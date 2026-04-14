@@ -15,21 +15,25 @@ import {
 } from '@/shared/ui/primitives.public';
 import { buildCategoryOptionLabel } from './tradera-mapping-utils';
 
-export interface MappingsRulesTableProps {
-  rules: TraderaParameterMapperRule[];
-  ruleStatuses: Map<string, { label: string; tone: 'default' | 'warning' }>;
+export interface MappingsRulesTableActions {
   onReview: (rule: TraderaParameterMapperRule) => void;
   onDelete: (ruleId: string) => Promise<void>;
   isDeleting: boolean;
 }
 
+export interface MappingsRulesTableProps {
+  rules: TraderaParameterMapperRule[];
+  ruleStatuses: Map<string, { label: string; tone: 'default' | 'warning' }>;
+  actions: MappingsRulesTableActions;
+}
+
 export function MappingsRulesTable({
   rules,
   ruleStatuses,
-  onReview,
-  onDelete,
-  isDeleting,
+  actions,
 }: MappingsRulesTableProps): React.JSX.Element {
+  const { onReview, onDelete, isDeleting } = actions;
+
   return (
     <Table>
       <TableHeader>

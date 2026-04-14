@@ -297,9 +297,11 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
       suggestedTraining,
       trainingSetupTitle,
       trainingWordmarkLabel,
+      compactActionClassName,
       handleHome,
       handleStartTraining,
       handleSelectOperation,
+      handleRecommendationSelect,
       practiceAssignmentsByOperation,
     }),
     [
@@ -320,9 +322,11 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
       suggestedTraining,
       trainingSetupTitle,
       trainingWordmarkLabel,
+      compactActionClassName,
       handleHome,
       handleStartTraining,
       handleSelectOperation,
+      handleRecommendationSelect,
       practiceAssignmentsByOperation,
     ]
   );
@@ -354,12 +358,7 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
           basePath={basePath}
           mode='queue'
         />
-        <KangurGameOperationRecommendationCard
-          compactActionClassName={compactActionClassName}
-          onRecommendationSelect={handleRecommendationSelect}
-          recommendation={recommendation}
-          showMathSections={showMathSections}
-        />
+        <KangurGameOperationRecommendationCard />
         <KangurGameOperationSelectorOperationSection />
         <KangurGameOperationSelectorQuickPracticeSection
           filteredLessonQuizGroups={filteredLessonQuizGroups}

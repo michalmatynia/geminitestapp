@@ -322,9 +322,11 @@ export function SocialPostList(): React.JSX.Element {
                       <div className='mt-1 flex flex-wrap items-center gap-2'>
                         <SocialJobStatusPill
                           status={visualAnalysisPillStatus}
-                          label='Image analysis'
-                          className='text-[10px]'
-                          title={visualAnalysisPillTitle || undefined}
+                          config={{
+                            label: 'Image analysis',
+                            className: 'text-[10px]',
+                            title: visualAnalysisPillTitle || undefined,
+                          }}
                         />
                         {post.visualAnalysisUpdatedAt ? (
                           <span>
@@ -357,25 +359,31 @@ export function SocialPostList(): React.JSX.Element {
                         {currentVisualAnalysisJob?.status ? (
                           <SocialJobStatusPill
                             status={currentVisualAnalysisJob.status}
-                            label='Image analysis'
-                            className='text-[10px]'
-                            title={currentVisualAnalysisJobTitle || undefined}
+                            config={{
+                              label: 'Image analysis',
+                              className: 'text-[10px]',
+                              title: currentVisualAnalysisJobTitle || undefined,
+                            }}
                           />
                         ) : null}
                         {currentGenerationJob?.status ? (
                           <SocialJobStatusPill
                             status={currentGenerationJob.status}
-                            label='Generate post'
-                            className='text-[10px]'
-                            title={currentGenerationJobTitle || undefined}
+                            config={{
+                              label: 'Generate post',
+                              className: 'text-[10px]',
+                              title: currentGenerationJobTitle || undefined,
+                            }}
                           />
                         ) : null}
                         {currentPipelineJob?.status ? (
                           <SocialJobStatusPill
                             status={currentPipelineJob.status}
-                            label='Full pipeline'
-                            className='text-[10px]'
-                            title={currentPipelineJobTitle || undefined}
+                            config={{
+                              label: 'Full pipeline',
+                              className: 'text-[10px]',
+                              title: currentPipelineJobTitle || undefined,
+                            }}
                           />
                         ) : null}
                       </div>

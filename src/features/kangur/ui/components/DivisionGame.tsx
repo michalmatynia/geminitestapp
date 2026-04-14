@@ -202,8 +202,11 @@ type DivisionChoicePresentation = {
 
 type DivisionGameContextValue = {
   confirmed: boolean;
+  finishLabel: string;
   isCoarsePointer: boolean;
   onConfirm: () => void;
+  onFinish: () => void;
+  onRestart: () => void;
   onSelect: (choice: number) => void;
   question: DivisionQuestion;
   roundIndex: number;
@@ -456,14 +459,8 @@ const confirmDivisionSelection = ({
 };
 
 function DivisionGameSummaryView({
-  finishLabel,
-  onFinish,
-  onRestart,
   results,
 }: {
-  finishLabel: string;
-  onFinish: () => void;
-  onRestart: () => void;
   results: {
     percent: number;
     score: number;
@@ -471,7 +468,7 @@ function DivisionGameSummaryView({
     xpEarned: number;
   };
 }): React.JSX.Element {
-  const { translations } = useDivisionGame();
+  const { finishLabel, onFinish, onRestart, translations } = useDivisionGame();
   const { percent, score, xpBreakdown, xpEarned } = results;
 
   return (
@@ -699,10 +696,27 @@ export default function DivisionGame({
     });
   };
 
+  const handleRestart = (): void => {
+    resetDivisionGameSession({
+      sessionStartedAtRef,
+      setConfirmed,
+      setDone,
+      setQuestion,
+      setRoundIndex,
+      setScore,
+      setSelected,
+      setXpBreakdown,
+      setXpEarned,
+    });
+  };
+
   const contextValue = {
     confirmed,
+    finishLabel,
     isCoarsePointer,
     onConfirm: handleConfirm,
+    onFinish: handleFinishGame,
+    onRestart: handleRestart,
     onSelect: handleSelect,
     question,
     roundIndex,
@@ -715,21 +729,6 @@ export default function DivisionGame({
     return (
       <DivisionGameContext.Provider value={contextValue}>
         <DivisionGameSummaryView
-          finishLabel={finishLabel}
-          onFinish={handleFinishGame}
-          onRestart={() =>
-            resetDivisionGameSession({
-              sessionStartedAtRef,
-              setConfirmed,
-              setDone,
-              setQuestion,
-              setRoundIndex,
-              setScore,
-              setSelected,
-              setXpBreakdown,
-              setXpEarned,
-            })
-          }
           results={{
             percent,
             score,

@@ -144,7 +144,13 @@ function MassListProductModalContent(): React.JSX.Element {
           </>
         )}
 
-        <ExportLogsPanel logs={exportLogs} isOpen={logsOpen} onToggle={setLogsOpen} />
+        <ExportLogsPanel
+          logs={exportLogs}
+          config={{
+            isOpen: logsOpen,
+            onToggle: setLogsOpen,
+          }}
+        />
       </div>
     </FormModal>
   );

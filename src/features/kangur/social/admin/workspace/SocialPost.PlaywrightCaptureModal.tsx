@@ -640,16 +640,20 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
         ) : null}
 
         <SocialCaptureBatchHistory
-          title='Recent programmable runs'
-          description='Durable programmable capture history with retry for failed routes.'
+          config={{
+            title: 'Recent programmable runs',
+            description: 'Durable programmable capture history with retry for failed routes.',
+            emptyMessage: 'No recent programmable capture runs yet.',
+            retryKind: 'programmable',
+            retryDisabled: isConfigEditingLocked,
+            retryTitle: configLockTitle,
+          }}
           jobs={recentProgrammableCaptureJobs}
           routes={programmableCaptureRoutes}
-          emptyMessage='No recent programmable capture runs yet.'
-          retryKind='programmable'
-          retryDisabled={isConfigEditingLocked}
-          retryTitle={configLockTitle}
-          onRetryFailed={(job) => {
-            void handleRetryFailedProgrammableCaptureJob(job);
+          actions={{
+            onRetryFailed: (job) => {
+              void handleRetryFailedProgrammableCaptureJob(job);
+            },
           }}
         />
       </div>

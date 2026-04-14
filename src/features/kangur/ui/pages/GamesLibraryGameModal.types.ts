@@ -27,6 +27,8 @@ export type GamesLibraryGameModalProps = {
 };
 
 export type GamesLibraryGameModalState = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   translations: ReturnType<typeof useTranslations>;
   locale: ReturnType<typeof useLocale>;
   settingsOpen: boolean;

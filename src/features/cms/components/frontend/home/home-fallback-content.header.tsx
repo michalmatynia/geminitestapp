@@ -9,7 +9,6 @@ import { Link as LocaleLink } from '@/i18n/navigation';
 import { useHomeFallback } from './home-fallback-content';
 import {
   CmsStorefrontAppearanceButtons,
-  type CmsAppearanceTone,
 } from '@/shared/ui/cms-appearance/CmsStorefrontAppearance';
 import {
   UI_CENTER_ROW_CLASSNAME,

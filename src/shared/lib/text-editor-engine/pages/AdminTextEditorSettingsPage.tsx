@@ -107,14 +107,15 @@ function useTextEditorSettingsContext(): TextEditorSettingsContextValue {
 }
 
 function InstanceSettingsPanel({
-  id,
-  title,
-  description,
+  meta,
 }: {
-  id: TextEditorEngineInstance;
-  title: string;
-  description: string;
+  meta: {
+    id: TextEditorEngineInstance;
+    title: string;
+    description: string;
+  };
 }): React.JSX.Element {
+  const { id, title, description } = meta;
   const { draftProfiles, updateProfile } = useTextEditorSettingsContext();
   const profile = draftProfiles[id];
 
@@ -251,9 +252,7 @@ export function AdminTextEditorSettingsPage(): React.JSX.Element {
           {TEXT_EDITOR_INSTANCE_META.map((meta) => (
             <InstanceSettingsPanel
               key={meta.id}
-              id={meta.id}
-              title={meta.title}
-              description={meta.description}
+              meta={meta}
             />
           ))}
         </div>

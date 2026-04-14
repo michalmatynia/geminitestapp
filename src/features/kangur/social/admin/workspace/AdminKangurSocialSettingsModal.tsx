@@ -74,25 +74,31 @@ function AdminKangurSocialSettingsModalContent(): React.JSX.Element {
           {currentVisualAnalysisJob?.status ? (
             <SocialJobStatusPill
               status={currentVisualAnalysisJob.status}
-              label='Image analysis'
-              title={currentVisualAnalysisJobTitle || undefined}
-              className='text-[10px]'
+              config={{
+                label: 'Image analysis',
+                title: currentVisualAnalysisJobTitle || undefined,
+                className: 'text-[10px]',
+              }}
             />
           ) : null}
           {currentGenerationJob?.status ? (
             <SocialJobStatusPill
               status={currentGenerationJob.status}
-              label='Generate post'
-              title={currentGenerationJobTitle || undefined}
-              className='text-[10px]'
+              config={{
+                label: 'Generate post',
+                title: currentGenerationJobTitle || undefined,
+                className: 'text-[10px]',
+              }}
             />
           ) : null}
           {currentPipelineJob?.status ? (
             <SocialJobStatusPill
               status={currentPipelineJob.status}
-              label='Full pipeline'
-              title={currentPipelineJobTitle || undefined}
-              className='text-[10px]'
+              config={{
+                label: 'Full pipeline',
+                title: currentPipelineJobTitle || undefined,
+                className: 'text-[10px]',
+              }}
             />
           ) : null}
         </div>

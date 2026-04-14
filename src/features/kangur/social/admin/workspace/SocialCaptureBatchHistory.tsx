@@ -97,29 +97,42 @@ const resolveRetryableFailureCount = (
   ).length;
 };
 
-export function SocialCaptureBatchHistory({
-  title,
-  description,
-  jobs,
-  routes = [],
-  emptyMessage,
-  retryKind,
-  retryActionLabel,
-  retryDisabled = false,
-  retryTitle,
-  onRetryFailed,
-}: {
+export type SocialCaptureBatchHistoryConfig = {
   title: string;
   description: string;
-  jobs: KangurSocialImageAddonsBatchJob[];
-  routes?: KangurSocialProgrammableCaptureRoute[];
   emptyMessage: string;
   retryKind?: 'preset' | 'programmable';
   retryActionLabel?: string;
   retryDisabled?: boolean;
   retryTitle?: string;
+};
+
+export type SocialCaptureBatchHistoryActions = {
   onRetryFailed?: (job: KangurSocialImageAddonsBatchJob) => void;
+};
+
+export function SocialCaptureBatchHistory({
+  config,
+  jobs,
+  routes = [],
+  actions = {},
+}: {
+  config: SocialCaptureBatchHistoryConfig;
+  jobs: KangurSocialImageAddonsBatchJob[];
+  routes?: KangurSocialProgrammableCaptureRoute[];
+  actions?: SocialCaptureBatchHistoryActions;
 }) {
+  const {
+    title,
+    description,
+    emptyMessage,
+    retryKind,
+    retryActionLabel,
+    retryDisabled = false,
+    retryTitle,
+  } = config;
+  const { onRetryFailed } = actions;
+
   return (
     <div className='space-y-3 rounded-xl border border-border/60 bg-background/40 p-4'>
       <div>

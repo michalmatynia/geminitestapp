@@ -28,9 +28,11 @@ export type KangurGameOperationSelectorContextValue = {
   suggestedTraining: ReturnType<typeof getRecommendedTrainingSetup>;
   trainingSetupTitle: string;
   trainingWordmarkLabel: string;
+  compactActionClassName: string;
   handleHome: () => void;
   handleStartTraining: KangurGameOperationSelectorRuntime['handleStartTraining'];
   handleSelectOperation: KangurGameOperationSelectorRuntime['handleSelectOperation'];
+  handleRecommendationSelect: () => void;
   practiceAssignmentsByOperation: KangurGameOperationSelectorRuntime['practiceAssignmentsByOperation'];
 };
 

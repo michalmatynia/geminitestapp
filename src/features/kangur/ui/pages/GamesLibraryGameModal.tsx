@@ -109,7 +109,7 @@ function ModalBooleanField(props: {
 }
 
 export function GamesLibraryGameModal(props: GamesLibraryGameModalProps): React.JSX.Element | null {
-  const { game, open, onOpenChange } = props;
+  const { game } = props;
   const state = useGamesLibraryGameModalState(props);
 
   if (!game) {
@@ -117,16 +117,11 @@ export function GamesLibraryGameModal(props: GamesLibraryGameModalProps): React.
   }
 
   return (
-    <GamesLibraryGameDialog
-      open={open}
-      onOpenChange={onOpenChange}
-      title={game.title}
-      description={game.description}
-    >
-      <GamesLibraryGameModalProvider state={state} basePath={props.basePath}>
+    <GamesLibraryGameModalProvider state={state} basePath={props.basePath}>
+      <GamesLibraryGameDialog>
         <GamesLibraryGameModalContent />
-      </GamesLibraryGameModalProvider>
-    </GamesLibraryGameDialog>
+      </GamesLibraryGameDialog>
+    </GamesLibraryGameModalProvider>
   );
 }
 

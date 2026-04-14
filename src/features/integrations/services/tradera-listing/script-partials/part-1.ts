@@ -1,3 +1,7 @@
+import { generateTraderaQuicklistBrowserStepsInit } from '@/shared/lib/browser-execution';
+
+const TRADERA_QUICKLIST_STEPS_INIT = generateTraderaQuicklistBrowserStepsInit();
+
 export const PART_1 = String.raw`export default async function run({
   page,
   input,
@@ -776,57 +780,7 @@ export const PART_1 = String.raw`export default async function run({
   const configuredShippingGroupName = toText(input?.traderaShipping?.shippingGroupName);
   const requiresConfiguredDeliveryOption = Boolean(configuredDeliveryOptionLabel);
 
-  // --- Execution step tracking ---
-  // Each step has: id, label, status ('pending'|'running'|'success'|'skipped'|'error'), info (null or object)
-  const executionSteps = (() => {
-    const steps = [
-      { id: 'browser_preparation', label: 'Browser preparation', status: 'pending', info: null },
-      { id: 'browser_open',        label: 'Open browser',        status: 'pending', info: null },
-      { id: 'cookie_accept',       label: 'Accept cookies',      status: 'pending', info: null },
-      { id: 'auth_check',          label: 'Validate Tradera session', status: 'pending', info: null },
-      { id: 'auth_login',          label: 'Automated login',     status: 'pending', info: null },
-      { id: 'auth_manual',         label: 'Complete manual Tradera login', status: 'pending', info: null },
-    ];
-    if (listingAction === 'sync') {
-      steps.push({ id: 'sync_check', label: 'Load sync target listing', status: 'pending', info: null });
-    } else {
-      steps.push(
-        { id: 'duplicate_check',      label: 'Search for duplicate listings', status: 'pending', info: null },
-        { id: 'deep_duplicate_check', label: 'Inspect duplicate candidates', status: 'pending', info: null },
-        { id: 'sell_page_open',       label: 'Open listing editor',  status: 'pending', info: null },
-        { id: 'image_cleanup',        label: 'Clear draft images',   status: 'pending', info: null }
-      );
-    }
-    steps.push(
-      { id: 'image_upload',          label: 'Upload listing images', status: 'pending', info: null },
-      { id: 'title_fill',            label: 'Enter title',           status: 'pending', info: null },
-      { id: 'description_fill',      label: 'Enter description',     status: 'pending', info: null },
-      { id: 'listing_format_select', label: 'Choose listing format', status: 'pending', info: null },
-      { id: 'price_set',             label: 'Set price',             status: 'pending', info: null },
-      { id: 'category_select',       label: 'Select category',       status: 'pending', info: null },
-      { id: 'attribute_select',      label: 'Apply listing attributes', status: 'pending', info: null },
-      { id: 'shipping_set',          label: 'Configure delivery',    status: 'pending', info: null },
-      {
-        id: 'publish',
-        label:
-          listingAction === 'sync'
-            ? 'Save listing changes'
-            : listingAction === 'relist'
-              ? 'Relist'
-              : 'Publish listing',
-        status: 'pending',
-        info: null,
-      },
-      {
-        id: 'publish_verify',
-        label: listingAction === 'sync' ? 'Verify saved listing' : 'Verify published listing',
-        status: 'pending',
-        info: null,
-      },
-      { id: 'browser_close', label: 'Close browser', status: 'pending', info: null }
-    );
-    return steps;
-  })();
+  ${TRADERA_QUICKLIST_STEPS_INIT}
 
   const normalizeStepStatus = (status) => {
     if (status === 'completed') return 'success';

@@ -1,4 +1,3 @@
-import type { useTranslations } from 'next-intl';
 import type {
   KangurGameEngineCatalogEntry,
   KangurGamesLibraryVariantGroup,

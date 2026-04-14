@@ -280,23 +280,31 @@ const resolveUniqueLeafCategorySuggestion = (
   return exactLeafMatches.length === 1 ? exactLeafMatches[0] ?? null : null;
 };
 
-type StructuredProductNameFieldProps = {
-  fieldName?: 'name_en' | 'name_pl';
+type StructuredProductNameFieldConfig = {
   locale?: StructuredProductTitleLocale;
   label?: string;
   description?: string;
   placeholder?: string;
 };
 
+type StructuredProductNameFieldProps = {
+  fieldName?: 'name_en' | 'name_pl';
+  config?: StructuredProductNameFieldConfig;
+};
+
 export function StructuredProductNameField({
   fieldName = 'name_en',
-  locale = 'en',
-  label = fieldName === 'name_pl' ? 'Polish Name' : 'English Name',
-  description = 'Format: <name> | <size> | <material> | <category> | <lore or theme>',
-  placeholder = locale === 'pl'
-    ? 'Scout Regiment | 4 cm | Metal | Przypinka Anime | Attack On Titan'
-    : 'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan',
+  config = {},
 }: StructuredProductNameFieldProps = {}): React.JSX.Element {
+  const {
+    locale = 'en',
+    label = fieldName === 'name_pl' ? 'Polish Name' : 'English Name',
+    description = 'Format: <name> | <size> | <material> | <category> | <lore or theme>',
+    placeholder = locale === 'pl'
+      ? 'Scout Regiment | 4 cm | Metal | Przypinka Anime | Attack On Titan'
+      : 'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan',
+  } = config;
+
   const inputRef = useRef<HTMLInputElement | null>(null);
   const measurementCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const previousSelectedCategoryIdRef = useRef<string | null>(null);

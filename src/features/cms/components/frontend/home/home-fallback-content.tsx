@@ -61,7 +61,7 @@ export function HomeFallbackContent({
           <HomeFallbackHero collectionCount={5} />
 
           <SectionDivider label={dividerTranslations('editorial')} />
-          <HomeFallbackSignature products={products} />
+          <HomeFallbackSignature />
 
           <SectionDivider label={dividerTranslations('highlights')} />
           <HomeFallbackHighlights />
@@ -70,12 +70,12 @@ export function HomeFallbackContent({
           <HomeFallbackCollections />
 
           <SectionDivider label={dividerTranslations('catalog')} />
-          <HomeFallbackProducts products={products} />
+          <HomeFallbackProducts />
 
           <HomeFallbackNextSteps />
         </div>
 
-        {showFallbackHeader ? <HomeFallbackFooterWithTheme themeSettings={themeSettings} /> : null}
+        {showFallbackHeader ? <HomeFallbackFooterWithTheme /> : null}
       </div>
     </HomeFallbackContext.Provider>
   );

@@ -85,7 +85,10 @@ type MultiplicationArrayGameContextValue = {
   b: number;
   celebrating: boolean;
   collected: Set<number>;
+  finishLabel: string;
   isCoarsePointer: boolean;
+  onFinish: () => void;
+  onRestart: () => void;
   onTapGroup: (groupIndex: number) => void;
   translations: ReturnType<typeof useTranslations>;
 };
@@ -288,14 +291,8 @@ const resolveMultiplicationArrayDotClassName = ({
 }): string => `w-6 h-6 rounded-full shadow-sm ${isCollected ? `${glow} shadow-md` : color} opacity-80`;
 
 function MultiplicationArraySummaryView({
-  finishLabel,
-  onFinish,
-  onRestart,
   results,
 }: {
-  finishLabel: string;
-  onFinish: () => void;
-  onRestart: () => void;
   results: {
     percent: number;
     score: number;
@@ -303,7 +300,7 @@ function MultiplicationArraySummaryView({
     xpEarned: number;
   };
 }): React.JSX.Element {
-  const { translations } = useMultiplicationArrayGame();
+  const { finishLabel, onFinish, onRestart, translations } = useMultiplicationArrayGame();
   const { percent, score, xpBreakdown, xpEarned } = results;
 
   return (
@@ -342,15 +339,11 @@ function MultiplicationArraySummaryView({
   );
 }
 
-function MultiplicationArrayCounters({
-  collectedCount,
-  total,
-  translations,
-}: {
-  collectedCount: number;
-  total: number;
-  translations: ReturnType<typeof useTranslations>;
-}): React.JSX.Element {
+function MultiplicationArrayCounters(): React.JSX.Element {
+  const { a, b, collected, translations } = useMultiplicationArrayGame();
+  const total = a * b;
+  const collectedCount = collected.size * b;
+
   return (
     <div className='flex w-full flex-col gap-2 min-[420px]:flex-row min-[420px]:items-center'>
       <KangurMetricCard
@@ -648,7 +641,10 @@ export default function MultiplicationArrayGame({
     b,
     celebrating,
     collected,
+    finishLabel: resolvedFinishLabel,
     isCoarsePointer,
+    onFinish: handleFinishGame,
+    onRestart: handleRestart,
     onTapGroup: handleTapGroup,
     translations,
   };
@@ -658,9 +654,6 @@ export default function MultiplicationArrayGame({
     return (
       <MultiplicationArrayGameContext.Provider value={contextValue}>
         <MultiplicationArraySummaryView
-          finishLabel={resolvedFinishLabel}
-          onFinish={handleFinishGame}
-          onRestart={handleRestart}
           results={{
             percent,
             score,

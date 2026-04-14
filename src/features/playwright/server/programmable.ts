@@ -216,7 +216,7 @@ export const runPlaywrightListingScript = async ({
         integrationId: connection.integrationId,
         listingId,
       }),
-    resolveEngineRequestConfig: (runtime) => {
+    resolveEngineRequestConfig: (runtime: ResolvedPlaywrightConnectionRuntime) => {
       const runtimeSettings = {
         ...runtime.settings,
         ...(runtimeSettingsOverrides ?? {}),
@@ -238,7 +238,7 @@ export const runPlaywrightListingScript = async ({
     },
   };
   const { run, runtime, settings: effectiveSettings, resultValue } = onRunStarted
-    ? await (async (): Promise<PlaywrightConnectionEngineTaskResult & { resultValue: unknown }> => {
+    ? await (async (): Promise<PlaywrightConnectionEngineTaskResult & { resultValue: Record<string, unknown> }> => {
         const startedTask = await startPlaywrightConnectionEngineTask(sharedTaskInput);
         await Promise.resolve(onRunStarted(startedTask.run.runId));
         const run = await waitForPlaywrightRunToFinish({
@@ -252,15 +252,15 @@ export const runPlaywrightListingScript = async ({
           runtime: startedTask.runtime,
           settings: startedTask.settings,
           browserPreference: startedTask.browserPreference,
-          resultValue,
+          resultValue: (resultValue ?? {}) as Record<string, unknown>,
         };
       })()
-    : await (async (): Promise<PlaywrightConnectionEngineTaskResult & { resultValue: unknown }> => {
+    : await (async (): Promise<PlaywrightConnectionEngineTaskResult & { resultValue: Record<string, unknown> }> => {
         const result = await runPlaywrightConnectionEngineTask(sharedTaskInput);
         const { resultValue } = resolvePlaywrightEngineRunOutputs(result.run.result);
         return {
           ...result,
-          resultValue,
+          resultValue: (resultValue ?? {}) as Record<string, unknown>,
         };
       })();
 

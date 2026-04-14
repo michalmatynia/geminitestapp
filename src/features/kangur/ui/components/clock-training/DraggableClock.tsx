@@ -402,17 +402,31 @@ export function DraggableClock(props: DraggableClockProps): React.JSX.Element {
       challengeRingCircumference,
       challengeRingColor,
       challengeRingOffset,
+      displayHour,
+      displayMinutes,
       hourHandEnabled,
       hourHandX,
       hourHandY,
+      isCoarsePointer,
       minuteHandEnabled,
       minuteHandX,
       minuteHandY,
+      minuteSnapMode,
       onHourPointerDown,
       onMinutePointerDown,
+      onSubmitClick: handleSubmitClick,
+      section,
+      setMinuteSnapMode,
       showChallengeRing,
       showHourHand,
       showMinuteHand,
+      showTimeDisplay,
+      submitButtonLabel,
+      submitFeedback,
+      submitFeedbackDetails,
+      submitFeedbackTitle,
+      submitLocked,
+      submitNextStep,
       svgRef,
       translations,
     }),
@@ -421,17 +435,31 @@ export function DraggableClock(props: DraggableClockProps): React.JSX.Element {
       challengeRingCircumference,
       challengeRingColor,
       challengeRingOffset,
+      displayHour,
+      displayMinutes,
       hourHandEnabled,
       hourHandX,
       hourHandY,
+      isCoarsePointer,
       minuteHandEnabled,
       minuteHandX,
       minuteHandY,
+      minuteSnapMode,
       onHourPointerDown,
       onMinutePointerDown,
+      handleSubmitClick,
+      section,
+      setMinuteSnapMode,
       showChallengeRing,
       showHourHand,
       showMinuteHand,
+      showTimeDisplay,
+      submitButtonLabel,
+      submitFeedback,
+      submitFeedbackDetails,
+      submitFeedbackTitle,
+      submitLocked,
+      submitNextStep,
       svgRef,
       translations,
     ]
@@ -440,41 +468,12 @@ export function DraggableClock(props: DraggableClockProps): React.JSX.Element {
   return (
     <DraggableClockContext.Provider value={contextValue}>
       <div className={`flex flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`}>
-        <DraggableClockTimeDisplay
-          displayHour={displayHour}
-          displayMinutes={displayMinutes}
-          showTimeDisplay={showTimeDisplay}
-        />
-        <DraggableClockSnapModeSwitch
-          isCoarsePointer={isCoarsePointer}
-          minuteHandEnabled={minuteHandEnabled}
-          minuteSnapMode={minuteSnapMode}
-          setMinuteSnapMode={setMinuteSnapMode}
-          showMinuteHand={showMinuteHand}
-          translations={translations}
-        />
-        <DraggableClockInteractionHint
-          section={section}
-          showHourHand={showHourHand}
-          showMinuteHand={showMinuteHand}
-          submitFeedback={submitFeedback}
-          submitNextStep={submitNextStep}
-          translations={translations}
-        />
+        <DraggableClockTimeDisplay />
+        <DraggableClockSnapModeSwitch />
+        <DraggableClockInteractionHint />
         <DraggableClockFace />
-        <DraggableClockLegend
-          showHourHand={showHourHand}
-          showMinuteHand={showMinuteHand}
-          translations={translations}
-        />
-        <DraggableClockSubmitArea
-          onSubmitClick={handleSubmitClick}
-          submitButtonLabel={submitButtonLabel}
-          submitFeedback={submitFeedback}
-          submitFeedbackDetails={submitFeedbackDetails}
-          submitFeedbackTitle={submitFeedbackTitle}
-          submitLocked={submitLocked}
-        />
+        <DraggableClockLegend />
+        <DraggableClockSubmitArea />
       </div>
     </DraggableClockContext.Provider>
   );

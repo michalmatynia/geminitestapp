@@ -879,9 +879,11 @@ export default function TraderaParameterMappingPage(): React.JSX.Element {
                 <MappingsRulesTable
                   rules={visibleParameterMapperRules}
                   ruleStatuses={parameterMapperRuleStatuses}
-                  onReview={handleReviewRule}
-                  onDelete={handleDeleteRule}
-                  isDeleting={upsertConnectionMutation.isPending}
+                  actions={{
+                    onReview: handleReviewRule,
+                    onDelete: handleDeleteRule,
+                    isDeleting: upsertConnectionMutation.isPending,
+                  }}
                 />
               </div>
             )}
@@ -961,9 +963,11 @@ export default function TraderaParameterMappingPage(): React.JSX.Element {
             ) : (
               <CatalogCategoryTable
                 categories={catalogCategoryRows}
-                onFetch={handleFetchCatalog}
-                isFetching={fetchCatalogMutation.isPending}
-                fetchingCategoryId={fetchCatalogMutation.variables?.externalCategoryId ?? null}
+                actions={{
+                  onFetch: handleFetchCatalog,
+                  isFetching: fetchCatalogMutation.isPending,
+                  fetchingCategoryId: fetchCatalogMutation.variables?.externalCategoryId ?? null,
+                }}
               />
             )}
           </Card>
@@ -977,9 +981,11 @@ export default function TraderaParameterMappingPage(): React.JSX.Element {
             ) : (
               <CatalogEntriesTable
                 entries={parameterCatalogEntries}
-                onRefetch={handleFetchCatalog}
-                isRefetching={fetchCatalogMutation.isPending}
-                refetchingCategoryId={fetchCatalogMutation.variables?.externalCategoryId ?? null}
+                actions={{
+                  onRefetch: handleFetchCatalog,
+                  isRefetching: fetchCatalogMutation.isPending,
+                  refetchingCategoryId: fetchCatalogMutation.variables?.externalCategoryId ?? null,
+                }}
               />
             )}
           </Card>

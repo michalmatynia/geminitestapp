@@ -407,10 +407,7 @@ export function KangurLaunchableGameInstanceRuntime(
   if (shouldUseLessonActivityRuntime) {
     return (
       <KangurLessonActivityInstanceRuntime
-        engineOverrides={config.engineOverrides}
-        gameId={config.gameId}
-        instanceId={config.instanceId}
-        onFinish={config.onFinish}
+        config={config}
       />
     );
   }

@@ -364,11 +364,26 @@ const renderKangurLearnerAssignmentsUnavailableState = ({
   );
 };
 
+interface LearnerAssignmentsContextValue {
+  fallbackCopy: LearnerAssignmentsFallbackCopy;
+  subject: ReturnType<typeof useKangurSubjectFocus>['subject'];
+  setSubject: ReturnType<typeof useKangurSubjectFocus>['setSubject'];
+}
+
+const LearnerAssignmentsContext = React.createContext<LearnerAssignmentsContextValue | null>(null);
+
+function useLearnerAssignments(): LearnerAssignmentsContextValue {
+  const context = React.useContext(LearnerAssignmentsContext);
+  if (!context) {
+    throw new Error('useLearnerAssignments must be used within KangurLearnerAssignmentsPanel');
+  }
+  return context;
+}
+
 function KangurLearnerAssignmentsMetrics({
   activeAssignmentsCount,
   completedAssignmentsCount,
   metrics,
-  fallbackCopy,
 }: {
   activeAssignmentsCount: number;
   completedAssignmentsCount: number;
@@ -379,8 +394,8 @@ function KangurLearnerAssignmentsMetrics({
     sectionSummary: string;
     sectionTitle: string;
   };
-  fallbackCopy: LearnerAssignmentsFallbackCopy;
 }): React.JSX.Element {
+  const { fallbackCopy } = useLearnerAssignments();
   const {
     completionRate,
     highPriorityActiveCount,
@@ -486,31 +501,32 @@ export function KangurLearnerAssignmentsPanel({
   }
 
   return (
-    <div className={`flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
-      <KangurLearnerAssignmentsMetrics
-        activeAssignmentsCount={activeAssignments.length}
-        completedAssignmentsCount={completedAssignments.length}
-        metrics={metrics}
-        fallbackCopy={fallbackCopy}
-      />
+    <LearnerAssignmentsContext.Provider value={{ fallbackCopy, subject, setSubject }}>
+      <div className={`flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
+        <KangurLearnerAssignmentsMetrics
+          activeAssignmentsCount={activeAssignments.length}
+          completedAssignmentsCount={completedAssignments.length}
+          metrics={metrics}
+        />
 
-      <KangurAssignmentsList
-        items={activeAssignmentItems}
-        title={fallbackCopy.activeAssignmentsTitle}
-        emptyLabel={fallbackCopy.activeAssignmentsEmptyLabel}
-        compact
-        showTimeCountdown
-        onItemActionClick={handleAssignmentOpen}
-      />
+        <KangurAssignmentsList
+          items={activeAssignmentItems}
+          title={fallbackCopy.activeAssignmentsTitle}
+          emptyLabel={fallbackCopy.activeAssignmentsEmptyLabel}
+          compact
+          showTimeCountdown
+          onItemActionClick={handleAssignmentOpen}
+        />
 
-      <KangurAssignmentsList
-        items={completedAssignmentItems}
-        title={fallbackCopy.completedAssignmentsTitle}
-        emptyLabel={fallbackCopy.completedAssignmentsEmptyLabel}
-        compact
-        onItemActionClick={handleAssignmentOpen}
-      />
-    </div>
+        <KangurAssignmentsList
+          items={completedAssignmentItems}
+          title={fallbackCopy.completedAssignmentsTitle}
+          emptyLabel={fallbackCopy.completedAssignmentsEmptyLabel}
+          compact
+          onItemActionClick={handleAssignmentOpen}
+        />
+      </div>
+    </LearnerAssignmentsContext.Provider>
   );
 }
 

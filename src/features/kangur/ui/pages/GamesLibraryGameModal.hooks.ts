@@ -44,6 +44,8 @@ export function useGamesLibraryGameModalState({
   }, [onOpenChange]);
 
   return {
+    open,
+    onOpenChange,
     translations,
     locale,
     settingsOpen,

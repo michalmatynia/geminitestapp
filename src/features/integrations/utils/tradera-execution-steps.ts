@@ -1,5 +1,10 @@
 import type { TraderaExecutionStep } from '@/shared/contracts/integrations/listings';
-import { buildActionSteps, type ActionSequenceKey } from '@/shared/lib/browser-execution';
+import {
+  buildActionSteps,
+  type ActionSequenceKey,
+  TRADERA_QUICKLIST_LABEL_OVERRIDES,
+  TRADERA_QUICKLIST_PUBLISH_LABELS,
+} from '@/shared/lib/browser-execution';
 
 type TraderaListingAction = 'list' | 'relist' | 'sync';
 
@@ -156,43 +161,19 @@ const getStepStatus = (
 ): TraderaExecutionStep['status'] | null =>
   steps.find((step) => step.id === stepId)?.status ?? null;
 
-// Registry labels are intentionally short and generic (shared with Vinted).
-// Tradera quicklist uses more descriptive labels that match the in-browser script
-// and the text users see during live execution.
-const TRADERA_QUICKLIST_LABEL_OVERRIDES: Readonly<Record<string, string>> = {
-  auth_check:           'Validate Tradera session',
-  auth_manual:          'Complete manual Tradera login',
-  sync_check:           'Load sync target listing',
-  duplicate_check:      'Search for duplicate listings',
-  deep_duplicate_check: 'Inspect duplicate candidates',
-  image_upload:         'Upload listing images',
-  listing_format_select:'Choose listing format',
-  attribute_select:     'Apply listing attributes',
-};
-
-const QUICKLIST_ACTION_SEQUENCE_KEYS: Record<TraderaListingAction, ActionSequenceKey> = {
+const QUICKLIST_SEQUENCE_KEYS: Record<TraderaListingAction, ActionSequenceKey> = {
   list:   'tradera_quicklist_list',
   relist: 'tradera_quicklist_relist',
   sync:   'tradera_quicklist_sync',
 };
 
-const QUICKLIST_PUBLISH_LABELS: Record<
-  TraderaListingAction,
-  { publish: string; publish_verify: string }
-> = {
-  sync:   { publish: 'Save listing changes',  publish_verify: 'Verify saved listing' },
-  relist: { publish: 'Relist',                publish_verify: 'Verify published listing' },
-  list:   { publish: 'Publish listing',       publish_verify: 'Verify published listing' },
-};
-
 const quicklistStepTemplates = (action: TraderaListingAction): TraderaExecutionStep[] => {
-  const key = QUICKLIST_ACTION_SEQUENCE_KEYS[action];
-  const steps = buildActionSteps(key);
-  const publishLabels = QUICKLIST_PUBLISH_LABELS[action];
+  const steps = buildActionSteps(QUICKLIST_SEQUENCE_KEYS[action]);
+  const publishLabels = TRADERA_QUICKLIST_PUBLISH_LABELS[action];
 
   for (const step of steps) {
-    const labelOverride = TRADERA_QUICKLIST_LABEL_OVERRIDES[step.id];
-    if (labelOverride !== undefined) step.label = labelOverride;
+    const override = TRADERA_QUICKLIST_LABEL_OVERRIDES[step.id];
+    if (override !== undefined) step.label = override;
     if (step.id === 'publish') step.label = publishLabels.publish;
     if (step.id === 'publish_verify') step.label = publishLabels.publish_verify;
   }

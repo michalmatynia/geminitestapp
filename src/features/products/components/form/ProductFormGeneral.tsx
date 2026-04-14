@@ -605,9 +605,11 @@ export default function ProductFormGeneral(): React.JSX.Element {
                   ) : fieldName === 'name_pl' ? (
                     <StructuredProductNameField
                       fieldName='name_pl'
-                      locale='pl'
-                      label={`${language.name} Name`}
-                      placeholder='Scout Regiment | 4 cm | Metal | Przypinka Anime | Attack On Titan'
+                      config={{
+                        locale: 'pl',
+                        label: `${language.name} Name`,
+                        placeholder: 'Scout Regiment | 4 cm | Metal | Przypinka Anime | Attack On Titan',
+                      }}
                     />
                   ) : (
                     <ValidatedField

@@ -4,11 +4,45 @@ import React, { createContext, useContext, useState } from 'react';
 import { ChevronDown, ChevronRight, Plus, Trash2 } from 'lucide-react';
 
 import type { PlaywrightConfigCaptureRoute } from '@/shared/contracts/ai-paths-core/nodes';
+import { buildCaptureRouteUrl } from '@/shared/lib/ai-paths/core/playwright/capture-defaults';
+import { Button, Input } from '@/shared/ui/primitives.public';
+import { FormField, SelectSimple } from '@/shared/ui/forms-and-actions.public';
+import { cn } from '@/shared/utils/ui-utils';
+
+const createRouteId = (): string => {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+    return crypto.randomUUID();
+  }
+  return `route-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+};
+
+const createEmptyRoute = (): PlaywrightConfigCaptureRoute => ({
+  id: createRouteId(),
+  title: '',
+  path: '/',
+  description: '',
+  selector: null,
+  waitForMs: null,
+  waitForSelectorMs: 15_000,
+});
+
+const APPEARANCE_MODE_OPTIONS = [
+  { value: '', label: 'Default (no override)' },
+  { value: 'dark', label: 'Dark' },
+  { value: 'light', label: 'Light' },
+];
+
+type RoutePatch = Partial<PlaywrightConfigCaptureRoute>;
 
 type PlaywrightCaptureRoutesEditorContextValue = {
   baseUrl: string;
   onUpdateRoute: (index: number, patch: RoutePatch) => void;
   onDeleteRoute: (index: number) => void;
+  onChange: (patch: {
+    routes?: PlaywrightConfigCaptureRoute[];
+    baseUrl?: string;
+    appearanceMode?: string;
+  }) => void;
 };
 
 const PlaywrightCaptureRoutesEditorContext = createContext<PlaywrightCaptureRoutesEditorContextValue | null>(null);
@@ -197,6 +231,7 @@ export function PlaywrightCaptureRoutesEditor({
         baseUrl,
         onUpdateRoute: updateRoute,
         onDeleteRoute: deleteRoute,
+        onChange,
       }}
     >
       <div className='space-y-3'>

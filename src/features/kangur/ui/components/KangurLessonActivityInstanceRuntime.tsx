@@ -173,17 +173,19 @@ const KangurLessonActivityInstanceRuntimeView = ({
   );
 };
 
-export function KangurLessonActivityInstanceRuntime({
-  engineOverrides,
-  gameId,
-  instanceId,
-  onFinish,
-}: {
+export type KangurLessonActivityRuntimeConfig = {
   engineOverrides?: KangurGameRuntimeRendererProps;
   gameId: KangurGameId;
   instanceId: KangurGameInstanceId;
   onFinish: () => void;
+};
+
+export function KangurLessonActivityInstanceRuntime({
+  config,
+}: {
+  config: KangurLessonActivityRuntimeConfig;
 }): React.JSX.Element {
+  const { engineOverrides, gameId, instanceId, onFinish } = config;
   const gameInstanceQuery = useKangurGameInstances({
     enabledOnly: true,
     gameId,

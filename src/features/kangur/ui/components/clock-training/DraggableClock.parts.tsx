@@ -29,17 +29,31 @@ export type DraggableClockContextValue = {
   challengeRingCircumference: number;
   challengeRingColor: string;
   challengeRingOffset: number;
+  displayHour: number;
+  displayMinutes: number;
   hourHandEnabled: boolean;
   hourHandX: number;
   hourHandY: number;
+  isCoarsePointer: boolean;
   minuteHandEnabled: boolean;
   minuteHandX: number;
   minuteHandY: number;
+  minuteSnapMode: MinuteSnapMode;
   onHourPointerDown: DraggableClockPointerDownHandler;
   onMinutePointerDown: DraggableClockPointerDownHandler;
+  onSubmitClick: () => void;
+  section: ClockTrainingTaskPoolId;
+  setMinuteSnapMode: React.Dispatch<React.SetStateAction<MinuteSnapMode>>;
   showChallengeRing: boolean;
   showHourHand: boolean;
   showMinuteHand: boolean;
+  showTimeDisplay: boolean;
+  submitButtonLabel: string;
+  submitFeedback: Feedback;
+  submitFeedbackDetails: string | null;
+  submitFeedbackTitle: string | null;
+  submitLocked: boolean;
+  submitNextStep: DraggableClockSubmitNextStep;
   svgRef: React.RefObject<SVGSVGElement | null>;
   translations: DraggableClockTranslations;
 };
@@ -251,15 +265,8 @@ const resolveDraggableClockInteractionHint = ({
   );
 };
 
-export function DraggableClockTimeDisplay({
-  displayHour,
-  displayMinutes,
-  showTimeDisplay,
-}: {
-  displayHour: number;
-  displayMinutes: number;
-  showTimeDisplay: boolean;
-}): React.JSX.Element | null {
+export function DraggableClockTimeDisplay(): React.JSX.Element | null {
+  const { displayHour, displayMinutes, showTimeDisplay } = useDraggableClock();
   if (!showTimeDisplay) {
     return null;
   }
@@ -275,21 +282,16 @@ export function DraggableClockTimeDisplay({
   );
 }
 
-export function DraggableClockSnapModeSwitch({
-  isCoarsePointer,
-  minuteHandEnabled,
-  minuteSnapMode,
-  setMinuteSnapMode,
-  showMinuteHand,
-  translations,
-}: {
-  isCoarsePointer: boolean;
-  minuteHandEnabled: boolean;
-  minuteSnapMode: MinuteSnapMode;
-  setMinuteSnapMode: React.Dispatch<React.SetStateAction<MinuteSnapMode>>;
-  showMinuteHand: boolean;
-  translations: DraggableClockTranslations;
-}): React.JSX.Element | null {
+export function DraggableClockSnapModeSwitch(): React.JSX.Element | null {
+  const {
+    isCoarsePointer,
+    minuteHandEnabled,
+    minuteSnapMode,
+    setMinuteSnapMode,
+    showMinuteHand,
+    translations,
+  } = useDraggableClock();
+
   if (!showMinuteHand || !minuteHandEnabled) {
     return null;
   }
@@ -340,21 +342,16 @@ export function DraggableClockSnapModeSwitch({
   );
 }
 
-export function DraggableClockInteractionHint({
-  section,
-  showHourHand,
-  showMinuteHand,
-  submitFeedback,
-  submitNextStep,
-  translations,
-}: {
-  section: ClockTrainingTaskPoolId;
-  showHourHand: boolean;
-  showMinuteHand: boolean;
-  submitFeedback: Feedback;
-  submitNextStep: DraggableClockSubmitNextStep;
-  translations: DraggableClockTranslations;
-}): React.JSX.Element | null {
+export function DraggableClockInteractionHint(): React.JSX.Element | null {
+  const {
+    section,
+    showHourHand,
+    showMinuteHand,
+    submitFeedback,
+    submitNextStep,
+    translations,
+  } = useDraggableClock();
+
   const interactionHint = resolveDraggableClockInteractionHint({
     section,
     showHourHand,
@@ -591,15 +588,9 @@ export function DraggableClockFace(): React.JSX.Element {
   );
 }
 
-export function DraggableClockLegend({
-  showHourHand,
-  showMinuteHand,
-  translations,
-}: {
-  showHourHand: boolean;
-  showMinuteHand: boolean;
-  translations: DraggableClockTranslations;
-}): React.JSX.Element {
+export function DraggableClockLegend(): React.JSX.Element {
+  const { showHourHand, showMinuteHand, translations } = useDraggableClock();
+
   return (
     <div
       className={`${KANGUR_WRAP_ROW_SPACED_CLASSNAME} justify-center text-sm [color:var(--kangur-page-muted-text)]`}
@@ -640,21 +631,16 @@ export function DraggableClockLegend({
   );
 }
 
-export function DraggableClockSubmitArea({
-  onSubmitClick,
-  submitButtonLabel,
-  submitFeedback,
-  submitFeedbackDetails,
-  submitFeedbackTitle,
-  submitLocked,
-}: {
-  onSubmitClick: () => void;
-  submitButtonLabel: string;
-  submitFeedback: Feedback;
-  submitFeedbackDetails: string | null;
-  submitFeedbackTitle: string | null;
-  submitLocked: boolean;
-}): React.JSX.Element {
+export function DraggableClockSubmitArea(): React.JSX.Element {
+  const {
+    onSubmitClick,
+    submitButtonLabel,
+    submitFeedback,
+    submitFeedbackDetails,
+    submitFeedbackTitle,
+    submitLocked,
+  } = useDraggableClock();
+
   return (
     <>
       <KangurButton

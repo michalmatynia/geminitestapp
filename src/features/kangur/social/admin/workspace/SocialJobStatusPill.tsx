@@ -55,17 +55,20 @@ export const getSocialJobStatusBadgeVariant = (
   }
 };
 
-export function SocialJobStatusPill({
-  status,
-  label,
-  title,
-  className,
-}: {
-  status: SocialJobStatusValue;
+export type SocialJobStatusPillConfig = {
   label?: string;
   title?: string;
   className?: string;
+};
+
+export function SocialJobStatusPill({
+  status,
+  config = {},
+}: {
+  status: SocialJobStatusValue;
+  config?: SocialJobStatusPillConfig;
 }): React.JSX.Element | null {
+  const { label, title, className } = config;
   const statusLabel = getSocialJobStatusLabel(status);
   if (!statusLabel) {
     return null;

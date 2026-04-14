@@ -199,7 +199,9 @@ describe('AI Paths DB action handler', () => {
     if (!findOneAndUpdateInvocation) {
       throw new Error('Expected MongoDB findOneAndUpdate to be called.');
     }
-    expect(findOneAndUpdateInvocation[0]).toEqual({ id: 'product-1' });
+    expect(findOneAndUpdateInvocation[0]).toEqual({
+      $or: [{ id: 'product-1' }, { _id: 'product-1' }],
+    });
     expect(findOneAndUpdateInvocation[1]).toMatchObject({
       $set: {
         name_en: 'Updated name',
@@ -216,5 +218,43 @@ describe('AI Paths DB action handler', () => {
     expect(body['resolvedProvider']).toBe('mongodb');
     expect(body['requestedProvider']).toBe('mongodb');
     expect(body['value']).toEqual({ id: 'product-1', name_en: 'Updated name' });
+  });
+
+  it('expands canonical product id filters to match legacy _id-only rows', async () => {
+    const updateOneMock = vi.fn().mockResolvedValue({
+      matchedCount: 1,
+      modifiedCount: 1,
+      upsertedId: null,
+    });
+    getMongoDbMock.mockResolvedValue({
+      collection: vi.fn().mockReturnValue({
+        updateOne: updateOneMock,
+      }),
+    });
+    process.env['MONGODB_URI'] = 'mongodb://localhost/test';
+
+    const response = await invokeDbActionHandler({
+      provider: 'auto',
+      collection: 'products',
+      action: 'updateOne',
+      filter: { id: 'legacy-product-1' },
+      update: { description_pl: 'Opis produktu' },
+      idType: 'string',
+    });
+    const body = await parseResponseBody(response);
+
+    expect(updateOneMock).toHaveBeenCalledWith(
+      {
+        $or: [{ id: 'legacy-product-1' }, { _id: 'legacy-product-1' }],
+      },
+      expect.objectContaining({
+        $set: expect.objectContaining({
+          description_pl: 'Opis produktu',
+        }),
+      }),
+      { upsert: false }
+    );
+    expect(body['matchedCount']).toBe(1);
+    expect(body['modifiedCount']).toBe(1);
   });
 });

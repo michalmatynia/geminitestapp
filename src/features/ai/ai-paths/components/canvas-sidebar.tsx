@@ -781,18 +781,22 @@ export function CanvasSidebar({ palette }: CanvasSidebarProps): React.JSX.Elemen
                     <div className='space-y-2'>
                       <CanvasSelectedWireEndpointCard
                         title='From'
-                        nodeLabel={fromNode?.title ?? selectedEdge.from ?? 'unknown-node'}
-                        nodeType={fromNode?.type ?? 'unknown'}
-                        portLabel={selectedEdge.fromPort ?? 'default'}
-                        accentClassName='text-amber-300'
+                        config={{
+                          nodeLabel: fromNode?.title ?? selectedEdge.from ?? 'unknown-node',
+                          nodeType: fromNode?.type ?? 'unknown',
+                          portLabel: selectedEdge.fromPort ?? 'default',
+                          accentClassName: 'text-amber-300',
+                        }}
                       />
                       <div className='flex justify-center text-gray-500'>↓</div>
                       <CanvasSelectedWireEndpointCard
                         title='To'
-                        nodeLabel={toNode?.title ?? selectedEdge.to ?? 'unknown-node'}
-                        nodeType={toNode?.type ?? 'unknown'}
-                        portLabel={selectedEdge.toPort ?? 'default'}
-                        accentClassName='text-sky-300'
+                        config={{
+                          nodeLabel: toNode?.title ?? selectedEdge.to ?? 'unknown-node',
+                          nodeType: toNode?.type ?? 'unknown',
+                          portLabel: selectedEdge.toPort ?? 'default',
+                          accentClassName: 'text-sky-300',
+                        }}
                       />
                     </div>
                     <Card

@@ -1,6 +1,6 @@
 'use client';
 
-import { type FormEvent, type JSX, useState, useRef } from 'react';
+import { createContext, useContext, type FormEvent, type JSX, useState, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { Eye, EyeOff } from 'lucide-react';
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
@@ -13,6 +13,28 @@ import {
   KANGUR_STACK_COMPACT_CLASSNAME,
   KANGUR_STACK_RELAXED_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
+
+type LoginFormContextValue = {
+  identifier: string;
+  identifierInputRef: React.RefObject<HTMLInputElement | null>;
+  isLoading: boolean;
+  isPasswordVisible: boolean;
+  password: string;
+  setIsPasswordVisible: React.Dispatch<React.SetStateAction<boolean>>;
+  setPassword: (value: string) => void;
+  setIdentifier: (value: string) => void;
+  translations: ReturnType<typeof useTranslations>;
+};
+
+const LoginFormContext = createContext<LoginFormContextValue | null>(null);
+
+function useLoginFormContext(): LoginFormContextValue {
+  const context = useContext(LoginFormContext);
+  if (!context) {
+    throw new Error('useLoginFormContext must be used within LoginForm');
+  }
+  return context;
+}
 
 type LoginFormProps = {
   onSubmit: (identifier: string, password?: string) => void;
@@ -52,20 +74,14 @@ const resolveKangurLoginSubmitDisabled = ({
 }): boolean =>
   isLoading || !identifier.trim() || (shouldShowPasswordField && !password);
 
-function LoginIdentifierField(props: {
-  identifier: string;
-  identifierInputRef: React.RefObject<HTMLInputElement | null>;
-  isLoading: boolean;
-  setIdentifier: (value: string) => void;
-  translations: ReturnType<typeof useTranslations>;
-}): JSX.Element {
+function LoginIdentifierField(): JSX.Element {
   const {
     identifier,
     identifierInputRef,
     isLoading,
     setIdentifier,
     translations,
-  } = props;
+  } = useLoginFormContext();
 
   return (
     <div className={KANGUR_STACK_COMPACT_CLASSNAME}>
@@ -90,14 +106,7 @@ function LoginIdentifierField(props: {
   );
 }
 
-function LoginPasswordField(props: {
-  isLoading: boolean;
-  isPasswordVisible: boolean;
-  password: string;
-  setIsPasswordVisible: React.Dispatch<React.SetStateAction<boolean>>;
-  setPassword: (value: string) => void;
-  translations: ReturnType<typeof useTranslations>;
-}): JSX.Element {
+function LoginPasswordField(): JSX.Element {
   const {
     isLoading,
     isPasswordVisible,
@@ -105,7 +114,7 @@ function LoginPasswordField(props: {
     setIsPasswordVisible,
     setPassword,
     translations,
-  } = props;
+  } = useLoginFormContext();
 
   return (
     <div className={KANGUR_STACK_COMPACT_CLASSNAME}>
@@ -226,44 +235,45 @@ export function LoginForm({
     shouldShowPasswordField,
   });
 
+  const contextValue: LoginFormContextValue = {
+    identifier,
+    identifierInputRef,
+    isLoading,
+    isPasswordVisible,
+    password,
+    setIsPasswordVisible,
+    setPassword,
+    setIdentifier,
+    translations,
+  };
+
   return (
-    <form
-      ref={loginFormRef}
-      onSubmit={handleSubmit}
-      className={`${KANGUR_STACK_RELAXED_CLASSNAME} w-full`}
-      aria-label={translations('loginFormAriaLabel')}
-    >
-      <LoginIdentifierField
-        identifier={identifier}
-        identifierInputRef={identifierInputRef}
-        isLoading={isLoading}
-        setIdentifier={setIdentifier}
-        translations={translations}
-      />
-
-      {shouldShowPasswordField && (
-        <LoginPasswordField
-          isLoading={isLoading}
-          isPasswordVisible={isPasswordVisible}
-          password={password}
-          setIsPasswordVisible={setIsPasswordVisible}
-          setPassword={setPassword}
-          translations={translations}
-        />
-      )}
-
-      <LoginFormFeedback error={error} notice={notice} />
-
-      <KangurButton
-        type='submit'
-        variant='primary'
-        size='lg'
-        disabled={submitDisabled}
-        className='mt-2 w-full justify-center rounded-xl font-bold'
+    <LoginFormContext.Provider value={contextValue}>
+      <form
+        ref={loginFormRef}
+        onSubmit={handleSubmit}
+        className={`${KANGUR_STACK_RELAXED_CLASSNAME} w-full`}
+        aria-label={translations('loginFormAriaLabel')}
       >
-        {isLoading ? translations('loginSubmitting') : translations('loginSubmit')}
-      </KangurButton>
-    </form>
+        <LoginIdentifierField />
+
+        {shouldShowPasswordField && (
+          <LoginPasswordField />
+        )}
+
+        <LoginFormFeedback error={error} notice={notice} />
+
+        <KangurButton
+          type='submit'
+          variant='primary'
+          size='lg'
+          disabled={submitDisabled}
+          className='mt-2 w-full justify-center rounded-xl font-bold'
+        >
+          {isLoading ? translations('loginSubmitting') : translations('loginSubmit')}
+        </KangurButton>
+      </form>
+    </LoginFormContext.Provider>
   );
 }
 

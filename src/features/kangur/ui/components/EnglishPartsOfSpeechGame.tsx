@@ -57,24 +57,36 @@ import {
 } from './EnglishPartsOfSpeechGame.utils';
 import type { SpeechToken } from './EnglishPartsOfSpeechGame.types';
 
+type EnglishPartsOfSpeechGameContextValue = ReturnType<typeof useEnglishPartsOfSpeechGameState> & {
+  finishLabel?: string;
+  finishLabelVariant: 'lesson' | 'topics';
+  onFinish: () => void;
+};
+
+const EnglishPartsOfSpeechGameContext = React.createContext<EnglishPartsOfSpeechGameContextValue | null>(null);
+
+function useEnglishPartsOfSpeechGame() {
+  const context = React.useContext(EnglishPartsOfSpeechGameContext);
+  if (!context) {
+    throw new Error('useEnglishPartsOfSpeechGame must be used within EnglishPartsOfSpeechGame');
+  }
+  return context;
+}
+
 function PartsOfSpeechToken({
   token,
   index,
-  isLocked,
-  isSelected,
-  isCoarsePointer,
-  onSelect,
   showStatus,
 }: {
   token: SpeechToken;
   index: number;
-  isLocked: boolean;
-  isSelected: boolean;
-  isCoarsePointer: boolean;
-  onSelect: () => void;
   showStatus?: boolean;
 }): React.JSX.Element {
+  const { isLocked, selectedTokenId, isCoarsePointer, setSelectedTokenId } = useEnglishPartsOfSpeechGame();
+  const isSelected = selectedTokenId === token.id;
+  const onSelect = () => setSelectedTokenId(curr => curr === token.id ? null : token.id);
   const isCorrect = showStatus ? true : false; // Simplified logic for display
+
   return (
     <Draggable draggableId={token.id} index={index} isDragDisabled={isLocked}>
       {(provided, snapshot) => {
@@ -122,27 +134,52 @@ function PartsOfSpeechToken({
   );
 }
 
-export function EnglishPartsOfSpeechGame({
-  finishLabel,
-  finishLabelVariant = 'lesson',
-  onFinish,
-}: {
-  finishLabel?: string;
-  finishLabelVariant?: 'lesson' | 'topics';
-  onFinish: () => void;
-}): React.JSX.Element {
-  const state = useEnglishPartsOfSpeechGameState();
+function PartsOfSpeechGameSummary(): React.JSX.Element {
+  const { finishLabel, finishLabelVariant, onFinish, handleRestart, score, xpEarned, xpBreakdown, translations } = useEnglishPartsOfSpeechGame();
+  const percent = Math.round((score / TOTAL_ROUNDS) * 100);
+
+  return (
+    <KangurPracticeGameSummary dataTestId='english-parts-summary-shell'>
+      <KangurPracticeGameSummaryEmoji
+        dataTestId='english-parts-summary-emoji'
+        emoji={percent === 100 ? '🏆' : percent >= 70 ? '🌟' : '💪'}
+      />
+      <KangurPracticeGameSummaryTitle
+        accent='sky'
+        title={
+          <KangurHeadline data-testid='english-parts-summary-title'>
+            {getKangurMiniGameScoreLabel(translations, score, TOTAL_ROUNDS)}
+          </KangurHeadline>
+        }
+      />
+      <KangurPracticeGameSummaryXP accent='sky' xpEarned={xpEarned} />
+      <KangurPracticeGameSummaryBreakdown
+        breakdown={xpBreakdown}
+        dataTestId='english-parts-summary-breakdown'
+        itemDataTestIdPrefix='english-parts-summary-breakdown'
+      />
+      <KangurPracticeGameSummaryHighlight progress={percent} accent='sky' />
+      <KangurPracticeGameSummaryMessage>
+        {percent === 100 ? 'Perfect score!' : percent >= 70 ? 'Great job!' : 'Keep practicing!'}
+      </KangurPracticeGameSummaryMessage>
+      <KangurPracticeGameSummaryActions
+        finishLabel={finishLabel ?? getKangurMiniGameFinishLabel(translations, finishLabelVariant)}
+        onFinish={onFinish}
+        onRestart={handleRestart}
+        restartLabel={translations('shared.restart')}
+      />
+    </KangurPracticeGameSummary>
+  );
+}
+
+function PartsOfSpeechGamePlaying(): React.JSX.Element {
   const {
     translations,
     isCoarsePointer,
     roundIndex,
-    score,
     roundState,
     checked,
     feedback,
-    done,
-    xpEarned,
-    xpBreakdown,
     selectedTokenId,
     setSelectedTokenId,
     round,
@@ -151,44 +188,9 @@ export function EnglishPartsOfSpeechGame({
     moveSelectedTokenTo,
     handleCheck,
     handleNext,
-    handleRestart,
-  } = state;
-
-  if (done) {
-    const percent = Math.round((score / TOTAL_ROUNDS) * 100);
-    return (
-      <KangurPracticeGameSummary dataTestId='english-parts-summary-shell'>
-        <KangurPracticeGameSummaryEmoji
-          dataTestId='english-parts-summary-emoji'
-          emoji={percent === 100 ? '🏆' : percent >= 70 ? '🌟' : '💪'}
-        />
-        <KangurPracticeGameSummaryTitle
-          accent='sky'
-          title={
-            <KangurHeadline data-testid='english-parts-summary-title'>
-              {getKangurMiniGameScoreLabel(translations, score, TOTAL_ROUNDS)}
-            </KangurHeadline>
-          }
-        />
-        <KangurPracticeGameSummaryXP accent='sky' xpEarned={xpEarned} />
-        <KangurPracticeGameSummaryBreakdown
-          breakdown={xpBreakdown}
-          dataTestId='english-parts-summary-breakdown'
-          itemDataTestIdPrefix='english-parts-summary-breakdown'
-        />
-        <KangurPracticeGameSummaryProgress accent='sky' percent={percent} />
-        <KangurPracticeGameSummaryMessage>
-          {percent === 100 ? 'Perfect score!' : percent >= 70 ? 'Great job!' : 'Keep practicing!'}
-        </KangurPracticeGameSummaryMessage>
-        <KangurPracticeGameSummaryActions
-          finishLabel={finishLabel ?? getKangurMiniGameFinishLabel(translations, finishLabelVariant)}
-          onFinish={onFinish}
-          onRestart={handleRestart}
-          restartLabel={translations('shared.restart')}
-        />
-      </KangurPracticeGameSummary>
-    );
-  }
+    finishLabel,
+    finishLabelVariant,
+  } = useEnglishPartsOfSpeechGame();
 
   const roundTitle = getPartsOfSpeechRoundMessage(translations, round.id, 'title', round.title);
   const roundPrompt = getPartsOfSpeechRoundMessage(translations, round.id, 'prompt', round.prompt);
@@ -274,10 +276,7 @@ export function EnglishPartsOfSpeechGame({
                           key={token.id}
                           token={token}
                           index={i}
-                          isLocked={isLocked}
-                          isSelected={selectedTokenId === token.id}
-                          isCoarsePointer={isCoarsePointer}
-                          onSelect={() => setSelectedTokenId(curr => curr === token.id ? null : token.id)}
+                          showStatus={checked}
                         />
                       ))}
                       {provided.placeholder}
@@ -343,10 +342,6 @@ export function EnglishPartsOfSpeechGame({
                                   key={token.id}
                                   token={token}
                                   index={i}
-                                  isLocked={isLocked}
-                                  isSelected={selectedTokenId === token.id}
-                                  isCoarsePointer={isCoarsePointer}
-                                  onSelect={() => setSelectedTokenId(curr => curr === token.id ? null : token.id)}
                                   showStatus={checked}
                                 />
                               ))}
@@ -436,6 +431,28 @@ export function EnglishPartsOfSpeechGame({
         </div>
       </div>
     </KangurPracticeGameShell>
+  );
+}
+
+export function EnglishPartsOfSpeechGame(props: {
+  finishLabel?: string;
+  finishLabelVariant?: 'lesson' | 'topics';
+  onFinish: () => void;
+}): React.JSX.Element {
+  const state = useEnglishPartsOfSpeechGameState();
+  const { done } = state;
+
+  return (
+    <EnglishPartsOfSpeechGameContext.Provider
+      value={{
+        ...state,
+        finishLabel: props.finishLabel,
+        finishLabelVariant: props.finishLabelVariant ?? 'lesson',
+        onFinish: props.onFinish,
+      }}
+    >
+      {done ? <PartsOfSpeechGameSummary /> : <PartsOfSpeechGamePlaying />}
+    </EnglishPartsOfSpeechGameContext.Provider>
   );
 }
 

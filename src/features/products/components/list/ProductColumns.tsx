@@ -493,18 +493,22 @@ const NameCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function NameCe
         ) : null}
         {productAiRunFeedback ? (
           <ProductListActivityPill
-            kind='trigger-button'
-            label={productAiRunFeedback.label}
-            variant={productAiRunFeedback.variant}
-            badgeClassName={productAiRunFeedback.badgeClassName}
+            config={{
+              kind: 'trigger-button',
+              label: productAiRunFeedback.label,
+              variant: productAiRunFeedback.variant,
+              badgeClassName: productAiRunFeedback.badgeClassName,
+            }}
           />
         ) : null}
         {productScanRunFeedback ? (
           <ProductListActivityPill
-            kind='scan'
-            label={productScanRunFeedback.label}
-            variant={productScanRunFeedback.variant}
-            badgeClassName={productScanRunFeedback.badgeClassName}
+            config={{
+              kind: 'scan',
+              label: productScanRunFeedback.label,
+              variant: productScanRunFeedback.variant,
+              badgeClassName: productScanRunFeedback.badgeClassName,
+            }}
           />
         ) : null}
       </div>

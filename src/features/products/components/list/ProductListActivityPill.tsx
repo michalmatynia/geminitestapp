@@ -4,7 +4,7 @@ import { RectangleHorizontal, Search } from 'lucide-react';
 import { Badge } from '@/shared/ui/badge';
 import { cn } from '@/shared/utils/ui-utils';
 
-type ProductListActivityPillProps = {
+type ProductListActivityPillConfig = {
   kind: 'trigger-button' | 'scan';
   label: string;
   variant:
@@ -22,7 +22,7 @@ type ProductListActivityPillProps = {
   className?: string | undefined;
 };
 
-const resolveIcon = (kind: ProductListActivityPillProps['kind']): React.JSX.Element =>
+const resolveIcon = (kind: ProductListActivityPillConfig['kind']): React.JSX.Element =>
   kind === 'scan' ? (
     <Search className='size-3' />
   ) : (
@@ -30,12 +30,12 @@ const resolveIcon = (kind: ProductListActivityPillProps['kind']): React.JSX.Elem
   );
 
 export function ProductListActivityPill({
-  kind,
-  label,
-  variant,
-  badgeClassName,
-  className,
-}: ProductListActivityPillProps): React.JSX.Element {
+  config,
+}: {
+  config: ProductListActivityPillConfig;
+}): React.JSX.Element {
+  const { kind, label, variant, badgeClassName, className } = config;
+
   return (
     <Badge
       variant={variant}

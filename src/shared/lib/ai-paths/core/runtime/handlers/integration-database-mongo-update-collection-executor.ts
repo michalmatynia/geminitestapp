@@ -129,6 +129,18 @@ export async function executeMongoCollectionUpdate({
       toast(message, { variant: 'error' });
       throw new Error(message);
     }
+    reportAiPathsError(new Error(message), {
+      action: 'dbWriteOutcome',
+      collection,
+      nodeId: node.id,
+      nodeType: node.type,
+      nodeTitle: node.title,
+      errorCode: 'AI_PATHS_DB_WRITE_ZERO_AFFECTED',
+      errorCategory: 'database',
+      errorScope: 'node',
+      errorSeverity: 'warning',
+      writeOutcome,
+    });
     toast(message, { variant: 'warning' });
   }
 

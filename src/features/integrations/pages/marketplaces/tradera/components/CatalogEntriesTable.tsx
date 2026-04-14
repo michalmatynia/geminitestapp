@@ -15,19 +15,23 @@ import {
 } from '@/shared/ui/primitives.public';
 import { buildCategoryOptionLabel } from './tradera-mapping-utils';
 
-export interface CatalogEntriesTableProps {
-  entries: TraderaParameterMapperCatalogEntry[];
+export interface CatalogEntriesTableActions {
   onRefetch: (externalCategoryId: string) => Promise<void>;
   isRefetching: boolean;
   refetchingCategoryId: string | null;
 }
 
+export interface CatalogEntriesTableProps {
+  entries: TraderaParameterMapperCatalogEntry[];
+  actions: CatalogEntriesTableActions;
+}
+
 export function CatalogEntriesTable({
   entries,
-  onRefetch,
-  isRefetching,
-  refetchingCategoryId,
+  actions,
 }: CatalogEntriesTableProps): React.JSX.Element {
+  const { onRefetch, isRefetching, refetchingCategoryId } = actions;
+
   return (
     <Table>
       <TableHeader>

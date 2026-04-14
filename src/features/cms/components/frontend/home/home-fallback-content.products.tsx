@@ -7,13 +7,11 @@ import React from 'react';
 
 import { ProductCard } from '@/features/products/public';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
+import { useHomeFallback } from './home-fallback-content';
 import { UI_GRID_ROOMY_CLASSNAME, UI_STACK_RELAXED_CLASSNAME } from '@/shared/ui/layout';
 
-export function HomeFallbackProducts({
-  products,
-}: {
-  products: ProductWithImages[];
-}): React.JSX.Element {
+export function HomeFallbackProducts(): React.JSX.Element {
+  const { products } = useHomeFallback();
   const translations = useTranslations('FallbackHome.Products');
   const hasProducts = products.length > 0;
 

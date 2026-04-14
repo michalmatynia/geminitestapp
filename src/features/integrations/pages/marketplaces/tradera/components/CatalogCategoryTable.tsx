@@ -13,6 +13,12 @@ import {
   TableRow,
 } from '@/shared/ui/primitives.public';
 
+export interface CatalogCategoryTableActions {
+  onFetch: (externalCategoryId: string) => Promise<void>;
+  isFetching: boolean;
+  fetchingCategoryId: string | null;
+}
+
 export interface CatalogCategoryTableProps {
   categories: {
     externalCategoryId: string;
@@ -22,17 +28,15 @@ export interface CatalogCategoryTableProps {
     latestFetchedAt: string | null;
     staleRuleCount: number;
   }[];
-  onFetch: (externalCategoryId: string) => Promise<void>;
-  isFetching: boolean;
-  fetchingCategoryId: string | null;
+  actions: CatalogCategoryTableActions;
 }
 
 export function CatalogCategoryTable({
   categories,
-  onFetch,
-  isFetching,
-  fetchingCategoryId,
+  actions,
 }: CatalogCategoryTableProps): React.JSX.Element {
+  const { onFetch, isFetching, fetchingCategoryId } = actions;
+
   return (
     <Table>
       <TableHeader>

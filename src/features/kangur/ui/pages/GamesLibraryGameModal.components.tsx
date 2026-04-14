@@ -22,17 +22,13 @@ import {
 
 export function GamesLibraryGameDialog({
   children,
-  description,
-  onOpenChange,
-  open,
-  title,
 }: {
   children: React.ReactNode;
-  description?: React.ReactNode;
-  onOpenChange: (open: boolean) => void;
-  open: boolean;
-  title: React.ReactNode;
 }): React.JSX.Element {
+  const { game, open, onOpenChange } = useGamesLibraryGameModalContext();
+  const title = game?.title;
+  const description = game?.description;
+
   return (
     <KangurDialog
       open={open}

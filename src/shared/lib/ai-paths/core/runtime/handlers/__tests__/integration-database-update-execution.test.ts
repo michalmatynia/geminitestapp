@@ -281,6 +281,7 @@ describe('executeDatabaseUpdate custom payload mode', () => {
 
   it('returns warning writeOutcome when 0 records are affected and policy is warn', async () => {
     const toast = vi.fn();
+    const reportAiPathsError = vi.fn();
     dbActionMock.mockResolvedValue({
       ok: true,
       data: {
@@ -302,7 +303,7 @@ describe('executeDatabaseUpdate custom payload mode', () => {
         schema: new Set(),
         mapper: new Set(),
       },
-      reportAiPathsError: vi.fn(),
+      reportAiPathsError,
       toast,
       dryRun: false,
       resolvedInputs: {
@@ -356,5 +357,20 @@ describe('executeDatabaseUpdate custom payload mode', () => {
     expect(toast).toHaveBeenCalledWith(expect.stringContaining('affected 0 records'), {
       variant: 'warning',
     });
+    expect(reportAiPathsError).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({
+        action: 'dbWriteOutcome',
+        nodeId: 'node-1',
+        errorCode: 'AI_PATHS_DB_WRITE_ZERO_AFFECTED',
+        errorCategory: 'database',
+        errorScope: 'node',
+        errorSeverity: 'warning',
+        writeOutcome: expect.objectContaining({
+          status: 'warning',
+          code: 'zero_affected',
+        }),
+      })
+    );
   });
 });

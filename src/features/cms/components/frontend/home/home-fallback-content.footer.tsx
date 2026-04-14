@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import React from 'react';
 
+import { useHomeFallback } from './home-fallback-content';
 import {
   UI_CENTER_ROW_CLASSNAME,
   UI_STACK_RELAXED_CLASSNAME,
@@ -191,11 +192,8 @@ export function HomeFallbackFooter({
   );
 }
 
-export function HomeFallbackFooterWithTheme({
-  themeSettings,
-}: {
-  themeSettings: SocialThemeSettings;
-}): React.JSX.Element {
+export function HomeFallbackFooterWithTheme(): React.JSX.Element {
+  const { themeSettings } = useHomeFallback();
   const socialLinks = React.useMemo(() => buildSocialLinks(themeSettings), [themeSettings]);
   return <HomeFallbackFooter socialLinks={socialLinks} />;
 }

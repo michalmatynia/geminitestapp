@@ -360,20 +360,24 @@ const renderProductListMobileCard = ({
                 )}
                 {productAiRunFeedback ? (
                   <ProductListActivityPill
-                    kind='trigger-button'
-                    label={productAiRunFeedback.label}
-                    variant={productAiRunFeedback.variant}
-                    badgeClassName={productAiRunFeedback.badgeClassName}
-                    className='ml-0'
+                    config={{
+                      kind: 'trigger-button',
+                      label: productAiRunFeedback.label,
+                      variant: productAiRunFeedback.variant,
+                      badgeClassName: productAiRunFeedback.badgeClassName,
+                      className: 'ml-0',
+                    }}
                   />
                 ) : null}
                 {productScanRunFeedback ? (
                   <ProductListActivityPill
-                    kind='scan'
-                    label={productScanRunFeedback.label}
-                    variant={productScanRunFeedback.variant}
-                    badgeClassName={productScanRunFeedback.badgeClassName}
-                    className='ml-0'
+                    config={{
+                      kind: 'scan',
+                      label: productScanRunFeedback.label,
+                      variant: productScanRunFeedback.variant,
+                      badgeClassName: productScanRunFeedback.badgeClassName,
+                      className: 'ml-0',
+                    }}
                   />
                 ) : null}
               </div>

@@ -63,8 +63,11 @@ type SubtractingChoicePresentation = {
 
 type SubtractingGameContextValue = {
   confirmed: boolean;
+  finishLabel: string;
   isCoarsePointer: boolean;
   onConfirm: () => void;
+  onFinish: () => void;
+  onRestart: () => void;
   onSelect: (choice: number) => void;
   question: SubtractingQuestion;
   roundIndex: number;
@@ -403,14 +406,8 @@ const confirmSubtractingSelection = ({
 };
 
 function SubtractingGameSummaryView({
-  finishLabel,
-  onFinish,
-  onRestart,
   results,
 }: {
-  finishLabel: string;
-  onFinish: () => void;
-  onRestart: () => void;
   results: {
     percent: number;
     score: number;
@@ -418,7 +415,7 @@ function SubtractingGameSummaryView({
     xpEarned: number;
   };
 }): React.JSX.Element {
-  const { translations } = useSubtractingGame();
+  const { finishLabel, onFinish, onRestart, translations } = useSubtractingGame();
   const { percent, score, xpBreakdown, xpEarned } = results;
 
   return (
@@ -635,10 +632,27 @@ export default function SubtractingGame({
     });
   };
 
+  const handleRestart = (): void => {
+    resetSubtractingGameSession({
+      sessionStartedAtRef,
+      setConfirmed,
+      setDone,
+      setQuestion,
+      setRoundIndex,
+      setScore,
+      setSelected,
+      setXpBreakdown,
+      setXpEarned,
+    });
+  };
+
   const contextValue = {
     confirmed,
+    finishLabel,
     isCoarsePointer,
     onConfirm: handleConfirm,
+    onFinish: handleFinishGame,
+    onRestart: handleRestart,
     onSelect: handleSelect,
     question,
     roundIndex,
@@ -651,21 +665,6 @@ export default function SubtractingGame({
     return (
       <SubtractingGameContext.Provider value={contextValue}>
         <SubtractingGameSummaryView
-          finishLabel={finishLabel}
-          onFinish={handleFinishGame}
-          onRestart={() =>
-            resetSubtractingGameSession({
-              sessionStartedAtRef,
-              setConfirmed,
-              setDone,
-              setQuestion,
-              setRoundIndex,
-              setScore,
-              setSelected,
-              setXpBreakdown,
-              setXpEarned,
-            })
-          }
           results={{
             percent,
             score,

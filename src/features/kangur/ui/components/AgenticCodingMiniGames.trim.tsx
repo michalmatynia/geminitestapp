@@ -107,7 +107,9 @@ function renderAgenticTrimGame(
         <KangurLessonVisual
           accent={accent}
           caption={config.svgLabel}
-          maxWidthClassName='max-w-full'
+          config={{
+            maxWidthClassName: 'max-w-full',
+          }}
         >
           <TrimGameSvg />
         </KangurLessonVisual>

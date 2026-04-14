@@ -61,6 +61,13 @@ describe('assertTraderaBrowserSessionReady', () => {
     });
 
     expect(handleTraderaBrowserTestMock).toHaveBeenCalledTimes(1);
+    expect(handleTraderaBrowserTestMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        connection: expect.objectContaining({ id: 'connection-1' }),
+        mode: 'quicklist_preflight',
+        manualMode: false,
+      })
+    );
   });
 
   it('reruns preflight after the cache TTL expires', async () => {

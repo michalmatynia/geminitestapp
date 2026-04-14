@@ -4,15 +4,12 @@ import type { IntegrationConnectionRecord } from '@/shared/contracts/integration
 import type { TestConnectionResponse, TestLogEntry } from '@/shared/contracts/integrations/session-testing';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
-type PushStep = (step: string, status: 'pending' | 'ok' | 'failed', detail: string) => void;
-type Fail = (step: string, detail: string, status?: number) => Promise<never>;
+import { type ConnectionTestContext } from './types';
 
 export const handleLinkedinApiTest = async (
-  connection: IntegrationConnectionRecord,
-  steps: TestLogEntry[],
-  pushStep: PushStep,
-  fail: Fail
+  ctx: ConnectionTestContext
 ): Promise<Response> => {
+  const { connection, steps, pushStep, fail } = ctx;
   pushStep('Checking LinkedIn token', 'pending', 'Validating LinkedIn access token');
   const encryptedToken = connection.linkedinAccessToken?.trim();
   if (!encryptedToken) {

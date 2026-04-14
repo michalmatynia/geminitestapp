@@ -12,10 +12,12 @@ import type {
   IntegrationRepository,
 } from '@/shared/contracts/integrations/repositories';
 
-type PushStep = (step: string, status: 'pending' | 'ok' | 'failed', detail: string) => void;
-type Fail = (step: string, detail: string, status?: number) => Promise<never>;
-
-type ConnectionUpdateRepository = Pick<IntegrationRepository, 'updateConnection'>;
+import {
+  type ConnectionTestContext,
+  type ConnectionUpdateRepository,
+  type Fail,
+  type PushStep,
+} from './types';
 
 const QUICKLIST_AUTH_REQUIRED_DETAIL =
   'AUTH_REQUIRED: Stored 1688 session expired or is missing. Open the 1688 login window and refresh the session.';
@@ -80,8 +82,6 @@ const waitFor1688ManualLogin = async (
   }
   return false;
 };
-
-import { type ConnectionTestContext } from './handler.vinted-browser';
 
 export const handle1688BrowserTest = async (
   ctx: ConnectionTestContext

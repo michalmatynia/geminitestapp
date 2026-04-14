@@ -19,11 +19,11 @@ type ConnectorPressState = {
   moved: boolean;
 };
 
+import { useCanvasSvgNode } from '../../CanvasSvgNode';
+
 export interface CanvasSvgNodePortsProps {
-  node: AiNode;
   incomingEdgePortSet: Set<string>;
   connectorHitRadius: number;
-  showPortLabels: boolean;
   buildConnectorKey: (direction: 'input' | 'output', nodeId: string, portName: string) => string;
   getConnectorInfo: (
     direction: 'input' | 'output',
@@ -33,13 +33,12 @@ export interface CanvasSvgNodePortsProps {
 }
 
 export function CanvasSvgNodePorts({
-  node,
   incomingEdgePortSet,
   connectorHitRadius,
-  showPortLabels,
   buildConnectorKey,
   getConnectorInfo,
 }: CanvasSvgNodePortsProps): React.JSX.Element {
+  const { node, showPortLabels } = useCanvasSvgNode();
   const {
     hoveredConnectorKey,
     pinnedConnectorKey,

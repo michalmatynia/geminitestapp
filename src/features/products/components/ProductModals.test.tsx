@@ -26,6 +26,7 @@ const {
 
 const {
   useProductFormCoreMock,
+  useProductFormParametersMock,
   useProductFormMetadataMock,
   productFormProviderPropsMock,
   triggerButtonBarMock,
@@ -34,18 +35,21 @@ const {
   getNextProviderInstanceIdMock,
   resetProviderInstanceCounterMock,
   subscribeToTrackedAiPathRunMock,
+  getAiPathRunMock,
   getAiPathRunResultMock,
 } = vi.hoisted(() => {
   let providerInstanceCounter = 0;
 
   return {
     useProductFormCoreMock: vi.fn(),
+    useProductFormParametersMock: vi.fn(),
     useProductFormMetadataMock: vi.fn(),
     productFormProviderPropsMock: vi.fn(),
     triggerButtonBarMock: vi.fn(),
     listProductModalPropsMock: vi.fn(),
     productListingsModalPropsMock: vi.fn(),
     subscribeToTrackedAiPathRunMock: vi.fn(),
+    getAiPathRunMock: vi.fn(),
     getAiPathRunResultMock: vi.fn(),
     getNextProviderInstanceIdMock: (): number => {
       providerInstanceCounter += 1;
@@ -92,6 +96,10 @@ vi.mock('@/features/products/context/ProductFormCoreContext', () => ({
   useProductFormCore: () => useProductFormCoreMock(),
 }));
 
+vi.mock('@/features/products/context/ProductFormParameterContext', () => ({
+  useProductFormParameters: () => useProductFormParametersMock(),
+}));
+
 vi.mock('@/features/products/context/ProductFormMetadataContext', () => ({
   useProductFormMetadata: () => useProductFormMetadataMock(),
   useProductFormMetadataState: () => useProductFormMetadataMock(),
@@ -117,6 +125,7 @@ vi.mock('@/shared/lib/ai-paths/client-run-tracker', () => ({
 }));
 
 vi.mock('@/shared/lib/ai-paths/api/client', () => ({
+  getAiPathRun: (...args: unknown[]) => getAiPathRunMock(...args),
   getAiPathRunResult: (...args: unknown[]) => getAiPathRunResultMock(...args),
 }));
 
@@ -263,6 +272,33 @@ describe('ProductModals', () => {
     vi.clearAllMocks();
     resetProviderInstanceCounterMock();
     subscribeToTrackedAiPathRunMock.mockReturnValue(() => {});
+    getAiPathRunMock.mockResolvedValue({
+      ok: true,
+      data: {
+        run: {
+          id: 'run-1',
+          status: 'completed',
+          createdAt: '2026-04-09T00:00:00.000Z',
+          updatedAt: '2026-04-09T00:00:05.000Z',
+          startedAt: null,
+          finishedAt: '2026-04-09T00:00:05.000Z',
+          errorMessage: null,
+          pathId: 'path-1',
+          pathName: 'Test Path',
+          triggerEvent: 'trigger-1',
+          triggerNodeId: 'node-trigger',
+          entityId: 'product-1',
+          entityType: 'product',
+          requestId: null,
+          meta: null,
+          graph: null,
+          triggerContext: null,
+          runtimeState: null,
+        },
+        nodes: [],
+        events: [],
+      },
+    });
     getAiPathRunResultMock.mockResolvedValue({
       ok: true,
       data: {
@@ -285,6 +321,10 @@ describe('ProductModals', () => {
       hasUnsavedChanges: false,
       setValue: vi.fn(),
       setNormalizeNameError: vi.fn(),
+    });
+    useProductFormParametersMock.mockReturnValue({
+      parameterValues: [],
+      applyLocalizedParameterValues: vi.fn(),
     });
     useProductFormImagesMock.mockReturnValue({
       showFileManager: false,
@@ -1422,6 +1462,156 @@ describe('ProductModals', () => {
         );
       });
       expect(setValue).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('local translation completion bridge', () => {
+    it('applies completed EN->PL translation results into description_pl and localized parameters', async () => {
+      const product = markEditingProductHydrated(createProduct());
+      const setValue = vi.fn();
+      const setNormalizeNameError = vi.fn();
+      const applyLocalizedParameterValues = vi.fn();
+
+      useProductFormCoreMock.mockReturnValue({
+        product,
+        draft: null,
+        getValues: () => ({}),
+        handleSubmit: vi.fn(),
+        uploading: false,
+        hasUnsavedChanges: false,
+        setValue,
+        setNormalizeNameError,
+      });
+      useProductFormParametersMock.mockReturnValue({
+        parameterValues: [
+          {
+            parameterId: 'color',
+            value: 'Blue',
+          },
+        ],
+        applyLocalizedParameterValues,
+      });
+      useProductListModalsContextMock.mockReturnValue(
+        buildContext({
+          editingProduct: product,
+        })
+      );
+      getAiPathRunMock.mockResolvedValue({
+        ok: true,
+        data: {
+          run: {
+            id: 'run-translation-1',
+            status: 'completed',
+            createdAt: '2026-04-09T00:00:00.000Z',
+            updatedAt: '2026-04-09T00:00:05.000Z',
+            startedAt: null,
+            finishedAt: '2026-04-09T00:00:05.000Z',
+            errorMessage: null,
+            pathId: 'path_96708d',
+            pathName: 'Translation EN->PL Description + Parameters v2',
+            triggerEvent: 'button-translate',
+            triggerNodeId: 'node-trigger',
+            entityId: 'product-1',
+            entityType: 'product',
+            requestId: null,
+            meta: null,
+            graph: null,
+            triggerContext: null,
+            runtimeState: null,
+          },
+          nodes: [
+            {
+              nodeType: 'database',
+              outputs: {
+                debugPayload: {
+                  updateDoc: {
+                    $set: {
+                      description_pl: 'Polski opis produktu',
+                      parameters: [
+                        {
+                          parameterId: 'color',
+                          value: 'Blue',
+                          valuesByLanguage: {
+                            pl: 'Niebieski',
+                          },
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+            },
+          ],
+          events: [],
+        },
+      });
+
+      render(<ProductModals />);
+
+      const onRunQueued = triggerButtonBarMock.mock.calls[0][0].onRunQueued;
+      await act(async () => {
+        onRunQueued({
+          button: {
+            id: 'button-translate',
+            name: 'Translation EN->PL Description + Parameters v2',
+            iconId: null,
+            locations: ['product_modal'],
+            mode: 'execute_path',
+            display: { label: 'Translate EN->PL' },
+            pathId: 'path_96708d',
+            enabled: true,
+            sortIndex: 0,
+            createdAt: '2026-04-09T00:00:00.000Z',
+            updatedAt: '2026-04-09T00:00:00.000Z',
+          },
+          runId: 'run-translation-1',
+          entityId: 'product-1',
+          entityType: 'product',
+        });
+      });
+
+      await waitFor(() => {
+        expect(subscribeToTrackedAiPathRunMock).toHaveBeenCalledWith(
+          'run-translation-1',
+          expect.any(Function)
+        );
+      });
+
+      const listener = subscribeToTrackedAiPathRunMock.mock.calls[0]?.[1];
+      expect(typeof listener).toBe('function');
+
+      await act(async () => {
+        await listener({
+          runId: 'run-translation-1',
+          status: 'completed',
+          updatedAt: '2026-04-09T00:00:05.000Z',
+          finishedAt: '2026-04-09T00:00:05.000Z',
+          errorMessage: null,
+          entityId: 'product-1',
+          entityType: 'product',
+          trackingState: 'stopped',
+        });
+      });
+
+      await waitFor(() => {
+        expect(getAiPathRunMock).toHaveBeenCalledWith('run-translation-1', {
+          timeoutMs: 60_000,
+        });
+      });
+      expect(setValue).toHaveBeenCalledWith('description_pl', 'Polski opis produktu', {
+        shouldDirty: true,
+        shouldTouch: true,
+        shouldValidate: true,
+      });
+      expect(applyLocalizedParameterValues).toHaveBeenCalledWith([
+        {
+          parameterId: 'color',
+          languageCode: 'pl',
+          value: 'Niebieski',
+        },
+      ]);
+      expect(getAiPathRunResultMock).not.toHaveBeenCalled();
+      expect(setNormalizeNameError).not.toHaveBeenCalled();
     });
   });
 

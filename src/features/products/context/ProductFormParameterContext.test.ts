@@ -218,6 +218,45 @@ describe('ProductFormParameterProvider', () => {
     ]);
   });
 
+  it('applies translated localized values without overwriting the existing English scalar base', () => {
+    useParametersMock.mockReturnValue({
+      data: [{ id: 'param-1', name_en: 'Condition' }] satisfies Partial<ProductParameter>[],
+      isLoading: false,
+    });
+
+    const product = {
+      parameters: [
+        {
+          parameterId: 'param-1',
+          value: 'Used',
+        },
+      ],
+    } as Partial<ProductWithImages> as ProductWithImages;
+
+    const wrapper = createWrapper({ product });
+    const { result } = renderHook(() => useProductFormParameters(), { wrapper });
+
+    act(() => {
+      result.current.applyLocalizedParameterValues([
+        {
+          parameterId: 'param-1',
+          languageCode: 'pl',
+          value: 'Uzywany',
+        },
+      ]);
+    });
+
+    expect(result.current.parameterValues).toEqual([
+      {
+        parameterId: 'param-1',
+        value: 'Used',
+        valuesByLanguage: {
+          pl: 'Uzywany',
+        },
+      },
+    ]);
+  });
+
   it('hydrates an explicitly blank saved parameter as a preserved row', () => {
     useParametersMock.mockReturnValue({
       data: [{ id: 'param-1', name_en: 'Condition' }] satisfies Partial<ProductParameter>[],

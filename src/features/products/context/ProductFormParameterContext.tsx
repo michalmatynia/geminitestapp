@@ -26,6 +26,9 @@ export interface ProductFormParameterContextType {
   parametersLoading: boolean;
   parameterValues: ProductParameterValue[];
   addParameterValue: () => void;
+  applyLocalizedParameterValues: (
+    updates: Array<{ parameterId: string; languageCode: string; value: string }>
+  ) => void;
   updateParameterId: (index: number, parameterId: string) => void;
   updateParameterValue: (index: number, value: string) => void;
   updateParameterValueByLanguage: (index: number, languageCode: string, value: string) => void;
@@ -40,6 +43,7 @@ export type ProductFormParameterStateContextType = Pick<
 export type ProductFormParameterActionsContextType = Pick<
   ProductFormParameterContextType,
   | 'addParameterValue'
+  | 'applyLocalizedParameterValues'
   | 'updateParameterId'
   | 'updateParameterValue'
   | 'updateParameterValueByLanguage'
@@ -280,6 +284,71 @@ export function ProductFormParameterProvider({
       ]);
     };
 
+    const applyLocalizedParameterValues = (
+      updates: Array<{ parameterId: string; languageCode: string; value: string }>
+    ): void => {
+      const normalizedUpdates = updates
+        .map((entry) => ({
+          parameterId: decodeSimpleParameterStorageId(
+            typeof entry.parameterId === 'string' ? entry.parameterId : ''
+          ),
+          languageCode:
+            typeof entry.languageCode === 'string' ? entry.languageCode.trim().toLowerCase() : '',
+          value: typeof entry.value === 'string' ? entry.value.trim() : '',
+        }))
+        .filter(
+          (entry): entry is { parameterId: string; languageCode: string; value: string } =>
+            entry.parameterId.length > 0 && entry.languageCode.length > 0 && entry.value.length > 0
+        );
+      if (normalizedUpdates.length === 0) return;
+
+      const updateByParameterId = new Map<
+        string,
+        { parameterId: string; languageCode: string; value: string }
+      >();
+      normalizedUpdates.forEach((entry) => {
+        updateByParameterId.set(entry.parameterId, entry);
+      });
+
+      onInteraction?.();
+      setBaseParameterValues((prev: ProductParameterValue[]): ProductParameterValue[] => {
+        let changed = false;
+        const next = prev.map((current: ProductParameterValue): ProductParameterValue => {
+          const normalizedParameterId = decodeSimpleParameterStorageId(
+            typeof current.parameterId === 'string' ? current.parameterId : ''
+          );
+          const match = updateByParameterId.get(normalizedParameterId);
+          if (!match) return current;
+
+          const currentValues = normalizeParameterValuesByLanguage(current.valuesByLanguage);
+          const previousLocalizedValue = currentValues[match.languageCode] ?? '';
+          if (previousLocalizedValue === match.value) {
+            return current;
+          }
+
+          const nextValues = {
+            ...currentValues,
+            [match.languageCode]: match.value,
+          };
+          const currentScalarValue = typeof current.value === 'string' ? current.value.trim() : '';
+          const nextScalarValue =
+            currentScalarValue && currentScalarValue !== previousLocalizedValue
+              ? currentScalarValue
+              : match.value;
+
+          changed = true;
+          return {
+            ...current,
+            parameterId: normalizedParameterId,
+            value: nextScalarValue,
+            valuesByLanguage: nextValues,
+          };
+        });
+
+        return changed ? next : prev;
+      });
+    };
+
     const updateParameterId = (index: number, parameterId: string): void => {
       onInteraction?.();
       setBaseParameterValues((prev: ProductParameterValue[]): ProductParameterValue[] => {
@@ -363,6 +432,7 @@ export function ProductFormParameterProvider({
       parametersLoading: parametersQuery.isLoading,
       parameterValues,
       addParameterValue,
+      applyLocalizedParameterValues,
       updateParameterId,
       updateParameterValue,
       updateParameterValueByLanguage,
@@ -405,6 +475,7 @@ export const useProductFormParameterState = (): ProductFormParameterStateContext
 export const useProductFormParameterActions = (): ProductFormParameterActionsContextType => {
   const {
     addParameterValue,
+    applyLocalizedParameterValues,
     updateParameterId,
     updateParameterValue,
     updateParameterValueByLanguage,
@@ -412,6 +483,7 @@ export const useProductFormParameterActions = (): ProductFormParameterActionsCon
   } = useRequiredProductFormParameterContext();
   return {
     addParameterValue,
+    applyLocalizedParameterValues,
     updateParameterId,
     updateParameterValue,
     updateParameterValueByLanguage,

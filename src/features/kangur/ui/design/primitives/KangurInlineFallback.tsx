@@ -5,12 +5,16 @@ import { cn } from '@/features/kangur/shared/utils';
 import { KANGUR_ACCENT_STYLES } from '../tokens';
 import { kangurInfoCardVariants } from './KangurInfoCard';
 
-export type KangurInlineFallbackProps = React.HTMLAttributes<HTMLDivElement> & {
+export type KangurInlineFallbackConfig = {
   accent?: string;
   align?: 'left' | 'center';
   description?: React.ReactNode;
   icon?: React.ReactNode;
+};
+
+export type KangurInlineFallbackProps = React.HTMLAttributes<HTMLDivElement> & {
   title: React.ReactNode;
+  config?: KangurInlineFallbackConfig;
 };
 
 const resolveKangurInlineFallbackAccent = (accent: string): string =>
@@ -48,15 +52,13 @@ function KangurInlineFallbackDescription(props: {
 }
 
 export function KangurInlineFallback({
-  accent = 'slate',
-  align = 'center',
   children,
   className,
-  description,
-  icon,
   title,
+  config = {},
   ...props
 }: KangurInlineFallbackProps): React.JSX.Element {
+  const { accent = 'slate', align = 'center', description, icon } = config;
   const centered = align === 'center';
 
   return (

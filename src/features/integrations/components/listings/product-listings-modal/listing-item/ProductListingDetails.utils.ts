@@ -376,6 +376,30 @@ export const resolvePlaywrightExecutionSummary = (
   };
 };
 
+const VINTED_EXECUTION_STEP_STATUSES = new Set<string>([
+  'pending', 'running', 'success', 'error', 'skipped',
+]);
+
+const readVintedExecutionSteps = (value: unknown): TraderaExecutionStep[] => {
+  if (!Array.isArray(value)) return [];
+  const steps: TraderaExecutionStep[] = [];
+  for (const item of value) {
+    if (!item || typeof item !== 'object') continue;
+    const record = item as Record<string, unknown>;
+    const id = readString(record['id']);
+    const label = readString(record['label']);
+    const status = readString(record['status']);
+    if (!id || !label || !status || !VINTED_EXECUTION_STEP_STATUSES.has(status)) continue;
+    steps.push({
+      id,
+      label,
+      status: status as TraderaExecutionStep['status'],
+      message: readString(record['message']) ?? null,
+    });
+  }
+  return steps;
+};
+
 export const resolveVintedExecutionSummary = (
   marketplaceData: Record<string, unknown> | null | undefined
 ): {
@@ -393,6 +417,7 @@ export const resolveVintedExecutionSummary = (
   requestId: string | null;
   publishVerified: boolean | null;
   listingUrl: string | null;
+  executionSteps: TraderaExecutionStep[];
   rawResult: unknown;
 } => {
   const marketplaceRecord = toRecord(marketplaceData);
@@ -416,6 +441,7 @@ export const resolveVintedExecutionSummary = (
     requestId: readString(lastExecution['requestId']),
     publishVerified: readBoolean(metadata['publishVerified']),
     listingUrl: readString(marketplaceRecord['listingUrl']),
+    executionSteps: readVintedExecutionSteps(metadata['executionSteps']),
     rawResult: metadata['rawResult'] ?? null,
   };
 };

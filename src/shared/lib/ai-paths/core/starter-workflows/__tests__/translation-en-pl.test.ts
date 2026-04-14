@@ -37,8 +37,8 @@ describe('starter translation EN->PL workflow', () => {
     expect(databaseNode).toBeTruthy();
     expect(databaseNode?.config?.database).toEqual(
       expect.objectContaining({
-        updatePayloadMode: 'custom',
-        updateTemplate: expect.stringContaining('{{result.parameters}}'),
+        updatePayloadMode: 'mapping',
+        updateTemplate: '',
         mappings: expect.arrayContaining([
           expect.objectContaining({
             targetPath: 'description_pl',

@@ -353,11 +353,7 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
             />
           }
         />
-        <KangurGameOperationPracticeAssignmentBanner
-          assignment={showMathSections ? operationPracticeAssignment : null}
-          basePath={basePath}
-          mode='queue'
-        />
+        <KangurGameOperationPracticeAssignmentBanner />
         <KangurGameOperationRecommendationCard />
         <KangurGameOperationSelectorOperationSection />
         <KangurGameOperationSelectorQuickPracticeSection

@@ -63,12 +63,21 @@ export type SocialJobStatusPillConfig = {
 
 export function SocialJobStatusPill({
   status,
-  config = {},
+  label,
+  title,
+  className,
+  config,
 }: {
   status: SocialJobStatusValue;
+  label?: string;
+  title?: string;
+  className?: string;
   config?: SocialJobStatusPillConfig;
 }): React.JSX.Element | null {
-  const { label, title, className } = config;
+  const finalLabel = label ?? config?.label;
+  const finalTitle = title ?? config?.title;
+  const finalClassName = className ?? config?.className;
+
   const statusLabel = getSocialJobStatusLabel(status);
   if (!statusLabel) {
     return null;
@@ -77,10 +86,10 @@ export function SocialJobStatusPill({
   return (
     <Badge
       variant={getSocialJobStatusBadgeVariant(status)}
-      className={className}
-      title={title}
+      className={finalClassName}
+      title={finalTitle}
     >
-      {label ? `${label}: ${statusLabel}` : statusLabel}
+      {finalLabel ? `${finalLabel}: ${statusLabel}` : statusLabel}
     </Badge>
   );
 }

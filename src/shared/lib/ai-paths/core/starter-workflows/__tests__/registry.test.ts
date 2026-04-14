@@ -822,7 +822,12 @@ describe('starter workflow registry', () => {
         starterKey: 'translation_en_pl',
       })
     );
-    expect(databaseNode?.config?.database?.updateTemplate).toContain('{{result.parameters}}');
+    expect(databaseNode?.config?.database).toEqual(
+      expect.objectContaining({
+        updatePayloadMode: 'mapping',
+        updateTemplate: '',
+      })
+    );
   });
 
   it('upgrades stale parameter inference v2 configs with blank product_core parser mappings', () => {

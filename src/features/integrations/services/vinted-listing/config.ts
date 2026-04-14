@@ -130,3 +130,20 @@ export const VINTED_ITEM_URL_PATTERN = /\/items\/(\d+)/;
 export const VINTED_LISTING_FORM_URL = 'https://www.vinted.pl/items/new';
 export const VINTED_AUTH_ENTRY_URL =
   'https://www.vinted.pl/member/signup/select_type?ref_url=%2Fitems%2Fnew';
+
+/**
+ * Base origin used to build the edit URL: `${VINTED_BASE_ORIGIN}/items/{id}/edit`.
+ * Kept separate so tests can override without rewriting the full URL.
+ */
+export const VINTED_BASE_ORIGIN = 'https://www.vinted.pl';
+
+/** Edit-page submit selectors — Vinted uses "Update" / "Aktualizuj" on edit forms. */
+export const VINTED_UPDATE_SUBMIT_SELECTORS = [
+  'button[data-testid="submit-listing"]',
+  'button[type="submit"]',
+  'button:has-text("Aktualizuj ogłoszenie")',
+  'button:has-text("Aktualizuj")',
+  'button:has-text("Update listing")',
+  'button:has-text("Update")',
+  'button:has-text("Save")',
+];

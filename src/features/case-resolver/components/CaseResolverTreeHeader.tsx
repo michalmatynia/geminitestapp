@@ -66,6 +66,30 @@ const {
   displayName: 'CaseResolverTreeSearchRuntimeContext',
 });
 
+interface CaseResolverTreeHeaderContextValue {
+  activeCaseChildCount: number;
+  createActions: CaseResolverCreateActionConfig[];
+  createContextTooltip: string | null;
+  disableCreateActions: boolean;
+  hasCaseContext: boolean;
+  onResetCaseContext: () => void;
+  onRetryCaseContext: () => void;
+  requestedCaseIssueMessage: string;
+  requestedCaseStatus: string | null | undefined;
+  showChildCaseFolders: boolean;
+  setShowChildCaseFolders: (value: boolean) => void;
+}
+
+const CaseResolverTreeHeaderContext = React.createContext<CaseResolverTreeHeaderContextValue | null>(null);
+
+function useCaseResolverTreeHeader() {
+  const context = React.useContext(CaseResolverTreeHeaderContext);
+  if (!context) {
+    throw new Error('CaseResolverTreeHeader sub-components must be used within its Provider');
+  }
+  return context;
+}
+
 function CaseResolverTreeSearchBar(): React.JSX.Element {
   const { searchQuery, onSearchChange } = useCaseResolverTreeSearchRuntime();
   return (
@@ -126,17 +150,8 @@ const resolveActiveCaseIdentifierLabel = ({
   return match?.name ?? identifierId;
 };
 
-function CaseResolverNestedScopeToggle({
-  activeCaseChildCount,
-  checked,
-  hasCaseContext,
-  onCheckedChange,
-}: {
-  activeCaseChildCount: number;
-  checked: boolean;
-  hasCaseContext: boolean;
-  onCheckedChange: (checked: boolean) => void;
-}): React.JSX.Element | null {
+function CaseResolverNestedScopeToggle(): React.JSX.Element | null {
+  const { activeCaseChildCount, hasCaseContext, showChildCaseFolders: checked, setShowChildCaseFolders: onCheckedChange } = useCaseResolverTreeHeader();
   if (!hasCaseContext) {
     return null;
   }
@@ -317,107 +332,77 @@ export function CaseResolverTreeHeader({
       }),
     [activeCaseFile, caseResolverIdentifiers]
   );
-  const createActions = React.useMemo(
-    (): CaseResolverCreateActionConfig[] => [
-      {
-        key: 'folder',
-        label: 'Add folder',
-        title: 'Add folder',
-        Icon: FolderPlus,
-        onClick: () => onCreateFolder(selectedFolderForFolderCreate),
-      },
-      {
-        key: 'file',
-        label: 'Add case file',
-        title: 'Add case file',
-        Icon: FilePlus,
-        onClick: () => onCreateFile(selectedFolderForCreate),
-      },
-      {
-        key: 'scan',
-        label: 'Create new image file',
-        title: 'Create new image file',
-        Icon: FileImage,
-        onClick: () => onCreateScanFile(selectedFolderForCreate),
-      },
-      {
-        key: 'asset',
-        label: 'Create new image asset',
-        title: 'Create new image asset',
-        Icon: ImagePlus,
-        onClick: () => onCreateImageAsset(selectedFolderForCreate),
-      },
-      {
-        key: 'node-file',
-        label: 'Add node file',
-        title: 'Add node file',
-        Icon: FileCode2,
-        onClick: () => onCreateNodeFile(selectedFolderForCreate),
-      },
-    ],
+
+  const contextValue = React.useMemo(
+    (): CaseResolverTreeHeaderContextValue => ({
+      activeCaseChildCount,
+      createActions,
+      createContextTooltip,
+      disableCreateActions,
+      hasCaseContext,
+      onResetCaseContext,
+      onRetryCaseContext,
+      requestedCaseIssueMessage,
+      requestedCaseStatus,
+      showChildCaseFolders,
+      setShowChildCaseFolders,
+    }),
     [
-      onCreateFile,
-      onCreateFolder,
-      onCreateImageAsset,
-      onCreateNodeFile,
-      onCreateScanFile,
-      selectedFolderForCreate,
-      selectedFolderForFolderCreate,
+      activeCaseChildCount,
+      createActions,
+      createContextTooltip,
+      disableCreateActions,
+      hasCaseContext,
+      onResetCaseContext,
+      onRetryCaseContext,
+      requestedCaseIssueMessage,
+      requestedCaseStatus,
+      showChildCaseFolders,
+      setShowChildCaseFolders,
     ]
   );
 
   return (
-    <div className='space-y-2 border-b border-border/60 px-2 py-2'>
-      <div className='flex items-start justify-between gap-2'>
-        <div className='min-w-0'>
-          <h1 className='truncate text-sm font-semibold text-gray-100'>Case Resolver</h1>
-          <div className='mt-0.5 truncate text-xs text-gray-300'>
-            {activeCaseFile?.name ?? 'No case selected'}
+    <CaseResolverTreeHeaderContext.Provider value={contextValue}>
+      <div className='space-y-2 border-b border-border/60 px-2 py-2'>
+        <div className='flex items-start justify-between gap-2'>
+          <div className='min-w-0'>
+            <h1 className='truncate text-sm font-semibold text-gray-100'>Case Resolver</h1>
+            <div className='mt-0.5 truncate text-xs text-gray-300'>
+              {activeCaseFile?.name ?? 'No case selected'}
+            </div>
+            <div className='mt-0.5 text-xs text-muted-foreground/80'>
+              {activeCaseIdentifierLabel
+                ? `Signature ID: ${activeCaseIdentifierLabel}`
+                : 'No signature ID'}
+            </div>
           </div>
-          <div className='mt-0.5 text-xs text-muted-foreground/80'>
-            {activeCaseIdentifierLabel
-              ? `Signature ID: ${activeCaseIdentifierLabel}`
-              : 'No signature ID'}
+          <div className='flex shrink-0 items-start gap-1'>
+            <Button
+              type='button'
+              size='sm'
+              variant='outline'
+              className='h-7 border px-2 text-[11px] font-semibold tracking-wide text-gray-200 hover:bg-muted/50'
+              onClick={(): void => {
+                startTransition(() => {
+                  router.push('/admin/case-resolver/cases');
+                });
+              }}
+            >
+              ALL CASES
+            </Button>
           </div>
         </div>
-        <div className='flex shrink-0 items-start gap-1'>
-          <Button
-            type='button'
-            size='sm'
-            variant='outline'
-            className='h-7 border px-2 text-[11px] font-semibold tracking-wide text-gray-200 hover:bg-muted/50'
-            onClick={(): void => {
-              startTransition(() => { router.push('/admin/case-resolver/cases'); });
-            }}
-          >
-            ALL CASES
-          </Button>
-        </div>
+        <CaseResolverNestedScopeToggle />
+        <CaseResolverContextNotice />
+        {resolvedSearchEnabled ? (
+          <CaseResolverTreeSearchRuntimeContext.Provider value={searchRuntimeValue}>
+            <CaseResolverTreeSearchBar />
+          </CaseResolverTreeSearchRuntimeContext.Provider>
+        ) : null}
+        <CaseResolverCreateActionBar />
       </div>
-      <CaseResolverNestedScopeToggle
-        activeCaseChildCount={activeCaseChildCount}
-        checked={showChildCaseFolders}
-        hasCaseContext={hasCaseContext}
-        onCheckedChange={setShowChildCaseFolders}
-      />
-      <CaseResolverContextNotice
-        createContextTooltip={createContextTooltip}
-        onResetCaseContext={onResetCaseContext}
-        onRetryCaseContext={onRetryCaseContext}
-        requestedCaseIssueMessage={requestedCaseIssueMessage}
-        requestedCaseStatus={requestedCaseStatus}
-      />
-      {resolvedSearchEnabled ? (
-        <CaseResolverTreeSearchRuntimeContext.Provider value={searchRuntimeValue}>
-          <CaseResolverTreeSearchBar />
-        </CaseResolverTreeSearchRuntimeContext.Provider>
-      ) : null}
-      <CaseResolverCreateActionBar
-        actions={createActions}
-        createContextTooltip={createContextTooltip}
-        disableCreateActions={disableCreateActions}
-      />
-    </div>
+    </CaseResolverTreeHeaderContext.Provider>
   );
 }
 

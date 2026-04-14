@@ -24,26 +24,16 @@ import {
   type IntegrationRepository,
 } from '@/shared/contracts/integrations/repositories';
 
-type PushStep = (step: string, status: 'pending' | 'ok' | 'failed', detail: string) => void;
-type Fail = (step: string, detail: string, status?: number) => Promise<never>;
-
-type ConnectionUpdateRepository = Pick<IntegrationRepository, 'updateConnection'>;
+import {
+  type ConnectionTestContext,
+  type ConnectionUpdateRepository,
+  type Fail,
+  type PushStep,
+} from './types';
 
 const VINTED_GOOGLE_SIGN_IN_BLOCKED_MESSAGE =
   'AUTH_REQUIRED: Google sign-in is blocked in this automated browser. Use Vinted.pl email/password login instead of Continue with Google.';
 const MANUAL_VINTED_DEVICE_NAME = 'Desktop Chrome';
-
-export type ConnectionTestContext = {
-  connection: IntegrationConnectionRecord;
-  repo: ConnectionUpdateRepository;
-  manualMode: boolean;
-  quicklistPreflightMode?: boolean;
-  manualLoginTimeoutMs: number;
-  steps: TestLogEntry[];
-  pushStep: PushStep;
-  fail: Fail;
-  productId?: string | null;
-};
 
 export const handleVintedBrowserTest = async (
   ctx: ConnectionTestContext

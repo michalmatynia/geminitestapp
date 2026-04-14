@@ -1,4 +1,5 @@
 import { handleTraderaBrowserTest } from '../[id]/connections/[connectionId]/test/handler.tradera-browser';
+import { type ConnectionTestContext } from '../[id]/connections/[connectionId]/test/types';
 
 import type {
   IntegrationRepository,
@@ -119,16 +120,17 @@ export const assertTraderaBrowserSessionReady = async ({
     throw mapStatusToAppError(safeDetail, status);
   };
 
-  const response = await handleTraderaBrowserTest(
+  const response = await handleTraderaBrowserTest({
     connection,
-    integrationRepository,
-    'quicklist_preflight',
-    TRADERA_PREFLIGHT_TIMEOUT_MS,
-    null,
+    repo: integrationRepository,
+    mode: 'quicklist_preflight',
+    manualMode: false,
+    manualLoginTimeoutMs: TRADERA_PREFLIGHT_TIMEOUT_MS,
+    productId: null,
     steps,
     pushStep,
-    fail
-  );
+    fail,
+  } as ConnectionTestContext);
   const payload = (await response
     .json()
     .catch(() => null)) as (TestConnectionResponse & { message?: string }) | null;

@@ -161,6 +161,26 @@ describe('CanvasSvgNode trigger interactions', () => {
     expect(getByText('Launching...')).toBeTruthy();
   });
 
+  it('renders node pulse overlays from node-local visibility state', () => {
+    const node = buildTriggerNode();
+    const ui = buildUi({
+      nodes: [node],
+      enableNodeAnimations: true,
+      inputPulseNodes: new Set([node.id]),
+    });
+
+    const { container } = render(
+      <CanvasBoardUIProvider value={ui}>
+        <svg>
+          <CanvasSvgNode node={node} />
+        </svg>
+      </CanvasBoardUIProvider>
+    );
+
+    expect(container.querySelector('.ai-paths-node-pulse-input')).toBeTruthy();
+    expect(container.querySelector('.ai-paths-node-pulse-output')).toBeNull();
+  });
+
   it('shows pre-run wiring blocker state on trigger chip before firing', () => {
     const node = buildTriggerNode();
     const ui = buildUi({

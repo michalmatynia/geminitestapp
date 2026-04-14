@@ -31,13 +31,9 @@ const toPositiveInt = (value: unknown): number | null => {
 };
 
 export const handleTraderaApiTest = async (
-  connection: any,
-  repo: any,
-  manualMode: boolean,
-  steps: TestLogEntry[],
-  pushStep: any,
-  fail: any
+  ctx: any
 ): Promise<Response> => {
+  const { connection, repo, manualMode, steps, pushStep, fail } = ctx;
 ${extractedLines.join('\n')}
 };
 `;
@@ -46,7 +42,7 @@ fs.writeFileSync(EXT_FILE, newExtContent);
 
 const newSrcLines = [
   ...lines.slice(0, 139),
-  `    return handleTraderaApiTest(connection, repo, manualMode, steps, pushStep, fail);`,
+  `    return handleTraderaApiTest(ctx);`,
   ...lines.slice(223)
 ];
 

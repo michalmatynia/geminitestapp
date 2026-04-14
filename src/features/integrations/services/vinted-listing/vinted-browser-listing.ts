@@ -1,9 +1,11 @@
 import {
   VINTED_LISTING_FORM_URL,
+  VINTED_BASE_ORIGIN,
   VINTED_TITLE_SELECTORS,
   VINTED_DESCRIPTION_SELECTORS,
   VINTED_PRICE_SELECTORS,
   VINTED_SUBMIT_SELECTORS,
+  VINTED_UPDATE_SUBMIT_SELECTORS,
   VINTED_IMAGE_UPLOAD_SELECTORS,
   VINTED_CATEGORY_SELECTORS,
   VINTED_CATEGORY_OPTION_SELECTORS,
@@ -359,18 +361,35 @@ export const runVintedBrowserListing = async ({
       tracker.skip('browser_preparation', 'No separate browser preparation phase for Vinted.');
       tracker.succeed('browser_open', 'Vinted browser context was opened.');
 
-      // 2. Navigate to listing form and verify auth
-      tracker.start('cookie_accept');
-      try {
-        await page.goto(VINTED_LISTING_FORM_URL, { waitUntil: 'domcontentloaded', timeout: 30000 });
-      } catch (navError) {
-        const navMessage = navError instanceof Error ? navError.message : '';
-        if (navMessage.includes('net::ERR_ABORTED')) {
-          // Vinted redirects during navigation (consent, locale detection) — wait for the page to settle
-          await page.waitForLoadState('domcontentloaded', { timeout: 15000 }).catch(() => undefined);
-        } else {
-          throw internalError(`Open Vinted Sell Form: Failed to navigate: ${navMessage}`);
+      // 2. Navigate to listing form / edit page and verify auth
+      const navigateToUrl = async (targetUrl: string, label: string): Promise<void> => {
+        try {
+          await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+        } catch (navError) {
+          const navMessage = navError instanceof Error ? navError.message : '';
+          if (navMessage.includes('net::ERR_ABORTED')) {
+            // Vinted redirects during navigation (consent, locale detection) — wait for page to settle
+            await page.waitForLoadState('domcontentloaded', { timeout: 15000 }).catch(() => undefined);
+          } else {
+            throw internalError(`${label}: Failed to navigate: ${navMessage}`);
+          }
         }
+      };
+
+      tracker.start('cookie_accept');
+      if (action === 'sync') {
+        if (!listing.externalListingId) {
+          throw internalError(
+            'Vinted sync requires an existing listing ID. No externalListingId found on this listing.',
+            { listingId: listing.id }
+          );
+        }
+        await navigateToUrl(
+          `${VINTED_BASE_ORIGIN}/items/${listing.externalListingId}/edit`,
+          'Open Vinted Edit Form'
+        );
+      } else {
+        await navigateToUrl(VINTED_LISTING_FORM_URL, 'Open Vinted Sell Form');
       }
       await acceptCookieConsent();
       tracker.succeed('cookie_accept', 'Cookie consent was handled.');
@@ -385,7 +404,25 @@ export const runVintedBrowserListing = async ({
       tracker.skip('auth_login', 'Vinted does not support automated login; session must be pre-authenticated.');
       tracker.skip('auth_manual', 'Vinted does not support manual login via this action.');
 
-      // 3. Load product data
+      // 3. Sync-check: verify the edit page loaded for the expected listing
+      if (action === 'sync') {
+        tracker.start('sync_check');
+        const editPageUrl = page.url();
+        const editPageId = extractVintedItemId(editPageUrl);
+        if (!editPageId) {
+          tracker.fail(
+            'sync_check',
+            `Vinted sync: edit page did not load for listing ${listing.externalListingId}. Current URL: ${editPageUrl}`
+          );
+          throw internalError(
+            `Vinted sync: edit page did not load for listing ${listing.externalListingId}.`,
+            { listingId: listing.id, externalListingId: listing.externalListingId, currentUrl: editPageUrl }
+          );
+        }
+        tracker.succeed('sync_check', `Edit page loaded for listing ${editPageId}.`);
+      }
+
+      // 4. Load product data
       const productRepository = await getProductRepository();
       const product = await productRepository.getProductById(listing.productId);
       if (!product) {
@@ -427,7 +464,7 @@ export const runVintedBrowserListing = async ({
         );
       }
 
-      // 4. Upload images
+      // 5. Upload images
       tracker.start('image_upload');
       const imageUploadPlan = await resolveVintedProductImageUploadPlan(product);
       if (imageUploadPlan.localImagePaths.length > 0) {
@@ -445,7 +482,7 @@ export const runVintedBrowserListing = async ({
       const description = resolvedMapping.description;
       const price = resolvedMapping.price;
 
-      // 5. Fill required fields
+      // 6. Fill required fields
       tracker.start('title_fill');
       await fillField(page, VINTED_TITLE_SELECTORS, title, 'Title', true);
       tracker.succeed('title_fill', 'Title was entered.');
@@ -454,7 +491,7 @@ export const runVintedBrowserListing = async ({
       await fillField(page, VINTED_DESCRIPTION_SELECTORS, description, 'Description', true);
       tracker.succeed('description_fill', 'Description was entered.');
 
-      // 6. Fill mapped marketplace fields.
+      // 7. Fill mapped marketplace fields.
       tracker.start('category_select');
       const selectedCategoryPath = await selectCategoryPath(page, resolvedMapping.category.pathSegments);
       tracker.succeed('category_select', `Category selected: ${selectedCategoryPath.join(' > ')}.`);
@@ -503,20 +540,21 @@ export const runVintedBrowserListing = async ({
         tracker.skip('size_set', 'No size mapping configured for this product.');
       }
 
-      // 7. Fill price (after optional fields to avoid Vinted re-rendering clearing it)
+      // 8. Fill price (after optional fields to avoid Vinted re-rendering clearing it)
       tracker.start('price_set');
       await fillField(page, VINTED_PRICE_SELECTORS, price, 'Price', true);
       tracker.succeed('price_set', 'Price was set.');
 
-      // 8. Submit the listing
+      // 9. Submit the listing
+      const submitSelectors = action === 'sync' ? VINTED_UPDATE_SUBMIT_SELECTORS : VINTED_SUBMIT_SELECTORS;
       tracker.start('publish');
-      const submitButton = await findFirstVisible(page, VINTED_SUBMIT_SELECTORS);
+      const submitButton = await findFirstVisible(page, [...submitSelectors]);
       if (!submitButton) {
         throw internalError('Submit button not found on Vinted listing form.');
       }
 
       // Wait for submit button to become enabled (images uploaded, required fields filled)
-      for (const selector of VINTED_SUBMIT_SELECTORS) {
+      for (const selector of submitSelectors) {
         try {
           await page.waitForFunction(
             (sel) => {
@@ -535,7 +573,7 @@ export const runVintedBrowserListing = async ({
       await submitButton.click();
       tracker.succeed('publish', 'Publish action was submitted.');
 
-      // 9. Wait for the real listing page. Do not fabricate success from a stale draft URL.
+      // 10. Wait for the real listing page. Do not fabricate success from a stale draft URL.
       tracker.start('publish_verify');
       await page
         .waitForURL(
@@ -580,7 +618,7 @@ export const runVintedBrowserListing = async ({
       const externalListingId = itemId;
       const listingUrl = finalUrl;
 
-      // 10. Save refreshed session
+      // 11. Save refreshed session
       const nextStorageState = await context.storageState();
       await persistPlaywrightConnectionStorageState({
         connectionId: connection.id,

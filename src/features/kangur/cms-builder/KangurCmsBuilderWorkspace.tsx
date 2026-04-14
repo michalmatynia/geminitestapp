@@ -33,7 +33,10 @@ import {
 import { KangurCmsBuilderLeftPanel } from './KangurCmsBuilderLeftPanel';
 import { KangurCmsBuilderRightPanel } from './KangurCmsBuilderRightPanel';
 import { KangurCmsBuilderStatusSidebar } from './KangurCmsBuilderStatusSidebar';
-import { KangurCmsBuilderRuntimeProvider } from './KangurCmsBuilderRuntimeContext';
+import {
+  KangurCmsBuilderRuntimeProvider,
+  useKangurCmsBuilderRuntime,
+} from './KangurCmsBuilderRuntimeContext';
 import { KangurCmsPreviewPanel } from './KangurCmsPreviewPanel';
 import {
   buildKangurPageBuilderPolicy,
@@ -94,16 +97,13 @@ const renderBuilderThemeSettingsProvider = (
   </ThemeSettingsProvider>
 );
 
-function KangurCmsBuilderInner({
-  themePreviewMode,
-  themePreviewFallbacks,
-  onThemeModeChange,
-}: {
-  themePreviewMode: KangurThemeMode;
-  themePreviewFallbacks: Record<KangurThemeMode, ThemeSettings>;
-  onThemeModeChange: (mode: KangurThemeMode) => void;
-}): React.JSX.Element {
+function KangurCmsBuilderInner(): React.JSX.Element {
   const { state, dispatch } = usePageBuilder();
+  const {
+    themePreviewMode,
+    themePreviewFallbacks,
+    setThemePreviewMode: onThemeModeChange,
+  } = useKangurCmsBuilderRuntime();
   const { setIsProgrammaticallyCollapsed } = useAdminLayoutActions();
   const isViewing = state.leftPanelCollapsed && state.rightPanelCollapsed;
   const autoCollapsedRightRef = React.useRef(false);
@@ -364,12 +364,11 @@ export function KangurCmsBuilderWorkspace(): React.JSX.Element {
               onSwitchScreen={handleSwitchScreen}
               onSave={handleSave}
               isSaving={isSaving}
+              themePreviewMode={themePreviewMode}
+              themePreviewFallbacks={themePreviewFallbacks}
+              setThemePreviewMode={setThemePreviewMode}
             >
-              <KangurCmsBuilderInner
-                themePreviewMode={themePreviewMode}
-                themePreviewFallbacks={themePreviewFallbacks}
-                onThemeModeChange={setThemePreviewMode}
-              />
+              <KangurCmsBuilderInner />
             </KangurCmsBuilderRuntimeProvider>
           )}
         </DragStateProvider>

@@ -225,7 +225,7 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
     },
     starterLineage: {
       starterKey: 'translation_en_pl',
-      templateVersion: 6,
+      templateVersion: 7,
       canonicalGraphHashes: TRANSLATION_EN_PL_ADDITIONAL_GRAPH_HASHES,
     },
     upgradePolicy: {

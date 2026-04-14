@@ -7,15 +7,40 @@ import {
 } from './utils';
 import type { AiPathTemplateRegistryEntry } from './types';
 
-const hasTranslationRepairDatabaseUpdateTemplate = (config: PathConfig): boolean =>
+const hasTranslationRepairDatabaseContract = (config: PathConfig): boolean =>
   hasNodeOfType(config, 'database', (node) => {
     const database = toRecord(toRecord(node.config)?.['database']);
     const updateTemplate = normalizeText(database?.['updateTemplate']);
-    return (
+    const hasLegacyCustomTemplate =
       updateTemplate.includes('"description_pl"') &&
       updateTemplate.includes('"parameters"') &&
-      updateTemplate.includes('{{result.parameters}}')
-    );
+      updateTemplate.includes('{{result.parameters}}');
+    if (hasLegacyCustomTemplate) {
+      return true;
+    }
+
+    const mappings = Array.isArray(database?.['mappings'])
+      ? (database?.['mappings'] as Array<unknown>)
+      : [];
+
+    const hasDescriptionMapping = mappings.some((entry) => {
+      const record = toRecord(entry);
+      return (
+        normalizeText(record?.['targetPath']) === 'description_pl' &&
+        normalizeText(record?.['sourcePort']) === 'value' &&
+        normalizeText(record?.['sourcePath']) === 'description_pl'
+      );
+    });
+    const hasParametersMapping = mappings.some((entry) => {
+      const record = toRecord(entry);
+      return (
+        normalizeText(record?.['targetPath']) === 'parameters' &&
+        normalizeText(record?.['sourcePort']) === 'result' &&
+        normalizeText(record?.['sourcePath']) === 'parameters'
+      );
+    });
+
+    return hasDescriptionMapping && hasParametersMapping;
   });
 
 export const matchesLegacyTranslationRepairSignature = (config: PathConfig): boolean => {
@@ -31,7 +56,7 @@ export const matchesLegacyTranslationRepairSignature = (config: PathConfig): boo
   ) {
     return false;
   }
-  return hasTranslationRepairDatabaseUpdateTemplate(config);
+  return hasTranslationRepairDatabaseContract(config);
 };
 
 const hasNormalizeProductNamePromptStructure = (config: PathConfig): boolean =>

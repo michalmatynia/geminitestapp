@@ -621,43 +621,62 @@ function buildKangurPrimaryNavigationAgeGroupDialog(input: {
   };
 }
 
-function KangurPrimaryNavigationMobileMenuOverlay({
-  closeMobileMenu,
-  closeMobileMenuLabel,
-  headerActions,
-  isMobileMenuOpen,
-  isMobileViewport,
-  menuDescription,
-  menuId,
-  menuRef,
-  menuTitle,
-  navigationLabel,
-  primaryActions,
-  textColor,
-  toneBackground,
-  utilityActions,
-}: {
-  closeMobileMenu: () => void;
-  closeMobileMenuLabel: string;
-  headerActions: React.ReactNode;
-  isMobileMenuOpen: boolean;
-  isMobileViewport: boolean;
-  menuDescription: string;
-  menuId: string;
-  menuRef: React.RefObject<HTMLDivElement | null>;
-  menuTitle: string;
-  navigationLabel: string;
-  primaryActions: React.ReactNode;
-  textColor: string;
-  toneBackground: string;
-  utilityActions: React.ReactNode;
-}): React.ReactNode {
+function KangurPrimaryNavigationMobileMenuOverlay(): React.ReactNode {
+  const {
+    closeMobileMenu,
+    isMobileMenuOpen,
+    isMobileViewport,
+    kangurAppearance,
+    navTranslations,
+    navigationLabel,
+    mobileMenuRef,
+    props,
+    derived,
+  } = useKangurPrimaryNavigationContext();
+
+  const { rightAccessory } = props;
+  const {
+    appearanceControlsInline,
+    basePath,
+    shouldRenderLanguageSwitcher,
+  } = derived;
+
   if (!isMobileViewport && !isMobileMenuOpen) {
     return null;
   }
 
+  const menuId = KANGUR_PRIMARY_NAV_DIALOG_IDS.mobileMenu;
   const mobileMenuTitleId = `${menuId}-title`;
   const mobileMenuDescriptionId = `${menuId}-description`;
+
+  const headerActions = resolveMobileMenuHeaderActions({
+    appearanceControlsInline,
+    basePath,
+    currentPage: props.currentPage,
+    forceLanguageSwitcherFallbackPath: props.forceLanguageSwitcherFallbackPath ?? false,
+    shouldRenderLanguageSwitcher,
+  });
+
+  const mobileAuthActions = (
+    <KangurPrimaryNavigationAuthActions onActionClick={closeMobileMenu} />
+  );
+  const mobilePrimaryActions = (
+    <KangurPrimaryNavigationPrimaryActions
+      onActionClick={closeMobileMenu}
+      wrapperClassName='flex w-full flex-col gap-2'
+    />
+  );
+  const mobileUtilityActions = (
+    <KangurPrimaryNavigationUtilityActions
+      authActions={mobileAuthActions}
+      onActionClick={closeMobileMenu}
+      rightAccessory={rightAccessory}
+      testId='kangur-primary-nav-mobile-utility-actions'
+      wrapperClassName='flex w-full flex-col gap-2'
+      hideAppearanceControls={Boolean(appearanceControlsInline)}
+      hideLanguageSwitcher={shouldRenderLanguageSwitcher}
+    />
+  );
 
   return (
     <div
@@ -682,18 +701,18 @@ function KangurPrimaryNavigationMobileMenuOverlay({
         }`}
         id={menuId}
         onClick={(event) => event.stopPropagation()}
-        ref={menuRef}
+        ref={mobileMenuRef}
         role='dialog'
         style={{
-          backgroundColor: toneBackground,
-          color: textColor,
+          backgroundColor: kangurAppearance.tone.background,
+          color: kangurAppearance.tone.text,
         }}
       >
         <h2 className='sr-only' id={mobileMenuTitleId}>
-          {menuTitle}
+          {navTranslations('mobileMenu.title')}
         </h2>
         <p className='sr-only' id={mobileMenuDescriptionId}>
-          {menuDescription}
+          {navTranslations('mobileMenu.description')}
         </p>
         <KangurTopNavGroup className='w-full flex-col' label={navigationLabel}>
           <div className='flex w-full items-center gap-2' data-testid='kangur-primary-nav-mobile-header'>
@@ -707,15 +726,15 @@ function KangurPrimaryNavigationMobileMenuOverlay({
             ) : null}
             <div className='ml-auto flex shrink-0 items-center'>
               <KangurPanelCloseButton
-                aria-label={closeMobileMenuLabel}
+                aria-label={navTranslations('mobileMenu.close')}
                 id='kangur-mobile-menu-close'
                 onClick={closeMobileMenu}
                 variant='chat'
               />
             </div>
           </div>
-          {primaryActions}
-          {utilityActions}
+          {mobilePrimaryActions}
+          {mobileUtilityActions}
         </KangurTopNavGroup>
       </div>
     </div>
@@ -876,23 +895,10 @@ function KangurPrimaryNavigationTopBarContent({
 
 function KangurPrimaryNavigationContent(): React.JSX.Element {
   const {
-    closeMobileMenu,
-    isMobileMenuOpen,
-    isMobileViewport,
-    kangurAppearance,
-    navTranslations,
-    navigationLabel,
-    mobileMenuRef,
     props,
-    derived,
   } = useKangurPrimaryNavigationContext();
 
   const { className, contentClassName, rightAccessory } = props;
-  const {
-    appearanceControlsInline,
-    basePath,
-    shouldRenderLanguageSwitcher,
-  } = derived;
 
   const authActions = <KangurPrimaryNavigationAuthActions />;
   const primaryActions = <KangurPrimaryNavigationPrimaryActions />;
@@ -900,35 +906,6 @@ function KangurPrimaryNavigationContent(): React.JSX.Element {
     <KangurPrimaryNavigationUtilityActions
       authActions={authActions}
       rightAccessory={rightAccessory}
-    />
-  );
-
-  const mobileMenuHeaderActions = resolveMobileMenuHeaderActions({
-    appearanceControlsInline,
-    basePath,
-    currentPage: props.currentPage,
-    forceLanguageSwitcherFallbackPath: props.forceLanguageSwitcherFallbackPath ?? false,
-    shouldRenderLanguageSwitcher,
-  });
-
-  const mobileAuthActions = (
-    <KangurPrimaryNavigationAuthActions onActionClick={closeMobileMenu} />
-  );
-  const mobilePrimaryActions = (
-    <KangurPrimaryNavigationPrimaryActions
-      onActionClick={closeMobileMenu}
-      wrapperClassName='flex w-full flex-col gap-2'
-    />
-  );
-  const mobileUtilityActions = (
-    <KangurPrimaryNavigationUtilityActions
-      authActions={mobileAuthActions}
-      onActionClick={closeMobileMenu}
-      rightAccessory={rightAccessory}
-      testId='kangur-primary-nav-mobile-utility-actions'
-      wrapperClassName='flex w-full flex-col gap-2'
-      hideAppearanceControls={Boolean(appearanceControlsInline)}
-      hideLanguageSwitcher={shouldRenderLanguageSwitcher}
     />
   );
 
@@ -944,22 +921,7 @@ function KangurPrimaryNavigationContent(): React.JSX.Element {
           />
         }
       />
-      <KangurPrimaryNavigationMobileMenuOverlay
-        closeMobileMenu={closeMobileMenu}
-        closeMobileMenuLabel={navTranslations('mobileMenu.close')}
-        headerActions={mobileMenuHeaderActions}
-        isMobileMenuOpen={isMobileMenuOpen}
-        isMobileViewport={isMobileViewport}
-        menuDescription={navTranslations('mobileMenu.description')}
-        menuId={KANGUR_PRIMARY_NAV_DIALOG_IDS.mobileMenu}
-        menuRef={mobileMenuRef}
-        menuTitle={navTranslations('mobileMenu.title')}
-        navigationLabel={navigationLabel}
-        primaryActions={mobilePrimaryActions}
-        textColor={kangurAppearance.tone.text}
-        toneBackground={kangurAppearance.tone.background}
-        utilityActions={mobileUtilityActions}
-      />
+      <KangurPrimaryNavigationMobileMenuOverlay />
       <KangurPrimaryNavigationChoiceDialogs />
     </>
   );

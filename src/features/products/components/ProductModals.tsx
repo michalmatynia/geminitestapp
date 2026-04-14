@@ -9,6 +9,7 @@ import { ProductFormProvider } from '@/features/products/context/ProductFormCont
 import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
 import { useProductFormImages } from '@/features/products/context/ProductFormImageContext';
 import { useProductFormMetadata } from '@/features/products/context/ProductFormMetadataContext';
+import { useProductFormParameters } from '@/features/products/context/ProductFormParameterContext';
 import { ProductLeafCategoriesContextRegistrySource } from '@/features/products/context-registry/ProductLeafCategoriesContextRegistrySource';
 import { PRODUCT_EDITOR_CONTEXT_ROOT_IDS } from '@/features/products/context-registry/workspace';
 import {
@@ -19,6 +20,7 @@ import {
 import { resolveProductListingsIntegrationScope } from '@/features/integrations/utils/product-listings-recovery';
 import { isEditingProductHydrated } from '@/features/products/hooks/editingProductHydration';
 import { buildTriggeredProductEntityJson } from '@/features/products/lib/build-triggered-product-entity-json';
+import { extractTranslationEnPlFromAiPathRunDetail } from '@/features/products/lib/extractTranslationEnPlFromAiPathRunDetail';
 import {
   extractNormalizeProductNameResultFromAiPathRunDetail,
   isNormalizeProductNamePath,
@@ -30,7 +32,7 @@ import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-button
 import type { IntegrationWithConnections } from '@/shared/contracts/integrations/domain';
 import type { ProductDraft } from '@/shared/contracts/products/drafts';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
-import { getAiPathRunResult } from '@/shared/lib/ai-paths/api/client';
+import { getAiPathRun, getAiPathRunResult } from '@/shared/lib/ai-paths/api/client';
 import { subscribeToTrackedAiPathRun } from '@/shared/lib/ai-paths/client-run-tracker';
 import {
   useDefaultExportConnection,
@@ -95,6 +97,21 @@ const ProductListingsModal = dynamic(
 );
 
 type ProductFormScope = 'draft_template' | 'product_create' | 'product_edit';
+const STARTER_TRANSLATION_EN_PL_PATH_ID = 'path_96708d';
+
+const isTranslationEnPlTriggerButton = (button: AiTriggerButtonRecord): boolean => {
+  if (button.pathId?.trim() === STARTER_TRANSLATION_EN_PL_PATH_ID) {
+    return true;
+  }
+
+  const labels = [button.name, button.display?.label]
+    .map((value) => (typeof value === 'string' ? value.trim().toLowerCase() : ''))
+    .filter(Boolean);
+  return labels.some(
+    (label) => label.includes('translate en->pl') || label.includes('translation en->pl')
+  );
+};
+
 type NormalizeCompletionState =
   | {
       kind: 'result';
@@ -150,10 +167,12 @@ function ProductFormModalBody(props: {
   } = props;
 
   const { product, draft, getValues, setValue, setNormalizeNameError } = useProductFormCore();
+  const { applyLocalizedParameterValues } = useProductFormParameters();
   const { showFileManager, handleMultiFileSelect, imageLinks } = useProductFormImages();
   const { categories } = useProductFormMetadata();
   const { showTriggerRunFeedback, setShowTriggerRunFeedback } = useProductListHeaderActionsContext();
   const shouldApplyNormalizeResultLocally = validationInstanceScopeOverride !== undefined;
+  const [pendingTranslationRunId, setPendingTranslationRunId] = useState<string | null>(null);
 
   const getEntityJson = useCallback((): Record<string, unknown> => {
     return buildTriggeredProductEntityJson({
@@ -175,12 +194,80 @@ function ProductFormModalBody(props: {
       entityType: 'product' | 'note' | 'custom';
     }): void => {
       if (!shouldApplyNormalizeResultLocally) return;
-      if (!isNormalizeProductNamePath(args.button.pathId)) return;
-      setNormalizeNameError(null);
-      onNormalizeRunQueued(args.runId);
+      if (isNormalizeProductNamePath(args.button.pathId)) {
+        setNormalizeNameError(null);
+        onNormalizeRunQueued(args.runId);
+        return;
+      }
+      if (isTranslationEnPlTriggerButton(args.button)) {
+        setPendingTranslationRunId(args.runId);
+      }
     },
     [onNormalizeRunQueued, setNormalizeNameError, shouldApplyNormalizeResultLocally]
   );
+
+  useEffect(() => {
+    if (!pendingTranslationRunId) return;
+
+    let active = true;
+    let terminalHandled = false;
+    const trackedRunId = pendingTranslationRunId;
+
+    const unsubscribe = subscribeToTrackedAiPathRun(trackedRunId, (snapshot) => {
+      if (!active || terminalHandled || snapshot.trackingState !== 'stopped') return;
+      terminalHandled = true;
+
+      void (async (): Promise<void> => {
+        if (snapshot.status !== 'completed') {
+          if (!active) return;
+          setPendingTranslationRunId((current) => (current === trackedRunId ? null : current));
+          return;
+        }
+
+        const streamedTranslation = snapshot.run
+          ? extractTranslationEnPlFromAiPathRunDetail({ run: snapshot.run })
+          : null;
+        let translationResult = streamedTranslation;
+
+        if (!translationResult) {
+          const response = await getAiPathRun(trackedRunId, { timeoutMs: 60_000 });
+          if (!active) return;
+          if (!response.ok) {
+            setPendingTranslationRunId((current) => (current === trackedRunId ? null : current));
+            return;
+          }
+          translationResult = extractTranslationEnPlFromAiPathRunDetail(response.data);
+        }
+
+        if (!active) return;
+
+        if (translationResult?.descriptionPl) {
+          setValue('description_pl', translationResult.descriptionPl, {
+            shouldDirty: true,
+            shouldTouch: true,
+            shouldValidate: true,
+          });
+        }
+
+        if (translationResult && translationResult.parameterTranslations.length > 0) {
+          applyLocalizedParameterValues(
+            translationResult.parameterTranslations.map((entry) => ({
+              parameterId: entry.parameterId,
+              languageCode: 'pl',
+              value: entry.value,
+            }))
+          );
+        }
+
+        setPendingTranslationRunId((current) => (current === trackedRunId ? null : current));
+      })();
+    });
+
+    return () => {
+      active = false;
+      unsubscribe();
+    };
+  }, [applyLocalizedParameterValues, pendingTranslationRunId, setValue]);
 
   useEffect(() => {
     if (!pendingNormalizeCompletion || !shouldApplyNormalizeResultLocally) return;

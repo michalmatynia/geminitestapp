@@ -3,6 +3,7 @@ import { handleTraderaApiTest } from './handler.tradera-api';
 import { handleVintedBrowserTest } from './handler.vinted-browser';
 import { handleTraderaBrowserTest } from './handler.tradera-browser';
 import { handle1688BrowserTest } from './handler.1688-browser';
+import { type ConnectionTestContext } from './types';
 import { NextRequest, NextResponse } from 'next/server';
 
 import {
@@ -98,6 +99,20 @@ export async function postTestConnectionHandler(
     return fail('Loading integration', 'Integration not found', 404);
   }
 
+  const ctx: ConnectionTestContext = {
+    connection,
+    repo,
+    manualMode,
+    manualSessionRefreshMode,
+    quicklistPreflightMode,
+    mode,
+    manualLoginTimeoutMs,
+    steps,
+    pushStep,
+    fail,
+    productId: requestBody.productId ?? null,
+  };
+
   if (integration.slug === 'baselinker') {
     // Redirect to Base-specific test endpoint
     const baseTestUrl = `/api/v2/integrations/${id}/connections/${connectionId}/base/test`;
@@ -111,51 +126,23 @@ export async function postTestConnectionHandler(
   }
 
   if (isTraderaApiIntegrationSlug(integration.slug)) {
-    return handleTraderaApiTest(connection, repo, manualMode, steps, pushStep, fail);
+    return handleTraderaApiTest(ctx);
   }
 
   if (integration.slug === 'linkedin') {
-    return handleLinkedinApiTest(connection, steps, pushStep, fail);
+    return handleLinkedinApiTest(ctx);
   }
 
   if (isVintedIntegrationSlug(integration.slug)) {
-    return handleVintedBrowserTest(
-      connection,
-      repo,
-      manualMode,
-      quicklistPreflightMode,
-      manualLoginTimeoutMs,
-      steps,
-      pushStep,
-      fail
-    );
+    return handleVintedBrowserTest(ctx);
   }
 
   if (is1688IntegrationSlug(integration.slug)) {
-    return handle1688BrowserTest(
-      connection,
-      repo,
-      manualMode,
-      manualSessionRefreshMode,
-      quicklistPreflightMode,
-      manualLoginTimeoutMs,
-      steps,
-      pushStep,
-      fail
-    );
+    return handle1688BrowserTest(ctx);
   }
 
   if (isTraderaBrowserIntegrationSlug(integration.slug)) {
-    return handleTraderaBrowserTest(
-      connection,
-      repo,
-      mode,
-      manualLoginTimeoutMs,
-      requestBody.productId ?? null,
-      steps,
-      pushStep,
-      fail
-    );
+    return handleTraderaBrowserTest(ctx);
   }
 
   return fail(

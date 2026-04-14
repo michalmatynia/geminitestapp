@@ -140,14 +140,12 @@ export function AiTutorSelectFieldRow({
 }
 
 export function AiTutorPanelHeader({
-  sectionSummary,
-  sectionTitle,
   title,
 }: {
-  sectionSummary: string;
-  sectionTitle: string;
   title: string;
 }): React.JSX.Element {
+  const { sectionSummary, sectionTitle } = useAiTutorConfigPanel();
+
   return (
     <KangurPanelRow className='items-start sm:items-center'>
       <BrainCircuit aria-hidden='true' className='h-5 w-5 text-orange-500' />
@@ -170,8 +168,6 @@ export function AiTutorNoActiveLearnerPanel(): React.JSX.Element {
     <KangurSurfacePanel accent='amber' padding='lg' className='w-full'>
       <KangurPanelStack>
         <AiTutorPanelHeader
-          sectionSummary={state.sectionSummary}
-          sectionTitle={state.sectionTitle}
           title={state.tutorContent.parentDashboard.noActiveLearner}
         />
         {state.isTutorHidden ? (
@@ -516,8 +512,6 @@ export function AiTutorConfiguredPanel(): React.JSX.Element {
     <KangurSurfacePanel accent='amber' padding='lg' className='w-full'>
       <KangurPanelStack>
         <AiTutorPanelHeader
-          sectionSummary={state.sectionSummary}
-          sectionTitle={state.sectionTitle}
           title={state.learnerHeaderTitle ?? parentDashboardContent.noActiveLearner}
         />
         <AiTutorMoodSection />

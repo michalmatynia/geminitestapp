@@ -1,0 +1,98 @@
+
+<--- Last few GCs --->
+
+[89668:0xa39c00000]    80618 ms: Mark-Compact 4034.9 (4131.6) -> 4018.1 (4131.8) MB, pooled: 0 MB, 832.54 / 0.00 ms  (average mu = 0.089, current mu = 0.031) allocation failure; scavenge might not succeed
+[89668:0xa39c00000]    81428 ms: Mark-Compact 4034.4 (4131.8) -> 4018.1 (4132.1) MB, pooled: 0 MB, 796.00 / 0.00 ms  (average mu = 0.058, current mu = 0.017) allocation failure; scavenge might not succeed
+
+
+<--- JS stacktrace --->
+
+FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed - JavaScript heap out of memory
+----- Native stack trace -----
+
+ 1: 0x10026b040 node::OOMErrorHandler(char const*, v8::OOMDetails const&) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+ 2: 0x10044779c v8::internal::V8::FatalProcessOutOfMemory(v8::internal::Isolate*, char const*, v8::OOMDetails const&) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+ 3: 0x100656f30 v8::internal::Heap::stack() [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+ 4: 0x10066d3a8 v8::internal::Heap::CollectGarbage(v8::internal::AllocationSpace, v8::internal::GarbageCollectionReason, v8::GCCallbackFlags)::$_1::operator()() const [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+ 5: 0x10066cc3c void heap::base::Stack::SetMarkerAndCallbackImpl<v8::internal::Heap::CollectGarbage(v8::internal::AllocationSpace, v8::internal::GarbageCollectionReason, v8::GCCallbackFlags)::$_1>(heap::base::Stack*, void*, void const*) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+ 6: 0x100e26e08 PushAllRegistersAndIterateStack [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+ 7: 0x1006550f0 v8::internal::Heap::CollectGarbage(v8::internal::AllocationSpace, v8::internal::GarbageCollectionReason, v8::GCCallbackFlags) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+ 8: 0x1006498c4 v8::internal::HeapAllocator::AllocateRawWithLightRetrySlowPath(int, v8::internal::AllocationType, v8::internal::AllocationOrigin, v8::internal::AllocationAlignment) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+ 9: 0x10064a0fc v8::internal::HeapAllocator::AllocateRawWithRetryOrFailSlowPath(int, v8::internal::AllocationType, v8::internal::AllocationOrigin, v8::internal::AllocationAlignment) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+10: 0x10062d41c v8::internal::Factory::NewFillerObject(int, v8::internal::AllocationAlignment, v8::internal::AllocationType, v8::internal::AllocationOrigin) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+11: 0x100a48ee0 v8::internal::Runtime_AllocateInYoungGeneration(int, unsigned long*, v8::internal::Isolate*) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+12: 0x100f09af4 Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+13: 0x10d427238 
+14: 0x10bde5194 
+15: 0x10bab92d4 
+16: 0x10bf22914 
+17: 0x10bde5244 
+18: 0x10bab92d4 
+19: 0x10c297ec8 
+20: 0x10d0b1a94 
+21: 0x10d574e90 
+22: 0x10bde42d8 
+23: 0x10bde4664 
+24: 0x10d34fc8c 
+25: 0x10bddc8a4 
+26: 0x10d49dfac 
+27: 0x10d49e210 
+28: 0x10bf25edc 
+29: 0x10cfb0874 
+30: 0x10d1365f8 
+31: 0x10d14fb90 
+32: 0x10b9f6380 
+33: 0x100eee248 Builtins_SetPrototypeForEach [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+34: 0x10be19048 
+35: 0x10bf368b4 
+36: 0x10bea2640 
+37: 0x10d39db90 
+38: 0x10bdb090c 
+39: 0x10d0e7c28 
+40: 0x10d2b77e4 
+41: 0x100e74ef0 Builtins_InterpreterEntryTrampoline [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+42: 0x100e74ef0 Builtins_InterpreterEntryTrampoline [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+43: 0x100e74ef0 Builtins_InterpreterEntryTrampoline [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+44: 0x100e74ef0 Builtins_InterpreterEntryTrampoline [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+45: 0x100e74ef0 Builtins_InterpreterEntryTrampoline [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+46: 0x100e74ef0 Builtins_InterpreterEntryTrampoline [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+47: 0x100e74ef0 Builtins_InterpreterEntryTrampoline [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+48: 0x100e74ef0 Builtins_InterpreterEntryTrampoline [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+49: 0x100e74ef0 Builtins_InterpreterEntryTrampoline [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+50: 0x100e74ef0 Builtins_InterpreterEntryTrampoline [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+51: 0x100e74ef0 Builtins_InterpreterEntryTrampoline [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+52: 0x100e74ef0 Builtins_InterpreterEntryTrampoline [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+53: 0x100e74ef0 Builtins_InterpreterEntryTrampoline [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+54: 0x100e74ef0 Builtins_InterpreterEntryTrampoline [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+55: 0x100e74ef0 Builtins_InterpreterEntryTrampoline [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+56: 0x100e74ef0 Builtins_InterpreterEntryTrampoline [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+57: 0x100e74ef0 Builtins_InterpreterEntryTrampoline [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+58: 0x100e74ef0 Builtins_InterpreterEntryTrampoline [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+59: 0x100e74ef0 Builtins_InterpreterEntryTrampoline [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+60: 0x100e74ef0 Builtins_InterpreterEntryTrampoline [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+61: 0x100e74ef0 Builtins_InterpreterEntryTrampoline [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+62: 0x100e74ef0 Builtins_InterpreterEntryTrampoline [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+63: 0x100e74ef0 Builtins_InterpreterEntryTrampoline [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+64: 0x100e74ef0 Builtins_InterpreterEntryTrampoline [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+65: 0x100e74ef0 Builtins_InterpreterEntryTrampoline [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+66: 0x100e74ef0 Builtins_InterpreterEntryTrampoline [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+67: 0x100e74ef0 Builtins_InterpreterEntryTrampoline [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+68: 0x100e74ef0 Builtins_InterpreterEntryTrampoline [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+69: 0x100e74ef0 Builtins_InterpreterEntryTrampoline [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+70: 0x100e74ef0 Builtins_InterpreterEntryTrampoline [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+71: 0x100e74ef0 Builtins_InterpreterEntryTrampoline [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+72: 0x100e74ef0 Builtins_InterpreterEntryTrampoline [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+73: 0x100e74ef0 Builtins_InterpreterEntryTrampoline [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+74: 0x100e72c0c Builtins_JSEntryTrampoline [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+75: 0x100e728f4 Builtins_JSEntry [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+76: 0x1005aee38 v8::internal::(anonymous namespace)::Invoke(v8::internal::Isolate*, v8::internal::(anonymous namespace)::InvokeParams const&) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+77: 0x1005ae794 v8::internal::Execution::Call(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>, int, v8::internal::Handle<v8::internal::Object>*) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+78: 0x10045dd08 v8::Function::Call(v8::Local<v8::Context>, v8::Local<v8::Value>, int, v8::Local<v8::Value>*) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+79: 0x100244e2c node::builtins::BuiltinLoader::CompileAndCall(v8::Local<v8::Context>, char const*, node::Realm*) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+80: 0x1002fd7b4 node::Realm::ExecuteBootstrapper(char const*) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+81: 0x10022266c node::StartExecution(node::Environment*, char const*) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+82: 0x1002225c0 node::StartExecution(node::Environment*, std::__1::function<v8::MaybeLocal<v8::Value> (node::StartExecutionCallbackInfo const&)>) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+83: 0x10016e098 node::LoadEnvironment(node::Environment*, std::__1::function<v8::MaybeLocal<v8::Value> (node::StartExecutionCallbackInfo const&)>, std::__1::function<void (node::Environment*, v8::Local<v8::Value>, v8::Local<v8::Value>)>) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+84: 0x1002b58d8 node::NodeMainInstance::Run() [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+85: 0x100225d50 node::Start(int, char**) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+86: 0x18e52dd54 start [/usr/lib/dyld]

@@ -55,6 +55,11 @@ import {
   VINTED_LISTING_FORM_URL,
 } from '@/features/integrations/services/vinted-listing/config';
 
+import {
+  type IntegrationConnectionRecord,
+  type IntegrationRepository,
+} from '@/shared/contracts/integrations/repositories';
+
 import { handleVintedBrowserTest } from './handler.vinted-browser';
 
 const AUTH_REDIRECT_URL =
@@ -139,6 +144,8 @@ const buildHarness = ({
       return locator;
     }),
     url: vi.fn(() => currentUrl),
+    screenshot: vi.fn(async () => Buffer.from('')),
+    content: vi.fn(async () => ''),
     context: vi.fn(() => ({
       storageState: vi.fn(async () => ({
         cookies: [{ name: 'session', value: 'ok' }],
@@ -152,6 +159,8 @@ const buildHarness = ({
     newPage: vi.fn(async () => page),
     setDefaultTimeout: vi.fn(),
     setDefaultNavigationTimeout: vi.fn(),
+    addInitScript: vi.fn(async () => undefined),
+    route: vi.fn(async () => undefined),
     close: vi.fn(async () => undefined),
   };
 
@@ -229,21 +238,21 @@ describe('handleVintedBrowserTest', () => {
     };
 
     await expect(
-      handleVintedBrowserTest(
-        {
+      handleVintedBrowserTest({
+        connection: {
           id: 'connection-1',
           playwrightStorageState: 'state-secret',
-        },
-        {
+        } as IntegrationConnectionRecord,
+        repo: {
           updateConnection: updateConnectionMock,
-        },
-        false,
-        true,
-        5_000,
+        } as IntegrationRepository,
+        manualMode: false,
+        quicklistPreflightMode: true,
+        manualLoginTimeoutMs: 5_000,
         steps,
         pushStep,
-        fail
-      )
+        fail,
+      })
     ).rejects.toThrow('409:AUTH_REQUIRED: Vinted session expired or is missing.');
 
     expect(updateConnectionMock).not.toHaveBeenCalled();
@@ -267,21 +276,21 @@ describe('handleVintedBrowserTest', () => {
     };
 
     await expect(
-      handleVintedBrowserTest(
-        {
+      handleVintedBrowserTest({
+        connection: {
           id: 'connection-1',
           playwrightStorageState: 'state-secret',
-        },
-        {
+        } as IntegrationConnectionRecord,
+        repo: {
           updateConnection: updateConnectionMock,
-        },
-        false,
-        true,
-        5_000,
+        } as IntegrationRepository,
+        manualMode: false,
+        quicklistPreflightMode: true,
+        manualLoginTimeoutMs: 5_000,
         steps,
         pushStep,
-        fail
-      )
+        fail,
+      })
     ).rejects.toThrow('409:AUTH_REQUIRED: Vinted session expired or is missing.');
 
     expect(updateConnectionMock).not.toHaveBeenCalled();
@@ -304,20 +313,20 @@ describe('handleVintedBrowserTest', () => {
       throw new Error(`${status}:${detail}`);
     };
 
-    const response = await handleVintedBrowserTest(
-      {
+    const response = await handleVintedBrowserTest({
+      connection: {
         id: 'connection-1',
-      },
-      {
+      } as IntegrationConnectionRecord,
+      repo: {
         updateConnection: updateConnectionMock,
-      },
-      true,
-      false,
-      5_000,
+      } as IntegrationRepository,
+      manualMode: true,
+      quicklistPreflightMode: false,
+      manualLoginTimeoutMs: 5_000,
       steps,
       pushStep,
-      fail
-    );
+      fail,
+    });
 
     expect((await response.json()) as { ok: boolean }).toEqual(
       expect.objectContaining({ ok: true })
@@ -378,20 +387,20 @@ describe('handleVintedBrowserTest', () => {
     };
 
     await expect(
-      handleVintedBrowserTest(
-        {
+      handleVintedBrowserTest({
+        connection: {
           id: 'connection-1',
-        },
-        {
+        } as IntegrationConnectionRecord,
+        repo: {
           updateConnection: updateConnectionMock,
-        },
-        true,
-        false,
-        2_000,
+        } as IntegrationRepository,
+        manualMode: true,
+        quicklistPreflightMode: false,
+        manualLoginTimeoutMs: 2_000,
         steps,
         pushStep,
-        fail
-      )
+        fail,
+      })
     ).rejects.toThrow('400:Manual login timed out after 2s.');
 
     expect(updateConnectionMock).not.toHaveBeenCalled();
@@ -415,20 +424,20 @@ describe('handleVintedBrowserTest', () => {
     };
 
     await expect(
-      handleVintedBrowserTest(
-        {
+      handleVintedBrowserTest({
+        connection: {
           id: 'connection-1',
-        },
-        {
+        } as IntegrationConnectionRecord,
+        repo: {
           updateConnection: updateConnectionMock,
-        },
-        true,
-        false,
-        2_000,
+        } as IntegrationRepository,
+        manualMode: true,
+        quicklistPreflightMode: false,
+        manualLoginTimeoutMs: 2_000,
         steps,
         pushStep,
-        fail
-      )
+        fail,
+      })
     ).rejects.toThrow(
       '409:AUTH_REQUIRED: Google sign-in is blocked in this automated browser. Use Vinted.pl email/password login instead of Continue with Google.'
     );
@@ -469,20 +478,20 @@ describe('handleVintedBrowserTest', () => {
       throw new Error(`${status}:${detail}`);
     };
 
-    const response = await handleVintedBrowserTest(
-      {
+    const response = await handleVintedBrowserTest({
+      connection: {
         id: 'connection-1',
-      },
-      {
+      } as IntegrationConnectionRecord,
+      repo: {
         updateConnection: updateConnectionMock,
-      },
-      true,
-      false,
-      5_000,
+      } as IntegrationRepository,
+      manualMode: true,
+      quicklistPreflightMode: false,
+      manualLoginTimeoutMs: 5_000,
       steps,
       pushStep,
-      fail
-    );
+      fail,
+    });
 
     expect((await response.json()) as { ok: boolean }).toEqual(
       expect.objectContaining({ ok: true })

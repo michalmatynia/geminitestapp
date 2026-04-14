@@ -37,11 +37,12 @@ const TRADERA_LISTING_FORM_URL = normalizeTraderaListingFormUrl(
 );
 const SESSION_CHECK_URL = 'https://www.tradera.com/en/my/listings?tab=active';
 
-type PushStep = (step: string, status: 'pending' | 'ok' | 'failed', detail: string) => void;
-type Fail = (step: string, detail: string, status?: number) => Promise<never>;
-type ConnectionUpdateRepository = Pick<IntegrationRepository, 'updateConnection'>;
-
-import { type ConnectionTestContext } from './handler.vinted-browser';
+import {
+  type ConnectionTestContext,
+  type ConnectionUpdateRepository,
+  type Fail,
+  type PushStep,
+} from './types';
 
 export async function handleTraderaBrowserTest(
   ctx: ConnectionTestContext

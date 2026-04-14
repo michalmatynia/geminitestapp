@@ -855,6 +855,15 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
           />
         </div>
       ) : null}
+      {isVintedListing && vintedExecution.executionSteps.length > 0 ? (
+        <div className='mt-4'>
+          <TraderaExecutionSteps
+            title='Vinted execution steps'
+            steps={vintedExecution.executionSteps}
+            compact
+          />
+        </div>
+      ) : null}
       {isVintedListing && vintedExecution.rawResult ? (
         <div className='mt-4'>
           <JsonViewer

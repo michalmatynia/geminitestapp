@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const SRC_FILE = path.resolve('src/app/api/v2/integrations/[id]/connections/[connectionId]/test/handler.ts');
-const EXTRACTED_FILE = path.resolve('src/app/api/v2/integrations/[id]/connections/[connectionId]/test/handler.tradera-api.ts');
+const EXT_FILE = path.resolve('src/app/api/v2/integrations/[id]/connections/[connectionId]/test/handler.tradera-api.ts');
 
 const content = fs.readFileSync(SRC_FILE, 'utf8');
 
@@ -36,21 +36,17 @@ const toPositiveInt = (value: unknown): number | null => {
 };
 
 export const handleTraderaApiTest = async (
-  connection: any,
-  repo: any,
-  manualMode: boolean,
-  steps: TestLogEntry[],
-  pushStep: any,
-  fail: any
+  ctx: any
 ): Promise<Response> => {
+  const { connection, repo, manualMode, steps, pushStep, fail } = ctx;
 ${extractedBlock.replace(/    \}\n  \}\n\n$/, '    }\n')}
 };
 `;
 
-fs.writeFileSync(EXTRACTED_FILE, extractedCode);
+fs.writeFileSync(EXT_FILE, extractedCode);
 
 let newContent = content.substring(0, startIndex) + `  if (isTraderaApiIntegrationSlug(integration.slug)) {
-    return handleTraderaApiTest(connection, repo, manualMode, steps, pushStep, fail);
+    return handleTraderaApiTest(ctx);
   }\n\n` + content.substring(endIndex);
 
 newContent = `import { handleTraderaApiTest } from './handler.tradera-api';\n` + newContent;

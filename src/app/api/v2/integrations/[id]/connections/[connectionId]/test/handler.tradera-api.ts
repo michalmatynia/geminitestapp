@@ -5,22 +5,7 @@ import type { IntegrationConnectionRecord, IntegrationRepository } from '@/share
 import type { TestConnectionResponse, TestLogEntry } from '@/shared/contracts/integrations/session-testing';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
-type PushStep = (step: string, status: 'pending' | 'ok' | 'failed', detail: string) => void;
-type Fail = (step: string, detail: string, status?: number) => Promise<never>;
-type ConnectionUpdateRepository = Pick<IntegrationRepository, 'updateConnection'>;
-
-const toPositiveInt = (value: unknown): number | null => {
-  if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
-    return Math.floor(value);
-  }
-  if (typeof value === 'string') {
-    const parsed = Number(value);
-    if (Number.isFinite(parsed) && parsed > 0) return Math.floor(parsed);
-  }
-  return null;
-};
-
-import { type ConnectionTestContext } from './handler.vinted-browser';
+import { type ConnectionTestContext } from './types';
 
 export const handleTraderaApiTest = async (
   ctx: ConnectionTestContext

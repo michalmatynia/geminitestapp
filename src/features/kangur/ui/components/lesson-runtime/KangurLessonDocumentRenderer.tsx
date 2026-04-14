@@ -280,7 +280,6 @@ function renderImageBlock(
             <img src={block.src} alt={altText} className='kangur-lesson-inset' loading='lazy' />
           ) : (
             <KangurInlineFallback
-              accent='amber'
               className='kangur-lesson-inset min-h-[180px] shadow-none'
               style={{
                 borderColor:
@@ -288,12 +287,15 @@ function renderImageBlock(
                 color: 'color-mix(in srgb, rgb(180 83 9) 80%, var(--kangur-page-text))',
               }}
               data-testid={`lesson-image-empty-${block.id}`}
-              icon={
-                <span aria-hidden='true' className='text-lg'>
-                  🖼️
-                </span>
-              }
               title={translate('imageMissingSource')}
+              config={{
+                accent: 'amber',
+                icon: (
+                  <span aria-hidden='true' className='text-lg'>
+                    🖼️
+                  </span>
+                ),
+              }}
             />
           )}
         </KangurMediaFrame>

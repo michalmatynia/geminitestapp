@@ -17,6 +17,8 @@ const {
   contextSetDefaultTimeoutMock,
   contextSetDefaultNavigationTimeoutMock,
   contextNewPageMock,
+  contextAddInitScriptMock,
+  contextRouteMock,
   contextCloseMock,
   browserCloseMock,
   safeGotoMock,
@@ -45,6 +47,8 @@ const {
   contextSetDefaultTimeoutMock: vi.fn(),
   contextSetDefaultNavigationTimeoutMock: vi.fn(),
   contextNewPageMock: vi.fn(),
+  contextAddInitScriptMock: vi.fn(),
+  contextRouteMock: vi.fn(),
   contextCloseMock: vi.fn(),
   browserCloseMock: vi.fn(),
   safeGotoMock: vi.fn(),
@@ -259,6 +263,8 @@ describe('integration connection test handler', () => {
 
     const context = {
       newPage: (...args: unknown[]) => contextNewPageMock(...args),
+      addInitScript: (...args: unknown[]) => contextAddInitScriptMock(...args),
+      route: (...args: unknown[]) => contextRouteMock(...args),
       setDefaultTimeout: (...args: unknown[]) => contextSetDefaultTimeoutMock(...args),
       setDefaultNavigationTimeout: (...args: unknown[]) =>
         contextSetDefaultNavigationTimeoutMock(...args),
@@ -407,7 +413,7 @@ describe('integration connection test handler', () => {
       waitUntil: 'domcontentloaded',
       timeout: 60_000,
     });
-    expect(pageWaitForTimeoutMock).toHaveBeenCalledTimes(2);
+    expect(pageWaitForTimeoutMock).toHaveBeenCalledTimes(3);
     expect(safeGotoMock).not.toHaveBeenCalledWith(
       'https://www.tradera.com/en/my/listings?tab=active',
       expect.anything(),

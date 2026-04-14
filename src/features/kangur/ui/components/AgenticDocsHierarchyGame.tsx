@@ -52,6 +52,8 @@ type AgenticDocsHierarchyGameContextValue = {
   resolvedOrder: readonly string[];
   isComplete: boolean;
   selectedItemId: string | null;
+  showTouchHint: boolean;
+  touchHint: string;
   onItemClick: (itemId: string, targetIndex: number) => void;
   onDragEnd: (result: DropResult) => void;
 };
@@ -205,15 +207,17 @@ function HierarchyItemButton({
   );
 }
 
-type HierarchyDraggableItemProps = {
+type HierarchyDraggableItemConfig = {
   item: HierarchyItem;
   index: number;
 };
 
 function HierarchyDraggableItem({
-  item,
-  index,
-}: HierarchyDraggableItemProps): React.JSX.Element {
+  config,
+}: {
+  config: HierarchyDraggableItemConfig;
+}): React.JSX.Element {
+  const { item, index } = config;
   const { checked, resolvedOrder, selectedItemId, isComplete } = useAgenticDocsHierarchyGame();
   const isCorrect = checked && item.id === resolvedOrder[index];
   const isIncorrect = checked && !isCorrect;
@@ -257,9 +261,15 @@ type HierarchyListProps = {
 
 function HierarchyList({
   droppableId,
-  order,
-  isTouchMoveTargetActive,
-}: HierarchyListProps): React.JSX.Element {
+  state,
+}: {
+  droppableId: string;
+  state: {
+    order: HierarchyItem[];
+    isTouchMoveTargetActive: boolean;
+  };
+}): React.JSX.Element {
+  const { order, isTouchMoveTargetActive } = state;
   const { onDragEnd } = useAgenticDocsHierarchyGame();
   return (
     <KangurDragDropContext onDragEnd={onDragEnd}>
@@ -281,8 +291,7 @@ function HierarchyList({
             {order.map((item, index) => (
               <HierarchyDraggableItem
                 key={item.id}
-                item={item}
-                index={index}
+                config={{ item, index }}
               />
             ))}
             {droppableProvided.placeholder}
@@ -301,11 +310,9 @@ const resolveCheckButtonTone = (
   return isComplete ? 'success' : 'error';
 };
 
-function HierarchyTouchHint(props: {
-  show: boolean;
-  text: string;
-}): React.JSX.Element | null {
-  if (!props.show) return null;
+function HierarchyTouchHint(): React.JSX.Element | null {
+  const { showTouchHint: show, touchHint: text } = useAgenticDocsHierarchyGame();
+  if (!show) return null;
 
   return (
     <KangurLessonCaption
@@ -315,7 +322,7 @@ function HierarchyTouchHint(props: {
       aria-live='polite'
       aria-atomic='true'
     >
-      {props.text}
+      {text}
     </KangurLessonCaption>
   );
 }
@@ -505,6 +512,8 @@ export default function AgenticDocsHierarchyGame({
         resolvedOrder: runtime.resolvedOrder,
         isComplete: runtime.isComplete,
         selectedItemId: runtime.selectedItemId,
+        showTouchHint: runtime.showTouchHint,
+        touchHint: runtime.touchHint,
         onItemClick: runtime.handleItemClick,
         onDragEnd: runtime.handleDragEnd,
       }}
@@ -514,7 +523,7 @@ export default function AgenticDocsHierarchyGame({
           <div className='text-sm font-semibold [color:var(--kangur-page-text)]'>{prompt}</div>
         </div>
         <KangurLessonCaption className='mt-2 text-left'>{helperText}</KangurLessonCaption>
-        <HierarchyTouchHint show={runtime.showTouchHint} text={runtime.touchHint} />
+        <HierarchyTouchHint />
         <HierarchyList
           droppableId={runtime.droppableId}
           order={runtime.order}

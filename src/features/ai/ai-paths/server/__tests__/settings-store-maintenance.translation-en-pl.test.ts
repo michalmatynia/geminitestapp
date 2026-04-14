@@ -426,7 +426,7 @@ describe('AI Paths maintenance forward-only action ids', () => {
     expect(parsed.extensions?.['aiPathsStarter']).toEqual(
       expect.objectContaining({
         templateId: 'starter_translation_en_pl',
-        templateVersion: 6,
+        templateVersion: 7,
       })
     );
     const databaseNode = parsed.nodes.find(
@@ -434,8 +434,8 @@ describe('AI Paths maintenance forward-only action ids', () => {
     );
     expect(databaseNode?.config?.database).toEqual(
       expect.objectContaining({
-        updatePayloadMode: 'custom',
-        updateTemplate: expect.stringContaining('{{result.parameters}}'),
+        updatePayloadMode: 'mapping',
+        updateTemplate: '',
         mappings: expect.arrayContaining([
           expect.objectContaining({
             targetPath: 'description_pl',

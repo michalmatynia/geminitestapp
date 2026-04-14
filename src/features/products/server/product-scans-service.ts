@@ -2686,73 +2686,74 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
         });
       }
 
-      return scan;
-      }
 
-      if (run.status === 'failed') {
-      const failureMessages = collectPlaywrightEngineRunFailureMessages(run);
-      const failureMessage = normalizeErrorMessage(
-        failureMessages[0],
-        'Amazon reverse image scan failed.'
-      );
+            return scan;
+          }
 
-      return await persistSynchronizedScan(scan, {
-        engineRunId,
-        status: 'failed',
-        steps: resolvePersistedProductScanSteps(scan, parsedResult.steps),
-        error: failureMessage,
-        rawResult: buildPlaywrightEngineRunFailureMeta(run, { includeRawResult: true }),
-        asinUpdateStatus: 'not_needed',
-        asinUpdateMessage: failureMessage,
-        completedAt: run.completedAt ?? new Date().toISOString(),
-      });
-      }
+          if (run.status === 'failed') {
+            const failureMessages = collectPlaywrightEngineRunFailureMessages(run);
+            const failureMessage = normalizeErrorMessage(
+              failureMessages[0],
+              'Amazon reverse image scan failed.'
+            );
 
-      if (parsedResult.status === 'triage_ready') {
-      return await synchronizeAmazonTriageReady({
-        scan,
-        run,
-        engineRunId,
-        resultValue,
-        parsedResult,
-        persistedAmazonProbe,
-        existingAmazonEvaluation,
-      });
-      }
+            return await persistSynchronizedScan(scan, {
+              engineRunId,
+              status: 'failed',
+              steps: resolvePersistedProductScanSteps(scan, parsedResult.steps),
+              error: failureMessage,
+              rawResult: buildPlaywrightEngineRunFailureMeta(run, { includeRawResult: true }),
+              asinUpdateStatus: 'not_needed',
+              asinUpdateMessage: failureMessage,
+              completedAt: run.completedAt ?? new Date().toISOString(),
+            });
+          }
 
-    if (parsedResult.status === 'probe_ready') {
-      return await synchronizeAmazonProbeReady({
-        scan,
-        run,
-        engineRunId,
-        resultValue,
-        parsedResult,
-        persistedAmazonProbe,
-        existingAmazonEvaluation,
-        finalUrl,
-      });
-    }
+          if (parsedResult.status === 'triage_ready') {
+            return await synchronizeAmazonTriageReady({
+              scan,
+              run,
+              engineRunId,
+              resultValue,
+              parsedResult,
+              persistedAmazonProbe,
+              existingAmazonEvaluation,
+            });
+          }
 
-    if (parsedResult.status === 'no_match') {
-      return await persistSynchronizedScan(scan, {
-        engineRunId,
-        status: 'no_match',
-        matchedImageId: parsedResult.matchedImageId,
-        title: parsedResult.title,
-        price: parsedResult.price,
-        url: resolvePersistableScanUrl(parsedResult.url, parsedResult.currentUrl, finalUrl),
-        description: parsedResult.description,
-        amazonDetails: parsedResult.amazonDetails,
-        amazonProbe: persistedAmazonProbe,
-        amazonEvaluation: existingAmazonEvaluation,
-        steps: resolvePersistedProductScanSteps(scan, parsedResult.steps),
-        rawResult: resultValue,
-        error: parsedResult.message,
-        asinUpdateStatus: 'not_needed',
-        asinUpdateMessage: parsedResult.message,
-        completedAt: run.completedAt ?? new Date().toISOString(),
-      });
-    }
+          if (parsedResult.status === 'probe_ready') {
+            return await synchronizeAmazonProbeReady({
+              scan,
+              run,
+              engineRunId,
+              resultValue,
+              parsedResult,
+              persistedAmazonProbe,
+              existingAmazonEvaluation,
+              finalUrl,
+            });
+          }
+
+          if (parsedResult.status === 'no_match') {
+            return await persistSynchronizedScan(scan, {
+              engineRunId,
+              status: 'no_match',
+              matchedImageId: parsedResult.matchedImageId,
+              title: parsedResult.title,
+              price: parsedResult.price,
+              url: resolvePersistableScanUrl(parsedResult.url, parsedResult.currentUrl, finalUrl),
+              description: parsedResult.description,
+              amazonDetails: parsedResult.amazonDetails,
+              amazonProbe: persistedAmazonProbe,
+              amazonEvaluation: existingAmazonEvaluation,
+              steps: resolvePersistedProductScanSteps(scan, parsedResult.steps),
+              rawResult: resultValue,
+              error: parsedResult.message,
+              asinUpdateStatus: 'not_needed',
+              asinUpdateMessage: parsedResult.message,
+              completedAt: run.completedAt ?? new Date().toISOString(),
+            });
+          }
 
     if (parsedResult.status !== 'matched') {
       const failureMessage = normalizeErrorMessage(

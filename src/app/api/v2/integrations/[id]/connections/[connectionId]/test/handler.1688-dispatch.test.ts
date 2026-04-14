@@ -90,19 +90,19 @@ describe('integration connection test handler 1688 dispatch', () => {
 
     expect(handle1688BrowserTestMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        id: 'connection-1688',
-      }),
-      expect.objectContaining({
-        getConnectionByIdAndIntegration: expect.any(Function),
-        getIntegrationById: expect.any(Function),
-      }),
-      true,
-      false,
-      false,
-      300000,
-      expect.any(Array),
-      expect.any(Function),
-      expect.any(Function)
+        connection: expect.objectContaining({ id: 'connection-1688' }),
+        repo: expect.objectContaining({
+          getConnectionByIdAndIntegration: expect.any(Function),
+          getIntegrationById: expect.any(Function),
+        }),
+        manualMode: true,
+        manualSessionRefreshMode: false,
+        quicklistPreflightMode: false,
+        manualLoginTimeoutMs: 300000,
+        steps: expect.any(Array),
+        pushStep: expect.any(Function),
+        fail: expect.any(Function),
+      })
     );
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({
@@ -135,15 +135,12 @@ describe('integration connection test handler 1688 dispatch', () => {
     );
 
     expect(handle1688BrowserTestMock).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.anything(),
-      false,
-      true,
-      false,
-      180000,
-      expect.any(Array),
-      expect.any(Function),
-      expect.any(Function)
+      expect.objectContaining({
+        manualMode: false,
+        manualSessionRefreshMode: true,
+        quicklistPreflightMode: false,
+        manualLoginTimeoutMs: 180000,
+      })
     );
   });
 });

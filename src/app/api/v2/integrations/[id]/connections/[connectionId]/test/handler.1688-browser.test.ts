@@ -119,23 +119,23 @@ describe('handle1688BrowserTest', () => {
       throw new Error(`${status}:${detail}`);
     };
 
-    const response = await handle1688BrowserTest(
-      {
+    const response = await handle1688BrowserTest({
+      connection: {
         id: 'connection-1688',
         scanner1688StartUrl: 'https://detail.1688.com/',
         playwrightStorageState: 'state-secret',
       } as never,
-      {
+      repo: {
         updateConnection: vi.fn(),
-      },
-      false,
-      false,
-      true,
-      60_000,
-      steps as never,
+      } as never,
+      manualMode: false,
+      manualSessionRefreshMode: false,
+      quicklistPreflightMode: true,
+      manualLoginTimeoutMs: 60_000,
+      steps: steps as never,
       pushStep,
-      fail
-    );
+      fail,
+    });
 
     const payload = (await response.json()) as { ok: boolean; sessionReady?: boolean; message?: string };
     expect(payload.ok).toBe(true);
@@ -169,23 +169,23 @@ describe('handle1688BrowserTest', () => {
       throw new Error(`${status}:${detail}`);
     };
 
-    const response = await handle1688BrowserTest(
-      {
+    const response = await handle1688BrowserTest({
+      connection: {
         id: 'connection-1688',
         scanner1688StartUrl: 'https://www.1688.com/',
         playwrightStorageState: null,
       } as never,
-      {
+      repo: {
         updateConnection: vi.fn(),
-      },
-      true,
-      false,
-      false,
-      5_000,
-      steps as never,
+      } as never,
+      manualMode: true,
+      manualSessionRefreshMode: false,
+      quicklistPreflightMode: false,
+      manualLoginTimeoutMs: 5_000,
+      steps: steps as never,
       pushStep,
-      fail
-    );
+      fail,
+    });
 
     const payload = (await response.json()) as { ok: boolean; sessionReady?: boolean; message?: string };
     expect(payload.ok).toBe(true);

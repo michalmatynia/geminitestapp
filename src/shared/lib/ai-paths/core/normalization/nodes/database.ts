@@ -105,7 +105,7 @@ export const normalizeDatabaseNode = (node: AiNode): AiNode => {
     databaseConfig.operation === 'update' &&
     databaseConfig.updatePayloadMode === 'custom' &&
     rawMappings.length > 0 &&
-    (inferredUseMongoActions || Boolean(databaseConfig.parameterInferenceGuard));
+    Boolean(databaseConfig.parameterInferenceGuard);
   const derivedMappings =
     databaseConfig.operation === 'update' &&
     databaseConfig.updatePayloadMode === 'custom' &&

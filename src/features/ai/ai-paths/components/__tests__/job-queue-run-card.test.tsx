@@ -7,7 +7,7 @@ import type {
   JobQueueContextValue,
   JobQueueStateValue,
 } from '@/features/ai/ai-paths/components/JobQueueContext';
-import type { AiPathRunRecord } from '@/shared/lib/ai-paths';
+import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 
 const { useJobQueueStateMock, useJobQueueActionsMock } = vi.hoisted(() => ({
   useJobQueueStateMock: vi.fn(),

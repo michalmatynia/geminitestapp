@@ -2,7 +2,8 @@ import { act, renderHook } from '@testing-library/react';
 import type React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { AiNode, Edge, RuntimeState } from '@/shared/lib/ai-paths';
+import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
+import type { RuntimeState } from '@/shared/contracts/ai-paths-runtime';
 
 import { useCanvasSidebarActions } from '../useCanvasSidebarActions';
 

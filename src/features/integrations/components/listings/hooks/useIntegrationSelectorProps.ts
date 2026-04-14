@@ -2,7 +2,6 @@
 
 import { useMemo } from 'react';
 import {
-  ListingSelection,
   useListingSelection,
 } from '@/features/integrations/context/ListingSettingsContext';
 import { useConnectedIntegrationSelectorOptions } from './useConnectedIntegrationSelectorOptions';

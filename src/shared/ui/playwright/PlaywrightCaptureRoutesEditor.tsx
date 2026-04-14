@@ -195,7 +195,7 @@ function RouteRow({ route, index }: RouteRowProps): React.JSX.Element {
   );
 }
 
-export type PlaywrightCaptureRoutesEditorConfig = {
+export type PlaywrightCaptureRoutesEditorProps = {
   routes: PlaywrightConfigCaptureRoute[];
   baseUrl: string;
   appearanceMode: string;
@@ -206,15 +206,12 @@ export type PlaywrightCaptureRoutesEditorConfig = {
   }) => void;
 };
 
-export type PlaywrightCaptureRoutesEditorProps = {
-  config: PlaywrightCaptureRoutesEditorConfig;
-};
-
 export function PlaywrightCaptureRoutesEditor({
-  config,
+  routes,
+  baseUrl,
+  appearanceMode,
+  onChange,
 }: PlaywrightCaptureRoutesEditorProps): React.JSX.Element {
-  const { routes, baseUrl, appearanceMode, onChange } = config;
-
   const updateRoute = (index: number, patch: RoutePatch): void => {
     const next = routes.map((r, i) => (i === index ? { ...r, ...patch } : r));
     onChange({ routes: next });

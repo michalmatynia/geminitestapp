@@ -1,7 +1,7 @@
 import { fireEvent, render } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { AiNode, Edge } from '@/shared/lib/ai-paths';
+import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
 
 import { CanvasBoardUIProvider } from '../CanvasBoardUIContext';
 import { CanvasSvgEdgeLayer } from '../canvas-svg-edge-layer';

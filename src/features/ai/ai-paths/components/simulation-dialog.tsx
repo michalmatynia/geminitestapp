@@ -9,7 +9,7 @@ import {
   usePathMetadataState,
 } from '@/features/ai/ai-paths/context/GraphContext';
 import type { EntityModalProps } from '@/shared/contracts/ui/modals';
-import type { AiNode } from '@/shared/lib/ai-paths';
+import type { AiNode } from '@/shared/contracts/ai-paths';
 import { Button, Input, Alert } from '@/shared/ui/primitives.public';
 import { FormField } from '@/shared/ui/forms-and-actions.public';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';

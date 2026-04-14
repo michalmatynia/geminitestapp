@@ -8,14 +8,14 @@ import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext
 import { useSelectionActions } from '@/features/ai/ai-paths/context/SelectionContext';
 import type { Toast } from '@/shared/contracts/ui/base';
 import type { ConfirmConfig } from '@/shared/hooks/ui/useConfirm';
-import type { AiNode, PathConfig, PathMeta } from '@/shared/lib/ai-paths';
+import type { AiNode, PathConfig, PathMeta } from '@/shared/contracts/ai-paths';
 import { PATH_TEMPLATES, buildPathConfigFromTemplate } from '@/shared/lib/ai-paths/core/utils/path-templates';
-import { PATH_CONFIG_PREFIX, PATH_DEBUG_PREFIX, PATH_INDEX_KEY, STORAGE_VERSION, DEFAULT_AI_PATHS_VALIDATION_CONFIG, createDefaultPathConfig, createPathId, createPathMeta, duplicatePathConfig, normalizeAiPathsValidationConfig, normalizeNodes, sanitizeEdges, triggers } from '@/shared/lib/ai-paths';
-import {
-  canMoveAiPathFolder,
-  normalizeAiPathFolderPath,
-  rebaseAiPathFolderPath,
-} from '@/shared/lib/ai-paths';
+import { PATH_CONFIG_PREFIX, PATH_DEBUG_PREFIX, PATH_INDEX_KEY, STORAGE_VERSION, triggers } from '@/shared/lib/ai-paths/core/constants';
+import { DEFAULT_AI_PATHS_VALIDATION_CONFIG, normalizeAiPathsValidationConfig } from '@/shared/lib/ai-paths/core/validation-engine';
+import { createDefaultPathConfig, createPathId, createPathMeta, duplicatePathConfig } from '@/shared/lib/ai-paths/core/utils';
+import { normalizeNodes } from '@/shared/lib/ai-paths/core/normalization';
+import { sanitizeEdges } from '@/shared/lib/ai-paths/core/utils/graph';
+import { canMoveAiPathFolder, normalizeAiPathFolderPath, rebaseAiPathFolderPath } from '@/shared/lib/ai-paths/core/utils/path-folders';
 import {
   deleteAiPathsSettings,
   fetchAiPathsSettingsCached,

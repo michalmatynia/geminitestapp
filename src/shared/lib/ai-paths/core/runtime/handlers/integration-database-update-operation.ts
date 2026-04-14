@@ -381,9 +381,56 @@ export async function handleDatabaseUpdateOperation({
   });
   if (!templateGuardrail.ok) {
     const hasMappingConfig = Array.isArray(dbConfig.mappings) && dbConfig.mappings.length > 0;
-    const error = hasMappingConfig
-      ? `${templateGuardrail.message} Configure update payload mode as "mapping" to apply mapping rows from the node UI.`
-      : templateGuardrail.message;
+    if (hasMappingConfig) {
+      const problemRoots = [
+        ...new Set([
+          ...(templateGuardrail.guardrailMeta.missingRoots ?? []),
+          ...(templateGuardrail.guardrailMeta.emptyRoots ?? []),
+          ...(templateGuardrail.guardrailMeta.unparseableRoots ?? []),
+        ]),
+      ];
+      const rootHint =
+        problemRoots.length > 0
+          ? ` (unresolved port${problemRoots.length > 1 ? 's' : ''}: ${problemRoots.join(', ')})`
+          : '';
+      const fallbackWarning =
+        `Update template has unresolved tokens${rootHint} — falling back to mapping rows automatically. ` +
+        `To fix permanently: set Update Payload Mode to "mapping" on the Database node so it always uses the configured mapping rows.`;
+      toast(fallbackWarning, { variant: 'warning' });
+      reportAiPathsError(
+        new Error(fallbackWarning),
+        {
+          action: 'dbUpdateTemplateFallback',
+          nodeId: node.id,
+          guardrailMeta: templateGuardrail.guardrailMeta,
+        },
+        'Database update template fallback to mapping mode:'
+      );
+      return handleDatabaseUpdateOperation({
+        node,
+        nodeInputs,
+        prevOutputs,
+        executed,
+        reportAiPathsError,
+        toast,
+        simulationEntityType,
+        simulationEntityId,
+        resolvedInputs,
+        nodeInputPorts,
+        dbConfig: { ...dbConfig, updatePayloadMode: 'mapping' },
+        queryConfig,
+        dryRun,
+        templateInputs,
+        aiPrompt,
+        ensureExistingParameterTemplateContext,
+      });
+    }
+    const missingRoots = templateGuardrail.guardrailMeta.missingRoots ?? [];
+    const portFix =
+      missingRoots.length > 0
+        ? `Fix: connect port${missingRoots.length > 1 ? 's' : ''} "${missingRoots.join('", "')}" to the Database node input, or add mapping rows and set Update Payload Mode to "mapping".`
+        : 'Fix: connect all referenced input ports to the Database node, or add mapping rows and set Update Payload Mode to "mapping".';
+    const error = `${templateGuardrail.message} ${portFix}`;
     reportAiPathsError(
       new Error(error),
       {

@@ -3,8 +3,9 @@
 import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type { AiNode, ParserConfig, ParserSampleState } from '@/shared/lib/ai-paths';
-import { PARSER_PATH_OPTIONS, PARSER_PRESETS, buildFlattenedMappings, buildTopLevelMappings, createParserMappings, extractJsonPathEntries, inferImageMappingPath, normalizePortName, safeParseJson } from '@/shared/lib/ai-paths';
+import type { AiNode, ParserConfig, ParserSampleState } from '@/shared/contracts/ai-paths';
+import { PARSER_PATH_OPTIONS, PARSER_PRESETS } from '@/shared/lib/ai-paths/core/constants';
+import { buildFlattenedMappings, buildTopLevelMappings, createParserMappings, extractJsonPathEntries, inferImageMappingPath, normalizePortName, safeParseJson } from '@/shared/lib/ai-paths/core/utils';
 import { Button, Input, Textarea } from '@/shared/ui/primitives.public';
 import { FormField, SelectSimple } from '@/shared/ui/forms-and-actions.public';
 

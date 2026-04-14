@@ -10,7 +10,8 @@ import {
   type AiTriggerButtonCreatePayload,
 } from '@/features/ai/ai-paths/validations/trigger-buttons';
 import type { AiTriggerButtonLocation } from '@/shared/contracts/ai-trigger-buttons';
-import { PATH_CONFIG_PREFIX, PATH_INDEX_KEY, triggerButtonsApi } from '@/shared/lib/ai-paths';
+import { PATH_CONFIG_PREFIX, PATH_INDEX_KEY } from '@/shared/lib/ai-paths/core/constants';
+import { triggerButtonsApi } from '@/shared/lib/ai-paths/api';
 import { loadCanonicalStoredPathConfig } from '@/shared/lib/ai-paths/core/utils/stored-path-config';
 import { useAiPathsSettingsQuery } from '@/shared/lib/ai-paths/hooks/useAiPathQueries';
 import { api } from '@/shared/lib/api-client';

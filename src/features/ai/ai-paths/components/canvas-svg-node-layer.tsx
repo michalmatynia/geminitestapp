@@ -2,8 +2,8 @@
 
 import React from 'react';
 
-import type { AiNode } from '@/shared/lib/ai-paths';
-import { NODE_MIN_HEIGHT, NODE_WIDTH } from '@/shared/lib/ai-paths';
+import type { AiNode } from '@/shared/contracts/ai-paths';
+import { NODE_MIN_HEIGHT, NODE_WIDTH } from '@/shared/lib/ai-paths/core/constants';
 import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
 import { collectVisionModelCapabilityIssues } from '@/shared/lib/ai-paths/core/utils/model-capability-preflight';
 

@@ -1,11 +1,8 @@
 'use client';
 
-import React, { startTransition } from 'react';
+import React from 'react';
 
 import { FilemakerMailSidebar } from '../components/FilemakerMailSidebar';
-import {
-  buildFilemakerMailComposeHref as buildComposeHref,
-} from '../components/FilemakerMailSidebar.helpers';
 import { MailAccountSettingsSection } from './mail-page-sections/MailAccountSettingsSection';
 import { MailboxesAttentionSection } from './mail-page-sections/MailboxesAttentionSection';
 import { MailSearchSection } from './mail-page-sections/MailSearchSection';

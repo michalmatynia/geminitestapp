@@ -3,7 +3,7 @@
 
 import { useCallback } from 'react';
 
-import type { DatabaseConfig, UpdaterMapping } from '@/shared/lib/ai-paths';
+import type { DatabaseConfig, UpdaterMapping } from '@/shared/contracts/ai-paths';
 
 // The database mapping editor builds several object-heavy callback closures from
 // live node-config state. Keep it on the plain hook runtime to avoid React

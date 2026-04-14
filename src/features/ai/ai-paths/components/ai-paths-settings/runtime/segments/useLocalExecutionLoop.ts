@@ -2,9 +2,10 @@
 
 import { useCallback, useMemo, useRef } from 'react';
 
-import type { AiNode, RuntimeState, RuntimePortValues } from '@/shared/lib/ai-paths';
+import type { AiNode } from '@/shared/contracts/ai-paths';
+import type { RuntimeState, RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
 import { evaluateGraphClient as evaluateGraph } from '@/shared/lib/ai-paths/core/runtime';
-import { GraphExecutionError, GraphExecutionCancelled } from '@/shared/lib/ai-paths';
+import { GraphExecutionError, GraphExecutionCancelled } from '@/shared/lib/ai-paths/core/runtime';
 import {
   normalizeRuntimeKernelConfigRecord,
   parseRuntimeKernelCodeObjectResolverIds,

@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { formatRuntimeValue } from '@/shared/lib/ai-paths';
+import { formatRuntimeValue } from '@/shared/lib/ai-paths/core/utils';
 import { Card } from '@/shared/ui/primitives.public';
 import { Hint } from '@/shared/ui/forms-and-actions.public';
 import { cn } from '@/shared/utils/ui-utils';

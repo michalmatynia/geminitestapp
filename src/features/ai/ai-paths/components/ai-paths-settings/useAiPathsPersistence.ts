@@ -7,8 +7,17 @@ import { usePersistenceActions } from '@/features/ai/ai-paths/context/Persistenc
 import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext';
 import { useSelectionActions } from '@/features/ai/ai-paths/context/SelectionContext';
 import type { LastErrorInfo } from '@/shared/contracts/ai-paths-runtime-ui-types';
-import type { PathConfig, PathMeta } from '@/shared/lib/ai-paths';
-import { AI_PATHS_HISTORY_RETENTION_KEY, AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_KEY, AI_PATHS_LAST_ERROR_KEY, PATH_CONFIG_PREFIX, PATH_INDEX_KEY, createDefaultPathConfig, normalizeNodes, sanitizeEdges, normalizeAiPathsValidationConfig, stableStringify } from '@/shared/lib/ai-paths';
+import type { PathConfig, PathMeta } from '@/shared/contracts/ai-paths';
+import {
+  AI_PATHS_HISTORY_RETENTION_KEY,
+  AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_KEY,
+  AI_PATHS_LAST_ERROR_KEY,
+  PATH_CONFIG_PREFIX,
+  PATH_INDEX_KEY,
+} from '@/shared/lib/ai-paths/core/constants';
+import { createDefaultPathConfig, sanitizeEdges, stableStringify } from '@/shared/lib/ai-paths/core/utils';
+import { normalizeNodes } from '@/shared/lib/ai-paths/core/normalization';
+import { normalizeAiPathsValidationConfig } from '@/shared/lib/ai-paths/core/validation-engine';
 import {
   loadCanonicalStoredPathConfig,
   loadRepairableStoredPathConfig,

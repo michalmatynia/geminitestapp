@@ -2,7 +2,7 @@
 
 import { useCallback, useRef } from 'react';
 
-import { AI_PATHS_UI_STATE_KEY } from '@/shared/lib/ai-paths';
+import { AI_PATHS_UI_STATE_KEY } from '@/shared/lib/ai-paths/core/constants';
 import {
   type AiPathsSettingRecord,
   updateAiPathsSettingsBulk,

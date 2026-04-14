@@ -26,7 +26,10 @@ import type {
   UpdaterSampleState,
 } from '@/shared/contracts/ai-paths';
 import { validationError } from '@/shared/errors/app-error';
-import { evaluateRunPreflight, findRemovedLegacyAiPathNodes, formatRemovedLegacyAiPathNodesMessage, normalizeNodes, normalizeAiPathsValidationConfig, palette, sanitizeEdges, stableStringify, validateCanonicalPathNodeIdentities } from '@/shared/lib/ai-paths';
+import { evaluateRunPreflight, findRemovedLegacyAiPathNodes, formatRemovedLegacyAiPathNodesMessage, sanitizeEdges, stableStringify, validateCanonicalPathNodeIdentities } from '@/shared/lib/ai-paths/core/utils';
+import { normalizeNodes } from '@/shared/lib/ai-paths/core/normalization';
+import { normalizeAiPathsValidationConfig } from '@/shared/lib/ai-paths/core/validation-engine';
+import { palette } from '@/shared/lib/ai-paths/core/definitions';
 import {
   findRemovedLegacyTriggerContextModes,
   formatRemovedLegacyTriggerContextModesMessage,

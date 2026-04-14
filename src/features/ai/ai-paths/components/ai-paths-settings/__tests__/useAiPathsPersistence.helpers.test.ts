@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
-import { createDefaultPathConfig } from '@/shared/lib/ai-paths';
+import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils';
 
 import {
   collectInvalidPathSavePayloadIssues,

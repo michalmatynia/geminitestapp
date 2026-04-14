@@ -10,7 +10,7 @@ import type {
 } from '@/shared/contracts/ai-paths';
 import { PATH_CONFIG_PREFIX, PATH_INDEX_KEY } from '@/shared/lib/ai-paths/core/constants';
 import { loadCanonicalStoredPathConfig } from '@/shared/lib/ai-paths/core/utils/stored-path-config';
-import { normalizeAiPathFolderPath } from '@/shared/lib/ai-paths';
+import { normalizeAiPathFolderPath } from '@/shared/lib/ai-paths/core/utils/path-folders';
 import { normalizeAiPathsValidationConfig } from '@/shared/lib/ai-paths/core/validation-engine';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 

@@ -44,7 +44,7 @@ export class TraderaSequencer extends PlaywrightSequencer {
         await page.goto('https://www.tradera.com');
         break;
       case 'cookie_accept':
-        await this.acceptCookies(TRADERA_COOKIE_ACCEPT_SELECTORS as string[]);
+        await this.acceptCookies(TRADERA_COOKIE_ACCEPT_SELECTORS as readonly string[]);
         break;
       case 'auth_check': {
         const isAuth = await this.checkAuthStatus(page);
@@ -54,31 +54,31 @@ export class TraderaSequencer extends PlaywrightSequencer {
       case 'sell_page_open':
         await page.goto('https://www.tradera.com/en/sell');
         break;
-      case 'list_title': {
+      case 'title_fill': {
         const helpers = this.context.helpers as { title?: string };
         const title = helpers?.title ?? 'Default Title';
-        await this.withRetry(() => this.fillInput(TITLE_SELECTORS, title), { context: 'list_title' });
+        await this.withRetry(() => this.fillInput(TITLE_SELECTORS, title), { context: 'title_fill' });
         break;
       }
-      case 'list_description': {
+      case 'description_fill': {
         const helpers = this.context.helpers as { description?: string };
         const desc = helpers?.description ?? 'Default Description';
-        await this.withRetry(() => this.fillInput(DESCRIPTION_SELECTORS, desc), { context: 'list_description' });
+        await this.withRetry(() => this.fillInput(DESCRIPTION_SELECTORS, desc), { context: 'description_fill' });
         break;
       }
-      case 'list_price': {
+      case 'price_set': {
         const helpers = this.context.helpers as { price?: string };
         const price = helpers?.price || '0';
-        await this.withRetry(() => this.fillInput(PRICE_SELECTORS, price), { context: 'list_price' });
+        await this.withRetry(() => this.fillInput(PRICE_SELECTORS, price), { context: 'price_set' });
         break;
       }
-      case 'list_quantity': {
+      case 'listing_format_select': {
         const helpers = this.context.helpers as { quantity?: string };
         const quantity = helpers?.quantity || '1';
-        await this.withRetry(() => this.fillInput(QUANTITY_SELECTORS, quantity), { context: 'list_quantity' });
+        await this.withRetry(() => this.fillInput(QUANTITY_SELECTORS, quantity), { context: 'listing_format_select' });
         break;
       }
-      case 'list_image': {
+      case 'image_upload': {
         const helpers = this.context.helpers as { imagePath?: string };
         if (helpers?.imagePath) {
           const input = page.locator(IMAGE_INPUT_SELECTORS.join(', ')).first();
@@ -86,7 +86,7 @@ export class TraderaSequencer extends PlaywrightSequencer {
         }
         break;
       }
-      case 'clear_draft_images': {
+      case 'image_cleanup': {
         const removeButtons = page.locator(DRAFT_IMAGE_REMOVE_SELECTORS.join(', '));
         const count = await removeButtons.count();
         for (let i = 0; i < count; i++) {
@@ -94,34 +94,27 @@ export class TraderaSequencer extends PlaywrightSequencer {
         }
         break;
       }
-      case 'list_ean': {
-        const helpers = this.context.helpers as { ean?: string };
-        if (helpers?.ean) await this.withRetry(() => this.fillInput(EAN_SELECTORS, helpers.ean!), { context: 'list_ean' });
+      case 'attribute_select': {
+        const helpers = this.context.helpers as { ean?: string; brand?: string };
+        if (helpers?.ean) await this.withRetry(() => this.fillInput(EAN_SELECTORS, helpers.ean!), { context: 'attribute_select:ean' });
+        if (helpers?.brand) await this.withRetry(() => this.fillInput(BRAND_SELECTORS, helpers.brand!), { context: 'attribute_select:brand' });
         break;
       }
-      case 'list_brand': {
-        const helpers = this.context.helpers as { brand?: string };
-        if (helpers?.brand) await this.withRetry(() => this.fillInput(BRAND_SELECTORS, helpers.brand!), { context: 'list_brand' });
-        break;
-      }
-      case 'list_weight': {
+      case 'shipping_set': {
         const helpers = this.context.helpers as { weight?: string };
-        if (helpers?.weight) await this.withRetry(() => this.fillInput(WEIGHT_SELECTORS, helpers.weight!), { context: 'list_weight' });
+        if (helpers?.weight) await this.withRetry(() => this.fillInput(WEIGHT_SELECTORS, helpers.weight!), { context: 'shipping_set' });
         break;
       }
-      case 'category_picker_open': {
+      case 'category_select': {
         const trigger = await this.findFieldTriggerByLabels(CATEGORY_FIELD_LABELS as string[]);
         if (trigger) {
           await trigger.click();
+          const helpers = this.context.helpers as { categoryPath?: string };
+          if (helpers?.categoryPath) {
+            await this.selectCategoryPath(helpers.categoryPath);
+          }
         } else {
           throw new Error('FAIL_CATEGORY_SET: Category selector trigger not found.');
-        }
-        break;
-      }
-      case 'category_selection': {
-        const helpers = this.context.helpers as { categoryPath?: string };
-        if (helpers?.categoryPath) {
-          await this.selectCategoryPath(helpers.categoryPath);
         }
         break;
       }

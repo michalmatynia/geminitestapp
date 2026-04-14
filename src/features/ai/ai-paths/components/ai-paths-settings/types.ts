@@ -1,5 +1,6 @@
 import type { Toast } from '@/shared/contracts/ui/base';
-import type { AiNode, Edge, NodeConfig, NodeDefinition, PathBlockedRunPolicy, ParserSampleState, PathConfig, PathExecutionMode, PathFlowIntensity, AiPathsValidationConfig, PathRunMode, PathDebugSnapshot, PathMeta, RuntimeState, UpdaterSampleState, AiPathRuntimeEvent, AiPathRuntimeNodeStatusMap, DbQueryPreset, DbNodePreset, ClusterPreset } from '@/shared/lib/ai-paths';
+import type { AiNode, Edge, PathBlockedRunPolicy, ParserSampleState, PathConfig, PathExecutionMode, PathFlowIntensity, AiPathsValidationConfig, PathRunMode, PathDebugSnapshot, PathMeta, UpdaterSampleState, DbQueryPreset, DbNodePreset, ClusterPreset, NodeConfig, NodeDefinition } from '@/shared/contracts/ai-paths';
+import type { RuntimeState, AiPathRuntimeEvent, AiPathRuntimeNodeStatusMap } from '@/shared/contracts/ai-paths-runtime';
 import type { PathCreateOptions } from './useAiPathsSettingsPathActions';
 
 import type { ClusterPresetDraft } from '../cluster-presets-panel';

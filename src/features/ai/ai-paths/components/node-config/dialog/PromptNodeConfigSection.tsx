@@ -4,9 +4,9 @@ import React from 'react';
 
 import { formatPlaceholderLabel, formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
 import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
-import type { AiNode, Edge, PromptConfig } from '@/shared/lib/ai-paths';
+import type { AiNode, Edge, PromptConfig } from '@/shared/contracts/ai-paths';
 import { buildPromptOutput } from '@/shared/lib/ai-paths/core/runtime/utils';
-import { createParserMappings, formatRuntimeValue } from '@/shared/lib/ai-paths';
+import { createParserMappings, formatRuntimeValue } from '@/shared/lib/ai-paths/core/utils';
 import { Button, Textarea, Alert } from '@/shared/ui/primitives.public';
 import { FormField } from '@/shared/ui/forms-and-actions.public';
 import { insetPanelVariants } from '@/shared/ui/navigation-and-layout.public';

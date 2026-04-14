@@ -4,8 +4,8 @@ import React from 'react';
 
 import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
 import { AI_PATHS_REGEX_TEMPLATES_KEY, buildRegexTemplatesStore, createRegexTemplateId, parseRegexTemplatesStore } from '@/shared/lib/ai-paths/regex-templates';
-import { renderTemplate } from '@/shared/lib/ai-paths';
-import type { RegexConfig, RegexTemplate } from '@/shared/lib/ai-paths';
+import { renderTemplate } from '@/shared/lib/ai-paths/core/utils';
+import type { RegexConfig, RegexTemplate } from '@/shared/contracts/ai-paths';
 import {
   fetchAiPathsSettingsCached,
   updateAiPathsSetting,

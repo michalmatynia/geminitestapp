@@ -198,7 +198,7 @@ function LessonsCatalogIntroCardWithPageContent({
   isSixYearOld?: boolean;
   locale?: string;
   subject?: string;
-  translations?: any;
+  translations?: LessonsTranslation;
 }): React.JSX.Element {
   const { isSixYearOld, locale, subject, translations } = useLessonsCatalogContext();
   const { entry: lessonListIntroContent } = useKangurPageContentEntry('lessons-list-intro');

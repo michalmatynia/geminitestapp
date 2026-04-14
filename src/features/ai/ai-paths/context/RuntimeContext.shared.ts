@@ -9,8 +9,8 @@ import type {
   RuntimeNodeConfigHandlers,
 } from '@/shared/contracts/ai-paths';
 import { internalError } from '@/shared/errors/app-error';
-import type { AiNode } from '@/shared/contracts/ai-paths';
-import type { RuntimeState, RuntimePortValues, ParserSampleState, UpdaterSampleState, PathDebugSnapshot, RuntimeHistoryEntry, AiPathRuntimeNodeStatusMap, AiPathRuntimeEvent } from '@/shared/contracts/ai-paths-runtime';
+import type { AiNode, PathDebugSnapshot, ParserSampleState, UpdaterSampleState } from '@/shared/contracts/ai-paths';
+import type { RuntimeState, RuntimePortValues, RuntimeHistoryEntry, AiPathRuntimeNodeStatusMap, AiPathRuntimeEvent } from '@/shared/contracts/ai-paths-runtime';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 export type { LastErrorInfo, RuntimeRunStatus, RuntimeControlHandlers, RuntimeNodeConfigHandlers };

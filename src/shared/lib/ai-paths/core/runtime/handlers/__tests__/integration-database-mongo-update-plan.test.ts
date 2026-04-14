@@ -1102,4 +1102,98 @@ describe('buildMongoUpdatePlan', () => {
     expect(reportAiPathsError).not.toHaveBeenCalled();
     expect(toast).not.toHaveBeenCalled();
   });
+
+  it('auto-falls back to mapping mode when custom template fails guardrail but mappings are configured', async () => {
+    const reportAiPathsError = vi.fn();
+    const toast = vi.fn();
+    const result = await buildMongoUpdatePlan({
+      actionCategory: 'update',
+      action: 'updateOne',
+      node: {
+        id: 'node-auto-fallback-to-mapping',
+        type: 'database',
+        title: 'Database Update',
+      } as AiNode,
+      prevOutputs: {},
+      reportAiPathsError,
+      toast,
+      resolvedInputs: {
+        entityId: 'product-1',
+        entityType: 'product',
+        result: {
+          parameters: [
+            { parameterId: 'color', value: 'Blue' },
+          ],
+        },
+      },
+      nodeInputPorts: ['entityId', 'result'],
+      dbConfig: {
+        operation: 'update',
+        mode: 'replace',
+        updatePayloadMode: 'custom',
+        mappings: [
+          { targetPath: 'parameters', sourcePort: 'result', sourcePath: 'parameters' },
+        ],
+      } as DatabaseConfig,
+      queryConfig: {
+        provider: 'auto',
+        collection: 'products',
+        mode: 'custom',
+        preset: 'by_id',
+        field: 'id',
+        idType: 'string',
+        queryTemplate: '{"id":"{{entityId}}"}',
+        limit: 1,
+        sort: '',
+        projection: '',
+        single: true,
+      } as DbQueryConfig,
+      collection: 'products',
+      filter: { id: 'product-1' },
+      idType: 'string',
+      updateTemplate: '{"$set":{"parameters":{{missingPort.parameters}}}}',
+      templateInputs: {
+        entityId: 'product-1',
+        entityType: 'product',
+        result: {
+          parameters: [
+            { parameterId: 'color', value: 'Blue' },
+          ],
+        },
+      },
+      parseJsonTemplate: (template: string): unknown =>
+        parseJsonSafe(
+          renderJsonTemplate(
+            template,
+            { entityId: 'product-1', result: { parameters: [{ parameterId: 'color', value: 'Blue' }] } },
+            undefined
+          )
+        ),
+      ensureExistingParameterTemplateContext: vi.fn(async () => {}),
+      aiPrompt: '',
+    });
+
+    expect('plan' in result).toBe(true);
+    if (!('plan' in result)) {
+      throw new Error('Expected plan result after mapping fallback.');
+    }
+    expect(result.plan.updateDoc).toEqual({
+      $set: {
+        parameters: [{ parameterId: 'color', value: 'Blue' }],
+      },
+    });
+    expect(toast).toHaveBeenCalledWith(
+      expect.stringContaining('Falling back to mapping rows automatically'),
+      { variant: 'warning' }
+    );
+    expect(toast).toHaveBeenCalledWith(
+      expect.stringContaining('set Update Payload Mode to "mapping"'),
+      { variant: 'warning' }
+    );
+    expect(reportAiPathsError).toHaveBeenCalledWith(
+      expect.objectContaining({ message: expect.stringContaining('falling back to mapping rows') }),
+      expect.objectContaining({ action: 'dbUpdateTemplateFallback' }),
+      expect.stringContaining('fallback')
+    );
+  });
 });

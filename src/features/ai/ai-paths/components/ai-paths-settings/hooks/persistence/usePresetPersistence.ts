@@ -2,8 +2,8 @@
 
 import { useCallback } from 'react';
 
-import type { ClusterPreset, DbNodePreset, DbQueryPreset } from '@/shared/lib/ai-paths';
-import { CLUSTER_PRESETS_KEY, DB_NODE_PRESETS_KEY, DB_QUERY_PRESETS_KEY } from '@/shared/lib/ai-paths';
+import type { ClusterPreset, DbNodePreset, DbQueryPreset } from '@/shared/contracts/ai-paths';
+import { CLUSTER_PRESETS_KEY, DB_QUERY_PRESETS_KEY, DB_NODE_PRESETS_KEY } from '@/shared/lib/ai-paths/core/constants';
 import { updateAiPathsSettingsBulk } from '@/shared/lib/ai-paths/settings-store-client';
 
 import type { PersistSettingsPayload } from '../../useAiPathsPersistence.types';

@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { AiNode, RuntimeState } from '@/shared/lib/ai-paths';
+import type { AiNode } from '@/shared/contracts/ai-paths';
+import type { RuntimeState } from '@/shared/contracts/ai-paths-runtime';
 
 const { useBrainModelOptionsMock } = vi.hoisted(() => ({
   useBrainModelOptionsMock: vi.fn(),

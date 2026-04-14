@@ -1,7 +1,8 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { AiNode, Edge, RuntimeState } from '@/shared/lib/ai-paths';
+import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
+import type { RuntimeState } from '@/shared/contracts/ai-paths-runtime';
 
 const { evaluateRunPreflightMock, evaluateLocalExecutionSecurityMock, brainModelOptionsMock } = vi.hoisted(() => ({
   evaluateRunPreflightMock: vi.fn(),

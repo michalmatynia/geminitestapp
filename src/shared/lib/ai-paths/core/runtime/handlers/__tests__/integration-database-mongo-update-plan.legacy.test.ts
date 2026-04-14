@@ -684,7 +684,7 @@ describe('buildMongoUpdatePlan', () => {
     );
   });
 
-  it('does not fallback to mappings when custom template guardrail fails', async () => {
+  it('auto-falls back to mapping mode when custom template guardrail fails and mappings are configured', async () => {
     const reportAiPathsError = vi.fn();
     const toast = vi.fn();
     const templateInputs = {
@@ -778,23 +778,23 @@ describe('buildMongoUpdatePlan', () => {
       aiPrompt: '',
     });
 
-    expect('output' in result).toBe(true);
-    if (!('output' in result)) {
-      throw new Error('Expected guardrail output.');
+    expect('plan' in result).toBe(true);
+    if (!('plan' in result)) {
+      throw new Error('Expected plan after mapping fallback.');
     }
-    const outputBundle = result.output['bundle'] as Record<string, unknown>;
-    expect(outputBundle).toEqual(
-      expect.objectContaining({
-        guardrail: 'write-template-values',
-      })
-    );
-    expect(reportAiPathsError).toHaveBeenCalled();
-    expect(toast).toHaveBeenCalledWith(expect.stringContaining('Database write blocked'), {
-      variant: 'error',
+    expect(result.plan.updateDoc).toEqual({
+      $set: expect.objectContaining({
+        description_pl: 'Opis',
+        parameters: expect.arrayContaining([
+          expect.objectContaining({ parameterId: 'param-1' }),
+        ]),
+      }),
     });
+    expect(reportAiPathsError).not.toHaveBeenCalled();
+    expect(toast).not.toHaveBeenCalled();
   });
 
-  it('returns explicit guardrail output when update template ports are missing', async () => {
+  it('returns no-safe-updates when custom template ports are missing and mapping inputs are also disconnected', async () => {
     const reportAiPathsError = vi.fn();
     const toast = vi.fn();
     const result = await buildMongoUpdatePlan({
@@ -895,21 +895,9 @@ describe('buildMongoUpdatePlan', () => {
     const outputBundle = result.output['bundle'] as Record<string, unknown>;
     expect(outputBundle).toEqual(
       expect.objectContaining({
-        guardrail: 'write-template-values',
+        guardrail: 'no-safe-updates',
       })
     );
-    const guardrailMeta = outputBundle['guardrailMeta'] as Record<string, unknown>;
-    expect(guardrailMeta).toEqual(
-      expect.objectContaining({
-        code: 'write-template-values',
-      })
-    );
-    const missingTokens = guardrailMeta['missingTokens'];
-    expect(Array.isArray(missingTokens)).toBe(true);
-    expect(missingTokens).toContain('bundle.parameters');
-    expect(toast).toHaveBeenCalledWith(expect.stringContaining('Database write blocked'), {
-      variant: 'error',
-    });
     expect(reportAiPathsError).toHaveBeenCalled();
   });
 });

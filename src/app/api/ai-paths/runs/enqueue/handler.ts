@@ -22,7 +22,11 @@ import {
 } from '@/shared/contracts/ai-paths';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, internalError, serviceUnavailableError } from '@/shared/errors/app-error';
-import { compileGraph, evaluateAiPathsValidationPreflight, normalizeNodes, normalizeAiPathsValidationConfig, PATH_CONFIG_PREFIX, palette, sanitizeEdges, stableStringify, validateCanonicalPathNodeIdentities } from '@/shared/lib/ai-paths';
+import { compileGraph, sanitizeEdges, stableStringify, validateCanonicalPathNodeIdentities } from '@/shared/lib/ai-paths/core/utils';
+import { evaluateAiPathsValidationPreflight, normalizeAiPathsValidationConfig } from '@/shared/lib/ai-paths/core/validation-engine';
+import { normalizeNodes } from '@/shared/lib/ai-paths/core/normalization';
+import { PATH_CONFIG_PREFIX } from '@/shared/lib/ai-paths/core/constants';
+import { palette } from '@/shared/lib/ai-paths/core/definitions';
 import { loadCanonicalStoredPathConfig } from '@/shared/lib/ai-paths/core/utils/stored-path-config';
 import {
   findRemovedLegacyTriggerContextModes,

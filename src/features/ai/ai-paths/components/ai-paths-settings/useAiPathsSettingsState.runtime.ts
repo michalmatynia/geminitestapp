@@ -1,4 +1,5 @@
-import type { PathConfig, RuntimeState } from '@/shared/lib/ai-paths';
+import type { PathConfig } from '@/shared/contracts/ai-paths';
+import type { RuntimeState } from '@/shared/contracts/ai-paths-runtime';
 
 type BuildRuntimePersistenceConfigInput = {
   activePathId: string | null;

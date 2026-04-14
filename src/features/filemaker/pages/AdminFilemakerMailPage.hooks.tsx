@@ -80,6 +80,7 @@ export interface MailPageState {
   tableActions: PanelAction[];
   handleSaveAccount: () => Promise<void>;
   handleSyncAccount: (accountId: string) => Promise<void>;
+  onNewMailbox: () => void;
   router: ReturnType<typeof useRouter>;
 }
 
@@ -396,6 +397,10 @@ export function useAdminFilemakerMailPageState(): MailPageState {
     }
   }, [draft, folderAllowlistValue, loadNavigation, toast]);
 
+  const onNewMailbox = useCallback(() => {
+    setSelection({ accountId: null, mailboxPath: null, panel: 'settings' });
+  }, []);
+
   const handleSyncAccount = useCallback(
     async (accountId: string): Promise<void> => {
       setSyncingAccountId(accountId);
@@ -647,6 +652,7 @@ export function useAdminFilemakerMailPageState(): MailPageState {
     tableActions,
     handleSaveAccount,
     handleSyncAccount,
+    onNewMailbox,
     router,
   };
 }

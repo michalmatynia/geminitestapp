@@ -2,8 +2,18 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ResolvedPlaywrightConnectionRuntime } from '@/features/playwright/server';
 
-const { runPlaywrightConnectionScriptTaskMock } = vi.hoisted(() => ({
+const {
+  runPlaywrightConnectionEngineTaskMock,
+  runPlaywrightConnectionScriptTaskMock,
+} = vi.hoisted(() => ({
+  runPlaywrightConnectionEngineTaskMock: vi.fn(),
   runPlaywrightConnectionScriptTaskMock: vi.fn(),
+}));
+
+vi.mock('@/features/playwright/server/connection-runtime', () => ({
+  runPlaywrightConnectionEngineTask: (input: Record<string, unknown>) =>
+    runPlaywrightConnectionEngineTaskMock(input) as Promise<unknown>,
+  startPlaywrightConnectionEngineTask: vi.fn(),
 }));
 
 vi.mock('@/features/playwright/server/script-task', () => ({
@@ -114,7 +124,7 @@ const makeConnectionTaskResult = (overrides?: {
 describe('runPlaywrightListingScript', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    runPlaywrightConnectionScriptTaskMock.mockResolvedValue(makeConnectionTaskResult());
+    runPlaywrightConnectionEngineTaskMock.mockResolvedValue(makeConnectionTaskResult());
   });
 
   it('passes the connection browser preference through the engine config resolver', async () => {
@@ -124,7 +134,7 @@ describe('runPlaywrightListingScript', () => {
       connection: {} as never,
     });
 
-    const call = runPlaywrightConnectionScriptTaskMock.mock.calls[0]?.[0] as {
+    const call = runPlaywrightConnectionEngineTaskMock.mock.calls[0]?.[0] as {
       resolveEngineRequestConfig: (runtime: ResolvedPlaywrightConnectionRuntime) => {
         browserPreference?: string | null;
       };
@@ -149,7 +159,7 @@ describe('runPlaywrightListingScript', () => {
       connection: {} as never,
     });
 
-    const call = runPlaywrightConnectionScriptTaskMock.mock.calls[0]?.[0] as {
+    const call = runPlaywrightConnectionEngineTaskMock.mock.calls[0]?.[0] as {
       resolveEngineRequestConfig: (runtime: ResolvedPlaywrightConnectionRuntime) => {
         browserPreference?: string | null;
       };
@@ -168,7 +178,7 @@ describe('runPlaywrightListingScript', () => {
   });
 
   it('returns mapped listing details and runtime-derived execution summary', async () => {
-    runPlaywrightConnectionScriptTaskMock.mockResolvedValue(
+    runPlaywrightConnectionEngineTaskMock.mockResolvedValue(
       makeConnectionTaskResult({
         runtime: {
           personaId: 'persona-1',
@@ -189,7 +199,7 @@ describe('runPlaywrightListingScript', () => {
       } as never,
     });
 
-    expect(runPlaywrightConnectionScriptTaskMock).toHaveBeenCalledWith(
+    expect(runPlaywrightConnectionEngineTaskMock).toHaveBeenCalledWith(
       expect.objectContaining({
         connection: expect.objectContaining({
           playwrightStorageState: 'encrypted-state',
@@ -252,7 +262,7 @@ describe('runPlaywrightListingScript', () => {
       instance,
     });
 
-    expect(runPlaywrightConnectionScriptTaskMock).toHaveBeenCalledWith(
+    expect(runPlaywrightConnectionEngineTaskMock).toHaveBeenCalledWith(
       expect.objectContaining({
         instance,
       })
@@ -271,7 +281,7 @@ describe('runPlaywrightListingScript', () => {
       connection: {} as never,
     });
 
-    expect(runPlaywrightConnectionScriptTaskMock).toHaveBeenCalledWith(
+    expect(runPlaywrightConnectionEngineTaskMock).toHaveBeenCalledWith(
       expect.objectContaining({
         request: expect.objectContaining({
           startUrl: 'https://www.tradera.com/en/selling/new',
@@ -291,7 +301,7 @@ describe('runPlaywrightListingScript', () => {
       browserMode: 'headed',
     });
 
-    const call = runPlaywrightConnectionScriptTaskMock.mock.calls[0]?.[0] as {
+    const call = runPlaywrightConnectionEngineTaskMock.mock.calls[0]?.[0] as {
       resolveEngineRequestConfig: (runtime: ResolvedPlaywrightConnectionRuntime) => {
         settings: { headless: boolean };
       };
@@ -302,7 +312,7 @@ describe('runPlaywrightListingScript', () => {
   });
 
   it('applies runtime settings overrides on top of the resolved connection settings', async () => {
-    runPlaywrightConnectionScriptTaskMock.mockResolvedValue(
+    runPlaywrightConnectionEngineTaskMock.mockResolvedValue(
       makeConnectionTaskResult({
         settings: {
           emulateDevice: false,
@@ -321,7 +331,7 @@ describe('runPlaywrightListingScript', () => {
       },
     });
 
-    const call = runPlaywrightConnectionScriptTaskMock.mock.calls[0]?.[0] as {
+    const call = runPlaywrightConnectionEngineTaskMock.mock.calls[0]?.[0] as {
       resolveEngineRequestConfig: (runtime: ResolvedPlaywrightConnectionRuntime) => {
         settings: { emulateDevice: boolean; deviceName: string };
       };
@@ -351,20 +361,20 @@ describe('runPlaywrightListingScript', () => {
       disableStartUrlBootstrap: true,
     });
 
-    expect(runPlaywrightConnectionScriptTaskMock).toHaveBeenCalledWith(
+    expect(runPlaywrightConnectionEngineTaskMock).toHaveBeenCalledWith(
       expect.objectContaining({
         instance: expect.objectContaining({
           kind: 'programmable_listing',
         }),
       })
     );
-    expect(runPlaywrightConnectionScriptTaskMock.mock.calls[0]?.[0]?.request).not.toHaveProperty(
+    expect(runPlaywrightConnectionEngineTaskMock.mock.calls[0]?.[0]?.request).not.toHaveProperty(
       'startUrl'
     );
   });
 
   it('preserves the Playwright run id when the centralized engine task fails', async () => {
-    runPlaywrightConnectionScriptTaskMock.mockResolvedValue(
+    runPlaywrightConnectionEngineTaskMock.mockResolvedValue(
       makeConnectionTaskResult({
         run: {
           runId: 'run-failed-1',
@@ -393,7 +403,7 @@ describe('runPlaywrightListingScript', () => {
 describe('runPlaywrightProgrammableListingForConnection', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    runPlaywrightConnectionScriptTaskMock.mockResolvedValue(makeConnectionTaskResult());
+    runPlaywrightConnectionEngineTaskMock.mockResolvedValue(makeConnectionTaskResult());
   });
 
   it('resolves the connection listing script and runs it through the centralized programmable adapter', async () => {
@@ -409,7 +419,7 @@ describe('runPlaywrightProgrammableListingForConnection', () => {
       browserMode: 'headed',
     });
 
-    expect(runPlaywrightConnectionScriptTaskMock).toHaveBeenCalledWith(
+    expect(runPlaywrightConnectionEngineTaskMock).toHaveBeenCalledWith(
       expect.objectContaining({
         request: expect.objectContaining({
           script: 'export default async function run() {}',
@@ -443,7 +453,7 @@ describe('runPlaywrightProgrammableListingForConnection', () => {
       })
     ).rejects.toThrow('This connection does not have a Playwright listing script configured.');
 
-    expect(runPlaywrightConnectionScriptTaskMock).not.toHaveBeenCalled();
+    expect(runPlaywrightConnectionEngineTaskMock).not.toHaveBeenCalled();
   });
 });
 
@@ -485,9 +495,6 @@ describe('runPlaywrightProgrammableImportForConnection', () => {
           input: {
             baseUrl: 'https://example.com',
           },
-        }),
-        instance: expect.objectContaining({
-          kind: 'programmable_import',
         }),
       })
     );

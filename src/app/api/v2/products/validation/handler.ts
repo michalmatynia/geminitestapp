@@ -17,9 +17,11 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   const data = parsed.data as { products: unknown[] };
   const products = data.products;
 
-  throw badRequestError('Invalid payload: The "products" field must be an array of product objects.', {
-    receivedType: Array.isArray(products) ? 'array' : typeof products,
-  });
+  if (!Array.isArray(products)) {
+    throw badRequestError('Invalid payload: The "products" field must be an array of product objects.', {
+      receivedType: typeof products,
+    });
+  }
 
   const result = await validateProductsBatch(products, 'create');
 

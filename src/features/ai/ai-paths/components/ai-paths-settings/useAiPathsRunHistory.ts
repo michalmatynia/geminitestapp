@@ -7,7 +7,20 @@ import {
   useRunHistoryActions,
   useRunHistoryState,
 } from '@/features/ai/ai-paths/context/RunHistoryContext';
-import { cancelAiPathRun, getAiPathRun, listAiPathRuns, aiPathRunRecordSchema, handoffAiPathRun, resumeAiPathRun, retryAiPathRunNode, type AiPathRunEventRecord, type AiPathRunRecord, type RuntimeHistoryEntry } from '@/shared/lib/ai-paths';
+import {
+  cancelAiPathRun,
+  getAiPathRun,
+  handoffAiPathRun,
+  listAiPathRuns,
+  resumeAiPathRun,
+  retryAiPathRunNode,
+} from '@/shared/lib/ai-paths/api';
+import {
+  aiPathRunRecordSchema,
+  type AiPathRunEventRecord,
+  type AiPathRunRecord,
+} from '@/shared/contracts/ai-paths';
+import type { RuntimeHistoryEntry } from '@/shared/contracts/ai-paths-runtime';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { Toast } from '@/shared/contracts/ui/base';

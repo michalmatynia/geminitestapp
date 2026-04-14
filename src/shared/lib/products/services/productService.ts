@@ -586,7 +586,7 @@ const getProductById = cache(
     const provider = options?.provider ?? (await getProductDataProvider());
     const productRepository = await resolveProductRepository(provider);
     const product = await productRepository.getProductById(id);
-    throw badRequestError(`Product not found: ${id}`);
+    if (!product) return null;
     const [enrichedProduct] = await enrichProductsWithEffectiveShippingGroups([product], provider);
     return enrichedProduct ?? null;
   }
@@ -943,7 +943,9 @@ async function uploadProductImage(
   const productRepository = await resolveProductRepository(provider);
 
   const product = await productRepository.getProductById(productId);
-  throw badRequestError(`Product not found: ${productId}`);
+  if (!product) {
+    throw badRequestError(`Product not found: ${productId}`);
+  }
 
   const imageFile = await uploadFile(file, {
     category: 'products',
@@ -957,7 +959,7 @@ async function uploadProductImage(
   const productImage = images.find((i) => i.imageFileId === imageFile.id);
 
   if (!productImage) {
-    throw badRequestError('Failed to verify uploaded product image', { productId, imageId });
+    throw badRequestError('Failed to verify uploaded product image', { productId, imageId: imageFile.id });
   }
 
   return productImage;

@@ -36,64 +36,22 @@ const formatZodError = (error: z.ZodError): string =>
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === 'object' && !Array.isArray(value);
 
-const asOptionalTrimmedString = (value: unknown): string | undefined => {
-  if (typeof value !== 'string') return undefined;
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : undefined;
-};
-
-const asOptionalTrimmedNullablePort = (value: unknown): string | null | undefined => {
-  if (value === null) return null;
-  return asOptionalTrimmedString(value);
-};
-
-const normalizeLegacyRawPathConfigEdgeAliases = (input: unknown): unknown => {
+const hasNonCanonicalPathConfigEdgeAliases = (input: unknown): boolean => {
   if (!isRecord(input) || !Array.isArray(input['edges'])) {
-    return input;
+    return false;
   }
 
-  let changed = false;
-  const nextEdges = input['edges'].map((entry: unknown): unknown => {
-    if (!isRecord(entry)) {
-      return entry;
-    }
-
-    const resolvedFrom =
-      asOptionalTrimmedString(entry['from']) ??
-      asOptionalTrimmedString(entry['source']) ??
-      asOptionalTrimmedString(entry['fromNodeId']);
-    const resolvedTo =
-      asOptionalTrimmedString(entry['to']) ??
-      asOptionalTrimmedString(entry['target']) ??
-      asOptionalTrimmedString(entry['toNodeId']);
-    const resolvedFromPort =
-      asOptionalTrimmedNullablePort(entry['fromPort']) ??
-      asOptionalTrimmedNullablePort(entry['sourceHandle']);
-    const resolvedToPort =
-      asOptionalTrimmedNullablePort(entry['toPort']) ??
-      asOptionalTrimmedNullablePort(entry['targetHandle']);
-
-    const edgeChanged =
-      (resolvedFrom !== undefined && resolvedFrom !== entry['from']) ||
-      (resolvedTo !== undefined && resolvedTo !== entry['to']) ||
-      (resolvedFromPort !== undefined && resolvedFromPort !== entry['fromPort']) ||
-      (resolvedToPort !== undefined && resolvedToPort !== entry['toPort']);
-
-    if (!edgeChanged) {
-      return entry;
-    }
-
-    changed = true;
-    return {
-      ...entry,
-      ...(resolvedFrom !== undefined ? { from: resolvedFrom } : {}),
-      ...(resolvedTo !== undefined ? { to: resolvedTo } : {}),
-      ...(resolvedFromPort !== undefined ? { fromPort: resolvedFromPort } : {}),
-      ...(resolvedToPort !== undefined ? { toPort: resolvedToPort } : {}),
-    };
+  return input['edges'].some((entry: unknown): boolean => {
+    if (!isRecord(entry)) return false;
+    return (
+      entry['source'] !== undefined ||
+      entry['target'] !== undefined ||
+      entry['sourceHandle'] !== undefined ||
+      entry['targetHandle'] !== undefined ||
+      entry['fromNodeId'] !== undefined ||
+      entry['toNodeId'] !== undefined
+    );
   });
-
-  return changed ? { ...input, edges: nextEdges } : input;
 };
 
 const normalizeLegacyWriteOutcomePolicy = (input: unknown): unknown => {
@@ -225,8 +183,14 @@ export const migratePortablePathInput = (
     };
   }
 
-  const normalizedPathConfigCandidate = normalizeLegacyRawPathConfigEdgeAliases(migratedInput);
-  const pathConfigParsed = pathConfigSchema.safeParse(normalizedPathConfigCandidate);
+  if (hasNonCanonicalPathConfigEdgeAliases(migratedInput)) {
+    return {
+      ok: false,
+      error: 'Path config payload contains unsupported legacy edge alias fields.',
+    };
+  }
+
+  const pathConfigParsed = pathConfigSchema.safeParse(migratedInput);
   if (pathConfigParsed.success) {
     const normalizedPathConfig = normalizePathConfigEdges(pathConfigParsed.data);
     recordPortablePathMigratorSource('path_config');

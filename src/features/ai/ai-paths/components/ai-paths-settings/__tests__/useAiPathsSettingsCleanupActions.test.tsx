@@ -1,7 +1,9 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { DEFAULT_AI_PATHS_VALIDATION_CONFIG, type AiNode, type Edge, type PathConfig, type PathMeta, type RuntimeState } from '@/shared/lib/ai-paths';
+import { DEFAULT_AI_PATHS_VALIDATION_CONFIG } from '@/shared/lib/ai-paths/core/validation-engine';
+import type { AiNode, Edge, PathConfig, PathMeta } from '@/shared/contracts/ai-paths';
+import type { RuntimeState } from '@/shared/contracts/ai-paths-runtime';
 
 import { useAiPathsSettingsCleanupActions } from '../useAiPathsSettingsCleanupActions';
 

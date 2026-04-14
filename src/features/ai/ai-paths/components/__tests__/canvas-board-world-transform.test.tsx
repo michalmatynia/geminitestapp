@@ -2,7 +2,7 @@ import React from 'react';
 import { fireEvent, render } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { AiNode, Edge } from '@/shared/lib/ai-paths';
+import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
 
 import type { CanvasBoardState } from '../CanvasBoard.types';
 import type { ConnectorInfo } from '../canvas-board-connectors';

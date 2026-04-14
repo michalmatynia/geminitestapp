@@ -3,9 +3,10 @@
 import { useCallback, useRef } from 'react';
 
 import { isTerminalAiPathRunStatus } from '@/features/ai/ai-paths/lib/path-run-status';
-import type { AiPathRunNodeRecord, AiPathRunRecord, AiPathRunEventRecord, AiPathRuntimeEvent, RuntimeHistoryEntry } from '@/shared/lib/ai-paths';
+import type { AiPathRunNodeRecord, AiPathRunRecord, AiPathRunEventRecord } from '@/shared/contracts/ai-paths';
+import type { AiPathRuntimeEvent, RuntimeHistoryEntry } from '@/shared/contracts/ai-paths-runtime';
 import { parseRuntimeState } from '@/shared/lib/ai-paths/core/utils/runtime-state';
-import { streamAiPathRun } from '@/shared/lib/ai-paths';
+import { streamAiPathRun } from '@/shared/lib/ai-paths/api';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
 

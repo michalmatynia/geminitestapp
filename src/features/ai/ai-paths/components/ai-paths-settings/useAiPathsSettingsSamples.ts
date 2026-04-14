@@ -7,8 +7,8 @@ import { useRef } from 'react';
 import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext';
 import type { Toast } from '@/shared/contracts/ui/base';
 import { getProductDetailQueryKey } from '@/shared/lib/product-query-keys';
-import type { ParserSampleState, UpdaterSampleState } from '@/shared/lib/ai-paths';
-import { dbApi, entityApi } from '@/shared/lib/ai-paths';
+import type { ParserSampleState, UpdaterSampleState } from '@/shared/contracts/ai-paths';
+import { dbApi, entityApi } from '@/shared/lib/ai-paths/api';
 import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 

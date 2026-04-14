@@ -1,5 +1,5 @@
 import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
-import { stableStringify } from '@/shared/lib/ai-paths';
+import { stableStringify } from '@/shared/lib/ai-paths/core/utils';
 
 export {
   buildCaseResolverDraftCanonicalState,

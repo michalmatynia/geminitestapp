@@ -126,25 +126,6 @@ const buildRefreshedStarterTriggerButton = (
   };
 };
 
-const normalizeTriggerButtonName = (value: string | null | undefined): string =>
-  typeof value === 'string' ? value.trim().toLowerCase() : '';
-
-const findLegacyStarterTriggerButtonUpgradeIndex = (
-  buttons: AiTriggerButtonRecord[],
-  preset: StarterWorkflowTriggerPreset
-): number =>
-  buttons.findIndex((button) => {
-    const normalizedPathId =
-      typeof button.pathId === 'string' ? button.pathId.trim() : '';
-    if (normalizedPathId.length > 0) {
-      return false;
-    }
-    if (normalizeTriggerButtonName(button.name) !== normalizeTriggerButtonName(preset.name)) {
-      return false;
-    }
-    return (button.locations ?? []).some((location) => preset.locations.includes(location));
-  });
-
 const parsePathConfigRecord = (value: string): PathConfig | null => {
   try {
     const parsed = JSON.parse(value) as unknown;
@@ -348,27 +329,6 @@ const ensureStarterWorkflowEntries = (
         return;
       }
       if (hasEquivalentStarterTriggerButton(nextButtons, preset)) return;
-      const legacyUpgradeIndex = findLegacyStarterTriggerButtonUpgradeIndex(nextButtons, preset);
-      if (legacyUpgradeIndex >= 0) {
-        const existingButton = nextButtons[legacyUpgradeIndex];
-        nextButtons[legacyUpgradeIndex] = {
-          ...existingButton,
-          id: preset.id,
-          name: preset.name,
-          pathId: preset.pathId,
-          enabled: existingButton?.enabled ?? (preset.enabled ?? true),
-          locations: [...preset.locations],
-          mode: preset.mode ?? existingButton?.mode ?? 'click',
-          display: preset.display ?? existingButton?.display ?? {
-            label: preset.name,
-            showLabel: true,
-          },
-          updatedAt: now,
-          sortIndex: existingButton?.sortIndex ?? preset.sortIndex ?? 0,
-        };
-        affectedCount += 1;
-        return;
-      }
       nextButtons.push(
         bundleTriggerButtonsById.get(preset.id) ?? toTriggerButtonRecord(preset, now)
       );

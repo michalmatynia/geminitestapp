@@ -3,7 +3,8 @@
 import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import { DEFAULT_CONTEXT_ROLE, applyContextPreset, formatRuntimeValue, getContextPresetSet, parsePathList, safeStringify, toggleContextTarget } from '@/shared/lib/ai-paths';
+import { DEFAULT_CONTEXT_ROLE } from '@/shared/lib/ai-paths/core/constants';
+import { applyContextPreset, formatRuntimeValue, getContextPresetSet, parsePathList, safeStringify, toggleContextTarget } from '@/shared/lib/ai-paths/core/utils';
 import { Button, Input, Textarea, Label, Card } from '@/shared/ui/primitives.public';
 import { SelectSimple, CopyButton, FormField } from '@/shared/ui/forms-and-actions.public';
 

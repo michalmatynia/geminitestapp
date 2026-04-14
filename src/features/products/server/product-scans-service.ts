@@ -26,6 +26,7 @@ import {
   type ProductAmazonBatchScanItem,
   type ProductAmazonBatchScanResponse,
   type ProductScanAmazonEvaluation,
+  type ProductScanAmazonProbe,
   type ProductScanBatchResponse,
   type ProductScanProvider,
   type ProductScanRecord,
@@ -1407,8 +1408,8 @@ async function synchronizeAmazonTriageReady({
   persistedAmazonProbe,
   existingAmazonEvaluation,
 }: SynchronizeAmazonStatusInput & {
-  persistedAmazonProbe: unknown;
-  existingAmazonEvaluation: unknown;
+  persistedAmazonProbe: ProductScanAmazonProbe;
+  existingAmazonEvaluation: ProductScanAmazonEvaluation;
 }): Promise<ProductScanRecord> {
   const product = await productService.getProductById(scan.productId);
   let finalizedAmazonSteps = resolvePersistedProductScanSteps(scan, parsedResult.steps);
@@ -1874,8 +1875,8 @@ async function synchronizeAmazonProbeReady({
   existingAmazonEvaluation,
   finalUrl,
 }: SynchronizeAmazonStatusInput & {
-  persistedAmazonProbe: unknown;
-  existingAmazonEvaluation: unknown;
+  persistedAmazonProbe: ProductScanAmazonProbe;
+  existingAmazonEvaluation: ProductScanAmazonEvaluation;
   finalUrl: string;
 }): Promise<ProductScanRecord> {
   const product = await productService.getProductById(scan.productId);
@@ -2171,6 +2172,7 @@ async function synchronizeAmazonProbeReady({
           nextCandidate.nextUrl &&
           nextCandidate.nextRank
         ) {
+          let continuationRunId = engineRunId;
           try {
             const scannerEngineRequestOptions =
               buildProductScannerEngineRequestOptions(scannerSettings);
@@ -2217,6 +2219,7 @@ async function synchronizeAmazonProbeReady({
               }),
             });
 
+            continuationRunId = continuationRun.runId;
             const continuationStatus =
               continuationRun.status === 'running' ? 'running' : 'queued';
             const continuationRejectionKind =
@@ -2246,7 +2249,7 @@ async function synchronizeAmazonProbeReady({
             });
 
             return await persistSynchronizedScan(scan, {
-              engineRunId: continuationRun.runId,
+              engineRunId: continuationRunId,
               status: continuationStatus,
               asin: null,
               matchedImageId: parsedResult.matchedImageId,
@@ -2299,7 +2302,7 @@ async function synchronizeAmazonProbeReady({
                 : 'Failed to continue with the next Amazon candidate after AI rejection.'
             );
             return await persistSynchronizedScan(scan, {
-              engineRunId: continuationRun.runId,
+              engineRunId: continuationRunId,
               status: 'failed',
               asin: null,
               matchedImageId: parsedResult.matchedImageId,

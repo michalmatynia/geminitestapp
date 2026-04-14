@@ -5,8 +5,11 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
-import type { NodeDefinition } from '@/shared/lib/ai-paths';
-import { palette, derivePaletteNodeTypeId, TRIGGER_INPUT_PORTS, TRIGGER_OUTPUT_PORTS, triggerButtonsApi } from '@/shared/lib/ai-paths';
+import type { NodeDefinition } from '@/shared/contracts/ai-paths';
+import { TRIGGER_INPUT_PORTS, TRIGGER_OUTPUT_PORTS } from '@/shared/lib/ai-paths/core/constants';
+import { palette } from '@/shared/lib/ai-paths/core/definitions';
+import { derivePaletteNodeTypeId } from '@/shared/lib/ai-paths/core/utils';
+import { triggerButtonsApi } from '@/shared/lib/ai-paths/api';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 export function usePaletteWithTriggerButtons({

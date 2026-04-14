@@ -2,7 +2,7 @@ import type {
   RuntimeTraceResumeDecision,
   RuntimeTraceResumeMode,
 } from '@/shared/contracts/ai-paths-runtime';
-import type { RuntimeHistoryEntry } from '@/shared/lib/ai-paths';
+import type { RuntimeHistoryEntry } from '@/shared/contracts/ai-paths-runtime';
 
 export type RunHistoryActionSource = {
   status?: string | null;

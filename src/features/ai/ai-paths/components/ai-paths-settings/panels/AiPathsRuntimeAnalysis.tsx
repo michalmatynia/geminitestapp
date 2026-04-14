@@ -14,7 +14,8 @@ import type {
 } from '@/shared/contracts/ai-paths';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
-import { listAiPathRuns, type AiNode } from '@/shared/lib/ai-paths';
+import type { AiNode } from '@/shared/contracts/ai-paths';
+import { listAiPathRuns } from '@/shared/lib/ai-paths/api';
 import { useAiPathRuntimeAnalytics } from '@/shared/lib/ai-paths/hooks/useAiPathQueries';
 import {
   buildVisionModelCapabilityErrorMessage,

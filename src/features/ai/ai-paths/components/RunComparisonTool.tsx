@@ -1,5 +1,5 @@
 import React from 'react';
-import type { AiPathRunRecord } from '@/shared/lib/ai-paths';
+import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import { formatDurationMs } from '@/shared/lib/ai-paths/format-duration';
 import { Label, Card, CollapsibleSection } from '@/shared/ui/primitives.public';
 import { StatusBadge, JsonViewer } from '@/shared/ui/data-display.public';

@@ -1,4 +1,4 @@
-import type { RegexConfig } from '@/shared/lib/ai-paths';
+import type { RegexConfig } from '@/shared/contracts/ai-paths';
 import {
   normalizeJsonIntegrityPolicy,
   normalizeJsonLikeValue,

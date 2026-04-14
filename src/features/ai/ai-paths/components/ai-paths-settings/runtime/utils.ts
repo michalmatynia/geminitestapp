@@ -1,7 +1,8 @@
 import type { AiPathRuntimeNodeStatus } from '@/shared/contracts/ai-paths-runtime';
 import { normalizeAiPathRuntimeNodeStatus } from '@/shared/contracts/ai-paths-runtime';
-import type { AiNode, AiPathRunRecord, Edge, PathConfig, PathBlockedRunPolicy, PathDebugEntry, PathDebugSnapshot, PathExecutionMode, AiPathsValidationConfig, PathRunMode, ParserSampleState, RuntimeState, RuntimePortValues, UpdaterSampleState } from '@/shared/lib/ai-paths';
-import { STORAGE_VERSION } from '@/shared/lib/ai-paths';
+import type { AiNode, AiPathRunRecord, Edge, PathConfig, PathBlockedRunPolicy, PathDebugEntry, PathDebugSnapshot, PathExecutionMode, AiPathsValidationConfig, PathRunMode, ParserSampleState, UpdaterSampleState } from '@/shared/contracts/ai-paths';
+import type { RuntimeState, RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
+import { STORAGE_VERSION } from '@/shared/lib/ai-paths/core/constants';
 import { extractImageUrls } from '@/shared/lib/ai-paths/core/runtime/utils';
 
 import type * as React from 'react';

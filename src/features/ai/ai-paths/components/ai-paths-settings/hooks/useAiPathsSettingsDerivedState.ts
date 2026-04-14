@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 
-import type { AiNode, PathConfig, PathMeta } from '@/shared/lib/ai-paths';
+import type { AiNode, PathConfig, PathMeta } from '@/shared/contracts/ai-paths';
 import type { AutoSaveStatus } from '@/shared/contracts/ui/base';
 
 type UseAiPathsSettingsDerivedStateArgs = {

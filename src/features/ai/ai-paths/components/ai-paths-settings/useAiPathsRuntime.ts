@@ -10,8 +10,11 @@ import {
 } from '@/features/ai/ai-paths/context/RuntimeContext';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
-import type { AiNode, Edge, RuntimeState } from '@/shared/lib/ai-paths';
-import { normalizeNodes, sanitizeEdges, stableStringify, aiJobsApi } from '@/shared/lib/ai-paths';
+import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
+import type { RuntimeState } from '@/shared/contracts/ai-paths-runtime';
+import { normalizeNodes } from '@/shared/lib/ai-paths/core/normalization';
+import { sanitizeEdges, stableStringify } from '@/shared/lib/ai-paths/core/utils';
+import { aiJobsApi } from '@/shared/lib/ai-paths/api';
 import {
   buildVisionModelCapabilityErrorMessage,
   collectVisionModelCapabilityIssues,

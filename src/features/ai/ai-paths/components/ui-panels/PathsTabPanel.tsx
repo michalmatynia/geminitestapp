@@ -2,11 +2,12 @@
 
 import React, { useState } from 'react';
 
-import type { PathConfig, PathMeta } from '@/shared/lib/ai-paths';
+import type { PathConfig, PathMeta } from '@/shared/contracts/ai-paths';
 import { sanitizePathConfig } from '@/shared/lib/ai-paths/core/utils/path-config-sanitization';
 import { PATH_TEMPLATES } from '@/shared/lib/ai-paths/core/utils/path-templates';
 import { buildPortablePathPackage, resolvePortablePathInput } from '@/shared/lib/ai-paths/portable-engine';
-import { createDefaultPathConfig, createPathId, normalizeAiPathFolderPath } from '@/shared/lib/ai-paths';
+import { createDefaultPathConfig, createPathId } from '@/shared/lib/ai-paths/core/utils';
+import { normalizeAiPathFolderPath } from '@/shared/lib/ai-paths/core/utils/path-folders';
 import { ActionMenu } from '@/shared/ui/forms-and-actions.public';
 import { AppModal } from '@/shared/ui/feedback.public';
 import { Button, DropdownMenuItem, Textarea } from '@/shared/ui/primitives.public';

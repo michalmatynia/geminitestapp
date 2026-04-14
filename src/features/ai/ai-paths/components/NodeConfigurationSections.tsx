@@ -1,6 +1,6 @@
 import React from 'react';
 
-import type { AiNode } from '@/shared/lib/ai-paths';
+import type { AiNode } from '@/shared/contracts/ai-paths';
 
 import { useAiPathSelection } from './AiPathConfigContext';
 import { ContextNodeConfigSection } from './node-config/ContextNodeConfigSection';

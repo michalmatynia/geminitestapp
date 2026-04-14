@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { ClusterPreset } from '@/shared/lib/ai-paths';
+import type { ClusterPreset } from '@/shared/contracts/ai-paths';
 import { Button, Input, Label, Textarea, Card } from '@/shared/ui/primitives.public';
 import { SimpleSettingsList } from '@/shared/ui/templates.public';
 

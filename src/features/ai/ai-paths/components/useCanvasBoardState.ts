@@ -2,7 +2,8 @@
 
 import React from 'react';
 
-import { evaluateRunPreflight, type AiNode, type PathFlowIntensity } from '@/shared/lib/ai-paths';
+import type { AiNode, PathFlowIntensity } from '@/shared/contracts/ai-paths';
+import { evaluateRunPreflight } from '@/shared/lib/ai-paths/core/utils';
 
 import {
   useCanvasState,

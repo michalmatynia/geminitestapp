@@ -5,7 +5,8 @@ import { useMemo } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
-import { TRIGGER_EVENTS, triggerButtonsApi } from '@/shared/lib/ai-paths';
+import { TRIGGER_EVENTS } from '@/shared/lib/ai-paths/core/constants';
+import { triggerButtonsApi } from '@/shared/lib/ai-paths/api';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { SelectSimple, FormField } from '@/shared/ui/forms-and-actions.public';

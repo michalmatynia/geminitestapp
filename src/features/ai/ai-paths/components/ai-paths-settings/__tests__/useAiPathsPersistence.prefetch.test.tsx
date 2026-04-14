@@ -1,8 +1,11 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createDefaultPathConfig, PATH_INDEX_KEY, type PathConfig, type RuntimeState } from '@/shared/lib/ai-paths';
-import { PATH_CONFIG_PREFIX } from '@/shared/lib/ai-paths';
+import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils';
+import { PATH_INDEX_KEY } from '@/shared/lib/ai-paths/core/constants';
+import type { PathConfig } from '@/shared/contracts/ai-paths';
+import type { RuntimeState } from '@/shared/contracts/ai-paths-runtime';
+import { PATH_CONFIG_PREFIX } from '@/shared/lib/ai-paths/core/constants';
 import { sanitizePathConfig } from '@/shared/lib/ai-paths/core/utils/path-config-sanitization';
 import {
   fetchAiPathsSettingsByKeysCached,

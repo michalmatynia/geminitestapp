@@ -1,10 +1,6 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
-
 export const AccessibilityProvider = ({ children }: { children: React.ReactNode }) => {
-  const _t = useTranslations('Accessibility');
-
   return (
     <>
       <div id='aria-announcer' aria-live='polite' aria-atomic='true' className='sr-only' />

@@ -7,7 +7,7 @@ import {
 import { parseRuntimeState } from '@/shared/lib/ai-paths/core/utils/runtime-state';
 
 import type { AiNode, Edge, PathConfig, RuntimeState } from '@/shared/contracts/ai-paths';
-import { createDefaultPathConfig } from '@/shared/lib/ai-paths';
+import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils';
 import { palette } from '@/shared/lib/ai-paths/core/definitions';
 import { resolveNodeTypeId } from '@/shared/lib/ai-paths/core/utils/node-identity';
 

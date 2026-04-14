@@ -5,7 +5,7 @@ import { renderToString } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AI_PATH_RUN_ENQUEUED_EVENT_NAME } from '@/shared/contracts/ai-paths';
-import type { AiPathRunListResult, AiPathRunRecord } from '@/shared/lib/ai-paths';
+import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import {
   listOptimisticAiPathRuns,
   rememberOptimisticAiPathRun,

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY, AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY } from '@/shared/lib/ai-paths';
+import { AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY, AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY } from '@/shared/lib/ai-paths/core/constants';
 import {
   normalizeRuntimeKernelConfigRecord,
   parseRuntimeKernelCodeObjectResolverIds,

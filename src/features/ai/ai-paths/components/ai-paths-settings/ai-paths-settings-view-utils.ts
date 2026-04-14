@@ -1,7 +1,7 @@
 import type { PathMeta } from '@/shared/contracts/ai-paths';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { StatusVariant } from '@/shared/contracts/ui/base';
-import { normalizeAiPathFolderPath } from '@/shared/lib/ai-paths';
+import { normalizeAiPathFolderPath } from '@/shared/lib/ai-paths/core/utils/path-folders';
 
 export const EXECUTION_OPTIONS = [
   { value: 'server', label: 'Run on Server' },

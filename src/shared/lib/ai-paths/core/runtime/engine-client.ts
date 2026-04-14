@@ -59,6 +59,7 @@ import {
 import { createNodeRuntimeHandlerCatalog } from './node-runtime-handler-catalog';
 import { createNodeRuntimeKernel, toNodeRuntimeResolutionTelemetry } from './node-runtime-kernel';
 import { buildPromptOutput, pollGraphJob } from './utils';
+import { ApiError } from '@/shared/lib/api-client';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 

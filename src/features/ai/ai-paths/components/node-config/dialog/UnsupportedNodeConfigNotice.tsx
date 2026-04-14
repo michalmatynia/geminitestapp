@@ -1,4 +1,4 @@
-import type { AiNode } from '@/shared/lib/ai-paths';
+import type { AiNode } from '@/shared/contracts/ai-paths';
 
 const SUPPORTED_NODE_TYPES = new Set<AiNode['type']>([
   'trigger',

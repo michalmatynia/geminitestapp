@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { AiPathRunRecord } from '@/shared/lib/ai-paths';
+import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import { Card } from '@/shared/ui/primitives.public';
 import { RunComparisonTool } from './RunComparisonTool';
 import { RunHistoryFilterControls } from './RunHistoryFilterControls';

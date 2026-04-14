@@ -2,7 +2,8 @@
 
 import { useCallback } from 'react';
 
-import { AI_PATHS_LAST_ERROR_KEY, safeStringify } from '@/shared/lib/ai-paths';
+import { AI_PATHS_LAST_ERROR_KEY } from '@/shared/lib/ai-paths/core/constants';
+import { safeStringify } from '@/shared/lib/ai-paths/core/utils';
 import { updateAiPathsSetting } from '@/shared/lib/ai-paths/settings-store-client';
 import {
   logClientCatch,

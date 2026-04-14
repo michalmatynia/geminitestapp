@@ -4,8 +4,8 @@ import React, { useCallback, useEffect } from 'react';
 
 import { formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type { DatabaseConfig } from '@/shared/lib/ai-paths';
-import { DB_COLLECTION_OPTIONS } from '@/shared/lib/ai-paths';
+import type { DatabaseConfig } from '@/shared/contracts/ai-paths';
+import { DB_COLLECTION_OPTIONS } from '@/shared/lib/ai-paths/core/constants';
 import { Button, Input, Label } from '@/shared/ui/primitives.public';
 import { SelectSimple, FormField } from '@/shared/ui/forms-and-actions.public';
 import { insetPanelVariants } from '@/shared/ui/navigation-and-layout.public';

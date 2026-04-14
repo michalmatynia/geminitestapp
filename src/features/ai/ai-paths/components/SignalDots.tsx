@@ -1,6 +1,6 @@
 import React from 'react';
 
-import type { PathFlowIntensity } from '@/shared/lib/ai-paths';
+import type { PathFlowIntensity } from '@/shared/contracts/ai-paths';
 
 // ---------------------------------------------------------------------------
 // Intensity presets — one dot per edge, intensity controls speed/size/glow

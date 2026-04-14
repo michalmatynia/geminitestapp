@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
-import type { PathMeta, RuntimeState } from '@/shared/lib/ai-paths';
+import type { PathMeta } from '@/shared/contracts/ai-paths';
+import type { RuntimeState } from '@/shared/contracts/ai-paths-runtime';
 
 import {
   AI_PATHS_CONTEXT_ROOT_IDS,

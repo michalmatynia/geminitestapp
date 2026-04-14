@@ -17,16 +17,12 @@ import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
 import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext';
 import { useSelectionActions } from '@/features/ai/ai-paths/context/SelectionContext';
 import type { LastErrorInfo } from '@/shared/contracts/ai-paths-runtime-ui-types';
-import type {
-  AiNode,
-  Edge,
-  ParserSampleState,
-  PathConfig,
-  PathMeta,
-  RuntimeState,
-  UpdaterSampleState,
-} from '@/shared/lib/ai-paths';
-import { PATH_CONFIG_PREFIX, PATH_INDEX_KEY, STORAGE_VERSION, compileGraph, normalizeNodes, safeParseJson, stableStringify, sanitizeEdges } from '@/shared/lib/ai-paths';
+import type { AiNode, Edge, ParserSampleState, PathConfig, PathMeta, UpdaterSampleState } from '@/shared/contracts/ai-paths';
+import type { RuntimeState } from '@/shared/contracts/ai-paths-runtime';
+import { PATH_CONFIG_PREFIX, PATH_INDEX_KEY, STORAGE_VERSION } from '@/shared/lib/ai-paths/core/constants';
+import { normalizeNodes } from '@/shared/lib/ai-paths/core/normalization';
+import { safeParseJson, stableStringify, sanitizeEdges, compileGraph } from '@/shared/lib/ai-paths/core/utils';
+import type { GraphCompileReport } from '@/shared/lib/ai-paths/core/utils';
 import { buildCompileWarningMessage } from '@/shared/lib/ai-paths/core/utils/compile-warning-message';
 import { updateAiPathsSettingsBulk } from '@/shared/lib/ai-paths/settings-store-client';
 
@@ -47,7 +43,6 @@ import type { PathSaveOptions, UseAiPathsPersistenceArgs } from '../../useAiPath
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 type PathNodeLintResult = ReturnType<typeof lintPathNodeRoles>;
-type GraphCompileReport = ReturnType<typeof compileGraph>;
 
 const hasNewDuplicateRoleViolation = (
   activePathId: string,

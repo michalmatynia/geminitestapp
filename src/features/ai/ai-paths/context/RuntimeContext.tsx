@@ -9,7 +9,8 @@ import {
   type ReactNode,
 } from 'react';
 
-import type { RuntimePortValues, ParserSampleState, UpdaterSampleState, PathDebugSnapshot, RuntimeHistoryEntry, AiPathRuntimeNodeStatusMap, AiPathRuntimeEvent } from '@/shared/contracts/ai-paths-runtime';
+import type { ParserSampleState, UpdaterSampleState, PathDebugSnapshot } from '@/shared/contracts/ai-paths';
+import type { RuntimePortValues, RuntimeHistoryEntry, AiPathRuntimeNodeStatusMap, AiPathRuntimeEvent } from '@/shared/contracts/ai-paths-runtime';
 
 import {
   INITIAL_RUNTIME_STATE,

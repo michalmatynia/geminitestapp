@@ -1,7 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { AiNode, Edge } from '@/shared/lib/ai-paths';
+import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
 import { useAiPathsCanvasInteractions } from '@/features/ai/ai-paths/components/ai-paths-settings/useAiPathsCanvasInteractions';
 
 type SelectionStateMock = {

@@ -1,5 +1,5 @@
 import { type RuntimeState, type RuntimePortValues } from '@/shared/contracts/ai-paths';
-import { cloneJsonSafe } from '@/shared/lib/ai-paths';
+import { cloneJsonSafe } from '@/shared/lib/ai-paths/core/utils';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
 export {

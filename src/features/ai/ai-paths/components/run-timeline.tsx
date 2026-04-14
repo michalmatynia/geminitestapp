@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { AiPathRunEventRecord, AiPathRunNodeRecord, AiPathRunRecord } from '@/shared/lib/ai-paths';
+import type { AiPathRunEventRecord, AiPathRunNodeRecord, AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import { formatDurationMs } from '@/shared/lib/ai-paths/format-duration';
 import type { StatusVariant } from '@/shared/contracts/ui/base';
 import { Button, Tooltip, Alert } from '@/shared/ui/primitives.public';

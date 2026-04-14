@@ -15,6 +15,7 @@ import { useCallback } from 'react';
 
 import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import type { TanstackFactoryMeta } from '@/shared/lib/tanstack-factory-v2.types';
+import { ApiError } from '@/shared/lib/api-client';
 import { useToast } from '@/shared/ui/primitives.public';
 import {
   logClientCatch,

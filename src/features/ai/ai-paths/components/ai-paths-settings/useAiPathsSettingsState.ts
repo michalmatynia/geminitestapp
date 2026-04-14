@@ -15,8 +15,8 @@ import {
 } from '@/features/ai/ai-paths/context';
 import { pruneRuntimeInputsState } from '@/features/ai/ai-paths/logic/runtime-pruning';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
-import type { Edge, PathMeta, PathConfig } from '@/shared/lib/ai-paths';
-import { triggers } from '@/shared/lib/ai-paths';
+import type { Edge, PathMeta, PathConfig } from '@/shared/contracts/ai-paths';
+import { triggers } from '@/shared/lib/ai-paths/core/constants';
 import { normalizeAiPathTriggerLabel } from '@/shared/lib/ai-paths/core/utils/trigger-label-migration';
 import {
   DOCS_OVERVIEW_SNIPPET,

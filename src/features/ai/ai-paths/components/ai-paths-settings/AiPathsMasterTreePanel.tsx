@@ -12,7 +12,7 @@ import {
   toAiPathNodeId,
 } from '@/features/ai/ai-paths/utils/master-folder-tree';
 import { usePrompt } from '@/shared/hooks/ui/usePrompt';
-import type { PathMeta } from '@/shared/lib/ai-paths';
+import type { PathMeta } from '@/shared/contracts/ai-paths';
 import {
   FolderTreeViewportV2,
   handleMasterTreeDrop,

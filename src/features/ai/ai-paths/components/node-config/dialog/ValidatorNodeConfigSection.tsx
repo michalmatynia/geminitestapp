@@ -1,6 +1,6 @@
 'use client';
 
-import { parsePathList } from '@/shared/lib/ai-paths';
+import { parsePathList } from '@/shared/lib/ai-paths/core/utils';
 import { Label, Textarea } from '@/shared/ui/primitives.public';
 import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
 

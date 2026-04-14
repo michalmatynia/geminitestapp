@@ -6,8 +6,8 @@ import {
   useGraphActions,
   usePathMetadataState,
 } from '@/features/ai/ai-paths/context/GraphContext';
-import type { AiPathsValidationConfig, PathBlockedRunPolicy, PathExecutionMode, PathFlowIntensity, PathRunMode } from '@/shared/lib/ai-paths';
-import { normalizeAiPathsValidationConfig } from '@/shared/lib/ai-paths';
+import type { AiPathsValidationConfig, PathBlockedRunPolicy, PathExecutionMode, PathFlowIntensity, PathRunMode } from '@/shared/contracts/ai-paths';
+import { normalizeAiPathsValidationConfig } from '@/shared/lib/ai-paths/core/validation-engine';
 
 const resolveStateAction = <T,>(next: SetStateAction<T>, currentValue: T): T =>
   typeof next === 'function' ? (next as (previous: T) => T)(currentValue) : next;

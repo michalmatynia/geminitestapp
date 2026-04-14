@@ -18,7 +18,8 @@ import type {
   RuntimeProfileSummary,
   RuntimeTraceRecord,
 } from '@/shared/contracts/ai-paths-runtime';
-import { normalizeNodes, sanitizeEdges } from '@/shared/lib/ai-paths';
+import { normalizeNodes } from '@/shared/lib/ai-paths/core/normalization';
+import { sanitizeEdges } from '@/shared/lib/ai-paths/core/utils/graph';
 import { GraphExecutionCancelled } from '@/shared/lib/ai-paths/core/runtime/engine-core';
 import { evaluateGraphWithIteratorAutoContinue } from '@/shared/lib/ai-paths/core/runtime/engine-server';
 import { resolveAiPathsRuntimeValidationMiddleware } from '@/shared/lib/ai-paths/core/validation-engine';

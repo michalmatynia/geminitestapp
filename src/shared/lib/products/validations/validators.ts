@@ -78,7 +78,7 @@ function zodIssuesToErrors(issues: ZodIssue[]): ValidationError[] {
       path: issue.path,
       // Include more specific context from the Zod issue
       ...(issue.message && { message: issue.message }),
-      ...(issue.params && { params: issue.params }),
+      ...('params' in issue && issue.params && { params: issue.params }),
       ...(issue.code && { code: issue.code }),
     },
   }));

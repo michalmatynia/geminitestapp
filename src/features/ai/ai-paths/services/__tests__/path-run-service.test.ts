@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createDefaultPathConfig } from '@/shared/lib/ai-paths';
+import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils';
 
 const {
   resolvePathRunRepositoryMock,

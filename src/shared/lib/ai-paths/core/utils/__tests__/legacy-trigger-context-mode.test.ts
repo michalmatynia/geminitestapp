@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import { buildPortablePathPackage } from '@/shared/lib/ai-paths/portable-engine';
-import { createDefaultPathConfig, type PathConfig } from '@/shared/lib/ai-paths';
+import type { PathConfig } from '@/shared/contracts/ai-paths';
+import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils';
 
 import {
   findRemovedLegacyTriggerContextModesInDocument,

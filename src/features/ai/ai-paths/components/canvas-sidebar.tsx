@@ -3,8 +3,8 @@
 import React, { useMemo, useState } from 'react';
 
 import { formatPlaceholderLabel, formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
-import type { AiNode, NodeDefinition } from '@/shared/lib/ai-paths';
-import { createParserMappings } from '@/shared/lib/ai-paths';
+import type { AiNode, NodeDefinition } from '@/shared/contracts/ai-paths';
+import { createParserMappings } from '@/shared/lib/ai-paths/core/utils';
 import { Button, Input, Label, Textarea, Card, Badge } from '@/shared/ui/primitives.public';
 import { StatusBadge } from '@/shared/ui/data-display.public';
 import { CompactEmptyState } from '@/shared/ui/navigation-and-layout.public';

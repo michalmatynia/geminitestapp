@@ -3,8 +3,10 @@
 import { useCallback, useRef } from 'react';
 
 import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
-import type { AiNode, RuntimeState, RuntimePortValues } from '@/shared/lib/ai-paths';
-import { TRIGGER_EVENTS, evaluateRunPreflight, stableStringify } from '@/shared/lib/ai-paths';
+import type { AiNode } from '@/shared/contracts/ai-paths';
+import type { RuntimeState, RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
+import { TRIGGER_EVENTS } from '@/shared/lib/ai-paths/core/constants';
+import { evaluateRunPreflight, stableStringify } from '@/shared/lib/ai-paths/core/utils';
 import {
   buildVisionModelCapabilityErrorMessage,
   collectVisionModelCapabilityIssues,

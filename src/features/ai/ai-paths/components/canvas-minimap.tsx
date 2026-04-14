@@ -2,8 +2,9 @@
 
 import React from 'react';
 
-import type { AiNode } from '@/shared/lib/ai-paths';
-import { CANVAS_HEIGHT, CANVAS_WIDTH, NODE_MIN_HEIGHT, NODE_WIDTH, clampScale } from '@/shared/lib/ai-paths';
+import type { AiNode } from '@/shared/contracts/ai-paths';
+import { CANVAS_HEIGHT, CANVAS_WIDTH, NODE_MIN_HEIGHT, NODE_WIDTH } from '@/shared/lib/ai-paths/core/constants';
+import { clampScale } from '@/shared/lib/ai-paths/core/utils/graph';
 
 import { useCanvasBoardUI } from './CanvasBoardUIContext';
 

@@ -36,37 +36,37 @@ export class VintedSequencer extends PlaywrightSequencer {
         }
         break;
       }
-      case 'list_title': {
+      case 'title_fill': {
         const helpers = this.context.helpers as { title?: string };
-        await this.withRetry(() => page.locator(VINTED_TITLE_SELECTORS.join(', ')).first().fill(helpers?.title ?? ''), { context: 'list_title' });
+        await this.withRetry(() => page.locator(VINTED_TITLE_SELECTORS.join(', ')).first().fill(helpers?.title ?? ''), { context: 'title_fill' });
         break;
       }
-      case 'list_description': {
+      case 'description_fill': {
         const helpers = this.context.helpers as { description?: string };
-        await this.withRetry(() => page.locator(VINTED_DESCRIPTION_SELECTORS.join(', ')).first().fill(helpers?.description ?? ''), { context: 'list_description' });
+        await this.withRetry(() => page.locator(VINTED_DESCRIPTION_SELECTORS.join(', ')).first().fill(helpers?.description ?? ''), { context: 'description_fill' });
         break;
       }
-      case 'list_price': {
+      case 'price_set': {
         const helpers = this.context.helpers as { price?: string };
-        await this.withRetry(() => page.locator(VINTED_PRICE_SELECTORS.join(', ')).first().fill(helpers?.price ?? '0'), { context: 'list_price' });
+        await this.withRetry(() => page.locator(VINTED_PRICE_SELECTORS.join(', ')).first().fill(helpers?.price ?? '0'), { context: 'price_set' });
         break;
       }
-      case 'list_image': {
+      case 'image_upload': {
         const helpers = this.context.helpers as { imagePath?: string };
         if (helpers?.imagePath) {
           await page.locator(VINTED_IMAGE_UPLOAD_SELECTORS.join(', ')).first().setInputFiles(helpers.imagePath);
         }
         break;
       }
-      case 'list_brand': {
+      case 'brand_fill': {
         const helpers = this.context.helpers as { brand?: string };
         if (helpers?.brand) {
           const input = page.locator(VINTED_BRAND_SELECTORS.join(', ')).first();
-          await this.withRetry(() => input.fill(helpers.brand!), { context: 'list_brand' });
+          await this.withRetry(() => input.fill(helpers.brand!), { context: 'brand_fill' });
         }
         break;
       }
-      case 'list_condition': {
+      case 'condition_set': {
         const helpers = this.context.helpers as { condition?: string };
         if (helpers?.condition) {
           const trigger = page.locator(VINTED_CONDITION_SELECTORS.join(', ')).first();
@@ -77,7 +77,7 @@ export class VintedSequencer extends PlaywrightSequencer {
         }
         break;
       }
-      case 'category_selection': {
+      case 'category_select': {
         const helpers = this.context.helpers as { categoryPath?: string };
         if (helpers?.categoryPath) {
           await this.selectVintedCategoryPath(helpers.categoryPath);

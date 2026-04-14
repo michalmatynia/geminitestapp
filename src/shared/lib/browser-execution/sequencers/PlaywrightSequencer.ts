@@ -1,7 +1,7 @@
 import { Page } from 'playwright';
-import { StepTracker } from './step-tracker';
-import { StepId } from './step-registry';
-import { ActionSequenceKey } from './action-sequences';
+import { StepTracker } from '../step-tracker';
+import { StepId } from '../step-registry';
+import { ActionSequenceKey } from '../action-sequences';
 
 export interface PlaywrightSequencerContext {
   page: Page;
@@ -55,7 +55,7 @@ export abstract class PlaywrightSequencer {
 
   protected abstract executeStep(stepId: StepId): Promise<void>;
 
-  protected async acceptCookies(selectors: string[]): Promise<void> {
+  protected async acceptCookies(selectors: readonly string[]): Promise<void> {
     const { page } = this.context;
     for (const selector of selectors) {
       const element = page.locator(selector).first();

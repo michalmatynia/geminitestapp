@@ -1,5 +1,5 @@
 import type { AiPathRunErrorSummary } from '@/shared/lib/ai-paths/error-reporting';
-import type { AiPathRunEventRecord, AiPathRunNodeRecord, AiPathRunRecord } from '@/shared/lib/ai-paths';
+import type { AiPathRunEventRecord, AiPathRunNodeRecord, AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import { safeJsonStringify } from '@/shared/lib/ai-paths/core/utils/runtime';
 import { buildAiPathRunErrorSummary } from '@/shared/lib/ai-paths/error-reporting';
 import { AI_PATHS_RUN_SOURCE_VALUES } from '@/shared/lib/ai-paths/run-sources';

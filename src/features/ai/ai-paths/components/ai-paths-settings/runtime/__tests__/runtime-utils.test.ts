@@ -6,7 +6,7 @@ import {
   resolveRuntimeNodeDisplayStatus,
 } from '../utils';
 
-import type { RuntimeState } from '@/shared/lib/ai-paths';
+import type { RuntimeState } from '@/shared/contracts/ai-paths-runtime';
 
 describe('mergeRuntimeNodeOutputsForStatus', () => {
   it('maps blocked missing-input updates to waiting_callback', () => {

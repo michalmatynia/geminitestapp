@@ -624,7 +624,7 @@ describe('settings-store flag preservation and maintenance-only starter policy',
     expect(triggerButtons.some((button) => button['id'] === 'btn-custom-param')).toBe(true);
   });
 
-  it('upgrades a legacy unbound normalize button during default seeding', () => {
+  it('does not upgrade a legacy unbound normalize button during default seeding', () => {
     const legacyNormalizeButton = {
       id: 'cf9974ae-1fb3-4e61-8a30-8df8af63744f',
       name: 'Normalize',
@@ -656,14 +656,25 @@ describe('settings-store flag preservation and maintenance-only starter policy',
     if (!triggerButtonsRecord) throw new Error('Expected trigger buttons record');
 
     const triggerButtons = JSON.parse(triggerButtonsRecord.value) as Array<Record<string, unknown>>;
-    const normalizeButtons = triggerButtons.filter((button) => button['name'] === 'Normalize');
+    const canonicalNormalizeButton = triggerButtons.find(
+      (button) => button['id'] === '7d58d6a0-44c7-4d69-a2e4-8d8d1f3f5a27'
+    );
+    const legacyButton = triggerButtons.find(
+      (button) => button['id'] === 'cf9974ae-1fb3-4e61-8a30-8df8af63744f'
+    );
 
-    expect(normalizeButtons).toHaveLength(1);
-    expect(normalizeButtons[0]).toEqual(
+    expect(canonicalNormalizeButton).toEqual(
       expect.objectContaining({
         id: '7d58d6a0-44c7-4d69-a2e4-8d8d1f3f5a27',
         pathId: 'path_name_normalize_v1',
         locations: ['product_modal'],
+      })
+    );
+    expect(legacyButton).toEqual(
+      expect.objectContaining({
+        id: 'cf9974ae-1fb3-4e61-8a30-8df8af63744f',
+        pathId: null,
+        name: 'Normalize',
       })
     );
   });

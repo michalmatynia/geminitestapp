@@ -417,4 +417,65 @@ describe('handleDatabaseUpdateOperation', () => {
       { variant: 'error' }
     );
   });
+
+  it('auto-falls back to mapping mode when custom template fails guardrail but mappings are configured', async () => {
+    executeDatabaseUpdateMock.mockResolvedValue({
+      skipped: false,
+      updateResult: { ok: true },
+      executionMeta: { action: 'entityUpdate' },
+      writeOutcome: { status: 'success', affectedCount: 1 },
+    });
+
+    const reportAiPathsError = vi.fn();
+    const toast = vi.fn();
+    const result = await handleDatabaseUpdateOperation({
+      node: {
+        id: 'node-db-update-fallback',
+        type: 'database',
+        title: 'Database Update',
+      } as AiNode,
+      nodeInputs: {},
+      prevOutputs: {},
+      executed: createExecutedState(),
+      reportAiPathsError,
+      toast,
+      simulationEntityType: 'product',
+      simulationEntityId: 'product-1',
+      resolvedInputs: {
+        entityId: 'product-1',
+        entityType: 'product',
+        result: {
+          parameters: [{ parameterId: 'color', value: 'Blue' }],
+        },
+      },
+      nodeInputPorts: ['entityId', 'result'],
+      dbConfig: {
+        operation: 'update',
+        entityType: 'product',
+        mode: 'replace',
+        updateStrategy: 'one',
+        updatePayloadMode: 'custom',
+        updateTemplate: '{"$set":{"parameters":{{missingPort.parameters}}}}',
+        mappings: [
+          { targetPath: 'parameters', sourcePort: 'result', sourcePath: 'parameters' },
+        ],
+      } as DatabaseConfig,
+      queryConfig: baseQueryConfig,
+      dryRun: false,
+      templateInputs: {
+        entityId: 'product-1',
+        entityType: 'product',
+        result: {
+          parameters: [{ parameterId: 'color', value: 'Blue' }],
+        },
+      },
+      aiPrompt: '',
+      ensureExistingParameterTemplateContext: vi.fn(async () => {}),
+    });
+
+    expect(executeDatabaseUpdateMock).toHaveBeenCalled();
+    expect(reportAiPathsError).not.toHaveBeenCalled();
+    expect(toast).not.toHaveBeenCalled();
+    expect(result['bundle']).not.toEqual(expect.objectContaining({ guardrail: 'write-template-values' }));
+  });
 });

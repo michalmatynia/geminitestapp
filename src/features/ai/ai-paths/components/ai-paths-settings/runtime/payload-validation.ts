@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { aiNodeSchema, edgeSchema } from '@/shared/contracts/ai-paths';
-import type { AiNode, Edge } from '@/shared/lib/ai-paths';
+import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 

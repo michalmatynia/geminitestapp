@@ -14,12 +14,9 @@ import {
   useRuntimeDataState,
   useRuntimeStatusState,
 } from '@/features/ai/ai-paths/context';
-import type { PathConfig, PathMeta } from '@/shared/lib/ai-paths';
-import {
-  PATH_CONFIG_PREFIX,
-  PATH_INDEX_KEY,
-  createDefaultPathConfig,
-} from '@/shared/lib/ai-paths';
+import type { PathConfig, PathMeta } from '@/shared/contracts/ai-paths';
+import { PATH_CONFIG_PREFIX, PATH_INDEX_KEY } from '@/shared/lib/ai-paths/core/constants';
+import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils';
 import {
   buildPersistedRuntimeState,
   sanitizePathConfig,

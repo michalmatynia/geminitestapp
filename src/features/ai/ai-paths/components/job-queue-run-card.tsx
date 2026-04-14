@@ -3,7 +3,8 @@
 import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type { AiPathRunEventRecord, AiPathRunNodeRecord, AiPathRunRecord, RuntimeHistoryEntry } from '@/shared/lib/ai-paths';
+import type { AiPathRunEventRecord, AiPathRunNodeRecord, AiPathRunRecord } from '@/shared/contracts/ai-paths';
+import type { RuntimeHistoryEntry } from '@/shared/contracts/ai-paths-runtime';
 import { Alert, Textarea, CollapsibleSection } from '@/shared/ui/primitives.public';
 import { SelectSimple, FormField } from '@/shared/ui/forms-and-actions.public';
 import { StatusBadge } from '@/shared/ui/data-display.public';

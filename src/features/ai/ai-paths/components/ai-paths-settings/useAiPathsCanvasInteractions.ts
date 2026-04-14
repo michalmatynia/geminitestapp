@@ -21,8 +21,8 @@ import {
   useSelectionState,
 } from '@/features/ai/ai-paths/context/SelectionContext';
 import { type ConfirmConfig } from '@/shared/hooks/ui/useConfirm';
-import type { AiNode, Edge, NodeDefinition } from '@/shared/lib/ai-paths';
-import { sanitizeEdges } from '@/shared/lib/ai-paths';
+import type { AiNode, Edge, NodeDefinition } from '@/shared/contracts/ai-paths';
+import { sanitizeEdges } from '@/shared/lib/ai-paths/core/utils/graph';
 
 import { isEditableElement } from './utils/canvas-interaction-utils';
 

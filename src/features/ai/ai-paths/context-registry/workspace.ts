@@ -4,7 +4,8 @@ import type {
   ContextRuntimeDocument,
   ContextRuntimeDocumentSection,
 } from '@/shared/contracts/ai-context-registry';
-import type { AiNode, AiPathRuntimeEvent, AiPathsValidationConfig, Edge, PathMeta, RuntimeState } from '@/shared/lib/ai-paths';
+import type { AiNode, AiPathsValidationConfig, Edge, PathMeta } from '@/shared/contracts/ai-paths';
+import type { AiPathRuntimeEvent, RuntimeState } from '@/shared/contracts/ai-paths-runtime';
 
 export const AI_PATHS_CONTEXT_ROOT_IDS = [
   'page:ai-paths',

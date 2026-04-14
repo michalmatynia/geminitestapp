@@ -1,7 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { PathMeta } from '@/shared/lib/ai-paths';
+import type { PathMeta } from '@/shared/contracts/ai-paths';
 import type { AiPathsSettingsProps } from '../../AiPathsSettings';
 import type { UseAiPathsSettingsStateReturn } from '../types';
 

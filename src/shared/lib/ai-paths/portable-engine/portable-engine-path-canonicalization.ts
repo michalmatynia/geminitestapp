@@ -39,33 +39,14 @@ const resolveEdgePort = (
   return trimmed.length > 0 ? trimmed : null;
 };
 
-const resolveAliasEdgePort = (value: unknown): string | null | undefined => {
-  if (value === undefined) return undefined;
-  if (value === null) return null;
-  if (typeof value !== 'string') return null;
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
-};
-
 export const normalizePathConfigEdges = (pathConfig: PathConfig): PathConfig => {
   let changed = false;
   const nextEdges = (pathConfig.edges ?? []).map((edge: Edge): Edge => {
-    const legacyEdge = edge as Edge & {
-      fromNodeId?: unknown;
-      toNodeId?: unknown;
-    };
-    const resolvedFrom =
-      asTrimmedString(edge.from) ??
-      asTrimmedString(edge.source) ??
-      asTrimmedString(legacyEdge.fromNodeId);
-    const resolvedTo =
-      asTrimmedString(edge.to) ??
-      asTrimmedString(edge.target) ??
-      asTrimmedString(legacyEdge.toNodeId);
-    const resolvedFromPort =
-      resolveEdgePort(edge, 'fromPort') ?? resolveAliasEdgePort(edge.sourceHandle);
-    const resolvedToPort =
-      resolveEdgePort(edge, 'toPort') ?? resolveAliasEdgePort(edge.targetHandle);
+    const legacyEdge = edge as Edge & { fromNodeId?: unknown; toNodeId?: unknown };
+    const resolvedFrom = asTrimmedString(edge.from);
+    const resolvedTo = asTrimmedString(edge.to);
+    const resolvedFromPort = resolveEdgePort(edge, 'fromPort');
+    const resolvedToPort = resolveEdgePort(edge, 'toPort');
 
     const edgeChanged =
       resolvedFrom !== edge.from ||

@@ -2,7 +2,7 @@ import React from 'react';
 import { fireEvent, render, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { AiNode, Edge } from '@/shared/lib/ai-paths';
+import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
 import { AiPathsProvider, useGraphState } from '@/features/ai/ai-paths/context';
 import { CanvasBoard } from '@/features/ai/ai-paths/components/canvas-board';
 import { ToastProvider } from '@/shared/ui/toast';

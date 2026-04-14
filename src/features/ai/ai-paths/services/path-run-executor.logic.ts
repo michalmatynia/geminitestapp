@@ -13,7 +13,7 @@ import type {
   RuntimeTraceResumeMode,
   RuntimeTraceResumeReason,
 } from '@/shared/contracts/ai-paths-runtime';
-import { cloneJsonSafe } from '@/shared/lib/ai-paths';
+import { cloneJsonSafe } from '@/shared/lib/ai-paths/core/utils';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 

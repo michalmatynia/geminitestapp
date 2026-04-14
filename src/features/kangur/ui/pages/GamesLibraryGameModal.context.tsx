@@ -7,7 +7,6 @@ import {
 } from '@/features/kangur/lessons/lesson-catalog-i18n';
 import { buildKangurGameLaunchHref } from '@/features/kangur/ui/services/game-launch';
 import { resolveModalAgeGroupAccent, resolveModalStatusAccent } from './GamesLibraryGameModal.utils';
-import type { KangurGameDefinition } from '@/shared/contracts/kangur-games';
 import type {
   GamesLibraryGameModalContextValue,
   GamesLibraryGameModalState,

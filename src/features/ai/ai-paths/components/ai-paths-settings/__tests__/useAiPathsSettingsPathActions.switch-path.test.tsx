@@ -1,8 +1,8 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
-import type { PathConfig, PathMeta } from '@/shared/lib/ai-paths';
-import { createDefaultPathConfig } from '@/shared/lib/ai-paths';
+import type { PathConfig, PathMeta } from '@/shared/contracts/ai-paths';
+import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils';
 import { sanitizePathConfig } from '@/shared/lib/ai-paths/core/utils/path-config-sanitization';
 
 import { useAiPathsSettingsPathActions } from '../useAiPathsSettingsPathActions';

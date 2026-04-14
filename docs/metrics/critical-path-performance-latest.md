@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-13'
+last_reviewed: '2026-04-14'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Critical Path Performance Report
 
-Generated at: 2026-04-13T20:43:11.150Z
+Generated at: 2026-04-14T11:08:31.589Z
 
 ## Summary
 
@@ -86,14 +86,14 @@ Generated at: 2026-04-13T20:43:11.150Z
 
 | File | LOC |
 | --- | ---: |
-| `src/features/products/server/product-scans-service.ts` | 4478 |
+| `src/features/products/server/product-scans-service.ts` | 4542 |
 | `src/features/products/components/list/ProductAmazonScanModal.test.tsx` | 4175 |
 | `src/features/products/server/parts/product-scan-amazon-script.part1.ts` | 3221 |
 | `src/features/products/components/form/ProductFormScans.test.tsx` | 3065 |
 | `src/features/products/server/parts/product-scan-1688-script.part1.ts` | 2194 |
 | `src/features/products/server/product-scans-service.amazon.test.ts` | 2166 |
 | `src/features/products/components/list/ProductAmazonScanModal.tsx` | 2130 |
-| `src/features/products/components/ProductModals.test.tsx` | 1730 |
+| `src/features/products/components/ProductModals.test.tsx` | 1920 |
 | `src/features/products/server/parts/product-scan-amazon-script.part2.ts` | 1719 |
 | `src/features/products/server/product-scan-amazon-evaluator.ts` | 1709 |
 

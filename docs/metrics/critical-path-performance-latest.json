@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-04-13T20:43:11.150Z",
-  "strictMode": false,
+  "generatedAt": "2026-04-14T11:08:31.589Z",
+  "strictMode": true,
   "summary": {
     "total": 10,
     "passed": 10,
@@ -383,12 +383,12 @@
     }
   ],
   "metrics": {
-    "generatedAt": "2026-04-13T20:43:11.143Z",
+    "generatedAt": "2026-04-14T11:08:31.581Z",
     "hotspots": {
       "topFilesByLines": [
         {
           "path": "src/features/products/server/product-scans-service.ts",
-          "lines": 4478
+          "lines": 4542
         },
         {
           "path": "src/features/products/components/list/ProductAmazonScanModal.test.tsx",
@@ -416,7 +416,7 @@
         },
         {
           "path": "src/features/products/components/ProductModals.test.tsx",
-          "lines": 1730
+          "lines": 1920
         },
         {
           "path": "src/features/products/server/parts/product-scan-amazon-script.part2.ts",
@@ -431,12 +431,12 @@
           "lines": 1676
         },
         {
-          "path": "src/features/ai/ai-paths/services/playwright-node-runner.ts",
-          "lines": 1599
+          "path": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingDetails.test.tsx",
+          "lines": 1673
         },
         {
-          "path": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingDetails.test.tsx",
-          "lines": 1598
+          "path": "src/features/ai/ai-paths/services/playwright-node-runner.ts",
+          "lines": 1599
         },
         {
           "path": "src/features/products/components/form/ProductFormScans.tsx",
@@ -475,16 +475,16 @@
           "lines": 1302
         },
         {
+          "path": "src/features/integrations/services/tradera-listing/BrowserListing.2.test.ts",
+          "lines": 1282
+        },
+        {
           "path": "src/features/products/components/scans/ProductScanAmazonDetails.tsx",
           "lines": 1256
         },
         {
           "path": "src/features/ai/ai-paths/services/__tests__/playwright-node-runner.test.ts",
           "lines": 1253
-        },
-        {
-          "path": "src/features/integrations/services/tradera-listing/BrowserListing.2.test.ts",
-          "lines": 1154
         },
         {
           "path": "src/features/product-sync/components/ProductSyncSettings.tsx",
@@ -495,16 +495,16 @@
           "lines": 1095
         },
         {
+          "path": "src/shared/lib/products/services/productService.test.ts",
+          "lines": 1087
+        },
+        {
+          "path": "src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-mongo-update-plan.test.ts",
+          "lines": 1068
+        },
+        {
           "path": "src/features/integrations/utils/tradera-execution-steps.ts",
-          "lines": 1080
-        },
-        {
-          "path": "src/features/integrations/context/useProductListingsActionsImpl.test.tsx",
-          "lines": 1059
-        },
-        {
-          "path": "src/features/ai/ai-paths/services/path-run-executor/callbacks.ts",
-          "lines": 1056
+          "lines": 1060
         }
       ]
     },

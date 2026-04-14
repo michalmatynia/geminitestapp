@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-04-13T20:59:29.998Z",
+  "generatedAt": "2026-04-14T11:08:59.784Z",
   "track": {
     "id": "application-performance",
     "title": "Application performance",
@@ -114,12 +114,12 @@
     "defaultSelected": true,
     "description": "Adds app-level performance regression checks to the improvement portfolio so broad sweeps cover runtime health alongside UI, quality, and data recovery.",
     "overallStatus": "passed",
-    "latestGeneratedAt": "2026-04-13T20:59:29.994Z",
+    "latestGeneratedAt": "2026-04-14T11:08:59.781Z",
     "docDir": "docs/build/improvements/application-performance",
     "phases": [
       {
         "phase": "audit",
-        "generatedAt": "2026-04-13T20:41:47.098Z",
+        "generatedAt": "2026-04-14T11:08:59.781Z",
         "reportPath": "artifacts/improvements/audit-report.json",
         "executionMode": "executed",
         "allowWrite": false,
@@ -143,7 +143,7 @@
             "outputs": [],
             "instructions": [],
             "script": "perf:ops:fast",
-            "durationMs": 34497
+            "durationMs": 30480
           }
         ],
         "status": "passed"

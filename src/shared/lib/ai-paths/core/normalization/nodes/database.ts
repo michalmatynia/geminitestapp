@@ -33,6 +33,8 @@ const DEFAULT_DB_SCHEMA_CONFIG: DbSchemaConfig = {
   formatAs: 'text',
 };
 
+const CANONICAL_LOCALIZED_PARAMETER_TARGET_PATH = 'parameters';
+
 const deriveMappingsFromSimpleUpdateTemplate = (
   template: string
 ): DerivedUpdateMapping[] | null => {
@@ -125,6 +127,16 @@ export const normalizeDatabaseNode = (node: AiNode): AiNode => {
           databaseConfig.parameterInferenceGuard.allowUnknownParameterIds ?? false,
     }
     : undefined;
+  const localizedParameterMerge = databaseConfig.localizedParameterMerge
+    ? {
+      enabled: databaseConfig.localizedParameterMerge.enabled ?? false,
+      targetPath:
+          databaseConfig.localizedParameterMerge.targetPath ??
+          CANONICAL_LOCALIZED_PARAMETER_TARGET_PATH,
+      languageCode: databaseConfig.localizedParameterMerge.languageCode ?? '',
+      requireFullCoverage: databaseConfig.localizedParameterMerge.requireFullCoverage ?? false,
+    }
+    : undefined;
   const runtimeConfig = node.config?.runtime
     ? {
       ...node.config.runtime,
@@ -166,6 +178,7 @@ export const normalizeDatabaseNode = (node: AiNode): AiNode => {
         aiPrompt: databaseConfig.aiPrompt ?? '',
         validationRuleIds: databaseConfig.validationRuleIds ?? [],
         ...(parameterInferenceGuard ? { parameterInferenceGuard } : {}),
+        ...(localizedParameterMerge ? { localizedParameterMerge } : {}),
       },
     },
   };

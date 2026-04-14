@@ -17,6 +17,7 @@ export type KangurGameOperationSelectorContextValue = {
   isSixYearOld: boolean;
   locale: string;
   mixedPracticeAssignment: KangurGameOperationSelectorAssignment;
+  operationPracticeAssignment: KangurGameOperationSelectorAssignment;
   normalizedProgress: KangurGameOperationSelectorRuntime['progress'];
   quickPracticeDescription: string;
   quickPracticeGameChipLabel: string;

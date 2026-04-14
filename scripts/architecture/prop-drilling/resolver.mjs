@@ -1,5 +1,4 @@
 import path from 'node:path';
-import { normalizeAbsolute } from '../lib-metrics.mjs'; // Wait, let's redefine it or import properly
 
 const root = process.cwd();
 

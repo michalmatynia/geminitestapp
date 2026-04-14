@@ -1,6 +1,27 @@
 import { getValueAtMappingPath } from './json';
 import { safeStringify } from './runtime';
 
+const resolveTemplateTokenValue = (
+  key: string,
+  context: Record<string, unknown>,
+  currentValue: unknown
+): unknown => {
+  if (key === 'value' || key === 'current') {
+    return currentValue;
+  }
+  if (key.startsWith('current.')) {
+    return getValueAtMappingPath(currentValue, key.slice('current.'.length));
+  }
+  if (key.startsWith('value.')) {
+    const resolvedFromContext = getValueAtMappingPath(context, key);
+    if (resolvedFromContext !== undefined) {
+      return resolvedFromContext;
+    }
+    return getValueAtMappingPath(currentValue, key.slice('value.'.length));
+  }
+  return getValueAtMappingPath(context, key);
+};
+
 export const renderTemplate = (
   template: string,
   context: Record<string, unknown>,
@@ -17,11 +38,7 @@ export const renderTemplate = (
       const raw = curlyToken ?? bracketToken ?? '';
       const key = String(raw).trim();
       if (!key) return '';
-      if (key === 'value' || key === 'current') {
-        return safeStringify(currentValue);
-      }
-      const resolved = getValueAtMappingPath(context, key);
-      return safeStringify(resolved);
+      return safeStringify(resolveTemplateTokenValue(key, context, currentValue));
     }
   );
 
@@ -30,13 +47,8 @@ export const renderJsonTemplate = (
   context: Record<string, unknown>,
   currentValue: unknown
 ): string => {
-  const resolveToken = (token: string): unknown => {
-    const key = String(token).trim();
-    if (key === 'value' || key === 'current') {
-      return currentValue;
-    }
-    return getValueAtMappingPath(context, key);
-  };
+  const resolveToken = (token: string): unknown =>
+    resolveTemplateTokenValue(String(token).trim(), context, currentValue);
   const escapeQuoted = (input: string): string => {
     const replaceQuoted = (text: string, pattern: RegExp): string =>
       text.replace(pattern, (_match: string, token: string) => {

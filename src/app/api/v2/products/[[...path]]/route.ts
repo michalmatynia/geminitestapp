@@ -45,7 +45,6 @@ const ROUTES: CatchAllRouteDefinition<PatternToken>[] = [
   { pattern: ['categories'], loader: () => import('../categories/route-handler') },
   { pattern: ['categories', 'tree'], loader: () => import('../categories/tree/route-handler') },
   { pattern: ['categories', 'batch'], loader: () => import('../categories/batch/route-handler') },
-  { pattern: ['categories', 'migrate'], loader: () => import('../categories/migrate/route-handler') },
   { pattern: ['categories', 'reorder'], loader: () => import('../categories/reorder/route-handler') },
   { pattern: ['categories', param('id')], loader: () => import('../categories/[id]/route-handler') },
   { pattern: ['entities', 'catalogs', 'assign'], loader: () => import('../entities/catalogs/assign/route-handler') },

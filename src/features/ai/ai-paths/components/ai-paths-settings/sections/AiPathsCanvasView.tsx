@@ -44,9 +44,7 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
   const {
     confirmNodeSwitch,
     isPathTreeVisible,
-    setIsPathTreeVisible,
     isInspectorVisible,
-    setIsInspectorVisible,
     palette,
   } = useAiPathsSettingsPageCanvasInteractionsContext();
   const {

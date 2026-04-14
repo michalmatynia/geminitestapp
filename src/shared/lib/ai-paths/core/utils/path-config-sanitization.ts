@@ -338,6 +338,29 @@ export const sanitizePathConfig = (config: PathConfig): PathConfig => {
         );
       }
     }
+    const localizedParameterMerge =
+      databaseRecord['localizedParameterMerge'] &&
+      typeof databaseRecord['localizedParameterMerge'] === 'object' &&
+      !Array.isArray(databaseRecord['localizedParameterMerge'])
+        ? (databaseRecord['localizedParameterMerge'] as Record<string, unknown>)
+        : null;
+    if (localizedParameterMerge) {
+      const targetPath =
+        typeof localizedParameterMerge['targetPath'] === 'string'
+          ? localizedParameterMerge['targetPath'].trim()
+          : '';
+      if (targetPath.length > 0 && targetPath !== 'parameters') {
+        throw validationError(
+          'AI Path config contains unsupported localized parameter merge target path.',
+          {
+            source: 'ai_paths.path_config',
+            reason: 'unsupported_localized_parameter_merge_target_path',
+            nodeId: node.id,
+            targetPath,
+          }
+        );
+      }
+    }
     return {
       ...node,
       config: {

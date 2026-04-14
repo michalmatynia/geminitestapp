@@ -221,6 +221,14 @@ export const databaseConfigSchema = z.object({
       allowUnknownParameterIds: z.boolean().optional(),
     })
     .optional(),
+  localizedParameterMerge: z
+    .object({
+      enabled: z.boolean().optional(),
+      targetPath: z.string().optional(),
+      languageCode: z.string().optional(),
+      requireFullCoverage: z.boolean().optional(),
+    })
+    .optional(),
   schemaSnapshot: dbSchemaSnapshotSchema.optional(),
 });
 

@@ -344,18 +344,23 @@ export function PlaywrightNodeConfigSection(): React.JSX.Element | null {
 
       {isBatchCapture ? (
         <PlaywrightCaptureRoutesEditor
-          routes={playwrightConfig.captureRoutes ?? []}
-          baseUrl={playwrightConfig.captureBaseUrl ?? ''}
-          appearanceMode={playwrightConfig.captureAppearanceMode ?? ''}
-          onChange={(patch) =>
-            updateConfig({
-              ...(patch.routes !== undefined ? { captureRoutes: patch.routes } : {}),
-              ...(patch.baseUrl !== undefined ? { captureBaseUrl: patch.baseUrl } : {}),
-              ...(patch.appearanceMode !== undefined
-                ? { captureAppearanceMode: patch.appearanceMode }
-                : {}),
-            })
-          }
+          config={{
+            routes: playwrightConfig.captureRoutes ?? [],
+            baseUrl: playwrightConfig.captureBaseUrl ?? '',
+            appearanceMode: playwrightConfig.captureAppearanceMode ?? '',
+            onChange: (patch: {
+              routes?: any[];
+              baseUrl?: string;
+              appearanceMode?: string;
+            }) =>
+              updateConfig({
+                ...(patch.routes !== undefined ? { captureRoutes: patch.routes } : {}),
+                ...(patch.baseUrl !== undefined ? { captureBaseUrl: patch.baseUrl } : {}),
+                ...(patch.appearanceMode !== undefined
+                  ? { captureAppearanceMode: patch.appearanceMode }
+                  : {}),
+              }),
+          }}
         />
       ) : (
         <>

@@ -52,7 +52,7 @@ const stripTypeOnlyStatements = (content) =>
     .replace(/(^|\n)\s*import\s+type[\s\S]*?;\s*/g, '$1')
     .replace(/(^|\n)\s*export\s+type[\s\S]*?;\s*/g, '$1')
     .replace(/\btype\s+\w+[\s\S]*?;\s*/g, '')
-    .replace(/\binterface\s+\w+[\s\S]*?\}\s*/g, '')
+    .replace(/\binterface\s+\w+\s*\{[\s\S]*?\}\s*/g, '')
     .replace(/\btypeof\b/g, 'any')
     .replace(/\bReturnType\b/g, 'any');
 
@@ -130,7 +130,7 @@ const isDelegatedRoute = (content) => {
   }
 
   if (
-    /export\s*{\s*[^}]+\s*}\s*from\s*['"]@\/features\/[^'"]+\/(?:server|api\/[^'"]+\/(?:handler|route))['"]/.test(
+    /export\s*{\s*[\s\S]*?\s*}\s*from\s*['"]@\/features\/[^'"]+\/(?:server|api\/[^'"]+\/(?:handler|route))['"]/.test(
       content
     )
   ) {

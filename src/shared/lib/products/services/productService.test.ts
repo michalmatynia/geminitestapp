@@ -491,6 +491,45 @@ describe('productService parameter normalization', () => {
     });
   });
 
+  it('accepts structured create payloads when the English title category matches category.name_en', async () => {
+    categoryRepositoryMock.getCategoryById.mockResolvedValue({
+      id: 'category-1',
+      name: 'Przypinka Anime',
+      description: null,
+      color: null,
+      parentId: null,
+      catalogId: 'catalog-1',
+      name_en: 'Anime Pin',
+      name_pl: 'Przypinka Anime',
+      name_de: null,
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    });
+    validateProductCreateMock.mockResolvedValue({
+      success: true,
+      data: {
+        sku: 'SKU-CATEGORY-EN',
+        catalogIds: ['catalog-1'],
+        categoryId: 'category-1',
+        name_en: 'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan',
+      },
+    });
+
+    await productService.createProduct({
+      sku: 'SKU-CATEGORY-EN',
+      catalogIds: ['catalog-1'],
+      categoryId: 'category-1',
+      name_en: 'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan',
+    });
+
+    expect(repositoryMock.createProduct).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sku: 'SKU-CATEGORY-EN',
+        name_en: 'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan',
+      })
+    );
+  });
+
   it('rejects structured create payloads without a selected category', async () => {
     validateProductCreateMock.mockResolvedValue({
       success: true,

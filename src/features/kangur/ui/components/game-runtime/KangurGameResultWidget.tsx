@@ -22,6 +22,9 @@ import { getCurrentKangurDailyQuest } from '@/features/kangur/ui/services/daily-
 import { getNextLockedBadge, getProgressBadges } from '@/features/kangur/ui/services/progress';
 import { translateKangurProgressWithFallback } from '@/features/kangur/ui/services/progress-i18n';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
+import type { KangurXpToastQuestHint } from '@/features/kangur/ui/types';
+
+type KangurGameResultDailyQuest = KangurXpToastQuestHint | null | undefined;
 
 type KangurResultSectionCardProps = {
   accent: ComponentProps<typeof KangurInfoCard>['accent'];

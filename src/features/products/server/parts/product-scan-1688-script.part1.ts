@@ -357,6 +357,15 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
 
     return nextStep;
   };
+  const captureArtifacts = async (key) => {
+    if (!artifacts) return;
+    if (typeof artifacts.screenshot === 'function') {
+      await artifacts.screenshot(key).catch(() => undefined);
+    }
+    if (typeof artifacts.html === 'function') {
+      await artifacts.html(key).catch(() => undefined);
+    }
+  };
   const emitResult = async (payload) => {
     const payloadWithSteps = {
       ...payload,
@@ -1133,7 +1142,16 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
     const valueMatches = normalizedPrice
       ? Array.from(normalizedPrice.matchAll(/\d+(?:\.\d+)?/g)).map((entry) => entry[0])
       : [];
-    const currency = normalizedPrice && /[¥￥]/.test(normalizedPrice) ? 'CNY' : null;
+    let currency = null;
+    if (normalizedPrice) {
+      if (/[¥￥]/.test(normalizedPrice) || /CNY|RMB/i.test(normalizedPrice)) {
+        currency = 'CNY';
+      } else if (/[$]/.test(normalizedPrice) || /USD/i.test(normalizedPrice)) {
+        currency = 'USD';
+      } else if (/[€]/.test(normalizedPrice) || /EUR/i.test(normalizedPrice)) {
+        currency = 'EUR';
+      }
+    }
     return {
       label: normalizedPrice && /[-~至]/.test(normalizedPrice) ? 'Range' : 'Primary',
       amount: valueMatches[0] || null,
@@ -1362,8 +1380,7 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
     const platformProductIdMatch = canonicalUrl.match(/\/offer\/(\d+)\.html/i);
     const priceParts = parsePriceParts(priceText, moqText);
     const artifactKey = '1688-scan-probe-' + (candidateId || 'candidate') + '-rank-' + String(candidateRank);
-    await artifacts.screenshot(artifactKey).catch(() => undefined);
-    await artifacts.html(artifactKey).catch(() => undefined);
+    await captureArtifacts(artifactKey);
 
     return {
       blocked: false,
@@ -1431,8 +1448,7 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
       message: '1688 supplier reverse image scanner requires at least one product image.',
       url: page.url(),
     });
-    await artifacts.screenshot('1688-scan-error').catch(() => undefined);
-    await artifacts.html('1688-scan-error').catch(() => undefined);
+    await captureArtifacts('1688-scan-error');
     await emitResult({
       status: 'failed',
       title: null,
@@ -1877,8 +1893,7 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
             '1688 image search did not accept the product image URL. A local product image file is required for this scanner path.',
           url: page.url(),
         });
-        await artifacts.screenshot('1688-scan-error').catch(() => undefined);
-        await artifacts.html('1688-scan-error').catch(() => undefined);
+        await captureArtifacts('1688-scan-error');
         await emitResult({
           status: 'failed',
           title: null,
@@ -1911,8 +1926,7 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
         message: missingFileInputMessage,
         url: page.url(),
       });
-      await artifacts.screenshot('1688-scan-error').catch(() => undefined);
-      await artifacts.html('1688-scan-error').catch(() => undefined);
+      await captureArtifacts('1688-scan-error');
       await emitResult({
         status: 'failed',
         title: null,
@@ -1958,8 +1972,7 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
     CANDIDATE_RESULT_LIMIT
   );
   if (normalizedCandidateUrls.length === 0) {
-    await artifacts.screenshot('1688-scan-no-match').catch(() => undefined);
-    await artifacts.html('1688-scan-no-match').catch(() => undefined);
+    await captureArtifacts('1688-scan-no-match');
     await emitResult({
       status: 'no_match',
       title: null,
@@ -2133,8 +2146,7 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
   }
 
   if (!bestCandidate || bestScore < configuredMinimumCandidateScore) {
-    await artifacts.screenshot('1688-scan-no-match').catch(() => undefined);
-    await artifacts.html('1688-scan-no-match').catch(() => undefined);
+    await captureArtifacts('1688-scan-no-match');
     await emitResult({
       status: 'no_match',
       title: bestCandidate?.title || null,
@@ -2172,8 +2184,7 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
       { label: 'MOQ', value: bestCandidate.supplierDetails?.moqText },
     ]),
   });
-  await artifacts.screenshot('1688-scan-match').catch(() => undefined);
-  await artifacts.html('1688-scan-match').catch(() => undefined);
+  await captureArtifacts('1688-scan-match');
   await emitResult({
     status: 'matched',
     title: bestCandidate.title,

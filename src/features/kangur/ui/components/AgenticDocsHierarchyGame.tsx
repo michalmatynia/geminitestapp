@@ -253,12 +253,6 @@ function HierarchyDraggableItem({
   );
 }
 
-type HierarchyListProps = {
-  droppableId: string;
-  order: HierarchyItem[];
-  isTouchMoveTargetActive: boolean;
-};
-
 function HierarchyList({
   droppableId,
   state,
@@ -526,8 +520,10 @@ export default function AgenticDocsHierarchyGame({
         <HierarchyTouchHint />
         <HierarchyList
           droppableId={runtime.droppableId}
-          order={runtime.order}
-          isTouchMoveTargetActive={runtime.isTouchMoveTargetActive}
+          state={{
+            order: runtime.order,
+            isTouchMoveTargetActive: runtime.isTouchMoveTargetActive,
+          }}
         />
         <div className={cn(KANGUR_CENTER_ROW_CLASSNAME, 'mt-3 flex-wrap justify-start gap-2')}>
           <KangurButton

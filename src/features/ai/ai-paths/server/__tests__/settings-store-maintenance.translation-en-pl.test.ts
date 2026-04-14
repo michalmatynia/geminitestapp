@@ -434,8 +434,16 @@ describe('AI Paths maintenance forward-only action ids', () => {
     );
     expect(databaseNode?.config?.database).toEqual(
       expect.objectContaining({
-        updatePayloadMode: 'mapping',
-        updateTemplate: '',
+        updatePayloadMode: 'custom',
+        updateTemplate: expect.stringContaining('{{value.description_pl}}'),
+        skipEmpty: true,
+        trimStrings: true,
+        localizedParameterMerge: expect.objectContaining({
+          enabled: true,
+          targetPath: 'parameters',
+          languageCode: 'pl',
+          requireFullCoverage: false,
+        }),
         mappings: expect.arrayContaining([
           expect.objectContaining({
             targetPath: 'description_pl',

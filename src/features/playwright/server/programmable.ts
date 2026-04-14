@@ -19,6 +19,7 @@ import {
   runPlaywrightConnectionEngineTask,
   startPlaywrightConnectionEngineTask,
   type PlaywrightConnectionEngineTaskResult,
+  type ResolvedPlaywrightConnectionRuntime,
 } from './connection-runtime';
 import { runPlaywrightImportTask } from './import-task';
 import { runPlaywrightListingTask } from './listing-task';

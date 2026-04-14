@@ -1,6 +1,7 @@
 'use client';
 
 import { useLocale } from 'next-intl';
+import * as React from 'react';
 import { useId, useMemo } from 'react';
 
 import type { KangurAssignmentSnapshot } from '@kangur/platform';

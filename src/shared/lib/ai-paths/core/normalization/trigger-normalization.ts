@@ -146,6 +146,30 @@ const assertNoUnsupportedTriggerDatabaseConfig = (node: AiNode): void => {
       );
     }
   }
+
+  const localizedParameterMerge =
+    databaseConfig['localizedParameterMerge'] &&
+    typeof databaseConfig['localizedParameterMerge'] === 'object' &&
+    !Array.isArray(databaseConfig['localizedParameterMerge'])
+      ? (databaseConfig['localizedParameterMerge'] as Record<string, unknown>)
+      : null;
+  if (localizedParameterMerge) {
+    const targetPath =
+      typeof localizedParameterMerge['targetPath'] === 'string'
+        ? localizedParameterMerge['targetPath'].trim()
+        : '';
+    if (targetPath.length > 0 && targetPath !== 'parameters') {
+      throw validationError(
+        'AI Path config contains unsupported localized parameter merge target path.',
+        {
+          source: 'ai_paths.trigger_payload',
+          reason: 'unsupported_localized_parameter_merge_target_path',
+          nodeId: node.id,
+          targetPath,
+        }
+      );
+    }
+  }
 };
 
 const UNSUPPORTED_TRIGGER_DATA_PORTS = new Set(['context', 'meta', 'entityId', 'entityType']);

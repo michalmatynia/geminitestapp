@@ -158,7 +158,7 @@ function PartsOfSpeechGameSummary(): React.JSX.Element {
         dataTestId='english-parts-summary-breakdown'
         itemDataTestIdPrefix='english-parts-summary-breakdown'
       />
-      <KangurPracticeGameSummaryHighlight progress={percent} accent='sky' />
+      <KangurPracticeGameSummaryProgress percent={percent} accent='sky' />
       <KangurPracticeGameSummaryMessage>
         {percent === 100 ? 'Perfect score!' : percent >= 70 ? 'Great job!' : 'Keep practicing!'}
       </KangurPracticeGameSummaryMessage>
@@ -181,7 +181,6 @@ function PartsOfSpeechGamePlaying(): React.JSX.Element {
     checked,
     feedback,
     selectedTokenId,
-    setSelectedTokenId,
     round,
     isLocked,
     handleDragEnd,

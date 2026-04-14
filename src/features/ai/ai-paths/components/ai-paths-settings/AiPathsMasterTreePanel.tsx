@@ -1,7 +1,7 @@
 'use client';
 
 import { Eye, FileCode2, Folder, FolderOpen, FolderPlus, GripVertical, Plus, Trash2 } from 'lucide-react';
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import { createAiPathsMasterTreeAdapter } from '@/features/ai/ai-paths/utils/ai-paths-master-tree-adapter';
 import {

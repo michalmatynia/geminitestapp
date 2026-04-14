@@ -5,9 +5,13 @@ import { isObjectRecord } from '@/shared/utils/object-utils';
 import { parseJsonSafe, renderJsonTemplate } from '../../utils';
 import { buildDbQueryPayload, resolveEntityIdFromInputs } from '../utils';
 import {
-  mergeTranslatedParameterUpdates,
+  mergeLocalizedParameterUpdates,
   normalizeNonEmptyString,
 } from './database-parameter-inference';
+import {
+  applyTopLevelWriteValuePolicies,
+  resolveLocalizedParameterMergeConfig,
+} from './database-write-policies';
 import { executeDatabaseUpdate } from './integration-database-update-execution';
 import { resolveDatabaseUpdateMappings } from './integration-database-update-mapping-resolution';
 import {
@@ -47,49 +51,6 @@ const resolveCustomContentEnValue = (customUpdateDoc: unknown): string | undefin
   return typeof setValue === 'string' ? setValue : undefined;
 };
 
-const hasTranslationDescriptionMapping = (dbConfig: DatabaseConfig): boolean =>
-  (dbConfig.mappings ?? []).some(
-    (mapping): boolean =>
-      mapping.targetPath === 'description_pl' &&
-      mapping.sourcePort === 'value' &&
-      (mapping.sourcePath === 'description_pl' || !mapping.sourcePath)
-  );
-
-const hasTranslationParameterMapping = (dbConfig: DatabaseConfig): boolean =>
-  (dbConfig.mappings ?? []).some(
-    (mapping): boolean =>
-      mapping.targetPath === 'parameters' &&
-      (mapping.sourcePort === 'result' || mapping.sourcePort === 'value')
-  );
-
-const isLegacyTranslationParameterUpdate = (dbConfig: DatabaseConfig): boolean =>
-  hasTranslationDescriptionMapping(dbConfig) && hasTranslationParameterMapping(dbConfig);
-
-const isResolvedTranslationParameterUpdate = (
-  updates: Record<string, unknown>,
-  parameterTargetPath: string
-): boolean =>
-  Object.prototype.hasOwnProperty.call(updates, 'description_pl') &&
-  Object.prototype.hasOwnProperty.call(updates, parameterTargetPath);
-
-const pruneEmptyTranslationDescriptionUpdate = (
-  updates: Record<string, unknown>
-): {
-  updates: Record<string, unknown>;
-  pruned: boolean;
-} => {
-  if (!Object.prototype.hasOwnProperty.call(updates, 'description_pl')) {
-    return { updates, pruned: false };
-  }
-  const description = normalizeNonEmptyString(updates['description_pl']);
-  if (description) {
-    return { updates: { ...updates, description_pl: description }, pruned: false };
-  }
-  const nextUpdates = { ...updates };
-  delete nextUpdates['description_pl'];
-  return { updates: nextUpdates, pruned: true };
-};
-
 const patchTargetPathInUpdateDoc = (
   value: unknown,
   targetPath: string,
@@ -119,14 +80,14 @@ const patchTargetPathInUpdateDoc = (
   return nextRecord;
 };
 
-const createTranslationNoUpdatesOutput = (args: {
+const createNoSafeUpdatesOutput = (args: {
   error: string;
   aiPrompt: string;
   entityType: string;
   collection: string;
   filter: Record<string, unknown> | null;
   unresolvedSourcePorts?: string[];
-  translationParameterMergeMeta?: Record<string, unknown>;
+  localizedParameterMergeMeta?: Record<string, unknown>;
   reportAiPathsError: HandleDatabaseUpdateOperationInput['reportAiPathsError'];
   toast: HandleDatabaseUpdateOperationInput['toast'];
   nodeId: string;
@@ -135,13 +96,13 @@ const createTranslationNoUpdatesOutput = (args: {
   args.reportAiPathsError(
     new Error(args.error),
     {
-      action: 'dbTranslationUpdate',
+      action: 'dbUpdatePolicy',
       nodeId: args.nodeId,
       ...(args.unresolvedSourcePorts && args.unresolvedSourcePorts.length > 0
         ? { unresolvedSourcePorts: args.unresolvedSourcePorts }
         : {}),
-      ...(args.translationParameterMergeMeta
-        ? { translationParameterMerge: args.translationParameterMergeMeta }
+      ...(args.localizedParameterMergeMeta
+        ? { localizedParameterMerge: args.localizedParameterMergeMeta }
         : {}),
     },
     'Database update blocked:'
@@ -151,16 +112,16 @@ const createTranslationNoUpdatesOutput = (args: {
     result: null,
     bundle: {
       error: args.error,
-      guardrail: 'translation-no-updates',
+      guardrail: 'no-safe-updates',
       guardrailMeta: {
-        code: 'translation-no-updates',
+        code: 'no-safe-updates',
         severity: 'error',
         message: args.error,
         ...(args.unresolvedSourcePorts && args.unresolvedSourcePorts.length > 0
           ? { unresolvedSourcePorts: args.unresolvedSourcePorts }
           : {}),
-        ...(args.translationParameterMergeMeta
-          ? { translationParameterMerge: args.translationParameterMergeMeta }
+        ...(args.localizedParameterMergeMeta
+          ? { localizedParameterMerge: args.localizedParameterMergeMeta }
           : {}),
       },
     },
@@ -172,8 +133,8 @@ const createTranslationNoUpdatesOutput = (args: {
       ...(args.unresolvedSourcePorts && args.unresolvedSourcePorts.length > 0
         ? { unresolvedSourcePorts: args.unresolvedSourcePorts }
         : {}),
-      ...(args.translationParameterMergeMeta
-        ? { translationParameterMerge: args.translationParameterMergeMeta }
+      ...(args.localizedParameterMergeMeta
+        ? { localizedParameterMerge: args.localizedParameterMergeMeta }
         : {}),
     },
     aiPrompt: args.aiPrompt,
@@ -216,9 +177,11 @@ export async function handleDatabaseUpdateOperation({
     simulationEntityType,
     simulationEntityId
   );
+  const localizedParameterMergeConfig = resolveLocalizedParameterMergeConfig(dbConfig);
   const parameterTargetPath =
-    normalizeNonEmptyString(dbConfig.parameterInferenceGuard?.targetPath) ?? 'parameters';
-  const isConfiguredTranslationParameterUpdate = isLegacyTranslationParameterUpdate(dbConfig);
+    normalizeNonEmptyString(dbConfig.parameterInferenceGuard?.targetPath) ??
+    localizedParameterMergeConfig?.targetPath ??
+    'parameters';
 
   if (updatePayloadMode === 'mapping') {
     const mappingResult = resolveDatabaseUpdateMappings({
@@ -229,59 +192,50 @@ export async function handleDatabaseUpdateOperation({
     });
     const unresolvedSourcePorts = Array.from(mappingResult.unresolvedSourcePorts);
     let updates: Record<string, unknown> = mappingResult.updates;
-    let translationParameterMergeMeta: Record<string, unknown> | undefined;
-    const isTranslationParameterUpdate =
-      isConfiguredTranslationParameterUpdate ||
-      isResolvedTranslationParameterUpdate(updates, parameterTargetPath);
+    const writePolicyResult = applyTopLevelWriteValuePolicies({ updates, dbConfig });
+    updates = writePolicyResult.updates;
+    let localizedParameterMergeMeta: Record<string, unknown> | undefined;
 
-    if (isTranslationParameterUpdate) {
-      const descriptionPruneResult = pruneEmptyTranslationDescriptionUpdate(updates);
-      updates = descriptionPruneResult.updates;
-
-      if (Object.prototype.hasOwnProperty.call(updates, parameterTargetPath)) {
-        await ensureExistingParameterTemplateContext(parameterTargetPath, {
-          forceHydrateRichParameters: true,
-        });
-        const translationMergeResult = mergeTranslatedParameterUpdates({
-          targetPath: parameterTargetPath,
-          updates,
-          templateInputs,
-          languageCode: 'pl',
-          requireFullCoverage: false,
-        });
-        if (translationMergeResult.applied) {
-          updates = translationMergeResult.updates;
-          translationParameterMergeMeta = translationMergeResult.meta;
-        }
+    if (
+      localizedParameterMergeConfig &&
+      Object.prototype.hasOwnProperty.call(updates, localizedParameterMergeConfig.targetPath)
+    ) {
+      await ensureExistingParameterTemplateContext(localizedParameterMergeConfig.targetPath, {
+        forceHydrateRichParameters: true,
+      });
+      const localizedMergeResult = mergeLocalizedParameterUpdates({
+        targetPath: localizedParameterMergeConfig.targetPath,
+        updates,
+        templateInputs,
+        languageCode: localizedParameterMergeConfig.languageCode,
+        requireFullCoverage: localizedParameterMergeConfig.requireFullCoverage,
+      });
+      if (localizedMergeResult.applied) {
+        updates = localizedMergeResult.updates;
+        localizedParameterMergeMeta = localizedMergeResult.meta;
       }
     }
 
-    const debugPayload: Record<string, unknown> = {
-      mode: 'mapping',
-      updateStrategy,
-      entityType,
-      collection: configuredCollection || null,
-      idField,
-      entityId,
-      mappings: mappingResult.mappings,
-      updates,
-      unresolvedSourcePorts,
-      ...(translationParameterMergeMeta
-        ? { translationParameterMerge: translationParameterMergeMeta }
-        : {}),
-    };
+    const writeValuePoliciesMeta =
+      dbConfig.skipEmpty || dbConfig.trimStrings
+        ? {
+            skipEmpty: dbConfig.skipEmpty === true,
+            trimStrings: dbConfig.trimStrings === true,
+            changedTargets: writePolicyResult.changedTargets,
+          }
+        : undefined;
 
     if (Object.keys(updates).length === 0) {
-      if (isTranslationParameterUpdate) {
-        return createTranslationNoUpdatesOutput({
+      if (localizedParameterMergeConfig || writeValuePoliciesMeta) {
+        return createNoSafeUpdatesOutput({
           error:
-            'Translation update blocked. No safe description or parameter translation updates were resolved.',
+            'Database update blocked. No safe write candidates were resolved after applying the configured write policies.',
           aiPrompt,
           entityType,
           collection: configuredCollection,
           filter: entityId ? { id: entityId } : null,
           unresolvedSourcePorts,
-          translationParameterMergeMeta,
+          localizedParameterMergeMeta,
           reportAiPathsError,
           toast,
           nodeId: node.id,
@@ -296,10 +250,36 @@ export async function handleDatabaseUpdateOperation({
           reason: 'no_mapping_updates',
           unresolvedSourcePorts,
         },
-        debugPayload,
+        debugPayload: {
+          mode: 'mapping',
+          updateStrategy,
+          entityType,
+          collection: configuredCollection || null,
+          idField,
+          entityId,
+          mappings: mappingResult.mappings,
+          updates,
+          unresolvedSourcePorts,
+        },
         aiPrompt,
       };
     }
+
+    const debugPayload: Record<string, unknown> = {
+      mode: 'mapping',
+      updateStrategy,
+      entityType,
+      collection: configuredCollection || null,
+      idField,
+      entityId,
+      mappings: mappingResult.mappings,
+      updates,
+      unresolvedSourcePorts,
+      ...(localizedParameterMergeMeta
+        ? { localizedParameterMerge: localizedParameterMergeMeta }
+        : {}),
+      ...(writeValuePoliciesMeta ? { writeValuePolicies: writeValuePoliciesMeta } : {}),
+    };
 
     const executionResult = await executeDatabaseUpdate({
       nodeId: node.id,
@@ -380,7 +360,8 @@ export async function handleDatabaseUpdateOperation({
     };
   }
 
-  const currentValueRaw: unknown = templateInputs['value'] ?? templateInputs['jobId'] ?? '';
+  const currentValueRaw: unknown =
+    templateInputs['value'] ?? templateInputs['result'] ?? templateInputs['jobId'] ?? '';
   const currentValue = Array.isArray(currentValueRaw)
     ? (currentValueRaw as unknown[])[0]
     : currentValueRaw;
@@ -482,51 +463,61 @@ export async function handleDatabaseUpdateOperation({
     return value;
   };
   let updates: Record<string, unknown> = extractUpdates(customUpdateDoc);
-  let translationParameterMergeMeta: Record<string, unknown> | undefined;
-  const isTranslationParameterUpdate =
-    isConfiguredTranslationParameterUpdate ||
-    isResolvedTranslationParameterUpdate(updates, parameterTargetPath);
+  const writePolicyResult = applyTopLevelWriteValuePolicies({ updates, dbConfig });
+  updates = writePolicyResult.updates;
+  writePolicyResult.changedTargets.forEach((targetPath: string) => {
+    customUpdateDoc = patchTargetPathInUpdateDoc(customUpdateDoc, targetPath, updates);
+  });
+  let localizedParameterMergeMeta: Record<string, unknown> | undefined;
 
-  if (isTranslationParameterUpdate) {
-    const descriptionPruneResult = pruneEmptyTranslationDescriptionUpdate(updates);
-    updates = descriptionPruneResult.updates;
-    if (descriptionPruneResult.pruned) {
-      customUpdateDoc = patchTargetPathInUpdateDoc(customUpdateDoc, 'description_pl', updates);
+  if (
+    localizedParameterMergeConfig &&
+    Object.prototype.hasOwnProperty.call(updates, localizedParameterMergeConfig.targetPath)
+  ) {
+    await ensureExistingParameterTemplateContext(localizedParameterMergeConfig.targetPath, {
+      forceHydrateRichParameters: true,
+    });
+    const localizedMergeResult = mergeLocalizedParameterUpdates({
+      targetPath: localizedParameterMergeConfig.targetPath,
+      updates,
+      templateInputs,
+      languageCode: localizedParameterMergeConfig.languageCode,
+      requireFullCoverage: localizedParameterMergeConfig.requireFullCoverage,
+    });
+    if (localizedMergeResult.applied) {
+      updates = localizedMergeResult.updates;
+      localizedParameterMergeMeta = localizedMergeResult.meta;
+      customUpdateDoc = patchTargetPathInUpdateDoc(
+        customUpdateDoc,
+        localizedParameterMergeConfig.targetPath,
+        updates
+      );
     }
+  }
 
-    if (Object.prototype.hasOwnProperty.call(updates, parameterTargetPath)) {
-      await ensureExistingParameterTemplateContext(parameterTargetPath, {
-        forceHydrateRichParameters: true,
-      });
-      const translationMergeResult = mergeTranslatedParameterUpdates({
-        targetPath: parameterTargetPath,
-        updates,
-        templateInputs,
-        languageCode: 'pl',
-        requireFullCoverage: false,
-      });
-      if (translationMergeResult.applied) {
-        updates = translationMergeResult.updates;
-        translationParameterMergeMeta = translationMergeResult.meta;
-        customUpdateDoc = patchTargetPathInUpdateDoc(customUpdateDoc, parameterTargetPath, updates);
-      }
-    }
+  const writeValuePoliciesMeta =
+    dbConfig.skipEmpty || dbConfig.trimStrings
+      ? {
+          skipEmpty: dbConfig.skipEmpty === true,
+          trimStrings: dbConfig.trimStrings === true,
+          changedTargets: writePolicyResult.changedTargets,
+        }
+      : undefined;
 
-    if (Object.keys(updates).length === 0) {
-      return createTranslationNoUpdatesOutput({
-        error:
-          'Translation update blocked. No safe description or parameter translation updates were resolved.',
-        aiPrompt,
-        entityType,
-        collection: configuredCollection,
-        filter: customFilter,
-        translationParameterMergeMeta,
-        reportAiPathsError,
-        toast,
-        nodeId: node.id,
-        mode: 'custom',
-      });
-    }
+  if (Object.keys(updates).length === 0 && (localizedParameterMergeConfig || writeValuePoliciesMeta)) {
+    return createNoSafeUpdatesOutput({
+      error:
+        'Database update blocked. No safe write candidates were resolved after applying the configured write policies.',
+      aiPrompt,
+      entityType,
+      collection: configuredCollection,
+      filter: customFilter,
+      localizedParameterMergeMeta,
+      reportAiPathsError,
+      toast,
+      nodeId: node.id,
+      mode: 'custom',
+    });
   }
 
   const debugPayload: Record<string, unknown> = {
@@ -541,9 +532,10 @@ export async function handleDatabaseUpdateOperation({
     updateDoc: customUpdateDoc,
     queryTemplate: queryConfig.queryTemplate ?? '',
     updateTemplate: dbConfig.updateTemplate ?? '',
-    ...(translationParameterMergeMeta
-      ? { translationParameterMerge: translationParameterMergeMeta }
+    ...(localizedParameterMergeMeta
+      ? { localizedParameterMerge: localizedParameterMergeMeta }
       : {}),
+    ...(writeValuePoliciesMeta ? { writeValuePolicies: writeValuePoliciesMeta } : {}),
   };
 
   const executionResult = await executeDatabaseUpdate({

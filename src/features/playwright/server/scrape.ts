@@ -10,6 +10,7 @@ import {
   runPlaywrightConnectionEngineTask,
   type PlaywrightConnectionBaseEngineRunRequest,
   type PlaywrightConnectionEngineTaskResult,
+  type ResolvedPlaywrightConnectionRuntime,
 } from './connection-runtime';
 import {
   buildPlaywrightExecutionSettingsSummary,
@@ -18,7 +19,6 @@ import {
 import type { PlaywrightEngineRunInstance, PlaywrightEngineRunRecord } from './runtime';
 import { readPlaywrightEngineRun } from './runtime';
 import { resolvePlaywrightEngineRunOutputs } from './run-result';
-import { runPlaywrightConnectionScriptTask } from './script-task';
 
 const resolveScriptRunStartUrl = (
   input: Record<string, unknown>,
@@ -124,7 +124,7 @@ export const runPlaywrightScrapeScript = async ({
       ...(contextRegistry ? { contextRegistry } : {}),
     },
     instance,
-    resolveEngineRequestConfig: (runtime) => {
+    resolveEngineRequestConfig: (runtime: ResolvedPlaywrightConnectionRuntime) => {
       const runtimeSettings = {
         ...runtime.settings,
         ...(runtimeSettingsOverrides ?? {}),
@@ -198,7 +198,7 @@ export const runPlaywrightScrapeScript = async ({
     effectiveBrowserMode: effectiveSettings.headless ? 'headless' : 'headed',
     personaId: runtime.personaId ?? null,
     executionSettings: buildPlaywrightExecutionSettingsSummary(effectiveSettings),
-    rawResult: resultValue,
+    rawResult: (resultValue ?? {}) as Record<string, unknown>,
     outputs,
     logs: Array.isArray(run.logs) ? run.logs : [],
   };

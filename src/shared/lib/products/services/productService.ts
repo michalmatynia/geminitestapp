@@ -35,6 +35,7 @@ import { getTitleTermRepository } from '@/shared/lib/products/services/title-ter
 import {
   normalizeStructuredProductName,
   parseStructuredProductName,
+  resolveLocalizedCategoryName,
 } from '@/shared/lib/products/title-terms';
 import { validateProductCreate, validateProductUpdate } from '@/shared/lib/products/validations';
 import {
@@ -261,6 +262,26 @@ const ensureStructuredProductNameTerms = async (input: {
 const normalizeStructuredCategorySegment = (value: string): string =>
   value.trim().replace(/\s+/g, ' ');
 
+const resolveStructuredCategoryAliases = (category: {
+  name: string;
+  name_en?: string | null;
+  name_pl?: string | null;
+  name_de?: string | null;
+}): string[] =>
+  Array.from(
+    new Set(
+      [
+        resolveLocalizedCategoryName(category, 'en'),
+        category.name,
+        category.name_en,
+        category.name_pl,
+        category.name_de,
+      ]
+        .map((value) => (typeof value === 'string' ? normalizeStructuredCategorySegment(value) : ''))
+        .filter((value) => value.length > 0)
+    )
+  );
+
 const assertStructuredProductNameCategory = async (input: {
   provider: ProductDbProvider;
   categoryId: unknown;
@@ -292,9 +313,10 @@ const assertStructuredProductNameCategory = async (input: {
   }
 
   const normalizedSegment = normalizeStructuredCategorySegment(parsed.category);
-  const normalizedCategoryName = normalizeStructuredCategorySegment(category.name);
+  const categoryAliases = resolveStructuredCategoryAliases(category);
+  const normalizedCategoryName = categoryAliases[0] ?? normalizeStructuredCategorySegment(category.name);
 
-  if (normalizedSegment !== normalizedCategoryName) {
+  if (!categoryAliases.includes(normalizedSegment)) {
     throw badRequestError('Structured product name category must match the selected category.', {
       field: 'name_en',
       categoryId,

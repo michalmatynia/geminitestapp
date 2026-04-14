@@ -213,6 +213,70 @@ describe('materializeStoredTriggerPathConfig', () => {
     expect(resolved.changed).toBe(true);
   });
 
+  it('repairs translation mapping update nodes with the semantic value-scoped description token', async () => {
+    const actualPortableEngine = await vi.importActual<
+      typeof import('@/shared/lib/ai-paths/portable-engine')
+    >('@/shared/lib/ai-paths/portable-engine');
+    const template = getStarterWorkflowTemplateById('starter_translation_en_pl');
+    if (!template) {
+      throw new Error('Expected starter_translation_en_pl template');
+    }
+    const config = materializeStarterWorkflowPathConfig(template, {
+      pathId: 'path-translation-en-pl-repair',
+      seededDefault: false,
+    });
+    const legacyNodes = (config.nodes ?? []).map((node) => {
+      if (node.type !== 'database' || node.title !== 'Database Update') {
+        return node;
+      }
+      return {
+        ...node,
+        config: {
+          ...node.config,
+          database: {
+            ...node.config?.database,
+            updatePayloadMode: 'mapping',
+            updateTemplate: '',
+          },
+        },
+      };
+    });
+    const rawConfig = JSON.stringify({
+      ...config,
+      nodes: legacyNodes,
+    });
+
+    mockResolvePortablePathInput.mockImplementation(actualPortableEngine.resolvePortablePathInput);
+
+    const resolved = materializeStoredTriggerPathConfig({
+      pathId: config.id,
+      rawConfig,
+      fallbackName: config.name,
+    });
+
+    const databaseNode = resolved.config.nodes.find(
+      (node) => node.type === 'database' && node.title === 'Database Update'
+    );
+    expect(databaseNode?.config?.database?.updatePayloadMode).toBe('custom');
+    expect(databaseNode?.config?.database?.updateTemplate).toContain(
+      '"description_pl": "{{value.description_pl}}"'
+    );
+    expect(databaseNode?.config?.database?.updateTemplate).toContain(
+      '"parameters": {{result.parameters}}'
+    );
+    expect(databaseNode?.config?.database?.skipEmpty).toBe(true);
+    expect(databaseNode?.config?.database?.trimStrings).toBe(true);
+    expect(databaseNode?.config?.database?.localizedParameterMerge).toEqual(
+      expect.objectContaining({
+        enabled: true,
+        targetPath: 'parameters',
+        languageCode: 'pl',
+        requireFullCoverage: false,
+      })
+    );
+    expect(resolved.changed).toBe(true);
+  });
+
   it('preserves an explicit Normalize model selection while materializing stale starter configs', async () => {
     const actualPortableEngine = await vi.importActual<
       typeof import('@/shared/lib/ai-paths/portable-engine')

@@ -35,8 +35,6 @@ const ADMIN_CANONICAL_REDIRECTS = new Map<string, string>([
     '/admin/integrations/marketplaces/category-mapper',
     '/admin/integrations/aggregators/base-com/category-mapping',
   ],
-  ['/admin/products/builder', '/admin/products/settings'],
-  ['/admin/products/constructor', '/admin/products/settings'],
   ['/admin/products/jobs', '/admin/ai-paths/queue?tab=paths-external'],
   ['/admin/prompt-engine', '/admin/prompt-engine/validation'],
   ['/admin/settings/ai', '/admin/brain?tab=routing'],

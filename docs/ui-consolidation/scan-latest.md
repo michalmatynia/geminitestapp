@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-13'
+last_reviewed: '2026-04-14'
 status: 'generated'
 doc_type: 'generated'
 scope: 'cross-feature'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # UI Consolidation Scan
 
-Generated at: 2026-04-13T20:41:09.460Z
+Generated at: 2026-04-14T11:08:27.180Z
 
 ## Snapshot
 

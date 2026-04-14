@@ -7,7 +7,6 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 const STORAGE_KEY = 'queued-product-ids';
 const DEFAULT_QUEUED_PRODUCT_TTL_MS = 30_000;
 const MIN_QUEUED_PRODUCT_TTL_MS = 1_000;
-const LEGACY_SOURCE = 'legacy';
 
 type QueuedSourceState = {
   expiresAt: number | null;
@@ -240,16 +239,6 @@ const hydrateQueuedProductStateFromStorage = (stored: unknown): void => {
   }
 
   const now = Date.now();
-  if (Array.isArray(stored)) {
-    stored.forEach((rawId: unknown) => {
-      if (typeof rawId !== 'string') return;
-      const productId = normalizeProductId(rawId);
-      if (!productId) return;
-      upsertQueuedProductSourceInternal(productId, LEGACY_SOURCE, null, false);
-    });
-    return;
-  }
-
   if (!stored || typeof stored !== 'object' || Array.isArray(stored)) return;
   const candidate = stored as Partial<StoredQueuedProductStateV2> & {
     products?: Record<string, Array<{ source?: unknown; expiresAt?: unknown }>>;
@@ -384,21 +373,6 @@ export const clearQueuedProductId = (id: string): void => {
   if (!productId) return;
   loadFromStorage();
   clearQueuedProductIdInternal(productId, true);
-};
-
-export const addQueuedProductId = (id: string): void => {
-  addQueuedProductSource(id, LEGACY_SOURCE);
-};
-
-export const removeQueuedProductId = (id: string): void => {
-  clearQueuedProductId(id);
-};
-
-export const markQueuedProductId = (
-  id: string,
-  ttlMs: number = DEFAULT_QUEUED_PRODUCT_TTL_MS
-): void => {
-  markQueuedProductSource(id, LEGACY_SOURCE, ttlMs);
 };
 
 export const useQueuedProductIds = (): Set<string> => {

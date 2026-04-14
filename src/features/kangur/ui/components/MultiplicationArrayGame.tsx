@@ -339,11 +339,15 @@ function MultiplicationArraySummaryView({
   );
 }
 
-function MultiplicationArrayCounters(): React.JSX.Element {
-  const { a, b, collected, translations } = useMultiplicationArrayGame();
-  const total = a * b;
-  const collectedCount = collected.size * b;
-
+function MultiplicationArrayCounters({
+  collectedCount,
+  total,
+  translations,
+}: {
+  collectedCount: number;
+  total: number;
+  translations: ReturnType<typeof useTranslations>;
+}): React.JSX.Element {
   return (
     <div className='flex w-full flex-col gap-2 min-[420px]:flex-row min-[420px]:items-center'>
       <KangurMetricCard

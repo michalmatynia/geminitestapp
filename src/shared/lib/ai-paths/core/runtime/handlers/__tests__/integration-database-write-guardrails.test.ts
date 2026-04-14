@@ -72,6 +72,26 @@ describe('resolveWriteTemplateGuardrail', () => {
     expect(result).toEqual({ ok: true });
   });
 
+  it('falls back nested value-scoped tokens to the current payload when the value port is absent', () => {
+    const result = resolveWriteTemplateGuardrail({
+      templates: [
+        {
+          name: 'updateTemplate',
+          template:
+            '{"parameters": {{result.parameters}}, "description_pl": "{{value.description_pl}}"}',
+        },
+      ],
+      templateContext: {
+        result: {
+          parameters: [{ parameterId: 'param-1', value: 'metal' }],
+        },
+      },
+      currentValue: { description_pl: 'Opis PL' },
+    });
+
+    expect(result).toEqual({ ok: true });
+  });
+
   it('resolves nested tokens when context token root is an array of candidates', () => {
     const result = resolveWriteTemplateGuardrail({
       templates: [

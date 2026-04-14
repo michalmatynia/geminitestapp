@@ -75,6 +75,14 @@ const buildBaseArgs = (): HandleDatabaseUpdateOperationInput => ({
     mode: 'replace',
     updateStrategy: 'one',
     updatePayloadMode: 'mapping',
+    skipEmpty: true,
+    trimStrings: true,
+    localizedParameterMerge: {
+      enabled: true,
+      targetPath: 'parameters',
+      languageCode: 'pl',
+      requireFullCoverage: false,
+    },
     mappings: [
       {
         targetPath: 'description_pl',
@@ -191,7 +199,7 @@ describe('handleDatabaseUpdateOperation', () => {
     );
     expect(result['debugPayload']).toEqual(
       expect.objectContaining({
-        translationParameterMerge: expect.objectContaining({
+        localizedParameterMerge: expect.objectContaining({
           languageCode: 'pl',
           mergedCount: 2,
         }),
@@ -240,10 +248,110 @@ describe('handleDatabaseUpdateOperation', () => {
     );
     expect(result['debugPayload']).toEqual(
       expect.objectContaining({
-        translationParameterMerge: expect.objectContaining({
+        localizedParameterMerge: expect.objectContaining({
           languageCode: 'pl',
           mergedCount: 2,
         }),
+        updateDoc: {
+          $set: {
+            description_pl: 'Opis produktu',
+            parameters: [
+              expect.objectContaining({
+                parameterId: 'color',
+                value: 'Blue',
+                valuesByLanguage: { en: 'Blue', pl: 'Niebieski' },
+              }),
+              expect.objectContaining({
+                parameterId: 'material',
+                value: 'Steel',
+                valuesByLanguage: { pl: 'Stal' },
+              }),
+            ],
+          },
+        },
+      })
+    );
+  });
+
+  it('renders nested value-scoped translation tokens from the current payload fallback in custom mode', async () => {
+    const args = buildBaseArgs();
+    args.resolvedInputs = {
+      entityId: 'product-1',
+      entityType: 'product',
+      result: {
+        description_pl: 'Opis produktu',
+        parameters: [
+          { parameterId: 'color', value: 'Niebieski' },
+          { parameterId: 'material', valuesByLanguage: { pl: 'Stal' } },
+        ],
+      },
+    };
+    args.nodeInputPorts = ['entityId', 'entityType', 'result'];
+    args.dbConfig = {
+      ...args.dbConfig,
+      updatePayloadMode: 'custom',
+      updateTemplate:
+        '{"$set":{"description_pl":"{{value.description_pl}}","parameters":{{result.parameters}}}}',
+    } as DatabaseConfig;
+    args.templateInputs = {
+      entityId: 'product-1',
+      entityType: 'product',
+      result: {
+        description_pl: 'Opis produktu',
+        parameters: [
+          { parameterId: 'color', value: 'Niebieski' },
+          { parameterId: 'material', valuesByLanguage: { pl: 'Stal' } },
+        ],
+      },
+      context: {
+        entity: {
+          parameters: [
+            {
+              parameterId: 'color',
+              value: 'Blue',
+              selectorType: 'select',
+              optionLabels: ['Blue', 'Black'],
+              valuesByLanguage: { en: 'Blue' },
+            },
+            {
+              parameterId: 'material',
+              value: 'Steel',
+              attributeId: 'attr-material',
+            },
+          ],
+        },
+      },
+    };
+
+    const result = await handleDatabaseUpdateOperation(args);
+
+    expect(executeDatabaseUpdateMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        updatePayloadMode: 'custom',
+        customUpdateDoc: {
+          $set: {
+            description_pl: 'Opis produktu',
+            parameters: [
+              {
+                parameterId: 'color',
+                value: 'Blue',
+                selectorType: 'select',
+                optionLabels: ['Blue', 'Black'],
+                valuesByLanguage: { en: 'Blue', pl: 'Niebieski' },
+              },
+              {
+                parameterId: 'material',
+                value: 'Steel',
+                attributeId: 'attr-material',
+                valuesByLanguage: { pl: 'Stal' },
+              },
+            ],
+          },
+        },
+      })
+    );
+    expect(result['debugPayload']).toEqual(
+      expect.objectContaining({
         updateDoc: {
           $set: {
             description_pl: 'Opis produktu',
@@ -292,12 +400,12 @@ describe('handleDatabaseUpdateOperation', () => {
     expect(executeDatabaseUpdateMock).not.toHaveBeenCalled();
     expect(result['bundle']).toEqual(
       expect.objectContaining({
-        guardrail: 'translation-no-updates',
+        guardrail: 'no-safe-updates',
       })
     );
     expect(result['debugPayload']).toEqual(
       expect.objectContaining({
-        translationParameterMerge: expect.objectContaining({
+        localizedParameterMerge: expect.objectContaining({
           skippedCount: 1,
           writeCandidates: 0,
         }),
@@ -305,7 +413,7 @@ describe('handleDatabaseUpdateOperation', () => {
     );
     expect(args.reportAiPathsError).toHaveBeenCalled();
     expect(args.toast).toHaveBeenCalledWith(
-      'Translation update blocked. No safe description or parameter translation updates were resolved.',
+      'Database update blocked. No safe write candidates were resolved after applying the configured write policies.',
       { variant: 'error' }
     );
   });

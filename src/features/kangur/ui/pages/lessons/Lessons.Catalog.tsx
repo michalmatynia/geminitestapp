@@ -234,13 +234,10 @@ function LessonsCatalogIntroCardWithPageContent({
   );
 }
 
-function LessonsCatalogEmptyStateWithPageContent({
-  ageGroupLabel,
-  translations,
-}: {
-  ageGroupLabel: string;
-  translations: LessonsTranslation;
-}): React.JSX.Element {
+function LessonsCatalogEmptyStateWithPageContent(): React.JSX.Element {
+  const { ageGroup, translations } = useLessonsCatalogContext();
+  const locale = useLocale();
+  const ageGroupLabel = getLocalizedKangurAgeGroupLabel(ageGroup, locale);
   const { entry: lessonListEmptyStateContent } = useKangurPageContentEntry(
     'lessons-list-empty-state'
   );
@@ -832,10 +829,7 @@ export function LessonsCatalog() {
             <LessonsCatalogSkeleton />
           ) : shouldShowEmptyState ? (
             isPageContentReady ? (
-              <LessonsCatalogEmptyStateWithPageContent
-                ageGroupLabel={ageGroupLabel}
-                translations={translations}
-              />
+              <LessonsCatalogEmptyStateWithPageContent />
             ) : (
               <KangurEmptyState
                 accent='indigo'

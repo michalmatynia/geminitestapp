@@ -21,6 +21,16 @@ function resolveManagedGeneratedDocRule(relativePath) {
     };
   }
 
+  if (normalizedPath === 'docs/metrics/type-clusters-plan-latest.md') {
+    return {
+      owner: 'Platform Team',
+      status: 'generated',
+      doc_type: 'generated',
+      scope: 'cross-feature',
+      canonical: true,
+    };
+  }
+
   if (
     normalizedPath === 'docs/build/improvements/scan-latest.md' ||
     /^docs\/build\/improvements\/[^/]+\/scan-latest\.md$/u.test(normalizedPath)

@@ -20,7 +20,7 @@ import {
   resolveNodeRuntimeStatusLabel,
 } from './canvas/signal-flow-visual-state';
 import { buildConnectorInfo } from './canvas-board-connectors';
-import { useCanvasBoardUI, type CanvasBoardUIContextValue } from './CanvasBoardUIContext';
+import { useCanvasBoardUI } from './CanvasBoardUIContext';
 
 const EMPTY_TRIGGER_IDS = new Set<string>();
 
@@ -426,10 +426,6 @@ export const CanvasSvgNode = React.memo(function CanvasSvgNode({
     onSelectNode,
     onOpenNodeConfig,
     openNodeConfigOnSingleClick,
-    onFireTrigger,
-    onNodeDiagnosticsHover,
-    onNodeDiagnosticsLeave,
-    onFocusNodeDiagnostics,
     nodes,
     edges,
     view,
@@ -555,7 +551,6 @@ export const CanvasSvgNode = React.memo(function CanvasSvgNode({
     ? Math.max(64, runtimeStatusLabel.length * 6 + 16)
     : 0;
   const showNodePorts = detailLevel !== 'skeleton' || isSelected || isPrimarySelected;
-  const nodeForPorts = node;
   const titleFontSize = detailLevel === 'skeleton' ? 11 : 12;
   const titleY = detailLevel === 'skeleton' ? 17 : 18;
   const titleText =

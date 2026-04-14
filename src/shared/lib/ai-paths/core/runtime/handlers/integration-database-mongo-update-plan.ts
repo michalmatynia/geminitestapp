@@ -9,11 +9,15 @@ import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 
 import {
   applyParameterInferenceGuard,
-  mergeTranslatedParameterUpdates,
+  mergeLocalizedParameterUpdates,
   materializeParameterInferenceUpdates,
   normalizeNonEmptyString,
   toRecord,
 } from './database-parameter-inference';
+import {
+  applyTopLevelWriteValuePolicies,
+  resolveLocalizedParameterMergeConfig,
+} from './database-write-policies';
 import {
   buildMongoUpdateDebugPayload,
   resolveMongoUpdateFilter,
@@ -57,49 +61,6 @@ export type BuildMongoUpdatePlanInput = {
     options?: { forceHydrateRichParameters?: boolean }
   ) => Promise<void>;
   aiPrompt: string;
-};
-
-const hasTranslationDescriptionMapping = (dbConfig: DatabaseConfig): boolean =>
-  (dbConfig.mappings ?? []).some(
-    (mapping): boolean =>
-      mapping.targetPath === 'description_pl' &&
-      mapping.sourcePort === 'value' &&
-      (mapping.sourcePath === 'description_pl' || !mapping.sourcePath)
-  );
-
-const hasTranslationParameterMapping = (dbConfig: DatabaseConfig): boolean =>
-  (dbConfig.mappings ?? []).some(
-    (mapping): boolean =>
-      mapping.targetPath === 'parameters' &&
-      (mapping.sourcePort === 'result' || mapping.sourcePort === 'value')
-  );
-
-const isLegacyTranslationParameterUpdate = (dbConfig: DatabaseConfig): boolean =>
-  hasTranslationDescriptionMapping(dbConfig) && hasTranslationParameterMapping(dbConfig);
-
-const isResolvedTranslationParameterUpdate = (
-  updates: Record<string, unknown>,
-  parameterTargetPath: string
-): boolean =>
-  Object.prototype.hasOwnProperty.call(updates, 'description_pl') &&
-  Object.prototype.hasOwnProperty.call(updates, parameterTargetPath);
-
-const pruneEmptyTranslationDescriptionUpdate = (
-  updates: Record<string, unknown>
-): {
-  updates: Record<string, unknown>;
-  pruned: boolean;
-} => {
-  if (!Object.prototype.hasOwnProperty.call(updates, 'description_pl')) {
-    return { updates, pruned: false };
-  }
-  const description = normalizeNonEmptyString(updates['description_pl']);
-  if (description) {
-    return { updates: { ...updates, description_pl: description }, pruned: false };
-  }
-  const nextUpdates = { ...updates };
-  delete nextUpdates['description_pl'];
-  return { updates: nextUpdates, pruned: true };
 };
 
 const patchTargetPathInUpdateDoc = (
@@ -206,13 +167,13 @@ const pruneImplicitEmptyProductParameterUpdate = (args: {
   };
 };
 
-const createTranslationNoUpdatesOutput = (args: {
+const createNoSafeUpdatesOutput = (args: {
   error: string;
   aiPrompt: string;
   collection: string;
   resolvedFilter: Record<string, unknown>;
   unresolvedSourcePorts?: string[];
-  translationParameterMergeMeta?: Record<string, unknown>;
+  localizedParameterMergeMeta?: Record<string, unknown>;
   reportAiPathsError: BuildMongoUpdatePlanInput['reportAiPathsError'];
   toast: BuildMongoUpdatePlanInput['toast'];
   nodeId: string;
@@ -221,13 +182,13 @@ const createTranslationNoUpdatesOutput = (args: {
   args.reportAiPathsError(
     new Error(args.error),
     {
-      action: 'dbTranslationUpdate',
+      action: 'dbUpdatePolicy',
       nodeId: args.nodeId,
       ...(args.unresolvedSourcePorts && args.unresolvedSourcePorts.length > 0
         ? { unresolvedSourcePorts: args.unresolvedSourcePorts }
         : {}),
-      ...(args.translationParameterMergeMeta
-        ? { translationParameterMerge: args.translationParameterMergeMeta }
+      ...(args.localizedParameterMergeMeta
+        ? { localizedParameterMerge: args.localizedParameterMergeMeta }
         : {}),
     },
     'Database update blocked:'
@@ -238,16 +199,16 @@ const createTranslationNoUpdatesOutput = (args: {
       result: null,
       bundle: {
         error: args.error,
-        guardrail: 'translation-no-updates',
+        guardrail: 'no-safe-updates',
         guardrailMeta: {
-          code: 'translation-no-updates',
+          code: 'no-safe-updates',
           severity: 'error',
           message: args.error,
           ...(args.unresolvedSourcePorts && args.unresolvedSourcePorts.length > 0
             ? { unresolvedSourcePorts: args.unresolvedSourcePorts }
             : {}),
-          ...(args.translationParameterMergeMeta
-            ? { translationParameterMerge: args.translationParameterMergeMeta }
+          ...(args.localizedParameterMergeMeta
+            ? { localizedParameterMerge: args.localizedParameterMergeMeta }
             : {}),
         },
       },
@@ -258,8 +219,8 @@ const createTranslationNoUpdatesOutput = (args: {
         ...(args.unresolvedSourcePorts && args.unresolvedSourcePorts.length > 0
           ? { unresolvedSourcePorts: args.unresolvedSourcePorts }
           : {}),
-        ...(args.translationParameterMergeMeta
-          ? { translationParameterMerge: args.translationParameterMergeMeta }
+        ...(args.localizedParameterMergeMeta
+          ? { localizedParameterMerge: args.localizedParameterMergeMeta }
           : {}),
       },
       aiPrompt: args.aiPrompt,
@@ -311,7 +272,8 @@ export async function buildMongoUpdatePlan({
   aiPrompt,
 }: BuildMongoUpdatePlanInput): Promise<BuildMongoUpdatePlanResult> {
   const updatePayloadMode = dbConfig.updatePayloadMode ?? 'custom';
-  const currentValueRaw: unknown = templateInputs['value'] ?? templateInputs['jobId'] ?? '';
+  const currentValueRaw: unknown =
+    templateInputs['value'] ?? templateInputs['result'] ?? templateInputs['jobId'] ?? '';
   const currentValue = Array.isArray(currentValueRaw)
     ? (currentValueRaw as unknown[])[0]
     : currentValueRaw;
@@ -355,14 +317,17 @@ export async function buildMongoUpdatePlan({
     parseJsonTemplate,
   });
 
+  const localizedParameterMergeConfig = resolveLocalizedParameterMergeConfig(dbConfig);
   const parameterTargetPath =
-    normalizeNonEmptyString(dbConfig.parameterInferenceGuard?.targetPath) ?? 'parameters';
-  const isConfiguredTranslationParameterUpdate = isLegacyTranslationParameterUpdate(dbConfig);
+    normalizeNonEmptyString(dbConfig.parameterInferenceGuard?.targetPath) ??
+    localizedParameterMergeConfig?.targetPath ??
+    'parameters';
 
   let updates: Record<string, unknown> = {};
   let updateDoc: unknown = null;
-  let translationParameterMergeMeta: Record<string, unknown> | undefined;
+  let localizedParameterMergeMeta: Record<string, unknown> | undefined;
   let implicitEmptyParameterPruneMeta: Record<string, unknown> | undefined;
+  let writeValuePoliciesMeta: Record<string, unknown> | undefined;
 
   if (updatePayloadMode === 'mapping') {
     const mappingResult = resolveDatabaseUpdateMappings({
@@ -372,34 +337,34 @@ export async function buildMongoUpdatePlan({
       parameterTargetPath,
     });
     updates = mappingResult.updates;
-    const isTranslationParameterUpdate =
-      isConfiguredTranslationParameterUpdate ||
-      isResolvedTranslationParameterUpdate(updates, parameterTargetPath);
-
-    if (isTranslationParameterUpdate) {
-      const descriptionPruneResult = pruneEmptyTranslationDescriptionUpdate(updates);
-      updates = descriptionPruneResult.updates;
-    }
+    const writePolicyResult = applyTopLevelWriteValuePolicies({ updates, dbConfig });
+    updates = writePolicyResult.updates;
+    writeValuePoliciesMeta =
+      dbConfig.skipEmpty || dbConfig.trimStrings
+        ? {
+            skipEmpty: dbConfig.skipEmpty === true,
+            trimStrings: dbConfig.trimStrings === true,
+            changedTargets: writePolicyResult.changedTargets,
+          }
+        : undefined;
 
     if (
-      isTranslationParameterUpdate &&
-      Object.prototype.hasOwnProperty.call(updates, parameterTargetPath)
+      localizedParameterMergeConfig &&
+      Object.prototype.hasOwnProperty.call(updates, localizedParameterMergeConfig.targetPath)
     ) {
-      await ensureExistingParameterTemplateContext(parameterTargetPath, {
+      await ensureExistingParameterTemplateContext(localizedParameterMergeConfig.targetPath, {
         forceHydrateRichParameters: true,
       });
-      const translationMergeResult = mergeTranslatedParameterUpdates({
-        targetPath: parameterTargetPath,
+      const localizedMergeResult = mergeLocalizedParameterUpdates({
+        targetPath: localizedParameterMergeConfig.targetPath,
         updates,
         templateInputs,
-        languageCode: 'pl',
-        // Legacy translation mappings merge by existing parameterId, so recovered
-        // partial payloads can be applied without clobbering untouched parameters.
-        requireFullCoverage: false,
+        languageCode: localizedParameterMergeConfig.languageCode,
+        requireFullCoverage: localizedParameterMergeConfig.requireFullCoverage,
       });
-      if (translationMergeResult.applied) {
-        updates = translationMergeResult.updates;
-        translationParameterMergeMeta = translationMergeResult.meta;
+      if (localizedMergeResult.applied) {
+        updates = localizedMergeResult.updates;
+        localizedParameterMergeMeta = localizedMergeResult.meta;
       }
     }
 
@@ -416,15 +381,15 @@ export async function buildMongoUpdatePlan({
     }
 
     if (Object.keys(updates).length === 0) {
-      if (isTranslationParameterUpdate) {
-        return createTranslationNoUpdatesOutput({
+      if (localizedParameterMergeConfig || writeValuePoliciesMeta) {
+        return createNoSafeUpdatesOutput({
           error:
-            'Translation update blocked. No safe description or parameter translation updates were resolved.',
+            'Database update blocked. No safe write candidates were resolved after applying the configured write policies.',
           aiPrompt,
           collection,
           resolvedFilter,
           unresolvedSourcePorts: Array.from(mappingResult.unresolvedSourcePorts),
-          translationParameterMergeMeta,
+          localizedParameterMergeMeta,
           reportAiPathsError,
           toast,
           nodeId: node.id,
@@ -560,51 +525,61 @@ export async function buildMongoUpdatePlan({
         return record;
       };
       updates = extractUpdates(updateDoc);
-      const isTranslationParameterUpdate =
-        isConfiguredTranslationParameterUpdate ||
-        isResolvedTranslationParameterUpdate(updates, parameterTargetPath);
+      const writePolicyResult = applyTopLevelWriteValuePolicies({ updates, dbConfig });
+      updates = writePolicyResult.updates;
+      writeValuePoliciesMeta =
+        dbConfig.skipEmpty || dbConfig.trimStrings
+          ? {
+              skipEmpty: dbConfig.skipEmpty === true,
+              trimStrings: dbConfig.trimStrings === true,
+              changedTargets: writePolicyResult.changedTargets,
+            }
+          : undefined;
+      writePolicyResult.changedTargets.forEach((targetPath: string) => {
+        updateDoc = patchTargetPathInUpdateDoc(updateDoc, targetPath, updates);
+      });
 
-      if (isTranslationParameterUpdate) {
-        const descriptionPruneResult = pruneEmptyTranslationDescriptionUpdate(updates);
-        updates = descriptionPruneResult.updates;
-        if (descriptionPruneResult.pruned) {
-          updateDoc = patchTargetPathInUpdateDoc(updateDoc, 'description_pl', updates);
+      if (
+        localizedParameterMergeConfig &&
+        Object.prototype.hasOwnProperty.call(updates, localizedParameterMergeConfig.targetPath)
+      ) {
+        await ensureExistingParameterTemplateContext(localizedParameterMergeConfig.targetPath, {
+          forceHydrateRichParameters: true,
+        });
+        const localizedMergeResult = mergeLocalizedParameterUpdates({
+          targetPath: localizedParameterMergeConfig.targetPath,
+          updates,
+          templateInputs,
+          languageCode: localizedParameterMergeConfig.languageCode,
+          requireFullCoverage: localizedParameterMergeConfig.requireFullCoverage,
+        });
+        if (localizedMergeResult.applied) {
+          updates = localizedMergeResult.updates;
+          localizedParameterMergeMeta = localizedMergeResult.meta;
+          updateDoc = patchTargetPathInUpdateDoc(
+            updateDoc,
+            localizedParameterMergeConfig.targetPath,
+            updates
+          );
         }
+      }
 
-        if (Object.prototype.hasOwnProperty.call(updates, parameterTargetPath)) {
-          await ensureExistingParameterTemplateContext(parameterTargetPath, {
-            forceHydrateRichParameters: true,
-          });
-          const translationMergeResult = mergeTranslatedParameterUpdates({
-            targetPath: parameterTargetPath,
-            updates,
-            templateInputs,
-            languageCode: 'pl',
-            // Legacy translation mappings merge by existing parameterId, so recovered
-            // partial payloads can be applied without clobbering untouched parameters.
-            requireFullCoverage: false,
-          });
-          if (translationMergeResult.applied) {
-            updates = translationMergeResult.updates;
-            translationParameterMergeMeta = translationMergeResult.meta;
-            updateDoc = patchTargetPathInUpdateDoc(updateDoc, parameterTargetPath, updates);
-          }
-        }
-
-        if (Object.keys(updates).length === 0) {
-          return createTranslationNoUpdatesOutput({
-            error:
-              'Translation update blocked. No safe description or parameter translation updates were resolved.',
-            aiPrompt,
-            collection,
-            resolvedFilter,
-            translationParameterMergeMeta,
-            reportAiPathsError,
-            toast,
-            nodeId: node.id,
-            mode: 'custom',
-          });
-        }
+      if (
+        Object.keys(updates).length === 0 &&
+        (localizedParameterMergeConfig || writeValuePoliciesMeta)
+      ) {
+        return createNoSafeUpdatesOutput({
+          error:
+            'Database update blocked. No safe write candidates were resolved after applying the configured write policies.',
+          aiPrompt,
+          collection,
+          resolvedFilter,
+          localizedParameterMergeMeta,
+          reportAiPathsError,
+          toast,
+          nodeId: node.id,
+          mode: 'custom',
+        });
       }
 
       const prunedEmptyParameterUpdate = pruneImplicitEmptyProductParameterUpdate({
@@ -643,8 +618,11 @@ export async function buildMongoUpdatePlan({
     idType,
     resolvedInputs,
   });
-  if (translationParameterMergeMeta) {
-    debugPayload['translationParameterMerge'] = translationParameterMergeMeta;
+  if (localizedParameterMergeMeta) {
+    debugPayload['localizedParameterMerge'] = localizedParameterMergeMeta;
+  }
+  if (writeValuePoliciesMeta) {
+    debugPayload['writeValuePolicies'] = writeValuePoliciesMeta;
   }
   if (implicitEmptyParameterPruneMeta) {
     debugPayload['parameterWriteGuard'] = implicitEmptyParameterPruneMeta;

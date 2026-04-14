@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-04-13T20:59:29.998Z",
+  "generatedAt": "2026-04-14T11:08:59.784Z",
   "defaultTrackIds": [
     "products-parameter-integrity",
     "products-category-schema-normalization",
@@ -46,12 +46,12 @@
       "defaultSelected": true,
       "description": "Audits missing product parameters, refreshes recovery classification, and rebuilds the remaining source-recovery workspace.",
       "overallStatus": "failed",
-      "latestGeneratedAt": "2026-04-13T20:41:47.098Z",
+      "latestGeneratedAt": "2026-04-14T11:08:59.781Z",
       "docDir": "docs/build/improvements/products-parameter-integrity",
       "phases": [
         {
           "phase": "audit",
-          "generatedAt": "2026-04-13T20:41:47.098Z",
+          "generatedAt": "2026-04-14T11:08:59.781Z",
           "reportPath": "artifacts/improvements/audit-report.json",
           "executionMode": "executed",
           "allowWrite": false,
@@ -81,7 +81,7 @@
               ],
               "instructions": [],
               "script": "products:audit:missing-parameters",
-              "durationMs": 10996
+              "durationMs": 11116
             }
           ],
           "status": "failed"
@@ -234,12 +234,12 @@
       "defaultSelected": true,
       "description": "Surfaces the remaining category and parameter-schema decisions that cannot be auto-repaired safely from current live product data.",
       "overallStatus": "failed",
-      "latestGeneratedAt": "2026-04-13T20:41:47.098Z",
+      "latestGeneratedAt": "2026-04-14T11:08:59.781Z",
       "docDir": "docs/build/improvements/products-category-schema-normalization",
       "phases": [
         {
           "phase": "audit",
-          "generatedAt": "2026-04-13T20:41:47.098Z",
+          "generatedAt": "2026-04-14T11:08:59.781Z",
           "reportPath": "artifacts/improvements/audit-report.json",
           "executionMode": "executed",
           "allowWrite": false,
@@ -431,12 +431,12 @@
       "defaultSelected": true,
       "description": "Runs the shared UI consolidation guardrail so broad improvement sweeps account for cross-feature component convergence, not only data and repo baselines.",
       "overallStatus": "passed",
-      "latestGeneratedAt": "2026-04-13T20:59:29.994Z",
+      "latestGeneratedAt": "2026-04-14T11:08:59.781Z",
       "docDir": "docs/build/improvements/ui-consolidation",
       "phases": [
         {
           "phase": "audit",
-          "generatedAt": "2026-04-13T20:41:47.098Z",
+          "generatedAt": "2026-04-14T11:08:59.781Z",
           "reportPath": "artifacts/improvements/audit-report.json",
           "executionMode": "executed",
           "allowWrite": false,
@@ -468,7 +468,7 @@
               ],
               "instructions": [],
               "script": "check:ui-consolidation",
-              "durationMs": 4744
+              "durationMs": 4515
             }
           ],
           "status": "passed"
@@ -566,12 +566,12 @@
       "defaultSelected": true,
       "description": "Adds app-level performance regression checks to the improvement portfolio so broad sweeps cover runtime health alongside UI, quality, and data recovery.",
       "overallStatus": "passed",
-      "latestGeneratedAt": "2026-04-13T20:59:29.994Z",
+      "latestGeneratedAt": "2026-04-14T11:08:59.781Z",
       "docDir": "docs/build/improvements/application-performance",
       "phases": [
         {
           "phase": "audit",
-          "generatedAt": "2026-04-13T20:41:47.098Z",
+          "generatedAt": "2026-04-14T11:08:59.781Z",
           "reportPath": "artifacts/improvements/audit-report.json",
           "executionMode": "executed",
           "allowWrite": false,
@@ -595,7 +595,7 @@
               "outputs": [],
               "instructions": [],
               "script": "perf:ops:fast",
-              "durationMs": 34497
+              "durationMs": 30480
             }
           ],
           "status": "passed"
@@ -728,7 +728,7 @@
       "phases": [
         {
           "phase": "audit",
-          "generatedAt": "2026-04-13T20:41:47.098Z",
+          "generatedAt": "2026-04-14T11:08:59.781Z",
           "reportPath": "artifacts/improvements/audit-report.json",
           "executionMode": "executed",
           "allowWrite": false,
@@ -836,12 +836,12 @@
       "defaultSelected": true,
       "description": "Runs the core read-only quality checks that establish the current repository baseline.",
       "overallStatus": "failed",
-      "latestGeneratedAt": "2026-04-13T20:59:29.994Z",
+      "latestGeneratedAt": "2026-04-14T11:08:59.781Z",
       "docDir": "docs/build/improvements/repo-quality-baseline",
       "phases": [
         {
           "phase": "audit",
-          "generatedAt": "2026-04-13T20:41:47.098Z",
+          "generatedAt": "2026-04-14T11:08:59.781Z",
           "reportPath": "artifacts/improvements/audit-report.json",
           "executionMode": "executed",
           "allowWrite": false,
@@ -871,7 +871,7 @@
               ],
               "instructions": [],
               "script": "check:api-error-sources",
-              "durationMs": 381
+              "durationMs": 339
             },
             {
               "id": "repo-quality-canonical-sitewide",
@@ -884,7 +884,7 @@
               "outputs": [],
               "instructions": [],
               "script": "canonical:check:sitewide",
-              "durationMs": 2598
+              "durationMs": 1696
             }
           ],
           "status": "passed"

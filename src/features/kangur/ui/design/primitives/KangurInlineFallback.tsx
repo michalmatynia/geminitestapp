@@ -15,6 +15,10 @@ export type KangurInlineFallbackConfig = {
 export type KangurInlineFallbackProps = React.HTMLAttributes<HTMLDivElement> & {
   title: React.ReactNode;
   config?: KangurInlineFallbackConfig;
+  accent?: string;
+  align?: 'left' | 'center';
+  description?: React.ReactNode;
+  icon?: React.ReactNode;
 };
 
 const resolveKangurInlineFallbackAccent = (accent: string): string =>
@@ -56,9 +60,18 @@ export function KangurInlineFallback({
   className,
   title,
   config = {},
+  accent: propAccent,
+  align: propAlign,
+  description: propDescription,
+  icon: propIcon,
   ...props
 }: KangurInlineFallbackProps): React.JSX.Element {
-  const { accent = 'slate', align = 'center', description, icon } = config;
+  const {
+    accent = propAccent ?? 'slate',
+    align = propAlign ?? 'center',
+    description = propDescription,
+    icon = propIcon,
+  } = config;
   const centered = align === 'center';
 
   return (

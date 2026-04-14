@@ -178,19 +178,15 @@ function CaseResolverNestedScopeToggle(): React.JSX.Element | null {
   );
 }
 
-function CaseResolverContextNotice({
-  createContextTooltip,
-  onResetCaseContext,
-  onRetryCaseContext,
-  requestedCaseIssueMessage,
-  requestedCaseStatus,
-}: {
-  createContextTooltip: string | null;
-  onResetCaseContext: () => void;
-  onRetryCaseContext: () => void;
-  requestedCaseIssueMessage: string;
-  requestedCaseStatus: string | null | undefined;
-}): React.JSX.Element | null {
+function CaseResolverContextNotice(): React.JSX.Element | null {
+  const {
+    createContextTooltip,
+    onResetCaseContext,
+    onRetryCaseContext,
+    requestedCaseIssueMessage,
+    requestedCaseStatus,
+  } = useCaseResolverTreeHeader();
+
   if (requestedCaseStatus === 'missing') {
     return (
       <div className='rounded border border-amber-500/30 bg-amber-500/10 px-2 py-1.5'>
@@ -297,8 +293,6 @@ export function CaseResolverTreeHeader({
   const {
     activeCaseFile,
     activeCaseChildCount,
-    selectedFolderForFolderCreate,
-    selectedFolderForCreate,
   } = useCaseResolverFolderTreeDataContext();
 
   const { showChildCaseFolders } = useCaseResolverFolderTreeUiStateContext();
@@ -331,6 +325,47 @@ export function CaseResolverTreeHeader({
         caseResolverIdentifiers: caseResolverIdentifiers as CaseResolverIdentifierOption[],
       }),
     [activeCaseFile, caseResolverIdentifiers]
+  );
+
+  const createActions = React.useMemo(
+    (): CaseResolverCreateActionConfig[] => [
+      {
+        key: 'folder',
+        label: 'Folder',
+        title: 'Create a new folder',
+        Icon: FolderPlus,
+        onClick: onCreateFolder,
+      },
+      {
+        key: 'file',
+        label: 'File',
+        title: 'Create a new file',
+        Icon: FilePlus,
+        onClick: onCreateFile,
+      },
+      {
+        key: 'scan',
+        label: 'Scan',
+        title: 'Create a scan file',
+        Icon: FileImage,
+        onClick: onCreateScanFile,
+      },
+      {
+        key: 'image',
+        label: 'Image',
+        title: 'Add an image asset',
+        Icon: ImagePlus,
+        onClick: onCreateImageAsset,
+      },
+      {
+        key: 'node',
+        label: 'Node',
+        title: 'Create a node file',
+        Icon: FileCode2,
+        onClick: onCreateNodeFile,
+      },
+    ],
+    [onCreateFolder, onCreateFile, onCreateScanFile, onCreateImageAsset, onCreateNodeFile]
   );
 
   const contextValue = React.useMemo(
@@ -400,7 +435,11 @@ export function CaseResolverTreeHeader({
             <CaseResolverTreeSearchBar />
           </CaseResolverTreeSearchRuntimeContext.Provider>
         ) : null}
-        <CaseResolverCreateActionBar />
+        <CaseResolverCreateActionBar
+          actions={createActions}
+          createContextTooltip={createContextTooltip}
+          disableCreateActions={disableCreateActions}
+        />
       </div>
     </CaseResolverTreeHeaderContext.Provider>
   );

@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-13'
+last_reviewed: '2026-04-14'
 status: 'generated'
 doc_type: 'generated'
 scope: 'cross-feature'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # UI consolidation Improvement Track
 
-Generated at: 2026-04-13T20:59:29.998Z
+Generated at: 2026-04-14T11:08:59.784Z
 
 ## Snapshot
 
@@ -16,7 +16,7 @@ Generated at: 2026-04-13T20:59:29.998Z
 - Category: `ui`
 - Included in default read-only bundle: yes
 - Overall status: `passed`
-- Latest report timestamp: 2026-04-13T20:59:29.994Z
+- Latest report timestamp: 2026-04-14T11:08:59.781Z
 
 ## Purpose
 

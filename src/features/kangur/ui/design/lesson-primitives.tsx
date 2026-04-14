@@ -49,6 +49,10 @@ type KangurLessonVisualProps = Omit<KangurLessonCalloutProps, 'children'> & {
   caption?: React.ReactNode;
   captionClassName?: string;
   config?: KangurLessonVisualConfig;
+  center?: boolean;
+  maxWidthClassName?: string;
+  supportingContent?: React.ReactNode;
+  supportingClassName?: string;
   children: React.ReactNode;
 };
 
@@ -208,16 +212,20 @@ export function KangurLessonVisual({
   caption,
   captionClassName,
   config = {},
+  center: propCenter,
+  maxWidthClassName: propMaxWidthClassName,
+  supportingContent: propSupportingContent,
+  supportingClassName: propSupportingClassName,
   className,
   children,
   ...props
 }: KangurLessonVisualProps): React.JSX.Element {
   const {
-    center = true,
-    maxWidthClassName = 'max-w-full',
+    center = propCenter ?? true,
+    maxWidthClassName = propMaxWidthClassName ?? 'max-w-full',
     visualClassName,
-    supportingContent,
-    supportingClassName,
+    supportingContent = propSupportingContent,
+    supportingClassName = propSupportingClassName,
   } = config;
 
   const resolvedCaptionClassName = captionClassName ?? 'mt-2 kangur-lesson-visual-caption';

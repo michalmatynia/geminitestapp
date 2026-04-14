@@ -7,7 +7,7 @@ import { useSearchParams } from 'next/navigation';
 import { CatalogsSettings } from '@/features/products/components/settings/catalogs/CatalogsSettings';
 import { CategoriesSettings } from '@/features/products/components/settings/CategoriesSettings';
 import { CustomFieldsSettings } from '@/features/products/components/settings/CustomFieldsSettings';
-import { ParametersSettings } from '@/features/products/components/constructor/ParametersSettings';
+import { ParametersSettings } from '@/features/products/components/settings/parameters/ParametersSettings';
 import { CatalogModal } from '@/features/products/components/settings/modals/catalog-modal/CatalogModal';
 import { PriceGroupModal } from '@/features/products/components/settings/modals/price-group-modal/PriceGroupModal';
 import { PriceGroupsSettings } from '@/features/products/components/settings/pricing/PriceGroupsSettings';

@@ -2,6 +2,7 @@
 
 import { Award, BarChart2, Compass, Flame, Sparkles, Target } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import * as React from 'react';
 import { useMemo, useState } from 'react';
 
 import { KANGUR_AVATAR_OPTIONS, getKangurAvatarById } from '@/features/kangur/ui/avatars/catalog';

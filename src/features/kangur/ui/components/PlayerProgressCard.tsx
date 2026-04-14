@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import * as React from 'react';
 import { useTranslations } from 'next-intl';
 
 import { KangurActivitySummaryCard } from '@/features/kangur/ui/components/summary-cards/KangurActivitySummaryCard';

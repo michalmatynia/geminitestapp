@@ -34,6 +34,14 @@ describe('buildMongoUpdatePlan', () => {
         operation: 'update',
         mode: 'replace',
         updatePayloadMode: 'mapping',
+        skipEmpty: true,
+        trimStrings: true,
+        localizedParameterMerge: {
+          enabled: true,
+          targetPath: 'parameters',
+          languageCode: 'pl',
+          requireFullCoverage: false,
+        },
         mappings: [
           {
             targetPath: 'description_pl',
@@ -133,7 +141,7 @@ describe('buildMongoUpdatePlan', () => {
     });
     expect(result.plan.debugPayload).toEqual(
       expect.objectContaining({
-        translationParameterMerge: expect.objectContaining({
+        localizedParameterMerge: expect.objectContaining({
           mergedCount: 1,
           coverage: expect.objectContaining({
             requiredCount: 2,
@@ -173,6 +181,14 @@ describe('buildMongoUpdatePlan', () => {
         operation: 'update',
         mode: 'replace',
         updatePayloadMode: 'mapping',
+        skipEmpty: true,
+        trimStrings: true,
+        localizedParameterMerge: {
+          enabled: true,
+          targetPath: 'parameters',
+          languageCode: 'pl',
+          requireFullCoverage: false,
+        },
         mappings: [
           {
             targetPath: 'description_pl',
@@ -267,7 +283,7 @@ describe('buildMongoUpdatePlan', () => {
     });
     expect(result.plan.debugPayload).toEqual(
       expect.objectContaining({
-        translationParameterMerge: expect.objectContaining({
+        localizedParameterMerge: expect.objectContaining({
           mergedCount: 1,
           coverage: expect.objectContaining({
             requiredCount: 2,
@@ -356,6 +372,14 @@ describe('buildMongoUpdatePlan', () => {
         operation: 'update',
         mode: 'replace',
         updatePayloadMode: 'mapping',
+        skipEmpty: true,
+        trimStrings: true,
+        localizedParameterMerge: {
+          enabled: true,
+          targetPath: 'parameters',
+          languageCode: 'pl',
+          requireFullCoverage: false,
+        },
         mappings: [
           {
             targetPath: 'description_pl',
@@ -469,6 +493,14 @@ describe('buildMongoUpdatePlan', () => {
         operation: 'update',
         mode: 'replace',
         updatePayloadMode: 'mapping',
+        skipEmpty: true,
+        trimStrings: true,
+        localizedParameterMerge: {
+          enabled: true,
+          targetPath: 'parameters',
+          languageCode: 'pl',
+          requireFullCoverage: false,
+        },
         mappings: [
           {
             targetPath: 'description_pl',
@@ -537,7 +569,7 @@ describe('buildMongoUpdatePlan', () => {
     });
     expect(result.plan.debugPayload).toEqual(
       expect.objectContaining({
-        translationParameterMerge: expect.objectContaining({
+        localizedParameterMerge: expect.objectContaining({
           mergedCount: 1,
           writeCandidates: 2,
         }),
@@ -573,6 +605,14 @@ describe('buildMongoUpdatePlan', () => {
         operation: 'update',
         mode: 'replace',
         updatePayloadMode: 'mapping',
+        skipEmpty: true,
+        trimStrings: true,
+        localizedParameterMerge: {
+          enabled: true,
+          targetPath: 'parameters',
+          languageCode: 'pl',
+          requireFullCoverage: false,
+        },
         mappings: [
           {
             targetPath: 'description_pl',
@@ -632,12 +672,12 @@ describe('buildMongoUpdatePlan', () => {
 
     expect(result.output['bundle']).toEqual(
       expect.objectContaining({
-        guardrail: 'translation-no-updates',
+        guardrail: 'no-safe-updates',
       })
     );
     expect(reportAiPathsError).toHaveBeenCalled();
     expect(toast).toHaveBeenCalledWith(
-      expect.stringContaining('No safe description or parameter translation updates were resolved'),
+      expect.stringContaining('No safe write candidates were resolved'),
       {
         variant: 'error',
       }
@@ -681,6 +721,14 @@ describe('buildMongoUpdatePlan', () => {
         operation: 'update',
         mode: 'replace',
         updatePayloadMode: 'custom',
+        skipEmpty: true,
+        trimStrings: true,
+        localizedParameterMerge: {
+          enabled: true,
+          targetPath: 'parameters',
+          languageCode: 'pl',
+          requireFullCoverage: false,
+        },
         mappings: [
           {
             sourcePort: 'value',
@@ -769,6 +817,14 @@ describe('buildMongoUpdatePlan', () => {
         operation: 'update',
         mode: 'replace',
         updatePayloadMode: 'custom',
+        skipEmpty: true,
+        trimStrings: true,
+        localizedParameterMerge: {
+          enabled: true,
+          targetPath: 'parameters',
+          languageCode: 'pl',
+          requireFullCoverage: false,
+        },
         mappings: [
           {
             targetPath: '__translation_description_payload__',

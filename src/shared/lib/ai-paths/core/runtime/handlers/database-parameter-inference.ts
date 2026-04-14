@@ -387,7 +387,7 @@ const collectAcceptedParameterInferenceCandidates = (args: {
   return { accepted, stats };
 };
 
-export const mergeTranslatedParameterUpdates = (args: {
+export const mergeLocalizedParameterUpdates = (args: {
   targetPath: string;
   updates: Record<string, unknown>;
   templateInputs: RuntimePortValues;

@@ -137,6 +137,28 @@ export const databaseDocs: NodeConfigDocField[] = [
     description: 'When true, keeps inferred parameterIds missing from definitions.',
     defaultValue: 'false',
   },
+  {
+    path: 'database.localizedParameterMerge.enabled',
+    description:
+      'When enabled, merge incoming parameter updates into existing parameter rows and write localized values into valuesByLanguage.',
+    defaultValue: 'false',
+  },
+  {
+    path: 'database.localizedParameterMerge.targetPath',
+    description: 'Update field to merge (default: parameters).',
+    defaultValue: 'parameters',
+  },
+  {
+    path: 'database.localizedParameterMerge.languageCode',
+    description: 'Language code written into valuesByLanguage for merged parameter updates.',
+    defaultValue: '""',
+  },
+  {
+    path: 'database.localizedParameterMerge.requireFullCoverage',
+    description:
+      'When true, block the merged parameter write unless the incoming payload covers every existing parameter row.',
+    defaultValue: 'false',
+  },
   ...COMMON_RUNTIME_FIELDS,
 ];
 

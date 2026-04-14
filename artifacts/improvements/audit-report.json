@@ -1,6 +1,6 @@
 {
   "kind": "general-improvement-report",
-  "generatedAt": "2026-04-13T20:41:47.098Z",
+  "generatedAt": "2026-04-14T11:08:59.781Z",
   "phase": "audit",
   "executionMode": "executed",
   "allowWrite": false,
@@ -27,7 +27,7 @@
       ],
       "instructions": [],
       "script": "products:audit:missing-parameters",
-      "durationMs": 10996
+      "durationMs": 11116
     },
     {
       "id": "ui-consolidation-guardrail",
@@ -44,7 +44,7 @@
       ],
       "instructions": [],
       "script": "check:ui-consolidation",
-      "durationMs": 4744
+      "durationMs": 4515
     },
     {
       "id": "application-performance-fast-gate",
@@ -57,7 +57,7 @@
       "outputs": [],
       "instructions": [],
       "script": "perf:ops:fast",
-      "durationMs": 34497
+      "durationMs": 30480
     },
     {
       "id": "repo-quality-api-error-sources",
@@ -73,7 +73,7 @@
       ],
       "instructions": [],
       "script": "check:api-error-sources",
-      "durationMs": 381
+      "durationMs": 339
     },
     {
       "id": "repo-quality-canonical-sitewide",
@@ -86,7 +86,7 @@
       "outputs": [],
       "instructions": [],
       "script": "canonical:check:sitewide",
-      "durationMs": 2598
+      "durationMs": 1696
     }
   ]
 }

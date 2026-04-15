@@ -26,7 +26,6 @@ export function TraderaStatusButton(props: {
 }): React.JSX.Element {
   const { productId, status, prefetchListings, onOpenListings } = props;
   const normalizedStatus = normalizeMarketplaceStatus(status);
-  const isFailureState = FAILURE_STATUSES.has(normalizedStatus);
   const persistedFeedback = readPersistedTraderaQuickListFeedback(productId);
   const effectiveStatus = resolveMarketplaceStatusWithLocalFeedback({
     serverStatus: normalizedStatus,

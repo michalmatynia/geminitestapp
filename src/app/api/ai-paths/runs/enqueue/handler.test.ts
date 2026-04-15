@@ -420,7 +420,6 @@ describe('ai-paths runs enqueue handler', () => {
     expect(response.status).toBe(200);
     await expect(parseResponseBody(response)).resolves.toEqual({
       run: { id: 'run-1', status: 'queued' },
-      runId: 'run-1',
     });
     const enqueueArgs = enqueuePathRunMock.mock.calls[0]?.[0] as
       | {
@@ -664,30 +663,26 @@ describe('ai-paths runs enqueue handler', () => {
     expect(logInvocation?.context?.['graphSource']).toBe('settings');
   });
 
-  it('derives runId from legacy _id run payloads', async () => {
+  it('rejects legacy _id run payloads from the enqueue service', async () => {
     enqueuePathRunMock.mockResolvedValueOnce({ _id: 'run-legacy-1', status: 'queued' });
     const config = createDefaultPathConfig('path-canonical-legacy-id');
 
-    const response = await POST_handler(
-      makeRequest({
-        pathId: config.id,
-        pathName: config.name,
-        nodes: config.nodes,
-        edges: config.edges,
-        meta: {
-          aiPathsValidation: {
-            enabled: false,
+    await expect(
+      POST_handler(
+        makeRequest({
+          pathId: config.id,
+          pathName: config.name,
+          nodes: config.nodes,
+          edges: config.edges,
+          meta: {
+            aiPathsValidation: {
+              enabled: false,
+            },
           },
-        },
-      }),
-      {} as Parameters<typeof POST_handler>[1]
-    );
-
-    expect(response.status).toBe(200);
-    await expect(parseResponseBody(response)).resolves.toEqual({
-      run: { _id: 'run-legacy-1', status: 'queued' },
-      runId: 'run-legacy-1',
-    });
+        }),
+        {} as Parameters<typeof POST_handler>[1]
+      )
+    ).rejects.toThrow(/non-canonical run payload/i);
   });
 
   it('returns repository provider headers on successful enqueue responses', async () => {
@@ -709,7 +704,7 @@ describe('ai-paths runs enqueue handler', () => {
     expect(response.headers.get('X-Ai-Paths-Run-Route-Mode')).toBe('explicit');
   });
 
-  it('rejects enqueue responses that do not expose any run identifier', async () => {
+  it('rejects enqueue responses that do not expose a canonical run payload', async () => {
     enqueuePathRunMock.mockResolvedValueOnce({ status: 'queued' });
     const config = createDefaultPathConfig('path-canonical-missing-id');
 
@@ -728,7 +723,7 @@ describe('ai-paths runs enqueue handler', () => {
         }),
         {} as Parameters<typeof POST_handler>[1]
       )
-    ).rejects.toThrow(/missing run identifier/i);
+    ).rejects.toThrow(/non-canonical run payload|contract violation/i);
   });
 
   it('rejects legacy object-shaped enqueue metadata source', async () => {
@@ -798,23 +793,22 @@ describe('ai-paths runs enqueue handler', () => {
     expect(enqueuePathRunMock).not.toHaveBeenCalled();
   });
 
-  it('resolves runId from a runId field in the enqueue response', async () => {
+  it('rejects enqueue service payloads that expose runId without canonical id', async () => {
     enqueuePathRunMock.mockResolvedValueOnce({ runId: 'run-runid-1', status: 'queued' });
     const config = createDefaultPathConfig('path-runid-field');
 
-    const response = await POST_handler(
-      makeRequest({
-        pathId: config.id,
-        pathName: config.name,
-        nodes: config.nodes,
-        edges: config.edges,
-        meta: { aiPathsValidation: { enabled: false } },
-      }),
-      {} as Parameters<typeof POST_handler>[1]
-    );
-
-    expect(response.status).toBe(200);
-    await expect(parseResponseBody(response)).resolves.toMatchObject({ runId: 'run-runid-1' });
+    await expect(
+      POST_handler(
+        makeRequest({
+          pathId: config.id,
+          pathName: config.name,
+          nodes: config.nodes,
+          edges: config.edges,
+          meta: { aiPathsValidation: { enabled: false } },
+        }),
+        {} as Parameters<typeof POST_handler>[1]
+      )
+    ).rejects.toThrow(/non-canonical run payload/i);
   });
 
   it('rejects stale translation starter configs before enqueueing stored paths', async () => {

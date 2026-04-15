@@ -36,6 +36,7 @@ export default async function run({
       : null;
   const normalizedConfiguredSellUrl =
     configuredSellUrl === LEGACY_SELL_URL ? DIRECT_SELL_URL : configuredSellUrl;
+  const TRADERA_ALLOWED_PAGE_HOSTS = ['www.tradera.com', 'tradera.com'];
   const SELL_URL_CANDIDATES = Array.from(
     new Set(
       [normalizedConfiguredSellUrl, DIRECT_SELL_URL, LEGACY_SELL_URL].filter(

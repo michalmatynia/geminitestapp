@@ -282,7 +282,7 @@ describe('materializeStoredTriggerPathConfig', () => {
     const rawConfig = JSON.stringify({
       ...config,
       nodes: (config.nodes ?? []).map((node) => {
-        if (node.id !== 'node-model-name-normalize') return node;
+        if (node.type !== 'model') return node;
         return {
           ...node,
           config: {
@@ -332,7 +332,7 @@ describe('materializeStoredTriggerPathConfig', () => {
     const rawConfig = JSON.stringify({
       ...config,
       nodes: (config.nodes ?? []).map((node) => {
-        if (node.id !== 'node-model-name-normalize') return node;
+        if (node.type !== 'model') return node;
         return {
           ...node,
           config: {
@@ -392,7 +392,7 @@ describe('materializeStoredTriggerPathConfig', () => {
     const rawConfig = JSON.stringify({
       ...config,
       nodes: (config.nodes ?? []).map((node) => {
-        if (node.id === 'node-fetcher-name-normalize') {
+        if (node.type === 'fetcher') {
           return {
             ...node,
             config: {
@@ -406,7 +406,7 @@ describe('materializeStoredTriggerPathConfig', () => {
             },
           };
         }
-        if (node.id === 'node-prompt-name-normalize') {
+        if (node.type === 'prompt') {
           return {
             ...node,
             config: {

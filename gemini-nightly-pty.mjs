@@ -40,6 +40,7 @@ const RAW_TAIL_MAX = toNumber(process.env.RAW_TAIL_MAX, 24000);
 const NORMALIZED_TAIL_MAX = toNumber(process.env.NORMALIZED_TAIL_MAX, 12000);
 
 const AUTO_CONTINUE_ON_CAPACITY = isEnabled(process.env.AUTO_CONTINUE_ON_CAPACITY, true);
+const AUTO_CONTINUE_MODE = ((process.env.AUTO_CONTINUE_MODE || 'prompt_only').trim().toLowerCase());
 const AUTO_DISABLE_ON_USAGE_LIMIT = isEnabled(process.env.AUTO_DISABLE_ON_USAGE_LIMIT, true);
 const NEVER_SWITCH = isEnabled(process.env.NEVER_SWITCH, false);
 const RAW_OUTPUT = isEnabled(process.env.RAW_OUTPUT, false);
@@ -57,8 +58,9 @@ const ISO_HOME = process.env.GEMINI_ISO_HOME || path.join(os.homedir(), '.gemini
 const SHELL_PATH = resolveExecutable(process.env.PTY_SHELL || process.env.SHELL || '/bin/zsh');
 const WRAPPER_LAUNCH_MODE = ((process.env.WRAPPER_LAUNCH_MODE && process.env.WRAPPER_LAUNCH_MODE.trim()) || (process.env.PTY_FORCE_SHELL === '1' ? 'shell' : 'auto')).toLowerCase();
 
-const HOTKEY_PREFIX_BYTE = 0x1d; // Ctrl-]
-const HOTKEY_PREFIX_LABEL = 'Ctrl-]';
+const DEFAULT_HOTKEY_PREFIX_NAME = process.platform === 'darwin' ? 'ctrl-g' : 'ctrl-]';
+const HOTKEY_PREFIX_NAME = (process.env.HOTKEY_PREFIX || DEFAULT_HOTKEY_PREFIX_NAME).trim().toLowerCase();
+const { byte: HOTKEY_PREFIX_BYTE, label: HOTKEY_PREFIX_LABEL } = resolveHotkeyPrefix(HOTKEY_PREFIX_NAME);
 const AUTOMATION_DEFAULT_ENABLED = isEnabled(process.env.AUTOMATION_ENABLED, true);
 
 let loadedPty = null;
@@ -80,6 +82,7 @@ let automationEnabled = AUTOMATION_DEFAULT_ENABLED;
 let automationDisabledReason = automationEnabled ? '' : 'manual';
 let automationPausedUntil = 0;
 let hotkeyAwaitingCommand = false;
+let hotkeyCommandTimer = null;
 let plannedAction = null;
 
 let demandHits = 0;
@@ -150,6 +153,7 @@ function spawnGemini(pty) {
   clearContinueTimer();
   clearRestartTimer();
   clearForceKillTimer();
+  clearHotkeyCommandTimer();
   disposeActiveListeners();
   activePty = null;
   plannedAction = null;
@@ -233,8 +237,9 @@ function logLaunchBanner({ model, canResume, wrapperInfo, launchPlan }) {
     `[gemini-nightly-pty] Wrapper resolved: ${wrapperInfo.resolvedPath || '(not found on PATH yet)'}${wrapperInfo.exists ? '' : ' [missing]'}`,
     `[gemini-nightly-pty] Wrapper kind: ${wrapperInfo.kind}`,
     `[gemini-nightly-pty] Launch mode: ${launchPlan.mode}`,
+    `[gemini-nightly-pty] Auto-continue mode: ${AUTO_CONTINUE_MODE}`,
     `[gemini-nightly-pty] PTY backend: ${activePtyModuleName}`,
-    `[gemini-nightly-pty] Local controls: ${HOTKEY_PREFIX_LABEL}h help, ${HOTKEY_PREFIX_LABEL}a toggle auto, ${HOTKEY_PREFIX_LABEL}s switch model, ${HOTKEY_PREFIX_LABEL}q quit`,
+    `[gemini-nightly-pty] Local controls: ${HOTKEY_PREFIX_LABEL} h help, ${HOTKEY_PREFIX_LABEL} a toggle auto, ${HOTKEY_PREFIX_LABEL} s switch model, ${HOTKEY_PREFIX_LABEL} q quit`,
   ];
 
   if (wrapperInfo.kind === 'script' && wrapperInfo.shebang) {
@@ -447,7 +452,10 @@ function handleTerminalData(runId, chunk) {
 }
 
 function maybeAutomate(runId) {
-  if (!isAutomationActive()) return;
+  if (!isAutomationActive()) {
+    clearContinueTimer();
+    return;
+  }
 
   const state = detectAutomationState(normalizedTail);
 
@@ -457,6 +465,7 @@ function maybeAutomate(runId) {
   }
 
   if (!state.hasCapacity) {
+    clearContinueTimer();
     return;
   }
 
@@ -502,7 +511,12 @@ function maybeAutomate(runId) {
     return;
   }
 
-  scheduleContinueRetry(state.reason, runId);
+  if (!shouldAutoContinue(state)) {
+    clearContinueTimer();
+    return;
+  }
+
+  scheduleContinueRetry(state, runId);
 }
 
 function handleUsageLimit(state) {
@@ -521,22 +535,30 @@ function handleUsageLimit(state) {
   }
 }
 
-function scheduleContinueRetry(reason, runId) {
+function scheduleContinueRetry(state, runId) {
   if (!AUTO_CONTINUE_ON_CAPACITY) return;
   if (continueTimer) return;
 
+  const continueLabel = describeContinueAction(state);
+
   if (autoContinueAttempts >= AUTO_CONTINUE_MAX_PER_EVENT) {
-    pauseAutomationTemporarily(AUTOMATION_COOLDOWN_MS, `too many auto-continues for ${reason}`);
+    pauseAutomationTemporarily(AUTOMATION_COOLDOWN_MS, `too many auto-continues for ${state.reason}`);
     return;
   }
 
   const delay = Math.min(CAPACITY_RETRY_MS * 2 ** autoContinueAttempts, MAX_CAPACITY_RETRY_MS);
-  console.error(`\n[gemini-nightly-pty] ${reason} — retrying in ${delay}ms (sending: ${CONTINUE_COMMAND}) [${autoContinueAttempts + 1}/${AUTO_CONTINUE_MAX_PER_EVENT}]\n`);
+  console.error(`\n[gemini-nightly-pty] ${state.reason} — retrying in ${delay}ms (sending: ${continueLabel}) [${autoContinueAttempts + 1}/${AUTO_CONTINUE_MAX_PER_EVENT}]\n`);
   continueTimer = setTimeout(() => {
     continueTimer = null;
     if (runId !== activeRunId || !activePty || !isAutomationActive()) return;
+
+    const latestState = detectAutomationState(normalizedTail);
+    if (!latestState.hasCapacity || latestState.hasKeepMenu || latestState.hasUsageLimit || !shouldAutoContinue(latestState)) {
+      return;
+    }
+
     autoContinueAttempts += 1;
-    sendLine(CONTINUE_COMMAND, reason, runId);
+    sendContinueAction(latestState, runId);
   }, delay);
 }
 
@@ -588,6 +610,34 @@ function sendRaw(text, reason = 'raw') {
     console.error(`[warn] Failed to send raw input (${reason}): ${error instanceof Error ? error.message : String(error)}`);
     return false;
   }
+}
+
+function shouldAutoContinue(state) {
+  if (!AUTO_CONTINUE_ON_CAPACITY) return false;
+
+  if (AUTO_CONTINUE_MODE === 'off' || AUTO_CONTINUE_MODE === '0' || AUTO_CONTINUE_MODE === 'false') {
+    return false;
+  }
+
+  if (AUTO_CONTINUE_MODE === 'capacity' || AUTO_CONTINUE_MODE === 'always') {
+    return true;
+  }
+
+  return state.hasExplicitContinuePrompt;
+}
+
+function describeContinueAction(state) {
+  if (state.continueAction === 'enter') {
+    return 'Enter';
+  }
+  return CONTINUE_COMMAND;
+}
+
+function sendContinueAction(state, runId) {
+  if (state.continueAction === 'enter') {
+    return sendLine('', state.reason, runId);
+  }
+  return sendLine(CONTINUE_COMMAND, state.reason, runId);
 }
 
 function handleChildExit(pty, { exitCode, signal, runId }) {
@@ -769,6 +819,8 @@ function detectAutomationState(text) {
       hasUsageLimit: true,
       hasCapacity: false,
       hasKeepMenu: false,
+      hasExplicitContinuePrompt: false,
+      continueAction: 'command',
       reason: matchedUsage[1],
       fingerprint: '',
     };
@@ -784,7 +836,15 @@ function detectAutomationState(text) {
 
   const matchedCapacity = capacityRules.find(([pattern]) => pattern.test(tail));
   if (!matchedCapacity) {
-    return { hasUsageLimit: false, hasCapacity: false, hasKeepMenu: false, reason: 'capacity', fingerprint: '' };
+    return {
+      hasUsageLimit: false,
+      hasCapacity: false,
+      hasKeepMenu: false,
+      hasExplicitContinuePrompt: false,
+      continueAction: 'command',
+      reason: 'capacity',
+      fingerprint: '',
+    };
   }
 
   const keepMatch =
@@ -795,15 +855,29 @@ function detectAutomationState(text) {
     tail.match(/(?:^|\n)\s*2\s*[.):-]?\s*(?:switch|change|use)\b/i) ||
     tail.match(/press\s+2\s+to\s+(?:switch|change|use)\b/i);
 
+  const continueCommandMatch =
+    tail.match(/(?:(?:type|enter|send|write)\s+["'`]?continue["'`]?\s+(?:to|for)\b[^\n]*|(?:to|for)\s+(?:keep\s+trying|continue\s+waiting|retry)[^\n]*\btype\s+["'`]?continue["'`]?)/i);
+
+  const continueEnterMatch =
+    tail.match(/(?:(?:press|hit)\s+(?:enter|return)\s+(?:to|for)\b[^\n]*(?:keep\s+trying|continue\s+waiting|retry|try\s+again)|(?:keep\s+trying|continue\s+waiting|retry|try\s+again)[^\n]*(?:press|hit)\s+(?:enter|return))/i);
+
+  const continueMatch = continueCommandMatch || continueEnterMatch;
+  const hasExplicitContinuePrompt = Boolean(continueMatch);
+  const continueAction = continueEnterMatch ? 'enter' : 'command';
+
   const hasKeepMenu = Boolean(keepMatch && switchMatch);
   const fingerprint = hasKeepMenu
     ? extractMenuFingerprint(tail, keepMatch.index ?? 0, switchMatch.index ?? 0)
-    : '';
+    : hasExplicitContinuePrompt
+      ? extractMenuFingerprint(tail, continueMatch.index ?? 0, continueMatch.index ?? 0)
+      : '';
 
   return {
     hasUsageLimit: false,
     hasCapacity: true,
     hasKeepMenu,
+    hasExplicitContinuePrompt,
+    continueAction,
     reason: matchedCapacity[1],
     fingerprint,
   };
@@ -853,13 +927,15 @@ function onUserInput(chunk) {
   for (const byte of buffer.values()) {
     if (hotkeyAwaitingCommand) {
       hotkeyAwaitingCommand = false;
+      clearHotkeyCommandTimer();
       handleHotkeyCommand(byte);
       continue;
     }
 
     if (byte === HOTKEY_PREFIX_BYTE) {
       hotkeyAwaitingCommand = true;
-      process.stderr.write(`\n[local] ${hotkeySummary()}\n`);
+      armHotkeyCommandTimer();
+      process.stderr.write(`\n[local] Prefix detected (${HOTKEY_PREFIX_LABEL}). Press a command key: h help, a auto, p pause, s switch, r restart, c Ctrl-C, q quit.\n`);
       continue;
     }
 
@@ -876,8 +952,32 @@ function onUserInput(chunk) {
   }
 }
 
+function armHotkeyCommandTimer() {
+  clearHotkeyCommandTimer();
+  hotkeyCommandTimer = setTimeout(() => {
+    hotkeyCommandTimer = null;
+    if (!hotkeyAwaitingCommand) return;
+    hotkeyAwaitingCommand = false;
+    process.stderr.write(`\n[local] Hotkey prefix timed out. ${hotkeySummary()}\n`);
+  }, 3000);
+}
+
+function clearHotkeyCommandTimer() {
+  if (!hotkeyCommandTimer) return;
+  clearTimeout(hotkeyCommandTimer);
+  hotkeyCommandTimer = null;
+}
+
+function decodeHotkeyCommandByte(byte) {
+  if (byte >= 1 && byte <= 26) {
+    return String.fromCharCode(96 + byte);
+  }
+
+  return String.fromCharCode(byte).toLowerCase();
+}
+
 function handleHotkeyCommand(byte) {
-  const command = String.fromCharCode(byte).toLowerCase();
+  const command = decodeHotkeyCommandByte(byte);
 
   if (command === 'h' || command === '?') {
     printLocalHelp();
@@ -923,7 +1023,7 @@ function handleHotkeyCommand(byte) {
     return;
   }
 
-  console.error(`\n[local] Unknown command ${JSON.stringify(String.fromCharCode(byte))}. ${hotkeySummary()}\n`);
+  console.error(`\n[local] Unknown command byte ${byte} (${JSON.stringify(command)}). ${hotkeySummary()}\n`);
 }
 
 function noteManualInput() {
@@ -1046,7 +1146,7 @@ function fulfillPlannedAction() {
 }
 
 function hotkeySummary() {
-  return `${HOTKEY_PREFIX_LABEL}h help | ${HOTKEY_PREFIX_LABEL}a auto on/off | ${HOTKEY_PREFIX_LABEL}p pause auto | ${HOTKEY_PREFIX_LABEL}s switch | ${HOTKEY_PREFIX_LABEL}r restart | ${HOTKEY_PREFIX_LABEL}c Ctrl-C | ${HOTKEY_PREFIX_LABEL}q quit`;
+  return `${HOTKEY_PREFIX_LABEL} h help | ${HOTKEY_PREFIX_LABEL} a auto on/off | ${HOTKEY_PREFIX_LABEL} p pause auto | ${HOTKEY_PREFIX_LABEL} s switch | ${HOTKEY_PREFIX_LABEL} r restart | ${HOTKEY_PREFIX_LABEL} c Ctrl-C | ${HOTKEY_PREFIX_LABEL} q quit`;
 }
 
 function printLocalHelp() {
@@ -1055,7 +1155,8 @@ function printLocalHelp() {
     [
       '',
       `[local] ${hotkeySummary()}`,
-      `[local] Manual typing pauses automation for ${pauseSec}s.` + (automationEnabled ? '' : ' Automation is currently disabled.'),
+      `[local] Press the prefix first, then the command key.`,
+      `[local] Manual typing pauses automation for ${pauseSec}s. Auto-continue mode: ${AUTO_CONTINUE_MODE}.` + (automationEnabled ? '' : ' Automation is currently disabled.'),
       `[local] Current model: ${currentModel()}`,
       '',
     ].join('\n')
@@ -1104,6 +1205,7 @@ function cleanupAndExit(code) {
   clearContinueTimer();
   clearRestartTimer();
   clearForceKillTimer();
+  clearHotkeyCommandTimer();
   disposeActiveListeners();
 
   try {
@@ -1126,6 +1228,30 @@ function failWithCleanup(error) {
   const message = error instanceof Error ? error.stack || error.message : String(error);
   console.error(`\n[fatal] ${message}\n`);
   cleanupAndExit(1);
+}
+
+function resolveHotkeyPrefix(name) {
+  const normalized = String(name || '').trim().toLowerCase();
+  const mapping = {
+    'ctrl-g': { byte: 0x07, label: 'Ctrl-G' },
+    '^g': { byte: 0x07, label: 'Ctrl-G' },
+    'ctrl-]': { byte: 0x1d, label: 'Ctrl-]' },
+    '^]': { byte: 0x1d, label: 'Ctrl-]' },
+    'ctrl-t': { byte: 0x14, label: 'Ctrl-T' },
+    '^t': { byte: 0x14, label: 'Ctrl-T' },
+    'ctrl-\\': { byte: 0x1c, label: 'Ctrl-\\' },
+    '^\\': { byte: 0x1c, label: 'Ctrl-\\' },
+  };
+
+  const resolved = mapping[normalized];
+  if (resolved) return resolved;
+
+  throw new Error(
+    [
+      `Unsupported HOTKEY_PREFIX=${JSON.stringify(name)}.`,
+      'Use one of: ctrl-g, ctrl-], ctrl-t, ctrl-\\',
+    ].join(' ')
+  );
 }
 
 function isEnabled(value, defaultValue) {

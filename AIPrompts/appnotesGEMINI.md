@@ -96,6 +96,10 @@ reduce Cyclomatic complexity
 
 file segmentation operation
 component loading segmentation
+
+
+continue building meanigful error messages in products
+build accessibility
 ---
 
   path is importing the oversized features/integrations/public barrel in

@@ -267,7 +267,300 @@ export const PART_2 = String.raw`      /(delivery|shipping|ship|leverans|frakt)/
     return collected;
   };
 
-  const collectVisibleListingCandidatePreview = async (limit = 8) => {
+  const buildVisibleListingCandidatesPageSignature = (candidates = []) =>
+    JSON.stringify({
+      url: normalizeWhitespace(page.url()),
+      listings: (Array.isArray(candidates) ? candidates : []).map((candidate) =>
+        normalizeWhitespace(
+          candidate?.listingId || candidate?.listingUrl || candidate?.title || ''
+        )
+      ),
+    });
+
+  const resolveNextVisibleListingResultsPageUrl = async () =>
+    page
+      .evaluate(
+        ({ currentUrl, nextLabelHints, pageParamNames }) => {
+          const normalize = (value) =>
+            String(value || '')
+              .replace(/\s+/g, ' ')
+              .trim();
+
+          const parsePageNumber = (value) => {
+            const normalizedValue = normalize(value);
+            if (!normalizedValue) {
+              return null;
+            }
+
+            try {
+              const url = new URL(normalizedValue, currentUrl);
+              for (const paramName of pageParamNames) {
+                const rawValue = normalize(url.searchParams.get(paramName) || '');
+                if (/^\d+$/.test(rawValue)) {
+                  const parsed = Number.parseInt(rawValue, 10);
+                  if (Number.isFinite(parsed) && parsed > 0) {
+                    return parsed;
+                  }
+                }
+              }
+            } catch {}
+
+            if (/^\d+$/.test(normalizedValue)) {
+              const parsed = Number.parseInt(normalizedValue, 10);
+              return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+            }
+
+            return null;
+          };
+
+          const isVisible = (element) => {
+            if (!(element instanceof HTMLElement)) {
+              return false;
+            }
+
+            const style = window.getComputedStyle(element);
+            if (!style || style.visibility === 'hidden' || style.display === 'none') {
+              return false;
+            }
+
+            const rect = element.getBoundingClientRect();
+            return rect.width > 0 && rect.height > 0;
+          };
+
+          const hasPaginationContext = (element) => {
+            let current = element;
+            for (let depth = 0; depth < 6 && current; depth += 1) {
+              if (!(current instanceof HTMLElement)) {
+                current = current.parentElement;
+                continue;
+              }
+
+              const tagName = String(current.tagName || '').toLowerCase();
+              const role = normalize(current.getAttribute('role')).toLowerCase();
+              const combinedHints = [
+                normalize(current.getAttribute('aria-label')).toLowerCase(),
+                normalize(current.getAttribute('data-testid')).toLowerCase(),
+                normalize(current.className).toLowerCase(),
+              ]
+                .filter(Boolean)
+                .join(' ');
+
+              if (tagName === 'nav' || role === 'navigation') {
+                return true;
+              }
+
+              if (combinedHints.includes('pagination') || combinedHints.includes('pager')) {
+                return true;
+              }
+
+              current = current.parentElement;
+            }
+
+            return false;
+          };
+
+          const toAbsoluteUrl = (value) => {
+            const normalizedValue = normalize(value);
+            if (!normalizedValue) {
+              return '';
+            }
+
+            try {
+              return new URL(normalizedValue, currentUrl).toString();
+            } catch {
+              return '';
+            }
+          };
+
+          const selectors = [
+            'main a[href]',
+            'main button',
+            '[role="main"] a[href]',
+            '[role="main"] button',
+            'a[rel="next"]',
+            'button[rel="next"]',
+          ];
+
+          const paginationCandidates = [];
+          const seen = new Set();
+
+          for (const selector of selectors) {
+            for (const element of document.querySelectorAll(selector)) {
+              if (!(element instanceof HTMLElement) || !isVisible(element)) {
+                continue;
+              }
+
+              const rel = normalize(element.getAttribute('rel')).toLowerCase();
+              const absoluteUrl = toAbsoluteUrl(
+                element.getAttribute('href') ||
+                  ('href' in element && typeof element.href === 'string' ? element.href : '')
+              );
+
+              if (!hasPaginationContext(element) && rel !== 'next') {
+                continue;
+              }
+
+              const labelText = normalize(
+                [
+                  element.getAttribute('aria-label'),
+                  element.getAttribute('title'),
+                  element.textContent,
+                ]
+                  .filter(Boolean)
+                  .join(' ')
+              );
+              const normalizedLabelText = labelText.toLowerCase();
+              const pageNumber =
+                parsePageNumber(absoluteUrl) || parsePageNumber(labelText) || null;
+              const isCurrent =
+                ['page', 'true'].includes(
+                  normalize(element.getAttribute('aria-current')).toLowerCase()
+                ) ||
+                normalize(element.getAttribute('aria-selected')).toLowerCase() === 'true';
+              const disabled =
+                element.matches(':disabled') ||
+                normalize(element.getAttribute('aria-disabled')).toLowerCase() === 'true';
+              const isNextHint =
+                rel === 'next' ||
+                nextLabelHints.some((hint) => normalizedLabelText.includes(hint)) ||
+                ['>', '>>', '›', '»', '→'].includes(normalizedLabelText);
+              const dedupeKey = [
+                absoluteUrl,
+                labelText,
+                rel,
+                pageNumber === null ? '' : String(pageNumber),
+              ].join('::');
+
+              if (seen.has(dedupeKey)) {
+                continue;
+              }
+
+              seen.add(dedupeKey);
+              paginationCandidates.push({
+                absoluteUrl,
+                labelText,
+                pageNumber,
+                isCurrent,
+                disabled,
+                isNextHint,
+              });
+            }
+          }
+
+          let currentPage = parsePageNumber(currentUrl) || 1;
+          for (const candidate of paginationCandidates) {
+            if (!candidate.isCurrent || candidate.pageNumber === null) {
+              continue;
+            }
+            currentPage = candidate.pageNumber;
+            break;
+          }
+
+          let bestCandidate = null;
+
+          for (const candidate of paginationCandidates) {
+            if (candidate.disabled || !candidate.absoluteUrl || candidate.absoluteUrl === currentUrl) {
+              continue;
+            }
+
+            const priority = candidate.isNextHint
+              ? 0
+              : candidate.pageNumber !== null && candidate.pageNumber > currentPage
+                ? 1
+                : Number.POSITIVE_INFINITY;
+
+            if (!Number.isFinite(priority)) {
+              continue;
+            }
+
+            if (
+              !bestCandidate ||
+              priority < bestCandidate.priority ||
+              (priority === bestCandidate.priority &&
+                (candidate.pageNumber ?? Number.POSITIVE_INFINITY) <
+                  (bestCandidate.pageNumber ?? Number.POSITIVE_INFINITY))
+            ) {
+              bestCandidate = {
+                absoluteUrl: candidate.absoluteUrl,
+                pageNumber: candidate.pageNumber,
+                priority,
+              };
+            }
+          }
+
+          return bestCandidate ? bestCandidate.absoluteUrl : null;
+        },
+        {
+          currentUrl: page.url(),
+          nextLabelHints: ['next', 'next page', 'nästa', 'nästa sida'],
+          pageParamNames: ['page', 'p', 'paged', 'pageindex', 'pageno', 'sid'],
+        }
+      )
+      .catch(() => null);
+
+  const collectVisibleListingCandidatesAcrossPages = async ({
+    context = 'listing-results',
+    searchTerm = null,
+  } = {}) => {
+    const collected = [];
+    const seenCandidates = new Set();
+    const seenPageSignatures = new Set();
+
+    while (true) {
+      const pageCandidates = await collectVisibleListingCandidates();
+      const pageSignature = buildVisibleListingCandidatesPageSignature(pageCandidates);
+
+      if (seenPageSignatures.has(pageSignature)) {
+        break;
+      }
+
+      seenPageSignatures.add(pageSignature);
+
+      for (const candidate of pageCandidates) {
+        const dedupeKey = candidate?.listingId || candidate?.listingUrl || null;
+        if (!dedupeKey || seenCandidates.has(dedupeKey)) {
+          continue;
+        }
+
+        seenCandidates.add(dedupeKey);
+        collected.push(candidate);
+      }
+
+      const currentUrl = normalizeWhitespace(page.url());
+      const nextPageUrl = normalizeWhitespace(
+        await resolveNextVisibleListingResultsPageUrl()
+      );
+
+      log?.('tradera.quicklist.listing_pagination.page', {
+        context,
+        searchTerm: normalizeWhitespace(searchTerm || '') || null,
+        currentUrl,
+        pageCandidateCount: pageCandidates.length,
+        collectedCandidateCount: collected.length,
+        nextPageUrl: nextPageUrl || null,
+      });
+
+      if (!nextPageUrl || nextPageUrl === currentUrl) {
+        break;
+      }
+
+      await page.goto(nextPageUrl, {
+        waitUntil: 'domcontentloaded',
+        timeout: 30_000,
+      });
+      await assertAllowedTraderaPage(context + ' pagination');
+      await page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => undefined);
+      await wait(700);
+      await acceptCookiesIfPresent({
+        context: context + '-pagination',
+        attempts: 1,
+      }).catch(() => false);
+    }
+
+    return collected;
+  };
+
+  const collectVisibleListingCandidatePreview = async (limit = null) => {
     const previewCandidates = await collectVisibleListingCandidates(limit);
     return previewCandidates.map((candidate) => ({
       listingUrl: candidate.listingUrl,

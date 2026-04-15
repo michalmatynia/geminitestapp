@@ -3,7 +3,11 @@
 import { useCallback, useMemo, useRef } from 'react';
 
 import type { AiNode } from '@/shared/contracts/ai-paths';
-import type { RuntimeState, RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
+import type {
+  RuntimeState,
+  RuntimePortValues,
+  NodeRuntimeResolutionStrategy,
+} from '@/shared/contracts/ai-paths-runtime';
 import { evaluateGraphClient as evaluateGraph } from '@/shared/lib/ai-paths/core/runtime';
 import { GraphExecutionError, GraphExecutionCancelled } from '@/shared/lib/ai-paths/core/runtime';
 import {
@@ -84,12 +88,7 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
           runtimeResolutionSource?: unknown;
           runtimeCodeObjectId?: unknown;
         }): Record<string, unknown> => {
-          const runtimeStrategy =
-            input.runtimeStrategy === 'compatibility'
-              ? 'compatibility'
-              : input.runtimeStrategy === 'code_object_v3'
-                ? 'code_object_v3'
-                : null;
+          const runtimeStrategy = input.runtimeStrategy === 'code_object_v3' ? 'code_object_v3' : null;
           const runtimeResolutionSource =
             input.runtimeResolutionSource === 'override' ||
             input.runtimeResolutionSource === 'registry' ||
@@ -173,7 +172,7 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
               node: AiNode;
               nodeInputs: RuntimePortValues;
               iteration: number;
-              runtimeStrategy?: 'compatibility' | 'code_object_v3';
+              runtimeStrategy?: NodeRuntimeResolutionStrategy;
               runtimeResolutionSource?: 'override' | 'registry' | 'missing';
               runtimeCodeObjectId?: string | null;
             }) => {
@@ -243,7 +242,7 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
               nextOutputs: RuntimePortValues;
               cached?: boolean;
               iteration: number;
-              runtimeStrategy?: 'compatibility' | 'code_object_v3';
+              runtimeStrategy?: NodeRuntimeResolutionStrategy;
               runtimeResolutionSource?: 'override' | 'registry' | 'missing';
               runtimeCodeObjectId?: string | null;
             }) => {
@@ -327,7 +326,7 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
               prevOutputs: RuntimePortValues | null;
               error: unknown;
               iteration: number;
-              runtimeStrategy?: 'compatibility' | 'code_object_v3';
+              runtimeStrategy?: NodeRuntimeResolutionStrategy;
               runtimeResolutionSource?: 'override' | 'registry' | 'missing';
               runtimeCodeObjectId?: string | null;
             }) => {
@@ -410,7 +409,7 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
               spanId: string;
               iteration: number;
               attempt: number;
-              runtimeStrategy?: 'compatibility' | 'code_object_v3';
+              runtimeStrategy?: NodeRuntimeResolutionStrategy;
               runtimeResolutionSource?: 'override' | 'registry' | 'missing';
               runtimeCodeObjectId?: string | null;
             }) => {

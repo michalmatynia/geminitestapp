@@ -219,12 +219,11 @@ describe('runtime kernel telemetry helpers', () => {
   it('normalizes runtime node resolution telemetry payloads', () => {
     expect(
       toRuntimeNodeResolutionTelemetry({
-        runtimeStrategy: 'compatibility',
+        runtimeStrategy: 'legacy_mode',
         runtimeResolutionSource: 'registry',
         runtimeCodeObjectId: null,
       })
     ).toEqual({
-      runtimeStrategy: 'compatibility',
       runtimeResolutionSource: 'registry',
       runtimeCodeObjectId: null,
     });
@@ -259,14 +258,14 @@ describe('runtime kernel telemetry helpers', () => {
           runtimeCodeObjectId: 'ai-paths.node-code-object.template.v3',
         },
         {
-          runtimeStrategy: 'compatibility',
+          runtimeStrategy: 'legacy_mode',
           runtimeResolutionSource: 'registry',
           runtimeCodeObjectId: null,
         },
       ],
       'node-math': [
         {
-          runtimeStrategy: 'compatibility',
+          runtimeStrategy: 'legacy_mode',
           runtimeResolutionSource: 'missing',
           runtimeCodeObjectId: '',
         },
@@ -280,9 +279,8 @@ describe('runtime kernel telemetry helpers', () => {
     expect(summary).toEqual({
       sampledHistoryEntries: 4,
       strategyCounts: {
-        compatibility: 2,
         code_object_v3: 1,
-        unknown: 1,
+        unknown: 3,
       },
       resolutionSourceCounts: {
         override: 1,

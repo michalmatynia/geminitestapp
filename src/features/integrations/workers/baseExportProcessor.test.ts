@@ -107,6 +107,7 @@ describe('processBaseExportJob', () => {
     });
     resolveListingForExportMock.mockResolvedValue({
       listingRepo: {
+        updateListing: vi.fn(),
         updateListingExternalId: vi.fn(),
         updateListingStatus: vi.fn(),
         appendExportHistory: vi.fn(),
@@ -175,6 +176,74 @@ describe('processBaseExportJob', () => {
           requestId: 'request-123',
           jobId: 'job-1',
         }),
+      })
+    );
+  });
+
+  it('persists the Base export failure reason on the listing and export history', async () => {
+    const listingRepo = {
+      updateListing: vi.fn(),
+      updateListingExternalId: vi.fn(),
+      updateListingStatus: vi.fn(),
+      appendExportHistory: vi.fn(),
+    };
+    resolveListingForExportMock.mockResolvedValue({
+      listingRepo,
+      listingId: 'listing-base-1',
+      listingExternalId: null,
+      listingInventoryId: null,
+    });
+    executeBaseExportMock.mockResolvedValue({
+      result: {
+        success: false,
+        error:
+          'No Base.com category mapping found for internal category "69da99b1855cd0bfc9a2ab81". Map this category in Category Mapper first.',
+        productId: null,
+      },
+      exportFields: ['category_id'],
+      finalWarehouseId: 'warehouse-1',
+      finalMappings: {},
+    });
+
+    await expect(
+      processBaseExportJob(
+        {
+          productId: 'product-1',
+          connectionId: 'connection-base-1',
+          inventoryId: 'inventory-main',
+          templateId: 'template-1',
+          imagesOnly: false,
+          listingId: null,
+          externalListingId: null,
+          allowDuplicateSku: false,
+          exportImagesAsBase64: null,
+          imageBase64Mode: null,
+          imageTransform: null,
+          imageBaseUrl: 'https://localhost:3000',
+          requestId: 'request-123',
+          runId: 'run-1',
+          userId: 'user-1',
+        },
+        'job-1'
+      )
+    ).rejects.toThrow(
+      'No Base.com category mapping found for internal category "69da99b1855cd0bfc9a2ab81". Map this category in Category Mapper first.'
+    );
+
+    expect(listingRepo.updateListing).toHaveBeenNthCalledWith(1, 'listing-base-1', {
+      failureReason: null,
+    });
+    expect(listingRepo.updateListing).toHaveBeenNthCalledWith(2, 'listing-base-1', {
+      status: 'failed',
+      failureReason:
+        'No Base.com category mapping found for internal category "69da99b1855cd0bfc9a2ab81". Map this category in Category Mapper first.',
+    });
+    expect(listingRepo.appendExportHistory).toHaveBeenCalledWith(
+      'listing-base-1',
+      expect.objectContaining({
+        status: 'failed',
+        failureReason:
+          'No Base.com category mapping found for internal category "69da99b1855cd0bfc9a2ab81". Map this category in Category Mapper first.',
       })
     );
   });

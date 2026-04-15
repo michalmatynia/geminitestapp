@@ -3,18 +3,22 @@
  */
 
 import React from 'react';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { persistTraderaQuickListFeedback } from '@/features/integrations/utils/traderaQuickListFeedback';
 import { persistVintedQuickListFeedback } from '@/features/integrations/utils/vintedQuickListFeedback';
 
 const {
+  getAiPathRunMock,
+  listAiPathRunsMock,
   refetchListingsMock,
   useProductListingsActionsImplMock,
   useTraderaQuickExportPollingMock,
   useVintedQuickExportPollingMock,
 } = vi.hoisted(() => ({
+  getAiPathRunMock: vi.fn(),
+  listAiPathRunsMock: vi.fn(),
   refetchListingsMock: vi.fn(),
   useProductListingsActionsImplMock: vi.fn(() => ({
     handleDeleteFromBase: vi.fn(),
@@ -61,6 +65,11 @@ vi.mock(
   })
 );
 
+vi.mock('@/shared/lib/ai-paths/api/client', () => ({
+  getAiPathRun: (...args: unknown[]) => getAiPathRunMock(...args),
+  listAiPathRuns: (...args: unknown[]) => listAiPathRunsMock(...args),
+}));
+
 import { ProductListingsProvider, useProductListingsModals } from './ProductListingsContext';
 
 function RecoveryContextSummary(): React.JSX.Element {
@@ -72,6 +81,11 @@ function RecoveryContextSummary(): React.JSX.Element {
       <div data-testid='integration-id'>{recoveryContext?.integrationId ?? 'none'}</div>
       <div data-testid='connection-id'>{recoveryContext?.connectionId ?? 'none'}</div>
       <div data-testid='run-id'>{recoveryContext?.runId ?? 'none'}</div>
+      <div data-testid='failure-reason'>
+        {recoveryContext && 'failureReason' in recoveryContext
+          ? recoveryContext.failureReason ?? 'none'
+          : 'none'}
+      </div>
     </div>
   );
 }
@@ -104,6 +118,14 @@ describe('ProductListingsProvider', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     window.sessionStorage.clear();
+    getAiPathRunMock.mockResolvedValue({
+      ok: false,
+      error: 'not found',
+    });
+    listAiPathRunsMock.mockResolvedValue({
+      ok: true,
+      data: { runs: [] },
+    });
   });
 
   it('shares recovery-context updates with later consumers in the same open modal', () => {
@@ -431,5 +453,115 @@ describe('ProductListingsProvider', () => {
     expect(screen.getByTestId('integration-id')).toHaveTextContent('none');
     expect(screen.getByTestId('connection-id')).toHaveTextContent('none');
     expect(screen.getByTestId('run-id')).toHaveTextContent('none');
+  });
+
+  it('hydrates Base recovery details from the failed run when the run id is already known', async () => {
+    getAiPathRunMock.mockResolvedValue({
+      ok: true,
+      data: {
+        run: {
+          id: 'run-base-1',
+          status: 'failed',
+          errorMessage:
+            'No Base.com category mapping found for internal category "69da99b1855cd0bfc9a2ab81". Map this category in Category Mapper first.',
+          meta: {
+            requestId: 'request-base-1',
+            connectionId: 'conn-base-1',
+          },
+        },
+        nodes: [],
+        events: [],
+      },
+    });
+
+    render(
+      <ProductListingsProvider
+        product={
+          {
+            id: 'product-1',
+            name: 'Product 1',
+            images: [],
+          } as never
+        }
+        onClose={vi.fn()}
+        recoveryContext={{
+          source: 'base_quick_export_failed',
+          integrationSlug: 'baselinker',
+          status: 'failed',
+          runId: 'run-base-1',
+        }}
+      >
+        <RecoveryContextSummary />
+      </ProductListingsProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('failure-reason')).toHaveTextContent(
+        'No Base.com category mapping found for internal category "69da99b1855cd0bfc9a2ab81". Map this category in Category Mapper first.'
+      );
+    });
+
+    expect(screen.getByTestId('connection-id')).toHaveTextContent('conn-base-1');
+    expect(screen.getByTestId('run-id')).toHaveTextContent('run-base-1');
+  });
+
+  it('hydrates Base recovery details from the latest failed Base run when the run id is missing', async () => {
+    listAiPathRunsMock.mockResolvedValue({
+      ok: true,
+      data: {
+        runs: [
+          {
+            id: 'run-base-older',
+            pathId: 'integration-base-export',
+            status: 'failed',
+            entityId: 'product-1',
+            errorMessage: 'Older Base failure.',
+            updatedAt: '2026-04-14T10:00:00.000Z',
+          },
+          {
+            id: 'run-base-latest',
+            pathId: 'integration-base-export',
+            status: 'failed',
+            entityId: 'product-1',
+            errorMessage:
+              'No Base.com category mapping found for internal category "69da99b1855cd0bfc9a2ab81". Map this category in Category Mapper first.',
+            updatedAt: '2026-04-15T10:00:00.000Z',
+            meta: {
+              connectionId: 'conn-base-latest',
+            },
+          },
+        ],
+      },
+    });
+
+    render(
+      <ProductListingsProvider
+        product={
+          {
+            id: 'product-1',
+            name: 'Product 1',
+            images: [],
+          } as never
+        }
+        onClose={vi.fn()}
+        recoveryContext={{
+          source: 'base_quick_export_failed',
+          integrationSlug: 'baselinker',
+          status: 'failed',
+          runId: null,
+        }}
+      >
+        <RecoveryContextSummary />
+      </ProductListingsProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('failure-reason')).toHaveTextContent(
+        'No Base.com category mapping found for internal category "69da99b1855cd0bfc9a2ab81". Map this category in Category Mapper first.'
+      );
+    });
+
+    expect(screen.getByTestId('run-id')).toHaveTextContent('run-base-latest');
+    expect(screen.getByTestId('connection-id')).toHaveTextContent('conn-base-latest');
   });
 });

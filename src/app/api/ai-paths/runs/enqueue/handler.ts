@@ -16,6 +16,7 @@ import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import {
   aiPathRunEnqueueRequestSchema,
   aiPathRunEnqueueResponseSchema,
+  aiPathRunRecordSchema,
   type AiNode,
   type Edge,
   type PathConfig,
@@ -60,22 +61,6 @@ const withTimeout = async <T>(
   } finally {
     if (timeoutId) clearTimeout(timeoutId);
   }
-};
-
-const resolveEnqueueRunId = (run: unknown): string | null => {
-  if (typeof run === 'string') {
-    const normalized = run.trim();
-    return normalized.length > 0 ? normalized : null;
-  }
-  if (!run || typeof run !== 'object' || Array.isArray(run)) return null;
-  const record = run as Record<string, unknown>;
-  const candidates = [record['id'], record['runId'], record['_id']];
-  for (const candidate of candidates) {
-    if (typeof candidate !== 'string') continue;
-    const normalized = candidate.trim();
-    if (normalized.length > 0) return normalized;
-  }
-  return null;
 };
 
 const hasOwn = (record: Record<string, unknown>, key: string): boolean =>
@@ -291,11 +276,12 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
       meta: normalizedMeta,
     });
   });
-  const runId = resolveEnqueueRunId(run);
-  if (!runId) {
-    throw internalError('AI Paths enqueue response missing run identifier.', {
+  const parsedRun = aiPathRunRecordSchema.strict().safeParse(run);
+  if (!parsedRun.success) {
+    throw internalError('AI Paths enqueue service returned a non-canonical run payload.', {
       source: 'ai-paths.runs.enqueue',
       pathId: rest.pathId,
+      issues: parsedRun.error.issues,
     });
   }
   void logSystemEvent({
@@ -327,7 +313,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
     },
   });
 
-  const responsePayload = { run, runId };
+  const responsePayload = { run: parsedRun.data };
   const responseContract = aiPathRunEnqueueResponseSchema.safeParse(responsePayload);
   if (!responseContract.success) {
     throw internalError('AI Paths enqueue response contract violation.', {

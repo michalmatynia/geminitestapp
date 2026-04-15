@@ -825,7 +825,7 @@ describe('settings-store flag preservation and maintenance-only starter policy',
       const parsed = JSON.parse(record.value) as Record<string, unknown>;
       const nodes = Array.isArray(parsed['nodes']) ? (parsed['nodes'] as Array<Record<string, unknown>>) : [];
       const nextNodes = nodes.map((node) => {
-        if (node['id'] !== 'node-model-name-normalize') return node;
+        if (node['type'] !== 'model') return node;
         const config =
           node['config'] && typeof node['config'] === 'object'
             ? { ...(node['config'] as Record<string, unknown>) }
@@ -872,7 +872,7 @@ describe('settings-store flag preservation and maintenance-only starter policy',
 
     const parsed = JSON.parse(normalizeRecord.value) as Record<string, unknown>;
     const nodes = Array.isArray(parsed['nodes']) ? (parsed['nodes'] as Array<Record<string, unknown>>) : [];
-    const normalizeModelNode = nodes.find((node) => node['id'] === 'node-model-name-normalize');
+    const normalizeModelNode = nodes.find((node) => node['type'] === 'model');
     const modelConfig =
       normalizeModelNode?.['config'] &&
       typeof normalizeModelNode['config'] === 'object' &&
@@ -899,7 +899,7 @@ describe('settings-store flag preservation and maintenance-only starter policy',
         ? (parsed['nodes'] as Array<Record<string, unknown>>)
         : [];
       const nextNodes = nodes.map((node) => {
-        if (node['id'] !== 'node-model-name-normalize') return node;
+        if (node['type'] !== 'model') return node;
         const config =
           node['config'] && typeof node['config'] === 'object'
             ? { ...(node['config'] as Record<string, unknown>) }

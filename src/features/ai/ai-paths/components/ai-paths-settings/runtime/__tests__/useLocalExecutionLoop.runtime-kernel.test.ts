@@ -277,7 +277,7 @@ describe('useLocalExecutionLoop runtime kernel forwarding', () => {
         prevOutputs: { status: 'running' },
         error: new Error('database failed'),
         iteration: 2,
-        runtimeStrategy: 'compatibility',
+        runtimeStrategy: 'code_object_v3',
         runtimeResolutionSource: 'override',
         runtimeCodeObjectId: 'resolver.fallback',
       });
@@ -294,7 +294,7 @@ describe('useLocalExecutionLoop runtime kernel forwarding', () => {
         waitingOnPorts: ['callback'],
         waitingOnDetails: [{ port: 'callback' }],
         message: 'Waiting for callback',
-        runtimeStrategy: 'compatibility',
+        runtimeStrategy: 'code_object_v3',
         runtimeResolutionSource: 'missing',
         runtimeCodeObjectId: null,
       });
@@ -305,7 +305,7 @@ describe('useLocalExecutionLoop runtime kernel forwarding', () => {
         message: 'Validation warning',
         iteration: 3,
         issues: [{ id: 'issue-1', severity: 'warn', message: 'Warn' }],
-        runtimeStrategy: 'compatibility',
+        runtimeStrategy: 'code_object_v3',
         runtimeResolutionSource: 'registry',
         runtimeCodeObjectId: 'resolver.db',
       });
@@ -357,7 +357,6 @@ describe('useLocalExecutionLoop runtime kernel forwarding', () => {
         status: 'failed',
         metadata: expect.objectContaining({
           error: 'database failed',
-          runtimeStrategy: 'compatibility',
           runtimeResolutionSource: 'override',
           runtimeCodeObjectId: 'resolver.fallback',
         }),
@@ -371,7 +370,6 @@ describe('useLocalExecutionLoop runtime kernel forwarding', () => {
         metadata: expect.objectContaining({
           reason: 'waiting_callback',
           waitingOnPorts: ['callback'],
-          runtimeStrategy: 'compatibility',
           runtimeResolutionSource: 'missing',
           runtimeCodeObjectId: null,
         }),
@@ -385,7 +383,6 @@ describe('useLocalExecutionLoop runtime kernel forwarding', () => {
           stage: 'node_post_execute',
           decision: 'warn',
           issueCount: 1,
-          runtimeStrategy: 'compatibility',
           runtimeResolutionSource: 'registry',
           runtimeCodeObjectId: 'resolver.db',
         }),

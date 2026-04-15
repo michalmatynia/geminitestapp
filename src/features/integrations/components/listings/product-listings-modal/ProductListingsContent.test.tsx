@@ -141,6 +141,49 @@ describe('ProductListingsContent', () => {
     expect(onStartListingMock).not.toHaveBeenCalled();
   });
 
+  it('renders a Base recovery banner in the listings content when a failed Base export is being recovered', () => {
+    useProductListingsModalsMock.mockReturnValue({
+      onStartListing: onStartListingMock,
+      recoveryContext: {
+        source: 'base_quick_export_failed',
+        integrationSlug: 'baselinker',
+        status: 'failed',
+        runId: 'run-base-1',
+        failureReason:
+          'No Base.com category mapping found for internal category "69da99b1855cd0bfc9a2ab81". Map this category in Category Mapper first.',
+      },
+      setRecoveryContext: setRecoveryContextMock,
+    });
+
+    render(
+      <ProductListingsViewProvider
+        value={{
+          ...baseViewContextValue,
+          filterIntegrationSlug: 'baselinker',
+          integrationScopeLabel: 'Base.com',
+          statusTargetLabel: 'Base.com',
+          isBaseFilter: true,
+          filteredListings: [
+            {
+              id: 'listing-base-1',
+              status: 'failed',
+            } as never,
+          ],
+        }}
+      >
+        <ProductListingsContent />
+      </ProductListingsViewProvider>
+    );
+
+    expect(screen.getByText(/Previous Base\.com export failed/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'No Base.com category mapping found for internal category "69da99b1855cd0bfc9a2ab81". Map this category in Category Mapper first.'
+      )
+    ).toBeInTheDocument();
+    expect(screen.getByText('Base.com status: failed')).toBeInTheDocument();
+  });
+
   it('does not continue into listing flow when login recovery fails', async () => {
     handleOpenTraderaLoginMock.mockResolvedValue(false);
     useProductListingsModalsMock.mockReturnValue({

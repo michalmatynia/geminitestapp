@@ -85,6 +85,8 @@ describe('ProductListingsEmpty', () => {
         integrationSlug: 'baselinker',
         status: 'failed',
         runId: 'run-base-failed-99',
+        failureReason:
+          'No Base.com category mapping found for internal category "69da99b1855cd0bfc9a2ab81". Map this category in Category Mapper first.',
       },
     });
 
@@ -102,6 +104,11 @@ describe('ProductListingsEmpty', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('failed')).toBeInTheDocument();
     expect(screen.getByText('run-base-failed-99')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'No Base.com category mapping found for internal category "69da99b1855cd0bfc9a2ab81". Map this category in Category Mapper first.'
+      )
+    ).toBeInTheDocument();
   });
 
   it('shows the Base sync panel in the empty BL modal state when scoped to Base.com', () => {

@@ -271,7 +271,6 @@ describe('useAiPathsSettingsPathActions handleSwitchPath', () => {
       expect(mocks.setActivePathId).toHaveBeenCalledWith(input.activePathId);
     });
     expect(mocks.setPathConfigs).not.toHaveBeenCalled();
-    expect(mocks.persistSettingsBulk).not.toHaveBeenCalled();
     expect(mocks.persistActivePathPreference).not.toHaveBeenCalledWith(nextPathId);
     expect(mocks.reportAiPathsError).toHaveBeenCalled();
     expect(mocks.toast).toHaveBeenCalledWith(

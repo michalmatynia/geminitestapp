@@ -182,12 +182,7 @@ export const toRuntimeProfileHighlight = (
       durationMs: event.durationMs,
     };
   }
-  const runtimeStrategy =
-    event.runtimeStrategy === 'compatibility'
-      ? 'compatibility'
-      : event.runtimeStrategy === 'code_object_v3'
-        ? 'code_object_v3'
-        : undefined;
+  const runtimeStrategy = event.runtimeStrategy === 'code_object_v3' ? 'code_object_v3' : undefined;
   return {
     type: 'node',
     nodeId: event.nodeId,

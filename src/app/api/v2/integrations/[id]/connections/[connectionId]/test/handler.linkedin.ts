@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { decryptSecret } from '@/features/integrations/server';
-import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
-import type { TestConnectionResponse, TestLogEntry } from '@/shared/contracts/integrations/session-testing';
+import type { TestConnectionResponse } from '@/shared/contracts/integrations/session-testing';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { type ConnectionTestContext } from './types';

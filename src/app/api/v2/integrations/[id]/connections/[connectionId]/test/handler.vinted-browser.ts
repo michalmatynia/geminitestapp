@@ -7,7 +7,6 @@ import {
   persistPlaywrightConnectionTestSession,
   resolvePlaywrightConnectionTestRuntime,
 } from '@/features/playwright/server';
-import { type TestLogEntry } from '@/shared/contracts/integrations';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { createVintedBrowserTestUtils } from '@/features/integrations/services/vinted-listing/vinted-browser-test-utils';
 import {
@@ -20,15 +19,7 @@ import {
 } from '@/features/integrations/services/vinted-listing/config';
 
 import {
-  type IntegrationConnectionRecord,
-  type IntegrationRepository,
-} from '@/shared/contracts/integrations/repositories';
-
-import {
   type ConnectionTestContext,
-  type ConnectionUpdateRepository,
-  type Fail,
-  type PushStep,
 } from './types';
 
 const VINTED_GOOGLE_SIGN_IN_BLOCKED_MESSAGE =

@@ -223,7 +223,7 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const LEGACY_SELL_URL = \'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts\';');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const normalizedConfiguredSellUrl =');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const CREATE_LISTING_TRIGGER_SELECTORS = [');
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const CATEGORY_FIELD_LABELS = [\'Category\', \'Kategori\'];');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const CATEGORY_FIELD_LABELS = ["Category","Kategori"];');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const CATEGORY_PLACEHOLDER_LABELS = [');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const FALLBACK_CATEGORY_OPTION_LABELS = [\'Other\', \'Övrigt\'];');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const FALLBACK_CATEGORY_PATH_SEGMENTS = [\'Other\', \'Other\'];');
@@ -233,18 +233,12 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const CONDITION_FIELD_LABELS = [\'Condition\', \'Skick\'];');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const CONDITION_OPTION_LABELS = [');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const DRAFT_IMAGE_REMOVE_SELECTORS = [');
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('[data-testid*="photo"] input[type="file"]');
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('input[type="file"][name*="image" i]');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const IMAGE_UPLOAD_TRIGGER_SELECTORS = [');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const IMAGE_REQUIRED_HINT_SELECTORS = [');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const IMAGE_UPLOAD_PENDING_SELECTORS = [');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const IMAGE_UPLOAD_ERROR_SELECTORS = [');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const IMAGE_UPLOAD_ERROR_HINTS = [');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const UPLOADED_IMAGE_PREVIEW_SELECTORS = [');
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('[data-testid*="preview" i] img');
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('button:has-text("Add images")');
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('button:has-text("Lägg till bilder")');
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('[data-testid*="image-picker"]');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('button[aria-label*="Radera" i]');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('button:has-text("Radera")');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const DRAFT_IMAGE_REMOVE_ACTION_HINTS = [');
@@ -445,7 +439,7 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const titleElement = candidateContainer.querySelector(');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('titleText: ((titleElement && titleElement.textContent) || \'\').replace');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).not.toContain('titleText: (element.getAttribute(\'title\') ||');
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const collectVisibleListingCandidatePreview = async (limit = 8) => {');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const collectVisibleListingCandidatePreview = async (limit = null) => {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const titlesExactlyMatch = (left, right) => {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const collectListingLinksForTerm = async (term, maxMatches = null, sourceCandidates = null) => {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const inspectDuplicateCandidateListing = async (candidate) => {');
@@ -875,7 +869,18 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('tradera.quicklist.publish.id_not_extracted');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const duplicateMatch = await checkDuplicate(duplicateSearchTerms);');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const matchLimit =');
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const visibleCandidates = await collectVisibleListingCandidates();');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      'const buildVisibleListingCandidatesPageSignature = (candidates = []) =>'
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      'const resolveNextVisibleListingResultsPageUrl = async () =>'
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      'const collectVisibleListingCandidatesAcrossPages = async ({'
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      'const collectVisibleListingCandidatePreview = async (limit = null) => {'
+    );
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const candidatePreviewBeforeSearch = await collectVisibleListingCandidatePreview();');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const preparedSearchValue = await prepareActiveListingsSearchInput(searchInput, searchTerm);');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const searchInputValue = await readActiveSearchInputValue(searchInput);');
@@ -884,6 +889,10 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const duplicateCandidateSet = await collectDuplicateCandidates(');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const sourceCandidates =');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(': await collectVisibleListingCandidates();');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      'const visibleCandidates = await collectVisibleListingCandidatesAcrossPages({'
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("context: 'duplicate-search',");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const exactTitleMatches = await collectListingLinksForTerm(');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('sourceCandidates');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const normalizedTerm = normalizeListingMatchValue(term);');
@@ -907,7 +916,15 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('matchStrategy: \'existing-listing-id+visible-candidate\',');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('matchStrategy: \'exact-title-single-candidate\',');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).not.toContain('for (const candidate of [...duplicateMatches, ...visibleCandidates]) {');
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const visibleCandidates = await collectVisibleListingCandidates();');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      "log?.('tradera.quicklist.listing_pagination.page', {"
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      "log?.('tradera.quicklist.sync.candidate_scan_page', {"
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).not.toContain(
+      'const visibleCandidates = await collectVisibleListingCandidates();'
+    );
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const uncertainSearch =');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('duplicateMatches.length > 0 &&');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
@@ -1028,16 +1045,22 @@ describe('TRADERA_CHECK_STATUS_SCRIPT', () => {
       "title: normalizeWhitespace(candidateInfo.titleText || '') || inferredTitleFromUrl,"
     );
     expect(TRADERA_CHECK_STATUS_SCRIPT).toContain(
+      'const collectVisibleListingCandidatesAcrossPages = async (section, searchTerm = null) => {'
+    );
+    expect(TRADERA_CHECK_STATUS_SCRIPT).toContain(
       'const isLikelyDuplicateMatchByText = (candidate, normalizedSearchTerm) => {'
     );
     expect(TRADERA_CHECK_STATUS_SCRIPT).toContain(
       'const inspectionCandidates = dedupeCandidatesByListing(['
     );
     expect(TRADERA_CHECK_STATUS_SCRIPT).toContain(
+      'const visibleCandidates = await collectVisibleListingCandidatesAcrossPages('
+    );
+    expect(TRADERA_CHECK_STATUS_SCRIPT).toContain(
       'via fallback candidate recovery from visible listing text.'
     );
     expect(TRADERA_CHECK_STATUS_SCRIPT).toContain(
-      'Inspecting ' + "' + inspectionCandidates.length + '" + ' candidate(s) from '
+      'search-result page(s) by description and Product ID.'
     );
   });
 

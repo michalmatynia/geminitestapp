@@ -30,7 +30,7 @@ const buildStaleNormalizeRefreshRecords = () =>
       ? (parsed['nodes'] as Array<Record<string, unknown>>)
       : [];
     const nextNodes = nodes.map((node) => {
-      if (node['id'] !== 'node-model-name-normalize') return node;
+      if (node['type'] !== 'model') return node;
       const config =
         node['config'] && typeof node['config'] === 'object'
           ? { ...(node['config'] as Record<string, unknown>) }

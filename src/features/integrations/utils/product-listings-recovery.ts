@@ -56,12 +56,14 @@ export const isBaseQuickExportRecoveryContext = (
 export const createBaseRecoveryContext = ({
   status,
   runId,
+  failureReason,
   requestId,
   integrationId,
   connectionId,
 }: {
   status: string;
   runId: string | null;
+  failureReason?: string | null | undefined;
   requestId?: string | null | undefined;
   integrationId?: string | null | undefined;
   connectionId?: string | null | undefined;
@@ -70,6 +72,7 @@ export const createBaseRecoveryContext = ({
   integrationSlug: 'baselinker',
   status,
   runId,
+  failureReason: failureReason ?? null,
   ...(requestId != null ? { requestId } : {}),
   ...(integrationId != null ? { integrationId } : {}),
   ...(connectionId != null ? { connectionId } : {}),
@@ -91,6 +94,14 @@ export const resolveProductListingsEmptyDescription = (
   recoveryContext?: ProductListingsRecoveryContext | null | undefined
 ): string => {
   if (isBaseQuickExportRecoveryContext(recoveryContext)) {
+    const failureReason =
+      typeof recoveryContext.failureReason === 'string' &&
+      recoveryContext.failureReason.trim().length > 0
+        ? recoveryContext.failureReason.trim()
+        : null;
+    if (failureReason) {
+      return failureReason;
+    }
     return 'The last Base.com one-click export failed before a listing record was created. Use the options above to retry or choose a different connection.';
   }
 

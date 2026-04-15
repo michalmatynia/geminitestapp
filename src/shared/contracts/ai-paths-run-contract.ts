@@ -55,74 +55,19 @@ export const aiPathRunEnqueueRequestSchema = z.object({
 });
 export type AiPathRunEnqueueRequest = z.infer<typeof aiPathRunEnqueueRequestSchema>;
 
-const aiPathRunEnqueueRunObjectSchema = z
-  .object({
-    id: nonEmptyTrimmedStringSchema.optional(),
-    runId: nonEmptyTrimmedStringSchema.optional(),
-    _id: nonEmptyTrimmedStringSchema.optional(),
-  })
-  .passthrough();
-
-const aiPathRunEnqueueEnvelopeCandidateSchema = z
-  .object({
-    run: z.union([nonEmptyTrimmedStringSchema, aiPathRunEnqueueRunObjectSchema]).optional(),
-    runId: nonEmptyTrimmedStringSchema.optional(),
-  })
-  .passthrough();
-
-const readRunIdFromEnqueueEnvelopeCandidate = (
-  value: z.infer<typeof aiPathRunEnqueueEnvelopeCandidateSchema>
-): string | null => {
-  if (typeof value.runId === 'string' && value.runId.length > 0) {
-    return value.runId;
-  }
-  if (typeof value.run === 'string' && value.run.length > 0) {
-    return value.run;
-  }
-  if (!value.run || typeof value.run !== 'object' || Array.isArray(value.run)) {
-    return null;
-  }
-  const run = value.run as Record<string, unknown>;
-  const candidates = [run['id'], run['runId'], run['_id']];
-  for (const candidate of candidates) {
-    if (typeof candidate !== 'string') continue;
-    const normalized = candidate.trim();
-    if (normalized.length > 0) return normalized;
-  }
-  return null;
-};
-
-export const extractAiPathRunIdFromEnqueueContractPayload = (value: unknown): string | null => {
-  const parsed = aiPathRunEnqueueEnvelopeCandidateSchema.safeParse(value);
-  if (parsed.success) {
-    const runId = readRunIdFromEnqueueEnvelopeCandidate(parsed.data);
-    if (runId) return runId;
-  }
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
-  const record = value as Record<string, unknown>;
-  const nested = record['data'];
-  if (!nested || typeof nested !== 'object' || Array.isArray(nested)) return null;
-  const nestedParsed = aiPathRunEnqueueEnvelopeCandidateSchema.safeParse(nested);
-  if (!nestedParsed.success) return null;
-  return readRunIdFromEnqueueEnvelopeCandidate(nestedParsed.data);
-};
+const aiPathRunEnqueueRunSchema = aiPathRunRecordSchema.strict();
 
 export const aiPathRunEnqueueResponseSchema = z
   .object({
-    run: z.union([nonEmptyTrimmedStringSchema, aiPathRunEnqueueRunObjectSchema]).optional(),
-    runId: nonEmptyTrimmedStringSchema.optional(),
-    data: aiPathRunEnqueueEnvelopeCandidateSchema.optional(),
+    run: aiPathRunEnqueueRunSchema,
   })
-  .passthrough()
-  .superRefine((value, ctx) => {
-    if (extractAiPathRunIdFromEnqueueContractPayload(value)) return;
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: 'AI Paths enqueue response must include a non-empty run identifier.',
-      path: ['runId'],
-    });
-  });
+  .strict();
 export type AiPathRunEnqueueResponse = z.infer<typeof aiPathRunEnqueueResponseSchema>;
+
+export const extractAiPathRunIdFromEnqueueContractPayload = (value: unknown): string | null => {
+  const parsed = aiPathRunEnqueueResponseSchema.safeParse(value);
+  return parsed.success ? parsed.data.run.id : null;
+};
 
 export const AI_PATH_RUN_ENQUEUED_EVENT_NAME = 'ai-path-run-enqueued';
 export const AI_PATH_RUN_QUEUE_CHANNEL = 'ai-path-queue';

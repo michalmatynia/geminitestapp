@@ -8,6 +8,7 @@ import {
   resolvePlaywrightEngineRunOutputs,
   startPlaywrightConnectionEngineTask,
   startPlaywrightEngineTask,
+  type PlaywrightEngineRunRecord,
 } from '@/features/playwright/server';
 import { type PlaywrightConnectionSettingsOverridesInput } from '@/features/playwright/server/connection-runtime';
 import {
@@ -1202,13 +1203,7 @@ async function mapWithConcurrencyLimit<TInput, TOutput>(
 
 type SynchronizeAmazonStatusInput = {
   scan: ProductScanRecord;
-  run: {
-    status: string;
-    completedAt?: string | null;
-    startedAt?: string | null;
-    createdAt?: string | null;
-    updatedAt?: string | null;
-  };
+  run: PlaywrightEngineRunRecord;
   engineRunId: string;
   resultValue: unknown;
   parsedResult: ReturnType<typeof parseAmazonScanScriptResult>;
@@ -1270,7 +1265,7 @@ async function synchronizeAmazonCaptchaRequired({
     steps: nextSteps,
     rawResult: {
       ...existingRawResult,
-      ...resultValue,
+      ...(toRecord(resultValue) ?? {}),
       previousRunId: engineRunId,
       captchaRetryStarted: true,
       manualVerificationPending: true,
@@ -1877,7 +1872,7 @@ async function synchronizeAmazonProbeReady({
 }: SynchronizeAmazonStatusInput & {
   persistedAmazonProbe: ProductScanAmazonProbe;
   existingAmazonEvaluation: ProductScanAmazonEvaluation;
-  finalUrl: string;
+  finalUrl: string | null;
 }): Promise<ProductScanRecord> {
   const product = await productService.getProductById(scan.productId);
   const resolvedProbeUrl = resolvePersistableScanUrl(
@@ -2709,6 +2704,16 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
               asinUpdateStatus: 'not_needed',
               asinUpdateMessage: failureMessage,
               completedAt: run.completedAt ?? new Date().toISOString(),
+            });
+          }
+
+          if (parsedResult.status === 'captcha_required') {
+            return await synchronizeAmazonCaptchaRequired({
+              scan,
+              run,
+              engineRunId,
+              resultValue,
+              parsedResult,
             });
           }
 

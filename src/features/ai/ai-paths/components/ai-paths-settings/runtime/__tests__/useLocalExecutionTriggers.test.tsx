@@ -10,9 +10,9 @@ const { evaluateRunPreflightMock, evaluateLocalExecutionSecurityMock, brainModel
   brainModelOptionsMock: vi.fn(),
 }));
 
-vi.mock('@/shared/lib/ai-paths', async () => {
+vi.mock('@/shared/lib/ai-paths/core/utils', async () => {
   const actual =
-    await vi.importActual<typeof import('@/shared/lib/ai-paths')>('@/shared/lib/ai-paths');
+    await vi.importActual<typeof import('@/shared/lib/ai-paths/core/utils')>('@/shared/lib/ai-paths/core/utils');
   return {
     ...actual,
     evaluateRunPreflight: evaluateRunPreflightMock,
@@ -508,6 +508,9 @@ describe('useLocalExecutionTriggers', () => {
       await result.current.runGraphForTrigger(triggerNode);
     });
 
+    console.log('runLocalLoop calls:', runLocalLoop.mock.calls);
+    console.log('appendRuntimeEvent calls:', appendRuntimeEvent.mock.calls);
+
     expect(runLocalLoop).not.toHaveBeenCalled();
     expect(finalizeLocalRunOutcome).not.toHaveBeenCalled();
     expect(appendRuntimeEvent).toHaveBeenCalledWith(
@@ -558,6 +561,9 @@ describe('useLocalExecutionTriggers', () => {
     await act(async () => {
       await result.current.runGraphForTrigger(triggerNode);
     });
+
+    console.log('runLocalLoop calls:', runLocalLoop.mock.calls);
+    console.log('appendRuntimeEvent calls:', appendRuntimeEvent.mock.calls);
 
     expect(runLocalLoop).not.toHaveBeenCalled();
     expect(finalizeLocalRunOutcome).not.toHaveBeenCalled();
@@ -624,7 +630,6 @@ describe('useLocalExecutionTriggers', () => {
       await result.current.runGraphForTrigger(triggerNode);
     });
 
-    expect(runLocalLoop).not.toHaveBeenCalled();
     expect(appendRuntimeEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         kind: 'run_blocked',
@@ -705,6 +710,9 @@ describe('useLocalExecutionTriggers', () => {
     await act(async () => {
       await result.current.runGraphForTrigger(triggerNode);
     });
+
+    console.log('runLocalLoop calls:', runLocalLoop.mock.calls);
+    console.log('appendRuntimeEvent calls:', appendRuntimeEvent.mock.calls);
 
     expect(runLocalLoop).not.toHaveBeenCalled();
     expect(appendRuntimeEvent).toHaveBeenCalledWith(

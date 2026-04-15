@@ -42,7 +42,6 @@ export const aiPathRuntimeTraceFailedNodeSchema = z.object({
 export type AiPathRuntimeTraceFailedNode = z.infer<typeof aiPathRuntimeTraceFailedNodeSchema>;
 
 export const aiPathRuntimeKernelStrategyCountsSchema = z.object({
-  compatibility: z.number(),
   code_object_v3: z.number(),
   unknown: z.number(),
 });

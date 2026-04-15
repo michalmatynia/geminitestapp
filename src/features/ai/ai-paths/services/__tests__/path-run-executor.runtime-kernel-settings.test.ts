@@ -478,7 +478,7 @@ describe('path-run-executor runtime-kernel settings integration', () => {
                 pathName: run.pathName,
                 traceId: run.id,
                 spanId: `${node?.id ?? 'node-1'}:1:2`,
-                runtimeStrategy: 'compatibility',
+                runtimeStrategy: 'legacy_mode' as never,
                 runtimeResolutionSource: 'registry',
                 runtimeCodeObjectId: null,
               },
@@ -546,9 +546,8 @@ describe('path-run-executor runtime-kernel settings integration', () => {
     expect(getRecordField(runtimeTrace, 'kernelParity')).toEqual({
       sampledHistoryEntries: 2,
       strategyCounts: {
-        compatibility: 1,
         code_object_v3: 1,
-        unknown: 0,
+        unknown: 1,
       },
       resolutionSourceCounts: {
         override: 1,

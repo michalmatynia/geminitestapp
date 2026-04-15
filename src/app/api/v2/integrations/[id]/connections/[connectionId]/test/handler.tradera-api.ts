@@ -2,8 +2,7 @@ import { NextResponse } from 'next/server';
 import { decryptSecret } from '@/features/integrations/server';
 import { getTraderaUserInfo } from '@/features/integrations/services/tradera-api-client';
 import { toPositiveInt } from '@/features/integrations/services/tradera-listing/utils';
-import type { IntegrationConnectionRecord, IntegrationRepository } from '@/shared/contracts/integrations/repositories';
-import type { TestConnectionResponse, TestLogEntry } from '@/shared/contracts/integrations/session-testing';
+import type { TestConnectionResponse } from '@/shared/contracts/integrations/session-testing';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { type ConnectionTestContext } from './types';

@@ -131,6 +131,7 @@ export function ProductListingsEmpty(): React.JSX.Element {
         <BaseQuickExportFailureBanner
           status={recoveryContext?.status}
           runId={recoveryContext?.runId}
+          failureReason={recoveryFailureReason}
         />
       )}
       {shouldUseTraderaRecovery && (

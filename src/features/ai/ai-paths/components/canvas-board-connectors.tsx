@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
-import type { AiNode, Edge, PortDataType } from '@/shared/contracts/ai-paths';
+import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
 import {
   arePortTypesCompatible,
   formatPortDataTypes,
@@ -9,6 +9,7 @@ import {
   getPortDataTypes,
   getValueTypeLabel,
   isValueCompatibleWithTypes,
+  type PortDataType,
 } from '@/shared/lib/ai-paths/core/utils';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 

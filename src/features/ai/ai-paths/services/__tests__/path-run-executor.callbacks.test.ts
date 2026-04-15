@@ -474,7 +474,7 @@ describe('path-run-executor callbacks', () => {
       message: 'Awaiting webhook callback.',
       waitingOnPorts: ['callback_url'],
       waitingOnDetails: [{ kind: 'webhook', attempt: 2 }],
-      runtimeStrategy: 'compatibility',
+      runtimeStrategy: 'code_object_v3',
       runtimeResolutionSource: 'override',
       runtimeCodeObjectId: null,
     });
@@ -544,7 +544,6 @@ describe('path-run-executor callbacks', () => {
           reason: 'waiting_callback',
           status: 'waiting_callback',
           waitingOnPorts: ['callback_url'],
-          runtimeStrategy: 'compatibility',
           runtimeResolutionSource: 'override',
           runtimeCodeObjectId: null,
           resumeMode: 'replay',

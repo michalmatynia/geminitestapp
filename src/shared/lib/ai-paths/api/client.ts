@@ -167,226 +167,23 @@ export async function enqueueAiPathRun(
   };
 }
 
-const asNonEmptyString = (value: unknown): string | null => {
-  if (typeof value !== 'string') return null;
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
-};
-
 const asRecord = (value: unknown): Record<string, unknown> | null => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
   return value as Record<string, unknown>;
 };
 
-const hasOwn = (record: Record<string, unknown>, key: string): boolean =>
-  Object.prototype.hasOwnProperty.call(record, key);
-
-const RUN_ID_KEYS = ['id', 'runId', '_id'] as const;
-
-const extractRunIdFromRecord = (record: Record<string, unknown>): string | null => {
-  for (const key of RUN_ID_KEYS) {
-    const runId = asNonEmptyString(record[key]);
-    if (runId) {
-      return runId;
-    }
-  }
-  return null;
+const parseCanonicalEnqueueResponse = (data: unknown): AiPathRunEnqueueResponse | null => {
+  const parsed = aiPathRunEnqueueResponseSchema.safeParse(data);
+  return parsed.success ? parsed.data : null;
 };
-
-const extractRunIdFromValue = (value: unknown): string | null => {
-  const directString = asNonEmptyString(value);
-  if (directString) return directString;
-  const record = asRecord(value);
-  if (!record) return null;
-  return extractRunIdFromRecord(record);
-};
-
-const isIdOnlyEnvelopeRecord = (record: Record<string, unknown>): boolean => {
-  const keys = Object.keys(record);
-  if (keys.length !== 1) return false;
-  return keys[0] === 'id' || keys[0] === 'runId' || keys[0] === '_id';
-};
-
-const looksLikeRunRecordEnvelope = (record: Record<string, unknown>): boolean => {
-  if (isIdOnlyEnvelopeRecord(record)) return true;
-  if (asNonEmptyString(record['status'])) return true;
-  if (asNonEmptyString(record['createdAt'])) return true;
-  if (asNonEmptyString(record['updatedAt'])) return true;
-  if (typeof record['progress'] === 'number') return true;
-  if (asNonEmptyString(record['pathName'])) return true;
-  return false;
-};
-
-const extractRunIdFromWrapperRecord = (record: Record<string, unknown>): string | null => {
-  const explicitRunId = asNonEmptyString(record['runId']);
-  if (explicitRunId) return explicitRunId;
-  if (!looksLikeRunRecordEnvelope(record)) return null;
-  return asNonEmptyString(record['id']) ?? asNonEmptyString(record['_id']) ?? null;
-};
-
-const readEnqueueRunCandidates = (
-  data: unknown
-): {
-  runCandidates: unknown[];
-  wrapperCandidates: Record<string, unknown>[];
-  hasPrimaryRunValue: boolean;
-} => {
-  if (typeof data === 'string') {
-    return { runCandidates: [data], wrapperCandidates: [], hasPrimaryRunValue: false };
-  }
-  const root = asRecord(data);
-  if (!root) return { runCandidates: [], wrapperCandidates: [], hasPrimaryRunValue: false };
-  const nestedData = asRecord(root['data']);
-  const runCandidates: unknown[] = [];
-  const wrapperCandidates: Record<string, unknown>[] = [root];
-  if (nestedData) wrapperCandidates.push(nestedData);
-  let hasPrimaryRunValue = false;
-  if (hasOwn(root, 'run')) {
-    runCandidates.push(root['run']);
-    hasPrimaryRunValue = true;
-  }
-  if (nestedData && hasOwn(nestedData, 'run')) {
-    runCandidates.push(nestedData['run']);
-    hasPrimaryRunValue = true;
-  }
-  return { runCandidates, wrapperCandidates, hasPrimaryRunValue };
-};
-
-const selectRunCandidateRecord = (
-  runCandidates: unknown[]
-): { selectedRecord: Record<string, unknown> | null; runId: string | null } => {
-  for (const candidate of runCandidates) {
-    const candidateRecord = asRecord(candidate);
-    const candidateRunId = extractRunIdFromValue(candidate);
-    if (!candidateRunId) continue;
-    return {
-      selectedRecord: candidateRecord,
-      runId: candidateRunId,
-    };
-  }
-  return {
-    selectedRecord: null,
-    runId: null,
-  };
-};
-
-const selectWrapperRunRecord = (
-  wrapperCandidates: Record<string, unknown>[]
-): { selectedRecord: Record<string, unknown> | null; runId: string | null } => {
-  for (const candidate of wrapperCandidates) {
-    const candidateRunId = extractRunIdFromWrapperRecord(candidate);
-    if (!candidateRunId) continue;
-    return {
-      selectedRecord: candidate,
-      runId: candidateRunId,
-    };
-  }
-  return {
-    selectedRecord: null,
-    runId: null,
-  };
-};
-
-const shouldPreferPrimaryRunRecord = (input: {
-  runId: string | null;
-  selectedRecord: Record<string, unknown> | null;
-  primaryRunRecord: Record<string, unknown> | null;
-}): boolean =>
-  Boolean(
-    input.runId &&
-      input.selectedRecord &&
-      input.primaryRunRecord &&
-      input.selectedRecord !== input.primaryRunRecord &&
-      !extractRunIdFromValue(input.primaryRunRecord)
-  );
-
-const resolveFallbackRunSelection = (input: {
-  data: unknown;
-  runId: string | null;
-  primaryRunRecord: Record<string, unknown> | null;
-  selectedRecord: Record<string, unknown> | null;
-}): { runId: string | null; selectedRecord: Record<string, unknown> | null } => {
-  if (input.runId) {
-    return {
-      runId: input.runId,
-      selectedRecord: input.selectedRecord,
-    };
-  }
-  const fallbackRunId = extractAiPathRunIdFromEnqueueResponseData(input.data);
-  if (fallbackRunId && input.primaryRunRecord) {
-    return {
-      runId: fallbackRunId,
-      selectedRecord: input.primaryRunRecord,
-    };
-  }
-  return {
-    runId: fallbackRunId,
-    selectedRecord: input.selectedRecord,
-  };
-};
-
-const normalizeEnqueueRunRecord = (
-  selectedRecord: Record<string, unknown>,
-  runId: string
-): AiPathRunRecord =>
-  ({
-    ...selectedRecord,
-    id: runId,
-    status: asNonEmptyString(selectedRecord['status']) ?? 'queued',
-  }) as AiPathRunRecord;
 
 export const extractAiPathRunIdFromEnqueueResponseData = (data: unknown): string | null => {
-  const { runCandidates, wrapperCandidates } = readEnqueueRunCandidates(data);
-  for (const candidate of runCandidates) {
-    const runId = extractRunIdFromValue(candidate);
-    if (runId) return runId;
-  }
-  for (const candidate of wrapperCandidates) {
-    const runId = extractRunIdFromWrapperRecord(candidate);
-    if (runId) return runId;
-  }
-  return null;
+  return parseCanonicalEnqueueResponse(data)?.run.id ?? null;
 };
 
 export const extractAiPathRunRecordFromEnqueueResponseData = (
   data: unknown
-): AiPathRunRecord | null => {
-  const { runCandidates, wrapperCandidates, hasPrimaryRunValue } = readEnqueueRunCandidates(data);
-  const primaryRunRecord = hasPrimaryRunValue ? asRecord(runCandidates[0] ?? null) : null;
-
-  const selectedRunCandidate = selectRunCandidateRecord(runCandidates);
-  const selectedWrapperCandidate = selectedRunCandidate.runId
-    ? null
-    : selectWrapperRunRecord(wrapperCandidates);
-  let selectedRecord = selectedRunCandidate.selectedRecord ?? selectedWrapperCandidate?.selectedRecord ?? null;
-  let runId = selectedRunCandidate.runId ?? selectedWrapperCandidate?.runId ?? null;
-
-  if (
-    shouldPreferPrimaryRunRecord({
-      runId,
-      selectedRecord,
-      primaryRunRecord,
-    })
-  ) {
-    // Prefer the primary `run` object payload body when id lives on wrapper fields.
-    selectedRecord = primaryRunRecord;
-  }
-
-  ({ runId, selectedRecord } = resolveFallbackRunSelection({
-    data,
-    runId,
-    primaryRunRecord,
-    selectedRecord,
-  }));
-
-  if (!runId) return null;
-  if (!selectedRecord) {
-    // Preserve legacy behavior for string-only payloads: return id only, no run record.
-    return null;
-  }
-
-  return normalizeEnqueueRunRecord(selectedRecord, runId);
-};
+): AiPathRunRecord | null => parseCanonicalEnqueueResponse(data)?.run ?? null;
 
 export const resolveAiPathRunFromEnqueueResponseData = (
   data: unknown
@@ -394,11 +191,11 @@ export const resolveAiPathRunFromEnqueueResponseData = (
   runId: string | null;
   runRecord: AiPathRunRecord | null;
 } => {
-  const runRecord = extractAiPathRunRecordFromEnqueueResponseData(data);
-  const runId = runRecord
-    ? asNonEmptyString(runRecord.id)
-    : extractAiPathRunIdFromEnqueueResponseData(data);
-  return { runId, runRecord };
+  const response = parseCanonicalEnqueueResponse(data);
+  if (!response) {
+    return { runId: null, runRecord: null };
+  }
+  return { runId: response.run.id, runRecord: response.run };
 };
 
 const mergeNullableRecord = (

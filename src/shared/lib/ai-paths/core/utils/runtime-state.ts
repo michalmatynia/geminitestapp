@@ -60,8 +60,25 @@ const assertNoUnsupportedRuntimeIdentityFields = (parsed: Record<string, unknown
   );
 };
 
+const pruneNonCanonicalRuntimeHistoryStrategy = (parsed: Record<string, unknown>): void => {
+  const history = parsed['history'];
+  if (!history || typeof history !== 'object' || Array.isArray(history)) return;
+
+  Object.values(history as Record<string, unknown>).forEach((entries: unknown): void => {
+    if (!Array.isArray(entries)) return;
+    entries.forEach((entry: unknown): void => {
+      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return;
+      const record = entry as Record<string, unknown>;
+      if (record['runtimeStrategy'] !== 'code_object_v3') {
+        delete record['runtimeStrategy'];
+      }
+    });
+  });
+};
+
 const normalizeParsedRuntimeState = (parsed: Record<string, unknown>): RuntimeState => {
   assertNoUnsupportedRuntimeIdentityFields(parsed);
+  pruneNonCanonicalRuntimeHistoryStrategy(parsed);
   const merged = {
     ...EMPTY_RUNTIME_STATE,
     ...parsed,

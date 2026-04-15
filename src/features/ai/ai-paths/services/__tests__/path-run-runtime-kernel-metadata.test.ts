@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { HISTORICAL_RUNTIME_COMPATIBILITY_ALIAS } from '@/dev/ai-paths-runtime-compatibility-normalization';
 import {
   DEPRECATED_RUNTIME_KERNEL_CONFIG_MODE_FIELD,
   DEPRECATED_RUNTIME_KERNEL_CONFIG_NODE_TYPES_FIELD,
@@ -20,6 +19,8 @@ import {
   normalizeAiPathRunRuntimeKernelMetadataForCleanup,
   normalizeAiPathRunRuntimeKernelMetadataForRuntimeRead,
 } from '@/features/ai/ai-paths/services/path-run-runtime-kernel-metadata';
+
+const HISTORICAL_RUNTIME_STRATEGY_ALIAS = 'compatibility';
 
 describe('normalizeAiPathRunRuntimeKernelMetadataForCleanup', () => {
   it('prunes legacy runtime-kernel config aliases instead of translating them', () => {
@@ -79,7 +80,7 @@ describe('normalizeAiPathRunRuntimeKernelMetadataForCleanup', () => {
         kernelParity: {
           sampledHistoryEntries: 3,
           strategyCounts: {
-            [HISTORICAL_RUNTIME_COMPATIBILITY_ALIAS]: 2,
+            [HISTORICAL_RUNTIME_STRATEGY_ALIAS]: 2,
             code_object_v3: 1,
             unknown: 0,
           },
@@ -94,7 +95,7 @@ describe('normalizeAiPathRunRuntimeKernelMetadataForCleanup', () => {
         kernelParity: {
           sampledHistoryEntries: 3,
           strategyCounts: {
-            [HISTORICAL_RUNTIME_COMPATIBILITY_ALIAS]: 2,
+            [HISTORICAL_RUNTIME_STRATEGY_ALIAS]: 2,
             code_object_v3: 1,
             unknown: 0,
           },
@@ -200,7 +201,7 @@ describe('normalizeAiPathRunRuntimeKernelMetadataForCleanup', () => {
       runtimeTrace: {
         kernelParity: {
           strategyCounts: {
-            [HISTORICAL_RUNTIME_COMPATIBILITY_ALIAS]: 4,
+            [HISTORICAL_RUNTIME_STRATEGY_ALIAS]: 4,
             code_object_v3: 2,
             unknown: 1,
           },
@@ -214,7 +215,7 @@ describe('normalizeAiPathRunRuntimeKernelMetadataForCleanup', () => {
       runtimeTrace: {
         kernelParity: {
           strategyCounts: {
-            [HISTORICAL_RUNTIME_COMPATIBILITY_ALIAS]: 4,
+            [HISTORICAL_RUNTIME_STRATEGY_ALIAS]: 4,
             code_object_v3: 2,
             unknown: 1,
           },

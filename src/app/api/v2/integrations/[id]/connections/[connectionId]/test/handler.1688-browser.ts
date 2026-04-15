@@ -6,17 +6,12 @@ import {
   persistPlaywrightConnectionTestSession,
   resolvePlaywrightConnectionTestRuntime,
 } from '@/features/playwright/server';
-import type { TestLogEntry } from '@/shared/contracts/integrations';
 import type {
   IntegrationConnectionRecord,
-  IntegrationRepository,
 } from '@/shared/contracts/integrations/repositories';
 
 import {
   type ConnectionTestContext,
-  type ConnectionUpdateRepository,
-  type Fail,
-  type PushStep,
 } from './types';
 
 const QUICKLIST_AUTH_REQUIRED_DETAIL =

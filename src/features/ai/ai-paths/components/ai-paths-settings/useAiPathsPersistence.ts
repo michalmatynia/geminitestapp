@@ -529,7 +529,6 @@ export function useAiPathsPersistence(
     loading,
     pathConfigs,
     paths,
-    resolveLoadedPathConfig,
     setPathConfigs,
   ]);
 

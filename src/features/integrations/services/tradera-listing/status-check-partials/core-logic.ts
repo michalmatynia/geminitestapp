@@ -437,7 +437,284 @@ export const STATUS_CHECK_CORE_LOGIC = String.raw`
     return collected;
   };
 
-  const collectListingLinksForTerm = async (term, maxMatches = null) => {
+  const buildVisibleListingCandidatesPageSignature = (candidates = []) =>
+    JSON.stringify({
+      url: normalizeWhitespace(page.url()),
+      listings: (Array.isArray(candidates) ? candidates : []).map((candidate) =>
+        normalizeWhitespace(
+          candidate?.listingId || candidate?.listingUrl || candidate?.title || ''
+        )
+      ),
+    });
+
+  const resolveNextVisibleListingResultsPageUrl = async () =>
+    page
+      .evaluate(
+        ({ currentUrl, nextLabelHints, pageParamNames }) => {
+          const normalize = (value) =>
+            String(value || '')
+              .replace(/\s+/g, ' ')
+              .trim();
+
+          const parsePageNumber = (value) => {
+            const normalizedValue = normalize(value);
+            if (!normalizedValue) {
+              return null;
+            }
+
+            try {
+              const url = new URL(normalizedValue, currentUrl);
+              for (const paramName of pageParamNames) {
+                const rawValue = normalize(url.searchParams.get(paramName) || '');
+                if (/^\d+$/.test(rawValue)) {
+                  const parsed = Number.parseInt(rawValue, 10);
+                  if (Number.isFinite(parsed) && parsed > 0) {
+                    return parsed;
+                  }
+                }
+              }
+            } catch {}
+
+            if (/^\d+$/.test(normalizedValue)) {
+              const parsed = Number.parseInt(normalizedValue, 10);
+              return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+            }
+
+            return null;
+          };
+
+          const isVisible = (element) => {
+            if (!(element instanceof HTMLElement)) {
+              return false;
+            }
+
+            const style = window.getComputedStyle(element);
+            if (!style || style.visibility === 'hidden' || style.display === 'none') {
+              return false;
+            }
+
+            const rect = element.getBoundingClientRect();
+            return rect.width > 0 && rect.height > 0;
+          };
+
+          const hasPaginationContext = (element) => {
+            let current = element;
+            for (let depth = 0; depth < 6 && current; depth += 1) {
+              if (!(current instanceof HTMLElement)) {
+                current = current.parentElement;
+                continue;
+              }
+
+              const tagName = String(current.tagName || '').toLowerCase();
+              const role = normalize(current.getAttribute('role')).toLowerCase();
+              const combinedHints = [
+                normalize(current.getAttribute('aria-label')).toLowerCase(),
+                normalize(current.getAttribute('data-testid')).toLowerCase(),
+                normalize(current.className).toLowerCase(),
+              ]
+                .filter(Boolean)
+                .join(' ');
+
+              if (tagName === 'nav' || role === 'navigation') {
+                return true;
+              }
+
+              if (combinedHints.includes('pagination') || combinedHints.includes('pager')) {
+                return true;
+              }
+
+              current = current.parentElement;
+            }
+
+            return false;
+          };
+
+          const toAbsoluteUrl = (value) => {
+            const normalizedValue = normalize(value);
+            if (!normalizedValue) {
+              return '';
+            }
+
+            try {
+              return new URL(normalizedValue, currentUrl).toString();
+            } catch {
+              return '';
+            }
+          };
+
+          const selectors = [
+            'main a[href]',
+            'main button',
+            '[role="main"] a[href]',
+            '[role="main"] button',
+            'a[rel="next"]',
+            'button[rel="next"]',
+          ];
+
+          const paginationCandidates = [];
+          const seen = new Set();
+
+          for (const selector of selectors) {
+            for (const element of document.querySelectorAll(selector)) {
+              if (!(element instanceof HTMLElement) || !isVisible(element)) {
+                continue;
+              }
+
+              const rel = normalize(element.getAttribute('rel')).toLowerCase();
+              const absoluteUrl = toAbsoluteUrl(
+                element.getAttribute('href') ||
+                  ('href' in element && typeof element.href === 'string' ? element.href : '')
+              );
+
+              if (!hasPaginationContext(element) && rel !== 'next') {
+                continue;
+              }
+
+              const labelText = normalize(
+                [
+                  element.getAttribute('aria-label'),
+                  element.getAttribute('title'),
+                  element.textContent,
+                ]
+                  .filter(Boolean)
+                  .join(' ')
+              );
+              const normalizedLabelText = labelText.toLowerCase();
+              const pageNumber =
+                parsePageNumber(absoluteUrl) || parsePageNumber(labelText) || null;
+              const isCurrent =
+                ['page', 'true'].includes(
+                  normalize(element.getAttribute('aria-current')).toLowerCase()
+                ) ||
+                normalize(element.getAttribute('aria-selected')).toLowerCase() === 'true';
+              const disabled =
+                element.matches(':disabled') ||
+                normalize(element.getAttribute('aria-disabled')).toLowerCase() === 'true';
+              const isNextHint =
+                rel === 'next' ||
+                nextLabelHints.some((hint) => normalizedLabelText.includes(hint)) ||
+                ['>', '>>', '›', '»', '→'].includes(normalizedLabelText);
+              const dedupeKey = [
+                absoluteUrl,
+                labelText,
+                rel,
+                pageNumber === null ? '' : String(pageNumber),
+              ].join('::');
+
+              if (seen.has(dedupeKey)) {
+                continue;
+              }
+
+              seen.add(dedupeKey);
+              paginationCandidates.push({
+                absoluteUrl,
+                labelText,
+                pageNumber,
+                isCurrent,
+                disabled,
+                isNextHint,
+              });
+            }
+          }
+
+          let currentPage = parsePageNumber(currentUrl) || 1;
+          for (const candidate of paginationCandidates) {
+            if (!candidate.isCurrent || candidate.pageNumber === null) {
+              continue;
+            }
+            currentPage = candidate.pageNumber;
+            break;
+          }
+
+          let bestCandidate = null;
+
+          for (const candidate of paginationCandidates) {
+            if (candidate.disabled || !candidate.absoluteUrl || candidate.absoluteUrl === currentUrl) {
+              continue;
+            }
+
+            const priority = candidate.isNextHint
+              ? 0
+              : candidate.pageNumber !== null && candidate.pageNumber > currentPage
+                ? 1
+                : Number.POSITIVE_INFINITY;
+
+            if (!Number.isFinite(priority)) {
+              continue;
+            }
+
+            if (
+              !bestCandidate ||
+              priority < bestCandidate.priority ||
+              (priority === bestCandidate.priority &&
+                (candidate.pageNumber ?? Number.POSITIVE_INFINITY) <
+                  (bestCandidate.pageNumber ?? Number.POSITIVE_INFINITY))
+            ) {
+              bestCandidate = {
+                absoluteUrl: candidate.absoluteUrl,
+                pageNumber: candidate.pageNumber,
+                priority,
+              };
+            }
+          }
+
+          return bestCandidate ? bestCandidate.absoluteUrl : null;
+        },
+        {
+          currentUrl: page.url(),
+          nextLabelHints: ['next', 'next page', 'nästa', 'nästa sida'],
+          pageParamNames: ['page', 'p', 'paged', 'pageindex', 'pageno', 'sid'],
+        }
+      )
+      .catch(() => null);
+
+  const collectVisibleListingCandidatesAcrossPages = async (section, searchTerm = null) => {
+    const collected = [];
+    const seenCandidates = new Set();
+    const seenPageSignatures = new Set();
+
+    while (true) {
+      const pageCandidates = await collectVisibleListingCandidates();
+      const pageSignature = buildVisibleListingCandidatesPageSignature(pageCandidates);
+
+      if (seenPageSignatures.has(pageSignature)) {
+        break;
+      }
+
+      seenPageSignatures.add(pageSignature);
+
+      for (const candidate of pageCandidates) {
+        const dedupeKey = candidate?.listingId || candidate?.listingUrl || null;
+        if (!dedupeKey || seenCandidates.has(dedupeKey)) {
+          continue;
+        }
+
+        seenCandidates.add(dedupeKey);
+        collected.push(candidate);
+      }
+
+      const currentUrl = normalizeWhitespace(page.url());
+      const nextPageUrl = normalizeWhitespace(
+        await resolveNextVisibleListingResultsPageUrl()
+      );
+
+      if (!nextPageUrl || nextPageUrl === currentUrl) {
+        break;
+      }
+
+      await page.goto(nextPageUrl, {
+        waitUntil: 'domcontentloaded',
+        timeout: 30_000,
+      }).catch(() => undefined);
+      await waitForPageIdle(1_000);
+      await acceptCookies();
+      await waitForPageIdle(700);
+    }
+
+    return collected;
+  };
+
+  const collectListingLinksForTerm = async (term, maxMatches = null, sourceCandidates = null) => {
     const normalizedTerm = normalizeListingMatchValue(term);
     if (!normalizedTerm) return [];
 
@@ -445,7 +722,10 @@ export const STATUS_CHECK_CORE_LOGIC = String.raw`
       typeof maxMatches === 'number' && Number.isFinite(maxMatches) && maxMatches > 0
         ? Math.max(1, Math.floor(maxMatches))
         : null;
-    const candidates = await collectVisibleListingCandidates();
+    const candidates =
+      Array.isArray(sourceCandidates) && sourceCandidates.length > 0
+        ? sourceCandidates
+        : await collectVisibleListingCandidates();
     const matches = [];
 
     for (const candidate of candidates) {
@@ -688,9 +968,16 @@ export const STATUS_CHECK_CORE_LOGIC = String.raw`
     const preparedSearchValue = await prepareSearchInput(searchInput, resolvedSearchTitle || '');
     const searchTrigger = await triggerSearchSubmit();
 
-    const visibleCandidates = await collectVisibleListingCandidates();
+    const visibleCandidates = await collectVisibleListingCandidatesAcrossPages(
+      section,
+      resolvedSearchTitle || ''
+    );
     const normalizedSearchTerm = normalizeListingMatchValue(resolvedSearchTitle || '');
-    const exactTitleCandidates = await collectListingLinksForTerm(resolvedSearchTitle || '');
+    const exactTitleCandidates = await collectListingLinksForTerm(
+      resolvedSearchTitle || '',
+      null,
+      visibleCandidates
+    );
     const fallbackCandidates =
       exactTitleCandidates.length === 0
         ? visibleCandidates.filter((candidate) =>
@@ -707,9 +994,9 @@ export const STATUS_CHECK_CORE_LOGIC = String.raw`
       inspectionCandidates.length > 0
         ? 'Found ' +
             inspectionCandidates.length +
-            ' candidate(s) in ' +
+            ' candidate(s) across all ' +
             section.label +
-            ' using "' +
+            ' search-result page(s) using "' +
             preparedSearchValue +
             '" (' +
             searchTrigger +
@@ -732,7 +1019,11 @@ export const STATUS_CHECK_CORE_LOGIC = String.raw`
     updateStep(
       section.inspectStepId,
       'running',
-      'Inspecting ' + inspectionCandidates.length + ' candidate(s) from ' + section.label + ' by description and Product ID.'
+      'Inspecting ' +
+        inspectionCandidates.length +
+        ' candidate(s) from all ' +
+        section.label +
+        ' search-result page(s) by description and Product ID.'
     );
 
     for (const candidate of inspectionCandidates) {

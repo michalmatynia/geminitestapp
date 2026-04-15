@@ -386,9 +386,9 @@ export const runtimeTraceRecordSchema = z
   });
 export type RuntimeTraceRecord = z.infer<typeof runtimeTraceRecordSchema>;
 
-export type NodeRuntimeResolutionStrategy = 'compatibility' | 'code_object_v3';
+export type NodeRuntimeResolutionStrategy = 'code_object_v3';
 
-export const nodeRuntimeResolutionStrategySchema = z.enum(['compatibility', 'code_object_v3']);
+export const nodeRuntimeResolutionStrategySchema = z.literal('code_object_v3');
 
 export const runtimeHistoryEntrySchema = z.object({
   timestamp: z.string(),

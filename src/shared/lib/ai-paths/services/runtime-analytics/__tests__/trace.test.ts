@@ -95,8 +95,8 @@ describe('runtime trace analytics', () => {
               kernelParity: {
                 sampledHistoryEntries: 2,
                 strategyCounts: {
-                  compatibility: 1,
                   code_object_v3: 1,
+                  unknown: 1,
                 },
                 resolutionSourceCounts: {
                   registry: 1,
@@ -159,9 +159,8 @@ describe('runtime trace analytics', () => {
         runsWithKernelParity: 1,
         sampledHistoryEntries: 2,
         strategyCounts: {
-          compatibility: 1,
           code_object_v3: 1,
-          unknown: 0,
+          unknown: 1,
         },
         resolutionSourceCounts: {
           override: 1,

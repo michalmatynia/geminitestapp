@@ -579,6 +579,7 @@ export type ProductListingsRecoveryContext =
     integrationSlug: 'baselinker';
     status: string;
     runId: string | null;
+    failureReason?: string | null | undefined;
     requestId?: string | null | undefined;
     integrationId?: string | null | undefined;
     connectionId?: string | null | undefined;

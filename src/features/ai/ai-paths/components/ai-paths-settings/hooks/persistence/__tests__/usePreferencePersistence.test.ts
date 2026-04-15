@@ -10,7 +10,7 @@ const mockState = vi.hoisted(() => ({
 }));
 
 vi.mock('@/shared/lib/ai-paths', () => ({
-  AI_PATHS_UI_STATE_KEY: 'ai-paths-ui-state',
+  AI_PATHS_UI_STATE_KEY: 'ai_paths_ui_state',
 }));
 
 vi.mock('@/shared/lib/ai-paths/settings-store-client', () => ({
@@ -56,7 +56,7 @@ describe('usePreferencePersistence', () => {
     expect(core.enqueueSettingsWrite).toHaveBeenCalledTimes(2);
     expect(mockState.updateAiPathsSettingsBulk).toHaveBeenNthCalledWith(1, [
       {
-        key: 'ai-paths-ui-state',
+        key: 'ai_paths_ui_state',
         value:
           '{"activePathId":"path-1","expandedGroups":["group-a"],"paletteCollapsed":true,"pathTreeVisible":false}',
       },
@@ -120,7 +120,7 @@ describe('usePreferencePersistence', () => {
 
     const resolved = result.current.resolveUiState([
       {
-        key: 'ai-paths-ui-state',
+        key: 'ai_paths_ui_state',
         value:
           '{"activePathId":" path-a ","expandedGroups":[" Ops ","Templates","Ops",""],"paletteCollapsed":true,"pathTreeVisible":false}',
       },
@@ -156,7 +156,7 @@ describe('usePreferencePersistence', () => {
 
     const resolved = result.current.resolveUiState([
       {
-        key: 'ai-paths-ui-state',
+        key: 'ai_paths_ui_state',
         value: '{bad json',
       },
     ] as never);

@@ -21,6 +21,7 @@ import {
   createTraderaRecoveryContext,
   createVintedRecoveryContext,
   findTraderaRecoveryListing,
+  isBaseQuickExportRecoveryContext,
   isTraderaQuickExportRecoveryContext,
   isVintedQuickExportRecoveryContext,
   mergeProductListingsRecoveryContext,
@@ -41,6 +42,7 @@ import type { ProductListingWithDetails } from '@/shared/contracts/integrations/
 import { useProductListingsViewContext } from './context/ProductListingsViewContext';
 import { renderProductListingItem } from './ProductListingItem';
 import { ProductListingsScopedStatusPanel } from './ProductListingsScopedStatusPanel';
+import { BaseQuickExportFailureBanner } from './BaseQuickExportFailureBanner';
 import { TraderaQuickExportRecoveryBanner } from './TraderaQuickExportRecoveryBanner';
 import { TraderaQuickExportSuccessBanner } from './TraderaQuickExportSuccessBanner';
 import { VintedQuickExportRecoveryBanner } from './VintedQuickExportRecoveryBanner';
@@ -125,6 +127,7 @@ export function ProductListingsContent(): React.JSX.Element {
   const { filteredListings, statusTargetLabel, filterIntegrationSlug, isBaseFilter, showSync } =
     useProductListingsViewContext();
   const { recoveryContext, setRecoveryContext } = useProductListingsModals();
+  const isBaseQuickExportRecovery = isBaseQuickExportRecoveryContext(recoveryContext);
   const isVintedQuickExportRecovery = isVintedQuickExportRecoveryContext(recoveryContext);
   const isScopedToTradera = isTraderaIntegrationSlug(filterIntegrationSlug);
   const isScopedToVinted = isVintedIntegrationSlug(filterIntegrationSlug);
@@ -139,8 +142,14 @@ export function ProductListingsContent(): React.JSX.Element {
   });
   const shouldUseTraderaRecovery =
     isTraderaQuickExportRecovery && !isScopedToVinted;
+  const shouldUseBaseRecovery =
+    isBaseQuickExportRecovery && !isScopedToTradera && !isScopedToVinted;
   const shouldUseVintedRecovery =
     isVintedQuickExportRecovery && !isScopedToTradera;
+  const baseRecoveryFailureReason =
+    recoveryContext && 'failureReason' in recoveryContext
+      ? recoveryContext.failureReason ?? null
+      : null;
   const fallbackRecoveryListing = shouldUseTraderaRecovery
     ? findTraderaRecoveryListing(filteredListings, recoveryRequestId, recoveryRunId)
     : null;
@@ -425,6 +434,13 @@ export function ProductListingsContent(): React.JSX.Element {
           listing={trackedVintedSuccessListing}
         />
       ) : null}
+      {shouldUseBaseRecovery && (
+        <BaseQuickExportFailureBanner
+          status={recoveryContext?.status}
+          runId={recoveryContext?.runId}
+          failureReason={baseRecoveryFailureReason}
+        />
+      )}
       {effectiveShouldUseTraderaRecovery && (
         <TraderaQuickExportRecoveryBanner
           mode='content'

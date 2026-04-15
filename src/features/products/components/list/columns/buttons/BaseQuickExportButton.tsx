@@ -157,6 +157,7 @@ type PersistedBaseQuickExportFeedback = {
   productId: string;
   runId: string | null;
   status: TriggerButtonRunFeedbackStatus;
+  errorMessage?: string | null;
   expiresAt: number;
 };
 
@@ -206,6 +207,10 @@ const readPersistedBaseQuickExportFeedbackMap = (): Record<string, PersistedBase
           ? record['runId'].trim()
           : null,
         status,
+        errorMessage:
+          typeof record['errorMessage'] === 'string' && record['errorMessage'].trim().length > 0
+            ? record['errorMessage'].trim()
+            : null,
         expiresAt,
       };
     });
@@ -243,7 +248,8 @@ const readPersistedBaseQuickExportFeedback = (
 const persistBaseQuickExportFeedback = (
   productId: string,
   runId: string | null,
-  status: TriggerButtonRunFeedbackStatus
+  status: TriggerButtonRunFeedbackStatus,
+  errorMessage?: string | null
 ): void => {
   if (!productId.trim()) return;
   const nextMap = readPersistedBaseQuickExportFeedbackMap();
@@ -251,6 +257,10 @@ const persistBaseQuickExportFeedback = (
     productId,
     runId,
     status,
+    errorMessage:
+      typeof errorMessage === 'string' && errorMessage.trim().length > 0
+        ? errorMessage.trim()
+        : null,
     expiresAt: Date.now() + resolveExportFeedbackTtlMs(status),
   };
   writePersistedBaseQuickExportFeedbackMap(nextMap);
@@ -292,6 +302,10 @@ export function BaseQuickExportButton(props: {
   const [linkExistingPending, setLinkExistingPending] = useState(false);
   const [trackedExportRunStatus, setTrackedExportRunStatus] =
     useState<TriggerButtonRunFeedbackStatus | null>(null);
+  const [trackedExportRunContextId, setTrackedExportRunContextId] = useState<string | null>(null);
+  const [trackedExportRunErrorMessage, setTrackedExportRunErrorMessage] = useState<string | null>(
+    null
+  );
 
   const stopTrackingExportRun = useCallback((): void => {
     trackedExportRunUnsubscribeRef.current?.();
@@ -300,13 +314,30 @@ export function BaseQuickExportButton(props: {
   }, []);
 
   const setTrackedExportStatus = useCallback(
-    (status: TriggerButtonRunFeedbackStatus | null, runId?: string | null): void => {
+    (
+      status: TriggerButtonRunFeedbackStatus | null,
+      options?: { runId?: string | null; errorMessage?: string | null }
+    ): void => {
       setTrackedExportRunStatus(status);
       if (!status) {
+        setTrackedExportRunContextId(null);
+        setTrackedExportRunErrorMessage(null);
         clearPersistedBaseQuickExportFeedback(product.id);
         return;
       }
-      persistBaseQuickExportFeedback(product.id, runId?.trim() || null, status);
+      const normalizedRunId = options?.runId?.trim() || null;
+      setTrackedExportRunContextId(normalizedRunId);
+      const normalizedErrorMessage =
+        typeof options?.errorMessage === 'string' && options.errorMessage.trim().length > 0
+          ? options.errorMessage.trim()
+          : null;
+      setTrackedExportRunErrorMessage(normalizedErrorMessage);
+      persistBaseQuickExportFeedback(
+        product.id,
+        normalizedRunId,
+        status,
+        normalizedErrorMessage
+      );
     },
     [product.id]
   );
@@ -321,7 +352,10 @@ export function BaseQuickExportButton(props: {
   const handleTrackedExportRunSnapshot = useCallback(
     (runId: string, snapshot: TrackedAiPathRunSnapshot): void => {
       if (trackedExportRunIdRef.current !== runId) return;
-      setTrackedExportStatus(snapshot.status, runId);
+      setTrackedExportStatus(snapshot.status, {
+        runId,
+        errorMessage: snapshot.errorMessage,
+      });
       if (
         snapshot.trackingState === 'stopped' ||
         TERMINAL_EXPORT_RUN_STATUSES.has(snapshot.status)
@@ -336,7 +370,7 @@ export function BaseQuickExportButton(props: {
     (runId: string, initialStatus: TriggerButtonRunFeedbackStatus): void => {
       const normalizedRunId = runId.trim();
       if (!normalizedRunId) {
-        setTrackedExportStatus(initialStatus, null);
+        setTrackedExportStatus(initialStatus, { runId: null });
         return;
       }
 
@@ -345,7 +379,7 @@ export function BaseQuickExportButton(props: {
         trackedExportRunIdRef.current = normalizedRunId;
       }
 
-      setTrackedExportStatus(initialStatus, normalizedRunId);
+      setTrackedExportStatus(initialStatus, { runId: normalizedRunId });
       if (TERMINAL_EXPORT_RUN_STATUSES.has(initialStatus)) {
         stopTrackingExportRun();
         return;
@@ -376,6 +410,8 @@ export function BaseQuickExportButton(props: {
 
     trackedExportRunIdRef.current = persistedFeedback.runId;
     setTrackedExportRunStatus(persistedFeedback.status);
+    setTrackedExportRunContextId(persistedFeedback.runId);
+    setTrackedExportRunErrorMessage(persistedFeedback.errorMessage ?? null);
     if (
       persistedFeedback.runId &&
       !TERMINAL_EXPORT_RUN_STATUSES.has(persistedFeedback.status)
@@ -579,7 +615,7 @@ export function BaseQuickExportButton(props: {
       if (normalizedRunId) {
         startTrackingExportRun(normalizedRunId, initialRunStatus);
       } else if (response?.status) {
-        setTrackedExportStatus(initialRunStatus, null);
+        setTrackedExportStatus(initialRunStatus, { runId: null });
       }
 
       prefetchListings();
@@ -740,7 +776,8 @@ export function BaseQuickExportButton(props: {
   const recoveryContext: ProductListingsRecoveryContext | undefined = isFailureState
     ? createBaseRecoveryContext({
       status: resolvedButtonStatus,
-      runId: trackedExportRunIdRef.current,
+      runId: trackedExportRunContextId,
+      failureReason: trackedExportRunErrorMessage,
     })
     : undefined;
 

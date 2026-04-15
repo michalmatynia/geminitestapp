@@ -3,16 +3,20 @@
 import React, { useEffect, useState, useMemo } from 'react';
 
 import {
+  isBaseIntegrationSlug,
   isTraderaIntegrationSlug,
   isVintedIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
+import { BASE_EXPORT_RUN_PATH_ID } from '@/features/integrations/services/base-export-segments/constants';
 import { useTraderaQuickListFeedback } from '@/features/integrations/hooks/useTraderaQuickListFeedback';
 import { useVintedQuickListFeedback } from '@/features/integrations/hooks/useVintedQuickListFeedback';
 import { useProductListings } from '@/features/integrations/hooks/useListingQueries';
 import {
   areProductListingsRecoveryContextsEqual,
+  createBaseRecoveryContext,
   createTraderaRecoveryContext,
   createVintedRecoveryContext,
+  isBaseQuickExportRecoveryContext,
   isTraderaQuickExportRecoveryContext,
   isVintedQuickExportRecoveryContext,
   mergeProductListingsRecoveryContext,
@@ -21,11 +25,13 @@ import {
 } from '@/features/integrations/utils/product-listings-recovery';
 import { useTraderaQuickExportPolling } from '@/features/integrations/hooks/useTraderaQuickExportPolling';
 import { useVintedQuickExportPolling } from '@/features/integrations/hooks/useVintedQuickExportPolling';
+import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
 import type { CapturedLog } from '@/features/integrations/services/exports/log-capture';
 import type { PlaywrightRelistBrowserMode, ProductListingWithDetails } from '@/shared/contracts/integrations/listings';
 import type { ImageRetryPreset } from '@/shared/contracts/integrations/base';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
+import { getAiPathRun, listAiPathRuns } from '@/shared/lib/ai-paths/api/client';
 
 import { createStrictContext } from './createStrictContext';
 import { useProductListingsActionsImpl } from './useProductListingsActionsImpl';
@@ -73,6 +79,107 @@ const resolveIncomingRecoveryContext = (
   }
 
   return recoveryContext;
+};
+
+const BASE_RECOVERY_TIMEOUT_MS = 15_000;
+
+const toRecord = (value: unknown): Record<string, unknown> =>
+  value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+
+const readTrimmedString = (value: unknown): string | null =>
+  typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
+
+const parseTimestamp = (value: unknown): number =>
+  typeof value === 'string' && value.trim().length > 0
+    ? Number.isFinite(Date.parse(value))
+      ? Date.parse(value)
+      : 0
+    : 0;
+
+const toAiPathRunRecord = (
+  value: unknown,
+  fallbackRunId?: string | null | undefined
+): AiPathRunRecord | null => {
+  const record = toRecord(value);
+  if (!record) return null;
+  const runId =
+    readTrimmedString(record['id']) ??
+    readTrimmedString(record['runId']) ??
+    readTrimmedString(record['_id']) ??
+    readTrimmedString(fallbackRunId);
+  if (!runId) return null;
+  return {
+    ...record,
+    id: runId,
+    status: readTrimmedString(record['status']) ?? 'queued',
+  } as AiPathRunRecord;
+};
+
+const readBaseRunMeta = (run: Pick<AiPathRunRecord, 'meta'>): Record<string, unknown> =>
+  toRecord(run.meta);
+
+const resolveBaseRunFailureReason = (run: Pick<AiPathRunRecord, 'errorMessage'>): string | null =>
+  readTrimmedString(run.errorMessage);
+
+const resolveBaseRunProductId = (
+  run: Pick<AiPathRunRecord, 'entityId' | 'meta'>
+): string | null => {
+  const meta = readBaseRunMeta(run);
+  const sourceInfo = toRecord(meta['sourceInfo']);
+  return (
+    readTrimmedString(run.entityId) ??
+    readTrimmedString(meta['productId']) ??
+    readTrimmedString(sourceInfo['productId'])
+  );
+};
+
+const resolveBaseRunConnectionId = (run: Pick<AiPathRunRecord, 'meta'>): string | null => {
+  const meta = readBaseRunMeta(run);
+  const sourceInfo = toRecord(meta['sourceInfo']);
+  return readTrimmedString(meta['connectionId']) ?? readTrimmedString(sourceInfo['connectionId']);
+};
+
+const resolveBaseRunRequestId = (run: Pick<AiPathRunRecord, 'requestId' | 'meta'>): string | null => {
+  const meta = readBaseRunMeta(run);
+  const sourceInfo = toRecord(meta['sourceInfo']);
+  return (
+    readTrimmedString(run.requestId) ??
+    readTrimmedString(meta['requestId']) ??
+    readTrimmedString(sourceInfo['requestId'])
+  );
+};
+
+const resolveBaseRunSortTimestamp = (
+  run: Pick<AiPathRunRecord, 'updatedAt' | 'finishedAt' | 'startedAt' | 'createdAt'>
+): number =>
+  parseTimestamp(run.updatedAt) ||
+  parseTimestamp(run.finishedAt) ||
+  parseTimestamp(run.startedAt) ||
+  parseTimestamp(run.createdAt);
+
+const choosePreferredBaseRecoveryRun = (args: {
+  runs: unknown[];
+  productId: string;
+  connectionId?: string | null | undefined;
+}): AiPathRunRecord | null => {
+  const normalizedConnectionId = readTrimmedString(args.connectionId);
+  const candidates = args.runs
+    .flatMap((candidate): AiPathRunRecord[] => {
+      const run = toAiPathRunRecord(candidate);
+      return run ? [run] : [];
+    })
+    .filter((run) => resolveBaseRunProductId(run) === args.productId)
+    .sort((left, right) => {
+      const connectionScore =
+        normalizedConnectionId === null
+          ? 0
+          : Number(resolveBaseRunConnectionId(right) === normalizedConnectionId) -
+            Number(resolveBaseRunConnectionId(left) === normalizedConnectionId);
+      if (connectionScore !== 0) return connectionScore;
+      return resolveBaseRunSortTimestamp(right) - resolveBaseRunSortTimestamp(left);
+    });
+
+  return candidates[0] ?? null;
 };
 
 // --- Granular Contexts ---
@@ -318,6 +425,12 @@ export function ProductListingsProvider({
       : incomingRecoveryScope !== null
         ? isVintedIntegrationSlug(incomingRecoveryScope)
         : true;
+  const allowBaseRecoveryHydration =
+    explicitFilterScope !== null
+      ? isBaseIntegrationSlug(explicitFilterScope)
+      : incomingRecoveryScope !== null
+        ? isBaseIntegrationSlug(incomingRecoveryScope)
+        : true;
 
   useEffect(() => {
     if (!allowTraderaRecoveryHydration) {
@@ -429,6 +542,100 @@ export function ProductListingsProvider({
     vintedQuickListFeedback?.requestId,
     vintedQuickListFeedback?.runId,
     vintedQuickListFeedback?.status,
+  ]);
+
+  useEffect(() => {
+    const baseRecoveryContext = isBaseQuickExportRecoveryContext(resolvedRecoveryContext)
+      ? resolvedRecoveryContext
+      : null;
+    if (!allowBaseRecoveryHydration || !baseRecoveryContext) {
+      return;
+    }
+
+    if (readTrimmedString(baseRecoveryContext.failureReason)) {
+      return;
+    }
+
+    const abortController = new AbortController();
+    let active = true;
+
+    void (async () => {
+      let recoveredRun: AiPathRunRecord | null = null;
+      const currentRunId = readTrimmedString(baseRecoveryContext.runId);
+
+      if (currentRunId) {
+        const runResponse = await getAiPathRun(currentRunId, {
+          timeoutMs: BASE_RECOVERY_TIMEOUT_MS,
+          signal: abortController.signal,
+          cache: 'no-store',
+        }).catch(() => null);
+        if (!active || abortController.signal.aborted) return;
+        if (runResponse?.ok) {
+          recoveredRun = toAiPathRunRecord(runResponse.data.run, currentRunId);
+        }
+      }
+
+      if (!recoveredRun || !resolveBaseRunFailureReason(recoveredRun)) {
+        const runListResponse = await listAiPathRuns({
+          pathId: BASE_EXPORT_RUN_PATH_ID,
+          status: 'failed',
+          query: product.id,
+          limit: 10,
+          includeTotal: false,
+          fresh: true,
+          timeoutMs: BASE_RECOVERY_TIMEOUT_MS,
+          signal: abortController.signal,
+        }).catch(() => null);
+        if (!active || abortController.signal.aborted) return;
+        if (runListResponse?.ok) {
+          const listedRun = choosePreferredBaseRecoveryRun({
+            runs: runListResponse.data.runs,
+            productId: product.id,
+            connectionId: baseRecoveryContext.connectionId,
+          });
+          if (listedRun) {
+            recoveredRun =
+              recoveredRun && resolveBaseRunFailureReason(recoveredRun) ? recoveredRun : listedRun;
+          }
+        }
+      }
+
+      if (!recoveredRun) {
+        return;
+      }
+
+      const nextRecoveryContext = createBaseRecoveryContext({
+        status: readTrimmedString(recoveredRun.status) ?? baseRecoveryContext.status ?? 'failed',
+        runId: recoveredRun.id,
+        failureReason: resolveBaseRunFailureReason(recoveredRun),
+        requestId: baseRecoveryContext.requestId ?? resolveBaseRunRequestId(recoveredRun),
+        integrationId: baseRecoveryContext.integrationId ?? null,
+        connectionId: baseRecoveryContext.connectionId ?? resolveBaseRunConnectionId(recoveredRun),
+      });
+
+      setResolvedRecoveryContext((current) => {
+        if (!isBaseQuickExportRecoveryContext(current)) {
+          return current;
+        }
+
+        const mergedRecoveryContext = mergeProductListingsRecoveryContext(
+          nextRecoveryContext,
+          current
+        );
+        return areProductListingsRecoveryContextsEqual(current, mergedRecoveryContext)
+          ? current
+          : mergedRecoveryContext;
+      });
+    })();
+
+    return () => {
+      active = false;
+      abortController.abort();
+    };
+  }, [
+    allowBaseRecoveryHydration,
+    product.id,
+    resolvedRecoveryContext,
   ]);
 
   const actions = useProductListingsActionsImpl({

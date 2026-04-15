@@ -376,7 +376,8 @@ export const PART_5B = String.raw`
         return null;
       }
 
-      const visibleCandidates = await collectVisibleListingCandidates().catch(() => []);      const matchedCandidate = visibleCandidates.find((candidate) => {
+      const visibleCandidates = await collectVisibleListingCandidates().catch(() => []);
+      const matchedCandidate = visibleCandidates.find((candidate) => {
         const candidateListingId =
           normalizeWhitespace(
             candidate?.listingId || extractListingId(candidate?.listingUrl || '') || ''

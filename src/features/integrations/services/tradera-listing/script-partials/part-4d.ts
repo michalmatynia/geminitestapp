@@ -686,7 +686,10 @@ export const PART_4D = String.raw`
         currentUrl: page.url(),
       });
 
-      const visibleCandidates = await collectVisibleListingCandidates();
+      const visibleCandidates = await collectVisibleListingCandidatesAcrossPages({
+        context: 'duplicate-search',
+        searchTerm,
+      });
       const duplicateCandidateSet = await collectDuplicateCandidates(
         searchTerm,
         visibleCandidates

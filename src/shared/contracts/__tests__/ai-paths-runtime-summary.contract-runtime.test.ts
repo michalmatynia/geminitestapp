@@ -89,9 +89,8 @@ describe('ai paths runtime analytics summary contract runtime', () => {
             runsWithKernelParity: 10,
             sampledHistoryEntries: 20,
             strategyCounts: {
-              compatibility: 4,
               code_object_v3: 6,
-              unknown: 0,
+              unknown: 4,
             },
             resolutionSourceCounts: {
               override: 1,

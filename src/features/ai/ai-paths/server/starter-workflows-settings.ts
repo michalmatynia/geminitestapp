@@ -13,7 +13,6 @@ import {
   upgradeStarterWorkflowPathConfig,
 } from '@/shared/lib/ai-paths/core/starter-workflows';
 import { sanitizePathConfig } from '@/shared/lib/ai-paths/core/utils/path-config-sanitization';
-import { loadCanonicalStoredPathConfig } from '@/shared/lib/ai-paths/core/utils/stored-path-config';
 import type {
   AiPathTemplateRegistryEntry,
   StarterWorkflowTriggerPreset,
@@ -179,10 +178,7 @@ const buildRefreshedStarterWorkflowConfig = (config: PathConfig): PathConfig | n
     applyStarterWorkflowUpgrade: false,
     allowStaticRecoveryFallback: false,
   }).config;
-  return loadCanonicalStoredPathConfig({
-    pathId: canonicalized.id,
-    rawConfig: JSON.stringify(canonicalized),
-  });
+  return sanitizePathConfig(canonicalized);
 };
 
 const tryRepairBrokenRecoverableStarterConfig = (args: {

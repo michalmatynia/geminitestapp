@@ -26,7 +26,6 @@ import {
   resolvePlaywrightConnectionTestRuntime,
 } from '@/features/playwright/server';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
-import { type IntegrationConnectionRecord, type IntegrationRepository, type TestLogEntry } from '@/shared/contracts/integrations';
 import { internalError } from '@/shared/errors/app-error';
 import type { Page } from 'playwright';
 
@@ -39,9 +38,6 @@ const SESSION_CHECK_URL = 'https://www.tradera.com/en/my/listings?tab=active';
 
 import {
   type ConnectionTestContext,
-  type ConnectionUpdateRepository,
-  type Fail,
-  type PushStep,
 } from './types';
 
 export async function handleTraderaBrowserTest(

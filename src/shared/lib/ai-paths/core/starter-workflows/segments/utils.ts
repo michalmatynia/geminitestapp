@@ -5,6 +5,7 @@ import type { AiTriggerButtonDisplay } from '@/shared/contracts/ai-trigger-butto
 import { normalizeNodes } from '@/shared/lib/ai-paths/core/normalization/normalization.nodes';
 import { deserializeSemanticCanvasToPathConfig } from '@/shared/lib/ai-paths/core/semantic-grammar/deserialize';
 import { sanitizeEdges } from '@/shared/lib/ai-paths/core/utils/graph';
+import { repairPathNodeIdentities } from '@/shared/lib/ai-paths/core/utils/node-identity';
 import type {
   AiPathsStarterProvenance,
   AiPathTemplateRegistryEntry,
@@ -168,11 +169,12 @@ export const materializeSemanticAsset = (
     updatedAt: args.updatedAt ?? config.updatedAt,
   };
   const normalizedNodes = normalizeNodes(repaired.nodes ?? []);
-  return {
+  const normalizedConfig = {
     ...repaired,
     nodes: normalizedNodes,
     edges: sanitizeEdges(normalizedNodes, repaired.edges ?? []),
   };
+  return repairPathNodeIdentities(normalizedConfig).config;
 };
 
 export const hasNodeOfType = (

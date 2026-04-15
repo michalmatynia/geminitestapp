@@ -128,7 +128,6 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
   const runtimeKernelRunsWithParity = runtimeKernelParity?.runsWithKernelParity ?? 0;
   const runtimeKernelSampledHistoryEntries = runtimeKernelParity?.sampledHistoryEntries ?? 0;
   const runtimeKernelV3Entries = runtimeKernelParity?.strategyCounts.code_object_v3 ?? 0;
-  const runtimeKernelCompatibilityEntries = runtimeKernelParity?.strategyCounts.compatibility ?? 0;
   const runtimeKernelUnknownEntries = runtimeKernelParity?.strategyCounts.unknown ?? 0;
   const runtimeKernelResolutionOverride = runtimeKernelParity?.resolutionSourceCounts.override ?? 0;
   const runtimeKernelResolutionRegistry = runtimeKernelParity?.resolutionSourceCounts.registry ?? 0;
@@ -143,10 +142,6 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
   const runtimeKernelV3Rate =
     runtimeKernelSampledHistoryEntries > 0
       ? (runtimeKernelV3Entries / runtimeKernelSampledHistoryEntries) * 100
-      : 0;
-  const runtimeKernelCompatibilityRate =
-    runtimeKernelSampledHistoryEntries > 0
-      ? (runtimeKernelCompatibilityEntries / runtimeKernelSampledHistoryEntries) * 100
       : 0;
   const runtimeKernelUnknownRate =
     runtimeKernelSampledHistoryEntries > 0
@@ -528,8 +523,7 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
                   History entries {runtimeKernelSampledHistoryEntries}
                 </RuntimeAnalysisStatLine>
                 <div className='mt-2 text-gray-200'>
-                  v3 {formatPercent(runtimeKernelV3Rate)} · compatibility{' '}
-                  {formatPercent(runtimeKernelCompatibilityRate)} · unknown{' '}
+                  v3 {formatPercent(runtimeKernelV3Rate)} · unknown{' '}
                   {formatPercent(runtimeKernelUnknownRate)}
                 </div>
                 <div className='mt-1 flex h-2 overflow-hidden rounded bg-card/80 ring-1 ring-border/30'>
@@ -539,22 +533,11 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
                     aria-hidden
                   />
                   <div
-                    className='bg-amber-400/70'
-                    style={{ width: `${Math.max(0, Math.min(100, runtimeKernelCompatibilityRate))}%` }}
-                    aria-hidden
-                  />
-                  <div
                     className='bg-slate-500/70'
                     style={{ width: `${Math.max(0, Math.min(100, runtimeKernelUnknownRate))}%` }}
                     aria-hidden
                   />
                 </div>
-                {runtimeKernelCompatibilityEntries > 0 ? (
-                  <div className='mt-2 text-[10px] text-amber-200/90'>
-                    Compatibility traces are historical rollout evidence only. Live execution is
-                    strict native.
-                  </div>
-                ) : null}
                 <div className='mt-2 text-gray-400'>
                   Resolution O/R/M/U: {runtimeKernelResolutionOverride}/
                   {runtimeKernelResolutionRegistry}/{runtimeKernelResolutionMissing}/

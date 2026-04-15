@@ -126,6 +126,9 @@ const applyExplicitModelIdToNode = (node: AiNode, modelId: string): AiNode => {
   return applyModelConfigOverrideToNode(node, { modelId });
 };
 
+const buildStarterNodeMatchKey = (node: Pick<AiNode, 'type' | 'title'>): string =>
+  `${normalizeText(node.type)}::${normalizeText(node.title)}`;
+
 const preserveNonCanonicalStarterNodeConfigById = (
   current: PathConfig,
   next: PathConfig
@@ -135,6 +138,13 @@ const preserveNonCanonicalStarterNodeConfigById = (
   }
 
   const currentNodesById = new Map(current.nodes.map((node: AiNode) => [node.id, node] as const));
+  const currentNodesByKey = current.nodes.reduce<Map<string, AiNode[]>>((acc, node: AiNode) => {
+    const key = buildStarterNodeMatchKey(node);
+    const existing = acc.get(key) ?? [];
+    existing.push(node);
+    acc.set(key, existing);
+    return acc;
+  }, new Map<string, AiNode[]>());
 
   let changed = false;
   const nextNodes = next.nodes.map((node: AiNode): AiNode => {
@@ -143,7 +153,14 @@ const preserveNonCanonicalStarterNodeConfigById = (
       return node;
     }
 
-    const currentNode = currentNodesById.get(node.id);
+    const currentNodeById = currentNodesById.get(node.id);
+    const matchingNodesByKey = currentNodesByKey.get(buildStarterNodeMatchKey(node)) ?? [];
+    const currentNode =
+      currentNodeById?.type === node.type
+        ? currentNodeById
+        : matchingNodesByKey.length === 1
+          ? (matchingNodesByKey[0] ?? null)
+          : null;
     if (currentNode?.type !== node.type) {
       return node;
     }

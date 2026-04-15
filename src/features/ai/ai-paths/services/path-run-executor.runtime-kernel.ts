@@ -171,8 +171,8 @@ export const matchesRuntimeKernelExecutionTelemetryFromMeta = (
     expected
   );
 
-const normalizeRuntimeStrategy = (value: unknown): 'compatibility' | 'code_object_v3' | null => {
-  if (value === 'compatibility' || value === 'code_object_v3') {
+const normalizeRuntimeStrategy = (value: unknown): 'code_object_v3' | null => {
+  if (value === 'code_object_v3') {
     return value;
   }
   return null;
@@ -192,7 +192,7 @@ export const toRuntimeNodeResolutionTelemetry = (input: {
   runtimeResolutionSource?: unknown;
   runtimeCodeObjectId?: unknown;
 }): {
-  runtimeStrategy?: 'compatibility' | 'code_object_v3';
+  runtimeStrategy?: 'code_object_v3';
   runtimeResolutionSource?: 'override' | 'registry' | 'missing';
   runtimeCodeObjectId?: string | null;
 } => {
@@ -215,7 +215,6 @@ export const toRuntimeNodeResolutionTelemetry = (input: {
 export type RuntimeKernelParitySummary = {
   sampledHistoryEntries: number;
   strategyCounts: {
-    compatibility: number;
     code_object_v3: number;
     unknown: number;
   };
@@ -234,7 +233,6 @@ export const summarizeRuntimeKernelParityFromHistory = (
   const summary: RuntimeKernelParitySummary = {
     sampledHistoryEntries: 0,
     strategyCounts: {
-      compatibility: 0,
       code_object_v3: 0,
       unknown: 0,
     },
@@ -261,8 +259,6 @@ export const summarizeRuntimeKernelParityFromHistory = (
       const strategy = normalizeRuntimeStrategy(record['runtimeStrategy']);
       if (strategy === 'code_object_v3') {
         summary.strategyCounts.code_object_v3 += 1;
-      } else if (strategy === 'compatibility') {
-        summary.strategyCounts.compatibility += 1;
       } else {
         summary.strategyCounts.unknown += 1;
       }

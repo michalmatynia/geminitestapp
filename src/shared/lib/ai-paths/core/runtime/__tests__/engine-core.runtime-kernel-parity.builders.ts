@@ -1,8 +1,5 @@
 import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
-import type {
-  NodeRuntimeResolutionStrategy as RuntimeMode,
-  RuntimeHistoryEntry,
-} from '@/shared/contracts/ai-paths-runtime';
+import type { RuntimeHistoryEntry } from '@/shared/contracts/ai-paths-runtime';
 import { evaluateGraphClient } from '@/shared/lib/ai-paths/core/runtime/engine-client';
 
 const buildKernelNodes = (value: unknown): AiNode[] => [
@@ -145,11 +142,16 @@ type KernelRunSummary = {
   profileNodeEvents: Array<Record<string, unknown>>;
 };
 
-const buildRuntimeKernelNodeTypes = (mode: RuntimeMode, nodes: AiNode[]): string[] =>
-  mode === 'code_object_v3' ? Array.from(new Set(nodes.map((node) => node.type))) : [];
+type RuntimeKernelTopology = 'default' | 'explicit';
+
+const buildRuntimeKernelNodeTypes = (
+  mode: RuntimeKernelTopology,
+  nodes: AiNode[]
+): string[] | undefined =>
+  mode === 'explicit' ? Array.from(new Set(nodes.map((node) => node.type))) : undefined;
 
 const runPath = async (
-  mode: RuntimeMode,
+  mode: RuntimeKernelTopology,
   nodes: AiNode[],
   edges: Edge[]
 ): Promise<KernelRunSummary> => {
@@ -175,11 +177,14 @@ const runPath = async (
   };
 };
 
-export const runKernelPath = async (mode: RuntimeMode, value: unknown): Promise<KernelRunSummary> =>
+export const runKernelPath = async (
+  mode: RuntimeKernelTopology,
+  value: unknown
+): Promise<KernelRunSummary> =>
   runPath(mode, buildKernelNodes(value), buildKernelEdges());
 
 export const runTransformKernelPath = async (
-  mode: RuntimeMode,
+  mode: RuntimeKernelTopology,
   title: string
 ): Promise<KernelRunSummary> =>
   runPath(mode, buildTransformKernelNodes(title), buildTransformKernelEdges());

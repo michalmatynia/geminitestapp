@@ -303,6 +303,54 @@ export const PART_3 = String.raw`        expectedValue,
       return firstTermMatch;
     };
 
+    const scanPaginatedVisibleCandidates = async (searchTerm = null) => {
+      const seenPageSignatures = new Set();
+
+      while (true) {
+        const matchedCandidate = await scanVisibleCandidates(searchTerm);
+        if (matchedCandidate) {
+          return matchedCandidate;
+        }
+
+        const pageCandidates = await collectVisibleListingCandidates();
+        const pageSignature = buildVisibleListingCandidatesPageSignature(pageCandidates);
+        if (seenPageSignatures.has(pageSignature)) {
+          break;
+        }
+        seenPageSignatures.add(pageSignature);
+
+        const currentUrl = normalizeWhitespace(page.url());
+        const nextPageUrl = normalizeWhitespace(
+          await resolveNextVisibleListingResultsPageUrl()
+        );
+
+        log?.('tradera.quicklist.sync.candidate_scan_page', {
+          searchTerm: normalizeWhitespace(searchTerm || '') || null,
+          currentUrl,
+          pageCandidateCount: pageCandidates.length,
+          nextPageUrl: nextPageUrl || null,
+        });
+
+        if (!nextPageUrl || nextPageUrl === currentUrl) {
+          break;
+        }
+
+        await page.goto(nextPageUrl, {
+          waitUntil: 'domcontentloaded',
+          timeout: 30_000,
+        });
+        await assertAllowedTraderaPage('sync active listings pagination');
+        await page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => undefined);
+        await wait(700);
+        await dismissVisibleWishlistFavoritesModalIfPresent({
+          context: 'sync-active-listings-pagination',
+          required: false,
+        }).catch(() => false);
+      }
+
+      return null;
+    };
+
     const searchInput = await openActiveSearchInput();
     for (const searchTerm of candidateSearchTerms) {
       if (searchInput) {
@@ -311,7 +359,7 @@ export const PART_3 = String.raw`        expectedValue,
         await wait(1200);
       }
 
-      const matchedCandidate = await scanVisibleCandidates(searchTerm);
+      const matchedCandidate = await scanPaginatedVisibleCandidates(searchTerm);
       if (matchedCandidate) {
         log?.('tradera.quicklist.sync.candidate_found', {
           searchTerm,
@@ -324,7 +372,7 @@ export const PART_3 = String.raw`        expectedValue,
       }
     }
 
-    return scanVisibleCandidates();
+    return scanPaginatedVisibleCandidates();
   };
 
   const resolveSyncListingCandidateContainer = async (candidateLink) => {

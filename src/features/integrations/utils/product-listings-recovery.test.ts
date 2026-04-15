@@ -110,6 +110,7 @@ describe('product-listings-recovery', () => {
       createBaseRecoveryContext({
         status: 'failed',
         runId: 'run-base-1',
+        failureReason: 'Base export requires a mapped category.',
         requestId: 'job-base-1',
         integrationId: 'integration-base-1',
         connectionId: 'conn-base-1',
@@ -119,6 +120,7 @@ describe('product-listings-recovery', () => {
       integrationSlug: 'baselinker',
       status: 'failed',
       runId: 'run-base-1',
+      failureReason: 'Base export requires a mapped category.',
       requestId: 'job-base-1',
       integrationId: 'integration-base-1',
       connectionId: 'conn-base-1',
@@ -126,6 +128,19 @@ describe('product-listings-recovery', () => {
   });
 
   it('resolves empty-state copy for Base, Tradera, and generic cases', () => {
+    expect(
+      resolveProductListingsEmptyDescription({
+        source: 'base_quick_export_failed',
+        integrationSlug: 'baselinker',
+        status: 'failed',
+        runId: null,
+        failureReason:
+          'Base export requires an active Base.com category mapping for this product category. Map it in Category Mapper and retry.',
+      })
+    ).toBe(
+      'Base export requires an active Base.com category mapping for this product category. Map it in Category Mapper and retry.'
+    );
+
     expect(
       resolveProductListingsEmptyDescription({
         source: 'base_quick_export_failed',

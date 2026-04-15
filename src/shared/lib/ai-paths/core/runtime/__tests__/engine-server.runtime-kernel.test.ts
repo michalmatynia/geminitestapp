@@ -434,7 +434,7 @@ describe('engine-server runtime-kernel resolver wiring', () => {
     expect(result.outputs?.['node-compare']?.['value']).toBe('legacy');
   });
 
-  it('falls back through compatibility handlers for unresolved non-contract runtime-kernel overrides', async () => {
+  it('falls back through registry handlers for unresolved non-contract runtime-kernel overrides', async () => {
     const resolveCodeObjectHandler = vi.fn(() => null);
 
     const result = await evaluateGraphServer({

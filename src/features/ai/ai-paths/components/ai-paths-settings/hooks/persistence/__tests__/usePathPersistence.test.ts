@@ -75,12 +75,18 @@ vi.mock('@/features/ai/ai-paths/context/SelectionContext', () => ({
   useSelectionActions: () => mockState.selectionActions,
 }));
 
-vi.mock('@/shared/lib/ai-paths', () => ({
+vi.mock('@/shared/lib/ai-paths/core/constants', () => ({
   PATH_CONFIG_PREFIX: 'path-config:',
   PATH_INDEX_KEY: 'path-index',
   STORAGE_VERSION: 7,
-  compileGraph: (...args: unknown[]) => mockState.compileGraph(...args),
+}));
+
+vi.mock('@/shared/lib/ai-paths/core/normalization', () => ({
   normalizeNodes: (...args: unknown[]) => mockState.normalizeNodes(...args),
+}));
+
+vi.mock('@/shared/lib/ai-paths/core/utils', () => ({
+  compileGraph: (...args: unknown[]) => mockState.compileGraph(...args),
   safeParseJson: (...args: unknown[]) => mockState.safeParseJson(...args),
   stableStringify: (...args: unknown[]) => mockState.stableStringify(...args),
   sanitizeEdges: (...args: unknown[]) => mockState.sanitizeEdges(...args),

@@ -8,7 +8,7 @@ canonical: true
 ---
 # Critical Path Performance Report
 
-Generated at: 2026-04-15T10:23:20.718Z
+Generated at: 2026-04-15T14:56:15.477Z
 
 ## Summary
 
@@ -86,7 +86,6 @@ Generated at: 2026-04-15T10:23:20.718Z
 
 | File | LOC |
 | --- | ---: |
-| `src/features/products/server/product-scans-service.ts` | 4645 |
 | `src/features/products/components/list/ProductAmazonScanModal.test.tsx` | 4175 |
 | `src/features/products/components/form/ProductFormScans.test.tsx` | 3065 |
 | `src/features/products/server/parts/product-scan-amazon-script.part1.ts` | 2939 |
@@ -94,8 +93,9 @@ Generated at: 2026-04-15T10:23:20.718Z
 | `src/features/products/server/product-scans-service.amazon.test.ts` | 2166 |
 | `src/features/products/components/list/ProductAmazonScanModal.tsx` | 2130 |
 | `src/features/products/components/ProductModals.test.tsx` | 1920 |
-| `src/features/products/server/product-scan-amazon-evaluator.ts` | 1709 |
+| `src/features/products/server/product-scan-amazon-evaluator.ts` | 1712 |
 | `src/features/integrations/services/tradera-listing-service.test.ts` | 1676 |
+| `src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingDetails.test.tsx` | 1673 |
 
 ## Top API Route Hotspots (Reference)
 

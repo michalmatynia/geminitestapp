@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-15T10:23:20.718Z",
+  "generatedAt": "2026-04-15T14:56:15.477Z",
   "strictMode": false,
   "summary": {
     "total": 10,
@@ -383,13 +383,9 @@
     }
   ],
   "metrics": {
-    "generatedAt": "2026-04-15T10:23:20.710Z",
+    "generatedAt": "2026-04-15T14:56:15.447Z",
     "hotspots": {
       "topFilesByLines": [
-        {
-          "path": "src/features/products/server/product-scans-service.ts",
-          "lines": 4645
-        },
         {
           "path": "src/features/products/components/list/ProductAmazonScanModal.test.tsx",
           "lines": 4175
@@ -420,7 +416,7 @@
         },
         {
           "path": "src/features/products/server/product-scan-amazon-evaluator.ts",
-          "lines": 1709
+          "lines": 1712
         },
         {
           "path": "src/features/integrations/services/tradera-listing-service.test.ts",
@@ -452,7 +448,7 @@
         },
         {
           "path": "src/features/products/server/product-scans-service.helpers.ts",
-          "lines": 1504
+          "lines": 1512
         },
         {
           "path": "src/features/integrations/services/tradera-listing/BrowserListing.3.test.ts",
@@ -467,8 +463,16 @@
           "lines": 1417
         },
         {
+          "path": "src/features/products/server/product-scans-sync-amazon-handlers.ts",
+          "lines": 1377
+        },
+        {
           "path": "src/features/integrations/components/listings/product-listings-modal/ProductListingsContent.test.tsx",
           "lines": 1351
+        },
+        {
+          "path": "src/features/products/components/list/ProductColumns.test.tsx",
+          "lines": 1341
         },
         {
           "path": "src/features/integrations/services/tradera-listing/script-partials/part-2.ts",
@@ -477,10 +481,6 @@
         {
           "path": "src/features/product-sync/services/product-sync-processor.ts",
           "lines": 1324
-        },
-        {
-          "path": "src/features/products/components/list/ProductColumns.test.tsx",
-          "lines": 1302
         },
         {
           "path": "src/features/integrations/services/tradera-listing/BrowserListing.2.test.ts",

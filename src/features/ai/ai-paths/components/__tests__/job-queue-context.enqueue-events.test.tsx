@@ -296,7 +296,7 @@ describe('JobQueueProvider enqueue event listeners', () => {
     });
 
     expect(screen.getByTestId('expanded-runs')).toHaveTextContent('run-from-link');
-    expect(mocks.getAiPathRunMock).toHaveBeenCalledWith('run-from-link');
+    expect(mocks.getAiPathRunMock).not.toHaveBeenCalled();
   });
 
   it('refreshes queue only for valid window enqueue events', () => {

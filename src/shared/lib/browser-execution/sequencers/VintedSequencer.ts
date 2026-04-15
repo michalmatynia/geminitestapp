@@ -13,6 +13,7 @@ import {
   VINTED_BRAND_SELECTORS,
   VINTED_CONDITION_SELECTORS
 } from '@/features/integrations/services/vinted-listing/config';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 export class VintedSequencer extends PlaywrightSequencer {
   constructor(context: PlaywrightSequencerContext) {
@@ -96,7 +97,11 @@ export class VintedSequencer extends PlaywrightSequencer {
         break;
       }
       default:
-        console.warn(`Step ${stepId} not implemented for VintedSequencer.`);
+        await logSystemEvent({
+          level: 'warn',
+          source: 'VintedSequencer',
+          message: `Step ${stepId} not implemented for VintedSequencer.`,
+        });
     }
   }
 

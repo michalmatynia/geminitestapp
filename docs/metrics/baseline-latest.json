@@ -1,16 +1,16 @@
 {
-  "generatedAt": "2026-04-15T10:23:12.055Z",
+  "generatedAt": "2026-04-15T14:56:08.509Z",
   "source": {
-    "totalFiles": 10434,
-    "totalLines": 1778697,
-    "useClientFiles": 1773,
+    "totalFiles": 10457,
+    "totalLines": 1781962,
+    "useClientFiles": 1782,
     "hooksWithoutUseClient": 0,
-    "filesOver800": 111,
+    "filesOver800": 113,
     "filesOver1000": 19,
-    "filesOver1500": 10,
+    "filesOver1500": 9,
     "largestFile": {
-      "path": "src/features/products/server/product-scans-service.ts",
-      "lines": 4645
+      "path": "src/features/products/server/parts/product-scan-amazon-script.part1.ts",
+      "lines": 2939
     }
   },
   "api": {
@@ -129,18 +129,18 @@
     "featureSizeByLines": [
       {
         "feature": "kangur",
-        "files": 2506,
-        "lines": 527568
+        "files": 2505,
+        "lines": 527477
       },
       {
         "feature": "ai",
         "files": 1305,
-        "lines": 254287
+        "lines": 254304
       },
       {
         "feature": "products",
-        "files": 470,
-        "lines": 144035
+        "files": 478,
+        "lines": 144646
       },
       {
         "feature": "integrations",
@@ -150,7 +150,7 @@
       {
         "feature": "case-resolver",
         "files": 327,
-        "lines": 67329
+        "lines": 67339
       },
       {
         "feature": "cms",
@@ -173,19 +173,19 @@
         "lines": 13499
       },
       {
+        "feature": "playwright",
+        "files": 108,
+        "lines": 12591
+      },
+      {
         "feature": "data-import-export",
         "files": 49,
         "lines": 11993
       },
       {
-        "feature": "playwright",
-        "files": 98,
-        "lines": 10516
-      },
-      {
         "feature": "admin",
         "files": 61,
-        "lines": 10273
+        "lines": 10306
       },
       {
         "feature": "database",
@@ -334,6 +334,13 @@
         "total": 22
       },
       {
+        "path": "src/features/playwright/hooks/usePlaywrightStepSequencerState.ts",
+        "useEffectCount": 0,
+        "useCallbackCount": 18,
+        "useMemoCount": 4,
+        "total": 22
+      },
+      {
         "path": "src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsRuntime.ts",
         "useEffectCount": 9,
         "useCallbackCount": 8,
@@ -423,23 +430,12 @@
         "useCallbackCount": 11,
         "useMemoCount": 1,
         "total": 16
-      },
-      {
-        "path": "src/features/kangur/ui/pages/duels/useDuelsLobby.ts",
-        "useEffectCount": 1,
-        "useCallbackCount": 15,
-        "useMemoCount": 0,
-        "total": 16
       }
     ],
     "highComplexityHooksCount": 171
   },
   "hotspots": {
     "topFilesByLines": [
-      {
-        "path": "src/features/products/server/product-scans-service.ts",
-        "lines": 4645
-      },
       {
         "path": "src/features/products/components/list/ProductAmazonScanModal.test.tsx",
         "lines": 4175
@@ -470,7 +466,7 @@
       },
       {
         "path": "src/features/products/server/product-scan-amazon-evaluator.ts",
-        "lines": 1709
+        "lines": 1712
       },
       {
         "path": "src/features/integrations/services/tradera-listing-service.test.ts",
@@ -502,7 +498,7 @@
       },
       {
         "path": "src/features/products/server/product-scans-service.helpers.ts",
-        "lines": 1504
+        "lines": 1512
       },
       {
         "path": "src/features/integrations/services/tradera-listing/BrowserListing.3.test.ts",
@@ -517,8 +513,16 @@
         "lines": 1417
       },
       {
+        "path": "src/features/products/server/product-scans-sync-amazon-handlers.ts",
+        "lines": 1377
+      },
+      {
         "path": "src/features/integrations/components/listings/product-listings-modal/ProductListingsContent.test.tsx",
         "lines": 1351
+      },
+      {
+        "path": "src/features/products/components/list/ProductColumns.test.tsx",
+        "lines": 1341
       },
       {
         "path": "src/features/integrations/services/tradera-listing/script-partials/part-2.ts",
@@ -527,10 +531,6 @@
       {
         "path": "src/features/product-sync/services/product-sync-processor.ts",
         "lines": 1324
-      },
-      {
-        "path": "src/features/products/components/list/ProductColumns.test.tsx",
-        "lines": 1302
       },
       {
         "path": "src/features/integrations/services/tradera-listing/BrowserListing.2.test.ts",
@@ -643,6 +643,6 @@
   "propDrilling": {
     "candidateChains": 9,
     "depthGte4Chains": 0,
-    "forwardingComponents": 56
+    "forwardingComponents": 58
   }
 }

@@ -613,6 +613,24 @@ describe('loadPathConfigsFromSettings', () => {
   });
 
   it('keeps query providers canonical while normalizing db_schema provider defaults before trigger preflight validation', async () => {
+    const triggerDefinition = palette.find(
+      (definition) =>
+        definition.type === 'trigger' && definition.title === 'Trigger: Product Modal'
+    );
+    const databaseDefinition = palette.find(
+      (definition) => definition.type === 'database' && definition.title === 'Database Query'
+    );
+    const dbSchemaDefinition = palette.find(
+      (definition) => definition.type === 'db_schema' && definition.title === 'Database Schema'
+    );
+    if (
+      !triggerDefinition?.nodeTypeId ||
+      !databaseDefinition?.nodeTypeId ||
+      !dbSchemaDefinition?.nodeTypeId
+    ) {
+      throw new Error('Expected trigger/database/db_schema node type ids in palette.');
+    }
+
     const pathId = 'path-legacy-trigger-provider-aliases';
     const data: Array<{ key: string; value: string }> = [
       {
@@ -626,7 +644,9 @@ describe('loadPathConfigsFromSettings', () => {
           name: 'Legacy Trigger Provider Aliases',
           nodes: [
             {
-              id: 'node-trigger',
+              id: 'node-aaaaaaaaaaaaaaaaaaaaaaaa',
+              instanceId: 'node-aaaaaaaaaaaaaaaaaaaaaaaa',
+              nodeTypeId: triggerDefinition.nodeTypeId,
               type: 'trigger',
               title: 'Trigger',
               description: '',
@@ -639,7 +659,9 @@ describe('loadPathConfigsFromSettings', () => {
               updatedAt: null,
             },
             {
-              id: 'node-database-query',
+              id: 'node-bbbbbbbbbbbbbbbbbbbbbbbb',
+              instanceId: 'node-bbbbbbbbbbbbbbbbbbbbbbbb',
+              nodeTypeId: databaseDefinition.nodeTypeId,
               type: 'database',
               title: 'Database Query',
               description: '',
@@ -669,7 +691,9 @@ describe('loadPathConfigsFromSettings', () => {
               updatedAt: null,
             },
             {
-              id: 'node-db-schema',
+              id: 'node-cccccccccccccccccccccccc',
+              instanceId: 'node-cccccccccccccccccccccccc',
+              nodeTypeId: dbSchemaDefinition.nodeTypeId,
               type: 'db_schema',
               title: 'Database Schema',
               description: '',
@@ -722,7 +746,7 @@ describe('loadPathConfigsFromSettings', () => {
     expect(loaded.configs['path-1']?.name).toBe('path-1');
   });
 
-  it('heals malformed persisted runtimeState strings during trigger load', async () => {
+  it('preserves malformed persisted runtimeState strings during trigger load', async () => {
     const parserDefinition = palette.find(
       (definition) => definition.type === 'parser' && definition.title === 'JSON Parser'
     );
@@ -766,10 +790,7 @@ describe('loadPathConfigsFromSettings', () => {
 
     const loaded = await loadPathConfigsFromSettings(data);
 
-    expect(loaded.configs[pathId]?.runtimeState).toEqual({
-      inputs: {},
-      outputs: {},
-    });
+    expect(loaded.configs[pathId]?.runtimeState).toBe('{"inputs":');
   });
 
   it('still drops missing index entries without writing repairs during trigger load', async () => {

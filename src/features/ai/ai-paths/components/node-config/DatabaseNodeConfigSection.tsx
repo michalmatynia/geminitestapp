@@ -105,7 +105,7 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
     parsedSampleError: state.parsedSampleError ?? '',
     updateQueryConfig: (patch) => state.updateQueryConfig(patch),
     connectedPlaceholders: state.connectedPlaceholders,
-    hasSchemaConnection: !!state.schemaConnection.snapshot,
+    hasSchemaConnection: Boolean(state.schemaConnection.snapshot),
     fetchedDbSchema: state.fetchedDbSchema ?? null,
     schemaMatrix: state.fetchedDbSchema ?? null,
     onSyncSchema: state.handleSyncSchema,

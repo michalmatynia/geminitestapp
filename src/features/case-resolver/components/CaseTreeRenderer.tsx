@@ -28,7 +28,7 @@ import {
   useAdminCaseResolverCasesStateContext,
 } from '../context/AdminCaseResolverCasesContext';
 import { useAdminCaseResolverCasesState } from '../hooks/useAdminCaseResolverCasesState';
-import { CaseTreeNode } from '../pages/AdminCaseResolverCasesUtils';
+import { type CaseTreeNode } from '../pages/AdminCaseResolverCasesUtils';
 import { getCaseResolverDocTooltipWithFallback } from '../relation-search/utils/docs';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 

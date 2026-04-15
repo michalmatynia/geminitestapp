@@ -405,10 +405,10 @@ function CanvasSvgNodePulseOverlays({
   );
 }
 
-export const CanvasSvgNode = React.memo(function CanvasSvgNode({
+export const CanvasSvgNode = React.memo(({
   node,
   modelCapabilityBlocked = false,
-}: CanvasSvgNodeProps): React.JSX.Element {
+}: CanvasSvgNodeProps): React.JSX.Element => {
   const ui = useCanvasBoardUI();
   const {
     detailLevel,

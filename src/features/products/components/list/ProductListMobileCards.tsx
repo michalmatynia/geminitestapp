@@ -548,7 +548,7 @@ const renderProductListMobileCard = ({
   );
 };
 
-const ProductListMobileCard = memo(function ProductListMobileCard({
+const ProductListMobileCard = memo(({
   product,
   isSelected,
   toggleSelection,
@@ -558,7 +558,7 @@ const ProductListMobileCard = memo(function ProductListMobileCard({
   isSelected: boolean;
   toggleSelection: (productId: string, nextChecked: boolean) => void;
   prefetchListings: (productId: string) => void;
-}) {
+}) => {
   const rowActions = useProductListRowActionsContext();
   const rowVisuals = useProductListRowVisualsContext();
   const rowRuntime = useProductListRowRuntime(product.id, product.baseProductId);
@@ -657,7 +657,7 @@ const ProductListMobileCard = memo(function ProductListMobileCard({
   });
 });
 
-export const ProductListMobileCards = memo(function ProductListMobileCards() {
+export const ProductListMobileCards = memo(() => {
   const { data, rowSelection, setRowSelection } = useProductListSelectionContext();
   const queryClient = useQueryClient();
 

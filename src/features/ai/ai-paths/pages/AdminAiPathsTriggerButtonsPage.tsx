@@ -799,7 +799,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
       </AppModal>
 
       <ConfirmModal
-        isOpen={!!buttonToDelete}
+        isOpen={Boolean(buttonToDelete)}
         onClose={(): void => {
           setButtonToDelete(null);
         }}

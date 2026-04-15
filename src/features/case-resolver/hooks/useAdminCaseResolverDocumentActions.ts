@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'nextjs-toploader/app';
+import { type useRouter } from 'nextjs-toploader/app';
 import { useCallback, useRef } from 'react';
 
 import {

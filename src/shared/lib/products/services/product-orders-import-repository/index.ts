@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { repository, ProductOrdersImportRepository } from './segments/repository';
+import { repository, type ProductOrdersImportRepository } from './segments/repository';
 
 export * from './segments/types';
 export * from './segments/mappers';

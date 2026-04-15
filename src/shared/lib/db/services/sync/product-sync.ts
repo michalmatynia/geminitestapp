@@ -1,4 +1,4 @@
-import { BatchCountResult } from '@/shared/contracts/base';
+import { type BatchCountResult } from '@/shared/contracts/base';
 import type { MongoProductDoc } from '../database-sync-types';
 import type { DatabaseSyncHandler } from './types';
 import type { Prisma } from '@prisma/client';

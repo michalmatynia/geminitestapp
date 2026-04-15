@@ -1,14 +1,14 @@
 import { normalizeFilemakerDatabase } from '../filemaker-settings.database';
 import { normalizeString } from '../filemaker-settings.helpers';
 import {
-  FilemakerDatabase,
-  FilemakerEvent,
-  FilemakerPhoneNumber,
-  FilemakerPerson,
-  FilemakerPhoneNumberLink,
-  FilemakerEmail,
-  FilemakerEmailLink,
-  FilemakerEventOrganizationLink,
+  type FilemakerDatabase,
+  type FilemakerEvent,
+  type FilemakerPhoneNumber,
+  type FilemakerPerson,
+  type FilemakerPhoneNumberLink,
+  type FilemakerEmail,
+  type FilemakerEmailLink,
+  type FilemakerEventOrganizationLink,
 } from '../types';
 
 export const removeFilemakerPhoneNumber = (

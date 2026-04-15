@@ -1,4 +1,4 @@
-import { Browser, BrowserContext } from 'playwright';
+import { type Browser, type BrowserContext } from 'playwright';
 
 import { logAgentAudit } from '@/features/ai/agent-runtime/audit';
 import {
@@ -6,7 +6,7 @@ import {
   isExtractionStep,
 } from '@/features/ai/agent-runtime/planning/utils';
 import { runAgentBrowserControl, runAgentTool } from '@/features/ai/agent-runtime/tools';
-import { PlanStep, PlannerMeta } from '@/shared/contracts/agent-runtime';
+import { type PlanStep, type PlannerMeta } from '@/shared/contracts/agent-runtime';
 import unknownToErrorMessage from '@/shared/utils/error-formatting';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -83,7 +83,7 @@ export async function executeTool(args: {
               browser: agentBrowser || 'chromium',
               runId,
               ...(typeof runHeadless === 'boolean' && {
-                runHeadless: runHeadless,
+                runHeadless,
               }),
               stepId: step.id,
               stepLabel: step.title,

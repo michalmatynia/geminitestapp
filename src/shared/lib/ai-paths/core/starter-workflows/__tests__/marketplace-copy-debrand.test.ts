@@ -20,7 +20,7 @@ describe('starter marketplace copy debrand workflow', () => {
     const config = materializeStarterWorkflowPathConfig(entry, {
       pathId: 'path_starter_marketplace_copy_debrand_mapping',
     });
-    const parserNode = config.nodes.find((node) => node.id === 'node-parser-marketplace-copy-debrand');
+    const parserNode = config.nodes.find((node) => node.type === 'parser');
 
     expect(parserNode).toBeTruthy();
 

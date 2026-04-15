@@ -2,11 +2,11 @@ import 'server-only';
 
 import {
   buildPlaywrightEngineRunFailureMeta,
-  startPlaywrightEngineTask,
+  type startPlaywrightEngineTask,
   type PlaywrightEngineRunRecord,
 } from '@/features/playwright/server';
 import {
-  createDefaultProductScannerSettings,
+  type createDefaultProductScannerSettings,
 } from '@/features/products/scanner-settings';
 import {
   type ProductScanAmazonEvaluation,
@@ -28,7 +28,6 @@ import {
   toRecord,
   readOptionalString,
   resolvePersistableScanUrl,
-  resolveIsoAgeMs,
 } from './product-scans-service.helpers';
 
 export const AMAZON_SCAN_DEFAULT_SLOW_MO_MS = 80;
@@ -229,7 +228,7 @@ export const normalizeAmazonImageSearchProvider = (
   value === 'google_images_upload' ||
   value === 'google_images_url' ||
   value === 'google_lens_upload'
-    ? (value as ReturnType<typeof createDefaultProductScannerSettings>['amazonImageSearchProvider'])
+    ? (value)
     : null;
 
 export const resolveAmazonImageSearchProviderHistory = (
@@ -255,40 +254,35 @@ export const mergeAmazonCandidateEvaluatorConfig = (
   baseConfig: ProductScannerAmazonCandidateEvaluatorResolvedConfig | null | undefined,
   overrideConfig?: Partial<ProductScannerAmazonCandidateEvaluatorResolvedConfig> | null
 ): ProductScannerAmazonCandidateEvaluatorResolvedConfig => {
-  const normalizedBaseConfig: ProductScannerAmazonCandidateEvaluatorResolvedConfig = {
-    enabled: baseConfig?.enabled ?? false,
-    mode: baseConfig?.mode ?? 'disabled',
-    threshold: baseConfig?.threshold ?? 0.85,
-    onlyForAmbiguousCandidates: baseConfig?.onlyForAmbiguousCandidates ?? false,
+  const enabled = overrideConfig?.enabled ?? baseConfig?.enabled ?? false;
+  const base = {
+    mode: overrideConfig?.mode ?? baseConfig?.mode ?? 'disabled',
+    threshold: overrideConfig?.threshold ?? baseConfig?.threshold ?? 0.85,
+    onlyForAmbiguousCandidates:
+      overrideConfig?.onlyForAmbiguousCandidates ?? baseConfig?.onlyForAmbiguousCandidates ?? false,
     candidateSimilarityMode:
-      baseConfig?.candidateSimilarityMode ?? 'deterministic_then_ai',
-    allowedContentLanguage: baseConfig?.allowedContentLanguage ?? 'en',
-    rejectNonEnglishContent: baseConfig?.rejectNonEnglishContent ?? true,
+      overrideConfig?.candidateSimilarityMode ?? baseConfig?.candidateSimilarityMode ?? 'deterministic_then_ai',
+    allowedContentLanguage:
+      overrideConfig?.allowedContentLanguage ?? baseConfig?.allowedContentLanguage ?? 'en',
+    rejectNonEnglishContent:
+      overrideConfig?.rejectNonEnglishContent ?? baseConfig?.rejectNonEnglishContent ?? true,
     languageDetectionMode:
-      baseConfig?.languageDetectionMode ?? 'deterministic_then_ai',
-    modelId: baseConfig?.modelId ?? null,
-    systemPrompt: baseConfig?.systemPrompt ?? null,
-    brainApplied: baseConfig?.brainApplied ?? null,
-  };
+      overrideConfig?.languageDetectionMode ?? baseConfig?.languageDetectionMode ?? 'deterministic_then_ai',
+  } as const;
 
-  return {
-  enabled: overrideConfig?.enabled ?? normalizedBaseConfig.enabled,
-  mode: overrideConfig?.mode ?? normalizedBaseConfig.mode,
-  threshold: overrideConfig?.threshold ?? normalizedBaseConfig.threshold,
-  onlyForAmbiguousCandidates:
-    overrideConfig?.onlyForAmbiguousCandidates ?? normalizedBaseConfig.onlyForAmbiguousCandidates,
-  candidateSimilarityMode:
-    overrideConfig?.candidateSimilarityMode ?? normalizedBaseConfig.candidateSimilarityMode,
-  allowedContentLanguage:
-    overrideConfig?.allowedContentLanguage ?? normalizedBaseConfig.allowedContentLanguage,
-  rejectNonEnglishContent:
-    overrideConfig?.rejectNonEnglishContent ?? normalizedBaseConfig.rejectNonEnglishContent,
-  languageDetectionMode:
-    overrideConfig?.languageDetectionMode ?? normalizedBaseConfig.languageDetectionMode,
-  modelId: overrideConfig?.modelId ?? normalizedBaseConfig.modelId,
-  systemPrompt: overrideConfig?.systemPrompt ?? normalizedBaseConfig.systemPrompt,
-  brainApplied: overrideConfig?.brainApplied ?? normalizedBaseConfig.brainApplied,
-};
+  if (!enabled) {
+    return { ...base, enabled: false, modelId: null, systemPrompt: null, brainApplied: null } as any;
+  }
+
+  const modelId = overrideConfig?.modelId ?? (baseConfig?.enabled ? baseConfig.modelId : null) ?? null;
+  const systemPrompt = overrideConfig?.systemPrompt ?? (baseConfig?.enabled ? baseConfig.systemPrompt : null) ?? null;
+  const brainApplied = overrideConfig?.brainApplied ?? (baseConfig?.enabled ? baseConfig.brainApplied : null) ?? null;
+
+  if (!modelId || !systemPrompt) {
+    return { ...base, enabled: false, modelId: null, systemPrompt: null, brainApplied: null } as any;
+  }
+
+  return { ...base, enabled: true, modelId, systemPrompt, brainApplied };
 };
 
 export const resolveAmazonProbeEvaluatorConfig = async (

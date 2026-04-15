@@ -93,7 +93,7 @@ INVESTIGATION AN PLANNING
 run application cleanup
 
 reduce Cyclomatic complexity
-
+replace the in-memory useState with real TanStack Query hooks in the state hook
 file segmentation operation
 component loading segmentation
 

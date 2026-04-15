@@ -1,5 +1,9 @@
 'use client';
 
+// useProductStudioMutations: mutation hooks for sending products to Image
+// Studio, accepting variants, and rotating image slots. Wraps API calls and
+// invalidates related product caches to keep list/detail views consistent.
+
 'use no memo';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';

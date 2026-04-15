@@ -1,4 +1,4 @@
-import { JSX } from 'react';
+import { type JSX } from 'react';
 
 import { ImportsPage } from '@/features/data-import-export/public';
 

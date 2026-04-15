@@ -3,8 +3,8 @@ import 'server-only';
 import { logger } from '@/shared/utils/logger';
 import { TRADERA_PUBLIC_CATEGORIES_URL } from '@/features/integrations/constants/tradera';
 import { DEFAULT_TRADERA_CATEGORY_SCRAPE_SCRIPT } from '@/features/integrations/services/tradera-listing/category-scrape-script';
-import { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
-import { TraderaCategoryRecord } from '@/shared/contracts/integrations/tradera';
+import { type IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
+import { type TraderaCategoryRecord } from '@/shared/contracts/integrations/tradera';
 import { AppError, AppErrorCodes } from '@/shared/errors/app-error';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 import {

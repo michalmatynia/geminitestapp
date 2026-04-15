@@ -111,7 +111,7 @@ export const executePathRun = async (
           void recordRuntimeRunHandoffReady({ runId: run.id });
         }
       }
-      return !!updated;
+      return Boolean(updated);
     } catch (error) {
       void ErrorSystem.captureException(error);
       if (isMissingRunUpdateError(error)) {
@@ -172,7 +172,7 @@ export const executePathRun = async (
     {},
     runtimeState.outputs ?? {}
   );
-  let resolvedRunStartedAt = runStartedAt;
+  const resolvedRunStartedAt = runStartedAt;
 
   const stateManager = new PathRunRuntimeStateManager(
     run,

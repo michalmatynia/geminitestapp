@@ -1,7 +1,7 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
-import React, { useState, useEffect, useRef, KeyboardEvent, memo } from 'react';
+import React, { useState, useEffect, useRef, type KeyboardEvent, memo } from 'react';
 
 import { api } from '@/shared/lib/api-client';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
@@ -48,12 +48,12 @@ const patchProductListCacheValue = (
 };
 
 export const EditableCell = memo(
-  function EditableCell({
+  ({
     value,
     productId,
     field,
     onUpdate,
-  }: EditableCellProps): React.JSX.Element {
+  }: EditableCellProps): React.JSX.Element => {
     const [isEditing, setIsEditing] = useState(false);
     const [editValue, setEditValue] = useState(String(value ?? ''));
     const [displayValue, setDisplayValue] = useState<number | null>(value);

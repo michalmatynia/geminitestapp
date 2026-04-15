@@ -174,7 +174,7 @@ export const importSourceProductImageToStudio = async (params: {
   });
 
   let uploadBuffer = buffer;
-  let uploadMimeType = mimeType;
+  const uploadMimeType = mimeType;
   let uploadFilename = sourceFilename;
 
   if (params.rotateBeforeSendDeg === 90) {

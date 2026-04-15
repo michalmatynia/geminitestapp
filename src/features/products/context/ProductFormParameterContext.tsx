@@ -1,5 +1,9 @@
 'use client';
 
+// ProductFormParameterContext: manages product parameter (spec/attribute)
+// state and helpers. Exposes parameter lists per-catalog and normalization
+// utilities used by parameter input components.
+
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 

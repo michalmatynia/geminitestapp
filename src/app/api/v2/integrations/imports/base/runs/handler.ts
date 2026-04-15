@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { initializeQueues } from '@/features/jobs/server';
 import { listBaseImportRuns } from '@/features/integrations/services/imports/base-import-run-repository';

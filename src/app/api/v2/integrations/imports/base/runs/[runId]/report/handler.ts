@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { getBaseImportRunDetailOrThrow } from '@/features/integrations/server';
 import type { BaseImportItemStatus, BaseImportRunDetailResponse, BaseImportRunReportResponse } from '@/shared/contracts/integrations/base-com';

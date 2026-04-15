@@ -957,7 +957,7 @@ export function ProductSyncSettings(): React.JSX.Element {
                 ? 'Loading inventory warehouse stock targets...'
                 : priceGroupsQuery.isLoading
                   ? 'Loading catalog price-group targets...'
-                  : [
+                  : `${[
                       warehouseBaseFieldOptions.length > 0
                         ? `${warehouseBaseFieldOptions.length} warehouse stock target${
                             warehouseBaseFieldOptions.length === 1 ? '' : 's'
@@ -970,7 +970,7 @@ export function ProductSyncSettings(): React.JSX.Element {
                         : null,
                     ]
                       .filter((value): value is string => Boolean(value))
-                      .join(' loaded, ') + ' loaded.'}
+                      .join(' loaded, ')  } loaded.`}
             </p>
           )}
           {draft.fieldRules.map((rule: ProductSyncFieldRule) => (

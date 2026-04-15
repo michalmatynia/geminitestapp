@@ -1,4 +1,4 @@
-import OpenAI from 'openai';
+import type OpenAI from 'openai';
 import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 import { KANGUR_TTS_DEFAULT_MODEL } from '../contracts';

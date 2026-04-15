@@ -143,7 +143,7 @@ const NavTreeNode = memo(
       onSetPendingHref,
     } = useNavTree();
 
-    const hasChildren = !!item.children?.length;
+    const hasChildren = Boolean(item.children?.length);
     const effectivePathname = pendingHref ?? pathname;
     const active = !hasChildren && item.href ? isActiveHref(effectivePathname, item.href, item.exact) : false;
     const isOpen = !isMenuCollapsed && hasChildren && openIds.has(item.id);
@@ -346,12 +346,12 @@ const NavTreeNode = memo(
       </div>
     );
   },
-  function navTreeNodePropsAreEqual(prev: NavTreeNodeProps, next: NavTreeNodeProps): boolean {
+  (prev: NavTreeNodeProps, next: NavTreeNodeProps): boolean => {
     return prev.item === next.item && prev.depth === next.depth;
   }
 );
 
-export const NavTree = memo(function NavTree({
+export const NavTree = memo(({
   items,
   depth,
   isMenuCollapsed,
@@ -362,7 +362,7 @@ export const NavTree = memo(function NavTree({
   onPrefetchHref: onPrefetchHrefProp,
   pendingHref,
   onSetPendingHref: onSetPendingHrefProp,
-}: NavTreeProps): React.ReactNode {
+}: NavTreeProps): React.ReactNode => {
   const router = useRouter();
   const prefetchedHrefSetRef = useRef<Set<string>>(new Set());
   const handleNavigateHrefLocal = useCallback(

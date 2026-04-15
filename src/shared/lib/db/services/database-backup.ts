@@ -66,7 +66,7 @@ const runMongoBackup = async (params: {
   const logPath = path.join(mongoBackupsDir, `${backupName}.log`);
 
   const command = getMongoDumpCommand();
-  const args = ['--uri', mongoUri, '--db', databaseName, '--archive=' + backupPath, '--gzip'];
+  const args = ['--uri', mongoUri, '--db', databaseName, `--archive=${  backupPath}`, '--gzip'];
   const commandString = `${command} ${args.join(' ')}`;
 
   let stdout: string;

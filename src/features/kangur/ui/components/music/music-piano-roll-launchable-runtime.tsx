@@ -3,7 +3,7 @@ import type { ComponentType } from 'react';
 
 import {
   KANGUR_MUSIC_PIANO_ROLL_CONFIGS,
-  KANGUR_MUSIC_PIANO_ROLL_RENDERER_IDS,
+  type KANGUR_MUSIC_PIANO_ROLL_RENDERER_IDS,
   KANGUR_MUSIC_PIANO_ROLL_VARIANT_KEYS,
 } from '@/features/kangur/games/music-piano-roll-contract';
 import type { KangurMiniGameFinishActionProps } from '@/features/kangur/ui/types';

@@ -1,5 +1,5 @@
-import { PlaywrightSequencer, PlaywrightSequencerContext } from './PlaywrightSequencer';
-import { StepId } from '../step-registry';
+import { PlaywrightSequencer, type PlaywrightSequencerContext } from './PlaywrightSequencer';
+import { type StepId } from '../step-registry';
 import { 
   TITLE_SELECTORS, 
   DESCRIPTION_SELECTORS, 
@@ -14,7 +14,7 @@ import {
   DRAFT_IMAGE_REMOVE_SELECTORS
 } from '../selectors/tradera';
 import { TRADERA_COOKIE_ACCEPT_SELECTORS } from '@/features/integrations/services/tradera-listing/config';
-import { Page } from 'playwright';
+import { type Page } from 'playwright';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 export class TraderaSequencer extends PlaywrightSequencer {

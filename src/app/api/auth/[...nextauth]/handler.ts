@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { handlers } from '@/features/auth/server';
 import { logAuthEvent } from '@/features/auth/server';

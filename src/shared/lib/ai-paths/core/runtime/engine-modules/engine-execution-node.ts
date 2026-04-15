@@ -1,8 +1,8 @@
-import { AiNode, Edge, RuntimePortValues } from '@/shared/contracts/ai-paths';
+import { type AiNode, type Edge, type RuntimePortValues } from '@/shared/contracts/ai-paths';
 import {
-  NodeHandlerContext,
-  RuntimeHistoryEntry,
-  RuntimeTraceResume,
+  type NodeHandlerContext,
+  type RuntimeHistoryEntry,
+  type RuntimeTraceResume,
 } from '@/shared/contracts/ai-paths-runtime';
 
 import {
@@ -24,7 +24,7 @@ import {
   readRuntimeRetryPolicy,
   resolveRecoverableNodeWaitState,
 } from './engine-runtime-status';
-import { EngineStateManager } from './engine-state-manager';
+import { type EngineStateManager } from './engine-state-manager';
 import {
   GraphExecutionCancelled,
   GraphExecutionError,
@@ -532,8 +532,8 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
       nodeInputs,
       prevOutputs: prevOutputs ?? {},
       edges: sanitizedEdges,
-      nodes: nodes,
-      nodeById: nodeById,
+      nodes,
+      nodeById,
       runId: resolvedRunId,
       runStartedAt: resolvedRunStartedAt,
       timeoutMs: resolveNodeTimeoutMs(node),

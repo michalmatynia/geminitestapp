@@ -1,4 +1,4 @@
-import { BatchCountResult } from '@/shared/contracts/base';
+import { type BatchCountResult } from '@/shared/contracts/base';
 import type { MongoCurrencyDoc, MongoCountryDoc, MongoLanguageDoc } from '../database-sync-types';
 import type { DatabaseSyncHandler } from './types';
 import type { Prisma, CurrencyCode } from '@prisma/client';

@@ -112,7 +112,7 @@ function DatabasesContentInner(): React.JSX.Element {
       )}
 
       <ConfirmModal
-        isOpen={!!backupToDelete}
+        isOpen={Boolean(backupToDelete)}
         onClose={() => setBackupToDelete(null)}
         onConfirm={handleConfirmDelete}
         title='Delete Backup'

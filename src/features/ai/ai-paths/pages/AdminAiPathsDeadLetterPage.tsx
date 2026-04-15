@@ -81,7 +81,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
               table.getIsAllPageRowsSelected() ||
               (table.getIsSomePageRowsSelected() && 'indeterminate')
             }
-            onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+            onCheckedChange={(value) => table.toggleAllPageRowsSelected(Boolean(value))}
             aria-label='Select all'
           />
         ),

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { CachedProductService, getProductRepository } from '@/features/products/server';
 import { productBulkArchiveRequestSchema } from '@/shared/contracts/products/product';

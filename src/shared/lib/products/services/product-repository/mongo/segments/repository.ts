@@ -1,6 +1,6 @@
-import { ProductFilters, ProductRepository } from '@/shared/contracts/products/drafts';
-import { ProductWithImages, ProductRecord, ProductImageRecord } from '@/shared/contracts/products/product';
-import { ProductCreateInput, ProductUpdateInput } from '@/shared/contracts/products/io';
+import { type ProductFilters, type ProductRepository } from '@/shared/contracts/products/drafts';
+import { type ProductWithImages, type ProductRecord, type ProductImageRecord } from '@/shared/contracts/products/product';
+import { type ProductCreateInput, type ProductUpdateInput } from '@/shared/contracts/products/io';
 
 import { mongoProductAssociationsImpl } from '../associations';
 import { mongoProductReadImpl } from '../read';

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { listProductSyncRuns } from '@/features/product-sync/services/product-sync-repository';
 import type { ProductSyncRunListQuery, ProductSyncRunsResponse } from '@/shared/contracts/product-sync';

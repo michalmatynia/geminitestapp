@@ -3,9 +3,9 @@
 import { useState } from 'react';
 
 import { useConnectionSession } from '@/features/integrations/hooks/useIntegrationQueries';
-import { IntegrationConnection } from '@/shared/contracts/integrations/connections';
+import { type IntegrationConnection } from '@/shared/contracts/integrations/connections';
 
-import { SessionPayload } from '../integrations-context-types';
+import { type SessionPayload } from '../integrations-context-types';
 
 export function useIntegrationsSessionImpl(activeConnection: IntegrationConnection | null) {
   const [showSessionModal, setShowSessionModal] = useState(false);

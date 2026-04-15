@@ -497,9 +497,9 @@ function KangurAssignmentManagerContent(): React.JSX.Element {
   );
 }
 
-export const KangurAssignmentManager = memo(function KangurAssignmentManager(
+export const KangurAssignmentManager = memo((
   props: KangurAssignmentManagerProps
-): React.JSX.Element {
+): React.JSX.Element => {
   return (
     <KangurAssignmentManagerProvider {...props}>
       <KangurAssignmentManagerContent />

@@ -1,8 +1,8 @@
 import {
-  QueryOptionsWithoutCore,
-  InfiniteQueryOptionsWithoutCore,
-  SuspenseInfiniteQueryOptionsWithoutCore,
-  SuspenseQueryOptionsWithoutCore,
+  type QueryOptionsWithoutCore,
+  type InfiniteQueryOptionsWithoutCore,
+  type SuspenseInfiniteQueryOptionsWithoutCore,
+  type SuspenseQueryOptionsWithoutCore,
 } from './types';
 
 import type { QueryKey } from '@tanstack/react-query';

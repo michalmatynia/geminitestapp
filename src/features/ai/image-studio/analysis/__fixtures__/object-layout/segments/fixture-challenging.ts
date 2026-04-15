@@ -5,7 +5,7 @@ import {
   sprinkleBorderNoise,
 } from '../generators';
 import { exactExpectation, tolerantExpectation } from './expectations';
-import { ObjectLayoutGoldenFixture } from './types';
+import { type ObjectLayoutGoldenFixture } from './types';
 
 export const fixtureShadowedProduct = (): ObjectLayoutGoldenFixture => {
   const width = 120;

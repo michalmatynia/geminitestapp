@@ -1,17 +1,18 @@
 'use client';
 
-import { useSearchParams } from 'next/navigation';
-import { useTranslations } from 'next-intl';
-import React, { useEffect, useMemo, useRef } from 'react';
+import { type useSearchParams } from 'next/navigation';
+import { type useTranslations } from 'next-intl';
+import type React from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
 import { useKangurAiTutorSessionSync } from '@/features/kangur/ui/context/KangurAiTutorContext';
-import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import { type useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import {
   KANGUR_PARENT_CAPTCHA_SITE_KEY,
 } from '@/features/kangur/ui/login-page/login-constants';
 import type { KangurLoginPageProps } from '@/features/kangur/ui/login-page/login-context';
-import { useKangurLoginPageState } from './KangurLoginPage.hooks';
+import { type useKangurLoginPageState } from './KangurLoginPage.hooks';
 import {
   normalizeParentEmail,
   parseJsonResponse,

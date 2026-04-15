@@ -1,4 +1,4 @@
-import { ParamLeaf } from '@/shared/contracts/prompt-engine';
+import { type ParamLeaf } from '@/shared/contracts/prompt-engine';
 
 import { isObjectRecord } from '../object-utils';
 

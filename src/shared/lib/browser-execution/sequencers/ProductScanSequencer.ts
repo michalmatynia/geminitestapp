@@ -361,13 +361,13 @@ export abstract class ProductScanSequencer {
     candidateId: string | null
   ): string {
     return (
-      String(key ?? '') +
-      '::' +
-      String(this.normalizeAttempt(attempt)) +
-      '::' +
-      String(inputSource ?? 'none') +
-      '::' +
-      String(candidateId ?? 'none')
+      `${String(key ?? '') 
+      }::${ 
+      String(this.normalizeAttempt(attempt)) 
+      }::${ 
+      String(inputSource ?? 'none') 
+      }::${ 
+      String(candidateId ?? 'none')}`
     );
   }
 

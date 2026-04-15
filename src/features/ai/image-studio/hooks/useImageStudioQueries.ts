@@ -97,7 +97,7 @@ export function useStudioSlots(projectId: string): SingleQuery<StudioSlotsRespon
     id: projectId,
     queryKey,
     queryFn,
-    enabled: !!projectId,
+    enabled: Boolean(projectId),
     staleTime: 60_000,
     // Slot data is frequently mutated outside Studio (e.g. Product Modal sends),
     // but those mutations call invalidateImageStudioSlots() explicitly, so

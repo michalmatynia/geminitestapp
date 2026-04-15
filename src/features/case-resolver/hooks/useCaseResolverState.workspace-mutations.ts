@@ -75,7 +75,7 @@ export function useCaseResolverStateWorkspaceMutations({
         const stampedWorkspace = stampCaseResolverWorkspaceMutation(normalizedUpdated, {
           baseRevision: getCaseResolverWorkspaceRevision(baseCurrent),
           mutationId,
-          normalizeWorkspace: options?.skipNormalization ? false : true,
+          normalizeWorkspace: !options?.skipNormalization,
         });
         logCaseResolverWorkspaceEvent({
           source: options?.source ?? 'case_view',

@@ -6,7 +6,7 @@ import {
   normalizeAuthSecurityPolicy,
   type AuthSecurityPolicy,
 } from '@/features/auth/utils/auth-security';
-import { MongoSettingRecord } from '@/shared/contracts/base';
+import { type MongoSettingRecord } from '@/shared/contracts/base';
 import { getAuthDataProvider, requireAuthProvider } from '@/shared/lib/auth/services/auth-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';

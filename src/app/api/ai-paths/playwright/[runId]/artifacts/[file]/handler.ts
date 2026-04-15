@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { assertPlaywrightRunAccess } from '@/app/api/ai-paths/playwright/access';
 import {

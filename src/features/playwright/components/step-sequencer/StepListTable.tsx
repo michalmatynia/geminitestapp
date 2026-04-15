@@ -1,6 +1,6 @@
 'use client';
 
-import { Copy, Globe, Lock, MoreHorizontal, Pencil, Plus, Share2, Tag, Trash2 } from 'lucide-react';
+import { Globe, Lock, MoreHorizontal, Pencil, Plus, Share2, Tag, Trash2 } from 'lucide-react';
 import { memo } from 'react';
 
 import { PLAYWRIGHT_STEP_TYPE_LABELS } from '@/shared/contracts/playwright-steps';
@@ -31,8 +31,8 @@ import { StepTypeIcon } from './StepTypeIcon';
 // Steps table
 // ---------------------------------------------------------------------------
 
-const StepRow = memo(function StepRow({ step }: { step: PlaywrightStep }) {
-  const { setEditingStep, handleDeleteStep, handleDuplicateStep, setFilterTag, websites } = usePlaywrightStepSequencer();
+const StepRow = memo(({ step }: { step: PlaywrightStep }) => {
+  const { setEditingStep, handleDeleteStep, setFilterTag, websites } = usePlaywrightStepSequencer();
 
   const websiteName = step.websiteId
     ? (websites.find((w) => w.id === step.websiteId)?.name ?? step.websiteId)
@@ -159,7 +159,7 @@ function StepsTable(): React.JSX.Element {
 // Step Sets table
 // ---------------------------------------------------------------------------
 
-const StepSetRow = memo(function StepSetRow({ set }: { set: PlaywrightStepSet }) {
+const StepSetRow = memo(({ set }: { set: PlaywrightStepSet }) => {
   const { setEditingSet, handleDeleteStepSet, handleAddStepSetToAction, setFilterTag, websites } =
     usePlaywrightStepSequencer();
 

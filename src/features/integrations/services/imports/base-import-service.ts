@@ -666,7 +666,7 @@ export const processBaseImportRun = async (
     const productRepository = await getProductRepository();
     const parameterRepository = await getParameterRepository();
     const customFieldRepository = await getCustomFieldRepository();
-    let customFieldDefinitions: ProductCustomFieldDefinition[] =
+    const customFieldDefinitions: ProductCustomFieldDefinition[] =
       await customFieldRepository.listCustomFields({});
 
     // Performance optimization: pre-fetch catalog context once per run

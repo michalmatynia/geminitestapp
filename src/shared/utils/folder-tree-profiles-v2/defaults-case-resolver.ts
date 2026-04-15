@@ -1,4 +1,4 @@
-import { FolderTreeProfileV2 } from '../../contracts/master-folder-tree';
+import { type FolderTreeProfileV2 } from '../../contracts/master-folder-tree';
 
 export const caseResolverProfiles: Record<string, FolderTreeProfileV2> = {
   case_resolver: {

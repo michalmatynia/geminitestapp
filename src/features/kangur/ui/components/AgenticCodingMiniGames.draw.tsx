@@ -170,10 +170,10 @@ const DrawGameSvg = forwardRef<
     onPointerMove?: (event: React.PointerEvent<SVGSVGElement>) => void;
     onPointerUp: (event: React.PointerEvent<SVGSVGElement>) => void;
   }
->(function DrawGameSvg(
+>((
   { checkpoints, guide, isDrawing, pathPoints, visited, onPointerDown, onPointerMove, onPointerUp },
   ref
-): React.JSX.Element {
+): React.JSX.Element => {
   const pathD =
     pathPoints.length > 1
       ? pathPoints.map((point, index) => `${index === 0 ? 'M' : 'L'}${point.x} ${point.y}`).join(' ')

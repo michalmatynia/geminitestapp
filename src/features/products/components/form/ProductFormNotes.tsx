@@ -3,7 +3,7 @@
 import React from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
-import { ProductFormData } from '@/shared/contracts/products/drafts';
+import { type ProductFormData } from '@/shared/contracts/products/drafts';
 import { FormField, FormSection } from '@/shared/ui/form-section';
 import { Input, Textarea } from '@/shared/ui/primitives.public';
 

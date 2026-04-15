@@ -1,5 +1,5 @@
 import type { TriggerEntitySnapshotMode } from '@/shared/contracts/ai-paths-core/nodes-primitives';
-import { TriggerEventEntityType } from '@/shared/contracts/ai-trigger-buttons';
+import { type TriggerEventEntityType } from '@/shared/contracts/ai-trigger-buttons';
 
 import { toRecord } from './trigger-event-utils';
 

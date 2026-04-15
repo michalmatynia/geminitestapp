@@ -19,7 +19,7 @@ const MAX_MINIMAP_EDGE_RENDER_COUNT = 1400;
 const clamp = (value: number, min: number, max: number): number =>
   Math.min(max, Math.max(min, value));
 
-export const CanvasMinimap = React.memo(function CanvasMinimap(): React.JSX.Element {
+export const CanvasMinimap = React.memo((): React.JSX.Element => {
   const {
     nodes,
     edgePaths,

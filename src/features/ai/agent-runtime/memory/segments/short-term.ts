@@ -4,7 +4,7 @@ import {
 } from '@/features/ai/agent-runtime/store-delegates';
 import type { InputJsonValue } from '@/shared/contracts/json';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import { DEBUG_CHATBOT, MemoryScope } from './shared';
+import { DEBUG_CHATBOT, type MemoryScope } from './shared';
 
 export async function addAgentMemory(params: {
   runId?: string | null;

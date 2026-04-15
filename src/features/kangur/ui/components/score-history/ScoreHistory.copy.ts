@@ -1,4 +1,4 @@
-import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
+import { type normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 import type { ScoreHistoryFallbackCopy } from './ScoreHistory.types';
 
 export const getScoreHistoryFallbackCopy = (

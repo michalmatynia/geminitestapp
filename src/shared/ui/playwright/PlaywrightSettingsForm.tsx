@@ -1,6 +1,6 @@
 'use client';
 
-import React, { ChangeEvent, ReactElement, useMemo } from 'react';
+import React, { type ChangeEvent, type ReactElement, useMemo } from 'react';
 
 import type { PlaywrightSettings } from '@/shared/contracts/playwright';
 import type { PlaywrightSettingsContextType, PlaywrightSettingsFormProps, PlaywrightSettingsProviderProps } from '@/shared/contracts/ui/playwright';

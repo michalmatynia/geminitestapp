@@ -1,5 +1,10 @@
 'use client';
 
+// useProductDataMutations: collection of server-facing mutations for product
+// data (create, update, delete, bulk operations). Each mutation uses the
+// project's query-factory helpers to enable optimistic updates and cache
+// invalidation strategies.
+
 import { type QueryClient, type UseMutationResult } from '@tanstack/react-query';
 
 import { createProduct, updateProduct, deleteProduct } from '@/features/products/api';
@@ -39,15 +44,18 @@ type ProductListCacheValue =
 const isPaginatedItemsCacheValue = (
   cacheValue: ProductListCacheValue
 ): cacheValue is { items: ProductWithImages[]; total?: number } =>
-  !!cacheValue && !Array.isArray(cacheValue) && 'items' in cacheValue && Array.isArray(cacheValue.items);
+  Boolean(cacheValue) &&
+  !Array.isArray(cacheValue) &&
+  'items' in (cacheValue as any) &&
+  Array.isArray((cacheValue as any).items);
 
 const isProductsArrayCacheValue = (
   cacheValue: ProductListCacheValue
 ): cacheValue is { products: ProductWithImages[] } =>
-  !!cacheValue &&
+  Boolean(cacheValue) &&
   !Array.isArray(cacheValue) &&
-  'products' in cacheValue &&
-  Array.isArray(cacheValue.products);
+  'products' in (cacheValue as any) &&
+  Array.isArray((cacheValue as any).products);
 
 const patchProductListCacheValue = (
   cacheValue: ProductListCacheValue,

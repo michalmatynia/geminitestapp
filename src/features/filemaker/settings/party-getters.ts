@@ -7,12 +7,12 @@ import {
   resolveFilemakerPersonLabel,
 } from './party-getters.helpers';
 import {
-  FilemakerDatabase,
-  FilemakerPerson,
-  FilemakerOrganization,
-  FilemakerPartyReference,
-  FilemakerPartyOption,
-  FilemakerPartyKind,
+  type FilemakerDatabase,
+  type FilemakerPerson,
+  type FilemakerOrganization,
+  type FilemakerPartyReference,
+  type FilemakerPartyOption,
+  type FilemakerPartyKind,
 } from '../types';
 
 export const getFilemakerPersonById = (

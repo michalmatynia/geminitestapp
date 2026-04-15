@@ -1,4 +1,4 @@
-import { ExtractParamsResult } from '@/shared/contracts/prompt-engine';
+import { type ExtractParamsResult } from '@/shared/contracts/prompt-engine';
 
 import { normalizeParamsObject } from './normalization';
 import { findMatchingBrace, stripJsComments, removeTrailingCommas } from './scanner';

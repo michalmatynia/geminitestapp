@@ -69,10 +69,10 @@ const resolveDraftIconColor = (draft: ProductDraft): string | undefined => {
   return normalized;
 };
 
-export const ProductListHeader = memo(function ProductListHeader({
+export const ProductListHeader = memo(({
   showHeader = true,
   filtersContent,
-}: ProductListHeaderProps) {
+}: ProductListHeaderProps) => {
   const { isMenuHidden } = useAdminLayoutState();
   const { setIsMenuHidden } = useAdminLayoutActions();
   const {

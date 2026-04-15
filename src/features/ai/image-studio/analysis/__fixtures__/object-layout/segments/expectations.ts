@@ -1,5 +1,5 @@
 import type { ImageStudioCenterObjectBounds } from '@/features/ai/image-studio/contracts/center';
-import { ObjectLayoutFixtureExpectation } from './types';
+import { type ObjectLayoutFixtureExpectation } from './types';
 
 export const exactExpectation = (
   bounds: ImageStudioCenterObjectBounds,

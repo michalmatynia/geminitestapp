@@ -1,5 +1,10 @@
 'use client';
 
+// ProductFormContext: high-level composition of form-related contexts used by
+// the product editor. Wires together Core, Metadata, Image, Parameter and
+// CustomField contexts so nested form tabs can access shared helpers and
+// the current editing product snapshot.
+
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useFormState } from 'react-hook-form';
 

@@ -98,7 +98,7 @@ export function Asset3DListPage(): React.JSX.Element {
             ))}
             {(row.original.tags || []).length > 2 && (
               <StatusBadge
-                status={'+' + ((row.original.tags || []).length - 2)}
+                status={`+${  (row.original.tags || []).length - 2}`}
                 variant='neutral'
                 size='sm'
                 className='font-bold'

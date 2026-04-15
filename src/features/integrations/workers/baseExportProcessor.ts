@@ -127,7 +127,7 @@ export async function processBaseExportJob(
 
     const { mappings, resolvedTemplateId, requestedTemplateId, exportProduct } =
       preparedExportContext;
-    let { exportImagesAsBase64: resolvedExportImagesAsBase64, imageBase64Mode: resolvedImageBase64Mode, imageTransform: resolvedImageTransform } =
+    const { exportImagesAsBase64: resolvedExportImagesAsBase64, imageBase64Mode: resolvedImageBase64Mode, imageTransform: resolvedImageTransform } =
       preparedExportContext;
     const {
       producerNameById,

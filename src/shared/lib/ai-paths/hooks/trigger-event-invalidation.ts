@@ -1,7 +1,7 @@
-import { QueryClient } from '@tanstack/react-query';
+import { type QueryClient } from '@tanstack/react-query';
 
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
-import { TriggerEventEntityType } from '@/shared/contracts/ai-trigger-buttons';
+import { type TriggerEventEntityType } from '@/shared/contracts/ai-trigger-buttons';
 import {
   invalidateAiPathQueue,
   invalidateNotes,

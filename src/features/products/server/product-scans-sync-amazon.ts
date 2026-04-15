@@ -55,6 +55,7 @@ import {
   resolveAsinUpdateStepStatus,
   resolveIsoAgeMs,
   resolveProductScanRequestSequenceInput,
+  createAmazonScanStartedRawResult,
 } from './product-scans-service.helpers';
 
 import {
@@ -154,7 +155,8 @@ export async function synchronizeAmazonProductScan(
         latestStage: latestActiveStage,
       });
       const activeMessage =
-        manualVerificationPending ? normalizeErrorMessage(parsedResult.message, null) : null;
+        manualVerificationPending ? normalizeErrorMessage(parsedResult.message, '') : null;
+
       const allowedRuntimeMs = manualVerificationPending
         ? Math.max(AMAZON_SCAN_TIMEOUT_MS, manualVerificationTimeoutMs + 60_000)
         : AMAZON_SCAN_TIMEOUT_MS;

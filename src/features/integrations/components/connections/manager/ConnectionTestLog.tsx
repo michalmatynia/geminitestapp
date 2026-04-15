@@ -7,7 +7,7 @@ import {
   useIntegrationsData,
   useIntegrationsTesting,
 } from '@/features/integrations/context/IntegrationsContext';
-import { TestLogEntry } from '@/shared/contracts/integrations/session-testing';
+import { type TestLogEntry } from '@/shared/contracts/integrations/session-testing';
 import { StatusBadge } from '@/shared/ui/data-display.public';
 import { FormSection } from '@/shared/ui/forms-and-actions.public';
 import { SimpleSettingsList } from '@/shared/ui/templates.public';

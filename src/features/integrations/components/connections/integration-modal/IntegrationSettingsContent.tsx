@@ -91,7 +91,7 @@ const resolveTraderaBrowserSettings = (connection: unknown): TraderaBrowserSetti
     traderaBrowserMode: mode === 'scripted' ? 'scripted' : 'builtin',
     traderaDefaultTemplateId: typeof templateId === 'string' && templateId.trim() ? templateId : null,
     traderaDefaultDurationHours: typeof duration === 'number' ? duration : null,
-    traderaAutoRelistEnabled: autoRelistEnabled === false ? false : true,
+    traderaAutoRelistEnabled: autoRelistEnabled !== false,
     traderaAutoRelistLeadMinutes: typeof autoRelistLead === 'number' ? autoRelistLead : null,
   };
 };

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { getCategoryRepository, getProductDataProvider } from '@/features/products/server';
 import { toProductCategorySummaryDto } from '@/shared/contracts/products/categories';

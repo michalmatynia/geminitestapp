@@ -1,6 +1,6 @@
 import React from 'react';
 import { BookOpen, Gamepad2 } from 'lucide-react';
-import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
+import { type normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 import { KangurNavAction } from '@/features/kangur/ui/components/KangurNavAction';
 import KangurVisualCueContent from '@/features/kangur/ui/components/KangurVisualCueContent';
 import type {

@@ -1,4 +1,9 @@
 'use client';
+
+// ProductFilters: UI for product list filters (search, sku, category,
+// price range). Thin presentation component — state and handlers are
+// supplied by useProductListFilters and the ProductListProvider to keep this
+// component purely presentational and easy to test.
 'use no memo';
 // ProductFilters: filter panel for the products list. Provides search,
 // field-based filters, advanced filter modal and presets management; pulls

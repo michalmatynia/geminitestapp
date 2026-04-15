@@ -1,8 +1,8 @@
 import {
-  PlanStep,
-  PlannerMeta,
-  AdaptivePlanReviewResult,
-  SelfCheckReviewResult,
+  type PlanStep,
+  type PlannerMeta,
+  type AdaptivePlanReviewResult,
+  type SelfCheckReviewResult,
   adaptivePlanReviewResultSchema,
   selfCheckReviewResultSchema,
 } from '@/shared/contracts/agent-runtime';

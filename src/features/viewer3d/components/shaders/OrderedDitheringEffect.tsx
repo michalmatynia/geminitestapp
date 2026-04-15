@@ -2,7 +2,7 @@
 
 import { Effect, BlendFunction } from 'postprocessing';
 import { forwardRef, useMemo } from 'react';
-import { Uniform, Vector2, WebGLRenderTarget, WebGLRenderer } from 'three';
+import { Uniform, Vector2, type WebGLRenderTarget, type WebGLRenderer } from 'three';
 
 import orderedDitheringShader from './OrderedDitheringShader';
 
@@ -109,7 +109,7 @@ export interface OrderedDitheringPassProps {
 export const OrderedDitheringPass = forwardRef<
   OrderedDitheringEffectImpl,
   OrderedDitheringPassProps
->(function OrderedDitheringPass(
+>((
   {
     gridSize = 4.0,
     luminanceMethod = 0,
@@ -119,7 +119,7 @@ export const OrderedDitheringPass = forwardRef<
     blendFunction = BlendFunction.NORMAL,
   }: OrderedDitheringPassProps,
   ref: React.Ref<OrderedDitheringEffectImpl>
-): React.JSX.Element {
+): React.JSX.Element => {
   const effect = useMemo(
     () =>
       new OrderedDitheringEffectImpl({

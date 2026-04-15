@@ -1,5 +1,5 @@
-import { AiNode, Edge } from '@/shared/contracts/ai-paths';
-import { RuntimeState } from '@/shared/contracts/ai-paths-runtime';
+import { type AiNode, type Edge } from '@/shared/contracts/ai-paths';
+import { type RuntimeState } from '@/shared/contracts/ai-paths-runtime';
 
 
 // Modular imports

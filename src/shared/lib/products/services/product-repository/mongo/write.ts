@@ -1,16 +1,16 @@
 import { randomUUID } from 'crypto';
 
-import { Collection, UpdateFilter, WithId } from 'mongodb';
+import { type Collection, type UpdateFilter, type WithId } from 'mongodb';
 
-import { ProductCreateInput, ProductUpdateInput } from '@/shared/contracts/products/io';
+import { type ProductCreateInput, type ProductUpdateInput } from '@/shared/contracts/products/io';
 import {
-  ProductRecord,
-  ProductWithImages,
+  type ProductRecord,
+  type ProductWithImages,
   normalizeProductNotes,
   normalizeProductMarketplaceContentOverrides,
 } from '@/shared/contracts/products/product';
 
-import { ProductDocument, toProductResponse } from '../mongo-product-repository-mappers';
+import { type ProductDocument, toProductResponse } from '../mongo-product-repository-mappers';
 import {
   normalizeProductCustomFieldValues,
   buildProductIdFilter,

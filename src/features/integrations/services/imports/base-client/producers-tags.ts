@@ -1,5 +1,5 @@
-import { BaseInventory } from '@/shared/contracts/integrations/base-com';
-import { BaseProducer, BaseTag } from '@/shared/contracts/integrations';
+import { type BaseInventory } from '@/shared/contracts/integrations/base-com';
+import { type BaseProducer, type BaseTag } from '@/shared/contracts/integrations';
 
 import { callBaseApi } from './core';
 import {

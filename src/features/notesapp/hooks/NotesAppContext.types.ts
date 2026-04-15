@@ -1,5 +1,5 @@
 import type { NotesAppContextValue } from '@/shared/contracts/notes';
-import { PickActions, OmitState } from '@/shared/lib/react/types';
+import { type PickActions, type OmitState } from '@/shared/lib/react/types';
 
 export type NotesAppActionsValue = Omit<
   PickActions<NotesAppContextValue>,

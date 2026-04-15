@@ -1,7 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { JSX, useState } from 'react';
+import { type JSX, useState } from 'react';
 
 import { useHealthStatus } from '@/shared/hooks/useHealthStatus';
 import { useSystemActivity } from '@/shared/hooks/useSystemActivity';

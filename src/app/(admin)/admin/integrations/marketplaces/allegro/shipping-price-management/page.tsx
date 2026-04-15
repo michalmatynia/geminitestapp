@@ -1,4 +1,4 @@
-import { JSX } from 'react';
+import { type JSX } from 'react';
 
 import { AllegroShippingPriceManagementPage } from '@/features/integrations/admin.public';
 

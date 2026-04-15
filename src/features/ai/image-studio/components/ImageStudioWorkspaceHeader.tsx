@@ -42,7 +42,7 @@ export function ImageStudioWorkspaceHeader({
       <TabsTrigger value='docs'>Docs</TabsTrigger>
     </TabsList>
   );
-  const showReturnButton = activeTab === 'studio' && !!returnToPath;
+  const showReturnButton = activeTab === 'studio' && Boolean(returnToPath);
 
   return (
     <div className={hideTopBar ? 'border-b bg-muted/40 px-1 py-1.5' : 'border-b bg-muted/40 px-1 py-2'}>

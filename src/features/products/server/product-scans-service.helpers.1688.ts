@@ -1,9 +1,6 @@
 import 'server-only';
 
 import {
-  createDefaultProductScannerSettings,
-} from '@/features/products/scanner-settings';
-import {
   type ProductScanRecord,
   type ProductScanSupplierEvaluation,
 } from '@/shared/contracts/product-scans';

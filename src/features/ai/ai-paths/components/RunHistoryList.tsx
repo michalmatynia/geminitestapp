@@ -119,7 +119,7 @@ export function RunHistoryList(props: RunHistoryListProps): React.JSX.Element {
                 {run.nextRetryAt && (
                   <div className='mt-1'>
                     <StatusBadge
-                      status={'Retry at ' + new Date(run.nextRetryAt).toLocaleString()}
+                      status={`Retry at ${  new Date(run.nextRetryAt).toLocaleString()}`}
                       variant='warning'
                       size='sm'
                     />

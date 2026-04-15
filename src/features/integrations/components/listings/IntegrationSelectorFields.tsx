@@ -4,7 +4,7 @@ import React from 'react';
 
 import { FormField, SelectSimple } from '@/shared/ui/forms-and-actions.public';
 import {
-  IntegrationSelectorCopyStrategy,
+  type IntegrationSelectorCopyStrategy,
   useIntegrationSelectorProps,
 } from './hooks/useIntegrationSelectorProps';
 

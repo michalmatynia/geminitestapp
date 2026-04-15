@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { z } from 'zod';
+import { type z } from 'zod';
 
 import { useToast } from '@/features/kangur/shared/ui';
 import {

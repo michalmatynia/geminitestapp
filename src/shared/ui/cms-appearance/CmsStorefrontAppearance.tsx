@@ -4,8 +4,8 @@ import { Sun } from 'lucide-react';
 import type React from 'react';
 
 import {
-  CmsStorefrontAppearanceMode,
-  CmsStorefrontAppearanceButtonsProps,
+  type CmsStorefrontAppearanceMode,
+  type CmsStorefrontAppearanceButtonsProps,
   DEFAULT_MODE_LABELS,
   MODE_ICON_MAP,
   VALID_MODES,

@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
-import { JSX } from 'react';
+import { type JSX } from 'react';
 
 import { readOptionalServerAuthSession } from '@/features/auth/server';
 

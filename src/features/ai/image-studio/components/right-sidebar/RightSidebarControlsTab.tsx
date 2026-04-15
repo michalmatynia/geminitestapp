@@ -35,7 +35,7 @@ import { useRightSidebarContext } from '../RightSidebarContext';
 import { StudioCard } from '../StudioCard';
 
 export const RightSidebarControlsTab = React.memo(
-  function RightSidebarControlsTab(): React.JSX.Element {
+  (): React.JSX.Element => {
     const {
       imageTransformMode,
       canvasBackgroundColor,

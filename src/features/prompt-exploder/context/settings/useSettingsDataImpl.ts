@@ -2,13 +2,13 @@
 
 import { useState, useMemo, useEffect, useRef } from 'react';
 
-import { PROMPT_ENGINE_SETTINGS_KEY, PromptValidationRule } from '@/shared/contracts/prompt-engine';
+import { PROMPT_ENGINE_SETTINGS_KEY, type PromptValidationRule } from '@/shared/contracts/prompt-engine';
 import { PROMPT_EXPLODER_SETTINGS_KEY } from '@/shared/contracts/prompt-exploder';
 import {
-  PromptExploderParserTuningRuleDraft,
-  PromptExploderLearnedTemplate,
-  PromptExploderPatternSnapshot,
-  PromptExploderRuntimeValidationScope,
+  type PromptExploderParserTuningRuleDraft,
+  type PromptExploderLearnedTemplate,
+  type PromptExploderPatternSnapshot,
+  type PromptExploderRuntimeValidationScope,
 } from '@/shared/contracts/prompt-exploder';
 import {
   VALIDATOR_PATTERN_LISTS_KEY,

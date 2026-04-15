@@ -22,7 +22,7 @@ import {
   sortValidatorPatterns,
 } from '@/features/products/validation-engine/core';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import { ProductFormData } from '@/shared/contracts/products/drafts';
+import { type ProductFormData } from '@/shared/contracts/products/drafts';
 import type { ProductValidationPattern } from '@/shared/contracts/products/validation';
 import { translateStructuredProductName } from '@/shared/lib/products/title-terms';
 import { parseDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';

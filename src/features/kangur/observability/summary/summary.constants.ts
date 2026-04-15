@@ -1,5 +1,5 @@
 import type { KangurRouteMetrics } from '@/shared/contracts/kangur-observability';
-import { DuelLobbyMetricKey } from './summary.contracts';
+import { type DuelLobbyMetricKey } from './summary.contracts';
 
 export const ANALYTICS_COLLECTION_NAME = 'analytics_events';
 export const SYSTEM_LOGS_COLLECTION_NAME = 'system_logs';

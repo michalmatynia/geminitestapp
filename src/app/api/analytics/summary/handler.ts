@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { auth } from '@/features/auth/server';
 import { analyticsSummaryQuerySchema } from '@/shared/contracts/analytics';

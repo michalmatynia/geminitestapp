@@ -1,5 +1,5 @@
-import { ClockThemeSettings } from './base';
-import { ThemeSettings } from './main';
+import { type ClockThemeSettings } from './base';
+import { type ThemeSettings } from './main';
 
 export const DEFAULT_CLOCK_THEME: ClockThemeSettings = {
   accentAmberText: '#f59e0b',

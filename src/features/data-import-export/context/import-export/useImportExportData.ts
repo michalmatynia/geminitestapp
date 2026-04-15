@@ -67,7 +67,7 @@ export function useImportExportData({
   const normalizedSelectedBaseConnectionId = selectedBaseConnectionId.trim();
   const inventoriesQuery = useInventories(
     normalizedSelectedBaseConnectionId,
-    inventoriesEnabled && isBaseConnected && !!normalizedSelectedBaseConnectionId
+    inventoriesEnabled && isBaseConnected && Boolean(normalizedSelectedBaseConnectionId)
   );
   const inventories = useMemo<InventoryOption[]>(() => {
     const toText = (value: unknown): string => {
@@ -129,8 +129,8 @@ export function useImportExportData({
     includeAllWarehouses,
     warehousesEnabled &&
       isBaseConnected &&
-      !!normalizedSelectedBaseConnectionId &&
-      !!exportInventoryId
+      Boolean(normalizedSelectedBaseConnectionId) &&
+      Boolean(exportInventoryId)
   );
   const warehousesData = warehousesQuery.data;
   const isFetchingWarehouses = warehousesQuery.isFetching;
@@ -160,7 +160,7 @@ export function useImportExportData({
       directTarget: importDirectTarget,
       searchSku: importSkuSearch,
     },
-    importListEnabled && isBaseConnected && !!inventoryId && !!normalizedSelectedBaseConnectionId
+    importListEnabled && isBaseConnected && Boolean(inventoryId) && Boolean(normalizedSelectedBaseConnectionId)
   );
   const importListData = importListQuery.data;
   const loadingImportList = importListQuery.isFetching;
@@ -194,7 +194,7 @@ export function useImportExportData({
   const activeImportRun = useMemo<ImportRunDetail | null>(() => {
     return activeImportRunQuery.data ?? null;
   }, [activeImportRunQuery.data]);
-  const loadingImportRun = activeImportRunQuery.isFetching && !!activeImportRunId;
+  const loadingImportRun = activeImportRunQuery.isFetching && Boolean(activeImportRunId);
 
   useEffect(() => {
     const status = activeImportRun?.run.status;

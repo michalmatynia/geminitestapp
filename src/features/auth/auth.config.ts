@@ -131,7 +131,7 @@ export const authConfig = {
       auth: Session | null;
       request: { nextUrl: URL };
     }): boolean | Response | Promise<boolean | Response> {
-      const isLoggedIn = !!auth?.user;
+      const isLoggedIn = Boolean(auth?.user);
       const isOnAdmin = nextUrl.pathname.startsWith('/admin');
       if (isOnAdmin) {
         if (!isLoggedIn) return false;

@@ -1,4 +1,4 @@
-import { BaseProductRecord, BaseApiResponse } from '@/shared/contracts/integrations/base-api';
+import { type BaseProductRecord, type BaseApiResponse } from '@/shared/contracts/integrations/base-api';
 import { isAppError } from '@/shared/errors/app-error';
 
 import { callBaseApi } from './core';

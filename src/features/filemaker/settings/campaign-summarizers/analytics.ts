@@ -11,8 +11,8 @@ import type {
   FilemakerEmailCampaignSuppressionRegistry,
 } from '../../types';
 import {
-  FilemakerEmailCampaignAnalytics,
-  FilemakerEmailCampaignLinkPerformance,
+  type FilemakerEmailCampaignAnalytics,
+  type FilemakerEmailCampaignLinkPerformance,
 } from '../../types/campaigns';
 import {
   getFilemakerEmailCampaignDeliveriesForRun,

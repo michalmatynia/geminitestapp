@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 
-import { PanelState, UsePanelStateOptions, UsePanelStateReturn } from '@/shared/contracts/ui/panels';
+import { type PanelState, type UsePanelStateOptions, type UsePanelStateReturn } from '@/shared/contracts/ui/panels';
 
 /**
  * Hook for managing panel state (pagination, filters, search, sorting)

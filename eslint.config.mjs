@@ -140,20 +140,46 @@ const integrationsPublicRestriction = {
 const commonRules = {
   ...js.configs.recommended.rules,
   ...preservedLegacyCoreRuleOffs,
+  // --- complexity & size limits ---
+  complexity: ['error', 8],
+  'max-depth': ['error', 3],
+  'max-params': ['error', 4],
+  'max-lines-per-function': ['error', { max: 60, skipBlankLines: true, skipComments: true }],
+  'max-lines': ['error', { max: 300, skipBlankLines: true, skipComments: true }],
+  // --- style ---
   indent: 'off',
   'linebreak-style': ['error', 'unix'],
   quotes: ['error', 'single'],
   'jsx-quotes': ['error', 'prefer-single'],
   semi: ['error', 'always'],
+  // --- correctness ---
+  eqeqeq: ['error', 'always'],
+  'no-var': 'error',
+  'prefer-const': 'error',
+  'no-console': 'error',
+  'no-shadow': 'off',                          // superseded by TS rule below
+  'no-throw-literal': 'off',                   // superseded by TS rule below
+  'no-else-return': ['error', { allowElseIf: false }],
+  'no-nested-ternary': 'error',
+  'no-unneeded-ternary': 'error',
+  'no-implicit-coercion': 'error',
+  'object-shorthand': ['error', 'always'],
+  'prefer-arrow-callback': 'error',
+  'prefer-template': 'error',
+  'no-param-reassign': ['error', { props: true }],
+  'no-return-assign': 'error',
+  'consistent-return': 'error',
+  // --- unused vars ---
   'no-unused-vars': 'off',
   '@typescript-eslint/no-unused-vars': [
-    'warn',
+    'error',
     {
       argsIgnorePattern: '^_',
       varsIgnorePattern: '^_',
       caughtErrorsIgnorePattern: '^_',
     },
   ],
+  // --- TS duplicates of core rules ---
   'no-redeclare': 'off',
   '@typescript-eslint/no-redeclare': 'error',
   'no-dupe-class-members': 'off',
@@ -161,6 +187,7 @@ const commonRules = {
   'no-loss-of-precision': 'off',
   '@typescript-eslint/no-loss-of-precision': 'error',
   'no-undef': 'off',
+  // --- TS strictness ---
   '@typescript-eslint/no-explicit-any': 'error',
   '@typescript-eslint/no-unsafe-assignment': 'error',
   '@typescript-eslint/no-unsafe-call': 'error',
@@ -177,6 +204,46 @@ const commonRules = {
   '@typescript-eslint/no-unnecessary-type-assertion': 'error',
   '@typescript-eslint/prefer-optional-chain': 'error',
   '@typescript-eslint/restrict-plus-operands': 'error',
+  '@typescript-eslint/no-shadow': 'error',
+  '@typescript-eslint/only-throw-error': 'error',
+  '@typescript-eslint/consistent-type-imports': ['error', { prefer: 'type-imports', fixStyle: 'inline-type-imports' }],
+  '@typescript-eslint/no-unnecessary-condition': 'error',
+  '@typescript-eslint/strict-boolean-expressions': ['error', { allowNullableBoolean: true, allowNullableString: false }],
+  '@typescript-eslint/prefer-nullish-coalescing': ['error', { ignorePrimitives: { string: true } }],
+  '@typescript-eslint/no-non-null-assertion': 'error',
+  '@typescript-eslint/explicit-function-return-type': ['error', { allowExpressions: true, allowTypedFunctionExpressions: true }],
+  '@typescript-eslint/consistent-type-assertions': ['error', { assertionStyle: 'as', objectLiteralTypeAssertions: 'never' }],
+  '@typescript-eslint/no-unnecessary-type-parameters': 'error',
+  // --- naming & exports ---
+  '@typescript-eslint/naming-convention': [
+    'error',
+    { selector: 'variable', format: ['camelCase', 'UPPER_CASE', 'PascalCase'] },
+    { selector: 'function', format: ['camelCase', 'PascalCase'] },
+    { selector: 'typeLike', format: ['PascalCase'] },
+    { selector: 'enumMember', format: ['UPPER_CASE'] },
+    { selector: 'interface', format: ['PascalCase'], custom: { regex: '^I[A-Z]', match: false } },
+  ],
+  // --- promise hygiene ---
+  '@typescript-eslint/require-await': 'error',
+  '@typescript-eslint/no-redundant-type-constituents': 'error',
+  // --- defensive coding ---
+  'no-promise-executor-return': 'error',
+  'no-constructor-return': 'error',
+  'no-unreachable-loop': 'error',
+  'no-self-compare': 'error',
+  'no-template-curly-in-string': 'error',
+  'require-atomic-updates': 'error',
+  'no-await-in-loop': 'error',
+  'guard-for-in': 'error',
+  'no-extend-native': 'error',
+  'no-iterator': 'error',
+  'no-proto': 'error',
+  'no-sequences': 'error',
+  'no-void': 'error',
+  'prefer-object-spread': 'error',
+  'prefer-rest-params': 'error',
+  'prefer-spread': 'error',
+  // --- import guard ---
   'no-restricted-imports': [
     'error',
     {
@@ -344,9 +411,6 @@ export default defineConfig([
         __dirname: 'readonly',
         __filename: 'readonly',
       },
-    },
-    rules: {
-      'no-console': 'warn',
     },
   },
 

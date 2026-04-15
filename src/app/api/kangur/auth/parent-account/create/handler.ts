@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { getKangurAiTutorContent } from '@/features/kangur/server/ai-tutor-content-repository';
 import { verifyKangurParentCaptcha } from '@/features/kangur/server/parent-account-captcha';

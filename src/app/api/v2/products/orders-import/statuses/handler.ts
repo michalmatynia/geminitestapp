@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { getIntegrationRepository, resolveBaseConnectionToken, callBaseApi } from '@/features/integrations/server';
 import { normalizeBaseOrderStatuses } from '@/features/products/services/product-orders-import-normalization';

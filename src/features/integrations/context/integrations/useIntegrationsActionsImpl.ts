@@ -30,9 +30,9 @@ import {
 } from '@/features/integrations/utils/playwright-connection-settings';
 import type { IntegrationAllegroApiMethod, IntegrationAllegroApiResponse, IntegrationBaseApiResponse } from '@/shared/contracts/integrations/api';
 import type { IntegrationConnectionTestType } from '@/shared/contracts/integrations/session-testing';
-import { Integration } from '@/shared/contracts/integrations/base';
-import { IntegrationConnection } from '@/shared/contracts/integrations/connections';
-import { TestLogEntry } from '@/shared/contracts/integrations/session-testing';
+import { type Integration } from '@/shared/contracts/integrations/base';
+import { type IntegrationConnection } from '@/shared/contracts/integrations/connections';
+import { type TestLogEntry } from '@/shared/contracts/integrations/session-testing';
 import type { PlaywrightPersona, PlaywrightSettings } from '@/shared/contracts/playwright';
 import type { ListQuery } from '@/shared/contracts/ui/queries';
 import { useToast } from '@/shared/ui/primitives.public';
@@ -40,9 +40,9 @@ import { isObjectRecord } from '@/shared/utils/object-utils';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import {
-  IntegrationDefinition,
-  SaveConnectionOptions,
-  StepWithResult,
+  type IntegrationDefinition,
+  type SaveConnectionOptions,
+  type StepWithResult,
 } from '../integrations-context-types';
 
 export function useIntegrationsActionsImpl(args: {

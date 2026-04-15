@@ -7,7 +7,7 @@ import type { ActivityLog } from '@/shared/contracts/system';
 import { Button } from '@/shared/ui/primitives.public';
 import { LoadingState } from '@/shared/ui/navigation-and-layout.public';
 
-export const QuickAccessPanel = memo(function QuickAccessPanel(): React.JSX.Element {
+export const QuickAccessPanel = memo((): React.JSX.Element => {
   return (
     <div className='rounded-lg bg-gray-950 p-6'>
       <h2 className='text-xl font-bold mb-3'>Quick Access</h2>
@@ -20,7 +20,7 @@ export const QuickAccessPanel = memo(function QuickAccessPanel(): React.JSX.Elem
   );
 });
 
-export const SystemHealthPanel = memo(function SystemHealthPanel({
+export const SystemHealthPanel = memo(({
   isLoading,
   errorMessage,
   isHealthy,
@@ -28,7 +28,7 @@ export const SystemHealthPanel = memo(function SystemHealthPanel({
   isLoading: boolean;
   errorMessage: string | null;
   isHealthy: boolean | null;
-}): React.JSX.Element {
+}): React.JSX.Element => {
   return (
     <div className='rounded-lg bg-gray-950 p-6'>
       <h2 className='text-xl font-bold mb-3'>System Health</h2>
@@ -45,7 +45,7 @@ export const SystemHealthPanel = memo(function SystemHealthPanel({
   );
 });
 
-export const RecentActivityPanel = memo(function RecentActivityPanel({
+export const RecentActivityPanel = memo(({
   isOpen,
   onOpenChange,
   isLoading,
@@ -55,7 +55,7 @@ export const RecentActivityPanel = memo(function RecentActivityPanel({
   onOpenChange: (open: boolean) => void;
   isLoading: boolean;
   activity: ActivityLog[];
-}): React.JSX.Element {
+}): React.JSX.Element => {
   return (
     <Collapsible.Root
       open={isOpen}

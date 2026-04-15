@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { deleteEmbeddingDocument } from '@/features/ai/agentcreator/server';
 import type { AgentTeachingDocumentDeleteResponse } from '@/shared/contracts/agent-teaching';

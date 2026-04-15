@@ -1,26 +1,26 @@
 'use client';
 
-import { useQueryClient, QueryClient } from '@tanstack/react-query';
+import { useQueryClient, type QueryClient } from '@tanstack/react-query';
 import {
-  ColumnDef,
+  type ColumnDef,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
   getSortedRowModel,
   getExpandedRowModel,
-  SortingState,
+  type SortingState,
   useReactTable,
-  Table as ReactTable,
-  RowSelectionState,
-  ExpandedState,
-  OnChangeFn,
-  Row,
-  Column,
-  RowData,
+  type Table as ReactTable,
+  type RowSelectionState,
+  type ExpandedState,
+  type OnChangeFn,
+  type Row,
+  type Column,
+  type RowData,
 } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { Loader2 } from 'lucide-react';
-import React, { JSX, memo, useEffect, useMemo, useState, useRef } from 'react';
+import React, { type JSX, memo, useEffect, useMemo, useState, useRef } from 'react';
 
 import { cn } from '@/shared/utils/ui-utils';
 
@@ -134,7 +134,7 @@ declare module '@tanstack/react-table' {
   }
 }
 
-export const DataTable = memo(function DataTable<TData>({
+export const DataTable = memo(<TData,>({
   columns,
   data,
   initialSorting,
@@ -159,7 +159,7 @@ export const DataTable = memo(function DataTable<TData>({
   tableLayout = 'auto',
   ariaLabel,
   ariaDescription,
-}: DataTableProps<TData>) {
+}: DataTableProps<TData>) => {
   const [internalRowSelection, setInternalRowSelection] = useState<RowSelectionState>({});
   const [internalExpanded, setInternalExpanded] = useState<ExpandedState>({});
   const [sorting, setSorting] = useState<SortingState>(initialSorting ?? []);
@@ -225,8 +225,8 @@ export const DataTable = memo(function DataTable<TData>({
     getRowId: getRowId as (row: TData) => string,
     getSubRows: getSubRows as (row: TData) => TData[] | undefined,
     getCoreRowModel: getCoreRowModel(),
-    onRowSelectionChange: onRowSelectionChange,
-    onExpandedChange: onExpandedChange,
+    onRowSelectionChange,
+    onExpandedChange,
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getExpandedRowModel: getExpandedRowModel(),

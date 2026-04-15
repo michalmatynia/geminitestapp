@@ -1,27 +1,27 @@
 import { randomUUID } from 'crypto';
 
-import { AnyBulkWriteOperation, Filter, UpdateFilter, WithId } from 'mongodb';
+import { type AnyBulkWriteOperation, type Filter, type UpdateFilter, type WithId } from 'mongodb';
 
 import {
-  NoteRecord,
-  NoteWithRelations,
-  NoteFilters,
-  NoteCreateInput,
-  NoteUpdateInput,
-  NoteFileRecord,
+  type NoteRecord,
+  type NoteWithRelations,
+  type NoteFilters,
+  type NoteCreateInput,
+  type NoteUpdateInput,
+  type NoteFileRecord,
 } from '@/shared/contracts/notes';
 import { notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 import {
-  NoteDocument,
-  TagDocument,
-  CategoryDocument,
-  NoteFileDocument,
-  NoteTagEmbedded,
-  NoteCategoryEmbedded,
-  NoteRelationFromEmbedded,
-  NoteRelationToEmbedded,
+  type NoteDocument,
+  type TagDocument,
+  type CategoryDocument,
+  type NoteFileDocument,
+  type NoteTagEmbedded,
+  type NoteCategoryEmbedded,
+  type NoteRelationFromEmbedded,
+  type NoteRelationToEmbedded,
 } from '@/features/notesapp/contracts';
 import {
   toNoteResponse,
@@ -114,7 +114,7 @@ export const mongoNoteCrudImpl = {
     if (filters.truncateContent) {
       return result.map((note: NoteWithRelations) => ({
         ...note,
-        content: note.content.length > 300 ? note.content.slice(0, 300) + '...' : note.content,
+        content: note.content.length > 300 ? `${note.content.slice(0, 300)  }...` : note.content,
       }));
     }
 

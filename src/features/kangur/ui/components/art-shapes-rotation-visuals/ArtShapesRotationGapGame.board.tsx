@@ -37,13 +37,13 @@ export type RotationBoardSlotView = {
   isMissing: boolean;
 };
 
-export const RotationBoard = memo(function RotationBoard({
+export const RotationBoard = memo(({
   animated = true,
   slots,
 }: {
   animated?: boolean;
   slots: readonly RotationBoardSlotView[];
-}): React.JSX.Element {
+}): React.JSX.Element => {
   return (
     <div className='art-shapes-rotation-pattern-board' data-testid='art-shapes-rotation-pattern-board'>
       <svg

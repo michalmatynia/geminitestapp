@@ -375,7 +375,7 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
               (entry: { nodeId: string; title: string; status: string }) => (
                 <StatusBadge
                   key={entry.nodeId}
-                  status={entry.title + ' · ' + formatStatusLabel(entry.status)}
+                  status={`${entry.title  } · ${  formatStatusLabel(entry.status)}`}
                   variant={statusToVariant(entry.status)}
                   size='sm'
                   title={entry.nodeId}

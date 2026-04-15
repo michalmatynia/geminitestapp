@@ -17,8 +17,8 @@ import {
   shouldFailBlockedRun,
 } from '../path-run-executor.diagnostics';
 import { summarizeRuntimeKernelParityFromHistory } from '../path-run-executor.runtime-kernel';
-import { PathRunRuntimeStateManager } from './runtime-state-manager';
-import { RuntimeProfileSnapshot } from '../path-run-executor.types';
+import { type PathRunRuntimeStateManager } from './runtime-state-manager';
+import { type RuntimeProfileSnapshot } from '../path-run-executor.types';
 
 export type ExecutionCompletionArgs = {
   run: AiPathRunRecord;

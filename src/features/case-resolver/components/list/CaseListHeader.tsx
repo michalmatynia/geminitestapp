@@ -79,7 +79,7 @@ function CaseListHeaderCreateButton(props: Pick<CaseListHeaderResolvedProps, 'on
   );
 }
 
-export const CaseListHeader = memo(function CaseListHeader({
+export const CaseListHeader = memo(({
   filtersContent,
   onCreateCase,
   totalCount,
@@ -91,7 +91,7 @@ export const CaseListHeader = memo(function CaseListHeader({
   onPageSizeChange,
   searchQuery,
   onSearchChange,
-}: CaseListHeaderProps): React.JSX.Element {
+}: CaseListHeaderProps): React.JSX.Element => {
   const panelControls = useOptionalCaseListPanelControlsContext();
   const resolvedOnCreateCase = onCreateCase ?? panelControls?.onCreateCase;
   const resolvedTotalCount = totalCount ?? panelControls?.totalCount;

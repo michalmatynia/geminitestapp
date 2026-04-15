@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 
 import type { AiNode } from '@/shared/contracts/ai-paths';
 import { type TriggerEventEntityType } from '@/shared/contracts/ai-trigger-buttons';

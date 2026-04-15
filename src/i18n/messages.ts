@@ -2,7 +2,7 @@ import 'server-only';
 
 import { cache } from 'react';
 
-import enMessages from './messages/en.json';
+import type enMessages from './messages/en.json';
 import plMessages from './messages/pl.json';
 
 import {

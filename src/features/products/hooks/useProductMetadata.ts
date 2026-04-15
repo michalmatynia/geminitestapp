@@ -1,5 +1,9 @@
 'use client';
 
+// useProductMetadata: exposes metadata queries (categories, tags, catalogs,
+// producers) used across product forms and lists. These are thin client-side
+// adapters over query factories to centralize parsing and caching hints.
+
 import React, { useMemo, useEffect } from 'react';
 
 import type { Language } from '@/shared/contracts/internationalization';

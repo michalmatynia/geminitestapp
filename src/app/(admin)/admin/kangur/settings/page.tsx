@@ -1,4 +1,4 @@
-import { JSX } from 'react';
+import { type JSX } from 'react';
 
 import { AdminKangurSettingsPage } from '@/features/kangur/public';
 

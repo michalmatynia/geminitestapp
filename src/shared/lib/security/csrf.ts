@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, type NextResponse } from 'next/server';
 import { reportObservabilityInternalError } from '@/shared/utils/observability/internal-observability-fallback';
 
 export const CSRF_COOKIE_NAME = 'csrf-token';

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { getExternalCategoryRepository, getIntegrationRepository } from '@/features/integrations/server';
 import type { ExternalCategory } from '@/shared/contracts/integrations/listings';

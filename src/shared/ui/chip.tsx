@@ -7,7 +7,7 @@ import type { ChipProps } from '@/shared/contracts/ui/controls';
 import { cn } from '@/shared/utils/ui-utils';
 import { getTextContent } from '@/shared/utils/a11y';
 
-import { Badge, badgeVariants } from './badge';
+import { Badge, type badgeVariants } from './badge';
 
 export type { ChipProps };
 

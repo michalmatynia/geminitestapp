@@ -369,7 +369,7 @@ function CaseResolverFolderTreeInner(): React.JSX.Element {
                 // Allow file-on-file center drop for relation linking
                 const targetFileId = fromCaseResolverFileNodeId(targetId);
                 const draggedFileId = fromCaseResolverFileNodeId(draggedNodeId);
-                return !!(targetFileId && draggedFileId && targetFileId !== draggedFileId);
+                return Boolean(targetFileId && draggedFileId && targetFileId !== draggedFileId);
               }
 
               return targetId !== null;

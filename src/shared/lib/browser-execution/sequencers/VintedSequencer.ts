@@ -1,6 +1,6 @@
-import { PlaywrightSequencer, PlaywrightSequencerContext } from './PlaywrightSequencer';
-import { StepId } from '../step-registry';
-import { Page } from 'playwright';
+import { PlaywrightSequencer, type PlaywrightSequencerContext } from './PlaywrightSequencer';
+import { type StepId } from '../step-registry';
+import { type Page } from 'playwright';
 
 import { 
   VINTED_TITLE_SELECTORS, 

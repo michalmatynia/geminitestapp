@@ -1,4 +1,4 @@
-import { normalizeTraderaListingFormUrl, TraderaSystemSettings } from '@/features/integrations/constants/tradera';
+import { normalizeTraderaListingFormUrl, type TraderaSystemSettings } from '@/features/integrations/constants/tradera';
 import { getIntegrationRepository } from '@/features/integrations/server';
 import {
   buildPlaywrightNativeTaskResult,
@@ -238,10 +238,10 @@ export const runTraderaBrowserListingStandard = async ({
         throw internalError(
           'FAIL_SELL_PAGE_INVALID: Unable to locate one or more Tradera standard listing form controls.',
           {
-            hasTitle: !!titleInput,
-            hasDescription: !!descriptionInput,
-            hasPrice: !!priceInput,
-            hasSubmit: !!submitButton,
+            hasTitle: Boolean(titleInput),
+            hasDescription: Boolean(descriptionInput),
+            hasPrice: Boolean(priceInput),
+            hasSubmit: Boolean(submitButton),
           }
         );
       }

@@ -1,4 +1,4 @@
-import { AiNode, Edge } from '@/shared/contracts/ai-paths';
+import { type AiNode, type Edge } from '@/shared/contracts/ai-paths';
 
 import { resolveEdgeToNodeId } from './engine-utils';
 

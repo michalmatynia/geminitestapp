@@ -180,7 +180,7 @@ function renderPromptGenerationOutputToggle({
       <Checkbox
         id={outputEnabledCheckboxId}
         checked={outputEnabled}
-        onCheckedChange={(checked: boolean | 'indeterminate') => onOutputEnabledChange(!!checked)}
+        onCheckedChange={(checked: boolean | 'indeterminate') => onOutputEnabledChange(Boolean(checked))}
       />
       <Label htmlFor={outputEnabledCheckboxId} className={`cursor-pointer ${badgeTextColor}`}>
         Enable Output Prompt (Refinement using {modelValue})

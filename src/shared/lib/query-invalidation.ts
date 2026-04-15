@@ -1,4 +1,4 @@
-import { QueryClient, type QueryKey } from '@tanstack/react-query';
+import { type QueryClient, type QueryKey } from '@tanstack/react-query';
 
 import {
   AI_PATH_RUN_ENQUEUED_EVENT_NAME,

@@ -3,7 +3,7 @@ import {
 } from '@/shared/lib/ai-context-registry/page-context';
 
 import {
-  buildKangurAdminLessonsManagerContextBundle,
+  type buildKangurAdminLessonsManagerContextBundle,
   KANGUR_ADMIN_LESSONS_MANAGER_CONTEXT_ROOT_IDS,
 } from './context-registry/lessons-manager';
 

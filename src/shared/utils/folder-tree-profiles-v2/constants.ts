@@ -1,14 +1,14 @@
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 
 import {
-  FolderTreePlaceholderPreset,
-  FolderTreePlaceholderStyle,
-  FolderTreePlaceholderEmphasis,
-  FolderTreeSelectionBehavior,
-  FolderTreeIconSlot,
-  FolderTreeInstance,
-  FolderTreeInstanceSettingsMeta,
-  FolderTreePersistFeedback,
+  type FolderTreePlaceholderPreset,
+  type FolderTreePlaceholderStyle,
+  type FolderTreePlaceholderEmphasis,
+  type FolderTreeSelectionBehavior,
+  type FolderTreeIconSlot,
+  type FolderTreeInstance,
+  type FolderTreeInstanceSettingsMeta,
+  type FolderTreePersistFeedback,
   folderTreeInstanceValues,
 } from './types';
 

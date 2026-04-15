@@ -222,7 +222,7 @@ export function useDatabasePreview(input: {
       }
       return result.payload as DatabasePreviewPayload;
     },
-    enabled: enabled && (!!backupName || mode === 'current'),
+    enabled: enabled && (Boolean(backupName) || mode === 'current'),
     meta: {
       source: 'database.hooks.useDatabasePreview',
       operation: 'detail',

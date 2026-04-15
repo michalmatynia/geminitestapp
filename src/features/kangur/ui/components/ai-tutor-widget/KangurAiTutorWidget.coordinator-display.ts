@@ -17,7 +17,7 @@ import {
   useKangurAiTutorGuidanceCompletionEffects,
   useKangurAiTutorNarrationObserverEffect,
 } from './KangurAiTutorWidget.effects';
-import { useKangurAiTutorWidgetEnvironment } from './KangurAiTutorWidget.environment';
+import { type useKangurAiTutorWidgetEnvironment } from './KangurAiTutorWidget.environment';
 import {
   getTutorBubblePlacement,
   useKangurAiTutorBubblePlacementState,

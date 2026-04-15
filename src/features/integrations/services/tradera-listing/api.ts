@@ -2,11 +2,11 @@ import { decryptSecret } from '@/shared/lib/security/encryption';
 import { getExternalCategoryRepository } from '@/features/integrations/services/external-category-repository';
 import {
   addTraderaShopItem,
-  TraderaApiCredentials,
-  TraderaPublicApiCredentials,
+  type TraderaApiCredentials,
+  type TraderaPublicApiCredentials,
 } from '@/features/integrations/services/tradera-api-client';
-import { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
-import { ProductListing } from '@/shared/contracts/integrations/listings';
+import { type IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
+import { type ProductListing } from '@/shared/contracts/integrations/listings';
 import { internalError, notFoundError } from '@/shared/errors/app-error';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 import { resolveMarketplaceAwareProductCopy } from '@/shared/lib/products/utils/marketplace-content-overrides';

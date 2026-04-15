@@ -1,5 +1,9 @@
 'use client';
 
+// ProductFormImageContext: manages image-slot state and temporary uploads for
+// the product form. Exposes helpers for slot swapping, preview URLs, and
+// integration points for the Image Studio; keeps object URL lifecycle centralized.
+
 import { createContext, useContext, useMemo } from 'react';
 
 import type { ImageFileSelection } from '@/shared/contracts/files';

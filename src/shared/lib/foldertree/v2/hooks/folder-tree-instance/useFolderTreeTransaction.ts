@@ -18,10 +18,10 @@ import {
   cloneUndoStack,
   withUndoEntry,
 } from './folder-tree-utils';
-import { ApplyPersistedOperationArgs } from './useFolderTreeEngineActions';
+import { type ApplyPersistedOperationArgs } from './useFolderTreeEngineActions';
 import { normalizeNodesV2 } from '../../core/engine';
-import { FolderTreeStore } from '../../store/createFolderTreeStore';
-import { FolderTreeAppliedTransaction, FolderTreeState, FolderTreeTransaction } from '../../types';
+import { type FolderTreeStore } from '../../store/createFolderTreeStore';
+import { type FolderTreeAppliedTransaction, type FolderTreeState, type FolderTreeTransaction } from '../../types';
 
 import type { MasterFolderTreeShellRuntime } from '../../shell/useFolderTreeShellRuntime';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';

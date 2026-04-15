@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { getParameterRepository } from '@/features/products/server';
 import type { ProductParameter } from '@/shared/contracts/products/parameters';

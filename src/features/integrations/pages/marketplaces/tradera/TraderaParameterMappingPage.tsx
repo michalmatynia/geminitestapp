@@ -54,7 +54,7 @@ import {
   buildCategoryOptionLabel,
   createRuleId,
   getRuleStatus,
-  MapperTab,
+  type MapperTab,
   sortRules,
 } from './components/tradera-mapping-utils';
 import { MappingsRulesTable } from './components/MappingsRulesTable';
@@ -722,7 +722,7 @@ export default function TraderaParameterMappingPage(): React.JSX.Element {
         <TabsContent value='mappings' className='mt-6 space-y-6'>
           <Card variant='subtle' padding='lg' className='bg-card/40'>
             <div className='space-y-6'>
-              <div className={UI_GRID_ROOMY_CLASSNAME + ' md:grid-cols-2 xl:grid-cols-3'}>
+              <div className={`${UI_GRID_ROOMY_CLASSNAME  } md:grid-cols-2 xl:grid-cols-3`}>
                 <FormField
                   label='Tradera Category'
                   description='Only categories with fetched Tradera dropdown catalogs can be mapped here.'

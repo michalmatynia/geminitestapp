@@ -1,4 +1,4 @@
-import { BatchCountResult } from '@/shared/contracts/base';
+import { type BatchCountResult } from '@/shared/contracts/base';
 import type {
   MongoPriceGroupDoc,
   MongoCatalogDoc,

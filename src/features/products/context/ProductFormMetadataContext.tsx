@@ -1,5 +1,9 @@
 'use client';
 
+// ProductFormMetadataContext: supplies catalog/category/tag metadata and
+// selection helpers to the product form. Separates metadata fetching from
+// form state to keep the form core focused on values and validation.
+
 import { createContext, useContext, useMemo } from 'react';
 
 import type { Language } from '@/shared/contracts/internationalization';

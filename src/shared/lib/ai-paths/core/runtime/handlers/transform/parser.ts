@@ -213,7 +213,7 @@ const preserveBundleSourceFields = (
 };
 
 const hasParserMappings = (mappings: Record<string, string | undefined>): boolean =>
-  Object.keys(mappings).some((key: string): boolean => !!key.trim());
+  Object.keys(mappings).some((key: string): boolean => Boolean(key.trim()));
 
 const buildBundleParserResult = (args: {
   source: ParserSourceRecord;

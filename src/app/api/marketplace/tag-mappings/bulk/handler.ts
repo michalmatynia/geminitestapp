@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { getTagMappingRepository } from '@/features/integrations/server';
 import { bulkTagMappingRequestSchema } from '@/shared/contracts/integrations/listings';

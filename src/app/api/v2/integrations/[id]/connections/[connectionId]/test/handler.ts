@@ -4,7 +4,7 @@ import { handleVintedBrowserTest } from './handler.vinted-browser';
 import { handleTraderaBrowserTest } from './handler.tradera-browser';
 import { handle1688BrowserTest } from './handler.1688-browser';
 import { type ConnectionTestContext } from './types';
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import {
   is1688IntegrationSlug,

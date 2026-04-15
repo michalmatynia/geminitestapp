@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { getCatalogsHandler, postCatalogsHandler } from '@/features/products/api/catalogs/handlers';
 import { deleteDraft, getDraft } from '@/features/drafter/server';

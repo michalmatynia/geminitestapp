@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, ReactNode } from 'react';
+import React, { useMemo, type ReactNode } from 'react';
 
 import type {
   ChatbotMessagesData,

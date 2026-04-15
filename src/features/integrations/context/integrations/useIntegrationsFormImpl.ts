@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { IntegrationConnection } from '@/shared/contracts/integrations/connections';
+import { type IntegrationConnection } from '@/shared/contracts/integrations/connections';
 import type { PlaywrightPersona } from '@/shared/contracts/playwright';
 import {
   defaultIntegrationConnectionPlaywrightSettings,

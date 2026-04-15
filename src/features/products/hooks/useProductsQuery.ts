@@ -221,7 +221,7 @@ export function useProductsWithCount(
   // invalidates it automatically on mutations.
   const queryKey = useMemo(() => getProductsPagedQueryKey(filters), [filters]);
   const query = createPaginatedListQueryV2<ProductWithImages>({
-    id: JSON.stringify(filters) + ':paged',
+    id: `${JSON.stringify(filters)  }:paged`,
     queryKey,
     queryFn: async (context) => {
       try {

@@ -38,7 +38,7 @@ const decodeHtmlEntity = (value: string): string => {
   if (!value?.includes('&')) return value;
 
   // Fast path for common entities
-  let result = value.replace(/&[a-z0-9#]+;/gi, (match) => ENTITY_MAP[match.toLowerCase()] || match);
+  const result = value.replace(/&[a-z0-9#]+;/gi, (match) => ENTITY_MAP[match.toLowerCase()] || match);
 
   if (!result.includes('&')) return result;
 

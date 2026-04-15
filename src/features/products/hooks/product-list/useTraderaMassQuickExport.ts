@@ -15,9 +15,9 @@ import {
   fetchPreferredTraderaConnection,
   integrationSelectionQueryKeys,
   isTraderaBrowserIntegrationSlug,
-  DEFAULT_TRADERA_QUICKLIST_SCRIPT,
   persistTraderaQuickListFeedback,
 } from '@/features/integrations/product-integrations-adapter';
+import { DEFAULT_TRADERA_QUICKLIST_SCRIPT } from '@/features/integrations/services/tradera-listing/default-script';
 import type { IntegrationWithConnections } from '@/shared/contracts/integrations/domain';
 import { api } from '@/shared/lib/api-client';
 import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';

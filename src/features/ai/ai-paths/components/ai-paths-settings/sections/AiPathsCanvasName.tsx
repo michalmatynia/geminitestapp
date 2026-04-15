@@ -132,7 +132,7 @@ export function AiPathsCanvasName(): React.JSX.Element | null {
             ) : null}
             {lastRunAt ? (
               <StatusBadge
-                status={'Last run: ' + new Date(lastRunAt).toLocaleTimeString()}
+                status={`Last run: ${  new Date(lastRunAt).toLocaleTimeString()}`}
                 variant='active'
                 size='sm'
                 className='font-medium'

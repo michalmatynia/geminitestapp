@@ -77,10 +77,10 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
     const r = toChannel(parts[0]!);
     const g = toChannel(parts[1]!);
     const b = toChannel(parts[2]!);    return (
-      '#' +
+      `#${ 
       [r, g, b]
         .map((channel) => channel.toString(16).padStart(2, '0'))
-        .join('')
+        .join('')}`
     );
   };
   const hslToRgb = (hue: number, saturation: number, lightness: number): [number, number, number] => {
@@ -137,10 +137,10 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
     if (Number.isNaN(saturation) || Number.isNaN(lightness)) return null;
     const [r, g, b] = hslToRgb(hue, saturation, lightness);
     return (
-      '#' +
+      `#${ 
       [r, g, b]
         .map((channel) => channel.toString(16).padStart(2, '0'))
-        .join('')
+        .join('')}`
     );
   };
   const derivePickerColor = (rawValue: string): string => {
@@ -246,7 +246,7 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
                 <Checkbox
                   id={fieldId}
                   checked={Boolean(fieldValue)}
-                  onCheckedChange={(checked: boolean) => handleFieldChange(fieldName, !!checked)}
+                  onCheckedChange={(checked: boolean) => handleFieldChange(fieldName, Boolean(checked))}
                   disabled={field.disabled || disabled}
                   aria-describedby={describedBy}
                   aria-invalid={isInvalid || undefined}
@@ -286,7 +286,7 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
                 <Switch
                   id={fieldId}
                   checked={Boolean(fieldValue)}
-                  onCheckedChange={(checked: boolean) => handleFieldChange(fieldName, !!checked)}
+                  onCheckedChange={(checked: boolean) => handleFieldChange(fieldName, Boolean(checked))}
                   disabled={field.disabled || disabled}
                   aria-describedby={describedBy}
                   aria-invalid={isInvalid || undefined}

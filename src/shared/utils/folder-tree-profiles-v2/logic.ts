@@ -3,17 +3,17 @@ import { validationError } from '@/shared/errors/app-error';
 import { normalizeMasterTreeKind } from '../master-folder-tree-contract';
 import { profileV2Schema } from './schema';
 import {
-  FolderTreeProfileV2,
-  FolderTreeKeyboardConfig,
-  FolderTreeMultiSelectConfig,
-  FolderTreeSearchConfig,
-  FolderTreePlaceholderPreset,
-  FolderTreePlaceholderClassSet,
-  FolderTreeProfilesV2Map,
-  FolderTreeInstance,
-  FolderTreeNestingRuleV2,
-  FolderTreeIconSlot,
-  CanNestTreeNodeV2Input,
+  type FolderTreeProfileV2,
+  type FolderTreeKeyboardConfig,
+  type FolderTreeMultiSelectConfig,
+  type FolderTreeSearchConfig,
+  type FolderTreePlaceholderPreset,
+  type FolderTreePlaceholderClassSet,
+  type FolderTreeProfilesV2Map,
+  type FolderTreeInstance,
+  type FolderTreeNestingRuleV2,
+  type FolderTreeIconSlot,
+  type CanNestTreeNodeV2Input,
 } from './types';
 import { folderTreeInstanceValues } from './types';
 

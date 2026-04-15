@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
+import { type NextRequest, NextResponse } from 'next/server';
+import { type z } from 'zod';
 
 import { baseOrderImportPreviewPayloadSchema } from '@/shared/contracts/products/orders-import';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';

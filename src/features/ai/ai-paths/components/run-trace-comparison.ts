@@ -7,12 +7,12 @@ import type {
 import { formatRuntimeValue, stableStringify } from '@/shared/lib/ai-paths/core/utils';
 
 import {
-  RunTraceComparison,
-  RunTraceComparisonRow,
-  RuntimeTraceSummary,
-  RunTracePayloadDiff,
-  HistoryPayloadSnapshot,
-  AggregatedRuntimeNode
+  type RunTraceComparison,
+  type RunTraceComparisonRow,
+  type RuntimeTraceSummary,
+  type RunTracePayloadDiff,
+  type HistoryPayloadSnapshot,
+  type AggregatedRuntimeNode
 } from './run-trace-types';
 import { readRuntimeTraceSummary, readRuntimeHistoryEntries } from './run-trace-utils';
 

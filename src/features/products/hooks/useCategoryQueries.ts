@@ -44,7 +44,7 @@ export function useProductCategoryTree(catalogId?: string): ListQuery<ProductCat
         { cache: 'no-store' }
       );
     },
-    enabled: !!catalogId,
+    enabled: Boolean(catalogId),
     meta: {
       source: 'products.hooks.useProductCategoryTree',
       operation: 'list',

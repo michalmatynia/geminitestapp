@@ -1,9 +1,9 @@
-import { Document, Collection, Filter, WithId } from 'mongodb';
+import { type Document, type Collection, type Filter, type WithId } from 'mongodb';
 
-import { ProductFilters } from '@/shared/contracts/products/drafts';
-import { ProductWithImages } from '@/shared/contracts/products/product';
+import { type ProductFilters } from '@/shared/contracts/products/drafts';
+import { type ProductWithImages } from '@/shared/contracts/products/product';
 
-import { ProductDocument, toProductResponse } from '../mongo-product-repository-mappers';
+import { type ProductDocument, toProductResponse } from '../mongo-product-repository-mappers';
 import { buildMongoWhere } from '../mongo-product-repository.filters';
 import { buildProductIdFilter, isEmptyFilter } from '../mongo-product-repository.helpers';
 

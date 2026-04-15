@@ -68,7 +68,7 @@ import {
   normalizeComparableAsin,
   normalizeComparableText,
   normalizeMetadataLabel,
-  ScanAttributeMapping,
+  type ScanAttributeMapping,
   parseAmazonWeightKg,
   parseAmazonDimensionsCm,
   buildAmazonMappedFields,

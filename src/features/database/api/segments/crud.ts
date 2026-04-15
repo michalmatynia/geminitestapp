@@ -1,8 +1,8 @@
 import {
-  CrudRequest,
-  CrudResult,
-  DatabaseType,
-  SqlQueryResult,
+  type CrudRequest,
+  type CrudResult,
+  type DatabaseType,
+  type SqlQueryResult,
 } from '@/shared/contracts/database';
 import { api } from '@/shared/lib/api-client';
 

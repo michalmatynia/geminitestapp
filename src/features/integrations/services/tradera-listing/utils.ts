@@ -1,9 +1,9 @@
 import { mkdir, writeFile } from 'fs/promises';
 import path from 'path';
 
-import { Page } from 'playwright';
+import { type Page } from 'playwright';
 
-import { TraderaFailureCategory } from './config';
+import { type TraderaFailureCategory } from './config';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 

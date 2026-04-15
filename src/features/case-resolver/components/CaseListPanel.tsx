@@ -58,7 +58,7 @@ import { CaseListSorting } from './list/sections/CaseListSorting';
 
 const CASE_LIST_LOADING_SKELETON_ROWS = 8;
 
-const CaseListLoadingSkeleton = memo(function CaseListLoadingSkeleton(): React.JSX.Element {
+const CaseListLoadingSkeleton = memo((): React.JSX.Element => {
   return (
     <div className='space-y-2 py-2'>
       {Array.from({ length: CASE_LIST_LOADING_SKELETON_ROWS }).map(
@@ -77,7 +77,7 @@ const CaseListLoadingSkeleton = memo(function CaseListLoadingSkeleton(): React.J
   );
 });
 
-export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
+export const CaseListPanel = memo((): React.JSX.Element => {
   const router = useRouter();
   const settingsStore = useSettingsStore();
   const {

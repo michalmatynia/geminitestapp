@@ -1,5 +1,5 @@
-import { ObjectId, Sort } from 'mongodb';
-import { NextRequest, NextResponse } from 'next/server';
+import { ObjectId, type Sort } from 'mongodb';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import {
   enforceAiPathsActionRateLimit,
@@ -336,7 +336,7 @@ export async function postAiPathsDbActionHandler(
         ? applyUpdatedAtToReplacement(replacement, now)
         : replacement;
       const result = await collectionRef.replaceOne(normalizedFilter, nextReplacement, {
-        upsert: !!upsert,
+        upsert: Boolean(upsert),
       });
       return withProviderPayload(provider, requestedProvider, {
         matchedCount: result.matchedCount,
@@ -355,7 +355,7 @@ export async function postAiPathsDbActionHandler(
         : updateDoc;
       const result = await collectionRef.findOneAndUpdate(normalizedFilter, nextUpdateDoc, {
         returnDocument,
-        upsert: !!upsert,
+        upsert: Boolean(upsert),
         includeResultMetadata: true,
       });
       return withProviderPayload(provider, requestedProvider, {
@@ -375,10 +375,10 @@ export async function postAiPathsDbActionHandler(
       const result =
         action === 'updateOne'
           ? await collectionRef.updateOne(normalizedFilter, nextUpdateDoc, {
-            upsert: !!upsert,
+            upsert: Boolean(upsert),
           })
           : await collectionRef.updateMany(normalizedFilter, nextUpdateDoc, {
-            upsert: !!upsert,
+            upsert: Boolean(upsert),
           });
       return withProviderPayload(provider, requestedProvider, {
         matchedCount: result.matchedCount,

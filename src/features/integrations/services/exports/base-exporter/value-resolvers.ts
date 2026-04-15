@@ -1,10 +1,10 @@
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 import {
-  ProducerNameLookup,
-  ProducerExternalIdLookup,
-  TagNameLookup,
-  TagExternalIdLookup,
+  type ProducerNameLookup,
+  type ProducerExternalIdLookup,
+  type TagNameLookup,
+  type TagExternalIdLookup,
   getProducerNameFromLookup,
   getProducerExternalIdFromLookup,
   getTagNameFromLookup,
@@ -24,7 +24,7 @@ import {
   parseParameterSourceKey,
   IMAGE_TARGET_FIELDS,
 } from './template-helpers';
-import { ImageExportLogger } from '../base-exporter-images';
+import { type ImageExportLogger } from '../base-exporter-images';
 import { getAllImageUrls, getImageSlotUrl } from '../base-exporter-images';
 
 type ExportValueLookupOptions = {

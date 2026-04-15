@@ -9,7 +9,7 @@ import {
   formatOrderDate,
   formatOrderTotal,
   formatItemsTotal,
-  OrderChangeSummaryItem,
+  type OrderChangeSummaryItem,
 } from './AdminProductOrdersImportPage.utils';
 
 import { useOrdersImportContext } from './AdminProductOrdersImportPage.context';
@@ -19,10 +19,10 @@ interface OrderDetailsProps {
   onImport: (orders: BaseOrderImportPreviewItem[]) => void;
 }
 
-export const OrderDetails = React.memo(function OrderDetails({
+export const OrderDetails = React.memo(({
   order,
   onImport,
-}: OrderDetailsProps) {
+}: OrderDetailsProps) => {
   const { isPreviewStale, importMutation, quickImportMutation } = useOrdersImportContext();
   const isImportPending = importMutation.isPending;
   const isQuickImportPending = quickImportMutation.isPending;

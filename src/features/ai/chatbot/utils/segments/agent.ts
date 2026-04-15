@@ -1,7 +1,7 @@
 import {
-  AgentAuditLogDto as AgentAuditLog,
-  AgentBrowserLogDto as AgentBrowserLog,
-  ChatbotTimelineEntryDto as TimelineEntry,
+  type AgentAuditLogDto as AgentAuditLog,
+  type AgentBrowserLogDto as AgentBrowserLog,
+  type ChatbotTimelineEntryDto as TimelineEntry,
 } from '@/shared/contracts/chatbot';
 import type { IdLabelOptionDto } from '@/shared/contracts/base';
 
@@ -18,7 +18,7 @@ export const buildAgentResultMessage = (
     .map((audit: AgentAuditLog): unknown => audit.metadata)
     .find(
       (metadata: unknown): boolean =>
-        !!metadata &&
+        Boolean(metadata) &&
         typeof (metadata as { plannerMeta?: { taskType?: string } }).plannerMeta?.taskType ===
           'string'
     );
@@ -184,7 +184,7 @@ export const getLatestAdaptiveTrigger = (
         };
       }
     )
-    .filter((item: AdaptiveTrigger | null): item is AdaptiveTrigger => !!item);
+    .filter((item: AdaptiveTrigger | null): item is AdaptiveTrigger => Boolean(item));
   if (candidates.length === 0) return null;
   return candidates.reduce(
     (

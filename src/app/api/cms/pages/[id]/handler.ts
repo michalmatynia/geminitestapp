@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
+import { type NextRequest, NextResponse } from 'next/server';
+import { type z } from 'zod';
 
 import { getCmsRepository } from '@/features/cms/server';
 import { cmsPageUpdateSchema } from '@/features/cms/server';

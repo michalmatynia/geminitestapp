@@ -38,9 +38,9 @@ export interface MemoizedViewer3DProps {
   scale: number;
 }
 
-export const MemoizedViewer3D = memo(function MemoizedViewer3D(
+export const MemoizedViewer3D = memo((
   props: MemoizedViewer3DProps
-): React.ReactElement {
+): React.ReactElement => {
   const {
     modelUrl,
     height,

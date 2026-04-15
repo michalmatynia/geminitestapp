@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { rotateProductStudioImageSlot } from '@/features/ai/server';
 import { productStudioProductResponseSchema, productStudioRotateRequestSchema as rotateSchema } from '@/shared/contracts/products/studio';

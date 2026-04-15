@@ -889,7 +889,7 @@ async function duplicateProduct(
   options?: { provider?: ProductDbProvider; userId?: string }
 ): Promise<ProductWithImages | null> {
   if (!sku || sku.trim() === '') {
-    throw badRequestError('SKU is required for duplication.', { sku: sku });
+    throw badRequestError('SKU is required for duplication.', { sku });
   }
   const provider = options?.provider ?? (await getProductDataProvider());
 

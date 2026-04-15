@@ -129,7 +129,7 @@ function AgentTeachingCollectionsContent(): React.JSX.Element {
       <StandardDataTablePanel columns={columns} data={collections} isLoading={isLoading} />
 
       <ConfirmModal
-        isOpen={!!itemToDelete}
+        isOpen={Boolean(itemToDelete)}
         onClose={() => setItemToDelete(null)}
         title='Delete collection?'
         message={`This will permanently delete "${itemToDelete?.name}" and all associated document embeddings. Agents using this collection will lose access to this knowledge.`}

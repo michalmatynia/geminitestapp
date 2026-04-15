@@ -533,11 +533,11 @@ function KangurParentDashboardManagedCard(): React.JSX.Element {
   );
 }
 
-export const KangurParentDashboardHeroWidget = memo(function KangurParentDashboardHeroWidget({
+export const KangurParentDashboardHeroWidget = memo(({
   showActions = true,
   showLearnerManagement = false,
   learnerManagementAnchorRef,
-}: KangurParentDashboardHeroWidgetProps): React.JSX.Element {
+}: KangurParentDashboardHeroWidgetProps): React.JSX.Element => {
   const locale = useLocale();
   const translations = useTranslations('KangurParentDashboard');
   const routeNavigator = useKangurRouteNavigator();

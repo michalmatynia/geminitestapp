@@ -1,10 +1,17 @@
 'use client';
 
+// ProductFormCoreContext: provides the core react-hook-form context and
+// helpers for product create/edit flows. Responsibilities:
+// - Initialize form state, validation schema, and submission lifecycle
+// - Offer helpers for normalization and draft bootstrapping used by form tabs
+// Keep this module client-only since it integrates with browser APIs and form
+// lifecycle hooks.
+
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   createContext,
   useContext,
-  BaseSyntheticEvent,
+  type BaseSyntheticEvent,
   useCallback,
   useEffect,
   useState,
@@ -12,19 +19,19 @@ import {
   useRef,
 } from 'react';
 import {
-  UseFormRegister,
-  UseFormSetValue,
-  UseFormGetValues,
-  FieldErrors,
+  type UseFormRegister,
+  type UseFormSetValue,
+  type UseFormGetValues,
+  type FieldErrors,
   useForm,
-  Resolver,
+  type Resolver,
   FormProvider,
-  UseFormReturn,
+  type UseFormReturn,
 } from 'react-hook-form';
 
-import { ProductFormData, ProductDraft } from '@/shared/contracts/products/drafts';
+import { type ProductFormData, type ProductDraft } from '@/shared/contracts/products/drafts';
 import {
-  ProductWithImages,
+  type ProductWithImages,
   type ProductNotes,
   normalizeProductMarketplaceContentOverrideDrafts,
 } from '@/shared/contracts/products/product';

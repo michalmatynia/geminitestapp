@@ -1,4 +1,4 @@
-import { PlaywrightCaptureRoute } from '@/shared/contracts/playwright';
+import { type PlaywrightCaptureRoute } from '@/shared/contracts/playwright';
 
 import { KANGUR_BASE_PATH, KANGUR_PAGE_TO_SLUG } from '@/features/kangur/config/routing';
 

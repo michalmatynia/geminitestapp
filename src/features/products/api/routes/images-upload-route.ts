@@ -3,7 +3,7 @@ import 'server-only';
 // (multiple sizes / formats) and returns metadata for each uploaded image.
 // Uses withFileUploadSecurity middleware to validate and rate-limit uploads.
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { imageOptimizer } from '@/features/products/performance';
 import { withFileUploadSecurity } from '@/features/products/security';

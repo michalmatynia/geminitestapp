@@ -23,7 +23,7 @@ import {
   SPEED_BONUS_WINDOW_MS,
   START_COUNTDOWN_MS,
 } from './constants';
-import { getNumberBalanceCollection, MongoNumberBalanceMatchDocument } from './database';
+import { getNumberBalanceCollection, type MongoNumberBalanceMatchDocument } from './database';
 import { computeExpiresAt, normalizeBalancedProbability, normalizeDuration } from './helpers';
 import { resolveMatch } from './match';
 import {

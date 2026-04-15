@@ -110,7 +110,7 @@ export async function validateProductCreate(
         service: 'product-service',
         action: 'validateProductCreate',
         errors: errors.map((e) => ({ field: e.field, message: e.message })),
-        data: data, // Consider redacting if it contains sensitive info
+        data, // Consider redacting if it contains sensitive info
       });
     }
     return { success: false, errors, metadata };
@@ -133,7 +133,7 @@ export async function validateProductUpdate(
         service: 'product-service',
         action: 'validateProductUpdate',
         errors: errors.map((e) => ({ field: e.field, message: e.message })),
-        data: data,
+        data,
       });
     }
     return { success: false, errors, metadata };

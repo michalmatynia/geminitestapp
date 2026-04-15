@@ -12,10 +12,10 @@ import {
 } from '@/features/ai/image-studio/server/upscale-utils';
 
 import {
-  ResolvedUpscaleRequest,
-  StudioSlotRecord,
-  UploadedClientUpscaleImage,
-  UpscaleProcessingResult,
+  type ResolvedUpscaleRequest,
+  type StudioSlotRecord,
+  type UploadedClientUpscaleImage,
+  type UpscaleProcessingResult,
 } from './types';
 import { loadSourceBuffer, parseDataUrl } from './upscale-buffer-loader';
 import { upscaleBadRequest } from './upscale-request-parser';

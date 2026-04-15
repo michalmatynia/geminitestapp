@@ -6,7 +6,7 @@ import React, { useEffect, useMemo, useRef } from 'react';
 
 
 import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
-import { MasterTreeDropPositionDto } from '@/shared/contracts/master-folder-tree';
+import { type MasterTreeDropPositionDto } from '@/shared/contracts/master-folder-tree';
 import { EmptyState } from '@/shared/ui/navigation-and-layout.public';
 import type { ResolvedFolderTreeMultiSelectConfig } from '@/shared/utils/folder-tree-profiles-v2';
 import type { MasterTreeId, MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
@@ -16,12 +16,12 @@ import type { MasterTreeViewNode } from '@/shared/utils/master-folder-tree-engin
 
 import { DefaultRow } from './DefaultRow';
 import { FolderTreeContextMenu } from './FolderTreeContextMenu';
-import { FolderTreeViewportRenderNodeInput } from './types';
+import { type FolderTreeViewportRenderNodeInput } from './types';
 import { buildRootsV2, flattenVisibleNodesV2 } from '../core/engine';
 import {
   useFolderTreeViewportDnd,
-  FolderTreeDropInput,
-  FolderTreeResolveDropPositionInput,
+  type FolderTreeDropInput,
+  type FolderTreeResolveDropPositionInput,
 } from '../hooks/useFolderTreeViewportDnd';
 import { useFolderTreeViewportSelection } from '../hooks/useFolderTreeViewportSelection';
 import { setMasterTreeDragNodeData } from '../operations/drag-data';

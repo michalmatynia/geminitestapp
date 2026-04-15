@@ -1,8 +1,8 @@
 import {
-  DatabaseBackupFile as DatabaseInfoResponse,
-  DatabaseBackupResponse,
-  DatabaseRestoreResponse,
-  DatabaseType,
+  type DatabaseBackupFile as DatabaseInfoResponse,
+  type DatabaseBackupResponse,
+  type DatabaseRestoreResponse,
+  type DatabaseType,
 } from '@/shared/contracts/database';
 import { type ApiPayloadResult } from '@/shared/contracts/http';
 import { api } from '@/shared/lib/api-client';

@@ -85,7 +85,7 @@ function PartsOfSpeechToken({
   const { isLocked, selectedTokenId, isCoarsePointer, setSelectedTokenId } = useEnglishPartsOfSpeechGame();
   const isSelected = selectedTokenId === token.id;
   const onSelect = () => setSelectedTokenId(curr => curr === token.id ? null : token.id);
-  const isCorrect = showStatus ? true : false; // Simplified logic for display
+  const isCorrect = Boolean(showStatus); // Simplified logic for display
 
   return (
     <Draggable draggableId={token.id} index={index} isDragDisabled={isLocked}>

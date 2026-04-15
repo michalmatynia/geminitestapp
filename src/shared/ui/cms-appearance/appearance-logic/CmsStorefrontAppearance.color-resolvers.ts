@@ -1,8 +1,8 @@
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import { darkenCssColor } from '@/shared/utils/color-utils';
 import {
-  CmsStorefrontAppearanceMode,
-  CmsAppearanceTone,
+  type CmsStorefrontAppearanceMode,
+  type CmsAppearanceTone,
   DEFAULT_TONE,
 } from '../CmsStorefrontAppearance.contracts';
 import {

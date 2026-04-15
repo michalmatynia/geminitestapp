@@ -8,11 +8,11 @@ import {
   type PromptValidationRule,
 } from '@/shared/contracts/prompt-engine';
 import {
-  PromptExploderPatternSnapshot,
-  PromptExploderParserTuningRuleDraft,
-  PromptExploderLearnedTemplate,
-  PromptExploderRuntimeValidationScope,
-  PromptExploderSettings,
+  type PromptExploderPatternSnapshot,
+  type PromptExploderParserTuningRuleDraft,
+  type PromptExploderLearnedTemplate,
+  type PromptExploderRuntimeValidationScope,
+  type PromptExploderSettings,
 } from '@/shared/contracts/prompt-exploder';
 import type { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useToast } from '@/shared/ui/primitives.public';

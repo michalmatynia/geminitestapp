@@ -61,9 +61,9 @@ function Badge({
   onKeyDown,
   ...props
 }: BadgeProps) {
-  const isClickable = !!onClick;
+  const isClickable = Boolean(onClick);
   const isNativeButton = isClickable && !onRemove;
-  const isSplitInteractive = isClickable && !!onRemove;
+  const isSplitInteractive = isClickable && Boolean(onRemove);
   const handleButtonClick = onClick;
   const handleButtonKeyDown = onKeyDown;
   const accessibleLabel = getTextContent(children).trim();
@@ -86,7 +86,7 @@ function Badge({
           type='button'
           onClick={(e) => {
             e.stopPropagation();
-            onRemove();
+            onRemove?.();
           }}
           className='ml-1.5 -mr-1 rounded-full p-0.5 hover:bg-black/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-colors'
           aria-label={removeLabel || 'Remove'}
@@ -133,7 +133,7 @@ function Badge({
           type='button'
           onClick={(e) => {
             e.stopPropagation();
-            onRemove();
+            onRemove?.();
           }}
           className='mr-1 rounded-full p-0.5 hover:bg-black/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-colors'
           aria-label={removeLabel || 'Remove'}

@@ -1,5 +1,10 @@
 'use client';
 
+// AdminProductsPageRuntime: page runtime wrapper for the admin products
+// experience. Wires global providers, background sync, and dev-time guards
+// required to run the product list UI (keeps heavy initialization out of the
+// view component for testability and faster client hydration).
+
 import dynamic from 'next/dynamic';
 
 import { ProductListPanel } from '@/features/products/components/ProductListPanel';
@@ -57,7 +62,7 @@ export function AdminProductsPageRuntime(): React.JSX.Element {
       ) : null}
       {state.productToDelete ? (
         <ConfirmModal
-          isOpen={!!state.productToDelete}
+          isOpen={Boolean(state.productToDelete)}
           onClose={() => state.setProductToDelete(null)}
           onConfirm={state.handleConfirmSingleDelete}
           title='Delete Product'

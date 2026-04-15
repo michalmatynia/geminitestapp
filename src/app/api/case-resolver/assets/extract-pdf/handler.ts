@@ -1,7 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { getDiskPathFromPublicPath } from '@/features/files/server';
 import { caseResolverPdfExtractRequestSchema } from '@/shared/contracts/case-resolver/file';

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getAsset3DRepository, uploadAsset3D, validate3DFile } from '@/features/viewer3d/server';

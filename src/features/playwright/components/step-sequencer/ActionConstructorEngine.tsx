@@ -50,9 +50,9 @@ type TreeNodeProps = FolderTreeViewportRenderNodeInput & {
   onAddToAction: (stepSetId: string) => void;
 };
 
-const ActionConstructorTreeNode = memo(function ActionConstructorTreeNode(
+const ActionConstructorTreeNode = memo((
   props: TreeNodeProps
-): React.JSX.Element {
+): React.JSX.Element => {
   const {
     node,
     depth,

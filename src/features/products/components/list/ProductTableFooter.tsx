@@ -1,14 +1,14 @@
 'use client';
 
-import { Table as ReactTable, Row } from '@tanstack/react-table';
+import { type Table as ReactTable, type Row } from '@tanstack/react-table';
 import { Trash2, Image as ImageIcon } from 'lucide-react';
-import React, { JSX, memo, useState } from 'react';
+import React, { type JSX, memo, useState } from 'react';
 
 import {
   useBulkDeleteProducts,
   useBulkConvertImagesToBase64,
 } from '@/features/products/hooks/useProductsMutations';
-import { ProductWithImages } from '@/shared/contracts/products/product';
+import { type ProductWithImages } from '@/shared/contracts/products/product';
 import { Button } from '@/shared/ui/button';
 import { ConfirmModal } from '@/shared/ui/templates/modals/ConfirmModal';
 import { useToast } from '@/shared/ui/toast';
@@ -22,11 +22,11 @@ interface ProductTableFooterProps<TData> {
   setActionError: (error: string | null) => void;
 }
 
-export const ProductTableFooter = memo(function ProductTableFooter<TData>({
+export const ProductTableFooter = memo(<TData,>({
   table,
   setRefreshTrigger,
   setActionError,
-}: ProductTableFooterProps<TData>) {
+}: ProductTableFooterProps<TData>) => {
   const selectedCount = table.getFilteredSelectedRowModel().rows.length;
   const hasSelection = selectedCount > 0;
   const { toast } = useToast();

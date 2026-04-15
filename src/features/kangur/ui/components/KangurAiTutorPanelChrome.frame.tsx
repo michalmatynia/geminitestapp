@@ -3,8 +3,8 @@
 import { motion, type MotionStyle, type TargetAndTransition, type Transition } from 'framer-motion';
 import { cn } from '@/features/kangur/shared/utils';
 
-import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
-import { useKangurAiTutor } from '@/features/kangur/ui/context/KangurAiTutorContext';
+import { type useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
+import { type useKangurAiTutor } from '@/features/kangur/ui/context/KangurAiTutorContext';
 
 import { KangurAiTutorMoodAvatar } from './KangurAiTutorMoodAvatar';
 

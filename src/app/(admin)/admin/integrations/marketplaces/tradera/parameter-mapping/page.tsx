@@ -1,4 +1,4 @@
-import { JSX, Suspense } from 'react';
+import { type JSX, Suspense } from 'react';
 
 import { AdminRouteLoading } from '@/features/admin/public';
 import { TraderaParameterMappingPage } from '@/features/integrations/admin.public';

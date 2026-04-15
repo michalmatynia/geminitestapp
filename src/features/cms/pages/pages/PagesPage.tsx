@@ -287,7 +287,7 @@ export default function PagesPage(): React.ReactNode {
       />
 
       <ConfirmModal
-        isOpen={!!pageToDelete}
+        isOpen={Boolean(pageToDelete)}
         onClose={() => setPageToDelete(null)}
         onConfirm={() => {
           void handleConfirmDelete();

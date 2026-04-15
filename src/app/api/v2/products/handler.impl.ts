@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { CachedProductService, performanceMonitor } from '@/features/products/performance';
 import { getProductDataProvider } from '@/features/products/server';
 import { validateProductCreateMiddleware } from '@/features/products/validations/middleware';
-import { productCreateInputSchema } from '@/shared/contracts/products/io';
+import { type productCreateInputSchema } from '@/shared/contracts/products/io';
 import { type ProductWithImages } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, payloadTooLargeError } from '@/shared/errors/app-error';

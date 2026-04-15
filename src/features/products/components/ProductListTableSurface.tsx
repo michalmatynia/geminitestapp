@@ -50,7 +50,7 @@ const ProductListMobileCards = dynamic(
   }
 );
 
-const ProductListAlerts = memo(function ProductListAlerts() {
+const ProductListAlerts = memo(() => {
   const { loadError, actionError, onDismissActionError } = useProductListAlertsContext();
 
   const alerts = useMemo(() => {
@@ -79,7 +79,7 @@ const ProductListAlerts = memo(function ProductListAlerts() {
   return alerts;
 });
 
-export const ProductListTableSurface = memo(function ProductListTableSurface() {
+export const ProductListTableSurface = memo(() => {
   const { handleProductsTableRender } = useProductListTableContext();
   const tableProps = useProductsTableProps();
   const desktopTableRef = useRef<HTMLDivElement>(null);

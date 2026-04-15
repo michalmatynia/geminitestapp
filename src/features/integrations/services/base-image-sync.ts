@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { ObjectId } from 'mongodb';
+import { type ObjectId } from 'mongodb';
 
 import { BASE_INTEGRATION_SLUGS } from '@/features/integrations/constants/slugs';
 import { getProductListingRepository } from '@/features/integrations/server';

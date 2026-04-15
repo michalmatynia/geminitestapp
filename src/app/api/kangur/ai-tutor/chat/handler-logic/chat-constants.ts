@@ -2,8 +2,8 @@ import 'server-only';
 
 import type { NextRequest } from 'next/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
-import { createDefaultKangurAiTutorLearnerMood } from '@/shared/contracts/kangur-ai-tutor-mood';
-import { resolveKangurActor } from '@/features/kangur/server';
+import { type createDefaultKangurAiTutorLearnerMood } from '@/shared/contracts/kangur-ai-tutor-mood';
+import { type resolveKangurActor } from '@/features/kangur/server';
 import type { KangurAiTutorConversationContext } from '@/shared/contracts/kangur-ai-tutor';
 import type { KangurAiTutorAvailabilityReason } from '@/features/kangur/ai-tutor/settings';
 

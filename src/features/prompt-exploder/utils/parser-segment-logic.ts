@@ -1,7 +1,7 @@
 import { buildPromptExploderBindings } from '../parser-bindings';
 import { collectReferencedParamsFromItems } from '../parser-list-items';
 import { renderPromptExploderSegment } from '../parser-segment-factory';
-import { PromptExploderSegment, PromptExploderBinding } from '../types';
+import { type PromptExploderSegment, type PromptExploderBinding } from '../types';
 
 export const CASE_RESOLVER_LABEL_ONLY_SEGMENT_IDS = new Set<string>([
   'segment.case_resolver.heading.addresser_label',

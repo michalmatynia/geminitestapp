@@ -38,11 +38,11 @@ import {
 import type { FilemakerMailAccount } from '../types';
 import { useFilemakerMailSidebar } from './FilemakerMailSidebarContext';
 
-export const FilemakerMailSidebarNode = memo(function FilemakerMailSidebarNode({
+export const FilemakerMailSidebarNode = memo(({
   input,
 }: {
   input: FolderTreeViewportRenderNodeInput;
-}): React.JSX.Element {
+}): React.JSX.Element => {
   const router = useRouter();
   const { toast } = useToast();
   const {

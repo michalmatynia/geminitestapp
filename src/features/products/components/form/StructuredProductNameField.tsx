@@ -7,7 +7,7 @@ import { useController, useFormContext } from 'react-hook-form';
 import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
 import { useProductFormMetadata } from '@/features/products/context/ProductFormMetadataContext';
 import { useTitleTerms } from '@/features/products/hooks/useProductMetadataQueries';
-import { ProductFormData } from '@/shared/contracts/products/drafts';
+import { type ProductFormData } from '@/shared/contracts/products/drafts';
 import type { ProductCategory } from '@/shared/contracts/products/categories';
 import type { ProductTitleTerm, ProductTitleTermType } from '@/shared/contracts/products/title-terms';
 import {

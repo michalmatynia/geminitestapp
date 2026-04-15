@@ -1,5 +1,10 @@
 'use client';
 
+// AdminProductsPageView: top-level view component for the products admin
+// list. Composes toolbar, filters, table surface and modals. Keep UI layout
+// concerns here; business logic and data-fetching live in hooks and context.
+
+
 import dynamic from 'next/dynamic';
 
 import { AppErrorBoundary } from '@/shared/ui/AppErrorBoundary';

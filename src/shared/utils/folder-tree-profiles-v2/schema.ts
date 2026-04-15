@@ -7,16 +7,16 @@ import {
   folderTreeSelectionBehaviorValues,
 } from './constants';
 import {
-  FolderTreePlaceholderPreset,
-  FolderTreePlaceholderStyle,
-  FolderTreePlaceholderEmphasis,
-  FolderTreeSelectionBehavior,
-  FolderTreeBadgeSpec,
-  FolderTreeKeyboardConfig,
-  FolderTreeMultiSelectConfig,
-  FolderTreeSearchConfig,
-  MasterTreeNodeStatus,
-  FolderTreeProfileV2,
+  type FolderTreePlaceholderPreset,
+  type FolderTreePlaceholderStyle,
+  type FolderTreePlaceholderEmphasis,
+  type FolderTreeSelectionBehavior,
+  type FolderTreeBadgeSpec,
+  type FolderTreeKeyboardConfig,
+  type FolderTreeMultiSelectConfig,
+  type FolderTreeSearchConfig,
+  type MasterTreeNodeStatus,
+  type FolderTreeProfileV2,
 } from './types';
 
 export const placeholderPresetSchema = z.enum(

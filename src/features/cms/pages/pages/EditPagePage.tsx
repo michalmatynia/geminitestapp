@@ -288,7 +288,7 @@ function EditPageContent({
                     title='Remove external assignment'
                   >
                     <StatusBadge
-                      status={'/' + slug.slug + ' ×'}
+                      status={`/${  slug.slug  } ×`}
                       variant='warning'
                       className='cursor-pointer hover:opacity-80 transition-opacity font-mono'
                     />

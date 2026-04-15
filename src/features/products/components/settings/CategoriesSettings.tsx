@@ -565,7 +565,7 @@ export function CategoriesSettings(): React.JSX.Element {
       )}
 
       <ConfirmModal
-        isOpen={!!categoryToDelete}
+        isOpen={Boolean(categoryToDelete)}
         onClose={() => setCategoryToDelete(null)}
         onConfirm={handleConfirmDelete}
         title='Delete Category'
@@ -582,7 +582,7 @@ export function CategoriesSettings(): React.JSX.Element {
         value={{
           open: showModal,
           onClose: (): void => setShowModal(false),
-          isEditing: !!editingCategory,
+          isEditing: Boolean(editingCategory),
           formData,
           onFormDataChange: setFormData,
           onSave: (): void => {

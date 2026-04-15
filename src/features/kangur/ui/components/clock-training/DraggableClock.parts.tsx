@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
-import { useTranslations } from 'next-intl';
+import { type useTranslations } from 'next-intl';
 
 import {
   KangurAccentDot,

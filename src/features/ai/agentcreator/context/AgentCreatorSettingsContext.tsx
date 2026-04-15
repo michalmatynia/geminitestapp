@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, ReactNode, useMemo } from 'react';
+import React, { useState, type ReactNode, useMemo } from 'react';
 
 import { DEFAULT_AGENT_SETTINGS } from '@/features/ai/agentcreator/utils/constants';
 import { internalError } from '@/shared/errors/app-error';

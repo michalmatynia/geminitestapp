@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { fetchAndStoreTraderaParameterMapperCatalog } from '@/features/integrations/services/tradera-listing/parameter-mapper-catalog';
 import {

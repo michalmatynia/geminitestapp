@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { ObjectId, type UpdateFilter } from 'mongodb';
 import { z } from 'zod';
 

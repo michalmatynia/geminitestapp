@@ -1,7 +1,7 @@
 'use client';
 
 import { Eye, EyeOff } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { type useTranslations } from 'next-intl';
 import React from 'react';
 import {
   KangurButton,
@@ -15,7 +15,7 @@ import {
   KANGUR_SEGMENTED_CONTROL_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import type { KangurLoginPageProps } from '@/features/kangur/ui/login-page/login-context';
-import { useKangurLoginPageState } from './KangurLoginPage.hooks';
+import { type useKangurLoginPageState } from './KangurLoginPage.hooks';
 
 type KangurLoginPageState = ReturnType<typeof useKangurLoginPageState>;
 type KangurLoginTranslations = ReturnType<typeof useTranslations>;

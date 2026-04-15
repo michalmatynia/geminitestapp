@@ -1,9 +1,9 @@
 import {
-  AiNode,
-  Edge,
-  RuntimeState,
-  AiPathRunRecord,
-  AiPathRunRepository,
+  type AiNode,
+  type Edge,
+  type RuntimeState,
+  type AiPathRunRecord,
+  type AiPathRunRepository,
 } from '@/shared/contracts/ai-paths';
 import { listBrainModels } from '@/shared/lib/ai-brain/server-model-catalog';
 import { getBrainAssignmentForCapability } from '@/shared/lib/ai-brain/segments/api';
@@ -181,7 +181,7 @@ export async function runExecutorPreflight(input: {
     validationConfig,
     strictFlowMode,
     nodeValidationEnabled,
-    blockedRunPolicy: blockedRunPolicy,
+    blockedRunPolicy,
     requiredProcessingNodeIds: compileReport.processingNodeIds,
   };
 }

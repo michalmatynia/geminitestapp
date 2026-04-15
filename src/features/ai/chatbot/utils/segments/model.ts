@@ -1,7 +1,7 @@
 import {
-  ModelProfileDto as ModelProfile,
-  ModelTaskRuleDto as ModelTaskRule,
-  ExtendedModelProfile,
+  type ModelProfileDto as ModelProfile,
+  type ModelTaskRuleDto as ModelTaskRule,
+  type ExtendedModelProfile,
 } from '@/shared/contracts/chatbot';
 
 export const parseModelSize = (normalized: string): number | null => {

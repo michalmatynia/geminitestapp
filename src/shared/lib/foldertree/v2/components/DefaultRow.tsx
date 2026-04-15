@@ -2,11 +2,11 @@
 
 import React from 'react';
 
-import { MasterTreeNodeStatus } from '@/shared/contracts/master-folder-tree';
+import { type MasterTreeNodeStatus } from '@/shared/contracts/master-folder-tree';
 import { Button } from '@/shared/ui/primitives.public';
 import { cn } from '@/shared/utils/ui-utils';
 
-import { FolderTreeViewportRenderNodeInput } from './types';
+import { type FolderTreeViewportRenderNodeInput } from './types';
 
 const STATUS_ICON_CHARS: Record<MasterTreeNodeStatus, string> = {
   loading: '⏳',

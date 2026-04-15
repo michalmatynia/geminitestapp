@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import { type NextRequest } from 'next/server';
 
 import { filemakerMailComposeInputSchema } from '@/shared/contracts/filemaker-mail';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';

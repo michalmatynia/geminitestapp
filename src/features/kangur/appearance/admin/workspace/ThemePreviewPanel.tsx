@@ -5,10 +5,10 @@ import { useLocale } from 'next-intl';
 import { resolveKangurStorefrontAppearance } from '@/shared/ui/cms-appearance/CmsStorefrontAppearance';
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import {
-  AppearanceSlot,
+  type AppearanceSlot,
   SLOT_CONFIG,
   SLOT_ORDER,
-  ThemeSelectionId,
+  type ThemeSelectionId,
 } from './AppearancePage.constants';
 import {
   getAppearancePreviewCopy,

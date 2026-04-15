@@ -27,12 +27,12 @@ import {
   buildLiveCheckBaseline,
   hasLiveCheckCompleted,
   isListingLiveCheckPending,
-  ListingRow,
+  type ListingRow,
   LIVE_CHECK_POLL_INTERVAL_MS,
   LIVE_CHECK_POLL_TIMEOUT_MS,
-  LiveCheckBaseline,
-  RefreshRowOptions,
-  RefreshRowResult,
+  type LiveCheckBaseline,
+  type RefreshRowOptions,
+  type RefreshRowResult,
   resolvePreferredTraderaListing,
   resolveTraderaSessionTarget,
 } from './TraderaStatusCheckModal.utils';
@@ -144,7 +144,7 @@ export function TraderaStatusCheckModal(props: TraderaStatusCheckModalProps): Re
         : false;
       const pending = isListingLiveCheckPending(freshRow.listing);
       const preserveLiveCheckProgress =
-        !!options.preserveLiveCheckProgress &&
+        Boolean(options.preserveLiveCheckProgress) &&
         !completed &&
         (pending ||
           currentRow.liveCheckState === 'queued' ||

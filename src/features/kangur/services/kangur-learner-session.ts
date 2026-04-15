@@ -2,7 +2,7 @@ import 'server-only';
 
 import { createHmac, timingSafeEqual } from 'crypto';
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, type NextResponse } from 'next/server';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 
 

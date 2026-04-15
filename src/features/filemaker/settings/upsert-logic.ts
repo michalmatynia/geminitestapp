@@ -1,9 +1,9 @@
 import {
-  FilemakerPhoneValidationRule,
-  UpsertFilemakerPartyPhoneNumbersResult,
-  UpsertFilemakerPartyEmailsResult,
-  FilemakerEmailParserRule,
-  FilemakerEmailExtractionResult,
+  type FilemakerPhoneValidationRule,
+  type UpsertFilemakerPartyPhoneNumbersResult,
+  type UpsertFilemakerPartyEmailsResult,
+  type FilemakerEmailParserRule,
+  type FilemakerEmailExtractionResult,
 } from '@/shared/contracts/filemaker';
 
 import { normalizeFilemakerDatabase } from '../filemaker-settings.database';
@@ -18,12 +18,12 @@ import {
   extractFilemakerEmailsFromText,
 } from '../filemaker-settings.validation';
 import {
-  FilemakerDatabase,
-  FilemakerPhoneNumber,
-  FilemakerPerson,
-  FilemakerOrganization,
-  FilemakerEmail,
-  FilemakerEmailStatus,
+  type FilemakerDatabase,
+  type FilemakerPhoneNumber,
+  type FilemakerPerson,
+  type FilemakerOrganization,
+  type FilemakerEmail,
+  type FilemakerEmailStatus,
 } from '../types';
 
 export const upsertFilemakerPhoneNumbersForParty = (

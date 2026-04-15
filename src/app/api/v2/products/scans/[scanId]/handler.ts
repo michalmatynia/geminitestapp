@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { deleteProductScan } from '@/features/products/server/product-scans-repository';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';

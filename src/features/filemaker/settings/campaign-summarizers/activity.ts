@@ -8,9 +8,9 @@ import type {
   FilemakerEmailCampaignRegistry,
 } from '../../types';
 import {
-  FilemakerEmailCampaignRecipientActivityItem,
-  FilemakerEmailCampaignRecipientActivityType,
-  FilemakerEmailCampaignRecipientActivitySummary,
+  type FilemakerEmailCampaignRecipientActivityItem,
+  type FilemakerEmailCampaignRecipientActivityType,
+  type FilemakerEmailCampaignRecipientActivitySummary,
 } from '../../types/campaigns';
 import {
   normalizeFilemakerEmailCampaignDeliveryRegistry,

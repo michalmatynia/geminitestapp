@@ -15,7 +15,7 @@
 // for development tooling and should not be removed without verifying callers.
 
 import {
-  ProfilerOnRenderCallback,
+  type ProfilerOnRenderCallback,
   startTransition,
   useCallback,
   useEffect,

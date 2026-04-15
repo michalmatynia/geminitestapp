@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { JSX } from 'react';
+import { type JSX } from 'react';
 
 import { applyCacheLife } from '@/shared/lib/next/cache-life';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { productStudioAuditResponseSchema } from '@/shared/contracts/products/studio';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';

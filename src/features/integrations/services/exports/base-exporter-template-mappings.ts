@@ -5,10 +5,10 @@ import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 
 import {
-  ProducerNameLookup,
-  ProducerExternalIdLookup,
-  TagNameLookup,
-  TagExternalIdLookup,
+  type ProducerNameLookup,
+  type ProducerExternalIdLookup,
+  type TagNameLookup,
+  type TagExternalIdLookup,
 } from './base-exporter/lookup-resolvers';
 import {
   toStringValue,
@@ -25,7 +25,7 @@ import {
   toTagNameValueList,
   toTagIdValueList,
 } from './base-exporter/value-resolvers';
-import { ImageExportLogger } from './base-exporter-images';
+import { type ImageExportLogger } from './base-exporter-images';
 
 export { toStringValue, toNumberValue };
 

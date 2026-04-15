@@ -10,11 +10,11 @@ import { buildConnectingPreviewPath } from './CanvasBoard.utils';
 import { useCanvasBoardUI } from './CanvasBoardUIContext';
 import { SignalDots } from './SignalDots';
 
-export const CanvasSvgEdgeLayer = React.memo(function CanvasSvgEdgeLayer({
+export const CanvasSvgEdgeLayer = React.memo(({
   cullPadding = 160,
 }: {
   cullPadding?: number;
-}): React.JSX.Element {
+}): React.JSX.Element => {
   const {
     edgePaths,
     view,

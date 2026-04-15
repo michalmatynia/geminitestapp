@@ -1,5 +1,9 @@
 'use client';
 
+// ProductFormCustomFieldContext: provides helpers and state for custom
+// product fields configured per-catalog. Handles rendering metadata, default
+// values, and validation glue for dynamic custom fields within the form.
+
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import type {

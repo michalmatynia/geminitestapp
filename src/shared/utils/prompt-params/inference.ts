@@ -1,4 +1,4 @@
-import { ParamSpec, ParamLeaf } from '@/shared/contracts/prompt-engine';
+import { type ParamSpec, type ParamLeaf } from '@/shared/contracts/prompt-engine';
 
 import { splitLineCodeAndLineComment } from './scanner';
 import {

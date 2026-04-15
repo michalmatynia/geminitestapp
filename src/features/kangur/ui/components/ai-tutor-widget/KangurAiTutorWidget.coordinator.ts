@@ -24,7 +24,7 @@ import {
   useKangurAiTutorGuidedAuthHandoffEffect,
   useKangurAiTutorHomeOnboardingFlow,
 } from './KangurAiTutorWidget.entry';
-import { useKangurAiTutorWidgetEnvironment } from './KangurAiTutorWidget.environment';
+import { type useKangurAiTutorWidgetEnvironment } from './KangurAiTutorWidget.environment';
 import { useKangurAiTutorGuidedFlow } from './KangurAiTutorWidget.guided';
 import { useKangurAiTutorPanelInteractions } from './KangurAiTutorWidget.interactions';
 import { useKangurAiTutorLifecycleEffects } from './KangurAiTutorWidget.lifecycle';

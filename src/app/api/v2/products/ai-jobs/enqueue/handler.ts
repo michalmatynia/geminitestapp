@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { enqueueProductAiJob } from '@/features/jobs/server';
 import { startProductAiJobQueue, processProductAiJob } from '@/features/jobs/server';
@@ -55,7 +55,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
         void ErrorSystem.captureException(err, {
           service: 'api/products/ai-jobs/enqueue',
           jobId: job.id,
-          productId: productId,
+          productId,
         });
       });
   } else {

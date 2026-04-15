@@ -14,7 +14,7 @@ export function useExternalCategories(connectionId: string): ListQuery<ExternalC
     queryKey,
     queryFn: () =>
       api.get<ExternalCategory[]>(`/api/marketplace/categories?connectionId=${connectionId}`),
-    enabled: !!connectionId,
+    enabled: Boolean(connectionId),
     meta: {
       source: 'integrations.hooks.useExternalCategories',
       operation: 'list',
@@ -39,7 +39,7 @@ export function useCategoryMappings(
         `/api/marketplace/mappings?connectionId=${connectionId}&catalogId=${catalogId}`
       );
     },
-    enabled: !!connectionId && !!catalogId,
+    enabled: Boolean(connectionId) && Boolean(catalogId),
     meta: {
       source: 'integrations.hooks.useCategoryMappings',
       operation: 'list',
@@ -57,7 +57,7 @@ export function useExternalProducers(connectionId: string): ListQuery<ExternalPr
     queryKey,
     queryFn: () =>
       api.get<ExternalProducer[]>(`/api/marketplace/producers?connectionId=${connectionId}`),
-    enabled: !!connectionId,
+    enabled: Boolean(connectionId),
     meta: {
       source: 'integrations.hooks.useExternalProducers',
       operation: 'list',
@@ -77,7 +77,7 @@ export function useProducerMappings(connectionId: string): ListQuery<ProducerMap
       api.get<ProducerMappingWithDetails[]>(
         `/api/marketplace/producer-mappings?connectionId=${connectionId}`
       ),
-    enabled: !!connectionId,
+    enabled: Boolean(connectionId),
     meta: {
       source: 'integrations.hooks.useProducerMappings',
       operation: 'list',
@@ -94,7 +94,7 @@ export function useExternalTags(connectionId: string): ListQuery<ExternalTag> {
   return createListQueryV2({
     queryKey,
     queryFn: () => api.get<ExternalTag[]>(`/api/marketplace/tags?connectionId=${connectionId}`),
-    enabled: !!connectionId,
+    enabled: Boolean(connectionId),
     meta: {
       source: 'integrations.hooks.useExternalTags',
       operation: 'list',
@@ -114,7 +114,7 @@ export function useTagMappings(connectionId: string): ListQuery<TagMappingWithDe
       api.get<TagMappingWithDetails[]>(
         `/api/marketplace/tag-mappings?connectionId=${connectionId}`
       ),
-    enabled: !!connectionId,
+    enabled: Boolean(connectionId),
     meta: {
       source: 'integrations.hooks.useTagMappings',
       operation: 'list',
@@ -140,7 +140,7 @@ export function useMarketplaceBadgeStatus(
         `/api/v2/integrations/products/${productId}/listings`,
         { cache: 'no-store' }
       ),
-    enabled: enabled && !!productId,
+    enabled: enabled && Boolean(productId),
     staleTime: 30000,
   });
 

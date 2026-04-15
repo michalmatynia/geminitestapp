@@ -158,7 +158,7 @@ export function useKangurParentDashboardProgressWidgetState() {
   const { archiveError, handleArchiveAssignment } =
     useKangurParentDashboardProgressArchiveAction({
       archiveAssignmentErrorLabel,
-      updateAssignment: updateAssignment,
+      updateAssignment,
     });
 
   return {

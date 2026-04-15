@@ -1,6 +1,6 @@
 import { primeFrontPageSettingRuntime } from '@/app/(frontend)/home/home-helpers';
-import { WithId } from 'mongodb';
-import { NextRequest, NextResponse } from 'next/server';
+import { type WithId } from 'mongodb';
+import { type NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
@@ -85,7 +85,7 @@ import {
   withSettingsScopeTimeout,
 } from '@/shared/lib/settings/settings-logic';
 import {
-  SettingRecord,
+  type SettingRecord,
   getCachedSettings,
   setCachedSettings,
   clearSettingsCache,
@@ -645,8 +645,8 @@ export async function GET_handler(
         })()
         : null;
     const fallbackFromLight = scope === 'all' ? getLastKnownSettings('light') : null;
-    let fallbackData = stale ?? lastKnown ?? fallbackFromAll ?? fallbackFromLight ?? [];
-    let cacheStatus = stale
+    const fallbackData = stale ?? lastKnown ?? fallbackFromAll ?? fallbackFromLight ?? [];
+    const cacheStatus = stale
       ? 'timeout-stale'
       : lastKnown
         ? 'timeout-last-known'

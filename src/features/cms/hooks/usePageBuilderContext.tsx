@@ -15,16 +15,16 @@ import { pageBuilderReducer } from './page-builder/page-builder-reducer';
 import { PageDispatchContext, usePageBuilderDispatch } from './page-builder/PageDispatchContext';
 import {
   PageSelectionContext,
-  PageSelectionValue,
+  type PageSelectionValue,
   usePageBuilderSelection,
 } from './page-builder/PageSelectionContext';
 import { PageStateContext, usePageBuilderState } from './page-builder/PageStateContext';
 import {
   VectorOverlayContext,
-  VectorOverlayRequest,
-  VectorOverlayValue,
+  type VectorOverlayRequest,
+  type VectorOverlayValue,
   useVectorOverlay,
-  VectorOverlayResult,
+  type VectorOverlayResult,
 } from './page-builder/VectorOverlayContext';
 
 export { pageBuilderReducer } from './page-builder/page-builder-reducer';

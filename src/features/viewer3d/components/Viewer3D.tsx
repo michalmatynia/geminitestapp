@@ -14,7 +14,7 @@ import {
 import { Canvas, useFrame, useThree, type RootState } from '@react-three/fiber';
 import { EffectComposer, Bloom, SMAA, ToneMapping, Vignette } from '@react-three/postprocessing';
 import { ToneMappingMode, BlendFunction } from 'postprocessing';
-import { Suspense, useEffect, useRef, useMemo, Component, ErrorInfo } from 'react';
+import { Suspense, useEffect, useRef, useMemo, Component, type ErrorInfo } from 'react';
 import * as THREE from 'three';
 
 import type {

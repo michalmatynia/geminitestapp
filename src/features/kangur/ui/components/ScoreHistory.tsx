@@ -318,7 +318,7 @@ function ScoreHistoryRecentSessionEntry({
   const accuracyPercent = Math.round((score.correct_answers / totalQuestions) * 100);
   const operationInfo = resolveKangurScoreOperationInfo(score.operation, {
     locale: normalizedLocale,
-    translateOperationLabel: translateOperationLabel,
+    translateOperationLabel,
   });
 
   return (

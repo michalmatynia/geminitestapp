@@ -1,5 +1,9 @@
 'use client';
 
+// ProductModals: coordinates product create/edit modals and related
+// modal lifecycle (hydration, dynamic imports, editor providers). Keeps modal
+// orchestration separate from toolbar and table to simplify testing.
+
 import Link from 'next/link';
 import { Eye, EyeOff } from 'lucide-react';
 import dynamic from 'next/dynamic';
@@ -825,7 +829,7 @@ export function ProductModals(): React.JSX.Element {
 
       {integrationsProduct && !showListProductModal && (
         <ProductListingsModal
-          isOpen={!!integrationsProduct}
+          isOpen={Boolean(integrationsProduct)}
           item={integrationsProduct}
           onClose={onCloseIntegrations}
           onStartListing={onStartListing}
@@ -837,7 +841,7 @@ export function ProductModals(): React.JSX.Element {
 
       {integrationsProduct && showListProductModal && (
         <ListProductModal
-          isOpen={!!integrationsProduct}
+          isOpen={Boolean(integrationsProduct)}
           item={integrationsProduct}
           onClose={onCloseListProduct}
           onSuccess={onListProductSuccess}
@@ -849,7 +853,7 @@ export function ProductModals(): React.JSX.Element {
 
       {exportSettingsProduct && onCloseExportSettings && (
         <ProductListingsModal
-          isOpen={!!exportSettingsProduct}
+          isOpen={Boolean(exportSettingsProduct)}
           item={exportSettingsProduct}
           onClose={onCloseExportSettings}
           filterIntegrationSlug='baselinker'

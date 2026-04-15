@@ -1,6 +1,6 @@
 'use client';
 
-import { GripVertical, Minus, Plus, X } from 'lucide-react';
+import { GripVertical, Plus, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 import type { PlaywrightStep, PlaywrightStepSet } from '@/shared/contracts/playwright-steps';

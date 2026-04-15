@@ -4,8 +4,8 @@ import { getProductDataProvider } from '@/shared/lib/products/services/product-p
 
 import { resolvePriceGroupContext } from '../base-import-service-context';
 import {
-  StartBaseImportRunInput,
-  BaseConnectionContext,
+  type StartBaseImportRunInput,
+  type BaseConnectionContext,
   nowIso,
   normalizeDirectTarget,
   normalizeSelectedIds,

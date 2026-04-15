@@ -1,6 +1,6 @@
 'use client';
 
-import { ColumnDef } from '@tanstack/react-table';
+import { type ColumnDef } from '@tanstack/react-table';
 import React, { useMemo } from 'react';
 
 import {
@@ -148,7 +148,7 @@ export function CategoryMapperTable(): React.JSX.Element {
               canExpand={row.getCanExpand()}
               isExpanded={row.getIsExpanded()}
               onToggleExpand={() => toggleExpand(row.original.id)}
-              isMapped={!!currentMapping}
+              isMapped={Boolean(currentMapping)}
               hasPendingChange={hasPendingChange}
             />
           );

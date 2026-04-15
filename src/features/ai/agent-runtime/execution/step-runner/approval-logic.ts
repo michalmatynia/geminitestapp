@@ -6,7 +6,7 @@ import {
 import { getBrowserContextSummary } from '@/features/ai/agent-runtime/browsing/context';
 import { buildCheckpointState } from '@/features/ai/agent-runtime/memory/checkpoint';
 import { getChatbotAgentRunDelegate } from '@/features/ai/agent-runtime/store-delegates';
-import { AgentExecutionContext, PlanStep, PlannerMeta } from '@/shared/contracts/agent-runtime';
+import { type AgentExecutionContext, type PlanStep, type PlannerMeta } from '@/shared/contracts/agent-runtime';
 import type { InputJsonValue } from '@/shared/contracts/json';
 
 export async function evaluateApproval(args: {

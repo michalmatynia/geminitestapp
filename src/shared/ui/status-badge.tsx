@@ -1,13 +1,13 @@
 'use client';
 
 import { type VariantProps } from 'class-variance-authority';
-import React, { ReactNode } from 'react';
+import React, { type ReactNode } from 'react';
 
 import type { StatusVariant } from '@/shared/contracts/ui/base';
 
 import { cn } from '@/shared/utils/ui-utils';
 
-import { Badge, badgeVariants } from './badge';
+import { Badge, type badgeVariants } from './badge';
 
 export type { StatusVariant };
 

@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
+import { type NextRequest, NextResponse } from 'next/server';
+import { type z } from 'zod';
 
 import { getTagRepository } from '@/features/products/server';
 import { createProductTagSchema } from '@/shared/contracts/products/tags';

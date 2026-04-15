@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import { type NextRequest } from 'next/server';
 
 import type { StringRecord } from '@/shared/contracts/base';
 import { methodNotAllowedError, notFoundError } from '@/shared/errors/app-error';

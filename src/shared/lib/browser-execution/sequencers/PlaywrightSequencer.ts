@@ -1,7 +1,7 @@
-import { Page } from 'playwright';
-import { StepTracker } from '../step-tracker';
-import { StepId } from '../step-registry';
-import { ActionSequenceKey } from '../action-sequences';
+import { type Page } from 'playwright';
+import { type StepTracker } from '../step-tracker';
+import { type StepId } from '../step-registry';
+import { type ActionSequenceKey } from '../action-sequences';
 
 export interface PlaywrightSequencerContext {
   page: Page;

@@ -7,7 +7,7 @@ import { FormSection } from '@/shared/ui/forms-and-actions.public';
 import { IntegrationSelectionLoadingState } from './IntegrationSelectionLoadingState';
 import { IntegrationSelectorFields } from './IntegrationSelectorFields';
 import {
-  IntegrationSelectorCopyStrategy,
+  type IntegrationSelectorCopyStrategy,
   useIntegrationSelectorProps,
 } from './hooks/useIntegrationSelectorProps';
 

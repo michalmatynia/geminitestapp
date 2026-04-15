@@ -155,7 +155,7 @@ const scheduleDeferredAdminMenuSettingsHydration = (
   };
 };
 
-export default memo(function Menu(): React.ReactNode {
+export default memo((): React.ReactNode => {
   const { isMenuCollapsed } = useAdminLayoutState();
   const { setIsMenuCollapsed, setIsProgrammaticallyCollapsed } = useAdminLayoutActions();
   const router = useRouter();

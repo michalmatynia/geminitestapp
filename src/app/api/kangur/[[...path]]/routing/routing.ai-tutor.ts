@@ -40,7 +40,7 @@ import { POST_handler as postKangurNativeGuideGenerationHandler } from '@/app/ap
 import { GET_handler as getKangurAiTutorExperimentsHandler, PUT_handler as putKangurAiTutorExperimentsHandler } from '@/app/api/kangur/ai-tutor/experiments/handler';
 import { GET_handler as getKangurKnowledgeGraphStatusHandler, querySchema as knowledgeGraphQuerySchema } from '@/app/api/kangur/knowledge-graph/status/handler';
 import { POST_handler as postKangurKnowledgeGraphSyncHandler } from '@/app/api/kangur/knowledge-graph/sync/handler';
-import { handleGetPost, methodNotAllowed, SimpleRouteHandler } from './routing.utils';
+import { handleGetPost, methodNotAllowed, type SimpleRouteHandler } from './routing.utils';
 
 export const aiTutorChatHandler: SimpleRouteHandler = apiHandler(postKangurAiTutorChatHandler, {
   source: 'kangur.ai-tutor.chat.POST',

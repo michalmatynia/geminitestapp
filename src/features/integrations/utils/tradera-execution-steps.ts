@@ -587,19 +587,19 @@ export const buildTraderaQuicklistExecutionSteps = ({
   );
   const duplicateNonExactIgnoredTitlesSuffix =
     duplicateNonExactIgnoredTitlesPreview.length > 0
-      ? ' Ignored titles: ' +
-        duplicateNonExactIgnoredTitlesPreview.join(', ') +
-        (duplicateNonExactIgnoredTitlesRemainingCount > 0
-          ? ', +' + String(duplicateNonExactIgnoredTitlesRemainingCount) + ' more'
-          : '') +
-        '.'
+      ? ` Ignored titles: ${ 
+        duplicateNonExactIgnoredTitlesPreview.join(', ') 
+        }${duplicateNonExactIgnoredTitlesRemainingCount > 0
+          ? `, +${  String(duplicateNonExactIgnoredTitlesRemainingCount)  } more`
+          : '' 
+        }.`
       : '';
   const duplicateNonExactIgnoredMessage =
     duplicateNonExactIgnoredCount && duplicateNonExactIgnoredCount > 0
-      ? 'Duplicate search ignored ' +
-        String(duplicateNonExactIgnoredCount) +
-        ' non-exact title match(es); deep inspection only runs on exact title matches.' +
-        duplicateNonExactIgnoredTitlesSuffix
+      ? `Duplicate search ignored ${ 
+        String(duplicateNonExactIgnoredCount) 
+        } non-exact title match(es); deep inspection only runs on exact title matches.${ 
+        duplicateNonExactIgnoredTitlesSuffix}`
       : null;
   const duplicateLinkedMessage =
     duplicateMatchStrategy === 'existing-linked-record'

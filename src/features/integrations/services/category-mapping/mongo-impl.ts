@@ -15,7 +15,7 @@ import { notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 import {
-  MongoCategoryMappingDoc,
+  type MongoCategoryMappingDoc,
   CATEGORY_MAPPING_COLLECTION,
   EXTERNAL_CATEGORY_COLLECTION,
   PRODUCT_CATEGORY_COLLECTION,
@@ -23,10 +23,10 @@ import {
   mapMongoCategoryMappingToRecord,
   mapMongoExternalCategory,
   mapMongoInternalCategory,
-  MongoExternalCategoryDoc,
-  MongoProductCategoryDoc,
+  type MongoExternalCategoryDoc,
+  type MongoProductCategoryDoc,
   normalizeInternalCategoryId,
-  UniqueInternalCategoryScope,
+  type UniqueInternalCategoryScope,
 } from './types';
 
 let mongoCategoryMappingIndexesReady: Promise<void> | null = null;

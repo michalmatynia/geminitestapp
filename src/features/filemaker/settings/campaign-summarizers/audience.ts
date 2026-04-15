@@ -5,15 +5,15 @@ import {
 } from '../database-getters';
 import { getFilemakerOrganizationById, getFilemakerPersonById } from '../party-getters';
 import {
-  FilemakerDatabase,
-  FilemakerEmailCampaignAudienceRule,
-  FilemakerEmailCampaignSuppressionRegistry,
-  FilemakerPartyKind,
-  FilemakerPartyReference,
+  type FilemakerDatabase,
+  type FilemakerEmailCampaignAudienceRule,
+  type FilemakerEmailCampaignSuppressionRegistry,
+  type FilemakerPartyKind,
+  type FilemakerPartyReference,
 } from '../../types';
 import {
-  FilemakerEmailCampaignAudiencePreview,
-  FilemakerEmailCampaignAudienceRecipient,
+  type FilemakerEmailCampaignAudiencePreview,
+  type FilemakerEmailCampaignAudienceRecipient,
 } from '../../types/campaigns';
 import {
   getFilemakerEmailCampaignSuppressionByAddress,

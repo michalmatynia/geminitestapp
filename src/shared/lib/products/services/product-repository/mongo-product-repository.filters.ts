@@ -16,7 +16,7 @@ import {
   toAdvancedStringArrayValues,
   toAdvancedStringValue,
   loadMongoBaseExportLookupContext,
-  BaseExportLookupContext,
+  type BaseExportLookupContext,
 } from './mongo-product-repository.helpers';
 
 const buildEmptyStringPathCondition = (path: string): Filter<ProductDocument> =>

@@ -1,3 +1,6 @@
+// ProductListActivityPill: small badge/pill used in the product list to
+// surface scan/trigger/queue activity states per-product. Purely presentational
+// and consumes a config object to keep rendering logic centralized.
 import type React from 'react';
 import { RectangleHorizontal, Search } from 'lucide-react';
 

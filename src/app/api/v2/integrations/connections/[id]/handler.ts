@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { auth, findAuthUserById } from '@/features/auth/server';

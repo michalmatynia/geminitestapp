@@ -23,7 +23,7 @@ import {
 } from './utils';
 import type { AiPathTemplateRegistryEntry } from './types';
 
-const TRANSLATION_EN_PL_ADDITIONAL_GRAPH_HASHES: string[] = ['97eb2bff'];
+const TRANSLATION_EN_PL_ADDITIONAL_GRAPH_HASHES: string[] = ['97eb2bff', '7994bd47'];
 const PARAMETER_INFERENCE_ADDITIONAL_GRAPH_HASHES: string[] = ['7f2d8625'];
 const PRODUCT_NAME_NORMALIZE_ADDITIONAL_GRAPH_HASHES: string[] = ['fbe949f9', '30c56611'];
 

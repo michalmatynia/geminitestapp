@@ -10,7 +10,7 @@ import {
   getIssueReplacementPreview,
   type FieldValidatorIssue,
 } from '@/features/products/validation-engine/core';
-import { ProductFormData } from '@/shared/contracts/products/drafts';
+import { type ProductFormData } from '@/shared/contracts/products/drafts';
 import { Button } from '@/shared/ui/button';
 import { Hint } from '@/shared/ui/Hint';
 
@@ -34,7 +34,7 @@ const buildIssueSnippet = (
   };
 };
 
-export const ValidatorIssueHint = memo(function ValidatorIssueHint(props: {
+export const ValidatorIssueHint = memo((props: {
   issue: FieldValidatorIssue;
   value: string;
   onReplace?: (() => void) | undefined;
@@ -42,7 +42,7 @@ export const ValidatorIssueHint = memo(function ValidatorIssueHint(props: {
   denyLabel?: 'Deny' | 'Mute';
   proposedValueOverride?: string | null;
   hideMatchSnippet?: boolean;
-}): React.JSX.Element {
+}): React.JSX.Element => {
   const {
     issue,
     value,
@@ -143,9 +143,9 @@ type IssueHintRowProps = {
   fieldValue: string;
 };
 
-export const IssueHintRow = memo(function IssueHintRow(
+export const IssueHintRow = memo((
   props: IssueHintRowProps
-): React.JSX.Element {
+): React.JSX.Element => {
   const { fieldName, issue, fieldValue } = props;
 
   const { getValues, setValue } = useFormContext<ProductFormData>();

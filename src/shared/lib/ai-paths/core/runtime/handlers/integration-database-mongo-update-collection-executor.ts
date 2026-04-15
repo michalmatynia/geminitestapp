@@ -52,7 +52,7 @@ export async function executeMongoCollectionUpdate({
   updateDoc,
   aiPrompt,
 }: ExecuteMongoCollectionUpdateInput): Promise<RuntimePortValues> {
-  let nextResolvedFilter: Record<string, unknown> = resolvedFilter;
+  const nextResolvedFilter: Record<string, unknown> = resolvedFilter;
 
   if (action === 'updateOne') {
     if (!nextResolvedFilter || Object.keys(nextResolvedFilter).length === 0) {

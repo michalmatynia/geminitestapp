@@ -33,7 +33,7 @@ import {
   useTags,
   useUpdatePriceGroupMutation,
 } from '@/features/products/hooks/useProductSettingsQueries';
-import { Catalog, PriceGroup } from '@/shared/contracts/products/catalogs';
+import { type Catalog, type PriceGroup } from '@/shared/contracts/products/catalogs';
 import { AdminProductsPageLayout } from '@/shared/ui/admin-products-page-layout';
 import { Button } from '@/shared/ui/button';
 import { Card } from '@/shared/ui/card';

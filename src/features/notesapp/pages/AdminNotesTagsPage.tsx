@@ -326,7 +326,7 @@ export function AdminNotesTagsPage(): React.JSX.Element {
       </div>
 
       <ConfirmModal
-        isOpen={!!toDelete}
+        isOpen={Boolean(toDelete)}
         onClose={() => setToDelete(null)}
         onConfirm={handleConfirmDelete}
         title='Delete Tag'

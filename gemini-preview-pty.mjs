@@ -75,6 +75,7 @@ let activeDisposables = [];
 let continueTimer = null;
 let restartTimer = null;
 let forceKillTimer = null;
+let automationResumeTimer = null;
 let stdinBound = false;
 let resizeBound = false;
 let shuttingDown = false;
@@ -156,6 +157,7 @@ function spawnGemini(pty) {
   clearContinueTimer();
   clearRestartTimer();
   clearForceKillTimer();
+  clearAutomationResumeTimer();
   clearHotkeyCommandTimer();
   disposeActiveListeners();
   activePty = null;
@@ -563,6 +565,24 @@ function handlePermissionMenu(state, runId) {
   }
 }
 
+function resetAutomationTracking() {
+  clearContinueTimer();
+  clearRestartTimer();
+  usageLimitLatched = false;
+  resetCapacityEventState();
+}
+
+function recheckVisiblePrompt(reason = 'manual recheck') {
+  if (!activePty || shuttingDown) return;
+  if (!isAutomationActive()) return;
+
+  if (DEBUG_AUTOMATION) {
+    console.error(`[gemini-preview-pty][auto] Rechecking visible prompt (${reason})`);
+  }
+
+  maybeAutomate(activeRunId);
+}
+
 function scheduleContinueRetry(state, runId) {
   if (!AUTO_CONTINUE_ON_CAPACITY) return;
   if (continueTimer) return;
@@ -608,6 +628,13 @@ function clearForceKillTimer() {
   if (forceKillTimer) {
     clearTimeout(forceKillTimer);
     forceKillTimer = null;
+  }
+}
+
+function clearAutomationResumeTimer() {
+  if (automationResumeTimer) {
+    clearTimeout(automationResumeTimer);
+    automationResumeTimer = null;
   }
 }
 
@@ -844,21 +871,31 @@ function detectAutomationState(text) {
     fingerprint: '',
   };
 
-  const permissionPromptMatch = tail.match(/allow\s+execution\s+of\s*:/i);
-  const allowSessionMatch = tail.match(/(?:^|\n)\s*(\d+)\s*[.):-]?\s*allow\s+for\s+this\s+session\b/i);
-  const allowOnceMatch = tail.match(/(?:^|\n)\s*(\d+)\s*[.):-]?\s*allow\s+once\b/i);
+  const permissionPromptMatch =
+    tail.match(/allow\s+execution\s+of\s*:/i) ||
+    tail.match(/action\s+required/i);
+  const allowSessionMatch = matchNumberedMenuOption(tail, 'allow for this session');
+  const allowOnceMatch = matchNumberedMenuOption(tail, 'allow once');
+  const denyMatch =
+    matchNumberedMenuOption(tail, 'no, suggest changes') ||
+    matchNumberedMenuOption(tail, 'deny') ||
+    matchNumberedMenuOption(tail, 'reject');
 
-  if (permissionPromptMatch && allowSessionMatch && allowOnceMatch) {
+  const hasPermissionPromptText =
+    /allow\s+execution\s+of\s*:/i.test(tail) ||
+    (/action\s+required/i.test(tail) && /allow\s+for\s+this\s+session/i.test(tail));
+
+  if (hasPermissionPromptText && allowSessionMatch) {
     const permissionFingerprint = extractMenuFingerprint(
       tail,
-      permissionPromptMatch.index ?? 0,
-      allowSessionMatch.index ?? permissionPromptMatch.index ?? 0
+      permissionPromptMatch?.index ?? allowSessionMatch.index ?? 0,
+      denyMatch?.index ?? allowSessionMatch.index ?? permissionPromptMatch?.index ?? 0
     );
 
     return {
       ...defaultState,
       hasPermissionMenu: true,
-      permissionOptionText: allowSessionMatch[1] || SESSION_PERMISSION_OPTION_TEXT,
+      permissionOptionText: allowSessionMatch.optionText || SESSION_PERMISSION_OPTION_TEXT,
       permissionFingerprint,
       reason: 'permission prompt',
       fingerprint: permissionFingerprint,
@@ -937,6 +974,46 @@ function extractMenuFingerprint(text, firstIndex, secondIndex) {
   const start = Math.max(0, Math.min(firstIndex, secondIndex) - 40);
   const end = Math.min(text.length, Math.max(firstIndex, secondIndex) + 220);
   return text.slice(start, end).replace(/\s+/g, ' ').trim();
+}
+
+function matchNumberedMenuOption(text, label) {
+  const escapedLabel = escapeRegex(label).replace(/\s+/g, '\\s+');
+  const patterns = [
+    new RegExp(
+      `(?:^|\\n)[^\S\n]*(?:[│║┃|][^\S\n]*)*(?:[•●◦▪◆▶➜»›>*?-][^\S\n]*)?(\\d+)\s*[.):-]?[^\S\n]*${escapedLabel}\\b`,
+      'i'
+    ),
+    new RegExp(
+      `(?:^|\\n)[^\S\n]*(?:[│║┃|][^\S\n]*)*(?:[•●◦▪◆▶➜»›>*?-][^\S\n]*)?${escapedLabel}\\b[^\S\n]*[(:-]?[^\S\n]*(\\d+)\\b`,
+      'i'
+    ),
+  ];
+
+  for (const pattern of patterns) {
+    const match = pattern.exec(text);
+    if (match) {
+      return {
+        index: match.index,
+        optionText: match[1] || '',
+        raw: match[0],
+      };
+    }
+  }
+
+  const labelOnly = new RegExp(escapedLabel, 'i').exec(text);
+  if (labelOnly) {
+    return {
+      index: labelOnly.index,
+      optionText: '',
+      raw: labelOnly[0],
+    };
+  }
+
+  return null;
+}
+
+function escapeRegex(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function bindUserInput() {
@@ -1148,6 +1225,7 @@ function requestLauncherAction(kind) {
   clearContinueTimer();
   clearRestartTimer();
   clearForceKillTimer();
+  clearAutomationResumeTimer();
   switching = false;
   sawCapacityAt = 0;
   plannedAction = { kind, code: 0 };
@@ -1216,11 +1294,19 @@ function printLocalHelp() {
 function setAutomationEnabled(enabled, reason = 'manual') {
   automationEnabled = enabled;
   automationDisabledReason = enabled ? '' : reason;
+
   if (!enabled) {
     automationPausedUntil = 0;
     clearContinueTimer();
     clearRestartTimer();
+    clearAutomationResumeTimer();
+    return;
   }
+
+  automationPausedUntil = 0;
+  clearAutomationResumeTimer();
+  resetAutomationTracking();
+  recheckVisiblePrompt('automation enabled');
 }
 
 function pauseAutomationTemporarily(ms, reason, silent = false) {
@@ -1256,6 +1342,7 @@ function cleanupAndExit(code) {
   clearContinueTimer();
   clearRestartTimer();
   clearForceKillTimer();
+  clearAutomationResumeTimer();
   clearHotkeyCommandTimer();
   disposeActiveListeners();
 

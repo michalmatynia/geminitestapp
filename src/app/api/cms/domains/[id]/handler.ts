@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { deleteCmsDomain, setCmsDomainAlias } from '@/features/cms/server';
 import { cmsDomainUpdateSchema } from '@/features/cms/server';

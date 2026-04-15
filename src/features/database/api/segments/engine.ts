@@ -1,16 +1,16 @@
 import {
-  DatabaseEngineBackupRunNowResponse,
-  DatabaseEngineBackupSchedulerStatus as DatabaseEngineBackupSchedulerStatusResponse,
-  DatabaseEngineMongoSourceState as DatabaseEngineMongoSourceStateResponse,
-  DatabaseEngineMongoSyncDirection,
-  DatabaseEngineMongoSyncResponse as DatabaseEngineMongoSyncResponsePayload,
-  DatabaseEngineBackupSchedulerTickResponse,
-  DatabaseEngineOperationsJobs as DatabaseEngineOperationsJobsResponse,
-  DatabaseEngineProviderPreview as DatabaseEngineProviderPreviewResponse,
-  DatabaseEngineStatus as DatabaseEngineStatusResponse,
-  MultiSchemaResponse,
-  RedisOverview as RedisOverviewResponse,
-  SettingsBackfillResult,
+  type DatabaseEngineBackupRunNowResponse,
+  type DatabaseEngineBackupSchedulerStatus as DatabaseEngineBackupSchedulerStatusResponse,
+  type DatabaseEngineMongoSourceState as DatabaseEngineMongoSourceStateResponse,
+  type DatabaseEngineMongoSyncDirection,
+  type DatabaseEngineMongoSyncResponse as DatabaseEngineMongoSyncResponsePayload,
+  type DatabaseEngineBackupSchedulerTickResponse,
+  type DatabaseEngineOperationsJobs as DatabaseEngineOperationsJobsResponse,
+  type DatabaseEngineProviderPreview as DatabaseEngineProviderPreviewResponse,
+  type DatabaseEngineStatus as DatabaseEngineStatusResponse,
+  type MultiSchemaResponse,
+  type RedisOverview as RedisOverviewResponse,
+  type SettingsBackfillResult,
 } from '@/shared/contracts/database';
 import type { AppProviderDiagnostics as ProviderDiagnosticsResponse } from '@/shared/contracts/system';
 import { api } from '@/shared/lib/api-client';

@@ -1,9 +1,9 @@
 import {
-  DatabasePreviewGroup,
-  DatabasePreviewPayload,
-  DatabasePreviewRequest,
-  DatabasePreviewTable,
-  DatabaseTablePreviewData,
+  type DatabasePreviewGroup,
+  type DatabasePreviewPayload,
+  type DatabasePreviewRequest,
+  type DatabasePreviewTable,
+  type DatabaseTablePreviewData,
 } from '@/shared/contracts/database';
 import { type ApiPayloadResult } from '@/shared/contracts/http';
 import { api, ApiError } from '@/shared/lib/api-client';

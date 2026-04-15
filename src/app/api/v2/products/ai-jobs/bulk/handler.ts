@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { enqueueProductAiJob } from '@/features/jobs/server';
 import { startProductAiJobQueue } from '@/features/jobs/server';

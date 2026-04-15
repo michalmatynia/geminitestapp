@@ -5,7 +5,7 @@ import {
   putBaseImportRunItems,
   updateBaseImportRunStatus,
 } from '@/features/integrations/services/imports/base-import-run-repository';
-import { BaseImportErrorCode, BaseImportErrorClass, BaseImportItemRecord, BaseImportItemStatus } from '@/shared/contracts/integrations/base-com';
+import { type BaseImportErrorCode, type BaseImportErrorClass, type BaseImportItemRecord, type BaseImportItemStatus } from '@/shared/contracts/integrations/base-com';
 import {
   buildSummaryMessage,
   determineBaseImportTerminalStatus,

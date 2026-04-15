@@ -1,4 +1,4 @@
-import { SystemLogRecordDto as SystemLogRecord } from '@/shared/contracts/observability';
+import { type SystemLogRecordDto as SystemLogRecord } from '@/shared/contracts/observability';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { StatusVariant } from '@/shared/contracts/ui/base';
 

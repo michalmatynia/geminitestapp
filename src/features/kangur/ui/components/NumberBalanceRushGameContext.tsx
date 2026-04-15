@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext } from 'react';
-import { useNumberBalanceRushGameState } from './NumberBalanceRushGame.hooks';
+import { type useNumberBalanceRushGameState } from './NumberBalanceRushGame.hooks';
 
 export type NumberBalanceRushGameState = ReturnType<typeof useNumberBalanceRushGameState>;
 

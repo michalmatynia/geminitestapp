@@ -1,5 +1,5 @@
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { registryBackend } from '@/features/ai/ai-context-registry/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';

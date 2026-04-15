@@ -1,5 +1,5 @@
 import {
-  getRecommendedTrainingSetup,
+  type getRecommendedTrainingSetup,
   hasMatchingTrainingSelection,
 } from '@/features/kangur/ui/services/game-setup-recommendations';
 import type { KangurSessionStartOptions, KangurTrainingSelection } from '@/features/kangur/ui/types';

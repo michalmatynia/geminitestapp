@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import {
   assertAiPathRunAccess,
@@ -29,7 +29,7 @@ export async function POST_handler(
   }
   const { runId } = parsedParams.data;
   const repo = await getPathRunRepository();
-  let existing: AiPathRunRecord | null = await repo.findRunById(runId);
+  const existing: AiPathRunRecord | null = await repo.findRunById(runId);
   if (!existing) {
     await removePathRunQueueEntries([runId]);
     return NextResponse.json({

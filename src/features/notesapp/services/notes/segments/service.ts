@@ -32,11 +32,11 @@ import { repoCall } from './core';
 const buildRelations = (note: NoteWithRelations): RelatedNote[] => {
   const fromRelations = (note.relationsFrom ?? [])
     .map((rel: NoteRelationWithTarget) => rel.targetNote)
-    .filter((rel: RelatedNote | undefined): rel is RelatedNote => !!rel);
+    .filter((rel: RelatedNote | undefined): rel is RelatedNote => Boolean(rel));
 
   const toRelations = (note.relationsTo ?? [])
     .map((rel: NoteRelationWithSource) => rel.sourceNote)
-    .filter((rel: RelatedNote | undefined): rel is RelatedNote => !!rel);
+    .filter((rel: RelatedNote | undefined): rel is RelatedNote => Boolean(rel));
 
   const relations: RelatedNote[] = [...fromRelations, ...toRelations];
   const seen = new Set<string>();
@@ -101,7 +101,7 @@ export const noteService: NoteRepository = {
       const previousRelatedIds =
         previousNote.relationsFrom
           ?.map((rel: NoteRelationWithTarget) => rel.targetNote?.id)
-          .filter((rid: string | undefined): rid is string => !!rid) || [];
+          .filter((rid: string | undefined): rid is string => Boolean(rid)) || [];
       const nextRelatedIds = data.relatedNoteIds;
       const addedRelations = nextRelatedIds.filter(
         (relId: string) => !previousRelatedIds.includes(relId) && relId !== id

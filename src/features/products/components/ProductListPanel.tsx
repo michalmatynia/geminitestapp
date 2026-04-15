@@ -17,7 +17,7 @@ import { Table, TableBody } from '@/shared/ui/table';
 import { PromptModal } from '@/shared/ui/templates/modals/PromptModal';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
-const ProductCreatePromptModal = memo(function ProductCreatePromptModal() {
+const ProductCreatePromptModal = memo(() => {
   const { isPromptOpen, setIsPromptOpen, handleConfirmSku } = useProductListModalsContext();
   if (!isPromptOpen) return null;
 
@@ -34,7 +34,7 @@ const ProductCreatePromptModal = memo(function ProductCreatePromptModal() {
   );
 });
 
-const ProductListPanelFallback = memo(function ProductListPanelFallback() {
+const ProductListPanelFallback = memo(() => {
   return (
     <div className='space-y-4' data-testid='product-list-panel-fallback'>
       <div className='space-y-2'>
@@ -57,7 +57,7 @@ const ProductListPanelFallback = memo(function ProductListPanelFallback() {
   );
 });
 
-const ProductListPanelSurface = memo(function ProductListPanelSurface() {
+const ProductListPanelSurface = memo(() => {
   const [SurfaceComponent, setSurfaceComponent] = useState<ComponentType | null>(null);
 
   useEffect(() => {
@@ -90,7 +90,7 @@ const ProductListPanelSurface = memo(function ProductListPanelSurface() {
   return <SurfaceComponent />;
 });
 
-export const ProductListPanel = memo(function ProductListPanel() {
+export const ProductListPanel = memo(() => {
   return (
     <AppErrorBoundary source='products.ProductListPanel'>
       <ProductListPanelSurface />

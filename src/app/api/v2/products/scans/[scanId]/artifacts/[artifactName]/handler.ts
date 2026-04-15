@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import { type NextRequest } from 'next/server';
 import { z } from 'zod';
 
 import { readPlaywrightEngineArtifact } from '@/features/playwright/server';

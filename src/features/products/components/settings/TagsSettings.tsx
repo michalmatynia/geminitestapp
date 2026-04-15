@@ -204,7 +204,7 @@ export function TagsSettings(): React.JSX.Element {
       )}
 
       <ConfirmModal
-        isOpen={!!tagToDelete}
+        isOpen={Boolean(tagToDelete)}
         onClose={() => setTagToDelete(null)}
         onConfirm={handleConfirmDelete}
         title='Delete Tag'

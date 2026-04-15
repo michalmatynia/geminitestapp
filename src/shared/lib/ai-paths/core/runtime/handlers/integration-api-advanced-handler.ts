@@ -8,7 +8,7 @@ import {
 
 import { getValueAtMappingPath, renderTemplate, safeStringify } from '../../utils';
 import { resolveAuthHeaders } from './advanced-api/auth';
-import { DEFAULT_ADVANCED_API_CONFIG, JsonRecord } from './advanced-api/config';
+import { DEFAULT_ADVANCED_API_CONFIG, type JsonRecord } from './advanced-api/config';
 import {
   parseErrorRoutes,
   evaluateErrorRoute,
@@ -360,7 +360,7 @@ export const handleAdvancedApi: NodeHandler = async ({
   };
 
   while (pageCount < maxPages) {
-    let queryParams = { ...parsedQueryParams };
+    const queryParams = { ...parsedQueryParams };
     if (paginationMode === 'page') {
       queryParams[pageParam] = String(page);
       if (limitParam) queryParams[limitParam] = String(pageSize);

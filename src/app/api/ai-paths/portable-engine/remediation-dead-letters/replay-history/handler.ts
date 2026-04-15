@@ -1,7 +1,7 @@
 import { createHmac } from 'crypto';
 import { gzipSync } from 'zlib';
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { requireAiPathsAccess } from '@/features/ai/ai-paths/server';
 import { portablePathRemediationDeadLetterReplayHistoryQuerySchema } from '@/shared/contracts/ai-paths-portable-engine';

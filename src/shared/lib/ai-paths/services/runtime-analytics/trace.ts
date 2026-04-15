@@ -1,10 +1,10 @@
 import 'server-only';
 
 import {
-  AiPathRunRecord,
-  AiPathRuntimeTraceAnalytics,
-  AiPathRuntimeAnalyticsRange,
-  AiPathRuntimeAnalyticsSummary,
+  type AiPathRunRecord,
+  type AiPathRuntimeTraceAnalytics,
+  type AiPathRuntimeAnalyticsRange,
+  type AiPathRuntimeAnalyticsSummary,
 } from '@/shared/contracts/ai-paths';
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';

@@ -43,7 +43,7 @@ export function useCategoryMappingsByConnection(
   connectionId: string,
   options?: { enabled?: boolean }
 ): ListQuery<CategoryMappingWithDetails> {
-  const isEnabled = options?.enabled ?? !!connectionId;
+  const isEnabled = options?.enabled ?? Boolean(connectionId);
   const queryKey = marketplaceKeys.mappings(connectionId, 'all');
 
   return createListQueryV2({
@@ -52,7 +52,7 @@ export function useCategoryMappingsByConnection(
       api.get<CategoryMappingWithDetails[]>(
         `/api/marketplace/mappings?connectionId=${connectionId}`
       ),
-    enabled: isEnabled && !!connectionId,
+    enabled: isEnabled && Boolean(connectionId),
     meta: {
       source: 'shared.hooks.useCategoryMappingsByConnection',
       operation: 'list',
@@ -202,7 +202,7 @@ export function useBaseInventories(
   return createListQueryV2({
     queryKey,
     queryFn,
-    enabled: enabled && !!connectionId,
+    enabled: enabled && Boolean(connectionId),
     meta: {
       source: 'shared.hooks.useBaseInventories',
       operation: 'list',
@@ -248,7 +248,7 @@ export function useBaseWarehouses(
     id: inventoryId || null,
     queryKey,
     queryFn,
-    enabled: enabled && !!connectionId.trim() && !!inventoryId.trim(),
+    enabled: enabled && Boolean(connectionId.trim()) && Boolean(inventoryId.trim()),
     meta: {
       source: 'shared.hooks.useBaseWarehouses',
       operation: 'detail',

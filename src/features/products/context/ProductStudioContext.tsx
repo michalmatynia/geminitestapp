@@ -1,4 +1,9 @@
 'use client';
+
+// ProductStudioContext: manages state related to Image Studio integrations and
+// studio workflows for a product (selected images, variant mappings, run
+// status). Keeps studio state separate from core form state to simplify
+// lifecycle and caching semantics.
 'use no memo';
 
 import { useRouter } from 'nextjs-toploader/app';
@@ -246,7 +251,7 @@ export function ProductStudioProvider({
     setStudioActionError(null);
     const baselineIds = (variantsData?.variants ?? [])
       .map((s) => s.id)
-      .filter((id): id is string => !!id);
+      .filter((id): id is string => Boolean(id));
     try {
       const result = await sendToStudioMutation.mutateAsync({
         productId: product.id,

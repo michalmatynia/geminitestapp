@@ -1,4 +1,4 @@
-import { JSX } from 'react';
+import { type JSX } from 'react';
 
 import { renderHomeRoute } from './route-helpers/home-route-helpers';
 

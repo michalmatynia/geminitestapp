@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { getChatbotAgentRunDelegate } from '@/features/ai/agent-runtime/store-delegates';
 import { chatbotJobRepository } from '@/features/ai/chatbot/services/chatbot-job-repository';

@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import React, { useCallback } from 'react';
 
-import { ImageFileSelection } from '@/shared/contracts/files';
+import { type ImageFileSelection } from '@/shared/contracts/files';
 import type { ExpandedImageFile } from '@/shared/contracts/products/drafts';
 import { Button, Card, Badge } from '@/shared/ui/primitives.public';
 

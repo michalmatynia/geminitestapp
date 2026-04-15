@@ -22,7 +22,7 @@ import {
   getAiInsightsQueueStatusSnapshot,
   getQueueStatusScopeKey,
 } from './status-utils';
-import { AiPathRunQueueHotStatus } from './types';
+import { type AiPathRunQueueHotStatus } from './types';
 
 export type GetAiPathRunQueueStatusOptions = {
   bypassCache?: boolean;

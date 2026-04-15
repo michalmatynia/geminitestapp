@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type React from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import type { Edge } from '@/shared/contracts/ai-paths';
@@ -210,7 +211,7 @@ export function useCanvasInteractions(args?: {
       setConnectingPos,
       view,
       viewportRef,
-      toast: toast,
+      toast,
     }
   );
 
@@ -230,7 +231,7 @@ export function useCanvasInteractions(args?: {
     viewportRef,
     lastPointerCanvasPosRef: stateHandlers.lastPointerCanvasPosRef,
     view,
-    toast: toast,
+    toast,
   });
 
   const edgePaths = useEdgePaths(edgeRoutingMode as EdgeRoutingMode);
@@ -254,7 +255,7 @@ export function useCanvasInteractions(args?: {
     touchLongPressSelectionRef: touch.touchLongPressSelectionRef,
     touchLongPressIndicatorRafRef: touch.touchLongPressIndicatorRafRef,
     touchLongPressIndicatorHideTimerRef: touch.touchLongPressIndicatorHideTimerRef,
-    viewportRef: viewportRef,
+    viewportRef,
     latestViewRef,
     setTouchLongPressIndicator,
     setNodeSelection,

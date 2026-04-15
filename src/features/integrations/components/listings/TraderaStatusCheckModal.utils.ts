@@ -244,8 +244,8 @@ export function isListingLiveCheckPending(
   listing: ProductListingWithDetails | null | undefined
 ): boolean {
   return (
-    !!listing &&
-    isTraderaBrowserIntegrationSlug(listing.integration?.slug) &&
+    Boolean(listing) &&
+    isTraderaBrowserIntegrationSlug(listing?.integration?.slug) &&
     isTraderaStatusCheckPending(listing)
   );
 }

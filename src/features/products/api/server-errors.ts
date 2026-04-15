@@ -68,13 +68,13 @@ export function withErrorHandling<T extends unknown[]>(handler: (...args: T) => 
       // Ensure error is an instance of Error or ApiErrorBuilder for createVersionedErrorResponse
       if (error instanceof ApiErrorBuilder) {
         return createVersionedErrorResponse(error, status, requestId);
-      } else if (error instanceof Error) {
+      } if (error instanceof Error) {
         return createVersionedErrorResponse(error, status, requestId);
-      } else {
+      } 
         // Fallback for unexpected error types
         const genericError = new Error('An unknown error occurred');
         return createVersionedErrorResponse(genericError, 500, requestId);
-      }
+      
     }
   };
 }

@@ -6,18 +6,18 @@ import {
 } from '../filemaker-settings.database';
 import { normalizeString } from '../filemaker-settings.helpers';
 import {
-  FilemakerDatabase,
-  FilemakerAddress,
-  FilemakerAddressOwnerKind,
-  FilemakerAddressLink,
-  FilemakerPhoneNumber,
-  FilemakerPhoneNumberLink,
-  FilemakerEmail,
-  FilemakerEmailLink,
-  FilemakerEvent,
-  FilemakerEventOrganizationLink,
-  FilemakerOrganization,
-  FilemakerPerson,
+  type FilemakerDatabase,
+  type FilemakerAddress,
+  type FilemakerAddressOwnerKind,
+  type FilemakerAddressLink,
+  type FilemakerPhoneNumber,
+  type FilemakerPhoneNumberLink,
+  type FilemakerEmail,
+  type FilemakerEmailLink,
+  type FilemakerEvent,
+  type FilemakerEventOrganizationLink,
+  type FilemakerOrganization,
+  type FilemakerPerson,
 } from '../types';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 

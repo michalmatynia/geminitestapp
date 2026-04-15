@@ -14,7 +14,7 @@ import {
   loadImageElement,
   type CropRect,
 } from './GenerationToolbarImageUtils';
-import { useGenerationToolbarResolution } from './useGenerationToolbarResolution';
+import { type useGenerationToolbarResolution } from './useGenerationToolbarResolution';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 

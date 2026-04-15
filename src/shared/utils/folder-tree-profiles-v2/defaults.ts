@@ -1,6 +1,6 @@
 import { caseResolverProfiles } from './defaults-case-resolver';
 import { imageStudioProfiles } from './defaults-image-studio';
-import { FolderTreeProfilesV2Map } from './types';
+import { type FolderTreeProfilesV2Map } from './types';
 
 export const defaultFolderTreeProfilesV2: FolderTreeProfilesV2Map = {
   notes: {

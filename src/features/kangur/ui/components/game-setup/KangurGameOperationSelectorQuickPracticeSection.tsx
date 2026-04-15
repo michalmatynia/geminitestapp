@@ -10,8 +10,8 @@ import {
 } from './KangurGameOperationSelectorWidget.utils';
 import { KangurGameOperationSelectorQuickPracticeOptionCard } from './KangurGameOperationSelectorQuickPracticeOptionCard';
 import {
-  KangurGameOperationSelectorQuizGroup,
-  LessonQuizOption,
+  type KangurGameOperationSelectorQuizGroup,
+  type LessonQuizOption,
 } from './KangurGameOperationSelectorWidget.types';
 import { useKangurGameOperationSelector } from './KangurGameOperationSelectorContext';
 

@@ -4,7 +4,7 @@ import type {
   FilemakerEmailCampaignRunStatus,
 } from '../../types';
 import {
-  FilemakerEmailCampaignRunMetrics,
+  type FilemakerEmailCampaignRunMetrics,
 } from '../../types/campaigns';
 import {
   createFilemakerEmailCampaignRun,

@@ -1,6 +1,6 @@
-import { Collection } from 'mongodb';
+import { type Collection } from 'mongodb';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import { ProductDocument } from '../../mongo-product-repository-mappers';
+import { type ProductDocument } from '../../mongo-product-repository-mappers';
 import { productCollectionName } from '../../mongo-product-repository.helpers';
 import { ensureProductIndexes } from './indexes';
 

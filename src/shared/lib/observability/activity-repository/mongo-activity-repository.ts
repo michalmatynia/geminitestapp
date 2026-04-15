@@ -1,4 +1,4 @@
-import { ObjectId, Filter } from 'mongodb';
+import { ObjectId, type Filter } from 'mongodb';
 
 import type { ActivityRepository, ActivityFilters } from '@/shared/contracts/system';
 import type { ActivityLog, CreateActivityLog } from '@/shared/contracts/system';

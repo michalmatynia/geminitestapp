@@ -1,5 +1,5 @@
 
-import { NextRequest } from 'next/server';
+import { type NextRequest } from 'next/server';
 
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import {

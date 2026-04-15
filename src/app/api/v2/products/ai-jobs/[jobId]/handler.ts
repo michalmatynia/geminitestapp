@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getProductAiJob, cancelProductAiJob, deleteProductAiJob } from '@/features/jobs/server';

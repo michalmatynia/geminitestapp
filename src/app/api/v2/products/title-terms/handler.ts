@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getTitleTermRepository } from '@/features/products/server';
 import {
-  createProductTitleTermSchema,
+  type createProductTitleTermSchema,
   productTitleTermTypeSchema,
 } from '@/shared/contracts/products/title-terms';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';

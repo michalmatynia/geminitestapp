@@ -9,7 +9,7 @@ import { getFsPromises, joinRuntimePath } from '@/shared/lib/files/runtime-fs';
 import { productsRoot } from '@/shared/lib/files/server-constants';
 import { getImageFileRepository } from '@/shared/lib/files/services/image-file-repository';
 import { getProducerRepository } from '@/shared/lib/products/services/producer-repository';
-import { getProductRepository } from '@/shared/lib/products/services/product-repository';
+import { type getProductRepository } from '@/shared/lib/products/services/product-repository';
 import { getTagRepository } from '@/shared/lib/products/services/tag-repository';
 import { validateProductCreate, validateProductUpdate } from '@/shared/lib/products/validations';
 import { findProductListingByProductAndConnectionAcrossProviders, getProductListingRepository } from '@/features/integrations/services/product-listing-repository';

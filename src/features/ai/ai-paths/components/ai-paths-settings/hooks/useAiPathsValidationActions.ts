@@ -46,7 +46,7 @@ export function useAiPathsValidationActions(args: {
       const reportAiPathsError = useCallback(
       (error: unknown, context: Record<string, unknown>, fallbackMessage?: string): void => {
       const message = error instanceof Error ? error.message : String(error);
-      const fullMessage = `[ai-paths] ${fallbackMessage ? fallbackMessage + ' ' : ''}${message}`;
+      const fullMessage = `[ai-paths] ${fallbackMessage ? `${fallbackMessage  } ` : ''}${message}`;
       toast(fallbackMessage || message, { variant: 'error' });
       void persistLastError(fallbackMessage || message);
 

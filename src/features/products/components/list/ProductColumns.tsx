@@ -195,9 +195,9 @@ interface ColumnActionsProps {
   row: Row<ProductWithImages>;
 }
 
-const ActionsCell: React.FC<ColumnActionsProps> = memo(function ActionsCell({
+const ActionsCell: React.FC<ColumnActionsProps> = memo(({
   row,
-}: ColumnActionsProps) {
+}: ColumnActionsProps) => {
   const product: ProductWithImages = row.original;
   const { onProductEditClick, onProductDeleteClick, onDuplicateProduct, onPrefetchProductDetail } =
     useProductListRowActionsContext();
@@ -261,7 +261,7 @@ const ActionsCell: React.FC<ColumnActionsProps> = memo(function ActionsCell({
   );
 });
 
-const ImageCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function ImageCell({ row }) {
+const ImageCell: React.FC<{ row: Row<ProductWithImages> }> = memo(({ row }) => {
   const product: ProductWithImages = row.original;
   const { thumbnailSource, imageExternalBaseUrl } = useProductListRowVisualsContext();
 
@@ -301,7 +301,7 @@ const ImageCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function Image
   );
 });
 
-const NameCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function NameCell({ row }) {
+const NameCell: React.FC<{ row: Row<ProductWithImages> }> = memo(({ row }) => {
   const product: ProductWithImages = row.original;
   const { onProductNameClick, onPrefetchProductDetail } = useProductListRowActionsContext();
   const { productNameKey, categoryNameById } = useProductListRowVisualsContext();
@@ -520,7 +520,7 @@ const NameCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function NameCe
   );
 });
 
-const PriceCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function PriceCell({ row }) {
+const PriceCell: React.FC<{ row: Row<ProductWithImages> }> = memo(({ row }) => {
   const product: ProductWithImages = row.original;
   const { currencyCode, priceGroups } = useProductListRowVisualsContext();
 
@@ -535,11 +535,11 @@ const PriceCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function Price
     priceGroups
   );
 
-  const showCurrencyIndicator: boolean = !!(actualCurrency && actualCurrency !== currencyCode);
+  const showCurrencyIndicator: boolean = Boolean(actualCurrency && actualCurrency !== currencyCode);
   const hasConvertedPrice: boolean =
     displayPrice !== null &&
     product.price !== null &&
-    !!baseCurrencyCode &&
+    Boolean(baseCurrencyCode) &&
     normalizeCurrencyCode(baseCurrencyCode) !== normalizeCurrencyCode(currencyCode) &&
     displayPrice !== product.price;
 
@@ -580,7 +580,7 @@ const PriceCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function Price
   );
 });
 
-const StockCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function StockCell({ row }) {
+const StockCell: React.FC<{ row: Row<ProductWithImages> }> = memo(({ row }) => {
   const product: ProductWithImages = row.original;
 
   return (
@@ -595,9 +595,9 @@ const StockCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function Stock
   );
 });
 
-const IntegrationsCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function IntegrationsCell({
+const IntegrationsCell: React.FC<{ row: Row<ProductWithImages> }> = memo(({
   row,
-}) {
+}) => {
   const product: ProductWithImages = row.original;
   const { onIntegrationsClick: handleClick } = useProductListRowActionsContext();
   const { showTriggerRunFeedback, triggerButtonsReady = true } = useProductListRowVisualsContext();
@@ -734,7 +734,7 @@ const IntegrationsCell: React.FC<{ row: Row<ProductWithImages> }> = memo(functio
   );
 });
 
-const TriggerRunFeedbackHeader: React.FC = memo(function TriggerRunFeedbackHeader() {
+const TriggerRunFeedbackHeader: React.FC = memo(() => {
   let showTriggerRunFeedback: boolean = FALLBACK_HEADER_ACTIONS_CONTEXT.showTriggerRunFeedback;
   let setShowTriggerRunFeedback = FALLBACK_HEADER_ACTIONS_CONTEXT.setShowTriggerRunFeedback;
   let isContextAvailable = true;
@@ -775,7 +775,7 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
           table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate')
         }
         onCheckedChange={(checked: boolean | 'indeterminate'): void =>
-          table.toggleAllPageRowsSelected(!!checked)
+          table.toggleAllPageRowsSelected(Boolean(checked))
         }
         aria-label='Select all'
         className='cursor-pointer'
@@ -785,7 +785,7 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
       <Checkbox
         checked={row.getIsSelected()}
         onCheckedChange={(checked: boolean | 'indeterminate'): void =>
-          row.toggleSelected(!!checked)
+          row.toggleSelected(Boolean(checked))
         }
         aria-label='Select row'
         className='cursor-pointer'

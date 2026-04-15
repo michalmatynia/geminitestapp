@@ -57,7 +57,7 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
               table.getIsAllPageRowsSelected() ||
               (table.getIsSomePageRowsSelected() && 'indeterminate')
             }
-            onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+            onCheckedChange={(value) => table.toggleAllPageRowsSelected(Boolean(value))}
             aria-label='Select all'
           />
         ),
@@ -253,7 +253,7 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
       />
 
       <ConfirmModal
-        isOpen={!!sessionToDelete}
+        isOpen={Boolean(sessionToDelete)}
         onClose={() => setSessionToDelete(null)}
         onConfirm={() => {
           if (sessionToDelete) void deleteSession(sessionToDelete);

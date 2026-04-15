@@ -5,8 +5,8 @@ import {
   useEffect,
   useMemo,
   type ReactNode,
-  Dispatch,
-  SetStateAction,
+  type Dispatch,
+  type SetStateAction,
   useCallback,
 } from 'react';
 import { internalError } from '@/shared/errors/app-error';

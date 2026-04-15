@@ -1,4 +1,9 @@
 'use client';
+
+// useProductFormSubmit: orchestrates form submission flows for product
+// create/update. Handles serializing FormData, coordinating image uploads,
+// showing toasts, and delegating to mutation hooks for server requests.
+// Keeps the submission surface separate from form validation/formatting logic.
 // useProductFormSubmit: handles form submission for product create/update.
 // Builds FormData, normalizes parameters/custom fields, uploads images, and
 // uses create/update mutations. Provides hydation guards and optimistic save

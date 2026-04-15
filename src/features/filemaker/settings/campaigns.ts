@@ -8,8 +8,8 @@ export * from './campaign-factories';
 export * from './campaign-summarizers';
 
 import {
-  FilemakerEmailCampaignAudiencePreview,
-  FilemakerEmailCampaignLaunchEvaluation,
+  type FilemakerEmailCampaignAudiencePreview,
+  type FilemakerEmailCampaignLaunchEvaluation,
 } from '../types/campaigns';
 
 const isWithinAllowedHours = (

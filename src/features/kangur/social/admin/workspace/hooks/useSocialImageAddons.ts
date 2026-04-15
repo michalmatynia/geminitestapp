@@ -125,8 +125,8 @@ const resolveBatchCaptureSummary = (
     message:
       `${successCount > 0 ? 'Batch capture completed' : 'Batch capture finished with no assets'} ` +
       `(${successCount} add-on${successCount === 1 ? '' : 's'}, ` +
-      `${failureCount} failure${failureCount === 1 ? '' : 's'})` +
-      (failureSummary ? ` Failures: ${failureSummary}.` : ''),
+      `${failureCount} failure${failureCount === 1 ? '' : 's'})${ 
+      failureSummary ? ` Failures: ${failureSummary}.` : ''}`,
     variant: failureCount > 0 ? 'warning' : successCount > 0 ? 'success' : 'warning',
   };
 };
@@ -442,8 +442,8 @@ export function useSocialImageAddons(deps: SocialImageAddonsDeps) {
         return;
       }
       setBatchCaptureMessage(
-        `Captured ${completedJob.result.addons.length} add-on${completedJob.result.addons.length === 1 ? '' : 's'} from the current batch.` +
-          (failureSummary ? ` Failed: ${failureSummary}.` : '')
+        `Captured ${completedJob.result.addons.length} add-on${completedJob.result.addons.length === 1 ? '' : 's'} from the current batch.${ 
+          failureSummary ? ` Failed: ${failureSummary}.` : ''}`
       );
     } catch (error) {
       setBatchCaptureMessage(null);

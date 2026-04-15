@@ -22,7 +22,7 @@ import type {
 import type { ProductParameter } from '@/shared/contracts/products/parameters';
 import type { ProductRecord, ProductWithImages, ProductParameterValue } from '@/shared/contracts/products/product';
 import type { ProductCreateInput, ProductUpdateInput } from '@/shared/contracts/products/io';
-import { getProductRepository } from '@/shared/lib/products/services/product-repository';
+import { type getProductRepository } from '@/shared/lib/products/services/product-repository';
 import { normalizeProductCustomFieldValues } from '@/shared/lib/products/utils/custom-field-values';
 import { filterProductCustomFieldValuesByAllowedFieldNames } from '@/shared/lib/products/utils/custom-field-values';
 import { validateProductUpdate } from '@/shared/lib/products/validations';

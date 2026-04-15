@@ -1,5 +1,5 @@
 import { type AnyBulkWriteOperation } from 'mongodb';
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getCatalogRepository, getProductDataProvider } from '@/features/products/server';

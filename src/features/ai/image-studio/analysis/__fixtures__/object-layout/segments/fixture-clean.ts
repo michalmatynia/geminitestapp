@@ -3,7 +3,7 @@ import {
   paintRect,
 } from '../generators';
 import { exactExpectation } from './expectations';
-import { ObjectLayoutGoldenFixture } from './types';
+import { type ObjectLayoutGoldenFixture } from './types';
 
 export const fixtureTransparentCore = (): ObjectLayoutGoldenFixture => {
   const width = 96;

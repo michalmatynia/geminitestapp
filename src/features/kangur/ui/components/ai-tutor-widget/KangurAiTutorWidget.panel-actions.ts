@@ -300,7 +300,7 @@ export function useKangurAiTutorPanelActions({
           nodeId: target.nodeId,
           label: target.label,
           route: target.route ?? null,
-          anchorId: anchorId,
+          anchorId,
           messageIndex,
           sourcePathname: currentLocation.pathname,
           sourceSearch: currentLocation.search,

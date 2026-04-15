@@ -1,5 +1,5 @@
 import { hash } from 'bcryptjs';
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { normalizeAuthEmail } from '@/features/auth/server';
 import { getAuthSecurityPolicy, validatePasswordStrength } from '@/features/auth/server';

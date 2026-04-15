@@ -1,4 +1,4 @@
-import { ObjectId, type WithId, type Filter, type Document } from 'mongodb';
+import { type ObjectId, type WithId, type Filter, type Document } from 'mongodb';
 
 import { isBaseIntegrationSlug } from '@/features/integrations/constants/slugs';
 import { badRequestError, conflictError } from '@/shared/errors/app-error';
@@ -18,8 +18,8 @@ import {
   normalizeOptionalConnectionId,
   toIntegrationRecord,
   toConnectionRecord,
-  ConnectionDeleteOptions,
-  ConnectionDependencyCounts,
+  type ConnectionDeleteOptions,
+  type ConnectionDependencyCounts,
 } from './common';
 import type {
   IntegrationConnectionRecord,

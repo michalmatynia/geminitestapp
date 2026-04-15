@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { parseJsonBody } from '@/features/products/server';
 import { productBulkImagesBase64RequestSchema as bulkSchema } from '@/shared/contracts/products/product';

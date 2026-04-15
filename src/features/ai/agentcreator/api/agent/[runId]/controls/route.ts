@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { runAgentBrowserControl } from '@/features/ai/agent-runtime/tools/run-agent-browser-control';
 import { badRequestError, internalError } from '@/shared/errors/app-error';

@@ -1,7 +1,7 @@
 import { type ApiPayloadResult } from '@/shared/contracts/http';
 import { ApiError } from '@/shared/lib/api-client';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { DatabaseType } from '@/shared/contracts/database';
+import { type DatabaseType } from '@/shared/contracts/database';
 
 export const withDbTypeQuery = (endpoint: string, dbType?: DatabaseType): string => {
   if (!dbType) return endpoint;

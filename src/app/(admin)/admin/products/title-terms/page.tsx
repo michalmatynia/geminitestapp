@@ -1,4 +1,4 @@
-import { JSX } from 'react';
+import { type JSX } from 'react';
 
 import { AdminProductTitleTermsPage } from '@/features/products/public/admin-product-title-terms-page';
 

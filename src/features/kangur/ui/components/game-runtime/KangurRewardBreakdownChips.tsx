@@ -20,7 +20,7 @@ type KangurRewardBreakdownChipsProps = {
   limit?: number;
 };
 
-const KangurRewardBreakdownChips = memo(function KangurRewardBreakdownChips({
+const KangurRewardBreakdownChips = memo(({
   accent = 'slate',
   breakdown = [],
   chipClassName,
@@ -28,7 +28,7 @@ const KangurRewardBreakdownChips = memo(function KangurRewardBreakdownChips({
   dataTestId,
   itemDataTestIdPrefix,
   limit,
-}: KangurRewardBreakdownChipsProps): React.JSX.Element | null {
+}: KangurRewardBreakdownChipsProps): React.JSX.Element | null => {
   const translations = useTranslations('KangurProgressRuntime');
   const chipAccent = accent;
   const chipClasses = chipClassName;

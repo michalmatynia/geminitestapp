@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { deleteNoteFile } from '@/features/notesapp/server';
 import { noteService } from '@/features/notesapp/server';

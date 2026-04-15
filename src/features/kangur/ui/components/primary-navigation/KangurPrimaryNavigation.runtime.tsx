@@ -13,14 +13,14 @@ import { KangurHomeLogo } from '@/features/kangur/ui/components/wordmarks/Kangur
 import KangurVisualCueContent from '@/features/kangur/ui/components/KangurVisualCueContent';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import {
-  getKangurSixYearOldAgeGroupVisual,
-  getKangurSixYearOldSubjectVisual,
+  type getKangurSixYearOldAgeGroupVisual,
+  type getKangurSixYearOldSubjectVisual,
 } from '@/features/kangur/ui/constants/six-year-old-visuals';
 
 import { KangurHomeBetaBadge } from './KangurPrimaryNavigation.components';
 import {
   useKangurPrimaryNavigationLessonsPrefetchOnIntent,
-  useKangurPrimaryNavigationState,
+  type useKangurPrimaryNavigationState,
 } from './KangurPrimaryNavigation.hooks';
 import type {
   KangurNavActionConfig,

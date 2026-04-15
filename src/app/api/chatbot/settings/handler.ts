@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import {

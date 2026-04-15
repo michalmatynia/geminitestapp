@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useCallback, ReactNode } from 'react';
+import React, { useState, useMemo, useCallback, type ReactNode } from 'react';
 
 import { useFileAsset3dList } from '@/features/files/hooks/useFileAsset3dQueries';
 import {

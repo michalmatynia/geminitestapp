@@ -1,14 +1,15 @@
 'use client';
 
-import React, { useCallback, useRef, useState } from 'react';
+import type React from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 import {
-  MasterFolderTreeController,
-  MasterTreeId,
-  MasterTreeDropPositionDto,
+  type MasterFolderTreeController,
+  type MasterTreeId,
+  type MasterTreeDropPositionDto,
 } from '@/shared/contracts/master-folder-tree';
 import { resolveVerticalDropPosition } from '@/shared/utils/drag-drop';
-import { MasterTreeViewNode } from '@/shared/utils/master-folder-tree-engine';
+import { type MasterTreeViewNode } from '@/shared/utils/master-folder-tree-engine';
 
 import { getMasterTreeDragNodeData } from '../operations/drag-data';
 

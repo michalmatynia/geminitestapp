@@ -6,7 +6,7 @@ import { useFormContext } from 'react-hook-form';
 import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
 import { useProductValidationState } from '@/features/products/context/ProductValidationSettingsContext';
 import type { FieldValidatorIssue } from '@/features/products/validation-engine/core';
-import { ProductFormData } from '@/shared/contracts/products/drafts';
+import { type ProductFormData } from '@/shared/contracts/products/drafts';
 import { FormField } from '@/shared/ui/form-section';
 import { Hint } from '@/shared/ui/Hint';
 import { Input } from '@/shared/ui/input';
@@ -27,9 +27,9 @@ interface ValidatedFieldProps {
   unit?: string;
 }
 
-export const ValidatedField = memo(function ValidatedField(
+export const ValidatedField = memo((
   props: ValidatedFieldProps
-): React.JSX.Element {
+): React.JSX.Element => {
   const {
     name,
     label,

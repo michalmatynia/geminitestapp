@@ -278,7 +278,7 @@ export function useInventories(
       );
       return data.inventories;
     },
-    enabled: enabled && !!connectionId.trim(),
+    enabled: enabled && Boolean(connectionId.trim()),
     meta: {
       source: 'importExport.hooks.useInventories',
       operation: 'list',
@@ -315,7 +315,7 @@ export function useWarehouses(
         } satisfies BaseImportWarehousesPayload
       );
     },
-    enabled: enabled && !!inventoryId && !!connectionId.trim(),
+    enabled: enabled && Boolean(inventoryId) && Boolean(connectionId.trim()),
     meta: {
       source: 'importExport.hooks.useWarehouses',
       operation: 'detail',
@@ -448,7 +448,7 @@ export function useImportList(
         } satisfies BaseImportListPayload
       );
     },
-    enabled: enabled && !!inventoryId && !!params.connectionId.trim(),
+    enabled: enabled && Boolean(inventoryId) && Boolean(params.connectionId.trim()),
     meta: {
       source: 'importExport.hooks.useImportList',
       operation: 'detail',
@@ -528,7 +528,7 @@ export function useImportRun(
       const endpoint = `/api/v2/integrations/imports/base/runs/${encodeURIComponent(runId)}${query ? `?${query}` : ''}`;
       return api.get<BaseImportRunDetailResponse>(endpoint, { cache: 'no-store' });
     },
-    enabled: (options?.enabled ?? true) && !!runId,
+    enabled: (options?.enabled ?? true) && Boolean(runId),
     refetchInterval: options?.refetchInterval ?? false,
     meta: {
       source: 'importExport.hooks.useImportRun',

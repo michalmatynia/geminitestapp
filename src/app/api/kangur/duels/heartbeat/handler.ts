@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { heartbeatKangurDuelSession } from '@/features/kangur/duels/server';
 import { requireActiveLearner, resolveKangurActor } from '@/features/kangur/server';

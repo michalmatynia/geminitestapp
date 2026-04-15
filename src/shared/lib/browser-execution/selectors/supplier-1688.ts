@@ -100,7 +100,7 @@ const jsStr = (s: string): string => `'${s.replace(/\\/g, '\\\\').replace(/'/g, 
 
 /** Serialise an array of strings as a single-quoted JS array literal. */
 const jsStrArray = (arr: readonly string[]): string =>
-  '[' + arr.map(jsStr).join(', ') + ']';
+  `[${  arr.map(jsStr).join(', ')  }]`;
 
 export const generateSupplier1688SelectorRegistryRuntime = (): string =>
   [

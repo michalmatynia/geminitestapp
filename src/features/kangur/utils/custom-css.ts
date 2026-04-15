@@ -231,7 +231,7 @@ const scopeCss = (css: string, scope: string, rootSelector: string): string => {
 
     const { header, end, terminator } = readHeader(css, i);
     if (terminator === ';') {
-      out += header + ';';
+      out += `${header  };`;
       i = end + 1;
       continue;
     }
@@ -241,15 +241,15 @@ const scopeCss = (css: string, scope: string, rootSelector: string): string => {
       const atRuleName = getAtRuleName(header);
       if (atRuleName) {
         if (UNSCOPED_AT_RULES.has(atRuleName)) {
-          out += header + '{' + body + '}';
+          out += `${header  }{${  body  }}`;
         } else if (NESTED_AT_RULES.has(atRuleName)) {
-          out += header + '{' + scopeCss(body, scope, rootSelector) + '}';
+          out += `${header  }{${  scopeCss(body, scope, rootSelector)  }}`;
         } else {
-          out += header + '{' + body + '}';
+          out += `${header  }{${  body  }}`;
         }
       } else {
         const scopedHeader = scopeSelectorText(header, scope, rootSelector);
-        out += scopedHeader + '{' + body + '}';
+        out += `${scopedHeader  }{${  body  }}`;
       }
       i = blockEnd;
       continue;

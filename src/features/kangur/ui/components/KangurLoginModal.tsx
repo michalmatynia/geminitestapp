@@ -11,7 +11,7 @@ import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginMod
 import { memo, useCallback } from 'react';
 import type { JSX } from 'react';
 
-export const KangurLoginModal = memo(function KangurLoginModal(): JSX.Element {
+export const KangurLoginModal = memo((): JSX.Element => {
   const translations = useTranslations('KangurLoginModal');
   const {
     authMode,

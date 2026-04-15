@@ -3,7 +3,7 @@
 import { Search, X } from 'lucide-react';
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 
-import { FilterField } from '@/shared/contracts/ui/panels';
+import { type FilterField } from '@/shared/contracts/ui/panels';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { Button, Label } from '@/shared/ui/primitives.public';
 import { SelectSimple, SearchInput } from '@/shared/ui/forms-and-actions.public';

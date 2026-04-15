@@ -18,7 +18,7 @@ import {
   ALREADY_QUEUED_STATUSES,
   formatDate,
   hoursSince,
-  ListingRow,
+  type ListingRow,
   RELIST_ELIGIBLE_STATUSES,
   resolveDisplayedTraderaFailureReason,
   resolveListingUrl,
@@ -55,9 +55,9 @@ export function ListingRowView({
   const isRefreshingSession = refreshingSessionProductId === row.productId;
   const { productId, productName, listing, error, relistState, relistError, liveCheckState, liveCheckError } = row;
   const listingUrl = listing ? resolveListingUrl(listing) : null;
-  const hasListingId = !!listing?.id;
+  const hasListingId = Boolean(listing?.id);
   const supportsLiveCheck =
-    hasListingId && !!listing && isTraderaBrowserIntegrationSlug(listing.integration?.slug);
+    hasListingId && Boolean(listing) && isTraderaBrowserIntegrationSlug(listing?.integration?.slug);
   const isLiveCheckRunning = liveCheckState === 'queued' || liveCheckState === 'polling';
   const liveTraderaExecution = useTraderaLiveExecution(supportsLiveCheck ? listing : null);
   const displayedStatus = resolveTraderaRowStatusPresentation({

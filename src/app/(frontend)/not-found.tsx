@@ -1,5 +1,5 @@
 import { getTranslations } from 'next-intl/server';
-import { JSX } from 'react';
+import { type JSX } from 'react';
 
 import { Link } from '@/i18n/navigation';
 import { Button } from '@/shared/ui/button';

@@ -244,7 +244,7 @@ export async function handleTraderaBrowserTest(
         steps,
         sessionReady: true,
       });
-    } else if (manualMode || manualSessionRefreshMode) {
+    } if (manualMode || manualSessionRefreshMode) {
       const stepLabel = manualSessionRefreshMode ? 'Session refresh' : 'Manual login';
       let sessionAlreadyActive = false;
 

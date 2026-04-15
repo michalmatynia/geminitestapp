@@ -1,6 +1,6 @@
 import {
-  CreateValidationPatternPayload,
-  UpdateValidationPatternPayload,
+  type CreateValidationPatternPayload,
+  type UpdateValidationPatternPayload,
 } from '@/features/products/api/settings';
 import type { ProductValidationPattern } from '@/shared/contracts/products/validation';
 import {

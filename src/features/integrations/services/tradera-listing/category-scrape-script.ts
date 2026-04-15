@@ -224,7 +224,7 @@ export const extractTraderaCategoryPageChildren = ({
   if (!main) return { blocked: false, children: [] };
 
   const mainText = toLowerText(main.textContent || '').slice(0, 4000);
-  const hasCategoryLinks = !!main.querySelector('a[href*="/category/"]');
+  const hasCategoryLinks = Boolean(main.querySelector('a[href*="/category/"]'));
   if (!hasCategoryLinks && mainText && blockedTextHints.some((hint) => mainText.includes(hint))) {
     return { blocked: true, children: [] };
   }

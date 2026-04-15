@@ -1,6 +1,6 @@
-import React from 'react';
+import type React from 'react';
 
-import { Card } from '@/shared/ui/primitives.public';
+import { type Card } from '@/shared/ui/primitives.public';
 import { cn } from '@/shared/utils/ui-utils';
 
 export type ValidationSubpanelProps = {

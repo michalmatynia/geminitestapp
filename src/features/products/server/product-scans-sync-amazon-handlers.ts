@@ -44,6 +44,7 @@ import {
   shouldAutoShowScannerCaptchaBrowser,
   toRecord,
   upsertPersistedProductScanStep,
+  type AmazonScanScriptResult,
 } from './product-scans-service.helpers';
 
 import {
@@ -78,7 +79,7 @@ type SynchronizeAmazonStatusInput = {
   run: PlaywrightEngineRunRecord;
   engineRunId: string;
   resultValue: unknown;
-  parsedResult: any;
+  parsedResult: AmazonScanScriptResult;
 };
 
 export async function synchronizeAmazonCaptchaRequired({

@@ -334,7 +334,7 @@ export const recordMongoSourceSync = async (
 ): Promise<void> => {
   const filePath = getMongoSourceLastSyncFilePath();
   await fs.mkdir(path.dirname(filePath), { recursive: true });
-  await fs.writeFile(filePath, JSON.stringify(lastSync, null, 2) + '\n', 'utf8');
+  await fs.writeFile(filePath, `${JSON.stringify(lastSync, null, 2)  }\n`, 'utf8');
 };
 
 export const __testOnly = {

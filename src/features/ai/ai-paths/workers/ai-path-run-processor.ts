@@ -322,7 +322,7 @@ export const processRun = async (
         },
       });
       return { requeueDelayMs: delayMs };
-    } else {
+    } 
       const finishedAt = new Date();
       await repo.finalizeRun(run.id, 'dead_lettered', {
         errorMessage: message,
@@ -374,7 +374,7 @@ export const processRun = async (
         },
       });
       return;
-    }
+    
   }
 };
 

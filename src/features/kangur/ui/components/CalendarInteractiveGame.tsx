@@ -31,7 +31,7 @@ import {
 import { cn } from '@/features/kangur/shared/utils';
 
 import { SEASONS, WEEKDAYS } from './CalendarInteractiveGame.constants';
-import { useCalendarInteractiveGameState } from './CalendarInteractiveGame.hooks';
+import { type useCalendarInteractiveGameState } from './CalendarInteractiveGame.hooks';
 import { CalendarInteractiveProvider, useCalendarInteractiveContext } from './CalendarInteractive.context';
 import type {
   CalendarInteractiveGameProps,

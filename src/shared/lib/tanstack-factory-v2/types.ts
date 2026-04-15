@@ -13,7 +13,7 @@ import {
 } from '@tanstack/react-query';
 
 import { type ListResult } from '@/shared/contracts/base';
-import { TanstackFactoryMeta } from '../tanstack-factory-v2.types';
+import { type TanstackFactoryMeta } from '../tanstack-factory-v2.types';
 
 export type QueryFactoryFn<TQueryFnData, TQueryKey extends QueryKey> =
   | (() => Promise<TQueryFnData>)

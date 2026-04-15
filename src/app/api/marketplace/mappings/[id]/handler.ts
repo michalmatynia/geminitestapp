@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { getCategoryMappingRepository } from '@/features/integrations/services/category-mapping-repository';
 import { categoryMappingUpdateInputSchema } from '@/shared/contracts/integrations/listings';

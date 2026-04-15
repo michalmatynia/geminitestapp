@@ -60,7 +60,7 @@ import {
 } from './product-filters-utils';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-export const ProductSelectionActions = memo(function ProductSelectionActions() {
+export const ProductSelectionActions = memo(() => {
   const {
     data,
     rowSelection,

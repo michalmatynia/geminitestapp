@@ -164,7 +164,7 @@ export async function HomeContent({
 }: HomeContentProps): Promise<React.JSX.Element> {
   const resolvedLocale = normalizeSiteLocale(locale);
 
-  const defaultSlug = slugs.find((s: Slug) => !!s.isDefault);
+  const defaultSlug = slugs.find((s: Slug) => Boolean(s.isDefault));
 
   if (defaultSlug) {
     const publishedHomeProps = await withTiming('publishedHomeCmsData', () =>

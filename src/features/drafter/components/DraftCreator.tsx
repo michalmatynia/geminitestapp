@@ -1,6 +1,6 @@
 'use client';
 
-import { UseQueryResult } from '@tanstack/react-query';
+import { type UseQueryResult } from '@tanstack/react-query';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
@@ -441,7 +441,7 @@ export function DraftCreator({
             (entry: {
               parameterId: string | undefined;
               value: string;
-            }): entry is { parameterId: string; value: string } => !!entry.parameterId
+            }): entry is { parameterId: string; value: string } => Boolean(entry.parameterId)
           ),
         active,
         validatorEnabled,

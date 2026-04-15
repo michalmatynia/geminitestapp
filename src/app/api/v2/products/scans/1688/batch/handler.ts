@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { queue1688BatchProductScans } from '@/features/products/server/product-scans-service';
 import {
@@ -15,10 +15,12 @@ export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): P
 
   const result = await queue1688BatchProductScans({
     productIds: body.productIds,
-    userId: ctx.userId ?? null,
-    connectionId: body.connectionId ?? null,
-    stepSequenceKey: body.stepSequenceKey ?? null,
-    stepSequence: body.stepSequence ?? null,
+    ownerUserId: ctx.userId ?? null,
+    requestInput: {
+      ...(body.connectionId ? { connectionId: body.connectionId } : {}),
+      ...(body.stepSequenceKey ? { stepSequenceKey: body.stepSequenceKey } : {}),
+      ...(body.stepSequence ? { stepSequence: body.stepSequence } : {}),
+    },
   });
 
   return NextResponse.json(productScanBatchResponseSchema.parse(result));

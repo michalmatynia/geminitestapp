@@ -397,8 +397,8 @@ export async function processBase64ConvertAll(job: Job): Promise<Record<string, 
 
   for (;;) {
     const products = await productRepo.getProducts({
-      page: page,
-      pageSize: pageSize,
+      page,
+      pageSize,
     });
     if (!products.length) {
       break;

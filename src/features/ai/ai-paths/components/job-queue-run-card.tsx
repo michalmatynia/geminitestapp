@@ -305,25 +305,25 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
           ) : null}
           <div className='mt-1 flex flex-wrap items-center gap-1'>
             <StatusBadge
-              status={'Origin: ' + getOriginLabel(runOrigin)}
+              status={`Origin: ${  getOriginLabel(runOrigin)}`}
               variant={getOriginVariant(runOrigin)}
               size='sm'
               className='font-medium'
             />
             <StatusBadge
-              status={'Run: ' + getExecutionLabel(runExecution)}
+              status={`Run: ${  getExecutionLabel(runExecution)}`}
               variant={getExecutionVariant(runExecution)}
               size='sm'
               className='font-medium'
             />
             <StatusBadge
-              status={'Source: ' + runSource}
+              status={`Source: ${  runSource}`}
               variant='neutral'
               size='sm'
               className='font-medium'
             />
             <StatusBadge
-              status={'Debug: ' + runSourceDebug}
+              status={`Debug: ${  runSourceDebug}`}
               variant='info'
               size='sm'
               title={runSourceDebug}

@@ -270,7 +270,7 @@ const normalizeDefinitionCandidateValue = (args: {
   enforceOptionLabels: boolean;
   rawValue: unknown;
 }): { reason: 'empty' | 'invalid_option'; value: string | null } => {
-  let value =
+  const value =
     args.definition.selectorType === 'checklist'
       ? resolveChecklistValue(args.rawValue)
       : resolveParameterValue(args.rawValue);

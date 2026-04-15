@@ -765,7 +765,7 @@ function KangurPrimaryNavigationChoiceDialogs(): React.ReactNode {
   } = derived;
 
   const subjectDialog = buildKangurPrimaryNavigationSubjectDialog({
-    ageGroup: ageGroup,
+    ageGroup,
     defaultSubjectLabel,
     isSixYearOld,
     navTranslations,

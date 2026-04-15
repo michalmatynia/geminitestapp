@@ -1,4 +1,4 @@
-import { JSX } from 'react';
+import { type JSX } from 'react';
 
 import { AllegroMessagesPage } from '@/features/integrations/admin.public';
 

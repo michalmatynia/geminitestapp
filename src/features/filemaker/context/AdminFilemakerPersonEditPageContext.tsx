@@ -4,7 +4,7 @@ import React from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
-import { PickActions, OmitState } from '@/shared/lib/react/types';
+import { type PickActions, type OmitState } from '@/shared/lib/react/types';
 
 import {
   useAdminFilemakerPersonEditPageState,

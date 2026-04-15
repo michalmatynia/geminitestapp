@@ -1,14 +1,14 @@
 import {
-  ActiveNode,
+  type ActiveNode,
   ATTACK_MS,
   DEFAULT_GAIN,
   DEFAULT_VIBRATO_RATE_HZ,
   KANGUR_DEFAULT_MUSIC_SYNTH_ENVELOPE,
-  KangurMusicSynthEnvelope,
+  type KangurMusicSynthEnvelope,
   MAX_SUSTAINED_POLYPHONY,
   MAX_TRANSIENT_POLYPHONY,
   SUSTAINED_RELEASE_SECONDS,
-  SustainedNode,
+  type SustainedNode,
   VOICE_STEAL_RELEASE_SECONDS,
 } from './useKangurMusicSynth.types';
 

@@ -71,11 +71,11 @@ const resolveProductNote = (
   };
 };
 
-export const ProductImageCell = React.memo(function ProductImageCell({
+export const ProductImageCell = React.memo(({
   imageUrl,
   productName,
   note,
-}: ProductImageCellProps): React.JSX.Element {
+}: ProductImageCellProps): React.JSX.Element => {
   const { showPreview, updatePreview, hidePreview } = useProductImagePreview();
   const [noteModalOpen, setNoteModalOpen] = useState(false);
 

@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 
-import { TestLogEntry } from '@/shared/contracts/integrations/session-testing';
+import { type TestLogEntry } from '@/shared/contracts/integrations/session-testing';
 
-import { StepWithResult } from '../integrations-context-types';
+import { type StepWithResult } from '../integrations-context-types';
 
 export function useIntegrationsTestingImpl() {
   const [testLog, setTestLog] = useState<TestLogEntry[]>([]);

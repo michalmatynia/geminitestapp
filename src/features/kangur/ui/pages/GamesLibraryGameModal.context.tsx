@@ -48,7 +48,7 @@ export function GamesLibraryGameModalProvider({
 
     return {
       ...state,
-      game: game,
+      game,
       resolvedAgeGroupLabel,
       subjectLabel,
       linkedLessonCount,

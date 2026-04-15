@@ -5,18 +5,17 @@ import {
   collectPlaywrightEngineRunFailureMessages,
   readPlaywrightEngineRun,
   resolvePlaywrightEngineRunOutputs,
-  type PlaywrightEngineRunRecord,
 } from '@/features/playwright/server';
 import { type PlaywrightConnectionSettingsOverridesInput } from '@/features/playwright/server/connection-runtime';
 import {
   createDefaultProductScannerSettings,
 } from '@/features/products/scanner-settings';
 import {
-  isProductScanTerminalStatus,
   type ProductScanRecord,
   type ProductScanStatus,
 } from '@/shared/contracts/product-scans';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { productService } from '@/shared/lib/products/services/productService';
 
 import { evaluate1688SupplierCandidateMatch } from './product-scan-1688-evaluator';
 import {
@@ -33,7 +32,6 @@ import {
   toRecord,
   readOptionalString,
   normalizeErrorMessage,
-  resolveManualVerificationMessage,
   resolvePersistableScanUrl,
   resolveIsoAgeMs,
   resolveScanEngineRunId,
@@ -298,13 +296,31 @@ export async function synchronize1688ProductScan(scan: ProductScanRecord): Promi
     }
 
     const evaluatorConfig = await resolveProductScanner1688CandidateEvaluatorConfig(scannerSettings);
-    if (evaluatorConfig.mode !== 'disabled' && nextStatus === 'completed' && !supplierEvaluation) {
+    if (evaluatorConfig.enabled && evaluatorConfig.mode !== 'disabled' && nextStatus === 'completed' && !supplierEvaluation) {
+      const product = await productService.getProductById(scan.productId);
+      if (!product) {
+        return await persistFailedSynchronization(
+          scan,
+          'Product not found while evaluating 1688 supplier candidate.',
+          '1688 supplier reverse image scan failed.'
+        );
+      }
       supplierEvaluation = await evaluate1688SupplierCandidateMatch({
         scan,
         parsedResult,
         run,
+        product,
         evaluatorConfig,
       });
+
+      if (!supplierEvaluation) {
+        const message = '1688 supplier candidate evaluation failed.';
+        return await persistFailedSynchronization(
+          scan,
+          message,
+          '1688 supplier reverse image scan failed.'
+        );
+      }
 
       if (supplierEvaluation.status === 'failed') {
         const message = supplierEvaluation.error || '1688 supplier candidate evaluation failed.';
@@ -325,7 +341,15 @@ export async function synchronize1688ProductScan(scan: ProductScanRecord): Promi
         {
           key: 'supplier_ai_evaluate',
           label: 'Evaluate 1688 supplier candidate match',
-          group: 'supplier',
+          group: 'supplier' as const,
+          attempt: null,
+          candidateId: null,
+          inputSource: null,
+          warning: null,
+          url: null,
+          startedAt: null,
+          completedAt: null,
+          durationMs: null,
           status: supplierEvaluation.status === 'approved' ? 'completed' : 'failed',
           resultCode:
             supplierEvaluation.status === 'approved' ? 'candidates_triaged' : 'triage_rejected',
@@ -333,9 +357,12 @@ export async function synchronize1688ProductScan(scan: ProductScanRecord): Promi
             supplierEvaluation.status === 'approved'
               ? '1688 supplier candidate approved by AI.'
               : nextMessage,
-          details: {
-            evaluation: supplierEvaluation,
-          },
+          details: [
+            {
+              label: 'AI Evaluation',
+              value: JSON.stringify(supplierEvaluation).slice(0, 500),
+            },
+          ],
         },
       ]);
     }
@@ -354,7 +381,7 @@ export async function synchronize1688ProductScan(scan: ProductScanRecord): Promi
       supplierEvaluation,
       steps: finalizedSteps,
       rawResult: resultValue,
-      error: nextStatus === 'failed' ? nextMessage : null,
+      error: (nextStatus as string) === 'failed' ? nextMessage : null,
       asinUpdateStatus: 'not_needed',
       asinUpdateMessage: nextMessage,
       completedAt: run.completedAt ?? new Date().toISOString(),

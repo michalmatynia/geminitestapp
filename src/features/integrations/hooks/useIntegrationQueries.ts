@@ -102,7 +102,7 @@ export function useConnectionSession(
     id: connectionId,
     queryKey,
     queryFn,
-    enabled: (options?.enabled ?? true) && !!connectionId,
+    enabled: (options?.enabled ?? true) && Boolean(connectionId),
     staleTime: 0,
     meta: {
       source: 'integrations.hooks.useConnectionSession',
@@ -264,7 +264,7 @@ export const getBaseInventoriesQueryOptions = (
       if (data.error) throw new ApiError(data.error, 400);
       return Array.isArray(data.inventories) ? data.inventories : [];
     },
-    enabled: enabled && !!connectionId,
+    enabled: enabled && Boolean(connectionId),
     meta: {
       source: 'integrations.queries.getBaseInventoriesOptions',
       operation: 'list' as const,

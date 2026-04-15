@@ -256,8 +256,8 @@ export const normalizeProductScanRequestSequence = (
         ...(group ? { group } : {}),
       } satisfies ProductScanRequestSequenceEntry;
     })
-    .filter((entry): entry is ProductScanRequestSequenceEntry => entry != null)
-    .slice(0, 50);
+    .filter((entry): entry is NonNullable<typeof entry> => entry != null)
+    .slice(0, 50) as ProductScanRequestSequenceEntry[];
 
   return normalized.length > 0 ? normalized : null;
 };

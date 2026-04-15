@@ -54,9 +54,9 @@ const SWITCH_OPTION_TEXT = process.env.SWITCH_OPTION_TEXT || '2';
 const CONTINUE_COMMAND = process.env.CONTINUE_COMMAND || 'continue';
 const SESSION_PERMISSION_OPTION_TEXT = process.env.SESSION_PERMISSION_OPTION_TEXT || '2';
 
-const GEMINI_WRAPPER_ENV = process.env.GEMINI_WRAPPER || 'gemini-nightly-iso';
+const GEMINI_WRAPPER_ENV = process.env.GEMINI_WRAPPER || 'gemini-preview-iso';
 const GEMINI_WRAPPER_ARGS = parseJsonArrayEnv(process.env.GEMINI_WRAPPER_ARGS_JSON);
-const ISO_HOME = process.env.GEMINI_ISO_HOME || path.join(os.homedir(), '.gemini-nightly-home');
+const ISO_HOME = process.env.GEMINI_PREVIEW_ISO_HOME || process.env.GEMINI_ISO_HOME || path.join(os.homedir(), '.gemini-preview-home');
 const SHELL_PATH = resolveExecutable(process.env.PTY_SHELL || process.env.SHELL || '/bin/zsh');
 const WRAPPER_LAUNCH_MODE = ((process.env.WRAPPER_LAUNCH_MODE && process.env.WRAPPER_LAUNCH_MODE.trim()) || (process.env.PTY_FORCE_SHELL === '1' ? 'shell' : 'auto')).toLowerCase();
 
@@ -75,6 +75,7 @@ let activeDisposables = [];
 let continueTimer = null;
 let restartTimer = null;
 let forceKillTimer = null;
+let automationResumeTimer = null;
 let stdinBound = false;
 let resizeBound = false;
 let shuttingDown = false;
@@ -156,6 +157,7 @@ function spawnGemini(pty) {
   clearContinueTimer();
   clearRestartTimer();
   clearForceKillTimer();
+  clearAutomationResumeTimer();
   clearHotkeyCommandTimer();
   disposeActiveListeners();
   activePty = null;
@@ -202,7 +204,7 @@ function spawnGemini(pty) {
     }
 
     lastLaunchPlan = maybeFallback;
-    console.error(`[gemini-nightly-pty] Direct spawn failed, retrying via shell exec: ${error instanceof Error ? error.message : String(error)}`);
+    console.error(`[gemini-preview-pty] Direct spawn failed, retrying via shell exec: ${error instanceof Error ? error.message : String(error)}`);
     ptyProcess = pty.spawn(maybeFallback.file, maybeFallback.args, {
       name: process.env.TERM || 'xterm-256color',
       cols: getTerminalColumns(),
@@ -236,24 +238,24 @@ function spawnGemini(pty) {
 
 function logLaunchBanner({ model, canResume, wrapperInfo, launchPlan }) {
   const lines = [
-    `\n[gemini-nightly-pty] Launching model: ${model}${canResume ? ' (resuming latest)' : ' (fresh)'}${RAW_OUTPUT ? ' [raw-output]' : ''}`,
-    `[gemini-nightly-pty] Wrapper request: ${GEMINI_WRAPPER_ENV}`,
-    `[gemini-nightly-pty] Wrapper resolved: ${wrapperInfo.resolvedPath || '(not found on PATH yet)'}${wrapperInfo.exists ? '' : ' [missing]'}`,
-    `[gemini-nightly-pty] Wrapper kind: ${wrapperInfo.kind}`,
-    `[gemini-nightly-pty] Launch mode: ${launchPlan.mode}`,
-    `[gemini-nightly-pty] Auto-continue mode: ${AUTO_CONTINUE_MODE}`,
-    `[gemini-nightly-pty] Auto-approve session permissions: ${AUTO_ALLOW_SESSION_PERMISSIONS ? 'ON' : 'OFF'}`,
-    `[gemini-nightly-pty] PTY backend: ${activePtyModuleName}`,
-    `[gemini-nightly-pty] Local controls: ${HOTKEY_PREFIX_LABEL} h help, ${HOTKEY_PREFIX_LABEL} a toggle auto, ${HOTKEY_PREFIX_LABEL} s switch model, ${HOTKEY_PREFIX_LABEL} q quit`,
+    `\n[gemini-preview-pty] Launching model: ${model}${canResume ? ' (resuming latest)' : ' (fresh)'}${RAW_OUTPUT ? ' [raw-output]' : ''}`,
+    `[gemini-preview-pty] Wrapper request: ${GEMINI_WRAPPER_ENV}`,
+    `[gemini-preview-pty] Wrapper resolved: ${wrapperInfo.resolvedPath || '(not found on PATH yet)'}${wrapperInfo.exists ? '' : ' [missing]'}`,
+    `[gemini-preview-pty] Wrapper kind: ${wrapperInfo.kind}`,
+    `[gemini-preview-pty] Launch mode: ${launchPlan.mode}`,
+    `[gemini-preview-pty] Auto-continue mode: ${AUTO_CONTINUE_MODE}`,
+    `[gemini-preview-pty] Auto-approve session permissions: ${AUTO_ALLOW_SESSION_PERMISSIONS ? 'ON' : 'OFF'}`,
+    `[gemini-preview-pty] PTY backend: ${activePtyModuleName}`,
+    `[gemini-preview-pty] Local controls: ${HOTKEY_PREFIX_LABEL} h help, ${HOTKEY_PREFIX_LABEL} a toggle auto, ${HOTKEY_PREFIX_LABEL} s switch model, ${HOTKEY_PREFIX_LABEL} q quit`,
   ];
 
   if (wrapperInfo.kind === 'script' && wrapperInfo.shebang) {
-    lines.push(`[gemini-nightly-pty] Script shebang: ${wrapperInfo.shebang}${wrapperInfo.hasCRLFShebang ? ' [CRLF detected]' : ''}`);
+    lines.push(`[gemini-preview-pty] Script shebang: ${wrapperInfo.shebang}${wrapperInfo.hasCRLFShebang ? ' [CRLF detected]' : ''}`);
   }
 
   if (DEBUG_LAUNCH) {
-    lines.push(`[gemini-nightly-pty] Launch file: ${launchPlan.file}`);
-    lines.push(`[gemini-nightly-pty] Launch args: ${JSON.stringify(launchPlan.args)}`);
+    lines.push(`[gemini-preview-pty] Launch file: ${launchPlan.file}`);
+    lines.push(`[gemini-preview-pty] Launch args: ${JSON.stringify(launchPlan.args)}`);
   }
 
   console.error(lines.join('\n') + '\n');
@@ -520,7 +522,7 @@ function maybeAutomate(runId) {
 
     switching = true;
     clearContinueTimer();
-    console.error(`\n[gemini-nightly-pty] Capacity busy on ${currentModel()} — switching model...\n`);
+    console.error(`\n[gemini-preview-pty] Capacity busy on ${currentModel()} — switching model...\n`);
     sendLine(SWITCH_OPTION_TEXT, 'switch-model', runId);
     return;
   }
@@ -545,7 +547,7 @@ function handleUsageLimit(state) {
 
   if (AUTO_DISABLE_ON_USAGE_LIMIT) {
     setAutomationEnabled(false, 'usage_limit');
-    console.error(`\n[gemini-nightly-pty] Usage limit detected (${state.reason}) — automation paused. ${hotkeySummary()}\n`);
+    console.error(`\n[gemini-preview-pty] Usage limit detected (${state.reason}) — automation paused. ${hotkeySummary()}\n`);
   }
 }
 
@@ -563,6 +565,24 @@ function handlePermissionMenu(state, runId) {
   }
 }
 
+function resetAutomationTracking() {
+  clearContinueTimer();
+  clearRestartTimer();
+  usageLimitLatched = false;
+  resetCapacityEventState();
+}
+
+function recheckVisiblePrompt(reason = 'manual recheck') {
+  if (!activePty || shuttingDown) return;
+  if (!isAutomationActive()) return;
+
+  if (DEBUG_AUTOMATION) {
+    console.error(`[gemini-preview-pty][auto] Rechecking visible prompt (${reason})`);
+  }
+
+  maybeAutomate(activeRunId);
+}
+
 function scheduleContinueRetry(state, runId) {
   if (!AUTO_CONTINUE_ON_CAPACITY) return;
   if (continueTimer) return;
@@ -575,7 +595,7 @@ function scheduleContinueRetry(state, runId) {
   }
 
   const delay = Math.min(CAPACITY_RETRY_MS * 2 ** autoContinueAttempts, MAX_CAPACITY_RETRY_MS);
-  console.error(`\n[gemini-nightly-pty] ${state.reason} — retrying in ${delay}ms (sending: ${continueLabel}) [${autoContinueAttempts + 1}/${AUTO_CONTINUE_MAX_PER_EVENT}]\n`);
+  console.error(`\n[gemini-preview-pty] ${state.reason} — retrying in ${delay}ms (sending: ${continueLabel}) [${autoContinueAttempts + 1}/${AUTO_CONTINUE_MAX_PER_EVENT}]\n`);
   continueTimer = setTimeout(() => {
     continueTimer = null;
     if (runId !== activeRunId || !activePty || !isAutomationActive()) return;
@@ -611,12 +631,19 @@ function clearForceKillTimer() {
   }
 }
 
+function clearAutomationResumeTimer() {
+  if (automationResumeTimer) {
+    clearTimeout(automationResumeTimer);
+    automationResumeTimer = null;
+  }
+}
+
 function sendLine(text, reason, runId) {
   if (runId !== activeRunId || !activePty) return false;
 
   try {
     if (DEBUG_AUTOMATION) {
-      console.error(`[gemini-nightly-pty][auto] send ${JSON.stringify(text)} (${reason})`);
+      console.error(`[gemini-preview-pty][auto] send ${JSON.stringify(text)} (${reason})`);
     }
     activePty.write(`${text}\r`);
     return true;
@@ -630,7 +657,7 @@ function sendRaw(text, reason = 'raw') {
   if (!activePty) return false;
   try {
     if (DEBUG_AUTOMATION) {
-      console.error(`[gemini-nightly-pty][raw] send ${JSON.stringify(text)} (${reason})`);
+      console.error(`[gemini-preview-pty][raw] send ${JSON.stringify(text)} (${reason})`);
     }
     activePty.write(text);
     return true;
@@ -694,7 +721,7 @@ function handleChildExit(pty, { exitCode, signal, runId }) {
 
   const noResumeSession = resumeEnabledThisRun && (exitCode === 42 || sawNoResumeSession);
   if (noResumeSession) {
-    console.error('[gemini-nightly-pty] No resumable session — retrying without --resume\n');
+    console.error('[gemini-preview-pty] No resumable session — retrying without --resume\n');
     resumeEnabledThisRun = false;
     spawnGemini(pty);
     return;
@@ -714,12 +741,12 @@ function handleChildExit(pty, { exitCode, signal, runId }) {
 
   if (canAutoRestart) {
     if (!recordAutoRestart()) {
-      console.error(`\n[gemini-nightly-pty] Too many auto-restarts in a short window — stopping the loop. ${hotkeySummary()}\n`);
+      console.error(`\n[gemini-preview-pty] Too many auto-restarts in a short window — stopping the loop. ${hotkeySummary()}\n`);
       cleanupAndExit(typeof exitCode === 'number' ? exitCode : 1);
       return;
     }
 
-    console.error(`[gemini-nightly-pty] Exited during/after capacity event — restarting in ${CAPACITY_RETRY_MS}ms...\n`);
+    console.error(`[gemini-preview-pty] Exited during/after capacity event — restarting in ${CAPACITY_RETRY_MS}ms...\n`);
     restartTimer = setTimeout(() => {
       restartTimer = null;
       if (runId !== activeRunId || shuttingDown) return;
@@ -844,21 +871,31 @@ function detectAutomationState(text) {
     fingerprint: '',
   };
 
-  const permissionPromptMatch = tail.match(/allow\s+execution\s+of\s*:/i);
-  const allowSessionMatch = tail.match(/(?:^|\n)\s*(\d+)\s*[.):-]?\s*allow\s+for\s+this\s+session\b/i);
-  const allowOnceMatch = tail.match(/(?:^|\n)\s*(\d+)\s*[.):-]?\s*allow\s+once\b/i);
+  const permissionPromptMatch =
+    tail.match(/allow\s+execution\s+of\s*:/i) ||
+    tail.match(/action\s+required/i);
+  const allowSessionMatch = matchNumberedMenuOption(tail, 'allow for this session');
+  const allowOnceMatch = matchNumberedMenuOption(tail, 'allow once');
+  const denyMatch =
+    matchNumberedMenuOption(tail, 'no, suggest changes') ||
+    matchNumberedMenuOption(tail, 'deny') ||
+    matchNumberedMenuOption(tail, 'reject');
 
-  if (permissionPromptMatch && allowSessionMatch && allowOnceMatch) {
+  const hasPermissionPromptText =
+    /allow\s+execution\s+of\s*:/i.test(tail) ||
+    (/action\s+required/i.test(tail) && /allow\s+for\s+this\s+session/i.test(tail));
+
+  if (hasPermissionPromptText && allowSessionMatch) {
     const permissionFingerprint = extractMenuFingerprint(
       tail,
-      permissionPromptMatch.index ?? 0,
-      allowSessionMatch.index ?? permissionPromptMatch.index ?? 0
+      permissionPromptMatch?.index ?? allowSessionMatch.index ?? 0,
+      denyMatch?.index ?? allowSessionMatch.index ?? permissionPromptMatch?.index ?? 0
     );
 
     return {
       ...defaultState,
       hasPermissionMenu: true,
-      permissionOptionText: allowSessionMatch[1] || SESSION_PERMISSION_OPTION_TEXT,
+      permissionOptionText: allowSessionMatch.optionText || SESSION_PERMISSION_OPTION_TEXT,
       permissionFingerprint,
       reason: 'permission prompt',
       fingerprint: permissionFingerprint,
@@ -937,6 +974,46 @@ function extractMenuFingerprint(text, firstIndex, secondIndex) {
   const start = Math.max(0, Math.min(firstIndex, secondIndex) - 40);
   const end = Math.min(text.length, Math.max(firstIndex, secondIndex) + 220);
   return text.slice(start, end).replace(/\s+/g, ' ').trim();
+}
+
+function matchNumberedMenuOption(text, label) {
+  const escapedLabel = escapeRegex(label).replace(/\s+/g, '\\s+');
+  const patterns = [
+    new RegExp(
+      `(?:^|\\n)[^\S\n]*(?:[│║┃|][^\S\n]*)*(?:[•●◦▪◆▶➜»›>*?-][^\S\n]*)?(\\d+)\s*[.):-]?[^\S\n]*${escapedLabel}\\b`,
+      'i'
+    ),
+    new RegExp(
+      `(?:^|\\n)[^\S\n]*(?:[│║┃|][^\S\n]*)*(?:[•●◦▪◆▶➜»›>*?-][^\S\n]*)?${escapedLabel}\\b[^\S\n]*[(:-]?[^\S\n]*(\\d+)\\b`,
+      'i'
+    ),
+  ];
+
+  for (const pattern of patterns) {
+    const match = pattern.exec(text);
+    if (match) {
+      return {
+        index: match.index,
+        optionText: match[1] || '',
+        raw: match[0],
+      };
+    }
+  }
+
+  const labelOnly = new RegExp(escapedLabel, 'i').exec(text);
+  if (labelOnly) {
+    return {
+      index: labelOnly.index,
+      optionText: '',
+      raw: labelOnly[0],
+    };
+  }
+
+  return null;
+}
+
+function escapeRegex(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function bindUserInput() {
@@ -1148,6 +1225,7 @@ function requestLauncherAction(kind) {
   clearContinueTimer();
   clearRestartTimer();
   clearForceKillTimer();
+  clearAutomationResumeTimer();
   switching = false;
   sawCapacityAt = 0;
   plannedAction = { kind, code: 0 };
@@ -1216,11 +1294,19 @@ function printLocalHelp() {
 function setAutomationEnabled(enabled, reason = 'manual') {
   automationEnabled = enabled;
   automationDisabledReason = enabled ? '' : reason;
+
   if (!enabled) {
     automationPausedUntil = 0;
     clearContinueTimer();
     clearRestartTimer();
+    clearAutomationResumeTimer();
+    return;
   }
+
+  automationPausedUntil = 0;
+  clearAutomationResumeTimer();
+  resetAutomationTracking();
+  recheckVisiblePrompt('automation enabled');
 }
 
 function pauseAutomationTemporarily(ms, reason, silent = false) {
@@ -1231,7 +1317,7 @@ function pauseAutomationTemporarily(ms, reason, silent = false) {
     automationPausedUntil = until;
   }
   if (!silent) {
-    console.error(`\n[gemini-nightly-pty] Automation paused for ${Math.round(ms / 1000)}s (${reason}). ${hotkeySummary()}\n`);
+    console.error(`\n[gemini-preview-pty] Automation paused for ${Math.round(ms / 1000)}s (${reason}). ${hotkeySummary()}\n`);
   }
 }
 
@@ -1256,6 +1342,7 @@ function cleanupAndExit(code) {
   clearContinueTimer();
   clearRestartTimer();
   clearForceKillTimer();
+  clearAutomationResumeTimer();
   clearHotkeyCommandTimer();
   disposeActiveListeners();
 

@@ -1,4 +1,4 @@
-import { ParamSpec, ParamIssue } from '@/shared/contracts/prompt-engine';
+import { type ParamSpec, type ParamIssue } from '@/shared/contracts/prompt-engine';
 
 import { getDeepValue, isRgbArray, isTuple2NumberArray } from './utils';
 

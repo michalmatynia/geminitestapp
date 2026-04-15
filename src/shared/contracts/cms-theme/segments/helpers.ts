@@ -1,5 +1,5 @@
-import { ColorScheme, ColorSchemeColors } from './base';
-import { ThemeSettings, themeSettingsSchema } from './main';
+import { type ColorScheme, type ColorSchemeColors } from './base';
+import { type ThemeSettings, themeSettingsSchema } from './main';
 import { DEFAULT_THEME } from './defaults';
 
 export function normalizeThemeSettings(

@@ -632,7 +632,7 @@ export function ShippingGroupsSettings(): React.JSX.Element {
       )}
 
       <ConfirmModal
-        isOpen={!!shippingGroupToDelete}
+        isOpen={Boolean(shippingGroupToDelete)}
         onClose={() => setShippingGroupToDelete(null)}
         onConfirm={handleConfirmDelete}
         title='Delete Shipping Group'

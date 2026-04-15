@@ -1,4 +1,4 @@
-import { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
+import { type ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 export const safeLocalStorageGet = (key: string): string | null => {
@@ -38,7 +38,7 @@ export const readCachedMessages = (sessionId: string): ChatMessage[] => {
     if (!Array.isArray(parsed)) return [];
     return (parsed as unknown[]).filter(
       (message: unknown): message is ChatMessage =>
-        !!message &&
+        message != null &&
         typeof message === 'object' &&
         'content' in message &&
         typeof (message as { content: unknown }).content === 'string'

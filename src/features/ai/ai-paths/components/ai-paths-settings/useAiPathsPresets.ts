@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useCallback, useEffect } from 'react';
+import type React from 'react';
+import { useCallback, useEffect } from 'react';
 
 import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
 import { usePresetsActions, usePresetsState } from '@/features/ai/ai-paths/context/PresetsContext';
@@ -13,7 +14,7 @@ import type {
   Edge,
 } from '@/shared/contracts/ai-paths';
 import type { Toast } from '@/shared/contracts/ui/base';
-import { ConfirmConfig } from '@/shared/hooks/ui/useConfirm';
+import { type ConfirmConfig } from '@/shared/hooks/ui/useConfirm';
 import {
   BUNDLE_INPUT_PORTS,
   CLUSTER_PRESETS_KEY,

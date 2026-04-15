@@ -15,11 +15,11 @@ import { usePlaywrightStepSequencer } from '../../context/PlaywrightStepSequence
 // Single action row (expandable)
 // ---------------------------------------------------------------------------
 
-const SavedActionRow = memo(function SavedActionRow({
+const SavedActionRow = memo(({
   action,
 }: {
   action: PlaywrightAction;
-}): React.JSX.Element {
+}): React.JSX.Element => {
   const { stepSets, handleDeleteAction } = usePlaywrightStepSequencer();
   const { data: personas = [] } = usePlaywrightPersonas();
   const [expanded, setExpanded] = useState(false);

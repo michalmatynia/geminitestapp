@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { redirect } from 'next/navigation';
-import { JSX } from 'react';
+import { type JSX } from 'react';
 
 import type { CmsDomain } from '@/shared/contracts/cms';
 import { getCmsRepository, getSlugsForDomain, isDomainZoningEnabled, resolveCmsDomainFromHeaders } from '@/features/cms/server';

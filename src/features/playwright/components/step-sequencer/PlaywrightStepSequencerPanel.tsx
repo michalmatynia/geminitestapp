@@ -83,7 +83,7 @@ function PlaywrightStepSequencerContent(): React.JSX.Element {
   );
 }
 
-export const PlaywrightStepSequencerPanel = memo(function PlaywrightStepSequencerPanel() {
+export const PlaywrightStepSequencerPanel = memo(() => {
   return (
     <AppErrorBoundary source='playwright.PlaywrightStepSequencerPanel'>
       {/* Modals — rendered outside layout flow */}

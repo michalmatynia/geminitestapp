@@ -1,5 +1,10 @@
 'use client';
 
+// useProductListListingStatuses: detects listing lifecycle transitions by
+// observing listing-related statuses (in-flight → terminal). Exposes maps and
+// helpers to surface row badges when a product's listing changes state and to
+// trigger UI highlights or to invalidate caches for completed listings.
+
 // useProductListListingStatuses: watches badge status maps for visible rows and
 // detects transitions from 'in-flight' -> 'completed'. When such transitions are
 // observed for visible products, triggers a UI highlight via

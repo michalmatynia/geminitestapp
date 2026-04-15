@@ -1,5 +1,10 @@
 'use client';
 
+// useProductListDebugLogging: lightweight debug logging utilities that
+// annotate query keys and user actions with structured logs. Intended for
+// developer diagnostics and controlled via feature flags or env vars; logs
+// are throttled/deduped to avoid noise in production.
+
 // useProductListDebugLogging: gated debug logger that diffs a compact
 // snapshot and emits structured debug events via product-list observability
 // shippers. Throttled to reduce noise and only active when debug mode is on.

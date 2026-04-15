@@ -1,5 +1,12 @@
 'use client';
 
+// useProductFormValidator: integrates product validation engine with the
+// product form. Responsibilities:
+// - Wire validator settings and decisions, manage accept/deny flow
+// - Provide helpers to accept/deny issues and apply auto-accept rules
+// - Coordinate server-side validation mutations and optimistic formatting
+// Keep client runtime directive; validator hooks rely on react-hook-form context.
+
 import { useCallback, useEffect, useMemo, useRef, useState, type SetStateAction } from 'react';
 import { useFormContext } from 'react-hook-form';
 

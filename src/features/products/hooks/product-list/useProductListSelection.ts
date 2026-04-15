@@ -1,5 +1,10 @@
 'use client';
 
+// useProductListSelection: manages table row selection state (single/multi),
+// keyboard modifiers, and helper APIs for bulk actions. Exposes stable
+// selection state suitable for passing into the table component and
+// integrates with URL/state persistence where necessary.
+
 // useProductListSelection: manages per-row selection state and global selection
 // operations for the product list. Provides helpers to select the current page,
 // select all matches (server-side via an API query), and orchestrates bulk

@@ -1,3 +1,7 @@
+// productListStateHelpers: pure utilities for product-list state normalization
+// (page size normalization, deferred bootstrapping helpers, background-sync
+// heuristics). These helpers are deliberately runtime-agnostic and can be used
+// by server and client code; keep them free of React hooks or browser-only APIs.
 import { normalizeProductPageSize } from '@/shared/lib/products/constants';
 
 export type DeferredDraftBootstrapTarget = {

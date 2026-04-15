@@ -1,5 +1,10 @@
 'use client';
 
+// useProductListModals: orchestrates create/edit/delete modal visibility and
+// modal lifecycle callbacks. Keeps modal boolean state, editing payloads, and
+// safe closure handlers in one place so the table and toolbars can remain
+// thin.
+
 // useProductListModals: coordinates modal open/close state and modal-scoped
 // operations (integrations modal, list product modal, export settings, mass
 // list) while enriching recovery contexts with persisted quick-list feedback

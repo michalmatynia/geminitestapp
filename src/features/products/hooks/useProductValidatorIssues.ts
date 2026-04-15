@@ -1,5 +1,10 @@
 'use client';
 
+// useProductValidatorIssues: collects and exposes field-level validation issues
+// for product forms (client-side and server feedback). Provides utilities to
+// query active issues per-field, map issues to UI severity, and integrates
+// with the validator decision registry used by the form editor.
+
 import { useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react';
 
 import {

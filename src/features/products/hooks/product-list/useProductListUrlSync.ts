@@ -1,5 +1,11 @@
 'use client';
 
+// useProductListUrlSync: keeps product-list filter state in sync with the
+// browser URL (query params). Handles initial hydration from the URL,
+// updates URL on filter changes, and supports back/forward navigation.
+// Debounces updates to avoid noisy history entries and preserves canonical
+// query formats for shareable links.
+
 // useProductListUrlSync: utilities to keep product-editor related query
 // parameters (openProductId, openProductTab, studio refs) in the URL. Exposes
 // a helper to remove editor-specific params when closing the editor. Uses

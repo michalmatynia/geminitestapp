@@ -1,4 +1,9 @@
 'use client';
+
+// useProductListCategories: resolves category filters, builds flattened and
+// hierarchical category view for the product list, and exposes helpers
+// for category selection and breadcrumb resolution. Keeps client-only logic
+// (tree expansion, client filtering) out of server entrypoints.
 'use no memo';
 
 // useProductListCategories: derives an embedded category-name map from the

@@ -87,4 +87,3 @@ export {
   readPersistedVintedQuickListFeedback,
   persistVintedQuickListFeedback,
 } from './utils/vintedQuickListFeedback';
-export { DEFAULT_TRADERA_QUICKLIST_SCRIPT } from './services/tradera-listing/default-script';

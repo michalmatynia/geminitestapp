@@ -39,3 +39,4 @@ export * from './workers/vintedListingQueue';
 export * from './workers/traderaRelistSchedulerQueue';
 export * from '@/shared/lib/security/encryption';
 export * from './constants/tradera';
+export { DEFAULT_TRADERA_QUICKLIST_SCRIPT } from './services/tradera-listing/default-script';

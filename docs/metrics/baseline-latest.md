@@ -8,13 +8,13 @@ canonical: true
 ---
 # Architecture & Performance Baseline
 
-Generated at: 2026-04-15T09:40:18.790Z
+Generated at: 2026-04-15T10:23:12.055Z
 
 ## Snapshot
 
 - Source files: 10434
-- Source lines: 1778695
-- use client files: 1780
+- Source lines: 1778697
+- use client files: 1773
 - Files >= 1000 LOC: 19
 - Files >= 1500 LOC: 10
 - Largest file: `src/features/products/server/product-scans-service.ts` (4645 LOC)

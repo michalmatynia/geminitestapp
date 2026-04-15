@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-04-15T09:39:36.941Z",
+  "generatedAt": "2026-04-15T10:54:26.142Z",
   "track": {
     "id": "products-category-schema-normalization",
     "title": "Products category and schema normalization",
@@ -153,13 +153,13 @@
     "category": "data",
     "defaultSelected": true,
     "description": "Surfaces the remaining category and parameter-schema decisions that cannot be auto-repaired safely from current live product data.",
-    "overallStatus": "failed",
-    "latestGeneratedAt": "2026-04-15T09:39:36.938Z",
+    "overallStatus": "passed",
+    "latestGeneratedAt": "2026-04-15T10:54:26.139Z",
     "docDir": "docs/build/improvements/products-category-schema-normalization",
     "phases": [
       {
         "phase": "audit",
-        "generatedAt": "2026-04-15T09:39:36.938Z",
+        "generatedAt": "2026-04-15T10:54:08.335Z",
         "reportPath": "artifacts/improvements/audit-report.json",
         "executionMode": "executed",
         "allowWrite": false,
@@ -172,41 +172,79 @@
         "plannedStepCount": 0,
         "outputs": [],
         "steps": [],
-        "status": "not-configured"
+        "status": "not-selected"
       },
       {
         "phase": "classify",
-        "generatedAt": "2026-04-13T20:59:29.994Z",
+        "generatedAt": "2026-04-15T10:36:23.126Z",
         "reportPath": "artifacts/improvements/classify-report.json",
         "executionMode": "executed",
         "allowWrite": false,
-        "stepCount": 0,
-        "automaticStepCount": 0,
+        "stepCount": 1,
+        "automaticStepCount": 1,
         "manualStepCount": 0,
-        "passedStepCount": 0,
+        "passedStepCount": 1,
         "failedStepCount": 0,
         "blockedStepCount": 0,
         "plannedStepCount": 0,
-        "outputs": [],
-        "steps": [],
-        "status": "not-selected"
+        "outputs": [
+          "/tmp/product-parameter-manual-remediation-*.json",
+          "/tmp/product-parameter-manual-remediation-latest.json"
+        ],
+        "steps": [
+          {
+            "id": "products-category-manual-remediation-report",
+            "title": "Report products requiring manual category or schema remediation",
+            "trackId": "products-category-schema-normalization",
+            "phase": "classify",
+            "mode": "automatic",
+            "writes": false,
+            "status": "passed",
+            "outputs": [
+              "/tmp/product-parameter-manual-remediation-*.json",
+              "/tmp/product-parameter-manual-remediation-latest.json"
+            ],
+            "instructions": [],
+            "script": "products:report:parameter-remediation",
+            "durationMs": 834
+          }
+        ],
+        "status": "passed"
       },
       {
         "phase": "plan",
-        "generatedAt": "2026-04-12T15:40:31.397Z",
+        "generatedAt": "2026-04-15T10:36:23.624Z",
         "reportPath": "artifacts/improvements/plan-report.json",
         "executionMode": "planned",
         "allowWrite": false,
-        "stepCount": 0,
+        "stepCount": 1,
         "automaticStepCount": 0,
-        "manualStepCount": 0,
+        "manualStepCount": 1,
         "passedStepCount": 0,
         "failedStepCount": 0,
         "blockedStepCount": 0,
         "plannedStepCount": 0,
         "outputs": [],
-        "steps": [],
-        "status": "not-selected"
+        "steps": [
+          {
+            "id": "products-category-schema-plan",
+            "title": "Plan category and schema normalization decisions",
+            "trackId": "products-category-schema-normalization",
+            "phase": "plan",
+            "mode": "manual",
+            "writes": false,
+            "status": "manual",
+            "outputs": [],
+            "instructions": [
+              "Assign missing categories only when a defensible family/category match exists.",
+              "Choose final parameter ids for the unresolved families before generating any curated override file.",
+              "Treat FIGANI, FOASW, and SPEFA as source/manual recovery until a real category/schema mapping is approved.",
+              "Use /tmp/product-parameter-source-recovery-batches/*-mapping-pack.json as the curation source of truth.",
+              "Use /tmp/product-parameter-curated-build-latest.json to see which family packs are actually ready for apply."
+            ]
+          }
+        ],
+        "status": "manual"
       },
       {
         "phase": "dry-run",
@@ -277,15 +315,15 @@
       },
       {
         "phase": "apply",
-        "generatedAt": "2026-04-02T09:59:31.245Z",
+        "generatedAt": "2026-04-15T10:54:26.139Z",
         "reportPath": "artifacts/improvements/apply-report.json",
         "executionMode": "executed",
         "allowWrite": true,
         "stepCount": 3,
         "automaticStepCount": 2,
         "manualStepCount": 1,
-        "passedStepCount": 0,
-        "failedStepCount": 2,
+        "passedStepCount": 2,
+        "failedStepCount": 0,
         "blockedStepCount": 0,
         "plannedStepCount": 0,
         "outputs": [
@@ -315,14 +353,14 @@
             "phase": "apply",
             "mode": "automatic",
             "writes": false,
-            "status": "failed",
+            "status": "passed",
             "outputs": [
               "/tmp/product-parameter-curated-build-latest.json",
               "/tmp/product-parameter-curated-overrides-latest.json"
             ],
             "instructions": [],
             "script": "products:build:ready-parameter-curated-overrides",
-            "durationMs": 318
+            "durationMs": 363
           },
           {
             "id": "products-category-schema-apply-ready-curated-overrides",
@@ -331,16 +369,16 @@
             "phase": "apply",
             "mode": "automatic",
             "writes": true,
-            "status": "failed",
+            "status": "passed",
             "outputs": [
               "/tmp/product-parameter-curated-apply-*.json"
             ],
             "instructions": [],
             "script": "products:apply:ready-parameter-curated-overrides",
-            "durationMs": 750
+            "durationMs": 1030
           }
         ],
-        "status": "failed"
+        "status": "passed"
       }
     ]
   }

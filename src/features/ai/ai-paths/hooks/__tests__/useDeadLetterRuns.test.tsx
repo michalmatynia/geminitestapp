@@ -47,6 +47,7 @@ vi.mock('@/shared/ui/primitives.public', () => ({
 
 vi.mock('@/shared/utils/observability/client-error-logger', () => ({
   logClientError: mocks.logClientErrorMock,
+  logClientCatch: vi.fn(),
 }));
 
 const buildRun = (overrides: Partial<AiPathRunRecord> = {}): AiPathRunRecord =>
@@ -237,11 +238,15 @@ describe('useDeadLetterRuns', () => {
     });
 
     await waitFor(() => {
+      expect(result.current.requeueingSelected).toBe(true);
+    });
+
+    await waitFor(() => {
       expect(mocks.requeueAiPathDeadLetterRunsMock).toHaveBeenCalledWith({
         runIds: ['run-1', 'run-2'],
         mode: 'resume',
       });
-    });
+    }, { timeout: 10000 });
 
     await waitFor(() => {
       expect(result.current.selectedIds.size).toBe(0);

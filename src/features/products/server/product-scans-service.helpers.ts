@@ -143,23 +143,6 @@ export type AmazonScanScriptResult = {
   steps: ProductScanStep[];
 };
 
-export type SupplierScanScriptResult = {
-  status: 'matched' | 'probe_ready' | 'no_match' | 'failed' | 'captcha_required' | 'running';
-  title: string | null;
-  price: string | null;
-  url: string | null;
-  description: string | null;
-  supplierDetails: ProductScanSupplierDetails;
-  supplierProbe: ProductScanSupplierProbe;
-  supplierEvaluation: ProductScanSupplierEvaluation;
-  candidateUrls: string[];
-  matchedImageId: string | null;
-  message: string | null;
-  currentUrl: string | null;
-  stage: string | null;
-  steps: ProductScanStep[];
-};
-
 export type AmazonScanCandidateResult = {
   url: string;
   score: number | null;
@@ -1501,3 +1484,5 @@ export const tryDirectQueuedScanUpdate = async (
 
   return null;
 };
+
+export * from './product-scans-service.helpers.amazon';

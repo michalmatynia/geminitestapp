@@ -1,16 +1,158 @@
 {
   "kind": "general-improvement-report",
-  "generatedAt": "2026-04-13T20:59:29.994Z",
+  "generatedAt": "2026-04-15T10:36:23.126Z",
   "phase": "classify",
   "executionMode": "executed",
   "allowWrite": false,
   "selectedTrackIds": [
+    "products-parameter-integrity",
+    "products-category-schema-normalization",
     "ui-consolidation",
     "application-performance",
     "repo-quality-baseline"
   ],
   "reportPath": "artifacts/improvements/classify-report.json",
   "steps": [
+    {
+      "id": "products-parameter-recovery-classification",
+      "title": "Classify product parameter recovery state",
+      "trackId": "products-parameter-integrity",
+      "phase": "classify",
+      "mode": "automatic",
+      "writes": false,
+      "status": "passed",
+      "outputs": [
+        "/tmp/product-parameter-recovery-classification-*.json",
+        "/tmp/product-parameter-recovery-classification-latest.json"
+      ],
+      "instructions": [],
+      "script": "products:classify:parameter-recovery",
+      "durationMs": 3689
+    },
+    {
+      "id": "products-parameter-source-report",
+      "title": "Refresh source-recovery report for unresolved products",
+      "trackId": "products-parameter-integrity",
+      "phase": "classify",
+      "mode": "automatic",
+      "writes": false,
+      "status": "passed",
+      "outputs": [
+        "/tmp/product-parameter-source-recovery-*.json",
+        "/tmp/product-parameter-source-recovery-latest.json"
+      ],
+      "instructions": [],
+      "script": "products:report:parameter-source-recovery",
+      "durationMs": 3672
+    },
+    {
+      "id": "products-parameter-source-summary",
+      "title": "Summarize unresolved source-recovery products",
+      "trackId": "products-parameter-integrity",
+      "phase": "classify",
+      "mode": "automatic",
+      "writes": false,
+      "status": "passed",
+      "outputs": [
+        "/tmp/product-parameter-source-recovery-summary-*.json",
+        "/tmp/product-parameter-source-recovery-summary-latest.json"
+      ],
+      "instructions": [],
+      "script": "products:summarize:parameter-source-recovery",
+      "durationMs": 352
+    },
+    {
+      "id": "products-parameter-source-template",
+      "title": "Generate source-recovery template for unresolved products",
+      "trackId": "products-parameter-integrity",
+      "phase": "classify",
+      "mode": "automatic",
+      "writes": false,
+      "status": "passed",
+      "outputs": [
+        "/tmp/product-parameter-source-recovery-template-*.json",
+        "/tmp/product-parameter-source-recovery-template-latest.json"
+      ],
+      "instructions": [],
+      "script": "products:generate:parameter-source-recovery-template",
+      "durationMs": 367
+    },
+    {
+      "id": "products-parameter-source-batch-split",
+      "title": "Split source-recovery template into family batches",
+      "trackId": "products-parameter-integrity",
+      "phase": "classify",
+      "mode": "automatic",
+      "writes": false,
+      "status": "passed",
+      "outputs": [
+        "/tmp/product-parameter-source-recovery-batches/manifest.json"
+      ],
+      "instructions": [],
+      "script": "products:split:parameter-source-recovery-template",
+      "durationMs": 312
+    },
+    {
+      "id": "products-parameter-family-mapping-packs",
+      "title": "Generate family mapping packs from the latest source-recovery batches",
+      "trackId": "products-parameter-integrity",
+      "phase": "classify",
+      "mode": "automatic",
+      "writes": false,
+      "status": "passed",
+      "outputs": [
+        "/tmp/product-parameter-source-recovery-batches/*-mapping-pack.json"
+      ],
+      "instructions": [],
+      "script": "products:generate:parameter-family-mapping-pack",
+      "durationMs": 298
+    },
+    {
+      "id": "products-parameter-family-mapping-index",
+      "title": "Build family mapping index for unresolved products",
+      "trackId": "products-parameter-integrity",
+      "phase": "classify",
+      "mode": "automatic",
+      "writes": false,
+      "status": "passed",
+      "outputs": [
+        "/tmp/product-parameter-source-recovery-batches/family-mapping-index.json"
+      ],
+      "instructions": [],
+      "script": "products:build:parameter-family-mapping-index",
+      "durationMs": 304
+    },
+    {
+      "id": "products-parameter-family-mapping-checklist",
+      "title": "Render family mapping checklist for manual curation",
+      "trackId": "products-parameter-integrity",
+      "phase": "classify",
+      "mode": "automatic",
+      "writes": false,
+      "status": "passed",
+      "outputs": [
+        "/tmp/product-parameter-source-recovery-batches/family-mapping-index-checklist.md"
+      ],
+      "instructions": [],
+      "script": "products:render:parameter-family-mapping-checklist",
+      "durationMs": 313
+    },
+    {
+      "id": "products-category-manual-remediation-report",
+      "title": "Report products requiring manual category or schema remediation",
+      "trackId": "products-category-schema-normalization",
+      "phase": "classify",
+      "mode": "automatic",
+      "writes": false,
+      "status": "passed",
+      "outputs": [
+        "/tmp/product-parameter-manual-remediation-*.json",
+        "/tmp/product-parameter-manual-remediation-latest.json"
+      ],
+      "instructions": [],
+      "script": "products:report:parameter-remediation",
+      "durationMs": 834
+    },
     {
       "id": "application-performance-baseline",
       "title": "Run the performance baseline pass",
@@ -30,7 +172,7 @@
       ],
       "instructions": [],
       "script": "perf:ops:baseline",
-      "durationMs": 673130
+      "durationMs": 706069
     },
     {
       "id": "repo-quality-lint",
@@ -43,7 +185,7 @@
       "outputs": [],
       "instructions": [],
       "script": "quality:baseline:lint",
-      "durationMs": 305535
+      "durationMs": 19243
     },
     {
       "id": "repo-quality-typecheck",
@@ -56,7 +198,7 @@
       "outputs": [],
       "instructions": [],
       "script": "quality:baseline:typecheck",
-      "durationMs": 9653
+      "durationMs": 76302
     }
   ]
 }

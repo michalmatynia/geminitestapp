@@ -1,12 +1,14 @@
 {
   "kind": "general-improvement-report",
-  "generatedAt": "2026-04-02T09:59:31.245Z",
+  "generatedAt": "2026-04-15T10:54:26.139Z",
   "phase": "apply",
   "executionMode": "executed",
   "allowWrite": true,
   "selectedTrackIds": [
     "products-parameter-integrity",
     "products-category-schema-normalization",
+    "ui-consolidation",
+    "application-performance",
     "repo-quality-baseline"
   ],
   "reportPath": "artifacts/improvements/apply-report.json",
@@ -46,14 +48,14 @@
       "phase": "apply",
       "mode": "automatic",
       "writes": false,
-      "status": "failed",
+      "status": "passed",
       "outputs": [
         "/tmp/product-parameter-curated-build-latest.json",
         "/tmp/product-parameter-curated-overrides-latest.json"
       ],
       "instructions": [],
       "script": "products:build:ready-parameter-curated-overrides",
-      "durationMs": 318
+      "durationMs": 363
     },
     {
       "id": "products-category-schema-apply-ready-curated-overrides",
@@ -62,13 +64,41 @@
       "phase": "apply",
       "mode": "automatic",
       "writes": true,
-      "status": "failed",
+      "status": "passed",
       "outputs": [
         "/tmp/product-parameter-curated-apply-*.json"
       ],
       "instructions": [],
       "script": "products:apply:ready-parameter-curated-overrides",
-      "durationMs": 750
+      "durationMs": 1030
+    },
+    {
+      "id": "ui-consolidation-apply",
+      "title": "Apply UI consolidation changes through targeted feature migrations",
+      "trackId": "ui-consolidation",
+      "phase": "apply",
+      "mode": "manual",
+      "writes": true,
+      "status": "manual",
+      "outputs": [],
+      "instructions": [
+        "This track intentionally stops at the shared backlog and guardrail surface.",
+        "Implement migrations in the owning feature areas instead of using the improvement runner for blind UI rewrites."
+      ]
+    },
+    {
+      "id": "application-performance-apply",
+      "title": "Apply performance fixes through targeted implementation work",
+      "trackId": "application-performance",
+      "phase": "apply",
+      "mode": "manual",
+      "writes": true,
+      "status": "manual",
+      "outputs": [],
+      "instructions": [
+        "This track is read-only and should guide optimization work rather than attempt blind fixes.",
+        "Implement the chosen remediation in the owning code and then re-run the fast gate or baseline lane."
+      ]
     },
     {
       "id": "repo-quality-baseline-apply",

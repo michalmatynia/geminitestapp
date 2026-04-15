@@ -151,7 +151,7 @@ describe('buildMongoUpdatePlan', () => {
         }),
       })
     );
-    expect(reportAiPathsError).toHaveBeenCalled();
+    expect(reportAiPathsError).not.toHaveBeenCalled();
     expect(toast).not.toHaveBeenCalled();
   });
 
@@ -293,7 +293,7 @@ describe('buildMongoUpdatePlan', () => {
         }),
       })
     );
-    expect(reportAiPathsError).toHaveBeenCalled();
+    expect(reportAiPathsError).not.toHaveBeenCalled();
     expect(toast).not.toHaveBeenCalled();
   });
 
@@ -442,7 +442,7 @@ describe('buildMongoUpdatePlan', () => {
         },
       ],
     });
-    expect(reportAiPathsError).toHaveBeenCalled();
+    expect(reportAiPathsError).not.toHaveBeenCalled();
     expect(toast).not.toHaveBeenCalled();
   });
 
@@ -575,7 +575,7 @@ describe('buildMongoUpdatePlan', () => {
         }),
       })
     );
-    expect(reportAiPathsError).toHaveBeenCalled();
+    expect(reportAiPathsError).not.toHaveBeenCalled();
     expect(toast).not.toHaveBeenCalled();
   });
 
@@ -791,7 +791,10 @@ describe('buildMongoUpdatePlan', () => {
       }),
     });
     expect(reportAiPathsError).toHaveBeenCalled();
-    expect(toast).not.toHaveBeenCalled();
+    expect(toast).toHaveBeenCalledWith(
+      expect.stringContaining('Update template has unresolved tokens'),
+      expect.objectContaining({ variant: 'warning' })
+    );
   });
 
   it('returns no-safe-updates when custom template ports are missing and mapping inputs are also disconnected', async () => {

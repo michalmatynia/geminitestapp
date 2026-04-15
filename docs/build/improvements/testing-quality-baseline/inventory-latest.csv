@@ -1,2 +1,1 @@
 phase,stepId,title,status,mode,writes,script,outputs,reportGeneratedAt,reportPath
-plan,testing-quality-plan,Review testing quality drift before changing validation scope,manual,manual,false,,,2026-04-12T15:40:31.397Z,artifacts/improvements/plan-report.json

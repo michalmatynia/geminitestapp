@@ -250,7 +250,10 @@ const detectTextLanguage = (value: string | null): {
 
   for (const [language, stopwords] of Object.entries(LANGUAGE_STOPWORDS)) {
     const stopwordSet = new Set(stopwords);
-    const score = tokens.reduce((count, token) => count + (stopwordSet.has(token) ? 1 : 0), 0);
+    const score = tokens.reduce<number>(
+      (count, token) => count + (stopwordSet.has(token) ? 1 : 0),
+      0
+    );
     if (score > bestScore) {
       secondScore = bestScore;
       bestScore = score;

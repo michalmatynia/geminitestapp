@@ -8,15 +8,15 @@ canonical: true
 ---
 # Testing quality baseline Improvement Track
 
-Generated at: 2026-04-15T09:39:36.941Z
+Generated at: 2026-04-15T10:54:26.142Z
 
 ## Snapshot
 
 - Track id: `testing-quality-baseline`
 - Category: `testing`
 - Included in default read-only bundle: no
-- Overall status: `attention`
-- Latest report timestamp: 2026-04-12T15:40:31.397Z
+- Overall status: `no-data`
+- Latest report timestamp: not available
 
 ## Purpose
 
@@ -40,15 +40,13 @@ Tracks the testing inventory and quality snapshot so broader improvement work st
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
 | `audit` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
 | `classify` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
-| `plan` | `manual` | 1 | 0 | 1 | 0 | 0 |
+| `plan` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
 | `dry-run` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
 | `apply` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
 
 ## Latest Steps
 
-| Phase | Status | Mode | Step | Command |
-| --- | --- | --- | --- | --- |
-| `plan` | `manual` | `manual` | `testing-quality-plan` | manual |
+- No step data is available for this track yet.
 
 ## Related Docs
 

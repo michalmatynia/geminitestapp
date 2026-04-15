@@ -181,12 +181,26 @@ vi.mock('@/shared/lib/icons', () => ({
 vi.mock('@/shared/lib/ai-paths', () => ({
   PATH_CONFIG_PREFIX: 'ai_paths:path_config:',
   PATH_INDEX_KEY: 'ai_paths:path_index',
-  triggerButtonsApi: mockState.triggerButtonsApi,
+  triggerButtonsApi: {
+    create: (...args: unknown[]) => mockState.triggerButtonsApi.create(...args),
+    update: (...args: unknown[]) => mockState.triggerButtonsApi.update(...args),
+    delete: (...args: unknown[]) => mockState.triggerButtonsApi.delete(...args),
+    reorder: (...args: unknown[]) => mockState.triggerButtonsApi.reorder(...args),
+    cleanupFixtures: (...args: unknown[]) => mockState.triggerButtonsApi.cleanupFixtures(...args),
+    list: (...args: unknown[]) => mockState.triggerButtonsApi.list(...args),
+  },
 }));
 
 vi.mock('@/shared/lib/ai-paths/core/utils/stored-path-config', () => ({
   loadCanonicalStoredPathConfig: (...args: unknown[]) =>
     mockState.loadCanonicalStoredPathConfig(...args),
+}));
+
+vi.mock('next-auth/react', () => ({
+  useSession: () => ({
+    data: { user: { id: 'user-1', name: 'Test User' } },
+    status: 'authenticated',
+  }),
 }));
 
 vi.mock('@/shared/ui/feedback.public', () => ({

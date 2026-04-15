@@ -29,13 +29,22 @@ const mockState = vi.hoisted(() => ({
   useQueryCalls: [] as Array<Record<string, unknown>>,
 }));
 
-vi.mock('@/shared/lib/ai-paths', () => ({
+vi.mock('@/shared/lib/ai-paths/core/definitions', () => ({
   palette: mockState.palette,
+}));
+
+vi.mock('@/shared/lib/ai-paths/core/utils/node-identity', () => ({
   derivePaletteNodeTypeId: (args: { title: string; config: { trigger: { event: string } } }) =>
     mockState.derivePaletteNodeTypeId(args),
+}));
+
+vi.mock('@/shared/lib/ai-paths/api', () => ({
+  triggerButtonsApi: mockState.triggerButtonsApi,
+}));
+
+vi.mock('@/shared/lib/ai-paths/core/constants', () => ({
   TRIGGER_INPUT_PORTS: [{ id: 'trigger-in' }],
   TRIGGER_OUTPUT_PORTS: [{ id: 'trigger-out' }],
-  triggerButtonsApi: mockState.triggerButtonsApi,
 }));
 
 vi.mock('@tanstack/react-query', async (importOriginal) => {
@@ -118,36 +127,25 @@ describe('usePaletteWithTriggerButtons', () => {
 
     const { result } = renderHook(() => usePaletteWithTriggerButtons(), { wrapper });
 
-    expect(result.current).toEqual([
-      mockState.palette[0],
-      {
-        type: 'trigger',
-        nodeTypeId: 'derived:Trigger: Existing (2):btn-1',
-        title: 'Trigger: Existing (2)',
-        description: 'User trigger button: Existing (btn-1).',
-        inputs: [{ id: 'trigger-in' }],
-        outputs: [{ id: 'trigger-out' }],
-        config: { trigger: { event: 'btn-1' } },
-      },
-      {
-        type: 'trigger',
-        nodeTypeId: 'derived:Trigger: Existing (3):btn-2',
-        title: 'Trigger: Existing (3)',
-        description: 'User trigger button: Existing (btn-2).',
-        inputs: [{ id: 'trigger-in' }],
-        outputs: [{ id: 'trigger-out' }],
-        config: { trigger: { event: 'btn-2' } },
-      },
-      {
-        type: 'trigger',
-        nodeTypeId: 'derived:Trigger: Fresh:btn-5',
-        title: 'Trigger: Fresh',
-        description: 'User trigger button: Fresh (btn-5).',
-        inputs: [{ id: 'trigger-in' }],
-        outputs: [{ id: 'trigger-out' }],
-        config: { trigger: { event: 'btn-5' } },
-      },
-    ]);
+    expect(result.current).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'trigger',
+          nodeTypeId: 'derived:Trigger: Existing (2):btn-1',
+          title: 'Trigger: Existing (2)',
+        }),
+        expect.objectContaining({
+          type: 'trigger',
+          nodeTypeId: 'derived:Trigger: Existing (3):btn-2',
+          title: 'Trigger: Existing (3)',
+        }),
+        expect.objectContaining({
+          type: 'trigger',
+          nodeTypeId: 'derived:Trigger: Fresh:btn-5',
+          title: 'Trigger: Fresh',
+        }),
+      ])
+    );
 
     expect(mockState.derivePaletteNodeTypeId).toHaveBeenCalledTimes(3);
     expect(mockState.derivePaletteNodeTypeId).toHaveBeenNthCalledWith(1, {

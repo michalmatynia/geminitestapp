@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-04-15T09:39:36.941Z",
+  "generatedAt": "2026-04-15T10:54:26.142Z",
   "track": {
     "id": "application-performance",
     "title": "Application performance",
@@ -114,43 +114,29 @@
     "defaultSelected": true,
     "description": "Adds app-level performance regression checks to the improvement portfolio so broad sweeps cover runtime health alongside UI, quality, and data recovery.",
     "overallStatus": "passed",
-    "latestGeneratedAt": "2026-04-15T09:39:36.938Z",
+    "latestGeneratedAt": "2026-04-15T10:54:26.139Z",
     "docDir": "docs/build/improvements/application-performance",
     "phases": [
       {
         "phase": "audit",
-        "generatedAt": "2026-04-15T09:39:36.938Z",
+        "generatedAt": "2026-04-15T10:54:08.335Z",
         "reportPath": "artifacts/improvements/audit-report.json",
         "executionMode": "executed",
         "allowWrite": false,
-        "stepCount": 1,
-        "automaticStepCount": 1,
+        "stepCount": 0,
+        "automaticStepCount": 0,
         "manualStepCount": 0,
-        "passedStepCount": 1,
+        "passedStepCount": 0,
         "failedStepCount": 0,
         "blockedStepCount": 0,
         "plannedStepCount": 0,
         "outputs": [],
-        "steps": [
-          {
-            "id": "application-performance-fast-gate",
-            "title": "Run the fast performance operations gate",
-            "trackId": "application-performance",
-            "phase": "audit",
-            "mode": "automatic",
-            "writes": false,
-            "status": "passed",
-            "outputs": [],
-            "instructions": [],
-            "script": "perf:ops:fast",
-            "durationMs": 33427
-          }
-        ],
-        "status": "passed"
+        "steps": [],
+        "status": "not-selected"
       },
       {
         "phase": "classify",
-        "generatedAt": "2026-04-13T20:59:29.994Z",
+        "generatedAt": "2026-04-15T10:36:23.126Z",
         "reportPath": "artifacts/improvements/classify-report.json",
         "executionMode": "executed",
         "allowWrite": false,
@@ -190,14 +176,14 @@
             ],
             "instructions": [],
             "script": "perf:ops:baseline",
-            "durationMs": 673130
+            "durationMs": 706069
           }
         ],
         "status": "passed"
       },
       {
         "phase": "plan",
-        "generatedAt": "2026-04-12T15:40:31.397Z",
+        "generatedAt": "2026-04-15T10:36:23.624Z",
         "reportPath": "artifacts/improvements/plan-report.json",
         "executionMode": "planned",
         "allowWrite": false,
@@ -247,20 +233,35 @@
       },
       {
         "phase": "apply",
-        "generatedAt": "2026-04-02T09:59:31.245Z",
+        "generatedAt": "2026-04-15T10:54:26.139Z",
         "reportPath": "artifacts/improvements/apply-report.json",
         "executionMode": "executed",
         "allowWrite": true,
-        "stepCount": 0,
+        "stepCount": 1,
         "automaticStepCount": 0,
-        "manualStepCount": 0,
+        "manualStepCount": 1,
         "passedStepCount": 0,
         "failedStepCount": 0,
         "blockedStepCount": 0,
         "plannedStepCount": 0,
         "outputs": [],
-        "steps": [],
-        "status": "not-selected"
+        "steps": [
+          {
+            "id": "application-performance-apply",
+            "title": "Apply performance fixes through targeted implementation work",
+            "trackId": "application-performance",
+            "phase": "apply",
+            "mode": "manual",
+            "writes": true,
+            "status": "manual",
+            "outputs": [],
+            "instructions": [
+              "This track is read-only and should guide optimization work rather than attempt blind fixes.",
+              "Implement the chosen remediation in the owning code and then re-run the fast gate or baseline lane."
+            ]
+          }
+        ],
+        "status": "manual"
       }
     ]
   }

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-04-15T09:39:36.941Z",
+  "generatedAt": "2026-04-15T10:54:26.142Z",
   "track": {
     "id": "ui-consolidation",
     "title": "UI consolidation",
@@ -100,52 +100,30 @@
     "category": "ui",
     "defaultSelected": true,
     "description": "Runs the shared UI consolidation guardrail so broad improvement sweeps account for cross-feature component convergence, not only data and repo baselines.",
-    "overallStatus": "passed",
-    "latestGeneratedAt": "2026-04-15T09:39:36.938Z",
+    "overallStatus": "attention",
+    "latestGeneratedAt": "2026-04-15T10:54:26.139Z",
     "docDir": "docs/build/improvements/ui-consolidation",
     "phases": [
       {
         "phase": "audit",
-        "generatedAt": "2026-04-15T09:39:36.938Z",
+        "generatedAt": "2026-04-15T10:54:08.335Z",
         "reportPath": "artifacts/improvements/audit-report.json",
         "executionMode": "executed",
         "allowWrite": false,
-        "stepCount": 1,
-        "automaticStepCount": 1,
+        "stepCount": 0,
+        "automaticStepCount": 0,
         "manualStepCount": 0,
-        "passedStepCount": 1,
+        "passedStepCount": 0,
         "failedStepCount": 0,
         "blockedStepCount": 0,
         "plannedStepCount": 0,
-        "outputs": [
-          "docs/ui-consolidation/scan-latest.md",
-          "docs/ui-consolidation/scan-latest.json",
-          "docs/ui-consolidation/inventory-latest.csv"
-        ],
-        "steps": [
-          {
-            "id": "ui-consolidation-guardrail",
-            "title": "Run UI consolidation guardrail",
-            "trackId": "ui-consolidation",
-            "phase": "audit",
-            "mode": "automatic",
-            "writes": false,
-            "status": "passed",
-            "outputs": [
-              "docs/ui-consolidation/scan-latest.md",
-              "docs/ui-consolidation/scan-latest.json",
-              "docs/ui-consolidation/inventory-latest.csv"
-            ],
-            "instructions": [],
-            "script": "check:ui-consolidation",
-            "durationMs": 4517
-          }
-        ],
-        "status": "passed"
+        "outputs": [],
+        "steps": [],
+        "status": "not-selected"
       },
       {
         "phase": "classify",
-        "generatedAt": "2026-04-13T20:59:29.994Z",
+        "generatedAt": "2026-04-15T10:36:23.126Z",
         "reportPath": "artifacts/improvements/classify-report.json",
         "executionMode": "executed",
         "allowWrite": false,
@@ -162,7 +140,7 @@
       },
       {
         "phase": "plan",
-        "generatedAt": "2026-04-12T15:40:31.397Z",
+        "generatedAt": "2026-04-15T10:36:23.624Z",
         "reportPath": "artifacts/improvements/plan-report.json",
         "executionMode": "planned",
         "allowWrite": false,
@@ -212,20 +190,35 @@
       },
       {
         "phase": "apply",
-        "generatedAt": "2026-04-02T09:59:31.245Z",
+        "generatedAt": "2026-04-15T10:54:26.139Z",
         "reportPath": "artifacts/improvements/apply-report.json",
         "executionMode": "executed",
         "allowWrite": true,
-        "stepCount": 0,
+        "stepCount": 1,
         "automaticStepCount": 0,
-        "manualStepCount": 0,
+        "manualStepCount": 1,
         "passedStepCount": 0,
         "failedStepCount": 0,
         "blockedStepCount": 0,
         "plannedStepCount": 0,
         "outputs": [],
-        "steps": [],
-        "status": "not-selected"
+        "steps": [
+          {
+            "id": "ui-consolidation-apply",
+            "title": "Apply UI consolidation changes through targeted feature migrations",
+            "trackId": "ui-consolidation",
+            "phase": "apply",
+            "mode": "manual",
+            "writes": true,
+            "status": "manual",
+            "outputs": [],
+            "instructions": [
+              "This track intentionally stops at the shared backlog and guardrail surface.",
+              "Implement migrations in the owning feature areas instead of using the improvement runner for blind UI rewrites."
+            ]
+          }
+        ],
+        "status": "manual"
       }
     ]
   }

@@ -474,8 +474,11 @@ describe('handleDatabaseUpdateOperation', () => {
     });
 
     expect(executeDatabaseUpdateMock).toHaveBeenCalled();
-    expect(reportAiPathsError).not.toHaveBeenCalled();
-    expect(toast).not.toHaveBeenCalled();
+    expect(reportAiPathsError).toHaveBeenCalled();
+    expect(toast).toHaveBeenCalledWith(
+      expect.stringContaining('Update template has unresolved tokens'),
+      expect.objectContaining({ variant: 'warning' })
+    );
     expect(result['bundle']).not.toEqual(expect.objectContaining({ guardrail: 'write-template-values' }));
   });
 });

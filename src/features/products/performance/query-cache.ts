@@ -1,5 +1,5 @@
-type CacheEntry<T> = {
-  data: T;
+type CacheEntry = {
+  data: unknown;
   timestamp: number;
   ttl: number;
   tags: string[];
@@ -12,25 +12,28 @@ type CacheOptions = {
 };
 
 export class QueryCache {
-  private cache: Map<string, CacheEntry<unknown>> = new Map<string, CacheEntry<unknown>>();
+  private cache: Map<string, CacheEntry> = new Map<string, CacheEntry>();
   private tagIndex: Map<string, Set<string>> = new Map<string, Set<string>>();
   private readonly defaultTTL: number = 300000; // 5 minutes
 
   private generateKey(query: string, params: unknown[], prefix?: string): string {
     const paramHash = JSON.stringify(params).slice(0, 50);
-    return `${prefix || 'query'}:${query}:${paramHash}`;
+    return `${prefix ?? 'query'}:${query}:${paramHash}`;
   }
 
-  private isExpired(entry: CacheEntry<unknown>): boolean {
+  private isExpired(entry: CacheEntry): boolean {
     return Date.now() - entry.timestamp > entry.ttl;
   }
 
   private addToTagIndex(key: string, tags: string[]): void {
     tags.forEach((tag: string) => {
-      if (!this.tagIndex.has(tag)) {
-        this.tagIndex.set(tag, new Set<string>());
+      const tagEntries = this.tagIndex.get(tag);
+      if (tagEntries) {
+        tagEntries.add(key);
+        return;
       }
-      this.tagIndex.get(tag)!.add(key);
+
+      this.tagIndex.set(tag, new Set<string>([key]));
     });
   }
 
@@ -40,7 +43,7 @@ export class QueryCache {
     });
   }
 
-  get<T>(query: string, params: unknown[] = [], options: CacheOptions = {}): T | null {
+  get(query: string, params: unknown[] = [], options: CacheOptions = {}): unknown {
     const key = this.generateKey(query, params, options.keyPrefix);
     const entry = this.cache.get(key);
 
@@ -52,17 +55,17 @@ export class QueryCache {
       return null;
     }
 
-    return entry.data as T;
+    return entry.data;
   }
 
-  set<T>(query: string, params: unknown[], data: T, options: CacheOptions = {}): void {
+  set(query: string, params: unknown[], data: unknown, options: CacheOptions = {}): void {
     const key = this.generateKey(query, params, options.keyPrefix);
-    const tags = options.tags || [];
+    const tags = options.tags ?? [];
 
-    const entry: CacheEntry<T> = {
+    const entry: CacheEntry = {
       data,
       timestamp: Date.now(),
-      ttl: options.ttl || this.defaultTTL,
+      ttl: options.ttl ?? this.defaultTTL,
       tags,
     };
 
@@ -74,6 +77,16 @@ export class QueryCache {
 
     this.cache.set(key, entry);
     this.addToTagIndex(key, tags);
+  }
+
+  delete(query: string, params: unknown[] = [], options: CacheOptions = {}): boolean {
+    const key = this.generateKey(query, params, options.keyPrefix);
+    const entry = this.cache.get(key);
+    if (!entry) return false;
+
+    this.removeFromTagIndex(key, entry.tags);
+    this.cache.delete(key);
+    return true;
   }
 
   invalidateByTag(tag: string): number {
@@ -139,17 +152,23 @@ export function withQueryCache<TArgs extends unknown[], TResult>(
     keyGenerator: (...args: TArgs) => string;
     ttl?: number;
     tags?: (...args: TArgs) => string[];
+    validateCached?: (cached: unknown) => cached is TResult;
     invalidateOn?: string[];
   }
-): (...args: TArgs) => Promise<TResult> {
+  ): (...args: TArgs) => Promise<TResult> {
   const pendingPromises = new Map<string, Promise<TResult>>();
   return (...args: TArgs): Promise<TResult> => {
     const key = options.keyGenerator(...args);
-    const tags = options.tags?.(...args) || [];
+    const tags = options.tags?.(...args) ?? [];
 
     // Try cache first
-    const cached = queryCache.get<TResult>(key, [], { tags, ttl: options.ttl });
-    if (cached !== null) return Promise.resolve(cached);
+    const cached = queryCache.get(key, [], { tags, ttl: options.ttl });
+    if (cached !== null) {
+      if (!options.validateCached || options.validateCached(cached)) {
+        return Promise.resolve(cached);
+      }
+      queryCache.delete(key, []);
+    }
 
     // Deduplicate concurrent in-flight requests for the same key
     const pending = pendingPromises.get(key);
@@ -199,7 +218,7 @@ export const ProductCacheHelpers = {
     product: (id: string): string[] => [`product:${id}`, 'products:list'],
     productList: (filters?: Record<string, unknown>): string[] => [
       'products:list',
-      `products:filter:${JSON.stringify(filters || {})}`,
+      `products:filter:${JSON.stringify(filters ?? {})}`,
     ],
     category: (id: string): string[] => [`category:${id}`, 'categories:list'],
   },

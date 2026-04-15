@@ -71,7 +71,7 @@ const extractLinkedInPostUrn = (value: string | null | undefined): string | null
     try {
       const url = new URL(trimmed);
       const match = url.pathname.match(/\/feed\/update\/([^/]+)/i);
-      if (match != null && match[1] != null) {
+      if (match?.[1] != null) {
         return decodeURIComponent(match[1]);
       }
     } catch (_error) {

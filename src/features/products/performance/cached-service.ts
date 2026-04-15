@@ -3,116 +3,32 @@ import 'server-only';
 // CachedProductService: server-side read-through cache helpers around
 // productService. Exposes cached readers and mutation wrappers that
 // invalidate relevant cache tags. TTLs are tuned based on query cost.
-import type { UnknownRecordDto } from '@/shared/contracts/base';
 import type { ProductCustomFieldDefinition } from '@/shared/contracts/products/custom-fields';
 import type { ProductParameter } from '@/shared/contracts/products/parameters';
-import type { ProductWithImages, ProductRecord } from '@/shared/contracts/products/product';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import type { ProductFilters } from '@/shared/contracts/products/drafts';
 import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 import { productService } from '@/shared/lib/products/services/productService';
 
 import { withQueryCache, ProductCacheHelpers, queryCache, stableStringify } from './query-cache';
+import { type ProductFilterInput, normalizeFilters } from './filter-normalization';
 
-type ProductFilterInput = UnknownRecordDto;
-
-function toOptionalString(value: unknown): string | undefined {
-  if (typeof value === 'string') {
-    const trimmed = value.trim();
-    return trimmed.length > 0 ? trimmed : undefined;
-  }
-  if (typeof value === 'number' && Number.isFinite(value)) {
-    return String(value);
-  }
-  return undefined;
-}
-
-function toOptionalNumber(value: unknown): number | undefined {
-  if (typeof value === 'number' && Number.isFinite(value)) {
-    return value;
-  }
-  if (typeof value === 'string') {
-    const parsed = Number(value.replace(',', '.'));
-    if (Number.isFinite(parsed)) return parsed;
-  }
-  return undefined;
-}
-
-function toOptionalBoolean(value: unknown): boolean | undefined {
-  if (typeof value === 'boolean') return value;
-  if (typeof value === 'string') {
-    const normalized = value.trim().toLowerCase();
-    if (normalized === 'true' || normalized === '1') return true;
-    if (normalized === 'false' || normalized === '0') return false;
-  }
-  return undefined;
-}
-
-function isValidLanguageCode(code?: string): code is 'name_en' | 'name_pl' | 'name_de' {
-  return code === 'name_en' || code === 'name_pl' || code === 'name_de';
-}
-
-function normalizeFilters(filters: ProductFilterInput = {}): ProductFilters {
-  const pageSize = toOptionalNumber(filters['pageSize']) ?? toOptionalNumber(filters['limit']);
-  let page = toOptionalNumber(filters['page']);
-
-  // Support offset+limit payloads used by API v2.
-  if (!page && pageSize) {
-    const offsetRaw = toOptionalNumber(filters['offset']);
-    if (offsetRaw !== undefined) {
-      page = Math.floor(offsetRaw / pageSize) + 1;
-    }
+const isPagedProductsCacheEntry = (
+  value: unknown
+): value is { products: ProductWithImages[]; total: number } => {
+  if (value === null || value === undefined || typeof value !== 'object' || Array.isArray(value)) {
+    return false;
   }
 
-  const normalized: ProductFilters = {};
-  const search = toOptionalString(filters['search']);
-  const id = toOptionalString(filters['id']);
-  const idMatchModeRaw = toOptionalString(filters['idMatchMode']);
-  const sku = toOptionalString(filters['sku']);
-  const categoryId = toOptionalString(filters['categoryId']);
-  const minPrice = toOptionalNumber(filters['minPrice']);
-  const maxPrice = toOptionalNumber(filters['maxPrice']);
-  const stockValue = toOptionalNumber(filters['stockValue']);
-  const stockOperatorRaw = toOptionalString(filters['stockOperator']);
-  const startDate = toOptionalString(filters['startDate']);
-  const endDate = toOptionalString(filters['endDate']);
-  const advancedFilter = toOptionalString(filters['advancedFilter']);
-  const catalogId = toOptionalString(filters['catalogId']);
-  const searchLanguage = toOptionalString(filters['searchLanguage']);
-  const baseExported = toOptionalBoolean(filters['baseExported']);
-  const archived = toOptionalBoolean(filters['archived']);
-
-  if (search !== undefined) normalized.search = search;
-  if (id !== undefined) normalized.id = id;
-  if (idMatchModeRaw === 'exact' || idMatchModeRaw === 'partial') {
-    normalized.idMatchMode = idMatchModeRaw;
-  }
-  if (sku !== undefined) normalized.sku = sku;
-  if (categoryId !== undefined) normalized.categoryId = categoryId;
-  if (minPrice !== undefined) normalized.minPrice = minPrice;
-  if (maxPrice !== undefined) normalized.maxPrice = maxPrice;
-  if (stockValue !== undefined) normalized.stockValue = stockValue;
-  if (
-    stockOperatorRaw === 'gt' ||
-    stockOperatorRaw === 'gte' ||
-    stockOperatorRaw === 'lt' ||
-    stockOperatorRaw === 'lte' ||
-    stockOperatorRaw === 'eq'
-  ) {
-    normalized.stockOperator = stockOperatorRaw;
-  }
-  if (startDate !== undefined) normalized.startDate = startDate;
-  if (endDate !== undefined) normalized.endDate = endDate;
-  if (advancedFilter !== undefined) normalized.advancedFilter = advancedFilter;
-  if (page !== undefined) normalized.page = page;
-  if (pageSize !== undefined) normalized.pageSize = pageSize;
-  if (catalogId !== undefined) normalized.catalogId = catalogId;
-  if (isValidLanguageCode(searchLanguage)) normalized.searchLanguage = searchLanguage;
-  if (baseExported !== undefined) normalized.baseExported = baseExported;
-  if (archived !== undefined) normalized.archived = archived;
-
-  return normalized;
-}
+  const record = value as Record<string, unknown>;
+  return (
+    Array.isArray(record['products']) &&
+    typeof record['total'] === 'number' &&
+    Number.isFinite(record['total']) &&
+    record['total'] >= 0
+  );
+};
 
 // Cached database operations for products
 export class CachedProductService {
@@ -167,6 +83,7 @@ export class CachedProductService {
           'products:paged',
           ...ProductCacheHelpers.getTags.productList(filters),
         ],
+        validateCached: isPagedProductsCacheEntry,
       }
     );
 
@@ -223,7 +140,7 @@ export class CachedProductService {
       },
       {
         keyGenerator: (categoryId: string, limit?: number) =>
-          `products:category:${categoryId}:${limit || 'all'}`,
+          `products:category:${categoryId}:${limit ?? 'all'}`,
         ttl: 240000, // 4 minutes
         tags: (categoryId: string) => [
           ...ProductCacheHelpers.getTags.category(categoryId),
@@ -352,76 +269,4 @@ export class CachedProductService {
     queryCache.invalidateByTag('parameters:list');
     queryCache.invalidateByPattern(/^parameters:/);
   }
-}
-
-// Middleware for automatic cache invalidation
-export function withCacheInvalidation<TArgs extends unknown[], TResult>(
-  mutationFn: (...args: TArgs) => Promise<TResult>,
-  invalidationStrategy: {
-    tags?: (...args: TArgs) => string[];
-    patterns?: (...args: TArgs) => RegExp[];
-    custom?: (...args: TArgs) => void;
-  }
-): (...args: TArgs) => Promise<TResult> {
-  return async (...args: TArgs): Promise<TResult> => {
-    const result = await mutationFn(...args);
-
-    // Invalidate by tags
-    if (invalidationStrategy.tags) {
-      const tags = invalidationStrategy.tags(...args);
-      tags.forEach((tag: string) => queryCache.invalidateByTag(tag));
-    }
-
-    // Invalidate by patterns
-    if (invalidationStrategy.patterns) {
-      const patterns = invalidationStrategy.patterns(...args);
-      patterns.forEach((pattern: RegExp) => {
-        queryCache.invalidateByPattern(pattern);
-      });
-    }
-
-    // Custom invalidation
-    if (invalidationStrategy.custom) {
-      invalidationStrategy.custom(...args);
-    }
-
-    return result;
-  };
-}
-
-// Product mutation operations with cache invalidation
-export class CachedProductMutations {
-  static createProduct: (data: unknown) => Promise<ProductWithImages> = withCacheInvalidation(
-    async (data: unknown): Promise<ProductWithImages> => {
-      return productService.createProduct(data);
-    },
-    {
-      tags: () => ['products:list', 'products:count'],
-      custom: () => ProductCacheHelpers.invalidateAll(),
-    }
-  );
-
-  static updateProduct: (id: string, data: Record<string, unknown>) => Promise<ProductWithImages> =
-    withCacheInvalidation(
-      async (id: string, data: Record<string, unknown>): Promise<ProductWithImages> => {
-        return productService.updateProduct(id, data);
-      },
-      {
-        tags: (id: string) => ProductCacheHelpers.getTags.product(id),
-        custom: (id: string) => ProductCacheHelpers.invalidateProduct(id),
-      }
-    );
-
-  static deleteProduct: (id: string) => Promise<ProductRecord | null> = withCacheInvalidation(
-    async (id: string): Promise<ProductRecord | null> => {
-      return productService.deleteProduct(id);
-    },
-    {
-      tags: (id: string) => ProductCacheHelpers.getTags.product(id),
-      custom: (id: string) => {
-        ProductCacheHelpers.invalidateProduct(id);
-        ProductCacheHelpers.invalidateAll();
-      },
-    }
-  );
 }

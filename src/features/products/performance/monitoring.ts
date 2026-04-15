@@ -50,6 +50,10 @@ const SHIP_THRESHOLDS: Record<string, number> = {
   request: 2000,
 };
 
+type RequestLike = {
+  method?: string;
+};
+
 function shouldShip(name: string, value: number, tags?: Record<string, string>): boolean {
   if (name === 'error') return true;
   if (tags?.['status'] === 'error') return true;
@@ -60,7 +64,8 @@ function shouldShip(name: string, value: number, tags?: Record<string, string>):
 /** Fire-and-forget: ships a metric to the structured log pipeline. */
 function shipMetric(name: string, value: number, tags?: Record<string, string>): void {
   if (typeof window !== 'undefined') return; // client-side: skip
-  void (async () => {
+
+  const shipTask = (async (): Promise<void> => {
     try {
       const { logSystemEvent } = await import('@/shared/lib/observability/system-logger');
       const isError = name === 'error' || tags?.['status'] === 'error';
@@ -80,6 +85,16 @@ function shipMetric(name: string, value: number, tags?: Record<string, string>):
       // Never let observability failures propagate
     }
   })();
+  shipTask.catch(() => undefined);
+}
+
+function getRequestMethod(req: unknown): string {
+  if (typeof req !== 'object' || req === null || !('method' in req)) {
+    return 'UNKNOWN';
+  }
+
+  const { method } = req as RequestLike;
+  return typeof method === 'string' && method.trim().length > 0 ? method : 'UNKNOWN';
 }
 
 // ---------------------------------------------------------------------------
@@ -142,11 +157,11 @@ export class PerformanceMonitor {
   getMetrics(name?: string, timeWindow?: number): PerformanceMetric[] {
     let entries = this.metrics.toArray();
 
-    if (name) {
+    if (typeof name === 'string') {
       entries = entries.filter((m) => m.name === name);
     }
 
-    if (timeWindow) {
+    if (typeof timeWindow === 'number') {
       const cutoff = Date.now() - timeWindow;
       entries = entries.filter((m) => m.timestamp > cutoff);
     }
@@ -297,7 +312,7 @@ export function withPerformanceMiddleware(
       const duration = performance.now() - start;
 
       performanceMonitor.record('request', duration, {
-        method: String((req as { method?: string })?.method || 'UNKNOWN'),
+        method: getRequestMethod(req),
         endpoint: name,
         status: 'success',
       });
@@ -308,7 +323,7 @@ export function withPerformanceMiddleware(
       const duration = performance.now() - start;
 
       performanceMonitor.record('request', duration, {
-        method: String((req as { method?: string })?.method || 'UNKNOWN'),
+        method: getRequestMethod(req),
         endpoint: name,
         status: 'error',
       });

@@ -44,7 +44,8 @@ export {
   type UpdateProductDraftInput,
 } from '@/shared/contracts/products';
 export { type ProductFiltersParsed } from '@/shared/lib/products/validations';
-export { CachedProductMutations, CachedProductService, withCacheInvalidation } from './performance/cached-service';
+export { CachedProductService } from './performance/cached-service';
+export { CachedProductMutations, withCacheInvalidation } from './performance/cache-invalidation';
 export { ProductsImagesUploadPOST } from './api/routes/images-upload-route';
 export {
   validateAndNormalizeRuntimeConfig,

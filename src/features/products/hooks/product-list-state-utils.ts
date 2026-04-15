@@ -50,7 +50,9 @@ const toTrimmedString = (value: unknown): string => {
 };
 
 const toRecord = (value: unknown): Record<string, unknown> | null => {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  if (value === null || value === undefined || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
   return value as Record<string, unknown>;
 };
 
@@ -84,8 +86,8 @@ export const isIncomingProductDetailNewer = (
   const incomingUpdatedAt = toMillis(incoming.updatedAt);
   const currentUpdatedAt = toMillis(current.updatedAt);
 
-  if (incomingUpdatedAt == null) return false;
-  if (currentUpdatedAt == null) return true;
+  if (incomingUpdatedAt === null) return false;
+  if (currentUpdatedAt === null) return true;
   return incomingUpdatedAt > currentUpdatedAt;
 };
 
@@ -96,7 +98,7 @@ export const isIncomingProductDetailSameRevision = (
   const incomingUpdatedAt = toMillis(incoming.updatedAt);
   const currentUpdatedAt = toMillis(current.updatedAt);
 
-  if (incomingUpdatedAt == null || currentUpdatedAt == null) return false;
+  if (incomingUpdatedAt === null || currentUpdatedAt === null) return false;
   return incomingUpdatedAt === currentUpdatedAt;
 };
 

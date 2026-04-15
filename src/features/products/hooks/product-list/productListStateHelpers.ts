@@ -21,10 +21,10 @@ export function applyProductListAdvancedFilterState(args: {
   const normalizedPresetId = normalizedValue.length > 0 ? args.presetId : null;
 
   args.setLocalState(normalizedValue, normalizedPresetId);
-  void args.persistState({
+  args.persistState({
     advancedFilter: normalizedValue,
     presetId: normalizedPresetId,
-  });
+  }).catch(() => undefined);
 }
 
 export function applyProductListPageSizeChange(args: {
@@ -34,7 +34,7 @@ export function applyProductListPageSizeChange(args: {
 }): void {
   const normalizedPageSize = normalizeProductPageSize(args.size, 12);
   args.setLocalPageSize(normalizedPageSize);
-  void args.persistPageSize(normalizedPageSize);
+  args.persistPageSize(normalizedPageSize).catch(() => undefined);
 }
 
 export function shouldEnableProductListBackgroundSync(args: {

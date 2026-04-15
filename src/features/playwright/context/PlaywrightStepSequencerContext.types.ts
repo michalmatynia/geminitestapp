@@ -53,6 +53,11 @@ export interface PlaywrightStepSequencerActionState {
   actionDraftName: string;
   /** Draft description for saving the action. */
   actionDraftDescription: string | null;
+  /**
+   * When non-null, the constructor is editing this saved action (loaded via
+   * handleLoadActionIntoConstructor). "Update Action" overwrites it in place.
+   */
+  editingActionId: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -100,10 +105,12 @@ export interface PlaywrightStepSequencerContextType
 
   // --- Website CRUD ---
   handleCreateWebsite: (draft: Omit<PlaywrightWebsite, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
+  handleUpdateWebsite: (id: string, updates: Partial<Pick<PlaywrightWebsite, 'name' | 'baseUrl'>>) => Promise<void>;
   handleDeleteWebsite: (id: string) => Promise<void>;
 
   // --- Flow CRUD ---
   handleCreateFlow: (draft: Omit<PlaywrightFlow, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
+  handleUpdateFlow: (id: string, updates: Partial<Pick<PlaywrightFlow, 'name' | 'description'>>) => Promise<void>;
   handleDeleteFlow: (id: string) => Promise<void>;
 
   // --- Step CRUD ---
@@ -120,6 +127,7 @@ export interface PlaywrightStepSequencerContextType
 
   // --- Action management ---
   handleDeleteAction: (id: string) => Promise<void>;
+  handleDuplicateAction: (id: string) => Promise<void>;
   handleLoadActionIntoConstructor: (id: string) => void;
 
   // --- Cleanup ---
@@ -144,6 +152,8 @@ export interface PlaywrightStepSequencerContextType
   setActionDraftName: (name: string) => void;
   setActionDraftDescription: (description: string | null) => void;
   handleSaveAction: () => Promise<void>;
+  /** Overwrite the currently-loaded action in place (requires editingActionId). */
+  handleUpdateAction: () => Promise<void>;
 
   // --- Modal toggles ---
   setIsCreateStepOpen: (v: boolean) => void;

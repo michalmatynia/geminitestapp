@@ -1,11 +1,10 @@
 'use client';
 
-import { ChevronDown, ChevronRight, Globe, Plus, Route, Trash2 } from 'lucide-react';
+import { Check, ChevronDown, ChevronRight, Globe, Pencil, Plus, Route, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 
 import type { PlaywrightFlow, PlaywrightWebsite } from '@/shared/contracts/playwright-steps';
-import { Button } from '@/shared/ui/primitives.public';
-import { Input } from '@/shared/ui/primitives.public';
+import { Button, Input } from '@/shared/ui/primitives.public';
 import { cn } from '@/shared/utils/ui-utils';
 
 import { usePlaywrightStepSequencer } from '../../context/PlaywrightStepSequencerContext';
@@ -80,7 +79,70 @@ function AddFlowRow({
 // ---------------------------------------------------------------------------
 
 function FlowRow({ flow }: { flow: PlaywrightFlow }): React.JSX.Element {
-  const { handleDeleteFlow } = usePlaywrightStepSequencer();
+  const { handleDeleteFlow, handleUpdateFlow, isSaving } = usePlaywrightStepSequencer();
+  const [editing, setEditing] = useState(false);
+  const [editName, setEditName] = useState(flow.name);
+  const [editDesc, setEditDesc] = useState(flow.description ?? '');
+
+  function startEdit(): void {
+    setEditName(flow.name);
+    setEditDesc(flow.description ?? '');
+    setEditing(true);
+  }
+
+  async function commitEdit(): Promise<void> {
+    const trimmed = editName.trim();
+    if (!trimmed) return;
+    await handleUpdateFlow(flow.id, { name: trimmed, description: editDesc.trim() || null });
+    setEditing(false);
+  }
+
+  if (editing) {
+    return (
+      <div className='mt-0.5 flex items-center gap-1.5 rounded border border-border/40 bg-card/20 p-1'>
+        <Route className='size-3 shrink-0 text-purple-400' />
+        <Input
+          autoFocus
+          value={editName}
+          onChange={(e) => setEditName(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') void commitEdit();
+            if (e.key === 'Escape') setEditing(false);
+          }}
+          className='h-5 flex-1 text-xs'
+          aria-label='Flow name'
+        />
+        <Input
+          value={editDesc}
+          onChange={(e) => setEditDesc(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') void commitEdit();
+            if (e.key === 'Escape') setEditing(false);
+          }}
+          placeholder='Description (optional)…'
+          className='h-5 w-[130px] text-xs'
+          aria-label='Flow description'
+        />
+        <button
+          type='button'
+          onClick={() => void commitEdit()}
+          disabled={!editName.trim() || isSaving}
+          className='inline-flex size-5 items-center justify-center rounded text-emerald-400 hover:bg-emerald-400/10 disabled:opacity-40'
+          aria-label='Save'
+        >
+          <Check className='size-3' />
+        </button>
+        <button
+          type='button'
+          onClick={() => setEditing(false)}
+          className='inline-flex size-5 items-center justify-center rounded text-muted-foreground hover:text-foreground'
+          aria-label='Cancel'
+        >
+          <X className='size-3' />
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className='group flex items-center gap-1.5 rounded px-1.5 py-1 text-xs hover:bg-white/5'>
@@ -91,8 +153,17 @@ function FlowRow({ flow }: { flow: PlaywrightFlow }): React.JSX.Element {
       ) : null}
       <button
         type='button'
+        onClick={startEdit}
+        className='ml-1 text-muted-foreground/40 opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100'
+        title='Rename flow'
+        aria-label={`Rename flow ${flow.name}`}
+      >
+        <Pencil className='size-3' />
+      </button>
+      <button
+        type='button'
         onClick={() => void handleDeleteFlow(flow.id)}
-        className='ml-1 text-muted-foreground/40 opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100'
+        className='text-muted-foreground/40 opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100'
         title='Delete flow'
         aria-label={`Delete flow ${flow.name}`}
       >
@@ -107,58 +178,131 @@ function FlowRow({ flow }: { flow: PlaywrightFlow }): React.JSX.Element {
 // ---------------------------------------------------------------------------
 
 function WebsiteRow({ website }: { website: PlaywrightWebsite }): React.JSX.Element {
-  const { flows, handleDeleteWebsite } = usePlaywrightStepSequencer();
+  const { flows, handleDeleteWebsite, handleUpdateWebsite, isSaving } = usePlaywrightStepSequencer();
   const [expanded, setExpanded] = useState(false);
   const [addingFlow, setAddingFlow] = useState(false);
+  const [editingHeader, setEditingHeader] = useState(false);
+  const [editName, setEditName] = useState(website.name);
+  const [editUrl, setEditUrl] = useState(website.baseUrl ?? '');
 
   const siteFlows = flows.filter((f) => f.websiteId === website.id);
+
+  function startHeaderEdit(): void {
+    setEditName(website.name);
+    setEditUrl(website.baseUrl ?? '');
+    setEditingHeader(true);
+  }
+
+  async function commitHeaderEdit(): Promise<void> {
+    const trimmed = editName.trim();
+    if (!trimmed) return;
+    await handleUpdateWebsite(website.id, { name: trimmed, baseUrl: editUrl.trim() || null });
+    setEditingHeader(false);
+  }
 
   return (
     <div className='rounded-md border border-border/30 bg-card/20'>
       {/* Header */}
       <div className='group flex items-center gap-1.5 px-2 py-1.5'>
-        <button
-          type='button'
-          onClick={() => setExpanded((v) => !v)}
-          className='flex flex-1 items-center gap-1.5 text-xs font-medium'
-          aria-expanded={expanded}
-        >
-          {expanded ? (
+        {editingHeader ? (
+          <>
             <ChevronDown className='size-3.5 shrink-0 text-muted-foreground' />
-          ) : (
-            <ChevronRight className='size-3.5 shrink-0 text-muted-foreground' />
-          )}
-          <Globe className='size-3.5 shrink-0 text-sky-400' />
-          <span>{website.name}</span>
-          {website.baseUrl ? (
-            <span className='text-[10px] text-muted-foreground/50'>{website.baseUrl}</span>
-          ) : null}
-          <span className='ml-1 rounded-full bg-white/10 px-1.5 text-[10px] text-muted-foreground'>
-            {siteFlows.length} flow{siteFlows.length !== 1 ? 's' : ''}
-          </span>
-        </button>
-        <Button
-          size='sm'
-          variant='ghost'
-          className='h-6 gap-0.5 px-1.5 text-[10px] text-sky-400 opacity-0 transition-opacity hover:text-sky-300 group-hover:opacity-100'
-          onClick={() => {
-            setExpanded(true);
-            setAddingFlow(true);
-          }}
-          title='Add flow to this website'
-        >
-          <Plus className='size-3' />
-          Flow
-        </Button>
-        <button
-          type='button'
-          onClick={() => void handleDeleteWebsite(website.id)}
-          className='text-muted-foreground/40 opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100'
-          title='Delete website (and its flows)'
-          aria-label={`Delete website ${website.name}`}
-        >
-          <Trash2 className='size-3.5' />
-        </button>
+            <Globe className='size-3.5 shrink-0 text-sky-400' />
+            <Input
+              autoFocus
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') void commitHeaderEdit();
+                if (e.key === 'Escape') setEditingHeader(false);
+              }}
+              className='h-5 flex-1 text-xs'
+              aria-label='Website name'
+            />
+            <Input
+              value={editUrl}
+              onChange={(e) => setEditUrl(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') void commitHeaderEdit();
+                if (e.key === 'Escape') setEditingHeader(false);
+              }}
+              placeholder='Base URL…'
+              className='h-5 w-[160px] text-xs'
+              aria-label='Base URL'
+            />
+            <button
+              type='button'
+              onClick={() => void commitHeaderEdit()}
+              disabled={!editName.trim() || isSaving}
+              className='inline-flex size-5 items-center justify-center rounded text-emerald-400 hover:bg-emerald-400/10 disabled:opacity-40'
+              aria-label='Save'
+            >
+              <Check className='size-3' />
+            </button>
+            <button
+              type='button'
+              onClick={() => setEditingHeader(false)}
+              className='inline-flex size-5 items-center justify-center rounded text-muted-foreground hover:text-foreground'
+              aria-label='Cancel'
+            >
+              <X className='size-3' />
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              type='button'
+              onClick={() => setExpanded((v) => !v)}
+              className='flex flex-1 items-center gap-1.5 text-xs font-medium'
+              aria-expanded={expanded}
+            >
+              {expanded ? (
+                <ChevronDown className='size-3.5 shrink-0 text-muted-foreground' />
+              ) : (
+                <ChevronRight className='size-3.5 shrink-0 text-muted-foreground' />
+              )}
+              <Globe className='size-3.5 shrink-0 text-sky-400' />
+              <span>{website.name}</span>
+              {website.baseUrl ? (
+                <span className='text-[10px] text-muted-foreground/50'>{website.baseUrl}</span>
+              ) : null}
+              <span className='ml-1 rounded-full bg-white/10 px-1.5 text-[10px] text-muted-foreground'>
+                {siteFlows.length} flow{siteFlows.length !== 1 ? 's' : ''}
+              </span>
+            </button>
+            <button
+              type='button'
+              onClick={startHeaderEdit}
+              className='text-muted-foreground/40 opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100'
+              title='Rename website'
+              aria-label={`Rename website ${website.name}`}
+            >
+              <Pencil className='size-3.5' />
+            </button>
+            <Button
+              size='sm'
+              variant='ghost'
+              className='h-6 gap-0.5 px-1.5 text-[10px] text-sky-400 opacity-0 transition-opacity hover:text-sky-300 group-hover:opacity-100'
+              onClick={() => {
+                setExpanded(true);
+                setAddingFlow(true);
+              }}
+              title='Add flow to this website'
+            >
+              <Plus className='size-3' />
+              Flow
+            </Button>
+            <button
+              type='button'
+              onClick={() => void handleDeleteWebsite(website.id)}
+              className='text-muted-foreground/40 opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100'
+              title='Delete website (and its flows)'
+              aria-label={`Delete website ${website.name}`}
+            >
+              <Trash2 className='size-3.5' />
+            </button>
+          </>
+        )}
       </div>
 
       {/* Flows */}

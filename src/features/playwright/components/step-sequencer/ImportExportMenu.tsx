@@ -65,35 +65,35 @@ function parseImport(raw: unknown): ExportPayload | null {
     ? (obj['steps'] as unknown[])
         .map((s) => playwrightStepSchema.safeParse(s))
         .filter((r) => r.success)
-        .map((r) => r.data!)
+        .map((r) => r.data)
     : [];
 
   const stepSets = Array.isArray(obj['stepSets'])
     ? (obj['stepSets'] as unknown[])
         .map((s) => playwrightStepSetSchema.safeParse(s))
         .filter((r) => r.success)
-        .map((r) => r.data!)
+        .map((r) => r.data)
     : [];
 
   const actions = Array.isArray(obj['actions'])
     ? (obj['actions'] as unknown[])
         .map((a) => playwrightActionSchema.safeParse(a))
         .filter((r) => r.success)
-        .map((r) => r.data!)
+        .map((r) => r.data)
     : [];
 
   const websites = Array.isArray(obj['websites'])
     ? (obj['websites'] as unknown[])
         .map((w) => playwrightWebsiteSchema.safeParse(w))
         .filter((r) => r.success)
-        .map((r) => r.data!)
+        .map((r) => r.data)
     : [];
 
   const flows = Array.isArray(obj['flows'])
     ? (obj['flows'] as unknown[])
         .map((f) => playwrightFlowSchema.safeParse(f))
         .filter((r) => r.success)
-        .map((r) => r.data!)
+        .map((r) => r.data)
     : [];
 
   return {

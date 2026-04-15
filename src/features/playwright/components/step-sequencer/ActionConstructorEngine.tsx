@@ -1,13 +1,17 @@
 'use client';
 
+import type { DropResult } from '@hello-pangea/dnd';
+import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
 import {
   ChevronDown,
   ChevronRight,
   Folder,
   GripVertical,
   Layers,
+  Pencil,
   Play,
   Plus,
+  RefreshCw,
   Save,
   Trash2,
   X,
@@ -147,20 +151,35 @@ const ActionConstructorTreeNode = memo((
 function ActionSequenceItem({
   set,
   index,
-  total,
+  dragProvided,
+  isDragging,
 }: {
   set: PlaywrightStepSet;
   index: number;
-  total: number;
+  dragProvided: import('@hello-pangea/dnd').DraggableProvided;
+  isDragging: boolean;
 }): React.JSX.Element {
-  const { handleRemoveFromAction, handleMoveActionItem } = usePlaywrightStepSequencer();
+  const { handleRemoveFromAction } = usePlaywrightStepSequencer();
 
   return (
-    <div className='group flex items-center gap-2 rounded border border-border/40 bg-card/30 px-2 py-1.5'>
-      {/* Drag handle visual (non-functional indicator; reorder via buttons) */}
-      <GripVertical className='size-3.5 shrink-0 text-muted-foreground opacity-40' />
+    <div
+      ref={dragProvided.innerRef}
+      {...dragProvided.draggableProps}
+      className={cn(
+        'group flex items-center gap-2 rounded border border-border/40 bg-card/30 px-2 py-1.5 transition-shadow',
+        isDragging && 'shadow-lg ring-1 ring-sky-500/40 opacity-90'
+      )}
+    >
+      {/* Drag handle */}
+      <span
+        {...dragProvided.dragHandleProps}
+        className='inline-flex cursor-grab items-center text-muted-foreground/40 hover:text-muted-foreground active:cursor-grabbing'
+        aria-label='Drag to reorder'
+      >
+        <GripVertical className='size-3.5 shrink-0' />
+      </span>
 
-      <span className='shrink-0 text-[10px] font-mono text-muted-foreground w-4 text-right'>
+      <span className='shrink-0 w-4 text-right text-[10px] font-mono text-muted-foreground'>
         {index + 1}.
       </span>
 
@@ -170,34 +189,14 @@ function ActionSequenceItem({
         {set.stepIds.length} steps
       </Badge>
 
-      <div className='invisible flex items-center gap-0.5 group-hover:visible'>
-        <button
-          type='button'
-          disabled={index === 0}
-          onClick={() => handleMoveActionItem(index, index - 1)}
-          className='inline-flex size-5 items-center justify-center rounded text-muted-foreground hover:text-foreground disabled:opacity-30'
-          aria-label='Move up'
-        >
-          <ChevronDown className='size-3 rotate-180' />
-        </button>
-        <button
-          type='button'
-          disabled={index === total - 1}
-          onClick={() => handleMoveActionItem(index, index + 1)}
-          className='inline-flex size-5 items-center justify-center rounded text-muted-foreground hover:text-foreground disabled:opacity-30'
-          aria-label='Move down'
-        >
-          <ChevronDown className='size-3' />
-        </button>
-        <button
-          type='button'
-          onClick={() => handleRemoveFromAction(index)}
-          className='inline-flex size-5 items-center justify-center rounded text-muted-foreground hover:text-destructive'
-          aria-label='Remove'
-        >
-          <X className='size-3' />
-        </button>
-      </div>
+      <button
+        type='button'
+        onClick={() => handleRemoveFromAction(index)}
+        className='invisible inline-flex size-5 items-center justify-center rounded text-muted-foreground hover:text-destructive group-hover:visible'
+        aria-label='Remove from action'
+      >
+        <X className='size-3' />
+      </button>
     </div>
   );
 }
@@ -211,17 +210,32 @@ export function ActionConstructorEngine(): React.JSX.Element {
     stepSets,
     websites,
     flows,
+    actions,
     actionStepSets,
     actionDraftName,
     actionDraftDescription,
     actionPersonaId,
+    editingActionId,
     setActionDraftName,
     setActionDraftDescription,
     setActionPersonaId,
     handleAddStepSetToAction,
+    handleMoveActionItem,
     handleClearAction,
+    handleUpdateAction,
     setIsSaveActionOpen,
+    isSaving,
   } = usePlaywrightStepSequencer();
+
+  function onDragEnd(result: DropResult): void {
+    if (!result.destination) return;
+    if (result.destination.index === result.source.index) return;
+    handleMoveActionItem(result.source.index, result.destination.index);
+  }
+
+  const editingAction = editingActionId
+    ? actions.find((a) => a.id === editingActionId) ?? null
+    : null;
 
   const { data: personas = [] } = usePlaywrightPersonas();
 
@@ -298,12 +312,25 @@ export function ActionConstructorEngine(): React.JSX.Element {
       </div>
 
       {/* ---- Right: action sequence builder ---- */}
-      <div className='flex flex-1 flex-col gap-2 rounded-lg border border-border/50 bg-card/20 p-3'>
+      <div className={cn(
+        'flex flex-1 flex-col gap-2 rounded-lg border p-3',
+        editingActionId
+          ? 'border-sky-500/40 bg-sky-900/10'
+          : 'border-border/50 bg-card/20'
+      )}>
         {/* Header */}
         <div className='flex items-center justify-between gap-2'>
-          <Label className='text-[11px] font-semibold uppercase tracking-wider text-muted-foreground'>
-            Action Sequence
-          </Label>
+          <div className='flex items-center gap-2'>
+            <Label className='text-[11px] font-semibold uppercase tracking-wider text-muted-foreground'>
+              Action Sequence
+            </Label>
+            {editingAction ? (
+              <span className='inline-flex items-center gap-1 rounded bg-sky-500/15 px-1.5 py-0.5 text-[10px] text-sky-300 ring-1 ring-inset ring-sky-500/30'>
+                <Pencil className='size-2.5' />
+                Editing: {editingAction.name}
+              </span>
+            ) : null}
+          </div>
           {actionStepSets.length > 0 ? (
             <button
               type='button'
@@ -311,7 +338,7 @@ export function ActionConstructorEngine(): React.JSX.Element {
               className='inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-destructive'
             >
               <Trash2 className='size-3' />
-              Clear
+              {editingActionId ? 'Discard' : 'Clear'}
             </button>
           ) : null}
         </div>
@@ -326,16 +353,34 @@ export function ActionConstructorEngine(): React.JSX.Element {
             </div>
           </div>
         ) : (
-          <div className='flex-1 space-y-1 overflow-y-auto'>
-            {actionStepSets.map((set, idx) => (
-              <ActionSequenceItem
-                key={`${set.id}_${idx}`}
-                set={set}
-                index={idx}
-                total={actionStepSets.length}
-              />
-            ))}
-          </div>
+          <DragDropContext onDragEnd={onDragEnd}>
+            <Droppable droppableId='action-sequence'>
+              {(provided, snapshot) => (
+                <div
+                  ref={provided.innerRef}
+                  {...provided.droppableProps}
+                  className={cn(
+                    'flex-1 space-y-1 overflow-y-auto rounded',
+                    snapshot.isDraggingOver && 'bg-sky-500/5'
+                  )}
+                >
+                  {actionStepSets.map((set, idx) => (
+                    <Draggable key={`${set.id}_${idx}`} draggableId={`${set.id}_${idx}`} index={idx}>
+                      {(dragProvided, dragSnapshot) => (
+                        <ActionSequenceItem
+                          set={set}
+                          index={idx}
+                          dragProvided={dragProvided}
+                          isDragging={dragSnapshot.isDragging}
+                        />
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          </DragDropContext>
         )}
 
         {/* Save bar */}
@@ -380,15 +425,41 @@ export function ActionConstructorEngine(): React.JSX.Element {
                 className='h-7 w-[160px] text-xs'
                 aria-label='Action description'
               />
-              <Button
-                size='sm'
-                className='h-7 gap-1 text-xs'
-                onClick={() => setIsSaveActionOpen(true)}
-                disabled={!actionDraftName.trim()}
-              >
-                <Save className='size-3.5' />
-                Save Action
-              </Button>
+              {editingActionId ? (
+                <>
+                  <Button
+                    size='sm'
+                    className='h-7 gap-1 text-xs'
+                    onClick={() => void handleUpdateAction()}
+                    disabled={!actionDraftName.trim() || isSaving}
+                    loading={isSaving}
+                  >
+                    <RefreshCw className='size-3.5' />
+                    Update
+                  </Button>
+                  <Button
+                    size='sm'
+                    variant='outline'
+                    className='h-7 gap-1 text-xs'
+                    onClick={() => setIsSaveActionOpen(true)}
+                    disabled={!actionDraftName.trim()}
+                    title='Save as a new separate action'
+                  >
+                    <Save className='size-3.5' />
+                    Save as new
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  size='sm'
+                  className='h-7 gap-1 text-xs'
+                  onClick={() => setIsSaveActionOpen(true)}
+                  disabled={!actionDraftName.trim()}
+                >
+                  <Save className='size-3.5' />
+                  Save Action
+                </Button>
+              )}
             </div>
           </div>
         ) : null}

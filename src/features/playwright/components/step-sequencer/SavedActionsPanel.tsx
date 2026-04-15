@@ -1,6 +1,6 @@
 'use client';
 
-import { AlertTriangle, ChevronDown, ChevronRight, Layers, Play, RotateCcw, Trash2, User } from 'lucide-react';
+import { AlertTriangle, ChevronDown, ChevronRight, Copy, Layers, Play, RotateCcw, Trash2, User } from 'lucide-react';
 import { memo, useState } from 'react';
 
 import type { PlaywrightAction } from '@/shared/contracts/playwright-steps';
@@ -20,9 +20,10 @@ const SavedActionRow = memo(({
 }: {
   action: PlaywrightAction;
 }): React.JSX.Element => {
-  const { stepSets, handleDeleteAction, handleLoadActionIntoConstructor, orphanedStepSetIds } =
+  const { stepSets, handleDeleteAction, handleDuplicateAction, handleLoadActionIntoConstructor, orphanedStepSetIds, editingActionId } =
     usePlaywrightStepSequencer();
   const hasOrphanedSets = action.stepSetIds.some((id) => orphanedStepSetIds.has(id));
+  const isBeingEdited = editingActionId === action.id;
   const { data: personas = [] } = usePlaywrightPersonas();
   const [expanded, setExpanded] = useState(false);
 
@@ -36,7 +37,12 @@ const SavedActionRow = memo(({
   );
 
   return (
-    <div className='rounded border border-border/40 bg-card/20'>
+    <div className={cn(
+      'rounded border',
+      isBeingEdited
+        ? 'border-sky-500/40 bg-sky-900/10 ring-1 ring-inset ring-sky-500/20'
+        : 'border-border/40 bg-card/20'
+    )}>
       {/* Header row */}
       <button
         type='button'
@@ -77,16 +83,34 @@ const SavedActionRow = memo(({
           <Button
             variant='ghost'
             size='sm'
-            className='h-6 gap-1 px-1.5 text-[11px] text-sky-400 hover:text-sky-300'
+            className={cn(
+              'h-6 gap-1 px-1.5 text-[11px]',
+              isBeingEdited
+                ? 'text-sky-300 opacity-50 cursor-default'
+                : 'text-sky-400 hover:text-sky-300'
+            )}
             onClick={(e) => {
               e.stopPropagation();
-              handleLoadActionIntoConstructor(action.id);
+              if (!isBeingEdited) handleLoadActionIntoConstructor(action.id);
             }}
-            aria-label={`Load action ${action.name} into constructor`}
-            title='Load into constructor'
+            aria-label={isBeingEdited ? 'Currently editing' : `Load action ${action.name} into constructor`}
+            title={isBeingEdited ? 'Currently loaded for editing' : 'Load into constructor'}
           >
             <RotateCcw className='size-3' />
-            Load
+            {isBeingEdited ? 'Editing' : 'Load'}
+          </Button>
+          <Button
+            variant='ghost'
+            size='sm'
+            className='size-6 p-0 text-muted-foreground hover:text-foreground'
+            onClick={(e) => {
+              e.stopPropagation();
+              void handleDuplicateAction(action.id);
+            }}
+            aria-label={`Duplicate action ${action.name}`}
+            title='Duplicate action'
+          >
+            <Copy className='size-3.5' />
           </Button>
           <Button
             variant='ghost'

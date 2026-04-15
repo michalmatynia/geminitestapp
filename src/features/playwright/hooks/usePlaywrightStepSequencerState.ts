@@ -106,6 +106,7 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
   const [actionPersonaId, setActionPersonaId] = useState<string | null>(null);
   const [actionDraftName, setActionDraftName] = useState('');
   const [actionDraftDescription, setActionDraftDescription] = useState<string | null>(null);
+  const [editingActionId, setEditingActionId] = useState<string | null>(null);
 
   // ---------------------------------------------------------------------------
   // Derived / filtered data
@@ -373,6 +374,22 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
     [saveWebsites, toast]
   );
 
+  const handleUpdateWebsite = useCallback(
+    async (id: string, updates: Partial<Pick<PlaywrightWebsite, 'name' | 'baseUrl'>>): Promise<void> => {
+      try {
+        const next = websitesRef.current.map((w) =>
+          w.id === id ? { ...w, ...updates, updatedAt: now() } : w
+        );
+        await saveWebsites({ websites: next });
+        toast('Website updated.', { variant: 'success' });
+      } catch (error) {
+        logClientCatch(error, { source: 'usePlaywrightStepSequencerState', action: 'updateWebsite' });
+        toast('Failed to update website.', { variant: 'error' });
+      }
+    },
+    [saveWebsites, toast]
+  );
+
   const handleDeleteWebsite = useCallback(
     async (id: string): Promise<void> => {
       try {
@@ -402,6 +419,22 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
       } catch (error) {
         logClientCatch(error, { source: 'usePlaywrightStepSequencerState', action: 'createFlow' });
         toast('Failed to add flow.', { variant: 'error' });
+      }
+    },
+    [saveFlows, toast]
+  );
+
+  const handleUpdateFlow = useCallback(
+    async (id: string, updates: Partial<Pick<PlaywrightFlow, 'name' | 'description'>>): Promise<void> => {
+      try {
+        const next = flowsRef.current.map((f) =>
+          f.id === id ? { ...f, ...updates, updatedAt: now() } : f
+        );
+        await saveFlows({ flows: next });
+        toast('Flow updated.', { variant: 'success' });
+      } catch (error) {
+        logClientCatch(error, { source: 'usePlaywrightStepSequencerState', action: 'updateFlow' });
+        toast('Failed to update flow.', { variant: 'error' });
       }
     },
     [saveFlows, toast]
@@ -520,6 +553,29 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
     [saveWebsites, saveFlows, saveSteps, saveStepSets, saveActions, toast]
   );
 
+  const handleDuplicateAction = useCallback(
+    async (id: string): Promise<void> => {
+      const original = actionsRef.current.find((a) => a.id === id);
+      if (!original) return;
+      try {
+        const ts = now();
+        const copy: PlaywrightAction = {
+          ...original,
+          id: createId(),
+          name: `${original.name} (copy)`,
+          createdAt: ts,
+          updatedAt: ts,
+        };
+        await saveActions({ actions: [...actionsRef.current, copy] });
+        toast('Action duplicated.', { variant: 'success' });
+      } catch (error) {
+        logClientCatch(error, { source: 'usePlaywrightStepSequencerState', action: 'duplicateAction' });
+        toast('Failed to duplicate action.', { variant: 'error' });
+      }
+    },
+    [saveActions, toast]
+  );
+
   const handleLoadActionIntoConstructor = useCallback((id: string): void => {
     const action = actionsRef.current.find((a) => a.id === id);
     if (!action) return;
@@ -527,6 +583,7 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
     setActionDraftName(action.name);
     setActionDraftDescription(action.description);
     setActionPersonaId(action.personaId);
+    setEditingActionId(id);
     toast('Action loaded into constructor.', { variant: 'success' });
   }, [toast]);
 
@@ -556,6 +613,7 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
     setActionDraftName('');
     setActionDraftDescription(null);
     setActionPersonaId(null);
+    setEditingActionId(null);
   }, []);
 
   const handleSaveAction = useCallback(async (): Promise<void> => {
@@ -588,6 +646,39 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
       toast('Failed to save action.', { variant: 'error' });
     }
   }, [actionDraftName, actionDraftDescription, actionStepSetIds, actionPersonaId, handleClearAction, saveActions, toast]);
+
+  const handleUpdateAction = useCallback(async (): Promise<void> => {
+    if (!editingActionId) return;
+    const name = actionDraftName.trim();
+    if (!name) {
+      toast('Action name is required.', { variant: 'error' });
+      return;
+    }
+    if (actionStepSetIds.length === 0) {
+      toast('Add at least one step set before saving.', { variant: 'error' });
+      return;
+    }
+    try {
+      const next = actionsRef.current.map((a) =>
+        a.id === editingActionId
+          ? {
+              ...a,
+              name,
+              description: actionDraftDescription?.trim() ?? null,
+              stepSetIds: [...actionStepSetIds],
+              personaId: actionPersonaId,
+              updatedAt: now(),
+            }
+          : a
+      );
+      await saveActions({ actions: next });
+      handleClearAction();
+      toast('Action updated.', { variant: 'success' });
+    } catch (error) {
+      logClientCatch(error, { source: 'usePlaywrightStepSequencerState', action: 'updateAction' });
+      toast('Failed to update action.', { variant: 'error' });
+    }
+  }, [editingActionId, actionDraftName, actionDraftDescription, actionStepSetIds, actionPersonaId, handleClearAction, saveActions, toast]);
 
   // ---------------------------------------------------------------------------
   // Assemble context value
@@ -649,6 +740,7 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
     actionPersonaId,
     actionDraftName,
     actionDraftDescription,
+    editingActionId,
     handleAddStepSetToAction,
     handleRemoveFromAction,
     handleMoveActionItem,
@@ -657,6 +749,7 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
     setActionDraftName,
     setActionDraftDescription,
     handleSaveAction,
+    handleUpdateAction,
 
     // Step CRUD
     handleCreateStep,
@@ -672,14 +765,17 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
 
     // Website CRUD
     handleCreateWebsite,
+    handleUpdateWebsite,
     handleDeleteWebsite,
 
     // Flow CRUD
     handleCreateFlow,
+    handleUpdateFlow,
     handleDeleteFlow,
 
     // Action management
     handleDeleteAction,
+    handleDuplicateAction,
     handleLoadActionIntoConstructor,
 
     // Cleanup

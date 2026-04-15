@@ -5,6 +5,15 @@ import os from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
 
+// -----------------------------------------------------------------------------
+// Configuration
+// -----------------------------------------------------------------------------
+
+const CLI_FLAVOR = 'preview';
+const FLAVOR_LABEL = 'gemini-preview-pty';
+const DEFAULT_WRAPPER = 'gemini-preview-iso';
+const DEFAULT_ISO_HOME = path.join(os.homedir(), '.gemini-preview-home');
+
 const MODELS = (
   process.env.MODEL_CHAIN ||
   [
@@ -26,103 +35,141 @@ if (MODELS.length === 0) {
 
 const KEEP_TRY_MAX = toNumber(process.env.KEEP_TRY_MAX, 3);
 const TRY_AGAIN_MIN_INTERVAL_MS = toNumber(process.env.TRY_AGAIN_MIN_INTERVAL_MS, 2500);
-const CAPACITY_RETRY_MS = toNumber(process.env.CAPACITY_RETRY_MS, 4000);
-const MAX_CAPACITY_RETRY_MS = toNumber(process.env.MAX_CAPACITY_RETRY_MS, 30000);
-const CAPACITY_RECENT_MS = toNumber(process.env.CAPACITY_RECENT_MS, 15000);
-const CAPACITY_EVENT_RESET_MS = toNumber(process.env.CAPACITY_EVENT_RESET_MS, 20000);
-const AUTO_CONTINUE_MAX_PER_EVENT = toNumber(process.env.AUTO_CONTINUE_MAX_PER_EVENT, 6);
-const AUTO_RESTART_MAX_PER_WINDOW = toNumber(process.env.AUTO_RESTART_MAX_PER_WINDOW, 4);
-const AUTO_RESTART_WINDOW_MS = toNumber(process.env.AUTO_RESTART_WINDOW_MS, 120000);
 const MANUAL_OVERRIDE_MS = toNumber(process.env.MANUAL_OVERRIDE_MS, 20000);
 const AUTOMATION_COOLDOWN_MS = toNumber(process.env.AUTOMATION_COOLDOWN_MS, 60000);
 const FORCE_KILL_AFTER_MS = toNumber(process.env.FORCE_KILL_AFTER_MS, 1200);
-const RAW_TAIL_MAX = toNumber(process.env.RAW_TAIL_MAX, 24000);
-const NORMALIZED_TAIL_MAX = toNumber(process.env.NORMALIZED_TAIL_MAX, 12000);
+const CAPACITY_RETRY_MS = toNumber(process.env.CAPACITY_RETRY_MS, 5000);
+const MAX_CAPACITY_RETRY_MS = toNumber(process.env.MAX_CAPACITY_RETRY_MS, 30000);
+const CAPACITY_EVENT_RESET_MS = toNumber(process.env.CAPACITY_EVENT_RESET_MS, 25000);
+const CAPACITY_RECENT_MS = toNumber(process.env.CAPACITY_RECENT_MS, 15000);
+const AUTO_CONTINUE_MAX_PER_EVENT = toNumber(process.env.AUTO_CONTINUE_MAX_PER_EVENT, 4);
+const AUTO_RESTART_MAX_PER_WINDOW = toNumber(process.env.AUTO_RESTART_MAX_PER_WINDOW, 3);
+const AUTO_RESTART_WINDOW_MS = toNumber(process.env.AUTO_RESTART_WINDOW_MS, 120000);
+const RAW_TAIL_MAX = toNumber(process.env.RAW_TAIL_MAX, 48000);
+const NORMALIZED_TAIL_MAX = toNumber(process.env.NORMALIZED_TAIL_MAX, 16000);
+const HOTKEY_TIMEOUT_MS = toNumber(process.env.HOTKEY_TIMEOUT_MS, 3000);
+const STATIC_RECHECK_MS = toNumber(process.env.STATIC_RECHECK_MS, 1800);
+const ACTION_RETRY_MIN_MS = toNumber(process.env.ACTION_RETRY_MIN_MS, 2600);
+const PERMISSION_RETRY_MIN_MS = toNumber(process.env.PERMISSION_RETRY_MIN_MS, 1400);
 
-const AUTO_CONTINUE_ON_CAPACITY = isEnabled(process.env.AUTO_CONTINUE_ON_CAPACITY, true);
 const AUTO_CONTINUE_MODE = ((process.env.AUTO_CONTINUE_MODE || 'prompt_only').trim().toLowerCase());
-const AUTO_DISABLE_ON_USAGE_LIMIT = isEnabled(process.env.AUTO_DISABLE_ON_USAGE_LIMIT, true);
+const AUTO_CONTINUE_ON_CAPACITY = isEnabled(process.env.AUTO_CONTINUE_ON_CAPACITY, true);
 const AUTO_ALLOW_SESSION_PERMISSIONS = isEnabled(process.env.AUTO_ALLOW_SESSION_PERMISSIONS, true);
+const AUTO_DISABLE_ON_USAGE_LIMIT = isEnabled(process.env.AUTO_DISABLE_ON_USAGE_LIMIT, true);
+const AUTOMATION_DEFAULT_ENABLED = isEnabled(process.env.AUTOMATION_ENABLED, true);
 const NEVER_SWITCH = isEnabled(process.env.NEVER_SWITCH, false);
-const RAW_OUTPUT = isEnabled(process.env.RAW_OUTPUT, false);
 const DEBUG_AUTOMATION = isEnabled(process.env.DEBUG_AUTOMATION, false);
 const DEBUG_LAUNCH = isEnabled(process.env.DEBUG_LAUNCH, false);
+const QUIET_CHILD_NODE_WARNINGS = isEnabled(process.env.QUIET_CHILD_NODE_WARNINGS, true);
 const SET_HOME_TO_ISO = isEnabled(process.env.PTY_SET_HOME_TO_ISO, false);
+const RAW_OUTPUT = isEnabled(process.env.RAW_OUTPUT, false);
+const RESUME_DEFAULT = isEnabled(process.env.RESUME_LATEST, true);
 
-const KEEP_OPTION_TEXT = process.env.KEEP_OPTION_TEXT || '1';
-const SWITCH_OPTION_TEXT = process.env.SWITCH_OPTION_TEXT || '2';
-const CONTINUE_COMMAND = process.env.CONTINUE_COMMAND || 'continue';
-const SESSION_PERMISSION_OPTION_TEXT = process.env.SESSION_PERMISSION_OPTION_TEXT || '2';
-
-const GEMINI_WRAPPER_ENV = process.env.GEMINI_WRAPPER || 'gemini-preview-iso';
+const GEMINI_WRAPPER_ENV = process.env.GEMINI_WRAPPER || DEFAULT_WRAPPER;
 const GEMINI_WRAPPER_ARGS = parseJsonArrayEnv(process.env.GEMINI_WRAPPER_ARGS_JSON);
-const ISO_HOME = process.env.GEMINI_PREVIEW_ISO_HOME || process.env.GEMINI_ISO_HOME || path.join(os.homedir(), '.gemini-preview-home');
-const SHELL_PATH = resolveExecutable(process.env.PTY_SHELL || process.env.SHELL || '/bin/zsh');
-const WRAPPER_LAUNCH_MODE = ((process.env.WRAPPER_LAUNCH_MODE && process.env.WRAPPER_LAUNCH_MODE.trim()) || (process.env.PTY_FORCE_SHELL === '1' ? 'shell' : 'auto')).toLowerCase();
+const ISO_HOME =
+  process.env.GEMINI_ISO_HOME ||
+  process.env.GEMINI_PREVIEW_ISO_HOME ||
+  DEFAULT_ISO_HOME;
 
-const DEFAULT_HOTKEY_PREFIX_NAME = process.platform === 'darwin' ? 'ctrl-g' : 'ctrl-]';
-const HOTKEY_PREFIX_NAME = (process.env.HOTKEY_PREFIX || DEFAULT_HOTKEY_PREFIX_NAME).trim().toLowerCase();
+// Shell fallback should be clean and non-login by default so user zsh startup files
+// cannot break the child with stray output or errors.
+const SHELL_EXECUTABLE = resolveExecutable(
+  process.env.PTY_SHELL_EXECUTABLE || process.env.PTY_SHELL || '/bin/sh'
+);
+const WRAPPER_LAUNCH_MODE = ((process.env.WRAPPER_LAUNCH_MODE || 'auto').trim().toLowerCase());
+
+const DEFAULT_HOTKEY_PREFIX = process.platform === 'darwin' ? 'ctrl-g' : 'ctrl-]';
+const HOTKEY_PREFIX_NAME = (process.env.HOTKEY_PREFIX || DEFAULT_HOTKEY_PREFIX).trim().toLowerCase();
 const { byte: HOTKEY_PREFIX_BYTE, label: HOTKEY_PREFIX_LABEL } = resolveHotkeyPrefix(HOTKEY_PREFIX_NAME);
-const AUTOMATION_DEFAULT_ENABLED = isEnabled(process.env.AUTOMATION_ENABLED, true);
+
+const CONTINUE_COMMAND = process.env.CONTINUE_COMMAND || 'continue';
+const PERMISSION_OPTION_LABEL = (process.env.PERMISSION_OPTION_LABEL || 'allow for this session').trim().toLowerCase();
+const KEEP_LABELS = splitListEnv(process.env.KEEP_OPTION_LABELS, [
+  'keep trying',
+  'try again',
+  'continue waiting',
+]);
+const SWITCH_LABELS = splitListEnv(process.env.SWITCH_OPTION_LABELS, [
+  'switch to',
+  'switch model',
+  'change model',
+  'use gemini',
+]);
+const STOP_LABELS = splitListEnv(process.env.STOP_OPTION_LABELS, ['stop']);
+
+// -----------------------------------------------------------------------------
+// Runtime state
+// -----------------------------------------------------------------------------
 
 let loadedPty = null;
-let resumeEnabledThisRun = isEnabled(process.env.RESUME_LATEST, true);
+let loadedPtyModuleName = null;
+let activePty = null;
+let activeDisposables = [];
+let shuttingDown = false;
+let resumeEnabledThisRun = RESUME_DEFAULT;
 let modelIndex = 0;
 let activeRunId = 0;
-let activePty = null;
-let activePtyModuleName = null;
-let activeDisposables = [];
-let continueTimer = null;
-let restartTimer = null;
-let forceKillTimer = null;
-let automationResumeTimer = null;
-let stdinBound = false;
-let resizeBound = false;
-let shuttingDown = false;
 let lastLaunchPlan = null;
+
+let rawTail = '';
+let normalizedTail = '';
+let stateGeneration = 0;
+let currentSnapshot = makeSnapshot('normal');
+let sawNoResumeSession = false;
 
 let automationEnabled = AUTOMATION_DEFAULT_ENABLED;
 let automationDisabledReason = automationEnabled ? '' : 'manual';
 let automationPausedUntil = 0;
+
 let hotkeyAwaitingCommand = false;
-let hotkeyCommandTimer = null;
-let plannedAction = null;
+let hotkeyTimer = null;
+let stdinBound = false;
+let resizeBound = false;
+
+let continueTimer = null;
+let restartTimer = null;
+let forceKillTimer = null;
+let automationResumeTimer = null;
+let staticRecheckTimer = null;
 
 let demandHits = 0;
-let switching = false;
 let lastDemandTs = 0;
-let sawCapacityAt = 0;
+let lastCapacityAt = 0;
 let autoContinueAttempts = 0;
 let autoRestartHistory = [];
-let sawNoResumeSession = false;
-let usageLimitLatched = false;
-let lastMenuFingerprint = '';
-let lastPermissionFingerprint = '';
-let rawTail = '';
-let normalizedTail = '';
+let plannedAction = null;
+let switching = false;
+
+// Recently attempted actions keyed by `${kind}:${fingerprint}` with timestamps
+const recentActionKeys = new Map();
 
 main().catch((error) => {
   failWithCleanup(error instanceof Error ? error : new Error(String(error)));
 });
+
+// -----------------------------------------------------------------------------
+// Main
+// -----------------------------------------------------------------------------
 
 async function main() {
   fs.mkdirSync(ISO_HOME, { recursive: true });
 
   const { pty, moduleName } = await loadPtyModule();
   loadedPty = pty;
-  activePtyModuleName = moduleName;
+  loadedPtyModuleName = moduleName;
 
   bindUserInput();
   bindResizeHandling();
   bindProcessCleanup();
 
-  spawnGemini(pty);
+  spawnGemini();
 }
 
 async function loadPtyModule() {
   const errors = [];
 
-  for (const moduleName of ['node-pty', '@lydell/node-pty']) {
+  for (const moduleName of ['@lydell/node-pty', 'node-pty']) {
     try {
       const imported = await import(moduleName);
       const candidate = imported?.spawn
@@ -145,38 +192,39 @@ async function loadPtyModule() {
     [
       'Could not load a PTY library.',
       'Install one of these in your project:',
-      '  npm i node-pty',
       '  npm i @lydell/node-pty',
+      '  npm i node-pty',
       '',
       errors.join('\n'),
     ].join('\n')
   );
 }
 
-function spawnGemini(pty) {
-  clearContinueTimer();
-  clearRestartTimer();
-  clearForceKillTimer();
-  clearAutomationResumeTimer();
-  clearHotkeyCommandTimer();
+function spawnGemini() {
+  if (!loadedPty) throw new Error('PTY module has not been loaded.');
+
+  clearAllTimers();
   disposeActiveListeners();
   activePty = null;
   plannedAction = null;
+  switching = false;
+
+  activeRunId += 1;
+  rawTail = '';
+  normalizedTail = '';
+  demandHits = 0;
+  lastDemandTs = 0;
+  lastCapacityAt = 0;
+  autoContinueAttempts = 0;
+  sawNoResumeSession = false;
+  stateGeneration = 0;
+  currentSnapshot = makeSnapshot('normal');
+  recentActionKeys.clear();
 
   if (automationDisabledReason === 'usage_limit') {
     automationEnabled = AUTOMATION_DEFAULT_ENABLED;
     automationDisabledReason = automationEnabled ? '' : 'manual';
   }
-
-  activeRunId += 1;
-  const runId = activeRunId;
-
-  resetCapacityEventState();
-  rawTail = '';
-  normalizedTail = '';
-  sawNoResumeSession = false;
-  usageLimitLatched = false;
-  lastPermissionFingerprint = '';
 
   const model = currentModel();
   const { args, canResume } = buildGeminiArgs(model);
@@ -190,31 +238,19 @@ function spawnGemini(pty) {
 
   let ptyProcess;
   try {
-    ptyProcess = pty.spawn(launchPlan.file, launchPlan.args, {
-      name: process.env.TERM || 'xterm-256color',
-      cols: getTerminalColumns(),
-      rows: getTerminalRows(),
-      cwd: process.cwd(),
-      env,
-    });
+    ptyProcess = loadedPty.spawn(launchPlan.file, launchPlan.args, buildPtyOptions(env));
   } catch (error) {
-    const maybeFallback = maybeBuildFallbackLaunchPlan(error, wrapperInfo, launchArgs, launchPlan);
-    if (!maybeFallback) {
+    const fallback = maybeBuildFallbackLaunchPlan(error, wrapperInfo, launchArgs, launchPlan);
+    if (!fallback) {
       throw wrapSpawnError(error, wrapperInfo, launchPlan);
     }
-
-    lastLaunchPlan = maybeFallback;
-    console.error(`[gemini-preview-pty] Direct spawn failed, retrying via shell exec: ${error instanceof Error ? error.message : String(error)}`);
-    ptyProcess = pty.spawn(maybeFallback.file, maybeFallback.args, {
-      name: process.env.TERM || 'xterm-256color',
-      cols: getTerminalColumns(),
-      rows: getTerminalRows(),
-      cwd: process.cwd(),
-      env,
-    });
+    lastLaunchPlan = fallback;
+    console.error(`[${FLAVOR_LABEL}] Direct spawn failed, retrying via clean shell exec: ${error instanceof Error ? error.message : String(error)}`);
+    ptyProcess = loadedPty.spawn(fallback.file, fallback.args, buildPtyOptions(env));
   }
 
   activePty = ptyProcess;
+  const runId = activeRunId;
 
   activeDisposables.push(
     ptyProcess.onData((data) => {
@@ -228,98 +264,88 @@ function spawnGemini(pty) {
     ptyProcess.onExit(({ exitCode, signal }) => {
       if (runId !== activeRunId || shuttingDown) return;
       activePty = null;
-      clearContinueTimer();
-      clearForceKillTimer();
+      clearAllTimers();
       disposeActiveListeners();
-      handleChildExit(pty, { exitCode, signal, runId });
+      handleChildExit({ runId, exitCode, signal });
     })
   );
 }
 
-function logLaunchBanner({ model, canResume, wrapperInfo, launchPlan }) {
-  const lines = [
-    `\n[gemini-preview-pty] Launching model: ${model}${canResume ? ' (resuming latest)' : ' (fresh)'}${RAW_OUTPUT ? ' [raw-output]' : ''}`,
-    `[gemini-preview-pty] Wrapper request: ${GEMINI_WRAPPER_ENV}`,
-    `[gemini-preview-pty] Wrapper resolved: ${wrapperInfo.resolvedPath || '(not found on PATH yet)'}${wrapperInfo.exists ? '' : ' [missing]'}`,
-    `[gemini-preview-pty] Wrapper kind: ${wrapperInfo.kind}`,
-    `[gemini-preview-pty] Launch mode: ${launchPlan.mode}`,
-    `[gemini-preview-pty] Auto-continue mode: ${AUTO_CONTINUE_MODE}`,
-    `[gemini-preview-pty] Auto-approve session permissions: ${AUTO_ALLOW_SESSION_PERMISSIONS ? 'ON' : 'OFF'}`,
-    `[gemini-preview-pty] PTY backend: ${activePtyModuleName}`,
-    `[gemini-preview-pty] Local controls: ${HOTKEY_PREFIX_LABEL} h help, ${HOTKEY_PREFIX_LABEL} a toggle auto, ${HOTKEY_PREFIX_LABEL} s switch model, ${HOTKEY_PREFIX_LABEL} q quit`,
-  ];
-
-  if (wrapperInfo.kind === 'script' && wrapperInfo.shebang) {
-    lines.push(`[gemini-preview-pty] Script shebang: ${wrapperInfo.shebang}${wrapperInfo.hasCRLFShebang ? ' [CRLF detected]' : ''}`);
-  }
-
-  if (DEBUG_LAUNCH) {
-    lines.push(`[gemini-preview-pty] Launch file: ${launchPlan.file}`);
-    lines.push(`[gemini-preview-pty] Launch args: ${JSON.stringify(launchPlan.args)}`);
-  }
-
-  console.error(lines.join('\n') + '\n');
+function buildPtyOptions(env) {
+  return {
+    name: process.env.TERM || 'xterm-256color',
+    cols: getTerminalColumns(),
+    rows: getTerminalRows(),
+    cwd: process.cwd(),
+    env,
+  };
 }
 
-function maybeBuildFallbackLaunchPlan(error, wrapperInfo, launchArgs, currentPlan) {
-  const message = error instanceof Error ? error.message : String(error);
-  if (currentPlan.mode === 'shell') return null;
+// -----------------------------------------------------------------------------
+// Launch planning
+// -----------------------------------------------------------------------------
 
-  if (/posix_spawnp failed/i.test(message) || /ENOENT/i.test(message) || /EACCES/i.test(message)) {
-    return makeShellLaunchPlan(wrapperInfo, launchArgs);
+function buildGeminiArgs(model) {
+  const canResume = resumeEnabledThisRun && isoHomeLooksInitialized();
+  const args = [model];
+
+  if (canResume) {
+    args.push('--resume', 'latest');
   }
 
-  return null;
+  if (RAW_OUTPUT) {
+    args.push('--raw-output', '--accept-raw-output-risk');
+  }
+
+  return { args, canResume };
 }
 
-function wrapSpawnError(error, wrapperInfo, launchPlan) {
-  const details = [
-    error instanceof Error ? error.stack || error.message : String(error),
-    '',
-    `Launch mode: ${launchPlan.mode}`,
-    `Launch file: ${launchPlan.file}`,
-    `Launch args: ${JSON.stringify(launchPlan.args)}`,
-    `Requested wrapper: ${GEMINI_WRAPPER_ENV}`,
-    `Resolved wrapper: ${wrapperInfo.resolvedPath || '(not found)'}`,
-    `Exists: ${wrapperInfo.exists}`,
-    `Executable: ${wrapperInfo.isExecutable}`,
-    `Kind: ${wrapperInfo.kind}`,
-  ];
-
-  if (wrapperInfo.readError) {
-    details.push(`Inspect error: ${wrapperInfo.readError}`);
-  }
-  if (wrapperInfo.shebang) {
-    details.push(`Shebang: ${wrapperInfo.shebang}${wrapperInfo.hasCRLFShebang ? ' [CRLF detected]' : ''}`);
+function buildChildEnv() {
+  const env = {};
+  for (const [key, value] of Object.entries(process.env)) {
+    if (typeof value === 'string') env[key] = value;
   }
 
-  if (!wrapperInfo.exists) {
-    details.push('Hint: the wrapper path could not be found. Check GEMINI_WRAPPER and PATH.');
-  } else if (!wrapperInfo.isExecutable) {
-    details.push('Hint: the wrapper exists but is not executable. Try: chmod +x <wrapper>.');
-  } else if (wrapperInfo.hasCRLFShebang) {
-    details.push('Hint: the wrapper appears to have CRLF line endings in the shebang. Run: perl -pi -e "s/\r$//" <wrapper>');
-  } else if (wrapperInfo.kind === 'script') {
-    details.push('Hint: this looks like a shell script wrapper. Shell exec mode is usually more reliable on macOS PTYs.');
+  env.GEMINI_ISO_HOME = ISO_HOME;
+  env.GEMINI_PREVIEW_ISO_HOME = ISO_HOME;
+  if (SET_HOME_TO_ISO) env.HOME = ISO_HOME;
+  if (QUIET_CHILD_NODE_WARNINGS && !env.NODE_NO_WARNINGS) {
+    env.NODE_NO_WARNINGS = '1';
   }
 
-  return new Error(details.join('\n'));
+  return env;
+}
+
+function isoHomeLooksInitialized() {
+  try {
+    const sentinel = path.join(ISO_HOME, '.iso-initialized');
+    if (fs.existsSync(sentinel)) return true;
+    if (!fs.existsSync(ISO_HOME)) return false;
+    const entries = fs.readdirSync(ISO_HOME);
+    return entries.some((entry) => entry && entry !== 'Library' && entry !== '.DS_Store');
+  } catch {
+    return false;
+  }
 }
 
 function buildLaunchPlan(wrapperInfo, launchArgs) {
-  if (WRAPPER_LAUNCH_MODE === 'shell') {
-    return makeShellLaunchPlan(wrapperInfo, launchArgs);
-  }
+  if (WRAPPER_LAUNCH_MODE === 'shell') return makeShellLaunchPlan(wrapperInfo, launchArgs);
+  if (WRAPPER_LAUNCH_MODE === 'direct') return makeDirectLaunchPlan(wrapperInfo, launchArgs);
 
-  if (WRAPPER_LAUNCH_MODE === 'direct') {
-    return makeDirectLaunchPlan(wrapperInfo, launchArgs);
-  }
-
-  if (wrapperInfo.kind === 'script' || wrapperInfo.hasCRLFShebang) {
+  if (wrapperInfo.kind === 'script' || wrapperInfo.hasCRLFShebang || !wrapperInfo.isExecutable) {
     return makeShellLaunchPlan(wrapperInfo, launchArgs);
   }
 
   return makeDirectLaunchPlan(wrapperInfo, launchArgs);
+}
+
+function maybeBuildFallbackLaunchPlan(error, wrapperInfo, launchArgs, currentPlan) {
+  if (currentPlan.mode === 'shell') return null;
+  const message = error instanceof Error ? error.message : String(error);
+  if (/posix_spawnp failed/i.test(message) || /ENOENT|EACCES|ENOEXEC/i.test(message)) {
+    return makeShellLaunchPlan(wrapperInfo, launchArgs);
+  }
+  return null;
 }
 
 function makeDirectLaunchPlan(wrapperInfo, launchArgs) {
@@ -335,8 +361,8 @@ function makeShellLaunchPlan(wrapperInfo, launchArgs) {
   const command = ['exec', shQuote(executable), ...launchArgs.map(shQuote)].join(' ');
   return {
     mode: 'shell',
-    file: SHELL_PATH,
-    args: ['-lc', command],
+    file: SHELL_EXECUTABLE,
+    args: ['-c', command],
   };
 }
 
@@ -359,9 +385,7 @@ function inspectCommandTarget(command, pathEnv) {
   result.exists = resolved.exists;
   result.isExecutable = resolved.isExecutable;
 
-  if (!resolved.exists || !resolved.resolvedPath) {
-    return result;
-  }
+  if (!resolved.exists || !resolved.resolvedPath) return result;
 
   try {
     const stat = fs.statSync(resolved.resolvedPath);
@@ -386,26 +410,16 @@ function inspectCommandTarget(command, pathEnv) {
       return result;
     }
 
-    if (/^[\x00-\x7F]*$/.test(sample)) {
-      result.kind = 'text';
-    } else {
-      result.kind = 'binary';
-    }
+    result.kind = /^[\x00-\x7F]*$/.test(sample) ? 'text' : 'binary';
   } catch (error) {
     result.readError = error instanceof Error ? error.message : String(error);
-    result.kind = 'unknown';
   }
 
   return result;
 }
 
 function resolveExecutableDetailed(cmd, pathEnv) {
-  const result = {
-    resolvedPath: null,
-    exists: false,
-    isExecutable: false,
-  };
-
+  const result = { resolvedPath: null, exists: false, isExecutable: false };
   if (!cmd) return result;
 
   if (cmd.includes(path.sep)) {
@@ -440,405 +454,93 @@ function resolveExecutableDetailed(cmd, pathEnv) {
   return result;
 }
 
-function handleTerminalData(runId, chunk) {
-  rawTail += chunk;
-  if (rawTail.length > RAW_TAIL_MAX) {
-    rawTail = rawTail.slice(rawTail.length - RAW_TAIL_MAX);
+function resolveExecutable(cmd) {
+  const pathEnv = process.env.PATH || '';
+  return resolveExecutableDetailed(cmd, pathEnv).resolvedPath || cmd;
+}
+
+function wrapSpawnError(error, wrapperInfo, launchPlan) {
+  const parts = [
+    error instanceof Error ? error.stack || error.message : String(error),
+    '',
+    `Launch mode: ${launchPlan.mode}`,
+    `Launch file: ${launchPlan.file}`,
+    `Launch args: ${JSON.stringify(launchPlan.args)}`,
+    `Requested wrapper: ${GEMINI_WRAPPER_ENV}`,
+    `Resolved wrapper: ${wrapperInfo.resolvedPath || '(not found)'}`,
+    `Exists: ${wrapperInfo.exists}`,
+    `Executable: ${wrapperInfo.isExecutable}`,
+    `Kind: ${wrapperInfo.kind}`,
+  ];
+
+  if (wrapperInfo.shebang) parts.push(`Shebang: ${wrapperInfo.shebang}${wrapperInfo.hasCRLFShebang ? ' [CRLF detected]' : ''}`);
+  if (!wrapperInfo.exists) parts.push('Hint: wrapper not found. Check GEMINI_WRAPPER and PATH.');
+  else if (!wrapperInfo.isExecutable) parts.push('Hint: wrapper exists but is not executable. Try chmod +x <wrapper>.');
+  else if (wrapperInfo.hasCRLFShebang) parts.push('Hint: wrapper shebang has CRLF. Convert it to LF.');
+  else if (wrapperInfo.kind === 'script') parts.push('Hint: script wrappers are more reliable through clean shell exec mode.');
+
+  return new Error(parts.join('\n'));
+}
+
+function logLaunchBanner({ model, canResume, wrapperInfo, launchPlan }) {
+  const lines = [
+    `\n[${FLAVOR_LABEL}] Launching model: ${model}${canResume ? ' (resuming latest)' : ' (fresh)'}${RAW_OUTPUT ? ' [raw-output]' : ''}`,
+    `[${FLAVOR_LABEL}] Flavor: ${CLI_FLAVOR}`,
+    `[${FLAVOR_LABEL}] ISO home: ${ISO_HOME}`,
+    `[${FLAVOR_LABEL}] Wrapper request: ${GEMINI_WRAPPER_ENV}`,
+    `[${FLAVOR_LABEL}] Wrapper resolved: ${wrapperInfo.resolvedPath || '(not found on PATH yet)'}${wrapperInfo.exists ? '' : ' [missing]'}`,
+    `[${FLAVOR_LABEL}] Wrapper kind: ${wrapperInfo.kind}`,
+    `[${FLAVOR_LABEL}] Launch mode: ${launchPlan.mode}`,
+    `[${FLAVOR_LABEL}] Shell fallback executable: ${SHELL_EXECUTABLE}`,
+    `[${FLAVOR_LABEL}] Auto-continue mode: ${AUTO_CONTINUE_MODE}`,
+    `[${FLAVOR_LABEL}] Auto-approve session permissions: ${AUTO_ALLOW_SESSION_PERMISSIONS ? 'ON' : 'OFF'}`,
+    `[${FLAVOR_LABEL}] PTY backend: ${loadedPtyModuleName}`,
+    `[${FLAVOR_LABEL}] Local controls: ${HOTKEY_PREFIX_LABEL} h help, ${HOTKEY_PREFIX_LABEL} a toggle auto, ${HOTKEY_PREFIX_LABEL} s switch model, ${HOTKEY_PREFIX_LABEL} q quit`,
+  ];
+
+  if (wrapperInfo.kind === 'script' && wrapperInfo.shebang) {
+    lines.push(`[${FLAVOR_LABEL}] Script shebang: ${wrapperInfo.shebang}${wrapperInfo.hasCRLFShebang ? ' [CRLF detected]' : ''}`);
+  }
+  if (QUIET_CHILD_NODE_WARNINGS) {
+    lines.push(`[${FLAVOR_LABEL}] Child Node warnings: suppressed`);
+  }
+  if (DEBUG_LAUNCH) {
+    lines.push(`[${FLAVOR_LABEL}] Launch file: ${launchPlan.file}`);
+    lines.push(`[${FLAVOR_LABEL}] Launch args: ${JSON.stringify(launchPlan.args)}`);
   }
 
+  console.error(lines.join('\n') + '\n');
+}
+
+// -----------------------------------------------------------------------------
+// Terminal parsing and detection
+// -----------------------------------------------------------------------------
+
+function handleTerminalData(runId, chunk) {
+  rawTail += chunk;
+  if (rawTail.length > RAW_TAIL_MAX) rawTail = rawTail.slice(-RAW_TAIL_MAX);
   normalizedTail = normalizeTerminalText(rawTail);
-  if (normalizedTail.length > NORMALIZED_TAIL_MAX) {
-    normalizedTail = normalizedTail.slice(normalizedTail.length - NORMALIZED_TAIL_MAX);
-  }
+  if (normalizedTail.length > NORMALIZED_TAIL_MAX) normalizedTail = normalizedTail.slice(-NORMALIZED_TAIL_MAX);
 
   if (/no\s+previous\s+sessions\s+found/i.test(normalizedTail)) {
     sawNoResumeSession = true;
   }
 
-  maybeAutomate(runId);
-}
-
-function maybeAutomate(runId) {
-  if (!isAutomationActive()) {
-    clearContinueTimer();
-    return;
-  }
-
-  const state = detectAutomationState(normalizedTail);
-
-  if (state.hasPermissionMenu) {
-    clearContinueTimer();
-    lastMenuFingerprint = '';
-    handlePermissionMenu(state, runId);
-    return;
-  }
-
-  lastPermissionFingerprint = '';
-
-  if (state.hasUsageLimit) {
-    handleUsageLimit(state);
-    return;
-  }
-
-  if (!state.hasCapacity) {
-    clearContinueTimer();
-    return;
-  }
-
-  const now = Date.now();
-  if (sawCapacityAt > 0 && now - sawCapacityAt > CAPACITY_EVENT_RESET_MS) {
-    resetCapacityEventState();
-  }
-  sawCapacityAt = now;
-
-  if (state.hasKeepMenu) {
-    clearContinueTimer();
-
-    if (state.fingerprint === lastMenuFingerprint) {
-      return;
-    }
-
-    if (now - lastDemandTs < TRY_AGAIN_MIN_INTERVAL_MS) {
-      return;
-    }
-
-    lastDemandTs = now;
-    lastMenuFingerprint = state.fingerprint;
-    demandHits += 1;
-
-    if (NEVER_SWITCH) {
-      if (demandHits > KEEP_TRY_MAX) {
-        pauseAutomationTemporarily(AUTOMATION_COOLDOWN_MS, 'keep-trying loop limit reached');
-        return;
-      }
-      sendLine(KEEP_OPTION_TEXT, `keep-trying ${demandHits}/${KEEP_TRY_MAX}`, runId);
-      return;
-    }
-
-    if (demandHits <= KEEP_TRY_MAX) {
-      sendLine(KEEP_OPTION_TEXT, `keep-trying ${demandHits}/${KEEP_TRY_MAX}`, runId);
-      return;
-    }
-
-    switching = true;
-    clearContinueTimer();
-    console.error(`\n[gemini-preview-pty] Capacity busy on ${currentModel()} — switching model...\n`);
-    sendLine(SWITCH_OPTION_TEXT, 'switch-model', runId);
-    return;
-  }
-
-  if (!shouldAutoContinue(state)) {
-    clearContinueTimer();
-    return;
-  }
-
-  scheduleContinueRetry(state, runId);
-}
-
-function handleUsageLimit(state) {
-  if (usageLimitLatched) return;
-  usageLimitLatched = true;
-  switching = false;
-  clearContinueTimer();
-  clearRestartTimer();
-  sawCapacityAt = 0;
-  autoContinueAttempts = 0;
-  lastMenuFingerprint = '';
-
-  if (AUTO_DISABLE_ON_USAGE_LIMIT) {
-    setAutomationEnabled(false, 'usage_limit');
-    console.error(`\n[gemini-preview-pty] Usage limit detected (${state.reason}) — automation paused. ${hotkeySummary()}\n`);
-  }
-}
-
-function handlePermissionMenu(state, runId) {
-  if (!AUTO_ALLOW_SESSION_PERMISSIONS) return;
-
-  const fingerprint = state.permissionFingerprint || state.fingerprint || 'permission-menu';
-  if (fingerprint && fingerprint === lastPermissionFingerprint) {
-    return;
-  }
-
-  const sent = sendLine(state.permissionOptionText || SESSION_PERMISSION_OPTION_TEXT, 'allow-for-this-session', runId);
-  if (sent) {
-    lastPermissionFingerprint = fingerprint;
-  }
-}
-
-function resetAutomationTracking() {
-  clearContinueTimer();
-  clearRestartTimer();
-  usageLimitLatched = false;
-  resetCapacityEventState();
-}
-
-function recheckVisiblePrompt(reason = 'manual recheck') {
-  if (!activePty || shuttingDown) return;
-  if (!isAutomationActive()) return;
-
-  if (DEBUG_AUTOMATION) {
-    console.error(`[gemini-preview-pty][auto] Rechecking visible prompt (${reason})`);
-  }
-
-  maybeAutomate(activeRunId);
-}
-
-function scheduleContinueRetry(state, runId) {
-  if (!AUTO_CONTINUE_ON_CAPACITY) return;
-  if (continueTimer) return;
-
-  const continueLabel = describeContinueAction(state);
-
-  if (autoContinueAttempts >= AUTO_CONTINUE_MAX_PER_EVENT) {
-    pauseAutomationTemporarily(AUTOMATION_COOLDOWN_MS, `too many auto-continues for ${state.reason}`);
-    return;
-  }
-
-  const delay = Math.min(CAPACITY_RETRY_MS * 2 ** autoContinueAttempts, MAX_CAPACITY_RETRY_MS);
-  console.error(`\n[gemini-preview-pty] ${state.reason} — retrying in ${delay}ms (sending: ${continueLabel}) [${autoContinueAttempts + 1}/${AUTO_CONTINUE_MAX_PER_EVENT}]\n`);
-  continueTimer = setTimeout(() => {
-    continueTimer = null;
-    if (runId !== activeRunId || !activePty || !isAutomationActive()) return;
-
-    const latestState = detectAutomationState(normalizedTail);
-    if (!latestState.hasCapacity || latestState.hasKeepMenu || latestState.hasUsageLimit || !shouldAutoContinue(latestState)) {
-      return;
-    }
-
-    autoContinueAttempts += 1;
-    sendContinueAction(latestState, runId);
-  }, delay);
-}
-
-function clearContinueTimer() {
-  if (continueTimer) {
-    clearTimeout(continueTimer);
-    continueTimer = null;
-  }
-}
-
-function clearRestartTimer() {
-  if (restartTimer) {
-    clearTimeout(restartTimer);
-    restartTimer = null;
-  }
-}
-
-function clearForceKillTimer() {
-  if (forceKillTimer) {
-    clearTimeout(forceKillTimer);
-    forceKillTimer = null;
-  }
-}
-
-function clearAutomationResumeTimer() {
-  if (automationResumeTimer) {
-    clearTimeout(automationResumeTimer);
-    automationResumeTimer = null;
-  }
-}
-
-function sendLine(text, reason, runId) {
-  if (runId !== activeRunId || !activePty) return false;
-
-  try {
-    if (DEBUG_AUTOMATION) {
-      console.error(`[gemini-preview-pty][auto] send ${JSON.stringify(text)} (${reason})`);
-    }
-    activePty.write(`${text}\r`);
-    return true;
-  } catch (error) {
-    console.error(`[warn] Failed to send automated input (${reason}): ${error instanceof Error ? error.message : String(error)}`);
-    return false;
-  }
-}
-
-function sendRaw(text, reason = 'raw') {
-  if (!activePty) return false;
-  try {
-    if (DEBUG_AUTOMATION) {
-      console.error(`[gemini-preview-pty][raw] send ${JSON.stringify(text)} (${reason})`);
-    }
-    activePty.write(text);
-    return true;
-  } catch (error) {
-    console.error(`[warn] Failed to send raw input (${reason}): ${error instanceof Error ? error.message : String(error)}`);
-    return false;
-  }
-}
-
-function shouldAutoContinue(state) {
-  if (!AUTO_CONTINUE_ON_CAPACITY) return false;
-
-  if (AUTO_CONTINUE_MODE === 'off' || AUTO_CONTINUE_MODE === '0' || AUTO_CONTINUE_MODE === 'false') {
-    return false;
-  }
-
-  if (AUTO_CONTINUE_MODE === 'capacity' || AUTO_CONTINUE_MODE === 'always') {
-    return true;
-  }
-
-  return state.hasExplicitContinuePrompt;
-}
-
-function describeContinueAction(state) {
-  if (state.continueAction === 'enter') {
-    return 'Enter';
-  }
-  return CONTINUE_COMMAND;
-}
-
-function sendContinueAction(state, runId) {
-  if (state.continueAction === 'enter') {
-    return sendLine('', state.reason, runId);
-  }
-  return sendLine(CONTINUE_COMMAND, state.reason, runId);
-}
-
-function handleChildExit(pty, { exitCode, signal, runId }) {
-  console.error(`\n[child] exited: code=${exitCode} signal=${signal}\n`);
-
-  if (plannedAction) {
-    const action = plannedAction;
-    plannedAction = null;
-
-    if (action.kind === 'switch') {
-      modelIndex += 1;
-      spawnGemini(pty);
-      return;
-    }
-
-    if (action.kind === 'restart') {
-      spawnGemini(pty);
-      return;
-    }
-
-    if (action.kind === 'exit') {
-      cleanupAndExit(action.code ?? 0);
-      return;
-    }
-  }
-
-  const noResumeSession = resumeEnabledThisRun && (exitCode === 42 || sawNoResumeSession);
-  if (noResumeSession) {
-    console.error('[gemini-preview-pty] No resumable session — retrying without --resume\n');
-    resumeEnabledThisRun = false;
-    spawnGemini(pty);
-    return;
-  }
-
-  if (switching) {
-    modelIndex += 1;
-    spawnGemini(pty);
-    return;
-  }
-
-  const canAutoRestart =
-    automationEnabled &&
-    automationDisabledReason !== 'usage_limit' &&
-    sawCapacityAt > 0 &&
-    Date.now() - sawCapacityAt <= CAPACITY_RECENT_MS;
-
-  if (canAutoRestart) {
-    if (!recordAutoRestart()) {
-      console.error(`\n[gemini-preview-pty] Too many auto-restarts in a short window — stopping the loop. ${hotkeySummary()}\n`);
-      cleanupAndExit(typeof exitCode === 'number' ? exitCode : 1);
-      return;
-    }
-
-    console.error(`[gemini-preview-pty] Exited during/after capacity event — restarting in ${CAPACITY_RETRY_MS}ms...\n`);
-    restartTimer = setTimeout(() => {
-      restartTimer = null;
-      if (runId !== activeRunId || shuttingDown) return;
-      spawnGemini(pty);
-    }, CAPACITY_RETRY_MS);
-    return;
-  }
-
-  cleanupAndExit(typeof exitCode === 'number' ? exitCode : 0);
-}
-
-function recordAutoRestart() {
-  const now = Date.now();
-  autoRestartHistory = autoRestartHistory.filter((ts) => now - ts <= AUTO_RESTART_WINDOW_MS);
-  if (autoRestartHistory.length >= AUTO_RESTART_MAX_PER_WINDOW) {
-    return false;
-  }
-  autoRestartHistory.push(now);
-  return true;
-}
-
-function currentModel() {
-  return MODELS[modelIndex % MODELS.length];
-}
-
-function buildGeminiArgs(model) {
-  const canResume = resumeEnabledThisRun && isoHomeLooksInitialized();
-  const args = [model];
-
-  if (canResume) {
-    args.push('--resume', 'latest');
-  }
-
-  if (RAW_OUTPUT) {
-    args.push('--raw-output', '--accept-raw-output-risk');
-  }
-
-  return { args, canResume };
-}
-
-function buildChildEnv() {
-  const env = {};
-  for (const [key, value] of Object.entries(process.env)) {
-    if (typeof value === 'string') {
-      env[key] = value;
-    }
-  }
-
-  env.GEMINI_ISO_HOME = ISO_HOME;
-  if (SET_HOME_TO_ISO) {
-    env.HOME = ISO_HOME;
-  }
-
-  return env;
-}
-
-function isoHomeLooksInitialized() {
-  try {
-    const sentinel = path.join(ISO_HOME, '.iso-initialized');
-    if (fs.existsSync(sentinel)) return true;
-    if (!fs.existsSync(ISO_HOME)) return false;
-
-    const entries = fs.readdirSync(ISO_HOME);
-    return entries.some((entry) => entry && entry !== 'Library' && entry !== '.DS_Store');
-  } catch {
-    return false;
-  }
-}
-
-function resolveExecutable(cmd) {
-  if (!cmd) return cmd;
-  if (cmd.includes(path.sep) && fs.existsSync(cmd)) return cmd;
-
-  const pathEnv = process.env.PATH || '';
-  for (const dir of pathEnv.split(path.delimiter)) {
-    if (!dir) continue;
-    const candidate = path.join(dir, cmd);
-    try {
-      fs.accessSync(candidate, fs.constants.X_OK);
-      return candidate;
-    } catch {
-      // Continue.
-    }
-  }
-
-  return cmd;
+  const snapshot = detectScreen(normalizedTail);
+  updateCurrentSnapshot(snapshot);
+  maybeAutomate(runId, snapshot);
 }
 
 function normalizeTerminalText(input) {
-  let text = input
-    .replace(/\u001B\][^\u0007]*(?:\u0007|\u001B\\)/g, '')
+  const trimmed = stripTrailingIncompleteEscape(input);
+  let text = trimmed
+    // OSC ... BEL or ESC \
+    .replace(/\u001B\][^\u0007\u001B]*(?:\u0007|\u001B\\)/g, '')
+    // CSI
     .replace(/\u001B\[[0-?]*[ -/]*[@-~]/g, '')
+    // DCS/PM/APC/SOS terminated by ST or BEL (best-effort)
+    .replace(/\u001B[PX^_][\s\S]*?(?:\u0007|\u001B\\)/g, '')
+    // Two-byte escape sequences and stray ESC-prefixed controls
     .replace(/\u001B[@-_]/g, '')
     .replace(/\r\n?/g, '\n');
 
@@ -855,176 +557,490 @@ function normalizeTerminalText(input) {
   return out.join('').replace(/[\x01-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
 }
 
-function detectAutomationState(text) {
+function stripTrailingIncompleteEscape(text) {
+  const lastEsc = text.lastIndexOf('\u001B');
+  if (lastEsc < 0) return text;
+  const suffix = text.slice(lastEsc);
+  if (isCompleteEscapeSequence(suffix)) return text;
+  return text.slice(0, lastEsc);
+}
+
+function isCompleteEscapeSequence(suffix) {
+  if (!suffix.startsWith('\u001B')) return true;
+  if (suffix === '\u001B') return false;
+
+  if (suffix.startsWith('\u001B[')) {
+    return /\u001B\[[0-?]*[ -/]*[@-~]$/.test(suffix);
+  }
+
+  if (suffix.startsWith('\u001B]')) {
+    return /(?:\u0007|\u001B\\)$/.test(suffix);
+  }
+
+  if (suffix.startsWith('\u001BP') || suffix.startsWith('\u001B^') || suffix.startsWith('\u001B_')) {
+    return /(?:\u0007|\u001B\\)$/.test(suffix);
+  }
+
+  return suffix.length >= 2;
+}
+
+function detectScreen(text) {
   const tail = text.slice(-NORMALIZED_TAIL_MAX);
+  const lower = tail.toLowerCase();
+  const lines = compactLines(tail);
+  const options = parseMenuOptions(lines);
 
-  const defaultState = {
-    hasPermissionMenu: false,
-    permissionOptionText: SESSION_PERMISSION_OPTION_TEXT,
-    permissionFingerprint: '',
-    hasUsageLimit: false,
-    hasCapacity: false,
-    hasKeepMenu: false,
-    hasExplicitContinuePrompt: false,
-    continueAction: 'command',
-    reason: 'idle',
-    fingerprint: '',
-  };
+  const findOption = (labels) => findMenuOption(options, labels);
 
-  const permissionPromptMatch =
-    tail.match(/allow\s+execution\s+of\s*:/i) ||
-    tail.match(/action\s+required/i);
-  const allowSessionMatch = matchNumberedMenuOption(tail, 'allow for this session');
-  const allowOnceMatch = matchNumberedMenuOption(tail, 'allow once');
-  const denyMatch =
-    matchNumberedMenuOption(tail, 'no, suggest changes') ||
-    matchNumberedMenuOption(tail, 'deny') ||
-    matchNumberedMenuOption(tail, 'reject');
-
-  const hasPermissionPromptText =
-    /allow\s+execution\s+of\s*:/i.test(tail) ||
-    (/action\s+required/i.test(tail) && /allow\s+for\s+this\s+session/i.test(tail));
-
-  if (hasPermissionPromptText && allowSessionMatch) {
-    const permissionFingerprint = extractMenuFingerprint(
-      tail,
-      permissionPromptMatch?.index ?? allowSessionMatch.index ?? 0,
-      denyMatch?.index ?? allowSessionMatch.index ?? permissionPromptMatch?.index ?? 0
-    );
-
-    return {
-      ...defaultState,
-      hasPermissionMenu: true,
-      permissionOptionText: allowSessionMatch.optionText || SESSION_PERMISSION_OPTION_TEXT,
-      permissionFingerprint,
-      reason: 'permission prompt',
-      fingerprint: permissionFingerprint,
-    };
-  }
-
-  const usageRules = [
-    [/you(?:'ve| have)\s+(?:reached|hit)\s+(?:your\s+)?(?:usage|request|quota|rate)\s+limit/i, 'usage limit reached'],
-    [/(?:daily|monthly)\s+(?:usage|quota|request)\s+limit/i, 'plan limit reached'],
-    [/rate\s+limit\s+exceeded/i, 'rate limit exceeded'],
-    [/quota\s+(?:reached|exceeded|used\s+up)/i, 'quota exceeded'],
-    [/usage\s+(?:limit|quota)\s+(?:reached|exceeded|used\s+up)/i, 'usage limit reached'],
-    [/try\s+again\s+(?:later|tomorrow)\b/i, 'retry later'],
-    [/come\s+back\s+(?:later|tomorrow)\b/i, 'retry later'],
-  ];
-
-  const matchedUsage = usageRules.find(([pattern]) => pattern.test(tail));
-  if (matchedUsage) {
-    return {
-      ...defaultState,
-      hasUsageLimit: true,
-      reason: matchedUsage[1],
-    };
-  }
-
-  const capacityRules = [
-    [/we\s+are\s+currently\s+experiencing\s+high\s+demand/i, 'high demand'],
-    [/no\s+capacity\s+available/i, 'no capacity'],
-    [/high\s+demand\s+right\s+now/i, 'high demand'],
-    [/try\s+again\s+in\s+a\s+moment/i, 'try again soon'],
-    [/temporarily\s+unavailable/i, 'temporarily unavailable'],
-  ];
-
-  const matchedCapacity = capacityRules.find(([pattern]) => pattern.test(tail));
-  if (!matchedCapacity) {
-    return defaultState;
-  }
-
-  const keepMatch =
-    tail.match(/(?:^|\n)\s*1\s*[.):-]?\s*(?:keep\s+trying|try\s+again|continue\s+waiting)\b/i) ||
-    tail.match(/press\s+1\s+to\s+(?:keep\s+trying|try\s+again|continue\s+waiting)\b/i);
-
-  const switchMatch =
-    tail.match(/(?:^|\n)\s*2\s*[.):-]?\s*(?:switch|change|use)\b/i) ||
-    tail.match(/press\s+2\s+to\s+(?:switch|change|use)\b/i);
-
-  const continueCommandMatch =
-    tail.match(/(?:(?:type|enter|send|write)\s+["'`]?continue["'`]?\s+(?:to|for)\b[^\n]*|(?:to|for)\s+(?:keep\s+trying|continue\s+waiting|retry)[^\n]*\btype\s+["'`]?continue["'`]?)/i) ||
-    tail.match(/(?:^|\n)\s*continue\s*$/im);
-
-  const continueEnterMatch = tail.match(/(?:(?:press|hit)\s+(?:enter|return)\s+(?:to|for)\b[^\n]*(?:keep\s+trying|continue\s+waiting|retry|try\s+again)|(?:keep\s+trying|continue\s+waiting|retry|try\s+again)[^\n]*(?:press|hit)\s+(?:enter|return))/i);
-
-  const continueMatch = continueCommandMatch || continueEnterMatch;
-  const hasExplicitContinuePrompt = Boolean(continueMatch);
-  const continueAction = continueEnterMatch ? 'enter' : 'command';
-
-  const hasKeepMenu = Boolean(keepMatch && switchMatch);
-  const fingerprint = hasKeepMenu
-    ? extractMenuFingerprint(tail, keepMatch.index ?? 0, switchMatch.index ?? 0)
-    : hasExplicitContinuePrompt
-      ? extractMenuFingerprint(tail, continueMatch.index ?? 0, continueMatch.index ?? 0)
-      : '';
-
-  return {
-    ...defaultState,
-    hasCapacity: true,
-    hasKeepMenu,
-    hasExplicitContinuePrompt,
-    continueAction,
-    reason: matchedCapacity[1],
-    fingerprint,
-  };
-}
-
-function extractMenuFingerprint(text, firstIndex, secondIndex) {
-  const start = Math.max(0, Math.min(firstIndex, secondIndex) - 40);
-  const end = Math.min(text.length, Math.max(firstIndex, secondIndex) + 220);
-  return text.slice(start, end).replace(/\s+/g, ' ').trim();
-}
-
-function matchNumberedMenuOption(text, label) {
-  const escapedLabel = escapeRegex(label).replace(/\s+/g, '\\s+');
-  const patterns = [
-    new RegExp(
-      `(?:^|\\n)[^\S\n]*(?:[│║┃|][^\S\n]*)*(?:[•●◦▪◆▶➜»›>*?-][^\S\n]*)?(\\d+)\s*[.):-]?[^\S\n]*${escapedLabel}\\b`,
-      'i'
-    ),
-    new RegExp(
-      `(?:^|\\n)[^\S\n]*(?:[│║┃|][^\S\n]*)*(?:[•●◦▪◆▶➜»›>*?-][^\S\n]*)?${escapedLabel}\\b[^\S\n]*[(:-]?[^\S\n]*(\\d+)\\b`,
-      'i'
-    ),
-  ];
-
-  for (const pattern of patterns) {
-    const match = pattern.exec(text);
-    if (match) {
+  // Permission prompt
+  if ((lower.includes('action required') || lower.includes('allow execution of:')) && options.length > 0) {
+    const allowSession = findOption([PERMISSION_OPTION_LABEL]);
+    if (allowSession) {
       return {
-        index: match.index,
-        optionText: match[1] || '',
-        raw: match[0],
+        kind: 'permission',
+        reason: 'permission prompt',
+        optionText: allowSession.numberText,
+        fingerprint: fingerprintFromLines(lines, [
+          'action required',
+          'allow execution of:',
+          allowSession.canonical,
+        ]),
+        options,
       };
     }
   }
 
-  const labelOnly = new RegExp(escapedLabel, 'i').exec(text);
-  if (labelOnly) {
+  // Usage / quota limit
+  const usagePatterns = [
+    /you(?:'ve| have)\s+(?:reached|hit)\s+(?:your\s+)?(?:usage|quota|request|rate)\s+limit/i,
+    /usage\s+limit\s+reached/i,
+    /quota\s+(?:reached|exceeded|used\s+up)/i,
+    /rate\s+limit\s+exceeded/i,
+    /try\s+again\s+(?:later|tomorrow)/i,
+    /come\s+back\s+(?:later|tomorrow)/i,
+  ];
+  if (usagePatterns.some((pattern) => pattern.test(tail))) {
     return {
-      index: labelOnly.index,
-      optionText: '',
-      raw: labelOnly[0],
+      kind: 'usage_limit',
+      reason: 'usage limit reached',
+      fingerprint: fingerprintFromLines(lines, ['usage limit', 'quota', 'rate limit']),
+      options,
     };
   }
 
+  // Capacity states
+  const capacityPatterns = [
+    /we\s+are\s+currently\s+experiencing\s+high\s+demand/i,
+    /no\s+capacity\s+available/i,
+    /high\s+demand\s+right\s+now/i,
+    /temporarily\s+unavailable/i,
+  ];
+
+  const hasCapacity = capacityPatterns.some((pattern) => pattern.test(tail));
+  if (!hasCapacity) {
+    return makeSnapshot('normal');
+  }
+
+  const keepOption = findOption(KEEP_LABELS);
+  const switchOption = findOption(SWITCH_LABELS);
+  const stopOption = findOption(STOP_LABELS);
+  const continuePrompt = detectContinuePrompt(tail);
+
+  if (keepOption) {
+    return {
+      kind: 'capacity_menu',
+      reason: 'capacity menu',
+      keepOptionText: keepOption.numberText,
+      switchOptionText: switchOption?.numberText || '',
+      stopOptionText: stopOption?.numberText || '',
+      fingerprint: fingerprintFromLines(lines, [keepOption.canonical, switchOption?.canonical || '', stopOption?.canonical || '']),
+      options,
+    };
+  }
+
+  if (continuePrompt) {
+    return {
+      kind: 'capacity_continue',
+      reason: continuePrompt.reason,
+      continueAction: continuePrompt.action,
+      fingerprint: fingerprintFromLines(lines, [continuePrompt.anchor]),
+      options,
+    };
+  }
+
+  return {
+    kind: 'capacity_info',
+    reason: 'capacity info',
+    fingerprint: fingerprintFromLines(lines, ['high demand', 'no capacity']),
+    options,
+  };
+}
+
+function makeSnapshot(kind) {
+  return {
+    kind,
+    reason: kind,
+    fingerprint: kind,
+    options: [],
+  };
+}
+
+function compactLines(text) {
+  const rawLines = text.split('\n').slice(-140);
+  const out = [];
+  for (const raw of rawLines) {
+    const cleaned = raw.replace(/\s+/g, ' ').trim();
+    if (!cleaned) continue;
+    if (out[out.length - 1] === cleaned) continue;
+    out.push(cleaned);
+  }
+  return out;
+}
+
+function parseMenuOptions(lines) {
+  const options = [];
+  for (const line of lines) {
+    const stripped = line
+      .replace(/^[│║┃|\s]+/u, '')
+      .replace(/^[•●◦○▪◆▶➜»›>*?-]+\s*/u, '')
+      .trim();
+
+    const match = stripped.match(/^(\d+)\s*[.):-]?\s*(.+)$/u);
+    if (!match) continue;
+
+    const label = normalizeLabel(match[2]);
+    if (!label) continue;
+
+    options.push({
+      numberText: match[1],
+      label: match[2].trim(),
+      canonical: label,
+      raw: line,
+    });
+  }
+  return options;
+}
+
+function normalizeLabel(text) {
+  return String(text)
+    .toLowerCase()
+    .replace(/^[?]+\s*/, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function findMenuOption(options, labels) {
+  const normalizedLabels = labels.map(normalizeLabel).filter(Boolean);
+  for (const option of options) {
+    for (const label of normalizedLabels) {
+      if (option.canonical === label) return option;
+      if (option.canonical.includes(label)) return option;
+    }
+  }
   return null;
 }
 
-function escapeRegex(value) {
-  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+function detectContinuePrompt(tail) {
+  const patterns = [
+    {
+      action: 'command',
+      reason: 'continue prompt',
+      anchor: 'type continue',
+      match:
+        /(?:(?:type|enter|send|write)\s+["'`]?continue["'`]?\s+(?:to|for)\b[^\n]*|(?:to|for)\s+(?:keep\s+trying|continue\s+waiting|retry)[^\n]*\btype\s+["'`]?continue["'`]?)/i,
+    },
+    {
+      action: 'enter',
+      reason: 'press enter prompt',
+      anchor: 'press enter',
+      match:
+        /(?:(?:press|hit)\s+(?:enter|return)\s+(?:to|for)\b[^\n]*(?:keep\s+trying|continue\s+waiting|retry|try\s+again)|(?:keep\s+trying|continue\s+waiting|retry|try\s+again)[^\n]*(?:press|hit)\s+(?:enter|return))/i,
+    },
+  ];
+
+  for (const pattern of patterns) {
+    if (pattern.match.test(tail)) return pattern;
+  }
+  return null;
 }
+
+function fingerprintFromLines(lines, anchors) {
+  const usableAnchors = anchors.map((anchor) => normalizeLabel(anchor)).filter(Boolean);
+  const selected = [];
+  for (const line of lines.slice(-50)) {
+    const canonical = normalizeLabel(line);
+    if (usableAnchors.length === 0 || usableAnchors.some((anchor) => canonical.includes(anchor))) {
+      selected.push(canonical);
+    }
+  }
+  if (selected.length === 0) {
+    return lines.slice(-8).map((line) => normalizeLabel(line)).join(' | ');
+  }
+  return selected.join(' | ');
+}
+
+function updateCurrentSnapshot(next) {
+  const prev = currentSnapshot;
+  if (prev.kind !== next.kind || prev.fingerprint !== next.fingerprint) {
+    currentSnapshot = next;
+    stateGeneration += 1;
+    clearContinueTimer();
+    if (DEBUG_AUTOMATION) {
+      console.error(`[${FLAVOR_LABEL}][state] ${prev.kind} -> ${next.kind} (#${stateGeneration}) ${next.fingerprint}`);
+    }
+    if (next.kind !== 'capacity_menu') {
+      demandHits = 0;
+      lastDemandTs = 0;
+    }
+    if (next.kind !== 'capacity_continue') {
+      autoContinueAttempts = 0;
+    }
+    recentActionKeys.clear();
+    return;
+  }
+  currentSnapshot = next;
+}
+
+// -----------------------------------------------------------------------------
+// Automation engine
+// -----------------------------------------------------------------------------
+
+function maybeAutomate(runId, snapshot) {
+  if (!isAutomationActive()) {
+    clearContinueTimer();
+    clearStaticRecheckTimer();
+    return;
+  }
+
+  const responders = [
+    handlePermissionSnapshot,
+    handleUsageLimitSnapshot,
+    handleCapacityMenuSnapshot,
+    handleCapacityContinueSnapshot,
+  ];
+
+  for (const responder of responders) {
+    if (responder(runId, snapshot)) {
+      scheduleStaticRecheck();
+      return;
+    }
+  }
+
+  clearContinueTimer();
+  scheduleStaticRecheck();
+}
+
+function handlePermissionSnapshot(runId, snapshot) {
+  if (snapshot.kind !== 'permission') return false;
+  clearContinueTimer();
+  if (!AUTO_ALLOW_SESSION_PERMISSIONS) return true;
+
+  const actionKey = `permission:${snapshot.fingerprint}`;
+  if (actionSeenRecently(actionKey, PERMISSION_RETRY_MIN_MS)) return true;
+
+  if (!snapshot.optionText) return true;
+
+  if (sendChoice(snapshot.optionText, 'allow-for-this-session', runId)) {
+    rememberAction(actionKey);
+  }
+  return true;
+}
+
+function handleUsageLimitSnapshot(_runId, snapshot) {
+  if (snapshot.kind !== 'usage_limit') return false;
+  clearContinueTimer();
+  clearStaticRecheckTimer();
+  if (AUTO_DISABLE_ON_USAGE_LIMIT && automationEnabled) {
+    setAutomationEnabled(false, 'usage_limit');
+    console.error(`\n[${FLAVOR_LABEL}] Usage limit detected — automation paused. ${hotkeySummary()}\n`);
+  }
+  return true;
+}
+
+function handleCapacityMenuSnapshot(runId, snapshot) {
+  if (snapshot.kind !== 'capacity_menu') return false;
+  clearContinueTimer();
+
+  const now = Date.now();
+  if (lastCapacityAt > 0 && now - lastCapacityAt > CAPACITY_EVENT_RESET_MS) {
+    demandHits = 0;
+    autoContinueAttempts = 0;
+  }
+  lastCapacityAt = now;
+
+  if (now - lastDemandTs < TRY_AGAIN_MIN_INTERVAL_MS) return true;
+
+  const actionKey = `capacity-menu:${snapshot.fingerprint}`;
+  if (actionSeenRecently(actionKey, ACTION_RETRY_MIN_MS)) return true;
+
+  lastDemandTs = now;
+  demandHits += 1;
+
+  if (NEVER_SWITCH || !snapshot.switchOptionText) {
+    if (demandHits > KEEP_TRY_MAX) {
+      pauseAutomationTemporarily(AUTOMATION_COOLDOWN_MS, 'keep-trying loop limit reached');
+      return true;
+    }
+    if (sendChoice(snapshot.keepOptionText, `keep-trying ${demandHits}/${KEEP_TRY_MAX}`, runId)) {
+      rememberAction(actionKey);
+    }
+    return true;
+  }
+
+  if (demandHits <= KEEP_TRY_MAX) {
+    if (sendChoice(snapshot.keepOptionText, `keep-trying ${demandHits}/${KEEP_TRY_MAX}`, runId)) {
+      rememberAction(actionKey);
+    }
+    return true;
+  }
+
+  switching = true;
+  console.error(`\n[${FLAVOR_LABEL}] Capacity still busy on ${currentModel()} — switching model...\n`);
+  if (sendChoice(snapshot.switchOptionText, 'switch-model', runId)) {
+    rememberAction(actionKey);
+  }
+  return true;
+}
+
+function handleCapacityContinueSnapshot(runId, snapshot) {
+  if (snapshot.kind !== 'capacity_continue' && snapshot.kind !== 'capacity_info') return false;
+  if (!AUTO_CONTINUE_ON_CAPACITY) return true;
+
+  const explicitOnly = !(AUTO_CONTINUE_MODE === 'capacity' || AUTO_CONTINUE_MODE === 'always');
+  if (explicitOnly && snapshot.kind !== 'capacity_continue') {
+    clearContinueTimer();
+    return true;
+  }
+
+  scheduleContinueRetry(runId, snapshot);
+  return true;
+}
+
+function scheduleContinueRetry(runId, snapshot) {
+  if (continueTimer) return;
+  if (autoContinueAttempts >= AUTO_CONTINUE_MAX_PER_EVENT) {
+    pauseAutomationTemporarily(AUTOMATION_COOLDOWN_MS, `too many auto-continues for ${snapshot.reason}`);
+    return;
+  }
+
+  const scheduledGeneration = stateGeneration;
+  const delay = Math.min(CAPACITY_RETRY_MS * 2 ** autoContinueAttempts, MAX_CAPACITY_RETRY_MS);
+  const label = snapshot.kind === 'capacity_continue' && snapshot.continueAction === 'enter' ? 'Enter' : CONTINUE_COMMAND;
+  console.error(`\n[${FLAVOR_LABEL}] ${snapshot.reason} — retrying in ${delay}ms (sending: ${label}) [${autoContinueAttempts + 1}/${AUTO_CONTINUE_MAX_PER_EVENT}]\n`);
+
+  continueTimer = setTimeout(() => {
+    continueTimer = null;
+    if (runId !== activeRunId || !activePty || !isAutomationActive()) return;
+    if (scheduledGeneration !== stateGeneration) return;
+
+    const latest = detectScreen(normalizedTail);
+    updateCurrentSnapshot(latest);
+    if (latest.kind !== currentSnapshot.kind || latest.fingerprint !== currentSnapshot.fingerprint) {
+      return;
+    }
+
+    if (AUTO_CONTINUE_MODE !== 'capacity' && AUTO_CONTINUE_MODE !== 'always' && latest.kind !== 'capacity_continue') {
+      return;
+    }
+
+    autoContinueAttempts += 1;
+    if (latest.kind === 'capacity_continue' && latest.continueAction === 'enter') {
+      sendChoice('', latest.reason, runId);
+    } else {
+      sendChoice(CONTINUE_COMMAND, latest.reason, runId);
+    }
+  }, delay);
+}
+
+function rememberAction(key) {
+  recentActionKeys.set(key, Date.now());
+}
+
+function actionSeenRecently(key, ttlMs) {
+  const ts = recentActionKeys.get(key);
+  return typeof ts === 'number' && Date.now() - ts < ttlMs;
+}
+
+// -----------------------------------------------------------------------------
+// Child exit / restart handling
+// -----------------------------------------------------------------------------
+
+function handleChildExit({ runId, exitCode, signal }) {
+  console.error(`\n[child] exited: code=${exitCode} signal=${signal}\n`);
+
+  if (plannedAction) {
+    const action = plannedAction;
+    plannedAction = null;
+    if (action.kind === 'switch') {
+      modelIndex += 1;
+      spawnGemini();
+      return;
+    }
+    if (action.kind === 'restart') {
+      spawnGemini();
+      return;
+    }
+    cleanupAndExit(action.code ?? 0);
+    return;
+  }
+
+  if (resumeEnabledThisRun && (exitCode === 42 || sawNoResumeSession)) {
+    console.error(`[${FLAVOR_LABEL}] No resumable session — retrying without --resume\n`);
+    resumeEnabledThisRun = false;
+    spawnGemini();
+    return;
+  }
+
+  if (switching) {
+    switching = false;
+    modelIndex += 1;
+    spawnGemini();
+    return;
+  }
+
+  const canAutoRestart =
+    automationEnabled &&
+    automationDisabledReason !== 'usage_limit' &&
+    lastCapacityAt > 0 &&
+    Date.now() - lastCapacityAt <= CAPACITY_RECENT_MS;
+
+  if (canAutoRestart) {
+    if (!recordAutoRestart()) {
+      console.error(`\n[${FLAVOR_LABEL}] Too many auto-restarts in a short window — stopping the loop. ${hotkeySummary()}\n`);
+      cleanupAndExit(typeof exitCode === 'number' ? exitCode : 1);
+      return;
+    }
+
+    console.error(`[${FLAVOR_LABEL}] Exited during/after capacity event — restarting in ${CAPACITY_RETRY_MS}ms...\n`);
+    restartTimer = setTimeout(() => {
+      restartTimer = null;
+      if (runId !== activeRunId || shuttingDown) return;
+      spawnGemini();
+    }, CAPACITY_RETRY_MS);
+    return;
+  }
+
+  cleanupAndExit(typeof exitCode === 'number' ? exitCode : 0);
+}
+
+function recordAutoRestart() {
+  const now = Date.now();
+  autoRestartHistory = autoRestartHistory.filter((ts) => now - ts <= AUTO_RESTART_WINDOW_MS);
+  if (autoRestartHistory.length >= AUTO_RESTART_MAX_PER_WINDOW) return false;
+  autoRestartHistory.push(now);
+  return true;
+}
+
+// -----------------------------------------------------------------------------
+// Input / hotkeys / resize
+// -----------------------------------------------------------------------------
 
 function bindUserInput() {
   if (stdinBound) return;
   stdinBound = true;
 
   process.stdin.resume();
-  if (process.stdin.isTTY) {
-    process.stdin.setRawMode?.(true);
-  }
-
+  if (process.stdin.isTTY) process.stdin.setRawMode?.(true);
   process.stdin.on('data', onUserInput);
   process.stdin.on('end', onStdinEnd);
 }
@@ -1032,15 +1048,13 @@ function bindUserInput() {
 function unbindUserInput() {
   if (!stdinBound) return;
   stdinBound = false;
-
   process.stdin.off('data', onUserInput);
   process.stdin.off('end', onStdinEnd);
-
   if (process.stdin.isTTY) {
     try {
       process.stdin.setRawMode?.(false);
     } catch {
-      // Ignore terminal reset failures during shutdown.
+      // ignore
     }
   }
 }
@@ -1050,19 +1064,18 @@ function onUserInput(chunk) {
   if (buffer.length === 0) return;
 
   const forwardBytes = [];
-
   for (const byte of buffer.values()) {
     if (hotkeyAwaitingCommand) {
       hotkeyAwaitingCommand = false;
-      clearHotkeyCommandTimer();
+      clearHotkeyTimer();
       handleHotkeyCommand(byte);
       continue;
     }
 
     if (byte === HOTKEY_PREFIX_BYTE) {
       hotkeyAwaitingCommand = true;
-      armHotkeyCommandTimer();
-      process.stderr.write(`\n[local] Prefix detected (${HOTKEY_PREFIX_LABEL}). Press a command key: h help, a auto, p pause, s switch, r restart, c Ctrl-C, q quit.\n`);
+      armHotkeyTimer();
+      process.stderr.write(`\n[local] Prefix detected (${HOTKEY_PREFIX_LABEL}). Press h help, a auto, p pause, s switch, r restart, c Ctrl-C, q quit.\n`);
       continue;
     }
 
@@ -1074,32 +1087,38 @@ function onUserInput(chunk) {
     try {
       activePty.write(Buffer.from(forwardBytes).toString('utf8'));
     } catch {
-      // Ignore best-effort input forwarding failures.
+      // ignore best-effort forwarding failures
     }
   }
 }
 
-function armHotkeyCommandTimer() {
-  clearHotkeyCommandTimer();
-  hotkeyCommandTimer = setTimeout(() => {
-    hotkeyCommandTimer = null;
+function onStdinEnd() {
+  if (!activePty) return;
+  try {
+    activePty.write('\x04');
+  } catch {
+    // ignore
+  }
+}
+
+function armHotkeyTimer() {
+  clearHotkeyTimer();
+  hotkeyTimer = setTimeout(() => {
+    hotkeyTimer = null;
     if (!hotkeyAwaitingCommand) return;
     hotkeyAwaitingCommand = false;
     process.stderr.write(`\n[local] Hotkey prefix timed out. ${hotkeySummary()}\n`);
-  }, 3000);
+  }, HOTKEY_TIMEOUT_MS);
 }
 
-function clearHotkeyCommandTimer() {
-  if (!hotkeyCommandTimer) return;
-  clearTimeout(hotkeyCommandTimer);
-  hotkeyCommandTimer = null;
+function clearHotkeyTimer() {
+  if (!hotkeyTimer) return;
+  clearTimeout(hotkeyTimer);
+  hotkeyTimer = null;
 }
 
 function decodeHotkeyCommandByte(byte) {
-  if (byte >= 1 && byte <= 26) {
-    return String.fromCharCode(96 + byte);
-  }
-
+  if (byte >= 1 && byte <= 26) return String.fromCharCode(96 + byte);
   return String.fromCharCode(byte).toLowerCase();
 }
 
@@ -1114,9 +1133,8 @@ function handleHotkeyCommand(byte) {
   if (command === 'a') {
     if (automationEnabled) {
       setAutomationEnabled(false, 'manual');
-      console.error(`\n[local] Automation disabled. ${HOTKEY_PREFIX_LABEL}a to re-enable.\n`);
+      console.error(`\n[local] Automation disabled. ${HOTKEY_PREFIX_LABEL} a to re-enable.\n`);
     } else {
-      automationPausedUntil = 0;
       setAutomationEnabled(true);
       console.error(`\n[local] Automation enabled.\n`);
     }
@@ -1150,27 +1168,25 @@ function handleHotkeyCommand(byte) {
     return;
   }
 
-  console.error(`\n[local] Unknown command byte ${byte} (${JSON.stringify(command)}). ${hotkeySummary()}\n`);
+  console.error(`\n[local] Unknown command ${JSON.stringify(command)}. ${hotkeySummary()}\n`);
 }
 
 function noteManualInput() {
   clearContinueTimer();
-
   if (!automationEnabled) return;
-
-  const nextPauseUntil = Date.now() + MANUAL_OVERRIDE_MS;
-  if (nextPauseUntil > automationPausedUntil) {
-    automationPausedUntil = nextPauseUntil;
-  }
+  automationPausedUntil = Math.max(automationPausedUntil, Date.now() + MANUAL_OVERRIDE_MS);
+  scheduleAutomationResumeRecheck();
 }
 
-function onStdinEnd() {
-  if (!activePty) return;
-  try {
-    activePty.write('\x04');
-  } catch {
-    // Ignore EOF forwarding failures.
-  }
+function scheduleAutomationResumeRecheck() {
+  clearAutomationResumeTimer();
+  if (!automationEnabled || automationPausedUntil <= Date.now()) return;
+  const delay = Math.max(10, automationPausedUntil - Date.now() + 20);
+  automationResumeTimer = setTimeout(() => {
+    automationResumeTimer = null;
+    if (!isAutomationActive()) return;
+    recheckVisiblePrompt('manual override ended');
+  }, delay);
 }
 
 function bindResizeHandling() {
@@ -1190,44 +1206,60 @@ function onTerminalResize() {
   try {
     activePty.resize(getTerminalColumns(), getTerminalRows());
   } catch {
-    // Ignore resize failures caused by race conditions during exit.
+    // ignore resize race on exited PTY
   }
 }
 
 function getTerminalColumns() {
-  return process.stdout.columns || 120;
+  return Math.max(1, process.stdout.columns || 120);
 }
 
 function getTerminalRows() {
-  return process.stdout.rows || 30;
+  return Math.max(1, process.stdout.rows || 30);
 }
 
-function bindProcessCleanup() {
-  process.on('SIGINT', () => cleanupAndExit(130));
-  process.on('SIGTERM', () => cleanupAndExit(143));
-  process.on('SIGHUP', () => cleanupAndExit(129));
-  process.on('exit', () => restoreTerminal());
-  process.on('uncaughtException', (error) => failWithCleanup(error));
-  process.on('unhandledRejection', (error) => failWithCleanup(error instanceof Error ? error : new Error(String(error))));
-}
+// -----------------------------------------------------------------------------
+// Automation control and actions
+// -----------------------------------------------------------------------------
 
-function disposeActiveListeners() {
-  for (const disposable of activeDisposables.splice(0)) {
-    try {
-      disposable?.dispose?.();
-    } catch {
-      // Ignore listener disposal failures.
+function sendChoice(text, reason, runId) {
+  if (runId !== activeRunId || !activePty) return false;
+  try {
+    if (DEBUG_AUTOMATION) {
+      console.error(`[${FLAVOR_LABEL}][send] ${JSON.stringify(text)} (${reason})`);
     }
+    if (text === '') {
+      activePty.write('\r');
+    } else if (/^\d+$/.test(text)) {
+      // Send multi-digit option numbers as documented by Gemini CLI.
+      activePty.write(text + '\r');
+    } else {
+      activePty.write(text + '\r');
+    }
+    return true;
+  } catch (error) {
+    console.error(`[warn] Failed to send automated input (${reason}): ${error instanceof Error ? error.message : String(error)}`);
+    return false;
+  }
+}
+
+function sendRaw(text, reason = 'raw') {
+  if (!activePty) return false;
+  try {
+    if (DEBUG_AUTOMATION) {
+      console.error(`[${FLAVOR_LABEL}][raw] ${JSON.stringify(text)} (${reason})`);
+    }
+    activePty.write(text);
+    return true;
+  } catch (error) {
+    console.error(`[warn] Failed to send raw input (${reason}): ${error instanceof Error ? error.message : String(error)}`);
+    return false;
   }
 }
 
 function requestLauncherAction(kind) {
-  clearContinueTimer();
-  clearRestartTimer();
-  clearForceKillTimer();
-  clearAutomationResumeTimer();
+  clearAllTimers();
   switching = false;
-  sawCapacityAt = 0;
   plannedAction = { kind, code: 0 };
 
   if (!activePty) {
@@ -1235,12 +1267,11 @@ function requestLauncherAction(kind) {
     return;
   }
 
-  const label =
-    kind === 'switch'
-      ? 'Switching model'
-      : kind === 'restart'
-        ? 'Restarting current model'
-        : 'Quitting launcher';
+  const label = kind === 'switch'
+    ? 'Switching model'
+    : kind === 'restart'
+      ? 'Restarting current model'
+      : 'Quitting launcher';
 
   console.error(`\n[local] ${label}...\n`);
   sendRaw('\x03', `local-${kind}`);
@@ -1249,7 +1280,7 @@ function requestLauncherAction(kind) {
     try {
       activePty.kill();
     } catch {
-      // Ignore racey kill failures.
+      // ignore
     }
   }, FORCE_KILL_AFTER_MS);
 }
@@ -1261,34 +1292,14 @@ function fulfillPlannedAction() {
 
   if (action.kind === 'switch') {
     modelIndex += 1;
-    if (loadedPty) spawnGemini(loadedPty);
+    spawnGemini();
     return;
   }
-
   if (action.kind === 'restart') {
-    if (loadedPty) spawnGemini(loadedPty);
+    spawnGemini();
     return;
   }
-
   cleanupAndExit(action.code ?? 0);
-}
-
-function hotkeySummary() {
-  return `${HOTKEY_PREFIX_LABEL} h help | ${HOTKEY_PREFIX_LABEL} a auto on/off | ${HOTKEY_PREFIX_LABEL} p pause auto | ${HOTKEY_PREFIX_LABEL} s switch | ${HOTKEY_PREFIX_LABEL} r restart | ${HOTKEY_PREFIX_LABEL} c Ctrl-C | ${HOTKEY_PREFIX_LABEL} q quit`;
-}
-
-function printLocalHelp() {
-  const pauseSec = Math.round(MANUAL_OVERRIDE_MS / 1000);
-  console.error(
-    [
-      '',
-      `[local] ${hotkeySummary()}`,
-      `[local] Press the prefix first, then the command key.`,
-      `[local] Manual typing pauses automation for ${pauseSec}s. Auto-continue mode: ${AUTO_CONTINUE_MODE}. Session permission auto-allow: ${AUTO_ALLOW_SESSION_PERMISSIONS ? 'ON' : 'OFF'}.` + (automationEnabled ? '' : ' Automation is currently disabled.'),
-      `[local] Current model: ${currentModel()}`,
-      '',
-    ].join('\n')
-  );
 }
 
 function setAutomationEnabled(enabled, reason = 'manual') {
@@ -1297,27 +1308,24 @@ function setAutomationEnabled(enabled, reason = 'manual') {
 
   if (!enabled) {
     automationPausedUntil = 0;
-    clearContinueTimer();
-    clearRestartTimer();
-    clearAutomationResumeTimer();
+    clearAllTimers();
+    recentActionKeys.clear();
     return;
   }
 
   automationPausedUntil = 0;
-  clearAutomationResumeTimer();
-  resetAutomationTracking();
+  recentActionKeys.clear();
+  clearAllTimers();
   recheckVisiblePrompt('automation enabled');
 }
 
 function pauseAutomationTemporarily(ms, reason, silent = false) {
   if (!automationEnabled) return;
   clearContinueTimer();
-  const until = Date.now() + ms;
-  if (until > automationPausedUntil) {
-    automationPausedUntil = until;
-  }
+  automationPausedUntil = Math.max(automationPausedUntil, Date.now() + ms);
+  scheduleAutomationResumeRecheck();
   if (!silent) {
-    console.error(`\n[gemini-preview-pty] Automation paused for ${Math.round(ms / 1000)}s (${reason}). ${hotkeySummary()}\n`);
+    console.error(`\n[${FLAVOR_LABEL}] Automation paused for ${Math.round(ms / 1000)}s (${reason}). ${hotkeySummary()}\n`);
   }
 }
 
@@ -1325,31 +1333,117 @@ function isAutomationActive() {
   return automationEnabled && Date.now() >= automationPausedUntil && !shuttingDown;
 }
 
-function resetCapacityEventState() {
-  demandHits = 0;
-  switching = false;
-  lastDemandTs = 0;
-  sawCapacityAt = 0;
-  autoContinueAttempts = 0;
-  lastMenuFingerprint = '';
-  lastPermissionFingerprint = '';
+function recheckVisiblePrompt(reason = 'manual recheck') {
+  if (!activePty || shuttingDown || !isAutomationActive()) return;
+  if (DEBUG_AUTOMATION) {
+    console.error(`[${FLAVOR_LABEL}][auto] Rechecking visible prompt (${reason})`);
+  }
+  const snapshot = detectScreen(normalizedTail);
+  updateCurrentSnapshot(snapshot);
+  maybeAutomate(activeRunId, snapshot);
+}
+
+function scheduleStaticRecheck() {
+  clearStaticRecheckTimer();
+  if (!activePty || shuttingDown || !isAutomationActive()) return;
+  if (currentSnapshot.kind === 'normal' || currentSnapshot.kind === 'usage_limit') return;
+
+  staticRecheckTimer = setTimeout(() => {
+    staticRecheckTimer = null;
+    if (!activePty || shuttingDown || !isAutomationActive()) return;
+    recheckVisiblePrompt('static prompt heartbeat');
+  }, STATIC_RECHECK_MS);
+}
+
+function hotkeySummary() {
+  return `${HOTKEY_PREFIX_LABEL} h help | ${HOTKEY_PREFIX_LABEL} a auto on/off | ${HOTKEY_PREFIX_LABEL} p pause auto | ${HOTKEY_PREFIX_LABEL} s switch | ${HOTKEY_PREFIX_LABEL} r restart | ${HOTKEY_PREFIX_LABEL} c Ctrl-C | ${HOTKEY_PREFIX_LABEL} q quit`;
+}
+
+function printLocalHelp() {
+  console.error(
+    [
+      '',
+      `[local] ${hotkeySummary()}`,
+      `[local] Press the prefix first, then the command key.`,
+      `[local] Manual typing pauses automation for ${Math.round(MANUAL_OVERRIDE_MS / 1000)}s.`,
+      `[local] Current model: ${currentModel()}`,
+      '',
+    ].join('\n')
+  );
+}
+
+// -----------------------------------------------------------------------------
+// Cleanup
+// -----------------------------------------------------------------------------
+
+function bindProcessCleanup() {
+  process.on('SIGINT', () => cleanupAndExit(130));
+  process.on('SIGTERM', () => cleanupAndExit(143));
+  process.on('SIGHUP', () => cleanupAndExit(129));
+  process.on('exit', () => restoreTerminal());
+  process.on('uncaughtException', (error) => failWithCleanup(error));
+  process.on('unhandledRejection', (error) => failWithCleanup(error instanceof Error ? error : new Error(String(error))));
+}
+
+function clearContinueTimer() {
+  if (!continueTimer) return;
+  clearTimeout(continueTimer);
+  continueTimer = null;
+}
+
+function clearRestartTimer() {
+  if (!restartTimer) return;
+  clearTimeout(restartTimer);
+  restartTimer = null;
+}
+
+function clearForceKillTimer() {
+  if (!forceKillTimer) return;
+  clearTimeout(forceKillTimer);
+  forceKillTimer = null;
+}
+
+function clearAutomationResumeTimer() {
+  if (!automationResumeTimer) return;
+  clearTimeout(automationResumeTimer);
+  automationResumeTimer = null;
+}
+
+function clearStaticRecheckTimer() {
+  if (!staticRecheckTimer) return;
+  clearTimeout(staticRecheckTimer);
+  staticRecheckTimer = null;
+}
+
+function clearAllTimers() {
+  clearContinueTimer();
+  clearRestartTimer();
+  clearForceKillTimer();
+  clearAutomationResumeTimer();
+  clearStaticRecheckTimer();
+  clearHotkeyTimer();
+}
+
+function disposeActiveListeners() {
+  for (const disposable of activeDisposables.splice(0)) {
+    try {
+      disposable?.dispose?.();
+    } catch {
+      // ignore
+    }
+  }
 }
 
 function cleanupAndExit(code) {
   if (shuttingDown) return;
   shuttingDown = true;
-
-  clearContinueTimer();
-  clearRestartTimer();
-  clearForceKillTimer();
-  clearAutomationResumeTimer();
-  clearHotkeyCommandTimer();
+  clearAllTimers();
   disposeActiveListeners();
 
   try {
     activePty?.kill?.();
   } catch {
-    // Ignore kill failures.
+    // ignore
   }
   activePty = null;
 
@@ -1368,6 +1462,14 @@ function failWithCleanup(error) {
   cleanupAndExit(1);
 }
 
+// -----------------------------------------------------------------------------
+// Helpers
+// -----------------------------------------------------------------------------
+
+function currentModel() {
+  return MODELS[modelIndex % MODELS.length];
+}
+
 function resolveHotkeyPrefix(name) {
   const normalized = String(name || '').trim().toLowerCase();
   const mapping = {
@@ -1384,17 +1486,12 @@ function resolveHotkeyPrefix(name) {
   const resolved = mapping[normalized];
   if (resolved) return resolved;
 
-  throw new Error(
-    [
-      `Unsupported HOTKEY_PREFIX=${JSON.stringify(name)}.`,
-      'Use one of: ctrl-g, ctrl-], ctrl-t, ctrl-\\',
-    ].join(' ')
-  );
+  throw new Error(`Unsupported HOTKEY_PREFIX=${JSON.stringify(name)}. Use one of: ctrl-g, ctrl-], ctrl-t, ctrl-\\`);
 }
 
 function isEnabled(value, defaultValue) {
   if (value == null) return defaultValue;
-  return value !== '0' && value.toLowerCase() !== 'false';
+  return String(value).toLowerCase() !== '0' && String(value).toLowerCase() !== 'false';
 }
 
 function toNumber(value, defaultValue) {
@@ -1404,7 +1501,6 @@ function toNumber(value, defaultValue) {
 
 function parseJsonArrayEnv(value) {
   if (!value) return [];
-
   try {
     const parsed = JSON.parse(value);
     if (!Array.isArray(parsed) || !parsed.every((item) => typeof item === 'string')) {
@@ -1412,10 +1508,16 @@ function parseJsonArrayEnv(value) {
     }
     return parsed;
   } catch (error) {
-    throw new Error(
-      `GEMINI_WRAPPER_ARGS_JSON is invalid: ${error instanceof Error ? error.message : String(error)}`
-    );
+    throw new Error(`GEMINI_WRAPPER_ARGS_JSON is invalid: ${error instanceof Error ? error.message : String(error)}`);
   }
+}
+
+function splitListEnv(value, defaults) {
+  if (!value) return defaults.map((item) => String(item));
+  return String(value)
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
 }
 
 function shQuote(value) {

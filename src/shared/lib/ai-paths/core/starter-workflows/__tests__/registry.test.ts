@@ -793,9 +793,6 @@ describe('starter workflow registry', () => {
 
   it('rehydrates starter provenance for canonical translation v2 configs without starter metadata', () => {
     const config = buildStaleLiveTranslationPathConfig();
-    const hash = computeStarterWorkflowGraphHash(config);
-    console.log('DEBUG: Translation Config Hash:', hash);
-
     const upgraded = upgradeStarterWorkflowPathConfig(config);
     const databaseNode = (upgraded.config.nodes ?? []).find(
       (node) => node.type === 'database' && node.config?.database?.operation === 'update'

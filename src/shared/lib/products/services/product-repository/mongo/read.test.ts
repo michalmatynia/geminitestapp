@@ -16,6 +16,7 @@ describe('buildListProjectStage', () => {
         name_en: '$category.name_en',
       },
       parameters: 1,
+      notes: 1,
       name_en: 1,
       name_pl: 1,
       name_de: 1,

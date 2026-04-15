@@ -89,13 +89,8 @@ export const ProductImageCell = React.memo(function ProductImageCell({
     <>
       <div
         className='relative inline-flex h-16 w-16 items-center justify-end overflow-visible'
-        onMouseEnter={(event) => {
-          if (!imageUrl) return;
-          showPreview({ imageUrl, productName, unoptimized, event });
-        }}
         onMouseLeave={hidePreview}
         onMouseMove={(event) => {
-          if (!imageUrl) return;
           updatePreview(event);
         }}
       >
@@ -106,13 +101,22 @@ export const ProductImageCell = React.memo(function ProductImageCell({
             title={`View note for ${productName}`}
             aria-haspopup='dialog'
             className={cn(
-              'absolute left-0 top-1/2 z-0 h-11 w-4 -translate-y-1/2 -translate-x-[3px] cursor-pointer rounded-l-sm rounded-r-md border border-black/10',
+              'absolute left-0 top-1/2 z-0 h-11 w-8 -translate-y-1/2 -translate-x-[12px] cursor-pointer rounded-l-sm rounded-r-md border border-black/10',
               'shadow-[0_10px_24px_rgba(15,23,42,0.22)] transition-[width,transform,box-shadow] duration-300 ease-in-out',
-              'hover:w-8 focus-visible:w-8',
-              'hover:-translate-x-[6px] focus-visible:-translate-x-[6px]',
+              'hover:w-11 focus-visible:w-11',
+              'hover:-translate-x-[16px] focus-visible:-translate-x-[16px]',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
             )}
             style={{ backgroundColor: resolvedNote.color }}
+            onMouseEnter={(event) => {
+              showPreview({
+                kind: 'note',
+                productName,
+                noteText: resolvedNote.text,
+                noteColor: resolvedNote.color,
+                event,
+              });
+            }}
             onClick={(event) => {
               event.preventDefault();
               event.stopPropagation();
@@ -122,7 +126,19 @@ export const ProductImageCell = React.memo(function ProductImageCell({
           />
         ) : null}
 
-        <div className='group/image relative z-10 h-16 w-16'>
+        <div
+          className='group/image relative z-10 h-16 w-16'
+          onMouseEnter={(event) => {
+            if (!imageUrl) return;
+            showPreview({
+              kind: 'image',
+              imageUrl,
+              productName,
+              unoptimized,
+              event,
+            });
+          }}
+        >
           {imageUrl ? (
             <>
               <Image

@@ -29,6 +29,7 @@ import {
   findNodeByTypeAndTitle,
   getStarterWorkflowTemplateByIdOrThrow,
   hasDatabaseNodeWithUpdatePayloadMode,
+  hasNodeByTitle,
   hasNodeId,
   hasNodeWithType,
   toLegacyAliasOnlyEdges,
@@ -661,7 +662,7 @@ describe('starter workflow registry', () => {
     } as PathConfig);
 
     const dbNode = findNodeByType(upgraded.config, 'database');
-    const paramsRegexNode = findNodeByTypeAndTitle(upgraded.config, 'regex', 'Regex Params');
+    const paramsRegexNode = findNodeByTypeAndTitle(upgraded.config, 'regex', 'Regex Parameters JSON');
     const extraParamsEdge = (upgraded.config.edges ?? []).find(
       (edge) => edge.id === 'edge-params'
     );

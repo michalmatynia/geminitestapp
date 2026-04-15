@@ -61,6 +61,34 @@ vi.mock('@/shared/ui/feedback.public', () => ({
 }));
 
 describe('ProductImageCell', () => {
+  it('requests the miniature note preview when hovering the note tab', () => {
+    render(
+      <ProductImageCell
+        imageUrl='/images/product.jpg'
+        productName='Gaming Bottle Opener'
+        note={{
+          text: 'Check the insert before export.',
+          color: '#bfdbfe',
+        }}
+      />
+    );
+
+    const noteButton = screen.getByRole('button', {
+      name: 'View note for Gaming Bottle Opener',
+    });
+
+    fireEvent.mouseEnter(noteButton, { clientX: 120, clientY: 140 });
+
+    expect(showPreviewMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: 'note',
+        productName: 'Gaming Bottle Opener',
+        noteText: 'Check the insert before export.',
+        noteColor: '#bfdbfe',
+      })
+    );
+  });
+
   it('renders the note indicator and opens the note modal on click', () => {
     render(
       <ProductImageCell
@@ -80,9 +108,10 @@ describe('ProductImageCell', () => {
 
     expect(noteButton).toHaveStyle({ backgroundColor: '#bfdbfe' });
     expect(noteButton.className).toContain('cursor-pointer');
-    expect(noteButton.className).toContain('hover:w-8');
-    expect(noteButton.className).toContain('-translate-x-[3px]');
-    expect(noteButton.className).toContain('hover:-translate-x-[6px]');
+    expect(noteButton.className).toContain('w-8');
+    expect(noteButton.className).toContain('-translate-x-[12px]');
+    expect(noteButton.className).toContain('hover:w-11');
+    expect(noteButton.className).toContain('hover:-translate-x-[16px]');
     expect(noteButton.className).not.toContain('group-hover:w-7');
     expect(thumbnailWrapper?.className).toContain('h-16 w-16');
     expect(thumbnailWrapper?.className).not.toContain('w-[72px]');

@@ -13,15 +13,34 @@ const BLUR_PLACEHOLDER =
   'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjMjcyNzJhIi8+PC9zdmc+';
 
 interface PreviewState {
+  kind: 'image' | 'note' | null;
   imageUrl: string | null;
   productName: string | null;
   unoptimized: boolean;
+  noteText: string | null;
+  noteColor: string | null;
   mousePos: { x: number; y: number };
   visible: boolean;
 }
 
+type ImagePreviewArgs = {
+  kind: 'image';
+  imageUrl: string;
+  productName: string;
+  unoptimized: boolean;
+  event: React.MouseEvent;
+};
+
+type NotePreviewArgs = {
+  kind: 'note';
+  productName: string;
+  noteText: string | null;
+  noteColor: string;
+  event: React.MouseEvent;
+};
+
 interface ProductImagePreviewContextType {
-  showPreview: (args: { imageUrl: string; productName: string; unoptimized: boolean; event: React.MouseEvent }) => void;
+  showPreview: (args: ImagePreviewArgs | NotePreviewArgs) => void;
   updatePreview: (event: React.MouseEvent) => void;
   hidePreview: () => void;
 }
@@ -41,9 +60,12 @@ const ProductImagePreviewContext = getProductImagePreviewContext();
 
 export const ProductImagePreviewProvider = ({ children }: { children: React.ReactNode }) => {
   const [state, setState] = useState<PreviewState>({
+    kind: null,
     imageUrl: null,
     productName: null,
     unoptimized: false,
+    noteText: null,
+    noteColor: null,
     mousePos: { x: 0, y: 0 },
     visible: false,
   });
@@ -57,12 +79,29 @@ export const ProductImagePreviewProvider = ({ children }: { children: React.Reac
     return () => window.removeEventListener('resize', updateViewport);
   }, []);
 
-  const showPreview = useCallback(({ imageUrl, productName, unoptimized, event }: { imageUrl: string; productName: string; unoptimized: boolean; event: React.MouseEvent }) => {
+  const showPreview = useCallback((args: ImagePreviewArgs | NotePreviewArgs) => {
+    if (args.kind === 'note') {
+      setState({
+        kind: 'note',
+        imageUrl: null,
+        productName: args.productName,
+        unoptimized: false,
+        noteText: args.noteText,
+        noteColor: args.noteColor,
+        mousePos: { x: args.event.clientX, y: args.event.clientY },
+        visible: true,
+      });
+      return;
+    }
+
     setState({
-      imageUrl,
-      productName,
-      unoptimized,
-      mousePos: { x: event.clientX, y: event.clientY },
+      kind: 'image',
+      imageUrl: args.imageUrl,
+      productName: args.productName,
+      unoptimized: args.unoptimized,
+      noteText: null,
+      noteColor: null,
+      mousePos: { x: args.event.clientX, y: args.event.clientY },
       visible: true,
     });
   }, []);
@@ -90,7 +129,7 @@ export const ProductImagePreviewProvider = ({ children }: { children: React.Reac
   return (
     <ProductImagePreviewContext.Provider value={contextValue}>
       {children}
-      {state.visible && state.imageUrl && typeof document !== 'undefined' && createPortal(
+      {state.visible && state.kind && typeof document !== 'undefined' && createPortal(
         <div
           className='fixed z-[100] pointer-events-none'
           style={{
@@ -117,19 +156,33 @@ export const ProductImagePreviewProvider = ({ children }: { children: React.Reac
           }}
         >
           <div className='bg-card rounded-lg overflow-hidden shadow-2xl border border-border/60'>
-            <div className='relative h-[136px] w-[136px]'>
-              <Image
-                src={state.imageUrl}
-                alt={state.productName || 'Preview'}
-                fill
-                sizes={`${PREVIEW_SIZE}px`}
-                unoptimized={state.unoptimized}
-                placeholder='blur'
-                blurDataURL={BLUR_PLACEHOLDER}
-                className='rounded-lg object-cover'
-                quality={80}
-              />
-            </div>
+            {state.kind === 'image' && state.imageUrl ? (
+              <div className='relative h-[136px] w-[136px]'>
+                <Image
+                  src={state.imageUrl}
+                  alt={state.productName || 'Preview'}
+                  fill
+                  sizes={`${PREVIEW_SIZE}px`}
+                  unoptimized={state.unoptimized}
+                  placeholder='blur'
+                  blurDataURL={BLUR_PLACEHOLDER}
+                  className='rounded-lg object-cover'
+                  quality={80}
+                />
+              </div>
+            ) : null}
+            {state.kind === 'note' ? (
+              <div className='h-[136px] w-[136px] bg-card p-2'>
+                <div
+                  className='flex h-full w-full rounded-md border border-black/10 px-3 py-2 shadow-[0_14px_36px_rgba(15,23,42,0.22)]'
+                  style={{ backgroundColor: state.noteColor ?? '#f5e7c3' }}
+                >
+                  <p className='w-full overflow-hidden whitespace-pre-wrap break-words text-[11px] leading-[1.35] text-slate-900'>
+                    {state.noteText?.trim() || 'No note text added yet.'}
+                  </p>
+                </div>
+              </div>
+            ) : null}
           </div>
         </div>,
         document.body

@@ -14,7 +14,7 @@ for (const route of publicAuthRoutes) {
     await expect(main).toBeVisible();
     await expect(main).toHaveAttribute('tabindex', '-1');
 
-    const skipLink = page.getByRole('link', { name: 'Skip to content' });
+    const skipLink = page.getByRole('link', { name: /Skip to (main )?content/i });
     await skipLink.focus();
     await expect(skipLink).toBeFocused();
 

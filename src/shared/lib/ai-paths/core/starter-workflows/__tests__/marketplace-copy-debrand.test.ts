@@ -98,14 +98,13 @@ describe('starter marketplace copy debrand workflow', () => {
     const config = materializeStarterWorkflowPathConfig(entry, {
       pathId: 'path_starter_marketplace_copy_debrand_result_contract',
     });
-    const regexNode = config.nodes.find(
-      (node) => node.id === 'node-regex-marketplace-copy-debrand'
-    );
+    const regexNode = config.nodes.find((node) => node.type === 'regex');
+    const viewNode = config.nodes.find((node) => node.type === 'viewer');
     const resultEdge = config.edges.find(
       (edge) =>
-        edge.from === 'node-regex-marketplace-copy-debrand' &&
+        edge.from === regexNode?.id &&
         edge.fromPort === 'value' &&
-        edge.to === 'node-view-marketplace-copy-debrand'
+        edge.to === viewNode?.id
     );
 
     expect(regexNode?.type).toBe('regex');

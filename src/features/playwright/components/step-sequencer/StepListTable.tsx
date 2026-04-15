@@ -1,6 +1,6 @@
 'use client';
 
-import { Globe, Lock, MoreHorizontal, Pencil, Plus, Share2, Tag, Trash2 } from 'lucide-react';
+import { Copy, Globe, Lock, MoreHorizontal, Pencil, Plus, Share2, Tag, Trash2 } from 'lucide-react';
 import { memo } from 'react';
 
 import { PLAYWRIGHT_STEP_TYPE_LABELS } from '@/shared/contracts/playwright-steps';
@@ -32,10 +32,15 @@ import { StepTypeIcon } from './StepTypeIcon';
 // ---------------------------------------------------------------------------
 
 const StepRow = memo(({ step }: { step: PlaywrightStep }) => {
-  const { setEditingStep, handleDeleteStep, setFilterTag, websites } = usePlaywrightStepSequencer();
+  const { setEditingStep, handleDeleteStep, handleDuplicateStep, setFilterTag, websites, flows } =
+    usePlaywrightStepSequencer();
 
   const websiteName = step.websiteId
     ? (websites.find((w) => w.id === step.websiteId)?.name ?? step.websiteId)
+    : null;
+
+  const flowName = step.flowId
+    ? (flows.find((f) => f.id === step.flowId)?.name ?? step.flowId)
     : null;
 
   return (
@@ -64,6 +69,12 @@ const StepRow = memo(({ step }: { step: PlaywrightStep }) => {
           <span className='inline-flex items-center gap-1 text-[11px] text-sky-400'>
             <Globe className='size-3' />
             {websiteName}
+            {flowName ? (
+              <span className='ml-1 inline-flex items-center gap-0.5 text-purple-400'>
+                <Lock className='size-2.5' />
+                {flowName}
+              </span>
+            ) : null}
           </span>
         )}
       </TableCell>
@@ -96,6 +107,10 @@ const StepRow = memo(({ step }: { step: PlaywrightStep }) => {
             <DropdownMenuItem onClick={() => setEditingStep(step)}>
               <Pencil className='size-3.5' />
               Edit
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => void handleDuplicateStep(step.id)}>
+              <Copy className='size-3.5' />
+              Duplicate
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
@@ -160,11 +175,22 @@ function StepsTable(): React.JSX.Element {
 // ---------------------------------------------------------------------------
 
 const StepSetRow = memo(({ set }: { set: PlaywrightStepSet }) => {
-  const { setEditingSet, handleDeleteStepSet, handleAddStepSetToAction, setFilterTag, websites } =
-    usePlaywrightStepSequencer();
+  const {
+    setEditingSet,
+    handleDeleteStepSet,
+    handleDuplicateStepSet,
+    handleAddStepSetToAction,
+    setFilterTag,
+    websites,
+    flows,
+  } = usePlaywrightStepSequencer();
 
   const websiteName = set.websiteId
     ? (websites.find((w) => w.id === set.websiteId)?.name ?? set.websiteId)
+    : null;
+
+  const flowName = set.flowId
+    ? (flows.find((f) => f.id === set.flowId)?.name ?? set.flowId)
     : null;
 
   return (
@@ -189,7 +215,7 @@ const StepSetRow = memo(({ set }: { set: PlaywrightStepSet }) => {
         {set.flowId ? (
           <span className='ml-2 inline-flex items-center gap-1 text-[11px] text-purple-400'>
             <Lock className='size-3' />
-            Flow
+            {flowName}
           </span>
         ) : null}
       </TableCell>
@@ -233,6 +259,10 @@ const StepSetRow = memo(({ set }: { set: PlaywrightStepSet }) => {
               <DropdownMenuItem onClick={() => setEditingSet(set)}>
                 <Pencil className='size-3.5' />
                 Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => void handleDuplicateStepSet(set.id)}>
+                <Copy className='size-3.5' />
+                Duplicate
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem

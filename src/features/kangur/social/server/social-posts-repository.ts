@@ -35,8 +35,17 @@ type KangurSocialPostsPageOptions = {
 
 let indexesEnsured: Promise<void> | null = null;
 
+/**
+ * Name of the local JSON file used for social post persistence when MongoDB is unavailable.
+ */
 const LOCAL_STORE_FILENAME = 'kangur_social_posts.json';
 
+/**
+ * Resolves the absolute path to the local social posts store file.
+ * Defaults to the system temp directory if no environment override is provided.
+ * 
+ * @returns Path to the local JSON store
+ */
 const resolveLocalStorePath = (): string => {
   const customPath = process.env['KANGUR_SOCIAL_POSTS_STORE_PATH']?.trim();
   const baseDir = customPath

@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronDown, ChevronRight, Layers, Play, Trash2, User } from 'lucide-react';
+import { AlertTriangle, ChevronDown, ChevronRight, Layers, Play, RotateCcw, Trash2, User } from 'lucide-react';
 import { memo, useState } from 'react';
 
 import type { PlaywrightAction } from '@/shared/contracts/playwright-steps';
@@ -20,7 +20,9 @@ const SavedActionRow = memo(({
 }: {
   action: PlaywrightAction;
 }): React.JSX.Element => {
-  const { stepSets, handleDeleteAction } = usePlaywrightStepSequencer();
+  const { stepSets, handleDeleteAction, handleLoadActionIntoConstructor, orphanedStepSetIds } =
+    usePlaywrightStepSequencer();
+  const hasOrphanedSets = action.stepSetIds.some((id) => orphanedStepSetIds.has(id));
   const { data: personas = [] } = usePlaywrightPersonas();
   const [expanded, setExpanded] = useState(false);
 
@@ -50,6 +52,14 @@ const SavedActionRow = memo(({
         <Play className='size-3.5 shrink-0 text-sky-400' />
 
         <span className='min-w-0 flex-1 truncate text-sm font-medium'>{action.name}</span>
+        {hasOrphanedSets ? (
+          <span
+            className='inline-flex items-center gap-0.5 text-[10px] text-amber-400'
+            title='Some referenced step sets have been deleted'
+          >
+            <AlertTriangle className='size-3' />
+          </span>
+        ) : null}
 
         <div className='flex items-center gap-1.5'>
           <Badge variant='neutral' className='h-5 px-1.5 text-[10px]'>
@@ -64,6 +74,20 @@ const SavedActionRow = memo(({
               {personas.find((p) => p.id === action.personaId)?.name ?? 'Persona'}
             </Badge>
           ) : null}
+          <Button
+            variant='ghost'
+            size='sm'
+            className='h-6 gap-1 px-1.5 text-[11px] text-sky-400 hover:text-sky-300'
+            onClick={(e) => {
+              e.stopPropagation();
+              handleLoadActionIntoConstructor(action.id);
+            }}
+            aria-label={`Load action ${action.name} into constructor`}
+            title='Load into constructor'
+          >
+            <RotateCcw className='size-3' />
+            Load
+          </Button>
           <Button
             variant='ghost'
             size='sm'

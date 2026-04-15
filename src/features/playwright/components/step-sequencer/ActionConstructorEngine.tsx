@@ -213,8 +213,10 @@ export function ActionConstructorEngine(): React.JSX.Element {
     flows,
     actionStepSets,
     actionDraftName,
+    actionDraftDescription,
     actionPersonaId,
     setActionDraftName,
+    setActionDraftDescription,
     setActionPersonaId,
     handleAddStepSetToAction,
     handleClearAction,
@@ -362,7 +364,7 @@ export function ActionConstructorEngine(): React.JSX.Element {
               </div>
             ) : null}
 
-            {/* Name + save */}
+            {/* Name + description + save */}
             <div className='flex items-center gap-2'>
               <Input
                 value={actionDraftName}
@@ -370,6 +372,13 @@ export function ActionConstructorEngine(): React.JSX.Element {
                 placeholder='Action name…'
                 className='h-7 flex-1 text-xs'
                 aria-label='Action name'
+              />
+              <Input
+                value={actionDraftDescription ?? ''}
+                onChange={(e) => setActionDraftDescription(e.target.value || null)}
+                placeholder='Description (optional)…'
+                className='h-7 w-[160px] text-xs'
+                aria-label='Action description'
               />
               <Button
                 size='sm'

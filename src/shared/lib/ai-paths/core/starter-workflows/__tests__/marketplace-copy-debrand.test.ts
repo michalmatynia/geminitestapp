@@ -130,7 +130,7 @@ describe('starter marketplace copy debrand workflow', () => {
     const config = materializeStarterWorkflowPathConfig(entry, {
       pathId: 'path_starter_marketplace_copy_debrand_parser_runtime',
     });
-    const parserNode = config.nodes.find((node) => node.id === 'node-parser-marketplace-copy-debrand');
+    const parserNode = config.nodes.find((node) => node.type === 'parser');
     if (!parserNode) throw new Error('Missing marketplace copy debrand parser node');
 
     const result = await handleParser({

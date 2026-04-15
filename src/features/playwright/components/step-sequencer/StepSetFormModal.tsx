@@ -1,5 +1,7 @@
 'use client';
 
+import type { DropResult } from '@hello-pangea/dnd';
+import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
 import { GripVertical, Plus, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -76,60 +78,51 @@ function StepPickerRow({
 }
 
 // ---------------------------------------------------------------------------
-// Ordered step list (right panel)
+// Ordered step list (right panel) — drag-and-drop
 // ---------------------------------------------------------------------------
 
-function OrderedStepItem({
+function DraggableStepItem({
   step,
   index,
-  total,
   onRemove,
-  onMoveUp,
-  onMoveDown,
 }: {
   step: PlaywrightStep;
   index: number;
-  total: number;
   onRemove: () => void;
-  onMoveUp: () => void;
-  onMoveDown: () => void;
 }): React.JSX.Element {
   return (
-    <div className='group flex items-center gap-1.5 rounded border border-border/40 bg-card/30 px-2 py-1'>
-      <GripVertical className='size-3.5 shrink-0 text-muted-foreground opacity-30' />
-      <span className='shrink-0 w-4 text-right text-[10px] font-mono text-muted-foreground'>
-        {index + 1}.
-      </span>
-      <span className='min-w-0 flex-1 truncate text-xs'>{step.name}</span>
-      <div className='invisible flex items-center gap-0.5 group-hover:visible'>
-        <button
-          type='button'
-          disabled={index === 0}
-          onClick={onMoveUp}
-          className='size-4 rounded text-muted-foreground hover:text-foreground disabled:opacity-30'
-          aria-label='Move up'
+    <Draggable draggableId={step.id} index={index}>
+      {(provided, snapshot) => (
+        <div
+          ref={provided.innerRef}
+          {...provided.draggableProps}
+          className={cn(
+            'group flex items-center gap-1.5 rounded border border-border/40 bg-card/30 px-2 py-1',
+            snapshot.isDragging && 'shadow-lg ring-1 ring-sky-500/40 opacity-90'
+          )}
         >
-          ↑
-        </button>
-        <button
-          type='button'
-          disabled={index === total - 1}
-          onClick={onMoveDown}
-          className='size-4 rounded text-muted-foreground hover:text-foreground disabled:opacity-30'
-          aria-label='Move down'
-        >
-          ↓
-        </button>
-        <button
-          type='button'
-          onClick={onRemove}
-          className='size-4 rounded text-muted-foreground hover:text-destructive'
-          aria-label='Remove'
-        >
-          <X className='size-3' />
-        </button>
-      </div>
-    </div>
+          <span
+            {...provided.dragHandleProps}
+            className='inline-flex cursor-grab items-center active:cursor-grabbing'
+            aria-label='Drag to reorder'
+          >
+            <GripVertical className='size-3.5 shrink-0 text-muted-foreground' />
+          </span>
+          <span className='shrink-0 w-4 text-right text-[10px] font-mono text-muted-foreground'>
+            {index + 1}.
+          </span>
+          <span className='min-w-0 flex-1 truncate text-xs'>{step.name}</span>
+          <button
+            type='button'
+            onClick={onRemove}
+            className='invisible size-4 rounded text-muted-foreground hover:text-destructive group-hover:visible'
+            aria-label='Remove'
+          >
+            <X className='size-3' />
+          </button>
+        </div>
+      )}
+    </Draggable>
   );
 }
 
@@ -220,6 +213,11 @@ export function StepSetFormModal(): React.JSX.Element | null {
     const [moved] = ids.splice(from, 1);
     if (moved !== undefined) ids.splice(to, 0, moved);
     setField('stepIds', ids);
+  };
+
+  const onDragEnd = (result: DropResult): void => {
+    if (!result.destination) return;
+    moveStep(result.source.index, result.destination.index);
   };
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
@@ -397,7 +395,7 @@ export function StepSetFormModal(): React.JSX.Element | null {
               </div>
             </div>
 
-            {/* Right: ordered selection */}
+            {/* Right: ordered selection (drag-to-reorder) */}
             <div className='space-y-2'>
               <div className='flex items-center justify-between'>
                 <Label className='text-xs text-muted-foreground'>
@@ -413,28 +411,39 @@ export function StepSetFormModal(): React.JSX.Element | null {
                   </button>
                 ) : null}
               </div>
-              <div className='h-[252px] overflow-y-auto rounded border border-border/40 bg-card/20 p-1'>
-                {orderedSelectedSteps.length === 0 ? (
-                  <div className='flex h-full flex-col items-center justify-center gap-1 text-center text-xs text-muted-foreground'>
-                    <Plus className='size-5 opacity-20' />
-                    <p>Check steps on the left to add them here.</p>
-                  </div>
-                ) : (
-                  <div className='space-y-1'>
-                    {orderedSelectedSteps.map((step, idx) => (
-                      <OrderedStepItem
-                        key={`${step.id}_${idx}`}
-                        step={step}
-                        index={idx}
-                        total={orderedSelectedSteps.length}
-                        onRemove={() => removeStep(idx)}
-                        onMoveUp={() => moveStep(idx, idx - 1)}
-                        onMoveDown={() => moveStep(idx, idx + 1)}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
+              <DragDropContext onDragEnd={onDragEnd}>
+                <Droppable droppableId='step-sequence'>
+                  {(provided, snapshot) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.droppableProps}
+                      className={cn(
+                        'h-[252px] overflow-y-auto rounded border border-border/40 bg-card/20 p-1',
+                        snapshot.isDraggingOver && 'border-sky-500/40 bg-sky-500/5'
+                      )}
+                    >
+                      {orderedSelectedSteps.length === 0 ? (
+                        <div className='flex h-full flex-col items-center justify-center gap-1 text-center text-xs text-muted-foreground'>
+                          <Plus className='size-5 opacity-20' />
+                          <p>Check steps on the left to add them here.</p>
+                        </div>
+                      ) : (
+                        <div className='space-y-1'>
+                          {orderedSelectedSteps.map((step, idx) => (
+                            <DraggableStepItem
+                              key={step.id}
+                              step={step}
+                              index={idx}
+                              onRemove={() => removeStep(idx)}
+                            />
+                          ))}
+                          {provided.placeholder}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </Droppable>
+              </DragDropContext>
             </div>
           </div>
 

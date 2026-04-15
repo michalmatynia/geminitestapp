@@ -11,6 +11,10 @@ import type {
 // Filter state
 // ---------------------------------------------------------------------------
 
+export type PlaywrightStepSortField = 'name' | 'type' | 'createdAt';
+export type PlaywrightStepSetSortField = 'name' | 'stepCount' | 'createdAt';
+export type SortDirection = 'asc' | 'desc';
+
 export interface PlaywrightStepSequencerFilters {
   searchQuery: string;
   filterWebsiteId: string | null;
@@ -20,6 +24,8 @@ export interface PlaywrightStepSequencerFilters {
   filterSharedOnly: boolean;
   /** 'steps' | 'step_sets' — which list is active in the bottom panel */
   activeTab: 'steps' | 'step_sets';
+  sortField: PlaywrightStepSortField | PlaywrightStepSetSortField;
+  sortDirection: SortDirection;
 }
 
 // ---------------------------------------------------------------------------
@@ -45,6 +51,8 @@ export interface PlaywrightStepSequencerActionState {
   actionPersonaId: string | null;
   /** Draft name for saving the action. */
   actionDraftName: string;
+  /** Draft description for saving the action. */
+  actionDraftDescription: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -72,6 +80,13 @@ export interface PlaywrightStepSequencerContextType
   /** Step sets resolved from actionStepSetIds (in order, with stable identity). */
   actionStepSets: PlaywrightStepSet[];
 
+  /** How many saved actions reference each step set ID. */
+  stepSetUsageCounts: Record<string, number>;
+  /** Step IDs that are referenced by step sets but no longer exist. */
+  orphanedStepIds: Set<string>;
+  /** Step Set IDs that are referenced by actions but no longer exist. */
+  orphanedStepSetIds: Set<string>;
+
   // --- Filter actions ---
   setSearchQuery: (q: string) => void;
   setFilterWebsiteId: (id: string | null) => void;
@@ -80,6 +95,8 @@ export interface PlaywrightStepSequencerContextType
   setFilterTag: (tag: string | null) => void;
   setFilterSharedOnly: (v: boolean) => void;
   setActiveTab: (tab: 'steps' | 'step_sets') => void;
+  setSortField: (field: PlaywrightStepSortField | PlaywrightStepSetSortField) => void;
+  setSortDirection: (dir: SortDirection) => void;
 
   // --- Website CRUD ---
   handleCreateWebsite: (draft: Omit<PlaywrightWebsite, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
@@ -103,6 +120,20 @@ export interface PlaywrightStepSequencerContextType
 
   // --- Action management ---
   handleDeleteAction: (id: string) => Promise<void>;
+  handleLoadActionIntoConstructor: (id: string) => void;
+
+  // --- Cleanup ---
+  handleCleanOrphanedSteps: () => Promise<void>;
+  handleCleanOrphanedStepSets: () => Promise<void>;
+
+  // --- Bulk import (preserves original IDs) ---
+  handleBatchImport: (payload: {
+    steps: PlaywrightStep[];
+    stepSets: PlaywrightStepSet[];
+    actions: PlaywrightAction[];
+    websites: PlaywrightWebsite[];
+    flows: PlaywrightFlow[];
+  }) => Promise<{ imported: number }>;
 
   // --- Action constructor ---
   handleAddStepSetToAction: (stepSetId: string) => void;
@@ -111,6 +142,7 @@ export interface PlaywrightStepSequencerContextType
   handleClearAction: () => void;
   setActionPersonaId: (id: string | null) => void;
   setActionDraftName: (name: string) => void;
+  setActionDraftDescription: (description: string | null) => void;
   handleSaveAction: () => Promise<void>;
 
   // --- Modal toggles ---

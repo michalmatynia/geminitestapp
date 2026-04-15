@@ -25,7 +25,12 @@ import {
 import { useToast } from '@/shared/ui/primitives.public';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
-import type { PlaywrightStepSequencerContextType } from '../context/PlaywrightStepSequencerContext.types';
+import type {
+  PlaywrightStepSequencerContextType,
+  PlaywrightStepSetSortField,
+  PlaywrightStepSortField,
+  SortDirection,
+} from '../context/PlaywrightStepSequencerContext.types';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -86,6 +91,8 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
   const [filterTag, setFilterTag] = useState<string | null>(null);
   const [filterSharedOnly, setFilterSharedOnly] = useState(false);
   const [activeTab, setActiveTab] = useState<'steps' | 'step_sets'>('steps');
+  const [sortField, setSortField] = useState<PlaywrightStepSortField | PlaywrightStepSetSortField>('name');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
   // --- Modal state ---
   const [isCreateStepOpen, setIsCreateStepOpen] = useState(false);
@@ -98,6 +105,7 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
   const [actionStepSetIds, setActionStepSetIds] = useState<string[]>([]);
   const [actionPersonaId, setActionPersonaId] = useState<string | null>(null);
   const [actionDraftName, setActionDraftName] = useState('');
+  const [actionDraftDescription, setActionDraftDescription] = useState<string | null>(null);
 
   // ---------------------------------------------------------------------------
   // Derived / filtered data
@@ -118,8 +126,15 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
     if (filterType !== null) result = result.filter((s) => s.type === filterType);
     if (filterTag !== null) result = result.filter((s) => s.tags.includes(filterTag));
     if (filterSharedOnly) result = result.filter((s) => s.websiteId === null);
+    // Sort
+    const dir = sortDirection === 'asc' ? 1 : -1;
+    result = [...result].sort((a, b) => {
+      if (sortField === 'type') return dir * a.type.localeCompare(b.type);
+      if (sortField === 'createdAt') return dir * a.createdAt.localeCompare(b.createdAt);
+      return dir * a.name.localeCompare(b.name);
+    });
     return result;
-  }, [steps, searchQuery, filterWebsiteId, filterFlowId, filterType, filterTag, filterSharedOnly]);
+  }, [steps, searchQuery, filterWebsiteId, filterFlowId, filterType, filterTag, filterSharedOnly, sortField, sortDirection]);
 
   const filteredStepSets = useMemo(() => {
     let result = stepSets;
@@ -135,8 +150,15 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
     if (filterFlowId !== null) result = result.filter((s) => s.flowId === filterFlowId);
     if (filterTag !== null) result = result.filter((s) => s.tags.includes(filterTag));
     if (filterSharedOnly) result = result.filter((s) => s.shared || s.websiteId === null);
+    // Sort
+    const dir = sortDirection === 'asc' ? 1 : -1;
+    result = [...result].sort((a, b) => {
+      if (sortField === 'stepCount') return dir * (a.stepIds.length - b.stepIds.length);
+      if (sortField === 'createdAt') return dir * a.createdAt.localeCompare(b.createdAt);
+      return dir * a.name.localeCompare(b.name);
+    });
     return result;
-  }, [stepSets, searchQuery, filterWebsiteId, filterFlowId, filterTag, filterSharedOnly]);
+  }, [stepSets, searchQuery, filterWebsiteId, filterFlowId, filterTag, filterSharedOnly, sortField, sortDirection]);
 
   const allTags = useMemo(() => {
     const tagSet = new Set<string>();
@@ -152,6 +174,38 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
         .filter((s): s is PlaywrightStepSet => s !== undefined),
     [actionStepSetIds, stepSets]
   );
+
+  const stepSetUsageCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const action of actions) {
+      for (const setId of action.stepSetIds) {
+        counts[setId] = (counts[setId] ?? 0) + 1;
+      }
+    }
+    return counts;
+  }, [actions]);
+
+  const orphanedStepIds = useMemo(() => {
+    const existingIds = new Set(steps.map((s) => s.id));
+    const orphaned = new Set<string>();
+    for (const set of stepSets) {
+      for (const stepId of set.stepIds) {
+        if (!existingIds.has(stepId)) orphaned.add(stepId);
+      }
+    }
+    return orphaned;
+  }, [steps, stepSets]);
+
+  const orphanedStepSetIds = useMemo(() => {
+    const existingIds = new Set(stepSets.map((s) => s.id));
+    const orphaned = new Set<string>();
+    for (const action of actions) {
+      for (const setId of action.stepSetIds) {
+        if (!existingIds.has(setId)) orphaned.add(setId);
+      }
+    }
+    return orphaned;
+  }, [stepSets, actions]);
 
   // ---------------------------------------------------------------------------
   // Step CRUD
@@ -383,6 +437,99 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
     [saveActions, toast]
   );
 
+  const handleCleanOrphanedSteps = useCallback(async (): Promise<void> => {
+    const existingIds = new Set(stepsRef.current.map((s) => s.id));
+    const cleaned = stepSetsRef.current.map((ss) => ({
+      ...ss,
+      stepIds: ss.stepIds.filter((id) => existingIds.has(id)),
+      updatedAt: now(),
+    }));
+    try {
+      await saveStepSets({ stepSets: cleaned });
+      toast('Orphaned step references removed.', { variant: 'success' });
+    } catch (error) {
+      logClientCatch(error, { source: 'usePlaywrightStepSequencerState', action: 'cleanOrphanedSteps' });
+      toast('Cleanup failed.', { variant: 'error' });
+    }
+  }, [saveStepSets, toast]);
+
+  const handleCleanOrphanedStepSets = useCallback(async (): Promise<void> => {
+    const existingIds = new Set(stepSetsRef.current.map((s) => s.id));
+    const cleaned = actionsRef.current.map((a) => ({
+      ...a,
+      stepSetIds: a.stepSetIds.filter((id) => existingIds.has(id)),
+      updatedAt: now(),
+    }));
+    try {
+      await saveActions({ actions: cleaned });
+      toast('Orphaned step set references removed.', { variant: 'success' });
+    } catch (error) {
+      logClientCatch(error, { source: 'usePlaywrightStepSequencerState', action: 'cleanOrphanedStepSets' });
+      toast('Cleanup failed.', { variant: 'error' });
+    }
+  }, [saveActions, toast]);
+
+  const handleBatchImport = useCallback(
+    async (payload: {
+      steps: PlaywrightStep[];
+      stepSets: PlaywrightStepSet[];
+      actions: PlaywrightAction[];
+      websites: PlaywrightWebsite[];
+      flows: PlaywrightFlow[];
+    }): Promise<{ imported: number }> => {
+      let imported = 0;
+      try {
+        const existingStepIds = new Set(stepsRef.current.map((s) => s.id));
+        const existingSetIds = new Set(stepSetsRef.current.map((s) => s.id));
+        const existingActionIds = new Set(actionsRef.current.map((a) => a.id));
+        const existingWebsiteIds = new Set(websitesRef.current.map((w) => w.id));
+        const existingFlowIds = new Set(flowsRef.current.map((f) => f.id));
+
+        const newWebsites = payload.websites.filter((w) => !existingWebsiteIds.has(w.id));
+        const newFlows = payload.flows.filter((f) => !existingFlowIds.has(f.id));
+        const newSteps = payload.steps.filter((s) => !existingStepIds.has(s.id));
+        const newSets = payload.stepSets.filter((s) => !existingSetIds.has(s.id));
+        const newActions = payload.actions.filter((a) => !existingActionIds.has(a.id));
+
+        if (newWebsites.length > 0) {
+          await saveWebsites({ websites: [...websitesRef.current, ...newWebsites] });
+          imported += newWebsites.length;
+        }
+        if (newFlows.length > 0) {
+          await saveFlows({ flows: [...flowsRef.current, ...newFlows] });
+          imported += newFlows.length;
+        }
+        if (newSteps.length > 0) {
+          await saveSteps({ steps: [...stepsRef.current, ...newSteps] });
+          imported += newSteps.length;
+        }
+        if (newSets.length > 0) {
+          await saveStepSets({ stepSets: [...stepSetsRef.current, ...newSets] });
+          imported += newSets.length;
+        }
+        if (newActions.length > 0) {
+          await saveActions({ actions: [...actionsRef.current, ...newActions] });
+          imported += newActions.length;
+        }
+      } catch (error) {
+        logClientCatch(error, { source: 'usePlaywrightStepSequencerState', action: 'batchImport' });
+        toast('Import failed.', { variant: 'error' });
+      }
+      return { imported };
+    },
+    [saveWebsites, saveFlows, saveSteps, saveStepSets, saveActions, toast]
+  );
+
+  const handleLoadActionIntoConstructor = useCallback((id: string): void => {
+    const action = actionsRef.current.find((a) => a.id === id);
+    if (!action) return;
+    setActionStepSetIds([...action.stepSetIds]);
+    setActionDraftName(action.name);
+    setActionDraftDescription(action.description);
+    setActionPersonaId(action.personaId);
+    toast('Action loaded into constructor.', { variant: 'success' });
+  }, [toast]);
+
   // ---------------------------------------------------------------------------
   // Action constructor
   // ---------------------------------------------------------------------------
@@ -407,6 +554,7 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
   const handleClearAction = useCallback((): void => {
     setActionStepSetIds([]);
     setActionDraftName('');
+    setActionDraftDescription(null);
     setActionPersonaId(null);
   }, []);
 
@@ -425,7 +573,7 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
       const next: PlaywrightAction = {
         id: createId(),
         name,
-        description: null,
+        description: actionDraftDescription?.trim() || null,
         stepSetIds: [...actionStepSetIds],
         personaId: actionPersonaId,
         createdAt: ts,
@@ -439,7 +587,7 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
       logClientCatch(error, { source: 'usePlaywrightStepSequencerState', action: 'saveAction' });
       toast('Failed to save action.', { variant: 'error' });
     }
-  }, [actionDraftName, actionStepSetIds, actionPersonaId, handleClearAction, saveActions, toast]);
+  }, [actionDraftName, actionDraftDescription, actionStepSetIds, actionPersonaId, handleClearAction, saveActions, toast]);
 
   // ---------------------------------------------------------------------------
   // Assemble context value
@@ -460,6 +608,9 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
     filteredStepSets,
     allTags,
     actionStepSets,
+    stepSetUsageCounts,
+    orphanedStepIds,
+    orphanedStepSetIds,
 
     // Filters
     searchQuery,
@@ -469,6 +620,8 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
     filterTag,
     filterSharedOnly,
     activeTab,
+    sortField,
+    sortDirection,
     setSearchQuery,
     setFilterWebsiteId,
     setFilterFlowId,
@@ -476,6 +629,8 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
     setFilterTag,
     setFilterSharedOnly,
     setActiveTab,
+    setSortField,
+    setSortDirection,
 
     // Modals
     isCreateStepOpen,
@@ -493,12 +648,14 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
     actionStepSetIds,
     actionPersonaId,
     actionDraftName,
+    actionDraftDescription,
     handleAddStepSetToAction,
     handleRemoveFromAction,
     handleMoveActionItem,
     handleClearAction,
     setActionPersonaId,
     setActionDraftName,
+    setActionDraftDescription,
     handleSaveAction,
 
     // Step CRUD
@@ -523,5 +680,13 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
 
     // Action management
     handleDeleteAction,
+    handleLoadActionIntoConstructor,
+
+    // Cleanup
+    handleCleanOrphanedSteps,
+    handleCleanOrphanedStepSets,
+
+    // Batch import
+    handleBatchImport,
   };
 }

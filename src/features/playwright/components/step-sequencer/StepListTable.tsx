@@ -1,7 +1,7 @@
 'use client';
 
-import { Copy, Globe, Lock, MoreHorizontal, Pencil, Plus, Share2, Tag, Trash2 } from 'lucide-react';
-import { memo } from 'react';
+import { AlertTriangle, ChevronDown, ChevronRight, Copy, Globe, Lock, MoreHorizontal, Pencil, Plus, Share2, Tag, Trash2 } from 'lucide-react';
+import { memo, useState } from 'react';
 
 import { PLAYWRIGHT_STEP_TYPE_LABELS } from '@/shared/contracts/playwright-steps';
 import type { PlaywrightStep, PlaywrightStepSet } from '@/shared/contracts/playwright-steps';
@@ -26,6 +26,31 @@ import {
 import { usePlaywrightStepSequencer } from '../../context/PlaywrightStepSequencerContext';
 import { StepListTableSkeleton } from './StepListTableSkeleton';
 import { StepTypeIcon } from './StepTypeIcon';
+
+// ---------------------------------------------------------------------------
+// Inline step preview (used inside StepSetRow expansion)
+// ---------------------------------------------------------------------------
+
+function StepPreviewRow({ stepId }: { stepId: string }): React.JSX.Element {
+  const { steps } = usePlaywrightStepSequencer();
+  const step = steps.find((s) => s.id === stepId);
+  if (!step) {
+    return (
+      <div className='flex items-center gap-2 px-2 py-0.5 text-[11px] text-muted-foreground/40 line-through'>
+        (deleted step)
+      </div>
+    );
+  }
+  return (
+    <div className='flex items-center gap-2 px-2 py-0.5 text-[11px]'>
+      <StepTypeIcon type={step.type} className='size-3 shrink-0' withColor />
+      <span className='min-w-0 flex-1 truncate text-muted-foreground'>{step.name}</span>
+      <Badge variant='neutral' className='h-3.5 shrink-0 px-1 text-[9px]'>
+        {PLAYWRIGHT_STEP_TYPE_LABELS[step.type]}
+      </Badge>
+    </div>
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Steps table
@@ -183,7 +208,12 @@ const StepSetRow = memo(({ set }: { set: PlaywrightStepSet }) => {
     setFilterTag,
     websites,
     flows,
+    stepSetUsageCounts,
+    orphanedStepIds,
   } = usePlaywrightStepSequencer();
+  const [expanded, setExpanded] = useState(false);
+  const usageCount = stepSetUsageCounts[set.id] ?? 0;
+  const hasOrphanedSteps = set.stepIds.some((id) => orphanedStepIds.has(id));
 
   const websiteName = set.websiteId
     ? (websites.find((w) => w.id === set.websiteId)?.name ?? set.websiteId)
@@ -194,9 +224,41 @@ const StepSetRow = memo(({ set }: { set: PlaywrightStepSet }) => {
     : null;
 
   return (
-    <TableRow>
-      <TableCell className='font-medium text-sm'>{set.name}</TableCell>
-      <TableCell className='text-xs text-muted-foreground'>{set.stepIds.length} steps</TableCell>
+    <>
+    <TableRow className={expanded ? 'border-b-0' : undefined}>
+      <TableCell>
+        <button
+          type='button'
+          onClick={() => setExpanded((v) => !v)}
+          className='flex items-center gap-1.5 font-medium text-sm hover:text-sky-300'
+          aria-expanded={expanded}
+          title={expanded ? 'Collapse steps' : 'Expand steps'}
+        >
+          {expanded
+            ? <ChevronDown className='size-3.5 shrink-0 text-muted-foreground' />
+            : <ChevronRight className='size-3.5 shrink-0 text-muted-foreground' />}
+          {set.name}
+        </button>
+      </TableCell>
+      <TableCell>
+        <div className='flex items-center gap-1.5'>
+          <span className='text-xs text-muted-foreground'>{set.stepIds.length} steps</span>
+          {hasOrphanedSteps ? (
+            <span
+              className='inline-flex items-center gap-0.5 text-[10px] text-amber-400'
+              title='Some referenced steps have been deleted'
+            >
+              <AlertTriangle className='size-3' />
+              orphaned
+            </span>
+          ) : null}
+          {usageCount > 0 ? (
+            <Badge variant='neutral' className='h-4 px-1 text-[9px]'>
+              {usageCount} action{usageCount !== 1 ? 's' : ''}
+            </Badge>
+          ) : null}
+        </div>
+      </TableCell>
       <TableCell className='max-w-[240px] truncate text-xs text-muted-foreground'>
         {set.description ?? <span className='opacity-40'>—</span>}
       </TableCell>
@@ -277,6 +339,23 @@ const StepSetRow = memo(({ set }: { set: PlaywrightStepSet }) => {
         </div>
       </TableCell>
     </TableRow>
+    {expanded && set.stepIds.length > 0 ? (
+      <TableRow className='bg-card/10 hover:bg-card/10'>
+        <TableCell colSpan={6} className='py-1.5 pl-8 pr-3'>
+          <div className='space-y-0.5 rounded border border-border/20 bg-black/10 py-1'>
+            {set.stepIds.map((stepId, idx) => (
+              <div key={`${stepId}_${idx}`} className='flex items-center gap-1'>
+                <span className='w-5 shrink-0 text-right text-[10px] font-mono text-muted-foreground/40'>
+                  {idx + 1}.
+                </span>
+                <StepPreviewRow stepId={stepId} />
+              </div>
+            ))}
+          </div>
+        </TableCell>
+      </TableRow>
+    ) : null}
+    </>
   );
 });
 

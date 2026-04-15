@@ -5,8 +5,13 @@ import { memo } from 'react';
 import { AppErrorBoundary } from '@/shared/ui/AppErrorBoundary';
 import { Skeleton } from '@/shared/ui/skeleton';
 
+import { AlertTriangle } from 'lucide-react';
+
+import { Button } from '@/shared/ui/primitives.public';
+
 import { usePlaywrightStepSequencer } from '../../context/PlaywrightStepSequencerContext';
 import { ActionConstructorEngine } from './ActionConstructorEngine';
+import { ImportExportMenu } from './ImportExportMenu';
 import { SavedActionsPanel } from './SavedActionsPanel';
 import { StepFormModal } from './StepFormModal';
 import { StepListFilters } from './StepListFilters';
@@ -47,6 +52,62 @@ function PlaywrightStepSequencerSkeleton(): React.JSX.Element {
   );
 }
 
+function OrphanBanner(): React.JSX.Element | null {
+  const {
+    orphanedStepIds,
+    orphanedStepSetIds,
+    handleCleanOrphanedSteps,
+    handleCleanOrphanedStepSets,
+    isSaving,
+  } = usePlaywrightStepSequencer();
+
+  const hasOrphanedSteps = orphanedStepIds.size > 0;
+  const hasOrphanedStepSets = orphanedStepSetIds.size > 0;
+  if (!hasOrphanedSteps && !hasOrphanedStepSets) return null;
+
+  return (
+    <div className='flex items-center gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-2.5'>
+      <AlertTriangle className='size-4 shrink-0 text-amber-400' />
+      <div className='flex-1 text-xs text-amber-300'>
+        {hasOrphanedSteps && (
+          <span>
+            {orphanedStepIds.size} deleted step{orphanedStepIds.size !== 1 ? 's' : ''} referenced in step sets.{' '}
+          </span>
+        )}
+        {hasOrphanedStepSets && (
+          <span>
+            {orphanedStepSetIds.size} deleted step set{orphanedStepSetIds.size !== 1 ? 's' : ''} referenced in actions.{' '}
+          </span>
+        )}
+      </div>
+      <div className='flex items-center gap-2'>
+        {hasOrphanedSteps ? (
+          <Button
+            size='sm'
+            variant='outline'
+            className='h-6 border-amber-500/40 px-2 text-[11px] text-amber-300 hover:border-amber-400/60'
+            onClick={() => void handleCleanOrphanedSteps()}
+            disabled={isSaving}
+          >
+            Fix step sets
+          </Button>
+        ) : null}
+        {hasOrphanedStepSets ? (
+          <Button
+            size='sm'
+            variant='outline'
+            className='h-6 border-amber-500/40 px-2 text-[11px] text-amber-300 hover:border-amber-400/60'
+            onClick={() => void handleCleanOrphanedStepSets()}
+            disabled={isSaving}
+          >
+            Fix actions
+          </Button>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 function PlaywrightStepSequencerContent(): React.JSX.Element {
   const { isLoading } = usePlaywrightStepSequencer();
 
@@ -54,6 +115,14 @@ function PlaywrightStepSequencerContent(): React.JSX.Element {
 
   return (
     <div className='space-y-6'>
+      {/* ---- Page-level toolbar ---- */}
+      <div className='flex justify-end'>
+        <ImportExportMenu />
+      </div>
+
+      {/* ---- Orphan warning banner ---- */}
+      <OrphanBanner />
+
       {/* ---- Websites & Flows management ---- */}
       <div className='rounded-lg border border-white/10 bg-black/10 p-4'>
         <WebsiteFlowManagerPanel />

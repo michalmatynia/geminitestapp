@@ -150,13 +150,21 @@ export const buildAmazonScannerRequestRuntimeOptions = (input: {
   NonNullable<Parameters<typeof startPlaywrightEngineTask>[0]['request']>,
   'personaId' | 'settingsOverrides' | 'launchOptions' | 'contextOptions'
 > => {
+  const scannerEngineRequestOptions =
+    input.scannerEngineRequestOptions &&
+    typeof input.scannerEngineRequestOptions === 'object'
+      ? (input.scannerEngineRequestOptions as {
+          settingsOverrides?: unknown;
+          launchOptions?: unknown;
+          contextOptions?: unknown;
+          personaId?: unknown;
+        })
+      : {};
   const existingSettingsOverrides =
-    toRecord(input.scannerEngineRequestOptions['settingsOverrides']) ?? {};
-  const existingLaunchOptions = toRecord(input.scannerEngineRequestOptions['launchOptions']) ?? {};
+    toRecord(scannerEngineRequestOptions.settingsOverrides) ?? {};
+  const existingLaunchOptions = toRecord(scannerEngineRequestOptions.launchOptions) ?? {};
   const existingContextOptions =
-    toRecord(
-      input.scannerEngineRequestOptions['contextOptions']
-    ) ?? {};
+    toRecord(scannerEngineRequestOptions.contextOptions) ?? {};
 
   const settingsOverrides: Record<string, unknown> = {
     ...existingSettingsOverrides,
@@ -193,9 +201,9 @@ export const buildAmazonScannerRequestRuntimeOptions = (input: {
   }
 
   return {
-    ...(typeof input.scannerEngineRequestOptions['personaId'] === 'string' &&
-    input.scannerEngineRequestOptions['personaId'].trim().length > 0
-      ? { personaId: input.scannerEngineRequestOptions['personaId'] }
+    ...(typeof scannerEngineRequestOptions.personaId === 'string' &&
+    scannerEngineRequestOptions.personaId.trim().length > 0
+      ? { personaId: scannerEngineRequestOptions.personaId }
       : {}),
     settingsOverrides,
     launchOptions,
@@ -244,56 +252,86 @@ export const resolveAmazonImageSearchProviderHistory = (
 };
 
 export const mergeAmazonCandidateEvaluatorConfig = (
-  baseConfig: ProductScannerAmazonCandidateEvaluatorResolvedConfig,
+  baseConfig: ProductScannerAmazonCandidateEvaluatorResolvedConfig | null | undefined,
   overrideConfig?: Partial<ProductScannerAmazonCandidateEvaluatorResolvedConfig> | null
-): ProductScannerAmazonCandidateEvaluatorResolvedConfig => ({
-  enabled: overrideConfig?.enabled ?? baseConfig.enabled,
-  mode: overrideConfig?.mode ?? baseConfig.mode,
-  threshold: overrideConfig?.threshold ?? baseConfig.threshold,
+): ProductScannerAmazonCandidateEvaluatorResolvedConfig => {
+  const normalizedBaseConfig: ProductScannerAmazonCandidateEvaluatorResolvedConfig = {
+    enabled: baseConfig?.enabled ?? false,
+    mode: baseConfig?.mode ?? 'disabled',
+    threshold: baseConfig?.threshold ?? 0.85,
+    onlyForAmbiguousCandidates: baseConfig?.onlyForAmbiguousCandidates ?? false,
+    candidateSimilarityMode:
+      baseConfig?.candidateSimilarityMode ?? 'deterministic_then_ai',
+    allowedContentLanguage: baseConfig?.allowedContentLanguage ?? 'en',
+    rejectNonEnglishContent: baseConfig?.rejectNonEnglishContent ?? true,
+    languageDetectionMode:
+      baseConfig?.languageDetectionMode ?? 'deterministic_then_ai',
+    modelId: baseConfig?.modelId ?? null,
+    systemPrompt: baseConfig?.systemPrompt ?? null,
+    brainApplied: baseConfig?.brainApplied ?? null,
+  };
+
+  return {
+  enabled: overrideConfig?.enabled ?? normalizedBaseConfig.enabled,
+  mode: overrideConfig?.mode ?? normalizedBaseConfig.mode,
+  threshold: overrideConfig?.threshold ?? normalizedBaseConfig.threshold,
   onlyForAmbiguousCandidates:
-    overrideConfig?.onlyForAmbiguousCandidates ?? baseConfig.onlyForAmbiguousCandidates,
+    overrideConfig?.onlyForAmbiguousCandidates ?? normalizedBaseConfig.onlyForAmbiguousCandidates,
   candidateSimilarityMode:
-    overrideConfig?.candidateSimilarityMode ?? baseConfig.candidateSimilarityMode,
+    overrideConfig?.candidateSimilarityMode ?? normalizedBaseConfig.candidateSimilarityMode,
   allowedContentLanguage:
-    overrideConfig?.allowedContentLanguage ?? baseConfig.allowedContentLanguage,
+    overrideConfig?.allowedContentLanguage ?? normalizedBaseConfig.allowedContentLanguage,
   rejectNonEnglishContent:
-    overrideConfig?.rejectNonEnglishContent ?? baseConfig.rejectNonEnglishContent,
+    overrideConfig?.rejectNonEnglishContent ?? normalizedBaseConfig.rejectNonEnglishContent,
   languageDetectionMode:
-    overrideConfig?.languageDetectionMode ?? baseConfig.languageDetectionMode,
-  modelId: overrideConfig?.modelId ?? baseConfig.modelId,
-  systemPrompt: overrideConfig?.systemPrompt ?? baseConfig.systemPrompt,
-  brainApplied: overrideConfig?.brainApplied ?? baseConfig.brainApplied,
-});
+    overrideConfig?.languageDetectionMode ?? normalizedBaseConfig.languageDetectionMode,
+  modelId: overrideConfig?.modelId ?? normalizedBaseConfig.modelId,
+  systemPrompt: overrideConfig?.systemPrompt ?? normalizedBaseConfig.systemPrompt,
+  brainApplied: overrideConfig?.brainApplied ?? normalizedBaseConfig.brainApplied,
+};
+};
 
 export const resolveAmazonProbeEvaluatorConfig = async (
   scannerSettings: ReturnType<typeof createDefaultProductScannerSettings>
-): Promise<ProductScannerAmazonCandidateEvaluatorResolvedConfig> =>
-  mergeAmazonCandidateEvaluatorConfig(
-    await resolveProductScannerAmazonCandidateEvaluatorConfig(scannerSettings),
-    await resolveProductScannerAmazonCandidateEvaluatorProbeConfig(scannerSettings).catch(
-      () => null
-    )
-  );
+): Promise<ProductScannerAmazonCandidateEvaluatorResolvedConfig> => {
+  const baseConfig = await resolveProductScannerAmazonCandidateEvaluatorConfig(scannerSettings);
+  try {
+    return mergeAmazonCandidateEvaluatorConfig(
+      baseConfig,
+      await resolveProductScannerAmazonCandidateEvaluatorProbeConfig(scannerSettings)
+    );
+  } catch {
+    return mergeAmazonCandidateEvaluatorConfig(baseConfig, null);
+  }
+};
 
 export const resolveAmazonTriageEvaluatorConfig = async (
   scannerSettings: ReturnType<typeof createDefaultProductScannerSettings>
-): Promise<ProductScannerAmazonCandidateEvaluatorResolvedConfig> =>
-  mergeAmazonCandidateEvaluatorConfig(
-    await resolveProductScannerAmazonCandidateEvaluatorConfig(scannerSettings),
-    await resolveProductScannerAmazonCandidateEvaluatorTriageConfig(scannerSettings).catch(
-      () => null
-    )
-  );
+): Promise<ProductScannerAmazonCandidateEvaluatorResolvedConfig> => {
+  const baseConfig = await resolveProductScannerAmazonCandidateEvaluatorConfig(scannerSettings);
+  try {
+    return mergeAmazonCandidateEvaluatorConfig(
+      baseConfig,
+      await resolveProductScannerAmazonCandidateEvaluatorTriageConfig(scannerSettings)
+    );
+  } catch {
+    return mergeAmazonCandidateEvaluatorConfig(baseConfig, null);
+  }
+};
 
 export const resolveAmazonExtractionEvaluatorConfig = async (
   scannerSettings: ReturnType<typeof createDefaultProductScannerSettings>
-): Promise<ProductScannerAmazonCandidateEvaluatorResolvedConfig> =>
-  mergeAmazonCandidateEvaluatorConfig(
-    await resolveProductScannerAmazonCandidateEvaluatorConfig(scannerSettings),
-    await resolveProductScannerAmazonCandidateEvaluatorExtractionConfig(scannerSettings).catch(
-      () => null
-    )
-  );
+): Promise<ProductScannerAmazonCandidateEvaluatorResolvedConfig> => {
+  const baseConfig = await resolveProductScannerAmazonCandidateEvaluatorConfig(scannerSettings);
+  try {
+    return mergeAmazonCandidateEvaluatorConfig(
+      baseConfig,
+      await resolveProductScannerAmazonCandidateEvaluatorExtractionConfig(scannerSettings)
+    );
+  } catch {
+    return mergeAmazonCandidateEvaluatorConfig(baseConfig, null);
+  }
+};
 
 export const resolveAmazonImageSearchFallbackProvider = (input: {
   rawResult: unknown;

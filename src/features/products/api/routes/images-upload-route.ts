@@ -1,4 +1,7 @@
 import 'server-only';
+// Server route: handles product image uploads. Runs image optimization
+// (multiple sizes / formats) and returns metadata for each uploaded image.
+// Uses withFileUploadSecurity middleware to validate and rate-limit uploads.
 
 import { NextRequest, NextResponse } from 'next/server';
 

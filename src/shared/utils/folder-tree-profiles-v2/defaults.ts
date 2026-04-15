@@ -775,4 +775,47 @@ export const defaultFolderTreeProfilesV2: FolderTreeProfilesV2Map = {
       selectionBehavior: 'click_away',
     },
   },
+  playwright_step_seq_constructor: {
+    version: 2,
+    placeholders: {
+      preset: 'sublime',
+      style: 'ghost',
+      emphasis: 'subtle',
+      rootDropLabel: 'Drop to Root',
+      inlineDropLabel: 'Drop to step',
+    },
+    icons: {
+      slots: {
+        folderClosed: 'Folder',
+        folderOpen: 'FolderOpen',
+        file: 'FileText',
+        root: 'Folder',
+        dragHandle: 'GripVertical',
+      },
+      byKind: {},
+    },
+    nesting: {
+      defaultAllow: false,
+      blockedTargetKinds: [],
+      rules: [
+        {
+          childType: 'folder',
+          childKinds: ['playwright_step'],
+          targetType: 'root',
+          targetKinds: ['root'],
+          allow: true,
+        },
+        {
+          childType: 'file',
+          childKinds: ['playwright_action'],
+          targetType: 'folder',
+          targetKinds: ['playwright_step'],
+          allow: true,
+        },
+      ],
+    },
+    interactions: {
+      selectionBehavior: 'click_away',
+    },
+  },
 };

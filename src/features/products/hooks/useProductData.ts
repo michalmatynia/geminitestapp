@@ -1,5 +1,14 @@
 'use client';
 'use no memo';
+// useProductData: high-level composition hook that binds local UI state
+// (pagination, filters, debounced search) to TanStack Query factories. It
+// centralizes initialization from user preferences, enforces filter
+// normalization/validation, keeps pagination stable across filter changes, and
+// exposes a single, testable interface consumed by the product list UI.
+//
+// Keep this on the client runtime (no heavy server-only work) and avoid
+// embedding side-effects—use the returned refresh() to trigger explicit
+// invalidation or refetch flows.
 
 import { useQueryClient } from '@tanstack/react-query';
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';

@@ -1,4 +1,7 @@
 'use client';
+// useProductImages: manages local image-slot state, object URL lifecycle,
+// temporary uploads and deletion. Keeps product image previews responsive and
+// invalidates product caches on server-side changes.
 'use no memo';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';

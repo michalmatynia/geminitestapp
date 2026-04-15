@@ -1,4 +1,8 @@
 'use client';
+// useProductFormSubmit: handles form submission for product create/update.
+// Builds FormData, normalizes parameters/custom fields, uploads images, and
+// uses create/update mutations. Provides hydation guards and optimistic save
+// behavior while exposing success/error state and a confirmation modal type.
 
 import { useCallback, useRef, useState, useEffect } from 'react';
 

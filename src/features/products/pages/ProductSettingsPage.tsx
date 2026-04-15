@@ -1,4 +1,7 @@
 'use client';
+// ProductSettingsPage: admin hub for product configuration (categories, pricing,
+// validators, image studio). Wraps providers and lazy-loads heavy panels to keep
+// initial admin load fast and focused.
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';

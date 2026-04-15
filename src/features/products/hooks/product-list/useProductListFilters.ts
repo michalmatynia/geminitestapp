@@ -1,5 +1,10 @@
 'use client';
 
+// useProductListFilters: thin adapter that normalizes and persists filter
+// related preferences (page size, advanced filter state). Keeps normalization
+// rules (like page size bounds) centralized and returns stable callbacks for
+// the UI layer.
+
 import { useCallback } from 'react';
 
 import { normalizeProductPageSize } from '@/shared/lib/products/constants';

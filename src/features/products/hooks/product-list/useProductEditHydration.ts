@@ -4,10 +4,20 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 
-// React Compiler currently produces unstable dev hook layouts for this
-// TanStack Query + URL-sync hydration stack during Fast Refresh. Keep the
-// edit-hydration path on the plain runtime path until the compiler issue is
-// resolved upstream.
+// useProductEditHydration: Manages opening the live product editor and
+// hydrating product detail with a non-blocking prefetch-first strategy.
+// Key responsibilities:
+// - Debounced prefetch of product detail + ProductForm JS chunk to keep the
+//   editor responsive while data downloads in the background.
+// - Freshness heuristics (PRODUCT_DETAIL_CACHE_FRESH_MS, PREFETCH_STALE_MS)
+//   decide between instant cached rendering and background refetching.
+// - Carefully decides when to adopt incoming server updates vs preserving
+//   a user's in-progress edits using timestamp and generated-text checks.
+// - Gracefully handles missing products (cleans URL, notifies user, refreshes
+//   list) and exposes a prefetch helper used by hover/prefetch UIs.
+//
+// Keep the 'use no memo' directive: it serves as a runtime development hint
+// to avoid unstable dev-hook layouts in some compilers during Fast Refresh.
 
 import { preloadProductFormChunk } from '@/features/products/components/product-form-preload';
 import {

@@ -1,3 +1,10 @@
+// ProductListRowRuntimeStore: external, lightweight snapshot store used by
+// row-level consumers. It composes badge ID sets, badge-status maps, queued
+// product IDs and run-status maps into per-row snapshots. Snapshots are cached
+// and shallow-compared using specialized equality helpers so that
+// useSyncExternalStore consumers only re-render when a meaningful change
+// occurs. The store exposes subscribe/getSnapshot/setState for external use by
+// the ProductListProvider.
 import type { ProductListContextType, ProductListRowRuntimeContextType } from '../ProductListContext.types';
 import { resolveProductAiRunFeedbackForList } from '@/features/products/lib/product-ai-run-feedback';
 

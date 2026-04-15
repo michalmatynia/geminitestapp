@@ -1,4 +1,7 @@
 'use client';
+// useProductDataWithQuery: lightweight list hook combining local UI filter and
+// pagination state with useProductsWithCount. Debounces inputs and exposes a
+// simple interface for list UIs that don't need the full product-list state.
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
 

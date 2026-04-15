@@ -1,5 +1,10 @@
 'use client';
 
+// useProductListSelection: manages per-row selection state and global selection
+// operations for the product list. Provides helpers to select the current page,
+// select all matches (server-side via an API query), and orchestrates bulk
+// deletions with optimistic UI behavior and toast/error reporting.
+
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
 

@@ -1,19 +1,40 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 import type {
   PlaywrightAction,
+  PlaywrightFlow,
   PlaywrightStep,
   PlaywrightStepSet,
   PlaywrightStepType,
+  PlaywrightWebsite,
 } from '@/shared/contracts/playwright-steps';
+import {
+  usePlaywrightActions,
+  usePlaywrightFlows,
+  usePlaywrightStepSets,
+  usePlaywrightSteps,
+  usePlaywrightWebsites,
+  useSavePlaywrightActionsMutation,
+  useSavePlaywrightFlowsMutation,
+  useSavePlaywrightStepSetsMutation,
+  useSavePlaywrightStepsMutation,
+  useSavePlaywrightWebsitesMutation,
+} from '@/shared/hooks/usePlaywrightStepSequencer';
 import { useToast } from '@/shared/ui/primitives.public';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import type { PlaywrightStepSequencerContextType } from '../context/PlaywrightStepSequencerContext.types';
 
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
 function createId(): string {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+    return crypto.randomUUID();
+  }
   return `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 9)}`;
 }
 
@@ -21,31 +42,59 @@ function now(): string {
   return new Date().toISOString();
 }
 
+// ---------------------------------------------------------------------------
+// Hook
+// ---------------------------------------------------------------------------
+
 export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContextType {
   const { toast } = useToast();
 
-  // --- Data (in-memory; replace with API calls when backend is ready) ---
-  const [steps, setSteps] = useState<PlaywrightStep[]>([]);
-  const [stepSets, setStepSets] = useState<PlaywrightStepSet[]>([]);
-  const [actions, setActions] = useState<PlaywrightAction[]>([]);
-  const [isSaving, setIsSaving] = useState(false);
+  // --- Server data via TanStack Query ---
+  const { data: steps = [], isLoading: stepsLoading } = usePlaywrightSteps();
+  const { data: stepSets = [], isLoading: setsLoading } = usePlaywrightStepSets();
+  const { data: actions = [], isLoading: actionsLoading } = usePlaywrightActions();
+  const { data: websites = [], isLoading: websitesLoading } = usePlaywrightWebsites();
+  const { data: flows = [], isLoading: flowsLoading } = usePlaywrightFlows();
 
-  // --- Filters ---
+  const isLoading = stepsLoading || setsLoading || actionsLoading || websitesLoading || flowsLoading;
+
+  // Stable refs so mutation callbacks don't need server data in their deps
+  const stepsRef = useRef(steps);
+  stepsRef.current = steps;
+  const stepSetsRef = useRef(stepSets);
+  stepSetsRef.current = stepSets;
+  const actionsRef = useRef(actions);
+  actionsRef.current = actions;
+  const websitesRef = useRef(websites);
+  websitesRef.current = websites;
+  const flowsRef = useRef(flows);
+  flowsRef.current = flows;
+
+  // --- Mutations ---
+  const { mutateAsync: saveSteps, isPending: savingSteps } = useSavePlaywrightStepsMutation();
+  const { mutateAsync: saveStepSets, isPending: savingSets } = useSavePlaywrightStepSetsMutation();
+  const { mutateAsync: saveActions, isPending: savingActions } = useSavePlaywrightActionsMutation();
+  const { mutateAsync: saveWebsites, isPending: savingWebsites } = useSavePlaywrightWebsitesMutation();
+  const { mutateAsync: saveFlows, isPending: savingFlows } = useSavePlaywrightFlowsMutation();
+  const isSaving = savingSteps || savingSets || savingActions || savingWebsites || savingFlows;
+
+  // --- UI filters ---
   const [searchQuery, setSearchQuery] = useState('');
   const [filterWebsiteId, setFilterWebsiteId] = useState<string | null>(null);
   const [filterFlowId, setFilterFlowId] = useState<string | null>(null);
   const [filterType, setFilterType] = useState<PlaywrightStepType | null>(null);
+  const [filterTag, setFilterTag] = useState<string | null>(null);
   const [filterSharedOnly, setFilterSharedOnly] = useState(false);
   const [activeTab, setActiveTab] = useState<'steps' | 'step_sets'>('steps');
 
-  // --- Modals ---
+  // --- Modal state ---
   const [isCreateStepOpen, setIsCreateStepOpen] = useState(false);
   const [editingStep, setEditingStep] = useState<PlaywrightStep | null>(null);
   const [isCreateSetOpen, setIsCreateSetOpen] = useState(false);
   const [editingSet, setEditingSet] = useState<PlaywrightStepSet | null>(null);
   const [isSaveActionOpen, setIsSaveActionOpen] = useState(false);
 
-  // --- Action constructor ---
+  // --- Action constructor state ---
   const [actionStepSetIds, setActionStepSetIds] = useState<string[]>([]);
   const [actionPersonaId, setActionPersonaId] = useState<string | null>(null);
   const [actionDraftName, setActionDraftName] = useState('');
@@ -64,20 +113,13 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
           (s.description?.toLowerCase().includes(q) ?? false)
       );
     }
-    if (filterWebsiteId !== null) {
-      result = result.filter((s) => s.websiteId === filterWebsiteId);
-    }
-    if (filterFlowId !== null) {
-      result = result.filter((s) => s.flowId === filterFlowId);
-    }
-    if (filterType !== null) {
-      result = result.filter((s) => s.type === filterType);
-    }
-    if (filterSharedOnly) {
-      result = result.filter((s) => s.websiteId === null);
-    }
+    if (filterWebsiteId !== null) result = result.filter((s) => s.websiteId === filterWebsiteId);
+    if (filterFlowId !== null) result = result.filter((s) => s.flowId === filterFlowId);
+    if (filterType !== null) result = result.filter((s) => s.type === filterType);
+    if (filterTag !== null) result = result.filter((s) => s.tags.includes(filterTag));
+    if (filterSharedOnly) result = result.filter((s) => s.websiteId === null);
     return result;
-  }, [steps, searchQuery, filterWebsiteId, filterFlowId, filterType, filterSharedOnly]);
+  }, [steps, searchQuery, filterWebsiteId, filterFlowId, filterType, filterTag, filterSharedOnly]);
 
   const filteredStepSets = useMemo(() => {
     let result = stepSets;
@@ -89,17 +131,19 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
           (s.description?.toLowerCase().includes(q) ?? false)
       );
     }
-    if (filterWebsiteId !== null) {
-      result = result.filter((s) => s.websiteId === filterWebsiteId);
-    }
-    if (filterFlowId !== null) {
-      result = result.filter((s) => s.flowId === filterFlowId);
-    }
-    if (filterSharedOnly) {
-      result = result.filter((s) => s.shared || s.websiteId === null);
-    }
+    if (filterWebsiteId !== null) result = result.filter((s) => s.websiteId === filterWebsiteId);
+    if (filterFlowId !== null) result = result.filter((s) => s.flowId === filterFlowId);
+    if (filterTag !== null) result = result.filter((s) => s.tags.includes(filterTag));
+    if (filterSharedOnly) result = result.filter((s) => s.shared || s.websiteId === null);
     return result;
-  }, [stepSets, searchQuery, filterWebsiteId, filterFlowId, filterSharedOnly]);
+  }, [stepSets, searchQuery, filterWebsiteId, filterFlowId, filterTag, filterSharedOnly]);
+
+  const allTags = useMemo(() => {
+    const tagSet = new Set<string>();
+    steps.forEach((s) => s.tags.forEach((t) => tagSet.add(t)));
+    stepSets.forEach((s) => s.tags.forEach((t) => tagSet.add(t)));
+    return [...tagSet].sort();
+  }, [steps, stepSets]);
 
   const actionStepSets = useMemo(
     () =>
@@ -115,56 +159,71 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
 
   const handleCreateStep = useCallback(
     async (draft: Omit<PlaywrightStep, 'id' | 'createdAt' | 'updatedAt'>): Promise<void> => {
-      setIsSaving(true);
       try {
         const ts = now();
         const next: PlaywrightStep = { ...draft, id: createId(), createdAt: ts, updatedAt: ts };
-        setSteps((prev) => [...prev, next]);
+        await saveSteps({ steps: [...stepsRef.current, next] });
         setIsCreateStepOpen(false);
         toast('Step created.', { variant: 'success' });
       } catch (error) {
         logClientCatch(error, { source: 'usePlaywrightStepSequencerState', action: 'createStep' });
         toast('Failed to create step.', { variant: 'error' });
-      } finally {
-        setIsSaving(false);
       }
     },
-    [toast]
+    [saveSteps, toast]
   );
 
   const handleUpdateStep = useCallback(
     async (id: string, updates: Partial<PlaywrightStep>): Promise<void> => {
-      setIsSaving(true);
       try {
-        setSteps((prev) =>
-          prev.map((s) => (s.id === id ? { ...s, ...updates, updatedAt: now() } : s))
+        const next = stepsRef.current.map((s) =>
+          s.id === id ? { ...s, ...updates, updatedAt: now() } : s
         );
+        await saveSteps({ steps: next });
         setEditingStep(null);
         toast('Step updated.', { variant: 'success' });
       } catch (error) {
         logClientCatch(error, { source: 'usePlaywrightStepSequencerState', action: 'updateStep' });
         toast('Failed to update step.', { variant: 'error' });
-      } finally {
-        setIsSaving(false);
       }
     },
-    [toast]
+    [saveSteps, toast]
   );
 
   const handleDeleteStep = useCallback(
     async (id: string): Promise<void> => {
-      setIsSaving(true);
       try {
-        setSteps((prev) => prev.filter((s) => s.id !== id));
+        await saveSteps({ steps: stepsRef.current.filter((s) => s.id !== id) });
         toast('Step deleted.', { variant: 'success' });
       } catch (error) {
         logClientCatch(error, { source: 'usePlaywrightStepSequencerState', action: 'deleteStep' });
         toast('Failed to delete step.', { variant: 'error' });
-      } finally {
-        setIsSaving(false);
       }
     },
-    [toast]
+    [saveSteps, toast]
+  );
+
+  const handleDuplicateStep = useCallback(
+    async (id: string): Promise<void> => {
+      const original = stepsRef.current.find((s) => s.id === id);
+      if (!original) return;
+      try {
+        const ts = now();
+        const copy: PlaywrightStep = {
+          ...original,
+          id: createId(),
+          name: `${original.name} (copy)`,
+          createdAt: ts,
+          updatedAt: ts,
+        };
+        await saveSteps({ steps: [...stepsRef.current, copy] });
+        toast('Step duplicated.', { variant: 'success' });
+      } catch (error) {
+        logClientCatch(error, { source: 'usePlaywrightStepSequencerState', action: 'duplicateStep' });
+        toast('Failed to duplicate step.', { variant: 'error' });
+      }
+    },
+    [saveSteps, toast]
   );
 
   // ---------------------------------------------------------------------------
@@ -173,58 +232,155 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
 
   const handleCreateStepSet = useCallback(
     async (draft: Omit<PlaywrightStepSet, 'id' | 'createdAt' | 'updatedAt'>): Promise<void> => {
-      setIsSaving(true);
       try {
         const ts = now();
         const next: PlaywrightStepSet = { ...draft, id: createId(), createdAt: ts, updatedAt: ts };
-        setStepSets((prev) => [...prev, next]);
+        await saveStepSets({ stepSets: [...stepSetsRef.current, next] });
         setIsCreateSetOpen(false);
         toast('Step set created.', { variant: 'success' });
       } catch (error) {
         logClientCatch(error, { source: 'usePlaywrightStepSequencerState', action: 'createStepSet' });
         toast('Failed to create step set.', { variant: 'error' });
-      } finally {
-        setIsSaving(false);
       }
     },
-    [toast]
+    [saveStepSets, toast]
   );
 
   const handleUpdateStepSet = useCallback(
     async (id: string, updates: Partial<PlaywrightStepSet>): Promise<void> => {
-      setIsSaving(true);
       try {
-        setStepSets((prev) =>
-          prev.map((s) => (s.id === id ? { ...s, ...updates, updatedAt: now() } : s))
+        const next = stepSetsRef.current.map((s) =>
+          s.id === id ? { ...s, ...updates, updatedAt: now() } : s
         );
+        await saveStepSets({ stepSets: next });
         setEditingSet(null);
         toast('Step set updated.', { variant: 'success' });
       } catch (error) {
         logClientCatch(error, { source: 'usePlaywrightStepSequencerState', action: 'updateStepSet' });
         toast('Failed to update step set.', { variant: 'error' });
-      } finally {
-        setIsSaving(false);
       }
     },
-    [toast]
+    [saveStepSets, toast]
   );
 
   const handleDeleteStepSet = useCallback(
     async (id: string): Promise<void> => {
-      setIsSaving(true);
       try {
-        setStepSets((prev) => prev.filter((s) => s.id !== id));
-        // Remove from any active action too
+        await saveStepSets({ stepSets: stepSetsRef.current.filter((s) => s.id !== id) });
         setActionStepSetIds((prev) => prev.filter((sid) => sid !== id));
         toast('Step set deleted.', { variant: 'success' });
       } catch (error) {
         logClientCatch(error, { source: 'usePlaywrightStepSequencerState', action: 'deleteStepSet' });
         toast('Failed to delete step set.', { variant: 'error' });
-      } finally {
-        setIsSaving(false);
       }
     },
-    [toast]
+    [saveStepSets, toast]
+  );
+
+  const handleDuplicateStepSet = useCallback(
+    async (id: string): Promise<void> => {
+      const original = stepSetsRef.current.find((s) => s.id === id);
+      if (!original) return;
+      try {
+        const ts = now();
+        const copy: PlaywrightStepSet = {
+          ...original,
+          id: createId(),
+          name: `${original.name} (copy)`,
+          createdAt: ts,
+          updatedAt: ts,
+        };
+        await saveStepSets({ stepSets: [...stepSetsRef.current, copy] });
+        toast('Step set duplicated.', { variant: 'success' });
+      } catch (error) {
+        logClientCatch(error, { source: 'usePlaywrightStepSequencerState', action: 'duplicateStepSet' });
+        toast('Failed to duplicate step set.', { variant: 'error' });
+      }
+    },
+    [saveStepSets, toast]
+  );
+
+  // ---------------------------------------------------------------------------
+  // Website CRUD
+  // ---------------------------------------------------------------------------
+
+  const handleCreateWebsite = useCallback(
+    async (draft: Omit<PlaywrightWebsite, 'id' | 'createdAt' | 'updatedAt'>): Promise<void> => {
+      try {
+        const ts = now();
+        const next: PlaywrightWebsite = { ...draft, id: createId(), createdAt: ts, updatedAt: ts };
+        await saveWebsites({ websites: [...websitesRef.current, next] });
+        toast('Website added.', { variant: 'success' });
+      } catch (error) {
+        logClientCatch(error, { source: 'usePlaywrightStepSequencerState', action: 'createWebsite' });
+        toast('Failed to add website.', { variant: 'error' });
+      }
+    },
+    [saveWebsites, toast]
+  );
+
+  const handleDeleteWebsite = useCallback(
+    async (id: string): Promise<void> => {
+      try {
+        await saveWebsites({ websites: websitesRef.current.filter((w) => w.id !== id) });
+        // Clean up orphaned flows
+        await saveFlows({ flows: flowsRef.current.filter((f) => f.websiteId !== id) });
+        toast('Website removed.', { variant: 'success' });
+      } catch (error) {
+        logClientCatch(error, { source: 'usePlaywrightStepSequencerState', action: 'deleteWebsite' });
+        toast('Failed to remove website.', { variant: 'error' });
+      }
+    },
+    [saveWebsites, saveFlows, toast]
+  );
+
+  // ---------------------------------------------------------------------------
+  // Flow CRUD
+  // ---------------------------------------------------------------------------
+
+  const handleCreateFlow = useCallback(
+    async (draft: Omit<PlaywrightFlow, 'id' | 'createdAt' | 'updatedAt'>): Promise<void> => {
+      try {
+        const ts = now();
+        const next: PlaywrightFlow = { ...draft, id: createId(), createdAt: ts, updatedAt: ts };
+        await saveFlows({ flows: [...flowsRef.current, next] });
+        toast('Flow added.', { variant: 'success' });
+      } catch (error) {
+        logClientCatch(error, { source: 'usePlaywrightStepSequencerState', action: 'createFlow' });
+        toast('Failed to add flow.', { variant: 'error' });
+      }
+    },
+    [saveFlows, toast]
+  );
+
+  const handleDeleteFlow = useCallback(
+    async (id: string): Promise<void> => {
+      try {
+        await saveFlows({ flows: flowsRef.current.filter((f) => f.id !== id) });
+        toast('Flow removed.', { variant: 'success' });
+      } catch (error) {
+        logClientCatch(error, { source: 'usePlaywrightStepSequencerState', action: 'deleteFlow' });
+        toast('Failed to remove flow.', { variant: 'error' });
+      }
+    },
+    [saveFlows, toast]
+  );
+
+  // ---------------------------------------------------------------------------
+  // Action management
+  // ---------------------------------------------------------------------------
+
+  const handleDeleteAction = useCallback(
+    async (id: string): Promise<void> => {
+      try {
+        await saveActions({ actions: actionsRef.current.filter((a) => a.id !== id) });
+        toast('Action deleted.', { variant: 'success' });
+      } catch (error) {
+        logClientCatch(error, { source: 'usePlaywrightStepSequencerState', action: 'deleteAction' });
+        toast('Failed to delete action.', { variant: 'error' });
+      }
+    },
+    [saveActions, toast]
   );
 
   // ---------------------------------------------------------------------------
@@ -264,7 +420,6 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
       toast('Add at least one step set before saving.', { variant: 'error' });
       return;
     }
-    setIsSaving(true);
     try {
       const ts = now();
       const next: PlaywrightAction = {
@@ -276,33 +431,34 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
         createdAt: ts,
         updatedAt: ts,
       };
-      setActions((prev) => [...prev, next]);
+      await saveActions({ actions: [...actionsRef.current, next] });
       setIsSaveActionOpen(false);
       handleClearAction();
       toast('Action saved.', { variant: 'success' });
     } catch (error) {
       logClientCatch(error, { source: 'usePlaywrightStepSequencerState', action: 'saveAction' });
       toast('Failed to save action.', { variant: 'error' });
-    } finally {
-      setIsSaving(false);
     }
-  }, [actionDraftName, actionStepSetIds, actionPersonaId, handleClearAction, toast]);
+  }, [actionDraftName, actionStepSetIds, actionPersonaId, handleClearAction, saveActions, toast]);
 
   // ---------------------------------------------------------------------------
   // Assemble context value
   // ---------------------------------------------------------------------------
 
   return {
-    // Data
+    // Server data
     steps,
     stepSets,
     actions,
-    isLoading: false,
+    websites,
+    flows,
+    isLoading,
     isSaving,
 
     // Derived
     filteredSteps,
     filteredStepSets,
+    allTags,
     actionStepSets,
 
     // Filters
@@ -310,12 +466,14 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
     filterWebsiteId,
     filterFlowId,
     filterType,
+    filterTag,
     filterSharedOnly,
     activeTab,
     setSearchQuery,
     setFilterWebsiteId,
     setFilterFlowId,
     setFilterType,
+    setFilterTag,
     setFilterSharedOnly,
     setActiveTab,
 
@@ -347,10 +505,23 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
     handleCreateStep,
     handleUpdateStep,
     handleDeleteStep,
+    handleDuplicateStep,
 
     // Step Set CRUD
     handleCreateStepSet,
     handleUpdateStepSet,
     handleDeleteStepSet,
+    handleDuplicateStepSet,
+
+    // Website CRUD
+    handleCreateWebsite,
+    handleDeleteWebsite,
+
+    // Flow CRUD
+    handleCreateFlow,
+    handleDeleteFlow,
+
+    // Action management
+    handleDeleteAction,
   };
 }

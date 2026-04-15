@@ -1,8 +1,10 @@
 import type {
   PlaywrightAction,
+  PlaywrightFlow,
   PlaywrightStep,
   PlaywrightStepSet,
   PlaywrightStepType,
+  PlaywrightWebsite,
 } from '@/shared/contracts/playwright-steps';
 
 // ---------------------------------------------------------------------------
@@ -14,6 +16,7 @@ export interface PlaywrightStepSequencerFilters {
   filterWebsiteId: string | null;
   filterFlowId: string | null;
   filterType: PlaywrightStepType | null;
+  filterTag: string | null;
   filterSharedOnly: boolean;
   /** 'steps' | 'step_sets' — which list is active in the bottom panel */
   activeTab: 'steps' | 'step_sets';
@@ -56,12 +59,15 @@ export interface PlaywrightStepSequencerContextType
   steps: PlaywrightStep[];
   stepSets: PlaywrightStepSet[];
   actions: PlaywrightAction[];
+  websites: PlaywrightWebsite[];
+  flows: PlaywrightFlow[];
   isLoading: boolean;
   isSaving: boolean;
 
   // --- Derived ---
   filteredSteps: PlaywrightStep[];
   filteredStepSets: PlaywrightStepSet[];
+  allTags: string[];
 
   /** Step sets resolved from actionStepSetIds (in order, with stable identity). */
   actionStepSets: PlaywrightStepSet[];
@@ -71,18 +77,32 @@ export interface PlaywrightStepSequencerContextType
   setFilterWebsiteId: (id: string | null) => void;
   setFilterFlowId: (id: string | null) => void;
   setFilterType: (t: PlaywrightStepType | null) => void;
+  setFilterTag: (tag: string | null) => void;
   setFilterSharedOnly: (v: boolean) => void;
   setActiveTab: (tab: 'steps' | 'step_sets') => void;
+
+  // --- Website CRUD ---
+  handleCreateWebsite: (draft: Omit<PlaywrightWebsite, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
+  handleDeleteWebsite: (id: string) => Promise<void>;
+
+  // --- Flow CRUD ---
+  handleCreateFlow: (draft: Omit<PlaywrightFlow, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
+  handleDeleteFlow: (id: string) => Promise<void>;
 
   // --- Step CRUD ---
   handleCreateStep: (draft: Omit<PlaywrightStep, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
   handleUpdateStep: (id: string, updates: Partial<PlaywrightStep>) => Promise<void>;
   handleDeleteStep: (id: string) => Promise<void>;
+  handleDuplicateStep: (id: string) => Promise<void>;
 
   // --- Step Set CRUD ---
   handleCreateStepSet: (draft: Omit<PlaywrightStepSet, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
   handleUpdateStepSet: (id: string, updates: Partial<PlaywrightStepSet>) => Promise<void>;
   handleDeleteStepSet: (id: string) => Promise<void>;
+  handleDuplicateStepSet: (id: string) => Promise<void>;
+
+  // --- Action management ---
+  handleDeleteAction: (id: string) => Promise<void>;
 
   // --- Action constructor ---
   handleAddStepSetToAction: (stepSetId: string) => void;

@@ -2,6 +2,11 @@
 
 'use no memo';
 
+// useProductListScanRunSync: synchronizes product scan run status for visible
+// product IDs using a short-polling query for active scans and a cleanup
+// timer for terminal feedback. Returns a stable readonly map of per-product
+// scan feedback objects suitable for row-level runtime snapshots.
+
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 

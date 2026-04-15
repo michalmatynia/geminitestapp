@@ -1,4 +1,7 @@
 'use client';
+// ValidatorSettings: container wiring the validator configuration UI for products.
+// Hosts validator rule lists, preview, and connects to validation metadata services
+// used by product create/edit flows.
 
 import { useEffect } from 'react';
 

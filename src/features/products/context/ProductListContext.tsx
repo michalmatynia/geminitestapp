@@ -1,5 +1,17 @@
 'use client';
 
+// ProductListContext: central composition root for product list UI state.
+// - Composes many small contexts (filters, selection, table, actions, alerts,
+//   modals, row visuals, row runtime store) into a single Provider to avoid
+//   deep prop-drilling and to keep render boundaries explicit.
+// - Uses a global registry when creating contexts to preserve context
+//   identity across hot-reloads and bundler/loader boundaries (prevents
+//   "must be used within a Provider" errors when modules are re-evaluated).
+// - The row runtime store is a lightweight, external store created once per
+//   provider instance; consumers use useSyncExternalStore (via
+//   useProductListRowRuntime) to subscribe to fine-grained per-row snapshots
+//   without forcing whole-list re-renders.
+
 import React, { useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
 
 import { useIntegrationListingBadges } from '@/features/integrations/product-integrations-adapter';

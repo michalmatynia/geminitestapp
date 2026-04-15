@@ -54,6 +54,7 @@ export const folderTreeInstanceValues = [
   'brain_catalog_tree',
   'brain_routing_tree',
   'kangur_social_capture_browser',
+  'playwright_step_seq_constructor',
 ] as const;
 
 export type FolderTreeInstance = (typeof folderTreeInstanceValues)[number];

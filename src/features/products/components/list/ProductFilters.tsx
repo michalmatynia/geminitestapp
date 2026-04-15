@@ -1,5 +1,8 @@
 'use client';
 'use no memo';
+// ProductFilters: filter panel for the products list. Provides search,
+// field-based filters, advanced filter modal and presets management; pulls
+// metadata (catalogs, categories, tags) lazily for performance.
 
 import React, { useEffect, useState } from 'react';
 

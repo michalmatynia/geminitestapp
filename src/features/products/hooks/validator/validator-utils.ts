@@ -1,3 +1,6 @@
+// Validator utilities: small helpers used by validator hooks for session
+// keys, value resolution, and convenience resolvers. These functions are
+// intentionally side-effect-free so they can be unit-tested easily.
 import type { SetStateAction } from 'react';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 

@@ -1,6 +1,10 @@
 'use client';
 'use no memo';
 
+// useProductListCategories: derives an embedded category-name map from the
+// current page of products and falls back to a batched category lookup for any
+// missing catalog-scoped categories. Keeps client-side lookups cheap and avoids
+// per-row category API calls.
 import { useMemo } from 'react';
 
 import {

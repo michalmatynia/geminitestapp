@@ -1,3 +1,8 @@
+// Validation engine core: deterministic helpers for validator pattern handling.
+// This module implements pattern normalization, sequence grouping, replacement
+// resolution, and safe execution guards used by both the simulator and runtime
+// validation paths. It is intentionally side-effect-free — do not add DB or
+// network operations here; keep logic pure for testability and reuse.
 import type { ProductValidationInstanceScope, ProductValidationPattern, ProductValidationPostAcceptBehavior, ProductValidationTarget, FieldValidatorIssue } from '@/shared/contracts/products/validation';
 import type { ProductCategory } from '@/shared/contracts/products/categories';
 import { PRODUCT_VALIDATION_REPLACEMENT_FIELDS } from '@/shared/lib/products/constants';

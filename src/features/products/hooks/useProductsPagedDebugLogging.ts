@@ -1,5 +1,8 @@
 'use client';
 
+// useProductsPagedDebugLogging: lightweight hook that computes a small debug
+// snapshot of paged product query state and logs state transitions (throttled)
+// to aid diagnosing flakiness and performance regressions in the products list.
 import { useEffect, useMemo, useRef } from 'react';
 import { logProductListDebug } from '@/features/products/lib/product-list-observability';
 import type { ProductWithImages } from '@/shared/contracts/products/product';

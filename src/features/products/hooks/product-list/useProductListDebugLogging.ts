@@ -1,5 +1,9 @@
 'use client';
 
+// useProductListDebugLogging: gated debug logger that diffs a compact
+// snapshot and emits structured debug events via product-list observability
+// shippers. Throttled to reduce noise and only active when debug mode is on.
+
 import { useEffect, useRef } from 'react';
 import { logProductListDebug } from '@/features/products/lib/product-list-observability';
 

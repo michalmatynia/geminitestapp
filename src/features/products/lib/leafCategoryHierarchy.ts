@@ -1,3 +1,6 @@
+// leafCategoryHierarchy: builds flat entries representing leaf categories and
+// their hierarchy paths. Used by name normalization, trigger builders and
+// validator helpers to disambiguate leaf names vs. hierarchical paths.
 import type { ProductCategory } from '@/shared/contracts/products/categories';
 
 export type LeafCategoryHierarchyEntry = {

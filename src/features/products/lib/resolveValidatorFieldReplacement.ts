@@ -1,3 +1,7 @@
+// resolveValidatorFieldReplacement: converts a raw replacement value into a
+// typed replacement object (text | number | category). Handles numeric coercion
+// and delegates category id resolution to resolveValidatorCategoryReplacement.
+// Returns null for invalid or unparsable replacements.
 import type { ProductCategory } from '@/shared/contracts/products/categories';
 
 import {

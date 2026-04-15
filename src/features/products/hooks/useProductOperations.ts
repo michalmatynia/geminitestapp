@@ -1,4 +1,8 @@
 'use client';
+// useProductOperations: UI action orchestration for product create/duplicate/edit
+// flows. Validates SKUs, triggers duplication, coordinates query prefetches,
+// and surfaces toasts and navigation. Keep network calls delegated to mutation
+// hooks to preserve single-responsibility and testability.
 
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'nextjs-toploader/app';

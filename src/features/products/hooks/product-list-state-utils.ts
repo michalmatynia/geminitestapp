@@ -1,3 +1,13 @@
+// product-list-state-utils: shared, pure helpers and constants used by the
+// product list UI. This module centralizes:
+// - time constants and UI timing values used for transient row highlights
+// - canonical sets for listing 'in-flight' and 'completed' statuses used to
+//   detect transitions and provide visual feedback
+// - lightweight normalization and parsing helpers (strings, records, dates)
+// - category and catalog resolution helpers used to derive display labels and
+//   stable ids across denormalized product payloads
+//
+// Keep this module side-effect free and cheap to import from client code.
 import type { ProductCategory } from '@/shared/contracts/products/categories';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import {

@@ -1,5 +1,10 @@
 'use client';
 
+// useProductListUrlSync: utilities to keep product-editor related query
+// parameters (openProductId, openProductTab, studio refs) in the URL. Exposes
+// a helper to remove editor-specific params when closing the editor. Uses
+// router.replace to avoid adding history entries.
+
 import { useRouter } from 'nextjs-toploader/app';
 import { usePathname } from 'next/navigation';
 import { useCallback } from 'react';

@@ -1,5 +1,11 @@
 'use client';
 
+// useProductListIntegrations: provides prefetch and refresh helpers for
+// integrations-related data (connection selection, product listings). The
+// implementation dynamically loads the integrations adapter to avoid pulling
+// heavy integration code into the main product list bundle. Errors caused by a
+// missing listings implementation are treated specially (they clear the
+// query) while other failures are logged for observability.
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 

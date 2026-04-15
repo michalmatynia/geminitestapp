@@ -1,5 +1,18 @@
 'use client';
 'use no memo';
+// useProductListState: composition hook that builds the ProductListProvider
+// value. Responsibilities:
+// - Orchestrates data hooks (useProductData), user preferences, background
+//   sync, integrations, and row-runtime subscriptions.
+// - Defers heavy initialization (draft bootstrap and row runtime readiness)
+//   to a deferred effect so initial rendering remains snappy.
+// - Exposes memoized callbacks and stable values for pagination, filtering,
+//   selection and modal operations consumed by the ProductListProvider.
+// - Reports debug telemetry when debug mode is enabled and keeps effects
+//   localized to minimize cross-cutting re-renders.
+
+// Note: keep 'use no memo' directive present — it is used as a runtime hint
+// for development tooling and should not be removed without verifying callers.
 
 import {
   ProfilerOnRenderCallback,

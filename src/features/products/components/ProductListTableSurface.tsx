@@ -1,5 +1,8 @@
 'use client';
 'use no memo';
+// ProductListTableSurface: layout wrapper for the products table. Handles
+// responsive breakpoints, dynamic max-height calculation, virtualization
+// and ties into table context for render profiling.
 
 import dynamic from 'next/dynamic';
 import { Profiler, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -86,20 +89,22 @@ export const ProductListTableSurface = memo(function ProductListTableSurface() {
 
   const updateTableMaxHeight = useCallback(() => {
     try {
-      const mainElement = document.getElementById('app-content');
       const tableElement = desktopTableRef.current;
-      if (!mainElement || !tableElement) return;
+      if (!tableElement) return;
 
-      const mainRect = mainElement.getBoundingClientRect();
       const tableRect = tableElement.getBoundingClientRect();
-      
-      const availableHeight = Math.floor(
-        mainRect.bottom - tableRect.top - PRODUCT_LIST_BOTTOM_GAP
-      );
+      const availableHeight = Math.floor(window.innerHeight - tableRect.top - PRODUCT_LIST_BOTTOM_GAP);
       const nextMaxHeight = Math.max(0, availableHeight);
-      
+
       setResolvedTableMaxHeight((currentValue) => {
         if (currentValue === nextMaxHeight) return currentValue;
+        if (
+          typeof currentValue === 'number' &&
+          Number.isFinite(currentValue) &&
+          Math.abs(currentValue - nextMaxHeight) <= 1
+        ) {
+          return currentValue;
+        }
         return nextMaxHeight;
       });
     } catch (error) {
@@ -126,9 +131,6 @@ export const ProductListTableSurface = memo(function ProductListTableSurface() {
 
     const resizeObserver = new ResizeObserver(throttledUpdate);
     resizeObserver.observe(mainElement);
-    if (desktopTableRef.current) {
-      resizeObserver.observe(desktopTableRef.current);
-    }
 
     window.addEventListener('resize', throttledUpdate);
     updateTableMaxHeight();

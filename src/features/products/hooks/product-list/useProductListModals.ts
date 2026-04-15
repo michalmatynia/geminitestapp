@@ -1,5 +1,11 @@
 'use client';
 
+// useProductListModals: coordinates modal open/close state and modal-scoped
+// operations (integrations modal, list product modal, export settings, mass
+// list) while enriching recovery contexts with persisted quick-list feedback
+// where appropriate. Keeps modal logic local and side-effect free; persists
+// transient feedback via integrations adapters when available.
+
 import { useCallback, useState } from 'react';
 
 import {

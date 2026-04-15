@@ -1,6 +1,6 @@
 'use client';
 
-import { Globe, Lock, MoreHorizontal, Pencil, Plus, Share2, Trash2 } from 'lucide-react';
+import { Copy, Globe, Lock, MoreHorizontal, Pencil, Plus, Share2, Tag, Trash2 } from 'lucide-react';
 import { memo } from 'react';
 
 import { PLAYWRIGHT_STEP_TYPE_LABELS } from '@/shared/contracts/playwright-steps';
@@ -25,23 +25,33 @@ import {
 
 import { usePlaywrightStepSequencer } from '../../context/PlaywrightStepSequencerContext';
 import { StepListTableSkeleton } from './StepListTableSkeleton';
+import { StepTypeIcon } from './StepTypeIcon';
 
 // ---------------------------------------------------------------------------
 // Steps table
 // ---------------------------------------------------------------------------
 
 const StepRow = memo(function StepRow({ step }: { step: PlaywrightStep }) {
-  const { setEditingStep, handleDeleteStep } = usePlaywrightStepSequencer();
+  const { setEditingStep, handleDeleteStep, handleDuplicateStep, setFilterTag, websites } = usePlaywrightStepSequencer();
+
+  const websiteName = step.websiteId
+    ? (websites.find((w) => w.id === step.websiteId)?.name ?? step.websiteId)
+    : null;
 
   return (
     <TableRow>
-      <TableCell className='font-medium text-sm'>{step.name}</TableCell>
+      <TableCell>
+        <div className='flex items-center gap-2'>
+          <StepTypeIcon type={step.type} className='size-3.5 shrink-0' />
+          <span className='font-medium text-sm'>{step.name}</span>
+        </div>
+      </TableCell>
       <TableCell>
         <Badge variant='neutral' className='text-[10px] uppercase tracking-wide'>
           {PLAYWRIGHT_STEP_TYPE_LABELS[step.type]}
         </Badge>
       </TableCell>
-      <TableCell className='max-w-[280px] truncate text-xs text-muted-foreground'>
+      <TableCell className='max-w-[240px] truncate text-xs text-muted-foreground'>
         {step.description ?? <span className='opacity-40'>—</span>}
       </TableCell>
       <TableCell>
@@ -53,9 +63,27 @@ const StepRow = memo(function StepRow({ step }: { step: PlaywrightStep }) {
         ) : (
           <span className='inline-flex items-center gap-1 text-[11px] text-sky-400'>
             <Globe className='size-3' />
-            Site
+            {websiteName}
           </span>
         )}
+      </TableCell>
+      <TableCell>
+        {step.tags.length > 0 ? (
+          <div className='flex flex-wrap gap-1'>
+            {step.tags.map((tag) => (
+              <button
+                key={tag}
+                type='button'
+                onClick={() => setFilterTag(tag)}
+                className='inline-flex items-center gap-0.5 rounded-full border border-border/40 bg-card/30 px-1.5 py-0.5 text-[10px] text-muted-foreground hover:border-sky-500/40 hover:text-sky-300'
+                title={`Filter by #${tag}`}
+              >
+                <Tag className='size-2.5' />
+                {tag}
+              </button>
+            ))}
+          </div>
+        ) : <span className='text-[11px] opacity-30'>—</span>}
       </TableCell>
       <TableCell>
         <DropdownMenu>
@@ -95,6 +123,7 @@ function StepsTable(): React.JSX.Element {
           <TableHead>Type</TableHead>
           <TableHead>Description</TableHead>
           <TableHead>Scope</TableHead>
+          <TableHead>Tags</TableHead>
           <TableHead className='w-10' />
         </TableRow>
       </TableHeader>
@@ -103,7 +132,7 @@ function StepsTable(): React.JSX.Element {
           <StepListTableSkeleton />
         ) : filteredSteps.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={5} className='py-10 text-center text-sm text-muted-foreground'>
+            <TableCell colSpan={6} className='py-10 text-center text-sm text-muted-foreground'>
               <div className='space-y-2'>
                 <p>No steps yet.</p>
                 <Button
@@ -131,8 +160,12 @@ function StepsTable(): React.JSX.Element {
 // ---------------------------------------------------------------------------
 
 const StepSetRow = memo(function StepSetRow({ set }: { set: PlaywrightStepSet }) {
-  const { setEditingSet, handleDeleteStepSet, handleAddStepSetToAction } =
+  const { setEditingSet, handleDeleteStepSet, handleAddStepSetToAction, setFilterTag, websites } =
     usePlaywrightStepSequencer();
+
+  const websiteName = set.websiteId
+    ? (websites.find((w) => w.id === set.websiteId)?.name ?? set.websiteId)
+    : null;
 
   return (
     <TableRow>
@@ -150,7 +183,7 @@ const StepSetRow = memo(function StepSetRow({ set }: { set: PlaywrightStepSet })
         ) : (
           <span className='inline-flex items-center gap-1 text-[11px] text-sky-400'>
             <Globe className='size-3' />
-            Site
+            {websiteName}
           </span>
         )}
         {set.flowId ? (
@@ -159,6 +192,24 @@ const StepSetRow = memo(function StepSetRow({ set }: { set: PlaywrightStepSet })
             Flow
           </span>
         ) : null}
+      </TableCell>
+      <TableCell>
+        {set.tags.length > 0 ? (
+          <div className='flex flex-wrap gap-1'>
+            {set.tags.map((tag) => (
+              <button
+                key={tag}
+                type='button'
+                onClick={() => setFilterTag(tag)}
+                className='inline-flex items-center gap-0.5 rounded-full border border-border/40 bg-card/30 px-1.5 py-0.5 text-[10px] text-muted-foreground hover:border-sky-500/40 hover:text-sky-300'
+                title={`Filter by #${tag}`}
+              >
+                <Tag className='size-2.5' />
+                {tag}
+              </button>
+            ))}
+          </div>
+        ) : <span className='text-[11px] opacity-30'>—</span>}
       </TableCell>
       <TableCell>
         <div className='flex items-center gap-1'>
@@ -210,6 +261,7 @@ function StepSetsTable(): React.JSX.Element {
           <TableHead>Steps</TableHead>
           <TableHead>Description</TableHead>
           <TableHead>Scope</TableHead>
+          <TableHead>Tags</TableHead>
           <TableHead className='w-20' />
         </TableRow>
       </TableHeader>
@@ -218,7 +270,7 @@ function StepSetsTable(): React.JSX.Element {
           <StepListTableSkeleton />
         ) : filteredStepSets.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={5} className='py-10 text-center text-sm text-muted-foreground'>
+            <TableCell colSpan={6} className='py-10 text-center text-sm text-muted-foreground'>
               <div className='space-y-2'>
                 <p>No step sets yet.</p>
                 <Button

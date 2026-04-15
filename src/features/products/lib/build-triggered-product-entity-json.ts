@@ -1,3 +1,6 @@
+// buildTriggeredProductEntityJson: constructs a normalized 'entity JSON' payload
+// from product, draft, and loose input values. Normalizes image links, catalog
+// resolution and builds category context using leaf category hierarchy helpers.
 import type { ProductDraft } from '@/shared/contracts/products/drafts';
 import type { ProductCategory } from '@/shared/contracts/products/categories';
 import type { ProductWithImages } from '@/shared/contracts/products/product';

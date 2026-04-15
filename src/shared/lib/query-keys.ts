@@ -499,6 +499,11 @@ export const QUERY_KEYS = {
     all: ['playwright'] as const,
     lists: () => [...QUERY_KEYS.playwright.all, 'list'] as const,
     personas: () => [...QUERY_KEYS.playwright.lists(), 'personas'] as const,
+    steps: () => [...QUERY_KEYS.playwright.lists(), 'steps'] as const,
+    stepSets: () => [...QUERY_KEYS.playwright.lists(), 'step-sets'] as const,
+    actions: () => [...QUERY_KEYS.playwright.lists(), 'actions'] as const,
+    websites: () => [...QUERY_KEYS.playwright.lists(), 'websites'] as const,
+    flows: () => [...QUERY_KEYS.playwright.lists(), 'flows'] as const,
   },
   jobs: {
     all: ['jobs'] as const,

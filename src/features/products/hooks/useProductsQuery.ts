@@ -1,5 +1,8 @@
 'use client';
 
+// Client-side product query hooks: encapsulates TanStack Query factories
+// and parsing/normalization for product list/detail payloads. Prefer
+// useProductsWithCount for a single request that returns items + total.
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { z } from 'zod';

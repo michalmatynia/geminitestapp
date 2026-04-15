@@ -1,5 +1,9 @@
 'use client';
 
+// useProductListQueueStatus: watches a set of queued product IDs and
+// triggers per-row completion highlights when items are removed from the
+// queue and remain visible. Keeps previous-set tracking local and inexpensive.
+
 import { useEffect, useRef } from 'react';
 
 export function useProductListQueueStatus({

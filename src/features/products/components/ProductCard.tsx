@@ -1,4 +1,6 @@
 'use client';
+// ProductCard: client-side presentational card used across frontend and admin.
+// Uses next-intl for localization and ResourceCard for consistent layout.
 
 import Image from 'next/image';
 import { useLocale, useTranslations } from 'next-intl';

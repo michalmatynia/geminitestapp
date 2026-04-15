@@ -1,4 +1,7 @@
 'use client';
+// ProductLeafCategoriesContextRegistrySource: small page-context source used by
+// the AI context registry. Exposes leaf category and catalog information from
+// product form metadata to downstream AI prompt enrichers and context resolvers.
 
 import { useMemo } from 'react';
 

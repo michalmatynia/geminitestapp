@@ -35,9 +35,14 @@ import {
 import { safeSetInterval, safeClearInterval, type SafeTimerId } from '@/shared/lib/timers';
 import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
 
-// This hook maintains multiple ref-backed subscriptions and timers for product
-// AI runs. Keep it on the plain runtime to avoid React Compiler dev instability
-// in the admin products route.
+// useProductAiPathsRunSync: subscribes to AI Path run events and maintains
+// per-product run state used for UI badges/feedback. Responsibilities:
+// - Listen for enqueue events and subscribe to tracked run snapshots
+// - Maintain a map of latest non-terminal run snapshots per product
+// - Emit transient badge state with TTLs to avoid flicker on rapid updates
+// - Persist terminal run feedback and invalidate product caches when needed
+// Note: runs on the client runtime with refs and safe timers to avoid hook
+// layout instability during Fast Refresh in the admin products route.
 
 // Keep the badge visible longer than the last scheduled product refresh (9 s).
 const AI_PATH_RUN_BADGE_TTL_MS = 30_000;

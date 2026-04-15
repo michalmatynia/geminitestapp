@@ -1,5 +1,11 @@
 'use client';
 
+// useProductListListingStatuses: watches badge status maps for visible rows and
+// detects transitions from 'in-flight' -> 'completed'. When such transitions are
+// observed for visible products, triggers a UI highlight via
+// triggerJobCompletionHighlight to provide visual feedback for background
+// operations (listing, AI runs, scans). Keeps previous-state tracking local and
+// inexpensive.
 import { useEffect, useMemo, useRef } from 'react';
 
 import {

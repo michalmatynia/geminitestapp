@@ -1,5 +1,9 @@
 'use client';
 
+// useProductListHighlights: lightweight UI hook for transient 'job completion'
+// highlights per row. Manages per-product timeouts and exposes a trigger
+// function used by background sync and AI-run updates to visually emphasize
+// updated rows.
 import { useCallback, useRef, useState } from 'react';
 
 import { PRODUCT_ROW_HIGHLIGHT_TOTAL_MS } from '@/features/products/hooks/product-list-state-utils';

@@ -333,6 +333,11 @@ export const buildAdminNav = (handlers: {
                 label: 'Import Routes',
                 href: '/admin/integrations/marketplaces/playwright/import',
               },
+              {
+                id: 'integrations/marketplaces/playwright/step-sequencer',
+                label: 'Step Sequencer',
+                href: '/admin/playwright/step-sequencer',
+              },
             ],
           },
         ],

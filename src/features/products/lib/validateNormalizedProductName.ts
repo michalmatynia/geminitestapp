@@ -1,3 +1,6 @@
+// validateNormalizedProductName: utility to validate and normalize structured
+// product names. Uses category leaf hierarchy helpers to disambiguate category
+// segments and protects against generic or ambiguous category matches.
 import type { ProductCategory } from '@/shared/contracts/products/categories';
 import {
   composeStructuredProductName,

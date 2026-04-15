@@ -1,3 +1,6 @@
+// Product mutation hooks: wrap create/update/delete operations with
+// TanStack mutation factories, optimistic updates, retry strategies, and
+// cache invalidation helpers to keep product list/detail caches consistent.
 import { useQueryClient } from '@tanstack/react-query';
 
 import {

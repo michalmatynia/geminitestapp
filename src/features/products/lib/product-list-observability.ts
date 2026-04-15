@@ -1,5 +1,9 @@
 'use client';
 
+// product-list observability: centralized helpers for logging UI debug events
+// related to product list queries. The helpers are gateable via URL query
+// (`?productListDebug=1`) and ship throttled system logs to /api/system/logs.
+// Useful for diagnosing flaky queries and user-reported issues in production.
 import type { SystemLogsCreateRequest } from '@/shared/contracts/observability';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 import { logger } from '@/shared/utils/logger';

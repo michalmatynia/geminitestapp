@@ -1,4 +1,7 @@
 'use client';
+// ProductFormParameters: parameter panel inside the product editor.
+// Renders parameter mapping controls and binds to product form metadata.
+// Designed for dynamic parameter schemas per catalog and handles i18n.
 
 import { X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';

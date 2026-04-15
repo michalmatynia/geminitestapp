@@ -2,6 +2,7 @@ import 'server-only';
 
 import {
   createCustomPlaywrightInstance,
+  readPlaywrightEngineRun,
   startPlaywrightConnectionEngineTask,
   startPlaywrightEngineTask,
 } from '@/features/playwright/server';
@@ -49,6 +50,8 @@ import {
   createAmazonScanStartedRawResult,
   createFailedBatchResult,
   resolveProductScanRequestSequenceInput,
+  resolveScanEngineRunId,
+  tryDirectQueuedScanUpdate,
 } from './product-scans-service.helpers';
 import {
   AMAZON_BATCH_SCAN_START_CONCURRENCY,
@@ -97,12 +100,52 @@ async function resolveAlreadyRunningBatchResult(input: {
   });
 
   if (latestScan && isProductScanActiveStatus(latestScan.status)) {
+    let currentStatus = latestScan.status;
+    const runId = resolveScanEngineRunId(latestScan);
+    if (runId) {
+      try {
+        const run = await readPlaywrightEngineRun(runId);
+        if (run?.status === 'queued' || run?.status === 'running') {
+          currentStatus = run.status;
+          if (latestScan.status !== run.status) {
+            await tryDirectQueuedScanUpdate(
+              latestScan,
+              {
+                engineRunId: run.runId,
+                status: run.status,
+                error: null,
+                asinUpdateStatus: 'pending',
+                asinUpdateMessage: null,
+                completedAt: null,
+              },
+              {
+                action: `queue${input.provider}BatchProductScans.syncAlreadyRunning`,
+                productId: input.productId,
+                runId: run.runId,
+              }
+            );
+          }
+        }
+      } catch {
+        currentStatus = latestScan.status;
+      }
+    }
+
+    const runningMessage =
+      input.provider === '1688'
+        ? '1688 supplier scan running.'
+        : 'Amazon reverse image scan running.';
+    const queuedMessage =
+      input.provider === '1688'
+        ? '1688 supplier scan already in progress for this product.'
+        : 'Amazon scan already in progress for this product.';
     return {
       productId: input.productId,
       scanId: latestScan.id,
-      status: 'skipped',
-      message: input.alreadyRunningMessage,
-      resultStatusLabel: input.resultStatusLabel,
+      runId,
+      status: 'already_running',
+      currentStatus,
+      message: currentStatus === 'running' ? runningMessage : queuedMessage,
     };
   }
 
@@ -130,16 +173,50 @@ async function mapWithConcurrencyLimit<T, R>(
   return results;
 }
 
+const resolveConnectionByIdCompat = async (input: {
+  connectionId: string;
+  repository: any;
+}) => {
+  if (typeof input.repository?.getConnectionById === 'function') {
+    return await input.repository.getConnectionById(input.connectionId);
+  }
+  if (typeof input.repository?.listConnections === 'function') {
+    const connections = await input.repository.listConnections();
+    return Array.isArray(connections)
+      ? connections.find((connection) => connection?.id === input.connectionId) ?? null
+      : null;
+  }
+  return null;
+};
+
+const resolveStartedRun = (
+  value: unknown
+): {
+  runId: string;
+  status: 'queued' | 'running';
+} | null => {
+  const record = toRecord(value);
+  const runRecord = toRecord(record?.['run']) ?? record;
+  const runId = typeof runRecord?.['runId'] === 'string' ? runRecord['runId'] : null;
+  const statusValue = runRecord?.['status'];
+  const status =
+    statusValue === 'running' || statusValue === 'queued' ? statusValue : null;
+  return runId && status ? { runId, status } : null;
+};
+
 async function queueBatchProductScans(input: {
   productIds: string[];
   config: BatchScanQueueConfig;
   forceVisible?: boolean;
   requestInput?: Record<string, unknown>;
   ownerUserId?: string | null;
-}): Promise<ProductAmazonBatchScanResponse> {
+}): Promise<{ items: ProductAmazonBatchScanItem[]; stats: { total: number; queued: number; running: number; alreadyRunning: number; failed: number } }> {
   const productIds = Array.from(new Set(input.productIds));
   if (productIds.length === 0) {
-    return { items: [], stats: { total: 0, queued: 0, skipped: 0, failed: 0 } };
+    return {
+      items: [],
+      stats: { total: 0, queued: 0, running: 0, alreadyRunning: 0, failed: 0 },
+    };
   }
 
   let scannerSettings = createDefaultProductScannerSettings();
@@ -159,7 +236,11 @@ async function queueBatchProductScans(input: {
       ? await get1688DefaultConnectionId()
           .then(async (connectionId) => {
             if (!connectionId) return null;
-            const connection = await getIntegrationRepository().getConnectionById(connectionId);
+            const repository = await getIntegrationRepository();
+            const connection = await resolveConnectionByIdCompat({
+              connectionId,
+              repository,
+            });
             return connection ? { integrationId: connection.integrationId, connection } : null;
           })
           .catch((error) => {
@@ -219,6 +300,16 @@ async function queueBatchProductScans(input: {
           return createFailedBatchResult(productId, SCANNER_1688_MISSING_PROFILE_MESSAGE);
         }
 
+        if (
+          input.config.provider === '1688' &&
+          !readOptionalString(supplierConnectionContext?.connection?.playwrightStorageState)
+        ) {
+          return createFailedBatchResult(
+            productId,
+            `1688 login required for profile ${supplierConnectionContext?.connection?.name ?? 'Unknown profile'}. Refresh the saved browser session before scanning.`
+          );
+        }
+
         const requestedStepSequenceInput = resolveProductScanRequestSequenceInput(
           input.requestInput
         );
@@ -275,19 +366,34 @@ async function queueBatchProductScans(input: {
             }),
           });
         } else {
-          const connectionSettings = resolve1688ConnectionEngineSettings(
-            toRecord(supplierConnectionContext?.connection?.settings) ?? {},
-            { forceVisible: input.forceVisible ?? false }
-          );
           run = await startPlaywrightConnectionEngineTask({
             integrationId: supplierConnectionContext!.integrationId,
             connectionId: supplierConnectionContext!.connection.id,
+            connection: supplierConnectionContext!.connection,
             request: {
               script: input.config.runtime.script,
               input: input.config.runtime.buildRequestInput({
                 productId: product.id,
                 productName: product.name,
                 imageCandidates,
+                integrationId: supplierConnectionContext!.integrationId,
+                connectionId: supplierConnectionContext!.connection.id,
+                scanner1688StartUrl:
+                  supplierConnectionContext!.connection.scanner1688StartUrl ?? null,
+                scanner1688LoginMode:
+                  supplierConnectionContext!.connection.scanner1688LoginMode ?? null,
+                scanner1688DefaultSearchMode:
+                  supplierConnectionContext!.connection.scanner1688DefaultSearchMode ?? null,
+                candidateResultLimit:
+                  supplierConnectionContext!.connection.scanner1688CandidateResultLimit ?? null,
+                minimumCandidateScore:
+                  supplierConnectionContext!.connection.scanner1688MinimumCandidateScore ?? null,
+                maxExtractedImages:
+                  supplierConnectionContext!.connection.scanner1688MaxExtractedImages ?? null,
+                allowUrlImageSearchFallback:
+                  supplierConnectionContext!.connection.scanner1688AllowUrlImageSearchFallback ??
+                  scannerSettings.scanner1688?.allowUrlImageSearchFallback ??
+                  true,
                 manualVerificationTimeoutMs,
                 evaluatorConfig: await resolveProductScanner1688CandidateEvaluatorConfig(
                   scannerSettings
@@ -295,35 +401,55 @@ async function queueBatchProductScans(input: {
                 ...requestedStepSequenceInput,
               }),
               timeoutMs: AMAZON_SCAN_TIMEOUT_MS,
-              ...connectionSettings,
               capture: {
                 screenshot: true,
                 html: true,
               },
               preventNewPages: true,
             },
+            resolveEngineRequestConfig: (runtime: { settings?: unknown; browserPreference?: unknown }) => ({
+              browserPreference:
+                typeof runtime?.browserPreference === 'string'
+                  ? runtime.browserPreference
+                  : null,
+              settings: resolve1688ConnectionEngineSettings(
+                {
+                  ...toRecord(runtime?.settings),
+                  ...toRecord(supplierConnectionContext?.connection?.settings),
+                },
+                { forceVisible: input.forceVisible ?? false }
+              ),
+            }),
             ownerUserId: input.ownerUserId ?? null,
             instance: createCustomPlaywrightInstance({
               family: 'scrape',
               label: '1688 product scan',
               tags: ['product', '1688', 'scan', 'batch'],
+              connectionId: supplierConnectionContext!.connection.id,
+              integrationId: supplierConnectionContext!.integrationId,
             }),
           });
+        }
+
+        const startedRun = resolveStartedRun(run);
+        if (!startedRun) {
+          return createFailedBatchResult(productId, 'Failed to queue scan.');
         }
 
         const scan = await upsertProductScan({
           productId,
           provider: input.config.provider,
           type: 'supplier_reverse_image',
-          status: 'queued',
-          engineRunId: run.runId,
+          status: startedRun.status,
+          engineRunId: startedRun.runId,
           productName: product.name,
           asin: product.asin,
           imageCandidates,
           asinUpdateStatus: 'pending',
-          asinUpdateMessage: 'Product scan queued.',
+          asinUpdateMessage:
+            startedRun.status === 'running' ? 'Product scan running.' : 'Product scan queued.',
           rawResult: createAmazonScanStartedRawResult({
-            runId: run.runId,
+            runId: startedRun.runId,
             imageSearchProvider:
               input.config.provider === 'amazon'
                 ? resolveAmazonImageSearchProvider(input.requestInput, scannerSettings)
@@ -337,9 +463,13 @@ async function queueBatchProductScans(input: {
         return {
           productId,
           scanId: scan.id,
-          status: 'success',
-          message: null,
-          resultStatusLabel: input.config.resultStatusLabel,
+          runId: startedRun.runId,
+          status: startedRun.status,
+          currentStatus: startedRun.status,
+          message:
+            startedRun.status === 'running'
+              ? `${input.config.provider === '1688' ? '1688 supplier' : 'Amazon reverse image'} scan running.`
+              : `${input.config.provider === '1688' ? '1688 supplier' : 'Amazon reverse image'} scan queued.`,
         };
       } catch (error) {
         void ErrorSystem.captureException(error, {
@@ -356,8 +486,9 @@ async function queueBatchProductScans(input: {
     items: results,
     stats: {
       total: results.length,
-      queued: results.filter((r) => r.status === 'success').length,
-      skipped: results.filter((r) => r.status === 'skipped').length,
+      queued: results.filter((r) => r.status === 'queued').length,
+      running: results.filter((r) => r.status === 'running').length,
+      alreadyRunning: results.filter((r) => r.status === 'already_running').length,
       failed: results.filter((r) => r.status === 'failed').length,
     },
   };

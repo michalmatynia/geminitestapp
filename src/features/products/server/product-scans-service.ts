@@ -15,11 +15,6 @@ import {
 } from './product-scans-repository';
 
 import {
-  resolveScanEngineRunId,
-  resolveProductScanRequestSequenceInput,
-} from './product-scans-service.helpers';
-
-import {
   synchronize1688ProductScan,
 } from './product-scans-sync-1688';
 
@@ -31,11 +26,6 @@ import {
   queueAmazonBatchProductScans as queueAmazonBatch,
   queue1688BatchProductScans as queue1688Batch,
 } from './product-scans-queuing';
-
-import {
-  readPlaywrightEngineRun,
-} from '@/features/playwright/server';
-import { productService } from '@/shared/lib/products/services/productService';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 /**
@@ -50,38 +40,15 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
     return await synchronize1688ProductScan(scan);
   }
 
-  const engineRunId = resolveScanEngineRunId(scan);
-  if (!engineRunId) {
-    return scan;
-  }
-
   try {
-    const run = await readPlaywrightEngineRun(engineRunId);
-    if (!run) {
-      return scan;
-    }
-
-    const product = await productService.getProductById(scan.productId);
-    if (!product) {
-      return scan;
-    }
-
-    const requestedStepSequenceInput = resolveProductScanRequestSequenceInput(scan.rawResult);
-
-    return await synchronizeAmazonProductScan(
-      scan,
-      run,
-      engineRunId,
-      product,
-      requestedStepSequenceInput
-    );
+    return await synchronizeAmazonProductScan(scan);
   } catch (error) {
     void ErrorSystem.captureException(error, {
       service: 'product-scans.service',
       action: 'synchronizeProductScan.catch',
       scanId: scan.id,
       productId: scan.productId,
-      engineRunId,
+      engineRunId: scan.engineRunId,
     });
     return scan;
   }

@@ -1,3 +1,7 @@
+// Validator pattern simulator: UI logic for running validator patterns locally
+// in the admin settings. This module wires the simulator input shapes to the
+// validation engine, normalizes patterns, and guards against unsafe replacement
+// executions in the browser.
 import type { DynamicReplacementSourceMode, ProductValidationInstanceScope, ProductValidationPattern, ProductValidationSemanticState } from '@/shared/contracts/products/validation';
 import type { PatternFormData, SequenceGroupView, ValidatorPatternSimulatorInput } from '@/shared/contracts/products/drafts';
 import type { ProductCategory } from '@/shared/contracts/products/categories';

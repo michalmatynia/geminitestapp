@@ -1,5 +1,8 @@
 import 'server-only';
 
+// CachedProductService: server-side read-through cache helpers around
+// productService. Exposes cached readers and mutation wrappers that
+// invalidate relevant cache tags. TTLs are tuned based on query cost.
 import type { UnknownRecordDto } from '@/shared/contracts/base';
 import type { ProductCustomFieldDefinition } from '@/shared/contracts/products/custom-fields';
 import type { ProductParameter } from '@/shared/contracts/products/parameters';

@@ -1,4 +1,7 @@
 'use client';
+// ProductForm: main product editor used in admin. Renders deferred tabs,
+// wires ProductForm contexts, validation provider, and registers editor
+// state with the Context Registry for AI/context tooling.
 
 import {
   Database,

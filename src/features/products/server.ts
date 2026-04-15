@@ -1,9 +1,17 @@
+// Server-only entrypoint for product server helpers and repositories.
+// Import from '@/features/products/server' in API routes or other server-side code.
+// This file intentionally uses `import 'server-only'` to prevent accidental client bundles.
 import 'server-only';
 
 import { productCacheEvents } from '@/shared/events/products';
 
 import { CachedProductService } from './performance/cached-service';
 
+// Server exports: stable server-only API for the products feature.
+// Export repositories, service helpers, validation utilities, and types used by
+// API route handlers and background workers. Keep this surface minimal and
+// server-only (this file uses `import 'server-only'`) so app-layer imports use
+// the feature's public/server entrypoints rather than deep internal paths.
 export { parseJsonBody, parseObjectJsonBody } from '@/shared/lib/api/parse-json';
 export { getCatalogRepository } from '@/shared/lib/products/services/catalog-repository';
 export { getCategoryRepository } from '@/shared/lib/products/services/category-repository';

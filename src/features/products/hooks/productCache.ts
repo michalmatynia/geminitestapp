@@ -1,3 +1,6 @@
+// Product cache helpers: thin re-exports of shared query invalidation helpers
+// tailored for the products feature. Use these to invalidate or refetch
+// product-related queries from mutation hooks or server-side events.
 import * as invalidation from '@/shared/lib/query-invalidation';
 
 export const invalidateProducts = invalidation.invalidateProducts;

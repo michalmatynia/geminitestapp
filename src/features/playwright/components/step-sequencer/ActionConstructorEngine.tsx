@@ -21,11 +21,20 @@ import {
   useMasterFolderTreeShell,
   type FolderTreeViewportRenderNodeInput,
 } from '@/shared/lib/foldertree/public';
-import { Badge } from '@/shared/ui/primitives.public';
-import { Button } from '@/shared/ui/primitives.public';
-import { Input } from '@/shared/ui/primitives.public';
-import { Label } from '@/shared/ui/primitives.public';
+import {
+  Badge,
+  Button,
+  Input,
+  Label,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/shared/ui/primitives.public';
 import { cn } from '@/shared/utils/ui-utils';
+
+import { usePlaywrightPersonas } from '@/features/playwright/hooks/usePlaywrightPersonas';
 
 import { usePlaywrightStepSequencer } from '../../context/PlaywrightStepSequencerContext';
 import {
@@ -200,17 +209,19 @@ function ActionSequenceItem({
 export function ActionConstructorEngine(): React.JSX.Element {
   const {
     stepSets,
+    websites,
+    flows,
     actionStepSets,
     actionDraftName,
+    actionPersonaId,
     setActionDraftName,
+    setActionPersonaId,
     handleAddStepSetToAction,
     handleClearAction,
     setIsSaveActionOpen,
   } = usePlaywrightStepSequencer();
 
-  // Stub website/flow lists — replace with real data when backend is ready
-  const websites = useMemo(() => [] as { id: string; name: string }[], []);
-  const flows = useMemo(() => [] as { id: string; name: string; websiteId: string }[], []);
+  const { data: personas = [] } = usePlaywrightPersonas();
 
   const masterNodes = useMemo(
     () => buildStepSequencerMasterNodes({ stepSets, websites, flows }),
@@ -327,23 +338,49 @@ export function ActionConstructorEngine(): React.JSX.Element {
 
         {/* Save bar */}
         {actionStepSets.length > 0 ? (
-          <div className='flex items-center gap-2 border-t border-border/30 pt-2'>
-            <Input
-              value={actionDraftName}
-              onChange={(e) => setActionDraftName(e.target.value)}
-              placeholder='Action name…'
-              className='h-7 flex-1 text-xs'
-              aria-label='Action name'
-            />
-            <Button
-              size='sm'
-              className='h-7 gap-1 text-xs'
-              onClick={() => setIsSaveActionOpen(true)}
-              disabled={!actionDraftName.trim()}
-            >
-              <Save className='size-3.5' />
-              Save Action
-            </Button>
+          <div className='space-y-2 border-t border-border/30 pt-2'>
+            {/* Persona selector */}
+            {personas.length > 0 ? (
+              <div className='flex items-center gap-2'>
+                <Label className='shrink-0 text-[11px] text-muted-foreground'>Persona</Label>
+                <Select
+                  value={actionPersonaId ?? '__none__'}
+                  onValueChange={(v) => setActionPersonaId(v === '__none__' ? null : v)}
+                >
+                  <SelectTrigger className='h-7 flex-1 text-xs'>
+                    <SelectValue placeholder='Default persona' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='__none__'>Default persona</SelectItem>
+                    {personas.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : null}
+
+            {/* Name + save */}
+            <div className='flex items-center gap-2'>
+              <Input
+                value={actionDraftName}
+                onChange={(e) => setActionDraftName(e.target.value)}
+                placeholder='Action name…'
+                className='h-7 flex-1 text-xs'
+                aria-label='Action name'
+              />
+              <Button
+                size='sm'
+                className='h-7 gap-1 text-xs'
+                onClick={() => setIsSaveActionOpen(true)}
+                disabled={!actionDraftName.trim()}
+              >
+                <Save className='size-3.5' />
+                Save Action
+              </Button>
+            </div>
           </div>
         ) : null}
       </div>

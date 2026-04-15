@@ -1,3 +1,7 @@
+// Validator runtime config: zod schemas and runtime validation helpers used to
+// safely interpret validator runtime configurations. These schemas are strict
+// and used to validate user-provided runtime queries/actions before execution
+// to avoid unsafe database operations.
 import { z } from 'zod';
 
 import type { ProductValidationRuntimeType } from '@/shared/contracts/products/validation';

@@ -1,5 +1,12 @@
 'use client';
 
+// useTraderaMassQuickExport: handles mass quick export to Tradera via
+// the browser-integration pipeline. Resolves preferred connections, ensures
+// scripted Playwright listing scripts are present, and runs export jobs with
+// progress snapshots. Uses best-effort upgrades for bootstrap connections and
+// logs errors via the client observability utilities.
+
+
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useRef, useState } from 'react';
 

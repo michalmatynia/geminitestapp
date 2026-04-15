@@ -1,5 +1,8 @@
 'use client';
 'use no memo';
+// User preferences for product list: reads persisted preferences (server +
+// localStorage), exposes stable setters that persist via offline mutation
+// helpers and update localStorage for responsive UI.
 
 import { type UseMutationResult } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';

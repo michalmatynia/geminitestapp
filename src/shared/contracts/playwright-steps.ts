@@ -142,9 +142,56 @@ export const createPlaywrightActionSchema = playwrightActionSchema.omit({
 export type CreatePlaywrightAction = z.infer<typeof createPlaywrightActionSchema>;
 
 // ---------------------------------------------------------------------------
+// PlaywrightWebsite — a named site that steps/sets can be scoped to
+// ---------------------------------------------------------------------------
+
+export const playwrightWebsiteSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  baseUrl: z.string().nullable(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export type PlaywrightWebsite = z.infer<typeof playwrightWebsiteSchema>;
+
+export const createPlaywrightWebsiteSchema = playwrightWebsiteSchema.omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type CreatePlaywrightWebsite = z.infer<typeof createPlaywrightWebsiteSchema>;
+
+// ---------------------------------------------------------------------------
+// PlaywrightFlow — a named user journey within a website
+// ---------------------------------------------------------------------------
+
+export const playwrightFlowSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  websiteId: z.string(),
+  description: z.string().nullable(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export type PlaywrightFlow = z.infer<typeof playwrightFlowSchema>;
+
+export const createPlaywrightFlowSchema = playwrightFlowSchema.omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type CreatePlaywrightFlow = z.infer<typeof createPlaywrightFlowSchema>;
+
+// ---------------------------------------------------------------------------
 // Settings key for persistence
 // ---------------------------------------------------------------------------
 
 export const PLAYWRIGHT_STEPS_SETTINGS_KEY = 'playwright_steps';
 export const PLAYWRIGHT_STEP_SETS_SETTINGS_KEY = 'playwright_step_sets';
 export const PLAYWRIGHT_ACTIONS_SETTINGS_KEY = 'playwright_actions';
+export const PLAYWRIGHT_WEBSITES_SETTINGS_KEY = 'playwright_websites';
+export const PLAYWRIGHT_FLOWS_SETTINGS_KEY = 'playwright_flows';

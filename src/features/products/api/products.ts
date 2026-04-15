@@ -1,3 +1,6 @@
+// Client product API helpers: wrapper around api client with sensible timeouts
+// and no-store caching to avoid stale client-side caches. Prefer
+// getProductsWithCount() for paged requests when possible.
 import { type ProductFilter } from '@/shared/contracts/products/filters';
 import {
   type ProductBulkArchiveResponse,

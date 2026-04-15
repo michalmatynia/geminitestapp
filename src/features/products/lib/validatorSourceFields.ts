@@ -1,3 +1,7 @@
+// Validator source field labels and helper mappings: maps product fields to
+// human-friendly labels used by validator UIs and replacement recipes. Kept as
+// a small, deterministic module so it can be imported in both client and
+// server contexts.
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { ProductCategory } from '@/shared/contracts/products/categories';
 import { PRODUCT_VALIDATION_REPLACEMENT_FIELDS } from '@/shared/lib/products/constants';

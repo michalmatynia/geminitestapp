@@ -195,6 +195,12 @@ export const folderTreeSettingsMetaByInstance: Record<
     fileHint: 'Example: social-capture-slide',
     folderHint: 'Example: social-capture-section, social-capture-subsection',
   },
+  playwright_step_seq_constructor: {
+    title: 'Playwright Step Sequencer',
+    description: 'Controls action and step ordering in the Playwright Step Sequencer.',
+    fileHint: 'Example: playwright_action',
+    folderHint: 'Example: playwright_step',
+  },
 };
 
 export const folderTreePersistFeedbackByInstance: Record<
@@ -315,6 +321,11 @@ export const folderTreePersistFeedbackByInstance: Record<
     notifySuccess: false,
     notifyError: false,
     successMessage: 'Social capture browser updated.',
+  },
+  playwright_step_seq_constructor: {
+    notifySuccess: false,
+    notifyError: true,
+    successMessage: 'Step sequence updated.',
   },
 };
 

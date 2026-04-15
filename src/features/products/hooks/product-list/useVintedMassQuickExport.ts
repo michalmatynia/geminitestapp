@@ -1,5 +1,14 @@
 'use client';
 
+// useVintedMassQuickExport: coordinates mass quick export to Vinted via the
+// browser-integration pipeline. Responsibilities:
+// - Resolve preferred Vinted connection and pick a candidate connection
+// - Run preflight/session checks (authentication, playwright/session bootstrap)
+// - Execute exports while reporting progress snapshots and handling auth errors
+// - Invalidate product listing caches and persist quick-list feedback
+// Uses best-effort upgrades and logs failures via client observability utilities.
+
+
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useRef, useState } from 'react';
 

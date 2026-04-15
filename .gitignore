@@ -69,6 +69,7 @@ next-env.d.ts
 # Database
 /mongo/backups
 /mongo/local-data
+/mongo/local-data/
 /mongo/runtime
 /prisma/backups
 /backups

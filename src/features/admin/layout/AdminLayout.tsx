@@ -101,6 +101,8 @@ function AdminLayoutContent({
     !hasInitialMenuPreference
   );
   const [remoteMenuPreferenceReady, setRemoteMenuPreferenceReady] = useState(false);
+  const overlayMenuToggleButtonRef = useRef<HTMLButtonElement | null>(null);
+  const previousFocusedElementRef = useRef<HTMLElement | null>(null);
 
   const { data: preferences } = useUserPreferences({
     enabled:
@@ -275,7 +277,21 @@ function AdminLayoutContent({
 
   const isOverlayMenu = isMobileViewport;
   const shouldTrapFocus = isOverlayMenu && !isMenuHidden;
-  useFocusTrap(shouldTrapFocus);
+  const focusTrapRef = useFocusTrap(shouldTrapFocus);
+
+  useEffect(() => {
+    if (shouldTrapFocus) {
+      previousFocusedElementRef.current =
+        document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      return;
+    }
+    if (previousFocusedElementRef.current && document.contains(previousFocusedElementRef.current)) {
+      previousFocusedElementRef.current.focus();
+      previousFocusedElementRef.current = null;
+      return;
+    }
+    overlayMenuToggleButtonRef.current?.focus();
+  }, [shouldTrapFocus]);
   const sidebarClassName = isMenuHidden
     ? 'w-0 p-0 opacity-0 pointer-events-none overflow-hidden'
     : isOverlayMenu
@@ -310,6 +326,7 @@ function AdminLayoutContent({
   const mobileMenuToggleLabel = isMenuHidden ? 'Open admin menu' : 'Close admin menu';
   const mobileMenuToggle = isOverlayMenu ? (
     <Button
+      ref={overlayMenuToggleButtonRef}
       variant='ghost'
       onClick={() => setIsMenuHidden(!isMenuHidden)}
       className='h-9 w-9 rounded-full border border-border/60 bg-muted/40 hover:bg-muted/60'
@@ -334,6 +351,7 @@ function AdminLayoutContent({
         />
       ) : null}
       <aside
+        ref={focusTrapRef}
         id='admin-sidebar'
         aria-label='Admin sidebar'
         className={`fixed inset-y-0 left-0 z-30 flex flex-col overflow-x-hidden border-r border-border/70 bg-slate-900/95 backdrop-blur transition-all duration-300 ${sidebarClassName}`}

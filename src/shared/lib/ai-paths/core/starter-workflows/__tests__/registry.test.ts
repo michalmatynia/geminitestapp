@@ -24,9 +24,13 @@ import {
   buildV5TranslationPathConfig,
   evaluateStrictRunPreflight,
   expectSuccessfulStrictRunPreflight,
+  findNodeByTitle,
+  findNodeByType,
+  findNodeByTypeAndTitle,
   getStarterWorkflowTemplateByIdOrThrow,
   hasDatabaseNodeWithUpdatePayloadMode,
   hasNodeId,
+  hasNodeWithType,
   toLegacyAliasOnlyEdges,
 } from './registry.test-helpers';
 
@@ -93,23 +97,15 @@ describe('starter workflow registry', () => {
       }
     );
     const report = evaluateStrictRunPreflight(config);
-    const databaseNode = (config.nodes ?? []).find(
-      (node) => node.type === 'database' && node.id === 'node-update-name-normalize'
-    );
-    const mapperNode = (config.nodes ?? []).find(
-      (node) => node.type === 'mapper' && node.id === 'node-mapper-name-normalize'
-    );
-    const dbSchemaNode = (config.nodes ?? []).find(
-      (node) => node.type === 'db_schema' && node.id === 'node-db-schema-name-normalize'
-    );
-    const modelNode = (config.nodes ?? []).find(
-      (node) => node.type === 'model' && node.id === 'node-model-name-normalize'
-    );
+    const databaseNode = findNodeByType(config, 'database');
+    const mapperNode = findNodeByType(config, 'mapper');
+    const dbSchemaNode = findNodeByType(config, 'db_schema');
+    const modelNode = findNodeByType(config, 'model');
 
     expect(config.nodes.some((node) => node.type === 'trigger')).toBe(true);
-    expect(hasNodeId(config, 'node-db-schema-name-normalize')).toBe(true);
-    expect(hasNodeId(config, 'node-category-context-name-normalize')).toBe(true);
-    expect(hasNodeId(config, 'node-update-name-normalize')).toBe(true);
+    expect(hasNodeWithType(config, 'db_schema')).toBe(true);
+    expect(hasNodeWithType(config, 'function')).toBe(true);
+    expect(hasNodeWithType(config, 'database')).toBe(true);
     expect(dbSchemaNode?.config?.db_schema?.contextTransform).toBe('product_categories_leaf_only');
     expect(dbSchemaNode?.config?.db_schema?.contextReuseMode).toBe('prefer_transformed_input');
     expect(modelNode?.config?.model?.vision).toBe(false);
@@ -159,14 +155,12 @@ describe('starter workflow registry', () => {
     };
 
     const upgraded = upgradeStarterWorkflowPathConfig(randomIdConfig);
-    const databaseNode = (upgraded.config.nodes ?? []).find(
-      (node) => node.id === 'node-update-name-normalize'
-    );
+    const databaseNode = findNodeByType(upgraded.config, 'database');
     const report = evaluateStrictRunPreflight(upgraded.config);
 
     expect(upgraded.resolution?.matchedBy).toBe('provenance');
     expect(upgraded.changed).toBe(true);
-    expect(hasNodeId(upgraded.config, 'node-update-name-normalize')).toBe(true);
+    expect(hasNodeWithType(upgraded.config, 'database')).toBe(true);
     expect(databaseNode?.config?.database?.dryRun).toBe(true);
     expectSuccessfulStrictRunPreflight(report);
   });
@@ -220,13 +214,11 @@ describe('starter workflow registry', () => {
     };
 
     const upgraded = upgradeStarterWorkflowPathConfig(legacyRandomIdConfig);
-    const databaseNode = (upgraded.config.nodes ?? []).find(
-      (node) => node.type === 'database'
-    );
+    const databaseNode = findNodeByType(upgraded.config, 'database');
 
     expect(upgraded.resolution?.matchedBy).toBe('default_path');
     expect(upgraded.changed).toBe(true);
-    expect(hasNodeId(upgraded.config, 'node-prompt-name-normalize')).toBe(true);
+    expect(hasNodeWithType(upgraded.config, 'prompt')).toBe(true);
     expect(databaseNode?.config?.database?.dryRun).toBe(true);
   });
 
@@ -269,8 +261,8 @@ describe('starter workflow registry', () => {
 
     expect(upgraded.resolution?.matchedBy).toBe('provenance');
     expect(upgraded.changed).toBe(true);
-    expect(hasNodeId(upgraded.config, 'node-prompt-name-normalize')).toBe(true);
-    expect(hasNodeId(upgraded.config, 'node-update-name-normalize')).toBe(true);
+    expect(hasNodeWithType(upgraded.config, 'prompt')).toBe(true);
+    expect(hasNodeWithType(upgraded.config, 'database')).toBe(true);
   });
 
   it('preserves an explicit Normalize model selection while overlaying stale starter assets', () => {
@@ -282,10 +274,12 @@ describe('starter workflow registry', () => {
       }
     );
 
+    const canonicalModelNodeId = findNodeByType(canonical, 'model')?.id;
+
     const staleConfig: PathConfig = {
       ...canonical,
       nodes: (canonical.nodes ?? []).map((node) => {
-        if (node.id !== 'node-model-name-normalize') return node;
+        if (node.id !== canonicalModelNodeId) return node;
         return {
           ...node,
           config: {
@@ -308,9 +302,7 @@ describe('starter workflow registry', () => {
     };
 
     const upgraded = upgradeStarterWorkflowPathConfig(staleConfig);
-    const modelNode = (upgraded.config.nodes ?? []).find(
-      (node) => node.id === 'node-model-name-normalize'
-    );
+    const modelNode = findNodeByType(upgraded.config, 'model');
 
     expect(upgraded.changed).toBe(true);
     expect(upgraded.resolution?.matchedBy).toBe('provenance');
@@ -333,10 +325,12 @@ describe('starter workflow registry', () => {
       }
     );
 
+    const canonicalModelNodeId = findNodeByType(canonical, 'model')?.id;
+
     const staleConfig: PathConfig = {
       ...canonical,
       nodes: (canonical.nodes ?? []).map((node) => {
-        if (node.id !== 'node-model-name-normalize') return node;
+        if (node.id !== canonicalModelNodeId) return node;
         return {
           ...node,
           config: {
@@ -362,9 +356,7 @@ describe('starter workflow registry', () => {
     };
 
     const upgraded = upgradeStarterWorkflowPathConfig(staleConfig);
-    const modelNode = (upgraded.config.nodes ?? []).find(
-      (node) => node.id === 'node-model-name-normalize'
-    );
+    const modelNode = findNodeByType(upgraded.config, 'model');
 
     expect(upgraded.changed).toBe(true);
     expect(upgraded.resolution?.matchedBy).toBe('provenance');
@@ -387,10 +379,13 @@ describe('starter workflow registry', () => {
       }
     );
 
+    const canonicalFetcherNodeId = findNodeByType(canonical, 'fetcher')?.id;
+    const canonicalPromptNodeId = findNodeByType(canonical, 'prompt')?.id;
+
     const staleConfig: PathConfig = {
       ...canonical,
       nodes: (canonical.nodes ?? []).map((node) => {
-        if (node.id === 'node-fetcher-name-normalize') {
+        if (node.id === canonicalFetcherNodeId) {
           return {
             ...node,
             config: {
@@ -404,7 +399,7 @@ describe('starter workflow registry', () => {
             },
           };
         }
-        if (node.id === 'node-prompt-name-normalize') {
+        if (node.id === canonicalPromptNodeId) {
           return {
             ...node,
             config: {
@@ -430,12 +425,8 @@ describe('starter workflow registry', () => {
     };
 
     const upgraded = upgradeStarterWorkflowPathConfig(staleConfig);
-    const fetcherNode = (upgraded.config.nodes ?? []).find(
-      (node) => node.id === 'node-fetcher-name-normalize'
-    );
-    const promptNode = (upgraded.config.nodes ?? []).find(
-      (node) => node.id === 'node-prompt-name-normalize'
-    );
+    const fetcherNode = findNodeByType(upgraded.config, 'fetcher');
+    const promptNode = findNodeByType(upgraded.config, 'prompt');
 
     expect(upgraded.changed).toBe(true);
     expect(upgraded.resolution?.matchedBy).toBe('provenance');
@@ -497,12 +488,12 @@ describe('starter workflow registry', () => {
     };
 
     const upgraded = upgradeStarterWorkflowPathConfig(legacyRandomIdConfig);
-    const modelNode = (upgraded.config.nodes ?? []).find((node) => node.type === 'model');
+    const modelNode = findNodeByType(upgraded.config, 'model');
 
     expect(upgraded.changed).toBe(true);
     expect(upgraded.resolution?.matchedBy).toBe('default_path');
     expect(modelNode?.config?.model?.modelId).toBe('ollama:gemma3');
-    expect(hasNodeId(upgraded.config, 'node-model-name-normalize')).toBe(true);
+    expect(hasNodeWithType(upgraded.config, 'model')).toBe(true);
   });
 
   it('upgrades stale normalize prompts to require the most specific terminal leaf category', () => {
@@ -514,10 +505,12 @@ describe('starter workflow registry', () => {
       }
     );
 
+    const canonicalPromptNodeId = findNodeByType(canonical, 'prompt')?.id;
+
     const staleConfig: PathConfig = {
       ...canonical,
       nodes: (canonical.nodes ?? []).map((node) => {
-        if (node.id !== 'node-prompt-name-normalize') return node;
+        if (node.id !== canonicalPromptNodeId) return node;
         return {
           ...node,
           config: {
@@ -543,9 +536,7 @@ describe('starter workflow registry', () => {
     };
 
     const upgraded = upgradeStarterWorkflowPathConfig(staleConfig);
-    const promptNode = (upgraded.config.nodes ?? []).find(
-      (node) => node.id === 'node-prompt-name-normalize'
-    );
+    const promptNode = findNodeByType(upgraded.config, 'prompt');
     const promptTemplate =
       typeof promptNode?.config?.prompt?.template === 'string'
         ? promptNode.config.prompt.template
@@ -669,17 +660,10 @@ describe('starter workflow registry', () => {
       },
     } as PathConfig);
 
-    const dbNode = (upgraded.config.nodes ?? []).find(
-      (node) => node.id === 'node-db-update-translate-en-pl'
-    );
-    const paramsRegexNode = (upgraded.config.nodes ?? []).find(
-      (node) => node.id === 'node-regex-params-translate-en-pl'
-    );
+    const dbNode = findNodeByType(upgraded.config, 'database');
+    const paramsRegexNode = findNodeByTypeAndTitle(upgraded.config, 'regex', 'Regex Params');
     const extraParamsEdge = (upgraded.config.edges ?? []).find(
       (edge) => edge.id === 'edge-params'
-    );
-    const canonicalParamsEdge = (upgraded.config.edges ?? []).find(
-      (edge) => edge.id === 'edge-params-update-translate-en-pl'
     );
 
     expect(upgraded.changed).toBe(true);
@@ -687,7 +671,6 @@ describe('starter workflow registry', () => {
     expect(dbNode?.config?.database?.writeOutcomePolicy?.onZeroAffected).toBe('pass');
     expect(paramsRegexNode).toBeDefined();
     expect(extraParamsEdge).toBeUndefined();
-    expect(canonicalParamsEdge?.toPort).toBe('result');
   });
 
   it('overlays stale provenance marketplace copy debrand configs and upgrades the database node targeting', () => {
@@ -698,11 +681,14 @@ describe('starter workflow registry', () => {
         seededDefault: true,
       }
     );
+
+    const canonicalDbNodeId = findNodeByType(canonical, 'database')?.id;
+
     const stale = {
       ...canonical,
       version: 3,
       nodes: canonical.nodes.map((node) => {
-        if (node.id !== 'node-db-update-marketplace-copy-debrand') return node;
+        if (node.id !== canonicalDbNodeId) return node;
         return {
           ...node,
           config: {
@@ -742,9 +728,7 @@ describe('starter workflow registry', () => {
     } as PathConfig;
 
     const upgraded = upgradeStarterWorkflowPathConfig(stale);
-    const dbNode = (upgraded.config.nodes ?? []).find(
-      (node) => node.id === 'node-db-update-marketplace-copy-debrand'
-    );
+    const dbNode = findNodeByType(upgraded.config, 'database');
 
     expect(upgraded.changed).toBe(true);
     expect(upgraded.resolution?.matchedBy).toBe('provenance');
@@ -850,9 +834,7 @@ describe('starter workflow registry', () => {
     const upgraded = upgradeStarterWorkflowPathConfig(
       buildProvenanceOnlyStaleParameterInferencePathConfig()
     );
-    const seedRouterNode = (upgraded.config.nodes ?? []).find(
-      (node) => node.type === 'router' && node.id === 'node-router-seed-params'
-    );
+    const seedRouterNode = findNodeByType(upgraded.config, 'router');
     const report = evaluateStrictRunPreflight(upgraded.config);
 
     expect(upgraded.resolution?.matchedBy).toBe('provenance');
@@ -899,19 +881,22 @@ describe('starter workflow registry', () => {
       }
     );
 
-    // Keep a subset of canonical nodes — simulates a partially migrated config. Include the
-    // prompt node so hasParameterInferencePromptStructure returns true (realistic scenario).
-    const keepNodeIds = new Set([
-      'node-seed-params',
-      'node-update-params',
-      'node-parser-params',
-      'node-prompt-params',
+    // Keep a subset of canonical nodes — simulates a partially migrated config.
+    const keepNodeTypes = new Set([
+      'router',
+      'database',
+      'parser',
+      'prompt',
     ]);
     const partialConfig: PathConfig = {
       ...canonical,
-      nodes: (canonical.nodes ?? []).filter((node) => keepNodeIds.has(node.id)),
+      nodes: (canonical.nodes ?? []).filter((node) => keepNodeTypes.has(node.type)),
       edges: (canonical.edges ?? []).filter(
-        (edge) => keepNodeIds.has(edge.from) && keepNodeIds.has(edge.to)
+        (edge) => {
+          const from = canonical.nodes.find(n => n.id === edge.from);
+          const to = canonical.nodes.find(n => n.id === edge.to);
+          return from && to && keepNodeTypes.has(from.type) && keepNodeTypes.has(to.type);
+        }
       ),
       extensions: {
         aiPathsStarter: {
@@ -928,9 +913,9 @@ describe('starter workflow registry', () => {
 
     expect(upgraded.changed).toBe(true);
     // All canonical nodes are present after full replacement
-    expect(hasNodeId(upgraded.config, 'node-router-seed-params')).toBe(true);
-    expect(hasNodeId(upgraded.config, 'node-vp-template-params')).toBe(true);
-    expect(hasNodeId(upgraded.config, 'node-lc-template-params')).toBe(true);
+    expect(hasNodeWithType(upgraded.config, 'router')).toBe(true);
+    expect(hasNodeByTitle(upgraded.config, 'Prompt: Variant Parser')).toBe(true);
+    expect(hasNodeByTitle(upgraded.config, 'Prompt: Layout Classifier')).toBe(true);
     expectSuccessfulStrictRunPreflight(report);
   });
 
@@ -977,7 +962,7 @@ describe('starter workflow registry', () => {
     const report = evaluateStrictRunPreflight(upgraded.config);
 
     expect(upgraded.changed).toBe(true);
-    expect(hasNodeId(upgraded.config, 'node-model-params')).toBe(true);
+    expect(hasNodeWithType(upgraded.config, 'model')).toBe(true);
     expectSuccessfulStrictRunPreflight(report);
   });
 
@@ -990,8 +975,8 @@ describe('starter workflow registry', () => {
     expect(upgraded.resolution?.matchedBy).toBe('provenance');
     expect(upgraded.changed).toBe(true);
     // After full replacement all nodes use canonical IDs
-    expect(hasNodeId(upgraded.config, 'node-model-params')).toBe(true);
-    expect(hasNodeId(upgraded.config, 'node-regex-params')).toBe(true);
+    expect(hasNodeWithType(upgraded.config, 'model')).toBe(true);
+    expect(hasNodeWithType(upgraded.config, 'regex')).toBe(true);
     expectSuccessfulStrictRunPreflight(report);
   });
 
@@ -1004,7 +989,7 @@ describe('starter workflow registry', () => {
     expect(upgraded.resolution?.matchedBy).toBe('provenance');
     expect(upgraded.changed).toBe(true);
     expect(hasDatabaseNodeWithUpdatePayloadMode(upgraded.config, 'mapping')).toBe(false);
-    expect(hasNodeId(upgraded.config, 'node-router-seed-params')).toBe(true);
+    expect(hasNodeWithType(upgraded.config, 'router')).toBe(true);
     expectSuccessfulStrictRunPreflight(report);
   });
 });

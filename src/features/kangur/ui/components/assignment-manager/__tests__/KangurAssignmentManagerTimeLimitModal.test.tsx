@@ -34,7 +34,12 @@ vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
   useKangurCoarsePointer: () => true,
 }));
 
-import { renderKangurAssignmentManagerTimeLimitModal } from '../KangurAssignmentManagerTimeLimitModal';
+import { KangurAssignmentManagerTimeLimitModal } from '../KangurAssignmentManagerTimeLimitModal';
+import { useKangurAssignmentManagerContext } from '../KangurAssignmentManager.context';
+
+vi.mock('../KangurAssignmentManager.context', () => ({
+  useKangurAssignmentManagerContext: vi.fn(),
+}));
 
 describe('KangurAssignmentManagerTimeLimitModal', () => {
   it('uses touch-friendly cancel and save actions', () => {
@@ -43,26 +48,24 @@ describe('KangurAssignmentManagerTimeLimitModal', () => {
     const onTimeLimitDraftChange = vi.fn();
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
+    vi.mocked(useKangurAssignmentManagerContext).mockReturnValue({
+      isTimeLimitModalOpen: true,
+      handleCloseTimeLimitModal: onClose,
+      handleSaveTimeLimit: onSave,
+      timeLimitDraft: '30',
+      setTimeLimitDraft: onTimeLimitDraftChange,
+      timeLimitTarget: {
+        title: 'Powtórka: Dzielenie',
+        description: 'Ukończ jedną sesję dzielenia.',
+      },
+      timeLimitPreview: '30 min',
+      timeLimitParsedError: null,
+      isTimeLimitSaveDisabled: false,
+      timeLimitSaveLabel: 'Zapisz limit',
+    } as any);
+
     try {
-      render(
-        renderKangurAssignmentManagerTimeLimitModal({
-          isOpen: true,
-          isSaveDisabled: false,
-          maxMinutes: 90,
-          minMinutes: 5,
-          onClose,
-          onSave,
-          onTimeLimitDraftChange,
-          saveLabel: 'Zapisz limit',
-          timeLimitDraft: '30',
-          timeLimitParsedError: null,
-          timeLimitPreview: '30 min',
-          timeLimitTarget: {
-            title: 'Powtórka: Dzielenie',
-            description: 'Ukończ jedną sesję dzielenia.',
-          },
-        })
-      );
+      render(<KangurAssignmentManagerTimeLimitModal />);
 
       expect(screen.getByRole('button', { name: 'Anuluj' })).toHaveClass(
         'min-h-11',

@@ -249,6 +249,7 @@ const resolvedAriaLabel =
 const resolvedAriaDescription =
   ariaDescription ??
   (typeof meta?.['ariaDescription'] === 'string' ? meta['ariaDescription'] : undefined);
+  const ariaDescriptionId = React.useId();
 
   const rowVirtualizer = useVirtualizer({
     count: rows.length,
@@ -275,12 +276,17 @@ const resolvedAriaDescription =
       style={resolvedContainerStyle}
       {...(isLoading ? { 'aria-busy': true } : {})}
     >
+      {resolvedAriaDescription ? (
+        <p id={ariaDescriptionId} className='sr-only'>
+          {resolvedAriaDescription}
+        </p>
+      ) : null}
       <div ref={parentRef} className={cn('flex-1 min-h-0', maxHeight && 'overflow-auto')}>
         <Table
           className={cn('border-collapse', isFixedTableLayout && 'table-fixed')}
           wrapperClassName={cn(maxHeight && 'overflow-visible')}
           aria-label={resolvedAriaLabel}
-          aria-describedby={resolvedAriaDescription}
+          aria-describedby={resolvedAriaDescription ? ariaDescriptionId : undefined}
           aria-rowcount={rows.length || undefined}
           aria-colcount={visibleColumnCount || undefined}
         >

@@ -249,8 +249,26 @@ describe('engine-core normalize starter flow', () => {
       return null;
     };
 
+    const findNodeIdByType = (type: string): string => {
+      const node = nodes.find((n) => n.type === type);
+      if (!node) throw new Error(`Missing node of type ${type}`);
+      return node.id;
+    };
+
+    const triggerNodeId = findNodeIdByType('trigger');
+    const fetcherNodeId = findNodeIdByType('fetcher');
+    const parserNodeId = findNodeIdByType('parser');
+    const dbSchemaNodeId = findNodeIdByType('db_schema');
+    const categoryContextNodeId = findNodeIdByType('function');
+    const promptNodeId = findNodeIdByType('prompt');
+    const modelNodeId = findNodeIdByType('model');
+    const regexNodeId = findNodeIdByType('regex');
+    const mapperNodeId = findNodeIdByType('mapper');
+    const updateNodeId = findNodeIdByType('database');
+    const viewNodeId = findNodeIdByType('viewer');
+
     const runtime = await evaluateGraphInternal(nodes, edges, {
-      triggerNodeId: 'node-trigger-name-normalize',
+      triggerNodeId,
       triggerContext: {
         entityId: 'product-1',
         entityType: 'product',
@@ -270,25 +288,25 @@ describe('engine-core normalize starter flow', () => {
     expect(enqueueModelJob).toHaveBeenCalledTimes(1);
 
     expect(finishedOrder).toEqual([
-      'node-trigger-name-normalize',
-      'node-fetcher-name-normalize',
-      'node-parser-name-normalize',
-      'node-db-schema-name-normalize',
-      'node-category-context-name-normalize',
-      'node-prompt-name-normalize',
-      'node-model-name-normalize',
-      'node-regex-name-normalize',
-      'node-mapper-name-normalize',
-      'node-update-name-normalize',
-      'node-view-name-normalize',
+      triggerNodeId,
+      fetcherNodeId,
+      parserNodeId,
+      dbSchemaNodeId,
+      categoryContextNodeId,
+      promptNodeId,
+      modelNodeId,
+      regexNodeId,
+      mapperNodeId,
+      updateNodeId,
+      viewNodeId,
     ]);
 
-    expect(seenInputs.get('node-parser-name-normalize')).toEqual(
+    expect(seenInputs.get(parserNodeId)).toEqual(
       expect.objectContaining({
         context: productEntity,
       })
     );
-    expect(seenInputs.get('node-prompt-name-normalize')).toEqual(
+    expect(seenInputs.get(promptNodeId)).toEqual(
       expect.objectContaining({
         bundle: expect.objectContaining({
           title: 'summer floral maxi dress',
@@ -304,7 +322,7 @@ describe('engine-core normalize starter flow', () => {
         ],
       })
     );
-    expect(seenInputs.get('node-update-name-normalize')).toEqual(
+    expect(seenInputs.get(updateNodeId)).toEqual(
       expect.objectContaining({
         entityId: 'product-1',
         entityType: 'product',
@@ -313,7 +331,7 @@ describe('engine-core normalize starter flow', () => {
         }),
       })
     );
-    expect(runtime.nodeOutputs['node-view-name-normalize']).toEqual(
+    expect(runtime.nodeOutputs[viewNodeId]).toEqual(
       expect.objectContaining({
         normalizedName: 'Floral Maxi Dress',
         persisted: true,

@@ -16,7 +16,7 @@ const titleSizes: Record<SectionHeaderSize, string> = {
   md: 'text-2xl',
   sm: 'text-xl',
   xs: 'text-sm font-semibold',
-  xxs: 'text-[11px] font-bold uppercase tracking-wider text-gray-400',
+  xxs: 'text-[11px] font-bold uppercase tracking-wider text-muted-foreground',
 };
 
 type SectionHeaderProps = {
@@ -101,10 +101,10 @@ export function SectionHeader(props: SectionHeaderProps) {
         </div>
         {subtitle ? (
           typeof subtitle === 'string' ? (
-            <h2 className={cn('text-sm text-gray-400', subtitleClassName)}>{subtitle}</h2>
+            <h2 className={cn('text-sm text-muted-foreground', subtitleClassName)}>{subtitle}</h2>
           ) : (
             <div
-              className={cn('text-sm text-gray-400', subtitleClassName)}
+              className={cn('text-sm text-muted-foreground', subtitleClassName)}
               role='heading'
               aria-level={2}
             >
@@ -114,9 +114,9 @@ export function SectionHeader(props: SectionHeaderProps) {
         ) : null}
         {description ? (
           typeof description === 'string' ? (
-            <p className={cn('text-sm text-gray-400', descriptionClassName)}>{description}</p>
+            <p className={cn('text-sm text-muted-foreground', descriptionClassName)}>{description}</p>
           ) : (
-            <div className={cn('text-sm text-gray-400', descriptionClassName)}>{description}</div>
+            <div className={cn('text-sm text-muted-foreground', descriptionClassName)}>{description}</div>
           )
         ) : null}
       </div>

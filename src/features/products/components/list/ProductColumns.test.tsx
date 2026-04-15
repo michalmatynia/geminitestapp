@@ -7,6 +7,7 @@ import { createProduct, createRowVisualsContext, createRowRuntimeContext, setupP
 const {
   baseQuickExportButtonMock,
   playwrightStatusButtonMock,
+  productImageCellMock,
   traderaQuickListButtonMock,
   traderaStatusButtonMock,
   vintedQuickListButtonMock,
@@ -20,6 +21,7 @@ const {
 } = vi.hoisted(() => ({
   baseQuickExportButtonMock: vi.fn(),
   playwrightStatusButtonMock: vi.fn(),
+  productImageCellMock: vi.fn(),
   traderaQuickListButtonMock: vi.fn(),
   traderaStatusButtonMock: vi.fn(),
   vintedQuickListButtonMock: vi.fn(),
@@ -105,6 +107,13 @@ vi.mock('./columns/buttons/VintedStatusButton', () => ({
   VintedStatusButton: (props: Record<string, unknown>) => {
     vintedStatusButtonMock(props);
     return <button type='button'>VR</button>;
+  },
+}));
+
+vi.mock('@/features/products/components/cells/ProductImageCell', () => ({
+  ProductImageCell: (props: { productName: string; note?: unknown }) => {
+    productImageCellMock(props);
+    return <div>{props.productName}</div>;
   },
 }));
 
@@ -222,6 +231,36 @@ describe('ProductColumns queued badge', () => {
     expect(pill.closest('[data-activity-kind]')).toHaveAttribute(
       'data-activity-kind',
       'trigger-button'
+    );
+  });
+
+  it('passes product notes into the desktop thumbnail cell', () => {
+    const product = createProduct({
+      notes: {
+        text: 'Use the category-mapped insert.',
+        color: '#bbf7d0',
+      },
+    });
+    setupProductListMocks(
+      useProductListActionsContextMock,
+      useProductListRowActionsContextMock,
+      useProductListRowVisualsContextMock
+    );
+
+    const imageColumn = getProductColumns().find((column) => column.accessorKey === 'images');
+    if (!imageColumn || typeof imageColumn.cell !== 'function') {
+      throw new Error('Image column cell was not found.');
+    }
+
+    render(imageColumn.cell({ row: { original: product } } as never));
+
+    expect(productImageCellMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        note: {
+          text: 'Use the category-mapped insert.',
+          color: '#bbf7d0',
+        },
+      })
     );
   });
 

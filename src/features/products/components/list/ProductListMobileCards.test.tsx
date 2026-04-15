@@ -5,6 +5,7 @@ import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 const {
   baseQuickExportButtonMock,
+  productImageCellMock,
   playwrightStatusButtonMock,
   traderaQuickListButtonMock,
   vintedQuickListButtonMock,
@@ -17,6 +18,7 @@ const {
   useProductListSelectionContextMock,
 } = vi.hoisted(() => ({
   baseQuickExportButtonMock: vi.fn(),
+  productImageCellMock: vi.fn(),
   playwrightStatusButtonMock: vi.fn(),
   traderaQuickListButtonMock: vi.fn(),
   vintedQuickListButtonMock: vi.fn(),
@@ -145,7 +147,10 @@ vi.mock('@/features/products/ui', () => ({
 }));
 
 vi.mock('@/features/products/components/cells/ProductImageCell', () => ({
-  ProductImageCell: ({ productName }: { productName: string }) => <div>{productName}</div>,
+  ProductImageCell: (props: { productName: string; note?: unknown }) => {
+    productImageCellMock(props);
+    return <div>{props.productName}</div>;
+  },
 }));
 
 let ProductListMobileCards: typeof import('./ProductListMobileCards').ProductListMobileCards;
@@ -258,6 +263,32 @@ describe('ProductListMobileCards', () => {
     render(<ProductListMobileCards />);
 
     expect(screen.getByLabelText('Select Keychain').className).toContain('cursor-pointer');
+  });
+
+  it('passes product notes into the shared thumbnail cell', () => {
+    useProductListSelectionContextMock.mockReturnValue({
+      data: [
+        createProduct({
+          notes: {
+            text: 'Check bundle insert.',
+            color: '#fde68a',
+          },
+        }),
+      ],
+      rowSelection: {},
+      setRowSelection: vi.fn(),
+    });
+
+    render(<ProductListMobileCards />);
+
+    expect(productImageCellMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        note: {
+          text: 'Check bundle insert.',
+          color: '#fde68a',
+        },
+      })
+    );
   });
 
   it('renders a duplicate SKU marker on mobile cards when the SKU is reused', () => {

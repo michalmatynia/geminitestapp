@@ -35,6 +35,21 @@ export const expectSuccessfulStrictRunPreflight = (
 export const hasNodeId = (config: Pick<PathConfig, 'nodes'>, nodeId: string): boolean =>
   (config.nodes ?? []).some((node) => node.id === nodeId);
 
+export const hasNodeWithType = (config: Pick<PathConfig, 'nodes'>, type: string): boolean =>
+  (config.nodes ?? []).some((node) => node.type === type);
+
+export const hasNodeByTitle = (config: Pick<PathConfig, 'nodes'>, title: string): boolean =>
+  (config.nodes ?? []).some((node) => node.title === title);
+
+export const findNodeByType = (config: Pick<PathConfig, 'nodes'>, type: string) =>
+  (config.nodes ?? []).find((node) => node.type === type);
+
+export const findNodeByTitle = (config: Pick<PathConfig, 'nodes'>, title: string) =>
+  (config.nodes ?? []).find((node) => node.title === title);
+
+export const findNodeByTypeAndTitle = (config: Pick<PathConfig, 'nodes'>, type: string, title: string) =>
+  (config.nodes ?? []).find((node) => node.type === type && node.title === title);
+
 const hasDatabaseNodeWithOperation = (
   config: Pick<PathConfig, 'nodes'>,
   operation: 'query' | 'update'

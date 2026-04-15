@@ -293,7 +293,11 @@ const ImageCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function Image
   }, [product.images, product.imageLinks, product.imageBase64s, thumbnailSource, imageExternalBaseUrl]);
 
   return (
-    <ProductImageCell imageUrl={imageUrl || null} productName={getProductDisplayName(product)} />
+    <ProductImageCell
+      imageUrl={imageUrl || null}
+      productName={getProductDisplayName(product)}
+      note={product.notes}
+    />
   );
 });
 

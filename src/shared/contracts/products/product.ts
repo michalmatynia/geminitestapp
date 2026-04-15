@@ -259,6 +259,47 @@ export const productMarketplaceContentOverridesSchema = z
   )
   .superRefine(validateMarketplaceContentOverrideUniqueness);
 
+const toProductNotesRecord = (value: unknown): Record<string, unknown> | null =>
+  value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
+
+const toTrimmedProductNotesValue = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+export const normalizeProductNotes = (
+  value: unknown
+): { text: string | null; color: string | null } | null => {
+  const record = toProductNotesRecord(value);
+  if (!record) return null;
+
+  const text = toTrimmedProductNotesValue(record['text']);
+  const color = toTrimmedProductNotesValue(record['color']);
+
+  if (!text && !color) {
+    return null;
+  }
+
+  return {
+    text,
+    color,
+  };
+};
+
+export const productNotesSchema = z.preprocess(
+  (value: unknown): { text: string | null; color: string | null } | null =>
+    normalizeProductNotes(value),
+  z
+    .object({
+      text: z.string().nullable(),
+      color: z.string().nullable(),
+    })
+    .nullable()
+);
+
+export type ProductNotes = NonNullable<z.infer<typeof productNotesSchema>>;
+
 /**
  * Product Contract
  */
@@ -308,6 +349,7 @@ export const productSchema = dtoBaseSchema.extend({
   customFields: z.array(productCustomFieldValueSchema).optional(),
   parameters: z.array(productParameterValueSchema).optional(),
   marketplaceContentOverrides: productMarketplaceContentOverridesSchema.optional(),
+  notes: productNotesSchema.optional(),
   imageLinks: z.array(z.string()).optional(),
   imageBase64s: z.array(z.string()).optional(),
   noteIds: z.array(z.string()).optional(),

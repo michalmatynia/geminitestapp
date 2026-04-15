@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
-import { TraderaSequencer } from '../TraderaSequencer';
-import { VintedSequencer } from '../VintedSequencer';
+import { TraderaSequencer } from '../sequencers/TraderaSequencer';
+import { VintedSequencer } from '../sequencers/VintedSequencer';
 import { StepTracker } from '../step-tracker';
 import { Page } from 'playwright';
 

@@ -42,6 +42,7 @@ const NORMALIZED_TAIL_MAX = toNumber(process.env.NORMALIZED_TAIL_MAX, 12000);
 const AUTO_CONTINUE_ON_CAPACITY = isEnabled(process.env.AUTO_CONTINUE_ON_CAPACITY, true);
 const AUTO_CONTINUE_MODE = ((process.env.AUTO_CONTINUE_MODE || 'prompt_only').trim().toLowerCase());
 const AUTO_DISABLE_ON_USAGE_LIMIT = isEnabled(process.env.AUTO_DISABLE_ON_USAGE_LIMIT, true);
+const AUTO_ALLOW_SESSION_PERMISSIONS = isEnabled(process.env.AUTO_ALLOW_SESSION_PERMISSIONS, true);
 const NEVER_SWITCH = isEnabled(process.env.NEVER_SWITCH, false);
 const RAW_OUTPUT = isEnabled(process.env.RAW_OUTPUT, false);
 const DEBUG_AUTOMATION = isEnabled(process.env.DEBUG_AUTOMATION, false);
@@ -51,6 +52,7 @@ const SET_HOME_TO_ISO = isEnabled(process.env.PTY_SET_HOME_TO_ISO, false);
 const KEEP_OPTION_TEXT = process.env.KEEP_OPTION_TEXT || '1';
 const SWITCH_OPTION_TEXT = process.env.SWITCH_OPTION_TEXT || '2';
 const CONTINUE_COMMAND = process.env.CONTINUE_COMMAND || 'continue';
+const SESSION_PERMISSION_OPTION_TEXT = process.env.SESSION_PERMISSION_OPTION_TEXT || '2';
 
 const GEMINI_WRAPPER_ENV = process.env.GEMINI_WRAPPER || 'gemini-nightly-iso';
 const GEMINI_WRAPPER_ARGS = parseJsonArrayEnv(process.env.GEMINI_WRAPPER_ARGS_JSON);
@@ -94,6 +96,7 @@ let autoRestartHistory = [];
 let sawNoResumeSession = false;
 let usageLimitLatched = false;
 let lastMenuFingerprint = '';
+let lastPermissionFingerprint = '';
 let rawTail = '';
 let normalizedTail = '';
 
@@ -171,6 +174,7 @@ function spawnGemini(pty) {
   normalizedTail = '';
   sawNoResumeSession = false;
   usageLimitLatched = false;
+  lastPermissionFingerprint = '';
 
   const model = currentModel();
   const { args, canResume } = buildGeminiArgs(model);
@@ -238,6 +242,7 @@ function logLaunchBanner({ model, canResume, wrapperInfo, launchPlan }) {
     `[gemini-nightly-pty] Wrapper kind: ${wrapperInfo.kind}`,
     `[gemini-nightly-pty] Launch mode: ${launchPlan.mode}`,
     `[gemini-nightly-pty] Auto-continue mode: ${AUTO_CONTINUE_MODE}`,
+    `[gemini-nightly-pty] Auto-approve session permissions: ${AUTO_ALLOW_SESSION_PERMISSIONS ? 'ON' : 'OFF'}`,
     `[gemini-nightly-pty] PTY backend: ${activePtyModuleName}`,
     `[gemini-nightly-pty] Local controls: ${HOTKEY_PREFIX_LABEL} h help, ${HOTKEY_PREFIX_LABEL} a toggle auto, ${HOTKEY_PREFIX_LABEL} s switch model, ${HOTKEY_PREFIX_LABEL} q quit`,
   ];
@@ -459,6 +464,15 @@ function maybeAutomate(runId) {
 
   const state = detectAutomationState(normalizedTail);
 
+  if (state.hasPermissionMenu) {
+    clearContinueTimer();
+    lastMenuFingerprint = '';
+    handlePermissionMenu(state, runId);
+    return;
+  }
+
+  lastPermissionFingerprint = '';
+
   if (state.hasUsageLimit) {
     handleUsageLimit(state);
     return;
@@ -532,6 +546,20 @@ function handleUsageLimit(state) {
   if (AUTO_DISABLE_ON_USAGE_LIMIT) {
     setAutomationEnabled(false, 'usage_limit');
     console.error(`\n[gemini-nightly-pty] Usage limit detected (${state.reason}) — automation paused. ${hotkeySummary()}\n`);
+  }
+}
+
+function handlePermissionMenu(state, runId) {
+  if (!AUTO_ALLOW_SESSION_PERMISSIONS) return;
+
+  const fingerprint = state.permissionFingerprint || state.fingerprint || 'permission-menu';
+  if (fingerprint && fingerprint === lastPermissionFingerprint) {
+    return;
+  }
+
+  const sent = sendLine(state.permissionOptionText || SESSION_PERMISSION_OPTION_TEXT, 'allow-for-this-session', runId);
+  if (sent) {
+    lastPermissionFingerprint = fingerprint;
   }
 }
 
@@ -803,6 +831,40 @@ function normalizeTerminalText(input) {
 function detectAutomationState(text) {
   const tail = text.slice(-NORMALIZED_TAIL_MAX);
 
+  const defaultState = {
+    hasPermissionMenu: false,
+    permissionOptionText: SESSION_PERMISSION_OPTION_TEXT,
+    permissionFingerprint: '',
+    hasUsageLimit: false,
+    hasCapacity: false,
+    hasKeepMenu: false,
+    hasExplicitContinuePrompt: false,
+    continueAction: 'command',
+    reason: 'idle',
+    fingerprint: '',
+  };
+
+  const permissionPromptMatch = tail.match(/allow\s+execution\s+of\s*:/i);
+  const allowSessionMatch = tail.match(/(?:^|\n)\s*(\d+)\s*[.):-]?\s*allow\s+for\s+this\s+session\b/i);
+  const allowOnceMatch = tail.match(/(?:^|\n)\s*(\d+)\s*[.):-]?\s*allow\s+once\b/i);
+
+  if (permissionPromptMatch && allowSessionMatch && allowOnceMatch) {
+    const permissionFingerprint = extractMenuFingerprint(
+      tail,
+      permissionPromptMatch.index ?? 0,
+      allowSessionMatch.index ?? permissionPromptMatch.index ?? 0
+    );
+
+    return {
+      ...defaultState,
+      hasPermissionMenu: true,
+      permissionOptionText: allowSessionMatch[1] || SESSION_PERMISSION_OPTION_TEXT,
+      permissionFingerprint,
+      reason: 'permission prompt',
+      fingerprint: permissionFingerprint,
+    };
+  }
+
   const usageRules = [
     [/you(?:'ve| have)\s+(?:reached|hit)\s+(?:your\s+)?(?:usage|request|quota|rate)\s+limit/i, 'usage limit reached'],
     [/(?:daily|monthly)\s+(?:usage|quota|request)\s+limit/i, 'plan limit reached'],
@@ -816,13 +878,9 @@ function detectAutomationState(text) {
   const matchedUsage = usageRules.find(([pattern]) => pattern.test(tail));
   if (matchedUsage) {
     return {
+      ...defaultState,
       hasUsageLimit: true,
-      hasCapacity: false,
-      hasKeepMenu: false,
-      hasExplicitContinuePrompt: false,
-      continueAction: 'command',
       reason: matchedUsage[1],
-      fingerprint: '',
     };
   }
 
@@ -836,15 +894,7 @@ function detectAutomationState(text) {
 
   const matchedCapacity = capacityRules.find(([pattern]) => pattern.test(tail));
   if (!matchedCapacity) {
-    return {
-      hasUsageLimit: false,
-      hasCapacity: false,
-      hasKeepMenu: false,
-      hasExplicitContinuePrompt: false,
-      continueAction: 'command',
-      reason: 'capacity',
-      fingerprint: '',
-    };
+    return defaultState;
   }
 
   const keepMatch =
@@ -856,10 +906,10 @@ function detectAutomationState(text) {
     tail.match(/press\s+2\s+to\s+(?:switch|change|use)\b/i);
 
   const continueCommandMatch =
-    tail.match(/(?:(?:type|enter|send|write)\s+["'`]?continue["'`]?\s+(?:to|for)\b[^\n]*|(?:to|for)\s+(?:keep\s+trying|continue\s+waiting|retry)[^\n]*\btype\s+["'`]?continue["'`]?)/i);
+    tail.match(/(?:(?:type|enter|send|write)\s+["'`]?continue["'`]?\s+(?:to|for)\b[^\n]*|(?:to|for)\s+(?:keep\s+trying|continue\s+waiting|retry)[^\n]*\btype\s+["'`]?continue["'`]?)/i) ||
+    tail.match(/(?:^|\n)\s*continue\s*$/im);
 
-  const continueEnterMatch =
-    tail.match(/(?:(?:press|hit)\s+(?:enter|return)\s+(?:to|for)\b[^\n]*(?:keep\s+trying|continue\s+waiting|retry|try\s+again)|(?:keep\s+trying|continue\s+waiting|retry|try\s+again)[^\n]*(?:press|hit)\s+(?:enter|return))/i);
+  const continueEnterMatch = tail.match(/(?:(?:press|hit)\s+(?:enter|return)\s+(?:to|for)\b[^\n]*(?:keep\s+trying|continue\s+waiting|retry|try\s+again)|(?:keep\s+trying|continue\s+waiting|retry|try\s+again)[^\n]*(?:press|hit)\s+(?:enter|return))/i);
 
   const continueMatch = continueCommandMatch || continueEnterMatch;
   const hasExplicitContinuePrompt = Boolean(continueMatch);
@@ -873,7 +923,7 @@ function detectAutomationState(text) {
       : '';
 
   return {
-    hasUsageLimit: false,
+    ...defaultState,
     hasCapacity: true,
     hasKeepMenu,
     hasExplicitContinuePrompt,
@@ -1156,7 +1206,7 @@ function printLocalHelp() {
       '',
       `[local] ${hotkeySummary()}`,
       `[local] Press the prefix first, then the command key.`,
-      `[local] Manual typing pauses automation for ${pauseSec}s. Auto-continue mode: ${AUTO_CONTINUE_MODE}.` + (automationEnabled ? '' : ' Automation is currently disabled.'),
+      `[local] Manual typing pauses automation for ${pauseSec}s. Auto-continue mode: ${AUTO_CONTINUE_MODE}. Session permission auto-allow: ${AUTO_ALLOW_SESSION_PERMISSIONS ? 'ON' : 'OFF'}.` + (automationEnabled ? '' : ' Automation is currently disabled.'),
       `[local] Current model: ${currentModel()}`,
       '',
     ].join('\n')
@@ -1196,6 +1246,7 @@ function resetCapacityEventState() {
   sawCapacityAt = 0;
   autoContinueAttempts = 0;
   lastMenuFingerprint = '';
+  lastPermissionFingerprint = '';
 }
 
 function cleanupAndExit(code) {

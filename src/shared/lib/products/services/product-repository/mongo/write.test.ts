@@ -126,4 +126,58 @@ describe('mongoProductWriteImpl custom fields persistence', () => {
       expect.anything()
     );
   });
+
+  it('stores normalized notes on create and update', async () => {
+    const insertOne = vi.fn().mockResolvedValue({ insertedId: 'product-1' });
+    const findOneAndUpdate = vi.fn().mockResolvedValue(null);
+    const createCollection = {
+      insertOne,
+    };
+    const updateCollection = {
+      findOneAndUpdate,
+    };
+
+    await mongoProductWriteImpl.createProduct(
+      {
+        sku: 'SKU-1',
+        notes: {
+          text: '  Remember to keep the old insert sheet.  ',
+          color: '  #fecaca ',
+        },
+      } as any,
+      async () => createCollection as any
+    );
+
+    await mongoProductWriteImpl.updateProduct(
+      'product-1',
+      {
+        notes: {
+          text: '  Updated internal note  ',
+          color: '  #bfdbfe ',
+        },
+      } as any,
+      async () => updateCollection as any
+    );
+
+    expect(insertOne).toHaveBeenCalledWith(
+      expect.objectContaining({
+        notes: {
+          text: 'Remember to keep the old insert sheet.',
+          color: '#fecaca',
+        },
+      })
+    );
+    expect(findOneAndUpdate).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        $set: expect.objectContaining({
+          notes: {
+            text: 'Updated internal note',
+            color: '#bfdbfe',
+          },
+        }),
+      }),
+      expect.anything()
+    );
+  });
 });

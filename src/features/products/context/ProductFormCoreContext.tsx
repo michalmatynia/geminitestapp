@@ -25,6 +25,7 @@ import {
 import { ProductFormData, ProductDraft } from '@/shared/contracts/products/drafts';
 import {
   ProductWithImages,
+  type ProductNotes,
   normalizeProductMarketplaceContentOverrideDrafts,
 } from '@/shared/contracts/products/product';
 import { internalError } from '@/shared/errors/app-error';
@@ -35,6 +36,24 @@ import {
 } from '@/shared/lib/products/validations/schemas';
 
 const normalizeOptionalString = (value: string | null | undefined): string => value || '';
+
+const normalizeProductFormNotes = (
+  value: ProductNotes | null | undefined
+): ProductNotes | undefined => {
+  if (!value) return undefined;
+
+  const text = typeof value.text === 'string' ? value.text : null;
+  const color = typeof value.color === 'string' ? value.color : null;
+
+  if (!text && !color) {
+    return undefined;
+  }
+
+  return {
+    text,
+    color,
+  };
+};
 
 export const resolveProductFormDefaultValues = ({
   product,
@@ -81,6 +100,7 @@ export const resolveProductFormDefaultValues = ({
     title: entry.title ?? '',
     description: entry.description ?? '',
   })),
+  notes: normalizeProductFormNotes(product?.notes ?? draft?.notes ?? undefined),
 });
 
 export interface ProductFormCoreContextType {

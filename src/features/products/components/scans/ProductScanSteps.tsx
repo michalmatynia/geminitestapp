@@ -1,8 +1,11 @@
-'use client';
-
 import { ExternalLink } from 'lucide-react';
 
 import type { ProductScanStep } from '@/shared/contracts/product-scans';
+import {
+  PRODUCT_SCAN_STEP_GROUP_LABELS as STEP_GROUP_LABELS,
+  PRODUCT_SCAN_STEP_GROUP_ORDER as STEP_GROUP_ORDER,
+  resolveProductScanStepGroup,
+} from '@/shared/lib/browser-execution/product-scan-step-sequencer';
 
 const STEP_STATUS_LABELS: Record<ProductScanStep['status'], string> = {
   pending: 'Pending',
@@ -20,39 +23,9 @@ const STEP_STATUS_CLASSES: Record<ProductScanStep['status'], string> = {
   skipped: 'border-border/70 text-muted-foreground',
 };
 
-const STEP_GROUP_LABELS: Record<NonNullable<ProductScanStep['group']>, string> = {
-  input: 'Input',
-  google_lens: 'Google Lens',
-  amazon: 'Amazon',
-  supplier: 'Supplier',
-  product: 'Product Update',
-};
-
-const STEP_GROUP_ORDER: Record<NonNullable<ProductScanStep['group']>, number> = {
-  input: 0,
-  google_lens: 1,
-  amazon: 2,
-  supplier: 3,
-  product: 4,
-};
-
 const resolveStepGroup = (
   step: Pick<ProductScanStep, 'group' | 'key'>
-): NonNullable<ProductScanStep['group']> => {
-  if (step.group) {
-    return step.group;
-  }
-  if (step.key === 'validate' || step.key === 'prepare_scan' || step.key === 'queue_scan') {
-    return 'input';
-  }
-  if (step.key.startsWith('google_')) {
-    return 'google_lens';
-  }
-  if (step.key.startsWith('amazon_')) {
-    return 'amazon';
-  }
-  return 'product';
-};
+): NonNullable<ProductScanStep['group']> => step.group ?? resolveProductScanStepGroup(step.key) ?? 'product';
 
 export type ProductScanActiveStepSummary = {
   phaseLabel: string;
@@ -171,6 +144,14 @@ export const resolveProductScanFailureSourceLabel = (
   }
 
   if (group === 'supplier') {
+    if (
+      step.key === '1688_open' ||
+      step.key === '1688_upload' ||
+      step.key === '1688_collect_candidates'
+    ) {
+      return 'Supplier search';
+    }
+
     if (step.key === 'supplier_ai_evaluate') {
       return 'Supplier evaluator';
     }
@@ -618,6 +599,13 @@ export function ProductScanSteps(props: { steps: ProductScanStep[] }): React.JSX
       .filter((step) => resolveStepGroup(step) === 'amazon' && typeof step.attempt === 'number')
       .map((step) => step.attempt)
   ).size;
+  const supplierCandidateAttemptCount = new Set(
+    steps
+      .filter(
+        (step) => step.key === 'supplier_open' && typeof step.attempt === 'number'
+      )
+      .map((step) => step.attempt)
+  ).size;
   const activeStepSummary = resolveProductScanActiveStepSummary(steps);
   const continuationContexts = resolveContinuationContexts(steps);
 
@@ -645,6 +633,12 @@ export function ProductScanSteps(props: { steps: ProductScanStep[] }): React.JSX
         {amazonCandidateAttemptCount > 0 ? (
           <span className='inline-flex items-center rounded-md border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium'>
             {amazonCandidateAttemptCount} Amazon candidate{amazonCandidateAttemptCount === 1 ? '' : 's'}
+          </span>
+        ) : null}
+        {supplierCandidateAttemptCount > 0 ? (
+          <span className='inline-flex items-center rounded-md border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium'>
+            {supplierCandidateAttemptCount} supplier candidate
+            {supplierCandidateAttemptCount === 1 ? '' : 's'}
           </span>
         ) : null}
         {activeStepSummary ? (

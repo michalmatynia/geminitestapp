@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-14'
+last_reviewed: '2026-04-15'
 status: 'generated'
 doc_type: 'generated'
 scope: 'cross-feature'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Repository quality baseline Improvement Track
 
-Generated at: 2026-04-14T12:38:14.583Z
+Generated at: 2026-04-15T09:39:36.941Z
 
 ## Snapshot
 
@@ -16,7 +16,7 @@ Generated at: 2026-04-14T12:38:14.583Z
 - Category: `quality`
 - Included in default read-only bundle: yes
 - Overall status: `failed`
-- Latest report timestamp: 2026-04-14T12:38:14.575Z
+- Latest report timestamp: 2026-04-15T09:39:36.938Z
 
 ## Purpose
 

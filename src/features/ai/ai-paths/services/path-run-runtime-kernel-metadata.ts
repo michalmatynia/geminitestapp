@@ -28,6 +28,7 @@ export const AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS = {
   runtimeKernelCodeObjectResolverIds: 'runtimeKernel.codeObjectResolverIds',
   runtimeKernelStrictNativeRegistry: 'runtimeKernel.strictNativeRegistry',
   runtimeKernelStrictNativeRegistrySource: 'runtimeKernel.strictNativeRegistrySource',
+  runtimeTraceKernelParityStrategyCounts: 'runtimeTrace.kernelParity.strategyCounts',
 } as const;
 
 export type AiPathRunRuntimeKernelMetadataChangedField =

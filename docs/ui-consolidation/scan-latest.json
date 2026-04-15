@@ -1,7 +1,7 @@
 {
   "summary": {
-    "generatedAt": "2026-04-14T12:37:29.515Z",
-    "scannedFileCount": 2597,
+    "generatedAt": "2026-04-15T09:39:01.224Z",
+    "scannedFileCount": 2604,
     "duplicateNameClusterCount": 0,
     "propSignatureClusterCount": 0,
     "tokenSimilarityClusterCount": 0,
@@ -11,7 +11,7 @@
     "familyCounts": [
       {
         "family": "Unknown",
-        "count": 1902
+        "count": 1907
       },
       {
         "family": "Page",
@@ -43,7 +43,7 @@
       },
       {
         "family": "Header",
-        "count": 23
+        "count": 24
       },
       {
         "family": "List",
@@ -54,11 +54,11 @@
         "count": 15
       },
       {
-        "family": "Toolbar",
-        "count": 8
+        "family": "Table",
+        "count": 9
       },
       {
-        "family": "Table",
+        "family": "Toolbar",
         "count": 8
       },
       {
@@ -81,7 +81,7 @@
     "domainCounts": [
       {
         "domain": "feature",
-        "count": 2016
+        "count": 2023
       },
       {
         "domain": "app",

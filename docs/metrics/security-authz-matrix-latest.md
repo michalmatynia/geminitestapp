@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-11'
+last_reviewed: '2026-04-15'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,12 +8,12 @@ canonical: true
 ---
 # Security Authorization Matrix Report
 
-Generated at: 2026-04-11T17:22:13.586Z
+Generated at: 2026-04-15T09:38:26.380Z
 
 ## Summary
 
 - Status: PASSED
-- Route files scanned: 311
+- Route files scanned: 313
 - Route methods scanned: 223
 - Public methods: 15
 - Protected methods: 207

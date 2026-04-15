@@ -91,6 +91,18 @@ export const productScanStepSchema = z.object({
 });
 export type ProductScanStep = z.infer<typeof productScanStepSchema>;
 
+export const productScanRequestSequenceEntrySchema = z.union([
+  trimmedString.min(1).max(120),
+  z.object({
+    key: trimmedString.min(1).max(120),
+    label: optionalTrimmedString(160).optional(),
+    group: productScanStepGroupSchema.nullable().optional(),
+  }),
+]);
+export type ProductScanRequestSequenceEntry = z.infer<
+  typeof productScanRequestSequenceEntrySchema
+>;
+
 export const productScanAmazonAttributeSchema = z.object({
   key: trimmedString.min(1).max(160),
   label: trimmedString.min(1).max(200),
@@ -428,6 +440,8 @@ export type ProductScanListResponse = z.infer<typeof productScanListResponseSche
 export const productAmazonBatchScanRequestSchema = z.object({
   productIds: z.array(trimmedString.min(1).max(160)).min(1).max(100),
   connectionId: z.string().trim().min(1).nullable().optional(),
+  stepSequenceKey: optionalTrimmedString(120).optional(),
+  stepSequence: z.array(productScanRequestSequenceEntrySchema).max(50).nullable().optional(),
 });
 export type ProductAmazonBatchScanRequest = z.infer<typeof productAmazonBatchScanRequestSchema>;
 export const productScanBatchRequestSchema = productAmazonBatchScanRequestSchema;

@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-14'
+last_reviewed: '2026-04-15'
 status: 'generated'
 doc_type: 'generated'
 scope: 'cross-feature'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Products category and schema normalization Improvement Track
 
-Generated at: 2026-04-14T12:38:14.583Z
+Generated at: 2026-04-15T09:39:36.941Z
 
 ## Snapshot
 
@@ -16,7 +16,7 @@ Generated at: 2026-04-14T12:38:14.583Z
 - Category: `data`
 - Included in default read-only bundle: yes
 - Overall status: `failed`
-- Latest report timestamp: 2026-04-02T09:59:31.245Z
+- Latest report timestamp: 2026-04-15T09:39:36.938Z
 
 ## Purpose
 
@@ -38,7 +38,7 @@ Surfaces the remaining category and parameter-schema decisions that cannot be au
 
 | Phase | Status | Steps | Automatic | Manual | Failed | Blocked |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| `audit` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
+| `audit` | `not-configured` | 0 | 0 | 0 | 0 | 0 |
 | `classify` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
 | `plan` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
 | `dry-run` | `passed` | 3 | 2 | 1 | 0 | 0 |

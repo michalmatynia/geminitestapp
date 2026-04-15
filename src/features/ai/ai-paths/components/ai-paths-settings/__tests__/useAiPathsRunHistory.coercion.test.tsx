@@ -3,7 +3,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const listAiPathRunsMock = vi.hoisted(() => vi.fn());
+const listAiPathRunsMock = vi.fn().mockImplementation(async (args) => {
+  console.log('listAiPathRuns called with:', args);
+  return { ok: true, data: { runs: [] } };
+});
 const getAiPathRunMock = vi.hoisted(() => vi.fn());
 const cancelAiPathRunMock = vi.hoisted(() => vi.fn());
 const resumeAiPathRunMock = vi.hoisted(() => vi.fn());
@@ -50,18 +53,13 @@ class MockEventSource {
   }
 }
 
-vi.mock('@/shared/lib/ai-paths', async () => {
-  const actual =
-    await vi.importActual<typeof import('@/shared/lib/ai-paths')>('@/shared/lib/ai-paths');
-  return {
-    ...actual,
-    listAiPathRuns: listAiPathRunsMock,
-    getAiPathRun: getAiPathRunMock,
-    cancelAiPathRun: cancelAiPathRunMock,
-    resumeAiPathRun: resumeAiPathRunMock,
-    retryAiPathRunNode: retryAiPathRunNodeMock,
-  };
-});
+vi.mock('@/shared/lib/ai-paths', () => ({
+  listAiPathRuns: listAiPathRunsMock,
+  getAiPathRun: getAiPathRunMock,
+  cancelAiPathRun: cancelAiPathRunMock,
+  resumeAiPathRun: resumeAiPathRunMock,
+  retryAiPathRunNode: retryAiPathRunNodeMock,
+}));
 
 import {
   RunHistoryProvider,
@@ -96,10 +94,11 @@ const useHarness = (
   state: ReturnType<typeof useRunHistoryState>;
   actions: ReturnType<typeof useRunHistoryActions>;
 } => {
-  useAiPathsRunHistory({
+  const harness = useAiPathsRunHistory({
     activePathId,
     toast: toastMock,
   });
+  console.log('harness:', harness);
   return {
     state: useRunHistoryState(),
     actions: useRunHistoryActions(),

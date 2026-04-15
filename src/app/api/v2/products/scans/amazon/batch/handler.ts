@@ -16,6 +16,8 @@ export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): P
   const result = await queueAmazonBatchProductScans({
     productIds: body.productIds,
     userId: ctx.userId ?? null,
+    stepSequenceKey: body.stepSequenceKey ?? null,
+    stepSequence: body.stepSequence ?? null,
   });
 
   return NextResponse.json(productAmazonBatchScanResponseSchema.parse(result));

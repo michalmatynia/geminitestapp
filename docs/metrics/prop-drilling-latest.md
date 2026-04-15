@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-14'
+last_reviewed: '2026-04-15'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Prop Drilling Scan
 
-Generated at: 2026-04-14T12:37:25.623Z
+Generated at: 2026-04-15T09:38:57.491Z
 
 ## Snapshot
 

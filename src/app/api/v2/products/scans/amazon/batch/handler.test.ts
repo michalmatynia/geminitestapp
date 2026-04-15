@@ -45,13 +45,19 @@ describe('products/scans/amazon/batch handler', () => {
         method: 'POST',
       }),
       {
-        body: { productIds: ['product-1'] },
+        body: {
+          productIds: ['product-1'],
+          stepSequenceKey: 'amazon_direct_candidate_followup',
+          stepSequence: [{ key: 'validate', label: 'Validate trigger' }],
+        },
         userId: 'user-42',
       } as ApiHandlerContext
     );
 
     expect(queueAmazonBatchProductScansMock).toHaveBeenCalledWith({
       productIds: ['product-1'],
+      stepSequenceKey: 'amazon_direct_candidate_followup',
+      stepSequence: [{ key: 'validate', label: 'Validate trigger' }],
       userId: 'user-42',
     });
     expect(response.status).toBe(200);

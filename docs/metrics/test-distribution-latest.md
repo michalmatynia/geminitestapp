@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-11'
+last_reviewed: '2026-04-15'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Test Distribution Check
 
-Generated at: 2026-04-11T17:22:03.377Z
+Generated at: 2026-04-15T09:38:15.453Z
 
 ## Summary
 
@@ -18,7 +18,7 @@ Generated at: 2026-04-11T17:22:03.377Z
 - Features without tests: 0
 - Features without fast tests: 0
 - Features without negative-path tests: 0
-- Total test files: 3530
+- Total test files: 3584
 - .only() occurrences: 0
 - .skip() occurrences: 32
 - .todo() occurrences: 0
@@ -28,9 +28,9 @@ Generated at: 2026-04-11T17:22:03.377Z
 | Feature | Test Files | Fast | E2E | Negative |
 | --- | ---: | ---: | ---: | ---: |
 | kangur | 948 | 928 | 20 | 181 |
-| ai | 402 | 402 | 0 | 170 |
-| products | 184 | 176 | 8 | 70 |
-| integrations | 173 | 172 | 1 | 63 |
+| ai | 405 | 405 | 0 | 171 |
+| products | 204 | 196 | 8 | 76 |
+| integrations | 186 | 185 | 1 | 72 |
 | case-resolver | 94 | 93 | 1 | 42 |
 | cms | 85 | 84 | 1 | 21 |
 | prompt-exploder | 54 | 54 | 0 | 29 |
@@ -47,9 +47,9 @@ Generated at: 2026-04-11T17:22:03.377Z
 | drafter | 8 | 7 | 1 | 3 |
 | internationalization | 8 | 8 | 0 | 5 |
 | jobs | 7 | 7 | 0 | 3 |
+| product-sync | 5 | 5 | 0 | 3 |
 | app-embeds | 3 | 3 | 0 | 1 |
 | gsap | 3 | 3 | 0 | 1 |
-| product-sync | 3 | 3 | 0 | 3 |
 | tooltip-engine | 3 | 3 | 0 | 2 |
 
 ## Rule Breakdown

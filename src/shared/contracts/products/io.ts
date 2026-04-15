@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { productCustomFieldValueSchema } from './custom-fields';
 import {
   productMarketplaceContentOverridesSchema,
+  productNotesSchema,
   productImportSourceSchema,
   productParameterValueSchema,
   productSchema,
@@ -159,6 +160,26 @@ const optionalMarketplaceContentOverridesFromFormSchema = z.preprocess(
   productMarketplaceContentOverridesSchema.optional()
 );
 
+const optionalProductNotesFromFormSchema = z.preprocess((value: unknown): unknown => {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value === 'object' && !Array.isArray(value)) return value;
+  if (typeof value !== 'string') return value;
+
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+
+  try {
+    return JSON.parse(trimmed) as unknown;
+  } catch (error) {
+    logClientCatch(error, {
+      source: 'contracts.products.io',
+      action: 'optionalProductNotesFromFormSchema',
+      valueLength: trimmed.length,
+    });
+    return value;
+  }
+}, productNotesSchema.optional());
+
 const STRUCTURED_PRODUCT_NAME_FORMAT_MESSAGE =
   'Name must follow the REQUIRED structured format: <name> | <size> | <material> | <category> | <lore or theme>';
 
@@ -204,6 +225,7 @@ const productInputFieldsSchema = z.object({
   customFields: optionalCustomFieldValuesFromFormSchema,
   parameters: optionalParameterValuesFromFormSchema,
   marketplaceContentOverrides: optionalMarketplaceContentOverridesFromFormSchema,
+  notes: optionalProductNotesFromFormSchema,
 });
 
 export const productCreateInputSchema = productInputFieldsSchema.superRefine((data, ctx) => {

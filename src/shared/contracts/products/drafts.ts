@@ -4,8 +4,12 @@ import { z } from 'zod';
 import { namedDtoSchema } from '../base';
 import type { LabeledOptionDto } from '../base';
 import { productCustomFieldValueSchema, type ProductCustomFieldDefinitionCreateInput, type ProductCustomFieldDefinitionUpdateInput } from './custom-fields';
-import { productImportSourceSchema, productParameterValueSchema } from './product';
-import { productMarketplaceContentOverrideDraftsSchema } from './product';
+import {
+  productImportSourceSchema,
+  productMarketplaceContentOverrideDraftsSchema,
+  productNotesSchema,
+  productParameterValueSchema,
+} from './product';
 
 import type { ImageFileRecord } from '../files';
 import type { ManagedImageSlot } from '../image-slots';
@@ -70,6 +74,7 @@ export const productDraftOpenFormTabSchema = z.enum([
   'scans',
   'studio',
   'import-info',
+  'notes',
   'note-link',
   'validation',
 ]);
@@ -86,6 +91,7 @@ export const PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS: ProductDraftOpenFormTab[] = [
   'scans',
   'studio',
   'import-info',
+  'notes',
   'note-link',
   'validation',
 ];
@@ -119,6 +125,7 @@ export const productDraftSchema = namedDtoSchema.extend({
   customFields: z.array(productCustomFieldValueSchema).optional(),
   parameters: z.array(productParameterValueSchema).optional(),
   marketplaceContentOverrides: productMarketplaceContentOverrideDraftsSchema.optional(),
+  notes: productNotesSchema.optional(),
   defaultPriceGroupId: z.string().nullable().optional(),
   active: z.boolean().optional(),
   validatorEnabled: z.boolean().optional(),

@@ -103,13 +103,13 @@ export abstract class PlaywrightSequencer {
   }
 
   protected async captureArtifacts(key: string): Promise<void> {
-    const { artifacts } = this.context as any;
+    const artifacts = this.context.artifacts as Record<string, unknown> | undefined;
     if (!artifacts) return;
-    if (typeof artifacts.screenshot === 'function') {
-      await artifacts.screenshot(key).catch(() => undefined);
+    if (typeof artifacts['screenshot'] === 'function') {
+      await (artifacts['screenshot'] as (k: string) => Promise<unknown>)(key).catch(() => undefined);
     }
-    if (typeof artifacts.html === 'function') {
-      await artifacts.html(key).catch(() => undefined);
+    if (typeof artifacts['html'] === 'function') {
+      await (artifacts['html'] as (k: string) => Promise<unknown>)(key).catch(() => undefined);
     }
   }
 

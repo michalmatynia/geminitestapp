@@ -1,3 +1,6 @@
+import { PRODUCT_SCAN_PLAYWRIGHT_STEP_SEQUENCER_RUNTIME } from '@/shared/lib/browser-execution/product-scan-step-sequencer';
+import { AMAZON_SELECTOR_REGISTRY_RUNTIME } from '@/shared/lib/browser-execution/selectors/amazon';
+
 export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default async function run({
   page,
   input,
@@ -41,157 +44,22 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
     typeof attempt === 'number' && Number.isFinite(attempt) && attempt > 0
       ? Math.trunc(attempt)
       : 1;
-  const resolveStepGroup = (key) => {
-    const normalizedKey = toText(key);
-    if (!normalizedKey) {
-      return null;
-    }
-    if (
-      normalizedKey === 'validate' ||
-      normalizedKey === 'prepare_scan' ||
-      normalizedKey === 'queue_scan'
-    ) {
-      return 'input';
-    }
-    if (normalizedKey.startsWith('google_')) {
-      return 'google_lens';
-    }
-    if (normalizedKey.startsWith('amazon_')) {
-      return 'amazon';
-    }
-    if (normalizedKey.startsWith('product_')) {
-      return 'product';
-    }
-    return null;
-  };
-  const normalizeStepDetails = (details) =>
-    (Array.isArray(details) ? details : [])
-      .map((entry) => {
-        const label = toText(entry?.label);
-        const value = toText(entry?.value);
-        if (!label) {
-          return null;
-        }
-        return {
-          label,
-          value,
-        };
-      })
-      .filter(Boolean)
-      .slice(0, 12);
-  const mergeStepDetails = (...detailSets) =>
-    detailSets.flatMap((details) => normalizeStepDetails(details));
-  const resolveStepIdentity = (key, attempt, inputSource, candidateId = null) =>
-    String(toText(key) || '') +
-    '::' +
-    String(resolveComparableAttempt(attempt)) +
-    '::' +
-    String(toText(inputSource) || 'none') +
-    '::' +
-    String(toText(candidateId) || 'none');
-
-  const upsertScanStep = (input) => {
-    const key = toText(input?.key);
-    const label = toText(input?.label);
-    const status = toText(input?.status);
-    if (!key || !label || !status) {
-      return null;
-    }
-
-    const normalizedStatus =
-      status === 'pending' ||
-      status === 'running' ||
-      status === 'completed' ||
-      status === 'failed' ||
-      status === 'skipped'
-        ? status
-        : null;
-    if (!normalizedStatus) {
-      return null;
-    }
-
-    const timestamp = nowIso();
-    const stepUrl = toText(input?.url) || toText(page.url());
-    const stepMessage = toText(input?.message);
-    const stepAttempt = resolveComparableAttempt(input?.attempt);
-    const normalizedInputSource = toText(input?.inputSource);
-    const existingIndex = scanSteps.findIndex(
-      (entry) =>
-        resolveStepIdentity(entry.key, entry.attempt, entry.inputSource, entry.candidateId) ===
-        resolveStepIdentity(key, stepAttempt, normalizedInputSource, input?.candidateId)
-    );
-    const existingStep =
-      existingIndex >= 0
-        ? scanSteps[existingIndex]
-        : {
-            key,
-            label,
-            group: resolveStepGroup(key),
-            attempt: stepAttempt,
-            candidateId: null,
-            candidateRank: null,
-            inputSource: null,
-            retryOf: null,
-            resultCode: null,
-            status: 'pending',
-            message: null,
-            warning: null,
-            details: [],
-            url: null,
-            startedAt: null,
-            completedAt: null,
-            durationMs: null,
-          };
-
-    const startedAt =
-      normalizedStatus === 'pending'
-        ? existingStep.startedAt
-        : existingStep.startedAt || timestamp;
-    const completedAt =
-      normalizedStatus === 'completed' ||
-      normalizedStatus === 'failed' ||
-      normalizedStatus === 'skipped'
-        ? timestamp
-        : null;
-    const durationMs =
-      startedAt && completedAt
-        ? Math.max(0, Date.parse(completedAt) - Date.parse(startedAt))
-        : null;
-
-    const nextStep = {
-      ...existingStep,
-      label,
-      group: toText(input?.group) || existingStep.group || resolveStepGroup(key),
-      attempt: stepAttempt,
-      candidateId: toText(input?.candidateId) || existingStep.candidateId || null,
-      candidateRank:
-        typeof input?.candidateRank === 'number' &&
-        Number.isFinite(input.candidateRank) &&
-        input.candidateRank > 0
-          ? Math.trunc(input.candidateRank)
-          : existingStep.candidateRank || null,
-      inputSource: normalizedInputSource || existingStep.inputSource || null,
-      retryOf: toText(input?.retryOf) ?? existingStep.retryOf ?? null,
-      resultCode: toText(input?.resultCode) ?? existingStep.resultCode ?? null,
-      status: normalizedStatus,
-      message: stepMessage ?? existingStep.message ?? null,
-      warning: toText(input?.warning) ?? existingStep.warning ?? null,
-      details:
-        Array.isArray(input?.details) ? normalizeStepDetails(input.details) : existingStep.details || [],
-      url: stepUrl ?? existingStep.url ?? null,
-      startedAt,
-      completedAt,
-      durationMs,
-    };
-
-    if (existingIndex >= 0) {
-      scanSteps[existingIndex] = nextStep;
-    } else {
-      scanSteps.push(nextStep);
-    }
-
-    return nextStep;
-  };
+  const hasDirectAmazonCandidateInput =
+    (typeof input?.directAmazonCandidateUrl === 'string' &&
+      input.directAmazonCandidateUrl.trim().length > 0) ||
+    (Array.isArray(input?.directAmazonCandidateUrls) &&
+      input.directAmazonCandidateUrls.some(
+        (value) => typeof value === 'string' && value.trim().length > 0
+      ));
+  ${PRODUCT_SCAN_PLAYWRIGHT_STEP_SEQUENCER_RUNTIME}
+  ${AMAZON_SELECTOR_REGISTRY_RUNTIME}
+  seedProductScanStepSequence({
+    defaultSequenceKey: hasDirectAmazonCandidateInput
+      ? 'amazon_direct_candidate_followup'
+      : 'amazon_reverse_image_scan_browser',
+    sequenceKey: input?.stepSequenceKey,
+    customSequence: input?.stepSequence,
+  });
 
   const emitResult = async (payload) => {
     const payloadWithSteps = {
@@ -296,140 +164,6 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
     }
     return artifactKey;
   };
-
-  const GOOGLE_LENS_RESULT_HINT_SELECTORS = [
-    'a[href*="amazon."]',
-    '#search a[href]',
-    '#rso a[href]',
-    'div.g a[href]',
-    'main a[href]',
-    '[data-lpage]',
-    'a[href*="udm=44"]',
-    'a[href*="udm=48"]',
-    'a[href*="/imgres"]',
-    '#islrg img',
-    'img[src^="blob:"]',
-    'img[src^="data:image/"]',
-  ];
-  const GOOGLE_LENS_RESULT_SHELL_SELECTORS = [
-    'button[aria-label*="Edit visual search"]',
-    'img[alt*="Visually searched image"]',
-    'main h2',
-    '#search',
-    '#rso',
-    '#islrg',
-    '[data-lpage]',
-    'div.g',
-  ];
-  const GOOGLE_LENS_PROCESSING_INDICATOR_SELECTORS = [
-    '[role="progressbar"]',
-    '[aria-busy="true"]',
-  ];
-  const GOOGLE_LENS_PROCESSING_TEXT_HINTS = [
-    'uploading',
-    'searching',
-    'looking for matches',
-    'finding results',
-  ];
-  const GOOGLE_LENS_RESULT_TEXT_HINTS = [
-    'visual matches',
-    'exact matches',
-    'about this image',
-    'search results',
-    'edit visual search',
-  ];
-  const GOOGLE_LENS_FILE_INPUT_SELECTORS = [
-    'input[type="file"][accept*="image"]',
-    'input[type="file"]',
-  ];
-  const GOOGLE_LENS_ENTRY_TRIGGER_SELECTORS = [
-    'div[aria-label="Search by image"]',
-    'button[aria-label="Search by image"]',
-    'div[aria-label="Search with an image"]',
-    'button[aria-label="Search with an image"]',
-    'div[aria-label="Search with Google Lens"]',
-    'button[aria-label="Search with Google Lens"]',
-    'div[aria-label="Google Lens"]',
-    'button[aria-label="Google Lens"]',
-    'div[role="button"][aria-label*="image"]',
-    'div[role="button"][aria-label*="Lens"]',
-    'button[aria-label*="image"]',
-    'button[aria-label*="Lens"]',
-    'div[role="button"]:has-text("Search by image")',
-    'button:has-text("Search by image")',
-    'div[role="button"]:has-text("Search with an image")',
-    'button:has-text("Search with an image")',
-    '[data-base-uri="/searchbyimage"]',
-    '[data-base-uri*="lens"]',
-  ];
-  const GOOGLE_LENS_UPLOAD_TAB_SELECTORS = [
-    'button:has-text("Upload an image")',
-    'button:has-text("Upload image")',
-    'button:has-text("Upload a file")',
-    'button:has-text("Upload file")',
-    'div[role="tab"]:has-text("Upload")',
-    'div[role="tab"]:has-text("Upload an image")',
-    'div[role="tab"]:has-text("Upload a file")',
-    'a:has-text("upload a file")',
-    'span:has-text("upload a file")',
-    'button:has-text("upload")',
-  ];
-  const GOOGLE_CONSENT_CONTROL_SELECTOR =
-    'button, [role="button"], input[type="submit"], input[type="button"]';
-  const GOOGLE_CONSENT_ACCEPT_SELECTORS = [
-    'button:has-text("Accept all cookies")',
-    'button:has-text("Accept all")',
-    'button:has-text("I agree")',
-    'button:has-text("Continue to Google")',
-    'button:has-text("Zaakceptuj")',
-    'button:has-text("Akceptuj")',
-    'button:has-text("Zgadzam")',
-    'button:has-text("Kontynuuj")',
-    'button[aria-label*="Accept"]',
-    'button[aria-label*="agree"]',
-    'form[action*="consent"] button',
-    'form[action*="save"] button',
-  ];
-  const GOOGLE_CONSENT_SURFACE_TEXT_HINTS = [
-    'before you continue',
-    'before you continue to google',
-    'google uses cookies',
-    'cookies',
-    'cookie',
-    'privacy',
-    'terms',
-    'consent',
-    'zanim przejdziesz',
-    'wykorzystuje pliki cookie',
-    'zasady prywatnosci',
-  ];
-  const GOOGLE_CONSENT_ACCEPT_TEXT_HINTS = [
-    'accept all',
-    'accept everything',
-    'i agree',
-    'agree',
-    'accept',
-    'continue to google',
-    'got it',
-    'zaakceptuj',
-    'akceptuj wszystko',
-    'zgadzam sie',
-    'przejdz do google',
-    'kontynuuj',
-  ];
-  const GOOGLE_CONSENT_REJECT_TEXT_HINTS = [
-    'reject all',
-    'reject',
-    'decline',
-    'manage options',
-    'more options',
-    'customize',
-    'settings',
-    'nie zgadzam',
-    'odrzuc',
-    'zarzadzaj',
-    'ustawienia',
-  ];
 
   const normalizeComparableText = (value) =>
     (toText(value) || '')
@@ -1430,13 +1164,6 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
           !/^amazon\.[a-z.]+$/i.test(line)
       )
       .slice(0, 6);
-
-  const GOOGLE_LENS_CANDIDATE_HINT_SELECTORS = [
-    'a[href*="amazon."]',
-    'a[href*="googleadservices.com"]',
-    'a[href*="/imgres"]',
-    '[role="listitem"]',
-  ];
 
   const readGoogleLensAmazonCandidates = async () => {
     const rawCandidates = await page
@@ -3135,15 +2862,6 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_1 = String.raw`export default
       frameUrl: null,
     };
   };
-
-  const AMAZON_PRODUCT_CONTENT_SELECTORS = [
-    '#productTitle',
-    '[data-asin]',
-    'input[name="ASIN"]',
-    '#dp-container',
-    '#corePrice_feature_div',
-    '#feature-bullets',
-  ];
 
   const readVisibleBodyText = async () =>
     (

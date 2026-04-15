@@ -151,7 +151,7 @@ describe('useLocalRunOutcome', () => {
       entries: [],
     });
     expect(mockState.updateAiPathsSetting).toHaveBeenCalledWith(
-      'path-debug:path-1',
+      'ai_paths_debug_path-1',
       JSON.stringify({
         pathId: 'path-1',
         runAt: '2026-03-19T16:59:00.000Z',
@@ -240,7 +240,7 @@ describe('useLocalRunOutcome', () => {
     });
     expect(args.setLastRunAt).toHaveBeenCalledWith('2026-03-19T17:00:00.000Z');
     expect(mockState.updateAiPathsSetting).toHaveBeenCalledWith(
-      'path-debug:path-1',
+      'ai_paths_debug_path-1',
       JSON.stringify({
         pathId: 'path-1',
         runAt: '2026-03-19T17:00:00.000Z',

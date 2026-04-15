@@ -128,6 +128,7 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
   const runtimeKernelRunsWithParity = runtimeKernelParity?.runsWithKernelParity ?? 0;
   const runtimeKernelSampledHistoryEntries = runtimeKernelParity?.sampledHistoryEntries ?? 0;
   const runtimeKernelV3Entries = runtimeKernelParity?.strategyCounts.code_object_v3 ?? 0;
+  const runtimeKernelCompatibilityEntries = runtimeKernelParity?.strategyCounts.compatibility ?? 0;
   const runtimeKernelUnknownEntries = runtimeKernelParity?.strategyCounts.unknown ?? 0;
   const runtimeKernelResolutionOverride = runtimeKernelParity?.resolutionSourceCounts.override ?? 0;
   const runtimeKernelResolutionRegistry = runtimeKernelParity?.resolutionSourceCounts.registry ?? 0;
@@ -142,6 +143,10 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
   const runtimeKernelV3Rate =
     runtimeKernelSampledHistoryEntries > 0
       ? (runtimeKernelV3Entries / runtimeKernelSampledHistoryEntries) * 100
+      : 0;
+  const runtimeKernelCompatibilityRate =
+    runtimeKernelSampledHistoryEntries > 0
+      ? (runtimeKernelCompatibilityEntries / runtimeKernelSampledHistoryEntries) * 100
       : 0;
   const runtimeKernelUnknownRate =
     runtimeKernelSampledHistoryEntries > 0
@@ -523,13 +528,19 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
                   History entries {runtimeKernelSampledHistoryEntries}
                 </RuntimeAnalysisStatLine>
                 <div className='mt-2 text-gray-200'>
-                  v3 {formatPercent(runtimeKernelV3Rate)} · unknown{' '}
+                  v3 {formatPercent(runtimeKernelV3Rate)} · compat{' '}
+                  {formatPercent(runtimeKernelCompatibilityRate)} · unknown{' '}
                   {formatPercent(runtimeKernelUnknownRate)}
                 </div>
                 <div className='mt-1 flex h-2 overflow-hidden rounded bg-card/80 ring-1 ring-border/30'>
                   <div
                     className='bg-emerald-400/70'
                     style={{ width: `${Math.max(0, Math.min(100, runtimeKernelV3Rate))}%` }}
+                    aria-hidden
+                  />
+                  <div
+                    className='bg-amber-400/70'
+                    style={{ width: `${Math.max(0, Math.min(100, runtimeKernelCompatibilityRate))}%` }}
                     aria-hidden
                   />
                   <div

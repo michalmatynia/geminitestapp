@@ -2,6 +2,7 @@
 
 import {
   Database,
+  FileText,
   ImageIcon,
   Languages,
   LayoutGrid,
@@ -94,6 +95,11 @@ const ProductFormImportInfo = dynamic(() => import('./form/ProductFormImportInfo
   loading: DeferredTabPlaceholder,
 });
 
+const ProductFormNotes = dynamic(() => import('./form/ProductFormNotes'), {
+  ssr: false,
+  loading: DeferredTabPlaceholder,
+});
+
 const ProductFormNoteLink = dynamic(() => import('./form/ProductFormNoteLink'), {
   ssr: false,
   loading: DeferredTabPlaceholder,
@@ -146,6 +152,7 @@ const PRODUCT_FORM_TABS: ProductFormTabDefinition[] = [
   { value: 'custom-fields', label: 'Custom Fields', icon: LayoutGrid },
   { value: 'scans', label: 'Scans', icon: Search },
   { value: 'import-info', label: 'Import Info', icon: Database },
+  { value: 'notes', label: 'Notes', icon: FileText },
   { value: 'note-link', label: 'Note Link', icon: Link2 },
   { value: 'validation', label: 'Validation', icon: ShieldAlert },
 ];
@@ -481,6 +488,9 @@ export default function ProductForm({
             </TabsContent>
             <TabsContent value='import-info' className='mt-4 data-[state=inactive]:hidden'>
               {mountedTabs.has('import-info') && <ProductFormImportInfo />}
+            </TabsContent>
+            <TabsContent value='notes' className='mt-4 data-[state=inactive]:hidden'>
+              {mountedTabs.has('notes') && <ProductFormNotes />}
             </TabsContent>
             <TabsContent value='note-link' className='mt-4 data-[state=inactive]:hidden'>
               {mountedTabs.has('note-link') && <ProductFormNoteLink />}

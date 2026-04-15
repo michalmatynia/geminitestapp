@@ -107,7 +107,7 @@ type GenericPickerDropdownContextValue<T extends PickerOption = PickerOption> = 
   setSearchQuery: (value: string) => void;
 };
 
-const GenericPickerDropdownContext = createContext<GenericPickerDropdownContextValue<any> | null>(
+const GenericPickerDropdownContext = createContext<GenericPickerDropdownContextValue<PickerOption> | null>(
   null
 );
 
@@ -116,7 +116,7 @@ function useGenericPickerDropdown<T extends PickerOption = PickerOption>(): Gene
   if (!context) {
     throw new Error('GenericPickerDropdown sub-components must be used within GenericPickerDropdown');
   }
-  return context;
+  return context as unknown as GenericPickerDropdownContextValue<T>;
 }
 function GenericPickerDropdownGroup<T extends PickerOption = PickerOption>({
   group,

@@ -1,21 +1,39 @@
 {
-  "generatedAt": "2026-04-11T17:22:01.512Z",
-  "status": "passed",
+  "generatedAt": "2026-04-15T09:38:12.826Z",
+  "status": "warn",
   "summary": {
-    "total": 0,
+    "total": 1,
     "errorCount": 0,
-    "warningCount": 0,
+    "warningCount": 1,
     "infoCount": 0,
-    "status": "passed",
-    "fileCount": 1138,
-    "totalHandlers": 1012,
-    "validatedHandlers": 1012,
+    "status": "warn",
+    "fileCount": 1155,
+    "totalHandlers": 1027,
+    "validatedHandlers": 1027,
     "coveragePercent": 100
   },
   "scope": {
     "root": "src/app/api"
   },
-  "issues": [],
-  "rules": [],
-  "durationMs": 77
+  "issues": [
+    {
+      "severity": "warn",
+      "ruleId": "url-param-unvalidated",
+      "message": "Dynamic route param \"scanId\" is used without Zod validation.",
+      "file": "src/app/api/v2/products/scans/[scanId]/handler.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    }
+  ],
+  "rules": [
+    {
+      "ruleId": "url-param-unvalidated",
+      "errorCount": 0,
+      "warningCount": 1,
+      "infoCount": 0
+    }
+  ],
+  "durationMs": 94
 }

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-04-14T12:38:14.583Z",
+  "generatedAt": "2026-04-15T09:39:36.941Z",
   "track": {
     "id": "repo-quality-baseline",
     "title": "Repository quality baseline",
@@ -142,12 +142,12 @@
     "defaultSelected": true,
     "description": "Runs the core read-only quality checks that establish the current repository baseline.",
     "overallStatus": "failed",
-    "latestGeneratedAt": "2026-04-14T12:38:14.575Z",
+    "latestGeneratedAt": "2026-04-15T09:39:36.938Z",
     "docDir": "docs/build/improvements/repo-quality-baseline",
     "phases": [
       {
         "phase": "audit",
-        "generatedAt": "2026-04-14T12:38:14.575Z",
+        "generatedAt": "2026-04-15T09:39:36.938Z",
         "reportPath": "artifacts/improvements/audit-report.json",
         "executionMode": "executed",
         "allowWrite": false,
@@ -177,7 +177,7 @@
             ],
             "instructions": [],
             "script": "check:api-error-sources",
-            "durationMs": 258
+            "durationMs": 286
           },
           {
             "id": "repo-quality-canonical-sitewide",
@@ -190,7 +190,7 @@
             "outputs": [],
             "instructions": [],
             "script": "canonical:check:sitewide",
-            "durationMs": 1970
+            "durationMs": 1960
           }
         ],
         "status": "passed"

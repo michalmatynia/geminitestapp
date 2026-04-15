@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-04-14T12:38:14.583Z",
+  "generatedAt": "2026-04-15T09:39:36.941Z",
   "track": {
     "id": "application-performance",
     "title": "Application performance",
@@ -114,25 +114,39 @@
     "defaultSelected": true,
     "description": "Adds app-level performance regression checks to the improvement portfolio so broad sweeps cover runtime health alongside UI, quality, and data recovery.",
     "overallStatus": "passed",
-    "latestGeneratedAt": "2026-04-13T20:59:29.994Z",
+    "latestGeneratedAt": "2026-04-15T09:39:36.938Z",
     "docDir": "docs/build/improvements/application-performance",
     "phases": [
       {
         "phase": "audit",
-        "generatedAt": "2026-04-14T12:38:14.575Z",
+        "generatedAt": "2026-04-15T09:39:36.938Z",
         "reportPath": "artifacts/improvements/audit-report.json",
         "executionMode": "executed",
         "allowWrite": false,
-        "stepCount": 0,
-        "automaticStepCount": 0,
+        "stepCount": 1,
+        "automaticStepCount": 1,
         "manualStepCount": 0,
-        "passedStepCount": 0,
+        "passedStepCount": 1,
         "failedStepCount": 0,
         "blockedStepCount": 0,
         "plannedStepCount": 0,
         "outputs": [],
-        "steps": [],
-        "status": "not-selected"
+        "steps": [
+          {
+            "id": "application-performance-fast-gate",
+            "title": "Run the fast performance operations gate",
+            "trackId": "application-performance",
+            "phase": "audit",
+            "mode": "automatic",
+            "writes": false,
+            "status": "passed",
+            "outputs": [],
+            "instructions": [],
+            "script": "perf:ops:fast",
+            "durationMs": 33427
+          }
+        ],
+        "status": "passed"
       },
       {
         "phase": "classify",

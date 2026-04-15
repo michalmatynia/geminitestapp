@@ -30,6 +30,7 @@ import {
   type ProductScanAmazonProbe,
   type ProductScanBatchResponse,
   type ProductScanProvider,
+  type ProductScanRequestSequenceEntry,
   type ProductScanRecord,
   type ProductScanStatus,
   type ProductScanSupplierEvaluation,
@@ -57,6 +58,7 @@ import {
   type ProductScanner1688CandidateEvaluatorResolvedConfig,
   type ProductScannerAmazonCandidateEvaluatorResolvedConfig,
   resolveProductScanner1688CandidateEvaluatorConfig,
+  resolveProductScannerAmazonCandidateEvaluatorConfig,
   resolveProductScannerAmazonCandidateEvaluatorTriageConfig,
   resolveProductScannerAmazonCandidateEvaluatorExtractionConfig,
   resolveProductScannerAmazonCandidateEvaluatorProbeConfig,
@@ -94,6 +96,7 @@ import {
   createFailedBatchResult,
   persistSynchronizedScan,
   persistFailedSynchronization,
+  resolveProductScanRequestSequenceInput,
   tryDirectQueuedScanUpdate,
 } from './product-scans-service.helpers';
 
@@ -216,6 +219,58 @@ const resolveAmazonImageSearchProviderHistory = (
   const current = normalizeAmazonImageSearchProvider(rawRecord?.['imageSearchProvider']);
   return Array.from(new Set([...history, current ?? currentProvider, currentProvider]));
 };
+
+const mergeAmazonCandidateEvaluatorConfig = (
+  baseConfig: ProductScannerAmazonCandidateEvaluatorResolvedConfig,
+  overrideConfig?: Partial<ProductScannerAmazonCandidateEvaluatorResolvedConfig> | null
+): ProductScannerAmazonCandidateEvaluatorResolvedConfig => ({
+  enabled: overrideConfig?.enabled ?? baseConfig.enabled,
+  mode: overrideConfig?.mode ?? baseConfig.mode,
+  threshold: overrideConfig?.threshold ?? baseConfig.threshold,
+  onlyForAmbiguousCandidates:
+    overrideConfig?.onlyForAmbiguousCandidates ?? baseConfig.onlyForAmbiguousCandidates,
+  candidateSimilarityMode:
+    overrideConfig?.candidateSimilarityMode ?? baseConfig.candidateSimilarityMode,
+  allowedContentLanguage:
+    overrideConfig?.allowedContentLanguage ?? baseConfig.allowedContentLanguage,
+  rejectNonEnglishContent:
+    overrideConfig?.rejectNonEnglishContent ?? baseConfig.rejectNonEnglishContent,
+  languageDetectionMode:
+    overrideConfig?.languageDetectionMode ?? baseConfig.languageDetectionMode,
+  modelId: overrideConfig?.modelId ?? baseConfig.modelId,
+  systemPrompt: overrideConfig?.systemPrompt ?? baseConfig.systemPrompt,
+  brainApplied: overrideConfig?.brainApplied ?? baseConfig.brainApplied,
+});
+
+const resolveAmazonProbeEvaluatorConfig = async (
+  scannerSettings: ReturnType<typeof createDefaultProductScannerSettings>
+): Promise<ProductScannerAmazonCandidateEvaluatorResolvedConfig> =>
+  mergeAmazonCandidateEvaluatorConfig(
+    await resolveProductScannerAmazonCandidateEvaluatorConfig(scannerSettings),
+    await resolveProductScannerAmazonCandidateEvaluatorProbeConfig(scannerSettings).catch(
+      () => null
+    )
+  );
+
+const resolveAmazonTriageEvaluatorConfig = async (
+  scannerSettings: ReturnType<typeof createDefaultProductScannerSettings>
+): Promise<ProductScannerAmazonCandidateEvaluatorResolvedConfig> =>
+  mergeAmazonCandidateEvaluatorConfig(
+    await resolveProductScannerAmazonCandidateEvaluatorConfig(scannerSettings),
+    await resolveProductScannerAmazonCandidateEvaluatorTriageConfig(scannerSettings).catch(
+      () => null
+    )
+  );
+
+const resolveAmazonExtractionEvaluatorConfig = async (
+  scannerSettings: ReturnType<typeof createDefaultProductScannerSettings>
+): Promise<ProductScannerAmazonCandidateEvaluatorResolvedConfig> =>
+  mergeAmazonCandidateEvaluatorConfig(
+    await resolveProductScannerAmazonCandidateEvaluatorConfig(scannerSettings),
+    await resolveProductScannerAmazonCandidateEvaluatorExtractionConfig(scannerSettings).catch(
+      () => null
+    )
+  );
 
 const resolveAmazonImageSearchFallbackProvider = (input: {
   rawResult: unknown;
@@ -1116,12 +1171,22 @@ const buildAmazonScannerRequestRuntimeOptions = (input: {
   Parameters<typeof startPlaywrightEngineTask>[0]['request'],
   'personaId' | 'settingsOverrides' | 'launchOptions' | 'contextOptions'
 > => {
+  const scannerEngineRequestOptions =
+    input.scannerEngineRequestOptions &&
+    typeof input.scannerEngineRequestOptions === 'object'
+      ? (input.scannerEngineRequestOptions as {
+          settingsOverrides?: unknown;
+          launchOptions?: unknown;
+          contextOptions?: unknown;
+          personaId?: unknown;
+        })
+      : {};
   const existingSettingsOverrides =
-    toRecord(input.scannerEngineRequestOptions.settingsOverrides) ?? {};
-  const existingLaunchOptions = toRecord(input.scannerEngineRequestOptions.launchOptions) ?? {};
+    toRecord(scannerEngineRequestOptions.settingsOverrides) ?? {};
+  const existingLaunchOptions = toRecord(scannerEngineRequestOptions.launchOptions) ?? {};
   const existingContextOptions =
     toRecord(
-      (input.scannerEngineRequestOptions as { contextOptions?: unknown }).contextOptions
+      scannerEngineRequestOptions.contextOptions
     ) ?? {};
 
   const settingsOverrides: Record<string, unknown> = {
@@ -1159,8 +1224,9 @@ const buildAmazonScannerRequestRuntimeOptions = (input: {
   }
 
   return {
-    ...(input.scannerEngineRequestOptions.personaId
-      ? { personaId: input.scannerEngineRequestOptions.personaId }
+    ...(typeof scannerEngineRequestOptions.personaId === 'string' &&
+    scannerEngineRequestOptions.personaId.trim().length > 0
+      ? { personaId: scannerEngineRequestOptions.personaId }
       : {}),
     settingsOverrides,
     launchOptions,
@@ -1238,7 +1304,7 @@ async function synchronizeAmazonCaptchaRequired({
 
   let scannerSettings = createDefaultProductScannerSettings();
   try {
-    scannerSettings = await getProductScannerSettings();
+    scannerSettings = (await getProductScannerSettings()) ?? scannerSettings;
   } catch (error) {
     void ErrorSystem.captureException(error, {
       service: 'product-scans.service',
@@ -1277,13 +1343,16 @@ async function synchronizeAmazonCaptchaRequired({
     asinUpdateMessage: manualVerificationMessage,
     completedAt: null,
   });
+  const requestedStepSequenceInput = resolveProductScanRequestSequenceInput(
+    claimedScan.rawResult
+  );
 
   try {
     const amazonCandidateEvaluatorEnabled = (
-      await resolveProductScannerAmazonCandidateEvaluatorProbeConfig(scannerSettings)
+      await resolveAmazonProbeEvaluatorConfig(scannerSettings)
     ).enabled;
     const amazonCandidateTriageEnabled = (
-      await resolveProductScannerAmazonCandidateEvaluatorTriageConfig(scannerSettings)
+      await resolveAmazonTriageEvaluatorConfig(scannerSettings)
     ).enabled;
     const scannerEngineRequestOptions =
       buildProductScannerEngineRequestOptions(scannerSettings);
@@ -1309,6 +1378,7 @@ async function synchronizeAmazonCaptchaRequired({
           manualVerificationTimeoutMs,
           triageOnlyOnAmazonCandidates: amazonCandidateTriageEnabled,
           probeOnlyOnAmazonMatch: amazonCandidateEvaluatorEnabled,
+          ...requestedStepSequenceInput,
         }),
         timeoutMs: Math.max(
           AMAZON_SCAN_TIMEOUT_MS,
@@ -1355,6 +1425,7 @@ async function synchronizeAmazonCaptchaRequired({
           manualVerificationMessage: retryManualVerificationPending
             ? manualVerificationMessage
             : null,
+          ...requestedStepSequenceInput,
         }),
         captchaRetryStarted: true,
         ...(retryManualVerificationPending
@@ -1443,7 +1514,7 @@ async function synchronizeAmazonTriageReady({
   let scannerSettings = createDefaultProductScannerSettings();
   let scannerHeadless = true;
   try {
-    scannerSettings = await getProductScannerSettings();
+    scannerSettings = (await getProductScannerSettings()) ?? scannerSettings;
     scannerHeadless = await resolveProductScannerHeadless(scannerSettings);
   } catch (error) {
     void ErrorSystem.captureException(error, {
@@ -1456,8 +1527,8 @@ async function synchronizeAmazonTriageReady({
   }
 
   const currentProvider = resolveAmazonImageSearchProvider(scan.rawResult, scannerSettings);
-  const probeEvaluatorConfig =
-    await resolveProductScannerAmazonCandidateEvaluatorProbeConfig(scannerSettings);
+  const requestedStepSequenceInput = resolveProductScanRequestSequenceInput(scan.rawResult);
+  const probeEvaluatorConfig = await resolveAmazonProbeEvaluatorConfig(scannerSettings);
   const triageBaselineCandidates =
     parsedResult.candidateResults.length > 0
       ? parsedResult.candidateResults
@@ -1472,8 +1543,7 @@ async function synchronizeAmazonTriageReady({
       }));
 
   try {
-    const triageEvaluatorConfig =
-      await resolveProductScannerAmazonCandidateEvaluatorTriageConfig(scannerSettings);
+    const triageEvaluatorConfig = await resolveAmazonTriageEvaluatorConfig(scannerSettings);
     const triageEvaluation = triageEvaluatorConfig.enabled
       ? await triageAmazonScanCandidates({
         scan,
@@ -1599,13 +1669,14 @@ async function synchronizeAmazonTriageReady({
             productName: scan.productName,
             existingAsin: product.asin,
             imageCandidates: scan.imageCandidates,
-            imageSearchProvider: fallbackProvider,
-            allowManualVerification:
-              shouldAutoShowScannerCaptchaBrowser(scannerSettings) && !scannerHeadless,
-            manualVerificationTimeoutMs,
-            triageOnlyOnAmazonCandidates: triageEvaluatorConfig.enabled,
-            probeOnlyOnAmazonMatch: probeEvaluatorConfig.enabled,
-          }),
+          imageSearchProvider: fallbackProvider,
+          allowManualVerification:
+            shouldAutoShowScannerCaptchaBrowser(scannerSettings) && !scannerHeadless,
+          manualVerificationTimeoutMs,
+          triageOnlyOnAmazonCandidates: triageEvaluatorConfig.enabled,
+          probeOnlyOnAmazonMatch: probeEvaluatorConfig.enabled,
+          ...requestedStepSequenceInput,
+        }),
           timeoutMs: AMAZON_SCAN_TIMEOUT_MS,
           browserEngine: 'chromium',
           ...scannerRuntimeOptions,
@@ -1636,6 +1707,7 @@ async function synchronizeAmazonTriageReady({
             manualVerificationTimeoutMs,
             previousRunId: engineRunId,
             previousResult: triageRawResult,
+            ...requestedStepSequenceInput,
           }),
           providerFallback: true,
           fallbackFromImageSearchProvider: currentProvider,
@@ -1726,6 +1798,7 @@ async function synchronizeAmazonTriageReady({
             directAmazonCandidateUrls: selectedCandidateUrls,
             directMatchedImageId: parsedResult.matchedImageId,
             directAmazonCandidateRank: selectedCandidateRank,
+            ...requestedStepSequenceInput,
           }),
           timeoutMs: AMAZON_SCAN_TIMEOUT_MS,
           browserEngine: 'chromium',
@@ -1758,6 +1831,7 @@ async function synchronizeAmazonTriageReady({
             manualVerificationTimeoutMs,
             previousRunId: engineRunId,
             previousResult: triageRawResult,
+            ...requestedStepSequenceInput,
           }),
           candidateTriageSelectedUrls: selectedCandidateUrls,
         },
@@ -1918,7 +1992,7 @@ async function synchronizeAmazonProbeReady({
   let scannerSettings = createDefaultProductScannerSettings();
   let scannerHeadless = true;
   try {
-    scannerSettings = await getProductScannerSettings();
+    scannerSettings = (await getProductScannerSettings()) ?? scannerSettings;
     scannerHeadless = await resolveProductScannerHeadless(scannerSettings);
   } catch (error) {
     void ErrorSystem.captureException(error, {
@@ -1929,11 +2003,11 @@ async function synchronizeAmazonProbeReady({
       engineRunId,
     });
   }
+  const requestedStepSequenceInput = resolveProductScanRequestSequenceInput(scan.rawResult);
 
   let amazonEvaluation = existingAmazonEvaluation;
   try {
-    const evaluatorConfig =
-      await resolveProductScannerAmazonCandidateEvaluatorProbeConfig(scannerSettings);
+    const evaluatorConfig = await resolveAmazonProbeEvaluatorConfig(scannerSettings);
     let probeEvaluationRawResult: unknown = resultValue;
     if (evaluatorConfig.enabled) {
       amazonEvaluation = await evaluateAmazonScanCandidateMatch({
@@ -2034,12 +2108,9 @@ async function synchronizeAmazonProbeReady({
                     shouldAutoShowScannerCaptchaBrowser(scannerSettings) && !scannerHeadless,
                   manualVerificationTimeoutMs,
                   triageOnlyOnAmazonCandidates:
-                    (
-                      await resolveProductScannerAmazonCandidateEvaluatorTriageConfig(
-                        scannerSettings
-                      )
-                    ).enabled,
+                    (await resolveAmazonTriageEvaluatorConfig(scannerSettings)).enabled,
                   probeOnlyOnAmazonMatch: true,
+                  ...requestedStepSequenceInput,
                 }),
                 timeoutMs: AMAZON_SCAN_TIMEOUT_MS,
                 browserEngine: 'chromium',
@@ -2102,6 +2173,7 @@ async function synchronizeAmazonProbeReady({
                     manualVerificationTimeoutMs,
                     previousRunId: engineRunId,
                     previousResult: probeEvaluationRawResult,
+                    ...requestedStepSequenceInput,
                   }),
                   providerFallback: true,
                   fallbackFromImageSearchProvider: amazonImageSearchProvider,
@@ -2196,6 +2268,7 @@ async function synchronizeAmazonProbeReady({
                   directAmazonCandidateUrls: nextCandidate.remainingCandidateUrls,
                   directMatchedImageId: parsedResult.matchedImageId,
                   directAmazonCandidateRank: nextCandidate.nextRank,
+                  ...requestedStepSequenceInput,
                 }),
                 timeoutMs: AMAZON_SCAN_TIMEOUT_MS,
                 browserEngine: 'chromium',
@@ -2272,6 +2345,7 @@ async function synchronizeAmazonProbeReady({
                     manualVerificationTimeoutMs,
                     previousRunId: engineRunId,
                     previousResult: probeEvaluationRawResult,
+                    ...requestedStepSequenceInput,
                   }),
                   candidateRejectedByAi: true,
                   candidateContinuation: true,
@@ -2404,6 +2478,7 @@ async function synchronizeAmazonProbeReady({
               .slice()
               .reverse()
               .find((step) => step.key === 'amazon_probe')?.candidateRank ?? 1,
+          ...requestedStepSequenceInput,
         }),
         timeoutMs: AMAZON_SCAN_TIMEOUT_MS,
         browserEngine: 'chromium',
@@ -2468,6 +2543,7 @@ async function synchronizeAmazonProbeReady({
           manualVerificationTimeoutMs,
           previousRunId: engineRunId,
           previousResult: probeEvaluationRawResult,
+          ...requestedStepSequenceInput,
         }),
         approvedCandidateExtraction: true,
         approvedCandidateUrl: resolvedProbeUrl,
@@ -2565,6 +2641,7 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
 
     const { resultValue, finalUrl } = resolvePlaywrightEngineRunOutputs(run.result);
     const parsedResult = parseAmazonScanScriptResult(resultValue);
+    const requestedStepSequenceInput = resolveProductScanRequestSequenceInput(scan.rawResult);
     const existingAmazonEvaluation = scan.amazonEvaluation ?? null;
     const approvedCandidateProbe =
       isApprovedAmazonCandidateExtractionRun(scan) ? scan.amazonProbe ?? null : null;
@@ -2836,7 +2913,7 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
     let scannerSettings = createDefaultProductScannerSettings();
     let scannerHeadless = true;
     try {
-      scannerSettings = await getProductScannerSettings();
+      scannerSettings = (await getProductScannerSettings()) ?? scannerSettings;
       scannerHeadless = await resolveProductScannerHeadless(scannerSettings);
     } catch (error) {
       void ErrorSystem.captureException(error, {
@@ -2850,8 +2927,7 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
 
     let extractionEvaluationRawResult: unknown = resultValue;
     try {
-      const evaluatorConfig =
-        await resolveProductScannerAmazonCandidateEvaluatorExtractionConfig(scannerSettings);
+      const evaluatorConfig = await resolveAmazonExtractionEvaluatorConfig(scannerSettings);
       if (evaluatorConfig.enabled && !isApprovedAmazonCandidateExtractionRun(scan)) {
         amazonEvaluation = await evaluateAmazonScanCandidateMatch({
           scan,
@@ -2950,17 +3026,10 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
                     shouldAutoShowScannerCaptchaBrowser(scannerSettings) && !scannerHeadless,
                   manualVerificationTimeoutMs,
                   triageOnlyOnAmazonCandidates:
-                    (
-                      await resolveProductScannerAmazonCandidateEvaluatorTriageConfig(
-                        scannerSettings
-                      )
-                    ).enabled,
+                    (await resolveAmazonTriageEvaluatorConfig(scannerSettings)).enabled,
                   probeOnlyOnAmazonMatch:
-                    (
-                      await resolveProductScannerAmazonCandidateEvaluatorProbeConfig(
-                        scannerSettings
-                      )
-                    ).enabled,
+                    (await resolveAmazonProbeEvaluatorConfig(scannerSettings)).enabled,
+                  ...requestedStepSequenceInput,
                 }),
                 timeoutMs: AMAZON_SCAN_TIMEOUT_MS,
                 browserEngine: 'chromium',
@@ -3022,6 +3091,7 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
                     manualVerificationTimeoutMs,
                     previousRunId: engineRunId,
                     previousResult: extractionEvaluationRawResult,
+                    ...requestedStepSequenceInput,
                   }),
                   providerFallback: true,
                   fallbackFromImageSearchProvider: amazonImageSearchProvider,
@@ -3075,6 +3145,7 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
                   directAmazonCandidateUrls: nextCandidate.remainingCandidateUrls,
                   directMatchedImageId: parsedResult.matchedImageId,
                   directAmazonCandidateRank: nextCandidate.nextRank,
+                  ...requestedStepSequenceInput,
                 }),
                 timeoutMs: AMAZON_SCAN_TIMEOUT_MS,
                 browserEngine: 'chromium',
@@ -3140,6 +3211,7 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
                     manualVerificationTimeoutMs,
                     previousRunId: engineRunId,
                     previousResult: extractionEvaluationRawResult,
+                    ...requestedStepSequenceInput,
                   }),
                   candidateRejectedByAi: true,
                   candidateContinuation: true,
@@ -3518,7 +3590,7 @@ async function synchronize1688ProductScan(scan: ProductScanRecord): Promise<Prod
 
     let scannerSettings = createDefaultProductScannerSettings();
     try {
-      scannerSettings = await getProductScannerSettings();
+      scannerSettings = (await getProductScannerSettings()) ?? scannerSettings;
     } catch (error) {
       void ErrorSystem.captureException(error, {
         service: 'product-scans.service',
@@ -3795,6 +3867,8 @@ type BatchQueueProviderConfig = {
     amazonCandidateEvaluatorEnabled: boolean;
     amazonCandidateTriageEnabled: boolean;
     scannerSettings: ReturnType<typeof createDefaultProductScannerSettings>;
+    stepSequenceKey?: string | null;
+    stepSequence?: ProductScanRequestSequenceEntry[] | null;
   }) => Record<string, unknown>;
 };
 
@@ -3886,6 +3960,8 @@ const queueProviderBatchProductScans = async (input: {
   productIds: string[];
   userId?: string | null;
   connectionId?: string | null;
+  stepSequenceKey?: string | null;
+  stepSequence?: ProductScanRequestSequenceEntry[] | null;
   config: BatchQueueProviderConfig;
 }): Promise<ProductScanBatchResponse> => {
   const productIds = Array.from(
@@ -3900,14 +3976,14 @@ const queueProviderBatchProductScans = async (input: {
   let amazonCandidateEvaluatorEnabled = false;
   let amazonCandidateTriageEnabled = false;
   try {
-    scannerSettings = await getProductScannerSettings();
+    scannerSettings = (await getProductScannerSettings()) ?? scannerSettings;
     scannerHeadless = await resolveProductScannerHeadless(scannerSettings);
     if (input.config.provider === 'amazon') {
       amazonCandidateEvaluatorEnabled = (
-        await resolveProductScannerAmazonCandidateEvaluatorProbeConfig(scannerSettings)
+        await resolveAmazonProbeEvaluatorConfig(scannerSettings)
       ).enabled;
       amazonCandidateTriageEnabled = (
-        await resolveProductScannerAmazonCandidateEvaluatorTriageConfig(scannerSettings)
+        await resolveAmazonTriageEvaluatorConfig(scannerSettings)
       ).enabled;
     }
   } catch (error) {
@@ -4074,6 +4150,8 @@ const queueProviderBatchProductScans = async (input: {
             amazonCandidateEvaluatorEnabled,
             amazonCandidateTriageEnabled,
             scannerSettings,
+            stepSequenceKey: input.stepSequenceKey ?? null,
+            stepSequence: input.stepSequence ?? null,
           });
           const timeoutMs = allowManualVerification
             ? Math.max(
@@ -4152,6 +4230,7 @@ const queueProviderBatchProductScans = async (input: {
             ),
             allowManualVerification,
             manualVerificationTimeoutMs,
+            ...resolveProductScanRequestSequenceInput(requestInput),
           });
 
           let saved: ProductScanRecord;
@@ -4442,10 +4521,14 @@ const queueProviderBatchProductScans = async (input: {
 export async function queueAmazonBatchProductScans(input: {
   productIds: string[];
   userId?: string | null;
+  stepSequenceKey?: string | null;
+  stepSequence?: ProductScanRequestSequenceEntry[] | null;
 }): Promise<ProductAmazonBatchScanResponse> {
   return await queueProviderBatchProductScans({
     productIds: input.productIds,
     userId: input.userId,
+    stepSequenceKey: input.stepSequenceKey ?? null,
+    stepSequence: input.stepSequence ?? null,
     config: {
       provider: 'amazon',
       runtime: amazonScanRuntime,
@@ -4470,6 +4553,8 @@ export async function queueAmazonBatchProductScans(input: {
         amazonCandidateEvaluatorEnabled,
         amazonCandidateTriageEnabled,
         scannerSettings: _scannerSettings,
+        stepSequenceKey,
+        stepSequence,
       }) =>
         amazonScanRuntime.buildRequestInput({
           productId: product?.id,
@@ -4482,6 +4567,8 @@ export async function queueAmazonBatchProductScans(input: {
           manualVerificationTimeoutMs,
           triageOnlyOnAmazonCandidates: amazonCandidateTriageEnabled,
           probeOnlyOnAmazonMatch: amazonCandidateEvaluatorEnabled,
+          stepSequenceKey,
+          stepSequence,
         }),
     },
   });
@@ -4491,11 +4578,15 @@ export async function queue1688BatchProductScans(input: {
   productIds: string[];
   userId?: string | null;
   connectionId?: string | null;
+  stepSequenceKey?: string | null;
+  stepSequence?: ProductScanRequestSequenceEntry[] | null;
 }): Promise<ProductScanBatchResponse> {
   return await queueProviderBatchProductScans({
     productIds: input.productIds,
     userId: input.userId,
     connectionId: input.connectionId,
+    stepSequenceKey: input.stepSequenceKey ?? null,
+    stepSequence: input.stepSequence ?? null,
     config: {
       provider: '1688',
       runtime: supplierScanRuntime,
@@ -4518,6 +4609,8 @@ export async function queue1688BatchProductScans(input: {
         connectionId,
         connection,
         scannerSettings,
+        stepSequenceKey,
+        stepSequence,
       }) =>
         supplierScanRuntime.buildRequestInput({
           productId: product?.id,
@@ -4543,6 +4636,8 @@ export async function queue1688BatchProductScans(input: {
           allowUrlImageSearchFallback:
             connection?.scanner1688AllowUrlImageSearchFallback ??
             scannerSettings.scanner1688?.allowUrlImageSearchFallback,
+          stepSequenceKey,
+          stepSequence,
         }),
     },
   });

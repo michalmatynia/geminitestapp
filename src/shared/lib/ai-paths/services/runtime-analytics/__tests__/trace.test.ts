@@ -160,6 +160,7 @@ describe('runtime trace analytics', () => {
         sampledHistoryEntries: 2,
         strategyCounts: {
           code_object_v3: 1,
+          compatibility: 0,
           unknown: 1,
         },
         resolutionSourceCounts: {

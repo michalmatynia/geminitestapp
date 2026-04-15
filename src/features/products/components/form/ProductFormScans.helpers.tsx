@@ -1,4 +1,4 @@
-'use client';
+
 
 import type { ProductCustomFieldDefinition } from '@/shared/contracts/products/custom-fields';
 import type { ProductScanRecord, ProductScanStatus } from '@/shared/contracts/product-scans';

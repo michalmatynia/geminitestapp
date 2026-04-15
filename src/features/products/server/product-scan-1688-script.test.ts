@@ -82,10 +82,10 @@ describe('SCAN_1688_REVERSE_IMAGE_SCRIPT', () => {
       'if (textSuggestsBarrier && candidateUrls.length === 0) {'
     );
     expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain(
-      'const hardBlockingSelectors = ['
+      'const SUPPLIER_1688_HARD_BLOCKING_SELECTORS = ['
     );
     expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain(
-      'const softBlockingSelectors = ['
+      'const SUPPLIER_1688_SOFT_BLOCKING_SELECTORS = ['
     );
     expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain(
       'if (visibleSoftBlockingSelector && !hasStrongReadySignal) {'
@@ -123,6 +123,15 @@ describe('SCAN_1688_REVERSE_IMAGE_SCRIPT', () => {
     expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain(
       'const apply1688NaturalBrowserSetup = async () => {'
     );
+    expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain('const PRODUCT_SCAN_STEP_REGISTRY =');
+    expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain('seedProductScanStepSequence({');
+    expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain("'supplier_direct_candidate_followup'");
+    expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain(
+      "'supplier_reverse_image_scan_browser'"
+    );
+    expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain("key: 'supplier_overlays'");
+    expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain("key: 'supplier_content_ready'");
+    expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain("attempt: candidateRank");
     expect(SCAN_1688_REVERSE_IMAGE_SCRIPT).toContain(
       "'Accept-Language': 'zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7'"
     );

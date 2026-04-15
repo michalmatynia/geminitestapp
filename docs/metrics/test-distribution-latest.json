@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-11T17:22:03.377Z",
+  "generatedAt": "2026-04-15T09:38:15.453Z",
   "status": "passed",
   "summary": {
     "total": 32,
@@ -12,7 +12,7 @@
     "featuresWithoutTestCount": 0,
     "featuresWithoutFastTestCount": 0,
     "featuresWithoutNegativeTestCount": 0,
-    "totalTestFiles": 3530,
+    "totalTestFiles": 3584,
     "onlyCount": 0,
     "skipCount": 32,
     "todoCount": 0
@@ -35,24 +35,24 @@
     },
     {
       "feature": "ai",
-      "testCount": 402,
-      "fastTestCount": 402,
+      "testCount": 405,
+      "fastTestCount": 405,
       "e2eTestCount": 0,
-      "negativePathTestCount": 170
+      "negativePathTestCount": 171
     },
     {
       "feature": "products",
-      "testCount": 184,
-      "fastTestCount": 176,
+      "testCount": 204,
+      "fastTestCount": 196,
       "e2eTestCount": 8,
-      "negativePathTestCount": 70
+      "negativePathTestCount": 76
     },
     {
       "feature": "integrations",
-      "testCount": 173,
-      "fastTestCount": 172,
+      "testCount": 186,
+      "fastTestCount": 185,
       "e2eTestCount": 1,
-      "negativePathTestCount": 63
+      "negativePathTestCount": 72
     },
     {
       "feature": "case-resolver",
@@ -167,6 +167,13 @@
       "negativePathTestCount": 3
     },
     {
+      "feature": "product-sync",
+      "testCount": 5,
+      "fastTestCount": 5,
+      "e2eTestCount": 0,
+      "negativePathTestCount": 3
+    },
+    {
       "feature": "app-embeds",
       "testCount": 3,
       "fastTestCount": 3,
@@ -179,13 +186,6 @@
       "fastTestCount": 3,
       "e2eTestCount": 0,
       "negativePathTestCount": 1
-    },
-    {
-      "feature": "product-sync",
-      "testCount": 3,
-      "fastTestCount": 3,
-      "e2eTestCount": 0,
-      "negativePathTestCount": 3
     },
     {
       "feature": "tooltip-engine",
@@ -528,5 +528,5 @@
       "infoCount": 32
     }
   ],
-  "durationMs": 442
+  "durationMs": 1153
 }

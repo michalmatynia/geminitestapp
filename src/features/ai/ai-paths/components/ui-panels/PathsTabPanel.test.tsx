@@ -66,13 +66,13 @@ vi.mock('../../context', () => ({
 
 vi.mock('../ai-paths-settings/AiPathsMasterTreePanel', () => ({
   AiPathsMasterTreePanel: ({
-    handleSwitchPath,
+    adapter,
     onPathOpen,
     pathClickBehavior,
     renderHeaderActions,
     showPathHoverActions,
   }: {
-    handleSwitchPath: (pathId: string) => void;
+    adapter: { handleSwitchPath: (pathId: string) => void };
     onPathOpen?: (pathId: string) => void;
     pathClickBehavior?: 'open' | 'select';
     renderHeaderActions?: (input: { selectedFolderPath: string }) => React.ReactNode;
@@ -87,7 +87,7 @@ vi.mock('../ai-paths-settings/AiPathsMasterTreePanel', () => ({
         type='button'
         onClick={() => {
           if (pathClickBehavior === 'open') {
-            handleSwitchPath('path-main');
+            adapter.handleSwitchPath('path-main');
           }
         }}
       >
@@ -96,7 +96,7 @@ vi.mock('../ai-paths-settings/AiPathsMasterTreePanel', () => ({
       <button
         type='button'
         onClick={() => {
-          handleSwitchPath('path-main');
+          adapter.handleSwitchPath('path-main');
           onPathOpen?.('path-main');
         }}
       >

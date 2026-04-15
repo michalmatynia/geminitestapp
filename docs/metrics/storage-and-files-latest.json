@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-11T17:22:24.772Z",
+  "generatedAt": "2026-04-15T09:38:38.378Z",
   "status": "passed",
   "summary": {
     "total": 0,
@@ -7,7 +7,7 @@
     "warningCount": 0,
     "infoCount": 0,
     "status": "passed",
-    "fileCount": 7244,
+    "fileCount": 7325,
     "codeUploadRootCount": 10,
     "runtimeUploadRootCount": 9,
     "dynamicReadRiskCount": 0
@@ -1289,12 +1289,6 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/app/(admin)/admin/products/builder/loading.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
       "file": "src/app/(admin)/admin/products/import/loading.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -1302,12 +1296,6 @@
     },
     {
       "file": "src/app/(admin)/admin/products/import/page.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/app/(admin)/admin/products/jobs/loading.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -2778,6 +2766,24 @@
     },
     {
       "file": "src/app/api/ai-paths/runs/[runId]/handoff/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/ai-paths/runs/[runId]/result/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/ai-paths/runs/[runId]/result/route-handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/ai-paths/runs/[runId]/result/route.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -6845,6 +6851,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/app/api/v2/integrations/[id]/connections/[connectionId]/test/handler.1688-browser.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/app/api/v2/integrations/[id]/connections/[connectionId]/test/handler.linkedin.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -6882,6 +6894,12 @@
     },
     {
       "file": "src/app/api/v2/integrations/[id]/connections/[connectionId]/test/route.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/v2/integrations/[id]/connections/[connectionId]/test/types.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -6954,6 +6972,30 @@
     },
     {
       "file": "src/app/api/v2/integrations/connections/[id]/session/route.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/v2/integrations/exports/1688/[setting]/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/v2/integrations/exports/1688/[setting]/route-handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/v2/integrations/exports/1688/[setting]/route.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/v2/integrations/exports/1688/default-connection/handler.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -7907,6 +7949,18 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/app/api/v2/products/[id]/sync/base/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/v2/products/[id]/sync/base/route-handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/app/api/v2/products/ai-jobs/[jobId]/handler.helpers.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -8046,18 +8100,6 @@
     },
     {
       "file": "src/app/api/v2/products/categories/handler.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/app/api/v2/products/categories/migrate/handler.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/app/api/v2/products/categories/migrate/route-handler.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -8393,6 +8435,18 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/app/api/v2/products/parameters/batch/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/v2/products/parameters/batch/route-handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/app/api/v2/products/parameters/handler.helpers.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -8448,6 +8502,42 @@
     },
     {
       "file": "src/app/api/v2/products/route-handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/v2/products/scans/1688/batch/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/v2/products/scans/1688/batch/route-handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/v2/products/scans/[scanId]/artifacts/[artifactName]/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/v2/products/scans/[scanId]/artifacts/[artifactName]/route-handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/v2/products/scans/[scanId]/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/v2/products/scans/[scanId]/route-handler.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -11921,6 +12011,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/ai/ai-paths/pages/__tests__/AdminAiPathsTriggerButtonsPage.test-support.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/ai/ai-paths/pages/dead-letter-utils.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -12181,7 +12277,7 @@
     {
       "file": "src/features/ai/ai-paths/services/playwright-node-runner.ts",
       "dynamicPublicResolvers": 0,
-      "readOps": 4,
+      "readOps": 6,
       "strongRootGuard": false
     },
     {
@@ -18965,6 +19061,18 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/filemaker/components/FilemakerMailSidebarContext.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/filemaker/components/FilemakerMailSidebarNode.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/filemaker/components/page/FilemakerEmailsSection.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -19326,12 +19434,6 @@
     },
     {
       "file": "src/features/filemaker/pages/campaign-edit-sections/DeliveryGovernanceSection.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -20159,6 +20261,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/integrations/components/listings/TraderaStatusCheckModalContext.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/integrations/components/listings/createStrictViewContext.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -20178,6 +20286,12 @@
     },
     {
       "file": "src/features/integrations/components/listings/hooks/useIntegrationSelection.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/integrations/components/listings/hooks/useIntegrationSelectorProps.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -20718,6 +20832,12 @@
     },
     {
       "file": "src/features/integrations/hooks/useProductListingMutations.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/integrations/hooks/useTraderaLiveExecution.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -24935,6 +25055,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/social/admin/workspace/SocialCaptureBrowserContext.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/social/admin/workspace/SocialCaptureBrowserPanel.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -27551,6 +27677,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/ui/components/NumberBalanceRushGameContext.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/ui/components/PageNotFound.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -28439,6 +28571,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/ui/components/assignment-manager/KangurAssignmentItemContext.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.cards.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -28458,12 +28596,6 @@
     },
     {
       "file": "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.hooks.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.modals.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -29064,6 +29196,12 @@
     },
     {
       "file": "src/features/kangur/ui/components/game-setup/KangurGameOperationRecommendationCard.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/game-setup/KangurGameOperationSelectorContext.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -31151,6 +31289,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/ui/pages/GamesLibrary.context.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/ui/pages/GamesLibrary.filters.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -31188,6 +31332,12 @@
     },
     {
       "file": "src/features/kangur/ui/pages/GamesLibraryGameModal.components.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/pages/GamesLibraryGameModal.context.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -32243,6 +32393,36 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/playwright/components/step-sequencer/ActionConstructorEngine.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/playwright/components/step-sequencer/StepListFilters.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/playwright/components/step-sequencer/StepListHeader.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/playwright/components/step-sequencer/StepListTable.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/playwright/components/step-sequencer/StepListTableSkeleton.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/playwright/constants/playwright.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -32256,6 +32436,18 @@
     },
     {
       "file": "src/features/playwright/context/PlaywrightSettingsContext.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/playwright/context/PlaywrightStepSequencerContext.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/playwright/context/PlaywrightStepSequencerContext.types.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -32304,6 +32496,12 @@
     },
     {
       "file": "src/features/playwright/hooks/usePlaywrightPersonas.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/playwright/hooks/usePlaywrightStepSequencerState.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -32543,6 +32741,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/playwright/step-sequencer-master-tree.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/playwright/ui.public.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -32567,6 +32771,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/product-sync/hooks/useProductBaseSync.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/product-sync/hooks/useProductSyncSettings.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -32580,6 +32790,12 @@
     },
     {
       "file": "src/features/product-sync/server.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/product-sync/services/product-sync-processor.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -32741,12 +32957,6 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/features/products/components/constructor/ParametersSettings.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
       "file": "src/features/products/components/form/CatalogMultiSelectField.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -32801,6 +33011,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/products/components/form/ProductFormLatestAmazonExtraction.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/products/components/form/ProductFormMarketplaceCopy.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -32813,6 +33029,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/products/components/form/ProductFormNotes.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/products/components/form/ProductFormOther.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -32820,6 +33042,12 @@
     },
     {
       "file": "src/features/products/components/form/ProductFormParameters.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/products/components/form/ProductFormScans.helpers.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -33095,13 +33323,43 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/products/components/scans/ProductScan1688ApplyPanel.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/products/components/scans/ProductScan1688Details.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/products/components/scans/ProductScanAmazonDetails.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
+      "file": "src/features/products/components/scans/ProductScanAmazonExtractedFieldsPanel.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/products/components/scans/ProductScanDiagnostics.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/products/components/scans/ProductScanSteps.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/products/components/scans/useProductScan1688ReviewState.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -33234,6 +33492,12 @@
     },
     {
       "file": "src/features/products/components/settings/modals/price-group-modal/hooks/usePriceGroupForm.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/products/components/settings/parameters/ParametersSettings.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -33989,6 +34253,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/products/lib/extractTranslationEnPlFromAiPathRunDetail.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/products/lib/leafCategoryHierarchy.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -34067,6 +34337,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/products/pages/AdminProductOrdersImportPage.context.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/products/pages/AdminProductOrdersImportPage.hooks.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -34116,12 +34392,6 @@
     },
     {
       "file": "src/features/products/pages/AdminProductsPageView.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/products/pages/ProductConstructorPage.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -34271,10 +34541,52 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/products/server/parts/product-scan-1688-script.part1.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/products/server/parts/product-scan-amazon-script.part1.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/products/server/parts/product-scan-amazon-script.part2.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/products/server/product-orders-import-preview.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
+    },
+    {
+      "file": "src/features/products/server/product-scan-1688-evaluator.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 1,
+      "strongRootGuard": true
+    },
+    {
+      "file": "src/features/products/server/product-scan-1688-script.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/products/server/product-scan-1688.helpers.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/products/server/product-scan-amazon-evaluator.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 1,
+      "strongRootGuard": true
     },
     {
       "file": "src/features/products/server/product-scan-amazon-script.ts",
@@ -34284,6 +34596,18 @@
     },
     {
       "file": "src/features/products/server/product-scan-amazon.helpers.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/products/server/product-scan-providers.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/products/server/product-scan-shared.helpers.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -34299,6 +34623,12 @@
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
+    },
+    {
+      "file": "src/features/products/server/product-scans-service.helpers.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 1,
+      "strongRootGuard": true
     },
     {
       "file": "src/features/products/server/product-scans-service.ts",
@@ -36089,6 +36419,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/shared/contracts/integrations/base-export-fields.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/shared/contracts/integrations/base-import.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -36576,6 +36912,12 @@
     },
     {
       "file": "src/shared/contracts/persona-memory.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/contracts/playwright-steps.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -37212,6 +37554,12 @@
     },
     {
       "file": "src/shared/hooks/useDraftQueries.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/hooks/useFocusTrap.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -38051,6 +38399,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/shared/lib/ai-paths/core/runtime/handlers/database-write-policies.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/shared/lib/ai-paths/core/runtime/handlers/function-node.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -38477,7 +38831,7 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/shared/lib/ai-paths/core/starter-workflows/segments/legacy-repair.ts",
+      "file": "src/shared/lib/ai-paths/core/starter-workflows/segments/structural-matchers.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -38885,13 +39239,13 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/shared/lib/ai-paths/legacy-trigger-context-mode-persistence.ts",
+      "file": "src/shared/lib/ai-paths/local-runs.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/shared/lib/ai-paths/local-runs.ts",
+      "file": "src/shared/lib/ai-paths/marketplace-copy-debrand.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -39491,6 +39845,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/shared/lib/api/timing-utils.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/shared/lib/api-client.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -39552,6 +39912,120 @@
     },
     {
       "file": "src/shared/lib/browser/client-cookies.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/browser-execution/action-constructor.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/browser-execution/action-sequences.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/browser-execution/generate-browser-steps.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/browser-execution/index.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/browser-execution/product-scan-step-sequencer.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/browser-execution/selectors/amazon.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/browser-execution/selectors/index.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/browser-execution/selectors/supplier-1688.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/browser-execution/selectors/tradera.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/browser-execution/selectors/vinted.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/browser-execution/sequencers/PlaywrightSequencer.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/browser-execution/sequencers/ProductScanSequencer.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/browser-execution/sequencers/Supplier1688ScanSequencer.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/browser-execution/sequencers/TraderaSequencer.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/browser-execution/sequencers/VintedSequencer.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/browser-execution/step-groups.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/browser-execution/step-registry.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/browser-execution/step-tracker.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -41027,6 +41501,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/shared/lib/playwright/anti-detection.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/shared/lib/playwright/browser-launch.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -41034,6 +41514,12 @@
     },
     {
       "file": "src/shared/lib/playwright/personas.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/playwright/proxy-affinity.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -41154,12 +41640,6 @@
     },
     {
       "file": "src/shared/lib/products/services/product-ai-job-repository/mongo-product-ai-job-repository.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/shared/lib/products/services/product-migration.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -41868,6 +42348,12 @@
     },
     {
       "file": "src/shared/lib/vector-drawing/useShapeHistory.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/providers/AccessibilityProvider.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -43507,5 +43993,5 @@
   ],
   "issues": [],
   "rules": [],
-  "durationMs": 2880
+  "durationMs": 3095
 }

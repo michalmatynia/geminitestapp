@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-11'
+last_reviewed: '2026-04-15'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,26 +8,29 @@ canonical: true
 ---
 # API Input Validation Check
 
-Generated at: 2026-04-11T17:22:01.512Z
+Generated at: 2026-04-15T09:38:12.826Z
 
 ## Summary
 
-- Status: PASSED
-- Files scanned: 1138
-- Total handlers: 1012
-- Validated handlers: 1012
+- Status: WARN
+- Files scanned: 1155
+- Total handlers: 1027
+- Validated handlers: 1027
 - **Coverage: 100%**
 - Errors: 0
-- Warnings: 0
+- Warnings: 1
 
 ## Rule Breakdown
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
+| url-param-unvalidated | 0 | 1 | 0 |
 
 ## Issues
 
-All API handlers have proper input validation.
+| Severity | Rule | Location | Message |
+| --- | --- | --- | --- |
+| WARN | url-param-unvalidated | src/app/api/v2/products/scans/[scanId]/handler.ts | Dynamic route param "scanId" is used without Zod validation. |
 
 ## Notes
 

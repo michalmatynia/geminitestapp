@@ -231,9 +231,9 @@ const handleModel: NodeHandler = async ({
     } else if (typeof error === 'object' && error !== null && 'message' in error && typeof error.message === 'string' && error.message.trim().length > 0) {
       // Try to get message from object if it's not a standard Error but has a message property
       errorMessage = error.message.trim();
-    } else if (typeof error === 'object' && error !== null && 'error' in error && typeof (error as any).error === 'string' && (error as any).error.trim().length > 0) {
+    } else if (typeof error === 'object' && error !== null && 'error' in error && typeof (error as { error: unknown }).error === 'string' && (error as { error: string }).error.trim().length > 0) {
       // Attempt to get error from payload structure if available (like ApiError)
-      errorMessage = (error as any).error.trim();
+      errorMessage = (error as { error: string }).error.trim();
     }
 
     // Ensure a meaningful message is always displayed

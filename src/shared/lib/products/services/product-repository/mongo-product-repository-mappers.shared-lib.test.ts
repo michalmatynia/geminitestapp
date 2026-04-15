@@ -117,6 +117,10 @@ describe('mongo product repository mappers shared-lib coverage', () => {
       updatedAt: new Date('2026-01-02T00:00:00.000Z'),
       catalogId: 'catalog-1',
       published: true,
+      notes: {
+        text: 'Internal note',
+        color: '#fde68a',
+      },
       noteIds: ['note-1', 'note-2'],
       tags: [
         {
@@ -137,6 +141,10 @@ describe('mongo product repository mappers shared-lib coverage', () => {
     } as ProductDocument);
 
     expect(result.noteIds).toEqual(['note-1', 'note-2']);
+    expect(result.notes).toEqual({
+      text: 'Internal note',
+      color: '#fde68a',
+    });
     expect(result.importSource).toBe('base');
     expect(result.images).toEqual([]);
     expect(result.tags).toEqual([

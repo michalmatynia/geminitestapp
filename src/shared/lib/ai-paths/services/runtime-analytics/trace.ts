@@ -47,6 +47,7 @@ export const emptyTraceAnalytics = (): AiPathRuntimeTraceAnalytics => ({
     sampledHistoryEntries: 0,
     strategyCounts: {
       code_object_v3: 0,
+      compatibility: 0,
       unknown: 0,
     },
     resolutionSourceCounts: {
@@ -85,6 +86,7 @@ const extractRuntimeTraceKernelParity = (
     sampledHistoryEntries: normalizeNonNegativeInteger(kernelParity['sampledHistoryEntries']),
     strategyCounts: {
       code_object_v3: normalizeNonNegativeInteger(strategyCounts?.['code_object_v3']),
+      compatibility: normalizeNonNegativeInteger(strategyCounts?.['compatibility']),
       unknown: normalizeNonNegativeInteger(strategyCounts?.['unknown']),
     },
     resolutionSourceCounts: {
@@ -140,6 +142,7 @@ const createRuntimeTraceSummaryState = (
     sampledHistoryEntries: 0,
     strategyCounts: {
       code_object_v3: 0,
+      compatibility: 0,
       unknown: 0,
     },
     resolutionSourceCounts: {
@@ -160,6 +163,7 @@ const mergeRuntimeTraceKernelParity = (
   state.kernelParity.runsWithKernelParity += 1;
   state.kernelParity.sampledHistoryEntries += parity.sampledHistoryEntries;
   state.kernelParity.strategyCounts.code_object_v3 += parity.strategyCounts.code_object_v3;
+  state.kernelParity.strategyCounts.compatibility += parity.strategyCounts.compatibility;
   state.kernelParity.strategyCounts.unknown += parity.strategyCounts.unknown;
   state.kernelParity.resolutionSourceCounts.override += parity.resolutionSourceCounts.override;
   state.kernelParity.resolutionSourceCounts.registry += parity.resolutionSourceCounts.registry;

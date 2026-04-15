@@ -407,6 +407,54 @@ describe('product-scans-service batch operations', () => {
     );
   });
 
+  it('forwards custom Amazon step sequence settings into the Playwright request', async () => {
+    mocks.findLatestActiveProductScanMock.mockResolvedValue(null);
+    mocks.getProductByIdMock.mockResolvedValue({
+      id: 'product-1',
+      name_en: 'Sequence Product',
+      images: [
+        {
+          id: 'image-1',
+          imageFile: {
+            id: 'file-1',
+            filename: 'img.jpg',
+            filepath: '/img.jpg',
+            mimetype: 'image/jpeg',
+            size: 100,
+          },
+        },
+      ],
+    });
+    mocks.startPlaywrightEngineTaskMock.mockResolvedValue({
+      runId: 'run-sequence',
+      status: 'queued',
+    });
+    mocks.upsertProductScanMock.mockImplementation(
+      async (input: any) => ({
+        ...input,
+        id: input.id || 'scan-sequence',
+      })
+    );
+
+    await queueAmazonBatchProductScans({
+      productIds: ['product-1'],
+      userId: 'user-1',
+      stepSequenceKey: 'amazon_direct_candidate_followup',
+      stepSequence: [{ key: 'validate', label: 'Validate trigger button' }],
+    });
+
+    expect(mocks.startPlaywrightEngineTaskMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        request: expect.objectContaining({
+          input: expect.objectContaining({
+            stepSequenceKey: 'amazon_direct_candidate_followup',
+            stepSequence: [{ key: 'validate', label: 'Validate trigger button' }],
+          }),
+        }),
+      })
+    );
+  });
+
   it('preserves the scanner browser launch choice for Amazon scans instead of overriding it', async () => {
     mocks.findLatestActiveProductScanMock.mockResolvedValue(null);
     mocks.getProductScannerSettingsMock.mockResolvedValue({
@@ -561,6 +609,52 @@ describe('product-scans-service batch operations', () => {
           inputDelayMax: 160,
           actionDelayMin: 250,
           actionDelayMax: 900,
+        }),
+      })
+    );
+  });
+
+  it('forwards custom 1688 step sequence settings into the Playwright request', async () => {
+    mocks.findLatestActiveProductScanMock.mockResolvedValue(null);
+    mocks.getProductByIdMock.mockResolvedValue({
+      id: 'product-1',
+      name_en: 'Supplier Sequence Product',
+      images: [
+        {
+          id: 'image-1',
+          imageFile: {
+            id: 'file-1',
+            filename: 'img.jpg',
+            filepath: '/img.jpg',
+            mimetype: 'image/jpeg',
+            size: 100,
+          },
+        },
+      ],
+    });
+    mocks.upsertProductScanMock.mockImplementation(
+      async (input: any) => ({
+        ...input,
+        id: input.id || 'scan-1688-sequence',
+      })
+    );
+
+    await queue1688BatchProductScans({
+      productIds: ['product-1'],
+      userId: 'user-1',
+      stepSequenceKey: 'supplier_direct_candidate_followup',
+      stepSequence: [{ key: 'supplier_probe', label: 'Probe direct supplier candidate' }],
+    });
+
+    expect(mocks.startPlaywrightConnectionEngineTaskMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        request: expect.objectContaining({
+          input: expect.objectContaining({
+            stepSequenceKey: 'supplier_direct_candidate_followup',
+            stepSequence: [
+              { key: 'supplier_probe', label: 'Probe direct supplier candidate' },
+            ],
+          }),
         }),
       })
     );

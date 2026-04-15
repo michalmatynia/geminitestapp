@@ -46,6 +46,7 @@ const OPEN_PRODUCT_FORM_TAB_LABELS: Record<ProductDraftOpenFormTab, string> = {
   scans: 'Scans',
   studio: 'Studio',
   'import-info': 'Import Info',
+  notes: 'Notes',
   'note-link': 'Note Link',
   validation: 'Validation',
 };

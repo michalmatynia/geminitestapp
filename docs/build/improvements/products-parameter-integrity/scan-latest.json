@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-04-14T12:38:14.583Z",
+  "generatedAt": "2026-04-15T09:39:36.941Z",
   "track": {
     "id": "products-parameter-integrity",
     "title": "Products parameter integrity",
@@ -234,26 +234,46 @@
     "category": "data",
     "defaultSelected": true,
     "description": "Audits missing product parameters, refreshes recovery classification, and rebuilds the remaining source-recovery workspace.",
-    "overallStatus": "passed",
-    "latestGeneratedAt": "2026-04-02T09:59:31.245Z",
+    "overallStatus": "failed",
+    "latestGeneratedAt": "2026-04-15T09:39:36.938Z",
     "docDir": "docs/build/improvements/products-parameter-integrity",
     "phases": [
       {
         "phase": "audit",
-        "generatedAt": "2026-04-14T12:38:14.575Z",
+        "generatedAt": "2026-04-15T09:39:36.938Z",
         "reportPath": "artifacts/improvements/audit-report.json",
         "executionMode": "executed",
         "allowWrite": false,
-        "stepCount": 0,
-        "automaticStepCount": 0,
+        "stepCount": 1,
+        "automaticStepCount": 1,
         "manualStepCount": 0,
         "passedStepCount": 0,
-        "failedStepCount": 0,
+        "failedStepCount": 1,
         "blockedStepCount": 0,
         "plannedStepCount": 0,
-        "outputs": [],
-        "steps": [],
-        "status": "not-selected"
+        "outputs": [
+          "/tmp/product-missing-parameters-audit-*.json",
+          "/tmp/product-missing-parameters-audit-latest.json"
+        ],
+        "steps": [
+          {
+            "id": "products-parameter-audit",
+            "title": "Audit products with missing parameters",
+            "trackId": "products-parameter-integrity",
+            "phase": "audit",
+            "mode": "automatic",
+            "writes": false,
+            "status": "failed",
+            "outputs": [
+              "/tmp/product-missing-parameters-audit-*.json",
+              "/tmp/product-missing-parameters-audit-latest.json"
+            ],
+            "instructions": [],
+            "script": "products:audit:missing-parameters",
+            "durationMs": 11114
+          }
+        ],
+        "status": "failed"
       },
       {
         "phase": "classify",

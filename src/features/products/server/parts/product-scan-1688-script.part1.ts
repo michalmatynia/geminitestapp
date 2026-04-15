@@ -1,3 +1,6 @@
+import { PRODUCT_SCAN_PLAYWRIGHT_STEP_SEQUENCER_RUNTIME } from '@/shared/lib/browser-execution/product-scan-step-sequencer';
+import { SUPPLIER_1688_SELECTOR_REGISTRY_RUNTIME } from '@/shared/lib/browser-execution/selectors/supplier-1688';
+
 export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default async function run({
   page: initialPage,
   context: browserContext,
@@ -215,148 +218,16 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
     typeof attempt === 'number' && Number.isFinite(attempt) && attempt > 0
       ? Math.trunc(attempt)
       : 1;
-  const resolveStepGroup = (key) => {
-    const normalizedKey = toText(key);
-    if (!normalizedKey) {
-      return null;
-    }
-    if (
-      normalizedKey === 'validate' ||
-      normalizedKey === 'prepare_scan' ||
-      normalizedKey === 'queue_scan'
-    ) {
-      return 'input';
-    }
-    if (normalizedKey.startsWith('1688_') || normalizedKey.startsWith('supplier_')) {
-      return 'supplier';
-    }
-    return null;
-  };
-  const normalizeStepDetails = (details) =>
-    (Array.isArray(details) ? details : [])
-      .map((entry) => {
-        const label = toText(entry?.label);
-        const value = toText(entry?.value);
-        if (!label) {
-          return null;
-        }
-        return {
-          label,
-          value,
-        };
-      })
-      .filter(Boolean)
-      .slice(0, 12);
-  const mergeStepDetails = (...detailSets) =>
-    detailSets.flatMap((details) => normalizeStepDetails(details));
-  const resolveStepIdentity = (key, attempt, inputSource) =>
-    String(toText(key) || '') +
-    '::' +
-    String(resolveComparableAttempt(attempt)) +
-    '::' +
-    String(toText(inputSource) || 'none');
-  const upsertScanStep = (input) => {
-    const key = toText(input?.key);
-    const label = toText(input?.label);
-    const status = toText(input?.status);
-    if (!key || !label || !status) {
-      return null;
-    }
-
-    const normalizedStatus =
-      status === 'pending' ||
-      status === 'running' ||
-      status === 'completed' ||
-      status === 'failed' ||
-      status === 'skipped'
-        ? status
-        : null;
-    if (!normalizedStatus) {
-      return null;
-    }
-
-    const timestamp = nowIso();
-    const stepUrl = toText(input?.url) || toText(page.url());
-    const stepMessage = toText(input?.message);
-    const stepAttempt = resolveComparableAttempt(input?.attempt);
-    const normalizedInputSource = toText(input?.inputSource);
-    const existingIndex = scanSteps.findIndex(
-      (entry) =>
-        resolveStepIdentity(entry.key, entry.attempt, entry.inputSource) ===
-        resolveStepIdentity(key, stepAttempt, normalizedInputSource)
-    );
-    const existingStep =
-      existingIndex >= 0
-        ? scanSteps[existingIndex]
-        : {
-            key,
-            label,
-            group: resolveStepGroup(key),
-            attempt: stepAttempt,
-            candidateId: null,
-            candidateRank: null,
-            inputSource: null,
-            retryOf: null,
-            resultCode: null,
-            status: 'pending',
-            message: null,
-            warning: null,
-            details: [],
-            url: null,
-            startedAt: null,
-            completedAt: null,
-            durationMs: null,
-          };
-
-    const startedAt =
-      normalizedStatus === 'pending'
-        ? existingStep.startedAt
-        : existingStep.startedAt || timestamp;
-    const completedAt =
-      normalizedStatus === 'completed' ||
-      normalizedStatus === 'failed' ||
-      normalizedStatus === 'skipped'
-        ? timestamp
-        : null;
-    const durationMs =
-      startedAt && completedAt
-        ? Math.max(0, Date.parse(completedAt) - Date.parse(startedAt))
-        : null;
-
-    const nextStep = {
-      ...existingStep,
-      label,
-      group: toText(input?.group) || existingStep.group || resolveStepGroup(key),
-      attempt: stepAttempt,
-      candidateId: toText(input?.candidateId) || existingStep.candidateId || null,
-      candidateRank:
-        typeof input?.candidateRank === 'number' &&
-        Number.isFinite(input.candidateRank) &&
-        input.candidateRank > 0
-          ? Math.trunc(input.candidateRank)
-          : existingStep.candidateRank || null,
-      inputSource: normalizedInputSource || existingStep.inputSource || null,
-      retryOf: toText(input?.retryOf) ?? existingStep.retryOf ?? null,
-      resultCode: toText(input?.resultCode) ?? existingStep.resultCode ?? null,
-      status: normalizedStatus,
-      message: stepMessage ?? existingStep.message ?? null,
-      warning: toText(input?.warning) ?? existingStep.warning ?? null,
-      details:
-        Array.isArray(input?.details) ? normalizeStepDetails(input.details) : existingStep.details || [],
-      url: stepUrl ?? existingStep.url ?? null,
-      startedAt,
-      completedAt,
-      durationMs,
-    };
-
-    if (existingIndex >= 0) {
-      scanSteps[existingIndex] = nextStep;
-    } else {
-      scanSteps.push(nextStep);
-    }
-
-    return nextStep;
-  };
+  ${PRODUCT_SCAN_PLAYWRIGHT_STEP_SEQUENCER_RUNTIME}
+  ${SUPPLIER_1688_SELECTOR_REGISTRY_RUNTIME}
+  seedProductScanStepSequence({
+    defaultSequenceKey:
+      directCandidateUrls.length > 0 || directCandidateUrl
+        ? 'supplier_direct_candidate_followup'
+        : 'supplier_reverse_image_scan_browser',
+    sequenceKey: input?.stepSequenceKey,
+    customSequence: input?.stepSequence,
+  });
   const captureArtifacts = async (key) => {
     if (!artifacts) return;
     if (typeof artifacts.screenshot === 'function') {
@@ -395,37 +266,6 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
     });
   };
   const CANDIDATE_RESULT_LIMIT = configuredCandidateResultLimit;
-  const FILE_INPUT_SELECTORS = [
-    'input[type="file"]',
-    'input[accept*="image"]',
-  ];
-  const IMAGE_SEARCH_ENTRY_SELECTORS = [
-    'a:has-text("以图搜")',
-    'button:has-text("以图搜")',
-    'span:has-text("以图搜")',
-    'div:has-text("以图搜")',
-    'a:has-text("搜同款")',
-    'button:has-text("搜同款")',
-    '[aria-label*="image"]',
-    '[title*="以图搜"]',
-    '[title*="搜同款"]',
-  ];
-  const SEARCH_RESULT_READY_SELECTORS = [
-    'a[href*="/offer/"]',
-    'a[href*="detail.1688.com/offer/"]',
-    '[class*="offer"] a[href]',
-    '[class*="image-search"] a[href]',
-  ];
-  const SUPPLIER_READY_SELECTORS = [
-    'h1',
-    '[class*="title"]',
-    '[data-testid*="title"]',
-    '[class*="price"]',
-    '[data-testid*="price"]',
-    'a[href*="shop.1688.com"]',
-    'a[href*="winport"]',
-  ];
-  const PRICE_TEXT_PATTERN = /(?:¥|￥)\s*\d+(?:\.\d+)?(?:\s*[-~至]\s*(?:¥|￥)?\s*\d+(?:\.\d+)?)?/;
   const normalize1688OfferUrl = (value) => {
     const href = toAbsoluteUrl(value, page.url());
     if (!href) {
@@ -483,15 +323,6 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
     return false;
   };
   const submit1688UploadedImageSearch = async () => {
-    const submittedSearchSelectors = [
-      '.search-btn',
-      'div:has-text("Search for Image")',
-      'button:has-text("Search for Image")',
-      'div:has-text("搜图")',
-      'button:has-text("搜图")',
-      'div:has-text("搜索图片")',
-      'button:has-text("搜索图片")',
-    ];
     const hasUploadedImage = await page.evaluate(() => {
       const bodyText = document.body?.innerText || '';
       return /File uploaded|已上传|图片预览|Search for Image|搜图|搜索图片/i.test(bodyText);
@@ -516,7 +347,7 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
       } catch {}
     }).catch(() => undefined);
 
-    const clicked = await clickFirstVisible(submittedSearchSelectors);
+    const clicked = await clickFirstVisible(SUPPLIER_1688_SUBMIT_SEARCH_SELECTORS);
     if (!clicked) {
       return false;
     }
@@ -539,7 +370,7 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
     return null;
   };
   const findFirstVisibleFileInput = async () => {
-    for (const selector of FILE_INPUT_SELECTORS) {
+    for (const selector of SUPPLIER_1688_FILE_INPUT_SELECTORS) {
       const locator = page.locator(selector).first();
       if ((await locator.count().catch(() => 0)) === 0) {
         continue;
@@ -567,20 +398,20 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
       toText(await page.locator('body').first().innerText().catch(() => null)) || ''
     ).toLowerCase();
     const readySurfaceSelector = await findFirstVisibleSelector([
-      ...IMAGE_SEARCH_ENTRY_SELECTORS,
-      ...SEARCH_RESULT_READY_SELECTORS,
-      ...SUPPLIER_READY_SELECTORS,
-      ...FILE_INPUT_SELECTORS,
+      ...SUPPLIER_1688_IMAGE_SEARCH_ENTRY_SELECTORS,
+      ...SUPPLIER_1688_SEARCH_RESULT_READY_SELECTORS,
+      ...SUPPLIER_1688_SUPPLIER_READY_SELECTORS,
+      ...SUPPLIER_1688_FILE_INPUT_SELECTORS,
     ]);
     const candidateUrls = await collect1688CandidateUrls().catch(() => []);
     const normalizedOfferUrl = normalize1688OfferUrl(currentUrl);
     const fileInput = await findFirstVisibleFileInput();
-    const entrySelector = await findFirstVisibleSelector(IMAGE_SEARCH_ENTRY_SELECTORS);
-    const resultShellSelector = await findFirstVisibleSelector(SEARCH_RESULT_READY_SELECTORS);
-    const supplierReadySelector = await findFirstVisibleSelector(SUPPLIER_READY_SELECTORS);
+    const entrySelector = await findFirstVisibleSelector(SUPPLIER_1688_IMAGE_SEARCH_ENTRY_SELECTORS);
+    const resultShellSelector = await findFirstVisibleSelector(SUPPLIER_1688_SEARCH_RESULT_READY_SELECTORS);
+    const supplierReadySelector = await findFirstVisibleSelector(SUPPLIER_1688_SUPPLIER_READY_SELECTORS);
     const hasPriceSignal = PRICE_TEXT_PATTERN.test(bodyText);
-    const searchBodySignal = /搜索结果|找相似|搜同款|同款|相似|为您找到/.test(bodyText);
-    const supplierBodySignal = /起订|供应商|厂家|所在地|发货地|成交/.test(bodyText);
+    const searchBodySignal = new RegExp(SUPPLIER_1688_SEARCH_BODY_SIGNAL_PATTERN).test(bodyText);
+    const supplierBodySignal = new RegExp(SUPPLIER_1688_SUPPLIER_BODY_SIGNAL_PATTERN).test(bodyText);
     const expectsSearchReady = stage === '1688_open' || stage === '1688_upload' || stage == null;
     const expectsSupplierReady = stage === 'supplier_open' || stage == null;
     const hasStrongReadySignal =
@@ -594,15 +425,9 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
       normalizedUrl.includes('login') || normalizedUrl.includes('signin');
     const urlSuggestsCaptcha = normalizedUrl.includes('captcha');
     const urlSuggestsBarrier = urlSuggestsLogin || urlSuggestsCaptcha;
-    const loginTextHints = ['请登录', '登录后', '扫码登录', '登录'];
-    const captchaTextHints = [
-      '验证码', '滑动验证', '滑块', '完成验证', '安全验证',
-      'unusual traffic', 'verify', 'captcha',
-    ];
-    const accessBlockTextHints = ['访问受限'];
-    const bodyHasLoginText = loginTextHints.some((hint) => bodyText.includes(hint.toLowerCase()));
-    const bodyHasCaptchaText = captchaTextHints.some((hint) => bodyText.includes(hint.toLowerCase()));
-    const bodyHasBlockText = accessBlockTextHints.some((hint) => bodyText.includes(hint.toLowerCase()));
+    const bodyHasLoginText = SUPPLIER_1688_LOGIN_TEXT_HINTS.some((hint) => bodyText.includes(hint.toLowerCase()));
+    const bodyHasCaptchaText = SUPPLIER_1688_CAPTCHA_TEXT_HINTS.some((hint) => bodyText.includes(hint.toLowerCase()));
+    const bodyHasBlockText = SUPPLIER_1688_ACCESS_BLOCK_TEXT_HINTS.some((hint) => bodyText.includes(hint.toLowerCase()));
     const textSuggestsBarrier = bodyHasLoginText || bodyHasCaptchaText || bodyHasBlockText;
     const resolveBarrierKind = () => {
       if (urlSuggestsLogin || bodyHasLoginText) {
@@ -617,13 +442,9 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
       kind === 'login'
         ? '1688 requested login before the scan could continue. Log in using the opened browser window.'
         : '1688 requested captcha verification. Solve it in the opened browser window and the scan will continue automatically.';
-    const titleSuggestsBarrier = [
-      'captcha interception',
-      'captcha',
-      '安全验证',
-      '访问受限',
-      '登录',
-    ].some((hint) => pageTitleText.includes(hint.toLowerCase()));
+    const titleSuggestsBarrier = SUPPLIER_1688_BARRIER_TITLE_HINTS.some(
+      (hint) => pageTitleText.includes(hint.toLowerCase())
+    );
     if (titleSuggestsBarrier && candidateUrls.length === 0) {
       const barrierKind = resolveBarrierKind();
       return {
@@ -633,16 +454,7 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
         message: resolveBarrierMessage(barrierKind),
       };
     }
-    const hardBlockingSelectors = [
-      'input[type="password"]',
-      '[class*="login"] input',
-    ];
-    const softBlockingSelectors = [
-      'iframe[src*="captcha"]',
-      '[id*="nc_"]',
-      '[class*="captcha"]',
-    ];
-    const visibleHardBlockingSelector = await findFirstVisibleSelector(hardBlockingSelectors);
+    const visibleHardBlockingSelector = await findFirstVisibleSelector(SUPPLIER_1688_HARD_BLOCKING_SELECTORS);
     if (visibleHardBlockingSelector && !hasStrongReadySignal) {
       return {
         blocked: true,
@@ -651,7 +463,7 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
         message: resolveBarrierMessage('login'),
       };
     }
-    const visibleSoftBlockingSelector = await findFirstVisibleSelector(softBlockingSelectors);
+    const visibleSoftBlockingSelector = await findFirstVisibleSelector(SUPPLIER_1688_SOFT_BLOCKING_SELECTORS);
     if (visibleSoftBlockingSelector && !hasStrongReadySignal) {
       return {
         blocked: true,
@@ -698,9 +510,9 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
     const normalizedOfferUrl = normalize1688OfferUrl(currentUrl);
     const candidateUrls = await collect1688CandidateUrls().catch(() => []);
     const fileInput = await findFirstVisibleFileInput();
-    const entrySelector = await findFirstVisibleSelector(IMAGE_SEARCH_ENTRY_SELECTORS);
-    const resultShellSelector = await findFirstVisibleSelector(SEARCH_RESULT_READY_SELECTORS);
-    const supplierReadySelector = await findFirstVisibleSelector(SUPPLIER_READY_SELECTORS);
+    const entrySelector = await findFirstVisibleSelector(SUPPLIER_1688_IMAGE_SEARCH_ENTRY_SELECTORS);
+    const resultShellSelector = await findFirstVisibleSelector(SUPPLIER_1688_SEARCH_RESULT_READY_SELECTORS);
+    const supplierReadySelector = await findFirstVisibleSelector(SUPPLIER_1688_SUPPLIER_READY_SELECTORS);
     const bodyText =
       (toText(await page.locator('body').first().textContent().catch(() => null)) || '').toLowerCase();
     const hasPriceSignal = PRICE_TEXT_PATTERN.test(bodyText);
@@ -1301,11 +1113,47 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
     });
     await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => undefined);
     await wait(1200);
+    upsertScanStep({
+      key: 'supplier_open',
+      label: 'Open supplier product page',
+      attempt: candidateRank,
+      candidateId,
+      candidateRank,
+      status: 'completed',
+      resultCode: 'candidate_opened',
+      message: 'Opened 1688 supplier candidate #' + String(candidateRank) + '.',
+      url: page.url(),
+    });
+    upsertScanStep({
+      key: 'supplier_overlays',
+      label: 'Resolve supplier barriers',
+      attempt: candidateRank,
+      candidateId,
+      candidateRank,
+      status: 'running',
+      resultCode: 'barrier_check_start',
+      message: 'Checking the 1688 supplier page for captcha and login barriers.',
+      url: page.url(),
+    });
     const captchaState = await handle1688CaptchaIfPresent('supplier_open', {
       candidateId,
       candidateRank,
     }, candidateUrl);
     if (!captchaState.resolved) {
+      upsertScanStep({
+        key: 'supplier_overlays',
+        label: 'Resolve supplier barriers',
+        attempt: candidateRank,
+        candidateId,
+        candidateRank,
+        status: captchaState.captchaRequired === true ? 'running' : 'failed',
+        resultCode:
+          captchaState.captchaRequired === true
+            ? 'captcha_required'
+            : captchaState.failureCode || 'barrier_blocked',
+        message: captchaState.message,
+        url: captchaState.currentUrl,
+      });
       return {
         blocked: captchaState.captchaRequired === true,
         postCaptchaFailure: captchaState.captchaRequired !== true,
@@ -1314,129 +1162,238 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
         currentUrl: captchaState.currentUrl,
       };
     }
+    upsertScanStep({
+      key: 'supplier_overlays',
+      label: 'Resolve supplier barriers',
+      attempt: candidateRank,
+      candidateId,
+      candidateRank,
+      status: 'completed',
+      resultCode: 'barriers_cleared',
+      message: '1688 supplier page is clear of captcha and login barriers.',
+      url: page.url(),
+    });
+    upsertScanStep({
+      key: 'supplier_content_ready',
+      label: 'Wait for supplier product content',
+      attempt: candidateRank,
+      candidateId,
+      candidateRank,
+      status: 'running',
+      resultCode: 'content_wait_start',
+      message: 'Waiting for supplier product content to become ready.',
+      url: page.url(),
+    });
+    const supplierReadyState = await detect1688ReadyState('supplier_open');
+    if (!supplierReadyState.ready) {
+      upsertScanStep({
+        key: 'supplier_content_ready',
+        label: 'Wait for supplier product content',
+        attempt: candidateRank,
+        candidateId,
+        candidateRank,
+        status: 'failed',
+        resultCode: supplierReadyState.reason || 'supplier_page_not_ready',
+        message: supplierReadyState.message,
+        url: supplierReadyState.currentUrl,
+      });
+      return {
+        blocked: false,
+        postCaptchaFailure: true,
+        failureCode: supplierReadyState.reason || 'supplier_page_not_ready',
+        message: supplierReadyState.message,
+        currentUrl: supplierReadyState.currentUrl,
+      };
+    }
+    upsertScanStep({
+      key: 'supplier_content_ready',
+      label: 'Wait for supplier product content',
+      attempt: candidateRank,
+      candidateId,
+      candidateRank,
+      status: 'completed',
+      resultCode: 'content_ready',
+      message: '1688 supplier product content is ready.',
+      url: supplierReadyState.currentUrl,
+    });
+    upsertScanStep({
+      key: 'supplier_probe',
+      label: 'Probe supplier product page',
+      attempt: candidateRank,
+      candidateId,
+      candidateRank,
+      status: 'running',
+      resultCode: 'probe_start',
+      message: 'Collecting 1688 supplier candidate details.',
+      url: page.url(),
+    });
 
-    const pageTitle =
-      toText(await readMetaContent('meta[property="og:title"]')) ||
-      toText(await page.title().catch(() => null)) ||
-      (await readFirstText(['h1', '[class*="title"]', '[data-testid*="title"]']));
-    const descriptionSnippet =
-      toText(await readMetaContent('meta[name="description"]')) ||
-      (await readFirstText(['meta[name="description"]', '[class*="desc"]', '[class*="summary"]']));
-    const selectorPriceText = extractFirstPriceText([
-      await readFirstText([
-        '[class*="price"]',
-        '[class*="Price"]',
-        '[data-testid*="price"]',
-        '[class*="reference"]',
-      ]),
-    ]);
-    const bodyText = await readBodyText();
-    const bodyPriceText = extractFirstPriceText(bodyText.split(/\n+/).slice(0, 120));
-    const priceText = selectorPriceText || bodyPriceText;
-    const moqText = extractMoqText(bodyText);
-    const supplierName =
-      (await readFirstText([
-        'a[href*="shop.1688.com"]',
-        '[class*="shop-name"]',
-        '[class*="company-name"]',
-        '[class*="supplier-name"]',
-      ])) ||
-      extractLabeledBodyValue(bodyText, [
-        /供应商[:：]\s*([^\n]{1,80})/,
-        /厂商[:：]\s*([^\n]{1,80})/,
+    try {
+      const pageTitle =
+        toText(await readMetaContent('meta[property="og:title"]')) ||
+        toText(await page.title().catch(() => null)) ||
+        (await readFirstText(['h1', '[class*="title"]', '[data-testid*="title"]']));
+      const descriptionSnippet =
+        toText(await readMetaContent('meta[name="description"]')) ||
+        (await readFirstText(['meta[name="description"]', '[class*="desc"]', '[class*="summary"]']));
+      const selectorPriceText = extractFirstPriceText([
+        await readFirstText([
+          '[class*="price"]',
+          '[class*="Price"]',
+          '[data-testid*="price"]',
+          '[class*="reference"]',
+        ]),
       ]);
-    const supplierStoreUrl = toAbsoluteUrl(
-      await page
-        .locator('a[href*="shop.1688.com"], a[href*="winport"]')
-        .first()
-        .getAttribute('href')
-        .catch(() => null),
-      page.url()
-    );
-    const supplierLocation = extractLabeledBodyValue(bodyText, [
-      /所在地[:：]\s*([^\n]{1,80})/,
-      /发货地[:：]\s*([^\n]{1,80})/,
-    ]);
-    const supplierRating = extractLabeledBodyValue(bodyText, [
-      /诚信通[:：]?\s*([^\n]{1,40})/,
-      /经营模式[:：]?\s*([^\n]{1,40})/,
-    ]);
-    const imageUrls = dedupeImages(
-      await page
-        .locator('img')
-        .evaluateAll((images) =>
-          images
-            .map((img) =>
-              img instanceof HTMLImageElement
-                ? img.currentSrc || img.src || img.getAttribute('data-src') || img.getAttribute('data-lazy-src')
-                : null
-            )
-            .filter(Boolean)
-        )
-        .catch(() => [])
-    );
-    const currentUrl = page.url();
-    const canonicalUrl = normalize1688OfferUrl(currentUrl) || normalize1688OfferUrl(candidateUrl) || currentUrl;
-    const platformProductIdMatch = canonicalUrl.match(/\/offer\/(\d+)\.html/i);
-    const priceParts = parsePriceParts(priceText, moqText);
-    const artifactKey = '1688-scan-probe-' + (candidateId || 'candidate') + '-rank-' + String(candidateRank);
-    await captureArtifacts(artifactKey);
+      const bodyText = await readBodyText();
+      const bodyPriceText = extractFirstPriceText(bodyText.split(/\n+/).slice(0, 120));
+      const priceText = selectorPriceText || bodyPriceText;
+      const moqText = extractMoqText(bodyText);
+      const supplierName =
+        (await readFirstText([
+          'a[href*="shop.1688.com"]',
+          '[class*="shop-name"]',
+          '[class*="company-name"]',
+          '[class*="supplier-name"]',
+        ])) ||
+        extractLabeledBodyValue(bodyText, [
+          /供应商[:：]\s*([^\n]{1,80})/,
+          /厂商[:：]\s*([^\n]{1,80})/,
+        ]);
+      const supplierStoreUrl = toAbsoluteUrl(
+        await page
+          .locator('a[href*="shop.1688.com"], a[href*="winport"]')
+          .first()
+          .getAttribute('href')
+          .catch(() => null),
+        page.url()
+      );
+      const supplierLocation = extractLabeledBodyValue(bodyText, [
+        /所在地[:：]\s*([^\n]{1,80})/,
+        /发货地[:：]\s*([^\n]{1,80})/,
+      ]);
+      const supplierRating = extractLabeledBodyValue(bodyText, [
+        /诚信通[:：]?\s*([^\n]{1,40})/,
+        /经营模式[:：]?\s*([^\n]{1,40})/,
+      ]);
+      const imageUrls = dedupeImages(
+        await page
+          .locator('img')
+          .evaluateAll((images) =>
+            images
+              .map((img) =>
+                img instanceof HTMLImageElement
+                  ? img.currentSrc || img.src || img.getAttribute('data-src') || img.getAttribute('data-lazy-src')
+                  : null
+              )
+              .filter(Boolean)
+          )
+          .catch(() => [])
+      );
+      const currentUrl = page.url();
+      const canonicalUrl =
+        normalize1688OfferUrl(currentUrl) || normalize1688OfferUrl(candidateUrl) || currentUrl;
+      const platformProductIdMatch = canonicalUrl.match(/\/offer\/(\d+)\.html/i);
+      const priceParts = parsePriceParts(priceText, moqText);
+      const artifactKey =
+        '1688-scan-probe-' + (candidateId || 'candidate') + '-rank-' + String(candidateRank);
+      await captureArtifacts(artifactKey);
 
-    return {
-      blocked: false,
-      title: pageTitle,
-      price: priceText,
-      url: canonicalUrl,
-      description: descriptionSnippet,
-      supplierDetails: {
-        supplierName,
-        supplierStoreUrl,
-        supplierProductUrl: canonicalUrl,
-        platformProductId: platformProductIdMatch ? platformProductIdMatch[1] : null,
-        currency: priceParts.currency,
-        priceText,
-        priceRangeText:
-          toText(priceText) && /[-~至]/.test(priceText) ? toText(priceText) : null,
-        moqText,
-        supplierLocation,
-        supplierRating,
-        sourceLanguage:
-          toText(await page.locator('html').first().getAttribute('lang').catch(() => null)) || 'zh-CN',
-        images: imageUrls.map((imageUrl, index) => ({
-          url: imageUrl,
-          alt: null,
-          source: index === 0 ? 'hero' : 'gallery',
-          position: index + 1,
-        })),
-        prices: toText(priceText) ? [priceParts] : [],
-      },
-      supplierProbe: {
-        candidateUrl: normalize1688OfferUrl(candidateUrl) || candidateUrl,
-        canonicalUrl,
-        pageTitle,
-        descriptionSnippet,
-        pageLanguage:
-          toText(await page.locator('html').first().getAttribute('lang').catch(() => null)) || 'zh-CN',
-        supplierName,
-        supplierStoreUrl,
-        priceText,
-        currency: priceParts.currency,
-        heroImageUrl: imageUrls[0] || null,
-        heroImageAlt: null,
-        heroImageArtifactName: null,
-        artifactKey,
-        imageCount: imageUrls.length,
-      },
-      score: scoreSupplierCandidate({
+      upsertScanStep({
+        key: 'supplier_probe',
+        label: 'Probe supplier product page',
+        attempt: candidateRank,
+        candidateId,
+        candidateRank,
+        status: 'completed',
+        resultCode: 'candidate_probed',
+        message: 'Collected 1688 supplier candidate details.',
+        url: canonicalUrl,
+        details: mergeStepDetails([
+          { label: 'Supplier', value: supplierName },
+          { label: 'Price', value: priceText },
+          { label: 'Images', value: String(imageUrls.length) },
+        ]),
+      });
+
+      return {
+        blocked: false,
         title: pageTitle,
         price: priceText,
+        url: canonicalUrl,
+        description: descriptionSnippet,
         supplierDetails: {
           supplierName,
           supplierStoreUrl,
-          images: imageUrls,
+          supplierProductUrl: canonicalUrl,
+          platformProductId: platformProductIdMatch ? platformProductIdMatch[1] : null,
+          currency: priceParts.currency,
+          priceText,
+          priceRangeText:
+            toText(priceText) && /[-~至]/.test(priceText) ? toText(priceText) : null,
+          moqText,
+          supplierLocation,
+          supplierRating,
+          sourceLanguage:
+            toText(await page.locator('html').first().getAttribute('lang').catch(() => null)) || 'zh-CN',
+          images: imageUrls.map((imageUrl, index) => ({
+            url: imageUrl,
+            alt: null,
+            source: index === 0 ? 'hero' : 'gallery',
+            position: index + 1,
+          })),
+          prices: toText(priceText) ? [priceParts] : [],
         },
-      }),
-    };
+        supplierProbe: {
+          candidateUrl: normalize1688OfferUrl(candidateUrl) || candidateUrl,
+          canonicalUrl,
+          pageTitle,
+          descriptionSnippet,
+          pageLanguage:
+            toText(await page.locator('html').first().getAttribute('lang').catch(() => null)) || 'zh-CN',
+          supplierName,
+          supplierStoreUrl,
+          priceText,
+          currency: priceParts.currency,
+          heroImageUrl: imageUrls[0] || null,
+          heroImageAlt: null,
+          heroImageArtifactName: null,
+          artifactKey,
+          imageCount: imageUrls.length,
+        },
+        score: scoreSupplierCandidate({
+          title: pageTitle,
+          price: priceText,
+          supplierDetails: {
+            supplierName,
+            supplierStoreUrl,
+            images: imageUrls,
+          },
+        }),
+      };
+    } catch (error) {
+      const message =
+        (error instanceof Error && toText(error.message)) ||
+        'Failed to probe 1688 supplier candidate.';
+      upsertScanStep({
+        key: 'supplier_probe',
+        label: 'Probe supplier product page',
+        attempt: candidateRank,
+        candidateId,
+        candidateRank,
+        status: 'failed',
+        resultCode: 'candidate_probe_failed',
+        message,
+        details: [{ label: 'Error', value: message }],
+        url: page.url(),
+      });
+      return {
+        blocked: false,
+        postCaptchaFailure: false,
+        failureCode: 'candidate_probe_failed',
+        message,
+        currentUrl: page.url(),
+      };
+    }
   };
 
   if (imageCandidates.length === 0 && !directCandidateUrl && directCandidateUrls.length === 0) {
@@ -1680,7 +1637,7 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
 
     let fileInput =
       (await findFirstVisibleFileInput()) ||
-      (await clickFirstVisible(IMAGE_SEARCH_ENTRY_SELECTORS).then(async (clicked) => {
+      (await clickFirstVisible(SUPPLIER_1688_IMAGE_SEARCH_ENTRY_SELECTORS).then(async (clicked) => {
         if (clicked) {
           await wait(1200);
           return await findFirstVisibleFileInput();
@@ -1727,6 +1684,17 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
       });
       await fileInput.setInputFiles(imageFilePath);
       await submit1688UploadedImageSearch();
+      upsertScanStep({
+        key: '1688_collect_candidates',
+        label: 'Collect 1688 supplier candidates',
+        attempt: 1,
+        candidateId: matchedImageId,
+        inputSource: 'file',
+        status: 'running',
+        resultCode: 'candidate_wait_start',
+        message: 'Waiting for 1688 supplier search results.',
+        url: page.url(),
+      });
       let candidateState = await waitFor1688Candidates(page.url());
       while (!candidateState.ready && candidateState.blocked) {
         const captchaStateAfterUpload = await handle1688CaptchaIfPresent('1688_upload', { matchedImageId }, scanner1688StartUrl);
@@ -1762,6 +1730,20 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
         }
       }
       if (!candidateState.ready) {
+        upsertScanStep({
+          key: '1688_collect_candidates',
+          label: 'Collect 1688 supplier candidates',
+          attempt: 1,
+          candidateId: matchedImageId,
+          inputSource: 'file',
+          status: candidateState.blocked ? 'running' : 'failed',
+          resultCode:
+            candidateState.blocked
+              ? 'captcha_required'
+              : candidateState.failureCode || 'candidate_timeout',
+          message: candidateState.message,
+          url: candidateState.currentUrl,
+        });
         upsertScanStep({
           key: '1688_upload',
           label: 'Upload image to 1688 search',
@@ -1824,6 +1806,17 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
           message: 'Opening 1688 image search using the product image URL.',
           url: searchUrl,
         });
+        upsertScanStep({
+          key: '1688_collect_candidates',
+          label: 'Collect 1688 supplier candidates',
+          attempt: 1,
+          candidateId: matchedImageId,
+          inputSource: 'url',
+          status: 'running',
+          resultCode: 'candidate_wait_start',
+          message: 'Waiting for 1688 supplier search results.',
+          url: searchUrl,
+        });
         await page.goto(searchUrl, {
           waitUntil: 'domcontentloaded',
           timeout: 30000,
@@ -1854,12 +1847,46 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
             // Captcha was solved — re-check candidates
             const candidateStateRetry = await waitFor1688Candidates(page.url(), 15000);
             if (!candidateStateRetry.ready) {
+              upsertScanStep({
+                key: '1688_collect_candidates',
+                label: 'Collect 1688 supplier candidates',
+                attempt: 1,
+                candidateId: matchedImageId,
+                inputSource: 'url',
+                status: 'failed',
+                resultCode: candidateStateRetry.reason || 'candidate_timeout',
+                message: candidateStateRetry.message,
+                url: candidateStateRetry.currentUrl,
+              });
               continue;
             }
             candidateUrls = candidateStateRetry.candidateUrls;
+            upsertScanStep({
+              key: '1688_collect_candidates',
+              label: 'Collect 1688 supplier candidates',
+              attempt: 1,
+              candidateId: matchedImageId,
+              inputSource: 'url',
+              status: 'completed',
+              resultCode: 'candidates_collected',
+              message: 'Collected ' + String(candidateUrls.length) + ' 1688 supplier candidates.',
+              url: candidateStateRetry.currentUrl,
+              details: [{ label: 'Candidates', value: String(candidateUrls.length) }],
+            });
             urlSearchResolved = true;
             break;
           }
+          upsertScanStep({
+            key: '1688_collect_candidates',
+            label: 'Collect 1688 supplier candidates',
+            attempt: 1,
+            candidateId: matchedImageId,
+            inputSource: 'url',
+            status: 'failed',
+            resultCode: candidateState.failureCode || candidateState.reason || 'candidate_timeout',
+            message: candidateState.message,
+            url: candidateState.currentUrl,
+          });
           continue;
         }
         candidateUrls = candidateState.candidateUrls;
@@ -1972,6 +1999,17 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
     CANDIDATE_RESULT_LIMIT
   );
   if (normalizedCandidateUrls.length === 0) {
+    upsertScanStep({
+      key: '1688_collect_candidates',
+      label: 'Collect 1688 supplier candidates',
+      attempt: 1,
+      candidateId: matchedImageId,
+      inputSource: selectedImageFilePath ? 'file' : selectedImageUrl ? 'url' : null,
+      status: 'failed',
+      resultCode: 'no_candidates',
+      message: '1688 image search did not return any supplier product candidates.',
+      url: page.url(),
+    });
     await captureArtifacts('1688-scan-no-match');
     await emitResult({
       status: 'no_match',
@@ -2004,7 +2042,7 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
     upsertScanStep({
       key: 'supplier_open',
       label: 'Open supplier product page',
-      attempt: 1,
+      attempt: candidateRank,
       candidateId: matchedImageId,
       candidateRank,
       inputSource: null,
@@ -2033,7 +2071,7 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
       upsertScanStep({
         key: 'supplier_open',
         label: 'Open supplier product page',
-        attempt: 1,
+        attempt: candidateRank,
         candidateId: matchedImageId,
         candidateRank,
         status: blockedCaptchaRequired ? 'running' : 'failed',
@@ -2049,7 +2087,7 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
       upsertScanStep({
         key: 'supplier_open',
         label: 'Open supplier product page',
-        attempt: 1,
+        attempt: candidateRank,
         candidateId: matchedImageId,
         candidateRank,
         status: 'failed',
@@ -2059,22 +2097,6 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
       });
       continue;
     }
-    upsertScanStep({
-      key: 'supplier_probe',
-      label: 'Probe supplier product page',
-      attempt: 1,
-      candidateId: matchedImageId,
-      candidateRank,
-      status: 'completed',
-      resultCode: 'candidate_probed',
-      message: 'Collected 1688 supplier candidate details.',
-      url: candidatePayload.url,
-      details: mergeStepDetails([
-        { label: 'Supplier', value: candidatePayload.supplierDetails?.supplierName },
-        { label: 'Price', value: candidatePayload.price },
-        { label: 'Images', value: String(candidatePayload.supplierDetails?.images?.length || 0) },
-      ]),
-    });
     if (candidatePayload.score > bestScore) {
       bestScore = candidatePayload.score;
       bestCandidate = {
@@ -2114,7 +2136,7 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
     upsertScanStep({
       key: 'supplier_evaluate',
       label: 'Evaluate supplier candidate',
-      attempt: 1,
+      attempt: bestCandidate.candidateRank,
       candidateId: matchedImageId,
       candidateRank: bestCandidate.candidateRank,
       status:
@@ -2171,7 +2193,7 @@ export const SCAN_1688_REVERSE_IMAGE_SCRIPT_PART_1 = String.raw`export default a
   upsertScanStep({
     key: 'supplier_extract',
     label: 'Extract supplier details',
-    attempt: 1,
+    attempt: bestCandidate.candidateRank,
     candidateId: matchedImageId,
     candidateRank: bestCandidate.candidateRank,
     status: 'completed',

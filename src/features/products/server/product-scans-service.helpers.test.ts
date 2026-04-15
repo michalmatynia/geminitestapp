@@ -22,7 +22,10 @@ vi.mock('@/shared/lib/files/runtime-fs', () => ({
   }),
 }));
 
-import { resolveLocalScanImageCandidatePath } from './product-scans-service.helpers';
+import {
+  resolveLocalScanImageCandidatePath,
+  resolvePersistedProductScanSteps,
+} from './product-scans-service.helpers';
 
 describe('product-scans-service helpers', () => {
   it('resolves public upload image paths when the configured uploads root is stale', async () => {
@@ -50,5 +53,45 @@ describe('product-scans-service helpers', () => {
 
     expect(mocks.statMock).toHaveBeenCalledWith(staleUploadsPath);
     expect(mocks.statMock).toHaveBeenCalledWith(devPublicPath);
+  });
+
+  it('keeps persisted candidate steps distinct when only the candidate id changes', () => {
+    const firstCandidateStep = {
+      key: 'google_upload',
+      label: 'Upload product image to Google',
+      group: 'google_lens' as const,
+      attempt: 1,
+      candidateId: 'image-candidate-1',
+      candidateRank: 1,
+      inputSource: 'file' as const,
+      retryOf: null,
+      resultCode: 'upload_started',
+      status: 'running' as const,
+      message: 'Uploading the first image candidate.',
+      warning: null,
+      details: [],
+      url: 'https://lens.google.com',
+      startedAt: '2026-04-15T00:00:00.000Z',
+      completedAt: null,
+      durationMs: null,
+    };
+
+    const secondCandidateStep = {
+      ...firstCandidateStep,
+      candidateId: 'image-candidate-2',
+      candidateRank: 2,
+      message: 'Uploading the second image candidate.',
+    };
+
+    const mergedSteps = resolvePersistedProductScanSteps(
+      { steps: [firstCandidateStep] },
+      [secondCandidateStep]
+    );
+
+    expect(mergedSteps).toHaveLength(2);
+    expect(mergedSteps.map((step) => step.candidateId)).toEqual([
+      'image-candidate-1',
+      'image-candidate-2',
+    ]);
   });
 });

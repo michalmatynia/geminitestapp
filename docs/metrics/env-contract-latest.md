@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-11'
+last_reviewed: '2026-04-15'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Environment Contract Report
 
-Generated at: 2026-04-11T17:22:16.768Z
+Generated at: 2026-04-15T09:38:29.772Z
 
 ## Summary
 
@@ -21,7 +21,7 @@ Generated at: 2026-04-11T17:22:16.768Z
 
 - NODE_ENV: development
 - DATABASE_URL configured: undefined
-- MONGODB_URI configured: true
+- MONGODB_URI configured: false
 - APP_DB_PROVIDER: mongodb
 - REDIS_URL configured: true
 - AUTH_SECRET configured: true

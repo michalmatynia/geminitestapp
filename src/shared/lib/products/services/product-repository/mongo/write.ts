@@ -6,6 +6,7 @@ import { ProductCreateInput, ProductUpdateInput } from '@/shared/contracts/produ
 import {
   ProductRecord,
   ProductWithImages,
+  normalizeProductNotes,
   normalizeProductMarketplaceContentOverrides,
 } from '@/shared/contracts/products/product';
 
@@ -67,6 +68,7 @@ export const mongoProductWriteImpl = {
       marketplaceContentOverrides: normalizeProductMarketplaceContentOverrides(
         data.marketplaceContentOverrides
       ),
+      notes: normalizeProductNotes(data.notes),
       imageLinks: data.imageLinks || [],
       imageBase64s: data.imageBase64s || [],
       noteIds: data.noteIds || [],
@@ -147,6 +149,9 @@ export const mongoProductWriteImpl = {
       set['marketplaceContentOverrides'] = normalizeProductMarketplaceContentOverrides(
         data.marketplaceContentOverrides
       );
+    }
+    if (data.notes !== undefined) {
+      set['notes'] = normalizeProductNotes(data.notes);
     }
     if (data.imageLinks !== undefined) set['imageLinks'] = data.imageLinks;
     if (data.imageBase64s !== undefined) set['imageBase64s'] = data.imageBase64s;

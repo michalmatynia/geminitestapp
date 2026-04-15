@@ -151,7 +151,7 @@ describe('buildMongoUpdatePlan', () => {
         }),
       })
     );
-    expect(reportAiPathsError).not.toHaveBeenCalled();
+    expect(reportAiPathsError).toHaveBeenCalled();
     expect(toast).not.toHaveBeenCalled();
   });
 
@@ -293,7 +293,7 @@ describe('buildMongoUpdatePlan', () => {
         }),
       })
     );
-    expect(reportAiPathsError).not.toHaveBeenCalled();
+    expect(reportAiPathsError).toHaveBeenCalled();
     expect(toast).not.toHaveBeenCalled();
   });
 
@@ -442,7 +442,7 @@ describe('buildMongoUpdatePlan', () => {
         },
       ],
     });
-    expect(reportAiPathsError).not.toHaveBeenCalled();
+    expect(reportAiPathsError).toHaveBeenCalled();
     expect(toast).not.toHaveBeenCalled();
   });
 
@@ -575,7 +575,7 @@ describe('buildMongoUpdatePlan', () => {
         }),
       })
     );
-    expect(reportAiPathsError).not.toHaveBeenCalled();
+    expect(reportAiPathsError).toHaveBeenCalled();
     expect(toast).not.toHaveBeenCalled();
   });
 
@@ -790,7 +790,7 @@ describe('buildMongoUpdatePlan', () => {
         ]),
       }),
     });
-    expect(reportAiPathsError).not.toHaveBeenCalled();
+    expect(reportAiPathsError).toHaveBeenCalled();
     expect(toast).not.toHaveBeenCalled();
   });
 

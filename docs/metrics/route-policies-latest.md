@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-11'
+last_reviewed: '2026-04-15'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,16 +8,16 @@ canonical: true
 ---
 # Route Policy Report
 
-Generated at: 2026-04-11T17:22:08.761Z
+Generated at: 2026-04-15T09:38:21.665Z
 
 ## Summary
 
 - Status: PASSED
-- Routes scanned: 320
-- Method exports scanned: 469
+- Routes scanned: 322
+- Method exports scanned: 472
 - Errors: 0
 - Warnings: 0
-- CSRF exemptions: 56
+- CSRF exemptions: 57
 
 ## Rule Breakdown
 
@@ -61,6 +61,7 @@ No route policy issues detected.
 | v2/integrations/[id]/connections | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
 | v2/integrations/connections/[id] | PUT | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
 | v2/integrations/connections/[id] | DELETE | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/exports/1688/[setting] | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
 | v2/integrations/exports/base/[setting] | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
 | v2/integrations/exports/tradera/[setting] | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
 | v2/integrations/exports/vinted/[setting] | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |

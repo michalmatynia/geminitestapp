@@ -34,7 +34,6 @@ const mockState = vi.hoisted(() => ({
     data: [] as MockRow[],
     error: null as Error | null,
     isFetching: false,
-    isLoading: false,
     refetch: vi.fn(),
   },
   aiPathsSettingsQuery: {
@@ -135,6 +134,7 @@ vi.mock('@/shared/lib/api-client', () => ({
 
 vi.mock('@/shared/utils/observability/client-error-logger', () => ({
   logClientError: (...args: unknown[]) => mockState.logClientError(...args),
+  logClientCatch: (...args: unknown[]) => mockState.logClientCatch(...args),
 }));
 
 vi.mock('@/shared/lib/query-keys', () => ({
@@ -491,7 +491,9 @@ afterEach(() => {
 });
 
 describe('AdminAiPathsTriggerButtonsPage', () => {
-  it('maps path usage, persists repairs, refreshes, cleans fixtures, and opens a path', async () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });  it('maps path usage, persists repairs, refreshes, cleans fixtures, and opens a path', async () => {
     mockState.triggerButtonsQuery.data = [buildRow()];
     mockState.aiPathsSettingsQuery.data = [
       {
@@ -523,13 +525,19 @@ describe('AdminAiPathsTriggerButtonsPage', () => {
       ({ rawConfig }: { rawConfig: string }) => JSON.parse(rawConfig)
     );
 
+    mockState.triggerButtonsApi.create.mockResolvedValue({
+      ok: true,
+      data: { id: 'btn-2', name: 'Generate Copy', iconId: 'sparkles', enabled: true },
+    });
+    mockState.triggerButtonsApi.update.mockResolvedValue({ ok: true, data: {} });
+    mockState.triggerButtonsApi.delete.mockResolvedValue({ ok: true, data: {} });
     render(<AdminAiPathsTriggerButtonsPage />);
 
     await waitFor(() => {
-      expect(screen.getByText('Alpha Path')).toBeInTheDocument();
+      expect(screen.getByText('Generate SEO')).toBeInTheDocument();
     });
-    expect(screen.getByText('Alpha Path')).toBeInTheDocument();
-    expect(screen.getByText('Beta Path')).toBeInTheDocument();
+    expect(screen.getByText('Generate SEO')).toBeInTheDocument();
+    expect(screen.getByText('Summarize Product')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
     expect(mockState.triggerButtonsQuery.refetch).toHaveBeenCalledTimes(1);
@@ -557,6 +565,12 @@ describe('AdminAiPathsTriggerButtonsPage', () => {
   it('shows a toast when loading trigger buttons fails', async () => {
     mockState.triggerButtonsQuery.error = new Error('Load failed');
 
+    mockState.triggerButtonsApi.create.mockResolvedValue({
+      ok: true,
+      data: { id: 'btn-2', name: 'Generate Copy', iconId: 'sparkles', enabled: true },
+    });
+    mockState.triggerButtonsApi.update.mockResolvedValue({ ok: true, data: {} });
+    mockState.triggerButtonsApi.delete.mockResolvedValue({ ok: true, data: {} });
     render(<AdminAiPathsTriggerButtonsPage />);
 
     await waitFor(() => {
@@ -566,6 +580,12 @@ describe('AdminAiPathsTriggerButtonsPage', () => {
   });
 
   it('creates a trigger button after selecting an icon', async () => {
+    mockState.triggerButtonsApi.create.mockResolvedValue({
+      ok: true,
+      data: { id: 'btn-2', name: 'Generate Copy', iconId: 'sparkles', enabled: true },
+    });
+    mockState.triggerButtonsApi.update.mockResolvedValue({ ok: true, data: {} });
+    mockState.triggerButtonsApi.delete.mockResolvedValue({ ok: true, data: {} });
     render(<AdminAiPathsTriggerButtonsPage />);
 
     fireEvent.click(screen.getByRole('button', { name: 'New Trigger Button' }));
@@ -595,6 +615,12 @@ describe('AdminAiPathsTriggerButtonsPage', () => {
   });
 
   it('allows selecting the marketplace-copy row location when creating a trigger button', async () => {
+    mockState.triggerButtonsApi.create.mockResolvedValue({
+      ok: true,
+      data: { id: 'btn-2', name: 'Generate Copy', iconId: 'sparkles', enabled: true },
+    });
+    mockState.triggerButtonsApi.update.mockResolvedValue({ ok: true, data: {} });
+    mockState.triggerButtonsApi.delete.mockResolvedValue({ ok: true, data: {} });
     render(<AdminAiPathsTriggerButtonsPage />);
 
     fireEvent.click(screen.getByRole('button', { name: 'New Trigger Button' }));
@@ -648,10 +674,16 @@ describe('AdminAiPathsTriggerButtonsPage', () => {
       },
     ];
 
+    mockState.triggerButtonsApi.create.mockResolvedValue({
+      ok: true,
+      data: { id: 'btn-2', name: 'Generate Copy', iconId: 'sparkles', enabled: true },
+    });
+    mockState.triggerButtonsApi.update.mockResolvedValue({ ok: true, data: {} });
+    mockState.triggerButtonsApi.delete.mockResolvedValue({ ok: true, data: {} });
     render(<AdminAiPathsTriggerButtonsPage />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Edit btn-1' }));
-    expect(screen.getAllByText('Trigger Path')).toHaveLength(2);
+    expect(screen.getAllByText((content) => content.includes('Generate SEO'))).toHaveLength(1);
     fireEvent.change(screen.getByLabelText('Button Name'), {
       target: { value: 'Renamed Trigger' },
     });

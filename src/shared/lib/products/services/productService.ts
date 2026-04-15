@@ -6,7 +6,10 @@ import type {
   ImageFileRepository,
 } from '@/shared/contracts/files';
 import type { ProductParameterValue, ProductWithImages, ProductImageRecord, ProductRecord } from '@/shared/contracts/products/product';
-import { normalizeProductMarketplaceContentOverrides } from '@/shared/contracts/products/product';
+import {
+  normalizeProductMarketplaceContentOverrides,
+  normalizeProductNotes,
+} from '@/shared/contracts/products/product';
 import type { ProductFilters, ProductRepository } from '@/shared/contracts/products/drafts';
 import type { ProductCreateInput } from '@/shared/contracts/products/io';
 import { badRequestError, duplicateEntryError, notFoundError } from '@/shared/errors/app-error';
@@ -165,6 +168,7 @@ const normalizeCreateProductPayloadForStorage = <TData extends Record<string, un
     parameters?: ProductParameterValue[] | null;
     imageFileIds?: string[] | null;
     marketplaceContentOverrides?: unknown[] | null;
+    notes?: unknown;
   };
   return {
     ...(payload as TData),
@@ -175,6 +179,7 @@ const normalizeCreateProductPayloadForStorage = <TData extends Record<string, un
     marketplaceContentOverrides: Array.isArray(payload.marketplaceContentOverrides)
       ? normalizeProductMarketplaceContentOverrides(payload.marketplaceContentOverrides)
       : [],
+    ...(payload.notes !== undefined ? { notes: normalizeProductNotes(payload.notes) } : {}),
     imageFileIds: Array.isArray(payload.imageFileIds) ? payload.imageFileIds : undefined,
   } as TData;
 };
@@ -187,6 +192,7 @@ const normalizeUpdateProductPayloadForStorage = <TData extends Record<string, un
     parameters?: ProductParameterValue[] | null;
     imageFileIds?: string[] | null;
     marketplaceContentOverrides?: unknown[] | null;
+    notes?: unknown;
   };
   return {
     ...(payload as TData),
@@ -201,6 +207,7 @@ const normalizeUpdateProductPayloadForStorage = <TData extends Record<string, un
           ),
         }
       : {}),
+    ...(payload.notes !== undefined ? { notes: normalizeProductNotes(payload.notes) } : {}),
     imageFileIds: Array.isArray(payload.imageFileIds) ? payload.imageFileIds : undefined,
   } as TData;
 };

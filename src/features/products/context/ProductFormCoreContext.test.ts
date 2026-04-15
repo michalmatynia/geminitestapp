@@ -115,6 +115,22 @@ describe('resolveProductFormDefaultValues', () => {
       },
     ]);
   });
+
+  it('hydrates product notes from the edited product into form defaults', () => {
+    expect(
+      resolveProductFormDefaultValues({
+        product: createProduct({
+          notes: {
+            text: 'Internal note',
+            color: '#fde68a',
+          },
+        }),
+      }).notes
+    ).toEqual({
+      text: 'Internal note',
+      color: '#fde68a',
+    });
+  });
 });
 
 function ImportSourceProbe(): React.JSX.Element {

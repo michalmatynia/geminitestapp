@@ -64,6 +64,21 @@ describe('product io schemas', () => {
     ]);
   });
 
+  it('parses product notes from JSON form fields', () => {
+    const parsed = productCreateInputSchema.parse({
+      sku: 'SKU-1',
+      notes: JSON.stringify({
+        text: '  Check packaging insert before export.  ',
+        color: '  #fde68a ',
+      }),
+    });
+
+    expect(parsed.notes).toEqual({
+      text: 'Check packaging insert before export.',
+      color: '#fde68a',
+    });
+  });
+
   it('allows marketplace content overrides with integrations selected and blank copy fields', () => {
     const parsed = productCreateInputSchema.parse({
       sku: 'SKU-1',

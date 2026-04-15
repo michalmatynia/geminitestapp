@@ -531,11 +531,9 @@ describe('product-scan-amazon-script', () => {
 
   it('tracks scan steps per image candidate instead of overwriting repeated Google upload attempts', () => {
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
-      "const resolveStepIdentity = (key, attempt, inputSource, candidateId = null) =>"
+      "const productScanResolveStepIdentity = (key, attempt, inputSource, candidateId = null) =>"
     );
-    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain(
-      "resolveStepIdentity(entry.key, entry.attempt, entry.inputSource, entry.candidateId)"
-    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain('productScanResolveStepIdentity(');
   });
 
   it('dismisses Amazon cookie and delivery overlays before extraction', () => {
@@ -739,6 +737,11 @@ describe('product-scan-amazon-script', () => {
 
   it('emits structured scan steps and running progress snapshots', () => {
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain('const scanSteps = [];');
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain('const PRODUCT_SCAN_STEP_REGISTRY =');
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain('seedProductScanStepSequence({');
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain('const hasDirectAmazonCandidateInput =');
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("'amazon_direct_candidate_followup'");
+    expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("'amazon_reverse_image_scan_browser'");
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain('const upsertScanStep = (input) => {');
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("steps: scanSteps.map((step) => ({ ...step }))");
     expect(AMAZON_REVERSE_IMAGE_SCAN_SCRIPT).toContain("status: 'running'");

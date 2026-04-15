@@ -106,7 +106,7 @@ export class TraderaSequencer extends PlaywrightSequencer {
         break;
       }
       case 'category_select': {
-        const trigger = await this.findFieldTriggerByLabels(CATEGORY_FIELD_LABELS as string[]);
+        const trigger = await this.findFieldTriggerByLabels(CATEGORY_FIELD_LABELS);
         if (trigger) {
           await trigger.click();
           const helpers = this.context.helpers as { categoryPath?: string };
@@ -148,7 +148,7 @@ export class TraderaSequencer extends PlaywrightSequencer {
     const { page } = this.context;
     const segments = path.split('>').map((s) => s.trim());
     for (const segment of segments) {
-      const option = page.locator(`[role="menuitem"], [role="option"]`).filter({ hasText: segment }).first();
+      const option = page.locator('[role="menuitem"], [role="option"]').filter({ hasText: segment }).first();
       await option.click();
       await page.waitForLoadState('networkidle').catch(() => undefined);
     }

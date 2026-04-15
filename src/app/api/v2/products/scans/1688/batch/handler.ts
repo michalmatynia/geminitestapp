@@ -17,6 +17,8 @@ export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): P
     productIds: body.productIds,
     userId: ctx.userId ?? null,
     connectionId: body.connectionId ?? null,
+    stepSequenceKey: body.stepSequenceKey ?? null,
+    stepSequence: body.stepSequence ?? null,
   });
 
   return NextResponse.json(productScanBatchResponseSchema.parse(result));

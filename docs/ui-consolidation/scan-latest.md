@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-14'
+last_reviewed: '2026-04-15'
 status: 'generated'
 doc_type: 'generated'
 scope: 'cross-feature'
@@ -8,11 +8,11 @@ canonical: true
 ---
 # UI Consolidation Scan
 
-Generated at: 2026-04-14T12:37:29.515Z
+Generated at: 2026-04-15T09:39:01.224Z
 
 ## Snapshot
 
-- Scanned UI files: 2597
+- Scanned UI files: 2604
 - Duplicate-name clusters: 0
 - Prop-signature clusters: 0
 - Token-similarity clusters: 0
@@ -24,7 +24,7 @@ Generated at: 2026-04-14T12:37:29.515Z
 
 | Domain | Files |
 | --- | ---: |
-| `feature` | 2016 |
+| `feature` | 2023 |
 | `app` | 342 |
 | `shared-ui` | 183 |
 | `shared` | 56 |
@@ -33,7 +33,7 @@ Generated at: 2026-04-14T12:37:29.515Z
 
 | Family | Files |
 | --- | ---: |
-| `Unknown` | 1902 |
+| `Unknown` | 1907 |
 | `Page` | 174 |
 | `Section` | 143 |
 | `Panel` | 104 |
@@ -41,11 +41,11 @@ Generated at: 2026-04-14T12:37:29.515Z
 | `Tab` | 44 |
 | `Card` | 40 |
 | `Settings` | 25 |
-| `Header` | 23 |
+| `Header` | 24 |
 | `List` | 19 |
 | `Form` | 15 |
+| `Table` | 9 |
 | `Toolbar` | 8 |
-| `Table` | 8 |
 | `Dialog` | 7 |
 | `Picker` | 7 |
 

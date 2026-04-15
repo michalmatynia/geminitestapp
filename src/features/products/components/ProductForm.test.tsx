@@ -160,6 +160,7 @@ describe('ProductForm', () => {
       'Custom Fields',
       'Scans',
       'Import Info',
+      'Notes',
       'Note Link',
       'Validation',
     ]);

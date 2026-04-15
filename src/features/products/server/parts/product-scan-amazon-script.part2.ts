@@ -2,29 +2,6 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_2 = String.raw`    };
   };
 
   const dismissAmazonOverlaysIfPresent = async () => {
-    const cookieAcceptSelectors = [
-      '#sp-cc-accept',
-      'input#sp-cc-accept',
-      'button:has-text("Accept")',
-      'input[aria-labelledby*="accept"]',
-      'input[name="accept"]',
-    ];
-    const cookieDismissSelectors = [
-      '#sp-cc-rejectall-link',
-      '#sp-cc-customize-link',
-      'button:has-text("Decline")',
-      'button:has-text("Dismiss")',
-      '[aria-label="Close"]',
-      '[data-action="a-popover-close"]',
-    ];
-    const addressDismissSelectors = [
-      '#glow-toaster button:has-text("Dismiss")',
-      'button:has-text("Dismiss")',
-      'button[aria-label="Dismiss"]',
-      'input[data-action-type="DISMISS"]',
-      '[data-action="GLUXPostalUpdateAction"] [aria-label="Close"]',
-    ];
-
     for (let attempt = 0; attempt < 4; attempt += 1) {
       const state = await detectAmazonOverlayState();
       if (
@@ -41,12 +18,12 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_2 = String.raw`    };
       let changed = false;
       if (state.cookieVisible) {
         changed =
-          (await clickFirstVisible(cookieAcceptSelectors)) ||
-          (await clickFirstVisible(cookieDismissSelectors)) ||
+          (await clickFirstVisible(AMAZON_COOKIE_ACCEPT_SELECTORS)) ||
+          (await clickFirstVisible(AMAZON_COOKIE_DISMISS_SELECTORS)) ||
           changed;
       }
       if (state.addressVisible) {
-        changed = (await clickFirstVisible(addressDismissSelectors)) || changed;
+        changed = (await clickFirstVisible(AMAZON_ADDRESS_DISMISS_SELECTORS)) || changed;
       }
 
       if (changed) {
@@ -559,18 +536,7 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_2 = String.raw`    };
     try { host = new URL(currentUrl).hostname.toLowerCase(); } catch {}
     if (!isGoogleRedirectHost(host)) return false;
 
-    const continueSelectors = [
-      'a:has-text("Przejdź do witryny")',
-      'a:has-text("Przejdź mimo to")',
-      'a:has-text("Kontynuuj")',
-      'button:has-text("Kontynuuj")',
-      'a:has-text("Continue")',
-      'a:has-text("Proceed")',
-      '#proceed-link',
-      'a[id*="proceed"]',
-    ];
-
-    for (const selector of continueSelectors) {
+    for (const selector of GOOGLE_REDIRECT_INTERSTITIAL_SELECTORS) {
       const locator = page.locator(selector).first();
       if ((await locator.count().catch(() => 0)) === 0) continue;
       const visible = await locator.isVisible().catch(() => false);
@@ -848,22 +814,12 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_2 = String.raw`    };
         extractAsin(await page.locator('input[name="ASIN"]').first().inputValue().catch(() => null));
 
       const title =
-        (await readFirstText(['#productTitle', 'h1.a-size-large', 'h1#title'])) ||
+        (await readFirstText(AMAZON_TITLE_SELECTORS)) ||
         toText(await getMetaContent('meta[property="og:title"]'));
-      const price =
-        (await readFirstText([
-          '.priceToPay .a-offscreen',
-          '#corePrice_feature_div .a-offscreen',
-          '#tp_price_block_total_price_ww .a-offscreen',
-          '#priceblock_ourprice',
-          '#priceblock_dealprice',
-        ])) || null;
+      const price = (await readFirstText(AMAZON_PRICE_SELECTORS)) || null;
       const description =
-        (await readFirstText([
-          '#feature-bullets',
-          '#productDescription',
-          '#bookDescription_feature_div',
-        ])) || toText(await getMetaContent('meta[name="description"]'));
+        (await readFirstText(AMAZON_DESCRIPTION_SELECTORS)) ||
+        toText(await getMetaContent('meta[name="description"]'));
       const amazonDetails = await buildAmazonDetails();
 
       upsertScanStep({
@@ -996,25 +952,15 @@ export const AMAZON_REVERSE_IMAGE_SCAN_SCRIPT_PART_2 = String.raw`    };
         extractAsin(await page.locator('[data-asin]').first().getAttribute('data-asin').catch(() => null)) ||
         extractAsin(await page.locator('input[name="ASIN"]').first().inputValue().catch(() => null));
       const pageTitle =
-        (await readFirstText(['#productTitle', 'h1.a-size-large', 'h1#title'])) ||
+        (await readFirstText(AMAZON_TITLE_SELECTORS)) ||
         toText(await getMetaContent('meta[property="og:title"]'));
       const descriptionSnippet =
-        (await readFirstText([
-          '#feature-bullets',
-          '#productDescription',
-          '#bookDescription_feature_div',
-        ])) || toText(await getMetaContent('meta[name="description"]'));
-      const heroImageSelectors = [
-        '#landingImage',
-        '#imgTagWrapperId img',
-        '#main-image-container img',
-        '#ebooksImgBlkFront',
-        '#imgBlkFront',
-      ];
+        (await readFirstText(AMAZON_DESCRIPTION_SELECTORS)) ||
+        toText(await getMetaContent('meta[name="description"]'));
       let heroImageUrl = null;
       let heroImageAlt = null;
       let heroImageArtifactName = null;
-      for (const selector of heroImageSelectors) {
+      for (const selector of AMAZON_HERO_IMAGE_SELECTORS) {
         const locator = page.locator(selector).first();
         const nextUrl = toText(await locator.getAttribute('src').catch(() => null));
         const nextAlt = toText(await locator.getAttribute('alt').catch(() => null));

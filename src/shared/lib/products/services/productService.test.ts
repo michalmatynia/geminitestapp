@@ -208,7 +208,9 @@ describe('productService parameter normalization', () => {
     repositoryMock.bulkCreateProducts.mockResolvedValue(1);
     repositoryMock.updateProduct.mockResolvedValue(createProductRecord());
     repositoryMock.getProductById.mockResolvedValue(createProductRecord());
-    repositoryMock.getProductBySku.mockResolvedValue(createProductRecord());
+    repositoryMock.getProductBySku.mockImplementation(async (sku: string) =>
+      sku === 'SKU-1' ? createProductRecord() : null
+    );
     repositoryMock.getProductsBySkus.mockResolvedValue([createProductRecord()]);
     repositoryMock.findProductsByBaseIds.mockResolvedValue([createProductRecord()]);
     repositoryMock.duplicateProduct.mockResolvedValue({ id: 'product-2' });
@@ -411,6 +413,65 @@ describe('productService parameter normalization', () => {
 
     expect(createPayload).toEqual(
       expect.objectContaining({ sku: 'SKU-NEW', customFields: [], parameters: [] })
+    );
+  });
+
+  it('normalizes notes on create and update payloads', async () => {
+    validateProductCreateMock.mockResolvedValue({
+      success: true,
+      data: {
+        sku: 'SKU-NOTES',
+        notes: {
+          text: '  Keep the original insert sheet.  ',
+          color: '  #fde68a ',
+        },
+      },
+    });
+    validateProductUpdateMock.mockResolvedValue({
+      success: true,
+      data: {
+        notes: {
+          text: '  Updated handling note  ',
+          color: '  #bfdbfe ',
+        },
+      },
+    });
+
+    await productService.createProduct({
+      sku: 'SKU-NOTES',
+      notes: {
+        text: 'Keep the original insert sheet.',
+        color: '#fde68a',
+      },
+    });
+    await productService.updateProduct('product-1', {
+      notes: {
+        text: 'Updated handling note',
+        color: '#bfdbfe',
+      },
+    });
+
+    const [createPayload] = repositoryMock.createProduct.mock.calls[0] as [Record<string, unknown>];
+    const [, updatePayload] = repositoryMock.updateProduct.mock.calls[0] as [
+      string,
+      Record<string, unknown>,
+    ];
+
+    expect(createPayload).toEqual(
+      expect.objectContaining({
+        notes: {
+          text: 'Keep the original insert sheet.',
+          color: '#fde68a',
+        },
+      })
+    );
+    expect(updatePayload).toEqual(
+      expect.objectContaining({
+        notes: {
+          text: 'Updated handling note',
+          color: '#bfdbfe',
+        },
+      })
     );
   });
 

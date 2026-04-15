@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-11T17:22:08.761Z",
+  "generatedAt": "2026-04-15T09:38:21.665Z",
   "status": "passed",
   "summary": {
     "total": 0,
@@ -7,16 +7,16 @@
     "warningCount": 0,
     "infoCount": 0,
     "status": "passed",
-    "routeCount": 320,
-    "methodCount": 469,
-    "csrfExemptionCount": 56,
+    "routeCount": 322,
+    "methodCount": 472,
+    "csrfExemptionCount": 57,
     "csrfExemptionsByPolicy": {
       "webhook-ingest": 1,
       "telemetry-ingest": 3,
       "auth-bootstrap": 11,
       "public-campaign-links": 2,
       "deprecated-public-auth": 2,
-      "external-integrations": 37
+      "external-integrations": 38
     }
   },
   "routeRoots": [
@@ -201,6 +201,12 @@
       "reason": "Integration routes accept external callbacks, requests, and connection flows."
     },
     {
+      "routePath": "v2/integrations/exports/1688/[setting]",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
       "routePath": "v2/integrations/exports/base/[setting]",
       "method": "POST",
       "policy": "external-integrations",
@@ -363,5 +369,5 @@
       "reason": "Integration routes accept external callbacks, requests, and connection flows."
     }
   ],
-  "durationMs": 111
+  "durationMs": 120
 }

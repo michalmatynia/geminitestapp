@@ -1,11 +1,15 @@
 import type { ProductCategory } from '@/shared/contracts/products/categories';
 import { catalogSchema } from '@/shared/contracts/products/catalogs';
 import type {
+  ProductNotes,
   ProductParameterValue,
   ProductRecord,
   ProductWithImages,
 } from '@/shared/contracts/products/product';
-import { normalizeProductMarketplaceContentOverrides } from '@/shared/contracts/products/product';
+import {
+  normalizeProductMarketplaceContentOverrides,
+  normalizeProductNotes,
+} from '@/shared/contracts/products/product';
 import { validationError } from '@/shared/errors/app-error';
 import { decodeSimpleParameterStorageId } from '@/shared/lib/products/utils/parameter-partition';
 import {
@@ -247,6 +251,9 @@ const normalizeParameterValues = (input: unknown): ProductParameterValue[] => {
   return Array.from(byParameterId.values());
 };
 
+const normalizeMappedProductNotes = (value: unknown): ProductNotes | undefined =>
+  normalizeProductNotes(value) ?? undefined;
+
 const resolveCanonicalCatalogId = (doc: ProductDocument): string => {
   if (Array.isArray(doc.catalogs)) {
     for (const entry of doc.catalogs) {
@@ -482,6 +489,7 @@ export const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImag
     canonicalProducers.length > 0
       ? canonicalProducers
       : normalizeLegacyTopLevelProducerRelations(doc, productId);
+  const notes = normalizeMappedProductNotes(doc.notes);
   const noteIds = Array.isArray(doc.noteIds) ? doc.noteIds : [];
   const catalogId = resolveCanonicalCatalogId(doc);
   const category = normalizeProductCategory(doc.category, catalogId);
@@ -528,6 +536,7 @@ export const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImag
     marketplaceContentOverrides: normalizeProductMarketplaceContentOverrides(
       doc.marketplaceContentOverrides
     ),
+    ...(notes ? { notes } : {}),
     imageLinks: Array.isArray(doc.imageLinks) ? doc.imageLinks : [],
     imageBase64s: Array.isArray(doc.imageBase64s) ? doc.imageBase64s : [],
     noteIds,
@@ -562,6 +571,7 @@ export const toProductBase = (doc: ProductDocument): ProductRecord => {
     pl: doc.description_pl,
     de: doc.description_de,
   });
+  const notes = normalizeMappedProductNotes(doc.notes);
   const noteIds = Array.isArray(doc.noteIds) ? doc.noteIds : [];
   const tags = normalizeTagRelations(doc.tags, productId);
   const canonicalProducers = normalizeProducerRelations(doc.producers, productId);
@@ -608,6 +618,7 @@ export const toProductBase = (doc: ProductDocument): ProductRecord => {
     marketplaceContentOverrides: normalizeProductMarketplaceContentOverrides(
       doc.marketplaceContentOverrides
     ),
+    ...(notes ? { notes } : {}),
     imageLinks: Array.isArray(doc.imageLinks) ? doc.imageLinks : [],
     imageBase64s: Array.isArray(doc.imageBase64s) ? doc.imageBase64s : [],
     noteIds,

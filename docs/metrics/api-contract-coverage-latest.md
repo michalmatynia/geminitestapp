@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-11'
+last_reviewed: '2026-04-15'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,12 +8,12 @@ canonical: true
 ---
 # API Contract Coverage Report
 
-Generated at: 2026-04-11T17:22:14.241Z
+Generated at: 2026-04-15T09:38:26.983Z
 
 ## Summary
 
 - Status: PASSED
-- Route files scanned: 311
+- Route files scanned: 313
 - Route methods scanned: 223
 - Methods with adjacent tests: 214
 - Mutations with body validation: 39

@@ -395,7 +395,7 @@ export async function handleDatabaseUpdateOperation({
           : '';
       const fallbackWarning =
         `Update template has unresolved tokens${rootHint} — falling back to mapping rows automatically. ` +
-        `To fix permanently: set Update Payload Mode to "mapping" on the Database node so it always uses the configured mapping rows.`;
+        'To fix permanently: set Update Payload Mode to "mapping" on the Database node so it always uses the configured mapping rows.';
       toast(fallbackWarning, { variant: 'warning' });
       reportAiPathsError(
         new Error(fallbackWarning),

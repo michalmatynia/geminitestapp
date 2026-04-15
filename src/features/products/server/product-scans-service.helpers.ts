@@ -21,12 +21,14 @@ import {
   type ProductScanAmazonProbe,
   type ProductAmazonBatchScanItem,
   type ProductScanRecord,
+  type ProductScanRequestSequenceEntry,
   type ProductScanSupplierDetails,
   type ProductScanSupplierEvaluation,
   type ProductScanSupplierProbe,
   type ProductScanStep,
 } from '@/shared/contracts/product-scans';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
+import { resolveProductScanStepGroup as resolveSharedProductScanStepGroup } from '@/shared/lib/browser-execution/product-scan-step-sequencer';
 import { getDiskPathFromPublicPath } from '@/shared/lib/files/file-uploader';
 import { getFsPromises } from '@/shared/lib/files/runtime-fs';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
@@ -43,6 +45,7 @@ export const PRODUCT_SCAN_URL_MAX_LENGTH = 4_000;
 export const PRODUCT_SCAN_DESCRIPTION_MAX_LENGTH = 8_000;
 export const PRODUCT_SCAN_ASIN_MAX_LENGTH = 40;
 export const PRODUCT_SCAN_MATCHED_IMAGE_ID_MAX_LENGTH = 160;
+export const PRODUCT_SCAN_SEQUENCE_KEY_MAX_LENGTH = 120;
 export const PRODUCT_SCAN_SYNC_PERSIST_ATTEMPTS = 2;
 export const PRODUCT_SCAN_MIN_IMAGE_BYTES = 1;
 export const PRODUCT_SCAN_MAX_REMOTE_IMAGE_BYTES = 15 * 1024 * 1024;
@@ -201,6 +204,75 @@ export const readOptionalPositiveInt = (value: unknown): number | null => {
 
   const normalized = Math.trunc(value);
   return normalized > 0 ? normalized : null;
+};
+
+const normalizeProductScanSequenceGroup = (
+  value: unknown
+): ProductScanStep['group'] =>
+  value === 'input' ||
+  value === 'google_lens' ||
+  value === 'amazon' ||
+  value === 'supplier' ||
+  value === 'product'
+    ? value
+    : null;
+
+export const normalizeProductScanRequestSequence = (
+  value: unknown
+): ProductScanRequestSequenceEntry[] | null => {
+  if (!Array.isArray(value)) {
+    return null;
+  }
+
+  const normalized = value
+    .map((entry) => {
+      const normalizedEntry = readOptionalString(entry, PRODUCT_SCAN_SEQUENCE_KEY_MAX_LENGTH);
+      if (normalizedEntry) {
+        return normalizedEntry;
+      }
+
+      const record = toRecord(entry);
+      const key = readOptionalString(record?.['key'], PRODUCT_SCAN_SEQUENCE_KEY_MAX_LENGTH);
+      if (!key) {
+        return null;
+      }
+
+      const label = readOptionalString(record?.['label'], 160);
+      const group = normalizeProductScanSequenceGroup(record?.['group']);
+
+      if (!label && !group) {
+        return key;
+      }
+
+      return {
+        key,
+        ...(label ? { label } : {}),
+        ...(group ? { group } : {}),
+      } satisfies ProductScanRequestSequenceEntry;
+    })
+    .filter((entry): entry is ProductScanRequestSequenceEntry => entry != null)
+    .slice(0, 50);
+
+  return normalized.length > 0 ? normalized : null;
+};
+
+export const resolveProductScanRequestSequenceInput = (
+  value: unknown
+): {
+  stepSequenceKey?: string;
+  stepSequence?: ProductScanRequestSequenceEntry[];
+} => {
+  const record = toRecord(value);
+  const stepSequenceKey = readOptionalString(
+    record?.['stepSequenceKey'],
+    PRODUCT_SCAN_SEQUENCE_KEY_MAX_LENGTH
+  );
+  const stepSequence = normalizeProductScanRequestSequence(record?.['stepSequence']);
+
+  return {
+    ...(stepSequenceKey ? { stepSequenceKey } : {}),
+    ...(stepSequence ? { stepSequence } : {}),
+  };
 };
 
 export const resolvePersistableScanUrl = (...values: unknown[]): string | null => {
@@ -718,38 +790,8 @@ const resolveComparableStepAttempt = (attempt: number | null | undefined): numbe
 
 export const resolveProductScanStepGroup = (
   key: string | null | undefined
-): ProductScanStep['group'] => {
-  const normalizedKey = readOptionalString(key);
-  if (!normalizedKey) {
-    return null;
-  }
-
-  if (
-    normalizedKey === 'validate' ||
-    normalizedKey === 'prepare_scan' ||
-    normalizedKey === 'queue_scan'
-  ) {
-    return 'input';
-  }
-
-  if (normalizedKey.startsWith('google_')) {
-    return 'google_lens';
-  }
-
-  if (normalizedKey.startsWith('amazon_')) {
-    return 'amazon';
-  }
-
-  if (normalizedKey.startsWith('supplier_') || normalizedKey.startsWith('1688_')) {
-    return 'supplier';
-  }
-
-  if (normalizedKey.startsWith('product_')) {
-    return 'product';
-  }
-
-  return null;
-};
+): ProductScanStep['group'] =>
+  resolveSharedProductScanStepGroup(readOptionalString(key));
 
 const normalizeProductScanStepDetails = (
   value: Array<{ label: string; value?: string | null }> | null | undefined
@@ -766,9 +808,9 @@ const normalizeProductScanStepDetails = (
     .map((entry) => entry.data);
 
 const resolveProductScanStepIdentity = (
-  step: Pick<ProductScanStep, 'key' | 'attempt' | 'inputSource'>
+  step: Pick<ProductScanStep, 'key' | 'attempt' | 'inputSource' | 'candidateId'>
 ): string =>
-  `${step.key}::${resolveComparableStepAttempt(step.attempt)}::${readOptionalString(step.inputSource) ?? 'none'}`;
+  `${step.key}::${resolveComparableStepAttempt(step.attempt)}::${readOptionalString(step.inputSource) ?? 'none'}::${readOptionalString(step.candidateId) ?? 'none'}`;
 
 const normalizePersistedProductScanStep = (
   input: Omit<Partial<ProductScanStep>, 'details'> &
@@ -1085,6 +1127,8 @@ export const buildAmazonScanRequestInput = (input: {
   directAmazonCandidateUrls?: string[] | null;
   directMatchedImageId?: string | null;
   directAmazonCandidateRank?: number | null;
+  stepSequenceKey?: string | null;
+  stepSequence?: ProductScanRequestSequenceEntry[] | null;
 }) => ({
   productId: input.productId,
   productName: input.productName,
@@ -1113,6 +1157,8 @@ export const buildAmazonScanRequestInput = (input: {
     input.directAmazonCandidateRank > 0
       ? Math.trunc(input.directAmazonCandidateRank)
       : null,
+  stepSequenceKey: readOptionalString(input.stepSequenceKey, PRODUCT_SCAN_SEQUENCE_KEY_MAX_LENGTH),
+  stepSequence: normalizeProductScanRequestSequence(input.stepSequence),
 });
 
 export const build1688ScanRequestInput = (input: {
@@ -1135,6 +1181,8 @@ export const build1688ScanRequestInput = (input: {
   directSupplierCandidateUrls?: string[] | null;
   directMatchedImageId?: string | null;
   directSupplierCandidateRank?: number | null;
+  stepSequenceKey?: string | null;
+  stepSequence?: ProductScanRequestSequenceEntry[] | null;
 }) => ({
   productId: input.productId,
   productName: input.productName,
@@ -1188,6 +1236,8 @@ export const build1688ScanRequestInput = (input: {
     input.directSupplierCandidateRank > 0
       ? Math.trunc(input.directSupplierCandidateRank)
       : null,
+  stepSequenceKey: readOptionalString(input.stepSequenceKey, PRODUCT_SCAN_SEQUENCE_KEY_MAX_LENGTH),
+  stepSequence: normalizeProductScanRequestSequence(input.stepSequence),
 });
 
 export const createAmazonScanStartedRawResult = (input: {
@@ -1201,6 +1251,8 @@ export const createAmazonScanStartedRawResult = (input: {
   previousResult?: unknown;
   manualVerificationPending?: boolean;
   manualVerificationMessage?: string | null;
+  stepSequenceKey?: string | null;
+  stepSequence?: ProductScanRequestSequenceEntry[] | null;
 }) => ({
   runId: input.runId,
   status: input.status,
@@ -1229,6 +1281,17 @@ export const createAmazonScanStartedRawResult = (input: {
         ],
   allowManualVerification: input.allowManualVerification,
   manualVerificationTimeoutMs: input.manualVerificationTimeoutMs,
+  ...(readOptionalString(input.stepSequenceKey, PRODUCT_SCAN_SEQUENCE_KEY_MAX_LENGTH)
+    ? {
+        stepSequenceKey: readOptionalString(
+          input.stepSequenceKey,
+          PRODUCT_SCAN_SEQUENCE_KEY_MAX_LENGTH
+        ),
+      }
+    : {}),
+  ...(normalizeProductScanRequestSequence(input.stepSequence)
+    ? { stepSequence: normalizeProductScanRequestSequence(input.stepSequence) }
+    : {}),
   ...(input.previousRunId ? { previousRunId: input.previousRunId } : {}),
   ...(input.previousResult !== undefined ? { previousResult: input.previousResult } : {}),
   ...(input.manualVerificationPending

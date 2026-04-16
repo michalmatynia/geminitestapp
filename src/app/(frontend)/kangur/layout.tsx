@@ -23,15 +23,23 @@ import { shouldRenderVercelAnalytics } from '@/shared/lib/analytics/vercel-analy
 import { safeHtml } from '@/shared/lib/security/safe-html';
 import { Analytics } from '@vercel/analytics/next';
 
-import type { ReactNode } from 'react';
+import { Suspense, use, type ReactNode } from 'react';
 
-export default async function Layout({ children }: { children: ReactNode }): Promise<ReactNode> {
-  const initialState = await getKangurStorefrontInitialState();
-  const shouldRenderAnalytics = shouldRenderVercelAnalytics();
-  const surfaceBootstrapStyle = getKangurSurfaceBootstrapStyle({
-    mode: initialState?.initialMode,
-    themeSettings: initialState?.initialThemeSettings,
-  });
+type KangurLayoutShellProps = {
+  children: ReactNode;
+  initialAppearance?: {
+    mode?: NonNullable<Awaited<ReturnType<typeof getKangurStorefrontInitialState>>>['initialMode'];
+    themeSettings?: NonNullable<
+      Awaited<ReturnType<typeof getKangurStorefrontInitialState>>
+    >['initialThemeSettings'];
+  };
+};
+
+function KangurLayoutShell({
+  children,
+  initialAppearance,
+}: KangurLayoutShellProps): React.JSX.Element {
+  const surfaceBootstrapStyle = getKangurSurfaceBootstrapStyle(initialAppearance);
 
   return (
     <>
@@ -40,14 +48,51 @@ export default async function Layout({ children }: { children: ReactNode }): Pro
         id='__KANGUR_SURFACE_BOOTSTRAP__'
         dangerouslySetInnerHTML={{ __html: safeHtml(surfaceBootstrapStyle) }}
       />
-      <KangurStorefrontAppearanceProvider
-        initialAppearance={{
-          mode: initialState?.initialMode,
-          themeSettings: initialState?.initialThemeSettings,
-        }}
-      >
+      <KangurStorefrontAppearanceProvider initialAppearance={initialAppearance}>
         <KangurSurfaceClassSync>{children}</KangurSurfaceClassSync>
       </KangurStorefrontAppearanceProvider>
+    </>
+  );
+}
+
+type KangurLayoutProps = {
+  children: ReactNode;
+};
+
+export async function resolveKangurLayoutView({
+  children,
+}: KangurLayoutProps): Promise<React.JSX.Element> {
+  const initialState = await getKangurStorefrontInitialState();
+
+  return (
+    <KangurLayoutShell
+      initialAppearance={{
+        mode: initialState?.initialMode,
+        themeSettings: initialState?.initialThemeSettings,
+      }}
+    >
+      {children}
+    </KangurLayoutShell>
+  );
+}
+
+function KangurLayoutRuntime({
+  layoutViewPromise,
+}: {
+  layoutViewPromise: Promise<React.JSX.Element>;
+}): React.JSX.Element {
+  return use(layoutViewPromise);
+}
+
+export default function Layout({ children }: KangurLayoutProps): React.JSX.Element {
+  const shouldRenderAnalytics = shouldRenderVercelAnalytics();
+  const layoutViewPromise = resolveKangurLayoutView({ children });
+
+  return (
+    <>
+      <Suspense fallback={<KangurLayoutShell>{children}</KangurLayoutShell>}>
+        <KangurLayoutRuntime layoutViewPromise={layoutViewPromise} />
+      </Suspense>
       {shouldRenderAnalytics ? <Analytics /> : null}
     </>
   );

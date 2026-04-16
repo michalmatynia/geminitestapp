@@ -50,15 +50,14 @@ export async function getPriceGroups(): Promise<PriceGroup[]> {
     return await api.get<PriceGroup[]>(PRICE_GROUPS_ENDPOINT);
   } catch (error) {
     logClientError(error);
-    logClientError(error instanceof Error ? error : new Error('Failed to load price groups'), {
-      context: { source: 'products-api-settings', action: 'getPriceGroups' },
-    });
+    const err = error instanceof Error ? error : new Error('Failed to load price groups');
+    logClientError(err, { context: { source: 'products-api-settings', action: 'getPriceGroups' } });
     return [];
   }
 }
 
 export async function updatePriceGroup(group: PriceGroup): Promise<PriceGroup> {
-  const routeId = group.id?.trim() || group.groupId.trim();
+  const routeId = (typeof group.id === 'string' && group.id !== '') ? group.id.trim() : group.groupId.trim();
   return api.put<PriceGroup>(`${PRICE_GROUPS_ENDPOINT}/${routeId}`, group);
 }
 
@@ -70,7 +69,7 @@ export async function savePriceGroup(
   id: string | undefined,
   data: Partial<PriceGroup>
 ): Promise<PriceGroup> {
-  if (id) {
+  if (typeof id === 'string' && id !== '') {
     return api.put<PriceGroup>(`${PRICE_GROUPS_ENDPOINT}/${id}`, data);
   }
   return api.post<PriceGroup>(PRICE_GROUPS_ENDPOINT, data);
@@ -96,30 +95,30 @@ export async function getCategories(
   catalogId: string | null
 ): Promise<ProductCategoryWithChildren[]> {
   try {
+    const params = (typeof catalogId === 'string' && catalogId !== '') ? { catalogId } : undefined;
     return await api.get<ProductCategoryWithChildren[]>('/api/v2/products/categories/tree', {
-      params: { catalogId: catalogId || undefined },
+      params,
       cache: 'no-store',
     });
   } catch (error) {
     logClientError(error);
-    logClientError(error instanceof Error ? error : new Error('Failed to load categories'), {
-      context: { source: 'products-api-settings', action: 'getCategories', catalogId },
-    });
+    const err = error instanceof Error ? error : new Error('Failed to load categories');
+    logClientError(err, { context: { source: 'products-api-settings', action: 'getCategories', catalogId } });
     return [];
   }
 }
 
 export async function getCategoriesFlat(catalogId: string | null): Promise<ProductCategory[]> {
   try {
+    const params = (typeof catalogId === 'string' && catalogId !== '') ? { catalogId } : undefined;
     return await api.get<ProductCategory[]>('/api/v2/products/categories', {
-      params: { catalogId: catalogId || undefined },
+      params,
       cache: 'no-store',
     });
   } catch (error) {
     logClientError(error);
-    logClientError(error instanceof Error ? error : new Error('Failed to load flat categories'), {
-      context: { source: 'products-api-settings', action: 'getCategoriesFlat', catalogId },
-    });
+    const err = error instanceof Error ? error : new Error('Failed to load flat categories');
+    logClientError(err, { context: { source: 'products-api-settings', action: 'getCategoriesFlat', catalogId } });
     return [];
   }
 }
@@ -144,17 +143,15 @@ export async function deleteCategory(id: string): Promise<void> {
 }
 
 export async function getTags(catalogId: string | null): Promise<ProductTag[]> {
-  return api.get<ProductTag[]>('/api/v2/products/tags', {
-    params: { catalogId: catalogId || undefined },
-  });
+  const params = (typeof catalogId === 'string' && catalogId !== '') ? { catalogId } : undefined;
+  return api.get<ProductTag[]>('/api/v2/products/tags', { params });
 }
 
 export async function getShippingGroups(
   catalogId: string | null
 ): Promise<ProductShippingGroup[]> {
-  return api.get<ProductShippingGroup[]>('/api/v2/products/shipping-groups', {
-    params: { catalogId: catalogId || undefined },
-  });
+  const params = (typeof catalogId === 'string' && catalogId !== '') ? { catalogId } : undefined;
+  return api.get<ProductShippingGroup[]>('/api/v2/products/shipping-groups', { params });
 }
 
 export async function createTag(data: Partial<ProductTag>): Promise<ProductTag> {
@@ -210,8 +207,9 @@ export async function deleteCustomField(id: string): Promise<void> {
 }
 
 export async function getParameters(catalogId: string | null): Promise<ProductParameter[]> {
+  const params = (typeof catalogId === 'string' && catalogId !== '') ? { catalogId } : undefined;
   return api.get<ProductParameter[]>('/api/v2/products/parameters', {
-    params: { catalogId: catalogId || undefined },
+    params,
     cache: 'no-store',
   });
 }
@@ -271,7 +269,7 @@ export async function updateValidationPattern(
 }
 
 export async function deleteValidationPattern(id: string): Promise<void> {
-  return api.delete(`/api/v2/products/validator-patterns/${id}`);
+  return api.delete(`/api/v2/patterns/${id}`);
 }
 
 export async function reorderValidationPatterns(payload: {
@@ -295,7 +293,7 @@ export async function importValidationPatterns(
 export async function getProductValidatorConfig(
   includeDisabled: boolean = false
 ): Promise<ProductValidatorConfig> {
-  if (includeDisabled) {
+  if (includeDisabled === true) {
     return api.get<ProductValidatorConfig>('/api/v2/products/validator-config', {
       params: { includeDisabled: true },
     });

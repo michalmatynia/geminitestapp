@@ -78,6 +78,6 @@ export function VectorCanvasProvider({
 }: {
   children: React.ReactNode;
   value: VectorCanvasContextValue;
-}) {
+}): React.JSX.Element {
   return <VectorCanvasContext.Provider value={value}>{children}</VectorCanvasContext.Provider>;
 }

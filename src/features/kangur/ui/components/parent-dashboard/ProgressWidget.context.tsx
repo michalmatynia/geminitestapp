@@ -7,7 +7,11 @@ type ProgressWidgetState = ReturnType<typeof useKangurParentDashboardProgressWid
 
 const ProgressWidgetContext = createContext<ProgressWidgetState | null>(null);
 
-export function ProgressWidgetProvider({ children }: { children: React.ReactNode }) {
+export function ProgressWidgetProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}): React.JSX.Element {
   const state = useKangurParentDashboardProgressWidgetState();
   return (
     <ProgressWidgetContext.Provider value={state}>

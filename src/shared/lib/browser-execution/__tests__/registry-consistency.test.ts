@@ -12,6 +12,11 @@ import {
   TRADERA_QUICKLIST_PUBLISH_LABELS,
   generateTraderaQuicklistBrowserStepsInit,
 } from '../generate-browser-steps';
+import {
+  TRADERA_SELECTOR_REGISTRY_RUNTIME,
+  TRADERA_SELECTOR_REGISTRY_SEED_ENTRIES,
+  generateTraderaSelectorRegistryRuntime,
+} from '../selectors/tradera';
 
 // ── Registry completeness ─────────────────────────────────────────────────────
 
@@ -220,5 +225,33 @@ describe('generateTraderaQuicklistBrowserStepsInit', () => {
 
   it('is stable — calling it twice produces the same output', () => {
     expect(generateTraderaQuicklistBrowserStepsInit()).toBe(generated);
+  });
+});
+
+describe('TRADERA_SELECTOR_REGISTRY_RUNTIME', () => {
+  it('contains the centralized selector constants used by the Tradera quicklist runtime', () => {
+    expect(TRADERA_SELECTOR_REGISTRY_RUNTIME).toContain('const TITLE_SELECTORS =');
+    expect(TRADERA_SELECTOR_REGISTRY_RUNTIME).toContain('const PRICE_SELECTORS =');
+    expect(TRADERA_SELECTOR_REGISTRY_RUNTIME).toContain('const ACTIVE_SEARCH_SELECTORS =');
+    expect(TRADERA_SELECTOR_REGISTRY_RUNTIME).toContain(
+      "const FALLBACK_CATEGORY_PATH = 'Other > Other';"
+    );
+  });
+
+  it('has a stable generated output and aligned seed metadata', () => {
+    expect(generateTraderaSelectorRegistryRuntime()).toBe(TRADERA_SELECTOR_REGISTRY_RUNTIME);
+    expect(TRADERA_SELECTOR_REGISTRY_SEED_ENTRIES.length).toBeGreaterThan(0);
+    expect(TRADERA_SELECTOR_REGISTRY_SEED_ENTRIES).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'TITLE_SELECTORS',
+          source: 'code',
+        }),
+        expect.objectContaining({
+          key: 'FALLBACK_CATEGORY_PATH',
+          source: 'code',
+        }),
+      ])
+    );
   });
 });

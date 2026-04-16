@@ -58,12 +58,23 @@ function resolvePriceInfo(product: ProductWithImages, currencyCode: string, pric
   );
 }
 
-export const PriceCell: React.FC<{ row: Row<ProductWithImages> }> = memo(({ row }) => {
-  const product = row.original;
-  const { currencyCode, priceGroups } = useProductListRowVisualsContext();
+function PriceCellBase({ productId, price }: { productId: string, price: number | null }): React.JSX.Element {
+  return (
+    <EditableCell value={price} productId={productId} field='price' onUpdate={(): void => { /* handled optimistically */ }} />
+  );
+}
 
-  const info: PriceInfo = resolvePriceInfo(product, currencyCode, priceGroups);
+function PriceCellContentIndicator({ info, productPrice }: { info: PriceInfo, productPrice: number | null }): React.JSX.Element | null {
+  const { price: displayPrice, currencyCode: actualCurrency } = info;
+  if (displayPrice === null || actualCurrency === null) return null;
+  if (displayPrice === productPrice) return null;
 
+  return (
+    <ConvertedPriceTooltip displayPrice={displayPrice} actualCurrency={actualCurrency} />
+  );
+}
+
+function PriceCellContent({ product, info, currencyCode }: { product: ProductWithImages, info: PriceInfo, currencyCode: string }): React.JSX.Element {
   const isConverted = resolveConvertedPrice(product.price, info.price, info.baseCurrencyCode, currencyCode);
 
   if (isConverted === true && info.price !== null && product.price !== null && info.baseCurrencyCode !== null) {
@@ -74,12 +85,21 @@ export const PriceCell: React.FC<{ row: Row<ProductWithImages> }> = memo(({ row 
 
   return (
     <div className='flex items-center gap-1'>
-      <EditableCell value={product.price} productId={product.id} field='price' onUpdate={(): void => { /* handled optimistically */ }} />
-      {showIndicator === true && info.price !== null && info.currencyCode !== null && info.price !== product.price && (
-        <ConvertedPriceTooltip displayPrice={info.price} actualCurrency={info.currencyCode} />
+      <PriceCellBase productId={product.id} price={product.price} />
+      {showIndicator === true && (
+        <PriceCellContentIndicator info={info} productPrice={product.price} />
       )}
     </div>
   );
+}
+
+export const PriceCell: React.FC<{ row: Row<ProductWithImages> }> = memo(({ row }) => {
+  const product = row.original;
+  const { currencyCode, priceGroups } = useProductListRowVisualsContext();
+
+  const info: PriceInfo = resolvePriceInfo(product, currencyCode, priceGroups);
+
+  return <PriceCellContent product={product} info={info} currencyCode={currencyCode} />;
 });
 
 PriceCell.displayName = 'PriceCell';

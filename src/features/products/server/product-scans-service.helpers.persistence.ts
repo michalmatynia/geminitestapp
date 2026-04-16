@@ -38,6 +38,9 @@ export const persistSynchronizedScan = async (
         price: readOptionalString(updates.price, PRODUCT_SCAN_PRICE_MAX_LENGTH),
         title: readOptionalString(updates.title, PRODUCT_SCAN_TITLE_MAX_LENGTH),
       });
+      if (result === null) {
+        throw new Error(`Product scan ${scan.id} could not be updated.`);
+      }
       return normalizeProductScanRecord(result);
     } catch (error) {
       attempt++;
@@ -76,7 +79,11 @@ export const tryDirectQueuedScanUpdate = async (
   scan: ProductScanRecord,
   input: {
     status?: ProductScanRecord['status'];
+    engineRunId?: string | null;
+    error?: string | null;
+    asinUpdateStatus?: ProductScanRecord['asinUpdateStatus'];
     asinUpdateMessage?: string | null;
+    completedAt?: string | null;
     message?: string | null;
     stepKey?: string;
     stepLabel?: string;
@@ -100,7 +107,11 @@ export const tryDirectQueuedScanUpdate = async (
 
   return await persistSynchronizedScan(scan, {
     status: input.status ?? scan.status,
+    engineRunId: input.engineRunId ?? scan.engineRunId,
+    error: input.error ?? scan.error,
+    asinUpdateStatus: input.asinUpdateStatus ?? scan.asinUpdateStatus,
     asinUpdateMessage: input.asinUpdateMessage ?? scan.asinUpdateMessage,
+    completedAt: input.completedAt ?? scan.completedAt,
     steps: nextSteps,
   });
 };

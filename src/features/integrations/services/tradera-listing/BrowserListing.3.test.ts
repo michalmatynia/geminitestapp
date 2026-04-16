@@ -661,7 +661,7 @@ beforeEach(() => {
 
     expect(runPlaywrightListingScriptMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        script: compatibleManagedV76Script,
+        script: compatibleManagedV76Script.trim(),
         browserMode: 'headed',
         failureHoldOpenMs: 30_000,
       })

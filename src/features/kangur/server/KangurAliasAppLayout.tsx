@@ -14,7 +14,6 @@
  */
 import { Suspense } from 'react';
 import { headers } from 'next/headers';
-import { connection } from 'next/server';
 
 import { getKangurAuthBootstrapScript } from '@/features/kangur/server/auth-bootstrap';
 import { KangurFeatureRouteShellClientBoundary } from '@/features/kangur/ui/KangurFeatureRouteShellClientBoundary';
@@ -39,11 +38,9 @@ async function KangurAuthBootstrapScript(): Promise<ReactNode> {
   );
 }
 
-export async function KangurAliasAppLayout({
+export function KangurAliasAppLayout({
   children,
-}: KangurAliasAppLayoutProps): Promise<ReactNode> {
-  await connection();
-
+}: KangurAliasAppLayoutProps): ReactNode {
   return (
     <>
       <Suspense fallback={null}>

@@ -7,7 +7,16 @@ import { type MasterTreeDropPositionDto } from '@/shared/contracts/master-folder
 import { type FolderTreeStore } from '../../store/createFolderTreeStore';
 import { type FolderTreeState } from '../../types';
 
-export function useFolderTreeDragActions(store: FolderTreeStore) {
+type FolderTreeDragActions = {
+  startDrag: (nodeId: string) => void;
+  updateDragTarget: (
+    targetId: string | null,
+    position?: MasterTreeDropPositionDto
+  ) => void;
+  clearDrag: () => void;
+};
+
+export function useFolderTreeDragActions(store: FolderTreeStore): FolderTreeDragActions {
   const startDrag = useCallback(
     (nodeId: string): void => {
       store.patchState((prev: FolderTreeState) => ({

@@ -45,7 +45,7 @@ export function KangurGameOperationSelectorProvider({
 }: {
   children: React.ReactNode;
   value: KangurGameOperationSelectorContextValue;
-}) {
+}): React.JSX.Element {
   return (
     <KangurGameOperationSelectorContext.Provider value={value}>
       {children}

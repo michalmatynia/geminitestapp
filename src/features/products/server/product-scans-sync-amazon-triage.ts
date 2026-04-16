@@ -17,7 +17,6 @@ import { productService } from '@/shared/lib/products/services/productService';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import {
-  evaluateAmazonScanCandidateMatch,
   triageAmazonScanCandidates,
   type AmazonCandidateTriageEvaluationResult,
 } from './product-scan-amazon-evaluator';
@@ -34,15 +33,11 @@ import {
   AMAZON_SCAN_TIMEOUT_MS,
   createAmazonScanStartedRawResult,
   normalizeErrorMessage,
-  persistFailedSynchronization,
   persistSynchronizedScan,
-  resolveManualVerificationMessage,
-  resolvePersistableScanUrl,
   resolvePersistedProductScanSteps,
   resolveProductScanRequestSequenceInput,
   resolveScanManualVerificationTimeoutMs,
   shouldAutoShowScannerCaptchaBrowser,
-  toRecord,
   upsertPersistedProductScanStep,
   type AmazonScanScriptResult,
 } from './product-scans-service.helpers';
@@ -51,22 +46,14 @@ import {
   appendAmazonAiStageSummary,
   buildAmazonCandidateTriageStageSummary,
   buildAmazonCandidateTriageStepDetails,
-  buildAmazonEvaluationStageSummary,
-  buildAmazonEvaluationStepDetails,
   buildAmazonScannerRequestRuntimeOptions,
   resolveAmazonCandidateTriageMessage,
   resolveAmazonCandidateTriageStepResultCode,
   resolveAmazonCandidateTriageStepStatus,
-  resolveAmazonEvaluationMessage,
-  resolveAmazonEvaluationStepResultCode,
-  resolveAmazonEvaluationStepStatus,
   resolveAmazonImageSearchFallbackProvider,
   resolveAmazonImageSearchProvider,
   resolveAmazonImageSearchProviderHistory,
-  resolveLatestAmazonCandidateStepMeta,
   resolveNextAmazonCandidateTriageStepAttempt,
-  resolveNextAmazonCandidateUrl,
-  resolveNextAmazonEvaluationStepAttempt,
   resolveNextQueueStepAttempt,
   resolveAmazonProbeEvaluatorConfig,
   resolveAmazonTriageEvaluatorConfig,
@@ -545,4 +532,3 @@ export async function synchronizeAmazonTriageReady({
     });
   }
 }
-

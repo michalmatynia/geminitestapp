@@ -1,6 +1,7 @@
+/* eslint-disable max-lines */
 import { caseResolverProfiles } from './defaults-case-resolver';
 import { imageStudioProfiles } from './defaults-image-studio';
-import { type FolderTreeProfilesV2Map } from './types';
+import { type FolderTreeProfilesV2Map, type FolderTreeProfileV2 } from './types';
 
 export const defaultFolderTreeProfilesV2: FolderTreeProfilesV2Map = {
   notes: {
@@ -120,12 +121,12 @@ export const defaultFolderTreeProfilesV2: FolderTreeProfilesV2Map = {
     },
   },
 
-  image_studio: imageStudioProfiles['image_studio']!,
-  case_resolver: caseResolverProfiles['case_resolver']!,
-  case_resolver_case_hierarchy: caseResolverProfiles['case_resolver_case_hierarchy']!,
-  case_resolver_document_relations: caseResolverProfiles['case_resolver_document_relations']!,
-  case_resolver_nodefile_relations: caseResolverProfiles['case_resolver_nodefile_relations']!,
-  case_resolver_scanfile_relations: caseResolverProfiles['case_resolver_scanfile_relations']!,
+  image_studio: imageStudioProfiles['image_studio'] as FolderTreeProfileV2,
+  case_resolver: caseResolverProfiles['case_resolver'] as FolderTreeProfileV2,
+  case_resolver_case_hierarchy: caseResolverProfiles['case_resolver_case_hierarchy'] as FolderTreeProfileV2,
+  case_resolver_document_relations: caseResolverProfiles['case_resolver_document_relations'] as FolderTreeProfileV2,
+  case_resolver_nodefile_relations: caseResolverProfiles['case_resolver_nodefile_relations'] as FolderTreeProfileV2,
+  case_resolver_scanfile_relations: caseResolverProfiles['case_resolver_scanfile_relations'] as FolderTreeProfileV2,
 
   product_categories: {
     version: 2,

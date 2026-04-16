@@ -6,5 +6,5 @@ export * from './segments/types';
 export * from './segments/mappers';
 export * from './segments/repository';
 
-export const getProductOrdersImportRepository = async (): Promise<ProductOrdersImportRepository> =>
-  repository;
+export const getProductOrdersImportRepository = (): Promise<ProductOrdersImportRepository> =>
+  Promise.resolve(repository);

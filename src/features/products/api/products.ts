@@ -13,38 +13,36 @@ import { logClientCatch } from '@/shared/utils/observability/client-error-logger
 const PRODUCT_READ_TIMEOUT_MS = 60_000;
 const PRODUCT_WRITE_TIMEOUT_MS = 60_000;
 
+function buildGetOptions(filters: ProductFilter, signal?: AbortSignal, fresh?: boolean): ApiClientOptions {
+  const options: ApiClientOptions = {
+    params: {
+      ...(fresh === true ? { fresh: 1 } : {}),
+      ...filters,
+    },
+    cache: 'no-store',
+    timeout: PRODUCT_READ_TIMEOUT_MS,
+  };
+  if (signal !== undefined) options.signal = signal;
+  return options;
+}
+
 // This function fetches a list of products from the API.
 export async function getProducts(
   filters: ProductFilter,
   signal?: AbortSignal,
   requestOptions?: { fresh?: boolean }
 ): Promise<ProductWithImages[]> {
-  const apiOptions: ApiClientOptions = {
-    params: {
-      ...(requestOptions?.fresh ? { fresh: 1 } : {}),
-      ...filters,
-    },
-    cache: 'no-store',
-  };
-  if (signal) apiOptions.signal = signal;
-  apiOptions.timeout = PRODUCT_READ_TIMEOUT_MS;
-  return api.get<ProductWithImages[]>('/api/v2/products', apiOptions);
+  const options = buildGetOptions(filters, signal, requestOptions?.fresh);
+  return api.get<ProductWithImages[]>('/api/v2/products', options);
 }
 
 export async function countProducts(filters: ProductFilter, signal?: AbortSignal): Promise<number> {
   try {
-    const options: ApiClientOptions = {
-      params: {
-        ...filters,
-      },
-      cache: 'no-store',
-    };
-    if (signal) options.signal = signal;
-    options.timeout = PRODUCT_READ_TIMEOUT_MS;
+    const options = buildGetOptions(filters, signal);
     const data = await api.get<{ count: number }>('/api/v2/products/count', options);
     return data.count;
-  } catch (_error) {
-    logClientCatch(_error, {
+  } catch (error: unknown) {
+    logClientCatch(error, {
       source: 'products.api',
       action: 'countProducts',
       filters,
@@ -58,14 +56,7 @@ export async function getProductIds(
   filters: ProductFilter,
   signal?: AbortSignal
 ): Promise<string[]> {
-  const options: ApiClientOptions = {
-    params: {
-      ...filters,
-    },
-    cache: 'no-store',
-  };
-  if (signal) options.signal = signal;
-  options.timeout = PRODUCT_READ_TIMEOUT_MS;
+  const options = buildGetOptions(filters, signal);
   const data = await api.get<{ ids?: string[] }>('/api/v2/products/ids', options);
   return Array.isArray(data.ids) ? data.ids : [];
 }
@@ -79,16 +70,8 @@ export async function getProductsWithCount(
   signal?: AbortSignal,
   requestOptions?: { fresh?: boolean }
 ): Promise<ProductsPagedResult> {
-  const apiOptions: ApiClientOptions = {
-    params: {
-      ...(requestOptions?.fresh ? { fresh: 1 } : {}),
-      ...filters,
-    },
-    cache: 'no-store',
-  };
-  if (signal) apiOptions.signal = signal;
-  apiOptions.timeout = PRODUCT_READ_TIMEOUT_MS;
-  return api.get<ProductsPagedResult>('/api/v2/products/paged', apiOptions);
+  const options = buildGetOptions(filters, signal, requestOptions?.fresh);
+  return api.get<ProductsPagedResult>('/api/v2/products/paged', options);
 }
 
 export async function createProduct(formData: FormData): Promise<ProductWithImages> {
@@ -111,8 +94,8 @@ export async function deleteProduct(id: string): Promise<{ success: boolean }> {
   try {
     await api.delete(`/api/v2/products/${id}`);
     return { success: true };
-  } catch (_error) {
-    logClientCatch(_error, {
+  } catch (error: unknown) {
+    logClientCatch(error, {
       source: 'products.api',
       action: 'deleteProduct',
       id,

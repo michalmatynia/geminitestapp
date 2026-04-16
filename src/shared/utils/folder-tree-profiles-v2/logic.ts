@@ -321,6 +321,7 @@ export const canNestTreeNodeV2 = ({
     decision = rule.allow;
   }
 
+  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
   return decision !== null ? decision : profile.nesting.defaultAllow;
 };
 
@@ -333,6 +334,7 @@ export const resolveFolderTreeIconV2 = (
     const normalizedKind = normalizeMasterTreeKind(kind, '');
     if (normalizedKind.length > 0 && normalizedKind in profile.icons.byKind) {
       const icon = profile.icons.byKind[normalizedKind];
+      // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
       return icon !== undefined && icon !== null ? icon : null;
     }
   }

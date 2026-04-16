@@ -157,7 +157,12 @@ export type GenerationToolbarAutoScalerSectionRuntimeValue = {
   onToggleAutoScaleLayoutSplitAxes: () => void;
 };
 
-function createSectionRuntimeContext<T>(name: string) {
+type SectionRuntimeContextTuple<T> = readonly [
+  (props: { value: T; children: React.ReactNode }) => React.JSX.Element,
+  () => T,
+];
+
+function createSectionRuntimeContext<T>(name: string): SectionRuntimeContextTuple<T> {
   const { Context, useStrictContext } = createStrictContext<T>({
     hookName: name,
     providerName: 'its provider',

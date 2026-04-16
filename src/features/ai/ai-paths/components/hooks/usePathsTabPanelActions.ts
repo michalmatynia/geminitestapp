@@ -7,7 +7,15 @@ import { usePersistenceActions } from '../../context/PersistenceContext';
 import { useAiPathsErrorReporting } from '../ai-paths-settings/useAiPathsErrorReporting';
 import { useAiPathsSettingsPathActions } from '../ai-paths-settings/useAiPathsSettingsPathActions';
 
-export function usePathsTabPanelActions() {
+type PathsTabPanelActions = ReturnType<typeof useAiPathsSettingsPathActions> & {
+  savePathIndex: ReturnType<typeof usePersistenceActions>['savePathIndex'];
+  persistPathSettings: ReturnType<typeof usePersistenceActions>['persistPathSettings'];
+  toast: ReturnType<typeof useToast>['toast'];
+  reportAiPathsError: ReturnType<typeof useAiPathsErrorReporting>['reportAiPathsError'];
+  ConfirmationModal: ReturnType<typeof useConfirm>['ConfirmationModal'];
+};
+
+export function usePathsTabPanelActions(): PathsTabPanelActions {
   const { toast } = useToast();
   const { confirm, ConfirmationModal } = useConfirm();
   const { activePathId, isPathLocked, pathConfigs, paths } = usePathMetadataState();

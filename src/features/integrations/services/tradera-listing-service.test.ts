@@ -720,6 +720,7 @@ describe('processTraderaListingJob', () => {
     expect(runTraderaBrowserCheckStatusMock).toHaveBeenCalledWith(
       expect.objectContaining({
         browserMode: 'headed',
+        systemSettings: expect.any(Object),
       }),
       expect.objectContaining({
         onRunStarted: expect.any(Function),
@@ -806,6 +807,7 @@ describe('processTraderaListingJob', () => {
     expect(runTraderaBrowserCheckStatusMock).toHaveBeenCalledWith(
       expect.objectContaining({
         browserMode: 'headed',
+        systemSettings: expect.any(Object),
       }),
       expect.objectContaining({
         onRunStarted: expect.any(Function),

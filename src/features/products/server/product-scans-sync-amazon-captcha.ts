@@ -9,25 +9,17 @@ import {
   createDefaultProductScannerSettings,
 } from '@/features/products/scanner-settings';
 import {
-  type ProductScanAmazonEvaluation,
-  type ProductScanAmazonProbe,
   type ProductScanRecord,
 } from '@/shared/contracts/product-scans';
 import { productService } from '@/shared/lib/products/services/productService';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import {
-  evaluateAmazonScanCandidateMatch,
-  triageAmazonScanCandidates,
-  type AmazonCandidateTriageEvaluationResult,
-} from './product-scan-amazon-evaluator';
-import {
   AMAZON_PRODUCT_SCAN_PROVIDER,
 } from './product-scan-providers';
 import {
   buildProductScannerEngineRequestOptions,
   getProductScannerSettings,
-  resolveProductScannerHeadless,
 } from './product-scanner-settings';
 
 import {
@@ -37,37 +29,18 @@ import {
   persistFailedSynchronization,
   persistSynchronizedScan,
   resolveManualVerificationMessage,
-  resolvePersistableScanUrl,
   resolvePersistedProductScanSteps,
   resolveProductScanRequestSequenceInput,
   resolveScanManualVerificationTimeoutMs,
   shouldAutoShowScannerCaptchaBrowser,
   toRecord,
-  upsertPersistedProductScanStep,
   type AmazonScanScriptResult,
 } from './product-scans-service.helpers';
 
 import {
-  appendAmazonAiStageSummary,
-  buildAmazonCandidateTriageStageSummary,
-  buildAmazonCandidateTriageStepDetails,
-  buildAmazonEvaluationStageSummary,
-  buildAmazonEvaluationStepDetails,
   buildAmazonScannerRequestRuntimeOptions,
-  resolveAmazonCandidateTriageMessage,
-  resolveAmazonCandidateTriageStepResultCode,
-  resolveAmazonCandidateTriageStepStatus,
-  resolveAmazonEvaluationMessage,
-  resolveAmazonEvaluationStepResultCode,
-  resolveAmazonEvaluationStepStatus,
-  resolveAmazonImageSearchFallbackProvider,
   resolveAmazonImageSearchProvider,
   resolveAmazonImageSearchProviderHistory,
-  resolveLatestAmazonCandidateStepMeta,
-  resolveNextAmazonCandidateTriageStepAttempt,
-  resolveNextAmazonCandidateUrl,
-  resolveNextAmazonEvaluationStepAttempt,
-  resolveNextQueueStepAttempt,
   resolveAmazonProbeEvaluatorConfig,
   resolveAmazonTriageEvaluatorConfig,
 } from './product-scans-service.helpers.amazon';
@@ -260,4 +233,3 @@ export async function synchronizeAmazonCaptchaRequired({
     });
   }
 }
-

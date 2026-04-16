@@ -17,7 +17,6 @@ import {
   type ProductScanRequestSequenceEntry,
 } from '@/shared/contracts/product-scans';
 import {
-  productScannerAmazonImageSearchProviderSchema,
   type ProductScannerAmazonImageSearchProvider,
 } from '@/shared/contracts/products/scanner-settings';
 

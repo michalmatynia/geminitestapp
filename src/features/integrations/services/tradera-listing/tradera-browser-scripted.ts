@@ -27,7 +27,10 @@ import { internalError, notFoundError } from '@/shared/errors/app-error';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 import { resolveMarketplaceAwareProductCopy } from '@/shared/lib/products/utils/marketplace-content-overrides';
 
-import { DEFAULT_TRADERA_QUICKLIST_SCRIPT } from './default-script';
+import {
+  buildDefaultTraderaQuicklistScript,
+  DEFAULT_TRADERA_QUICKLIST_SCRIPT,
+} from './default-script';
 import {
   resolveAppBaseUrl,
   toAbsoluteUrl,
@@ -36,6 +39,10 @@ import {
   extractExternalListingId,
   buildCanonicalTraderaListingUrl,
 } from './utils';
+import {
+  resolveTraderaSelectorRegistryRuntime,
+  type ResolvedTraderaSelectorRegistryRuntime,
+} from '@/features/integrations/services/tradera-selector-registry';
 import {
   buildTraderaQuicklistExecutionSteps,
   resolveTraderaCheckStatusExecutionStepsFromResult,
@@ -54,7 +61,7 @@ import {
   usesLegacyDefaultTraderaQuickListScript,
   usesStaleManagedDefaultTraderaQuickListScript,
 } from './managed-script';
-import { TRADERA_CHECK_STATUS_SCRIPT } from './check-status-script';
+import { buildTraderaCheckStatusScript } from './check-status-script';
 
 export const TRADERA_HEADED_FAILURE_HOLD_OPEN_MS = 30_000;
 export const TRADERA_SCRIPTED_LISTING_TIMEOUT_MS = 240_000;
@@ -143,13 +150,20 @@ const resolveManagedTraderaScript = (
     };
   }
 
-  if (
-    usesLegacyDefaultTraderaQuickListScript(connectionScript) ||
-    usesStaleManagedDefaultTraderaQuickListScript(connectionScript)
-  ) {
+  const usesLegacyManagedScript = usesLegacyDefaultTraderaQuickListScript(connectionScript);
+  const usesStaleManagedScript = usesStaleManagedDefaultTraderaQuickListScript(connectionScript);
+
+  if (usesLegacyManagedScript || usesStaleManagedScript) {
     return {
       script: DEFAULT_TRADERA_QUICKLIST_SCRIPT,
       scriptSource: 'legacy-default-refresh',
+    };
+  }
+
+  if (extractManagedTraderaQuickListMarker(connectionScript) !== null) {
+    return {
+      script: connectionScript,
+      scriptSource: 'connection',
     };
   }
 
@@ -177,6 +191,23 @@ const buildManagedQuicklistRuntimeSettingsOverrides = (
         deviceName: MANAGED_TRADERA_QUICKLIST_DESKTOP_DEVICE_NAME,
       }
     : undefined;
+
+const buildSelectorRuntimeMetadata = (
+  resolution: ResolvedTraderaSelectorRegistryRuntime | null | undefined
+): Record<string, unknown> =>
+  resolution
+    ? {
+        selectorProfileRequested: resolution.requestedProfile,
+        selectorProfileResolved: resolution.resolvedProfile,
+        selectorProfileSourceProfiles: resolution.sourceProfiles,
+        selectorRegistryEntryCount: resolution.entryCount,
+        selectorRegistryOverlayEntryCount: resolution.overlayEntryCount,
+        selectorRegistryFallbackToCode: resolution.fallbackToCode,
+        ...(resolution.fallbackReason
+          ? { selectorRegistryFallbackReason: resolution.fallbackReason }
+          : {}),
+      }
+    : {};
 
 const buildTraderaScriptInput = async ({
   product,
@@ -330,6 +361,7 @@ const buildSuccessMetadata = ({
   scriptSource,
   scriptValidationError,
   runtimeSettingsOverrides,
+  selectorRuntimeResolution,
 }: {
   result: Awaited<ReturnType<typeof runPlaywrightListingScript>>;
   script: string;
@@ -340,6 +372,7 @@ const buildSuccessMetadata = ({
   scriptSource: ScriptSource;
   scriptValidationError?: string;
   runtimeSettingsOverrides?: Partial<PlaywrightSettings>;
+  selectorRuntimeResolution?: ResolvedTraderaSelectorRegistryRuntime | null;
 }): Record<string, unknown> => {
   const traderaPricing = toRecord(scriptInput['traderaPricing']);
   const traderaCategory = toRecord(scriptInput['traderaCategory']);
@@ -401,6 +434,7 @@ const buildSuccessMetadata = ({
       scriptMarker: extractManagedTraderaQuickListMarker(script),
       scriptStoredOnConnection: scriptSource === 'connection',
       listingFormUrl: normalizeTraderaListingFormUrl(systemSettings.listingFormUrl),
+      ...buildSelectorRuntimeMetadata(selectorRuntimeResolution),
       ...(runtimeSettingsOverrides?.emulateDevice === false &&
       runtimeSettingsOverrides.deviceName === MANAGED_TRADERA_QUICKLIST_DESKTOP_DEVICE_NAME
         ? { managedQuicklistDesktopMode: true }
@@ -477,7 +511,20 @@ const runTraderaScriptedListingForProduct = async ({
     action,
     syncSkipImages,
   });
-  const { script, scriptSource, scriptValidationError } = resolveManagedTraderaScript(connection);
+  const {
+    script: resolvedScript,
+    scriptSource,
+    scriptValidationError,
+  } = resolveManagedTraderaScript(connection);
+  const selectorRuntimeResolution =
+    scriptSource === 'connection'
+      ? null
+      : await resolveTraderaSelectorRegistryRuntime({
+          profile: systemSettings.selectorProfile,
+        });
+  const script = selectorRuntimeResolution
+    ? buildDefaultTraderaQuicklistScript(selectorRuntimeResolution.runtime)
+    : resolvedScript;
   const runtimeSettingsOverrides = buildManagedQuicklistRuntimeSettingsOverrides(script);
   const result = await runPlaywrightListingScript({
     script,
@@ -529,6 +576,7 @@ const runTraderaScriptedListingForProduct = async ({
       scriptSource,
       scriptValidationError,
       runtimeSettingsOverrides,
+      selectorRuntimeResolution,
     }),
   });
 };
@@ -599,14 +647,17 @@ export const runTraderaBrowserListingScripted = async ({
 export const runTraderaBrowserCheckStatus = async ({
   listing,
   connection,
+  systemSettings,
   browserMode,
 }: {
   listing: ProductListing;
   connection: IntegrationConnectionRecord;
+  systemSettings?: TraderaSystemSettings;
   browserMode: PlaywrightRelistBrowserMode;
 }, options?: {
   onRunStarted?: TraderaPlaywrightRunStartedCallback;
 }): Promise<BrowserListingResultDto> => {
+  const resolvedSystemSettings = systemSettings ?? DEFAULT_TRADERA_SYSTEM_SETTINGS;
   const resolvedListingUrl = resolveExistingListingUrl(listing);
   let verificationSearchTerms: string[] = [];
   let verificationBaseProductId: string | null = null;
@@ -636,8 +687,13 @@ export const runTraderaBrowserCheckStatus = async ({
     });
   }
 
+  const selectorRuntimeResolution = await resolveTraderaSelectorRegistryRuntime({
+    profile: resolvedSystemSettings.selectorProfile,
+  });
+  const statusCheckScript = buildTraderaCheckStatusScript(selectorRuntimeResolution.runtime);
+
   const result = await runPlaywrightScrapeScript({
-    script: TRADERA_CHECK_STATUS_SCRIPT,
+    script: statusCheckScript,
     input: {
       listingUrl: resolvedListingUrl,
       externalListingId: listing.externalListingId ?? null,
@@ -684,6 +740,7 @@ export const runTraderaBrowserCheckStatus = async ({
       checkStatusError,
       requestedBrowserMode: browserMode,
       runId: result.runId,
+      ...buildSelectorRuntimeMetadata(selectorRuntimeResolution),
       ...(executionSteps.length > 0 ? { executionSteps } : {}),
       verificationSection: toTrimmedString(rawResult['verificationSection']) || null,
       verificationMatchStrategy: toTrimmedString(rawResult['verificationMatchStrategy']) || null,

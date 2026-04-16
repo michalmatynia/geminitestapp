@@ -3,7 +3,9 @@ import { generateTraderaQuicklistBrowserStepsInit } from '@/shared/lib/browser-e
 
 const TRADERA_QUICKLIST_STEPS_INIT = generateTraderaQuicklistBrowserStepsInit();
 
-export const PART_1 = String.raw`
+export const buildPart1 = (
+  selectorRegistryRuntime: string = TRADERA_SELECTOR_REGISTRY_RUNTIME
+): string => String.raw`
 export default async function run({
   page,
   input,
@@ -32,7 +34,7 @@ export default async function run({
     )
   );
 
-${TRADERA_SELECTOR_REGISTRY_RUNTIME}
+${selectorRegistryRuntime}
 
   const VALIDATION_MESSAGE_IGNORE_FIELDS = ['__next-route-announcer__', 'next-route-announcer'];
   const TRANSIENT_VALIDATION_MESSAGE_PATTERNS = [
@@ -198,3 +200,5 @@ ${TRADERA_SELECTOR_REGISTRY_RUNTIME}
     }
   };
 `;
+
+export const PART_1 = buildPart1();

@@ -3,134 +3,27 @@
 // wires ProductForm contexts, validation provider, and registers editor
 // state with the Context Registry for AI/context tooling.
 
-import {
-  Database,
-  FileText,
-  ImageIcon,
-  Languages,
-  LayoutGrid,
-  Link2,
-  ListFilter,
-  Package,
-  Search,
-  Settings2,
-  ShieldAlert,
-  Sparkles,
-} from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 
 import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
 import { useProductFormMetadataState } from '@/features/products/context/ProductFormMetadataContext';
 import { ProductValidationSettingsProvider } from '@/features/products/context/ProductValidationSettingsContext';
-import { useProductValidationState } from '@/features/products/context/ProductValidationSettingsContext';
-import {
-  buildProductEditorWorkspaceContextBundle,
-  PRODUCT_EDITOR_CONTEXT_ROOT_IDS,
-} from '@/features/products/context-registry/workspace';
+import { PRODUCT_EDITOR_CONTEXT_ROOT_IDS } from '@/features/products/context-registry/workspace';
 import { ProductLeafCategoriesContextRegistrySource } from '@/features/products/context-registry/ProductLeafCategoriesContextRegistrySource';
-import { PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS } from '@/shared/contracts/products/drafts';
-import { type ProductDraftOpenFormTab } from '@/shared/contracts/products';
-import type { ProductValidationDenyBehavior } from '@/shared/contracts/products/validation';
-import {
-  ContextRegistryPageProvider,
-  useRegisterContextRegistryPageSource,
-} from '@/shared/lib/ai-context-registry/page-context';
-import {
-  composeStructuredProductName,
-  parseStructuredProductName,
-} from '@/shared/lib/products/title-terms';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/ui/tabs';
+import type { ProductDraftOpenFormTab } from '@/shared/contracts/products';
+import { ContextRegistryPageProvider } from '@/shared/lib/ai-context-registry/page-context';
+import { alignDraftStructuredNameToSelectedCategory } from '@/shared/lib/products/title-terms';
+import { Tabs } from '@/shared/ui/tabs';
 
 import { ProductFormFooter } from './form/ProductFormFooter';
-import ProductFormGeneral from './form/ProductFormGeneral';
 import { useProductFormValidator } from '../hooks/useProductFormValidator';
+import { normalizeProductFormTab, subscribePopstate, getSearchSnapshot, getSearchServerSnapshot } from './form/ProductForm.helpers';
+import { ProductFormContextRegistrySource } from './form/ProductFormContextRegistrySource';
+import { ProductFormTabsList } from './form/ProductFormTabsList';
+import { ProductFormTabsContent } from './form/ProductFormTabsContent';
 
-const subscribePopstate = (cb: () => void): (() => void) => {
-  window.addEventListener('popstate', cb);
-  return () => window.removeEventListener('popstate', cb);
-};
-const getSearchSnapshot = (): string =>
-  typeof window !== 'undefined' ? window.location.search : '';
-const getSearchServerSnapshot = (): string => '';
-
-const DeferredTabPlaceholder = (): React.JSX.Element => (
-  <div className='rounded-lg border border-border/60 bg-background/40 px-4 py-6 text-sm text-muted-foreground'>
-    Loading tab...
-  </div>
-);
-
-const ProductFormImages = dynamic(() => import('./form/ProductFormImages'), {
-  ssr: false,
-  loading: DeferredTabPlaceholder,
-});
-
-const ProductFormScans = dynamic(() => import('./form/ProductFormScans'), {
-  ssr: false,
-  loading: DeferredTabPlaceholder,
-});
-
-const ProductFormOther = dynamic(() => import('./form/ProductFormOther'), {
-  ssr: false,
-  loading: DeferredTabPlaceholder,
-});
-
-const ProductFormMarketplaceCopy = dynamic(
-  () => import('./form/ProductFormMarketplaceCopy'),
-  {
-    ssr: false,
-    loading: DeferredTabPlaceholder,
-  }
-);
-
-const ProductFormParameters = dynamic(() => import('./form/ProductFormParameters'), {
-  ssr: false,
-  loading: DeferredTabPlaceholder,
-});
-
-const ProductFormCustomFields = dynamic(() => import('./form/ProductFormCustomFields'), {
-  ssr: false,
-  loading: DeferredTabPlaceholder,
-});
-
-const ProductFormImportInfo = dynamic(() => import('./form/ProductFormImportInfo'), {
-  ssr: false,
-  loading: DeferredTabPlaceholder,
-});
-
-const ProductFormNotes = dynamic(() => import('./form/ProductFormNotes'), {
-  ssr: false,
-  loading: DeferredTabPlaceholder,
-});
-
-const ProductFormNoteLink = dynamic(() => import('./form/ProductFormNoteLink'), {
-  ssr: false,
-  loading: DeferredTabPlaceholder,
-});
-
-const ProductFormDebugPanel = dynamic(
-  () => import('@/features/products/components/ProductFormDebugPanel'),
-  {
-    ssr: false,
-    loading: () => null,
-  }
-);
-
-const ProductFormStudio = dynamic(() => import('./form/ProductFormStudio'), {
-  ssr: false,
-  loading: DeferredTabPlaceholder,
-});
-
-const ProductFormValidationTab = dynamic(
-  () =>
-    import('./form/ProductFormValidationTab').then(
-      (mod: typeof import('./form/ProductFormValidationTab')) => mod.ProductFormValidationTab
-    ),
-  {
-    ssr: false,
-    loading: DeferredTabPlaceholder,
-  }
-);
+const ProductFormDebugPanel = dynamic(() => import('@/features/products/components/ProductFormDebugPanel'), { ssr: false, loading: () => null });
 
 interface ProductFormProps {
   submitButtonText: string;
@@ -139,371 +32,112 @@ interface ProductFormProps {
   validatorSessionKey?: string;
 }
 
-type ProductFormTabDefinition = {
-  value: ProductDraftOpenFormTab;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-};
+function resolveInitialMountedTabs(draft: any): Set<ProductDraftOpenFormTab> {
+  const initial = new Set<ProductDraftOpenFormTab>(['general']);
+  const tab = normalizeProductFormTab(draft?.openProductFormTab);
+  initial.add(tab);
+  return initial;
+}
 
-const PRODUCT_FORM_TABS: ProductFormTabDefinition[] = [
-  { value: 'general', label: 'General', icon: Package },
-  { value: 'other', label: 'Other', icon: Settings2 },
-  { value: 'parameters', label: 'Parameters', icon: ListFilter },
-  { value: 'images', label: 'Images', icon: ImageIcon },
-  { value: 'studio', label: 'Studio', icon: Sparkles },
-  { value: 'marketplace-copy', label: 'Marketplace Copy', icon: Languages },
-  { value: 'custom-fields', label: 'Custom Fields', icon: LayoutGrid },
-  { value: 'scans', label: 'Scans', icon: Search },
-  { value: 'import-info', label: 'Import Info', icon: Database },
-  { value: 'notes', label: 'Notes', icon: FileText },
-  { value: 'note-link', label: 'Note Link', icon: Link2 },
-  { value: 'validation', label: 'Validation', icon: ShieldAlert },
-];
-
-const PRODUCT_FORM_TAB_SET = new Set<string>(PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS);
-
-const normalizeProductFormTab = (value: unknown): ProductDraftOpenFormTab => {
-  if (typeof value !== 'string') return 'general';
-  const trimmed = value.trim();
-  if (!PRODUCT_FORM_TAB_SET.has(trimmed)) return 'general';
-  return trimmed as ProductDraftOpenFormTab;
-};
-
-const normalizeStructuredSegment = (value: string): string => value.trim().replace(/\s+/g, ' ');
-
-export const alignDraftStructuredNameToSelectedCategory = (input: {
-  nameEn: string;
-  categoryName: string;
-}): string | null => {
-  const parsed = parseStructuredProductName(input.nameEn);
-  if (!parsed) return null;
-
-  const normalizedCategoryName = normalizeStructuredSegment(input.categoryName);
-  if (!normalizedCategoryName) return null;
-
-  const normalizedStructuredCategory = normalizeStructuredSegment(parsed.category);
-  if (normalizedStructuredCategory === normalizedCategoryName) {
-    return null;
+function resolveValidatorSessionKey(validatorSessionKey?: string): string {
+  if (typeof validatorSessionKey === 'string' && validatorSessionKey !== '') return validatorSessionKey;
+  if (typeof globalThis.crypto !== 'undefined' && typeof globalThis.crypto.randomUUID === 'function') {
+    return globalThis.crypto.randomUUID();
   }
+  return `product-form-validator-${Date.now().toString(36)}`;
+}
 
-  return composeStructuredProductName({
-    ...parsed,
-    category: normalizedCategoryName,
-  });
-};
+function useProductFormEffects(core: any, meta: any) {
+  useEffect(() => {
+    const rawCurrent = core.methods.getValues('categoryId');
+    const current = (typeof rawCurrent === 'string') ? rawCurrent.trim() : '';
+    const selected = (typeof meta.selectedCategoryId === 'string') ? meta.selectedCategoryId.trim() : '';
+    if (current !== selected) {
+      core.methods.setValue('categoryId', selected, { shouldDirty: false, shouldTouch: false, shouldValidate: true });
+    }
+  }, [core.methods, meta.selectedCategoryId]);
 
-const resolveProductEditorTitle = ({
-  product,
-  draft,
-}: Pick<ReturnType<typeof useProductFormCore>, 'product' | 'draft'>): string | null =>
-  product?.name_en?.trim() ||
-  product?.name_pl?.trim() ||
-  product?.name_de?.trim() ||
-  product?.sku?.trim() ||
-  draft?.name_en?.trim() ||
-  draft?.name_pl?.trim() ||
-  draft?.name_de?.trim() ||
-  draft?.sku?.trim() ||
-  null;
+  useEffect(() => {
+    const { product, draft, methods } = core;
+    const { categories, selectedCategoryId } = meta;
+    if (product || !draft?.id || !selectedCategoryId) return;
+    const category = categories.find((entry: any) => entry.id === selectedCategoryId);
+    const categoryName = category?.name?.trim() ?? '';
+    if (!categoryName || methods.getFieldState('name_en').isDirty) return;
 
-function ProductFormContextRegistrySource({
-  activeTab,
-  mountedTabs,
-}: {
-  activeTab: ProductDraftOpenFormTab;
-  mountedTabs: Set<ProductDraftOpenFormTab>;
-}): null {
-  const { product, draft, hasUnsavedChanges, uploading, uploadError, uploadSuccess } =
-    useProductFormCore();
-  const { selectedCatalogIds, selectedCategoryId, selectedTagIds, selectedProducerIds } =
-    useProductFormMetadataState();
-  const {
-    validationInstanceScope,
-    validatorEnabled,
-    formatterEnabled,
-    validationDenyBehavior,
-    validatorPatterns,
-    visibleFieldIssues,
-  } = useProductValidationState();
-
-  const registrySource = useMemo(() => {
-    const visibleIssueEntries = Object.values(visibleFieldIssues);
-    const visibleIssueCount = visibleIssueEntries.reduce(
-      (total, issues) => total + issues.length,
-      0
-    );
-
-    return {
-      label: 'Product editor workspace state',
-      refs: [],
-      resolved: buildProductEditorWorkspaceContextBundle({
-        productId: product?.id?.trim() || null,
-        draftId: draft?.id?.trim() || null,
-        productTitle: resolveProductEditorTitle({ product, draft }),
-        activeTab,
-        mountedTabs: [...mountedTabs],
-        validationInstanceScope,
-        validatorEnabled,
-        formatterEnabled,
-        validationDenyBehavior,
-        visibleIssueCount,
-        visibleIssueFieldCount: Object.keys(visibleFieldIssues).length,
-        validatorPatternCount: validatorPatterns.length,
-        selectedCategoryId,
-        selectedCatalogIds,
-        selectedTagIds,
-        selectedProducerIds,
-        hasUnsavedChanges,
-        uploading,
-        uploadError,
-        uploadSuccess,
-      }),
-    };
-  }, [
-    activeTab,
-    draft,
-    formatterEnabled,
-    hasUnsavedChanges,
-    mountedTabs,
-    product,
-    selectedCatalogIds,
-    selectedCategoryId,
-    selectedProducerIds,
-    selectedTagIds,
-    uploadError,
-    uploadSuccess,
-    uploading,
-    validationDenyBehavior,
-    validationInstanceScope,
-    validatorEnabled,
-    validatorPatterns.length,
-    visibleFieldIssues,
-  ]);
-
-  useRegisterContextRegistryPageSource('product-editor-workspace-state', registrySource);
-  return null;
+    const currentNameEn = methods.getValues('name_en') ?? '';
+    const correctedNameEn = alignDraftStructuredNameToSelectedCategory({ nameEn: currentNameEn, categoryName });
+    if (correctedNameEn && correctedNameEn !== currentNameEn) {
+      methods.setValue('name_en', correctedNameEn, { shouldDirty: false, shouldTouch: false, shouldValidate: true });
+    }
+  }, [meta.categories, core.draft?.id, core.methods, core.product, meta.selectedCategoryId]);
 }
 
 /**
  * This component renders the product form fields and handles user interactions.
- * It consumes the ProductFormContext to access state and functions.
- * @param submitButtonText - The text to display on the submit button.
  */
 export default function ProductForm({
-  submitButtonText: _submitButtonText,
-  skuRequired: _skuRequired = false,
   validationInstanceScopeOverride,
   validatorSessionKey,
 }: ProductFormProps): React.JSX.Element {
-  const { handleSubmit, product, draft, ConfirmationModal, methods } = useProductFormCore();
-  const { categories, selectedCategoryId } = useProductFormMetadataState();
+  const core = useProductFormCore();
+  const meta = useProductFormMetadataState();
 
-  const searchString = useSyncExternalStore(
-    subscribePopstate,
-    getSearchSnapshot,
-    getSearchServerSnapshot
-  );
+  const searchString = useSyncExternalStore(subscribePopstate, getSearchSnapshot, getSearchServerSnapshot);
   const searchParams = useMemo(() => new URLSearchParams(searchString), [searchString]);
   const [isDebugOpen, setIsDebugOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<ProductDraftOpenFormTab>(() =>
-    normalizeProductFormTab(draft?.openProductFormTab)
-  );
+  const [activeTab, setActiveTab] = useState<ProductDraftOpenFormTab>(() => normalizeProductFormTab(core.draft?.openProductFormTab));
+  const [mountedTabs, setMountedTabs] = useState<Set<ProductDraftOpenFormTab>>(() => resolveInitialMountedTabs(core.draft));
 
-  const [mountedTabs, setMountedTabs] = useState<Set<ProductDraftOpenFormTab>>(() => {
-    const initial = new Set<ProductDraftOpenFormTab>(['general']);
-    const startTab = normalizeProductFormTab(draft?.openProductFormTab);
-    initial.add(startTab);
-    return initial;
-  });
+  const effectiveKey = useMemo(() => resolveValidatorSessionKey(validatorSessionKey), [validatorSessionKey]);
+  const validator = useProductFormValidator(validationInstanceScopeOverride, effectiveKey);
 
-  const [fallbackValidatorSessionKey] = useState<string>(() =>
-    typeof globalThis.crypto !== 'undefined' && typeof globalThis.crypto.randomUUID === 'function'
-      ? globalThis.crypto.randomUUID()
-      : `product-form-validator-${Date.now().toString(36)}`
-  );
-  const effectiveValidatorSessionKey = validatorSessionKey ?? fallbackValidatorSessionKey;
+  useProductFormEffects(core, meta);
 
-  const validator = useProductFormValidator(
-    validationInstanceScopeOverride,
-    effectiveValidatorSessionKey
-  );
+  useEffect(() => { setIsDebugOpen(searchParams.get('debug') === 'true'); }, [searchParams]);
 
   useEffect(() => {
-    const currentCategoryValue = methods.getValues('categoryId');
-    const normalizedCurrentCategoryId =
-      typeof currentCategoryValue === 'string' ? currentCategoryValue.trim() : '';
-    const normalizedSelectedCategoryId =
-      typeof selectedCategoryId === 'string' ? selectedCategoryId.trim() : '';
+    const requested = searchParams.get('openProductTab');
+    const tab = (typeof requested === 'string' && requested.trim() !== '') ? requested : core.draft?.openProductFormTab;
+    setActiveTab(normalizeProductFormTab(tab));
+  }, [core.draft?.openProductFormTab, searchParams]);
 
-    if (normalizedCurrentCategoryId === normalizedSelectedCategoryId) {
-      return;
-    }
-
-    methods.setValue('categoryId', normalizedSelectedCategoryId, {
-      shouldDirty: false,
-      shouldTouch: false,
-      shouldValidate: true,
-    });
-  }, [methods, selectedCategoryId]);
-
-  useEffect(() => {
-    if (product || !draft?.id || !selectedCategoryId) return;
-
-    const category = categories.find((entry) => entry.id === selectedCategoryId);
-    const categoryName = category?.name?.trim() ?? '';
-    if (!categoryName) return;
-
-    if (methods.getFieldState('name_en').isDirty) return;
-
-    const currentNameEn = methods.getValues('name_en') ?? '';
-    const correctedNameEn = alignDraftStructuredNameToSelectedCategory({
-      nameEn: currentNameEn,
-      categoryName,
-    });
-    if (!correctedNameEn || correctedNameEn === currentNameEn) return;
-
-    methods.setValue('name_en', correctedNameEn, {
-      shouldDirty: false,
-      shouldTouch: false,
-      shouldValidate: true,
-    });
-  }, [categories, draft?.id, methods, product, selectedCategoryId]);
-
-  const footerEntityId = product?.id?.trim() || draft?.id?.trim() || '';
-
-  useEffect(() => {
-    setIsDebugOpen(searchParams.get('debug') === 'true');
-  }, [searchParams]);
-
-  useEffect(() => {
-    const requestedTab = searchParams.get('openProductTab');
-    if (requestedTab && requestedTab.trim().length > 0) {
-      setActiveTab(normalizeProductFormTab(requestedTab));
-      return;
-    }
-    setActiveTab(normalizeProductFormTab(draft?.openProductFormTab));
-  }, [draft?.id, draft?.openProductFormTab, searchParams]);
+  const footId = (core.product?.id?.trim() || core.draft?.id?.trim() || '');
 
   return (
-    <ContextRegistryPageProvider
-      pageId='admin:product-editor'
-      title='Product Editor'
-      rootNodeIds={[...PRODUCT_EDITOR_CONTEXT_ROOT_IDS]}
-    >
-      <form
-        onSubmit={(e: React.FormEvent) => {
-          void handleSubmit(e);
-        }}
-        className='relative min-h-[400px] pb-10'
-      >
+    <ContextRegistryPageProvider pageId='admin:product-editor' title='Product Editor' rootNodeIds={[...PRODUCT_EDITOR_CONTEXT_ROOT_IDS]}>
+      <form onSubmit={(e) => { core.handleSubmit(e).catch(() => { /* handled by context */ }); }} className='relative min-h-[400px] pb-10'>
         {isDebugOpen && <ProductFormDebugPanel />}
-        <ProductValidationSettingsProvider
-          value={{
-            validationInstanceScope: validator.validationInstanceScope,
-            validatorEnabled: validator.validatorEnabled,
-            formatterEnabled: validator.formatterEnabled,
-            setValidatorEnabled: validator.setValidatorEnabled,
-            setFormatterEnabled: validator.setFormatterEnabled,
-            validationDenyBehavior: validator.validationDenyBehavior,
-            setValidationDenyBehavior: (
-              behavior: React.SetStateAction<ProductValidationDenyBehavior>
-            ): void => {
-              if (typeof behavior === 'string') {
-                validator.setValidationDenyBehavior(behavior);
-              }
-            },
-            denyActionLabel: validator.denyActionLabel,
-            getDenyActionLabel: validator.getDenyActionLabel,
-            isIssueDenied: validator.isIssueDenied,
-            denyIssue: validator.denyIssue,
-            isIssueAccepted: validator.isIssueAccepted,
-            acceptIssue: validator.acceptIssue,
-            validatorPatterns: validator.validatorPatterns,
-            latestProductValues: validator.latestProductValues,
-            visibleFieldIssues: validator.visibleFieldIssues,
-          }}
-        >
+        <ProductValidationSettingsProvider value={{
+          validationInstanceScope: validator.validationInstanceScope,
+          validatorEnabled: validator.validatorEnabled,
+          formatterEnabled: validator.formatterEnabled,
+          setValidatorEnabled: validator.setValidatorEnabled,
+          setFormatterEnabled: validator.setFormatterEnabled,
+          validationDenyBehavior: validator.validationDenyBehavior,
+          setValidationDenyBehavior: (v): void => { if (typeof v === 'string') validator.setValidationDenyBehavior(v); },
+          denyActionLabel: validator.denyActionLabel,
+          getDenyActionLabel: validator.getDenyActionLabel,
+          isIssueDenied: validator.isIssueDenied,
+          denyIssue: validator.denyIssue,
+          isIssueAccepted: validator.isIssueAccepted,
+          acceptIssue: validator.acceptIssue,
+          validatorPatterns: validator.validatorPatterns,
+          latestProductValues: validator.latestProductValues,
+          visibleFieldIssues: validator.visibleFieldIssues,
+        }}>
           <ProductFormContextRegistrySource activeTab={activeTab} mountedTabs={mountedTabs} />
           <ProductLeafCategoriesContextRegistrySource sourceId='product-editor-leaf-categories' />
-          <Tabs
-            value={activeTab}
-            onValueChange={(value: string): void => {
-              const tab = normalizeProductFormTab(value);
-              setActiveTab(tab);
-              setMountedTabs((prev) => {
-                if (prev.has(tab)) return prev;
-                const next = new Set(prev);
-                next.add(tab);
-                return next;
-              });
-            }}
-            className='w-full'
-          >
-            <TabsList
-              className='h-auto w-full flex-wrap justify-start gap-2 rounded-xl border-border/60 bg-background/50 p-2'
-              aria-label='Product form tabs'
-            >
-              {PRODUCT_FORM_TABS.map((tab) => {
-                const Icon = tab.icon;
-
-                return (
-                  <TabsTrigger
-                    key={tab.value}
-                    value={tab.value}
-                    aria-label={tab.label}
-                    title={tab.label}
-                    className='group min-w-12 justify-start gap-2 rounded-lg px-3 py-2'
-                  >
-                    <Icon className='h-4 w-4 shrink-0' />
-                    <span className='whitespace-nowrap text-sm leading-none opacity-90 transition-opacity duration-150 ease-out group-hover:opacity-100 group-focus-visible:opacity-100'>
-                      {tab.label}
-                    </span>
-                  </TabsTrigger>
-                );
-              })}
-            </TabsList>
-            {/* General tab is always mounted — the formatter effect reads its fields from mount */}
-            <TabsContent value='general' className='mt-4 data-[state=inactive]:hidden' forceMount>
-              <ProductFormGeneral />
-            </TabsContent>
-            <TabsContent value='other' className='mt-4 data-[state=inactive]:hidden' forceMount>
-              <ProductFormOther />
-            </TabsContent>
-            {/* Remaining tabs use deferred mounting: content renders on first visit and */}
-            {/* remains hidden via CSS when inactive, avoiding repeated mount/unmount cost. */}
-            <TabsContent value='parameters' className='mt-4 data-[state=inactive]:hidden'>
-              {mountedTabs.has('parameters') && <ProductFormParameters />}
-            </TabsContent>
-            <TabsContent value='images' className='mt-4 data-[state=inactive]:hidden'>
-              {mountedTabs.has('images') && <ProductFormImages />}
-            </TabsContent>
-            <TabsContent value='studio' className='mt-4 data-[state=inactive]:hidden'>
-              {mountedTabs.has('studio') && <ProductFormStudio />}
-            </TabsContent>
-            <TabsContent value='marketplace-copy' className='mt-4 data-[state=inactive]:hidden'>
-              {mountedTabs.has('marketplace-copy') && <ProductFormMarketplaceCopy />}
-            </TabsContent>
-            <TabsContent value='custom-fields' className='mt-4 data-[state=inactive]:hidden'>
-              {mountedTabs.has('custom-fields') && <ProductFormCustomFields />}
-            </TabsContent>
-            <TabsContent value='scans' className='mt-4 data-[state=inactive]:hidden'>
-              {mountedTabs.has('scans') && <ProductFormScans />}
-            </TabsContent>
-            <TabsContent value='import-info' className='mt-4 data-[state=inactive]:hidden'>
-              {mountedTabs.has('import-info') && <ProductFormImportInfo />}
-            </TabsContent>
-            <TabsContent value='notes' className='mt-4 data-[state=inactive]:hidden'>
-              {mountedTabs.has('notes') && <ProductFormNotes />}
-            </TabsContent>
-            <TabsContent value='note-link' className='mt-4 data-[state=inactive]:hidden'>
-              {mountedTabs.has('note-link') && <ProductFormNoteLink />}
-            </TabsContent>
-            <TabsContent value='validation' className='mt-4 space-y-4'>
-              <ProductFormValidationTab />
-            </TabsContent>
+          <Tabs value={activeTab} onValueChange={(v): void => {
+            const tab = normalizeProductFormTab(v);
+            setActiveTab(tab);
+            setMountedTabs((prev) => prev.has(tab) ? prev : new Set([...prev, tab]));
+          }} className='w-full'>
+            <ProductFormTabsList />
+            <ProductFormTabsContent mountedTabs={mountedTabs} />
           </Tabs>
         </ProductValidationSettingsProvider>
-        <ProductFormFooter entityId={footerEntityId} />
+        <ProductFormFooter entityId={footId} />
         <ConfirmationModal />
       </form>
     </ContextRegistryPageProvider>

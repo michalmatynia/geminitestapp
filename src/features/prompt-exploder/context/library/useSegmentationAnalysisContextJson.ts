@@ -6,9 +6,14 @@ import type { PromptExploderSegmentationRecord } from '@/shared/contracts/prompt
 
 import { buildPromptExploderSegmentationAnalysisContextJson } from '../../segmentation-library';
 
+type SegmentationAnalysisContextJson = {
+  buildSegmentationAnalysisContextJsonForRecord: (recordId: string) => string | null;
+  buildSegmentationAnalysisContextJsonForAll: () => string;
+};
+
 export const useSegmentationAnalysisContextJson = (
   segmentationRecords: PromptExploderSegmentationRecord[]
-) => {
+): SegmentationAnalysisContextJson => {
   const buildSegmentationAnalysisContextJsonForRecord = useCallback(
     (recordId: string): string | null => {
       const record = segmentationRecords.find((candidate) => candidate.id === recordId);

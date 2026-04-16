@@ -20,7 +20,7 @@ export function useProductListQueueStatus({
   queuedProductIds: Set<string>;
   visibleProductIdSet: Set<string>;
   triggerJobCompletionHighlight: (productId: string) => void;
-}) {
+}): void {
   const previousQueuedProductIdsRef = useRef<Set<string> | null>(null);
 
   useEffect(() => {

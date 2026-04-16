@@ -75,3 +75,4 @@ export * from './repositories';
 export * from './session-testing';
 export * from './tradera';
 export * from './tradera-parameter-mapper';
+export * from './tradera-selector-registry';

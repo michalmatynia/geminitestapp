@@ -30,7 +30,7 @@ export function MasterFolderTreeShellProvider({
 }: {
   children: React.ReactNode;
   value: MasterFolderTreeShell;
-}) {
+}): React.JSX.Element {
   return (
     <MasterFolderTreeShellContext.Provider value={value}>
       {children}

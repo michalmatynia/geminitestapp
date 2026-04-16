@@ -30,7 +30,7 @@ export function TreeActionsProvider({
   children,
   expandedIds,
   setExpandedIds,
-}: TreeActionsProviderProps) {
+}: TreeActionsProviderProps): React.JSX.Element {
   const { state, dispatch } = usePageBuilder();
   const { autoExpand, toggleExpand } = useAutoExpand(setExpandedIds);
 

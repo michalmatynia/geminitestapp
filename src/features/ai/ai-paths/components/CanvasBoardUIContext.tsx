@@ -119,7 +119,7 @@ export function CanvasBoardUIProvider({
 }: {
   children: React.ReactNode;
   value: CanvasBoardUIContextValue;
-}) {
+}): React.JSX.Element {
   return <CanvasBoardUIContext.Provider value={value}>{children}</CanvasBoardUIContext.Provider>;
 }
 export { useCanvasBoardUI };

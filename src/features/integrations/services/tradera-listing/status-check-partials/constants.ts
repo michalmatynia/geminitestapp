@@ -1,60 +1,21 @@
-export const STATUS_CHECK_CONSTANTS = String.raw`
+import { TRADERA_SELECTOR_REGISTRY_RUNTIME } from '@/shared/lib/browser-execution/selectors/tradera';
+
+export const buildStatusCheckConstants = (
+  selectorRegistryRuntime: string = TRADERA_SELECTOR_REGISTRY_RUNTIME
+): string => String.raw`
   const INITIAL_SECTION_URL = 'https://www.tradera.com/en/my/listings';
-  const ACTIVE_SEARCH_SELECTORS = [
-    'main input[type="search"]',
-    'main [role="searchbox"]',
-    'main input[type="text"]',
-    'main input',
-    'input[type="search"]',
-    'input[placeholder*="Search"]',
-    'input[placeholder*="Sök"]',
-    '[data-testid*="search"] input',
-  ];
-  const ACTIVE_SEARCH_SUBMIT_SELECTORS = [
-    'main button:has-text("Search")',
-    'main button:has-text("Sök")',
-    'main [data-testid*="search"] button',
-    'main button[type="submit"]',
-  ];
-  const ACTIVE_SEARCH_TRIGGER_LABELS = ['Search', 'Sök'];
-  const GLOBAL_HEADER_SEARCH_HINTS = [
-    'items, sellers or a category',
-    'artiklar, säljare eller en kategori',
-    'artiklar, säljare eller kategori',
-    'what are you looking for',
-    'vad letar du efter',
-  ];
-  const DUPLICATE_DESCRIPTION_TEXT_SELECTORS = [
-    '[data-testid*="description"]',
-    '[id*="description" i]',
-    '[class*="description" i]',
-    '[class*="Description"]',
-    'article',
-    'main',
-  ];
-  const COOKIE_SELECTORS = [
-    '#onetrust-accept-btn-handler',
-    'button:has-text("Acceptera alla cookies")',
-    'button:has-text("Acceptera alla kakor")',
-    'button:has-text("Acceptera alla")',
-    'button:has-text("Accept all cookies")',
-    'button:has-text("Accept all")',
-    'button:has-text("Godkänn alla")',
-  ];
+
+${selectorRegistryRuntime}
+
+  const COOKIE_SELECTORS = COOKIE_ACCEPT_SELECTORS;
+
   const SECTIONS = [
     {
       id: 'active',
       label: 'Active listings',
       url: 'https://www.tradera.com/en/my/listings',
       tabLabels: ['Active listings', 'Active', 'Aktiva annonser', 'Aktiva'],
-      stateSelectors: [
-        '[aria-current="page"]:has-text("Active")',
-        '[aria-current="true"]:has-text("Active")',
-        '[role="tab"][aria-selected="true"]:has-text("Active")',
-        '[aria-current="page"]:has-text("Aktiva")',
-        '[aria-current="true"]:has-text("Aktiva")',
-        '[role="tab"][aria-selected="true"]:has-text("Aktiva")',
-      ],
+      stateSelectors: ACTIVE_TAB_STATE_SELECTORS,
       searchStepId: 'search_active',
       inspectStepId: 'inspect_active',
     },
@@ -63,14 +24,7 @@ export const STATUS_CHECK_CONSTANTS = String.raw`
       label: 'Unsold items',
       url: 'https://www.tradera.com/en/my/listings?tab=unsold',
       tabLabels: ['Unsold items', 'Unsold', 'Osålda objekt', 'Osålda'],
-      stateSelectors: [
-        '[aria-current="page"]:has-text("Unsold")',
-        '[aria-current="true"]:has-text("Unsold")',
-        '[role="tab"][aria-selected="true"]:has-text("Unsold")',
-        '[aria-current="page"]:has-text("Osålda")',
-        '[aria-current="true"]:has-text("Osålda")',
-        '[role="tab"][aria-selected="true"]:has-text("Osålda")',
-      ],
+      stateSelectors: UNSOLD_TAB_STATE_SELECTORS,
       searchStepId: 'search_unsold',
       inspectStepId: 'inspect_unsold',
     },
@@ -79,14 +33,7 @@ export const STATUS_CHECK_CONSTANTS = String.raw`
       label: 'Your sold items',
       url: 'https://www.tradera.com/en/my/sold',
       tabLabels: ['Your sold items', 'Sold items', 'Sold', 'Dina sålda', 'Sålda'],
-      stateSelectors: [
-        '[aria-current="page"]:has-text("Sold")',
-        '[aria-current="true"]:has-text("Sold")',
-        '[role="tab"][aria-selected="true"]:has-text("Sold")',
-        '[aria-current="page"]:has-text("Sålda")',
-        '[aria-current="true"]:has-text("Sålda")',
-        '[role="tab"][aria-selected="true"]:has-text("Sålda")',
-      ],
+      stateSelectors: SOLD_TAB_STATE_SELECTORS,
       searchStepId: 'search_sold',
       inspectStepId: 'inspect_sold',
     },
@@ -149,3 +96,5 @@ export const STATUS_CHECK_CONSTANTS = String.raw`
     return false;
   };
 `;
+
+export const STATUS_CHECK_CONSTANTS = buildStatusCheckConstants();

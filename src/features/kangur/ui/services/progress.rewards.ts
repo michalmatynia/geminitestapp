@@ -26,7 +26,7 @@ export {
 export const createRewardOutcome = (
   progress: KangurProgressState,
   input: KangurRewardInput,
-) =>
+): ReturnType<typeof createCoreRewardOutcome> =>
   createCoreRewardOutcome(progress, input, {
     persistenceEnabled: isProgressPersistenceEnabled(),
   });

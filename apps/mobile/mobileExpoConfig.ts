@@ -1,6 +1,18 @@
-import type { ExpoConfig } from 'expo/config';
-
 export type KangurMobileBuildProfile = 'local' | 'preview' | 'production';
+
+export type KangurExpoConfig = Record<string, unknown> & {
+  android?: {
+    package?: string;
+  };
+  extra?: Record<string, unknown>;
+  ios?: {
+    bundleIdentifier?: string;
+    supportsTablet?: boolean;
+  };
+  name: string;
+  owner?: string;
+  slug: string;
+};
 
 export type KangurMobileBuildEnvIssue = {
   level: 'error' | 'warning';
@@ -56,8 +68,8 @@ const getTrimmedEnvValue = (
 
 export const createKangurExpoConfig = (
   env: NodeJS.ProcessEnv,
-  baseConfig: Partial<ExpoConfig> = {},
-): ExpoConfig => {
+  baseConfig: Partial<KangurExpoConfig> = {},
+): KangurExpoConfig => {
   const name = getTrimmedEnvValue(env, 'KANGUR_EXPO_NAME') || DEFAULT_KANGUR_EXPO_NAME;
   const slug = getTrimmedEnvValue(env, 'KANGUR_EXPO_SLUG') || DEFAULT_KANGUR_EXPO_SLUG;
   const scheme =

@@ -19,7 +19,7 @@ export function SocialCaptureBrowserProvider({
 }: {
   children: React.ReactNode;
   state: SocialCaptureBrowserState;
-}) {
+}): React.JSX.Element {
   return (
     <SocialCaptureBrowserContext.Provider value={state}>
       {children}

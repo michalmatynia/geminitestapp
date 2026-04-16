@@ -1,8 +1,10 @@
 import type { KangurRegistryBaseData } from '../kangur-registry-types';
 
+type OperationPerformanceItem = KangurRegistryBaseData['snapshot']['operationPerformance'][number];
+
 export const buildOperationPerformanceItem = (
   operation: KangurRegistryBaseData['snapshot']['operationPerformance'][number]
-) => ({
+): OperationPerformanceItem => ({
   operation: operation.operation,
   label: operation.label,
   emoji: operation.emoji,

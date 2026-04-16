@@ -1,10 +1,23 @@
 'use client';
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState, type MutableRefObject } from 'react';
 import { stopActiveNode } from '../useKangurMusicSynth.utils';
 import type { ActiveNode } from '../useKangurMusicSynth.types';
 
-export function useKangurMusicSynthPlayback() {
+type KangurMusicSynthPlayback = {
+  activeNodesRef: MutableRefObject<ActiveNode[]>;
+  isPlayingSequenceRef: MutableRefObject<boolean>;
+  playbackTokenRef: MutableRefObject<number>;
+  timeoutIdsRef: MutableRefObject<number[]>;
+  isPlayingSequence: boolean;
+  setIsPlayingSequence: (value: boolean) => void;
+  clearScheduledTimeouts: () => void;
+  clearActivePlayback: () => void;
+  schedulePlaybackTimeout: (callback: () => void, ms: number) => number;
+  waitForPlaybackWindow: (token: number, ms: number) => Promise<boolean>;
+};
+
+export function useKangurMusicSynthPlayback(): KangurMusicSynthPlayback {
   const activeNodesRef = useRef<ActiveNode[]>([]);
   const isPlayingSequenceRef = useRef(false);
   const playbackTokenRef = useRef(0);

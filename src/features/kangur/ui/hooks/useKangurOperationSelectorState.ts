@@ -42,6 +42,13 @@ type UseKangurOperationSelectorStateOptions = {
   recommendedOperation?: KangurOperation | null;
 };
 
+type KangurOperationSelectorState = {
+  difficulty: KangurDifficulty;
+  difficultyOptions: KangurDifficultyOption[];
+  operations: KangurOperationSelectorItem[];
+  setDifficulty: Dispatch<SetStateAction<KangurDifficulty>>;
+};
+
 const OPERATIONS: Array<
   IdLabelOptionDto<KangurOperation> & {
     accent: KangurAccent;
@@ -166,7 +173,7 @@ const buildOperationSelectorItem = ({
 
 export const useKangurOperationSelectorState = (
   options: UseKangurOperationSelectorStateOptions = {}
-) => {
+): KangurOperationSelectorState => {
   const translations = useTranslations('KangurOperationSelector');
   const active = options.active ?? true;
   const onSelect = options.onSelect;

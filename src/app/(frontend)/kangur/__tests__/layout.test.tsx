@@ -53,13 +53,15 @@ describe('kangur layout', () => {
   });
 
   it('does not mount vercel analytics by default for the shared kangur route boundary', async () => {
-    const { default: KangurLayout } = await import('@/app/(frontend)/kangur/layout');
+    const { resolveKangurLayoutView } = await import('@/app/(frontend)/kangur/layout');
 
-    const view = await KangurLayout({
-      children: <div data-testid='kangur-layout-child' />,
-    });
-
-    render(<>{view}</>);
+    render(
+      <>
+        {await resolveKangurLayoutView({
+          children: <div data-testid='kangur-layout-child' />,
+        })}
+      </>
+    );
 
     expect(screen.getByTestId('kangur-storefront-appearance-provider')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-surface-class-sync')).toBeInTheDocument();
@@ -71,7 +73,7 @@ describe('kangur layout', () => {
     expect(document.querySelector('script')?.textContent).toContain(
       'document.documentElement.classList.add(\'kangur-surface-active\')'
     );
-    expect(kangurStorefrontAppearanceProviderMock).toHaveBeenCalledWith(
+    expect(kangurStorefrontAppearanceProviderMock).toHaveBeenLastCalledWith(
       expect.objectContaining({
         initialAppearance: {
           mode: 'dark',
@@ -119,11 +121,11 @@ describe('kangur layout', () => {
 
     const { default: KangurLayout } = await import('@/app/(frontend)/kangur/layout');
 
-    const view = await KangurLayout({
-      children: <div data-testid='kangur-layout-child' />,
-    });
-
-    render(<>{view}</>);
+    render(
+      <KangurLayout>
+        <div data-testid='kangur-layout-child' />
+      </KangurLayout>
+    );
 
     expect(screen.getAllByTestId('kangur-vercel-analytics')).toHaveLength(1);
   });

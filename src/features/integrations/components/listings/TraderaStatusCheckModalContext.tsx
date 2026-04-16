@@ -25,7 +25,7 @@ export function TraderaStatusCheckProvider({
 }: {
   children: React.ReactNode;
   value: TraderaStatusCheckContextValue;
-}) {
+}): React.JSX.Element {
   return (
     <TraderaStatusCheckContext.Provider value={value}>
       {children}

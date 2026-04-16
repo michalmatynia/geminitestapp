@@ -7,7 +7,11 @@ type MonitoringWidgetState = ReturnType<typeof useMonitoringWidgetState>;
 
 const MonitoringWidgetContext = createContext<MonitoringWidgetState | null>(null);
 
-export function MonitoringWidgetProvider({ children }: { children: React.ReactNode }) {
+export function MonitoringWidgetProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}): React.JSX.Element {
   const state = useMonitoringWidgetState();
   return (
     <MonitoringWidgetContext.Provider value={state}>

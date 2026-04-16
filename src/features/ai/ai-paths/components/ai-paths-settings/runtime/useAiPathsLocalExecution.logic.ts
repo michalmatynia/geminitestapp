@@ -8,7 +8,13 @@ import { useLocalRunOutcome } from './segments/useLocalRunOutcome';
 
 import type { LocalExecutionArgs } from './types';
 
-export function useAiPathsLocalExecutionLogic(args: LocalExecutionArgs) {
+type AiPathsLocalExecutionLogic = ReturnType<typeof useLocalRunOutcome> &
+  ReturnType<typeof useLocalExecutionLoop> &
+  ReturnType<typeof useLocalExecutionTriggers>;
+
+export function useAiPathsLocalExecutionLogic(
+  args: LocalExecutionArgs
+): AiPathsLocalExecutionLogic {
   const outcome = useLocalRunOutcome(args);
   const loop = useLocalExecutionLoop(args);
   const triggers = useLocalExecutionTriggers(args, loop, outcome);

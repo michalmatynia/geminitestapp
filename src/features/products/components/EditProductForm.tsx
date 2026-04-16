@@ -19,16 +19,19 @@ const FileManager = dynamic(() => import('@/features/files/public').then(m => m.
   ssr: false,
 });
 
+function resolveValidatorSessionKey(): string {
+  if (typeof globalThis.crypto !== 'undefined' && typeof globalThis.crypto.randomUUID === 'function') {
+    return globalThis.crypto.randomUUID();
+  }
+  return `edit-product-validator-${Date.now().toString(36)}`;
+}
+
 function EditProductForm(): React.JSX.Element {
   const { uploading, handleSubmit, hasUnsavedChanges } = useProductFormCore();
   const { showFileManager, handleMultiFileSelect } = useProductFormImages();
   const router = useRouter();
   const isSaveDisabled = uploading || !hasUnsavedChanges;
-  const [validatorSessionKey] = useState<string>(() =>
-    typeof globalThis.crypto !== 'undefined' && typeof globalThis.crypto.randomUUID === 'function'
-      ? globalThis.crypto.randomUUID()
-      : `edit-product-validator-${Date.now().toString(36)}`
-  );
+  const [validatorSessionKey] = useState<string>(() => resolveValidatorSessionKey());
 
   return (
     <AdminProductsPageLayout
@@ -46,7 +49,7 @@ function EditProductForm(): React.JSX.Element {
           </Button>
           <Button
             onClick={() => {
-              void handleSubmit();
+              handleSubmit().catch(() => { /* handled by context */ });
             }}
             disabled={isSaveDisabled}
             aria-disabled={isSaveDisabled}
@@ -60,7 +63,7 @@ function EditProductForm(): React.JSX.Element {
       wrapInPanel
       panelClassName='shadow-lg'
     >
-      {showFileManager ? (
+      {showFileManager === true ? (
         <FileManager onSelectFile={handleMultiFileSelect} showFileManager={showFileManager} />
       ) : (
         <ProductForm

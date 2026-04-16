@@ -12,13 +12,20 @@ import {
 import { PROMPT_EXPLODER_SEGMENTATION_LIBRARY_KEY } from '../../segmentation-library';
 import type { PromptExploderSettingsActions, PromptExploderSettingsState } from '../SettingsContext';
 
+type LibraryPersistence = {
+  persistPromptLibraryItems: (items: PromptExploderLibraryItem[]) => Promise<boolean>;
+  persistSegmentationRecords: (
+    records: PromptExploderSegmentationRecord[]
+  ) => Promise<boolean>;
+};
+
 export const useLibraryPersistence = ({
   settingsMap,
   updateSetting,
 }: {
   settingsMap: PromptExploderSettingsState['settingsMap'];
   updateSetting: PromptExploderSettingsActions['updateSetting'];
-}) => {
+}): LibraryPersistence => {
   const persistPromptLibraryItems = useCallback(
     async (items: PromptExploderLibraryItem[]): Promise<boolean> => {
       const serialized = serializeSetting({ version: 1, items });

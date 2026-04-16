@@ -37,6 +37,11 @@ export type TraderaSelectorRegistrySeedEntry = {
   source: 'code';
 };
 
+export type TraderaSelectorRegistryRuntimeEntry = Pick<
+  TraderaSelectorRegistrySeedEntry,
+  'key' | 'valueJson'
+>;
+
 const escapeJsString = (value: string): string =>
   value.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 
@@ -726,6 +731,7 @@ export const CATEGORY_PLACEHOLDER_LABELS = [
 
 export const FALLBACK_CATEGORY_OPTION_LABELS = ['Other', 'Övrigt'] as const;
 export const FALLBACK_CATEGORY_PATH_SEGMENTS = ['Other', 'Other'] as const;
+export const FALLBACK_CATEGORY_PATH = FALLBACK_CATEGORY_PATH_SEGMENTS.join(' > ');
 export const FALLBACK_CATEGORY_PATH_SEGMENT_VARIANTS = [
   ['Other', 'Other'],
   ['Övrigt', 'Övrigt'],
@@ -1260,6 +1266,13 @@ export const TRADERA_SELECTOR_REGISTRY_DEFINITIONS: TraderaSelectorRegistryDefin
     value: [...FALLBACK_CATEGORY_PATH_SEGMENTS],
   }),
   defineRegistryEntry({
+    key: 'FALLBACK_CATEGORY_PATH',
+    group: 'category',
+    kind: 'paths',
+    description: 'Fallback category path.',
+    value: FALLBACK_CATEGORY_PATH,
+  }),
+  defineRegistryEntry({
     key: 'FALLBACK_CATEGORY_PATH_SEGMENT_VARIANTS',
     group: 'category',
     kind: 'paths',
@@ -1477,12 +1490,23 @@ export const TRADERA_SELECTOR_REGISTRY_SEED_ENTRIES: TraderaSelectorRegistrySeed
     source: 'code',
   }));
 
-export const generateTraderaSelectorRegistryRuntime = (): string =>
+export const generateTraderaSelectorRegistryRuntimeFromEntries = (
+  entries: readonly TraderaSelectorRegistryRuntimeEntry[]
+): string =>
   [
     '// --- Tradera selector registry ---',
-    ...TRADERA_SELECTOR_REGISTRY_DEFINITIONS.map(
-      (definition) => `const ${definition.key} = ${toJsLiteral(definition.value)};`
-    ),
+    ...entries.map((entry) => {
+      const parsedValue = JSON.parse(entry.valueJson) as TraderaSelectorRegistryValue;
+      return `const ${entry.key} = ${toJsLiteral(parsedValue)};`;
+    }),
   ].join('\n');
+
+export const generateTraderaSelectorRegistryRuntime = (): string =>
+  generateTraderaSelectorRegistryRuntimeFromEntries(
+    TRADERA_SELECTOR_REGISTRY_DEFINITIONS.map((definition) => ({
+      key: definition.key,
+      valueJson: JSON.stringify(definition.value),
+    }))
+  );
 
 export const TRADERA_SELECTOR_REGISTRY_RUNTIME = generateTraderaSelectorRegistryRuntime();

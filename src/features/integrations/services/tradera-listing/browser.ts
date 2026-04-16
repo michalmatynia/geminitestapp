@@ -1,4 +1,7 @@
-import { type TraderaSystemSettings } from '@/features/integrations/constants/tradera';
+import {
+  DEFAULT_TRADERA_SYSTEM_SETTINGS,
+  type TraderaSystemSettings,
+} from '@/features/integrations/constants/tradera';
 import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
 import type { BrowserListingResultDto, PlaywrightRelistBrowserMode, ProductListing } from '@/shared/contracts/integrations/listings';
 export { ensureLoggedIn } from './tradera-browser-auth';
@@ -61,16 +64,19 @@ export const runTraderaBrowserListing = async ({
 export const runTraderaBrowserCheckStatus = async ({
   listing,
   connection,
+  systemSettings,
   browserMode,
 }: {
   listing: ProductListing;
   connection: IntegrationConnectionRecord;
+  systemSettings?: TraderaSystemSettings;
   browserMode: PlaywrightRelistBrowserMode;
 }, options?: TraderaBrowserRunOptions): Promise<BrowserListingResultDto> =>
   runTraderaBrowserCheckStatusScripted(
     {
       listing,
       connection,
+      systemSettings: systemSettings ?? DEFAULT_TRADERA_SYSTEM_SETTINGS,
       browserMode,
     },
     options

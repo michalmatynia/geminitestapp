@@ -8,6 +8,14 @@ import {
 } from './NumberBalanceRushGame.runtime';
 import type { MatchStatus, UseNumberBalanceRushDerivedStateProps } from './NumberBalanceRushGame.types';
 
+type NumberBalanceRushDerivedState = {
+  activeMatchId: string | null;
+  activeMatchStatus: MatchStatus;
+  activePlayerId: string | null;
+  shouldPoll: boolean;
+} & ReturnType<typeof resolveNumberBalanceRushMatchMeta> &
+  ReturnType<typeof resolveNumberBalanceRushTiming>;
+
 export function useNumberBalanceRushDerivedState({
   clockNowMs,
   durationMs,
@@ -18,7 +26,7 @@ export function useNumberBalanceRushDerivedState({
   scores,
   serverOffsetMs,
   translations,
-}: UseNumberBalanceRushDerivedStateProps) {
+}: UseNumberBalanceRushDerivedStateProps): NumberBalanceRushDerivedState {
   const activeMatchId = match?.matchId ?? null;
   const activeMatchStatus = (match?.status ?? 'waiting') as MatchStatus;
   const activePlayerId = player?.playerId ?? null;

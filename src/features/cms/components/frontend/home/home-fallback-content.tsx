@@ -36,7 +36,7 @@ type HomeFallbackContextValue = {
 
 const HomeFallbackContext = createContext<HomeFallbackContextValue | null>(null);
 
-export function useHomeFallback() {
+export function useHomeFallback(): HomeFallbackContextValue {
   const context = useContext(HomeFallbackContext);
   if (!context) {
     throw new Error('useHomeFallback must be used within HomeFallbackContent');

@@ -1,12 +1,43 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type Dispatch, type SetStateAction } from 'react';
 
 import { type TestLogEntry } from '@/shared/contracts/integrations/session-testing';
 
 import { type StepWithResult } from '../integrations-context-types';
 
-export function useIntegrationsTestingImpl() {
+type IntegrationsTestingState = {
+  testLog: TestLogEntry[];
+  setTestLog: Dispatch<SetStateAction<TestLogEntry[]>>;
+  isTesting: boolean;
+  setIsTesting: Dispatch<SetStateAction<boolean>>;
+  showTestLogModal: boolean;
+  setShowTestLogModal: Dispatch<SetStateAction<boolean>>;
+  showTestErrorModal: boolean;
+  setShowTestErrorModal: Dispatch<SetStateAction<boolean>>;
+  testError: string | null;
+  setTestError: Dispatch<SetStateAction<string | null>>;
+  testErrorMeta: {
+    errorId?: string;
+    integrationId?: string | null;
+    connectionId?: string | null;
+  } | null;
+  setTestErrorMeta: Dispatch<
+    SetStateAction<{
+      errorId?: string;
+      integrationId?: string | null;
+      connectionId?: string | null;
+    } | null>
+  >;
+  showTestSuccessModal: boolean;
+  setShowTestSuccessModal: Dispatch<SetStateAction<boolean>>;
+  testSuccessMessage: string | null;
+  setTestSuccessMessage: Dispatch<SetStateAction<string | null>>;
+  selectedStep: StepWithResult | null;
+  setSelectedStep: Dispatch<SetStateAction<StepWithResult | null>>;
+};
+
+export function useIntegrationsTestingImpl(): IntegrationsTestingState {
   const [testLog, setTestLog] = useState<TestLogEntry[]>([]);
   const [isTesting, setIsTesting] = useState(false);
   const [showTestLogModal, setShowTestLogModal] = useState(false);

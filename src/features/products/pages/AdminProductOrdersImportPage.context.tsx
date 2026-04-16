@@ -21,7 +21,7 @@ export function OrdersImportProvider({
 }: {
   children: React.ReactNode;
   state: OrdersImportState;
-}) {
+}): React.JSX.Element {
   return (
     <OrdersImportContext.Provider value={state}>
       {children}

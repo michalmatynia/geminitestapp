@@ -6,7 +6,7 @@ import { NextResponse } from 'next/server';
 import { badRequestError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 
-const getContentType = (filename: string) => {
+const getContentType = (filename: string): string => {
   if (filename.endsWith('.png')) return 'image/png';
   if (filename.endsWith('.jpg') || filename.endsWith('.jpeg')) return 'image/jpeg';
   if (filename.endsWith('.webm')) return 'video/webm';

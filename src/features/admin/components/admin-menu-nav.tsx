@@ -316,6 +316,11 @@ export const buildAdminNav = (handlers: {
                 label: 'Parameter Mapping',
                 href: '/admin/integrations/marketplaces/tradera/parameter-mapping',
               },
+              {
+                id: 'integrations/marketplaces/tradera/selectors',
+                label: 'Selector Registry',
+                href: '/admin/integrations/marketplaces/tradera/selectors',
+              },
             ],
           },
           {

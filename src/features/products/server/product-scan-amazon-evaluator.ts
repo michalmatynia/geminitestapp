@@ -17,7 +17,6 @@ import type {
   ProductScanAmazonVariantAssessment,
   ProductScanAmazonEvaluationResult,
   ProductScanRecord,
-  ProductScanStep,
 } from '@/shared/contracts/product-scans';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';

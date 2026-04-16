@@ -13,7 +13,7 @@ export function NumberBalanceRushGameProvider({
 }: {
   children: React.ReactNode;
   state: NumberBalanceRushGameState;
-}) {
+}): React.JSX.Element {
   return (
     <NumberBalanceRushGameContext.Provider value={state}>
       {children}

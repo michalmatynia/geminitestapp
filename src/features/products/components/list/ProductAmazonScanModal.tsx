@@ -419,7 +419,6 @@ type ProductScanRowProps = {
   expandedExtractedFieldRowIds: Set<string>;
   isBlockedScanReviewed: (scanId: string | null | undefined) => boolean;
   markBlockedScanReviewed: (scanId: string | null | undefined) => void;
-  clearBlockedScanReviewed: (scanId: string | null | undefined) => void;
   toggleRowExtractedFields: (productId: string) => void;
   toggleRowDiagnostics: (productId: string) => void;
   toggleRowSteps: (productId: string) => void;
@@ -439,7 +438,6 @@ function ProductScanRow(props: ProductScanRowProps): React.JSX.Element {
     expandedExtractedFieldRowIds,
     isBlockedScanReviewed,
     markBlockedScanReviewed,
-    clearBlockedScanReviewed,
     toggleRowExtractedFields,
     toggleRowDiagnostics,
     toggleRowSteps,
@@ -1102,7 +1100,6 @@ export function ProductAmazonScanModal(
   const {
     isBlockedScanReviewed,
     markBlockedScanReviewed,
-    clearBlockedScanReviewed,
   } = useProductScan1688ReviewState();
   const testConnectionMutation = useTestConnection();
   const [is1688LoginPending, setIs1688LoginPending] = useState(false);
@@ -2231,7 +2228,6 @@ export function ProductAmazonScanModal(
               expandedExtractedFieldRowIds={expandedExtractedFieldRowIds}
               isBlockedScanReviewed={isBlockedScanReviewed}
               markBlockedScanReviewed={markBlockedScanReviewed}
-              clearBlockedScanReviewed={clearBlockedScanReviewed}
               toggleRowExtractedFields={toggleRowExtractedFields}
               toggleRowDiagnostics={toggleRowDiagnostics}
               toggleRowSteps={toggleRowSteps}

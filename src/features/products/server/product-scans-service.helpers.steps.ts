@@ -42,22 +42,22 @@ export const normalizeParsedProductScanSteps = (value: unknown): ProductScanStep
 
 export const normalizeParsedAmazonDetails = (value: unknown): ProductScanAmazonDetails => {
   const parsed = productScanAmazonDetailsSchema.safeParse(value);
-  return parsed.success ? parsed.data : {};
+  return parsed.success ? parsed.data : null;
 };
 
 export const normalizeParsedAmazonProbe = (value: unknown): ProductScanAmazonProbe => {
   const parsed = productScanAmazonProbeSchema.safeParse(value);
-  return parsed.success ? parsed.data : {};
+  return parsed.success ? parsed.data : null;
 };
 
 export const normalizeParsedSupplierDetails = (value: unknown): ProductScanSupplierDetails => {
   const parsed = productScanSupplierDetailsSchema.safeParse(value);
-  return parsed.success ? parsed.data : {};
+  return parsed.success ? parsed.data : null;
 };
 
 export const normalizeParsedSupplierProbe = (value: unknown): ProductScanSupplierProbe => {
   const parsed = productScanSupplierProbeSchema.safeParse(value);
-  return parsed.success ? parsed.data : {};
+  return parsed.success ? parsed.data : null;
 };
 
 export const normalizeParsedSupplierEvaluation = (
@@ -85,6 +85,7 @@ export const normalizeParsedAmazonCandidateResults = (
   return value
     .map((item: unknown): AmazonScanCandidateResult | null => {
       const record = toRecord(item);
+      if (record === null) return null;
       const url = readOptionalString(record?.['url']);
       if (!url) return null;
       return {
@@ -115,6 +116,9 @@ export const areProductScanStepsEqual = (
   for (let i = 0; i < a.length; i++) {
     const stepA = a[i];
     const stepB = b[i];
+    if (stepA === undefined || stepB === undefined) {
+      return false;
+    }
     if (
       stepA.key !== stepB.key ||
       stepA.status !== stepB.status ||
@@ -147,10 +151,14 @@ export const resolvePersistedProductScanSteps = (
     const existingIndex = results.findIndex((s) => s.key === nextStep.key);
     if (existingIndex >= 0) {
       const existing = results[existingIndex];
+      if (existing === undefined) {
+        results.push(nextStep);
+        continue;
+      }
       results[existingIndex] = {
         ...existing,
         ...nextStep,
-        details: nextStep.details ?? existing.details ?? null,
+        details: nextStep.details ?? existing.details ?? [],
       };
     } else {
       results.push(nextStep);
@@ -166,25 +174,27 @@ export const upsertPersistedProductScanStep = (
 ): ProductScanStep[] => {
   const results = [...steps];
   const existingIndex = results.findIndex((s) => s.key === nextStep.key);
+  const existingStep = existingIndex >= 0 ? results[existingIndex] : undefined;
 
   const mergedStep: ProductScanStep = {
+    ...nextStep,
     key: nextStep.key,
     label: nextStep.label,
-    group: nextStep.group ?? resolveProductScanStepGroup(nextStep.key),
-    status: nextStep.status ?? 'pending',
-    resultCode: nextStep.resultCode ?? null,
-    message: nextStep.message ?? null,
-    details: nextStep.details ?? null,
-    candidateId: nextStep.candidateId ?? null,
-    candidateRank: nextStep.candidateRank ?? null,
-    url: nextStep.url ?? null,
-    attempt: nextStep.attempt ?? null,
-    retryOf: nextStep.retryOf ?? null,
-    inputSource: nextStep.inputSource ?? 'url',
-    startedAt: nextStep.startedAt ?? new Date().toISOString(),
-    completedAt: nextStep.completedAt ?? null,
-    ...(existingIndex >= 0 ? results[existingIndex] : {}),
-    ...nextStep,
+    group: nextStep.group ?? existingStep?.group ?? resolveProductScanStepGroup(nextStep.key),
+    status: nextStep.status ?? existingStep?.status ?? 'pending',
+    resultCode: nextStep.resultCode ?? existingStep?.resultCode ?? null,
+    message: nextStep.message ?? existingStep?.message ?? null,
+    details: nextStep.details ?? existingStep?.details ?? [],
+    candidateId: nextStep.candidateId ?? existingStep?.candidateId ?? null,
+    candidateRank: nextStep.candidateRank ?? existingStep?.candidateRank ?? null,
+    url: nextStep.url ?? existingStep?.url ?? null,
+    attempt: nextStep.attempt ?? existingStep?.attempt ?? null,
+    retryOf: nextStep.retryOf ?? existingStep?.retryOf ?? null,
+    inputSource: nextStep.inputSource ?? existingStep?.inputSource ?? 'url',
+    warning: nextStep.warning ?? existingStep?.warning ?? null,
+    startedAt: nextStep.startedAt ?? existingStep?.startedAt ?? new Date().toISOString(),
+    completedAt: nextStep.completedAt ?? existingStep?.completedAt ?? null,
+    durationMs: nextStep.durationMs ?? existingStep?.durationMs ?? null,
   };
 
   if (existingIndex >= 0) {
@@ -202,7 +212,7 @@ export const createPersistedProductScanStep = (input: {
   status?: ProductScanStep['status'];
   resultCode?: string | null;
   message?: string | null;
-  details?: Record<string, unknown> | null;
+  details?: ProductScanStep['details'] | null;
   url?: string | null;
   candidateId?: string | null;
   candidateRank?: number | null;
@@ -216,36 +226,33 @@ export const createPersistedProductScanStep = (input: {
   status: input.status ?? 'pending',
   resultCode: input.resultCode ?? null,
   message: readOptionalString(input.message),
-  details: toRecord(input.details),
+  details: input.details ?? [],
   url: readOptionalString(input.url, PRODUCT_SCAN_URL_MAX_LENGTH),
   candidateId: readOptionalString(input.candidateId, PRODUCT_SCAN_MATCHED_IMAGE_ID_MAX_LENGTH),
   candidateRank: readOptionalPositiveInt(input.candidateRank),
   attempt: readOptionalPositiveInt(input.attempt),
   retryOf: readOptionalString(input.retryOf),
   inputSource: input.inputSource ?? 'url',
+  warning: null,
   startedAt: new Date().toISOString(),
   completedAt: input.status === 'completed' || input.status === 'failed' ? new Date().toISOString() : null,
+  durationMs: null,
 });
 
 export const buildPreparedProductScanSteps = (input: {
-  stepKeys: string[];
-}): ProductScanStep[] =>
-  input.stepKeys.map((key) =>
+  stepKeys?: string[];
+  prepareLabel?: string;
+  summaryLabel?: string;
+  imageCandidateCount?: number;
+  status?: ProductScanRecord['status'];
+  error?: string | null;
+}): ProductScanStep[] => {
+  const stepKeys = input.stepKeys ?? ['validate', 'prepare_scan', 'queue_scan'];
+  return stepKeys.map((key) =>
     createPersistedProductScanStep({
       key,
       label: key.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase()),
       status: 'pending',
     })
   );
-
-export const resolveNextQueueStepAttempt = (
-  steps: ProductScanRecord['steps']
-): number =>
-  Math.max(
-    0,
-    ...steps
-      .filter((step) => step.key === 'queue_scan')
-      .map((step) =>
-        typeof step.attempt === 'number' && Number.isFinite(step.attempt) ? step.attempt : 1
-      )
-  ) + 1;
+};

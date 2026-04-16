@@ -1,4 +1,7 @@
-import { STATUS_CHECK_CONSTANTS } from './status-check-partials/constants';
+import {
+  buildStatusCheckConstants,
+  STATUS_CHECK_CONSTANTS,
+} from './status-check-partials/constants';
 import { STATUS_CHECK_CORE_LOGIC } from './status-check-partials/core-logic';
 
 /**
@@ -15,13 +18,21 @@ import { STATUS_CHECK_CORE_LOGIC } from './status-check-partials/core-logic';
  * - confirm by description first
  * - fall back to Product ID match
  */
-export const TRADERA_CHECK_STATUS_SCRIPT = String.raw`export default async function run({
+export const buildTraderaCheckStatusScript = (
+  selectorRegistryRuntime?: string
+): string =>
+  String.raw`export default async function run({
   page,
   input,
   emit,
   log,
 }) {
-` + STATUS_CHECK_CONSTANTS + STATUS_CHECK_CORE_LOGIC + String.raw`
+` +
+  (selectorRegistryRuntime
+    ? buildStatusCheckConstants(selectorRegistryRuntime)
+    : STATUS_CHECK_CONSTANTS) +
+  STATUS_CHECK_CORE_LOGIC +
+  String.raw`
   const {
     listingUrl = null,
     externalListingId = null,
@@ -265,3 +276,5 @@ export const TRADERA_CHECK_STATUS_SCRIPT = String.raw`export default async funct
     });
   }
 }`;
+
+export const TRADERA_CHECK_STATUS_SCRIPT = buildTraderaCheckStatusScript();

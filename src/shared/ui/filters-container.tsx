@@ -1,7 +1,7 @@
 'use client';
 
 import { X } from 'lucide-react';
-import { type ReactNode } from 'react';
+import { type JSX, type ReactNode } from 'react';
 
 import { cn } from '@/shared/utils/ui-utils';
 
@@ -18,7 +18,7 @@ interface FiltersContainerProps {
   gridClassName?: string;
 }
 
-export function FiltersContainer(props: FiltersContainerProps) {
+export function FiltersContainer(props: FiltersContainerProps): JSX.Element {
   const {
     title = 'Filters',
     onReset,

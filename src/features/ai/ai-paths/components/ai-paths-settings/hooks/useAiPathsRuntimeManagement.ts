@@ -6,7 +6,13 @@ import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext
 import { pruneRuntimeInputsState } from '@/features/ai/ai-paths/logic/runtime-pruning';
 import type { Edge } from '@/shared/contracts/ai-paths';
 
-export function useAiPathsRuntimeManagement() {
+type AiPathsRuntimeManagement = {
+  pruneRuntimeInputs: (removedEdges: Edge[], remainingEdges: Edge[]) => void;
+  clearRuntimeInputsForEdges: (targetEdges: Edge[]) => void;
+  clearRuntimeForNode: (nodeId: string) => void;
+};
+
+export function useAiPathsRuntimeManagement(): AiPathsRuntimeManagement {
   const { setRuntimeState } = useRuntimeActions();
 
   const pruneRuntimeInputs = useCallback(

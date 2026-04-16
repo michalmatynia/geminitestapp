@@ -16,9 +16,11 @@ export function registerSettingsProvider(provider: SettingsProvider): void {
   providers.add(provider);
 }
 
-export async function findProviderForKey(key: string): Promise<SettingsProvider | null> {
+export function findProviderForKey(key: string): Promise<SettingsProvider | null> {
   for (const provider of providers) {
-    if (provider.isKey(key)) return provider;
+    if (provider.isKey(key)) {
+      return Promise.resolve(provider);
+    }
   }
-  return null;
+  return Promise.resolve(null);
 }

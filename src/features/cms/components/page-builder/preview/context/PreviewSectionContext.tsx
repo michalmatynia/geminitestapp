@@ -24,11 +24,11 @@ export function PreviewSectionProvider({
 }: {
   children: React.ReactNode;
   value: PreviewSectionContextValue;
-}) {
+}): React.JSX.Element {
   return <PreviewSectionContext.Provider value={value}>{children}</PreviewSectionContext.Provider>;
 }
 
-export function usePreviewSectionContext() {
+export function usePreviewSectionContext(): PreviewSectionContextValue {
   const context = useContext(PreviewSectionContext);
   if (!context) {
     throw internalError('usePreviewSectionContext must be used within PreviewSectionProvider');

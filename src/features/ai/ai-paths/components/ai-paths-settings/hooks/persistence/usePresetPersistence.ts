@@ -8,13 +8,20 @@ import { updateAiPathsSettingsBulk } from '@/shared/lib/ai-paths/settings-store-
 
 import type { PersistSettingsPayload } from '../../useAiPathsPersistence.types';
 
+type PresetPersistence = {
+  persistSettingsBulk: (payload: PersistSettingsPayload) => Promise<void>;
+  saveClusterPresets: (presets: ClusterPreset[]) => Promise<void>;
+  saveDbQueryPresets: (presets: DbQueryPreset[]) => Promise<void>;
+  saveDbNodePresets: (presets: DbNodePreset[]) => Promise<void>;
+};
+
 export function usePresetPersistence(
   _args: unknown,
   core: {
     enqueueSettingsWrite: <T>(operation: () => Promise<T>) => Promise<T>;
     stringifyForStorage: (value: unknown, label: string) => string;
   }
-) {
+): PresetPersistence {
   const persistSettingsBulk = useCallback(
     async (payload: PersistSettingsPayload): Promise<void> => {
       await core.enqueueSettingsWrite(async (): Promise<void> => {

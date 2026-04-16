@@ -92,6 +92,23 @@ describe('buildAdminNav', () => {
     expect(item).not.toBeNull();
   });
 
+  it('includes the Tradera selector registry entry', () => {
+    const nav = buildAdminNav({
+      onOpenChat: () => undefined,
+      onCreatePageClick: () => undefined,
+    }) as AdminNavNode[];
+
+    const item = findNavItem(
+      nav,
+      (entry) =>
+        entry.id === 'integrations/marketplaces/tradera/selectors' &&
+        entry.label === 'Selector Registry' &&
+        entry.href === '/admin/integrations/marketplaces/tradera/selectors'
+    );
+
+    expect(item).not.toBeNull();
+  });
+
   it('includes the dedicated product import page and export-focused Base.com entry', () => {
     const nav = buildAdminNav({
       onOpenChat: () => undefined,

@@ -25,7 +25,7 @@ type ShippingInfo = { autoLabel: string, autoRuleLabel: string, conflictLabel: s
 
 function resolveAutoShipping(product: ProductWithImages, categoryNameById: ReadonlyMap<string, string>): { autoLabel: string, autoRuleLabel: string } {
   const isAuto = product.shippingGroupSource === 'category_rule';
-  const groupName = product.shippingGroup?.name?.trim() ?? '';
+  const groupName = product.shippingGroup?.name.trim() ?? '';
   const autoLabel = isAuto ? groupName : '';
   
   const ruleIds = Array.isArray(product.shippingGroupMatchedCategoryRuleIds) ? product.shippingGroupMatchedCategoryRuleIds : [];
@@ -117,7 +117,7 @@ function NameCellActivity({ runtime }: { runtime: ProductListRowRuntimeContextTy
 
 function NameCellBasicInfo({ product }: { product: ProductWithImages }): React.JSX.Element {
   const sku = (product.sku ?? '').trim();
-  const pid = (product.baseProductId ?? product.id ?? '').trim();
+  const pid = (product.baseProductId ?? product.id).trim();
 
   return (
     <>

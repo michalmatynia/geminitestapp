@@ -523,7 +523,7 @@ export async function listProductListingsByProductIdsAcrossProviders(
 }
 
 export async function listAllProductListingsAcrossProviders(): Promise<
-  Array<Pick<ProductListing, 'productId' | 'status' | 'integrationId' | 'marketplaceData'>>
+  Array<Pick<ProductListing, 'productId' | 'status' | 'integrationId' | 'marketplaceData' | 'updatedAt'>>
   > {
   return mongoRepository.listAllListings();
 }

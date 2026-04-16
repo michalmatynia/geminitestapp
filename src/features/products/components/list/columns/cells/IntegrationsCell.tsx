@@ -73,23 +73,22 @@ export const IntegrationsCell: React.FC<{ row: Row<ProductWithImages> }> = memo(
   const runtime = useProductListRowRuntime(product.id, product.baseProductId);
   const prefetchListings = usePrefetchListings(product.id, useQueryClient());
 
-  const click = actions.onIntegrationsClick;
-  if (!click) return null;
+  const onIntegrationsClick = actions.onIntegrationsClick;
 
   return (
     <div className='inline-flex items-center gap-1'>
-      <CircleIconButton onClick={(): void => click(product)} onMouseEnter={prefetchListings} onFocus={prefetchListings} ariaLabel='View integrations' className='border-gray-500/50 text-gray-300 hover:border-gray-400/60 hover:text-white transition-colors'>
+      <CircleIconButton onClick={(): void => onIntegrationsClick(product)} onMouseEnter={prefetchListings} onFocus={prefetchListings} ariaLabel='View integrations' className='border-gray-500/50 text-gray-300 hover:border-gray-400/60 hover:text-white transition-colors'>
         <span aria-hidden='true' className='inline-flex size-full items-center justify-center text-[20px] font-medium leading-none tracking-tight -translate-y-[1px]'>+</span>
       </CircleIconButton>
-      <BaseQuickExportButton product={product} status={runtime.integrationStatus} prefetchListings={prefetchListings} showMarketplaceBadge={runtime.showMarketplaceBadge} onOpenIntegrations={(rec): void => click(product, rec, 'baselinker')} />
-      <TraderaQuickListButton product={product} prefetchListings={prefetchListings} onOpenIntegrations={(rec): void => click(product, rec, 'tradera')} showTraderaBadge={runtime.showTraderaBadge} traderaStatus={runtime.traderaStatus} />
-      {runtime.showTraderaBadge && <TraderaStatusButton productId={product.id} status={runtime.traderaStatus} prefetchListings={prefetchListings} onOpenListings={(rec): void => click(product, rec, 'tradera')} />}
-      <VintedQuickListButton product={product} prefetchListings={prefetchListings} onOpenIntegrations={(rec): void => click(product, rec, 'vinted')} showVintedBadge={runtime.showVintedBadge} vintedStatus={runtime.vintedStatus} />
-      {runtime.showVintedBadge && <VintedStatusButton productId={product.id} status={runtime.vintedStatus} prefetchListings={prefetchListings} onOpenListings={(rec): void => click(product, rec, 'vinted')} />}
-      {visuals.triggerButtonsReady && (
+      <BaseQuickExportButton product={product} status={runtime.integrationStatus} prefetchListings={prefetchListings} showMarketplaceBadge={runtime.showMarketplaceBadge} onOpenIntegrations={(rec): void => onIntegrationsClick(product, rec, 'baselinker')} />
+      <TraderaQuickListButton product={product} prefetchListings={prefetchListings} onOpenIntegrations={(rec): void => onIntegrationsClick(product, rec, 'tradera')} showTraderaBadge={runtime.showTraderaBadge} traderaStatus={runtime.traderaStatus} />
+      {runtime.showTraderaBadge && <TraderaStatusButton productId={product.id} status={runtime.traderaStatus} prefetchListings={prefetchListings} onOpenListings={(rec): void => onIntegrationsClick(product, rec, 'tradera')} />}
+      <VintedQuickListButton product={product} prefetchListings={prefetchListings} onOpenIntegrations={(rec): void => onIntegrationsClick(product, rec, 'vinted')} showVintedBadge={runtime.showVintedBadge} vintedStatus={runtime.vintedStatus} />
+      {runtime.showVintedBadge && <VintedStatusButton productId={product.id} status={runtime.vintedStatus} prefetchListings={prefetchListings} onOpenListings={(rec): void => onIntegrationsClick(product, rec, 'vinted')} />}
+      {visuals.triggerButtonsReady === true && (
         <TriggerButtonBar location='product_row' entityType='product' entityId={product.id} getEntityJson={(): Record<string, unknown> => buildTriggeredProductEntityJson({ product, values: {} })} showRunFeedback={visuals.showTriggerRunFeedback} className='[&_button]:h-8 [&_button]:px-2 [&_button]:text-[10px] [&_button]:font-black [&_button]:uppercase [&_button]:tracking-tight' />
       )}
-      {runtime.showPlaywrightProgrammableBadge && <PlaywrightStatusButton status={runtime.playwrightProgrammableStatus} prefetchListings={prefetchListings} onOpenListings={(): void => click(product, undefined, 'playwright-programmable')} />}
+      {runtime.showPlaywrightProgrammableBadge && <PlaywrightStatusButton status={runtime.playwrightProgrammableStatus} prefetchListings={prefetchListings} onOpenListings={(): void => onIntegrationsClick(product, undefined, 'playwright-programmable')} />}
     </div>
   );
 });

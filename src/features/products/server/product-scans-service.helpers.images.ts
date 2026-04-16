@@ -210,16 +210,25 @@ export const resolveImageCandidateFilepath = async (
 
 export const hydrateProductScanImageCandidates = async (input: {
   product: ProductWithImages;
-  imageCandidates: Array<{ filepath: string | null; url: string | null }>;
-}): Promise<Array<{ filepath: string | null; url: string | null }>> => {
+  imageCandidates: ProductScanRecord['imageCandidates'];
+}): Promise<ProductScanRecord['imageCandidates']> => {
   const results = [...input.imageCandidates];
   const processedUrls = new Set(results.map((r) => r.url).filter((u): u is string => u !== null));
 
   const productImages = input.product.images ?? [];
   for (const image of productImages) {
-    const url = image.url;
-    if (url && !processedUrls.has(url)) {
-      results.push({ filepath: null, url });
+    const imageFile = image.imageFile;
+    const url =
+      readOptionalString(imageFile.publicUrl) ??
+      readOptionalString(imageFile.url) ??
+      readOptionalString(imageFile.thumbnailUrl);
+    if (url !== null && !processedUrls.has(url)) {
+      results.push({
+        id: readOptionalString(imageFile.id) ?? readOptionalString(image.imageFileId),
+        filepath: readOptionalString(imageFile.filepath),
+        url,
+        filename: readOptionalString(imageFile.filename),
+      });
       processedUrls.add(url);
     }
   }
@@ -313,7 +322,6 @@ const resolveLocalScanImageCandidateUrlPath = async (
 
   return await resolveLocalScanImageCandidatePath({
     filepath: publicPath,
-    filename: candidate.filename,
   });
 };
 

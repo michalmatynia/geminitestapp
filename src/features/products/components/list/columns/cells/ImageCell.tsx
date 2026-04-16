@@ -17,8 +17,7 @@ type BaseCandidate = { resFile: string | undefined, resLink: string | undefined,
 
 function resolveBaseCandidate(product: ProductWithImages, imageExternalBaseUrl: string | null | undefined): BaseCandidate {
   const images = Array.isArray(product.images) ? product.images : [];
-  const firstImg = images[0]?.imageFile;
-  const firstFile = getImageFilepath(firstImg);
+  const firstFile = getImageFilepath(images[0]?.imageFile);
   const resFile = resolveProductImageUrl(firstFile, imageExternalBaseUrl) ?? undefined;
 
   const firstLink = resolveFirstValid(product.imageLinks);
@@ -29,17 +28,12 @@ function resolveBaseCandidate(product: ProductWithImages, imageExternalBaseUrl: 
   return { resFile, resLink, firstBase64 };
 }
 
-function resolveCandidateImageUrl(
-  base: BaseCandidate, 
-  thumbnailSource: string
-): string | undefined {
-  if (thumbnailSource === 'link') {
-    return (base.resLink ?? base.resFile) ?? base.firstBase64;
-  }
-  if (thumbnailSource === 'base64') {
-    return (base.firstBase64 ?? base.resFile) ?? base.resLink;
-  }
-  return (base.resFile ?? base.resLink) ?? base.firstBase64;
+function resolveCandidateBySource(base: BaseCandidate, source: string): string | undefined {
+  const lookup: Record<string, string | undefined> = {
+    link: base.resLink ?? base.resFile ?? base.firstBase64,
+    base64: base.firstBase64 ?? base.resFile ?? base.resLink,
+  };
+  return lookup[source] ?? base.resFile ?? base.resLink ?? base.firstBase64;
 }
 
 export const ImageCell: React.FC<{ row: Row<ProductWithImages> }> = memo(({ row }) => {
@@ -49,18 +43,17 @@ export const ImageCell: React.FC<{ row: Row<ProductWithImages> }> = memo(({ row 
 
   const imageUrl = useMemo(() => {
     const base = resolveBaseCandidate(product, visuals.imageExternalBaseUrl);
-    return resolveCandidateImageUrl(base, source);
+    return resolveCandidateBySource(base, source);
   }, [product, source, visuals.imageExternalBaseUrl]);
 
   const name = getProductDisplayName(product);
-  const notes = product.notes;
-  const note = (typeof notes === 'string' && notes !== '') ? notes : null;
 
   return (
     <ProductImageCell
       imageUrl={imageUrl ?? null}
+      productId={product.id}
       productName={name}
-      note={note}
+      note={product.notes ?? null}
     />
   );
 });

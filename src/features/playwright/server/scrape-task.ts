@@ -15,19 +15,15 @@ export type RunPlaywrightScrapeTaskInput<
   TErrorAdditional extends Record<string, unknown> = Record<string, unknown>,
 > = RunPlaywrightInstanceTaskInput<PlaywrightScrapeResult, TResult, TErrorAdditional>;
 
-export const withPlaywrightScrapeTaskErrorMeta = <
-  TAdditional extends Record<string, unknown> = Record<string, unknown>,
->(
+export const withPlaywrightScrapeTaskErrorMeta = (
   error: AppError,
-  additional?: TAdditional
-): AppError => withPlaywrightInstanceTaskErrorMeta<TAdditional>(error, additional);
+  additional?: Record<string, unknown>
+): AppError => withPlaywrightInstanceTaskErrorMeta(error, additional);
 
-export const createPlaywrightScrapeTaskInternalError = <
-  TAdditional extends Record<string, unknown> = Record<string, unknown>,
->(
+export const createPlaywrightScrapeTaskInternalError = (
   message: string,
-  additional?: TAdditional
-): AppError => createPlaywrightInstanceTaskInternalError<TAdditional>(message, additional);
+  additional?: Record<string, unknown>
+): AppError => createPlaywrightInstanceTaskInternalError(message, additional);
 
 export const runPlaywrightScrapeTask = async <
   TResult,

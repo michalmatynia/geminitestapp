@@ -5,7 +5,23 @@ import {
 import { integrationDefinitions } from '@/shared/contracts/integrations/domain';
 import { type Integration } from '@/shared/contracts/integrations';
 
-export function useIntegrationList() {
+type IntegrationDefinition = (typeof integrationDefinitions)[number];
+
+type IntegrationListState = {
+  integrations: ReturnType<typeof useIntegrationsData>['integrations'];
+  handleIntegrationClick: ReturnType<typeof useIntegrationsActions>['handleIntegrationClick'];
+  integrationSlugs: Integration['slug'][];
+  hasIntegrations: boolean;
+  traderaDefinition: IntegrationDefinition | null;
+  traderaApiDefinition: IntegrationDefinition | null;
+  allegroDefinition: IntegrationDefinition | null;
+  vintedDefinition: IntegrationDefinition | null;
+  scanner1688Definition: IntegrationDefinition | null;
+  baselinkerDefinition: IntegrationDefinition | null;
+  linkedinDefinition: IntegrationDefinition | null;
+};
+
+export function useIntegrationList(): IntegrationListState {
   const { integrations } = useIntegrationsData();
   const { handleIntegrationClick } = useIntegrationsActions();
   const integrationSlugs = integrations.map((integration: Integration) => integration.slug);

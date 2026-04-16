@@ -52,7 +52,7 @@ export function CountryModal(): React.JSX.Element | null {
     onToggleCurrency: toggleCurrency,
   });
 
-  const handleChange = (values: Partial<CodeNameDto>) => {
+  const handleChange = (values: Partial<CodeNameDto>): void => {
     setForm((prev) => resolveCountryFormChange(prev, values, countryCodeOptions));
   };
 

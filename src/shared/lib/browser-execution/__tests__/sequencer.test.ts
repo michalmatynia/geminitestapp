@@ -27,7 +27,9 @@ describe('Sequencer Integration', () => {
     await sequencer.run();
 
     expect(page.setViewportSize).toHaveBeenCalled();
-    expect(page.goto).toHaveBeenCalledWith('https://www.tradera.com');
+    expect(page.goto).toHaveBeenCalledWith('https://www.tradera.com', {
+      waitUntil: 'domcontentloaded',
+    });
     expect(tracker.getSteps().filter(s => s.status === 'success')).toHaveLength(2);
   });
 

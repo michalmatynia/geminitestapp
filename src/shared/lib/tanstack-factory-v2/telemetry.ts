@@ -37,13 +37,13 @@ export const emitFactoryTelemetry = ({
   });
 };
 
-export const withQueryKeyMeta = <TQueryKey extends QueryKey>(
+export const withQueryKeyMeta = (
   meta: TanstackFactoryMeta,
-  queryKey: TQueryKey
+  queryKey: QueryKey
 ): TanstackFactoryMeta => ({
-    ...meta,
-    queryKey,
-  });
+  ...meta,
+  queryKey,
+});
 
 export const withMutationKeyMeta = (
   meta: TanstackFactoryMeta,

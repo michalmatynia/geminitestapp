@@ -9,6 +9,7 @@ import {
   startPlaywrightEngineTask,
   type ResolvedPlaywrightConnectionRuntime,
 } from '@/features/playwright/server';
+import { extractIntegrationConnectionPlaywrightSettingsOverrides } from '@/features/playwright/server/connection-settings-shared';
 import {
   get1688DefaultConnectionId,
   getIntegrationRepository,
@@ -128,12 +129,8 @@ async function resolveAlreadyRunningBatchResult(input: {
               asinUpdateStatus: 'pending',
               asinUpdateMessage: null,
               completedAt: null,
-            },
-                          {
-                            action: `queue${input.provider}BatchProductScans.syncAlreadyRunning`,
-                            productId: input.productId,
-                            runId: run.runId,
-                          }          );
+            }
+          );
         }
       }
     } catch {
@@ -424,7 +421,7 @@ async function queueBatchProductScans(input: {
               settings: resolve1688ConnectionEngineSettings(
                 {
                   ...toRecord(runtime.settings),
-                  ...toRecord(supplierConnection.settings),
+                  ...extractIntegrationConnectionPlaywrightSettingsOverrides(supplierConnection),
                 },
                 { forceVisible: input.forceVisible ?? false }
               ),

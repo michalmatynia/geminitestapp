@@ -16,7 +16,7 @@ export function KangurAssignmentItemProvider({
 }: {
   children: React.ReactNode;
   item: AssignmentManagerItem;
-}) {
+}): React.JSX.Element {
   return (
     <KangurAssignmentItemContext.Provider value={item}>
       {children}

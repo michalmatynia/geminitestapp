@@ -7,7 +7,19 @@ export * from './segments/upgrade';
 
 import { normalizeText } from './segments/utils';
 
-export const canonicalEdgeAliasValidator = (record: Record<string, unknown>, edge: { to: unknown; toPort: unknown }) => {
+type CanonicalEdgeAlias = {
+  from: string;
+  to: string;
+  fromPort: string;
+  toPort: string;
+  toNodeId: string;
+  port: string;
+};
+
+export const canonicalEdgeAliasValidator = (
+  record: Record<string, unknown>,
+  edge: { to: unknown; toPort: unknown }
+): CanonicalEdgeAlias => {
   // from: normalizeText(record['from'])
   // to: normalizeText(record['to'])
   // fromPort: normalizeText(record['fromPort'])

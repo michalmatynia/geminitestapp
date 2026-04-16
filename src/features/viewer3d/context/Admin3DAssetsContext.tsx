@@ -19,7 +19,11 @@ export const {
   errorFactory: internalError,
 });
 
-export function Admin3DAssetsProvider({ children }: { children: React.ReactNode }) {
+export function Admin3DAssetsProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}): React.JSX.Element {
   const value = useAdmin3DAssetsState();
   return <Admin3DAssetsContext.Provider value={value}>{children}</Admin3DAssetsContext.Provider>;
 }

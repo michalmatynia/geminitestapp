@@ -15,19 +15,15 @@ export type RunPlaywrightListingTaskInput<
   TErrorAdditional extends Record<string, unknown> = Record<string, unknown>,
 > = RunPlaywrightInstanceTaskInput<PlaywrightListingResult, TResult, TErrorAdditional>;
 
-export const withPlaywrightListingTaskErrorMeta = <
-  TAdditional extends Record<string, unknown> = Record<string, unknown>,
->(
+export const withPlaywrightListingTaskErrorMeta = (
   error: AppError,
-  additional?: TAdditional
-): AppError => withPlaywrightInstanceTaskErrorMeta<TAdditional>(error, additional);
+  additional?: Record<string, unknown>
+): AppError => withPlaywrightInstanceTaskErrorMeta(error, additional);
 
-export const createPlaywrightListingTaskInternalError = <
-  TAdditional extends Record<string, unknown> = Record<string, unknown>,
->(
+export const createPlaywrightListingTaskInternalError = (
   message: string,
-  additional?: TAdditional
-): AppError => createPlaywrightInstanceTaskInternalError<TAdditional>(message, additional);
+  additional?: Record<string, unknown>
+): AppError => createPlaywrightInstanceTaskInternalError(message, additional);
 
 export const runPlaywrightListingTask = async <
   TResult,

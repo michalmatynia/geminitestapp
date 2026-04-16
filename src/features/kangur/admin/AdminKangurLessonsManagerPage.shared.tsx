@@ -25,7 +25,12 @@ const buildLessonsManagerErrorReport = (
   action: string,
   description: string,
   context?: Record<string, unknown>,
-) => ({
+): {
+  source: 'kangur-admin';
+  action: string;
+  description: string;
+  context?: Record<string, unknown>;
+} => ({
   source: 'kangur-admin',
   action,
   description,

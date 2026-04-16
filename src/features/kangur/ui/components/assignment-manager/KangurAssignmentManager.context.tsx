@@ -11,7 +11,7 @@ const KangurAssignmentManagerContext = createContext<AssignmentManagerState | nu
 export function KangurAssignmentManagerProvider({
   children,
   ...props
-}: KangurAssignmentManagerProps & { children: React.ReactNode }) {
+}: KangurAssignmentManagerProps & { children: React.ReactNode }): React.JSX.Element {
   const state = useKangurAssignmentManagerState(props);
   return (
     <KangurAssignmentManagerContext.Provider value={state}>

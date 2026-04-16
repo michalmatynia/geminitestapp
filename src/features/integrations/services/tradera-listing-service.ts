@@ -277,6 +277,7 @@ export const runTraderaListing = async (
       const checkResult = await runTraderaBrowserCheckStatus({
         listing,
         connection,
+        systemSettings,
         browserMode: requestedBrowserMode,
       }, {
         onRunStarted: persistPendingRunId,

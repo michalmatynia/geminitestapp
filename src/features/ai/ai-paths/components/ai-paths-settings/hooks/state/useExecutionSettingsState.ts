@@ -28,7 +28,26 @@ const useResolvedGraphSettingSetter = <T,>(
     [commit, currentValue, normalize]
   );
 
-export function useExecutionSettingsState() {
+type ExecutionSettingsState = {
+  executionMode: PathExecutionMode;
+  setExecutionMode: Dispatch<SetStateAction<PathExecutionMode>>;
+  flowIntensity: PathFlowIntensity;
+  setFlowIntensity: Dispatch<SetStateAction<PathFlowIntensity>>;
+  runMode: PathRunMode;
+  setRunMode: Dispatch<SetStateAction<PathRunMode>>;
+  strictFlowMode: boolean;
+  setStrictFlowMode: Dispatch<SetStateAction<boolean>>;
+  blockedRunPolicy: PathBlockedRunPolicy;
+  setBlockedRunPolicy: Dispatch<SetStateAction<PathBlockedRunPolicy>>;
+  aiPathsValidationState: AiPathsValidationConfig;
+  setAiPathsValidationState: Dispatch<SetStateAction<AiPathsValidationConfig>>;
+  historyRetentionPasses: number;
+  setHistoryRetentionPasses: Dispatch<SetStateAction<number>>;
+  historyRetentionOptionsMax: number;
+  setHistoryRetentionOptionsMax: Dispatch<SetStateAction<number>>;
+};
+
+export function useExecutionSettingsState(): ExecutionSettingsState {
   const graphState = usePathMetadataState();
   const graphActions = useGraphActions();
 

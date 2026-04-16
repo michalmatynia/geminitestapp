@@ -1,9 +1,12 @@
 #!/usr/bin/env node
+// @ts-check
+
 
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
+import { pathToFileURL } from 'node:url';
 
 // -----------------------------------------------------------------------------
 // Configuration
@@ -51,6 +54,20 @@ const HOTKEY_TIMEOUT_MS = toNumber(process.env.HOTKEY_TIMEOUT_MS, 3000);
 const STATIC_RECHECK_MS = toNumber(process.env.STATIC_RECHECK_MS, 1800);
 const ACTION_RETRY_MIN_MS = toNumber(process.env.ACTION_RETRY_MIN_MS, 2600);
 const PERMISSION_RETRY_MIN_MS = toNumber(process.env.PERMISSION_RETRY_MIN_MS, 1400);
+const SCREEN_MAX_BUFFER_ROWS = toNumber(process.env.SCREEN_MAX_BUFFER_ROWS, 420);
+const SCREEN_MAX_COLS = toNumber(process.env.SCREEN_MAX_COLS, 260);
+const SCREEN_CAPTURE_LINES = toNumber(process.env.SCREEN_CAPTURE_LINES, 140);
+const MENU_SELECT_MIN_MS = toNumber(process.env.MENU_SELECT_MIN_MS, 280);
+const MENU_CONFIRM_MIN_MS = toNumber(process.env.MENU_CONFIRM_MIN_MS, 650);
+const MENU_FALLBACK_AFTER_SELECTS = toNumber(process.env.MENU_FALLBACK_AFTER_SELECTS, 2);
+const QUICK_RECHECK_MS = toNumber(process.env.QUICK_RECHECK_MS, 220);
+const DIALOG_BOTTOM_WINDOW_LINES = toNumber(process.env.DIALOG_BOTTOM_WINDOW_LINES, 36);
+const DIALOG_CONTEXT_LINES = toNumber(process.env.DIALOG_CONTEXT_LINES, 6);
+const CHAT_PROMPT_WINDOW_LINES = toNumber(process.env.CHAT_PROMPT_WINDOW_LINES, 8);
+const MENU_ACTION_LIMIT = toNumber(process.env.MENU_ACTION_LIMIT, 6);
+const MENU_NAV_MAX_ATTEMPTS = toNumber(process.env.MENU_NAV_MAX_ATTEMPTS, 4);
+const MENU_NUMERIC_MAX_ATTEMPTS = toNumber(process.env.MENU_NUMERIC_MAX_ATTEMPTS, 1);
+const MENU_CONFIRM_MAX_ATTEMPTS = toNumber(process.env.MENU_CONFIRM_MAX_ATTEMPTS, 2);
 
 const AUTO_CONTINUE_MODE = ((process.env.AUTO_CONTINUE_MODE || 'prompt_only').trim().toLowerCase());
 const AUTO_CONTINUE_ON_CAPACITY = isEnabled(process.env.AUTO_CONTINUE_ON_CAPACITY, true);
@@ -140,20 +157,28 @@ let autoContinueAttempts = 0;
 let autoRestartHistory = [];
 let plannedAction = null;
 let switching = false;
+let menuPlan = null;
+let screenModel = null;
 
 // Recently attempted actions keyed by `${kind}:${fingerprint}` with timestamps
 const recentActionKeys = new Map();
 
-main().catch((error) => {
-  failWithCleanup(error instanceof Error ? error : new Error(String(error)));
-});
+const IS_MAIN = Boolean(process.argv[1]) && import.meta.url === pathToFileURL(process.argv[1]).href;
+
+if (IS_MAIN) {
+  main().catch((error) => {
+    failWithCleanup(error instanceof Error ? error : new Error(String(error)));
+  });
+}
 
 // -----------------------------------------------------------------------------
 // Main
 // -----------------------------------------------------------------------------
 
 async function main() {
+  validateConfig();
   fs.mkdirSync(ISO_HOME, { recursive: true });
+  screenModel = new VirtualScreen(SCREEN_MAX_BUFFER_ROWS, SCREEN_MAX_COLS);
 
   const { pty, moduleName } = await loadPtyModule();
   loadedPty = pty;
@@ -210,6 +235,8 @@ function spawnGemini() {
   switching = false;
 
   activeRunId += 1;
+  screenModel?.reset();
+  clearMenuPlan();
   rawTail = '';
   normalizedTail = '';
   demandHits = 0;
@@ -517,6 +544,8 @@ function logLaunchBanner({ model, canResume, wrapperInfo, launchPlan }) {
 // -----------------------------------------------------------------------------
 
 function handleTerminalData(runId, chunk) {
+  screenModel?.feed(chunk);
+
   rawTail += chunk;
   if (rawTail.length > RAW_TAIL_MAX) rawTail = rawTail.slice(-RAW_TAIL_MAX);
   normalizedTail = normalizeTerminalText(rawTail);
@@ -526,7 +555,7 @@ function handleTerminalData(runId, chunk) {
     sawNoResumeSession = true;
   }
 
-  const snapshot = detectScreen(normalizedTail);
+  const snapshot = detectCurrentSnapshot();
   updateCurrentSnapshot(snapshot);
   maybeAutomate(runId, snapshot);
 }
@@ -584,33 +613,47 @@ function isCompleteEscapeSequence(suffix) {
   return suffix.length >= 2;
 }
 
-function detectScreen(text) {
-  const tail = text.slice(-NORMALIZED_TAIL_MAX);
-  const lower = tail.toLowerCase();
-  const lines = compactLines(tail);
-  const options = parseMenuOptions(lines);
+function detectCurrentSnapshot() {
+  const screenText = screenModel?.renderText(SCREEN_CAPTURE_LINES) || '';
+  const screenSnapshot = detectSnapshotFromText(screenText, 'screen');
+  if (screenSnapshot.kind !== 'normal') return screenSnapshot;
 
-  const findOption = (labels) => findMenuOption(options, labels);
+  const rawSnapshot = detectSnapshotFromText(normalizedTail.slice(-NORMALIZED_TAIL_MAX), 'raw');
+  if (rawSnapshot.kind !== 'normal') return rawSnapshot;
 
-  // Permission prompt
-  if ((lower.includes('action required') || lower.includes('allow execution of:')) && options.length > 0) {
-    const allowSession = findOption([PERMISSION_OPTION_LABEL]);
+  return screenSnapshot;
+}
+
+function detectSnapshotFromText(text, source) {
+  const rawLines = String(text || '').split('\n').slice(-SCREEN_CAPTURE_LINES).map((line) => line.replace(/\s+$/g, ''));
+  const tail = rawLines.join('\n').slice(-NORMALIZED_TAIL_MAX);
+  const menuBlocks = extractMenuBlocks(rawLines);
+  const chatPromptActive = detectChatPromptActive(rawLines);
+
+  const permissionBlock = findPermissionMenuBlock(rawLines, menuBlocks, chatPromptActive);
+  if (permissionBlock) {
+    const allowSession = permissionBlock.options.find((option) => option.canonical.includes(PERMISSION_OPTION_LABEL));
     if (allowSession) {
       return {
         kind: 'permission',
+        source,
         reason: 'permission prompt',
-        optionText: allowSession.numberText,
-        fingerprint: fingerprintFromLines(lines, [
-          'action required',
-          'allow execution of:',
-          allowSession.canonical,
-        ]),
-        options,
+        targetOption: allowSession,
+        targetOptionText: allowSession.numberText,
+        targetSelected: allowSession.selected,
+        selectedOption: permissionBlock.selectedOption,
+        fingerprint: fingerprintFromBlock(permissionBlock, ['action required', 'allow execution of:', allowSession.canonical]),
+        options: permissionBlock.options,
+        blockStart: permissionBlock.start,
+        blockEnd: permissionBlock.end,
+        chatPromptActive,
+        blockMode: permissionBlock.mode,
       };
     }
   }
 
-  // Usage / quota limit
+  const recentLines = rawLines.slice(-Math.max(12, DIALOG_BOTTOM_WINDOW_LINES));
+  const recentTail = recentLines.join('\n');
   const usagePatterns = [
     /you(?:'ve| have)\s+(?:reached|hit)\s+(?:your\s+)?(?:usage|quota|request|rate)\s+limit/i,
     /usage\s+limit\s+reached/i,
@@ -619,16 +662,17 @@ function detectScreen(text) {
     /try\s+again\s+(?:later|tomorrow)/i,
     /come\s+back\s+(?:later|tomorrow)/i,
   ];
-  if (usagePatterns.some((pattern) => pattern.test(tail))) {
+  if (usagePatterns.some((pattern) => pattern.test(recentTail))) {
     return {
       kind: 'usage_limit',
+      source,
       reason: 'usage limit reached',
-      fingerprint: fingerprintFromLines(lines, ['usage limit', 'quota', 'rate limit']),
-      options,
+      fingerprint: fingerprintFromLines(compactLines(recentTail), ['usage limit', 'quota', 'rate limit']),
+      options: [],
+      chatPromptActive,
     };
   }
 
-  // Capacity states
   const capacityPatterns = [
     /we\s+are\s+currently\s+experiencing\s+high\s+demand/i,
     /no\s+capacity\s+available/i,
@@ -636,57 +680,78 @@ function detectScreen(text) {
     /temporarily\s+unavailable/i,
   ];
 
-  const hasCapacity = capacityPatterns.some((pattern) => pattern.test(tail));
-  if (!hasCapacity) {
-    return makeSnapshot('normal');
+  const hasCapacity = capacityPatterns.some((pattern) => pattern.test(recentTail));
+
+  const capacityBlock = hasCapacity ? findCapacityMenuBlock(rawLines, menuBlocks, chatPromptActive) : null;
+  if (capacityBlock) {
+    const keepOption = findMenuOption(capacityBlock.options, KEEP_LABELS);
+    const switchOption = findMenuOption(capacityBlock.options, SWITCH_LABELS);
+    const stopOption = findMenuOption(capacityBlock.options, STOP_LABELS);
+    if (keepOption) {
+      return {
+        kind: 'capacity_menu',
+        source,
+        reason: 'capacity menu',
+        keepOption,
+        keepOptionText: keepOption.numberText,
+        keepSelected: keepOption.selected,
+        switchOption: switchOption || null,
+        switchOptionText: switchOption?.numberText || '',
+        stopOptionText: stopOption?.numberText || '',
+        selectedOption: capacityBlock.selectedOption,
+        fingerprint: fingerprintFromBlock(capacityBlock, [
+          keepOption.canonical,
+          switchOption?.canonical || '',
+          stopOption?.canonical || '',
+          'high demand',
+          'no capacity',
+        ]),
+        options: capacityBlock.options,
+        blockStart: capacityBlock.start,
+        blockEnd: capacityBlock.end,
+        chatPromptActive,
+        blockMode: capacityBlock.mode,
+      };
+    }
   }
 
-  const keepOption = findOption(KEEP_LABELS);
-  const switchOption = findOption(SWITCH_LABELS);
-  const stopOption = findOption(STOP_LABELS);
-  const continuePrompt = detectContinuePrompt(tail);
+  if (!hasCapacity) return makeSnapshot('normal', source);
 
-  if (keepOption) {
-    return {
-      kind: 'capacity_menu',
-      reason: 'capacity menu',
-      keepOptionText: keepOption.numberText,
-      switchOptionText: switchOption?.numberText || '',
-      stopOptionText: stopOption?.numberText || '',
-      fingerprint: fingerprintFromLines(lines, [keepOption.canonical, switchOption?.canonical || '', stopOption?.canonical || '']),
-      options,
-    };
-  }
-
+  const continuePrompt = detectContinuePrompt(recentTail);
   if (continuePrompt) {
     return {
       kind: 'capacity_continue',
+      source,
       reason: continuePrompt.reason,
       continueAction: continuePrompt.action,
-      fingerprint: fingerprintFromLines(lines, [continuePrompt.anchor]),
-      options,
+      fingerprint: fingerprintFromLines(compactLines(recentTail), [continuePrompt.anchor]),
+      options: [],
+      chatPromptActive,
     };
   }
 
   return {
     kind: 'capacity_info',
+    source,
     reason: 'capacity info',
-    fingerprint: fingerprintFromLines(lines, ['high demand', 'no capacity']),
-    options,
+    fingerprint: fingerprintFromLines(compactLines(recentTail), ['high demand', 'no capacity']),
+    options: [],
+    chatPromptActive,
   };
 }
 
-function makeSnapshot(kind) {
+function makeSnapshot(kind, source = 'none') {
   return {
     kind,
+    source,
     reason: kind,
-    fingerprint: kind,
+    fingerprint: `${source}:${kind}`,
     options: [],
   };
 }
 
 function compactLines(text) {
-  const rawLines = text.split('\n').slice(-140);
+  const rawLines = String(text || '').split('\n').slice(-180);
   const out = [];
   for (const raw of rawLines) {
     const cleaned = raw.replace(/\s+/g, ' ').trim();
@@ -697,28 +762,65 @@ function compactLines(text) {
   return out;
 }
 
-function parseMenuOptions(lines) {
-  const options = [];
-  for (const line of lines) {
-    const stripped = line
-      .replace(/^[│║┃|\s]+/u, '')
-      .replace(/^[•●◦○▪◆▶➜»›>*?-]+\s*/u, '')
-      .trim();
+function parseOptionLine(rawLine, index) {
+  const trimmedRight = String(rawLine || '').replace(/\s+$/g, '');
+  if (!trimmedRight) return null;
 
-    const match = stripped.match(/^(\d+)\s*[.):-]?\s*(.+)$/u);
-    if (!match) continue;
+  const withoutBox = trimmedRight.replace(/^[│║┃|\s]+/u, '');
+  const selected = /^[•●◦○▪◆▶➜»›>*-]+\s*/u.test(withoutBox);
+  const stripped = withoutBox.replace(/^[•●◦○▪◆▶➜»›>*-]+\s*/u, '').trim();
+  const match = stripped.match(/^(\d+)\s*[.):-]?\s+(.+)$/u);
+  if (!match) return null;
 
-    const label = normalizeLabel(match[2]);
-    if (!label) continue;
+  const canonical = normalizeLabel(match[2]);
+  if (!canonical) return null;
 
-    options.push({
-      numberText: match[1],
-      label: match[2].trim(),
-      canonical: label,
-      raw: line,
-    });
+  return {
+    index,
+    numberText: match[1],
+    label: match[2].trim(),
+    canonical,
+    raw: rawLine,
+    selected,
+  };
+}
+
+function extractMenuBlocks(rawLines) {
+  const indexedOptions = [];
+  for (let index = 0; index < rawLines.length; index += 1) {
+    const option = parseOptionLine(rawLines[index], index);
+    if (option) indexedOptions.push(option);
   }
-  return options;
+  if (indexedOptions.length === 0) return [];
+
+  const groups = [];
+  let current = [indexedOptions[0]];
+  for (let i = 1; i < indexedOptions.length; i += 1) {
+    const prev = current[current.length - 1];
+    const next = indexedOptions[i];
+    if (next.index - prev.index <= 2) {
+      current.push(next);
+      continue;
+    }
+    groups.push(current);
+    current = [next];
+  }
+  groups.push(current);
+
+  return groups.map((options) => {
+    const start = Math.max(0, options[0].index - DIALOG_CONTEXT_LINES);
+    const end = Math.min(rawLines.length - 1, options[options.length - 1].index + DIALOG_CONTEXT_LINES);
+    const contextLines = rawLines.slice(start, end + 1);
+    const selectedOption = options.find((option) => option.selected) || null;
+    return {
+      start,
+      end,
+      options,
+      contextLines,
+      selectedOption,
+      mode: selectedOption ? 'radio' : 'plain',
+    };
+  });
 }
 
 function normalizeLabel(text) {
@@ -727,6 +829,64 @@ function normalizeLabel(text) {
     .replace(/^[?]+\s*/, '')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+function detectChatPromptActive(rawLines) {
+  const window = rawLines.slice(-Math.max(2, CHAT_PROMPT_WINDOW_LINES));
+  return window.some((line) => {
+    const trimmed = String(line || '').trim();
+    return /^>\s*$/.test(trimmed) || /^>\s+.+/.test(trimmed);
+  });
+}
+
+function isBlockNearBottom(block, totalLines) {
+  return block.end >= Math.max(0, totalLines - DIALOG_BOTTOM_WINDOW_LINES);
+}
+
+function isActionableDialogBlock(block, totalLines, chatPromptActive) {
+  if (!isBlockNearBottom(block, totalLines)) return false;
+  if (chatPromptActive && block.end < totalLines - 4) return false;
+  return true;
+}
+
+function findPermissionMenuBlock(rawLines, blocks, chatPromptActive) {
+  for (const block of blocks) {
+    if (!isActionableDialogBlock(block, rawLines.length, chatPromptActive)) continue;
+    const target = findMenuOption(block.options, [PERMISSION_OPTION_LABEL]);
+    if (!target) continue;
+
+    const context = block.contextLines.map((line) => normalizeLabel(line)).join(' | ');
+    const hasAnchor =
+      context.includes('allow execution of:') ||
+      context.includes('action required') ||
+      context.includes('toggle auto-edit') ||
+      context.includes('tip: toggle auto-edit');
+    const hasSiblingPermissionOption = block.options.some((option) =>
+      /allow once|suggest changes|allow for this session/.test(option.canonical)
+    );
+    const hasSelectionCue = Boolean(block.selectedOption) || /[•●◦○▪◆▶➜»›]/u.test(block.contextLines.join('\n'));
+
+    if (hasAnchor && hasSiblingPermissionOption && hasSelectionCue) return block;
+  }
+  return null;
+}
+
+function findCapacityMenuBlock(rawLines, blocks, chatPromptActive) {
+  for (const block of blocks) {
+    if (!isActionableDialogBlock(block, rawLines.length, chatPromptActive)) continue;
+    const keepOption = findMenuOption(block.options, KEEP_LABELS);
+    if (!keepOption) continue;
+
+    const context = block.contextLines.map((line) => normalizeLabel(line)).join(' | ');
+    const hasCapacityAnchor =
+      context.includes('high demand') ||
+      context.includes('no capacity') ||
+      context.includes('temporarily unavailable') ||
+      context.includes('currently experiencing');
+    const hasSelectionCue = Boolean(block.selectedOption) || /[•●◦○▪◆▶➜»›]/u.test(block.contextLines.join('\n'));
+    if (hasCapacityAnchor && hasSelectionCue) return block;
+  }
+  return null;
 }
 
 function findMenuOption(options, labels) {
@@ -767,16 +927,21 @@ function detectContinuePrompt(tail) {
 function fingerprintFromLines(lines, anchors) {
   const usableAnchors = anchors.map((anchor) => normalizeLabel(anchor)).filter(Boolean);
   const selected = [];
-  for (const line of lines.slice(-50)) {
+  for (const line of lines.slice(-60)) {
     const canonical = normalizeLabel(line);
+    if (!canonical) continue;
     if (usableAnchors.length === 0 || usableAnchors.some((anchor) => canonical.includes(anchor))) {
       selected.push(canonical);
     }
   }
   if (selected.length === 0) {
-    return lines.slice(-8).map((line) => normalizeLabel(line)).join(' | ');
+    return lines.slice(-10).map((line) => normalizeLabel(line)).filter(Boolean).join(' | ');
   }
   return selected.join(' | ');
+}
+
+function fingerprintFromBlock(block, anchors) {
+  return fingerprintFromLines(block.contextLines, anchors);
 }
 
 function updateCurrentSnapshot(next) {
@@ -785,8 +950,9 @@ function updateCurrentSnapshot(next) {
     currentSnapshot = next;
     stateGeneration += 1;
     clearContinueTimer();
+    clearMenuPlan();
     if (DEBUG_AUTOMATION) {
-      console.error(`[${FLAVOR_LABEL}][state] ${prev.kind} -> ${next.kind} (#${stateGeneration}) ${next.fingerprint}`);
+      console.error(`[${FLAVOR_LABEL}][state] ${prev.kind}/${prev.source} -> ${next.kind}/${next.source} (#${stateGeneration}) ${next.fingerprint}`);
     }
     if (next.kind !== 'capacity_menu') {
       demandHits = 0;
@@ -801,6 +967,280 @@ function updateCurrentSnapshot(next) {
   currentSnapshot = next;
 }
 
+class VirtualScreen {
+  constructor(maxRows, maxCols) {
+    this.maxRows = Math.max(40, maxRows || 400);
+    this.maxCols = Math.max(80, maxCols || 240);
+    this.reset();
+  }
+
+  reset() {
+    this.lines = [[]];
+    this.row = 0;
+    this.col = 0;
+    this.savedRow = 0;
+    this.savedCol = 0;
+    this.carry = '';
+  }
+
+  feed(chunk) {
+    const input = this.carry + String(chunk || '');
+    this.carry = '';
+
+    for (let i = 0; i < input.length; i += 1) {
+      const ch = input[i];
+      if (ch === '\u001B') {
+        const consumed = this.handleEscape(input, i);
+        if (consumed == null) {
+          this.carry = input.slice(i);
+          break;
+        }
+        i += consumed - 1;
+        continue;
+      }
+
+      if (ch === '\r') {
+        this.col = 0;
+        continue;
+      }
+      if (ch === '\n') {
+        this.row += 1;
+        this.ensureRow(this.row);
+        this.trimOverflow();
+        continue;
+      }
+      if (ch === '\b') {
+        this.col = Math.max(0, this.col - 1);
+        continue;
+      }
+      if (ch === '\t') {
+        const spaces = 4 - (this.col % 4 || 0);
+        for (let s = 0; s < spaces; s += 1) this.writeChar(' ');
+        continue;
+      }
+      if (ch < ' ' || ch === '\u007F') continue;
+
+      this.writeChar(ch);
+    }
+  }
+
+  handleEscape(text, start) {
+    if (start + 1 >= text.length) return null;
+    const next = text[start + 1];
+
+    if (next === '[') return this.handleCsi(text, start);
+    if (next === ']') return this.skipTerminatedEscape(text, start, 2);
+    if (next === 'P' || next === '^' || next === '_') return this.skipTerminatedEscape(text, start, 2);
+    if (next === '7') {
+      this.savedRow = this.row;
+      this.savedCol = this.col;
+      return 2;
+    }
+    if (next === '8') {
+      this.row = this.savedRow;
+      this.col = this.savedCol;
+      this.ensureRow(this.row);
+      return 2;
+    }
+
+    return 2;
+  }
+
+  skipTerminatedEscape(text, start, prefixLength) {
+    for (let i = start + prefixLength; i < text.length; i += 1) {
+      if (text[i] === '\u0007') return i - start + 1;
+      if (text[i] === '\u001B' && text[i + 1] === '\\') return i - start + 2;
+    }
+    return null;
+  }
+
+  handleCsi(text, start) {
+    let end = start + 2;
+    while (end < text.length) {
+      const code = text.charCodeAt(end);
+      if (code >= 0x40 && code <= 0x7E) break;
+      end += 1;
+    }
+    if (end >= text.length) return null;
+
+    const final = text[end];
+    const paramsRaw = text.slice(start + 2, end);
+    this.applyCsi(final, paramsRaw);
+    return end - start + 1;
+  }
+
+  applyCsi(final, paramsRaw) {
+    const privateMode = paramsRaw.startsWith('?');
+    const clean = privateMode ? paramsRaw.slice(1) : paramsRaw;
+    const parts = clean.length === 0
+      ? []
+      : clean.split(';').map((part) => {
+          const value = Number(part);
+          return Number.isFinite(value) ? value : undefined;
+        });
+    const p = (index, fallback = 1) => {
+      const value = parts[index];
+      return Number.isFinite(value) ? value : fallback;
+    };
+
+    switch (final) {
+      case 'A':
+        this.row = Math.max(0, this.row - p(0));
+        break;
+      case 'B':
+        this.row += p(0);
+        this.ensureRow(this.row);
+        this.trimOverflow();
+        break;
+      case 'C':
+        this.col = Math.min(this.maxCols - 1, this.col + p(0));
+        break;
+      case 'D':
+        this.col = Math.max(0, this.col - p(0));
+        break;
+      case 'E':
+        this.row += p(0);
+        this.col = 0;
+        this.ensureRow(this.row);
+        this.trimOverflow();
+        break;
+      case 'F':
+        this.row = Math.max(0, this.row - p(0));
+        this.col = 0;
+        break;
+      case 'G':
+        this.col = Math.max(0, Math.min(this.maxCols - 1, p(0) - 1));
+        break;
+      case 'H':
+      case 'f':
+        this.row = Math.max(0, p(0) - 1);
+        this.col = Math.max(0, Math.min(this.maxCols - 1, p(1, 1) - 1));
+        this.ensureRow(this.row);
+        this.trimOverflow();
+        break;
+      case 'J':
+        this.eraseScreen(p(0, 0));
+        break;
+      case 'K':
+        this.eraseLine(p(0, 0));
+        break;
+      case 'P':
+        this.deleteChars(p(0));
+        break;
+      case 'X':
+        this.eraseChars(p(0));
+        break;
+      case '@':
+        this.insertBlankChars(p(0));
+        break;
+      case 's':
+        this.savedRow = this.row;
+        this.savedCol = this.col;
+        break;
+      case 'u':
+        this.row = this.savedRow;
+        this.col = this.savedCol;
+        this.ensureRow(this.row);
+        break;
+      case 'h':
+      case 'l':
+        if (privateMode && /^(?:1047|1048|1049)$/.test(clean)) {
+          this.lines = [[]];
+          this.row = 0;
+          this.col = 0;
+        }
+        break;
+      default:
+        break;
+    }
+  }
+
+  writeChar(ch) {
+    if (this.col >= this.maxCols) return;
+    this.ensureRow(this.row);
+    const line = this.lines[this.row];
+    while (line.length < this.col) line.push(' ');
+    line[this.col] = ch;
+    this.col += 1;
+  }
+
+  ensureRow(row) {
+    while (this.lines.length <= row) this.lines.push([]);
+  }
+
+  trimOverflow() {
+    if (this.lines.length <= this.maxRows) return;
+    const overflow = this.lines.length - this.maxRows;
+    this.lines.splice(0, overflow);
+    this.row = Math.max(0, this.row - overflow);
+    this.savedRow = Math.max(0, this.savedRow - overflow);
+  }
+
+  eraseLine(mode) {
+    this.ensureRow(this.row);
+    const line = this.lines[this.row];
+    if (mode === 2) {
+      this.lines[this.row] = [];
+      return;
+    }
+    if (mode === 1) {
+      for (let i = 0; i <= this.col && i < line.length; i += 1) line[i] = ' ';
+      return;
+    }
+    line.length = Math.min(line.length, this.col);
+  }
+
+  eraseScreen(mode) {
+    if (mode === 2) {
+      this.lines = [[]];
+      this.row = 0;
+      this.col = 0;
+      return;
+    }
+
+    this.ensureRow(this.row);
+    if (mode === 1) {
+      for (let r = 0; r < this.row; r += 1) this.lines[r] = [];
+      const line = this.lines[this.row];
+      for (let i = 0; i <= this.col && i < line.length; i += 1) line[i] = ' ';
+      return;
+    }
+
+    this.eraseLine(0);
+    for (let r = this.row + 1; r < this.lines.length; r += 1) this.lines[r] = [];
+  }
+
+  deleteChars(count) {
+    this.ensureRow(this.row);
+    const line = this.lines[this.row];
+    line.splice(this.col, Math.max(1, count));
+  }
+
+  eraseChars(count) {
+    this.ensureRow(this.row);
+    const line = this.lines[this.row];
+    for (let i = 0; i < Math.max(1, count); i += 1) {
+      const index = this.col + i;
+      if (index >= line.length) break;
+      line[index] = ' ';
+    }
+  }
+
+  insertBlankChars(count) {
+    this.ensureRow(this.row);
+    const line = this.lines[this.row];
+    line.splice(this.col, 0, ...Array.from({ length: Math.max(1, count) }, () => ' '));
+    if (line.length > this.maxCols) line.length = this.maxCols;
+  }
+
+  renderText(maxLines = 120) {
+    const slice = this.lines.slice(-Math.max(20, maxLines));
+    const rendered = slice
+      .map((line) => line.join('').replace(/\s+$/g, ''))
+      .filter((line, index, arr) => !(line === '' && index === 0 && arr.length > 1));
+    return rendered.join('\n');
+  }
+}
 // -----------------------------------------------------------------------------
 // Automation engine
 // -----------------------------------------------------------------------------
@@ -809,6 +1249,7 @@ function maybeAutomate(runId, snapshot) {
   if (!isAutomationActive()) {
     clearContinueTimer();
     clearStaticRecheckTimer();
+    clearMenuPlan();
     return;
   }
 
@@ -827,6 +1268,7 @@ function maybeAutomate(runId, snapshot) {
   }
 
   clearContinueTimer();
+  clearMenuPlan();
   scheduleStaticRecheck();
 }
 
@@ -835,21 +1277,14 @@ function handlePermissionSnapshot(runId, snapshot) {
   clearContinueTimer();
   if (!AUTO_ALLOW_SESSION_PERMISSIONS) return true;
 
-  const actionKey = `permission:${snapshot.fingerprint}`;
-  if (actionSeenRecently(actionKey, PERMISSION_RETRY_MIN_MS)) return true;
-
-  if (!snapshot.optionText) return true;
-
-  if (sendChoice(snapshot.optionText, 'allow-for-this-session', runId)) {
-    rememberAction(actionKey);
-  }
-  return true;
+  return runMenuPlanForOption(runId, snapshot, snapshot.targetOption, 'allow-for-this-session');
 }
 
 function handleUsageLimitSnapshot(_runId, snapshot) {
   if (snapshot.kind !== 'usage_limit') return false;
   clearContinueTimer();
   clearStaticRecheckTimer();
+  clearMenuPlan();
   if (AUTO_DISABLE_ON_USAGE_LIMIT && automationEnabled) {
     setAutomationEnabled(false, 'usage_limit');
     console.error(`\n[${FLAVOR_LABEL}] Usage limit detected — automation paused. ${hotkeySummary()}\n`);
@@ -868,10 +1303,19 @@ function handleCapacityMenuSnapshot(runId, snapshot) {
   }
   lastCapacityAt = now;
 
-  if (now - lastDemandTs < TRY_AGAIN_MIN_INTERVAL_MS) return true;
+  let targetOption = snapshot.keepOption;
+  let label = `keep-trying ${Math.min(demandHits + 1, KEEP_TRY_MAX)}/${KEEP_TRY_MAX}`;
 
-  const actionKey = `capacity-menu:${snapshot.fingerprint}`;
-  if (actionSeenRecently(actionKey, ACTION_RETRY_MIN_MS)) return true;
+  if (!NEVER_SWITCH && snapshot.switchOption && demandHits >= KEEP_TRY_MAX) {
+    targetOption = snapshot.switchOption;
+    label = 'switch-model';
+  }
+
+  if (hasActiveMenuPlan(snapshot, targetOption)) {
+    return runMenuPlanForOption(runId, snapshot, targetOption, label);
+  }
+
+  if (now - lastDemandTs < TRY_AGAIN_MIN_INTERVAL_MS) return true;
 
   lastDemandTs = now;
   demandHits += 1;
@@ -881,30 +1325,26 @@ function handleCapacityMenuSnapshot(runId, snapshot) {
       pauseAutomationTemporarily(AUTOMATION_COOLDOWN_MS, 'keep-trying loop limit reached');
       return true;
     }
-    if (sendChoice(snapshot.keepOptionText, `keep-trying ${demandHits}/${KEEP_TRY_MAX}`, runId)) {
-      rememberAction(actionKey);
-    }
-    return true;
+    return runMenuPlanForOption(runId, snapshot, snapshot.keepOption, `keep-trying ${demandHits}/${KEEP_TRY_MAX}`);
   }
 
   if (demandHits <= KEEP_TRY_MAX) {
-    if (sendChoice(snapshot.keepOptionText, `keep-trying ${demandHits}/${KEEP_TRY_MAX}`, runId)) {
-      rememberAction(actionKey);
-    }
-    return true;
+    return runMenuPlanForOption(runId, snapshot, snapshot.keepOption, `keep-trying ${demandHits}/${KEEP_TRY_MAX}`);
   }
 
   switching = true;
   console.error(`\n[${FLAVOR_LABEL}] Capacity still busy on ${currentModel()} — switching model...\n`);
-  if (sendChoice(snapshot.switchOptionText, 'switch-model', runId)) {
-    rememberAction(actionKey);
-  }
-  return true;
+  return runMenuPlanForOption(runId, snapshot, snapshot.switchOption, 'switch-model');
 }
 
 function handleCapacityContinueSnapshot(runId, snapshot) {
   if (snapshot.kind !== 'capacity_continue' && snapshot.kind !== 'capacity_info') return false;
-  if (!AUTO_CONTINUE_ON_CAPACITY) return true;
+  clearMenuPlan();
+
+  if (!AUTO_CONTINUE_ON_CAPACITY || AUTO_CONTINUE_MODE === 'off') {
+    clearContinueTimer();
+    return true;
+  }
 
   const explicitOnly = !(AUTO_CONTINUE_MODE === 'capacity' || AUTO_CONTINUE_MODE === 'always');
   if (explicitOnly && snapshot.kind !== 'capacity_continue') {
@@ -914,6 +1354,124 @@ function handleCapacityContinueSnapshot(runId, snapshot) {
 
   scheduleContinueRetry(runId, snapshot);
   return true;
+}
+
+function runMenuPlanForOption(runId, snapshot, targetOption, label) {
+  if (runId !== activeRunId || !activePty) return false;
+  if (!targetOption?.numberText || !targetOption?.canonical) return true;
+
+  const target = snapshot.options.find(
+    (option) => option.numberText === targetOption.numberText && option.canonical === targetOption.canonical
+  ) || targetOption;
+
+  const plan = ensureMenuPlan(snapshot, target, label);
+  if (plan.totalActions >= MENU_ACTION_LIMIT) {
+    pauseAutomationTemporarily(AUTOMATION_COOLDOWN_MS, `${label} action limit reached`);
+    return true;
+  }
+
+  const now = Date.now();
+  const selected = snapshot.selectedOption || snapshot.options.find((option) => option.selected) || null;
+  const selectedIndex = selected
+    ? snapshot.options.findIndex(
+        (option) => option.numberText === selected.numberText && option.canonical === selected.canonical
+      )
+    : -1;
+  const targetIndex = snapshot.options.findIndex(
+    (option) => option.numberText === target.numberText && option.canonical === target.canonical
+  );
+
+  if (target.selected) {
+    if (plan.confirmAttempts >= MENU_CONFIRM_MAX_ATTEMPTS) {
+      pauseAutomationTemporarily(AUTOMATION_COOLDOWN_MS, `${label} confirm limit reached`);
+      return true;
+    }
+    if (now - plan.lastSentAt < MENU_CONFIRM_MIN_MS) return true;
+    plan.phase = 'confirm';
+    plan.confirmAttempts += 1;
+    plan.totalActions += 1;
+    plan.lastSentAt = now;
+    rememberAction(`${snapshot.kind}:${snapshot.fingerprint}:confirm`);
+    sendRaw('\r', `${label}:confirm-enter`);
+    scheduleStaticRecheck(QUICK_RECHECK_MS);
+    return true;
+  }
+
+  if (now - plan.lastSentAt < MENU_SELECT_MIN_MS) return true;
+
+  if (selectedIndex >= 0 && targetIndex >= 0 && selectedIndex !== targetIndex) {
+    if (plan.navAttempts >= MENU_NAV_MAX_ATTEMPTS) {
+      pauseAutomationTemporarily(AUTOMATION_COOLDOWN_MS, `${label} navigation limit reached`);
+      return true;
+    }
+    const delta = targetIndex - selectedIndex;
+    const navSequence = delta > 0 ? '\u001B[B'.repeat(delta) : '\u001B[A'.repeat(-delta);
+    if (!navSequence) return true;
+    plan.phase = 'nav';
+    plan.navAttempts += 1;
+    plan.totalActions += 1;
+    plan.lastSentAt = now;
+    rememberAction(`${snapshot.kind}:${snapshot.fingerprint}:nav:${delta}`);
+    sendRaw(navSequence, `${label}:arrow-focus`);
+    scheduleStaticRecheck(QUICK_RECHECK_MS);
+    return true;
+  }
+
+  const numericAllowed = snapshot.blockMode === 'radio' && !snapshot.chatPromptActive;
+  if (numericAllowed && plan.numericAttempts < MENU_NUMERIC_MAX_ATTEMPTS) {
+    plan.phase = 'numeric';
+    plan.numericAttempts += 1;
+    plan.totalActions += 1;
+    plan.lastSentAt = now;
+    rememberAction(`${snapshot.kind}:${snapshot.fingerprint}:numeric:${target.numberText}`);
+    sendRaw(target.numberText, `${label}:select-number`);
+    scheduleStaticRecheck(QUICK_RECHECK_MS);
+    return true;
+  }
+
+  pauseAutomationTemporarily(AUTOMATION_COOLDOWN_MS, `${label} could not safely focus target option`);
+  return true;
+}
+
+function ensureMenuPlan(snapshot, target, label) {
+  if (
+    !menuPlan ||
+    menuPlan.kind !== snapshot.kind ||
+    menuPlan.fingerprint !== snapshot.fingerprint ||
+    menuPlan.targetNumberText !== target.numberText ||
+    menuPlan.targetCanonical !== target.canonical
+  ) {
+    menuPlan = {
+      kind: snapshot.kind,
+      fingerprint: snapshot.fingerprint,
+      targetNumberText: target.numberText,
+      targetCanonical: target.canonical,
+      targetLabel: target.canonical,
+      label,
+      phase: 'select',
+      numericAttempts: 0,
+      navAttempts: 0,
+      confirmAttempts: 0,
+      totalActions: 0,
+      lastSentAt: 0,
+      createdAt: Date.now(),
+    };
+  }
+  return menuPlan;
+}
+
+function clearMenuPlan() {
+  menuPlan = null;
+}
+
+function hasActiveMenuPlan(snapshot, targetOption) {
+  return Boolean(
+    menuPlan &&
+      menuPlan.kind === snapshot.kind &&
+      menuPlan.fingerprint === snapshot.fingerprint &&
+      menuPlan.targetNumberText === targetOption?.numberText &&
+      menuPlan.targetCanonical === targetOption?.canonical
+  );
 }
 
 function scheduleContinueRetry(runId, snapshot) {
@@ -933,15 +1491,10 @@ function scheduleContinueRetry(runId, snapshot) {
     if (runId !== activeRunId || !activePty || !isAutomationActive()) return;
     if (scheduledGeneration !== stateGeneration) return;
 
-    const latest = detectScreen(normalizedTail);
+    const latest = detectCurrentSnapshot();
     updateCurrentSnapshot(latest);
-    if (latest.kind !== currentSnapshot.kind || latest.fingerprint !== currentSnapshot.fingerprint) {
-      return;
-    }
-
-    if (AUTO_CONTINUE_MODE !== 'capacity' && AUTO_CONTINUE_MODE !== 'always' && latest.kind !== 'capacity_continue') {
-      return;
-    }
+    if (latest.kind !== currentSnapshot.kind || latest.fingerprint !== currentSnapshot.fingerprint) return;
+    if (AUTO_CONTINUE_MODE !== 'capacity' && AUTO_CONTINUE_MODE !== 'always' && latest.kind !== 'capacity_continue') return;
 
     autoContinueAttempts += 1;
     if (latest.kind === 'capacity_continue' && latest.continueAction === 'enter') {
@@ -949,6 +1502,7 @@ function scheduleContinueRetry(runId, snapshot) {
     } else {
       sendChoice(CONTINUE_COMMAND, latest.reason, runId);
     }
+    scheduleStaticRecheck(QUICK_RECHECK_MS);
   }, delay);
 }
 
@@ -960,7 +1514,6 @@ function actionSeenRecently(key, ttlMs) {
   const ts = recentActionKeys.get(key);
   return typeof ts === 'number' && Date.now() - ts < ttlMs;
 }
-
 // -----------------------------------------------------------------------------
 // Child exit / restart handling
 // -----------------------------------------------------------------------------
@@ -1075,7 +1628,7 @@ function onUserInput(chunk) {
     if (byte === HOTKEY_PREFIX_BYTE) {
       hotkeyAwaitingCommand = true;
       armHotkeyTimer();
-      process.stderr.write(`\n[local] Prefix detected (${HOTKEY_PREFIX_LABEL}). Press h help, a auto, p pause, s switch, r restart, c Ctrl-C, q quit.\n`);
+      process.stderr.write(`\n[local] Prefix detected (${HOTKEY_PREFIX_LABEL}). Press h help, a auto, p pause, e recheck, i status, s switch, r restart, c Ctrl-C, q quit.\n`);
       continue;
     }
 
@@ -1146,6 +1699,17 @@ function handleHotkeyCommand(byte) {
     return;
   }
 
+  if (command === 'e') {
+    recheckVisiblePrompt('manual hotkey');
+    console.error(`\n[local] Rechecked visible prompt.\n`);
+    return;
+  }
+
+  if (command === 'i') {
+    printLocalStatus();
+    return;
+  }
+
   if (command === 's') {
     requestLauncherAction('switch');
     return;
@@ -1173,6 +1737,7 @@ function handleHotkeyCommand(byte) {
 
 function noteManualInput() {
   clearContinueTimer();
+  clearMenuPlan();
   if (!automationEnabled) return;
   automationPausedUntil = Math.max(automationPausedUntil, Date.now() + MANUAL_OVERRIDE_MS);
   scheduleAutomationResumeRecheck();
@@ -1217,7 +1782,6 @@ function getTerminalColumns() {
 function getTerminalRows() {
   return Math.max(1, process.stdout.rows || 30);
 }
-
 // -----------------------------------------------------------------------------
 // Automation control and actions
 // -----------------------------------------------------------------------------
@@ -1230,9 +1794,6 @@ function sendChoice(text, reason, runId) {
     }
     if (text === '') {
       activePty.write('\r');
-    } else if (/^\d+$/.test(text)) {
-      // Send multi-digit option numbers as documented by Gemini CLI.
-      activePty.write(text + '\r');
     } else {
       activePty.write(text + '\r');
     }
@@ -1259,6 +1820,7 @@ function sendRaw(text, reason = 'raw') {
 
 function requestLauncherAction(kind) {
   clearAllTimers();
+  clearMenuPlan();
   switching = false;
   plannedAction = { kind, code: 0 };
 
@@ -1309,6 +1871,7 @@ function setAutomationEnabled(enabled, reason = 'manual') {
   if (!enabled) {
     automationPausedUntil = 0;
     clearAllTimers();
+    clearMenuPlan();
     recentActionKeys.clear();
     return;
   }
@@ -1316,12 +1879,14 @@ function setAutomationEnabled(enabled, reason = 'manual') {
   automationPausedUntil = 0;
   recentActionKeys.clear();
   clearAllTimers();
+  clearMenuPlan();
   recheckVisiblePrompt('automation enabled');
 }
 
 function pauseAutomationTemporarily(ms, reason, silent = false) {
   if (!automationEnabled) return;
   clearContinueTimer();
+  clearMenuPlan();
   automationPausedUntil = Math.max(automationPausedUntil, Date.now() + ms);
   scheduleAutomationResumeRecheck();
   if (!silent) {
@@ -1338,12 +1903,12 @@ function recheckVisiblePrompt(reason = 'manual recheck') {
   if (DEBUG_AUTOMATION) {
     console.error(`[${FLAVOR_LABEL}][auto] Rechecking visible prompt (${reason})`);
   }
-  const snapshot = detectScreen(normalizedTail);
+  const snapshot = detectCurrentSnapshot();
   updateCurrentSnapshot(snapshot);
   maybeAutomate(activeRunId, snapshot);
 }
 
-function scheduleStaticRecheck() {
+function scheduleStaticRecheck(delay = STATIC_RECHECK_MS) {
   clearStaticRecheckTimer();
   if (!activePty || shuttingDown || !isAutomationActive()) return;
   if (currentSnapshot.kind === 'normal' || currentSnapshot.kind === 'usage_limit') return;
@@ -1352,11 +1917,11 @@ function scheduleStaticRecheck() {
     staticRecheckTimer = null;
     if (!activePty || shuttingDown || !isAutomationActive()) return;
     recheckVisiblePrompt('static prompt heartbeat');
-  }, STATIC_RECHECK_MS);
+  }, Math.max(30, delay));
 }
 
 function hotkeySummary() {
-  return `${HOTKEY_PREFIX_LABEL} h help | ${HOTKEY_PREFIX_LABEL} a auto on/off | ${HOTKEY_PREFIX_LABEL} p pause auto | ${HOTKEY_PREFIX_LABEL} s switch | ${HOTKEY_PREFIX_LABEL} r restart | ${HOTKEY_PREFIX_LABEL} c Ctrl-C | ${HOTKEY_PREFIX_LABEL} q quit`;
+  return `${HOTKEY_PREFIX_LABEL} h help | ${HOTKEY_PREFIX_LABEL} a auto on/off | ${HOTKEY_PREFIX_LABEL} p pause auto | ${HOTKEY_PREFIX_LABEL} e recheck | ${HOTKEY_PREFIX_LABEL} i status | ${HOTKEY_PREFIX_LABEL} s switch | ${HOTKEY_PREFIX_LABEL} r restart | ${HOTKEY_PREFIX_LABEL} c Ctrl-C | ${HOTKEY_PREFIX_LABEL} q quit`;
 }
 
 function printLocalHelp() {
@@ -1372,6 +1937,24 @@ function printLocalHelp() {
   );
 }
 
+function printLocalStatus() {
+  const pausedForMs = Math.max(0, automationPausedUntil - Date.now());
+  const selection = currentSnapshot.options.find((option) => option.selected)?.label || '(none)';
+  const screenSummary = screenModel?.renderText(16)?.split('\n').slice(-4).join(' | ') || '(empty)';
+  console.error(
+    [
+      '',
+      `[local] Model: ${currentModel()}`,
+      `[local] Automation: ${automationEnabled ? 'enabled' : `disabled (${automationDisabledReason || 'manual'})`}`,
+      `[local] Paused: ${pausedForMs > 0 ? `${Math.ceil(pausedForMs / 1000)}s remaining` : 'no'}`,
+      `[local] Snapshot: ${currentSnapshot.kind}/${currentSnapshot.source}`,
+      `[local] Fingerprint: ${currentSnapshot.fingerprint}`,
+      `[local] Selected option: ${selection}`,
+      `[local] Visible tail: ${screenSummary}`,
+      '',
+    ].join('\n')
+  );
+}
 // -----------------------------------------------------------------------------
 // Cleanup
 // -----------------------------------------------------------------------------
@@ -1417,6 +2000,7 @@ function clearStaticRecheckTimer() {
 
 function clearAllTimers() {
   clearContinueTimer();
+  clearMenuPlan();
   clearRestartTimer();
   clearForceKillTimer();
   clearAutomationResumeTimer();
@@ -1465,6 +2049,47 @@ function failWithCleanup(error) {
 // -----------------------------------------------------------------------------
 // Helpers
 // -----------------------------------------------------------------------------
+
+function validateConfig() {
+  const modes = new Set(['prompt_only', 'capacity', 'always', 'off']);
+  if (!modes.has(AUTO_CONTINUE_MODE)) {
+    throw new Error(`AUTO_CONTINUE_MODE=${JSON.stringify(AUTO_CONTINUE_MODE)} is invalid. Use prompt_only, capacity, always, or off.`);
+  }
+
+  const numericChecks = {
+    KEEP_TRY_MAX,
+    TRY_AGAIN_MIN_INTERVAL_MS,
+    MANUAL_OVERRIDE_MS,
+    AUTOMATION_COOLDOWN_MS,
+    FORCE_KILL_AFTER_MS,
+    CAPACITY_RETRY_MS,
+    MAX_CAPACITY_RETRY_MS,
+    CAPACITY_EVENT_RESET_MS,
+    CAPACITY_RECENT_MS,
+    AUTO_CONTINUE_MAX_PER_EVENT,
+    AUTO_RESTART_MAX_PER_WINDOW,
+    AUTO_RESTART_WINDOW_MS,
+    RAW_TAIL_MAX,
+    NORMALIZED_TAIL_MAX,
+    HOTKEY_TIMEOUT_MS,
+    STATIC_RECHECK_MS,
+    ACTION_RETRY_MIN_MS,
+    PERMISSION_RETRY_MIN_MS,
+    SCREEN_MAX_BUFFER_ROWS,
+    SCREEN_MAX_COLS,
+    SCREEN_CAPTURE_LINES,
+    MENU_SELECT_MIN_MS,
+    MENU_CONFIRM_MIN_MS,
+    MENU_FALLBACK_AFTER_SELECTS,
+    QUICK_RECHECK_MS,
+  };
+
+  for (const [name, value] of Object.entries(numericChecks)) {
+    if (!Number.isFinite(value) || value < 0) {
+      throw new Error(`${name} must be a non-negative number. Received ${JSON.stringify(value)}.`);
+    }
+  }
+}
 
 function currentModel() {
   return MODELS[modelIndex % MODELS.length];
@@ -1524,3 +2149,13 @@ function shQuote(value) {
   const s = String(value);
   return `'${s.replace(/'/g, `'\\''`)}'`;
 }
+
+export const _test = {
+  normalizeTerminalText,
+  detectSnapshotFromText,
+  detectContinuePrompt,
+  extractMenuBlocks,
+  parseOptionLine,
+  normalizeLabel,
+  VirtualScreen,
+};

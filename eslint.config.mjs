@@ -208,7 +208,7 @@ const commonRules = {
   '@typescript-eslint/only-throw-error': 'error',
   '@typescript-eslint/consistent-type-imports': ['error', { prefer: 'type-imports', fixStyle: 'inline-type-imports' }],
   '@typescript-eslint/no-unnecessary-condition': 'error',
-  '@typescript-eslint/strict-boolean-expressions': ['error', { allowNullableBoolean: true, allowNullableString: false }],
+  '@typescript-eslint/strict-boolean-expressions': ['error', { allowNullableBoolean: false, allowNullableString: false, allowNullableNumber: false, allowString: false, allowNumber: false }],
   '@typescript-eslint/prefer-nullish-coalescing': ['error', { ignorePrimitives: { string: true } }],
   '@typescript-eslint/no-non-null-assertion': 'error',
   '@typescript-eslint/explicit-function-return-type': ['error', { allowExpressions: true, allowTypedFunctionExpressions: true }],
@@ -239,7 +239,7 @@ const commonRules = {
   'no-iterator': 'error',
   'no-proto': 'error',
   'no-sequences': 'error',
-  'no-void': 'error',
+  'no-void': ['error', { allowAsStatement: false }],
   'prefer-object-spread': 'error',
   'prefer-rest-params': 'error',
   'prefer-spread': 'error',
@@ -256,8 +256,18 @@ const commonRules = {
 const a11yRules = {
   'jsx-a11y/alt-text': 'error',
   'jsx-a11y/anchor-has-content': 'error',
-  'jsx-a11y/control-has-associated-label': 'error',
+  'jsx-a11y/control-has-associated-label': ['error', { labelAttributes: ['aria-label', 'aria-labelledby', 'alt', 'title'] }],
   'jsx-a11y/label-has-associated-control': ['error', { assert: 'either', depth: 3 }],
+  'jsx-a11y/anchor-is-valid': ['error', { aspects: ['noHref', 'invalidHref', 'preferButton'] }],
+  'jsx-a11y/media-has-caption': 'error',
+  'jsx-a11y/aria-role': 'error',
+  'jsx-a11y/role-has-required-aria-props': 'error',
+  'jsx-a11y/role-supports-aria-props': 'error',
+  'jsx-a11y/no-autofocus': ['error', { ignoreNonDOM: true }],
+  'jsx-a11y/tabindex-no-positive': 'error',
+  'jsx-a11y/interactive-supports-focus': 'error',
+  'jsx-a11y/no-redundant-roles': 'error',
+  'jsx-a11y/heading-has-content': 'error',
 };
 
 export default defineConfig([

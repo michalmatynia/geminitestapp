@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { revalidateTag, unstable_cache } from 'next/cache';
+import { cacheTag, revalidateTag } from 'next/cache';
 
 import {
   KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY,
@@ -16,6 +16,7 @@ import {
 } from '@/shared/contracts/kangur-settings-keys';
 import type { SettingRecord } from '@/shared/contracts/settings';
 import { isTransientMongoConnectionError } from '@/shared/lib/db/utils/mongo';
+import { applyCacheLife } from '@/shared/lib/next/cache-life';
 
 import {
   createKangurStorefrontAppearanceSeedSettings,
@@ -120,11 +121,10 @@ const getKangurStorefrontInitialStateUncached = async (): Promise<KangurStorefro
   };
 };
 
-export const getKangurStorefrontInitialState = unstable_cache(
-  getKangurStorefrontInitialStateUncached,
-  [KANGUR_STOREFRONT_INITIAL_STATE_CACHE_TAG],
-  {
-    revalidate: 300,
-    tags: [KANGUR_STOREFRONT_INITIAL_STATE_CACHE_TAG],
-  }
-);
+export const getKangurStorefrontInitialState = async (): Promise<KangurStorefrontInitialState> => {
+  'use cache';
+  applyCacheLife({ revalidate: 300 });
+  cacheTag(KANGUR_STOREFRONT_INITIAL_STATE_CACHE_TAG);
+
+  return getKangurStorefrontInitialStateUncached();
+};

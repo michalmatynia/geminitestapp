@@ -698,8 +698,8 @@ export const hasProductScan1688Details = (
     (scan.supplierDetails?.priceText ?? '') !== '' ||
     (scan.supplierDetails?.priceRangeText ?? '') !== '' ||
     (scan.supplierDetails?.moqText ?? '') !== '' ||
-    (Array.isArray(scan.supplierDetails?.images) && scan.supplierDetails!.images!.length > 0) ||
-    (Array.isArray(scan.supplierDetails?.prices) && scan.supplierDetails!.prices!.length > 0) ||
+    (Array.isArray(scan.supplierDetails?.images) && scan.supplierDetails.images.length > 0) ||
+    (Array.isArray(scan.supplierDetails?.prices) && scan.supplierDetails.prices.length > 0) ||
     (scan.supplierProbe?.candidateUrl ?? '') !== '' ||
     (scan.supplierProbe?.canonicalUrl ?? '') !== '' ||
     (scan.supplierProbe?.pageTitle ?? '') !== '' ||
@@ -926,7 +926,7 @@ export function ProductScan1688Details(props: ProductScan1688DetailsProps): Reac
             Extracted prices
           </p>
           <ul className='space-y-2 text-sm text-foreground'>
-            {details!.prices!.map((price, index) => (
+            {details!.prices.map((price, index) => (
               <li
                 key={`${price.label ?? 'price'}-${price.amount ?? 'na'}-${index}`}
                 className='rounded-md border border-border/40 bg-muted/10 px-3 py-2'
@@ -951,7 +951,7 @@ export function ProductScan1688Details(props: ProductScan1688DetailsProps): Reac
           </p>
           {(details?.images?.length ?? 0) > 0 ? (
             <ul className='space-y-2 text-sm text-foreground'>
-              {details!.images!.slice(0, 6).map((image, index) => (
+              {details!.images.slice(0, 6).map((image, index) => (
                 <li
                   key={`${image.url ?? 'image'}-${index}`}
                   className='rounded-md border border-border/40 bg-muted/10 px-3 py-2'

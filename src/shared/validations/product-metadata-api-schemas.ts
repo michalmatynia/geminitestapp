@@ -11,7 +11,7 @@ const normalizeQueryString = (value: unknown): string | undefined => {
 
 const normalizeOptionalEntityId = (value: unknown): string | undefined => {
   const normalized = normalizeQueryString(value);
-  if (!normalized) return undefined;
+  if (normalized === undefined) return undefined;
   const lowered = normalized.toLowerCase();
   if (lowered === 'undefined' || lowered === 'null') return undefined;
   return normalized;
@@ -21,7 +21,7 @@ const parseBooleanQueryValue = (value: unknown): unknown => {
   if (typeof value === 'boolean') return value;
   if (typeof value !== 'string') return value;
   const normalized = value.trim().toLowerCase();
-  if (!normalized) return undefined;
+  if (normalized.length === 0) return undefined;
   if (TRUE_QUERY_VALUES.has(normalized)) return true;
   if (FALSE_QUERY_VALUES.has(normalized)) return false;
   return value;

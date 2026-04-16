@@ -283,7 +283,7 @@ export function useProductsWithCount(
 
     if (queryClient.getQueryData(nextQueryKey) !== undefined) return;
 
-    await prefetchQueryV2(queryClient, {
+    void prefetchQueryV2(queryClient, {
       queryKey: nextQueryKey,
       queryFn: async (context) => {
         try {

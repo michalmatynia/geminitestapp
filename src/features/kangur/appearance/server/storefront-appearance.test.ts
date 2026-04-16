@@ -16,15 +16,20 @@ vi.mock('server-only', () => ({}));
 const {
   ensureKangurStorefrontAppearanceSettingsSeededMock,
   createKangurStorefrontAppearanceSeedSettingsMock,
+  cacheLifeMock,
+  cacheTagMock,
   revalidateTagMock,
 } = vi.hoisted(() => ({
   ensureKangurStorefrontAppearanceSettingsSeededMock: vi.fn(),
   createKangurStorefrontAppearanceSeedSettingsMock: vi.fn(),
+  cacheLifeMock: vi.fn(),
+  cacheTagMock: vi.fn(),
   revalidateTagMock: vi.fn(),
 }));
 
 vi.mock('next/cache', () => ({
-  unstable_cache: <T extends (...args: never[]) => unknown>(fn: T): T => fn,
+  cacheLife: cacheLifeMock,
+  cacheTag: cacheTagMock,
   revalidateTag: revalidateTagMock,
 }));
 

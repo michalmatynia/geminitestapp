@@ -194,7 +194,7 @@ const normalizeAmazonAiStages = (value: unknown): AmazonAiStageEvidence[] => {
           ? String(recommendedActionValue).trim()
           : null,
         rejectionCategory: hasText(String(rejectionCategoryValue ?? ''))
-          ? String(rejectionCategory).trim()
+          ? String(rejectionCategoryValue).trim()
           : null,
         pageLanguage: hasText(String(pageLanguageValue ?? ''))
           ? String(pageLanguageValue).trim()
@@ -216,13 +216,6 @@ const normalizeAmazonAiStages = (value: unknown): AmazonAiStageEvidence[] => {
       } satisfies AmazonAiStageEvidence;
     })
     .filter((entry): entry is AmazonAiStageEvidence => entry !== null);
-};
-        evaluatedAt: hasText(String(entry['evaluatedAt'] ?? ''))
-          ? String(entry['evaluatedAt']).trim()
-          : null,
-      } satisfies AmazonAiStageEvidence;
-    })
-    .filter((entry): entry is AmazonAiStageEvidence => Boolean(entry));
 };
 
 const normalizeLogTail = (value: unknown): string[] => {
@@ -552,17 +545,17 @@ export function ProductScanDiagnostics(props: {
         ) : null}
         {(diagnostics.runStatus ?? null) !== null ? (
           <span className='inline-flex items-center rounded-md border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium'>
-            {formatLabel(diagnostics.runStatus!)}
+            {formatLabel(diagnostics.runStatus)}
           </span>
         ) : null}
         {(diagnostics.imageSearchProvider ?? null) !== null ? (
           <span className='inline-flex items-center rounded-md border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium'>
-            {formatAmazonImageSearchProvider(diagnostics.imageSearchProvider!)}
+            {formatAmazonImageSearchProvider(diagnostics.imageSearchProvider)}
           </span>
         ) : null}
         {(diagnostics.latestStage ?? null) !== null ? (
           <span className='inline-flex items-center rounded-md border border-amber-500/40 bg-background/70 px-2.5 py-1 text-xs font-medium text-amber-300'>
-            Stage: {formatLabel(diagnostics.latestStage!)}
+            Stage: {formatLabel(diagnostics.latestStage)}
           </span>
         ) : null}
         {diagnostics.failureArtifacts.length > 0 ? (
@@ -607,10 +600,10 @@ export function ProductScanDiagnostics(props: {
           </p>
           <div className='grid gap-2 sm:grid-cols-2'>
             {[
-              { label: 'Browser', content: formatRuntimePostureBrowser(diagnostics.runtimePosture!) },
-              { label: 'Identity', content: formatRuntimePostureIdentity(diagnostics.runtimePosture!) },
-              { label: 'Proxy', content: formatRuntimePostureProxy(diagnostics.runtimePosture!) },
-              { label: 'Sticky state', content: formatRuntimePostureStorage(diagnostics.runtimePosture!) },
+              { label: 'Browser', content: formatRuntimePostureBrowser(diagnostics.runtimePosture) },
+              { label: 'Identity', content: formatRuntimePostureIdentity(diagnostics.runtimePosture) },
+              { label: 'Proxy', content: formatRuntimePostureProxy(diagnostics.runtimePosture) },
+              { label: 'Sticky state', content: formatRuntimePostureStorage(diagnostics.runtimePosture) },
             ]
               .filter((entry): entry is { label: string; content: string } => hasText(entry.content))
               .map((entry) => (
@@ -635,19 +628,19 @@ export function ProductScanDiagnostics(props: {
           </p>
           <div className='grid gap-2 sm:grid-cols-2'>
             {[
-              { label: 'Execution', content: evaluationPolicySummary!.executionLabel },
-              { label: 'Model source', content: evaluationPolicySummary!.modelSource },
-              { label: 'Model', content: evaluationPolicySummary!.modelLabel },
-              { label: 'Threshold', content: evaluationPolicySummary!.thresholdLabel },
-              { label: 'Evaluation scope', content: evaluationPolicySummary!.scopeLabel },
+              { label: 'Execution', content: evaluationPolicySummary.executionLabel },
+              { label: 'Model source', content: evaluationPolicySummary.modelSource },
+              { label: 'Model', content: evaluationPolicySummary.modelLabel },
+              { label: 'Threshold', content: evaluationPolicySummary.thresholdLabel },
+              { label: 'Evaluation scope', content: evaluationPolicySummary.scopeLabel },
               {
                 label: 'Similarity decision',
-                content: evaluationPolicySummary!.similarityDecisionLabel,
+                content: evaluationPolicySummary.similarityDecisionLabel,
               },
-              { label: 'Language gate', content: evaluationPolicySummary!.languageGateLabel },
+              { label: 'Language gate', content: evaluationPolicySummary.languageGateLabel },
               {
                 label: 'Language detection',
-                content: evaluationPolicySummary!.languageDetectionLabel,
+                content: evaluationPolicySummary.languageDetectionLabel,
               },
             ]
               .filter((entry): entry is { label: string; content: string } => hasText(entry.content))

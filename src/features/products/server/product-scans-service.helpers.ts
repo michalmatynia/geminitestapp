@@ -2,7 +2,7 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 import { tmpdir } from 'node:os';
-import { extname, join, resolve, sep } from 'node:path';
+import { extname, join, sep } from 'node:path';
 
 import {
   DEFAULT_PRODUCT_SCANNER_MANUAL_VERIFICATION_TIMEOUT_MS,
@@ -70,6 +70,7 @@ const nodeFs = getFsPromises();
 const PRODUCT_SCAN_TEMP_IMAGE_DIRECTORY = join(tmpdir(), 'geminitestapp-product-scan-images');
 const PRODUCT_SCAN_HTTP_URL_PATTERN = /^https?:\/\//i;
 const PRODUCT_SCAN_PUBLIC_UPLOADS_PATH_PATTERN = /^\/uploads\//i;
+const PRODUCT_SCAN_DEV_PUBLIC_UPLOADS_ROOT = `${process.cwd()}${sep}public${sep}uploads`;
 
 const isLoopbackProductScanHost = (hostname: string): boolean => {
   const normalized = hostname.replace(/^\[|\]$/g, '').toLowerCase();
@@ -83,7 +84,7 @@ const isLoopbackProductScanHost = (hostname: string): boolean => {
 
 const resolveLocalPublicPathFromScanImageUrl = (value: unknown): string | null => {
   const normalized = readOptionalString(value);
-  if (!normalized) {
+  if (normalized === null) {
     return null;
   }
 
@@ -93,10 +94,10 @@ const resolveLocalPublicPathFromScanImageUrl = (value: unknown): string | null =
 
   try {
     const parsed = new URL(normalized);
-    if (!isLoopbackProductScanHost(parsed.hostname)) {
+    if (isLoopbackProductScanHost(parsed.hostname) === false) {
       return null;
     }
-    return parsed.pathname || null;
+    return parsed.pathname !== '' ? parsed.pathname : null;
   } catch {
     return null;
   }
@@ -104,18 +105,23 @@ const resolveLocalPublicPathFromScanImageUrl = (value: unknown): string | null =
 
 const resolvePublicUploadsFallbackDiskPath = (value: unknown): string | null => {
   const normalized = readOptionalString(value);
-  if (!normalized || !PRODUCT_SCAN_PUBLIC_UPLOADS_PATH_PATTERN.test(normalized)) {
+  if (normalized === null || PRODUCT_SCAN_PUBLIC_UPLOADS_PATH_PATTERN.test(normalized) === false) {
     return null;
   }
 
-  const publicUploadsRoot = resolve(process.cwd(), 'public', 'uploads');
   const cleaned = normalized.replace(/^\/uploads\/+/, '');
-  const resolved = resolve(publicUploadsRoot, cleaned);
-  if (resolved !== publicUploadsRoot && !resolved.startsWith(`${publicUploadsRoot}${sep}`)) {
+  const segments = cleaned
+    .split('/')
+    .map((segment) => segment.trim())
+    .filter((segment) => segment.length > 0);
+
+  if (segments.some((segment) => segment === '.' || segment === '..')) {
     return null;
   }
 
-  return resolved;
+  return segments.length === 0
+    ? PRODUCT_SCAN_DEV_PUBLIC_UPLOADS_ROOT
+    : `${PRODUCT_SCAN_DEV_PUBLIC_UPLOADS_ROOT}${sep}${segments.join(sep)}`;
 };
 
 export type AmazonScanScriptResult = {
@@ -177,7 +183,7 @@ export type AmazonScanCandidateResult = {
 };
 
 export const toRecord = (value: unknown): Record<string, unknown> | null =>
-  value && typeof value === 'object' && !Array.isArray(value)
+  value !== null && value !== undefined && typeof value === 'object' && Array.isArray(value) === false
     ? (value as Record<string, unknown>)
     : null;
 
@@ -226,37 +232,37 @@ const normalizeProductScanSequenceGroup = (
 export const normalizeProductScanRequestSequence = (
   value: unknown
 ): ProductScanRequestSequenceEntry[] | null => {
-  if (!Array.isArray(value)) {
+  if (Array.isArray(value) === false) {
     return null;
   }
 
-  const normalized = value
+  const normalized = (value as unknown[])
     .map((entry) => {
       const normalizedEntry = readOptionalString(entry, PRODUCT_SCAN_SEQUENCE_KEY_MAX_LENGTH);
-      if (normalizedEntry) {
+      if (normalizedEntry !== null) {
         return normalizedEntry;
       }
 
       const record = toRecord(entry);
       const key = readOptionalString(record?.['key'], PRODUCT_SCAN_SEQUENCE_KEY_MAX_LENGTH);
-      if (!key) {
+      if (key === null) {
         return null;
       }
 
       const label = readOptionalString(record?.['label'], 160);
       const group = normalizeProductScanSequenceGroup(record?.['group']);
 
-      if (!label && !group) {
+      if (label === null && group === null) {
         return key;
       }
 
       return {
         key,
-        ...(label ? { label } : {}),
-        ...(group ? { group } : {}),
+        ...(label !== null ? { label } : {}),
+        ...(group !== null ? { group } : {}),
       } satisfies ProductScanRequestSequenceEntry;
     })
-    .filter((entry): entry is NonNullable<typeof entry> => entry != null)
+    .filter((entry): entry is NonNullable<typeof entry> => entry !== null)
     .slice(0, 50) as ProductScanRequestSequenceEntry[];
 
   return normalized.length > 0 ? normalized : null;
@@ -276,15 +282,15 @@ export const resolveProductScanRequestSequenceInput = (
   const stepSequence = normalizeProductScanRequestSequence(record?.['stepSequence']);
 
   return {
-    ...(stepSequenceKey ? { stepSequenceKey } : {}),
-    ...(stepSequence ? { stepSequence } : {}),
+    ...(stepSequenceKey !== null ? { stepSequenceKey } : {}),
+    ...(stepSequence !== null ? { stepSequence } : {}),
   };
 };
 
 export const resolvePersistableScanUrl = (...values: unknown[]): string | null => {
   for (const value of values) {
     const normalized = readOptionalString(value, PRODUCT_SCAN_URL_MAX_LENGTH);
-    if (normalized) {
+    if (normalized !== null) {
       return normalized;
     }
   }
@@ -298,12 +304,12 @@ export const hasSupportedLocalScanImageExtension = (candidate: {
 }): boolean => {
   const extensionSource =
     readOptionalString(candidate.filename) ?? readOptionalString(candidate.filepath);
-  if (!extensionSource) {
+  if (extensionSource === null) {
     return false;
   }
 
   const normalizedExtension = extname(extensionSource).toLowerCase();
-  if (!normalizedExtension) {
+  if (normalizedExtension === '') {
     return true;
   }
 
@@ -313,17 +319,18 @@ export const hasSupportedLocalScanImageExtension = (candidate: {
 export const validateLocalScanImageCandidatePath = async (
   candidate: Pick<ProductScanRecord['imageCandidates'][number], 'filepath' | 'filename'>
 ): Promise<boolean> => {
-  return Boolean(await resolveLocalScanImageCandidatePath(candidate));
+  const resolved = await resolveLocalScanImageCandidatePath(candidate);
+  return resolved !== null;
 };
 
 export const resolveLocalScanImageCandidatePath = async (
   candidate: Pick<ProductScanRecord['imageCandidates'][number], 'filepath' | 'filename'>
 ): Promise<string | null> => {
   const normalizedFilepath = readOptionalString(candidate.filepath);
-  if (!normalizedFilepath) {
+  if (normalizedFilepath === null) {
     return null;
   }
-  if (!hasSupportedLocalScanImageExtension(candidate)) {
+  if (hasSupportedLocalScanImageExtension(candidate) === false) {
     return null;
   }
 
@@ -331,7 +338,7 @@ export const resolveLocalScanImageCandidatePath = async (
   if (normalizedFilepath.startsWith('/')) {
     try {
       const publicDiskPath = getDiskPathFromPublicPath(normalizedFilepath);
-      if (publicDiskPath && !diskPathCandidates.includes(publicDiskPath)) {
+      if (diskPathCandidates.includes(publicDiskPath) === false) {
         diskPathCandidates.push(publicDiskPath);
       }
     } catch {
@@ -340,15 +347,15 @@ export const resolveLocalScanImageCandidatePath = async (
 
     const publicUploadsFallbackPath = resolvePublicUploadsFallbackDiskPath(normalizedFilepath);
     if (
-      publicUploadsFallbackPath &&
-      !diskPathCandidates.includes(publicUploadsFallbackPath)
+      publicUploadsFallbackPath !== null &&
+      diskPathCandidates.includes(publicUploadsFallbackPath) === false
     ) {
       diskPathCandidates.push(publicUploadsFallbackPath);
     }
-  } else if (!PRODUCT_SCAN_HTTP_URL_PATTERN.test(normalizedFilepath)) {
+  } else if (PRODUCT_SCAN_HTTP_URL_PATTERN.test(normalizedFilepath) === false) {
     try {
       const publicDiskPath = getDiskPathFromPublicPath(`/${normalizedFilepath}`);
-      if (publicDiskPath && !diskPathCandidates.includes(publicDiskPath)) {
+      if (diskPathCandidates.includes(publicDiskPath) === false) {
         diskPathCandidates.push(publicDiskPath);
       }
     } catch {
@@ -359,7 +366,7 @@ export const resolveLocalScanImageCandidatePath = async (
   for (const diskPath of diskPathCandidates) {
     try {
       const fileStats = await nodeFs.stat(diskPath);
-      if (fileStats.isFile() && fileStats.size >= PRODUCT_SCAN_MIN_IMAGE_BYTES) {
+      if (fileStats.isFile() === true && fileStats.size >= PRODUCT_SCAN_MIN_IMAGE_BYTES) {
         return diskPath;
       }
     } catch {
@@ -391,35 +398,35 @@ export const sanitizeProductScanImageCandidates = async (
   const sanitizedCandidates = await Promise.all(
     imageCandidates.map(async (candidate) => {
       const resolvedFilepath = await resolveLocalScanImageCandidatePath(candidate);
-      const hasUrl = Boolean(readOptionalString(candidate.url));
+      const hasUrl = readOptionalString(candidate.url) !== null;
 
-      if (resolvedFilepath) {
+      if (resolvedFilepath !== null) {
         return {
           ...candidate,
           filepath: resolvedFilepath,
         };
       }
 
-      if (!hasUrl) {
+      if (hasUrl === false) {
         return null;
       }
 
       const localUrlFilepath = await resolveLocalScanImageCandidateUrlPath(candidate);
-      if (localUrlFilepath) {
+      if (localUrlFilepath !== null) {
         return {
           ...candidate,
           filepath: localUrlFilepath,
         };
       }
 
-      if (options.materializeUrlCandidates) {
+      if (options.materializeUrlCandidates === true) {
         try {
           const materializedCandidate = await materializeProductScanUrlCandidate(candidate);
-          if (materializedCandidate) {
+          if (materializedCandidate !== null) {
             return materializedCandidate;
           }
         } catch (error) {
-          void ErrorSystem.captureException(error, {
+          await ErrorSystem.captureException(error, {
             service: 'product-scans.service',
             action: 'sanitizeProductScanImageCandidates.materializeUrlCandidate',
             candidateId: candidate.id,
@@ -427,7 +434,7 @@ export const sanitizeProductScanImageCandidates = async (
         }
       }
 
-      if (options.requireLocalFile) {
+      if (options.requireLocalFile === true) {
         return null;
       }
 
@@ -439,16 +446,16 @@ export const sanitizeProductScanImageCandidates = async (
   );
 
   return sanitizedCandidates.filter(
-    (candidate): candidate is ProductScanRecord['imageCandidates'][number] => Boolean(candidate)
+    (candidate): candidate is ProductScanRecord['imageCandidates'][number] => candidate !== null
   );
 };
 
 const normalizeProductScanDataUrl = (value: unknown): string | null => {
   const normalized = readOptionalString(value);
-  if (!normalized) {
+  if (normalized === null) {
     return null;
   }
-  return /^data:image\/[a-z0-9.+-]+;base64,/i.test(normalized) ? normalized : null;
+  return /^data:image\/[a-z0-9.+-]+;base64,/i.test(normalized) === true ? normalized : null;
 };
 
 const collectProductScanBase64Slots = (
@@ -458,14 +465,14 @@ const collectProductScanBase64Slots = (
   const values: string[] = [];
   for (const entry of Array.isArray(product.imageBase64s) ? product.imageBase64s : []) {
     const normalized = normalizeProductScanDataUrl(entry);
-    if (normalized && !seen.has(normalized)) {
+    if (normalized !== null && seen.has(normalized) === false) {
       seen.add(normalized);
       values.push(normalized);
     }
   }
   for (const entry of Array.isArray(product.imageLinks) ? product.imageLinks : []) {
     const normalized = normalizeProductScanDataUrl(entry);
-    if (normalized && !seen.has(normalized)) {
+    if (normalized !== null && seen.has(normalized) === false) {
       seen.add(normalized);
       values.push(normalized);
     }
@@ -642,11 +649,11 @@ export const hydrateProductScanImageCandidates = async (input: {
         slotIndex,
         dataUrl,
       });
-      if (candidate) {
+      if (candidate !== null) {
         nextCandidates.push(candidate);
       }
     } catch (error) {
-      void ErrorSystem.captureException(error, {
+      await ErrorSystem.captureException(error, {
         service: 'product-scans.service',
         action: 'hydrateProductScanImageCandidates',
         productId: input.product.id,
@@ -659,12 +666,12 @@ export const hydrateProductScanImageCandidates = async (input: {
 };
 
 export const resolveIsoAgeMs = (value: string | null | undefined): number | null => {
-  if (!value) {
+  if (typeof value !== 'string' || value === '') {
     return null;
   }
 
   const parsed = Date.parse(value);
-  if (!Number.isFinite(parsed)) {
+  if (Number.isFinite(parsed) === false) {
     return null;
   }
 
@@ -686,14 +693,14 @@ export const shouldAutoShowScannerCaptchaBrowser = (
 ): boolean => settings?.captchaBehavior !== 'fail';
 
 export const normalizeParsedProductScanSteps = (value: unknown): ProductScanStep[] => {
-  if (!Array.isArray(value)) {
+  if (Array.isArray(value) === false) {
     return [];
   }
 
-  return value
+  return (value as unknown[])
     .map((entry) => {
       const record = toRecord(entry);
-      if (!record) {
+      if (record === null) {
         return null;
       }
 
@@ -704,7 +711,7 @@ export const normalizeParsedProductScanSteps = (value: unknown): ProductScanStep
         ),
       });
     })
-    .filter((entry): entry is ReturnType<typeof productScanStepSchema.safeParse> => Boolean(entry))
+    .filter((entry): entry is ReturnType<typeof productScanStepSchema.safeParse> => entry !== null)
     .filter((entry) => entry.success)
     .map((entry) => entry.data);
 };
@@ -758,16 +765,16 @@ export const normalizeParsedCandidateUrls = (value: unknown): string[] => {
 export const normalizeParsedAmazonCandidateResults = (
   value: unknown
 ): AmazonScanCandidateResult[] => {
-  if (!Array.isArray(value)) {
+  if (Array.isArray(value) === false) {
     return [];
   }
 
   const seen = new Set<string>();
   const normalized: AmazonScanCandidateResult[] = [];
-  for (const entry of value) {
+  for (const entry of value as unknown[]) {
     const record = toRecord(entry);
     const url = readOptionalString(record?.['url'], PRODUCT_SCAN_URL_MAX_LENGTH);
-    if (!url || seen.has(url)) {
+    if (url === null || seen.has(url) === true) {
       continue;
     }
     seen.add(url);
@@ -810,7 +817,7 @@ const normalizeProductScanStepDetails = (
         value: entry.value ?? null,
       })
     )
-    .filter((entry) => entry.success)
+    .filter((entry) => entry.success === true)
     .map((entry) => entry.data);
 
 const resolveProductScanStepIdentity = (
@@ -833,7 +840,7 @@ const normalizePersistedProductScanStep = (
   const durationMs =
     typeof input.durationMs === 'number' && Number.isFinite(input.durationMs) && input.durationMs >= 0
       ? Math.trunc(input.durationMs)
-      : startedAt && completedAt
+      : completedAt !== null
         ? Math.max(0, Date.parse(completedAt) - Date.parse(startedAt))
         : null;
 
@@ -944,21 +951,18 @@ export const upsertPersistedProductScanStep = (
     return [...steps, nextStep];
   }
 
-  const existingStep = steps[existingIndex];
-  if (!existingStep) {
-    return [...steps, nextStep];
-  }
+  const existingStep = steps[existingIndex]!;
 
   const mergedStep: ProductScanStep = productScanStepSchema.parse({
     ...existingStep,
     ...nextStep,
-    startedAt: existingStep.startedAt || nextStep.startedAt,
+    startedAt: (existingStep.startedAt !== '' ? existingStep.startedAt : null) ?? nextStep.startedAt,
     durationMs:
-      nextStep.completedAt && (existingStep.startedAt || nextStep.startedAt)
+      nextStep.completedAt !== null && ((existingStep.startedAt !== '' ? existingStep.startedAt : null) !== null || nextStep.startedAt !== null)
         ? Math.max(
             0,
             Date.parse(nextStep.completedAt) -
-              Date.parse(existingStep.startedAt || nextStep.startedAt || nextStep.completedAt)
+              Date.parse((existingStep.startedAt !== '' ? existingStep.startedAt : null) ?? nextStep.startedAt ?? nextStep.completedAt)
           )
         : nextStep.durationMs,
   });
@@ -1141,8 +1145,8 @@ export const buildAmazonScanRequestInput = (input: {
   existingAsin: input.existingAsin ?? null,
   imageCandidates: input.imageCandidates,
   imageSearchProvider:
-    input.imageSearchProvider === 'google_images_url' ||
-    input.imageSearchProvider === 'google_lens_upload'
+    (input.imageSearchProvider === 'google_images_url' ||
+    input.imageSearchProvider === 'google_lens_upload')
       ? input.imageSearchProvider
       : 'google_images_upload',
   batchIndex:
@@ -1263,8 +1267,8 @@ export const createAmazonScanStartedRawResult = (input: {
   runId: input.runId,
   status: input.status,
   imageSearchProvider:
-    input.imageSearchProvider === 'google_images_url' ||
-    input.imageSearchProvider === 'google_lens_upload'
+    (input.imageSearchProvider === 'google_images_url' ||
+    input.imageSearchProvider === 'google_lens_upload')
       ? input.imageSearchProvider
       : 'google_images_upload',
   imageSearchProviderHistory:
@@ -1275,19 +1279,14 @@ export const createAmazonScanStartedRawResult = (input: {
               (value): value is ProductScannerAmazonImageSearchProvider =>
                 value === 'google_images_upload' ||
                 value === 'google_images_url' ||
-                value === 'google_lens_upload'
+                (value as string) === 'google_lens_upload'
             )
           )
         )
-      : [
-          input.imageSearchProvider === 'google_images_url' ||
-          input.imageSearchProvider === 'google_lens_upload'
-            ? input.imageSearchProvider
-            : 'google_images_upload',
-        ],
+      : [input.imageSearchProvider],
   allowManualVerification: input.allowManualVerification,
   manualVerificationTimeoutMs: input.manualVerificationTimeoutMs,
-  ...(readOptionalString(input.stepSequenceKey, PRODUCT_SCAN_SEQUENCE_KEY_MAX_LENGTH)
+  ...(readOptionalString(input.stepSequenceKey, PRODUCT_SCAN_SEQUENCE_KEY_MAX_LENGTH) !== null
     ? {
         stepSequenceKey: readOptionalString(
           input.stepSequenceKey,
@@ -1295,12 +1294,12 @@ export const createAmazonScanStartedRawResult = (input: {
         ),
       }
     : {}),
-  ...(normalizeProductScanRequestSequence(input.stepSequence)
+  ...(normalizeProductScanRequestSequence(input.stepSequence) !== null
     ? { stepSequence: normalizeProductScanRequestSequence(input.stepSequence) }
     : {}),
-  ...(input.previousRunId ? { previousRunId: input.previousRunId } : {}),
+  ...(input.previousRunId !== null && input.previousRunId !== undefined && input.previousRunId !== '' ? { previousRunId: input.previousRunId } : {}),
   ...(input.previousResult !== undefined ? { previousResult: input.previousResult } : {}),
-  ...(input.manualVerificationPending
+  ...(input.manualVerificationPending === true
     ? {
         manualVerificationPending: true,
         manualVerificationMessage:
@@ -1350,8 +1349,8 @@ export const createAmazonProductScanBaseRecord = (input: {
     error: input.error ?? null,
     asinUpdateStatus: 'not_needed',
     asinUpdateMessage: null,
-    createdBy: input.userId?.trim() || null,
-    updatedBy: input.userId?.trim() || null,
+    createdBy: (input.userId?.trim() ?? '') !== '' ? input.userId!.trim() : null,
+    updatedBy: (input.userId?.trim() ?? '') !== '' ? input.userId!.trim() : null,
     completedAt: input.status === 'failed' ? new Date().toISOString() : null,
   });
 
@@ -1399,8 +1398,8 @@ export const create1688ProductScanBaseRecord = (input: {
     error: input.error ?? null,
     asinUpdateStatus: input.status === 'failed' ? 'not_needed' : 'pending',
     asinUpdateMessage: null,
-    createdBy: input.userId?.trim() || null,
-    updatedBy: input.userId?.trim() || null,
+    createdBy: (input.userId?.trim() ?? '') !== '' ? input.userId!.trim() : null,
+    updatedBy: (input.userId?.trim() ?? '') !== '' ? input.userId!.trim() : null,
     completedAt: input.status === 'failed' ? new Date().toISOString() : null,
   });
 
@@ -1445,7 +1444,7 @@ export const persistSynchronizedScan = async (
     }
   }
 
-  void ErrorSystem.captureException(lastError, {
+  await ErrorSystem.captureException(lastError, {
     service: 'product-scans.service',
     action: 'persistSynchronizedScan',
     scanId: scan.id,
@@ -1487,7 +1486,7 @@ export const tryDirectQueuedScanUpdate = async (
   for (let attempt = 0; attempt < PRODUCT_SCAN_SYNC_PERSIST_ATTEMPTS; attempt += 1) {
     try {
       const updated = await updateProductScan(scan.id, updates);
-      if (updated) {
+      if (updated !== null) {
         return updated;
       }
     } catch (error) {
@@ -1495,8 +1494,8 @@ export const tryDirectQueuedScanUpdate = async (
     }
   }
 
-  if (lastError) {
-    void ErrorSystem.captureException(lastError, {
+  if (lastError !== null) {
+    await ErrorSystem.captureException(lastError, {
       service: 'product-scans.service',
       action: context.action,
       scanId: scan.id,

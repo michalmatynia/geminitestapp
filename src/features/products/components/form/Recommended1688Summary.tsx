@@ -18,6 +18,7 @@ import type { Supplier1688FormBindings } from './ProductFormScans.types';
 
 type Recommended1688SummaryProps = {
   scan: ProductScanRecord;
+  preferredScans: ProductScanRecord[];
   isBlockedReviewed: boolean;
   supplier1688FormBindings: Supplier1688FormBindings;
 };
@@ -48,24 +49,26 @@ function Recommended1688Header({ scan }: { scan: ProductScanRecord }): React.JSX
   );
 }
 
-function Recommended1688ConfidenceInfo({ scan, isBlockedReviewed }: { scan: ProductScanRecord, isBlockedReviewed: boolean }): React.JSX.Element {
-  const signal = resolveProductScan1688RecommendationSignal();
+function Recommended1688ConfidenceInfo({ scan, preferredScans, isBlockedReviewed }: { scan: ProductScanRecord, preferredScans: ProductScanRecord[], isBlockedReviewed: boolean }): React.JSX.Element {
+  const signal = resolveProductScan1688RecommendationSignal({ isPreferred: true });
   const policy = resolveProductScan1688ApplyPolicySummary(scan);
-  const targets = resolveProductScan1688ComparisonTargets(scan);
-  const countLabel = formatProductScan1688ComparisonCountLabel(targets.length);
+  const targets = resolveProductScan1688ComparisonTargets(preferredScans, scan.id);
+  const countLabel = formatProductScan1688ComparisonCountLabel(targets.alternativeTargets.length);
 
   const policyClassName = ((): string => {
     if (isBlockedReviewed === true) return 'text-muted-foreground line-through';
-    if (policy.tone === 'destructive') return 'text-destructive';
+    if (policy !== null && policy.tone === 'destructive') return 'text-destructive';
     return 'text-amber-400';
   })();
+
+  const policyLabel = policy !== null ? policy.label : 'Manual review recommended';
 
   return (
     <div className='grid gap-4 sm:grid-cols-2'>
       <div className='space-y-2 rounded-lg border border-border/50 bg-background/50 p-3'>
         <div className='text-[10px] font-bold uppercase tracking-wider text-muted-foreground'>Match Confidence</div>
         <div className='flex items-center gap-2'>
-          <span className='text-xs font-semibold text-blue-400'>{signal.label}</span>
+          <span className='text-xs font-semibold text-blue-400'>{signal.badgeLabel}</span>
           {countLabel !== null ? <span className='text-[10px] text-muted-foreground'>(compared to {countLabel})</span> : null}
         </div>
       </div>
@@ -73,7 +76,7 @@ function Recommended1688ConfidenceInfo({ scan, isBlockedReviewed }: { scan: Prod
         <div className='text-[10px] font-bold uppercase tracking-wider text-muted-foreground'>Apply Policy</div>
         <div className='flex items-center gap-2'>
           <span className={`text-xs font-semibold ${policyClassName}`}>
-            {policy.label}
+            {policyLabel}
           </span>
           {isBlockedReviewed === true ? <span className='text-[10px] font-medium text-emerald-400'>(Reviewed)</span> : null}
         </div>
@@ -84,6 +87,7 @@ function Recommended1688ConfidenceInfo({ scan, isBlockedReviewed }: { scan: Prod
 
 export function Recommended1688Summary({
   scan,
+  preferredScans,
   isBlockedReviewed,
   supplier1688FormBindings,
 }: Recommended1688SummaryProps): React.JSX.Element | null {
@@ -92,7 +96,7 @@ export function Recommended1688Summary({
   return (
     <section className='space-y-4 rounded-xl border border-border/80 bg-card/30 p-5 shadow-sm'>
       <Recommended1688Header scan={scan} />
-      <Recommended1688ConfidenceInfo scan={scan} isBlockedReviewed={isBlockedReviewed} />
+      <Recommended1688ConfidenceInfo scan={scan} preferredScans={preferredScans} isBlockedReviewed={isBlockedReviewed} />
 
       <div className='rounded-lg bg-muted/20 p-4'>
         <ProductScan1688Details scan={scan} scanId={scan.id} showRecommendationReason />

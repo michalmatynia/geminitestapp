@@ -24,29 +24,25 @@ type ProductScanProgressInfoProps = {
 export function ProductScanProgressInfo({
   scan,
 }: ProductScanProgressInfoProps): React.JSX.Element | null {
-  const scanSteps = Array.isArray(scan.steps) ? scan.steps : [];
-  const isActive = isProductScanActiveStatus(scan.status);
+  const steps = Array.isArray(scan.steps) ? scan.steps : [];
+  const active = isProductScanActiveStatus(scan.status);
 
-  const progressSummary = isActive ? resolveProductScanActiveStepSummary(scanSteps) : null;
-  const continuationSummary = isActive ? resolveProductScanContinuationSummary(scanSteps) : null;
-  const rejectedCandidateSummary =
-    progressSummary === null && continuationSummary === null
-      ? resolveProductScanRejectedCandidateSummary(scanSteps)
-      : null;
-  const evaluationPolicySummary =
-    progressSummary === null ? resolveProductScanEvaluationPolicySummary(scanSteps) : null;
-  const latestOutcomeSummary =
-    progressSummary === null && (scan.status === 'failed' || scan.status === 'conflict')
-      ? resolveProductScanLatestOutcomeSummary(scanSteps, { allowStalled: false })
-      : null;
+  const prog = active ? resolveProductScanActiveStepSummary(steps) : null;
+  const cont = active ? resolveProductScanContinuationSummary(steps) : null;
+  
+  const fail = scan.status === 'failed' || scan.status === 'conflict';
+  const out = (prog === null && fail) ? resolveProductScanLatestOutcomeSummary(steps, { allowStalled: false }) : null;
+
+  const evalSum = prog === null ? resolveProductScanEvaluationPolicySummary(steps) : null;
+  const rejSum = (prog === null && cont === null) ? resolveProductScanRejectedCandidateSummary(steps) : null;
 
   return (
     <>
-      <ProductScanActiveProgress summary={progressSummary} />
-      <ProductScanContinuationInfo summary={continuationSummary} />
-      <ProductScanEvaluationPolicyInfo summary={evaluationPolicySummary} />
-      <ProductScanRejectedCandidateInfo summary={rejectedCandidateSummary} />
-      <ProductScanLatestOutcomeInfo summary={latestOutcomeSummary} />
+      <ProductScanActiveProgress summary={prog} />
+      <ProductScanContinuationInfo summary={cont} />
+      <ProductScanEvaluationPolicyInfo summary={evalSum} />
+      <ProductScanRejectedCandidateInfo summary={rejSum} />
+      <ProductScanLatestOutcomeInfo summary={out} />
     </>
   );
 }

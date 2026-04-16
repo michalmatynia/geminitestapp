@@ -28,7 +28,7 @@ const getSafeText = (element: Element | null): string | undefined => {
   const tag = element.tagName.toLowerCase();
   const isSafeTag = tag === 'button' || tag === 'a' || tag === 'span' || tag === 'div';
   if (isSafeTag) {
-    const text = element.textContent !== null ? element.textContent.slice(0, 50) : '';
+    const text = element.textContent.slice(0, 50);
     return text.length > 0 ? text : undefined;
   }
   return undefined;

@@ -1,12 +1,6 @@
 'use client';
 
-import { useContext } from 'react';
-
 import { useProductScan1688ReviewState } from '@/features/products/components/scans/useProductScan1688ReviewState';
-import { useProductFormCustomFields } from '@/features/products/context/ProductFormCustomFieldContext';
-import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
-import { ProductFormImageContext } from '@/features/products/context/ProductFormImageContext';
-import { useProductFormParameters } from '@/features/products/context/ProductFormParameterContext';
 import { ProductFormScansHeader } from './ProductFormScansHeader';
 import { ProductFormScansHistory } from './ProductFormScansHistory';
 import { useSupplier1688FormBindings } from './useSupplier1688FormBindings';
@@ -18,70 +12,45 @@ import { ProductFormRecommendedSummaries } from './ProductFormRecommendedSummari
 import { useProductFormScanProductName } from './useProductFormScanProductName';
 import { ProductFormScansModal } from './ProductFormScansModal';
 import { useProductRecommendedScans } from './useProductRecommendedScans';
+import { useProductFormScansContext } from './useProductFormScansContext';
 
 export default function ProductFormScans(): React.JSX.Element {
-  const { product, getValues, setValue } = useProductFormCore();
-  const {
-    parameters,
-    parameterValues,
-    addParameterValue,
-    updateParameterId,
-    updateParameterValue,
-  } = useProductFormParameters();
-  const { customFields, customFieldValues, setTextValue, toggleSelectedOption } =
-    useProductFormCustomFields();
-  const productFormImages = useContext(ProductFormImageContext);
-  const productId = product?.id?.trim() ?? '';
+  const ctx = useProductFormScansContext();
+  const productId = (ctx.product?.id ?? '').trim();
 
-  const {
-    scanModalProvider,
-    setScanModalProvider,
-    expandedScanIds,
-    expandedDiagnosticScanIds,
-    expandedExtractedFieldScanIds,
-    toggleScanSteps,
-    toggleDiagnostics,
-    toggleExtractedFields,
-  } = useProductFormScansState(productId);
-
+  const state = useProductFormScansState(productId);
   const { scans, isFetching, refetch, handleDeleteScan, isDeletingScanId } = useProductScansQuery(productId);
-
   const { isBlockedScanReviewed, markBlockedScanReviewed, clearBlockedScanReviewed } = useProductScan1688ReviewState();
 
-  const supplier1688FormBindings = useSupplier1688FormBindings({ getValues, setValue, productFormImages });
-  const productFormBindings = useProductGeneralFormBindings({
-    getValues,
-    setValue,
-    parameters,
-    parameterValues,
-    addParameterValue,
-    updateParameterId,
-    updateParameterValue,
-    customFields,
-    customFieldValues,
-    setTextValue,
-    toggleSelectedOption,
+  const supplierBindings = useSupplier1688FormBindings({ getValues: ctx.getValues, setValue: ctx.setValue, productFormImages: ctx.productFormImages });
+  const productBindings = useProductGeneralFormBindings({
+    getValues: ctx.getValues, setValue: ctx.setValue, parameters: ctx.parameters, parameterValues: ctx.parameterValues,
+    addParameterValue: ctx.addParameterValue, updateParameterId: ctx.updateParameterId, updateParameterValue: ctx.updateParameterValue,
+    customFields: ctx.customFields, customFieldValues: ctx.customFieldValues, setTextValue: ctx.setTextValue, toggleSelectedOption: ctx.toggleSelectedOption,
   });
 
   const connectionNamesById = useProductFormConnectionNames();
-  const productName = useProductFormScanProductName(product);
+  const productName = useProductFormScanProductName(ctx.product);
   const { recommendedAmazonScan, recommended1688Scan, recommendedAmazonExtractedScanId } = useProductRecommendedScans(scans);
 
-  const isAmazonExtractedExpanded = recommendedAmazonExtractedScanId !== null && expandedExtractedFieldScanIds.has(recommendedAmazonExtractedScanId);
+  const isAmazonExtractedExpanded = recommendedAmazonExtractedScanId !== null && state.expandedExtractedFieldScanIds.has(recommendedAmazonExtractedScanId);
   const is1688BlockedReviewed = recommended1688Scan !== null && isBlockedScanReviewed(recommended1688Scan.id);
+
+  const preferred1688Scans = scans.filter((s) => s.provider === '1688');
 
   return (
     <div className='space-y-6'>
-      <ProductFormScansHeader onSetProvider={setScanModalProvider} />
+      <ProductFormScansHeader onSetProvider={state.setScanModalProvider} />
 
       <ProductFormRecommendedSummaries
         recommendedAmazonScan={recommendedAmazonScan}
         recommended1688Scan={recommended1688Scan}
+        preferred1688Scans={preferred1688Scans}
         isExtractedFieldsExpanded={isAmazonExtractedExpanded}
-        onToggleExtractedFields={toggleExtractedFields}
+        onToggleExtractedFields={state.toggleExtractedFields}
         is1688BlockedReviewed={is1688BlockedReviewed}
-        supplier1688FormBindings={supplier1688FormBindings}
-        productFormBindings={productFormBindings}
+        supplier1688FormBindings={supplierBindings}
+        productFormBindings={productBindings}
       />
 
       <ProductFormScansHistory
@@ -90,28 +59,23 @@ export default function ProductFormScans(): React.JSX.Element {
         activeScansCount={scans.filter((s) => s.status === 'running' || s.status === 'queued' || s.status === 'enqueuing').length}
         isFetching={isFetching}
         onRefetch={refetch}
-        expandedScanIds={expandedScanIds}
-        expandedDiagnosticScanIds={expandedDiagnosticScanIds}
-        expandedExtractedFieldScanIds={expandedExtractedFieldScanIds}
+        expandedScanIds={state.expandedScanIds}
+        expandedDiagnosticScanIds={state.expandedDiagnosticScanIds}
+        expandedExtractedFieldScanIds={state.expandedExtractedFieldScanIds}
         isDeletingScanId={isDeletingScanId}
-        onDelete={(id) => { void handleDeleteScan(id); }}
-        onToggleSteps={toggleScanSteps}
-        onToggleExtractedFields={toggleExtractedFields}
-        onToggleDiagnostics={toggleDiagnostics}
+        onDelete={(id): void => { handleDeleteScan(id).catch(() => { /* no-op */ }); }}
+        onToggleSteps={state.toggleScanSteps}
+        onToggleExtractedFields={state.toggleExtractedFields}
+        onToggleDiagnostics={state.toggleDiagnostics}
         connectionNamesById={connectionNamesById}
         isBlockedScanReviewed={isBlockedScanReviewed}
         markBlockedScanReviewed={markBlockedScanReviewed}
         clearBlockedScanReviewed={clearBlockedScanReviewed}
-        supplier1688FormBindings={supplier1688FormBindings}
-        productFormBindings={productFormBindings}
+        supplier1688FormBindings={supplierBindings}
+        productFormBindings={productBindings}
       />
 
-      <ProductFormScansModal
-        provider={scanModalProvider}
-        onClose={(): void => setScanModalProvider(null)}
-        productId={productId}
-        product={product}
-      />
+      <ProductFormScansModal provider={state.scanModalProvider} onClose={(): void => state.setScanModalProvider(null)} productId={productId} product={ctx.product} />
     </div>
   );
 }

@@ -59,11 +59,21 @@ function RecommendedAmazonHeader({ scan, isExtractedFieldsExpanded, onToggleExtr
   );
 }
 
-function RecommendedAmazonScanDetails({ scan }: { scan: ProductScanRecord }): React.JSX.Element {
+function RecommendedAmazonMessage({ scan }: { scan: ProductScanRecord }): React.JSX.Element | null {
   const { infoMessage, errorMessage } = resolveScanMessages(scan);
-  const statusClassName = resolveStatusClassName(scan);
-  const statusLabel = resolveStatusLabel(scan);
+  const hasInfo = typeof infoMessage === 'string' && infoMessage !== '';
+  const hasError = typeof errorMessage === 'string' && errorMessage !== '';
+  if (!hasInfo && !hasError) return null;
 
+  const className = hasError ? 'border border-destructive/20 bg-destructive/10 text-destructive-foreground' : 'border border-border/50 bg-background/50 text-muted-foreground';
+  return (
+    <div className={`rounded-md px-3 py-2 text-sm leading-relaxed ${className}`}>
+      {errorMessage ?? infoMessage}
+    </div>
+  );
+}
+
+function RecommendedAmazonScanDetails({ scan }: { scan: ProductScanRecord }): React.JSX.Element {
   return (
     <div className='space-y-3 rounded-lg bg-muted/20 p-4'>
       <div className='flex items-start gap-4'>
@@ -74,17 +84,13 @@ function RecommendedAmazonScanDetails({ scan }: { scan: ProductScanRecord }): Re
           {renderScanMeta(scan)}
         </div>
         <div className='flex shrink-0 flex-col items-end gap-1.5'>
-          <span className={`inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-semibold ${statusClassName}`}>
-            {statusLabel}
+          <span className={`inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-semibold ${resolveStatusClassName(scan)}`}>
+            {resolveStatusLabel(scan)}
           </span>
           <span className='text-[10px] font-medium text-muted-foreground'>{formatTimestamp(scan.createdAt)}</span>
         </div>
       </div>
-      {(typeof infoMessage === 'string' && infoMessage !== '') || (typeof errorMessage === 'string' && errorMessage !== '') ? (
-        <div className={`rounded-md px-3 py-2 text-sm leading-relaxed ${typeof errorMessage === 'string' && errorMessage !== '' ? 'border border-destructive/20 bg-destructive/10 text-destructive-foreground' : 'border border-border/50 bg-background/50 text-muted-foreground'}`}>
-          {errorMessage ?? infoMessage}
-        </div>
-      ) : null}
+      <RecommendedAmazonMessage scan={scan} />
     </div>
   );
 }

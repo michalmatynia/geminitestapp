@@ -9,6 +9,7 @@ import type { Supplier1688FormBindings, ProductFormBindings } from './ProductFor
 type ProductFormRecommendedSummariesProps = {
   recommendedAmazonScan: ProductScanRecord | null;
   recommended1688Scan: ProductScanRecord | null;
+  preferred1688Scans: ProductScanRecord[];
   isExtractedFieldsExpanded: boolean;
   onToggleExtractedFields: (id: string) => void;
   is1688BlockedReviewed: boolean;
@@ -19,6 +20,7 @@ type ProductFormRecommendedSummariesProps = {
 export function ProductFormRecommendedSummaries({
   recommendedAmazonScan,
   recommended1688Scan,
+  preferred1688Scans,
   isExtractedFieldsExpanded,
   onToggleExtractedFields,
   is1688BlockedReviewed,
@@ -40,6 +42,7 @@ export function ProductFormRecommendedSummaries({
       {recommended1688Scan !== null ? (
         <Recommended1688Summary
           scan={recommended1688Scan}
+          preferredScans={preferred1688Scans}
           isBlockedReviewed={is1688BlockedReviewed}
           supplier1688FormBindings={supplier1688FormBindings}
         />

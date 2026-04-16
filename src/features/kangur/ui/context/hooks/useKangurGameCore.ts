@@ -22,11 +22,24 @@ import {
 
 type Setter<T> = Dispatch<SetStateAction<T>>;
 
+// useKangurGameCore manages all mutable game state through a single reducer.
+// It exposes stable setter callbacks (dispatch wrappers) so consumers can
+// update individual fields without triggering unnecessary re-renders, plus
+// compound actions (startSession, completeSession, resetGame) that update
+// multiple fields atomically.
+//
+// Two refs track pending timeouts so they can be cancelled on unmount:
+//  xpToastTimeoutRef  – auto-dismisses the XP toast after 2.8 s
+//  gameLoopTimeoutRef – drives the per-question countdown timer
 export function useKangurGameCore() {
+  // Ref for the auto-dismiss timeout of the XP reward toast.
   const xpToastTimeoutRef = useRef<number | null>(null);
+  // Ref for the game-loop countdown timer (question time limit).
   const gameLoopTimeoutRef = useRef<number | null>(null);
   const [state, dispatch] = useReducer(kangurGameCoreReducer, initialKangurGameCoreState);
 
+  // Cancel any pending timeouts when the component unmounts to prevent
+  // state updates on an unmounted tree.
   useEffect(
     () => () => {
       if (xpToastTimeoutRef.current) {
@@ -112,6 +125,9 @@ export function useKangurGameCore() {
     dispatch({ type: 'RESET_GAME', payload });
   }, []);
 
+  // runGameLoopTimer schedules a single-shot callback after `ms` milliseconds.
+  // Any previously scheduled timer is cancelled first so only one countdown
+  // is active at a time (prevents double-advance on rapid re-renders).
   const runGameLoopTimer = useCallback((fn: () => void, ms: number): void => {
     if (gameLoopTimeoutRef.current) {
       window.clearTimeout(gameLoopTimeoutRef.current);
@@ -122,6 +138,10 @@ export function useKangurGameCore() {
     }, ms);
   }, []);
 
+  // showXpToast displays the XP reward toast with earned XP, new badges,
+  // a breakdown of XP sources, next-badge progress, daily quest status, and
+  // an optional session recommendation. It auto-dismisses after 2.8 s.
+  // Any previously visible toast is replaced immediately.
   const showXpToast = useCallback((
     xpGained: number,
     newBadges: string[],

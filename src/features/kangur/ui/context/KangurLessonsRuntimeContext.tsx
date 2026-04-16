@@ -48,18 +48,36 @@ import type {
   KangurLessonsRuntimeStateContextValue,
 } from './KangurLessonsRuntimeContext.shared';
 
+// Shared empty map returned when no lesson template has been loaded yet.
+// Using a stable reference avoids unnecessary re-renders in consumers that
+// depend on the map reference.
 const EMPTY_LESSON_TEMPLATE_MAP = new Map<KangurLessonComponentId, KangurLessonTemplate>();
 
+// Split into two contexts so lesson UI components that only read state don't
+// re-render when action callbacks are recreated.
 const KangurLessonsRuntimeStateContext =
   createContext<KangurLessonsRuntimeStateContextValue | null>(null);
 const KangurLessonsRuntimeActionsContext =
   createContext<KangurLessonsRuntimeActionsContextValue | null>(null);
 
+// Resolves whether the current user can access parent-delegated assignments.
+// Falls back to checking for an active learner ID when the platform flag is
+// not yet available.
 const resolveKangurLessonsCanAccessParentAssignments = (
   auth: ReturnType<typeof useKangurAuth>,
   user: ReturnType<typeof useKangurAuth>['user']
 ): boolean => auth.canAccessParentAssignments ?? Boolean(user?.activeLearner?.id);
 
+// KangurLessonsRuntimeProvider is the central state container for the StudiQ
+// lessons experience. It owns:
+//
+//  - Lesson catalog fetching filtered by subject + age group
+//  - Lesson ordering (assignments-first, then catalog order)
+//  - Active lesson selection, document fetching, and template loading
+//  - Assignment resolution per lesson component (active + completed)
+//  - Focus-token-driven lesson auto-selection (deep-link / embed intent)
+//  - Existence guard: clears activeLessonId if the lesson is removed from
+//    the catalog (e.g. after a subject switch)
 export function KangurLessonsRuntimeProvider({
   children,
 }: {
@@ -77,6 +95,8 @@ export function KangurLessonsRuntimeProvider({
   const focusToken = useKangurFocusToken(basePath);
   const isAssignmentsReady = useKangurAssignmentsReady(canAccessParentAssignments);
   const progress = useKangurProgressState();
+  // Assignments are only fetched once the assignments-ready gate has opened
+  // (i.e. auth has resolved and the user has parent assignment access).
   const { assignments } = useKangurAssignments({
     enabled: isAssignmentsReady && canAccessParentAssignments,
     query: {
@@ -92,10 +112,15 @@ export function KangurLessonsRuntimeProvider({
     () => lessonsCatalogQuery.data?.sections ?? [],
     [lessonsCatalogQuery.data?.sections],
   );
+  // Build a set of component IDs present in the current catalog so assignment
+  // resolution can quickly filter out assignments for lessons that are no
+  // longer visible (e.g. after a subject or age-group switch).
   const lessonComponentIds = useMemo(
     () => new Set(lessons.map((lesson) => lesson.componentId)),
     [lessons]
   );
+  // Active assignments keyed by lesson component ID — used to surface
+  // assignment badges and reorder assigned lessons to the top of the catalog.
   const lessonAssignmentsByComponent = useMemo(
     () =>
       resolveLessonAssignmentsByComponent({
@@ -130,6 +155,9 @@ export function KangurLessonsRuntimeProvider({
     () => orderedLessons.find((lesson) => lesson.id === activeLessonId)?.componentId ?? null,
     [activeLessonId, orderedLessons]
   );
+  // Lesson template for the active lesson. Loaded on-demand when a lesson is
+  // selected; provides the component-level metadata (slides, activity config)
+  // needed to render the lesson content.
   const activeLessonTemplateQuery = useKangurLessonTemplate(activeLessonComponentId, {
     enabled: activeLessonComponentId !== null,
   });
@@ -141,6 +169,9 @@ export function KangurLessonsRuntimeProvider({
 
     return new Map([[activeLessonTemplate.componentId, activeLessonTemplate] as const]);
   }, [activeLessonTemplateQuery.data]);
+  // Lesson document for the active lesson. Contains the rich-text/block
+  // content authored in the CMS builder and rendered by
+  // KangurLessonDocumentRenderer.
   const activeLessonDocumentQuery = useKangurLessonDocument(activeLessonId, {
     enabled: activeLessonId !== null,
   });
@@ -237,6 +268,9 @@ export function KangurLessonsRuntimeProvider({
   );
 }
 
+// KangurLessonsRuntimeBoundary conditionally mounts the provider. If a
+// provider is already present in the tree the boundary passes children through
+// unchanged to avoid double-mounting lesson state.
 export function KangurLessonsRuntimeBoundary({
   enabled,
   children,
@@ -292,6 +326,9 @@ export const useOptionalKangurLessonsRuntime = (): KangurLessonsRuntimeContextVa
   }, [actions, state]);
 };
 
+// useOptionalKangurLessonTemplate looks up a lesson template by component ID
+// from the runtime state map without throwing if the context is absent. Used
+// by lesson components that may render outside the lessons runtime tree.
 export const useOptionalKangurLessonTemplate = (
   componentId: KangurLessonComponentId | null | undefined,
 ): KangurLessonTemplate | null => {

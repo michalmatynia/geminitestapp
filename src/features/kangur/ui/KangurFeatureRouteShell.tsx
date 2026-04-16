@@ -26,7 +26,12 @@ import { withKangurClientErrorSync } from '@/features/kangur/observability/clien
 
 import type { CSSProperties, JSX } from 'react';
 
+// CSS class added to <html> and <body> while the Kangur client shell is
+// mounted. Used by global CSS to apply shell-specific layout overrides.
 const KANGUR_CLIENT_SHELL_ACTIVE_CLASSNAME = 'kangur-client-shell-active';
+// Delay (ms) before showing the "Open the Kangur app?" prompt after a
+// dedicated-app launch intent is detected. Gives the URL replace time to
+// settle before the prompt appears.
 const KANGUR_DEDICATED_APP_LAUNCH_DELAY_MS = 160;
 
 type RouterSearchParamsLike = {
@@ -47,18 +52,27 @@ type KangurFeatureRouteShellPathState = {
   dedicatedAppHref: string | null;
 };
 
+// Strips Next.js layout-segment markers (route groups like "(app)" and
+// parallel-route slots like "@modal") from the selected segments array so
+// only real URL path segments remain.
 const normalizeSelectedKangurSegments = (segments: readonly string[]): string[] =>
   segments
     .map((segment) => segment.trim())
     .filter(Boolean)
     .filter((segment) => !segment.startsWith('(') && !segment.startsWith('@'));
 
+// Returns the current browser pathname during client-side rendering, or null
+// during SSR. Used as a fallback when Next.js usePathname() returns null.
 const resolveKangurFeatureRouteShellBrowserPathname = (): string | null =>
   typeof window === 'undefined' ? null : window.location.pathname?.trim() || null;
 
+// Returns the current browser search string (including "?") during CSR, or
+// an empty string during SSR.
 const resolveKangurFeatureRouteShellBrowserSearch = (): string =>
   typeof window === 'undefined' ? '' : window.location.search || '';
 
+// Detects whether the current device is capable of launching the native app.
+// Returns true for touch/mobile devices where the deep-link prompt makes sense.
 const isKangurDedicatedAppLaunchCapable = (): boolean => {
   if (typeof window === 'undefined') {
     return false;
@@ -80,6 +94,8 @@ const isKangurDedicatedAppLaunchCapable = (): boolean => {
   );
 };
 
+// Resolves the effective pathname for the shell. Prefers the Next.js router
+// pathname, falls back to the live browser pathname, then to the base path.
 const resolveKangurFeatureRouteShellPathname = ({
   browserPathname,
   normalizedBasePath,
@@ -90,6 +106,9 @@ const resolveKangurFeatureRouteShellPathname = ({
   pathname: string | null;
 }): string => pathname?.trim() || browserPathname || normalizedBasePath;
 
+// Resolves the URL slug segments for the current route. Prefers the
+// selectedLayoutSegments from Next.js (most accurate during RSC transitions),
+// then falls back to parsing the pathname directly.
 const resolveKangurFeatureRouteShellSlug = ({
   normalizedBasePath,
   resolvedPathname,
@@ -107,9 +126,16 @@ const resolveKangurFeatureRouteShellSlug = ({
   return getKangurSlugFromPathname(resolvedPathname, normalizedBasePath);
 };
 
+// The /login route is handled by a dedicated Next.js page outside the Kangur
+// app shell. Treat it as the root slug so the shell renders the home page
+// while the login page mounts above it.
 const resolveKangurFeatureRouteShellEffectiveSlug = (slug: string[]): string[] =>
   slug[0]?.trim().toLowerCase() === 'login' ? [] : slug;
 
+// Builds the canonical href for the current route by combining the resolved
+// pathname with the active search params. Uses a URL parse to normalise
+// trailing slashes. Falls back to a simple string concatenation if URL
+// construction fails (e.g. malformed pathname from an edge case).
 const resolveKangurFeatureRequestedHref = ({
   requestedPath,
   resolvedPathname,
@@ -142,6 +168,9 @@ const resolveKangurFeatureRequestedHref = ({
   );
 };
 
+// Merges the Next.js router search params with the live browser search string.
+// The browser string is used as a fallback because Next.js search params can
+// lag behind the browser URL during rapid navigations.
 const useActiveSearchParams = ({
   browserSearch,
   searchParams,
@@ -153,6 +182,13 @@ const useActiveSearchParams = ({
     return new URLSearchParams(searchParams?.toString() || browserSearch.replace(/^\?/, ''));
   }, [browserSearch, searchParams]);
 
+// Derives the three href variants needed by the shell:
+//  requestedHref         – full href including launch-intent params (used for
+//                          routing context so the app knows the original intent)
+//  sanitizedRequestedHref – href with launch-intent params stripped (used for
+//                           URL replacement so the intent doesn't persist in
+//                           the browser history)
+//  sanitizedSearchParams  – search params with launch-intent stripped
 const useResolvedRequestedHrefs = ({
   activeSearchParams,
   requestedPath,
@@ -195,6 +231,9 @@ const useResolvedRequestedHrefs = ({
   };
 };
 
+// Aggregates all path-related state for the shell into a single object.
+// This hook is the single source of truth for the current route, page key,
+// launch intent, and dedicated-app href.
 const useKangurFeatureRouteShellPathState = ({
   basePath,
   pathname,
@@ -251,6 +290,9 @@ const useKangurFeatureRouteShellPathState = ({
   };
 };
 
+// Handles the "dedicated_app" launch intent: strips the intent param from the
+// URL immediately (so it doesn't persist in history), then shows a bottom-sheet
+// prompt on touch devices offering to open the native Kangur app via deep link.
 const useKangurDedicatedAppLaunchPrompt = ({
   dedicatedAppHref,
   launchIntent,
@@ -303,6 +345,9 @@ const useKangurDedicatedAppLaunchPrompt = ({
   };
 };
 
+// Bottom-sheet prompt shown on touch devices when a dedicated-app launch
+// intent is detected. Lets the user choose between the web version and the
+// installed native app.
 function KangurDedicatedAppLaunchPrompt({
   pendingDedicatedAppHref,
   onDismiss,
@@ -344,6 +389,9 @@ function KangurDedicatedAppLaunchPrompt({
   );
 };
 
+// Adds/removes the shell-active CSS class on <html> and <body> for the
+// lifetime of the Kangur shell mount. Cleans up on unmount so the class
+// doesn't linger if the shell is conditionally rendered.
 function useSyncKangurFeatureRouteShellActiveClass(): void {
   useEffect(() => {
     if (typeof document === 'undefined') {
@@ -360,6 +408,20 @@ function useSyncKangurFeatureRouteShellActiveClass(): void {
   }, []);
 }
 
+// KangurFeatureRouteShell is the outermost client component for the StudiQ
+// web experience. It is rendered by the Next.js App Router layout and is
+// responsible for:
+//
+//  - Resolving the current page key and requested href from the URL
+//  - Detecting and handling the "dedicated_app" deep-link launch intent
+//  - Applying the storefront appearance (theme CSS variables) to the shell div
+//  - Providing routing context (KangurRoutingProvider) to the app tree
+//  - Rendering the dedicated-app launch prompt on eligible touch devices
+//
+// Props:
+//  basePath           – canonical Kangur base path (default: /kangur)
+//  embedded           – true when the shell is embedded inside a CMS page
+//  forceBodyScrollLock – locks body scroll (used by full-screen game views)
 export function KangurFeatureRouteShell({
   basePath = KANGUR_BASE_PATH,
   embedded = false,

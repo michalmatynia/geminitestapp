@@ -1,3 +1,18 @@
+/*
+ * StudiQ (Kangur) frontend layout
+ *
+ * Purpose: Server layout that bootstraps Kangur storefront appearance, surface
+ * styles and analytics. Keep this file server-only and avoid client-side hooks
+ * here so hydration remains predictable.
+ *
+ * Accessibility notes:
+ * - Surface bootstrap should not interfere with focus order.
+ * - Ensure that child pages render a single <main> landmark and provide a
+ *   meaningful H1 where appropriate (Kangur page shells enforce this via
+ *   KangurStandardPageLayout / KangurAliasAppLayout).
+ * - Do not add interactive UI here; keep interactions inside the page shell
+ *   components so keyboard and focus management can be localized and tested.
+ */
 import {
   getKangurStorefrontInitialState,
   getKangurSurfaceBootstrapStyle,

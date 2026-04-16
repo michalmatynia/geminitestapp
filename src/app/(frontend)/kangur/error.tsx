@@ -1,3 +1,14 @@
+/*
+ * StudiQ error page (client)
+ *
+ * Purpose: Client error boundary for Kangur storefront routes. This component
+ * reports client errors and renders an accessible error message.
+ *
+ * Accessibility notes:
+ * - The inner alert uses role='alert' and aria-live='assertive' so screen
+ *   readers announce critical failures immediately.
+ * - Keep buttons focusable and provide clear, descriptive labels for actions.
+ */
 'use client';
 
 import { useTranslations } from 'next-intl';

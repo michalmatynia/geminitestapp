@@ -9,12 +9,10 @@ export function useProductFormConnectionNames(): Map<string, string> {
 
   return useMemo((): Map<string, string> => {
     const names = new Map<string, string>();
-    if (integrationData === undefined || integrationData === null) return names;
+    if (integrationData === undefined) return names;
 
     integrationData.forEach((integration) => {
-      const connections = integration.connections;
-      
-      connections.forEach((connection) => {
+      integration.connections.forEach((connection) => {
         const id = connection.id.trim();
         const name = connection.name.trim();
         if (id === '' || name === '' || names.has(id)) return;

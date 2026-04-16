@@ -23,7 +23,7 @@ export const STATUS_CLASSES: Record<ProductScanStatus | 'enqueuing', string> = {
   failed: 'border-destructive/40 text-destructive',
 };
 
-export const isManualVerificationPending = (scan: Pick<ProductScanRecord, 'rawResult'> | null | undefined): boolean => {
+export function isManualVerificationPending(scan: Pick<ProductScanRecord, 'rawResult'> | null | undefined): boolean {
   const rawResult = scan?.rawResult;
   if (rawResult === null || rawResult === undefined || typeof rawResult !== 'object' || Array.isArray(rawResult)) {
     return false;
@@ -31,50 +31,60 @@ export const isManualVerificationPending = (scan: Pick<ProductScanRecord, 'rawRe
 
   const result = rawResult as Record<string, unknown>;
   return result['manualVerificationPending'] === true;
-};
+}
 
-const resolveStatusFeedbackParams = (scan: ProductScanRecord): Parameters<typeof resolveProductScanRunFeedbackPresentation>[1] => {
+function resolveEvalStatus(evalObj: { status: string } | null | undefined): string | null {
+  return typeof evalObj?.status === 'string' ? evalObj.status : null;
+}
+
+function resolveStatusFeedbackParams(scan: ProductScanRecord): Parameters<typeof resolveProductScanRunFeedbackPresentation>[1] {
   const amazonEval = scan.amazonEvaluation;
   const supplierEval = scan.supplierEvaluation;
 
+  const amazonStatus = resolveEvalStatus(amazonEval);
+  const amazonLanguage = typeof amazonEval?.languageAccepted === 'boolean' ? amazonEval.languageAccepted : null;
+
   return {
     manualVerificationPending: isManualVerificationPending(scan),
-    manualVerificationMessage: (scan.asinUpdateMessage ?? null) !== null ? scan.asinUpdateMessage : null,
-    amazonEvaluationStatus: typeof amazonEval?.status === 'string' ? amazonEval.status : null,
-    amazonEvaluationLanguageAccepted: typeof amazonEval?.languageAccepted === 'boolean' ? amazonEval.languageAccepted : null,
-    supplierEvaluationStatus: typeof supplierEval?.status === 'string' ? supplierEval.status : null,
+    manualVerificationMessage: scan.asinUpdateMessage ?? null,
+    amazonEvaluationStatus: amazonStatus,
+    amazonEvaluationLanguageAccepted: amazonLanguage,
+    supplierEvaluationStatus: resolveEvalStatus(supplierEval),
   };
-};
+}
 
-export const resolveStatusLabel = (scan: ProductScanRecord): string =>
-  resolveProductScanRunFeedbackPresentation(scan.status, resolveStatusFeedbackParams(scan)).label;
+export function resolveStatusLabel(scan: ProductScanRecord): string {
+  return resolveProductScanRunFeedbackPresentation(scan.status, resolveStatusFeedbackParams(scan)).label;
+}
 
-export const resolveStatusClassName = (scan: ProductScanRecord): string =>
-  resolveProductScanRunFeedbackPresentation(scan.status, resolveStatusFeedbackParams(scan)).badgeClassName ?? STATUS_CLASSES[scan.status];
+export function resolveStatusClassName(scan: ProductScanRecord): string {
+  const badge = resolveProductScanRunFeedbackPresentation(scan.status, resolveStatusFeedbackParams(scan)).badgeClassName;
+  return badge ?? STATUS_CLASSES[scan.status];
+}
 
-export const resolveActiveStatusMessage = (status: ProductScanStatus): string | null => {
+export function resolveActiveStatusMessage(status: ProductScanStatus): string | null {
   if (status === 'queued') return 'Amazon reverse image scan queued.';
   if (status === 'running') return 'Amazon reverse image scan running.';
   return null;
-};
+}
 
-export const normalizeComparableAsin = (value: string | null | undefined): string | null => {
+export function normalizeComparableAsin(value: string | null | undefined): string | null {
   if (typeof value !== 'string') return null;
   const normalized = value.trim().toUpperCase();
   return normalized !== '' ? normalized : null;
-};
+}
 
-export const normalizeComparableText = (value: string | null | undefined): string | null => {
+export function normalizeComparableText(value: string | null | undefined): string | null {
   if (typeof value !== 'string') return null;
   const normalized = value.trim();
   return normalized !== '' ? normalized : null;
-};
+}
 
-export const normalizeMetadataLabel = (value: string | null | undefined): string | null => {
+export function normalizeMetadataLabel(value: string | null | undefined): string | null {
   const normalized = normalizeComparableText(value);
   if (normalized === null) return null;
   return normalized.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
-};
+}
 
 export type AmazonScanMappedField = {
   sourceLabel: string;
@@ -106,10 +116,10 @@ export type ScanAttributeMapping =
       targetOptionLabels: string[];
     };
 
-export const roundToDecimals = (value: number, decimals: number): number => {
+export function roundToDecimals(value: number, decimals: number): number {
   const factor = 10 ** decimals;
   return Math.round(value * factor) / factor;
-};
+}
 
 const WEIGHT_UNIT_FACTORS: Record<string, number> = {
   kg: 1, kilogram: 1,
@@ -118,21 +128,23 @@ const WEIGHT_UNIT_FACTORS: Record<string, number> = {
   lb: 0.45359237, lbs: 0.45359237, pound: 0.45359237,
 };
 
-export const parseAmazonWeightKg = (value: string | null | undefined): number | null => {
+function resolveWeightFactor(unitRaw: string): number | null {
+  const unit = Object.keys(WEIGHT_UNIT_FACTORS).find((u) => unitRaw.startsWith(u));
+  return unit !== undefined ? (WEIGHT_UNIT_FACTORS[unit] ?? null) : null;
+}
+
+export function parseAmazonWeightKg(value: string | null | undefined): number | null {
   const raw = normalizeComparableText(value);
   if (raw === null) return null;
   const match = raw.toLowerCase().match(/([\d.,]+)\s*(kg|kilograms?|g|grams?|lb|lbs|pounds?|ounces?|oz)\b/i);
   if (match === null) return null;
 
-  const m1 = match[1];
-  const m2 = match[2];
-  const amount = Number.parseFloat((m1 ?? '').replace(/,/g, ''));
-  if (Number.isFinite(amount) === false || amount <= 0) return null;
+  const amount = Number.parseFloat((match[1] ?? '').replace(/,/g, ''));
+  if (!Number.isFinite(amount) || amount <= 0) return null;
 
-  const unitRaw = (m2 ?? '').toLowerCase();
-  const unit = Object.keys(WEIGHT_UNIT_FACTORS).find((u) => unitRaw.startsWith(u));
-  return unit !== undefined ? roundToDecimals(amount * (WEIGHT_UNIT_FACTORS[unit] ?? 0), 2) : null;
-};
+  const factor = resolveWeightFactor((match[2] ?? '').toLowerCase());
+  return factor !== null ? roundToDecimals(amount * factor, 2) : null;
+}
 
 function resolveDimensionFactor(unit: string): number {
   if (unit.startsWith('cm') || unit.startsWith('centimeter')) return 1;
@@ -140,9 +152,9 @@ function resolveDimensionFactor(unit: string): number {
   return 2.54;
 }
 
-export const parseAmazonDimensionsCm = (
+export function parseAmazonDimensionsCm(
   value: string | null | undefined
-): { sizeLength: number; sizeWidth: number; length: number } | null => {
+): { sizeLength: number; sizeWidth: number; length: number } | null {
   const raw = normalizeComparableText(value);
   if (raw === null) return null;
   const match = raw.toLowerCase().match(/([\d.,]+)\s*x\s*([\d.,]+)\s*x\s*([\d.,]+)\s*(cm|centimeters?|mm|millimeters?|in|inch|inches)\b/i);
@@ -152,13 +164,14 @@ export const parseAmazonDimensionsCm = (
   if (vals.some((v) => !Number.isFinite(v) || v <= 0)) return null;
 
   const factor = resolveDimensionFactor((match[4] ?? '').toLowerCase());
-  const [l, w, len] = vals;
-  if (l === undefined || w === undefined || len === undefined) return null;
+  const sizeL = vals[0] ?? 0;
+  const sizeW = vals[1] ?? 0;
+  const len = vals[2] ?? 0;
 
-  return { sizeLength: roundToDecimals(l * factor, 1), sizeWidth: roundToDecimals(w * factor, 1), length: roundToDecimals(len * factor, 1) };
-};
+  return { sizeLength: roundToDecimals(sizeL * factor, 1), sizeWidth: roundToDecimals(sizeW * factor, 1), length: roundToDecimals(len * factor, 1) };
+}
 
-const buildAmazonDetailsBaseFields = (details: NonNullable<ProductScanRecord['amazonDetails']>): AmazonScanMappedField[] => {
+function buildAmazonDetailsBaseFields(details: NonNullable<ProductScanRecord['amazonDetails']>): AmazonScanMappedField[] {
   const fields: Array<{ label: string; value: string | null | undefined }> = [
     { label: 'Brand', value: details.brand }, { label: 'Manufacturer', value: details.manufacturer },
     { label: 'Model number', value: details.modelNumber }, { label: 'Part number', value: details.partNumber },
@@ -172,113 +185,130 @@ const buildAmazonDetailsBaseFields = (details: NonNullable<ProductScanRecord['am
 
   return fields.map((f) => ({ sourceLabel: f.label, value: f.value ?? '' }))
     .filter((entry): entry is AmazonScanMappedField => normalizeComparableText(entry.value) !== null);
-};
+}
 
-export const buildAmazonMappedFields = (
+export function buildAmazonMappedFields(
   scan: Pick<ProductScanRecord, 'amazonDetails'>
-): AmazonScanMappedField[] => {
+): AmazonScanMappedField[] {
   const details = scan.amazonDetails;
-  if (details === undefined || details === null) return [];
+  if (details === null) return [];
 
-  const normalizedEntries = buildAmazonDetailsBaseFields(details);
-  const seenLabels = new Set(normalizedEntries.map((e) => normalizeMetadataLabel(e.sourceLabel)).filter((l): l is string => l !== null));
+  const base = buildAmazonDetailsBaseFields(details);
+  const seen = new Set(base.map((e) => normalizeMetadataLabel(e.sourceLabel)).filter((l): l is string => l !== null));
 
-  const rawEntries = details.attributes.map((e) => ({ sourceLabel: e.label, value: e.value }))
-    .filter((entry): entry is AmazonScanMappedField => {
-      const label = normalizeMetadataLabel(entry.sourceLabel);
-      return normalizeComparableText(entry.value) !== null && label !== null && !seenLabels.has(label);
+  const raw = details.attributes.map((e) => ({ sourceLabel: e.label, value: e.value }))
+    .filter((e): e is AmazonScanMappedField => {
+      const label = normalizeMetadataLabel(e.sourceLabel);
+      return normalizeComparableText(e.value) !== null && label !== null && !seen.has(label);
     });
 
-  return [...normalizedEntries, ...rawEntries];
-};
+  return [...base, ...raw];
+}
 
-export const resolveAmazonMappedFieldKey = (field: AmazonScanMappedField): string =>
-  [normalizeMetadataLabel(field.sourceLabel) ?? field.sourceLabel.trim().toLowerCase(), normalizeComparableText(field.value) ?? ''].join('::');
+export function resolveAmazonMappedFieldKey(field: AmazonScanMappedField): string {
+  const label = normalizeMetadataLabel(field.sourceLabel) ?? field.sourceLabel.trim().toLowerCase();
+  const val = normalizeComparableText(field.value) ?? '';
+  return `${label}::${val}`;
+}
 
-export const resolveUnmappedAmazonFields = (
+export function resolveUnmappedAmazonFields(
   scan: Pick<ProductScanRecord, 'amazonDetails'>,
   mappings: ScanAttributeMapping[]
-): AmazonScanMappedField[] => {
-  const sourceEntries = buildAmazonMappedFields(scan);
-  if (sourceEntries.length === 0) return [];
+): AmazonScanMappedField[] {
+  const source = buildAmazonMappedFields(scan);
+  if (source.length === 0) return [];
 
-  const mappedKeys = new Set(mappings.map((m) => resolveAmazonMappedFieldKey({ sourceLabel: m.sourceLabel, value: m.value })));
-  return sourceEntries.filter((entry) => !mappedKeys.has(resolveAmazonMappedFieldKey(entry)));
-};
+  const mapped = new Set(mappings.map((m) => resolveAmazonMappedFieldKey({ sourceLabel: m.sourceLabel, value: m.value })));
+  return source.filter((e) => !mapped.has(resolveAmazonMappedFieldKey(e)));
+}
 
-export const splitMultiValueTokens = (value: string): string[] =>
-  Array.from(new Set(value.split(/\s*(?:,|;|\||\/|\band\b)\s*/i).map((e) => normalizeMetadataLabel(e)).filter((e): e is string => e !== null)));
+export function splitMultiValueTokens(value: string): string[] {
+  const parts = value.split(/\s*(?:,|;|\||\/|\band\b)\s*/i);
+  return Array.from(new Set(parts.map((e) => normalizeMetadataLabel(e)).filter((e): e is string => e !== null)));
+}
 
-export const resolveCheckboxSetOptionMatch = (
+export function resolveCheckboxSetOptionMatch(
   field: ProductCustomFieldDefinition,
   sourceValue: string
-): { optionIds: string[]; optionLabels: string[] } | null => {
-  const optionsMap = new Map(field.options.map((o) => {
+): { optionIds: string[]; optionLabels: string[] } | null {
+  const map = new Map(field.options.map((o) => {
     const label = normalizeMetadataLabel(o.label);
     return label !== null ? [label, { id: o.id, label: o.label }] as const : null;
   }).filter((entry): entry is readonly [string, { id: string; label: string }] => entry !== null));
 
   const exact = normalizeMetadataLabel(sourceValue);
-  const exactOption = exact !== null ? optionsMap.get(exact) : undefined;
-  if (exactOption !== undefined) return { optionIds: [exactOption.id], optionLabels: [exactOption.label] };
+  const exactOpt = exact !== null ? map.get(exact) : undefined;
+  if (exactOpt !== undefined) return { optionIds: [exactOpt.id], optionLabels: [exactOpt.label] };
 
   const tokens = splitMultiValueTokens(sourceValue);
   if (tokens.length < 2) return null;
 
-  const matched = tokens.map((t) => optionsMap.get(t)).filter((o): o is { id: string; label: string } => o !== undefined);
-  if (matched.length !== tokens.length) return null;
+  const matched = tokens.map((t) => map.get(t)).filter((o): o is { id: string; label: string } => o !== undefined);
+  return matched.length === tokens.length ? { optionIds: matched.map((o) => o.id), optionLabels: matched.map((o) => o.label) } : null;
+}
 
-  return { optionIds: matched.map((o) => o.id), optionLabels: matched.map((o) => o.label) };
-};
-
-export const haveSameSelectedOptions = (
+export function haveSameSelectedOptions(
   left: readonly string[] | null | undefined,
   right: readonly string[] | null | undefined
-): boolean => {
+): boolean {
   const leftSet = new Set(Array.isArray(left) ? left : []);
   const rightSet = new Set(Array.isArray(right) ? right : []);
-  return leftSet.size === rightSet.size && [...leftSet].every((value) => rightSet.has(value));
-};
+  return leftSet.size === rightSet.size && [...leftSet].every((v) => rightSet.has(v));
+}
 
-export const formatCustomFieldSelectedOptionLabels = (
+export function formatCustomFieldSelectedOptionLabels(
   field: ProductCustomFieldDefinition,
   optionIds: readonly string[] | null | undefined
-): string | null => {
+): string | null {
   if (field.type !== 'checkbox_set' || !Array.isArray(optionIds) || optionIds.length === 0) return null;
 
   const labelMap = new Map<string, string>(field.options.map((o) => [o.id, o.label]));
   const labels = optionIds.filter((id): id is string => typeof id === 'string')
     .map((id) => labelMap.get(id))
-    .filter((label): label is string => label !== undefined && normalizeComparableText(label) !== null);
+    .filter((l): l is string => l !== undefined && normalizeComparableText(l) !== null);
 
   return labels.length > 0 ? labels.join(', ') : null;
-};
+}
 
-export const formatTimestamp = (value: string | null | undefined): string => {
+export function formatTimestamp(value: string | null | undefined): string {
   if (typeof value !== 'string' || value === '') return 'Unknown time';
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime()) ? value : parsed.toLocaleString();
-};
+}
 
-export const renderScanMeta = (scan: ProductScanRecord): React.JSX.Element | null => {
-  const asinValue = scan.asin;
-  const asinPart = typeof asinValue === 'string' && asinValue !== '' ? `ASIN ${asinValue}` : null;
-  const priceValue = scan.price;
-  const pricePart = typeof priceValue === 'string' && priceValue !== '' ? `Price ${priceValue}` : null;
+export function renderScanMeta(scan: ProductScanRecord): React.JSX.Element | null {
+  const asinPart = typeof scan.asin === 'string' && scan.asin !== '' ? `ASIN ${scan.asin}` : null;
+  const pricePart = typeof scan.price === 'string' && scan.price !== '' ? `Price ${scan.price}` : null;
   const parts = [asinPart, pricePart].filter((p): p is string => p !== null);
   return parts.length > 0 ? <p className='text-xs text-muted-foreground'>{parts.join(' · ')}</p> : null;
-};
+}
 
-export const resolveScanMessages = (
+function resolveCompletedMessages(asin: string | null): { infoMessage: string | null; errorMessage: string | null } {
+  return { infoMessage: asin, errorMessage: null };
+}
+
+function resolveNoMatchMessages(asin: string | null, error: string | null): { infoMessage: string | null; errorMessage: string | null } {
+  return { infoMessage: asin ?? error, errorMessage: null };
+}
+
+function resolveFailureMessages(asin: string | null, error: string | null): { infoMessage: string | null; errorMessage: string | null } {
+  return { infoMessage: null, errorMessage: error ?? asin };
+}
+
+function resolveActiveMessages(status: ProductScanStatus, asin: string | null, error: string | null): { infoMessage: string | null; errorMessage: string | null } {
+  return { infoMessage: asin ?? resolveActiveStatusMessage(status), errorMessage: error };
+}
+
+function resolveMessagesByStatus(status: ProductScanStatus, asin: string | null, error: string | null): { infoMessage: string | null; errorMessage: string | null } {
+  if (status === 'completed') return resolveCompletedMessages(asin);
+  if (status === 'no_match') return resolveNoMatchMessages(asin, error);
+  if (status === 'conflict' || status === 'failed') return resolveFailureMessages(asin, error);
+  if (isProductScanActiveStatus(status)) return resolveActiveMessages(status, asin, error);
+  return { infoMessage: asin, errorMessage: error };
+}
+
+export function resolveScanMessages(
   scan: ProductScanRecord
-): { infoMessage: string | null; errorMessage: string | null } => {
-  const asinMsg = (scan.asinUpdateMessage ?? null) !== null ? scan.asinUpdateMessage : null;
-  const scanErr = (scan.error ?? null) !== null ? scan.error : null;
-
-  if (scan.status === 'completed') return { infoMessage: asinMsg, errorMessage: null };
-  if (scan.status === 'no_match') return { infoMessage: asinMsg ?? scanErr, errorMessage: null };
-  if (scan.status === 'conflict' || scan.status === 'failed') return { infoMessage: null, errorMessage: scanErr ?? asinMsg };
-
-  const activeMsg = isProductScanActiveStatus(scan.status) ? (asinMsg ?? resolveActiveStatusMessage(scan.status)) : asinMsg;
-  return { infoMessage: activeMsg, errorMessage: scanErr };
-};
+): { infoMessage: string | null; errorMessage: string | null } {
+  return resolveMessagesByStatus(scan.status, scan.asinUpdateMessage ?? null, scan.error ?? null);
+}

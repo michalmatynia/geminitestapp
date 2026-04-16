@@ -1,12 +1,13 @@
 'use client';
 
-import { useMemo } from 'react';
 import type { UseFormSetValue, UseFormGetValues } from 'react-hook-form';
 import type { ProductFormData } from '@/shared/contracts/products/drafts';
 import type { ProductFormImageContextType } from '@/features/products/context/ProductFormImageContext';
 import type { ProductParameterDefinition, ProductParameterValue } from '@/shared/contracts/products/parameters';
 import type { ProductCustomFieldDefinition, ProductCustomFieldValue } from '@/shared/contracts/products/custom-fields';
 import type { Supplier1688FormBindings, ProductFormBindings } from './ProductFormScans.types';
+import { useSupplier1688FormBindings } from './useSupplier1688FormBindings';
+import { useProductGeneralFormBindings } from './useProductGeneralFormBindings';
 
 type UseProductFormBindingsProps = {
   getValues: UseFormGetValues<ProductFormData>;
@@ -23,72 +24,26 @@ type UseProductFormBindingsProps = {
   toggleSelectedOption: (id: string, optId: string) => void;
 };
 
-export function useProductFormBindings({
-  getValues,
-  setValue,
-  productFormImages,
-  parameters,
-  parameterValues,
-  addParameterValue,
-  updateParameterId,
-  updateParameterValue,
-  customFields,
-  customFieldValues,
-  setTextValue,
-  toggleSelectedOption,
-}: UseProductFormBindingsProps): { supplier1688FormBindings: Supplier1688FormBindings; productFormBindings: ProductFormBindings } {
-  const applyProductFormValue = <TField extends keyof ProductFormData>(
-    field: TField,
-    value: ProductFormData[TField]
-  ): void => {
-    if (typeof setValue !== 'function') return;
-    setValue(field, value, { shouldDirty: true, shouldTouch: true, shouldValidate: true });
-  };
+export function useProductFormBindings(props: UseProductFormBindingsProps): { supplier1688FormBindings: Supplier1688FormBindings; productFormBindings: ProductFormBindings } {
+  const supplier1688FormBindings = useSupplier1688FormBindings({
+    getValues: props.getValues,
+    setValue: props.setValue,
+    productFormImages: props.productFormImages,
+  });
 
-  const getCurrentProductFormValue = <TField extends keyof ProductFormData>(
-    field: TField
-  ): ProductFormData[TField] | undefined =>
-    typeof getValues === 'function' ? getValues(field) : undefined;
-
-  const supplier1688FormBindings: Supplier1688FormBindings = useMemo(() => ({
-    getTextFieldValue: (field: 'supplierName' | 'supplierLink' | 'priceComment'): string | null => {
-      const val = getCurrentProductFormValue(field);
-      return typeof val === 'string' ? val : null;
-    },
-    applyTextField: (field: 'supplierName' | 'supplierLink' | 'priceComment', val: string): void => {
-      applyProductFormValue(field, val);
-    },
-    imageLinks: productFormImages?.imageLinks,
-    imageBase64s: productFormImages?.imageBase64s,
-    setImageLinkAt: productFormImages?.setImageLinkAt,
-    setImageBase64At: productFormImages?.setImageBase64At,
-  }), [productFormImages, getValues, setValue]);
-
-  const productFormBindings: ProductFormBindings = useMemo(() => ({
-    getTextFieldValue: (field: 'asin' | 'ean' | 'gtin'): string | null => {
-      const val = getCurrentProductFormValue(field);
-      return typeof val === 'string' ? val : null;
-    },
-    getNumberFieldValue: (field: 'weight' | 'sizeLength' | 'sizeWidth' | 'length'): number | null => {
-      const val = getCurrentProductFormValue(field);
-      return typeof val === 'number' ? val : null;
-    },
-    applyTextField: (field: 'asin' | 'ean' | 'gtin', val: string): void => {
-      applyProductFormValue(field, val);
-    },
-    applyNumberField: (field: 'weight' | 'sizeLength' | 'sizeWidth' | 'length', val: number): void => {
-      applyProductFormValue(field, val);
-    },
-    parameters,
-    parameterValues,
-    addParameterValue,
-    updateParameterId,
-    updateParameterValue,
-    customFields,
-    customFieldValues,
-    setTextValue,
-    toggleSelectedOption,
-  }), [parameters, parameterValues, addParameterValue, updateParameterId, updateParameterValue, customFields, customFieldValues, setTextValue, toggleSelectedOption, getValues, setValue]);
+  const productFormBindings = useProductGeneralFormBindings({
+    getValues: props.getValues,
+    setValue: props.setValue,
+    parameters: props.parameters,
+    parameterValues: props.parameterValues,
+    addParameterValue: props.addParameterValue,
+    updateParameterId: props.updateParameterId,
+    updateParameterValue: props.updateParameterValue,
+    customFields: props.customFields,
+    customFieldValues: props.customFieldValues,
+    setTextValue: props.setTextValue,
+    toggleSelectedOption: props.toggleSelectedOption,
+  });
 
   return { supplier1688FormBindings, productFormBindings };
 }

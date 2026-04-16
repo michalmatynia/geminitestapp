@@ -1,3 +1,15 @@
+/*
+ * Kangur server entrypoint
+ *
+ * Purpose: Wire up Kangur server-side integrations such as settings and AI
+ * context providers and re-export server-only services. Keep heavy server
+ * initialization here; avoid importing client-only modules to prevent
+ * circular dependencies.
+ *
+ * Accessibility guidance: This module exposes server helpers used by page
+ * shells and bootstrapping scripts. Ensure server-rendered shells include
+ * accessible landmarks, meta tags, and skip links when composing responses.
+ */
 import { contextRegistryEngine } from '@/features/ai/server';
 import { kangurRuntimeContextProvider } from '@/features/kangur/server/context-registry/kangur-ai-context-provider';
 import { registerSettingsProvider } from '@/shared/lib/db/settings-registry';

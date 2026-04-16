@@ -35,12 +35,17 @@ import type {
 import { useKangurGameCore } from './hooks/useKangurGameCore';
 import { useKangurGameRuntimeActions as useKangurGameRuntimeActionHandlers } from './hooks/useKangurGameRuntimeActions';
 
+// Split into two contexts so game UI components that only read state don't
+// re-render when action callbacks are recreated.
 const KangurGameRuntimeStateContext = createContext<KangurGameRuntimeStateContextValue | null>(
   null
 );
 const KangurGameRuntimeActionsContext =
   createContext<KangurGameRuntimeActionsContextValue | null>(null);
 
+// Resolves whether the current user can access parent-delegated assignments.
+// Falls back to checking for an active learner ID when the platform flag is
+// not yet available (e.g. during the auth loading phase).
 const resolveCanAccessParentAssignments = ({
   canAccessParentAssignments,
   isAuthenticated,
@@ -48,6 +53,18 @@ const resolveCanAccessParentAssignments = ({
 }: ReturnType<typeof useKangurAuth>): boolean =>
   canAccessParentAssignments ?? (isAuthenticated && Boolean(user?.activeLearner?.id));
 
+// KangurGameRuntimeProvider is the central state container for the StudiQ
+// game experience. It owns:
+//
+//  - Core game loop state (screen, operation, difficulty, questions, score,
+//    timing) via useKangurGameCore
+//  - All game action handlers (start, answer, restart, home, etc.) via
+//    useKangurGameRuntimeActions
+//  - Parent-delegated assignment resolution filtered by the active subject
+//  - Quick-start intent handling (deep-link or embed query params) via
+//    useKangurGameQuickStart
+//  - Derived values: current question, time limit, practice assignment
+//    selection for the active screen
 export function KangurGameRuntimeProvider({
   children,
 }: {
@@ -98,6 +115,9 @@ export function KangurGameRuntimeProvider({
     runGameLoopTimer,
   } = useKangurGameCore();
 
+  // Only fetch assignments when the user has a parent account with delegated
+  // assignment access. Avoids unnecessary API calls for guest/learner-only
+  // sessions.
   const { assignments: delegatedAssignments, refresh: refreshAssignments } = useKangurAssignments({
     enabled: canAccessParentAssignments,
     query: {
@@ -105,10 +125,14 @@ export function KangurGameRuntimeProvider({
     },
   });
 
+  // Filter assignments to the active subject so the game only surfaces
+  // operations and recommendations relevant to what the learner is studying.
   const subjectAssignments = useMemo(
     () => filterKangurAssignmentsBySubject(delegatedAssignments, subject),
     [delegatedAssignments, subject]
   );
+  // Use the actual question count from the generated set when available,
+  // otherwise fall back to the default TOTAL_QUESTIONS constant.
   const totalQuestions = questions.length > 0 ? questions.length : TOTAL_QUESTIONS;
   const {
     playerName,
@@ -175,16 +199,24 @@ export function KangurGameRuntimeProvider({
   });
 
   const currentQuestion = questions[currentQuestionIndex] ?? null;
+  // Per-difficulty time limit (seconds) for answering each question. Drives
+  // the countdown timer shown in the game UI.
   const questionTimeLimit = DIFFICULTY_CONFIG[difficulty]?.timeLimit ?? 15;
 
+  // Map assignments by operation so the game setup screen can show which
+  // operations have active parent-delegated practice assignments.
   const practiceAssignmentsByOperation = useMemo(
     () => mapKangurPracticeAssignmentsByOperation(subjectAssignments),
     [subjectAssignments]
   );
+  // The single active practice assignment for the current screen + operation
+  // combination. Shown as a banner/chip during gameplay.
   const activePracticeAssignment = useMemo(
     () => selectKangurPracticeAssignmentForScreen(subjectAssignments, screen, operation),
     [operation, screen, subjectAssignments]
   );
+  // The practice assignment shown on the result screen. Only resolved when the
+  // game has ended and an operation is active.
   const resultPracticeAssignment = useMemo(
     () =>
       screen === 'result' && operation
@@ -286,6 +318,9 @@ export function KangurGameRuntimeProvider({
   );
 }
 
+// KangurGameRuntimeBoundary conditionally mounts the provider. If a provider
+// is already present in the tree (e.g. from a parent route), the boundary
+// passes children through unchanged to avoid double-mounting game state.
 export function KangurGameRuntimeBoundary({
   enabled,
   children,

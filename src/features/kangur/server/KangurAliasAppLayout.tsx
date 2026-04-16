@@ -1,3 +1,17 @@
+/*
+ * Kangur alias app layout (server)
+ *
+ * Purpose: Server-side layout used when Kangur is embedded as an alias route
+ * inside the storefront. Responsibilities:
+ * - Inject auth bootstrap scripts safely into the head
+ * - Render the server Kangur shell to ensure SSR content contains landmarks and
+ *   accessible markup
+ * - Mount the client boundary for interactive route shells
+ *
+ * Accessibility notes:
+ * - Scripts injected here should not trap focus; ensure the rendered server
+ *   shell includes a focusable main target and skip link bindings.
+ */
 import { Suspense } from 'react';
 import { headers } from 'next/headers';
 import { connection } from 'next/server';

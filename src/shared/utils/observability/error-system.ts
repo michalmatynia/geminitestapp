@@ -12,7 +12,6 @@ import { resolveErrorUserMessage } from '@/shared/errors/error-catalog';
 import type { ResolvedError } from '@/shared/contracts/base';
 import { reportObservabilityInternalError } from '@/shared/utils/observability/internal-observability-fallback';
 
-
 export const ErrorCategories = ERROR_CATEGORY;
 export type { ErrorCategory, ErrorContext };
 
@@ -42,6 +41,16 @@ const logErrorSystemFailure = async (
   }
 };
 
+const safeLogErrorSystemFailure = (
+  message: string,
+  error: unknown,
+  level: 'error' | 'warn' = 'error'
+): void => {
+  logErrorSystemFailure(message, error, level).catch(() => {
+    // Ultimate fallback is ignored
+  });
+};
+
 async function isLoggingEnabled(type: 'info' | 'activity' | 'error'): Promise<boolean> {
   if (typeof window !== 'undefined') return true;
   try {
@@ -56,6 +65,18 @@ async function isLoggingEnabled(type: 'info' | 'activity' | 'error'): Promise<bo
     return true;
   }
 }
+
+const getCategory = async (contextCategory: string | undefined, errorOrMessage: unknown): Promise<string | undefined> => {
+  if (contextCategory !== undefined && contextCategory.length > 0) return contextCategory;
+  if (typeof window !== 'undefined') return contextCategory;
+  try {
+    const { classifyError } = await import('@/shared/errors/error-classifier');
+    return classifyError(errorOrMessage);
+  } catch (classifyErr) {
+    safeLogErrorSystemFailure('[ErrorSystem] Failed to classify.', classifyErr, 'warn');
+    return contextCategory;
+  }
+};
 
 /**
  * Centralized error handling system.
@@ -72,20 +93,10 @@ export const ErrorSystem = {
     if (!(await isLoggingEnabled('error'))) return;
     try {
       const { logSystemEvent } = await import('@/shared/lib/observability/system-logger');
-      const isBrowser = typeof window !== 'undefined';
-      let category = context.category;
-      
-      if (!category && !isBrowser) {
-        try {
-          const { classifyError } = await import('@/shared/errors/error-classifier');
-          category = classifyError(error);
-        } catch (classifyErr) {
-          logErrorSystemFailure('[ErrorSystem] Failed to classify error.', classifyErr, 'warn');
-        }
-      }
+      const category = await getCategory(context.category, error);
 
       const message = error instanceof Error ? error.message : String(error);
-      const service = context.service || 'unknown';
+      const service = context.service !== undefined && context.service.length > 0 ? context.service : 'unknown';
 
       // 1. Log to System Log (DB + Console)
       await logSystemEvent({
@@ -102,7 +113,7 @@ export const ErrorSystem = {
         },
       });
 
-      if (!isBrowser) {
+      if (typeof window === 'undefined') {
         // 2. Domain-Specific Logging
         await (await import('./error-enricher-registry')).notifyErrorEnrichers(error, {
           ...context,
@@ -112,7 +123,7 @@ export const ErrorSystem = {
         });
       }
     } catch (importError) {
-      await logErrorSystemFailure('[ErrorSystem] Failed to import dependencies.', importError);
+      safeLogErrorSystemFailure('[ErrorSystem] Failed to import dependencies.', importError);
     }
   },
 
@@ -123,18 +134,8 @@ export const ErrorSystem = {
     if (!(await isLoggingEnabled('error'))) return;
     try {
       const { logSystemEvent } = await import('@/shared/lib/observability/system-logger');
-      const isBrowser = typeof window !== 'undefined';
-      const service = context.service || 'unknown';
-      let category = context.category;
-
-      if (!category && !isBrowser) {
-        try {
-          const { classifyError } = await import('@/shared/errors/error-classifier');
-          category = classifyError(message);
-        } catch (classifyErr) {
-          logErrorSystemFailure('[ErrorSystem] Failed to classify warning.', classifyErr, 'warn');
-        }
-      }
+      const service = context.service !== undefined && context.service.length > 0 ? context.service : 'unknown';
+      const category = await getCategory(context.category, message);
 
       await logSystemEvent({
         level: 'warn',
@@ -146,7 +147,7 @@ export const ErrorSystem = {
         },
       });
 
-      if (!isBrowser) {
+      if (typeof window === 'undefined') {
         // Domain-Specific Logging
         await (await import('./error-enricher-registry')).notifyErrorEnrichers(message, {
           ...context,
@@ -156,7 +157,7 @@ export const ErrorSystem = {
         });
       }
     } catch (importError) {
-      await logErrorSystemFailure('[ErrorSystem] Failed to import dependencies.', importError);
+      safeLogErrorSystemFailure('[ErrorSystem] Failed to import dependencies.', importError);
     }
   },
 
@@ -167,7 +168,7 @@ export const ErrorSystem = {
     if (!(await isLoggingEnabled('error'))) return;
     try {
       const { logSystemEvent } = await import('@/shared/lib/observability/system-logger');
-      const service = context.service || 'unknown';
+      const service = context.service !== undefined && context.service.length > 0 ? context.service : 'unknown';
 
       await logSystemEvent({
         level: 'warn',
@@ -179,7 +180,7 @@ export const ErrorSystem = {
         },
       });
     } catch (importError) {
-      await logErrorSystemFailure('[ErrorSystem] Failed to import dependencies.', importError);
+      safeLogErrorSystemFailure('[ErrorSystem] Failed to import dependencies.', importError);
     }
   },
 
@@ -190,18 +191,8 @@ export const ErrorSystem = {
     if (!(await isLoggingEnabled('info'))) return;
     try {
       const { logSystemEvent } = await import('@/shared/lib/observability/system-logger');
-      const isBrowser = typeof window !== 'undefined';
-      const service = context.service || 'unknown';
-      let category = context.category;
-
-      if (!category && !isBrowser) {
-        try {
-          const { classifyError } = await import('@/shared/errors/error-classifier');
-          category = classifyError(message);
-        } catch (classifyErr) {
-          logErrorSystemFailure('[ErrorSystem] Failed to classify info event.', classifyErr, 'warn');
-        }
-      }
+      const service = context.service !== undefined && context.service.length > 0 ? context.service : 'unknown';
+      const category = await getCategory(context.category, message);
 
       await logSystemEvent({
         level: 'info',
@@ -213,7 +204,7 @@ export const ErrorSystem = {
         },
       });
     } catch (importError) {
-      await logErrorSystemFailure('[ErrorSystem] Failed to import dependencies.', importError);
+      safeLogErrorSystemFailure('[ErrorSystem] Failed to import dependencies.', importError);
     }
   },
 
@@ -230,9 +221,10 @@ export const ErrorSystem = {
         ? (contextCategory as ErrorCategory)
         : classifySharedError(error);
 
-    const baseResolved: ResolvedError | null = isAppError(error)
-      ? {
-        errorId: context.errorId || `err_${Date.now()}`,
+    let baseResolved: ResolvedError | null = null;
+    if (isAppError(error)) {
+      baseResolved = {
+        errorId: context.errorId !== undefined && context.errorId.length > 0 ? context.errorId : `err_${Date.now()}`,
         message: error.message,
         code: error.code,
         httpStatus: error.httpStatus,
@@ -244,19 +236,22 @@ export const ErrorSystem = {
         ...(typeof error.retryAfterMs === 'number' ? { retryAfterMs: error.retryAfterMs } : {}),
         ...(error.meta ? { meta: error.meta } : {}),
         cause: error.cause,
-      }
-      : null;
-    const userMessage = context.userMessage || (baseResolved ? resolveErrorUserMessage(baseResolved) : null);
+      };
+    }
+    
+    const userMessageFallback = baseResolved !== null ? resolveErrorUserMessage(baseResolved) : null;
+    const userMessage = context.userMessage !== undefined && context.userMessage.length > 0 ? context.userMessage : userMessageFallback;
 
     return {
-      id: context.errorId || `err_${Date.now()}`,
+      id: context.errorId !== undefined && context.errorId.length > 0 ? context.errorId : `err_${Date.now()}`,
       timestamp: new Date().toISOString(),
       category,
       message,
       userMessage:
-        userMessage ||
-        'An unexpected error occurred. Please try again or contact support.',
-      service: context.service || 'unknown',
+        userMessage !== null && userMessage.length > 0
+          ? userMessage
+          : 'An unexpected error occurred. Please try again or contact support.',
+      service: context.service !== undefined && context.service.length > 0 ? context.service : 'unknown',
       suggestedActions: getSharedSuggestedActions(category, error),
       context: {
         ...context,

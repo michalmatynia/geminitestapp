@@ -2,7 +2,7 @@ const ABORT_ERROR_NAMES = new Set(['AbortError', 'CanceledError', 'CancelError']
 
 const hasAbortLikeMessage = (value: string): boolean => {
   const normalized = value.trim().toLowerCase();
-  if (!normalized) return false;
+  if (normalized.length === 0) return false;
   return (
     normalized === 'aborted' ||
     normalized.includes('signal is aborted') ||
@@ -12,18 +12,18 @@ const hasAbortLikeMessage = (value: string): boolean => {
 };
 
 const readName = (value: unknown): string | null => {
-  if (!value || typeof value !== 'object') return null;
+  if (value === null || value === undefined || typeof value !== 'object') return null;
   const candidate = (value as { name?: unknown }).name;
   return typeof candidate === 'string' ? candidate : null;
 };
 
 const readMessage = (value: unknown): string | null => {
-  if (!value || typeof value !== 'object') return null;
+  if (value === null || value === undefined || typeof value !== 'object') return null;
   const candidate = (value as { message?: unknown }).message;
   return typeof candidate === 'string' ? candidate : null;
 };
 
-const hasAbortLikeName = (name: string | null): boolean => Boolean(name && ABORT_ERROR_NAMES.has(name));
+const hasAbortLikeName = (name: string | null): boolean => Boolean(name !== null && ABORT_ERROR_NAMES.has(name));
 
 const isAbortLikeObjectError = (error: unknown): boolean => {
   const name = readName(error);
@@ -35,7 +35,7 @@ const isAbortLikeObjectError = (error: unknown): boolean => {
 };
 
 export const isAbortLikeError = (error: unknown, signal?: AbortSignal | null): boolean => {
-  if (signal?.aborted) return true;
+  if (signal?.aborted === true) return true;
 
   if (error instanceof DOMException && hasAbortLikeName(error.name)) {
     return true;

@@ -63,8 +63,18 @@ export default async function RootLayout({
       ? messages['Common']['skipToMainContent']
       : 'Skip to main content';
 
+  const siteTitle =
+    typeof messages['Routes'] === 'object' &&
+    messages['Routes'] !== null &&
+    typeof (messages['Routes'] as any)['siteTitle'] === 'string'
+      ? (messages['Routes'] as any)['siteTitle']
+      : 'Gemini App';
+
   return (
-    <html lang={locale} data-app-font-set={fontSetId} suppressHydrationWarning>
+    <html lang={locale || 'en'} data-app-font-set={fontSetId} suppressHydrationWarning>
+      <head>
+        <title>{siteTitle}</title>
+      </head>
       <body suppressHydrationWarning className={cn('max-w-full overflow-x-hidden font-sans')}>
         {sanitizedLiteSettingsScript ? (
           <script
@@ -76,9 +86,12 @@ export default async function RootLayout({
         <AppIntlProvider locale={locale} messages={messages}>
           <AccessibilityProvider>
             <SkipToContentLink>{skipToMainContentLabel}</SkipToContentLink>
-            <Suspense fallback={<main id='kangur-main-content' className='min-h-screen' />}>
-              <RootClientShell>{children}</RootClientShell>
-            </Suspense>
+            <main id='kangur-main-content' className='min-h-screen' role='main'>
+              <h1 className='sr-only'>{siteTitle}</h1>
+              <Suspense fallback={<div className='min-h-screen' aria-busy='true' />}>
+                <RootClientShell>{children}</RootClientShell>
+              </Suspense>
+            </main>
           </AccessibilityProvider>
         </AppIntlProvider>
       </body>

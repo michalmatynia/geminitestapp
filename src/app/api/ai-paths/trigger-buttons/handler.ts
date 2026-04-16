@@ -90,9 +90,13 @@ const shouldSilenceRecoverableStarterPathConfigError = (args: {
 }): boolean => {
   if (
     !isAppError(args.error) ||
-    args.error.code !== AppErrorCodes.validation ||
-    args.error.meta?.['source'] !== 'ai_paths.path_config'
+    args.error.code !== AppErrorCodes.validation
   ) {
+    return false;
+  }
+
+  const source = args.error.meta?.['source'];
+  if (source !== 'ai_paths.path_config' && source !== 'ai_paths.trigger_payload') {
     return false;
   }
 

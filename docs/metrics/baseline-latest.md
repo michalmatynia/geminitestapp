@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-15'
+last_reviewed: '2026-04-16'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,13 +8,13 @@ canonical: true
 ---
 # Architecture & Performance Baseline
 
-Generated at: 2026-04-15T14:56:08.509Z
+Generated at: 2026-04-16T05:55:26.058Z
 
 ## Snapshot
 
-- Source files: 10457
-- Source lines: 1781962
-- use client files: 1782
+- Source files: 10465
+- Source lines: 1785332
+- use client files: 1784
 - Files >= 1000 LOC: 19
 - Files >= 1500 LOC: 9
 - Largest file: `src/features/products/server/parts/product-scan-amazon-script.part1.ts` (2939 LOC)
@@ -62,20 +62,20 @@ Generated at: 2026-04-15T14:56:08.509Z
 | `src/features/products/components/list/ProductAmazonScanModal.test.tsx` | 4175 |
 | `src/features/products/components/form/ProductFormScans.test.tsx` | 3065 |
 | `src/features/products/server/parts/product-scan-amazon-script.part1.ts` | 2939 |
+| `src/features/products/components/list/ProductAmazonScanModal.tsx` | 2272 |
 | `src/features/products/server/parts/product-scan-1688-script.part1.ts` | 2227 |
 | `src/features/products/server/product-scans-service.amazon.test.ts` | 2166 |
-| `src/features/products/components/list/ProductAmazonScanModal.tsx` | 2130 |
 | `src/features/products/components/ProductModals.test.tsx` | 1920 |
-| `src/features/products/server/product-scan-amazon-evaluator.ts` | 1712 |
+| `src/features/products/server/product-scan-amazon-evaluator.ts` | 1726 |
 | `src/features/integrations/services/tradera-listing-service.test.ts` | 1676 |
 | `src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingDetails.test.tsx` | 1673 |
 | `src/features/products/server/parts/product-scan-amazon-script.part2.ts` | 1665 |
 | `src/features/ai/ai-paths/services/playwright-node-runner.ts` | 1599 |
-| `src/features/products/components/form/ProductFormScans.tsx` | 1582 |
+| `src/features/products/components/form/ProductFormScans.tsx` | 1589 |
 | `src/features/products/pages/AdminProductScannerSettingsPage.tsx` | 1540 |
 | `src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts` | 1517 |
-| `src/features/products/server/product-scans-service.helpers.ts` | 1512 |
+| `src/features/products/server/product-scans-service.helpers.ts` | 1516 |
 | `src/features/integrations/services/tradera-listing/BrowserListing.3.test.ts` | 1498 |
 | `src/features/integrations/services/tradera-listing/BrowserListing.1.test.ts` | 1442 |
+| `src/features/product-sync/services/product-sync-processor.ts` | 1430 |
 | `src/features/integrations/services/tradera-listing/script-partials/part-5.ts` | 1417 |
-| `src/features/products/server/product-scans-sync-amazon-handlers.ts` | 1377 |

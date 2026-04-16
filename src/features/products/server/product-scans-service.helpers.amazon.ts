@@ -1,5 +1,7 @@
 import 'server-only';
 
+import { randomUUID } from 'crypto';
+
 import {
   buildPlaywrightEngineRunFailureMeta,
   type startPlaywrightEngineTask,
@@ -9,9 +11,15 @@ import {
   type createDefaultProductScannerSettings,
 } from '@/features/products/scanner-settings';
 import {
+  normalizeProductScanRecord,
   type ProductScanAmazonEvaluation,
   type ProductScanRecord,
+  type ProductScanRequestSequenceEntry,
 } from '@/shared/contracts/product-scans';
+import {
+  productScannerAmazonImageSearchProviderSchema,
+  type ProductScannerAmazonImageSearchProvider,
+} from '@/shared/contracts/products/scanner-settings';
 
 import {
   type AmazonCandidateTriageEvaluationResult,
@@ -25,10 +33,20 @@ import {
 } from './product-scanner-settings';
 
 import {
-  toRecord,
+  PRODUCT_SCAN_MATCHED_IMAGE_ID_MAX_LENGTH,
+  PRODUCT_SCAN_SEQUENCE_KEY_MAX_LENGTH,
+  PRODUCT_SCAN_URL_MAX_LENGTH,
+} from './product-scans-service.constants';
+import {
+  normalizeProductScanRequestSequence,
   readOptionalString,
   resolvePersistableScanUrl,
-} from './product-scans-service.helpers';
+  toRecord,
+} from './product-scans-service.helpers.base';
+import {
+  buildPreparedProductScanSteps,
+  normalizeParsedCandidateUrls,
+} from './product-scans-service.helpers.steps';
 
 export const AMAZON_SCAN_DEFAULT_SLOW_MO_MS = 80;
 export const AMAZON_BATCH_SCAN_START_CONCURRENCY = 1;
@@ -967,6 +985,102 @@ export const buildAmazonCandidateTriageStepDetails = (
     value: evaluation.reasons[0] ?? null,
   },
 ];
+
+export const buildAmazonScanRequestInput = (input: {
+  productId: string;
+  productName: string | null;
+  existingAsin: string | null | undefined;
+  imageCandidates: ProductScanRecord['imageCandidates'];
+  imageSearchProvider?: ProductScannerAmazonImageSearchProvider | null;
+  batchIndex?: number;
+  allowManualVerification: boolean;
+  manualVerificationTimeoutMs: number;
+  triageOnlyOnAmazonCandidates?: boolean;
+  probeOnlyOnAmazonMatch?: boolean;
+  skipAmazonProbe?: boolean;
+  directAmazonCandidateUrl?: string | null;
+  directAmazonCandidateUrls?: string[] | null;
+  directMatchedImageId?: string | null;
+  directAmazonCandidateRank?: number | null;
+  stepSequenceKey?: string | null;
+  stepSequence?: ProductScanRequestSequenceEntry[] | null;
+}): Record<string, unknown> => ({
+  productId: input.productId,
+  productName: input.productName,
+  existingAsin: input.existingAsin ?? null,
+  imageCandidates: input.imageCandidates,
+  imageSearchProvider:
+    (input.imageSearchProvider === 'google_images_url' ||
+    input.imageSearchProvider === 'google_lens_upload')
+      ? input.imageSearchProvider
+      : 'google_images_upload',
+  batchIndex:
+    typeof input.batchIndex === 'number' && Number.isFinite(input.batchIndex) && input.batchIndex > 0
+      ? Math.trunc(input.batchIndex)
+      : 0,
+  allowManualVerification: input.allowManualVerification,
+  manualVerificationTimeoutMs: input.manualVerificationTimeoutMs,
+  triageOnlyOnAmazonCandidates: input.triageOnlyOnAmazonCandidates === true,
+  probeOnlyOnAmazonMatch: input.probeOnlyOnAmazonMatch === true,
+  skipAmazonProbe: input.skipAmazonProbe === true,
+  directAmazonCandidateUrl: readOptionalString(input.directAmazonCandidateUrl, PRODUCT_SCAN_URL_MAX_LENGTH),
+  directAmazonCandidateUrls: normalizeParsedCandidateUrls(input.directAmazonCandidateUrls),
+  directMatchedImageId: readOptionalString(input.directMatchedImageId, PRODUCT_SCAN_MATCHED_IMAGE_ID_MAX_LENGTH),
+  directAmazonCandidateRank:
+    typeof input.directAmazonCandidateRank === 'number' &&
+    Number.isFinite(input.directAmazonCandidateRank) &&
+    input.directAmazonCandidateRank > 0
+      ? Math.trunc(input.directAmazonCandidateRank)
+      : null,
+  stepSequenceKey: readOptionalString(input.stepSequenceKey, PRODUCT_SCAN_SEQUENCE_KEY_MAX_LENGTH),
+  stepSequence: normalizeProductScanRequestSequence(input.stepSequence),
+});
+
+export const createAmazonProductScanBaseRecord = (input: {
+  productId: string;
+  productName: string;
+  integrationId?: string | null;
+  connectionId?: string | null;
+  userId?: string | null;
+  imageCandidates: ProductScanRecord['imageCandidates'];
+  status: ProductScanRecord['status'];
+  error?: string | null;
+}): ProductScanRecord =>
+  normalizeProductScanRecord({
+    id: randomUUID(),
+    productId: input.productId,
+    integrationId: readOptionalString(input.integrationId, 160),
+    connectionId: readOptionalString(input.connectionId, 160),
+    provider: 'amazon',
+    scanType: 'google_reverse_image',
+    status: input.status,
+    productName: input.productName,
+    engineRunId: null,
+    imageCandidates: input.imageCandidates,
+    matchedImageId: null,
+    asin: null,
+    title: null,
+    price: null,
+    url: null,
+    description: null,
+    amazonDetails: null,
+    amazonProbe: null,
+    amazonEvaluation: null,
+    steps: buildPreparedProductScanSteps({
+      prepareLabel: 'Amazon',
+      summaryLabel: 'Amazon reverse image',
+      imageCandidateCount: input.imageCandidates.length,
+      status: input.status,
+      error: input.error ?? null,
+    }),
+    rawResult: null,
+    error: input.error ?? null,
+    asinUpdateStatus: 'not_needed',
+    asinUpdateMessage: null,
+    createdBy: (input.userId?.trim() ?? '') !== '' ? String(input.userId).trim() : null,
+    updatedBy: (input.userId?.trim() ?? '') !== '' ? String(input.userId).trim() : null,
+    completedAt: input.status === 'failed' ? new Date().toISOString() : null,
+  });
 
 export const shouldWriteAmazonEnglishContent = (
   evaluation: ProductScanAmazonEvaluation | null | undefined

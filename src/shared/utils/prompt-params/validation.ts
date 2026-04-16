@@ -2,25 +2,8 @@ import { type ParamSpec, type ParamIssue } from '@/shared/contracts/prompt-engin
 
 import { getDeepValue, isRgbArray, isTuple2NumberArray } from './utils';
 
-const validateNumber = (value: unknown, spec: ParamSpec & { kind: 'number' }): ParamIssue[] => {
+const validateNumberBounds = (value: number, spec: ParamSpec & { kind: 'number' }): ParamIssue[] => {
   const issues: ParamIssue[] = [];
-  if (typeof value !== 'number' || !Number.isFinite(value)) {
-    issues.push({
-      path: spec.path,
-      severity: 'error',
-      code: 'type',
-      message: 'Expected number.',
-    });
-    return issues;
-  }
-  if (spec.integer === true && !Number.isInteger(value)) {
-    issues.push({
-      path: spec.path,
-      severity: 'error',
-      code: 'integer',
-      message: 'Must be an integer.',
-    });
-  }
   if (spec.min !== undefined && value < spec.min) {
     issues.push({
       path: spec.path,
@@ -40,27 +23,78 @@ const validateNumber = (value: unknown, spec: ParamSpec & { kind: 'number' }): P
   return issues;
 };
 
-const validateRgb = (value: unknown, spec: ParamSpec & { kind: 'rgb' }): ParamIssue[] => {
+const validateNumber = (value: unknown, spec: ParamSpec & { kind: 'number' }): ParamIssue[] => {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return [
+      {
+        path: spec.path,
+        severity: 'error',
+        code: 'type',
+        message: 'Expected number.',
+      },
+    ];
+  }
   const issues: ParamIssue[] = [];
-  if (!isRgbArray(value)) {
+  if (spec.integer === true && !Number.isInteger(value)) {
     issues.push({
       path: spec.path,
       severity: 'error',
-      code: 'type',
-      message: 'Expected [R,G,B] array.',
+      code: 'integer',
+      message: 'Must be an integer.',
     });
-    return issues;
+  }
+  issues.push(...validateNumberBounds(value, spec));
+  return issues;
+};
+
+const validateArrayBounds = (
+  values: number[],
+  spec: { path: string; min?: number; max?: number }
+): ParamIssue[] => {
+  const { path, min, max } = spec;
+  const issues: ParamIssue[] = [];
+  if (min !== undefined && values.some((v) => v < min)) {
+    issues.push({
+      path,
+      severity: 'error',
+      code: 'min',
+      message: `Values must be >= ${min}.`,
+    });
+  }
+  if (max !== undefined && values.some((v) => v > max)) {
+    issues.push({
+      path,
+      severity: 'error',
+      code: 'max',
+      message: `Values must be <= ${max}.`,
+    });
+  }
+  return issues;
+};
+
+const validateRgb = (value: unknown, spec: ParamSpec & { kind: 'rgb' }): ParamIssue[] => {
+  if (!isRgbArray(value)) {
+    return [
+      {
+        path: spec.path,
+        severity: 'error',
+        code: 'type',
+        message: 'Expected [R,G,B] array.',
+      },
+    ];
   }
   const numericArray = value as number[];
   if (numericArray.some((v) => typeof v !== 'number' || !Number.isFinite(v))) {
-    issues.push({
-      path: spec.path,
-      severity: 'error',
-      code: 'type',
-      message: 'RGB must be numeric.',
-    });
-    return issues;
+    return [
+      {
+        path: spec.path,
+        severity: 'error',
+        code: 'type',
+        message: 'RGB must be numeric.',
+      },
+    ];
   }
+  const issues: ParamIssue[] = [];
   if (spec.integer === true && numericArray.some((v) => !Number.isInteger(v))) {
     issues.push({
       path: spec.path,
@@ -69,37 +103,23 @@ const validateRgb = (value: unknown, spec: ParamSpec & { kind: 'rgb' }): ParamIs
       message: 'RGB values must be integers.',
     });
   }
-  if (spec.min !== undefined && numericArray.some((v) => v < spec.min!)) {
-    issues.push({
-      path: spec.path,
-      severity: 'error',
-      code: 'min',
-      message: `RGB values must be >= ${spec.min}.`,
-    });
-  }
-  if (spec.max !== undefined && numericArray.some((v) => v > spec.max!)) {
-    issues.push({
-      path: spec.path,
-      severity: 'error',
-      code: 'max',
-      message: `RGB values must be <= ${spec.max}.`,
-    });
-  }
+  issues.push(...validateArrayBounds(numericArray, spec));
   return issues;
 };
 
 const validateTuple2 = (value: unknown, spec: ParamSpec & { kind: 'tuple2' }): ParamIssue[] => {
-  const issues: ParamIssue[] = [];
   if (!isTuple2NumberArray(value)) {
-    issues.push({
-      path: spec.path,
-      severity: 'error',
-      code: 'type',
-      message: 'Expected [x,y] numeric array.',
-    });
-    return issues;
+    return [
+      {
+        path: spec.path,
+        severity: 'error',
+        code: 'type',
+        message: 'Expected [x,y] numeric array.',
+      },
+    ];
   }
   const numericArray = value as number[];
+  const issues: ParamIssue[] = [];
   if (spec.integer === true && numericArray.some((v) => !Number.isInteger(v))) {
     issues.push({
       path: spec.path,
@@ -108,24 +128,36 @@ const validateTuple2 = (value: unknown, spec: ParamSpec & { kind: 'tuple2' }): P
       message: 'Values must be integers.',
     });
   }
-  if (spec.min !== undefined && numericArray.some((v) => v < spec.min!)) {
-    issues.push({
-      path: spec.path,
-      severity: 'error',
-      code: 'min',
-      message: `Values must be >= ${spec.min}.`,
-    });
-  }
-  if (spec.max !== undefined && numericArray.some((v) => v > spec.max!)) {
-    issues.push({
-      path: spec.path,
-      severity: 'error',
-      code: 'max',
-      message: `Values must be <= ${spec.max}.`,
-    });
-  }
+  issues.push(...validateArrayBounds(numericArray, spec));
   return issues;
 };
+
+const validateEnum = (value: unknown, spec: ParamSpec & { kind: 'enum' }): ParamIssue[] => {
+  if (typeof value !== 'string') {
+    return [{ path: spec.path, severity: 'error', code: 'type', message: 'Expected string enum.' }];
+  }
+  if (spec.enumOptions && !spec.enumOptions.includes(value)) {
+    return [
+      {
+        path: spec.path,
+        severity: 'error',
+        code: 'enum',
+        message: `Value must be one of: ${spec.enumOptions.join(', ')}`,
+      },
+    ];
+  }
+  return [];
+};
+
+const validateBoolean = (value: unknown, spec: ParamSpec): ParamIssue[] =>
+  typeof value !== 'boolean'
+    ? [{ path: spec.path, severity: 'error', code: 'type', message: 'Expected boolean.' }]
+    : [];
+
+const validateString = (value: unknown, spec: ParamSpec): ParamIssue[] =>
+  typeof value !== 'string'
+    ? [{ path: spec.path, severity: 'error', code: 'type', message: 'Expected string.' }]
+    : [];
 
 const validateSingleParam = (value: unknown, spec: ParamSpec): ParamIssue[] => {
   if (value === undefined) {
@@ -139,48 +171,22 @@ const validateSingleParam = (value: unknown, spec: ParamSpec): ParamIssue[] => {
     ];
   }
 
-  if (spec.kind === 'boolean') {
-    return typeof value !== 'boolean'
-      ? [{ path: spec.path, severity: 'error', code: 'type', message: 'Expected boolean.' }]
-      : [];
+  switch (spec.kind) {
+    case 'boolean':
+      return validateBoolean(value, spec);
+    case 'string':
+      return validateString(value, spec);
+    case 'enum':
+      return validateEnum(value, spec);
+    case 'number':
+      return validateNumber(value, spec);
+    case 'rgb':
+      return validateRgb(value, spec);
+    case 'tuple2':
+      return validateTuple2(value, spec);
+    default:
+      return [];
   }
-
-  if (spec.kind === 'string') {
-    return typeof value !== 'string'
-      ? [{ path: spec.path, severity: 'error', code: 'type', message: 'Expected string.' }]
-      : [];
-  }
-
-  if (spec.kind === 'enum') {
-    if (typeof value !== 'string') {
-      return [{ path: spec.path, severity: 'error', code: 'type', message: 'Expected string enum.' }];
-    }
-    if (spec.enumOptions && !spec.enumOptions.includes(value)) {
-      return [
-        {
-          path: spec.path,
-          severity: 'error',
-          code: 'enum',
-          message: `Value must be one of: ${spec.enumOptions.join(', ')}`,
-        },
-      ];
-    }
-    return [];
-  }
-
-  if (spec.kind === 'number') {
-    return validateNumber(value, spec as ParamSpec & { kind: 'number' });
-  }
-
-  if (spec.kind === 'rgb') {
-    return validateRgb(value, spec as ParamSpec & { kind: 'rgb' });
-  }
-
-  if (spec.kind === 'tuple2') {
-    return validateTuple2(value, spec as ParamSpec & { kind: 'tuple2' });
-  }
-
-  return [];
 };
 
 export function validateParamsAgainstSpecs(

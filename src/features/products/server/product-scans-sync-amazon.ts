@@ -85,9 +85,13 @@ import {
 
 import {
   synchronizeAmazonCaptchaRequired,
-  synchronizeAmazonProbeReady,
+} from './product-scans-sync-amazon-captcha';
+import {
   synchronizeAmazonTriageReady,
-} from './product-scans-sync-amazon-handlers';
+} from './product-scans-sync-amazon-triage';
+import {
+  synchronizeAmazonProbeReady,
+} from './product-scans-sync-amazon-probe';
 
 const amazonScanRuntime: ProductScanProviderRuntime = AMAZON_PRODUCT_SCAN_PROVIDER.runtime!;
 

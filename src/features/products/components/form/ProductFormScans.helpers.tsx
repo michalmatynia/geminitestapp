@@ -1,11 +1,9 @@
-
-
 import type { ProductCustomFieldDefinition } from '@/shared/contracts/products/custom-fields';
 import type { ProductScanRecord, ProductScanStatus } from '@/shared/contracts/product-scans';
 import { isProductScanActiveStatus } from '@/shared/contracts/product-scans';
 import { resolveProductScanRunFeedbackPresentation } from '@/features/products/lib/product-scan-run-feedback';
 
-export const STATUS_LABELS: Record<ProductScanStatus, string> = {
+export const STATUS_LABELS: Record<ProductScanStatus | 'enqueuing', string> = {
   enqueuing: 'Enqueuing...',
   queued: 'Queued',
   running: 'Running',
@@ -15,7 +13,7 @@ export const STATUS_LABELS: Record<ProductScanStatus, string> = {
   failed: 'Failed',
 };
 
-export const STATUS_CLASSES: Record<ProductScanStatus, string> = {
+export const STATUS_CLASSES: Record<ProductScanStatus | 'enqueuing', string> = {
   enqueuing: 'border-border/70 text-muted-foreground',
   queued: 'border-border/70 text-muted-foreground',
   running: 'border-blue-500/40 text-blue-300',
@@ -25,32 +23,41 @@ export const STATUS_CLASSES: Record<ProductScanStatus, string> = {
   failed: 'border-destructive/40 text-destructive',
 };
 
-export const isManualVerificationPending = (scan: Pick<ProductScanRecord, 'rawResult'>): boolean => {
-  const rawResult = scan.rawResult;
-  if (!rawResult || typeof rawResult !== 'object' || Array.isArray(rawResult)) {
+export const isManualVerificationPending = (scan: Pick<ProductScanRecord, 'rawResult'> | null | undefined): boolean => {
+  const rawResult = scan?.rawResult;
+  if (rawResult === null || rawResult === undefined || typeof rawResult !== 'object' || Array.isArray(rawResult)) {
     return false;
   }
 
   return (rawResult as Record<string, unknown>)['manualVerificationPending'] === true;
 };
 
-export const resolveStatusLabel = (scan: ProductScanRecord): string =>
-  resolveProductScanRunFeedbackPresentation(scan.status, {
-    manualVerificationPending: isManualVerificationPending(scan),
-    manualVerificationMessage: scan.asinUpdateMessage ?? null,
-    amazonEvaluationStatus: scan.amazonEvaluation?.status ?? null,
-    amazonEvaluationLanguageAccepted: scan.amazonEvaluation?.languageAccepted ?? null,
-    supplierEvaluationStatus: scan.supplierEvaluation?.status ?? null,
-  }).label;
+const resolveStatusFeedbackParams = (scan: ProductScanRecord): Parameters<typeof resolveProductScanRunFeedbackPresentation>[1] => {
+  const amazonEval = scan.amazonEvaluation;
+  const supplierEval = scan.supplierEvaluation;
 
-export const resolveStatusClassName = (scan: ProductScanRecord): string =>
-  resolveProductScanRunFeedbackPresentation(scan.status, {
+  const amazonStatus = typeof amazonEval?.status === 'string' ? amazonEval.status : null;
+  const amazonLanguage = typeof amazonEval?.languageAccepted === 'boolean' ? amazonEval.languageAccepted : null;
+  const supplierStatus = typeof supplierEval?.status === 'string' ? supplierEval.status : null;
+
+  return {
     manualVerificationPending: isManualVerificationPending(scan),
-    manualVerificationMessage: scan.asinUpdateMessage ?? null,
-    amazonEvaluationStatus: scan.amazonEvaluation?.status ?? null,
-    amazonEvaluationLanguageAccepted: scan.amazonEvaluation?.languageAccepted ?? null,
-    supplierEvaluationStatus: scan.supplierEvaluation?.status ?? null,
-  }).badgeClassName ?? STATUS_CLASSES[scan.status];
+    manualVerificationMessage: (scan.asinUpdateMessage ?? null) !== null ? scan.asinUpdateMessage : null,
+    amazonEvaluationStatus: amazonStatus,
+    amazonEvaluationLanguageAccepted: amazonLanguage,
+    supplierEvaluationStatus: supplierStatus,
+  };
+};
+
+export const resolveStatusLabel = (scan: ProductScanRecord): string => {
+  const params = resolveStatusFeedbackParams(scan);
+  return resolveProductScanRunFeedbackPresentation(scan.status, params).label;
+};
+
+export const resolveStatusClassName = (scan: ProductScanRecord): string => {
+  const params = resolveStatusFeedbackParams(scan);
+  return resolveProductScanRunFeedbackPresentation(scan.status, params).badgeClassName ?? STATUS_CLASSES[scan.status];
+};
 
 export const resolveActiveStatusMessage = (status: ProductScanStatus): string | null => {
   if (status === 'queued') {
@@ -70,7 +77,7 @@ export const normalizeComparableAsin = (value: string | null | undefined): strin
   }
 
   const normalized = value.trim().toUpperCase();
-  return normalized.length > 0 ? normalized : null;
+  return normalized !== '' ? normalized : null;
 };
 
 export const normalizeComparableText = (value: string | null | undefined): string | null => {
@@ -79,12 +86,12 @@ export const normalizeComparableText = (value: string | null | undefined): strin
   }
 
   const normalized = value.trim();
-  return normalized.length > 0 ? normalized : null;
+  return normalized !== '' ? normalized : null;
 };
 
 export const normalizeMetadataLabel = (value: string | null | undefined): string | null => {
   const normalized = normalizeComparableText(value);
-  if (!normalized) {
+  if (normalized === null) {
     return null;
   }
   return normalized.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
@@ -125,102 +132,107 @@ export const roundToDecimals = (value: number, decimals: number): number => {
   return Math.round(value * factor) / factor;
 };
 
+const resolveWeightUnitFactor = (unit: string): number | null => {
+  if (unit === 'kg' || unit.startsWith('kilogram')) return 1;
+  if (unit === 'g' || unit.startsWith('gram')) return 0.001;
+  if (unit === 'oz' || unit === 'ounces' || unit === 'ounce') return 0.0283495;
+  if (unit === 'lb' || unit === 'lbs' || unit === 'pounds' || unit === 'pound') return 0.45359237;
+  return null;
+};
+
 export const parseAmazonWeightKg = (value: string | null | undefined): number | null => {
-  const normalized = normalizeComparableText(value)?.toLowerCase();
-  if (!normalized) {
-    return null;
-  }
+  const normalizedRaw = normalizeComparableText(value);
+  if (normalizedRaw === null) return null;
+  const normalized = normalizedRaw.toLowerCase();
 
   const match = normalized.match(/([\d.,]+)\s*(kg|kilograms?|g|grams?|lb|lbs|pounds?|ounces?|oz)\b/i);
-  if (!match) {
-    return null;
-  }
+  if (match === null) return null;
 
-  const amount = Number.parseFloat((match[1] ?? '').replace(/,/g, ''));
-  if (!Number.isFinite(amount) || amount <= 0) {
-    return null;
-  }
+  const match1 = match[1];
+  const amount = Number.parseFloat((match1 ?? '').replace(/,/g, ''));
+  if (Number.isFinite(amount) === false || amount <= 0) return null;
 
-  const unit = (match[2] ?? '').toLowerCase();
-  if (unit === 'kg' || unit.startsWith('kilogram')) {
-    return roundToDecimals(amount, 2);
-  }
-  if (unit === 'g' || unit.startsWith('gram')) {
-    return roundToDecimals(amount / 1000, 2);
-  }
-  if (unit === 'oz' || unit === 'ounces' || unit === 'ounce') {
-    return roundToDecimals(amount * 0.0283495, 2);
-  }
-  return roundToDecimals(amount * 0.45359237, 2);
+  const unit = match[2];
+  const factor = resolveWeightUnitFactor(unit !== undefined ? unit.toLowerCase() : '');
+  if (factor === null) return null;
+
+  return roundToDecimals(amount * factor, 2);
+};
+
+const resolveDimensionFactor = (unit: string): number => {
+  const unitLower = unit.toLowerCase();
+  if (unitLower === 'cm' || unitLower.startsWith('centimeter') === true) return 1;
+  if (unitLower === 'mm' || unitLower.startsWith('millimeter') === true) return 0.1;
+  return 2.54;
 };
 
 export const parseAmazonDimensionsCm = (
   value: string | null | undefined
 ): { sizeLength: number; sizeWidth: number; length: number } | null => {
-  const normalized = normalizeComparableText(value)?.toLowerCase();
-  if (!normalized) {
-    return null;
-  }
+  const normalizedRaw = normalizeComparableText(value);
+  if (normalizedRaw === null) return null;
+  const normalized = normalizedRaw.toLowerCase();
 
   const measurementMatch = normalized.match(
     /([\d.,]+)\s*x\s*([\d.,]+)\s*x\s*([\d.,]+)\s*(cm|centimeters?|mm|millimeters?|in|inch|inches)\b/i
   );
-  if (!measurementMatch) {
-    return null;
-  }
+  if (measurementMatch === null) return null;
 
-  const values = measurementMatch
-    .slice(1, 4)
-    .map((entry) => Number.parseFloat((entry ?? '').replace(/,/g, '')));
-  if (values.some((entry) => !Number.isFinite(entry) || entry <= 0)) {
-    return null;
-  }
+  const m1 = measurementMatch[1];
+  const m2 = measurementMatch[2];
+  const m3 = measurementMatch[3];
+  const values = [m1, m2, m3].map((entry) => Number.parseFloat((entry ?? '').replace(/,/g, '')));
+  if (values.some((entry) => Number.isFinite(entry) === false || entry <= 0) === true) return null;
 
-  const unit = measurementMatch[4]?.toLowerCase();
-  const factor =
-    unit === 'cm' || unit?.startsWith('centimeter')
-      ? 1
-      : unit === 'mm' || unit?.startsWith('millimeter')
-        ? 0.1
-        : 2.54;
+  const factor = resolveDimensionFactor(measurementMatch[4] ?? '');
+
+  const val0 = values[0];
+  const val1 = values[1];
+  const val2 = values[2];
 
   return {
-    sizeLength: roundToDecimals(values[0]! * factor, 1),
-    sizeWidth: roundToDecimals(values[1]! * factor, 1),
-    length: roundToDecimals(values[2]! * factor, 1),
+    sizeLength: roundToDecimals((val0 ?? 0) * factor, 1),
+    sizeWidth: roundToDecimals((val1 ?? 0) * factor, 1),
+    length: roundToDecimals((val2 ?? 0) * factor, 1),
   };
+};
+
+const buildAmazonDetailsBaseFields = (details: NonNullable<ProductScanRecord['amazonDetails']>): AmazonScanMappedField[] => {
+  const fields: Array<{ label: string; value: string | null | undefined }> = [
+    { label: 'Brand', value: details.brand },
+    { label: 'Manufacturer', value: details.manufacturer },
+    { label: 'Model number', value: details.modelNumber },
+    { label: 'Part number', value: details.partNumber },
+    { label: 'Color', value: details.color },
+    { label: 'Style', value: details.style },
+    { label: 'Material', value: details.material },
+    { label: 'Size', value: details.size },
+    { label: 'Pattern', value: details.pattern },
+    { label: 'Finish', value: details.finish },
+    { label: 'Item dimensions', value: details.itemDimensions },
+    { label: 'Package dimensions', value: details.packageDimensions },
+    { label: 'Item weight', value: details.itemWeight },
+    { label: 'Package weight', value: details.packageWeight },
+    { label: 'Best Sellers Rank', value: details.bestSellersRank },
+  ];
+
+  return fields
+    .map((f) => ({ sourceLabel: f.label, value: f.value ?? '' }))
+    .filter((entry): entry is AmazonScanMappedField => normalizeComparableText(entry.value) !== null);
 };
 
 export const buildAmazonMappedFields = (
   scan: Pick<ProductScanRecord, 'amazonDetails'>
 ): AmazonScanMappedField[] => {
   const details = scan.amazonDetails;
-  if (!details) {
-    return [];
-  }
+  if (details === undefined || details === null) return [];
 
-  const normalizedEntries: AmazonScanMappedField[] = [
-    { sourceLabel: 'Brand', value: details.brand ?? '' },
-    { sourceLabel: 'Manufacturer', value: details.manufacturer ?? '' },
-    { sourceLabel: 'Model number', value: details.modelNumber ?? '' },
-    { sourceLabel: 'Part number', value: details.partNumber ?? '' },
-    { sourceLabel: 'Color', value: details.color ?? '' },
-    { sourceLabel: 'Style', value: details.style ?? '' },
-    { sourceLabel: 'Material', value: details.material ?? '' },
-    { sourceLabel: 'Size', value: details.size ?? '' },
-    { sourceLabel: 'Pattern', value: details.pattern ?? '' },
-    { sourceLabel: 'Finish', value: details.finish ?? '' },
-    { sourceLabel: 'Item dimensions', value: details.itemDimensions ?? '' },
-    { sourceLabel: 'Package dimensions', value: details.packageDimensions ?? '' },
-    { sourceLabel: 'Item weight', value: details.itemWeight ?? '' },
-    { sourceLabel: 'Package weight', value: details.packageWeight ?? '' },
-    { sourceLabel: 'Best Sellers Rank', value: details.bestSellersRank ?? '' },
-  ].filter((entry): entry is AmazonScanMappedField => Boolean(normalizeComparableText(entry.value)));
+  const normalizedEntries = buildAmazonDetailsBaseFields(details);
 
   const seenLabels = new Set(
     normalizedEntries
       .map((entry) => normalizeMetadataLabel(entry.sourceLabel))
-      .filter((entry): entry is string => Boolean(entry))
+      .filter((entry): entry is string => entry !== null)
   );
 
   const rawEntries = details.attributes
@@ -231,9 +243,9 @@ export const buildAmazonMappedFields = (
     .filter((entry): entry is AmazonScanMappedField => {
       const normalizedSourceLabel = normalizeMetadataLabel(entry.sourceLabel);
       return (
-        Boolean(normalizeComparableText(entry.value)) &&
-        Boolean(normalizedSourceLabel) &&
-        !seenLabels.has(normalizedSourceLabel!)
+        normalizeComparableText(entry.value) !== null &&
+        normalizedSourceLabel !== null &&
+        seenLabels.has(normalizedSourceLabel) === false
       );
     });
 
@@ -251,9 +263,7 @@ export const resolveUnmappedAmazonFields = (
   mappings: ScanAttributeMapping[]
 ): AmazonScanMappedField[] => {
   const sourceEntries = buildAmazonMappedFields(scan);
-  if (sourceEntries.length === 0) {
-    return [];
-  }
+  if (sourceEntries.length === 0) return [];
 
   const mappedKeys = new Set(
     mappings.map((mapping) =>
@@ -264,7 +274,7 @@ export const resolveUnmappedAmazonFields = (
     )
   );
 
-  return sourceEntries.filter((entry) => !mappedKeys.has(resolveAmazonMappedFieldKey(entry)));
+  return sourceEntries.filter((entry) => mappedKeys.has(resolveAmazonMappedFieldKey(entry)) === false);
 };
 
 export const splitMultiValueTokens = (value: string): string[] =>
@@ -273,7 +283,7 @@ export const splitMultiValueTokens = (value: string): string[] =>
       value
         .split(/\s*(?:,|;|\||\/|\band\b)\s*/i)
         .map((entry) => normalizeMetadataLabel(entry))
-        .filter((entry): entry is string => Boolean(entry))
+        .filter((entry): entry is string => entry !== null)
     )
   );
 
@@ -285,17 +295,17 @@ export const resolveCheckboxSetOptionMatch = (
     field.options
       .map((option) => {
         const normalizedLabel = normalizeMetadataLabel(option.label);
-        return normalizedLabel
-          ? [normalizedLabel, { id: option.id, label: option.label }]
+        return normalizedLabel !== null
+          ? [normalizedLabel, { id: option.id, label: option.label }] as const
           : null;
       })
-      .filter((entry): entry is [string, { id: string; label: string }] => Boolean(entry))
+      .filter((entry): entry is readonly [string, { id: string; label: string }] => entry !== null)
   );
 
   const exactMatch = normalizeMetadataLabel(sourceValue);
-  if (exactMatch) {
+  if (exactMatch !== null) {
     const option = optionsByLabel.get(exactMatch);
-    if (option) {
+    if (option !== undefined) {
       return {
         optionIds: [option.id],
         optionLabels: [option.label],
@@ -304,17 +314,13 @@ export const resolveCheckboxSetOptionMatch = (
   }
 
   const tokens = splitMultiValueTokens(sourceValue);
-  if (tokens.length < 2) {
-    return null;
-  }
+  if (tokens.length < 2) return null;
 
   const matchedOptions = tokens
     .map((token) => optionsByLabel.get(token))
-    .filter((option): option is { id: string; label: string } => Boolean(option));
+    .filter((option): option is { id: string; label: string } => option !== undefined);
 
-  if (matchedOptions.length !== tokens.length) {
-    return null;
-  }
+  if (matchedOptions.length !== tokens.length) return null;
 
   return {
     optionIds: matchedOptions.map((option) => option.id),
@@ -328,9 +334,7 @@ export const haveSameSelectedOptions = (
 ): boolean => {
   const leftSet = new Set(Array.isArray(left) ? left : []);
   const rightSet = new Set(Array.isArray(right) ? right : []);
-  if (leftSet.size !== rightSet.size) {
-    return false;
-  }
+  if (leftSet.size !== rightSet.size) return false;
   return [...leftSet].every((value) => rightSet.has(value));
 };
 
@@ -348,26 +352,26 @@ export const formatCustomFieldSelectedOptionLabels = (
   const normalizedOptionIds = optionIds.filter((optionId): optionId is string => typeof optionId === 'string');
   const labels = normalizedOptionIds
     .map((optionId) => labelByOptionId.get(optionId))
-    .filter((label): label is string => Boolean(normalizeComparableText(label)));
+    .filter((label): label is string => label !== undefined && normalizeComparableText(label) !== null);
 
   return labels.length > 0 ? labels.join(', ') : null;
 };
 
 export const formatTimestamp = (value: string | null | undefined): string => {
-  if (!value) return 'Unknown time';
+  if (typeof value !== 'string' || value === '') return 'Unknown time';
   const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
+  if (Number.isNaN(parsed.getTime()) === true) return value;
   return parsed.toLocaleString();
 };
 
 export const renderScanMeta = (scan: ProductScanRecord): React.JSX.Element | null => {
-  const parts = [scan.asin && `ASIN ${scan.asin}`, scan.price && `Price ${scan.price}`].filter(
-    Boolean
-  );
+  const asinValue = scan.asin;
+  const asinPart = typeof asinValue === 'string' && asinValue !== '' ? `ASIN ${asinValue}` : null;
+  const priceValue = scan.price;
+  const pricePart = typeof priceValue === 'string' && priceValue !== '' ? `Price ${priceValue}` : null;
+  const parts = [asinPart, pricePart].filter((p): p is string => p !== null);
 
-  if (parts.length === 0) {
-    return null;
-  }
+  if (parts.length === 0) return null;
 
   return <p className='text-xs text-muted-foreground'>{parts.join(' · ')}</p>;
 };
@@ -375,36 +379,23 @@ export const renderScanMeta = (scan: ProductScanRecord): React.JSX.Element | nul
 export const resolveScanMessages = (
   scan: ProductScanRecord
 ): { infoMessage: string | null; errorMessage: string | null } => {
-  if (scan.status === 'completed') {
-    return {
-      infoMessage: scan.asinUpdateMessage,
-      errorMessage: null,
-    };
-  }
+  const scanStatus = scan.status;
+  const asinMessage = (scan.asinUpdateMessage ?? null) !== null ? scan.asinUpdateMessage : null;
+  const scanError = (scan.error ?? null) !== null ? scan.error : null;
 
-  if (scan.status === 'no_match') {
-    return {
-      infoMessage: scan.asinUpdateMessage ?? scan.error,
-      errorMessage: null,
-    };
-  }
+  if (scanStatus === 'completed') return { infoMessage: asinMessage, errorMessage: null };
+  if (scanStatus === 'no_match') return { infoMessage: asinMessage ?? scanError, errorMessage: null };
+  if (scanStatus === 'conflict' || scanStatus === 'failed') return { infoMessage: null, errorMessage: scanError ?? asinMessage };
 
-  if (scan.status === 'conflict' || scan.status === 'failed') {
+  if (isProductScanActiveStatus(scanStatus)) {
     return {
-      infoMessage: null,
-      errorMessage: scan.error ?? scan.asinUpdateMessage,
-    };
-  }
-
-  if (isProductScanActiveStatus(scan.status)) {
-    return {
-      infoMessage: scan.asinUpdateMessage ?? resolveActiveStatusMessage(scan.status),
-      errorMessage: scan.error,
+      infoMessage: asinMessage ?? resolveActiveStatusMessage(scanStatus),
+      errorMessage: scanError,
     };
   }
 
   return {
-    infoMessage: scan.asinUpdateMessage,
-    errorMessage: scan.error,
+    infoMessage: asinMessage,
+    errorMessage: scanError,
   };
 };

@@ -17,6 +17,7 @@ import type {
   ProductScanAmazonVariantAssessment,
   ProductScanAmazonEvaluationResult,
   ProductScanRecord,
+  ProductScanStep,
 } from '@/shared/contracts/product-scans';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
@@ -74,13 +75,14 @@ const amazonVariantAssessmentResponseSchema = z.object({
 });
 
 const normalizeConfidenceInput = (value: unknown): number => {
-  const parsed =
-    typeof value === 'number'
-      ? value
-      : typeof value === 'string' && value.trim().length > 0
-        ? Number(value)
-        : Number.NaN;
-  if (!Number.isFinite(parsed)) {
+  let parsed = Number.NaN;
+  if (typeof value === 'number') {
+    parsed = value;
+  } else if (typeof value === 'string' && value.trim().length > 0) {
+    parsed = Number(value);
+  }
+
+  if (Number.isFinite(parsed) === false) {
     return Number.NaN;
   }
   if (parsed > 1 && parsed <= 100) {
@@ -99,7 +101,7 @@ const amazonEvaluatorResponseSchema = z.object({
   languageReason: z.string().trim().min(1).max(500).nullable().optional().default(null),
   languageConfidence: z.preprocess(
     (value) => {
-      if (value == null || value === '') {
+      if (value === null || value === undefined || value === '') {
         return null;
       }
       return normalizeConfidenceInput(value);
@@ -130,7 +132,7 @@ const amazonCandidateTriageCandidateSchema = z.object({
   keep: z.boolean(),
   confidence: z.preprocess(
     (value) => {
-      if (value == null || value === '') {
+      if (value === null || value === undefined || value === '') {
         return null;
       }
       return normalizeConfidenceInput(value);
@@ -200,7 +202,7 @@ const normalizeTextList = (values: Array<string | null | undefined>): string[] =
   const normalized: string[] = [];
   for (const value of values) {
     const next = readOptionalString(value);
-    if (!next || seen.has(next)) {
+    if (next === null || seen.has(next) === true) {
       continue;
     }
     seen.add(next);
@@ -211,7 +213,7 @@ const normalizeTextList = (values: Array<string | null | undefined>): string[] =
 
 const resolveLanguageLabel = (value: string | null | undefined): string | null => {
   const normalized = normalizeLanguageTag(value);
-  if (!normalized) {
+  if (normalized === null) {
     return null;
   }
   return LANGUAGE_LABELS[normalized] ?? normalized.toUpperCase();
@@ -219,7 +221,7 @@ const resolveLanguageLabel = (value: string | null | undefined): string | null =
 
 const resolveMarketplaceLanguageHint = (candidateUrl: string | null): string | null => {
   const normalizedUrl = readOptionalString(candidateUrl);
-  if (!normalizedUrl) {
+  if (normalizedUrl === null) {
     return null;
   }
   try {
@@ -234,8 +236,9 @@ const detectTextLanguage = (value: string | null): {
   confidence: number | null;
   reason: string | null;
 } => {
-  const normalized = readOptionalString(value)?.toLowerCase() ?? null;
-  if (!normalized) {
+  const rawNormalized = readOptionalString(value)?.toLowerCase();
+  const normalized = (rawNormalized ?? null) !== null ? rawNormalized! : null;
+  if (normalized === null) {
     return { language: null, confidence: null, reason: null };
   }
 
@@ -263,14 +266,14 @@ const detectTextLanguage = (value: string | null): {
     }
   }
 
-  if (!bestLanguage || bestScore < 2) {
+  if (bestLanguage === null || bestScore < 2) {
     return { language: null, confidence: null, reason: null };
   }
 
   return {
     language: bestLanguage,
     confidence: Math.min(0.95, 0.55 + (bestScore - secondScore) * 0.08),
-    reason: `Visible Amazon text looks ${resolveLanguageLabel(bestLanguage)}.`,
+    reason: `Visible Amazon text looks ${resolveLanguageLabel(bestLanguage)!}.`,
   };
 };
 
@@ -283,19 +286,23 @@ const resolveDeterministicLanguageDecision = (input: {
 }): DeterministicLanguageDecision => {
   const probe = input.parsedResult.amazonProbe;
   const probeLanguage = normalizeLanguageTag(probe?.pageLanguage);
-  if (probeLanguage) {
+  if (probeLanguage !== null) {
     return {
       pageLanguage: probeLanguage,
       languageAccepted: isEnglishLanguageTag(probeLanguage),
       confidence: 0.99,
       reason: isEnglishLanguageTag(probeLanguage)
-        ? `Amazon page declares ${resolveLanguageLabel(probeLanguage)} content.`
-        : `Amazon page declares ${resolveLanguageLabel(probeLanguage)} content, which is outside the allowed ${resolveLanguageLabel(input.evaluatorConfig.allowedContentLanguage)} policy.`,
+        ? `Amazon page declares ${resolveLanguageLabel(probeLanguage)!} content.`
+        : `Amazon page declares ${resolveLanguageLabel(probeLanguage)!} content, which is outside the allowed ${resolveLanguageLabel(input.evaluatorConfig.allowedContentLanguage)!} policy.`,
     };
   }
 
   const marketplaceLanguage =
-    normalizeLanguageTag(probe?.marketplaceDomain && AMAZON_MARKETPLACE_LANGUAGE_HINTS[probe.marketplaceDomain]) ??
+    normalizeLanguageTag(
+      (probe?.marketplaceDomain !== undefined && probe?.marketplaceDomain !== null)
+        ? AMAZON_MARKETPLACE_LANGUAGE_HINTS[probe.marketplaceDomain]
+        : null
+    ) ??
     resolveMarketplaceLanguageHint(
       readOptionalString(probe?.canonicalUrl) ??
         readOptionalString(probe?.candidateUrl) ??
@@ -311,7 +318,7 @@ const resolveDeterministicLanguageDecision = (input: {
   );
   const pageLanguage = textLanguage.language ?? marketplaceLanguage ?? null;
 
-  if (textLanguage.language && !isEnglishLanguageTag(textLanguage.language)) {
+  if (textLanguage.language !== null && isEnglishLanguageTag(textLanguage.language) === false) {
     return {
       pageLanguage,
       languageAccepted: false,
@@ -320,7 +327,7 @@ const resolveDeterministicLanguageDecision = (input: {
     };
   }
 
-  if (textLanguage.language && isEnglishLanguageTag(textLanguage.language)) {
+  if (textLanguage.language !== null && isEnglishLanguageTag(textLanguage.language) === true) {
     return {
       pageLanguage,
       languageAccepted: true,
@@ -333,18 +340,20 @@ const resolveDeterministicLanguageDecision = (input: {
     pageLanguage,
     languageAccepted: null,
     confidence: null,
-    reason: marketplaceLanguage && !isEnglishLanguageTag(marketplaceLanguage)
-      ? `Amazon marketplace domain suggests ${resolveLanguageLabel(marketplaceLanguage)} content, but probe text was not strong enough to trust that alone.`
+    reason: (marketplaceLanguage !== null && isEnglishLanguageTag(marketplaceLanguage) === false)
+      ? `Amazon marketplace domain suggests ${resolveLanguageLabel(marketplaceLanguage)!} content, but probe text was not strong enough to trust that alone.`
       : null,
   };
 };
 
-const normalizeIdentifier = (value: unknown): string | null =>
-  readOptionalString(value)?.replace(/\s+/g, '').toUpperCase() ?? null;
+const normalizeIdentifier = (value: unknown): string | null => {
+  const raw = readOptionalString(value);
+  return raw !== null ? raw.replace(/\s+/g, '').toUpperCase() : null;
+};
 
 const extractAmazonAsinFromUrl = (value: string | null | undefined): string | null => {
   const normalized = readOptionalString(value);
-  if (!normalized) {
+  if (normalized === null) {
     return null;
   }
   const match = normalized
@@ -353,11 +362,13 @@ const extractAmazonAsinFromUrl = (value: string | null | undefined): string | nu
   return match?.[1] ?? null;
 };
 
-const normalizeLanguageTag = (value: unknown): string | null =>
-  readOptionalString(value)?.replace(/_/g, '-').toLowerCase() ?? null;
+const normalizeLanguageTag = (value: unknown): string | null => {
+  const raw = readOptionalString(value);
+  return raw !== null ? raw.replace(/_/g, '-').toLowerCase() : null;
+};
 
 const isEnglishLanguageTag = (value: string | null | undefined): boolean =>
-  typeof value === 'string' && value.toLowerCase().startsWith('en');
+  typeof value === 'string' && value.toLowerCase().startsWith('en') === true;
 
 const LANGUAGE_LABELS: Record<string, string> = {
   en: 'English',
@@ -413,10 +424,10 @@ const dedupeMismatchLabels = (
   const normalized = new Set<ProductScanAmazonMismatchLabel>();
   for (const value of values) {
     if (
-      value &&
-      (AMAZON_MISMATCH_LABEL_VALUES as readonly string[]).includes(value)
+      (value ?? null) !== null &&
+      (AMAZON_MISMATCH_LABEL_VALUES as readonly string[]).includes(value!)
     ) {
-      normalized.add(value);
+      normalized.add(value!);
     }
   }
   return Array.from(normalized);
@@ -425,7 +436,7 @@ const dedupeMismatchLabels = (
 const normalizeVariantAssessment = (
   value: z.infer<typeof amazonVariantAssessmentResponseSchema> | null | undefined
 ): ProductScanAmazonVariantAssessment =>
-  value
+  (value !== null && value !== undefined)
     ? {
         brand: value.brand ?? 'unknown',
         model: value.model ?? 'unknown',
@@ -447,10 +458,10 @@ const resolveAmazonRejectionCategory = (input: {
   confidence: number;
   threshold: number;
 }): ProductScanAmazonRejectionCategory | null => {
-  if (input.approved) {
+  if (input.approved === true) {
     return null;
   }
-  if (input.parsedRejectionCategory) {
+  if (input.parsedRejectionCategory !== null) {
     return input.parsedRejectionCategory;
   }
   if (input.languageAccepted === false) {
@@ -471,7 +482,7 @@ const resolveAmazonRejectionCategory = (input: {
   ) {
     return 'variant';
   }
-  if (!input.sameProduct || !input.pageRepresentsSameProduct) {
+  if (input.sameProduct === false || input.pageRepresentsSameProduct === false) {
     return 'wrong_product';
   }
   if (input.confidence < input.threshold) {
@@ -485,10 +496,10 @@ const resolveAmazonRecommendedAction = (input: {
   parsedRecommendedAction: ProductScanAmazonRecommendedAction | null;
   rejectionCategory: ProductScanAmazonRejectionCategory | null;
 }): ProductScanAmazonRecommendedAction | null => {
-  if (input.approved) {
+  if (input.approved === true) {
     return 'accept';
   }
-  if (input.parsedRecommendedAction && input.parsedRecommendedAction !== 'accept') {
+  if (input.parsedRecommendedAction !== null && input.parsedRecommendedAction !== 'accept') {
     return input.parsedRecommendedAction;
   }
   if (
@@ -514,7 +525,7 @@ const resolveDeterministicCandidateLanguageDecision = (
   );
   const pageLanguage = textLanguage.language ?? marketplaceLanguage ?? null;
 
-  if (textLanguage.language) {
+  if (textLanguage.language !== null) {
     return {
       pageLanguage,
       languageAccepted: isEnglishLanguageTag(textLanguage.language),
@@ -523,12 +534,12 @@ const resolveDeterministicCandidateLanguageDecision = (
     };
   }
 
-  if (marketplaceLanguage) {
+  if (marketplaceLanguage !== null) {
     return {
       pageLanguage,
       languageAccepted: isEnglishLanguageTag(marketplaceLanguage) ? true : null,
       confidence: isEnglishLanguageTag(marketplaceLanguage) ? 0.7 : 0.55,
-      reason: `Marketplace domain suggests ${resolveLanguageLabel(marketplaceLanguage)} content.`,
+      reason: `Marketplace domain suggests ${resolveLanguageLabel(marketplaceLanguage)!} content.`,
     };
   }
 
@@ -545,7 +556,7 @@ const toDataUrl = (content: Buffer, mimeType: string): string =>
 
 const readLocalImageAsDataUrl = async (source: string): Promise<string | null> => {
   const candidates = [source];
-  if (!path.isAbsolute(source)) {
+  if (path.isAbsolute(source) === false) {
     candidates.push(getDiskPathFromPublicPath(source));
   }
   if (source.startsWith('/')) {
@@ -578,7 +589,7 @@ const readRemoteImageAsDataUrl = async (source: string): Promise<string | null> 
     method: 'GET',
     maxRedirects: 3,
   });
-  if (!response.ok) {
+  if (response.ok === false) {
     return null;
   }
   const content = Buffer.from(await response.arrayBuffer());
@@ -590,7 +601,7 @@ const loadImageSourceAsDataUrl = async (source: string): Promise<string | null> 
   if (source.startsWith('data:')) {
     return source;
   }
-  if (/^https?:\/\//i.test(source)) {
+  if (/^https?:\/\//i.test(source) === true) {
     return await readRemoteImageAsDataUrl(source);
   }
   return await readLocalImageAsDataUrl(source);
@@ -606,10 +617,10 @@ const resolveArtifactFileName = (
   matcher: (artifact: PlaywrightEngineRunRecord['artifacts'][number]) => boolean
 ): string | null => {
   const artifact = (Array.isArray(run.artifacts) ? run.artifacts : []).find(matcher);
-  if (!artifact?.path) {
+  if (artifact === undefined || artifact === null || (artifact.path ?? '') === '') {
     return null;
   }
-  const fileName = path.basename(artifact.path);
+  const fileName = path.basename(artifact.path!);
   return fileName.trim().length > 0 ? fileName : null;
 };
 
@@ -619,7 +630,7 @@ const resolveArtifactFileNameByKey = (
   matcher: (artifact: PlaywrightEngineRunRecord['artifacts'][number]) => boolean
 ): string | null => {
   const normalizedKey = readOptionalString(artifactKey);
-  if (!normalizedKey) {
+  if (normalizedKey === null) {
     return null;
   }
   return resolveArtifactFileName(
@@ -651,7 +662,7 @@ const resolveAmazonEvaluationArtifactFileNames = (
       run,
       (artifact) =>
         artifact.mimeType?.startsWith('image/') === true &&
-        (artifact.name === 'amazon-scan-match' || artifact.path.includes('amazon-scan-match'))
+        (artifact.name === 'amazon-scan-match' || (artifact.path ?? '').includes('amazon-scan-match'))
     ),
   htmlArtifactName:
     resolveArtifactFileNameByKey(
@@ -663,7 +674,7 @@ const resolveAmazonEvaluationArtifactFileNames = (
       run,
       (artifact) =>
         artifact.mimeType === 'text/html' &&
-        (artifact.name === 'amazon-scan-match' || artifact.path.includes('amazon-scan-match'))
+        (artifact.name === 'amazon-scan-match' || (artifact.path ?? '').includes('amazon-scan-match'))
     ),
 });
 
@@ -706,7 +717,7 @@ const buildDeterministicMatchReasons = (
   const reasons: string[] = [];
   const productAsin = normalizeIdentifier(product.asin);
   const detectedAsin = normalizeIdentifier(parsedResult.asin);
-  if (productAsin && detectedAsin && productAsin === detectedAsin) {
+  if (productAsin !== null && detectedAsin !== null && productAsin === detectedAsin) {
     reasons.push(`Existing ASIN ${productAsin} matches the Amazon candidate.`);
   }
 
@@ -717,12 +728,12 @@ const buildDeterministicMatchReasons = (
     normalizeIdentifier(parsedResult.amazonDetails?.gtin),
     normalizeIdentifier(parsedResult.amazonDetails?.upc),
     normalizeIdentifier(parsedResult.amazonDetails?.isbn),
-  ].filter((value): value is string => Boolean(value));
+  ].filter((value): value is string => value !== null);
 
-  if (productEan && candidateIdentifiers.includes(productEan)) {
+  if (productEan !== null && candidateIdentifiers.includes(productEan)) {
     reasons.push(`Existing EAN ${productEan} matches the Amazon candidate.`);
   }
-  if (productGtin && candidateIdentifiers.includes(productGtin)) {
+  if (productGtin !== null && candidateIdentifiers.includes(productGtin)) {
     reasons.push(`Existing GTIN ${productGtin} matches the Amazon candidate.`);
   }
 
@@ -736,7 +747,7 @@ const buildDeterministicCandidateTriageReasons = (
   const reasons: string[] = [];
   const productAsin = normalizeIdentifier(product.asin);
   const candidateAsin = normalizeIdentifier(candidate.asin);
-  if (productAsin && candidateAsin && productAsin === candidateAsin) {
+  if (productAsin !== null && candidateAsin !== null && productAsin === candidateAsin) {
     reasons.push(`Candidate URL includes matching ASIN ${candidateAsin}.`);
   }
   return reasons;
@@ -751,9 +762,9 @@ const shouldBypassAmazonSimilarityAi = (input: {
   deterministicLanguageDecision: DeterministicLanguageDecision;
 }): boolean =>
   input.evaluatorConfig.candidateSimilarityMode !== 'ai_only' &&
-  input.evaluatorConfig.onlyForAmbiguousCandidates &&
+  input.evaluatorConfig.onlyForAmbiguousCandidates === true &&
   input.deterministicReasons.length > 0 &&
-  (!input.evaluatorConfig.rejectNonEnglishContent ||
+  (input.evaluatorConfig.rejectNonEnglishContent === false ||
     input.deterministicLanguageDecision.languageAccepted === true);
 
 const createEvaluationResult = (
@@ -815,7 +826,7 @@ export const triageAmazonScanCandidates = async (input: {
           url,
           score: null,
           asin: extractAmazonAsinFromUrl(url),
-          marketplaceDomain: readOptionalString(url)
+          marketplaceDomain: (readOptionalString(url) !== null)
             ? (() => {
                 try {
                   return new URL(url).hostname.toLowerCase();
@@ -869,52 +880,55 @@ export const triageAmazonScanCandidates = async (input: {
 
   if (
     input.evaluatorConfig.candidateSimilarityMode !== 'ai_only' &&
-    input.evaluatorConfig.onlyForAmbiguousCandidates
+    input.evaluatorConfig.onlyForAmbiguousCandidates === true
   ) {
     const deterministicKeeps = deterministicCandidates.filter(
       (entry) =>
         entry.deterministicReasons.length > 0 &&
-        (!input.evaluatorConfig.rejectNonEnglishContent ||
+        (input.evaluatorConfig.rejectNonEnglishContent === false ||
           entry.deterministicLanguageDecision.languageAccepted !== false)
     );
 
     if (deterministicKeeps.length > 0) {
       const normalizedCandidates = deterministicCandidates
-        .map((entry) => ({
-          url: entry.candidate.url,
-          rankBefore: entry.rankBefore,
-          rankAfter: deterministicKeeps.some((keep) => keep.candidate.url === entry.candidate.url)
-            ? deterministicKeeps.findIndex((keep) => keep.candidate.url === entry.candidate.url) + 1
-            : null,
-          confidence: entry.deterministicReasons.length > 0 ? 1 : null,
-          keep: deterministicKeeps.some((keep) => keep.candidate.url === entry.candidate.url),
-          asin: entry.candidate.asin,
-          marketplaceDomain: entry.candidate.marketplaceDomain,
-          title: entry.candidate.title,
-          snippet: entry.candidate.snippet,
-          pageLanguage: entry.deterministicLanguageDecision.pageLanguage,
-          languageAccepted: entry.candidateLanguageAccepted,
-          recommendedAction: deterministicKeeps.some((keep) => keep.candidate.url === entry.candidate.url)
-            ? ('accept' as const)
-            : ('reject' as const),
-          rejectionCategory:
-            entry.candidateLanguageAccepted === false
-              ? ('language' as const)
-              : entry.deterministicReasons.length > 0
-                ? null
-                : ('wrong_product' as const),
-          reasons:
-            entry.deterministicReasons.length > 0
-              ? entry.deterministicReasons
-              : entry.candidateLanguageAccepted === false
-                ? [
-                    entry.deterministicLanguageDecision.reason ??
-                      'Candidate marketplace language is outside the allowed content policy.',
-                  ]
-                : ['Candidate remained ambiguous after deterministic checks.'],
-          mismatchLabels:
-            entry.candidateLanguageAccepted === false ? (['language'] as ProductScanAmazonMismatchLabel[]) : [],
-        }))
+        .map((entry) => {
+          const isKept = deterministicKeeps.some((keepEntry) => keepEntry.candidate.url === entry.candidate.url);
+          return {
+            url: entry.candidate.url,
+            rankBefore: entry.rankBefore,
+            rankAfter: isKept === true
+              ? deterministicKeeps.findIndex((keepEntry) => keepEntry.candidate.url === entry.candidate.url) + 1
+              : null,
+            confidence: entry.deterministicReasons.length > 0 ? 1 : null,
+            keep: isKept,
+            asin: entry.candidate.asin,
+            marketplaceDomain: entry.candidate.marketplaceDomain,
+            title: entry.candidate.title,
+            snippet: entry.candidate.snippet,
+            pageLanguage: entry.deterministicLanguageDecision.pageLanguage,
+            languageAccepted: entry.candidateLanguageAccepted,
+            recommendedAction: isKept === true
+              ? ('accept' as const)
+              : ('reject' as const),
+            rejectionCategory:
+              entry.candidateLanguageAccepted === false
+                ? ('language' as const)
+                : entry.deterministicReasons.length > 0
+                  ? null
+                  : ('wrong_product' as const),
+            reasons:
+              entry.deterministicReasons.length > 0
+                ? entry.deterministicReasons
+                : entry.candidateLanguageAccepted === false
+                  ? [
+                      entry.deterministicLanguageDecision.reason ??
+                        'Candidate marketplace language is outside the allowed content policy.',
+                    ]
+                  : ['Candidate remained ambiguous after deterministic checks.'],
+            mismatchLabels:
+              entry.candidateLanguageAccepted === false ? (['language'] as ProductScanAmazonMismatchLabel[]) : [],
+          };
+        })
         .sort((left, right) => left.rankBefore - right.rankBefore);
 
       return createCandidateTriageEvaluationResult({
@@ -1005,7 +1019,7 @@ export const triageAmazonScanCandidates = async (input: {
               ? 'Deterministic hints are hints only. AI must decide whether each candidate should stay in the queue.'
               : 'Use deterministic hints as strong signals, but still discard candidates that are clearly wrong from the result metadata.',
           ]
-            .filter(Boolean)
+            .filter((v): v is string => v !== null && v !== undefined && v !== '')
             .join('\n'),
         },
         {
@@ -1028,25 +1042,25 @@ export const triageAmazonScanCandidates = async (input: {
         ...(parsedCandidate?.mismatchLabels ?? []),
         languageAccepted === false ? 'language' : null,
       ]);
+      const currentKeep =
+        parsedCandidate?.keep === true &&
+        (input.evaluatorConfig.rejectNonEnglishContent === false || languageAccepted !== false);
       const rejectionCategory = resolveAmazonRejectionCategory({
-        approved: parsedCandidate?.keep === true,
+        approved: currentKeep === true,
         languageAccepted,
         parsedRejectionCategory: parsedCandidate?.rejectionCategory ?? null,
         mismatchLabels,
-        sameProduct: parsedCandidate?.keep === true || entry.deterministicReasons.length > 0,
-        pageRepresentsSameProduct: parsedCandidate?.keep === true || entry.deterministicReasons.length > 0,
+        sameProduct: currentKeep === true || entry.deterministicReasons.length > 0,
+        pageRepresentsSameProduct: currentKeep === true || entry.deterministicReasons.length > 0,
         confidence: parsedCandidate?.confidence ?? 0,
         threshold: input.evaluatorConfig.threshold,
       });
-      const keep =
-        parsedCandidate?.keep === true &&
-        (!input.evaluatorConfig.rejectNonEnglishContent || languageAccepted !== false);
       return {
         url: entry.candidate.url,
         rankBefore: entry.rankBefore,
-        rankAfter: keep ? parsedCandidate?.rankAfter ?? null : null,
+        rankAfter: currentKeep ? parsedCandidate?.rankAfter ?? null : null,
         confidence: parsedCandidate?.confidence ?? null,
-        keep,
+        keep: currentKeep,
         asin: entry.candidate.asin,
         marketplaceDomain: entry.candidate.marketplaceDomain,
         title: entry.candidate.title,
@@ -1056,7 +1070,7 @@ export const triageAmazonScanCandidates = async (input: {
           entry.deterministicLanguageDecision.pageLanguage,
         languageAccepted,
         recommendedAction: resolveAmazonRecommendedAction({
-          approved: keep,
+          approved: currentKeep,
           parsedRecommendedAction: parsedCandidate?.recommendedAction ?? null,
           rejectionCategory,
         }),
@@ -1107,7 +1121,7 @@ export const triageAmazonScanCandidates = async (input: {
       keptCandidateUrls.length > 0
         ? null
         : parsed.rejectionCategory ??
-          finalCandidates.find((candidate) => candidate.rejectionCategory != null)
+          finalCandidates.find((candidate) => candidate.rejectionCategory !== null)
             ?.rejectionCategory ??
           'wrong_product';
 
@@ -1214,7 +1228,7 @@ export const evaluateAmazonScanCandidateMatch = async (input: {
     evaluatorConfig: input.evaluatorConfig,
   });
   if (
-    input.evaluatorConfig.rejectNonEnglishContent &&
+    input.evaluatorConfig.rejectNonEnglishContent === true &&
     input.evaluatorConfig.languageDetectionMode === 'deterministic_then_ai' &&
     deterministicLanguageDecision.languageAccepted === false
   ) {
@@ -1262,7 +1276,7 @@ export const evaluateAmazonScanCandidateMatch = async (input: {
       pageRepresentsSameProduct: true,
       pageLanguage: deterministicLanguageDecision.pageLanguage,
       languageConfidence: deterministicLanguageDecision.confidence,
-      languageAccepted: input.evaluatorConfig.rejectNonEnglishContent
+      languageAccepted: input.evaluatorConfig.rejectNonEnglishContent === true
         ? deterministicLanguageDecision.languageAccepted
         : true,
       languageReason: deterministicLanguageDecision.reason,
@@ -1284,7 +1298,7 @@ export const evaluateAmazonScanCandidateMatch = async (input: {
   evidence.productImageSource = productImageSource;
 
   const screenshotArtifactName = evidenceArtifacts.screenshotArtifactName;
-  if (!productImageSource) {
+  if (productImageSource === null) {
     return createEvaluationResult({
       ...evaluationBase,
       status: 'failed',
@@ -1301,7 +1315,7 @@ export const evaluateAmazonScanCandidateMatch = async (input: {
       error: 'Amazon candidate AI evaluation could not load a source product image.',
     });
   }
-  if (!screenshotArtifactName) {
+  if (screenshotArtifactName === null) {
     return createEvaluationResult({
       ...evaluationBase,
       status: 'failed',
@@ -1319,8 +1333,8 @@ export const evaluateAmazonScanCandidateMatch = async (input: {
     });
   }
 
-  const productImageDataUrl = await loadImageSourceAsDataUrl(productImageSource).catch((error) => {
-    void ErrorSystem.captureException(error, {
+  const productImageDataUrl = await loadImageSourceAsDataUrl(productImageSource).catch(async (error) => {
+    await ErrorSystem.captureException(error, {
       service: 'product-scan-amazon-evaluator',
       action: 'loadProductImage',
       productId: input.product.id,
@@ -1328,7 +1342,7 @@ export const evaluateAmazonScanCandidateMatch = async (input: {
     });
     return null;
   });
-  if (!productImageDataUrl) {
+  if (productImageDataUrl === null) {
     return createEvaluationResult({
       ...evaluationBase,
       status: 'failed',
@@ -1346,32 +1360,32 @@ export const evaluateAmazonScanCandidateMatch = async (input: {
     });
   }
 
-  const heroImageArtifact = evidence.heroImageArtifactName
+  const heroImageArtifact = (typeof evidence.heroImageArtifactName === 'string' && evidence.heroImageArtifactName !== '')
     ? await readPlaywrightEngineArtifact({
         runId: input.run.runId,
         fileName: evidence.heroImageArtifactName,
-      }).catch((error) => {
-        void ErrorSystem.captureException(error, {
+      }).catch(async (error) => {
+        await ErrorSystem.captureException(error, {
           service: 'product-scan-amazon-evaluator',
           action: 'readAmazonHeroImageArtifact',
           productId: input.product.id,
-          fileName: evidence.heroImageArtifactName,
+          fileName: evidence.heroImageArtifactName!,
         });
         return null;
       })
     : null;
-  const heroImageDataUrl = heroImageArtifact
+  const heroImageDataUrl = heroImageArtifact !== null
     ? toDataUrl(
         heroImageArtifact.content,
         readOptionalString(heroImageArtifact.artifact.mimeType) ?? 'image/png'
       )
-    : evidence.heroImageSource
-      ? await loadImageSourceAsDataUrl(evidence.heroImageSource).catch((error) => {
-          void ErrorSystem.captureException(error, {
+    : (typeof evidence.heroImageSource === 'string' && evidence.heroImageSource !== '')
+      ? await loadImageSourceAsDataUrl(evidence.heroImageSource).catch(async (error) => {
+          await ErrorSystem.captureException(error, {
             service: 'product-scan-amazon-evaluator',
             action: 'loadAmazonHeroImage',
             productId: input.product.id,
-            source: evidence.heroImageSource,
+            source: evidence.heroImageSource!,
           });
           return null;
         })
@@ -1412,14 +1426,14 @@ export const evaluateAmazonScanCandidateMatch = async (input: {
       ? 'Deterministic identifier matches are hints only. AI must decide whether the page represents the same product.'
       : 'Use deterministic identifier matches as strong hints, but still reject visible product mismatches.',
     `Allowed content language for scraping: ${resolveLanguageLabel(input.evaluatorConfig.allowedContentLanguage) ?? input.evaluatorConfig.allowedContentLanguage}.`,
-    input.evaluatorConfig.rejectNonEnglishContent
+    input.evaluatorConfig.rejectNonEnglishContent === true
       ? 'If the Amazon page content is not English enough to trust scraping into English fields, set languageAccepted to false and proceed to false.'
       : 'Language does not block scraping in this run.',
     input.evaluatorConfig.languageDetectionMode === 'ai_only'
       ? 'You must determine the Amazon page language from the page content and images. Do not leave languageAccepted empty.'
       : 'Deterministic language hints are provided as extra evidence.',
   ]
-    .filter(Boolean)
+    .filter((v): v is string => v !== null && v !== undefined && v !== '')
     .join('\n');
 
   const promptPayload = {
@@ -1517,20 +1531,20 @@ export const evaluateAmazonScanCandidateMatch = async (input: {
         text: [
           'Compare the source product and the Amazon page.',
           'The first image is the source product image from the app.',
-          heroImageDataUrl
+          (heroImageDataUrl !== null)
             ? 'The second image is the Amazon product hero image from the page.'
             : null,
-          heroImageDataUrl
+          (heroImageDataUrl !== null)
             ? 'The third image is the Amazon page screenshot.'
             : 'The second image is the Amazon page screenshot.',
           JSON.stringify(promptPayload, null, 2),
         ]
-          .filter(Boolean)
+          .filter((v): v is string => v !== null && v !== undefined && v !== '')
           .join('\n\n'),
       },
       buildImagePart(productImageDataUrl),
     ];
-    if (heroImageDataUrl) {
+    if (heroImageDataUrl !== null) {
       userContent.push(buildImagePart(heroImageDataUrl));
     }
     userContent.push(
@@ -1559,7 +1573,7 @@ export const evaluateAmazonScanCandidateMatch = async (input: {
       ],
     });
 
-    if (!SUPPORTED_IMAGE_RUNTIME_VENDORS.has(completion.vendor)) {
+    if (SUPPORTED_IMAGE_RUNTIME_VENDORS.has(completion.vendor) === false) {
       return createEvaluationResult({
         ...evaluationBase,
         status: 'failed',
@@ -1582,7 +1596,7 @@ export const evaluateAmazonScanCandidateMatch = async (input: {
     const rawJson = JSON.parse(completion.text) as unknown;
     const parsed = amazonEvaluatorResponseSchema.parse(rawJson);
     const languageAccepted =
-      input.evaluatorConfig.rejectNonEnglishContent
+      input.evaluatorConfig.rejectNonEnglishContent === true
         ? typeof parsed.languageAccepted === 'boolean'
           ? parsed.languageAccepted
           : input.evaluatorConfig.languageDetectionMode === 'deterministic_then_ai'
@@ -1597,18 +1611,18 @@ export const evaluateAmazonScanCandidateMatch = async (input: {
       typeof parsed.languageConfidence === 'number'
         ? parsed.languageConfidence
         : deterministicLanguageDecision.confidence;
-    const languageGatePassed = !input.evaluatorConfig.rejectNonEnglishContent
+    const languageGatePassed = input.evaluatorConfig.rejectNonEnglishContent === false
       ? true
       : input.evaluatorConfig.languageDetectionMode === 'ai_only'
         ? languageAccepted === true
         : languageAccepted !== false;
     const approved =
-      parsed.proceed &&
-      parsed.sameProduct &&
-      parsed.pageRepresentsSameProduct &&
+      parsed.proceed === true &&
+      parsed.sameProduct === true &&
+      parsed.pageRepresentsSameProduct === true &&
       parsed.imageMatch !== false &&
       parsed.descriptionMatch !== false &&
-      languageGatePassed &&
+      languageGatePassed === true &&
       parsed.confidence >= input.evaluatorConfig.threshold;
     const reasons = [...parsed.reasons];
     const mismatches = [...parsed.mismatches];
@@ -1625,35 +1639,35 @@ export const evaluateAmazonScanCandidateMatch = async (input: {
         ? 'character_theme_license'
         : null,
       languageAccepted === false ? 'language' : null,
-      !parsed.sameProduct || !parsed.pageRepresentsSameProduct ? 'wrong_product' : null,
+      (parsed.sameProduct === false || parsed.pageRepresentsSameProduct === false) ? 'wrong_product' : null,
     ]);
     if (
-      input.evaluatorConfig.rejectNonEnglishContent &&
+      input.evaluatorConfig.rejectNonEnglishContent === true &&
       input.evaluatorConfig.languageDetectionMode === 'ai_only' &&
-      languageAccepted == null
+      languageAccepted === null
     ) {
       const missingLanguageVerdictReason =
         'AI evaluator did not return a language verdict for the Amazon page.';
-      if (!reasons.includes(missingLanguageVerdictReason)) {
+      if (reasons.includes(missingLanguageVerdictReason) === false) {
         reasons.unshift(missingLanguageVerdictReason);
       }
-      if (!mismatches.includes('Amazon page language could not be verified.')) {
+      if (mismatches.includes('Amazon page language could not be verified.') === false) {
         mismatches.push('Amazon page language could not be verified.');
       }
     }
-    if (languageAccepted === false && languageReason && !reasons.includes(languageReason)) {
+    if (languageAccepted === false && languageReason !== null && reasons.includes(languageReason) === false) {
       reasons.unshift(languageReason);
     }
     if (
       languageAccepted === false &&
-      !mismatches.some((entry) => /language|english/i.test(entry))
+      mismatches.some((entry) => /language|english/i.test(entry)) === false
     ) {
       mismatches.push('Amazon page content is not in English.');
     }
     const rejectionCategory = resolveAmazonRejectionCategory({
       approved,
       languageAccepted,
-      parsedRejectionCategory: parsed.rejectionCategory,
+      parsedRejectionCategory: parsed.rejectionCategory ?? null,
       mismatchLabels,
       sameProduct: parsed.sameProduct,
       pageRepresentsSameProduct: parsed.pageRepresentsSameProduct,
@@ -1662,7 +1676,7 @@ export const evaluateAmazonScanCandidateMatch = async (input: {
     });
     const recommendedAction = resolveAmazonRecommendedAction({
       approved,
-      parsedRecommendedAction: parsed.recommendedAction,
+      parsedRecommendedAction: parsed.recommendedAction ?? null,
       rejectionCategory,
     });
 

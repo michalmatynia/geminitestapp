@@ -57,13 +57,18 @@ const hasText = (value: string | null | undefined): value is string =>
 
 const resolveDetailFields = (
   fields: DetailField[]
-): Array<{ label: string; value: string }> =>
-  fields
-    .filter((field): field is { label: string; value: string } => hasText(field.value))
-    .map((field) => ({
-      label: field.label,
-      value: field.value.trim(),
-    }));
+): Array<{ label: string; value: string }> => {
+  const result: Array<{ label: string; value: string }> = [];
+  for (const field of fields) {
+    if (hasText(field.value)) {
+      result.push({
+        label: field.label,
+        value: field.value.trim(),
+      });
+    }
+  }
+  return result;
+};
 
 const resolveAttributeSourceLabel = (value: string | null | undefined): string => {
   const normalized = hasText(value) ? value.trim() : 'other';
@@ -80,7 +85,7 @@ const resolveAttributeSourceLabel = (value: string | null | undefined): string =
 const groupAmazonAttributesBySource = (
   details: ProductScanAmazonDetailsValue | null | undefined
 ): Array<{ source: string; entries: AmazonAttribute[] }> => {
-  if (!details?.attributes.length) {
+  if (details === null || details === undefined || details.attributes.length === 0) {
     return [];
   }
 
@@ -118,12 +123,12 @@ const groupAmazonAttributesBySource = (
 };
 
 const matchesAttributeQuery = (attribute: AmazonAttribute, query: string): boolean => {
-  if (!query) {
+  if (query === '') {
     return true;
   }
 
   const haystack = [attribute.label, attribute.value, attribute.key, attribute.source]
-    .filter(hasText)
+    .filter((v): v is string => hasText(v))
     .join(' ')
     .toLowerCase();
 
@@ -131,22 +136,21 @@ const matchesAttributeQuery = (attribute: AmazonAttribute, query: string): boole
 };
 
 const formatResultCode = (value: string | null | undefined): string | null => {
-  if (!hasText(value)) {
-    return null;
+  if (hasText(value)) {
+    return value
+      .trim()
+      .replace(/[_-]+/g, ' ')
+      .replace(/\b\w/g, (letter) => letter.toUpperCase());
   }
-
-  return value
-    .trim()
-    .replace(/[_-]+/g, ' ')
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+  return null;
 };
 
 const resolveInputSourceLabel = (value: string | null | undefined): string | null => {
-  if (!hasText(value)) {
-    return null;
+  if (hasText(value)) {
+    const trimmed = value.trim();
+    return trimmed === 'url' ? 'URL input' : trimmed === 'file' ? 'File input' : trimmed;
   }
-
-  return value === 'url' ? 'URL input' : value === 'file' ? 'File input' : value.trim();
+  return null;
 };
 
 const resolveAmazonEvaluationStatusLabel = (
@@ -165,35 +169,43 @@ const formatAmazonEvaluationConfidence = (value: number | null | undefined): str
   typeof value === 'number' && Number.isFinite(value) ? `${Math.round(value * 100)}%` : null;
 
 const formatAmazonPageLanguage = (value: string | null | undefined): string | null => {
-  if (!hasText(value)) {
-    return null;
+  if (hasText(value)) {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === 'en') return 'English';
+    if (normalized === 'en-us') return 'English (US)';
+    if (normalized === 'en-gb') return 'English (UK)';
+    if (normalized === 'de') return 'German';
+    if (normalized === 'fr') return 'French';
+    if (normalized === 'es') return 'Spanish';
+    if (normalized === 'it') return 'Italian';
+    if (normalized === 'pl') return 'Polish';
+    if (normalized === 'nl') return 'Dutch';
+    if (normalized === 'sv') return 'Swedish';
+    if (normalized === 'ja') return 'Japanese';
+    return normalized.toUpperCase();
   }
-
-  const normalized = value.trim().toLowerCase();
-  if (normalized === 'en') return 'English';
-  if (normalized === 'en-us') return 'English (US)';
-  if (normalized === 'en-gb') return 'English (UK)';
-  if (normalized === 'de') return 'German';
-  if (normalized === 'fr') return 'French';
-  if (normalized === 'es') return 'Spanish';
-  if (normalized === 'it') return 'Italian';
-  if (normalized === 'pl') return 'Polish';
-  if (normalized === 'nl') return 'Dutch';
-  if (normalized === 'sv') return 'Swedish';
-  if (normalized === 'ja') return 'Japanese';
-  return normalized.toUpperCase();
+  return null;
 };
 
 const resolveStepDetailValue = (
   step: Pick<ProductScanStep, 'details'>,
   label: string
-): string | null =>
-  step.details.find((entry) => entry.label === label)?.value?.trim() || null;
+): string | null => {
+  const detail = step.details.find((entry) => entry.label === label);
+  if (detail && hasText(detail.value)) {
+    return detail.value.trim();
+  }
+  return null;
+};
 
 const resolveLatestAmazonEvaluationStep = (
   steps: readonly ProductScanStep[] | null | undefined
-): ProductScanStep | null =>
-  [...(steps ?? [])].reverse().find((step) => step.key === 'amazon_ai_evaluate') ?? null;
+): ProductScanStep | null => {
+  if (steps) {
+    return [...steps].reverse().find((step) => step.key === 'amazon_ai_evaluate') ?? null;
+  }
+  return null;
+};
 
 const resolveAmazonExtractionProvenance = (
   steps: readonly ProductScanStep[] | null | undefined
@@ -203,32 +215,37 @@ const resolveAmazonExtractionProvenance = (
     return null;
   }
 
+  const reversedSteps = [...normalizedSteps].reverse();
   const amazonExtractStep =
-    [...normalizedSteps].reverse().find((step) => step.key === 'amazon_extract' && step.status === 'completed') ??
-    [...normalizedSteps].reverse().find((step) => step.key === 'amazon_extract');
-  const amazonProbeStep = [...normalizedSteps].reverse().find((step) => step.key === 'amazon_probe') ?? null;
+    reversedSteps.find((step) => step.key === 'amazon_extract' && step.status === 'completed') ??
+    reversedSteps.find((step) => step.key === 'amazon_extract');
+  const amazonProbeStep = reversedSteps.find((step) => step.key === 'amazon_probe') ?? null;
   const googleUploadStep =
-    [...normalizedSteps].reverse().find(
+    reversedSteps.find(
       (step) =>
         step.key === 'google_upload' &&
         step.status === 'completed' &&
-        (!amazonExtractStep?.candidateId || step.candidateId === amazonExtractStep.candidateId)
+        ((amazonExtractStep?.candidateId ?? '') === '' || step.candidateId === amazonExtractStep?.candidateId)
     ) ??
-    [...normalizedSteps].reverse().find((step) => step.key === 'google_upload' && step.status === 'completed') ??
-    [...normalizedSteps].reverse().find((step) => step.key === 'google_upload');
+    reversedSteps.find((step) => step.key === 'google_upload' && step.status === 'completed') ??
+    reversedSteps.find((step) => step.key === 'google_upload');
 
-  const candidateId = amazonExtractStep?.candidateId?.trim() || googleUploadStep?.candidateId?.trim() || null;
+  const extractCandidateId = amazonExtractStep?.candidateId;
+  const uploadCandidateId = googleUploadStep?.candidateId;
+  const candidateId = (typeof extractCandidateId === 'string' && extractCandidateId.trim() !== '' ? extractCandidateId.trim() : null) ??
+    (typeof uploadCandidateId === 'string' && uploadCandidateId.trim() !== '' ? uploadCandidateId.trim() : null);
   const candidateRank =
     typeof amazonExtractStep?.candidateRank === 'number' && Number.isFinite(amazonExtractStep.candidateRank)
       ? amazonExtractStep.candidateRank
       : null;
   const inputSourceLabel = resolveInputSourceLabel(googleUploadStep?.inputSource);
-  const retryOf = googleUploadStep?.retryOf?.trim() || null;
+  const uploadRetryOf = googleUploadStep?.retryOf;
+  const retryOf = (typeof uploadRetryOf === 'string' && uploadRetryOf.trim() !== '' ? uploadRetryOf.trim() : null);
   const reusedProbe = amazonProbeStep?.resultCode === 'probe_reused';
   const extractionResultLabel =
     formatResultCode(amazonExtractStep?.resultCode) ?? formatResultCode(googleUploadStep?.resultCode);
 
-  if (!candidateId && !candidateRank && !inputSourceLabel && !retryOf && !reusedProbe && !extractionResultLabel) {
+  if (candidateId === null && candidateRank === null && inputSourceLabel === null && retryOf === null && reusedProbe === false && extractionResultLabel === null) {
     return null;
   }
 
@@ -244,36 +261,43 @@ const resolveAmazonExtractionProvenance = (
 
 const resolveRejectedAmazonCandidateHistory = (
   steps: readonly ProductScanStep[] | null | undefined
-): AmazonRejectedCandidateHistoryEntry[] =>
-  (steps ?? [])
+): AmazonRejectedCandidateHistoryEntry[] => {
+  const normalizedSteps = steps ?? [];
+  return normalizedSteps
     .filter(
       (step) =>
         step.key === 'amazon_ai_evaluate' &&
         (step.resultCode === 'candidate_rejected' ||
           step.resultCode === 'candidate_language_rejected')
     )
-    .map((step) => ({
-      attempt:
-        typeof step.attempt === 'number' && Number.isFinite(step.attempt) ? step.attempt : 1,
-      candidateId: step.candidateId?.trim() || null,
-      candidateRank:
-        typeof step.candidateRank === 'number' && Number.isFinite(step.candidateRank)
-          ? step.candidateRank
-          : null,
-      url: step.url?.trim() || resolveStepDetailValue(step, 'Candidate URL'),
-      rejectionKind:
-        step.resultCode === 'candidate_language_rejected'
-          ? ('language' as const)
-          : ('product' as const),
-      confidenceLabel: resolveStepDetailValue(step, 'Confidence'),
-      modelId: resolveStepDetailValue(step, 'Model'),
-      reason:
-        resolveStepDetailValue(step, 'Reason') ??
-        resolveStepDetailValue(step, 'Language reason'),
-      mismatch: resolveStepDetailValue(step, 'Mismatch'),
-      message: step.message?.trim() || null,
-    }))
+    .map((step) => {
+      const stepCandidateId = step.candidateId;
+      const stepUrl = step.url;
+      const stepMessage = step.message;
+      return {
+        attempt:
+          typeof step.attempt === 'number' && Number.isFinite(step.attempt) ? step.attempt : 1,
+        candidateId: (typeof stepCandidateId === 'string' && stepCandidateId.trim() !== '' ? stepCandidateId.trim() : null),
+        candidateRank:
+          typeof step.candidateRank === 'number' && Number.isFinite(step.candidateRank)
+            ? step.candidateRank
+            : null,
+        url: (typeof stepUrl === 'string' && stepUrl.trim() !== '' ? stepUrl.trim() : null) ?? resolveStepDetailValue(step, 'Candidate URL'),
+        rejectionKind:
+          step.resultCode === 'candidate_language_rejected'
+            ? ('language' as const)
+            : ('product' as const),
+        confidenceLabel: resolveStepDetailValue(step, 'Confidence'),
+        modelId: resolveStepDetailValue(step, 'Model'),
+        reason:
+          resolveStepDetailValue(step, 'Reason') ??
+          resolveStepDetailValue(step, 'Language reason'),
+        mismatch: resolveStepDetailValue(step, 'Mismatch'),
+        message: (typeof stepMessage === 'string' && stepMessage.trim() !== '' ? stepMessage.trim() : null),
+      };
+    })
     .sort((left, right) => left.attempt - right.attempt);
+};
 
 export const resolveRejectedAmazonCandidateBreakdown = (
   steps: readonly ProductScanStep[] | null | undefined
@@ -304,12 +328,13 @@ export const resolveAmazonScanRecommendationReason = (
       ? ` (${rejectedLanguageCount} non-English)`
       : '';
 
-  if (!quality) {
-    return rejectedCandidateCount > 0
-      ? `Best available result after ${rejectedCandidateCount} rejected candidate${
-          rejectedCandidateCount === 1 ? '' : 's'
-        }`
-      : 'Best available result';
+  if (quality === null) {
+    if (rejectedCandidateCount > 0) {
+      return `Best available result after ${rejectedCandidateCount} rejected candidate${
+        rejectedCandidateCount === 1 ? '' : 's'
+      }`;
+    }
+    return 'Best available result';
   }
 
   if (quality.primaryLabel === 'Strong match') {
@@ -319,7 +344,7 @@ export const resolveAmazonScanRecommendationReason = (
       }${rejectedSuffix}`;
     }
 
-    if (!quality.usedFallback && !quality.usedCaptcha) {
+    if (quality.usedFallback === false && quality.usedCaptcha === false) {
       return 'Strongest clean match';
     }
 
@@ -333,7 +358,7 @@ export const resolveAmazonScanRecommendationReason = (
       }${rejectedSuffix}`;
     }
 
-    if (!quality.usedFallback && !quality.usedCaptcha) {
+    if (quality.usedFallback === false && quality.usedCaptcha === false) {
       return 'Clean partial extraction';
     }
 
@@ -353,12 +378,12 @@ export const resolvePreferredAmazonExtractedScans = (
   scans: ProductScanRecord[]
 ): ProductScanRecord[] => {
   const extractedScans = scans.filter(
-    (scan) => hasProductScanAmazonDetails(scan.amazonDetails) || Boolean(scan.asin)
+    (scan) => hasProductScanAmazonDetails(scan.amazonDetails) || hasText(scan.asin)
   );
 
   const resolveQualityPriority = (scan: ProductScanRecord): number => {
     const quality = resolveAmazonScanQualitySummary(scan);
-    if (!quality) {
+    if (quality === null) {
       return 0;
     }
 
@@ -369,7 +394,7 @@ export const resolvePreferredAmazonExtractedScans = (
           ? 200
           : 100;
 
-    return primaryScore + (quality.usedFallback ? 0 : 5) + (quality.usedCaptcha ? 0 : 2);
+    return primaryScore + (quality.usedFallback === false ? 5 : 0) + (quality.usedCaptcha === false ? 2 : 0);
   };
 
   const resolveSortTimestamp = (scan: ProductScanRecord): number => {
@@ -405,23 +430,23 @@ export const resolveAmazonScanQualitySummary = (
   }
 ): AmazonScanQualitySummary | null => {
   const provenance = resolveAmazonExtractionProvenance(scan.steps);
-  const normalizedSteps: readonly ProductScanStep[] = scan.steps ?? [];
+  const normalizedSteps: readonly ProductScanStep[] = Array.isArray(scan.steps) ? scan.steps : [];
   const hasAsin = hasText(scan.asin);
   const hasExtractedDetails = hasProductScanAmazonDetails(scan.amazonDetails);
   const hasListingText = hasText(scan.title) || hasText(scan.description);
   const usedCaptcha = normalizedSteps.some((step) => step.key === 'google_captcha');
 
-  if (!hasAsin && !hasExtractedDetails && !hasListingText && !usedCaptcha && !provenance?.retryOf) {
+  if (hasAsin === false && hasExtractedDetails === false && hasListingText === false && usedCaptcha === false && (provenance?.retryOf ?? '') === '') {
     return null;
   }
 
   return {
-    primaryLabel: hasAsin
+    primaryLabel: hasAsin === true
       ? 'Strong match'
-      : hasExtractedDetails || hasListingText
+      : hasExtractedDetails === true || hasListingText === true
         ? 'Partial extraction'
         : 'Scraped info',
-    usedFallback: Boolean(provenance?.retryOf),
+    usedFallback: (provenance?.retryOf ?? '') !== '',
     usedCaptcha,
   };
 };
@@ -432,7 +457,7 @@ const resolveAmazonScanQualityModifierLabel = (
   }
 ): string | null => {
   const quality = resolveAmazonScanQualitySummary(scan);
-  if (!quality) {
+  if (quality === null) {
     return null;
   }
 
@@ -448,11 +473,11 @@ const resolveAmazonScanQualityModifierLabel = (
     }${languageSuffix}`;
   }
 
-  if (!quality.usedFallback && !quality.usedCaptcha) {
+  if (quality.usedFallback === false && quality.usedCaptcha === false) {
     return 'Clean path';
   }
 
-  if (quality.usedFallback || quality.usedCaptcha) {
+  if (quality.usedFallback === true || quality.usedCaptcha === true) {
     return 'Recovered path';
   }
 
@@ -465,7 +490,7 @@ export function ProductScanAmazonQualitySummary(props: {
   const quality = resolveAmazonScanQualitySummary(props.scan);
   const modifierLabel = resolveAmazonScanQualityModifierLabel(props.scan);
 
-  if (!quality) {
+  if (quality === null) {
     return null;
   }
 
@@ -487,17 +512,17 @@ export function ProductScanAmazonQualitySummary(props: {
         >
           {quality.primaryLabel}
         </span>
-        {modifierLabel ? (
+        {modifierLabel !== null ? (
           <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium'>
             {modifierLabel}
           </span>
         ) : null}
-        {quality.usedFallback ? (
+        {quality.usedFallback === true ? (
           <span className='inline-flex items-center rounded-md border border-amber-500/40 px-2 py-0.5 text-[11px] font-medium text-amber-300'>
             Fallback used
           </span>
         ) : null}
-        {quality.usedCaptcha ? (
+        {quality.usedCaptcha === true ? (
           <span className='inline-flex items-center rounded-md border border-sky-500/40 px-2 py-0.5 text-[11px] font-medium text-sky-300'>
             Captcha path
           </span>
@@ -514,9 +539,14 @@ export function ProductScanAmazonProvenanceSummary(props: {
   const rejectedCandidateBreakdown = resolveRejectedAmazonCandidateBreakdown(props.scan.steps);
   const rejectedCandidateCount = rejectedCandidateBreakdown.totalCount;
 
-  if (!provenance && rejectedCandidateCount === 0) {
+  if (provenance === null && rejectedCandidateCount === 0) {
     return null;
   }
+
+  const inputSourceLabel = provenance?.inputSourceLabel;
+  const retryOf = provenance?.retryOf;
+  const candidateId = provenance?.candidateId;
+  const extractionResultLabel = provenance?.extractionResultLabel;
 
   return (
     <div className='space-y-2 rounded-md border border-border/50 bg-background/70 px-3 py-2'>
@@ -524,17 +554,17 @@ export function ProductScanAmazonProvenanceSummary(props: {
         Scan Provenance
       </p>
       <div className='flex flex-wrap gap-2'>
-        {provenance?.inputSourceLabel ? (
+        {typeof inputSourceLabel === 'string' ? (
           <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium'>
-            Google: {provenance.inputSourceLabel === 'URL input' ? 'URL' : 'File'}
+            Google: {inputSourceLabel === 'URL input' ? 'URL' : 'File'}
           </span>
         ) : null}
-        {provenance?.retryOf ? (
+        {typeof retryOf === 'string' ? (
           <span className='inline-flex items-center rounded-md border border-amber-500/40 px-2 py-0.5 text-[11px] font-medium text-amber-300'>
-            Fallback: {provenance.retryOf}
+            Fallback: {retryOf}
           </span>
         ) : null}
-        {provenance?.reusedProbe ? (
+        {provenance?.reusedProbe === true ? (
           <span className='inline-flex items-center rounded-md border border-emerald-500/40 px-2 py-0.5 text-[11px] font-medium text-emerald-300'>
             Probe reused
           </span>
@@ -554,14 +584,14 @@ export function ProductScanAmazonProvenanceSummary(props: {
             Amazon rank: #{provenance.candidateRank}
           </span>
         ) : null}
-        {provenance?.candidateId ? (
+        {typeof candidateId === 'string' ? (
           <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium'>
-            Image: {provenance.candidateId}
+            Image: {candidateId}
           </span>
         ) : null}
-        {provenance?.extractionResultLabel ? (
+        {typeof extractionResultLabel === 'string' ? (
           <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium'>
-            Result: {provenance.extractionResultLabel}
+            Result: {extractionResultLabel}
           </span>
         ) : null}
       </div>
@@ -571,34 +601,35 @@ export function ProductScanAmazonProvenanceSummary(props: {
 
 export const hasProductScanAmazonDetails = (
   details: ProductScanAmazonDetailsValue | null | undefined
-): boolean =>
-  Boolean(
-    details &&
-      ([
-        details.brand,
-        details.manufacturer,
-        details.modelNumber,
-        details.partNumber,
-        details.color,
-        details.style,
-        details.material,
-        details.size,
-        details.pattern,
-        details.finish,
-        details.itemDimensions,
-        details.packageDimensions,
-        details.itemWeight,
-        details.packageWeight,
-        details.bestSellersRank,
-        details.ean,
-        details.gtin,
-        details.upc,
-        details.isbn,
-      ].some(hasText) ||
-        details.bulletPoints.length > 0 ||
-        details.attributes.length > 0 ||
-        details.rankings.length > 0)
-  );
+): boolean => {
+  if (details !== null && details !== undefined) {
+    return (
+      hasText(details.brand) === true ||
+      hasText(details.manufacturer) === true ||
+      hasText(details.modelNumber) === true ||
+      hasText(details.partNumber) === true ||
+      hasText(details.color) === true ||
+      hasText(details.style) === true ||
+      hasText(details.material) === true ||
+      hasText(details.size) === true ||
+      hasText(details.pattern) === true ||
+      hasText(details.finish) === true ||
+      hasText(details.itemDimensions) === true ||
+      hasText(details.packageDimensions) === true ||
+      hasText(details.itemWeight) === true ||
+      hasText(details.packageWeight) === true ||
+      hasText(details.bestSellersRank) === true ||
+      hasText(details.ean) === true ||
+      hasText(details.gtin) === true ||
+      hasText(details.upc) === true ||
+      hasText(details.isbn) === true ||
+      details.bulletPoints.length > 0 ||
+      details.attributes.length > 0 ||
+      details.rankings.length > 0
+    );
+  }
+  return false;
+};
 
 function FieldGroup(props: {
   title: string;
@@ -648,6 +679,8 @@ function TextBlock(props: {
     return null;
   }
 
+  const trimmedValue = props.value.trim();
+
   return (
     <div className='space-y-2'>
       <div className='flex items-center justify-between gap-2'>
@@ -655,7 +688,7 @@ function TextBlock(props: {
           {props.title}
         </h5>
         <CopyButton
-          value={props.value.trim()}
+          value={trimmedValue}
           ariaLabel={`Copy ${props.title}`}
           size='sm'
           className='h-6 px-2 text-[11px]'
@@ -663,8 +696,123 @@ function TextBlock(props: {
         />
       </div>
       <div className='rounded-md border border-border/50 bg-background/70 px-3 py-2'>
-        <p className='whitespace-pre-wrap text-sm'>{props.value.trim()}</p>
+        <p className='whitespace-pre-wrap text-sm'>{trimmedValue}</p>
       </div>
+    </div>
+  );
+}
+
+function ProductScanAmazonDetailsBadgeList(props: {
+  quality: AmazonScanQualitySummary | null;
+  scan: Pick<ProductScanRecord, 'title' | 'asin' | 'amazonEvaluation'>;
+  details: ProductScanAmazonDetailsValue | null | undefined;
+  provenance: AmazonExtractionProvenance | null;
+  rejectedCandidateHistory: AmazonRejectedCandidateHistoryEntry[];
+  rejectedCandidateBreakdown: AmazonRejectedCandidateBreakdown;
+}): React.JSX.Element {
+  const { quality, scan, details, provenance, rejectedCandidateHistory, rejectedCandidateBreakdown } = props;
+  return (
+    <div className='flex flex-wrap gap-2'>
+      {quality !== null ? (
+        <span
+          className={`inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-medium ${
+            quality.primaryLabel === 'Strong match'
+              ? 'border-emerald-500/40 bg-background/70 text-emerald-300'
+              : quality.primaryLabel === 'Partial extraction'
+                ? 'border-amber-500/40 bg-background/70 text-amber-300'
+                : 'border-border/60 bg-background/70'
+          }`}
+        >
+          {quality.primaryLabel}
+        </span>
+      ) : null}
+      {hasText(scan.title) === true ? (
+        <span className='inline-flex items-center rounded-md border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium'>
+          Title available
+        </span>
+      ) : null}
+      {details !== null && details !== undefined && details.bulletPoints.length > 0 ? (
+        <span className='inline-flex items-center rounded-md border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium'>
+          {details.bulletPoints.length} bullet point{details.bulletPoints.length === 1 ? '' : 's'}
+        </span>
+      ) : null}
+      {details !== null && details !== undefined && details.attributes.length > 0 ? (
+        <span className='inline-flex items-center rounded-md border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium'>
+          {details.attributes.length} extracted attribute{details.attributes.length === 1 ? '' : 's'}
+        </span>
+      ) : null}
+      {details !== null && details !== undefined && details.rankings.length > 0 ? (
+        <span className='inline-flex items-center rounded-md border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium'>
+          {details.rankings.length} ranking entr{details.rankings.length === 1 ? 'y' : 'ies'}
+        </span>
+      ) : null}
+      {typeof provenance?.inputSourceLabel === 'string' ? (
+        <span className='inline-flex items-center rounded-md border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium'>
+          {provenance.inputSourceLabel}
+        </span>
+      ) : null}
+      {typeof provenance?.retryOf === 'string' ? (
+        <span className='inline-flex items-center rounded-md border border-amber-500/40 bg-background/70 px-2.5 py-1 text-xs font-medium text-amber-300'>
+          Fallback used
+        </span>
+      ) : null}
+      {provenance?.reusedProbe === true ? (
+        <span className='inline-flex items-center rounded-md border border-emerald-500/40 bg-background/70 px-2.5 py-1 text-xs font-medium text-emerald-300'>
+          Probe reused
+        </span>
+      ) : null}
+      {quality?.usedCaptcha === true ? (
+        <span className='inline-flex items-center rounded-md border border-sky-500/40 bg-background/70 px-2.5 py-1 text-xs font-medium text-sky-300'>
+          Captcha path
+        </span>
+      ) : null}
+      {typeof provenance?.candidateRank === 'number' ? (
+        <span className='inline-flex items-center rounded-md border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium'>
+          Amazon candidate #{provenance.candidateRank}
+        </span>
+      ) : null}
+      {rejectedCandidateHistory.length > 0 ? (
+        <span className='inline-flex items-center rounded-md border border-amber-500/40 bg-background/70 px-2.5 py-1 text-xs font-medium text-amber-300'>
+          {rejectedCandidateHistory.length} earlier candidate
+          {rejectedCandidateHistory.length === 1 ? '' : 's'} rejected
+        </span>
+      ) : null}
+      {rejectedCandidateBreakdown.languageRejectedCount > 0 ? (
+        <span className='inline-flex items-center rounded-md border border-rose-500/40 bg-background/70 px-2.5 py-1 text-xs font-medium text-rose-300'>
+          {rejectedCandidateBreakdown.languageRejectedCount} non-English page
+          {rejectedCandidateBreakdown.languageRejectedCount === 1 ? '' : 's'} rejected
+        </span>
+      ) : null}
+      {scan.amazonEvaluation !== null && scan.amazonEvaluation !== undefined ? (
+        <span
+          className={`inline-flex items-center rounded-md border bg-background/70 px-2.5 py-1 text-xs font-medium ${
+            scan.amazonEvaluation.status === 'approved'
+              ? 'border-emerald-500/40 text-emerald-300'
+              : scan.amazonEvaluation.status === 'rejected'
+                ? 'border-rose-500/40 text-rose-300'
+                : scan.amazonEvaluation.status === 'skipped'
+                  ? 'border-border/60'
+                  : 'border-amber-500/40 text-amber-300'
+          }`}
+        >
+          {resolveAmazonEvaluationStatusLabel(scan.amazonEvaluation.status)}
+        </span>
+      ) : null}
+      {scan.amazonEvaluation?.languageAccepted === false ? (
+        <span className='inline-flex items-center rounded-md border border-rose-500/40 bg-background/70 px-2.5 py-1 text-xs font-medium text-rose-300'>
+          Non-English page
+        </span>
+      ) : null}
+      {typeof scan.amazonEvaluation?.pageLanguage === 'string' ? (
+        <span className='inline-flex items-center rounded-md border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium'>
+          Language {formatAmazonPageLanguage(scan.amazonEvaluation.pageLanguage)}
+        </span>
+      ) : null}
+      {scan.amazonEvaluation?.confidence !== null && scan.amazonEvaluation?.confidence !== undefined ? (
+        <span className='inline-flex items-center rounded-md border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium'>
+          AI confidence {formatAmazonEvaluationConfidence(scan.amazonEvaluation.confidence)}
+        </span>
+      ) : null}
     </div>
   );
 }
@@ -715,120 +863,26 @@ export function ProductScanAmazonDetails(props: {
   );
 
   if (
-    !hasProductScanAmazonDetails(details) &&
-    !hasText(scan.asin) &&
-    !scan.amazonEvaluation &&
-    !scan.amazonProbe
+    hasProductScanAmazonDetails(details) === false &&
+    hasText(scan.asin) === false &&
+    scan.amazonEvaluation === null &&
+    scan.amazonProbe === null
   ) {
     return null;
   }
 
   return (
     <div className='space-y-3 rounded-md border border-border/60 bg-muted/20 px-3 py-3'>
-      <div className='flex flex-wrap gap-2'>
-        {quality ? (
-          <span
-            className={`inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-medium ${
-              quality.primaryLabel === 'Strong match'
-                ? 'border-emerald-500/40 bg-background/70 text-emerald-300'
-                : quality.primaryLabel === 'Partial extraction'
-                  ? 'border-amber-500/40 bg-background/70 text-amber-300'
-                  : 'border-border/60 bg-background/70'
-            }`}
-          >
-            {quality.primaryLabel}
-          </span>
-        ) : null}
-        {hasText(scan.title) ? (
-          <span className='inline-flex items-center rounded-md border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium'>
-            Title available
-          </span>
-        ) : null}
-        {details?.bulletPoints.length ? (
-          <span className='inline-flex items-center rounded-md border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium'>
-            {details.bulletPoints.length} bullet point{details.bulletPoints.length === 1 ? '' : 's'}
-          </span>
-        ) : null}
-        {details?.attributes.length ? (
-          <span className='inline-flex items-center rounded-md border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium'>
-            {details.attributes.length} extracted attribute{details.attributes.length === 1 ? '' : 's'}
-          </span>
-        ) : null}
-        {details?.rankings.length ? (
-          <span className='inline-flex items-center rounded-md border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium'>
-            {details.rankings.length} ranking entr{details.rankings.length === 1 ? 'y' : 'ies'}
-          </span>
-        ) : null}
-        {provenance?.inputSourceLabel ? (
-          <span className='inline-flex items-center rounded-md border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium'>
-            {provenance.inputSourceLabel}
-          </span>
-        ) : null}
-        {provenance?.retryOf ? (
-          <span className='inline-flex items-center rounded-md border border-amber-500/40 bg-background/70 px-2.5 py-1 text-xs font-medium text-amber-300'>
-            Fallback used
-          </span>
-        ) : null}
-        {provenance?.reusedProbe ? (
-          <span className='inline-flex items-center rounded-md border border-emerald-500/40 bg-background/70 px-2.5 py-1 text-xs font-medium text-emerald-300'>
-            Probe reused
-          </span>
-        ) : null}
-        {quality?.usedCaptcha ? (
-          <span className='inline-flex items-center rounded-md border border-sky-500/40 bg-background/70 px-2.5 py-1 text-xs font-medium text-sky-300'>
-            Captcha path
-          </span>
-        ) : null}
-        {typeof provenance?.candidateRank === 'number' ? (
-          <span className='inline-flex items-center rounded-md border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium'>
-            Amazon candidate #{provenance.candidateRank}
-          </span>
-        ) : null}
-        {rejectedCandidateHistory.length ? (
-          <span className='inline-flex items-center rounded-md border border-amber-500/40 bg-background/70 px-2.5 py-1 text-xs font-medium text-amber-300'>
-            {rejectedCandidateHistory.length} earlier candidate
-            {rejectedCandidateHistory.length === 1 ? '' : 's'} rejected
-          </span>
-        ) : null}
-        {rejectedCandidateBreakdown.languageRejectedCount > 0 ? (
-          <span className='inline-flex items-center rounded-md border border-rose-500/40 bg-background/70 px-2.5 py-1 text-xs font-medium text-rose-300'>
-            {rejectedCandidateBreakdown.languageRejectedCount} non-English page
-            {rejectedCandidateBreakdown.languageRejectedCount === 1 ? '' : 's'} rejected
-          </span>
-        ) : null}
-        {scan.amazonEvaluation ? (
-          <span
-            className={`inline-flex items-center rounded-md border bg-background/70 px-2.5 py-1 text-xs font-medium ${
-              scan.amazonEvaluation.status === 'approved'
-                ? 'border-emerald-500/40 text-emerald-300'
-                : scan.amazonEvaluation.status === 'rejected'
-                  ? 'border-rose-500/40 text-rose-300'
-                  : scan.amazonEvaluation.status === 'skipped'
-                    ? 'border-border/60'
-                    : 'border-amber-500/40 text-amber-300'
-            }`}
-          >
-            {resolveAmazonEvaluationStatusLabel(scan.amazonEvaluation.status)}
-          </span>
-        ) : null}
-        {scan.amazonEvaluation?.languageAccepted === false ? (
-          <span className='inline-flex items-center rounded-md border border-rose-500/40 bg-background/70 px-2.5 py-1 text-xs font-medium text-rose-300'>
-            Non-English page
-          </span>
-        ) : null}
-        {scan.amazonEvaluation?.pageLanguage ? (
-          <span className='inline-flex items-center rounded-md border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium'>
-            Language {formatAmazonPageLanguage(scan.amazonEvaluation.pageLanguage)}
-          </span>
-        ) : null}
-        {scan.amazonEvaluation?.confidence != null ? (
-          <span className='inline-flex items-center rounded-md border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium'>
-            AI confidence {formatAmazonEvaluationConfidence(scan.amazonEvaluation.confidence)}
-          </span>
-        ) : null}
-      </div>
+      <ProductScanAmazonDetailsBadgeList
+        quality={quality}
+        scan={scan}
+        details={details}
+        provenance={provenance}
+        rejectedCandidateHistory={rejectedCandidateHistory}
+        rejectedCandidateBreakdown={rejectedCandidateBreakdown}
+      />
 
-      {scan.amazonEvaluation ? (
+      {scan.amazonEvaluation !== null && scan.amazonEvaluation !== undefined ? (
         <FieldGroup
           title='AI Evaluation'
           fields={[
@@ -843,44 +897,44 @@ export function ProductScanAmazonDetails(props: {
             { label: 'Model', value: scan.amazonEvaluation.modelId },
             {
               label: 'Model source',
-              value: latestAmazonEvaluationStep
+              value: latestAmazonEvaluationStep !== null
                 ? resolveStepDetailValue(latestAmazonEvaluationStep, 'Model source')
                 : null,
             },
             {
               label: 'Threshold',
               value:
-                (latestAmazonEvaluationStep
+                (latestAmazonEvaluationStep !== null
                   ? resolveStepDetailValue(latestAmazonEvaluationStep, 'Threshold')
                   : null) ?? formatAmazonEvaluationConfidence(scan.amazonEvaluation.threshold),
             },
             {
               label: 'Evaluation scope',
-              value: latestAmazonEvaluationStep
+              value: latestAmazonEvaluationStep !== null
                 ? resolveStepDetailValue(latestAmazonEvaluationStep, 'Evaluation scope')
                 : null,
             },
             {
               label: 'Similarity decision',
-              value: latestAmazonEvaluationStep
+              value: latestAmazonEvaluationStep !== null
                 ? resolveStepDetailValue(latestAmazonEvaluationStep, 'Similarity decision')
                 : null,
             },
             {
               label: 'Allowed content language',
-              value: latestAmazonEvaluationStep
+              value: latestAmazonEvaluationStep !== null
                 ? resolveStepDetailValue(latestAmazonEvaluationStep, 'Allowed content language')
                 : null,
             },
             {
               label: 'Language policy',
-              value: latestAmazonEvaluationStep
+              value: latestAmazonEvaluationStep !== null
                 ? resolveStepDetailValue(latestAmazonEvaluationStep, 'Language policy')
                 : null,
             },
             {
               label: 'Language detection',
-              value: latestAmazonEvaluationStep
+              value: latestAmazonEvaluationStep !== null
                 ? resolveStepDetailValue(latestAmazonEvaluationStep, 'Language detection')
                 : null,
             },
@@ -955,91 +1009,100 @@ export function ProductScanAmazonDetails(props: {
         />
       ) : null}
 
-      {scan.amazonEvaluation?.reasons.length ? (
+      {scan.amazonEvaluation !== null && scan.amazonEvaluation !== undefined && scan.amazonEvaluation.reasons.length > 0 ? (
         <TextBlock title='AI Evaluation Reasons' value={scan.amazonEvaluation.reasons.join('\n')} />
       ) : null}
 
-      {scan.amazonEvaluation?.mismatches.length ? (
+      {scan.amazonEvaluation !== null && scan.amazonEvaluation !== undefined && scan.amazonEvaluation.mismatches.length > 0 ? (
         <TextBlock
           title='AI Evaluation Mismatches'
           value={scan.amazonEvaluation.mismatches.join('\n')}
         />
       ) : null}
 
-      {rejectedCandidateHistory.length ? (
+      {rejectedCandidateHistory.length > 0 ? (
         <div className='space-y-2'>
           <h5 className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
             Rejected Amazon Candidates
           </h5>
           <div className='space-y-2'>
-            {rejectedCandidateHistory.map((entry) => (
-              <div
-                key={`amazon-ai-rejected-${entry.attempt}-${entry.candidateRank ?? 'na'}`}
-                className='rounded-md border border-rose-500/20 bg-background/70 px-3 py-2'
-              >
-                <div className='flex flex-wrap gap-2'>
-                  {typeof entry.candidateRank === 'number' ? (
-                    <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium'>
-                      Candidate #{entry.candidateRank}
+            {rejectedCandidateHistory.map((entry) => {
+              const entryConfidenceLabel = entry.confidenceLabel;
+              const entryCandidateId = entry.candidateId;
+              const entryUrl = entry.url;
+              const entryReason = entry.reason;
+              const entryMismatch = entry.mismatch;
+              const entryMessage = entry.message;
+              const entryModelId = entry.modelId;
+              return (
+                <div
+                  key={`amazon-ai-rejected-${entry.attempt}-${entry.candidateRank ?? 'na'}`}
+                  className='rounded-md border border-rose-500/20 bg-background/70 px-3 py-2'
+                >
+                  <div className='flex flex-wrap gap-2'>
+                    {typeof entry.candidateRank === 'number' ? (
+                      <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium'>
+                        Candidate #{entry.candidateRank}
+                      </span>
+                    ) : null}
+                    <span className='inline-flex items-center rounded-md border border-rose-500/40 px-2 py-0.5 text-[11px] font-medium text-rose-300'>
+                      Rejected
                     </span>
-                  ) : null}
-                  <span className='inline-flex items-center rounded-md border border-rose-500/40 px-2 py-0.5 text-[11px] font-medium text-rose-300'>
-                    Rejected
-                  </span>
-                  <span
-                    className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] font-medium ${
-                      entry.rejectionKind === 'language'
-                        ? 'border-rose-500/40 text-rose-300'
-                        : 'border-border/60'
-                    }`}
-                  >
-                    {entry.rejectionKind === 'language' ? 'Language gate' : 'Product mismatch'}
-                  </span>
-                  <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium'>
-                    Evaluation #{entry.attempt}
-                  </span>
-                  {entry.confidenceLabel ? (
-                    <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium'>
-                      Confidence {entry.confidenceLabel}
+                    <span
+                      className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] font-medium ${
+                        entry.rejectionKind === 'language'
+                          ? 'border-rose-500/40 text-rose-300'
+                          : 'border-border/60'
+                      }`}
+                    >
+                      {entry.rejectionKind === 'language' ? 'Language gate' : 'Product mismatch'}
                     </span>
-                  ) : null}
-                  {entry.candidateId ? (
                     <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium'>
-                      Image {entry.candidateId}
+                      Evaluation #{entry.attempt}
                     </span>
-                  ) : null}
+                    {typeof entryConfidenceLabel === 'string' ? (
+                      <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium'>
+                        Confidence {entryConfidenceLabel}
+                      </span>
+                    ) : null}
+                    {typeof entryCandidateId === 'string' ? (
+                      <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium'>
+                        Image {entryCandidateId}
+                      </span>
+                    ) : null}
+                  </div>
+                  <div className='mt-2 space-y-2 text-sm'>
+                    {typeof entryUrl === 'string' ? (
+                      <div className='flex items-start justify-between gap-2'>
+                        <p className='break-all'>{entryUrl}</p>
+                        <CopyButton
+                          value={entryUrl}
+                          ariaLabel={`Copy rejected Amazon candidate URL ${entry.attempt}`}
+                          size='sm'
+                          className='h-6 px-2 text-[11px]'
+                          showText
+                        />
+                      </div>
+                    ) : null}
+                    {typeof entryReason === 'string' ? <p>{entryReason}</p> : null}
+                    {typeof entryMismatch === 'string' ? (
+                      <p className='text-muted-foreground'>{entryMismatch}</p>
+                    ) : null}
+                    {entryReason === null && entryMismatch === null && typeof entryMessage === 'string' ? (
+                      <p>{entryMessage}</p>
+                    ) : null}
+                    {typeof entryModelId === 'string' ? (
+                      <p className='text-xs text-muted-foreground'>Model: {entryModelId}</p>
+                    ) : null}
+                  </div>
                 </div>
-                <div className='mt-2 space-y-2 text-sm'>
-                  {entry.url ? (
-                    <div className='flex items-start justify-between gap-2'>
-                      <p className='break-all'>{entry.url}</p>
-                      <CopyButton
-                        value={entry.url}
-                        ariaLabel={`Copy rejected Amazon candidate URL ${entry.attempt}`}
-                        size='sm'
-                        className='h-6 px-2 text-[11px]'
-                        showText
-                      />
-                    </div>
-                  ) : null}
-                  {entry.reason ? <p>{entry.reason}</p> : null}
-                  {entry.mismatch ? (
-                    <p className='text-muted-foreground'>{entry.mismatch}</p>
-                  ) : null}
-                  {!entry.reason && !entry.mismatch && entry.message ? (
-                    <p>{entry.message}</p>
-                  ) : null}
-                  {entry.modelId ? (
-                    <p className='text-xs text-muted-foreground'>Model: {entry.modelId}</p>
-                  ) : null}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       ) : null}
 
-      {scan.amazonProbe ? (
+      {scan.amazonProbe !== null && scan.amazonProbe !== undefined ? (
         <FieldGroup
           title='Amazon Probe'
           fields={[
@@ -1076,7 +1139,7 @@ export function ProductScanAmazonDetails(props: {
         />
       ) : null}
 
-      {scan.amazonProbe?.bulletPoints.length ? (
+      {scan.amazonProbe !== null && scan.amazonProbe !== undefined && scan.amazonProbe.bulletPoints.length > 0 ? (
         <TextBlock title='Probe Bullet Points' value={scan.amazonProbe.bulletPoints.join('\n')} />
       ) : null}
 
@@ -1092,7 +1155,7 @@ export function ProductScanAmazonDetails(props: {
           },
           {
             label: 'Probe handling',
-            value: provenance?.reusedProbe ? 'Reused earlier approved probe' : null,
+            value: provenance?.reusedProbe === true ? 'Reused earlier approved probe' : null,
           },
           {
             label: 'Rejected candidates',
@@ -1157,7 +1220,7 @@ export function ProductScanAmazonDetails(props: {
         fields={[{ label: 'Best Sellers Rank', value: details?.bestSellersRank }]}
       />
 
-      {details?.rankings.length ? (
+      {details !== null && details !== undefined && details.rankings.length > 0 ? (
         <div className='space-y-2'>
           <h5 className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
             Ranking Entries
@@ -1169,7 +1232,7 @@ export function ProductScanAmazonDetails(props: {
                 className='rounded-md border border-border/50 bg-background/70 px-3 py-2'
               >
                 <p className='text-sm font-medium'>{entry.rank}</p>
-                {entry.category ? (
+                {typeof entry.category === 'string' ? (
                   <p className='text-sm text-muted-foreground'>{entry.category}</p>
                 ) : null}
               </div>
@@ -1178,7 +1241,7 @@ export function ProductScanAmazonDetails(props: {
         </div>
       ) : null}
 
-      {details?.bulletPoints.length ? (
+      {details !== null && details !== undefined && details.bulletPoints.length > 0 ? (
         <div className='space-y-2'>
           <h5 className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
             Bullet Points
@@ -1191,7 +1254,7 @@ export function ProductScanAmazonDetails(props: {
         </div>
       ) : null}
 
-      {groupedAttributes.length ? (
+      {groupedAttributes.length > 0 ? (
         <div className='space-y-2'>
           <div className='flex flex-wrap items-center justify-between gap-2'>
             <h5 className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>

@@ -91,11 +91,16 @@ const shouldSilenceRecoverableStarterPathConfigError = (args: {
   if (
     !isAppError(args.error) ||
     args.error.code !== AppErrorCodes.validation ||
-    args.error.meta?.['source'] !== 'ai_paths.path_config' ||
-    args.error.meta?.['reason'] !== 'non_canonical_persisted_values'
+    args.error.meta?.['source'] !== 'ai_paths.path_config'
   ) {
     return false;
   }
+
+  const reason = args.error.meta?.['reason'];
+  if (reason !== 'non_canonical_persisted_values' && reason !== 'unsupported_node_identities') {
+    return false;
+  }
+
   if (!getStaticRecoveryStarterWorkflowEntryByDefaultPathId(args.pathId)) {
     return false;
   }

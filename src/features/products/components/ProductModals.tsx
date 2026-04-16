@@ -47,6 +47,7 @@ import { FormModal } from '@/shared/ui/FormModal';
 import { IntegrationSelector } from '@/shared/ui/integration-selector';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { ContextRegistryPageProvider } from '@/shared/lib/ai-context-registry/page-context';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { loadProductForm } from './product-form-preload';
 
@@ -60,57 +61,24 @@ const FileManager = dynamic(() => import('@/features/files/public').then((mod) =
   ssr: false,
 });
 
-const TriggerButtonBar = dynamic<ProductTriggerButtonBarProps>(
-  () =>
-    import('@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar').then(
-      (
-        mod: typeof import('@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar')
-      ) => mod.TriggerButtonBar
-    ),
-  {
-    ssr: false,
-    loading: () => null,
-  }
-);
-
-const ListProductModal = dynamic(
-  () =>
-    import('@/features/integrations/product-integrations-adapter').then(
-      (mod: typeof import('@/features/integrations/product-integrations-adapter')) =>
-        mod.ListProductModal
-    ),
-  { ssr: false }
-);
-
-const MassListProductModal = dynamic(
-  () =>
-    import('@/features/integrations/product-integrations-adapter').then(
-      (mod: typeof import('@/features/integrations/product-integrations-adapter')) =>
-        mod.MassListProductModal
-    ),
-  { ssr: false }
-);
-
-const ProductListingsModal = dynamic(
-  () =>
-    import('@/features/integrations/product-integrations-adapter').then(
-      (mod: typeof import('@/features/integrations/product-integrations-adapter')) =>
-        mod.ProductListingsModal
-    ),
-  { ssr: false }
-);
+import {
+  ListProductModal,
+  MassListProductModal,
+  ProductListingsModal,
+} from '@/features/integrations/product-integrations-adapter';
+import { TriggerButtonBar } from '@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar';
 
 type ProductFormScope = 'draft_template' | 'product_create' | 'product_edit';
 const STARTER_TRANSLATION_EN_PL_PATH_ID = 'path_96708d';
 
 const isTranslationEnPlTriggerButton = (button: AiTriggerButtonRecord): boolean => {
-  if (button.pathId?.trim() === STARTER_TRANSLATION_EN_PL_PATH_ID) {
+  if ((button.pathId?.trim() ?? '') === STARTER_TRANSLATION_EN_PL_PATH_ID) {
     return true;
   }
 
   const labels = [button.name, button.display?.label]
     .map((value) => (typeof value === 'string' ? value.trim().toLowerCase() : ''))
-    .filter(Boolean);
+    .filter((v): v is string => v !== '');
   return labels.some(
     (label) => label.includes('translate en->pl') || label.includes('translation en->pl')
   );
@@ -137,7 +105,9 @@ function ProductFormModalBridge(props: {
   const { handleSubmit, uploading, hasUnsavedChanges } = useProductFormCore();
 
   submitRef.current = () => {
-    void handleSubmit();
+    handleSubmit().catch((error: unknown) => {
+      void ErrorSystem.captureException(error);
+    });
   };
 
   useEffect(() => {
@@ -210,8 +180,61 @@ function ProductFormModalBody(props: {
     [onNormalizeRunQueued, setNormalizeNameError, shouldApplyNormalizeResultLocally]
   );
 
+  const handleSubmitTranslationSnapshot = useCallback(
+    async (
+      snapshot: any,
+      trackedRunId: string,
+      isActive: () => boolean
+    ): Promise<void> => {
+      if (snapshot.status !== 'completed') {
+        if (isActive()) {
+          setPendingTranslationRunId((current) => (current === trackedRunId ? null : current));
+        }
+        return;
+      }
+
+      const streamedTranslation = snapshot.run
+        ? extractTranslationEnPlFromAiPathRunDetail({ run: snapshot.run })
+        : null;
+      let translationResult = streamedTranslation;
+
+      if (translationResult === null) {
+        const response = await getAiPathRun(trackedRunId, { timeoutMs: 60_000 });
+        if (isActive() === false) return;
+        if (response.ok === false) {
+          setPendingTranslationRunId((current) => (current === trackedRunId ? null : current));
+          return;
+        }
+        translationResult = extractTranslationEnPlFromAiPathRunDetail(response.data);
+      }
+
+      if (isActive() === false) return;
+
+      if (translationResult !== null && (translationResult.descriptionPl ?? '') !== '') {
+        setValue('description_pl', translationResult.descriptionPl!, {
+          shouldDirty: true,
+          shouldTouch: true,
+          shouldValidate: true,
+        });
+      }
+
+      if (translationResult !== null && translationResult.parameterTranslations.length > 0) {
+        applyLocalizedParameterValues(
+          translationResult.parameterTranslations.map((entry) => ({
+            parameterId: entry.parameterId,
+            languageCode: 'pl',
+            value: entry.value,
+          }))
+        );
+      }
+
+      setPendingTranslationRunId((current) => (current === trackedRunId ? null : current));
+    },
+    [applyLocalizedParameterValues, setValue]
+  );
+
   useEffect(() => {
-    if (!pendingTranslationRunId) return;
+    if (pendingTranslationRunId === null) return;
 
     let active = true;
     let terminalHandled = false;
@@ -221,50 +244,9 @@ function ProductFormModalBody(props: {
       if (!active || terminalHandled || snapshot.trackingState !== 'stopped') return;
       terminalHandled = true;
 
-      void (async (): Promise<void> => {
-        if (snapshot.status !== 'completed') {
-          if (!active) return;
-          setPendingTranslationRunId((current) => (current === trackedRunId ? null : current));
-          return;
-        }
-
-        const streamedTranslation = snapshot.run
-          ? extractTranslationEnPlFromAiPathRunDetail({ run: snapshot.run })
-          : null;
-        let translationResult = streamedTranslation;
-
-        if (!translationResult) {
-          const response = await getAiPathRun(trackedRunId, { timeoutMs: 60_000 });
-          if (!active) return;
-          if (!response.ok) {
-            setPendingTranslationRunId((current) => (current === trackedRunId ? null : current));
-            return;
-          }
-          translationResult = extractTranslationEnPlFromAiPathRunDetail(response.data);
-        }
-
-        if (!active) return;
-
-        if (translationResult?.descriptionPl) {
-          setValue('description_pl', translationResult.descriptionPl, {
-            shouldDirty: true,
-            shouldTouch: true,
-            shouldValidate: true,
-          });
-        }
-
-        if (translationResult && translationResult.parameterTranslations.length > 0) {
-          applyLocalizedParameterValues(
-            translationResult.parameterTranslations.map((entry) => ({
-              parameterId: entry.parameterId,
-              languageCode: 'pl',
-              value: entry.value,
-            }))
-          );
-        }
-
-        setPendingTranslationRunId((current) => (current === trackedRunId ? null : current));
-      })();
+      handleSubmitTranslationSnapshot(snapshot, trackedRunId, () => active).catch((error: unknown) => {
+        void ErrorSystem.captureException(error);
+      });
     });
 
     return () => {
@@ -274,7 +256,7 @@ function ProductFormModalBody(props: {
   }, [applyLocalizedParameterValues, pendingTranslationRunId, setValue]);
 
   useEffect(() => {
-    if (!pendingNormalizeCompletion || !shouldApplyNormalizeResultLocally) return;
+    if (pendingNormalizeCompletion === null || !shouldApplyNormalizeResultLocally) return;
 
     const completionRunId = pendingNormalizeCompletion.runId;
 
@@ -292,7 +274,8 @@ function ProductFormModalBody(props: {
         );
         return;
       }
-      if (!normalizeResult.normalizedName) {
+      const normalizedName = normalizeResult.normalizedName;
+      if (normalizedName === null || normalizedName === undefined || normalizedName === '') {
         setNormalizeNameError(
           normalizeResult.validationError ??
             'Normalize failed: the AI Path did not return a normalized English title.'
@@ -301,12 +284,12 @@ function ProductFormModalBody(props: {
       }
 
       const validation = validateNormalizedProductName({
-        normalizedName: normalizeResult.normalizedName,
+        normalizedName,
         categories,
         categoryHint: normalizeResult.category,
         categoryContext: normalizeResult.categoryContext,
       });
-      if (!validation.isValid) {
+      if (validation.isValid === false) {
         setNormalizeNameError(validation.error);
         return;
       }
@@ -420,7 +403,7 @@ function ProductIntegrationSelectionModal(props: {
   );
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (isOpen === false) return;
 
     if (integrations.length === 0) {
       if (selectedIntegrationId !== '') setSelectedIntegrationId('');
@@ -432,13 +415,13 @@ function ProductIntegrationSelectionModal(props: {
       (integration: IntegrationWithConnections) => integration.id === selectedIntegrationId
     );
 
-    if (!hasSelectedIntegration) {
+    if (hasSelectedIntegration === false) {
       setSelectedIntegrationId(integrations[0]?.id ?? '');
     }
   }, [integrations, isOpen, selectedConnectionId, selectedIntegrationId]);
 
   useEffect(() => {
-    if (!isOpen || !selectedIntegrationId) return;
+    if (isOpen === false || selectedIntegrationId === '') return;
 
     const integration = integrations.find(
       (entry: IntegrationWithConnections) => entry.id === selectedIntegrationId
@@ -450,12 +433,12 @@ function ProductIntegrationSelectionModal(props: {
       return;
     }
 
-    if (selectedConnectionId && connectionIds.includes(selectedConnectionId)) {
+    if (selectedConnectionId !== '' && connectionIds.includes(selectedConnectionId)) {
       return;
     }
 
     const preferredConnectionId = preferredConnection?.connectionId ?? null;
-    if (preferredConnectionId && connectionIds.includes(preferredConnectionId)) {
+    if (preferredConnectionId !== null && connectionIds.includes(preferredConnectionId)) {
       setSelectedConnectionId(preferredConnectionId);
       return;
     }
@@ -464,12 +447,12 @@ function ProductIntegrationSelectionModal(props: {
   }, [integrations, isOpen, preferredConnection?.connectionId, selectedConnectionId, selectedIntegrationId]);
 
   const handleContinue = useCallback((): void => {
-    if (selectedIntegrationId && selectedConnectionId) {
+    if (selectedIntegrationId !== '' && selectedConnectionId !== '') {
       onSelect(selectedIntegrationId, selectedConnectionId);
     }
   }, [onSelect, selectedConnectionId, selectedIntegrationId]);
 
-  if (!isOpen) return null;
+  if (isOpen === false) return null;
 
   return (
     <FormModal
@@ -479,10 +462,10 @@ function ProductIntegrationSelectionModal(props: {
       size='md'
       onSave={handleContinue}
       saveText='Continue'
-      isSaveDisabled={!selectedIntegrationId || !selectedConnectionId}
+      isSaveDisabled={selectedIntegrationId === '' || selectedConnectionId === ''}
     >
       <div className='space-y-4'>
-        {isLoading ? (
+        {isLoading === true ? (
           <p className='text-sm text-muted-foreground'>Loading integrations...</p>
         ) : integrations.length === 0 ? (
           <div className='rounded-lg border border-yellow-500/40 bg-yellow-500/10 p-6 text-center'>
@@ -573,7 +556,7 @@ function ProductEditorModal(props: ProductEditorModalProps): React.JSX.Element |
   );
 
   useEffect(() => {
-    if (isOpen && !wasOpenRef.current) {
+    if (isOpen === true && wasOpenRef.current === false) {
       openSessionCounterRef.current += 1;
       setValidatorSessionKey(`${providerKey}:session:${openSessionCounterRef.current}`);
     }
@@ -581,41 +564,42 @@ function ProductEditorModal(props: ProductEditorModalProps): React.JSX.Element |
   }, [isOpen, providerKey]);
 
   useEffect(() => {
-    if (showSkeleton) {
+    if (showSkeleton === true) {
       setFormIsSaving(false);
       setFormHasUnsavedChanges(false);
     }
   }, [showSkeleton]);
 
   useEffect(() => {
-    if (!pendingNormalizeRunId || !shouldApplyNormalizeResultLocally) return;
+    if (pendingNormalizeRunId === null || shouldApplyNormalizeResultLocally === false) return;
 
     let active = true;
     let terminalHandled = false;
     const trackedRunId = pendingNormalizeRunId;
 
     const unsubscribe = subscribeToTrackedAiPathRun(trackedRunId, (snapshot) => {
-      if (!active || terminalHandled || snapshot.trackingState !== 'stopped') return;
+      if (active === false || terminalHandled === true || snapshot.trackingState !== 'stopped') return;
       terminalHandled = true;
 
       void (async (): Promise<void> => {
         if (snapshot.status !== 'completed') {
-          if (!active) return;
-          setPendingNormalizeCompletion({
-            kind: 'error',
-            runId: trackedRunId,
-            error:
-              snapshot.errorMessage ??
-              `Normalize failed: the AI Path run ${snapshot.status.replace(/_/g, ' ')}.`,
-          });
-          setPendingNormalizeRunId((current) => (current === trackedRunId ? null : current));
+          if (active === true) {
+            setPendingNormalizeCompletion({
+              kind: 'error',
+              runId: trackedRunId,
+              error:
+                snapshot.errorMessage ??
+                `Normalize failed: the AI Path run ${snapshot.status.replace(/_/g, ' ')}.`,
+            });
+            setPendingNormalizeRunId((current) => (current === trackedRunId ? null : current));
+          }
           return;
         }
 
         const streamedNormalizeResult = snapshot.run
           ? extractNormalizeProductNameResultFromAiPathRunDetail({ run: snapshot.run })
           : null;
-        if (streamedNormalizeResult) {
+        if (streamedNormalizeResult !== null) {
           setPendingNormalizeCompletion({
             kind: 'result',
             runId: trackedRunId,
@@ -626,8 +610,8 @@ function ProductEditorModal(props: ProductEditorModalProps): React.JSX.Element |
         }
 
         const response = await getAiPathRunResult(trackedRunId, { timeoutMs: 60_000 });
-        if (!active) return;
-        if (!response.ok) {
+        if (active === false) return;
+        if (response.ok === false) {
           setPendingNormalizeCompletion({
             kind: 'error',
             runId: trackedRunId,
@@ -641,7 +625,7 @@ function ProductEditorModal(props: ProductEditorModalProps): React.JSX.Element |
 
         const normalizeResult = extractNormalizeProductNameResultFromAiPathRunDetail(response.data);
         setPendingNormalizeCompletion(
-          normalizeResult
+          normalizeResult !== null
             ? {
                 kind: 'result',
                 runId: trackedRunId,
@@ -664,13 +648,13 @@ function ProductEditorModal(props: ProductEditorModalProps): React.JSX.Element |
   }, [pendingNormalizeRunId, shouldApplyNormalizeResultLocally]);
 
   useEffect(() => {
-    if (!isOpen) {
+    if (isOpen === false) {
       setPendingNormalizeRunId(null);
       setPendingNormalizeCompletion(null);
     }
   }, [isOpen]);
 
-  if (!isOpen) return null;
+  if (isOpen === false) return null;
 
   return (
     <FormModal
@@ -681,14 +665,14 @@ function ProductEditorModal(props: ProductEditorModalProps): React.JSX.Element |
       onSave={() => formSubmitRef.current?.()}
       isSaving={formIsSaving}
       disableCloseWhileSaving
-      isSaveDisabled={showSkeleton || formIsSaving || isSaveDisabledOverride}
+      isSaveDisabled={showSkeleton === true || formIsSaving === true || isSaveDisabledOverride === true}
       hasUnsavedChanges={formHasUnsavedChanges}
       saveText={saveText}
       cancelText='Close'
       size='xl'
       className='md:min-w-[63rem] max-w-[66rem]'
     >
-      {showSkeleton ? (
+      {showSkeleton === true ? (
         <EditProductSkeletonContent />
       ) : (
         <ProductFormProvider
@@ -713,7 +697,7 @@ function ProductEditorModal(props: ProductEditorModalProps): React.JSX.Element |
             validationInstanceScopeOverride={validationInstanceScopeOverride}
             validatorSessionKey={validatorSessionKey}
             disableTriggerButtons={
-              Boolean(isSaveDisabledOverride) &&
+              (isSaveDisabledOverride === true) &&
               validationInstanceScopeOverride === 'product_edit'
             }
             pendingNormalizeCompletion={pendingNormalizeCompletion}
@@ -768,25 +752,25 @@ export function ProductModals(): React.JSX.Element {
     onSelectIntegrationFromModal,
   } = useProductListModalsContext();
   const selectedMassListProducts = React.useMemo(() => {
-    if (!massListProductIds || massListProductIds.length === 0) return [];
+    if (massListProductIds === null || massListProductIds === undefined || massListProductIds.length === 0) return [];
     const productById = new Map(data.map((product) => [product.id, product]));
     return massListProductIds
       .map((productId) => productById.get(productId))
-      .filter((product): product is ProductWithImages => Boolean(product));
+      .filter((product): product is ProductWithImages => product !== undefined && product !== null);
   }, [data, massListProductIds]);
 
   const hydratedEditingProduct =
-    editingProduct && isEditingProductHydrated(editingProduct) ? editingProduct : null;
+    (editingProduct !== null && editingProduct !== undefined && isEditingProductHydrated(editingProduct)) ? editingProduct : null;
   // Show the form immediately with list-level data while hydrating, instead of a skeleton.
   // The save button stays disabled until hydration completes (showSkeleton controls that).
   const showEditSkeleton = false;
-  const isEditOpen = Boolean(editingProduct);
+  const isEditOpen = editingProduct !== null && editingProduct !== undefined;
 
-  const createProviderKey = createDraft ? ['create', createDraft.id].join(':') : 'create';
+  const createProviderKey = (createDraft !== null && createDraft !== undefined) ? ['create', createDraft.id].join(':') : 'create';
   // Include hydration state in the key so the form remounts with full data
   // (list-level data may lack descriptions, etc.)
-  const editProviderKey = editingProduct
-    ? ['edit', editingProduct.id, hydratedEditingProduct ? 'h' : 'p'].join(':')
+  const editProviderKey = (editingProduct !== null && editingProduct !== undefined)
+    ? ['edit', editingProduct.id, hydratedEditingProduct !== null ? 'h' : 'p'].join(':')
     : 'edit';
   const effectiveIntegrationsFilterIntegrationSlug = resolveProductListingsIntegrationScope({
     filterIntegrationSlug: integrationsFilterIntegrationSlug,
@@ -799,7 +783,7 @@ export function ProductModals(): React.JSX.Element {
         isOpen={isCreateOpen}
         onClose={onCloseCreate}
         title='Create Product'
-        subtitle={createDraft ? `Using draft template: ${createDraft.name}` : undefined}
+        subtitle={(createDraft !== null && createDraft !== undefined) ? `Using draft template: ${createDraft.name}` : undefined}
         saveText='Create'
         submitButtonText='Create'
         providerKey={createProviderKey}
@@ -807,7 +791,7 @@ export function ProductModals(): React.JSX.Element {
         onSuccess={onCreateSuccess}
         initialSku={initialSku}
         initialCatalogId={initialCatalogId ?? undefined}
-        validationInstanceScopeOverride={createDraft?.id ? 'draft_template' : 'product_create'}
+        validationInstanceScopeOverride={(createDraft?.id ?? '') !== '' ? 'draft_template' : 'product_create'}
       />
 
       <ProductEditorModal
@@ -827,9 +811,9 @@ export function ProductModals(): React.JSX.Element {
         isSaveDisabledOverride={isEditHydrating}
       />
 
-      {integrationsProduct && !showListProductModal && (
+      {integrationsProduct !== null && integrationsProduct !== undefined && !showListProductModal && (
         <ProductListingsModal
-          isOpen={Boolean(integrationsProduct)}
+          isOpen={integrationsProduct !== null && integrationsProduct !== undefined}
           item={integrationsProduct}
           onClose={onCloseIntegrations}
           onStartListing={onStartListing}
@@ -839,21 +823,21 @@ export function ProductModals(): React.JSX.Element {
         />
       )}
 
-      {integrationsProduct && showListProductModal && (
+      {integrationsProduct !== null && integrationsProduct !== undefined && showListProductModal && (
         <ListProductModal
-          isOpen={Boolean(integrationsProduct)}
+          isOpen={integrationsProduct !== null && integrationsProduct !== undefined}
           item={integrationsProduct}
           onClose={onCloseListProduct}
           onSuccess={onListProductSuccess}
           initialIntegrationId={listProductPreset?.integrationId ?? null}
           initialConnectionId={listProductPreset?.connectionId ?? null}
-          autoSubmitOnOpen={Boolean(listProductPreset?.autoSubmit)}
+          autoSubmitOnOpen={(listProductPreset?.autoSubmit ?? false) === true}
         />
       )}
 
-      {exportSettingsProduct && onCloseExportSettings && (
+      {exportSettingsProduct !== null && exportSettingsProduct !== undefined && onCloseExportSettings !== undefined && onCloseExportSettings !== null && (
         <ProductListingsModal
-          isOpen={Boolean(exportSettingsProduct)}
+          isOpen={exportSettingsProduct !== null && exportSettingsProduct !== undefined}
           item={exportSettingsProduct}
           onClose={onCloseExportSettings}
           filterIntegrationSlug='baselinker'
@@ -861,7 +845,7 @@ export function ProductModals(): React.JSX.Element {
         />
       )}
 
-      {massListIntegration && massListProductIds && massListProductIds.length > 0 && (
+      {massListIntegration !== null && massListIntegration !== undefined && massListProductIds !== null && massListProductIds !== undefined && massListProductIds.length > 0 && (
         <MassListProductModal
           isOpen={true}
           onSuccess={onMassListSuccess ?? (() => {})}

@@ -54,7 +54,8 @@ const BASE_QUICK_EXPORT_FEEDBACK_STORAGE_KEY = 'base-quick-export-feedback';
 const ACTIVE_EXPORT_FEEDBACK_TTL_MS = 15 * 60 * 1000;
 const TERMINAL_EXPORT_FEEDBACK_TTL_MS = 30 * 60 * 1000;
 
-const normalizeInventoryId = (value: string | null | undefined): string => value?.trim() || '';
+const normalizeInventoryId = (value: string | null | undefined): string =>
+  typeof value === 'string' ? value.trim() : '';
 
 const resolveFallbackInventoryId = (
   inventories: BaseImportInventoriesResponse['inventories'] | null | undefined
@@ -62,14 +63,15 @@ const resolveFallbackInventoryId = (
   const normalizedInventories = (Array.isArray(inventories) ? inventories : [])
     .map((entry) => ({
       id: normalizeInventoryId(entry.id),
-      isDefault: Boolean(entry.is_default),
+      isDefault: entry.is_default === true,
     }))
     .filter((entry) => entry.id.length > 0);
 
-  const defaultInventory = normalizedInventories.find((entry) => entry.isDefault);
-  if (defaultInventory?.id) return defaultInventory.id;
+  const defaultInventory = normalizedInventories.find((entry) => entry.isDefault === true);
+  if (defaultInventory !== undefined && defaultInventory.id !== '') return defaultInventory.id;
   if (normalizedInventories.length === 1) {
-    return normalizedInventories[0]?.id ?? '';
+    const first = normalizedInventories[0];
+    return first !== undefined ? first.id : '';
   }
   return '';
 };
@@ -81,10 +83,10 @@ const resolveBaseConnectionCandidates = (
   const candidates: string[] = [];
 
   for (const integration of Array.isArray(integrations) ? integrations : []) {
-    if (!isBaseIntegrationSlug(integration?.slug)) continue;
+    if (integration === null || isBaseIntegrationSlug(integration.slug) === false) continue;
     for (const connection of Array.isArray(integration.connections) ? integration.connections : []) {
-      const connectionId = connection?.id?.trim() || '';
-      if (!connectionId || seen.has(connectionId)) continue;
+      const connectionId = (connection?.id ?? '').trim();
+      if (connectionId === '' || seen.has(connectionId) === true) continue;
       seen.add(connectionId);
       candidates.push(connectionId);
     }
@@ -95,7 +97,7 @@ const resolveBaseConnectionCandidates = (
 
 const readApiErrorPayload = (error: unknown): Record<string, unknown> | null => {
   if (!(error instanceof ApiError)) return null;
-  if (!error.payload || typeof error.payload !== 'object' || Array.isArray(error.payload)) {
+  if (error.payload === null || error.payload === undefined || typeof error.payload !== 'object' || Array.isArray(error.payload)) {
     return null;
   }
   return error.payload as Record<string, unknown>;
@@ -110,7 +112,7 @@ const readApiErrorCode = (error: unknown): string | null => {
 const readApiErrorDetails = (error: unknown): Record<string, unknown> | null => {
   const payload = readApiErrorPayload(error);
   const details = payload?.['details'];
-  if (!details || typeof details !== 'object' || Array.isArray(details)) return null;
+  if (details === null || details === undefined || typeof details !== 'object' || Array.isArray(details)) return null;
   return details as Record<string, unknown>;
 };
 
@@ -124,7 +126,7 @@ const shouldIgnoreInventoryLookupError = (
   error: unknown,
   configuredInventoryId: string
 ): boolean => {
-  if (!configuredInventoryId) return false;
+  if (configuredInventoryId === '') return false;
 
   const baseErrorCode = readBaseApiErrorCode(error);
   if (baseErrorCode === 'ERROR_USER_ACCOUNT_BLOCKED') return false;
@@ -177,12 +179,12 @@ const resolveExportFeedbackTtlMs = (status: TriggerButtonRunFeedbackStatus): num
     : ACTIVE_EXPORT_FEEDBACK_TTL_MS;
 
 const readPersistedBaseQuickExportFeedbackMap = (): Record<string, PersistedBaseQuickExportFeedback> => {
-  if (!canUseSessionStorage()) return {};
+  if (canUseSessionStorage() === false) return {};
   try {
     const raw = window.sessionStorage.getItem(BASE_QUICK_EXPORT_FEEDBACK_STORAGE_KEY);
-    if (!raw) return {};
+    if (raw === null || raw === '') return {};
     const parsed = JSON.parse(raw) as unknown;
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
       return {};
     }
 
@@ -190,17 +192,19 @@ const readPersistedBaseQuickExportFeedbackMap = (): Record<string, PersistedBase
     const now = Date.now();
 
     Object.entries(parsed as Record<string, unknown>).forEach(([productId, value]) => {
-      if (!value || typeof value !== 'object' || Array.isArray(value)) return;
+      if (value === null || typeof value !== 'object' || Array.isArray(value)) return;
       const record = value as Record<string, unknown>;
+      const statusValue = record['status'];
       const status =
-        typeof record['status'] === 'string'
-          ? (record['status'] as TriggerButtonRunFeedbackStatus)
+        typeof statusValue === 'string'
+          ? (statusValue as TriggerButtonRunFeedbackStatus)
           : null;
+      const expiresAtValue = record['expiresAt'];
       const expiresAt =
-        typeof record['expiresAt'] === 'number' && Number.isFinite(record['expiresAt'])
-          ? record['expiresAt']
+        typeof expiresAtValue === 'number' && Number.isFinite(expiresAtValue)
+          ? expiresAtValue
           : 0;
-      if (!status || expiresAt <= now) return;
+      if (status === null || expiresAt <= now) return;
       next[productId] = {
         productId,
         runId: typeof record['runId'] === 'string' && record['runId'].trim().length > 0
@@ -224,7 +228,7 @@ const readPersistedBaseQuickExportFeedbackMap = (): Record<string, PersistedBase
 const writePersistedBaseQuickExportFeedbackMap = (
   nextMap: Record<string, PersistedBaseQuickExportFeedback>
 ): void => {
-  if (!canUseSessionStorage()) return;
+  if (canUseSessionStorage() === false) return;
   try {
     if (Object.keys(nextMap).length === 0) {
       window.sessionStorage.removeItem(BASE_QUICK_EXPORT_FEEDBACK_STORAGE_KEY);
@@ -242,7 +246,7 @@ const readPersistedBaseQuickExportFeedback = (
   const nextMap = readPersistedBaseQuickExportFeedbackMap();
   const record = nextMap[productId];
   writePersistedBaseQuickExportFeedbackMap(nextMap);
-  return record ?? null;
+  return record !== undefined ? record : null;
 };
 
 const persistBaseQuickExportFeedback = (
@@ -251,7 +255,7 @@ const persistBaseQuickExportFeedback = (
   status: TriggerButtonRunFeedbackStatus,
   errorMessage?: string | null
 ): void => {
-  if (!productId.trim()) return;
+  if (productId.trim() === '') return;
   const nextMap = readPersistedBaseQuickExportFeedbackMap();
   nextMap[productId] = {
     productId,
@@ -267,7 +271,7 @@ const persistBaseQuickExportFeedback = (
 };
 
 const clearPersistedBaseQuickExportFeedback = (productId: string): void => {
-  if (!productId.trim()) return;
+  if (productId.trim() === '') return;
   const nextMap = readPersistedBaseQuickExportFeedbackMap();
   if (!(productId in nextMap)) return;
   delete nextMap[productId];
@@ -315,17 +319,17 @@ export function BaseQuickExportButton(props: {
 
   const setTrackedExportStatus = useCallback(
     (
-      status: TriggerButtonRunFeedbackStatus | null,
+      newStatus: TriggerButtonRunFeedbackStatus | null,
       options?: { runId?: string | null; errorMessage?: string | null }
     ): void => {
-      setTrackedExportRunStatus(status);
-      if (!status) {
+      setTrackedExportRunStatus(newStatus);
+      if (newStatus === null) {
         setTrackedExportRunContextId(null);
         setTrackedExportRunErrorMessage(null);
         clearPersistedBaseQuickExportFeedback(product.id);
         return;
       }
-      const normalizedRunId = options?.runId?.trim() || null;
+      const normalizedRunId = (options?.runId?.trim() ?? '') !== '' ? options!.runId!.trim() : null;
       setTrackedExportRunContextId(normalizedRunId);
       const normalizedErrorMessage =
         typeof options?.errorMessage === 'string' && options.errorMessage.trim().length > 0
@@ -335,7 +339,7 @@ export function BaseQuickExportButton(props: {
       persistBaseQuickExportFeedback(
         product.id,
         normalizedRunId,
-        status,
+        newStatus,
         normalizedErrorMessage
       );
     },
@@ -369,7 +373,7 @@ export function BaseQuickExportButton(props: {
   const startTrackingExportRun = useCallback(
     (runId: string, initialStatus: TriggerButtonRunFeedbackStatus): void => {
       const normalizedRunId = runId.trim();
-      if (!normalizedRunId) {
+      if (normalizedRunId === '') {
         setTrackedExportStatus(initialStatus, { runId: null });
         return;
       }
@@ -404,7 +408,7 @@ export function BaseQuickExportButton(props: {
 
   useEffect(() => {
     const persistedFeedback = readPersistedBaseQuickExportFeedback(product.id);
-    if (!persistedFeedback) {
+    if (persistedFeedback === null) {
       return;
     }
 
@@ -413,17 +417,17 @@ export function BaseQuickExportButton(props: {
     setTrackedExportRunContextId(persistedFeedback.runId);
     setTrackedExportRunErrorMessage(persistedFeedback.errorMessage ?? null);
     if (
-      persistedFeedback.runId &&
-      !TERMINAL_EXPORT_RUN_STATUSES.has(persistedFeedback.status)
+      persistedFeedback.runId !== null &&
+      TERMINAL_EXPORT_RUN_STATUSES.has(persistedFeedback.status) === false
     ) {
       startTrackingExportRun(persistedFeedback.runId, persistedFeedback.status);
     }
   }, [product.id, startTrackingExportRun]);
 
   useEffect(() => {
-    if (!showMarketplaceBadge) return;
-    if (!trackedExportRunStatus) return;
-    if (!TERMINAL_EXPORT_RUN_STATUSES.has(trackedExportRunStatus)) return;
+    if (showMarketplaceBadge === false) return;
+    if (trackedExportRunStatus === null) return;
+    if (TERMINAL_EXPORT_RUN_STATUSES.has(trackedExportRunStatus) === false) return;
 
     // Once the list runtime confirms the product is exported, the server-backed
     // listing badge becomes the source of truth and stale terminal client-run
@@ -438,7 +442,7 @@ export function BaseQuickExportButton(props: {
         await Promise.all([
         fetchQueryV2<BaseDefaultConnectionPreferenceResponse>(queryClient, {
           queryKey: normalizeQueryKey(integrationSelectionQueryKeys.defaultConnection),
-          queryFn: () => fetchPreferredBaseConnection(),
+          queryFn: async () => await fetchPreferredBaseConnection(),
           staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
           meta: {
             source: 'products.columns.buttons.BaseQuickExport.resolveContext.preferredConnection',
@@ -451,8 +455,8 @@ export function BaseQuickExportButton(props: {
         })(),
         fetchQueryV2<BaseDefaultInventoryPreferenceResponse>(queryClient, {
           queryKey: normalizeQueryKey(defaultExportInventoryQueryKey),
-          queryFn: () =>
-            api.get<BaseDefaultInventoryPreferenceResponse>(
+          queryFn: async () =>
+            await api.get<BaseDefaultInventoryPreferenceResponse>(
               '/api/v2/integrations/exports/base/default-inventory'
             ),
           staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
@@ -467,7 +471,7 @@ export function BaseQuickExportButton(props: {
         })(),
         fetchQueryV2<IntegrationWithConnections[]>(queryClient, {
           queryKey: normalizeQueryKey(integrationSelectionQueryKeys.withConnections),
-          queryFn: () => fetchIntegrationsWithConnections(),
+          queryFn: async () => await fetchIntegrationsWithConnections(),
           staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
           meta: {
             source: 'products.columns.buttons.BaseQuickExport.resolveContext.integrationsWithConnections',
@@ -481,22 +485,22 @@ export function BaseQuickExportButton(props: {
         })().catch(() => [] as IntegrationWithConnections[]),
         ]);
 
-      const preferredConnectionId = preferredConnection?.connectionId?.trim() || '';
+      const preferredConnectionId = (preferredConnection?.connectionId?.trim() ?? '');
       const availableBaseConnectionIds = resolveBaseConnectionCandidates(integrationsWithConnections);
       let connectionId = preferredConnectionId;
 
-      if (!connectionId) {
+      if (connectionId === '') {
         connectionId =
           availableBaseConnectionIds.length === 1 ? availableBaseConnectionIds[0] ?? '' : '';
       } else if (
         availableBaseConnectionIds.length > 0 &&
-        !availableBaseConnectionIds.includes(connectionId)
+        availableBaseConnectionIds.includes(connectionId) === false
       ) {
         connectionId =
           availableBaseConnectionIds.length === 1 ? availableBaseConnectionIds[0] ?? '' : '';
       }
 
-      if (!connectionId) {
+      if (connectionId === '') {
         toast('Set a default Base.com connection first.', { variant: 'error' });
         return null;
       }
@@ -529,21 +533,21 @@ export function BaseQuickExportButton(props: {
             .filter((value) => value.length > 0)
         );
       } catch (error) {
-        if (!shouldIgnoreInventoryLookupError(error, configuredInventoryId)) {
+        if (shouldIgnoreInventoryLookupError(error, configuredInventoryId) === false) {
           throw error;
         }
       }
 
       let inventoryId = configuredInventoryId;
 
-      if (!inventoryId) {
+      if (inventoryId === '') {
         inventoryId = fallbackInventoryId;
-      } else if (availableInventoryIds.size > 0 && !availableInventoryIds.has(inventoryId)) {
+      } else if (availableInventoryIds.size > 0 && availableInventoryIds.has(inventoryId) === false) {
         inventoryId = fallbackInventoryId;
       }
 
-      if (!inventoryId) {
-        const message = configuredInventoryId
+      if (inventoryId === '') {
+        const message = configuredInventoryId !== ''
           ? 'Configured Base.com inventory is not available for this connection. Open Export Settings and select a valid inventory.'
           : 'Specific Base.com inventory is not configured. Open Export Settings and set inventory.';
         toast(message, { variant: 'error' });
@@ -564,7 +568,7 @@ export function BaseQuickExportButton(props: {
         const scopedTemplate = await api.get<BaseActiveTemplatePreferenceResponse>(
           `/api/v2/integrations/exports/base/active-template?connectionId=${encodeURIComponent(connectionId)}&inventoryId=${encodeURIComponent(inventoryId)}`
         );
-        templateId = scopedTemplate?.templateId?.trim() || '';
+        templateId = scopedTemplate?.templateId?.trim() ?? '';
       } catch {
         // Best-effort only. Export can proceed without a scoped template.
       }
@@ -600,21 +604,21 @@ export function BaseQuickExportButton(props: {
       requestId: `one-click:${product.id}:${context.connectionId}:${context.inventoryId}:${Math.floor(Date.now() / 30000)}`,
     };
 
-    if (context.templateId) {
+    if (context.templateId !== '') {
       payload.templateId = context.templateId;
     }
 
     try {
       const response = await quickExportMutation.mutateAsync(payload);
-      const normalizedRunId = response?.runId?.trim() || '';
+      const normalizedRunId = response?.runId?.trim() ?? '';
       const initialRunStatus: TriggerButtonRunFeedbackStatus =
         response?.status === 'completed' || response?.status === 'failed'
           ? response.status
           : 'queued';
 
-      if (normalizedRunId) {
+      if (normalizedRunId !== '') {
         startTrackingExportRun(normalizedRunId, initialRunStatus);
-      } else if (response?.status) {
+      } else if ((response?.status ?? null) !== null) {
         setTrackedExportStatus(initialRunStatus, { runId: null });
       }
 
@@ -634,30 +638,35 @@ export function BaseQuickExportButton(props: {
 
   const runQuickExport = async (): Promise<void> => {
     const preflightError = getBaseExportPreflightError(product.categoryId);
-    if (preflightError) {
+    if (preflightError !== null) {
       toast(preflightError, { variant: 'error' });
       return;
     }
 
     if (
-      quickExportLockRef.current ||
-      quickExportMutation.isPending ||
-      oneClickExportInFlight.has(product.id)
+      quickExportLockRef.current === true ||
+      quickExportMutation.isPending === true ||
+      oneClickExportInFlight.has(product.id) === true
     ) {
       return;
     }
 
     quickExportLockRef.current = true;
-    oneClickExportInFlight.add(product.id);
     setQuickExportLocked(true);
+    oneClickExportInFlight.add(product.id);
 
     try {
       const context = await resolveQuickExportContext();
-      if (!context) return;
+      if (context === null) {
+        quickExportLockRef.current = false;
+        setQuickExportLocked(false);
+        oneClickExportInFlight.delete(product.id);
+        return;
+      }
 
-      if (!showMarketplaceBadge) {
+      if (showMarketplaceBadge === false) {
         const sku = (product.sku ?? '').trim();
-        if (sku) {
+        if (sku !== '') {
           let skuCheck: BaseProductSkuCheckResponse;
           try {
             skuCheck = await api.post<BaseProductSkuCheckResponse>(
@@ -674,36 +683,46 @@ export function BaseQuickExportButton(props: {
                 ? error.message
                 : 'Failed to verify SKU in Base.com. Export was not started.';
             toast(message, { variant: 'error' });
+            quickExportLockRef.current = false;
+            setQuickExportLocked(false);
+            oneClickExportInFlight.delete(product.id);
             return;
           }
 
-          if (skuCheck.exists) {
+          if (skuCheck.exists === true) {
             setExistingSkuDecision({
               ...context,
-              sku: (skuCheck.sku ?? sku).trim() || sku,
-              existingProductId: skuCheck.existingProductId?.trim() || null,
+              sku: (skuCheck.sku ?? sku).trim() !== '' ? skuCheck.sku!.trim() : sku,
+              existingProductId: (skuCheck.existingProductId?.trim() ?? '') !== '' ? skuCheck.existingProductId!.trim() : null,
             });
+            quickExportLockRef.current = false;
+            setQuickExportLocked(false);
+            oneClickExportInFlight.delete(product.id);
             return;
           }
         }
       }
 
       await runQuickExportMutation(context);
-    } finally {
       quickExportLockRef.current = false;
-      oneClickExportInFlight.delete(product.id);
       setQuickExportLocked(false);
+      oneClickExportInFlight.delete(product.id);
+    } catch (error) {
+      quickExportLockRef.current = false;
+      setQuickExportLocked(false);
+      oneClickExportInFlight.delete(product.id);
+      throw error;
     }
   };
 
   const handleCloseDecisionModal = (): void => {
-    if (linkExistingPending) return;
+    if (linkExistingPending === true) return;
     setExistingSkuDecision(null);
   };
 
   const handleSetupNewConnection = (): void => {
     setExistingSkuDecision(null);
-    if (onOpenIntegrations) {
+    if (onOpenIntegrations !== undefined) {
       onOpenIntegrations();
       return;
     }
@@ -713,11 +732,11 @@ export function BaseQuickExportButton(props: {
   };
 
   const handleLinkExistingProduct = async (): Promise<void> => {
-    if (!existingSkuDecision) return;
-    if (linkExistingPending) return;
+    if (existingSkuDecision === null) return;
+    if (linkExistingPending === true) return;
 
-    const externalListingId = existingSkuDecision.existingProductId?.trim() || '';
-    if (!externalListingId) {
+    const externalListingId = (existingSkuDecision.existingProductId?.trim() ?? '');
+    if (externalListingId === '') {
       toast('Existing Base.com product ID is missing. Use "Set up new connection" instead.', {
         variant: 'error',
       });
@@ -753,27 +772,30 @@ export function BaseQuickExportButton(props: {
 
   const label = 'One-click export to Base.com';
 
-  const trackedExportPresentation = trackedExportRunStatus
+  const trackedExportPresentation = trackedExportRunStatus !== null
     ? resolveTriggerButtonRunFeedbackPresentation(trackedExportRunStatus)
     : null;
   const trackedExportInFlight =
-    trackedExportRunStatus !== null && !TERMINAL_EXPORT_RUN_STATUSES.has(trackedExportRunStatus);
-  const quickExportPending = quickExportMutation.isPending || quickExportLocked || trackedExportInFlight;
+    trackedExportRunStatus !== null && TERMINAL_EXPORT_RUN_STATUSES.has(trackedExportRunStatus) === false;
+  const quickExportPending = quickExportMutation.isPending === true || quickExportLocked === true || trackedExportInFlight === true;
   const resolvedButtonStatus = trackedExportRunStatus ?? status;
   const normalizedResolvedButtonStatus = normalizeMarketplaceStatus(resolvedButtonStatus);
   const isFailureState = FAILURE_STATUSES.has(normalizedResolvedButtonStatus);
   const shouldManageExistingListing =
-    !isFailureState &&
-    (showMarketplaceBadge || SUCCESS_STATUSES.has(normalizedResolvedButtonStatus));
-  const shouldUseFilledMarketplaceTone = showMarketplaceBadge || trackedExportRunStatus !== null;
-  const resolvedLabel = isFailureState
-    ? `Open Base.com recovery options (${resolvedButtonStatus}).`
-    : shouldManageExistingListing
-      ? `Manage Base.com listing (${resolvedButtonStatus}).`
-    : trackedExportPresentation
-      ? `Base.com export ${trackedExportPresentation.label.toLowerCase()}.`
-      : label;
-  const recoveryContext: ProductListingsRecoveryContext | undefined = isFailureState
+    isFailureState === false &&
+    (showMarketplaceBadge === true || SUCCESS_STATUSES.has(normalizedResolvedButtonStatus));
+  const shouldUseFilledMarketplaceTone = showMarketplaceBadge === true || trackedExportRunStatus !== null;
+
+  let resolvedLabel = label;
+  if (isFailureState === true) {
+    resolvedLabel = `Open Base.com recovery options (${resolvedButtonStatus}).`;
+  } else if (shouldManageExistingListing === true) {
+    resolvedLabel = `Manage Base.com listing (${resolvedButtonStatus}).`;
+  } else if (trackedExportPresentation !== null) {
+    resolvedLabel = `Base.com export ${trackedExportPresentation.label.toLowerCase()}.`;
+  }
+
+  const recoveryContext: ProductListingsRecoveryContext | undefined = isFailureState === true
     ? createBaseRecoveryContext({
       status: resolvedButtonStatus,
       runId: trackedExportRunContextId,
@@ -787,15 +809,21 @@ export function BaseQuickExportButton(props: {
         type='button'
         disabled={quickExportPending}
         onClick={(): void => {
-          if (isFailureState) {
-            onOpenIntegrations?.(recoveryContext);
+          if (isFailureState === true) {
+            if (onOpenIntegrations !== undefined) {
+              onOpenIntegrations(recoveryContext);
+            }
             return;
           }
-          if (shouldManageExistingListing) {
-            onOpenIntegrations?.();
+          if (shouldManageExistingListing === true) {
+            if (onOpenIntegrations !== undefined) {
+              onOpenIntegrations();
+            }
             return;
           }
-          void runQuickExport();
+          runQuickExport().catch((error: unknown) => {
+            logClientError(error);
+          });
         }}
         onMouseEnter={prefetchListings}
         onFocus={prefetchListings}
@@ -805,7 +833,7 @@ export function BaseQuickExportButton(props: {
         title={resolvedLabel}
         className={cn(
           'size-8 rounded-full border border-transparent bg-transparent p-0 hover:bg-transparent',
-          !showMarketplaceBadge && quickExportPending && 'cursor-not-allowed opacity-60',
+          showMarketplaceBadge === false && quickExportPending === true && 'cursor-not-allowed opacity-60',
           getMarketplaceButtonClass(resolvedButtonStatus, shouldUseFilledMarketplaceTone, 'base')
         )}
       >
@@ -813,14 +841,14 @@ export function BaseQuickExportButton(props: {
           aria-hidden='true'
           className='text-[9px] font-black uppercase leading-none tracking-tight'
         >
-          {quickExportPending ? '...' : 'BL'}
+          {quickExportPending === true ? '...' : 'BL'}
         </span>
       </Button>
 
       <AppModal
-        open={Boolean(existingSkuDecision)}
+        open={existingSkuDecision !== null}
         onOpenChange={(open) => {
-          if (!open) handleCloseDecisionModal();
+          if (open === false) handleCloseDecisionModal();
         }}
         onClose={handleCloseDecisionModal}
         title='SKU already exists in Base.com'
@@ -840,12 +868,12 @@ export function BaseQuickExportButton(props: {
             </span>
           </InsetPanel>
 
-          {!existingSkuDecision?.existingProductId && (
+          {existingSkuDecision?.existingProductId === null || existingSkuDecision?.existingProductId === undefined || existingSkuDecision.existingProductId === '' ? (
             <p className='text-xs text-amber-300'>
               Could not resolve existing Base.com product ID. Linking is disabled. Use "Set up new
               connection".
             </p>
-          )}
+          ) : null}
 
           <div className='flex items-center justify-end gap-2 border-t border-border/60 pt-2'>
             <Button
@@ -867,11 +895,13 @@ export function BaseQuickExportButton(props: {
             <Button
               type='button'
               onClick={(): void => {
-                void handleLinkExistingProduct();
+                handleLinkExistingProduct().catch((error: unknown) => {
+                  logClientError(error);
+                });
               }}
-              disabled={linkExistingPending || !existingSkuDecision?.existingProductId}
+              disabled={linkExistingPending === true || (existingSkuDecision?.existingProductId ?? '') === ''}
             >
-              {linkExistingPending ? 'Linking...' : 'Link existing product'}
+              {linkExistingPending === true ? 'Linking...' : 'Link existing product'}
             </Button>
           </div>
         </div>

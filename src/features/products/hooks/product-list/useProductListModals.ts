@@ -27,16 +27,17 @@ import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrat
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import type { ProductDraft } from '@/shared/contracts/products/drafts';
 import type { Toast } from '@/shared/contracts/ui/base';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 const enrichRecoveryContext = (
   productId: string,
   recoveryContext?: ProductListingsRecoveryContext
 ): ProductListingsRecoveryContext | null => {
-  if (!recoveryContext) return null;
+  if (recoveryContext === undefined) return null;
 
   if (
-    !isTraderaQuickExportRecoveryContext(recoveryContext) &&
-    !isVintedQuickExportRecoveryContext(recoveryContext)
+    isTraderaQuickExportRecoveryContext(recoveryContext) === false &&
+    isVintedQuickExportRecoveryContext(recoveryContext) === false
   ) {
     return recoveryContext;
   }
@@ -44,9 +45,9 @@ const enrichRecoveryContext = (
   const persistedFeedback = isTraderaQuickExportRecoveryContext(recoveryContext)
     ? readPersistedTraderaQuickListFeedback(productId)
     : readPersistedVintedQuickListFeedback(productId);
-  if (!persistedFeedback) return recoveryContext;
+  if (persistedFeedback === null) return recoveryContext;
 
-  const normalizedFeedbackStatus = (persistedFeedback.status ?? '').trim().toLowerCase();
+  const normalizedFeedbackStatus = persistedFeedback.status.trim().toLowerCase();
   if (
     normalizedFeedbackStatus === 'processing' ||
     normalizedFeedbackStatus === 'queued' ||
@@ -57,15 +58,58 @@ const enrichRecoveryContext = (
 
   return {
     ...recoveryContext,
-    runId: recoveryContext.runId ?? persistedFeedback.runId ?? null,
+    runId: recoveryContext.runId ?? persistedFeedback.runId,
     failureReason:
       ('failureReason' in recoveryContext ? recoveryContext.failureReason : null) ??
-      persistedFeedback.failureReason ??
-      null,
-    requestId: recoveryContext.requestId ?? persistedFeedback.requestId ?? null,
-    integrationId: recoveryContext.integrationId ?? persistedFeedback.integrationId ?? null,
-    connectionId: recoveryContext.connectionId ?? persistedFeedback.connectionId ?? null,
+      persistedFeedback.failureReason,
+    requestId: recoveryContext.requestId ?? persistedFeedback.requestId,
+    integrationId: recoveryContext.integrationId ?? persistedFeedback.integrationId,
+    connectionId: recoveryContext.connectionId ?? persistedFeedback.connectionId,
   };
+};
+
+export type ProductListModalsContextValue = {
+  createDraft: ProductDraft | null;
+  setCreateDraft: (draft: ProductDraft | null) => void;
+  handleOpenCreate: () => void;
+  handleOpenIntegrationsModal: (
+    product: ProductWithImages,
+    recoveryContext?: ProductListingsRecoveryContext,
+    filterIntegrationSlug?: string | null
+  ) => void;
+  handleOpenExportSettings: (product: ProductWithImages) => void;
+  handleCloseIntegrations: () => void;
+  handleCloseListProduct: () => void;
+  handleListProductSuccess: () => void;
+  handleStartListing: (
+    integrationId: string,
+    connectionId: string,
+    options?: { autoSubmit?: boolean }
+  ) => void;
+  massListIntegration: {
+    integrationId: string;
+    connectionId: string;
+  } | null;
+  massListProductIds: string[];
+  isMassListing: boolean;
+  showIntegrationModal: boolean;
+  handleCloseIntegrationModal: () => void;
+  handleSelectIntegrationFromModal: (integrationId: string, connectionId: string) => void;
+  handleCloseMassList: () => void;
+  handleMassListSuccess: () => void;
+  handleAddToMarketplace: () => void;
+  integrationsProduct: ProductWithImages | null;
+  integrationsRecoveryContext: ProductListingsRecoveryContext | null;
+  integrationsFilterIntegrationSlug: string | null;
+  showListProductModal: boolean;
+  listProductPreset: {
+    integrationId: string;
+    connectionId: string;
+    autoSubmit?: boolean;
+  } | null;
+  exportSettingsProduct: ProductWithImages | null;
+  setExportSettingsProduct: (product: ProductWithImages | null) => void;
+  refreshListingBadges: () => Promise<void>;
 };
 
 export function useProductListModals({
@@ -82,7 +126,7 @@ export function useProductListModals({
   refreshProductListingsData: (productId: string) => void;
   rowSelection: Record<string, boolean>;
   toast: Toast;
-}) {
+}): ProductListModalsContextValue {
   const [createDraft, setCreateDraft] = useState<ProductDraft | null>(null);
   const [integrationsRecoveryContext, setIntegrationsRecoveryContext] =
     useState<ProductListingsRecoveryContext | null>(null);
@@ -102,7 +146,7 @@ export function useProductListModals({
     handleListProductSuccess: baseHandleListProductSuccess,
   } = useIntegrationModalOperations();
 
-  const handleOpenCreate = useCallback(() => {
+  const handleOpenCreate = useCallback((): void => {
     setCreateDraft(null);
     handleOpenCreateModal();
   }, [handleOpenCreateModal]);
@@ -112,7 +156,7 @@ export function useProductListModals({
       product: ProductWithImages,
       recoveryContext?: ProductListingsRecoveryContext,
       filterIntegrationSlug?: string | null
-    ) => {
+    ): void => {
       const resolvedFilterIntegrationSlug = resolveProductListingsIntegrationScope({
         filterIntegrationSlug,
         recoveryContext,
@@ -124,7 +168,7 @@ export function useProductListModals({
         isVintedQuickExportRecoveryContext(recoveryContext);
       prefetchIntegrationSelectionData();
       prefetchProductListingsData(product.id);
-      if (shouldRefreshListings) {
+      if (shouldRefreshListings === true) {
         refreshProductListingsData(product.id);
       }
       setIntegrationsRecoveryContext(enrichRecoveryContext(product.id, recoveryContext));
@@ -142,14 +186,14 @@ export function useProductListModals({
   );
 
   const handleOpenExportSettings = useCallback(
-    (product: ProductWithImages) => {
+    (product: ProductWithImages): void => {
       setExportSettingsProduct(product);
       refreshProductListingsData(product.id);
     },
     [refreshProductListingsData, setExportSettingsProduct]
   );
 
-  const handleCloseIntegrations = useCallback(() => {
+  const handleCloseIntegrations = useCallback((): void => {
     setIntegrationsProduct(null);
     setIntegrationsRecoveryContext(null);
     setIntegrationsFilterIntegrationSlug(null);
@@ -161,21 +205,21 @@ export function useProductListModals({
     setShowListProductModal,
   ]);
 
-  const handleCloseListProduct = useCallback(() => {
+  const handleCloseListProduct = useCallback((): void => {
     setShowListProductModal(false);
     setListProductPreset(null);
   }, [setShowListProductModal, setListProductPreset]);
 
-  const handleListProductSuccess = useCallback(() => {
+  const handleListProductSuccess = useCallback((): void => {
     setListProductPreset(null);
     setIntegrationsRecoveryContext(null);
-    if (integrationsProduct?.id) {
+    if (integrationsProduct !== null) {
       refreshProductListingsData(integrationsProduct.id);
     }
     baseHandleListProductSuccess();
   }, [
     baseHandleListProductSuccess,
-    integrationsProduct?.id,
+    integrationsProduct,
     refreshProductListingsData,
     setIntegrationsRecoveryContext,
     setListProductPreset,
@@ -186,11 +230,11 @@ export function useProductListModals({
       integrationId: string,
       connectionId: string,
       options?: { autoSubmit?: boolean }
-    ) => {
+    ): void => {
       setListProductPreset({
         integrationId,
         connectionId,
-        ...(options?.autoSubmit ? { autoSubmit: true } : {}),
+        ...(options?.autoSubmit === true ? { autoSubmit: true } : {}),
       });
       setShowListProductModal(true);
     },
@@ -206,7 +250,7 @@ export function useProductListModals({
   const [isMassListing, setIsMassListing] = useState(false);
   const [showIntegrationModal, setShowIntegrationModal] = useState(false);
 
-  const handleCloseIntegrationModal = useCallback(() => {
+  const handleCloseIntegrationModal = useCallback((): void => {
     setShowIntegrationModal(false);
     setIsMassListing(false);
   }, []);
@@ -214,8 +258,8 @@ export function useProductListModals({
   const handleSelectIntegrationFromModal = useCallback(
     (integrationId: string, connectionId: string): void => {
       setShowIntegrationModal(false);
-      if (isMassListing) {
-        const ids = Object.keys(rowSelection).filter((id: string) => rowSelection[id]);
+      if (isMassListing === true) {
+        const ids = Object.keys(rowSelection).filter((id: string) => rowSelection[id] === true);
         setMassListProductIds(ids);
         setMassListIntegration({ integrationId, connectionId });
       }
@@ -223,21 +267,24 @@ export function useProductListModals({
     [isMassListing, rowSelection]
   );
 
-  const handleCloseMassList = useCallback(() => {
+  const handleCloseMassList = useCallback((): void => {
     setMassListIntegration(null);
     setMassListProductIds([]);
     setIsMassListing(false);
   }, []);
 
-  const handleMassListSuccess = useCallback(() => {
+  const handleMassListSuccess = useCallback((): void => {
     setMassListIntegration(null);
     setMassListProductIds([]);
     setIsMassListing(false);
     toast('Products listed successfully.', { variant: 'success' });
-    void refreshListingBadges();
+    refreshListingBadges().catch((error: unknown) => {
+      // Ignore background refresh errors
+      ErrorSystem.logWarning('Failed to refresh listing badges after mass list success', { error }).catch(() => {});
+    });
   }, [toast, refreshListingBadges]);
 
-  const handleAddToMarketplace = useCallback(() => {
+  const handleAddToMarketplace = useCallback((): void => {
     prefetchIntegrationSelectionData();
     setIsMassListing(true);
     setShowIntegrationModal(true);

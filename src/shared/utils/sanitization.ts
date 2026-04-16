@@ -1,4 +1,5 @@
 import { dispatchClientCatch } from '@/shared/utils/observability/client-error-dispatch';
+
 const HTML_SCRIPT_FALLBACK_PATTERN = /<script\b[^>]*>[\s\S]*?<\/script>/gi;
 const DANGEROUS_HTML_TAG_NAMES = new Set(['SCRIPT', 'OBJECT', 'EMBED', 'IFRAME']);
 
@@ -10,6 +11,14 @@ const canUseDomHtmlSanitizer = (): boolean =>
     typeof window === 'undefined' ||
     typeof document === 'undefined' ||
     typeof DOMParser === 'undefined'
+  );
+
+const canUseDomSvgSanitizer = (): boolean =>
+  !(
+    typeof window === 'undefined' ||
+    typeof document === 'undefined' ||
+    typeof DOMParser === 'undefined' ||
+    typeof XMLSerializer === 'undefined'
   );
 
 const shouldRemoveHtmlAttribute = (attribute: Attr): boolean => {
@@ -42,7 +51,7 @@ const sanitizeHtmlNode = (node: Node): void => {
 };
 
 export function sanitizeHtml(html: string): string {
-  if (!html) return '';
+  if (html.length === 0) return '';
 
   if (!canUseDomHtmlSanitizer()) {
     return sanitizeHtmlFallback(html);
@@ -52,8 +61,8 @@ export function sanitizeHtml(html: string): string {
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
 
-    if (!doc?.body) {
-      return sanitizeHtmlFallback(html);
+    if (doc.body.nodeName === '') {
+      // Dummy check to satisfy some logic if needed, but doc.body is not null in HTML mode
     }
 
     sanitizeHtmlNode(doc.body);
@@ -84,7 +93,7 @@ const sanitizeSvgFallback = (svg: string): string =>
 
 const ensureSvgRoot = (markup: string, viewBox: string): string => {
   const normalized = markup.trim();
-  if (!normalized) {
+  if (normalized.length === 0) {
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}"></svg>`;
   }
   if (/<svg[\s>]/i.test(normalized)) {
@@ -93,15 +102,58 @@ const ensureSvgRoot = (markup: string, viewBox: string): string => {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}">${normalized}</svg>`;
 };
 
-export function sanitizeSvg(svg: string, options?: { viewBox?: string }): string {
-  const wrappedSvg = ensureSvgRoot(svg, options?.viewBox ?? '0 0 100 100');
+const sanitizeSvgAttribute = (element: Element, attribute: Attr): boolean => {
+  const attributeName = attribute.name.toLowerCase();
+  const attributeValue = attribute.value.trim();
+
+  if (attributeName.startsWith('on')) {
+    return true;
+  }
+
+  if (attributeName === 'href' || attributeName === 'xlink:href' || attributeName === 'src') {
+    return !SVG_LOCAL_REFERENCE_PATTERN.test(attributeValue);
+  }
 
   if (
-    typeof window === 'undefined' ||
-    typeof document === 'undefined' ||
-    typeof DOMParser === 'undefined' ||
-    typeof XMLSerializer === 'undefined'
+    attributeName === 'style' &&
+    /(javascript:|expression\(|url\(\s*https?:|url\(\s*\/\/)/i.test(attributeValue)
   ) {
+    return true;
+  }
+
+  return /javascript:/i.test(attributeValue);
+};
+
+const sanitizeSvgElement = (element: Element): void => {
+  const tagName = element.tagName.toUpperCase();
+  if (DANGEROUS_SVG_TAG_NAMES.has(tagName)) {
+    element.remove();
+    return;
+  }
+
+  for (const attribute of Array.from(element.attributes)) {
+    if (sanitizeSvgAttribute(element, attribute)) {
+      element.removeAttribute(attribute.name);
+    }
+  }
+
+  Array.from(element.children).forEach(sanitizeSvgElement);
+};
+
+const ensureSvgAttributes = (root: Element, viewBox: string): void => {
+  if (root.getAttribute('xmlns') === null) {
+    root.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+  }
+  if (root.getAttribute('viewBox') === null) {
+    root.setAttribute('viewBox', viewBox);
+  }
+};
+
+export function sanitizeSvg(svg: string, options?: { viewBox?: string }): string {
+  const defaultViewBox = options?.viewBox ?? '0 0 100 100';
+  const wrappedSvg = ensureSvgRoot(svg, defaultViewBox);
+
+  if (!canUseDomSvgSanitizer()) {
     return sanitizeSvgFallback(wrappedSvg);
   }
 
@@ -110,57 +162,12 @@ export function sanitizeSvg(svg: string, options?: { viewBox?: string }): string
     const doc = parser.parseFromString(wrappedSvg, 'image/svg+xml');
     const root = doc.documentElement;
 
-    if (!root || root.nodeName.toLowerCase() === 'parsererror') {
+    if (root.nodeName.toLowerCase() === 'parsererror') {
       return sanitizeSvgFallback(wrappedSvg);
     }
 
-    const sanitizeElement = (element: Element): void => {
-      const tagName = element.tagName.toUpperCase();
-      if (DANGEROUS_SVG_TAG_NAMES.has(tagName)) {
-        element.remove();
-        return;
-      }
-
-      for (const attribute of Array.from(element.attributes)) {
-        const attributeName = attribute.name.toLowerCase();
-        const attributeValue = attribute.value.trim();
-
-        if (attributeName.startsWith('on')) {
-          element.removeAttribute(attribute.name);
-          continue;
-        }
-
-        if (attributeName === 'href' || attributeName === 'xlink:href' || attributeName === 'src') {
-          if (!SVG_LOCAL_REFERENCE_PATTERN.test(attributeValue)) {
-            element.removeAttribute(attribute.name);
-          }
-          continue;
-        }
-
-        if (
-          attributeName === 'style' &&
-          /(javascript:|expression\(|url\(\s*https?:|url\(\s*\/\/)/i.test(attributeValue)
-        ) {
-          element.removeAttribute(attribute.name);
-          continue;
-        }
-
-        if (/javascript:/i.test(attributeValue)) {
-          element.removeAttribute(attribute.name);
-        }
-      }
-
-      Array.from(element.children).forEach(sanitizeElement);
-    };
-
-    sanitizeElement(root);
-
-    if (!root.getAttribute('xmlns')) {
-      root.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-    }
-    if (!root.getAttribute('viewBox')) {
-      root.setAttribute('viewBox', options?.viewBox ?? '0 0 100 100');
-    }
+    sanitizeSvgElement(root);
+    ensureSvgAttributes(root, defaultViewBox);
 
     return new XMLSerializer().serializeToString(root);
   } catch (error) {

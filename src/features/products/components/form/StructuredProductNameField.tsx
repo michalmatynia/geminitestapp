@@ -119,7 +119,7 @@ const resolveSegmentBounds = (
 
 const resolveLastNonEmptySegmentIndex = (segments: string[]): number => {
   for (let index = segments.length - 1; index >= 0; index -= 1) {
-    if (segments[index]?.trim()) return index;
+    if (typeof segments[index] === 'string' && segments[index]!.trim() !== '') return index;
   }
   return 0;
 };
@@ -134,7 +134,7 @@ const findEnabledSuggestionIndex = (
   let nextIndex = Math.min(Math.max(startIndex, 0), suggestions.length - 1);
   for (let steps = 0; steps < suggestions.length; steps += 1) {
     const candidate = suggestions[nextIndex];
-    if (candidate && !candidate.disabled) {
+    if (candidate !== undefined && candidate.disabled !== true) {
       return nextIndex;
     }
     const fallbackIndex = nextIndex + direction;
@@ -167,7 +167,7 @@ const replaceStructuredSegment = (
     .join(' | ')
     .trim();
 
-  if (!hasLaterContent && stage < 4) {
+  if (hasLaterContent === false && stage < 4) {
     return `${nextValue} | `;
   }
 
@@ -189,17 +189,27 @@ const buildTitleTermSuggestion = (
 ): SuggestionOption => {
   const value = resolveLocalizedTitleTermName(term, locale);
   const aliases = uniqueSuggestionValues([term.name_en, term.name_pl, value]);
+  const description = ((): string | undefined => {
+    if (locale === 'pl') {
+      const enName = term.name_en;
+      if (typeof enName === 'string' && enName !== '' && enName !== value) {
+        return enName;
+      }
+    } else {
+      const plName = term.name_pl;
+      if (typeof plName === 'string' && plName !== '' && plName !== value) {
+        return plName;
+      }
+    }
+    return undefined;
+  })();
+
   return {
     value,
     label: value,
     aliases,
     searchText: aliases.join(' '),
-    description:
-      locale === 'pl' && term.name_en && term.name_en !== value
-        ? term.name_en
-        : term.name_pl && term.name_pl !== value
-          ? term.name_pl
-          : undefined,
+    description,
   };
 };
 
@@ -210,16 +220,15 @@ const buildCategorySuggestions = (
   const byParentId = new Map<string | null, ProductCategory[]>();
   const hasChildren = new Set<string>();
 
-  categories.forEach((category) => {
+  for (const category of categories) {
     const parentId = category.parentId ?? null;
-    if (!byParentId.has(parentId)) {
-      byParentId.set(parentId, []);
-    }
-    byParentId.get(parentId)?.push(category);
-    if (parentId) {
+    const existing = byParentId.get(parentId) ?? [];
+    existing.push(category);
+    byParentId.set(parentId, existing);
+    if (parentId !== null) {
       hasChildren.add(parentId);
     }
-  });
+  }
 
   const sortCategories = (items: ProductCategory[]): ProductCategory[] =>
     [...items].sort((left, right) => {
@@ -236,7 +245,7 @@ const buildCategorySuggestions = (
   const collected: SuggestionOption[] = [];
   const walk = (parentId: string | null, path: string[]): void => {
     const siblings = sortCategories(byParentId.get(parentId) ?? []);
-    siblings.forEach((category) => {
+    for (const category of siblings) {
       const value = resolveLocalizedCategoryName(category, locale);
       const label = [...path, value].join(' / ');
       const aliases = uniqueSuggestionValues([
@@ -256,7 +265,7 @@ const buildCategorySuggestions = (
         description: hasChildren.has(category.id) ? 'Parent category' : undefined,
       });
       walk(category.id, [...path, value]);
-    });
+    }
   };
 
   walk(null, []);
@@ -268,17 +277,95 @@ const resolveUniqueLeafCategorySuggestion = (
   value: string
 ): SuggestionOption | null => {
   const normalizedValue = normalizeSegmentValue(value);
-  if (!normalizedValue) return null;
+  if (normalizedValue === '') return null;
   const normalizedKey = normalizeSuggestionKey(normalizedValue);
 
   const exactLeafMatches = suggestions.filter(
     (option) =>
-      !option.disabled &&
+      option.disabled !== true &&
       option.aliases.some((alias: string): boolean => normalizeSuggestionKey(alias) === normalizedKey)
   );
 
   return exactLeafMatches.length === 1 ? exactLeafMatches[0] ?? null : null;
 };
+
+type ProductTitleSuggestionPanelProps = {
+  side: 'above' | 'below';
+  listboxId: string;
+  suggestions: Array<{ option: SuggestionOption; index: number }>;
+  highlightedIndex: number;
+  overlayMetrics: SuggestionOverlayMetrics;
+  panelHeight: number;
+  onApply: (option: SuggestionOption) => void;
+  onHighlight: (index: number) => void;
+};
+
+function ProductTitleSuggestionPanel(props: ProductTitleSuggestionPanelProps): React.JSX.Element {
+  const { side, listboxId, suggestions, highlightedIndex, overlayMetrics, panelHeight, onApply, onHighlight } = props;
+  const panelStyle = side === 'above' ? {
+    left: overlayMetrics.left,
+    bottom: 'calc(100% + 8px)',
+    width: overlayMetrics.width,
+    height: panelHeight,
+  } : {
+    left: overlayMetrics.left,
+    top: 'calc(100% + 8px)',
+    width: overlayMetrics.width,
+    height: panelHeight,
+  };
+
+  return (
+    <div
+      className={getSuggestionPanelClassName(side)}
+      style={panelStyle}
+      onMouseDown={(event: React.MouseEvent): void => event.preventDefault()}
+    >
+      <div className={cn(
+        'pointer-events-none absolute inset-x-0 z-10 bg-gradient-to-b from-card via-card/80 to-transparent',
+        side === 'above' ? 'top-0 h-10' : 'inset-x-2 top-0 h-9 rounded-lg border border-foreground/12 bg-foreground/10 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]'
+      )} />
+      <div className='pointer-events-none absolute inset-x-0 bottom-0 z-10 h-10 bg-gradient-to-t from-card via-card/80 to-transparent' />
+      <div className='py-[6px]'>
+        {suggestions.map(({ option, index }) => (
+          <button
+            id={`${listboxId}-option-${index}`}
+            key={`${option.label}-${index}`}
+            type='button'
+            role='option'
+            disabled={option.disabled}
+            aria-selected={index === highlightedIndex}
+            onMouseDown={(event: React.MouseEvent): void => event.preventDefault()}
+            onMouseEnter={(): void => {
+              if (option.disabled !== true) {
+                onHighlight(index);
+              }
+            }}
+            onClick={(): void => onApply(option)}
+            className={getSuggestionOptionClassName(
+              option.disabled === true,
+              index === highlightedIndex
+            )}
+            aria-disabled={option.disabled === true ? true : undefined}
+          >
+            <span className='min-w-0'>
+              <span className='block truncate'>{option.label}</span>
+              {typeof option.description === 'string' && option.description !== '' ? (
+                <span className='block text-[11px] text-muted-foreground'>
+                  {option.description}
+                </span>
+              ) : null}
+            </span>
+            {option.disabled !== true ? (
+              <ChevronRight
+                className={getSuggestionChevronClassName(index === highlightedIndex)}
+              />
+            ) : null}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 type StructuredProductNameFieldConfig = {
   locale?: StructuredProductTitleLocale;
@@ -318,18 +405,18 @@ export function StructuredProductNameField({
   const { errors, normalizeNameError, setNormalizeNameError } = useProductFormCore();
   const formMetadata = useProductFormMetadata() as Partial<ReturnType<typeof useProductFormMetadata>>;
   const selectedCatalogIds = formMetadata.selectedCatalogIds ?? [];
-  const categories = formMetadata.categories ?? [];
+  const categoriesList = formMetadata.categories ?? [];
   const selectedCategoryId = formMetadata.selectedCategoryId ?? null;
-  const setCategoryId = formMetadata.setCategoryId ?? (() => {});
+  const setCategoryId = formMetadata.setCategoryId ?? ((): void => {});
   const primaryCatalogId = selectedCatalogIds[0];
 
   const nameValue = typeof field.value === 'string' ? field.value : '';
   const sizeTermsQuery = useTitleTerms(primaryCatalogId, 'size');
   const materialTermsQuery = useTitleTerms(primaryCatalogId, 'material');
   const themeTermsQuery = useTitleTerms(primaryCatalogId, 'theme');
-  const titleTermsHref = useMemo(() => {
+  const titleTermsHref = useMemo((): string => {
     const normalizedCatalogId = typeof primaryCatalogId === 'string' ? primaryCatalogId.trim() : '';
-    if (!normalizedCatalogId) {
+    if (normalizedCatalogId === '') {
       return '/admin/products/title-terms';
     }
     return `/admin/products/title-terms?catalogId=${encodeURIComponent(normalizedCatalogId)}`;
@@ -343,11 +430,11 @@ export function StructuredProductNameField({
   const [overlayMetrics, setOverlayMetrics] = useState<SuggestionOverlayMetrics | null>(null);
 
   const fieldError = errors[fieldName]?.message;
-  const error = fieldName === 'name_en' ? normalizeNameError ?? fieldError : fieldError;
+  const error = fieldName === 'name_en' ? (normalizeNameError ?? fieldError) : fieldError;
 
   const categorySuggestions = useMemo(
-    (): SuggestionOption[] => buildCategorySuggestions(categories, locale),
-    [categories, locale]
+    (): SuggestionOption[] => buildCategorySuggestions(categoriesList, locale),
+    [categoriesList, locale]
   );
   const selectedCategoryOption = useMemo(
     (): SuggestionOption | null =>
@@ -372,14 +459,14 @@ export function StructuredProductNameField({
     });
   };
 
-  useEffect(() => {
+  useEffect((): void => {
     const previousSelectedCategoryId = previousSelectedCategoryIdRef.current;
     const selectedCategoryChanged = previousSelectedCategoryId !== selectedCategoryId;
     const segments = nameValue.split('|').map((segment: string) => normalizeSegmentValue(segment));
     const categorySegment = segments[3] ?? '';
 
-    if (!categorySegment) {
-      if (selectedCategoryId && !selectedCategoryChanged) {
+    if (categorySegment === '') {
+      if (selectedCategoryId !== null && selectedCategoryChanged === false) {
         setCategoryId(null);
         syncMappedCategoryField(null);
       }
@@ -393,16 +480,16 @@ export function StructuredProductNameField({
 
     const exactLeafMatch = resolveUniqueLeafCategorySuggestion(categorySuggestions, categorySegment);
 
-    if (exactLeafMatch) {
+    if (exactLeafMatch !== null) {
       const matchedCategoryId = exactLeafMatch.categoryId;
-      if (matchedCategoryId?.trim() && matchedCategoryId !== selectedCategoryId) {
+      if (typeof matchedCategoryId === 'string' && matchedCategoryId.trim() !== '' && matchedCategoryId !== selectedCategoryId) {
         setCategoryId(matchedCategoryId);
         syncMappedCategoryField(matchedCategoryId);
       }
       return;
     }
 
-    if (selectedCategoryId && !selectedCategoryChanged) {
+    if (selectedCategoryId !== null && selectedCategoryChanged === false) {
       setCategoryId(null);
       syncMappedCategoryField(null);
     }
@@ -417,10 +504,10 @@ export function StructuredProductNameField({
   ]);
 
   const suggestions = useMemo((): SuggestionOption[] => {
-    if (!activeStage) return [];
+    if (activeStage === null) return [];
 
     const normalizedQuery = normalizeSegmentValue(segmentQuery);
-    if (!normalizedQuery) return [];
+    if (normalizedQuery === '') return [];
 
     if (activeStage === CATEGORY_STAGE) {
       const normalizedQueryLower = normalizedQuery.toLowerCase();
@@ -495,7 +582,7 @@ export function StructuredProductNameField({
     };
   }, [highlightedIndex, suggestions]);
 
-  useEffect(() => {
+  useEffect((): void => {
     if (suggestions.length === 0) {
       if (highlightedIndex !== 0) {
         setHighlightedIndex(0);
@@ -503,7 +590,8 @@ export function StructuredProductNameField({
       return;
     }
 
-    if (!suggestions[highlightedIndex] || suggestions[highlightedIndex]?.disabled) {
+    const currentCandidate = suggestions[highlightedIndex];
+    if (currentCandidate === undefined || currentCandidate.disabled === true) {
       const nextIndex = findEnabledSuggestionIndex(suggestions, 0, 1);
       if (nextIndex !== highlightedIndex) {
         setHighlightedIndex(nextIndex);
@@ -511,10 +599,10 @@ export function StructuredProductNameField({
     }
   }, [highlightedIndex, suggestions]);
 
-  const dropdownOpen = Boolean(activeStage && primaryCatalogId && suggestions.length > 0);
+  const dropdownOpen = Boolean(activeStage !== null && typeof primaryCatalogId === 'string' && primaryCatalogId !== '' && suggestions.length > 0);
 
   const syncSuggestionContext = (value: string, caret: number | null): void => {
-    if (caret === null || caret === undefined) {
+    if (caret === null) {
       setActiveStage(null);
       setSegmentBounds(null);
       setSegmentQuery('');
@@ -538,16 +626,16 @@ export function StructuredProductNameField({
 
     const stageChanged = activeStage !== nextStage;
     const boundsChanged =
-      segmentBounds?.start !== nextBounds.start || segmentBounds?.end !== nextBounds.end;
+      (segmentBounds !== null && segmentBounds.start !== nextBounds.start) || (segmentBounds !== null && segmentBounds.end !== nextBounds.end);
     const queryChanged = segmentQuery !== nextQuery;
 
-    if (stageChanged || boundsChanged || queryChanged) {
+    if (stageChanged === true || boundsChanged === true || queryChanged === true) {
       setHighlightedIndex(0);
     }
   };
 
   const applySuggestion = (option: SuggestionOption): void => {
-    if (!activeStage || option.disabled) return;
+    if (activeStage === null || option.disabled === true) return;
     const nextValue = replaceStructuredSegment(nameValue, activeStage, option.value);
     if (fieldName === 'name_en') {
       setNormalizeNameError(null);
@@ -562,9 +650,9 @@ export function StructuredProductNameField({
       setCategoryId(nextCategoryId);
       syncMappedCategoryField(nextCategoryId);
     }
-    setTimeout(() => {
+    setTimeout((): void => {
       const input = inputRef.current;
-      if (!input) return;
+      if (input === null) return;
       const caret = nextValue.length;
       input.focus();
       input.setSelectionRange(caret, caret);
@@ -572,14 +660,14 @@ export function StructuredProductNameField({
     }, 0);
   };
 
-  useEffect(() => {
+  useEffect((): void => {
     const previousSelectedCategoryId = previousSelectedCategoryIdRef.current;
 
-    if (!selectedCategoryOption) return;
+    if (selectedCategoryOption === null) return;
     const segments = nameValue.split('|').map((segment: string) => normalizeSegmentValue(segment));
     const categorySegment = segments[3] ?? '';
-    const hasStructuredPrefix = Boolean(segments[0] && segments[1] && segments[2]);
-    if (!hasStructuredPrefix) return;
+    const hasStructuredPrefix = Boolean(segments[0] !== '' && segments[1] !== '' && segments[2] !== '');
+    if (hasStructuredPrefix === false) return;
     if (categorySegment === selectedCategoryOption.value) return;
     if (
       resolveUniqueLeafCategorySuggestion(categorySuggestions, categorySegment)?.categoryId ===
@@ -588,7 +676,7 @@ export function StructuredProductNameField({
       return;
     }
     const selectedCategoryChanged = previousSelectedCategoryId !== selectedCategoryId;
-    if (!selectedCategoryChanged && categorySegment) return;
+    if (selectedCategoryChanged === false && categorySegment !== '') return;
 
     const nextValue = replaceStructuredSegment(nameValue, CATEGORY_STAGE, selectedCategoryOption.value);
     setValue(fieldName, nextValue, {
@@ -598,55 +686,57 @@ export function StructuredProductNameField({
     });
   }, [categorySuggestions, fieldName, nameValue, selectedCategoryId, selectedCategoryOption, setValue]);
 
-  useEffect(() => {
+  useEffect((): void => {
     previousSelectedCategoryIdRef.current = selectedCategoryId;
   }, [selectedCategoryId]);
 
-  useLayoutEffect(() => {
-    if (!dropdownOpen || !segmentBounds) {
+  useLayoutEffect((): (() => void) | void => {
+    if (dropdownOpen === false || segmentBounds === null) {
       setOverlayMetrics(null);
       return;
     }
 
     const input = inputRef.current;
-    if (!input) {
+    if (input === null) {
       setOverlayMetrics(null);
       return;
     }
 
     const measureTextWidth = (value: string): number => {
-      if (/jsdom/i.test(window.navigator.userAgent)) {
+      if (/jsdom/i.test(window.navigator.userAgent) === true) {
         return value.length * 8;
       }
 
       const canvas = measurementCanvasRef.current ?? document.createElement('canvas');
       measurementCanvasRef.current = canvas;
       const context = canvas.getContext('2d');
-      if (!context) {
+      if (context === null) {
         return value.length * 8;
       }
 
       const styles = window.getComputedStyle(input);
       context.font =
-        styles.font ||
+        (styles.font ?? '') !== '' ?
+        styles.font :
         `${styles.fontStyle} ${styles.fontVariant} ${styles.fontWeight} ${styles.fontSize} ${styles.fontFamily}`;
       const measuredValue = value.length > 0 ? value : ' ';
       const baseWidth = context.measureText(measuredValue).width;
-      const letterSpacing = Number.parseFloat(styles.letterSpacing);
+      const letterSpacingValue = Number.parseFloat(styles.letterSpacing);
 
-      if (Number.isFinite(letterSpacing)) {
-        return baseWidth + Math.max(0, measuredValue.length - 1) * letterSpacing;
+      if (Number.isFinite(letterSpacingValue) === true) {
+        return baseWidth + Math.max(0, measuredValue.length - 1) * letterSpacingValue;
       }
 
       return baseWidth;
     };
 
-    const updateOverlayMetrics = (): void => {
+    const updateOverlayMetrics = ((): void => {
+      if (input === null || segmentBounds === null) return;
       const styles = window.getComputedStyle(input);
       const paddingLeft = Number.parseFloat(styles.paddingLeft) || 0;
       const prefixText = nameValue.slice(0, segmentBounds.start);
       const rawSegmentText = nameValue.slice(segmentBounds.start, segmentBounds.end);
-      const segmentText = rawSegmentText || ` ${segmentQuery}`;
+      const segmentText = rawSegmentText !== '' ? rawSegmentText : ` ${segmentQuery}`;
       const prefixWidth = measureTextWidth(prefixText);
       const segmentWidth = Math.max(measureTextWidth(segmentText), 28);
       const widestSuggestionWidth = suggestions.reduce(
@@ -662,11 +752,11 @@ export function StructuredProductNameField({
         SUGGESTION_MIN_WIDTH,
         maxOverlayWidth
       );
-      const rawCenter = paddingLeft + prefixWidth + segmentWidth / 2 - input.scrollLeft;
+      const rawCenter = paddingLeft + prefixWidth + (segmentWidth / 2) - input.scrollLeft;
       const clampedCenter = clampNumber(
         rawCenter,
-        desiredWidth / 2 + 4,
-        input.clientWidth - desiredWidth / 2 - 4
+        (desiredWidth / 2) + 4,
+        input.clientWidth - (desiredWidth / 2) - 4
       );
       const nextMetrics = {
         left: clampedCenter,
@@ -675,8 +765,8 @@ export function StructuredProductNameField({
 
       setOverlayMetrics((currentMetrics) => {
         if (
-          currentMetrics &&
-          currentMetrics?.left === nextMetrics.left &&
+          currentMetrics !== null &&
+          currentMetrics.left === nextMetrics.left &&
           currentMetrics.width === nextMetrics.width
         ) {
           return currentMetrics;
@@ -684,21 +774,22 @@ export function StructuredProductNameField({
 
         return nextMetrics;
       });
-    };
+    }) as EventListener;
 
     updateOverlayMetrics();
-    input.addEventListener('scroll', updateOverlayMetrics);
-    window.addEventListener('resize', updateOverlayMetrics);
+    const eventHandler = updateOverlayMetrics as EventListener;
+    input.addEventListener('scroll', eventHandler);
+    window.addEventListener('resize', eventHandler);
 
-    return () => {
-      input.removeEventListener('scroll', updateOverlayMetrics);
-      window.removeEventListener('resize', updateOverlayMetrics);
+    return (): void => {
+      input.removeEventListener('scroll', eventHandler);
+      window.removeEventListener('resize', eventHandler);
     };
   }, [dropdownOpen, nameValue, segmentBounds, segmentQuery, suggestions]);
 
-  const overlayStageLabel = activeStage ? TITLE_SEGMENT_LABELS[activeStage] : null;
+  const overlayStageLabel = activeStage !== null ? TITLE_SEGMENT_LABELS[activeStage] : null;
   const activeDescendantId =
-    dropdownOpen && suggestions[highlightedIndex] ? `${listboxId}-option-${highlightedIndex}` : undefined;
+    (dropdownOpen && suggestions[highlightedIndex] !== undefined) ? `${listboxId}-option-${highlightedIndex}` : undefined;
   const aboveSuggestions = visibleSuggestionWindow.above;
   const belowSuggestions = visibleSuggestionWindow.below;
   const topPanelHeight =
@@ -731,41 +822,49 @@ export function StructuredProductNameField({
         aria-haspopup='listbox'
         aria-expanded={dropdownOpen}
         aria-owns={dropdownOpen ? listboxId : undefined}
+        aria-controls={dropdownOpen ? listboxId : undefined}
       >
         <Input
-          ref={(node) => {
+          ref={(node: HTMLInputElement | null): void => {
             inputRef.current = node;
-            field.ref(node);
+            if (node !== null) {
+              field.ref(node);
+            }
           }}
           id={fieldName}
           name={field.name}
           value={nameValue}
-          onChange={(event) => {
+          onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
             const nextValue = event.target.value;
-            if (fieldName === 'name_en' && normalizeNameError) {
+            if (fieldName === 'name_en' && (normalizeNameError !== null && normalizeNameError !== undefined && normalizeNameError !== '')) {
               setNormalizeNameError(null);
             }
             field.onChange(event);
-            syncSuggestionContext(nextValue, event.target.selectionStart);
+            const selectionStart = event.target.selectionStart;
+            syncSuggestionContext(nextValue, selectionStart);
           }}
-          onFocus={() => {
+          onFocus={(): void => {
             if (blurTimeoutRef.current !== null) {
               clearTimeout(blurTimeoutRef.current);
               blurTimeoutRef.current = null;
             }
           }}
-          onClick={(event) => {
+          onClick={(event: React.MouseEvent<HTMLInputElement>): void => {
             if (blurTimeoutRef.current !== null) {
               clearTimeout(blurTimeoutRef.current);
               blurTimeoutRef.current = null;
             }
-            syncSuggestionContext(event.currentTarget.value, event.currentTarget.selectionStart);
+            const eventValue = event.currentTarget.value;
+            const selectionStart = event.currentTarget.selectionStart;
+            syncSuggestionContext(eventValue, selectionStart);
           }}
-          onKeyUp={(event) =>
-            syncSuggestionContext(event.currentTarget.value, event.currentTarget.selectionStart)
-          }
-          onKeyDown={(event) => {
-            if (!dropdownOpen) return;
+          onKeyUp={(event: React.KeyboardEvent<HTMLInputElement>): void => {
+            const eventValue = event.currentTarget.value;
+            const selectionStart = event.currentTarget.selectionStart;
+            syncSuggestionContext(eventValue, selectionStart);
+          }}
+          onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>): void => {
+            if (dropdownOpen === false) return;
             if (event.key === 'ArrowDown') {
               event.preventDefault();
               setHighlightedIndex((current) =>
@@ -786,7 +885,7 @@ export function StructuredProductNameField({
             }
             if (event.key === 'Enter') {
               const highlighted = suggestions[highlightedIndex];
-              if (!highlighted || highlighted.disabled) return;
+              if (highlighted === undefined || highlighted.disabled === true) return;
               event.preventDefault();
               applySuggestion(highlighted);
               return;
@@ -797,9 +896,9 @@ export function StructuredProductNameField({
               setSegmentQuery('');
             }
           }}
-          onBlur={() => {
+          onBlur={(): void => {
             field.onBlur();
-            blurTimeoutRef.current = window.setTimeout(() => {
+            blurTimeoutRef.current = window.setTimeout((): void => {
               blurTimeoutRef.current = null;
               setActiveStage(null);
               setSegmentBounds(null);
@@ -814,9 +913,9 @@ export function StructuredProductNameField({
           aria-controls={dropdownOpen ? listboxId : undefined}
           aria-activedescendant={activeDescendantId}
           spellCheck={false}
-          className={cn(error && 'border-red-500/60')}
+          className={cn(typeof error === 'string' && error !== '' && 'border-red-500/60')}
         />
-        {dropdownOpen && segmentBounds && overlayMetrics ? (
+        {dropdownOpen && segmentBounds !== null && overlayMetrics !== null ? (
           <div
             id={listboxId}
             role='listbox'
@@ -824,120 +923,38 @@ export function StructuredProductNameField({
             className='pointer-events-none absolute inset-0 z-30 overflow-visible'
           >
             {aboveSuggestions.length > 0 ? (
-              <div
-                className={getSuggestionPanelClassName('above')}
-                style={{
-                  left: overlayMetrics.left,
-                  bottom: 'calc(100% + 8px)',
-                  width: overlayMetrics.width,
-                  height: topPanelHeight,
-                }}
-                onMouseDown={(event) => event.preventDefault()}
-              >
-                <div className='pointer-events-none absolute inset-x-0 top-0 z-10 h-10 bg-gradient-to-b from-card via-card/80 to-transparent' />
-                <div className='pointer-events-none absolute inset-x-0 bottom-0 z-10 h-8 bg-gradient-to-t from-card via-card/80 to-transparent' />
-                <div className='py-[6px]'>
-                  {aboveSuggestions.map(({ option, index }) => (
-                    <button
-                      id={`${listboxId}-option-${index}`}
-                      key={`${option.label}-${index}`}
-                      type='button'
-                      role='option'
-                      disabled={option.disabled}
-                      aria-selected={index === highlightedIndex}
-                      onMouseDown={(event) => event.preventDefault()}
-                      onMouseEnter={() => {
-                        if (!option.disabled) {
-                          setHighlightedIndex(index);
-                        }
-                      }}
-                      onClick={() => applySuggestion(option)}
-                      className={getSuggestionOptionClassName(
-                        Boolean(option.disabled),
-                        index === highlightedIndex
-                      )}
-                      aria-disabled={option.disabled || undefined}
-                    >
-                      <span className='min-w-0'>
-                        <span className='block truncate'>{option.label}</span>
-                        {option.description && (
-                          <span className='block text-[11px] text-muted-foreground'>
-                            {option.description}
-                          </span>
-                        )}
-                      </span>
-                      {!option.disabled && (
-                        <ChevronRight
-                          className={getSuggestionChevronClassName(index === highlightedIndex)}
-                        />
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <ProductTitleSuggestionPanel
+                side='above'
+                listboxId={listboxId}
+                suggestions={aboveSuggestions}
+                highlightedIndex={highlightedIndex}
+                overlayMetrics={overlayMetrics}
+                panelHeight={topPanelHeight}
+                onApply={applySuggestion}
+                onHighlight={setHighlightedIndex}
+              />
             ) : null}
             {belowSuggestions.length > 0 ? (
-              <div
-                className={getSuggestionPanelClassName('below')}
-                style={{
-                  left: overlayMetrics.left,
-                  top: 'calc(100% + 8px)',
-                  width: overlayMetrics.width,
-                  height: bottomPanelHeight,
-                }}
-                onMouseDown={(event) => event.preventDefault()}
-              >
-                <div className='pointer-events-none absolute inset-x-2 top-0 z-10 h-9 rounded-lg border border-foreground/12 bg-foreground/10 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]' />
-                <div className='pointer-events-none absolute inset-x-0 bottom-0 z-10 h-10 bg-gradient-to-t from-card via-card/80 to-transparent' />
-                <div className='py-[6px]'>
-                  {belowSuggestions.map(({ option, index }) => (
-                    <button
-                      id={`${listboxId}-option-${index}`}
-                      key={`${option.label}-${index}`}
-                      type='button'
-                      role='option'
-                      disabled={option.disabled}
-                      aria-selected={index === highlightedIndex}
-                      onMouseDown={(event) => event.preventDefault()}
-                      onMouseEnter={() => {
-                        if (!option.disabled) {
-                          setHighlightedIndex(index);
-                        }
-                      }}
-                      onClick={() => applySuggestion(option)}
-                      className={getSuggestionOptionClassName(
-                        Boolean(option.disabled),
-                        index === highlightedIndex
-                      )}
-                      aria-disabled={option.disabled || undefined}
-                    >
-                      <span className='min-w-0'>
-                        <span className='block truncate'>{option.label}</span>
-                        {option.description && (
-                          <span className='block text-[11px] text-muted-foreground'>
-                            {option.description}
-                          </span>
-                        )}
-                      </span>
-                      {!option.disabled && (
-                        <ChevronRight
-                          className={getSuggestionChevronClassName(index === highlightedIndex)}
-                        />
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <ProductTitleSuggestionPanel
+                side='below'
+                listboxId={listboxId}
+                suggestions={belowSuggestions}
+                highlightedIndex={highlightedIndex}
+                overlayMetrics={overlayMetrics}
+                panelHeight={bottomPanelHeight}
+                onApply={applySuggestion}
+                onHighlight={setHighlightedIndex}
+              />
             ) : null}
           </div>
         ) : null}
       </div>
-      {!primaryCatalogId && (
+      {(typeof primaryCatalogId !== 'string' || primaryCatalogId === '') && (
         <p className='text-[10px] italic leading-relaxed text-gray-500'>
           Select a catalog first to load size, material, category, and theme suggestions.
         </p>
       )}
-      {selectedCategoryOption && (
+      {selectedCategoryOption !== null && (
         <p className='text-[10px] italic leading-relaxed text-gray-500'>
           Selected category: {selectedCategoryOption.label}
         </p>

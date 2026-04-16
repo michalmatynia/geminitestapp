@@ -22,9 +22,9 @@ export type UploadWithProgressResult<T> = {
   raw: string;
 };
 
-const safeJsonParse = (raw: string): unknown => {
+function safeJsonParse(raw: string): unknown {
   try {
-    return JSON.parse(raw) as unknown;
+    return JSON.parse(raw);
   } catch (error) {
     logClientCatch(error, {
       source: 'upload-with-progress',
@@ -33,7 +33,7 @@ const safeJsonParse = (raw: string): unknown => {
     });
     return {};
   }
-};
+}
 
 const setupCsrfHeaders = (
   method: string,
@@ -45,7 +45,7 @@ const setupCsrfHeaders = (
 
   if (!CSRF_SAFE_METHODS.has(methodUpper) && isSameOriginUrl(url)) {
     const token = getClientCsrfToken();
-    if (token !== undefined && finalHeaders[CSRF_HEADER_NAME] === undefined) {
+    if (token !== null && finalHeaders[CSRF_HEADER_NAME] === undefined) {
       finalHeaders[CSRF_HEADER_NAME] = token;
     }
   }

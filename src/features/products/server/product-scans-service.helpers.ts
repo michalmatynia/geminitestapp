@@ -7,7 +7,10 @@ import { extname, join, sep } from 'node:path';
 import {
   DEFAULT_PRODUCT_SCANNER_MANUAL_VERIFICATION_TIMEOUT_MS,
 } from '@/features/products/scanner-settings';
-import type { ProductScannerAmazonImageSearchProvider } from '@/shared/contracts/products/scanner-settings';
+import {
+  type ProductScannerAmazonImageSearchProvider,
+  productScannerAmazonImageSearchProviderSchema,
+} from '@/shared/contracts/products/scanner-settings';
 import {
   normalizeProductScanRecord,
   productScanAmazonDetailsSchema,
@@ -381,7 +384,7 @@ const resolveLocalScanImageCandidateUrlPath = async (
   candidate: Pick<ProductScanRecord['imageCandidates'][number], 'url' | 'filename'>
 ): Promise<string | null> => {
   const publicPath = resolveLocalPublicPathFromScanImageUrl(candidate.url);
-  if (!publicPath) {
+  if (publicPath === null) {
     return null;
   }
 
@@ -498,12 +501,12 @@ const resolveProductScanUrlImageExtension = (input: {
   filename?: string | null;
   url?: string | null;
 }): string => {
-  if (input.contentType) {
+  if (input.contentType !== null && input.contentType !== undefined && input.contentType !== '') {
     return resolveProductScanBase64ImageExtension(input.contentType);
   }
 
   const extensionSource = readOptionalString(input.filename) ?? readOptionalString(input.url);
-  if (!extensionSource) {
+  if (extensionSource === null) {
     return '.jpg';
   }
 
@@ -532,9 +535,8 @@ const writeProductScanTempImageCandidate = async (input: {
     filename: input.filename,
     url: input.sourceUrl,
   });
-  const safeProductId =
-    readOptionalString(input.productId)?.replace(/[^a-zA-Z0-9_-]+/g, '-').slice(0, 60) ||
-    'product';
+  const rawSafeProductId = readOptionalString(input.productId)?.replace(/[^a-zA-Z0-9_-]+/g, '-').slice(0, 60);
+  const safeProductId = typeof rawSafeProductId === 'string' && rawSafeProductId !== '' ? rawSafeProductId : 'product';
   const slotLabel =
     typeof input.slotIndex === 'number' && Number.isFinite(input.slotIndex)
       ? `slot-${input.slotIndex + 1}`
@@ -590,12 +592,12 @@ const materializeProductScanUrlCandidate = async (
   candidate: ProductScanRecord['imageCandidates'][number]
 ): Promise<ProductScanRecord['imageCandidates'][number] | null> => {
   const url = readOptionalString(candidate.url);
-  if (!url || !PRODUCT_SCAN_HTTP_URL_PATTERN.test(url)) {
+  if (url === null || PRODUCT_SCAN_HTTP_URL_PATTERN.test(url) === false) {
     return null;
   }
 
   const response = await fetch(url);
-  if (!response.ok) {
+  if (response.ok === false) {
     return null;
   }
 
@@ -605,7 +607,7 @@ const materializeProductScanUrlCandidate = async (
   }
 
   const contentType = response.headers.get('content-type');
-  if (contentType && !/^image\//i.test(contentType)) {
+  if (contentType !== null && /^image\//i.test(contentType) === false) {
     return null;
   }
 
@@ -624,10 +626,12 @@ export const hydrateProductScanImageCandidates = async (input: {
   imageCandidates: ProductScanRecord['imageCandidates'];
   limit?: number;
 }): Promise<ProductScanRecord['imageCandidates']> => {
-  const limit =
-    typeof input.limit === 'number' && Number.isFinite(input.limit) && input.limit > 0
-      ? Math.trunc(input.limit)
-      : input.imageCandidates.length || 3;
+  let limit = 3;
+  if (typeof input.limit === 'number' && Number.isFinite(input.limit) && input.limit > 0) {
+    limit = Math.trunc(input.limit);
+  } else if (input.imageCandidates.length > 0) {
+    limit = input.imageCandidates.length;
+  }
   const nextCandidates = input.imageCandidates.slice(0, limit);
   if (nextCandidates.length >= limit) {
     return nextCandidates;
@@ -752,7 +756,7 @@ export const normalizeParsedCandidateUrls = (value: unknown): string[] => {
   const normalized: string[] = [];
   for (const entry of value) {
     const next = readOptionalString(entry, PRODUCT_SCAN_URL_MAX_LENGTH);
-    if (!next || seen.has(next)) {
+    if (next === null || seen.has(next) === true) {
       continue;
     }
     seen.add(next);
@@ -837,12 +841,12 @@ const normalizePersistedProductScanStep = (
     (input.status === 'completed' || input.status === 'failed' || input.status === 'skipped'
       ? new Date().toISOString()
       : null);
-  const durationMs =
-    typeof input.durationMs === 'number' && Number.isFinite(input.durationMs) && input.durationMs >= 0
-      ? Math.trunc(input.durationMs)
-      : completedAt !== null
-        ? Math.max(0, Date.parse(completedAt) - Date.parse(startedAt))
-        : null;
+  let durationMs: number | null = null;
+  if (typeof input.durationMs === 'number' && Number.isFinite(input.durationMs) && input.durationMs >= 0) {
+    durationMs = Math.trunc(input.durationMs);
+  } else if (completedAt !== null) {
+    durationMs = Math.max(0, Date.parse(completedAt) - Date.parse(startedAt));
+  }
 
   return productScanStepSchema.parse({
     key: input.key,
@@ -951,7 +955,10 @@ export const upsertPersistedProductScanStep = (
     return [...steps, nextStep];
   }
 
-  const existingStep = steps[existingIndex]!;
+  const existingStep = steps[existingIndex];
+  if (existingStep === undefined) {
+    return [...steps, nextStep];
+  }
 
   const mergedStep: ProductScanStep = productScanStepSchema.parse({
     ...existingStep,
@@ -1139,7 +1146,7 @@ export const buildAmazonScanRequestInput = (input: {
   directAmazonCandidateRank?: number | null;
   stepSequenceKey?: string | null;
   stepSequence?: ProductScanRequestSequenceEntry[] | null;
-}) => ({
+}): Record<string, unknown> => ({
   productId: input.productId,
   productName: input.productName,
   existingAsin: input.existingAsin ?? null,
@@ -1193,7 +1200,7 @@ export const build1688ScanRequestInput = (input: {
   directSupplierCandidateRank?: number | null;
   stepSequenceKey?: string | null;
   stepSequence?: ProductScanRequestSequenceEntry[] | null;
-}) => ({
+}): Record<string, unknown> => ({
   productId: input.productId,
   productName: input.productName,
   imageCandidates: input.imageCandidates,
@@ -1263,7 +1270,7 @@ export const createAmazonScanStartedRawResult = (input: {
   manualVerificationMessage?: string | null;
   stepSequenceKey?: string | null;
   stepSequence?: ProductScanRequestSequenceEntry[] | null;
-}) => ({
+}): Record<string, unknown> => ({
   runId: input.runId,
   status: input.status,
   imageSearchProvider:
@@ -1277,9 +1284,7 @@ export const createAmazonScanStartedRawResult = (input: {
           new Set(
             input.imageSearchProviderHistory.filter(
               (value): value is ProductScannerAmazonImageSearchProvider =>
-                value === 'google_images_upload' ||
-                value === 'google_images_url' ||
-                (value as string) === 'google_lens_upload'
+                productScannerAmazonImageSearchProviderSchema.safeParse(value).success
             )
           )
         )
@@ -1349,8 +1354,8 @@ export const createAmazonProductScanBaseRecord = (input: {
     error: input.error ?? null,
     asinUpdateStatus: 'not_needed',
     asinUpdateMessage: null,
-    createdBy: (input.userId?.trim() ?? '') !== '' ? input.userId!.trim() : null,
-    updatedBy: (input.userId?.trim() ?? '') !== '' ? input.userId!.trim() : null,
+    createdBy: (input.userId?.trim() ?? '') !== '' ? String(input.userId).trim() : null,
+    updatedBy: (input.userId?.trim() ?? '') !== '' ? String(input.userId).trim() : null,
     completedAt: input.status === 'failed' ? new Date().toISOString() : null,
   });
 
@@ -1398,8 +1403,8 @@ export const create1688ProductScanBaseRecord = (input: {
     error: input.error ?? null,
     asinUpdateStatus: input.status === 'failed' ? 'not_needed' : 'pending',
     asinUpdateMessage: null,
-    createdBy: (input.userId?.trim() ?? '') !== '' ? input.userId!.trim() : null,
-    updatedBy: (input.userId?.trim() ?? '') !== '' ? input.userId!.trim() : null,
+    createdBy: (input.userId?.trim() ?? '') !== '' ? String(input.userId).trim() : null,
+    updatedBy: (input.userId?.trim() ?? '') !== '' ? String(input.userId).trim() : null,
     completedAt: input.status === 'failed' ? new Date().toISOString() : null,
   });
 
@@ -1407,7 +1412,7 @@ export const createFailedBatchResult = (
   productId: string,
   message: string,
   scanId: string | null = null,
-  currentStatus: ProductScanRecord['status'] | null = scanId ? 'failed' : null
+  currentStatus: ProductScanRecord['status'] | null = scanId !== null ? 'failed' : null
 ): ProductAmazonBatchScanItem => ({
   productId,
   scanId,

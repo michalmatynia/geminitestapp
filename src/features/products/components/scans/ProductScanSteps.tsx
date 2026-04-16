@@ -89,14 +89,14 @@ export const resolveProductScanActiveStepSummary = (
   const activeStep =
     [...steps].reverse().find((step) => step.status === 'running' || step.status === 'pending') ?? null;
 
-  if (!activeStep) {
+  if (activeStep === null) {
     return null;
   }
 
   return {
     phaseLabel: STEP_GROUP_LABELS[resolveStepGroup(activeStep)],
     stepLabel: activeStep.label,
-    message: activeStep.message ?? activeStep.warning ?? null,
+    message: (activeStep.message ?? activeStep.warning ?? null) !== null ? activeStep.message ?? activeStep.warning : null,
     attempt: activeStep.attempt ?? null,
     inputSource: activeStep.inputSource ?? null,
   };
@@ -180,29 +180,29 @@ export const resolveProductScanLatestOutcomeSummary = (
 ): ProductScanLatestOutcomeSummary | null => {
   const failedStep = [...steps].reverse().find((step) => step.status === 'failed') ?? null;
 
-  if (failedStep) {
+  if (failedStep !== null) {
     return {
       kind: 'failed',
       phaseLabel: STEP_GROUP_LABELS[resolveStepGroup(failedStep)],
       sourceLabel: resolveProductScanFailureSourceLabel(failedStep),
       stepLabel: failedStep.label,
-      message: failedStep.message ?? failedStep.warning ?? null,
+      message: (failedStep.message ?? failedStep.warning ?? null) !== null ? failedStep.message ?? failedStep.warning : null,
       resultCodeLabel: formatResultCode(failedStep.resultCode),
       attempt: failedStep.attempt ?? null,
       inputSource: failedStep.inputSource ?? null,
-      url: failedStep.url ?? null,
+      url: (failedStep.url ?? null) !== null ? failedStep.url : null,
       timingLabel: formatStepTiming(failedStep),
     };
   }
 
-  if (!options?.allowStalled) {
+  if (options?.allowStalled !== true) {
     return null;
   }
 
   const stalledStep =
     [...steps].reverse().find((step) => step.status === 'completed' || step.status === 'skipped') ?? null;
 
-  if (!stalledStep) {
+  if (stalledStep === null) {
     return null;
   }
 
@@ -211,11 +211,11 @@ export const resolveProductScanLatestOutcomeSummary = (
     phaseLabel: STEP_GROUP_LABELS[resolveStepGroup(stalledStep)],
     sourceLabel: resolveProductScanFailureSourceLabel(stalledStep),
     stepLabel: stalledStep.label,
-    message: stalledStep.message ?? stalledStep.warning ?? null,
+    message: (stalledStep.message ?? stalledStep.warning ?? null) !== null ? stalledStep.message ?? stalledStep.warning : null,
     resultCodeLabel: formatResultCode(stalledStep.resultCode),
     attempt: stalledStep.attempt ?? null,
     inputSource: stalledStep.inputSource ?? null,
-    url: stalledStep.url ?? null,
+    url: (stalledStep.url ?? null) !== null ? stalledStep.url : null,
     timingLabel: formatStepTiming(stalledStep),
   };
 };
@@ -242,16 +242,17 @@ const resolveAmazonEvaluationRejectionKind = (
     return 'product';
   }
 
-  const rejectionKind = resolveStepDetailValue(step, 'Rejection kind')?.toLowerCase() ?? null;
-  if (!rejectionKind) {
+  const rawRejectionKind = resolveStepDetailValue(step, 'Rejection kind');
+  const rejectionKind = rawRejectionKind !== null ? rawRejectionKind.toLowerCase() : null;
+  if (rejectionKind === null) {
     return null;
   }
 
-  if (rejectionKind.includes('language')) {
+  if (rejectionKind.includes('language') === true) {
     return 'language';
   }
 
-  if (rejectionKind.includes('product')) {
+  if (rejectionKind.includes('product') === true) {
     return 'product';
   }
 
@@ -272,15 +273,15 @@ const resolveAmazonCandidateContinuationRejectionKind = (
   step: Pick<ProductScanStep, 'key' | 'label' | 'message' | 'resultCode' | 'details'>
 ): 'language' | 'product' | null => {
   const explicitKind = resolveAmazonEvaluationRejectionKind(step);
-  if (explicitKind) {
+  if (explicitKind !== null) {
     return explicitKind;
   }
 
-  if (step.message?.includes('language rejection')) {
+  if (step.message !== null && step.message !== undefined && step.message.includes('language rejection') === true) {
     return 'language';
   }
 
-  return isAmazonCandidateContinuationStep(step) ? 'product' : null;
+  return isAmazonCandidateContinuationStep(step) === true ? 'product' : null;
 };
 
 const isAmazonCandidateContinuationStep = (
@@ -288,9 +289,8 @@ const isAmazonCandidateContinuationStep = (
 ): boolean =>
   step.key === 'queue_scan' &&
   (step.label === 'Continue with next Amazon candidate' ||
-    step.message?.includes('next Amazon candidate after AI rejection') ||
-    step.message?.includes('next Amazon candidate after language rejection') ||
-    false);
+    (step.message !== null && step.message !== undefined && (step.message.includes('next Amazon candidate after AI rejection') === true ||
+    step.message.includes('next Amazon candidate after language rejection') === true)));
 
 export const resolveProductScanContinuationSummary = (
   steps: ProductScanStep[]
@@ -302,14 +302,14 @@ export const resolveProductScanContinuationSummary = (
         (step) => isAmazonCandidateContinuationStep(step)
       ) ?? null;
 
-  if (!continuationStep) {
+  if (continuationStep === null) {
     return null;
   }
 
   return {
     phaseLabel: STEP_GROUP_LABELS[resolveStepGroup(continuationStep)],
     stepLabel: continuationStep.label,
-    message: continuationStep.message ?? null,
+    message: (continuationStep.message ?? null) !== null ? continuationStep.message : null,
     resultCodeLabel: formatResultCode(continuationStep.resultCode),
     attempt: continuationStep.attempt ?? null,
     nextUrl: resolveStepDetailValue(continuationStep, 'Next candidate URL'),
@@ -334,7 +334,7 @@ export const resolveProductScanRejectedCandidateSummary = (
   }
 
   const latestRejectedStep = [...rejectedEvaluationSteps].reverse()[0] ?? null;
-  if (!latestRejectedStep) {
+  if (latestRejectedStep === null) {
     return null;
   }
 
@@ -347,13 +347,12 @@ export const resolveProductScanRejectedCandidateSummary = (
   return {
     rejectedCount: rejectedEvaluationSteps.length,
     languageRejectedCount,
-    latestRejectedUrl: latestRejectedStep.url ?? resolveStepDetailValue(latestRejectedStep, 'Candidate URL'),
+    latestRejectedUrl: (latestRejectedStep.url ?? null) !== null ? latestRejectedStep.url : resolveStepDetailValue(latestRejectedStep, 'Candidate URL'),
     latestReason:
       resolveStepDetailValue(latestRejectedStep, 'Reason') ??
       resolveStepDetailValue(latestRejectedStep, 'Mismatch') ??
       resolveStepDetailValue(latestRejectedStep, 'Language reason') ??
-      latestRejectedStep.message ??
-      null,
+      ((latestRejectedStep.message ?? null) !== null ? latestRejectedStep.message : null),
     latestRejectionKind: latestAmazonRejectionKind ?? latestSupplierRejectionKind,
   };
 };
@@ -361,10 +360,14 @@ export const resolveProductScanRejectedCandidateSummary = (
 const resolveProductScanEvaluationPolicySummaryFromStep = (
   step: Pick<ProductScanStep, 'key' | 'details' | 'resultCode' | 'status'> | null | undefined
 ): ProductScanEvaluationPolicySummary | null => {
+  if (step === null || step === undefined) {
+    return null;
+  }
+
   if (
-    step?.key !== 'amazon_ai_triage' &&
-    step?.key !== 'amazon_ai_evaluate' &&
-    step?.key !== 'supplier_ai_evaluate'
+    step.key !== 'amazon_ai_triage' &&
+    step.key !== 'amazon_ai_evaluate' &&
+    step.key !== 'supplier_ai_evaluate'
   ) {
     return null;
   }
@@ -380,23 +383,23 @@ const resolveProductScanEvaluationPolicySummaryFromStep = (
   const executionLabel = resolveEvaluationExecutionSummary(step)?.badgeLabel ?? null;
 
   let languageGateLabel: string | null = null;
-  if (allowedContentLanguage && languagePolicy === 'Reject non-English content') {
+  if (allowedContentLanguage !== null && languagePolicy === 'Reject non-English content') {
     languageGateLabel = `${allowedContentLanguage} only`;
-  } else if (allowedContentLanguage && languagePolicy) {
+  } else if (allowedContentLanguage !== null && languagePolicy !== null) {
     languageGateLabel = `${allowedContentLanguage} · ${languagePolicy}`;
   } else {
     languageGateLabel = allowedContentLanguage ?? languagePolicy;
   }
 
   if (
-    !executionLabel &&
-    !modelSource &&
-    !modelLabel &&
-    !thresholdLabel &&
-    !scopeLabel &&
-    !similarityDecisionLabel &&
-    !languageGateLabel &&
-    !languageDetectionLabel
+    executionLabel === null &&
+    modelSource === null &&
+    modelLabel === null &&
+    thresholdLabel === null &&
+    scopeLabel === null &&
+    similarityDecisionLabel === null &&
+    languageGateLabel === null &&
+    languageDetectionLabel === null
   ) {
     return null;
   }
@@ -488,7 +491,7 @@ const resolveContinuationContexts = (
 
   for (const step of steps) {
     if (
-      !isAmazonCandidateContinuationStep(step) ||
+      isAmazonCandidateContinuationStep(step) === false ||
       typeof step.attempt !== 'number' ||
       !Number.isFinite(step.attempt)
     ) {
@@ -507,9 +510,9 @@ const resolveContinuationContexts = (
 };
 
 const formatTimestamp = (value: string | null | undefined): string => {
-  if (!value) return 'Unknown time';
+  if (value === null || value === undefined || value === '') return 'Unknown time';
   const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
+  if (Number.isNaN(parsed.getTime()) === true) return value;
   return parsed.toLocaleString();
 };
 
@@ -533,39 +536,39 @@ const formatDuration = (value: number | null | undefined): string | null => {
 };
 
 const formatStepTiming = (step: ProductScanStep): string | null => {
-  const startedAt = step.startedAt ? formatTimestamp(step.startedAt) : null;
-  const completedAt = step.completedAt ? formatTimestamp(step.completedAt) : null;
+  const startedAt = (step.startedAt ?? '') !== '' ? formatTimestamp(step.startedAt) : null;
+  const completedAt = (step.completedAt ?? '') !== '' ? formatTimestamp(step.completedAt) : null;
   const duration = formatDuration(step.durationMs);
 
-  if (startedAt && completedAt && duration) {
-    return `Started ${startedAt} · Completed ${completedAt} · Duration ${duration}`;
+  if (startedAt !== null && completedAt !== null && duration !== null) {
+    return `Started ${startedAt!} · Completed ${completedAt!} · Duration ${duration!}`;
   }
 
-  if (startedAt && completedAt) {
-    return `Started ${startedAt} · Completed ${completedAt}`;
+  if (startedAt !== null && completedAt !== null) {
+    return `Started ${startedAt!} · Completed ${completedAt!}`;
   }
 
-  if (startedAt && duration) {
-    return `Started ${startedAt} · Duration ${duration}`;
+  if (startedAt !== null && duration !== null) {
+    return `Started ${startedAt!} · Duration ${duration!}`;
   }
 
-  if (startedAt) {
-    return `Started ${startedAt}`;
+  if (startedAt !== null) {
+    return `Started ${startedAt!}`;
   }
 
-  if (completedAt && duration) {
-    return `Completed ${completedAt} · Duration ${duration}`;
+  if (completedAt !== null && duration !== null) {
+    return `Completed ${completedAt!} · Duration ${duration!}`;
   }
 
-  if (completedAt) {
-    return `Completed ${completedAt}`;
+  if (completedAt !== null) {
+    return `Completed ${completedAt!}`;
   }
 
   return null;
 };
 
 const formatResultCode = (value: string | null | undefined): string | null => {
-  if (!value) {
+  if (value === null || value === undefined || value === '') {
     return null;
   }
 
@@ -583,26 +586,30 @@ export function ProductScanSteps(props: { steps: ProductScanStep[] }): React.JSX
     }>>((groups, step) => {
       const group = resolveStepGroup(step);
       const existingGroup = groups.find((entry) => entry.group === group);
-      if (existingGroup) {
+      if (existingGroup !== undefined) {
         existingGroup.steps.push(step);
         return groups;
       }
       return [...groups, { group, steps: [step] }];
     }, [])
-    .sort((left, right) => STEP_GROUP_ORDER[left.group] - STEP_GROUP_ORDER[right.group]);
+    .sort((left, right) => {
+      const leftOrder = STEP_GROUP_ORDER[left.group] ?? 999;
+      const rightOrder = STEP_GROUP_ORDER[right.group] ?? 999;
+      return leftOrder - rightOrder;
+    });
 
-  const warningCount = steps.filter((step) => typeof step.warning === 'string' && step.warning.trim()).length;
+  const warningCount = steps.filter((step) => typeof step.warning === 'string' && step.warning.trim() !== '').length;
   const failedCount = steps.filter((step) => step.status === 'failed').length;
-  const retryCount = steps.filter((step) => typeof step.retryOf === 'string' && step.retryOf.trim()).length;
+  const retryCount = steps.filter((step) => typeof step.retryOf === 'string' && step.retryOf.trim() !== '').length;
   const amazonCandidateAttemptCount = new Set(
     steps
-      .filter((step) => resolveStepGroup(step) === 'amazon' && typeof step.attempt === 'number')
+      .filter((step) => resolveStepGroup(step) === 'amazon' && typeof step.attempt === 'number' && Number.isFinite(step.attempt))
       .map((step) => step.attempt)
   ).size;
   const supplierCandidateAttemptCount = new Set(
     steps
       .filter(
-        (step) => step.key === 'supplier_open' && typeof step.attempt === 'number'
+        (step) => step.key === 'supplier_open' && typeof step.attempt === 'number' && Number.isFinite(step.attempt)
       )
       .map((step) => step.attempt)
   ).size;
@@ -641,7 +648,7 @@ export function ProductScanSteps(props: { steps: ProductScanStep[] }): React.JSX
             {supplierCandidateAttemptCount === 1 ? '' : 's'}
           </span>
         ) : null}
-        {activeStepSummary ? (
+        {activeStepSummary !== null ? (
           <span className='inline-flex items-center rounded-md border border-blue-500/40 bg-background/70 px-2.5 py-1 text-xs font-medium text-blue-300'>
             Active: {activeStepSummary.stepLabel}
           </span>
@@ -650,17 +657,19 @@ export function ProductScanSteps(props: { steps: ProductScanStep[] }): React.JSX
       {groupedSteps.map((group) => (
         <div key={group.group} className='space-y-2'>
           <h5 className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
-            {STEP_GROUP_LABELS[group.group]}
+            {STEP_GROUP_LABELS[group.group] ?? group.group}
           </h5>
           <div className='space-y-2 border-l border-border/50 pl-3'>
             {group.steps.map((step, index) => {
               const timing = formatStepTiming(step);
               const stepDetails = Array.isArray(step.details) ? step.details : [];
               const resultCodeLabel = formatResultCode(step.resultCode);
-              const continuationContext =
+              const attemptValue =
                 typeof step.attempt === 'number' && Number.isFinite(step.attempt)
-                  ? continuationContexts.get(step.attempt) ?? null
+                  ? step.attempt
                   : null;
+              const continuationContext =
+                attemptValue !== null ? continuationContexts.get(attemptValue) ?? null : null;
               const evaluationPolicySummary = resolveProductScanEvaluationPolicySummaryFromStep(step);
               const evaluationExecutionSummary = resolveEvaluationExecutionSummary(step);
               const isContinuationQueueStep =
@@ -669,7 +678,7 @@ export function ProductScanSteps(props: { steps: ProductScanStep[] }): React.JSX
                 step.label === 'Continue with next Amazon candidate';
               const isContinuationAmazonStep =
                 resolveStepGroup(step) === 'amazon' &&
-                Boolean(continuationContext) &&
+                continuationContext !== null &&
                 continuationContext?.step !== step;
               return (
                 <div
@@ -683,9 +692,9 @@ export function ProductScanSteps(props: { steps: ProductScanStep[] }): React.JSX
                     >
                       {STEP_STATUS_LABELS[step.status]}
                     </span>
-                    {step.attempt ? (
+                    {(step.attempt ?? null) !== null ? (
                       <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground'>
-                        Attempt {step.attempt}
+                        Attempt {step.attempt!}
                       </span>
                     ) : null}
                     {typeof step.candidateRank === 'number' ? (
@@ -693,14 +702,14 @@ export function ProductScanSteps(props: { steps: ProductScanStep[] }): React.JSX
                         Candidate #{step.candidateRank}
                       </span>
                     ) : null}
-                    {step.inputSource ? (
+                    {(step.inputSource ?? null) !== null ? (
                       <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground'>
                         {step.inputSource === 'url' ? 'URL input' : 'File input'}
                       </span>
                     ) : null}
-                    {resultCodeLabel ? (
+                    {resultCodeLabel !== null ? (
                       <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground'>
-                        {resultCodeLabel}
+                        {resultCodeLabel!}
                       </span>
                     ) : null}
                     {step.key === 'amazon_ai_evaluate' &&
@@ -709,19 +718,19 @@ export function ProductScanSteps(props: { steps: ProductScanStep[] }): React.JSX
                         Language gate
                       </span>
                     ) : null}
-                    {evaluationExecutionSummary ? (
+                    {evaluationExecutionSummary !== null ? (
                       <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground'>
                         {evaluationExecutionSummary.badgeLabel}
                       </span>
                     ) : null}
-                    {isContinuationQueueStep ? (
+                    {isContinuationQueueStep === true ? (
                       <span className='inline-flex items-center rounded-md border border-amber-500/40 px-2 py-0.5 text-[11px] font-medium text-amber-300'>
                         {continuationContext?.rejectionKind === 'language'
                           ? 'Language rejection recovery'
                           : 'AI rejection recovery'}
                       </span>
                     ) : null}
-                    {isContinuationAmazonStep ? (
+                    {isContinuationAmazonStep === true ? (
                       <span className='inline-flex items-center rounded-md border border-amber-500/40 px-2 py-0.5 text-[11px] font-medium text-amber-300'>
                         {continuationContext?.rejectionKind === 'language'
                           ? 'Language recovery attempt'
@@ -729,60 +738,60 @@ export function ProductScanSteps(props: { steps: ProductScanStep[] }): React.JSX
                       </span>
                     ) : null}
                   </div>
-                  {step.message ? <p className='text-sm text-muted-foreground'>{step.message}</p> : null}
-                  {step.warning ? (
-                    <p className='text-xs font-medium text-amber-300'>{step.warning}</p>
+                  {(step.message ?? null) !== null ? <p className='text-sm text-muted-foreground'>{step.message!}</p> : null}
+                  {(step.warning ?? null) !== null ? (
+                    <p className='text-xs font-medium text-amber-300'>{step.warning!}</p>
                   ) : null}
-                  {evaluationExecutionSummary?.detailLabel ? (
+                  {(evaluationExecutionSummary?.detailLabel ?? null) !== null ? (
                     <p className='text-xs text-muted-foreground'>
-                      {evaluationExecutionSummary.detailLabel}
+                      {evaluationExecutionSummary!.detailLabel!}
                     </p>
                   ) : null}
-                  {evaluationPolicySummary ? (
+                  {evaluationPolicySummary !== null ? (
                     <div className='space-y-1 rounded-md border border-border/40 bg-muted/20 px-2 py-2'>
                       <div className='flex flex-wrap items-center gap-2 text-xs'>
                         <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
                           AI evaluator policy
                         </span>
-                        {evaluationPolicySummary.modelSource ? (
+                        {(evaluationPolicySummary.modelSource ?? null) !== null ? (
                           <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
-                            {evaluationPolicySummary.modelSource}
+                            {evaluationPolicySummary.modelSource!}
                           </span>
                         ) : null}
-                        {evaluationPolicySummary.thresholdLabel ? (
+                        {(evaluationPolicySummary.thresholdLabel ?? null) !== null ? (
                           <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
-                            {evaluationPolicySummary.thresholdLabel}
+                            {evaluationPolicySummary.thresholdLabel!}
                           </span>
                         ) : null}
-                        {evaluationPolicySummary.scopeLabel ? (
+                        {(evaluationPolicySummary.scopeLabel ?? null) !== null ? (
                           <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
-                            {evaluationPolicySummary.scopeLabel}
+                            {evaluationPolicySummary.scopeLabel!}
                           </span>
                         ) : null}
-                        {evaluationPolicySummary.similarityDecisionLabel ? (
+                        {(evaluationPolicySummary.similarityDecisionLabel ?? null) !== null ? (
                           <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
-                            {evaluationPolicySummary.similarityDecisionLabel}
+                            {evaluationPolicySummary.similarityDecisionLabel!}
                           </span>
                         ) : null}
-                        {evaluationPolicySummary.languageGateLabel ? (
+                        {(evaluationPolicySummary.languageGateLabel ?? null) !== null ? (
                           <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
-                            {evaluationPolicySummary.languageGateLabel}
+                            {evaluationPolicySummary.languageGateLabel!}
                           </span>
                         ) : null}
-                        {evaluationPolicySummary.languageDetectionLabel ? (
+                        {(evaluationPolicySummary.languageDetectionLabel ?? null) !== null ? (
                           <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
-                            {evaluationPolicySummary.languageDetectionLabel}
+                            {evaluationPolicySummary.languageDetectionLabel!}
                           </span>
                         ) : null}
                       </div>
-                      {evaluationPolicySummary.modelLabel ? (
+                      {(evaluationPolicySummary.modelLabel ?? null) !== null ? (
                         <p className='text-xs text-muted-foreground'>
-                          Model {evaluationPolicySummary.modelLabel}
+                          Model {evaluationPolicySummary.modelLabel!}
                         </p>
                       ) : null}
                     </div>
                   ) : null}
-                  {isContinuationAmazonStep && continuationContext ? (
+                  {isContinuationAmazonStep === true && continuationContext !== null ? (
                     <p className='text-xs text-muted-foreground'>
                       Continues after{' '}
                       {continuationContext.rejectionKind === 'language'
@@ -792,11 +801,11 @@ export function ProductScanSteps(props: { steps: ProductScanStep[] }): React.JSX
                       {continuationContext.rejectedUrl ?? 'the previous Amazon candidate'}.
                     </p>
                   ) : null}
-                  {step.retryOf ? (
-                    <p className='text-xs text-muted-foreground'>Retry of: {step.retryOf}</p>
+                  {(step.retryOf ?? null) !== null ? (
+                    <p className='text-xs text-muted-foreground'>Retry of: {step.retryOf!}</p>
                   ) : null}
-                  {step.candidateId ? (
-                    <p className='text-xs text-muted-foreground'>Candidate: {step.candidateId}</p>
+                  {(step.candidateId ?? null) !== null ? (
+                    <p className='text-xs text-muted-foreground'>Candidate: {step.candidateId!}</p>
                   ) : null}
                   {stepDetails.length > 0 ? (
                     <dl className='grid gap-2 sm:grid-cols-2'>
@@ -813,9 +822,9 @@ export function ProductScanSteps(props: { steps: ProductScanStep[] }): React.JSX
                       ))}
                     </dl>
                   ) : null}
-                  {step.url ? (
+                  {(step.url ?? null) !== null ? (
                     <a
-                      href={step.url}
+                      href={step.url!}
                       target='_blank'
                       rel='noopener noreferrer'
                       className='inline-flex items-center gap-1 text-xs text-primary underline-offset-2 hover:underline'
@@ -824,7 +833,7 @@ export function ProductScanSteps(props: { steps: ProductScanStep[] }): React.JSX
                       <ExternalLink className='h-3.5 w-3.5' />
                     </a>
                   ) : null}
-                  {timing ? <p className='text-xs text-muted-foreground'>{timing}</p> : null}
+                  {timing !== null ? <p className='text-xs text-muted-foreground'>{timing!}</p> : null}
                 </div>
               );
             })}

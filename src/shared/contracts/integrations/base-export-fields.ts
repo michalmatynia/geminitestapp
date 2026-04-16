@@ -18,11 +18,13 @@ export const BASE_EXPORT_FIELD_DOCS: ExportParameterDoc[] = [
   { key: 'height', description: 'Height (cm).' },
   { key: 'name', description: 'Product name (default language).' },
   { key: 'name|en', description: 'Product name (English).' },
+  { key: 'name|pl', description: 'Product name (Polish).' },
   {
     key: 'description',
     description: 'Product description (default language).',
   },
   { key: 'description|en', description: 'Product description (English).' },
+  { key: 'description|pl', description: 'Product description (Polish).' },
   { key: 'text_fields.name', description: 'Name inside text_fields object.' },
   {
     key: 'text_fields.description',
@@ -33,9 +35,21 @@ export const BASE_EXPORT_FIELD_DOCS: ExportParameterDoc[] = [
     description: 'English name inside text_fields.',
   },
   {
+    key: 'text_fields.name|pl',
+    description: 'Polish name inside text_fields.',
+  },
+  {
     key: 'text_fields.description|en',
     description: 'English description inside text_fields.',
   },
+  {
+    key: 'text_fields.description|pl',
+    description: 'Polish description inside text_fields.',
+  },
+  { key: 'parameters', description: 'Product parameters / attributes array.' },
+  { key: 'features', description: 'Product features / attributes (Base.com features field).' },
+  { key: 'attributes', description: 'Product attributes (Base.com attributes field).' },
+  { key: 'custom_fields', description: 'Product custom fields array.' },
   { key: 'prices.0', description: 'Price for price group 0.' },
   {
     key: 'prices.<price_group_id>',

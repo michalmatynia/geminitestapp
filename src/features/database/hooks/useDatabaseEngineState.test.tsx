@@ -1,6 +1,8 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { ApiError } from '@/shared/lib/api-client';
+
 import { useDatabaseEngineState } from './useDatabaseEngineState';
 
 const mocks = vi.hoisted(() => ({
@@ -14,6 +16,29 @@ const mocks = vi.hoisted(() => ({
   engineStatusRefetch: vi.fn(),
   backupSchedulerStatusRefetch: vi.fn(),
   operationsJobsRefetch: vi.fn(),
+  mongoSourceData: undefined as
+    | {
+        timestamp: string;
+        activeSource: 'local' | 'cloud' | null;
+        defaultSource: 'local' | 'cloud' | null;
+        lastSync: {
+          direction: 'cloud_to_local' | 'local_to_cloud';
+          source: 'local' | 'cloud';
+          target: 'local' | 'cloud';
+          syncedAt: string;
+          preSyncBackups: never[];
+          archivePath: string | null;
+          logPath: string | null;
+        } | null;
+        syncInProgress?: {
+          direction: 'cloud_to_local' | 'local_to_cloud';
+          source: 'local' | 'cloud';
+          target: 'local' | 'cloud';
+          acquiredAt: string;
+          pid: number;
+        } | null;
+      }
+    | undefined,
   mongoSourceRefetch: vi.fn(),
   providerPreviewRefetch: vi.fn(),
   schemaRefetch: vi.fn(),
@@ -63,7 +88,7 @@ vi.mock('./useDatabaseQueries', () => ({
     refetch: mocks.operationsJobsRefetch,
   }),
   useDatabaseEngineMongoSource: () => ({
-    data: undefined,
+    data: mocks.mongoSourceData,
     isPending: false,
     refetch: mocks.mongoSourceRefetch,
   }),
@@ -90,6 +115,7 @@ vi.mock('./useDatabaseQueries', () => ({
 
 describe('useDatabaseEngineState', () => {
   beforeEach(() => {
+    vi.restoreAllMocks();
     mocks.routerPush.mockReset();
     mocks.toast.mockReset();
     mocks.settingsMap = new Map<string, string>();
@@ -100,7 +126,9 @@ describe('useDatabaseEngineState', () => {
     mocks.engineStatusRefetch.mockReset();
     mocks.backupSchedulerStatusRefetch.mockReset();
     mocks.operationsJobsRefetch.mockReset();
+    mocks.mongoSourceData = undefined;
     mocks.mongoSourceRefetch.mockReset();
+    mocks.mongoSourceRefetch.mockResolvedValue({ data: undefined });
     mocks.providerPreviewRefetch.mockReset();
     mocks.schemaRefetch.mockReset();
     mocks.redisOverviewRefetch.mockReset();
@@ -132,5 +160,94 @@ describe('useDatabaseEngineState', () => {
     expect(mocks.toast).toHaveBeenCalledWith('MongoDB sync completed: cloud -> local.', {
       variant: 'success',
     });
+  });
+
+  it('surfaces the server-provided sync lock message instead of a generic failure toast', async () => {
+    mocks.syncMongoSourcesMutateAsync.mockRejectedValue(
+      new ApiError(
+        'MongoDB sync is already in progress: local -> cloud. Started at 2026-04-16T00:38:12.443Z.',
+        423
+      )
+    );
+
+    const { result } = renderHook(() => useDatabaseEngineState());
+
+    await act(async () => {
+      await result.current.syncMongoSources('local_to_cloud');
+    });
+
+    expect(mocks.toast).toHaveBeenCalledWith(
+      'MongoDB sync is already in progress: local -> cloud. Started at 2026-04-16T00:38:12.443Z.',
+      {
+        variant: 'warning',
+      }
+    );
+  });
+
+  it('reports a running sync when the request times out but the backend lock is still active', async () => {
+    mocks.syncMongoSourcesMutateAsync.mockRejectedValue(new Error('Request timeout after 900000ms'));
+    mocks.mongoSourceRefetch.mockResolvedValue({
+      data: {
+        timestamp: '2026-04-16T00:40:00.000Z',
+        activeSource: 'local',
+        defaultSource: 'local',
+        lastSync: null,
+        syncInProgress: {
+          direction: 'local_to_cloud',
+          source: 'local',
+          target: 'cloud',
+          acquiredAt: '2026-04-16T00:38:12.443Z',
+          pid: 28245,
+        },
+      },
+    });
+
+    const { result } = renderHook(() => useDatabaseEngineState());
+
+    await act(async () => {
+      await result.current.syncMongoSources('local_to_cloud');
+    });
+
+    expect(mocks.toast).toHaveBeenCalledWith(
+      'MongoDB sync is still running: local -> cloud. Started at 2026-04-16T00:38:12.443Z. The server has not reported a final result yet.',
+      {
+        variant: 'warning',
+      }
+    );
+  });
+
+  it('reports a successful sync when the request times out after the backend already finished', async () => {
+    vi.spyOn(Date, 'now').mockReturnValueOnce(Date.parse('2026-04-16T00:38:00.000Z'));
+    mocks.syncMongoSourcesMutateAsync.mockRejectedValue(new Error('Request timeout after 900000ms'));
+    mocks.mongoSourceRefetch.mockResolvedValue({
+      data: {
+        timestamp: '2026-04-16T00:40:00.000Z',
+        activeSource: 'local',
+        defaultSource: 'local',
+        lastSync: {
+          direction: 'local_to_cloud',
+          source: 'local',
+          target: 'cloud',
+          syncedAt: '2026-04-16T00:38:43.264Z',
+          preSyncBackups: [],
+          archivePath: '/tmp/mongo-sync.archive',
+          logPath: '/tmp/mongo-sync.log',
+        },
+        syncInProgress: null,
+      },
+    });
+
+    const { result } = renderHook(() => useDatabaseEngineState());
+
+    await act(async () => {
+      await result.current.syncMongoSources('local_to_cloud');
+    });
+
+    expect(mocks.toast).toHaveBeenCalledWith(
+      'MongoDB sync completed: local -> cloud. Synced at 2026-04-16T00:38:43.264Z.',
+      {
+        variant: 'success',
+      }
+    );
   });
 });

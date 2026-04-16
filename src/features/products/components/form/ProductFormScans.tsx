@@ -141,7 +141,7 @@ export default function ProductFormScans(): React.JSX.Element {
   });
 
   const handleDeleteScan = async (scanId: string): Promise<void> => {
-    if (isDeletingScanId != null) {
+    if (isDeletingScanId !== null) {
       return;
     }
 
@@ -165,14 +165,20 @@ export default function ProductFormScans(): React.JSX.Element {
   const scansDataUpdatedAt = scansQuery.dataUpdatedAt;
   const connectionNamesById = useMemo(() => {
     const names = new Map<string, string>();
-    for (const integration of integrationsWithConnectionsQuery.data ?? []) {
-      for (const connection of integration.connections ?? []) {
-        const connectionId = connection.id?.trim();
-        const connectionName = connection.name?.trim();
-        if (!connectionId || !connectionName || names.has(connectionId)) {
-          continue;
+    const integrationData = integrationsWithConnectionsQuery.data;
+    if (integrationData !== undefined && integrationData !== null) {
+      for (const integration of integrationData) {
+        const connections = integration.connections;
+        if (connections !== undefined && connections !== null) {
+          for (const connection of connections) {
+            const connectionId = (connection.id ?? '').trim();
+            const connectionName = (connection.name ?? '').trim();
+            if (connectionId === '' || connectionName === '' || names.has(connectionId)) {
+              continue;
+            }
+            names.set(connectionId, connectionName);
+          }
         }
-        names.set(connectionId, connectionName);
       }
     }
     return names;
@@ -273,10 +279,10 @@ export default function ProductFormScans(): React.JSX.Element {
     applyTextField: (field: 'supplierName' | 'supplierLink' | 'priceComment', value: string) => {
       applyProductFormValue(field, value);
     },
-    imageLinks: productFormImages?.imageLinks,
-    imageBase64s: productFormImages?.imageBase64s,
-    setImageLinkAt: productFormImages?.setImageLinkAt,
-    setImageBase64At: productFormImages?.setImageBase64At,
+    imageLinks: (productFormImages?.imageLinks ?? null) !== null ? productFormImages?.imageLinks : undefined,
+    imageBase64s: (productFormImages?.imageBase64s ?? null) !== null ? productFormImages?.imageBase64s : undefined,
+    setImageLinkAt: (productFormImages?.setImageLinkAt ?? null) !== null ? productFormImages?.setImageLinkAt : undefined,
+    setImageBase64At: (productFormImages?.setImageBase64At ?? null) !== null ? productFormImages?.setImageBase64At : undefined,
   } as const;
 
   const buildAttributeMappings = (
@@ -294,7 +300,7 @@ export default function ProductFormScans(): React.JSX.Element {
             normalizeMetadataLabel(parameter.name_en) ??
             normalizeMetadataLabel(parameter.name_pl) ??
             normalizeMetadataLabel(parameter.name_de);
-          return normalizedLabel
+          return (normalizedLabel ?? null) !== null
             ? [
                 normalizedLabel,
                 {
@@ -304,16 +310,16 @@ export default function ProductFormScans(): React.JSX.Element {
               ]
             : null;
         })
-        .filter((entry): entry is [string, { id: string; label: string }] => Boolean(entry))
+        .filter((entry): entry is [string, { id: string; label: string }] => entry !== null)
     );
 
     const customFieldByLabel = new Map(
       customFields
         .map((field) => {
           const normalizedLabel = normalizeMetadataLabel(field.name);
-          return normalizedLabel ? [normalizedLabel, field] : null;
+          return (normalizedLabel ?? null) !== null ? [normalizedLabel, field] : null;
         })
-        .filter((entry): entry is [string, ProductCustomFieldDefinition] => Boolean(entry))
+        .filter((entry): entry is [string, ProductCustomFieldDefinition] => entry !== null)
     );
 
     const usedTargets = new Set<string>();
@@ -321,14 +327,14 @@ export default function ProductFormScans(): React.JSX.Element {
 
     for (const entry of sourceEntries) {
       const normalizedSourceLabel = normalizeMetadataLabel(entry.sourceLabel);
-      if (!normalizedSourceLabel) {
+      if (normalizedSourceLabel === null || normalizedSourceLabel === undefined || normalizedSourceLabel === '') {
         continue;
       }
 
       const parameterMatch = parameterByLabel.get(normalizedSourceLabel);
-      if (parameterMatch) {
+      if (parameterMatch !== undefined) {
         const targetKey = `parameter:${parameterMatch.id}`;
-        if (!usedTargets.has(targetKey)) {
+        if (usedTargets.has(targetKey) === false) {
           usedTargets.add(targetKey);
           mappings.push({
             targetType: 'parameter',
@@ -342,13 +348,13 @@ export default function ProductFormScans(): React.JSX.Element {
       }
 
       const customFieldMatch = customFieldByLabel.get(normalizedSourceLabel);
-      if (customFieldMatch) {
+      if (customFieldMatch !== undefined) {
         const targetKey = `custom_field:${customFieldMatch.id}`;
-        if (!usedTargets.has(targetKey)) {
+        if (usedTargets.has(targetKey) === false) {
           usedTargets.add(targetKey);
           if (customFieldMatch.type === 'checkbox_set') {
             const optionMatch = resolveCheckboxSetOptionMatch(customFieldMatch, entry.value);
-            if (optionMatch) {
+            if (optionMatch !== null) {
               mappings.push({
                 targetType: 'custom_field_checkbox_set',
                 targetId: customFieldMatch.id,
@@ -455,11 +461,11 @@ export default function ProductFormScans(): React.JSX.Element {
       return null;
     }
 
-    return formatCustomFieldSelectedOptionLabels(targetField, existingValue?.selectedOptionIds);
+    return formatCustomFieldSelectedOptionLabels(targetField, (existingValue?.selectedOptionIds ?? null) !== null ? existingValue?.selectedOptionIds : undefined);
   };
 
   useEffect(() => {
-    if (!productId || scans.length === 0) {
+    if (productId === '' || scans.length === 0) {
       return;
     }
 
@@ -471,13 +477,13 @@ export default function ProductFormScans(): React.JSX.Element {
         }
 
         const scanAsin = normalizeComparableAsin(scan.asin);
-        return !scanAsin || scanAsin !== currentProductAsin;
+        return (scanAsin === null || scanAsin === undefined || scanAsin === '') || scanAsin !== currentProductAsin;
       })
       .map((scan) => scan.id)
       .filter(
         (scanId) =>
-          !invalidatedUpdatedScanIdsRef.current.has(scanId) &&
-          !pendingUpdatedScanIdsRef.current.has(scanId)
+          invalidatedUpdatedScanIdsRef.current.has(scanId) === false &&
+          pendingUpdatedScanIdsRef.current.has(scanId) === false
       );
 
     if (unseenUpdatedScanIds.length === 0) {
@@ -509,7 +515,7 @@ export default function ProductFormScans(): React.JSX.Element {
       });
   }, [product?.asin, productId, queryClient, scans, scansDataUpdatedAt]);
 
-  if (!productId) {
+  if (productId === '') {
     return (
       <div className='rounded-md border border-dashed border-border/60 px-4 py-6 text-sm text-muted-foreground'>
         Save the product before using scans.
@@ -517,7 +523,7 @@ export default function ProductFormScans(): React.JSX.Element {
     );
   }
 
-  if (scansQuery.isLoading) {
+  if (scansQuery.isLoading === true) {
     return (
       <div className='flex min-h-[160px] items-center justify-center gap-3 text-sm text-muted-foreground'>
         <Loader2 className='h-4 w-4 animate-spin' />
@@ -526,7 +532,7 @@ export default function ProductFormScans(): React.JSX.Element {
     );
   }
 
-  if (scansQuery.isError && scans.length === 0) {
+  if (scansQuery.isError === true && scans.length === 0) {
     return (
       <div className='space-y-3 rounded-md border border-destructive/40 px-4 py-5'>
         <p className='text-sm text-destructive'>
@@ -536,7 +542,7 @@ export default function ProductFormScans(): React.JSX.Element {
           type='button'
           variant='outline'
           size='sm'
-          onClick={() => void scansQuery.refetch()}
+          onClick={() => { void scansQuery.refetch(); }}
           className='h-8 gap-1.5 px-3 text-xs'
         >
           <RefreshCw className='h-3.5 w-3.5' />
@@ -583,17 +589,17 @@ export default function ProductFormScans(): React.JSX.Element {
             type='button'
             variant='outline'
             size='sm'
-            onClick={() => void scansQuery.refetch()}
-            disabled={scansQuery.isFetching}
+            onClick={() => { void scansQuery.refetch(); }}
+            disabled={scansQuery.isFetching === true}
             className='h-8 gap-1.5 px-3 text-xs'
           >
-            <RefreshCw className={`h-3.5 w-3.5 ${scansQuery.isFetching ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-3.5 w-3.5 ${scansQuery.isFetching === true ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
         </div>
       </div>
 
-      {scansQuery.isError ? (
+      {scansQuery.isError === true ? (
         <div className='rounded-md border border-amber-500/40 px-4 py-3 text-sm text-amber-300'>
           {scansQuery.error.message || 'Failed to refresh product scans.'}
         </div>
@@ -616,82 +622,83 @@ export default function ProductFormScans(): React.JSX.Element {
               scan.connectionId ??
               null;
             const supplierSummary = [
-              scan.supplierDetails?.supplierName,
-              scan.supplierDetails?.priceText ?? scan.supplierDetails?.priceRangeText,
-              scan.supplierDetails?.moqText,
+              (scan.supplierDetails?.supplierName ?? null) !== null ? scan.supplierDetails?.supplierName : null,
+              (scan.supplierDetails?.priceText ?? scan.supplierDetails?.priceRangeText ?? null) !== null ? scan.supplierDetails?.priceText ?? scan.supplierDetails?.priceRangeText : null,
+              (scan.supplierDetails?.moqText ?? null) !== null ? scan.supplierDetails?.moqText : null,
             ]
-              .filter(Boolean)
+              .filter((val): val is string => typeof val === 'string')
               .join(' · ');
             const hasExtractedFields =
-              isAmazonScan &&
-              (hasProductScanAmazonDetails(scan.amazonDetails) || Boolean(scan.asin));
-            const recommendationReason = isAmazonScan
-              ? hasExtractedFields
+              isAmazonScan === true &&
+              (hasProductScanAmazonDetails(scan.amazonDetails) || (scan.asin !== undefined && scan.asin !== null && scan.asin !== ''));
+            const recommendationReason = isAmazonScan === true
+              ? (hasExtractedFields === true
                 ? resolveAmazonScanRecommendationReason(scan)
-                : null
+                : null)
               : resolve1688ScanRecommendationReason(scan);
-            const supplierApplyPolicySummary = !isAmazonScan
+            const supplierApplyPolicySummary = isAmazonScan === false
               ? resolveProductScan1688ApplyPolicySummary(scan)
               : null;
             const isBlocked1688ResultReviewed =
               supplierApplyPolicySummary?.blockActions === true &&
               isBlockedScanReviewed(scan.id);
             const hasNewerApproved1688Result =
-              isBlocked1688ResultReviewed && hasNewerApproved1688Scan(scans, scan.id);
+              isBlocked1688ResultReviewed === true && hasNewerApproved1688Scan(scans, scan.id);
             const shouldCollapseReviewedBlocked1688 =
-              hasNewerApproved1688Result && !expandedReviewedBlockedScanIds.has(scan.id);
+              hasNewerApproved1688Result === true && expandedReviewedBlockedScanIds.has(scan.id) === false;
             const blocked1688CandidateUrlsHref =
-              !isAmazonScan && supplierApplyPolicySummary?.blockActions
+              isAmazonScan === false && supplierApplyPolicySummary?.blockActions === true
                 ? buildProductScan1688SectionId(scan.id, 'candidate-urls')
                 : null;
             const blocked1688MatchEvaluationHref =
-              !isAmazonScan && supplierApplyPolicySummary?.blockActions
+              isAmazonScan === false && supplierApplyPolicySummary?.blockActions === true
                 ? buildProductScan1688SectionId(scan.id, 'match-evaluation')
                 : null;
-            const recommendationRejectedBreakdown = isAmazonScan && hasExtractedFields
+            const recommendationRejectedBreakdown = isAmazonScan === true && hasExtractedFields === true
               ? resolveRejectedAmazonCandidateBreakdown(scan.steps)
               : null;
             const isRecommendedAmazonResult =
-              isAmazonScan && hasExtractedFields && scan.id === recommendedAmazonExtractedScanId;
+              isAmazonScan === true && hasExtractedFields === true && scan.id === recommendedAmazonExtractedScanId;
             const hasAlternativeRecommendedAmazonResult =
-              isAmazonScan &&
-              hasExtractedFields &&
+              isAmazonScan === true &&
+              hasExtractedFields === true &&
               preferredAmazonExtractedScans.length > 1 &&
-              recommendedAmazonExtractedScanId != null &&
+              recommendedAmazonExtractedScanId !== null &&
               scan.id !== recommendedAmazonExtractedScanId;
-            const supplier1688RankingSummary = !isAmazonScan
+            const supplier1688RankingSummary = isAmazonScan === false
               ? resolveProductScan1688RankingSummary(preferred1688SupplierScans, scan.id)
               : null;
             const isPreferred1688SupplierResult = supplier1688RankingSummary?.isPreferred ?? false;
             const hasAlternativePreferred1688SupplierResult =
               supplier1688RankingSummary?.hasStrongerAlternative ?? false;
             const alternativePreferred1688SupplierScans =
-              !isAmazonScan && supplier1688RankingSummary != null
+              isAmazonScan === false && supplier1688RankingSummary !== null
                 ? preferred1688SupplierScans.filter((preferredScan) =>
                     supplier1688RankingSummary.alternativeScanIds.includes(preferredScan.id)
                   )
                 : [];
             const comparisonTargetSourceScans =
-              !isAmazonScan
+              isAmazonScan === false
                 ? preferred1688SupplierScans.map(
                     (preferredScan) => scansById.get(preferredScan.id) ?? preferredScan
                   )
                 : [];
-            const supplier1688ComparisonTargets = !isAmazonScan
+            const supplier1688ComparisonTargets = isAmazonScan === false
               ? resolveProductScan1688ComparisonTargets(comparisonTargetSourceScans, scan.id)
               : null;
             const alternativePreferred1688SupplierResultLinks =
               supplier1688ComparisonTargets?.alternativeTargets
                 .map((target) => {
                   const href = buildProductScanHistoryRowId(target.id);
-                  return href ? { href, label: target.labelWithRank } : null;
+                  return (href ?? null) !== null ? { href: href!, label: target.labelWithRank } : null;
                 })
-                .filter((entry): entry is { href: string; label: string } => entry != null) ?? [];
+                .filter((entry): entry is { href: string; label: string } => entry !== null) ?? [];
             const preferred1688SupplierRank = supplier1688RankingSummary?.rank ?? null;
             const preferred1688SupplierRankCount = supplier1688RankingSummary?.count ?? 0;
             const preferred1688SupplierResultHref =
-              !isAmazonScan &&
-              supplier1688RankingSummary?.preferredScanId != null &&
+              isAmazonScan === false &&
+              supplier1688RankingSummary?.preferredScanId !== undefined &&
+              supplier1688RankingSummary?.preferredScanId !== null &&
               scan.id !== supplier1688RankingSummary.preferredScanId
                 ? buildProductScanHistoryRowId(supplier1688RankingSummary.preferredScanId)
                 : null;
@@ -700,7 +707,7 @@ export default function ProductFormScans(): React.JSX.Element {
             const preferred1688SupplierResultLabelWithRank =
               supplier1688ComparisonTargets?.preferredTarget?.labelWithRank ?? null;
             const supplierRecommendationSignal =
-              !isAmazonScan && recommendationReason
+              isAmazonScan === false && (recommendationReason ?? null) !== null
                 ? resolveProductScan1688RecommendationSignal({
                     isPreferred: isPreferred1688SupplierResult,
                     hasAlternativeMeaningfulResult: alternativePreferred1688SupplierScans.length > 0,
@@ -709,10 +716,10 @@ export default function ProductFormScans(): React.JSX.Element {
                 : null;
             const diagnostics = resolveProductScanDiagnostics(scan);
             const latestFailureArtifact = diagnostics?.failureArtifacts[0] ?? null;
-            const hasDiagnostics = Boolean(diagnostics);
+            const hasDiagnostics = diagnostics !== null;
             const failureArtifactCount = diagnostics?.failureArtifacts.length ?? 0;
             const latestFailureArtifactPath = latestFailureArtifact?.path ?? null;
-            const latestFailureArtifactHref = latestFailureArtifact
+            const latestFailureArtifactHref = latestFailureArtifact !== null
               ? buildProductScanArtifactHref(scan.id, latestFailureArtifact)
               : null;
             const extractedFieldsExpanded = expandedExtractedFieldScanIds.has(scan.id);
@@ -725,16 +732,16 @@ export default function ProductFormScans(): React.JSX.Element {
                 ? resolveProductScanContinuationSummary(scanSteps)
                 : null;
             const rejectedCandidateSummary =
-              scanSteps.length > 0 && !progressSummary && !continuationSummary
+              scanSteps.length > 0 && progressSummary === null && continuationSummary === null
                 ? resolveProductScanRejectedCandidateSummary(scanSteps)
                 : null;
             const evaluationPolicySummary =
-              scanSteps.length > 0 && !progressSummary
+              scanSteps.length > 0 && progressSummary === null
                 ? resolveProductScanEvaluationPolicySummary(scanSteps)
                 : null;
             const latestOutcomeSummary =
               scanSteps.length > 0 &&
-              !progressSummary &&
+              progressSummary === null &&
               (scan.status === 'failed' ||
                 scan.status === 'conflict' ||
                 isProductScanActiveStatus(scan.status))
@@ -743,7 +750,7 @@ export default function ProductFormScans(): React.JSX.Element {
                   })
                 : null;
             const fallbackFailureSummary =
-              !latestOutcomeSummary && (scan.status === 'failed' || scan.status === 'conflict')
+              latestOutcomeSummary === null && (scan.status === 'failed' || scan.status === 'conflict')
                 ? resolveProductScanDiagnosticFailureSummary(scan)
                 : null;
             const currentAsin = normalizeComparableText(getCurrentProductFormValue('asin'));
@@ -771,18 +778,18 @@ export default function ProductFormScans(): React.JSX.Element {
               isAttributeMappingPending(mapping)
             );
             const canApplyDimensions =
-              parsedDimensions != null &&
+              parsedDimensions !== null &&
               (currentSizeLength !== parsedDimensions.sizeLength ||
                 currentSizeWidth !== parsedDimensions.sizeWidth ||
                 currentHeight !== parsedDimensions.length);
-            const canApplyWeight = parsedWeight != null && currentWeight !== parsedWeight;
+            const canApplyWeight = parsedWeight !== null && currentWeight !== parsedWeight;
 
             return (
               <section
                 key={scan.id}
                 id={buildProductScanHistoryRowId(scan.id) ?? undefined}
                 className={`space-y-2 rounded-md border px-4 py-4 ${
-                  shouldCollapseReviewedBlocked1688
+                  shouldCollapseReviewedBlocked1688 === true
                     ? 'border-border/40 bg-muted/10'
                     : 'border-border/60'
                 }`}
@@ -797,12 +804,12 @@ export default function ProductFormScans(): React.JSX.Element {
                     >
                       {resolveStatusLabel(scan)}
                     </span>
-                    {!isAmazonScan && resolvedConnectionLabel ? (
+                    {isAmazonScan === false && resolvedConnectionLabel !== null ? (
                       <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground'>
                         Profile {resolvedConnectionLabel}
                       </span>
                     ) : null}
-                    {hasNewerApproved1688Result ? (
+                    {hasNewerApproved1688Result === true ? (
                       <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground'>
                         Superseded by newer approved 1688 match
                       </span>
@@ -814,12 +821,12 @@ export default function ProductFormScans(): React.JSX.Element {
                 </div>
 
                 <div className='flex items-center justify-end gap-1'>
-                  {!isProductScanActiveStatus(scan.status) && (
+                  {isProductScanActiveStatus(scan.status) === false && (
                     <Button
                       type='button'
                       variant='ghost'
                       size='sm'
-                      onClick={() => void handleDeleteScan(scan.id)}
+                      onClick={() => { void handleDeleteScan(scan.id); }}
                       disabled={isDeletingScanId === scan.id}
                       className='h-7 gap-1.5 px-2 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive'
                     >
@@ -831,13 +838,13 @@ export default function ProductFormScans(): React.JSX.Element {
                       Delete
                     </Button>
                   )}
-                  {isAmazonScan ? (
+                  {isAmazonScan === true ? (
                     <Button
                       type='button'
                       variant='ghost'
                       size='sm'
                       onClick={() => toggleExtractedFields(scan.id)}
-                      disabled={!hasExtractedFields}
+                      disabled={hasExtractedFields === false}
                       className='h-7 gap-1.5 px-2 text-xs'
                     >
                       {extractedFieldsExpanded ? (
@@ -853,7 +860,7 @@ export default function ProductFormScans(): React.JSX.Element {
                     variant='ghost'
                     size='sm'
                     onClick={() => toggleDiagnostics(scan.id)}
-                    disabled={!hasDiagnostics}
+                    disabled={hasDiagnostics === false}
                     className='h-7 gap-1.5 px-2 text-xs'
                   >
                     {diagnosticsExpanded ? (
@@ -880,7 +887,7 @@ export default function ProductFormScans(): React.JSX.Element {
                   </Button>
                 </div>
 
-                {progressSummary ? (
+                {progressSummary !== null ? (
                   <div className='space-y-1 rounded-md border border-blue-500/20 bg-blue-500/5 px-3 py-2'>
                     <div className='flex flex-wrap items-center gap-2 text-xs'>
                       <span className='inline-flex items-center rounded-md border border-blue-500/20 px-2 py-0.5 font-medium text-foreground'>
@@ -893,19 +900,19 @@ export default function ProductFormScans(): React.JSX.Element {
                           Attempt {progressSummary.attempt}
                         </span>
                       ) : null}
-                      {progressSummary.inputSource ? (
+                      {progressSummary.inputSource !== undefined && progressSummary.inputSource !== null ? (
                         <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
                           {progressSummary.inputSource === 'url' ? 'URL input' : 'File input'}
                         </span>
                       ) : null}
                     </div>
-                    {progressSummary.message ? (
+                    {progressSummary.message !== undefined && progressSummary.message !== null && progressSummary.message !== '' ? (
                       <p className='text-sm text-muted-foreground'>{progressSummary.message}</p>
                     ) : null}
                   </div>
                 ) : null}
 
-                {continuationSummary ? (
+                {continuationSummary !== null ? (
                   <div className='space-y-1 rounded-md border border-amber-500/20 bg-amber-500/5 px-3 py-2'>
                     <div className='flex flex-wrap items-center gap-2 text-xs'>
                       <span className='inline-flex items-center rounded-md border border-amber-500/20 px-2 py-0.5 font-medium text-amber-300'>
@@ -917,7 +924,7 @@ export default function ProductFormScans(): React.JSX.Element {
                           : 'After AI rejection'}
                       </span>
                       <span className='font-medium text-foreground'>{continuationSummary.stepLabel}</span>
-                      {continuationSummary.resultCodeLabel ? (
+                      {continuationSummary.resultCodeLabel !== undefined && continuationSummary.resultCodeLabel !== null && continuationSummary.resultCodeLabel !== '' ? (
                         <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
                           {continuationSummary.resultCodeLabel}
                         </span>
@@ -928,21 +935,21 @@ export default function ProductFormScans(): React.JSX.Element {
                         </span>
                       ) : null}
                     </div>
-                    {continuationSummary.message ? (
+                    {continuationSummary.message !== undefined && continuationSummary.message !== null && continuationSummary.message !== '' ? (
                       <p className='text-sm text-muted-foreground'>{continuationSummary.message}</p>
                     ) : null}
                     <div className='flex flex-wrap gap-3 text-xs text-muted-foreground'>
-                      {continuationSummary.rejectedUrl ? (
+                      {continuationSummary.rejectedUrl !== undefined && continuationSummary.rejectedUrl !== null && continuationSummary.rejectedUrl !== '' ? (
                         <span>Rejected: {continuationSummary.rejectedUrl}</span>
                       ) : null}
-                      {continuationSummary.nextUrl ? (
+                      {continuationSummary.nextUrl !== undefined && continuationSummary.nextUrl !== null && continuationSummary.nextUrl !== '' ? (
                         <span>Next: {continuationSummary.nextUrl}</span>
                       ) : null}
                     </div>
                   </div>
                 ) : null}
 
-                {rejectedCandidateSummary ? (
+                {rejectedCandidateSummary !== null ? (
                   <div className='space-y-1 rounded-md border border-amber-500/20 bg-amber-500/5 px-3 py-2'>
                     <div className='flex flex-wrap items-center gap-2 text-xs'>
                       <span className='inline-flex items-center rounded-md border border-amber-500/20 px-2 py-0.5 font-medium text-amber-300'>
@@ -960,7 +967,7 @@ export default function ProductFormScans(): React.JSX.Element {
                             : 'final result'}
                       </span>
                     </div>
-                    {rejectedCandidateSummary.latestReason ? (
+                    {rejectedCandidateSummary.latestReason !== undefined && rejectedCandidateSummary.latestReason !== null && rejectedCandidateSummary.latestReason !== '' ? (
                       <p className='text-sm text-muted-foreground'>
                         {rejectedCandidateSummary.latestReason}
                       </p>
@@ -971,7 +978,7 @@ export default function ProductFormScans(): React.JSX.Element {
                         {rejectedCandidateSummary.languageRejectedCount === 1 ? '' : 's'} rejected
                       </p>
                     ) : null}
-                    {rejectedCandidateSummary.latestRejectedUrl ? (
+                    {rejectedCandidateSummary.latestRejectedUrl !== undefined && rejectedCandidateSummary.latestRejectedUrl !== null && rejectedCandidateSummary.latestRejectedUrl !== '' ? (
                       <div className='flex flex-wrap gap-3 text-xs text-muted-foreground'>
                         <span>Latest rejected: {rejectedCandidateSummary.latestRejectedUrl}</span>
                       </div>
@@ -979,44 +986,44 @@ export default function ProductFormScans(): React.JSX.Element {
                   </div>
                 ) : null}
 
-                {evaluationPolicySummary ? (
+                {evaluationPolicySummary !== null ? (
                   <div className='space-y-1 rounded-md border border-border/50 bg-background/70 px-3 py-2'>
                     <div className='flex flex-wrap items-center gap-2 text-xs'>
                       <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
                         AI evaluator policy
                       </span>
-                      {evaluationPolicySummary.executionLabel ? (
+                      {evaluationPolicySummary.executionLabel !== undefined && evaluationPolicySummary.executionLabel !== null && evaluationPolicySummary.executionLabel !== '' ? (
                         <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
                           {evaluationPolicySummary.executionLabel}
                         </span>
                       ) : null}
-                      {evaluationPolicySummary.modelSource ? (
+                      {evaluationPolicySummary.modelSource !== undefined && evaluationPolicySummary.modelSource !== null && evaluationPolicySummary.modelSource !== '' ? (
                         <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
                           {evaluationPolicySummary.modelSource}
                         </span>
                       ) : null}
-                      {evaluationPolicySummary.thresholdLabel ? (
+                      {evaluationPolicySummary.thresholdLabel !== undefined && evaluationPolicySummary.thresholdLabel !== null && evaluationPolicySummary.thresholdLabel !== '' ? (
                         <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
                           {evaluationPolicySummary.thresholdLabel}
                         </span>
                       ) : null}
-                      {evaluationPolicySummary.scopeLabel ? (
+                      {evaluationPolicySummary.scopeLabel !== undefined && evaluationPolicySummary.scopeLabel !== null && evaluationPolicySummary.scopeLabel !== '' ? (
                         <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
                           {evaluationPolicySummary.scopeLabel}
                         </span>
                       ) : null}
-                      {evaluationPolicySummary.languageGateLabel ? (
+                      {evaluationPolicySummary.languageGateLabel !== undefined && evaluationPolicySummary.languageGateLabel !== null && evaluationPolicySummary.languageGateLabel !== '' ? (
                         <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
                           {evaluationPolicySummary.languageGateLabel}
                         </span>
                       ) : null}
-                      {evaluationPolicySummary.languageDetectionLabel ? (
+                      {evaluationPolicySummary.languageDetectionLabel !== undefined && evaluationPolicySummary.languageDetectionLabel !== null && evaluationPolicySummary.languageDetectionLabel !== '' ? (
                         <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
                           {evaluationPolicySummary.languageDetectionLabel}
                         </span>
                       ) : null}
                     </div>
-                    {evaluationPolicySummary.modelLabel ? (
+                    {evaluationPolicySummary.modelLabel !== undefined && evaluationPolicySummary.modelLabel !== null && evaluationPolicySummary.modelLabel !== '' ? (
                       <p className='text-sm text-muted-foreground'>
                         Model {evaluationPolicySummary.modelLabel}
                       </p>
@@ -1024,10 +1031,10 @@ export default function ProductFormScans(): React.JSX.Element {
                   </div>
                 ) : null}
 
-                {latestOutcomeSummary || fallbackFailureSummary ? (
+                {latestOutcomeSummary !== null || fallbackFailureSummary !== null ? (
                   <div
                     className={`space-y-1 rounded-md px-3 py-2 ${
-                      latestOutcomeSummary?.kind === 'failed' || fallbackFailureSummary
+                      latestOutcomeSummary?.kind === 'failed' || fallbackFailureSummary !== null
                         ? 'border border-destructive/20 bg-destructive/5'
                         : 'border border-amber-500/20 bg-amber-500/5'
                     }`}
@@ -1035,7 +1042,7 @@ export default function ProductFormScans(): React.JSX.Element {
                     <div className='flex flex-wrap items-center gap-2 text-xs'>
                       <span
                         className={`inline-flex items-center rounded-md px-2 py-0.5 font-medium ${
-                          latestOutcomeSummary?.kind === 'failed' || fallbackFailureSummary
+                          latestOutcomeSummary?.kind === 'failed' || fallbackFailureSummary !== null
                             ? 'border border-destructive/20 text-destructive'
                             : 'border border-amber-500/20 text-amber-300'
                         }`}
@@ -1043,19 +1050,19 @@ export default function ProductFormScans(): React.JSX.Element {
                         {latestOutcomeSummary?.phaseLabel ?? fallbackFailureSummary?.phaseLabel}
                       </span>
                       <span className='text-muted-foreground'>
-                        {latestOutcomeSummary?.kind === 'failed' || fallbackFailureSummary
+                        {latestOutcomeSummary?.kind === 'failed' || fallbackFailureSummary !== null
                           ? 'Last failure'
                           : 'Last completed step'}
                       </span>
                       <span className='font-medium text-foreground'>
                         {latestOutcomeSummary?.stepLabel ?? fallbackFailureSummary?.stepLabel}
                       </span>
-                      {(latestOutcomeSummary?.sourceLabel ?? fallbackFailureSummary?.sourceLabel) ? (
+                      {(latestOutcomeSummary?.sourceLabel ?? fallbackFailureSummary?.sourceLabel) !== undefined && (latestOutcomeSummary?.sourceLabel ?? fallbackFailureSummary?.sourceLabel) !== null ? (
                         <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
                           {latestOutcomeSummary?.sourceLabel ?? fallbackFailureSummary?.sourceLabel}
                         </span>
                       ) : null}
-                      {(latestOutcomeSummary?.resultCodeLabel ?? fallbackFailureSummary?.resultCodeLabel) ? (
+                      {(latestOutcomeSummary?.resultCodeLabel ?? fallbackFailureSummary?.resultCodeLabel) !== undefined && (latestOutcomeSummary?.resultCodeLabel ?? fallbackFailureSummary?.resultCodeLabel) !== null ? (
                         <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
                           {latestOutcomeSummary?.resultCodeLabel ?? fallbackFailureSummary?.resultCodeLabel}
                         </span>
@@ -1065,7 +1072,7 @@ export default function ProductFormScans(): React.JSX.Element {
                           Attempt {latestOutcomeSummary.attempt}
                         </span>
                       ) : null}
-                      {latestOutcomeSummary?.inputSource ? (
+                      {latestOutcomeSummary?.inputSource !== undefined && latestOutcomeSummary?.inputSource !== null ? (
                         <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
                           {latestOutcomeSummary.inputSource === 'url' ? 'URL input' : 'File input'}
                         </span>
@@ -1075,7 +1082,7 @@ export default function ProductFormScans(): React.JSX.Element {
                           {failureArtifactCount} artifact{failureArtifactCount === 1 ? '' : 's'}
                         </span>
                       ) : null}
-                      {latestFailureArtifactPath ? (
+                      {latestFailureArtifactPath !== null ? (
                         <CopyButton
                           value={latestFailureArtifactPath}
                           variant='outline'
@@ -1086,17 +1093,17 @@ export default function ProductFormScans(): React.JSX.Element {
                         />
                       ) : null}
                     </div>
-                    {(latestOutcomeSummary?.message ?? fallbackFailureSummary?.message) ? (
+                    {(latestOutcomeSummary?.message ?? fallbackFailureSummary?.message) !== undefined && (latestOutcomeSummary?.message ?? fallbackFailureSummary?.message) !== null ? (
                       <p className='text-sm text-muted-foreground'>
                         {latestOutcomeSummary?.message ?? fallbackFailureSummary?.message}
                       </p>
                     ) : null}
-                    {(latestOutcomeSummary?.timingLabel ?? fallbackFailureSummary?.timingLabel) ? (
+                    {(latestOutcomeSummary?.timingLabel ?? fallbackFailureSummary?.timingLabel) !== undefined && (latestOutcomeSummary?.timingLabel ?? fallbackFailureSummary?.timingLabel) !== null ? (
                       <p className='text-xs text-muted-foreground'>
                         {latestOutcomeSummary?.timingLabel ?? fallbackFailureSummary?.timingLabel}
                       </p>
                     ) : null}
-                    {(latestOutcomeSummary?.url ?? fallbackFailureSummary?.url) ? (
+                    {(latestOutcomeSummary?.url ?? fallbackFailureSummary?.url) !== undefined && (latestOutcomeSummary?.url ?? fallbackFailureSummary?.url) !== null ? (
                       <a
                         href={latestOutcomeSummary?.url ?? fallbackFailureSummary?.url ?? undefined}
                         target='_blank'
@@ -1107,7 +1114,7 @@ export default function ProductFormScans(): React.JSX.Element {
                         <ExternalLink className='h-3.5 w-3.5' />
                       </a>
                     ) : null}
-                    {latestFailureArtifactHref ? (
+                    {latestFailureArtifactHref !== null ? (
                       <a
                         href={latestFailureArtifactHref}
                         target='_blank'
@@ -1121,10 +1128,10 @@ export default function ProductFormScans(): React.JSX.Element {
                   </div>
                 ) : null}
 
-                {recommendationReason ? (
+                {(recommendationReason ?? null) !== null ? (
                   <div
                     className={`space-y-1 rounded-md px-3 py-2 ${
-                      isAmazonScan && isRecommendedAmazonResult
+                      isAmazonScan === true && isRecommendedAmazonResult === true
                         ? 'border border-emerald-500/20 bg-emerald-500/5'
                         : supplierRecommendationSignal?.variant === 'preferred'
                           ? 'border border-cyan-500/20 bg-cyan-500/5'
@@ -1136,7 +1143,7 @@ export default function ProductFormScans(): React.JSX.Element {
                     <div className='flex flex-wrap items-center gap-2 text-xs'>
                       <span
                         className={`inline-flex items-center rounded-md px-2 py-0.5 font-medium ${
-                          isAmazonScan && isRecommendedAmazonResult
+                          isAmazonScan === true && isRecommendedAmazonResult === true
                             ? 'border border-emerald-500/20 text-emerald-300'
                             : supplierRecommendationSignal?.variant === 'preferred'
                               ? 'border border-cyan-500/20 text-cyan-300'
@@ -1145,16 +1152,16 @@ export default function ProductFormScans(): React.JSX.Element {
                             : 'border border-border/60 text-muted-foreground'
                         }`}
                       >
-                        {isAmazonScan && isRecommendedAmazonResult
+                        {isAmazonScan === true && isRecommendedAmazonResult === true
                           ? 'Recommended Amazon result'
-                          : !isAmazonScan
+                          : isAmazonScan === false
                             ? (supplierRecommendationSignal?.badgeLabel ?? '1688 supplier result')
-                          : isAmazonScan
+                          : isAmazonScan === true
                             ? 'Amazon result signal'
                             : '1688 supplier result'}
                       </span>
-                      {!isAmazonScan &&
-                      preferred1688SupplierRank != null &&
+                      {isAmazonScan === false &&
+                      preferred1688SupplierRank !== null &&
                       preferred1688SupplierRankCount > 1 ? (
                         <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
                           Rank {preferred1688SupplierRank} of {preferred1688SupplierRankCount}
@@ -1162,25 +1169,25 @@ export default function ProductFormScans(): React.JSX.Element {
                       ) : null}
                       <span className='font-medium text-foreground'>{recommendationReason}</span>
                     </div>
-                    {supplierApplyPolicySummary ? (
+                    {supplierApplyPolicySummary !== null ? (
                       <div className='flex flex-wrap items-center gap-2 text-xs'>
                         <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
                           Apply policy
                         </span>
                         <span
                           className={
-                            isBlocked1688ResultReviewed
+                            isBlocked1688ResultReviewed === true
                               ? 'font-medium text-muted-foreground'
                               : supplierApplyPolicySummary.tone === 'destructive'
                               ? 'font-medium text-destructive'
                               : 'font-medium text-amber-300'
                           }
                         >
-                          {isBlocked1688ResultReviewed
+                          {isBlocked1688ResultReviewed === true
                             ? 'Blocked result reviewed'
                             : supplierApplyPolicySummary.label}
                         </span>
-                        {blocked1688CandidateUrlsHref ? (
+                        {blocked1688CandidateUrlsHref !== null ? (
                           <a
                             href={`#${blocked1688CandidateUrlsHref}`}
                             className='text-primary underline-offset-2 hover:underline'
@@ -1188,7 +1195,7 @@ export default function ProductFormScans(): React.JSX.Element {
                             Review candidates
                           </a>
                         ) : null}
-                        {blocked1688MatchEvaluationHref ? (
+                        {blocked1688MatchEvaluationHref !== null ? (
                           <a
                             href={`#${blocked1688MatchEvaluationHref}`}
                             className='text-primary underline-offset-2 hover:underline'
@@ -1196,47 +1203,47 @@ export default function ProductFormScans(): React.JSX.Element {
                             Review evaluation
                           </a>
                         ) : null}
-                        {supplierApplyPolicySummary.blockActions ? (
+                        {supplierApplyPolicySummary.blockActions === true ? (
                           <button
                             type='button'
                             onClick={() =>
-                              isBlocked1688ResultReviewed
+                              isBlocked1688ResultReviewed === true
                                 ? clearBlockedScanReviewed(scan.id)
                                 : markBlockedScanReviewed(scan.id)
                             }
                             className='text-primary underline-offset-2 hover:underline'
                           >
-                            {isBlocked1688ResultReviewed ? 'Undo review' : 'Mark reviewed'}
+                            {isBlocked1688ResultReviewed === true ? 'Undo review' : 'Mark reviewed'}
                           </button>
                         ) : null}
                       </div>
                     ) : null}
-                    {isAmazonScan && hasAlternativeRecommendedAmazonResult ? (
+                    {isAmazonScan === true && hasAlternativeRecommendedAmazonResult === true ? (
                       <p className='text-sm text-muted-foreground'>
                         A stronger extracted Amazon run is available for this product.
                       </p>
-                    ) : isAmazonScan && preferredAmazonExtractedScans.length > 1 ? (
+                    ) : isAmazonScan === true && preferredAmazonExtractedScans.length > 1 ? (
                       <p className='text-sm text-muted-foreground'>
                         Preferred over other extracted Amazon runs for this product.
                       </p>
-                    ) : !isAmazonScan && supplierRecommendationSignal?.detail ? (
+                    ) : isAmazonScan === false && (supplierRecommendationSignal?.detail ?? null) !== null ? (
                       <div className='flex flex-wrap items-center gap-2 text-sm text-muted-foreground'>
-                        <p>{supplierRecommendationSignal.detail}</p>
-                        {supplierRecommendationSignal.variant === 'weaker' &&
-                        preferred1688SupplierResultHref ? (
+                        <p>{supplierRecommendationSignal?.detail}</p>
+                        {supplierRecommendationSignal?.variant === 'weaker' &&
+                        preferred1688SupplierResultHref !== null ? (
                           <span>
                             Preferred result: {preferred1688SupplierResultLabelWithRank ?? preferred1688SupplierResultLabel}
                           </span>
                         ) : null}
-                        {supplierRecommendationSignal.variant === 'weaker' &&
-                        preferred1688SupplierResultHref ? (
+                        {supplierRecommendationSignal?.variant === 'weaker' &&
+                        preferred1688SupplierResultHref !== null ? (
                           <a
                             href={`#${preferred1688SupplierResultHref}`}
                             className='text-primary underline-offset-2 hover:underline'
                           >
                             Open preferred: {preferred1688SupplierResultLabel}
                           </a>
-                        ) : supplierRecommendationSignal.variant === 'preferred' &&
+                        ) : supplierRecommendationSignal?.variant === 'preferred' &&
                           alternativePreferred1688SupplierResultLinks.length > 0 ? (
                           <>
                             <span>
@@ -1257,7 +1264,7 @@ export default function ProductFormScans(): React.JSX.Element {
                         ) : null}
                       </div>
                     ) : null}
-                    {recommendationRejectedBreakdown &&
+                    {recommendationRejectedBreakdown !== null &&
                     recommendationRejectedBreakdown.languageRejectedCount > 0 ? (
                       <p className='text-sm text-muted-foreground'>
                         Includes {recommendationRejectedBreakdown.languageRejectedCount} non-English
@@ -1269,7 +1276,7 @@ export default function ProductFormScans(): React.JSX.Element {
                   </div>
                 ) : null}
 
-                {!recommendationReason && supplierApplyPolicySummary ? (
+                {recommendationReason === null && supplierApplyPolicySummary !== null ? (
                   <div className='space-y-1 rounded-md border border-border/50 bg-background/70 px-3 py-2'>
                     <div className='flex flex-wrap items-center gap-2 text-xs'>
                       <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
@@ -1277,18 +1284,18 @@ export default function ProductFormScans(): React.JSX.Element {
                       </span>
                       <span
                         className={
-                          isBlocked1688ResultReviewed
+                          isBlocked1688ResultReviewed === true
                             ? 'font-medium text-muted-foreground'
                             : supplierApplyPolicySummary.tone === 'destructive'
                             ? 'font-medium text-destructive'
                             : 'font-medium text-amber-300'
                         }
                       >
-                        {isBlocked1688ResultReviewed
+                        {isBlocked1688ResultReviewed === true
                           ? 'Blocked result reviewed'
                           : supplierApplyPolicySummary.label}
                       </span>
-                      {blocked1688CandidateUrlsHref ? (
+                      {blocked1688CandidateUrlsHref !== null ? (
                         <a
                           href={`#${blocked1688CandidateUrlsHref}`}
                           className='text-primary underline-offset-2 hover:underline'
@@ -1296,7 +1303,7 @@ export default function ProductFormScans(): React.JSX.Element {
                           Review candidates
                         </a>
                       ) : null}
-                      {blocked1688MatchEvaluationHref ? (
+                      {blocked1688MatchEvaluationHref !== null ? (
                         <a
                           href={`#${blocked1688MatchEvaluationHref}`}
                           className='text-primary underline-offset-2 hover:underline'
@@ -1304,17 +1311,17 @@ export default function ProductFormScans(): React.JSX.Element {
                           Review evaluation
                         </a>
                       ) : null}
-                      {supplierApplyPolicySummary.blockActions ? (
+                      {supplierApplyPolicySummary.blockActions === true ? (
                         <button
                           type='button'
                           onClick={() =>
-                            isBlocked1688ResultReviewed
+                            isBlocked1688ResultReviewed === true
                               ? clearBlockedScanReviewed(scan.id)
                               : markBlockedScanReviewed(scan.id)
                           }
                           className='text-primary underline-offset-2 hover:underline'
                         >
-                          {isBlocked1688ResultReviewed ? 'Undo review' : 'Mark reviewed'}
+                          {isBlocked1688ResultReviewed === true ? 'Undo review' : 'Mark reviewed'}
                         </button>
                       ) : null}
                     </div>
@@ -1322,13 +1329,13 @@ export default function ProductFormScans(): React.JSX.Element {
                   </div>
                 ) : null}
 
-                {hasNewerApproved1688Result ? (
+                {hasNewerApproved1688Result === true ? (
                   <div className='space-y-2 rounded-md border border-border/40 bg-muted/10 px-3 py-2'>
                     <p className='text-sm text-muted-foreground'>
                       A newer AI-approved 1688 supplier match exists for this product, so this reviewed
                       blocked result is collapsed by default.
                     </p>
-                    {preferred1688SupplierResultHref ? (
+                    {preferred1688SupplierResultHref !== null ? (
                       <p className='text-sm text-muted-foreground'>
                         Current approved result: {preferred1688SupplierResultLabelWithRank ?? preferred1688SupplierResultLabel}
                       </p>
@@ -1341,11 +1348,11 @@ export default function ProductFormScans(): React.JSX.Element {
                         onClick={() => toggleReviewedBlockedScan(scan.id)}
                         className='h-7 px-2 text-xs'
                       >
-                        {shouldCollapseReviewedBlocked1688
+                        {shouldCollapseReviewedBlocked1688 === true
                           ? 'Show reviewed blocked result'
                           : 'Hide reviewed blocked result'}
                       </Button>
-                      {preferred1688SupplierResultHref ? (
+                      {preferred1688SupplierResultHref !== null ? (
                         <a
                           href={`#${preferred1688SupplierResultHref}`}
                           className='inline-flex h-7 items-center text-xs text-primary underline-offset-2 hover:underline'
@@ -1357,52 +1364,52 @@ export default function ProductFormScans(): React.JSX.Element {
                   </div>
                 ) : null}
 
-                {!shouldCollapseReviewedBlocked1688 && scan.title ? (
+                {shouldCollapseReviewedBlocked1688 === false && (scan.title ?? null) !== null ? (
                   <p className='text-sm font-medium'>{scan.title}</p>
                 ) : null}
-                {!shouldCollapseReviewedBlocked1688 && !isAmazonScan && supplierSummary ? (
+                {shouldCollapseReviewedBlocked1688 === false && isAmazonScan === false && supplierSummary !== '' ? (
                   <p className='text-xs text-muted-foreground'>{supplierSummary}</p>
                 ) : null}
-                {!shouldCollapseReviewedBlocked1688 ? renderScanMeta(scan) : null}
-                {!shouldCollapseReviewedBlocked1688 && scan.url ? (
+                {shouldCollapseReviewedBlocked1688 === false ? renderScanMeta(scan) : null}
+                {shouldCollapseReviewedBlocked1688 === false && (scan.url ?? null) !== null ? (
                   <a
-                    href={scan.url}
+                    href={scan.url ?? undefined}
                     target='_blank'
                     rel='noopener noreferrer'
                     className='inline-flex items-center gap-1 text-xs text-primary underline-offset-2 hover:underline'
                   >
-                    {isAmazonScan ? 'Open Amazon Result' : 'Open 1688 Result'}
+                    {isAmazonScan === true ? 'Open Amazon Result' : 'Open 1688 Result'}
                     <ExternalLink className='h-3.5 w-3.5' />
                   </a>
                 ) : null}
-                {!shouldCollapseReviewedBlocked1688 && scan.description ? (
+                {shouldCollapseReviewedBlocked1688 === false && (scan.description ?? null) !== null ? (
                   <p className='line-clamp-3 text-sm text-muted-foreground'>{scan.description}</p>
                 ) : null}
-                {!shouldCollapseReviewedBlocked1688 && infoMessage ? (
+                {shouldCollapseReviewedBlocked1688 === false && (infoMessage ?? null) !== null ? (
                   <p className='text-sm text-muted-foreground'>{infoMessage}</p>
                 ) : null}
-                {!shouldCollapseReviewedBlocked1688 && errorMessage ? (
+                {shouldCollapseReviewedBlocked1688 === false && (errorMessage ?? null) !== null ? (
                   <p className='text-sm text-destructive'>{errorMessage}</p>
                 ) : null}
-                {!shouldCollapseReviewedBlocked1688 && !isAmazonScan ? (
+                {shouldCollapseReviewedBlocked1688 === false && isAmazonScan === false ? (
                   <ProductScan1688Details
                     scan={scan}
                     scanId={scan.id}
                     connectionLabel={resolvedConnectionLabel}
                   />
                 ) : null}
-                {!shouldCollapseReviewedBlocked1688 && !isAmazonScan ? (
+                {shouldCollapseReviewedBlocked1688 === false && isAmazonScan === false ? (
                   <ProductScan1688ApplyPanel
                     scan={scan}
                     formBindings={supplier1688FormBindings}
                   />
                 ) : null}
-                {!shouldCollapseReviewedBlocked1688 && isAmazonScan && extractedFieldsExpanded ? (
+                {shouldCollapseReviewedBlocked1688 === false && isAmazonScan === true && extractedFieldsExpanded === true ? (
                   <div className='space-y-3'>
                     <ProductScanAmazonQualitySummary scan={scan} />
                     <ProductScanAmazonProvenanceSummary scan={scan} />
                     <div className='flex flex-wrap gap-2'>
-                      {scan.asin ? (
+                      {(scan.asin ?? null) !== null ? (
                         <Button
                           type='button'
                           variant='outline'
@@ -1414,24 +1421,24 @@ export default function ProductFormScans(): React.JSX.Element {
                           Use ASIN
                         </Button>
                       ) : null}
-                      {scan.amazonDetails?.ean ? (
+                      {(scan.amazonDetails?.ean ?? null) !== null ? (
                         <Button
                           type='button'
                           variant='outline'
                           size='sm'
-                          disabled={currentEan === scan.amazonDetails.ean}
+                          disabled={currentEan === scan.amazonDetails?.ean}
                           onClick={() => applyProductFormValue('ean', scan.amazonDetails?.ean ?? '')}
                           className='h-7 px-2 text-xs'
                         >
                           Use EAN
                         </Button>
                       ) : null}
-                      {scan.amazonDetails?.gtin ? (
+                      {(scan.amazonDetails?.gtin ?? null) !== null ? (
                         <Button
                           type='button'
                           variant='outline'
                           size='sm'
-                          disabled={currentGtin === scan.amazonDetails.gtin}
+                          disabled={currentGtin === scan.amazonDetails?.gtin}
                           onClick={() =>
                             applyProductFormValue('gtin', scan.amazonDetails?.gtin ?? '')
                           }
@@ -1440,24 +1447,24 @@ export default function ProductFormScans(): React.JSX.Element {
                           Use GTIN
                         </Button>
                       ) : null}
-                      {parsedWeight != null ? (
+                      {parsedWeight !== null ? (
                         <Button
                           type='button'
                           variant='outline'
                           size='sm'
-                          disabled={!canApplyWeight}
+                          disabled={canApplyWeight === false}
                           onClick={() => applyProductFormValue('weight', parsedWeight)}
                           className='h-7 px-2 text-xs'
                         >
                           Use Weight
                         </Button>
                       ) : null}
-                      {parsedDimensions ? (
+                      {parsedDimensions !== null ? (
                         <Button
                           type='button'
                           variant='outline'
                           size='sm'
-                          disabled={!canApplyDimensions}
+                          disabled={canApplyDimensions === false}
                           onClick={() => {
                             applyProductFormValue('sizeLength', parsedDimensions.sizeLength);
                             applyProductFormValue('sizeWidth', parsedDimensions.sizeWidth);
@@ -1517,7 +1524,7 @@ export default function ProductFormScans(): React.JSX.Element {
                                   type='button'
                                   variant='ghost'
                                   size='sm'
-                                  disabled={!isPending}
+                                  disabled={isPending === false}
                                   onClick={() => applyMatchedAttributeMappings([mapping])}
                                   aria-label={`Apply ${mapping.sourceLabel} mapping`}
                                   className='h-6 px-2 text-[11px]'
@@ -1557,10 +1564,10 @@ export default function ProductFormScans(): React.JSX.Element {
                     <ProductScanAmazonDetails scan={scan} />
                   </div>
                 ) : null}
-                {!shouldCollapseReviewedBlocked1688 && diagnosticsExpanded ? (
+                {shouldCollapseReviewedBlocked1688 === false && diagnosticsExpanded === true ? (
                   <ProductScanDiagnostics scan={scan} />
                 ) : null}
-                {!shouldCollapseReviewedBlocked1688 && isExpanded && scanSteps.length > 0 ? (
+                {shouldCollapseReviewedBlocked1688 === false && isExpanded === true && scanSteps.length > 0 ? (
                   <ProductScanSteps steps={scanSteps} />
                 ) : null}
               </section>
@@ -1570,9 +1577,9 @@ export default function ProductFormScans(): React.JSX.Element {
       )}
 
       <ProductAmazonScanModal
-        isOpen={scanModalProvider != null}
+        isOpen={scanModalProvider !== null}
         onClose={() => setScanModalProvider(null)}
-        productIds={productId ? [productId] : []}
+        productIds={productId !== '' ? [productId] : []}
         products={product ? [product] : []}
         provider={scanModalProvider ?? 'amazon'}
       />

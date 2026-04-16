@@ -18,7 +18,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   const products = data.products;
 
   if (!Array.isArray(products)) {
-    throw badRequestError('Invalid payload: The "products" field must be an array of product objects.', {
+    throw badRequestError('Products must be an array', {
       receivedType: typeof products,
     });
   }

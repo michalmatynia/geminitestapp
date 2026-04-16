@@ -152,6 +152,7 @@ export const useKangurLessonTemplate = (
   componentId: KangurLessonComponentId | null,
   options?: Omit<LessonTemplatesQueryOptions, 'componentId'>
 ): SingleQuery<KangurLessonTemplate | null> => {
+  'use no memo';
   const routeLocale = useLocale();
   const resolvedLocale = resolveLessonTemplatesLocale(routeLocale, options?.locale);
 

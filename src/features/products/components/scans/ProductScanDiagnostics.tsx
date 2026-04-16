@@ -74,7 +74,7 @@ const hasText = (value: string | null | undefined): value is string =>
   typeof value === 'string' && value.trim().length > 0;
 
 const formatLabel = (value: string | null | undefined): string | null => {
-  if (!hasText(value)) {
+  if (hasText(value) === false) {
     return null;
   }
 
@@ -85,7 +85,7 @@ const formatLabel = (value: string | null | undefined): string | null => {
 };
 
 const formatTimestamp = (value: string | null | undefined): string | null => {
-  if (!hasText(value)) {
+  if (hasText(value) === false) {
     return null;
   }
 
@@ -98,53 +98,60 @@ const formatTimestamp = (value: string | null | undefined): string | null => {
 };
 
 const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
-  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+  value !== null && value !== undefined && typeof value === 'object' && Array.isArray(value) === false;
 
 const readOptionalBoolean = (value: unknown): boolean | null =>
   typeof value === 'boolean' ? value : null;
 
 const normalizeFailureArtifacts = (value: unknown): ScanFailureArtifact[] => {
-  if (!Array.isArray(value)) {
+  if (Array.isArray(value) === false) {
     return [];
   }
 
-  return value
+  return (value as unknown[])
     .map((entry) => {
-      if (!isObjectRecord(entry)) {
+      if (isObjectRecord(entry) === false) {
         return null;
       }
 
-      const name = hasText(String(entry['name'] ?? '')) ? String(entry['name']).trim() : null;
-      const path = hasText(String(entry['path'] ?? '')) ? String(entry['path']).trim() : null;
-      if (!name || !path) {
+      const entryRecord = entry;
+      const rawName = entryRecord['name'];
+      const rawPath = entryRecord['path'];
+      const name = hasText(String(rawName ?? '')) ? String(rawName).trim() : null;
+      const path = hasText(String(rawPath ?? '')) ? String(rawPath).trim() : null;
+      if (name === null || path === null) {
         return null;
       }
 
+      const rawKind = entryRecord['kind'];
+      const rawMimeType = entryRecord['mimeType'];
       return {
         name,
         path,
-        kind: hasText(String(entry['kind'] ?? '')) ? String(entry['kind']).trim() : null,
-        mimeType: hasText(String(entry['mimeType'] ?? ''))
-          ? String(entry['mimeType']).trim()
+        kind: hasText(String(rawKind ?? '')) ? String(rawKind).trim() : null,
+        mimeType: hasText(String(rawMimeType ?? ''))
+          ? String(rawMimeType).trim()
           : null,
       };
     })
-    .filter((entry): entry is ScanFailureArtifact => Boolean(entry));
+    .filter((entry): entry is ScanFailureArtifact => entry !== null);
 };
 
 const normalizeAmazonAiStages = (value: unknown): AmazonAiStageEvidence[] => {
-  if (!Array.isArray(value)) {
+  if (Array.isArray(value) === false) {
     return [];
   }
 
-  return value
+  return (value as unknown[])
     .map((entry) => {
-      if (!isObjectRecord(entry)) {
+      if (isObjectRecord(entry) === false) {
         return null;
       }
 
-      const stage = hasText(String(entry['stage'] ?? ''))
-        ? String(entry['stage']).trim()
+      const entryRecord = entry;
+      const rawStage = entryRecord['stage'];
+      const stage = hasText(String(rawStage ?? ''))
+        ? String(rawStage).trim()
         : null;
       if (
         stage !== 'candidate_triage' &&
@@ -154,14 +161,23 @@ const normalizeAmazonAiStages = (value: unknown): AmazonAiStageEvidence[] => {
         return null;
       }
 
-      const thresholdValue = entry['threshold'];
-      const candidateRankBeforeValue = entry['candidateRankBefore'];
-      const candidateRankAfterValue = entry['candidateRankAfter'];
-      const languageAcceptedValue = entry['languageAccepted'];
+      const thresholdValue = entryRecord['threshold'];
+      const candidateRankBeforeValue = entryRecord['candidateRankBefore'];
+      const candidateRankAfterValue = entryRecord['candidateRankAfter'];
+      const languageAcceptedValue = entryRecord['languageAccepted'];
+      const statusValue = entryRecord['status'];
+      const modelValue = entryRecord['model'];
+      const recommendedActionValue = entryRecord['recommendedAction'];
+      const rejectionCategoryValue = entryRecord['rejectionCategory'];
+      const pageLanguageValue = entryRecord['pageLanguage'];
+      const topReasonsValue = entryRecord['topReasons'];
+      const providerValue = entryRecord['provider'];
+      const evaluatedAtValue = entryRecord['evaluatedAt'];
+
       return {
         stage,
-        status: hasText(String(entry['status'] ?? '')) ? String(entry['status']).trim() : null,
-        model: hasText(String(entry['model'] ?? '')) ? String(entry['model']).trim() : null,
+        status: hasText(String(statusValue ?? '')) ? String(statusValue).trim() : null,
+        model: hasText(String(modelValue ?? '')) ? String(modelValue).trim() : null,
         threshold:
           typeof thresholdValue === 'number' && Number.isFinite(thresholdValue)
             ? thresholdValue
@@ -174,26 +190,33 @@ const normalizeAmazonAiStages = (value: unknown): AmazonAiStageEvidence[] => {
           typeof candidateRankAfterValue === 'number' && Number.isFinite(candidateRankAfterValue)
             ? candidateRankAfterValue
             : null,
-        recommendedAction: hasText(String(entry['recommendedAction'] ?? ''))
-          ? String(entry['recommendedAction']).trim()
+        recommendedAction: hasText(String(recommendedActionValue ?? ''))
+          ? String(recommendedActionValue).trim()
           : null,
-        rejectionCategory: hasText(String(entry['rejectionCategory'] ?? ''))
-          ? String(entry['rejectionCategory']).trim()
+        rejectionCategory: hasText(String(rejectionCategoryValue ?? ''))
+          ? String(rejectionCategory).trim()
           : null,
-        pageLanguage: hasText(String(entry['pageLanguage'] ?? ''))
-          ? String(entry['pageLanguage']).trim()
+        pageLanguage: hasText(String(pageLanguageValue ?? ''))
+          ? String(pageLanguageValue).trim()
           : null,
         languageAccepted:
           typeof languageAcceptedValue === 'boolean' ? languageAcceptedValue : null,
-        topReasons: Array.isArray(entry['topReasons'])
-          ? entry['topReasons']
+        topReasons: Array.isArray(topReasonsValue)
+          ? (topReasonsValue as unknown[])
               .map((reason) => (typeof reason === 'string' ? reason.trim() : ''))
               .filter((reason) => reason.length > 0)
               .slice(0, 3)
           : [],
-        provider: hasText(String(entry['provider'] ?? ''))
-          ? String(entry['provider']).trim()
+        provider: hasText(String(providerValue ?? ''))
+          ? String(providerValue).trim()
           : null,
+        evaluatedAt: hasText(String(evaluatedAtValue ?? ''))
+          ? String(evaluatedAtValue).trim()
+          : null,
+      } satisfies AmazonAiStageEvidence;
+    })
+    .filter((entry): entry is AmazonAiStageEvidence => entry !== null);
+};
         evaluatedAt: hasText(String(entry['evaluatedAt'] ?? ''))
           ? String(entry['evaluatedAt']).trim()
           : null,
@@ -522,24 +545,24 @@ export function ProductScanDiagnostics(props: {
   return (
     <div className='space-y-3 rounded-md border border-border/60 bg-muted/20 px-3 py-3'>
       <div className='flex flex-wrap gap-2'>
-        {diagnostics.runId ? (
+        {(diagnostics.runId ?? null) !== null ? (
           <span className='inline-flex items-center rounded-md border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium'>
-            Run {diagnostics.runId}
+            Run {diagnostics.runId!}
           </span>
         ) : null}
-        {diagnostics.runStatus ? (
+        {(diagnostics.runStatus ?? null) !== null ? (
           <span className='inline-flex items-center rounded-md border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium'>
-            {formatLabel(diagnostics.runStatus)}
+            {formatLabel(diagnostics.runStatus!)}
           </span>
         ) : null}
-        {diagnostics.imageSearchProvider ? (
+        {(diagnostics.imageSearchProvider ?? null) !== null ? (
           <span className='inline-flex items-center rounded-md border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium'>
-            {formatAmazonImageSearchProvider(diagnostics.imageSearchProvider)}
+            {formatAmazonImageSearchProvider(diagnostics.imageSearchProvider!)}
           </span>
         ) : null}
-        {diagnostics.latestStage ? (
+        {(diagnostics.latestStage ?? null) !== null ? (
           <span className='inline-flex items-center rounded-md border border-amber-500/40 bg-background/70 px-2.5 py-1 text-xs font-medium text-amber-300'>
-            Stage: {formatLabel(diagnostics.latestStage)}
+            Stage: {formatLabel(diagnostics.latestStage!)}
           </span>
         ) : null}
         {diagnostics.failureArtifacts.length > 0 ? (
@@ -550,14 +573,14 @@ export function ProductScanDiagnostics(props: {
         ) : null}
       </div>
 
-      {diagnostics.latestStageUrl ? (
+      {(diagnostics.latestStageUrl ?? null) !== null ? (
         <div className='space-y-1'>
           <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
             Latest Stage URL
           </p>
           <div className='flex flex-wrap items-center gap-2'>
             <a
-              href={diagnostics.latestStageUrl}
+              href={diagnostics.latestStageUrl!}
               target='_blank'
               rel='noopener noreferrer'
               className='inline-flex items-center gap-1 text-xs text-primary underline-offset-2 hover:underline'
@@ -566,7 +589,7 @@ export function ProductScanDiagnostics(props: {
               <ExternalLink className='h-3.5 w-3.5' />
             </a>
             <CopyButton
-              value={diagnostics.latestStageUrl}
+              value={diagnostics.latestStageUrl!}
               variant='outline'
               size='sm'
               showText
@@ -577,19 +600,19 @@ export function ProductScanDiagnostics(props: {
         </div>
       ) : null}
 
-      {diagnostics.runtimePosture ? (
+      {diagnostics.runtimePosture !== null ? (
         <div className='space-y-2'>
           <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
             Runtime Posture
           </p>
           <div className='grid gap-2 sm:grid-cols-2'>
             {[
-              { label: 'Browser', value: formatRuntimePostureBrowser(diagnostics.runtimePosture) },
-              { label: 'Identity', value: formatRuntimePostureIdentity(diagnostics.runtimePosture) },
-              { label: 'Proxy', value: formatRuntimePostureProxy(diagnostics.runtimePosture) },
-              { label: 'Sticky state', value: formatRuntimePostureStorage(diagnostics.runtimePosture) },
+              { label: 'Browser', content: formatRuntimePostureBrowser(diagnostics.runtimePosture!) },
+              { label: 'Identity', content: formatRuntimePostureIdentity(diagnostics.runtimePosture!) },
+              { label: 'Proxy', content: formatRuntimePostureProxy(diagnostics.runtimePosture!) },
+              { label: 'Sticky state', content: formatRuntimePostureStorage(diagnostics.runtimePosture!) },
             ]
-              .filter((entry): entry is { label: string; value: string } => hasText(entry.value))
+              .filter((entry): entry is { label: string; content: string } => hasText(entry.content))
               .map((entry) => (
                 <div
                   key={entry.label}
@@ -598,36 +621,36 @@ export function ProductScanDiagnostics(props: {
                   <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
                     {entry.label}
                   </p>
-                  <p className='break-words text-sm'>{entry.value}</p>
+                  <p className='break-words text-sm'>{entry.content}</p>
                 </div>
               ))}
           </div>
         </div>
       ) : null}
 
-      {evaluationPolicySummary ? (
+      {evaluationPolicySummary !== null ? (
         <div className='space-y-2'>
           <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
             AI Evaluator Policy
           </p>
           <div className='grid gap-2 sm:grid-cols-2'>
             {[
-              { label: 'Execution', value: evaluationPolicySummary.executionLabel },
-              { label: 'Model source', value: evaluationPolicySummary.modelSource },
-              { label: 'Model', value: evaluationPolicySummary.modelLabel },
-              { label: 'Threshold', value: evaluationPolicySummary.thresholdLabel },
-              { label: 'Evaluation scope', value: evaluationPolicySummary.scopeLabel },
+              { label: 'Execution', content: evaluationPolicySummary!.executionLabel },
+              { label: 'Model source', content: evaluationPolicySummary!.modelSource },
+              { label: 'Model', content: evaluationPolicySummary!.modelLabel },
+              { label: 'Threshold', content: evaluationPolicySummary!.thresholdLabel },
+              { label: 'Evaluation scope', content: evaluationPolicySummary!.scopeLabel },
               {
                 label: 'Similarity decision',
-                value: evaluationPolicySummary.similarityDecisionLabel,
+                content: evaluationPolicySummary!.similarityDecisionLabel,
               },
-              { label: 'Language gate', value: evaluationPolicySummary.languageGateLabel },
+              { label: 'Language gate', content: evaluationPolicySummary!.languageGateLabel },
               {
                 label: 'Language detection',
-                value: evaluationPolicySummary.languageDetectionLabel,
+                content: evaluationPolicySummary!.languageDetectionLabel,
               },
             ]
-              .filter((entry): entry is { label: string; value: string } => hasText(entry.value))
+              .filter((entry): entry is { label: string; content: string } => hasText(entry.content))
               .map((entry) => (
                 <div
                   key={entry.label}
@@ -636,7 +659,7 @@ export function ProductScanDiagnostics(props: {
                   <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
                     {entry.label}
                   </p>
-                  <p className='break-words text-sm'>{entry.value}</p>
+                  <p className='break-words text-sm'>{entry.content}</p>
                 </div>
               ))}
           </div>

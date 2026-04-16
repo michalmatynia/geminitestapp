@@ -486,11 +486,24 @@ export type DatabaseEngineMongoLastSync = z.infer<
   typeof databaseEngineMongoLastSyncSchema
 >;
 
+export const databaseEngineMongoSyncInProgressSchema = z.object({
+  direction: databaseEngineMongoSyncDirectionSchema,
+  source: mongoSourceSchema,
+  target: mongoSourceSchema,
+  acquiredAt: z.string(),
+  pid: z.number().int().nonnegative(),
+});
+
+export type DatabaseEngineMongoSyncInProgress = z.infer<
+  typeof databaseEngineMongoSyncInProgressSchema
+>;
+
 export const databaseEngineMongoSourceStateSchema = z.object({
   timestamp: z.string(),
   activeSource: mongoSourceSchema.nullable(),
   defaultSource: mongoSourceSchema.nullable(),
   lastSync: databaseEngineMongoLastSyncSchema.nullable(),
+  syncInProgress: databaseEngineMongoSyncInProgressSchema.nullable().optional(),
   local: databaseEngineMongoSourceEntrySchema,
   cloud: databaseEngineMongoSourceEntrySchema,
   canSwitch: z.boolean(),

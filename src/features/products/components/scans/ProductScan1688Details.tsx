@@ -95,18 +95,18 @@ const resolveSupplierEvaluationDetail = (
     | undefined
 ): string | null => {
   const evaluation = scan?.supplierEvaluation;
-  if (!evaluation) {
+  if (evaluation === undefined || evaluation === null) {
     return null;
   }
 
-  const mismatch = evaluation.mismatches[0] ?? null;
-  const reason = evaluation.reasons[0] ?? null;
+  const mismatch = (evaluation.mismatches[0] ?? null) !== null ? evaluation.mismatches[0] : null;
+  const reason = (evaluation.reasons[0] ?? null) !== null ? evaluation.reasons[0] : null;
   const confidence =
     typeof evaluation.confidence === 'number' && Number.isFinite(evaluation.confidence)
       ? `Confidence ${Math.round(evaluation.confidence * 100)}%`
       : null;
 
-  return mismatch ?? reason ?? evaluation.error ?? confidence ?? 'Review the extracted supplier details before applying them to the product form.';
+  return mismatch ?? reason ?? ((evaluation.error ?? null) !== null ? evaluation.error : null) ?? confidence ?? 'Review the extracted supplier details before applying them to the product form.';
 };
 
 const formatTimestamp = (value: string | null | undefined): string | null => {
@@ -132,7 +132,7 @@ const normalizeDomIdFragment = (value: string | null | undefined): string | null
 };
 
 const toRecord = (value: unknown): Record<string, unknown> | null =>
-  value != null && typeof value === 'object' && !Array.isArray(value)
+  value !== null && value !== undefined && typeof value === 'object' && Array.isArray(value) === false
     ? (value as Record<string, unknown>)
     : null;
 
@@ -142,7 +142,7 @@ const resolveSupplierCandidateUrls = (
     | null
     | undefined
 ): string[] => {
-  if (!scan) {
+  if (scan === undefined || scan === null) {
     return [];
   }
 
@@ -180,19 +180,18 @@ export const resolveProductScan1688QualitySummary = (
     | null
     | undefined
 ): ProductScan1688QualitySummaryValue | null => {
-  if (!scan) {
+  if (scan === undefined || scan === null) {
     return null;
   }
 
   const details = scan.supplierDetails;
   const evaluation = scan.supplierEvaluation;
-  const hasPricing = Boolean(
-    details?.priceText ||
-      details?.priceRangeText ||
-      (Array.isArray(details?.prices) && details.prices.length > 0)
-  );
-  const hasImages = Boolean(Array.isArray(details?.images) && details.images.length > 0);
-  const hasStoreLink = Boolean(details?.supplierStoreUrl);
+  const hasPricing =
+    (details?.priceText ?? null) !== null ||
+    (details?.priceRangeText ?? null) !== null ||
+    (Array.isArray(details?.prices) && details.prices.length > 0);
+  const hasImages = Array.isArray(details?.images) && details.images.length > 0;
+  const hasStoreLink = (details?.supplierStoreUrl ?? null) !== null;
 
   if (evaluation?.status === 'approved') {
     return {
@@ -203,7 +202,7 @@ export const resolveProductScan1688QualitySummary = (
     };
   }
 
-  if (evaluation?.status === 'skipped' && evaluation.proceed) {
+  if (evaluation?.status === 'skipped' && evaluation.proceed === true) {
     return {
       primaryLabel: 'Deterministic supplier match',
       hasPricing,
@@ -212,7 +211,12 @@ export const resolveProductScan1688QualitySummary = (
     };
   }
 
-  if (details?.supplierProductUrl || details?.supplierName || hasPricing || hasImages) {
+  if (
+    (details?.supplierProductUrl ?? null) !== null ||
+    (details?.supplierName ?? null) !== null ||
+    hasPricing === true ||
+    hasImages === true
+  ) {
     return {
       primaryLabel: 'Heuristic supplier match',
       hasPricing,
@@ -221,7 +225,11 @@ export const resolveProductScan1688QualitySummary = (
     };
   }
 
-  if (scan.supplierProbe?.candidateUrl || scan.supplierProbe?.canonicalUrl || scan.supplierProbe?.pageTitle) {
+  if (
+    (scan.supplierProbe?.candidateUrl ?? null) !== null ||
+    (scan.supplierProbe?.canonicalUrl ?? null) !== null ||
+    (scan.supplierProbe?.pageTitle ?? null) !== null
+  ) {
     return {
       primaryLabel: 'Supplier probe',
       hasPricing,
@@ -243,7 +251,7 @@ export const resolve1688ScanRecommendationReason = (
     | undefined
 ): string | null => {
   const quality = resolveProductScan1688QualitySummary(scan);
-  if (!quality) {
+  if (quality === null) {
     return null;
   }
 
@@ -256,13 +264,13 @@ export const resolve1688ScanRecommendationReason = (
   }
 
   if (quality.primaryLabel === 'Heuristic supplier match') {
-    if (quality.hasPricing && quality.hasImages) {
+    if (quality.hasPricing === true && quality.hasImages === true) {
       return 'Supplier match with pricing and images';
     }
-    if (quality.hasPricing) {
+    if (quality.hasPricing === true) {
       return 'Supplier match with pricing';
     }
-    if (quality.hasImages) {
+    if (quality.hasImages === true) {
       return 'Supplier match with images';
     }
     return 'Heuristic supplier match';
@@ -278,7 +286,7 @@ export const resolveProductScan1688ApplyPolicySummary = (
     | undefined
 ): ProductScan1688ApplyPolicySummaryValue | null => {
   const evaluation = scan?.supplierEvaluation;
-  if (!evaluation) {
+  if (evaluation === undefined || evaluation === null) {
     return null;
   }
 
@@ -288,7 +296,7 @@ export const resolveProductScan1688ApplyPolicySummary = (
     return {
       tone: 'destructive',
       label: 'Apply blocked by AI rejection',
-      detail: detail ?? 'The supplier candidate was rejected by the 1688 evaluator.',
+      detail: (detail ?? null) !== null ? detail! : 'The supplier candidate was rejected by the 1688 evaluator.',
       blockActions: true,
     };
   }
@@ -297,7 +305,7 @@ export const resolveProductScan1688ApplyPolicySummary = (
     return {
       tone: 'warning',
       label: 'Manual review after AI failure',
-      detail: detail ?? 'The 1688 evaluator failed. Review the extracted supplier details manually.',
+      detail: (detail ?? null) !== null ? detail! : 'The 1688 evaluator failed. Review the extracted supplier details manually.',
       blockActions: false,
     };
   }
@@ -307,7 +315,7 @@ export const resolveProductScan1688ApplyPolicySummary = (
       tone: 'warning',
       label: 'Manual review recommended',
       detail:
-        detail ?? 'The supplier candidate was not auto-approved. Review the extracted details before applying them.',
+        (detail ?? null) !== null ? detail! : 'The supplier candidate was not auto-approved. Review the extracted details before applying them.',
       blockActions: false,
     };
   }
@@ -324,17 +332,17 @@ export const resolveProductScan1688RecommendationSignal = ({
   hasAlternativeMeaningfulResult?: boolean;
   hasStrongerAlternative?: boolean;
 } = {}): ProductScan1688RecommendationSignalValue => {
-  if (isPreferred) {
+  if (isPreferred === true) {
     return {
       variant: 'preferred',
       badgeLabel: 'Preferred 1688 supplier result',
-      detail: hasAlternativeMeaningfulResult
+      detail: hasAlternativeMeaningfulResult === true
         ? 'Preferred over other 1688 supplier results for this product.'
         : null,
     };
   }
 
-  if (hasStrongerAlternative) {
+  if (hasStrongerAlternative === true) {
     return {
       variant: 'weaker',
       badgeLabel: 'Weaker 1688 supplier result',
@@ -377,7 +385,7 @@ const resolveProductScan1688PreferenceRank = (
     | undefined
 ): ProductScan1688PreferenceRank => {
   const quality = resolveProductScan1688QualitySummary(scan);
-  if (!quality) {
+  if (quality === null) {
     return null;
   }
 
@@ -447,7 +455,7 @@ export const resolvePreferred1688SupplierScans = (
         >;
         rank: Exclude<ProductScan1688PreferenceRank, null>;
         timestampMs: number;
-      } => entry.rank != null && entry.rank < 3
+      } => entry.rank !== null && entry.rank < 3
     )
     .sort((left, right) => {
       if (left.rank !== right.rank) {
@@ -484,7 +492,7 @@ export const hasNewerApproved1688Scan = (
 
   const normalizedScanId = scanId.trim();
   const targetScan = scans.find((scan) => scan.id === normalizedScanId && scan.provider === '1688');
-  if (!targetScan) {
+  if (targetScan === undefined) {
     return false;
   }
 
@@ -514,10 +522,10 @@ export const resolveProductScan1688RankingSummary = (
     count: preferredScans.length,
     isPreferred: rank === 1 && preferredScanId === normalizedScanId,
     hasStrongerAlternative:
-      rank != null && preferredScanId != null && preferredScanId !== normalizedScanId,
+      rank !== null && preferredScanId !== null && preferredScanId !== normalizedScanId,
     preferredScanId,
     alternativeScanIds:
-      rank != null
+      rank !== null
         ? preferredScans
             .filter((preferredScan) => preferredScan.id !== normalizedScanId)
             .map((preferredScan) => preferredScan.id)
@@ -531,11 +539,14 @@ export const resolveProductScan1688ResultLabel = (
     | null
     | undefined
 ): string => {
+  if (scan === undefined || scan === null) {
+    return 'Scan result';
+  }
   return (
-    scan?.title?.trim() ||
-    scan?.supplierDetails?.supplierName?.trim() ||
-    scan?.supplierProbe?.pageTitle?.trim() ||
-    scan?.id ||
+    (scan.title?.trim() ?? '') !== '' ? scan.title!.trim() :
+    (scan.supplierDetails?.supplierName?.trim() ?? '') !== '' ? scan.supplierDetails!.supplierName!.trim() :
+    (scan.supplierProbe?.pageTitle?.trim() ?? '') !== '' ? scan.supplierProbe!.pageTitle!.trim() :
+    scan.id ||
     'Scan result'
   );
 };
@@ -577,7 +588,7 @@ const buildProductScan1688ComparisonTarget = (
     id: scan.id,
     label,
     rank,
-    labelWithRank: rankLabel ? `${label} (${rankLabel})` : label,
+    labelWithRank: (rankLabel ?? null) !== null ? `${label} (${rankLabel})` : label,
   };
 };
 
@@ -592,7 +603,7 @@ export const resolveProductScan1688ComparisonTargets = (
 } => {
   const count = preferredScans.length;
   const preferredTarget =
-    preferredScans[0] != null ? buildProductScan1688ComparisonTarget(preferredScans[0], 1, count) : null;
+    preferredScans[0] !== undefined && preferredScans[0] !== null ? buildProductScan1688ComparisonTarget(preferredScans[0], 1, count) : null;
   const normalizedCurrentScanId = typeof currentScanId === 'string' ? currentScanId.trim() : '';
 
   const alternativeTargets = preferredScans
@@ -613,7 +624,7 @@ export const buildProductScan1688SectionId = (
   section: ProductScan1688SectionKey
 ): string | null => {
   const normalizedScanId = normalizeDomIdFragment(scanId);
-  return normalizedScanId ? `product-scan-1688-${normalizedScanId}-${section}` : null;
+  return (normalizedScanId ?? null) !== null ? `product-scan-1688-${normalizedScanId}-${section}` : null;
 };
 
 export function ProductScan1688QualitySummary(props: {
@@ -621,7 +632,7 @@ export function ProductScan1688QualitySummary(props: {
 }): React.JSX.Element | null {
   const quality = resolveProductScan1688QualitySummary(props.scan);
 
-  if (!quality) {
+  if (quality === null) {
     return null;
   }
 
@@ -645,17 +656,17 @@ export function ProductScan1688QualitySummary(props: {
         >
           {quality.primaryLabel}
         </span>
-        {quality.hasPricing ? (
+        {quality.hasPricing === true ? (
           <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium'>
             Pricing extracted
           </span>
         ) : null}
-        {quality.hasImages ? (
+        {quality.hasImages === true ? (
           <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium'>
             Images extracted
           </span>
         ) : null}
-        {quality.hasStoreLink ? (
+        {quality.hasStoreLink === true ? (
           <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium'>
             Store link found
           </span>
@@ -674,26 +685,26 @@ export const hasProductScan1688Details = (
     | null
     | undefined
 ): boolean => {
-  if (!scan) {
+  if (scan === undefined || scan === null) {
     return false;
   }
 
-  return Boolean(
-    scan.title ||
-      scan.url ||
-      scan.supplierDetails?.supplierName ||
-      scan.supplierDetails?.supplierStoreUrl ||
-      scan.supplierDetails?.supplierProductUrl ||
-      scan.supplierDetails?.priceText ||
-      scan.supplierDetails?.priceRangeText ||
-      scan.supplierDetails?.moqText ||
-      scan.supplierDetails?.images?.length ||
-      scan.supplierDetails?.prices?.length ||
-      scan.supplierProbe?.candidateUrl ||
-      scan.supplierProbe?.canonicalUrl ||
-      scan.supplierProbe?.pageTitle ||
-      resolveSupplierCandidateUrls(scan).length > 0 ||
-      scan.supplierEvaluation
+  return (
+    (scan.title ?? '') !== '' ||
+    (scan.url ?? '') !== '' ||
+    (scan.supplierDetails?.supplierName ?? '') !== '' ||
+    (scan.supplierDetails?.supplierStoreUrl ?? '') !== '' ||
+    (scan.supplierDetails?.supplierProductUrl ?? '') !== '' ||
+    (scan.supplierDetails?.priceText ?? '') !== '' ||
+    (scan.supplierDetails?.priceRangeText ?? '') !== '' ||
+    (scan.supplierDetails?.moqText ?? '') !== '' ||
+    (Array.isArray(scan.supplierDetails?.images) && scan.supplierDetails!.images!.length > 0) ||
+    (Array.isArray(scan.supplierDetails?.prices) && scan.supplierDetails!.prices!.length > 0) ||
+    (scan.supplierProbe?.candidateUrl ?? '') !== '' ||
+    (scan.supplierProbe?.canonicalUrl ?? '') !== '' ||
+    (scan.supplierProbe?.pageTitle ?? '') !== '' ||
+    resolveSupplierCandidateUrls(scan).length > 0 ||
+    scan.supplierEvaluation !== null && scan.supplierEvaluation !== undefined
   );
 };
 
@@ -706,18 +717,18 @@ const DetailRow = (props: {
   const normalizedValue = typeof value === 'string' ? value.trim() : '';
   const normalizedHref = typeof href === 'string' ? href.trim() : '';
 
-  if (!normalizedValue && !normalizedHref) {
+  if (normalizedValue === '' && normalizedHref === '') {
     return null;
   }
 
-  const content = normalizedHref ? (
+  const content = normalizedHref !== '' ? (
     <a
       href={normalizedHref}
       target='_blank'
       rel='noopener noreferrer'
       className='inline-flex items-center gap-1 text-primary underline-offset-2 hover:underline'
     >
-      {normalizedValue || normalizedHref}
+      {normalizedValue !== '' ? normalizedValue : normalizedHref}
       <ExternalLink className='h-3.5 w-3.5' />
     </a>
   ) : (
@@ -729,8 +740,8 @@ const DetailRow = (props: {
       <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>{label}</p>
       <div className='flex flex-wrap items-center gap-2 text-sm text-foreground'>
         {content}
-        {(normalizedValue || normalizedHref) ? (
-          <CopyButton value={normalizedHref || normalizedValue} className='h-6 px-2 text-[11px]' />
+        {(normalizedValue !== '' || normalizedHref !== '') ? (
+          <CopyButton value={normalizedHref !== '' ? normalizedHref : normalizedValue} className='h-6 px-2 text-[11px]' />
         ) : null}
       </div>
     </div>
@@ -740,7 +751,7 @@ const DetailRow = (props: {
 export function ProductScan1688Details(props: ProductScan1688DetailsProps): React.JSX.Element | null {
   const { scan } = props;
 
-  if (!hasProductScan1688Details(scan)) {
+  if (hasProductScan1688Details(scan) === false) {
     return null;
   }
 
@@ -763,7 +774,7 @@ export function ProductScan1688Details(props: ProductScan1688DetailsProps): Reac
   const evaluationConfidence = formatConfidence(evaluation?.confidence);
   const evaluationSummary = buildInlineSummary(
     evaluation?.modelId ? `Evaluator ${evaluation.modelId}` : null,
-    evaluationConfidence ? `Confidence ${evaluationConfidence}` : null,
+    (evaluationConfidence ?? null) !== null ? `Confidence ${evaluationConfidence}` : null,
     evaluation?.sameProduct === true
       ? 'Same product'
       : evaluation?.sameProduct === false
@@ -794,23 +805,23 @@ export function ProductScan1688Details(props: ProductScan1688DetailsProps): Reac
         <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
           1688 supplier details
         </span>
-        {details?.supplierName ? (
-          <span className='font-medium text-foreground'>{details.supplierName}</span>
+        {(details?.supplierName ?? null) !== null ? (
+          <span className='font-medium text-foreground'>{details!.supplierName}</span>
         ) : null}
-        {connectionLabel ? (
+        {connectionLabel !== null ? (
           <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
             Profile {connectionLabel}
           </span>
         ) : null}
-        {priceSummary ? <span className='text-muted-foreground'>{priceSummary}</span> : null}
-        {details?.moqText ? (
+        {priceSummary !== null ? <span className='text-muted-foreground'>{priceSummary}</span> : null}
+        {(details?.moqText ?? null) !== null ? (
           <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
-            {details.moqText}
+            {details!.moqText}
           </span>
         ) : null}
-        {details?.sourceLanguage ? (
+        {(details?.sourceLanguage ?? null) !== null ? (
           <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
-            {details.sourceLanguage}
+            {details!.sourceLanguage}
           </span>
         ) : null}
         {extractedImageCount > 0 ? (
@@ -823,7 +834,7 @@ export function ProductScan1688Details(props: ProductScan1688DetailsProps): Reac
             {extractedPriceCount} price tier{extractedPriceCount === 1 ? '' : 's'}
           </span>
         ) : null}
-        {probeImageCount && probeImageCount > 0 ? (
+        {probeImageCount !== null && probeImageCount > 0 ? (
           <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
             Probe saw {probeImageCount} image{probeImageCount === 1 ? '' : 's'}
           </span>
@@ -909,22 +920,22 @@ export function ProductScan1688Details(props: ProductScan1688DetailsProps): Reac
         </div>
       ) : null}
 
-      {details?.prices?.length ? (
+      {(details?.prices?.length ?? 0) > 0 ? (
         <div className='space-y-2'>
           <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
             Extracted prices
           </p>
           <ul className='space-y-2 text-sm text-foreground'>
-            {details.prices.map((price, index) => (
+            {details!.prices!.map((price, index) => (
               <li
                 key={`${price.label ?? 'price'}-${price.amount ?? 'na'}-${index}`}
                 className='rounded-md border border-border/40 bg-muted/10 px-3 py-2'
               >
                 {buildInlineSummary(
                   price.label,
-                  price.amount && price.currency ? `${price.amount} ${price.currency}` : price.amount,
-                  price.rangeStart && price.rangeEnd ? `${price.rangeStart} - ${price.rangeEnd}` : null,
-                  price.moq ? `MOQ ${price.moq}` : null,
+                  (price.amount !== undefined && price.amount !== null && price.amount !== '' && (price.currency ?? '') !== '') ? `${price.amount} ${price.currency}` : price.amount,
+                  (price.rangeStart !== undefined && price.rangeStart !== null && price.rangeStart !== '' && (price.rangeEnd ?? '') !== '') ? `${price.rangeStart} - ${price.rangeEnd}` : null,
+                  (price.moq ?? '') !== '' ? `MOQ ${price.moq}` : null,
                   price.unit
                 ) ?? 'Unlabeled supplier price'}
               </li>
@@ -938,20 +949,20 @@ export function ProductScan1688Details(props: ProductScan1688DetailsProps): Reac
           <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
             Extracted images
           </p>
-          {details?.images?.length ? (
+          {(details?.images?.length ?? 0) > 0 ? (
             <ul className='space-y-2 text-sm text-foreground'>
-              {details.images.slice(0, 6).map((image, index) => (
+              {details!.images!.slice(0, 6).map((image, index) => (
                 <li
                   key={`${image.url ?? 'image'}-${index}`}
                   className='rounded-md border border-border/40 bg-muted/10 px-3 py-2'
                 >
                   <div className='flex flex-wrap items-center justify-between gap-2'>
                     <span className='font-medium'>
-                      {image.source ? `${image.source} image` : `Image ${index + 1}`}
+                      {(image.source ?? '') !== '' ? `${image.source} image` : `Image ${index + 1}`}
                     </span>
-                    {image.url ? (
+                    {(image.url ?? '') !== '' ? (
                       <a
-                        href={image.url}
+                        href={image.url!}
                         target='_blank'
                         rel='noopener noreferrer'
                         className='inline-flex items-center gap-1 text-xs text-primary underline-offset-2 hover:underline'
@@ -961,7 +972,7 @@ export function ProductScan1688Details(props: ProductScan1688DetailsProps): Reac
                       </a>
                     ) : null}
                   </div>
-                  {image.url ? <p className='mt-1 break-all text-xs text-muted-foreground'>{image.url}</p> : null}
+                  {(image.url ?? '') !== '' ? <p className='mt-1 break-all text-xs text-muted-foreground'>{image.url}</p> : null}
                 </li>
               ))}
             </ul>
@@ -977,51 +988,51 @@ export function ProductScan1688Details(props: ProductScan1688DetailsProps): Reac
           <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
             Match evaluation
           </p>
-          {evaluation ? (
+          {(evaluation ?? null) !== null ? (
             <div className='space-y-2 rounded-md border border-border/40 bg-muted/10 px-3 py-2 text-sm'>
               <p className='font-medium text-foreground'>
-                {evaluation.status === 'approved'
+                {evaluation!.status === 'approved'
                   ? 'Approved'
-                  : evaluation.status === 'rejected'
+                  : evaluation!.status === 'rejected'
                     ? 'Rejected'
-                    : evaluation.status === 'failed'
+                    : evaluation!.status === 'failed'
                       ? 'Failed'
                       : 'Skipped'}
               </p>
-              {evaluationSummary ? <p className='text-muted-foreground'>{evaluationSummary}</p> : null}
+              {evaluationSummary !== null ? <p className='text-muted-foreground'>{evaluationSummary}</p> : null}
               <div className='grid gap-2 sm:grid-cols-2'>
                 <DetailRow
                   label='Proceed'
-                  value={typeof evaluation.proceed === 'boolean' ? String(evaluation.proceed) : null}
+                  value={typeof evaluation!.proceed === 'boolean' ? String(evaluation!.proceed) : null}
                 />
                 <DetailRow label='Evaluated at' value={evaluationTimestamp} />
               </div>
-              {evaluation.reasons.length ? (
+              {evaluation!.reasons.length > 0 ? (
                 <div className='space-y-1'>
                   <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
                     Reasons
                   </p>
                   <ul className='list-disc space-y-1 pl-5 text-muted-foreground'>
-                    {evaluation.reasons.map((reason, index) => (
+                    {evaluation!.reasons.map((reason, index) => (
                       <li key={`${reason}-${index}`}>{reason}</li>
                     ))}
                   </ul>
                 </div>
               ) : null}
-              {evaluation.mismatches.length ? (
+              {evaluation!.mismatches.length > 0 ? (
                 <div className='space-y-1'>
                   <p className='text-[11px] font-medium uppercase tracking-wide text-destructive'>
                     Mismatches
                   </p>
                   <ul className='list-disc space-y-1 pl-5 text-destructive'>
-                    {evaluation.mismatches.map((mismatch, index) => (
+                    {evaluation!.mismatches.map((mismatch, index) => (
                       <li key={`${mismatch}-${index}`}>{mismatch}</li>
                     ))}
                   </ul>
                 </div>
               ) : null}
-              {evaluation.error ? (
-                <p className='text-destructive'>{evaluation.error}</p>
+              {(evaluation!.error ?? '') !== '' ? (
+                <p className='text-destructive'>{evaluation!.error}</p>
               ) : null}
             </div>
           ) : (

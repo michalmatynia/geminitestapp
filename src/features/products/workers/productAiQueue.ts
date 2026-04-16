@@ -172,7 +172,7 @@ const queue = createManagedQueue<ProductAiJobData>({
         message: `Job ${data.jobId} not found, skipping`,
         context: { jobId: data.jobId },
       });
-      return;
+      return null;
     }
     if (job.status !== 'running' && job.status !== 'pending') {
       await logSystemEvent({
@@ -181,7 +181,7 @@ const queue = createManagedQueue<ProductAiJobData>({
         message: `Job ${data.jobId} has status "${job.status}", skipping`,
         context: { jobId: data.jobId, status: job.status },
       });
-      return;
+      return null;
     }
 
     return runStoredProductAiJob({
@@ -196,19 +196,19 @@ export const startProductAiJobQueue = (): void => {
   queue.startWorker();
 };
 
-export const stopProductAiJobQueue = (reason?: string): void => {
-  const suffix = reason ? `: ${reason}` : '';
-  void logSystemEvent({
+export const stopProductAiJobQueue = async (reason?: string): Promise<void> => {
+  const suffix = typeof reason === 'string' && reason !== '' ? `: ${reason}` : '';
+  await logSystemEvent({
     level: 'info',
     source: LOG_SOURCE,
     message: `Queue worker stopped${suffix}`,
     context: { reason },
   });
-  void queue.stopWorker();
+  await queue.stopWorker();
 };
 
-export const resetProductAiJobQueue = (): void => {
-  void queue.stopWorker();
+export const resetProductAiJobQueue = async (): Promise<void> => {
+  await queue.stopWorker();
 };
 
 export const getQueueStatus = async (): Promise<{
@@ -258,7 +258,7 @@ export const processProductAiJob = async (jobId: string): Promise<void> => {
   const job = await jobRepository.findJobById(jobId);
 
   if (!job) {
-    void ErrorSystem.logWarning(`Job ${jobId} not found`, {
+    await ErrorSystem.logWarning(`Job ${jobId} not found`, {
       service: SINGLE_LOG_SOURCE,
       jobId,
     });

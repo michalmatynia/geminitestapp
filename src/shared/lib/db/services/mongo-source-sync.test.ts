@@ -2,7 +2,9 @@
  * @vitest-environment node
  */
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { promises as fs } from 'fs';
+import path from 'path';
 
 const mocks = vi.hoisted(() => ({
   getMongoSourceState: vi.fn(async () => ({
@@ -67,6 +69,8 @@ vi.mock('@/shared/lib/db/services/database-backup', () => ({
 import { syncMongoSources } from './mongo-source-sync';
 
 describe('mongo-source-sync', () => {
+  const syncLockPath = path.join(process.cwd(), 'mongo', 'runtime', 'sync.lock');
+
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.getMongoSourceState.mockResolvedValue({
@@ -113,6 +117,10 @@ describe('mongo-source-sync', () => {
     }));
   });
 
+  afterEach(async () => {
+    await fs.unlink(syncLockPath).catch(() => undefined);
+  });
+
   it('rejects sync when local and cloud resolve to the same Mongo target', async () => {
     mocks.resolveMongoSourceConfig.mockResolvedValue({
       configured: true,
@@ -123,6 +131,29 @@ describe('mongo-source-sync', () => {
 
     await expect(syncMongoSources('local_to_cloud')).rejects.toThrow(
       /point to the same URI and database/i
+    );
+    expect(mocks.execFileAsync).not.toHaveBeenCalled();
+    expect(mocks.recordMongoSourceSync).not.toHaveBeenCalled();
+  });
+
+  it('rejects sync when another Mongo source sync is already in progress', async () => {
+    await fs.mkdir(path.dirname(syncLockPath), { recursive: true });
+    await fs.writeFile(
+      syncLockPath,
+      JSON.stringify(
+        {
+          direction: 'local_to_cloud',
+          acquiredAt: '2026-04-16T00:38:12.443Z',
+          pid: process.pid,
+        },
+        null,
+        2
+      ),
+      'utf8'
+    );
+
+    await expect(syncMongoSources('cloud_to_local')).rejects.toThrow(
+      'MongoDB sync is already in progress: local -> cloud. Started at 2026-04-16T00:38:12.443Z.'
     );
     expect(mocks.execFileAsync).not.toHaveBeenCalled();
     expect(mocks.recordMongoSourceSync).not.toHaveBeenCalled();

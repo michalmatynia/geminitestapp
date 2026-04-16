@@ -56,9 +56,11 @@ describe('products/scans/amazon/batch handler', () => {
 
     expect(queueAmazonBatchProductScansMock).toHaveBeenCalledWith({
       productIds: ['product-1'],
-      stepSequenceKey: 'amazon_direct_candidate_followup',
-      stepSequence: [{ key: 'validate', label: 'Validate trigger' }],
-      userId: 'user-42',
+      ownerUserId: 'user-42',
+      requestInput: {
+        stepSequenceKey: 'amazon_direct_candidate_followup',
+        stepSequence: [{ key: 'validate', label: 'Validate trigger' }],
+      },
     });
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({

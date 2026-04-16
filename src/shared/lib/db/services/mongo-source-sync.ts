@@ -12,10 +12,10 @@ import type {
 } from '@/shared/contracts/database';
 import {
   configurationError,
-  conflictError,
   forbiddenError,
   operationFailedError,
 } from '@/shared/errors/app-error';
+import { acquireMongoSyncLock } from '@/shared/lib/db/mongo-sync-lock';
 import { createMongoSourceBackup } from '@/shared/lib/db/services/database-backup';
 import {
   getMongoSourceState,
@@ -30,8 +30,6 @@ import {
 } from '@/shared/lib/db/utils/mongo';
 
 const mongoRuntimeDir = path.join(process.cwd(), 'mongo', 'runtime');
-const mongoSyncLockPath = path.join(mongoRuntimeDir, 'sync.lock');
-
 const resolveSyncEndpoints = (
   direction: DatabaseEngineMongoSyncDirection
 ): { source: MongoSource; target: MongoSource } =>
@@ -47,41 +45,6 @@ const buildArchivePaths = (
   return {
     archivePath: path.join(mongoRuntimeDir, `${baseName}.archive`),
     logPath: path.join(mongoRuntimeDir, `${baseName}.log`),
-  };
-};
-
-const acquireMongoSyncLock = async (
-  direction: DatabaseEngineMongoSyncDirection
-): Promise<() => Promise<void>> => {
-  await fs.mkdir(mongoRuntimeDir, { recursive: true });
-
-  let lockHandle;
-  try {
-    lockHandle = await fs.open(mongoSyncLockPath, 'wx');
-    await lockHandle.writeFile(
-      JSON.stringify(
-        {
-          direction,
-          acquiredAt: new Date().toISOString(),
-          pid: process.pid,
-        },
-        null,
-        2
-      ),
-      'utf8'
-    );
-  } catch (error) {
-    const errorCode = (error as NodeJS.ErrnoException).code;
-    if (errorCode === 'EEXIST') {
-      throw conflictError('MongoDB source sync is already in progress.');
-    }
-
-    throw operationFailedError('Failed to acquire MongoDB sync lock.', error);
-  }
-
-  return async () => {
-    await lockHandle?.close().catch(() => undefined);
-    await fs.rm(mongoSyncLockPath, { force: true }).catch(() => undefined);
   };
 };
 

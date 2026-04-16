@@ -57,6 +57,9 @@ describe('mongo-source', () => {
     await fs
       .unlink(path.join(process.cwd(), 'mongo', 'runtime', 'last-sync.json'))
       .catch(() => undefined);
+    await fs
+      .unlink(path.join(process.cwd(), 'mongo', 'runtime', 'sync.lock'))
+      .catch(() => undefined);
   });
 
   it('resolves explicit local and cloud MongoDB sources', async () => {
@@ -117,6 +120,36 @@ describe('mongo-source', () => {
       preSyncBackups: [],
       archivePath: '/tmp/mongo-sync.archive',
       logPath: '/tmp/mongo-sync.log',
+    });
+  });
+
+  it('surfaces the active sync lock in Mongo source state', async () => {
+    const { promises: fs } = await import('fs');
+    const lockPath = path.join(process.cwd(), 'mongo', 'runtime', 'sync.lock');
+    await fs.mkdir(path.dirname(lockPath), { recursive: true });
+    await fs.writeFile(
+      lockPath,
+      JSON.stringify(
+        {
+          direction: 'local_to_cloud',
+          acquiredAt: '2026-04-16T00:38:12.443Z',
+          pid: process.pid,
+        },
+        null,
+        2
+      ),
+      'utf8'
+    );
+
+    const module = await import('./mongo-source');
+    const state = await module.getMongoSourceState();
+
+    expect(state.syncInProgress).toEqual({
+      direction: 'local_to_cloud',
+      source: 'local',
+      target: 'cloud',
+      acquiredAt: '2026-04-16T00:38:12.443Z',
+      pid: process.pid,
     });
   });
 

@@ -6,9 +6,12 @@ import {
   TRADERA_INTEGRATION_SLUGS,
 } from '@/features/integrations/constants/slugs';
 import {
-  getProductListingRepository,
   getIntegrationRepository,
 } from '@/features/integrations/server';
+import {
+  listAllProductListingsAcrossProviders,
+  listProductListingsByProductIdsAcrossProviders,
+} from '@/features/integrations/services/product-listing-repository';
 import {
   applyCanonicalBaseBadgeFallback,
   isCanonicalBaseIntegrationSlug,
@@ -115,12 +118,11 @@ const buildPayload = async (
   );
 
   const integrationRepository = await getIntegrationRepository();
-  const listingRepository = await getProductListingRepository();
   const lookupStart = performance.now();
   const listingsPromise =
     normalizedRequestedProductIds.length > 0
-      ? listingRepository.getListingsByProductIds(normalizedRequestedProductIds)
-      : listingRepository.listAllListings();
+      ? listProductListingsByProductIdsAcrossProviders(normalizedRequestedProductIds)
+      : listAllProductListingsAcrossProviders();
   const [listings, integrations] = await Promise.all([
     listingsPromise,
     integrationRepository.listIntegrations(),

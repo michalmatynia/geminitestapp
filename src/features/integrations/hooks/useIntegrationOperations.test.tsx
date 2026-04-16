@@ -3,13 +3,13 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { apiGetMock } = vi.hoisted(() => ({
-  apiGetMock: vi.fn(),
+const { apiPostMock } = vi.hoisted(() => ({
+  apiPostMock: vi.fn(),
 }));
 
 vi.mock('@/shared/lib/api-client', () => ({
   api: {
-    get: (...args: unknown[]) => apiGetMock(...args),
+    post: (...args: unknown[]) => apiPostMock(...args),
   },
 }));
 
@@ -37,10 +37,10 @@ describe('useIntegrationOperations listing badges query', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     window.sessionStorage.clear();
-    apiGetMock.mockResolvedValue({});
+    apiPostMock.mockResolvedValue({});
   });
 
-  it('loads listing badges via GET with normalized productIds', async () => {
+  it('loads listing badges via POST with normalized productIds and an extended timeout', async () => {
     const queryClient = createQueryClient();
     const wrapper = ({ children }: { children: React.ReactNode }) => (
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
@@ -51,9 +51,10 @@ describe('useIntegrationOperations listing badges query', () => {
     });
 
     await waitFor(() => {
-      expect(apiGetMock).toHaveBeenCalledWith(
-        '/api/v2/integrations/product-listings?productIds=product-1%2Cproduct-2',
-        { cache: 'no-store' }
+      expect(apiPostMock).toHaveBeenCalledWith(
+        '/api/v2/integrations/product-listings',
+        { productIds: ['product-1', 'product-2'] },
+        { cache: 'no-store', timeout: 45_000 }
       );
     });
   });
@@ -68,7 +69,7 @@ describe('useIntegrationOperations listing badges query', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 20));
 
-    expect(apiGetMock).not.toHaveBeenCalled();
+    expect(apiPostMock).not.toHaveBeenCalled();
   });
 
   it('exposes listing badges directly for provider-side runtime polling', async () => {
@@ -82,9 +83,10 @@ describe('useIntegrationOperations listing badges query', () => {
     });
 
     await waitFor(() => {
-      expect(apiGetMock).toHaveBeenCalledWith(
-        '/api/v2/integrations/product-listings?productIds=product-1%2Cproduct-2',
-        { cache: 'no-store' }
+      expect(apiPostMock).toHaveBeenCalledWith(
+        '/api/v2/integrations/product-listings',
+        { productIds: ['product-1', 'product-2'] },
+        { cache: 'no-store', timeout: 45_000 }
       );
     });
   });
@@ -107,11 +109,11 @@ describe('useIntegrationOperations listing badges query', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 20));
 
-    expect(apiGetMock).not.toHaveBeenCalled();
+    expect(apiPostMock).not.toHaveBeenCalled();
   });
 
   it('parses programmable Playwright marketplace statuses alongside Base and Tradera badges', async () => {
-    apiGetMock.mockResolvedValue({
+    apiPostMock.mockResolvedValue({
       'product-1': {
         base: 'active',
         tradera: 'queued',
@@ -149,7 +151,7 @@ describe('useIntegrationOperations listing badges query', () => {
         },
       })
     );
-    apiGetMock.mockResolvedValue({
+    apiPostMock.mockResolvedValue({
       'product-1': {
         tradera: 'auth_required',
       },

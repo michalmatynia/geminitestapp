@@ -321,7 +321,7 @@ export function ProductListingsSyncPanel(): React.JSX.Element {
     hasChecked && !preview && (previewQuery.isLoading === true || isCheckingPreview);
   const outOfSyncFields =
     preview?.fields.filter((field: ProductSyncFieldPreview) => field.hasDifference) ?? [];
-  const visibleFields = outOfSyncFields;
+  const visibleFields = preview?.fields ?? [];
   const activeFieldCount =
     preview?.fields.filter((field: ProductSyncFieldPreview) => field.direction !== 'disabled')
       .length ?? 0;
@@ -553,9 +553,11 @@ export function ProductListingsSyncPanel(): React.JSX.Element {
                 fields.
               </div>
             </div>
-            <Badge variant='outline' className='text-[10px]'>
-              {configuredProfile.name}
-            </Badge>
+            <Button asChild variant='outline' size='sm' className='h-7 px-3 text-[10px]'>
+              <Link href={GLOBAL_SYNC_SETTINGS_HREF} title={`Open sync settings — ${configuredProfile.name}`}>
+                Sync Settings
+              </Link>
+            </Button>
           </div>
           <div className='grid gap-2 md:grid-cols-3'>
             <div>

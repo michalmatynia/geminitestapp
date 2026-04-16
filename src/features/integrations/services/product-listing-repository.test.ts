@@ -12,6 +12,7 @@ import {
   findProductListingByIdAcrossProviders,
   findProductListingByProductAndConnectionAcrossProviders,
   getProductListingRepository,
+  listProductListingsByProductIdsAcrossProviders,
   listProductListingsByProductIdAcrossProviders,
   listingExistsAcrossProviders,
 } from './product-listing-repository';
@@ -212,5 +213,35 @@ describe('product-listing-repository mongodb indexes', () => {
     expect(listingFindMock).toHaveBeenCalledTimes(1);
     expect(integrationFindMock).toHaveBeenCalledTimes(1);
     expect(connectionFindMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('loads badge lookups with a projected Mongo query', async () => {
+    const { db, listingFindMock } = createMongoDbMock();
+
+    getMongoDbMock.mockResolvedValue(db);
+
+    const listings = await listProductListingsByProductIdsAcrossProviders(['product-1']);
+
+    expect(listings).toEqual([
+      {
+        productId: 'product-1',
+        status: 'active',
+        integrationId: 'integration-base',
+        marketplaceData: null,
+        updatedAt: '2026-03-11T10:00:00.000Z',
+      },
+    ]);
+    expect(listingFindMock).toHaveBeenCalledWith(
+      { productId: { $in: ['product-1'] } },
+      {
+        projection: {
+          productId: 1,
+          status: 1,
+          integrationId: 1,
+          marketplaceData: 1,
+          updatedAt: 1,
+        },
+      }
+    );
   });
 });

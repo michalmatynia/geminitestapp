@@ -165,10 +165,10 @@ const resolveRowStatusLabel = (row: ScanModalRow): string =>
     ? STATUS_LABELS[row.status]
     : resolveProductScanRunFeedbackPresentation(row.status, {
         manualVerificationPending: isManualVerificationPending(row.scan),
-        manualVerificationMessage: row.scan?.asinUpdateMessage ?? null,
-        amazonEvaluationStatus: row.scan?.amazonEvaluation?.status ?? null,
-        amazonEvaluationLanguageAccepted: row.scan?.amazonEvaluation?.languageAccepted ?? null,
-        supplierEvaluationStatus: row.scan?.supplierEvaluation?.status ?? null,
+        manualVerificationMessage: (row.scan?.asinUpdateMessage ?? null) !== null ? row.scan?.asinUpdateMessage ?? null : null,
+        amazonEvaluationStatus: (row.scan?.amazonEvaluation?.status ?? null) !== null ? row.scan?.amazonEvaluation?.status ?? null : null,
+        amazonEvaluationLanguageAccepted: (row.scan?.amazonEvaluation?.languageAccepted ?? null) !== null ? row.scan?.amazonEvaluation?.languageAccepted ?? null : null,
+        supplierEvaluationStatus: (row.scan?.supplierEvaluation?.status ?? null) !== null ? row.scan?.supplierEvaluation?.status ?? null : null,
       }).label;
 
 const resolveRowStatusClassName = (row: ScanModalRow): string =>
@@ -176,10 +176,10 @@ const resolveRowStatusClassName = (row: ScanModalRow): string =>
     ? STATUS_CLASSES[row.status]
     : resolveProductScanRunFeedbackPresentation(row.status, {
         manualVerificationPending: isManualVerificationPending(row.scan),
-        manualVerificationMessage: row.scan?.asinUpdateMessage ?? null,
-        amazonEvaluationStatus: row.scan?.amazonEvaluation?.status ?? null,
-        amazonEvaluationLanguageAccepted: row.scan?.amazonEvaluation?.languageAccepted ?? null,
-        supplierEvaluationStatus: row.scan?.supplierEvaluation?.status ?? null,
+        manualVerificationMessage: (row.scan?.asinUpdateMessage ?? null) !== null ? row.scan?.asinUpdateMessage ?? null : null,
+        amazonEvaluationStatus: (row.scan?.amazonEvaluation?.status ?? null) !== null ? row.scan?.amazonEvaluation?.status ?? null : null,
+        amazonEvaluationLanguageAccepted: (row.scan?.amazonEvaluation?.languageAccepted ?? null) !== null ? row.scan?.amazonEvaluation?.languageAccepted ?? null : null,
+        supplierEvaluationStatus: (row.scan?.supplierEvaluation?.status ?? null) !== null ? row.scan?.supplierEvaluation?.status ?? null : null,
       }).badgeClassName ?? STATUS_CLASSES[row.status];
 
 const resolveActiveStatusMessage = (
@@ -219,15 +219,15 @@ const formatSummary = (rows: ScanModalRow[]): string => {
 
   return [
     `${rows.length} selected`,
-    counts.enqueuing > 0 && `${counts.enqueuing} enqueuing`,
-    counts.queued > 0 && `${counts.queued} queued`,
-    counts.running > 0 && `${counts.running} running`,
-    counts.completed > 0 && `${counts.completed} completed`,
-    counts.noMatch > 0 && `${counts.noMatch} no match`,
-    counts.conflict > 0 && `${counts.conflict} conflicts`,
-    counts.failed > 0 && `${counts.failed} failed`,
+    counts.enqueuing > 0 ? `${counts.enqueuing} enqueuing` : null,
+    counts.queued > 0 ? `${counts.queued} queued` : null,
+    counts.running > 0 ? `${counts.running} running` : null,
+    counts.completed > 0 ? `${counts.completed} completed` : null,
+    counts.noMatch > 0 ? `${counts.noMatch} no match` : null,
+    counts.conflict > 0 ? `${counts.conflict} conflicts` : null,
+    counts.failed > 0 ? `${counts.failed} failed` : null,
   ]
-    .filter(Boolean)
+    .filter((val): val is string => typeof val === 'string')
     .join(' · ');
 };
 
@@ -246,24 +246,24 @@ const buildToastSummaryFromRows = (
   };
 
   const summary = [
-    counts.queued > 0 && `${counts.queued} queued`,
-    counts.running > 0 && `${counts.running} running`,
-    counts.completed > 0 && `${counts.completed} completed`,
-    counts.noMatch > 0 && `${counts.noMatch} no match`,
-    counts.conflict > 0 && `${counts.conflict} conflicts`,
-    counts.failed > 0 && `${counts.failed} failed`,
+    counts.queued > 0 ? `${counts.queued} queued` : null,
+    counts.running > 0 ? `${counts.running} running` : null,
+    counts.completed > 0 ? `${counts.completed} completed` : null,
+    counts.noMatch > 0 ? `${counts.noMatch} no match` : null,
+    counts.conflict > 0 ? `${counts.conflict} conflicts` : null,
+    counts.failed > 0 ? `${counts.failed} failed` : null,
   ]
-    .filter(Boolean)
+    .filter((val): val is string => typeof val === 'string')
     .join(', ');
 
   return {
-    message: summary ? `${batchLabel}: ${summary}.` : noQueuedMessage,
+    message: summary !== '' ? `${batchLabel}: ${summary}.` : noQueuedMessage,
     variant: counts.failed > 0 || counts.conflict > 0 ? 'warning' : 'success',
   };
 };
 
 const formatTimestamp = (value: string | null | undefined): string => {
-  if (!value) return 'Unknown time';
+  if (value === null || value === undefined || value === '') return 'Unknown time';
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return value;
   return parsed.toLocaleString();
@@ -292,12 +292,13 @@ const resolve1688PostureWarnings = (connection: {
   playwrightPersonaId?: string | null;
   playwrightHumanizeMouse?: boolean;
 } | null): string[] => {
-  if (!connection) {
+  if (connection === null) {
     return [];
   }
 
   const warnings: string[] = [];
-  if (!connection.playwrightPersonaId?.trim()) {
+  const personaId = connection.playwrightPersonaId;
+  if (personaId === null || personaId === undefined || personaId.trim() === '') {
     warnings.push('No Playwright persona is configured for this 1688 profile.');
   }
   if ((connection.playwrightIdentityProfile ?? 'default') !== 'marketplace') {
@@ -321,7 +322,7 @@ const isDiscoveredScanCurrentForRow = (
   row: ScanModalRow,
   discoveredScan: ProductScanRecord | null
 ): discoveredScan is ProductScanRecord => {
-  if (!discoveredScan) {
+  if (discoveredScan === null) {
     return false;
   }
 
@@ -341,7 +342,7 @@ const isDiscoveredScanCurrentForRow = (
 const resolveRowDisplayMessages = (
   row: ScanModalRow
 ): { infoMessage: string | null; errorMessage: string | null } => {
-  if (!row.scan) {
+  if (row.scan === null) {
     return row.status === 'failed'
       ? { infoMessage: null, errorMessage: row.message }
       : { infoMessage: row.message, errorMessage: null };
@@ -370,7 +371,7 @@ const resolveRowDisplayMessages = (
 
   return {
     infoMessage: row.message,
-    errorMessage: row.scan.error,
+    errorMessage: (row.scan.error ?? null) !== null ? row.scan.error : null,
   };
 };
 
@@ -949,8 +950,8 @@ export function ProductAmazonScanModal(
       });
   }, [ensurePollingForTrackedActiveRows, handleRefreshFailure, provider, refreshScanRows, toast]);
 
-  useEffect(() => {
-    if (!isOpen) {
+  useEffect((): (() => void) => {
+    if (isOpen === false) {
       modalSessionRef.current += 1;
       rowsRef.current = [];
       setRows([]);
@@ -964,15 +965,15 @@ export function ProductAmazonScanModal(
       setExpandedDiagnosticRowIds(new Set());
       setExpandedExtractedFieldRowIds(new Set());
       stopPollingRef.current();
-      return;
+      return (): void => {};
     }
 
-    if (is1688ConnectionBootstrapPending) {
+    if (is1688ConnectionBootstrapPending === true) {
       rowsRef.current = [];
       setRows([]);
       setIsSubmitting(true);
       stopPollingRef.current();
-      return;
+      return (): void => {};
     }
 
     const sessionId = modalSessionRef.current + 1;
@@ -986,7 +987,7 @@ export function ProductAmazonScanModal(
       setExpandedDiagnosticRowIds(new Set());
       setExpandedExtractedFieldRowIds(new Set());
       stopPollingRef.current();
-      return;
+      return (): void => {};
     }
 
     const initialRows = selectedProductEntries.map(({ productId, productName }) => ({
@@ -1000,10 +1001,11 @@ export function ProductAmazonScanModal(
       scan: null,
     }));
     if (provider === '1688') {
-      const missing1688SessionMessage = !active1688ConnectionId
+      const activeConnectionId = active1688ConnectionId;
+      const missing1688SessionMessage = activeConnectionId === null
         ? '1688 browser profile required before running supplier scans.'
         : `1688 login required for profile ${active1688ProfileName ?? '1688 profile'}. Refresh the saved browser session before scanning.`;
-      if (!active1688ConnectionId) {
+      if (activeConnectionId === null) {
         const blockedRows = initialRows.map((row) => ({
           ...row,
           status: 'failed' as const,
@@ -1013,18 +1015,18 @@ export function ProductAmazonScanModal(
         setRows(blockedRows);
         setIsSubmitting(false);
         stopPollingRef.current();
-        return;
+        return (): void => {};
       }
-      if (!hasResolved1688Session) {
-        const connectionId = active1688ConnectionId;
-        if (connectionId.length > 0 && !autoStarted1688ConnectionIdsRef.current.has(connectionId)) {
+      if (hasResolved1688Session === false) {
+        const connectionId = activeConnectionId;
+        if (connectionId.length > 0 && autoStarted1688ConnectionIdsRef.current.has(connectionId) === false) {
           autoStarted1688ConnectionIdsRef.current.add(connectionId);
           rowsRef.current = [];
           setRows([]);
           setIsSubmitting(true);
           stopPollingRef.current();
           void handle1688RefreshSessionRef.current().then((sessionRefreshResult) => {
-            if (sessionId !== modalSessionRef.current || sessionRefreshResult.ok) {
+            if (sessionId !== modalSessionRef.current || sessionRefreshResult.ok === true) {
               return;
             }
 
@@ -1037,7 +1039,7 @@ export function ProductAmazonScanModal(
             setRows(blockedRows);
             setIsSubmitting(false);
           });
-          return;
+          return (): void => {};
         }
 
         const blockedRows = initialRows.map((row) => ({
@@ -1049,7 +1051,7 @@ export function ProductAmazonScanModal(
         setRows(blockedRows);
         setIsSubmitting(false);
         stopPollingRef.current();
-        return;
+        return (): void => {};
       }
     }
     rowsRef.current = initialRows;
@@ -1081,7 +1083,7 @@ export function ProductAmazonScanModal(
 
         const queuedRows: ScanModalRow[] = initialRows.map((row) => {
           const result = resultsByProductId.get(row.productId);
-          if (!result) {
+          if (result === undefined) {
             summaryCounts.failed += 1;
             return {
               ...row,
@@ -1093,7 +1095,7 @@ export function ProductAmazonScanModal(
             result.status === 'queued' ||
             result.status === 'running' ||
             result.status === 'already_running';
-          if (resultIsActive && !result.scanId) {
+          if (resultIsActive === true && (result.scanId === null || result.scanId === undefined || result.scanId === '')) {
             if (result.status === 'queued') {
               summaryCounts.queued = Math.max(0, summaryCounts.queued - 1);
             } else if (result.status === 'running') {
@@ -1110,7 +1112,7 @@ export function ProductAmazonScanModal(
           }
           const nextStatus: ScanModalRow['status'] =
             result.status === 'already_running'
-              ? (result.currentStatus && isProductScanActiveStatus(result.currentStatus)
+              ? ((result.currentStatus !== undefined && result.currentStatus !== null && isProductScanActiveStatus(result.currentStatus))
                   ? result.currentStatus
                   : 'running')
               : result.status;
@@ -1119,7 +1121,7 @@ export function ProductAmazonScanModal(
             scanId: result.scanId,
             runId: result.runId,
             status: nextStatus,
-            message: result.message,
+            message: (result.message ?? null) !== null ? result.message : null,
           };
         });
         rowsRef.current = queuedRows;
@@ -1146,7 +1148,7 @@ export function ProductAmazonScanModal(
           void refreshScanRowsRef.current(sessionId).catch((error: unknown) => {
             handleRefreshFailureRef.current(error, { stopPolling: true, sessionId });
           });
-        } else if (queuedRows.some((row) => !row.scanId)) {
+        } else if (queuedRows.some((row) => (row.scanId === null || row.scanId === undefined || row.scanId === ''))) {
           let recoveredRows = queuedRows;
           try {
             await refreshScanRowsRef.current(sessionId);
@@ -1166,7 +1168,7 @@ export function ProductAmazonScanModal(
               queuedRow?.message !== row.message
             );
           });
-          if (recoveredState) {
+          if (recoveredState === true) {
             const recoveredSummary = buildToastSummaryFromRows(
               recoveredRows,
               modalConfig.batchLabel,
@@ -1177,18 +1179,18 @@ export function ProductAmazonScanModal(
           }
         }
 
-        if (!toastMessage) {
+        if (toastMessage === null) {
           const totalFailedCount = summaryCounts.failed;
           const summary = [
-            summaryCounts.queued > 0 && `${summaryCounts.queued} queued`,
-            summaryCounts.running > 0 && `${summaryCounts.running} running`,
-            summaryCounts.alreadyRunning > 0 &&
-              `${summaryCounts.alreadyRunning} already in progress`,
-            totalFailedCount > 0 && `${totalFailedCount} failed`,
+            summaryCounts.queued > 0 ? `${summaryCounts.queued} queued` : null,
+            summaryCounts.running > 0 ? `${summaryCounts.running} running` : null,
+            summaryCounts.alreadyRunning > 0 ?
+              `${summaryCounts.alreadyRunning} already in progress` : null,
+            totalFailedCount > 0 ? `${totalFailedCount} failed` : null,
           ]
-            .filter(Boolean)
+            .filter((val): val is string => typeof val === 'string')
             .join(', ');
-          toastMessage = summary ? `${modalConfig.batchLabel}: ${summary}.` : modalConfig.noQueuedMessage;
+          toastMessage = summary !== '' ? `${modalConfig.batchLabel}: ${summary}.` : modalConfig.noQueuedMessage;
           toastVariant = totalFailedCount > 0 ? 'warning' : 'success';
         }
 
@@ -1239,7 +1241,7 @@ export function ProductAmazonScanModal(
         } catch {
           // Keep the original enqueue failure visible when recovery probing also fails.
         }
-        if (sessionId !== modalSessionRef.current || recoveredState) {
+        if (sessionId !== modalSessionRef.current || recoveredState === true) {
           return;
         }
         toastRef.current(message, { variant: 'error' });
@@ -1533,54 +1535,54 @@ export function ProductAmazonScanModal(
                   : null;
               const supplierDetails = row.scan?.provider === '1688' ? row.scan.supplierDetails : null;
               const supplierSummary = [
-                supplierDetails?.supplierName,
-                supplierDetails?.priceText ?? supplierDetails?.priceRangeText,
-                supplierDetails?.moqText,
+                (supplierDetails?.supplierName ?? null) !== null ? supplierDetails?.supplierName : null,
+                (supplierDetails?.priceText ?? supplierDetails?.priceRangeText ?? null) !== null ? supplierDetails?.priceText ?? supplierDetails?.priceRangeText : null,
+                (supplierDetails?.moqText ?? null) !== null ? supplierDetails?.moqText : null,
               ]
-                .filter(Boolean)
+                .filter((val): val is string => typeof val === 'string')
                 .join(' · ');
               const hasExtractedFields =
-                isAmazonScan &&
-                ((row.scan && hasProductScanAmazonDetails(row.scan.amazonDetails)) ||
-                  Boolean(row.scan?.asin));
+                isAmazonScan === true &&
+                ((row.scan !== null && hasProductScanAmazonDetails(row.scan.amazonDetails)) ||
+                  (row.scan?.asin !== undefined && row.scan?.asin !== null && row.scan.asin !== ''));
               const recommendationReason =
-                row.scan == null
+                row.scan === null
                   ? null
-                  : isAmazonScan
-                    ? hasExtractedFields
+                  : isAmazonScan === true
+                    ? hasExtractedFields === true
                       ? resolveAmazonScanRecommendationReason(row.scan)
                       : null
                     : resolve1688ScanRecommendationReason(row.scan);
               const supplierApplyPolicySummary =
-                row.scan && !isAmazonScan
+                row.scan !== null && isAmazonScan === false
                   ? resolveProductScan1688ApplyPolicySummary(row.scan)
                   : null;
               const supplierRecommendationSignal =
-                !isAmazonScan && recommendationReason
+                isAmazonScan === false && recommendationReason !== null
                   ? resolveProductScan1688RecommendationSignal()
                   : null;
               const isBlocked1688ResultReviewed =
                 supplierApplyPolicySummary?.blockActions === true &&
                 isBlockedScanReviewed(row.scan?.id);
               const blocked1688CandidateUrlsHref =
-                row.scan && !isAmazonScan && supplierApplyPolicySummary?.blockActions
+                row.scan !== null && isAmazonScan === false && supplierApplyPolicySummary?.blockActions === true
                   ? buildProductScan1688SectionId(row.scan.id, 'candidate-urls')
                   : null;
               const blocked1688MatchEvaluationHref =
-                row.scan && !isAmazonScan && supplierApplyPolicySummary?.blockActions
+                row.scan !== null && isAmazonScan === false && supplierApplyPolicySummary?.blockActions === true
                   ? buildProductScan1688SectionId(row.scan.id, 'match-evaluation')
                   : null;
               const recommendationRejectedBreakdown =
-                row.scan && isAmazonScan && hasExtractedFields
+                row.scan !== null && isAmazonScan === true && hasExtractedFields === true
                   ? resolveRejectedAmazonCandidateBreakdown(row.scan.steps)
                   : null;
-              const diagnostics = row.scan ? resolveProductScanDiagnostics(row.scan) : null;
-              const hasDiagnostics = Boolean(diagnostics);
+              const diagnostics = row.scan !== null ? resolveProductScanDiagnostics(row.scan) : null;
+              const hasDiagnostics = diagnostics !== null;
               const latestFailureArtifact = diagnostics?.failureArtifacts[0] ?? null;
               const failureArtifactCount = diagnostics?.failureArtifacts.length ?? 0;
               const latestFailureArtifactPath = latestFailureArtifact?.path ?? null;
               const latestFailureArtifactHref =
-                row.scan && latestFailureArtifact
+                row.scan !== null && latestFailureArtifact !== null
                   ? buildProductScanArtifactHref(row.scan.id, latestFailureArtifact)
                   : null;
               const progressSummary =
@@ -1592,16 +1594,16 @@ export function ProductAmazonScanModal(
                   ? resolveProductScanContinuationSummary(scanSteps)
                   : null;
               const rejectedCandidateSummary =
-                scanSteps.length > 0 && !progressSummary && !continuationSummary
+                scanSteps.length > 0 && progressSummary === null && continuationSummary === null
                   ? resolveProductScanRejectedCandidateSummary(scanSteps)
                   : null;
               const evaluationPolicySummary =
-                scanSteps.length > 0 && !progressSummary
+                scanSteps.length > 0 && progressSummary === null
                   ? resolveProductScanEvaluationPolicySummary(scanSteps)
                   : null;
               const latestOutcomeSummary =
                 scanSteps.length > 0 &&
-                !progressSummary &&
+                progressSummary === null &&
                 (row.status === 'failed' ||
                   row.status === 'conflict' ||
                   row.status === 'queued' ||
@@ -1611,16 +1613,16 @@ export function ProductAmazonScanModal(
                     })
                   : null;
               const fallbackFailureSummary =
-                !latestOutcomeSummary && row.scan
+                latestOutcomeSummary === null && row.scan !== null
                   ? resolveProductScanDiagnosticFailureSummary(row.scan)
                   : null;
               const isActiveDiagnosticSummary =
-                !latestOutcomeSummary &&
-                Boolean(fallbackFailureSummary) &&
+                latestOutcomeSummary === null &&
+                fallbackFailureSummary !== null &&
                 (row.status === 'queued' || row.status === 'running');
               const usesFailureSummaryStyling =
                 latestOutcomeSummary?.kind === 'failed' ||
-                (fallbackFailureSummary != null && !isActiveDiagnosticSummary);
+                (fallbackFailureSummary !== null && isActiveDiagnosticSummary === false);
 
               return (
                 <section
@@ -1639,7 +1641,7 @@ export function ProductAmazonScanModal(
                         {row.status === 'running' ? <Loader2 className='mr-1 h-3 w-3 animate-spin' /> : null}
                         {resolveRowStatusLabel(row)}
                       </span>
-                      {!isAmazonScan && resolvedConnectionLabel ? (
+                      {isAmazonScan === false && resolvedConnectionLabel !== null ? (
                         <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground'>
                           Profile {resolvedConnectionLabel}
                         </span>
@@ -1651,13 +1653,13 @@ export function ProductAmazonScanModal(
                   </div>
 
                   <div className='flex items-center justify-end gap-1'>
-                    {isAmazonScan ? (
+                    {isAmazonScan === true ? (
                       <Button
                         type='button'
                         variant='ghost'
                         size='sm'
                         onClick={() => toggleRowExtractedFields(row.productId)}
-                        disabled={!hasExtractedFields}
+                        disabled={hasExtractedFields === false}
                         className='h-7 gap-1.5 px-2 text-xs'
                       >
                         {extractedFieldsExpanded ? (
@@ -1673,7 +1675,7 @@ export function ProductAmazonScanModal(
                       variant='ghost'
                       size='sm'
                       onClick={() => toggleRowDiagnostics(row.productId)}
-                      disabled={!hasDiagnostics}
+                      disabled={hasDiagnostics === false}
                       className='h-7 gap-1.5 px-2 text-xs'
                     >
                       {diagnosticsExpanded ? (
@@ -1700,7 +1702,7 @@ export function ProductAmazonScanModal(
                     </Button>
                   </div>
 
-                  {progressSummary ? (
+                  {progressSummary !== null ? (
                     <div className='space-y-1 rounded-md border border-blue-500/20 bg-blue-500/5 px-3 py-2'>
                       <div className='flex flex-wrap items-center gap-2 text-xs'>
                         <span className='inline-flex items-center rounded-md border border-blue-500/20 px-2 py-0.5 font-medium text-foreground'>
@@ -1713,19 +1715,19 @@ export function ProductAmazonScanModal(
                             Attempt {progressSummary.attempt}
                           </span>
                         ) : null}
-                        {progressSummary.inputSource ? (
+                        {progressSummary.inputSource !== undefined && progressSummary.inputSource !== null ? (
                           <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
                             {progressSummary.inputSource === 'url' ? 'URL input' : 'File input'}
                           </span>
                         ) : null}
                       </div>
-                      {progressSummary.message ? (
+                      {progressSummary.message !== undefined && progressSummary.message !== null && progressSummary.message !== '' ? (
                         <p className='text-sm text-muted-foreground'>{progressSummary.message}</p>
                       ) : null}
                     </div>
                   ) : null}
 
-                  {continuationSummary ? (
+                  {continuationSummary !== null ? (
                     <div className='space-y-1 rounded-md border border-amber-500/20 bg-amber-500/5 px-3 py-2'>
                       <div className='flex flex-wrap items-center gap-2 text-xs'>
                         <span className='inline-flex items-center rounded-md border border-amber-500/20 px-2 py-0.5 font-medium text-amber-300'>
@@ -1737,7 +1739,7 @@ export function ProductAmazonScanModal(
                             : 'After AI rejection'}
                         </span>
                         <span className='font-medium text-foreground'>{continuationSummary.stepLabel}</span>
-                        {continuationSummary.resultCodeLabel ? (
+                        {continuationSummary.resultCodeLabel !== undefined && continuationSummary.resultCodeLabel !== null && continuationSummary.resultCodeLabel !== '' ? (
                           <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
                             {continuationSummary.resultCodeLabel}
                           </span>
@@ -1748,21 +1750,21 @@ export function ProductAmazonScanModal(
                           </span>
                         ) : null}
                       </div>
-                      {continuationSummary.message ? (
+                      {continuationSummary.message !== undefined && continuationSummary.message !== null && continuationSummary.message !== '' ? (
                         <p className='text-sm text-muted-foreground'>{continuationSummary.message}</p>
                       ) : null}
                       <div className='flex flex-wrap gap-3 text-xs text-muted-foreground'>
-                        {continuationSummary.rejectedUrl ? (
+                        {continuationSummary.rejectedUrl !== undefined && continuationSummary.rejectedUrl !== null && continuationSummary.rejectedUrl !== '' ? (
                           <span>Rejected: {continuationSummary.rejectedUrl}</span>
                         ) : null}
-                        {continuationSummary.nextUrl ? (
+                        {continuationSummary.nextUrl !== undefined && continuationSummary.nextUrl !== null && continuationSummary.nextUrl !== '' ? (
                           <span>Next: {continuationSummary.nextUrl}</span>
                         ) : null}
                       </div>
                     </div>
                   ) : null}
 
-                  {rejectedCandidateSummary ? (
+                  {rejectedCandidateSummary !== null ? (
                     <div className='space-y-1 rounded-md border border-amber-500/20 bg-amber-500/5 px-3 py-2'>
                       <div className='flex flex-wrap items-center gap-2 text-xs'>
                         <span className='inline-flex items-center rounded-md border border-amber-500/20 px-2 py-0.5 font-medium text-amber-300'>
@@ -1780,7 +1782,7 @@ export function ProductAmazonScanModal(
                               : 'final result'}
                         </span>
                       </div>
-                      {rejectedCandidateSummary.latestReason ? (
+                      {rejectedCandidateSummary.latestReason !== undefined && rejectedCandidateSummary.latestReason !== null && rejectedCandidateSummary.latestReason !== '' ? (
                         <p className='text-sm text-muted-foreground'>
                           {rejectedCandidateSummary.latestReason}
                         </p>
@@ -1791,7 +1793,7 @@ export function ProductAmazonScanModal(
                           {rejectedCandidateSummary.languageRejectedCount === 1 ? '' : 's'} rejected
                         </p>
                       ) : null}
-                      {rejectedCandidateSummary.latestRejectedUrl ? (
+                      {rejectedCandidateSummary.latestRejectedUrl !== undefined && rejectedCandidateSummary.latestRejectedUrl !== null && rejectedCandidateSummary.latestRejectedUrl !== '' ? (
                         <div className='flex flex-wrap gap-3 text-xs text-muted-foreground'>
                           <span>Latest rejected: {rejectedCandidateSummary.latestRejectedUrl}</span>
                         </div>
@@ -1799,44 +1801,44 @@ export function ProductAmazonScanModal(
                     </div>
                   ) : null}
 
-                  {evaluationPolicySummary ? (
+                  {evaluationPolicySummary !== null ? (
                     <div className='space-y-1 rounded-md border border-border/50 bg-background/70 px-3 py-2'>
                       <div className='flex flex-wrap items-center gap-2 text-xs'>
                         <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
                           AI evaluator policy
                         </span>
-                        {evaluationPolicySummary.executionLabel ? (
+                        {evaluationPolicySummary.executionLabel !== undefined && evaluationPolicySummary.executionLabel !== null && evaluationPolicySummary.executionLabel !== '' ? (
                           <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
                             {evaluationPolicySummary.executionLabel}
                           </span>
                         ) : null}
-                        {evaluationPolicySummary.modelSource ? (
+                        {evaluationPolicySummary.modelSource !== undefined && evaluationPolicySummary.modelSource !== null && evaluationPolicySummary.modelSource !== '' ? (
                           <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
                             {evaluationPolicySummary.modelSource}
                           </span>
                         ) : null}
-                        {evaluationPolicySummary.thresholdLabel ? (
+                        {evaluationPolicySummary.thresholdLabel !== undefined && evaluationPolicySummary.thresholdLabel !== null && evaluationPolicySummary.thresholdLabel !== '' ? (
                           <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
                             {evaluationPolicySummary.thresholdLabel}
                           </span>
                         ) : null}
-                        {evaluationPolicySummary.scopeLabel ? (
+                        {evaluationPolicySummary.scopeLabel !== undefined && evaluationPolicySummary.scopeLabel !== null && evaluationPolicySummary.scopeLabel !== '' ? (
                           <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
                             {evaluationPolicySummary.scopeLabel}
                           </span>
                         ) : null}
-                        {evaluationPolicySummary.languageGateLabel ? (
+                        {evaluationPolicySummary.languageGateLabel !== undefined && evaluationPolicySummary.languageGateLabel !== null && evaluationPolicySummary.languageGateLabel !== '' ? (
                           <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
                             {evaluationPolicySummary.languageGateLabel}
                           </span>
                         ) : null}
-                        {evaluationPolicySummary.languageDetectionLabel ? (
+                        {evaluationPolicySummary.languageDetectionLabel !== undefined && evaluationPolicySummary.languageDetectionLabel !== null && evaluationPolicySummary.languageDetectionLabel !== '' ? (
                           <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
                             {evaluationPolicySummary.languageDetectionLabel}
                           </span>
                         ) : null}
                       </div>
-                      {evaluationPolicySummary.modelLabel ? (
+                      {evaluationPolicySummary.modelLabel !== undefined && evaluationPolicySummary.modelLabel !== null && evaluationPolicySummary.modelLabel !== '' ? (
                         <p className='text-sm text-muted-foreground'>
                           Model {evaluationPolicySummary.modelLabel}
                         </p>
@@ -1844,7 +1846,7 @@ export function ProductAmazonScanModal(
                     </div>
                   ) : null}
 
-                  {latestOutcomeSummary || fallbackFailureSummary ? (
+                  {latestOutcomeSummary !== null || fallbackFailureSummary !== null ? (
                     <div
                       className={`space-y-1 rounded-md px-3 py-2 ${
                         usesFailureSummaryStyling
@@ -1865,31 +1867,31 @@ export function ProductAmazonScanModal(
                         <span className='text-muted-foreground'>
                           {latestOutcomeSummary?.kind === 'failed'
                             ? 'Last failure'
-                            : isActiveDiagnosticSummary
+                            : isActiveDiagnosticSummary === true
                               ? 'Latest diagnostics'
-                              : fallbackFailureSummary
+                              : fallbackFailureSummary !== null
                                 ? 'Last failure'
                             : 'Last completed step'}
                         </span>
                         <span className='font-medium text-foreground'>
                           {latestOutcomeSummary?.stepLabel ?? fallbackFailureSummary?.stepLabel}
                         </span>
-                        {(latestOutcomeSummary?.sourceLabel ?? fallbackFailureSummary?.sourceLabel) ? (
+                        {(latestOutcomeSummary?.sourceLabel ?? fallbackFailureSummary?.sourceLabel) !== undefined && (latestOutcomeSummary?.sourceLabel ?? fallbackFailureSummary?.sourceLabel) !== null ? (
                           <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
                             {latestOutcomeSummary?.sourceLabel ?? fallbackFailureSummary?.sourceLabel}
                           </span>
                         ) : null}
-                        {(latestOutcomeSummary?.resultCodeLabel ?? fallbackFailureSummary?.resultCodeLabel) ? (
+                        {(latestOutcomeSummary?.resultCodeLabel ?? fallbackFailureSummary?.resultCodeLabel) !== undefined && (latestOutcomeSummary?.resultCodeLabel ?? fallbackFailureSummary?.resultCodeLabel) !== null ? (
                           <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
                             {latestOutcomeSummary?.resultCodeLabel ?? fallbackFailureSummary?.resultCodeLabel}
                           </span>
                         ) : null}
-                        {latestOutcomeSummary?.attempt ? (
+                        {latestOutcomeSummary?.attempt !== undefined && latestOutcomeSummary?.attempt !== null ? (
                           <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
                             Attempt {latestOutcomeSummary.attempt}
                           </span>
                         ) : null}
-                        {latestOutcomeSummary?.inputSource ? (
+                        {latestOutcomeSummary?.inputSource !== undefined && latestOutcomeSummary?.inputSource !== null ? (
                           <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
                             {latestOutcomeSummary.inputSource === 'url' ? 'URL input' : 'File input'}
                           </span>
@@ -1899,7 +1901,7 @@ export function ProductAmazonScanModal(
                             {failureArtifactCount} artifact{failureArtifactCount === 1 ? '' : 's'}
                           </span>
                         ) : null}
-                        {latestFailureArtifactPath ? (
+                        {latestFailureArtifactPath !== null ? (
                           <CopyButton
                             value={latestFailureArtifactPath}
                             variant='outline'
@@ -1910,17 +1912,17 @@ export function ProductAmazonScanModal(
                           />
                         ) : null}
                       </div>
-                      {(latestOutcomeSummary?.message ?? fallbackFailureSummary?.message) ? (
+                      {(latestOutcomeSummary?.message ?? fallbackFailureSummary?.message) !== undefined && (latestOutcomeSummary?.message ?? fallbackFailureSummary?.message) !== null ? (
                         <p className='text-sm text-muted-foreground'>
                           {latestOutcomeSummary?.message ?? fallbackFailureSummary?.message}
                         </p>
                       ) : null}
-                      {(latestOutcomeSummary?.timingLabel ?? fallbackFailureSummary?.timingLabel) ? (
+                      {(latestOutcomeSummary?.timingLabel ?? fallbackFailureSummary?.timingLabel) !== undefined && (latestOutcomeSummary?.timingLabel ?? fallbackFailureSummary?.timingLabel) !== null ? (
                         <p className='text-xs text-muted-foreground'>
                           {latestOutcomeSummary?.timingLabel ?? fallbackFailureSummary?.timingLabel}
                         </p>
                       ) : null}
-                      {(latestOutcomeSummary?.url ?? fallbackFailureSummary?.url) ? (
+                      {(latestOutcomeSummary?.url ?? fallbackFailureSummary?.url) !== undefined && (latestOutcomeSummary?.url ?? fallbackFailureSummary?.url) !== null ? (
                         <a
                           href={latestOutcomeSummary?.url ?? fallbackFailureSummary?.url ?? undefined}
                           target='_blank'
@@ -1931,7 +1933,7 @@ export function ProductAmazonScanModal(
                           <ExternalLink className='h-3.5 w-3.5' />
                         </a>
                       ) : null}
-                      {latestFailureArtifactHref ? (
+                      {latestFailureArtifactHref !== null ? (
                         <a
                           href={latestFailureArtifactHref}
                           target='_blank'
@@ -1945,35 +1947,35 @@ export function ProductAmazonScanModal(
                     </div>
                   ) : null}
 
-                  {recommendationReason ? (
+                  {recommendationReason !== null ? (
                     <div className='space-y-1 rounded-md border border-border/50 bg-background/70 px-3 py-2'>
                       <div className='flex flex-wrap items-center gap-2 text-xs'>
                         <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
-                          {isAmazonScan
+                          {isAmazonScan === true
                             ? 'Amazon result signal'
                             : (supplierRecommendationSignal?.badgeLabel ?? '1688 supplier result')}
                         </span>
                         <span className='font-medium text-foreground'>{recommendationReason}</span>
                       </div>
-                      {supplierApplyPolicySummary ? (
+                      {supplierApplyPolicySummary !== null ? (
                         <div className='flex flex-wrap items-center gap-2 text-xs'>
                           <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
                             Apply policy
                           </span>
                           <span
                             className={
-                              isBlocked1688ResultReviewed
+                              isBlocked1688ResultReviewed === true
                                 ? 'font-medium text-muted-foreground'
                                 : supplierApplyPolicySummary.tone === 'destructive'
                                 ? 'font-medium text-destructive'
                                 : 'font-medium text-amber-300'
                             }
                           >
-                            {isBlocked1688ResultReviewed
+                            {isBlocked1688ResultReviewed === true
                               ? 'Blocked result reviewed'
                               : supplierApplyPolicySummary.label}
                           </span>
-                          {blocked1688CandidateUrlsHref ? (
+                          {blocked1688CandidateUrlsHref !== null ? (
                             <a
                               href={`#${blocked1688CandidateUrlsHref}`}
                               className='text-primary underline-offset-2 hover:underline'
@@ -1981,7 +1983,7 @@ export function ProductAmazonScanModal(
                               Review candidates
                             </a>
                           ) : null}
-                          {blocked1688MatchEvaluationHref ? (
+                          {blocked1688MatchEvaluationHref !== null ? (
                             <a
                               href={`#${blocked1688MatchEvaluationHref}`}
                               className='text-primary underline-offset-2 hover:underline'
@@ -1989,11 +1991,11 @@ export function ProductAmazonScanModal(
                               Review evaluation
                             </a>
                           ) : null}
-                          {supplierApplyPolicySummary.blockActions ? (
+                          {supplierApplyPolicySummary.blockActions === true ? (
                             <button
                               type='button'
                               onClick={() =>
-                                isBlocked1688ResultReviewed
+                                isBlocked1688ResultReviewed === true
                                   ? clearBlockedScanReviewed(row.scan?.id)
                                   : markBlockedScanReviewed(row.scan?.id)
                               }

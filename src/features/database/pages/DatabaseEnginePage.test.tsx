@@ -474,6 +474,36 @@ describe('DatabaseEnginePage', () => {
     expect(mocks.actions.syncMongoSources).toHaveBeenNthCalledWith(2, 'local_to_cloud');
   });
 
+  it('shows server-side sync progress and disables sync controls while the lock is active', () => {
+    mocks.state = {
+      ...mocks.state,
+      mongoSourceState: {
+        ...mocks.state.mongoSourceState,
+        syncInProgress: {
+          direction: 'local_to_cloud',
+          source: 'local',
+          target: 'cloud',
+          acquiredAt: '2026-04-16T00:38:12.443Z',
+          pid: 28245,
+        },
+      },
+    };
+
+    render(<DatabaseEnginePage />);
+
+    expect(
+      screen.getByText(
+        'Sync in progress: local -> cloud since 2026-04-16T00:38:12.443Z'
+      )
+    ).toBeInTheDocument();
+
+    const syncButtons = screen.getAllByRole('button', { name: 'Syncing...' });
+    expect(syncButtons).toHaveLength(2);
+    syncButtons.forEach((button) => {
+      expect(button).toBeDisabled();
+    });
+  });
+
   it('updates manual operation controls from the engine page', () => {
     render(<DatabaseEnginePage />);
 

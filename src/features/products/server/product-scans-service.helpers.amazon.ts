@@ -63,11 +63,13 @@ export const appendAmazonAiStageSummary = (
   summary: AmazonAiStageSummary
 ): Record<string, unknown> => {
   const existingRawResult = toRecord(rawResult) ?? {};
-  const existingEvidence = toRecord(existingRawResult['amazonAiEvidence']) ?? {};
-  const existingStages = Array.isArray(existingEvidence['stages'])
-    ? existingEvidence['stages'].filter(
+  const amazonAiEvidence = existingRawResult['amazonAiEvidence'];
+  const existingEvidence = toRecord(amazonAiEvidence) ?? {};
+  const stages = existingEvidence['stages'];
+  const existingStages = Array.isArray(stages)
+    ? (stages as unknown[]).filter(
         (entry): entry is Record<string, unknown> =>
-          entry != null && typeof entry === 'object' && !Array.isArray(entry)
+          entry !== null && entry !== undefined && typeof entry === 'object' && Array.isArray(entry) === false
       )
     : [];
 
@@ -173,18 +175,18 @@ export const buildAmazonScannerRequestRuntimeOptions = (input: {
     settingsOverrides['headless'] = input.forceHeadless;
   }
 
-  if (!input.scannerSettings.playwrightPersonaId) {
+  if ((input.scannerSettings.playwrightPersonaId ?? '') === '') {
     if (typeof settingsOverrides['humanizeMouse'] !== 'boolean') {
       settingsOverrides['humanizeMouse'] = true;
     }
     const slowMo = settingsOverrides['slowMo'];
-    if (typeof slowMo !== 'number' || !Number.isFinite(slowMo) || slowMo <= 0) {
+    if (typeof slowMo !== 'number' || !Number.isFinite(slowMo) || (slowMo as number) <= 0) {
       settingsOverrides['slowMo'] = AMAZON_SCAN_DEFAULT_SLOW_MO_MS;
     }
   }
 
   const existingLaunchArgs = Array.isArray(existingLaunchOptions['args'])
-    ? existingLaunchOptions['args'].filter((entry): entry is string => typeof entry === 'string')
+    ? (existingLaunchOptions['args'] as unknown[]).filter((entry): entry is string => typeof entry === 'string')
     : [];
 
   const launchOptions: Record<string, unknown> = {
@@ -195,7 +197,8 @@ export const buildAmazonScannerRequestRuntimeOptions = (input: {
   const contextOptions: Record<string, unknown> = {
     ...existingContextOptions,
   };
-  if (typeof contextOptions['userAgent'] !== 'string' || contextOptions['userAgent'].trim().length === 0) {
+  const userAgent = contextOptions['userAgent'];
+  if (typeof userAgent !== 'string' || userAgent.trim().length === 0) {
     contextOptions['userAgent'] = AMAZON_SCAN_DEFAULT_USER_AGENT;
   }
 
@@ -236,14 +239,15 @@ export const resolveAmazonImageSearchProviderHistory = (
   currentProvider: ReturnType<typeof createDefaultProductScannerSettings>['amazonImageSearchProvider']
 ) => {
   const rawRecord = toRecord(rawResult);
-  const history = Array.isArray(rawRecord?.['imageSearchProviderHistory'])
-    ? rawRecord['imageSearchProviderHistory']
+  const imageSearchProviderHistory = rawRecord?.['imageSearchProviderHistory'];
+  const history = Array.isArray(imageSearchProviderHistory)
+    ? (imageSearchProviderHistory as unknown[])
         .map((value) => normalizeAmazonImageSearchProvider(value))
         .filter(
           (
             value
           ): value is ReturnType<typeof createDefaultProductScannerSettings>['amazonImageSearchProvider'] =>
-            value != null
+            value !== null
         )
     : [];
   const current = normalizeAmazonImageSearchProvider(rawRecord?.['imageSearchProvider']);
@@ -270,15 +274,15 @@ export const mergeAmazonCandidateEvaluatorConfig = (
       overrideConfig?.languageDetectionMode ?? baseConfig?.languageDetectionMode ?? 'deterministic_then_ai',
   } as const;
 
-  if (!enabled) {
+  if (enabled === false) {
     return { ...base, enabled: false, modelId: null, systemPrompt: null, brainApplied: null } as any;
   }
 
-  const modelId = overrideConfig?.modelId ?? (baseConfig?.enabled ? baseConfig.modelId : null) ?? null;
-  const systemPrompt = overrideConfig?.systemPrompt ?? (baseConfig?.enabled ? baseConfig.systemPrompt : null) ?? null;
-  const brainApplied = overrideConfig?.brainApplied ?? (baseConfig?.enabled ? baseConfig.brainApplied : null) ?? null;
+  const modelId = overrideConfig?.modelId ?? (baseConfig?.enabled === true ? baseConfig.modelId : null) ?? null;
+  const systemPrompt = overrideConfig?.systemPrompt ?? (baseConfig?.enabled === true ? baseConfig.systemPrompt : null) ?? null;
+  const brainApplied = overrideConfig?.brainApplied ?? (baseConfig?.enabled === true ? baseConfig.brainApplied : null) ?? null;
 
-  if (!modelId || !systemPrompt) {
+  if (modelId === null || systemPrompt === null) {
     return { ...base, enabled: false, modelId: null, systemPrompt: null, brainApplied: null } as any;
   }
 
@@ -335,7 +339,7 @@ export const resolveAmazonImageSearchFallbackProvider = (input: {
   const fallbackProvider = normalizeAmazonImageSearchProvider(
     input.scannerSettings.amazonImageSearchFallbackProvider
   );
-  if (!fallbackProvider || fallbackProvider === input.currentProvider) {
+  if (fallbackProvider === null || fallbackProvider === input.currentProvider) {
     return null;
   }
   const history = resolveAmazonImageSearchProviderHistory(
@@ -353,7 +357,7 @@ export const formatAmazonEvaluationConfidence = (confidence: number | null | und
 export const resolveAmazonEvaluationStepStatus = (
   evaluation: ProductScanAmazonEvaluation | null | undefined
 ): ProductScanRecord['steps'][number]['status'] => {
-  if (!evaluation) {
+  if (evaluation === undefined || evaluation === null) {
     return 'failed';
   }
   if (evaluation.status === 'approved') {
@@ -368,7 +372,7 @@ export const resolveAmazonEvaluationStepStatus = (
 export const resolveAmazonCandidateTriageStepStatus = (
   evaluation: AmazonCandidateTriageEvaluationResult | null | undefined
 ): ProductScanRecord['steps'][number]['status'] => {
-  if (!evaluation) {
+  if (evaluation === undefined || evaluation === null) {
     return 'failed';
   }
   if (evaluation.status === 'approved') {
@@ -383,7 +387,7 @@ export const resolveAmazonCandidateTriageStepStatus = (
 export const resolveAmazonCandidateTriageStepResultCode = (
   evaluation: AmazonCandidateTriageEvaluationResult | null | undefined
 ): string => {
-  if (!evaluation) {
+  if (evaluation === undefined || evaluation === null) {
     return 'triage_failed';
   }
   if (evaluation.status === 'approved') {
@@ -401,7 +405,7 @@ export const resolveAmazonCandidateTriageStepResultCode = (
 export const resolveAmazonCandidateTriageMessage = (
   evaluation: AmazonCandidateTriageEvaluationResult | null | undefined
 ): string => {
-  if (!evaluation) {
+  if (evaluation === undefined || evaluation === null) {
     return 'Amazon candidate triage failed.';
   }
   if (evaluation.status === 'approved') {
@@ -410,8 +414,9 @@ export const resolveAmazonCandidateTriageMessage = (
       : 'Amazon candidate triage selected the best candidate.';
   }
   if (evaluation.status === 'skipped') {
+    const reasons = evaluation.reasons;
     return (
-      evaluation.reasons[0] ??
+      reasons[0] ??
       'Skipped Amazon candidate triage because deterministic hints already identified the best candidate.'
     );
   }
@@ -419,8 +424,9 @@ export const resolveAmazonCandidateTriageMessage = (
     return 'Amazon candidate triage requested a fallback image-search provider.';
   }
   if (evaluation.status === 'rejected') {
+    const reasons = evaluation.reasons;
     return (
-      evaluation.reasons[0] ?? 'Amazon candidate triage rejected the current Google candidate set.'
+      reasons[0] ?? 'Amazon candidate triage rejected the current Google candidate set.'
     );
   }
   return evaluation.error ?? 'Amazon candidate triage failed.';
@@ -428,7 +434,7 @@ export const resolveAmazonCandidateTriageMessage = (
 
 export const formatAmazonRuntimeStageLabel = (value: unknown): string | null => {
   const normalized = readOptionalString(value, 160);
-  if (!normalized) {
+  if (normalized === null || normalized === undefined || normalized === '') {
     return null;
   }
 
@@ -439,7 +445,7 @@ export const formatAmazonRuntimeStageLabel = (value: unknown): string | null => 
 
 export const humanizeAmazonRuntimeStageLabel = (value: unknown): string | null => {
   const normalized = formatAmazonRuntimeStageLabel(value);
-  if (!normalized) {
+  if (normalized === null || normalized === undefined || normalized === '') {
     return null;
   }
 
@@ -464,40 +470,41 @@ export const buildAmazonActiveRunDiagnostics = (
 
   return {
     ...metaRawResult,
-    ...(readOptionalString(metaRecord['runId']) || readOptionalString(metaRawResult['runId'])
+    ...(readOptionalString(metaRecord['runId']) !== '' || readOptionalString(metaRawResult['runId']) !== ''
       ? {
           runId:
-            readOptionalString(metaRecord['runId']) ?? readOptionalString(metaRawResult['runId']),
+            readOptionalString(metaRecord['runId']) !== '' ? readOptionalString(metaRecord['runId']) : readOptionalString(metaRawResult['runId']),
         }
       : {}),
-    ...(readOptionalString(metaRecord['runStatus']) ||
-    readOptionalString(metaRawResult['runStatus'])
+    ...(readOptionalString(metaRecord['runStatus']) !== '' ||
+    readOptionalString(metaRawResult['runStatus']) !== ''
       ? {
           runStatus:
-            readOptionalString(metaRecord['runStatus']) ??
+            readOptionalString(metaRecord['runStatus']) !== '' ?
+            readOptionalString(metaRecord['runStatus']) :
             readOptionalString(metaRawResult['runStatus']),
         }
       : {}),
-    ...(resolvePersistableScanUrl(metaRecord['finalUrl'], metaRawResult['finalUrl'])
+    ...(resolvePersistableScanUrl(metaRecord['finalUrl'], metaRawResult['finalUrl']) !== null
       ? {
           finalUrl: resolvePersistableScanUrl(metaRecord['finalUrl'], metaRawResult['finalUrl']),
         }
       : {}),
-    ...(readOptionalString(metaRecord['latestStage']) ||
-    readOptionalString(metaRawResult['latestStage']) ||
-    readOptionalString(metaRawResult['stage'])
+    ...(readOptionalString(metaRecord['latestStage']) !== '' ||
+    readOptionalString(metaRawResult['latestStage']) !== '' ||
+    readOptionalString(metaRawResult['stage']) !== ''
       ? {
           latestStage:
-            readOptionalString(metaRecord['latestStage']) ??
-            readOptionalString(metaRawResult['latestStage']) ??
-            readOptionalString(metaRawResult['stage']),
+            readOptionalString(metaRecord['latestStage']) !== '' ?
+            readOptionalString(metaRecord['latestStage']) :
+            (readOptionalString(metaRawResult['latestStage']) !== '' ? readOptionalString(metaRawResult['latestStage']) : readOptionalString(metaRawResult['stage'])),
         }
       : {}),
     ...(resolvePersistableScanUrl(
       metaRecord['latestStageUrl'],
       metaRawResult['latestStageUrl'],
       metaRawResult['currentUrl']
-    )
+    ) !== null
       ? {
           latestStageUrl: resolvePersistableScanUrl(
             metaRecord['latestStageUrl'],
@@ -506,9 +513,9 @@ export const buildAmazonActiveRunDiagnostics = (
           ),
         }
       : {}),
-    ...(failureArtifacts ? { failureArtifacts } : {}),
-    ...(logTail ? { logTail } : {}),
-    ...(runtimePosture ? { runtimePosture } : {}),
+    ...(failureArtifacts !== null ? { failureArtifacts } : {}),
+    ...(logTail !== null ? { logTail } : {}),
+    ...(runtimePosture !== null ? { runtimePosture } : {}),
   };
 };
 
@@ -521,19 +528,19 @@ export const resolveAmazonActiveRunStallMessage = ({
 }): string => {
   const displayStage = humanizeAmazonRuntimeStageLabel(latestStage);
   if (reason === 'manual_verification_expired') {
-    return displayStage
-      ? `Google Lens manual verification expired at ${displayStage}.`
+    return (displayStage ?? null) !== null
+      ? `Google Lens manual verification expired at ${displayStage!}.`
       : 'Google Lens manual verification expired before completion.';
   }
 
   if (reason === 'no_progress') {
-    return displayStage
-      ? `Amazon reverse image scan stalled at ${displayStage}.`
+    return (displayStage ?? null) !== null
+      ? `Amazon reverse image scan stalled at ${displayStage!}.`
       : 'Amazon reverse image scan stopped making progress.';
   }
 
-  return displayStage
-    ? `Amazon reverse image scan timed out at ${displayStage}.`
+  return (displayStage ?? null) !== null
+    ? `Amazon reverse image scan timed out at ${displayStage!}.`
     : 'Amazon reverse image scan exceeded its runtime limit.';
 };
 
@@ -544,14 +551,14 @@ export const shouldKeepAmazonManualVerificationPending = (input: {
 }): boolean => {
   const waitingForManualVerification =
     input.parsedStatus === 'captcha_required' ||
-    (input.existingPending &&
-      (input.parsedStatus === 'running' || input.parsedStatus == null));
-  if (!waitingForManualVerification) {
+    (input.existingPending === true &&
+      (input.parsedStatus === 'running' || input.parsedStatus === null));
+  if (waitingForManualVerification === false) {
     return false;
   }
 
   const normalizedStage = input.latestStage?.trim().toLowerCase() ?? null;
-  if (!normalizedStage) {
+  if (normalizedStage === null) {
     return true;
   }
 
@@ -565,7 +572,7 @@ export const shouldKeepAmazonManualVerificationPending = (input: {
 export const resolveAmazonEvaluationStepResultCode = (
   evaluation: ProductScanAmazonEvaluation | null | undefined
 ): string => {
-  if (!evaluation) {
+  if (evaluation === undefined || evaluation === null) {
     return 'evaluation_failed';
   }
   if (evaluation.status === 'approved') {
@@ -585,28 +592,29 @@ export const resolveAmazonEvaluationStepResultCode = (
 export const resolveAmazonEvaluationMessage = (
   evaluation: ProductScanAmazonEvaluation | null | undefined
 ): string => {
-  if (!evaluation) {
+  if (evaluation === undefined || evaluation === null) {
     return 'Amazon candidate AI evaluation failed.';
   }
   const confidenceLabel = formatAmazonEvaluationConfidence(evaluation.confidence);
   if (evaluation.status === 'approved') {
-    return confidenceLabel
-      ? `AI evaluator approved the Amazon candidate (${confidenceLabel}).`
+    return (confidenceLabel ?? null) !== null
+      ? `AI evaluator approved the Amazon candidate (${confidenceLabel!}).`
       : 'AI evaluator approved the Amazon candidate.';
   }
   if (evaluation.status === 'rejected') {
     if (evaluation.languageAccepted === false) {
-      return confidenceLabel
-        ? `AI evaluator rejected the Amazon candidate because page content is not English (${confidenceLabel}).`
+      return (confidenceLabel ?? null) !== null
+        ? `AI evaluator rejected the Amazon candidate because page content is not English (${confidenceLabel!}).`
         : 'AI evaluator rejected the Amazon candidate because page content is not English.';
     }
-    return confidenceLabel
-      ? `AI evaluator rejected the Amazon candidate (${confidenceLabel}).`
+    return (confidenceLabel ?? null) !== null
+      ? `AI evaluator rejected the Amazon candidate (${confidenceLabel!}).`
       : 'AI evaluator rejected the Amazon candidate.';
   }
   if (evaluation.status === 'skipped') {
+    const reasons = evaluation.reasons;
     return (
-      evaluation.reasons[0] ??
+      reasons[0] ??
       'Skipped Amazon candidate AI evaluation because deterministic identifiers already matched.'
     );
   }
@@ -616,7 +624,7 @@ export const resolveAmazonEvaluationMessage = (
 export const formatAmazonEvaluatorAllowedContentLanguage = (
   value: ProductScannerAmazonCandidateEvaluatorResolvedConfig['allowedContentLanguage'] | null | undefined
 ): string => {
-  if (!value || value === 'en') {
+  if (value === undefined || value === null || value === '' || value === 'en') {
     return 'English';
   }
 
@@ -666,7 +674,7 @@ export const formatAmazonEvaluatorModelSource = (
 export const resolveAmazonEvaluationRejectionKindLabel = (
   evaluation: ProductScanAmazonEvaluation | null | undefined
 ): string | null => {
-  if (evaluation?.status !== 'rejected') {
+  if (evaluation === undefined || evaluation === null || evaluation.status !== 'rejected') {
     return null;
   }
 
@@ -705,13 +713,13 @@ export const resolveNextAmazonCandidateUrl = (input: {
     };
   }
 
-  const currentIndex = input.currentUrl ? normalizedUrls.indexOf(input.currentUrl) : -1;
+  const currentIndex = input.currentUrl !== null ? normalizedUrls.indexOf(input.currentUrl) : -1;
   const nextIndex = currentIndex >= 0 ? currentIndex + 1 : 0;
   const nextUrl = normalizedUrls[nextIndex] ?? null;
   return {
     nextUrl,
-    nextRank: nextUrl ? nextIndex + 1 : null,
-    remainingCandidateUrls: nextUrl ? normalizedUrls.slice(nextIndex) : [],
+    nextRank: nextUrl !== null ? nextIndex + 1 : null,
+    remainingCandidateUrls: nextUrl !== null ? normalizedUrls.slice(nextIndex) : [],
   };
 };
 
@@ -766,15 +774,18 @@ export const resolveLatestAmazonCandidateStepMeta = (
       step.key === 'amazon_open'
     ) ?? null;
 
+  const candidateId = (latestCandidateStep?.candidateId ?? '').trim();
+  const url = (latestCandidateStep?.url ?? '').trim();
+
   return {
-    candidateId: latestCandidateStep?.candidateId?.trim() || null,
+    candidateId: candidateId !== '' ? candidateId : null,
     candidateRank:
       typeof latestCandidateStep?.candidateRank === 'number' &&
       Number.isFinite(latestCandidateStep.candidateRank) &&
       latestCandidateStep.candidateRank > 0
         ? latestCandidateStep.candidateRank
         : null,
-    url: latestCandidateStep?.url?.trim() || null,
+    url: url !== '' ? url : null,
   };
 };
 
@@ -798,7 +809,7 @@ export const buildAmazonEvaluationStepDetails = (
   },
   {
     label: 'Evaluation scope',
-    value: evaluatorConfig.onlyForAmbiguousCandidates
+    value: evaluatorConfig.onlyForAmbiguousCandidates === true
       ? 'Ambiguous Amazon candidates only'
       : 'Every Amazon candidate',
   },
@@ -912,7 +923,7 @@ export const buildAmazonCandidateTriageStepDetails = (
   },
   {
     label: 'Evaluation scope',
-    value: evaluatorConfig.onlyForAmbiguousCandidates
+    value: evaluatorConfig.onlyForAmbiguousCandidates === true
       ? 'Ambiguous Amazon candidates only'
       : 'Every Amazon candidate',
   },

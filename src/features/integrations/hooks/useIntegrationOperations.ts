@@ -19,6 +19,7 @@ const listingBadgesQueryKey = QUERY_KEYS.integrations.productListingsBadges();
 const EMPTY_LISTING_BADGES_PAYLOAD: ListingBadgesPayload = Object.freeze({});
 const LISTING_BADGE_IN_FLIGHT_REFETCH_MS = 10_000;
 const LISTING_BADGE_RECONCILIATION_REFETCH_MS = 30_000;
+const LISTING_BADGE_QUERY_TIMEOUT_MS = 45_000;
 const LISTING_BADGE_RECONCILIATION_STATUSES = new Set([
   'failed',
   'needs_login',
@@ -277,11 +278,12 @@ export function useIntegrationListingBadges(
     queryKey: scopedListingBadgesQueryKey,
     queryFn: async (): Promise<ListingBadgesPayload> => {
       try {
-        const productIdsParam = encodeURIComponent(scopedProductIds.join(','));
-        return await api.get<ListingBadgesPayload>(
-          `/api/v2/integrations/product-listings?productIds=${productIdsParam}`,
+        return await api.post<ListingBadgesPayload>(
+          '/api/v2/integrations/product-listings',
+          { productIds: scopedProductIds },
           {
             cache: 'no-store',
+            timeout: LISTING_BADGE_QUERY_TIMEOUT_MS,
           }
         );
       } catch (error) {

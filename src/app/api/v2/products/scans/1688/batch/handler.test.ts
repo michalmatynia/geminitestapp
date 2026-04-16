@@ -55,11 +55,12 @@ describe('products/scans/1688/batch handler', () => {
     );
 
     expect(queue1688BatchProductScansMock).toHaveBeenCalledWith({
-      connectionId: null,
       productIds: ['product-1'],
-      stepSequenceKey: 'supplier_direct_candidate_followup',
-      stepSequence: [{ key: 'supplier_probe', label: 'Probe supplier candidate' }],
-      userId: 'user-42',
+      ownerUserId: 'user-42',
+      requestInput: {
+        stepSequenceKey: 'supplier_direct_candidate_followup',
+        stepSequence: [{ key: 'supplier_probe', label: 'Probe supplier candidate' }],
+      },
     });
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({

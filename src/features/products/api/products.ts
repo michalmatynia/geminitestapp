@@ -42,7 +42,7 @@ export async function countProducts(filters: ProductFilter, signal?: AbortSignal
     if (signal) options.signal = signal;
     options.timeout = PRODUCT_READ_TIMEOUT_MS;
     const data = await api.get<{ count: number }>('/api/v2/products/count', options);
-    return data.count ?? 0;
+    return data.count;
   } catch (_error) {
     logClientCatch(_error, {
       source: 'products.api',

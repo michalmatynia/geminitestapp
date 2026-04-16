@@ -31,7 +31,7 @@ export async function getCatalogsHandler(
   const provider = await getProductDataProvider();
   let catalogs = await (await getCatalogRepository(provider)).listCatalogs();
 
-  if (provider === 'mongodb' && catalogs.length > 0) {
+  if ((provider as string) === 'mongodb' && catalogs.length > 0) {
     try {
       const mongo = await getMongoDb();
       const mongoLanguages = await mongo
@@ -40,18 +40,22 @@ export async function getCatalogsHandler(
         .toArray();
       const languageCodeById = new Map<string, string>();
       mongoLanguages.forEach((language: { id: string; code: string }) => {
-        if (language.id) languageCodeById.set(language.id, language.code);
-        if (language.code) languageCodeById.set(language.code, language.code);
+        if (typeof language.id === 'string' && language.id !== '') {
+          languageCodeById.set(language.id, language.code);
+        }
+        if (typeof language.code === 'string' && language.code !== '') {
+          languageCodeById.set(language.code, language.code);
+        }
       });
 
       const collection = mongo.collection<{ _id: string; id: string }>('catalogs');
       const bulkOps: AnyBulkWriteOperation<{ _id: string; id: string }>[] = [];
       const updatedCatalogs = catalogs.map((catalog: CatalogRecord) => {
         const nextLanguageIds =
-          catalog.languageIds?.map(
+          (catalog.languageIds ?? []).map(
             (languageId: string) => languageCodeById.get(languageId) ?? languageId
-          ) ?? [];
-        const nextDefaultLanguageId = catalog.defaultLanguageId
+          );
+        const nextDefaultLanguageId = (catalog.defaultLanguageId !== undefined && catalog.defaultLanguageId !== null && catalog.defaultLanguageId !== '')
           ? (languageCodeById.get(catalog.defaultLanguageId) ?? catalog.defaultLanguageId)
           : null;
 
@@ -90,7 +94,7 @@ export async function getCatalogsHandler(
       catalogs = updatedCatalogs;
     } catch (error: unknown) {
       logClientError(error);
-      void logSystemEvent({
+      await logSystemEvent({
         level: 'warn',
         message: 'Failed to normalize catalog language IDs',
         source: 'catalogs.GET',
@@ -132,7 +136,9 @@ export async function postCatalogsHandler(
     });
   }
   if (
-    !normalizedLanguages.defaultLanguageId ||
+    normalizedLanguages.defaultLanguageId === null ||
+    normalizedLanguages.defaultLanguageId === undefined ||
+    normalizedLanguages.defaultLanguageId === '' ||
     !normalizedLanguages.languageIds.includes(normalizedLanguages.defaultLanguageId)
   ) {
     throw badRequestError('Default language must be one of the selected languages.', {
@@ -145,7 +151,9 @@ export async function postCatalogsHandler(
     });
   }
   if (
-    !normalizedPriceGroups.defaultPriceGroupId ||
+    normalizedPriceGroups.defaultPriceGroupId === null ||
+    normalizedPriceGroups.defaultPriceGroupId === undefined ||
+    normalizedPriceGroups.defaultPriceGroupId === '' ||
     !normalizedPriceGroups.priceGroupIds.includes(normalizedPriceGroups.defaultPriceGroupId)
   ) {
     throw badRequestError('Default price group must be one of the selected price groups.', {

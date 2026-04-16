@@ -61,10 +61,12 @@ function DatabaseEngineSettingsTab(): React.JSX.Element {
   } = useDatabaseEngineActionsContext();
   const activeMongoSource = mongoSourceState?.activeSource ?? null;
   const lastMongoSync = mongoSourceState?.lastSync ?? null;
+  const mongoSyncInProgress = mongoSourceState?.syncInProgress ?? null;
   const lastMongoSyncBackups = lastMongoSync?.preSyncBackups ?? [];
   const mongoSources = mongoSourceState
     ? [mongoSourceState.local, mongoSourceState.cloud]
     : [];
+  const mongoSyncButtonsDisabled = isSyncingMongoSources || Boolean(mongoSyncInProgress);
   const manualFullSyncEnabled = operationControls.allowManualFullSync;
   const nextMongoSource =
     activeMongoSource === 'local'
@@ -255,6 +257,12 @@ MONGODB_ACTIVE_SOURCE_DEFAULT=${nextMongoSource ?? 'cloud'}`}
                   {mongoSourceState.syncIssue}
                 </Badge>
               ) : null}
+              {mongoSyncInProgress ? (
+                <Badge variant='outline' className='border-sky-400/30 text-sky-200'>
+                  Sync in progress: {mongoSyncInProgress.source} -&gt; {mongoSyncInProgress.target}{' '}
+                  since {mongoSyncInProgress.acquiredAt}
+                </Badge>
+              ) : null}
               {mongoSourceState?.canSync && manualFullSyncEnabled ? (
                 <>
                   <Button
@@ -262,12 +270,12 @@ MONGODB_ACTIVE_SOURCE_DEFAULT=${nextMongoSource ?? 'cloud'}`}
                     size='sm'
                     variant='outline'
                     className='h-8'
-                    disabled={isSyncingMongoSources}
+                    disabled={mongoSyncButtonsDisabled}
                     onClick={() => {
                       void syncMongoSources('cloud_to_local');
                     }}
                   >
-                    {isSyncingMongoSources
+                    {mongoSyncButtonsDisabled
                       ? 'Syncing...'
                       : 'Pull Cloud -> Local (backup both first)'}
                   </Button>
@@ -276,12 +284,12 @@ MONGODB_ACTIVE_SOURCE_DEFAULT=${nextMongoSource ?? 'cloud'}`}
                     size='sm'
                     variant='outline'
                     className='h-8'
-                    disabled={isSyncingMongoSources}
+                    disabled={mongoSyncButtonsDisabled}
                     onClick={() => {
                       void syncMongoSources('local_to_cloud');
                     }}
                   >
-                    {isSyncingMongoSources
+                    {mongoSyncButtonsDisabled
                       ? 'Syncing...'
                       : 'Push Local -> Cloud (backup both first)'}
                   </Button>

@@ -2,23 +2,25 @@ import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
-  getListingsByProductIdsMock,
   listAllListingsMock,
+  listProductListingsByProductIdsMock,
   listIntegrationsMock,
 } = vi.hoisted(() => ({
-  getListingsByProductIdsMock: vi.fn(),
   listAllListingsMock: vi.fn(),
+  listProductListingsByProductIdsMock: vi.fn(),
   listIntegrationsMock: vi.fn(),
 }));
 
 vi.mock('@/features/integrations/server', () => ({
-  getProductListingRepository: async () => ({
-    getListingsByProductIds: (...args: unknown[]) => getListingsByProductIdsMock(...args),
-    listAllListings: (...args: unknown[]) => listAllListingsMock(...args),
-  }),
   getIntegrationRepository: async () => ({
     listIntegrations: (...args: unknown[]) => listIntegrationsMock(...args),
   }),
+}));
+
+vi.mock('@/features/integrations/services/product-listing-repository', () => ({
+  listAllProductListingsAcrossProviders: (...args: unknown[]) => listAllListingsMock(...args),
+  listProductListingsByProductIdsAcrossProviders: (...args: unknown[]) =>
+    listProductListingsByProductIdsMock(...args),
 }));
 
 vi.mock('@/features/integrations/services/base-listing-canonicalization', () => ({
@@ -46,7 +48,7 @@ describe('integration product listings handler', () => {
   });
 
   it('prefers the newer auth_required Tradera status over an older queued listing', async () => {
-    getListingsByProductIdsMock.mockResolvedValue([
+    listProductListingsByProductIdsMock.mockResolvedValue([
       {
         id: 'listing-queued',
         productId: 'product-1',
@@ -82,7 +84,7 @@ describe('integration product listings handler', () => {
   });
 
   it('keeps an active Tradera badge when an older live listing still exists', async () => {
-    getListingsByProductIdsMock.mockResolvedValue([
+    listProductListingsByProductIdsMock.mockResolvedValue([
       {
         id: 'listing-active',
         productId: 'product-1',
@@ -118,7 +120,7 @@ describe('integration product listings handler', () => {
   });
 
   it('surfaces processing while a Tradera live status check is pending', async () => {
-    getListingsByProductIdsMock.mockResolvedValue([
+    listProductListingsByProductIdsMock.mockResolvedValue([
       {
         id: 'listing-active',
         productId: 'product-1',

@@ -15,6 +15,8 @@ import {
 import type { AppProviderDiagnostics as ProviderDiagnosticsResponse } from '@/shared/contracts/system';
 import { api } from '@/shared/lib/api-client';
 
+const MONGO_SOURCE_SYNC_TIMEOUT_MS = 15 * 60 * 1000;
+
 export const getDatabaseStatus = async (): Promise<DatabaseEngineStatusResponse> =>
   api.get<DatabaseEngineStatusResponse>('/api/databases/engine/status');
 
@@ -31,6 +33,8 @@ export const syncDatabaseEngineMongoSource = async (
 ): Promise<DatabaseEngineMongoSyncResponsePayload> =>
   api.post<DatabaseEngineMongoSyncResponsePayload>('/api/databases/engine/source/sync', {
     direction,
+  }, {
+    timeout: MONGO_SOURCE_SYNC_TIMEOUT_MS,
   });
 
 export const getProviderDiagnostics = async (): Promise<ProviderDiagnosticsResponse> =>

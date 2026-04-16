@@ -134,12 +134,12 @@ export const validateAndNormalizeRuntimeConfig = ({
   runtimeConfig: string | null;
 }): string | null => {
   if (!runtimeEnabled || runtimeType === 'none') return null;
-  if (!runtimeConfig) {
+  if (runtimeConfig === null || runtimeConfig === undefined || runtimeConfig === '') {
     throw badRequestError('runtimeConfig is required when runtime is enabled.');
   }
 
   const parsed = parseRuntimeConfigJson(runtimeConfig);
-  if (runtimeType === 'database_query') {
+  if ((runtimeType as string) === 'database_query') {
     const result = databaseRuntimeConfigSchema.safeParse(parsed);
     if (!result.success) {
       throw badRequestError('Invalid database runtimeConfig.', {
@@ -149,7 +149,7 @@ export const validateAndNormalizeRuntimeConfig = ({
     return JSON.stringify(result.data);
   }
 
-  if (runtimeType === 'ai_prompt') {
+  if ((runtimeType as string) === 'ai_prompt') {
     const result = aiRuntimeConfigSchema.safeParse(parsed);
     if (!result.success) {
       throw badRequestError('Invalid AI runtimeConfig.', {
@@ -169,17 +169,19 @@ export const parseRuntimeConfigForEvaluation = ({
   runtimeType: ProductValidationRuntimeType;
   runtimeConfig: string | null;
 }): Record<string, unknown> | null => {
-  if (!runtimeConfig || runtimeType === 'none') return null;
+  if (runtimeConfig === null || runtimeConfig === undefined || runtimeConfig === '' || runtimeType === 'none') {
+    return null;
+  }
   try {
     const parsed = JSON.parse(runtimeConfig) as unknown;
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
       return null;
     }
-    if (runtimeType === 'database_query') {
+    if ((runtimeType as string) === 'database_query') {
       const result = databaseRuntimeConfigSchema.safeParse(parsed);
       return result.success ? (result.data as Record<string, unknown>) : null;
     }
-    if (runtimeType === 'ai_prompt') {
+    if ((runtimeType as string) === 'ai_prompt') {
       const result = aiRuntimeConfigSchema.safeParse(parsed);
       return result.success ? (result.data as Record<string, unknown>) : null;
     }

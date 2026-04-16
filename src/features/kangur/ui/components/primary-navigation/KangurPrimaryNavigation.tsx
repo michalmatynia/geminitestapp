@@ -121,7 +121,7 @@ function KangurPrimaryNavigationGuestPlayerNameAction({
   if (isEditingGuestPlayerName) {
     return (
       <form
-        className='flex items-center gap-2'
+        className='flex items-center'
         onSubmit={(e) => {
           e.preventDefault();
           commitGuestPlayerName();
@@ -130,9 +130,9 @@ function KangurPrimaryNavigationGuestPlayerNameAction({
         <input
           aria-label={fallbackCopy.guestPlayerNameLabel}
           autoFocus
-          className='h-9 w-32 rounded-lg border border-sky-200 bg-white/90 px-3 text-xs font-bold text-sky-900 placeholder:text-sky-300/70 focus:border-sky-400 focus:outline-none'
+          className='kangur-text-field h-10 min-h-0 w-44 rounded-xl px-3.5 py-0 text-sm font-semibold text-slate-600 sm:w-48'
           onChange={(e) => handleGuestPlayerNameChange(e.target.value)}
-          onBlur={() => setIsEditingGuestPlayerName(false)}
+          onBlur={() => commitGuestPlayerName()}
           onKeyDown={(e) => {
             if (e.key === 'Escape') {
               setIsEditingGuestPlayerName(false);
@@ -145,16 +145,20 @@ function KangurPrimaryNavigationGuestPlayerNameAction({
             }
           }}
           placeholder={guestPlayerPlaceholderText}
+          style={
+            {
+              '--kangur-input-height': '40px',
+              '--kangur-text-field-background': 'rgba(255, 255, 255, 0.88)',
+              '--kangur-text-field-border': 'rgba(226, 232, 240, 0.78)',
+              '--kangur-text-field-focus-border': 'rgba(203, 213, 225, 0.9)',
+              '--kangur-text-field-focus-ring': 'transparent',
+              '--kangur-text-field-placeholder': 'rgba(148, 163, 184, 0.95)',
+              '--kangur-text-field-text': '#475569',
+            } as React.CSSProperties
+          }
           type='text'
           value={guestPlayerNameValue}
         />
-        <button
-          aria-label={fallbackCopy.guestPlayerNameLabel}
-          className='flex h-9 w-9 items-center justify-center rounded-lg bg-sky-500 text-white shadow-sm transition hover:bg-sky-600 active:scale-95'
-          type='submit'
-        >
-          <span className='text-sm'>OK</span>
-        </button>
       </form>
     );
   }

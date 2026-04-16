@@ -11,10 +11,17 @@ export const productSyncAppFieldSchema = z.enum([
   'stock',
   'price',
   'name_en',
+  'name_pl',
   'description_en',
+  'description_pl',
   'sku',
   'ean',
   'weight',
+  'length',
+  'width',
+  'category',
+  'parameters',
+  'custom_fields',
 ]);
 export type ProductSyncAppField = z.infer<typeof productSyncAppFieldSchema>;
 
@@ -22,10 +29,17 @@ export const PRODUCT_SYNC_APP_FIELDS: ProductSyncAppField[] = [
   'stock',
   'price',
   'name_en',
+  'name_pl',
   'description_en',
+  'description_pl',
   'sku',
   'ean',
   'weight',
+  'length',
+  'width',
+  'category',
+  'parameters',
+  'custom_fields',
 ];
 
 export const productSyncDirectionSchema = z.enum(['disabled', 'base_to_app', 'app_to_base']);
@@ -113,6 +127,18 @@ export const PRODUCT_SYNC_BASE_FIELD_OPTIONS_BY_APP_FIELD: Record<
       group: 'Legacy fields',
     }),
   ],
+  name_pl: [
+    createProductSyncBaseFieldOption({
+      value: 'text_fields.name|pl',
+      label: 'Polish name (text_fields.name|pl)',
+      group: 'Text Fields',
+    }),
+    createProductSyncBaseFieldOption({
+      value: 'name|pl',
+      label: 'Legacy Polish name (name|pl)',
+      group: 'Legacy fields',
+    }),
+  ],
   description_en: [
     createProductSyncBaseFieldOption({
       value: 'text_fields.description',
@@ -132,6 +158,18 @@ export const PRODUCT_SYNC_BASE_FIELD_OPTIONS_BY_APP_FIELD: Record<
     createProductSyncBaseFieldOption({
       value: 'description|en',
       label: 'Legacy English description (description|en)',
+      group: 'Legacy fields',
+    }),
+  ],
+  description_pl: [
+    createProductSyncBaseFieldOption({
+      value: 'text_fields.description|pl',
+      label: 'Polish description (text_fields.description|pl)',
+      group: 'Text Fields',
+    }),
+    createProductSyncBaseFieldOption({
+      value: 'description|pl',
+      label: 'Legacy Polish description (description|pl)',
       group: 'Legacy fields',
     }),
   ],
@@ -156,6 +194,56 @@ export const PRODUCT_SYNC_BASE_FIELD_OPTIONS_BY_APP_FIELD: Record<
       group: 'Physical',
     }),
   ],
+  length: [
+    createProductSyncBaseFieldOption({
+      value: 'length',
+      label: 'Length (length)',
+      group: 'Physical',
+    }),
+  ],
+  width: [
+    createProductSyncBaseFieldOption({
+      value: 'width',
+      label: 'Width (width)',
+      group: 'Physical',
+    }),
+  ],
+  category: [
+    createProductSyncBaseFieldOption({
+      value: 'category_id',
+      label: 'Category ID (category_id)',
+      group: 'Classification',
+    }),
+  ],
+  parameters: [
+    createProductSyncBaseFieldOption({
+      value: 'parameters',
+      label: 'Parameters (parameters)',
+      group: 'Attributes',
+    }),
+    createProductSyncBaseFieldOption({
+      value: 'features',
+      label: 'Features (features)',
+      group: 'Attributes',
+    }),
+    createProductSyncBaseFieldOption({
+      value: 'attributes',
+      label: 'Attributes (attributes)',
+      group: 'Attributes',
+    }),
+  ],
+  custom_fields: [
+    createProductSyncBaseFieldOption({
+      value: 'custom_fields',
+      label: 'Custom fields (custom_fields)',
+      group: 'Attributes',
+    }),
+    createProductSyncBaseFieldOption({
+      value: 'features',
+      label: 'Features (features)',
+      group: 'Attributes',
+    }),
+  ],
 };
 
 export const PRODUCT_SYNC_BASE_FIELD_PATTERN_HINTS_BY_APP_FIELD: Record<
@@ -168,10 +256,17 @@ export const PRODUCT_SYNC_BASE_FIELD_PATTERN_HINTS_BY_APP_FIELD: Record<
   ],
   price: [createProductSyncBaseFieldPatternHint('prices.<price_group_id>')],
   name_en: [],
+  name_pl: [],
   description_en: [],
+  description_pl: [],
   sku: [],
   ean: [],
   weight: [],
+  length: [],
+  width: [],
+  category: [],
+  parameters: [],
+  custom_fields: [],
 };
 
 export const getProductSyncBaseFieldOptions = (
@@ -353,16 +448,58 @@ export const DEFAULT_PRODUCT_SYNC_FIELD_RULES: Array<Omit<ProductSyncFieldRule, 
     baseField: 'weight',
     direction: 'disabled',
   },
+  {
+    appField: 'name_pl',
+    baseField: 'text_fields.name|pl',
+    direction: 'disabled',
+  },
+  {
+    appField: 'description_pl',
+    baseField: 'text_fields.description|pl',
+    direction: 'disabled',
+  },
+  {
+    appField: 'length',
+    baseField: 'length',
+    direction: 'disabled',
+  },
+  {
+    appField: 'width',
+    baseField: 'width',
+    direction: 'disabled',
+  },
+  {
+    appField: 'category',
+    baseField: 'category_id',
+    direction: 'disabled',
+  },
+  {
+    appField: 'parameters',
+    baseField: 'parameters',
+    direction: 'disabled',
+  },
+  {
+    appField: 'custom_fields',
+    baseField: 'custom_fields',
+    direction: 'disabled',
+  },
 ];
 
 export const getProductSyncAppFieldLabel = (field: ProductSyncAppField): string => {
   if (field === 'name_en') return 'Name (EN)';
+  if (field === 'name_pl') return 'Name (PL)';
   if (field === 'description_en') return 'Description (EN)';
+  if (field === 'description_pl') return 'Description (PL)';
   if (field === 'stock') return 'Stock';
   if (field === 'price') return 'Price';
   if (field === 'sku') return 'SKU';
   if (field === 'ean') return 'EAN';
   if (field === 'weight') return 'Weight';
+  if (field === 'length') return 'Length';
+  if (field === 'width') return 'Width';
+  if (field === 'category') return 'Category';
+  if (field === 'parameters') return 'Parameters';
+  if (field === 'custom_fields') return 'Custom Fields';
   return field;
 };
 

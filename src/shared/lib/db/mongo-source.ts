@@ -10,6 +10,7 @@ import type {
 } from '@/shared/contracts/database';
 import { databaseEngineMongoLastSyncSchema } from '@/shared/contracts/database';
 import { configurationError } from '@/shared/errors/app-error';
+import { readMongoSyncLock } from '@/shared/lib/db/mongo-sync-lock';
 import { reportRuntimeCatch } from '@/shared/utils/observability/runtime-error-reporting';
 
 const MONGODB_ACTIVE_SOURCE_DEFAULT_ENV = 'MONGODB_ACTIVE_SOURCE_DEFAULT';
@@ -268,6 +269,7 @@ export const getMongoSourceState = async (): Promise<DatabaseEngineMongoSourceSt
   const activeSource = await getActiveMongoSource();
   const defaultSource = resolveDefaultMongoSource();
   const lastSync = await readMongoSourceLastSync();
+  const syncInProgress = await readMongoSyncLock({ pruneStale: true });
   const local = getMongoSourceConfig('local');
   const cloud = getMongoSourceConfig('cloud');
   const localReachability = await probeMongoSourceReachability('local');
@@ -286,6 +288,7 @@ export const getMongoSourceState = async (): Promise<DatabaseEngineMongoSourceSt
     activeSource,
     defaultSource,
     lastSync,
+    syncInProgress,
     local: {
       source: 'local',
       configured: local.configured,

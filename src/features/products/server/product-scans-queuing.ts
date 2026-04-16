@@ -497,12 +497,18 @@ export async function queueAmazonBatchProductScans(input: {
   productIds: string[];
   requestInput?: Record<string, unknown>;
   ownerUserId?: string | null;
+  userId?: string | null;
+  stepSequenceKey?: string | null;
+  stepSequence?: any[] | null;
 }): Promise<ProductAmazonBatchScanResponse> {
   return await queueBatchProductScans({
     productIds: input.productIds,
     config: AMAZON_QUEUE_CONFIG,
-    requestInput: input.requestInput,
-    ownerUserId: input.ownerUserId,
+    requestInput: input.requestInput ?? {
+      ...(input.stepSequenceKey ? { stepSequenceKey: input.stepSequenceKey } : {}),
+      ...(input.stepSequence ? { stepSequence: input.stepSequence } : {}),
+    },
+    ownerUserId: input.ownerUserId ?? input.userId,
   });
 }
 
@@ -511,12 +517,18 @@ export async function queue1688BatchProductScans(input: {
   forceVisible?: boolean;
   requestInput?: Record<string, unknown>;
   ownerUserId?: string | null;
+  userId?: string | null;
+  stepSequenceKey?: string | null;
+  stepSequence?: any[] | null;
 }): Promise<ProductScanBatchResponse> {
   return await queueBatchProductScans({
     productIds: input.productIds,
     config: SUPPLIER_1688_QUEUE_CONFIG,
     forceVisible: input.forceVisible,
-    requestInput: input.requestInput,
-    ownerUserId: input.ownerUserId,
+    requestInput: input.requestInput ?? {
+      ...(input.stepSequenceKey ? { stepSequenceKey: input.stepSequenceKey } : {}),
+      ...(input.stepSequence ? { stepSequence: input.stepSequence } : {}),
+    },
+    ownerUserId: input.ownerUserId ?? input.userId,
   });
 }

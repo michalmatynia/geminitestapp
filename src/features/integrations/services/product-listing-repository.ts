@@ -488,19 +488,37 @@ export async function listProductListingsByProductIdAcrossProviders(
 export async function listProductListingsByProductIdsAcrossProviders(
   productIds: string[]
 ): Promise<
-  Array<Pick<ProductListing, 'productId' | 'status' | 'integrationId' | 'marketplaceData'>>
+  Array<
+    Pick<
+      ProductListing,
+      'productId' | 'status' | 'integrationId' | 'marketplaceData' | 'updatedAt'
+    >
+  >
 > {
   const uniqueProductIds = Array.from(
     new Set(productIds.map((id) => id.trim()).filter((id) => id.length > 0))
   );
   if (uniqueProductIds.length === 0) return [];
 
-  const mongoListings = await mongoRepository.getListingsByProductIds(uniqueProductIds);
+  const collection = await getListingCollection();
+  const mongoListings = await collection
+    .find(buildLookupFilterForIds('productId', uniqueProductIds), {
+      projection: {
+        productId: 1,
+        status: 1,
+        integrationId: 1,
+        marketplaceData: 1,
+        updatedAt: 1,
+      },
+    })
+    .toArray();
+
   return mongoListings.map((listing) => ({
-    productId: listing.productId,
+    productId: normalizeLookupIdOrFallback(listing.productId),
     status: listing.status,
-    integrationId: listing.integrationId,
-    marketplaceData: listing.marketplaceData,
+    integrationId: normalizeLookupIdOrFallback(listing.integrationId),
+    marketplaceData: listing.marketplaceData ?? null,
+    updatedAt: listing.updatedAt.toISOString(),
   }));
 }
 

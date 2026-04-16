@@ -9,6 +9,7 @@ import type {
   DatabaseEngineOperationsJobs,
   DatabaseEngineBackupSchedulerStatus,
   DatabaseEngineMongoSourceState,
+  DatabaseEngineMongoSyncDirection,
   RedisOverview,
   DatabaseEngineProviderPreview,
   DatabaseEngineWorkspaceView,
@@ -16,6 +17,7 @@ import type {
   CollectionSchema,
 } from '@/shared/contracts/database';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
+import { ApiError } from '@/shared/lib/api-client';
 import {
   DATABASE_ENGINE_BACKUP_SCHEDULE_KEY,
   DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY,
@@ -29,6 +31,7 @@ import {
   type DatabaseEngineOperationControls,
   type DatabaseEnginePolicy,
 } from '@/shared/lib/db/database-engine-constants';
+import { extractMutationErrorMessage } from '@/shared/lib/mutation-error-handler';
 import { useToast } from '@/shared/ui/primitives.public';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -84,6 +87,36 @@ export interface UseDatabaseEngineStateReturn {
   isSyncingMongoSources: boolean;
 }
 
+const isMongoSyncTimeoutError = (error: unknown): error is Error =>
+  error instanceof Error &&
+  (error.message.startsWith('Request timeout after ') ||
+    error.message.startsWith('Response body timeout after '));
+
+const didMongoSyncCompleteAfterRequestStarted = (
+  state: DatabaseEngineMongoSourceState | undefined,
+  direction: DatabaseEngineMongoSyncDirection,
+  requestStartedAtMs: number
+): boolean => {
+  const syncedAt = state?.lastSync?.syncedAt;
+  if (syncedAt == null || syncedAt === '' || state?.lastSync?.direction !== direction) {
+    return false;
+  }
+
+  const syncedAtMs = Date.parse(syncedAt);
+  return Number.isFinite(syncedAtMs) && syncedAtMs >= requestStartedAtMs - 1_000;
+};
+
+const getMongoSyncInProgressMessage = (
+  state: DatabaseEngineMongoSourceState | undefined
+): string | null => {
+  const syncInProgress = state?.syncInProgress;
+  if (!syncInProgress) {
+    return null;
+  }
+
+  return `MongoDB sync is still running: ${syncInProgress.source} -> ${syncInProgress.target}. Started at ${syncInProgress.acquiredAt}.`;
+};
+
 export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
   const router = useRouter();
   const pathname = usePathname();
@@ -98,7 +131,9 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
   const redisOverviewQuery = useRedisOverview();
   const schemaQuery = useAllCollectionsSchema();
 
-  const activeView = (searchParams.get('view') as DatabaseEngineWorkspaceView) || 'engine';
+  const requestedView = searchParams.get('view');
+  const activeView: DatabaseEngineWorkspaceView =
+    requestedView === 'crud' || requestedView === 'engine' ? requestedView : 'engine';
 
   const setActiveView = useCallback(
     (view: DatabaseEngineWorkspaceView) => {
@@ -129,6 +164,63 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
   const [isDirty, setIsDirty] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const lastValidationErrorSignatureRef = useRef<string | null>(null);
+
+  const resolveMongoSyncToast = useCallback(
+    async (
+      error: unknown,
+      direction: DatabaseEngineMongoSyncDirection,
+      requestStartedAtMs: number
+    ): Promise<{ message: string; variant: 'success' | 'warning' | 'error' }> => {
+      if (isMongoSyncTimeoutError(error)) {
+        try {
+          const refreshedState = (await mongoSourceQuery.refetch()).data;
+          const refreshedLastSync = refreshedState?.lastSync;
+
+          if (didMongoSyncCompleteAfterRequestStarted(refreshedState, direction, requestStartedAtMs)) {
+            return {
+              message: `MongoDB sync completed: ${refreshedLastSync?.source ?? 'unknown'} -> ${refreshedLastSync?.target ?? 'unknown'}. Synced at ${refreshedLastSync?.syncedAt ?? 'unknown time'}.`,
+              variant: 'success',
+            };
+          }
+
+          const syncInProgressMessage = getMongoSyncInProgressMessage(refreshedState);
+          if (syncInProgressMessage !== null) {
+            return {
+              message: `${syncInProgressMessage} The server has not reported a final result yet.`,
+              variant: 'warning',
+            };
+          }
+        } catch (refetchError) {
+          logClientError(refetchError, {
+            context: {
+              source: 'useDatabaseEngineState',
+              action: 'resolveMongoSyncToast',
+              direction,
+            },
+          });
+        }
+
+        return {
+          message:
+            'MongoDB sync request timed out before the server reported a final result. Check MongoDB source status before retrying.',
+          variant: 'warning',
+        };
+      }
+
+      if (error instanceof ApiError && error.status === 423) {
+        return {
+          message: error.message,
+          variant: 'warning',
+        };
+      }
+
+      return {
+        message: extractMutationErrorMessage(error, 'Failed to synchronize MongoDB sources.'),
+        variant: 'error',
+      };
+    },
+    [mongoSourceQuery]
+  );
 
   const parsedPersistedSettings = useMemo(() => {
     const errors: string[] = [];
@@ -324,12 +416,15 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
       setIsDirty(true);
     },
     syncMongoSources: async (direction) => {
+      const requestStartedAtMs = Date.now();
       try {
         const response = await syncMongoSourcesMutation.mutateAsync(direction);
         toast(response.message, { variant: 'success' });
+        mongoSourceQuery.refetch().catch(() => undefined);
       } catch (error) {
         logClientError(error);
-        toast('Failed to synchronize MongoDB sources.', { variant: 'error' });
+        const nextToast = await resolveMongoSyncToast(error, direction, requestStartedAtMs);
+        toast(nextToast.message, { variant: nextToast.variant });
       }
     },
     saveSettings: handleSave,

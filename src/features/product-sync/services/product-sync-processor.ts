@@ -146,12 +146,25 @@ export const coerceNumber = (value: unknown): number | null => {
   return null;
 };
 
+const serializeArrayField = (value: unknown): string | null => {
+  if (value === null || value === undefined) return null;
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return null;
+  }
+};
+
+
 export const normalizeFieldValue = (
   appField: ProductSyncAppField,
   value: unknown
 ): string | number | null => {
-  if (appField === 'stock' || appField === 'price' || appField === 'weight') {
+  if (appField === 'stock' || appField === 'price' || appField === 'weight' || appField === 'length' || appField === 'width') {
     return coerceNumber(value);
+  }
+  if (appField === 'parameters' || appField === 'custom_fields') {
+    return serializeArrayField(value);
   }
   const stringValue = toTrimmedString(value);
   return stringValue || null;
@@ -167,12 +180,19 @@ export const valuesEqual = (appField: ProductSyncAppField, left: unknown, right:
 
 export const getProductFieldValue = (product: ProductWithImages, field: ProductSyncAppField): unknown => {
   if (field === 'name_en') return product.name_en;
+  if (field === 'name_pl') return product.name_pl;
   if (field === 'description_en') return product.description_en;
+  if (field === 'description_pl') return product.description_pl;
   if (field === 'stock') return product.stock;
   if (field === 'price') return product.price;
   if (field === 'sku') return product.sku;
   if (field === 'ean') return product.ean;
   if (field === 'weight') return product.weight;
+  if (field === 'length') return product.length;
+  if (field === 'width') return product.sizeWidth;
+  if (field === 'category') return product.categoryId;
+  if (field === 'parameters') return product.parameters;
+  if (field === 'custom_fields') return product.customFields;
   return null;
 };
 
@@ -198,6 +218,42 @@ export const resolvePathValue = (record: Record<string, unknown>, path: string):
   return current;
 };
 
+const readNumericFromPriceEntry = (entry: unknown): number | null => {
+  if (typeof entry === 'number') return Number.isFinite(entry) ? entry : null;
+  if (typeof entry === 'string') return toFiniteNumber(entry);
+  if (entry && typeof entry === 'object') {
+    const e = entry as Record<string, unknown>;
+    const candidate = e['price'] ?? e['price_brutto'] ?? e['price_gross'] ?? e['gross'];
+    return toFiniteNumber(candidate);
+  }
+  return null;
+};
+
+const resolveFirstPriceFromRecord = (record: Record<string, unknown>): number | null => {
+  // Try prices.0 (numeric key) — handles inventories with positional price groups
+  const group0 = resolvePathValue(record, 'prices.0');
+  if (group0 !== undefined && group0 !== null) {
+    const v = readNumericFromPriceEntry(group0);
+    if (v !== null) return v;
+  }
+  // Try top-level price/price_brutto fields
+  const topLevel = readNumericFromPriceEntry({
+    price: record['price'],
+    price_brutto: record['price_brutto'],
+    price_gross: record['price_gross'],
+  });
+  if (topLevel !== null) return topLevel;
+  // Iterate all price group values (handles PLN / EUR / other currency-keyed groups)
+  const pricesObj = record['prices'];
+  if (pricesObj && typeof pricesObj === 'object' && !Array.isArray(pricesObj)) {
+    for (const entry of Object.values(pricesObj as Record<string, unknown>)) {
+      const v = readNumericFromPriceEntry(entry);
+      if (v !== null) return v;
+    }
+  }
+  return null;
+};
+
 export const resolveDefaultBaseValue = (
   appField: ProductSyncAppField,
   record: Record<string, unknown>
@@ -206,24 +262,24 @@ export const resolveDefaultBaseValue = (
     return resolvePathValue(record, 'stock');
   }
   if (appField === 'price') {
-    const byDefaultGroup = resolvePathValue(record, 'prices.0');
-    if (byDefaultGroup !== undefined) return byDefaultGroup;
-    return resolvePathValue(record, 'price');
+    return resolveFirstPriceFromRecord(record);
   }
   if (appField === 'name_en') {
     return (
-      resolvePathValue(record, 'text_fields.name') ??
+      resolvePathValue(record, 'name_en') ??
+      resolvePathValue(record, 'text_fields.name_en') ??
       resolvePathValue(record, 'text_fields.name|en') ??
-      resolvePathValue(record, 'name') ??
-      resolvePathValue(record, 'name_en')
+      resolvePathValue(record, 'text_fields.name') ??
+      resolvePathValue(record, 'name')
     );
   }
   if (appField === 'description_en') {
     return (
-      resolvePathValue(record, 'text_fields.description') ??
+      resolvePathValue(record, 'description_en') ??
+      resolvePathValue(record, 'text_fields.description_en') ??
       resolvePathValue(record, 'text_fields.description|en') ??
-      resolvePathValue(record, 'description') ??
-      resolvePathValue(record, 'description_en')
+      resolvePathValue(record, 'text_fields.description') ??
+      resolvePathValue(record, 'description')
     );
   }
   if (appField === 'sku') {
@@ -234,6 +290,52 @@ export const resolveDefaultBaseValue = (
   }
   if (appField === 'weight') {
     return resolvePathValue(record, 'weight');
+  }
+  if (appField === 'name_pl') {
+    return (
+      resolvePathValue(record, 'name_pl') ??
+      resolvePathValue(record, 'text_fields.name_pl') ??
+      resolvePathValue(record, 'text_fields.name|pl') ??
+      resolvePathValue(record, 'name|pl') ??
+      resolvePathValue(record, 'text_fields.name') ??
+      resolvePathValue(record, 'name')
+    );
+  }
+  if (appField === 'description_pl') {
+    return (
+      resolvePathValue(record, 'description_pl') ??
+      resolvePathValue(record, 'text_fields.description_pl') ??
+      resolvePathValue(record, 'text_fields.description|pl') ??
+      resolvePathValue(record, 'description|pl') ??
+      resolvePathValue(record, 'text_fields.description') ??
+      resolvePathValue(record, 'description')
+    );
+  }
+  if (appField === 'length') {
+    return resolvePathValue(record, 'length');
+  }
+  if (appField === 'width') {
+    return resolvePathValue(record, 'width');
+  }
+  if (appField === 'category') {
+    return (
+      resolvePathValue(record, 'category_id') ??
+      resolvePathValue(record, 'category')
+    );
+  }
+  if (appField === 'parameters') {
+    return (
+      resolvePathValue(record, 'parameters') ??
+      resolvePathValue(record, 'features') ??
+      resolvePathValue(record, 'attributes') ??
+      resolvePathValue(record, 'params')
+    );
+  }
+  if (appField === 'custom_fields') {
+    return (
+      resolvePathValue(record, 'custom_fields') ??
+      resolvePathValue(record, 'features')
+    );
   }
   return undefined;
 };
@@ -532,9 +634,13 @@ export const buildLinkedProductSyncPlan = (input: {
   const baseChanges: string[] = [];
 
   const fields = rules.map((rule: ProductSyncFieldRule): ProductSyncFieldPreview => {
-    const appValue = normalizeFieldValue(rule.appField, getProductFieldValue(input.product, rule.appField));
+    const rawAppValue = getProductFieldValue(input.product, rule.appField);
+    const rawBaseValue = input.baseRecord
+      ? resolveBaseValueByRule(rule, input.baseRecord)
+      : null;
+    const appValue = normalizeFieldValue(rule.appField, rawAppValue);
     const baseValue = input.baseRecord
-      ? normalizeFieldValue(rule.appField, resolveBaseValueByRule(rule, input.baseRecord))
+      ? normalizeFieldValue(rule.appField, rawBaseValue)
       : null;
     const baseFieldPresentation = getEffectiveBaseFieldPresentation(
       rule,
@@ -552,12 +658,12 @@ export const buildLinkedProductSyncPlan = (input: {
       hasDifference;
 
     if (willWriteToApp) {
-      localPatch[rule.appField] = baseValue;
+      localPatch[rule.appField] = rawBaseValue;
       localChanges.push(rule.appField);
     }
 
     if (willWriteToBase) {
-      setPathValue(basePayload, rule.baseField, appValue);
+      setPathValue(basePayload, rule.baseField, rawAppValue);
       baseChanges.push(rule.baseField);
     }
 

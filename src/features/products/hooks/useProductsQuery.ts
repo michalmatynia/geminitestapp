@@ -61,7 +61,7 @@ const toOptionalFiniteNumber = (value: unknown): number | undefined => {
 
 const normalizePagedImageFileRecord = (input: unknown): Record<string, unknown> | undefined => {
   const record = toRecord(input);
-  if (!record) return undefined;
+  if (record === null) return undefined;
 
   const filepath = toTrimmedString(record['filepath']);
   const derivedFilename = filepath.split('/').filter(Boolean).pop() ?? 'image';
@@ -85,7 +85,8 @@ const normalizePagedImageFileRecord = (input: unknown): Record<string, unknown> 
 
 const normalizePagedProductCatalogRelation = (input: unknown): Record<string, unknown> => {
   const record = toRecord(input) ?? {};
-  const parsedCatalog = catalogSchema.safeParse(record['catalog']);
+  const catalog = record['catalog'];
+  const parsedCatalog = catalogSchema.safeParse(catalog);
   if (parsedCatalog.success) {
     return {
       ...record,
@@ -125,13 +126,16 @@ const parseProductsPagedResult = (
 ): {
   products: ProductWithImages[];
   total: number;
-} =>
-  productsPagedResultSchema.parse({
-    ...(toRecord(payload) ?? {}),
-    products: Array.isArray(toRecord(payload)?.['products'])
-      ? (toRecord(payload)?.['products'] as unknown[]).map(normalizePagedProductRecord)
+} => {
+  const record = toRecord(payload) ?? {};
+  const productsRaw = record['products'];
+  return productsPagedResultSchema.parse({
+    ...record,
+    products: Array.isArray(productsRaw)
+      ? (productsRaw as unknown[]).map(normalizePagedProductRecord)
       : [],
   });
+};
 
 const getProductsPagedQueryKey = (filters: UseProductsFilters) =>
   [...QUERY_KEYS.products.lists(), 'paged', { filters }] as const;
@@ -279,7 +283,7 @@ export function useProductsWithCount(
 
     if (queryClient.getQueryData(nextQueryKey) !== undefined) return;
 
-    void prefetchQueryV2(queryClient, {
+    await prefetchQueryV2(queryClient, {
       queryKey: nextQueryKey,
       queryFn: async (context) => {
         try {

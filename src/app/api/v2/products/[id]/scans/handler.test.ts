@@ -38,6 +38,7 @@ describe('products/[id]/scans handler', () => {
 
     expect(listProductScansWithSyncMock).toHaveBeenCalledWith({
       productId: 'product-123',
+      provider: null,
       limit: 15,
     });
     expect(response.status).toBe(200);
@@ -72,6 +73,7 @@ describe('products/[id]/scans handler', () => {
 
     expect(listProductScansWithSyncMock).toHaveBeenCalledWith({
       productId: 'product-123',
+      provider: null,
       limit: 50,
     });
   });

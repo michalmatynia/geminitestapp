@@ -126,6 +126,9 @@ export async function queueAmazonBatchProductScans(input: {
   productIds: string[];
   requestInput?: Record<string, unknown>;
   ownerUserId?: string | null;
+  userId?: string | null;
+  stepSequenceKey?: string | null;
+  stepSequence?: any[] | null;
 }): Promise<ProductAmazonBatchScanResponse> {
   return await queueAmazonBatch(input);
 }
@@ -138,6 +141,9 @@ export async function queue1688BatchProductScans(input: {
   forceVisible?: boolean;
   requestInput?: Record<string, unknown>;
   ownerUserId?: string | null;
+  userId?: string | null;
+  stepSequenceKey?: string | null;
+  stepSequence?: any[] | null;
 }): Promise<ProductScanBatchResponse> {
   return await queue1688Batch(input);
 }

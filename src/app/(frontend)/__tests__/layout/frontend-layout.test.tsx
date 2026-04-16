@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import React, { type ReactNode } from 'react';
 
@@ -11,14 +11,15 @@ const {
   frontendPublicOwnerShellClientMock,
   getCmsThemeSettingsMock,
   getKangurAuthBootstrapScriptMock,
-  resolveFrontPageSelectionMock,
   getKangurStorefrontInitialStateMock,
+  getLiteSettingsCacheMock,
   headersMock,
   kangurServerShellMock,
   kangurSSRSkeletonMock,
   queryErrorBoundaryMock,
   readServerRequestHeadersMock,
   readServerRequestPathnameMock,
+  resolveFrontPageSelectionMock,
   shouldApplyFrontPageAppSelectionMock,
 } = vi.hoisted(() => ({
   cmsStorefrontAppearanceProviderMock: vi.fn(({ children }: { children: ReactNode }) => <>{children}</>),
@@ -26,14 +27,15 @@ const {
   frontendPublicOwnerShellClientMock: vi.fn(({ children }: { children: ReactNode }) => <>{children}</>),
   getCmsThemeSettingsMock: vi.fn(),
   getKangurAuthBootstrapScriptMock: vi.fn(),
-  resolveFrontPageSelectionMock: vi.fn(),
   getKangurStorefrontInitialStateMock: vi.fn(),
+  getLiteSettingsCacheMock: vi.fn(),
   headersMock: vi.fn(),
   kangurServerShellMock: vi.fn(() => <div data-testid='kangur-server-shell' />),
   kangurSSRSkeletonMock: vi.fn(() => <div data-testid='kangur-ssr-skeleton' />),
   queryErrorBoundaryMock: vi.fn(({ children }: { children: ReactNode }) => <>{children}</>),
   readServerRequestHeadersMock: vi.fn(),
   readServerRequestPathnameMock: vi.fn(),
+  resolveFrontPageSelectionMock: vi.fn(),
   shouldApplyFrontPageAppSelectionMock: vi.fn(),
 }));
 
@@ -62,6 +64,10 @@ vi.mock('@/features/kangur/server', () => ({
 vi.mock('@/shared/lib/request/server-request-context', () => ({
   readServerRequestHeaders: readServerRequestHeadersMock,
   readServerRequestPathname: readServerRequestPathnameMock,
+}));
+
+vi.mock('@/shared/lib/settings-lite-server-cache', () => ({
+  getLiteSettingsCache: getLiteSettingsCacheMock,
 }));
 
 vi.mock('@/features/cms/public', () => ({
@@ -95,12 +101,20 @@ describe('frontend layout bootstrap', () => {
     return { layout, resolvedLayout };
   };
 
+  const renderFrontendLayoutFallback = async (children: React.ReactNode) => {
+    const { default: FrontendLayout } = await import('@/app/(frontend)/layout');
+    const layout = await FrontendLayout({ children });
+    render(layout.props.fallback as React.ReactElement);
+    return layout;
+  };
+
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
     headersMock.mockResolvedValue(new Headers());
     readServerRequestHeadersMock.mockReturnValue(null);
     readServerRequestPathnameMock.mockReturnValue(null);
+    getLiteSettingsCacheMock.mockReturnValue(null);
     shouldApplyFrontPageAppSelectionMock.mockReturnValue(true);
     getCmsThemeSettingsMock.mockResolvedValue({ darkMode: false });
     getKangurAuthBootstrapScriptMock.mockResolvedValue(null);
@@ -149,6 +163,50 @@ describe('frontend layout bootstrap', () => {
     },
     60_000
   );
+
+  it('does not render route children inside the shared suspense fallback shell', async () => {
+    await renderFrontendLayoutFallback(<div>blocked route child</div>);
+
+    expect(screen.queryByText('blocked route child')).not.toBeInTheDocument();
+    expect(document.querySelector('#kangur-main-content')).toHaveAttribute(
+      'data-frontend-public-route-family',
+      'pending'
+    );
+    expect(document.querySelector('#kangur-main-content')).toHaveAttribute('aria-busy', 'true');
+    expect(frontendPublicOwnerProviderMock).not.toHaveBeenCalled();
+    expect(frontendPublicOwnerShellClientMock).not.toHaveBeenCalled();
+  });
+
+  it('renders the StudiQ loading shell in the shared fallback for explicit Kangur routes', async () => {
+    readServerRequestPathnameMock.mockReturnValue('/en/kangur/library');
+
+    await renderFrontendLayoutFallback(<div>blocked route child</div>);
+
+    expect(screen.getByTestId('kangur-server-shell')).toBeInTheDocument();
+    expect(document.querySelector('#kangur-main-content')).toHaveAttribute(
+      'data-frontend-public-route-family',
+      'studiq'
+    );
+    expect(
+      document.querySelector('#__KANGUR_SURFACE_BOOTSTRAP_FALLBACK__')?.textContent
+    ).toContain('--kangur-soft-card-border:');
+  });
+
+  it('reuses the cached front-page app selection to render the StudiQ root fallback shell', async () => {
+    readServerRequestPathnameMock.mockReturnValue('/');
+    getLiteSettingsCacheMock.mockReturnValue({
+      data: [{ key: 'front_page_app', value: 'kangur' }],
+      ts: Date.now(),
+    });
+
+    await renderFrontendLayoutFallback(<div>blocked route child</div>);
+
+    expect(screen.getByTestId('kangur-ssr-skeleton')).toBeInTheDocument();
+    expect(document.querySelector('#kangur-main-content')).toHaveAttribute(
+      'data-frontend-public-route-family',
+      'studiq'
+    );
+  });
 
   it(
     'loads Kangur storefront bootstrap only when the frontend public owner is kangur',
@@ -341,6 +399,12 @@ describe('frontend layout bootstrap', () => {
     expect(getCmsThemeSettingsMock).toHaveBeenCalledTimes(1);
     expect(getKangurStorefrontInitialStateMock).not.toHaveBeenCalled();
     expect(getKangurAuthBootstrapScriptMock).not.toHaveBeenCalled();
+    expect(
+      document.querySelector('#__KANGUR_SURFACE_BOOTSTRAP__')?.textContent
+    ).toContain('--kangur-soft-card-border:');
+    expect(document.body.innerHTML).toContain(
+      'document.documentElement.classList.add(\'kangur-surface-active\')'
+    );
     expect(frontendPublicOwnerProviderMock.mock.calls[0]?.[0]).toMatchObject({
       publicOwner: 'cms',
       routeFamily: 'studiq',

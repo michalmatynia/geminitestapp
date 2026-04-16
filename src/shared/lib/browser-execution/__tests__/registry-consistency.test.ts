@@ -8,6 +8,7 @@ import {
   getActionStepIds,
 } from '../action-constructor';
 import {
+  generateBrowserExecutionStepsInit,
   TRADERA_QUICKLIST_LABEL_OVERRIDES,
   TRADERA_QUICKLIST_PUBLISH_LABELS,
   generateTraderaQuicklistBrowserStepsInit,
@@ -124,6 +125,27 @@ describe('ACTION_SEQUENCES', () => {
     expect(getActionStepIds('vinted_list')).not.toContain('sync_check');
     expect(getActionStepIds('vinted_relist')).not.toContain('sync_check');
   });
+
+  it('tradera_check_status includes browser_preparation before opening the overview flow', () => {
+    expect(getActionStepIds('tradera_check_status').slice(0, 4)).toEqual([
+      'browser_preparation',
+      'browser_open',
+      'cookie_accept',
+      'auth_check',
+    ]);
+  });
+
+  it('tradera_fetch_categories uses the centralized category crawl lifecycle steps', () => {
+    expect(getActionStepIds('tradera_fetch_categories')).toEqual([
+      'browser_preparation',
+      'browser_open',
+      'cookie_accept',
+      'categories_seed_extract',
+      'categories_crawl',
+      'categories_finalize',
+      'browser_close',
+    ]);
+  });
 });
 
 // ── buildActionSteps ──────────────────────────────────────────────────────────
@@ -225,6 +247,20 @@ describe('generateTraderaQuicklistBrowserStepsInit', () => {
 
   it('is stable — calling it twice produces the same output', () => {
     expect(generateTraderaQuicklistBrowserStepsInit()).toBe(generated);
+  });
+});
+
+describe('generateBrowserExecutionStepsInit', () => {
+  it('serializes an execution-step manifest into a runtime const declaration', () => {
+    const generated = generateBrowserExecutionStepsInit([
+      { id: 'browser_open', label: 'Open browser' },
+      { id: 'resolve_status', label: 'Resolve listing status' },
+    ]);
+
+    expect(generated).toContain('const executionSteps =');
+    expect(generated).toContain('"id": "browser_open"');
+    expect(generated).toContain('"label": "Resolve listing status"');
+    expect(generated).toContain('"status": "pending"');
   });
 });
 

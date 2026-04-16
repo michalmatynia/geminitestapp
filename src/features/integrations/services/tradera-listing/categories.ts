@@ -1,8 +1,10 @@
 import 'server-only';
 
+import { getResolvedActionStepManifest } from '@/shared/lib/browser-execution/runtime-action-resolver.server';
+import { generateBrowserExecutionStepsInit } from '@/shared/lib/browser-execution/generate-browser-steps';
 import { logger } from '@/shared/utils/logger';
 import { TRADERA_PUBLIC_CATEGORIES_URL } from '@/features/integrations/constants/tradera';
-import { DEFAULT_TRADERA_CATEGORY_SCRAPE_SCRIPT } from '@/features/integrations/services/tradera-listing/category-scrape-script';
+import { buildTraderaCategoryScrapeScript } from '@/features/integrations/services/tradera-listing/category-scrape-script';
 import { type IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
 import { type TraderaCategoryRecord } from '@/shared/contracts/integrations/tradera';
 import { AppError, AppErrorCodes } from '@/shared/errors/app-error';
@@ -96,11 +98,15 @@ const toCategoryFetchError = (
 
 export const fetchTraderaCategoriesForConnection = async (
   connection: IntegrationConnectionRecord
-): Promise<TraderaCategoryRecord[]> =>
-  runPlaywrightScrapeTask({
+): Promise<TraderaCategoryRecord[]> => {
+  const executionStepsInit = generateBrowserExecutionStepsInit(
+    await getResolvedActionStepManifest('tradera_fetch_categories')
+  );
+
+  return runPlaywrightScrapeTask({
     execute: async () =>
       runPlaywrightScrapeScript({
-        script: DEFAULT_TRADERA_CATEGORY_SCRAPE_SCRIPT,
+        script: buildTraderaCategoryScrapeScript(executionStepsInit),
         input: {
           connectionId: connection.id,
           traderaConfig: {
@@ -175,3 +181,4 @@ export const fetchTraderaCategoriesForConnection = async (
       return categories;
     },
   });
+};

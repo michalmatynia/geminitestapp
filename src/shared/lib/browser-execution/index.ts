@@ -21,6 +21,7 @@ export {
 export { StepTracker } from './step-tracker';
 
 export {
+  generateBrowserExecutionStepsInit,
   TRADERA_QUICKLIST_LABEL_OVERRIDES,
   TRADERA_QUICKLIST_PUBLISH_LABELS,
   generateTraderaQuicklistBrowserStepsInit,

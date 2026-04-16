@@ -1,8 +1,15 @@
+import { getActionStepManifest } from '@/shared/lib/browser-execution/action-constructor';
+import { generateBrowserExecutionStepsInit } from '@/shared/lib/browser-execution/generate-browser-steps';
+
 import {
   buildStatusCheckConstants,
   STATUS_CHECK_CONSTANTS,
 } from './status-check-partials/constants';
 import { STATUS_CHECK_CORE_LOGIC } from './status-check-partials/core-logic';
+
+const DEFAULT_TRADERA_CHECK_STATUS_STEPS_INIT = generateBrowserExecutionStepsInit(
+  getActionStepManifest('tradera_check_status')
+);
 
 /**
  * Tradera listing status-check script.
@@ -19,7 +26,8 @@ import { STATUS_CHECK_CORE_LOGIC } from './status-check-partials/core-logic';
  * - fall back to Product ID match
  */
 export const buildTraderaCheckStatusScript = (
-  selectorRegistryRuntime?: string
+  selectorRegistryRuntime?: string,
+  executionStepsInit: string = DEFAULT_TRADERA_CHECK_STATUS_STEPS_INIT
 ): string =>
   String.raw`export default async function run({
   page,
@@ -43,21 +51,7 @@ export const buildTraderaCheckStatusScript = (
   } = input || {};
   const resolvedSearchTitle = searchTitle || duplicateSearchTitle || null;
 
-  const executionSteps = [
-    { id: 'browser_preparation', label: 'Browser preparation',       status: 'pending' },
-    { id: 'browser_open',        label: 'Open browser',              status: 'pending' },
-    { id: 'cookie_accept',       label: 'Accept cookies',            status: 'pending' },
-    { id: 'auth_check',          label: 'Validate Tradera session',  status: 'pending' },
-    { id: 'overview_open',       label: 'Open Tradera overview',     status: 'pending' },
-    { id: 'search_active',       label: 'Search active listings',    status: 'pending' },
-    { id: 'inspect_active',      label: 'Inspect active candidate',  status: 'pending' },
-    { id: 'search_unsold',       label: 'Search unsold items',       status: 'pending' },
-    { id: 'inspect_unsold',      label: 'Inspect unsold candidate',  status: 'pending' },
-    { id: 'search_sold',         label: 'Search sold items',         status: 'pending' },
-    { id: 'inspect_sold',        label: 'Inspect sold candidate',    status: 'pending' },
-    { id: 'resolve_status',      label: 'Resolve listing status',    status: 'pending' },
-    { id: 'browser_close',       label: 'Close browser',             status: 'pending' },
-  ];
+  ${executionStepsInit}
 
   const updateStep = (id, status, message = null) => {
     const step = executionSteps.find((s) => s.id === id);

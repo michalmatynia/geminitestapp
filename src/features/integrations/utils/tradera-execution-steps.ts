@@ -1021,13 +1021,16 @@ export const resolveTraderaExecutionStepsFromMarketplaceData = (
   const action = readString(lastExecution['action']);
   const persistedSteps = readTraderaExecutionSteps(metadata['executionSteps']);
   const rawResult = toRecord(metadata['rawResult']);
+  const rawExecutionSteps = readTraderaExecutionSteps(rawResult['executionSteps']);
   const logs = readStringArray(metadata['logTail']);
   const errorMessage = readString(lastExecution['error']);
 
   let derivedSteps: TraderaExecutionStep[] = [];
   if (persistedSteps.length === 0) {
-    if (action === 'check_status') {
-      derivedSteps = readTraderaExecutionSteps(rawResult['executionSteps']);
+    if (rawExecutionSteps.length > 0) {
+      derivedSteps = rawExecutionSteps;
+    } else if (action === 'check_status') {
+      derivedSteps = rawExecutionSteps;
     } else if (action === 'list' || action === 'relist' || action === 'sync') {
       derivedSteps = buildTraderaQuicklistExecutionSteps({
         action,

@@ -31,7 +31,10 @@ import {
   buildDefaultTraderaQuicklistScript,
   DEFAULT_TRADERA_QUICKLIST_SCRIPT,
 } from './default-script';
-import { generateTraderaQuicklistBrowserStepsInit } from '@/shared/lib/browser-execution/generate-browser-steps';
+import {
+  generateBrowserExecutionStepsInit,
+  generateTraderaQuicklistBrowserStepsInit,
+} from '@/shared/lib/browser-execution/generate-browser-steps';
 import {
   resolveAppBaseUrl,
   toAbsoluteUrl,
@@ -44,9 +47,13 @@ import {
   resolveTraderaSelectorRegistryRuntime,
   type ResolvedTraderaSelectorRegistryRuntime,
 } from '@/features/integrations/services/tradera-selector-registry';
-import { resolveRuntimeActionStepIds } from '@/shared/lib/browser-execution/runtime-action-resolver.server';
+import {
+  getResolvedActionStepManifest,
+  resolveRuntimeActionStepIds,
+} from '@/shared/lib/browser-execution/runtime-action-resolver.server';
 import {
   buildTraderaQuicklistExecutionSteps,
+  readTraderaExecutionSteps,
   resolveTraderaCheckStatusExecutionStepsFromResult,
 } from '@/features/integrations/utils/tradera-execution-steps';
 import { resolveTraderaListingPriceForProduct } from './price';
@@ -381,11 +388,15 @@ const buildSuccessMetadata = ({
   const traderaCategoryMapping = toRecord(scriptInput['traderaCategoryMapping']);
   const traderaShipping = toRecord(scriptInput['traderaShipping']);
   const imageDiagnostics = resolveScriptInputImageDiagnostics(scriptInput);
-  const executionSteps = buildTraderaQuicklistExecutionSteps({
-    action,
-    rawResult: result.rawResult,
-    logs: result.logs ?? [],
-  });
+  const emittedExecutionSteps = readTraderaExecutionSteps(result.rawResult['executionSteps']);
+  const executionSteps =
+    emittedExecutionSteps.length > 0
+      ? emittedExecutionSteps
+      : buildTraderaQuicklistExecutionSteps({
+          action,
+          rawResult: result.rawResult,
+          logs: result.logs ?? [],
+        });
   const categoryId = toTrimmedString(traderaCategory['externalId']) || null;
   const categoryName = toTrimmedString(traderaCategory['name']) || null;
   const categoryPath =
@@ -707,7 +718,13 @@ export const runTraderaBrowserCheckStatus = async ({
   const selectorRuntimeResolution = await resolveTraderaSelectorRegistryRuntime({
     profile: resolvedSystemSettings.selectorProfile,
   });
-  const statusCheckScript = buildTraderaCheckStatusScript(selectorRuntimeResolution.runtime);
+  const statusCheckExecutionStepsInit = generateBrowserExecutionStepsInit(
+    await getResolvedActionStepManifest('tradera_check_status')
+  );
+  const statusCheckScript = buildTraderaCheckStatusScript(
+    selectorRuntimeResolution.runtime,
+    statusCheckExecutionStepsInit
+  );
 
   const result = await runPlaywrightScrapeScript({
     script: statusCheckScript,

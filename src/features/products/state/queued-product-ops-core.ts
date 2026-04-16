@@ -106,9 +106,7 @@ export function saveToStorage(): void {
 }
 
 export function ensureSourceMap(productId: string): Map<string, QueuedSourceState> {
-  if (cachedSources === null) {
-    cachedSources = new Map<string, Map<string, QueuedSourceState>>();
-  }
+  cachedSources ??= new Map<string, Map<string, QueuedSourceState>>();
   
   let sourceMap = cachedSources.get(productId);
   if (sourceMap === undefined) {
@@ -221,9 +219,7 @@ function resolveExpiresAtFromEntry(entry: StoredSourceEntry): number | null {
 }
 
 export function hydrateQueuedProductStateFromStorage(stored: unknown): void {
-  if (cachedSources === null) {
-    cachedSources = new Map<string, Map<string, QueuedSourceState>>();
-  }
+  cachedSources ??= new Map<string, Map<string, QueuedSourceState>>();
 
   const now = Date.now();
   if (stored === null || stored === undefined || typeof stored !== 'object' || Array.isArray(stored)) return;
@@ -246,8 +242,7 @@ export function hydrateQueuedProductStateFromStorage(stored: unknown): void {
 }
 
 export function loadFromStorage(): QueuedProductState {
-  if (cachedSources !== null) return cachedSources;
-  cachedSources = new Map<string, Map<string, QueuedSourceState>>();
+  cachedSources ??= new Map<string, Map<string, QueuedSourceState>>();
   if (typeof window === 'undefined') return cachedSources;
 
   const stored = window.localStorage.getItem(STORAGE_KEY);

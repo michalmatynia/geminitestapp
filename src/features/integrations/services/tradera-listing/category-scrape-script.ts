@@ -1,3 +1,6 @@
+import { getActionStepManifest } from '@/shared/lib/browser-execution/action-constructor';
+import { generateBrowserExecutionStepsInit } from '@/shared/lib/browser-execution/generate-browser-steps';
+
 export const extractTraderaCategoryPageChildren = ({
   currentCategory,
   stopTexts,
@@ -293,7 +296,13 @@ export const extractTraderaCategoryPageChildren = ({
   return { blocked: false, children };
 };
 
-export const DEFAULT_TRADERA_CATEGORY_SCRAPE_SCRIPT = String.raw`export default async function run({
+const DEFAULT_TRADERA_CATEGORY_SCRAPE_STEPS_INIT = generateBrowserExecutionStepsInit(
+  getActionStepManifest('tradera_fetch_categories')
+);
+
+export const buildTraderaCategoryScrapeScript = (
+  executionStepsInit: string = DEFAULT_TRADERA_CATEGORY_SCRAPE_STEPS_INIT
+): string => String.raw`export default async function run({
   page,
   input,
   emit,
@@ -332,6 +341,18 @@ export const DEFAULT_TRADERA_CATEGORY_SCRAPE_SCRIPT = String.raw`export default 
       setTimeout(resolve, Math.max(0, Math.trunc(ms)));
     });
 
+  ${executionStepsInit}
+
+  const updateStep = (id, status, message = null) => {
+    const step = executionSteps.find((entry) => entry.id === id);
+    if (!step) return;
+    step.status = status;
+    if (message !== null) {
+      step.message = message;
+    }
+    emit('steps', executionSteps);
+  };
+
   const captureDebugArtifacts = async (label, state) => {
     if (!artifacts) return;
     if (typeof artifacts.json === 'function') {
@@ -369,12 +390,20 @@ export const DEFAULT_TRADERA_CATEGORY_SCRAPE_SCRIPT = String.raw`export default 
   };
 
   // --- Navigate to the categories page and wait for CSR to render ---
+  updateStep('browser_preparation', 'success', 'Browser settings were prepared.');
   await page.goto(configuredCategoriesUrl, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+  updateStep('browser_open', 'success', 'Tradera categories page opened.');
   await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => undefined);
   await wait(1500);
-  await acceptCookiesIfPresent();
+  const cookiesAccepted = await acceptCookiesIfPresent();
+  updateStep(
+    'cookie_accept',
+    'success',
+    cookiesAccepted ? 'Cookie consent was handled.' : 'No cookie banner detected.'
+  );
 
   // --- Phase 1: extract root categories + immediate children from the rendered seed page ---
+  updateStep('categories_seed_extract', 'running', 'Extracting category roots from the seed page.');
   const seedData = await page.evaluate(
     ({ rootSectionSuffixes, stopTexts, blockedUrlHints, blockedTextHints }) => {
       const toText = (value) =>
@@ -525,6 +554,13 @@ export const DEFAULT_TRADERA_CATEGORY_SCRAPE_SCRIPT = String.raw`export default 
       blockedTextHints: BLOCKED_TEXT_HINTS,
     }
   );
+  updateStep(
+    'categories_seed_extract',
+    seedData.blocked ? 'error' : 'success',
+    seedData.blocked
+      ? 'Tradera category seed page was blocked by a verification or login surface.'
+      : 'Extracted initial category roots and visible child categories.'
+  );
 
   if (seedData.blocked) {
     const state = {
@@ -541,7 +577,11 @@ export const DEFAULT_TRADERA_CATEGORY_SCRAPE_SCRIPT = String.raw`export default 
       scrapedFrom: page.url(),
       diagnostics: seedData.diagnostics,
       crawlStats: { pagesVisited: 1, rootCount: 0 },
+      executionSteps,
     };
+    updateStep('categories_crawl', 'skipped', 'Skipped because the seed page was blocked.');
+    updateStep('categories_finalize', 'skipped', 'Skipped because the seed page was blocked.');
+    updateStep('browser_close', 'success', 'Browser scrape flow ended.');
     emit('result', result);
     return result;
   }
@@ -565,6 +605,8 @@ export const DEFAULT_TRADERA_CATEGORY_SCRAPE_SCRIPT = String.raw`export default 
   for (const cat of seedData.categories) {
     categoriesById.set(cat.id, cat);
   }
+
+  updateStep('categories_crawl', 'running', 'Crawling linked Tradera category pages.');
 
   // Enqueue root categories first (to discover Level 2 children)
   for (const root of seedData.rootCategories) {
@@ -679,7 +721,14 @@ export const DEFAULT_TRADERA_CATEGORY_SCRAPE_SCRIPT = String.raw`export default 
     }
   }
 
+  updateStep(
+    'categories_crawl',
+    'success',
+    'Category crawl completed across ' + String(pagesVisited) + ' page(s).'
+  );
+
   // --- Build result ---
+  updateStep('categories_finalize', 'running', 'Finalizing normalized Tradera category output.');
   const crawlResult = {
     categories: Array.from(categoriesById.values()).map(({ url, ...category }) => category),
     categorySource: 'public-categories',
@@ -706,7 +755,10 @@ export const DEFAULT_TRADERA_CATEGORY_SCRAPE_SCRIPT = String.raw`export default 
       categorySource: 'public-categories',
       scrapedFrom: page.url(),
       diagnostics: state,
+      executionSteps,
     };
+    updateStep('categories_finalize', 'error', 'Category crawl produced an invalid result payload.');
+    updateStep('browser_close', 'success', 'Browser scrape flow ended.');
     emit('result', result);
     return result;
   }
@@ -741,8 +793,13 @@ export const DEFAULT_TRADERA_CATEGORY_SCRAPE_SCRIPT = String.raw`export default 
     scrapedFrom: crawlResult.scrapedFrom || page.url(),
     diagnostics: crawlResult.diagnostics || null,
     crawlStats: crawlResult.crawlStats || null,
+    executionSteps,
   };
+  updateStep('categories_finalize', 'success', 'Final Tradera category output was prepared.');
+  updateStep('browser_close', 'success', 'Browser scrape flow ended.');
   emit('result', result);
   return result;
 }
 `;
+
+export const DEFAULT_TRADERA_CATEGORY_SCRAPE_SCRIPT = buildTraderaCategoryScrapeScript();

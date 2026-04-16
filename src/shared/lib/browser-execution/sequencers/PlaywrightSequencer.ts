@@ -26,12 +26,19 @@ export abstract class PlaywrightSequencer {
       if (step.status === 'success' || step.status === 'error') continue;
 
       try {
-        this.context.tracker.start(step.id);
+        if (this.context.tracker.getStatus(step.id) === 'pending') {
+          this.context.tracker.start(step.id);
+        }
         await this.executeStep(step.id as StepId);
-        this.context.tracker.succeed(step.id);
+        const finalStatus = this.context.tracker.getStatus(step.id);
+        if (finalStatus === 'pending' || finalStatus === 'running' || finalStatus === undefined) {
+          this.context.tracker.succeed(step.id);
+        }
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        this.context.tracker.fail(step.id, message);
+        if (this.context.tracker.getStatus(step.id) !== 'error') {
+          this.context.tracker.fail(step.id, message);
+        }
         throw error;
       }
     }

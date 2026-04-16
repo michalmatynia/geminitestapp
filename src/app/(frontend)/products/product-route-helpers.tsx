@@ -12,13 +12,13 @@ type RenderProductPublicRouteOptions = {
   locale?: string | null;
 };
 
-export const renderProductPublicRoute = ({
+export async function renderProductPublicRoute({
   id,
   locale,
-}: RenderProductPublicRouteOptions): Promise<JSX.Element> => {
+}: RenderProductPublicRouteOptions): Promise<JSX.Element> {
   'use cache';
   applyCacheLife('hours');
 
   const resolvedLocale = typeof locale === 'string' ? normalizeSiteLocale(locale) : undefined;
-  return Promise.resolve(<ProductPublicPage params={{ id }} locale={resolvedLocale} />);
-};
+  return <ProductPublicPage params={{ id }} locale={resolvedLocale} />;
+}

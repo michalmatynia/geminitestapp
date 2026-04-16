@@ -7,6 +7,7 @@ import {
   normalizeTraderaListingFormUrl,
   TRADERA_SETTINGS_KEYS,
 } from '@/features/integrations/constants/tradera';
+import { TraderaSelectorProfileOverrideSelect } from '@/features/integrations/components/listings/TraderaSelectorProfileOverrideSelect';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { Input, useToast } from '@/shared/ui/primitives.public';
 import { FormSection, FormField, ToggleRow, FormActions } from '@/shared/ui/forms-and-actions.public';
@@ -270,13 +271,17 @@ export default function TraderaSettingsPage(): React.JSX.Element {
             </FormField>
 
             <FormField label='Selector Profile'>
-              <Input
-                variant='subtle'
-                size='sm'
+              <TraderaSelectorProfileOverrideSelect
                 value={selectorProfile}
-                onChange={(e) => setSelectorProfile(e.target.value)}
-                placeholder='default'
-               aria-label='default' title='default'/>
+                onChange={(value) =>
+                  setSelectorProfile(value ?? DEFAULT_TRADERA_SYSTEM_SETTINGS.selectorProfile)
+                }
+                includeConfiguredOption={false}
+                ariaLabel='Selector Profile'
+                title='Choose the default Mongo-backed Tradera selector profile for automation runs.'
+                className='w-full'
+                disabled={saveMutation.isPending}
+              />
             </FormField>
           </div>
         </FormSection>

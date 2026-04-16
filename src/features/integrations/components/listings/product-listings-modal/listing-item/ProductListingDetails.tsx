@@ -89,6 +89,12 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
     liveTraderaExecution?.status === 'queued' || liveTraderaExecution?.status === 'running'
       ? liveTraderaExecution.status
       : null;
+  const displayedRequestedSelectorProfile =
+    liveTraderaExecution?.requestedSelectorProfile ??
+    traderaExecution.requestedSelectorProfile ??
+    traderaExecution.pendingSelectorProfile;
+  const displayedResolvedSelectorProfile =
+    liveTraderaExecution?.resolvedSelectorProfile ?? traderaExecution.resolvedSelectorProfile;
   const displayedTraderaDuplicateSummary = resolveDisplayedTraderaDuplicateSummary({
     persisted: traderaExecution,
     liveRawResult: liveTraderaExecution?.rawResult,
@@ -192,6 +198,13 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
               variant='minimal'
             />
           ) : null}
+          {isTraderaListing && traderaExecution.pendingSelectorProfile ? (
+            <MetadataItem
+              label='Pending selector profile'
+              value={traderaExecution.pendingSelectorProfile}
+              variant='minimal'
+            />
+          ) : null}
           {isTraderaListing && traderaExecution.pendingRequestId ? (
             <MetadataItem
               label='Pending queue job'
@@ -225,6 +238,23 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
             <MetadataItem
               label='Browser mode'
               value={traderaExecution.browserMode ?? traderaExecution.requestedBrowserMode}
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing &&
+          displayedRequestedSelectorProfile &&
+          displayedRequestedSelectorProfile !== displayedResolvedSelectorProfile ? (
+            <MetadataItem
+              label='Requested selector profile'
+              value={displayedRequestedSelectorProfile}
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing &&
+          (displayedResolvedSelectorProfile ?? displayedRequestedSelectorProfile) ? (
+            <MetadataItem
+              label='Resolved selector profile'
+              value={displayedResolvedSelectorProfile ?? displayedRequestedSelectorProfile}
               variant='minimal'
             />
           ) : null}

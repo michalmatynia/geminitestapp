@@ -87,6 +87,10 @@ describe('useTraderaLiveExecution', () => {
           result: {
             finalUrl: 'https://www.tradera.com/en/selling/draft/live',
             outputs: {
+              metadata: {
+                selectorProfileRequested: 'profile-market-a',
+                selectorProfileResolved: 'profile-market-b',
+              },
               steps: [
                 {
                   id: 'image_upload',
@@ -130,6 +134,8 @@ describe('useTraderaLiveExecution', () => {
     expect(result.current?.latestStageUrl).toBe(
       'https://www.tradera.com/en/selling/draft/live'
     );
+    expect(result.current?.requestedSelectorProfile).toBe('profile-market-a');
+    expect(result.current?.resolvedSelectorProfile).toBe('profile-market-b');
     expect(result.current?.executionSteps).toEqual([
       {
         id: 'image_upload',
@@ -190,6 +196,8 @@ describe('useTraderaLiveExecution', () => {
     expect(fetchPlaywrightRunMock).toHaveBeenCalledWith('run-check-123');
     expect(result.current?.action).toBe('check_status');
     expect(result.current?.latestStage).toBe('closed');
+    expect(result.current?.requestedSelectorProfile).toBeNull();
+    expect(result.current?.resolvedSelectorProfile).toBeNull();
     expect(result.current?.executionSteps).toEqual([
       {
         id: 'status_lookup',

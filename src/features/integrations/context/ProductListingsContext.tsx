@@ -269,6 +269,7 @@ export interface ProductListingsActions {
       connectionId?: string | null;
       skipSessionPreflight?: boolean;
       browserMode?: PlaywrightRelistBrowserMode;
+      selectorProfile?: string;
       skipImages?: boolean;
     }
   ) => Promise<void>;
@@ -277,6 +278,7 @@ export interface ProductListingsActions {
     options?: {
       skipSessionPreflight?: boolean;
       browserMode?: PlaywrightRelistBrowserMode;
+      selectorProfile?: string;
     }
   ) => Promise<void>;
   handleRelistTradera: (
@@ -284,6 +286,7 @@ export interface ProductListingsActions {
     options?: {
       skipSessionPreflight?: boolean;
       browserMode?: PlaywrightRelistBrowserMode;
+      selectorProfile?: string;
     }
   ) => Promise<void>;
   handleOpenTraderaLogin: (
@@ -297,6 +300,7 @@ export interface ProductListingsActions {
     connectionId: string;
     action: 'relist' | 'sync' | 'check_status';
     browserMode?: PlaywrightRelistBrowserMode;
+    selectorProfile?: string;
     skipImages?: boolean;
   }) => Promise<boolean>;
   handleOpenVintedLogin: (

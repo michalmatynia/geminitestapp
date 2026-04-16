@@ -105,6 +105,8 @@ export const playwrightRelistBrowserModeSchema = z.enum([
 
 export type PlaywrightRelistBrowserMode = z.infer<typeof playwrightRelistBrowserModeSchema>;
 
+export const traderaSelectorProfileOverrideSchema = z.string().trim().min(1);
+
 export const productListingCreatePayloadSchema = z.object({
   integrationId: z.string().trim().min(1),
   connectionId: z.string().trim().min(1),
@@ -213,12 +215,14 @@ export type ProductListingSyncBaseImagesResponse = z.infer<
 
 export const productListingRelistPayloadSchema = z.object({
   browserMode: playwrightRelistBrowserModeSchema.optional(),
+  selectorProfile: traderaSelectorProfileOverrideSchema.optional(),
 });
 
 export type ProductListingRelistPayload = z.infer<typeof productListingRelistPayloadSchema>;
 
 export const productListingRelistVariablesSchema = productListingActionSchema.extend({
   browserMode: playwrightRelistBrowserModeSchema.optional(),
+  selectorProfile: traderaSelectorProfileOverrideSchema.optional(),
 });
 
 export type ProductListingRelistVariables = z.infer<typeof productListingRelistVariablesSchema>;
@@ -235,6 +239,7 @@ export type ProductListingRelistResponse = z.infer<typeof productListingRelistRe
 
 export const productListingSyncPayloadSchema = z.object({
   browserMode: playwrightRelistBrowserModeSchema.optional(),
+  selectorProfile: traderaSelectorProfileOverrideSchema.optional(),
   skipImages: z.boolean().optional(),
 });
 
@@ -242,6 +247,7 @@ export type ProductListingSyncPayload = z.infer<typeof productListingSyncPayload
 
 export const productListingSyncVariablesSchema = productListingActionSchema.extend({
   browserMode: playwrightRelistBrowserModeSchema.optional(),
+  selectorProfile: traderaSelectorProfileOverrideSchema.optional(),
   skipImages: z.boolean().optional(),
 });
 
@@ -278,6 +284,7 @@ export type TraderaExecutionStep = z.infer<typeof traderaExecutionStepSchema>;
 
 export const traderaListingStatusCheckBatchPayloadSchema = z.object({
   productIds: z.array(z.string().trim().min(1)).min(1).max(250),
+  selectorProfile: traderaSelectorProfileOverrideSchema.optional(),
 });
 
 export type TraderaListingStatusCheckBatchPayload = z.infer<

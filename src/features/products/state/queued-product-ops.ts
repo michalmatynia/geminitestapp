@@ -34,29 +34,29 @@ const normalizeSource = (value: string): string => value.trim();
 const sourceTimerKey = (productId: string, source: string): string => `${productId}::${source}`;
 const isAiRunSource = (source: string): boolean => source.startsWith('ai-run:');
 
-const clearSourceTimer = (productId: string, source: string): void => {
+function clearSourceTimer(productId: string, source: string): void {
   const timerKey = sourceTimerKey(productId, source);
   const existingTimer = removalTimers.get(timerKey);
-  if (!existingTimer) return;
+  if (existingTimer === undefined) return;
   clearTimeout(existingTimer);
   removalTimers.delete(timerKey);
-};
+}
 
-const clearAllTimers = (): void => {
-  removalTimers.forEach((timer: ReturnType<typeof setTimeout>) => clearTimeout(timer));
+function clearAllTimers(): void {
+  removalTimers.forEach((timer) => clearTimeout(timer));
   removalTimers.clear();
-};
+}
 
-const areSetsEqual = (left: ReadonlySet<string>, right: ReadonlySet<string>): boolean => {
+function areSetsEqual(left: ReadonlySet<string>, right: ReadonlySet<string>): boolean {
   if (left === right) return true;
   if (left.size !== right.size) return false;
   for (const value of left) {
     if (!right.has(value)) return false;
   }
   return true;
-};
+}
 
-const emitChange = (): void => {
+function emitChange(): void {
   logProductListDebug(
     'queued-product-ops-change',
     {
@@ -68,31 +68,29 @@ const emitChange = (): void => {
       throttleMs: 300,
     }
   );
-  listeners.forEach((listener: () => void) => listener());
-};
+  listeners.forEach((listener) => listener());
+}
 
-const saveToStorage = (): void => {
-  if (typeof window === 'undefined' || !cachedSources) return;
+function serializeSources(): Record<string, Array<{ source: string; expiresAt?: number | null }>> {
+  if (cachedSources === null) return {};
+  const products: Record<string, Array<{ source: string; expiresAt?: number | null }>> = {};
+  
+  for (const [productId, sources] of cachedSources.entries()) {
+    const serialized = Array.from(sources.entries()).map(([source, state]) => ({
+      source,
+      ...(state.expiresAt !== null ? { expiresAt: state.expiresAt } : {}),
+    }));
+    if (serialized.length > 0) {
+      products[productId] = serialized;
+    }
+  }
+  return products;
+}
 
-  const products = Array.from(cachedSources.entries()).reduce(
-    (
-      acc: Record<string, Array<{ source: string; expiresAt?: number | null }>>,
-      [productId, sources]
-    ) => {
-      const serializedSources = Array.from(sources.entries()).map(
-        ([source, state]: [string, QueuedSourceState]) => ({
-          source,
-          ...(state.expiresAt !== null ? { expiresAt: state.expiresAt } : {}),
-        })
-      );
-      if (serializedSources.length > 0) {
-        acc[productId] = serializedSources;
-      }
-      return acc;
-    },
-    {}
-  );
+function saveToStorage(): void {
+  if (typeof window === 'undefined' || cachedSources === null) return;
 
+  const products = serializeSources();
   if (Object.keys(products).length === 0) {
     window.localStorage.removeItem(STORAGE_KEY);
     return;
@@ -103,25 +101,25 @@ const saveToStorage = (): void => {
     products,
   };
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-};
+}
 
-const ensureSourceMap = (productId: string): Map<string, QueuedSourceState> => {
-  if (!cachedSources) {
+function ensureSourceMap(productId: string): Map<string, QueuedSourceState> {
+  if (cachedSources === null) {
     cachedSources = new Map<string, Map<string, QueuedSourceState>>();
   }
   let sourceMap = cachedSources.get(productId);
-  if (!sourceMap) {
+  if (sourceMap === undefined) {
     sourceMap = new Map<string, QueuedSourceState>();
     cachedSources.set(productId, sourceMap);
   }
   return sourceMap;
-};
+}
 
-const scheduleQueuedSourceExpiry = (
+function scheduleQueuedSourceExpiry(
   productId: string,
   source: string,
   expiresAt: number | null
-): void => {
+): void {
   clearSourceTimer(productId, source);
   if (expiresAt === null) return;
 
@@ -129,27 +127,20 @@ const scheduleQueuedSourceExpiry = (
   const timer = setTimeout(() => {
     removalTimers.delete(sourceTimerKey(productId, source));
     logProductListDebug(
-      'queued-product-source-expired',
-      {
-        productId,
-        source,
-      },
-      {
-        dedupeKey: `queued-product-source-expired:${productId}:${source}`,
-        throttleMs: 250,
-      }
+      'queued-product-source-expired', { productId, source },
+      { dedupeKey: `queued-product-source-expired:${productId}:${source}`, throttleMs: 250 }
     );
     removeQueuedProductSource(productId, source);
   }, delayMs);
   removalTimers.set(sourceTimerKey(productId, source), timer);
-};
+}
 
-const upsertQueuedProductSourceInternal = (
+function upsertQueuedProductSourceInternal(
   productId: string,
   source: string,
   expiresAt: number | null,
   emit: boolean
-): void => {
+): void {
   const sources = ensureSourceMap(productId);
   const currentState = sources.get(source);
   if (currentState?.expiresAt === expiresAt) {
@@ -161,33 +152,25 @@ const upsertQueuedProductSourceInternal = (
   scheduleQueuedSourceExpiry(productId, source, expiresAt);
   logProductListDebug(
     'queued-product-source-upserted',
-    {
-      productId,
-      source,
-      expiresAt,
-      queuedProductIdsCount: cachedSources?.size ?? 0,
-    },
-    {
-      dedupeKey: `queued-product-source-upserted:${productId}:${source}`,
-      throttleMs: 250,
-    }
+    { productId, source, expiresAt, queuedProductIdsCount: cachedSources?.size ?? 0 },
+    { dedupeKey: `queued-product-source-upserted:${productId}:${source}`, throttleMs: 250 }
   );
   saveToStorage();
-  if (emit) emitChange();
-};
+  if (emit === true) emitChange();
+}
 
-const removeQueuedProductSourceInternal = (
+function removeQueuedProductSourceInternal(
   productId: string,
   source: string,
   emit: boolean
-): boolean => {
-  if (!cachedSources) return false;
+): boolean {
+  if (cachedSources === null) return false;
   const sources = cachedSources.get(productId);
-  if (!sources) return false;
+  if (sources === undefined) return false;
 
   clearSourceTimer(productId, source);
   const removed = sources.delete(source);
-  if (!removed) return false;
+  if (removed === false) return false;
 
   if (sources.size === 0) {
     cachedSources.delete(productId);
@@ -195,187 +178,162 @@ const removeQueuedProductSourceInternal = (
 
   logProductListDebug(
     'queued-product-source-removed',
-    {
-      productId,
-      source,
-      queuedProductIdsCount: cachedSources?.size ?? 0,
-    },
-    {
-      dedupeKey: `queued-product-source-removed:${productId}:${source}`,
-      throttleMs: 250,
-    }
+    { productId, source, queuedProductIdsCount: cachedSources.size },
+    { dedupeKey: `queued-product-source-removed:${productId}:${source}`, throttleMs: 250 }
   );
   saveToStorage();
-  if (emit) emitChange();
+  if (emit === true) emitChange();
   return true;
-};
+}
 
-const clearQueuedProductIdInternal = (productId: string, emit: boolean): boolean => {
-  if (!cachedSources) return false;
+function clearQueuedProductIdInternal(productId: string, emit: boolean): boolean {
+  if (cachedSources === null) return false;
   const sources = cachedSources.get(productId);
-  if (!sources) return false;
+  if (sources === undefined) return false;
 
-  Array.from(sources.keys()).forEach((source: string) => clearSourceTimer(productId, source));
+  Array.from(sources.keys()).forEach((source) => clearSourceTimer(productId, source));
   cachedSources.delete(productId);
   logProductListDebug(
     'queued-product-cleared',
-    {
-      productId,
-      queuedProductIdsCount: cachedSources?.size ?? 0,
-    },
-    {
-      dedupeKey: `queued-product-cleared:${productId}`,
-      throttleMs: 250,
-    }
+    { productId, queuedProductIdsCount: cachedSources.size },
+    { dedupeKey: `queued-product-cleared:${productId}`, throttleMs: 250 }
   );
   saveToStorage();
-  if (emit) emitChange();
+  if (emit === true) emitChange();
   return true;
-};
+}
 
-const hydrateQueuedProductStateFromStorage = (stored: unknown): void => {
-  if (!cachedSources) {
+function hydrateQueuedProductStateFromStorage(stored: unknown): void {
+  if (cachedSources === null) {
     cachedSources = new Map<string, Map<string, QueuedSourceState>>();
   }
 
   const now = Date.now();
-  if (!stored || typeof stored !== 'object' || Array.isArray(stored)) return;
-  const candidate = stored as Partial<StoredQueuedProductStateV2> & {
-    products?: Record<string, Array<{ source?: unknown; expiresAt?: unknown }>>;
-  };
+  if (stored === null || stored === undefined || typeof stored !== 'object' || Array.isArray(stored)) return;
+  const candidate = stored as Partial<StoredQueuedProductStateV2>;
   const products = candidate.products;
-  if (!products || typeof products !== 'object') return;
+  if (products === undefined || typeof products !== 'object') return;
 
   Object.entries(products).forEach(([rawProductId, rawSources]) => {
     const productId = normalizeProductId(rawProductId);
-    if (!productId || !Array.isArray(rawSources)) return;
+    if (productId === '' || !Array.isArray(rawSources)) return;
 
     rawSources.forEach((rawSourceEntry) => {
-      const source = normalizeSource(
-        typeof rawSourceEntry?.source === 'string' ? rawSourceEntry.source : ''
-      );
-      if (!source) return;
-      const expiresAt =
-        typeof rawSourceEntry?.expiresAt === 'number' && Number.isFinite(rawSourceEntry.expiresAt)
-          ? rawSourceEntry.expiresAt
-          : null;
+      const source = normalizeSource(typeof rawSourceEntry?.source === 'string' ? rawSourceEntry.source : '');
+      if (source === '') return;
+      const expiresAt = typeof rawSourceEntry?.expiresAt === 'number' && Number.isFinite(rawSourceEntry.expiresAt) ? rawSourceEntry.expiresAt : null;
       if (expiresAt !== null && expiresAt <= now) return;
       upsertQueuedProductSourceInternal(productId, source, expiresAt, false);
     });
   });
-};
+}
 
-const loadFromStorage = (): void => {
-  if (cachedSources) return;
+function loadFromStorage(): void {
+  if (cachedSources !== null) return;
   cachedSources = new Map<string, Map<string, QueuedSourceState>>();
   if (typeof window === 'undefined') return;
 
   const stored = window.localStorage.getItem(STORAGE_KEY);
-  if (!stored) return;
+  if (stored === null) return;
   try {
     hydrateQueuedProductStateFromStorage(JSON.parse(stored) as unknown);
-  } catch (error) {
+  } catch (error: unknown) {
     logClientError(error);
     cachedSources = new Map<string, Map<string, QueuedSourceState>>();
   }
-};
+}
 
-const refreshFromStorage = (): void => {
+function refreshFromStorage(): void {
   clearAllTimers();
   cachedSources = null;
   loadFromStorage();
-  const queuedProductIdsCount = (cachedSources as QueuedProductState | null)?.size ?? 0;
+  const queuedProductIdsCount = cachedSources?.size ?? 0;
   logProductListDebug(
     'queued-product-storage-refreshed',
-    {
-      queuedProductIdsCount,
-    },
-    {
-      dedupeKey: 'queued-product-storage-refreshed',
-      throttleMs: 250,
-    }
+    { queuedProductIdsCount },
+    { dedupeKey: 'queued-product-storage-refreshed', throttleMs: 250 }
   );
   emitChange();
-};
+}
 
-export const __resetQueuedProductOpsState = (): void => {
+export function resetQueuedProductOpsState(): void {
   clearAllTimers();
   cachedSources = null;
   listeners.clear();
-};
+}
 
-export const buildQueuedProductAiRunSource = (runId: string): string | null => {
+export function buildQueuedProductAiRunSource(runId: string): string | null {
   const normalizedRunId = normalizeSource(runId);
-  if (!normalizedRunId) return null;
+  if (normalizedRunId === '') return null;
   return `ai-run:${normalizedRunId}`;
-};
+}
 
-export const buildQueuedProductOfflineMutationSource = (
+export function buildQueuedProductOfflineMutationSource(
   operation: 'update' | 'delete' | 'create'
-): string => `offline:${operation}`;
+): string {
+  return `offline:${operation}`;
+}
 
-export const getQueuedProductIds = (): Set<string> => {
+export function getQueuedProductIds(): Set<string> {
   loadFromStorage();
   return new Set(Array.from(cachedSources?.keys() ?? []));
-};
+}
 
-export const getQueuedAiRunProductIds = (): Set<string> => {
+export function getQueuedAiRunProductIds(): Set<string> {
   loadFromStorage();
-  if (!cachedSources) return new Set<string>();
+  if (cachedSources === null) return new Set<string>();
 
   return new Set(
     Array.from(cachedSources.entries())
-      .filter(([, sources]: [string, Map<string, QueuedSourceState>]) =>
-        Array.from(sources.keys()).some((source: string) => isAiRunSource(source))
-      )
-      .map(([productId]: [string, Map<string, QueuedSourceState>]) => productId)
+      .filter(([, sources]) => Array.from(sources.keys()).some((source) => isAiRunSource(source)))
+      .map(([productId]) => productId)
   );
-};
+}
 
-export const getQueuedProductSources = (id: string): Set<string> => {
+export function getQueuedProductSources(id: string): Set<string> {
   const productId = normalizeProductId(id);
-  if (!productId) return new Set<string>();
+  if (productId === '') return new Set<string>();
   loadFromStorage();
   return new Set(Array.from(cachedSources?.get(productId)?.keys() ?? []));
-};
+}
 
-export const addQueuedProductSource = (id: string, source: string): void => {
+export function addQueuedProductSource(id: string, source: string): void {
   const productId = normalizeProductId(id);
   const normalizedSource = normalizeSource(source);
-  if (!productId || !normalizedSource) return;
+  if (productId === '' || normalizedSource === '') return;
   loadFromStorage();
   upsertQueuedProductSourceInternal(productId, normalizedSource, null, true);
-};
+}
 
-export const removeQueuedProductSource = (id: string, source: string): void => {
+export function removeQueuedProductSource(id: string, source: string): void {
   const productId = normalizeProductId(id);
   const normalizedSource = normalizeSource(source);
-  if (!productId || !normalizedSource) return;
+  if (productId === '' || normalizedSource === '') return;
   loadFromStorage();
   removeQueuedProductSourceInternal(productId, normalizedSource, true);
-};
+}
 
-export const markQueuedProductSource = (
+export function markQueuedProductSource(
   id: string,
   source: string,
   ttlMs: number = DEFAULT_QUEUED_PRODUCT_TTL_MS
-): void => {
+): void {
   const productId = normalizeProductId(id);
   const normalizedSource = normalizeSource(source);
-  if (!productId || !normalizedSource) return;
+  if (productId === '' || normalizedSource === '') return;
   loadFromStorage();
   const expiresAt = Date.now() + Math.max(MIN_QUEUED_PRODUCT_TTL_MS, ttlMs);
   upsertQueuedProductSourceInternal(productId, normalizedSource, expiresAt, true);
-};
+}
 
-export const clearQueuedProductId = (id: string): void => {
+export function clearQueuedProductId(id: string): void {
   const productId = normalizeProductId(id);
-  if (!productId) return;
+  if (productId === '') return;
   loadFromStorage();
   clearQueuedProductIdInternal(productId, true);
-};
+}
 
-export const useQueuedProductIds = (): Set<string> => {
+export function useQueuedProductIds(): Set<string> {
   const [ids, setIds] = useState<Set<string>>(() => getQueuedProductIds());
 
   useEffect(() => {
@@ -390,15 +348,8 @@ export const useQueuedProductIds = (): Set<string> => {
     const handleStorage = (event: StorageEvent): void => {
       if (event.key === STORAGE_KEY) {
         logProductListDebug(
-          'queued-product-storage-event',
-          {
-            hook: 'useQueuedProductIds',
-            storageKey: event.key,
-          },
-          {
-            dedupeKey: 'queued-product-storage-event:ids',
-            throttleMs: 250,
-          }
+          'queued-product-storage-event', { hook: 'useQueuedProductIds', storageKey: event.key },
+          { dedupeKey: 'queued-product-storage-event:ids', throttleMs: 250 }
         );
         refreshFromStorage();
       }
@@ -412,9 +363,9 @@ export const useQueuedProductIds = (): Set<string> => {
   }, []);
 
   return ids;
-};
+}
 
-export const useQueuedAiRunProductIds = (): Set<string> => {
+export function useQueuedAiRunProductIds(): Set<string> {
   const [ids, setIds] = useState<Set<string>>(() => getQueuedAiRunProductIds());
 
   useEffect(() => {
@@ -429,15 +380,8 @@ export const useQueuedAiRunProductIds = (): Set<string> => {
     const handleStorage = (event: StorageEvent): void => {
       if (event.key === STORAGE_KEY) {
         logProductListDebug(
-          'queued-product-storage-event',
-          {
-            hook: 'useQueuedAiRunProductIds',
-            storageKey: event.key,
-          },
-          {
-            dedupeKey: 'queued-product-storage-event:ai-runs',
-            throttleMs: 250,
-          }
+          'queued-product-storage-event', { hook: 'useQueuedAiRunProductIds', storageKey: event.key },
+          { dedupeKey: 'queued-product-storage-event:ai-runs', throttleMs: 250 }
         );
         refreshFromStorage();
       }
@@ -451,4 +395,4 @@ export const useQueuedAiRunProductIds = (): Set<string> => {
   }, []);
 
   return ids;
-};
+}

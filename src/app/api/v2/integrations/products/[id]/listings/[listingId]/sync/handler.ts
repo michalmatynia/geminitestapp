@@ -79,6 +79,7 @@ export async function POST_handler(
     action: 'sync',
     source: 'manual',
     ...(payload.browserMode ? { browserMode: payload.browserMode } : {}),
+    ...(payload.selectorProfile ? { selectorProfile: payload.selectorProfile } : {}),
     ...(payload.skipImages ? { syncSkipImages: true } : {}),
   });
   const enqueuedAt = new Date().toISOString();
@@ -93,6 +94,7 @@ export async function POST_handler(
         pendingExecution: {
           action: 'sync',
           requestedBrowserMode: payload.browserMode ?? 'connection_default',
+          ...(payload.selectorProfile ? { requestedSelectorProfile: payload.selectorProfile } : {}),
           requestId: jobId,
           queuedAt: enqueuedAt,
           ...(payload.skipImages ? { skipImages: true } : {}),

@@ -43,13 +43,12 @@ export interface DraftCreatorBasicInfo {
   resolvedIconColor: string;
   openIconLibrary: () => void;
 }
-export const {
-  Context: BasicInfoContext,
-  useStrictContext: useDraftCreatorBasicInfo,
-} = createDraftCreatorStrictContext<DraftCreatorBasicInfo>(
+const basicInfoContextResult = createDraftCreatorStrictContext<DraftCreatorBasicInfo>(
   'useDraftCreatorBasicInfo',
   'DraftCreatorBasicInfoContext'
 );
+export const BasicInfoContext = basicInfoContextResult.Context;
+export const useDraftCreatorBasicInfo = basicInfoContextResult.useStrictContext;
 
 // --- Product Data Context ---
 export interface DraftCreatorProductData {
@@ -96,13 +95,12 @@ export interface DraftCreatorProductData {
   baseProductId: string;
   setBaseProductId: (next: string) => void;
 }
-export const {
-  Context: ProductDataContext,
-  useStrictContext: useDraftCreatorProductData,
-} = createDraftCreatorStrictContext<DraftCreatorProductData>(
+const productDataContextResult = createDraftCreatorStrictContext<DraftCreatorProductData>(
   'useDraftCreatorProductData',
   'DraftCreatorProductDataContext'
 );
+export const ProductDataContext = productDataContextResult.Context;
+export const useDraftCreatorProductData = productDataContextResult.useStrictContext;
 
 // --- Metadata Context ---
 export interface DraftCreatorMetadata {
@@ -122,13 +120,12 @@ export interface DraftCreatorMetadata {
   selectedProducerIds: string[];
   setSelectedProducerIds: (nextIds: string[]) => void;
 }
-export const {
-  Context: MetadataContext,
-  useStrictContext: useDraftCreatorMetadata,
-} = createDraftCreatorStrictContext<DraftCreatorMetadata>(
+const metadataContextResult = createDraftCreatorStrictContext<DraftCreatorMetadata>(
   'useDraftCreatorMetadata',
   'DraftCreatorMetadataContext'
 );
+export const MetadataContext = metadataContextResult.Context;
+export const useDraftCreatorMetadata = metadataContextResult.useStrictContext;
 
 // --- Images Context ---
 export interface DraftCreatorImages {
@@ -137,13 +134,12 @@ export interface DraftCreatorImages {
   handleMultiFileSelect: (files: ImageFileSelection[]) => void;
   imageManagerController: ProductImageManagerController;
 }
-export const {
-  Context: ImagesContext,
-  useStrictContext: useDraftCreatorImages,
-} = createDraftCreatorStrictContext<DraftCreatorImages>(
+const imagesContextResult = createDraftCreatorStrictContext<DraftCreatorImages>(
   'useDraftCreatorImages',
   'DraftCreatorImagesContext'
 );
+export const ImagesContext = imagesContextResult.Context;
+export const useDraftCreatorImages = imagesContextResult.useStrictContext;
 
 // --- Parameters Context ---
 export interface DraftCreatorParameters {
@@ -155,13 +151,12 @@ export interface DraftCreatorParameters {
   updateParameterValue: (index: number, value: string) => void;
   removeParameterValue: (index: number) => void;
 }
-export const {
-  Context: ParametersContext,
-  useStrictContext: useDraftCreatorParameters,
-} = createDraftCreatorStrictContext<DraftCreatorParameters>(
+const parametersContextResult = createDraftCreatorStrictContext<DraftCreatorParameters>(
   'useDraftCreatorParameters',
   'DraftCreatorParametersContext'
 );
+export const ParametersContext = parametersContextResult.Context;
+export const useDraftCreatorParameters = parametersContextResult.useStrictContext;
 
 // --- Context Aggregator ---
 export interface DraftCreatorFormContextValue

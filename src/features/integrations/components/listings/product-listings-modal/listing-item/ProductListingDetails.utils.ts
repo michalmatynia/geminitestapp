@@ -97,12 +97,15 @@ export const resolveTraderaExecutionSummary = (
   mode: string | null;
   browserMode: string | null;
   requestedBrowserMode: string | null;
+  requestedSelectorProfile: string | null;
+  resolvedSelectorProfile: string | null;
   scriptSource: string | null;
   scriptKind: string | null;
   scriptMarker: string | null;
   listingFormUrl: string | null;
   pendingAction: string | null;
   pendingBrowserMode: string | null;
+  pendingSelectorProfile: string | null;
   pendingRequestId: string | null;
   pendingQueuedAt: string | null;
   runId: string | null;
@@ -183,12 +186,15 @@ export const resolveTraderaExecutionSummary = (
     mode: readString(metadata['scriptMode']) ?? readString(metadata['mode']),
     browserMode: readString(metadata['browserMode']),
     requestedBrowserMode: readString(metadata['requestedBrowserMode']),
+    requestedSelectorProfile: readString(metadata['requestedSelectorProfile']),
+    resolvedSelectorProfile: readString(metadata['selectorProfileResolved']),
     scriptSource: readString(metadata['scriptSource']),
     scriptKind: readString(metadata['scriptKind']),
     scriptMarker: readString(metadata['scriptMarker']),
     listingFormUrl: readString(metadata['listingFormUrl']) ?? readString(metadata['startUrl']),
     pendingAction: readString(pendingExecution['action']),
     pendingBrowserMode: readString(pendingExecution['requestedBrowserMode']),
+    pendingSelectorProfile: readString(pendingExecution['requestedSelectorProfile']),
     pendingRequestId: readString(pendingExecution['requestId']),
     pendingQueuedAt: readString(pendingExecution['queuedAt']),
     runId: readString(metadata['runId']) ?? readString(pendingExecution['runId']),

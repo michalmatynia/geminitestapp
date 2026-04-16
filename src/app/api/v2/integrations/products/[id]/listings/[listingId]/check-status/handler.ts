@@ -69,11 +69,19 @@ export async function POST_handler(
   });
 
   initializeQueues();
-  const jobId = await enqueueTraderaListingJob({
+  const queueJobInput = {
     listingId,
-    action: 'check_status',
-    source: 'manual',
-    ...(payload.browserMode ? { browserMode: payload.browserMode } : {}),
+    action: 'check_status' as const,
+    source: 'manual' as const,
+    ...(typeof payload.browserMode === 'string'
+      ? { browserMode: payload.browserMode }
+      : {}),
+    ...(typeof payload.selectorProfile === 'string' && payload.selectorProfile.length > 0
+      ? { selectorProfile: payload.selectorProfile }
+      : {}),
+  };
+  const jobId = await enqueueTraderaListingJob({
+    ...queueJobInput,
   });
   const enqueuedAt = new Date().toISOString();
   await resolved.repository.updateListing(listingId, {
@@ -82,6 +90,7 @@ export async function POST_handler(
       requestId: jobId,
       queuedAt: enqueuedAt,
       requestedBrowserMode: payload.browserMode,
+      requestedSelectorProfile: payload.selectorProfile,
     }),
   });
 

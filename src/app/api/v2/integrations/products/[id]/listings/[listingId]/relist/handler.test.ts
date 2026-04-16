@@ -124,6 +124,42 @@ describe('integration listing relist handler', () => {
     });
   });
 
+  it('forwards selectorProfile overrides through for Tradera browser relists', async () => {
+    const response = await POST_handler(
+      new Request('http://localhost/api', {
+        method: 'POST',
+        body: JSON.stringify({ selectorProfile: 'profile-market-a' }),
+        headers: {
+          'content-type': 'application/json',
+        },
+      }) as never,
+      {} as never,
+      { id: 'product-1', listingId: 'listing-1' }
+    );
+
+    await response.json();
+
+    expect(enqueueTraderaListingJobMock).toHaveBeenCalledWith({
+      listingId: 'listing-1',
+      action: 'relist',
+      source: 'manual',
+      selectorProfile: 'profile-market-a',
+    });
+    expect(updateListingMock).toHaveBeenCalledWith(
+      'listing-1',
+      expect.objectContaining({
+        marketplaceData: expect.objectContaining({
+          tradera: expect.objectContaining({
+            pendingExecution: expect.objectContaining({
+              action: 'relist',
+              requestedSelectorProfile: 'profile-market-a',
+            }),
+          }),
+        }),
+      })
+    );
+  });
+
   it('passes headed/headless overrides through for Playwright programmable relists', async () => {
     findProductListingByIdAcrossProvidersMock.mockResolvedValue({
       listing: {
@@ -203,6 +239,32 @@ describe('integration listing relist handler', () => {
       )
     ).rejects.toThrow(
       'Browser mode override is only supported for Playwright and Tradera browser relists'
+    );
+
+    expect(enqueueTraderaListingJobMock).not.toHaveBeenCalled();
+    expect(enqueuePlaywrightListingJobMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects selectorProfile overrides for relists that are not Tradera browser', async () => {
+    getIntegrationByIdMock.mockResolvedValue({
+      id: 'integration-playwright-1',
+      slug: 'playwright-programmable',
+    });
+
+    await expect(
+      POST_handler(
+        new Request('http://localhost/api', {
+          method: 'POST',
+          body: JSON.stringify({ selectorProfile: 'profile-market-a' }),
+          headers: {
+            'content-type': 'application/json',
+          },
+        }) as never,
+        {} as never,
+        { id: 'product-1', listingId: 'listing-1' }
+      )
+    ).rejects.toThrow(
+      'Selector profile override is only supported for Tradera browser relists'
     );
 
     expect(enqueueTraderaListingJobMock).not.toHaveBeenCalled();

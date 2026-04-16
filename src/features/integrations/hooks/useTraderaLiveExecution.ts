@@ -26,6 +26,8 @@ export type LiveTraderaExecutionState = {
   status: PlaywrightNodeRunSnapshot['status'];
   latestStage: string | null;
   latestStageUrl: string | null;
+  requestedSelectorProfile: string | null;
+  resolvedSelectorProfile: string | null;
   executionSteps: TraderaExecutionStep[];
   rawResult: Record<string, unknown> | null;
   logTail: string[];
@@ -83,11 +85,13 @@ const resolveLiveRunOutputs = (
 ): {
   payload: Record<string, unknown>;
   outputs: Record<string, unknown>;
+  metadata: Record<string, unknown>;
   resultValue: Record<string, unknown>;
   finalUrl: string | null;
 } => {
   const payload = toRecord(snapshot.result);
   const outputs = toRecord(payload['outputs']);
+  const metadata = toRecord(outputs['metadata'] ?? payload['metadata']);
   const nestedResult = toRecord(outputs['result']);
   const resultValue =
     Object.keys(nestedResult).length > 0
@@ -99,6 +103,7 @@ const resolveLiveRunOutputs = (
   return {
     payload,
     outputs,
+    metadata,
     resultValue,
     finalUrl: readString(payload['finalUrl']),
   };
@@ -108,7 +113,7 @@ const buildLiveTraderaExecutionState = (
   action: LiveTraderaAction,
   snapshot: PlaywrightNodeRunSnapshot
 ): LiveTraderaExecutionState => {
-  const { outputs, resultValue, finalUrl } = resolveLiveRunOutputs(snapshot);
+  const { outputs, metadata, resultValue, finalUrl } = resolveLiveRunOutputs(snapshot);
   const emittedSteps = readTraderaExecutionSteps(outputs['steps']);
   const executionSteps =
     emittedSteps.length > 0
@@ -128,6 +133,12 @@ const buildLiveTraderaExecutionState = (
     status: snapshot.status,
     latestStage: readString(resultValue['stage']),
     latestStageUrl: readString(resultValue['currentUrl']) ?? finalUrl,
+    requestedSelectorProfile:
+      readString(metadata['selectorProfileRequested']) ??
+      readString(resultValue['selectorProfileRequested']),
+    resolvedSelectorProfile:
+      readString(metadata['selectorProfileResolved']) ??
+      readString(resultValue['selectorProfileResolved']),
     executionSteps,
     rawResult: Object.keys(resultValue).length > 0 ? resultValue : null,
     logTail: Array.isArray(snapshot.logs) ? snapshot.logs.slice(-12) : [],

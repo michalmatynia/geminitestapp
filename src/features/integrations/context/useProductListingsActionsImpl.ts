@@ -249,6 +249,7 @@ export const useProductListingsActionsImpl = ({
       options?: {
         skipSessionPreflight?: boolean;
         browserMode?: PlaywrightRelistBrowserMode;
+        selectorProfile?: string;
       }
     ) => {
       const listing = listings.find((item) => item.id === listingId);
@@ -278,6 +279,7 @@ export const useProductListingsActionsImpl = ({
         const response = await relistTraderaMutation.mutateAsync({
           listingId,
           ...(options?.browserMode ? { browserMode: options.browserMode } : {}),
+          ...(options?.selectorProfile ? { selectorProfile: options.selectorProfile } : {}),
         });
         const queueJobId = response.queue?.jobId;
         const browserModeLabel =
@@ -368,6 +370,7 @@ export const useProductListingsActionsImpl = ({
         connectionId?: string | null;
         skipSessionPreflight?: boolean;
         browserMode?: PlaywrightRelistBrowserMode;
+        selectorProfile?: string;
         skipImages?: boolean;
       }
     ) => {
@@ -393,6 +396,7 @@ export const useProductListingsActionsImpl = ({
         const response = await syncTraderaMutation.mutateAsync({
           listingId,
           ...(options?.browserMode ? { browserMode: options.browserMode } : {}),
+          ...(options?.selectorProfile ? { selectorProfile: options.selectorProfile } : {}),
           ...(options?.skipImages ? { skipImages: true } : {}),
         });
         const queueJobId = response.queue?.jobId;
@@ -463,6 +467,7 @@ export const useProductListingsActionsImpl = ({
       options?: {
         skipSessionPreflight?: boolean;
         browserMode?: PlaywrightRelistBrowserMode;
+        selectorProfile?: string;
       }
     ) => {
       const listing = listings.find((item) => item.id === listingId);
@@ -491,6 +496,7 @@ export const useProductListingsActionsImpl = ({
         const response = await checkTraderaStatusMutation.mutateAsync({
           listingId,
           ...(options?.browserMode ? { browserMode: options.browserMode } : {}),
+          ...(options?.selectorProfile ? { selectorProfile: options.selectorProfile } : {}),
         });
         const queueJobId = response.queue?.jobId;
         toast(
@@ -625,6 +631,7 @@ export const useProductListingsActionsImpl = ({
       connectionId,
       action,
       browserMode = 'headed',
+      selectorProfile,
       skipImages = false,
     }: {
       listingId: string;
@@ -632,6 +639,7 @@ export const useProductListingsActionsImpl = ({
       connectionId: string;
       action: 'relist' | 'sync' | 'check_status';
       browserMode?: PlaywrightRelistBrowserMode;
+      selectorProfile?: string;
       skipImages?: boolean;
     }): Promise<boolean> => {
       const recovered = await handleOpenTraderaLogin(listingId, integrationId, connectionId);
@@ -645,6 +653,7 @@ export const useProductListingsActionsImpl = ({
           integrationId,
           connectionId,
           browserMode,
+          ...(selectorProfile ? { selectorProfile } : {}),
           ...(skipImages ? { skipImages: true } : {}),
         });
         return true;
@@ -654,6 +663,7 @@ export const useProductListingsActionsImpl = ({
         await handleCheckTraderaStatus(listingId, {
           skipSessionPreflight: true,
           browserMode,
+          ...(selectorProfile ? { selectorProfile } : {}),
         });
         return true;
       }
@@ -661,6 +671,7 @@ export const useProductListingsActionsImpl = ({
       await handleRelistTradera(listingId, {
         skipSessionPreflight: true,
         browserMode,
+        ...(selectorProfile ? { selectorProfile } : {}),
       });
       return true;
     },

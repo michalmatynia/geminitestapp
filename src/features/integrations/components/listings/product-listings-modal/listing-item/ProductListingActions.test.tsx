@@ -11,12 +11,16 @@ const {
   useProductListingsModalsMock,
   useImageRetryPresetsMock,
   useTraderaLiveExecutionMock,
+  useTraderaSelectorRegistryMock,
+  useSettingsMapMock,
 } = vi.hoisted(() => ({
   useProductListingsUIStateMock: vi.fn(),
   useProductListingsActionsMock: vi.fn(),
   useProductListingsModalsMock: vi.fn(),
   useImageRetryPresetsMock: vi.fn(),
   useTraderaLiveExecutionMock: vi.fn(),
+  useTraderaSelectorRegistryMock: vi.fn(),
+  useSettingsMapMock: vi.fn(),
 }));
 
 vi.mock('@/features/integrations/context/ProductListingsContext', () => ({
@@ -31,6 +35,15 @@ vi.mock('@/features/integrations/components/listings/useImageRetryPresets', () =
 
 vi.mock('@/features/integrations/hooks/useTraderaLiveExecution', () => ({
   useTraderaLiveExecution: () => useTraderaLiveExecutionMock(),
+}));
+
+vi.mock('@/features/integrations/hooks/useTraderaSelectorRegistry', () => ({
+  useTraderaSelectorRegistry: (...args: unknown[]) =>
+    useTraderaSelectorRegistryMock(...args),
+}));
+
+vi.mock('@/shared/hooks/use-settings', () => ({
+  useSettingsMap: () => useSettingsMapMock(),
 }));
 
 vi.mock('@/shared/ui/primitives.public', async (importOriginal) => {
@@ -61,6 +74,7 @@ vi.mock('@/shared/ui/forms-and-actions.public', async (importOriginal) => {
 });
 
 import { ProductListingActions } from './ProductListingActions';
+import { TRADERA_SETTINGS_KEYS } from '@/features/integrations/constants/tradera';
 
 describe('ProductListingActions', () => {
   const handleExportAgain = vi.fn();
@@ -78,6 +92,17 @@ describe('ProductListingActions', () => {
     handleSyncTradera.mockResolvedValue(undefined);
     useImageRetryPresetsMock.mockReturnValue([]);
     useTraderaLiveExecutionMock.mockReturnValue(null);
+    useTraderaSelectorRegistryMock.mockReturnValue({
+      data: {
+        entries: [
+          { profile: 'default' },
+          { profile: 'profile-market-a' },
+        ],
+      },
+    });
+    useSettingsMapMock.mockReturnValue({
+      data: new Map<string, string>([[TRADERA_SETTINGS_KEYS.selectorProfile, 'profile-market-a']]),
+    });
     useProductListingsUIStateMock.mockReturnValue({
       exportingListing: null,
       inventoryOverrides: {},
@@ -248,6 +273,39 @@ describe('ProductListingActions', () => {
     });
   });
 
+  it('reuses the selector profile override for Tradera sync actions', async () => {
+    render(
+      <ProductListingActions
+        listing={
+          {
+            id: 'listing-1',
+            status: 'active',
+            integrationId: 'integration-1',
+            connectionId: 'connection-1',
+            integration: {
+              name: 'Tradera',
+              slug: 'tradera',
+            },
+            marketplaceData: null,
+          } as never
+        }
+      />
+    );
+
+    fireEvent.change(screen.getByRole('combobox', { name: 'Tradera selector profile override' }), {
+      target: { value: 'profile-market-a' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Sync with Tradera' }));
+    fireEvent.click(screen.getByText('Sync (default)'));
+    await Promise.resolve();
+
+    expect(handleSyncTradera).toHaveBeenCalledWith('listing-1', {
+      integrationId: 'integration-1',
+      connectionId: 'connection-1',
+      selectorProfile: 'profile-market-a',
+    });
+  });
+
   it('queues a Tradera status check from the listing actions', async () => {
     render(
       <ProductListingActions
@@ -271,6 +329,36 @@ describe('ProductListingActions', () => {
     await Promise.resolve();
 
     expect(handleCheckTraderaStatus).toHaveBeenCalledWith('listing-1');
+  });
+
+  it('reuses the selector profile override for Tradera relist actions', async () => {
+    render(
+      <ProductListingActions
+        listing={
+          {
+            id: 'listing-1',
+            status: 'active',
+            integrationId: 'integration-1',
+            connectionId: 'connection-1',
+            integration: {
+              name: 'Tradera',
+              slug: 'tradera',
+            },
+            marketplaceData: null,
+          } as never
+        }
+      />
+    );
+
+    fireEvent.change(screen.getByRole('combobox', { name: 'Tradera selector profile override' }), {
+      target: { value: 'profile-market-a' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Relist now' }));
+    await Promise.resolve();
+
+    expect(handleRelistTradera).toHaveBeenCalledWith('listing-1', {
+      selectorProfile: 'profile-market-a',
+    });
   });
 
   it('retries sync after manual login when the last Tradera execution action was sync', async () => {

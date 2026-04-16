@@ -1,4 +1,5 @@
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
+import type { SlotGenerationMetadata } from '@/shared/contracts/image-studio/slot';
 
 import { readMeta } from './metadata';
 
@@ -13,6 +14,72 @@ export interface CompareRow {
 
 // ── Compare utility ──────────────────────────────────────────────────────────
 
+type CompareFieldInput = {
+  field: string;
+  a: string | null;
+  b: string | null;
+};
+type StringGenerationParamKey = 'prompt' | 'model' | 'timestamp' | 'runId';
+
+const toNullableString = (value: string | undefined): string | null => value ?? null;
+
+const readGenerationStringParam = (
+  meta: SlotGenerationMetadata,
+  key: StringGenerationParamKey
+): string | null => toNullableString(meta.generationParams?.[key]);
+
+const readRole = (meta: SlotGenerationMetadata): string | null => meta.role ?? null;
+
+const formatOutputIndex = (
+  outputIndex: number | null | undefined,
+  outputCount: number | null | undefined
+): string | null =>
+  outputIndex !== null && outputIndex !== undefined
+    ? `${outputIndex + 1}/${outputCount ?? '?'}`
+    : null;
+
+const buildCompareFields = (
+  metaA: SlotGenerationMetadata,
+  metaB: SlotGenerationMetadata
+): CompareFieldInput[] => [
+  {
+    field: 'Prompt',
+    a: readGenerationStringParam(metaA, 'prompt'),
+    b: readGenerationStringParam(metaB, 'prompt'),
+  },
+  {
+    field: 'Model',
+    a: readGenerationStringParam(metaA, 'model'),
+    b: readGenerationStringParam(metaB, 'model'),
+  },
+  { field: 'Type', a: readRole(metaA), b: readRole(metaB) },
+  {
+    field: 'Timestamp',
+    a: readGenerationStringParam(metaA, 'timestamp'),
+    b: readGenerationStringParam(metaB, 'timestamp'),
+  },
+  {
+    field: 'Run ID',
+    a: readGenerationStringParam(metaA, 'runId'),
+    b: readGenerationStringParam(metaB, 'runId'),
+  },
+  {
+    field: 'Output #',
+    a: formatOutputIndex(metaA.generationParams?.outputIndex, metaA.generationParams?.outputCount),
+    b: formatOutputIndex(metaB.generationParams?.outputIndex, metaB.generationParams?.outputCount),
+  },
+];
+
+const hasCompareFieldValue = (field: CompareFieldInput): boolean =>
+  field.a !== null || field.b !== null;
+
+const toCompareRow = (field: CompareFieldInput): CompareRow => ({
+  field: field.field,
+  valueA: field.a,
+  valueB: field.b,
+  isDifferent: field.a !== field.b,
+});
+
 /** Compare generation parameters between two slots, returning rows for a diff table. */
 export function compareGenerationParams(
   slotA: ImageStudioSlotRecord,
@@ -21,54 +88,5 @@ export function compareGenerationParams(
   const metaA = readMeta(slotA);
   const metaB = readMeta(slotB);
 
-  const paramsA = metaA.generationParams;
-  const paramsB = metaB.generationParams;
-
-  const fields: Array<{ field: string; a: string | null; b: string | null }> = [
-    {
-      field: 'Prompt',
-      a: paramsA?.prompt ?? null,
-      b: paramsB?.prompt ?? null,
-    },
-    {
-      field: 'Model',
-      a: paramsA?.model ?? null,
-      b: paramsB?.model ?? null,
-    },
-    {
-      field: 'Type',
-      a: metaA.role ?? null,
-      b: metaB.role ?? null,
-    },
-    {
-      field: 'Timestamp',
-      a: paramsA?.timestamp ?? null,
-      b: paramsB?.timestamp ?? null,
-    },
-    {
-      field: 'Run ID',
-      a: paramsA?.runId ?? null,
-      b: paramsB?.runId ?? null,
-    },
-    {
-      field: 'Output #',
-      a:
-        paramsA?.outputIndex != null
-          ? `${paramsA.outputIndex + 1}/${paramsA.outputCount ?? '?'}`
-          : null,
-      b:
-        paramsB?.outputIndex != null
-          ? `${paramsB.outputIndex + 1}/${paramsB.outputCount ?? '?'}`
-          : null,
-    },
-  ];
-
-  return fields
-    .filter((f) => f.a !== null || f.b !== null) // Only show rows where at least one side has a value
-    .map((f) => ({
-      field: f.field,
-      valueA: f.a,
-      valueB: f.b,
-      isDifferent: f.a !== f.b,
-    }));
+  return buildCompareFields(metaA, metaB).filter(hasCompareFieldValue).map(toCompareRow);
 }

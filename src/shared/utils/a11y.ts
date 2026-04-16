@@ -85,6 +85,7 @@ export const warnMissingAccessibleLabel = ({
 }): void => {
   if (process.env['NODE_ENV'] === 'production') return;
   if (hasAccessibleLabel) return;
+  // eslint-disable-next-line no-void
   void import('@/shared/lib/observability/system-logger-client')
     .then(({ logSystemEvent }) =>
       logSystemEvent({

@@ -22,6 +22,11 @@ import {
   createMutationV2,
 } from '@/shared/lib/query-factories-v2';
 
+export {
+  DEFAULT_TRADERA_SYSTEM_SETTINGS,
+  TRADERA_SETTINGS_KEYS,
+} from '@/features/integrations/constants/tradera';
+
 export const TRADERA_SELECTOR_REGISTRY_QUERY_KEY = [
   'integrations',
   'tradera',

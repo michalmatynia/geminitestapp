@@ -100,18 +100,25 @@ const buildPendingTraderaRunMarketplaceData = ({
   existingMarketplaceData,
   action,
   requestedBrowserMode,
+  requestedSelectorProfile,
   requestId,
   runId,
 }: {
   existingMarketplaceData: unknown;
   action: 'list' | 'relist' | 'sync' | 'check_status';
   requestedBrowserMode: PlaywrightRelistBrowserMode;
+  requestedSelectorProfile?: string;
   requestId: string | null;
   runId: string;
 }): Record<string, unknown> => {
   const marketplaceData = toRecord(existingMarketplaceData);
   const traderaData = toRecord(marketplaceData['tradera']);
   const pendingExecution = toRecord(traderaData['pendingExecution']);
+  const pendingSelectorProfile =
+    typeof pendingExecution['requestedSelectorProfile'] === 'string' &&
+    pendingExecution['requestedSelectorProfile'].trim().length > 0
+      ? pendingExecution['requestedSelectorProfile'].trim()
+      : null;
 
   return {
     ...marketplaceData,
@@ -121,6 +128,12 @@ const buildPendingTraderaRunMarketplaceData = ({
       pendingExecution: {
         action,
         requestedBrowserMode,
+        ...((requestedSelectorProfile ?? pendingSelectorProfile)
+          ? {
+              requestedSelectorProfile:
+                requestedSelectorProfile ?? pendingSelectorProfile,
+            }
+          : {}),
         requestId,
         queuedAt:
           typeof pendingExecution['queuedAt'] === 'string' && pendingExecution['queuedAt'].trim().length > 0
@@ -210,6 +223,13 @@ export const runTraderaListing = async (
     const { listing, connection, integration, repository } = runContext;
 
     const systemSettings = await loadTraderaSystemSettings();
+    const requestedSelectorProfile =
+      typeof input.selectorProfile === 'string' && input.selectorProfile.trim().length > 0
+        ? input.selectorProfile.trim()
+        : null;
+    if (requestedSelectorProfile) {
+      systemSettings.selectorProfile = requestedSelectorProfile;
+    }
     const integrationSlug = integration.slug;
     const useApi = isTraderaApiIntegrationSlug(integrationSlug);
     if (!useApi && action === 'list') {
@@ -253,6 +273,7 @@ export const runTraderaListing = async (
           existingMarketplaceData: listing.marketplaceData,
           action,
           requestedBrowserMode,
+          ...(requestedSelectorProfile ? { requestedSelectorProfile } : {}),
           requestId: input.jobId ?? null,
           runId,
         });

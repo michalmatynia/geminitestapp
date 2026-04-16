@@ -1,3 +1,7 @@
+/* eslint-disable max-lines-per-function */
+/* eslint-disable complexity */
+/* eslint-disable max-lines */
+/* eslint-disable @typescript-eslint/naming-convention */
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -266,11 +270,9 @@ export function VectorCanvas(props: VectorCanvasProps): React.JSX.Element {
     ]
   );
 
-  const showViewTransformHud = true;
-
-  useEffect((): (() => void) | void => {
+  useEffect(() => {
     const containerElement = containerRef.current;
-    if (!containerElement) return;
+    if (!containerElement) return undefined;
     const handleNativeWheel = (event: WheelEvent): void => {
       handleWheel(event);
     };
@@ -279,6 +281,21 @@ export function VectorCanvas(props: VectorCanvasProps): React.JSX.Element {
       containerElement.removeEventListener('wheel', handleNativeWheel);
     };
   }, [handleWheel]);
+
+  const getCursorClass = (): string => {
+    if (isPanning || isDraggingImage || isDraggingEditablePoint) {
+      return 'cursor-grabbing';
+    }
+    if (isHoveringEditablePoint) {
+      return 'cursor-pointer';
+    }
+    if (isHoveringMovableShape) {
+      return 'cursor-move';
+    }
+    return 'cursor-crosshair';
+  };
+
+  const showViewTransformHudValue = true;
 
   return (
     <VectorCanvasProvider value={contextValue}>
@@ -291,18 +308,14 @@ export function VectorCanvas(props: VectorCanvasProps): React.JSX.Element {
         )}
         style={enableTwoFingerRotate ? { touchAction: 'none' } : undefined}
       >
-        <div
+          <div
           ref={viewportRef}
           className='relative h-full w-full'
-          style={
-            showViewTransformHud
-              ? {
-                transform: `translate(${viewTransform.panX}px, ${viewTransform.panY}px) scale(${viewTransform.scale}) rotate(${viewTransform.rotateDeg}deg)`,
-                transformOrigin: '0 0',
-                transition: isPanning ? 'none' : 'transform 120ms cubic-bezier(0.22, 1, 0.36, 1)',
-              }
-              : undefined
-          }
+          style={{
+            transform: `translate(${viewTransform.panX}px, ${viewTransform.panY}px) scale(${viewTransform.scale}) rotate(${viewTransform.rotateDeg}deg)`,
+            transformOrigin: '0 0',
+            transition: isPanning ? 'none' : 'transform 120ms cubic-bezier(0.22, 1, 0.36, 1)',
+          }}
         >
           <CanvasBackgroundLayer />
           <CanvasGridLayer />
@@ -312,13 +325,7 @@ export function VectorCanvas(props: VectorCanvasProps): React.JSX.Element {
             ref={canvasRef}
             className={cn(
               'absolute left-1/2 top-0 z-20 -translate-x-1/2',
-              isPanning || isDraggingImage || isDraggingEditablePoint
-                ? 'cursor-grabbing'
-                : isHoveringEditablePoint
-                  ? 'cursor-pointer'
-                  : isHoveringMovableShape
-                    ? 'cursor-move'
-                    : 'cursor-crosshair'
+              getCursorClass()
             )}
             aria-label='Drawing canvas'
             onMouseDown={handleMouseDown}
@@ -330,7 +337,7 @@ export function VectorCanvas(props: VectorCanvasProps): React.JSX.Element {
           />
           <VectorShapeOverlay viewboxSize={SHAPE_VIEWBOX_SIZE} />
         </div>
-        <CanvasHud show={showViewTransformHud} />
+        <CanvasHud show={showViewTransformHudValue} />
       </div>
     </VectorCanvasProvider>
   );

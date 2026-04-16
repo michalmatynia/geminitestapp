@@ -14,6 +14,10 @@ import {
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
+  DEFAULT_TRADERA_SYSTEM_SETTINGS,
+  TRADERA_SETTINGS_KEYS,
+} from '@/features/integrations/constants/tradera';
+import {
   useDeleteTraderaSelectorRegistryEntryMutation,
   useMutateTraderaSelectorRegistryProfileMutation,
   useSaveTraderaSelectorRegistryEntryMutation,
@@ -22,6 +26,7 @@ import {
 } from '@/features/integrations/hooks/useTraderaSelectorRegistry';
 import type { TraderaSelectorRegistryEntry } from '@/shared/contracts/integrations/tradera-selector-registry';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
+import { useSettingsMap } from '@/shared/hooks/use-settings';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { AdminIntegrationsPageLayout } from '@/shared/ui/admin.public';
 import { EmptyState } from '@/shared/ui/empty-state';
@@ -291,6 +296,7 @@ export default function TraderaSelectorRegistryPage(): React.JSX.Element {
   const { toast } = useToast();
   const { confirm, ConfirmationModal } = useConfirm();
   const registryQuery = useTraderaSelectorRegistry();
+  const settingsQuery = useSettingsMap();
   const syncMutation = useSyncTraderaSelectorRegistryMutation();
   const saveMutation = useSaveTraderaSelectorRegistryEntryMutation();
   const deleteMutation = useDeleteTraderaSelectorRegistryEntryMutation();
@@ -310,6 +316,12 @@ export default function TraderaSelectorRegistryPage(): React.JSX.Element {
   const syncedAt = registryQuery.data?.syncedAt ?? null;
   const errorMessage =
     registryQuery.error instanceof Error ? registryQuery.error.message : null;
+  const configuredSelectorProfile = useMemo(() => {
+    const savedProfile = settingsQuery.data?.get(TRADERA_SETTINGS_KEYS.selectorProfile);
+    return typeof savedProfile === 'string' && savedProfile.trim().length > 0
+      ? savedProfile.trim()
+      : DEFAULT_TRADERA_SYSTEM_SETTINGS.selectorProfile;
+  }, [settingsQuery.data]);
 
   const availableProfiles = useMemo(
     () =>
@@ -703,6 +715,8 @@ export default function TraderaSelectorRegistryPage(): React.JSX.Element {
             </div>
           ) : (
             <div className='flex flex-wrap items-center gap-2 text-xs text-muted-foreground'>
+              <Badge variant='outline'>Global profile: {configuredSelectorProfile}</Badge>
+              <Badge variant='outline'>Viewing: {selectedProfile}</Badge>
               <Badge variant='outline'>{effectiveEntries.length} effective entries</Badge>
               <Badge variant='outline'>{availableProfiles.length} profiles</Badge>
               <Badge variant='outline'>{groupCount} groups</Badge>

@@ -12,6 +12,14 @@ const { useTraderaLiveExecutionMock } = vi.hoisted(() => ({
   useTraderaLiveExecutionMock: vi.fn(),
 }));
 
+const { useTraderaSelectorRegistryMock } = vi.hoisted(() => ({
+  useTraderaSelectorRegistryMock: vi.fn(),
+}));
+
+const { useSettingsMapMock } = vi.hoisted(() => ({
+  useSettingsMapMock: vi.fn(),
+}));
+
 const { invalidateQueriesMock } = vi.hoisted(() => ({
   invalidateQueriesMock: vi.fn(),
 }));
@@ -80,7 +88,17 @@ vi.mock('@/features/integrations/hooks/useTraderaLiveExecution', () => ({
   useTraderaLiveExecution: (...args: unknown[]) => useTraderaLiveExecutionMock(...args),
 }));
 
+vi.mock('@/features/integrations/hooks/useTraderaSelectorRegistry', () => ({
+  useTraderaSelectorRegistry: (...args: unknown[]) =>
+    useTraderaSelectorRegistryMock(...args),
+}));
+
+vi.mock('@/shared/hooks/use-settings', () => ({
+  useSettingsMap: () => useSettingsMapMock(),
+}));
+
 import { TraderaStatusCheckModal } from './TraderaStatusCheckModal';
+import { TRADERA_SETTINGS_KEYS } from '@/features/integrations/constants/tradera';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 const buildTraderaSessionRefreshResponse = () => ({
@@ -125,6 +143,17 @@ describe('TraderaStatusCheckModal', () => {
     vi.clearAllMocks();
     invalidateQueriesMock.mockResolvedValue(undefined);
     useTraderaLiveExecutionMock.mockReturnValue(null);
+    useTraderaSelectorRegistryMock.mockReturnValue({
+      data: {
+        entries: [
+          { profile: 'default' },
+          { profile: 'profile-market-a' },
+        ],
+      },
+    });
+    useSettingsMapMock.mockReturnValue({
+      data: new Map<string, string>([[TRADERA_SETTINGS_KEYS.selectorProfile, 'profile-market-a']]),
+    });
   });
 
   afterEach(() => {
@@ -250,6 +279,64 @@ describe('TraderaStatusCheckModal', () => {
     });
   });
 
+  it('includes selectorProfile overrides in batch live-check requests', async () => {
+    apiGetMock.mockResolvedValue([
+      makeListing({
+        id: 'listing-browser-1',
+        productId: 'product-1',
+      }),
+    ]);
+    apiPostMock.mockImplementation((url: string) => {
+      if (url === '/api/v2/integrations/product-listings/tradera-status-check') {
+        return Promise.resolve({
+          total: 1,
+          queued: 1,
+          alreadyQueued: 0,
+          skipped: 0,
+          failed: 0,
+          results: [
+            {
+              productId: 'product-1',
+              listingId: 'listing-browser-1',
+              status: 'queued',
+              queue: {
+                name: 'tradera-listings',
+                jobId: 'job-1',
+                enqueuedAt: '2026-04-01T12:01:00.000Z',
+              },
+            },
+          ],
+        });
+      }
+      return Promise.reject(new Error(`Unexpected api.post call: ${url}`));
+    });
+
+    render(
+      <TraderaStatusCheckModal
+        isOpen
+        onClose={() => {}}
+        productIds={['product-1']}
+        products={[{ id: 'product-1', name_en: 'Product One' } as never]}
+      />
+    );
+
+    await screen.findByText('Product One');
+    fireEvent.change(screen.getByRole('combobox', { name: 'Selector profile override' }), {
+      target: { value: 'profile-market-a' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Check All Live' }));
+
+    await waitFor(() => {
+      expect(apiPostMock).toHaveBeenCalledWith(
+        '/api/v2/integrations/product-listings/tradera-status-check',
+        {
+          productIds: ['product-1'],
+          selectorProfile: 'profile-market-a',
+        }
+      );
+    });
+  });
+
   it('shows skipped row feedback returned by the batch API', async () => {
     apiGetMock.mockResolvedValue([
       makeListing({
@@ -352,6 +439,56 @@ describe('TraderaStatusCheckModal', () => {
       expect(invalidateQueriesMock).toHaveBeenCalledWith({
         queryKey: QUERY_KEYS.integrations.productListingsBadges(),
       });
+    });
+  });
+
+  it('includes selectorProfile overrides in single live-check requests', async () => {
+    apiGetMock.mockResolvedValue([
+      makeListing({
+        id: 'listing-browser-1',
+        productId: 'product-1',
+      }),
+    ]);
+    apiPostMock.mockImplementation((url: string) => {
+      if (
+        url ===
+        '/api/v2/integrations/products/product-1/listings/listing-browser-1/check-status'
+      ) {
+        return Promise.resolve({
+          queued: true,
+          listingId: 'listing-browser-1',
+          queue: {
+            name: 'tradera-listings',
+            jobId: 'job-override-1',
+            enqueuedAt: '2026-04-01T12:02:00.000Z',
+          },
+        });
+      }
+      return Promise.reject(new Error(`Unexpected api.post call: ${url}`));
+    });
+
+    render(
+      <TraderaStatusCheckModal
+        isOpen
+        onClose={() => {}}
+        productIds={['product-1']}
+        products={[{ id: 'product-1', name_en: 'Product One' } as never]}
+      />
+    );
+
+    await screen.findByText('Product One');
+    fireEvent.change(screen.getByRole('combobox', { name: 'Selector profile override' }), {
+      target: { value: 'profile-market-a' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Check Live' }));
+
+    await waitFor(() => {
+      expect(apiPostMock).toHaveBeenCalledWith(
+        '/api/v2/integrations/products/product-1/listings/listing-browser-1/check-status',
+        {
+          selectorProfile: 'profile-market-a',
+        }
+      );
     });
   });
 
@@ -702,6 +839,8 @@ describe('TraderaStatusCheckModal', () => {
       status: 'running',
       latestStage: 'status_lookup',
       latestStageUrl: 'https://www.tradera.com/en/my/unsold',
+      requestedSelectorProfile: 'profile-market-a',
+      resolvedSelectorProfile: 'profile-market-b',
       executionSteps: [
         {
           id: 'status_lookup',
@@ -729,6 +868,10 @@ describe('TraderaStatusCheckModal', () => {
     await screen.findByText('Product One');
 
     expect(screen.getByText('Latest check steps')).toBeInTheDocument();
+    expect(screen.getByText('Selector profile')).toBeInTheDocument();
+    expect(screen.getByText('profile-market-b')).toBeInTheDocument();
+    expect(screen.getByText('Requested profile')).toBeInTheDocument();
+    expect(screen.getByText('profile-market-a')).toBeInTheDocument();
     expect(screen.getByText('Live')).toBeInTheDocument();
     expect(screen.getByText('status_lookup')).toBeInTheDocument();
     expect(screen.getByText('Locate Tradera listing')).toBeInTheDocument();
@@ -753,6 +896,8 @@ describe('TraderaStatusCheckModal', () => {
       status: 'running',
       latestStage: 'duplicate_linked',
       latestStageUrl: 'https://www.tradera.com/item/721891408',
+      requestedSelectorProfile: null,
+      resolvedSelectorProfile: null,
       executionSteps: [
         {
           id: 'duplicate_check',

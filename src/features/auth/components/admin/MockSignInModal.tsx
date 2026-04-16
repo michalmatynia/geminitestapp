@@ -15,6 +15,21 @@ type MockSignInFormState = {
   password: string;
 };
 
+const MOCK_SIGN_IN_FIELDS: SettingsPanelField<MockSignInFormState>[] = [
+  {
+    key: 'email',
+    label: 'Email',
+    type: 'email',
+    required: true,
+  },
+  {
+    key: 'password',
+    label: 'Password',
+    type: 'password',
+    required: true,
+  },
+];
+
 export function MockSignInModal(): React.JSX.Element | null {
   const { toast } = useToast();
   const { mutations } = useUsersData();
@@ -28,14 +43,14 @@ export function MockSignInModal(): React.JSX.Element | null {
   } = useUsersDialogs();
 
   const isSaving = mutations.mockSignIn.isPending;
-  const onClose = () => setMockOpen(false);
+  const onClose = (): void => setMockOpen(false);
 
   const values = useMemo(
     () => ({ email: mockEmail, password: mockPassword }),
     [mockEmail, mockPassword]
   );
 
-  const onSave = async () => {
+  const onSave = async (): Promise<void> => {
     try {
       const res = await mutations.mockSignIn.mutateAsync({
         email: mockEmail,
@@ -49,25 +64,7 @@ export function MockSignInModal(): React.JSX.Element | null {
     }
   };
 
-  const fields: SettingsPanelField<MockSignInFormState>[] = useMemo(
-    () => [
-      {
-        key: 'email',
-        label: 'Email',
-        type: 'email',
-        required: true,
-      },
-      {
-        key: 'password',
-        label: 'Password',
-        type: 'password',
-        required: true,
-      },
-    ],
-    []
-  );
-
-  const handleChange = (vals: Partial<MockSignInFormState>) => {
+  const handleChange = (vals: Partial<MockSignInFormState>): void => {
     if (vals.email !== undefined) setMockEmail(vals.email);
     if (vals.password !== undefined) setMockPassword(vals.password);
   };
@@ -79,10 +76,10 @@ export function MockSignInModal(): React.JSX.Element | null {
       title='Identity Validator'
       subtitle='Test authentication against the live identity provider without affecting your current session.'
       saveText='Verify Credentials'
-      fields={fields}
-      values={values ?? { email: '', password: '' }}
+      fields={MOCK_SIGN_IN_FIELDS}
+      values={values}
       onChange={handleChange}
-      onSave={async () => onSave()}
+      onSave={onSave}
       isSaving={isSaving}
       size='sm'
     />

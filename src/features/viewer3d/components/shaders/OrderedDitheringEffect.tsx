@@ -17,31 +17,55 @@ export interface OrderedDitheringEffectOptions {
   blendFunction?: BlendFunction;
 }
 
-export class OrderedDitheringEffectImpl extends Effect {
-  constructor({
-    time = 0,
-    resolution = new Vector2(1, 1),
-    gridSize = 4.0,
-    luminanceMethod = 0,
-    invertColor = false,
-    pixelSizeRatio = 1,
-    grayscaleOnly = false,
-    blendFunction = BlendFunction.NORMAL,
-  }: OrderedDitheringEffectOptions = {}) {
-    const uniforms = new Map<string, Uniform>([
-      ['time', new Uniform(time)],
-      ['resolution', new Uniform(resolution)],
-      ['gridSize', new Uniform(gridSize)],
-      ['luminanceMethod', new Uniform(luminanceMethod)],
-      ['invertColor', new Uniform(invertColor ? 1 : 0)],
-      ['ditheringEnabled', new Uniform(1)],
-      ['pixelSizeRatio', new Uniform(pixelSizeRatio)],
-      ['grayscaleOnly', new Uniform(grayscaleOnly ? 1 : 0)],
-    ]);
+type OrderedDitheringUniformOptions = Required<
+  Omit<OrderedDitheringEffectOptions, 'blendFunction'>
+>;
+type ResolvedOrderedDitheringEffectOptions = Required<OrderedDitheringEffectOptions>;
 
+const booleanUniformValue = (value: boolean): number => (value ? 1 : 0);
+
+const withDefault = <Value,>(value: Value | undefined, fallback: Value): Value =>
+  value ?? fallback;
+
+const resolveOrderedDitheringOptions = (
+  options: OrderedDitheringEffectOptions
+): ResolvedOrderedDitheringEffectOptions => ({
+  time: withDefault(options.time, 0),
+  resolution: withDefault(options.resolution, new Vector2(1, 1)),
+  gridSize: withDefault(options.gridSize, 4.0),
+  luminanceMethod: withDefault(options.luminanceMethod, 0),
+  invertColor: withDefault(options.invertColor, false),
+  pixelSizeRatio: withDefault(options.pixelSizeRatio, 1),
+  grayscaleOnly: withDefault(options.grayscaleOnly, false),
+  blendFunction: withDefault(options.blendFunction, BlendFunction.NORMAL),
+});
+
+const createOrderedDitheringUniforms = ({
+  time,
+  resolution,
+  gridSize,
+  luminanceMethod,
+  invertColor,
+  pixelSizeRatio,
+  grayscaleOnly,
+}: OrderedDitheringUniformOptions): Map<string, Uniform> =>
+  new Map<string, Uniform>([
+    ['time', new Uniform(time)],
+    ['resolution', new Uniform(resolution)],
+    ['gridSize', new Uniform(gridSize)],
+    ['luminanceMethod', new Uniform(luminanceMethod)],
+    ['invertColor', new Uniform(booleanUniformValue(invertColor))],
+    ['ditheringEnabled', new Uniform(1)],
+    ['pixelSizeRatio', new Uniform(pixelSizeRatio)],
+    ['grayscaleOnly', new Uniform(booleanUniformValue(grayscaleOnly))],
+  ]);
+
+export class OrderedDitheringEffectImpl extends Effect {
+  constructor(options: OrderedDitheringEffectOptions = {}) {
+    const resolvedOptions = resolveOrderedDitheringOptions(options);
     super('OrderedDitheringEffect', orderedDitheringShader, {
-      blendFunction,
-      uniforms,
+      blendFunction: resolvedOptions.blendFunction,
+      uniforms: createOrderedDitheringUniforms(resolvedOptions),
     });
   }
 

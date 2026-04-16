@@ -13,6 +13,7 @@ import {
 import { resolveTraderaExecutionStepsFromMarketplaceData } from '@/features/integrations/utils/tradera-execution-steps';
 import { Button } from '@/shared/ui/button';
 import { StatusBadge } from '@/shared/ui/data-display.public';
+import { resolveTraderaExecutionSummary } from './product-listings-modal/listing-item/ProductListingDetails.utils';
 import { TraderaExecutionSteps } from './TraderaExecutionSteps';
 import {
   ALREADY_QUEUED_STATUSES,
@@ -71,6 +72,9 @@ export function ListingRowView({
   const traderaExecution = listing
     ? resolveTraderaExecutionStepsFromMarketplaceData(listing.marketplaceData)
     : { action: null, steps: [], ok: null, error: null };
+  const traderaExecutionSummary = listing
+    ? resolveTraderaExecutionSummary(listing.marketplaceData)
+    : null;
   const displayedTraderaAction = liveTraderaExecution?.action ?? traderaExecution.action;
   const displayedTraderaSteps =
     liveTraderaExecution && liveTraderaExecution.executionSteps.length > 0
@@ -84,6 +88,15 @@ export function ListingRowView({
     liveRawResult: liveTraderaExecution?.rawResult,
     liveLatestStage: liveTraderaExecution?.latestStage,
   });
+  const displayedRequestedSelectorProfile =
+    liveTraderaExecution?.requestedSelectorProfile ??
+    traderaExecutionSummary?.requestedSelectorProfile ??
+    traderaExecutionSummary?.pendingSelectorProfile;
+  const displayedResolvedSelectorProfile =
+    liveTraderaExecution?.resolvedSelectorProfile ??
+    traderaExecutionSummary?.resolvedSelectorProfile;
+  const displayedSelectorProfile =
+    displayedResolvedSelectorProfile ?? displayedRequestedSelectorProfile;
   const requiresSessionRefresh =
     supportsLiveCheck &&
     (isTraderaBrowserAuthRequiredMessage(liveCheckError ?? displayedFailureReason) ||
@@ -151,6 +164,21 @@ export function ListingRowView({
 
             <span className='text-muted-foreground'>Connection</span>
             <span className='truncate'>{listing.connection.name}</span>
+
+            {displayedSelectorProfile ? (
+              <>
+                <span className='text-muted-foreground'>Selector profile</span>
+                <span className='truncate'>{displayedSelectorProfile}</span>
+              </>
+            ) : null}
+
+            {displayedRequestedSelectorProfile &&
+            displayedRequestedSelectorProfile !== displayedResolvedSelectorProfile ? (
+              <>
+                <span className='text-muted-foreground'>Requested profile</span>
+                <span className='truncate'>{displayedRequestedSelectorProfile}</span>
+              </>
+            ) : null}
 
             <span className='text-muted-foreground'>Listed at</span>
             <span>{formatDate(listing.listedAt)}</span>

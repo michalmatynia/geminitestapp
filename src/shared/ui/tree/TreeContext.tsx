@@ -8,44 +8,78 @@ export type { TreeContextValue };
 
 const TreeContext = createContext<TreeContextValue | null>(null);
 
+type TreeNodeSelectionOptions = {
+  multi?: boolean;
+  toggle?: boolean;
+};
+
+type TreeNodeState = {
+  isSelected: boolean;
+  isExpanded: boolean;
+  onToggleExpand?: () => void;
+  onSelect?: (options?: TreeNodeSelectionOptions) => void;
+  isProcessing?: boolean;
+};
+
+const EMPTY_TREE_NODE_STATE: TreeNodeState = {
+  isSelected: false,
+  isExpanded: false,
+};
+
+const hasTrackedTreeNodeId = (id: string | undefined): id is string =>
+  typeof id === 'string' && id.length > 0;
+
+const hasTreeNodeId = (
+  ids: TreeContextValue['selectedIds'] | TreeContextValue['expandedIds'],
+  id: string
+): boolean => {
+  if (!ids) {
+    return false;
+  }
+
+  return Array.isArray(ids) ? ids.includes(id) : ids.has(id);
+};
+
+const buildTreeNodeState = (
+  context: TreeContextValue | null,
+  id: string | undefined
+): TreeNodeState => {
+  if (!context || !hasTrackedTreeNodeId(id)) {
+    return EMPTY_TREE_NODE_STATE;
+  }
+
+  return {
+    isSelected: hasTreeNodeId(context.selectedIds, id),
+    isExpanded: hasTreeNodeId(context.expandedIds, id),
+    onToggleExpand: (): void => {
+      context.onToggleExpand?.(id);
+    },
+    onSelect: (options?: TreeNodeSelectionOptions): void => {
+      context.onSelect?.(id, options);
+    },
+    isProcessing: context.isProcessing,
+  };
+};
+
 export function TreeProvider({
   value,
   children,
 }: {
   value: TreeContextValue;
   children: React.ReactNode;
-}) {
+}): React.JSX.Element {
   return <TreeContext.Provider value={value}>{children}</TreeContext.Provider>;
 }
 
-function useTreeContext() {
+function useTreeContext(): TreeContextValue | null {
   return useContext(TreeContext);
 }
 
 /**
  * Helper to check if a node is selected/expanded from context
  */
-export function useTreeNodeState(id: string | undefined) {
+export function useTreeNodeState(id: string | undefined): TreeNodeState {
   const context = useTreeContext();
 
-  return useMemo(() => {
-    if (!context || !id) return { isSelected: false, isExpanded: false };
-
-    const isSelected = Array.isArray(context.selectedIds)
-      ? context.selectedIds.includes(id)
-      : (context.selectedIds?.has(id) ?? false);
-
-    const isExpanded = Array.isArray(context.expandedIds)
-      ? context.expandedIds.includes(id)
-      : (context.expandedIds?.has(id) ?? false);
-
-    return {
-      isSelected,
-      isExpanded,
-      onToggleExpand: () => context.onToggleExpand?.(id),
-      onSelect: (options?: { multi?: boolean; toggle?: boolean }) =>
-        context.onSelect?.(id, options),
-      isProcessing: context.isProcessing,
-    };
-  }, [context, id]);
+  return useMemo((): TreeNodeState => buildTreeNodeState(context, id), [context, id]);
 }

@@ -269,6 +269,35 @@ describe('useProductListingsActionsImpl', () => {
     });
   });
 
+  it('passes selectorProfile overrides through to Tradera browser relists', async () => {
+    const { result } = renderHook(() =>
+      useProductListingsActionsImpl(
+        buildBaseParams({
+          listings: [
+            {
+              id: 'listing-1',
+              productId: 'product-1',
+              integrationId: 'integration-tradera-1',
+              connectionId: 'connection-tradera-1',
+              integration: { slug: 'tradera' },
+            },
+          ],
+        })
+      )
+    );
+
+    await act(async () => {
+      await result.current.handleRelistTradera('listing-1', {
+        selectorProfile: 'profile-market-a',
+      });
+    });
+
+    expect(relistTraderaMutateAsyncMock).toHaveBeenCalledWith({
+      listingId: 'listing-1',
+      selectorProfile: 'profile-market-a',
+    });
+  });
+
   it('runs fast Tradera quicklist preflight before queueing a Tradera sync', async () => {
     const setSyncingTraderaListing = vi.fn();
     const { result } = renderHook(() =>
@@ -323,6 +352,35 @@ describe('useProductListingsActionsImpl', () => {
       productId: 'product-1',
     });
     expect(syncTraderaMutateAsyncMock).toHaveBeenCalledWith({ listingId: 'listing-1' });
+  });
+
+  it('passes selectorProfile overrides through to Tradera sync jobs', async () => {
+    const { result } = renderHook(() =>
+      useProductListingsActionsImpl(
+        buildBaseParams({
+          listings: [
+            {
+              id: 'listing-1',
+              productId: 'product-1',
+              integrationId: 'integration-tradera-1',
+              connectionId: 'connection-tradera-1',
+              integration: { slug: 'tradera' },
+            },
+          ],
+        })
+      )
+    );
+
+    await act(async () => {
+      await result.current.handleSyncTradera('listing-1', {
+        selectorProfile: 'profile-market-a',
+      });
+    });
+
+    expect(syncTraderaMutateAsyncMock).toHaveBeenCalledWith({
+      listingId: 'listing-1',
+      selectorProfile: 'profile-market-a',
+    });
   });
 
   it('runs fast Tradera quicklist preflight before queueing a Tradera status check', async () => {

@@ -14,7 +14,7 @@ export const normalizeHexColor = (value: string): string | null => {
 
 export const darkenColor = (hex: string, percent: number): string => {
   const normalizedHex = normalizeHexColor(hex);
-  if (!normalizedHex) return hex;
+  if (normalizedHex === null) return hex;
   const normalized = normalizedHex.replace('#', '');
   const num = parseInt(normalized, 16);
   const amt = Math.round(2.55 * percent);
@@ -26,6 +26,6 @@ export const darkenColor = (hex: string, percent: number): string => {
 
 export const darkenCssColor = (color: string, percent: number): string => {
   const normalizedHex = normalizeHexColor(color);
-  if (normalizedHex) return darkenColor(normalizedHex, percent);
+  if (normalizedHex !== null) return darkenColor(normalizedHex, percent);
   return `color-mix(in srgb, ${color} ${Math.max(0, 100 - percent)}%, black)`;
 };

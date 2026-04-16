@@ -16,16 +16,24 @@ function resolveTextCandidate(val: string | null | undefined): string | null {
 
 function resolveProductTitle(p: ProductWithImages | null): string | null {
   if (p === null) return null;
-  return resolveTextCandidate(p.name_en) || resolveTextCandidate(p.name_pl) || resolveTextCandidate(p.name_de) || resolveTextCandidate(p.sku);
+  const nEn = resolveTextCandidate(p.name_en);
+  const nPl = resolveTextCandidate(p.name_pl);
+  const nDe = resolveTextCandidate(p.name_de);
+  const sku = resolveTextCandidate(p.sku);
+  return nEn ?? nPl ?? nDe ?? sku;
 }
 
 function resolveDraftTitle(d: ProductDraft | null): string | null {
   if (d === null) return null;
-  return resolveTextCandidate(d.name_en) || resolveTextCandidate(d.name_pl) || resolveTextCandidate(d.name_de) || resolveTextCandidate(d.sku);
+  const nEn = resolveTextCandidate(d.name_en);
+  const nPl = resolveTextCandidate(d.name_pl);
+  const nDe = resolveTextCandidate(d.name_de);
+  const sku = resolveTextCandidate(d.sku);
+  return nEn ?? nPl ?? nDe ?? sku;
 }
 
 function resolveProductEditorTitle(product: ProductWithImages | null, draft: ProductDraft | null): string | null {
-  return resolveProductTitle(product) || resolveDraftTitle(draft);
+  return resolveProductTitle(product) ?? resolveDraftTitle(draft);
 }
 
 function resolveTrimmed(val: string | undefined): string | null {

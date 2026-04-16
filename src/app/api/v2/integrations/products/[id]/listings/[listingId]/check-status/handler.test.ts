@@ -113,6 +113,43 @@ describe('integration listing check-status handler', () => {
     });
   });
 
+  it('forwards selectorProfile overrides into the queued Tradera live check', async () => {
+    const response = await POST_handler(
+      new Request('http://localhost/api', {
+        method: 'POST',
+        body: JSON.stringify({
+          selectorProfile: 'profile-market-a',
+        }),
+        headers: {
+          'content-type': 'application/json',
+        },
+      }) as never,
+      {} as never,
+      { id: 'product-1', listingId: 'listing-1' }
+    );
+
+    await response.json();
+
+    expect(enqueueTraderaListingJobMock).toHaveBeenCalledWith({
+      listingId: 'listing-1',
+      action: 'check_status',
+      source: 'manual',
+      selectorProfile: 'profile-market-a',
+    });
+    expect(updateListingMock).toHaveBeenCalledWith(
+      'listing-1',
+      expect.objectContaining({
+        marketplaceData: expect.objectContaining({
+          tradera: expect.objectContaining({
+            pendingExecution: expect.objectContaining({
+              requestedSelectorProfile: 'profile-market-a',
+            }),
+          }),
+        }),
+      })
+    );
+  });
+
   it('queues a check_status even when the listing status is queued from a prior list/relist job', async () => {
     findProductListingByIdAcrossProvidersMock.mockResolvedValue({
       listing: {

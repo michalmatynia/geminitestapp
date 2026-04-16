@@ -24,6 +24,7 @@ import type { ImageRetryPreset } from '@/shared/contracts/integrations/base';
 import { Button, DropdownMenuItem, Label, Input } from '@/shared/ui/primitives.public';
 import { ActionMenu } from '@/shared/ui/forms-and-actions.public';
 import type { ProductListingWithDetailsProps } from './types';
+import { TraderaSelectorProfileOverrideSelect } from '@/features/integrations/components/listings/TraderaSelectorProfileOverrideSelect';
 
 const normalizeIntegrationSlug = (value: string | null | undefined): string =>
   (value ?? '').trim().toLowerCase();
@@ -196,6 +197,9 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
     isPersistedPlaywrightQueueState &&
     persistedPlaywrightPendingBrowserMode === 'headed';
   const isPlaywrightRelistUnavailable = isRelistingCurrentListing || isPersistedPlaywrightQueueState;
+  const [selectorProfileOverride, setSelectorProfileOverride] = React.useState<string | null>(null);
+  const requestedSelectorProfile =
+    typeof selectorProfileOverride === 'string' ? selectorProfileOverride.trim() : '';
 
   return (
     <div className='flex w-full flex-col gap-2 sm:ml-4 sm:w-auto sm:shrink-0'>
@@ -298,6 +302,17 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
       )}
       {isTraderaListing && (
         <>
+          {isTraderaBrowserListing ? (
+            <TraderaSelectorProfileOverrideSelect
+              value={selectorProfileOverride}
+              onChange={setSelectorProfileOverride}
+              ariaLabel='Tradera selector profile override'
+              title='Choose a Mongo-backed Tradera selector profile for relist, sync, or status-check actions.'
+              configuredLabel='Configured profile'
+              className='w-full sm:w-auto'
+              disabled={isLiveTraderaRunActive || isPersistedTraderaQueueState}
+            />
+          ) : null}
           {traderaNeedsManualLogin && (
             <Button
               type='button'
@@ -314,6 +329,7 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
                       ? 'sync'
                       : 'relist',
                   browserMode: 'headed',
+                  ...(requestedSelectorProfile ? { selectorProfile: requestedSelectorProfile } : {}),
                 });
               }}
               disabled={openingTraderaLogin === listing.id}
@@ -372,6 +388,7 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
                   void handleSyncTradera(listing.id, {
                     integrationId: listing.integrationId,
                     connectionId: listing.connectionId,
+                    ...(requestedSelectorProfile ? { selectorProfile: requestedSelectorProfile } : {}),
                   });
                 }}
                 className='text-gray-200 focus:bg-card/60'
@@ -387,6 +404,7 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
                     integrationId: listing.integrationId,
                     connectionId: listing.connectionId,
                     browserMode: 'headed',
+                    ...(requestedSelectorProfile ? { selectorProfile: requestedSelectorProfile } : {}),
                   });
                 }}
                 className='text-gray-200 focus:bg-card/60'
@@ -402,6 +420,7 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
                     integrationId: listing.integrationId,
                     connectionId: listing.connectionId,
                     browserMode: 'headless',
+                    ...(requestedSelectorProfile ? { selectorProfile: requestedSelectorProfile } : {}),
                   });
                 }}
                 className='text-gray-200 focus:bg-card/60'
@@ -416,6 +435,7 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
                   void handleSyncTradera(listing.id, {
                     integrationId: listing.integrationId,
                     connectionId: listing.connectionId,
+                    ...(requestedSelectorProfile ? { selectorProfile: requestedSelectorProfile } : {}),
                     skipImages: true,
                   });
                 }}
@@ -436,6 +456,12 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
               variant='outline'
               size='sm'
               onClick={(): void => {
+                if (requestedSelectorProfile) {
+                  void handleCheckTraderaStatus(listing.id, {
+                    selectorProfile: requestedSelectorProfile,
+                  });
+                  return;
+                }
                 void handleCheckTraderaStatus(listing.id);
               }}
               disabled={
@@ -459,6 +485,12 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
             variant='success'
             size='sm'
             onClick={(): void => {
+              if (requestedSelectorProfile) {
+                void handleRelistTradera(listing.id, {
+                  selectorProfile: requestedSelectorProfile,
+                });
+                return;
+              }
               void handleRelistTradera(listing.id);
             }}
             disabled={

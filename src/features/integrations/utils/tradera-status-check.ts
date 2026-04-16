@@ -100,14 +100,19 @@ export const buildQueuedTraderaStatusCheckMarketplaceData = ({
   requestId,
   queuedAt,
   requestedBrowserMode = 'connection_default',
+  requestedSelectorProfile,
 }: {
   existingMarketplaceData: unknown;
   requestId: string;
   queuedAt: string;
   requestedBrowserMode?: PlaywrightRelistBrowserMode;
+  requestedSelectorProfile?: string;
 }): Record<string, unknown> => {
   const marketplaceData = toRecord(existingMarketplaceData);
   const traderaData = toRecord(marketplaceData['tradera']);
+  const hasRequestedSelectorProfile =
+    typeof requestedSelectorProfile === 'string' &&
+    requestedSelectorProfile.trim().length > 0;
   return {
     ...marketplaceData,
     marketplace: 'tradera',
@@ -116,6 +121,7 @@ export const buildQueuedTraderaStatusCheckMarketplaceData = ({
       pendingExecution: {
         action: 'check_status',
         requestedBrowserMode,
+        ...(hasRequestedSelectorProfile ? { requestedSelectorProfile } : {}),
         requestId,
         queuedAt,
       },

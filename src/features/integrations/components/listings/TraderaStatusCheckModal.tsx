@@ -38,6 +38,7 @@ import {
 } from './TraderaStatusCheckModal.utils';
 import { ListingRowView } from './TraderaStatusCheckModal.RowItem';
 import { TraderaStatusCheckProvider } from './TraderaStatusCheckModalContext';
+import { TraderaSelectorProfileOverrideSelect } from './TraderaSelectorProfileOverrideSelect';
 
 interface TraderaStatusCheckModalProps {
   isOpen: boolean;
@@ -53,6 +54,7 @@ export function TraderaStatusCheckModal(props: TraderaStatusCheckModalProps): Re
   const [rows, setRows] = useState<ListingRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [isBatchChecking, setIsBatchChecking] = useState(false);
+  const [selectorProfileOverride, setSelectorProfileOverride] = useState<string | null>(null);
   const [refreshingSessionProductId, setRefreshingSessionProductId] = useState<string | null>(null);
   const pollTimersRef = useRef<Map<string, ReturnType<typeof setInterval>>>(new Map());
   const pollDeadlinesRef = useRef<Map<string, number>>(new Map());
@@ -202,6 +204,7 @@ export function TraderaStatusCheckModal(props: TraderaStatusCheckModalProps): Re
   useEffect(() => {
     if (isOpen) {
       setRows([]);
+      setSelectorProfileOverride(null);
       void fetchStatuses();
     }
     return () => {
@@ -386,6 +389,8 @@ export function TraderaStatusCheckModal(props: TraderaStatusCheckModalProps): Re
     async (productId: string, listingId: string) => {
       const row = rows.find((r) => r.productId === productId);
       const baseline = buildLiveCheckBaseline(row?.listing);
+      const requestedSelectorProfile =
+        typeof selectorProfileOverride === 'string' ? selectorProfileOverride.trim() : '';
 
       setRows((prev) =>
         prev.map((r) =>
@@ -396,9 +401,13 @@ export function TraderaStatusCheckModal(props: TraderaStatusCheckModalProps): Re
       );
 
       try {
+        const requestBody =
+          requestedSelectorProfile.length > 0
+            ? { selectorProfile: requestedSelectorProfile }
+            : {};
         await api.post(
           `/api/v2/integrations/products/${productId}/listings/${listingId}/check-status`,
-          {}
+          requestBody
         );
         setRows((prev) =>
           prev.map((r) =>
@@ -433,7 +442,7 @@ export function TraderaStatusCheckModal(props: TraderaStatusCheckModalProps): Re
         );
       }
     },
-    [invalidateStatusViews, refreshRow, rows, startPollingForLiveCheck]
+    [invalidateStatusViews, refreshRow, rows, selectorProfileOverride, startPollingForLiveCheck]
   );
 
   const handleCheckAllLive = useCallback(async () => {
@@ -454,6 +463,14 @@ export function TraderaStatusCheckModal(props: TraderaStatusCheckModalProps): Re
     const baselineByProductId = new Map(
       eligibleRows.map((row) => [row.productId, buildLiveCheckBaseline(row.listing)])
     );
+    const requestedSelectorProfile =
+      typeof selectorProfileOverride === 'string' ? selectorProfileOverride.trim() : '';
+    const requestBody = {
+      productIds: eligibleProductIds,
+      ...(requestedSelectorProfile.length > 0
+        ? { selectorProfile: requestedSelectorProfile }
+        : {}),
+    };
     setIsBatchChecking(true);
     setRows((prev) =>
       prev.map((row) =>
@@ -474,9 +491,7 @@ export function TraderaStatusCheckModal(props: TraderaStatusCheckModalProps): Re
 
       const response = await api.post<TraderaListingStatusCheckBatchResponse>(
         '/api/v2/integrations/product-listings/tradera-status-check',
-        {
-          productIds: eligibleProductIds,
-        }
+        requestBody
       );
       const resultByProductId = new Map(
         response.results.map((result) => [result.productId, result])
@@ -569,7 +584,7 @@ export function TraderaStatusCheckModal(props: TraderaStatusCheckModalProps): Re
     } finally {
       setIsBatchChecking(false);
     }
-  }, [invalidateStatusViews, refreshRow, rows, startPollingForLiveCheck, toast]);
+  }, [invalidateStatusViews, refreshRow, rows, selectorProfileOverride, startPollingForLiveCheck, toast]);
 
   // Summary counts
   const totalWithListing = rows.filter((r) => r.listing !== null).length;
@@ -607,7 +622,16 @@ export function TraderaStatusCheckModal(props: TraderaStatusCheckModalProps): Re
       }
       size='lg'
       headerActions={
-        <div className='flex items-center gap-2'>
+        <div className='flex flex-wrap items-center gap-2'>
+          <TraderaSelectorProfileOverrideSelect
+            value={selectorProfileOverride}
+            onChange={setSelectorProfileOverride}
+            ariaLabel='Selector profile override'
+            title='Choose a Mongo-backed Tradera selector profile, or leave configured profile selected.'
+            configuredLabel='Configured profile'
+            className='w-40'
+            disabled={loading || isBatchChecking}
+          />
           <Button
             variant='outline'
             size='sm'

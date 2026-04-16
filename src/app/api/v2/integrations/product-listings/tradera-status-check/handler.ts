@@ -141,10 +141,17 @@ export async function POST_handler(
 
   for (const candidate of preflightReadyCandidates) {
     try {
-      const jobId = await enqueueTraderaListingJob({
+      const queueJobInput = {
         listingId: candidate.listing.id,
-        action: 'check_status',
-        source: 'manual',
+        action: 'check_status' as const,
+        source: 'manual' as const,
+        ...(typeof parsed.data.selectorProfile === 'string' &&
+        parsed.data.selectorProfile.length > 0
+          ? { selectorProfile: parsed.data.selectorProfile }
+          : {}),
+      };
+      const jobId = await enqueueTraderaListingJob({
+        ...queueJobInput,
       });
       const enqueuedAt = new Date().toISOString();
       await listingRepository.updateListing(candidate.listing.id, {
@@ -152,6 +159,7 @@ export async function POST_handler(
           existingMarketplaceData: candidate.listing.marketplaceData,
           requestId: jobId,
           queuedAt: enqueuedAt,
+          requestedSelectorProfile: parsed.data.selectorProfile,
         }),
       });
       resultByProductId.set(candidate.productId, {

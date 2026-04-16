@@ -45,12 +45,28 @@ export * from '@/features/kangur/server/context-registry';
 export * from '@/features/kangur/server/kangur-learner-sessions';
 export * from '@/features/kangur/server/kangur-learner-interactions';
 export * from '@/features/kangur/server/ai-tutor-mood';
-export * from '@/features/kangur/appearance/server/storefront-appearance';
+export {
+  KANGUR_STOREFRONT_APPEARANCE_SETTING_KEYS,
+  KANGUR_STOREFRONT_INITIAL_STATE_CACHE_TAG,
+  ensureKangurStorefrontAppearanceSettingsSeeded,
+  ensureKangurThemeCatalogSeeded,
+  ensureKangurThemePresetManifestSeeded,
+  ensureKangurThemeSlotAssignmentsSeeded,
+  getKangurStorefrontDefaultMode,
+  getKangurStorefrontInitialState,
+  invalidateKangurStorefrontInitialStateCache,
+  isKangurStorefrontInitialStateDependencyKey,
+} from '@/features/kangur/appearance/server/storefront-appearance';
 export * from '@/features/kangur/appearance/server/storefront-appearance-bootstrap';
 export * from '@/features/kangur/server/auth-bootstrap';
 export * from '@/features/kangur/server/route-access';
 export * from '@/features/kangur/server/alias-shell-page';
-export * from '@/features/kangur/server/launch-route';
+export {
+  getKangurConfiguredLaunchHref,
+  getKangurConfiguredLaunchRoute,
+  getKangurConfiguredLaunchTarget,
+  primeKangurLaunchRouteRuntime,
+} from '@/features/kangur/server/launch-route';
 export * from '@/features/kangur/server/KangurAliasAppLayout';
 export * from '@/features/kangur/social/workers/kangurSocialSchedulerQueue';
 export * from '@/features/kangur/social/workers/kangurSocialPipelineQueue';

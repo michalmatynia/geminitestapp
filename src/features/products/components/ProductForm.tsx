@@ -6,22 +6,29 @@
 import dynamic from 'next/dynamic';
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 
-import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
-import { useProductFormMetadataState } from '@/features/products/context/ProductFormMetadataContext';
+import { useProductFormCore, type ProductFormCoreContextType } from '@/features/products/context/ProductFormCoreContext';
+import { useProductFormMetadataState, type ProductFormMetadataContextType } from '@/features/products/context/ProductFormMetadataContext';
 import { ProductValidationSettingsProvider } from '@/features/products/context/ProductValidationSettingsContext';
 import { PRODUCT_EDITOR_CONTEXT_ROOT_IDS } from '@/features/products/context-registry/workspace';
 import { ProductLeafCategoriesContextRegistrySource } from '@/features/products/context-registry/ProductLeafCategoriesContextRegistrySource';
 import type { ProductDraftOpenFormTab } from '@/shared/contracts/products';
 import { ContextRegistryPageProvider } from '@/shared/lib/ai-context-registry/page-context';
-import { alignDraftStructuredNameToSelectedCategory } from '@/shared/lib/products/title-terms';
 import { Tabs } from '@/shared/ui/tabs';
 
 import { ProductFormFooter } from './form/ProductFormFooter';
 import { useProductFormValidator } from '../hooks/useProductFormValidator';
-import { normalizeProductFormTab, subscribePopstate, getSearchSnapshot, getSearchServerSnapshot } from './form/ProductForm.helpers';
+import {
+  normalizeProductFormTab,
+  subscribePopstate,
+  getSearchSnapshot,
+  getSearchServerSnapshot,
+  alignDraftStructuredNameToSelectedCategory as alignStructuredNameToSelectedCategory,
+} from './form/ProductForm.helpers';
 import { ProductFormContextRegistrySource } from './form/ProductFormContextRegistrySource';
 import { ProductFormTabsList } from './form/ProductFormTabsList';
 import { ProductFormTabsContent } from './form/ProductFormTabsContent';
+
+export { alignDraftStructuredNameToSelectedCategory } from './form/ProductForm.helpers';
 
 const ProductFormDebugPanel = dynamic(() => import('@/features/products/components/ProductFormDebugPanel'), { ssr: false, loading: () => null });
 
@@ -32,7 +39,7 @@ interface ProductFormProps {
   validatorSessionKey?: string;
 }
 
-function resolveInitialMountedTabs(draft: any): Set<ProductDraftOpenFormTab> {
+function resolveInitialMountedTabs(draft: ProductFormCoreContextType['draft']): Set<ProductDraftOpenFormTab> {
   const initial = new Set<ProductDraftOpenFormTab>(['general']);
   const tab = normalizeProductFormTab(draft?.openProductFormTab);
   initial.add(tab);
@@ -47,30 +54,53 @@ function resolveValidatorSessionKey(validatorSessionKey?: string): string {
   return `product-form-validator-${Date.now().toString(36)}`;
 }
 
-function useProductFormEffects(core: any, meta: any) {
+function useProductFormCategoryEffect(core: ProductFormCoreContextType, meta: ProductFormMetadataContextType): void {
   useEffect(() => {
-    const rawCurrent = core.methods.getValues('categoryId');
-    const current = (typeof rawCurrent === 'string') ? rawCurrent.trim() : '';
+    const raw = core.methods.getValues('categoryId');
+    const current = (typeof raw === 'string') ? raw.trim() : '';
     const selected = (typeof meta.selectedCategoryId === 'string') ? meta.selectedCategoryId.trim() : '';
     if (current !== selected) {
       core.methods.setValue('categoryId', selected, { shouldDirty: false, shouldTouch: false, shouldValidate: true });
     }
   }, [core.methods, meta.selectedCategoryId]);
+}
 
+function resolveCategoryName(categories: ProductFormMetadataContextType['categories'], id: string | null): string {
+  if (id === null) return '';
+  const category = categories.find((entry) => entry.id === id);
+  return category?.name.trim() ?? '';
+}
+
+function resolveCorrectedName(core: ProductFormCoreContextType, categoryName: string): string | null {
+  const current = core.methods.getValues('name_en') ?? '';
+  return alignStructuredNameToSelectedCategory({ nameEn: current, categoryName });
+}
+
+function shouldSkipNameCorrection(core: ProductFormCoreContextType, selectedCategoryId: string | null): boolean {
+  if (core.product !== undefined) return true;
+  if (core.draft === null) return true;
+  return selectedCategoryId === null;
+}
+
+function useProductFormNameEffect(core: ProductFormCoreContextType, meta: ProductFormMetadataContextType): void {
   useEffect(() => {
-    const { product, draft, methods } = core;
-    const { categories, selectedCategoryId } = meta;
-    if (product || !draft?.id || !selectedCategoryId) return;
-    const category = categories.find((entry: any) => entry.id === selectedCategoryId);
-    const categoryName = category?.name?.trim() ?? '';
-    if (!categoryName || methods.getFieldState('name_en').isDirty) return;
+    if (shouldSkipNameCorrection(core, meta.selectedCategoryId)) return;
+    
+    const categoryName = resolveCategoryName(meta.categories, meta.selectedCategoryId);
+    const isDirty = core.methods.getFieldState('name_en').isDirty;
+    if (categoryName === '' || isDirty) return;
 
-    const currentNameEn = methods.getValues('name_en') ?? '';
-    const correctedNameEn = alignDraftStructuredNameToSelectedCategory({ nameEn: currentNameEn, categoryName });
-    if (correctedNameEn && correctedNameEn !== currentNameEn) {
-      methods.setValue('name_en', correctedNameEn, { shouldDirty: false, shouldTouch: false, shouldValidate: true });
+    const current = core.methods.getValues('name_en') ?? '';
+    const corrected = resolveCorrectedName(core, categoryName);
+    if (corrected !== null && corrected !== current) {
+      core.methods.setValue('name_en', corrected, { shouldDirty: false, shouldTouch: false, shouldValidate: true });
     }
-  }, [meta.categories, core.draft?.id, core.methods, core.product, meta.selectedCategoryId]);
+  }, [meta.categories, core.draft, core.methods, core.product, meta.selectedCategoryId]);
+}
+
+function resolveFooterEntityId(core: ProductFormCoreContextType): string {
+  const id = core.product?.id ?? core.draft?.id;
+  return (typeof id === 'string') ? id.trim() : '';
 }
 
 /**
@@ -92,7 +122,8 @@ export default function ProductForm({
   const effectiveKey = useMemo(() => resolveValidatorSessionKey(validatorSessionKey), [validatorSessionKey]);
   const validator = useProductFormValidator(validationInstanceScopeOverride, effectiveKey);
 
-  useProductFormEffects(core, meta);
+  useProductFormCategoryEffect(core, meta);
+  useProductFormNameEffect(core, meta);
 
   useEffect(() => { setIsDebugOpen(searchParams.get('debug') === 'true'); }, [searchParams]);
 
@@ -101,8 +132,6 @@ export default function ProductForm({
     const tab = (typeof requested === 'string' && requested.trim() !== '') ? requested : core.draft?.openProductFormTab;
     setActiveTab(normalizeProductFormTab(tab));
   }, [core.draft?.openProductFormTab, searchParams]);
-
-  const footId = (core.product?.id?.trim() || core.draft?.id?.trim() || '');
 
   return (
     <ContextRegistryPageProvider pageId='admin:product-editor' title='Product Editor' rootNodeIds={[...PRODUCT_EDITOR_CONTEXT_ROOT_IDS]}>
@@ -137,7 +166,7 @@ export default function ProductForm({
             <ProductFormTabsContent mountedTabs={mountedTabs} />
           </Tabs>
         </ProductValidationSettingsProvider>
-        <ProductFormFooter entityId={footId} />
+        <ProductFormFooter entityId={resolveFooterEntityId(core)} />
         <ConfirmationModal />
       </form>
     </ContextRegistryPageProvider>

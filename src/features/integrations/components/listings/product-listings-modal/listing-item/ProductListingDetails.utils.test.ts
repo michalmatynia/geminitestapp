@@ -67,6 +67,8 @@ describe('ProductListingDetails.utils', () => {
           action: 'list',
           metadata: {
             latestStage: 'duplicate_checked',
+            requestedSelectorProfile: 'profile-market-a',
+            selectorProfileResolved: 'profile-market-b',
             duplicateIgnoredNonExactCandidateCount: 2,
             duplicateIgnoredCandidateTitles: ['Primary One', 'Primary Two'],
             rawResult: {
@@ -88,6 +90,8 @@ describe('ProductListingDetails.utils', () => {
       },
     });
 
+    expect(summary.requestedSelectorProfile).toBe('profile-market-a');
+    expect(summary.resolvedSelectorProfile).toBe('profile-market-b');
     expect(summary.duplicateIgnoredNonExactCandidateCount).toBe(2);
     expect(summary.duplicateIgnoredCandidateTitles).toEqual(['Primary One', 'Primary Two']);
   });

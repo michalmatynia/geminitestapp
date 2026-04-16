@@ -170,6 +170,43 @@ describe('integrations product-listings tradera-status-check handler', () => {
     });
   });
 
+  it('forwards selectorProfile overrides into queued batch live checks', async () => {
+    const response = await POST_handler(
+      new Request('http://localhost/api', {
+        method: 'POST',
+        body: JSON.stringify({
+          productIds: ['product-1'],
+          selectorProfile: 'profile-market-a',
+        }),
+        headers: {
+          'content-type': 'application/json',
+        },
+      }) as never,
+      {} as never
+    );
+
+    await response.json();
+
+    expect(enqueueTraderaListingJobMock).toHaveBeenCalledWith({
+      listingId: 'listing-browser-1',
+      action: 'check_status',
+      source: 'manual',
+      selectorProfile: 'profile-market-a',
+    });
+    expect(updateListingMock).toHaveBeenCalledWith(
+      'listing-browser-1',
+      expect.objectContaining({
+        marketplaceData: expect.objectContaining({
+          tradera: expect.objectContaining({
+            pendingExecution: expect.objectContaining({
+              requestedSelectorProfile: 'profile-market-a',
+            }),
+          }),
+        }),
+      })
+    );
+  });
+
   it('reports queue failures without sending browser overrides', async () => {
     getListingsByProductIdsMock.mockResolvedValue([
       {

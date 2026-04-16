@@ -95,6 +95,8 @@ describe('ProductListingDetails', () => {
                     scriptMode: 'scripted',
                     browserMode: 'headed',
                     requestedBrowserMode: 'headed',
+                    requestedSelectorProfile: 'profile-market-a',
+                    selectorProfileResolved: 'profile-market-b',
                     scriptSource: 'legacy-default-refresh',
                     scriptKind: 'managed',
                     scriptMarker: 'tradera-quicklist-default:v94',
@@ -199,6 +201,10 @@ describe('ProductListingDetails', () => {
     expect(screen.getAllByText(/2026/).length).toBeGreaterThan(0);
     expect(screen.getByText('Run mode:')).toBeInTheDocument();
     expect(screen.getByText('scripted')).toBeInTheDocument();
+    expect(screen.getByText('Requested selector profile:')).toBeInTheDocument();
+    expect(screen.getByText('profile-market-a')).toBeInTheDocument();
+    expect(screen.getByText('Resolved selector profile:')).toBeInTheDocument();
+    expect(screen.getByText('profile-market-b')).toBeInTheDocument();
     expect(screen.getByText('Tradera scripted listing failed.')).toHaveClass(
       'break-words',
       'whitespace-normal'
@@ -454,6 +460,8 @@ describe('ProductListingDetails', () => {
       status: 'running',
       latestStage: 'image_upload',
       latestStageUrl: 'https://www.tradera.com/en/selling/draft/live',
+      requestedSelectorProfile: 'profile-market-a',
+      resolvedSelectorProfile: 'profile-market-b',
       executionSteps: [
         {
           id: 'image_upload',
@@ -518,6 +526,10 @@ describe('ProductListingDetails', () => {
 
     expect(screen.getByText('Run ID:')).toBeInTheDocument();
     expect(screen.getByText('run-live-123')).toBeInTheDocument();
+    expect(screen.getByText('Requested selector profile:')).toBeInTheDocument();
+    expect(screen.getByText('profile-market-a')).toBeInTheDocument();
+    expect(screen.getByText('Resolved selector profile:')).toBeInTheDocument();
+    expect(screen.getByText('profile-market-b')).toBeInTheDocument();
     expect(screen.getByText('Last stage:')).toBeInTheDocument();
     expect(screen.getAllByText('image_upload').length).toBeGreaterThan(0);
     expect(screen.getByText('Execution steps')).toBeInTheDocument();

@@ -104,12 +104,15 @@ const patchQueuedTraderaRelist = (
   options: {
     action?: 'relist' | 'sync';
     browserMode?: ListingQueueBrowserMode;
+    selectorProfile?: string;
     requestId?: string | null;
     queuedAt?: string | null;
   }
 ): ProductListingWithDetails => {
   const previousMarketplaceData = toRecord(listing.marketplaceData);
   const previousTraderaData = toRecord(previousMarketplaceData['tradera']);
+  const hasSelectorProfile =
+    typeof options.selectorProfile === 'string' && options.selectorProfile.trim().length > 0;
 
   return {
     ...listing,
@@ -123,6 +126,9 @@ const patchQueuedTraderaRelist = (
         pendingExecution: {
           action: options.action ?? 'relist',
           requestedBrowserMode: options.browserMode ?? 'connection_default',
+          ...(hasSelectorProfile
+            ? { requestedSelectorProfile: options.selectorProfile }
+            : {}),
           requestId: options.requestId ?? null,
           queuedAt: options.queuedAt ?? null,
         },
@@ -135,18 +141,28 @@ const patchQueuedTraderaStatusCheck = (
   listing: ProductListingWithDetails,
   options: {
     browserMode?: ListingQueueBrowserMode;
+    selectorProfile?: string;
     requestId?: string | null;
     queuedAt?: string | null;
   }
-): ProductListingWithDetails => ({
-  ...listing,
-  marketplaceData: buildQueuedTraderaStatusCheckMarketplaceData({
-    existingMarketplaceData: listing.marketplaceData,
-    requestId: options.requestId ?? `pending-check-status-${listing.id}`,
-    queuedAt: options.queuedAt ?? new Date().toISOString(),
-    ...(options.browserMode ? { requestedBrowserMode: options.browserMode } : {}),
-  }),
-});
+): ProductListingWithDetails => {
+  const hasBrowserMode = typeof options.browserMode === 'string';
+  const hasSelectorProfile =
+    typeof options.selectorProfile === 'string' && options.selectorProfile.trim().length > 0;
+
+  return {
+    ...listing,
+    marketplaceData: buildQueuedTraderaStatusCheckMarketplaceData({
+      existingMarketplaceData: listing.marketplaceData,
+      requestId: options.requestId ?? `pending-check-status-${listing.id}`,
+      queuedAt: options.queuedAt ?? new Date().toISOString(),
+      ...(hasBrowserMode ? { requestedBrowserMode: options.browserMode } : {}),
+      ...(hasSelectorProfile
+        ? { requestedSelectorProfile: options.selectorProfile }
+        : {}),
+    }),
+  };
+};
 
 const getListingBadgesSnapshot = (
   queryClient: ReturnType<typeof useQueryClient>
@@ -584,11 +600,14 @@ export function useRelistTraderaMutation(productId: string): UpdateMutation<
   const listingQueryKey = getProductListingsQueryKey(productId);
 
   return createCreateMutationV2({
-    mutationFn: ({ listingId, browserMode }: ProductListingRelistVariables) =>
+    mutationFn: ({ listingId, browserMode, selectorProfile }: ProductListingRelistVariables) =>
       api.post<ProductListingRelistResponse>(
         `/api/v2/integrations/products/${productId}/listings/${listingId}/relist`,
         {
-          ...(browserMode ? { browserMode } : {}),
+          ...(typeof browserMode === 'string' ? { browserMode } : {}),
+          ...(typeof selectorProfile === 'string' && selectorProfile.trim().length > 0
+            ? { selectorProfile }
+            : {}),
         }
       ),
     mutationKey: getProductListingsQueryKey(productId),
@@ -619,7 +638,10 @@ export function useRelistTraderaMutation(productId: string): UpdateMutation<
               return patchQueuedPlaywrightRelist(listing, { browserMode: vars.browserMode });
             }
             if (TRADERA_INTEGRATION_SLUGS.has(integrationSlug)) {
-              return patchQueuedTraderaRelist(listing, { browserMode: vars.browserMode });
+              return patchQueuedTraderaRelist(listing, {
+                browserMode: vars.browserMode,
+                selectorProfile: vars.selectorProfile,
+              });
             }
 
             return { ...listing, status: 'queued_relist', failureReason: null };
@@ -665,6 +687,7 @@ export function useRelistTraderaMutation(productId: string): UpdateMutation<
               listing.id === vars.listingId
                 ? patchQueuedTraderaRelist(listing, {
                     browserMode: vars.browserMode,
+                    selectorProfile: vars.selectorProfile,
                     requestId,
                     queuedAt,
                   })
@@ -693,12 +716,15 @@ export function useSyncTraderaMutation(productId: string): UpdateMutation<
   const listingQueryKey = getProductListingsQueryKey(productId);
 
   return createCreateMutationV2({
-    mutationFn: ({ listingId, browserMode, skipImages }: ProductListingSyncVariables) =>
+    mutationFn: ({ listingId, browserMode, selectorProfile, skipImages }: ProductListingSyncVariables) =>
       api.post<ProductListingSyncResponse>(
         `/api/v2/integrations/products/${productId}/listings/${listingId}/sync`,
         {
-          ...(browserMode ? { browserMode } : {}),
-          ...(skipImages ? { skipImages } : {}),
+          ...(typeof browserMode === 'string' ? { browserMode } : {}),
+          ...(typeof selectorProfile === 'string' && selectorProfile.trim().length > 0
+            ? { selectorProfile }
+            : {}),
+          ...(skipImages === true ? { skipImages } : {}),
         }
       ),
     mutationKey: getProductListingsQueryKey(productId),
@@ -727,6 +753,7 @@ export function useSyncTraderaMutation(productId: string): UpdateMutation<
               ? patchQueuedTraderaRelist(listing, {
                   action: 'sync',
                   browserMode: vars.browserMode,
+                  selectorProfile: vars.selectorProfile,
                 })
               : listing
           )
@@ -755,6 +782,7 @@ export function useSyncTraderaMutation(productId: string): UpdateMutation<
                 ? patchQueuedTraderaRelist(listing, {
                     action: 'sync',
                     browserMode: vars.browserMode,
+                    selectorProfile: vars.selectorProfile,
                     requestId,
                     queuedAt,
                   })
@@ -771,17 +799,20 @@ export function useSyncTraderaMutation(productId: string): UpdateMutation<
 
 export function useCheckTraderaStatusMutation(productId: string): UpdateMutation<
   ProductListingSyncResponse,
-  ProductListingRelistVariables
+  ProductListingSyncVariables
 > {
   const queryClient = useQueryClient();
   const listingQueryKey = getProductListingsQueryKey(productId);
 
   return createCreateMutationV2({
-    mutationFn: ({ listingId, browserMode }: ProductListingRelistVariables) =>
+    mutationFn: ({ listingId, browserMode, selectorProfile }: ProductListingSyncVariables) =>
       api.post<ProductListingSyncResponse>(
         `/api/v2/integrations/products/${productId}/listings/${listingId}/check-status`,
         {
-          ...(browserMode ? { browserMode } : {}),
+          ...(typeof browserMode === 'string' ? { browserMode } : {}),
+          ...(typeof selectorProfile === 'string' && selectorProfile.trim().length > 0
+            ? { selectorProfile }
+            : {}),
         }
       ),
     mutationKey: listingQueryKey,
@@ -809,6 +840,7 @@ export function useCheckTraderaStatusMutation(productId: string): UpdateMutation
             listing.id === vars.listingId
               ? patchQueuedTraderaStatusCheck(listing, {
                   browserMode: vars.browserMode,
+                  selectorProfile: vars.selectorProfile,
                 })
               : listing
           )
@@ -836,6 +868,7 @@ export function useCheckTraderaStatusMutation(productId: string): UpdateMutation
               listing.id === vars.listingId
                 ? patchQueuedTraderaStatusCheck(listing, {
                     browserMode: vars.browserMode,
+                    selectorProfile: vars.selectorProfile,
                     requestId,
                     queuedAt,
                   })

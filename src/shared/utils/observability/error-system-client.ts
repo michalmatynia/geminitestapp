@@ -18,28 +18,30 @@ import { logClientCatch } from '@/shared/utils/observability/client-error-logger
 export const ErrorCategories = ERROR_CATEGORY;
 export type { ErrorCategory, ErrorContext };
 
+const getNonEmptyContextString = (value: string | null | undefined): string | undefined =>
+  typeof value === 'string' && value.length > 0 ? value : undefined;
+
 const reportErrorSystemClientCatch = (
   error: unknown,
   action: string,
   context: ErrorContext
 ): void => {
+  const category = getNonEmptyContextString(context.category);
   logClientCatch(error, {
     source: 'error-system-client',
     action,
-    service: context.service !== undefined && context.service.length > 0 ? context.service : 'unknown',
-    ...(context.category !== undefined && context.category.length > 0 ? { category: context.category } : {}),
+    service: getService(context),
+    ...(category !== undefined ? { category } : {}),
   });
 };
 
 const getService = (context: ErrorContext): string =>
-  context.service !== undefined && context.service.length > 0 ? context.service : 'unknown';
+  getNonEmptyContextString(context.service) ?? 'unknown';
 
 const getCategory = (context: ErrorContext, errorOrMessage: unknown): string =>
-  context.category !== undefined && context.category.length > 0
-    ? context.category
-    : classifySharedError(errorOrMessage);
+  getNonEmptyContextString(context.category) ?? classifySharedError(errorOrMessage);
 
-const resolveErrorCategory = (contextCategory: string | undefined, error: unknown): ErrorCategory => {
+const resolveErrorCategory = (contextCategory: string | null | undefined, error: unknown): ErrorCategory => {
   if (typeof contextCategory === 'string' && (Object.values(ErrorCategories) as string[]).includes(contextCategory)) {
     return contextCategory as ErrorCategory;
   }
@@ -50,7 +52,7 @@ const resolveBaseError = (error: unknown, context: ErrorContext, category: Error
   if (!isAppError(error)) return null;
 
   return {
-    errorId: context.errorId !== undefined && context.errorId.length > 0 ? context.errorId : `err_${Date.now()}`,
+    errorId: getNonEmptyContextString(context.errorId) ?? `err_${Date.now()}`,
     message: error.message,
     code: error.code,
     httpStatus: error.httpStatus,
@@ -66,8 +68,9 @@ const resolveBaseError = (error: unknown, context: ErrorContext, category: Error
 };
 
 const resolveUserMessage = (context: ErrorContext, baseResolved: ResolvedError | null): string => {
-  if (context.userMessage !== undefined && context.userMessage.length > 0) {
-    return context.userMessage;
+  const userMessage = getNonEmptyContextString(context.userMessage);
+  if (userMessage !== undefined) {
+    return userMessage;
   }
   const fallback = baseResolved !== null ? resolveErrorUserMessage(baseResolved) : null;
   return fallback !== null && fallback.length > 0 ? fallback : 'An unexpected error occurred. Please try again or contact support.';
@@ -191,7 +194,7 @@ export const ErrorSystem = {
     const userMessage = resolveUserMessage(context, baseResolved);
 
     return {
-      id: context.errorId !== undefined && context.errorId.length > 0 ? context.errorId : `err_${Date.now()}`,
+      id: getNonEmptyContextString(context.errorId) ?? `err_${Date.now()}`,
       timestamp: new Date().toISOString(),
       category,
       message,

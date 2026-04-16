@@ -254,7 +254,7 @@ CreateProductInput, UpdateProductInput (validated inputs)
 
 Add mapper functions:
 
-toProductDTO(prismaProduct): ProductDTO
+toProductDTO(productRecord): ProductDTO
 
 This prevents accidental exposure of internal fields (cost price, supplier IDs, etc.) and stabilizes your frontend.
 

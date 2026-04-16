@@ -47,16 +47,16 @@ const getOptionalContext = (
 ): Record<string, unknown> => {
   const opts: Record<string, unknown> = {};
   if (resolved.retryAfterMs !== undefined) {
-    opts.retryAfterMs = resolved.retryAfterMs;
+    opts['retryAfterMs'] = resolved.retryAfterMs;
   }
   if (resolved.meta !== undefined) {
-    opts.meta = resolved.meta;
+    opts['meta'] = resolved.meta;
   }
   if (logMessage !== resolved.message) {
-    opts.originalMessage = resolved.message;
+    opts['originalMessage'] = resolved.message;
   }
   if (input.service !== undefined && input.service.length > 0) {
-    opts.service = input.service;
+    opts['service'] = input.service;
   }
   return opts;
 };

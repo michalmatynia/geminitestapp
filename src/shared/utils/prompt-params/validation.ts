@@ -2,7 +2,7 @@ import { type ParamSpec, type ParamIssue } from '@/shared/contracts/prompt-engin
 
 import { getDeepValue, isRgbArray, isTuple2NumberArray } from './utils';
 
-const validateNumberBounds = (value: number, spec: ParamSpec & { kind: 'number' }): ParamIssue[] => {
+const validateNumberBounds = (value: number, spec: ParamSpec): ParamIssue[] => {
   const issues: ParamIssue[] = [];
   if (spec.min !== undefined && value < spec.min) {
     issues.push({
@@ -23,7 +23,7 @@ const validateNumberBounds = (value: number, spec: ParamSpec & { kind: 'number' 
   return issues;
 };
 
-const validateNumber = (value: unknown, spec: ParamSpec & { kind: 'number' }): ParamIssue[] => {
+const validateNumber = (value: unknown, spec: ParamSpec): ParamIssue[] => {
   if (typeof value !== 'number' || !Number.isFinite(value)) {
     return [
       {
@@ -72,7 +72,7 @@ const validateArrayBounds = (
   return issues;
 };
 
-const validateRgb = (value: unknown, spec: ParamSpec & { kind: 'rgb' }): ParamIssue[] => {
+const validateRgb = (value: unknown, spec: ParamSpec): ParamIssue[] => {
   if (!isRgbArray(value)) {
     return [
       {
@@ -107,7 +107,7 @@ const validateRgb = (value: unknown, spec: ParamSpec & { kind: 'rgb' }): ParamIs
   return issues;
 };
 
-const validateTuple2 = (value: unknown, spec: ParamSpec & { kind: 'tuple2' }): ParamIssue[] => {
+const validateTuple2 = (value: unknown, spec: ParamSpec): ParamIssue[] => {
   if (!isTuple2NumberArray(value)) {
     return [
       {
@@ -132,7 +132,7 @@ const validateTuple2 = (value: unknown, spec: ParamSpec & { kind: 'tuple2' }): P
   return issues;
 };
 
-const validateEnum = (value: unknown, spec: ParamSpec & { kind: 'enum' }): ParamIssue[] => {
+const validateEnum = (value: unknown, spec: ParamSpec): ParamIssue[] => {
   if (typeof value !== 'string') {
     return [{ path: spec.path, severity: 'error', code: 'type', message: 'Expected string enum.' }];
   }

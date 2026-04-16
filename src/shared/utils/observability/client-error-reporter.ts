@@ -2,6 +2,9 @@ import type { ErrorContext } from '@/shared/contracts/observability';
 import { isAbortLikeError } from '@/shared/utils/observability/is-abort-like-error';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
+const getNonEmptyContextString = (value: string | null | undefined): string | undefined =>
+  typeof value === 'string' && value.length > 0 ? value : undefined;
+
 const extractErrorInfo = (error: unknown): { message: string; stack: string | undefined; name: string } => {
   if (error instanceof Error) {
     return {
@@ -43,7 +46,7 @@ export const reportClientError = async (
     logClientCatch(err, {
       source: 'client-error-reporter',
       action: 'sendClientErrorReport',
-      service: context.service !== undefined && context.service.length > 0 ? context.service : 'observability.client-error-reporter',
+      service: getNonEmptyContextString(context.service) ?? 'observability.client-error-reporter',
     });
     const { logger } = await import('@/shared/utils/logger');
     logger.error(

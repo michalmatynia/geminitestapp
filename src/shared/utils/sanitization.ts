@@ -102,7 +102,7 @@ const ensureSvgRoot = (markup: string, viewBox: string): string => {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}">${normalized}</svg>`;
 };
 
-const sanitizeSvgAttribute = (element: Element, attribute: Attr): boolean => {
+const sanitizeSvgAttribute = (attribute: Attr): boolean => {
   const attributeName = attribute.name.toLowerCase();
   const attributeValue = attribute.value.trim();
 
@@ -132,7 +132,7 @@ const sanitizeSvgElement = (element: Element): void => {
   }
 
   for (const attribute of Array.from(element.attributes)) {
-    if (sanitizeSvgAttribute(element, attribute)) {
+    if (sanitizeSvgAttribute(attribute)) {
       element.removeAttribute(attribute.name);
     }
   }

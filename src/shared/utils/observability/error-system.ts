@@ -51,6 +51,66 @@ const safeLogErrorSystemFailure = (
   });
 };
 
+const getNonEmptyContextString = (value: string | null | undefined): string | undefined =>
+  typeof value === 'string' && value.length > 0 ? value : undefined;
+
+const getService = (context: ErrorContext): string =>
+  getNonEmptyContextString(context.service) ?? 'unknown';
+
+const resolveErrorCategory = (
+  contextCategory: string | null | undefined,
+  error: unknown
+): ErrorCategory => {
+  const category = getNonEmptyContextString(contextCategory);
+  return category !== undefined && (Object.values(ErrorCategories) as string[]).includes(category)
+    ? (category as ErrorCategory)
+    : classifySharedError(error);
+};
+
+const resolveBaseError = (
+  error: unknown,
+  context: ErrorContext,
+  category: ErrorCategory
+): ResolvedError | null => {
+  if (!isAppError(error)) return null;
+
+  return {
+    errorId: getNonEmptyContextString(context.errorId) ?? `err_${Date.now()}`,
+    message: error.message,
+    code: error.code,
+    httpStatus: error.httpStatus,
+    expected: error.expected,
+    critical: error.critical,
+    retryable: error.retryable,
+    category,
+    suggestedActions: getSharedSuggestedActions(category, error),
+    ...(typeof error.retryAfterMs === 'number' ? { retryAfterMs: error.retryAfterMs } : {}),
+    ...(error.meta ? { meta: error.meta } : {}),
+    cause: error.cause,
+  };
+};
+
+const resolveReportUserMessage = (
+  context: ErrorContext,
+  baseResolved: ResolvedError | null
+): string => {
+  const userMessage = getNonEmptyContextString(context.userMessage);
+  if (userMessage !== undefined) return userMessage;
+
+  const fallback = baseResolved !== null ? resolveErrorUserMessage(baseResolved) : null;
+  return fallback !== null && fallback.length > 0
+    ? fallback
+    : 'An unexpected error occurred. Please try again or contact support.';
+};
+
+const buildReportContext = (context: ErrorContext): Record<string, unknown> => ({
+  ...context,
+  // Remove sensitive or redundant info
+  errorId: undefined,
+  userMessage: undefined,
+  category: undefined,
+});
+
 async function isLoggingEnabled(type: 'info' | 'activity' | 'error'): Promise<boolean> {
   if (typeof window !== 'undefined') return true;
   try {
@@ -66,15 +126,19 @@ async function isLoggingEnabled(type: 'info' | 'activity' | 'error'): Promise<bo
   }
 }
 
-const getCategory = async (contextCategory: string | undefined, errorOrMessage: unknown): Promise<string | undefined> => {
-  if (contextCategory !== undefined && contextCategory.length > 0) return contextCategory;
-  if (typeof window !== 'undefined') return contextCategory;
+const getCategory = async (
+  contextCategory: string | null | undefined,
+  errorOrMessage: unknown
+): Promise<string | undefined> => {
+  const category = getNonEmptyContextString(contextCategory);
+  if (category !== undefined) return category;
+  if (typeof window !== 'undefined') return undefined;
   try {
     const { classifyError } = await import('@/shared/errors/error-classifier');
     return classifyError(errorOrMessage);
   } catch (classifyErr) {
     safeLogErrorSystemFailure('[ErrorSystem] Failed to classify.', classifyErr, 'warn');
-    return contextCategory;
+    return category;
   }
 };
 
@@ -96,7 +160,7 @@ export const ErrorSystem = {
       const category = await getCategory(context.category, error);
 
       const message = error instanceof Error ? error.message : String(error);
-      const service = context.service !== undefined && context.service.length > 0 ? context.service : 'unknown';
+      const service = getService(context);
 
       // 1. Log to System Log (DB + Console)
       await logSystemEvent({
@@ -134,7 +198,7 @@ export const ErrorSystem = {
     if (!(await isLoggingEnabled('error'))) return;
     try {
       const { logSystemEvent } = await import('@/shared/lib/observability/system-logger');
-      const service = context.service !== undefined && context.service.length > 0 ? context.service : 'unknown';
+      const service = getService(context);
       const category = await getCategory(context.category, message);
 
       await logSystemEvent({
@@ -168,7 +232,7 @@ export const ErrorSystem = {
     if (!(await isLoggingEnabled('error'))) return;
     try {
       const { logSystemEvent } = await import('@/shared/lib/observability/system-logger');
-      const service = context.service !== undefined && context.service.length > 0 ? context.service : 'unknown';
+      const service = getService(context);
 
       await logSystemEvent({
         level: 'warn',
@@ -191,7 +255,7 @@ export const ErrorSystem = {
     if (!(await isLoggingEnabled('info'))) return;
     try {
       const { logSystemEvent } = await import('@/shared/lib/observability/system-logger');
-      const service = context.service !== undefined && context.service.length > 0 ? context.service : 'unknown';
+      const service = getService(context);
       const category = await getCategory(context.category, message);
 
       await logSystemEvent({
@@ -214,52 +278,18 @@ export const ErrorSystem = {
   generateErrorReport: (error: unknown, context: ErrorContext = {}): Record<string, unknown> => {
     const message = error instanceof Error ? error.message : String(error);
     const stack = error instanceof Error ? error.stack : undefined;
-    const contextCategory = context.category;
-    const category: ErrorCategory =
-      typeof contextCategory === 'string' &&
-      (Object.values(ErrorCategories) as string[]).includes(contextCategory)
-        ? (contextCategory as ErrorCategory)
-        : classifySharedError(error);
-
-    let baseResolved: ResolvedError | null = null;
-    if (isAppError(error)) {
-      baseResolved = {
-        errorId: context.errorId !== undefined && context.errorId.length > 0 ? context.errorId : `err_${Date.now()}`,
-        message: error.message,
-        code: error.code,
-        httpStatus: error.httpStatus,
-        expected: error.expected,
-        critical: error.critical,
-        retryable: error.retryable,
-        category,
-        suggestedActions: getSharedSuggestedActions(category, error),
-        ...(typeof error.retryAfterMs === 'number' ? { retryAfterMs: error.retryAfterMs } : {}),
-        ...(error.meta ? { meta: error.meta } : {}),
-        cause: error.cause,
-      };
-    }
-    
-    const userMessageFallback = baseResolved !== null ? resolveErrorUserMessage(baseResolved) : null;
-    const userMessage = context.userMessage !== undefined && context.userMessage.length > 0 ? context.userMessage : userMessageFallback;
+    const category = resolveErrorCategory(context.category, error);
+    const baseResolved = resolveBaseError(error, context, category);
 
     return {
-      id: context.errorId !== undefined && context.errorId.length > 0 ? context.errorId : `err_${Date.now()}`,
+      id: getNonEmptyContextString(context.errorId) ?? `err_${Date.now()}`,
       timestamp: new Date().toISOString(),
       category,
       message,
-      userMessage:
-        userMessage !== null && userMessage.length > 0
-          ? userMessage
-          : 'An unexpected error occurred. Please try again or contact support.',
-      service: context.service !== undefined && context.service.length > 0 ? context.service : 'unknown',
+      userMessage: resolveReportUserMessage(context, baseResolved),
+      service: getService(context),
       suggestedActions: getSharedSuggestedActions(category, error),
-      context: {
-        ...context,
-        // Remove sensitive or redundant info
-        errorId: undefined,
-        userMessage: undefined,
-        category: undefined,
-      },
+      context: buildReportContext(context),
       debug: process.env['NODE_ENV'] !== 'production' ? { stack } : undefined,
     };
   },

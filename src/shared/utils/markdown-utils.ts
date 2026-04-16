@@ -41,7 +41,7 @@ export const autoformatMarkdown = (text: string): string => {
         .replace(/\.[^.]+$/, '') // Remove file extension
         .replace(/[-_]/g, ' ') // Replace dashes/underscores with spaces
         .trim();
-        
+
       const title = decodedLastPart.length > 0 ? decodedLastPart : urlObj.hostname;
 
       return `[${title}](${url})`;

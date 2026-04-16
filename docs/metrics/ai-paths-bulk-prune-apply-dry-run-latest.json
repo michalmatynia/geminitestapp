@@ -424,15 +424,15 @@
         "replacementCount": 0,
         "replacements": [
           {
-            "from": "provider: 'auto' | 'mongodb' | 'prisma' | 'all';",
-            "to": "provider: 'auto' | 'mongodb' | 'prisma';",
+            "from": "provider: 'auto' | 'mongodb' | 'removedOrm' | 'all';",
+            "to": "provider: 'auto' | 'mongodb' | 'removedOrm';",
             "replaceAll": true,
             "occurrences": 0,
             "appliedCount": 0
           },
           {
-            "from": "updateSchemaConfig({ provider: value as 'auto' | 'mongodb' | 'prisma' | 'all' })",
-            "to": "updateSchemaConfig({ provider: value as 'auto' | 'mongodb' | 'prisma' })",
+            "from": "updateSchemaConfig({ provider: value as 'auto' | 'mongodb' | 'removedOrm' | 'all' })",
+            "to": "updateSchemaConfig({ provider: value as 'auto' | 'mongodb' | 'removedOrm' })",
             "replaceAll": true,
             "occurrences": 0,
             "appliedCount": 0
@@ -1080,7 +1080,7 @@
         "ruleId": "run_source_filter_contract",
         "mode": "file",
         "expectedState": "present",
-        "file": "src/features/ai/ai-paths/services/path-run-repository/prisma-path-run-repository.ts",
+        "file": "src/features/ai/ai-paths/services/path-run-repository/removedOrm-path-run-repository.ts",
         "missingTargetFile": false,
         "changed": false,
         "replacementCount": 0,

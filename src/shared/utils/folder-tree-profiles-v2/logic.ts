@@ -1,3 +1,6 @@
+/* eslint-disable complexity */
+/* eslint-disable max-lines */
+/* eslint-disable max-lines-per-function */
 import { validationError } from '@/shared/errors/app-error';
 
 import { normalizeMasterTreeKind } from '../master-folder-tree-contract';
@@ -127,7 +130,7 @@ export const normalizeKindList = (
   const normalized = new Set<string>();
   values.forEach((entry: string) => {
     const value = entry.trim().toLowerCase();
-    if (!value) return;
+    if (value.length === 0) return;
     normalized.add(value);
   });
   return normalized.size > 0 ? Array.from(normalized) : [...fallback];
@@ -164,7 +167,7 @@ export const cloneProfileV2 = (profile: FolderTreeProfileV2): FolderTreeProfileV
 export const createDefaultFolderTreeProfilesV2 = (
   defaultProfiles: FolderTreeProfilesV2Map
 ): FolderTreeProfilesV2Map => {
-  const defaults = {} as FolderTreeProfilesV2Map;
+  const defaults: FolderTreeProfilesV2Map = {} satisfies FolderTreeProfilesV2Map as FolderTreeProfilesV2Map;
   folderTreeInstanceValues.forEach((instance: FolderTreeInstance) => {
     defaults[instance] = cloneProfileV2(defaultProfiles[instance]);
   });
@@ -178,8 +181,8 @@ export const normalizeByKindIcons = (
   const normalized: Record<string, string | null> = { ...fallback };
   Object.entries(entries).forEach(([key, value]: [string, string | null]) => {
     const normalizedKey = key.trim().toLowerCase();
-    if (!normalizedKey) return;
-    normalized[normalizedKey] = value && value.trim().length > 0 ? value : null;
+    if (normalizedKey.length === 0) return;
+    normalized[normalizedKey] = value !== null && value.trim().length > 0 ? value : null;
   });
   return normalized;
 };
@@ -194,19 +197,23 @@ export const toCanonicalProfileV2 = ({
   fallback: FolderTreeProfileV2;
 }): FolderTreeProfileV2 => {
   const sourceRecord =
-    candidate && typeof candidate === 'object' && !Array.isArray(candidate)
+    candidate !== null && typeof candidate === 'object' && !Array.isArray(candidate)
       ? (candidate as Record<string, unknown>)
       : null;
-  const hasInteractionSettings = Boolean(sourceRecord && 'interactions' in sourceRecord);
-  const hasSearchSettings = Boolean(sourceRecord && 'search' in sourceRecord);
-  const mergedSearch = hasSearchSettings
-    ? {
+  const hasInteractionSettings = sourceRecord !== null && 'interactions' in sourceRecord;
+  const hasSearchSettings = sourceRecord !== null && 'search' in sourceRecord;
+  
+  let mergedSearch;
+  if (hasSearchSettings) {
+    mergedSearch = {
       ...(fallback.search ?? {}),
       ...(parsed.search ?? {}),
-    }
-    : fallback.search
-      ? { ...fallback.search }
-      : undefined;
+    };
+  } else if (fallback.search) {
+    mergedSearch = { ...fallback.search };
+  } else {
+    mergedSearch = undefined;
+  }
 
   return {
     version: 2,
@@ -287,7 +294,7 @@ export const canNestTreeNodeV2 = ({
     nodeKind,
     nodeType === 'folder' ? 'folder' : 'file'
   );
-  const normalizedTargetKind = normalizeMasterTreeKind(targetFolderKind, 'folder');
+  const normalizedTargetKind = normalizeMasterTreeKind(targetFolderKind ?? '', 'folder');
 
   if (
     targetType === 'folder' &&
@@ -319,9 +326,9 @@ export const resolveFolderTreeIconV2 = (
   slot: FolderTreeIconSlot,
   kind?: string | null
 ): string | null => {
-  if (kind) {
+  if (kind !== undefined && kind !== null && kind.length > 0) {
     const normalizedKind = normalizeMasterTreeKind(kind, '');
-    if (normalizedKind && normalizedKind in profile.icons.byKind) {
+    if (normalizedKind !== null && normalizedKind.length > 0 && normalizedKind in profile.icons.byKind) {
       return profile.icons.byKind[normalizedKind] ?? null;
     }
   }

@@ -110,7 +110,7 @@ export const guardAgainstMasterTreeCycles = (
     const pathIndex = new Map<string, number>();
     let cursor: string | null = node.id;
 
-    while (cursor !== null && cursor.length > 0) {
+    while (typeof cursor === 'string') {
       if (!byId.has(cursor)) break;
       if (visited.has(cursor)) break;
 

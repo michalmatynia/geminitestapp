@@ -42,3 +42,44 @@ describe('resolveKangurMobileWebCorsOrigins', () => {
     expect(resolveKangurMobileWebCorsOrigins()).toEqual(['https://preview.example.com']);
   });
 });
+
+describe('resolveKangurTrustedWebOrigins', () => {
+  beforeEach(() => {
+    vi.resetModules();
+    vi.unstubAllEnvs();
+  });
+
+  it('merges mobile-web defaults with studiq-web origins', async () => {
+    delete process.env['KANGUR_MOBILE_WEB_CORS_ORIGINS'];
+    vi.stubEnv('KANGUR_WEB_CORS_ORIGINS', 'https://www.studiq.com');
+
+    const { resolveKangurTrustedWebOrigins } = await import('./cors');
+
+    expect(resolveKangurTrustedWebOrigins()).toEqual([
+      'http://localhost:8081',
+      'http://127.0.0.1:8081',
+      'https://www.studiq.com',
+    ]);
+  });
+
+  it('deduplicates when the same origin appears in both env vars', async () => {
+    vi.stubEnv('KANGUR_MOBILE_WEB_CORS_ORIGINS', 'https://www.studiq.com');
+    vi.stubEnv('KANGUR_WEB_CORS_ORIGINS', 'https://www.studiq.com');
+
+    const { resolveKangurTrustedWebOrigins } = await import('./cors');
+
+    expect(resolveKangurTrustedWebOrigins()).toEqual(['https://www.studiq.com']);
+  });
+
+  it('returns only mobile-web defaults when KANGUR_WEB_CORS_ORIGINS is unset', async () => {
+    delete process.env['KANGUR_MOBILE_WEB_CORS_ORIGINS'];
+    delete process.env['KANGUR_WEB_CORS_ORIGINS'];
+
+    const { resolveKangurTrustedWebOrigins } = await import('./cors');
+
+    expect(resolveKangurTrustedWebOrigins()).toEqual([
+      'http://localhost:8081',
+      'http://127.0.0.1:8081',
+    ]);
+  });
+});

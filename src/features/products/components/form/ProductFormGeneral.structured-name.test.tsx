@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+/* eslint-disable max-lines, max-lines-per-function */
 
 import React from 'react';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
@@ -81,8 +82,8 @@ const createPattern = (
     regex: string;
     target: ProductValidationPattern['target'];
   }
-): ProductValidationPattern =>
-  ({
+): ProductValidationPattern => {
+  const pattern: ProductValidationPattern = {
     id: 'pattern-name-lore',
     label: 'Name formatter',
     target: overrides.target,
@@ -123,7 +124,9 @@ const createPattern = (
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
     ...overrides,
-  }) as ProductValidationPattern;
+  };
+  return pattern;
+};
 
 function NameValueProbe(): React.JSX.Element {
   const { watch } = useFormContext<ProductFormData>();
@@ -310,7 +313,7 @@ describe('ProductFormGeneral structured name editing', () => {
     const view = renderProductFormGeneral('Scout Regiment | 4 cm | Metal | Anime Pin | Lore');
     const nameInput = screen.getByLabelText('English Name');
 
-    await act(async () => {
+    act(() => {
       nameInput.focus();
     });
 
@@ -320,7 +323,7 @@ describe('ProductFormGeneral structured name editing', () => {
 
     validationState.formatterEnabled = true;
 
-    await act(async () => {
+    act(() => {
       view.rerenderForm();
     });
 
@@ -328,7 +331,7 @@ describe('ProductFormGeneral structured name editing', () => {
       expect(nameInput).toHaveValue('Scout Regiment | 4 cm | Metal | Anime Pin | Lore');
     });
 
-    await act(async () => {
+    act(() => {
       nameInput.blur();
     });
 
@@ -358,7 +361,7 @@ describe('ProductFormGeneral structured name editing', () => {
     renderProductFormGeneral('Scout Regiment | 4 cm | Metal | Anime Pin | Lore');
     const nameInput = screen.getByLabelText('English Name');
 
-    await act(async () => {
+    act(() => {
       nameInput.focus();
     });
 
@@ -370,7 +373,7 @@ describe('ProductFormGeneral structured name editing', () => {
       expect(nameInput).toHaveValue('Scout Regiment | 4 cm | Metal | Anime Pin | Lo');
     });
 
-    await act(async () => {
+    act(() => {
       nameInput.blur();
     });
 

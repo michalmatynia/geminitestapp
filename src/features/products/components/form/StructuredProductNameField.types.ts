@@ -1,4 +1,3 @@
-import type { ProductTitleTermType } from '@/shared/contracts/products/title-terms';
 import type { StructuredProductTitleLocale } from '@/shared/lib/products/title-terms';
 
 export type TitleSegmentStage = 1 | 2 | 3 | 4;
@@ -43,4 +42,4 @@ export const TITLE_SEGMENT_LABELS: Record<TitleSegmentStage, string> = {
   4: 'Theme',
 };
 
-export const CATEGORY_STAGE = 3 satisfies ProductTitleTermType | number;
+export const CATEGORY_STAGE: TitleSegmentStage = 3;

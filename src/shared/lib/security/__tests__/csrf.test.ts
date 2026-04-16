@@ -132,3 +132,49 @@ describe('csrf same-origin matching', () => {
     expect(csrf.isTrustedOriginRequest(request as never, ['http://localhost:9090'])).toBe(false);
   });
 });
+
+describe('ensureCsrfCookie domain scoping', () => {
+  const makeResponseStub = () => {
+    const calls: Array<Record<string, unknown>> = [];
+    const stub = {
+      cookies: {
+        set: (payload: Record<string, unknown>): void => {
+          calls.push(payload);
+        },
+      },
+    };
+    return { stub, calls };
+  };
+
+  it('omits domain when KANGUR_COOKIE_DOMAIN is unset', () => {
+    const previous = process.env['KANGUR_COOKIE_DOMAIN'];
+    delete process.env['KANGUR_COOKIE_DOMAIN'];
+    try {
+      const { stub, calls } = makeResponseStub();
+      csrf.ensureCsrfCookie(stub as never);
+      expect(calls).toHaveLength(1);
+      expect(calls[0]).not.toHaveProperty('domain');
+    } finally {
+      if (previous !== undefined) {
+        process.env['KANGUR_COOKIE_DOMAIN'] = previous;
+      }
+    }
+  });
+
+  it('forwards Domain=.studiq.com when KANGUR_COOKIE_DOMAIN is set', () => {
+    const previous = process.env['KANGUR_COOKIE_DOMAIN'];
+    process.env['KANGUR_COOKIE_DOMAIN'] = '.studiq.com';
+    try {
+      const { stub, calls } = makeResponseStub();
+      csrf.ensureCsrfCookie(stub as never);
+      expect(calls).toHaveLength(1);
+      expect(calls[0]).toHaveProperty('domain', '.studiq.com');
+    } finally {
+      if (previous === undefined) {
+        delete process.env['KANGUR_COOKIE_DOMAIN'];
+      } else {
+        process.env['KANGUR_COOKIE_DOMAIN'] = previous;
+      }
+    }
+  });
+});

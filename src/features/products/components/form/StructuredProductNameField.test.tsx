@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+/* eslint-disable max-lines, max-lines-per-function */
 
 import React from 'react';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
@@ -6,6 +7,7 @@ import { FormProvider, useForm, useFormContext } from 'react-hook-form';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ProductFormData } from '@/shared/contracts/products/drafts';
+import type { ProductTitleTerm, ProductTitleTermType } from '@/shared/contracts/products/title-terms';
 
 const {
   useProductFormCoreMock,
@@ -54,9 +56,9 @@ type RenderFieldOptions = {
 
 const toTitleTermFixture = (
   term: string | { name_en: string; name_pl?: string | null },
-  type: 'size' | 'material' | 'theme',
+  type: ProductTitleTermType,
   index: number
-) => {
+): ProductTitleTerm => {
   const nameEn = typeof term === 'string' ? term : term.name_en;
   const namePl = typeof term === 'string' ? term : (term.name_pl ?? null);
   return {
@@ -69,6 +71,7 @@ const toTitleTermFixture = (
   };
 };
 
+// eslint-disable-next-line complexity
 function renderField(options: RenderFieldOptions = {}): { setCategoryId: ReturnType<typeof vi.fn> } {
   const setCategoryId = vi.fn();
   const categories = options.categories ?? [
@@ -90,6 +93,13 @@ function renderField(options: RenderFieldOptions = {}): { setCategoryId: ReturnT
   const sizeTerms = options.sizeTerms ?? ['4 cm'];
   const materialTerms = options.materialTerms ?? ['Metal'];
   const themeTerms = options.themeTerms ?? ['Attack On Titan'];
+  const resolveTermsByType = (
+    type: ProductTitleTermType
+  ): Array<string | { name_en: string; name_pl?: string | null }> => {
+    if (type === 'size') return sizeTerms;
+    if (type === 'material') return materialTerms;
+    return themeTerms;
+  };
 
   function Wrapper({ children }: { children: React.ReactNode }): React.JSX.Element {
     const methods = useForm<ProductFormData>({
@@ -97,7 +107,7 @@ function renderField(options: RenderFieldOptions = {}): { setCategoryId: ReturnT
         name_en: options.initialName ?? '',
         name_pl: options.initialNamePl ?? '',
         categoryId: '',
-      } as ProductFormData,
+      } satisfies Partial<ProductFormData>,
     });
     return <FormProvider {...methods}>{children}</FormProvider>;
   }
@@ -121,13 +131,8 @@ function renderField(options: RenderFieldOptions = {}): { setCategoryId: ReturnT
     setCategoryId,
   });
   useTitleTermsMock.mockImplementation(
-    (_catalogId: string, type: 'size' | 'material' | 'theme') => ({
-      data:
-        type === 'size'
-          ? sizeTerms.map((term, index) => toTitleTermFixture(term, type, index))
-          : type === 'material'
-            ? materialTerms.map((term, index) => toTitleTermFixture(term, type, index))
-            : themeTerms.map((term, index) => toTitleTermFixture(term, type, index)),
+    (_catalogId: string, type: ProductTitleTermType) => ({
+      data: resolveTermsByType(type).map((term, index) => toTitleTermFixture(term, type, index)),
       isLoading: false,
     })
   );
@@ -172,7 +177,9 @@ describe('StructuredProductNameField', () => {
     expect(combobox).toHaveAttribute('aria-owns', listbox.id);
     expect(within(listbox).getByText('4 cm')).toBeInTheDocument();
 
-    fireEvent.click(screen.getAllByText('4 cm')[0]!.closest('button') as HTMLButtonElement);
+    const sizeButton = screen.getAllByText('4 cm')[0]?.closest('button');
+    expect(sizeButton).not.toBeNull();
+    fireEvent.click(sizeButton as HTMLButtonElement);
 
     await waitFor(() => {
       expect((input as HTMLInputElement).value).toBe('Scout Regiment | 4 cm | ');
@@ -235,7 +242,7 @@ describe('StructuredProductNameField', () => {
         defaultValues: {
           name_en: 'Scout Regiment | 4 cm | Metal | Anime Pins | Anime',
           categoryId: '',
-        } as ProductFormData,
+        } satisfies Partial<ProductFormData>,
       });
       return <FormProvider {...methods}>{children}</FormProvider>;
     }
@@ -270,7 +277,7 @@ describe('StructuredProductNameField', () => {
     const listbox = await screen.findByRole('listbox', { name: 'Size suggestions' });
     const optionTexts = within(listbox)
       .getAllByRole('option')
-      .map((option) => option.textContent?.trim());
+      .map((option) => option.textContent.trim());
 
     expect(optionTexts).toEqual(['2 cm', '4 cm', '6 cm', '8 cm']);
   });

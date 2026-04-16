@@ -92,4 +92,40 @@ describe('kangur learner session', () => {
 
     expect(response.headers.get('set-cookie')).toContain('Max-Age=0');
   });
+
+  it('omits the Domain attribute when KANGUR_COOKIE_DOMAIN is unset', () => {
+    const previous = process.env['KANGUR_COOKIE_DOMAIN'];
+    delete process.env['KANGUR_COOKIE_DOMAIN'];
+    try {
+      const response = NextResponse.json({ ok: true });
+      setKangurLearnerSession(response, { learnerId: 'learner-1', ownerUserId: 'parent-1' });
+      const cookie = response.headers.get('set-cookie') ?? '';
+      expect(cookie.toLowerCase()).not.toContain('domain=');
+    } finally {
+      if (previous !== undefined) {
+        process.env['KANGUR_COOKIE_DOMAIN'] = previous;
+      }
+    }
+  });
+
+  it('emits Domain=.studiq.com when KANGUR_COOKIE_DOMAIN is set', () => {
+    const previous = process.env['KANGUR_COOKIE_DOMAIN'];
+    process.env['KANGUR_COOKIE_DOMAIN'] = '.studiq.com';
+    try {
+      const response = NextResponse.json({ ok: true });
+      setKangurLearnerSession(response, { learnerId: 'learner-1', ownerUserId: 'parent-1' });
+      const cookie = response.headers.get('set-cookie') ?? '';
+      expect(cookie).toContain('Domain=.studiq.com');
+
+      const cleared = NextResponse.json({ ok: true });
+      clearKangurLearnerSession(cleared);
+      expect(cleared.headers.get('set-cookie')).toContain('Domain=.studiq.com');
+    } finally {
+      if (previous === undefined) {
+        delete process.env['KANGUR_COOKIE_DOMAIN'];
+      } else {
+        process.env['KANGUR_COOKIE_DOMAIN'] = previous;
+      }
+    }
+  });
 });

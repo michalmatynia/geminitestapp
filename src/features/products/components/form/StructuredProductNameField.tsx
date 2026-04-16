@@ -1,769 +1,117 @@
 'use client';
 
-import { BookType, ChevronRight } from 'lucide-react';
-import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
-import { useController, useFormContext } from 'react-hook-form';
+import { BookType } from 'lucide-react';
+import React from 'react';
 
-import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
-import { useProductFormMetadata } from '@/features/products/context/ProductFormMetadataContext';
-import { useTitleTerms } from '@/features/products/hooks/useProductMetadataQueries';
-import { type ProductFormData } from '@/shared/contracts/products/drafts';
-import type { ProductCategory } from '@/shared/contracts/products/categories';
-import type { ProductTitleTerm, ProductTitleTermType } from '@/shared/contracts/products/title-terms';
-import {
-  resolveLocalizedCategoryName,
-  resolveLocalizedTitleTermName,
-  type StructuredProductTitleLocale,
-} from '@/shared/lib/products/title-terms';
 import { Button } from '@/shared/ui/button';
 import { FormField } from '@/shared/ui/form-section';
 import { Input } from '@/shared/ui/input';
 import { cn } from '@/shared/utils/ui-utils';
 
-type TitleSegmentStage = 1 | 2 | 3 | 4;
+import { ProductTitleSuggestionPanel } from './ProductTitleSuggestionPanel';
+import type { StructuredProductNameFieldProps } from './StructuredProductNameField.types';
+import {
+  type StructuredProductNameFieldController,
+  useStructuredProductNameFieldController,
+} from './useStructuredProductNameFieldController';
 
-type SuggestionOption = {
-  value: string;
-  label: string;
-  aliases: string[];
-  searchText: string;
-  description?: string;
-  disabled?: boolean;
-  categoryId?: string;
+type ControllerProps = {
+  controller: StructuredProductNameFieldController;
 };
 
-const TITLE_SEGMENT_LABELS: Record<TitleSegmentStage, string> = {
-  1: 'Size',
-  2: 'Material',
-  3: 'Category',
-  4: 'Theme',
-};
-
-const CATEGORY_STAGE = 3;
-
-const normalizeSegmentValue = (value: string): string => value.trim().replace(/\s+/g, ' ');
-
-const normalizeSuggestionKey = (value: string): string => normalizeSegmentValue(value).toLowerCase();
-
-const sortSuggestionOptions = (options: SuggestionOption[]): SuggestionOption[] =>
-  [...options].sort((left, right) =>
-    left.label.localeCompare(right.label, undefined, {
-      sensitivity: 'base',
-    })
+function TitleTermsAction({ href }: { href: string }): React.JSX.Element {
+  return (
+    <Button size='xs' variant='outline' asChild>
+      <a href={href} target='_blank' rel='noopener noreferrer'>
+        <BookType className='size-3.5' />
+        <span>Open Title Terms</span>
+      </a>
+    </Button>
   );
+}
 
-const getSuggestionPanelClassName = (): string =>
-  cn(
-    'pointer-events-auto absolute left-0 right-0 top-[calc(100%+6px)] z-30 min-w-0 overflow-hidden rounded-md border border-border/70 bg-card/95 shadow-2xl backdrop-blur',
-    'transform-gpu will-change-transform transition-[opacity,transform,box-shadow] duration-200 ease-out motion-reduce:transition-none',
-    'motion-safe:animate-in motion-safe:fade-in motion-safe:duration-200 motion-safe:ease-out',
-    'motion-safe:slide-in-from-top-2'
+function CatalogHint({ primaryCatalogId }: { primaryCatalogId?: string }): React.JSX.Element | null {
+  if (typeof primaryCatalogId === 'string' && primaryCatalogId !== '') return null;
+  return (
+    <p className='text-[10px] italic leading-relaxed text-gray-500'>
+      Select a catalog first to load size, material, category, and theme suggestions.
+    </p>
   );
+}
 
-const getSuggestionOptionStateClassName = (
-  isDisabled: boolean,
-  isHighlighted: boolean
-): string => {
-  if (isDisabled) return 'cursor-not-allowed opacity-50';
-  if (isHighlighted) {
-    return 'cursor-pointer border-foreground/10 bg-foreground/12 font-medium text-foreground shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]';
-  }
-  return 'cursor-pointer text-muted-foreground hover:translate-x-0.5 hover:border-foreground/10 hover:bg-foreground/6 hover:text-foreground hover:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]';
-};
-
-const getSuggestionOptionClassName = (isDisabled: boolean, isHighlighted: boolean): string =>
-  cn(
-    'group flex min-h-9 w-full min-w-0 items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-1 text-left text-sm',
-    'transition-[background-color,border-color,color,transform,box-shadow,opacity] duration-200 ease-out motion-reduce:transition-none',
-    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-1 focus-visible:ring-offset-background',
-    getSuggestionOptionStateClassName(isDisabled, isHighlighted)
+function SelectedCategoryHint({ label }: { label: string | null }): React.JSX.Element | null {
+  if (label === null) return null;
+  return (
+    <p className='text-[10px] italic leading-relaxed text-gray-500'>
+      Selected category: {label}
+    </p>
   );
+}
 
-const getSuggestionChevronClassName = (isHighlighted: boolean): string =>
-  cn(
-    'size-4 shrink-0 transition-[color,transform] duration-200 ease-out motion-reduce:transition-none',
-    isHighlighted
-      ? 'translate-x-0.5 text-foreground'
-      : 'text-gray-500 group-hover:translate-x-0.5 group-hover:text-foreground'
-  );
-
-const resolveStageType = (stage: TitleSegmentStage): ProductTitleTermType => {
-  if (stage === 1) return 'size';
-  if (stage === 2) return 'material';
-  return 'theme';
-};
-
-const countPipesBeforeCaret = (value: string, caret: number): number =>
-  value.slice(0, caret).split('|').length - 1;
-
-const resolveSegmentBounds = (
-  value: string,
-  caret: number
-): { start: number; end: number; text: string } => {
-  const leftBoundary = value.lastIndexOf('|', Math.max(0, caret - 1));
-  const rightBoundary = value.indexOf('|', caret);
-  const start = leftBoundary === -1 ? 0 : leftBoundary + 1;
-  const end = rightBoundary === -1 ? value.length : rightBoundary;
-  return {
-    start,
-    end,
-    text: normalizeSegmentValue(value.slice(start, end)),
-  };
-};
-
-const resolveLastNonEmptySegmentIndex = (segments: string[]): number => {
-  for (let index = segments.length - 1; index >= 0; index -= 1) {
-    const segment = segments[index];
-    if (typeof segment === 'string' && segment.trim() !== '') return index;
-  }
-  return 0;
-};
-
-const findEnabledSuggestionIndex = (
-  suggestions: SuggestionOption[],
-  startIndex: number,
-  direction: 1 | -1
-): number => {
-  if (suggestions.length === 0) return 0;
-
-  let nextIndex = Math.min(Math.max(startIndex, 0), suggestions.length - 1);
-  for (let steps = 0; steps < suggestions.length; steps += 1) {
-    const candidate = suggestions[nextIndex];
-    if (candidate !== undefined && candidate.disabled !== true) {
-      return nextIndex;
-    }
-    const fallbackIndex = nextIndex + direction;
-    if (fallbackIndex < 0 || fallbackIndex >= suggestions.length) {
-      break;
-    }
-    nextIndex = fallbackIndex;
-  }
-
-  return startIndex;
-};
-
-const replaceStructuredSegment = (
-  value: string,
-  stage: TitleSegmentStage,
-  nextSegmentValue: string
-): string => {
-  const normalizedSegments = value.split('|').map((segment: string) => normalizeSegmentValue(segment));
-  while (normalizedSegments.length <= stage) {
-    normalizedSegments.push('');
-  }
-  normalizedSegments[stage] = normalizeSegmentValue(nextSegmentValue);
-
-  const hasLaterContent = normalizedSegments
-    .slice(stage + 1)
-    .some((segment: string): boolean => segment.length > 0);
-  const lastRelevantIndex = resolveLastNonEmptySegmentIndex(normalizedSegments);
-  const nextValue = normalizedSegments
-    .slice(0, Math.max(lastRelevantIndex, stage) + 1)
-    .join(' | ')
-    .trim();
-
-  if (hasLaterContent === false && stage < 4) {
-    return `${nextValue} | `;
-  }
-
-  return nextValue;
-};
-
-const uniqueSuggestionValues = (values: Array<string | null | undefined>): string[] =>
-  Array.from(
-    new Set(
-      values
-        .map((value: string | null | undefined): string => normalizeSegmentValue(value ?? ''))
-        .filter((value: string): boolean => value.length > 0)
-    )
-  );
-
-const buildTitleTermSuggestion = (
-  term: ProductTitleTerm,
-  locale: StructuredProductTitleLocale
-): SuggestionOption => {
-  const value = resolveLocalizedTitleTermName(term, locale);
-  const aliases = uniqueSuggestionValues([term.name_en, term.name_pl, value]);
-  const description = ((): string | undefined => {
-    if (locale === 'pl') {
-      const enName = term.name_en;
-      if (typeof enName === 'string' && enName !== '' && enName !== value) {
-        return enName;
-      }
-    } else {
-      const plName = term.name_pl;
-      if (typeof plName === 'string' && plName !== '' && plName !== value) {
-        return plName;
-      }
-    }
-    return undefined;
-  })();
-
-  return {
-    value,
-    label: value,
-    aliases,
-    searchText: aliases.join(' '),
-    description,
-  };
-};
-
-const buildCategorySuggestions = (
-  categories: ProductCategory[],
-  locale: StructuredProductTitleLocale
-): SuggestionOption[] => {
-  const byParentId = new Map<string | null, ProductCategory[]>();
-  const hasChildren = new Set<string>();
-
-  for (const category of categories) {
-    const parentId = category.parentId ?? null;
-    const existing = byParentId.get(parentId) ?? [];
-    existing.push(category);
-    byParentId.set(parentId, existing);
-    if (parentId !== null) {
-      hasChildren.add(parentId);
-    }
-  }
-
-  const sortCategories = (items: ProductCategory[]): ProductCategory[] =>
-    [...items].sort((left, right) => {
-      const leftSortIndex = left.sortIndex ?? Number.MAX_SAFE_INTEGER;
-      const rightSortIndex = right.sortIndex ?? Number.MAX_SAFE_INTEGER;
-      if (leftSortIndex !== rightSortIndex) {
-        return leftSortIndex - rightSortIndex;
-      }
-      return resolveLocalizedCategoryName(left, locale).localeCompare(
-        resolveLocalizedCategoryName(right, locale)
-      );
-    });
-
-  const collected: SuggestionOption[] = [];
-  const walk = (parentId: string | null, path: string[]): void => {
-    const siblings = sortCategories(byParentId.get(parentId) ?? []);
-    for (const category of siblings) {
-      const value = resolveLocalizedCategoryName(category, locale);
-      const label = [...path, value].join(' / ');
-      const aliases = uniqueSuggestionValues([
-        value,
-        category.name,
-        category.name_en,
-        category.name_pl,
-        category.name_de,
-      ]);
-      collected.push({
-        value,
-        label,
-        aliases,
-        searchText: [...aliases, label].join(' '),
-        disabled: hasChildren.has(category.id),
-        categoryId: category.id,
-        description: hasChildren.has(category.id) ? 'Parent category' : undefined,
-      });
-      walk(category.id, [...path, value]);
-    }
-  };
-
-  walk(null, []);
-  return collected;
-};
-
-const resolveUniqueLeafCategorySuggestion = (
-  suggestions: SuggestionOption[],
-  value: string
-): SuggestionOption | null => {
-  const normalizedValue = normalizeSegmentValue(value);
-  if (normalizedValue === '') return null;
-  const normalizedKey = normalizeSuggestionKey(normalizedValue);
-
-  const exactLeafMatches = suggestions.filter(
-    (option) =>
-      option.disabled !== true &&
-      option.aliases.some((alias: string): boolean => normalizeSuggestionKey(alias) === normalizedKey)
-  );
-
-  return exactLeafMatches.length === 1 ? exactLeafMatches[0] ?? null : null;
-};
-
-type ProductTitleSuggestionPanelProps = {
-  listboxId: string;
-  listboxLabel: string;
-  suggestions: SuggestionOption[];
-  highlightedIndex: number;
-  onApply: (option: SuggestionOption) => void;
-  onHighlight: (index: number) => void;
-};
-
-function ProductTitleSuggestionPanel(props: ProductTitleSuggestionPanelProps): React.JSX.Element {
-  const { listboxId, listboxLabel, suggestions, highlightedIndex, onApply, onHighlight } = props;
-
+function StructuredProductNameInput({ controller }: ControllerProps): React.JSX.Element {
   return (
     <div
-      id={listboxId}
-      role='listbox'
-      aria-label={listboxLabel}
-      tabIndex={-1}
-      className={getSuggestionPanelClassName()}
-      onMouseDown={(event: React.MouseEvent): void => event.preventDefault()}
+      className='relative'
+      role='combobox'
+      aria-haspopup='listbox'
+      aria-expanded={controller.dropdownOpen}
+      aria-owns={controller.dropdownOpen ? controller.listboxId : undefined}
+      aria-controls={controller.dropdownOpen ? controller.listboxId : undefined}
     >
-      <div className='max-h-60 overflow-y-auto p-1'>
-        {suggestions.map((option, index) => (
-          <button
-            id={`${listboxId}-option-${index}`}
-            key={`${option.label}-${index}`}
-            type='button'
-            role='option'
-            disabled={option.disabled}
-            aria-selected={index === highlightedIndex}
-            onMouseDown={(event: React.MouseEvent): void => event.preventDefault()}
-            onMouseEnter={(): void => {
-              if (option.disabled !== true) {
-                onHighlight(index);
-              }
-            }}
-            onClick={(): void => onApply(option)}
-            className={getSuggestionOptionClassName(
-              option.disabled === true,
-              index === highlightedIndex
-            )}
-            aria-disabled={option.disabled === true ? true : undefined}
-          >
-            <span className='min-w-0 flex-1'>
-              <span className='block truncate leading-5'>{option.label}</span>
-              {typeof option.description === 'string' && option.description !== '' ? (
-                <span className='block truncate text-[11px] leading-4 text-muted-foreground'>
-                  {option.description}
-                </span>
-              ) : null}
-            </span>
-            {option.disabled !== true ? (
-              <ChevronRight
-                className={getSuggestionChevronClassName(index === highlightedIndex)}
-              />
-            ) : null}
-          </button>
-        ))}
-      </div>
+      <Input
+        ref={controller.inputRef}
+        id={controller.fieldName}
+        name={controller.inputName}
+        value={controller.value}
+        onChange={controller.onChange}
+        onFocus={controller.onFocus}
+        onClick={controller.onClick}
+        onKeyUp={controller.onKeyUp}
+        onKeyDown={controller.onKeyDown}
+        onBlur={controller.onBlur}
+        placeholder={controller.placeholder}
+        autoComplete='off'
+        autoCorrect='off'
+        autoCapitalize='off'
+        aria-autocomplete='list'
+        aria-controls={controller.dropdownOpen ? controller.listboxId : undefined}
+        aria-activedescendant={controller.activeDescendantId}
+        spellCheck={false}
+        className={cn(controller.error !== undefined && 'border-red-500/60')}
+      />
+      {controller.dropdownOpen ? (
+        <ProductTitleSuggestionPanel
+          listboxId={controller.listboxId}
+          listboxLabel={controller.listboxLabel}
+          suggestions={controller.suggestions}
+          highlightedIndex={controller.highlightedIndex}
+          onApply={controller.onApplySuggestion}
+          onHighlight={controller.onHighlightSuggestion}
+        />
+      ) : null}
     </div>
   );
 }
 
-type StructuredProductNameFieldConfig = {
-  locale?: StructuredProductTitleLocale;
-  label?: string;
-  description?: string;
-  placeholder?: string;
-};
-
-type StructuredProductNameFieldProps = {
-  fieldName?: 'name_en' | 'name_pl';
-  config?: StructuredProductNameFieldConfig;
-};
-
-export function StructuredProductNameField({
-  fieldName = 'name_en',
-  config = {},
-}: StructuredProductNameFieldProps = {}): React.JSX.Element {
-  const {
-    locale = 'en',
-    label = fieldName === 'name_pl' ? 'Polish Name' : 'English Name',
-    description = 'REQUIRED FORMAT: <name> | <size> | <material> | <category> | <lore or theme>',
-    placeholder = locale === 'pl'
-      ? 'Scout Regiment | 4 cm | Metal | Przypinka Anime | Attack On Titan'
-      : 'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan',
-  } = config;
-
-  const inputRef = useRef<HTMLInputElement | null>(null);
-  const previousSelectedCategoryIdRef = useRef<string | null>(null);
-  const listboxId = useId();
-  const { control, getValues, setValue } = useFormContext<ProductFormData>();
-  const { field } = useController<ProductFormData>({
-    control,
-    name: fieldName,
-    defaultValue: '',
-  });
-  const { errors, normalizeNameError, setNormalizeNameError } = useProductFormCore();
-  const formMetadata = useProductFormMetadata() as Partial<ReturnType<typeof useProductFormMetadata>>;
-  const selectedCatalogIds = formMetadata.selectedCatalogIds ?? [];
-  const categoriesList = formMetadata.categories ?? [];
-  const selectedCategoryId = formMetadata.selectedCategoryId ?? null;
-  const setCategoryId = formMetadata.setCategoryId ?? ((): void => {});
-  const primaryCatalogId = selectedCatalogIds[0];
-
-  const nameValue = typeof field.value === 'string' ? field.value : '';
-  const sizeTermsQuery = useTitleTerms(primaryCatalogId, 'size');
-  const materialTermsQuery = useTitleTerms(primaryCatalogId, 'material');
-  const themeTermsQuery = useTitleTerms(primaryCatalogId, 'theme');
-  const titleTermsHref = useMemo((): string => {
-    const normalizedCatalogId = typeof primaryCatalogId === 'string' ? primaryCatalogId.trim() : '';
-    if (normalizedCatalogId === '') {
-      return '/admin/products/title-terms';
-    }
-    return `/admin/products/title-terms?catalogId=${encodeURIComponent(normalizedCatalogId)}`;
-  }, [primaryCatalogId]);
-
-  const blurTimeoutRef = useRef<number | null>(null);
-  const [activeStage, setActiveStage] = useState<TitleSegmentStage | null>(null);
-  const [segmentQuery, setSegmentQuery] = useState('');
-  const [segmentBounds, setSegmentBounds] = useState<{ start: number; end: number } | null>(null);
-  const [highlightedIndex, setHighlightedIndex] = useState(0);
-
-  const fieldError = errors[fieldName]?.message;
-  const error = fieldName === 'name_en' ? (normalizeNameError ?? fieldError) : fieldError;
-
-  const categorySuggestions = useMemo(
-    (): SuggestionOption[] => buildCategorySuggestions(categoriesList, locale),
-    [categoriesList, locale]
-  );
-  const selectedCategoryOption = useMemo(
-    (): SuggestionOption | null =>
-      categorySuggestions.find((option) => option.categoryId === selectedCategoryId) ?? null,
-    [categorySuggestions, selectedCategoryId]
-  );
-
-  const syncMappedCategoryField = (nextCategoryId: string | null): void => {
-    const normalizedNextCategoryId = typeof nextCategoryId === 'string' ? nextCategoryId.trim() : '';
-    const currentCategoryValue = getValues('categoryId');
-    const normalizedCurrentCategoryId =
-      typeof currentCategoryValue === 'string' ? currentCategoryValue.trim() : '';
-
-    if (normalizedCurrentCategoryId === normalizedNextCategoryId) {
-      return;
-    }
-
-    setValue('categoryId', normalizedNextCategoryId, {
-      shouldDirty: false,
-      shouldTouch: false,
-      shouldValidate: true,
-    });
-  };
-
-  useEffect((): void => {
-    const previousSelectedCategoryId = previousSelectedCategoryIdRef.current;
-    const selectedCategoryChanged = previousSelectedCategoryId !== selectedCategoryId;
-    const segments = nameValue.split('|').map((segment: string) => normalizeSegmentValue(segment));
-    const categorySegment = segments[3] ?? '';
-
-    if (categorySegment === '') {
-      if (selectedCategoryId !== null && selectedCategoryChanged === false) {
-        setCategoryId(null);
-        syncMappedCategoryField(null);
-      }
-      return;
-    }
-
-    if (selectedCategoryOption?.value === categorySegment) {
-      syncMappedCategoryField(selectedCategoryId);
-      return;
-    }
-
-    const exactLeafMatch = resolveUniqueLeafCategorySuggestion(categorySuggestions, categorySegment);
-
-    if (exactLeafMatch !== null) {
-      const matchedCategoryId = exactLeafMatch.categoryId;
-      if (typeof matchedCategoryId === 'string' && matchedCategoryId.trim() !== '' && matchedCategoryId !== selectedCategoryId) {
-        setCategoryId(matchedCategoryId);
-        syncMappedCategoryField(matchedCategoryId);
-      }
-      return;
-    }
-
-    if (selectedCategoryId !== null && selectedCategoryChanged === false) {
-      setCategoryId(null);
-      syncMappedCategoryField(null);
-    }
-  }, [
-    categorySuggestions,
-    getValues,
-    nameValue,
-    selectedCategoryId,
-    selectedCategoryOption,
-    setCategoryId,
-    setValue,
-  ]);
-
-  const suggestions = useMemo((): SuggestionOption[] => {
-    if (activeStage === null) return [];
-
-    const normalizedQuery = normalizeSegmentValue(segmentQuery);
-    if (normalizedQuery === '') return [];
-
-    if (activeStage === CATEGORY_STAGE) {
-      const normalizedQueryLower = normalizedQuery.toLowerCase();
-      return categorySuggestions.filter((option) =>
-        option.searchText.toLowerCase().includes(normalizedQueryLower)
-      );
-    }
-
-    const type = resolveStageType(activeStage);
-    let sourceTerms: ProductTitleTerm[];
-    if (type === 'size') {
-      sourceTerms = sizeTermsQuery.data ?? [];
-    } else if (type === 'material') {
-      sourceTerms = materialTermsQuery.data ?? [];
-    } else {
-      sourceTerms = themeTermsQuery.data ?? [];
-    }
-    const baseSuggestions = sourceTerms
-      .map((term: ProductTitleTerm): SuggestionOption => buildTitleTermSuggestion(term, locale))
-      .filter((option) => option.searchText.toLowerCase().includes(normalizedQuery.toLowerCase()));
-    return sortSuggestionOptions(baseSuggestions);
-  }, [
-    activeStage,
-    categorySuggestions,
-    locale,
-    materialTermsQuery.data,
-    segmentQuery,
-    sizeTermsQuery.data,
-    themeTermsQuery.data,
-  ]);
-
-  useEffect((): void => {
-    if (suggestions.length === 0) {
-      if (highlightedIndex !== 0) {
-        setHighlightedIndex(0);
-      }
-      return;
-    }
-
-    const currentCandidate = suggestions[highlightedIndex];
-    if (currentCandidate === undefined || currentCandidate.disabled === true) {
-      const nextIndex = findEnabledSuggestionIndex(suggestions, 0, 1);
-      if (nextIndex !== highlightedIndex) {
-        setHighlightedIndex(nextIndex);
-      }
-    }
-  }, [highlightedIndex, suggestions]);
-
-  const dropdownOpen = Boolean(activeStage !== null && typeof primaryCatalogId === 'string' && primaryCatalogId !== '' && suggestions.length > 0);
-
-  const syncSuggestionContext = (value: string, caret: number | null): void => {
-    if (caret === null) {
-      setActiveStage(null);
-      setSegmentBounds(null);
-      setSegmentQuery('');
-      return;
-    }
-    const stage = countPipesBeforeCaret(value, caret);
-    if (stage < 1 || stage > 4) {
-      setActiveStage(null);
-      setSegmentBounds(null);
-      setSegmentQuery('');
-      return;
-    }
-    const bounds = resolveSegmentBounds(value, caret);
-    const nextStage = stage as TitleSegmentStage;
-    const nextBounds = { start: bounds.start, end: bounds.end };
-    const nextQuery = bounds.text;
-
-    setActiveStage(nextStage);
-    setSegmentBounds(nextBounds);
-    setSegmentQuery(nextQuery);
-
-    const stageChanged = activeStage !== nextStage;
-    const boundsChanged =
-      (segmentBounds !== null && segmentBounds.start !== nextBounds.start) || (segmentBounds !== null && segmentBounds.end !== nextBounds.end);
-    const queryChanged = segmentQuery !== nextQuery;
-
-    if (stageChanged === true || boundsChanged === true || queryChanged === true) {
-      setHighlightedIndex(0);
-    }
-  };
-
-  const applySuggestion = (option: SuggestionOption): void => {
-    if (activeStage === null || option.disabled === true) return;
-    const nextValue = replaceStructuredSegment(nameValue, activeStage, option.value);
-    if (fieldName === 'name_en') {
-      setNormalizeNameError(null);
-    }
-    setValue(fieldName, nextValue, {
-      shouldDirty: true,
-      shouldTouch: true,
-      shouldValidate: true,
-    });
-    if (activeStage === CATEGORY_STAGE) {
-      const nextCategoryId = option.categoryId ?? null;
-      setCategoryId(nextCategoryId);
-      syncMappedCategoryField(nextCategoryId);
-    }
-    setTimeout((): void => {
-      const input = inputRef.current;
-      if (input === null) return;
-      const caret = nextValue.length;
-      input.focus();
-      input.setSelectionRange(caret, caret);
-      syncSuggestionContext(nextValue, caret);
-    }, 0);
-  };
-
-  useEffect((): void => {
-    const previousSelectedCategoryId = previousSelectedCategoryIdRef.current;
-
-    if (selectedCategoryOption === null) return;
-    const segments = nameValue.split('|').map((segment: string) => normalizeSegmentValue(segment));
-    const categorySegment = segments[3] ?? '';
-    const hasStructuredPrefix = Boolean(segments[0] !== '' && segments[1] !== '' && segments[2] !== '');
-    if (hasStructuredPrefix === false) return;
-    if (categorySegment === selectedCategoryOption.value) return;
-    if (
-      resolveUniqueLeafCategorySuggestion(categorySuggestions, categorySegment)?.categoryId ===
-      selectedCategoryId
-    ) {
-      return;
-    }
-    const selectedCategoryChanged = previousSelectedCategoryId !== selectedCategoryId;
-    if (selectedCategoryChanged === false && categorySegment !== '') return;
-
-    const nextValue = replaceStructuredSegment(nameValue, CATEGORY_STAGE, selectedCategoryOption.value);
-    setValue(fieldName, nextValue, {
-      shouldDirty: true,
-      shouldTouch: true,
-      shouldValidate: true,
-    });
-  }, [categorySuggestions, fieldName, nameValue, selectedCategoryId, selectedCategoryOption, setValue]);
-
-  useEffect((): void => {
-    previousSelectedCategoryIdRef.current = selectedCategoryId;
-  }, [selectedCategoryId]);
-
-  const overlayStageLabel = activeStage !== null ? TITLE_SEGMENT_LABELS[activeStage] : null;
-  const activeDescendantId =
-    (dropdownOpen && suggestions[highlightedIndex] !== undefined) ? `${listboxId}-option-${highlightedIndex}` : undefined;
-
+function StructuredProductNameFieldView({ controller }: ControllerProps): React.JSX.Element {
   return (
     <FormField
-      label={label}
-      error={typeof error === 'string' ? error : undefined}
-      description={description}
-      id={fieldName}
-      actions={
-        <Button size='xs' variant='outline' asChild>
-          <a href={titleTermsHref} target='_blank' rel='noopener noreferrer'>
-            <BookType className='size-3.5' />
-            <span>Open Title Terms</span>
-          </a>
-        </Button>
-      }
+      label={controller.label}
+      error={controller.error}
+      description={controller.description}
+      id={controller.fieldName}
+      actions={<TitleTermsAction href={controller.titleTermsHref} />}
     >
-      <div
-        className='relative'
-        role='combobox'
-        aria-haspopup='listbox'
-        aria-expanded={dropdownOpen}
-        aria-owns={dropdownOpen ? listboxId : undefined}
-        aria-controls={dropdownOpen ? listboxId : undefined}
-      >
-        <Input
-          ref={(node: HTMLInputElement | null): void => {
-            inputRef.current = node;
-            if (node !== null) {
-              field.ref(node);
-            }
-          }}
-          id={fieldName}
-          name={field.name}
-          value={nameValue}
-          onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-            const nextValue = event.target.value;
-            if (fieldName === 'name_en' && normalizeNameError !== null && normalizeNameError !== '') {
-              setNormalizeNameError(null);
-            }
-            field.onChange(event);
-            const selectionStart = event.target.selectionStart;
-            syncSuggestionContext(nextValue, selectionStart);
-          }}
-          onFocus={(): void => {
-            if (blurTimeoutRef.current !== null) {
-              clearTimeout(blurTimeoutRef.current);
-              blurTimeoutRef.current = null;
-            }
-          }}
-          onClick={(event: React.MouseEvent<HTMLInputElement>): void => {
-            if (blurTimeoutRef.current !== null) {
-              clearTimeout(blurTimeoutRef.current);
-              blurTimeoutRef.current = null;
-            }
-            const eventValue = event.currentTarget.value;
-            const selectionStart = event.currentTarget.selectionStart;
-            syncSuggestionContext(eventValue, selectionStart);
-          }}
-          onKeyUp={(event: React.KeyboardEvent<HTMLInputElement>): void => {
-            const eventValue = event.currentTarget.value;
-            const selectionStart = event.currentTarget.selectionStart;
-            syncSuggestionContext(eventValue, selectionStart);
-          }}
-          onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>): void => {
-            if (dropdownOpen === false) return;
-            if (event.key === 'ArrowDown') {
-              event.preventDefault();
-              setHighlightedIndex((current) =>
-                findEnabledSuggestionIndex(
-                  suggestions,
-                  Math.min(current + 1, suggestions.length - 1),
-                  1
-                )
-              );
-              return;
-            }
-            if (event.key === 'ArrowUp') {
-              event.preventDefault();
-              setHighlightedIndex((current) =>
-                findEnabledSuggestionIndex(suggestions, Math.max(current - 1, 0), -1)
-              );
-              return;
-            }
-            if (event.key === 'Enter') {
-              const highlighted = suggestions[highlightedIndex];
-              if (highlighted === undefined || highlighted.disabled === true) return;
-              event.preventDefault();
-              applySuggestion(highlighted);
-              return;
-            }
-            if (event.key === 'Escape') {
-              setActiveStage(null);
-              setSegmentBounds(null);
-              setSegmentQuery('');
-            }
-          }}
-          onBlur={(): void => {
-            field.onBlur();
-            blurTimeoutRef.current = window.setTimeout((): void => {
-              blurTimeoutRef.current = null;
-              setActiveStage(null);
-              setSegmentBounds(null);
-              setSegmentQuery('');
-            }, 120);
-          }}
-          placeholder={placeholder}
-          autoComplete='off'
-          autoCorrect='off'
-          autoCapitalize='off'
-          aria-autocomplete='list'
-          aria-controls={dropdownOpen ? listboxId : undefined}
-          aria-activedescendant={activeDescendantId}
-          spellCheck={false}
-          className={cn(typeof error === 'string' && error !== '' && 'border-red-500/60')}
-        />
-        {dropdownOpen && segmentBounds !== null ? (
-          <ProductTitleSuggestionPanel
-            listboxId={listboxId}
-            listboxLabel={`${overlayStageLabel ?? 'Title'} suggestions`}
-            suggestions={suggestions}
-            highlightedIndex={highlightedIndex}
-            onApply={applySuggestion}
-            onHighlight={setHighlightedIndex}
-          />
-        ) : null}
-      </div>
-      {(typeof primaryCatalogId !== 'string' || primaryCatalogId === '') && (
-        <p className='text-[10px] italic leading-relaxed text-gray-500'>
-          Select a catalog first to load size, material, category, and theme suggestions.
-        </p>
-      )}
-      {selectedCategoryOption !== null && (
-        <p className='text-[10px] italic leading-relaxed text-gray-500'>
-          Selected category: {selectedCategoryOption.label}
-        </p>
-      )}
+      <StructuredProductNameInput controller={controller} />
+      <CatalogHint primaryCatalogId={controller.primaryCatalogId} />
+      <SelectedCategoryHint label={controller.selectedCategoryLabel} />
     </FormField>
   );
+}
+
+export function StructuredProductNameField(
+  props: StructuredProductNameFieldProps = {}
+): React.JSX.Element {
+  const controller = useStructuredProductNameFieldController(props);
+  return <StructuredProductNameFieldView controller={controller} />;
 }

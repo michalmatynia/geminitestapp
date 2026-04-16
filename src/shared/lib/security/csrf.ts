@@ -144,9 +144,18 @@ export const isTrustedOriginRequest = (
   });
 };
 
+const resolveCsrfCookieDomain = (): string | undefined => {
+  const value = process.env['KANGUR_COOKIE_DOMAIN'];
+  if (!value || value.trim().length === 0) {
+    return undefined;
+  }
+  return value.trim();
+};
+
 export const ensureCsrfCookie = (response: NextResponse, existingToken?: string | null): string => {
   const token = existingToken && existingToken.length > 0 ? existingToken : generateCsrfToken();
   if (!existingToken) {
+    const domain = resolveCsrfCookieDomain();
     response.cookies.set({
       name: CSRF_COOKIE_NAME,
       value: token,
@@ -155,6 +164,7 @@ export const ensureCsrfCookie = (response: NextResponse, existingToken?: string 
       path: '/',
       secure: process.env['NODE_ENV'] === 'production',
       maxAge: 60 * 60 * 12, // 12 hours
+      ...(domain ? { domain } : {}),
     });
   }
   return token;

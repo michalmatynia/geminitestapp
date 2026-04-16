@@ -47,7 +47,7 @@ export function ProductScanPolicyBlock({
   if (isAmazonScan === true) return null;
 
   const summary = resolveProductScan1688ApplyPolicySummary(scan);
-  if (summary.isBlocked === false) return null;
+  if (summary === null || summary.isBlocked === false) return null;
 
   const isReviewed = summary.blockActions === true && isBlockedScanReviewed(scan.id);
 

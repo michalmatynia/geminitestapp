@@ -33,4 +33,13 @@ export const resolveKangurMobileWebCorsOrigins = (): string[] => {
   return [...DEFAULT_KANGUR_MOBILE_WEB_CORS_ORIGINS];
 };
 
+export const resolveKangurStudiqWebCorsOrigins = (): string[] =>
+  parseOriginList(process.env['KANGUR_WEB_CORS_ORIGINS']);
+
+export const resolveKangurTrustedWebOrigins = (): string[] =>
+  Array.from(
+    new Set([...resolveKangurMobileWebCorsOrigins(), ...resolveKangurStudiqWebCorsOrigins()])
+  );
+
 export const KANGUR_MOBILE_WEB_CORS_ORIGINS = resolveKangurMobileWebCorsOrigins();
+export const KANGUR_TRUSTED_WEB_ORIGINS = resolveKangurTrustedWebOrigins();

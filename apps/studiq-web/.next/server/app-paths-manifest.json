@@ -1,0 +1,18 @@
+{
+  "/[locale]/kangur/(app)/[...slug]/page": "app/[locale]/kangur/(app)/[...slug]/page.js",
+  "/[locale]/kangur/(app)/duels/page": "app/[locale]/kangur/(app)/duels/page.js",
+  "/[locale]/kangur/(app)/lessons/page": "app/[locale]/kangur/(app)/lessons/page.js",
+  "/[locale]/kangur/(app)/page": "app/[locale]/kangur/(app)/page.js",
+  "/[locale]/kangur/(app)/tests/page": "app/[locale]/kangur/(app)/tests/page.js",
+  "/[locale]/kangur/login/page": "app/[locale]/kangur/login/page.js",
+  "/[locale]/page": "app/[locale]/page.js",
+  "/_global-error/page": "app/_global-error/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/kangur/(app)/[...slug]/page": "app/kangur/(app)/[...slug]/page.js",
+  "/kangur/(app)/duels/page": "app/kangur/(app)/duels/page.js",
+  "/kangur/(app)/lessons/page": "app/kangur/(app)/lessons/page.js",
+  "/kangur/(app)/page": "app/kangur/(app)/page.js",
+  "/kangur/(app)/tests/page": "app/kangur/(app)/tests/page.js",
+  "/kangur/login/page": "app/kangur/login/page.js",
+  "/page": "app/page.js"
+}

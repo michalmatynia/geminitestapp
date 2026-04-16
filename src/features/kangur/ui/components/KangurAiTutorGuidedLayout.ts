@@ -19,17 +19,26 @@ import {
 import type { TutorPoint } from './ai-tutor-widget/KangurAiTutorWidget.types';
 import type { CSSProperties } from 'react';
 
+// Layout constants for the guided AI Tutor avatar and callout positioning.
+// These drive the geometry calculations that place the avatar adjacent to a
+// focused page section and position the callout bubble relative to the avatar.
 const FLOATING_TUTOR_ARROWHEAD_ANCHOR_X = 12.5;
 const FLOATING_TUTOR_ARROWHEAD_ANCHOR_Y = 9;
 const FLOATING_TUTOR_ARROWHEAD_DOT_RADIUS_PX = 3.2;
 const FLOATING_TUTOR_ARROWHEAD_ROTATION_OFFSET_DEG = 180;
 const FLOATING_TUTOR_ARROWHEAD_RIM_INSET_PX = FLOATING_TUTOR_ARROWHEAD_DOT_RADIUS_PX + 1;
+// Padding around the arrowhead corridor so the line doesn't clip the avatar edge.
 const FLOATING_TUTOR_ARROWHEAD_CORRIDOR_PADDING_PX = 18;
 const GUIDED_ARROWHEAD_MIN_TRANSITION_DURATION_S = 0.22;
+// Fixed height of the guided callout bubble (px). Used to compute whether the
+// callout fits above or below the avatar without clipping the viewport.
 export const GUIDED_CALLOUT_HEIGHT = 260;
 const GUIDED_CALLOUT_FOCUS_GAP = 28;
+// Height range for the selection callout attachment (px).
 const GUIDED_SELECTION_CALLOUT_ATTACHMENT_HEIGHT_MAX = 255;
 const GUIDED_SELECTION_CALLOUT_ATTACHMENT_HEIGHT_MIN = 219;
+// Extra height added to the callout when knowledge context or a revealed
+// answer is present in the selection explain flow.
 const GUIDED_SELECTION_KNOWLEDGE_CONTEXT_EXTRA_HEIGHT = 104;
 const GUIDED_SELECTION_RESOLVED_ANSWER_EXTRA_HEIGHT = 124;
 const GUIDED_SELECTION_PREVIEW_HEIGHT = 36;
@@ -43,6 +52,10 @@ type FloatingTutorArrowheadGeometry = TutorGuidedArrowhead;
 const clamp = (value: number, min: number, max: number): number =>
   Math.min(Math.max(value, min), max);
 
+// getGuidedAvatarRectForCallout computes the DOMRect where the guided avatar
+// should be positioned adjacent to a focused element. It clamps the avatar
+// within the surface bounds (respecting ATTACHED_AVATAR_EDGE_INSET) and
+// places it on the correct side (left/right/top/bottom) based on placement.
 const getGuidedAvatarRectForCallout = (input: {
   focusRect?: DOMRect | null;
   placement: ReturnType<typeof getGuidedAvatarAttachmentPlacement>;
@@ -248,6 +261,10 @@ const getGuidedSelectionPreviewRect = (calloutRect: DOMRect): DOMRect =>
     GUIDED_SELECTION_PREVIEW_HEIGHT
   );
 
+// resolveContinuousRotationDegrees computes the next rotation value that
+// minimises the angular delta from the previous value. This prevents the
+// arrowhead from spinning 350° in the wrong direction when crossing the
+// 0°/360° boundary.
 export const resolveContinuousRotationDegrees = (previous: number | null, next: number): number => {
   if (previous === null || !Number.isFinite(previous)) {
     return next;
@@ -263,6 +280,10 @@ export const resolveContinuousRotationDegrees = (previous: number | null, next: 
   return previous + bestDelta;
 };
 
+// formatGuidedArrowheadTransition builds the CSS transition string for the
+// arrowhead animation. Uses 55% of the avatar transition duration so the
+// arrowhead leads the avatar slightly. Returns undefined when reduced motion
+// is preferred (disables the transition entirely).
 export const formatGuidedArrowheadTransition = (
   motionProfile: TutorMotionProfile,
   prefersReducedMotion: boolean
@@ -361,6 +382,10 @@ export const getFloatingTutorArrowheadGeometry = (input: {
   };
 };
 
+// getFloatingTutorArrowCorridorRect computes the bounding rect of the
+// arrowhead corridor (the invisible hit-test region between the avatar and
+// the focus target). Used to suppress outside-click dismissal when the
+// pointer is within the corridor.
 export const getFloatingTutorArrowCorridorRect = (input: {
   avatarPoint: TutorPoint | null;
   arrowhead: FloatingTutorArrowheadGeometry | null;
@@ -385,6 +410,10 @@ export const getFloatingTutorArrowCorridorRect = (input: {
   return createRect(left, top, width, height);
 };
 
+// getGuidedCalloutLayout computes the position and entry direction for the
+// guided callout bubble relative to a focused element rect. It tries to place
+// the callout on the side with the most available space, avoids protected
+// rects (e.g. the avatar), and clamps within the viewport with EDGE_GAP.
 export const getGuidedCalloutLayout = (
   rect: DOMRect,
   viewport: { width: number; height: number },

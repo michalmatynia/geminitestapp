@@ -1,3 +1,4 @@
+/* eslint-disable complexity */
 import type { UnknownRecord } from '@/shared/contracts/base';
 import type {
   ClientErrorPayloadDto as ClientErrorPayload,
@@ -42,7 +43,7 @@ const safeSerialize = (value: unknown): SerializedContext => {
   try {
     const seen = new WeakSet();
     const json = JSON.stringify(value, (_key: string, val: unknown) => {
-      if (_key && isSensitiveKey(_key)) return REDACTED_VALUE;
+      if (_key !== '' && isSensitiveKey(_key)) return REDACTED_VALUE;
       if (typeof val === 'object' && val !== null) {
         if (seen.has(val)) return '[Circular]';
         seen.add(val);
@@ -52,7 +53,7 @@ const safeSerialize = (value: unknown): SerializedContext => {
       if (typeof val === 'string') return truncateString(val, MAX_VALUE_LENGTH);
       return val;
     });
-    if (!json) return null;
+    if (json.length === 0) return null;
     if (json.length > MAX_CONTEXT_SIZE) {
       return { truncated: true, preview: json.slice(0, MAX_CONTEXT_SIZE) };
     }
@@ -61,6 +62,55 @@ const safeSerialize = (value: unknown): SerializedContext => {
     logClientError(error);
     return { error: 'Failed to serialize context.' };
   }
+};
+
+const getErrorName = (error: unknown): string | undefined => {
+  if (error instanceof Error) return error.name;
+  if (error !== null && typeof error === 'object') {
+    const name = (error as { name?: string }).name;
+    return typeof name === 'string' && name.length > 0 ? name : undefined;
+  }
+  return undefined;
+};
+
+const getErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'string') return error;
+  if (error !== null && typeof error === 'object') {
+    const msg = (error as { message?: string }).message;
+    if (typeof msg === 'string' && msg.length > 0) return msg;
+  }
+  return 'Unknown client error';
+};
+
+const resolveUrlAndAgent = (): { url?: string; userAgent?: string } => {
+  const href = typeof window !== 'undefined' ? window.location.href : undefined;
+  const url = typeof href === 'string' && href.length > 0 ? href : undefined;
+  const agent = typeof navigator !== 'undefined' ? navigator.userAgent : undefined;
+  const userAgent = typeof agent === 'string' && agent.length > 0 ? agent : undefined;
+  return { url, userAgent };
+};
+
+const resolveMergedContext = (extra?: { context?: ClientErrorContext | null | undefined }, category?: string): ClientErrorContext | null => {
+  const mergedContext = extra?.context ?? null;
+  const hasBaseContext = Object.keys(baseContext).length > 0;
+  
+  let result: ClientErrorContext | null = null;
+  if (mergedContext !== null || hasBaseContext) {
+    result = { ...baseContext, ...(mergedContext ?? {}) };
+  }
+
+  const lastAction = getLastUserAction();
+  if (result !== null || lastAction !== null || (category !== undefined && category.length > 0)) {
+    const contextToSerialize = {
+      ...(result ?? {}),
+      ...(category !== undefined && category.length > 0 ? { category } : {}),
+      ...(lastAction !== null ? { lastAction } : {}),
+    };
+    const serialized = safeSerialize(contextToSerialize);
+    if (serialized !== null) return serialized as ClientErrorContext;
+  }
+  return null;
 };
 
 const buildPayload = (
@@ -72,44 +122,35 @@ const buildPayload = (
   }
 ): ClientErrorPayload => {
   const category = classifyError(error);
-  const url =
-    typeof window !== 'undefined' && window.location?.href ? window.location.href : undefined;
-  const userAgent =
-    typeof navigator !== 'undefined' && navigator.userAgent ? navigator.userAgent : undefined;
+  const { url, userAgent } = resolveUrlAndAgent();
 
   const payload: ClientErrorPayload = {
-    message: 'Unknown client error',
+    message: getErrorMessage(error),
     timestamp: new Date().toISOString(),
-    ...(url || userAgent ? { url, userAgent } : {}),
-    ...(extra?.digest ? { digest: extra.digest } : {}),
-    ...(extra?.componentStack ? { componentStack: extra.componentStack } : {}),
   };
 
-  if (error instanceof Error) {
-    payload.message = error.message;
-    payload.name = error.name;
-    payload.stack = error.stack ?? null;
-  } else if (typeof error === 'string') {
-    payload.message = error;
-  } else if (error && typeof error === 'object') {
-    payload.message = (error as { message?: string }).message ?? 'Unknown client error';
-    const errorName = (error as { name?: string }).name;
-    if (errorName) payload.name = errorName;
+  if (url !== undefined || userAgent !== undefined) {
+    if (url !== undefined) payload.url = url;
+    if (userAgent !== undefined) payload.userAgent = userAgent;
+  }
+  
+  if (extra?.digest !== undefined && extra.digest !== null) {
+    payload.digest = extra.digest;
+  }
+  if (extra?.componentStack !== undefined && extra.componentStack !== null) {
+    payload.componentStack = extra.componentStack;
   }
 
-  const mergedContext =
-    extra?.context || Object.keys(baseContext).length > 0
-      ? { ...baseContext, ...(extra?.context ?? {}) }
-      : null;
+  const name = getErrorName(error);
+  if (name !== undefined) payload.name = name;
 
-  if (mergedContext || getLastUserAction() || category) {
-    const contextToSerialize = {
-      ...(mergedContext || {}),
-      ...(category ? { category } : {}),
-      ...(getLastUserAction() ? { lastAction: getLastUserAction() } : {}),
-    };
-    const serialized = safeSerialize(contextToSerialize);
-    if (serialized) payload.context = serialized as ClientErrorContext;
+  if (error instanceof Error) {
+    payload.stack = error.stack ?? null;
+  }
+
+  const context = resolveMergedContext(extra, category);
+  if (context !== null) {
+    payload.context = context;
   }
 
   return payload;
@@ -131,22 +172,20 @@ const pruneRecentClientErrorSignatures = (nowMs: number): void => {
 
 const shouldSkipDuplicateClientTimeout = (payload: ClientErrorPayload): boolean => {
   const message = payload.message?.trim();
-  if (!message || !isTimeoutLikeMessage(message)) {
+  if (message === undefined || !isTimeoutLikeMessage(message)) {
     return false;
   }
 
-  const context =
-    payload.context && typeof payload.context === 'object'
+  const context = payload.context !== undefined && payload.context !== null && typeof payload.context === 'object'
       ? (payload.context as ClientErrorContext)
       : null;
   const endpoint = readContextString(context, 'endpoint');
   const method = readContextString(context, 'method');
   const source = readContextString(context, 'source');
   const pageUrl = typeof payload.url === 'string' ? payload.url.trim() : '';
-  const signature = [message.toLowerCase(), endpoint, method, source, pageUrl].join(
-    '::'
-  );
-  if (!signature.replace(/:/g, '').trim()) {
+  const signature = [message.toLowerCase(), endpoint, method, source, pageUrl].join('::');
+  
+  if (signature.replace(/:/g, '').trim().length === 0) {
     return false;
   }
 
@@ -182,56 +221,31 @@ const resolveClientLoggingLevel = (
   return 'error';
 };
 
-export const logClientError = (
-  error: unknown,
-  extra?: {
-    digest?: string | null | undefined;
-    componentStack?: string | null | undefined;
-    context?: ClientErrorContext | null | undefined;
-  }
-): void => {
-  if (typeof window === 'undefined') return;
-  if (isAbortLikeError(error)) return;
-  const loggingControlType = getObservabilityLoggingControlTypeForSystemLogLevel(
-    resolveClientLoggingLevel(extra)
-  );
-  if (!isClientLoggingControlEnabled(loggingControlType)) return;
-
-  // Prevent double logging of the same error instance
-  if (isLoggableObject(error) && error.__logged) {
-    return;
-  }
-
-  const payload = buildPayload(error, extra);
-  if (shouldSkipDuplicateClientTimeout(payload)) {
-    return;
-  }
-  const body = JSON.stringify(payload);
-
-  // Mark error as logged
-  if (isLoggableObject(error)) {
+const markAsLogged = (errorObj: unknown): void => {
+  if (isLoggableObject(errorObj)) {
     try {
-      error.__logged = true;
-    } catch (error) {
-      logClientError(error);
-    
+      // eslint-disable-next-line no-param-reassign
+      errorObj.__logged = true;
+    } catch (_ignoreErr) {
       // Ignore frozen objects
     }
   }
+};
 
+const sendClientErrorPayload = (payload: ClientErrorPayload): void => {
+  const body = JSON.stringify(payload);
   try {
     if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
       const blob = new Blob([body], { type: 'application/json' });
       navigator.sendBeacon('/api/client-errors', blob);
       return;
     }
-  } catch (error) {
-    logClientError(error);
-
+  } catch (_beaconError) {
     // fall back to fetch
   }
 
   if (typeof fetch === 'function') {
+    // eslint-disable-next-line no-void
     void fetch('/api/client-errors', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -243,15 +257,46 @@ export const logClientError = (
   }
 };
 
+export const logClientError = (
+  errorObj: unknown,
+  extra?: {
+    digest?: string | null | undefined;
+    componentStack?: string | null | undefined;
+    context?: ClientErrorContext | null | undefined;
+  }
+): void => {
+  if (typeof window === 'undefined') return;
+  if (isAbortLikeError(errorObj)) return;
+  
+  const loggingControlType = getObservabilityLoggingControlTypeForSystemLogLevel(
+    resolveClientLoggingLevel(extra)
+  );
+  if (!isClientLoggingControlEnabled(loggingControlType)) return;
+
+  // Prevent double logging of the same error instance
+  if (isLoggableObject(errorObj) && errorObj.__logged === true) {
+    return;
+  }
+
+  const payload = buildPayload(errorObj, extra);
+  if (shouldSkipDuplicateClientTimeout(payload)) {
+    return;
+  }
+
+  // Mark error as logged
+  markAsLogged(errorObj);
+  sendClientErrorPayload(payload);
+};
+
 export const logClientCatch = (
-  error: unknown,
+  errorObj: unknown,
   context: ClientErrorContext,
   extra?: {
     digest?: string | null | undefined;
     componentStack?: string | null | undefined;
   }
 ): void => {
-  logClientError(error, {
+  logClientError(errorObj, {
     ...(extra ?? {}),
     context,
   });

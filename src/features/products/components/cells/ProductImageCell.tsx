@@ -1,11 +1,18 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
 import Image from 'next/image';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
+import { updateProduct } from '@/features/products/api';
 import { useProductImagePreview } from '@/features/products/context/ProductImagePreviewContext';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { AppModal } from '@/shared/ui/feedback.public';
+import { FormActions } from '@/shared/ui/FormActions';
 import MissingImagePlaceholder from '@/shared/ui/missing-image-placeholder';
+import { useToast } from '@/shared/ui/toast';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { cn } from '@/shared/utils/ui-utils';
 
 type ProductNoteValue = {
@@ -15,9 +22,16 @@ type ProductNoteValue = {
 
 interface ProductImageCellProps {
   imageUrl: string | null;
+  productId: string;
   productName: string;
   note?: ProductNoteValue;
 }
+
+type ProductListCacheValue =
+  | ProductWithImages[]
+  | { items: ProductWithImages[] }
+  | null
+  | undefined;
 
 const BLUR_PLACEHOLDER =
   'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjMjcyNzJhIi8+PC9zdmc+';
@@ -58,12 +72,8 @@ const resolveProductNote = (
   if (!note) return null;
 
   const text = normalizeNoteText(note.text);
+  if (!text) return null;
   const color = normalizeNoteColor(note.color);
-  const hasExplicitColor = typeof note.color === 'string' && note.color.trim().length > 0;
-
-  if (!text && !hasExplicitColor) {
-    return null;
-  }
 
   return {
     text,
@@ -71,19 +81,106 @@ const resolveProductNote = (
   };
 };
 
+const mergeProductIntoListCache = (
+  cacheValue: ProductListCacheValue,
+  savedProduct: ProductWithImages
+): ProductListCacheValue => {
+  if (!cacheValue) return cacheValue;
+  if (Array.isArray(cacheValue)) {
+    return cacheValue.map((product: ProductWithImages) =>
+      product.id === savedProduct.id ? { ...product, ...savedProduct } : product
+    );
+  }
+  if (Array.isArray(cacheValue.items)) {
+    return {
+      ...cacheValue,
+      items: cacheValue.items.map((product: ProductWithImages) =>
+        product.id === savedProduct.id ? { ...product, ...savedProduct } : product
+      ),
+    };
+  }
+  return cacheValue;
+};
+
 export const ProductImageCell = React.memo(({
   imageUrl,
+  productId,
   productName,
   note,
 }: ProductImageCellProps): React.JSX.Element => {
   const { showPreview, updatePreview, hidePreview } = useProductImagePreview();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [noteModalOpen, setNoteModalOpen] = useState(false);
+  const [draftNoteText, setDraftNoteText] = useState('');
+  const [isSavingNote, setIsSavingNote] = useState(false);
 
   const unoptimized = useMemo(
     () => (imageUrl ? shouldSkipOptimization(imageUrl) : false),
     [imageUrl]
   );
   const resolvedNote = useMemo(() => resolveProductNote(note), [note]);
+  const noteColor = resolvedNote?.color ?? DEFAULT_NOTE_COLOR;
+  const hasDraftChanges = Boolean(resolvedNote && draftNoteText !== resolvedNote.text);
+
+  useEffect(() => {
+    if (noteModalOpen && resolvedNote) {
+      setDraftNoteText(resolvedNote.text);
+    }
+  }, [noteModalOpen, resolvedNote]);
+
+  const syncSavedProduct = (savedProduct: ProductWithImages): void => {
+    queryClient.setQueriesData({ queryKey: QUERY_KEYS.products.lists() }, (old: ProductListCacheValue) =>
+      mergeProductIntoListCache(old, savedProduct)
+    );
+    queryClient.setQueryData(QUERY_KEYS.products.detail(savedProduct.id), savedProduct);
+    queryClient.setQueryData(QUERY_KEYS.products.detailEdit(savedProduct.id), savedProduct);
+  };
+
+  const saveNote = async (options: { closeAfter?: boolean } = {}): Promise<void> => {
+    if (!resolvedNote || isSavingNote) {
+      if (options.closeAfter) setNoteModalOpen(false);
+      return;
+    }
+
+    const nextText = draftNoteText.trim();
+    if (nextText === resolvedNote.text) {
+      if (options.closeAfter) setNoteModalOpen(false);
+      return;
+    }
+
+    try {
+      setIsSavingNote(true);
+      const savedProduct = await updateProduct(productId, {
+        notes: nextText
+          ? { text: nextText, color: resolvedNote.color }
+          : { text: null, color: null },
+      } as Partial<ProductWithImages>);
+      syncSavedProduct(savedProduct);
+      toast(nextText ? 'Product note updated' : 'Product note removed', { variant: 'success' });
+      if (options.closeAfter || !nextText) {
+        setNoteModalOpen(false);
+      }
+    } catch (error) {
+      logClientCatch(error, {
+        source: 'ProductImageCell',
+        action: 'saveNote',
+        productId,
+      });
+      toast(error instanceof Error ? error.message : 'Failed to update product note', {
+        variant: 'error',
+      });
+    } finally {
+      setIsSavingNote(false);
+    }
+  };
+
+  const cancelNoteModal = (): void => {
+    if (resolvedNote) {
+      setDraftNoteText(resolvedNote.text);
+    }
+    setNoteModalOpen(false);
+  };
 
   return (
     <>
@@ -121,6 +218,7 @@ export const ProductImageCell = React.memo(({
               event.preventDefault();
               event.stopPropagation();
               hidePreview();
+              setDraftNoteText(resolvedNote.text);
               setNoteModalOpen(true);
             }}
           />
@@ -163,31 +261,63 @@ export const ProductImageCell = React.memo(({
       {resolvedNote ? (
         <AppModal
           open={noteModalOpen}
-          onClose={() => setNoteModalOpen(false)}
+          onClose={cancelNoteModal}
           title='Product note'
-          subtitle={productName}
+          titleHidden
           description={`Internal product note for ${productName}`}
           size='sm'
+          padding='none'
+          showClose={false}
+          closeOnOutside={!isSavingNote}
+          closeOnEscape={!isSavingNote}
+          className='overflow-hidden border-black/10 text-slate-900 shadow-[0_24px_70px_rgba(15,23,42,0.32)]'
+          bodyClassName='p-0'
+          style={{ backgroundColor: noteColor }}
+          header={
+            <div className='flex flex-col gap-3 text-slate-900 lg:flex-row lg:items-start lg:justify-between'>
+              <div className='min-w-0'>
+                <div className='flex min-w-0 items-center gap-2'>
+                  <FormActions
+                    onSave={() => {
+                      void saveNote();
+                    }}
+                    saveText='Save'
+                    saveVariant={hasDraftChanges ? 'success' : 'outline'}
+                    isSaving={isSavingNote}
+                    isDisabled={!hasDraftChanges || isSavingNote}
+                    className='mr-2'
+                  />
+                  <h2 className='truncate text-lg font-semibold leading-tight'>Product note</h2>
+                </div>
+                <p className='mt-1 truncate text-xs text-slate-700'>{productName}</p>
+              </div>
+              <div className='flex shrink-0 items-center gap-2'>
+                <FormActions
+                  onCancel={cancelNoteModal}
+                  cancelText='Cancel'
+                  isSaving={isSavingNote}
+                  isDisabled={isSavingNote}
+                />
+              </div>
+            </div>
+          }
         >
-          <div className='space-y-4'>
-            <div className='flex items-center gap-2 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground'>
-              <span
-                aria-hidden='true'
-                className='inline-flex h-3.5 w-3.5 rounded-sm border border-black/10 shadow-sm'
-                style={{ backgroundColor: resolvedNote.color }}
-              />
-              Note paper
-            </div>
-
-            <div
-              className='rounded-md border border-black/10 px-4 py-4 text-sm leading-relaxed text-slate-900 shadow-[0_14px_36px_rgba(15,23,42,0.22)]'
-              style={{ backgroundColor: resolvedNote.color }}
-            >
-              <p className='whitespace-pre-wrap break-words'>
-                {resolvedNote.text || 'No note text added yet.'}
-              </p>
-            </div>
-          </div>
+          <textarea
+            value={draftNoteText}
+            onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => {
+              setDraftNoteText(event.target.value);
+            }}
+            onKeyDown={(event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+              if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+                event.preventDefault();
+                void saveNote();
+              }
+            }}
+            disabled={isSavingNote}
+            aria-label={`Edit note for ${productName}`}
+            className='block min-h-56 w-full resize-none border-0 border-t border-black/10 bg-transparent px-6 py-5 text-sm leading-relaxed text-slate-900 outline-none ring-0 placeholder:text-slate-700/50 focus:border-t-black/20 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 disabled:opacity-70'
+            placeholder='Write an internal product note...'
+          />
         </AppModal>
       ) : null}
     </>

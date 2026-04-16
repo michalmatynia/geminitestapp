@@ -172,9 +172,9 @@ export const ProductImagePreviewProvider = ({ children }: { children: React.Reac
               </div>
             ) : null}
             {state.kind === 'note' ? (
-              <div className='h-[136px] w-[136px] bg-card p-2'>
+              <div className='h-[136px] w-[136px]'>
                 <div
-                  className='flex h-full w-full rounded-md border border-black/10 px-3 py-2 shadow-[0_14px_36px_rgba(15,23,42,0.22)]'
+                  className='flex h-full w-full rounded-lg border border-black/10 px-3 py-2 shadow-[0_14px_36px_rgba(15,23,42,0.22)]'
                   style={{ backgroundColor: state.noteColor ?? '#f5e7c3' }}
                 >
                   <p className='w-full overflow-hidden whitespace-pre-wrap break-words text-[11px] leading-[1.35] text-slate-900'>

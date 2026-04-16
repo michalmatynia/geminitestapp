@@ -162,7 +162,7 @@ const combineEnabledWithRequiredId = <TData, TTransformedData, TQueryKey extends
   return Boolean(enabled);
 };
 
-export function createSingleQueryV2<
+export function useSingleQueryV2<
   TData,
   TTransformedData = TData,
   TQueryKey extends QueryKey = QueryKey,
@@ -177,6 +177,14 @@ export function createSingleQueryV2<
     queryKey: resolvedQueryKey,
     ...(guardedEnabled !== undefined ? { enabled: guardedEnabled } : {}),
   }) as SingleQuery<TTransformedData>;
+}
+
+export function createSingleQueryV2<
+  TData,
+  TTransformedData = TData,
+  TQueryKey extends QueryKey = QueryKey,
+>(config: SingleQueryConfigV2<TData, TTransformedData, TQueryKey>): SingleQuery<TTransformedData> {
+  return useSingleQueryV2(config);
 }
 
 export function createPaginatedListQueryV2<TItem, TQueryKey extends QueryKey = QueryKey>(

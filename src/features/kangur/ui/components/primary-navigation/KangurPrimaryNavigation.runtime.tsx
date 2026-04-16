@@ -37,6 +37,9 @@ import {
 type KangurPrimaryNavigationTransitionPhase =
   'pending' | 'idle' | 'acknowledging' | 'waiting_for_ready' | 'revealing';
 
+// useKangurPrimaryNavigationMobileMenuBodyLock locks body scroll while the
+// mobile menu is open to prevent the page from scrolling behind the overlay.
+// Restores the previous overflow value on close.
 function useKangurPrimaryNavigationMobileMenuBodyLock(isMobileMenuOpen: boolean): void {
   useEffect(() => {
     if (!isMobileMenuOpen || typeof document === 'undefined') {
@@ -51,6 +54,8 @@ function useKangurPrimaryNavigationMobileMenuBodyLock(isMobileMenuOpen: boolean)
   }, [isMobileMenuOpen]);
 }
 
+// useKangurPrimaryNavigationMobileMenuEscapeClose closes the mobile menu
+// when the Escape key is pressed, following ARIA dialog keyboard conventions.
 function useKangurPrimaryNavigationMobileMenuEscapeClose({
   isMobileMenuOpen,
   setIsMobileMenuOpen,
@@ -76,6 +81,9 @@ function useKangurPrimaryNavigationMobileMenuEscapeClose({
   }, [isMobileMenuOpen, setIsMobileMenuOpen]);
 }
 
+// useKangurPrimaryNavigationMobileMenuFocusRestore saves the focused element
+// before the mobile menu opens and restores focus to it when the menu closes,
+// maintaining keyboard navigation continuity.
 function useKangurPrimaryNavigationMobileMenuFocusRestore({
   isMobileMenuOpen,
   mobileMenuPreviousFocusRef,
@@ -288,6 +296,15 @@ function useKangurPrimaryNavigationGuestPlayerNameRuntime({
   };
 }
 
+// useKangurPrimaryNavigationRuntime builds the full set of nav action configs
+// for the primary navigation bar. It assembles:
+//  - Home, Lessons, Games Library, Tests, Competition, Duels, Profile,
+//    Parent Dashboard, and subject/age-group switcher actions
+//  - Login / logout actions based on auth state
+//  - Guest player name input action
+//  - Mobile menu open/close actions
+// Each action is a KangurNavActionConfig with content, href, onClick, and
+// accessibility metadata. The configs are consumed by the nav renderer.
 export function useKangurPrimaryNavigationRuntime({
   ageGroup,
   currentPage,

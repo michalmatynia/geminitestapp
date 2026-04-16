@@ -9,6 +9,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const {
   adminLayoutMock,
   captureExceptionMock,
+  connectionMock,
   readOptionalRequestHeadersMock,
   readOptionalServerAuthSessionMock,
   readOptionalRequestCookiesMock,
@@ -16,6 +17,7 @@ const {
 } = vi.hoisted(() => ({
   adminLayoutMock: vi.fn(({ children }: { children: ReactNode }) => <>{children}</>),
   captureExceptionMock: vi.fn(),
+  connectionMock: vi.fn(),
   readOptionalRequestHeadersMock: vi.fn(),
   readOptionalServerAuthSessionMock: vi.fn(),
   readOptionalRequestCookiesMock: vi.fn(),
@@ -24,6 +26,10 @@ const {
 
 vi.mock('next/navigation', () => ({
   redirect: redirectMock,
+}));
+
+vi.mock('next/server', () => ({
+  connection: connectionMock,
 }));
 
 vi.mock('nextjs-toploader/app', () => ({
@@ -58,6 +64,7 @@ describe('admin app layout', () => {
     vi.resetModules();
     vi.clearAllMocks();
     adminLayoutMock.mockImplementation(({ children }: { children: ReactNode }) => <>{children}</>);
+    connectionMock.mockResolvedValue(undefined);
     readOptionalRequestHeadersMock.mockResolvedValue(null);
     readOptionalServerAuthSessionMock.mockResolvedValue({
       user: {

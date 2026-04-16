@@ -63,6 +63,9 @@ const KangurChoiceDialog = dynamic(() =>
 
 // --- Internal Components (previously components.tsx) ---
 
+// KangurPrimaryNavigationLoginAction renders the login button in the nav bar.
+// It reads the login action copy from the AI Tutor page content catalog so
+// the label can be customised per storefront without a code change.
 function KangurPrimaryNavigationLoginAction({
   className,
   fallbackLabel,
@@ -931,6 +934,10 @@ function KangurPrimaryNavigationContent(): React.JSX.Element {
   );
 }
 
+// KangurPrimaryNavigation is the top-level navigation bar for the StudiQ
+// learner shell. It wraps KangurPrimaryNavigationContent in the navigation
+// context provider so all sub-components can access shared nav state without
+// prop drilling.
 export function KangurPrimaryNavigation(props: KangurPrimaryNavigationProps): React.JSX.Element {
   return (
     <KangurPrimaryNavigationProvider {...props}>

@@ -92,6 +92,8 @@ type KangurGameResultContextValue = {
   xpToast: KangurGameResultXpToast;
 };
 
+// KangurGameResultContext provides result-screen data to all sub-components
+// without prop drilling. Scoped to the KangurGameResultWidget tree.
 const KangurGameResultContext = createContext<KangurGameResultContextValue | null>(null);
 
 function useKangurGameResult(): KangurGameResultContextValue {

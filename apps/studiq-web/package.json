@@ -1,0 +1,28 @@
+{
+  "name": "@app/studiq-web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --port 3100",
+    "build": "next build",
+    "start": "next start --port 3100",
+    "typecheck": "tsc -p tsconfig.json --noEmit --pretty false"
+  },
+  "dependencies": {
+    "@kangur/api-client": "file:../../packages/kangur-api-client",
+    "@kangur/contracts": "file:../../packages/kangur-contracts",
+    "@kangur/core": "file:../../packages/kangur-core",
+    "@kangur/platform": "file:../../packages/kangur-platform",
+    "next": "^16.1.1",
+    "next-intl": "^4.8.3",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3"
+  },
+  "devDependencies": {
+    "@types/node": "^25.4.0",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "typescript": "^5.9.3"
+  }
+}

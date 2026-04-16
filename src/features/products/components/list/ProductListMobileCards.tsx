@@ -299,6 +299,7 @@ const renderProductListMobileCard = ({
         <div className='shrink-0'>
           <ProductImageCell
             imageUrl={thumbnailUrl}
+            productId={product.id}
             productName={getProductDisplayName(product)}
             note={product.notes}
           />

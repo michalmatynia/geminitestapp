@@ -79,6 +79,8 @@ describe('ProductImagePreviewProvider', () => {
 
     expect(screen.getByText('Check the insert before export.')).toBeInTheDocument();
     expect(screen.queryByAltText('Gaming Bottle Opener')).not.toBeInTheDocument();
+    expect(screen.getByText('Check the insert before export.').parentElement?.parentElement)
+      .not.toHaveClass('p-2');
   });
 
   it('keeps rendering the image enlargement for image hover previews', () => {

@@ -97,6 +97,15 @@ const KangurLearnerProfileRuntimeStateContext =
 const KangurLearnerProfileRuntimeActionsContext =
   createContext<KangurLearnerProfileRuntimeActionsContextValue | null>(null);
 
+// Split into two contexts so profile UI components that only read state don't
+// re-render when action callbacks are recreated.
+
+// KangurLearnerProfileRuntimeProvider owns the learner profile page state:
+//  - Score history fetching (with synchronous cache peek to avoid loading flash)
+//  - Progress state for XP, streaks, and level display
+//  - Profile snapshot: weekly activity, recommendations, badge tracks
+//  - Localised translation helper that falls back across message namespaces
+//  - Derived values: maxWeeklyGames (chart Y-axis), xpToNextLevel
 export function KangurLearnerProfileRuntimeProvider({
   children,
 }: {
@@ -111,8 +120,13 @@ export function KangurLearnerProfileRuntimeProvider({
   const { subject } = useKangurSubjectFocus();
   const progress = useKangurProgressState();
   const hasUser = Boolean(user);
+  // scoreIdentity: resolved from the auth user to determine which score
+  // records belong to this learner (by learner ID, player name, or email).
   const scoreIdentity = useMemo(() => resolveLearnerProfileScoreIdentity(user), [user]);
   const hasScoreIdentity = hasLearnerProfileScoreIdentity(scoreIdentity);
+  // cachedScores: synchronously peek the React Query cache for scores that
+  // were already fetched on a previous render. Avoids a loading flash when
+  // the user navigates back to the profile page.
   const cachedScores = useMemo(() => {
     if (!hasScoreIdentity) {
       return null;
@@ -126,6 +140,9 @@ export function KangurLearnerProfileRuntimeProvider({
       limit: LEARNER_PROFILE_SCORE_FETCH_LIMIT,
     });
   }, [hasScoreIdentity, scoreIdentity.learnerId, scoreIdentity.userEmail, scoreIdentity.userName, subject]);
+  // translateRuntime: tries the profile-specific namespace first, then falls
+  // back to the shared progress namespace, then returns the raw key. Allows
+  // profile copy to override shared strings without duplicating all keys.
   const translateRuntime = useCallback(
     (key: string, values?: Record<string, string | number>) => {
       if (hasScopedMessage(messages, 'KangurLearnerProfileRuntime', key)) {
@@ -153,6 +170,8 @@ export function KangurLearnerProfileRuntimeProvider({
     subject,
   });
 
+  // snapshot: the full learner profile data structure used by all profile
+  // widgets. Rebuilt when progress, scores, locale, or translations change.
   const snapshot = useMemo(
     () =>
       buildKangurLearnerProfileSnapshot({
@@ -164,10 +183,15 @@ export function KangurLearnerProfileRuntimeProvider({
       }),
     [locale, progress, scores, translateRuntime]
   );
+  // maxWeeklyGames: the highest game count in the weekly activity series.
+  // Used as the Y-axis maximum for the activity chart. Minimum of 1 prevents
+  // a zero-height chart when the learner has no activity this week.
   const maxWeeklyGames = useMemo(
     () => Math.max(1, ...snapshot.weeklyActivity.map((point) => point.games)),
     [snapshot.weeklyActivity]
   );
+  // xpToNextLevel: XP remaining until the learner reaches the next level.
+  // Zero when the learner is at the maximum level.
   const xpToNextLevel = snapshot.nextLevel
     ? Math.max(0, snapshot.nextLevel.minXp - snapshot.totalXp)
     : 0;

@@ -1,0 +1,3 @@
+module.exports=[88868,a=>{"use strict";var b=a.i(7997);function c({children:a}){return(0,b.jsxs)("div",{className:"kangur-alias-app",children:[(0,b.jsx)("a",{className:"kangur-skip-link sr-only focus:not-sr-only",href:"#kangur-alias-main",children:"Skip to content"}),(0,b.jsx)("main",{id:"kangur-alias-main",children:a})]})}a.s(["default",()=>c])}];
+
+//# sourceMappingURL=apps_studiq-web_src_app_kangur_%28app%29_layout_tsx_4c123ee2._.js.map

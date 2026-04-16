@@ -8,6 +8,7 @@ import {
   normalizeTitleTermName,
   parseStructuredProductName,
   splitStructuredProductName,
+  syncPolishStructuredProductName,
   translateStructuredProductName,
 } from './title-terms';
 
@@ -107,5 +108,86 @@ describe('product title term helpers', () => {
         ],
       })
     ).toBe('Scout Regiment | 4 cm | Metal PL | Przypinka Anime | Atak Tytanow');
+  });
+
+  it('syncs Polish title segments while preserving a custom Polish base name', () => {
+    expect(
+      syncPolishStructuredProductName({
+        englishTitle: 'Survey Corps | 7 cm | Plastic | Anime Pin | Naruto',
+        polishTitle: 'Oddzial Zwiadowcow | 4 cm | Metal PL | Przypinka Anime | Atak Tytanow',
+        previousGeneratedPolishTitle:
+          'Scout Regiment | 4 cm | Metal PL | Przypinka Anime | Atak Tytanow',
+        sizeTerms: [
+          {
+            id: 'size-7',
+            name: '7 cm',
+            name_en: '7 cm',
+            name_pl: null,
+            catalogId: 'catalog-1',
+            type: 'size',
+          },
+        ],
+        materialTerms: [
+          {
+            id: 'material-plastic',
+            name: 'Plastic',
+            name_en: 'Plastic',
+            name_pl: 'Plastik',
+            catalogId: 'catalog-1',
+            type: 'material',
+          },
+        ],
+        categories: [
+          {
+            id: 'category-pin',
+            name: 'Anime Pin',
+            name_en: 'Anime Pin',
+            name_pl: 'Przypinka Anime',
+            name_de: null,
+            description: null,
+            color: null,
+            parentId: null,
+            catalogId: 'catalog-1',
+            sortIndex: 0,
+          },
+        ],
+        themeTerms: [
+          {
+            id: 'theme-naruto',
+            name: 'Naruto',
+            name_en: 'Naruto',
+            name_pl: 'Naruto PL',
+            catalogId: 'catalog-1',
+            type: 'theme',
+          },
+        ],
+      }).polishTitle
+    ).toBe('Oddzial Zwiadowcow | 7 cm | Plastik | Przypinka Anime | Naruto PL');
+  });
+
+  it('updates the Polish base name while it is generic or auto-generated', () => {
+    expect(
+      syncPolishStructuredProductName({
+        englishTitle: 'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan',
+        polishTitle: 'Parameter Name | 4 cm | Metal | Anime Pin | Attack On Titan',
+      }).polishTitle
+    ).toBe('Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan');
+
+    expect(
+      syncPolishStructuredProductName({
+        englishTitle: 'Survey Corps | 4 cm | Metal | Anime Pin | Attack On Titan',
+        polishTitle: 'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan',
+        previousGeneratedPolishTitle: 'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan',
+      }).polishTitle
+    ).toBe('Survey Corps | 4 cm | Metal | Anime Pin | Attack On Titan');
+
+    expect(
+      syncPolishStructuredProductName({
+        englishTitle: 'Survey Corps | 4 cm | Metal | Anime Pin | Attack On Titan',
+        polishTitle: 'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan',
+        previousGeneratedPolishTitle: 'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan',
+        syncPreviousGeneratedBaseName: false,
+      }).polishTitle
+    ).toBe('Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan');
   });
 });

@@ -49,7 +49,7 @@ vi.mock('@/shared/lib/product-query-keys', () => ({
   getProductDetailQueryKey: (id: string) => ['product', id],
 }));
 
-vi.mock('@/shared/lib/ai-paths', () => ({
+vi.mock('@/shared/lib/ai-paths/api', () => ({
   dbApi: {
     query: (...args: unknown[]) => mockState.dbQuery(...args),
   },

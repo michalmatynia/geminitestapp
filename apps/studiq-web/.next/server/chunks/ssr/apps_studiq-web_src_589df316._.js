@@ -1,0 +1,3 @@
+module.exports=[50917,a=>{"use strict";var b=a.i(7997);function c(){return(0,b.jsx)("div",{role:"status","aria-live":"polite","aria-busy":"true",className:"kangur-loading-fallback",children:(0,b.jsx)("span",{className:"sr-only",children:"Loading…"})})}a.s(["default",()=>c])},81405,a=>{"use strict";var b=a.i(7997),c=a.i(50917);function d(){return(0,b.jsx)(c.default,{})}a.s(["default",()=>d])}];
+
+//# sourceMappingURL=apps_studiq-web_src_589df316._.js.map

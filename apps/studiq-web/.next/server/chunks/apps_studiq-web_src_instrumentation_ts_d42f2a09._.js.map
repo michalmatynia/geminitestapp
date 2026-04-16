@@ -1,0 +1,1 @@
+{"version":3,"sources":["../../../../../apps/studiq-web/src/instrumentation.ts"],"sourcesContent":["export const register = async (): Promise<void> => {};\n"],"names":[],"mappings":"uCAAO,IAAM,EAAW,UAA4B"}

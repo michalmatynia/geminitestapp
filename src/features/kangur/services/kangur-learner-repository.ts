@@ -26,9 +26,13 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import type { Filter } from 'mongodb';
 
+// MongoDB collection and settings key constants for the learner repository.
 const KANGUR_LEARNERS_SETTINGS_KEY = 'kangur_learners.v1';
 const KANGUR_LEARNERS_COLLECTION = 'kangur_learners';
+// Unique index name used to detect duplicate loginName conflicts.
 const KANGUR_LEARNERS_LOGIN_NAME_UNIQUE_INDEX = 'kangur_learners_login_name_unique';
+// Cap on the number of "contains" matches returned by duel opponent search.
+// Configurable via KANGUR_DUEL_SEARCH_CONTAINS_CAP env var.
 const DEFAULT_DUEL_SEARCH_CONTAINS_CAP = 3;
 const MAX_DUEL_SEARCH_CONTAINS_CAP = 20;
 
@@ -52,8 +56,14 @@ type MongoKangurLearnerDocument = {
   passwordHash: string;
 };
 
+// normalizeLoginName lowercases and trims the login name so lookups are
+// case-insensitive and whitespace-tolerant.
 const normalizeLoginName = (value: string): string => value.trim().toLowerCase();
+// createLearnerPassword generates a random UUID-based password for new
+// learners. Parents set a PIN separately; this is the initial credential.
 const createLearnerPassword = (): string => randomUUID().replace(/-/g, '');
+// escapeRegex escapes special regex characters in user-supplied search terms
+// to prevent regex injection in MongoDB $regex queries.
 const escapeRegex = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const resolveDuelSearchContainsCap = (): number => {
   const raw = process.env['KANGUR_DUEL_SEARCH_CONTAINS_CAP'];
@@ -82,6 +92,9 @@ const normalizeAvatarId = (value: string | null | undefined): string | null => {
   return trimmed.length > 0 ? trimmed : null;
 };
 
+// isMongoDuplicateKeyError detects MongoDB E11000 duplicate key errors by
+// checking both the numeric error code and the error message string. Used to
+// convert duplicate loginName inserts into a user-facing conflict error.
 const isMongoDuplicateKeyError = (error: unknown): boolean => {
   const code =
     typeof error === 'object' && error !== null && 'code' in error
@@ -96,6 +109,9 @@ const isMongoDuplicateKeyError = (error: unknown): boolean => {
   return code === 11000 || message.includes('e11000') || message.includes('duplicate key');
 };
 
+// toPublicLearnerProfile strips the passwordHash from a stored document
+// before returning it to callers. Ensures credentials never leak outside
+// the repository layer.
 const toPublicLearnerProfile = (stored: StoredKangurLearnerProfile): KangurLearnerProfile => {
   const baseProfile: KangurLearnerProfile = {
     id: stored.id,
@@ -436,6 +452,10 @@ const readAllKnownLearners = async (): Promise<StoredKangurLearnerProfile[]> => 
   return mergeStoredLearners(mongoProfiles, legacyProfiles);
 };
 
+// listKangurLearnersByOwner returns all learner profiles owned by a parent
+// user. Uses React cache() so repeated calls within the same request are
+// deduplicated. Transparently merges MongoDB and legacy settings-store
+// profiles, migrating any missing legacy profiles to MongoDB on the fly.
 export const listKangurLearnersByOwner = cache(async (
   ownerUserId: string
 ): Promise<KangurLearnerProfile[]> => {
@@ -474,6 +494,10 @@ export const listKangurLearnersByOwner = cache(async (
   );
 });
 
+// searchKangurLearners searches learner profiles by display name or login
+// name for the duel opponent search feature. Combines exact-prefix matches
+// with contains matches, capped by DUEL_SEARCH_CONTAINS_CAP to limit
+// exposure of the learner list.
 export const searchKangurLearners = async (
   query: string,
   options?: { limit?: number; excludeLearnerId?: string }
@@ -577,6 +601,8 @@ export const searchKangurLearners = async (
   return applyContainsCap(sortMatches([...byId.values()]));
 };
 
+// getKangurLearnerById returns the public (no passwordHash) profile for a
+// learner ID, or null when not found.
 export const getKangurLearnerById = async (
   learnerId: string
 ): Promise<KangurLearnerProfile | null> => {
@@ -584,6 +610,9 @@ export const getKangurLearnerById = async (
   return match ? toPublicLearnerProfile(match) : null;
 };
 
+// getKangurStoredLearnerById returns the full stored profile (including
+// passwordHash) for internal use (e.g. auth). Migrates legacy profiles to
+// MongoDB on first access.
 export const getKangurStoredLearnerById = async (
   learnerId: string
 ): Promise<StoredKangurLearnerProfile | null> => {
@@ -604,6 +633,9 @@ export const getKangurStoredLearnerById = async (
   return legacyProfile;
 };
 
+// getKangurStoredLearnerByLoginName looks up a stored profile by normalized
+// login name. Used during learner authentication to retrieve the passwordHash
+// for bcrypt comparison.
 export const getKangurStoredLearnerByLoginName = async (
   loginName: string
 ): Promise<StoredKangurLearnerProfile | null> => {

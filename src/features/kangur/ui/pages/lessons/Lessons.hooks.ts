@@ -45,6 +45,8 @@ import {
 import type { LessonsActiveLessonSnapshot } from './Lessons.types';
 export type { LessonsActiveLessonSnapshot } from './Lessons.types';
 
+// Stable empty sentinels — shared references prevent unnecessary re-renders
+// in consumers that depend on referential equality.
 const EMPTY_LESSONS: KangurLesson[] = [];
 const EMPTY_LESSON_ASSIGNMENTS_BY_COMPONENT = new Map<
   KangurLessonComponentId,
@@ -56,6 +58,9 @@ const EMPTY_LESSON_TEMPLATE_MAP = new Map<
 >();
 const EMPTY_LESSON_DOCUMENTS = {} as KangurLessonDocumentStore;
 
+// useLessonsActiveLessonRenderSnapshot memoises the active-lesson snapshot
+// passed to the lesson panel. Returning null when no lesson is active lets
+// the panel unmount cleanly without stale data.
 export function useLessonsActiveLessonRenderSnapshot(input: {
   activeLesson: KangurLesson | null;
   activeLessonId: string | null;
@@ -123,6 +128,19 @@ export function useLessonsActiveLessonRenderSnapshot(input: {
   );
 }
 
+// useLessonsLogic is the primary hook for the Lessons page. It owns:
+//
+//  - Incremental lesson catalog loading: lessons are fetched in batches
+//    (activeLessonComponentIdBatch) rather than all at once, so the page
+//    renders quickly and loads additional lessons on demand.
+//  - Complete catalog fallback: when shouldLoadCompleteLessonsCatalog is true
+//    (e.g. user scrolls the full list), the full catalog is fetched.
+//  - Active lesson selection driven by URL focus token or user interaction.
+//  - Assignment loading gated behind isDeferredContentReady + rAF so it
+//    doesn't block the initial paint.
+//  - Scroll management: refs for the lesson header, content, and scroll
+//    container are used to animate the header on scroll.
+//  - Subject/age-group focus: persisted across navigations via context.
 export function useLessonsLogic() {
   const routeNavigator = useKangurRouteNavigator();
   const { basePath } = useKangurRouting();
@@ -135,23 +153,38 @@ export function useLessonsLogic() {
   const canAccessParentAssignments =
     auth.canAccessParentAssignments ?? Boolean(user?.activeLearner?.id);
   const isMobile = useKangurMobileBreakpoint();
+  // isDeferredContentReady: set to true after the first rAF tick so heavy
+  // secondary data fetches (assignments, complete catalog) don't block paint.
   const [isDeferredContentReady, setIsDeferredContentReady] = useState(false);
+  // requestedLessonComponentIds: component IDs queued for incremental loading.
   const [requestedLessonComponentIds, setRequestedLessonComponentIds] = useState<
     KangurLessonComponentId[]
   >([]);
+  // pendingLessonComponentIdBatches: batches waiting to be promoted to the
+  // active batch once the current batch finishes loading.
   const [pendingLessonComponentIdBatches, setPendingLessonComponentIdBatches] = useState<
     KangurLessonComponentId[][]
   >([]);
+  // activeLessonComponentIdBatch: the batch currently being fetched. Null
+  // when no incremental load is in progress.
   const [activeLessonComponentIdBatch, setActiveLessonComponentIdBatch] = useState<
     KangurLessonComponentId[] | null
   >(null);
+  // loadedLessonsByComponent: accumulates incrementally loaded lessons so
+  // previously fetched lessons remain available while new batches load.
   const [loadedLessonsByComponent, setLoadedLessonsByComponent] = useState<
     Map<KangurLessonComponentId, KangurLesson>
   >(new Map());
+  // shouldLoadCompleteLessonsCatalog: flipped to true when the user needs the
+  // full lesson list (e.g. opens the catalog drawer).
   const [shouldLoadCompleteLessonsCatalog, setShouldLoadCompleteLessonsCatalog] = useState(false);
+  // isActiveLessonComponentReady: true once the active lesson's React
+  // component has mounted and signalled readiness.
   const [isActiveLessonComponentReady, setIsActiveLessonComponentReady] = useState(false);
   const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
   const [isSecretLessonActive, setIsSecretLessonActive] = useState(false);
+  // focusToken: read from the URL ?focus= param on mount and on basePath
+  // changes. Drives automatic lesson selection when the page is deep-linked.
   const [focusToken, setFocusToken] = useState<string | null>(() => {
     if (typeof window === 'undefined') {
       return null;
@@ -165,13 +198,18 @@ export function useLessonsLogic() {
   });
   const [isAssignmentsReady, setIsAssignmentsReady] = useState(false);
   const lessonTemplateMap = EMPTY_LESSON_TEMPLATE_MAP;
+  // shouldLoadLessonCatalogDetails: true when either the full catalog or a
+  // specific set of component IDs has been requested.
   const shouldLoadLessonCatalogDetails =
     shouldLoadCompleteLessonsCatalog || requestedLessonComponentIds.length > 0;
+  // shouldLoadLessonRuntimeMetadata: true when a lesson is active. Gates
+  // progress fetching so it only runs when actually needed.
   const shouldLoadLessonRuntimeMetadata = activeLessonId !== null;
   const progress = useKangurProgressState({
     enabled: shouldLoadLessonRuntimeMetadata,
   });
   
+  // Refs for the lesson panel DOM nodes used by scroll and animation logic.
   const activeLessonNavigationRef = useRef<HTMLDivElement | null>(null);
   const activeLessonHeaderRef = useRef<HTMLDivElement | null>(null);
   const activeLessonContentRef = useRef<HTMLDivElement | null>(null);
@@ -184,6 +222,9 @@ export function useLessonsLogic() {
     },
   });
 
+  // isDeferredContentReady effect: fires after the first rAF tick (or
+  // immediately during SSR) to unblock secondary data fetches without
+  // delaying the initial paint.
   useEffect(() => {
     if (typeof window === 'undefined') {
       setIsDeferredContentReady(true);
@@ -226,6 +267,9 @@ export function useLessonsLogic() {
     setFocusToken(nextFocusToken && nextFocusToken.length > 0 ? nextFocusToken : null);
   }, [basePath]);
 
+  // isAssignmentsReady effect: gates assignment fetching behind both
+  // isDeferredContentReady and an active lesson being open. Uses rAF so the
+  // assignment query doesn't compete with the lesson render on the same frame.
   useEffect((): (() => void) | void => {
     if (
       !isDeferredContentReady ||
@@ -271,12 +315,16 @@ export function useLessonsLogic() {
     shouldLoadCompleteLessonsCatalog || requestedLessonComponentIds.length === 0
       ? undefined
       : requestedLessonComponentIds;
+  // completeLessonsQuery: full catalog fetch, only enabled when the user has
+  // explicitly requested the complete list.
   const completeLessonsQuery = useKangurLessonsCatalog({
     subject,
     ageGroup,
     enabledOnly: true,
     enabled: shouldLoadCompleteLessonsCatalog,
   });
+  // incrementalLessonsQuery: fetches only the active batch of component IDs.
+  // Disabled when the full catalog is already being loaded.
   const incrementalLessonsQuery = useKangurLessons({
     subject,
     ageGroup,

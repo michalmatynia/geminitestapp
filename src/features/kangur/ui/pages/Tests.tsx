@@ -59,7 +59,12 @@ import {
 } from '@/features/kangur/test-suites/questions';
 
 const TESTS_MAIN_ID = 'kangur-tests-main';
+// ACTIVE_TESTS_SCROLL_MAX_FRAMES: number of rAF ticks used to scroll the
+// active test suite into view after selection. Multiple frames ensure the
+// layout has settled before the scroll fires.
 const ACTIVE_TESTS_SCROLL_MAX_FRAMES = 18;
+// ACTIVE_TESTS_ANCHOR_ID: DOM id of the active test intro card. Used as the
+// scroll target when a suite is selected.
 const ACTIVE_TESTS_ANCHOR_ID = 'kangur-tests-active-intro';
 
 type TestsTranslations = ReturnType<typeof useTranslations>;
@@ -68,6 +73,9 @@ type TestsEmptyStateCopy = {
   title: string;
 };
 
+// resolveFocusedSuiteId resolves a test suite ID from a URL focus token.
+// Tries matching by ID, title substring, category substring, and year in
+// order so deep-links can target suites by any of these identifiers.
 const resolveFocusedSuiteId = (
   focusToken: string,
   suites: KangurTestSuite[]
@@ -94,6 +102,9 @@ const resolveFocusedSuiteId = (
   return null;
 };
 
+// resolveVisibleTestSuites filters the raw suite list for display. Suites
+// are hidden until deferred content is ready (post-paint) and filtered by
+// age group focus when adult mode is active.
 const resolveVisibleTestSuites = ({
   isAdultFocus,
   isDeferredContentReady,
@@ -721,6 +732,14 @@ function TestsPageContent(props: {
   );
 }
 
+// Tests is the learner-facing test suites page. It owns:
+//  - Test suite list rendering (filtered by age group and deferred readiness)
+//  - Active suite selection driven by URL focus token or user interaction
+//  - Test player (KangurTestSuitePlayer) rendered inline when a suite is active
+//  - Scroll-to-active-suite after selection (multi-frame rAF loop)
+//  - Learner activity ping during active test sessions
+//  - Route page-ready signalling
+//  - Auth-gated suite access (login modal for unauthenticated learners)
 export default function Tests(): React.JSX.Element {
   const locale = useLocale();
   const translations = useTranslations('KangurTests');

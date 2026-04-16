@@ -74,6 +74,9 @@ interface LessonsCatalogContextValue extends LessonsViewState {
   translations: LessonsTranslation;
 }
 
+// LessonsCatalogContext provides shared catalog state and translations to all
+// catalog sub-components without prop drilling. Scoped to the LessonsCatalog
+// tree so it doesn't interfere with other lesson contexts.
 const LessonsCatalogContext = React.createContext<LessonsCatalogContextValue | null>(null);
 
 function useLessonsCatalogContext(): LessonsCatalogContextValue {
@@ -84,6 +87,9 @@ function useLessonsCatalogContext(): LessonsCatalogContextValue {
   return context;
 }
 
+// Skeleton dimensions: 3 section blocks each containing 2 lesson cards.
+// Matches the typical first-load layout so the skeleton doesn't cause a
+// large layout shift when real content arrives.
 const LESSONS_SKELETON_SECTION_COUNT = 3;
 const LESSONS_SKELETON_CARD_COUNT = 2;
 
@@ -155,6 +161,9 @@ function LessonsCatalogDeferredLoadingCard({
   );
 }
 
+// renderLessonsCatalogIntroDescription renders the intro description for the
+// lessons page. For the six-year-old subject it adds visual step icons and
+// an emoji icon alongside the text label.
 function renderLessonsCatalogIntroDescription({
   isSixYearOld,
   label,
@@ -640,6 +649,14 @@ function LessonsCatalogResolvedContent() {
   );
 }
 
+// LessonsCatalog renders the full lesson library for the active subject and
+// age group. It:
+//  - Shows a skeleton while sections are loading to prevent layout shift
+//  - Groups lessons into sections and subsections from the catalog metadata
+//  - Renders the intro card with page content from the AI Tutor catalog
+//  - Prefetches the active lesson view on hover/focus for instant open
+//  - Supports the six-year-old subject with visual cues and group icons
+//  - Provides LessonsCatalogContext to all sub-components
 export function LessonsCatalog() {
   const locale = useLocale();
   const translations = useTranslations('KangurLessonsPage');

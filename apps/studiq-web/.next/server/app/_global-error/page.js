@@ -1,0 +1,10 @@
+var R=require("../../chunks/ssr/[turbopack]_runtime.js")("server/app/_global-error/page.js")
+R.c("server/chunks/ssr/node_modules_8bc17d92._.js")
+R.c("server/chunks/ssr/[root-of-the-server]__5d5aaa26._.js")
+R.c("server/chunks/ssr/node_modules_next_dist_08570d7f._.js")
+R.c("server/chunks/ssr/[root-of-the-server]__c3cffade._.js")
+R.c("server/chunks/ssr/[root-of-the-server]__867903a0._.js")
+R.c("server/chunks/ssr/node_modules_861e98fe._.js")
+R.c("server/chunks/ssr/apps_studiq-web__next-internal_server_app__global-error_page_actions_6d3d29ca.js")
+R.m(37823)
+module.exports=R.m(37823).exports

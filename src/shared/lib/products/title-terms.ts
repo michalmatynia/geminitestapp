@@ -16,11 +16,26 @@ export type StructuredProductName = {
 
 export type StructuredProductTitleLocale = 'en' | 'pl';
 
+export type StructuredProductNameSegments = readonly [string, string, string, string, string];
+
+export type PolishStructuredProductNameSyncResult = {
+  polishTitle: string;
+  generatedPolishTitle: string;
+  generatedPolishSegments: StructuredProductNameSegments;
+  baseNameSynced: boolean;
+};
+
 export const PRODUCT_TITLE_TERM_TYPES = ['size', 'material', 'theme'] as const satisfies readonly ProductTitleTermType[];
 
 const normalizeSegment = (value: string): string => value.trim().replace(/\s+/g, ' ');
 
 export const normalizeTitleTermName = (value: string): string => normalizeSegment(value).toLowerCase();
+
+const toStructuredSegments = (value: string): StructuredProductNameSegments => {
+  const [baseName = '', size = '', material = '', category = '', theme = ''] =
+    splitStructuredProductName(value);
+  return [baseName, size, material, category, theme];
+};
 
 export const splitStructuredProductName = (value: string): string[] =>
   value
@@ -32,11 +47,14 @@ export const normalizeStructuredProductName = (value: string): string =>
     .filter((segment: string): boolean => segment.length > 0)
     .join(PRODUCT_TITLE_SEPARATOR);
 
+const hasCompleteStructuredSegments = (segments: StructuredProductNameSegments): boolean =>
+  segments.every((segment: string): boolean => segment.length > 0);
+
 export const parseStructuredProductName = (value: string): StructuredProductName | null => {
   const [baseName = '', size = '', material = '', category = '', theme = '', ...rest] =
     splitStructuredProductName(value);
   if (rest.length > 0) return null;
-  if (!baseName || !size || !material || !category || !theme) return null;
+  if (!hasCompleteStructuredSegments([baseName, size, material, category, theme])) return null;
   return {
     baseName,
     size,
@@ -61,7 +79,7 @@ export const composeStructuredProductNameSegments = (value: readonly string[]): 
   const segments = value.map((segment: string): string => normalizeSegment(segment));
   let lastNonEmptyIndex = -1;
   for (let index = segments.length - 1; index >= 0; index -= 1) {
-    if (segments[index]) {
+    if ((segments[index] ?? '').length > 0) {
       lastNonEmptyIndex = index;
       break;
     }
@@ -75,7 +93,7 @@ const resolveFirstLocalizedValue = (
 ): string | null => {
   for (const value of values) {
     const normalized = normalizeSegment(value ?? '');
-    if (normalized) return normalized;
+    if (normalized.length > 0) return normalized;
   }
   return null;
 };
@@ -116,7 +134,7 @@ const findTitleTermByEnglishSegment = (
   englishSegment: string
 ): ProductTitleTerm | null => {
   const lookupKey = normalizeTitleTermName(englishSegment);
-  if (!lookupKey) return null;
+  if (lookupKey === '') return null;
   const matches = (terms ?? []).filter((term: ProductTitleTerm): boolean =>
     matchesNormalizedValue(term.name_en, lookupKey)
   );
@@ -128,7 +146,7 @@ const findCategoryBySegment = (
   segment: string
 ): ProductCategory | null => {
   const lookupKey = normalizeTitleTermName(segment);
-  if (!lookupKey) return null;
+  if (lookupKey === '') return null;
   const matches = (categories ?? []).filter((category: ProductCategory): boolean =>
     [category.name_en, category.name, category.name_pl, category.name_de].some((candidate) =>
       matchesNormalizedValue(candidate, lookupKey)
@@ -143,7 +161,7 @@ const translateTitleTermSegment = (
   locale: StructuredProductTitleLocale
 ): string => {
   const normalizedSegment = normalizeSegment(segment);
-  if (!normalizedSegment) return '';
+  if (normalizedSegment === '') return '';
   const matchedTerm = findTitleTermByEnglishSegment(terms, normalizedSegment);
   return matchedTerm ? resolveLocalizedTitleTermName(matchedTerm, locale) : normalizedSegment;
 };
@@ -154,9 +172,35 @@ const translateCategorySegment = (
   locale: StructuredProductTitleLocale
 ): string => {
   const normalizedSegment = normalizeSegment(segment);
-  if (!normalizedSegment) return '';
+  if (normalizedSegment === '') return '';
   const matchedCategory = findCategoryBySegment(categories, normalizedSegment);
   return matchedCategory ? resolveLocalizedCategoryName(matchedCategory, locale) : normalizedSegment;
+};
+
+export const translateStructuredProductNameSegments = ({
+  englishTitle,
+  locale,
+  sizeTerms,
+  materialTerms,
+  categories,
+  themeTerms,
+}: {
+  englishTitle: string;
+  locale: StructuredProductTitleLocale;
+  sizeTerms?: ProductTitleTerm[];
+  materialTerms?: ProductTitleTerm[];
+  categories?: ProductCategory[];
+  themeTerms?: ProductTitleTerm[];
+}): StructuredProductNameSegments => {
+  const [baseName, size, material, category, theme] = toStructuredSegments(englishTitle);
+
+  return [
+    baseName,
+    translateTitleTermSegment(size, sizeTerms, locale),
+    translateTitleTermSegment(material, materialTerms, locale),
+    translateCategorySegment(category, categories, locale),
+    translateTitleTermSegment(theme, themeTerms, locale),
+  ];
 };
 
 export const translateStructuredProductName = ({
@@ -174,14 +218,101 @@ export const translateStructuredProductName = ({
   categories?: ProductCategory[];
   themeTerms?: ProductTitleTerm[];
 }): string => {
-  const [baseName = '', size = '', material = '', category = '', theme = ''] =
-    splitStructuredProductName(englishTitle);
+  return composeStructuredProductNameSegments(
+    translateStructuredProductNameSegments({
+      englishTitle,
+      locale,
+      sizeTerms,
+      materialTerms,
+      categories,
+      themeTerms,
+    })
+  );
+};
 
-  return composeStructuredProductNameSegments([
-    baseName,
-    translateTitleTermSegment(size, sizeTerms, locale),
-    translateTitleTermSegment(material, materialTerms, locale),
-    translateCategorySegment(category, categories, locale),
-    translateTitleTermSegment(theme, themeTerms, locale),
-  ]);
+const GENERIC_POLISH_BASE_NAME_VALUES = new Set([
+  'name',
+  'nazwa',
+  'nazwa parametru',
+  'nazwa produktu',
+  'parameter name',
+  'product name',
+  'title',
+  'tytul',
+  'tytuł',
+  '<name>',
+  '<nazwa>',
+  '<nazwa parametru>',
+  '<nazwa produktu>',
+  '<parameter name>',
+  '<product name>',
+]);
+
+const shouldSyncPolishBaseName = ({
+  currentBaseName,
+  previousGeneratedBaseName,
+  syncPreviousGeneratedBaseName,
+}: {
+  currentBaseName: string;
+  previousGeneratedBaseName: string;
+  syncPreviousGeneratedBaseName: boolean;
+}): boolean => {
+  const normalizedCurrentBaseName = normalizeTitleTermName(currentBaseName);
+  if (normalizedCurrentBaseName === '') return true;
+  if (GENERIC_POLISH_BASE_NAME_VALUES.has(normalizedCurrentBaseName)) return true;
+  if (syncPreviousGeneratedBaseName === false) return false;
+  return (
+    previousGeneratedBaseName.trim() !== '' &&
+    normalizedCurrentBaseName === normalizeTitleTermName(previousGeneratedBaseName)
+  );
+};
+
+export const syncPolishStructuredProductName = ({
+  englishTitle,
+  polishTitle,
+  previousGeneratedPolishTitle = '',
+  syncPreviousGeneratedBaseName = true,
+  sizeTerms,
+  materialTerms,
+  categories,
+  themeTerms,
+}: {
+  englishTitle: string;
+  polishTitle: string;
+  previousGeneratedPolishTitle?: string;
+  syncPreviousGeneratedBaseName?: boolean;
+  sizeTerms?: ProductTitleTerm[];
+  materialTerms?: ProductTitleTerm[];
+  categories?: ProductCategory[];
+  themeTerms?: ProductTitleTerm[];
+}): PolishStructuredProductNameSyncResult => {
+  const generatedPolishSegments = translateStructuredProductNameSegments({
+    englishTitle,
+    locale: 'pl',
+    sizeTerms,
+    materialTerms,
+    categories,
+    themeTerms,
+  });
+  const currentPolishSegments = toStructuredSegments(polishTitle);
+  const previousGeneratedPolishSegments = toStructuredSegments(previousGeneratedPolishTitle);
+  const baseNameSynced = shouldSyncPolishBaseName({
+    currentBaseName: currentPolishSegments[0],
+    previousGeneratedBaseName: previousGeneratedPolishSegments[0],
+    syncPreviousGeneratedBaseName,
+  });
+  const nextPolishSegments: StructuredProductNameSegments = [
+    baseNameSynced ? generatedPolishSegments[0] : currentPolishSegments[0],
+    generatedPolishSegments[1],
+    generatedPolishSegments[2],
+    generatedPolishSegments[3],
+    generatedPolishSegments[4],
+  ];
+
+  return {
+    polishTitle: composeStructuredProductNameSegments(nextPolishSegments),
+    generatedPolishTitle: composeStructuredProductNameSegments(generatedPolishSegments),
+    generatedPolishSegments,
+    baseNameSynced,
+  };
 };

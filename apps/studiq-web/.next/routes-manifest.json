@@ -1,0 +1,158 @@
+{
+  "version": 3,
+  "pages404": true,
+  "appType": "app",
+  "caseSensitive": false,
+  "basePath": "",
+  "redirects": [
+    {
+      "source": "/:path+/",
+      "destination": "/:path+",
+      "internal": true,
+      "priority": true,
+      "statusCode": 308,
+      "regex": "^(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))/$"
+    }
+  ],
+  "headers": [],
+  "rewrites": {
+    "beforeFiles": [],
+    "afterFiles": [],
+    "fallback": []
+  },
+  "dynamicRoutes": [
+    {
+      "page": "/kangur/[...slug]",
+      "regex": "^/kangur/(.+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPslug": "nxtPslug"
+      },
+      "namedRegex": "^/kangur/(?<nxtPslug>.+?)(?:/)?$"
+    },
+    {
+      "page": "/[locale]",
+      "regex": "^/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPlocale": "nxtPlocale"
+      },
+      "namedRegex": "^/(?<nxtPlocale>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/[locale]/kangur",
+      "regex": "^/([^/]+?)/kangur(?:/)?$",
+      "routeKeys": {
+        "nxtPlocale": "nxtPlocale"
+      },
+      "namedRegex": "^/(?<nxtPlocale>[^/]+?)/kangur(?:/)?$"
+    },
+    {
+      "page": "/[locale]/kangur/duels",
+      "regex": "^/([^/]+?)/kangur/duels(?:/)?$",
+      "routeKeys": {
+        "nxtPlocale": "nxtPlocale"
+      },
+      "namedRegex": "^/(?<nxtPlocale>[^/]+?)/kangur/duels(?:/)?$"
+    },
+    {
+      "page": "/[locale]/kangur/lessons",
+      "regex": "^/([^/]+?)/kangur/lessons(?:/)?$",
+      "routeKeys": {
+        "nxtPlocale": "nxtPlocale"
+      },
+      "namedRegex": "^/(?<nxtPlocale>[^/]+?)/kangur/lessons(?:/)?$"
+    },
+    {
+      "page": "/[locale]/kangur/login",
+      "regex": "^/([^/]+?)/kangur/login(?:/)?$",
+      "routeKeys": {
+        "nxtPlocale": "nxtPlocale"
+      },
+      "namedRegex": "^/(?<nxtPlocale>[^/]+?)/kangur/login(?:/)?$"
+    },
+    {
+      "page": "/[locale]/kangur/tests",
+      "regex": "^/([^/]+?)/kangur/tests(?:/)?$",
+      "routeKeys": {
+        "nxtPlocale": "nxtPlocale"
+      },
+      "namedRegex": "^/(?<nxtPlocale>[^/]+?)/kangur/tests(?:/)?$"
+    },
+    {
+      "page": "/[locale]/kangur/[...slug]",
+      "regex": "^/([^/]+?)/kangur/(.+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPlocale": "nxtPlocale",
+        "nxtPslug": "nxtPslug"
+      },
+      "namedRegex": "^/(?<nxtPlocale>[^/]+?)/kangur/(?<nxtPslug>.+?)(?:/)?$"
+    }
+  ],
+  "staticRoutes": [
+    {
+      "page": "/",
+      "regex": "^/(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/(?:/)?$"
+    },
+    {
+      "page": "/_global-error",
+      "regex": "^/_global\\-error(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_global\\-error(?:/)?$"
+    },
+    {
+      "page": "/_not-found",
+      "regex": "^/_not\\-found(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_not\\-found(?:/)?$"
+    },
+    {
+      "page": "/kangur",
+      "regex": "^/kangur(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/kangur(?:/)?$"
+    },
+    {
+      "page": "/kangur/duels",
+      "regex": "^/kangur/duels(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/kangur/duels(?:/)?$"
+    },
+    {
+      "page": "/kangur/lessons",
+      "regex": "^/kangur/lessons(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/kangur/lessons(?:/)?$"
+    },
+    {
+      "page": "/kangur/login",
+      "regex": "^/kangur/login(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/kangur/login(?:/)?$"
+    },
+    {
+      "page": "/kangur/tests",
+      "regex": "^/kangur/tests(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/kangur/tests(?:/)?$"
+    }
+  ],
+  "dataRoutes": [],
+  "rsc": {
+    "header": "rsc",
+    "varyHeader": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+    "prefetchHeader": "next-router-prefetch",
+    "didPostponeHeader": "x-nextjs-postponed",
+    "contentTypeHeader": "text/x-component",
+    "suffix": ".rsc",
+    "prefetchSegmentHeader": "next-router-segment-prefetch",
+    "prefetchSegmentSuffix": ".segment.rsc",
+    "prefetchSegmentDirSuffix": ".segments",
+    "clientParamParsing": false,
+    "dynamicRSCPrerender": false
+  },
+  "rewriteHeaders": {
+    "pathHeader": "x-nextjs-rewritten-path",
+    "queryHeader": "x-nextjs-rewritten-query"
+  }
+}

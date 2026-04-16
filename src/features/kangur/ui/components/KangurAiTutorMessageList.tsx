@@ -19,6 +19,8 @@ import { useKangurAiTutorWidgetStateContext } from './ai-tutor-widget/KangurAiTu
 
 import { type JSX, useMemo } from 'react';
 
+// Acknowledge delay for follow-up route navigations. Set to 0 so the
+// navigation fires immediately without waiting for a skeleton window.
 const AI_TUTOR_FOLLOW_UP_ROUTE_ACKNOWLEDGE_MS = 0;
 
 type TutorDrawingContent = {
@@ -26,6 +28,8 @@ type TutorDrawingContent = {
   previewAlt?: string;
 };
 
+// COACHING_MODE_ICON maps coaching frame modes to single-character badge
+// icons shown on assistant messages to indicate the coaching strategy used.
 const COACHING_MODE_ICON: Record<
   'hint_ladder' | 'misconception_check' | 'review_reflection' | 'next_best_action',
   string
@@ -36,6 +40,10 @@ const COACHING_MODE_ICON: Record<
   next_best_action: '*',
 };
 
+// getMessageArtifacts returns the artifacts array for a message. If the
+// message has a drawingImageData field but no user_drawing artifact yet
+// (e.g. legacy messages), it prepends a synthetic user_drawing artifact so
+// the drawing preview is always rendered consistently.
 const getMessageArtifacts = (
   message: TutorRenderedMessage,
   fallbackAlt: string
@@ -61,6 +69,16 @@ type KangurAiTutorMessageListProps = {
   introMessage?: string | null;
 };
 
+// KangurAiTutorMessageList renders the conversation history in the AI Tutor
+// panel. It handles:
+//  - Message suppression during selection/section explain pending states
+//    (hides history so the explain callout appears clean)
+//  - Drawing artifact rendering (inline image previews)
+//  - Follow-up action chips (navigate, hint, explain, etc.)
+//  - Website help target links (knowledge graph references)
+//  - Message feedback (thumbs up/down per message)
+//  - Quick action chips (hint, explain shortcuts)
+//  - Empty state and loading indicator
 export function KangurAiTutorMessageList({
   introMessage,
 }: KangurAiTutorMessageListProps): JSX.Element {
@@ -93,6 +111,9 @@ export function KangurAiTutorMessageList({
     messageFeedbackByKey,
     messagesEndRef,
   } = useKangurAiTutorWidgetStateContext();
+  // shouldSuppressConversationHistory: hides the message history while a
+  // selection or section explain is pending so the explain callout appears
+  // without the previous conversation visible behind it.
   const shouldSuppressConversationHistory =
     isSelectionExplainPendingMode || isSectionExplainPendingMode;
   const visibleMessages = shouldSuppressConversationHistory ? [] : messages;

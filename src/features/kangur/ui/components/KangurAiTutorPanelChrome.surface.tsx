@@ -32,6 +32,9 @@ import type {
 import type { JSX, PointerEvent, ReactNode } from 'react';
 import type { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 
+// KANGUR_AI_TUTOR_PANEL_SURFACE_ID is the stable DOM id for the tutor panel
+// surface element. Used by drag logic and focus management to locate the
+// panel in the DOM without traversing the component tree.
 const KANGUR_AI_TUTOR_PANEL_SURFACE_ID = 'kangur-ai-tutor-panel-surface';
 
 type KangurAiTutorPanelHeaderInfoProps = {
@@ -787,6 +790,15 @@ const renderPanelSheetHandleNode = (input: {
 }): JSX.Element | null =>
   resolveShouldRenderPanelSheetHandle(input) ? <KangurAiTutorPanelSheetHandle /> : null;
 
+// KangurAiTutorPanelSurface is the outermost shell of the AI Tutor panel.
+// It composes:
+//  - KangurGlassPanel: the frosted-glass container with drag pointer handlers
+//  - KangurAiTutorPanelHeader: title, mood badge, narrator control, actions
+//  - Bubble tail: directional pointer rendered when the panel is in bubble mode
+//  - Sheet handle: drag handle shown when the panel is snapped to a sheet position
+//  - Snap preview overlay: shown during drag to indicate the snap target
+// The surface applies variant-specific CSS classes and inline styles (position,
+// size, shadow) resolved by the shared chrome helpers.
 export function KangurAiTutorPanelSurface(props: KangurAiTutorPanelSurfaceProps): JSX.Element {
   const {
     avatarAttachmentSide,

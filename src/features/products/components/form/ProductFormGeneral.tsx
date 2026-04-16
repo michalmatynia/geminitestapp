@@ -24,7 +24,10 @@ import {
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { type ProductFormData } from '@/shared/contracts/products/drafts';
 import type { ProductValidationPattern } from '@/shared/contracts/products/validation';
-import { translateStructuredProductName } from '@/shared/lib/products/title-terms';
+import {
+  syncPolishStructuredProductName,
+  type PolishStructuredProductNameSyncResult,
+} from '@/shared/lib/products/title-terms';
 import { parseDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
 import { isPatternReplacementEnabledForValidationScope } from '@/shared/lib/products/utils/validator-instance-behavior';
 import { Alert } from '@/shared/ui/alert';
@@ -46,6 +49,30 @@ const PRODUCT_IDENTIFIER_OPTIONS = [
   { value: 'gtin', label: 'GTIN' },
   { value: 'asin', label: 'ASIN' },
 ] as const satisfies ReadonlyArray<LabeledOptionDto<'ean' | 'gtin' | 'asin'>>;
+
+const coerceWatchedString = (value: unknown): string => (typeof value === 'string' ? value : '');
+
+const resolvePolishBaseNameAutoSyncStateUpdate = ({
+  currentNamePl,
+  englishTitle,
+  syncResult,
+}: {
+  currentNamePl: string;
+  englishTitle: string;
+  syncResult: PolishStructuredProductNameSyncResult;
+}): { generatedPolishTitle: string | null; shouldDisableAutoSync: boolean } => {
+  if (syncResult.baseNameSynced) {
+    return {
+      generatedPolishTitle: syncResult.generatedPolishTitle,
+      shouldDisableAutoSync: englishTitle.includes('|'),
+    };
+  }
+
+  return {
+    generatedPolishTitle: null,
+    shouldDisableAutoSync: currentNamePl.trim() !== '',
+  };
+};
 
 const resolveFocusedProductFieldName = (): string | null => {
   if (typeof document === 'undefined') return null;
@@ -83,6 +110,7 @@ export default function ProductFormGeneral(): React.JSX.Element {
     cycleHits: 0,
   });
   const lastGeneratedPolishNameRef = useRef<string>('');
+  const polishBaseNameAutoSyncRef = useRef<boolean>(true);
   const focusOutSyncTimeoutRef = useRef<number | null>(null);
 
   const [identifierType, setIdentifierType] = useState<'ean' | 'gtin' | 'asin'>(
@@ -205,22 +233,25 @@ export default function ProductFormGeneral(): React.JSX.Element {
   }, [firstLanguageTab, languageTabValues]);
 
   const generatedPolishName = useMemo(
-    (): string =>
+    () =>
       languageTabValues.includes('pl')
-        ? translateStructuredProductName({
-            englishTitle: typeof nameEn === 'string' ? nameEn : '',
-            locale: 'pl',
+        ? syncPolishStructuredProductName({
+            englishTitle: coerceWatchedString(nameEn),
+            polishTitle: coerceWatchedString(namePl),
+            previousGeneratedPolishTitle: lastGeneratedPolishNameRef.current,
+            syncPreviousGeneratedBaseName: polishBaseNameAutoSyncRef.current,
             sizeTerms: sizeTermsQuery.data,
             materialTerms: materialTermsQuery.data,
             categories,
             themeTerms: themeTermsQuery.data,
           })
-        : '',
+        : null,
     [
       categories,
       languageTabValues,
       materialTermsQuery.data,
       nameEn,
+      namePl,
       sizeTermsQuery.data,
       themeTermsQuery.data,
     ]
@@ -228,24 +259,30 @@ export default function ProductFormGeneral(): React.JSX.Element {
 
   useEffect(() => {
     if (!languageTabValues.includes('pl')) return;
+    if (generatedPolishName === null) return;
 
     const rawNamePl = getValues('name_pl');
     const currentNamePl = typeof rawNamePl === 'string' ? rawNamePl : '';
-    const previousGeneratedPolishName = lastGeneratedPolishNameRef.current;
-    const shouldSync =
-      currentNamePl.trim().length === 0 || currentNamePl === previousGeneratedPolishName;
+    const autoSyncStateUpdate = resolvePolishBaseNameAutoSyncStateUpdate({
+      currentNamePl,
+      englishTitle: coerceWatchedString(nameEn),
+      syncResult: generatedPolishName,
+    });
+    if (autoSyncStateUpdate.generatedPolishTitle !== null) {
+      lastGeneratedPolishNameRef.current = autoSyncStateUpdate.generatedPolishTitle;
+    }
+    if (autoSyncStateUpdate.shouldDisableAutoSync) {
+      polishBaseNameAutoSyncRef.current = false;
+    }
 
-    if (!shouldSync) return;
+    if (currentNamePl === generatedPolishName.polishTitle) return;
 
-    lastGeneratedPolishNameRef.current = generatedPolishName;
-    if (currentNamePl === generatedPolishName) return;
-
-    setValue('name_pl', generatedPolishName, {
+    setValue('name_pl', generatedPolishName.polishTitle, {
       shouldDirty: true,
       shouldTouch: false,
       shouldValidate: true,
     });
-  }, [generatedPolishName, getValues, languageTabValues, namePl, setValue]);
+  }, [generatedPolishName, getValues, languageTabValues, nameEn, namePl, setValue]);
 
   useEffect(() => {
     const syncFocusedField = (): void => {

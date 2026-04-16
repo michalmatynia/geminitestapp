@@ -5,7 +5,12 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { FormProvider, useForm, useFormContext } from 'react-hook-form';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { ProductCategory } from '@/shared/contracts/products/categories';
 import type { ProductFormData } from '@/shared/contracts/products/drafts';
+import type {
+  ProductTitleTerm,
+  ProductTitleTermType,
+} from '@/shared/contracts/products/title-terms';
 import type { ProductValidationPattern } from '@/shared/contracts/products/validation';
 
 const {
@@ -124,6 +129,94 @@ function NameValueProbe(): React.JSX.Element {
   const { watch } = useFormContext<ProductFormData>();
   return <output data-testid='polish-name-value'>{watch('name_pl') ?? ''}</output>;
 }
+
+const createTitleTerm = ({
+  id,
+  nameEn,
+  namePl = null,
+  type,
+}: {
+  id: string;
+  nameEn: string;
+  namePl?: string | null;
+  type: ProductTitleTermType;
+}): ProductTitleTerm => ({
+  id,
+  name: nameEn,
+  name_en: nameEn,
+  name_pl: namePl,
+  catalogId: 'catalog-a',
+  type,
+});
+
+const mockTitleTermsByType = (
+  termsByType: Record<ProductTitleTermType, ProductTitleTerm[]>
+): void => {
+  useTitleTermsMock.mockImplementation(
+    (_catalogId: string, type: ProductTitleTermType) => ({
+      data: termsByType[type],
+      isLoading: false,
+    })
+  );
+};
+
+const MULTI_SEGMENT_SYNC_CATEGORIES: ProductCategory[] = [
+  {
+    id: 'category-anime-pin',
+    name: 'Anime Pin',
+    name_en: 'Anime Pin',
+    name_pl: 'Przypinka Anime',
+    color: null,
+    parentId: null,
+    catalogId: 'catalog-a',
+    sortIndex: 0,
+  },
+  {
+    id: 'category-anime-keychain',
+    name: 'Anime Keychain',
+    name_en: 'Anime Keychain',
+    name_pl: 'Brelok Anime',
+    color: null,
+    parentId: null,
+    catalogId: 'catalog-a',
+    sortIndex: 1,
+  },
+];
+
+const MULTI_SEGMENT_SYNC_TITLE_TERMS: Record<ProductTitleTermType, ProductTitleTerm[]> = {
+  size: [
+    createTitleTerm({ id: 'size-4', nameEn: '4 cm', type: 'size' }),
+    createTitleTerm({ id: 'size-7', nameEn: '7 cm', type: 'size' }),
+  ],
+  material: [
+    createTitleTerm({
+      id: 'material-metal',
+      nameEn: 'Metal',
+      namePl: 'Metal PL',
+      type: 'material',
+    }),
+    createTitleTerm({
+      id: 'material-plastic',
+      nameEn: 'Plastic',
+      namePl: 'Plastik',
+      type: 'material',
+    }),
+  ],
+  theme: [
+    createTitleTerm({
+      id: 'theme-aot',
+      nameEn: 'Attack On Titan',
+      namePl: 'Atak Tytanow',
+      type: 'theme',
+    }),
+    createTitleTerm({
+      id: 'theme-naruto',
+      nameEn: 'Naruto',
+      namePl: 'Naruto PL',
+      type: 'theme',
+    }),
+  ],
+};
 
 function renderProductFormGeneral(
   initialNameEn: string,
@@ -308,42 +401,25 @@ describe('ProductFormGeneral structured name editing', () => {
       selectedCategoryId: null,
       setCategoryId: vi.fn(),
     });
-    useTitleTermsMock.mockImplementation((_catalogId: string, type: string) => ({
-      data:
-        type === 'size'
-          ? [
-              {
-                id: 'size-4',
-                name: '4 cm',
-                name_en: '4 cm',
-                name_pl: null,
-                catalogId: 'catalog-a',
-                type,
-              },
-            ]
-          : type === 'material'
-            ? [
-                {
-                  id: 'material-metal',
-                  name: 'Metal',
-                  name_en: 'Metal',
-                  name_pl: 'Metal PL',
-                  catalogId: 'catalog-a',
-                  type,
-                },
-              ]
-            : [
-                {
-                  id: 'theme-aot',
-                  name: 'Attack On Titan',
-                  name_en: 'Attack On Titan',
-                  name_pl: 'Atak Tytanow',
-                  catalogId: 'catalog-a',
-                  type,
-                },
-              ],
-      isLoading: false,
-    }));
+    mockTitleTermsByType({
+      size: [createTitleTerm({ id: 'size-4', nameEn: '4 cm', type: 'size' })],
+      material: [
+        createTitleTerm({
+          id: 'material-metal',
+          nameEn: 'Metal',
+          namePl: 'Metal PL',
+          type: 'material',
+        }),
+      ],
+      theme: [
+        createTitleTerm({
+          id: 'theme-aot',
+          nameEn: 'Attack On Titan',
+          namePl: 'Atak Tytanow',
+          type: 'theme',
+        }),
+      ],
+    });
 
     renderProductFormGeneral('Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan');
 
@@ -354,7 +430,7 @@ describe('ProductFormGeneral structured name editing', () => {
     });
   });
 
-  it('does not overwrite a manually populated Polish title', async () => {
+  it('preserves a custom Polish title base while syncing the remaining segments', async () => {
     useProductFormMetadataMock.mockReturnValue({
       filteredLanguages: [
         { code: 'en', name: 'English' },
@@ -372,11 +448,116 @@ describe('ProductFormGeneral structured name editing', () => {
 
     renderProductFormGeneral(
       'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan',
-      'Manual Polish Title'
+      'Manual Polish Title | Old size | Old material | Old category | Old theme'
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('polish-name-value')).toHaveTextContent('Manual Polish Title');
+      expect(screen.getByTestId('polish-name-value')).toHaveTextContent(
+        'Manual Polish Title | 4 cm | Metal | Anime Pin | Attack On Titan'
+      );
+    });
+  });
+
+  it('locks the Polish title base after replacing a generic placeholder once', async () => {
+    useProductFormMetadataMock.mockReturnValue({
+      filteredLanguages: [
+        { code: 'en', name: 'English' },
+        { code: 'pl', name: 'Polish' },
+      ],
+      selectedCatalogIds: ['catalog-a'],
+      categories: [],
+      selectedCategoryId: null,
+      setCategoryId: vi.fn(),
+    });
+    useTitleTermsMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+    });
+
+    renderProductFormGeneral(
+      'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan',
+      'Parameter Name | 4 cm | Metal | Anime Pin | Attack On Titan'
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('polish-name-value')).toHaveTextContent(
+        'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan'
+      );
+    });
+
+    fireEvent.change(screen.getByLabelText('English Name'), {
+      target: { value: 'Survey Corps | 7 cm | Plastic | Anime Keychain | Naruto' },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('polish-name-value')).toHaveTextContent(
+        'Scout Regiment | 7 cm | Plastic | Anime Keychain | Naruto'
+      );
+    });
+  });
+
+  it('preserves an existing specific Polish base even when it matches the generated title', async () => {
+    useProductFormMetadataMock.mockReturnValue({
+      filteredLanguages: [
+        { code: 'en', name: 'English' },
+        { code: 'pl', name: 'Polish' },
+      ],
+      selectedCatalogIds: ['catalog-a'],
+      categories: [],
+      selectedCategoryId: null,
+      setCategoryId: vi.fn(),
+    });
+    useTitleTermsMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+    });
+
+    renderProductFormGeneral(
+      'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan',
+      'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan'
+    );
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    fireEvent.change(screen.getByLabelText('English Name'), {
+      target: { value: 'Survey Corps | 7 cm | Plastic | Anime Keychain | Naruto' },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('polish-name-value')).toHaveTextContent(
+        'Scout Regiment | 7 cm | Plastic | Anime Keychain | Naruto'
+      );
+    });
+  });
+
+  it('immediately syncs changed English size, material, category, and theme into Polish', async () => {
+    useProductFormMetadataMock.mockReturnValue({
+      filteredLanguages: [
+        { code: 'en', name: 'English' },
+        { code: 'pl', name: 'Polish' },
+      ],
+      selectedCatalogIds: ['catalog-a'],
+      categories: MULTI_SEGMENT_SYNC_CATEGORIES,
+      selectedCategoryId: null,
+      setCategoryId: vi.fn(),
+    });
+    mockTitleTermsByType(MULTI_SEGMENT_SYNC_TITLE_TERMS);
+
+    renderProductFormGeneral(
+      'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan',
+      'Oddzial Zwiadowcow | 4 cm | Metal PL | Przypinka Anime | Atak Tytanow'
+    );
+
+    fireEvent.change(screen.getByLabelText('English Name'), {
+      target: { value: 'Survey Corps | 7 cm | Plastic | Anime Keychain | Naruto' },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('polish-name-value')).toHaveTextContent(
+        'Oddzial Zwiadowcow | 7 cm | Plastik | Brelok Anime | Naruto PL'
+      );
     });
   });
 });

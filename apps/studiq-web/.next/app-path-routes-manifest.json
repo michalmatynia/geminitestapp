@@ -1,0 +1,18 @@
+{
+  "/[locale]/kangur/(app)/[...slug]/page": "/[locale]/kangur/[...slug]",
+  "/[locale]/kangur/(app)/duels/page": "/[locale]/kangur/duels",
+  "/[locale]/kangur/(app)/lessons/page": "/[locale]/kangur/lessons",
+  "/[locale]/kangur/(app)/page": "/[locale]/kangur",
+  "/[locale]/kangur/(app)/tests/page": "/[locale]/kangur/tests",
+  "/[locale]/kangur/login/page": "/[locale]/kangur/login",
+  "/[locale]/page": "/[locale]",
+  "/_global-error/page": "/_global-error",
+  "/_not-found/page": "/_not-found",
+  "/kangur/(app)/[...slug]/page": "/kangur/[...slug]",
+  "/kangur/(app)/duels/page": "/kangur/duels",
+  "/kangur/(app)/lessons/page": "/kangur/lessons",
+  "/kangur/(app)/page": "/kangur",
+  "/kangur/(app)/tests/page": "/kangur/tests",
+  "/kangur/login/page": "/kangur/login",
+  "/page": "/"
+}

@@ -56,6 +56,25 @@ type UseKangurAiTutorWidgetCoordinatorInput = {
   widgetState: KangurAiTutorWidgetState;
 };
 
+// useKangurAiTutorWidgetCoordinator is the top-level orchestration hook for
+// the AI Tutor widget. It wires together all sub-hooks and produces the
+// KangurAiTutorPortalContextValue consumed by the portal renderer.
+//
+// Sub-hooks composed here:
+//  coordinator-display  – derives all display state (panel mode, avatar,
+//                         guided callout, snap state, messages, etc.)
+//  panel-actions        – open/close/move/detach/reset panel actions
+//  panel-drag           – pointer-based panel drag and snap logic
+//  avatar-drag          – avatar drag and attachment side logic
+//  avatar-shell         – avatar button actions and animations
+//  interactions         – selection explain, section explain, ask modal
+//  lifecycle            – mount/unmount effects, page-change effects
+//  guided-flow          – guided AI Tutor step progression
+//  guest-intro-flow     – unauthenticated guest intro sequence
+//  home-onboarding-flow – first-visit home onboarding sequence
+//  guided-auth-handoff  – hands off to login when auth is required mid-flow
+//  telemetry-bridge     – tracks widget events to analytics
+//  portal-view          – assembles the final portal context value
 export function useKangurAiTutorWidgetCoordinator({
   authState,
   environment,
@@ -84,6 +103,9 @@ export function useKangurAiTutorWidgetCoordinator({
     sessionContext,
   } = tutorRuntime;
   const selectionExplainRequest = tutorRuntime.selectionExplainRequest ?? null;
+  // selectionExplainRequestRef tracks the last processed selection explain
+  // request ID so the coordinator can detect new requests without re-running
+  // effects that depend on the full request object.
   const selectionExplainRequestRef = useRef<number | null>(null);
 
   const {
@@ -428,6 +450,10 @@ export function useKangurAiTutorWidgetCoordinator({
     shouldRepeatHomeOnboardingOnEntry,
   });
 
+  // handleOnboardingAccept: called when the learner accepts the guest intro or
+  // home onboarding prompt. Silently dismisses the guest intro, hides the
+  // canonical modal, and starts the home onboarding step sequence if steps
+  // are available.
   const handleOnboardingAccept = useCallback((): void => {
     guestIntroFlow.handleGuestIntroAcceptSilent();
     widgetState.setCanonicalTutorModalVisible(false);
@@ -486,6 +512,8 @@ export function useKangurAiTutorWidgetCoordinator({
     suppressAvatarClickRef: widgetState.suppressAvatarClickRef,
   });
 
+  // Outside-click handler: closes the selection guidance callout when the
+  // learner clicks outside the tutor UI while the panel is closed.
   useEffect(() => {
     if (tutorRuntime.isOpen || !showSelectionGuidanceCallout) {
       return;
@@ -541,6 +569,9 @@ export function useKangurAiTutorWidgetCoordinator({
     viewport,
   });
 
+  // handleTutorHeader pointer handlers: route to panelDrag when the panel is
+  // draggable (free-floating mode), or to avatarDrag when the panel is
+  // anchored to a section (guided/contextual mode).
   const handleTutorHeaderPointerCancel = isPanelDraggable
     ? panelDrag.handlePanelHeaderPointerCancel
     : avatarDrag.handlePanelSectionPointerCancel;
@@ -777,6 +808,9 @@ export function useKangurAiTutorWidgetCoordinator({
     visibleQuickActions,
   });
 
+  // shouldRender: the widget DOM tree is only mounted when at least one of
+  // these conditions is true. This prevents the portal from rendering when
+  // the tutor is fully disabled and no transient UI state requires it.
   const shouldRender =
     widgetState.mounted &&
     (

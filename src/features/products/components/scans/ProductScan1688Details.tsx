@@ -5,7 +5,8 @@ import React from 'react';
 import type { 
   ProductScanRecord, 
   ProductScanSupplierDetails, 
-  ProductScanSupplierProbe 
+  ProductScanSupplierProbe,
+  ProductScanSupplierPrice
 } from '@/shared/contracts/product-scans';
 import {
   hasProductScan1688Details,
@@ -49,56 +50,71 @@ type ProductScan1688DetailsProps = {
   connectionLabel?: string | null;
 };
 
+function resolvePriceFromPrices(prices: ProductScanSupplierPrice[]): string | null {
+  const f = Array.isArray(prices) ? prices[0] : null;
+  if (!f) return null;
+
+  const moq = (typeof f.moq === 'string' && f.moq !== '') ? `MOQ ${f.moq}` : null;
+  return buildInlineSummary(f.amount, f.currency, moq);
+}
+
 function resolvePriceSummary(details: ProductScanSupplierDetails | null): string | null {
   if (details === null) return null;
   
-  const text = details.priceText;
-  if (typeof text === 'string' && text !== '') return text;
+  const { priceText, priceRangeText, prices } = details;
+  if (typeof priceText === 'string' && priceText !== '') return priceText;
+  if (typeof priceRangeText === 'string' && priceRangeText !== '') return priceRangeText;
 
-  const range = details.priceRangeText;
-  if (typeof range === 'string' && range !== '') return range;
-
-  const f = details.prices?.[0];
-  const moq = (typeof f?.moq === 'string' && f.moq !== '') ? `MOQ ${f.moq}` : null;
-  return buildInlineSummary(f?.amount, f?.currency, moq);
+  return resolvePriceFromPrices(prices);
 }
 
 type GridRow = { label: string; value?: string | null; href?: string | null };
 
 function resolveBasicRows(details: ProductScanSupplierDetails | null, scanUrl: string | null | undefined): GridRow[] {
-  const url = (typeof details?.supplierProductUrl === 'string' && details.supplierProductUrl !== '') ? details.supplierProductUrl : (scanUrl ?? null);
-  const store = (typeof details?.supplierStoreUrl === 'string' && details.supplierStoreUrl !== '') ? details.supplierStoreUrl : null;
+  const { supplierProductUrl, supplierStoreUrl } = details ?? {};
+  const url = (typeof supplierProductUrl === 'string' && supplierProductUrl !== '') ? supplierProductUrl : (scanUrl ?? null);
+  const store = (typeof supplierStoreUrl === 'string' && supplierStoreUrl !== '') ? supplierStoreUrl : null;
   return [
     { label: 'Supplier product', value: url, href: url },
     { label: 'Supplier store', value: store, href: store },
   ];
 }
 
-function resolveLeftRows(details: ProductScanSupplierDetails | null, scanUrl: string | null | undefined): GridRow[] {
-  const basic = resolveBasicRows(details, scanUrl);
-  const loc = (typeof details?.supplierLocation === 'string' && details.supplierLocation !== '') ? details.supplierLocation : null;
-  const rat = (typeof details?.supplierRating === 'string' && details.supplierRating !== '') ? details.supplierRating : null;
-  const pid = (typeof details?.platformProductId === 'string' && details.platformProductId !== '') ? details.platformProductId : null;
-
+function resolveExtraLeftRows(details: ProductScanSupplierDetails | null): GridRow[] {
+  const { supplierLocation, supplierRating, platformProductId } = details ?? {};
   return [
-    ...basic,
-    { label: 'Supplier location', value: loc },
-    { label: 'Supplier rating', value: rat },
-    { label: 'Platform product id', value: pid },
+    { label: 'Supplier location', value: supplierLocation ?? null },
+    { label: 'Supplier rating', value: supplierRating ?? null },
+    { label: 'Platform product id', value: platformProductId ?? null },
   ];
 }
 
+function resolveLeftRows(details: ProductScanSupplierDetails | null, scanUrl: string | null | undefined): GridRow[] {
+  const basic = resolveBasicRows(details, scanUrl);
+  const extra = resolveExtraLeftRows(details);
+  return [...basic, ...extra];
+}
+
 function resolveImageCountInfo(details: ProductScanSupplierDetails | null, probe: ProductScanSupplierProbe | null): { extracted: number, probe: number | null } {
+  const extracted = Array.isArray(details?.images) ? details.images.length : 0;
   return {
-    extracted: Array.isArray(details?.images) ? details.images.length : 0,
+    extracted,
     probe: probe?.imageCount ?? null
   };
 }
 
+function resolveTitleValue(probeTitle: string | null | undefined, scanTitle: string | null | undefined): string | null {
+  return (typeof probeTitle === 'string' && probeTitle !== '') ? probeTitle : (scanTitle ?? null);
+}
+
+function resolveUrlValue(probeUrl: string | null | undefined): string | null {
+  return (typeof probeUrl === 'string' && probeUrl !== '') ? probeUrl : null;
+}
+
 function resolveBaseRightRows(probe: ProductScanSupplierProbe | null, scanTitle: string | null | undefined, connectionLabel: string | null): GridRow[] {
-  const title = (typeof probe?.pageTitle === 'string' && probe.pageTitle !== '') ? probe.pageTitle : (scanTitle ?? null);
-  const cand = (typeof probe?.candidateUrl === 'string' && probe.candidateUrl !== '') ? probe.candidateUrl : null;
-  const canon = (typeof probe?.canonicalUrl === 'string' && probe.canonicalUrl !== '') ? probe.canonicalUrl : null;
+  const title = resolveTitleValue(probe?.pageTitle, scanTitle);
+  const cand = resolveUrlValue(probe?.candidateUrl);
+  const canon = resolveUrlValue(probe?.canonicalUrl);
 
   return [
     { label: 'Browser profile', value: connectionLabel },
@@ -108,14 +124,17 @@ function resolveBaseRightRows(probe: ProductScanSupplierProbe | null, scanTitle:
   ];
 }
 
+function resolveProbeValue(val: string | null | undefined): string | null {
+  return (typeof val === 'string' && val !== '') ? val : null;
+}
+
 function resolveProbeRows(probe: ProductScanSupplierProbe | null, info: { extracted: number, probe: number | null }, pCount: number): GridRow[] {
-  const lang = (typeof probe?.pageLanguage === 'string' && probe.pageLanguage !== '') ? probe.pageLanguage : null;
-  const art = (typeof probe?.artifactKey === 'string' && probe.artifactKey !== '') ? probe.artifactKey : null;
+  const probeImg = typeof info.probe === 'number' ? String(info.probe) : null;
 
   return [
-    { label: 'Probe language', value: lang },
-    { label: 'Probe artifact key', value: art },
-    { label: 'Probe image count', value: typeof info.probe === 'number' ? String(info.probe) : null },
+    { label: 'Probe language', value: resolveProbeValue(probe?.pageLanguage) },
+    { label: 'Probe artifact key', value: resolveProbeValue(probe?.artifactKey) },
+    { label: 'Probe image count', value: probeImg },
     { label: 'Extracted image count', value: info.extracted > 0 ? String(info.extracted) : null },
     { label: 'Extracted price tiers', value: pCount > 0 ? String(pCount) : null },
   ];
@@ -148,15 +167,20 @@ function ProductScan1688DetailsGrid({ details, probe, scanUrl, scanTitle, connec
 
 type SummaryTextItems = { name: string | null, moq: string | null, lang: string | null, imgCount: number, pCount: number };
 
-function resolveSummaryBaseInfo(details: ProductScanSupplierDetails | null): SummaryTextItems {
-  const sn = details?.supplierName;
-  const mt = details?.moqText;
-  const sl = details?.sourceLanguage;
+function resolveSummaryBaseInfo(details: ProductScanSupplierDetails | null): { name: string | null, moq: string | null, lang: string | null } {
+  const { supplierName, moqText, sourceLanguage } = details ?? {};
   
   return {
-    name: (typeof sn === 'string' && sn !== '') ? sn : null,
-    moq: (typeof mt === 'string' && mt !== '') ? mt : null,
-    lang: (typeof sl === 'string' && sl !== '') ? sl : null,
+    name: (typeof supplierName === 'string' && supplierName !== '') ? supplierName : null,
+    moq: (typeof moqText === 'string' && moqText !== '') ? moqText : null,
+    lang: (typeof sourceLanguage === 'string' && sourceLanguage !== '') ? sourceLanguage : null,
+  };
+}
+
+function resolveSummaryTextItems(details: ProductScanSupplierDetails | null): SummaryTextItems {
+  const base = resolveSummaryBaseInfo(details);
+  return {
+    ...base,
     imgCount: Array.isArray(details?.images) ? details.images.length : 0,
     pCount: Array.isArray(details?.prices) ? details.prices.length : 0,
   };
@@ -175,21 +199,37 @@ function resolveProbeImageChipLabel(probe: ProductScanSupplierProbe | null): str
   return `Probe saw ${formatCountLabel(probeImageCount, 'image')}`;
 }
 
+function SummarySupplierChips({ items }: { items: SummaryTextItems }): React.JSX.Element {
+  return (
+    <>
+      {items.name !== null && <span className='font-medium text-foreground'>{items.name}</span>}
+      {items.moq !== null && <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>{items.moq}</span>}
+      {items.lang !== null && <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>{items.lang}</span>}
+    </>
+  );
+}
+
+function SummaryStatusChips({ items, connectionLabel, priceSummary, probeLabel }: { items: SummaryTextItems, connectionLabel: string | null, priceSummary: string | null, probeLabel: string | null }): React.JSX.Element {
+  return (
+    <>
+      {connectionLabel !== null && <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>Profile {connectionLabel}</span>}
+      {priceSummary !== null && <span className='text-muted-foreground'>{priceSummary}</span>}
+      {items.imgCount > 0 && <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>{formatCountLabel(items.imgCount, 'extracted image')}</span>}
+      {items.pCount > 0 && <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>{formatCountLabel(items.pCount, 'price tier')}</span>}
+      {probeLabel !== null && <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>{probeLabel}</span>}
+    </>
+  );
+}
+
 function ProductScan1688SummaryLine({ details, probe, connectionLabel, priceSummary }: { details: ProductScanSupplierDetails | null, probe: ProductScanSupplierProbe | null, connectionLabel: string | null, priceSummary: string | null }): React.JSX.Element {
-  const items = resolveSummaryBaseInfo(details);
-  const probeImageChipLabel = resolveProbeImageChipLabel(probe);
+  const items = resolveSummaryTextItems(details);
+  const probeLabel = resolveProbeImageChipLabel(probe);
 
   return (
     <div className='flex flex-wrap items-center gap-2 text-xs'>
       <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>1688 supplier details</span>
-      {items.name !== null && <span className='font-medium text-foreground'>{items.name}</span>}
-      {connectionLabel !== null && <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>Profile {connectionLabel}</span>}
-      {priceSummary !== null && <span className='text-muted-foreground'>{priceSummary}</span>}
-      {items.moq !== null && <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>{items.moq}</span>}
-      {items.lang !== null && <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>{items.lang}</span>}
-      {items.imgCount > 0 && <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>{formatCountLabel(items.imgCount, 'extracted image')}</span>}
-      {items.pCount > 0 && <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>{formatCountLabel(items.pCount, 'price tier')}</span>}
-      {probeImageChipLabel !== null && <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>{probeImageChipLabel}</span>}
+      <SummarySupplierChips items={items} />
+      <SummaryStatusChips items={items} connectionLabel={connectionLabel} priceSummary={priceSummary} probeLabel={probeLabel} />
     </div>
   );
 }
@@ -207,7 +247,8 @@ export function ProductScan1688Details(props: ProductScan1688DetailsProps): Reac
   const resScanId = resolveResolvedScanId(props.scanId, scan as ProductScanRecord);
   const details = scan.supplierDetails;
   const priceSum = resolvePriceSummary(details);
-  const cLab = (typeof props.connectionLabel === 'string' && props.connectionLabel.trim() !== '') ? props.connectionLabel.trim() : null;
+  const connectionLabel = props.connectionLabel;
+  const cLab = (typeof connectionLabel === 'string' && connectionLabel.trim() !== '') ? connectionLabel.trim() : null;
 
   return (
     <div className='space-y-3 rounded-md border border-border/50 bg-background/70 px-3 py-3'>

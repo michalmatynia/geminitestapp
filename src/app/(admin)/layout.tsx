@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import { connection } from 'next/server';
 import { Suspense } from 'react';
 import NextTopLoader from 'nextjs-toploader';
 
@@ -17,6 +18,8 @@ const isPlaywrightRuntime = Boolean(
 );
 
 export async function AdminLayoutResolver({ children }: { children: React.ReactNode }) {
+  await connection();
+
   const requestHeadersPromise = readOptionalRequestHeaders();
   const cookiesPromise = readOptionalRequestCookies();
 

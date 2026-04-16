@@ -461,6 +461,39 @@ describe('ActiveLessonView mobile controls and core navigation', () => {
     }).not.toThrow();
   });
 
+  it('does not break hook order when the active lesson appears after a rerender', async () => {
+    useKangurMobileBreakpointMock.mockReturnValue(false);
+
+    let currentActiveLesson: typeof activeLesson | null = null;
+
+    useLessonsMock.mockImplementation(() => ({
+      activeLesson: currentActiveLesson,
+      handleSelectLesson,
+      lessonDocuments: {},
+      lessonTemplateMap: new Map(),
+      lessonAssignmentsByComponent: new Map(),
+      completedLessonAssignmentsByComponent: new Map(),
+      setIsActiveLessonComponentReady: vi.fn(),
+      activeLessonHeaderRef: React.createRef<HTMLDivElement>(),
+      activeLessonNavigationRef: React.createRef<HTMLDivElement>(),
+      activeLessonContentRef,
+      activeLessonScrollRef: React.createRef<HTMLDivElement>(),
+      orderedLessons: currentActiveLesson ? [activeLesson, nextLesson] : [nextLesson],
+      isSecretLessonActive: false,
+      progress: { lessonMastery: {} },
+    }));
+
+    const { rerender } = render(<ActiveLessonView />);
+
+    currentActiveLesson = activeLesson;
+
+    expect(() => {
+      rerender(<ActiveLessonView />);
+    }).not.toThrow();
+
+    expect(screen.getByTestId('active-lesson-header')).toBeInTheDocument();
+  });
+
   it('keeps rendering the latched lesson snapshot while the live active lesson clears', async () => {
     useKangurMobileBreakpointMock.mockReturnValue(false);
     useKangurLessonDocumentMock.mockReturnValue({

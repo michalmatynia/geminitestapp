@@ -20,8 +20,8 @@ import type { ListQuery, MutationResult, SingleQuery } from '@/shared/contracts/
 import { api } from '@/shared/lib/api-client';
 import {
   createListQueryV2,
-  createSingleQueryV2,
   createUpdateMutationV2,
+  useSingleQueryV2,
 } from '@/shared/lib/query-factories-v2';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
@@ -156,7 +156,8 @@ export const useKangurLessonTemplate = (
   const routeLocale = useLocale();
   const resolvedLocale = resolveLessonTemplatesLocale(routeLocale, options?.locale);
 
-  return createSingleQueryV2<KangurLessonTemplate | null>({
+  return useSingleQueryV2<KangurLessonTemplate | null>({
+    id: componentId,
     queryKey: QUERY_KEYS.kangur.lessonTemplate(componentId, resolvedLocale, {
       subject: options?.subject ?? null,
       ageGroup: options?.ageGroup ?? null,

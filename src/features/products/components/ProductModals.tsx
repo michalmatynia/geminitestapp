@@ -47,7 +47,7 @@ import { FormModal } from '@/shared/ui/FormModal';
 import { IntegrationSelector } from '@/shared/ui/integration-selector';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { ContextRegistryPageProvider } from '@/shared/lib/ai-context-registry/page-context';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { ErrorSystem } from '@/shared/utils/observability/error-system-client';
 
 import { loadProductForm } from './product-form-preload';
 

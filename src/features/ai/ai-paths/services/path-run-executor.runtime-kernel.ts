@@ -216,7 +216,6 @@ export type RuntimeKernelParitySummary = {
   sampledHistoryEntries: number;
   strategyCounts: {
     code_object_v3: number;
-    compatibility: number;
     unknown: number;
   };
   resolutionSourceCounts: {
@@ -235,7 +234,6 @@ export const summarizeRuntimeKernelParityFromHistory = (
     sampledHistoryEntries: 0,
     strategyCounts: {
       code_object_v3: 0,
-      compatibility: 0,
       unknown: 0,
     },
     resolutionSourceCounts: {
@@ -261,8 +259,6 @@ export const summarizeRuntimeKernelParityFromHistory = (
       const strategy = normalizeRuntimeStrategy(record['runtimeStrategy']);
       if (strategy === 'code_object_v3') {
         summary.strategyCounts.code_object_v3 += 1;
-      } else if (strategy === 'compatibility') {
-        summary.strategyCounts.compatibility += 1;
       } else {
         summary.strategyCounts.unknown += 1;
       }

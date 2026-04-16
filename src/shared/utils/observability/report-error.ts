@@ -40,24 +40,25 @@ const getLogLevel = (resolved: ResolvedError): SystemLogLevel => {
   return 'error';
 };
 
-const appendOptionalContext = (
-  ctx: Record<string, unknown>,
+const getOptionalContext = (
   input: ReportErrorInput,
   resolved: ResolvedError,
   logMessage: string
-): void => {
+): Record<string, unknown> => {
+  const opts: Record<string, unknown> = {};
   if (resolved.retryAfterMs !== undefined) {
-    ctx.retryAfterMs = resolved.retryAfterMs;
+    opts.retryAfterMs = resolved.retryAfterMs;
   }
   if (resolved.meta !== undefined) {
-    ctx.meta = resolved.meta;
+    opts.meta = resolved.meta;
   }
   if (logMessage !== resolved.message) {
-    ctx.originalMessage = resolved.message;
+    opts.originalMessage = resolved.message;
   }
   if (input.service !== undefined && input.service.length > 0) {
-    ctx.service = input.service;
+    opts.service = input.service;
   }
+  return opts;
 };
 
 const buildErrorContext = (
@@ -67,7 +68,7 @@ const buildErrorContext = (
   userMessage: string
 ): Record<string, unknown> => {
   const otelContext = input.includeOtelContext === true ? getActiveOtelContextAttributes() : {};
-  const ctx: Record<string, unknown> = {
+  return {
     ...(input.context ?? {}),
     ...otelContext,
     errorId: resolved.errorId,
@@ -77,11 +78,8 @@ const buildErrorContext = (
     critical: resolved.critical,
     retryable: resolved.retryable,
     userMessage,
+    ...getOptionalContext(input, resolved, logMessage),
   };
-
-  appendOptionalContext(ctx, input, resolved, logMessage);
-
-  return ctx;
 };
 
 const dispatchLogEvent = async (

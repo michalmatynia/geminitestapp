@@ -27,7 +27,7 @@ import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrat
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import type { ProductDraft } from '@/shared/contracts/products/drafts';
 import type { Toast } from '@/shared/contracts/ui/base';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { ErrorSystem } from '@/shared/utils/observability/error-system-client';
 
 const enrichRecoveryContext = (
   productId: string,

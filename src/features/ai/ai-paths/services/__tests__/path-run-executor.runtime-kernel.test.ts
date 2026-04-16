@@ -275,20 +275,20 @@ describe('runtime kernel telemetry helpers', () => {
         },
       ],
     } as RuntimeState['history']);
+expect(summary).toEqual({
+  sampledHistoryEntries: 4,
+  strategyCounts: {
+    code_object_v3: 1,
+    unknown: 3,
+  },
+  resolutionSourceCounts: {
+    override: 1,
+    registry: 1,
+    missing: 1,
+    unknown: 1,
+  },
+  codeObjectIds: ['ai-paths.node-code-object.template.v3'],
+});
 
-    expect(summary).toEqual({
-      sampledHistoryEntries: 4,
-      strategyCounts: {
-        code_object_v3: 1,
-        unknown: 3,
-      },
-      resolutionSourceCounts: {
-        override: 1,
-        registry: 1,
-        missing: 1,
-        unknown: 1,
-      },
-      codeObjectIds: ['ai-paths.node-code-object.template.v3'],
-    });
   });
 });

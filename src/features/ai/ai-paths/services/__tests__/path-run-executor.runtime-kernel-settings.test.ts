@@ -557,6 +557,7 @@ describe('path-run-executor runtime-kernel settings integration', () => {
       },
       codeObjectIds: ['ai-paths.node-code-object.constant.v3'],
     });
+
     expect(nodeFinishEventPayload?.['metadata']).not.toHaveProperty(
       DEPRECATED_RUNTIME_KERNEL_TELEMETRY_NODE_TYPES_FIELD
     );

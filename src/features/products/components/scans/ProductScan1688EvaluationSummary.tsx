@@ -1,7 +1,10 @@
 'use client';
 
 import React from 'react';
-import type { ProductScanSupplierEvaluation } from '@/shared/contracts/product-scans';
+import type {
+  NonNullableProductScanSupplierEvaluation,
+  ProductScanSupplierEvaluation,
+} from '@/shared/contracts/product-scans';
 import { buildProductScan1688SectionId, formatTimestamp, formatConfidence, buildInlineSummary } from './ProductScan1688Details.helpers';
 import { ProductScan1688DetailRow } from './ProductScan1688DetailRow';
 
@@ -17,7 +20,7 @@ function resolveStatusLabel(status: string): string {
   return 'Skipped';
 }
 
-function resolveProductMatchSummary(evaluation: ProductScanSupplierEvaluation): string | null {
+function resolveProductMatchSummary(evaluation: NonNullableProductScanSupplierEvaluation): string | null {
   const { sameProduct, imageMatch, titleMatch } = evaluation;
   let same: string | null = null;
   if (sameProduct === true) same = 'Same product';
@@ -34,7 +37,7 @@ function resolveProductMatchSummary(evaluation: ProductScanSupplierEvaluation): 
   return buildInlineSummary(same, img, title);
 }
 
-function resolveSummaryText(evaluation: ProductScanSupplierEvaluation): string | null {
+function resolveSummaryText(evaluation: NonNullableProductScanSupplierEvaluation): string | null {
   const confidence = formatConfidence(evaluation.confidence);
   const mid = evaluation.modelId ?? null;
   const model = (typeof mid === 'string' && mid !== '') ? `Evaluator ${mid}` : null;
@@ -49,7 +52,7 @@ function resolveEvaluatedAt(evalAt: string | null | undefined): string | null {
   return null;
 }
 
-function EvaluationStatusDisplay({ evaluation }: { evaluation: ProductScanSupplierEvaluation }): React.JSX.Element {
+function EvaluationStatusDisplay({ evaluation }: { evaluation: NonNullableProductScanSupplierEvaluation }): React.JSX.Element {
   const summary = resolveSummaryText(evaluation);
   return (
     <>

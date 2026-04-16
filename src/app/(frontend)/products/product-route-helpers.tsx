@@ -12,7 +12,7 @@ type RenderProductPublicRouteOptions = {
   locale?: string | null;
 };
 
-export const renderProductPublicRoute = async ({
+export const renderProductPublicRoute = ({
   id,
   locale,
 }: RenderProductPublicRouteOptions): Promise<JSX.Element> => {
@@ -20,5 +20,5 @@ export const renderProductPublicRoute = async ({
   applyCacheLife('hours');
 
   const resolvedLocale = typeof locale === 'string' ? normalizeSiteLocale(locale) : undefined;
-  return <ProductPublicPage params={{ id }} locale={resolvedLocale} />;
+  return Promise.resolve(<ProductPublicPage params={{ id }} locale={resolvedLocale} />);
 };

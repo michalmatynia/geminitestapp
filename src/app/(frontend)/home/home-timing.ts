@@ -2,7 +2,12 @@ import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 export const shouldLogHomeTiming = (): boolean => process.env['DEBUG_API_TIMING'] === 'true';
 
-export const createHomeTimingRecorder = () => {
+type HomeTimingRecorder = {
+  withTiming: <T>(label: string, fn: () => Promise<T>) => Promise<T>;
+  flush: () => Promise<void>;
+};
+
+export const createHomeTimingRecorder = (): HomeTimingRecorder => {
   const enabled = shouldLogHomeTiming();
 
   if (!enabled) {

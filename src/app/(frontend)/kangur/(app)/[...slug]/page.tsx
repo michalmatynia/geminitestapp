@@ -17,7 +17,7 @@ type KangurAliasPageProps = {
 
 async function KangurAliasPageRuntime({
   params,
-}: KangurAliasPageProps) {
+}: KangurAliasPageProps): Promise<React.JSX.Element> {
   const { slug = [] } = await params;
   return renderAccessibleKangurAliasRoute(slug);
 }

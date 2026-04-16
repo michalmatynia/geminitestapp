@@ -3,22 +3,23 @@
 import { useMemo } from 'react';
 import type { UseFormSetValue, UseFormGetValues } from 'react-hook-form';
 import type { ProductFormData } from '@/shared/contracts/products/drafts';
-import type { ProductParameterDefinition, ProductParameterValue } from '@/shared/contracts/products/parameters';
+import type { ProductParameter } from '@/shared/contracts/products/parameters';
+import type { ProductParameterValue } from '@/shared/contracts/products/product';
 import type { ProductCustomFieldDefinition, ProductCustomFieldValue } from '@/shared/contracts/products/custom-fields';
 import type { ProductFormBindings } from './ProductFormScans.types';
 
 type UseProductGeneralFormBindingsProps = {
   getValues: UseFormGetValues<ProductFormData>;
   setValue: UseFormSetValue<ProductFormData>;
-  parameters: ProductParameterDefinition[];
+  parameters: ProductParameter[];
   parameterValues: ProductParameterValue[];
-  addParameterValue: (id: string, val: string) => void;
-  updateParameterId: (oldId: string, newId: string) => void;
-  updateParameterValue: (id: string, val: string) => void;
+  addParameterValue: () => void;
+  updateParameterId: (index: number, parameterId: string) => void;
+  updateParameterValue: (index: number, value: string) => void;
   customFields: ProductCustomFieldDefinition[];
   customFieldValues: ProductCustomFieldValue[];
   setTextValue: (id: string, val: string) => void;
-  toggleSelectedOption: (id: string, optId: string) => void;
+  toggleSelectedOption: (id: string, optId: string, checked: boolean) => void;
 };
 
 export function useProductGeneralFormBindings({
@@ -40,7 +41,7 @@ export function useProductGeneralFormBindings({
       value: ProductFormData[TField]
     ): void => {
       if (typeof setValue !== 'function') return;
-      setValue(field, value, { shouldDirty: true, shouldTouch: true, shouldValidate: true });
+      setValue(field, value as never, { shouldDirty: true, shouldTouch: true, shouldValidate: true });
     };
 
     const getValue = <TField extends keyof ProductFormData>(

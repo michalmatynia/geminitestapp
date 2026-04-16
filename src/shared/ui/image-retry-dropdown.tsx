@@ -16,7 +16,7 @@ interface ImageRetryDropdownProps {
   buttonClassName?: string;
 }
 
-export function ImageRetryDropdown(props: ImageRetryDropdownProps) {
+export function ImageRetryDropdown(props: ImageRetryDropdownProps): React.JSX.Element {
   const {
     presets,
     onRetry,

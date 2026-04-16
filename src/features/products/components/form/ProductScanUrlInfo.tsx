@@ -35,7 +35,7 @@ export function ProductScanUrlInfo({
           <CopyButton
             value={scan.asin}
             ariaLabel='Copy ASIN'
-            size='xs'
+            size='sm'
             className='h-5 px-1.5'
             showText
           />

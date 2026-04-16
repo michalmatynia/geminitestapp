@@ -266,7 +266,7 @@ HTML: ${htmlPath}`;
   }
 };
 
-export const findVisibleLocator = async (page: Page, selectors: string[]) => {
+export const findVisibleLocator = async (page: Page, selectors: readonly string[]) => {
   for (const selector of selectors) {
     const locator = page.locator(selector).first();
     if (await isLocatorVisible(locator)) return locator;

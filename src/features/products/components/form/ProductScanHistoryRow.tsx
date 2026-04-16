@@ -81,7 +81,7 @@ export function ProductScanHistoryRow({
 
       <ProductScanExpansionPanels scan={scan} isAmazonScan={isAmazonScan} extractedFieldsExpanded={extractedFieldsExpanded} diagnosticsExpanded={diagnosticsExpanded} isExpanded={isExpanded} productFormBindings={productFormBindings} />
 
-      <ProductScan1688ActionSection scan={scan} isAmazonScan={isAmazonScan} resolvedConnectionLabel={resolvedLabel} productName={productName} supplier1688FormBindings={supplier1688FormBindings} />
+      <ProductScan1688ActionSection scan={scan} isAmazonScan={isAmazonScan} resolvedConnectionLabel={resolvedLabel} supplier1688FormBindings={supplier1688FormBindings} />
     </section>
   );
 }

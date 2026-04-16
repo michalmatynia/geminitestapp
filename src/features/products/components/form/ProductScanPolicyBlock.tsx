@@ -22,6 +22,7 @@ function PolicyVerificationLinks({ scanId, canShow }: { scanId: string, canShow:
   if (!canShow) return null;
   const urlsHref = buildProductScan1688SectionId(scanId, 'candidate-urls');
   const matchHref = buildProductScan1688SectionId(scanId, 'match-evaluation');
+  if (urlsHref === null || matchHref === null) return null;
 
   return (
     <>
@@ -47,13 +48,13 @@ export function ProductScanPolicyBlock({
   if (isAmazonScan === true) return null;
 
   const summary = resolveProductScan1688ApplyPolicySummary(scan);
-  if (summary === null || summary.isBlocked === false) return null;
+  if (summary === null || summary.blockActions === false) return null;
 
   const isReviewed = summary.blockActions === true && isBlockedScanReviewed(scan.id);
 
   return (
     <div className='space-y-1.5 rounded-md border border-amber-500/20 bg-amber-500/5 px-3 py-2'>
-      <p className='text-xs font-medium text-amber-300'>Apply is blocked by policy: {summary.reason}</p>
+      <p className='text-xs font-medium text-amber-300'>Apply is blocked by policy: {summary.detail}</p>
       {isReviewed === true ? (
         <p className='text-[11px] text-muted-foreground'>Review bypass active (reviewed at {formatTimestamp(scan.updatedAt)})</p>
       ) : (

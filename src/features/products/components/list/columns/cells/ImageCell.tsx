@@ -17,7 +17,8 @@ type BaseCandidate = { resFile: string | undefined, resLink: string | undefined,
 
 function resolveBaseCandidate(product: ProductWithImages, imageExternalBaseUrl: string | null | undefined): BaseCandidate {
   const images = Array.isArray(product.images) ? product.images : [];
-  const firstFile = getImageFilepath(images[0]?.imageFile);
+  const firstImg = images[0]?.imageFile;
+  const firstFile = getImageFilepath(firstImg);
   const resFile = resolveProductImageUrl(firstFile, imageExternalBaseUrl) ?? undefined;
 
   const firstLink = resolveFirstValid(product.imageLinks);
@@ -28,18 +29,17 @@ function resolveBaseCandidate(product: ProductWithImages, imageExternalBaseUrl: 
   return { resFile, resLink, firstBase64 };
 }
 
-const CANDIDATE_KEYS: Record<string, (keyof BaseCandidate)[]> = {
-  link: ['resLink', 'resFile', 'firstBase64'],
-  base64: ['firstBase64', 'resFile', 'resLink'],
-  file: ['resFile', 'resLink', 'firstBase64'],
-};
-
 function resolveCandidateImageUrl(
   base: BaseCandidate, 
   thumbnailSource: string
 ): string | undefined {
-  const keys = CANDIDATE_KEYS[thumbnailSource] ?? CANDIDATE_KEYS.file;
-  return base[keys[0]] ?? base[keys[1]] ?? base[keys[2]];
+  if (thumbnailSource === 'link') {
+    return (base.resLink ?? base.resFile) ?? base.firstBase64;
+  }
+  if (thumbnailSource === 'base64') {
+    return (base.firstBase64 ?? base.resFile) ?? base.resLink;
+  }
+  return (base.resFile ?? base.resLink) ?? base.firstBase64;
 }
 
 export const ImageCell: React.FC<{ row: Row<ProductWithImages> }> = memo(({ row }) => {
@@ -53,13 +53,14 @@ export const ImageCell: React.FC<{ row: Row<ProductWithImages> }> = memo(({ row 
   }, [product, source, visuals.imageExternalBaseUrl]);
 
   const name = getProductDisplayName(product);
+  const notes = product.notes;
+  const note = (typeof notes === 'string' && notes !== '') ? notes : null;
 
   return (
     <ProductImageCell
       imageUrl={imageUrl ?? null}
-      productId={product.id}
       productName={name}
-      note={product.notes ?? null}
+      note={note}
     />
   );
 });

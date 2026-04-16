@@ -99,7 +99,7 @@ export function Recommended1688Summary({
       <Recommended1688ConfidenceInfo scan={scan} preferredScans={preferredScans} isBlockedReviewed={isBlockedReviewed} />
 
       <div className='rounded-lg bg-muted/20 p-4'>
-        <ProductScan1688Details scan={scan} scanId={scan.id} showRecommendationReason />
+        <ProductScan1688Details scan={scan} scanId={scan.id} />
       </div>
 
       {(typeof infoMessage === 'string' && infoMessage !== '') || (typeof errorMessage === 'string' && errorMessage !== '') ? (

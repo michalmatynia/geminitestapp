@@ -164,7 +164,10 @@ export function withQueryCache<TArgs extends unknown[], TResult>(
     // Try cache first
     const cached = queryCache.get(key, [], { tags, ttl: options.ttl });
     if (cached !== null) {
-      if (!options.validateCached || options.validateCached(cached)) {
+      if (options.validateCached === undefined) {
+        return Promise.resolve(cached as TResult);
+      }
+      if (options.validateCached(cached)) {
         return Promise.resolve(cached);
       }
       queryCache.delete(key, []);

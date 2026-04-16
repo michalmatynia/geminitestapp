@@ -289,19 +289,19 @@ export function buildProductScan1688SectionId(scanId: string | null | undefined,
   return id !== null ? `product-scan-1688-${id}-${section}` : null;
 }
 
-function resolveHasBasicInfo(det: ProductScanSupplierDetails): boolean {
+function resolveHasBasicInfo(det: NonNullable<ProductScanSupplierDetails>): boolean {
   if ((det.supplierName ?? '') !== '') return true;
   if ((det.supplierStoreUrl ?? '') !== '') return true;
   return (det.supplierProductUrl ?? '') !== '';
 }
 
-function resolveHasPricingInfo(det: ProductScanSupplierDetails): boolean {
+function resolveHasPricingInfo(det: NonNullable<ProductScanSupplierDetails>): boolean {
   if ((det.priceText ?? '') !== '') return true;
   if ((det.priceRangeText ?? '') !== '') return true;
   return (det.moqText ?? '') !== '';
 }
 
-function resolveHasExtractedText(det: ProductScanSupplierDetails): boolean {
+function resolveHasExtractedText(det: NonNullable<ProductScanSupplierDetails>): boolean {
   if (resolveHasBasicInfo(det)) return true;
   return resolveHasPricingInfo(det);
 }

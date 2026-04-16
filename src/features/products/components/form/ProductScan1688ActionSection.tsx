@@ -10,7 +10,6 @@ type ProductScan1688ActionSectionProps = {
   scan: ProductScanRecord;
   isAmazonScan: boolean;
   resolvedConnectionLabel: string | null;
-  productName: string;
   supplier1688FormBindings: Supplier1688FormBindings;
 };
 
@@ -18,7 +17,6 @@ export function ProductScan1688ActionSection({
   scan,
   isAmazonScan,
   resolvedConnectionLabel,
-  productName,
   supplier1688FormBindings,
 }: ProductScan1688ActionSectionProps): React.JSX.Element | null {
   if (isAmazonScan === true) return null;
@@ -35,8 +33,6 @@ export function ProductScan1688ActionSection({
       <div className='border-t border-border/40 pt-3'>
         <ProductScan1688ApplyPanel
           scan={scan}
-          productId={scan.productId}
-          productName={productName}
           formBindings={supplier1688FormBindings}
         />
       </div>

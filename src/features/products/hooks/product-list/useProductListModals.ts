@@ -58,13 +58,13 @@ const enrichRecoveryContext = (
 
   return {
     ...recoveryContext,
-    runId: recoveryContext.runId ?? persistedFeedback.runId,
+    runId: recoveryContext.runId ?? persistedFeedback.runId ?? null,
     failureReason:
       ('failureReason' in recoveryContext ? recoveryContext.failureReason : null) ??
-      persistedFeedback.failureReason,
-    requestId: recoveryContext.requestId ?? persistedFeedback.requestId,
-    integrationId: recoveryContext.integrationId ?? persistedFeedback.integrationId,
-    connectionId: recoveryContext.connectionId ?? persistedFeedback.connectionId,
+      persistedFeedback.failureReason ?? null,
+    requestId: recoveryContext.requestId ?? persistedFeedback.requestId ?? null,
+    integrationId: recoveryContext.integrationId ?? persistedFeedback.integrationId ?? null,
+    connectionId: recoveryContext.connectionId ?? persistedFeedback.connectionId ?? null,
   };
 };
 

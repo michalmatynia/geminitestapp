@@ -167,11 +167,11 @@ export const cloneProfileV2 = (profile: FolderTreeProfileV2): FolderTreeProfileV
 export const createDefaultFolderTreeProfilesV2 = (
   defaultProfiles: FolderTreeProfilesV2Map
 ): FolderTreeProfilesV2Map => {
-  const defaults: FolderTreeProfilesV2Map = {} satisfies FolderTreeProfilesV2Map as FolderTreeProfilesV2Map;
+  const defaults: Partial<FolderTreeProfilesV2Map> = {};
   folderTreeInstanceValues.forEach((instance: FolderTreeInstance) => {
     defaults[instance] = cloneProfileV2(defaultProfiles[instance]);
   });
-  return defaults;
+  return defaults as FolderTreeProfilesV2Map;
 };
 
 export const normalizeByKindIcons = (
@@ -294,7 +294,10 @@ export const canNestTreeNodeV2 = ({
     nodeKind,
     nodeType === 'folder' ? 'folder' : 'file'
   );
-  const normalizedTargetKind = normalizeMasterTreeKind(targetFolderKind ?? '', 'folder');
+  const normalizedTargetKind = normalizeMasterTreeKind(
+    targetFolderKind !== null ? targetFolderKind : '',
+    'folder'
+  );
 
   if (
     targetType === 'folder' &&
@@ -304,21 +307,21 @@ export const canNestTreeNodeV2 = ({
   }
 
   let decision: boolean | null = null;
-  profile.nesting.rules.forEach((rule: FolderTreeNestingRuleV2) => {
-    if (rule.childType !== nodeType) return;
-    if (!listMatches(rule.childKinds, normalizedNodeKind)) return;
-    if (rule.targetType !== targetType) return;
+  for (const rule of profile.nesting.rules) {
+    if (rule.childType !== nodeType) continue;
+    if (!listMatches(rule.childKinds, normalizedNodeKind)) continue;
+    if (rule.targetType !== targetType) continue;
 
     if (targetType === 'folder') {
-      if (!listMatches(rule.targetKinds, normalizedTargetKind)) return;
+      if (!listMatches(rule.targetKinds, normalizedTargetKind)) continue;
     } else if (!listMatches(rule.targetKinds, 'root')) {
-      return;
+      continue;
     }
 
     decision = rule.allow;
-  });
+  }
 
-  return decision ?? profile.nesting.defaultAllow;
+  return decision !== null ? decision : profile.nesting.defaultAllow;
 };
 
 export const resolveFolderTreeIconV2 = (
@@ -328,8 +331,9 @@ export const resolveFolderTreeIconV2 = (
 ): string | null => {
   if (kind !== undefined && kind !== null && kind.length > 0) {
     const normalizedKind = normalizeMasterTreeKind(kind, '');
-    if (normalizedKind !== null && normalizedKind.length > 0 && normalizedKind in profile.icons.byKind) {
-      return profile.icons.byKind[normalizedKind] ?? null;
+    if (normalizedKind.length > 0 && normalizedKind in profile.icons.byKind) {
+      const icon = profile.icons.byKind[normalizedKind];
+      return icon !== undefined && icon !== null ? icon : null;
     }
   }
   return profile.icons.slots[slot];

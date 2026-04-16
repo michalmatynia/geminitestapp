@@ -25,7 +25,11 @@ export function useProductRecommendedScans(scans: ProductScanRecord[]): ProductR
     return scans.find((s) => s.id === recommendedAmazonExtractedScanId) ?? null;
   }, [recommendedAmazonExtractedScanId, scans]);
 
-  const recommended1688Scan = preferred1688Scans[0] ?? null;
+  const recommended1688ScanId = preferred1688Scans[0]?.id ?? null;
+  const recommended1688Scan = useMemo((): ProductScanRecord | null => {
+    if (recommended1688ScanId === null) return null;
+    return scans.find((scan) => scan.id === recommended1688ScanId) ?? null;
+  }, [recommended1688ScanId, scans]);
 
   return {
     recommendedAmazonScan,

@@ -51,7 +51,7 @@ const resolveStepGroup = (
     return 'supplier';
   }
 
-  return 'output';
+  return 'product';
 };
 
 const getStepGroupLabel = (group: NonNullable<ProductScanStep['group']>): string => {

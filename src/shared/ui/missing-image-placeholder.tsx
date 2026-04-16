@@ -8,7 +8,7 @@ interface MissingImagePlaceholderProps {
 export default function MissingImagePlaceholder({
   className,
   label = 'No image',
-}: MissingImagePlaceholderProps) {
+}: MissingImagePlaceholderProps): React.JSX.Element {
   return (
     <div
       role='img'

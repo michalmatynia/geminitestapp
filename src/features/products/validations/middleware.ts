@@ -32,8 +32,9 @@ export async function validateProductCreateMiddleware(
     }
     const fieldErrors: Record<string, string[]> = {};
     result.errors.forEach((err: ValidationError) => {
-      fieldErrors[err.field] ??= [];
-      fieldErrors[err.field].push(err.message);
+      const messages = fieldErrors[err.field] ?? [];
+      messages.push(err.message);
+      fieldErrors[err.field] = messages;
     });
     const response = await createValidationErrorResponse(fieldErrors, {
       source: 'products.validation.create',
@@ -61,8 +62,9 @@ export async function validateProductUpdateMiddleware(
     }
     const fieldErrors: Record<string, string[]> = {};
     result.errors.forEach((err: ValidationError) => {
-      fieldErrors[err.field] ??= [];
-      fieldErrors[err.field].push(err.message);
+      const messages = fieldErrors[err.field] ?? [];
+      messages.push(err.message);
+      fieldErrors[err.field] = messages;
     });
     const response = await createValidationErrorResponse(fieldErrors, {
       source: 'products.validation.update',

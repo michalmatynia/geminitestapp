@@ -1,5 +1,10 @@
 import type { ProductCustomFieldDefinition } from '@/shared/contracts/products/custom-fields';
-import type { ProductScanRecord, ProductScanStatus } from '@/shared/contracts/product-scans';
+import type {
+  ProductScanAmazonEvaluationStatus,
+  ProductScanRecord,
+  ProductScanStatus,
+  ProductScanSupplierEvaluationStatus,
+} from '@/shared/contracts/product-scans';
 import { isProductScanActiveStatus } from '@/shared/contracts/product-scans';
 import { resolveProductScanRunFeedbackPresentation } from '@/features/products/lib/product-scan-run-feedback';
 
@@ -33,7 +38,15 @@ export function isManualVerificationPending(scan: Pick<ProductScanRecord, 'rawRe
   return result['manualVerificationPending'] === true;
 }
 
-function resolveEvalStatus(evalObj: { status: string } | null | undefined): string | null {
+function resolveAmazonEvalStatus(
+  evalObj: { status: ProductScanAmazonEvaluationStatus } | null | undefined
+): ProductScanAmazonEvaluationStatus | null {
+  return typeof evalObj?.status === 'string' ? evalObj.status : null;
+}
+
+function resolveSupplierEvalStatus(
+  evalObj: { status: ProductScanSupplierEvaluationStatus } | null | undefined
+): ProductScanSupplierEvaluationStatus | null {
   return typeof evalObj?.status === 'string' ? evalObj.status : null;
 }
 
@@ -41,7 +54,7 @@ function resolveStatusFeedbackParams(scan: ProductScanRecord): Parameters<typeof
   const amazonEval = scan.amazonEvaluation;
   const supplierEval = scan.supplierEvaluation;
 
-  const amazonStatus = resolveEvalStatus(amazonEval);
+  const amazonStatus = resolveAmazonEvalStatus(amazonEval);
   const amazonLanguage = typeof amazonEval?.languageAccepted === 'boolean' ? amazonEval.languageAccepted : null;
 
   return {
@@ -49,7 +62,7 @@ function resolveStatusFeedbackParams(scan: ProductScanRecord): Parameters<typeof
     manualVerificationMessage: scan.asinUpdateMessage ?? null,
     amazonEvaluationStatus: amazonStatus,
     amazonEvaluationLanguageAccepted: amazonLanguage,
-    supplierEvaluationStatus: resolveEvalStatus(supplierEval),
+    supplierEvaluationStatus: resolveSupplierEvalStatus(supplierEval),
   };
 }
 

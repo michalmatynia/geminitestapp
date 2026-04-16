@@ -31,7 +31,6 @@ import {
   type NormalizeProductNameAiPathResult,
 } from '@/features/products/lib/extractNormalizeProductNameFromAiPathRunDetail';
 import { validateNormalizedProductName } from '@/features/products/lib/validateNormalizedProductName';
-import type { ProductTriggerButtonBarProps } from '@/features/products/lib/product-integrations-adapter-loader';
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
 import type { IntegrationWithConnections } from '@/shared/contracts/integrations/domain';
 import type { ProductDraft } from '@/shared/contracts/products/drafts';
@@ -573,17 +572,17 @@ function ProductEditorModal(props: ProductEditorModalProps): React.JSX.Element |
   useEffect(() => {
     if (pendingNormalizeRunId === null || shouldApplyNormalizeResultLocally === false) return;
 
-    let active = true;
+    const activeRef = { current: true };
     let terminalHandled = false;
     const trackedRunId = pendingNormalizeRunId;
 
     const unsubscribe = subscribeToTrackedAiPathRun(trackedRunId, (snapshot) => {
-      if (active === false || terminalHandled === true || snapshot.trackingState !== 'stopped') return;
+      if (activeRef.current === false || terminalHandled === true || snapshot.trackingState !== 'stopped') return;
       terminalHandled = true;
 
       void (async (): Promise<void> => {
         if (snapshot.status !== 'completed') {
-          if (active === true) {
+          if (activeRef.current === true) {
             setPendingNormalizeCompletion({
               kind: 'error',
               runId: trackedRunId,
@@ -610,7 +609,7 @@ function ProductEditorModal(props: ProductEditorModalProps): React.JSX.Element |
         }
 
         const response = await getAiPathRunResult(trackedRunId, { timeoutMs: 60_000 });
-        if (active === false) return;
+        if (activeRef.current === false) return;
         if (response.ok === false) {
           setPendingNormalizeCompletion({
             kind: 'error',
@@ -642,7 +641,7 @@ function ProductEditorModal(props: ProductEditorModalProps): React.JSX.Element |
     });
 
     return () => {
-      active = false;
+      activeRef.current = false;
       unsubscribe();
     };
   }, [pendingNormalizeRunId, shouldApplyNormalizeResultLocally]);

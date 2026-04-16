@@ -23,7 +23,7 @@ export function useSupplier1688FormBindings({
       value: ProductFormData[TField]
     ): void => {
       if (typeof setValue !== 'function') return;
-      setValue(field, value, { shouldDirty: true, shouldTouch: true, shouldValidate: true });
+      setValue(field, value as never, { shouldDirty: true, shouldTouch: true, shouldValidate: true });
     };
 
     const getValue = <TField extends keyof ProductFormData>(

@@ -9,8 +9,14 @@ import {
   useIntegrationsWithConnections,
 } from '@/features/integrations/hooks/useIntegrationQueries';
 import { useTestConnection } from '@/features/integrations/hooks/useIntegrationMutations';
-import { ProductScanAmazonExtractedFieldsPanel } from '@/features/products/components/scans/ProductScanAmazonExtractedFieldsPanel';
-import { ProductScan1688ApplyPanel } from '@/features/products/components/scans/ProductScan1688ApplyPanel';
+import {
+  ProductScanAmazonExtractedFieldsPanel,
+  type ProductScanAmazonFormBindings,
+} from '@/features/products/components/scans/ProductScanAmazonExtractedFieldsPanel';
+import {
+  ProductScan1688ApplyPanel,
+  type ProductScan1688FormBindings,
+} from '@/features/products/components/scans/ProductScan1688ApplyPanel';
 import {
   hasProductScanAmazonDetails,
   resolveAmazonScanRecommendationReason,
@@ -172,9 +178,9 @@ const resolveRowStatusLabel = (row: ScanModalRow): string => {
   return resolveProductScanRunFeedbackPresentation(row.status, {
     manualVerificationPending: isManualVerificationPending(row.scan),
     manualVerificationMessage: typeof manualVerificationMessage === 'string' && manualVerificationMessage !== '' ? manualVerificationMessage : null,
-    amazonEvaluationStatus: typeof amazonEvaluationStatus === 'string' && amazonEvaluationStatus !== '' ? amazonEvaluationStatus : null,
+    amazonEvaluationStatus: amazonEvaluationStatus ?? null,
     amazonEvaluationLanguageAccepted: typeof amazonEvaluationLanguageAccepted === 'boolean' ? amazonEvaluationLanguageAccepted : null,
-    supplierEvaluationStatus: typeof supplierEvaluationStatus === 'string' && supplierEvaluationStatus !== '' ? supplierEvaluationStatus : null,
+    supplierEvaluationStatus: supplierEvaluationStatus ?? null,
   }).label;
 };
 
@@ -191,9 +197,9 @@ const resolveRowStatusClassName = (row: ScanModalRow): string => {
   return resolveProductScanRunFeedbackPresentation(row.status, {
     manualVerificationPending: isManualVerificationPending(row.scan),
     manualVerificationMessage: typeof manualVerificationMessage === 'string' && manualVerificationMessage !== '' ? manualVerificationMessage : null,
-    amazonEvaluationStatus: typeof amazonEvaluationStatus === 'string' && amazonEvaluationStatus !== '' ? amazonEvaluationStatus : null,
+    amazonEvaluationStatus: amazonEvaluationStatus ?? null,
     amazonEvaluationLanguageAccepted: typeof amazonEvaluationLanguageAccepted === 'boolean' ? amazonEvaluationLanguageAccepted : null,
-    supplierEvaluationStatus: typeof supplierEvaluationStatus === 'string' && supplierEvaluationStatus !== '' ? supplierEvaluationStatus : null,
+    supplierEvaluationStatus: supplierEvaluationStatus ?? null,
   }).badgeClassName ?? STATUS_CLASSES[row.status];
 };
 
@@ -403,31 +409,6 @@ const resolveRowDisplayMessages = (
   };
 };
 
-type ProductFormBindings = {
-  getTextFieldValue: (field: 'asin' | 'ean' | 'gtin') => string | null;
-  getNumberFieldValue: (field: 'weight' | 'sizeLength' | 'sizeWidth' | 'length') => number | null;
-  applyTextField: (field: 'asin' | 'ean' | 'gtin', value: string) => void;
-  applyNumberField: (field: 'weight' | 'sizeLength' | 'sizeWidth' | 'length', value: number) => void;
-  parameters: unknown[];
-  parameterValues: unknown[];
-  addParameterValue: (paramId: string) => void;
-  updateParameterId: (oldParamId: string, nextParamId: string) => void;
-  updateParameterValue: (paramId: string, value: string) => void;
-  customFields: unknown[];
-  customFieldValues: Record<string, string | string[]>;
-  setTextValue: (fieldId: string, value: string) => void;
-  toggleSelectedOption: (fieldId: string, optionId: string) => void;
-};
-
-type ProductSupplier1688FormBindings = {
-  getTextFieldValue: (field: 'supplierName' | 'supplierLink' | 'priceComment') => string | null;
-  applyTextField: (field: 'supplierName' | 'supplierLink' | 'priceComment', value: string) => void;
-  imageLinks: string[] | undefined;
-  imageBase64s: string[] | undefined;
-  setImageLinkAt: ((index: number, link: string) => void) | undefined;
-  setImageBase64At: ((index: number, base64: string) => void) | undefined;
-};
-
 type ProductScanRowProps = {
   row: ScanModalRow;
   modalConfig: ProductScanModalConfig;
@@ -443,8 +424,8 @@ type ProductScanRowProps = {
   toggleRowDiagnostics: (productId: string) => void;
   toggleRowSteps: (productId: string) => void;
   provider: Extract<ProductScanProvider, 'amazon' | '1688'>;
-  formBindings: ProductFormBindings | null;
-  supplierFormBindings: ProductSupplier1688FormBindings | null;
+  formBindings: ProductScanAmazonFormBindings | null;
+  supplierFormBindings: ProductScan1688FormBindings | null;
 };
 
 function ProductScanRow(props: ProductScanRowProps): React.JSX.Element {
@@ -516,8 +497,9 @@ function ProductScanRow(props: ProductScanRowProps): React.JSX.Element {
       : null;
 
   const isBlocked1688ResultReviewed =
-    supplierApplyPolicySummary?.blockActions === true &&
-    isBlockedScanReviewed(row.scan?.id);
+    supplierApplyPolicySummary?.blockActions === true
+      ? isBlockedScanReviewed(row.scan?.id)
+      : false;
 
   const blocked1688CandidateUrlsHref =
     row.scan !== null && isAmazonScan === false && supplierApplyPolicySummary?.blockActions === true
@@ -537,6 +519,7 @@ function ProductScanRow(props: ProductScanRowProps): React.JSX.Element {
   const diagnostics = row.scan !== null ? resolveProductScanDiagnostics(row.scan) : null;
   const hasDiagnostics = diagnostics !== null;
   const latestFailureArtifact = diagnostics?.failureArtifacts[0] ?? null;
+  const failureArtifactCount = diagnostics?.failureArtifacts.length ?? 0;
   const latestFailureArtifactHref =
     row.scan !== null && latestFailureArtifact !== null
       ? buildProductScanArtifactHref(row.scan.id, latestFailureArtifact)
@@ -936,10 +919,10 @@ function ProductScanRow(props: ProductScanRowProps): React.JSX.Element {
         </p>
       ) : null}
 
-      {isAmazonScan === false && supplierApplyPolicySummary?.isBlocked === true ? (
+      {isAmazonScan === false && supplierApplyPolicySummary?.blockActions === true ? (
         <div className='space-y-1.5 rounded-md border border-amber-500/20 bg-amber-500/5 px-3 py-2'>
           <p className='text-xs font-medium text-amber-300'>
-            Apply is blocked by policy: {supplierApplyPolicySummary.reason}
+            Apply is blocked by policy: {supplierApplyPolicySummary.detail}
           </p>
           {isBlocked1688ResultReviewed === true ? (
             <p className='text-[11px] text-muted-foreground'>
@@ -968,14 +951,10 @@ function ProductScanRow(props: ProductScanRowProps): React.JSX.Element {
               {supplierApplyPolicySummary.blockActions === true ? (
                 <button
                   type='button'
-                  onClick={() =>
-                    isBlocked1688ResultReviewed === true
-                      ? clearBlockedScanReviewed(row.scan?.id)
-                      : markBlockedScanReviewed(row.scan?.id)
-                  }
+                  onClick={() => markBlockedScanReviewed(row.scan?.id)}
                   className='text-primary underline-offset-2 hover:underline'
                 >
-                  {isBlocked1688ResultReviewed === true ? 'Undo review' : 'Mark reviewed'}
+                  Mark reviewed
                 </button>
               ) : null}
             </div>
@@ -1003,7 +982,7 @@ function ProductScanRow(props: ProductScanRowProps): React.JSX.Element {
               <CopyButton
                 value={row.scan.asin}
                 ariaLabel='Copy ASIN'
-                size='xs'
+                size='sm'
                 className='h-5 px-1.5'
                 showText
               />
@@ -1075,8 +1054,6 @@ function ProductScanRow(props: ProductScanRowProps): React.JSX.Element {
           <div className='border-t border-border/40 pt-3'>
             <ProductScan1688ApplyPanel
               scan={row.scan}
-              productId={row.productId}
-              productName={row.productName}
               formBindings={supplierFormBindings}
             />
           </div>
@@ -1373,18 +1350,17 @@ export function ProductAmazonScanModal(
     );
 
     setRows((currentRows) => {
-      let didChange = false;
       const nextRows = currentRows.map((row) => {
         const nextProductName = selectedProductNames.get(row.productId);
         if (nextProductName === undefined || nextProductName === null || nextProductName === row.productName) {
           return row;
         }
-        didChange = true;
         return {
           ...row,
           productName: nextProductName,
         };
       });
+      const didChange = nextRows.some((row, index) => row.productName !== currentRows[index]?.productName);
 
       if (didChange === true) {
         rowsRef.current = nextRows;
@@ -2041,7 +2017,7 @@ export function ProductAmazonScanModal(
     });
   }, []);
 
-  const productFormBindings = useMemo((): ProductFormBindings | null => {
+  const productFormBindings = useMemo((): ProductScanAmazonFormBindings | null => {
     if (
       productFormCoreState === null ||
       productFormCoreActions === null ||
@@ -2094,7 +2070,7 @@ export function ProductAmazonScanModal(
     productFormParameters,
   ]);
 
-  const productSupplier1688FormBindings = useMemo((): ProductSupplier1688FormBindings | null => {
+  const productSupplier1688FormBindings = useMemo((): ProductScan1688FormBindings | null => {
     if (productFormCoreState === null || productFormCoreActions === null) {
       return null;
     }

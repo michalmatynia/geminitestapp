@@ -29,7 +29,7 @@ export function useProductScansQuery(productId: string): ProductScansQueryResult
     refetchInterval: (q) => {
       const scansData = q.state.data?.scans;
       if (!Array.isArray(scansData)) return false;
-      return scansData.some((scan) => isProductScanActiveStatus(scan.status));
+      return scansData.some((scan) => isProductScanActiveStatus(scan.status)) ? 5_000 : false;
     },
   });
 
@@ -51,8 +51,7 @@ export function useProductScansQuery(productId: string): ProductScansQueryResult
     queryRefetch().catch(() => { /* silent */ });
   }, [queryRefetch]);
 
-  const rawData: ProductScanListResponse | undefined = query.data;
-  const rawScans = rawData?.scans;
+  const rawScans = query.data?.scans;
 
   return {
     scans: Array.isArray(rawScans) ? rawScans : [],

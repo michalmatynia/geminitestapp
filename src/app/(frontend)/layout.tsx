@@ -24,23 +24,12 @@ import {
   type FrontendPublicOwner,
   type FrontendPublicRouteFamily,
 } from '@/shared/lib/frontend-public-route-family';
-import { getFrontPagePublicOwner } from '@/shared/lib/front-page-app';
-import { stripSiteLocalePrefix } from '@/shared/lib/i18n/site-locale';
 import { safeHtml } from '@/shared/lib/security/safe-html';
-import { getLiteSettingsCache } from '@/shared/lib/settings-lite-server-cache';
 import { QueryErrorBoundary } from '@/shared/ui/QueryErrorBoundary';
 
 import type { JSX } from 'react';
-import { Suspense } from 'react';
 
 const FRONTEND_LAYOUT_REQUEST_HEADERS_TIMEOUT_MS = 1200;
-const FRONT_PAGE_SETTING_KEY = 'front_page_app';
-const FRONTEND_REQUEST_PATHNAME_HEADER_KEYS = [
-  'x-app-request-pathname',
-  'x-app-request-url',
-  'next-url',
-  'x-matched-path',
-] as const;
 
 const resolveFrontendRequestPathname = (headerValue: string | null | undefined): string | null => {
   if (typeof headerValue !== 'string') {
@@ -66,104 +55,15 @@ const resolveFrontendRequestPathname = (headerValue: string | null | undefined):
   return pathname.startsWith('/') ? pathname : `/${pathname}`;
 };
 
-const isCanonicalPublicLoginRequest = (pathname: string | null): boolean => {
-  if (pathname === null || pathname.length === 0) {
-    return false;
-  }
-
-  return stripSiteLocalePrefix(pathname) === '/login';
-};
-
 const isRootPublicRequest = (pathname: string | null): boolean => {
-  if (pathname === null || pathname.length === 0) {
+  if (!pathname) {
     return true;
   }
 
-  return stripSiteLocalePrefix(pathname) === '/';
+  return pathname === '/';
 };
 
-const resolveFrontendFallbackRequestPathname = (): string | null => {
-  const requestContextPathname = readServerRequestPathname();
-  if (requestContextPathname !== null) {
-    return requestContextPathname;
-  }
-
-  const requestHeaders = readServerRequestHeaders();
-  for (const headerKey of FRONTEND_REQUEST_PATHNAME_HEADER_KEYS) {
-    const resolvedPathname = resolveFrontendRequestPathname(requestHeaders?.get(headerKey));
-    if (resolvedPathname !== null) {
-      return resolvedPathname;
-    }
-  }
-
-  return null;
-};
-
-const resolveFrontendFallbackPublicOwner = (
-  _pathname: string | null
-): FrontendPublicOwner | null => {
-  if (!shouldApplyFrontPageAppSelection()) {
-    return null;
-  }
-
-  const cachedLiteSettings = getLiteSettingsCache()?.data;
-  if (!cachedLiteSettings || cachedLiteSettings.length === 0) {
-    return null;
-  }
-
-  const frontPageSetting = cachedLiteSettings.find((setting) => setting.key === FRONT_PAGE_SETTING_KEY);
-  return getFrontPagePublicOwner(frontPageSetting?.value);
-};
-
-export default function FrontendLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}): JSX.Element {
-  return (
-    <Suspense fallback={<FrontendLayoutFallback />}>
-      <FrontendLayoutRuntime>{children}</FrontendLayoutRuntime>
-    </Suspense>
-  );
-}
-
-function FrontendLayoutFallback(): JSX.Element {
-  const fallbackPathname = resolveFrontendFallbackRequestPathname();
-  // Keep fallback owner resolution for future use
-  resolveFrontendFallbackPublicOwner(fallbackPathname);
-
-  return (
-    <main
-      id='main-content'
-      tabIndex={-1}
-      className='min-h-screen bg-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background'
-      data-frontend-public-route-family='pending'
-      aria-busy='true'
-    >
-      <div className='mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-6 px-6 py-8 sm:px-10 lg:px-12'>
-        <div className='h-11 w-40 animate-pulse rounded-2xl bg-foreground/[0.06]' />
-        <div className='grid flex-1 gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]'>
-          <div className='flex flex-col gap-4'>
-            <div className='h-16 w-3/4 animate-pulse rounded-3xl bg-foreground/[0.05]' />
-            <div className='h-64 animate-pulse rounded-[2rem] bg-foreground/[0.04]' />
-            <div className='grid gap-3 sm:grid-cols-2'>
-              <div className='h-28 animate-pulse rounded-3xl bg-foreground/[0.04]' />
-              <div className='h-28 animate-pulse rounded-3xl bg-foreground/[0.04]' />
-            </div>
-          </div>
-          <div className='hidden gap-4 rounded-[2rem] border border-foreground/[0.06] bg-background/80 p-6 lg:flex lg:flex-col'>
-            <div className='h-5 w-28 animate-pulse rounded-full bg-foreground/[0.06]' />
-            <div className='h-12 animate-pulse rounded-2xl bg-foreground/[0.05]' />
-            <div className='h-12 animate-pulse rounded-2xl bg-foreground/[0.05]' />
-            <div className='h-24 animate-pulse rounded-3xl bg-foreground/[0.04]' />
-          </div>
-        </div>
-      </div>
-    </main>
-  );
-}
-
-async function FrontendLayoutRuntime({
+export default async function FrontendLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -189,11 +89,9 @@ async function FrontendLayoutRuntime({
     resolveFrontendRequestPathname(requestHeaders?.get('x-app-request-url')) ??
     resolveFrontendRequestPathname(requestHeaders?.get('next-url')) ??
     resolveFrontendRequestPathname(requestHeaders?.get('x-matched-path'));
-  const isCanonicalPublicLogin = isCanonicalPublicLoginRequest(requestPathname);
   const isRootPublicRoute = isRootPublicRequest(requestPathname);
   const shouldUseFrontPageAppSelection = shouldApplyFrontPageAppSelection();
-  const shouldResolveFrontPageSelection = shouldUseFrontPageAppSelection;
-  const frontPageSelectionPromise = shouldResolveFrontPageSelection
+  const frontPageSelectionPromise = shouldUseFrontPageAppSelection
     ? layoutTiming.withTiming('frontPageSelection', resolveFrontPageSelection)
     : Promise.resolve(null);
   const themePromise = getCmsThemeSettings();
@@ -204,27 +102,25 @@ async function FrontendLayoutRuntime({
     pathname: requestPathname,
     publicOwner,
   });
-  const [themeSettings] = await Promise.all([
-    layoutTiming.withTiming('cmsThemeSettings', () => themePromise),
-  ]);
+  const themeSettings = await layoutTiming.withTiming('cmsThemeSettings', () => themePromise);
   const storefrontAppearanceMode = themeSettings.darkMode ? 'dark' : 'default';
   const frontendLoadTimingPayload = layoutTiming.buildPayload({
     pathname: requestPathname,
     publicOwner,
     routeFamily: publicRouteFamily,
-    flags: {
-      explicitKangurAlias: false,
-      canonicalPublicLogin: isCanonicalPublicLogin,
-      rootPublicRoute: isRootPublicRoute,
-      requestHeadersTimedOut,
-      frontPageSelectionSource: frontPageSelection?.source ?? null,
-      frontPageSelectionFallbackReason: frontPageSelection?.fallbackReason ?? null,
-      expectsRootRedirectToKangur: false,
-      renderStandaloneKangurShell: false,
-      injectKangurAuthBootstrap: false,
-      loadKangurStorefrontBootstrap: false,
-    },
-  });
+      flags: {
+        explicitKangurAlias: false,
+        canonicalPublicLogin: false,
+        rootPublicRoute: isRootPublicRoute,
+        requestHeadersTimedOut,
+        frontPageSelectionSource: frontPageSelection?.source ?? null,
+        frontPageSelectionFallbackReason: frontPageSelection?.fallbackReason ?? null,
+        expectsRootRedirectToKangur: false,
+        renderStandaloneKangurShell: false,
+        injectKangurAuthBootstrap: false,
+        loadKangurStorefrontBootstrap: false,
+      },
+    });
   const inlineFrontendLoadTimingPayload: FrontendLoadTimingPayload | null =
     frontendLoadTimingPayload
       ? {
@@ -236,7 +132,7 @@ async function FrontendLayoutRuntime({
         }
       : null;
 
-  const frontendShellChildren: React.ReactNode = (
+  const frontendShellChildren = (
     <CmsStorefrontAppearanceProvider initialMode={storefrontAppearanceMode}>
       <>{children}</>
     </CmsStorefrontAppearanceProvider>

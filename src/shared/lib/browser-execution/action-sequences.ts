@@ -2,15 +2,23 @@ import type { StepId } from './step-registry';
 import { BROWSER_AND_AUTH, STEP_GROUPS } from './step-groups';
 
 export type ActionSequenceKey =
+  | 'tradera_auth'
   | 'tradera_quicklist_list'
   | 'tradera_quicklist_relist'
   | 'tradera_quicklist_sync'
   | 'tradera_check_status'
+  | 'tradera_fetch_categories'
   | 'vinted_list'
   | 'vinted_relist'
   | 'vinted_sync';
 
 export const ACTION_SEQUENCES: Record<ActionSequenceKey, readonly StepId[]> = {
+  tradera_auth: [
+    ...BROWSER_AND_AUTH,
+    'sell_page_open',
+    'browser_close',
+  ],
+
   tradera_quicklist_list: [
     ...BROWSER_AND_AUTH,
     'duplicate_check',
@@ -39,6 +47,7 @@ export const ACTION_SEQUENCES: Record<ActionSequenceKey, readonly StepId[]> = {
   ],
 
   tradera_check_status: [
+    'browser_preparation',
     'browser_open',
     'cookie_accept',
     'auth_check',
@@ -50,6 +59,16 @@ export const ACTION_SEQUENCES: Record<ActionSequenceKey, readonly StepId[]> = {
     'search_sold',
     'inspect_sold',
     'resolve_status',
+    'browser_close',
+  ],
+
+  tradera_fetch_categories: [
+    'browser_preparation',
+    'browser_open',
+    'cookie_accept',
+    'categories_seed_extract',
+    'categories_crawl',
+    'categories_finalize',
     'browser_close',
   ],
 

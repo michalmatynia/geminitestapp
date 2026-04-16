@@ -879,10 +879,10 @@ afterEach(async () => {
   }
 
   try {
-    const { __resetQueuedProductOpsState } = await import(
+    const { resetQueuedProductOpsState } = await import(
       '@/features/products/state/queued-product-ops'
     );
-    __resetQueuedProductOpsState?.();
+    resetQueuedProductOpsState?.();
   } catch {
     // ignore cleanup for non-browser test environments
   }

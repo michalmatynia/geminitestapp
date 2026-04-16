@@ -43,7 +43,7 @@ function PlaywrightStepSequencerSkeleton(): React.JSX.Element {
         </div>
         <Skeleton className='h-8 w-full' />
         <div className='space-y-2 rounded-md border border-white/10 p-3'>
-          {[...Array(5)].map((_, i) => (
+          {Array.from({ length: 5 }).map((_, i) => (
             <Skeleton key={i} className='h-9 w-full' />
           ))}
         </div>
@@ -55,6 +55,7 @@ function PlaywrightStepSequencerSkeleton(): React.JSX.Element {
 function OrphanBanner(): React.JSX.Element | null {
   const {
     orphanedStepIds,
+    orphanedActionStepIds,
     orphanedStepSetIds,
     handleCleanOrphanedSteps,
     handleCleanOrphanedStepSets,
@@ -62,8 +63,9 @@ function OrphanBanner(): React.JSX.Element | null {
   } = usePlaywrightStepSequencer();
 
   const hasOrphanedSteps = orphanedStepIds.size > 0;
+  const hasOrphanedActionSteps = orphanedActionStepIds.size > 0;
   const hasOrphanedStepSets = orphanedStepSetIds.size > 0;
-  if (!hasOrphanedSteps && !hasOrphanedStepSets) return null;
+  if (!hasOrphanedSteps && !hasOrphanedActionSteps && !hasOrphanedStepSets) return null;
 
   return (
     <div className='flex items-center gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-2.5'>
@@ -72,6 +74,11 @@ function OrphanBanner(): React.JSX.Element | null {
         {hasOrphanedSteps && (
           <span>
             {orphanedStepIds.size} deleted step{orphanedStepIds.size !== 1 ? 's' : ''} referenced in step sets.{' '}
+          </span>
+        )}
+        {hasOrphanedActionSteps && (
+          <span>
+            {orphanedActionStepIds.size} deleted step{orphanedActionStepIds.size !== 1 ? 's' : ''} referenced directly in actions.{' '}
           </span>
         )}
         {hasOrphanedStepSets && (
@@ -86,7 +93,9 @@ function OrphanBanner(): React.JSX.Element | null {
             size='sm'
             variant='outline'
             className='h-6 border-amber-500/40 px-2 text-[11px] text-amber-300 hover:border-amber-400/60'
-            onClick={() => void handleCleanOrphanedSteps()}
+            onClick={() => {
+              handleCleanOrphanedSteps().catch(() => undefined);
+            }}
             disabled={isSaving}
           >
             Fix step sets
@@ -97,7 +106,9 @@ function OrphanBanner(): React.JSX.Element | null {
             size='sm'
             variant='outline'
             className='h-6 border-amber-500/40 px-2 text-[11px] text-amber-300 hover:border-amber-400/60'
-            onClick={() => void handleCleanOrphanedStepSets()}
+            onClick={() => {
+              handleCleanOrphanedStepSets().catch(() => undefined);
+            }}
             disabled={isSaving}
           >
             Fix actions
@@ -133,7 +144,7 @@ function PlaywrightStepSequencerContent(): React.JSX.Element {
         <div className='space-y-0.5'>
           <h2 className='text-sm font-semibold text-foreground'>Action Constructor</h2>
           <p className='text-xs text-muted-foreground'>
-            Browse step sets from the tree and assemble them into a named action.
+            Assemble named actions from direct steps and reusable step sets.
           </p>
         </div>
         <ActionConstructorEngine />

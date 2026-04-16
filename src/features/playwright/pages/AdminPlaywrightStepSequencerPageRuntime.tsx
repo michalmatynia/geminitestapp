@@ -15,9 +15,7 @@ const PlaywrightStepSequencerPanel = dynamic(
 
 const ConfirmModal = dynamic(
   () =>
-    import('@/shared/ui/templates/modals/ConfirmModal').then(
-      (mod: typeof import('@/shared/ui/templates/modals/ConfirmModal')) => mod.ConfirmModal
-    ),
+    import('@/shared/ui/templates/modals/ConfirmModal').then((mod) => mod.ConfirmModal),
   { ssr: false }
 );
 
@@ -31,9 +29,9 @@ export function AdminPlaywrightStepSequencerPageRuntime(): React.JSX.Element {
         <ConfirmModal
           isOpen={state.isSaveActionOpen}
           onClose={() => state.setIsSaveActionOpen(false)}
-          onConfirm={() => void state.handleSaveAction()}
+          onConfirm={state.handleSaveAction}
           title='Save Action'
-          message={`Save action "${state.actionDraftName}" with ${state.actionStepSets.length} step set(s)?`}
+          message={`Save action "${state.actionDraftName}" with ${state.actionBlocks.length} block(s)?`}
           confirmText='Save'
           loading={state.isSaving}
         />

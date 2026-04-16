@@ -15,12 +15,30 @@ import {
   type FilemakerPartyKind,
 } from '../types';
 
+type EncodableFilemakerPartyReference = {
+  kind: FilemakerPartyKind | null | undefined;
+  id: string | null | undefined;
+};
+
+const isFilemakerPartyKind = (value: string): value is FilemakerPartyKind =>
+  value === 'person' || value === 'organization';
+
+const toEncodableFilemakerPartyReference = (
+  referenceOrKind: FilemakerPartyReference | FilemakerPartyKind | null | undefined,
+  idArg: string | null | undefined
+): EncodableFilemakerPartyReference => {
+  if (referenceOrKind !== null && referenceOrKind !== undefined && typeof referenceOrKind === 'object') {
+    return referenceOrKind;
+  }
+  return { kind: referenceOrKind, id: idArg };
+};
+
 export const getFilemakerPersonById = (
   database: FilemakerDatabase,
   personId: string | null | undefined
 ): FilemakerPerson | null => {
   const normalizedPersonId = normalizeString(personId);
-  if (!normalizedPersonId) return null;
+  if (normalizedPersonId.length === 0) return null;
   return (
     database.persons.find((person: FilemakerPerson) => person.id === normalizedPersonId) ?? null
   );
@@ -31,7 +49,7 @@ export const getFilemakerOrganizationById = (
   organizationId: string | null | undefined
 ): FilemakerOrganization | null => {
   const normalizedOrganizationId = normalizeString(organizationId);
-  if (!normalizedOrganizationId) return null;
+  if (normalizedOrganizationId.length === 0) return null;
   return (
     database.organizations.find(
       (organization: FilemakerOrganization) => organization.id === normalizedOrganizationId
@@ -45,7 +63,7 @@ export const getFilemakerPartyReference = (
   id: string | null | undefined
 ): FilemakerPartyReference | null => {
   const normalizedId = normalizeString(id);
-  if (!normalizedId) return null;
+  if (normalizedId.length === 0) return null;
   if (kind === 'person') {
     const person = getFilemakerPersonById(database, normalizedId);
     if (!person) return null;
@@ -63,18 +81,12 @@ export const encodeFilemakerPartyReference = (
   referenceOrKind: FilemakerPartyReference | FilemakerPartyKind | null | undefined,
   idArg?: string | null | undefined
 ): string => {
-  const reference =
-    referenceOrKind && typeof referenceOrKind === 'object'
-      ? referenceOrKind
-      : ({ kind: referenceOrKind, id: idArg } as {
-          kind: FilemakerPartyKind | null | undefined;
-          id: string | null | undefined;
-        });
-  const kind = reference?.kind;
-  const id = reference?.id;
+  const reference = toEncodableFilemakerPartyReference(referenceOrKind, idArg);
+  const kind = reference.kind;
+  const id = reference.id;
   const normalizedKind = normalizeString(kind);
   const normalizedId = normalizeString(id);
-  if (!normalizedKind || !normalizedId) return FILEMAKER_REFERENCE_NONE;
+  if (normalizedKind.length === 0 || normalizedId.length === 0) return FILEMAKER_REFERENCE_NONE;
   return `${normalizedKind}:${normalizedId}`;
 };
 
@@ -82,12 +94,13 @@ export const decodeFilemakerPartyReference = (
   value: string | null | undefined
 ): FilemakerPartyReference | null => {
   const normalizedValue = normalizeString(value);
-  if (!normalizedValue || normalizedValue === FILEMAKER_REFERENCE_NONE) return null;
+  if (normalizedValue.length === 0 || normalizedValue === FILEMAKER_REFERENCE_NONE) return null;
   const delimiterIndex = normalizedValue.indexOf(':');
   if (delimiterIndex < 0) return null;
-  const kind = normalizedValue.slice(0, delimiterIndex) as 'person' | 'organization';
+  const kind = normalizedValue.slice(0, delimiterIndex);
+  if (!isFilemakerPartyKind(kind)) return null;
   const id = normalizedValue.slice(delimiterIndex + 1);
-  if (!id) return null;
+  if (id.length === 0) return null;
   return { kind, id, name: id };
 };
 

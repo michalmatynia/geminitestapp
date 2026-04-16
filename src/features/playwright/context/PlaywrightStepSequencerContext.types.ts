@@ -1,5 +1,6 @@
 import type {
   PlaywrightAction,
+  PlaywrightActionBlock,
   PlaywrightFlow,
   PlaywrightStep,
   PlaywrightStepSet,
@@ -45,8 +46,8 @@ export interface PlaywrightStepSequencerModals {
 // ---------------------------------------------------------------------------
 
 export interface PlaywrightStepSequencerActionState {
-  /** Step sets queued in the current action being constructed (in order). */
-  actionStepSetIds: string[];
+  /** Ordered blocks queued in the current action being constructed. */
+  actionBlocks: PlaywrightActionBlock[];
   /** Persona to use when running the action. */
   actionPersonaId: string | null;
   /** Draft name for saving the action. */
@@ -58,6 +59,14 @@ export interface PlaywrightStepSequencerActionState {
    * handleLoadActionIntoConstructor). "Update Action" overwrites it in place.
    */
   editingActionId: string | null;
+}
+
+export interface PlaywrightResolvedActionBlock {
+  block: PlaywrightActionBlock;
+  runtimeStepId: string | null;
+  runtimeStepLabel: string | null;
+  step: PlaywrightStep | null;
+  stepSet: PlaywrightStepSet | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -82,13 +91,15 @@ export interface PlaywrightStepSequencerContextType
   filteredStepSets: PlaywrightStepSet[];
   allTags: string[];
 
-  /** Step sets resolved from actionStepSetIds (in order, with stable identity). */
-  actionStepSets: PlaywrightStepSet[];
+  /** Action blocks resolved against the current step and step-set catalogues. */
+  resolvedActionBlocks: PlaywrightResolvedActionBlock[];
 
   /** How many saved actions reference each step set ID. */
   stepSetUsageCounts: Record<string, number>;
   /** Step IDs that are referenced by step sets but no longer exist. */
   orphanedStepIds: Set<string>;
+  /** Step IDs that are referenced directly by actions but no longer exist. */
+  orphanedActionStepIds: Set<string>;
   /** Step Set IDs that are referenced by actions but no longer exist. */
   orphanedStepSetIds: Set<string>;
 
@@ -144,9 +155,12 @@ export interface PlaywrightStepSequencerContextType
   }) => Promise<{ imported: number }>;
 
   // --- Action constructor ---
+  handleAddStepToAction: (stepId: string) => void;
+  handleAddRuntimeStepToAction: (stepId: string) => void;
   handleAddStepSetToAction: (stepSetId: string) => void;
   handleRemoveFromAction: (index: number) => void;
   handleMoveActionItem: (from: number, to: number) => void;
+  handleToggleActionBlockEnabled: (index: number) => void;
   handleClearAction: () => void;
   setActionPersonaId: (id: string | null) => void;
   setActionDraftName: (name: string) => void;

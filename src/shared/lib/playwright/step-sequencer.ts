@@ -1,10 +1,12 @@
 import { fetchSettingsCached } from '@/shared/api/settings-client';
+import { mergeSeededPlaywrightActions } from '@/shared/lib/browser-execution/playwright-runtime-action-seeds';
 import {
   PLAYWRIGHT_ACTIONS_SETTINGS_KEY,
   PLAYWRIGHT_FLOWS_SETTINGS_KEY,
   PLAYWRIGHT_STEPS_SETTINGS_KEY,
   PLAYWRIGHT_STEP_SETS_SETTINGS_KEY,
   PLAYWRIGHT_WEBSITES_SETTINGS_KEY,
+  normalizePlaywrightAction,
   playwrightActionSchema,
   playwrightFlowSchema,
   playwrightStepSchema,
@@ -63,13 +65,15 @@ function normalizeFlows(raw: unknown): PlaywrightFlow[] {
 }
 
 function normalizeActions(raw: unknown): PlaywrightAction[] {
-  if (!Array.isArray(raw)) return [];
-  return raw
+  if (!Array.isArray(raw)) return mergeSeededPlaywrightActions([]);
+  const normalized = raw
     .map((item: unknown): PlaywrightAction | null => {
       const result = playwrightActionSchema.safeParse(item);
-      return result.success ? result.data : null;
+      return result.success ? normalizePlaywrightAction(result.data) : null;
     })
     .filter((item): item is PlaywrightAction => item !== null);
+
+  return mergeSeededPlaywrightActions(normalized);
 }
 
 // ---------------------------------------------------------------------------

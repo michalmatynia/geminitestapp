@@ -1,24 +1,30 @@
 'use client';
 
-import type { DropResult } from '@hello-pangea/dnd';
+import type { DraggableProvided, DropResult } from '@hello-pangea/dnd';
 import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
 import {
+  AlertTriangle,
   ChevronDown,
   ChevronRight,
   Folder,
   GripVertical,
   Layers,
+  ListChecks,
   Pencil,
   Play,
   Plus,
   RefreshCw,
   Save,
+  ToggleLeft,
+  ToggleRight,
   Trash2,
   X,
 } from 'lucide-react';
 import { memo, useEffect, useMemo, useRef } from 'react';
 
-import type { PlaywrightStepSet } from '@/shared/contracts/playwright-steps';
+import type { PlaywrightResolvedActionBlock } from '../../context/PlaywrightStepSequencerContext.types';
+import { PLAYWRIGHT_STEP_TYPE_LABELS } from '@/shared/contracts/playwright-steps';
+import { STEP_REGISTRY, type StepId } from '@/shared/lib/browser-execution/step-registry';
 import {
   createMasterFolderTreeTransactionAdapter,
   FolderTreeViewportV2,
@@ -45,6 +51,69 @@ import {
   buildStepSequencerMasterNodes,
   decodeStepSeqNodeId,
 } from '../../step-sequencer-master-tree';
+import { StepTypeIcon } from './StepTypeIcon';
+
+type RuntimeStepGroup = {
+  id: string;
+  label: string;
+  stepIds: readonly StepId[];
+};
+
+const RUNTIME_STEP_GROUPS: readonly RuntimeStepGroup[] = [
+  {
+    id: 'browser_session',
+    label: 'Browser & Session',
+    stepIds: [
+      'browser_preparation',
+      'browser_open',
+      'browser_close',
+      'cookie_accept',
+      'auth_check',
+      'auth_login',
+      'auth_manual',
+    ],
+  },
+  {
+    id: 'shared_listing',
+    label: 'Shared Listing',
+    stepIds: [
+      'sync_check',
+      'image_upload',
+      'title_fill',
+      'description_fill',
+      'price_set',
+      'category_select',
+      'publish',
+      'publish_verify',
+    ],
+  },
+  {
+    id: 'tradera',
+    label: 'Tradera',
+    stepIds: [
+      'duplicate_check',
+      'deep_duplicate_check',
+      'sell_page_open',
+      'image_cleanup',
+      'listing_format_select',
+      'attribute_select',
+      'shipping_set',
+      'overview_open',
+      'search_active',
+      'inspect_active',
+      'search_unsold',
+      'inspect_unsold',
+      'search_sold',
+      'inspect_sold',
+      'resolve_status',
+    ],
+  },
+  {
+    id: 'vinted',
+    label: 'Vinted',
+    stepIds: ['brand_fill', 'condition_set', 'size_set'],
+  },
+];
 
 // ---------------------------------------------------------------------------
 // Tree node renderer
@@ -126,7 +195,7 @@ const ActionConstructorTreeNode = memo((
       </button>
 
       {/* Quick-add button for step sets */}
-      {isStepSet && decoded ? (
+      {isStepSet && decoded !== null ? (
         <button
           type='button'
           onClick={(e) => {
@@ -149,17 +218,32 @@ const ActionConstructorTreeNode = memo((
 // ---------------------------------------------------------------------------
 
 function ActionSequenceItem({
-  set,
+  item,
   index,
   dragProvided,
   isDragging,
 }: {
-  set: PlaywrightStepSet;
+  item: PlaywrightResolvedActionBlock;
   index: number;
-  dragProvided: import('@hello-pangea/dnd').DraggableProvided;
+  dragProvided: DraggableProvided;
   isDragging: boolean;
 }): React.JSX.Element {
-  const { handleRemoveFromAction } = usePlaywrightStepSequencer();
+  const { handleRemoveFromAction, handleToggleActionBlockEnabled } = usePlaywrightStepSequencer();
+  const { block, runtimeStepLabel, step, stepSet } = item;
+  const isStep = block.kind === 'step';
+  const isRuntimeStep = block.kind === 'runtime_step';
+  const displayName =
+    block.label ??
+    (isRuntimeStep ? runtimeStepLabel : null) ??
+    step?.name ??
+    stepSet?.name ??
+    `(deleted ${block.kind}: ${block.refId})`;
+  const isMissing = isRuntimeStep ? runtimeStepLabel === null : isStep ? step === null : stepSet === null;
+  const badgeLabel = isRuntimeStep
+    ? 'Runtime step'
+    : isStep
+      ? (step ? PLAYWRIGHT_STEP_TYPE_LABELS[step.type] : 'Missing step')
+      : `${stepSet?.stepIds.length ?? 0} steps`;
 
   return (
     <div
@@ -167,6 +251,7 @@ function ActionSequenceItem({
       {...dragProvided.draggableProps}
       className={cn(
         'group flex items-center gap-2 rounded border border-border/40 bg-card/30 px-2 py-1.5 transition-shadow',
+        !block.enabled && 'opacity-60',
         isDragging && 'shadow-lg ring-1 ring-sky-500/40 opacity-90'
       )}
     >
@@ -183,11 +268,46 @@ function ActionSequenceItem({
         {index + 1}.
       </span>
 
-      <span className='min-w-0 flex-1 truncate text-xs font-medium'>{set.name}</span>
+      <span className='inline-flex shrink-0 items-center'>
+        {isRuntimeStep ? (
+          <ListChecks className='size-3.5 text-sky-300' />
+        ) : isStep ? (
+          step ? (
+            <StepTypeIcon type={step.type} className='size-3.5' />
+          ) : (
+            <AlertTriangle className='size-3.5 text-amber-400' />
+          )
+        ) : (
+          <Layers className='size-3.5 text-sky-400' />
+        )}
+      </span>
+
+      <div className='min-w-0 flex-1'>
+        <div className={cn(
+          'truncate text-xs font-medium',
+          isMissing && 'text-muted-foreground line-through'
+        )}>
+          {displayName}
+        </div>
+        <div className='flex items-center gap-1 text-[10px] text-muted-foreground'>
+          <span>{isRuntimeStep ? 'Runtime step' : isStep ? 'Direct step' : 'Step set'}</span>
+          {!block.enabled ? <span>• disabled</span> : null}
+        </div>
+      </div>
 
       <Badge variant='neutral' className='shrink-0 h-4 px-1 text-[9px] border-border/50 bg-card/40'>
-        {set.stepIds.length} steps
+        {badgeLabel}
       </Badge>
+
+      <button
+        type='button'
+        onClick={() => handleToggleActionBlockEnabled(index)}
+        className='inline-flex size-5 items-center justify-center rounded text-muted-foreground hover:text-sky-300'
+        aria-label={block.enabled ? 'Disable action block' : 'Enable action block'}
+        title={block.enabled ? 'Disable block' : 'Enable block'}
+      >
+        {block.enabled ? <ToggleRight className='size-3.5' /> : <ToggleLeft className='size-3.5' />}
+      </button>
 
       <button
         type='button'
@@ -211,7 +331,7 @@ export function ActionConstructorEngine(): React.JSX.Element {
     websites,
     flows,
     actions,
-    actionStepSets,
+    resolvedActionBlocks,
     actionDraftName,
     actionDraftDescription,
     actionPersonaId,
@@ -219,6 +339,7 @@ export function ActionConstructorEngine(): React.JSX.Element {
     setActionDraftName,
     setActionDraftDescription,
     setActionPersonaId,
+    handleAddRuntimeStepToAction,
     handleAddStepSetToAction,
     handleMoveActionItem,
     handleClearAction,
@@ -233,7 +354,7 @@ export function ActionConstructorEngine(): React.JSX.Element {
     handleMoveActionItem(result.source.index, result.destination.index);
   }
 
-  const editingAction = editingActionId
+  const editingAction = editingActionId !== null
     ? actions.find((a) => a.id === editingActionId) ?? null
     : null;
 
@@ -284,6 +405,9 @@ export function ActionConstructorEngine(): React.JSX.Element {
         <Label className='text-[11px] font-semibold uppercase tracking-wider text-muted-foreground'>
           Step Sets
         </Label>
+        <p className='text-[11px] text-muted-foreground/70'>
+          Add reusable step sets here. Runtime steps live below, and direct steps can be added from the table.
+        </p>
 
         {masterNodes.length === 0 ? (
           <div className='flex flex-1 items-center justify-center py-8 text-center text-xs text-muted-foreground'>
@@ -309,12 +433,43 @@ export function ActionConstructorEngine(): React.JSX.Element {
             />
           </div>
         )}
+
+        <div className='space-y-2 border-t border-border/30 pt-2'>
+          <Label className='text-[11px] font-semibold uppercase tracking-wider text-muted-foreground'>
+            Runtime Steps
+          </Label>
+          <div className='max-h-[220px] space-y-2 overflow-y-auto rounded border border-border/60 bg-card/30 p-2'>
+            {RUNTIME_STEP_GROUPS.map((group) => (
+              <div key={group.id} className='space-y-1'>
+                <div className='text-[10px] font-medium uppercase tracking-wide text-muted-foreground'>
+                  {group.label}
+                </div>
+                <div className='space-y-1'>
+                  {group.stepIds.map((stepId) => (
+                    <button
+                      key={stepId}
+                      type='button'
+                      onClick={() => handleAddRuntimeStepToAction(stepId)}
+                      className='group flex w-full items-center gap-1.5 rounded px-2 py-1 text-left text-xs text-gray-300 transition-colors hover:bg-muted/40'
+                    >
+                      <ListChecks className='size-3 shrink-0 text-sky-300' />
+                      <span className='min-w-0 flex-1 truncate'>{STEP_REGISTRY[stepId].label}</span>
+                      <span className='inline-flex size-5 items-center justify-center rounded text-sky-400 opacity-80 group-hover:bg-sky-500/20 group-hover:opacity-100'>
+                        <Plus className='size-3' />
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* ---- Right: action sequence builder ---- */}
       <div className={cn(
         'flex flex-1 flex-col gap-2 rounded-lg border p-3',
-        editingActionId
+        editingActionId !== null
           ? 'border-sky-500/40 bg-sky-900/10'
           : 'border-border/50 bg-card/20'
       )}>
@@ -331,25 +486,25 @@ export function ActionConstructorEngine(): React.JSX.Element {
               </span>
             ) : null}
           </div>
-          {actionStepSets.length > 0 ? (
+          {resolvedActionBlocks.length > 0 ? (
             <button
               type='button'
               onClick={handleClearAction}
               className='inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-destructive'
             >
               <Trash2 className='size-3' />
-              {editingActionId ? 'Discard' : 'Clear'}
+              {editingActionId !== null ? 'Discard' : 'Clear'}
             </button>
           ) : null}
         </div>
 
         {/* Sequence list */}
-        {actionStepSets.length === 0 ? (
+        {resolvedActionBlocks.length === 0 ? (
           <div className='flex flex-1 items-center justify-center rounded border border-dashed border-border/40 bg-card/10 py-10 text-center text-xs text-muted-foreground'>
             <div className='space-y-1'>
               <Play className='mx-auto size-6 opacity-20' />
-              <p>Click <strong>+</strong> on a step set to add it here.</p>
-              <p className='opacity-60'>Steps execute top → bottom.</p>
+              <p>Add blocks from the step-set tree or the step list below.</p>
+              <p className='opacity-60'>Blocks execute top to bottom.</p>
             </div>
           </div>
         ) : (
@@ -364,11 +519,15 @@ export function ActionConstructorEngine(): React.JSX.Element {
                     snapshot.isDraggingOver && 'bg-sky-500/5'
                   )}
                 >
-                  {actionStepSets.map((set, idx) => (
-                    <Draggable key={`${set.id}_${idx}`} draggableId={`${set.id}_${idx}`} index={idx}>
+                  {resolvedActionBlocks.map((item, idx) => (
+                    <Draggable
+                      key={item.block.id}
+                      draggableId={item.block.id}
+                      index={idx}
+                    >
                       {(dragProvided, dragSnapshot) => (
                         <ActionSequenceItem
-                          set={set}
+                          item={item}
                           index={idx}
                           dragProvided={dragProvided}
                           isDragging={dragSnapshot.isDragging}
@@ -384,7 +543,7 @@ export function ActionConstructorEngine(): React.JSX.Element {
         )}
 
         {/* Save bar */}
-        {actionStepSets.length > 0 ? (
+        {resolvedActionBlocks.length > 0 ? (
           <div className='space-y-2 border-t border-border/30 pt-2'>
             {/* Persona selector */}
             {personas.length > 0 ? (
@@ -420,7 +579,10 @@ export function ActionConstructorEngine(): React.JSX.Element {
               />
               <Input
                 value={actionDraftDescription ?? ''}
-                onChange={(e) => setActionDraftDescription(e.target.value || null)}
+                onChange={(e) => {
+                  const nextDescription = e.target.value;
+                  setActionDraftDescription(nextDescription.length > 0 ? nextDescription : null);
+                }}
                 placeholder='Description (optional)…'
                 className='h-7 w-[160px] text-xs'
                 aria-label='Action description'
@@ -430,7 +592,9 @@ export function ActionConstructorEngine(): React.JSX.Element {
                   <Button
                     size='sm'
                     className='h-7 gap-1 text-xs'
-                    onClick={() => void handleUpdateAction()}
+                    onClick={() => {
+                      handleUpdateAction().catch(() => undefined);
+                    }}
                     disabled={!actionDraftName.trim() || isSaving}
                     loading={isSaving}
                   >

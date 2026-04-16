@@ -12,7 +12,7 @@ import {
   VINTED_IMAGE_UPLOAD_SELECTORS,
   VINTED_BRAND_SELECTORS,
   VINTED_CONDITION_SELECTORS
-} from '@/features/integrations/services/vinted-listing/config';
+} from '../selectors/vinted';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 export class VintedSequencer extends PlaywrightSequencer {

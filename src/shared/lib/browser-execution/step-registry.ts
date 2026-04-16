@@ -30,6 +30,9 @@ export const STEP_REGISTRY = {
   search_sold:            { id: 'search_sold',            label: 'Search sold items' },
   inspect_sold:           { id: 'inspect_sold',           label: 'Inspect sold candidate' },
   resolve_status:         { id: 'resolve_status',         label: 'Resolve listing status' },
+  categories_seed_extract:{ id: 'categories_seed_extract',label: 'Extract category seed page' },
+  categories_crawl:       { id: 'categories_crawl',       label: 'Crawl category pages' },
+  categories_finalize:    { id: 'categories_finalize',    label: 'Finalize category registry' },
 
   // Listing fields — shared
   image_upload:           { id: 'image_upload',           label: 'Upload images' },

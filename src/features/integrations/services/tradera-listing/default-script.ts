@@ -11,10 +11,13 @@ import { PART_5 } from './script-partials/part-5';
 import { PART_5B } from './script-partials/part-5b';
 
 export const buildDefaultTraderaQuicklistScript = (
-  selectorRegistryRuntime?: string
+  selectorRegistryRuntime?: string,
+  quicklistStepsInit?: string
 ): string =>
   [
-    selectorRegistryRuntime ? buildPart1(selectorRegistryRuntime) : PART_1,
+    selectorRegistryRuntime !== undefined || quicklistStepsInit !== undefined
+      ? buildPart1(selectorRegistryRuntime, quicklistStepsInit)
+      : PART_1,
     PART_1B,
     PART_2,
     PART_3,

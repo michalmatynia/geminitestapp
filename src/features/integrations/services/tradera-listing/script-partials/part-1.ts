@@ -4,7 +4,8 @@ import { generateTraderaQuicklistBrowserStepsInit } from '@/shared/lib/browser-e
 const TRADERA_QUICKLIST_STEPS_INIT = generateTraderaQuicklistBrowserStepsInit();
 
 export const buildPart1 = (
-  selectorRegistryRuntime: string = TRADERA_SELECTOR_REGISTRY_RUNTIME
+  selectorRegistryRuntime: string = TRADERA_SELECTOR_REGISTRY_RUNTIME,
+  quicklistStepsInit: string = TRADERA_QUICKLIST_STEPS_INIT
 ): string => String.raw`
 export default async function run({
   page,
@@ -164,7 +165,7 @@ ${selectorRegistryRuntime}
   const configuredShippingGroupName = toText(input?.traderaShipping?.shippingGroupName);
   const requiresConfiguredDeliveryOption = Boolean(configuredDeliveryOptionLabel);
 
-  ${TRADERA_QUICKLIST_STEPS_INIT}
+  ${quicklistStepsInit}
 
   const normalizeStepStatus = (status) => {
     if (status === 'completed') return 'success';

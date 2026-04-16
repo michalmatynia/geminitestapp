@@ -3,13 +3,15 @@
 import { AlertTriangle, ChevronDown, ChevronRight, Copy, Layers, Play, RotateCcw, Trash2, User } from 'lucide-react';
 import { memo, useState } from 'react';
 
-import type { PlaywrightAction } from '@/shared/contracts/playwright-steps';
+import { PLAYWRIGHT_STEP_TYPE_LABELS, normalizePlaywrightAction, type PlaywrightAction } from '@/shared/contracts/playwright-steps';
+import { STEP_REGISTRY } from '@/shared/lib/browser-execution/step-registry';
 import { Badge, Button } from '@/shared/ui/primitives.public';
 import { cn } from '@/shared/utils/ui-utils';
 
 import { usePlaywrightPersonas } from '@/features/playwright/hooks/usePlaywrightPersonas';
 
 import { usePlaywrightStepSequencer } from '../../context/PlaywrightStepSequencerContext';
+import { StepTypeIcon } from './StepTypeIcon';
 
 // ---------------------------------------------------------------------------
 // Single action row (expandable)
@@ -20,21 +22,34 @@ const SavedActionRow = memo(({
 }: {
   action: PlaywrightAction;
 }): React.JSX.Element => {
-  const { stepSets, handleDeleteAction, handleDuplicateAction, handleLoadActionIntoConstructor, orphanedStepSetIds, editingActionId } =
+  const {
+    steps,
+    stepSets,
+    handleDeleteAction,
+    handleDuplicateAction,
+    handleLoadActionIntoConstructor,
+    orphanedActionStepIds,
+    orphanedStepSetIds,
+    editingActionId,
+  } =
     usePlaywrightStepSequencer();
-  const hasOrphanedSets = action.stepSetIds.some((id) => orphanedStepSetIds.has(id));
+  const normalizedAction = normalizePlaywrightAction(action);
+  const hasOrphanedSets = normalizedAction.blocks.some(
+    (block) =>
+      (block.kind === 'step_set' && orphanedStepSetIds.has(block.refId)) ||
+      (block.kind === 'step' && orphanedActionStepIds.has(block.refId))
+  );
   const isBeingEdited = editingActionId === action.id;
   const { data: personas = [] } = usePlaywrightPersonas();
   const [expanded, setExpanded] = useState(false);
 
-  const resolvedSets = action.stepSetIds
-    .map((id) => stepSets.find((s) => s.id === id))
-    .filter(Boolean);
-
-  const totalSteps = resolvedSets.reduce(
-    (sum, s) => sum + (s?.stepIds.length ?? 0),
-    0
-  );
+  const totalStepSets = normalizedAction.blocks.filter((block) => block.kind === 'step_set').length;
+  const totalRuntimeSteps = normalizedAction.blocks.filter((block) => block.kind === 'runtime_step').length;
+  const totalSteps = normalizedAction.blocks.reduce((sum, block) => {
+    if (block.kind === 'step') return sum + 1;
+    if (block.kind === 'runtime_step') return sum + 1;
+    return sum + (stepSets.find((set) => set.id === block.refId)?.stepIds.length ?? 0);
+  }, 0);
 
   return (
     <div className={cn(
@@ -69,12 +84,25 @@ const SavedActionRow = memo(({
 
         <div className='flex items-center gap-1.5'>
           <Badge variant='neutral' className='h-5 px-1.5 text-[10px]'>
-            {action.stepSetIds.length} set{action.stepSetIds.length !== 1 ? 's' : ''}
+            {normalizedAction.blocks.length} block{normalizedAction.blocks.length !== 1 ? 's' : ''}
           </Badge>
+          <Badge variant='neutral' className='h-5 px-1.5 text-[10px]'>
+            {totalStepSets} set{totalStepSets !== 1 ? 's' : ''}
+          </Badge>
+          {totalRuntimeSteps > 0 ? (
+            <Badge variant='neutral' className='h-5 px-1.5 text-[10px]'>
+              {totalRuntimeSteps} runtime
+            </Badge>
+          ) : null}
+          {normalizedAction.runtimeKey !== null ? (
+            <Badge variant='neutral' className='h-5 px-1.5 text-[10px]'>
+              {normalizedAction.runtimeKey}
+            </Badge>
+          ) : null}
           <Badge variant='neutral' className='h-5 px-1.5 text-[10px]'>
             {totalSteps} step{totalSteps !== 1 ? 's' : ''}
           </Badge>
-          {action.personaId ? (
+          {action.personaId !== null ? (
             <Badge variant='neutral' className='h-5 gap-0.5 px-1.5 text-[10px]'>
               <User className='size-2.5' />
               {personas.find((p) => p.id === action.personaId)?.name ?? 'Persona'}
@@ -105,7 +133,7 @@ const SavedActionRow = memo(({
             className='size-6 p-0 text-muted-foreground hover:text-foreground'
             onClick={(e) => {
               e.stopPropagation();
-              void handleDuplicateAction(action.id);
+              handleDuplicateAction(action.id).catch(() => undefined);
             }}
             aria-label={`Duplicate action ${action.name}`}
             title='Duplicate action'
@@ -118,7 +146,7 @@ const SavedActionRow = memo(({
             className='size-6 p-0 text-muted-foreground hover:text-destructive'
             onClick={(e) => {
               e.stopPropagation();
-              void handleDeleteAction(action.id);
+              handleDeleteAction(action.id).catch(() => undefined);
             }}
             aria-label={`Delete action ${action.name}`}
             title='Delete action'
@@ -131,30 +159,70 @@ const SavedActionRow = memo(({
       {/* Expanded detail */}
       {expanded ? (
         <div className='space-y-1 border-t border-border/30 px-4 py-2'>
-          {action.description ? (
+          {action.description !== null ? (
             <p className='text-xs text-muted-foreground'>{action.description}</p>
           ) : null}
           <ol className='space-y-1'>
-            {action.stepSetIds.map((setId, idx) => {
-              const set = stepSets.find((s) => s.id === setId);
+            {normalizedAction.blocks.map((block, idx) => {
+              const set = block.kind === 'step_set'
+                ? (stepSets.find((item) => item.id === block.refId) ?? null)
+                : null;
+              const step = block.kind === 'step'
+                ? (steps.find((item) => item.id === block.refId) ?? null)
+                : null;
+              const runtimeStepLabel =
+                block.kind === 'runtime_step' && block.refId in STEP_REGISTRY
+                  ? STEP_REGISTRY[block.refId as keyof typeof STEP_REGISTRY].label
+                  : null;
+              const isMissing =
+                block.kind === 'runtime_step'
+                  ? runtimeStepLabel === null
+                  : block.kind === 'step'
+                    ? step === null
+                    : set === null;
               return (
                 <li
-                  key={`${setId}_${idx}`}
+                  key={block.id}
                   className={cn(
                     'flex items-center gap-2 rounded px-2 py-1 text-xs',
-                    set ? 'text-foreground' : 'text-muted-foreground line-through opacity-50'
+                    isMissing ? 'text-muted-foreground line-through opacity-50' : 'text-foreground'
                   )}
                 >
                   <span className='shrink-0 w-5 text-right font-mono text-[10px] text-muted-foreground'>
                     {idx + 1}.
                   </span>
-                  <Layers className='size-3 shrink-0 text-sky-400/70' />
+                  {block.kind === 'runtime_step' ? (
+                    <Play className='size-3 shrink-0 text-sky-300' />
+                  ) : block.kind === 'step' ? (
+                    step ? (
+                      <StepTypeIcon type={step.type} className='size-3 shrink-0' />
+                    ) : (
+                      <AlertTriangle className='size-3 shrink-0 text-amber-400' />
+                    )
+                  ) : (
+                    <Layers className='size-3 shrink-0 text-sky-400/70' />
+                  )}
                   <span className='min-w-0 flex-1 truncate'>
-                    {set?.name ?? `(deleted: ${setId})`}
+                    {block.label ?? runtimeStepLabel ?? step?.name ?? set?.name ?? `(deleted: ${block.refId})`}
                   </span>
-                  {set ? (
+                  {block.kind === 'runtime_step' && runtimeStepLabel !== null ? (
+                    <span className='shrink-0 text-[10px] text-muted-foreground'>
+                      runtime
+                    </span>
+                  ) : null}
+                  {block.kind === 'step' && step ? (
+                    <span className='shrink-0 text-[10px] text-muted-foreground'>
+                      {PLAYWRIGHT_STEP_TYPE_LABELS[step.type]}
+                    </span>
+                  ) : null}
+                  {block.kind === 'step_set' && set ? (
                     <span className='shrink-0 text-[10px] text-muted-foreground'>
                       {set.stepIds.length} steps
+                    </span>
+                  ) : null}
+                  {!block.enabled ? (
+                    <span className='shrink-0 text-[10px] text-amber-300'>
+                      disabled
                     </span>
                   ) : null}
                 </li>

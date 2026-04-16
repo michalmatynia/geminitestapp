@@ -871,7 +871,7 @@ describe('TraderaStatusCheckModal', () => {
     expect(screen.getByText('Selector profile')).toBeInTheDocument();
     expect(screen.getByText('profile-market-b')).toBeInTheDocument();
     expect(screen.getByText('Requested profile')).toBeInTheDocument();
-    expect(screen.getByText('profile-market-a')).toBeInTheDocument();
+    expect(screen.getAllByText('profile-market-a').length).toBeGreaterThan(0);
     expect(screen.getByText('Live')).toBeInTheDocument();
     expect(screen.getByText('status_lookup')).toBeInTheDocument();
     expect(screen.getByText('Locate Tradera listing')).toBeInTheDocument();

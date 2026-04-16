@@ -32,15 +32,68 @@ export const TRADERA_QUICKLIST_PUBLISH_LABELS = {
   list:   { publish: 'Publish listing',       publish_verify: 'Verify published listing' },
 } as const;
 
+type TraderaQuicklistStepSequenceOverrides = {
+  listStepIds?: readonly string[];
+  syncStepIds?: readonly string[];
+};
+
+type StepManifestEntry = {
+  id: string;
+  label: string;
+};
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-const resolveLabel = (id: string): string =>
-  TRADERA_QUICKLIST_LABEL_OVERRIDES[id] ??
-  STEP_REGISTRY[id as StepId]?.label ??
-  id;
+const resolveLabel = (id: string): string => {
+  const override = TRADERA_QUICKLIST_LABEL_OVERRIDES[id];
+  if (override !== undefined) {
+    return override;
+  }
+
+  if (id in STEP_REGISTRY) {
+    return STEP_REGISTRY[id as StepId].label;
+  }
+
+  return id;
+};
 
 const stepEntry = (id: string): string =>
   `{ id: '${id}', label: '${resolveLabel(id)}', status: 'pending', info: null }`;
+
+const splitQuicklistSequenceIds = (
+  listSeq: readonly string[],
+  syncSeq: readonly string[]
+): {
+  listOnlyIds: string[];
+  prefixIds: string[];
+  suffixIds: string[];
+  syncOnlyIds: string[];
+} => {
+  const listSet = new Set(listSeq);
+  const syncSet = new Set(syncSeq);
+
+  const syncOnlyIds = syncSeq.filter((id) => !listSet.has(id));
+  const listOnlyIds = listSeq.filter((id) => !syncSet.has(id));
+  const branchSet = new Set([...syncOnlyIds, ...listOnlyIds]);
+  const prefixIds: string[] = [];
+  const suffixIds: string[] = [];
+  let pastBranch = false;
+
+  for (const id of listSeq) {
+    if (branchSet.has(id)) {
+      pastBranch = true;
+      continue;
+    }
+    (pastBranch ? suffixIds : prefixIds).push(id);
+  }
+
+  return {
+    listOnlyIds,
+    prefixIds,
+    suffixIds,
+    syncOnlyIds,
+  };
+};
 
 // ── Generator ────────────────────────────────────────────────────────────────
 
@@ -57,26 +110,15 @@ const stepEntry = (id: string): string =>
  * Calling this at TypeScript module-load time means the browser script body
  * is computed once; the resulting string is a pure-JS snippet with no imports.
  */
-export const generateTraderaQuicklistBrowserStepsInit = (): string => {
-  const listSeq = ACTION_SEQUENCES.tradera_quicklist_list as readonly string[];
-  const syncSeq = ACTION_SEQUENCES.tradera_quicklist_sync as readonly string[];
-  const listSet = new Set(listSeq);
-  const syncSet = new Set(syncSeq);
-
-  const syncOnlyIds = syncSeq.filter((id) => !listSet.has(id));  // ['sync_check']
-  const listOnlyIds = listSeq.filter((id) => !syncSet.has(id));  // duplicate … image_cleanup
-
-  // Steps that appear in both sequences.  Split into:
-  //   prefixIds  — come before the branching section
-  //   suffixIds  — come after the branching section
-  const branchSet = new Set([...syncOnlyIds, ...listOnlyIds]);
-  const prefixIds: string[] = [];
-  const suffixIds: string[] = [];
-  let pastBranch = false;
-  for (const id of listSeq) {
-    if (branchSet.has(id)) { pastBranch = true; continue; }
-    (pastBranch ? suffixIds : prefixIds).push(id);
-  }
+export const generateTraderaQuicklistBrowserStepsInit = (
+  options: TraderaQuicklistStepSequenceOverrides = {}
+): string => {
+  const listSeq = options.listStepIds ?? ACTION_SEQUENCES.tradera_quicklist_list;
+  const syncSeq = options.syncStepIds ?? ACTION_SEQUENCES.tradera_quicklist_sync;
+  const { listOnlyIds, prefixIds, suffixIds, syncOnlyIds } = splitQuicklistSequenceIds(
+    listSeq,
+    syncSeq
+  );
 
   const i1 = '  ';
   const i2 = '    ';
@@ -131,3 +173,17 @@ export const generateTraderaQuicklistBrowserStepsInit = (): string => {
 
   return lines.join('\n');
 };
+
+export const generateBrowserExecutionStepsInit = (
+  manifest: readonly StepManifestEntry[]
+): string =>
+  `const executionSteps = ${JSON.stringify(
+    manifest.map((step) => ({
+      id: step.id,
+      label: step.label,
+      status: 'pending',
+      message: null,
+    })),
+    null,
+    2
+  )};`;

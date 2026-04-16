@@ -116,15 +116,33 @@ export const createPlaywrightStepSetSchema = playwrightStepSetSchema.omit({
 export type CreatePlaywrightStepSet = z.infer<typeof createPlaywrightStepSetSchema>;
 
 // ---------------------------------------------------------------------------
-// PlaywrightAction — constructed from step sets via the tree engine
+// PlaywrightAction — ordered blocks assembled in the action constructor
 // ---------------------------------------------------------------------------
+
+export const playwrightActionBlockKindSchema = z.enum(['step', 'step_set', 'runtime_step']);
+
+export type PlaywrightActionBlockKind = z.infer<typeof playwrightActionBlockKindSchema>;
+
+export const playwrightActionBlockSchema = z.object({
+  id: z.string(),
+  kind: playwrightActionBlockKindSchema,
+  refId: z.string(),
+  enabled: z.boolean().optional().default(true),
+  label: z.string().nullable().optional().default(null),
+});
+
+export type PlaywrightActionBlock = z.infer<typeof playwrightActionBlockSchema>;
 
 export const playwrightActionSchema = z.object({
   id: z.string(),
   name: z.string(),
   description: z.string().nullable(),
-  /** Ordered list of step set IDs that make up this action. */
-  stepSetIds: z.array(z.string()),
+  /** Optional browser-execution runtime key for marketplace-native action sequences. */
+  runtimeKey: z.string().nullable().optional().default(null),
+  /** Ordered list of editable blocks that make up this action. */
+  blocks: z.array(playwrightActionBlockSchema).optional().default([]),
+  /** Legacy compatibility field derived from action blocks. */
+  stepSetIds: z.array(z.string()).optional().default([]),
   /** Which persona to run this action with (null = use default). */
   personaId: z.string().nullable(),
   createdAt: z.string(),
@@ -132,6 +150,37 @@ export const playwrightActionSchema = z.object({
 });
 
 export type PlaywrightAction = z.infer<typeof playwrightActionSchema>;
+
+export function createLegacyPlaywrightActionStepSetBlock(
+  actionId: string,
+  stepSetId: string,
+  index: number
+): PlaywrightActionBlock {
+  return {
+    id: `${actionId}__step_set__${index}`,
+    kind: 'step_set',
+    refId: stepSetId,
+    enabled: true,
+    label: null,
+  };
+}
+
+export function normalizePlaywrightAction(action: PlaywrightAction): PlaywrightAction {
+  const blocks = action.blocks.length > 0
+    ? action.blocks
+    : action.stepSetIds.map((stepSetId, index) =>
+        createLegacyPlaywrightActionStepSetBlock(action.id, stepSetId, index)
+      );
+
+  return {
+    ...action,
+    runtimeKey: action.runtimeKey ?? null,
+    blocks,
+    stepSetIds: blocks
+      .filter((block) => block.kind === 'step_set')
+      .map((block) => block.refId),
+  };
+}
 
 export const createPlaywrightActionSchema = playwrightActionSchema.omit({
   id: true,

@@ -57,7 +57,15 @@ function StepPreviewRow({ stepId }: { stepId: string }): React.JSX.Element {
 // ---------------------------------------------------------------------------
 
 const StepRow = memo(({ step }: { step: PlaywrightStep }) => {
-  const { setEditingStep, handleDeleteStep, handleDuplicateStep, setFilterTag, websites, flows } =
+  const {
+    setEditingStep,
+    handleDeleteStep,
+    handleDuplicateStep,
+    handleAddStepToAction,
+    setFilterTag,
+    websites,
+    flows,
+  } =
     usePlaywrightStepSequencer();
 
   const websiteName = step.websiteId
@@ -122,31 +130,47 @@ const StepRow = memo(({ step }: { step: PlaywrightStep }) => {
         ) : <span className='text-[11px] opacity-30'>—</span>}
       </TableCell>
       <TableCell>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant='ghost' size='sm' className='size-7 p-0' aria-label='Step actions'>
-              <MoreHorizontal className='size-3.5' />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align='end'>
-            <DropdownMenuItem onClick={() => setEditingStep(step)}>
-              <Pencil className='size-3.5' />
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => void handleDuplicateStep(step.id)}>
-              <Copy className='size-3.5' />
-              Duplicate
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              className='text-destructive focus:text-destructive'
-              onClick={() => void handleDeleteStep(step.id)}
-            >
-              <Trash2 className='size-3.5' />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className='flex items-center gap-1'>
+          <Button
+            variant='ghost'
+            size='sm'
+            className='h-7 gap-1 px-2 text-xs text-sky-400 hover:text-sky-300'
+            onClick={() => handleAddStepToAction(step.id)}
+            title='Add direct step to action constructor'
+          >
+            <Plus className='size-3' />
+            Add
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant='ghost' size='sm' className='size-7 p-0' aria-label='Step actions'>
+                <MoreHorizontal className='size-3.5' />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align='end'>
+              <DropdownMenuItem onClick={() => setEditingStep(step)}>
+                <Pencil className='size-3.5' />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => {
+                handleDuplicateStep(step.id).catch(() => undefined);
+              }}>
+                <Copy className='size-3.5' />
+                Duplicate
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className='text-destructive focus:text-destructive'
+                onClick={() => {
+                  handleDeleteStep(step.id).catch(() => undefined);
+                }}
+              >
+                <Trash2 className='size-3.5' />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </TableCell>
     </TableRow>
   );
@@ -322,14 +346,18 @@ const StepSetRow = memo(({ set }: { set: PlaywrightStepSet }) => {
                 <Pencil className='size-3.5' />
                 Edit
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => void handleDuplicateStepSet(set.id)}>
+              <DropdownMenuItem onClick={() => {
+                handleDuplicateStepSet(set.id).catch(() => undefined);
+              }}>
                 <Copy className='size-3.5' />
                 Duplicate
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 className='text-destructive focus:text-destructive'
-                onClick={() => void handleDeleteStepSet(set.id)}
+                onClick={() => {
+                  handleDeleteStepSet(set.id).catch(() => undefined);
+                }}
               >
                 <Trash2 className='size-3.5' />
                 Delete

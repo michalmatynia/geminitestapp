@@ -3,12 +3,6 @@ import {
   shouldApplyFrontPageAppSelection,
 } from '@/app/(frontend)/home/home-helpers';
 import {
-  getKangurAuthBootstrapScript,
-  getKangurStorefrontInitialState,
-  getKangurSurfaceBootstrapStyle,
-  KANGUR_SURFACE_HINT_SCRIPT,
-} from '@/features/kangur/server';
-import {
   createFrontendLoadTimingRecorder,
   serializeInlineTimingPayload,
   shouldEnableFrontendLoadTiming,
@@ -19,8 +13,6 @@ import { getCmsThemeSettings } from '@/features/cms/server';
 import {
   FrontendPublicOwnerProvider,
   FrontendPublicOwnerShellClient,
-  KangurSSRSkeleton,
-  KangurServerShell,
 } from '@/features/kangur/public';
 import { readOptionalRequestHeadersResult } from '@/shared/lib/request/optional-headers';
 import {
@@ -41,16 +33,8 @@ import { QueryErrorBoundary } from '@/shared/ui/QueryErrorBoundary';
 import type { JSX } from 'react';
 import { Suspense } from 'react';
 
-import './kangur/kangur.css';
-
-const DEFAULT_CMS_THEME_SETTINGS = {
-  darkMode: false,
-} as const;
-
 const FRONTEND_LAYOUT_REQUEST_HEADERS_TIMEOUT_MS = 1200;
 const FRONT_PAGE_SETTING_KEY = 'front_page_app';
-const KANGUR_FALLBACK_BACKGROUND =
-  'var(--kangur-page-background, radial-gradient(circle at top, #fffdfd 0%, #f7f3f6 45%, #f3f1f8 100%))';
 const FRONTEND_REQUEST_PATHNAME_HEADER_KEYS = [
   'x-app-request-pathname',
   'x-app-request-url',
@@ -80,15 +64,6 @@ const resolveFrontendRequestPathname = (headerValue: string | null | undefined):
   })();
 
   return pathname.startsWith('/') ? pathname : `/${pathname}`;
-};
-
-const isExplicitKangurAliasRequest = (pathname: string | null): boolean => {
-  if (pathname === null || pathname.length === 0) {
-    return false;
-  }
-
-  const normalizedPathname = stripSiteLocalePrefix(pathname);
-  return normalizedPathname === '/kangur' || normalizedPathname.startsWith('/kangur/');
 };
 
 const isCanonicalPublicLoginRequest = (pathname: string | null): boolean => {
@@ -125,12 +100,8 @@ const resolveFrontendFallbackRequestPathname = (): string | null => {
 };
 
 const resolveFrontendFallbackPublicOwner = (
-  pathname: string | null
+  _pathname: string | null
 ): FrontendPublicOwner | null => {
-  if (isExplicitKangurAliasRequest(pathname)) {
-    return 'kangur';
-  }
-
   if (!shouldApplyFrontPageAppSelection()) {
     return null;
   }
@@ -158,40 +129,12 @@ export default function FrontendLayout({
 
 function FrontendLayoutFallback(): JSX.Element {
   const fallbackPathname = resolveFrontendFallbackRequestPathname();
-  const fallbackPublicOwner = resolveFrontendFallbackPublicOwner(fallbackPathname);
-  const shouldRenderKangurFallback = fallbackPublicOwner === 'kangur';
-
-  if (shouldRenderKangurFallback) {
-    const fallbackRouteFamily = resolveFrontendPublicRouteFamily({
-      pathname: fallbackPathname,
-      publicOwner: fallbackPublicOwner,
-    });
-    const isRootFallbackRoute = isRootPublicRequest(fallbackPathname);
-
-    return (
-      <main
-        id='kangur-main-content'
-        tabIndex={-1}
-        className='min-h-screen focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background'
-        data-frontend-public-route-family={fallbackRouteFamily}
-        aria-busy='true'
-        style={{ background: KANGUR_FALLBACK_BACKGROUND }}
-      >
-        <script dangerouslySetInnerHTML={{ __html: safeHtml(KANGUR_SURFACE_HINT_SCRIPT) }} />
-        <style
-          id='__KANGUR_SURFACE_BOOTSTRAP_FALLBACK__'
-          dangerouslySetInnerHTML={{
-            __html: safeHtml(getKangurSurfaceBootstrapStyle()),
-          }}
-        />
-        {isRootFallbackRoute ? <KangurSSRSkeleton /> : <KangurServerShell />}
-      </main>
-    );
-  }
+  // Keep fallback owner resolution for future use
+  resolveFrontendFallbackPublicOwner(fallbackPathname);
 
   return (
     <main
-      id='kangur-main-content'
+      id='main-content'
       tabIndex={-1}
       className='min-h-screen bg-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background'
       data-frontend-public-route-family='pending'
@@ -246,76 +189,42 @@ async function FrontendLayoutRuntime({
     resolveFrontendRequestPathname(requestHeaders?.get('x-app-request-url')) ??
     resolveFrontendRequestPathname(requestHeaders?.get('next-url')) ??
     resolveFrontendRequestPathname(requestHeaders?.get('x-matched-path'));
-  const isExplicitKangurAlias = isExplicitKangurAliasRequest(requestPathname);
   const isCanonicalPublicLogin = isCanonicalPublicLoginRequest(requestPathname);
   const isRootPublicRoute = isRootPublicRequest(requestPathname);
   const shouldUseFrontPageAppSelection = shouldApplyFrontPageAppSelection();
-  const shouldResolveFrontPageSelection = shouldUseFrontPageAppSelection && !isExplicitKangurAlias;
+  const shouldResolveFrontPageSelection = shouldUseFrontPageAppSelection;
   const frontPageSelectionPromise = shouldResolveFrontPageSelection
     ? layoutTiming.withTiming('frontPageSelection', resolveFrontPageSelection)
     : Promise.resolve(null);
   const themePromise = getCmsThemeSettings();
 
   const frontPageSelection = await frontPageSelectionPromise;
-  const publicOwner: FrontendPublicOwner =
-    shouldResolveFrontPageSelection && frontPageSelection
-      ? frontPageSelection.publicOwner
-      : 'cms';
-  const expectsRootRedirectToKangur =
-    publicOwner === 'kangur' && isRootPublicRoute && !isExplicitKangurAlias && !isCanonicalPublicLogin;
-  const shouldRenderStandaloneKangurShell =
-    publicOwner === 'kangur' &&
-    !isExplicitKangurAlias &&
-    !isCanonicalPublicLogin &&
-    !expectsRootRedirectToKangur;
-  const shouldInjectKangurAuthBootstrap =
-    (publicOwner === 'kangur' && !expectsRootRedirectToKangur) || isCanonicalPublicLogin;
-  const shouldLoadKangurStorefrontBootstrap =
-    publicOwner === 'kangur' && shouldRenderStandaloneKangurShell;
+  const publicOwner: FrontendPublicOwner = 'cms';
   const publicRouteFamily: FrontendPublicRouteFamily = resolveFrontendPublicRouteFamily({
     pathname: requestPathname,
     publicOwner,
   });
-  const kangurStatePromise = shouldLoadKangurStorefrontBootstrap
-    ? layoutTiming.withTiming(
-      'kangurStorefrontInitialState',
-      getKangurStorefrontInitialState
-    )
-    : Promise.resolve(null);
-  let kangurAuthBootstrapScriptPromise: Promise<string | null> = Promise.resolve(null);
-  if (shouldInjectKangurAuthBootstrap) {
-    kangurAuthBootstrapScriptPromise =
-      requestHeaders !== null
-        ? layoutTiming.withTiming('kangurAuthBootstrapScript', () =>
-          getKangurAuthBootstrapScript(requestHeaders)
-        )
-        : Promise.resolve('window.__KANGUR_AUTH_BOOTSTRAP__=null;');
-  }
-  const [themeSettings, kangurInitialState] = await Promise.all([
-    publicOwner === 'cms' && !isExplicitKangurAlias
-      ? layoutTiming.withTiming('cmsThemeSettings', () => themePromise)
-      : Promise.resolve(DEFAULT_CMS_THEME_SETTINGS),
-    kangurStatePromise,
+  const [themeSettings] = await Promise.all([
+    layoutTiming.withTiming('cmsThemeSettings', () => themePromise),
   ]);
-  const kangurAuthBootstrapScript = await kangurAuthBootstrapScriptPromise;
   const storefrontAppearanceMode = themeSettings.darkMode ? 'dark' : 'default';
   const frontendLoadTimingPayload = layoutTiming.buildPayload({
     pathname: requestPathname,
     publicOwner,
     routeFamily: publicRouteFamily,
-      flags: {
-        explicitKangurAlias: isExplicitKangurAlias,
-        canonicalPublicLogin: isCanonicalPublicLogin,
-        rootPublicRoute: isRootPublicRoute,
-        requestHeadersTimedOut,
-        frontPageSelectionSource: frontPageSelection?.source ?? null,
-        frontPageSelectionFallbackReason: frontPageSelection?.fallbackReason ?? null,
-        expectsRootRedirectToKangur,
-        renderStandaloneKangurShell: shouldRenderStandaloneKangurShell,
-        injectKangurAuthBootstrap: shouldInjectKangurAuthBootstrap,
-        loadKangurStorefrontBootstrap: shouldLoadKangurStorefrontBootstrap,
-      },
-    });
+    flags: {
+      explicitKangurAlias: false,
+      canonicalPublicLogin: isCanonicalPublicLogin,
+      rootPublicRoute: isRootPublicRoute,
+      requestHeadersTimedOut,
+      frontPageSelectionSource: frontPageSelection?.source ?? null,
+      frontPageSelectionFallbackReason: frontPageSelection?.fallbackReason ?? null,
+      expectsRootRedirectToKangur: false,
+      renderStandaloneKangurShell: false,
+      injectKangurAuthBootstrap: false,
+      loadKangurStorefrontBootstrap: false,
+    },
+  });
   const inlineFrontendLoadTimingPayload: FrontendLoadTimingPayload | null =
     frontendLoadTimingPayload
       ? {
@@ -326,39 +235,19 @@ async function FrontendLayoutRuntime({
           },
         }
       : null;
-  const kangurSurfaceBootstrapStyle =
-    publicOwner === 'kangur' && kangurInitialState
-      ? getKangurSurfaceBootstrapStyle({
-          mode: kangurInitialState.initialMode,
-          themeSettings: kangurInitialState.initialThemeSettings,
-        })
-      : null;
-  const shouldInjectKangurSurfaceHint =
-    publicOwner === 'kangur' || publicRouteFamily === 'studiq';
-  const resolvedKangurSurfaceBootstrapStyle =
-    kangurSurfaceBootstrapStyle ??
-    (publicOwner !== 'kangur' && publicRouteFamily === 'studiq'
-      ? getKangurSurfaceBootstrapStyle()
-      : null);
 
-  let frontendShellChildren: React.ReactNode;
-  if (shouldRenderStandaloneKangurShell) {
-    frontendShellChildren = isRootPublicRoute ? <KangurSSRSkeleton /> : <KangurServerShell />;
-  } else {
-    frontendShellChildren = (
-      <CmsStorefrontAppearanceProvider initialMode={storefrontAppearanceMode}>
-        <>{children}</>
-      </CmsStorefrontAppearanceProvider>
-    );
-  }
+  const frontendShellChildren: React.ReactNode = (
+    <CmsStorefrontAppearanceProvider initialMode={storefrontAppearanceMode}>
+      <>{children}</>
+    </CmsStorefrontAppearanceProvider>
+  );
 
   return (
     <main
-      id='kangur-main-content'
+      id='main-content'
       tabIndex={-1}
       className='min-h-screen bg-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background'
       data-frontend-public-route-family={publicRouteFamily}
-      style={publicRouteFamily === 'studiq' ? { background: KANGUR_FALLBACK_BACKGROUND } : undefined}
     >
       {inlineFrontendLoadTimingPayload ? (
         <script
@@ -369,30 +258,10 @@ async function FrontendLayoutRuntime({
           }}
         />
       ) : null}
-      {shouldInjectKangurSurfaceHint ? (
-        <script dangerouslySetInnerHTML={{ __html: safeHtml(KANGUR_SURFACE_HINT_SCRIPT) }} />
-      ) : null}
-      {resolvedKangurSurfaceBootstrapStyle !== null ? (
-        <style
-          id='__KANGUR_SURFACE_BOOTSTRAP__'
-          dangerouslySetInnerHTML={{ __html: safeHtml(resolvedKangurSurfaceBootstrapStyle) }}
-        />
-      ) : null}
-      {kangurAuthBootstrapScript !== null ? (
-        <script dangerouslySetInnerHTML={{ __html: safeHtml(kangurAuthBootstrapScript) }} />
-      ) : null}
       <FrontendPublicOwnerProvider publicOwner={publicOwner} routeFamily={publicRouteFamily}>
         <QueryErrorBoundary>
           <FrontendPublicOwnerShellClient
             publicOwner={publicOwner}
-            initialAppearance={
-              shouldRenderStandaloneKangurShell
-                ? {
-                    mode: kangurInitialState?.initialMode,
-                    themeSettings: kangurInitialState?.initialThemeSettings,
-                  }
-                : undefined
-            }
           >
             {frontendShellChildren}
           </FrontendPublicOwnerShellClient>

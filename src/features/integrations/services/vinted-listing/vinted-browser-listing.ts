@@ -41,6 +41,7 @@ import type { BrowserListingResultDto } from '@/shared/contracts/integrations/li
 import { readVintedAuthState } from './vinted-browser-auth';
 import { resolveVintedProductMapping } from './vinted-product-mapping';
 import { StepTracker, type ActionSequenceKey } from '@/shared/lib/browser-execution';
+import { buildResolvedActionSteps } from '@/shared/lib/browser-execution/runtime-action-resolver.server';
 
 /** Extract Vinted numeric item ID from a URL, e.g. /items/1234567890-item-name → "1234567890" */
 const extractVintedItemId = (url: string): string | null => {
@@ -334,7 +335,7 @@ export const runVintedBrowserListing = async ({
 }): Promise<BrowserListingResultDto> => {
   const actionKey: ActionSequenceKey =
     action === 'sync' ? 'vinted_sync' : action === 'relist' ? 'vinted_relist' : 'vinted_list';
-  const tracker = StepTracker.forAction(actionKey);
+  const tracker = StepTracker.fromSteps(await buildResolvedActionSteps(actionKey));
 
   return runPlaywrightConnectionNativeTask({
     connection,

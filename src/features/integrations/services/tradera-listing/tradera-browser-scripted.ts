@@ -31,6 +31,7 @@ import {
   buildDefaultTraderaQuicklistScript,
   DEFAULT_TRADERA_QUICKLIST_SCRIPT,
 } from './default-script';
+import { generateTraderaQuicklistBrowserStepsInit } from '@/shared/lib/browser-execution/generate-browser-steps';
 import {
   resolveAppBaseUrl,
   toAbsoluteUrl,
@@ -43,6 +44,7 @@ import {
   resolveTraderaSelectorRegistryRuntime,
   type ResolvedTraderaSelectorRegistryRuntime,
 } from '@/features/integrations/services/tradera-selector-registry';
+import { resolveRuntimeActionStepIds } from '@/shared/lib/browser-execution/runtime-action-resolver.server';
 import {
   buildTraderaQuicklistExecutionSteps,
   resolveTraderaCheckStatusExecutionStepsFromResult,
@@ -516,15 +518,30 @@ const runTraderaScriptedListingForProduct = async ({
     scriptSource,
     scriptValidationError,
   } = resolveManagedTraderaScript(connection);
-  const selectorRuntimeResolution =
+  const [selectorRuntimeResolution, listStepIds, syncStepIds] =
     scriptSource === 'connection'
-      ? null
-      : await resolveTraderaSelectorRegistryRuntime({
-          profile: systemSettings.selectorProfile,
-        });
-  const script = selectorRuntimeResolution
-    ? buildDefaultTraderaQuicklistScript(selectorRuntimeResolution.runtime)
-    : resolvedScript;
+      ? [null, null, null]
+      : await Promise.all([
+          resolveTraderaSelectorRegistryRuntime({
+            profile: systemSettings.selectorProfile,
+          }),
+          resolveRuntimeActionStepIds('tradera_quicklist_list'),
+          resolveRuntimeActionStepIds('tradera_quicklist_sync'),
+        ]);
+  const quicklistStepsInit =
+    listStepIds !== null && syncStepIds !== null
+      ? generateTraderaQuicklistBrowserStepsInit({
+          listStepIds,
+          syncStepIds,
+        })
+      : undefined;
+  const script =
+    selectorRuntimeResolution !== null || quicklistStepsInit !== undefined
+      ? buildDefaultTraderaQuicklistScript(
+          selectorRuntimeResolution?.runtime,
+          quicklistStepsInit
+        )
+      : resolvedScript;
   const runtimeSettingsOverrides = buildManagedQuicklistRuntimeSettingsOverrides(script);
   const result = await runPlaywrightListingScript({
     script,

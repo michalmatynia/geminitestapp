@@ -55,25 +55,50 @@ const normalizeChromaThreshold = (
     IMAGE_STUDIO_CENTER_LAYOUT_MAX_CHROMA_THRESHOLD
   );
 
-export const normalizeImageStudioAnalysisLayoutConfig = (
-  config?: Partial<ImageStudioCenterLayoutConfig> | null
-): NormalizedImageStudioAnalysisLayoutConfig => {
+const normalizePaddingConfig = (
+  config: Partial<ImageStudioCenterLayoutConfig> | null | undefined
+): Pick<
+  NormalizedImageStudioAnalysisLayoutConfig,
+  'paddingPercent' | 'paddingXPercent' | 'paddingYPercent'
+> => {
   const paddingPercent = normalizePaddingPercent(config);
-
-  const result = {
+  return {
     paddingPercent,
     paddingXPercent: config?.paddingXPercent ?? paddingPercent,
     paddingYPercent: config?.paddingYPercent ?? paddingPercent,
-    fillMissingCanvasWhite: config?.fillMissingCanvasWhite ?? false,
-    targetCanvasWidth: normalizeTargetCanvasSide(config?.targetCanvasWidth),
-    targetCanvasHeight: normalizeTargetCanvasSide(config?.targetCanvasHeight),
+  };
+};
+
+const normalizeCanvasConfig = (
+  config: Partial<ImageStudioCenterLayoutConfig> | null | undefined
+): Pick<
+  NormalizedImageStudioAnalysisLayoutConfig,
+  'targetCanvasWidth' | 'targetCanvasHeight'
+> => ({
+  targetCanvasWidth: normalizeTargetCanvasSide(config?.targetCanvasWidth),
+  targetCanvasHeight: normalizeTargetCanvasSide(config?.targetCanvasHeight),
+});
+
+const normalizeDetectionConfig = (
+  config: Partial<ImageStudioCenterLayoutConfig> | null | undefined
+): Pick<
+  NormalizedImageStudioAnalysisLayoutConfig,
+  'fillMissingCanvasWhite' | 'shadowPolicy' | 'detection'
+> => ({
+  fillMissingCanvasWhite: config?.fillMissingCanvasWhite ?? false,
+  shadowPolicy: config?.shadowPolicy ?? 'auto',
+  detection: config?.detection ?? 'auto',
+});
+
+export const normalizeImageStudioAnalysisLayoutConfig = (
+  config?: Partial<ImageStudioCenterLayoutConfig> | null
+): NormalizedImageStudioAnalysisLayoutConfig => ({
+    ...normalizePaddingConfig(config),
+    ...normalizeDetectionConfig(config),
+    ...normalizeCanvasConfig(config),
     whiteThreshold: normalizeWhiteThreshold(config),
     chromaThreshold: normalizeChromaThreshold(config),
-    shadowPolicy: config?.shadowPolicy ?? 'auto',
-    detection: config?.detection ?? 'auto',
-  };
-  return result;
-};
+  });
 
 export const analyzeImageObjectFromRgba = (params: {
   pixelData: PixelData;

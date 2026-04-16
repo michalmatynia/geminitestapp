@@ -16,7 +16,7 @@ export const removeFilemakerPhoneNumber = (
   phoneNumberId: string
 ): FilemakerDatabase => {
   const normalizedPhoneNumberId = normalizeString(phoneNumberId);
-  if (!normalizedPhoneNumberId) return database;
+  if (normalizedPhoneNumberId.length === 0) return database;
 
   const nextPhoneNumbers = database.phoneNumbers.filter(
     (phoneNumber: FilemakerPhoneNumber): boolean => phoneNumber.id !== normalizedPhoneNumberId
@@ -56,7 +56,7 @@ export const removeFilemakerPartyPhoneNumberLinks = (
   partyId: string
 ): FilemakerDatabase => {
   const normalizedPartyId = normalizeString(partyId);
-  if (!normalizedPartyId) return database;
+  if (normalizedPartyId.length === 0) return database;
 
   const nextLinks = database.phoneNumberLinks.filter(
     (link: FilemakerPhoneNumberLink): boolean =>
@@ -86,7 +86,7 @@ export const removeFilemakerEmail = (
   emailId: string
 ): FilemakerDatabase => {
   const normalizedEmailId = normalizeString(emailId);
-  if (!normalizedEmailId) return database;
+  if (normalizedEmailId.length === 0) return database;
 
   const nextEmails = database.emails.filter(
     (email: FilemakerEmail) => email.id !== normalizedEmailId
@@ -115,7 +115,7 @@ export const removeFilemakerPartyEmailLinks = (
   partyId: string
 ): FilemakerDatabase => {
   const normalizedPartyId = normalizeString(partyId);
-  if (!normalizedPartyId) return database;
+  if (normalizedPartyId.length === 0) return database;
 
   const nextLinks = database.emailLinks.filter(
     (link: FilemakerEmailLink) =>
@@ -134,7 +134,7 @@ export const removeFilemakerEventOrganizationLinks = (
   eventId: string
 ): FilemakerDatabase => {
   const normalizedEventId = normalizeString(eventId);
-  if (!normalizedEventId) return database;
+  if (normalizedEventId.length === 0) return database;
 
   const nextLinks = database.eventOrganizationLinks.filter(
     (link: FilemakerEventOrganizationLink) => link.eventId !== normalizedEventId
@@ -152,7 +152,7 @@ export const removeFilemakerOrganizationEventLinks = (
   organizationId: string
 ): FilemakerDatabase => {
   const normalizedOrganizationId = normalizeString(organizationId);
-  if (!normalizedOrganizationId) return database;
+  if (normalizedOrganizationId.length === 0) return database;
 
   const nextLinks = database.eventOrganizationLinks.filter(
     (link: FilemakerEventOrganizationLink) => link.organizationId !== normalizedOrganizationId
@@ -170,7 +170,7 @@ export const removeFilemakerEvent = (
   eventId: string
 ): FilemakerDatabase => {
   const normalizedEventId = normalizeString(eventId);
-  if (!normalizedEventId) return database;
+  if (normalizedEventId.length === 0) return database;
 
   const nextEvents = database.events.filter(
     (event: FilemakerEvent): boolean => event.id !== normalizedEventId

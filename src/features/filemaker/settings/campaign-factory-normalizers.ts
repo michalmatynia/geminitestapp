@@ -39,12 +39,18 @@ const FILEMAKER_CAMPAIGN_EVENT_TYPES: FilemakerEmailCampaignEvent['type'][] = [
 const FILEMAKER_CAMPAIGN_SUPPRESSION_REASONS: FilemakerEmailCampaignSuppressionEntry['reason'][] =
   ['manual_block', 'unsubscribed', 'bounced'];
 
+const isNullishOrEmptyString = (input: unknown): boolean =>
+  input === null || input === undefined || input === '';
+
+const isRecord = (input: unknown): input is Record<string, unknown> =>
+  input !== null && typeof input === 'object';
+
 export const normalizeStringList = (input: unknown): string[] => {
   if (!Array.isArray(input)) return [];
   const unique = new Set<string>();
   input.forEach((entry: unknown) => {
     const normalized = normalizeString(entry);
-    if (normalized) {
+    if (normalized.length > 0) {
       unique.add(normalized);
     }
   });
@@ -81,12 +87,12 @@ export const normalizePartyReferences = (
   if (!Array.isArray(input)) return [];
   const references: FilemakerEmailCampaignAudienceRule['includePartyReferences'] = [];
   input.forEach((entry: unknown) => {
-    if (!entry || typeof entry !== 'object') return;
-    const record = entry as Record<string, unknown>;
+    if (!isRecord(entry)) return;
+    const record = entry;
     const partyKind = normalizeString(record['partyKind']).toLowerCase();
     const partyId = normalizeString(record['partyId']);
     if (
-      !partyId ||
+      partyId.length === 0 ||
       !FILEMAKER_CAMPAIGN_AUDIENCE_PARTY_KINDS.includes(partyKind as FilemakerPartyKind)
     ) {
       return;
@@ -104,7 +110,7 @@ export const normalizePartyReferences = (
 };
 
 export const normalizeNullablePositiveInt = (input: unknown): number | null => {
-  if (input == null || input === '') return null;
+  if (isNullishOrEmptyString(input)) return null;
   const value = Math.trunc(Number(input));
   return Number.isFinite(value) && value > 0 ? value : null;
 };
@@ -114,7 +120,7 @@ export const normalizeNullableBoundedInt = (
   min: number,
   max: number
 ): number | null => {
-  if (input == null || input === '') return null;
+  if (isNullishOrEmptyString(input)) return null;
   const value = Math.trunc(Number(input));
   if (!Number.isFinite(value) || value < min || value > max) {
     return null;
@@ -125,8 +131,8 @@ export const normalizeNullableBoundedInt = (
 export const normalizeRecurringRule = (
   input: unknown
 ): FilemakerEmailCampaignRecurringRule | null => {
-  if (!input || typeof input !== 'object') return null;
-  const record = input as Record<string, unknown>;
+  if (!isRecord(input)) return null;
+  const record = input;
   const frequency = normalizeString(record['frequency']).toLowerCase();
   const interval = Math.trunc(Number(record['interval']));
   const weekdays = Array.isArray(record['weekdays'])

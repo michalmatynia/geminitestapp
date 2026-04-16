@@ -86,7 +86,7 @@ export default async function RootLayout({
         <AppIntlProvider locale={locale} messages={messages}>
           <AccessibilityProvider>
             <SkipToContentLink>{skipToMainContentLabel}</SkipToContentLink>
-            <main id='kangur-main-content' className='min-h-screen' role='main'>
+            <main id='main-content' className='min-h-screen' role='main'>
               <h1 className='sr-only'>{siteTitle}</h1>
               <Suspense fallback={<div className='min-h-screen' aria-busy='true' />}>
                 <RootClientShell>{children}</RootClientShell>

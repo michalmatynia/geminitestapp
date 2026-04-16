@@ -4,12 +4,14 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 
 import type {
   PlaywrightAction,
+  PlaywrightActionBlock,
   PlaywrightFlow,
   PlaywrightStep,
   PlaywrightStepSet,
   PlaywrightStepType,
   PlaywrightWebsite,
 } from '@/shared/contracts/playwright-steps';
+import { normalizePlaywrightAction } from '@/shared/contracts/playwright-steps';
 import {
   usePlaywrightActions,
   usePlaywrightFlows,
@@ -22,10 +24,12 @@ import {
   useSavePlaywrightStepsMutation,
   useSavePlaywrightWebsitesMutation,
 } from '@/shared/hooks/usePlaywrightStepSequencer';
+import { STEP_REGISTRY } from '@/shared/lib/browser-execution/step-registry';
 import { useToast } from '@/shared/ui/primitives.public';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import type {
+  PlaywrightResolvedActionBlock,
   PlaywrightStepSequencerContextType,
   PlaywrightStepSetSortField,
   PlaywrightStepSortField,
@@ -45,6 +49,19 @@ function createId(): string {
 
 function now(): string {
   return new Date().toISOString();
+}
+
+function createActionBlock(
+  kind: PlaywrightActionBlock['kind'],
+  refId: string
+): PlaywrightActionBlock {
+  return {
+    id: createId(),
+    kind,
+    refId,
+    enabled: true,
+    label: null,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -102,7 +119,7 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
   const [isSaveActionOpen, setIsSaveActionOpen] = useState(false);
 
   // --- Action constructor state ---
-  const [actionStepSetIds, setActionStepSetIds] = useState<string[]>([]);
+  const [actionBlocks, setActionBlocks] = useState<PlaywrightActionBlock[]>([]);
   const [actionPersonaId, setActionPersonaId] = useState<string | null>(null);
   const [actionDraftName, setActionDraftName] = useState('');
   const [actionDraftDescription, setActionDraftDescription] = useState<string | null>(null);
@@ -168,19 +185,32 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
     return [...tagSet].sort();
   }, [steps, stepSets]);
 
-  const actionStepSets = useMemo(
+  const resolvedActionBlocks = useMemo<PlaywrightResolvedActionBlock[]>(
     () =>
-      actionStepSetIds
-        .map((id) => stepSets.find((s) => s.id === id))
-        .filter((s): s is PlaywrightStepSet => s !== undefined),
-    [actionStepSetIds, stepSets]
+      actionBlocks.map((block) => ({
+        block,
+        runtimeStepId:
+          block.kind === 'runtime_step' && block.refId in STEP_REGISTRY ? block.refId : null,
+        runtimeStepLabel:
+          block.kind === 'runtime_step' && block.refId in STEP_REGISTRY
+            ? STEP_REGISTRY[block.refId as keyof typeof STEP_REGISTRY].label
+            : null,
+        step: block.kind === 'step'
+          ? (steps.find((step) => step.id === block.refId) ?? null)
+          : null,
+        stepSet: block.kind === 'step_set'
+          ? (stepSets.find((stepSet) => stepSet.id === block.refId) ?? null)
+          : null,
+      })),
+    [actionBlocks, steps, stepSets]
   );
 
   const stepSetUsageCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     for (const action of actions) {
-      for (const setId of action.stepSetIds) {
-        counts[setId] = (counts[setId] ?? 0) + 1;
+      for (const block of action.blocks) {
+        if (block.kind !== 'step_set') continue;
+        counts[block.refId] = (counts[block.refId] ?? 0) + 1;
       }
     }
     return counts;
@@ -201,12 +231,27 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
     const existingIds = new Set(stepSets.map((s) => s.id));
     const orphaned = new Set<string>();
     for (const action of actions) {
-      for (const setId of action.stepSetIds) {
-        if (!existingIds.has(setId)) orphaned.add(setId);
+      for (const block of action.blocks) {
+        if (block.kind === 'step_set' && !existingIds.has(block.refId)) {
+          orphaned.add(block.refId);
+        }
       }
     }
     return orphaned;
   }, [stepSets, actions]);
+
+  const orphanedActionStepIds = useMemo(() => {
+    const existingIds = new Set(steps.map((s) => s.id));
+    const orphaned = new Set<string>();
+    for (const action of actions) {
+      for (const block of action.blocks) {
+        if (block.kind === 'step' && !existingIds.has(block.refId)) {
+          orphaned.add(block.refId);
+        }
+      }
+    }
+    return orphaned;
+  }, [steps, actions]);
 
   // ---------------------------------------------------------------------------
   // Step CRUD
@@ -249,6 +294,9 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
     async (id: string): Promise<void> => {
       try {
         await saveSteps({ steps: stepsRef.current.filter((s) => s.id !== id) });
+        setActionBlocks((prev) =>
+          prev.filter((block) => !(block.kind === 'step' && block.refId === id))
+        );
         toast('Step deleted.', { variant: 'success' });
       } catch (error) {
         logClientCatch(error, { source: 'usePlaywrightStepSequencerState', action: 'deleteStep' });
@@ -322,7 +370,9 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
     async (id: string): Promise<void> => {
       try {
         await saveStepSets({ stepSets: stepSetsRef.current.filter((s) => s.id !== id) });
-        setActionStepSetIds((prev) => prev.filter((sid) => sid !== id));
+        setActionBlocks((prev) =>
+          prev.filter((block) => !(block.kind === 'step_set' && block.refId === id))
+        );
         toast('Step set deleted.', { variant: 'success' });
       } catch (error) {
         logClientCatch(error, { source: 'usePlaywrightStepSequencerState', action: 'deleteStepSet' });
@@ -487,15 +537,21 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
   }, [saveStepSets, toast]);
 
   const handleCleanOrphanedStepSets = useCallback(async (): Promise<void> => {
-    const existingIds = new Set(stepSetsRef.current.map((s) => s.id));
-    const cleaned = actionsRef.current.map((a) => ({
-      ...a,
-      stepSetIds: a.stepSetIds.filter((id) => existingIds.has(id)),
-      updatedAt: now(),
-    }));
+    const existingStepIds = new Set(stepsRef.current.map((s) => s.id));
+    const existingStepSetIds = new Set(stepSetsRef.current.map((s) => s.id));
+    const cleaned = actionsRef.current.map((action) =>
+      normalizePlaywrightAction({
+        ...action,
+        blocks: action.blocks.filter((block) => {
+          if (block.kind === 'step') return existingStepIds.has(block.refId);
+          return existingStepSetIds.has(block.refId);
+        }),
+        updatedAt: now(),
+      })
+    );
     try {
       await saveActions({ actions: cleaned });
-      toast('Orphaned step set references removed.', { variant: 'success' });
+      toast('Orphaned action block references removed.', { variant: 'success' });
     } catch (error) {
       logClientCatch(error, { source: 'usePlaywrightStepSequencerState', action: 'cleanOrphanedStepSets' });
       toast('Cleanup failed.', { variant: 'error' });
@@ -522,7 +578,9 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
         const newFlows = payload.flows.filter((f) => !existingFlowIds.has(f.id));
         const newSteps = payload.steps.filter((s) => !existingStepIds.has(s.id));
         const newSets = payload.stepSets.filter((s) => !existingSetIds.has(s.id));
-        const newActions = payload.actions.filter((a) => !existingActionIds.has(a.id));
+        const newActions = payload.actions
+          .map((action) => normalizePlaywrightAction(action))
+          .filter((action) => !existingActionIds.has(action.id));
 
         if (newWebsites.length > 0) {
           await saveWebsites({ websites: [...websitesRef.current, ...newWebsites] });
@@ -559,13 +617,18 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
       if (!original) return;
       try {
         const ts = now();
-        const copy: PlaywrightAction = {
+        const copy = normalizePlaywrightAction({
           ...original,
           id: createId(),
           name: `${original.name} (copy)`,
+          runtimeKey: null,
+          blocks: original.blocks.map((block) => ({
+            ...block,
+            id: createId(),
+          })),
           createdAt: ts,
           updatedAt: ts,
-        };
+        });
         await saveActions({ actions: [...actionsRef.current, copy] });
         toast('Action duplicated.', { variant: 'success' });
       } catch (error) {
@@ -579,7 +642,7 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
   const handleLoadActionIntoConstructor = useCallback((id: string): void => {
     const action = actionsRef.current.find((a) => a.id === id);
     if (!action) return;
-    setActionStepSetIds([...action.stepSetIds]);
+    setActionBlocks(action.blocks.map((block) => ({ ...block })));
     setActionDraftName(action.name);
     setActionDraftDescription(action.description);
     setActionPersonaId(action.personaId);
@@ -591,16 +654,24 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
   // Action constructor
   // ---------------------------------------------------------------------------
 
+  const handleAddStepToAction = useCallback((stepId: string): void => {
+    setActionBlocks((prev) => [...prev, createActionBlock('step', stepId)]);
+  }, []);
+
+  const handleAddRuntimeStepToAction = useCallback((stepId: string): void => {
+    setActionBlocks((prev) => [...prev, createActionBlock('runtime_step', stepId)]);
+  }, []);
+
   const handleAddStepSetToAction = useCallback((stepSetId: string): void => {
-    setActionStepSetIds((prev) => [...prev, stepSetId]);
+    setActionBlocks((prev) => [...prev, createActionBlock('step_set', stepSetId)]);
   }, []);
 
   const handleRemoveFromAction = useCallback((index: number): void => {
-    setActionStepSetIds((prev) => prev.filter((_, i) => i !== index));
+    setActionBlocks((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
   const handleMoveActionItem = useCallback((from: number, to: number): void => {
-    setActionStepSetIds((prev) => {
+    setActionBlocks((prev) => {
       const next = [...prev];
       const [moved] = next.splice(from, 1);
       if (moved !== undefined) next.splice(to, 0, moved);
@@ -608,8 +679,16 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
     });
   }, []);
 
+  const handleToggleActionBlockEnabled = useCallback((index: number): void => {
+    setActionBlocks((prev) =>
+      prev.map((block, blockIndex) =>
+        blockIndex === index ? { ...block, enabled: !block.enabled } : block
+      )
+    );
+  }, []);
+
   const handleClearAction = useCallback((): void => {
-    setActionStepSetIds([]);
+    setActionBlocks([]);
     setActionDraftName('');
     setActionDraftDescription(null);
     setActionPersonaId(null);
@@ -622,21 +701,22 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
       toast('Action name is required.', { variant: 'error' });
       return;
     }
-    if (actionStepSetIds.length === 0) {
-      toast('Add at least one step set before saving.', { variant: 'error' });
+    if (actionBlocks.length === 0) {
+      toast('Add at least one action block before saving.', { variant: 'error' });
       return;
     }
     try {
       const ts = now();
-      const next: PlaywrightAction = {
+      const next = normalizePlaywrightAction({
         id: createId(),
         name,
         description: actionDraftDescription?.trim() || null,
-        stepSetIds: [...actionStepSetIds],
+        blocks: actionBlocks.map((block) => ({ ...block })),
+        stepSetIds: [],
         personaId: actionPersonaId,
         createdAt: ts,
         updatedAt: ts,
-      };
+      });
       await saveActions({ actions: [...actionsRef.current, next] });
       setIsSaveActionOpen(false);
       handleClearAction();
@@ -645,7 +725,7 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
       logClientCatch(error, { source: 'usePlaywrightStepSequencerState', action: 'saveAction' });
       toast('Failed to save action.', { variant: 'error' });
     }
-  }, [actionDraftName, actionDraftDescription, actionStepSetIds, actionPersonaId, handleClearAction, saveActions, toast]);
+  }, [actionDraftName, actionDraftDescription, actionBlocks, actionPersonaId, handleClearAction, saveActions, toast]);
 
   const handleUpdateAction = useCallback(async (): Promise<void> => {
     if (!editingActionId) return;
@@ -654,21 +734,22 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
       toast('Action name is required.', { variant: 'error' });
       return;
     }
-    if (actionStepSetIds.length === 0) {
-      toast('Add at least one step set before saving.', { variant: 'error' });
+    if (actionBlocks.length === 0) {
+      toast('Add at least one action block before saving.', { variant: 'error' });
       return;
     }
     try {
       const next = actionsRef.current.map((a) =>
         a.id === editingActionId
-          ? {
+          ? normalizePlaywrightAction({
               ...a,
               name,
               description: actionDraftDescription?.trim() ?? null,
-              stepSetIds: [...actionStepSetIds],
+              blocks: actionBlocks.map((block) => ({ ...block })),
+              stepSetIds: [],
               personaId: actionPersonaId,
               updatedAt: now(),
-            }
+            })
           : a
       );
       await saveActions({ actions: next });
@@ -678,7 +759,7 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
       logClientCatch(error, { source: 'usePlaywrightStepSequencerState', action: 'updateAction' });
       toast('Failed to update action.', { variant: 'error' });
     }
-  }, [editingActionId, actionDraftName, actionDraftDescription, actionStepSetIds, actionPersonaId, handleClearAction, saveActions, toast]);
+  }, [editingActionId, actionDraftName, actionDraftDescription, actionBlocks, actionPersonaId, handleClearAction, saveActions, toast]);
 
   // ---------------------------------------------------------------------------
   // Assemble context value
@@ -698,9 +779,10 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
     filteredSteps,
     filteredStepSets,
     allTags,
-    actionStepSets,
+    resolvedActionBlocks,
     stepSetUsageCounts,
     orphanedStepIds,
+    orphanedActionStepIds,
     orphanedStepSetIds,
 
     // Filters
@@ -736,14 +818,17 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
     setIsSaveActionOpen,
 
     // Action constructor
-    actionStepSetIds,
+    actionBlocks,
     actionPersonaId,
     actionDraftName,
     actionDraftDescription,
     editingActionId,
+    handleAddStepToAction,
+    handleAddRuntimeStepToAction,
     handleAddStepSetToAction,
     handleRemoveFromAction,
     handleMoveActionItem,
+    handleToggleActionBlockEnabled,
     handleClearAction,
     setActionPersonaId,
     setActionDraftName,

@@ -1,12 +1,15 @@
 'use client';
 
-import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { useRouter } from 'nextjs-toploader/app';
+import { usePathname, useSearchParams } from 'next/navigation';
+import { startTransition, useState, useMemo, useCallback, useEffect, useRef } from 'react';
 
 import type {
   DatabaseEngineStatus,
   DatabaseEngineOperationsJobs,
   DatabaseEngineBackupSchedulerStatus,
+  DatabaseEngineMongoSourceState,
+  DatabaseEngineMongoSyncDirection,
   RedisOverview,
   DatabaseEngineProviderPreview,
   DatabaseEngineWorkspaceView,
@@ -14,6 +17,7 @@ import type {
   CollectionSchema,
 } from '@/shared/contracts/database';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
+import { ApiError } from '@/shared/lib/api-client';
 import {
   DATABASE_ENGINE_BACKUP_SCHEDULE_KEY,
   DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY,
@@ -27,6 +31,7 @@ import {
   type DatabaseEngineOperationControls,
   type DatabaseEnginePolicy,
 } from '@/shared/lib/db/database-engine-constants';
+import { extractMutationErrorMessage } from '@/shared/lib/mutation-error-handler';
 import { useToast } from '@/shared/ui/primitives.public';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -40,7 +45,9 @@ import {
 import {
   useDatabaseBackupSchedulerStatus,
   useDatabaseEngineOperationsJobs,
+  useDatabaseEngineMongoSource,
   useDatabaseEngineProviderPreview,
+  useSyncDatabaseEngineMongoSourceMutation,
   useDatabaseEngineStatus,
   useAllCollectionsSchema,
   useRedisOverview,
@@ -55,6 +62,7 @@ export interface UseDatabaseEngineStateReturn {
   backupSchedulerStatus: DatabaseEngineBackupSchedulerStatus | undefined;
   operationsJobs: DatabaseEngineOperationsJobs | undefined;
   providerPreview: DatabaseEngineProviderPreview | undefined;
+  mongoSourceState: DatabaseEngineMongoSourceState | undefined;
   redisOverview: RedisOverview | undefined;
   activeView: DatabaseEngineWorkspaceView;
   setActiveView: (view: DatabaseEngineWorkspaceView) => void;
@@ -71,11 +79,43 @@ export interface UseDatabaseEngineStateReturn {
   updateCollectionRoute: (collection: string, provider: string) => void;
   updateBackupSchedule: (updates: Partial<DatabaseEngineBackupSchedule>) => void;
   updateOperationControls: (updates: Partial<DatabaseEngineOperationControls>) => void;
+  syncMongoSources: (direction: 'cloud_to_local' | 'local_to_cloud') => Promise<void>;
   saveSettings: () => Promise<void>;
   isDirty: boolean;
   refetchAll: () => void;
   validationErrors: string[];
+  isSyncingMongoSources: boolean;
 }
+
+const isMongoSyncTimeoutError = (error: unknown): error is Error =>
+  error instanceof Error &&
+  (error.message.startsWith('Request timeout after ') ||
+    error.message.startsWith('Response body timeout after '));
+
+const didMongoSyncCompleteAfterRequestStarted = (
+  state: DatabaseEngineMongoSourceState | undefined,
+  direction: DatabaseEngineMongoSyncDirection,
+  requestStartedAtMs: number
+): boolean => {
+  const syncedAt = state?.lastSync?.syncedAt;
+  if (syncedAt == null || syncedAt === '' || state?.lastSync?.direction !== direction) {
+    return false;
+  }
+
+  const syncedAtMs = Date.parse(syncedAt);
+  return Number.isFinite(syncedAtMs) && syncedAtMs >= requestStartedAtMs - 1_000;
+};
+
+const getMongoSyncInProgressMessage = (
+  state: DatabaseEngineMongoSourceState | undefined
+): string | null => {
+  const syncInProgress = state?.syncInProgress;
+  if (!syncInProgress) {
+    return null;
+  }
+
+  return `MongoDB sync is still running: ${syncInProgress.source} -> ${syncInProgress.target}. Started at ${syncInProgress.acquiredAt}.`;
+};
 
 export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
   const router = useRouter();
@@ -86,17 +126,22 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
   const engineStatusQuery = useDatabaseEngineStatus();
   const backupSchedulerStatusQuery = useDatabaseBackupSchedulerStatus();
   const operationsJobsQuery = useDatabaseEngineOperationsJobs(30);
+  const mongoSourceQuery = useDatabaseEngineMongoSource();
   const providerPreviewQuery = useDatabaseEngineProviderPreview();
   const redisOverviewQuery = useRedisOverview();
   const schemaQuery = useAllCollectionsSchema();
 
-  const activeView = (searchParams.get('view') as DatabaseEngineWorkspaceView) || 'engine';
+  const requestedView = searchParams.get('view');
+  const activeView: DatabaseEngineWorkspaceView =
+    requestedView === 'crud' || requestedView === 'engine' ? requestedView : 'engine';
 
   const setActiveView = useCallback(
     (view: DatabaseEngineWorkspaceView) => {
       const params = new URLSearchParams(searchParams.toString());
       params.set('view', view);
-      router.push(`${pathname}?${params.toString()}`);
+      startTransition(() => {
+        router.push(`${pathname}?${params.toString()}`);
+      });
     },
     [pathname, router, searchParams]
   );
@@ -104,6 +149,7 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
   const { data: settingsMap, isPending: settingsLoading } = useSettingsMap({ scope: 'all' });
 
   const updateSettingsBulk = useUpdateSettingsBulk();
+  const syncMongoSourcesMutation = useSyncDatabaseEngineMongoSourceMutation();
 
   const [policy, setPolicy] = useState<DatabaseEnginePolicy>(DEFAULT_DATABASE_ENGINE_POLICY);
   const [serviceRouteMap, setServiceRouteMap] = useState<Record<string, string>>({});
@@ -118,6 +164,63 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
   const [isDirty, setIsDirty] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const lastValidationErrorSignatureRef = useRef<string | null>(null);
+
+  const resolveMongoSyncToast = useCallback(
+    async (
+      error: unknown,
+      direction: DatabaseEngineMongoSyncDirection,
+      requestStartedAtMs: number
+    ): Promise<{ message: string; variant: 'success' | 'warning' | 'error' }> => {
+      if (isMongoSyncTimeoutError(error)) {
+        try {
+          const refreshedState = (await mongoSourceQuery.refetch()).data;
+          const refreshedLastSync = refreshedState?.lastSync;
+
+          if (didMongoSyncCompleteAfterRequestStarted(refreshedState, direction, requestStartedAtMs)) {
+            return {
+              message: `MongoDB sync completed: ${refreshedLastSync?.source ?? 'unknown'} -> ${refreshedLastSync?.target ?? 'unknown'}. Synced at ${refreshedLastSync?.syncedAt ?? 'unknown time'}.`,
+              variant: 'success',
+            };
+          }
+
+          const syncInProgressMessage = getMongoSyncInProgressMessage(refreshedState);
+          if (syncInProgressMessage !== null) {
+            return {
+              message: `${syncInProgressMessage} The server has not reported a final result yet.`,
+              variant: 'warning',
+            };
+          }
+        } catch (refetchError) {
+          logClientError(refetchError, {
+            context: {
+              source: 'useDatabaseEngineState',
+              action: 'resolveMongoSyncToast',
+              direction,
+            },
+          });
+        }
+
+        return {
+          message:
+            'MongoDB sync request timed out before the server reported a final result. Check MongoDB source status before retrying.',
+          variant: 'warning',
+        };
+      }
+
+      if (error instanceof ApiError && error.status === 423) {
+        return {
+          message: error.message,
+          variant: 'warning',
+        };
+      }
+
+      return {
+        message: extractMutationErrorMessage(error, 'Failed to synchronize MongoDB sources.'),
+        variant: 'error',
+      };
+    },
+    [mongoSourceQuery]
+  );
 
   const parsedPersistedSettings = useMemo(() => {
     const errors: string[] = [];
@@ -258,6 +361,7 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
     engineStatus: engineStatusQuery.data,
     backupSchedulerStatus: backupSchedulerStatusQuery.data,
     operationsJobs: operationsJobsQuery.data,
+    mongoSourceState: mongoSourceQuery.data,
     providerPreview: providerPreviewQuery.data,
     redisOverview: redisOverviewQuery.data,
     activeView,
@@ -267,6 +371,7 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
       engineStatusQuery.isPending ||
       backupSchedulerStatusQuery.isPending ||
       operationsJobsQuery.isPending ||
+      mongoSourceQuery.isPending ||
       settingsLoading,
     isSaving: updateSettingsBulk.isPending,
     policy,
@@ -310,16 +415,30 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
       setOperationControls((prev) => ({ ...prev, ...updates }));
       setIsDirty(true);
     },
+    syncMongoSources: async (direction) => {
+      const requestStartedAtMs = Date.now();
+      try {
+        const response = await syncMongoSourcesMutation.mutateAsync(direction);
+        toast(response.message, { variant: 'success' });
+        mongoSourceQuery.refetch().catch(() => undefined);
+      } catch (error) {
+        logClientError(error);
+        const nextToast = await resolveMongoSyncToast(error, direction, requestStartedAtMs);
+        toast(nextToast.message, { variant: nextToast.variant });
+      }
+    },
     saveSettings: handleSave,
     isDirty,
     refetchAll: () => {
       void engineStatusQuery.refetch();
       void backupSchedulerStatusQuery.refetch();
       void operationsJobsQuery.refetch();
+      void mongoSourceQuery.refetch();
       void providerPreviewQuery.refetch();
       void schemaQuery.refetch();
       void redisOverviewQuery.refetch();
     },
     validationErrors,
+    isSyncingMongoSources: syncMongoSourcesMutation.isPending,
   };
 }

@@ -61,6 +61,10 @@ describe('starter parameter inference workflow', () => {
       mode: 'full',
     });
 
+    if (report.shouldBlock) {
+      console.log('Full report:', JSON.stringify(report, null, 2));
+    }
+
     expect(report.shouldBlock).toBe(false);
     expect(report.blockReason).toBeNull();
     expect(report.compileReport.errors).toBe(0);

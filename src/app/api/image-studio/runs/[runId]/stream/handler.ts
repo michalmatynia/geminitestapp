@@ -1,5 +1,5 @@
 import { Redis } from 'ioredis';
-import { NextRequest } from 'next/server';
+import { type NextRequest } from 'next/server';
 
 import { getImageStudioRunById } from '@/features/ai/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';

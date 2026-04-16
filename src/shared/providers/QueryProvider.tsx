@@ -1,6 +1,11 @@
 'use client';
 
-import { QueryClientContext, QueryClientProvider, type QueryClient } from '@tanstack/react-query';
+import {
+  QueryClientContext,
+  QueryClientProvider,
+  useQueryClient,
+  type QueryClient,
+} from '@tanstack/react-query';
 import React, { useState, useEffect } from 'react';
 
 import { useQueryBatching } from '@/shared/hooks/query/useQueryBatching';
@@ -25,8 +30,8 @@ type QueryProviderProps = {
 
 const isDevelopment = process.env['NODE_ENV'] === 'development';
 const enableAdvancedRuntime =
-  isDevelopment && process.env['NEXT_PUBLIC_QUERY_ADVANCED_RUNTIME'] === 'true';
-const enableWarmup = process.env['NEXT_PUBLIC_QUERY_WARMUP'] === 'true';
+  process.env['NEXT_PUBLIC_QUERY_ADVANCED_RUNTIME'] === 'true' || !isDevelopment;
+const enableWarmup = process.env['NEXT_PUBLIC_QUERY_WARMUP'] === 'true' || !isDevelopment;
 
 let browserQueryClient: QueryClient | null = null;
 
@@ -47,7 +52,7 @@ function QueryProviderAdvancedRuntime({ shouldWarmup }: { shouldWarmup: boolean 
   const { optimizeCache } = useSmartCache();
   const { warmFrequentlyAccessedData } = useCacheWarming();
   const { cleanupStaleQueries, optimizeQueryPriorities } = useQueryLifecycle();
-  useQueryBatching({ maxBatchSize: 5, batchDelay: 100 });
+  useQueryBatching({ maxBatchSize: 10, batchDelay: 50 });
 
   useEffect((): (() => void) => {
     const optimizeInterval = safeSetInterval(
@@ -82,6 +87,7 @@ function QueryProviderAdvancedRuntime({ shouldWarmup }: { shouldWarmup: boolean 
 // Stable query key arrays for persistence — avoids re-running effects on every render.
 const PERSISTED_PREFERENCES_KEYS = [[...QUERY_KEYS.userPreferences.all]];
 const PERSISTED_SETTINGS_KEYS = [[...QUERY_KEYS.settings.scope('lite')]];
+type WindowLiteSettingsHydration = typeof globalThis & { __LITE_SETTINGS__?: unknown[] };
 
 // Deferred persistence — mounts useQueryPersistence after the initial render
 // to keep localStorage reads off the critical hydration path.
@@ -123,9 +129,22 @@ function DeferredQueryPersistence(): null {
 }
 
 function QueryProviderInner({ children }: QueryProviderProps): React.JSX.Element {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const initialSettings = (globalThis as WindowLiteSettingsHydration).__LITE_SETTINGS__;
+    if (Array.isArray(initialSettings) && initialSettings.length > 0) {
+      const queryKey = QUERY_KEYS.settings.scope('lite');
+      if (!queryClient.getQueryData(queryKey)) {
+        queryClient.setQueryData(queryKey, initialSettings);
+      }
+    }
+  }, [queryClient]);
+
   useGlobalQueryErrorHandler({
     showToast: true,
-    logErrors: false,
+    logErrors: true,
     retryOnError: false,
     toastDedupeWindowMs: 20000,
   });

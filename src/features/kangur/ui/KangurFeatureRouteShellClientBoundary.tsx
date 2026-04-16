@@ -32,7 +32,7 @@ const loadKangurFeatureRouteShell = async (): Promise<KangurFeatureRouteShellCom
 
 export function KangurFeatureRouteShellClientBoundary(): JSX.Element | null {
   const [routeShellComponent, setRouteShellComponent] =
-    useState<KangurFeatureRouteShellComponent | null>(cachedKangurFeatureRouteShell);
+    useState<KangurFeatureRouteShellComponent | null>(() => cachedKangurFeatureRouteShell);
 
   useEffect(() => {
     if (routeShellComponent) {

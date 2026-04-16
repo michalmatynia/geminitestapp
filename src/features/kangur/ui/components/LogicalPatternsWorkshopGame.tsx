@@ -146,7 +146,7 @@ export default function LogicalPatternsWorkshopGame({
               return (
                 <Droppable key={cell.id} droppableId={slotIdForBlank(cell.id)} isDropDisabled={checked}>
                   {(provided, snapshot) => {
-                    const surface = getSlotSurface({ checked, isDraggingOver: snapshot.isDraggingOver, isCorrect: slotted?.value === cell.correctValue, hasToken: !!slotted });
+                    const surface = getSlotSurface({ checked, isDraggingOver: snapshot.isDraggingOver, isCorrect: slotted?.value === cell.correctValue, hasToken: Boolean(slotted) });
                     return (
                       <div
                         ref={provided.innerRef}
@@ -204,7 +204,7 @@ export default function LogicalPatternsWorkshopGame({
                           {...p.dragHandleProps}
                           aria-label={`Kafelek: ${getTileNoun(tile)} ${tile.label}`}
                           aria-pressed={selectedTokenId === tile.id}
-                          className={buildTileClassName({ accent: tile.accent ?? 'violet', isSelected: tile.id === selectedTokenId, isDragging: s.isDragging, isCompact: false, isDisabled: checked, isCoarsePointer, isMuted: !!selectedTokenId && tile.id !== selectedTokenId })}
+                          className={buildTileClassName({ accent: tile.accent ?? 'violet', isSelected: tile.id === selectedTokenId, isDragging: s.isDragging, isCompact: false, isDisabled: checked, isCoarsePointer, isMuted: Boolean(selectedTokenId) && tile.id !== selectedTokenId })}
                           onClick={() => !checked && setSelectedTokenId(tile.id === selectedTokenId ? null : tile.id)}
                           style={isCoarsePointer ? { touchAction: 'none' } : undefined}
                           type='button'

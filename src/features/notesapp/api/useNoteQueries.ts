@@ -147,7 +147,7 @@ export function useNote(
       return noteWithRelationsSchema.nullable().parse(data);
     },
     staleTime: NOTES_STALE_MS,
-    enabled: (options?.enabled ?? true) && !!noteId,
+    enabled: (options?.enabled ?? true) && Boolean(noteId),
     meta: {
       source: 'notes.hooks.useNote',
       operation: 'detail',

@@ -1,5 +1,5 @@
-import { ObjectId, Sort } from 'mongodb';
-import { NextRequest, NextResponse } from 'next/server';
+import { ObjectId, type Sort } from 'mongodb';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import {
   enforceAiPathsActionRateLimit,
@@ -155,6 +155,26 @@ const withProviderPayload = (
   resolvedProvider: provider,
 });
 
+const expandFilter = (
+  filter: Record<string, unknown>,
+  collection: string
+): Record<string, unknown> => {
+  const normalizedCollection = collection.trim().toLowerCase();
+  if (normalizedCollection !== 'products' && normalizedCollection !== 'product_drafts') {
+    return filter;
+  }
+
+  const keys = Object.keys(filter);
+  if (keys.length === 1 && keys[0] === 'id' && typeof filter['id'] === 'string') {
+    const id = filter['id'];
+    return {
+      $or: [{ id }, { _id: id }],
+    };
+  }
+
+  return filter;
+};
+
 export async function postAiPathsDbActionHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext
@@ -216,7 +236,7 @@ export async function postAiPathsDbActionHandler(
     const mongo = await getMongoDb();
     const collectionRef = mongo.collection(resolvedCollection);
     const where = coerceQuery(filter);
-    const normalizedFilter = normalizeObjectId(coerceQuery(filter), idType);
+    const normalizedFilter = expandFilter(normalizeObjectId(coerceQuery(filter), idType), resolvedCollection);
     const hasFilter = Object.keys(where).length > 0;
     const now = new Date();
 
@@ -336,7 +356,7 @@ export async function postAiPathsDbActionHandler(
         ? applyUpdatedAtToReplacement(replacement, now)
         : replacement;
       const result = await collectionRef.replaceOne(normalizedFilter, nextReplacement, {
-        upsert: !!upsert,
+        upsert: Boolean(upsert),
       });
       return withProviderPayload(provider, requestedProvider, {
         matchedCount: result.matchedCount,
@@ -355,7 +375,7 @@ export async function postAiPathsDbActionHandler(
         : updateDoc;
       const result = await collectionRef.findOneAndUpdate(normalizedFilter, nextUpdateDoc, {
         returnDocument,
-        upsert: !!upsert,
+        upsert: Boolean(upsert),
         includeResultMetadata: true,
       });
       return withProviderPayload(provider, requestedProvider, {
@@ -375,10 +395,10 @@ export async function postAiPathsDbActionHandler(
       const result =
         action === 'updateOne'
           ? await collectionRef.updateOne(normalizedFilter, nextUpdateDoc, {
-            upsert: !!upsert,
+            upsert: Boolean(upsert),
           })
           : await collectionRef.updateMany(normalizedFilter, nextUpdateDoc, {
-            upsert: !!upsert,
+            upsert: Boolean(upsert),
           });
       return withProviderPayload(provider, requestedProvider, {
         matchedCount: result.matchedCount,

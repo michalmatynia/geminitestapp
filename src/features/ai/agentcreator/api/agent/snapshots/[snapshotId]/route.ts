@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { getAgentBrowserSnapshotDelegate } from '@/features/ai/agent-runtime/store-delegates';
 import { internalError, notFoundError } from '@/shared/errors/app-error';

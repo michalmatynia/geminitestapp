@@ -22,7 +22,7 @@ import {
   getAiInsightsQueueStatusSnapshot,
   getQueueStatusScopeKey,
 } from './status-utils';
-import { AiPathRunQueueHotStatus } from './types';
+import { type AiPathRunQueueHotStatus } from './types';
 
 export type GetAiPathRunQueueStatusOptions = {
   bypassCache?: boolean;
@@ -30,6 +30,7 @@ export type GetAiPathRunQueueStatusOptions = {
   userId?: string | null;
 };
 
+const QUEUE_STATUS_CACHE_MAX_ENTRIES = 100;
 const queueStatusCache = new Map<string, { value: AiPathRunQueueStatus; expiresAt: number }>();
 const queueStatusInFlight = new Map<string, Promise<AiPathRunQueueStatus>>();
 let queueHotStatusCache: { value: AiPathRunQueueHotStatus; expiresAt: number } | null = null;
@@ -40,6 +41,21 @@ const ACTIVE_PERSISTED_RUN_STATUSES = [
   'handoff_ready',
   'paused',
 ] as const;
+
+const touchQueueStatusCacheEntry = (
+  key: string,
+  entry: { value: AiPathRunQueueStatus; expiresAt: number }
+): void => {
+  if (queueStatusCache.has(key)) {
+    queueStatusCache.delete(key);
+  }
+  queueStatusCache.set(key, entry);
+  while (queueStatusCache.size > QUEUE_STATUS_CACHE_MAX_ENTRIES) {
+    const oldestKey = queueStatusCache.keys().next().value;
+    if (oldestKey === undefined) break;
+    queueStatusCache.delete(oldestKey);
+  }
+};
 
 const readQueueHealthSnapshot = async () => {
   return aiPathRunQueueState.workerStarted
@@ -167,7 +183,11 @@ export const getAiPathRunQueueStatus = async (
   const scopeKey = getQueueStatusScopeKey(visibility, options);
   const cached = queueStatusCache.get(scopeKey);
   if (!bypassCache && cached && cached.expiresAt > now) {
+    touchQueueStatusCacheEntry(scopeKey, cached);
     return cached.value;
+  }
+  if (cached && cached.expiresAt <= now) {
+    queueStatusCache.delete(scopeKey);
   }
   const inFlight = queueStatusInFlight.get(scopeKey);
   if (!bypassCache && inFlight) {
@@ -176,7 +196,7 @@ export const getAiPathRunQueueStatus = async (
 
   const fetchStatus = async (): Promise<AiPathRunQueueStatus> => {
     const status = await readAiPathRunQueueStatus(now, options);
-    queueStatusCache.set(scopeKey, {
+    touchQueueStatusCacheEntry(scopeKey, {
       value: status,
       expiresAt: Date.now() + QUEUE_STATUS_CACHE_TTL_MS,
     });

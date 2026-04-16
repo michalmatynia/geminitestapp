@@ -19,6 +19,22 @@ export const QUERY_KEYS = {
     details: () => [...QUERY_KEYS.products.all, 'detail'] as const,
     detail: (id: string) => [...QUERY_KEYS.products.details(), id] as const,
     detailEdit: (id: string) => [...QUERY_KEYS.products.detail(id), 'edit'] as const,
+    baseSyncPreview: (id: string) => [...QUERY_KEYS.products.detail(id), 'base-sync-preview'] as const,
+    scans: (productId: string) => [...QUERY_KEYS.products.detail(productId), 'scans'] as const,
+    scansLatestAll: () => [...QUERY_KEYS.products.all, 'scans-latest'] as const,
+    scansLatest: (productIds: string[]) =>
+      [
+        ...QUERY_KEYS.products.scansLatestAll(),
+        {
+          productIds: Array.from(
+            new Set(
+              productIds
+                .map((productId) => productId.trim())
+                .filter((productId) => productId.length > 0)
+            )
+          ).sort(),
+        },
+      ] as const,
     enhanced: () => [...QUERY_KEYS.products.all, 'enhanced'] as const,
     enhancedCount: () => [...QUERY_KEYS.products.all, 'enhanced-count'] as const,
     categoriesAll: () => [...QUERY_KEYS.products.all, 'categories'] as const,
@@ -41,10 +57,15 @@ export const QUERY_KEYS = {
       tags: (catalogId: string | null) =>
         [...QUERY_KEYS.products.metadata.all, 'tags', catalogId] as const,
       producers: () => [...QUERY_KEYS.products.metadata.all, 'producers'] as const,
+      customFields: () => [...QUERY_KEYS.products.metadata.all, 'custom-fields'] as const,
       parameters: (catalogId: string | null) =>
         [...QUERY_KEYS.products.metadata.all, 'parameters', catalogId] as const,
       simpleParameters: (catalogId: string | null) =>
         [...QUERY_KEYS.products.metadata.all, 'simple-parameters', catalogId] as const,
+      titleTermsAll: (catalogId: string | null) =>
+        [...QUERY_KEYS.products.metadata.all, 'title-terms', catalogId] as const,
+      titleTerms: (catalogId: string | null, type: string | null) =>
+        [...QUERY_KEYS.products.metadata.titleTermsAll(catalogId), type ?? 'all'] as const,
       languages: () => [...QUERY_KEYS.products.metadata.all, 'languages'] as const,
       priceGroups: () => [...QUERY_KEYS.products.metadata.all, 'price-groups'] as const,
     },
@@ -58,6 +79,7 @@ export const QUERY_KEYS = {
         [...QUERY_KEYS.products.settings.all, 'shipping-groups', catalogId] as const,
       tags: (catalogId: string | null) =>
         [...QUERY_KEYS.products.settings.all, 'tags', catalogId] as const,
+      customFields: () => [...QUERY_KEYS.products.settings.all, 'custom-fields'] as const,
       parameters: (catalogId: string | null) =>
         [...QUERY_KEYS.products.settings.all, 'parameters', catalogId] as const,
       simpleParameters: (catalogId: string | null) =>
@@ -217,6 +239,10 @@ export const QUERY_KEYS = {
         [...QUERY_KEYS.integrations.all, 'base', 'default-connection'] as const,
       traderaDefaultConnection: () =>
         [...QUERY_KEYS.integrations.all, 'tradera', 'default-connection'] as const,
+      vintedDefaultConnection: () =>
+        [...QUERY_KEYS.integrations.all, 'vinted', 'default-connection'] as const,
+      scanner1688DefaultConnection: () =>
+        [...QUERY_KEYS.integrations.all, '1688', 'default-connection'] as const,
       withConnections: () => QUERY_KEYS.integrations.withConnections(),
     },
     marketplace: {
@@ -420,6 +446,7 @@ export const QUERY_KEYS = {
       redisOverview: (params: Record<string, unknown>) =>
         [...QUERY_KEYS.system.databases.all, 'redis-overview', params] as const,
       engineStatus: () => [...QUERY_KEYS.system.databases.all, 'engine-status'] as const,
+      engineMongoSource: () => [...QUERY_KEYS.system.databases.all, 'engine-mongo-source'] as const,
       engineBackupSchedulerStatus: () =>
         [...QUERY_KEYS.system.databases.all, 'engine-backup-scheduler-status'] as const,
       engineOperationsJobs: (params: Record<string, unknown>) =>
@@ -472,11 +499,20 @@ export const QUERY_KEYS = {
     all: ['playwright'] as const,
     lists: () => [...QUERY_KEYS.playwright.all, 'list'] as const,
     personas: () => [...QUERY_KEYS.playwright.lists(), 'personas'] as const,
+    steps: () => [...QUERY_KEYS.playwright.lists(), 'steps'] as const,
+    stepSets: () => [...QUERY_KEYS.playwright.lists(), 'step-sets'] as const,
+    actions: () => [...QUERY_KEYS.playwright.lists(), 'actions'] as const,
+    websites: () => [...QUERY_KEYS.playwright.lists(), 'websites'] as const,
+    flows: () => [...QUERY_KEYS.playwright.lists(), 'flows'] as const,
   },
   jobs: {
     all: ['jobs'] as const,
     lists: () => [...QUERY_KEYS.jobs.all, 'list'] as const,
     integrations: () => [...QUERY_KEYS.jobs.lists(), 'integrations'] as const,
+    baseImportRuns: (limit: number | null = null) =>
+      [...QUERY_KEYS.jobs.integrations(), 'base-import-runs', limit] as const,
+    baseImportQueueHealth: () =>
+      [...QUERY_KEYS.jobs.integrations(), 'base-import-queue-health'] as const,
     traderaQueueHealth: () => [...QUERY_KEYS.jobs.integrations(), 'tradera-queue-health'] as const,
     productAi: (scope: string) => [...QUERY_KEYS.jobs.lists(), 'product-ai', scope] as const,
     chatbot: (scope: string) => [...QUERY_KEYS.jobs.lists(), 'chatbot', scope] as const,

@@ -79,4 +79,94 @@ describe('engine-core onNodeError lifecycle', () => {
       },
     });
   });
+
+  it('keeps handler-declared blocked nodes blocked and prevents downstream execution', async () => {
+    const sourceNode = {
+      ...buildFailingNode('source_ready'),
+      id: 'node-source',
+      title: 'Source Node',
+      outputs: ['value'],
+    } as AiNode;
+    const blockedNode = {
+      ...buildFailingNode('handler_blocked'),
+      id: 'node-blocked',
+      title: 'Blocked Node',
+      inputs: ['value'],
+      outputs: ['result'],
+    } as AiNode;
+    const downstreamNode = {
+      ...buildFailingNode('downstream_observer'),
+      id: 'node-downstream',
+      title: 'Downstream Node',
+      inputs: ['result'],
+      outputs: ['value'],
+    } as AiNode;
+    const downstreamHandler = vi.fn(async () => ({ value: 'should-not-run' }));
+    const onHalt = vi.fn();
+
+    const runtime = await evaluateGraphInternal(
+      [sourceNode, blockedNode, downstreamNode],
+      [
+        {
+          id: 'edge-source-blocked',
+          from: sourceNode.id,
+          to: blockedNode.id,
+          fromPort: 'value',
+          toPort: 'value',
+        },
+        {
+          id: 'edge-blocked-downstream',
+          from: blockedNode.id,
+          to: downstreamNode.id,
+          fromPort: 'result',
+          toPort: 'result',
+        },
+      ] satisfies Edge[],
+      {
+        resolveHandler: (nodeType) => {
+          if (nodeType === 'source_ready') {
+            return async () => ({ value: 'ready' });
+          }
+          if (nodeType === 'handler_blocked') {
+            return async () => ({
+              status: 'blocked',
+              reason: 'missing_prompt',
+              blockedReason: 'missing_prompt',
+              waitingOnPorts: ['prompt'],
+            });
+          }
+          if (nodeType === 'downstream_observer') {
+            return downstreamHandler;
+          }
+          return null;
+        },
+        onHalt,
+        reportAiPathsError: (): void => {},
+      }
+    );
+
+    expect(runtime.status).toBe('running');
+    expect(runtime.nodeStatuses[sourceNode.id]).toBe('completed');
+    expect(runtime.nodeStatuses[blockedNode.id]).toBe('blocked');
+    expect(runtime.nodeOutputs[blockedNode.id]).toEqual(
+      expect.objectContaining({
+        status: 'blocked',
+        blockedReason: 'missing_prompt',
+      })
+    );
+    expect(runtime.nodeStatuses[downstreamNode.id]).toBe('waiting_callback');
+    expect(runtime.nodeOutputs[downstreamNode.id]).toEqual(
+      expect.objectContaining({
+        status: 'waiting_callback',
+        blockedReason: 'missing_inputs',
+      })
+    );
+    expect(downstreamHandler).not.toHaveBeenCalled();
+    expect(onHalt).toHaveBeenCalledTimes(1);
+    expect(onHalt).toHaveBeenCalledWith(
+      expect.objectContaining({
+        reason: 'blocked',
+      })
+    );
+  });
 });

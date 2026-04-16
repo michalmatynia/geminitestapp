@@ -1,11 +1,15 @@
-import { NextIntlClientProvider } from 'next-intl';
-import { getLocale, getTranslations } from 'next-intl/server';
+import { getTranslations } from 'next-intl/server';
+import { Suspense } from 'react';
 
 import { RootClientShell } from './_providers/RootClientShell';
 import { loadSiteMessages } from '@/i18n/messages';
+import { APP_FONT_SET_SETTING_KEY } from '@/shared/constants/typography';
 import { cn } from '@/shared/utils/ui-utils';
 import { DEFAULT_SITE_I18N_CONFIG } from '@/shared/contracts/site-i18n';
 import { getLiteSettingsForHydration } from '@/shared/lib/lite-settings-ssr';
+import { AppIntlProvider } from '@/shared/providers/AppIntlProvider';
+import { AccessibilityProvider } from '@/shared/providers/AccessibilityProvider';
+import { SkipToContentLink } from '@/shared/ui/SkipToContentLink';
 
 import type { Metadata, Viewport } from 'next';
 
@@ -39,19 +43,38 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>): Promise<React.JSX.Element> {
-  const locale = await getLocale();
-  const [commonTranslations, liteSettings, messages] = await Promise.all([
-    getTranslations('Common'),
-    getLiteSettingsForHydration(),
-    loadSiteMessages(locale),
-  ]);
+  const locale = DEFAULT_SITE_I18N_CONFIG.defaultLocale;
+  const messagesPromise = loadSiteMessages(locale);
+  const liteSettingsPromise = getLiteSettingsForHydration();
+
+  const [messages, liteSettings] = await Promise.all([messagesPromise, liteSettingsPromise]);
+
   const sanitizedLiteSettingsScript =
     liteSettings.length > 0
       ? `self.__LITE_SETTINGS__=${JSON.stringify(liteSettings).replace(/</g, '\\u003c')}`
       : null;
 
+  const fontSetId =
+    liteSettings.find((s) => s.key === APP_FONT_SET_SETTING_KEY)?.value || 'system';
+  const skipToMainContentLabel =
+    typeof messages['Common'] === 'object' &&
+    messages['Common'] !== null &&
+    typeof messages['Common']['skipToMainContent'] === 'string'
+      ? messages['Common']['skipToMainContent']
+      : 'Skip to main content';
+
+  const siteTitle =
+    typeof messages['Routes'] === 'object' &&
+    messages['Routes'] !== null &&
+    typeof (messages['Routes'] as any)['siteTitle'] === 'string'
+      ? (messages['Routes'] as any)['siteTitle']
+      : 'Gemini App';
+
   return (
-    <html lang={locale} suppressHydrationWarning>
+    <html lang={locale || 'en'} data-app-font-set={fontSetId} suppressHydrationWarning>
+      <head>
+        <title>{siteTitle}</title>
+      </head>
       <body suppressHydrationWarning className={cn('max-w-full overflow-x-hidden font-sans')}>
         {sanitizedLiteSettingsScript ? (
           <script
@@ -60,12 +83,17 @@ export default async function RootLayout({
             }}
           />
         ) : null}
-        <NextIntlClientProvider locale={locale} messages={messages}>
-          <a href='#kangur-main-content' className='app-skip-link'>
-            {commonTranslations('skipToMainContent')}
-          </a>
-          <RootClientShell>{children}</RootClientShell>
-        </NextIntlClientProvider>
+        <AppIntlProvider locale={locale} messages={messages}>
+          <AccessibilityProvider>
+            <SkipToContentLink>{skipToMainContentLabel}</SkipToContentLink>
+            <main id='main-content' className='min-h-screen' role='main'>
+              <h1 className='sr-only'>{siteTitle}</h1>
+              <Suspense fallback={<div className='min-h-screen' aria-busy='true' />}>
+                <RootClientShell>{children}</RootClientShell>
+              </Suspense>
+            </main>
+          </AccessibilityProvider>
+        </AppIntlProvider>
       </body>
     </html>
   );

@@ -52,10 +52,38 @@ describe('useBrainModelOptions', () => {
       data: {
         models: [' validator-a ', 'chat-a', 'unclassified-a', 'validator-a'],
         descriptors: {
-          'validator-a': { family: 'validation' },
-          'chat-a': { family: 'chat' },
-          'validator-b': { family: 'validation' },
-          'manual-selection': { family: 'chat' },
+          'validator-a': {
+            id: 'validator-a',
+            family: 'validation',
+            modality: 'text',
+            vendor: 'openai',
+            supportsStreaming: true,
+            supportsJsonMode: true,
+          },
+          'chat-a': {
+            id: 'chat-a',
+            family: 'chat',
+            modality: 'text',
+            vendor: 'openai',
+            supportsStreaming: true,
+            supportsJsonMode: true,
+          },
+          'validator-b': {
+            id: 'validator-b',
+            family: 'validation',
+            modality: 'text',
+            vendor: 'ollama',
+            supportsStreaming: true,
+            supportsJsonMode: true,
+          },
+          'manual-selection': {
+            id: 'manual-selection',
+            family: 'chat',
+            modality: 'multimodal',
+            vendor: 'openai',
+            supportsStreaming: true,
+            supportsJsonMode: true,
+          },
         },
         sources: {
           modelPresets: ['validator-b', 'chat-a'],
@@ -80,6 +108,8 @@ describe('useBrainModelOptions', () => {
       'validator-b',
       'manual-selection',
     ]);
+    expect(result.current.descriptors['validator-a']?.family).toBe('validation');
+    expect(result.current.descriptors['manual-selection']?.modality).toBe('multimodal');
     expect(result.current.assignment.modelId).toBe('manual-selection');
     expect(result.current.effectiveModelId).toBe('manual-selection');
     expect(result.current.sourceWarnings).toEqual(['partial model catalog']);
@@ -115,6 +145,7 @@ describe('useBrainModelOptions', () => {
 
     expect(useBrainModels).toHaveBeenCalledWith({ enabled: false });
     expect(result.current.models).toEqual(['gpt-4o-mini', 'custom-local', 'gpt-4o', 'mistral']);
+    expect(result.current.descriptors).toEqual({});
     expect(result.current.sourceWarnings).toEqual([]);
     expect(result.current.isLoading).toBe(true);
 

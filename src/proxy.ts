@@ -35,8 +35,6 @@ const ADMIN_CANONICAL_REDIRECTS = new Map<string, string>([
     '/admin/integrations/marketplaces/category-mapper',
     '/admin/integrations/aggregators/base-com/category-mapping',
   ],
-  ['/admin/products/builder', '/admin/products/settings'],
-  ['/admin/products/constructor', '/admin/products/settings'],
   ['/admin/products/jobs', '/admin/ai-paths/queue?tab=paths-external'],
   ['/admin/prompt-engine', '/admin/prompt-engine/validation'],
   ['/admin/settings/ai', '/admin/brain?tab=routing'],
@@ -71,6 +69,8 @@ const isSafePageMethod = (request: NextRequest): boolean =>
 const isDefaultLocaleBypassPath = (pathname: string): boolean => {
   return (
     pathname === '/' ||
+    pathname === '/auth' ||
+    pathname.startsWith('/auth/') ||
     pathname === '/login' ||
     pathname === '/kangur' ||
     pathname.startsWith('/kangur/') ||
@@ -173,8 +173,14 @@ const buildAdminRequestHeaders = (request: AuthenticatedProxyRequest): Headers |
 const handler =
   typeof auth === 'function'
     ? auth(
-      (request: AuthenticatedProxyRequest): Response =>
-        resolveAdminRedirectResponse(request) ?? baseProxy(request, buildAdminRequestHeaders(request) ?? undefined)
+      (request: AuthenticatedProxyRequest): Response => {
+        const fastRedirect = resolveAdminRedirectResponse(request);
+        if (fastRedirect) {
+          return fastRedirect;
+        }
+
+        return baseProxy(request, buildAdminRequestHeaders(request) ?? undefined);
+      }
     )
     : null;
 
@@ -199,7 +205,7 @@ export function proxy(
   }
 
   if (!handler || typeof handler !== 'function') {
-    return baseProxy(request);
+    return resolveAdminRedirectResponse(request) ?? baseProxy(request);
   }
   const result = handler(request, resolvedContext);
   if (result instanceof Promise) {

@@ -1,0 +1,385 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-04-15T10:54:26.142Z",
+  "track": {
+    "id": "products-category-schema-normalization",
+    "title": "Products category and schema normalization",
+    "description": "Surfaces the remaining category and parameter-schema decisions that cannot be auto-repaired safely from current live product data.",
+    "docs": {
+      "category": "data",
+      "defaultSelected": true,
+      "commands": [
+        "npm run improvements:classify -- --track products-category-schema-normalization",
+        "npm run improvements:dry-run -- --track products-category-schema-normalization",
+        "npm run improvements:apply -- --track products-category-schema-normalization"
+      ],
+      "relatedDocs": [
+        "docs/build/general-improvements.md"
+      ],
+      "generatedArtifacts": [
+        "/tmp/product-parameter-manual-remediation-latest.json",
+        "/tmp/product-parameter-curated-build-latest.json",
+        "/tmp/product-parameter-curated-overrides-latest.json"
+      ]
+    },
+    "phases": {
+      "audit": [],
+      "classify": [
+        {
+          "id": "products-category-manual-remediation-report",
+          "title": "Report products requiring manual category or schema remediation",
+          "mode": "automatic",
+          "writes": false,
+          "outputs": [
+            "/tmp/product-parameter-manual-remediation-*.json",
+            "/tmp/product-parameter-manual-remediation-latest.json"
+          ],
+          "body": {
+            "kind": "script",
+            "script": "products:report:parameter-remediation"
+          }
+        }
+      ],
+      "plan": [
+        {
+          "id": "products-category-schema-plan",
+          "title": "Plan category and schema normalization decisions",
+          "mode": "manual",
+          "writes": false,
+          "outputs": [],
+          "body": {
+            "kind": "manual",
+            "instructions": [
+              "Assign missing categories only when a defensible family/category match exists.",
+              "Choose final parameter ids for the unresolved families before generating any curated override file.",
+              "Treat FIGANI, FOASW, and SPEFA as source/manual recovery until a real category/schema mapping is approved.",
+              "Use /tmp/product-parameter-source-recovery-batches/*-mapping-pack.json as the curation source of truth.",
+              "Use /tmp/product-parameter-curated-build-latest.json to see which family packs are actually ready for apply."
+            ]
+          }
+        }
+      ],
+      "dry-run": [
+        {
+          "id": "products-category-schema-curate-family-mappings",
+          "title": "Fill final parameter ids in the latest family mapping packs",
+          "mode": "manual",
+          "writes": false,
+          "outputs": [],
+          "body": {
+            "kind": "manual",
+            "instructions": [
+              "Review /tmp/product-parameter-source-recovery-batches/family-mapping-index-checklist.md.",
+              "Fill suggestedFinalParameterId in each *-mapping-pack.json only when the final category/schema mapping is approved."
+            ]
+          }
+        },
+        {
+          "id": "products-category-schema-build-ready-curated-overrides",
+          "title": "Build ready curated override bundle from completed family mapping packs",
+          "mode": "automatic",
+          "writes": false,
+          "outputs": [
+            "/tmp/product-parameter-curated-build-latest.json",
+            "/tmp/product-parameter-curated-overrides-latest.json"
+          ],
+          "body": {
+            "kind": "script",
+            "script": "products:build:ready-parameter-curated-overrides"
+          }
+        },
+        {
+          "id": "products-category-schema-preview-ready-curated-overrides",
+          "title": "Preview the latest curated override bundle without applying writes",
+          "mode": "automatic",
+          "writes": false,
+          "outputs": [
+            "/tmp/product-parameter-curated-apply-*.json"
+          ],
+          "body": {
+            "kind": "script",
+            "script": "products:apply:parameter-curated-overrides"
+          }
+        }
+      ],
+      "apply": [
+        {
+          "id": "products-category-schema-apply",
+          "title": "Apply category/schema normalization only after explicit review",
+          "mode": "manual",
+          "writes": true,
+          "outputs": [],
+          "body": {
+            "kind": "manual",
+            "instructions": [
+              "Confirm /tmp/product-parameter-curated-build-latest.json shows only the approved family packs as ready.",
+              "Apply the resulting curated overrides only after the category/schema decision is finalized."
+            ]
+          }
+        },
+        {
+          "id": "products-category-schema-build-ready-curated-overrides",
+          "title": "Build ready curated override bundle from completed family mapping packs",
+          "mode": "automatic",
+          "writes": false,
+          "outputs": [
+            "/tmp/product-parameter-curated-build-latest.json",
+            "/tmp/product-parameter-curated-overrides-latest.json"
+          ],
+          "body": {
+            "kind": "script",
+            "script": "products:build:ready-parameter-curated-overrides"
+          }
+        },
+        {
+          "id": "products-category-schema-apply-ready-curated-overrides",
+          "title": "Apply the latest ready curated override bundle",
+          "mode": "automatic",
+          "writes": true,
+          "outputs": [
+            "/tmp/product-parameter-curated-apply-*.json"
+          ],
+          "body": {
+            "kind": "script",
+            "script": "products:apply:ready-parameter-curated-overrides"
+          }
+        }
+      ]
+    }
+  },
+  "summary": {
+    "trackId": "products-category-schema-normalization",
+    "title": "Products category and schema normalization",
+    "category": "data",
+    "defaultSelected": true,
+    "description": "Surfaces the remaining category and parameter-schema decisions that cannot be auto-repaired safely from current live product data.",
+    "overallStatus": "passed",
+    "latestGeneratedAt": "2026-04-15T10:54:26.139Z",
+    "docDir": "docs/build/improvements/products-category-schema-normalization",
+    "phases": [
+      {
+        "phase": "audit",
+        "generatedAt": "2026-04-15T10:54:08.335Z",
+        "reportPath": "artifacts/improvements/audit-report.json",
+        "executionMode": "executed",
+        "allowWrite": false,
+        "stepCount": 0,
+        "automaticStepCount": 0,
+        "manualStepCount": 0,
+        "passedStepCount": 0,
+        "failedStepCount": 0,
+        "blockedStepCount": 0,
+        "plannedStepCount": 0,
+        "outputs": [],
+        "steps": [],
+        "status": "not-selected"
+      },
+      {
+        "phase": "classify",
+        "generatedAt": "2026-04-15T10:36:23.126Z",
+        "reportPath": "artifacts/improvements/classify-report.json",
+        "executionMode": "executed",
+        "allowWrite": false,
+        "stepCount": 1,
+        "automaticStepCount": 1,
+        "manualStepCount": 0,
+        "passedStepCount": 1,
+        "failedStepCount": 0,
+        "blockedStepCount": 0,
+        "plannedStepCount": 0,
+        "outputs": [
+          "/tmp/product-parameter-manual-remediation-*.json",
+          "/tmp/product-parameter-manual-remediation-latest.json"
+        ],
+        "steps": [
+          {
+            "id": "products-category-manual-remediation-report",
+            "title": "Report products requiring manual category or schema remediation",
+            "trackId": "products-category-schema-normalization",
+            "phase": "classify",
+            "mode": "automatic",
+            "writes": false,
+            "status": "passed",
+            "outputs": [
+              "/tmp/product-parameter-manual-remediation-*.json",
+              "/tmp/product-parameter-manual-remediation-latest.json"
+            ],
+            "instructions": [],
+            "script": "products:report:parameter-remediation",
+            "durationMs": 834
+          }
+        ],
+        "status": "passed"
+      },
+      {
+        "phase": "plan",
+        "generatedAt": "2026-04-15T10:36:23.624Z",
+        "reportPath": "artifacts/improvements/plan-report.json",
+        "executionMode": "planned",
+        "allowWrite": false,
+        "stepCount": 1,
+        "automaticStepCount": 0,
+        "manualStepCount": 1,
+        "passedStepCount": 0,
+        "failedStepCount": 0,
+        "blockedStepCount": 0,
+        "plannedStepCount": 0,
+        "outputs": [],
+        "steps": [
+          {
+            "id": "products-category-schema-plan",
+            "title": "Plan category and schema normalization decisions",
+            "trackId": "products-category-schema-normalization",
+            "phase": "plan",
+            "mode": "manual",
+            "writes": false,
+            "status": "manual",
+            "outputs": [],
+            "instructions": [
+              "Assign missing categories only when a defensible family/category match exists.",
+              "Choose final parameter ids for the unresolved families before generating any curated override file.",
+              "Treat FIGANI, FOASW, and SPEFA as source/manual recovery until a real category/schema mapping is approved.",
+              "Use /tmp/product-parameter-source-recovery-batches/*-mapping-pack.json as the curation source of truth.",
+              "Use /tmp/product-parameter-curated-build-latest.json to see which family packs are actually ready for apply."
+            ]
+          }
+        ],
+        "status": "manual"
+      },
+      {
+        "phase": "dry-run",
+        "generatedAt": "2026-03-14T08:13:11.213Z",
+        "reportPath": "artifacts/improvements/dry-run-report.json",
+        "executionMode": "executed",
+        "allowWrite": false,
+        "stepCount": 3,
+        "automaticStepCount": 2,
+        "manualStepCount": 1,
+        "passedStepCount": 2,
+        "failedStepCount": 0,
+        "blockedStepCount": 0,
+        "plannedStepCount": 0,
+        "outputs": [
+          "/tmp/product-parameter-curated-build-latest.json",
+          "/tmp/product-parameter-curated-overrides-latest.json",
+          "/tmp/product-parameter-curated-apply-*.json"
+        ],
+        "steps": [
+          {
+            "id": "products-category-schema-curate-family-mappings",
+            "title": "Fill final parameter ids in the latest family mapping packs",
+            "trackId": "products-category-schema-normalization",
+            "phase": "dry-run",
+            "mode": "manual",
+            "writes": false,
+            "status": "manual",
+            "outputs": [],
+            "instructions": [
+              "Review /tmp/product-parameter-source-recovery-batches/family-mapping-index-checklist.md.",
+              "Fill suggestedFinalParameterId in each *-mapping-pack.json only when the final category/schema mapping is approved."
+            ]
+          },
+          {
+            "id": "products-category-schema-build-ready-curated-overrides",
+            "title": "Build ready curated override bundle from completed family mapping packs",
+            "trackId": "products-category-schema-normalization",
+            "phase": "dry-run",
+            "mode": "automatic",
+            "writes": false,
+            "status": "passed",
+            "outputs": [
+              "/tmp/product-parameter-curated-build-latest.json",
+              "/tmp/product-parameter-curated-overrides-latest.json"
+            ],
+            "instructions": [],
+            "script": "products:build:ready-parameter-curated-overrides",
+            "durationMs": 256
+          },
+          {
+            "id": "products-category-schema-preview-ready-curated-overrides",
+            "title": "Preview the latest curated override bundle without applying writes",
+            "trackId": "products-category-schema-normalization",
+            "phase": "dry-run",
+            "mode": "automatic",
+            "writes": false,
+            "status": "passed",
+            "outputs": [
+              "/tmp/product-parameter-curated-apply-*.json"
+            ],
+            "instructions": [],
+            "script": "products:apply:parameter-curated-overrides",
+            "durationMs": 546
+          }
+        ],
+        "status": "passed"
+      },
+      {
+        "phase": "apply",
+        "generatedAt": "2026-04-15T10:54:26.139Z",
+        "reportPath": "artifacts/improvements/apply-report.json",
+        "executionMode": "executed",
+        "allowWrite": true,
+        "stepCount": 3,
+        "automaticStepCount": 2,
+        "manualStepCount": 1,
+        "passedStepCount": 2,
+        "failedStepCount": 0,
+        "blockedStepCount": 0,
+        "plannedStepCount": 0,
+        "outputs": [
+          "/tmp/product-parameter-curated-build-latest.json",
+          "/tmp/product-parameter-curated-overrides-latest.json",
+          "/tmp/product-parameter-curated-apply-*.json"
+        ],
+        "steps": [
+          {
+            "id": "products-category-schema-apply",
+            "title": "Apply category/schema normalization only after explicit review",
+            "trackId": "products-category-schema-normalization",
+            "phase": "apply",
+            "mode": "manual",
+            "writes": true,
+            "status": "manual",
+            "outputs": [],
+            "instructions": [
+              "Confirm /tmp/product-parameter-curated-build-latest.json shows only the approved family packs as ready.",
+              "Apply the resulting curated overrides only after the category/schema decision is finalized."
+            ]
+          },
+          {
+            "id": "products-category-schema-build-ready-curated-overrides",
+            "title": "Build ready curated override bundle from completed family mapping packs",
+            "trackId": "products-category-schema-normalization",
+            "phase": "apply",
+            "mode": "automatic",
+            "writes": false,
+            "status": "passed",
+            "outputs": [
+              "/tmp/product-parameter-curated-build-latest.json",
+              "/tmp/product-parameter-curated-overrides-latest.json"
+            ],
+            "instructions": [],
+            "script": "products:build:ready-parameter-curated-overrides",
+            "durationMs": 363
+          },
+          {
+            "id": "products-category-schema-apply-ready-curated-overrides",
+            "title": "Apply the latest ready curated override bundle",
+            "trackId": "products-category-schema-normalization",
+            "phase": "apply",
+            "mode": "automatic",
+            "writes": true,
+            "status": "passed",
+            "outputs": [
+              "/tmp/product-parameter-curated-apply-*.json"
+            ],
+            "instructions": [],
+            "script": "products:apply:ready-parameter-curated-overrides",
+            "durationMs": 1030
+          }
+        ],
+        "status": "passed"
+      }
+    ]
+  }
+}

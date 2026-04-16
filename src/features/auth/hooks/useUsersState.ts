@@ -1,7 +1,7 @@
 'use client';
 
 import { type UseMutationResult } from '@tanstack/react-query';
-import { useState, useMemo, useCallback, useEffect, Dispatch, SetStateAction } from 'react';
+import { useState, useMemo, useCallback, useEffect, type Dispatch, type SetStateAction } from 'react';
 
 import { useAuth } from '@/features/auth/context/AuthContext';
 import {

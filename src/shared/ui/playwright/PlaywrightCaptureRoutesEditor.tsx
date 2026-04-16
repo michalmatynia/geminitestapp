@@ -1,7 +1,7 @@
 'use client';
 
+import React, { createContext, useContext, useState } from 'react';
 import { ChevronDown, ChevronRight, Plus, Trash2 } from 'lucide-react';
-import { useState } from 'react';
 
 import type { PlaywrightConfigCaptureRoute } from '@/shared/contracts/ai-paths-core/nodes';
 import { buildCaptureRouteUrl } from '@/shared/lib/ai-paths/core/playwright/capture-defaults';
@@ -34,19 +34,41 @@ const APPEARANCE_MODE_OPTIONS = [
 
 type RoutePatch = Partial<PlaywrightConfigCaptureRoute>;
 
-type RouteRowProps = {
-  route: PlaywrightConfigCaptureRoute;
+type PlaywrightCaptureRoutesEditorContextValue = {
   baseUrl: string;
-  onUpdate: (patch: RoutePatch) => void;
-  onDelete: () => void;
+  onUpdateRoute: (index: number, patch: RoutePatch) => void;
+  onDeleteRoute: (index: number) => void;
+  onChange: (patch: {
+    routes?: PlaywrightConfigCaptureRoute[];
+    baseUrl?: string;
+    appearanceMode?: string;
+  }) => void;
 };
 
-function RouteRow({ route, baseUrl, onUpdate, onDelete }: RouteRowProps): React.JSX.Element {
+const PlaywrightCaptureRoutesEditorContext = createContext<PlaywrightCaptureRoutesEditorContextValue | null>(null);
+
+function usePlaywrightCaptureRoutesEditor() {
+  const context = useContext(PlaywrightCaptureRoutesEditorContext);
+  if (!context) {
+    throw new Error('PlaywrightCaptureRoutesEditor sub-components must be used within its Provider');
+  }
+  return context;
+}
+
+type RouteRowProps = {
+  route: PlaywrightConfigCaptureRoute;
+  index: number;
+};
+
+function RouteRow({ route, index }: RouteRowProps): React.JSX.Element {
+  const { baseUrl, onUpdateRoute, onDeleteRoute } = usePlaywrightCaptureRoutesEditor();
   const [expanded, setExpanded] = useState(false);
 
   const resolvedUrl = buildCaptureRouteUrl(baseUrl, route.path);
   const hasIssue = !resolvedUrl;
 
+  const onUpdate = (patch: RoutePatch) => onUpdateRoute(index, patch);
+  const onDelete = () => onDeleteRoute(index);
   return (
     <div className='rounded-lg border border-border/50 bg-background/40'>
       {/* Header row */}
@@ -204,7 +226,15 @@ export function PlaywrightCaptureRoutesEditor({
   };
 
   return (
-    <div className='space-y-3'>
+    <PlaywrightCaptureRoutesEditorContext.Provider
+      value={{
+        baseUrl,
+        onUpdateRoute: updateRoute,
+        onDeleteRoute: deleteRoute,
+        onChange,
+      }}
+    >
+      <div className='space-y-3'>
       <FormField
         label='Base URL'
         description='Relative paths are resolved against this URL.'
@@ -263,14 +293,13 @@ export function PlaywrightCaptureRoutesEditor({
               <RouteRow
                 key={route.id}
                 route={route}
-                baseUrl={baseUrl}
-                onUpdate={(patch) => updateRoute(index, patch)}
-                onDelete={() => deleteRoute(index)}
+                index={index}
               />
             ))}
           </div>
         )}
       </div>
     </div>
-  );
+  </PlaywrightCaptureRoutesEditorContext.Provider>
+);
 }

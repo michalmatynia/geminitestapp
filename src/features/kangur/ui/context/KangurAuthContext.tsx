@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'nextjs-toploader/app';
 import {
   createContext,
   useCallback,
@@ -9,318 +9,71 @@ import {
   useMemo,
   useRef,
   useState,
-  type ReactNode,
-} from 'react';
+  type ReactNode, startTransition } from 'react';
 
 import {
   withKangurClientError,
 } from '@/features/kangur/observability/client';
 import { signalBootReady } from '@/features/kangur/ui/boot/boot-ready-signal';
 import type { KangurUser } from '@kangur/platform';
-import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
-import { getKangurLoginHref, KANGUR_BASE_PATH } from '@/features/kangur/config/routing';
+import { getKangurLoginHref } from '@/features/kangur/config/routing';
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { useKangurRouteAccess } from '@/features/kangur/ui/routing/useKangurRouteAccess';
-import type { KangurAuthMode } from '@/features/kangur/shared/contracts/kangur-auth';
 import { internalError } from '@/features/kangur/shared/errors/app-error';
+import {
+  type KangurAuthError,
+  type KangurAuthCheckAppStateOptions,
+  readKangurAuthBootstrapSnapshot,
+  resolveKangurAuthProviderRouteConfig,
+  resolveKangurAuthCheckTimeoutMs,
+  createKangurAuthSessionRequest,
+  awaitKangurTimedAuthCheck,
+  scheduleKangurLateAuthCheckSettlement,
+  applyKangurResolvedAuthState,
+} from './KangurAuthContext.utils';
+import type {
+  KangurAuthMode,
+  KangurAuthContextValue,
+  KangurAuthStateContextValue,
+  KangurAuthActionsContextValue,
+} from '@/shared/contracts/kangur-auth';
 import {
   appendAuthModeParam,
   clearKangurAuthBootstrapCache,
   kangurPlatform,
-  loadKangurAuthBootstrapSession,
   primeKangurAuthBootstrapCache,
-  readKangurAuthBootstrapCache,
   resolveCanAccessParentAssignments,
-  resolveErrorMessage,
 } from '@/features/kangur/ui/context/kangur-auth-bootstrap-cache';
 
+// Soft timeout for the initial auth check. If the platform auth call hasn't
+// resolved within this window, the shell renders with the current (possibly
+// unauthenticated) state and a background settlement completes later.
 const AUTH_CHECK_TIMEOUT_MS = 1_500;
 
-type KangurAuthCheckAppStateOptions = {
-  timeoutMs?: number | null;
-  useBootstrapCache?: boolean;
-};
-
-type KangurAuthError = {
-  type: 'unknown' | 'auth_required' | 'user_not_registered';
-  message: string;
-};
-
-type KangurAuthContextValue = {
-  user: KangurUser | null;
-  isAuthenticated: boolean;
-  hasResolvedAuth: boolean;
-  canAccessParentAssignments: boolean;
-  isLoadingAuth: boolean;
-  isLoggingOut?: boolean;
-  isLoadingPublicSettings: boolean;
-  authError: KangurAuthError | null;
-  appPublicSettings: null;
-  logout: (shouldRedirect?: boolean) => void;
-  navigateToLogin: (options?: { authMode?: KangurAuthMode }) => void;
-  checkAppState: (options?: KangurAuthCheckAppStateOptions) => Promise<KangurUser | null>;
-  selectLearner: (learnerId: string) => Promise<void>;
-};
-
-type KangurAuthStateContextValue = Pick<
-  KangurAuthContextValue,
-  | 'user'
-  | 'isAuthenticated'
-  | 'hasResolvedAuth'
-  | 'canAccessParentAssignments'
-  | 'isLoadingAuth'
-  | 'isLoadingPublicSettings'
-  | 'authError'
-  | 'appPublicSettings'
->;
-
-type KangurAuthActionsContextValue = Pick<
-  KangurAuthContextValue,
-  'logout' | 'navigateToLogin' | 'checkAppState' | 'selectLearner'
->;
-
-type KangurAuthBootstrapSnapshot = {
-  cachedUser: KangurUser | null | undefined;
-  hasResolvedAuth: boolean;
-  isAuthenticated: boolean;
-  isLoadingAuth: boolean;
-  user: KangurUser | null;
-};
-
-type KangurAuthRuntimeSetters = {
-  authRequestVersionRef: { current: number };
-  setAuthError: (value: KangurAuthError | null) => void;
-  setHasResolvedAuth: (value: boolean) => void;
-  setIsAuthenticated: (value: boolean) => void;
-  setIsLoadingAuth: (value: boolean) => void;
-  setUser: (value: KangurUser | null) => void;
-};
-
+// Split into two contexts so components that only need auth state don't
+// re-render when action callbacks are recreated, and vice versa.
 const KangurAuthStateContext = createContext<KangurAuthStateContextValue | null>(null);
 const KangurAuthActionsContext = createContext<KangurAuthActionsContextValue | null>(null);
 
 export { clearKangurAuthBootstrapCache };
 
-const readKangurAuthBootstrapSnapshot = (): KangurAuthBootstrapSnapshot => {
-  const cachedUser = readKangurAuthBootstrapCache();
-  const hasResolvedAuth = typeof cachedUser !== 'undefined';
-
-  return {
-    cachedUser,
-    hasResolvedAuth,
-    isAuthenticated: hasResolvedAuth ? cachedUser !== null : false,
-    isLoadingAuth: !hasResolvedAuth,
-    user: hasResolvedAuth ? cachedUser ?? null : null,
-  };
-};
-
-const resolveKangurAuthCurrentOrigin = (): string | null =>
-  typeof window === 'undefined' ? null : window.location.origin;
-
-const resolveKangurAuthRequestedPath = ({
-  basePath,
-  routing,
-}: {
-  basePath: string;
-  routing: ReturnType<typeof useOptionalKangurRouting>;
-}): { href: string; pathname: string | null } => ({
-  href: routing?.requestedPath ?? basePath,
-  pathname: routing?.requestedPath ?? null,
-});
-
-const resolveKangurAuthProviderRouteConfig = ({
-  routing,
-  sanitizeManagedHref,
-}: {
-  routing: ReturnType<typeof useOptionalKangurRouting>;
-  sanitizeManagedHref: ReturnType<typeof useKangurRouteAccess>['sanitizeManagedHref'];
-}): {
-  basePath: string;
-  canonicalizePublicAlias: boolean;
-  fallbackCallbackUrl: string;
-} => {
-  const basePath = routing?.basePath ?? KANGUR_BASE_PATH;
-  const canonicalizePublicAlias = basePath === '/';
-  const requestedPath = resolveKangurAuthRequestedPath({ basePath, routing });
-
-  return {
-    basePath,
-    canonicalizePublicAlias,
-    fallbackCallbackUrl:
-      sanitizeManagedHref({
-        href: requestedPath.href,
-        pathname: requestedPath.pathname,
-        currentOrigin: resolveKangurAuthCurrentOrigin(),
-        canonicalizePublicAlias,
-        basePath,
-        fallbackHref: basePath,
-      }) ?? basePath,
-  };
-};
-
-const resolveKangurAuthCheckTimeoutMs = (
-  options?: KangurAuthCheckAppStateOptions
-): number | null =>
-  typeof options?.timeoutMs === 'number' && Number.isFinite(options.timeoutMs)
-    ? Math.max(0, options.timeoutMs)
-    : null;
-
-const handleKangurAuthCheckError = ({
-  error,
-  requestVersion,
-  runtime,
-}: {
-  error: unknown;
-  requestVersion: number;
-  runtime: Pick<
-    KangurAuthRuntimeSetters,
-    'authRequestVersionRef' | 'setAuthError' | 'setIsAuthenticated' | 'setUser'
-  >;
-}): void => {
-  if (runtime.authRequestVersionRef.current !== requestVersion) {
-    return;
-  }
-
-  runtime.setUser(null);
-  runtime.setIsAuthenticated(false);
-
-  if (isKangurAuthStatusError(error)) {
-    primeKangurAuthBootstrapCache(null);
-    runtime.setAuthError(null);
-    return;
-  }
-
-  runtime.setAuthError({
-    type: 'unknown',
-    message: resolveErrorMessage(error),
-  });
-};
-
-const createKangurAuthSessionRequest = ({
-  requestVersion,
-  runtime,
-  useBootstrapCache,
-}: {
-  requestVersion: number;
-  runtime: Pick<
-    KangurAuthRuntimeSetters,
-    'authRequestVersionRef' | 'setAuthError' | 'setIsAuthenticated' | 'setUser'
-  >;
-  useBootstrapCache: boolean;
-}): Promise<KangurUser | null> =>
-  withKangurClientError(
-    {
-      source: 'kangur.auth',
-      action: 'check-app-state',
-      description: 'Fetches the current Kangur auth session.',
-      context: { stage: useBootstrapCache ? 'auth.me.bootstrap' : 'auth.me' },
-    },
-    async () =>
-      useBootstrapCache
-        ? await loadKangurAuthBootstrapSession()
-        : await kangurPlatform.auth.me(),
-    {
-      fallback: null,
-      shouldReport: (error) => !isKangurAuthStatusError(error),
-      onError: (error) =>
-        handleKangurAuthCheckError({
-          error,
-          requestVersion,
-          runtime,
-        }),
-    }
-  );
-
-const awaitKangurTimedAuthCheck = async ({
-  authCheck,
-  timeoutMs,
-}: {
-  authCheck: Promise<KangurUser | null>;
-  timeoutMs: number | null;
-}): Promise<{ currentUser: KangurUser | null; didSoftTimeout: boolean }> => {
-  if (timeoutMs === null) {
-    return {
-      currentUser: await authCheck,
-      didSoftTimeout: false,
-    };
-  }
-
-  let didSoftTimeout = false;
-  let timeoutId: ReturnType<typeof globalThis.setTimeout> | null = null;
-  const currentUser = await Promise.race([
-    authCheck,
-    new Promise<null>((resolve) => {
-      timeoutId = globalThis.setTimeout(() => {
-        didSoftTimeout = true;
-        resolve(null);
-      }, timeoutMs);
-    }),
-  ]);
-
-  if (timeoutId !== null) {
-    globalThis.clearTimeout(timeoutId);
-  }
-
-  return { currentUser, didSoftTimeout };
-};
-
-const scheduleKangurLateAuthCheckSettlement = ({
-  authCheck,
-  requestVersion,
-  runtime,
-}: {
-  authCheck: Promise<KangurUser | null>;
-  requestVersion: number;
-  runtime: Pick<
-    KangurAuthRuntimeSetters,
-    | 'authRequestVersionRef'
-    | 'setAuthError'
-    | 'setHasResolvedAuth'
-    | 'setIsAuthenticated'
-    | 'setUser'
-  >;
-}): void => {
-  void authCheck.then((lateUser) => {
-    if (runtime.authRequestVersionRef.current !== requestVersion) {
-      return;
-    }
-
-    if (lateUser) {
-      runtime.setUser(lateUser);
-      runtime.setIsAuthenticated(true);
-      runtime.setAuthError(null);
-    }
-
-    runtime.setHasResolvedAuth(true);
-  });
-};
-
-const applyKangurResolvedAuthState = ({
-  currentUser,
-  runtime,
-}: {
-  currentUser: KangurUser | null;
-  runtime: Pick<
-    KangurAuthRuntimeSetters,
-    'setAuthError' | 'setHasResolvedAuth' | 'setIsAuthenticated' | 'setUser'
-  >;
-}): void => {
-  if (currentUser) {
-    primeKangurAuthBootstrapCache(currentUser);
-    runtime.setUser(currentUser);
-    runtime.setIsAuthenticated(true);
-    runtime.setAuthError(null);
-  } else {
-    primeKangurAuthBootstrapCache(null);
-  }
-
-  runtime.setHasResolvedAuth(true);
-};
-
+// KangurAuthProvider owns the learner auth lifecycle for the StudiQ web shell.
+// It exposes two separate contexts (state + actions) to minimise re-renders.
+//
+// Boot strategy:
+//  1. Read a synchronous bootstrap snapshot from the in-memory cache (primed
+//     by the server component or a previous session).
+//  2. If the cache contained a user, skip the blocking auth check and run a
+//     silent background revalidation instead — this keeps first paint fast.
+//  3. If no cache hit, run a timed auth check (AUTH_CHECK_TIMEOUT_MS). If the
+//     check soft-times-out, render with the current state and settle later.
 export const KangurAuthProvider = ({ children }: { children: ReactNode }): React.JSX.Element => {
   const router = useRouter();
   const routing = useOptionalKangurRouting();
   const { sanitizeManagedHref } = useKangurRouteAccess();
+  // Resolve base path, public-alias canonicalisation, and fallback callback URL
+  // from the current routing context (may be null when rendered outside the
+  // Kangur route shell, e.g. in a CMS embed).
   const { basePath, canonicalizePublicAlias, fallbackCallbackUrl } = useMemo(
     () =>
       resolveKangurAuthProviderRouteConfig({
@@ -329,8 +82,13 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
       }),
     [routing, sanitizeManagedHref]
   );
+  // Read the synchronous bootstrap snapshot once on mount. This avoids a
+  // loading flash when the cache was primed by the server component.
   const bootstrapSnapshot = useMemo(() => readKangurAuthBootstrapSnapshot(), []);
+  // Monotonically increasing version counter used to discard stale auth
+  // responses when a newer check has been initiated.
   const authRequestVersionRef = useRef(0);
+  // Guards against concurrent logout calls (e.g. double-click).
   const logoutInFlightRef = useRef(false);
 
   const [user, setUser] = useState<KangurUser | null>(bootstrapSnapshot.user);
@@ -349,6 +107,12 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
   const [appPublicSettings] = useState<null>(null);
   const canAccessParentAssignments = resolveCanAccessParentAssignments(user, isAuthenticated);
 
+  // checkAppState performs a versioned auth session check. It:
+  //  - Increments the request version so stale responses are ignored.
+  //  - Optionally reads from the bootstrap cache to avoid a network round-trip.
+  //  - Applies a soft timeout: if the check takes longer than timeoutMs, the
+  //    shell renders with the current state and a late-settlement callback
+  //    updates state when the check eventually resolves.
   const checkAppState = useCallback(
     async (options?: KangurAuthCheckAppStateOptions): Promise<KangurUser | null> => {
       const timeoutMs = resolveKangurAuthCheckTimeoutMs(options);
@@ -450,6 +214,10 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
       .finally(() => signalBootReady());
   }, [bootstrapSnapshot.cachedUser, checkAppState]);
 
+  // logout clears local auth state immediately (optimistic), then calls the
+  // platform logout endpoint. If shouldRedirect is true, the platform handles
+  // the post-logout redirect (e.g. to the login page). Otherwise the shell
+  // stays on the current route and re-checks auth state.
   const logout = useCallback((shouldRedirect = true): void => {
     if (logoutInFlightRef.current) {
       return;
@@ -500,6 +268,10 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
     })();
   }, [checkAppState, router]);
 
+  // navigateToLogin builds the login URL with a callbackUrl so the learner is
+  // returned to the current page after signing in. The callback URL is
+  // sanitised to strip managed embed prefixes and canonicalise public aliases
+  // before being appended as a query param.
   const navigateToLogin = useCallback(
     (options?: { authMode?: KangurAuthMode }): void => {
       const callbackUrl =
@@ -520,11 +292,14 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
         getKangurLoginHref(basePath, resolvedCallbackUrl),
         options?.authMode
       );
-      router.push(loginHref);
+      startTransition(() => { router.push(loginHref); });
     },
     [basePath, canonicalizePublicAlias, fallbackCallbackUrl, router, routing?.requestedPath, sanitizeManagedHref]
   );
 
+  // selectLearner switches the active learner profile within a parent account.
+  // It calls the platform learners.select endpoint, primes the bootstrap cache
+  // with the returned user, and updates auth state synchronously.
   const selectLearner = useCallback(async (learnerId: string): Promise<void> => {
     const nextUser = await kangurPlatform.learners.select(learnerId);
     primeKangurAuthBootstrapCache(nextUser);

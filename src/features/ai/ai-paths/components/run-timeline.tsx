@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { AiPathRunEventRecord, AiPathRunNodeRecord, AiPathRunRecord } from '@/shared/lib/ai-paths';
+import type { AiPathRunEventRecord, AiPathRunNodeRecord, AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import { formatDurationMs } from '@/shared/lib/ai-paths/format-duration';
 import type { StatusVariant } from '@/shared/contracts/ui/base';
 import { Button, Tooltip, Alert } from '@/shared/ui/primitives.public';
@@ -608,7 +608,7 @@ export function RunTimeline(props: {
             <div className='text-[11px] uppercase text-gray-500'>Logs</div>
             {eventsOverflow ? (
               <StatusBadge
-                status={'Truncated' + (eventsBatchLimit ? ' (limit ' + eventsBatchLimit + ')' : '')}
+                status={`Truncated${  eventsBatchLimit ? ` (limit ${  eventsBatchLimit  })` : ''}`}
                 variant='warning'
                 size='sm'
                 className='font-bold'

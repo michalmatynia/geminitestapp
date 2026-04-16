@@ -36,7 +36,7 @@ const SEMANTIC_AUDIT_TRANSITION_TONE = {
 const formatSemanticAuditTimestamp = (value: string): string => {
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return value;
-  return parsed.toISOString().replace('T', ' ').slice(0, 16) + ' UTC';
+  return `${parsed.toISOString().replace('T', ' ').slice(0, 16)  } UTC`;
 };
 
 const resolveSemanticOperationTitle = (

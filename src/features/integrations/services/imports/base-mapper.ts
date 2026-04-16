@@ -2,465 +2,62 @@ import { randomUUID } from 'crypto';
 
 import type { BaseProductRecord } from '@/features/integrations/services/imports/base-client';
 import type { IntegrationTemplateMapping as TemplateMapping } from '@/shared/contracts/integrations';
+import { parseProductCustomFieldTarget } from '@/shared/contracts/integrations/import-template-targets';
+import type {
+  ProductCustomFieldDefinition,
+  ProductCustomFieldValue,
+} from '@/shared/contracts/products/custom-fields';
 import type { ProductCreateInput } from '@/shared/contracts/products/io';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import {
+  normalizeProductCustomFieldValues,
+} from '@/shared/lib/products/utils/custom-field-values';
 
+import {
+  MARKET_EXCLUSION_FIELD_NAME,
+  normalizeBaseMarketplaceCheckboxKey,
+  resolveBaseMarketExclusionOptionStates,
+  resolveBaseMarketplaceCheckboxValue,
+} from '@/shared/lib/integrations/base-marketplace-checkboxes';
 
-const toTrimmedString = (value: unknown): string | null => {
-  if (typeof value === 'string') {
-    const trimmed = value.trim();
-    return trimmed ? trimmed : null;
-  }
-  if (typeof value === 'number' && Number.isFinite(value)) {
-    return String(value);
-  }
-  return null;
-};
+import {
+  autoExtractProducerIds,
+  autoExtractTagIds,
+  getImageUrlsForAll as extractImageUrlsForAll,
+  getImageUrlsForAll,
+  getImageUrlsForLinks,
+  getImageUrlsForSlots,
+  hasMultipleParsedPriceEntries,
+  mergeCheckboxOptionSelection,
+  normalizeImportedStructuredName,
+  normalizePreferredCurrencies,
+  normalizeProducerIds,
+  normalizeTagIds,
+  NUMBER_FIELDS,
+  pickFirstIntFromObject,
+  pickInt,
+  pickNestedInt,
+  pickNestedString,
+  pickPriceByPreferredCurrency,
+  pickString,
+  PRODUCER_TARGET_FIELDS,
+  resolveCheckboxOptionId,
+  resolveImageTargetIndex,
+  TAG_TARGET_FIELDS,
+  toCheckboxValue,
+  toIntValue,
+  toStringValue,
+  getByPath,
+} from './base-mapper-utils';
 
-const normalizeCurrencyCode = (value: unknown): string | null => {
-  const normalized = toTrimmedString(value)?.toUpperCase();
-  if (!normalized) return null;
-  const compact = normalized.replace(/[^A-Z]/g, '');
-  return compact || null;
-};
-
-const parsePrice = (value: unknown): number | null => {
-  if (typeof value === 'number' && Number.isFinite(value)) {
-    return Math.round(value);
-  }
-  if (typeof value === 'string') {
-    const cleaned = value.replace(/\s/g, '').replace(',', '.');
-    const parsed = Number(cleaned);
-    if (Number.isFinite(parsed)) {
-      return Math.round(parsed);
-    }
-  }
-  return null;
-};
-
-const toInt = (value: unknown): number | null => {
-  return parsePrice(value);
-};
-
-const pickString = (record: BaseProductRecord, keys: string[]): string | null => {
-  for (const key of keys) {
-    const value = toTrimmedString(record[key]);
-    if (value) return value;
-  }
-  return null;
-};
-
-const pickInt = (record: BaseProductRecord, keys: string[]): number | null => {
-  for (const key of keys) {
-    const value = toInt(record[key]);
-    if (value !== null) return value;
-  }
-  return null;
-};
-
-const pickNested = (record: BaseProductRecord, path: string[]): unknown => {
-  let current: unknown = record;
-  for (const key of path) {
-    if (!current || typeof current !== 'object') return null;
-    current = (current as Record<string, unknown>)[key];
-  }
-  return current;
-};
-
-const pickNestedInt = (record: BaseProductRecord, paths: string[][]): number | null => {
-  for (const path of paths) {
-    const value = toInt(pickNested(record, path));
-    if (value !== null) return value;
-  }
-  return null;
-};
-
-const pickNestedString = (record: BaseProductRecord, paths: string[][]): string | null => {
-  for (const path of paths) {
-    const value = toTrimmedString(pickNested(record, path));
-    if (value) return value;
-  }
-  return null;
-};
-
-const pickFirstIntFromObject = (record: BaseProductRecord, key: string): number | null => {
-  const obj = record[key];
-  if (!obj || typeof obj !== 'object') return null;
-  const values = Object.values(obj);
-  for (const v of values) {
-    if (typeof v === 'number') return toInt(v);
-    if (typeof v === 'string') return toInt(v);
-    if (typeof v === 'object' && v) {
-      const pObj = v as Record<string, unknown>;
-      const p = toInt(pObj['price'] ?? pObj['price_brutto'] ?? pObj['price_gross']);
-      if (p !== null) return p;
-    }
-  }
-  return null;
-};
-
-const normalizePreferredCurrencies = (preferred?: string[]): string[] =>
-  Array.from(
-    new Set(
-      (preferred ?? [])
-        .map((value: string): string | null => normalizeCurrencyCode(value))
-        .filter((value: string | null): value is string => Boolean(value))
-    )
-  );
-
-const readPriceFromPriceEntry = (value: unknown): number | null => {
-  if (value === null || value === undefined) return null;
-  if (typeof value === 'number' || typeof value === 'string') {
-    return parsePrice(value);
-  }
-  if (!value || typeof value !== 'object') return null;
-  const record = value as Record<string, unknown>;
-  const directCandidates = [
-    record['price'],
-    record['price_brutto'],
-    record['price_gross'],
-    record['gross'],
-    record['brutto'],
-    record['value'],
-    record['amount'],
-  ];
-  for (const candidate of directCandidates) {
-    const parsed = parsePrice(candidate);
-    if (parsed !== null) return parsed;
-  }
-  return null;
-};
-
-const pickPriceByPreferredCurrency = (
-  record: BaseProductRecord,
-  preferredCurrencies: string[]
-): number | null => {
-  const preferredSet = new Set(normalizePreferredCurrencies(preferredCurrencies));
-  const rawPrices = record['prices'];
-  if (!rawPrices) return null;
-
-  const tryValue = (
-    entry: unknown,
-    keyHint?: string
-  ): { value: number | null; currency: string | null } => {
-    const parsed = readPriceFromPriceEntry(entry);
-    if (parsed === null) return { value: null, currency: null };
-    let detectedCurrency: string | null = null;
-    if (keyHint) {
-      detectedCurrency = normalizeCurrencyCode(keyHint);
-    }
-    if (!detectedCurrency && entry && typeof entry === 'object') {
-      const entryRecord = entry as Record<string, unknown>;
-      detectedCurrency =
-        normalizeCurrencyCode(entryRecord['currency']) ??
-        normalizeCurrencyCode(entryRecord['currency_code']) ??
-        normalizeCurrencyCode(entryRecord['code']) ??
-        normalizeCurrencyCode(entryRecord['symbol']);
-    }
-    return { value: parsed, currency: detectedCurrency };
-  };
-
-  const buffered: Array<{ value: number; currency: string | null }> = [];
-  if (Array.isArray(rawPrices)) {
-    rawPrices.forEach((entry: unknown) => {
-      const resolved = tryValue(entry);
-      if (resolved.value !== null) {
-        buffered.push({ value: resolved.value, currency: resolved.currency });
-      }
-    });
-  } else if (rawPrices && typeof rawPrices === 'object') {
-    Object.entries(rawPrices as Record<string, unknown>).forEach(
-      ([key, value]: [string, unknown]) => {
-        const resolved = tryValue(value, key);
-        if (resolved.value !== null) {
-          buffered.push({ value: resolved.value, currency: resolved.currency });
-        }
-      }
-    );
-  } else {
-    const resolved = tryValue(rawPrices);
-    if (resolved.value !== null) {
-      buffered.push({ value: resolved.value, currency: resolved.currency });
-    }
-  }
-
-  if (buffered.length === 0) return null;
-  if (preferredSet.size > 0) {
-    const preferredMatch = buffered.find(
-      (entry) => entry.currency && preferredSet.has(entry.currency)
-    );
-    if (preferredMatch) return preferredMatch.value;
-  }
-  return buffered[0]?.value ?? null;
-};
-
-const isUrl = (value: string): boolean => /^https?:\/\//i.test(value);
-
-const collectUrls = (value: unknown, urls: string[]): void => {
-  if (!value) return;
-  if (typeof value === 'string') {
-    if (isUrl(value)) urls.push(value);
-    return;
-  }
-  if (Array.isArray(value)) {
-    value.forEach((entry: unknown) => collectUrls(entry, urls));
-    return;
-  }
-  if (typeof value === 'object') {
-    const record = value as Record<string, unknown>;
-    const candidates = [
-      record['url'],
-      record['href'],
-      record['src'],
-      record['image'],
-      record['imageUrl'],
-      record['image_url'],
-      record['link'],
-      record['photo'],
-      record['thumbnail'],
-    ];
-    candidates.forEach((candidate: unknown) => collectUrls(candidate, urls));
-    Object.values(record).forEach((candidate: unknown) => collectUrls(candidate, urls));
-  }
-};
-
-const extractImageUrlsFromValue = (value: unknown): string[] => {
-  const urls: string[] = [];
-  collectUrls(value, urls);
-  return Array.from(new Set(urls));
-};
-
-const IMAGE_SLOT_KEYS = [
-  'images',
-  'image',
-  'photos',
-  'photo',
-  'gallery',
-  'pictures',
-  'main_image',
-  'mainImage',
-];
-
-const IMAGE_LINK_KEYS = [
-  'image_links',
-  'images_links',
-  'image_link',
-  'images_link',
-  'image_url',
-  'imageUrl',
-  'image_urls',
-  'images_url',
-  'images_urls',
-  'imageUrls',
-  'image_links_all',
-  'links',
-  'link',
-];
-
-const extractImageUrlsFromRecordKeys = (record: BaseProductRecord, keys: string[]): string[] => {
-  const urls: string[] = [];
-  keys.forEach((key: string) => collectUrls(record[key], urls));
-  return Array.from(new Set(urls));
-};
-
-const getImageUrlsForSlots = (record: BaseProductRecord): string[] => {
-  const urls = extractImageUrlsFromRecordKeys(record, IMAGE_SLOT_KEYS);
-  return urls.length > 0 ? urls : extractBaseImageUrls(record);
-};
-
-const getImageUrlsForLinks = (record: BaseProductRecord): string[] => {
-  const urls = extractImageUrlsFromRecordKeys(record, IMAGE_LINK_KEYS);
-  return urls.length > 0 ? urls : extractBaseImageUrls(record);
-};
-
-const getImageUrlsForAll = (record: BaseProductRecord): string[] => {
-  const urls = [...getImageUrlsForSlots(record), ...getImageUrlsForLinks(record)];
-  return Array.from(new Set(urls));
-};
-
-const resolveImageTargetIndex = (targetField: string): number | null => {
-  const normalized = targetField.toLowerCase();
-  if (normalized.startsWith('image_slot_')) {
-    const index = parseInt(normalized.replace('image_slot_', ''), 10);
-    return Number.isNaN(index) ? null : index - 1;
-  }
-  if (normalized.startsWith('image_file_')) {
-    const index = parseInt(normalized.replace('image_file_', ''), 10);
-    return Number.isNaN(index) ? null : index - 1;
-  }
-  if (normalized.startsWith('image_link_')) {
-    const index = parseInt(normalized.replace('image_link_', ''), 10);
-    return Number.isNaN(index) ? null : index - 1;
-  }
-  if (normalized.startsWith('image_')) {
-    const index = parseInt(normalized.replace('image_', ''), 10);
-    return Number.isNaN(index) ? null : index - 1;
-  }
-  return null;
-};
-
-export function extractBaseImageUrls(record: BaseProductRecord): string[] {
-  const urls: string[] = [];
-  const keys = [
-    'images',
-    'image',
-    'image_url',
-    'imageUrl',
-    'images_url',
-    'images_urls',
-    'photos',
-    'photo',
-    'gallery',
-    'pictures',
-    'main_image',
-    'mainImage',
-  ];
-  keys.forEach((key: string) => collectUrls(record[key], urls));
-  collectUrls(record, urls);
-  return Array.from(new Set(urls));
-}
-
-const NUMBER_FIELDS = new Set(['price', 'stock', 'sizeLength', 'sizeWidth', 'weight', 'length']);
-
-const PRODUCER_TARGET_FIELDS = new Set([
-  'producerids',
-  'producer_ids',
-  'producerid',
-  'producer_id',
-  'producer',
-]);
-
-const TAG_TARGET_FIELDS = new Set([
-  'tagids',
-  'tag_ids',
-  'tagid',
-  'tag_id',
-  'tags',
-  'tag',
-  'tagnames',
-  'tag_names',
-]);
-
-const toStringValue = (value: unknown): string | null => {
-  if (Array.isArray(value)) {
-    const parts = value
-      .map((entry: unknown) => toTrimmedString(entry))
-      .filter((entry: string | null): entry is string => Boolean(entry));
-    return parts.length ? parts.join(', ') : null;
-  }
-  if (value && typeof value === 'object') {
-    try {
-      return JSON.stringify(value);
-    } catch (error) {
-      logClientError(error);
-      return null;
-    }
-  }
-  return toTrimmedString(value);
-};
-
-const toIntValue = (value: unknown): number | null => {
-  if (Array.isArray(value)) {
-    for (const entry of value) {
-      const parsed = toInt(entry);
-      if (parsed !== null) return parsed;
-    }
-    return null;
-  }
-  return toInt(value);
-};
-
-const normalizeProducerIds = (value: unknown): string[] => {
-  const unique = new Set<string>();
-
-  const pushValue = (entry: unknown): void => {
-    if (typeof entry === 'string') {
-      entry
-        .split(/[,\n;|]/)
-        .map((part: string) => part.trim())
-        .filter(Boolean)
-        .forEach((part: string) => unique.add(part));
-      return;
-    }
-    if (typeof entry === 'number' && Number.isFinite(entry)) {
-      unique.add(String(entry));
-      return;
-    }
-    if (entry && typeof entry === 'object') {
-      const record = entry as Record<string, unknown>;
-      const candidate =
-        record['producerId'] ??
-        record['producer_id'] ??
-        record['id'] ??
-        record['name'] ??
-        record['label'] ??
-        record['value'];
-      if (candidate !== undefined && candidate !== null) {
-        pushValue(candidate);
-        return;
-      }
-      Object.values(record).forEach((nested: unknown) => pushValue(nested));
-    }
-  };
-
-  if (Array.isArray(value)) {
-    value.forEach((entry: unknown) => pushValue(entry));
-  } else {
-    pushValue(value);
-  }
-
-  return Array.from(unique);
-};
-
-const normalizeTagIds = (value: unknown): string[] => {
-  const unique = new Set<string>();
-
-  const pushValue = (entry: unknown): void => {
-    if (typeof entry === 'string') {
-      entry
-        .split(/[,\n;|]/)
-        .map((part: string) => part.trim())
-        .filter(Boolean)
-        .forEach((part: string) => unique.add(part));
-      return;
-    }
-    if (typeof entry === 'number' && Number.isFinite(entry)) {
-      unique.add(String(entry));
-      return;
-    }
-    if (entry && typeof entry === 'object') {
-      const record = entry as Record<string, unknown>;
-      const candidate =
-        record['tagId'] ??
-        record['tag_id'] ??
-        record['id'] ??
-        record['name'] ??
-        record['label'] ??
-        record['value'];
-      if (candidate !== undefined && candidate !== null) {
-        pushValue(candidate);
-        return;
-      }
-      Object.values(record).forEach((nested: unknown) => pushValue(nested));
-    }
-  };
-
-  if (Array.isArray(value)) {
-    value.forEach((entry: unknown) => pushValue(entry));
-  } else {
-    pushValue(value);
-  }
-
-  return Array.from(unique);
-};
-
-const getByPath = (record: BaseProductRecord, path: string[]): unknown => {
-  let current: unknown = record;
-  for (const key of path) {
-    if (!current || typeof current !== 'object') return null;
-    current = (current as Record<string, unknown>)[key];
-  }
-  return current;
+export type BaseCustomFieldImportDiagnostics = {
+  autoMatchedFieldIds: string[];
+  autoMatchedFieldNames: string[];
+  explicitMappedFieldIds: string[];
+  explicitMappedFieldNames: string[];
+  skippedFieldIds: string[];
+  skippedFieldNames: string[];
+  overriddenFieldIds: string[];
+  overriddenFieldNames: string[];
 };
 
 const collectTemplateParameterBuckets = (record: BaseProductRecord): unknown[] => {
@@ -504,20 +101,179 @@ const collectTemplateParameterBuckets = (record: BaseProductRecord): unknown[] =
   return buckets;
 };
 
+const normalizeLookupKey = (value: string): string => {
+  const trimmed = value.trim();
+  const separatorIndex = trimmed.indexOf('|');
+  const scopedKey =
+    separatorIndex > 0 && /^[a-z0-9_-]{2,10}$/i.test(trimmed.slice(separatorIndex + 1))
+      ? trimmed.slice(0, separatorIndex)
+      : trimmed;
+  return scopedKey.trim().toLowerCase();
+};
+
+const findObjectEntryByNormalizedKey = (
+  record: Record<string, unknown>,
+  key: string
+): [string, unknown] | null => {
+  if (key in record) {
+    return [key, record[key]];
+  }
+  const normalizedKey = normalizeLookupKey(key);
+  return (
+    Object.entries(record).find(
+      ([candidateKey]: [string, unknown]) => normalizeLookupKey(candidateKey) === normalizedKey
+    ) ?? null
+  );
+};
+
+const extractOptionValueFromArray = (entries: unknown[], optionKey: string): unknown => {
+  const normalizedOptionKey = normalizeLookupKey(optionKey);
+
+  for (const entry of entries) {
+    const scalar = toStringValue(entry);
+    if (scalar && normalizeLookupKey(scalar) === normalizedOptionKey) {
+      return true;
+    }
+
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) continue;
+
+    const record = entry as Record<string, unknown>;
+    const optionName = toStringValue(
+      record['name'] ??
+        record['parameter'] ??
+        record['code'] ??
+        record['label'] ??
+        record['title'] ??
+        record['value'] ??
+        record['text']
+    );
+    if (!optionName || normalizeLookupKey(optionName) !== normalizedOptionKey) continue;
+
+    const explicitState =
+      record['selected'] ??
+      record['checked'] ??
+      record['active'] ??
+      record['enabled'] ??
+      record['is_selected'] ??
+      record['isSelected'];
+    if (explicitState !== undefined) {
+      return explicitState;
+    }
+
+    return true;
+  }
+
+  return null;
+};
+
+const resolveCompoundParameterValue = (
+  record: Record<string, unknown>,
+  sourceKey: string
+): unknown => {
+  const pathSegments = sourceKey
+    .split('.')
+    .map((segment: string) => segment.trim())
+    .filter((segment: string): boolean => segment.length > 0);
+  if (pathSegments.length < 2) return null;
+
+  const headSegment = pathSegments[0];
+  if (!headSegment) return null;
+  const tailSegments = pathSegments.slice(1);
+  const normalizedHeadSegment = normalizeLookupKey(headSegment);
+  const name = toStringValue(
+    record['name'] ?? record['parameter'] ?? record['code'] ?? record['label'] ?? record['title']
+  );
+  const id = toStringValue(
+    record['id'] ?? record['parameter_id'] ?? record['param_id'] ?? record['attribute_id']
+  );
+  const headMatches =
+    (name && normalizeLookupKey(name) === normalizedHeadSegment) ||
+    (id && normalizeLookupKey(id) === normalizedHeadSegment);
+  if (!headMatches) return null;
+
+  const nestedCandidates = [
+    record['value'],
+    record['values'],
+    record['options'],
+    record['items'],
+    record['children'],
+    record['data'],
+  ];
+
+  for (const candidate of nestedCandidates) {
+    const resolved = resolveValueByNormalizedPath(candidate, tailSegments);
+    if (resolved !== null && resolved !== undefined) {
+      return resolved;
+    }
+  }
+
+  return null;
+};
+
+const resolveValueByNormalizedPath = (value: unknown, pathSegments: string[]): unknown => {
+  if (value === null || value === undefined) return null;
+  if (pathSegments.length === 0) return value;
+  const currentSegment = pathSegments[0];
+  if (!currentSegment) return null;
+
+  if (Array.isArray(value)) {
+    if (pathSegments.length === 1) {
+      return extractOptionValueFromArray(value, currentSegment);
+    }
+
+    for (const entry of value) {
+      const resolved = resolveValueByNormalizedPath(entry, pathSegments);
+      if (resolved !== null && resolved !== undefined) {
+        return resolved;
+      }
+    }
+
+    return null;
+  }
+
+  if (typeof value !== 'object') {
+    if (pathSegments.length !== 1) return null;
+    const scalar = toStringValue(value);
+    if (!scalar) return null;
+    return normalizeLookupKey(scalar) === normalizeLookupKey(currentSegment) ? true : null;
+  }
+
+  const record = value as Record<string, unknown>;
+  const directEntry = findObjectEntryByNormalizedKey(record, currentSegment);
+  if (directEntry) {
+    return resolveValueByNormalizedPath(directEntry[1], pathSegments.slice(1));
+  }
+
+  if (pathSegments.length > 1) {
+    const compoundValue = resolveCompoundParameterValue(record, pathSegments.join('.'));
+    if (compoundValue !== null && compoundValue !== undefined) {
+      return compoundValue;
+    }
+  }
+
+  return null;
+};
+
 const findParameterValue = (params: unknown, sourceKey: string): unknown => {
   if (!params) return null;
-  const normalizedSourceKey = sourceKey.trim().toLowerCase();
+  const normalizedSourceKey = normalizeLookupKey(sourceKey);
   if (!normalizedSourceKey) return null;
   const getFromParameterRecord = (record: Record<string, unknown>): unknown => {
-    const name = toTrimmedString(
+    if (sourceKey.includes('.')) {
+      const compoundValue = resolveCompoundParameterValue(record, sourceKey);
+      if (compoundValue !== null && compoundValue !== undefined) {
+        return compoundValue;
+      }
+    }
+    const name = toStringValue(
       record['name'] ?? record['parameter'] ?? record['code'] ?? record['label'] ?? record['title']
     );
-    const id = toTrimmedString(
+    const id = toStringValue(
       record['id'] ?? record['parameter_id'] ?? record['param_id'] ?? record['attribute_id']
     );
     if (
-      name?.trim().toLowerCase() === normalizedSourceKey ||
-      id?.trim().toLowerCase() === normalizedSourceKey
+      (name && normalizeLookupKey(name) === normalizedSourceKey) ||
+      (id && normalizeLookupKey(id) === normalizedSourceKey)
     ) {
       return (
         record['value'] ??
@@ -540,9 +296,21 @@ const findParameterValue = (params: unknown, sourceKey: string): unknown => {
   }
   if (typeof params === 'object') {
     const record = params as Record<string, unknown>;
+    if (sourceKey.includes('.')) {
+      const byPath = resolveValueByNormalizedPath(
+        record,
+        sourceKey
+          .split('.')
+          .map((segment: string) => segment.trim())
+          .filter((segment: string): boolean => segment.length > 0)
+      );
+      if (byPath !== null && byPath !== undefined) {
+        return byPath;
+      }
+    }
     if (sourceKey in record) return record[sourceKey];
     const byNormalizedKey = Object.entries(record).find(
-      ([key]: [string, unknown]) => key.trim().toLowerCase() === normalizedSourceKey
+      ([key]: [string, unknown]) => normalizeLookupKey(key) === normalizedSourceKey
     );
     if (byNormalizedKey) {
       return byNormalizedKey[1];
@@ -596,6 +364,10 @@ const resolveTemplateValue = (record: BaseProductRecord, sourceKey: string): unk
   if (sourceKey in record) {
     return record[sourceKey];
   }
+  const marketplaceCheckboxValue = resolveBaseMarketplaceCheckboxValue(record, sourceKey);
+  if (marketplaceCheckboxValue !== null && marketplaceCheckboxValue !== undefined) {
+    return marketplaceCheckboxValue;
+  }
   const parameterBuckets = collectTemplateParameterBuckets(record);
   for (const bucket of parameterBuckets) {
     const parameterValue = findParameterValue(bucket, sourceKey);
@@ -606,18 +378,309 @@ const resolveTemplateValue = (record: BaseProductRecord, sourceKey: string): unk
   return null;
 };
 
+const buildSourceKeyCandidates = (label: string, parentLabel?: string): string[] => {
+  const trimmedLabel = label.trim();
+  if (!trimmedLabel) return [];
+
+  const baseVariants = Array.from(
+    new Set(
+      [
+        trimmedLabel,
+        trimmedLabel.toLowerCase(),
+        trimmedLabel.replace(/\s+/g, '_'),
+        trimmedLabel.replace(/\s+/g, '_').toLowerCase(),
+        trimmedLabel.replace(/\s+/g, '-'),
+        trimmedLabel.replace(/\s+/g, '-').toLowerCase(),
+        trimmedLabel.replace(/\s+/g, ''),
+        trimmedLabel.replace(/\s+/g, '').toLowerCase(),
+      ].filter((candidate): candidate is string => candidate.length > 0)
+    )
+  );
+
+  const parentVariants = parentLabel ? buildSourceKeyCandidates(parentLabel) : [];
+  return Array.from(
+    new Set([
+      ...baseVariants,
+      ...parentVariants.flatMap((parentVariant) =>
+        baseVariants.flatMap((baseVariant) => [
+          `${parentVariant}.${baseVariant}`,
+          `${parentVariant}_${baseVariant}`,
+          `${parentVariant}-${baseVariant}`,
+        ])
+      ),
+    ])
+  );
+};
+
+const resolveAutoTemplateValue = (
+  record: BaseProductRecord,
+  label: string,
+  parentLabel?: string
+): unknown => {
+  const candidates = buildSourceKeyCandidates(label, parentLabel);
+  for (const candidate of candidates) {
+    const value = resolveTemplateValue(record, candidate);
+    if (value !== null && value !== undefined) {
+      return value;
+    }
+  }
+  return null;
+};
+
+const autoExtractCustomFieldValues = (
+  record: BaseProductRecord,
+  customFieldDefinitions: ProductCustomFieldDefinition[] | undefined
+): ProductCustomFieldValue[] => {
+  if (!Array.isArray(customFieldDefinitions) || customFieldDefinitions.length === 0) {
+    return [];
+  }
+
+  const customFieldValuesById = new Map<string, ProductCustomFieldValue>();
+
+  customFieldDefinitions.forEach((customField: ProductCustomFieldDefinition) => {
+    const fieldId = customField.id.trim();
+    const fieldName = customField.name.trim();
+    if (!fieldId || !fieldName) return;
+
+    if (customField.type === 'checkbox_set') {
+      const marketExclusionStates =
+        normalizeBaseMarketplaceCheckboxKey(fieldName) ===
+        normalizeBaseMarketplaceCheckboxKey(MARKET_EXCLUSION_FIELD_NAME)
+          ? resolveBaseMarketExclusionOptionStates(record, customFieldDefinitions)
+          : null;
+      let matchedAnyOption = false;
+      customField.options.forEach((option) => {
+        const optionId = option.id.trim();
+        const optionLabel = option.label.trim();
+        if (!optionId || !optionLabel) return;
+
+        const rawValue =
+          resolveAutoTemplateValue(record, optionLabel, fieldName) ??
+          resolveAutoTemplateValue(record, `${optionLabel} Yes`, fieldName);
+        if (rawValue !== null && rawValue !== undefined) {
+          matchedAnyOption = true;
+          mergeCheckboxOptionSelection(
+            customFieldValuesById,
+            fieldId,
+            optionId,
+            toCheckboxValue(rawValue)
+          );
+          return;
+        }
+
+        if (!marketExclusionStates?.has(optionId)) return;
+
+        matchedAnyOption = true;
+        mergeCheckboxOptionSelection(
+          customFieldValuesById,
+          fieldId,
+          optionId,
+          marketExclusionStates.get(optionId) ?? false
+        );
+      });
+
+      if (!matchedAnyOption) return;
+      if (!customFieldValuesById.has(fieldId)) {
+        customFieldValuesById.set(fieldId, {
+          fieldId,
+          selectedOptionIds: [],
+        });
+      }
+      return;
+    }
+
+    const rawValue = resolveAutoTemplateValue(record, fieldName);
+    if (rawValue === null || rawValue === undefined) return;
+
+    const textValue = toStringValue(rawValue);
+    if (textValue === null) return;
+
+    customFieldValuesById.set(fieldId, {
+      fieldId,
+      textValue,
+    });
+  });
+
+  return normalizeProductCustomFieldValues(Array.from(customFieldValuesById.values()));
+};
+
+const normalizeCustomFieldValueForComparison = (
+  value: ProductCustomFieldValue | undefined
+): ProductCustomFieldValue | null => {
+  if (!value) return null;
+  return normalizeProductCustomFieldValues([value])[0] ?? null;
+};
+
+const serializeNormalizedCustomFieldValue = (
+  value: ProductCustomFieldValue | undefined
+): string => JSON.stringify(normalizeCustomFieldValueForComparison(value));
+
+const sortUniqueStrings = (values: Iterable<string>): string[] =>
+  Array.from(new Set(Array.from(values).filter((value: string): boolean => value.trim().length > 0))).sort(
+    (left: string, right: string) => left.localeCompare(right)
+  );
+
+const createCustomFieldNameResolver = (
+  customFieldDefinitions: ProductCustomFieldDefinition[] | undefined
+): ((fieldId: string) => string) => {
+  const fieldNameById = new Map<string, string>();
+  (customFieldDefinitions ?? []).forEach((customField: ProductCustomFieldDefinition) => {
+    const fieldId = customField.id.trim();
+    const fieldName = customField.name.trim();
+    if (!fieldId || !fieldName) return;
+    fieldNameById.set(fieldId, fieldName);
+  });
+
+  return (fieldId: string): string => fieldNameById.get(fieldId) ?? fieldId;
+};
+
+export const collectCustomFieldImportDiagnostics = (
+  record: BaseProductRecord,
+  mappings: TemplateMapping[] = [],
+  customFieldDefinitions?: ProductCustomFieldDefinition[]
+): BaseCustomFieldImportDiagnostics => {
+  const resolveFieldName = createCustomFieldNameResolver(customFieldDefinitions);
+  const autoMatchedValues = autoExtractCustomFieldValues(record, customFieldDefinitions);
+  const autoMatchedByFieldId = new Map<string, ProductCustomFieldValue>();
+  autoMatchedValues.forEach((value: ProductCustomFieldValue) => {
+    autoMatchedByFieldId.set(value.fieldId, value);
+  });
+
+  const mergedByFieldId = new Map<string, ProductCustomFieldValue>(autoMatchedByFieldId);
+  const explicitMappedFieldIds = new Set<string>();
+  const skippedFieldIds = new Set<string>();
+
+  for (const mapping of mappings) {
+    const sourceKey = mapping.sourceKey.trim();
+    const targetField = mapping.targetField.trim();
+    if (!sourceKey || !targetField) continue;
+
+    const customFieldTarget = parseProductCustomFieldTarget(targetField);
+    if (!customFieldTarget) continue;
+
+    const fieldId = customFieldTarget.fieldId.trim();
+    if (!fieldId) continue;
+
+    const rawValue = resolveTemplateValue(record, sourceKey);
+    if (rawValue === null || rawValue === undefined) {
+      skippedFieldIds.add(fieldId);
+      continue;
+    }
+
+    explicitMappedFieldIds.add(fieldId);
+    if (customFieldTarget.optionId) {
+      const resolvedOptionId = resolveCheckboxOptionId(
+        fieldId,
+        customFieldTarget.optionId,
+        customFieldDefinitions
+      );
+      mergeCheckboxOptionSelection(
+        mergedByFieldId,
+        fieldId,
+        resolvedOptionId,
+        toCheckboxValue(rawValue)
+      );
+      continue;
+    }
+
+    const textValue = toStringValue(rawValue);
+    if (textValue === null) {
+      skippedFieldIds.add(fieldId);
+      continue;
+    }
+    mergedByFieldId.set(fieldId, {
+      fieldId,
+      textValue,
+    });
+  }
+
+  const overriddenFieldIds = new Set<string>();
+  explicitMappedFieldIds.forEach((fieldId: string) => {
+    if (!autoMatchedByFieldId.has(fieldId)) return;
+    if (
+      serializeNormalizedCustomFieldValue(autoMatchedByFieldId.get(fieldId)) !==
+      serializeNormalizedCustomFieldValue(mergedByFieldId.get(fieldId))
+    ) {
+      overriddenFieldIds.add(fieldId);
+    }
+  });
+
+  const skippedOnlyFieldIds = Array.from(skippedFieldIds).filter(
+    (fieldId: string): boolean => !explicitMappedFieldIds.has(fieldId)
+  );
+  const autoMatchedFieldIds = autoMatchedValues.map((value: ProductCustomFieldValue) => value.fieldId);
+  const explicitMappedFieldIdList = Array.from(explicitMappedFieldIds);
+  const overriddenFieldIdList = Array.from(overriddenFieldIds);
+
+  return {
+    autoMatchedFieldIds: sortUniqueStrings(autoMatchedFieldIds),
+    autoMatchedFieldNames: sortUniqueStrings(autoMatchedFieldIds.map(resolveFieldName)),
+    explicitMappedFieldIds: sortUniqueStrings(explicitMappedFieldIdList),
+    explicitMappedFieldNames: sortUniqueStrings(explicitMappedFieldIdList.map(resolveFieldName)),
+    skippedFieldIds: sortUniqueStrings(skippedOnlyFieldIds),
+    skippedFieldNames: sortUniqueStrings(skippedOnlyFieldIds.map(resolveFieldName)),
+    overriddenFieldIds: sortUniqueStrings(overriddenFieldIdList),
+    overriddenFieldNames: sortUniqueStrings(overriddenFieldIdList.map(resolveFieldName)),
+  };
+};
+
 const applyTemplateMappings = (
   record: BaseProductRecord,
   mapped: ProductCreateInput,
-  mappings: TemplateMapping[]
+  mappings: TemplateMapping[],
+  customFieldDefinitions?: ProductCustomFieldDefinition[],
+  preferredPriceIdentifiers: string[] = []
 ): void => {
+  const hasMultiplePriceEntries = hasMultipleParsedPriceEntries(record);
+  const normalizedPreferredPriceIdentifiers = normalizePreferredCurrencies(preferredPriceIdentifiers);
+  const normalizePriceSourceKey = (value: string): string[] =>
+    value
+      .trim()
+      .toUpperCase()
+      .split(/[^A-Z0-9]+/)
+      .map((segment: string): string => segment.trim())
+      .filter((segment: string): boolean => segment.length > 0);
+  const sourceContainsPreferredPriceIdentifier = (sourceKey: string): boolean => {
+    const segments = normalizePriceSourceKey(sourceKey);
+    return segments.some((segment: string): boolean =>
+      normalizedPreferredPriceIdentifiers.some((preferredIdentifier: string): boolean => {
+        if (segment === preferredIdentifier) {
+          return true;
+        }
+        if (preferredIdentifier.length === 3) {
+          return (
+            segment.startsWith(preferredIdentifier) || segment.endsWith(preferredIdentifier)
+          );
+        }
+        return false;
+      })
+    );
+  };
+  const isAmbiguousPriceTemplateSource = (sourceKey: string): boolean => {
+    const normalized = sourceKey.trim().toLowerCase();
+    if (!normalized) return false;
+    if (['price', 'price_gross', 'price_brutto'].includes(normalized)) {
+      return true;
+    }
+    if (!normalized.startsWith('prices.')) {
+      return false;
+    }
+    return !sourceContainsPreferredPriceIdentifier(sourceKey);
+  };
+
   const parameterValuesById = new Map<string, { parameterId: string; value: string }>();
+  const customFieldValuesById = new Map<string, ProductCustomFieldValue>();
   if (Array.isArray(mapped.parameters)) {
     mapped.parameters.forEach((entry) => {
-      const parameterId = toTrimmedString(entry?.parameterId);
-      const value = toTrimmedString(entry?.value);
+      const parameterId = toStringValue(entry?.parameterId);
+      const value = toStringValue(entry?.value);
       if (!parameterId || !value) return;
       parameterValuesById.set(parameterId, { parameterId, value });
+    });
+  }
+  if (Array.isArray(mapped.customFields)) {
+    normalizeProductCustomFieldValues(mapped.customFields).forEach((entry: ProductCustomFieldValue) => {
+      customFieldValuesById.set(entry.fieldId, entry);
     });
   }
 
@@ -642,6 +705,31 @@ const applyTemplateMappings = (
       }
       continue;
     }
+    const customFieldTarget = parseProductCustomFieldTarget(targetField);
+    if (customFieldTarget) {
+      if (customFieldTarget.optionId) {
+        const resolvedOptionId = resolveCheckboxOptionId(
+          customFieldTarget.fieldId,
+          customFieldTarget.optionId,
+          customFieldDefinitions
+        );
+        mergeCheckboxOptionSelection(
+          customFieldValuesById,
+          customFieldTarget.fieldId,
+          resolvedOptionId,
+          toCheckboxValue(rawValue)
+        );
+      } else {
+        const textValue = toStringValue(rawValue);
+        if (textValue !== null) {
+          customFieldValuesById.set(customFieldTarget.fieldId, {
+            fieldId: customFieldTarget.fieldId,
+            textValue,
+          });
+        }
+      }
+      continue;
+    }
     if (normalizedTargetField.startsWith('parameter:')) {
       const parameterId = targetField.slice('parameter:'.length).trim();
       if (!parameterId) continue;
@@ -654,6 +742,14 @@ const applyTemplateMappings = (
       continue;
     }
     if (NUMBER_FIELDS.has(targetField)) {
+      if (
+        targetField === 'price' &&
+        hasMultiplePriceEntries &&
+        normalizedPreferredPriceIdentifiers.length > 0 &&
+        isAmbiguousPriceTemplateSource(sourceKey)
+      ) {
+        continue;
+      }
       const parsed = toIntValue(rawValue);
       if (parsed === null) continue;
       (mapped as Record<string, unknown>)[targetField] = parsed;
@@ -676,7 +772,7 @@ const applyTemplateMappings = (
       targetField === 'image_slots_all' ||
       targetField === 'images_all'
     ) {
-      const urls = extractImageUrlsFromValue(rawValue);
+      const urls = extractImageUrlsForAll(record);
       if (urls.length > 0) {
         mapped.imageLinks = urls;
       }
@@ -692,6 +788,9 @@ const applyTemplateMappings = (
   if (parameterValuesById.size > 0) {
     mapped.parameters = Array.from(parameterValuesById.values());
   }
+  if (customFieldValuesById.size > 0) {
+    mapped.customFields = normalizeProductCustomFieldValues(Array.from(customFieldValuesById.values()));
+  }
 };
 
 export function mapBaseProduct(
@@ -699,6 +798,7 @@ export function mapBaseProduct(
   mappings: TemplateMapping[] = [],
   options?: {
     preferredPriceCurrencies?: string[];
+    customFieldDefinitions?: ProductCustomFieldDefinition[];
   }
 ): ProductCreateInput {
   // Extend this mapper as new Base.com fields are needed.
@@ -746,15 +846,16 @@ export function mapBaseProduct(
   const sku = pickString(record, ['sku', 'code', 'product_code', 'item_code']);
 
   const preferredCurrencies = normalizePreferredCurrencies(options?.preferredPriceCurrencies);
+  const hasMultiplePriceEntries = hasMultipleParsedPriceEntries(record);
+  const allowGenericPriceFallback =
+    preferredCurrencies.length === 0 || !hasMultiplePriceEntries;
   const price =
     pickPriceByPreferredCurrency(record, preferredCurrencies) ??
     pickInt(record, [
       ...(preferredCurrencies.includes('PLN')
         ? ['price_pln', 'price_gross_pln', 'price_brutto_pln']
         : []),
-      'price',
-      'price_gross',
-      'price_brutto',
+      ...(allowGenericPriceFallback ? ['price', 'price_gross', 'price_brutto'] : []),
     ]) ??
     pickNestedInt(record, [
       ...(preferredCurrencies.includes('PLN')
@@ -767,10 +868,14 @@ export function mapBaseProduct(
           ['prices', 'PLN', 'price_brutto'],
         ]
         : []),
-      ['prices', '0', 'price'],
-      ['prices', '0', 'price_brutto'],
+      ...(allowGenericPriceFallback
+        ? [
+          ['prices', '0', 'price'] as string[],
+          ['prices', '0', 'price_brutto'] as string[],
+        ]
+        : []),
     ]) ??
-    pickFirstIntFromObject(record, 'prices');
+    (allowGenericPriceFallback ? pickFirstIntFromObject(record, 'prices') : null);
 
   const stock =
     pickInt(record, ['stock', 'quantity', 'qty', 'available']) ??
@@ -783,7 +888,7 @@ export function mapBaseProduct(
 
   const mapped: ProductCreateInput = {
     baseProductId: baseProductId ?? undefined,
-    name_en: nameEn ?? undefined,
+    name_en: normalizeImportedStructuredName(record, nameEn) ?? undefined,
     name_pl: namePl ?? undefined,
     name_de: nameDe ?? undefined,
     description_en: descriptionEn ?? undefined,
@@ -806,7 +911,28 @@ export function mapBaseProduct(
     sku: finalSku,
   };
 
-  applyTemplateMappings(record, result, mappings);
+  // Auto-extract producers and tags from the raw record before template mappings.
+  // Template mappings applied below can still override these auto-extracted values.
+  const extendedResult = result as ProductCreateInput & { producerIds?: string[]; tagIds?: string[] };
+  const autoProducerIds = autoExtractProducerIds(record);
+  if (autoProducerIds.length > 0) extendedResult.producerIds = autoProducerIds;
+  const autoTagIds = autoExtractTagIds(record);
+  if (autoTagIds.length > 0) extendedResult.tagIds = autoTagIds;
+  const autoCustomFieldValues = autoExtractCustomFieldValues(
+    record,
+    options?.customFieldDefinitions
+  );
+  if (autoCustomFieldValues.length > 0) {
+    extendedResult.customFields = autoCustomFieldValues;
+  }
+
+  applyTemplateMappings(
+    record,
+    result,
+    mappings,
+    options?.customFieldDefinitions,
+    preferredCurrencies
+  );
 
   return result;
 }

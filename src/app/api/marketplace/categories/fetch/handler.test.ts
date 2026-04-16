@@ -10,6 +10,7 @@ const {
   getIntegrationRepositoryMock,
   resolveBaseConnectionTokenMock,
   syncFromBaseMock,
+  listByConnectionMock,
   getConnectionByIdMock,
   getIntegrationByIdMock,
 } = vi.hoisted(() => ({
@@ -19,6 +20,7 @@ const {
   getIntegrationRepositoryMock: vi.fn(),
   resolveBaseConnectionTokenMock: vi.fn(),
   syncFromBaseMock: vi.fn(),
+  listByConnectionMock: vi.fn(),
   getConnectionByIdMock: vi.fn(),
   getIntegrationByIdMock: vi.fn(),
 }));
@@ -54,6 +56,7 @@ describe('marketplace categories fetch handler', () => {
     });
     getExternalCategoryRepositoryMock.mockReturnValue({
       syncFromBase: syncFromBaseMock,
+      listByConnection: listByConnectionMock,
     });
     getConnectionByIdMock.mockResolvedValue({
       id: 'conn-1',
@@ -81,6 +84,7 @@ describe('marketplace categories fetch handler', () => {
       { id: 'cat-2', name: 'Category 2', parentId: 'cat-1' },
     ]);
     syncFromBaseMock.mockResolvedValue(2);
+    listByConnectionMock.mockResolvedValue([]);
   });
 
   it('fetches and syncs base categories for a supported connection', async () => {
@@ -101,13 +105,37 @@ describe('marketplace categories fetch handler', () => {
       inventoryId: 'inventory-1',
     });
     expect(syncFromBaseMock).toHaveBeenCalledWith('conn-1', [
-      { id: 'cat-1', name: 'Category 1', parentId: null },
-      { id: 'cat-2', name: 'Category 2', parentId: 'cat-1' },
+      {
+        id: 'cat-1',
+        name: 'Category 1',
+        parentId: null,
+        metadata: {
+          categoryFetchSource: 'Base.com',
+        },
+      },
+      {
+        id: 'cat-2',
+        name: 'Category 2',
+        parentId: 'cat-1',
+        metadata: {
+          categoryFetchSource: 'Base.com',
+        },
+      },
     ]);
     await expect(response.json()).resolves.toEqual({
       fetched: 2,
       total: 2,
-      message: 'Successfully synced 2 categories from Base.com',
+      message: 'Successfully synced 2 categories from Base.com (roots: 1, max depth: 1).',
+      source: 'Base.com',
+      categoryStats: {
+        rootCount: 1,
+        withParentCount: 1,
+        maxDepth: 1,
+        depthHistogram: {
+          '0': 1,
+          '1': 1,
+        },
+      },
     });
   });
 
@@ -139,7 +167,14 @@ describe('marketplace categories fetch handler', () => {
     await expect(response.json()).resolves.toEqual({
       fetched: 0,
       total: 0,
-      message: 'No categories found in Tradera.',
+      message: 'No categories found in Tradera public taxonomy pages.',
+      source: 'Tradera public taxonomy pages',
+      categoryStats: {
+        rootCount: 0,
+        withParentCount: 0,
+        maxDepth: 0,
+        depthHistogram: {},
+      },
     });
   });
 
@@ -206,5 +241,100 @@ describe('marketplace categories fetch handler', () => {
         sampleExternalIds: ['cat-1'],
       },
     });
+    expect(syncFromBaseMock).toHaveBeenCalledWith('conn-1', [
+      {
+        id: 'cat-1',
+        name: 'Category 1',
+        parentId: '0',
+        metadata: {
+          categoryFetchSource: 'Tradera public taxonomy pages',
+        },
+      },
+    ]);
+  });
+
+  it('keeps existing deeper Tradera categories when the public fallback returns a shallower tree', async () => {
+    getIntegrationByIdMock.mockResolvedValue({
+      id: 'integration-1',
+      name: 'Tradera',
+      slug: 'tradera',
+      createdAt: new Date(0).toISOString(),
+      updatedAt: null,
+    });
+    fetchTraderaCategoriesForConnectionMock.mockResolvedValue([
+      { id: '49', name: 'Collectibles', parentId: '0' },
+      { id: '2929', name: 'Pins & needles', parentId: '49' },
+    ]);
+    listByConnectionMock.mockResolvedValue([
+      {
+        id: 'stored-root',
+        connectionId: 'conn-1',
+        externalId: '49',
+        name: 'Collectibles',
+        parentExternalId: null,
+        path: 'Collectibles',
+        depth: 0,
+        isLeaf: false,
+        metadata: { categoryFetchSource: 'Tradera public taxonomy pages' },
+        fetchedAt: '2026-04-08T00:00:00.000Z',
+        createdAt: '2026-04-08T00:00:00.000Z',
+        updatedAt: '2026-04-08T00:00:00.000Z',
+      },
+      {
+        id: 'stored-parent',
+        connectionId: 'conn-1',
+        externalId: '2929',
+        name: 'Pins & needles',
+        parentExternalId: '49',
+        path: 'Collectibles > Pins & needles',
+        depth: 1,
+        isLeaf: false,
+        metadata: { categoryFetchSource: 'Tradera public taxonomy pages' },
+        fetchedAt: '2026-04-08T00:00:00.000Z',
+        createdAt: '2026-04-08T00:00:00.000Z',
+        updatedAt: '2026-04-08T00:00:00.000Z',
+      },
+      {
+        id: 'stored-leaf',
+        connectionId: 'conn-1',
+        externalId: '292904',
+        name: 'Other pins & needles',
+        parentExternalId: '2929',
+        path: 'Collectibles > Pins & needles > Other pins & needles',
+        depth: 2,
+        isLeaf: true,
+        metadata: { categoryFetchSource: 'Tradera public taxonomy pages' },
+        fetchedAt: '2026-04-08T00:00:00.000Z',
+        createdAt: '2026-04-08T00:00:00.000Z',
+        updatedAt: '2026-04-08T00:00:00.000Z',
+      },
+    ]);
+
+    const request = new NextRequest('http://localhost/api/marketplace/categories/fetch', {
+      method: 'POST',
+      body: JSON.stringify({
+        connectionId: 'conn-1',
+      }),
+      headers: {
+        'content-type': 'application/json',
+      },
+    });
+
+    await expect(POST_handler(request, createContext())).rejects.toMatchObject({
+      message:
+        'Tradera public taxonomy pages returned a shallower category tree than the categories already stored. Existing categories were kept. Retry the fetch or configure Tradera App ID and App Key to use the SOAP API.',
+      httpStatus: 422,
+      code: 'UNPROCESSABLE_ENTITY',
+      meta: {
+        connectionId: 'conn-1',
+        sourceName: 'Tradera public taxonomy pages',
+        existingTotal: 3,
+        existingMaxDepth: 2,
+        fetchedTotal: 2,
+        fetchedMaxDepth: 1,
+      },
+    });
+
+    expect(syncFromBaseMock).not.toHaveBeenCalled();
   });
 });

@@ -187,14 +187,15 @@ export const fileUploadEventsFiltersSchema = z.object({
   page: z.number().optional(),
   pageSize: z.number().optional(),
   status: z.enum(['success', 'error', 'all']).optional(),
-  category: z.string().optional(),
-  projectId: z.string().optional(),
-  query: z.string().optional(),
-  from: z.string().nullable().optional(),
-  to: z.string().nullable().optional(),
+  category: z.string().nullable().optional(),
+  projectId: z.string().nullable().optional(),
+  query: z.string().nullable().optional(),
+  from: z.union([z.string(), z.date()]).nullable().optional(),
+  to: z.union([z.string(), z.date()]).nullable().optional(),
 });
 
 export type FileUploadEventsFilters = z.infer<typeof fileUploadEventsFiltersSchema>;
+export type FileUploadEventsQueryInput = FileUploadEventsFilters;
 
 export type ImageFileRepository = {
   createImageFile(data: ImageFileCreateInput): Promise<ImageFileRecord>;

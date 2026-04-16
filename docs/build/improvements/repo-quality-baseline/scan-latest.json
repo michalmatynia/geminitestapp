@@ -1,0 +1,358 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-04-15T10:54:26.142Z",
+  "track": {
+    "id": "repo-quality-baseline",
+    "title": "Repository quality baseline",
+    "description": "Runs the core read-only quality checks that establish the current repository baseline.",
+    "docs": {
+      "category": "quality",
+      "defaultSelected": true,
+      "commands": [
+        "npm run improvements:audit -- --track repo-quality-baseline",
+        "npm run improvements:classify -- --track repo-quality-baseline",
+        "npm run improvements:plan -- --track repo-quality-baseline"
+      ],
+      "relatedDocs": [
+        "docs/build/general-improvements.md",
+        "docs/metrics/README.md"
+      ],
+      "generatedArtifacts": [
+        "docs/metrics/api-error-sources-latest.md",
+        "docs/metrics/api-error-sources-latest.json"
+      ]
+    },
+    "phases": {
+      "audit": [
+        {
+          "id": "repo-quality-api-error-sources",
+          "title": "Check API error source coverage",
+          "mode": "automatic",
+          "writes": false,
+          "outputs": [
+            "docs/metrics/api-error-sources-latest.json",
+            "docs/metrics/api-error-sources-latest.md"
+          ],
+          "body": {
+            "kind": "script",
+            "script": "check:api-error-sources"
+          }
+        },
+        {
+          "id": "repo-quality-canonical-sitewide",
+          "title": "Check canonical sitewide coverage",
+          "mode": "automatic",
+          "writes": false,
+          "outputs": [],
+          "body": {
+            "kind": "script",
+            "script": "canonical:check:sitewide"
+          }
+        }
+      ],
+      "classify": [
+        {
+          "id": "repo-quality-lint",
+          "title": "Run source lint baseline",
+          "mode": "automatic",
+          "writes": false,
+          "outputs": [],
+          "body": {
+            "kind": "script",
+            "script": "quality:baseline:lint"
+          }
+        },
+        {
+          "id": "repo-quality-typecheck",
+          "title": "Run typecheck baseline",
+          "mode": "automatic",
+          "writes": false,
+          "outputs": [],
+          "body": {
+            "kind": "script",
+            "script": "quality:baseline:typecheck"
+          }
+        }
+      ],
+      "plan": [
+        {
+          "id": "repo-quality-baseline-plan",
+          "title": "Review baseline results and decide follow-up validation",
+          "mode": "manual",
+          "writes": false,
+          "outputs": [],
+          "body": {
+            "kind": "manual",
+            "instructions": [
+              "Use the lint and typecheck outputs to decide whether a wider repo quality sweep is needed.",
+              "Escalate to bazel:smoke or bazel:ci only when the baseline checks indicate broader instability."
+            ]
+          }
+        }
+      ],
+      "dry-run": [
+        {
+          "id": "repo-quality-api-error-sources",
+          "title": "Check API error source coverage",
+          "mode": "automatic",
+          "writes": false,
+          "outputs": [
+            "docs/metrics/api-error-sources-latest.json",
+            "docs/metrics/api-error-sources-latest.md"
+          ],
+          "body": {
+            "kind": "script",
+            "script": "check:api-error-sources"
+          }
+        },
+        {
+          "id": "repo-quality-canonical-sitewide",
+          "title": "Check canonical sitewide coverage",
+          "mode": "automatic",
+          "writes": false,
+          "outputs": [],
+          "body": {
+            "kind": "script",
+            "script": "canonical:check:sitewide"
+          }
+        }
+      ],
+      "apply": [
+        {
+          "id": "repo-quality-baseline-apply",
+          "title": "Apply repo-wide quality fixes manually",
+          "mode": "manual",
+          "writes": true,
+          "outputs": [],
+          "body": {
+            "kind": "manual",
+            "instructions": [
+              "This track is read-only by default.",
+              "Run targeted fix commands explicitly instead of using the improvement runner for blind write-side quality changes."
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "summary": {
+    "trackId": "repo-quality-baseline",
+    "title": "Repository quality baseline",
+    "category": "quality",
+    "defaultSelected": true,
+    "description": "Runs the core read-only quality checks that establish the current repository baseline.",
+    "overallStatus": "failed",
+    "latestGeneratedAt": "2026-04-15T10:54:26.139Z",
+    "docDir": "docs/build/improvements/repo-quality-baseline",
+    "phases": [
+      {
+        "phase": "audit",
+        "generatedAt": "2026-04-15T10:54:08.335Z",
+        "reportPath": "artifacts/improvements/audit-report.json",
+        "executionMode": "executed",
+        "allowWrite": false,
+        "stepCount": 2,
+        "automaticStepCount": 2,
+        "manualStepCount": 0,
+        "passedStepCount": 2,
+        "failedStepCount": 0,
+        "blockedStepCount": 0,
+        "plannedStepCount": 0,
+        "outputs": [
+          "docs/metrics/api-error-sources-latest.json",
+          "docs/metrics/api-error-sources-latest.md"
+        ],
+        "steps": [
+          {
+            "id": "repo-quality-api-error-sources",
+            "title": "Check API error source coverage",
+            "trackId": "repo-quality-baseline",
+            "phase": "audit",
+            "mode": "automatic",
+            "writes": false,
+            "status": "passed",
+            "outputs": [
+              "docs/metrics/api-error-sources-latest.json",
+              "docs/metrics/api-error-sources-latest.md"
+            ],
+            "instructions": [],
+            "script": "check:api-error-sources",
+            "durationMs": 320
+          },
+          {
+            "id": "repo-quality-canonical-sitewide",
+            "title": "Check canonical sitewide coverage",
+            "trackId": "repo-quality-baseline",
+            "phase": "audit",
+            "mode": "automatic",
+            "writes": false,
+            "status": "passed",
+            "outputs": [],
+            "instructions": [],
+            "script": "canonical:check:sitewide",
+            "durationMs": 2398
+          }
+        ],
+        "status": "passed"
+      },
+      {
+        "phase": "classify",
+        "generatedAt": "2026-04-15T10:36:23.126Z",
+        "reportPath": "artifacts/improvements/classify-report.json",
+        "executionMode": "executed",
+        "allowWrite": false,
+        "stepCount": 2,
+        "automaticStepCount": 2,
+        "manualStepCount": 0,
+        "passedStepCount": 0,
+        "failedStepCount": 2,
+        "blockedStepCount": 0,
+        "plannedStepCount": 0,
+        "outputs": [],
+        "steps": [
+          {
+            "id": "repo-quality-lint",
+            "title": "Run source lint baseline",
+            "trackId": "repo-quality-baseline",
+            "phase": "classify",
+            "mode": "automatic",
+            "writes": false,
+            "status": "failed",
+            "outputs": [],
+            "instructions": [],
+            "script": "quality:baseline:lint",
+            "durationMs": 19243
+          },
+          {
+            "id": "repo-quality-typecheck",
+            "title": "Run typecheck baseline",
+            "trackId": "repo-quality-baseline",
+            "phase": "classify",
+            "mode": "automatic",
+            "writes": false,
+            "status": "failed",
+            "outputs": [],
+            "instructions": [],
+            "script": "quality:baseline:typecheck",
+            "durationMs": 76302
+          }
+        ],
+        "status": "failed"
+      },
+      {
+        "phase": "plan",
+        "generatedAt": "2026-04-15T10:36:23.624Z",
+        "reportPath": "artifacts/improvements/plan-report.json",
+        "executionMode": "planned",
+        "allowWrite": false,
+        "stepCount": 1,
+        "automaticStepCount": 0,
+        "manualStepCount": 1,
+        "passedStepCount": 0,
+        "failedStepCount": 0,
+        "blockedStepCount": 0,
+        "plannedStepCount": 0,
+        "outputs": [],
+        "steps": [
+          {
+            "id": "repo-quality-baseline-plan",
+            "title": "Review baseline results and decide follow-up validation",
+            "trackId": "repo-quality-baseline",
+            "phase": "plan",
+            "mode": "manual",
+            "writes": false,
+            "status": "manual",
+            "outputs": [],
+            "instructions": [
+              "Use the lint and typecheck outputs to decide whether a wider repo quality sweep is needed.",
+              "Escalate to bazel:smoke or bazel:ci only when the baseline checks indicate broader instability."
+            ]
+          }
+        ],
+        "status": "manual"
+      },
+      {
+        "phase": "dry-run",
+        "generatedAt": "2026-03-14T08:13:11.213Z",
+        "reportPath": "artifacts/improvements/dry-run-report.json",
+        "executionMode": "executed",
+        "allowWrite": false,
+        "stepCount": 2,
+        "automaticStepCount": 2,
+        "manualStepCount": 0,
+        "passedStepCount": 2,
+        "failedStepCount": 0,
+        "blockedStepCount": 0,
+        "plannedStepCount": 0,
+        "outputs": [
+          "docs/metrics/api-error-sources-latest.json",
+          "docs/metrics/api-error-sources-latest.md"
+        ],
+        "steps": [
+          {
+            "id": "repo-quality-api-error-sources",
+            "title": "Check API error source coverage",
+            "trackId": "repo-quality-baseline",
+            "phase": "dry-run",
+            "mode": "automatic",
+            "writes": false,
+            "status": "passed",
+            "outputs": [
+              "docs/metrics/api-error-sources-latest.json",
+              "docs/metrics/api-error-sources-latest.md"
+            ],
+            "instructions": [],
+            "script": "check:api-error-sources",
+            "durationMs": 211
+          },
+          {
+            "id": "repo-quality-canonical-sitewide",
+            "title": "Check canonical sitewide coverage",
+            "trackId": "repo-quality-baseline",
+            "phase": "dry-run",
+            "mode": "automatic",
+            "writes": false,
+            "status": "passed",
+            "outputs": [],
+            "instructions": [],
+            "script": "canonical:check:sitewide",
+            "durationMs": 1087
+          }
+        ],
+        "status": "passed"
+      },
+      {
+        "phase": "apply",
+        "generatedAt": "2026-04-15T10:54:26.139Z",
+        "reportPath": "artifacts/improvements/apply-report.json",
+        "executionMode": "executed",
+        "allowWrite": true,
+        "stepCount": 1,
+        "automaticStepCount": 0,
+        "manualStepCount": 1,
+        "passedStepCount": 0,
+        "failedStepCount": 0,
+        "blockedStepCount": 0,
+        "plannedStepCount": 0,
+        "outputs": [],
+        "steps": [
+          {
+            "id": "repo-quality-baseline-apply",
+            "title": "Apply repo-wide quality fixes manually",
+            "trackId": "repo-quality-baseline",
+            "phase": "apply",
+            "mode": "manual",
+            "writes": true,
+            "status": "manual",
+            "outputs": [],
+            "instructions": [
+              "This track is read-only by default.",
+              "Run targeted fix commands explicitly instead of using the improvement runner for blind write-side quality changes."
+            ]
+          }
+        ],
+        "status": "manual"
+      }
+    ]
+  }
+}

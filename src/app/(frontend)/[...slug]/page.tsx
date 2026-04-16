@@ -1,4 +1,4 @@
-import { JSX } from 'react';
+import { type JSX } from 'react';
 
 import {
   generateCmsSlugRouteMetadata,
@@ -6,8 +6,6 @@ import {
 } from '../route-helpers/slug-route-helpers';
 
 import type { Metadata } from 'next';
-
-export const revalidate = 3600; // Hourly revalidation for CMS slug pages
 
 interface SlugPageProps {
   params: Promise<{ slug: string[] }>;

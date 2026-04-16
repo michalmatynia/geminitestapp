@@ -12,10 +12,8 @@ import {
 import {
   getObservabilityLoggingControlTypeForSystemLogLevel,
 } from './logging-controls';
-import { isServerLoggingEnabled } from './logging-controls-server';
 import { getActiveOtelContextAttributes } from './otel-context';
 import { emitOtelLogRecord } from './otel-log-bridge';
-import { forwardToCentralizedLogging } from './system-logger-central-forwarding';
 
 
 const MAX_CONTEXT_SIZE = 12000;
@@ -48,6 +46,9 @@ const shouldPersistSystemLogsToDatabase = (env: NodeJS.ProcessEnv = process.env)
 
   return env['NODE_ENV'] !== 'development';
 };
+
+const isProductionBuildPhase = (env: NodeJS.ProcessEnv = process.env): boolean =>
+  env['NEXT_PHASE'] === 'phase-production-build';
 
 type CreateSystemLogFn = (input: {
   level: SystemLogLevel;
@@ -439,12 +440,21 @@ export type SystemLogInput = {
 export async function logSystemEvent(input: SystemLogInput): Promise<void> {
   try {
     const level = input.level ?? 'info';
-    const loggingControlType = getObservabilityLoggingControlTypeForSystemLogLevel(
-      level,
-      Boolean(input.critical)
-    );
-    if (!(await isServerLoggingEnabled(loggingControlType))) {
-      return;
+    const isBrowser = typeof window !== 'undefined';
+
+    if (!isBrowser) {
+      const loggingControlType = getObservabilityLoggingControlTypeForSystemLogLevel(
+        level,
+        Boolean(input.critical)
+      );
+      try {
+        const { isServerLoggingEnabled } = await import('./logging-controls-server');
+        if (!(await isServerLoggingEnabled(loggingControlType))) {
+          return;
+        }
+      } catch (importError) {
+        logSystemLoggerFailure('[system-logger] Failed to load logging controls', importError);
+      }
     }
 
     const errorInfo = input.error ? normalizeErrorInfo(input.error) : null;
@@ -455,7 +465,7 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
     const explicitCategory =
       typeof input.context?.['category'] === 'string' ? input.context['category'] : undefined;
     let category = explicitCategory;
-    if (!category && input.error) {
+    if (!category && input.error && !isBrowser) {
       try {
         const { classifyError } = await import('@/shared/errors/error-classifier');
         category = classifyError(input.error);
@@ -581,7 +591,7 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
       console.log(consoleMsg, context);
     }
 
-    if (typeof window !== 'undefined') {
+    if (isBrowser || isProductionBuildPhase()) {
       return;
     }
 
@@ -619,6 +629,7 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
           userId: input.userId ?? null,
         });
 
+        const { forwardToCentralizedLogging } = await import('./system-logger-central-forwarding');
         const forwardPromise = forwardToCentralizedLogging({
           level: input.level ?? 'info',
           message: input.message,
@@ -686,5 +697,11 @@ export async function logSystemError(input: Omit<SystemLogInput, 'level'>): Prom
 }
 
 export type { CentralLoggingRuntimeStats } from './system-logger-central-forwarding';
-export { getCentralLoggingRuntimeStats } from './system-logger-central-forwarding';
+
+export async function getCentralLoggingRuntimeStats(): Promise<any> {
+  if (typeof window !== 'undefined') return null;
+  const { getCentralLoggingRuntimeStats: getStats } = await import('./system-logger-central-forwarding');
+  return getStats();
+}
+
 export { ErrorSystem } from '../../utils/observability/error-system';

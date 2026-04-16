@@ -1,6 +1,6 @@
 'use client';
 
-import type { HttpConfig } from '@/shared/lib/ai-paths';
+import type { HttpConfig } from '@/shared/contracts/ai-paths';
 import { Input, Textarea } from '@/shared/ui/primitives.public';
 import { SelectSimple, FormField } from '@/shared/ui/forms-and-actions.public';
 

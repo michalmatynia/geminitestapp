@@ -3,12 +3,20 @@ import type { PathConfig } from '@/shared/contracts/ai-paths';
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
 import { materializeStoredTriggerPathConfig } from '@/shared/lib/ai-paths/core/normalization/stored-trigger-path-config';
 import {
-  computeStarterWorkflowGraphHash,
   getAutoSeedStarterWorkflowEntries,
-  materializeStarterWorkflowPathConfig,
+  getStaticRecoveryStarterWorkflowEntryByDefaultPathId,
+  getStaticRecoveryStarterWorkflowEntries,
+  materializeStarterWorkflowRecoveryBundle,
+} from '@/shared/lib/ai-paths/core/starter-workflows/segments/api';
+import {
   resolveStarterWorkflowForPathConfig,
-  type StarterWorkflowTriggerPreset,
+  upgradeStarterWorkflowPathConfig,
 } from '@/shared/lib/ai-paths/core/starter-workflows';
+import { sanitizePathConfig } from '@/shared/lib/ai-paths/core/utils/path-config-sanitization';
+import type {
+  AiPathTemplateRegistryEntry,
+  StarterWorkflowTriggerPreset,
+} from '@/shared/lib/ai-paths/core/starter-workflows/segments/types';
 
 import {
   AI_PATHS_CONFIG_KEY_PREFIX,
@@ -16,12 +24,7 @@ import {
   AI_PATHS_TRIGGER_BUTTONS_KEY,
   type AiPathsSettingRecord,
 } from './settings-store.constants';
-import {
-  parsePathConfigFlags,
-  parsePathConfigMeta,
-  parsePathMetas,
-  parseTriggerButtons,
-} from './settings-store.parsing';
+import { parsePathConfigFlags, parsePathConfigMeta, parsePathMetas, parseTriggerButtons } from './settings-store.parsing';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
@@ -74,6 +77,54 @@ const hasEquivalentStarterTriggerButton = (
     return (button.locations ?? []).some((location) => preset.locations.includes(location));
   });
 
+const areStringArraysEqual = (left: readonly string[], right: readonly string[]): boolean => {
+  if (left.length !== right.length) return false;
+  return left.every((value, index) => value === right[index]);
+};
+
+const areTriggerButtonDisplaysEqual = (
+  left: AiTriggerButtonRecord['display'],
+  right: AiTriggerButtonRecord['display']
+): boolean =>
+  left.label === right.label &&
+  left.icon === right.icon &&
+  left.color === right.color &&
+  left.variant === right.variant &&
+  left.size === right.size &&
+  left.showLabel === right.showLabel &&
+  left.tooltip === right.tooltip;
+
+const buildRefreshedStarterTriggerButton = (
+  button: AiTriggerButtonRecord,
+  preset: StarterWorkflowTriggerPreset,
+  timestamp: string
+): AiTriggerButtonRecord | null => {
+  const nextDisplay = preset.display ?? {
+    label: preset.name,
+    showLabel: true,
+  };
+  const nextMode = preset.mode ?? 'click';
+  const nextLocations = [...preset.locations];
+  const isCurrent =
+    button.name === preset.name &&
+    (button.pathId ?? null) === preset.pathId &&
+    button.mode === nextMode &&
+    areStringArraysEqual(button.locations ?? [], nextLocations) &&
+    areTriggerButtonDisplaysEqual(button.display, nextDisplay);
+
+  if (isCurrent) return null;
+
+  return {
+    ...button,
+    name: preset.name,
+    pathId: preset.pathId,
+    locations: nextLocations,
+    mode: nextMode,
+    display: nextDisplay,
+    updatedAt: timestamp,
+  };
+};
+
 const parsePathConfigRecord = (value: string): PathConfig | null => {
   try {
     const parsed = JSON.parse(value) as unknown;
@@ -85,87 +136,56 @@ const parsePathConfigRecord = (value: string): PathConfig | null => {
   }
 };
 
+const toTimestampOrNull = (value: unknown): string | null =>
+  typeof value === 'string' && value.trim().length > 0 ? value : null;
+
+const backfillStarterRefreshTimestamps = (config: PathConfig): PathConfig => {
+  const fallbackTimestamp = toTimestampOrNull(config.updatedAt) ?? new Date().toISOString();
+
+  return {
+    ...config,
+    updatedAt: toTimestampOrNull(config.updatedAt) ?? fallbackTimestamp,
+    nodes: (config.nodes ?? []).map((node) => {
+      const createdAt = toTimestampOrNull(node.createdAt) ?? fallbackTimestamp;
+      return {
+        ...node,
+        createdAt,
+        updatedAt: toTimestampOrNull(node.updatedAt) ?? createdAt,
+      };
+    }),
+    edges: (config.edges ?? []).map((edge) => {
+      const createdAt = toTimestampOrNull(edge.createdAt) ?? fallbackTimestamp;
+      return {
+        ...edge,
+        createdAt,
+        updatedAt: toTimestampOrNull(edge.updatedAt) ?? createdAt,
+      };
+    }),
+  };
+};
+
 const buildRefreshedStarterWorkflowConfig = (config: PathConfig): PathConfig | null => {
   const resolution = resolveStarterWorkflowForPathConfig(config);
   if (!resolution) return null;
 
-  const currentHash = computeStarterWorkflowGraphHash(config);
-  const canonicalHashes = new Set(resolution.entry.starterLineage.canonicalGraphHashes);
-  if (!canonicalHashes.has(currentHash)) return null;
+  const upgraded = upgradeStarterWorkflowPathConfig(config);
+  if (!upgraded.changed) return null;
 
-  const latest = materializeStarterWorkflowPathConfig(resolution.entry, {
-    pathId: config.id,
-    name: typeof config.name === 'string' && config.name.trim().length > 0 ? config.name : undefined,
-    description:
-      typeof config.description === 'string' && config.description.trim().length > 0
-        ? config.description
-        : undefined,
-    isActive: config.isActive,
-    isLocked: config.isLocked,
-    seededDefault:
-      config.id === resolution.entry.seedPolicy?.defaultPathId &&
-      resolution.entry.seedPolicy?.autoSeed === true,
-    updatedAt: config.updatedAt,
-  });
-
-  const currentNodesById = new Map((config.nodes ?? []).map((node) => [node.id, node] as const));
-  const currentEdgesById = new Map((config.edges ?? []).map((edge) => [edge.id, edge] as const));
-
-  const nextConfig: PathConfig = {
-    ...config,
-    ...latest,
-    id: config.id,
-    name: typeof config.name === 'string' && config.name.trim().length > 0 ? config.name : latest.name,
-    description:
-      typeof config.description === 'string' && config.description.trim().length > 0
-        ? config.description
-        : latest.description,
-    isActive: config.isActive ?? latest.isActive,
-    isLocked: config.isLocked ?? latest.isLocked,
-    updatedAt: config.updatedAt ?? latest.updatedAt,
-    nodes: (latest.nodes ?? []).map((node) => {
-      const currentNode = currentNodesById.get(node.id);
-      return {
-        ...node,
-        position: currentNode?.position ?? node.position,
-        data: currentNode?.data ?? node.data,
-        createdAt: currentNode?.createdAt ?? node.createdAt,
-        updatedAt: currentNode?.updatedAt ?? node.updatedAt,
-      };
-    }),
-    edges: (latest.edges ?? []).map((edge) => {
-      const currentEdge = currentEdgesById.get(edge.id);
-      return {
-        ...edge,
-        createdAt: currentEdge?.createdAt ?? edge.createdAt,
-        updatedAt: currentEdge?.updatedAt ?? edge.updatedAt,
-        data: currentEdge?.data ?? edge.data,
-      };
-    }),
-    extensions:
-      config.extensions || latest.extensions
-        ? {
-          ...(config.extensions ?? {}),
-          ...(latest.extensions ?? {}),
-        }
-        : undefined,
-    uiState: config.uiState ?? latest.uiState,
-  };
-
-  return JSON.stringify(nextConfig) === JSON.stringify(config) ? null : nextConfig;
+  const canonicalized = materializeStoredTriggerPathConfig({
+    pathId: upgraded.config.id,
+    rawConfig: JSON.stringify(backfillStarterRefreshTimestamps(upgraded.config)),
+    fallbackName: upgraded.config.name,
+    applyStarterWorkflowUpgrade: false,
+    allowStaticRecoveryFallback: false,
+  }).config;
+  return sanitizePathConfig(canonicalized);
 };
 
-const DEFAULT_STARTER_PATH_IDS = new Set(
-  getAutoSeedStarterWorkflowEntries()
-    .map((entry) => entry.seedPolicy?.defaultPathId ?? null)
-    .filter((pathId): pathId is string => typeof pathId === 'string' && pathId.trim().length > 0)
-);
-
-const tryRepairBrokenSeededStarterConfig = (args: {
+const tryRepairBrokenRecoverableStarterConfig = (args: {
   pathId: string;
   rawConfig: string;
 }): PathConfig | null => {
-  if (!DEFAULT_STARTER_PATH_IDS.has(args.pathId)) {
+  if (!getStaticRecoveryStarterWorkflowEntryByDefaultPathId(args.pathId)) {
     return null;
   }
   try {
@@ -173,8 +193,10 @@ const tryRepairBrokenSeededStarterConfig = (args: {
       pathId: args.pathId,
       rawConfig: args.rawConfig,
       fallbackName: args.pathId,
+      applyStarterWorkflowUpgrade: true,
+      allowStaticRecoveryFallback: true,
     });
-    return resolved.changed ? resolved.config : null;
+    return resolved.changed ? sanitizePathConfig(resolved.config) : null;
   } catch (error) {
     void ErrorSystem.captureException(error);
     return null;
@@ -182,36 +204,17 @@ const tryRepairBrokenSeededStarterConfig = (args: {
 };
 
 export const countPendingStarterWorkflowDefaults = (records: AiPathsSettingRecord[]): number => {
-  if (records.length === 0) return getAutoSeedStarterWorkflowEntries().length;
-
-  const indexEntry = records.find((record) => record.key === AI_PATHS_INDEX_KEY);
-  const metas = parsePathMetas(indexEntry?.value);
-  const triggerButtons = parseTriggerButtons(
-    records.find((record) => record.key === AI_PATHS_TRIGGER_BUTTONS_KEY)?.value
-  );
-
-  return getAutoSeedStarterWorkflowEntries().reduce((count, entry) => {
-    const defaultPathId = entry.seedPolicy?.defaultPathId;
-    if (!defaultPathId) return count;
-    const configKey = `${AI_PATHS_CONFIG_KEY_PREFIX}${defaultPathId}`;
-    const existingConfig = records.find((record) => record.key === configKey);
-    const hasConfig = Boolean(existingConfig);
-    const hasIndexMeta = metas.some((meta) => meta.id === defaultPathId);
-    const shouldSeedButtons = shouldSeedStarterTriggerButtons(
-      existingConfig?.value,
-      entry.seedPolicy?.isActive
-    );
-    const missingButtons = shouldSeedButtons
-      ? (entry.triggerButtonPresets ?? []).some(
-        (preset) => !hasEquivalentStarterTriggerButton(triggerButtons, preset)
-      )
-      : false;
-    return count + Number(!hasConfig) + Number(!hasIndexMeta) + Number(missingButtons);
-  }, 0);
+  return ensureStarterWorkflowEntries(records, getAutoSeedStarterWorkflowEntries()).affectedCount;
 };
 
-export const ensureStarterWorkflowDefaults = (
+export const countPendingStaticStarterWorkflowBundle = (
   records: AiPathsSettingRecord[]
+): number =>
+  ensureStarterWorkflowEntries(records, getStaticRecoveryStarterWorkflowEntries()).affectedCount;
+
+const ensureStarterWorkflowEntries = (
+  records: AiPathsSettingRecord[],
+  entries: AiPathTemplateRegistryEntry[]
 ): { nextRecords: AiPathsSettingRecord[]; affectedCount: number } => {
   const now = new Date().toISOString();
   const nextRecords = records.map((record) => ({ ...record }));
@@ -245,8 +248,19 @@ export const ensureStarterWorkflowDefaults = (
     )
   );
   const nextButtons = parseTriggerButtons(triggerButtonsEntry.value);
+  const bundleScope = entries.every((entry) => entry.seedPolicy?.autoSeed === true)
+    ? 'auto_seed'
+    : 'static_recovery';
+  const bundle = materializeStarterWorkflowRecoveryBundle(bundleScope);
+  const bundleConfigByPathId = new Map(
+    bundle.pathConfigs.map((config) => [config.id, config] as const)
+  );
+  const bundleMetaByPathId = new Map(bundle.pathMetas.map((meta) => [meta.id, meta] as const));
+  const bundleTriggerButtonsById = new Map(
+    bundle.triggerButtons.map((button) => [button.id, button] as const)
+  );
 
-  getAutoSeedStarterWorkflowEntries().forEach((entry) => {
+  entries.forEach((entry) => {
     const defaultPathId = entry.seedPolicy?.defaultPathId;
     if (!defaultPathId) return;
 
@@ -255,29 +269,32 @@ export const ensureStarterWorkflowDefaults = (
     const hasConfig = Boolean(existingConfig);
     let currentConfigRaw = existingConfig?.value;
     if (!hasConfig) {
-      const raw = JSON.stringify(
-        materializeStarterWorkflowPathConfig(entry, {
-          pathId: defaultPathId,
-          seededDefault: true,
-        })
-      );
+      const canonicalConfig = bundleConfigByPathId.get(defaultPathId);
+      if (!canonicalConfig) return;
+      const raw = JSON.stringify(canonicalConfig);
       nextRecords.push({ key: configKey, value: raw });
       currentConfigRaw = raw;
       affectedCount += 1;
-      const meta = parsePathConfigMeta(defaultPathId, raw);
+      const meta = bundleMetaByPathId.get(defaultPathId) ?? parsePathConfigMeta(defaultPathId, raw);
       if (meta && !nextMetas.some((current) => current.id === meta.id)) {
         nextMetas.push(meta);
         affectedCount += 1;
       }
     } else if (existingConfig) {
       if (!nextMetas.some((meta) => meta.id === defaultPathId)) {
-        const meta = parsePathConfigMeta(defaultPathId, existingConfig.value);
+        const meta =
+          parsePathConfigMeta(defaultPathId, existingConfig.value) ??
+          bundleMetaByPathId.get(defaultPathId) ??
+          null;
         if (meta) {
           nextMetas.push(meta);
           affectedCount += 1;
         }
       } else {
-        const meta = parsePathConfigMeta(defaultPathId, existingConfig.value);
+        const meta =
+          parsePathConfigMeta(defaultPathId, existingConfig.value) ??
+          bundleMetaByPathId.get(defaultPathId) ??
+          null;
         if (meta) {
           const index = nextMetas.findIndex((current) => current.id === defaultPathId);
           if (index >= 0) {
@@ -292,8 +309,25 @@ export const ensureStarterWorkflowDefaults = (
     }
 
     (entry.triggerButtonPresets ?? []).forEach((preset) => {
+      const existingStarterIndex = nextButtons.findIndex((button) => button.id === preset.id);
+      if (existingStarterIndex >= 0) {
+        const existingStarterButton = nextButtons[existingStarterIndex];
+        if (!existingStarterButton) return;
+        const refreshed = buildRefreshedStarterTriggerButton(
+          existingStarterButton,
+          preset,
+          now
+        );
+        if (refreshed) {
+          nextButtons[existingStarterIndex] = refreshed;
+          affectedCount += 1;
+        }
+        return;
+      }
       if (hasEquivalentStarterTriggerButton(nextButtons, preset)) return;
-      nextButtons.push(toTriggerButtonRecord(preset, now));
+      nextButtons.push(
+        bundleTriggerButtonsById.get(preset.id) ?? toTriggerButtonRecord(preset, now)
+      );
       affectedCount += 1;
     });
   });
@@ -302,6 +336,16 @@ export const ensureStarterWorkflowDefaults = (
   triggerButtonsEntry.value = serializeAiTriggerButtonsRaw(nextButtons);
   return { nextRecords, affectedCount };
 };
+
+export const ensureStarterWorkflowDefaults = (
+  records: AiPathsSettingRecord[]
+): { nextRecords: AiPathsSettingRecord[]; affectedCount: number } =>
+  ensureStarterWorkflowEntries(records, getAutoSeedStarterWorkflowEntries());
+
+export const restoreStaticStarterWorkflowBundle = (
+  records: AiPathsSettingRecord[]
+): { nextRecords: AiPathsSettingRecord[]; affectedCount: number } =>
+  ensureStarterWorkflowEntries(records, getStaticRecoveryStarterWorkflowEntries());
 
 export const countPendingStarterWorkflowConfigRefreshes = (
   records: AiPathsSettingRecord[]
@@ -318,24 +362,24 @@ export const refreshStarterWorkflowConfigs = (
     const pathId = record.key.replace(AI_PATHS_CONFIG_KEY_PREFIX, '');
     const parsedConfig = parsePathConfigRecord(record.value);
     if (!parsedConfig) {
-      const repairedSeededConfig = tryRepairBrokenSeededStarterConfig({
+      const repairedStarterConfig = tryRepairBrokenRecoverableStarterConfig({
         pathId,
         rawConfig: record.value,
       });
-      if (!repairedSeededConfig) return;
-      record.value = JSON.stringify(repairedSeededConfig);
+      if (!repairedStarterConfig) return;
+      record.value = JSON.stringify(repairedStarterConfig);
       affectedCount += 1;
       return;
     }
 
     const refreshed = buildRefreshedStarterWorkflowConfig(parsedConfig);
     if (!refreshed) {
-      const repairedSeededConfig = tryRepairBrokenSeededStarterConfig({
+      const repairedStarterConfig = tryRepairBrokenRecoverableStarterConfig({
         pathId,
         rawConfig: record.value,
       });
-      if (!repairedSeededConfig) return;
-      record.value = JSON.stringify(repairedSeededConfig);
+      if (!repairedStarterConfig) return;
+      record.value = JSON.stringify(repairedStarterConfig);
       affectedCount += 1;
       return;
     }

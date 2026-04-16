@@ -1,4 +1,4 @@
-import { ObjectId, type WithId, type Filter, type Document } from 'mongodb';
+import { type ObjectId, type WithId, type Filter, type Document } from 'mongodb';
 
 import { isBaseIntegrationSlug } from '@/features/integrations/constants/slugs';
 import { badRequestError, conflictError } from '@/shared/errors/app-error';
@@ -18,10 +18,15 @@ import {
   normalizeOptionalConnectionId,
   toIntegrationRecord,
   toConnectionRecord,
-  ConnectionDeleteOptions,
-  ConnectionDependencyCounts,
+  type ConnectionDeleteOptions,
+  type ConnectionDependencyCounts,
 } from './common';
-import { IntegrationRecord, IntegrationConnectionRecord, IntegrationRepository } from '@/shared/contracts/integrations/repositories';
+import type {
+  IntegrationConnectionRecord,
+  IntegrationConnectionUpdateInput,
+  IntegrationRecord,
+  IntegrationRepository,
+} from '@/shared/contracts/integrations/repositories';
 
 type IntegrationDocument = {
   name: string;
@@ -36,12 +41,15 @@ type IntegrationConnectionDocument = {
   username: string;
   password: string;
   traderaBrowserMode?: 'builtin' | 'scripted';
+  traderaCategoryStrategy?: 'mapper' | 'top_suggested';
   playwrightStorageState?: string | null;
   playwrightStorageStateUpdatedAt?: Date | null;
   playwrightHeadless?: boolean;
   playwrightSlowMo?: number;
   playwrightTimeout?: number;
   playwrightNavigationTimeout?: number;
+  playwrightLocale?: string;
+  playwrightTimezoneId?: string;
   playwrightHumanizeMouse?: boolean;
   playwrightMouseJitter?: number;
   playwrightClickDelayMin?: number;
@@ -54,6 +62,11 @@ type IntegrationConnectionDocument = {
   playwrightProxyServer?: string;
   playwrightProxyUsername?: string;
   playwrightProxyPassword?: string | null;
+  playwrightProxySessionAffinity?: boolean;
+  playwrightProxySessionMode?: string;
+  playwrightProxyProviderPreset?: string;
+  playwrightBrowser?: string;
+  playwrightIdentityProfile?: string;
   playwrightEmulateDevice?: boolean;
   playwrightDeviceName?: string;
   playwrightPersonaId?: string | null;
@@ -62,6 +75,13 @@ type IntegrationConnectionDocument = {
   playwrightImportBaseUrl?: string | null;
   playwrightImportCaptureRoutesJson?: string | null;
   playwrightFieldMapperJson?: string | null;
+  scanner1688StartUrl?: string | null;
+  scanner1688LoginMode?: 'session_required' | 'manual_login';
+  scanner1688DefaultSearchMode?: 'local_image' | 'image_url_fallback';
+  scanner1688CandidateResultLimit?: number | null;
+  scanner1688MinimumCandidateScore?: number | null;
+  scanner1688MaxExtractedImages?: number | null;
+  scanner1688AllowUrlImageSearchFallback?: boolean | null;
   allegroAccessToken?: string | null;
   allegroRefreshToken?: string | null;
   allegroTokenType?: string | null;
@@ -90,6 +110,8 @@ type IntegrationConnectionDocument = {
   traderaApiUserId?: number;
   traderaApiToken?: string;
   traderaApiTokenUpdatedAt?: Date | null;
+  traderaParameterMapperRulesJson?: string | null;
+  traderaParameterMapperCatalogJson?: string | null;
   createdAt: Date;
   updatedAt: Date | null;
 };
@@ -422,7 +444,7 @@ export function getMongoIntegrationRepository(): IntegrationRepository {
 
     async updateConnection(
       id: string,
-      input: Partial<IntegrationConnectionRecord>
+      input: IntegrationConnectionUpdateInput
     ): Promise<IntegrationConnectionRecord> {
       const db = await getMongoDb();
       const now = new Date();

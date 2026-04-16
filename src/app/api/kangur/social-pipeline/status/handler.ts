@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import type { Job, Queue } from 'bullmq';
 
 import {
@@ -16,7 +16,7 @@ export async function GET_handler(
 ): Promise<Response> {
   const managed = getKangurSocialPipelineQueue();
   const now = Date.now();
-  let status = await managed.getHealthStatus().catch(async () => {
+  const status = await managed.getHealthStatus().catch(async () => {
     const redisConfigured = isRedisAvailable();
     const redisReachable = redisConfigured ? await isRedisReachable() : false;
     return {

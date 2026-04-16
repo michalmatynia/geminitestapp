@@ -1,7 +1,9 @@
 'use client';
 
-import { useParams, useRouter } from 'next/navigation';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'nextjs-toploader/app';
+import { useParams } from 'next/navigation';
+import type React from 'react';
+import { startTransition, useCallback, useEffect, useMemo, useState } from 'react';
 
 import type { CountryOption } from '@/shared/contracts/internationalization';
 import { useCountries } from '@/shared/hooks/use-i18n-queries';
@@ -140,7 +142,9 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
     };
 
     await persistDatabase(nextDatabase, 'Person updated.');
-    router.push('/admin/filemaker');
+    startTransition(() => {
+      router.push('/admin/filemaker');
+    });
   }, [database, person, personDraft, persistDatabase, router]);
 
   const handleExtractEmails = useCallback(async (): Promise<void> => {

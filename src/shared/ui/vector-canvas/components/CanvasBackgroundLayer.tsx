@@ -13,7 +13,7 @@ export function CanvasBackgroundLayer(): React.JSX.Element | null {
       style={{
         width: `${canvasRenderSize.width}px`,
         height: `${canvasRenderSize.height}px`,
-        backgroundColor: backgroundColor,
+        backgroundColor,
       }}
     />
   );

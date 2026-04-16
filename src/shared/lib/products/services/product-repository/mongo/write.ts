@@ -1,12 +1,18 @@
 import { randomUUID } from 'crypto';
 
-import { Collection, UpdateFilter, WithId } from 'mongodb';
+import { type Collection, type UpdateFilter, type WithId } from 'mongodb';
 
-import { ProductCreateInput, ProductUpdateInput } from '@/shared/contracts/products/io';
-import { ProductRecord, ProductWithImages } from '@/shared/contracts/products/product';
-
-import { ProductDocument, toProductResponse } from '../mongo-product-repository-mappers';
+import { type ProductCreateInput, type ProductUpdateInput } from '@/shared/contracts/products/io';
 import {
+  type ProductRecord,
+  type ProductWithImages,
+  normalizeProductNotes,
+  normalizeProductMarketplaceContentOverrides,
+} from '@/shared/contracts/products/product';
+
+import { type ProductDocument, toProductResponse } from '../mongo-product-repository-mappers';
+import {
+  normalizeProductCustomFieldValues,
   buildProductIdFilter,
   normalizeProductParameterValues,
 } from '../mongo-product-repository.helpers';
@@ -47,6 +53,7 @@ export const mongoProductWriteImpl = {
       weight: data.weight ?? null,
       length: data.length ?? null,
       published: true,
+      archived: data.archived ?? false,
       categoryId: data.categoryId || null,
       shippingGroupId: data.shippingGroupId || null,
       catalogId: storageInput.catalogId || 'default',
@@ -56,7 +63,12 @@ export const mongoProductWriteImpl = {
       catalogs: [],
       tags: [],
       producers: [],
+      customFields: normalizeProductCustomFieldValues(data.customFields),
       parameters: normalizeProductParameterValues(data.parameters),
+      marketplaceContentOverrides: normalizeProductMarketplaceContentOverrides(
+        data.marketplaceContentOverrides
+      ),
+      notes: normalizeProductNotes(data.notes),
       imageLinks: data.imageLinks || [],
       imageBase64s: data.imageBase64s || [],
       noteIds: data.noteIds || [],
@@ -121,14 +133,26 @@ export const mongoProductWriteImpl = {
     if (data.sizeWidth !== undefined) set['sizeWidth'] = data.sizeWidth;
     if (data.weight !== undefined) set['weight'] = data.weight;
     if (data.length !== undefined) set['length'] = data.length;
+    if (data.archived !== undefined) set['archived'] = data.archived;
     if (data.categoryId !== undefined) {
       set['categoryId'] = data.categoryId;
     }
     if (data.shippingGroupId !== undefined) {
       set['shippingGroupId'] = data.shippingGroupId;
     }
+    if (data.customFields !== undefined) {
+      set['customFields'] = normalizeProductCustomFieldValues(data.customFields);
+    }
     if (data.parameters !== undefined)
       set['parameters'] = normalizeProductParameterValues(data.parameters);
+    if (data.marketplaceContentOverrides !== undefined) {
+      set['marketplaceContentOverrides'] = normalizeProductMarketplaceContentOverrides(
+        data.marketplaceContentOverrides
+      );
+    }
+    if (data.notes !== undefined) {
+      set['notes'] = normalizeProductNotes(data.notes);
+    }
     if (data.imageLinks !== undefined) set['imageLinks'] = data.imageLinks;
     if (data.imageBase64s !== undefined) set['imageBase64s'] = data.imageBase64s;
     if (data.noteIds !== undefined) set['noteIds'] = data.noteIds;
@@ -165,6 +189,29 @@ export const mongoProductWriteImpl = {
       count += 1;
     }
     return count;
+  },
+
+  async bulkSetArchived(
+    productIds: string[],
+    archived: boolean,
+    getCollection: () => Promise<Collection<ProductDocument>>
+  ): Promise<number> {
+    if (productIds.length === 0) return 0;
+
+    const collection = await getCollection();
+    const result = await collection.updateMany(
+      {
+        $or: [{ id: { $in: productIds } }, { _id: { $in: productIds } }],
+      },
+      {
+        $set: {
+          archived,
+          updatedAt: new Date(),
+        },
+      } as UpdateFilter<ProductDocument>
+    );
+
+    return result.modifiedCount;
   },
 
   async duplicateProduct(

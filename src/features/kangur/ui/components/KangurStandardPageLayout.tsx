@@ -1,3 +1,14 @@
+/*
+ * Kangur standard page layout
+ *
+ * Purpose: Provide a consistent page shell for Kangur pages. It composes the
+ * page shell, navigation and container primitives and resolves skip-link
+ * targets. Accessibility notes:
+ * - Ensure the resolved container exposes a single <main> landmark per page.
+ * - Prefer using skipLinkTargetId and skipLinkLabel props to wire skip links
+ *   from the global layout to the page content.
+ * - Keep interactive focus management inside the shell primitives, not here.
+ */
 import type { ReactNode } from 'react';
 
 import { LazyKangurDocsTooltipEnhancer } from '@/features/kangur/ui/components/LazyKangurDocsTooltipEnhancer';

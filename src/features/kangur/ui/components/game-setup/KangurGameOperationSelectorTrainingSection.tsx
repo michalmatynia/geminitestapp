@@ -2,26 +2,31 @@ import React from 'react';
 import { translateRecommendationWithFallback } from '@/features/kangur/ui/services/recommendation-i18n';
 import { KangurPageIntroCard } from '@/features/kangur/ui/components/lesson-library/KangurPageIntroCard';
 import { KangurTreningWordmark } from '@/features/kangur/ui/components/wordmarks/KangurTreningWordmark';
-import type { KangurGameOperationSelectorTrainingSectionProps } from './KangurGameOperationSelectorWidget.types';
 import KangurGameSetupMomentumCard from './KangurGameSetupMomentumCard';
 import { KangurTrainingSetupPanel } from './KangurTrainingSetupPanel';
 import { KangurGameOperationPracticeAssignmentBanner } from './KangurGameOperationPracticeAssignmentBanner';
+import { useKangurGameOperationSelector } from './KangurGameOperationSelectorContext';
 
 export function KangurGameOperationSelectorTrainingSection({
-  basePath,
-  fallbackCopy,
-  gamePageTranslations,
-  handleHome,
-  handleStartTraining,
-  locale,
-  mixedPracticeAssignment,
-  normalizedProgress,
-  showMathSections,
-  suggestedTraining,
   trainingSectionRef,
-  trainingSetupTitle,
-  trainingWordmarkLabel,
-}: KangurGameOperationSelectorTrainingSectionProps): React.JSX.Element | null {
+}: {
+  trainingSectionRef: React.RefObject<HTMLElement | null>;
+}): React.JSX.Element | null {
+  const {
+    basePath,
+    fallbackCopy,
+    gamePageTranslations,
+    handleHome,
+    handleStartTraining,
+    locale,
+    mixedPracticeAssignment,
+    normalizedProgress,
+    showMathSections,
+    suggestedTraining,
+    trainingSetupTitle,
+    trainingWordmarkLabel,
+  } = useKangurGameOperationSelector();
+
   if (!showMathSections) {
     return null;
   }

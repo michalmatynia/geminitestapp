@@ -45,6 +45,10 @@ export const registerLogHandler = (handler: LogHandler): void => {
   handlers.push(handler);
 };
 
+const extractPart = (val: string | null | undefined, prefix: string): string => {
+  return val !== undefined && val !== null && val.length > 0 ? ` [${prefix}:${val}]` : '';
+};
+
 const formatMessage = (
   level: LogLevel,
   message: string,
@@ -52,15 +56,13 @@ const formatMessage = (
 ): string => {
   const timestamp = new Date().toISOString();
   const requestContext = readRequestContext();
-  const requestId = requestContext?.requestId ? ` [RID:${requestContext.requestId}]` : '';
-  const traceId = requestContext?.traceId ? ` [TID:${requestContext.traceId}]` : '';
-  const correlationId = requestContext?.correlationId
-    ? ` [CID:${requestContext.correlationId}]`
-    : '';
-  const userId = requestContext?.userId ? ` [UID:${requestContext.userId}]` : '';
+  const rid = extractPart(requestContext?.requestId, 'RID');
+  const tid = extractPart(requestContext?.traceId, 'TID');
+  const cid = extractPart(requestContext?.correlationId, 'CID');
+  const uid = extractPart(requestContext?.userId, 'UID');
 
   // For human readable console output while maintaining parsability
-  return `[${timestamp}] [${level.toUpperCase()}]${requestId}${traceId}${correlationId}${userId} ${message}`;
+  return `[${timestamp}] [${level.toUpperCase()}]${rid}${tid}${cid}${uid} ${message}`;
 };
 
 const SERVICE_PREFIX_PATTERN = /^\[([A-Za-z0-9_.:-]+)\]/;
@@ -68,69 +70,61 @@ const SERVICE_PREFIX_PATTERN = /^\[([A-Za-z0-9_.:-]+)\]/;
 const readServiceFromMessage = (message: string): string | undefined => {
   const match = message.match(SERVICE_PREFIX_PATTERN);
   const value = match?.[1]?.trim();
-  return value && value.length > 0 ? value : undefined;
+  return value !== undefined && value.length > 0 ? value : undefined;
 };
+
+const hasNonEmptyString = (value: unknown): value is string =>
+  typeof value === 'string' && value.trim().length > 0;
+
+const withDefaultStringContext = (
+  context: Record<string, unknown>,
+  key: string,
+  value: unknown
+): Record<string, unknown> =>
+  hasNonEmptyString(value) && !hasNonEmptyString(context[key])
+    ? { ...context, [key]: value }
+    : context;
+
+const REQUEST_CONTEXT_KEYS = ['requestId', 'traceId', 'correlationId', 'userId'] as const;
+const OTEL_CONTEXT_KEYS = ['otelTraceId', 'otelSpanId', 'otelTraceFlags'] as const;
+
+const applyRequestContext = (
+  context: Record<string, unknown>,
+  requestContext: RequestContextSnapshot | undefined
+): Record<string, unknown> => {
+  if (requestContext === undefined) return context;
+  return REQUEST_CONTEXT_KEYS.reduce(
+    (nextContext, key) => withDefaultStringContext(nextContext, key, requestContext[key]),
+    context
+  );
+};
+
+const applyOtelContext = (
+  context: Record<string, unknown>,
+  otelContext: Record<string, unknown>
+): Record<string, unknown> =>
+  OTEL_CONTEXT_KEYS.reduce(
+    (nextContext, key) => withDefaultStringContext(nextContext, key, otelContext[key]),
+    context
+  );
 
 const normalizeContext = (
   message: string,
   context?: Record<string, unknown>
 ): Record<string, unknown> => {
-  const requestContext = readRequestContext();
-  const otelContext = getActiveOtelContextAttributes();
-  const normalized: Record<string, unknown> = {
+  let normalized: Record<string, unknown> = {
     ...(context ?? {}),
   };
 
-  if (typeof normalized['service'] !== 'string' || normalized['service'].trim().length === 0) {
+  if (!hasNonEmptyString(normalized['service'])) {
     const inferredService = readServiceFromMessage(message);
-    if (inferredService) {
-      normalized['service'] = inferredService;
+    if (inferredService !== undefined && inferredService.length > 0) {
+      normalized = { ...normalized, service: inferredService };
     }
   }
-  if (
-    requestContext?.requestId &&
-    (typeof normalized['requestId'] !== 'string' || normalized['requestId'].trim().length === 0)
-  ) {
-    normalized['requestId'] = requestContext.requestId;
-  }
-  if (
-    requestContext?.traceId &&
-    (typeof normalized['traceId'] !== 'string' || normalized['traceId'].trim().length === 0)
-  ) {
-    normalized['traceId'] = requestContext.traceId;
-  }
-  if (
-    requestContext?.correlationId &&
-    (typeof normalized['correlationId'] !== 'string' ||
-      normalized['correlationId'].trim().length === 0)
-  ) {
-    normalized['correlationId'] = requestContext.correlationId;
-  }
-  if (
-    requestContext?.userId &&
-    (typeof normalized['userId'] !== 'string' || normalized['userId'].trim().length === 0)
-  ) {
-    normalized['userId'] = requestContext.userId;
-  }
-  if (
-    otelContext.otelTraceId &&
-    (typeof normalized['otelTraceId'] !== 'string' || normalized['otelTraceId'].trim().length === 0)
-  ) {
-    normalized['otelTraceId'] = otelContext.otelTraceId;
-  }
-  if (
-    otelContext.otelSpanId &&
-    (typeof normalized['otelSpanId'] !== 'string' || normalized['otelSpanId'].trim().length === 0)
-  ) {
-    normalized['otelSpanId'] = otelContext.otelSpanId;
-  }
-  if (
-    otelContext.otelTraceFlags &&
-    (typeof normalized['otelTraceFlags'] !== 'string' ||
-      normalized['otelTraceFlags'].trim().length === 0)
-  ) {
-    normalized['otelTraceFlags'] = otelContext.otelTraceFlags;
-  }
+
+  normalized = applyRequestContext(normalized, readRequestContext());
+  normalized = applyOtelContext(normalized, getActiveOtelContextAttributes());
 
   return normalized;
 };
@@ -139,6 +133,7 @@ export const logger = {
   info: (message: string, context?: Record<string, unknown>): void => {
     const normalizedContext = normalizeContext(message, context);
     if (handlers.length === 0) {
+      // eslint-disable-next-line no-console
       console.info(formatMessage('info', message, normalizedContext), normalizedContext);
     }
     handlers.forEach((h) => h('info', message, undefined, normalizedContext));
@@ -146,6 +141,7 @@ export const logger = {
   warn: (message: string, context?: Record<string, unknown>): void => {
     const normalizedContext = normalizeContext(message, context);
     if (handlers.length === 0) {
+      // eslint-disable-next-line no-console
       console.warn(formatMessage('warn', message, normalizedContext), normalizedContext);
     }
     handlers.forEach((h) => h('warn', message, undefined, normalizedContext));
@@ -158,6 +154,7 @@ export const logger = {
     };
 
     if (handlers.length === 0) {
+      // eslint-disable-next-line no-console
       console.error(formatMessage('error', message, combinedContext), combinedContext);
     }
 
@@ -174,8 +171,8 @@ export const logger = {
           message,
           ...combinedContext,
         });
-      } catch (error) {
-        reportObservabilityInternalError(error, {
+      } catch (fallbackError) {
+        reportObservabilityInternalError(fallbackError, {
           source: 'shared.logger',
           action: 'forwardClientError',
           message,
@@ -186,6 +183,7 @@ export const logger = {
   log: (message: string, context?: Record<string, unknown>): void => {
     const normalizedContext = normalizeContext(message, context);
     if (handlers.length === 0) {
+      // eslint-disable-next-line no-console
       console.log(formatMessage('log', message, normalizedContext), normalizedContext);
     }
     handlers.forEach((h) => h('log', message, undefined, normalizedContext));

@@ -3,8 +3,8 @@
 import Image from 'next/image';
 
 import { extractImageUrls, formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
-import type { AiNode, Edge } from '@/shared/lib/ai-paths';
-import { createViewerOutputs, formatRuntimeValue } from '@/shared/lib/ai-paths';
+import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
+import { createViewerOutputs, formatRuntimeValue } from '@/shared/lib/ai-paths/core/utils';
 import { Button, Textarea } from '@/shared/ui/primitives.public';
 import { FormField } from '@/shared/ui/forms-and-actions.public';
 

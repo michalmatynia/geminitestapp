@@ -205,6 +205,23 @@ it('shows the login action and hides create-account when the user is not authent
   expect(screen.queryByRole('link', { name: /profil/i })).toBeNull();
 });
 
+it('does not render a separate guest-name submit button while editing', () => {
+  render(
+    <KangurPrimaryNavigation
+      basePath='/kangur'
+      currentPage='Game'
+      guestPlayerName=''
+      isAuthenticated={false}
+      onGuestPlayerNameChange={vi.fn()}
+      onLogin={vi.fn()}
+      onLogout={vi.fn()}
+    />
+  );
+
+  expect(screen.getByPlaceholderText('Wpisz imię gracza...')).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Imię gracza' })).toBeNull();
+});
+
 it('registers tutor anchors on the anonymous login action only', () => {
   render(
     <KangurTutorAnchorProvider>

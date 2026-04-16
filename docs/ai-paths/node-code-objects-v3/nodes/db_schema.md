@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-04-05'
+last_reviewed: '2026-04-12'
 status: 'generated'
 doc_type: 'generated'
 scope: 'feature:ai-paths'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Database Schema Migration Sheet (`db_schema`)
 
-Generated at: 2026-04-05T14:57:58.017Z
+Generated at: 2026-04-12T04:59:57.716Z
 
 ## Status
 
@@ -20,21 +20,22 @@ Generated at: 2026-04-05T14:57:58.017Z
 - Readiness blockers: `none`
 - Parity evidence suite IDs: `runtime-kernel-parity-core`
 - Rollout approved: `yes` (source: `docs/ai-paths/node-code-objects-v3/rollout-approvals.json`)
-- Config field count: 9
+- Config field count: 14
 
 ## Node Contract Files
 
 - Semantic node contract: `docs/ai-paths/semantic-grammar/nodes/db_schema.json`
-- Semantic hash: `a872b63af24b71cdcd57441d6a49d748f0a8c9d9a586a5b092a8ba97964a499f`
+- Semantic hash: `bcf4fb4c3f3303862da09171a296efabba74c9cc0d8a960ef6decd4466dd5fc6`
 - v2 code object: `docs/ai-paths/node-code-objects-v2/db_schema.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/db_schema.scaffold.json`
 - v3 object id: `node_obj_db_schema_portable_v3`
-- v3 object hash: `5be73667a0e5dd52de4c894393f8490827f5a0133f81f538330ef14661d88621`
+- v3 object hash: `3af6f68c46a06215e7417e6f0b1b558fdd78e446082e2e8bd5307106f7a03fee`
 
 ## Ports
 
 Inputs:
-- (none)
+- `context`
+- `schema`
 
 Outputs:
 - `schema`

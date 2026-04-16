@@ -18,7 +18,11 @@ type UseKangurProgressStateOptions = {
 
 const subscribeDisabled = (): (() => void) => () => {};
 
-export const useKangurProgressState = (options: UseKangurProgressStateOptions = {}) => {
+type KangurProgressStateSnapshot = ReturnType<typeof loadProgress>;
+
+export const useKangurProgressState = (
+  options: UseKangurProgressStateOptions = {}
+): KangurProgressStateSnapshot => {
   const enabled = options.enabled ?? true;
   const ownerKey = useKangurProgressOwnerKey();
   const getSnapshot = useCallback(

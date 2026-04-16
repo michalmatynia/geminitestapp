@@ -8,6 +8,12 @@ import {
   renderNavAction,
 } from './KangurPrimaryNavigation.utils';
 
+/**
+ * Renders the StuqiQ Beta badge as an SVG element.
+ * 
+ * @param props - Component properties
+ * @param props.testId - Test identifier for the badge
+ */
 export function KangurHomeBetaBadge({
   testId = 'kangur-home-beta-badge',
 }: {
@@ -49,6 +55,17 @@ export function KangurHomeBetaBadge({
   );
 }
 
+/**
+ * Renders the login action component for the primary navigation.
+ * Uses Kangur CMS content for localized strings and falls back to provided label.
+ * 
+ * @param props - Component properties
+ * @param props.className - Optional CSS class name
+ * @param props.fallbackLabel - Label used when CMS content is unavailable
+ * @param props.loginActionRef - Reference to the button element
+ * @param props.onActionClick - Optional tracking callback
+ * @param props.onLogin - Login function to execute on click
+ */
 export function KangurPrimaryNavigationLoginAction({
   className,
   fallbackLabel,

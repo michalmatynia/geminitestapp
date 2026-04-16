@@ -3,13 +3,13 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const createMultiQueryV2Mock = vi.hoisted(() => vi.fn());
+const useQueriesMock = vi.hoisted(() => vi.fn());
 
-vi.mock('@/shared/lib/query-factories-v2', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/shared/lib/query-factories-v2')>();
+vi.mock('@tanstack/react-query', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@tanstack/react-query')>();
   return {
     ...actual,
-    createMultiQueryV2: createMultiQueryV2Mock,
+    useQueries: useQueriesMock,
   };
 });
 
@@ -21,7 +21,7 @@ describe('useIntegrationSelection', () => {
   });
 
   it('prefers the Tradera default connection for Tradera integrations', async () => {
-    createMultiQueryV2Mock.mockReturnValue([
+    useQueriesMock.mockReturnValue([
       { data: { connectionId: 'conn-base-1' } },
       { data: { connectionId: 'conn-tradera-2' } },
       {
@@ -49,7 +49,7 @@ describe('useIntegrationSelection', () => {
   });
 
   it('does not apply the Tradera browser default connection to Tradera API integrations', async () => {
-    createMultiQueryV2Mock.mockReturnValue([
+    useQueriesMock.mockReturnValue([
       { data: { connectionId: 'conn-base-1' } },
       { data: { connectionId: 'conn-tradera-browser-default' } },
       {
@@ -77,7 +77,7 @@ describe('useIntegrationSelection', () => {
   });
 
   it('filters the selection list to the requested marketplace scope', async () => {
-    createMultiQueryV2Mock.mockReturnValue([
+    useQueriesMock.mockReturnValue([
       { data: { connectionId: 'conn-base-1' } },
       { data: { connectionId: 'conn-tradera-2' } },
       {
@@ -116,7 +116,7 @@ describe('useIntegrationSelection', () => {
   });
 
   it('updates the selected Tradera target when the initial recovery ids change after mount', async () => {
-    createMultiQueryV2Mock.mockReturnValue([
+    useQueriesMock.mockReturnValue([
       { data: { connectionId: 'conn-base-1' } },
       { data: { connectionId: 'conn-tradera-1' } },
       {
@@ -175,5 +175,33 @@ describe('useIntegrationSelection', () => {
       expect(result.current.selectedIntegrationId).toBe('integration-tradera-2');
     });
     expect(result.current.selectedConnectionId).toBe('conn-tradera-2');
+  });
+
+  it('prefers the Vinted default connection for Vinted integrations', async () => {
+    useQueriesMock.mockReturnValue([
+      { data: { connectionId: 'conn-base-1' } },
+      { data: { connectionId: 'conn-tradera-2' } },
+      {
+        data: [
+          {
+            id: 'integration-vinted-1',
+            name: 'Vinted',
+            slug: 'vinted',
+            connections: [
+              { id: 'conn-vinted-1', name: 'Alpha', integrationId: 'integration-vinted-1' },
+              { id: 'conn-vinted-2', name: 'Zulu', integrationId: 'integration-vinted-1' },
+            ],
+          },
+        ],
+        isPending: false,
+      },
+      { data: { connectionId: 'conn-vinted-2' } },
+    ]);
+
+    const { result } = renderHook(() => useIntegrationSelection('integration-vinted-1'));
+
+    await waitFor(() => {
+      expect(result.current.selectedConnectionId).toBe('conn-vinted-2');
+    });
   });
 });

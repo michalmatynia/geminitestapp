@@ -178,7 +178,6 @@ describe('mongoProductRepository.replaceProductCategory', () => {
             productId: 'product-1',
             catalogId,
             assignedAt: expect.any(String),
-            catalog: { id: catalogId },
           },
         ],
         catalogId,

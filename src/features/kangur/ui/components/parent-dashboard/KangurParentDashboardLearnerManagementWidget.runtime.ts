@@ -5,7 +5,7 @@ import type React from 'react';
 
 import { withKangurClientError } from '@/features/kangur/observability/client';
 
-import { useLearnerManagementState } from './KangurParentDashboardLearnerManagementWidget.hooks';
+import { type useLearnerManagementState } from './KangurParentDashboardLearnerManagementWidget.hooks';
 import type { ProfileModalTabId } from './KangurParentDashboardLearnerManagementWidget.types';
 
 type LearnerManagementState = ReturnType<typeof useLearnerManagementState>;
@@ -185,7 +185,7 @@ const resolveModalOpen = ({
 }: {
   isCreateModalVisible: boolean;
   activeProfileId: LearnerManagementState['activeProfileId'];
-}): boolean => isCreateModalVisible || !!activeProfileId;
+}): boolean => isCreateModalVisible || Boolean(activeProfileId);
 
 export type LearnerManagementRuntime = {
   selectedLearnerId: string | null;

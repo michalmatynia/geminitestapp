@@ -171,6 +171,7 @@ describe('IntegrationModal', () => {
       activeTab: 'settings',
       setActiveTab: vi.fn(),
       isTradera: true,
+      isVinted: false,
       isAllegro: false,
       isLinkedIn: false,
       isBaselinker: false,
@@ -194,6 +195,7 @@ describe('IntegrationModal', () => {
       activeTab: 'settings',
       setActiveTab: vi.fn(),
       isTradera: true,
+      isVinted: false,
       isAllegro: false,
       isLinkedIn: false,
       isBaselinker: false,
@@ -234,6 +236,7 @@ describe('IntegrationModal', () => {
       activeTab: 'settings',
       setActiveTab: vi.fn(),
       isTradera: false,
+      isVinted: false,
       isAllegro: false,
       isLinkedIn: false,
       isBaselinker: true,
@@ -253,6 +256,46 @@ describe('IntegrationModal', () => {
         showSaveButton: false,
         showCancelButton: true,
         cancelText: 'Close',
+      })
+    );
+  });
+
+  it('shows save actions for Vinted browser settings on the settings tab', async () => {
+    const handleSavePlaywrightSettings = vi.fn().mockResolvedValue(undefined);
+
+    useIntegrationsDataMock.mockReturnValue({
+      activeIntegration: {
+        id: 'integration-vinted',
+        name: 'Vinted.pl',
+      },
+    });
+    useIntegrationTabsMock.mockReturnValue({
+      activeTab: 'settings',
+      setActiveTab: vi.fn(),
+      isTradera: false,
+      isVinted: true,
+      isAllegro: false,
+      isLinkedIn: false,
+      isBaselinker: false,
+      showPlaywright: true,
+      showAllegroConsole: false,
+      showBaseConsole: false,
+      activeConnection: { id: 'connection-vinted-1' },
+      handleSavePlaywrightSettings,
+    });
+
+    render(<IntegrationModal />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => {
+      expect(handleSavePlaywrightSettings).toHaveBeenCalledTimes(1);
+    });
+    expect(formModalRenderSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        showSaveButton: true,
+        showCancelButton: true,
+        saveText: 'Save',
       })
     );
   });

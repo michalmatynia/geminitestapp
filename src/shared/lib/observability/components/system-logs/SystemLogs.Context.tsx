@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useSystemLogsState } from '@/features/observability/context/SystemLogsContext';
+import { useSystemLogsState } from '@/shared/lib/observability/context/SystemLogsContext';
 import { buildSystemLogsWorkspaceContextBundle } from '@/shared/lib/observability/runtime-context/system-logs-workspace';
 import { useRegisterContextRegistryPageSource } from '@/shared/lib/ai-context-registry/page-context';
 

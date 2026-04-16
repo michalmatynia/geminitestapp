@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { buildAgentTeachingContextRegistrySystemPrompt } from '@/features/ai/agentcreator/teaching/context-registry/system-prompt';
 import { runTeachingChat } from '@/features/ai/agentcreator/teaching/server/chat';

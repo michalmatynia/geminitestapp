@@ -125,7 +125,7 @@ vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
   }),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   useToast: () => ({
     toast: mocks.toast,
   }),

@@ -1,7 +1,7 @@
 'use client';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type { RouterConfig } from '@/shared/lib/ai-paths';
+import type { RouterConfig } from '@/shared/contracts/ai-paths';
 import { Input, Label } from '@/shared/ui/primitives.public';
 import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
 

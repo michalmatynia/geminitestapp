@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
+import { sanitizePathConfig } from '@/shared/lib/ai-paths/core/utils/path-config-sanitization';
 import {
   getStarterWorkflowTemplateById,
   materializeStarterWorkflowPathConfig,
@@ -79,6 +80,9 @@ const parseResponseBody = async (response: Response): Promise<Record<string, unk
   }
   return parsed;
 };
+
+const serializeStoredPathConfig = (config: ReturnType<typeof createDefaultPathConfig>): string =>
+  JSON.stringify(sanitizePathConfig(config));
 
 const buildLegacyStoredTranslationConfig = () => {
   const entry = getStarterWorkflowTemplateById('starter_translation_en_pl');
@@ -416,7 +420,6 @@ describe('ai-paths runs enqueue handler', () => {
     expect(response.status).toBe(200);
     await expect(parseResponseBody(response)).resolves.toEqual({
       run: { id: 'run-1', status: 'queued' },
-      runId: 'run-1',
     });
     const enqueueArgs = enqueuePathRunMock.mock.calls[0]?.[0] as
       | {
@@ -438,7 +441,7 @@ describe('ai-paths runs enqueue handler', () => {
     expect(enqueueArgs?.meta).not.toHaveProperty('identityRepair');
   });
 
-  it('remediates removed legacy trigger context modes when loading stored path configs by pathId', async () => {
+  it('rejects removed legacy trigger context modes when loading stored path configs by pathId', async () => {
     const config = createDefaultPathConfig('path-legacy-trigger-mode');
     const seedNode = config.nodes[0];
     expect(seedNode).toBeDefined();
@@ -461,145 +464,90 @@ describe('ai-paths runs enqueue handler', () => {
     config.edges = [];
     getAiPathsSettingMock.mockResolvedValue(JSON.stringify(config));
 
-    const response = await POST_handler(
-      makeRequest({
-        pathId: config.id,
-      }),
-      {} as Parameters<typeof POST_handler>[1]
-    );
-    expect(response.status).toBe(200);
-    const enqueueArgs = enqueuePathRunMock.mock.calls[0]?.[0] as
-      | { nodes?: Array<{ config?: { trigger?: { contextMode?: string } } }> }
-      | undefined;
-    expect(enqueueArgs?.nodes?.[0]?.config?.trigger?.contextMode).toBe('trigger_only');
+    await expect(
+      POST_handler(
+        makeRequest({
+          pathId: config.id,
+        }),
+        {} as Parameters<typeof POST_handler>[1]
+      )
+    ).rejects.toThrow(/non-canonical persisted values|invalid ai path config payload/i);
+    expect(enqueuePathRunMock).not.toHaveBeenCalled();
   });
 
-  it('repairs stale parameter inference v2 starter configs before enqueueing stored paths', async () => {
+  it('rejects stale parameter inference v2 starter configs until they are explicitly restored', async () => {
     const config = buildLegacyStoredParameterInferenceConfig();
     getAiPathsSettingMock.mockResolvedValue(JSON.stringify(config));
 
-    const response = await POST_handler(
-      makeRequest({
-        pathId: config.id,
-        entityId: 'product-1',
-        entityType: 'product',
-      }),
-      {} as Parameters<typeof POST_handler>[1]
-    );
-
-    expect(response.status).toBe(200);
-    const enqueueArgs = enqueuePathRunMock.mock.calls[0]?.[0] as
-      | {
-        nodes?: Array<{
-          type?: string;
-          config?: { parser?: { mappings?: Record<string, string> } };
-        }>;
-      }
-      | undefined;
-    const parserNode = enqueueArgs?.nodes?.find((node) => node.type === 'parser');
-    expect(parserNode?.config?.parser?.mappings?.['title']).toBe('$.name_en');
-    expect(parserNode?.config?.parser?.mappings?.['content_en']).toBe('$.description_en');
-    expect(upsertAiPathsSettingsMock).toHaveBeenCalledWith([
-      expect.objectContaining({
-        key: `ai_paths_config_${config.id}`,
-      }),
-    ]);
+    await expect(
+      POST_handler(
+        makeRequest({
+          pathId: config.id,
+          entityId: 'product-1',
+          entityType: 'product',
+        }),
+        {} as Parameters<typeof POST_handler>[1]
+      )
+    ).rejects.toThrow(/non-canonical persisted values|invalid ai path config payload/i);
+    expect(enqueuePathRunMock).not.toHaveBeenCalled();
+    expect(upsertAiPathsSettingsMock).not.toHaveBeenCalled();
   });
 
-  it('repairs stale BLWo starter configs before enqueueing stored paths', async () => {
+  it('rejects broken BLWo starter configs until they are explicitly restored', async () => {
     const config = buildBrokenStoredBlwoConfig();
     getAiPathsSettingMock.mockResolvedValue(JSON.stringify(config));
 
-    const response = await POST_handler(
-      makeRequest({
-        pathId: config.id,
-        triggerEvent: 'manual',
-        meta: {
-          aiPathsValidation: {
-            enabled: false,
+    await expect(
+      POST_handler(
+        makeRequest({
+          pathId: config.id,
+          triggerEvent: 'manual',
+          meta: {
+            aiPathsValidation: {
+              enabled: false,
+            },
           },
-        },
-      }),
-      {} as Parameters<typeof POST_handler>[1]
-    );
-
-    expect(response.status).toBe(200);
-    const enqueueArgs = enqueuePathRunMock.mock.calls[0]?.[0] as
-      | {
-          pathId?: string;
-          pathName?: string;
-          nodes?: Array<{ type?: string }>;
-        }
-      | undefined;
-    expect(enqueueArgs?.pathId).toBe(config.id);
-    expect(enqueueArgs?.pathName).toBe('Base Export Workflow (BLWo)');
-    expect(enqueueArgs?.nodes?.some((node) => node.type === 'trigger')).toBe(true);
-    expect(upsertAiPathsSettingsMock).toHaveBeenCalledWith([
-      expect.objectContaining({
-        key: `ai_paths_config_${config.id}`,
-      }),
-    ]);
+        }),
+        {} as Parameters<typeof POST_handler>[1]
+      )
+    ).rejects.toThrow(/invalid ai path config payload/i);
+    expect(enqueuePathRunMock).not.toHaveBeenCalled();
+    expect(upsertAiPathsSettingsMock).not.toHaveBeenCalled();
   });
 
-  it('repairs stale parameter inference starter provenance on non-default path ids before enqueueing', async () => {
+  it('rejects stale parameter inference starter provenance on non-default path ids until explicitly restored', async () => {
     const config = buildProvenanceOnlyStoredParameterInferenceConfig();
     getAiPathsSettingMock.mockResolvedValue(JSON.stringify(config));
 
-    const response = await POST_handler(
-      makeRequest({
-        pathId: config.id,
-        entityId: 'product-1',
-        entityType: 'product',
-      }),
-      {} as Parameters<typeof POST_handler>[1]
-    );
-
-    expect(response.status).toBe(200);
-    expect(upsertAiPathsSettingsMock).toHaveBeenCalledWith([
-      expect.objectContaining({
-        key: `ai_paths_config_${config.id}`,
-      }),
-    ]);
+    await expect(
+      POST_handler(
+        makeRequest({
+          pathId: config.id,
+          entityId: 'product-1',
+          entityType: 'product',
+        }),
+        {} as Parameters<typeof POST_handler>[1]
+      )
+    ).rejects.toThrow(/non-canonical persisted values|invalid ai path config payload/i);
+    expect(enqueuePathRunMock).not.toHaveBeenCalled();
+    expect(upsertAiPathsSettingsMock).not.toHaveBeenCalled();
   });
 
-  it('fully repairs stale parameter inference live configs that still use mapping-mode database updates', async () => {
+  it('rejects legacy mapping-mode database updates without upgrading starter provenance', async () => {
     const config = buildMappingModeStoredParameterInferenceConfig();
     getAiPathsSettingMock.mockResolvedValue(JSON.stringify(config));
 
-    const response = await POST_handler(
-      makeRequest({
-        pathId: config.id,
-        entityId: 'product-1',
-        entityType: 'product',
-      }),
-      {} as Parameters<typeof POST_handler>[1]
-    );
-
-    expect(response.status).toBe(200);
-    expect(upsertAiPathsSettingsMock).toHaveBeenCalledWith([
-      expect.objectContaining({
-        key: `ai_paths_config_${config.id}`,
-      }),
-    ]);
-    const repairedPayload = upsertAiPathsSettingsMock.mock.calls[0]?.[0]?.[0]?.value;
-    expect(typeof repairedPayload).toBe('string');
-    const repairedConfig = JSON.parse(repairedPayload as string) as {
-      extensions?: {
-        aiPathsStarter?: {
-          templateVersion?: number;
-        };
-      };
-      nodes?: Array<{
-        type?: string;
-        inputs?: string[];
-        outputs?: string[];
-      }>;
-    };
-    expect(repairedConfig.extensions?.aiPathsStarter?.templateVersion).toBe(16);
-    const seedRouterNode = repairedConfig.nodes?.find((node) => node.type === 'router');
-    expect(seedRouterNode).toBeDefined();
-    expect(seedRouterNode?.inputs ?? []).not.toContain('prompt');
-    expect(seedRouterNode?.outputs ?? []).not.toContain('prompt');
+    await expect(
+      POST_handler(
+        makeRequest({
+          pathId: config.id,
+          entityId: 'product-1',
+          entityType: 'product',
+        }),
+        {} as Parameters<typeof POST_handler>[1]
+      )
+    ).rejects.toThrow(/non-canonical persisted values|invalid ai path config payload/i);
+    expect(upsertAiPathsSettingsMock).not.toHaveBeenCalled();
   });
 
   it('normalizes context registry payloads into enqueue metadata', async () => {
@@ -670,7 +618,7 @@ describe('ai-paths runs enqueue handler', () => {
 
   it('loads stored path config when nodes and edges are omitted', async () => {
     const config = createDefaultPathConfig('path-stored-config');
-    getAiPathsSettingMock.mockResolvedValueOnce(JSON.stringify(config));
+    getAiPathsSettingMock.mockResolvedValueOnce(serializeStoredPathConfig(config));
 
     const response = await POST_handler(
       makeRequest({
@@ -715,30 +663,26 @@ describe('ai-paths runs enqueue handler', () => {
     expect(logInvocation?.context?.['graphSource']).toBe('settings');
   });
 
-  it('derives runId from legacy _id run payloads', async () => {
+  it('rejects legacy _id run payloads from the enqueue service', async () => {
     enqueuePathRunMock.mockResolvedValueOnce({ _id: 'run-legacy-1', status: 'queued' });
     const config = createDefaultPathConfig('path-canonical-legacy-id');
 
-    const response = await POST_handler(
-      makeRequest({
-        pathId: config.id,
-        pathName: config.name,
-        nodes: config.nodes,
-        edges: config.edges,
-        meta: {
-          aiPathsValidation: {
-            enabled: false,
+    await expect(
+      POST_handler(
+        makeRequest({
+          pathId: config.id,
+          pathName: config.name,
+          nodes: config.nodes,
+          edges: config.edges,
+          meta: {
+            aiPathsValidation: {
+              enabled: false,
+            },
           },
-        },
-      }),
-      {} as Parameters<typeof POST_handler>[1]
-    );
-
-    expect(response.status).toBe(200);
-    await expect(parseResponseBody(response)).resolves.toEqual({
-      run: { _id: 'run-legacy-1', status: 'queued' },
-      runId: 'run-legacy-1',
-    });
+        }),
+        {} as Parameters<typeof POST_handler>[1]
+      )
+    ).rejects.toThrow(/non-canonical run payload/i);
   });
 
   it('returns repository provider headers on successful enqueue responses', async () => {
@@ -760,7 +704,7 @@ describe('ai-paths runs enqueue handler', () => {
     expect(response.headers.get('X-Ai-Paths-Run-Route-Mode')).toBe('explicit');
   });
 
-  it('rejects enqueue responses that do not expose any run identifier', async () => {
+  it('rejects enqueue responses that do not expose a canonical run payload', async () => {
     enqueuePathRunMock.mockResolvedValueOnce({ status: 'queued' });
     const config = createDefaultPathConfig('path-canonical-missing-id');
 
@@ -779,7 +723,7 @@ describe('ai-paths runs enqueue handler', () => {
         }),
         {} as Parameters<typeof POST_handler>[1]
       )
-    ).rejects.toThrow(/missing run identifier/i);
+    ).rejects.toThrow(/non-canonical run payload|contract violation/i);
   });
 
   it('rejects legacy object-shaped enqueue metadata source', async () => {
@@ -849,43 +793,38 @@ describe('ai-paths runs enqueue handler', () => {
     expect(enqueuePathRunMock).not.toHaveBeenCalled();
   });
 
-  it('resolves runId from a runId field in the enqueue response', async () => {
+  it('rejects enqueue service payloads that expose runId without canonical id', async () => {
     enqueuePathRunMock.mockResolvedValueOnce({ runId: 'run-runid-1', status: 'queued' });
     const config = createDefaultPathConfig('path-runid-field');
 
-    const response = await POST_handler(
-      makeRequest({
-        pathId: config.id,
-        pathName: config.name,
-        nodes: config.nodes,
-        edges: config.edges,
-        meta: { aiPathsValidation: { enabled: false } },
-      }),
-      {} as Parameters<typeof POST_handler>[1]
-    );
-
-    expect(response.status).toBe(200);
-    await expect(parseResponseBody(response)).resolves.toMatchObject({ runId: 'run-runid-1' });
+    await expect(
+      POST_handler(
+        makeRequest({
+          pathId: config.id,
+          pathName: config.name,
+          nodes: config.nodes,
+          edges: config.edges,
+          meta: { aiPathsValidation: { enabled: false } },
+        }),
+        {} as Parameters<typeof POST_handler>[1]
+      )
+    ).rejects.toThrow(/non-canonical run payload/i);
   });
 
-  it('repairs stale translation starter configs before enqueueing stored paths', async () => {
+  it('rejects stale translation starter configs before enqueueing stored paths', async () => {
     const config = buildLegacyStoredTranslationConfig();
     getAiPathsSettingMock.mockResolvedValue(JSON.stringify(config));
 
-    const response = await POST_handler(
-      makeRequest({
-        pathId: config.id,
-        entityId: 'product-1',
-        entityType: 'product',
-      }),
-      {} as Parameters<typeof POST_handler>[1]
-    );
-
-    expect(response.status).toBe(200);
-    expect(upsertAiPathsSettingsMock).toHaveBeenCalledWith([
-      expect.objectContaining({
-        key: `ai_paths_config_${config.id}`,
-      }),
-    ]);
+    await expect(
+      POST_handler(
+        makeRequest({
+          pathId: config.id,
+          entityId: 'product-1',
+          entityType: 'product',
+        }),
+        {} as Parameters<typeof POST_handler>[1]
+      )
+    ).rejects.toThrow(/non-canonical persisted values|invalid ai path config payload/i);
+    expect(upsertAiPathsSettingsMock).not.toHaveBeenCalled();
   });
 });

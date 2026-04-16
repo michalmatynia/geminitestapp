@@ -36,6 +36,16 @@ const parseOptionalBooleanQueryValue = (value: unknown): boolean | undefined => 
   return undefined;
 };
 
+const parseOptionalCsvQueryValue = (value: unknown): string[] | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  if (trimmed.length === 0) return undefined;
+  return trimmed
+    .split(',')
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0);
+};
+
 export {
   KANGUR_LEARNER_PASSWORD_MAX_LENGTH,
   KANGUR_LEARNER_PASSWORD_MIN_LENGTH,
@@ -83,6 +93,10 @@ export type KangurLessons = z.infer<typeof kangurLessonsSchema>;
 export const kangurLessonsQuerySchema = z.object({
   subject: z.preprocess(normalizeOptionalQueryString, kangurLessonSubjectSchema.optional()),
   ageGroup: z.preprocess(normalizeOptionalQueryString, kangurLessonAgeGroupSchema.optional()),
+  componentIds: z.preprocess(
+    parseOptionalCsvQueryValue,
+    z.array(kangurLessonComponentIdSchema).optional()
+  ),
   enabledOnly: z.preprocess(parseOptionalBooleanQueryValue, z.boolean().optional()),
 });
 export type KangurLessonsQuery = z.infer<typeof kangurLessonsQuerySchema>;
@@ -91,6 +105,14 @@ export const kangurLessonsReplacePayloadSchema = z.object({
   lessons: kangurLessonsSchema,
 });
 export type KangurLessonsReplacePayload = z.infer<typeof kangurLessonsReplacePayloadSchema>;
+
+import { kangurLessonSectionsSchema } from './kangur-lesson-sections';
+
+export const kangurLessonsCatalogSchema = z.object({
+  lessons: kangurLessonsSchema,
+  sections: kangurLessonSectionsSchema,
+});
+export type KangurLessonsCatalog = z.infer<typeof kangurLessonsCatalogSchema>;
 
 const kangurLessonBlockIdSchema = nonEmptyTrimmedString.max(120);
 const kangurLessonBlockAlignSchema = z.enum(['left', 'center', 'right']);

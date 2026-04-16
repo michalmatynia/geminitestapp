@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-30T15:09:29.565Z",
+  "generatedAt": "2026-04-15T09:38:21.665Z",
   "status": "passed",
   "summary": {
     "total": 0,
@@ -7,16 +7,16 @@
     "warningCount": 0,
     "infoCount": 0,
     "status": "passed",
-    "routeCount": 307,
-    "methodCount": 454,
-    "csrfExemptionCount": 49,
+    "routeCount": 322,
+    "methodCount": 472,
+    "csrfExemptionCount": 57,
     "csrfExemptionsByPolicy": {
       "webhook-ingest": 1,
       "telemetry-ingest": 3,
       "auth-bootstrap": 11,
       "public-campaign-links": 2,
       "deprecated-public-auth": 2,
-      "external-integrations": 30
+      "external-integrations": 38
     }
   },
   "routeRoots": [
@@ -201,7 +201,25 @@
       "reason": "Integration routes accept external callbacks, requests, and connection flows."
     },
     {
+      "routePath": "v2/integrations/exports/1688/[setting]",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
       "routePath": "v2/integrations/exports/base/[setting]",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/exports/tradera/[setting]",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/exports/vinted/[setting]",
       "method": "POST",
       "policy": "external-integrations",
       "reason": "Integration routes accept external callbacks, requests, and connection flows."
@@ -255,7 +273,19 @@
       "reason": "Integration routes accept external callbacks, requests, and connection flows."
     },
     {
+      "routePath": "v2/integrations/playwright/test",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
       "routePath": "v2/integrations/product-listings",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/product-listings/tradera-status-check",
       "method": "POST",
       "policy": "external-integrations",
       "reason": "Integration routes accept external callbacks, requests, and connection flows."
@@ -274,6 +304,12 @@
     },
     {
       "routePath": "v2/integrations/products/[id]/export-to-base",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/products/[id]/listings/[listingId]/check-status",
       "method": "POST",
       "policy": "external-integrations",
       "reason": "Integration routes accept external callbacks, requests, and connection flows."
@@ -309,6 +345,12 @@
       "reason": "Integration routes accept external callbacks, requests, and connection flows."
     },
     {
+      "routePath": "v2/integrations/products/[id]/listings/[listingId]/sync",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
       "routePath": "v2/integrations/products/[id]/listings/[listingId]/sync-base-images",
       "method": "POST",
       "policy": "external-integrations",
@@ -319,7 +361,13 @@
       "method": "POST",
       "policy": "external-integrations",
       "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/products/[id]/tradera/link-existing",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
     }
   ],
-  "durationMs": 100
+  "durationMs": 120
 }

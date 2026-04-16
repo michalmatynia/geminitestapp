@@ -1,6 +1,13 @@
 'use client';
 
-import { SaveIcon, SlidersHorizontalIcon, ArchiveIcon, ClipboardListIcon } from 'lucide-react';
+import {
+  SaveIcon,
+  SlidersHorizontalIcon,
+  ArchiveIcon,
+  ClipboardListIcon,
+  CloudIcon,
+  HardDriveIcon,
+} from 'lucide-react';
 import React, { useMemo, Suspense } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
@@ -36,14 +43,53 @@ const COLLECTION_PROVIDER_OPTIONS = [
 function DatabaseEngineSettingsTab(): React.JSX.Element {
   const {
     policy,
+    operationControls,
     collectionRouteMap,
     rows,
     isLoading,
     engineStatus,
+    mongoSourceState,
     operationsJobs,
     redisOverview,
+    isSyncingMongoSources,
   } = useDatabaseEngineStateContext();
-  const { updatePolicy, updateCollectionRoute } = useDatabaseEngineActionsContext();
+  const {
+    updatePolicy,
+    updateCollectionRoute,
+    updateOperationControls,
+    syncMongoSources,
+  } = useDatabaseEngineActionsContext();
+  const activeMongoSource = mongoSourceState?.activeSource ?? null;
+  const lastMongoSync = mongoSourceState?.lastSync ?? null;
+  const mongoSyncInProgress = mongoSourceState?.syncInProgress ?? null;
+  const lastMongoSyncBackups = lastMongoSync?.preSyncBackups ?? [];
+  const mongoSources = mongoSourceState
+    ? [mongoSourceState.local, mongoSourceState.cloud]
+    : [];
+  const mongoSyncButtonsDisabled = isSyncingMongoSources || Boolean(mongoSyncInProgress);
+  const manualFullSyncEnabled = operationControls.allowManualFullSync;
+  const nextMongoSource =
+    activeMongoSource === 'local'
+      ? 'cloud'
+      : activeMongoSource === 'cloud'
+        ? 'local'
+        : null;
+  const activeMongoSourceLabel =
+    activeMongoSource === 'local'
+      ? 'Local Database'
+      : activeMongoSource === 'cloud'
+        ? 'Cloud Database'
+        : 'No active MongoDB source';
+  const localMongoUriExample = mongoSourceState?.local.maskedUri ?? 'mongodb://localhost:27017/app_local';
+  const localMongoDbExample = mongoSourceState?.local.dbName ?? 'app_local';
+  const cloudMongoUriExample =
+    mongoSourceState?.cloud.maskedUri ?? 'mongodb+srv://cluster.example/app_cloud';
+  const cloudMongoDbExample = mongoSourceState?.cloud.dbName ?? 'app_cloud';
+  const effectiveEnvFileHint = '.env.local overrides .env in development';
+  const mongoSourceTip =
+    nextMongoSource !== null
+      ? `To switch, add or update MONGODB_ACTIVE_SOURCE_DEFAULT=${nextMongoSource} in the effective env file (${effectiveEnvFileHint}) and restart the server.`
+      : `Add MONGODB_ACTIVE_SOURCE_DEFAULT=local or MONGODB_ACTIVE_SOURCE_DEFAULT=cloud to the effective env file (${effectiveEnvFileHint}), then restart the server.`;
 
   const collectionColumns = useMemo<ColumnDef<DatabaseCollectionRow>[]>(
     () => [
@@ -120,6 +166,348 @@ function DatabaseEngineSettingsTab(): React.JSX.Element {
   return (
     <div className='space-y-6'>
       <div className={`${UI_GRID_ROOMY_CLASSNAME} lg:grid-cols-3`}>
+        <FormSection title='Mongo Source' className='lg:col-span-2 p-6'>
+          <div className='space-y-4'>
+            <Card className='border-border/60 bg-card/35 p-4'>
+              <div className='flex flex-wrap items-start justify-between gap-4'>
+                <div className='space-y-2'>
+                  <div className='flex items-center gap-2'>
+                    {activeMongoSource === 'cloud' ? (
+                      <CloudIcon className='size-4 text-sky-200' />
+                    ) : (
+                      <HardDriveIcon className='size-4 text-sky-200' />
+                    )}
+                    <p className='text-xs uppercase tracking-[0.24em] text-muted-foreground'>
+                      Current Database
+                    </p>
+                  </div>
+                  <p className='text-lg font-semibold text-white'>{activeMongoSourceLabel}</p>
+                  <p className='text-sm text-muted-foreground'>{mongoSourceTip}</p>
+                </div>
+                <StatusBadge
+                  status={
+                    activeMongoSource
+                      ? `Connected to ${activeMongoSourceLabel}`
+                      : 'No MongoDB source configured'
+                  }
+                  variant={activeMongoSource ? 'active' : 'error'}
+                  size='sm'
+                />
+              </div>
+            </Card>
+
+            <Card className='border-border/60 bg-card/25 p-4'>
+              <div className='space-y-3'>
+                <div>
+                  <p className='text-xs uppercase tracking-[0.24em] text-muted-foreground'>
+                    Effective Env Example
+                  </p>
+                  <p className='text-sm text-muted-foreground'>
+                    Keep both targets in the effective env files. In Next.js development,
+                    {' '}`.env.local` overrides `.env`. Change only
+                    {' '}`MONGODB_ACTIVE_SOURCE_DEFAULT` in the winning file, then restart.
+                  </p>
+                </div>
+                <pre className='overflow-x-auto rounded-md border border-white/10 bg-black/20 p-3 font-mono text-xs text-gray-200'>
+{`MONGODB_LOCAL_URI=${localMongoUriExample}
+MONGODB_LOCAL_DB=${localMongoDbExample}
+MONGODB_CLOUD_URI=${cloudMongoUriExample}
+MONGODB_CLOUD_DB=${cloudMongoDbExample}
+MONGODB_ACTIVE_SOURCE_DEFAULT=${activeMongoSource ?? 'local'}
+
+# To switch:
+MONGODB_ACTIVE_SOURCE_DEFAULT=${nextMongoSource ?? 'cloud'}`}
+                </pre>
+              </div>
+            </Card>
+
+            <div className='flex flex-wrap items-center gap-2'>
+              <StatusBadge
+                status={
+                  activeMongoSource
+                    ? `Active source: ${activeMongoSource}`
+                    : 'No MongoDB source configured'
+                }
+                variant={activeMongoSource ? 'active' : 'error'}
+                size='sm'
+                className='font-medium capitalize'
+              />
+              <Badge variant='outline' className='border-white/10 text-gray-300'>
+                Controlled by effective env: MONGODB_ACTIVE_SOURCE_DEFAULT
+              </Badge>
+              <Badge variant='outline' className='border-white/10 text-gray-300'>
+                Restart required after env file changes
+              </Badge>
+              <Badge variant='outline' className='border-white/10 text-gray-300'>
+                In dev: `.env.local` overrides `.env`
+              </Badge>
+              {!mongoSourceState?.canSwitch ? (
+                <Badge variant='outline' className='border-amber-400/30 text-amber-200'>
+                  Configure both local and cloud URIs in the effective env and set
+                  MONGODB_ACTIVE_SOURCE_DEFAULT in the winning file to use dual-source mode.
+                </Badge>
+              ) : null}
+              {!manualFullSyncEnabled ? (
+                <Badge variant='outline' className='border-amber-400/30 text-amber-200'>
+                  Manual full sync is disabled by Database Engine controls.
+                </Badge>
+              ) : null}
+              {mongoSourceState?.syncIssue ? (
+                <Badge variant='outline' className='border-amber-400/30 text-amber-200'>
+                  {mongoSourceState.syncIssue}
+                </Badge>
+              ) : null}
+              {mongoSyncInProgress ? (
+                <Badge variant='outline' className='border-sky-400/30 text-sky-200'>
+                  Sync in progress: {mongoSyncInProgress.source} -&gt; {mongoSyncInProgress.target}{' '}
+                  since {mongoSyncInProgress.acquiredAt}
+                </Badge>
+              ) : null}
+              {mongoSourceState?.canSync && manualFullSyncEnabled ? (
+                <>
+                  <Button
+                    type='button'
+                    size='sm'
+                    variant='outline'
+                    className='h-8'
+                    disabled={mongoSyncButtonsDisabled}
+                    onClick={() => {
+                      void syncMongoSources('cloud_to_local');
+                    }}
+                  >
+                    {mongoSyncButtonsDisabled
+                      ? 'Syncing...'
+                      : 'Pull Cloud -> Local (backup both first)'}
+                  </Button>
+                  <Button
+                    type='button'
+                    size='sm'
+                    variant='outline'
+                    className='h-8'
+                    disabled={mongoSyncButtonsDisabled}
+                    onClick={() => {
+                      void syncMongoSources('local_to_cloud');
+                    }}
+                  >
+                    {mongoSyncButtonsDisabled
+                      ? 'Syncing...'
+                      : 'Push Local -> Cloud (backup both first)'}
+                  </Button>
+                </>
+              ) : null}
+            </div>
+
+            <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2`}>
+              <Card className='space-y-3 border-border/60 bg-card/25 p-4 md:col-span-2'>
+                <div className='flex flex-wrap items-center gap-2'>
+                  <StatusBadge
+                    status={
+                      lastMongoSync
+                        ? `Last sync: ${lastMongoSync.source} -> ${lastMongoSync.target}`
+                        : 'No sync recorded yet'
+                    }
+                    variant={lastMongoSync ? 'success' : 'neutral'}
+                    size='sm'
+                  />
+                  {lastMongoSync ? (
+                    <Badge variant='outline' className='border-white/10 text-gray-300'>
+                      Synced at: {lastMongoSync.syncedAt}
+                    </Badge>
+                  ) : null}
+                </div>
+                {lastMongoSync ? (
+                  <div className='space-y-1 text-xs text-muted-foreground'>
+                    <p>Direction: {lastMongoSync.direction}</p>
+                    <p>Transfer archive: {lastMongoSync.archivePath ?? 'Not retained'}</p>
+                    <p>Transfer log: {lastMongoSync.logPath ?? 'Not available'}</p>
+                    {lastMongoSyncBackups.length > 0 ? (
+                      <>
+                        <p>Pre-sync backups: {lastMongoSyncBackups.length}</p>
+                        {lastMongoSyncBackups.map((backup) => (
+                          <div
+                            key={`${backup.role}-${backup.source}-${backup.backupName}`}
+                            className='rounded-md border border-white/10 bg-white/5 px-3 py-2'
+                          >
+                            <p className='font-medium text-gray-200'>
+                              {`${backup.role === 'source' ? 'Source' : 'Target'} backup (${backup.source}): ${backup.backupName}`}
+                            </p>
+                            <p>Backup file: {backup.backupPath}</p>
+                            <p>Backup log: {backup.logPath}</p>
+                            {backup.warning ? <p>Backup warning: {backup.warning}</p> : null}
+                          </div>
+                        ))}
+                      </>
+                    ) : (
+                      <p>Pre-sync backups: Not recorded</p>
+                    )}
+                  </div>
+                ) : (
+                  <p className='text-xs text-muted-foreground'>
+                    Run a cloud/local sync to create two pre-sync backups and persist the latest
+                    transfer archive and log reference here.
+                  </p>
+                )}
+              </Card>
+
+              {mongoSources.map((entry) => {
+                const isLocal = entry.source === 'local';
+                const connectionStatus = !entry.configured
+                  ? 'Missing'
+                  : entry.reachable === false
+                    ? 'Unreachable'
+                    : entry.isActive
+                      ? 'Active'
+                      : entry.reachable === true
+                        ? 'Reachable'
+                        : 'Available';
+                const connectionVariant = !entry.configured
+                  ? 'error'
+                  : entry.reachable === false
+                    ? 'error'
+                    : entry.isActive
+                      ? 'active'
+                      : entry.reachable === true
+                        ? 'success'
+                        : 'neutral';
+                return (
+                  <Card
+                    key={entry.source}
+                    className='space-y-3 border-border/60 bg-card/35 p-4'
+                  >
+                    <div className='flex items-start justify-between gap-3'>
+                      <div className='space-y-1'>
+                        <div className='flex items-center gap-2'>
+                          {isLocal ? (
+                            <HardDriveIcon className='size-4 text-sky-200' />
+                          ) : (
+                            <CloudIcon className='size-4 text-sky-200' />
+                          )}
+                          <h3 className='text-sm font-semibold capitalize text-white'>
+                            {entry.source} MongoDB
+                          </h3>
+                        </div>
+                        <p className='text-xs text-muted-foreground'>
+                          {entry.configured
+                            ? entry.maskedUri || 'Configured MongoDB target'
+                            : 'Not configured'}
+                        </p>
+                      </div>
+                      <StatusBadge
+                        status={connectionStatus}
+                        variant={connectionVariant}
+                        size='sm'
+                      />
+                    </div>
+
+                    <div className='space-y-1 text-xs text-muted-foreground'>
+                      <p>Database: {entry.dbName ?? 'Not configured'}</p>
+                      <p>
+                        {entry.usesLegacyEnv
+                          ? 'Using legacy MONGODB_URI fallback.'
+                          : 'Using dedicated source env.'}
+                      </p>
+                      {entry.reachable === true ? <p>Connection: Reachable</p> : null}
+                      {entry.reachable === false ? (
+                        <p>
+                          Connection error:{' '}
+                          {entry.healthError ?? 'Unable to reach MongoDB target.'}
+                        </p>
+                      ) : null}
+                    </div>
+
+                    <div className='rounded-md border border-white/10 bg-white/5 px-3 py-2 text-xs text-muted-foreground'>
+                      {entry.isActive
+                        ? 'This target is active for the current server process.'
+                        : `To activate this target, add or update MONGODB_ACTIVE_SOURCE_DEFAULT=${entry.source} in the effective env file (${effectiveEnvFileHint}) and restart the server.`}
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+        </FormSection>
+
+        <FormSection title='Manual Operation Controls' className='p-6'>
+          <div className='space-y-4'>
+            <p className='text-xs text-muted-foreground'>
+              These gates control which admin-triggered database operations are allowed from the
+              UI and API.
+            </p>
+            <div className='space-y-3'>
+              <ToggleRow
+                id='database-engine-allow-manual-full-sync'
+                label='Manual Full Sync'
+                description='Allow full MongoDB source copy jobs between local and cloud.'
+                checked={operationControls.allowManualFullSync}
+                onCheckedChange={(checked) => {
+                  updateOperationControls({ allowManualFullSync: checked });
+                }}
+                className='bg-white/5 border-white/5'
+              />
+              <ToggleRow
+                id='database-engine-allow-manual-collection-sync'
+                label='Manual Collection Sync'
+                description='Allow collection-level copy and sync operations.'
+                checked={operationControls.allowManualCollectionSync}
+                onCheckedChange={(checked) => {
+                  updateOperationControls({ allowManualCollectionSync: checked });
+                }}
+                className='bg-white/5 border-white/5'
+              />
+              <ToggleRow
+                id='database-engine-allow-manual-backfill'
+                label='Manual Backfill'
+                description='Allow one-off settings and metadata backfill jobs.'
+                checked={operationControls.allowManualBackfill}
+                onCheckedChange={(checked) => {
+                  updateOperationControls({ allowManualBackfill: checked });
+                }}
+                className='bg-white/5 border-white/5'
+              />
+              <ToggleRow
+                id='database-engine-allow-manual-backup-run-now'
+                label='Manual Backup Run Now'
+                description='Allow administrators to trigger backups immediately.'
+                checked={operationControls.allowManualBackupRunNow}
+                onCheckedChange={(checked) => {
+                  updateOperationControls({ allowManualBackupRunNow: checked });
+                }}
+                className='bg-white/5 border-white/5'
+              />
+              <ToggleRow
+                id='database-engine-allow-manual-backup-maintenance'
+                label='Manual Backup Maintenance'
+                description='Allow restore, upload, and delete actions in Backup Center.'
+                checked={operationControls.allowManualBackupMaintenance}
+                onCheckedChange={(checked) => {
+                  updateOperationControls({ allowManualBackupMaintenance: checked });
+                }}
+                className='bg-white/5 border-white/5'
+              />
+              <ToggleRow
+                id='database-engine-allow-backup-scheduler-tick'
+                label='Backup Scheduler Tick'
+                description='Allow manual scheduler ticks and due-check operations.'
+                checked={operationControls.allowBackupSchedulerTick}
+                onCheckedChange={(checked) => {
+                  updateOperationControls({ allowBackupSchedulerTick: checked });
+                }}
+                className='bg-white/5 border-white/5'
+              />
+              <ToggleRow
+                id='database-engine-allow-operation-job-cancellation'
+                label='Operation Job Cancellation'
+                description='Allow administrators to cancel running database jobs.'
+                checked={operationControls.allowOperationJobCancellation}
+                onCheckedChange={(checked) => {
+                  updateOperationControls({ allowOperationJobCancellation: checked });
+                }}
+                className='bg-white/5 border-white/5'
+              />
+            </div>
+          </div>
+        </FormSection>
+
         <FormSection title='Engine Policy' className='lg:col-span-2 p-6'>
           <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2`}>
             <ToggleRow
@@ -173,6 +561,17 @@ function DatabaseEngineSettingsTab(): React.JSX.Element {
               value={
                 <StatusBadge
                   status={engineStatus?.providers.mongodbConfigured ? 'success' : 'error'}
+                />
+              }
+              className='flex items-center justify-between'
+            />
+            <MetadataItem
+              variant='minimal'
+              label='Mongo Source'
+              value={
+                <StatusBadge
+                  status={activeMongoSource ? activeMongoSource : 'missing'}
+                  variant={activeMongoSource ? 'active' : 'error'}
                 />
               }
               className='flex items-center justify-between'

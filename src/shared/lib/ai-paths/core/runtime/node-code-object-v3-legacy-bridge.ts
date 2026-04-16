@@ -13,7 +13,6 @@ export type NodeCodeObjectV3ContractEntry = {
 };
 
 export const NODE_CODE_OBJECT_V3_EXECUTION_ADAPTERS = [
-  'legacy_handler_bridge',
   'native_handler_registry',
 ] as const;
 export type NodeCodeObjectV3ExecutionAdapter =
@@ -98,38 +97,12 @@ export const listNodeCodeObjectV3NativeRegistryContracts =
       .sort((left, right) => left.codeObjectId.localeCompare(right.codeObjectId));
 
 export type CreateNodeCodeObjectV3ContractResolverArgs = {
-  resolveLegacyHandler: (nodeType: string) => NodeHandler | null;
   resolveNativeCodeObjectHandler?:
     | ((args: ResolveCodeObjectHandlerArgs) => NodeHandler | null)
     | undefined;
 };
 
-const resolveViaLegacyBridge = ({
-  contract,
-  resolveLegacyHandler,
-}: {
-  contract: NodeCodeObjectV3ContractEntry;
-  resolveLegacyHandler: (nodeType: string) => NodeHandler | null;
-}): NodeHandler | null => {
-  if (!contract.legacyHandlerKey) return null;
-  return resolveLegacyHandler(contract.legacyHandlerKey);
-};
-
-const resolveViaNativeRegistry = ({
-  args,
-  resolveNativeCodeObjectHandler,
-}: {
-  args: ResolveCodeObjectHandlerArgs;
-  resolveNativeCodeObjectHandler:
-    | ((args: ResolveCodeObjectHandlerArgs) => NodeHandler | null)
-    | undefined;
-}): NodeHandler | null => {
-  if (typeof resolveNativeCodeObjectHandler !== 'function') return null;
-  return resolveNativeCodeObjectHandler(args);
-};
-
 export const createNodeCodeObjectV3ContractResolver = ({
-  resolveLegacyHandler,
   resolveNativeCodeObjectHandler,
 }: CreateNodeCodeObjectV3ContractResolverArgs): ((
   args: ResolveCodeObjectHandlerArgs
@@ -147,48 +120,7 @@ export const createNodeCodeObjectV3ContractResolver = ({
     if (contract.nodeType !== nodeType) return null;
     if (contract.runtimeStrategy !== 'code_object_v3') return null;
 
-    if (contract.executionAdapter === 'native_handler_registry') {
-      return resolveViaNativeRegistry({
-        args: {
-          nodeType,
-          codeObjectId,
-        },
-        resolveNativeCodeObjectHandler,
-      });
-    }
-
-    if (contract.executionAdapter === 'legacy_handler_bridge') {
-      return resolveViaLegacyBridge({
-        contract,
-        resolveLegacyHandler,
-      });
-    }
-
-    return null;
-  };
-};
-
-export const createNodeCodeObjectV3LegacyBridgeResolver = ({
-  resolveLegacyHandler,
-}: {
-  resolveLegacyHandler: (nodeType: string) => NodeHandler | null;
-}): ((args: ResolveCodeObjectHandlerArgs) => NodeHandler | null) => {
-  return ({
-    nodeType: nodeTypeInput,
-    codeObjectId: codeObjectIdInput,
-  }: ResolveCodeObjectHandlerArgs) => {
-    const nodeType = normalizeNodeType(nodeTypeInput);
-    const codeObjectId = normalizeCodeObjectId(codeObjectIdInput);
-    if (!nodeType || !codeObjectId) return null;
-
-    const contract = resolveNodeCodeObjectV3ContractByCodeObjectId(codeObjectId);
-    if (!contract) return null;
-    if (contract.nodeType !== nodeType) return null;
-    if (contract.runtimeStrategy !== 'code_object_v3') return null;
-
-    return resolveViaLegacyBridge({
-      contract,
-      resolveLegacyHandler,
-    });
+    if (typeof resolveNativeCodeObjectHandler !== 'function') return null;
+    return resolveNativeCodeObjectHandler({ nodeType, codeObjectId });
   };
 };

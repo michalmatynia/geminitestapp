@@ -115,6 +115,12 @@ describe('Products API', () => {
   });
 
   it('rejects invalid product data', async () => {
+    const { validateProductCreateMiddleware } = await import('@/features/products/validations/middleware');
+    vi.mocked(validateProductCreateMiddleware).mockResolvedValueOnce({
+      success: false,
+      response: new Response(JSON.stringify({ error: 'Invalid price' }), { status: 400 }),
+    });
+
     const formData = new FormData();
     formData.append('price', 'not-a-number');
     formData.append('sku', 'SKU123');

@@ -1,6 +1,7 @@
+/* eslint-disable max-lines */
 import { caseResolverProfiles } from './defaults-case-resolver';
 import { imageStudioProfiles } from './defaults-image-studio';
-import { FolderTreeProfilesV2Map } from './types';
+import { type FolderTreeProfilesV2Map, type FolderTreeProfileV2 } from './types';
 
 export const defaultFolderTreeProfilesV2: FolderTreeProfilesV2Map = {
   notes: {
@@ -60,13 +61,72 @@ export const defaultFolderTreeProfilesV2: FolderTreeProfilesV2Map = {
       selectionBehavior: 'click_away',
     },
   },
+  ai_paths: {
+    version: 2,
+    placeholders: {
+      preset: 'sublime',
+      style: 'ghost',
+      emphasis: 'subtle',
+      rootDropLabel: 'Drop to Root',
+      inlineDropLabel: 'Drop into group',
+    },
+    icons: {
+      slots: {
+        folderClosed: 'Folder',
+        folderOpen: 'FolderOpen',
+        file: 'FileCode2',
+        root: 'Folder',
+        dragHandle: 'GripVertical',
+      },
+      byKind: {
+        path: 'FileCode2',
+      },
+    },
+    nesting: {
+      defaultAllow: false,
+      blockedTargetKinds: [],
+      rules: [
+        {
+          childType: 'folder',
+          childKinds: ['folder'],
+          targetType: 'folder',
+          targetKinds: ['*'],
+          allow: true,
+        },
+        {
+          childType: 'file',
+          childKinds: ['path'],
+          targetType: 'folder',
+          targetKinds: ['*'],
+          allow: true,
+        },
+        {
+          childType: 'folder',
+          childKinds: ['folder'],
+          targetType: 'root',
+          targetKinds: ['root'],
+          allow: true,
+        },
+        {
+          childType: 'file',
+          childKinds: ['path'],
+          targetType: 'root',
+          targetKinds: ['root'],
+          allow: true,
+        },
+      ],
+    },
+    interactions: {
+      selectionBehavior: 'click_away',
+    },
+  },
 
-  image_studio: imageStudioProfiles['image_studio']!,
-  case_resolver: caseResolverProfiles['case_resolver']!,
-  case_resolver_case_hierarchy: caseResolverProfiles['case_resolver_case_hierarchy']!,
-  case_resolver_document_relations: caseResolverProfiles['case_resolver_document_relations']!,
-  case_resolver_nodefile_relations: caseResolverProfiles['case_resolver_nodefile_relations']!,
-  case_resolver_scanfile_relations: caseResolverProfiles['case_resolver_scanfile_relations']!,
+  image_studio: imageStudioProfiles['image_studio'] as FolderTreeProfileV2,
+  case_resolver: caseResolverProfiles['case_resolver'] as FolderTreeProfileV2,
+  case_resolver_case_hierarchy: caseResolverProfiles['case_resolver_case_hierarchy'] as FolderTreeProfileV2,
+  case_resolver_document_relations: caseResolverProfiles['case_resolver_document_relations'] as FolderTreeProfileV2,
+  case_resolver_nodefile_relations: caseResolverProfiles['case_resolver_nodefile_relations'] as FolderTreeProfileV2,
+  case_resolver_scanfile_relations: caseResolverProfiles['case_resolver_scanfile_relations'] as FolderTreeProfileV2,
 
   product_categories: {
     version: 2,
@@ -708,6 +768,49 @@ export const defaultFolderTreeProfilesV2: FolderTreeProfilesV2Map = {
           childKinds: ['brain-routing-feature'],
           targetType: 'root',
           targetKinds: ['root'],
+          allow: true,
+        },
+      ],
+    },
+    interactions: {
+      selectionBehavior: 'click_away',
+    },
+  },
+  playwright_step_seq_constructor: {
+    version: 2,
+    placeholders: {
+      preset: 'sublime',
+      style: 'ghost',
+      emphasis: 'subtle',
+      rootDropLabel: 'Drop to Root',
+      inlineDropLabel: 'Drop to step',
+    },
+    icons: {
+      slots: {
+        folderClosed: 'Folder',
+        folderOpen: 'FolderOpen',
+        file: 'FileText',
+        root: 'Folder',
+        dragHandle: 'GripVertical',
+      },
+      byKind: {},
+    },
+    nesting: {
+      defaultAllow: false,
+      blockedTargetKinds: [],
+      rules: [
+        {
+          childType: 'folder',
+          childKinds: ['playwright_step'],
+          targetType: 'root',
+          targetKinds: ['root'],
+          allow: true,
+        },
+        {
+          childType: 'file',
+          childKinds: ['playwright_action'],
+          targetType: 'folder',
+          targetKinds: ['playwright_step'],
           allow: true,
         },
       ],

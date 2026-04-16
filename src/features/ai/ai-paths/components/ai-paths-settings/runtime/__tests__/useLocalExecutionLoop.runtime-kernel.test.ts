@@ -1,7 +1,9 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { GraphExecutionCancelled, GraphExecutionError, type AiNode, type AiPathRuntimeNodeStatus, type RuntimeState } from '@/shared/lib/ai-paths';
+import type { AiNode } from '@/shared/contracts/ai-paths';
+import type { AiPathRuntimeNodeStatus, RuntimeState } from '@/shared/contracts/ai-paths-runtime';
+import { GraphExecutionCancelled, GraphExecutionError } from '@/shared/lib/ai-paths/core/runtime';
 import { normalizeAiPathRuntimeNodeStatus } from '@/shared/contracts/ai-paths-runtime';
 import {
   DEPRECATED_RUNTIME_KERNEL_CONFIG_NODE_TYPES_FIELD,
@@ -12,6 +14,17 @@ import {
 import type { LocalExecutionArgs } from '../types';
 
 const evaluateGraphClientMock = vi.hoisted(() => vi.fn());
+
+vi.mock('@/shared/lib/ai-paths/core/runtime', async () => {
+  const actual =
+    await vi.importActual<typeof import('@/shared/lib/ai-paths/core/runtime')>(
+      '@/shared/lib/ai-paths/core/runtime'
+    );
+  return {
+    ...actual,
+    evaluateGraphClient: evaluateGraphClientMock,
+  };
+});
 
 vi.mock('@/shared/lib/ai-paths', async () => {
   const actual =
@@ -264,7 +277,7 @@ describe('useLocalExecutionLoop runtime kernel forwarding', () => {
         prevOutputs: { status: 'running' },
         error: new Error('database failed'),
         iteration: 2,
-        runtimeStrategy: 'compatibility',
+        runtimeStrategy: 'code_object_v3',
         runtimeResolutionSource: 'override',
         runtimeCodeObjectId: 'resolver.fallback',
       });
@@ -281,7 +294,7 @@ describe('useLocalExecutionLoop runtime kernel forwarding', () => {
         waitingOnPorts: ['callback'],
         waitingOnDetails: [{ port: 'callback' }],
         message: 'Waiting for callback',
-        runtimeStrategy: 'compatibility',
+        runtimeStrategy: 'code_object_v3',
         runtimeResolutionSource: 'missing',
         runtimeCodeObjectId: null,
       });
@@ -292,7 +305,7 @@ describe('useLocalExecutionLoop runtime kernel forwarding', () => {
         message: 'Validation warning',
         iteration: 3,
         issues: [{ id: 'issue-1', severity: 'warn', message: 'Warn' }],
-        runtimeStrategy: 'compatibility',
+        runtimeStrategy: 'code_object_v3',
         runtimeResolutionSource: 'registry',
         runtimeCodeObjectId: 'resolver.db',
       });
@@ -344,7 +357,6 @@ describe('useLocalExecutionLoop runtime kernel forwarding', () => {
         status: 'failed',
         metadata: expect.objectContaining({
           error: 'database failed',
-          runtimeStrategy: 'compatibility',
           runtimeResolutionSource: 'override',
           runtimeCodeObjectId: 'resolver.fallback',
         }),
@@ -358,7 +370,6 @@ describe('useLocalExecutionLoop runtime kernel forwarding', () => {
         metadata: expect.objectContaining({
           reason: 'waiting_callback',
           waitingOnPorts: ['callback'],
-          runtimeStrategy: 'compatibility',
           runtimeResolutionSource: 'missing',
           runtimeCodeObjectId: null,
         }),
@@ -372,7 +383,6 @@ describe('useLocalExecutionLoop runtime kernel forwarding', () => {
           stage: 'node_post_execute',
           decision: 'warn',
           issueCount: 1,
-          runtimeStrategy: 'compatibility',
           runtimeResolutionSource: 'registry',
           runtimeCodeObjectId: 'resolver.db',
         }),

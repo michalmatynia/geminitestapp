@@ -1,40 +1,50 @@
 'use client';
 
 import { Plus } from 'lucide-react';
-import { memo, useState, useCallback, useEffect, useId, useMemo, useRef } from 'react';
+import {
+  createContext,
+  memo,
+  useCallback,
+  useContext,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import type { GenericPickerDropdownProps, PickerOption, PickerGroup } from '@/shared/contracts/ui/pickers';
 import { cn } from '@/shared/utils/ui-utils';
 
-const filterGenericPickerDropdownGroups = (
-  groups: PickerGroup[],
+const filterGenericPickerDropdownGroups = <T extends PickerOption>(
+  groups: PickerGroup<T>[],
   searchQuery: string,
   searchable: boolean
-): PickerGroup[] => {
+): PickerGroup<T>[] => {
   if (!searchable || !searchQuery) {
     return groups;
   }
 
   const query = searchQuery.toLowerCase();
   return groups
-    .map((group: PickerGroup) => ({
+    .map((group: PickerGroup<T>) => ({
       ...group,
       options: group.options.filter(
-        (option: PickerOption) =>
+        (option: T) =>
           option.label.toLowerCase().includes(query) ||
           option.description?.toLowerCase().includes(query)
       ),
     }))
-    .filter((group: PickerGroup) => group.options.length > 0);
+    .filter((group: PickerGroup<T>) => group.options.length > 0);
 };
 
-const flattenGenericPickerDropdownOptions = (groups: PickerGroup[]): PickerOption[] =>
-  groups.flatMap((group: PickerGroup) => group.options);
+const flattenGenericPickerDropdownOptions = <T extends PickerOption>(groups: PickerGroup<T>[]): T[] =>
+  groups.flatMap((group: PickerGroup<T>) => group.options);
 
-const resolveEnabledGenericPickerDropdownOptions = (
-  groups: PickerGroup[]
-): PickerOption[] =>
-  flattenGenericPickerDropdownOptions(groups).filter((option: PickerOption) => !option.disabled);
+const resolveEnabledGenericPickerDropdownOptions = <T extends PickerOption>(
+  groups: PickerGroup<T>[]
+): T[] =>
+  flattenGenericPickerDropdownOptions(groups).filter((option: T) => !option.disabled);
 
 function GenericPickerDropdownTrigger({
   ariaLabel,
@@ -79,21 +89,44 @@ function GenericPickerDropdownTrigger({
   );
 }
 
+type GenericPickerDropdownContextValue<T extends PickerOption = PickerOption> = {
+  ariaLabel: string;
+  dropdownClassName?: string;
+  filteredGroups: PickerGroup<T>[];
+  handleDropdownKeyDown: (event: React.KeyboardEvent) => void;
+  handleOptionKeyDown: (option: T, event: React.KeyboardEvent<HTMLButtonElement>) => void;
+  handleSearchInputKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => void;
+  handleSelect: (option: T) => void;
+  listboxId: string;
+  searchInputRef: React.RefObject<HTMLInputElement | null>;
+  searchPlaceholder: string;
+  searchable: boolean;
+  searchQuery: string;
+  selectedKey?: string;
+  setOptionRef: (optionKey: string, node: HTMLButtonElement | null) => void;
+  setSearchQuery: (value: string) => void;
+};
+
+const GenericPickerDropdownContext = createContext<GenericPickerDropdownContextValue<any> | null>(
+  null
+);
+
+function useGenericPickerDropdown<T extends PickerOption = PickerOption>(): GenericPickerDropdownContextValue<T> {
+  const context = useContext(GenericPickerDropdownContext);
+  if (!context) {
+    throw new Error('GenericPickerDropdown sub-components must be used within GenericPickerDropdown');
+  }
+  return context as GenericPickerDropdownContextValue<T>;
+}
 function GenericPickerDropdownGroup<T extends PickerOption = PickerOption>({
   group,
   groupIdx,
-  handleOptionKeyDown,
-  handleSelect,
-  selectedKey,
-  setOptionRef,
 }: {
-  group: PickerGroup;
+  group: PickerGroup<T>;
   groupIdx: number;
-  handleOptionKeyDown: (option: T, event: React.KeyboardEvent<HTMLButtonElement>) => void;
-  handleSelect: (option: T) => void;
-  selectedKey?: string;
-  setOptionRef: (optionKey: string, node: HTMLButtonElement | null) => void;
 }): React.ReactNode {
+  const { handleOptionKeyDown, handleSelect, selectedKey, setOptionRef } = useGenericPickerDropdown<T>();
+
   return (
     <div key={group.label} role='group' aria-label={group.label}>
       {groupIdx > 0 && <div className='my-1 border-t border-border/30' aria-hidden='true' />}
@@ -103,7 +136,7 @@ function GenericPickerDropdownGroup<T extends PickerOption = PickerOption>({
       >
         {group.label}
       </div>
-      {group.options.map((option: PickerOption) => {
+      {group.options.map((option: T) => {
         const isSelected = selectedKey === option.key;
         return (
           <button
@@ -113,8 +146,8 @@ function GenericPickerDropdownGroup<T extends PickerOption = PickerOption>({
             role='option'
             aria-selected={isSelected}
             aria-disabled={option.disabled || undefined}
-            onClick={() => handleSelect(option as T)}
-            onKeyDown={(event) => handleOptionKeyDown(option as T, event)}
+            onClick={() => handleSelect(option)}
+            onKeyDown={(event) => handleOptionKeyDown(option, event)}
             disabled={option.disabled}
             className={cn(
               'flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm transition',
@@ -138,39 +171,21 @@ function GenericPickerDropdownGroup<T extends PickerOption = PickerOption>({
   );
 }
 
-function GenericPickerDropdownMenu<T extends PickerOption = PickerOption>({
-  ariaLabel,
-  dropdownClassName,
-  filteredGroups,
-  handleDropdownKeyDown,
-  handleOptionKeyDown,
-  handleSearchInputKeyDown,
-  handleSelect,
-  listboxId,
-  searchInputRef,
-  searchPlaceholder,
-  searchable,
-  searchQuery,
-  selectedKey,
-  setOptionRef,
-  setSearchQuery,
-}: {
-  ariaLabel: string;
-  dropdownClassName?: string;
-  filteredGroups: PickerGroup[];
-  handleDropdownKeyDown: (event: React.KeyboardEvent) => void;
-  handleOptionKeyDown: (option: T, event: React.KeyboardEvent<HTMLButtonElement>) => void;
-  handleSearchInputKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => void;
-  handleSelect: (option: T) => void;
-  listboxId: string;
-  searchInputRef: React.RefObject<HTMLInputElement | null>;
-  searchPlaceholder: string;
-  searchable: boolean;
-  searchQuery: string;
-  selectedKey?: string;
-  setOptionRef: (optionKey: string, node: HTMLButtonElement | null) => void;
-  setSearchQuery: (value: string) => void;
-}): React.ReactNode {
+function GenericPickerDropdownMenu<T extends PickerOption = PickerOption>(): React.ReactNode {
+  const {
+    ariaLabel,
+    dropdownClassName,
+    filteredGroups,
+    handleDropdownKeyDown,
+    handleSearchInputKeyDown,
+    listboxId,
+    searchInputRef,
+    searchPlaceholder,
+    searchable,
+    searchQuery,
+    setSearchQuery,
+  } = useGenericPickerDropdown<T>();
+
   return (
     <div
       id={listboxId}
@@ -203,15 +218,11 @@ function GenericPickerDropdownMenu<T extends PickerOption = PickerOption>({
           {searchable ? 'No results found' : 'No options available'}
         </div>
       ) : (
-        filteredGroups.map((group: PickerGroup, groupIdx: number) => (
+        filteredGroups.map((group: PickerGroup<T>, groupIdx: number) => (
           <GenericPickerDropdownGroup<T>
             key={group.label}
             group={group}
             groupIdx={groupIdx}
-            handleOptionKeyDown={handleOptionKeyDown}
-            handleSelect={handleSelect}
-            selectedKey={selectedKey}
-            setOptionRef={setOptionRef}
           />
         ))
       )}
@@ -498,23 +509,27 @@ function GenericPickerDropdownComponent<T extends PickerOption = PickerOption>(
             aria-label='Close dropdown'
             tabIndex={-1}
           />
-          <GenericPickerDropdownMenu<T>
-            ariaLabel={ariaLabel}
-            dropdownClassName={dropdownClassName}
-            filteredGroups={filteredGroups}
-            handleDropdownKeyDown={handleDropdownKeyDown}
-            handleOptionKeyDown={handleOptionKeyDown}
-            handleSearchInputKeyDown={handleSearchInputKeyDown}
-            handleSelect={handleSelect}
-            listboxId={listboxId}
-            searchInputRef={searchInputRef}
-            searchPlaceholder={searchPlaceholder}
-            searchable={searchable}
-            searchQuery={searchQuery}
-            selectedKey={selectedKey}
-            setOptionRef={setOptionRef}
-            setSearchQuery={setSearchQuery}
-          />
+          <GenericPickerDropdownContext.Provider
+            value={{
+              ariaLabel,
+              dropdownClassName,
+              filteredGroups,
+              handleDropdownKeyDown,
+              handleOptionKeyDown,
+              handleSearchInputKeyDown,
+              handleSelect,
+              listboxId,
+              searchInputRef,
+              searchPlaceholder,
+              searchable,
+              searchQuery,
+              selectedKey,
+              setOptionRef,
+              setSearchQuery,
+            } as any}
+          >
+            <GenericPickerDropdownMenu<T> />
+          </GenericPickerDropdownContext.Provider>
         </>
       )}
     </div>

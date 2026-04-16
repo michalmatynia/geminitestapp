@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 
 import { renderCmsPageRenderer, type CmsPageRendererProps } from './CmsPageRendererBase';
 

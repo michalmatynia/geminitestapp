@@ -1,3 +1,4 @@
+import type React from 'react';
 import { z } from 'zod';
 
 /**
@@ -15,3 +16,32 @@ export type DocumentEditorMode = z.infer<typeof documentEditorModeSchema>;
 
 export const richTextEditorVariantSchema = z.enum(['compact', 'full']);
 export type RichTextEditorVariant = z.infer<typeof richTextEditorVariantSchema>;
+
+/**
+ * Common configuration for split Markdown/HTML editors.
+ */
+export interface MarkdownSplitEditorOptions {
+  value?: string;
+  onChange?: (nextValue: string) => void;
+  readOnly?: boolean;
+  showPreview?: boolean;
+  renderPreviewHtml?: (value: string) => string;
+  sanitizePreviewHtml?: (value: string) => string;
+  isCodeMode?: boolean;
+  isPasting?: boolean;
+  onPaste?: (event: React.ClipboardEvent<HTMLTextAreaElement>) => void | Promise<void>;
+  textareaRef?: React.RefObject<HTMLTextAreaElement | null>;
+  splitRef?: React.RefObject<HTMLDivElement | null>;
+  editorWidth?: number | null;
+  onEditorWidthChange?: (next: number | null | ((prev: number | null) => number | null)) => void;
+  isDraggingSplitter?: boolean;
+  onDraggingSplitterChange?: (dragging: boolean) => void;
+  contentBackground?: string;
+  contentTextColor?: string;
+  previewTypographyStyle?: React.CSSProperties;
+  onPreviewImageClick?: (src: string) => void;
+  onCopyCodeFailure?: () => void;
+  placeholder?: string;
+  debounceMs?: number;
+  textareaClassName?: string;
+}

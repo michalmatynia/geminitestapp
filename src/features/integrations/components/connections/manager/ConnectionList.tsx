@@ -2,14 +2,18 @@
 
 import React from 'react';
 
-import { isTraderaIntegrationSlug } from '@/features/integrations/constants/slugs';
+import {
+  is1688IntegrationSlug,
+  isTraderaBrowserIntegrationSlug,
+  isVintedIntegrationSlug,
+} from '@/features/integrations/constants/slugs';
 import {
   useIntegrationsActions,
   useIntegrationsData,
   useIntegrationsForm,
   useIntegrationsTesting,
 } from '@/features/integrations/context/IntegrationsContext';
-import { IntegrationConnection } from '@/shared/contracts/integrations/connections';
+import { type IntegrationConnection } from '@/shared/contracts/integrations/connections';
 import { Button } from '@/shared/ui/primitives.public';
 import { FormSection } from '@/shared/ui/forms-and-actions.public';
 import { SimpleSettingsList } from '@/shared/ui/templates.public';
@@ -30,13 +34,17 @@ export function ConnectionList(): React.JSX.Element {
     handleBaselinkerTest,
     handleAllegroTest,
     handleTraderaManualLogin,
+    handleVintedManualLogin,
+    handle1688ManualLogin,
   } = useIntegrationsActions();
 
   if (!activeIntegration) return <></>;
 
   const integrationSlug = activeIntegration.slug;
-  const isTradera = isTraderaIntegrationSlug(integrationSlug);
-  const isTraderaBrowser = isTradera && integrationSlug !== 'tradera-api';
+  const isTraderaBrowser = isTraderaBrowserIntegrationSlug(integrationSlug);
+  const isVinted = isVintedIntegrationSlug(integrationSlug);
+  const is1688 = is1688IntegrationSlug(integrationSlug);
+  const isBrowserAutomation = isTraderaBrowser || isVinted || is1688;
   const isAllegro = integrationSlug === 'allegro';
   const isBaselinker = integrationSlug === 'baselinker';
 
@@ -46,7 +54,9 @@ export function ConnectionList(): React.JSX.Element {
         items={connections.map((connection: IntegrationConnection) => ({
           id: connection.id,
           title: connection.name,
-          subtitle: connection.username,
+          subtitle:
+            connection.username?.trim() ||
+            (isVinted || is1688 ? 'Session-based browser login' : undefined),
           description:
             editingConnectionId === connection.id ? (
               <span className='text-[10px] uppercase tracking-wide text-emerald-300 font-bold'>
@@ -90,14 +100,16 @@ export function ConnectionList(): React.JSX.Element {
             >
               {isTesting ? 'Testing...' : 'Test'}
             </Button>
-            {isTraderaBrowser && (
+            {isBrowserAutomation && (
               <Button
                 variant='outline'
                 size='xs'
                 className='h-7 text-[10px] uppercase font-bold text-emerald-300 hover:text-emerald-200'
                 type='button'
                 onClick={(): void => {
-                  void handleTraderaManualLogin(item.original);
+                  if (is1688) void handle1688ManualLogin(item.original);
+                  else if (isVinted) void handleVintedManualLogin(item.original);
+                  else void handleTraderaManualLogin(item.original);
                 }}
                 disabled={isTesting}
               >

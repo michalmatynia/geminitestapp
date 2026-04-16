@@ -4,7 +4,7 @@ import type {
   FilemakerEmailCampaignRunStatus,
 } from '../../types';
 import {
-  FilemakerEmailCampaignRunMetrics,
+  type FilemakerEmailCampaignRunMetrics,
 } from '../../types/campaigns';
 import {
   createFilemakerEmailCampaignRun,
@@ -21,6 +21,25 @@ export const summarizeFilemakerEmailCampaignRunDeliveries = (
   skippedCount: deliveries.filter((delivery) => delivery.status === 'skipped').length,
 });
 
+const resolveQueuedRunStatus = (
+  currentStatus: FilemakerEmailCampaignRunStatus,
+  processedCount: number
+): FilemakerEmailCampaignRunStatus => {
+  if (processedCount > 0) return 'running';
+  if (currentStatus === 'pending') return 'pending';
+  return 'queued';
+};
+
+const hasOnlySkippedDeliveries = (
+  metrics: FilemakerEmailCampaignRunMetrics
+): boolean =>
+  metrics.deliveredCount === 0 && metrics.failedCount === 0 && metrics.skippedCount > 0;
+
+const hasOnlyFailedDeliveries = (
+  metrics: FilemakerEmailCampaignRunMetrics
+): boolean =>
+  metrics.deliveredCount === 0 && metrics.failedCount > 0 && metrics.skippedCount === 0;
+
 export const resolveFilemakerEmailCampaignRunStatusFromDeliveries = (input: {
   currentStatus: FilemakerEmailCampaignRunStatus;
   deliveries: FilemakerEmailCampaignDelivery[];
@@ -34,17 +53,40 @@ export const resolveFilemakerEmailCampaignRunStatusFromDeliveries = (input: {
     return input.currentStatus;
   }
   if (queuedCount > 0) {
-    if (processedCount > 0) return 'running';
-    if (input.currentStatus === 'pending') return 'pending';
-    return 'queued';
+    return resolveQueuedRunStatus(input.currentStatus, processedCount);
   }
-  if (metrics.deliveredCount === 0 && metrics.failedCount === 0 && metrics.skippedCount > 0) {
+  if (hasOnlySkippedDeliveries(metrics)) {
     return 'cancelled';
   }
-  if (metrics.deliveredCount === 0 && metrics.failedCount > 0 && metrics.skippedCount === 0) {
+  if (hasOnlyFailedDeliveries(metrics)) {
     return 'failed';
   }
   return 'completed';
+};
+
+const isTerminalRunStatus = (status: FilemakerEmailCampaignRunStatus): boolean =>
+  status === 'completed' || status === 'failed' || status === 'cancelled';
+
+const resolveRunStartedAt = (
+  run: FilemakerEmailCampaignRun,
+  nextStatus: FilemakerEmailCampaignRunStatus,
+  now: string
+): string | null => {
+  if (nextStatus === 'running') {
+    return run.startedAt ?? now;
+  }
+  return run.startedAt ?? null;
+};
+
+const resolveRunCompletedAt = (
+  run: FilemakerEmailCampaignRun,
+  nextStatus: FilemakerEmailCampaignRunStatus,
+  now: string
+): string | null => {
+  if (isTerminalRunStatus(nextStatus)) {
+    return now;
+  }
+  return run.completedAt ?? null;
 };
 
 export const syncFilemakerEmailCampaignRunWithDeliveries = (input: {
@@ -68,14 +110,8 @@ export const syncFilemakerEmailCampaignRunWithDeliveries = (input: {
     deliveredCount: metrics.deliveredCount,
     failedCount: metrics.failedCount,
     skippedCount: metrics.skippedCount,
-    startedAt:
-      nextStatus === 'running'
-        ? input.run.startedAt ?? now
-        : input.run.startedAt ?? null,
-    completedAt:
-      nextStatus === 'completed' || nextStatus === 'failed' || nextStatus === 'cancelled'
-        ? now
-        : input.run.completedAt ?? null,
+    startedAt: resolveRunStartedAt(input.run, nextStatus, now),
+    completedAt: resolveRunCompletedAt(input.run, nextStatus, now),
     updatedAt: now,
   });
 };

@@ -17,7 +17,7 @@ import { Textarea } from '../textarea';
 const normalizeSelectOptions = (
   options?: ReadonlyArray<LabeledOptionDto<string | number>>
 ): Array<LabeledOptionDto<string>> =>
-  (options ?? []).map((option: any) => ({ label: option.label, value: String(option.value) }));
+  (options ?? []).map((option) => ({ label: option.label, value: String(option.value) }));
 
 export type {
   SettingsFieldsRendererProps,
@@ -77,10 +77,10 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
     const r = toChannel(parts[0]!);
     const g = toChannel(parts[1]!);
     const b = toChannel(parts[2]!);    return (
-      '#' +
+      `#${ 
       [r, g, b]
         .map((channel) => channel.toString(16).padStart(2, '0'))
-        .join('')
+        .join('')}`
     );
   };
   const hslToRgb = (hue: number, saturation: number, lightness: number): [number, number, number] => {
@@ -137,10 +137,10 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
     if (Number.isNaN(saturation) || Number.isNaN(lightness)) return null;
     const [r, g, b] = hslToRgb(hue, saturation, lightness);
     return (
-      '#' +
+      `#${ 
       [r, g, b]
         .map((channel) => channel.toString(16).padStart(2, '0'))
-        .join('')
+        .join('')}`
     );
   };
   const derivePickerColor = (rawValue: string): string => {
@@ -164,10 +164,12 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
 
   return (
     <div className={cn('space-y-6', className)}>
-      {fields.map((field: any, index: number) => {
+      {fields.map((field, index: number) => {
+        const fieldName = field.key;
         const fieldKey = `${String(field.key)}-${index}`;
         const fieldId = `settings-field-${fieldKey}`;
-        const fieldError = resolvedErrors[field.key];
+        const fieldValue = values[fieldName];
+        const fieldError = resolvedErrors[fieldName];
         const descriptionId = field.helperText ? `${fieldId}-description` : undefined;
         const errorId = fieldError ? `${fieldId}-error` : undefined;
         const describedBy = [descriptionId, errorId].filter(Boolean).join(' ') || undefined;
@@ -185,8 +187,8 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
                 errorId={errorId}
               >
                 {field.render({
-                  value: values[field.key],
-                  onChange: (value: unknown) => handleFieldChange(field.key, value),
+                  value: fieldValue,
+                  onChange: (value: unknown) => handleFieldChange(fieldName, value),
                   disabled: field.disabled || disabled,
                   ...(fieldError !== undefined ? { error: fieldError } : {}),
                 })}
@@ -203,8 +205,8 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
               >
                 <Textarea
                   id={fieldId}
-                  value={(values[field.key] as string) || ''}
-                  onChange={(e) => handleFieldChange(field.key, e.target.value)}
+                  value={typeof fieldValue === 'string' ? fieldValue : ''}
+                  onChange={(e) => handleFieldChange(fieldName, e.target.value)}
                   placeholder={field.placeholder}
                   disabled={field.disabled || disabled}
                   className='min-h-[100px]'
@@ -225,8 +227,10 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
                 errorId={errorId}
               >
                 <SelectSimple
-                  value={String(values[field.key] || '')}
-                  onValueChange={(val: boolean) => handleFieldChange(field.key, val)}
+                  value={
+                    fieldValue !== undefined && fieldValue !== null ? String(fieldValue) : ''
+                  }
+                  onValueChange={(val: string) => handleFieldChange(fieldName, val)}
                   disabled={field.disabled || disabled}
                   options={normalizeSelectOptions(field.options)}
                   placeholder={field.placeholder || 'Select an option'}
@@ -241,8 +245,8 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
               <div className='flex items-center gap-2 py-2'>
                 <Checkbox
                   id={fieldId}
-                  checked={(values[field.key] as boolean) || false}
-                  onCheckedChange={(checked: boolean) => handleFieldChange(field.key, !!checked)}
+                  checked={Boolean(fieldValue)}
+                  onCheckedChange={(checked: boolean) => handleFieldChange(fieldName, Boolean(checked))}
                   disabled={field.disabled || disabled}
                   aria-describedby={describedBy}
                   aria-invalid={isInvalid || undefined}
@@ -281,8 +285,8 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
                 </div>
                 <Switch
                   id={fieldId}
-                  checked={(values[field.key] as boolean) || false}
-                  onCheckedChange={(checked: boolean) => handleFieldChange(field.key, !!checked)}
+                  checked={Boolean(fieldValue)}
+                  onCheckedChange={(checked: boolean) => handleFieldChange(fieldName, Boolean(checked))}
                   disabled={field.disabled || disabled}
                   aria-describedby={describedBy}
                   aria-invalid={isInvalid || undefined}
@@ -307,13 +311,13 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
                 <div className='flex items-center gap-2'>
                   <div
                     className='size-8 rounded border border-border shrink-0 overflow-hidden'
-                    style={{ backgroundColor: String(values[field.key] || '#000000') }}
+                    style={{ backgroundColor: String(fieldValue || '#000000') }}
                   >
                     <input
                       type='color'
                       id={`${fieldId}-picker`}
-                      value={String(values[field.key] || '#000000')}
-                      onChange={(e) => handleFieldChange(field.key, e.target.value)}
+                      value={String(fieldValue || '#000000')}
+                      onChange={(e) => handleFieldChange(fieldName, e.target.value)}
                       className='opacity-0 size-full cursor-pointer'
                       disabled={field.disabled || disabled}
                       aria-describedby={describedBy}
@@ -324,8 +328,8 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
                   </div>
                   <Input
                     id={fieldId}
-                    value={String(values[field.key] || '#000000')}
-                    onChange={(e) => handleFieldChange(field.key, e.target.value)}
+                    value={String(fieldValue || '#000000')}
+                    onChange={(e) => handleFieldChange(fieldName, e.target.value)}
                     placeholder='#000000'
                     disabled={field.disabled || disabled}
                     className='font-mono'
@@ -347,7 +351,7 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
                 errorId={errorId}
               >
                 {(() => {
-                  const rawValue = String(values[field.key] ?? '');
+                  const rawValue = String(fieldValue ?? '');
                   const trimmedValue = rawValue.trim();
                   const isAuto = trimmedValue.length === 0;
                   return (
@@ -365,7 +369,7 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
                     type='color'
                     id={`${fieldId}-picker`}
                     value={derivePickerColor(rawValue)}
-                    onChange={(e) => handleFieldChange(field.key, e.target.value)}
+                    onChange={(e) => handleFieldChange(fieldName, e.target.value)}
                     className='h-8 w-8 cursor-pointer rounded border border-border'
                     disabled={field.disabled || disabled}
                     aria-describedby={describedBy}
@@ -376,7 +380,7 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
                   <Input
                     id={fieldId}
                     value={rawValue}
-                    onChange={(e) => handleFieldChange(field.key, e.target.value)}
+                    onChange={(e) => handleFieldChange(fieldName, e.target.value)}
                     placeholder={field.placeholder}
                     disabled={field.disabled || disabled}
                     className='font-mono'
@@ -400,7 +404,7 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
                 errorId={errorId}
                 actions={
                   <span className='text-xs font-mono text-muted-foreground'>
-                    {(values[field.key] as number) ?? 0}
+                    {(typeof fieldValue === 'number' ? fieldValue : 0) ?? 0}
                     {field.suffix}
                   </span>
                 }
@@ -411,8 +415,8 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
                   min={field.min ?? 0}
                   max={field.max ?? 100}
                   step={field.step ?? 1}
-                  value={(values[field.key] as number) ?? field.min ?? 0}
-                  onChange={(e) => handleFieldChange(field.key, Number(e.target.value))}
+                  value={(typeof fieldValue === 'number' ? fieldValue : undefined) ?? field.min ?? 0}
+                  onChange={(e) => handleFieldChange(fieldName, Number(e.target.value))}
                   className='w-full accent-primary h-2 bg-muted rounded-lg appearance-none cursor-pointer'
                   disabled={field.disabled || disabled}
                   aria-describedby={describedBy}
@@ -436,11 +440,11 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
                     <PasswordInput
                       id={fieldId}
                       value={
-                        values[field.key] !== undefined && values[field.key] !== null
-                          ? String(values[field.key])
+                        fieldValue !== undefined && fieldValue !== null
+                          ? String(fieldValue)
                           : ''
                       }
-                      onChange={(e) => handleFieldChange(field.key, e.target.value)}
+                      onChange={(e) => handleFieldChange(fieldName, e.target.value)}
                       placeholder={field.placeholder}
                       disabled={field.disabled || disabled}
                       className='flex-1'
@@ -456,13 +460,13 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
                       id={fieldId}
                       type={field.type}
                       value={
-                        values[field.key] !== undefined && values[field.key] !== null
-                          ? String(values[field.key])
+                        fieldValue !== undefined && fieldValue !== null
+                          ? String(fieldValue)
                           : ''
                       }
                       onChange={(e) =>
                         handleFieldChange(
-                          field.key,
+                          fieldName,
                           field.type === 'number' ? Number(e.target.value) : e.target.value
                         )
                       }

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { resolveAiPathsContextRegistryEnvelope } from '@/features/ai/ai-paths/context-registry/server';
 import {
@@ -6,9 +6,10 @@ import {
   requireAiPathsAccessOrInternal,
 } from '@/features/ai/ai-paths/server/access';
 import {
-  enqueuePlaywrightNodeRun,
-  type PlaywrightNodeRunRecord,
-} from '@/features/ai/ai-paths/services/playwright-node-runner';
+  createAiPathNodePlaywrightInstance,
+  enqueuePlaywrightEngineRun,
+  type PlaywrightEngineRunRecord,
+} from '@/features/playwright/server';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { aiPathsPlaywrightEnqueueRequestSchema } from '@/shared/contracts/ai-paths';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
@@ -40,8 +41,8 @@ const normalizeCaptureConfig = (
 };
 
 const toPublicRun = (
-  run: PlaywrightNodeRunRecord
-): Omit<PlaywrightNodeRunRecord, 'ownerUserId'> => {
+  run: PlaywrightEngineRunRecord
+): Omit<PlaywrightEngineRunRecord, 'ownerUserId'> => {
   const { ownerUserId: _ownerUserId, ...rest } = run;
   return rest;
 };
@@ -62,7 +63,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   const personaId = payload.personaId?.trim();
   const capture = normalizeCaptureConfig(payload.capture);
   const contextRegistry = await resolveAiPathsContextRegistryEnvelope(payload.contextRegistry);
-  const run = await enqueuePlaywrightNodeRun({
+  const run = await enqueuePlaywrightEngineRun({
     request: {
       script: payload.script,
       ...(payload.input ? { input: payload.input } : {}),
@@ -78,6 +79,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     },
     waitForResult: payload.waitForResult ?? true,
     ownerUserId: isInternal ? 'system' : access.userId,
+    instance: createAiPathNodePlaywrightInstance(),
   });
 
   return NextResponse.json({ run: toPublicRun(run) });

@@ -2,12 +2,35 @@ import { z } from 'zod';
 
 import { type ApiEnvelopeDto } from './api-envelope';
 
+export type StatusVariant =
+  | 'pending'
+  | 'active'
+  | 'failed'
+  | 'removed'
+  | 'neutral'
+  | 'info'
+  | 'success'
+  | 'warning'
+  | 'error'
+  | 'processing';
+
+/**
+ * Standard status for asynchronous requests
+ */
+export type RequestStatus = 'idle' | 'loading' | 'ready' | 'error';
+
+/**
+ * Standard status for auto-saving operations
+ */
+export type AutoSaveStatus = 'idle' | 'saving' | 'saved' | 'error';
+
 /**
  * Foundation schemas used across all contracts
  */
 
 export const statusSchema = z.enum([
   'pending',
+  'queued',
   'running',
   'completed',
   'failed',
@@ -22,6 +45,8 @@ export type LocalizedDto = z.infer<typeof localizedSchema>;
 export type Localized<T = string> = Record<string, T | null>;
 export type UnknownRecordDto = Record<string, unknown>;
 export type UnknownRecord = UnknownRecordDto;
+export type StringRecordDto = Record<string, string>;
+export type StringRecord = StringRecordDto;
 
 export const dtoBaseSchema = z.object({
   id: z.string(),
@@ -52,6 +77,28 @@ export interface IdNameDto {
   name: string;
 }
 export type IdName = IdNameDto;
+
+export interface CodeNameDto {
+  code: string;
+  name: string;
+}
+export type CodeName = CodeNameDto;
+
+/**
+ * Generic lookup DTOs
+ */
+export type NameLookupDto = {
+  name: string;
+};
+
+export type TitleDescriptionDto = {
+  title: string;
+  description: string;
+};
+
+export type CatalogNameLookupDto = NameLookupDto & {
+  catalogId: string;
+};
 
 export type LabeledOptionDto<TValue = string> = {
   label: string;
@@ -88,6 +135,12 @@ export type LabeledOptionWithDisabledDto<TValue = string> = LabeledOptionDto<TVa
   disabled?: boolean;
 };
 export type LabeledOptionWithDisabled<TValue = string> = LabeledOptionWithDisabledDto<TValue>;
+
+export type LabeledOptionWithGroupDto<TValue = string> = LabeledOptionWithDisabledDto<TValue> & {
+  description?: string;
+  group?: string;
+};
+export type LabeledOptionWithGroup<TValue = string> = LabeledOptionWithGroupDto<TValue>;
 
 export type IdDto = {
   id: string;
@@ -239,9 +292,19 @@ export const listResponseSchema = z.object({
   hasMore: z.boolean().optional(),
 });
 
-export type ListResponseDto<T> = {
+/**
+ * Simple list result structure
+ */
+export type ListResultDto<T> = {
   items: T[];
   total: number;
+};
+export type ListResult<T> = ListResultDto<T>;
+
+/**
+ * Standard paginated list response
+ */
+export type ListResponseDto<T> = ListResultDto<T> & {
   page: number;
   pageSize: number;
   totalPages?: number;
@@ -259,6 +322,64 @@ export const paginationQuerySchema = z.object({
 
 export type PaginationQueryDto = z.infer<typeof paginationQuerySchema>;
 export type PaginationQuery = PaginationQueryDto;
+
+/**
+ * Standard HTTP methods
+ */
+export const httpMethodSchema = z.enum([
+  'GET',
+  'POST',
+  'PUT',
+  'PATCH',
+  'DELETE',
+  'HEAD',
+  'OPTIONS',
+]);
+export type HttpMethod = z.infer<typeof httpMethodSchema>;
+
+/**
+ * Standard sort order
+ */
+export type SortOrder = 'asc' | 'desc';
+
+/**
+ * Base pagination parameters for database queries
+ */
+export type PaginationParamsDto = {
+  page: number;
+  pageSize: number;
+  skip: number;
+};
+export type PaginationParams = PaginationParamsDto;
+
+/**
+ * Common schema for search query parameters.
+ */
+export const searchQuerySchema = z.object({
+  search: z.string().trim().optional(),
+});
+
+/**
+ * Common schema for date range query parameters.
+ */
+export const dateRangeQuerySchema = z.object({
+  startDate: z.string().datetime().optional(),
+  endDate: z.string().datetime().optional(),
+});
+
+/**
+ * Combined common list query parameters.
+ */
+export const commonListQuerySchema = paginationQuerySchema
+  .merge(searchQuerySchema)
+  .merge(dateRangeQuerySchema);
+
+/**
+ * Common schema for a single ID parameter.
+ */
+export const idParamSchema = z.object({
+  id: z.string().trim().min(1, 'ID is required'),
+});
 
 export type CodeMessageIssueDto<TCode extends string = string> = {
   code: TCode;
@@ -303,11 +424,38 @@ export type UpdatePayload<T extends DtoBase> = UpdatePayloadDto<T>;
 /**
  * Base interface for all entities in the system.
  */
-interface BaseEntity {
+export interface BaseEntity {
   id: string;
   createdAt: string | Date;
   updatedAt: string | Date | null;
 }
+
+/**
+ * Result of a single resource deletion
+ */
+export type SimpleDeleteResponseDto = {
+  success: boolean;
+  message?: string;
+};
+export type SimpleDeleteResponse = SimpleDeleteResponseDto;
+
+/**
+ * Result of a batch resource deletion
+ */
+export type BatchDeleteResponseDto = {
+  success: boolean;
+  deletedCount: number;
+  message?: string;
+};
+export type BatchDeleteResponse = BatchDeleteResponseDto;
+
+/**
+ * Simple result for batch operations returns a count
+ */
+export type BatchCountResultDto = {
+  count: number;
+};
+export type BatchCountResult = BatchCountResultDto;
 
 /**
  * Base interface for named entities.
@@ -324,3 +472,14 @@ export type MongoSettingRecordDto<TId = string, TValue = string> = {
 };
 export type MongoSettingRecord = MongoSettingRecordDto;
 export type MongoDocument<T> = T & { _id: string };
+
+/**
+ * Common progress tracking structure
+ */
+export type ProgressSnapshotDto = {
+  current: number;
+  total: number;
+  errors: number;
+  metadata?: Record<string, unknown>;
+};
+export type ProgressSnapshot = ProgressSnapshotDto;

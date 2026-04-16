@@ -11,7 +11,7 @@ const KangurAssignmentManagerContext = createContext<AssignmentManagerState | nu
 export function KangurAssignmentManagerProvider({
   children,
   ...props
-}: KangurAssignmentManagerProps & { children: React.ReactNode }) {
+}: KangurAssignmentManagerProps & { children: React.ReactNode }): React.JSX.Element {
   const state = useKangurAssignmentManagerState(props);
   return (
     <KangurAssignmentManagerContext.Provider value={state}>
@@ -20,10 +20,12 @@ export function KangurAssignmentManagerProvider({
   );
 }
 
+import { internalError } from '@/shared/errors/app-error';
+
 export function useKangurAssignmentManagerContext(): AssignmentManagerState {
   const context = useContext(KangurAssignmentManagerContext);
   if (!context) {
-    throw new Error('useKangurAssignmentManagerContext must be used within a KangurAssignmentManagerProvider');
+    throw internalError('useKangurAssignmentManagerContext must be used within a KangurAssignmentManagerProvider');
   }
   return context;
 }

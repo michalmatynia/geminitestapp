@@ -1,13 +1,15 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import {
-  isKangurSettingKey,
-  listKangurSettingsByKeys,
   KANGUR_STOREFRONT_APPEARANCE_SETTING_KEYS,
   ensureKangurStorefrontAppearanceSettingsSeeded,
   ensureKangurThemePresetManifestSeeded,
-} from '@/features/kangur/server';
+} from '@/features/kangur/appearance/server/storefront-appearance';
+import {
+  isKangurSettingKey,
+  listKangurSettingsByKeys,
+} from '@/features/kangur/services/kangur-settings-repository';
 import { KANGUR_THEME_PRESET_MANIFEST_KEY } from '@/shared/contracts/kangur-settings-keys';
 import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
@@ -168,9 +170,8 @@ export const querySchema = z.object({
 });
 
 export const prewarmLiteSettingsServerCache = async (): Promise<void> => {
-  const now = Date.now();
   const currentCache = getLiteSettingsCache();
-  if (currentCache && now - currentCache.ts <= LITE_SETTINGS_CACHE_TTL_MS) {
+  if (currentCache) {
     return;
   }
 

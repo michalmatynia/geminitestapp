@@ -2,8 +2,15 @@
 
 import { useCallback, useRef } from 'react';
 
-import type { AiNode, RuntimeState, RuntimePortValues } from '@/shared/lib/ai-paths';
-import { TRIGGER_EVENTS, evaluateRunPreflight, stableStringify } from '@/shared/lib/ai-paths';
+import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
+import type { AiNode } from '@/shared/contracts/ai-paths';
+import type { RuntimeState, RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
+import { TRIGGER_EVENTS } from '@/shared/lib/ai-paths/core/constants';
+import { evaluateRunPreflight, stableStringify } from '@/shared/lib/ai-paths/core/utils';
+import {
+  buildVisionModelCapabilityErrorMessage,
+  collectVisionModelCapabilityIssues,
+} from '@/shared/lib/ai-paths/core/utils/model-capability-preflight';
 
 import { evaluateLocalExecutionSecurity } from '../local-execution-security';
 import {
@@ -44,6 +51,10 @@ export function useLocalExecutionTriggers(
   }
 ) {
   // Stable refs — callbacks read the latest values without needing them in deps.
+  const brainModelOptions = useBrainModelOptions({
+    capability: 'ai_paths.model',
+    enabled: args.executionMode === 'local',
+  });
   const argsRef = useRef(args);
   argsRef.current = args;
   const loopRef = useRef(loop);
@@ -192,6 +203,10 @@ export function useLocalExecutionTriggers(
         args.toast('This path is deactivated. Activate it to run.', { variant: 'info' });
         return;
       }
+      const pendingNodeConfigPersisted = await args.persistPendingNodeConfigBeforeRun?.();
+      if (pendingNodeConfigPersisted === false) {
+        return;
+      }
       const triggerEvent = triggerNode.config?.trigger?.event ?? TRIGGER_EVENTS[0]?.id ?? 'manual';
       const triggerContextArgs = {
         triggerNode,
@@ -271,6 +286,11 @@ export function useLocalExecutionTriggers(
       const dependencyReport = runPreflight.dependencyReport;
       const dataContractReport = runPreflight.dataContractReport;
       const nodeValidationEnabled = runPreflight.nodeValidationEnabled;
+      const visionModelCapabilityIssues = collectVisionModelCapabilityIssues({
+        nodes: args.normalizedNodes,
+        defaultModelId: brainModelOptions.effectiveModelId,
+        descriptors: brainModelOptions.descriptors,
+      });
       if (nodeValidationEnabled && validationReport.blocked) {
         const timestamp = new Date().toISOString();
         const primaryFinding = validationReport.findings[0];
@@ -322,6 +342,43 @@ export function useLocalExecutionTriggers(
           `Validation blocked run (score ${validationReport.score}). Fix validation findings in Path Settings.`,
           { variant: 'error' }
         );
+        return;
+      }
+      if (visionModelCapabilityIssues.length > 0) {
+        const timestamp = new Date().toISOString();
+        const blockedMessage = buildVisionModelCapabilityErrorMessage(
+          visionModelCapabilityIssues[0]!
+        );
+        args.appendRuntimeEvent({
+          source: 'local',
+          kind: 'run_blocked',
+          level: 'warn',
+          timestamp,
+          message: blockedMessage,
+          nodeId: triggerNode.id,
+          nodeType: triggerNode.type,
+          nodeTitle: triggerNode.title ?? null,
+          metadata: {
+            modelCapability: {
+              issues: visionModelCapabilityIssues,
+            },
+          },
+        });
+        args.setNodeStatus({
+          nodeId: triggerNode.id,
+          status: 'blocked',
+          source: 'local',
+          nodeType: triggerNode.type,
+          nodeTitle: triggerNode.title ?? null,
+          kind: 'node_status',
+          level: 'warn',
+          message: blockedMessage,
+          metadata: {
+            modelCapabilityBlocked: true,
+            issueCount: visionModelCapabilityIssues.length,
+          },
+        });
+        args.toast(blockedMessage, { variant: 'error' });
         return;
       }
       if (nodeValidationEnabled && validationReport.shouldWarn) {
@@ -713,29 +770,54 @@ export function useLocalExecutionTriggers(
         args.setRuntimeState(nextState);
       }
 
-      const loopResult = await loop.runLocalLoop(mode);
-      if (loopResult.status === 'paused') {
-        args.setRunStatus('paused');
-        args.appendRuntimeEvent({
-          source: 'local',
-          kind: 'run_paused',
-          level: 'info',
-          message: 'Run paused.',
-        });
-        return;
-      }
-
-      args.runInFlightRef.current = false;
-      args.setRunStatus('idle');
-      args.abortControllerRef.current = null;
-      args.pauseRequestedRef.current = false;
-
-      outcome.finalizeLocalRunOutcome(loopResult, {
+      const finalizeMeta = {
         startedAt,
         startedAtMs,
         triggerEvent: triggerEvent ?? null,
         triggerContext,
-      });
+      };
+      let keepRunActive = false;
+      let loopResult:
+        | {
+            status: 'completed' | 'paused' | 'canceled' | 'error';
+            error?: unknown;
+            state: RuntimeState;
+          }
+        | undefined;
+
+      try {
+        loopResult = await loop.runLocalLoop(mode);
+        if (loopResult.status === 'paused') {
+          keepRunActive = true;
+          args.setRunStatus('paused');
+          args.appendRuntimeEvent({
+            source: 'local',
+            kind: 'run_paused',
+            level: 'info',
+            message: 'Run paused.',
+          });
+          return;
+        }
+      } catch (error) {
+        loopResult = {
+          status: 'error',
+          error,
+          state: args.runtimeStateRef.current,
+        };
+      } finally {
+        if (!keepRunActive) {
+          args.runInFlightRef.current = false;
+          args.setRunStatus('idle');
+          args.abortControllerRef.current = null;
+          args.pauseRequestedRef.current = false;
+          args.currentRunIdRef.current = null;
+          args.currentRunStartedAtRef.current = null;
+          args.currentRunStartedAtMsRef.current = 0;
+          args.triggerContextRef.current = null;
+        }
+      }
+
+      outcome.finalizeLocalRunOutcome(loopResult, finalizeMeta);
 
       if (args.runMode === 'automatic' && args.queuedRunsRef.current.length > 0) {
         const next = args.queuedRunsRef.current.shift();
@@ -758,6 +840,8 @@ export function useLocalExecutionTriggers(
     [
       getConnectedSimulationNodesForTrigger,
       getConnectedFetcherNodesForTrigger,
+      brainModelOptions.descriptors,
+      brainModelOptions.effectiveModelId,
       resolveConnectedSimulationBridgeForTrigger,
       resolveSimulationContextForNode,
     ]

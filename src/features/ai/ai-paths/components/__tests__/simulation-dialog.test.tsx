@@ -30,10 +30,12 @@ vi.mock('@/features/ai/ai-paths/context', () => ({
 
 vi.mock('@/features/ai/ai-paths/context/GraphContext', () => ({
   useGraphState: () => mockState.graphState,
+  useGraphDataState: () => mockState.graphState,
+  usePathMetadataState: () => mockState.graphState,
   useGraphActions: () => graphActionsMock,
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   Button: ({
     children,
     ...props

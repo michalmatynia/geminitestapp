@@ -4,53 +4,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-type ListPanelMockProps = {
-  actions?: React.ReactNode;
-  alerts?: React.ReactNode;
-  children?: React.ReactNode;
-  className?: string;
-  contentClassName?: string;
-  filters?: React.ReactNode;
-  footer?: React.ReactNode;
-  header?: React.ReactNode;
-  isLoading?: boolean;
-  loadingMessage?: string;
-  variant?: string;
-};
-
-function MockListPanel(props: ListPanelMockProps): React.JSX.Element {
-  const {
-    actions,
-    alerts,
-    children,
-    className,
-    contentClassName,
-    filters,
-    footer,
-    header,
-    isLoading,
-    loadingMessage,
-    variant,
-  } = props;
-
-  return (
-    <div
-      data-testid='list-panel'
-      data-class-name={className}
-      data-content-class-name={contentClassName}
-      data-is-loading={String(isLoading)}
-      data-loading-message={loadingMessage}
-      data-variant={variant}
-    >
-      <div data-testid='list-panel-header'>{header}</div>
-      <div data-testid='list-panel-alerts'>{alerts}</div>
-      <div data-testid='list-panel-filters'>{filters}</div>
-      <div data-testid='list-panel-actions'>{actions}</div>
-      <div data-testid='list-panel-footer'>{footer}</div>
-      {children}
-    </div>
-  );
-}
+import { MockListPanel } from '@/__tests__/mocks/MockListPanel';
 
 vi.mock('../data-table', () => ({
   DataTable: ({

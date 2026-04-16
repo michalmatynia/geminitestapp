@@ -34,7 +34,7 @@ export function ProductListingsConfirmDialogs(): React.JSX.Element {
   const confirmDialogs = [
     {
       id: 'delete-from-base',
-      open: !!listingToDelete,
+      open: Boolean(listingToDelete),
       onOpenChange: (open: boolean) => !open && setListingToDelete(null),
       onConfirm: () => {
         if (listingToDelete) void handleDeleteFromBase(listingToDelete);
@@ -46,7 +46,7 @@ export function ProductListingsConfirmDialogs(): React.JSX.Element {
     },
     {
       id: 'purge-listing',
-      open: !!listingToPurge,
+      open: Boolean(listingToPurge),
       onOpenChange: (open: boolean) => !open && setListingToPurge(null),
       onConfirm: () => {
         if (listingToPurge) void handlePurgeListing(listingToPurge);

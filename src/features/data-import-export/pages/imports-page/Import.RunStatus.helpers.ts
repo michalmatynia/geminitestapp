@@ -1,4 +1,9 @@
-import type { BaseImportItemRecord, BaseImportParameterImportSummary, BaseImportRunParameterImportSummary } from '@/shared/contracts/integrations/base-com';
+import type {
+  BaseImportItemRecord,
+  BaseImportRunRecord,
+  BaseImportParameterImportSummary,
+  BaseImportRunParameterImportSummary,
+} from '@/shared/contracts/integrations/base-com';
 
 const DEFAULT_PARAMETER_IMPORT_SUMMARY: BaseImportRunParameterImportSummary = {
   itemsApplied: 0,
@@ -7,6 +12,75 @@ const DEFAULT_PARAMETER_IMPORT_SUMMARY: BaseImportRunParameterImportSummary = {
   created: 0,
   written: 0,
 };
+
+export type ImportRunCustomFieldMetadata = {
+  seededFieldNames: string[];
+  autoMatchedFieldNames: string[];
+  explicitMappedFieldNames: string[];
+  skippedFieldNames: string[];
+  overriddenFieldNames: string[];
+};
+
+export type ImportRunCustomFieldSummary = {
+  itemsApplied: number;
+  seeded: number;
+  autoMatched: number;
+  explicitMapped: number;
+  skipped: number;
+  overridden: number;
+};
+
+const readStringList = (value: unknown): string[] => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return Array.from(
+    new Set(
+      value
+        .filter((entry: unknown): entry is string => typeof entry === 'string')
+        .map((entry: string): string => entry.trim())
+        .filter((entry: string): boolean => entry.length > 0)
+    )
+  ).sort((left: string, right: string) => left.localeCompare(right));
+};
+
+const getItemCustomFieldImportMetadata = (
+  item: BaseImportItemRecord
+): ImportRunCustomFieldMetadata | null => {
+  const metadata = item.metadata;
+  if (!metadata || typeof metadata !== 'object') {
+    return null;
+  }
+
+  const rawCustomFieldImport = metadata['customFieldImport'];
+  if (!rawCustomFieldImport || typeof rawCustomFieldImport !== 'object') {
+    return null;
+  }
+
+  const customFieldImport = rawCustomFieldImport as Record<string, unknown>;
+  return {
+    seededFieldNames: readStringList(customFieldImport['seededFieldNames']),
+    autoMatchedFieldNames: readStringList(customFieldImport['autoMatchedFieldNames']),
+    explicitMappedFieldNames: readStringList(customFieldImport['explicitMappedFieldNames']),
+    skippedFieldNames: readStringList(customFieldImport['skippedFieldNames']),
+    overriddenFieldNames: readStringList(customFieldImport['overriddenFieldNames']),
+  };
+};
+
+const hasCustomFieldImportActivity = (
+  metadata: ImportRunCustomFieldMetadata | null | undefined
+): boolean =>
+  Boolean(
+    metadata &&
+      (
+        metadata.seededFieldNames.length > 0 ||
+        metadata.autoMatchedFieldNames.length > 0 ||
+        metadata.explicitMappedFieldNames.length > 0 ||
+        metadata.skippedFieldNames.length > 0 ||
+        metadata.overriddenFieldNames.length > 0
+      )
+  );
 
 const normalizeParameterImportSummaryCount = (value: unknown): number => {
   if (typeof value !== 'number' || !Number.isFinite(value)) {
@@ -42,6 +116,7 @@ export const getImportRunErrorItems = (
 ): BaseImportItemRecord[] => {
   return items
     .filter((item: BaseImportItemRecord) => item.status === 'failed' || Boolean(item.errorMessage))
+    .sort(compareImportItemsByLatestCompletion)
     .slice(0, limit);
 };
 
@@ -89,6 +164,61 @@ export const resolveImportRunParameterImportSummary = (
   return buildParameterImportSummaryFromItems(items);
 };
 
+export const buildCustomFieldImportSummaryFromItems = (
+  items: BaseImportItemRecord[]
+): ImportRunCustomFieldSummary | null => {
+  let itemsApplied = 0;
+  const seededFieldNames = new Set<string>();
+  const autoMatchedFieldNames = new Set<string>();
+  const explicitMappedFieldNames = new Set<string>();
+  const skippedFieldNames = new Set<string>();
+  const overriddenFieldNames = new Set<string>();
+
+  items.forEach((item: BaseImportItemRecord): void => {
+    const metadata = getItemCustomFieldImportMetadata(item);
+    if (!metadata || !hasCustomFieldImportActivity(metadata)) {
+      return;
+    }
+
+    itemsApplied += 1;
+    metadata.seededFieldNames.forEach((fieldName: string): void => {
+      seededFieldNames.add(fieldName);
+    });
+    metadata.autoMatchedFieldNames.forEach((fieldName: string): void => {
+      autoMatchedFieldNames.add(fieldName);
+    });
+    metadata.explicitMappedFieldNames.forEach((fieldName: string): void => {
+      explicitMappedFieldNames.add(fieldName);
+    });
+    metadata.skippedFieldNames.forEach((fieldName: string): void => {
+      skippedFieldNames.add(fieldName);
+    });
+    metadata.overriddenFieldNames.forEach((fieldName: string): void => {
+      overriddenFieldNames.add(fieldName);
+    });
+  });
+
+  if (
+    itemsApplied === 0 &&
+    seededFieldNames.size === 0 &&
+    autoMatchedFieldNames.size === 0 &&
+    explicitMappedFieldNames.size === 0 &&
+    skippedFieldNames.size === 0 &&
+    overriddenFieldNames.size === 0
+  ) {
+    return null;
+  }
+
+  return {
+    itemsApplied,
+    seeded: seededFieldNames.size,
+    autoMatched: autoMatchedFieldNames.size,
+    explicitMapped: explicitMappedFieldNames.size,
+    skipped: skippedFieldNames.size,
+    overridden: overriddenFieldNames.size,
+  };
+};
+
 export const compareImportItemsByLatestCompletion = (
   left: BaseImportItemRecord,
   right: BaseImportItemRecord
@@ -110,4 +240,117 @@ export const getParameterSyncHistoryItems = (
     .filter((item: BaseImportItemRecord) => Boolean(item.parameterImportSummary))
     .sort(compareImportItemsByLatestCompletion)
     .slice(0, limit);
+};
+
+export const getCustomFieldImportHistoryItems = (
+  items: BaseImportItemRecord[],
+  limit = 8
+): BaseImportItemRecord[] => {
+  return items
+    .filter((item: BaseImportItemRecord) =>
+      hasCustomFieldImportActivity(getItemCustomFieldImportMetadata(item))
+    )
+    .sort(compareImportItemsByLatestCompletion)
+    .slice(0, limit);
+};
+
+export const formatCustomFieldImportHistory = (item: BaseImportItemRecord): string | null => {
+  const metadata = getItemCustomFieldImportMetadata(item);
+  if (!metadata || !hasCustomFieldImportActivity(metadata)) {
+    return null;
+  }
+
+  const segments: string[] = [];
+  const append = (label: string, values: string[]): void => {
+    if (values.length === 0) {
+      return;
+    }
+    segments.push(`${label}: ${values.join(', ')}`);
+  };
+
+  append('seeded', metadata.seededFieldNames);
+  append('auto', metadata.autoMatchedFieldNames);
+  append('explicit', metadata.explicitMappedFieldNames);
+  append('skipped', metadata.skippedFieldNames);
+  append('overridden', metadata.overriddenFieldNames);
+
+  return segments.length > 0 ? segments.join(' · ') : null;
+};
+
+export type ImportRunDispatchDiagnostics = {
+  tone: 'info' | 'warning' | 'error';
+  title: string;
+  details: string[];
+};
+
+export type ImportRunRetryDiagnostics = {
+  scheduledCount: number;
+  nextRetryAt: string | null;
+};
+
+export const resolveImportRunDispatchDiagnostics = (
+  run: BaseImportRunRecord | null
+): ImportRunDispatchDiagnostics | null => {
+  if (!run) {
+    return null;
+  }
+
+  if (run.preflight && !run.preflight.ok) {
+    return {
+      tone: 'error',
+      title: 'Dispatch stopped at preflight',
+      details: [
+        'This run did not reach the runtime queue because the preflight check failed.',
+        ...run.preflight.issues.map((issue) => issue.message),
+      ],
+    };
+  }
+
+  if (run.dispatchMode == null && (run.stats?.total ?? 0) === 0 && run.status === 'completed') {
+    return {
+      tone: 'warning',
+      title: 'No products matched the current import filters',
+      details: ['Nothing was queued because item resolution returned zero import candidates.'],
+    };
+  }
+
+  if (run.dispatchMode === 'inline') {
+    return {
+      tone: 'warning',
+      title: 'This run used inline fallback instead of BullMQ',
+      details: [
+        'Base imports use the separate base-import runtime queue.',
+        'This run executed inline because Redis queueing was unavailable or enqueueing failed.',
+      ],
+    };
+  }
+
+  return null;
+};
+
+export const resolveImportRunRetryDiagnostics = (
+  items: BaseImportItemRecord[]
+): ImportRunRetryDiagnostics | null => {
+  const scheduledRetryItems = items.filter(
+    (item: BaseImportItemRecord): boolean =>
+      item.status === 'pending' && item.retryable === true && typeof item.nextRetryAt === 'string'
+  );
+
+  if (scheduledRetryItems.length === 0) {
+    return null;
+  }
+
+  const nextRetryAt =
+    scheduledRetryItems
+      .map((item: BaseImportItemRecord) => {
+        const parsed = Date.parse(item.nextRetryAt ?? '');
+        return Number.isFinite(parsed) ? parsed : Number.NaN;
+      })
+      .filter((value: number) => Number.isFinite(value))
+      .sort((left: number, right: number) => left - right)[0] ?? Number.NaN;
+
+  return {
+    scheduledCount: scheduledRetryItems.length,
+    nextRetryAt: Number.isFinite(nextRetryAt) ? new Date(nextRetryAt).toISOString() : null,
+  };
 };

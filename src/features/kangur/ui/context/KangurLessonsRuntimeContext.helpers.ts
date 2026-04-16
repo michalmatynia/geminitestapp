@@ -26,6 +26,8 @@ import {
   type KangurLessonsRuntimeStateContextValue,
 } from './KangurLessonsRuntimeContext.shared';
 
+// Stable empty map returned when assignments are not ready or the list is
+// empty. Shared reference prevents unnecessary re-renders in consumers.
 const EMPTY_LESSON_ASSIGNMENTS_BY_COMPONENT = new Map<
   KangurLessonComponentId,
   KangurAssignmentSnapshot
@@ -61,6 +63,8 @@ type KangurActiveLessonNeighbors = Pick<
   'activeLesson' | 'nextLesson' | 'prevLesson'
 >;
 
+// Narrows an assignment to one whose target is a lesson (vs a game or other
+// target type). Used to filter the raw assignment list before mapping.
 const isKangurLessonTargetAssignment = (
   assignment: KangurAssignmentSnapshot
 ): assignment is KangurLessonTargetAssignment => assignment.target.type === 'lesson';
@@ -73,6 +77,10 @@ const matchesKangurLessonAssignmentMode = (
     ? assignment.progress.status !== 'completed'
     : assignment.progress.status === 'completed';
 
+// shouldReplaceKangurLessonAssignment decides whether a candidate assignment
+// should replace the current best assignment for a component:
+//  active mode   – lower priority number wins (higher urgency)
+//  completed mode – more recently completed/updated wins
 const shouldReplaceKangurLessonAssignment = ({
   candidate,
   current,
@@ -100,6 +108,10 @@ const shouldReplaceKangurLessonAssignment = ({
   return candidateTimestamp > currentTimestamp;
 };
 
+// resolveLessonAssignmentsByComponent builds a Map<componentId, assignment>
+// for the given mode (active or completed). Each component ID maps to the
+// single highest-priority (or most-recent) assignment for that lesson.
+// Returns the stable empty map when assignments are not yet ready.
 export const resolveLessonAssignmentsByComponent = ({
   assignments,
   isAssignmentsReady,
@@ -144,6 +156,10 @@ export const resolveLessonAssignmentsByComponent = ({
   return nextMap;
 };
 
+// resolveOrderedKangurLessons sorts the lesson list so assigned lessons
+// appear first (ordered by assignment priority), then unassigned lessons
+// follow in their original sortOrder. Returns the input array unchanged when
+// there are no assignments or only one lesson.
 export const resolveOrderedKangurLessons = ({
   lessonAssignmentsByComponent,
   lessons,
@@ -174,6 +190,9 @@ export const resolveOrderedKangurLessons = ({
   });
 };
 
+// scheduleKangurAssignmentsReady defers the ready callback by one rAF tick
+// (or a zero-timeout fallback) so assignment fetching doesn't compete with
+// the lesson render on the same frame.
 const scheduleKangurAssignmentsReady = (onReady: () => void): (() => void) => {
   if (
     typeof window.requestAnimationFrame === 'function' &&
@@ -191,6 +210,9 @@ const scheduleKangurAssignmentsReady = (onReady: () => void): (() => void) => {
   };
 };
 
+// useKangurAssignmentsReady gates assignment fetching behind a rAF tick.
+// Returns false immediately on mount, then true after the first paint when
+// canAccessParentAssignments is true. During SSR it resolves synchronously.
 export const useKangurAssignmentsReady = (canAccessParentAssignments: boolean): boolean => {
   const [isAssignmentsReady, setIsAssignmentsReady] = useState(false);
 

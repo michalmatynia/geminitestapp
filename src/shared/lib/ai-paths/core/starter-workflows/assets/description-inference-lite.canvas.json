@@ -709,6 +709,7 @@
               "sourcePort": "result"
             }
           ],
+          "updatePayloadMode": "custom",
           "query": {
             "provider": "auto",
             "collection": "products",
@@ -726,7 +727,7 @@
           "writeSourcePath": "",
           "dryRun": false,
           "distinctField": "",
-          "updateTemplate": "",
+          "updateTemplate": "{\n  \"$set\": {\n    \"description_en\": \"{{result}}\"\n  },\n  \"$unset\": {\n    \"__noop__\": \"\"\n  }\n}",
           "skipEmpty": true,
           "trimStrings": true,
           "aiPrompt": "",

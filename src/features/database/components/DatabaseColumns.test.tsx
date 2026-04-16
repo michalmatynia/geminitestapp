@@ -27,11 +27,17 @@ vi.mock('@/features/database/context/DatabaseBackupsContext', () => ({
   }),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/forms-and-actions.public', () => ({
   ActionMenu: ({ children }: { children?: React.ReactNode }) => (
     <div data-testid='database-action-menu'>{children}</div>
   ),
+}));
+
+vi.mock('@/shared/ui/data-display.public', () => ({
   DataTableSortableHeader: ({ label }: { label: string }) => <div>{label}</div>,
+}));
+
+vi.mock('@/shared/ui/primitives.public', () => ({
   DropdownMenuItem: ({
     children,
     ...props

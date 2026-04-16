@@ -4,13 +4,9 @@ import React from 'react';
 
 import { useSaveCountryMutation } from '@/features/internationalization/hooks/useInternationalizationMutations';
 import type { CountryOption, CurrencyOption } from '@/shared/contracts/internationalization';
+import type { CodeNameDto } from '@/shared/contracts/base';
 import { useToast } from '@/shared/ui/primitives.public';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
-
-interface CountryFormState {
-  code: string;
-  name: string;
-}
 
 interface UseCountryFormProps {
   country?: CountryOption | null;
@@ -19,8 +15,8 @@ interface UseCountryFormProps {
 }
 
 interface UseCountryFormReturn {
-  form: CountryFormState;
-  setForm: React.Dispatch<React.SetStateAction<CountryFormState>>;
+  form: CodeNameDto;
+  setForm: React.Dispatch<React.SetStateAction<CodeNameDto>>;
   selectedCurrencyIds: string[];
   setSelectedCurrencyIds: React.Dispatch<React.SetStateAction<string[]>>;
   saveMutation: ReturnType<typeof useSaveCountryMutation>;
@@ -32,7 +28,7 @@ export function useCountryForm({
   defaultCountryCode,
   defaultCountryName,
 }: UseCountryFormProps): UseCountryFormReturn {
-  const [form, setForm] = React.useState<CountryFormState>({
+  const [form, setForm] = React.useState<CodeNameDto>({
     code: defaultCountryCode,
     name: defaultCountryName,
   });

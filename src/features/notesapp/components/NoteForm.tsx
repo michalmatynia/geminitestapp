@@ -76,7 +76,7 @@ function NoteFormInner(): React.JSX.Element {
         </FormSection>
       </form>
 
-      <Dialog open={!!lightboxImage} onOpenChange={(open) => !open && setLightboxImage(null)}>
+      <Dialog open={Boolean(lightboxImage)} onOpenChange={(open) => !open && setLightboxImage(null)}>
         <DialogContent className='max-w-screen-xl border-none bg-black/90 p-0 shadow-none sm:max-w-screen-xl'>
           <DialogTitle className='sr-only'>Image Preview</DialogTitle>
           <DialogDescription className='sr-only'>

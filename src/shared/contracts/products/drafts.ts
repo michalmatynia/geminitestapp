@@ -1,9 +1,15 @@
-import * as React from 'react';
+import type * as React from 'react';
 import { z } from 'zod';
 
 import { namedDtoSchema } from '../base';
 import type { LabeledOptionDto } from '../base';
-import { productImportSourceSchema, productParameterValueSchema } from './product';
+import { productCustomFieldValueSchema, type ProductCustomFieldDefinitionCreateInput, type ProductCustomFieldDefinitionUpdateInput } from './custom-fields';
+import {
+  productImportSourceSchema,
+  productMarketplaceContentOverrideDraftsSchema,
+  productNotesSchema,
+  productParameterValueSchema,
+} from './product';
 
 import type { ImageFileRecord } from '../files';
 import type { ManagedImageSlot } from '../image-slots';
@@ -24,6 +30,7 @@ import type {
 } from './parameters';
 import type { Producer } from './producers';
 import type { ProductRecord, ProductWithImages, ProductImageRecord } from './product';
+import type { ProductCustomFieldDefinition } from './custom-fields';
 import type { AppProviderValue as DraftProvider } from '../system';
 import type {
   ProductTagFilters,
@@ -37,6 +44,13 @@ import type {
   ProductShippingGroupFilters,
   ProductShippingGroupUpdateInput,
 } from './shipping-groups';
+import type {
+  ProductTitleTerm,
+  ProductTitleTermCreateInput,
+  ProductTitleTermFilters,
+  ProductTitleTermType,
+  ProductTitleTermUpdateInput,
+} from './title-terms';
 import type {
   ProductValidationPatternFormData,
   ProductValidationPattern,
@@ -52,11 +66,15 @@ import type {
 import type { ProductValidationSemanticTransition } from '@/shared/lib/products/utils/validator-semantic-state';
 export const productDraftOpenFormTabSchema = z.enum([
   'general',
+  'marketplace-copy',
   'other',
+  'custom-fields',
   'parameters',
   'images',
+  'scans',
   'studio',
   'import-info',
+  'notes',
   'note-link',
   'validation',
 ]);
@@ -65,11 +83,15 @@ export type ProductDraftOpenFormTab = z.infer<typeof productDraftOpenFormTabSche
 
 export const PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS: ProductDraftOpenFormTab[] = [
   'general',
+  'marketplace-copy',
   'other',
+  'custom-fields',
   'parameters',
   'images',
+  'scans',
   'studio',
   'import-info',
+  'notes',
   'note-link',
   'validation',
 ];
@@ -100,7 +122,10 @@ export const productDraftSchema = namedDtoSchema.extend({
   shippingGroupId: z.string().nullable().optional(),
   tagIds: z.array(z.string()).optional(),
   producerIds: z.array(z.string()).optional(),
+  customFields: z.array(productCustomFieldValueSchema).optional(),
   parameters: z.array(productParameterValueSchema).optional(),
+  marketplaceContentOverrides: productMarketplaceContentOverrideDraftsSchema.optional(),
+  notes: productNotesSchema.optional(),
   defaultPriceGroupId: z.string().nullable().optional(),
   active: z.boolean().optional(),
   validatorEnabled: z.boolean().optional(),
@@ -160,14 +185,19 @@ export type CategoryRepository = {
   isDescendant(categoryId: string, targetId: string): Promise<boolean>;
 };
 
-export type ParameterFilters = {
+export type BaseFilters = {
   search?: string;
-  catalogId?: string;
   skip?: number;
   limit?: number;
 };
+
+export type ParameterFilters = BaseFilters & {
+  catalogId?: string;
+};
 export type ParameterCreateInput = ProductParameterCreateInput;
 export type ParameterUpdateInput = ProductParameterUpdateInput;
+export type CustomFieldCreateInput = ProductCustomFieldDefinitionCreateInput;
+export type CustomFieldUpdateInput = ProductCustomFieldDefinitionUpdateInput;
 
 export type ParameterRepository = {
   listParameters(filters: ParameterFilters): Promise<ProductParameter[]>;
@@ -179,14 +209,17 @@ export type ParameterRepository = {
   findByName(catalogId: string, name_en: string): Promise<ProductParameter | null>;
 };
 
-export type ProducerFilters = {
-  search?: string;
-  skip?: number;
-  limit?: number;
+export type CustomFieldRepository = {
+  listCustomFields(filters: BaseFilters): Promise<ProductCustomFieldDefinition[]>;
+  getCustomFieldById(id: string): Promise<ProductCustomFieldDefinition | null>;
+  createCustomField(data: CustomFieldCreateInput): Promise<ProductCustomFieldDefinition>;
+  updateCustomField(id: string, data: CustomFieldUpdateInput): Promise<ProductCustomFieldDefinition>;
+  deleteCustomField(id: string): Promise<void>;
+  findByName(name: string): Promise<ProductCustomFieldDefinition | null>;
 };
 
 export type ProducerRepository = {
-  listProducers(filters: ProducerFilters): Promise<Producer[]>;
+  listProducers(filters: BaseFilters): Promise<Producer[]>;
   getProducerById(id: string): Promise<Producer | null>;
   createProducer(data: { name: string; website?: string | null }): Promise<Producer>;
   updateProducer(id: string, data: { name?: string; website?: string | null }): Promise<Producer>;
@@ -247,6 +280,7 @@ export type TransactionalProductRepository = {
   bulkReplaceProductCatalogs(productIds: string[], catalogIds: string[]): Promise<void>;
   bulkAddProductCatalogs(productIds: string[], catalogIds: string[]): Promise<void>;
   bulkRemoveProductCatalogs(productIds: string[], catalogIds: string[]): Promise<void>;
+  bulkSetArchived(productIds: string[], archived: boolean): Promise<number>;
 };
 export type ProductRepository = TransactionalProductRepository & {
   getProductIds(filters: ProductFilters): Promise<string[]>;
@@ -281,6 +315,23 @@ export type ShippingGroupRepository = {
   ): Promise<ProductShippingGroup>;
   deleteShippingGroup(id: string): Promise<void>;
   findByName(catalogId: string, name: string): Promise<ProductShippingGroup | null>;
+};
+
+export type TitleTermFilters = ProductTitleTermFilters;
+export type TitleTermCreateInput = ProductTitleTermCreateInput;
+export type TitleTermUpdateInput = ProductTitleTermUpdateInput;
+
+export type TitleTermRepository = {
+  listTitleTerms(filters: TitleTermFilters): Promise<ProductTitleTerm[]>;
+  getTitleTermById(id: string): Promise<ProductTitleTerm | null>;
+  createTitleTerm(data: TitleTermCreateInput): Promise<ProductTitleTerm>;
+  updateTitleTerm(id: string, data: TitleTermUpdateInput): Promise<ProductTitleTerm>;
+  deleteTitleTerm(id: string): Promise<void>;
+  findByName(
+    catalogId: string,
+    type: ProductTitleTermType,
+    name_en: string
+  ): Promise<ProductTitleTerm | null>;
 };
 
 export type PatternFormData = ProductValidationPatternFormData;

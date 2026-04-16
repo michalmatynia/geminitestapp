@@ -31,7 +31,7 @@ import { getKangurDuelOpponentsHandler } from '@/app/api/kangur/duels/opponents/
 import { getKangurDuelSearchHandler } from '@/app/api/kangur/duels/search/handler';
 import { getKangurDuelSpectateHandler } from '@/app/api/kangur/duels/spectate/handler';
 import { getKangurDuelStateHandler } from '@/app/api/kangur/duels/state/handler';
-import { handleGetPost, methodNotAllowed, SimpleRouteHandler } from './routing.utils';
+import { handleGetPost, methodNotAllowed, type SimpleRouteHandler } from './routing.utils';
 
 export const duelCreateHandler: SimpleRouteHandler = apiHandler(postKangurDuelCreateHandler, {
   source: 'kangur.duels.create.POST',

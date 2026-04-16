@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { normalizeImageRetryPresets } from '@/features/data-import-export/public';
 import {

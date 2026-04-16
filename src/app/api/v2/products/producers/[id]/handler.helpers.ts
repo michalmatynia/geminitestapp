@@ -1,17 +1,13 @@
 import { z } from 'zod';
-
 import type { Producer, ProducerUpdateInput } from '@/shared/contracts/products/producers';
 import { conflictError, validationError } from '@/shared/errors/app-error';
+import type { NameLookupDto } from '@/shared/contracts/base';
 
 const paramsSchema = z.object({
   id: z.string().trim().min(1, 'Producer id is required'),
 });
 
 type ProducerSnapshot = Pick<Producer, 'id'>;
-
-export type ProducerNameLookupInput = {
-  name: string;
-};
 
 const normalizeProducerName = (name: string | undefined): string | undefined =>
   typeof name === 'string' ? name.trim() : undefined;
@@ -29,7 +25,7 @@ export const parseProducerId = (params: { id: string }): string => {
 
 export const buildProducerNameLookupInput = (
   data: ProducerUpdateInput
-): ProducerNameLookupInput | null => {
+): NameLookupDto | null => {
   const normalizedName = normalizeProducerName(data.name);
   if (!normalizedName) return null;
 
@@ -41,7 +37,7 @@ export const buildProducerNameLookupInput = (
 export const assertAvailableProducerName = (
   existing: ProducerSnapshot | null,
   producerId: string,
-  lookup: ProducerNameLookupInput
+  lookup: NameLookupDto
 ): void => {
   if (!existing || existing.id === producerId) return;
 

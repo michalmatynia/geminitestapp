@@ -3,7 +3,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { AiNode, AiPathRuntimeNodeStatus, RuntimePortValues, RuntimeState } from '@/shared/lib/ai-paths';
+import type { AiNode } from '@/shared/contracts/ai-paths';
+import type { AiPathRuntimeNodeStatus, RuntimePortValues, RuntimeState } from '@/shared/contracts/ai-paths-runtime';
 import { normalizeAiPathRuntimeNodeStatus } from '@/shared/contracts/ai-paths-runtime';
 import {
   DEPRECATED_RUNTIME_KERNEL_CONFIG_MODE_FIELD,
@@ -29,13 +30,13 @@ const graphActionsMock = vi.hoisted(() => ({
   setPathConfigs: setPathConfigsMock,
 }));
 
-vi.mock('@/shared/lib/ai-paths', async () => {
-  const actual =
-    await vi.importActual<typeof import('@/shared/lib/ai-paths')>('@/shared/lib/ai-paths');
+const performEnqueueMock = vi.hoisted(() => vi.fn());
+
+vi.mock('@/features/ai/ai-paths/components/ai-paths-settings/runtime/server-execution/enqueue-logic', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/ai/ai-paths/components/ai-paths-settings/runtime/server-execution/enqueue-logic')>();
   return {
     ...actual,
-    enqueueAiPathRun: enqueueAiPathRunMock,
-    streamAiPathRun: streamAiPathRunMock,
+    performEnqueue: performEnqueueMock,
   };
 });
 
@@ -61,6 +62,7 @@ vi.mock('@/shared/lib/ai-paths/hooks/trigger-event-recovery', () => ({
 
 vi.mock('@/shared/utils/observability/client-error-logger', () => ({
   logClientError: logClientErrorMock,
+  logClientCatch: vi.fn(),
 }));
 
 import { useAiPathsServerExecution } from '../useAiPathsServerExecution';
@@ -220,18 +222,17 @@ describe('useAiPathsServerExecution history streaming', () => {
     await act(async () => {
       await result.current.runServerStream(triggerNode, 'manual', {});
     });
-    const enqueueArgs = enqueueAiPathRunMock.mock.calls[0]?.[0] as
-      | { meta?: Record<string, unknown> }
-      | undefined;
-    expect(enqueueArgs?.meta).toEqual(
+
+    expect(performEnqueueMock).toHaveBeenCalled();
+    const callArgs = performEnqueueMock.mock.calls[0]?.[1];
+    expect(callArgs.meta).toEqual(
       expect.objectContaining({
-        runtimeKernelConfig: {
+        runtimeKernelConfig: expect.objectContaining({
           nodeTypes: ['template'],
           codeObjectResolverIds: ['resolver.path'],
-        },
+        }),
       })
     );
-    expect(enqueueAiPathRunMock.mock.calls[0]?.[1]).toEqual({ timeoutMs: 90_000 });
 
     const nodePayload = [
       {

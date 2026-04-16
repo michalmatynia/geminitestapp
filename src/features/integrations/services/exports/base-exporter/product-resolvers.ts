@@ -6,12 +6,12 @@ import {
   buildProducerNameToExternalIdLookup,
   getTagNameFromLookup,
   getTagExternalIdFromLookup,
-  ProducerNameLookup,
-  ProducerExternalIdLookup,
-  TagNameLookup,
-  TagExternalIdLookup,
+  type ProducerNameLookup,
+  type ProducerExternalIdLookup,
+  type TagNameLookup,
+  type TagExternalIdLookup,
 } from './lookup-resolvers';
-import { toTrimmedString, ProducerEntry, TagEntry } from './template-helpers';
+import { toTrimmedString, type ProducerEntry, type TagEntry } from './template-helpers';
 
 const toScalarProducerValue = (value: unknown): string | null => {
   if (typeof value === 'string') {

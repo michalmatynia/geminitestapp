@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { RegexConfig, AiNode } from '@/shared/lib/ai-paths';
+import type { RegexConfig, AiNode } from '@/shared/contracts/ai-paths';
 import { Button, Label, Textarea, Tooltip } from '@/shared/ui/primitives.public';
 import { ToggleRow } from '@/shared/ui/forms-and-actions.public';
 

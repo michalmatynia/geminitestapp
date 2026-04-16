@@ -42,9 +42,10 @@ export const resolveCatalogRelationIdValue = (
     return directCatalogId;
   }
 
+  const rawCatalog = record?.['catalog'];
   const catalogRecord =
-    record?.['catalog'] && typeof record['catalog'] === 'object' && !Array.isArray(record['catalog'])
-      ? (record['catalog'] as Record<string, unknown>)
+    rawCatalog !== null && rawCatalog !== undefined && typeof rawCatalog === 'object' && !Array.isArray(rawCatalog)
+      ? (rawCatalog as Record<string, unknown>)
       : null;
 
   return resolveFirstTrimmedRecordValue(catalogRecord, ['id']);

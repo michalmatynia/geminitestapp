@@ -32,6 +32,7 @@ export type {
 
 export const folderTreeInstanceValues = [
   'notes',
+  'ai_paths',
   'image_studio',
   'product_categories',
   'cms_page_builder',
@@ -53,6 +54,7 @@ export const folderTreeInstanceValues = [
   'brain_catalog_tree',
   'brain_routing_tree',
   'kangur_social_capture_browser',
+  'playwright_step_seq_constructor',
 ] as const;
 
 export type FolderTreeInstance = (typeof folderTreeInstanceValues)[number];

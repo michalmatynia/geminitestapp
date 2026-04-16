@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { LogicalConditionConfig, LogicalConditionItem, LogicalConditionOperator } from '@/shared/lib/ai-paths';
+import type { LogicalConditionConfig, LogicalConditionItem, LogicalConditionOperator } from '@/shared/contracts/ai-paths';
 import { Button, Input, Label } from '@/shared/ui/primitives.public';
 import { FormField, SelectSimple } from '@/shared/ui/forms-and-actions.public';
 import { insetPanelVariants } from '@/shared/ui/navigation-and-layout.public';

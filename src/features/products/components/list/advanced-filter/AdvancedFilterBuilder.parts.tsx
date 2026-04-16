@@ -77,7 +77,7 @@ const FIELD_OPTIONS: SelectSimpleOption[] = ADVANCED_FILTER_FIELD_CONFIGS.map((c
   label: config.label,
 }));
 
-const AdvancedFilterConditionEditor = memo(function AdvancedFilterConditionEditor(props: {
+const AdvancedFilterConditionEditor = memo((props: {
   condition: ProductAdvancedFilterCondition;
   parentGroup: ProductAdvancedFilterGroup;
   updateParent: (next: ProductAdvancedFilterGroup) => void;
@@ -85,7 +85,7 @@ const AdvancedFilterConditionEditor = memo(function AdvancedFilterConditionEdito
   canMoveUp: boolean;
   canMoveDown: boolean;
   disableRemove?: boolean;
-}): React.JSX.Element {
+}): React.JSX.Element => {
   const {
     condition,
     parentGroup,

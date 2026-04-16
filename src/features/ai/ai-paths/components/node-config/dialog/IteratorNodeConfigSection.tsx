@@ -2,8 +2,8 @@
 
 import React from 'react';
 
-import type { IteratorConfig } from '@/shared/lib/ai-paths';
-import { formatRuntimeValue } from '@/shared/lib/ai-paths';
+import type { IteratorConfig } from '@/shared/contracts/ai-paths';
+import { formatRuntimeValue } from '@/shared/lib/ai-paths/core/utils';
 import { Input, Textarea, Card, Badge } from '@/shared/ui/primitives.public';
 import { ToggleRow, FormField } from '@/shared/ui/forms-and-actions.public';
 import { StatusBadge } from '@/shared/ui/data-display.public';

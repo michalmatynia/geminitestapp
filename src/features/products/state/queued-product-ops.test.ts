@@ -22,30 +22,18 @@ describe('queued-product-ops', () => {
     expect(ops.getQueuedProductIds().size).toBe(0);
   });
 
-  it('tracks AI-run queued ids separately from legacy and offline sources', () => {
+  it('tracks AI-run queued ids separately from offline sources', () => {
     const updateSource = ops.buildQueuedProductOfflineMutationSource('update');
     const aiRunSource = ops.buildQueuedProductAiRunSource('run-1');
     if (!aiRunSource) throw new Error('Expected ai-run source');
 
-    ops.addQueuedProductId('product-legacy');
     ops.addQueuedProductSource('product-offline', updateSource);
     ops.addQueuedProductSource('product-run', aiRunSource);
 
     expect(ops.getQueuedProductIds()).toEqual(
-      new Set(['product-legacy', 'product-offline', 'product-run'])
+      new Set(['product-offline', 'product-run'])
     );
     expect(ops.getQueuedAiRunProductIds()).toEqual(new Set(['product-run']));
-  });
-
-  it('tracks legacy queued ids through the compatibility helpers', () => {
-    ops.addQueuedProductId('product-1');
-
-    expect(ops.getQueuedProductIds().has('product-1')).toBe(true);
-    expect(ops.getQueuedProductSources('product-1')).toEqual(new Set(['legacy']));
-
-    ops.removeQueuedProductId('product-1');
-
-    expect(ops.getQueuedProductIds().has('product-1')).toBe(false);
   });
 
   it('keeps a product queued while at least one source remains', () => {
@@ -115,16 +103,6 @@ describe('queued-product-ops', () => {
 
     expect(stored?.version).toBe(2);
     expect(stored?.products['product-1']).toEqual([{ source: updateSource }]);
-  });
-
-  it('restores legacy array storage values on first load', async () => {
-    window.localStorage.setItem('queued-product-ids', JSON.stringify(['product-seed']));
-    vi.resetModules();
-    const freshOps = await import('./queued-product-ops');
-
-    expect(freshOps.getQueuedProductIds()).toEqual(new Set(['product-seed']));
-    expect(freshOps.getQueuedProductSources('product-seed')).toEqual(new Set(['legacy']));
-    expect(freshOps.getQueuedAiRunProductIds().size).toBe(0);
   });
 
   it('restores source-aware storage values and prunes expired sources', async () => {

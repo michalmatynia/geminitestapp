@@ -47,10 +47,7 @@ const resolveRuntimeKernelParityRates = (
     sampledHistoryEntries,
     coverageRate: safeRate(kernelParity.runsWithKernelParity, sampledRuns),
     v3Rate: safeRate(kernelParity.strategyCounts.code_object_v3, sampledHistoryEntries),
-    compatibilityRate: safeRate(
-      kernelParity.strategyCounts.compatibility,
-      sampledHistoryEntries
-    ),
+    compatibilityRate: safeRate(kernelParity.strategyCounts.compatibility, sampledHistoryEntries),
     unknownRate: safeRate(kernelParity.strategyCounts.unknown, sampledHistoryEntries),
     missingResolutionRate: safeRate(resolutionSourceCounts.missing, resolutionSourceTotal),
   };

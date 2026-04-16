@@ -164,6 +164,14 @@ export const PART_4B = String.raw`
         continue;
       }
 
+      if (listingAction === 'sync' && (await isControlDisabled(listingFormatTrigger))) {
+        log?.('tradera.quicklist.listing_format.skipped', {
+          attempt,
+          reason: 'disabled-on-sync',
+        });
+        return;
+      }
+
       await humanClick(listingFormatTrigger);
       await wait(400);
 
@@ -380,6 +388,35 @@ export const PART_4B = String.raw`
     return Boolean(pendingIndicator);
   };
 
+  const summarizeImageUploadProgressState = ({
+    selectedImageFileCount = 0,
+    draftImageRemoveControls = 0,
+    uploadedImagePreviewCount = 0,
+    baselinePreviewCount = 0,
+    imageUploadPromptVisible = false,
+    imageUploadPending = false,
+  } = {}) => {
+    const normalizedBaselinePreviewCount = Math.max(0, baselinePreviewCount || 0);
+    const observedPreviewDelta = Math.max(
+      0,
+      (uploadedImagePreviewCount || 0) - normalizedBaselinePreviewCount
+    );
+    const uploadAccepted =
+      observedPreviewDelta > 0 ||
+      draftImageRemoveControls > 0 ||
+      (selectedImageFileCount > 0 && imageUploadPromptVisible === false) ||
+      (imageUploadPending === true && imageUploadPromptVisible === false);
+    const uploadPartiallyApplied =
+      uploadAccepted &&
+      (imageUploadPending === true || observedPreviewDelta === 0);
+
+    return {
+      observedPreviewDelta,
+      uploadAccepted,
+      uploadPartiallyApplied,
+    };
+  };
+
   const readImageUploadErrorText = async () => {
     for (const selector of IMAGE_UPLOAD_ERROR_SELECTORS) {
       const locator = page.locator(selector);
@@ -406,25 +443,8 @@ export const PART_4B = String.raw`
   };
 
   const countUploadedImagePreviews = async () => {
-    let count = 0;
-
-    for (const selector of UPLOADED_IMAGE_PREVIEW_SELECTORS) {
-      const locator = page.locator(selector);
-      const candidateCount = await locator.count().catch(() => 0);
-      if (!candidateCount) continue;
-
-      for (let index = 0; index < candidateCount; index += 1) {
-        const candidate = locator.nth(index);
-        const visible = await candidate.isVisible().catch(() => false);
-        if (!visible) continue;
-
-        const box = await candidate.boundingBox().catch(() => null);
-        if (!box || box.width < 24 || box.height < 24) continue;
-        count += 1;
-      }
-    }
-
-    return count;
+    const descriptors = await readUploadedImagePreviewDescriptors(48).catch(() => []);
+    return Array.isArray(descriptors) ? descriptors.length : 0;
   };
 
   const summarizeUploadFileNames = (uploadFiles, limit = 12) => {
@@ -487,6 +507,10 @@ export const PART_4B = String.raw`
 
         const descriptor = await candidate
           .evaluate((element) => {
+            const previewImage =
+              element instanceof HTMLImageElement
+                ? element
+                : element.querySelector('img');
             const container =
               element.closest(
                 'article, li, figure, [data-testid*="image"], [data-testid*="photo"], [data-testid*="preview"], [class*="image"], [class*="Image"], [class*="photo"], [class*="Photo"]'
@@ -494,13 +518,18 @@ export const PART_4B = String.raw`
               element.parentElement ||
               element;
 
-            const src =
-              element instanceof HTMLImageElement
-                ? element.currentSrc || element.src || element.getAttribute('src') || ''
-                : element.getAttribute('src') || '';
+            const src = previewImage
+              ? previewImage.currentSrc || previewImage.src || previewImage.getAttribute('src') || ''
+              : element.getAttribute('src') ||
+                container.getAttribute('data-src') ||
+                container.getAttribute('data-image') ||
+                '';
 
             return {
-              alt: element.getAttribute('alt') || '',
+              alt:
+                (previewImage && previewImage.getAttribute('alt')) ||
+                element.getAttribute('alt') ||
+                '',
               src,
               ariaLabel:
                 element.getAttribute('aria-label') ||
@@ -517,7 +546,15 @@ export const PART_4B = String.raw`
         const normalizedSrc = normalizeWhitespace(descriptor.src);
         const normalizedAriaLabel = normalizeWhitespace(descriptor.ariaLabel);
         const normalizedContainerText = normalizeWhitespace(descriptor.containerText);
+        const normalizedBoxKey = [
+          Math.round(box.x),
+          Math.round(box.y),
+          Math.round(box.width),
+          Math.round(box.height),
+        ].join('x');
         const dedupeKey =
+          normalizedBoxKey +
+          '|' +
           normalizedSrc.replace(/\?.*$/, '') +
           '|' +
           normalizedAlt +
@@ -547,15 +584,17 @@ export const PART_4B = String.raw`
 
   const readDraftImageCleanupState = async () => {
     const currentUrl = page.url();
-    const [draftImageRemoveControls, uploadedImagePreviewCount] = await Promise.all([
+    const [draftImageRemoveControls, uploadedImagePreviewCount, uploadedImagePreviewDescriptors] = await Promise.all([
       countDraftImageRemoveControls().catch(() => 0),
       countUploadedImagePreviews().catch(() => 0),
+      readUploadedImagePreviewDescriptors().catch(() => []),
     ]);
 
     return {
       currentUrl,
       draftImageRemoveControls,
       uploadedImagePreviewCount,
+      uploadedImagePreviewDescriptors,
       onHomepage: isTraderaHomepage(currentUrl),
       onSellingRoute: isTraderaSellingRoute(currentUrl),
     };
@@ -606,10 +645,23 @@ export const PART_4B = String.raw`
     const deadline = Date.now() + timeoutMs;
     let lastObservedState = null;
     while (Date.now() < deadline) {
-      const [selectedImageFileCount, draftImageRemoveControls, uploadedImagePreviewCount] = await Promise.all([
+      const autofillDialogDismissed = await dismissVisibleAutofillDialogIfPresent({
+        context: 'image-upload-settle',
+      }).catch(() => false);
+      if (autofillDialogDismissed) {
+        await wait(300);
+      }
+
+      const [
+        selectedImageFileCount,
+        draftImageRemoveControls,
+        uploadedImagePreviewCount,
+        uploadedImagePreviewDescriptors,
+      ] = await Promise.all([
         readSelectedImageFileCount(imageInput),
         countDraftImageRemoveControls(),
         countUploadedImagePreviews(),
+        readUploadedImagePreviewDescriptors().catch(() => []),
       ]);
       const [imageUploadPromptVisible, imageUploadPending, imageUploadErrorText] = await Promise.all([
         isImageUploadPromptVisible(),
@@ -621,6 +673,7 @@ export const PART_4B = String.raw`
           selectedImageFileCount,
           draftImageRemoveControls,
           uploadedImagePreviewCount,
+          uploadedImagePreviewDescriptors,
           baselinePreviewCount,
           imageUploadPromptVisible,
           imageUploadPending,
@@ -662,7 +715,16 @@ export const PART_4B = String.raw`
         selectedImageFileCount,
         draftImageRemoveControls,
         uploadedImagePreviewCount,
+        uploadedImagePreviewDescriptors,
         baselinePreviewCount,
+        ...summarizeImageUploadProgressState({
+          selectedImageFileCount,
+          draftImageRemoveControls,
+          uploadedImagePreviewCount,
+          baselinePreviewCount,
+          imageUploadPromptVisible,
+          imageUploadPending,
+        }),
         imageUploadPromptVisible,
         imageUploadPending,
         continueButtonVisible: Boolean(continueButton),
@@ -680,6 +742,7 @@ export const PART_4B = String.raw`
           selectedImageFileCount,
           draftImageRemoveControls,
           uploadedImagePreviewCount,
+          uploadedImagePreviewDescriptors,
           baselinePreviewCount,
           imageUploadPromptVisible,
           imageUploadPending,
@@ -698,621 +761,4 @@ export const PART_4B = String.raw`
             method: 'editor-with-upload-state',
             selectedImageFileCount,
             draftImageRemoveControls,
-            imageUploadPromptVisible,
-            imageUploadPending,
-            listingEditorState,
-          });
-          return true;
-        }
-      }
-
-      if (draftImageRemoveControls > 0 && !imageUploadPromptVisible && !imageUploadPending) {
-        log?.('tradera.quicklist.image.settle', {
-          method: 'draft-image-controls',
-          selectedImageFileCount,
-          draftImageRemoveControls,
-          imageUploadPromptVisible,
-          imageUploadPending,
-        });
-        return true;
-      }
-
-      await wait(1000);
-    }
-
-    log?.('tradera.quicklist.image.settle_timeout', lastObservedState);
-    return lastObservedState;
-  };
-
-  const advancePastImagesStep = async (
-    imageInput,
-    expectedUploadCount = 1,
-    baselinePreviewCount = 0
-  ) => {
-    const waitForListingFormReady = async (timeoutMs = 20_000) => {
-      const deadline = Date.now() + timeoutMs;
-      while (Date.now() < deadline) {
-        const listingEditorState = await readListingEditorState();
-        if (listingEditorState.ready) {
-          log?.('tradera.quicklist.image.editor_ready', listingEditorState);
-          return true;
-        }
-
-        await wait(500);
-      }
-
-      return false;
-    };
-
-    const clickContinueButton = async (button) => {
-      await button.scrollIntoViewIfNeeded().catch(() => undefined);
-      let primaryClickFailed = false;
-      try {
-        await humanClick(button);
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error || '');
-        if (message.includes('FAIL_SELL_PAGE_INVALID:')) {
-          throw error;
-        }
-        primaryClickFailed = true;
-      }
-      await wait(400);
-
-      const stillVisible = await button.isVisible().catch(() => false);
-      if (stillVisible) {
-        await button.evaluate((element) => {
-          element.click();
-        }).catch(() => undefined);
-      } else if (primaryClickFailed) {
-        return;
-      }
-    };
-
-    const imageSettleState = await waitForImageUploadsToSettle(
-      imageInput,
-      expectedUploadCount,
-      baselinePreviewCount
-    );
-    if (!imageSettleState || imageSettleState === false) {
-      throw new Error('FAIL_IMAGE_SET_INVALID: Tradera image upload step did not finish.');
-    }
-
-    const settleReady =
-      imageSettleState === true ||
-      (typeof imageSettleState === 'object' &&
-        imageSettleState !== null &&
-        !imageSettleState.imageUploadErrorText &&
-        imageSettleState.imageUploadPending === false &&
-        ((imageSettleState.uploadedImagePreviewCount ?? 0) > (imageSettleState.baselinePreviewCount ?? 0) ||
-          (imageSettleState.selectedImageFileCount >= Math.max(1, expectedUploadCount) &&
-            imageSettleState.imageUploadPromptVisible === false) ||
-          imageSettleState.draftImageRemoveControls > 0 ||
-          imageSettleState.continueButtonDisabled === false));
-
-    if (!settleReady) {
-      throw new Error(
-        'FAIL_IMAGE_SET_INVALID: Tradera image upload step did not finish. Last state: ' +
-          JSON.stringify(imageSettleState)
-      );
-    }
-
-    const actionableContinueButton = await firstVisible(CONTINUE_SELECTORS);
-    if (!actionableContinueButton) {
-      const formReadyWithoutContinue = await waitForListingFormReady(8_000);
-      if (formReadyWithoutContinue) {
-        return false;
-      }
-
-      throw new Error(
-        'FAIL_IMAGE_SET_INVALID: Tradera listing form did not appear after the image step.'
-      );
-    }
-
-    const disabled = await isControlDisabled(actionableContinueButton);
-
-    if (disabled) {
-      return false;
-    }
-
-    for (let attempt = 0; attempt < 3; attempt += 1) {
-      await clickContinueButton(actionableContinueButton);
-
-      const formReady = await waitForListingFormReady(20_000);
-      if (formReady) {
-        return true;
-      }
-
-      const continueStillVisible = await actionableContinueButton.isVisible().catch(() => false);
-      const continueStillDisabled = continueStillVisible
-        ? await actionableContinueButton.isDisabled().catch(() => false)
-        : false;
-
-      if (!continueStillVisible || continueStillDisabled) {
-        break;
-      }
-    }
-
-    const finalEditorState = await readListingEditorState();
-
-    throw new Error(
-      'FAIL_IMAGE_SET_INVALID: Continue completed the image step but the listing editor never became ready. Editor state: ' +
-        JSON.stringify(finalEditorState)
-    );
-  };
-
-  const guessExtension = (url, contentType) => {
-    if (typeof contentType === 'string') {
-      if (contentType.includes('png')) return 'png';
-      if (contentType.includes('webp')) return 'webp';
-      if (contentType.includes('gif')) return 'gif';
-      if (contentType.includes('jpeg') || contentType.includes('jpg')) return 'jpg';
-    }
-    try {
-      const pathname = new URL(url).pathname;
-      const match = pathname.match(/\.([a-z0-9]{2,5})\$/i);
-      if (match && match[1]) return match[1].toLowerCase();
-    } catch {}
-    return 'jpg';
-  };
-
-  const downloadImages = async () => {
-    const downloaded = [];
-
-    for (let index = 0; index < imageUrls.length; index += 1) {
-      const sourceUrl = imageUrls[index];
-      if (!sourceUrl) continue;
-      const response = await page.context().request.get(sourceUrl).catch(() => null);
-      if (!response || !response.ok()) {
-        log?.('tradera.quicklist.image.download_failed', { index, sourceUrl, status: response?.status() ?? null });
-        continue;
-      }
-      const bytes = await response.body().catch(() => null);
-      if (!bytes) {
-        log?.('tradera.quicklist.image.download_failed', { index, sourceUrl, reason: 'empty_body' });
-        continue;
-      }
-      if (bytes.byteLength < 10_240) {
-        log?.('tradera.quicklist.image.download_skipped', { index, sourceUrl, reason: 'too_small', size: bytes.byteLength });
-        continue;
-      }
-      const contentType = response.headers()['content-type'] || '';
-      const extension = guessExtension(sourceUrl, contentType);
-      const filename =
-        String(baseProductId).replace(/[^a-zA-Z0-9_-]+/g, '-') +
-        '_' +
-        String(index + 1).padStart(2, '0') +
-        '.' +
-        extension;
-      downloaded.push({
-        name: filename,
-        mimeType: contentType || 'image/jpeg',
-        buffer: bytes,
-      });
-    }
-
-    if (!downloaded.length) {
-      throw new Error(
-        'FAIL_IMAGE_SET_INVALID: No usable product images were downloaded. Attempted ' +
-        imageUrls.length + ' URL(s): ' + imageUrls.slice(0, 3).join(', ') +
-        (imageUrls.length > 3 ? ' ...' : '')
-      );
-    }
-
-    return downloaded;
-  };
-
-  const isListingEditorReady = async () => {
-    const readyLocators = await Promise.all([
-      firstVisible(TITLE_SELECTORS),
-      firstVisible(DESCRIPTION_SELECTORS),
-      firstVisible(PRICE_SELECTORS),
-      firstVisible(PUBLISH_SELECTORS),
-    ]);
-
-    return readyLocators.some(Boolean);
-  };
-
-  const ensureImageStepSellPageReady = async (context) => {
-    if (await isCreateListingPage()) {
-      return true;
-    }
-
-    const stableEntryPoint = await confirmStableSellPage(1_000, 6_000);
-    if (stableEntryPoint === 'form') {
-      return true;
-    }
-
-    const currentUrl = page.url();
-    if (
-      context === 'draft image cleanup complete' &&
-      !draftImageCleanupCompleteRecoveryUsed &&
-      (stableEntryPoint === 'homepage' || stableEntryPoint === 'trigger')
-    ) {
-      draftImageCleanupCompleteRecoveryUsed = true;
-      const beforeRecoveryState = await readDraftImageCleanupState();
-      log?.('tradera.quicklist.sell_page.image_step_recover', {
-        context,
-        stableEntryPoint,
-        currentUrl,
-        ...beforeRecoveryState,
-      });
-
-      try {
-        await ensureCreateListingPageReady(context + ' recovery', true);
-      } catch (error) {
-        log?.('tradera.quicklist.sell_page.image_step_recover_result', {
-          context,
-          stableEntryPoint,
-          recovered: false,
-          currentUrl: page.url(),
-          error: error instanceof Error ? error.message : String(error),
-          ...(await readDraftImageCleanupState().catch(() => ({
-            currentUrl: page.url(),
-          }))),
-        });
-      }
-
-      if (await isCreateListingPage()) {
-        log?.('tradera.quicklist.sell_page.image_step_recover_result', {
-          context,
-          stableEntryPoint,
-          recovered: true,
-          currentUrl: page.url(),
-          ...(await readDraftImageCleanupState().catch(() => ({
-            currentUrl: page.url(),
-          }))),
-        });
-        return true;
-      }
-    }
-
-    if (
-      stableEntryPoint === 'homepage' ||
-      stableEntryPoint === 'trigger' ||
-      stableEntryPoint === null
-    ) {
-      log?.('tradera.quicklist.sell_page.image_step_invalid', {
-        context,
-        stableEntryPoint,
-        currentUrl,
-      });
-      await captureFailureArtifacts('listing-page-missing', {
-        context,
-        stableEntryPoint,
-        currentUrl,
-      }).catch(() => undefined);
-      throw new Error(
-        'FAIL_SELL_PAGE_INVALID: Tradera listing editor was lost during ' +
-          context +
-          '. Entry point: ' +
-          String(stableEntryPoint) +
-          '. Current URL: ' +
-          currentUrl
-      );
-    }
-
-    await ensureCreateListingPageReady(context);
-    return true;
-  };
-
-  const openImageUploadControlsIfPresent = async () => {
-    for (const selector of IMAGE_UPLOAD_TRIGGER_SELECTORS) {
-      const locator = page.locator(selector);
-      const count = await locator.count().catch(() => 0);
-      if (!count) continue;
-
-      for (let index = 0; index < count; index += 1) {
-        const candidate = locator.nth(index);
-        const visible = await candidate.isVisible().catch(() => false);
-        if (!visible) continue;
-
-        await candidate.scrollIntoViewIfNeeded().catch(() => undefined);
-        const clicked = await tryHumanClick(candidate);
-        if (!clicked) {
-          continue;
-        }
-        await wait(800);
-        log?.('tradera.quicklist.image.trigger_opened', { selector });
-        return true;
-      }
-    }
-
-    return false;
-  };
-
-  const ensureImageInputReady = async (attempts = 4) => {
-    for (let attempt = 0; attempt < attempts; attempt += 1) {
-      await ensureImageStepSellPageReady('image input resolution');
-      await assertAllowedTraderaPage('image input resolution');
-      const imageInput = await firstExisting(IMAGE_INPUT_SELECTORS);
-      if (imageInput) {
-        return imageInput;
-      }
-
-      const editorReady = await isListingEditorReady();
-      const triggerOpened = await openImageUploadControlsIfPresent();
-      log?.('tradera.quicklist.image_input.retry', {
-        attempt,
-        editorReady,
-        triggerOpened,
-        url: page.url(),
-      });
-
-      await wait(triggerOpened ? 1200 : editorReady ? 1500 : 1000);
-    }
-
-    return firstExisting(IMAGE_INPUT_SELECTORS);
-  };
-
-  const resolveUploadFiles = async () => {
-    if (localImagePaths.length) {
-      log?.('tradera.quicklist.image.local_paths', {
-        strategy: imageOrderStrategy,
-        manifestCount: imageManifestCount,
-        localCoverageCount: localImageCoverageCount,
-        count: localImagePaths.length,
-        sample: localImagePaths.slice(0, 3),
-      });
-      return localImagePaths;
-    }
-
-    if (imageOrderStrategy === 'download-ordered') {
-      log?.('tradera.quicklist.image.order_preserved_by_download', {
-        strategy: imageOrderStrategy,
-        manifestCount: imageManifestCount,
-        localCoverageCount: localImageCoverageCount,
-      });
-    }
-
-    return downloadImages();
-  };
-
-  const clearDraftImagesIfPresent = async () => {
-    await ensureImageStepSellPageReady('draft image cleanup');
-    let removedCount = 0;
-
-    for (let attempt = 0; attempt < 12; attempt += 1) {
-      let removedInAttempt = false;
-
-      for (const selector of DRAFT_IMAGE_REMOVE_SELECTORS) {
-        const locator = page.locator(selector);
-        const count = await locator.count().catch(() => 0);
-        if (!count) continue;
-
-        for (let index = 0; index < count; index += 1) {
-          const candidate = locator.nth(index);
-          const visible = await candidate.isVisible().catch(() => false);
-          if (!visible) continue;
-          const safeDraftRemoveControl = await isSafeDraftImageRemoveControl(candidate);
-          if (!safeDraftRemoveControl) continue;
-          await logClickTarget('draft-image-remove', candidate);
-          await candidate.scrollIntoViewIfNeeded().catch(() => undefined);
-          const clicked = await tryHumanClick(candidate);
-          if (!clicked) {
-            continue;
-          }
-          const postClickUrl = page.url();
-          log?.('tradera.quicklist.draft_image_remove.clicked', {
-            attempt,
-            selector,
-            index,
-            postClickUrl,
-          });
-          if (isTraderaHomepage(postClickUrl) || !isTraderaSellingRoute(postClickUrl)) {
-            await captureFailureArtifacts('draft-image-remove-navigation', {
-              attempt,
-              selector,
-              index,
-              postClickUrl,
-            }).catch(() => undefined);
-            throw new Error(
-              'FAIL_SELL_PAGE_INVALID: Tradera draft image cleanup navigated away from the listing editor. Current URL: ' +
-                postClickUrl
-            );
-          }
-          removedCount += 1;
-          removedInAttempt = true;
-          await wait(500);
-          break;
-        }
-
-        if (removedInAttempt) {
-          break;
-        }
-      }
-
-      if (!removedInAttempt) {
-        break;
-      }
-    }
-
-    if (removedCount > 0) {
-      log?.('tradera.quicklist.draft.reset', { removedCount });
-      await wait(800);
-      log?.('tradera.quicklist.draft.reset_state', {
-        removedCount,
-        ...(await readDraftImageCleanupState().catch(() => ({
-          currentUrl: page.url(),
-        }))),
-      });
-    }
-
-    await ensureImageStepSellPageReady('draft image cleanup complete');
-
-    return removedCount;
-  };
-
-  const checkDuplicate = async (term) => {
-    const createDefaultDuplicateResult = () => ({
-      duplicateFound: false,
-      listingUrl: null,
-      listingId: null,
-      matchStrategy: null,
-      matchedProductId: null,
-      candidateCount: 0,
-      searchTitle: term || null,
-    });
-    const identifiersMatch = (left, right) =>
-      normalizeWhitespace(left).toLowerCase() === normalizeWhitespace(right).toLowerCase();
-
-    if (!term) {
-      log?.('tradera.quicklist.duplicate.skipped', {
-        reason: 'english-title-missing',
-        listingAction,
-        existingExternalListingId: existingExternalListingId || null,
-        duplicateSearchTitle: duplicateSearchTitle || null,
-      });
-      return createDefaultDuplicateResult();
-    }
-
-    const activeContextReady = await ensureActiveListingsContext();
-    if (!activeContextReady) {
-      throw new Error('FAIL_DUPLICATE_UNCERTAIN: Active listings context could not be confirmed.');
-    }
-    const searchInput = await openActiveSearchInput();
-    if (!searchInput) {
-      throw new Error('FAIL_DUPLICATE_UNCERTAIN: Active listings search input not found.');
-    }
-
-    const candidatePreviewBeforeSearch = await collectVisibleListingCandidatePreview();
-    log?.('tradera.quicklist.duplicate.search_prepare', {
-      term,
-      listingAction,
-      allowDuplicateLinking,
-      candidatePreviewBeforeSearch,
-      currentUrl: page.url(),
-    });
-
-    const preparedSearchValue = await prepareActiveListingsSearchInput(searchInput, term);
-    const searchTrigger = await triggerActiveSearchSubmit();
-    await wait(1200);
-    const searchInputValue = await readActiveSearchInputValue(searchInput);
-    const candidatePreviewAfterSearch = await collectVisibleListingCandidatePreview();
-    const searchStateChanged =
-      JSON.stringify(candidatePreviewBeforeSearch) !== JSON.stringify(candidatePreviewAfterSearch);
-    log?.('tradera.quicklist.duplicate.search_state', {
-      term,
-      preparedSearchValue,
-      searchInputValue,
-      searchTrigger,
-      searchStateChanged,
-      candidatePreviewBeforeSearch,
-      candidatePreviewAfterSearch,
-      currentUrl: page.url(),
-    });
-
-    const duplicateMatches = await collectListingLinksForTerm(term);
-    log?.('tradera.quicklist.duplicate.search', {
-      term,
-      preparedSearchValue,
-      searchInputValue,
-      searchTrigger,
-      candidateCount: duplicateMatches.length,
-      candidateScanMode: 'all-visible',
-      searchStateChanged,
-      listingAction,
-      allowDuplicateLinking,
-    });
-
-    if (duplicateMatches.length === 0) {
-      log?.('tradera.quicklist.duplicate.result', {
-        term,
-        duplicateFound: false,
-        matchStrategy: null,
-        candidateCount: 0,
-        listingUrl: null,
-        listingId: null,
-      });
-      return createDefaultDuplicateResult();
-    }
-
-    // Inspect every title-matched candidate: Phase 1 = description match, Phase 2 = product ID match
-    for (const candidate of duplicateMatches) {
-      let inspectedCandidate = null;
-      try {
-        inspectedCandidate = await inspectDuplicateCandidateListing(candidate);
-      } catch (error) {
-        throw new Error(
-          'FAIL_DUPLICATE_UNCERTAIN: Duplicate inspection failed for Tradera listing ' +
-            String(candidate?.listingId || candidate?.listingUrl || 'unknown') +
-            '. ' +
-            (error instanceof Error ? error.message : String(error))
-        );
-      }
-
-      const resolvedListingUrl = inspectedCandidate?.listingUrl || candidate.listingUrl;
-      const resolvedListingId =
-        inspectedCandidate?.listingId || candidate.listingId || extractListingId(candidate.listingUrl);
-      const descriptionMatched = rawDescriptionEn
-        ? descriptionsMatch(inspectedCandidate?.listingDescription || '', rawDescriptionEn)
-        : false;
-
-      log?.('tradera.quicklist.duplicate.inspect', {
-        term,
-        listingUrl: resolvedListingUrl,
-        listingId: resolvedListingId,
-        matchedProductId: inspectedCandidate?.matchedProductId || null,
-        expectedProductId: baseProductId,
-        descriptionMatched,
-      });
-
-      // Phase 1: description match
-      if (descriptionMatched) {
-        log?.('tradera.quicklist.duplicate.result', {
-          term,
-          duplicateFound: true,
-          matchStrategy: 'title+description',
-          candidateCount: duplicateMatches.length,
-          listingUrl: resolvedListingUrl,
-          listingId: resolvedListingId,
-          matchedProductId: inspectedCandidate?.matchedProductId || null,
-        });
-
-        return {
-          duplicateFound: true,
-          listingUrl: resolvedListingUrl,
-          listingId: resolvedListingId,
-          matchStrategy: 'title+description',
-          matchedProductId: inspectedCandidate?.matchedProductId || null,
-          candidateCount: duplicateMatches.length,
-          searchTitle: term,
-        };
-      }
-
-      // Phase 2: product ID match
-      if (identifiersMatch(baseProductId, inspectedCandidate?.matchedProductId || '')) {
-        log?.('tradera.quicklist.duplicate.result', {
-          term,
-          duplicateFound: true,
-          matchStrategy: 'title+product-id',
-          candidateCount: duplicateMatches.length,
-          listingUrl: resolvedListingUrl,
-          listingId: resolvedListingId,
-          matchedProductId: inspectedCandidate?.matchedProductId || null,
-        });
-
-        return {
-          duplicateFound: true,
-          listingUrl: resolvedListingUrl,
-          listingId: resolvedListingId,
-          matchStrategy: 'title+product-id',
-          matchedProductId: inspectedCandidate?.matchedProductId || null,
-          candidateCount: duplicateMatches.length,
-          searchTitle: term,
-        };
-      }
-    }
-
-    log?.('tradera.quicklist.duplicate.result', {
-      term,
-      duplicateFound: false,
-      matchStrategy: null,
-      candidateCount: duplicateMatches.length,
-      expectedProductId: baseProductId,
-      listingUrl: null,
-      listingId: null,
-    });
-
-    return createDefaultDuplicateResult();
-  };
 `;

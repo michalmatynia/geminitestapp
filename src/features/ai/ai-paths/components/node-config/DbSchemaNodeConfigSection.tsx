@@ -30,6 +30,31 @@ const OUTPUT_FORMAT_OPTIONS = [
   { value: 'json', label: 'JSON (Structured)' },
 ] as const satisfies ReadonlyArray<LabeledOptionDto<'text' | 'json'>>;
 
+const CONTEXT_SOURCE_MODE_OPTIONS = [
+  { value: 'schema', label: 'Schema Only' },
+  { value: 'schema_and_live_context', label: 'Schema + Live Context' },
+  { value: 'live_context', label: 'Live Context Only' },
+] as const satisfies ReadonlyArray<
+  LabeledOptionDto<'schema' | 'schema_and_live_context' | 'live_context'>
+>;
+
+const CONTEXT_TRANSFORM_OPTIONS = [
+  { value: 'none', label: 'Raw Documents' },
+  { value: 'product_categories_leaf_only', label: 'Product Categories Leaves Only' },
+] as const satisfies ReadonlyArray<
+  LabeledOptionDto<'none' | 'product_categories_leaf_only'>
+>;
+
+const CONTEXT_REUSE_MODE_OPTIONS = [
+  { value: 'never', label: 'Always Fetch Live Context' },
+  { value: 'prefer_transformed_input', label: 'Prefer Matching Input Context' },
+] as const satisfies ReadonlyArray<
+  LabeledOptionDto<'never' | 'prefer_transformed_input'>
+>;
+
+const DEFAULT_CONTEXT_LIMIT = 20;
+const MAX_CONTEXT_LIMIT = 100;
+
 const isCollectionSchema = (value: unknown): value is CollectionSchema =>
   isObjectRecord(value) && typeof value['name'] === 'string' && Array.isArray(value['fields']);
 
@@ -96,6 +121,12 @@ interface SchemaConfig {
   provider: 'auto' | 'mongodb';
   mode: 'all' | 'selected';
   collections: string[];
+  sourceMode: 'schema' | 'live_context' | 'schema_and_live_context';
+  contextCollections: string[];
+  contextQuery: string;
+  contextLimit: number;
+  contextTransform: 'none' | 'product_categories_leaf_only';
+  contextReuseMode: 'never' | 'prefer_transformed_input';
   includeFields: boolean;
   includeRelations: boolean;
   formatAs: 'json' | 'text';
@@ -123,6 +154,12 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
     provider: normalizeSchemaProvider(selectedNode.config?.db_schema?.provider),
     mode: selectedNode.config?.db_schema?.mode ?? 'all',
     collections: selectedNode.config?.db_schema?.collections ?? [],
+    sourceMode: selectedNode.config?.db_schema?.sourceMode ?? 'schema',
+    contextCollections: selectedNode.config?.db_schema?.contextCollections ?? [],
+    contextQuery: selectedNode.config?.db_schema?.contextQuery ?? '',
+    contextLimit: selectedNode.config?.db_schema?.contextLimit ?? DEFAULT_CONTEXT_LIMIT,
+    contextTransform: selectedNode.config?.db_schema?.contextTransform ?? 'none',
+    contextReuseMode: selectedNode.config?.db_schema?.contextReuseMode ?? 'never',
     includeFields: selectedNode.config?.db_schema?.includeFields ?? true,
     includeRelations: selectedNode.config?.db_schema?.includeRelations ?? true,
     formatAs: selectedNode.config?.db_schema?.formatAs ?? 'text',
@@ -246,6 +283,13 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
 
   if (selectedNode.type !== 'db_schema') return null;
 
+  const effectiveContextCollections =
+    schemaConfig.contextCollections.length > 0
+      ? schemaConfig.contextCollections
+      : schemaConfig.sourceMode !== 'schema' && schemaConfig.mode === 'selected'
+        ? schemaConfig.collections
+        : [];
+
   const updateSchemaConfig = (patch: Partial<typeof schemaConfig>): void => {
     const nextConfig: SchemaConfig = { ...schemaConfig, ...patch };
     updateSelectedNodeConfig({
@@ -261,6 +305,33 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
       ? current.filter((c: string): boolean => c !== key)
       : [...current, key];
     updateSchemaConfig({ collections: next });
+  };
+
+  const toggleContextCollection = (collection: CollectionSchema): void => {
+    const current = effectiveContextCollections;
+    const includeProvider = fetchedDbSchema?.provider === 'multi';
+    const key = buildCollectionKey(collection, includeProvider);
+    const next = current.includes(key)
+      ? current.filter((entry: string): boolean => entry !== key)
+      : [...current, key];
+    updateSchemaConfig({ contextCollections: next });
+  };
+
+  const handleSourceModeChange = (value: string): void => {
+    const nextSourceMode = value as SchemaConfig['sourceMode'];
+    if (
+      nextSourceMode !== 'schema' &&
+      schemaConfig.contextCollections.length === 0 &&
+      schemaConfig.mode === 'selected' &&
+      schemaConfig.collections.length > 0
+    ) {
+      updateSchemaConfig({
+        sourceMode: nextSourceMode,
+        contextCollections: schemaConfig.collections,
+      });
+      return;
+    }
+    updateSchemaConfig({ sourceMode: nextSourceMode });
   };
 
   return (
@@ -352,6 +423,180 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
               </div>
             )}
 
+            <div>
+              <Label className='text-xs text-gray-400'>Context Source</Label>
+              <SelectSimple
+                size='sm'
+                value={schemaConfig.sourceMode}
+                onValueChange={handleSourceModeChange}
+                ariaLabel='Context source mode'
+                options={CONTEXT_SOURCE_MODE_OPTIONS}
+                triggerClassName='mt-2 border-border bg-card/70'
+               title='Select option'/>
+            </div>
+
+            {schemaConfig.sourceMode !== 'schema' && (
+              <Card variant='subtle-compact' padding='sm' className='space-y-4 border-border bg-card/40'>
+                <div className='space-y-1'>
+                  <div className='text-[10px] uppercase text-gray-500'>Live Context</div>
+                  <div className='text-xs text-gray-300'>
+                    Fetches the latest collection documents during each workflow run without manual schema reload.
+                  </div>
+                </div>
+
+                <div>
+                  <Label className='text-xs text-gray-400'>
+                    Live Context Collections ({effectiveContextCollections.length} selected)
+                  </Label>
+                  <Card
+                    variant='subtle-compact'
+                    padding='sm'
+                    className='mt-2 max-h-[180px] space-y-1 overflow-y-auto border-border bg-card/50'
+                  >
+                    {schemaCollections.map((coll) => {
+                      const includeProvider = fetchedDbSchema?.provider === 'multi';
+                      const key = buildCollectionKey(coll, includeProvider);
+                      const isSelected = effectiveContextCollections.includes(key);
+                      return (
+                        <button
+                          key={`live-${key}`}
+                          type='button'
+                          onClick={() => toggleContextCollection(coll)}
+                          className={`flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-xs transition ${
+                            isSelected
+                              ? 'bg-cyan-500/20 text-cyan-200'
+                              : 'text-gray-300 hover:bg-muted/50'
+                          }`}
+                        >
+                          <span className='font-medium'>
+                            {coll.name}
+                            {showProviderLabel && coll.provider ? (
+                              <span className='ml-2 text-[10px] text-gray-500'>
+                                ({coll.provider})
+                              </span>
+                            ) : null}
+                          </span>
+                          <span className='text-[10px] text-gray-500'>
+                            {coll.fields?.length ?? 0} fields
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </Card>
+                  {effectiveContextCollections.length === 0 ? (
+                    <div className='mt-2 text-[10px] text-amber-300'>
+                      Select at least one collection to emit live context. If none are selected, runtime emits an empty live-context bundle.
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className='grid grid-cols-1 gap-3 md:grid-cols-2'>
+                  <div>
+                    <Label className='text-xs text-gray-400'>Runtime Query Filter</Label>
+                    <textarea
+                      aria-label='Runtime context query filter'
+                      value={schemaConfig.contextQuery}
+                      onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
+                        updateSchemaConfig({ contextQuery: event.target.value })
+                      }
+                      placeholder={'Optional JSON filter, text search, or template such as {\n  "catalogId": "{{context.catalogId}}"\n}'}
+                      className='mt-2 min-h-[84px] w-full rounded-md border border-border bg-card/70 px-3 py-2 text-xs text-white'
+                    />
+                    <div className='mt-2 text-[10px] text-gray-500'>
+                      Supports runtime templates from connected inputs, for example
+                      {' '}
+                      <code>{'{{context.catalogId}}'}</code>
+                      {' '}
+                      or
+                      {' '}
+                      <code>{'{{bundle.categoryId}}'}</code>.
+                    </div>
+                  </div>
+                  <div>
+                    <Label className='text-xs text-gray-400'>Documents Per Collection</Label>
+                    <input
+                      aria-label='Documents per collection'
+                      type='number'
+                      min={1}
+                      max={MAX_CONTEXT_LIMIT}
+                      value={schemaConfig.contextLimit}
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                        const parsed = Number.parseInt(event.target.value, 10);
+                        if (!Number.isFinite(parsed)) {
+                          updateSchemaConfig({ contextLimit: DEFAULT_CONTEXT_LIMIT });
+                          return;
+                        }
+                        updateSchemaConfig({
+                          contextLimit: Math.max(1, Math.min(MAX_CONTEXT_LIMIT, parsed)),
+                        });
+                      }}
+                      className='mt-2 w-full rounded-md border border-border bg-card/70 px-3 py-2 text-xs text-white'
+                    />
+                    <div className='mt-2 text-[10px] text-gray-500'>
+                      Uses fresh data on each run. Keep this low to control prompt size.
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <Label className='text-xs text-gray-400'>Live Context Transform</Label>
+                  <SelectSimple
+                    size='sm'
+                    value={schemaConfig.contextTransform}
+                    onValueChange={(value: string) =>
+                      updateSchemaConfig({
+                        contextTransform: value as SchemaConfig['contextTransform'],
+                      })
+                    }
+                    ariaLabel='Live context transform'
+                    options={CONTEXT_TRANSFORM_OPTIONS}
+                    triggerClassName='mt-2 border-border bg-card/70'
+                   title='Select option'/>
+                  <div className='mt-2 text-[10px] text-gray-500'>
+                    Use
+                    {' '}
+                    <code>Product Categories Leaves Only</code>
+                    {' '}
+                    when
+                    {' '}
+                    <code>product_categories</code>
+                    {' '}
+                    should emit only terminal leaves such as
+                    {' '}
+                    <code>Movie Keychain</code>
+                    {' '}
+                    while preserving a
+                    {' '}
+                    <code>fullPath</code>
+                    {' '}
+                    field for disambiguation.
+                  </div>
+                </div>
+
+                <div>
+                  <Label className='text-xs text-gray-400'>Live Context Reuse</Label>
+                  <SelectSimple
+                    size='sm'
+                    value={schemaConfig.contextReuseMode}
+                    onValueChange={(value: string) =>
+                      updateSchemaConfig({
+                        contextReuseMode: value as SchemaConfig['contextReuseMode'],
+                      })
+                    }
+                    ariaLabel='Live context reuse mode'
+                    options={CONTEXT_REUSE_MODE_OPTIONS}
+                    triggerClassName='mt-2 border-border bg-card/70'
+                   title='Select option'/>
+                  <div className='mt-2 text-[10px] text-gray-500'>
+                    When enabled, runtime may reuse matching transformed context already supplied by
+                    upstream inputs before fetching live documents again. This keeps the behavior
+                    workflow-driven and only applies when the incoming payload matches the selected
+                    transform.
+                  </div>
+                </div>
+              </Card>
+            )}
+
             <div className='grid grid-cols-2 gap-3'>
               <Card
                 variant='subtle-compact'
@@ -440,6 +685,33 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
                 )}
               </div>
             </Card>
+
+            {schemaConfig.sourceMode !== 'schema' && (
+              <Card variant='subtle-compact' padding='sm' className='border-cyan-800/40 bg-cyan-950/10'>
+                <div className='mb-2 text-[10px] uppercase text-cyan-300'>Live Context Preview</div>
+                <div className='space-y-2 text-[11px] text-gray-300'>
+                  <div>
+                    Runtime will fetch the latest documents from{' '}
+                    <span className='text-cyan-200'>
+                      {effectiveContextCollections.length} collection
+                      {effectiveContextCollections.length === 1 ? '' : 's'}
+                    </span>{' '}
+                    on each workflow run.
+                  </div>
+                  <div>Filter: {schemaConfig.contextQuery.trim() || '(none)'}</div>
+                  <div>Per-collection limit: {schemaConfig.contextLimit}</div>
+                  <div>
+                    Selected:{' '}
+                    {effectiveContextCollections.length > 0
+                      ? effectiveContextCollections.join(', ')
+                      : 'No live context collections selected'}
+                  </div>
+                  <div className='text-[10px] text-gray-500'>
+                    Use the Data Browser below to inspect candidate documents before running the workflow.
+                  </div>
+                </div>
+              </Card>
+            )}
 
             {/* Data Browser */}
             <Card

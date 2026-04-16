@@ -106,7 +106,7 @@ export const flattenAdminNav = (items: NavItem[], parents: string[] = []): Flatt
         label: item.label,
         href: item.href,
         ...(item.keywords ? { keywords: item.keywords } : {}),
-        parents: parents,
+        parents,
         item,
       });
     }

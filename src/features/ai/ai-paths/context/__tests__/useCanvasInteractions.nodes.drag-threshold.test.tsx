@@ -1,7 +1,8 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { CANVAS_HEIGHT, CANVAS_WIDTH, NODE_MIN_HEIGHT, NODE_WIDTH, type AiNode } from '@/shared/lib/ai-paths';
+import type { AiNode } from '@/shared/contracts/ai-paths';
+import { CANVAS_HEIGHT, CANVAS_WIDTH, NODE_MIN_HEIGHT, NODE_WIDTH } from '@/shared/lib/ai-paths/core/constants';
 
 import { useCanvasInteractionsNodes } from '../hooks/useCanvasInteractions.nodes';
 
@@ -55,37 +56,44 @@ const dispatchWindowPointerEvent = (
 const buildHookProps = (): Parameters<typeof useCanvasInteractionsNodes>[0] => {
   const node = buildNode();
   return {
-    nodes: [node],
-    edges: [],
-    isPathLocked: false,
-    notifyLocked: vi.fn(),
-    confirmNodeSwitch: undefined,
-    selectedNodeIdSet: new Set<string>(),
-    selectedNodeIds: [],
-    setNodes: vi.fn(),
-    removeNode: vi.fn(),
-    setNodeSelection: vi.fn(),
-    toggleNodeSelection: vi.fn(),
-    selectNode: vi.fn(),
-    selectEdge: vi.fn(),
-    startDrag: vi.fn(),
-    endDrag: vi.fn(),
-    dragState: null,
-    updateLastPointerCanvasPosFromClient: (clientX: number, clientY: number) => ({
-      x: clientX,
-      y: clientY,
-    }),
-    stopViewAnimation: vi.fn(),
-    resolveActiveNodeSelectionIds: () => [],
-    confirm: vi.fn(),
-    setEdges: vi.fn(),
-    setRuntimeState: vi.fn(),
-    pruneRuntimeInputsInternal: (state) => state,
-    viewportRef: { current: document.createElement('div') },
-    view: { x: 0, y: 0, scale: 1 },
-    setLastDrop: vi.fn(),
-    ensureNodeVisible: vi.fn(),
-    toast: vi.fn(),
+    graphOps: {
+      nodes: [node],
+      edges: [],
+      setNodes: vi.fn(),
+      setEdges: vi.fn(),
+      setRuntimeState: vi.fn(),
+      pruneRuntimeInputsInternal: (state) => state,
+    },
+    selectionOps: {
+      selectedNodeIdSet: new Set<string>(),
+      selectedNodeIds: [],
+      setNodeSelection: vi.fn(),
+      toggleNodeSelection: vi.fn(),
+      selectNode: vi.fn(),
+      selectEdge: vi.fn(),
+      resolveActiveNodeSelectionIds: () => [],
+    },
+    canvasOps: {
+      startDrag: vi.fn(),
+      endDrag: vi.fn(),
+      dragState: null,
+      updateLastPointerCanvasPosFromClient: (clientX: number, clientY: number) => ({
+        x: clientX,
+        y: clientY,
+      }),
+      stopViewAnimation: vi.fn(),
+      viewportRef: { current: document.createElement('div') },
+      view: { x: 0, y: 0, scale: 1 },
+      setLastDrop: vi.fn(),
+      ensureNodeVisible: vi.fn(),
+    },
+    interactionOps: {
+      isPathLocked: false,
+      notifyLocked: vi.fn(),
+      confirmNodeSwitch: undefined,
+      confirm: vi.fn(),
+      toast: vi.fn(),
+    },
   };
 };
 
@@ -93,9 +101,10 @@ type HookProps = Parameters<typeof useCanvasInteractionsNodes>[0];
 
 const resolveLastSetNodesMutation = (
   props: Parameters<typeof useCanvasInteractionsNodes>[0],
-  prevNodes: AiNode[] = props.nodes
+  prevNodes: AiNode[] = props.graphOps.nodes
 ): { nodes: AiNode[]; mutationMeta: unknown } | null => {
-  const calls = (props.setNodes as unknown as { mock: { calls: unknown[][] } }).mock.calls;
+  const calls = (props.graphOps.setNodes as unknown as { mock: { calls: unknown[][] } }).mock
+    .calls;
   const lastCall = calls[calls.length - 1];
   if (!lastCall) return null;
   const [nextNodes, mutationMeta] = lastCall as [
@@ -144,8 +153,8 @@ describe('useCanvasInteractionsNodes drag threshold', () => {
       result.current.handlePointerUpNode(createPointerEvent(target), 'node-1');
     });
 
-    expect(props.startDrag).not.toHaveBeenCalled();
-    expect(props.setNodes).not.toHaveBeenCalled();
+    expect(props.canvasOps.startDrag).not.toHaveBeenCalled();
+    expect(props.graphOps.setNodes).not.toHaveBeenCalled();
     expect(result.current.consumeSuppressedNodeClick('node-1')).toBe(false);
   });
 
@@ -207,8 +216,8 @@ describe('useCanvasInteractionsNodes drag threshold', () => {
       );
     });
 
-    expect(props.startDrag).toHaveBeenCalledWith('node-1', 60, 60);
-    const mutation = resolveLastSetNodesMutation(props, props.nodes);
+    expect(props.canvasOps.startDrag).toHaveBeenCalledWith('node-1', 60, 60);
+    const mutation = resolveLastSetNodesMutation(props, props.graphOps.nodes);
     expect(mutation).not.toBeNull();
     expect(mutation?.mutationMeta).toMatchObject({
       reason: 'drag',
@@ -217,7 +226,7 @@ describe('useCanvasInteractionsNodes drag threshold', () => {
       x: 50,
       y: 50,
     });
-    expect(props.endDrag).toHaveBeenCalledTimes(1);
+    expect(props.canvasOps.endDrag).toHaveBeenCalledTimes(1);
     expect(result.current.consumeSuppressedNodeClick('node-1')).toBe(true);
     expect(result.current.consumeSuppressedNodeClick('node-1')).toBe(false);
   });
@@ -244,23 +253,26 @@ describe('useCanvasInteractionsNodes drag threshold', () => {
       );
     });
 
-    expect(props.startDrag).toHaveBeenCalledWith('node-1', 60, 60);
-    expect(props.endDrag).not.toHaveBeenCalled();
+    expect(props.canvasOps.startDrag).toHaveBeenCalledWith('node-1', 60, 60);
+    expect(props.canvasOps.endDrag).not.toHaveBeenCalled();
 
     act(() => {
       rerender({
         ...props,
-        dragState: { nodeId: 'node-1', offsetX: 60, offsetY: 60 },
+        canvasOps: {
+          ...props.canvasOps,
+          dragState: { nodeId: 'node-1', offsetX: 60, offsetY: 60 },
+        },
       });
     });
 
-    expect(props.endDrag).not.toHaveBeenCalled();
+    expect(props.canvasOps.endDrag).not.toHaveBeenCalled();
   });
 
   it('converts viewport pointer coordinates to world coordinates when view is transformed', async () => {
     const props = buildHookProps();
-    props.nodes = [buildNode({ position: { x: 100, y: 100 } })];
-    props.view = { x: 40, y: 20, scale: 2 };
+    props.graphOps.nodes = [buildNode({ position: { x: 100, y: 100 } })];
+    props.canvasOps.view = { x: 40, y: 20, scale: 2 };
     const target = document.createElement('div');
     const { result } = renderHook(() => useCanvasInteractionsNodes(props));
 
@@ -293,8 +305,8 @@ describe('useCanvasInteractionsNodes drag threshold', () => {
       );
     });
 
-    expect(props.startDrag).toHaveBeenCalledWith('node-1', 0, 0);
-    const mutation = resolveLastSetNodesMutation(props, props.nodes);
+    expect(props.canvasOps.startDrag).toHaveBeenCalledWith('node-1', 0, 0);
+    const mutation = resolveLastSetNodesMutation(props, props.graphOps.nodes);
     expect(mutation).not.toBeNull();
     expect(mutation?.mutationMeta).toMatchObject({
       reason: 'drag',
@@ -307,7 +319,7 @@ describe('useCanvasInteractionsNodes drag threshold', () => {
 
   it('does not clamp node drag movement to the legacy 2000x2000 bounds', async () => {
     const props = buildHookProps();
-    props.nodes = [buildNode({ position: { x: 1900, y: 1900 } })];
+    props.graphOps.nodes = [buildNode({ position: { x: 1900, y: 1900 } })];
     const target = document.createElement('div');
     const { result } = renderHook(() => useCanvasInteractionsNodes(props));
 
@@ -340,7 +352,7 @@ describe('useCanvasInteractionsNodes drag threshold', () => {
 
     const maxX = CANVAS_WIDTH - NODE_WIDTH - 16;
     const maxY = CANVAS_HEIGHT - NODE_MIN_HEIGHT - 16;
-    const mutation = resolveLastSetNodesMutation(props, props.nodes);
+    const mutation = resolveLastSetNodesMutation(props, props.graphOps.nodes);
     expect(mutation).not.toBeNull();
     expect(mutation?.mutationMeta).toMatchObject({
       reason: 'drag',
@@ -381,8 +393,8 @@ describe('useCanvasInteractionsNodes drag threshold', () => {
       result.current.handlePointerUpNode(createPointerEvent(target), 'node-1');
     });
 
-    expect(props.startDrag).not.toHaveBeenCalled();
-    expect(props.setNodes).not.toHaveBeenCalled();
+    expect(props.canvasOps.startDrag).not.toHaveBeenCalled();
+    expect(props.graphOps.setNodes).not.toHaveBeenCalled();
   });
 
   it('allows pointer moves with zero buttons when pointer capture is still active', async () => {
@@ -421,8 +433,8 @@ describe('useCanvasInteractionsNodes drag threshold', () => {
       );
     });
 
-    expect(props.startDrag).toHaveBeenCalledWith('node-1', 60, 60);
-    const mutation = resolveLastSetNodesMutation(props, props.nodes);
+    expect(props.canvasOps.startDrag).toHaveBeenCalledWith('node-1', 60, 60);
+    const mutation = resolveLastSetNodesMutation(props, props.graphOps.nodes);
     expect(mutation).not.toBeNull();
     expect(mutation?.mutationMeta).toMatchObject({
       reason: 'drag',
@@ -462,7 +474,7 @@ describe('useCanvasInteractionsNodes drag threshold', () => {
       );
     });
 
-    expect(props.startDrag).not.toHaveBeenCalled();
-    expect(props.setNodes).not.toHaveBeenCalled();
+    expect(props.canvasOps.startDrag).not.toHaveBeenCalled();
+    expect(props.graphOps.setNodes).not.toHaveBeenCalled();
   });
 });

@@ -11,7 +11,7 @@ import {
 
 import { createErrorAction, toActionOk, createTxId } from './folder-tree-utils';
 import { canDropNodeV2, moveNodeV2, reorderNodeV2, dropNodeToRootV2 } from '../../core/engine';
-import { FolderTreeStore } from '../../store/createFolderTreeStore';
+import { type FolderTreeStore } from '../../store/createFolderTreeStore';
 
 import type { FolderTreeState } from '../../types';
 

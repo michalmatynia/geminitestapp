@@ -2,8 +2,9 @@
 
 import { ArrowLeft, Plus, Save } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'nextjs-toploader/app';
+import { usePathname, useSearchParams } from 'next/navigation';
+import React, { useCallback, useEffect, useMemo, useState, startTransition } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { ValidatorPatternList, ValidatorScope } from '@/shared/contracts/admin';
@@ -395,7 +396,7 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
         nextParams.set('view', view);
       }
       const nextQuery = nextParams.toString();
-      router.push(nextQuery ? `${pathname}?${nextQuery}` : pathname, { scroll: false });
+      startTransition(() => { router.push(nextQuery ? `${pathname}?${nextQuery}` : pathname, { scroll: false }); });
     },
     [pathname, router, searchParams]
   );
@@ -406,6 +407,7 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
         <ListPanel
           variant='flat'
           className='[&>div:first-child]:mb-3'
+          data-testid='list-panel'
           header={
             <AdminTitleBreadcrumbHeader
               title={
@@ -417,6 +419,7 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
                 <AdminSectionBreadcrumbs
                   section={{ label: 'Global Validator', href: '/admin/validator' }}
                   current={activeView === 'tooltips' ? 'Settings' : 'Validation Pattern Lists'}
+                  data-testid='validator-lists-breadcrumbs'
                 />
               }
               actions={

@@ -30,6 +30,12 @@ vi.mock('next/navigation', () => ({
   }),
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  useRouter: () => ({
+    push: routerPushMock,
+  }),
+}));
+
 vi.mock('@/shared/hooks/use-settings', () => ({
   useSettingsMap: vi.fn(),
   useUpdateSetting: vi.fn(),

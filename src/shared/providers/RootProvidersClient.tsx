@@ -13,7 +13,6 @@ import { SettingsStoreProvider } from '@/shared/providers/SettingsStoreProvider'
 import { ThemeProvider } from '@/shared/providers/theme-provider';
 import { AppErrorBoundary } from '@/shared/ui/AppErrorBoundary';
 import { RouteAccessibilityAnnouncer } from '@/shared/ui/RouteAccessibilityAnnouncer';
-import { SkipToContentLink } from '@/shared/ui/SkipToContentLink';
 import { ToastProvider } from '@/shared/ui/toast';
 
 const LazyCsrfProvider = lazy(() => import('@/shared/providers/CsrfProvider'));
@@ -24,18 +23,15 @@ const LazyUrlGuardProvider = lazy(() =>
 const KANGUR_CAPTURE_MODE_QUERY_PARAM = 'kangurCapture';
 const KANGUR_CAPTURE_MODE_SOCIAL_BATCH = 'social-batch';
 
-export function RootProvidersClient({
+function RootProviderFrame({
   children,
+  isSyntheticKangurCapture,
 }: {
   children: React.ReactNode;
+  isSyntheticKangurCapture: boolean;
 }): React.JSX.Element {
-  const searchParams = useSearchParams();
-  const isSyntheticKangurCapture =
-    searchParams?.get(KANGUR_CAPTURE_MODE_QUERY_PARAM) === KANGUR_CAPTURE_MODE_SOCIAL_BATCH;
-
   return (
     <>
-      <SkipToContentLink />
       <RouteAccessibilityAnnouncer />
       <ToastProvider>
         <QueryProvider>
@@ -74,5 +70,29 @@ export function RootProvidersClient({
         </QueryProvider>
       </ToastProvider>
     </>
+  );
+}
+
+function SearchParamAwareRootProviders({
+  children,
+}: {
+  children: React.ReactNode;
+}): React.JSX.Element {
+  const searchParams = useSearchParams();
+  const isSyntheticKangurCapture =
+    searchParams?.get(KANGUR_CAPTURE_MODE_QUERY_PARAM) === KANGUR_CAPTURE_MODE_SOCIAL_BATCH;
+
+  return <RootProviderFrame isSyntheticKangurCapture={isSyntheticKangurCapture}>{children}</RootProviderFrame>;
+}
+
+export function RootProvidersClient({
+  children,
+}: {
+  children: React.ReactNode;
+}): React.JSX.Element {
+  return (
+    <Suspense fallback={<RootProviderFrame isSyntheticKangurCapture={false}>{children}</RootProviderFrame>}>
+      <SearchParamAwareRootProviders>{children}</SearchParamAwareRootProviders>
+    </Suspense>
   );
 }

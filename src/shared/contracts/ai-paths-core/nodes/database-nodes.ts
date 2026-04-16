@@ -28,10 +28,38 @@ const dbSchemaProviderSchema = z
   ])
   .optional();
 
+export const dbSchemaSourceModeSchema = z.enum([
+  'schema',
+  'live_context',
+  'schema_and_live_context',
+]);
+export type DbSchemaSourceModeDto = z.infer<typeof dbSchemaSourceModeSchema>;
+export type DbSchemaSourceMode = DbSchemaSourceModeDto;
+
+export const dbSchemaContextTransformSchema = z.enum([
+  'none',
+  'product_categories_leaf_only',
+]);
+export type DbSchemaContextTransformDto = z.infer<typeof dbSchemaContextTransformSchema>;
+export type DbSchemaContextTransform = DbSchemaContextTransformDto;
+
+export const dbSchemaContextReuseModeSchema = z.enum([
+  'never',
+  'prefer_transformed_input',
+]);
+export type DbSchemaContextReuseModeDto = z.infer<typeof dbSchemaContextReuseModeSchema>;
+export type DbSchemaContextReuseMode = DbSchemaContextReuseModeDto;
+
 export const dbSchemaConfigSchema = z.object({
   provider: dbSchemaProviderSchema,
   mode: z.enum(['all', 'selected']),
   collections: z.array(z.string()),
+  sourceMode: dbSchemaSourceModeSchema.optional(),
+  contextCollections: z.array(z.string()).optional(),
+  contextQuery: z.string().optional(),
+  contextLimit: z.number().int().min(1).max(100).optional(),
+  contextTransform: dbSchemaContextTransformSchema.optional(),
+  contextReuseMode: dbSchemaContextReuseModeSchema.optional(),
   includeFields: z.boolean(),
   includeRelations: z.boolean(),
   formatAs: z.enum(['json', 'text']),
@@ -191,6 +219,14 @@ export const databaseConfigSchema = z.object({
       languageCode: z.string().optional(),
       enforceOptionLabels: z.boolean().optional(),
       allowUnknownParameterIds: z.boolean().optional(),
+    })
+    .optional(),
+  localizedParameterMerge: z
+    .object({
+      enabled: z.boolean().optional(),
+      targetPath: z.string().optional(),
+      languageCode: z.string().optional(),
+      requireFullCoverage: z.boolean().optional(),
     })
     .optional(),
   schemaSnapshot: dbSchemaSnapshotSchema.optional(),

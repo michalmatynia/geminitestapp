@@ -106,7 +106,16 @@ export const buildProgress = (
 export const buildRuntime = (
   progress: KangurProgressState,
   overrides: Record<string, unknown> = {}
-) => ({
+): {
+  activePracticeAssignment: null;
+  basePath: string;
+  handleHome: ReturnType<typeof vi.fn>;
+  handleSelectOperation: ReturnType<typeof vi.fn>;
+  practiceAssignmentsByOperation: Record<string, unknown>;
+  progress: KangurProgressState;
+  screen: 'operation';
+  setScreen: ReturnType<typeof vi.fn>;
+} & Record<string, unknown> => ({
   activePracticeAssignment: null,
   basePath: '/kangur',
   handleHome: vi.fn(),

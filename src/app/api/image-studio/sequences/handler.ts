@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { listImageStudioSequenceRuns } from '@/features/ai/image-studio/server/sequence-run-repository';

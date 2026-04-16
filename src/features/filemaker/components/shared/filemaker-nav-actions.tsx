@@ -5,6 +5,7 @@ import type { PanelAction } from '@/shared/contracts/ui/panels';
 
 import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import type { ReactNode } from 'react';
+import { startTransition } from 'react';
 
 type FilemakerPageKey =
   | 'persons'
@@ -89,6 +90,6 @@ export function buildFilemakerNavActions(
     label: item.label,
     icon: item.icon,
     ...(item.variant ? { variant: item.variant } : {}),
-    onClick: () => router.push(item.href),
+    onClick: () => startTransition(() => { router.push(item.href); }),
   }));
 }

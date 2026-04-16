@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { enqueueProductSyncBackfillJob } from '@/features/jobs/server';
 import type {

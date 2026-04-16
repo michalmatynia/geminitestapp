@@ -1,11 +1,16 @@
 'use client';
+// ProductSettingsPage: admin hub for product configuration (categories, pricing,
+// validators, image studio). Wraps providers and lazy-loads heavy panels to keep
+// initial admin load fast and focused.
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 
-import { ParametersSettings } from '@/features/products/components/constructor/ParametersSettings';
 import { CatalogsSettings } from '@/features/products/components/settings/catalogs/CatalogsSettings';
 import { CategoriesSettings } from '@/features/products/components/settings/CategoriesSettings';
+import { CustomFieldsSettings } from '@/features/products/components/settings/CustomFieldsSettings';
+import { ParametersSettings } from '@/features/products/components/settings/parameters/ParametersSettings';
 import { CatalogModal } from '@/features/products/components/settings/modals/catalog-modal/CatalogModal';
 import { PriceGroupModal } from '@/features/products/components/settings/modals/price-group-modal/PriceGroupModal';
 import { PriceGroupsSettings } from '@/features/products/components/settings/pricing/PriceGroupsSettings';
@@ -19,15 +24,16 @@ import { ValidatorSettings } from '@/features/products/components/settings/Valid
 import {
   useCatalogs,
   useCategories,
+  useParameters,
+  useCustomFields,
   useDeleteCatalogMutation,
   useDeletePriceGroupMutation,
-  useParameters,
   usePriceGroups,
   useShippingGroups,
   useTags,
   useUpdatePriceGroupMutation,
 } from '@/features/products/hooks/useProductSettingsQueries';
-import { Catalog, PriceGroup } from '@/shared/contracts/products/catalogs';
+import { type Catalog, type PriceGroup } from '@/shared/contracts/products/catalogs';
 import { AdminProductsPageLayout } from '@/shared/ui/admin-products-page-layout';
 import { Button } from '@/shared/ui/button';
 import { Card } from '@/shared/ui/card';
@@ -89,6 +95,7 @@ export function ProductSettingsPage({
   const isCategoriesSectionActive = activeSection === 'Categories';
   const isShippingGroupsSectionActive = activeSection === 'Shipping Groups';
   const isTagsSectionActive = activeSection === 'Tags';
+  const isCustomFieldsSectionActive = activeSection === 'Custom Fields';
   const isParametersSectionActive = activeSection === 'Parameters';
   const isPriceGroupsSectionActive = activeSection === 'Price Groups';
   const isCatalogsSectionActive = activeSection === 'Catalogs';
@@ -133,6 +140,11 @@ export function ProductSettingsPage({
     isLoading: loadingTags,
     refetch: refetchTags,
   } = useTags(selectedTagCatalogId, { enabled: isTagsSectionActive });
+  const {
+    data: productCustomFields = [],
+    isLoading: loadingCustomFields,
+    refetch: refetchCustomFields,
+  } = useCustomFields({ enabled: isCustomFieldsSectionActive });
   const {
     data: productParameters = [],
     isLoading: loadingParameters,
@@ -181,12 +193,12 @@ export function ProductSettingsPage({
     catalogs,
     isCategoriesSectionActive,
     isShippingGroupsSectionActive,
-    isParametersSectionActive,
     isTagsSectionActive,
+    isParametersSectionActive,
     selectedCategoryCatalogId,
     selectedShippingGroupCatalogId,
-    selectedParameterCatalogId,
     selectedTagCatalogId,
+    selectedParameterCatalogId,
     shouldLoadCatalogs,
   ]);
 
@@ -346,6 +358,20 @@ export function ProductSettingsPage({
             </Button>
           </div>
         </Card>
+        <Card variant='subtle-compact' padding='sm' className='mb-4 border-border/60 bg-card/30'>
+          <div className='flex flex-wrap items-center justify-between gap-3'>
+            <div>
+              <p className='text-sm font-medium text-gray-100'>Structured Product Name Terms</p>
+              <p className='text-xs text-gray-400'>
+                Manage catalog-specific size, material, and theme lists used by the English
+                product name composer.
+              </p>
+            </div>
+            <Button size='xs' type='button' variant='outline' asChild>
+              <Link href='/admin/products/title-terms'>Open Title Terms</Link>
+            </Button>
+          </div>
+        </Card>
         <div className={`${UI_GRID_ROOMY_CLASSNAME} md:grid-cols-[240px_1fr]`}>
           <Card variant='subtle' padding='md' className='border-border/60 bg-card/40'>
             <div className='flex flex-col gap-2'>
@@ -367,6 +393,15 @@ export function ProductSettingsPage({
               {activeSection === 'Categories' && <CategoriesSettings />}
               {activeSection === 'Shipping Groups' && <ShippingGroupsSettings />}
               {activeSection === 'Tags' && <TagsSettings />}
+              {activeSection === 'Custom Fields' && (
+                <CustomFieldsSettings
+                  loading={loadingCustomFields}
+                  customFields={productCustomFields}
+                  onRefresh={(): void => {
+                    void refetchCustomFields();
+                  }}
+                />
+              )}
               {activeSection === 'Parameters' && (
                 <ParametersSettings
                   loading={loadingParameters}

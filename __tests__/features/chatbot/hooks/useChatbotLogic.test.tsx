@@ -33,6 +33,16 @@ vi.mock('next/navigation', () => ({
   })),
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  useSearchParams: vi.fn(() => new URLSearchParams()),
+  usePathname: vi.fn(() => '/'),
+  useRouter: vi.fn(() => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    prefetch: vi.fn(),
+  })),
+}));
+
 // Mock useAgentCreatorSettings
 vi.mock('@/features/ai/agentcreator', () => ({
   useAgentCreatorSettings: vi.fn(() => ({

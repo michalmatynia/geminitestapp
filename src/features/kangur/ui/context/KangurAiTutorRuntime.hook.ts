@@ -80,6 +80,8 @@ type KangurAiTutorRuntimeResult = {
   sessionRegistryValue: KangurAiTutorSessionRegistryContextValue;
 };
 
+// Truncates telemetry strings to a maximum length before they are sent to
+// analytics. Prevents oversized payloads from user-generated content.
 const trimReplayableTelemetryText = (
   value: string | null | undefined,
   maxLength: number
@@ -96,26 +98,51 @@ const trimReplayableTelemetryText = (
   return trimmed.slice(0, maxLength);
 };
 
+// useKangurAiTutorRuntime is the central hook for the StudiQ AI Tutor feature.
+// It owns:
+//  - Panel open/close state (persisted across page navigations)
+//  - Session registration: which page/context the tutor is currently attached to
+//  - Per-session message history, loading state, and usage summaries
+//  - Learner memory: cross-session facts the tutor remembers per learner
+//  - Learner mood: the tutor's current emotional tone per learner
+//  - Selected-text explain requests (highlight-to-ask feature)
+//  - Settings resolution (enabled flag, memory, sources, cross-page persistence)
+//  - State persistence to sessionStorage via loadPersistedRuntimeState /
+//    persistRuntimeState
 export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
   const tutorContent = useKangurAiTutorContent();
   const settingsStore = useSettingsStore();
+  // Load persisted state once on mount using a ref to avoid re-reading
+  // sessionStorage on every render. The ref is initialised synchronously so
+  // useState initialisers can consume it without a loading flash.
   const initialRuntimeStateRef = useRef<ReturnType<typeof loadPersistedRuntimeState> | null>(null);
   if (initialRuntimeStateRef.current === null) {
     initialRuntimeStateRef.current = loadPersistedRuntimeState();
   }
 
   const [isOpen, setIsOpen] = useState(initialRuntimeStateRef.current.isOpen);
+  // activeRegistration: the currently registered page/context that the tutor
+  // is attached to. Set by page components via the session registry context.
   const [activeRegistration, setActiveRegistration] =
     useState<KangurAiTutorSessionRegistration | null>(null);
+  // sessionStates: per-session message history, loading flags, and usage data.
+  // Keyed by sessionKey so switching pages preserves each session's history.
   const [sessionStates, setSessionStates] = useState<Record<string, KangurAiTutorSessionState>>(
     initialRuntimeStateRef.current.sessionStates
   );
+  // learnerMemories: cross-session facts the tutor remembers per learner.
+  // Keyed by a composite memory key (learnerId + context).
   const [learnerMemories, setLearnerMemories] = useState<
     Record<string, KangurAiTutorLearnerMemory>
   >(initialRuntimeStateRef.current.learnerMemories);
+  // learnerMoodById: the tutor's current emotional tone per learner ID.
+  // Merged from the auth user's aiTutor field on every auth state change.
   const [learnerMoodById, setLearnerMoodById] = useState<Record<string, KangurAiTutorLearnerMood>>(
     {}
   );
+  // selectionExplainRequest: the current highlight-to-ask request. The id
+  // field is a monotonic counter so consumers can detect new requests even
+  // when the selected text is the same.
   const selectionExplainRequestIdRef = useRef(0);
   const [selectionExplainRequest, setSelectionExplainRequest] = useState<{
     id: number;
@@ -129,6 +156,10 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
   const activeSessionContext = activeRegistration?.sessionContext ?? null;
   const activeSessionKey = activeRegistration?.sessionKey ?? null;
 
+  // Sync learner mood from the auth user object whenever the user changes
+  // (e.g. after learner selection or a background auth revalidation). Uses a
+  // functional update with a changed-flag to avoid spurious re-renders when
+  // the mood values haven't actually changed.
   useEffect(() => {
     const nextEntries = [
       ...(authUser?.learners ?? []),
@@ -198,6 +229,9 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
     [tutorContent.moods, tutorBehaviorMood.currentMoodId]
   );
 
+  // updateSessionState: immutably updates a single session's state. Uses a
+  // functional setState so concurrent updates don't overwrite each other.
+  // No-ops when the updater returns the same reference (avoids re-renders).
   const updateSessionState = useCallback(
     (
       sessionKey: string | null,
@@ -223,6 +257,8 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
     []
   );
 
+  // updateLearnerMemory: immutably updates a single learner's memory entry.
+  // Deletes the key when the updater returns null (clears the memory).
   const updateLearnerMemory = useCallback(
     (
       memoryKey: string | null,

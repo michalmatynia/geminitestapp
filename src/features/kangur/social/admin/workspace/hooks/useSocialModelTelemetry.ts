@@ -4,10 +4,16 @@ import { useMemo } from 'react';
 import { trackKangurClientEvent } from '@/features/kangur/observability/client';
 import type { UseSocialModelTelemetryProps } from '../AdminKangurSocialPage.types';
 
+type SocialModelTelemetry = {
+  handleBrainModelChange: (value: string) => void;
+  handleVisionModelChange: (value: string) => void;
+  handleLinkedInConnectionChange: (value: string) => void;
+};
+
 export function useSocialModelTelemetry({
   settings,
   buildSocialContext,
-}: UseSocialModelTelemetryProps) {
+}: UseSocialModelTelemetryProps): SocialModelTelemetry {
   const handleBrainModelChange = useMemo(() => {
     const original = settings.handleBrainModelChange;
     return (value: string): void => {

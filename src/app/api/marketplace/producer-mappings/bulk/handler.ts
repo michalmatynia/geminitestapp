@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { getProducerMappingRepository } from '@/features/integrations/server';
 import { bulkProducerMappingRequestSchema } from '@/shared/contracts/integrations/producers';

@@ -1,3 +1,5 @@
+'use client';
+
 import { AlertTriangleIcon } from 'lucide-react';
 import Link from 'next/link';
 

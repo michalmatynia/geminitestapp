@@ -41,8 +41,12 @@ vi.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(),
 }));
 
-vi.mock('@/shared/ui', async () => {
-  const actual = await vi.importActual<typeof import('@/shared/ui')>('@/shared/ui');
+vi.mock('nextjs-toploader/app', () => ({
+  useSearchParams: () => new URLSearchParams(),
+}));
+
+vi.mock('@/shared/ui/primitives.public', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/ui/primitives.public')>();
   return {
     ...actual,
     useToast: () => ({

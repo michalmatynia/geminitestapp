@@ -141,7 +141,7 @@ export function calculatePriceForCurrency(
     (defaultPriceGroupId
       ? priceGroups.find((g: PriceGroupForCalculation): boolean => g.id === defaultPriceGroupId)
       : undefined) ??
-    priceGroups.find((g: PriceGroupForCalculation): boolean => !!g.isDefault) ??
+    priceGroups.find((g: PriceGroupForCalculation): boolean => Boolean(g.isDefault)) ??
     priceGroups[0];
 
   if (!defaultGroup) {

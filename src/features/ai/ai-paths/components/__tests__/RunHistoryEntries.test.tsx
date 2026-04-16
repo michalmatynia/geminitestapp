@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { RuntimeHistoryEntry } from '@/shared/lib/ai-paths';
+import type { RuntimeHistoryEntry } from '@/shared/contracts/ai-paths-runtime';
 
 import { RunHistoryEntries } from '../RunHistoryEntries';
 

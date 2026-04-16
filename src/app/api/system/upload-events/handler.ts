@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { listFileUploadEvents } from '@/features/files/server';
@@ -43,10 +43,10 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
   const result = await listFileUploadEvents({
     page: query.page,
     pageSize: query.pageSize,
-    status: query.status ?? null,
-    category: query.category ?? null,
-    projectId: query.projectId ?? null,
-    query: query.query ?? null,
+    status: query.status,
+    category: query.category,
+    projectId: query.projectId,
+    query: query.query,
     from,
     to,
   });

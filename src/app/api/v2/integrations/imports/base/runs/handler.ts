@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
+import { initializeQueues } from '@/features/jobs/server';
 import { listBaseImportRuns } from '@/features/integrations/services/imports/base-import-run-repository';
 import { startBaseImportRunResponse } from '@/features/integrations/services/imports/base-import-run-starter';
 import type { BaseImportRunsListQuery, BaseImportRunsResponse, BaseImportRunStartPayload, BaseImportStartResponse } from '@/shared/contracts/integrations/base-com';
@@ -33,6 +34,8 @@ export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): P
     throw badRequestError('Base.com connection is required.');
   }
 
+  initializeQueues();
+
   const data = ctx.body as BaseImportRunStartPayload;
   const response: BaseImportStartResponse = await startBaseImportRunResponse({
     connectionId: rawConnectionId,
@@ -44,6 +47,7 @@ export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): P
     ...(data.templateId ? { templateId: data.templateId } : {}),
     ...(typeof data.limit === 'number' ? { limit: data.limit } : {}),
     ...(Array.isArray(data.selectedIds) ? { selectedIds: data.selectedIds } : {}),
+    ...(data.directTarget ? { directTarget: data.directTarget } : {}),
     ...(typeof data.dryRun === 'boolean' ? { dryRun: data.dryRun } : {}),
     ...(data.mode ? { mode: data.mode } : {}),
     ...(data.requestId ? { requestId: data.requestId } : {}),

@@ -1,14 +1,14 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
-import type { PathConfig, PathMeta } from '@/shared/lib/ai-paths';
-import { createDefaultPathConfig } from '@/shared/lib/ai-paths';
+import type { PathConfig, PathMeta } from '@/shared/contracts/ai-paths';
+import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils';
+import { sanitizePathConfig } from '@/shared/lib/ai-paths/core/utils/path-config-sanitization';
 
 import { useAiPathsSettingsPathActions } from '../useAiPathsSettingsPathActions';
 import {
   fetchAiPathsSettingsByKeysCached,
   fetchAiPathsSettingsCached,
-  updateAiPathsSetting,
 } from '@/shared/lib/ai-paths/settings-store-client';
 
 type PathActionsInput = Parameters<typeof useAiPathsSettingsPathActions>[0];
@@ -62,7 +62,6 @@ vi.mock('@/shared/lib/ai-paths/settings-store-client', async () => {
     ...actual,
     fetchAiPathsSettingsByKeysCached: vi.fn(),
     fetchAiPathsSettingsCached: vi.fn(),
-    updateAiPathsSetting: vi.fn(async (key: string, value: string) => ({ key, value })),
     deleteAiPathsSettings: vi.fn().mockResolvedValue(0),
   };
 });
@@ -95,14 +94,15 @@ vi.mock('@/features/ai/ai-paths/context/PersistenceContext', () => ({
 
 const mockedFetchAiPathsSettingsByKeysCached = vi.mocked(fetchAiPathsSettingsByKeysCached);
 const mockedFetchAiPathsSettingsCached = vi.mocked(fetchAiPathsSettingsCached);
-const mockedUpdateAiPathsSetting = vi.mocked(updateAiPathsSetting);
-
 const buildPathMeta = (config: Pick<PathConfig, 'id' | 'name'>): PathMeta => ({
   id: config.id,
   name: config.name,
   createdAt: '2026-03-01T00:00:00.000Z',
   updatedAt: '2026-03-01T00:00:00.000Z',
 });
+
+const serializeStoredPathConfig = (config: PathConfig): string =>
+  JSON.stringify(sanitizePathConfig(config));
 
 const buildLegacyTriggerConfig = (pathId: string): PathConfig => {
   const pathConfig = createDefaultPathConfig(pathId);
@@ -138,6 +138,7 @@ const buildInput = (): {
     setPaths: ReturnType<typeof vi.fn>;
     toast: ReturnType<typeof vi.fn>;
     persistActivePathPreference: ReturnType<typeof vi.fn>;
+    reportAiPathsError: ReturnType<typeof vi.fn>;
   };
 } => {
   const oldPathId = 'path_old';
@@ -180,6 +181,7 @@ const buildInput = (): {
       setPaths: setPathsGraphMock,
       toast,
       persistActivePathPreference,
+      reportAiPathsError,
     },
   };
 };
@@ -187,10 +189,6 @@ const buildInput = (): {
 describe('useAiPathsSettingsPathActions handleSwitchPath', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockedUpdateAiPathsSetting.mockImplementation(async (key: string, value: string) => ({
-      key,
-      value,
-    }));
     selectNodeMock.mockReset();
     setConfigOpenSelectionMock.mockReset();
     setNodesGraphMock.mockReset();
@@ -225,7 +223,7 @@ describe('useAiPathsSettingsPathActions handleSwitchPath', () => {
     mockedFetchAiPathsSettingsByKeysCached.mockResolvedValueOnce([
       {
         key: `ai_paths_config_${nextPathId}`,
-        value: JSON.stringify(fetchedConfig),
+        value: serializeStoredPathConfig(fetchedConfig),
       },
     ]);
 
@@ -243,6 +241,44 @@ describe('useAiPathsSettingsPathActions handleSwitchPath', () => {
     expect(mocks.persistActivePathPreference).toHaveBeenCalledWith(nextPathId);
     expect(mocks.setPathConfigs).toHaveBeenCalledTimes(1);
     expect(setRunModeGraphMock).toHaveBeenCalledWith('manual');
+  });
+
+  it('fails non-canonical stored path payloads instead of rewriting them during path switch', async () => {
+    const { input, mocks } = buildInput();
+    const nextPathId = 'path_noncanonical_switch';
+    const fetchedConfig = createDefaultPathConfig(nextPathId);
+
+    mockedFetchAiPathsSettingsByKeysCached.mockResolvedValueOnce([
+      {
+        key: `ai_paths_config_${nextPathId}`,
+        value: JSON.stringify(fetchedConfig),
+      },
+    ]);
+    mockedFetchAiPathsSettingsCached.mockResolvedValueOnce([
+      {
+        key: `ai_paths_config_${nextPathId}`,
+        value: JSON.stringify(fetchedConfig),
+      },
+    ]);
+
+    const { result } = renderHook(() => useAiPathsSettingsPathActions(input));
+
+    act(() => {
+      result.current.handleSwitchPath(nextPathId);
+    });
+
+    await waitFor(() => {
+      expect(mocks.setActivePathId).toHaveBeenCalledWith(input.activePathId);
+    });
+    expect(mocks.setPathConfigs).not.toHaveBeenCalled();
+    expect(mocks.persistActivePathPreference).not.toHaveBeenCalledWith(nextPathId);
+    expect(mocks.reportAiPathsError).toHaveBeenCalled();
+    expect(mocks.toast).toHaveBeenCalledWith(
+      'Failed to load selected path. Try again in a moment.',
+      {
+        variant: 'error',
+      }
+    );
   });
 
   it('does not replace target path with default config when fetch fails', async () => {
@@ -281,7 +317,7 @@ describe('useAiPathsSettingsPathActions handleSwitchPath', () => {
     mockedFetchAiPathsSettingsCached.mockResolvedValueOnce([
       {
         key: `ai_paths_config_${nextPathId}`,
-        value: JSON.stringify(recoveredConfig),
+        value: serializeStoredPathConfig(recoveredConfig),
       },
     ]);
 
@@ -301,47 +337,50 @@ describe('useAiPathsSettingsPathActions handleSwitchPath', () => {
     );
   });
 
-  it('recovers invalid runtime state while switching paths', async () => {
+  it('does not auto-recover invalid runtime state while switching paths', async () => {
     const { input, mocks } = buildInput();
     const nextPathId = 'path_invalid';
     const invalidConfig = createDefaultPathConfig(nextPathId);
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    try {
-      invalidConfig.runtimeState = JSON.stringify({
-        inputs: {},
-        outputs: {},
-        runId: 'legacy-run-id',
-      });
+    invalidConfig.runtimeState = JSON.stringify({
+      inputs: {},
+      outputs: {},
+      runId: 'legacy-run-id',
+    });
 
-      mockedFetchAiPathsSettingsByKeysCached.mockResolvedValueOnce([
-        {
-          key: `ai_paths_config_${nextPathId}`,
-          value: JSON.stringify(invalidConfig),
-        },
-      ]);
-      mockedFetchAiPathsSettingsCached.mockResolvedValueOnce([]);
+    mockedFetchAiPathsSettingsByKeysCached.mockResolvedValueOnce([
+      {
+        key: `ai_paths_config_${nextPathId}`,
+        value: JSON.stringify(invalidConfig),
+      },
+    ]);
+    mockedFetchAiPathsSettingsCached.mockResolvedValueOnce([
+      {
+        key: `ai_paths_config_${nextPathId}`,
+        value: JSON.stringify(invalidConfig),
+      },
+    ]);
 
-      const { result } = renderHook(() => useAiPathsSettingsPathActions(input));
+    const { result } = renderHook(() => useAiPathsSettingsPathActions(input));
 
-      act(() => {
-        result.current.handleSwitchPath(nextPathId);
-      });
+    act(() => {
+      result.current.handleSwitchPath(nextPathId);
+    });
 
-      await waitFor(() => {
-        expect(mocks.setActivePathId).toHaveBeenCalledWith(nextPathId);
-      });
-      expect(mocks.setPathConfigs).toHaveBeenCalledTimes(1);
-      expect(mocks.persistActivePathPreference).toHaveBeenCalledWith(nextPathId);
-      expect(mocks.toast).not.toHaveBeenCalledWith(
-        'Failed to load selected path. Try again in a moment.',
-        expect.anything()
-      );
-    } finally {
-      warnSpy.mockRestore();
-    }
+    await waitFor(() => {
+      expect(mocks.setActivePathId).toHaveBeenCalledWith(input.activePathId);
+    });
+    expect(mocks.setPathConfigs).not.toHaveBeenCalled();
+    expect(mocks.persistActivePathPreference).not.toHaveBeenCalledWith(nextPathId);
+    expect(mocks.reportAiPathsError).toHaveBeenCalled();
+    expect(mocks.toast).toHaveBeenCalledWith(
+      'Failed to load selected path. Try again in a moment.',
+      {
+        variant: 'error',
+      }
+    );
   });
 
-  it('remediates stored path configs with removed legacy trigger context modes while switching', async () => {
+  it('does not persist trigger-context remediation while switching paths', async () => {
     const { input, mocks } = buildInput();
     const nextPathId = 'path_legacy_trigger';
     const fetchedConfig = buildLegacyTriggerConfig(nextPathId);
@@ -360,25 +399,15 @@ describe('useAiPathsSettingsPathActions handleSwitchPath', () => {
     });
 
     await waitFor(() => {
-      expect(mocks.setActivePathId).toHaveBeenCalledWith(nextPathId);
+      expect(mocks.setActivePathId).toHaveBeenCalledWith(input.activePathId);
     });
-    expect(mocks.toast).not.toHaveBeenCalledWith(
+    expect(mocks.toast).toHaveBeenCalledWith(
       'Failed to load selected path. Try again in a moment.',
-      expect.anything()
+      {
+        variant: 'error',
+      }
     );
-    expect(mocks.setPathConfigs).toHaveBeenCalled();
-    const updatePathConfigs = mocks.setPathConfigs.mock.calls[0]?.[0] as
-      | ((prev: Record<string, PathConfig>) => Record<string, PathConfig>)
-      | undefined;
-    expect(updatePathConfigs).toBeTypeOf('function');
-    const nextPathConfigs = updatePathConfigs?.(input.pathConfigs);
-    expect(nextPathConfigs?.[nextPathId]?.nodes[0]?.config?.trigger?.contextMode).toBe(
-      'trigger_only'
-    );
-    expect(mockedUpdateAiPathsSetting).toHaveBeenCalledWith(
-      `ai_paths_config_${nextPathId}`,
-      expect.any(String)
-    );
+    expect(mocks.setPathConfigs).not.toHaveBeenCalled();
   });
 
   it('duplicates paths with fresh canonical node ids and remapped samples', () => {

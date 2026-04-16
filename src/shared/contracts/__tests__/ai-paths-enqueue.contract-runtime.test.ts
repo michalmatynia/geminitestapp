@@ -12,32 +12,31 @@ describe('ai-paths enqueue response contract', () => {
         id: 'run-contract-1',
         status: 'queued',
       },
-      runId: 'run-contract-1',
     };
     const parsed = aiPathRunEnqueueResponseSchema.safeParse(payload);
     expect(parsed.success).toBe(true);
     expect(extractAiPathRunIdFromEnqueueContractPayload(payload)).toBe('run-contract-1');
   });
 
-  it('accepts legacy and mixed payloads that still include a run identifier', () => {
+  it('rejects legacy and mixed enqueue payloads', () => {
     expect(
       aiPathRunEnqueueResponseSchema.safeParse({
         run: { _id: 'run-legacy-contract', status: 'queued' },
       }).success
-    ).toBe(true);
+    ).toBe(false);
 
     expect(
       aiPathRunEnqueueResponseSchema.safeParse({
         run: { status: 'queued' },
         runId: 'run-mixed-contract',
       }).success
-    ).toBe(true);
+    ).toBe(false);
 
     expect(
       aiPathRunEnqueueResponseSchema.safeParse({
         data: { runId: 'run-nested-contract' },
       }).success
-    ).toBe(true);
+    ).toBe(false);
   });
 
   it('rejects enqueue payloads without any run identifier', () => {

@@ -68,14 +68,14 @@ export function TraderaQuickExportRecoveryBanner({
     mode === 'empty' && !canContinue && failureReason ? (
       failureReason
     ) : mode === 'empty' ? (
-      'The one-click Tradera export did not leave behind a usable listing record yet. Open the Tradera login window if needed, then continue directly into the Tradera listing flow from this modal.'
+      'The one-click Tradera export did not leave behind a usable listing record yet. Open the Tradera login window if needed, then choose whether to relist or sync from this modal.'
     ) : !canContinue && failureReason ? (
       failureReason
     ) : (
       <>
         Review the Tradera listing below and use
-        <span className='font-semibold text-white'> Login and continue listing </span>
-        if the last run needs manual verification.
+        <span className='font-semibold text-white'> Login to Tradera </span>
+        if the last run needs manual verification. After login, choose relist or sync manually.
       </>
     );
 

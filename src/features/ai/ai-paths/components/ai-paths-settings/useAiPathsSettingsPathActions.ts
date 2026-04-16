@@ -8,24 +8,28 @@ import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext
 import { useSelectionActions } from '@/features/ai/ai-paths/context/SelectionContext';
 import type { Toast } from '@/shared/contracts/ui/base';
 import type { ConfirmConfig } from '@/shared/hooks/ui/useConfirm';
-import type { AiNode, PathConfig, PathMeta } from '@/shared/lib/ai-paths';
+import type { AiNode, PathConfig, PathMeta } from '@/shared/contracts/ai-paths';
 import { PATH_TEMPLATES, buildPathConfigFromTemplate } from '@/shared/lib/ai-paths/core/utils/path-templates';
-import { resolvePortablePathInput } from '@/shared/lib/ai-paths/portable-engine';
-import { PATH_CONFIG_PREFIX, PATH_DEBUG_PREFIX, PATH_INDEX_KEY, STORAGE_VERSION, DEFAULT_AI_PATHS_VALIDATION_CONFIG, createDefaultPathConfig, createPathId, createPathMeta, duplicatePathConfig, normalizeAiPathsValidationConfig, normalizeNodes, sanitizeEdges, triggers } from '@/shared/lib/ai-paths';
-import { persistLegacyTriggerContextModeRepair } from '@/shared/lib/ai-paths/legacy-trigger-context-mode-persistence';
+import { PATH_CONFIG_PREFIX, PATH_DEBUG_PREFIX, PATH_INDEX_KEY, STORAGE_VERSION, triggers } from '@/shared/lib/ai-paths/core/constants';
+import { DEFAULT_AI_PATHS_VALIDATION_CONFIG, normalizeAiPathsValidationConfig } from '@/shared/lib/ai-paths/core/validation-engine';
+import { createDefaultPathConfig, createPathId, createPathMeta, duplicatePathConfig } from '@/shared/lib/ai-paths/core/utils';
+import { normalizeNodes } from '@/shared/lib/ai-paths/core/normalization';
+import { sanitizeEdges } from '@/shared/lib/ai-paths/core/utils/graph';
+import { canMoveAiPathFolder, normalizeAiPathFolderPath, rebaseAiPathFolderPath } from '@/shared/lib/ai-paths/core/utils/path-folders';
 import {
   deleteAiPathsSettings,
   fetchAiPathsSettingsCached,
   fetchAiPathsSettingsByKeysCached,
 } from '@/shared/lib/ai-paths/settings-store-client';
-import { logSystemEvent } from '@/shared/lib/observability/system-logger-client';
-
+import { sanitizePathConfig } from '@/shared/lib/ai-paths/core/utils/path-config-sanitization';
+import { loadCanonicalStoredPathConfig } from '@/shared/lib/ai-paths/core/utils/stored-path-config';
 import {
   normalizeParserSamples,
   normalizeUpdaterSamples,
   parseRuntimeState,
-  sanitizePathConfig,
-} from '../AiPathsSettingsUtils';
+} from '@/shared/lib/ai-paths/core/utils/runtime-state';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger-client';
+
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 type UseAiPathsSettingsPathActionsInput = {
@@ -52,13 +56,20 @@ type UseAiPathsSettingsPathActionsInput = {
 
 const SWITCH_PATH_FETCH_TIMEOUT_MS = 25_000;
 
+export type PathCreateOptions = {
+  folderPath?: string | null;
+};
+
 export type UseAiPathsSettingsPathActionsReturn = {
   handleReset: () => void;
-  handleCreatePath: () => void;
-  handleCreateFromTemplate: (templateId: string) => void;
-  handleDuplicatePath: (pathId?: string) => void;
+  handleCreatePath: (options?: PathCreateOptions) => void;
+  handleCreateFromTemplate: (templateId: string, options?: PathCreateOptions) => void;
+  handleDuplicatePath: (pathId?: string, options?: PathCreateOptions) => void;
   handleDeletePath: (pathId?: string) => Promise<void>;
   handleSwitchPath: (pathId: string) => void;
+  handleMovePathToFolder: (pathId: string, folderPath?: string | null) => Promise<void>;
+  handleMoveFolder: (folderPath: string, targetFolderPath?: string | null) => Promise<void>;
+  handleRenameFolder: (folderPath: string, nextFolderPath: string) => Promise<void>;
 };
 
 export function useAiPathsSettingsPathActions(
@@ -100,177 +111,6 @@ export function useAiPathsSettingsPathActions(
   const { selectNode, setConfigOpen } = useSelectionActions();
   const { setIsPathSwitching } = usePersistenceActions();
   const switchRequestSeqRef = React.useRef(0);
-
-  const sanitizePathConfigWithRuntimeFallback = useCallback(
-    (config: PathConfig, pathId: string): PathConfig => {
-      try {
-        return sanitizePathConfig(config);
-      } catch (error) {
-        logClientError(error);
-        const message = error instanceof Error ? error.message : String(error);
-        const errorMeta =
-          typeof error === 'object' && error !== null && 'meta' in error
-            ? (error as { meta?: unknown }).meta
-            : null;
-        const errorReason =
-          errorMeta && typeof errorMeta === 'object' && !Array.isArray(errorMeta)
-            ? (errorMeta as Record<string, unknown>)['reason']
-            : null;
-        const shouldRetryWithEmptyRuntime =
-          errorReason === 'unsupported_runtime_identity_fields' ||
-          message.includes('Invalid AI Paths runtime state payload');
-        if (!shouldRetryWithEmptyRuntime) {
-          throw error;
-        }
-        void logSystemEvent({
-          source: 'ai.paths.settings',
-          message: 'Recovering selected path from invalid runtime state',
-          level: 'warn',
-          context: {
-            pathId,
-            error: message,
-          },
-        });
-        return sanitizePathConfig({
-          ...config,
-          runtimeState: '',
-        });
-      }
-    },
-    []
-  );
-
-  const resolveStoredPayloadWithRuntimeFallback = useCallback(
-    (payload: string, pathId: string) => {
-      const resolvePayload = (value: unknown) =>
-        resolvePortablePathInput(value, {
-          repairIdentities: true,
-          includeConnections: false,
-          signingPolicyTelemetrySurface: 'canvas',
-          nodeCodeObjectHashVerificationMode: 'warn',
-        });
-      const replaceRuntimeState = (
-        record: Record<string, unknown>
-      ): { value: Record<string, unknown>; changed: boolean } => {
-        let nextRecord = record;
-        let changed = false;
-
-        if ('runtimeState' in record && record['runtimeState'] !== '') {
-          nextRecord = {
-            ...nextRecord,
-            runtimeState: '',
-          };
-          changed = true;
-        }
-
-        const execution = nextRecord['execution'];
-        if (
-          execution &&
-          typeof execution === 'object' &&
-          !Array.isArray(execution) &&
-          'runtimeState' in execution &&
-          execution['runtimeState'] !== ''
-        ) {
-          nextRecord = {
-            ...nextRecord,
-            execution: {
-              ...execution,
-              runtimeState: '',
-            },
-          };
-          changed = true;
-        }
-
-        return { value: nextRecord, changed };
-      };
-
-      const replaceNestedRuntimeState = (
-        parent: Record<string, unknown>,
-        key: 'document' | 'package'
-      ): { value: Record<string, unknown>; changed: boolean } => {
-        const nested = parent[key];
-        if (!nested || typeof nested !== 'object' || Array.isArray(nested)) {
-          return { value: parent, changed: false };
-        }
-        const replaced = replaceRuntimeState(nested as Record<string, unknown>);
-        if (!replaced.changed) {
-          return { value: parent, changed: false };
-        }
-        return {
-          value: {
-            ...parent,
-            [key]: replaced.value,
-          },
-          changed: true,
-        };
-      };
-
-      let resolved = resolvePayload(payload);
-      if (resolved.ok) {
-        return resolved;
-      }
-
-      let parsedPayload: unknown;
-      try {
-        parsedPayload = JSON.parse(payload);
-      } catch (error) {
-        logClientError(error);
-        return resolved;
-      }
-
-      if (!parsedPayload || typeof parsedPayload !== 'object' || Array.isArray(parsedPayload)) {
-        return resolved;
-      }
-
-      const direct = replaceRuntimeState(parsedPayload as Record<string, unknown>);
-      const document = replaceNestedRuntimeState(direct.value, 'document');
-      const portableEnvelope = replaceNestedRuntimeState(document.value, 'package');
-      if (!direct.changed && !document.changed && !portableEnvelope.changed) {
-        return resolved;
-      }
-
-      const recovered = resolvePayload(portableEnvelope.value);
-      if (!recovered.ok) {
-        return resolved;
-      }
-
-      void logSystemEvent({
-        source: 'ai.paths.settings',
-        message: 'Recovering selected path from invalid runtime state',
-        level: 'warn',
-        context: {
-          pathId,
-          error: resolved.error,
-        },
-      });
-      resolved = recovered;
-      return resolved;
-    },
-    []
-  );
-
-  const parseLoadedPathConfigPayload = useCallback(
-    (payload: string, pathId: string): PathConfig => {
-      const resolved = resolveStoredPayloadWithRuntimeFallback(payload, pathId);
-      if (!resolved.ok) {
-        throw new Error(resolved.error);
-      }
-      const base = createDefaultPathConfig(pathId);
-      const imported = resolved.value.pathConfig;
-      const fallbackName = paths.find((path: PathMeta): boolean => path.id === pathId)?.name;
-      const resolvedName =
-        typeof imported.name === 'string' && imported.name.trim().length > 0
-          ? imported.name
-          : fallbackName || base.name;
-      return {
-        ...base,
-        ...imported,
-        id: pathId,
-        name: resolvedName,
-      };
-    },
-    [paths, resolveStoredPayloadWithRuntimeFallback]
-  );
 
   const resolveDuplicatePathName = useCallback(
     (sourceName: string): string => {
@@ -392,10 +232,42 @@ export function useAiPathsSettingsPathActions(
     );
   }, [activePathId, applyPathConfigState, isPathLocked, setPathConfigs, toast]);
 
-  const handleCreatePath = useCallback((): void => {
+  const persistPathIndexChanges = useCallback(
+    async (nextPaths: PathMeta[]): Promise<void> => {
+      const persistPathId = activePathId ?? nextPaths[0]?.id ?? null;
+      if (persistPathId) {
+        const persistConfig = pathConfigs[persistPathId] ?? createDefaultPathConfig(persistPathId);
+        await persistPathSettings(nextPaths, persistPathId, persistConfig);
+        return;
+      }
+      await persistSettingsBulk([{ key: PATH_INDEX_KEY, value: JSON.stringify(nextPaths) }]);
+    },
+    [activePathId, pathConfigs, persistPathSettings, persistSettingsBulk]
+  );
+
+  const updatePathsWithPersistence = useCallback(
+    async (nextPaths: PathMeta[]): Promise<void> => {
+      setPaths(nextPaths);
+      try {
+        await persistPathIndexChanges(nextPaths);
+      } catch (error) {
+        logClientError(error);
+        reportAiPathsError(
+          error,
+          { action: 'persistPathGroupingIndex' },
+          'Failed to persist path grouping:'
+        );
+        toast('Failed to persist path grouping.', { variant: 'error' });
+      }
+    },
+    [persistPathIndexChanges, reportAiPathsError, setPaths, toast]
+  );
+
+  const handleCreatePath = useCallback((options?: PathCreateOptions): void => {
     const id = createPathId();
     const now = new Date().toISOString();
     const name = `New Path ${paths.length + 1}`;
+    const folderPath = normalizeAiPathFolderPath(options?.folderPath);
     const config: PathConfig = {
       id,
       version: STORAGE_VERSION,
@@ -425,6 +297,7 @@ export function useAiPathsSettingsPathActions(
     const meta: PathMeta = {
       id,
       name,
+      folderPath,
       createdAt: now,
       updatedAt: now,
     };
@@ -440,7 +313,7 @@ export function useAiPathsSettingsPathActions(
   }, [applyPathConfigState, paths.length, setActivePathId, setPathConfigs, setPaths]);
 
   const handleCreateFromTemplate = useCallback(
-    (templateId: string): void => {
+    (templateId: string, options?: PathCreateOptions): void => {
       const template = PATH_TEMPLATES.find((t) => t.templateId === templateId);
       if (!template) {
         toast(`Path template "${templateId}" not found.`, { variant: 'error' });
@@ -448,7 +321,9 @@ export function useAiPathsSettingsPathActions(
       }
       const id = createPathId();
       const config = buildPathConfigFromTemplate(id, template);
-      const meta = createPathMeta(config);
+      const meta = createPathMeta(config, {
+        folderPath: normalizeAiPathFolderPath(options?.folderPath),
+      });
       setPaths((prev: PathMeta[]): PathMeta[] => [...prev, meta]);
       setPathConfigs(
         (prev: Record<string, PathConfig>): Record<string, PathConfig> => ({
@@ -464,7 +339,7 @@ export function useAiPathsSettingsPathActions(
   );
 
   const handleDuplicatePath = useCallback(
-    (pathId?: string): void => {
+    (pathId?: string, options?: PathCreateOptions): void => {
       const sourceId = pathId ?? activePathId;
       if (!sourceId) return;
 
@@ -484,6 +359,7 @@ export function useAiPathsSettingsPathActions(
       const duplicateMeta: PathMeta = {
         id: duplicateId,
         name: duplicateName,
+        folderPath: normalizeAiPathFolderPath(options?.folderPath ?? sourceMeta?.folderPath),
         createdAt: now,
         updatedAt: now,
       };
@@ -618,6 +494,69 @@ export function useAiPathsSettingsPathActions(
     ]
   );
 
+  const handleMovePathToFolder = useCallback(
+    async (pathId: string, folderPath?: string | null): Promise<void> => {
+      const normalizedPathId = pathId.trim();
+      if (!normalizedPathId) return;
+      const normalizedFolderPath = normalizeAiPathFolderPath(folderPath);
+      const pathMeta = paths.find((path: PathMeta): boolean => path.id === normalizedPathId);
+      if (!pathMeta) return;
+      if (normalizeAiPathFolderPath(pathMeta.folderPath) === normalizedFolderPath) return;
+
+      const nextPaths = paths.map((path: PathMeta): PathMeta =>
+        path.id === normalizedPathId
+          ? {
+            ...path,
+            folderPath: normalizedFolderPath,
+          }
+          : path
+      );
+      await updatePathsWithPersistence(nextPaths);
+    },
+    [paths, updatePathsWithPersistence]
+  );
+
+  const handleMoveFolder = useCallback(
+    async (folderPath: string, targetFolderPath?: string | null): Promise<void> => {
+      const normalizedFolderPath = normalizeAiPathFolderPath(folderPath);
+      if (!normalizedFolderPath) return;
+      const normalizedTargetFolderPath = normalizeAiPathFolderPath(targetFolderPath);
+      if (!canMoveAiPathFolder(normalizedFolderPath, normalizedTargetFolderPath)) return;
+
+      let changed = false;
+      const nextPaths = paths.map((path: PathMeta): PathMeta => {
+        const currentFolderPath = normalizeAiPathFolderPath(path.folderPath);
+        const rebasedFolderPath = rebaseAiPathFolderPath(
+          currentFolderPath,
+          normalizedFolderPath,
+          normalizedTargetFolderPath
+        );
+        if (rebasedFolderPath === currentFolderPath) {
+          return path;
+        }
+        changed = true;
+        return {
+          ...path,
+          folderPath: rebasedFolderPath,
+        };
+      });
+      if (!changed) return;
+      await updatePathsWithPersistence(nextPaths);
+    },
+    [paths, updatePathsWithPersistence]
+  );
+
+  const handleRenameFolder = useCallback(
+    async (folderPath: string, nextFolderPath: string): Promise<void> => {
+      const normalizedFolderPath = normalizeAiPathFolderPath(folderPath);
+      const normalizedNextFolderPath = normalizeAiPathFolderPath(nextFolderPath);
+      if (!normalizedFolderPath || !normalizedNextFolderPath) return;
+      if (!canMoveAiPathFolder(normalizedFolderPath, normalizedNextFolderPath)) return;
+      await handleMoveFolder(normalizedFolderPath, normalizedNextFolderPath);
+    },
+    [handleMoveFolder]
+  );
+
   const handleSwitchPath = useCallback(
     (value: string): void => {
       if (!value) return;
@@ -667,30 +606,23 @@ export function useAiPathsSettingsPathActions(
           if (switchRequestSeqRef.current !== nextRequestSeq) return;
 
           const configItem = settings.find((item) => item.key === `${PATH_CONFIG_PREFIX}${value}`);
-          let config: PathConfig = createDefaultPathConfig(value);
-          if (configItem?.value) {
-            try {
-              config = parseLoadedPathConfigPayload(configItem.value, value);
-            } catch (error) {
-              logClientError(error);
-              reportAiPathsError(
-                error,
-                { action: 'switchPathParseConfig', pathId: value },
-                'Failed to parse selected path config:'
-              );
-              throw error;
-            }
+          if (!configItem?.value) {
+            throw new Error(`Stored AI Path config not found for "${value}".`);
           }
-
-          config = sanitizePathConfigWithRuntimeFallback(config, value);
-          if (configItem?.value) {
-            void persistLegacyTriggerContextModeRepair({
+          let config: PathConfig;
+          try {
+            config = loadCanonicalStoredPathConfig({
               pathId: value,
-              rawPayload: configItem.value,
-              repairedConfig: config,
-              source: 'useAiPathsSettingsPathActions',
-              action: 'persistSwitchPathLegacyTriggerContextModeRepair',
+              rawConfig: configItem.value,
             });
+          } catch (error) {
+            logClientError(error);
+            reportAiPathsError(
+              error,
+              { action: 'switchPathParseConfig', pathId: value },
+              'Failed to parse selected path config:'
+            );
+            throw error;
           }
 
           setPathConfigs(
@@ -709,9 +641,12 @@ export function useAiPathsSettingsPathActions(
               (item) => item.key === `${PATH_CONFIG_PREFIX}${value}`
             );
             if (configItem?.value) {
-              let recoveredConfig = createDefaultPathConfig(value);
+              let recoveredConfig: PathConfig;
               try {
-                recoveredConfig = parseLoadedPathConfigPayload(configItem.value, value);
+                recoveredConfig = loadCanonicalStoredPathConfig({
+                  pathId: value,
+                  rawConfig: configItem.value,
+                });
               } catch (parseError) {
                 logClientError(parseError);
                 reportAiPathsError(
@@ -721,14 +656,6 @@ export function useAiPathsSettingsPathActions(
                 );
                 throw parseError;
               }
-              recoveredConfig = sanitizePathConfigWithRuntimeFallback(recoveredConfig, value);
-              void persistLegacyTriggerContextModeRepair({
-                pathId: value,
-                rawPayload: configItem.value,
-                repairedConfig: recoveredConfig,
-                source: 'useAiPathsSettingsPathActions',
-                action: 'persistFallbackSwitchPathLegacyTriggerContextModeRepair',
-              });
               setPathConfigs(
                 (prev: Record<string, PathConfig>): Record<string, PathConfig> => ({
                   ...prev,
@@ -771,8 +698,6 @@ export function useAiPathsSettingsPathActions(
       pathConfigs,
       persistActivePathPreference,
       reportAiPathsError,
-      parseLoadedPathConfigPayload,
-      sanitizePathConfigWithRuntimeFallback,
       setActivePathId,
       setIsPathSwitching,
       setPathConfigs,
@@ -787,5 +712,8 @@ export function useAiPathsSettingsPathActions(
     handleDuplicatePath,
     handleDeletePath,
     handleSwitchPath,
+    handleMovePathToFolder,
+    handleMoveFolder,
+    handleRenameFolder,
   };
 }

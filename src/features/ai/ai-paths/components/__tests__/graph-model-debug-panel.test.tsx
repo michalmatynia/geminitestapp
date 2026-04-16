@@ -16,9 +16,10 @@ function getRuntimeStateMock() {
 
 vi.mock('@/features/ai/ai-paths/context', () => ({
   useRuntimeState: getRuntimeStateMock,
+  useRuntimeDataState: getRuntimeStateMock,
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/data-display.public', () => ({
   JsonViewer: (props: Record<string, unknown>) => {
     mockState.jsonViewerProps.push(props);
     return <div data-testid='json-viewer'>{String(props.title)}</div>;

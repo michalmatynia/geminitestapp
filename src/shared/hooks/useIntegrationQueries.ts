@@ -1,5 +1,16 @@
-import type { BaseImportInventoriesPayload, BaseImportInventoriesResponse } from '@/shared/contracts/integrations/import-export';
-import type { BaseDefaultConnectionPreferenceResponse, BaseDefaultInventoryPreferenceResponse, TraderaDefaultConnectionPreferenceResponse } from '@/shared/contracts/integrations/preferences';
+import type {
+  BaseImportInventoriesPayload,
+  BaseImportInventoriesResponse,
+  BaseImportWarehousesPayload,
+  BaseImportWarehousesResponse,
+} from '@/shared/contracts/integrations/import-export';
+import type {
+  BaseDefaultConnectionPreferenceResponse,
+  BaseDefaultInventoryPreferenceResponse,
+  Scanner1688DefaultConnectionPreferenceResponse,
+  TraderaDefaultConnectionPreferenceResponse,
+  VintedDefaultConnectionPreferenceResponse,
+} from '@/shared/contracts/integrations/preferences';
 import type { BaseInventory } from '@/shared/contracts/integrations/base-com';
 import type { CategoryMappingWithDetails } from '@/shared/contracts/integrations/listings';
 import type { IntegrationWithConnections } from '@/shared/contracts/integrations/domain';
@@ -32,7 +43,7 @@ export function useCategoryMappingsByConnection(
   connectionId: string,
   options?: { enabled?: boolean }
 ): ListQuery<CategoryMappingWithDetails> {
-  const isEnabled = options?.enabled ?? !!connectionId;
+  const isEnabled = options?.enabled ?? Boolean(connectionId);
   const queryKey = marketplaceKeys.mappings(connectionId, 'all');
 
   return createListQueryV2({
@@ -41,7 +52,7 @@ export function useCategoryMappingsByConnection(
       api.get<CategoryMappingWithDetails[]>(
         `/api/marketplace/mappings?connectionId=${connectionId}`
       ),
-    enabled: isEnabled && !!connectionId,
+    enabled: isEnabled && Boolean(connectionId),
     meta: {
       source: 'shared.hooks.useCategoryMappingsByConnection',
       operation: 'list',
@@ -123,6 +134,52 @@ export function useDefaultTraderaConnection(): SingleQuery<TraderaDefaultConnect
   });
 }
 
+export function useDefaultVintedConnection(): SingleQuery<VintedDefaultConnectionPreferenceResponse> {
+  const queryKey = integrationKeys.selection.vintedDefaultConnection();
+  const queryFn = async (): Promise<VintedDefaultConnectionPreferenceResponse> =>
+    api.get<VintedDefaultConnectionPreferenceResponse>(
+      '/api/v2/integrations/exports/vinted/default-connection'
+    );
+
+  return createSingleQueryV2({
+    id: 'default-vinted-connection',
+    queryKey,
+    queryFn,
+    meta: {
+      source: 'shared.hooks.useDefaultVintedConnection',
+      operation: 'detail',
+      resource: 'integrations.default-vinted-connection',
+      domain: 'integrations',
+      queryKey,
+      tags: ['integrations', 'vinted', 'connection'],
+      description: 'Loads integrations default Vinted connection.',
+    },
+  });
+}
+
+export function useDefault1688Connection(): SingleQuery<Scanner1688DefaultConnectionPreferenceResponse> {
+  const queryKey = integrationKeys.selection.scanner1688DefaultConnection();
+  const queryFn = async (): Promise<Scanner1688DefaultConnectionPreferenceResponse> =>
+    api.get<Scanner1688DefaultConnectionPreferenceResponse>(
+      '/api/v2/integrations/exports/1688/default-connection'
+    );
+
+  return createSingleQueryV2({
+    id: 'default-1688-connection',
+    queryKey,
+    queryFn,
+    meta: {
+      source: 'shared.hooks.useDefault1688Connection',
+      operation: 'detail',
+      resource: 'integrations.default-1688-connection',
+      domain: 'integrations',
+      queryKey,
+      tags: ['integrations', '1688', 'connection'],
+      description: 'Loads integrations default 1688 connection.',
+    },
+  });
+}
+
 export function useBaseInventories(
   connectionId: string,
   enabled: boolean = true
@@ -145,7 +202,7 @@ export function useBaseInventories(
   return createListQueryV2({
     queryKey,
     queryFn,
-    enabled: enabled && !!connectionId,
+    enabled: enabled && Boolean(connectionId),
     meta: {
       source: 'shared.hooks.useBaseInventories',
       operation: 'list',
@@ -154,6 +211,52 @@ export function useBaseInventories(
       queryKey,
       tags: ['integrations', 'inventories'],
       description: 'Loads integrations base inventories.',
+    },
+  });
+}
+
+export function useBaseWarehouses(
+  connectionId: string,
+  inventoryId: string,
+  includeAllWarehouses: boolean = false,
+  enabled: boolean = true
+): SingleQuery<BaseImportWarehousesResponse> {
+  const queryKey = [
+    ...integrationKeys.baseInventories(connectionId),
+    'warehouses',
+    inventoryId || 'all',
+    includeAllWarehouses,
+  ] as const;
+  const queryFn = async (): Promise<BaseImportWarehousesResponse> => {
+    const normalizedConnectionId = connectionId.trim();
+    const normalizedInventoryId = inventoryId.trim();
+    if (!normalizedConnectionId) {
+      throw new Error('Base.com connection is required to load warehouses.');
+    }
+    if (!normalizedInventoryId) {
+      throw new Error('Base.com inventory is required to load warehouses.');
+    }
+    return api.post<BaseImportWarehousesResponse>('/api/v2/integrations/imports/base', {
+      action: 'warehouses',
+      connectionId: normalizedConnectionId,
+      inventoryId: normalizedInventoryId,
+      includeAllWarehouses,
+    } satisfies BaseImportWarehousesPayload);
+  };
+
+  return createSingleQueryV2({
+    id: inventoryId || null,
+    queryKey,
+    queryFn,
+    enabled: enabled && Boolean(connectionId.trim()) && Boolean(inventoryId.trim()),
+    meta: {
+      source: 'shared.hooks.useBaseWarehouses',
+      operation: 'detail',
+      resource: 'integrations.base-warehouses',
+      domain: 'integrations',
+      queryKey,
+      tags: ['integrations', 'warehouses'],
+      description: 'Loads Base.com warehouses for an inventory.',
     },
   });
 }

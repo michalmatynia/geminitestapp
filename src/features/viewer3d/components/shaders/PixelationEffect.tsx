@@ -31,12 +31,20 @@ export class PixelationEffectImpl extends Effect {
     });
   }
 
+  private get pixelSizeUniform(): Uniform {
+    const uniform = this.uniforms.get('pixelSize');
+    if (uniform === undefined) {
+      throw new Error('PixelationEffect pixelSize uniform is missing.');
+    }
+    return uniform;
+  }
+
   get pixelSize(): number {
-    return this.uniforms.get('pixelSize')!.value as number;
+    return this.pixelSizeUniform.value as number;
   }
 
   set pixelSize(value: number) {
-    this.uniforms.get('pixelSize')!.value = value;
+    this.pixelSizeUniform.value = value;
   }
 }
 
@@ -46,10 +54,10 @@ export interface PixelationPassProps {
 }
 
 export const PixelationPass = forwardRef<PixelationEffectImpl, PixelationPassProps>(
-  function PixelationPass(
+  (
     { pixelSize = 6.0, blendFunction = BlendFunction.NORMAL }: PixelationPassProps,
     ref: React.Ref<PixelationEffectImpl>
-  ) {
+  ) => {
     const effect = useMemo(
       () => new PixelationEffectImpl({ pixelSize, blendFunction }),
       [pixelSize, blendFunction]

@@ -5,6 +5,8 @@ export {
   useBaseInventories,
   useDefaultExportConnection,
   useDefaultTraderaConnection,
+  useDefaultVintedConnection,
+  useDefault1688Connection,
   useDefaultExportInventory,
 } from '@/shared/hooks/useIntegrationQueries';
 import { fetchSettingsCached } from '@/shared/api/settings-client';
@@ -20,7 +22,6 @@ import type { PlaywrightPersona } from '@/shared/contracts/playwright';
 import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from '@/shared/contracts/playwright';
 import type { ListQuery, SingleQuery } from '@/shared/contracts/ui/queries';
 import { api, ApiError } from '@/shared/lib/api-client';
-import { normalizePlaywrightPersonas } from '@/shared/lib/playwright/personas';
 import {
   createListQueryV2,
   createSingleQueryV2,
@@ -28,6 +29,7 @@ import {
 } from '@/shared/lib/query-factories-v2';
 import { integrationKeys, playwrightKeys } from '@/shared/lib/query-key-exports';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
+import { normalizeIntegrationPlaywrightPersonas } from '@/features/integrations/utils/playwright-connection-settings';
 
 const INTEGRATIONS_QUERY_TIMEOUT_MS = 30_000;
 
@@ -100,7 +102,7 @@ export function useConnectionSession(
     id: connectionId,
     queryKey,
     queryFn,
-    enabled: (options?.enabled ?? true) && !!connectionId,
+    enabled: (options?.enabled ?? true) && Boolean(connectionId),
     staleTime: 0,
     meta: {
       source: 'integrations.hooks.useConnectionSession',
@@ -122,7 +124,7 @@ export function usePlaywrightPersonas(): ListQuery<PlaywrightPersona> {
       map.get(PLAYWRIGHT_PERSONA_SETTINGS_KEY),
       []
     );
-    return normalizePlaywrightPersonas(stored);
+    return normalizeIntegrationPlaywrightPersonas(stored);
   };
 
   return createListQueryV2({
@@ -262,7 +264,7 @@ export const getBaseInventoriesQueryOptions = (
       if (data.error) throw new ApiError(data.error, 400);
       return Array.isArray(data.inventories) ? data.inventories : [];
     },
-    enabled: enabled && !!connectionId,
+    enabled: enabled && Boolean(connectionId),
     meta: {
       source: 'integrations.queries.getBaseInventoriesOptions',
       operation: 'list' as const,

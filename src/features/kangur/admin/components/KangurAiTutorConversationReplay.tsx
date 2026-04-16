@@ -1,7 +1,7 @@
 'use client';
 
 import {
-  ChangeEvent,
+  type ChangeEvent,
   useCallback,
   useState,
 } from 'react';

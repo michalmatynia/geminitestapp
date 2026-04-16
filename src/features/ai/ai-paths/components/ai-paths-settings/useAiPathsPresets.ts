@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useCallback, useEffect } from 'react';
+import type React from 'react';
+import { useCallback, useEffect } from 'react';
 
 import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
 import { usePresetsActions, usePresetsState } from '@/features/ai/ai-paths/context/PresetsContext';
@@ -13,8 +14,15 @@ import type {
   Edge,
 } from '@/shared/contracts/ai-paths';
 import type { Toast } from '@/shared/contracts/ui/base';
-import { ConfirmConfig } from '@/shared/hooks/ui/useConfirm';
-import { BUNDLE_INPUT_PORTS, CLUSTER_PRESETS_KEY, DB_NODE_PRESETS_KEY, DB_QUERY_PRESETS_KEY, TEMPLATE_INPUT_PORTS, createPresetId, parsePathList } from '@/shared/lib/ai-paths';
+import { type ConfirmConfig } from '@/shared/hooks/ui/useConfirm';
+import {
+  BUNDLE_INPUT_PORTS,
+  CLUSTER_PRESETS_KEY,
+  DB_NODE_PRESETS_KEY,
+  DB_QUERY_PRESETS_KEY,
+  TEMPLATE_INPUT_PORTS,
+} from '@/shared/lib/ai-paths/core/constants';
+import { createPresetId, parsePathList } from '@/shared/lib/ai-paths/core/utils';
 import { updateAiPathsSetting } from '@/shared/lib/ai-paths/settings-store-client';
 
 import type { ClusterPresetDraft } from '../cluster-presets-panel';

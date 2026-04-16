@@ -1,0 +1,23 @@
+{
+  "root": true,
+  "rules": {
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          {
+            "group": [
+              "@/features/*/server",
+              "@/features/*/server/*",
+              "@/features/kangur/server",
+              "@/features/kangur/server/*",
+              "@/server/*",
+              "@/shared/lib/db/*"
+            ],
+            "message": "studiq-web must not import server-only root modules. Use @kangur/api-client against KANGUR_API_ORIGIN instead."
+          }
+        ]
+      }
+    ]
+  }
+}

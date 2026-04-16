@@ -1,8 +1,8 @@
 'use client';
 
 import { Mail } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import React, { useDeferredValue, useMemo, useState } from 'react';
+import { useRouter } from 'nextjs-toploader/app';
+import React, { useDeferredValue, useMemo, useState, startTransition } from 'react';
 
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Badge, DropdownMenuItem } from '@/shared/ui/primitives.public';
@@ -105,7 +105,7 @@ export function AdminFilemakerEmailsPage(): React.JSX.Element {
               <DropdownMenuItem
                 onSelect={(event: Event): void => {
                   event.preventDefault();
-                  router.push(`/admin/filemaker/emails/${encodeURIComponent(row.original.id)}`);
+                  startTransition(() => { router.push(`/admin/filemaker/emails/${encodeURIComponent(row.original.id)}`); });
                 }}
               >
                 Edit Details

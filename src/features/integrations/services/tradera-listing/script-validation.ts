@@ -1,4 +1,4 @@
-import { validatePlaywrightNodeScript } from '@/features/ai/ai-paths/services/playwright-node-runner.parser';
+import { validatePlaywrightEngineScript } from '@/features/playwright/server';
 import {
   isTraderaApiIntegrationSlug,
   isTraderaIntegrationSlug,
@@ -31,7 +31,7 @@ export const assertValidTraderaPlaywrightListingScript = ({
     return;
   }
 
-  const validation = validatePlaywrightNodeScript(normalizedScript);
+  const validation = validatePlaywrightEngineScript(normalizedScript);
   if (validation.ok) {
     return;
   }

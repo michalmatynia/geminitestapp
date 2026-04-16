@@ -1,12 +1,16 @@
-import { z } from 'zod';
-
 import type { CategoryMapping, CategoryMappingCreateInput } from '@/shared/contracts/integrations/listings';
 import type { CategoryMappingRepository } from '@/shared/contracts/integrations/repositories';
 import { badRequestError } from '@/shared/errors/app-error';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 
-const marketplaceMappingsQuerySchema = z.object({
-  connectionId: optionalTrimmedQueryString(),
+import {
+  marketplaceConnectionQuerySchema,
+  type MarketplaceMappingSaveResult,
+  type MarketplaceMappingSaveRepository,
+  saveMarketplaceMapping,
+} from '../marketplace-api.types';
+
+const marketplaceMappingsQuerySchema = marketplaceConnectionQuerySchema.extend({
   catalogId: optionalTrimmedQueryString(),
 });
 
@@ -22,15 +26,19 @@ export type CategoryMappingCreateFields = {
   catalogId: string;
 };
 
-export type CategoryMappingSaveResult = {
-  body: CategoryMapping;
-  status: 200 | 201;
+export type CategoryMappingUpdateFields = {
+  internalCategoryId: string;
+  isActive: true;
 };
 
-type CategoryMappingSaveRepository = Pick<
-  CategoryMappingRepository,
-  'getByExternalCategory' | 'update' | 'create'
->;
+export type CategoryMappingSaveResult = MarketplaceMappingSaveResult<CategoryMapping>;
+
+type CategoryMappingSaveRepository = MarketplaceMappingSaveRepository<
+  CategoryMapping,
+  CategoryMappingCreateFields,
+  CategoryMappingUpdateFields
+> &
+  Pick<CategoryMappingRepository, 'getByExternalCategory'>;
 
 export const parseMarketplaceMappingsQuery = (
   rawQuery: unknown
@@ -75,21 +83,10 @@ export const requireCategoryMappingCreateFields = (
 export const saveCategoryMapping = async (
   repo: CategoryMappingSaveRepository,
   input: CategoryMappingCreateFields
-): Promise<CategoryMappingSaveResult> => {
-  const existing = await repo.getByExternalCategory(
-    input.connectionId,
-    input.externalCategoryId,
-    input.catalogId
+): Promise<CategoryMappingSaveResult> =>
+  saveMarketplaceMapping(
+    repo,
+    () => repo.getByExternalCategory(input.connectionId, input.externalCategoryId, input.catalogId),
+    input,
+    { internalCategoryId: input.internalCategoryId, isActive: true }
   );
-
-  if (existing) {
-    const updated = await repo.update(existing.id, {
-      internalCategoryId: input.internalCategoryId,
-      isActive: true,
-    });
-    return { body: updated, status: 200 };
-  }
-
-  const mapping = await repo.create(input);
-  return { body: mapping, status: 201 };
-};

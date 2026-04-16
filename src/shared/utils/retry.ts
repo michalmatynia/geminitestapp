@@ -8,6 +8,7 @@ import {
 import { logger } from '@/shared/utils/logger';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { reportObservabilityInternalError } from '@/shared/utils/observability/internal-observability-fallback';
+import { delay } from './time-utils';
 
 // Local type definition to avoid importing from features layer
 type SystemLogLevel = 'info' | 'warn' | 'error';
@@ -126,125 +127,157 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number, operation: strin
   );
 }
 
-import { delay } from './time-utils';
-
-/**
- * Executes an async operation with automatic retries on failure.
- *
- * Features:
- * - Exponential backoff with jitter
- * - Configurable retry conditions
- * - Optional timeout per attempt
- * - Logging of retry attempts
- *
- * @example
- * ```ts
- * const result = await withRetry(
- *   () => fetchExternalApi(),
- *   {
- *     maxAttempts: 3,
- *     source: "external-api",
- *     timeoutMs: 5000,
- *   }
- * );
- * ```
- */
-export async function withRetry<T>(
+const performRetryAttempt = async <T>(
   operation: () => Promise<T>,
-  options?: RetryOptions
-): Promise<T> {
-  const opts = { ...DEFAULT_OPTIONS, ...options };
-  const { maxAttempts, timeoutMs, isRetryable, onRetry, source, logRetries } = {
-    ...opts,
-    timeoutMs: options?.timeoutMs,
-    isRetryable: options?.isRetryable,
-    onRetry: options?.onRetry,
-    source: options?.source,
-    logRetries: opts.logRetries,
-  };
+  timeoutMs: number,
+  source: string
+): Promise<T> => {
+  if (timeoutMs !== 0) {
+    return withTimeout(operation(), timeoutMs, source);
+  }
+  return operation();
+};
 
+type LogRetryAttemptParams = {
+  error: unknown;
+  attempt: number;
+  maxAttempts: number;
+  nextDelay: number;
+  source: string;
+};
+
+const logRetryEvent = (params: LogRetryAttemptParams): void => {
+  const { error, attempt, maxAttempts, nextDelay, source } = params;
+  logSystemEvent({
+    level: 'warn',
+    message: `Retry attempt ${attempt}/${maxAttempts} after ${nextDelay}ms`,
+    source,
+    error,
+    context: {
+      attempt,
+      maxAttempts,
+      delayMs: nextDelay,
+    },
+  }).catch((logError) => logger.error('Failed to log retry event', logError));
+};
+
+const resolveRetryDecision = (
+  error: unknown,
+  attempt: number,
+  maxAttempts: number,
+  options: Required<RetryOptions & { source: string }>
+): { shouldRetry: boolean; nextDelay: number } => {
+  const { isRetryable, source } = options;
+
+  const shouldRetry = attempt < maxAttempts && (isRetryable(error) || isRetryableError(error));
+
+  logClientCatch(error, {
+    source,
+    action: 'withRetryAttempt',
+    attempt,
+    maxAttempts,
+    willRetry: shouldRetry,
+  });
+
+  if (!shouldRetry) {
+    return { shouldRetry: false, nextDelay: 0 };
+  }
+
+  const errorDelay = getRetryDelay(error);
+  const nextDelay = errorDelay ?? calculateDelay(attempt, options);
+
+  return { shouldRetry: true, nextDelay };
+};
+
+const executeRetryLoop = async <T>(
+  operation: () => Promise<T>,
+  fullOpts: Required<RetryOptions & { source: string }>
+): Promise<T> => {
   let lastError: unknown;
 
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+  for (let attempt = 1; attempt <= fullOpts.maxAttempts; attempt++) {
     try {
-      // Execute with optional timeout
-      const result = timeoutMs
-        ? await withTimeout(operation(), timeoutMs, source ?? 'operation')
-        : await operation();
-
-      return result;
+      // eslint-disable-next-line no-await-in-loop
+      return await performRetryAttempt(operation, fullOpts.timeoutMs, fullOpts.source);
     } catch (error) {
       lastError = error;
-
-      // Check if we should retry
-      const shouldRetry =
-        attempt < maxAttempts && (isRetryable?.(error) ?? isRetryableError(error) ?? true);
-
-      logClientCatch(error, {
-        source: source ?? 'shared.retry',
-        action: 'withRetryAttempt',
+      const { shouldRetry, nextDelay } = resolveRetryDecision(
+        error,
         attempt,
-        maxAttempts,
-        willRetry: shouldRetry,
-      });
+        fullOpts.maxAttempts,
+        fullOpts
+      );
 
       if (!shouldRetry) {
         throw error;
       }
 
-      // Calculate delay
-      const errorDelay = getRetryDelay(error);
-      const nextDelay = errorDelay ?? calculateDelay(attempt, opts);
-
-      // Log retry attempt
-      if (logRetries) {
-        void logSystemEvent({
-          level: 'warn',
-          message: `Retry attempt ${attempt}/${maxAttempts} after ${nextDelay}ms`,
-          source: source ?? 'retry',
-          error,
-          context: {
-            attempt,
-            maxAttempts,
-            delayMs: nextDelay,
-          },
-        });
+      if (fullOpts.logRetries) {
+        logRetryEvent({ error, attempt, maxAttempts: fullOpts.maxAttempts, nextDelay, source: fullOpts.source });
       }
 
-      // Call retry callback
-      onRetry?.(attempt, error, nextDelay);
-
-      // Wait before next attempt
+      fullOpts.onRetry(attempt, error, nextDelay);
+      // eslint-disable-next-line no-await-in-loop
       await delay(nextDelay);
     }
   }
 
-  // All attempts failed
   throw lastError;
+};
+
+const resolveFullOptions = (options?: RetryOptions): Required<RetryOptions & { source: string }> => {
+  const opts = { ...DEFAULT_OPTIONS, ...options };
+  const source = options?.source ?? 'operation';
+  return {
+    ...opts,
+    timeoutMs: options?.timeoutMs ?? 0,
+    isRetryable: options?.isRetryable ?? ((err): boolean => isRetryableError(err)),
+    onRetry: options?.onRetry ?? ((): void => {}),
+    source,
+  };
+};
+
+/**
+ * Executes an async operation with automatic retries on failure.
+ */
+export async function withRetry<T>(
+  operation: () => Promise<T>,
+  options?: RetryOptions
+): Promise<T> {
+  return executeRetryLoop(operation, resolveFullOptions(options));
 }
+
+const handleRetryAllFailure = (error: unknown, index: number, options?: RetryOptions): { success: false; error: unknown } => {
+  logClientCatch(error, {
+    source: options?.source ?? 'shared.retry',
+    action: 'withRetryAllOperation',
+    operationIndex: index,
+  });
+  return { success: false as const, error };
+};
+
+const retryAllOperation = async <T>(
+  op: () => Promise<T>,
+  index: number,
+  options?: RetryOptions
+): Promise<{ success: true; result: T } | { success: false; error: unknown }> => {
+  try {
+    const result = await withRetry(op, options);
+    return { success: true as const, result };
+  } catch (error) {
+    return handleRetryAllFailure(error, index, options);
+  }
+};
 
 /**
  * Executes multiple operations in parallel with retry support.
- * Returns results for successful operations and errors for failed ones.
  */
 export async function withRetryAll<T>(
   operations: Array<() => Promise<T>>,
   options?: RetryOptions
 ): Promise<Array<{ success: true; result: T } | { success: false; error: unknown }>> {
   return Promise.all(
-    operations.map(async (op: () => Promise<T>, index: number) => {
-      try {
-        const result = await withRetry(op, options);
-        return { success: true as const, result };
-      } catch (error) {
-        logClientCatch(error, {
-          source: options?.source ?? 'shared.retry',
-          action: 'withRetryAllOperation',
-          operationIndex: index,
-        });
-        return { success: false as const, error };
-      }
-    })
+    operations.map((op, index) => retryAllOperation(op, index, options))
   );
 }
 
@@ -263,11 +296,8 @@ const circuitStates = new Map<string, CircuitState>();
  * Configuration for circuit breaker.
  */
 export type CircuitBreakerOptions = {
-  /** Number of failures before opening circuit (default: 5) */
   failureThreshold?: number;
-  /** Time in ms before attempting to close circuit (default: 60000) */
   resetTimeoutMs?: number;
-  /** Identifier for this circuit */
   circuitId: string;
 };
 
@@ -278,15 +308,6 @@ const DEFAULT_CIRCUIT_OPTIONS = {
 
 /**
  * Executes an operation with circuit breaker pattern.
- * Prevents cascade failures by temporarily blocking calls to failing services.
- *
- * @example
- * ```ts
- * const result = await withCircuitBreaker(
- *   () => callExternalService(),
- *   { circuitId: "external-service" }
- * );
- * ```
  */
 export async function withCircuitBreaker<T>(
   operation: () => Promise<T>,
@@ -295,14 +316,12 @@ export async function withCircuitBreaker<T>(
   const opts = { ...DEFAULT_CIRCUIT_OPTIONS, ...options };
   const { circuitId, failureThreshold, resetTimeoutMs } = opts;
 
-  // Get or initialize circuit state
   let state = circuitStates.get(circuitId);
   if (!state) {
     state = { failures: 0, lastFailure: 0, isOpen: false };
     circuitStates.set(circuitId, state);
   }
 
-  // Check if circuit is open
   if (state.isOpen) {
     const timeSinceLastFailure = Date.now() - state.lastFailure;
     if (timeSinceLastFailure < resetTimeoutMs) {
@@ -312,18 +331,12 @@ export async function withCircuitBreaker<T>(
         { retryable: true, retryAfterMs: resetTimeoutMs - timeSinceLastFailure }
       );
     }
-    // Attempt to close circuit (half-open state)
     state.isOpen = false;
   }
 
   try {
-    const result = await operation();
-
-    // Success - reset failures
-    state.failures = 0;
-    return result;
+    return await operation();
   } catch (error) {
-    // Record failure
     state.failures++;
     state.lastFailure = Date.now();
     logClientCatch(error, {
@@ -334,10 +347,9 @@ export async function withCircuitBreaker<T>(
       failureThreshold,
     });
 
-    // Check if threshold reached
     if (state.failures >= failureThreshold) {
       state.isOpen = true;
-      void logSystemEvent({
+      logSystemEvent({
         level: 'error',
         message: `Circuit breaker opened for ${circuitId} after ${state.failures} failures`,
         source: 'circuit-breaker',
@@ -346,7 +358,7 @@ export async function withCircuitBreaker<T>(
           failures: state.failures,
           resetTimeoutMs,
         },
-      });
+      }).catch((logError) => logger.error('Failed to log circuit breaker event', logError));
     }
 
     throw error;

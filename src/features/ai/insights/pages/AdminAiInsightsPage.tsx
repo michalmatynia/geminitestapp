@@ -1,7 +1,7 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import React from 'react';
+import { useRouter } from 'nextjs-toploader/app';
+import React, { startTransition } from 'react';
 
 import {
   ContextRegistryPageProvider,
@@ -175,7 +175,7 @@ function AdminAiInsightsPageContent(): React.JSX.Element {
           <Button
             variant='outline'
             size='sm'
-            onClick={() => router.push('/admin/brain?tab=routing')}
+            onClick={() => startTransition(() => { router.push('/admin/brain?tab=routing'); })}
           >
             Settings
           </Button>

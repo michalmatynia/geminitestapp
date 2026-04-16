@@ -1,1 +1,11 @@
-export { default } from '@/app/(frontend)/kangur/layout';
+import SharedKangurLayout from '@/app/(frontend)/kangur/layout';
+
+import type { ReactNode } from 'react';
+
+export default function LocalizedKangurLayout({
+  children,
+}: {
+  children: ReactNode;
+}): React.JSX.Element {
+  return <SharedKangurLayout>{children}</SharedKangurLayout>;
+}

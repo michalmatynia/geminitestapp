@@ -6,16 +6,25 @@ import {
   buildProductCategoryCreateInput,
   buildServerTiming,
   normalizeCategoryCreateName,
-  normalizeFreshQueryValue,
+  querySchema,
   requireProductCategoryCatalogId,
   shouldUseFreshProductCategoryFetch,
 } from './handler.helpers';
 
 describe('product categories handler helpers', () => {
-  it('normalizes fresh query values and required catalog ids', () => {
-    expect(normalizeFreshQueryValue(' yes ')).toBe(true);
-    expect(normalizeFreshQueryValue('off')).toBe(false);
-    expect(normalizeFreshQueryValue('')).toBeUndefined();
+  it('parses fresh query values and required catalog ids', () => {
+    expect(querySchema.parse({ catalogId: 'catalog-1', fresh: ' yes ' })).toEqual({
+      catalogId: 'catalog-1',
+      fresh: true,
+    });
+    expect(querySchema.parse({ catalogId: 'catalog-1', fresh: 'off' })).toEqual({
+      catalogId: 'catalog-1',
+      fresh: false,
+    });
+    expect(querySchema.parse({ catalogId: 'catalog-1', fresh: '' })).toEqual({
+      catalogId: 'catalog-1',
+      fresh: false,
+    });
     expect(requireProductCategoryCatalogId({ catalogId: 'catalog-1' })).toBe('catalog-1');
     expect(() => requireProductCategoryCatalogId(undefined)).toThrow(
       'catalogId query parameter is required'
@@ -47,6 +56,7 @@ describe('product categories handler helpers', () => {
       buildProductCategoryCreateInput(
         {
           name: 'Priority',
+          name_pl: ' Priorytet ',
           catalogId: 'catalog-1',
           color: undefined,
           parentId: undefined,
@@ -57,6 +67,7 @@ describe('product categories handler helpers', () => {
       )
     ).toEqual({
       name: 'Priority',
+      name_pl: ' Priorytet ',
       catalogId: 'catalog-1',
       color: null,
       parentId: null,

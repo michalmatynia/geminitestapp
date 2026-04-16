@@ -4,14 +4,14 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Check } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-import { integrationSelectionQueryKeys } from '@/features/integrations/components/listings/hooks/useIntegrationSelection';
-import { useCreateListingMutation } from '@/features/integrations/hooks/useProductListingMutations';
-import { createTraderaRecoveryContext } from '@/features/integrations/utils/product-listings-recovery';
 import {
+  integrationSelectionQueryKeys,
+  useCreateListingMutation,
+  createTraderaRecoveryContext,
   ensureTraderaBrowserSession,
   isTraderaBrowserAuthRequiredMessage,
   preflightTraderaQuickListSession,
-} from '@/features/integrations/utils/tradera-browser-session';
+} from '@/features/integrations/product-integrations-adapter';
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { ApiError, api } from '@/shared/lib/api-client';
@@ -30,11 +30,16 @@ import {
   FAILURE_STATUSES,
   getMarketplaceButtonClass,
   normalizeMarketplaceStatus,
+  resolveMarketplaceStatusWithLocalFeedback,
 } from '../product-column-utils';
 
-import { useTraderaQuickExportConnection } from './hooks/useTraderaQuickExportConnection';
-import { useTraderaQuickExportFeedback } from './hooks/useTraderaQuickExportFeedback';
-import { useTraderaQuickExportPolling } from './hooks/useTraderaQuickExportPolling';
+import {
+  useTraderaQuickExportConnection,
+  useTraderaQuickExportFeedback,
+  useTraderaQuickExportPolling,
+  type ResolvedTraderaQuickListContext,
+  type ResolvedTraderaBrowserConnection,
+} from '@/features/integrations/product-integrations-adapter';
 
 export function TraderaQuickListButton(props: {
   product: ProductWithImages;
@@ -57,8 +62,7 @@ export function TraderaQuickListButton(props: {
   const [submitting, setSubmitting] = useState(false);
   const [showCheckmark, setShowCheckmark] = useState(false);
 
-  const { resolveConnection, enableDefaultScriptedConnection } =
-    useTraderaQuickExportConnection(product.id);
+  const { resolveConnection, enableDefaultScriptedConnection } = useTraderaQuickExportConnection(product.id);
   const {
     localFeedback,
     localFeedbackStatus,
@@ -95,8 +99,8 @@ export function TraderaQuickListButton(props: {
       | undefined;
 
     try {
-      const resolvedContext = await resolveConnection();
-      const resolvedConnection =
+      const resolvedContext: ResolvedTraderaQuickListContext = await resolveConnection();
+      const resolvedConnection: ResolvedTraderaBrowserConnection | null =
         resolvedContext.scriptedConnection ??
         (await enableDefaultScriptedConnection(resolvedContext));
       if (!resolvedConnection) {
@@ -195,7 +199,11 @@ export function TraderaQuickListButton(props: {
       await invalidateProductListingsAndBadges(queryClient, product.id);
       await invalidateProducts(queryClient);
     } catch (error: unknown) {
-      if (error instanceof ApiError && error.status === 409) {
+      if (
+        error instanceof ApiError &&
+        error.status === 409 &&
+        !isTraderaBrowserAuthRequiredMessage(error.message)
+      ) {
         setFeedbackStatus(null);
         toast(
           error.message ||
@@ -255,11 +263,11 @@ export function TraderaQuickListButton(props: {
     return null;
   }
 
-  const resolvedButtonStatus = submitting
-    ? 'processing'
-    : hasServerStatus
-      ? normalizedTraderaStatus
-      : (localFeedbackStatus ?? 'not_started');
+  const resolvedButtonStatus = resolveMarketplaceStatusWithLocalFeedback({
+    serverStatus: normalizedTraderaStatus,
+    localFeedbackStatus,
+    submitting,
+  });
   const shouldUseFilledMarketplaceTone =
     hasServerStatus || localFeedbackStatus !== null;
   const isFailureState = FAILURE_STATUSES.has(

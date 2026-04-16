@@ -1,33 +1,13 @@
 import type { NotesAppContextValue } from '@/shared/contracts/notes';
+import { type PickActions, type OmitState } from '@/shared/lib/react/types';
 
-type NotesAppActionKey =
-  | 'updateSettings'
-  | 'setSelectedNote'
-  | 'setIsEditing'
-  | 'setIsCreating'
-  | 'setIsFolderTreeCollapsed'
-  | 'setDraggedNoteId'
-  | 'handleThemeChange'
-  | 'fetchTags'
-  | 'setSelectedFolderId'
-  | 'handleSelectNoteFromTree'
-  | 'handleToggleFavorite'
-  | 'handleDeleteNote'
-  | 'handleUpdateSuccess'
-  | 'handleCreateSuccess'
-  | 'handleUnlinkRelatedNote'
-  | 'handleFilterByTag'
-  | 'setConfirmation'
-  | 'confirmAction'
-  | 'setPrompt'
-  | 'promptAction'
-  | 'operations'
-  | 'handleUndoFolderTree'
-  | 'handleUndoAtIndex'
-  | 'fetchFolderTree';
-
-export type NotesAppActionsValue = Pick<NotesAppContextValue, NotesAppActionKey>;
-export type NotesAppStateValue = Omit<NotesAppContextValue, NotesAppActionKey>;
+export type NotesAppActionsValue = Omit<
+  PickActions<NotesAppContextValue>,
+  'getThemeForNote'
+> &
+  Pick<NotesAppContextValue, 'operations'>;
+export type NotesAppStateValue = Omit<OmitState<NotesAppContextValue>, 'operations'> &
+  Pick<NotesAppContextValue, 'getThemeForNote'>;
 
 export interface NotesAppConfirmationState {
   title: string;

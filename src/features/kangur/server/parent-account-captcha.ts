@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import { type NextRequest } from 'next/server';
 
 import { createServiceLogger } from '@/features/kangur/shared/utils/logger';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';

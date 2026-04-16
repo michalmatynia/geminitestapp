@@ -63,6 +63,9 @@ const KangurChoiceDialog = dynamic(() =>
 
 // --- Internal Components (previously components.tsx) ---
 
+// KangurPrimaryNavigationLoginAction renders the login button in the nav bar.
+// It reads the login action copy from the AI Tutor page content catalog so
+// the label can be customised per storefront without a code change.
 function KangurPrimaryNavigationLoginAction({
   className,
   fallbackLabel,
@@ -121,7 +124,7 @@ function KangurPrimaryNavigationGuestPlayerNameAction({
   if (isEditingGuestPlayerName) {
     return (
       <form
-        className='flex items-center gap-2'
+        className='flex items-center'
         onSubmit={(e) => {
           e.preventDefault();
           commitGuestPlayerName();
@@ -130,9 +133,9 @@ function KangurPrimaryNavigationGuestPlayerNameAction({
         <input
           aria-label={fallbackCopy.guestPlayerNameLabel}
           autoFocus
-          className='h-9 w-32 rounded-lg border border-sky-200 bg-white/90 px-3 text-xs font-bold text-sky-900 placeholder:text-sky-300/70 focus:border-sky-400 focus:outline-none'
+          className='kangur-text-field h-10 min-h-0 w-44 rounded-xl px-3.5 py-0 text-sm font-semibold text-slate-600 sm:w-48'
           onChange={(e) => handleGuestPlayerNameChange(e.target.value)}
-          onBlur={() => setIsEditingGuestPlayerName(false)}
+          onBlur={() => commitGuestPlayerName()}
           onKeyDown={(e) => {
             if (e.key === 'Escape') {
               setIsEditingGuestPlayerName(false);
@@ -145,16 +148,20 @@ function KangurPrimaryNavigationGuestPlayerNameAction({
             }
           }}
           placeholder={guestPlayerPlaceholderText}
+          style={
+            {
+              '--kangur-input-height': '40px',
+              '--kangur-text-field-background': 'rgba(255, 255, 255, 0.88)',
+              '--kangur-text-field-border': 'rgba(226, 232, 240, 0.78)',
+              '--kangur-text-field-focus-border': 'rgba(203, 213, 225, 0.9)',
+              '--kangur-text-field-focus-ring': 'transparent',
+              '--kangur-text-field-placeholder': 'rgba(148, 163, 184, 0.95)',
+              '--kangur-text-field-text': '#475569',
+            } as React.CSSProperties
+          }
           type='text'
           value={guestPlayerNameValue}
         />
-        <button
-          aria-label={fallbackCopy.guestPlayerNameLabel}
-          className='flex h-9 w-9 items-center justify-center rounded-lg bg-sky-500 text-white shadow-sm transition hover:bg-sky-600 active:scale-95'
-          type='submit'
-        >
-          <span className='text-sm'>OK</span>
-        </button>
       </form>
     );
   }
@@ -621,43 +628,62 @@ function buildKangurPrimaryNavigationAgeGroupDialog(input: {
   };
 }
 
-function KangurPrimaryNavigationMobileMenuOverlay({
-  closeMobileMenu,
-  closeMobileMenuLabel,
-  headerActions,
-  isMobileMenuOpen,
-  isMobileViewport,
-  menuDescription,
-  menuId,
-  menuRef,
-  menuTitle,
-  navigationLabel,
-  primaryActions,
-  textColor,
-  toneBackground,
-  utilityActions,
-}: {
-  closeMobileMenu: () => void;
-  closeMobileMenuLabel: string;
-  headerActions: React.ReactNode;
-  isMobileMenuOpen: boolean;
-  isMobileViewport: boolean;
-  menuDescription: string;
-  menuId: string;
-  menuRef: React.RefObject<HTMLDivElement | null>;
-  menuTitle: string;
-  navigationLabel: string;
-  primaryActions: React.ReactNode;
-  textColor: string;
-  toneBackground: string;
-  utilityActions: React.ReactNode;
-}): React.ReactNode {
+function KangurPrimaryNavigationMobileMenuOverlay(): React.ReactNode {
+  const {
+    closeMobileMenu,
+    isMobileMenuOpen,
+    isMobileViewport,
+    kangurAppearance,
+    navTranslations,
+    navigationLabel,
+    mobileMenuRef,
+    props,
+    derived,
+  } = useKangurPrimaryNavigationContext();
+
+  const { rightAccessory } = props;
+  const {
+    appearanceControlsInline,
+    basePath,
+    shouldRenderLanguageSwitcher,
+  } = derived;
+
   if (!isMobileViewport && !isMobileMenuOpen) {
     return null;
   }
 
+  const menuId = KANGUR_PRIMARY_NAV_DIALOG_IDS.mobileMenu;
   const mobileMenuTitleId = `${menuId}-title`;
   const mobileMenuDescriptionId = `${menuId}-description`;
+
+  const headerActions = resolveMobileMenuHeaderActions({
+    appearanceControlsInline,
+    basePath,
+    currentPage: props.currentPage,
+    forceLanguageSwitcherFallbackPath: props.forceLanguageSwitcherFallbackPath ?? false,
+    shouldRenderLanguageSwitcher,
+  });
+
+  const mobileAuthActions = (
+    <KangurPrimaryNavigationAuthActions onActionClick={closeMobileMenu} />
+  );
+  const mobilePrimaryActions = (
+    <KangurPrimaryNavigationPrimaryActions
+      onActionClick={closeMobileMenu}
+      wrapperClassName='flex w-full flex-col gap-2'
+    />
+  );
+  const mobileUtilityActions = (
+    <KangurPrimaryNavigationUtilityActions
+      authActions={mobileAuthActions}
+      onActionClick={closeMobileMenu}
+      rightAccessory={rightAccessory}
+      testId='kangur-primary-nav-mobile-utility-actions'
+      wrapperClassName='flex w-full flex-col gap-2'
+      hideAppearanceControls={Boolean(appearanceControlsInline)}
+      hideLanguageSwitcher={shouldRenderLanguageSwitcher}
+    />
+  );
 
   return (
     <div
@@ -682,18 +708,18 @@ function KangurPrimaryNavigationMobileMenuOverlay({
         }`}
         id={menuId}
         onClick={(event) => event.stopPropagation()}
-        ref={menuRef}
+        ref={mobileMenuRef}
         role='dialog'
         style={{
-          backgroundColor: toneBackground,
-          color: textColor,
+          backgroundColor: kangurAppearance.tone.background,
+          color: kangurAppearance.tone.text,
         }}
       >
         <h2 className='sr-only' id={mobileMenuTitleId}>
-          {menuTitle}
+          {navTranslations('mobileMenu.title')}
         </h2>
         <p className='sr-only' id={mobileMenuDescriptionId}>
-          {menuDescription}
+          {navTranslations('mobileMenu.description')}
         </p>
         <KangurTopNavGroup className='w-full flex-col' label={navigationLabel}>
           <div className='flex w-full items-center gap-2' data-testid='kangur-primary-nav-mobile-header'>
@@ -707,28 +733,67 @@ function KangurPrimaryNavigationMobileMenuOverlay({
             ) : null}
             <div className='ml-auto flex shrink-0 items-center'>
               <KangurPanelCloseButton
-                aria-label={closeMobileMenuLabel}
+                aria-label={navTranslations('mobileMenu.close')}
                 id='kangur-mobile-menu-close'
                 onClick={closeMobileMenu}
                 variant='chat'
               />
             </div>
           </div>
-          {primaryActions}
-          {utilityActions}
+          {mobilePrimaryActions}
+          {mobileUtilityActions}
         </KangurTopNavGroup>
       </div>
     </div>
   );
 }
 
-function KangurPrimaryNavigationChoiceDialogs({
-  ageGroupDialog,
-  subjectDialog,
-}: {
-  ageGroupDialog: KangurChoiceDialogConfig;
-  subjectDialog: KangurChoiceDialogConfig;
-}): React.ReactNode {
+function KangurPrimaryNavigationChoiceDialogs(): React.ReactNode {
+  const {
+    ageGroup,
+    isAgeGroupModalOpen,
+    isSubjectModalOpen,
+    navTranslations,
+    setIsAgeGroupModalOpen,
+    setIsSubjectModalOpen,
+    derived,
+  } = useKangurPrimaryNavigationContext();
+
+  const {
+    ageGroupChoiceLabel,
+    ageGroupOptions,
+    ageGroupVisual,
+    defaultAgeGroupLabel,
+    defaultSubjectLabel,
+    isSixYearOld,
+    subjectChoiceLabel,
+    subjectOptions,
+    subjectVisual,
+  } = derived;
+
+  const subjectDialog = buildKangurPrimaryNavigationSubjectDialog({
+    ageGroup,
+    defaultSubjectLabel,
+    isSixYearOld,
+    navTranslations,
+    onOpenChange: setIsSubjectModalOpen,
+    open: isSubjectModalOpen,
+    options: subjectOptions,
+    subjectChoiceLabel,
+    subjectVisual,
+  });
+
+  const ageGroupDialog = buildKangurPrimaryNavigationAgeGroupDialog({
+    ageGroupChoiceLabel,
+    ageGroupVisual,
+    defaultAgeGroupLabel,
+    isSixYearOld,
+    navTranslations,
+    onOpenChange: setIsAgeGroupModalOpen,
+    open: isAgeGroupModalOpen,
+    options: ageGroupOptions,
+  });
+
   return (
     <Suspense fallback={null}>
       {subjectDialog.open ? (
@@ -837,37 +902,10 @@ function KangurPrimaryNavigationTopBarContent({
 
 function KangurPrimaryNavigationContent(): React.JSX.Element {
   const {
-    ageGroup,
-    closeMobileMenu,
-    isAgeGroupModalOpen,
-    isMobileMenuOpen,
-    isMobileViewport,
-    isSubjectModalOpen,
-    kangurAppearance,
-    navTranslations,
-    navigationLabel,
-    setIsAgeGroupModalOpen,
-    setIsSubjectModalOpen,
-    mobileMenuRef,
     props,
-    derived,
   } = useKangurPrimaryNavigationContext();
 
   const { className, contentClassName, rightAccessory } = props;
-  const {
-    ageGroupChoiceLabel,
-    ageGroupOptions,
-    ageGroupVisual,
-    defaultAgeGroupLabel,
-    defaultSubjectLabel,
-    isSixYearOld,
-    subjectChoiceLabel,
-    subjectOptions,
-    subjectVisual,
-    appearanceControlsInline,
-    basePath,
-    shouldRenderLanguageSwitcher,
-  } = derived;
 
   const authActions = <KangurPrimaryNavigationAuthActions />;
   const primaryActions = <KangurPrimaryNavigationPrimaryActions />;
@@ -875,35 +913,6 @@ function KangurPrimaryNavigationContent(): React.JSX.Element {
     <KangurPrimaryNavigationUtilityActions
       authActions={authActions}
       rightAccessory={rightAccessory}
-    />
-  );
-
-  const mobileMenuHeaderActions = resolveMobileMenuHeaderActions({
-    appearanceControlsInline,
-    basePath,
-    currentPage: props.currentPage,
-    forceLanguageSwitcherFallbackPath: props.forceLanguageSwitcherFallbackPath ?? false,
-    shouldRenderLanguageSwitcher,
-  });
-
-  const mobileAuthActions = (
-    <KangurPrimaryNavigationAuthActions onActionClick={closeMobileMenu} />
-  );
-  const mobilePrimaryActions = (
-    <KangurPrimaryNavigationPrimaryActions
-      onActionClick={closeMobileMenu}
-      wrapperClassName='flex w-full flex-col gap-2'
-    />
-  );
-  const mobileUtilityActions = (
-    <KangurPrimaryNavigationUtilityActions
-      authActions={mobileAuthActions}
-      onActionClick={closeMobileMenu}
-      rightAccessory={rightAccessory}
-      testId='kangur-primary-nav-mobile-utility-actions'
-      wrapperClassName='flex w-full flex-col gap-2'
-      hideAppearanceControls={Boolean(appearanceControlsInline)}
-      hideLanguageSwitcher={shouldRenderLanguageSwitcher}
     />
   );
 
@@ -919,49 +928,16 @@ function KangurPrimaryNavigationContent(): React.JSX.Element {
           />
         }
       />
-      <KangurPrimaryNavigationMobileMenuOverlay
-        closeMobileMenu={closeMobileMenu}
-        closeMobileMenuLabel={navTranslations('mobileMenu.close')}
-        headerActions={mobileMenuHeaderActions}
-        isMobileMenuOpen={isMobileMenuOpen}
-        isMobileViewport={isMobileViewport}
-        menuDescription={navTranslations('mobileMenu.description')}
-        menuId={KANGUR_PRIMARY_NAV_DIALOG_IDS.mobileMenu}
-        menuRef={mobileMenuRef}
-        menuTitle={navTranslations('mobileMenu.title')}
-        navigationLabel={navigationLabel}
-        primaryActions={mobilePrimaryActions}
-        textColor={kangurAppearance.tone.text}
-        toneBackground={kangurAppearance.tone.background}
-        utilityActions={mobileUtilityActions}
-      />
-      <KangurPrimaryNavigationChoiceDialogs
-        ageGroupDialog={buildKangurPrimaryNavigationAgeGroupDialog({
-          ageGroupChoiceLabel,
-          ageGroupVisual,
-          defaultAgeGroupLabel,
-          isSixYearOld,
-          navTranslations,
-          onOpenChange: setIsAgeGroupModalOpen,
-          open: isAgeGroupModalOpen,
-          options: ageGroupOptions,
-        })}
-        subjectDialog={buildKangurPrimaryNavigationSubjectDialog({
-          ageGroup: ageGroup,
-          defaultSubjectLabel,
-          isSixYearOld,
-          navTranslations,
-          onOpenChange: setIsSubjectModalOpen,
-          open: isSubjectModalOpen,
-          options: subjectOptions,
-          subjectChoiceLabel,
-          subjectVisual,
-        })}
-      />
+      <KangurPrimaryNavigationMobileMenuOverlay />
+      <KangurPrimaryNavigationChoiceDialogs />
     </>
   );
 }
 
+// KangurPrimaryNavigation is the top-level navigation bar for the StudiQ
+// learner shell. It wraps KangurPrimaryNavigationContent in the navigation
+// context provider so all sub-components can access shared nav state without
+// prop drilling.
 export function KangurPrimaryNavigation(props: KangurPrimaryNavigationProps): React.JSX.Element {
   return (
     <KangurPrimaryNavigationProvider {...props}>

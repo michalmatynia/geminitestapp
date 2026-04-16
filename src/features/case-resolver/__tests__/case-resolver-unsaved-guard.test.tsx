@@ -18,6 +18,10 @@ vi.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(''),
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  useSearchParams: () => new URLSearchParams(''),
+}));
+
 vi.mock('@/features/case-resolver/components/CaseResolverViewContext', () => ({
   useCaseResolverViewStateContext: (): CaseResolverViewStateValue =>
     viewContextMock as unknown as CaseResolverViewStateValue,

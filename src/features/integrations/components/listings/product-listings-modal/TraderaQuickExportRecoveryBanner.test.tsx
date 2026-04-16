@@ -34,7 +34,7 @@ describe('TraderaQuickExportRecoveryBanner', () => {
     expect(screen.getByText('Tradera quick export needs recovery')).toBeInTheDocument();
     expect(
       screen.getByText(
-        'The one-click Tradera export did not leave behind a usable listing record yet. Open the Tradera login window if needed, then continue directly into the Tradera listing flow from this modal.'
+        'The one-click Tradera export did not leave behind a usable listing record yet. Open the Tradera login window if needed, then choose whether to relist or sync from this modal.'
       )
     ).toBeInTheDocument();
     expect(screen.getByText('auth_required')).toBeInTheDocument();
@@ -62,7 +62,7 @@ describe('TraderaQuickExportRecoveryBanner', () => {
     expect(
       screen.getByText(/Review the Tradera listing below and use/i)
     ).toBeInTheDocument();
-    expect(screen.getByText('Login and continue listing')).toBeInTheDocument();
+    expect(screen.getByText('Login to Tradera')).toBeInTheDocument();
     expect(screen.getByText('job-tradera-2')).toBeInTheDocument();
     expect(screen.getByText('run-tradera-2')).toBeInTheDocument();
   });
@@ -85,7 +85,7 @@ describe('TraderaQuickExportRecoveryBanner', () => {
         'Tradera export requires an active Tradera category mapping for this product category.'
       )
     ).toBeInTheDocument();
-    expect(screen.queryByText('Login and continue listing')).toBeNull();
+    expect(screen.queryByText('Login to Tradera')).toBeNull();
     expect(screen.getByRole('link', { name: 'Open Category Mapper' })).toHaveAttribute(
       'href',
       '/admin/integrations/marketplaces/category-mapper?connectionId=conn-tradera-1'
@@ -114,7 +114,7 @@ describe('TraderaQuickExportRecoveryBanner', () => {
         'Tradera export requires a shipping group with a Tradera shipping price in EUR. Assign or configure a shipping group with the EUR price and retry.'
       )
     ).toBeInTheDocument();
-    expect(screen.queryByText('Login and continue listing')).toBeNull();
+    expect(screen.queryByText('Login to Tradera')).toBeNull();
     expect(screen.getByRole('link', { name: 'Open Shipping Groups' })).toHaveAttribute(
       'href',
       '/admin/products/settings?section=shipping-groups'

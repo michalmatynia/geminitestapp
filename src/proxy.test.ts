@@ -370,6 +370,20 @@ describe('proxy api routing', () => {
     expect(ensureCsrfCookieMock).toHaveBeenCalledTimes(1);
   });
 
+  it('keeps default-locale auth routes unprefixed', async () => {
+    const request = createRequest('http://localhost/auth/signin', {
+      acceptLanguage: 'pl-PL,pl;q=0.9',
+    });
+
+    const response = await Promise.resolve(proxy(request as never, { params: {} }));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('x-middleware-next')).toBe('1');
+    expect(response.headers.get('x-middleware-rewrite')).toBeNull();
+    expect(response.headers.get('location')).toBeNull();
+    expect(ensureCsrfCookieMock).toHaveBeenCalledTimes(1);
+  });
+
   it('canonicalizes superfluous default-locale prefixes', async () => {
     const request = createRequest('http://localhost/pl/about');
 

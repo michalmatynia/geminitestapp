@@ -239,14 +239,16 @@ const renderKangurUnifiedLessonGameShell = <SectionId extends string>({
           gameId={gameConfig.launchableInstance.gameId}
           instanceId={gameConfig.launchableInstance.instanceId}
           onFinish={gameHelpers.onFinish}
-          preferLessonActivityRuntime
+          preferLessonActivityRuntime={true}
         />
       ) : (
         <KangurLessonActivityInstanceRuntime
-          engineOverrides={gameConfig.engineOverrides}
-          gameId={gameConfig.lessonActivityInstance.gameId}
-          instanceId={gameConfig.lessonActivityInstance.instanceId}
-          onFinish={gameHelpers.onFinish}
+          config={{
+            engineOverrides: gameConfig.engineOverrides,
+            gameId: gameConfig.lessonActivityInstance.gameId,
+            instanceId: gameConfig.lessonActivityInstance.instanceId,
+            onFinish: gameHelpers.onFinish,
+          }}
         />
       )}
     </LessonActivityShell>

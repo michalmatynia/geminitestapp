@@ -590,6 +590,11 @@ describe('queue-factory', () => {
       lastPollTime: 50_000,
       timeSinceLastPoll: 500,
     });
-    expect(processor).toHaveBeenCalledWith({ task: 'run' }, 'job-active');
+    expect(processor).toHaveBeenCalledWith(
+      { task: 'run' },
+      'job-active',
+      undefined,
+      expect.objectContaining({ updateProgress: expect.any(Function) })
+    );
   });
 });

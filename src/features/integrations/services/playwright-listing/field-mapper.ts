@@ -183,6 +183,7 @@ const toCreateProductInput = (mapped: Omit<PlaywrightMappedImportProduct, 'creat
   weight: null,
   length: null,
   published: false,
+  archived: false,
   categoryId: null,
   catalogId: '',
   parameters: [],

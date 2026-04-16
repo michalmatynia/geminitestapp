@@ -9,7 +9,7 @@ import {
   type DocumentContentCanonical,
 } from '@/shared/lib/document-editor/public';
 import type { CaseResolverFile, CaseResolverFileEditDraft } from '@/shared/contracts/case-resolver/file';
-import { stableStringify } from '@/shared/lib/ai-paths';
+import { stableStringify } from '@/shared/lib/ai-paths/core/utils';
 
 export type CaseResolverDraftCanonicalState = {
   mode: 'markdown' | 'wysiwyg';

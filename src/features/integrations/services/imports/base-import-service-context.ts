@@ -2,7 +2,10 @@ import 'server-only';
 
 import { resolveBaseConnectionToken } from '@/features/integrations/services/base-token-resolver';
 import {
+  callBaseApi,
   fetchBaseProductDetails,
+  fetchBaseProductById,
+  isBaseProductRecordSparse,
   type BaseProductRecord,
 } from '@/features/integrations/services/imports/base-client';
 import { getIntegrationRepository } from '@/features/integrations/services/integration-repository';
@@ -22,9 +25,94 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 type ProductDataProvider = Awaited<ReturnType<typeof getProductDataProvider>>;
 
+const normalizePriceIdentifier = (value: unknown): string | null => {
+  if (typeof value !== 'string' && typeof value !== 'number') return null;
+  const compact = String(value)
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '');
+  return compact.length > 0 ? compact : null;
+};
+
+const matchesPreferredPriceIdentifier = (
+  identifier: string,
+  preferredSet: Set<string>
+): boolean => {
+  for (const preferred of preferredSet) {
+    if (identifier === preferred) {
+      return true;
+    }
+    if (preferred.length === 3) {
+      if (identifier.startsWith(preferred) || identifier.endsWith(preferred)) {
+        return true;
+      }
+    }
+  }
+  return false;
+};
+
+const resolveBaseInventoryPriceGroupIdentifiers = async (input: {
+  token?: string | null;
+  inventoryId?: string | null;
+  preferredIdentifiers: string[];
+}): Promise<string[]> => {
+  const token = input.token?.trim() ?? '';
+  const inventoryId = input.inventoryId?.trim() ?? '';
+  if (!token || !inventoryId) return [];
+
+  const preferredSet = new Set(
+    input.preferredIdentifiers
+      .map((value: string): string | null => normalizePriceIdentifier(value))
+      .filter((value: string | null): value is string => Boolean(value))
+  );
+  if (preferredSet.size === 0) return [];
+
+  try {
+    const payload = await callBaseApi(token, 'getInventoryPriceGroups', {
+      inventory_id: inventoryId,
+    });
+    const priceGroups = Array.isArray(payload['price_groups']) ? payload['price_groups'] : [];
+    const matched = new Set<string>();
+
+    priceGroups.forEach((entry: unknown) => {
+      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return;
+      const record = entry as Record<string, unknown>;
+      const candidateIdentifiers = [
+        record['price_group_id'],
+        record['id'],
+        record['name'],
+        record['currency'],
+        record['currency_code'],
+        record['code'],
+      ]
+        .map((value: unknown): string | null => normalizePriceIdentifier(value))
+        .filter((value: string | null): value is string => Boolean(value));
+
+      const matches = candidateIdentifiers.some((identifier: string): boolean =>
+        matchesPreferredPriceIdentifier(identifier, preferredSet)
+      );
+      if (!matches) return;
+
+      const priceGroupId = normalizePriceIdentifier(record['price_group_id'] ?? record['id']);
+      if (priceGroupId) {
+        matched.add(priceGroupId);
+      }
+    });
+
+    return Array.from(matched);
+  } catch (error) {
+    void ErrorSystem.captureException(error);
+    return [];
+  }
+};
+
 export const resolvePriceGroupContext = async (
   provider: ProductDataProvider,
-  preferredPriceGroupId?: string | null
+  preferredPriceGroupId?: string | null,
+  options?: {
+    baseToken?: string | null;
+    inventoryId?: string | null;
+  }
 ): Promise<{ defaultPriceGroupId: string | null; preferredCurrencies: string[] }> => {
   void provider;
   const projectedFields = {
@@ -78,6 +166,15 @@ export const resolvePriceGroupContext = async (
       // Currency lookup is optional during import.
     }
   }
+
+  const basePriceGroupIdentifiers = await resolveBaseInventoryPriceGroupIdentifiers({
+    token: options?.baseToken,
+    inventoryId: options?.inventoryId,
+    preferredIdentifiers: Array.from(preferredCurrencies),
+  });
+  basePriceGroupIdentifiers.forEach((identifier: string) => {
+    preferredCurrencies.add(identifier);
+  });
 
   return {
     defaultPriceGroupId: resolved.id,
@@ -266,5 +363,30 @@ export const fetchDetailsMap = async (
       }
     });
   }
+
+  // For sparse records (no name in any language), attempt a richer single-product fetch.
+  // This catches cases where the batch endpoint omits extended attributes.
+  const sparseIds: string[] = [];
+  for (const [id, record] of map.entries()) {
+    if (isBaseProductRecordSparse(record)) {
+      sparseIds.push(id);
+    }
+  }
+
+  if (sparseIds.length > 0) {
+    await Promise.all(
+      sparseIds.map(async (id) => {
+        try {
+          const enriched = await fetchBaseProductById(token, inventoryId, id);
+          if (enriched && !isBaseProductRecordSparse(enriched)) {
+            map.set(id, enriched);
+          }
+        } catch {
+          // Enrichment is best-effort; keep the sparse record
+        }
+      })
+    );
+  }
+
   return map;
 };

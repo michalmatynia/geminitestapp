@@ -1,8 +1,8 @@
 'use client';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type { MathConfig } from '@/shared/lib/ai-paths';
-import { toNumber } from '@/shared/lib/ai-paths';
+import type { MathConfig } from '@/shared/contracts/ai-paths';
+import { toNumber } from '@/shared/lib/ai-paths/core/utils';
 import { Input } from '@/shared/ui/primitives.public';
 import { SelectSimple, FormField } from '@/shared/ui/forms-and-actions.public';
 

@@ -3,6 +3,10 @@ import 'dotenv/config';
 import { pathToFileURL } from 'node:url';
 
 import { listAllProductListingsAcrossProviders } from '@/features/integrations/services/product-listing-repository';
+import {
+  listBaseImportRunItems,
+  listBaseImportRuns,
+} from '@/features/integrations/services/imports/base-import-run-repository';
 import { getMongoClient, getMongoDb } from '@/shared/lib/db/mongo-client';
 
 import { buildProductImportSourceBackfillPlan } from './lib/product-import-source-backfill';
@@ -18,11 +22,14 @@ type CliOptions = {
   limit: number | null;
 };
 
+const BASE_IMPORT_RUN_SCAN_LIMIT = 1_000;
+
 type BackfillSummary = {
   mode: 'dry-run' | 'write';
   productFilter: string | null;
   limit: number | null;
   scannedListings: number;
+  scannedRunItems: number;
   candidateImportedProducts: number;
   scannedProducts: number;
   targetProducts: number;
@@ -71,25 +78,38 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<void
   try {
     const db = await getMongoDb();
     const allListings = await listAllProductListingsAcrossProviders();
+    const baseImportRuns = await listBaseImportRuns(BASE_IMPORT_RUN_SCAN_LIMIT);
+    const allRunItems = (
+      await Promise.all(
+        baseImportRuns.map(async (run) => listBaseImportRunItems(run.id))
+      )
+    ).flat();
     const listings = options.productId
       ? allListings.filter((listing) => listing.productId === options.productId)
       : allListings;
+    const runItems = options.productId
+      ? allRunItems.filter((runItem) => runItem.importedProductId === options.productId)
+      : allRunItems;
+
+    const candidateProductIds = options.productId
+      ? [options.productId]
+      : Array.from(
+          new Set([
+            ...listings.map((listing) => normalizeTrimmedString(listing.productId)),
+            ...runItems.map((runItem) => normalizeTrimmedString(runItem.importedProductId)),
+          ])
+        ).filter((id) => id.length > 0);
 
     const plan = buildProductImportSourceBackfillPlan({
       listings,
+      runItems,
       products: await db
         .collection('products')
         .find(
           {
-            ...(options.productId
-              ? { id: options.productId }
-              : {
-                  id: {
-                    $in: Array.from(
-                      new Set(listings.map((listing) => normalizeTrimmedString(listing.productId)))
-                    ).filter((id) => id.length > 0),
-                  },
-                }),
+            id: {
+              $in: candidateProductIds,
+            },
           },
           {
             projection: {
@@ -121,6 +141,7 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<void
       productFilter: options.productId,
       limit: options.limit,
       scannedListings: listings.length,
+      scannedRunItems: runItems.length,
       candidateImportedProducts: plan.candidateImportedProductIds.length,
       scannedProducts:
         targetProductIds.length + plan.alreadyTaggedProductIds.length,

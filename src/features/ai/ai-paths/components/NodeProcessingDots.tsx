@@ -15,9 +15,9 @@ interface NodeProcessingDotsProps {
  * Rendered inside blocker nodes (model, agent, poll, delay) while their status
  * is 'polling', 'queued', 'running', or 'pending'.
  */
-export const NodeProcessingDots = React.memo(function NodeProcessingDots({
+export const NodeProcessingDots = React.memo(({
   active,
-}: NodeProcessingDotsProps): React.JSX.Element | null {
+}: NodeProcessingDotsProps): React.JSX.Element | null => {
   if (!active) return null;
 
   return (

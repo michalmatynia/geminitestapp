@@ -72,17 +72,32 @@ import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 import type { JSX } from 'react';
 
+// Minimum time (ms) the boot skeleton stays visible to avoid a flash when
+// theme settings resolve almost immediately.
 const BOOT_SKELETON_MIN_VISIBLE_MS = 50;
+// Delay (ms) before showing the navigation skeleton during a route transition.
+// Set to 0 so the skeleton appears immediately when a transition is triggered
+// from a known source (e.g. nav link click).
 const NAVIGATION_SKELETON_DELAY_MS = 0;
+// Source ID used to identify transitions triggered by the language switcher so
+// the skeleton animation can be adjusted accordingly.
 const LANGUAGE_SWITCHER_TRANSITION_SOURCE_ID = 'kangur-language-switcher';
+// How long to wait (ms) before prefetching AI Tutor page-content during idle
+// time after the initial route settles.
 const HOT_PAGE_CONTENT_PREFETCH_TIMEOUT_MS = 250;
+// Default idle-callback timeout (ms) for hot-route preloads when no per-page
+// override is defined.
 const HOT_ROUTE_PRELOAD_TIMEOUT_MS = 1_500;
+// Per-page overrides for the hot-route preload idle timeout. Game and Lessons
+// are preloaded more aggressively because users frequently switch between them.
 const HOT_ROUTE_PRELOAD_TIMEOUTS: Readonly<Partial<Record<KangurPreloadPageKey, number>>> =
   Object.freeze({
     Game: 250,
     Lessons: 250,
   });
 type KangurPreloadPageKey = Parameters<typeof preloadKangurPage>[0];
+// All page keys that are eligible for background preloading once the active
+// route has settled.
 const KANGUR_PRELOAD_PAGE_KEYS: ReadonlyArray<KangurPreloadPageKey> = [
   'Competition',
   'Game',
@@ -95,6 +110,8 @@ const KANGUR_PRELOAD_PAGE_KEYS: ReadonlyArray<KangurPreloadPageKey> = [
   'Tests',
 ];
 
+// Bidirectional hot-route preload map: when the user is on the key page, the
+// listed pages are preloaded in the background so navigation feels instant.
 const HOT_ROUTE_PRELOADS: Readonly<
   Partial<Record<KangurPreloadPageKey, ReadonlyArray<KangurPreloadPageKey>>>
 > = Object.freeze({
@@ -102,15 +119,21 @@ const HOT_ROUTE_PRELOADS: Readonly<
   Lessons: ['Game'],
 });
 
+// Type guard: checks whether a string is a valid preloadable page key.
 const isKangurPreloadPageKey = (value: string | null): value is KangurPreloadPageKey =>
   value !== null && KANGUR_PRELOAD_PAGE_KEYS.includes(value as KangurPreloadPageKey);
 
+// Snapshot of the navigation skeleton state that is latched at the start of a
+// transition so the skeleton keeps showing the correct page/variant even after
+// the active transition state has been cleared.
 type LatchedNavigationSkeletonState = {
   embedded: boolean;
   pageKey: string;
   variant: KangurRouteTransitionSkeletonVariant | null;
 };
 
+// Renders the login modal only when it is explicitly open. Keeping this as a
+// separate component avoids importing the heavy modal bundle until needed.
 const KangurLoginModalMount = (): JSX.Element | null => {
   const loginModalState = useKangurLoginModalState();
 
@@ -121,6 +144,12 @@ const KangurLoginModalMount = (): JSX.Element | null => {
   return <KangurLoginModal />;
 };
 
+// AuthenticatedApp is the main learner shell. It owns:
+//  - Boot and navigation skeleton orchestration
+//  - Route content rendering (page components + CMS runtime screen overlay)
+//  - Hot-route preloading and AI Tutor page-content prefetching
+//  - Auth-error redirects (login redirect, parent-dashboard guard)
+//  - Accessibility announcer and top navigation host
 const AuthenticatedApp = (): JSX.Element | null => {
   const {
     isLoadingAuth,
@@ -134,6 +163,8 @@ const AuthenticatedApp = (): JSX.Element | null => {
   const { resolvePendingSnapshot } = useKangurRouteAccess();
   const settingsStore = useSettingsStore();
   const isLoadingSettings = settingsStore.isLoading;
+  // Raw CMS project key from settings — used to decide whether to render the
+  // CMS runtime screen overlay instead of the plain page component.
   const rawCmsProject = settingsStore.get(KANGUR_CMS_PROJECT_SETTING_KEY);
   const {
     isRouteAcknowledging,
@@ -155,6 +186,8 @@ const AuthenticatedApp = (): JSX.Element | null => {
   const authErrorType = authError?.type;
   const resolvedPageKey = resolveKangurPageKey(pageKey, kangurPages, KANGUR_MAIN_PAGE);
   const homeHref = getKangurHomeHref(basePath);
+  // Unauthenticated users who land directly on the parent dashboard are
+  // silently redirected to the home page rather than shown an auth error.
   const shouldRedirectToHome =
     !embedded &&
     hasResolvedAuth &&
@@ -164,24 +197,42 @@ const AuthenticatedApp = (): JSX.Element | null => {
     resolvedPageKey === 'ParentDashboard';
   const prefersReducedMotion = usePrefersReducedMotion();
   const routeContentMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
+  // Stable key for AnimatePresence: changes on every navigation so the
+  // outgoing page can animate out before the incoming page mounts.
   const routeTransitionKey = requestedPath || (pageKey ? `page:${pageKey}` : 'page:unknown');
   const currentRequestedHref = requestedHref ?? requestedPath ?? null;
+  // Synthetic capture mode is used by the social screenshot pipeline. When
+  // active, background preloads and prefetches are suppressed to keep the
+  // captured page in a clean, deterministic state.
   const isSyntheticKangurCapture = isKangurSocialBatchCaptureHref(currentRequestedHref);
   const pendingRouteLoadingSnapshot = resolvePendingSnapshot({
     currentHref: currentRequestedHref,
     fallbackPageKey: KANGUR_MAIN_PAGE,
     snapshot: useKangurPendingRouteLoadingSnapshot(),
   });
+  // isBootLoading: true while auth or public settings are still resolving.
+  // isThemeBootLoading: true while the settings store (theme/appearance) is
+  // loading. Kept separate so the boot loader can be shown even after auth
+  // resolves if the theme hasn't arrived yet.
   const isBootLoading = isLoadingPublicSettings || isLoadingAuth;
   const isThemeBootLoading = isLoadingSettings;
+  // A navigation transition is active during any of the four phases:
+  // acknowledging → pending → waiting_for_ready → revealing.
   const isNavigationTransitionActive =
     isRouteAcknowledging || isRoutePending || isRouteWaitingForReady || isRouteRevealing;
+  // Language-switcher transitions use a fade-in/out skeleton animation instead
+  // of the standard slide skeleton so the locale change feels intentional.
   const isLanguageSwitcherTransition =
     activeTransitionKind === 'locale-switch' ||
     activeTransitionSourceId === LANGUAGE_SWITCHER_TRANSITION_SOURCE_ID;
+  // When a transition has a known source (e.g. a nav link), skip the delay
+  // before showing the navigation skeleton so feedback is immediate.
   const shouldSkipNavigationSkeletonDelay = activeTransitionSourceId !== null;
   const shouldBlockRouteContent = shouldRedirectToHome;
   const shouldUseCmsRuntimeScreen = hasKangurCmsRuntimeScreen(rawCmsProject, resolvedPageKey);
+  // Memoized route content: resolves the correct page component (or CMS
+  // runtime screen overlay) for the current page key. Returns null when the
+  // route should be blocked (e.g. auth_required or parent-dashboard redirect).
   const routeContent = useMemo<JSX.Element | null>(() => {
     if (authErrorType === 'auth_required' || shouldBlockRouteContent) {
       return null;
@@ -202,8 +253,16 @@ const AuthenticatedApp = (): JSX.Element | null => {
       <ResolvedPage />
     );
   }, [authErrorType, resolvedPageKey, shouldBlockRouteContent, shouldUseCmsRuntimeScreen]);
+  // hasPresentedInteractiveShell: latched to true once the shell has been
+  // shown to the user at least once. Prevents the boot loader from re-appearing
+  // on subsequent navigations.
   const [hasPresentedInteractiveShell, setHasPresentedInteractiveShell] = useState(false);
+  // isRouteInteractionReady: set to true after the first client-side render so
+  // pointer events are enabled on the route content.
   const [isRouteInteractionReady, setIsRouteInteractionReady] = useState(false);
+  // hasInitialContentSettled: set to true after the first animation frame
+  // following mount, ensuring the lazy-loaded main page has painted before the
+  // skeleton overlay is removed.
   const [hasInitialContentSettled, setHasInitialContentSettled] = useState(false);
   const shouldShowBootLoader = isThemeBootLoading && !hasPresentedInteractiveShell;
   const [isBootSkeletonVisible, setIsBootSkeletonVisible] = useState<boolean>(shouldShowBootLoader);
@@ -300,6 +359,8 @@ const AuthenticatedApp = (): JSX.Element | null => {
     isPendingRouteSnapshotVisible ||
     (isRouteSkeletonVisible && transitionPhase !== 'revealing');
   const hasVisibleRouteContent = routeContent !== null && !isRouteContentVisuallyHidden;
+  // isRouteCaptureReady: data attribute consumed by the social screenshot
+  // pipeline to know when the page is fully settled and safe to capture.
   const isRouteCaptureReady =
     routeContent !== null &&
     !isBootLoading &&
@@ -308,6 +369,8 @@ const AuthenticatedApp = (): JSX.Element | null => {
     !isPendingRouteSnapshotVisible &&
     !shouldRedirectToHome &&
     authErrorType !== 'auth_required';
+  // When the boot loader is blocking navigation, hide the top navigation so
+  // the skeleton covers the full viewport without a nav bar peeking through.
   const isBootLoaderBlockingNavigation =
     isBootSkeletonVisible && !isRouteSkeletonVisible && !hasVisibleRouteContent;
   const shouldHideTopNavigationDuringBoot = isBootLoaderBlockingNavigation;
@@ -367,6 +430,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
     </LazyMotionDiv>
   ) : null;
 
+  // Enable pointer events on the route content after the first client render.
   useEffect(() => {
     setIsRouteInteractionReady(true);
   }, []);
@@ -507,12 +571,16 @@ const AuthenticatedApp = (): JSX.Element | null => {
     routeContent,
   ]);
 
+  // Redirect to login when the server returns an auth_required error (e.g.
+  // session expired or invalid token).
   useEffect(() => {
     if (authErrorType === 'auth_required') {
       navigateToLogin();
     }
   }, [authErrorType, navigateToLogin]);
 
+  // Redirect unauthenticated users away from the parent dashboard to the home
+  // page. Uses replace so the back button doesn't loop back to the dashboard.
   useEffect(() => {
     if (!shouldRedirectToHome) {
       return;
@@ -730,6 +798,10 @@ const AuthenticatedApp = (): JSX.Element | null => {
   );
 };
 
+// DeferredAiTutorProviders delays mounting the AI Tutor context tree until
+// after the first client render. This prevents the heavy AI Tutor bundle from
+// blocking the initial paint and avoids SSR hydration mismatches for
+// client-only AI Tutor state.
 const DeferredAiTutorProviders = ({ children }: { children: ReactNode }): JSX.Element => {
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
@@ -747,6 +819,24 @@ const DeferredAiTutorProviders = ({ children }: { children: ReactNode }): JSX.El
   );
 };
 
+// KangurFeatureApp is the root of the StudiQ learner experience. It composes
+// all global context providers in the correct order:
+//
+//  KangurRouteTransitionProvider  – manages the 4-phase navigation lifecycle
+//  KangurTopNavigationProvider    – owns top-bar visibility and content
+//  KangurGuestPlayerProvider      – tracks unauthenticated guest state
+//  KangurLoginModalProvider       – controls the login modal open/close state
+//  KangurAuthProvider             – resolves learner auth session
+//  KangurSubjectFocusProvider     – persists the learner's active subject
+//  KangurAgeGroupFocusProvider    – persists the learner's age-group filter
+//  KangurSubjectAgeGroupSync      – keeps subject and age-group in sync
+//  KangurProgressSyncProvider     – background progress polling/sync
+//  KangurScoreSyncProvider        – background score polling/sync
+//  KangurContextRegistryPageBoundary – scopes AI Tutor context to the page
+//  DeferredAiTutorProviders       – lazy-mounts AI Tutor context after paint
+//
+// AuthenticatedApp and KangurAiTutorWidget are rendered inside the deferred
+// AI Tutor tree so they can access tutor context without blocking first paint.
 export function KangurFeatureApp(): JSX.Element {
   return (
     <KangurRouteTransitionProvider>

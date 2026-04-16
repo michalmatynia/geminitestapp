@@ -27,6 +27,7 @@ import type {
   RuntimeNodeStartEvent,
 } from '@/shared/lib/ai-paths/core/runtime/engine-modules/engine-types';
 import { cloneJsonSafe, hashRuntimeValue } from '@/shared/lib/ai-paths/core/utils/runtime';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 import { extractDatabaseRuntimeMetadata } from '../../components/ai-paths-settings/runtime/useAiPathsLocalExecution.helpers';
 
@@ -195,6 +196,103 @@ export const createCallbacks = (ctx: CallbackCtx) => {
     };
   };
 
+  const nodeStartedAtBySpanId = new Map<string, string>();
+
+  const resolveDurationMs = (
+    startedAt: string | null | undefined,
+    finishedAt: string | null | undefined
+  ): number | null => {
+    if (!startedAt || !finishedAt) return null;
+    const startedAtMs = Date.parse(startedAt);
+    const finishedAtMs = Date.parse(finishedAt);
+    if (!Number.isFinite(startedAtMs) || !Number.isFinite(finishedAtMs)) return null;
+    return Math.max(0, finishedAtMs - startedAtMs);
+  };
+
+  const emitNodeLifecycleSystemEvent = (input: {
+    event:
+      | 'node.started'
+      | 'node.finished'
+      | 'node.blocked'
+      | 'node.failed'
+      | 'node.reused_seeded';
+    level: 'info' | 'warn' | 'error';
+    node: AiNode;
+    spanId: string;
+    iteration: number;
+    attempt: number;
+    status: string;
+    startedAt?: string | null;
+    finishedAt?: string | null;
+    durationMs?: number | null;
+    cached?: boolean;
+    cacheDecision?: RuntimeNodeFinishEvent['cacheDecision'] | 'seed' | null;
+    sideEffectPolicy?: RuntimeSideEffectPolicy;
+    sideEffectDecision?: RuntimeSideEffectDecision;
+    activationHash?: string | null;
+    idempotencyKey?: string | null;
+    effectSourceSpanId?: string | null;
+    runtimeStrategy?: unknown;
+    runtimeResolutionSource?: unknown;
+    runtimeCodeObjectId?: unknown;
+    resume?: RuntimeTraceResume;
+    reason?: string | null;
+    errorMessage?: string | null;
+    waitingOnPorts?: string[] | null;
+  }): void => {
+    if (!logNodeStartEvents) return;
+
+    const phaseLabel =
+      input.event === 'node.started'
+        ? 'started'
+        : input.event === 'node.reused_seeded'
+          ? 'reused seeded outputs'
+          : input.event === 'node.blocked'
+            ? 'blocked'
+            : input.event === 'node.failed'
+              ? 'failed'
+              : 'finished';
+
+    void logSystemEvent({
+      level: input.level,
+      source: 'ai-paths-executor',
+      message: `AI Paths node ${phaseLabel}: ${run.pathName ?? run.pathId ?? run.id} :: ${input.node.title ?? input.node.id}`,
+      context: {
+        event: input.event,
+        runId: run.id,
+        pathId: run.pathId ?? null,
+        pathName: run.pathName ?? null,
+        traceId,
+        spanId: input.spanId,
+        nodeId: input.node.id,
+        nodeType: input.node.type,
+        nodeTitle: input.node.title ?? null,
+        iteration: input.iteration,
+        attempt: input.attempt,
+        status: input.status,
+        startedAt: input.startedAt ?? null,
+        finishedAt: input.finishedAt ?? null,
+        durationMs: input.durationMs ?? null,
+        cached: input.cached ?? null,
+        cacheDecision: input.cacheDecision ?? null,
+        sideEffectPolicy: input.sideEffectPolicy ?? null,
+        sideEffectDecision: input.sideEffectDecision ?? null,
+        activationHash: input.activationHash ?? null,
+        idempotencyKey: input.idempotencyKey ?? null,
+        effectSourceSpanId: input.effectSourceSpanId ?? null,
+        reason: input.reason ?? null,
+        errorMessage: input.errorMessage ?? null,
+        waitingOnPorts: input.waitingOnPorts ?? null,
+        ...toResumeRunEventMetadata(input.resume),
+        ...toRunEventRuntimeKernelMetadata({
+          runtimeStrategy: input.runtimeStrategy,
+          runtimeResolutionSource: input.runtimeResolutionSource,
+          runtimeCodeObjectId: input.runtimeCodeObjectId,
+        }),
+      },
+    });
+  };
+
   return {
     onNodeStart: async ({
       node,
@@ -210,6 +308,7 @@ export const createCallbacks = (ctx: CallbackCtx) => {
       try {
         const nodeStartedAt = new Date().toISOString();
         const resume = resolveResume(node.id);
+        nodeStartedAtBySpanId.set(nodeSpanId, nodeStartedAt);
 
         profiling.beginRuntimeNodeSpan({
           spanId: nodeSpanId,
@@ -262,6 +361,8 @@ export const createCallbacks = (ctx: CallbackCtx) => {
           updatedAt: nodeStartedAt,
         });
 
+        setRuntimeNodeStatus?.(node.id, 'running');
+
         await Promise.all([
           repo
             .upsertRunNode(run.id, node.id, {
@@ -301,6 +402,21 @@ export const createCallbacks = (ctx: CallbackCtx) => {
             ]
             : []),
         ]);
+
+        emitNodeLifecycleSystemEvent({
+          event: 'node.started',
+          level: 'info',
+          node,
+          spanId: nodeSpanId,
+          iteration,
+          attempt,
+          status: 'running',
+          startedAt: nodeStartedAt,
+          resume,
+          runtimeStrategy,
+          runtimeResolutionSource,
+          runtimeCodeObjectId,
+        });
             
         void throttledSaveIntermediateState();
       } catch (error) {
@@ -333,6 +449,9 @@ export const createCallbacks = (ctx: CallbackCtx) => {
         const status = resolveFinishedNodeStatus({ cached, nextOutputs });
         const traceStatus = resolveRuntimeTraceSpanStatus(status);
         const resume = resolveResume(node.id);
+        const startedAt = nodeStartedAtBySpanId.get(nodeSpanId) ?? null;
+        nodeStartedAtBySpanId.delete(nodeSpanId);
+        const durationMs = resolveDurationMs(startedAt, finishedAt);
 
         profiling.finalizeRuntimeNodeSpan({
           spanId: nodeSpanId,
@@ -390,6 +509,36 @@ export const createCallbacks = (ctx: CallbackCtx) => {
           errorMessage: status === 'failed' ? (nextOutputs['message'] as string) : null,
         });
 
+        setRuntimeNodeStatus?.(node.id, status);
+        appendRuntimeHistoryEntry?.(node.id, {
+          timestamp: finishedAt,
+          pathId: run.pathId ?? null,
+          pathName: run.pathName ?? null,
+          traceId,
+          spanId: nodeSpanId,
+          nodeId: node.id,
+          nodeType: node.type,
+          nodeTitle: node.title ?? null,
+          status,
+          iteration,
+          attempt,
+          inputs: safeInputs,
+          outputs: safeOutputs,
+          inputsFrom: [],
+          outputsTo: [],
+          inputHash: hashRuntimeValue(safeInputs ?? nodeInputs),
+          cacheDecision: cacheDecision ?? (cached ? 'hit' : 'miss'),
+          sideEffectPolicy,
+          sideEffectDecision,
+          activationHash: activationHash ?? null,
+          idempotencyKey: idempotencyKey ?? null,
+          effectSourceSpanId: effectSourceSpanId ?? null,
+          durationMs: durationMs ?? 0,
+          runtimeStrategy: runtimeStrategy as any,
+          runtimeResolutionSource: runtimeResolutionSource as any,
+          runtimeCodeObjectId: (runtimeCodeObjectId as string) ?? null,
+        });
+
         await Promise.all([
           repo
             .upsertRunNode(run.id, node.id, {
@@ -424,6 +573,7 @@ export const createCallbacks = (ctx: CallbackCtx) => {
                 activationHash: activationHash ?? null,
                 idempotencyKey: idempotencyKey ?? null,
                 effectSourceSpanId: effectSourceSpanId ?? null,
+                durationMs,
                 ...toResumeRunEventMetadata(resume),
                 ...toRunEventRuntimeKernelMetadata({
                   runtimeStrategy,
@@ -435,6 +585,31 @@ export const createCallbacks = (ctx: CallbackCtx) => {
             })
             .catch(() => {}),
         ]);
+
+        emitNodeLifecycleSystemEvent({
+          event: 'node.finished',
+          level: status === 'failed' ? 'error' : 'info',
+          node,
+          spanId: nodeSpanId,
+          iteration,
+          attempt,
+          status,
+          startedAt,
+          finishedAt,
+          durationMs,
+          cached,
+          cacheDecision: cacheDecision ?? (cached ? 'hit' : 'miss'),
+          sideEffectPolicy,
+          sideEffectDecision,
+          activationHash: activationHash ?? null,
+          idempotencyKey: idempotencyKey ?? null,
+          effectSourceSpanId: effectSourceSpanId ?? null,
+          runtimeStrategy,
+          runtimeResolutionSource,
+          runtimeCodeObjectId,
+          resume,
+          errorMessage: status === 'failed' ? ((nextOutputs['message'] as string) ?? null) : null,
+        });
             
         void throttledSaveIntermediateState();
         void recordRuntimeNodeStatus({ runId: run.id, nodeId: node.id, status }).catch(() => {});
@@ -465,6 +640,9 @@ export const createCallbacks = (ctx: CallbackCtx) => {
         const traceStatus: RuntimeTraceSpanStatus =
           runtimeStatus === 'waiting_callback' ? 'waiting_callback' : 'blocked';
         const resume = resolveResume(node.id);
+        const startedAt = nodeStartedAtBySpanId.get(nodeSpanId) ?? null;
+        nodeStartedAtBySpanId.delete(nodeSpanId);
+        const durationMs = resolveDurationMs(startedAt, finishedAt);
         const safeOutputs: RuntimePortValues = {
           status: runtimeStatus,
           skipReason: reason,
@@ -511,6 +689,32 @@ export const createCallbacks = (ctx: CallbackCtx) => {
           errorMessage: message,
         });
 
+        setRuntimeNodeStatus?.(node.id, runtimeStatus);
+        appendRuntimeHistoryEntry?.(node.id, {
+          timestamp: finishedAt,
+          pathId: run.pathId ?? null,
+          pathName: run.pathName ?? null,
+          traceId,
+          spanId: nodeSpanId,
+          nodeId: node.id,
+          nodeType: node.type,
+          nodeTitle: node.title ?? null,
+          status: runtimeStatus,
+          iteration,
+          attempt,
+          inputs: (ctx.accInputs[node.id] as RuntimePortValues) ?? {},
+          outputs: safeOutputs,
+          inputsFrom: [],
+          outputsTo: [],
+          inputHash: null,
+          skipReason: reason,
+          waitingOnPorts: waitingOnPorts ?? undefined,
+          durationMs: durationMs ?? 0,
+          runtimeStrategy: runtimeStrategy as any,
+          runtimeResolutionSource: runtimeResolutionSource as any,
+          runtimeCodeObjectId: (runtimeCodeObjectId as string) ?? null,
+        });
+
         await Promise.all([
           repo
             .upsertRunNode(run.id, node.id, {
@@ -540,6 +744,7 @@ export const createCallbacks = (ctx: CallbackCtx) => {
                 attempt,
                 reason,
                 status: runtimeStatus,
+                durationMs,
                 ...toResumeRunEventMetadata(resume),
                 ...toRunEventRuntimeKernelMetadata({
                   runtimeStrategy,
@@ -551,6 +756,26 @@ export const createCallbacks = (ctx: CallbackCtx) => {
             })
             .catch(() => {}),
         ]);
+
+        emitNodeLifecycleSystemEvent({
+          event: 'node.blocked',
+          level: runtimeStatus === 'waiting_callback' ? 'info' : 'warn',
+          node,
+          spanId: nodeSpanId,
+          iteration,
+          attempt,
+          status: runtimeStatus,
+          startedAt,
+          finishedAt,
+          durationMs,
+          runtimeStrategy,
+          runtimeResolutionSource,
+          runtimeCodeObjectId,
+          resume,
+          reason,
+          errorMessage: message,
+          waitingOnPorts: waitingOnPorts ?? null,
+        });
             
         void throttledSaveIntermediateState();
       } catch (error) {
@@ -576,6 +801,9 @@ export const createCallbacks = (ctx: CallbackCtx) => {
         const errorMessage =
           error instanceof Error ? error.message : String(error ?? 'Unknown error');
         const resume = resolveResume(node.id);
+        const startedAt = nodeStartedAtBySpanId.get(nodeSpanId) ?? null;
+        nodeStartedAtBySpanId.delete(nodeSpanId);
+        const durationMs = resolveDurationMs(startedAt, finishedAt);
         const safeInputs = cloneJsonSafe(nodeInputs) as RuntimePortValues;
         const safeOutputs: RuntimePortValues = {
           status: 'failed',
@@ -627,6 +855,31 @@ export const createCallbacks = (ctx: CallbackCtx) => {
           errorMessage,
         });
 
+        setRuntimeNodeStatus?.(node.id, 'failed');
+        appendRuntimeHistoryEntry?.(node.id, {
+          timestamp: finishedAt,
+          pathId: run.pathId ?? null,
+          pathName: run.pathName ?? null,
+          traceId,
+          spanId: nodeSpanId,
+          nodeId: node.id,
+          nodeType: node.type,
+          nodeTitle: node.title ?? null,
+          status: 'failed',
+          iteration,
+          attempt,
+          inputs: safeInputs,
+          outputs: safeOutputs,
+          inputsFrom: [],
+          outputsTo: [],
+          inputHash: hashRuntimeValue(safeInputs ?? nodeInputs),
+          error: errorMessage,
+          durationMs: durationMs ?? 0,
+          runtimeStrategy: runtimeStrategy as any,
+          runtimeResolutionSource: runtimeResolutionSource as any,
+          runtimeCodeObjectId: (runtimeCodeObjectId as string) ?? null,
+        });
+
         await Promise.all([
           repo
             .upsertRunNode(run.id, node.id, {
@@ -650,6 +903,7 @@ export const createCallbacks = (ctx: CallbackCtx) => {
                 nodeType: node.type,
                 iteration,
                 attempt,
+                durationMs,
                 ...toResumeRunEventMetadata(resume),
                 ...toRunEventRuntimeKernelMetadata({
                   runtimeStrategy,
@@ -660,6 +914,24 @@ export const createCallbacks = (ctx: CallbackCtx) => {
             })
             .catch(() => {}),
         ]);
+
+        emitNodeLifecycleSystemEvent({
+          event: 'node.failed',
+          level: 'error',
+          node,
+          spanId: nodeSpanId,
+          iteration,
+          attempt,
+          status: 'failed',
+          startedAt,
+          finishedAt,
+          durationMs,
+          runtimeStrategy,
+          runtimeResolutionSource,
+          runtimeCodeObjectId,
+          resume,
+          errorMessage,
+        });
             
         void throttledSaveIntermediateState();
         void recordRuntimeNodeStatus({ runId: run.id, nodeId: node.id, status: 'failed' }).catch(
@@ -821,11 +1093,36 @@ export const createCallbacks = (ctx: CallbackCtx) => {
                 sideEffectPolicy: input.sourceHistory?.sideEffectPolicy ?? null,
                 effectSourceSpanId: effectSourceSpanId ?? null,
                 activationHash: input.sourceHistory?.activationHash ?? null,
+                durationMs: 0,
                 ...toResumeRunEventMetadata(input.resume),
               },
             })
             .catch(() => {}),
         ]);
+
+        emitNodeLifecycleSystemEvent({
+          event: 'node.reused_seeded',
+          level: 'info',
+          node: input.node,
+          spanId: input.spanId,
+          iteration: input.iteration,
+          attempt: input.attempt,
+          status: 'cached',
+          startedAt,
+          finishedAt,
+          durationMs: 0,
+          cached: true,
+          cacheDecision: 'seed',
+          sideEffectPolicy: input.sourceHistory?.sideEffectPolicy,
+          sideEffectDecision: input.sourceHistory?.sideEffectDecision,
+          activationHash: input.sourceHistory?.activationHash ?? null,
+          idempotencyKey: input.sourceHistory?.idempotencyKey ?? null,
+          effectSourceSpanId: effectSourceSpanId ?? null,
+          resume: input.resume,
+          runtimeStrategy: input.sourceHistory?.runtimeStrategy,
+          runtimeResolutionSource: input.sourceHistory?.runtimeResolutionSource,
+          runtimeCodeObjectId: input.sourceHistory?.runtimeCodeObjectId ?? null,
+        });
             
         void throttledSaveIntermediateState();
         void recordRuntimeNodeStatus({ runId: run.id, nodeId: input.node.id, status: 'cached' }).catch(

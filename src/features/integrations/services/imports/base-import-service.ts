@@ -37,11 +37,15 @@ import {
   BASE_IMPORT_HEARTBEAT_EVERY_ITEMS,
   BASE_IMPORT_LEASE_MS,
   BASE_IMPORT_MAX_ATTEMPTS,
+  BASE_IMPORT_PROCESSING_BATCH_SIZE,
+  BASE_IMPORT_PROCESSING_SCAN_PAGE_SIZE,
   type StartBaseImportRunInput,
   createRunIdempotencyKey,
+  isExactTargetImport,
+  normalizeDirectTarget,
   normalizeSelectedIds,
   nowIso,
-  resolveMode,
+  resolveEffectiveMode,
   shouldReuseIdempotentRun,
   toStringId,
 } from '@/features/integrations/services/imports/base-import-service-shared';
@@ -51,9 +55,11 @@ import type { BaseImportRunDetailResponse, BaseImportItemRecord, BaseImportItemS
 import type { ProductListing } from '@/shared/contracts/integrations/listings';
 import type { ProductListingRepository } from '@/shared/contracts/integrations/repositories';
 import { normalizeBaseImportParameterImportSettings } from '@/shared/contracts/integrations/parameter-import';
+import type { ProductCustomFieldDefinition } from '@/shared/contracts/products/custom-fields';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { getCatalogRepository } from '@/shared/lib/products/services/catalog-repository';
+import { getCustomFieldRepository } from '@/shared/lib/products/services/custom-field-repository';
 import { getParameterRepository } from '@/shared/lib/products/services/parameter-repository';
 import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
@@ -74,6 +80,169 @@ const BASE_IMPORT_TERMINAL_STATUSES = new Set([
 ]);
 
 const BASE_IMPORT_RESUME_DEFAULT_STATUSES: BaseImportItemStatus[] = ['failed', 'pending'];
+const BASE_IMPORT_RETRY_WAIT_WINDOW_MS = 5_000;
+
+const toFailureTimestamp = (item: BaseImportItemRecord): number => {
+  const candidates = [item.lastErrorAt, item.finishedAt, item.updatedAt];
+  for (const value of candidates) {
+    if (!value) continue;
+    const parsed = Date.parse(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return 0;
+};
+
+const pickLatestFailedImportItem = (
+  items: BaseImportItemRecord[]
+): BaseImportItemRecord | null => {
+  if (items.length === 0) return null;
+  return [...items].sort((left, right) => toFailureTimestamp(right) - toFailureTimestamp(left))[0] ?? null;
+};
+
+const findLatestFailedImportItem = async (
+  runId: string
+): Promise<BaseImportItemRecord | null> => {
+  let latest: BaseImportItemRecord | null = null;
+  let offset = 0;
+
+  while (true) {
+    const listedPage = await listBaseImportRunItems(runId, {
+      limit: BASE_IMPORT_PROCESSING_SCAN_PAGE_SIZE,
+      offset,
+    });
+    const page = Array.isArray(listedPage) ? listedPage : [];
+    if (page.length === 0) break;
+
+    const failedItems = page.filter((item): boolean => item.status === 'failed');
+    latest = pickLatestFailedImportItem([...(latest ? [latest] : []), ...failedItems]);
+
+    offset += page.length;
+    if (page.length < BASE_IMPORT_PROCESSING_SCAN_PAGE_SIZE) break;
+  }
+
+  return latest;
+};
+
+const toCompactFailureMessage = (value: string | null | undefined, maxLength = 220): string => {
+  const normalized = (value ?? '').replace(/\s+/g, ' ').trim();
+  if (!normalized) return '';
+  if (normalized.length <= maxLength) return normalized;
+  return `${normalized.slice(0, Math.max(0, maxLength - 1)).trimEnd()}…`;
+};
+
+const formatLatestFailureSummary = (item: BaseImportItemRecord | null): string | null => {
+  if (!item) return null;
+  const subject = item.sku?.trim() || item.itemId?.trim() || item.baseProductId?.trim() || 'item';
+  const code = item.errorCode?.trim() || '';
+  const message = toCompactFailureMessage(item.errorMessage);
+  if (!code && !message) return null;
+  if (!message) return `Latest failure: ${subject}${code ? ` [${code}]` : ''}`;
+  return `Latest failure: ${subject}${code ? ` [${code}]` : ''}: ${message}`;
+};
+
+const formatExactTargetItemSummary = (input: {
+  run: BaseImportRunRecord;
+  item: BaseImportItemRecord | null;
+}): string | null => {
+  const directTarget = input.run.params.directTarget;
+  const item = input.item;
+  if (!directTarget || !item) return null;
+
+  const targetLabel =
+    directTarget.type === 'sku'
+      ? `SKU ${directTarget.value}`
+      : `Base Product ID ${directTarget.value}`;
+  const productReference = item.importedProductId?.trim()
+    ? ` product ${item.importedProductId.trim()}`
+    : ' product';
+  const importedSkuReference = item.sku?.trim() ? ` with SKU ${item.sku.trim()}` : '';
+
+  if (item.status === 'imported') {
+    return `Exact target ${targetLabel} created new Base-linked${productReference}${importedSkuReference}.`;
+  }
+
+  if (item.status === 'updated') {
+    return `Exact target ${targetLabel} updated existing${productReference}.`;
+  }
+
+  if (item.status === 'skipped') {
+    const message = toCompactFailureMessage(item.errorMessage, 160);
+    return message
+      ? `Exact target ${targetLabel} was skipped: ${message}`
+      : `Exact target ${targetLabel} was skipped.`;
+  }
+
+  return null;
+};
+
+type DueBaseImportRunItemBatch = {
+  dueItems: BaseImportItemRecord[];
+  nextOffset: number;
+  nextRetryAtMs: number | null;
+  reachedEnd: boolean;
+};
+
+const toRetryTimestamp = (item: BaseImportItemRecord): number | null => {
+  if (!item.nextRetryAt) return null;
+  const retryAt = Date.parse(item.nextRetryAt);
+  return Number.isFinite(retryAt) ? retryAt : null;
+};
+
+const isBaseImportRunItemDue = (item: BaseImportItemRecord, nowMs: number): boolean => {
+  if (item.status !== 'pending') return true;
+  const retryAt = toRetryTimestamp(item);
+  return retryAt === null || retryAt <= nowMs;
+};
+
+const listDueBaseImportRunItemBatch = async (input: {
+  runId: string;
+  allowedStatuses: Set<BaseImportItemStatus>;
+  nowMs: number;
+  offset: number;
+}): Promise<DueBaseImportRunItemBatch> => {
+  const dueItems: BaseImportItemRecord[] = [];
+  let nextRetryAtMs: number | null = null;
+  let offset = input.offset;
+  let reachedEnd = false;
+
+  while (dueItems.length < BASE_IMPORT_PROCESSING_BATCH_SIZE) {
+    const listedPage = await listBaseImportRunItems(input.runId, {
+      limit: BASE_IMPORT_PROCESSING_SCAN_PAGE_SIZE,
+      offset,
+    });
+    const page = Array.isArray(listedPage) ? listedPage : [];
+    if (page.length === 0) {
+      reachedEnd = true;
+      break;
+    }
+
+    let pageCursor = 0;
+
+    for (const item of page) {
+      pageCursor += 1;
+      if (!input.allowedStatuses.has(item.status)) continue;
+
+      if (isBaseImportRunItemDue(item, input.nowMs)) {
+        dueItems.push(item);
+        if (dueItems.length >= BASE_IMPORT_PROCESSING_BATCH_SIZE) break;
+        continue;
+      }
+
+      const retryAt = toRetryTimestamp(item);
+      if (retryAt !== null && (nextRetryAtMs === null || retryAt < nextRetryAtMs)) {
+        nextRetryAtMs = retryAt;
+      }
+    }
+
+    offset += pageCursor;
+    if (page.length < BASE_IMPORT_PROCESSING_SCAN_PAGE_SIZE) {
+      reachedEnd = true;
+      break;
+    }
+  }
+
+  return { dueItems, nextOffset: offset, nextRetryAtMs, reachedEnd };
+};
 
 export const prepareBaseImportRun = async (
   input: StartBaseImportRunInput
@@ -85,6 +254,7 @@ export const prepareBaseImportRun = async (
   const normalizedTemplateId = input.templateId?.trim() || '';
   const normalizedRequestId = input.requestId?.trim() || '';
   const normalizedSelectedIds = normalizeSelectedIds(input.selectedIds);
+  const normalizedDirectTarget = normalizeDirectTarget(input.directTarget);
   const normalizedLimit =
     typeof input.limit === 'number' && Number.isFinite(input.limit)
       ? Math.max(1, Math.floor(input.limit))
@@ -98,10 +268,14 @@ export const prepareBaseImportRun = async (
     uniqueOnly: input.uniqueOnly,
     allowDuplicateSku: input.allowDuplicateSku,
     dryRun: input.dryRun ?? false,
-    mode: resolveMode(input.mode),
+    mode: resolveEffectiveMode({
+      mode: input.mode,
+      directTarget: normalizedDirectTarget,
+    }),
     ...(normalizedTemplateId ? { templateId: normalizedTemplateId } : {}),
     ...(normalizedLimit !== null ? { limit: normalizedLimit } : {}),
     ...(normalizedSelectedIds.length > 0 ? { selectedIds: normalizedSelectedIds } : {}),
+    ...(normalizedDirectTarget ? { directTarget: normalizedDirectTarget } : {}),
     ...(normalizedRequestId ? { requestId: normalizedRequestId } : {}),
   };
 
@@ -118,13 +292,38 @@ export const prepareBaseImportRun = async (
     });
   }
 
-  const ids = await resolveRunItems({
+  const resolvedItems = await resolveRunItems({
     token: connection.token,
     inventoryId: normalizedParams.inventoryId,
     uniqueOnly: normalizedParams.uniqueOnly,
     ...(normalizedParams.selectedIds ? { selectedIds: normalizedParams.selectedIds } : {}),
+    ...(normalizedParams.directTarget ? { directTarget: normalizedParams.directTarget } : {}),
     ...(typeof normalizedParams.limit === 'number' ? { limit: normalizedParams.limit } : {}),
   });
+  const ids = resolvedItems.ids;
+
+  if (normalizedParams.directTarget && ids.length === 0) {
+    return createBaseImportRun({
+      params: normalizedParams,
+      preflight: {
+        ...preflightResult.preflight,
+        ok: false,
+        issues: [
+          ...preflightResult.preflight.issues,
+          {
+            code: 'NOT_FOUND',
+            severity: 'error',
+            message:
+              resolvedItems.resolutionError ??
+              'The requested Base product could not be resolved in the selected inventory.',
+          },
+        ],
+      },
+      summaryMessage: 'Preflight failed. Resolve errors and retry import.',
+      totalItems: 0,
+      maxAttempts: BASE_IMPORT_MAX_ATTEMPTS,
+    });
+  }
 
   const idempotencyKey = createRunIdempotencyKey(normalizedParams, ids);
 
@@ -148,7 +347,9 @@ export const prepareBaseImportRun = async (
     totalItems: ids.length,
     maxAttempts: BASE_IMPORT_MAX_ATTEMPTS,
     summaryMessage:
-      ids.length === 0
+      normalizedParams.directTarget && ids.length === 1
+        ? `Queued exact ${normalizedParams.directTarget.type === 'sku' ? 'SKU' : 'Base Product ID'} target ${normalizedParams.directTarget.value} for new product creation.`
+        : ids.length === 0
         ? 'No products matched current import filters.'
         : `Queued ${ids.length} products for import.`,
   });
@@ -213,12 +414,14 @@ export const toStartResponse = (run: BaseImportRunRecord): BaseImportStartRespon
   status: run.status,
   ...(run.preflight !== undefined ? { preflight: run.preflight ?? null } : {}),
   queueJobId: run.queueJobId ?? null,
+  dispatchMode: run.dispatchMode ?? null,
   summaryMessage: run.summaryMessage ?? null,
 });
 
 export const updateBaseImportRunQueueJob = async (
   runId: string,
-  queueJobId: string | null
+  queueJobId: string | null,
+  dispatchMode?: 'queued' | 'inline' | null
 ): Promise<BaseImportRunRecord> => {
   const run = await getBaseImportRun(runId);
   if (!run) {
@@ -227,6 +430,7 @@ export const updateBaseImportRunQueueJob = async (
   const normalizedQueueJobId = queueJobId?.trim() || null;
   return updateBaseImportRun(runId, {
     queueJobId: normalizedQueueJobId,
+    ...(dispatchMode != null ? { dispatchMode } : {}),
   });
 };
 
@@ -369,51 +573,31 @@ export const processBaseImportRun = async (
     throw badRequestError('Import run is locked by another worker.', { runId });
   }
 
-  const getDueItems = (items: BaseImportItemRecord[], nowMs: number): BaseImportItemRecord[] =>
-    items.filter((item: BaseImportItemRecord): boolean => {
-      if (!allowedStatuses.has(item.status)) return false;
-      if (item.status !== 'pending') return true;
-      if (!item.nextRetryAt) return true;
-      const retryAt = Date.parse(item.nextRetryAt);
-      if (!Number.isFinite(retryAt)) return true;
-      return retryAt <= nowMs;
-    });
-
-  const getNextRetryTimestamp = (items: BaseImportItemRecord[]): number | null => {
-    let next: number | null = null;
-    items.forEach((item: BaseImportItemRecord): void => {
-      if (item.status !== 'pending' || !allowedStatuses.has(item.status)) return;
-      if (!item.nextRetryAt) return;
-      const retryAt = Date.parse(item.nextRetryAt);
-      if (!Number.isFinite(retryAt)) return;
-      if (next === null || retryAt < next) next = retryAt;
-    });
-    return next;
-  };
-
   let processedItemsSinceHeartbeat = 0;
+  let itemScanOffset = 0;
+  let wrappedItemScan = false;
 
   try {
-    const initialItems = await listBaseImportRunItems(runId, {
-      limit: 100_000,
-      statuses: Array.from(allowedStatuses),
-    });
-    if (initialItems.length === 0) {
+    let runTotal = run.stats?.total ?? 0;
+    if (runTotal === 0) {
       const refreshed = await recomputeBaseImportRunStats(runId);
-      const alreadyFinished =
-        refreshed.status === 'completed' ||
-        refreshed.status === 'partial_success' ||
-        refreshed.status === 'failed' ||
-        refreshed.status === 'canceled';
-      if (alreadyFinished) return refreshed;
-      return updateBaseImportRunStatus(runId, 'completed', {
-        summaryMessage: buildSummaryMessage(refreshed.stats, Boolean(run.params.dryRun)),
-      });
+      runTotal = refreshed.stats?.total ?? 0;
+      if (runTotal === 0) {
+        const alreadyFinished =
+          refreshed.status === 'completed' ||
+          refreshed.status === 'partial_success' ||
+          refreshed.status === 'failed' ||
+          refreshed.status === 'canceled';
+        if (alreadyFinished) return refreshed;
+        return updateBaseImportRunStatus(runId, 'completed', {
+          summaryMessage: buildSummaryMessage(refreshed.stats, Boolean(run.params.dryRun)),
+        });
+      }
     }
 
     await updateBaseImportRunStatus(runId, 'running', {
       queueJobId: options?.jobId ?? run.queueJobId ?? null,
-      summaryMessage: `Processing ${initialItems.length} product(s).`,
+      summaryMessage: `Processing ${runTotal} product(s).`,
       cancellationRequestedAt: run.cancellationRequestedAt ?? null,
     });
 
@@ -452,7 +636,11 @@ export const processBaseImportRun = async (
     const provider = await getProductDataProvider();
     const pricingContext = await resolvePriceGroupContext(
       provider,
-      targetCatalog.defaultPriceGroupId
+      targetCatalog.defaultPriceGroupId,
+      {
+        baseToken: connection.token,
+        inventoryId: run.params.inventoryId,
+      }
     );
     if (!pricingContext.defaultPriceGroupId) {
       await failRemainingItems({
@@ -469,6 +657,7 @@ export const processBaseImportRun = async (
     }
 
     const template = run.params.templateId ? await getImportTemplate(run.params.templateId) : null;
+    const exactTargetImport = isExactTargetImport(run.params.directTarget);
     const templateMappings = Array.isArray(template?.mappings) ? template.mappings : [];
     const templateParameterImportSettings = normalizeBaseImportParameterImportSettings(
       template?.parameterImport
@@ -476,6 +665,9 @@ export const processBaseImportRun = async (
     const lookups = await resolveProducerAndTagLookups(connection.connectionId);
     const productRepository = await getProductRepository();
     const parameterRepository = await getParameterRepository();
+    const customFieldRepository = await getCustomFieldRepository();
+    const customFieldDefinitions: ProductCustomFieldDefinition[] =
+      await customFieldRepository.listCustomFields({});
 
     // Performance optimization: pre-fetch catalog context once per run
     const [prefetchedParameters, prefetchedLinks] = await Promise.all([
@@ -516,23 +708,34 @@ export const processBaseImportRun = async (
         });
       }
 
-      const candidates = await listBaseImportRunItems(runId, {
-        limit: 100_000,
-        statuses: Array.from(allowedStatuses),
-      });
       const nowMs = Date.now();
-      const dueItems = getDueItems(candidates, nowMs);
+      const batch = await listDueBaseImportRunItemBatch({
+        runId,
+        allowedStatuses,
+        nowMs,
+        offset: itemScanOffset,
+      });
+      itemScanOffset = batch.nextOffset;
+      const dueItems = batch.dueItems;
       if (dueItems.length === 0) {
-        const nextRetryAtMs = getNextRetryTimestamp(candidates);
+        if (batch.reachedEnd && itemScanOffset > 0 && !wrappedItemScan) {
+          itemScanOffset = 0;
+          wrappedItemScan = true;
+          continue;
+        }
+        const nextRetryAtMs = batch.nextRetryAtMs;
         if (nextRetryAtMs !== null) {
           const waitMs = nextRetryAtMs - nowMs;
-          if (waitMs > 0 && waitMs <= 5_000) {
+          if (waitMs > 0 && waitMs <= BASE_IMPORT_RETRY_WAIT_WINDOW_MS) {
             await new Promise((resolve) => setTimeout(resolve, waitMs));
+            itemScanOffset = 0;
+            wrappedItemScan = false;
             continue;
           }
         }
         break;
       }
+      wrappedItemScan = false;
 
       const detailsMap = await fetchDetailsMap(
         connection.token,
@@ -549,7 +752,8 @@ export const processBaseImportRun = async (
         const mapped = normalizeMappedProduct(
           raw,
           templateMappings,
-          pricingContext.preferredCurrencies
+          pricingContext.preferredCurrencies,
+          customFieldDefinitions
         );
         const baseId =
           mapped.baseProductId?.trim() ||
@@ -655,6 +859,7 @@ export const processBaseImportRun = async (
             targetCatalogId: targetCatalog.id,
             defaultPriceGroupId: pricingContext.defaultPriceGroupId,
             preferredPriceCurrencies: pricingContext.preferredCurrencies,
+            customFieldDefinitions,
             lookups,
             templateMappings,
             productRepository,
@@ -662,7 +867,9 @@ export const processBaseImportRun = async (
             imageMode: run.params.imageMode,
             dryRun: Boolean(run.params.dryRun),
             inventoryId: run.params.inventoryId,
-            mode: resolveMode(run.params.mode),
+            mode: resolveEffectiveMode(run.params),
+            forceCreateNewProduct: exactTargetImport,
+            persistBaseSyncIdentity: !exactTargetImport,
             allowDuplicateSku: run.params.allowDuplicateSku,
             parameterImportSettings: templateParameterImportSettings,
             catalogLanguageCodes: catalogLanguageContext.languageCodes,
@@ -688,6 +895,7 @@ export const processBaseImportRun = async (
                 importedProductId: result.importedProductId ?? null,
                 payloadSnapshot: result.payloadSnapshot ?? null,
                 parameterImportSummary: result.parameterImportSummary ?? null,
+                ...(result.metadata ? { metadata: result.metadata } : {}),
                 errorCode: result.errorCode ?? null,
                 errorClass: result.errorClass ?? 'transient',
                 errorMessage: result.errorMessage ?? 'Retry scheduled.',
@@ -695,10 +903,10 @@ export const processBaseImportRun = async (
                 lastErrorAt: now,
                 nextRetryAt: new Date(Date.now() + delayMs).toISOString(),
               },
-              { recompute: true }
+              { recompute: false }
             );
           } else {
-            await markRunItem(runId, item, result, { recompute: true });
+            await markRunItem(runId, item, result, { recompute: false });
           }
         } catch (error: unknown) {
           void ErrorSystem.captureException(error);
@@ -719,17 +927,42 @@ export const processBaseImportRun = async (
               nextRetryAt: isRetryable ? new Date(Date.now() + delayMs).toISOString() : null,
               finishedAt: isRetryable ? null : now,
             },
-            { recompute: true }
+            { recompute: false }
           );
         }
       }
     }
 
     const finalStats = await recomputeBaseImportRunStats(runId);
-    const terminalStatus = determineBaseImportTerminalStatus(finalStats.stats);
+    const hasPendingItems =
+      (finalStats.stats?.pending ?? 0) > 0 || (finalStats.stats?.processing ?? 0) > 0;
+    const terminalStatus = determineBaseImportTerminalStatus(finalStats.stats, {
+      hasPendingItems,
+    });
+    const latestFailure =
+      (finalStats.stats?.failed ?? 0) > 0 ? await findLatestFailedImportItem(runId) : null;
+    const latestFailureSummary = formatLatestFailureSummary(latestFailure);
+    const summaryMessageBase = buildSummaryMessage(finalStats.stats, Boolean(run.params.dryRun));
+    const exactTargetItems =
+      run.params.directTarget && (finalStats.stats?.total ?? 0) === 1
+        ? await listBaseImportRunItems(runId, {
+            limit: 1,
+          })
+        : [];
+    const exactTargetSummary = formatExactTargetItemSummary({
+      run,
+      item: Array.isArray(exactTargetItems) ? (exactTargetItems[0] ?? null) : null,
+    });
     return updateBaseImportRunStatus(runId, terminalStatus, {
       finishedAt: nowIso(),
-      summaryMessage: buildSummaryMessage(finalStats.stats, Boolean(run.params.dryRun)),
+      summaryMessage: exactTargetSummary
+        ? exactTargetSummary
+        : latestFailureSummary
+          ? `${summaryMessageBase} ${latestFailureSummary}`
+          : summaryMessageBase,
+      error: latestFailure?.errorMessage ?? null,
+      errorCode: latestFailure?.errorCode ?? null,
+      errorClass: latestFailure?.errorClass ?? null,
     });
   } finally {
     await releaseBaseImportRunLease({ runId, ownerId });

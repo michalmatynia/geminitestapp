@@ -5,7 +5,7 @@ import React, { useMemo } from 'react';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
-import type { DatabaseAction, DatabaseActionCategory, DbQueryConfig } from '@/shared/lib/ai-paths';
+import type { DatabaseAction, DatabaseActionCategory, DbQueryConfig } from '@/shared/contracts/ai-paths';
 
 import type { QueryValidationResult } from './query-utils';
 

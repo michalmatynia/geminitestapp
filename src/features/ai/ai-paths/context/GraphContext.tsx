@@ -1,16 +1,13 @@
 'use client';
 
-import {
-  useState,
-  useMemo,
-  useCallback,
-  useRef,
-} from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
-import type { AiNode, AiPathsValidationConfig, Edge, NodeConfig, PathBlockedRunPolicy, PathConfig, PathExecutionMode, PathFlowIntensity, PathMeta, PathRunMode } from '@/shared/lib/ai-paths';
-import { initialNodes, initialEdges, normalizeNodes, sanitizeEdges } from '@/shared/lib/ai-paths';
+import type { AiNode, AiPathsValidationConfig, Edge, NodeConfig, PathBlockedRunPolicy, PathConfig, PathExecutionMode, PathFlowIntensity, PathMeta, PathRunMode } from '@/shared/contracts/ai-paths';
+import { initialNodes, initialEdges } from '@/shared/lib/ai-paths/core/constants';
+import { normalizeNodes } from '@/shared/lib/ai-paths/core/normalization';
+import { sanitizeEdges } from '@/shared/lib/ai-paths/core/utils/graph';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import {
@@ -29,40 +26,53 @@ import {
 
 import type {
   GraphActions,
+  GraphDataState,
   GraphMutationMeta,
   GraphMutationReason,
   GraphMutationRecord,
+  PathMetadataState,
   GraphProviderProps,
   GraphState,
 } from './GraphContext.shared';
 
 export type {
   GraphActions,
+  GraphDataState,
   GraphMutationMeta,
   GraphMutationReason,
   GraphMutationRecord,
+  PathMetadataState,
   GraphState,
 } from './GraphContext.shared';
 
+const createGraphStrictContext = <T,>(hookName: string) =>
+  createStrictContext<T>({
+    hookName,
+    providerName: 'a GraphProvider',
+    errorFactory: internalError,
+  });
+
 const {
-  Context: GraphStateContext,
-  useStrictContext: useGraphState,
-} = createStrictContext<GraphState>({
-  hookName: 'useGraphState',
-  providerName: 'a GraphProvider',
-  errorFactory: internalError,
-});
+  Context: GraphDataStateContext,
+  useStrictContext: useGraphDataState,
+} = createGraphStrictContext<GraphDataState>('useGraphDataState');
+
+const {
+  Context: PathMetadataStateContext,
+  useStrictContext: usePathMetadataState,
+} = createGraphStrictContext<PathMetadataState>('usePathMetadataState');
 
 const {
   Context: GraphActionsContext,
   useStrictContext: useGraphActions,
-} = createStrictContext<GraphActions>({
-  hookName: 'useGraphActions',
-  providerName: 'a GraphProvider',
-  errorFactory: internalError,
-});
+} = createGraphStrictContext<GraphActions>('useGraphActions');
 
-export { useGraphState, useGraphActions };
+const {
+  Context: GraphStateContext,
+  useStrictContext: useGraphState,
+} = createGraphStrictContext<GraphState>('useGraphState');
+
+export { useGraphDataState, usePathMetadataState, useGraphState, useGraphActions };
 
 export function GraphProvider({
   children,
@@ -415,32 +425,18 @@ export function GraphProvider({
     ]
   );
 
-  const state = useMemo<GraphState>(
+  const graphDataState = useMemo<GraphDataState>(
     () => ({
       nodes,
       edges,
-      paths,
-      pathConfigs,
-      activePathId,
-      pathName,
-      pathDescription,
-      activeTrigger,
-      executionMode,
-      flowIntensity,
-      runMode,
-      strictFlowMode,
-      blockedRunPolicy,
-      aiPathsValidation,
-      historyRetentionPasses,
-      historyRetentionOptionsMax,
-      isPathLocked,
-      isPathActive,
       graphRevision,
       lastMutation,
     }),
-    [
-      nodes,
-      edges,
+    [nodes, edges, graphRevision, lastMutation]
+  );
+
+  const pathMetadataState = useMemo<PathMetadataState>(
+    () => ({
       paths,
       pathConfigs,
       activePathId,
@@ -457,14 +453,42 @@ export function GraphProvider({
       historyRetentionOptionsMax,
       isPathLocked,
       isPathActive,
-      graphRevision,
-      lastMutation,
+    }),
+    [
+      paths,
+      pathConfigs,
+      activePathId,
+      pathName,
+      pathDescription,
+      activeTrigger,
+      executionMode,
+      flowIntensity,
+      runMode,
+      strictFlowMode,
+      blockedRunPolicy,
+      aiPathsValidation,
+      historyRetentionPasses,
+      historyRetentionOptionsMax,
+      isPathLocked,
+      isPathActive,
     ]
+  );
+
+  const state = useMemo<GraphState>(
+    () => ({
+      ...graphDataState,
+      ...pathMetadataState,
+    }),
+    [graphDataState, pathMetadataState]
   );
 
   return (
     <GraphActionsContext.Provider value={actions}>
-      <GraphStateContext.Provider value={state}>{children}</GraphStateContext.Provider>
+      <PathMetadataStateContext.Provider value={pathMetadataState}>
+        <GraphDataStateContext.Provider value={graphDataState}>
+          <GraphStateContext.Provider value={state}>{children}</GraphStateContext.Provider>
+        </GraphDataStateContext.Provider>
+      </PathMetadataStateContext.Provider>
     </GraphActionsContext.Provider>
   );
 }

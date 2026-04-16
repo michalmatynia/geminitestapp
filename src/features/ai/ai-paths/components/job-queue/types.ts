@@ -1,4 +1,4 @@
-import type { AiPathRunRecord } from '@/shared/lib/ai-paths';
+import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 
 import type { 
   QueueHistoryEntry, 

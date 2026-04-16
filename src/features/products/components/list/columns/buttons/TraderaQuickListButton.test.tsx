@@ -792,6 +792,38 @@ describe('TraderaQuickListButton', () => {
     });
   });
 
+  it('prefers completed local Tradera feedback over a stale server auth_required status', () => {
+    const onOpenIntegrations = vi.fn();
+    window.sessionStorage.setItem(
+      'tradera-quick-list-feedback',
+      JSON.stringify({
+        'product-1': {
+          productId: 'product-1',
+          status: 'completed',
+          expiresAt: Date.now() + 60_000,
+          runId: 'run-tradera-1',
+          requestId: 'job-tradera-1',
+          duplicateMatchStrategy: 'exact-title-single-candidate',
+        },
+      })
+    );
+
+    renderButton({
+      onOpenIntegrations,
+      showTraderaBadge: false,
+      traderaStatus: 'auth_required',
+    });
+
+    const button = screen.getByRole('button', {
+      name: 'One-click export to Tradera',
+    });
+    expect(button.className).toContain('border-emerald-400/70');
+
+    fireEvent.click(button);
+
+    expect(onOpenIntegrations).not.toHaveBeenCalled();
+  });
+
   it('opens recovery options instead of retrying when local quick-list feedback is failed', () => {
     const onOpenIntegrations = vi.fn();
     window.sessionStorage.setItem(
@@ -843,6 +875,40 @@ describe('TraderaQuickListButton', () => {
     expect(toastMock).toHaveBeenCalledWith('Product is already listed on this account', {
       variant: 'error',
     });
+  });
+
+  it('passes recovery context when preflight returns a 409 ApiError with auth_required message', async () => {
+    const onOpenIntegrations = vi.fn();
+    preflightTraderaQuickListSessionMock.mockRejectedValue(
+      new ApiError(
+        'AUTH_REQUIRED: Stored Tradera session expired or is missing. Open Tradera recovery options and refresh the session.',
+        409
+      )
+    );
+
+    renderButton({ onOpenIntegrations });
+
+    fireEvent.click(screen.getByRole('button', { name: 'One-click export to Tradera' }));
+
+    await waitFor(() => {
+      expect(toastMock).toHaveBeenCalledWith(
+        'AUTH_REQUIRED: Stored Tradera session expired or is missing. Open Tradera recovery options and refresh the session.',
+        { variant: 'error' }
+      );
+    });
+
+    expect(mutateAsyncMock).not.toHaveBeenCalled();
+    expect(onOpenIntegrations).toHaveBeenCalledWith(
+      expect.objectContaining({
+        integrationSlug: 'tradera',
+        status: 'auth_required',
+        integrationId: 'integration-tradera-1',
+        connectionId: 'conn-tradera-1',
+      })
+    );
+    expect(window.sessionStorage.getItem('tradera-quick-list-feedback')).toContain(
+      '"auth_required"'
+    );
   });
 
   it('shows error toast but does not open integrations modal for non-auth setup errors', async () => {

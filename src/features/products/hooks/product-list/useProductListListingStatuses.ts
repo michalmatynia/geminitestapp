@@ -1,5 +1,16 @@
 'use client';
 
+// useProductListListingStatuses: detects listing lifecycle transitions by
+// observing listing-related statuses (in-flight → terminal). Exposes maps and
+// helpers to surface row badges when a product's listing changes state and to
+// trigger UI highlights or to invalidate caches for completed listings.
+
+// useProductListListingStatuses: watches badge status maps for visible rows and
+// detects transitions from 'in-flight' -> 'completed'. When such transitions are
+// observed for visible products, triggers a UI highlight via
+// triggerJobCompletionHighlight to provide visual feedback for background
+// operations (listing, AI runs, scans). Keeps previous-state tracking local and
+// inexpensive.
 import { useEffect, useMemo, useRef } from 'react';
 
 import {
@@ -14,6 +25,7 @@ export function useProductListListingStatuses({
   integrationBadgeStatuses,
   traderaBadgeStatuses,
   playwrightProgrammableBadgeStatuses,
+  vintedBadgeStatuses,
   visibleProductIdSet,
   triggerJobCompletionHighlight,
 }: {
@@ -21,6 +33,7 @@ export function useProductListListingStatuses({
   integrationBadgeStatuses: Map<string, string>;
   traderaBadgeStatuses: Map<string, string>;
   playwrightProgrammableBadgeStatuses: Map<string, string>;
+  vintedBadgeStatuses: Map<string, string>;
   visibleProductIdSet: Set<string>;
   triggerJobCompletionHighlight: (productId: string) => void;
 }) {
@@ -43,9 +56,13 @@ export function useProductListListingStatuses({
       if (playwrightProgrammableStatus) {
         statuses.set(`${product.id}:playwright-programmable`, playwrightProgrammableStatus);
       }
+      const vintedStatus = normalizeListingStatus(vintedBadgeStatuses.get(product.id));
+      if (vintedStatus) {
+        statuses.set(`${product.id}:vinted`, vintedStatus);
+      }
     }
     return statuses;
-  }, [data, integrationBadgeStatuses, playwrightProgrammableBadgeStatuses, traderaBadgeStatuses]);
+  }, [data, integrationBadgeStatuses, playwrightProgrammableBadgeStatuses, traderaBadgeStatuses, vintedBadgeStatuses]);
 
   useEffect(() => {
     const previousStatuses = previousListingBadgeStatusesRef.current;

@@ -1,3 +1,6 @@
+// Workspace helpers: string and title helpers used across the product editor
+// context workspace. Keep these small, deterministic, and free of runtime
+// side-effects so they can be used in server and client contexts.
 import type {
   ProductStudioVariantsResponse,
 } from '@/features/products/context/ProductStudioContext.types';

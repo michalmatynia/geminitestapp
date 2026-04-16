@@ -1,4 +1,6 @@
-import React from 'react';
+'use client';
+
+import React, { startTransition } from 'react';
 
 import { OrganizationBasicInfoSection } from '../components/page/OrganizationBasicInfoSection';
 import { OrganizationEmailsSection } from '../components/page/OrganizationEmailsSection';
@@ -22,7 +24,7 @@ function AdminFilemakerOrganizationEditPageInner(): React.JSX.Element {
       onSave={() => {
         void handleSave();
       }}
-      onCancel={() => router.push('/admin/filemaker')}
+      onCancel={() => startTransition(() => { router.push('/admin/filemaker'); })}
       isSaving={updateSetting.isPending}
     >
       <OrganizationBasicInfoSection />

@@ -1,7 +1,7 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { useEffect, useMemo } from 'react';
+import { useRouter } from 'nextjs-toploader/app';
+import { useEffect, useMemo, startTransition } from 'react';
 
 import { useCreateIntegration } from '@/features/integrations/hooks/useIntegrationMutations';
 import { useIntegrations } from '@/features/integrations/hooks/useIntegrationQueries';
@@ -48,6 +48,22 @@ const AVAILABLE_INTEGRATIONS = [
     type: 'marketplace',
     method: 'api',
   },
+  {
+    name: 'Vinted.pl',
+    slug: 'vinted',
+    description:
+      'Browser-based Vinted.pl integration with reusable Playwright session storage.',
+    type: 'marketplace',
+    method: 'browser',
+  },
+  {
+    name: '1688',
+    slug: '1688',
+    description:
+      'Browser-based 1688 supplier scanning integration with reusable Playwright session storage.',
+    type: 'marketplace',
+    method: 'browser',
+  },
 ] as const;
 
 export default function AddIntegrationPage(): React.JSX.Element {
@@ -78,7 +94,7 @@ export default function AddIntegrationPage(): React.JSX.Element {
         name: integration.name,
         slug: integration.slug,
       });
-      router.push('/admin/integrations');
+      startTransition(() => { router.push('/admin/integrations'); });
     } catch (error: unknown) {
       logClientCatch(error, {
         source: 'AddIntegrationPage',

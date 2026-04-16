@@ -3,12 +3,13 @@ import React from 'react';
 import { useIntegrationModalViewContext } from './IntegrationModalViewContext';
 
 export function IntegrationModalSubtitle(): React.JSX.Element {
-  const { isBaselinker, isTradera, showPlaywright } = useIntegrationModalViewContext();
+  const { isBaselinker, isTradera, isVinted, is1688, showPlaywright } =
+    useIntegrationModalViewContext();
 
   if (isBaselinker) {
     return <>Manage connections and warehouse sync settings.</>;
   }
-  if (isTradera && showPlaywright) {
+  if (showPlaywright && (isTradera || isVinted || is1688)) {
     return <>Manage connections via browser automation (Playwright).</>;
   }
   if (isTradera) {

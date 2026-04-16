@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { useProductFormMetadata } from '@/features/products/context/ProductFormMetadataContext';
+import { useTitleTerms } from '@/features/products/hooks/useProductMetadataQueries';
 import { useProductValidationState } from '@/features/products/context/ProductValidationSettingsContext';
 import { coerceProductValidationTargetValue } from '@/features/products/lib/validatorTargetAdapters';
 import {
@@ -21,8 +22,12 @@ import {
   sortValidatorPatterns,
 } from '@/features/products/validation-engine/core';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import { ProductFormData } from '@/shared/contracts/products/drafts';
+import { type ProductFormData } from '@/shared/contracts/products/drafts';
 import type { ProductValidationPattern } from '@/shared/contracts/products/validation';
+import {
+  syncPolishStructuredProductName,
+  type PolishStructuredProductNameSyncResult,
+} from '@/shared/lib/products/title-terms';
 import { parseDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
 import { isPatternReplacementEnabledForValidationScope } from '@/shared/lib/products/utils/validator-instance-behavior';
 import { Alert } from '@/shared/ui/alert';
@@ -35,6 +40,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/ui/tabs';
 import { cn } from '@/shared/utils/ui-utils';
 
 import { ValidatedField } from './ValidatedField';
+import { StructuredProductNameField } from './StructuredProductNameField';
+import ProductFormLatestAmazonExtraction from './ProductFormLatestAmazonExtraction';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 const PRODUCT_IDENTIFIER_OPTIONS = [
@@ -42,6 +49,43 @@ const PRODUCT_IDENTIFIER_OPTIONS = [
   { value: 'gtin', label: 'GTIN' },
   { value: 'asin', label: 'ASIN' },
 ] as const satisfies ReadonlyArray<LabeledOptionDto<'ean' | 'gtin' | 'asin'>>;
+
+const coerceWatchedString = (value: unknown): string => (typeof value === 'string' ? value : '');
+
+const resolvePolishBaseNameAutoSyncStateUpdate = ({
+  currentNamePl,
+  englishTitle,
+  syncResult,
+}: {
+  currentNamePl: string;
+  englishTitle: string;
+  syncResult: PolishStructuredProductNameSyncResult;
+}): { generatedPolishTitle: string | null; shouldDisableAutoSync: boolean } => {
+  if (syncResult.baseNameSynced) {
+    return {
+      generatedPolishTitle: syncResult.generatedPolishTitle,
+      shouldDisableAutoSync: englishTitle.includes('|'),
+    };
+  }
+
+  return {
+    generatedPolishTitle: null,
+    shouldDisableAutoSync: currentNamePl.trim() !== '',
+  };
+};
+
+const resolveFocusedProductFieldName = (): string | null => {
+  if (typeof document === 'undefined') return null;
+  const activeElement = document.activeElement;
+  if (
+    !(activeElement instanceof HTMLInputElement) &&
+    !(activeElement instanceof HTMLTextAreaElement) &&
+    !(activeElement instanceof HTMLSelectElement)
+  ) {
+    return null;
+  }
+  return activeElement.name?.trim() || activeElement.id?.trim() || null;
+};
 
 export default function ProductFormGeneral(): React.JSX.Element {
   const {
@@ -51,16 +95,23 @@ export default function ProductFormGeneral(): React.JSX.Element {
     validatorPatterns,
     latestProductValues,
   } = useProductValidationState();
-  const { filteredLanguages } = useProductFormMetadata();
+  const productFormMetadata = useProductFormMetadata();
+  const categories = productFormMetadata.categories ?? [];
+  const filteredLanguages = productFormMetadata.filteredLanguages ?? [];
+  const selectedCatalogIds = productFormMetadata.selectedCatalogIds ?? [];
 
   const { register, getValues, setValue, watch } = useFormContext<ProductFormData>();
   const [activeNameTab, setActiveNameTab] = useState<string>('');
   const [activeDescriptionTab, setActiveDescriptionTab] = useState<string>('');
+  const [focusedFieldName, setFocusedFieldName] = useState<string | null>(null);
   const sequenceGroupDebounceRef = useRef<Record<string, number>>({});
   const formatterLoopGuardRef = useRef<{ recentSignatures: string[]; cycleHits: number }>({
     recentSignatures: [],
     cycleHits: 0,
   });
+  const lastGeneratedPolishNameRef = useRef<string>('');
+  const polishBaseNameAutoSyncRef = useRef<boolean>(true);
+  const focusOutSyncTimeoutRef = useRef<number | null>(null);
 
   const [identifierType, setIdentifierType] = useState<'ean' | 'gtin' | 'asin'>(
     (): 'ean' | 'gtin' | 'asin' => {
@@ -159,6 +210,10 @@ export default function ProductFormGeneral(): React.JSX.Element {
       ),
     [filteredLanguages]
   );
+  const primaryCatalogId = selectedCatalogIds[0];
+  const sizeTermsQuery = useTitleTerms(primaryCatalogId, 'size');
+  const materialTermsQuery = useTitleTerms(primaryCatalogId, 'material');
+  const themeTermsQuery = useTitleTerms(primaryCatalogId, 'theme');
   const firstLanguageTab = languageTabValues[0] ?? '';
   const resolvedActiveNameTab = activeNameTab || firstLanguageTab;
   const resolvedActiveDescriptionTab = activeDescriptionTab || firstLanguageTab;
@@ -176,6 +231,92 @@ export default function ProductFormGeneral(): React.JSX.Element {
       prev && languageTabValues.includes(prev) ? prev : firstLanguageTab
     );
   }, [firstLanguageTab, languageTabValues]);
+
+  const generatedPolishName = useMemo(
+    () =>
+      languageTabValues.includes('pl')
+        ? syncPolishStructuredProductName({
+            englishTitle: coerceWatchedString(nameEn),
+            polishTitle: coerceWatchedString(namePl),
+            previousGeneratedPolishTitle: lastGeneratedPolishNameRef.current,
+            syncPreviousGeneratedBaseName: polishBaseNameAutoSyncRef.current,
+            sizeTerms: sizeTermsQuery.data,
+            materialTerms: materialTermsQuery.data,
+            categories,
+            themeTerms: themeTermsQuery.data,
+          })
+        : null,
+    [
+      categories,
+      languageTabValues,
+      materialTermsQuery.data,
+      nameEn,
+      namePl,
+      sizeTermsQuery.data,
+      themeTermsQuery.data,
+    ]
+  );
+
+  useEffect(() => {
+    if (!languageTabValues.includes('pl')) return;
+    if (generatedPolishName === null) return;
+
+    const rawNamePl = getValues('name_pl');
+    const currentNamePl = typeof rawNamePl === 'string' ? rawNamePl : '';
+    const autoSyncStateUpdate = resolvePolishBaseNameAutoSyncStateUpdate({
+      currentNamePl,
+      englishTitle: coerceWatchedString(nameEn),
+      syncResult: generatedPolishName,
+    });
+    if (autoSyncStateUpdate.generatedPolishTitle !== null) {
+      lastGeneratedPolishNameRef.current = autoSyncStateUpdate.generatedPolishTitle;
+    }
+    if (autoSyncStateUpdate.shouldDisableAutoSync) {
+      polishBaseNameAutoSyncRef.current = false;
+    }
+
+    if (currentNamePl === generatedPolishName.polishTitle) return;
+
+    setValue('name_pl', generatedPolishName.polishTitle, {
+      shouldDirty: true,
+      shouldTouch: false,
+      shouldValidate: true,
+    });
+  }, [generatedPolishName, getValues, languageTabValues, nameEn, namePl, setValue]);
+
+  useEffect(() => {
+    const syncFocusedField = (): void => {
+      setFocusedFieldName(resolveFocusedProductFieldName());
+    };
+
+    const handleFocusIn = (): void => {
+      syncFocusedField();
+    };
+
+    const handleFocusOut = (): void => {
+      if (focusOutSyncTimeoutRef.current !== null) {
+        window.clearTimeout(focusOutSyncTimeoutRef.current);
+      }
+
+      focusOutSyncTimeoutRef.current = window.setTimeout(() => {
+        focusOutSyncTimeoutRef.current = null;
+        syncFocusedField();
+      }, 0);
+    };
+
+    syncFocusedField();
+    document.addEventListener('focusin', handleFocusIn);
+    document.addEventListener('focusout', handleFocusOut);
+
+    return () => {
+      if (focusOutSyncTimeoutRef.current !== null) {
+        window.clearTimeout(focusOutSyncTimeoutRef.current);
+        focusOutSyncTimeoutRef.current = null;
+      }
+      document.removeEventListener('focusin', handleFocusIn);
+      document.removeEventListener('focusout', handleFocusOut);
+    };
+  }, []);
 
   // Pre-compile regexes once per validatorPatterns change instead of re-creating
   // them on every loop iteration inside the formatter effect (Fix 1.2).
@@ -364,6 +505,9 @@ export default function ProductFormGeneral(): React.JSX.Element {
       }
 
       if (nextValue !== rawValue) {
+        if (focusedFieldName === fieldNameRaw) {
+          continue;
+        }
         const coercedValue = coerceProductValidationTargetValue({ target, value: nextValue });
         if (typeof coercedValue === 'number') {
           const currentNumeric =
@@ -416,6 +560,7 @@ export default function ProductFormGeneral(): React.JSX.Element {
     price,
     stock,
     weight,
+    focusedFieldName,
     sizeLength,
     sizeWidth,
     fieldLength,
@@ -492,11 +637,24 @@ export default function ProductFormGeneral(): React.JSX.Element {
               const fieldName = `name_${language.code.toLowerCase()}` as keyof ProductFormData;
               return (
                 <TabsContent key={language.code} value={language.code.toLowerCase()}>
-                  <ValidatedField
-                    name={fieldName}
-                    label={`${language.name} Name`}
-                    placeholder={`Enter product name in ${language.name}`}
-                  />
+                  {fieldName === 'name_en' ? (
+                    <StructuredProductNameField />
+                  ) : fieldName === 'name_pl' ? (
+                    <StructuredProductNameField
+                      fieldName='name_pl'
+                      config={{
+                        locale: 'pl',
+                        label: `${language.name} Name`,
+                        placeholder: 'Scout Regiment | 4 cm | Metal | Przypinka Anime | Attack On Titan',
+                      }}
+                    />
+                  ) : (
+                    <ValidatedField
+                      name={fieldName}
+                      label={`${language.name} Name`}
+                      placeholder={`Enter product name in ${language.name}`}
+                    />
+                  )}
                 </TabsContent>
               );
             })}
@@ -545,6 +703,8 @@ export default function ProductFormGeneral(): React.JSX.Element {
           </Tabs>
         </FormSection>
       )}
+
+      <ProductFormLatestAmazonExtraction />
 
       <FormSection title='Identifiers' gridClassName='md:grid-cols-2'>
         <ValidatedField name='sku' label='SKU' required placeholder='Unique stock keeping unit' />

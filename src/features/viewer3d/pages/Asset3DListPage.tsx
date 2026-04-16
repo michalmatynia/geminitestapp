@@ -13,6 +13,7 @@ import { StatusBadge } from '@/shared/ui/data-display.public';
 
 import { Asset3DPreviewModal } from '../components/Asset3DPreviewModalImpl';
 import { useAsset3DListState } from '../hooks/useAsset3DListState';
+import { formatAssetDate } from '../utils/formatAssetDate';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
@@ -26,14 +27,6 @@ const formatFileSize = (bytes: number): string => {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
-};
-
-const formatDate = (date: Date | string): string => {
-  return new Date(date).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
 };
 
 export function Asset3DListPage(): React.JSX.Element {
@@ -105,7 +98,7 @@ export function Asset3DListPage(): React.JSX.Element {
             ))}
             {(row.original.tags || []).length > 2 && (
               <StatusBadge
-                status={'+' + ((row.original.tags || []).length - 2)}
+                status={`+${  (row.original.tags || []).length - 2}`}
                 variant='neutral'
                 size='sm'
                 className='font-bold'
@@ -131,7 +124,7 @@ export function Asset3DListPage(): React.JSX.Element {
         header: 'Date',
         cell: ({ row }) => (
           <span className='text-xs text-muted-foreground'>
-            {row.original.createdAt ? formatDate(row.original.createdAt) : ''}
+            {row.original.createdAt ? formatAssetDate(row.original.createdAt) : ''}
           </span>
         ),
       },

@@ -14,7 +14,7 @@ import {
 import {
   useSystemLogsActions,
   useSystemLogsState,
-} from '@/features/observability/context/SystemLogsContext';
+} from '@/shared/lib/observability/context/SystemLogsContext';
 import type { ClearLogsTargetDto as ClearLogsTarget } from '@/shared/contracts/observability';
 import AnalyticsEventsTable from '@/shared/lib/analytics/components/AnalyticsEventsTable';
 import { useAnalyticsEvents } from '@/shared/lib/analytics/hooks/useAnalyticsQueries';

@@ -19,7 +19,11 @@ import {
   QUEUE_UNAVAILABLE_RETRY_AFTER_MS,
 } from './ai-path-run-queue/config';
 import { queue, enqueuePathRunJob } from './ai-path-run-queue/queue';
-import { aiPathRunQueueState, localFallbackTimers } from './ai-path-run-queue/state';
+import {
+  aiPathRunQueueState,
+  localFallbackTimers,
+  setLocalFallbackTimer,
+} from './ai-path-run-queue/state';
 import {
   getAiPathRunQueueStatus,
   getAiPathRunQueueHotStatus,
@@ -253,9 +257,6 @@ export const assertAiPathRunQueueReadyForEnqueue = async (): Promise<AiPathRunQu
 };
 
 export const scheduleLocalFallbackRun = (runId: string, delayMs: number): void => {
-  const existing = localFallbackTimers.get(runId);
-  if (existing) clearTimeout(existing);
-
   const timer = setTimeout(() => {
     void (async () => {
       localFallbackTimers.delete(runId);
@@ -279,7 +280,7 @@ export const scheduleLocalFallbackRun = (runId: string, delayMs: number): void =
     })();
   }, delayMs);
 
-  localFallbackTimers.set(runId, timer);
+  setLocalFallbackTimer(runId, timer);
 };
 
 export const cancelLocalFallbackRun = (runId: string): void => {

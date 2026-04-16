@@ -37,9 +37,7 @@ import { usePickerSearch } from './usePickerSearch';
  *   searchable
  * />
  */
-export const GenericGridPicker = memo(function GenericGridPicker<
-  T extends GridPickerItem = GridPickerItem,
->({
+export const GenericGridPicker = memo(<T extends GridPickerItem>({
   items,
   selectedId,
   onSelect,
@@ -53,7 +51,7 @@ export const GenericGridPicker = memo(function GenericGridPicker<
   className,
   gridClassName,
   disabled = false,
-}: GenericGridPickerProps<T>): React.JSX.Element {
+}: GenericGridPickerProps<T>): React.JSX.Element => {
   const [localFocused, setLocalFocused] = useState<string | null>(null);
 
   // Use search hook with custom matcher if provided

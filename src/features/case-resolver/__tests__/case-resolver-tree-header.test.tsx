@@ -94,6 +94,12 @@ vi.mock('next/navigation', () => ({
   }),
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  useRouter: () => ({
+    push: routerPushMock,
+  }),
+}));
+
 vi.mock('@/features/case-resolver/context/CaseResolverPageContext', () => ({
   useCaseResolverPageState: () => pageStateContext,
   useCaseResolverPageActions: () => pageActionsContext,
@@ -227,9 +233,9 @@ describe('CaseResolverTreeHeader', () => {
   it('calls image, scan, and node file creation actions from the toolbar', () => {
     render(<CaseResolverTreeHeader searchQuery='' onSearchChange={vi.fn()} />);
 
-    fireEvent.click(screen.getByTitle('Create new image file'));
-    fireEvent.click(screen.getByTitle('Create new image asset'));
-    fireEvent.click(screen.getByTitle('Add node file'));
+    fireEvent.click(screen.getByTitle('Create a scan file'));
+    fireEvent.click(screen.getByTitle('Add an image asset'));
+    fireEvent.click(screen.getByTitle('Create a node file'));
 
     expect(onCreateScanFileMock).toHaveBeenCalledWith(null);
     expect(onCreateImageAssetMock).toHaveBeenCalledWith(null);

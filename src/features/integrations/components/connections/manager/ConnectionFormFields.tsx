@@ -3,9 +3,13 @@
 import React from 'react';
 
 import {
+  is1688IntegrationSlug,
+  isBrowserAutomationIntegrationSlug,
+  isPlaywrightProgrammableSlug,
   isTraderaApiIntegrationSlug,
   isTraderaIntegrationSlug,
   isLinkedInIntegrationSlug,
+  isVintedIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
 import { DEFAULT_TRADERA_QUICKLIST_SCRIPT } from '@/features/integrations/services/tradera-listing/default-script';
 import type { ConnectionFormState } from '@/features/integrations/context/integrations-context-types';
@@ -14,9 +18,31 @@ import { Button, Checkbox, Input, Label, Textarea } from '@/shared/ui/primitives
 import { FormField, SelectSimple } from '@/shared/ui/forms-and-actions.public';
 import { UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 
+const TRADERA_CATEGORY_STRATEGY_OPTIONS = [
+  { value: 'mapper', label: 'Category mapper (with Other fallback)' },
+  { value: 'top_suggested', label: 'Top suggested by Tradera' },
+] as const;
+
 const TRADERA_BROWSER_MODE_OPTIONS = [
   { value: 'builtin', label: 'Built-in form automation' },
   { value: 'scripted', label: 'Playwright script' },
+] as const;
+
+const PLAYWRIGHT_BROWSER_OPTIONS = [
+  { value: 'auto', label: 'Auto (Brave → Chrome → Chromium)' },
+  { value: 'brave', label: 'Brave' },
+  { value: 'chrome', label: 'Chrome' },
+  { value: 'chromium', label: 'Chromium (bundled)' },
+] as const;
+
+const SCANNER_1688_LOGIN_MODE_OPTIONS = [
+  { value: 'session_required', label: 'Stored session required' },
+  { value: 'manual_login', label: 'Manual login window' },
+] as const;
+
+const SCANNER_1688_SEARCH_MODE_OPTIONS = [
+  { value: 'local_image', label: 'Local image upload only' },
+  { value: 'image_url_fallback', label: 'Allow image URL fallback' },
 ] as const;
 
 type ConnectionFormFieldsProps = {
@@ -45,62 +71,96 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
   const isAllegro = integrationSlug === 'allegro';
   const isBaselinker = integrationSlug === 'baselinker';
   const isLinkedIn = isLinkedInIntegrationSlug(integrationSlug);
+  const isVinted = isVintedIntegrationSlug(integrationSlug);
+  const is1688 = is1688IntegrationSlug(integrationSlug);
+  const showBrowserSelector =
+    isBrowserAutomationIntegrationSlug(integrationSlug) ||
+    isPlaywrightProgrammableSlug(integrationSlug);
 
   const connectionNamePlaceholder = isAllegro
     ? 'Integration name (e.g. Allegro Main)'
     : isLinkedIn
       ? 'Integration name (e.g. LinkedIn Main)'
-    : isBaselinker
-      ? 'Integration name (e.g. Main Baselinker)'
-      : 'Integration name (e.g. John\'s Tradera)';
+      : isVinted
+        ? 'Integration name (e.g. Vinted Browser)'
+        : is1688
+          ? 'Integration name (e.g. 1688 Main)'
+      : isBaselinker
+        ? 'Integration name (e.g. Main Baselinker)'
+        : 'Integration name (e.g. John\'s Tradera)';
 
   const usernameLabel = isAllegro
     ? 'Allegro client ID'
     : isLinkedIn
       ? 'LinkedIn client ID'
-    : isBaselinker
-      ? 'Account name (optional)'
-      : isTraderaApi
-        ? 'Tradera username/alias'
-        : 'Tradera username';
+      : isVinted
+        ? 'Vinted email (optional)'
+        : is1688
+          ? '1688 account label (optional)'
+      : isBaselinker
+        ? 'Account name (optional)'
+        : isTraderaApi
+          ? 'Tradera username/alias'
+          : 'Tradera username';
 
   const usernamePlaceholder = isAllegro
     ? 'Allegro client ID'
     : isLinkedIn
       ? 'LinkedIn client ID'
-    : isBaselinker
-      ? 'Account name (for reference)'
-      : isTraderaApi
-        ? 'Tradera username/alias'
-        : 'Tradera username';
+      : isVinted
+        ? 'Vinted email (optional)'
+        : is1688
+          ? '1688 account label (optional)'
+      : isBaselinker
+        ? 'Account name (for reference)'
+        : isTraderaApi
+          ? 'Tradera username/alias'
+          : 'Tradera username';
 
   const passwordLabel = isAllegro
     ? 'Allegro client secret'
     : isLinkedIn
       ? 'LinkedIn client secret'
-    : isBaselinker
-      ? 'Baselinker API token'
-      : isTraderaApi
-        ? 'Fallback secret'
-        : 'Tradera password';
+      : isVinted
+        ? 'Vinted password (optional)'
+        : is1688
+          ? '1688 password (optional)'
+      : isBaselinker
+        ? 'Baselinker API token'
+        : isTraderaApi
+          ? 'Fallback secret'
+          : 'Tradera password';
 
   const passwordPlaceholder = isCreateMode
     ? isAllegro
       ? 'Allegro client secret'
       : isLinkedIn
         ? 'LinkedIn client secret'
-      : isBaselinker
-        ? 'Baselinker API token'
-        : isTraderaApi
-          ? 'Fallback secret (required)'
-          : 'Tradera password'
+        : isVinted
+          ? 'Vinted password (optional)'
+          : is1688
+            ? '1688 password (optional)'
+        : isBaselinker
+          ? 'Baselinker API token'
+          : isTraderaApi
+            ? 'Fallback secret (required)'
+            : 'Tradera password'
     : isAllegro
       ? 'New client secret (leave blank to keep)'
       : isLinkedIn
         ? 'New client secret (leave blank to keep)'
+        : isVinted
+          ? 'New Vinted password (leave blank to keep)'
+          : is1688
+            ? 'New 1688 password (leave blank to keep)'
       : isTraderaApi
-        ? 'New fallback secret (leave blank to keep)'
-        : 'New password (leave blank to keep)';
+          ? 'New fallback secret (leave blank to keep)'
+          : 'New password (leave blank to keep)';
+
+  const browserSessionCredentialDescription =
+    isVinted || is1688
+      ? 'Optional. Leave blank if you will sign in through the login window and reuse the stored browser session.'
+      : undefined;
 
   return (
     <>
@@ -118,7 +178,7 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
           }
          aria-label={connectionNamePlaceholder} title={connectionNamePlaceholder}/>
       </FormField>
-      <FormField label={usernameLabel}>
+      <FormField label={usernameLabel} description={browserSessionCredentialDescription}>
         <Input
           variant='subtle'
           size='sm'
@@ -132,7 +192,7 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
           }
          aria-label={usernamePlaceholder} title={usernamePlaceholder}/>
       </FormField>
-      <FormField label={passwordLabel}>
+      <FormField label={passwordLabel} description={browserSessionCredentialDescription}>
         <Input
           variant='subtle'
           size='sm'
@@ -147,6 +207,153 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
           }
          aria-label={passwordPlaceholder} title={passwordPlaceholder}/>
       </FormField>
+      {showBrowserSelector && (
+        <FormField label='Browser' description='Which browser to use for Playwright automation'>
+          <SelectSimple
+            id={`${idPrefix}-playwrightBrowser`}
+            value={form.playwrightBrowser}
+            onValueChange={(nextValue): void =>
+              setForm((prev) => ({
+                ...prev,
+                playwrightBrowser:
+                  nextValue === 'brave' || nextValue === 'chrome' || nextValue === 'chromium'
+                    ? nextValue
+                    : 'auto',
+              }))
+            }
+            options={[...PLAYWRIGHT_BROWSER_OPTIONS]}
+            ariaLabel='Browser'
+            placeholder='Browser'
+          />
+        </FormField>
+      )}
+      {is1688 && (
+        <>
+          <FormField
+            label='1688 start URL'
+            description='Used for login/session refresh and as the default starting page for this profile.'
+          >
+            <Input
+              variant='subtle'
+              size='sm'
+              placeholder='https://www.1688.com/'
+              value={form.scanner1688StartUrl}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                setForm((prev) => ({
+                  ...prev,
+                  scanner1688StartUrl: event.target.value,
+                }))
+              }
+              aria-label='1688 start URL'
+              title='1688 start URL'
+            />
+          </FormField>
+          <FormField label='Login mode'>
+            <SelectSimple
+              id={`${idPrefix}-scanner1688LoginMode`}
+              value={form.scanner1688LoginMode}
+              onValueChange={(nextValue): void =>
+                setForm((prev) => ({
+                  ...prev,
+                  scanner1688LoginMode:
+                    nextValue === 'manual_login' ? 'manual_login' : 'session_required',
+                }))
+              }
+              options={[...SCANNER_1688_LOGIN_MODE_OPTIONS]}
+              ariaLabel='1688 login mode'
+              placeholder='1688 login mode'
+            />
+          </FormField>
+          <FormField label='Search mode'>
+            <SelectSimple
+              id={`${idPrefix}-scanner1688DefaultSearchMode`}
+              value={form.scanner1688DefaultSearchMode}
+              onValueChange={(nextValue): void =>
+                setForm((prev) => ({
+                  ...prev,
+                  scanner1688DefaultSearchMode:
+                    nextValue === 'image_url_fallback' ? 'image_url_fallback' : 'local_image',
+                  scanner1688AllowUrlImageSearchFallback:
+                    nextValue === 'image_url_fallback',
+                }))
+              }
+              options={[...SCANNER_1688_SEARCH_MODE_OPTIONS]}
+              ariaLabel='1688 search mode'
+              placeholder='1688 search mode'
+            />
+          </FormField>
+          <FormField label='Candidate cap override (optional)'>
+            <Input
+              variant='subtle'
+              size='sm'
+              type='number'
+              min={1}
+              value={form.scanner1688CandidateResultLimit}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                setForm((prev) => ({
+                  ...prev,
+                  scanner1688CandidateResultLimit: event.target.value,
+                }))
+              }
+              aria-label='1688 candidate cap override'
+              title='1688 candidate cap override'
+            />
+          </FormField>
+          <FormField label='Minimum score override (optional)'>
+            <Input
+              variant='subtle'
+              size='sm'
+              type='number'
+              min={1}
+              value={form.scanner1688MinimumCandidateScore}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                setForm((prev) => ({
+                  ...prev,
+                  scanner1688MinimumCandidateScore: event.target.value,
+                }))
+              }
+              aria-label='1688 minimum score override'
+              title='1688 minimum score override'
+            />
+          </FormField>
+          <FormField label='Max extracted images override (optional)'>
+            <Input
+              variant='subtle'
+              size='sm'
+              type='number'
+              min={1}
+              value={form.scanner1688MaxExtractedImages}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                setForm((prev) => ({
+                  ...prev,
+                  scanner1688MaxExtractedImages: event.target.value,
+                }))
+              }
+              aria-label='1688 max extracted images override'
+              title='1688 max extracted images override'
+            />
+          </FormField>
+          <div className={`${UI_CENTER_ROW_SPACED_CLASSNAME} py-1`}>
+            <Checkbox
+              id={`${idPrefix}-scanner1688AllowUrlImageSearchFallback`}
+              checked={form.scanner1688AllowUrlImageSearchFallback}
+              onCheckedChange={(checked: boolean): void =>
+                setForm((prev) => ({
+                  ...prev,
+                  scanner1688AllowUrlImageSearchFallback: checked,
+                  scanner1688DefaultSearchMode: checked ? 'image_url_fallback' : 'local_image',
+                }))
+              }
+            />
+            <Label
+              htmlFor={`${idPrefix}-scanner1688AllowUrlImageSearchFallback`}
+              className='text-xs font-medium text-gray-300'
+            >
+              Allow image URL fallback for 1688 search
+            </Label>
+          </div>
+        </>
+      )}
       {isTradera && (
         <>
           {isTraderaBrowser && (
@@ -164,6 +371,24 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
                   options={[...TRADERA_BROWSER_MODE_OPTIONS]}
                   ariaLabel='Browser automation mode'
                   placeholder='Browser automation mode'
+                />
+              </FormField>
+              <FormField
+                label='Category selection strategy'
+                description='How Tradera category is chosen when listing a product'
+              >
+                <SelectSimple
+                  id={`${idPrefix}-traderaCategoryStrategy`}
+                  value={form.traderaCategoryStrategy}
+                  onValueChange={(nextValue): void =>
+                    setForm((prev) => ({
+                      ...prev,
+                      traderaCategoryStrategy: nextValue === 'top_suggested' ? 'top_suggested' : 'mapper',
+                    }))
+                  }
+                  options={[...TRADERA_CATEGORY_STRATEGY_OPTIONS]}
+                  ariaLabel='Category selection strategy'
+                  placeholder='Category selection strategy'
                 />
               </FormField>
               {form.traderaBrowserMode === 'scripted' && (

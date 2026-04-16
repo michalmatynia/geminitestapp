@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import { type NextRequest } from 'next/server';
 
 import { assertAiPathRunAccess, requireAiPathsRunAccess } from '@/features/ai/ai-paths/server';
 import {
@@ -326,10 +326,10 @@ export async function getAiPathRunStreamHandler(
   const { runId } = params;
   const access = await requireAiPathsRunAccess();
   const repoSelection = await resolvePathRunRepository();
-  let readRepo = repoSelection.repo;
-  let readProvider = repoSelection.provider;
+  const readRepo = repoSelection.repo;
+  const readProvider = repoSelection.provider;
   const readMode = 'selected' as const;
-  let initialRun = await readRepo.findRunById(runId);
+  const initialRun = await readRepo.findRunById(runId);
   if (!initialRun) {
     throw notFoundError('Run not found', { runId });
   }

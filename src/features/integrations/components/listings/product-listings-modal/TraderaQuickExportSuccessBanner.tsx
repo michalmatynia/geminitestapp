@@ -1,13 +1,22 @@
+'use client';
+
 import React from 'react';
 
+import {
+  useProductListingsActions,
+  useProductListingsUIState,
+} from '@/features/integrations/context/ProductListingsContext';
 import type { PersistedTraderaQuickListFeedback } from '@/features/integrations/utils/traderaQuickListFeedback';
 import {
   resolveCompletedAtFromFeedbackAndListing,
+  resolveDuplicateLinkedFromFeedback,
   resolveDuplicateLinkedFromListing,
+  resolveDuplicateMatchStrategyFromFeedback,
+  resolveDuplicateMatchStrategyFromListing,
   resolveListingUrl,
 } from '@/features/integrations/utils/tradera-listing-client-utils';
 import type { ProductListingWithDetails } from '@/shared/contracts/integrations/listings';
-import { Card } from '@/shared/ui/primitives.public';
+import { Button, Card } from '@/shared/ui/primitives.public';
 import { ExternalLink } from '@/shared/ui/forms-and-actions.public';
 
 type TraderaQuickExportSuccessBannerProps = {
@@ -27,23 +36,54 @@ export function TraderaQuickExportSuccessBanner({
     return null;
   }
 
+  const { handleSyncTradera } = useProductListingsActions();
+  const { syncingTraderaListing } = useProductListingsUIState();
+
   const listingUrl = resolveListingUrl(feedback.listingUrl, feedback.externalListingId, listing);
   const externalListingId = listing?.externalListingId ?? feedback.externalListingId ?? null;
   const localListingId = listing?.id ?? feedback.listingId ?? null;
+  const syncIntegrationId = listing?.integrationId ?? feedback.integrationId ?? null;
+  const syncConnectionId = listing?.connectionId ?? feedback.connectionId ?? null;
+  const canSync = Boolean(localListingId && syncIntegrationId && syncConnectionId);
+  const isSyncing = Boolean(localListingId && syncingTraderaListing === localListingId);
   const completedAt = resolveCompletedAtFromFeedbackAndListing(feedback.completedAt, listing);
   const duplicateLinked =
-    resolveDuplicateLinkedFromListing(listing) || feedback.duplicateLinked === true;
-  const title = duplicateLinked
-    ? 'Tradera existing listing linked'
-    : 'Tradera quick export completed';
-  const description =
-    duplicateLinked
-      ? mode === 'empty'
-        ? 'The product matched an existing Tradera listing and has now been linked in this modal. Use the link below to open the live Tradera item.'
-        : 'The product is now linked to an existing Tradera listing. Open the live Tradera item directly from here.'
-      : mode === 'empty'
-        ? 'The product was listed on Tradera, but the listing row is still catching up in this modal. Use the link below to open the created Tradera item now.'
-        : 'The product is now linked to the created Tradera listing. Open the live Tradera item directly from here.';
+    resolveDuplicateLinkedFromListing(listing) || resolveDuplicateLinkedFromFeedback(feedback);
+  const duplicateMatchStrategy =
+    resolveDuplicateMatchStrategyFromListing(listing) ??
+    resolveDuplicateMatchStrategyFromFeedback(feedback);
+  const linkedCopy =
+    duplicateMatchStrategy === 'existing-linked-record'
+      ? {
+          title: 'Tradera existing linked listing reused',
+          emptyDescription:
+            'This product was already linked to a Tradera listing record. The modal reused that linked record instead of creating a new listing.',
+          contentDescription:
+            'This product was already linked to a Tradera listing record. Open the linked Tradera item directly from here.',
+        }
+      : duplicateMatchStrategy === 'exact-title-single-candidate'
+        ? {
+            title: 'Tradera relist matched an existing listing',
+            emptyDescription:
+              'Relist found one exact-title Tradera candidate and linked it instead of creating a new listing. Use the link below to open the matched Tradera item.',
+            contentDescription:
+              'Relist linked the single exact-title Tradera match instead of creating a new listing. Open the matched Tradera item directly from here.',
+          }
+        : {
+            title: 'Tradera existing listing linked',
+            emptyDescription:
+              'The product matched an existing Tradera listing and has now been linked in this modal. Use the link below to open the live Tradera item.',
+            contentDescription:
+              'The product is now linked to an existing Tradera listing. Open the live Tradera item directly from here.',
+          };
+  const title = duplicateLinked ? linkedCopy.title : 'Tradera quick export completed';
+  const description = duplicateLinked
+    ? mode === 'empty'
+      ? linkedCopy.emptyDescription
+      : linkedCopy.contentDescription
+    : mode === 'empty'
+      ? 'The product was listed on Tradera, but the listing row is still catching up in this modal. Use the link below to open the created Tradera item now.'
+      : 'The product is now linked to the created Tradera listing. Open the live Tradera item directly from here.';
   const completedLabel = duplicateLinked ? 'Linked' : 'Completed';
 
   if (variant === 'full') {
@@ -72,14 +112,32 @@ export function TraderaQuickExportSuccessBanner({
         {completedAt ? (
           <div className='text-center text-[11px] text-emerald-100/75'>{completedLabel}: {completedAt}</div>
         ) : null}
-        {listingUrl ? (
-          <div className='flex justify-center'>
+        {(listingUrl || canSync) ? (
+          <div className='flex flex-wrap justify-center gap-2'>
+            {canSync && localListingId ? (
+              <Button
+                type='button'
+                variant='outline'
+                size='default'
+                onClick={(): void => {
+                  void handleSyncTradera(localListingId, {
+                    integrationId: syncIntegrationId,
+                    connectionId: syncConnectionId,
+                  });
+                }}
+                disabled={isSyncing}
+              >
+                {isSyncing ? 'Queuing sync...' : 'Sync with Tradera'}
+              </Button>
+            ) : null}
+            {listingUrl ? (
             <ExternalLink
               href={listingUrl}
               className='rounded-md border border-emerald-400/40 bg-emerald-500/15 px-3 py-2 text-sm font-medium text-emerald-100 hover:bg-emerald-500/20 hover:text-white'
             >
               Open listing
             </ExternalLink>
+            ) : null}
           </div>
         ) : null}
       </Card>
@@ -112,13 +170,33 @@ export function TraderaQuickExportSuccessBanner({
           )}
           {completedAt ? <div className='mt-2 text-[11px] text-emerald-100/75'>{completedLabel}: {completedAt}</div> : null}
         </div>
-        {listingUrl ? (
-          <ExternalLink
-            href={listingUrl}
-            className='rounded-md border border-emerald-400/40 bg-emerald-500/15 px-3 py-2 text-sm font-medium text-emerald-100 hover:bg-emerald-500/20 hover:text-white'
-          >
-            Open listing
-          </ExternalLink>
+        {(listingUrl || canSync) ? (
+          <div className='flex flex-wrap gap-2'>
+            {canSync && localListingId ? (
+              <Button
+                type='button'
+                variant='outline'
+                size='sm'
+                onClick={(): void => {
+                  void handleSyncTradera(localListingId, {
+                    integrationId: syncIntegrationId,
+                    connectionId: syncConnectionId,
+                  });
+                }}
+                disabled={isSyncing}
+              >
+                {isSyncing ? 'Queuing sync...' : 'Sync with Tradera'}
+              </Button>
+            ) : null}
+            {listingUrl ? (
+              <ExternalLink
+                href={listingUrl}
+                className='rounded-md border border-emerald-400/40 bg-emerald-500/15 px-3 py-2 text-sm font-medium text-emerald-100 hover:bg-emerald-500/20 hover:text-white'
+              >
+                Open listing
+              </ExternalLink>
+            ) : null}
+          </div>
         ) : null}
       </div>
     </Card>

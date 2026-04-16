@@ -12,6 +12,7 @@ import type {
 import {
   AI_PATHS_CONFIG_KEY_PREFIX,
   AI_PATHS_INDEX_KEY,
+  AI_PATHS_TRIGGER_BUTTONS_KEY,
 } from '@/features/ai/ai-paths/server/settings-store.constants';
 import type { PathConfig } from '@/shared/contracts/ai-paths';
 import { evaluateRunPreflight } from '@/shared/lib/ai-paths/core/utils/run-preflight';
@@ -278,6 +279,35 @@ const buildBrokenBlwoStarterRefreshRecords = (): AiPathsSettingRecord[] => [
   },
 ];
 
+const buildBrokenRecoverableTranslationDefaultPathRecords = (): AiPathsSettingRecord[] => [
+  {
+    key: AI_PATHS_INDEX_KEY,
+    value: JSON.stringify([
+      {
+        id: 'path_96708d',
+        name: 'Translation EN->PL Description + Parameters',
+        createdAt: '2026-03-03T10:00:00.000Z',
+        updatedAt: '2026-03-03T10:00:00.000Z',
+      },
+    ]),
+  },
+  {
+    key: `${AI_PATHS_CONFIG_KEY_PREFIX}path_96708d`,
+    value: '{"broken":',
+  },
+];
+
+const buildEmptyRecoveryRecords = (): AiPathsSettingRecord[] => [
+  {
+    key: AI_PATHS_INDEX_KEY,
+    value: '[]',
+  },
+  {
+    key: AI_PATHS_TRIGGER_BUTTONS_KEY,
+    value: '[]',
+  },
+];
+
 describe('AI Paths maintenance forward-only action ids', () => {
   it('does not surface removed runtime migration action ids', () => {
     const report = buildAiPathsMaintenanceReport(buildSettingsRecords());
@@ -319,7 +349,58 @@ describe('AI Paths maintenance forward-only action ids', () => {
     );
   });
 
-  it('refreshes outdated starter-derived translation configs to the current runnable starter graph', () => {
+  it('surfaces static recovery restore when canonical workflows are missing from settings', () => {
+    const report = buildAiPathsMaintenanceReport(buildEmptyRecoveryRecords());
+
+    expect(report.actions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'restore_static_recovery_bundle',
+          status: 'pending',
+        }),
+      ])
+    );
+    expect(report.actions.some((action) => action.id === 'ensure_starter_workflow_defaults')).toBe(
+      false
+    );
+  });
+
+  it('restores canonical AI Paths and trigger buttons from the static recovery bundle', () => {
+    const result = runMaintenanceAction({
+      actionId: 'restore_static_recovery_bundle',
+      records: buildEmptyRecoveryRecords(),
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.affectedCount).toBeGreaterThan(0);
+    expect(
+      result.nextRecords.some(
+        (record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_descv3lite`
+      )
+    ).toBe(true);
+    expect(
+      result.nextRecords.some((record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_96708d`)
+    ).toBe(true);
+    expect(
+      result.nextRecords.some(
+        (record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_marketplace_copy_debrand_v1`
+      )
+    ).toBe(true);
+
+    const triggerButtonsRecord = result.nextRecords.find(
+      (record) => record.key === AI_PATHS_TRIGGER_BUTTONS_KEY
+    );
+    if (!triggerButtonsRecord) throw new Error('Expected trigger buttons record');
+    const triggerButtons = JSON.parse(triggerButtonsRecord.value) as Array<Record<string, unknown>>;
+    expect(
+      triggerButtons.some((button) => button['id'] === '4c07d35b-ea92-4d1f-b86b-c586359f68de')
+    ).toBe(true);
+    expect(
+      triggerButtons.some((button) => button['id'] === 'bdf0f5d2-a300-4f79-991c-2b5f1e0ef3a4')
+    ).toBe(true);
+  });
+
+  it('refreshes outdated starter-derived translation configs through canonical graph replacement', () => {
     const result = runMaintenanceAction({
       actionId: 'refresh_starter_workflow_configs',
       records: buildStarterRefreshRecords(),
@@ -342,11 +423,10 @@ describe('AI Paths maintenance forward-only action ids', () => {
       mode: 'full',
     });
 
-    expect(parsed.nodes.some((node) => node.type === 'trigger')).toBe(true);
     expect(parsed.extensions?.['aiPathsStarter']).toEqual(
       expect.objectContaining({
         templateId: 'starter_translation_en_pl',
-        templateVersion: 6,
+        templateVersion: 7,
       })
     );
     const databaseNode = parsed.nodes.find(
@@ -355,7 +435,15 @@ describe('AI Paths maintenance forward-only action ids', () => {
     expect(databaseNode?.config?.database).toEqual(
       expect.objectContaining({
         updatePayloadMode: 'custom',
-        updateTemplate: expect.stringContaining('{{result.parameters}}'),
+        updateTemplate: expect.stringContaining('{{value.description_pl}}'),
+        skipEmpty: true,
+        trimStrings: true,
+        localizedParameterMerge: expect.objectContaining({
+          enabled: true,
+          targetPath: 'parameters',
+          languageCode: 'pl',
+          requireFullCoverage: false,
+        }),
         mappings: expect.arrayContaining([
           expect.objectContaining({
             targetPath: 'description_pl',
@@ -371,7 +459,8 @@ describe('AI Paths maintenance forward-only action ids', () => {
       })
     );
     expect(report.shouldBlock).toBe(false);
-    expect(report.dependencyReport?.errors ?? 0).toBe(0);
+    expect(report.blockReason).toBeNull();
+    expect(report.compileReport.errors).toBe(0);
   });
 
   it('repairs broken seeded BLWo starter configs through the generic refresh action', () => {
@@ -407,6 +496,31 @@ describe('AI Paths maintenance forward-only action ids', () => {
     expect(parsed.extensions?.['aiPathsStarter']).toEqual(
       expect.objectContaining({
         templateId: 'starter_base_export_blwo',
+      })
+    );
+  });
+
+  it('repairs broken recoverable translation default-path configs through the generic refresh action', () => {
+    const result = runMaintenanceAction({
+      actionId: 'refresh_starter_workflow_configs',
+      records: buildBrokenRecoverableTranslationDefaultPathRecords(),
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.affectedCount).toBe(1);
+
+    const configRecord = result.nextRecords.find(
+      (record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_96708d`
+    );
+    if (!configRecord) throw new Error('Expected repaired translation config record');
+
+    const parsed = JSON.parse(configRecord.value) as PathConfig;
+    expect(parsed.id).toBe('path_96708d');
+    expect(parsed.nodes.some((node) => node.type === 'trigger')).toBe(true);
+    expect(parsed.extensions?.['aiPathsStarter']).toEqual(
+      expect.objectContaining({
+        templateId: 'starter_translation_en_pl',
+        seededDefault: false,
       })
     );
   });

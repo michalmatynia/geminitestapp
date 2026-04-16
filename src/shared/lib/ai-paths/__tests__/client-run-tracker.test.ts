@@ -185,6 +185,12 @@ describe('client-run-tracker', () => {
       entityId: 'product-1',
       entityType: 'product',
     });
+    expect(snapshots.at(-1)?.run).toMatchObject({
+      id: 'run-1',
+      status: 'completed',
+      entityId: 'product-1',
+      entityType: 'product',
+    });
 
     unsubscribe();
     expect(eventSource.close).toHaveBeenCalledTimes(1);
@@ -630,10 +636,6 @@ describe('client-run-tracker', () => {
   it('finalizes terminal stream updates without surfacing transient detail timeouts', async () => {
     const eventSource = new MockEventSource();
     streamAiPathRunMock.mockReturnValue(eventSource as unknown as EventSource);
-    getAiPathRunMock.mockResolvedValue({
-      ok: false,
-      error: 'Request timeout after 15000ms',
-    });
 
     const snapshots: TrackedAiPathRunSnapshot[] = [];
     subscribeToTrackedAiPathRun('run-5', (snapshot: TrackedAiPathRunSnapshot) => {
@@ -657,19 +659,54 @@ describe('client-run-tracker', () => {
     });
     await flushAsync();
 
-    expect(getAiPathRunMock).toHaveBeenCalledWith(
-      'run-5',
-      expect.objectContaining({
-        cache: 'no-store',
-        timeoutMs: 60_000,
-      })
-    );
+    expect(getAiPathRunMock).not.toHaveBeenCalled();
     expect(snapshots.at(-1)).toMatchObject({
       runId: 'run-5',
       status: 'completed',
       trackingState: 'stopped',
       errorMessage: null,
       finishedAt: '2026-03-09T12:00:12.000Z',
+    });
+    expect(snapshots.at(-1)?.run).toMatchObject({
+      id: 'run-5',
+      status: 'completed',
+    });
+  });
+
+  it('finalizes failed terminal stream updates immediately when the stream includes an error message', async () => {
+    const eventSource = new MockEventSource();
+    streamAiPathRunMock.mockReturnValue(eventSource as unknown as EventSource);
+
+    const snapshots: TrackedAiPathRunSnapshot[] = [];
+    subscribeToTrackedAiPathRun('run-6', (snapshot: TrackedAiPathRunSnapshot) => {
+      snapshots.push(snapshot);
+    });
+
+    act(() => {
+      eventSource.emit(
+        'run',
+        new MessageEvent('message', {
+          data: JSON.stringify(
+            createRunRecord({
+              id: 'run-6',
+              status: 'failed',
+              updatedAt: '2026-03-09T12:00:15.000Z',
+              finishedAt: '2026-03-09T12:00:15.000Z',
+              errorMessage: 'Prompt evaluation failed.',
+            })
+          ),
+        })
+      );
+    });
+    await flushAsync();
+
+    expect(getAiPathRunMock).not.toHaveBeenCalled();
+    expect(snapshots.at(-1)).toMatchObject({
+      runId: 'run-6',
+      status: 'failed',
+      trackingState: 'stopped',
+      errorMessage: 'Prompt evaluation failed.',
+      finishedAt: '2026-03-09T12:00:15.000Z',
     });
   });
 });

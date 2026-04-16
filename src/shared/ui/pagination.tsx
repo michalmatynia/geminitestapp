@@ -1,7 +1,7 @@
 'use client';
 
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
-import React, { useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { PaginationContextValue, PaginationProps } from '@/shared/contracts/ui/controls';
@@ -9,6 +9,7 @@ import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { cn } from '@/shared/utils/ui-utils';
 
 import { Button } from './button';
+import { Input } from './input';
 import { Label } from './label';
 import { SelectSimple } from './select-simple';
 import { UI_STACK_RELAXED_CLASSNAME } from './layout';
@@ -92,8 +93,128 @@ function PaginationPageSize(): React.JSX.Element | null {
 }
 
 function PaginationControls(): React.JSX.Element {
-  const { page, onPageChange, isLoading, totalPages, variant } = usePaginationContext();
+  const { page, onPageChange, isLoading, totalPages, variant, showPageJump } =
+    usePaginationContext();
   const isCompact = variant === 'compact';
+  const [draftPage, setDraftPage] = useState(String(page));
+  const maxPage = Math.max(1, totalPages);
+
+  useEffect(() => {
+    setDraftPage(String(page));
+  }, [page]);
+
+  const commitDraftPage = useCallback((): void => {
+    if (isLoading) {
+      setDraftPage(String(page));
+      return;
+    }
+
+    const normalizedDraft = draftPage.trim();
+    if (normalizedDraft.length === 0) {
+      setDraftPage(String(page));
+      return;
+    }
+
+    const parsedPage = Number.parseInt(normalizedDraft, 10);
+    if (!Number.isFinite(parsedPage)) {
+      setDraftPage(String(page));
+      return;
+    }
+
+    const nextPage = Math.min(Math.max(parsedPage, 1), maxPage);
+    setDraftPage(String(nextPage));
+    if (nextPage !== page) {
+      onPageChange(nextPage);
+    }
+  }, [draftPage, isLoading, maxPage, onPageChange, page]);
+
+  const pageIndicator = showPageJump ? (
+    isCompact ? (
+      <div className='flex items-center gap-1 text-xs font-medium text-gray-400'>
+        <Input
+          type='text'
+          inputMode='numeric'
+          pattern='[0-9]*'
+          value={draftPage}
+          onChange={(event) => {
+            const nextDraftPage = event.target.value.replace(/\D/g, '');
+            setDraftPage(nextDraftPage);
+          }}
+          onBlur={commitDraftPage}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              event.preventDefault();
+              commitDraftPage();
+            }
+            if (event.key === 'Escape') {
+              event.preventDefault();
+              setDraftPage(String(page));
+            }
+          }}
+          onFocus={(event) => {
+            event.currentTarget.select();
+          }}
+          disabled={isLoading || maxPage <= 1}
+          size='sm'
+          variant='subtle'
+          className='h-8 w-14 text-center'
+          aria-label='Jump to page'
+          title='Jump to page'
+        />
+        <span>/ {maxPage}</span>
+      </div>
+    ) : (
+      <div className='flex items-center gap-2 text-xs font-medium text-gray-400'>
+        <span>Page</span>
+        <Input
+          type='text'
+          inputMode='numeric'
+          pattern='[0-9]*'
+          value={draftPage}
+          onChange={(event) => {
+            const nextDraftPage = event.target.value.replace(/\D/g, '');
+            setDraftPage(nextDraftPage);
+          }}
+          onBlur={commitDraftPage}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              event.preventDefault();
+              commitDraftPage();
+            }
+            if (event.key === 'Escape') {
+              event.preventDefault();
+              setDraftPage(String(page));
+            }
+          }}
+          onFocus={(event) => {
+            event.currentTarget.select();
+          }}
+          disabled={isLoading || maxPage <= 1}
+          size='sm'
+          variant='subtle'
+          className='h-8 w-16 text-center'
+          aria-label='Jump to page'
+          title='Jump to page'
+        />
+        <span>
+          of <span className='font-bold text-white'>{maxPage}</span>
+        </span>
+      </div>
+    )
+  ) : (
+    <div className='text-xs font-medium text-gray-400 min-w-[80px] text-center'>
+      {isCompact ? (
+        <span>
+          {page} / {maxPage}
+        </span>
+      ) : (
+        <>
+          Page <span className='font-bold text-white'>{page}</span> of{' '}
+          <span className='font-bold text-white'>{maxPage}</span>
+        </>
+      )}
+    </div>
+  );
 
   return (
     <div className='flex items-center gap-2'>
@@ -108,24 +229,13 @@ function PaginationControls(): React.JSX.Element {
         <ChevronLeft className='h-4 w-4' aria-hidden='true' />
       </Button>
 
-      <div className='text-xs font-medium text-gray-400 min-w-[80px] text-center'>
-        {isCompact ? (
-          <span>
-            {page} / {totalPages}
-          </span>
-        ) : (
-          <>
-            Page <span className='font-bold text-white'>{page}</span> of{' '}
-            <span className='font-bold text-white'>{totalPages}</span>
-          </>
-        )}
-      </div>
+      {pageIndicator}
 
       <Button
         variant='outline'
         size='sm'
-        onClick={() => onPageChange(Math.min(totalPages, page + 1))}
-        disabled={page >= totalPages || isLoading}
+        onClick={() => onPageChange(Math.min(maxPage, page + 1))}
+        disabled={page >= maxPage || isLoading}
         className='h-8 w-8 p-0'
         aria-label='Next page'
         title={'Next page'}>
@@ -153,11 +263,12 @@ export function Pagination(props: PaginationProps): React.JSX.Element | null {
     isLoading = false,
     className,
     showLabels = true,
+    showPageJump = false,
     variant = 'default',
   } = props;
 
   const calculatedTotalPages = totalCount && pageSize ? Math.ceil(totalCount / pageSize) : 0;
-  const totalPages = propTotalPages ?? calculatedTotalPages;
+  const totalPages = Math.max(1, propTotalPages ?? calculatedTotalPages);
 
   const startItem = totalCount && pageSize ? (page - 1) * pageSize + 1 : 0;
   const endItem = totalCount && pageSize ? Math.min(page * pageSize, totalCount) : 0;
@@ -175,6 +286,7 @@ export function Pagination(props: PaginationProps): React.JSX.Element | null {
       showInfo,
       isLoading,
       showLabels,
+      showPageJump,
       variant,
       startItem,
       endItem,
@@ -191,6 +303,7 @@ export function Pagination(props: PaginationProps): React.JSX.Element | null {
       showInfo,
       isLoading,
       showLabels,
+      showPageJump,
       variant,
       startItem,
       endItem,

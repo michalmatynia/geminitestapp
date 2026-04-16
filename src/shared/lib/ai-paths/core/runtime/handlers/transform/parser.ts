@@ -92,6 +92,21 @@ const isEmptyParserValue = (value: unknown): boolean =>
 
 const fallbackParserValue = (source: ParserSourceRecord, key: string): unknown => {
   const normalized = key.trim().toLowerCase();
+  if (normalized === 'catalogid') {
+    if (typeof source['catalogId'] === 'string' && source['catalogId'].trim().length > 0) {
+      return source['catalogId'];
+    }
+    if (Array.isArray(source['catalogs'])) {
+      for (const entry of source['catalogs']) {
+        if (!entry || typeof entry !== 'object') continue;
+        const catalogId = (entry as Record<string, unknown>)['catalogId'];
+        if (typeof catalogId === 'string' && catalogId.trim().length > 0) {
+          return catalogId;
+        }
+      }
+    }
+    return undefined;
+  }
   if (normalized === 'title' || normalized === 'name') {
     return (
       source['title'] ??
@@ -184,8 +199,21 @@ const normalizeParserBundle = (source: ParserSourceRecord): ParserSourceRecord =
   return bundle;
 };
 
+const preserveBundleSourceFields = (
+  source: ParserSourceRecord,
+  parsed: ParserSourceRecord
+): ParserSourceRecord => {
+  const bundle = { ...parsed };
+
+  if (source['categoryContext'] !== undefined && bundle['categoryContext'] === undefined) {
+    bundle['categoryContext'] = source['categoryContext'];
+  }
+
+  return bundle;
+};
+
 const hasParserMappings = (mappings: Record<string, string | undefined>): boolean =>
-  Object.keys(mappings).some((key: string): boolean => !!key.trim());
+  Object.keys(mappings).some((key: string): boolean => Boolean(key.trim()));
 
 const buildBundleParserResult = (args: {
   source: ParserSourceRecord;
@@ -199,12 +227,16 @@ const buildBundleParserResult = (args: {
     return { bundle: fullBundle, ...declaredOutputs };
   }
 
+  const preservedBundle = preserveBundleSourceFields(
+    args.source,
+    args.parsed as ParserSourceRecord
+  );
   const extraOutputs = buildDeclaredOutputs(
     args.outputs,
-    args.parsed as ParserSourceRecord,
+    preservedBundle,
     args.source
   );
-  return { bundle: args.parsed, ...extraOutputs };
+  return { bundle: preservedBundle, ...extraOutputs };
 };
 
 export const handleParser: NodeHandler = async ({

@@ -24,6 +24,12 @@ vi.mock('next/navigation', () => ({
   useSearchParams: vi.fn(() => new URLSearchParams()),
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  useRouter: vi.fn(() => ({ push: routerPushMock })),
+  usePathname: vi.fn(() => '/admin/products'),
+  useSearchParams: vi.fn(() => new URLSearchParams()),
+}));
+
 vi.mock('next/link', () => ({
   default: ({
     children,

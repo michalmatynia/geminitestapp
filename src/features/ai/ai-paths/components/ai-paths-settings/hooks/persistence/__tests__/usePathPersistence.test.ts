@@ -12,6 +12,10 @@ const mockState = vi.hoisted(() => ({
   },
   runtimeActions: {
     setLastError: vi.fn(),
+    setLastRunAt: vi.fn(),
+    setParserSamples: vi.fn(),
+    setRuntimeState: vi.fn(),
+    setUpdaterSamples: vi.fn(),
   },
   selectionActions: {
     selectNode: vi.fn(),
@@ -22,7 +26,10 @@ const mockState = vi.hoisted(() => ({
     sanitized: true,
   })),
   compileGraph: vi.fn(),
+  normalizeParserSamples: vi.fn((samples: unknown) => samples ?? {}),
   normalizeNodes: vi.fn((nodes: unknown) => nodes),
+  normalizeUpdaterSamples: vi.fn((samples: unknown) => samples ?? {}),
+  parseRuntimeState: vi.fn((state: unknown) => state),
   safeParseJson: vi.fn((value: string) => ({ value: JSON.parse(value) })),
   stableStringify: vi.fn((value: unknown) => JSON.stringify(value)),
   sanitizeEdges: vi.fn((_nodes: unknown, edges: unknown) => edges),
@@ -45,9 +52,15 @@ const mockState = vi.hoisted(() => ({
   logClientError: vi.fn(), logClientCatch: vi.fn(),
 }));
 
-vi.mock('@/features/ai/ai-paths/components/AiPathsSettingsUtils', () => ({
+vi.mock('@/shared/lib/ai-paths/core/utils/path-config-sanitization', () => ({
   buildPersistedRuntimeState: (...args: unknown[]) => mockState.buildPersistedRuntimeState(...args),
   sanitizePathConfig: (...args: unknown[]) => mockState.sanitizePathConfig(...args),
+}));
+
+vi.mock('@/shared/lib/ai-paths/core/utils/runtime-state', () => ({
+  normalizeParserSamples: (...args: unknown[]) => mockState.normalizeParserSamples(...args),
+  normalizeUpdaterSamples: (...args: unknown[]) => mockState.normalizeUpdaterSamples(...args),
+  parseRuntimeState: (...args: unknown[]) => mockState.parseRuntimeState(...args),
 }));
 
 vi.mock('@/features/ai/ai-paths/context/GraphContext', () => ({
@@ -62,12 +75,18 @@ vi.mock('@/features/ai/ai-paths/context/SelectionContext', () => ({
   useSelectionActions: () => mockState.selectionActions,
 }));
 
-vi.mock('@/shared/lib/ai-paths', () => ({
+vi.mock('@/shared/lib/ai-paths/core/constants', () => ({
   PATH_CONFIG_PREFIX: 'path-config:',
   PATH_INDEX_KEY: 'path-index',
   STORAGE_VERSION: 7,
-  compileGraph: (...args: unknown[]) => mockState.compileGraph(...args),
+}));
+
+vi.mock('@/shared/lib/ai-paths/core/normalization', () => ({
   normalizeNodes: (...args: unknown[]) => mockState.normalizeNodes(...args),
+}));
+
+vi.mock('@/shared/lib/ai-paths/core/utils', () => ({
+  compileGraph: (...args: unknown[]) => mockState.compileGraph(...args),
   safeParseJson: (...args: unknown[]) => mockState.safeParseJson(...args),
   stableStringify: (...args: unknown[]) => mockState.stableStringify(...args),
   sanitizeEdges: (...args: unknown[]) => mockState.sanitizeEdges(...args),
@@ -180,6 +199,10 @@ describe('usePathPersistence', () => {
     mockState.graphActions.setPathConfigs.mockReset();
     mockState.graphActions.setPaths.mockReset();
     mockState.runtimeActions.setLastError.mockReset();
+    mockState.runtimeActions.setLastRunAt.mockReset();
+    mockState.runtimeActions.setParserSamples.mockReset();
+    mockState.runtimeActions.setRuntimeState.mockReset();
+    mockState.runtimeActions.setUpdaterSamples.mockReset();
     mockState.selectionActions.selectNode.mockReset();
     mockState.buildPersistedRuntimeState.mockReset().mockReturnValue({ persisted: true });
     mockState.sanitizePathConfig.mockReset().mockImplementation((config: Record<string, unknown>) => ({
@@ -187,7 +210,10 @@ describe('usePathPersistence', () => {
       sanitized: true,
     }));
     mockState.compileGraph.mockReset().mockReturnValue({ errors: 0, warnings: 0, findings: [] });
+    mockState.normalizeParserSamples.mockReset().mockImplementation((samples: unknown) => samples ?? {});
     mockState.normalizeNodes.mockReset().mockImplementation((nodes: unknown) => nodes);
+    mockState.normalizeUpdaterSamples.mockReset().mockImplementation((samples: unknown) => samples ?? {});
+    mockState.parseRuntimeState.mockReset().mockImplementation((state: unknown) => state);
     mockState.safeParseJson.mockReset().mockImplementation((value: string) => ({ value: JSON.parse(value) }));
     mockState.stableStringify.mockReset().mockImplementation((value: unknown) => JSON.stringify(value));
     mockState.sanitizeEdges.mockReset().mockImplementation((_nodes: unknown, edges: unknown) => edges);
@@ -406,5 +432,66 @@ describe('usePathPersistence', () => {
     });
     expect(args.toast).toHaveBeenNthCalledWith(5, 'AI Paths saved.', { variant: 'success' });
     expect(result.current.lastSavedSnapshotRef.current).toContain('"activePathId":"path-1"');
+  });
+
+  it('persists node identities as provided without repair-time remapping', async () => {
+    const args = createArgs({
+      selectedNodeId: 'legacy-node-1',
+      nodes: [
+        { id: 'legacy-node-1', title: 'Node 1', type: 'viewer', position: { x: 0, y: 0 } },
+        { id: 'legacy-node-2', title: 'Node 2', type: 'viewer', position: { x: 1, y: 1 } },
+      ],
+      parserSamples: { 'legacy-node-1': { json: '{"ok":true}' } },
+      updaterSamples: { 'legacy-node-2': { json: '{"ok":false}' } },
+      runtimeState: {
+        status: 'idle',
+        inputs: { 'legacy-node-1': { value: 1 } },
+        outputs: { 'legacy-node-2': { value: 2 } },
+      },
+    });
+    const core = createCore();
+
+    const { result } = renderHook(() => usePathPersistence(args, core));
+
+    const saved = await act(async () => await result.current.persistPathConfig());
+
+    expect(saved).toBe(true);
+    expect(mockState.sanitizePathConfig).toHaveBeenCalledWith(
+      expect.objectContaining({
+        nodes: args.nodes,
+        parserSamples: args.parserSamples,
+        updaterSamples: args.updaterSamples,
+        uiState: {
+          selectedNodeId: 'legacy-node-1',
+        },
+      })
+    );
+    expect(mockState.updateAiPathsSettingsBulk).toHaveBeenCalledWith([
+      expect.objectContaining({ key: 'path-index' }),
+      expect.objectContaining({
+        key: 'path-config:path-1',
+        value: expect.stringContaining('legacy-node-1'),
+      }),
+    ]);
+    expect(mockState.graphActions.setNodes).toHaveBeenCalledWith(args.nodes);
+    expect(mockState.runtimeActions.setParserSamples).toHaveBeenCalledWith(
+      args.parserSamples
+    );
+    expect(mockState.runtimeActions.setUpdaterSamples).toHaveBeenCalledWith(
+      args.updaterSamples
+    );
+    expect(mockState.runtimeActions.setRuntimeState).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 'idle',
+        inputs: args.runtimeState.inputs,
+        outputs: args.runtimeState.outputs,
+      })
+    );
+    expect(mockState.runtimeActions.setLastRunAt).toHaveBeenCalledWith(
+      args.lastRunAt
+    );
+    expect(mockState.selectionActions.selectNode).toHaveBeenCalledWith(
+      'legacy-node-1'
+    );
   });
 });

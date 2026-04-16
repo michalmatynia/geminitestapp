@@ -216,6 +216,9 @@ describe('AdminKangurSettingsPage', () => {
           dailyMessageLimit: 12,
           guestIntroMode: 'first_visit',
           homeOnboardingMode: 'first_visit',
+          contextRegistryMaxNodes: 24,
+          contextRegistryDepth: 1,
+          knowledgeGraphEnabled: true,
         });
       }
       if (key === KANGUR_PARENT_VERIFICATION_SETTINGS_KEY) {
@@ -339,10 +342,12 @@ describe('AdminKangurSettingsPage', () => {
       fireEvent.change(screen.getByLabelText(/dzienny limit wiadomości/i), {
         target: { value: '20' },
       });
-      fireEvent.click(screen.getByLabelText(/anonimowy onboarding ai tutora/i));
-      fireEvent.click(screen.getByRole('option', { name: /Każde wejście/i }));
-      fireEvent.click(screen.getByLabelText(/onboarding pierwszej strony/i));
-      fireEvent.click(screen.getAllByRole('option', { name: /Tylko ręcznie/i })[0]!);
+      fireEvent.change(screen.getByLabelText(/anonimowy onboarding ai tutora/i), {
+        target: { value: 'every_visit' },
+      });
+      fireEvent.change(screen.getByLabelText(/onboarding pierwszej strony/i), {
+        target: { value: 'off' },
+      });
       fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
 
       await waitFor(() =>

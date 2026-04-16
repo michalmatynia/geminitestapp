@@ -46,7 +46,7 @@ vi.mock('../hooks/useClusterPresetsActions', () => ({
   }),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   Button: ({
     children,
     ...props
@@ -66,6 +66,9 @@ vi.mock('@/shared/ui', () => ({
     <textarea {...props} />
   ),
   Card: ({ children }: { children: React.ReactNode }): React.JSX.Element => <div>{children}</div>,
+}));
+
+vi.mock('@/shared/ui/templates.public', () => ({
   SimpleSettingsList: ({
     items,
     emptyMessage,

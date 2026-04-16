@@ -1,9 +1,9 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'nextjs-toploader/app';
+import { useEffect, useMemo, useState, startTransition } from 'react';
 
-import { useStudioProjects } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
+import { useStudioProjects } from '@/features/ai/public';
 import { useProductSettings } from '@/features/products/hooks/useProductSettings';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { type ProductStudioSequenceGenerationMode } from '@/shared/contracts/products';
@@ -269,7 +269,7 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
     } else {
       params.set('tab', 'projects');
     }
-    router.push(`/admin/image-studio?${params.toString()}`);
+    startTransition(() => { router.push(`/admin/image-studio?${params.toString()}`); });
   };
 
   return (

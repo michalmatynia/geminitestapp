@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { getAsset3DRepository } from '@/features/viewer3d/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';

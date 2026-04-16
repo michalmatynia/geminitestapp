@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, type NextResponse } from 'next/server';
 
 import { AppError } from '@/shared/errors/app-error';
 

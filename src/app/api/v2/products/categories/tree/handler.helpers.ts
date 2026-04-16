@@ -1,14 +1,12 @@
-import { z } from 'zod';
-
 import { badRequestError } from '@/shared/errors/app-error';
-import { optionalBooleanQuerySchema } from '@/shared/lib/api/query-schema';
-import { catalogIdQuerySchema } from '@/shared/validations/product-metadata-api-schemas';
+import {
+  catalogIdWithFreshQuerySchema,
+  type CatalogIdWithFreshQuery,
+} from '@/shared/validations/product-metadata-api-schemas';
 
-export const querySchema = catalogIdQuerySchema.extend({
-  fresh: optionalBooleanQuerySchema().default(false),
-});
+export const querySchema = catalogIdWithFreshQuerySchema;
 
-export type ProductCategoryTreeQuery = z.infer<typeof querySchema>;
+export type ProductCategoryTreeQuery = CatalogIdWithFreshQuery;
 
 export const requireProductCategoryTreeCatalogId = (
   query: ProductCategoryTreeQuery | undefined

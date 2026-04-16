@@ -13,9 +13,12 @@ export const isTraderaBrowserAuthRequiredMessage = (
   if (!normalized) return false;
   return (
     normalized.includes('auth_required') ||
+    normalized.includes('auth_state_timeout') ||
     normalized.includes('manual verification') ||
     normalized.includes('captcha') ||
     normalized.includes('login requires') ||
+    normalized.includes('session validation did not resolve') ||
+    normalized.includes('session check did not resolve') ||
     normalized.includes('session expired') ||
     normalized.includes('session has expired') ||
     normalized.includes('session is missing or expired') ||
@@ -43,46 +46,57 @@ const isTestConnectionResponse = (value: unknown): value is TestConnectionRespon
 const describeManualVerificationFailure = (
   response: TestConnectionResponse
 ): string | null => {
-  const relevantStep =
-    response.steps.find(
-      (step) =>
-        step.step === 'Captcha required' &&
-        (step.status === 'pending' || step.status === 'failed') &&
-        step.detail?.trim()
-    ) ??
-    response.steps.find(
-      (step) =>
-        (step.status === 'failed' || step.status === 'pending') &&
-        step.detail?.trim()
-    );
+  // First, look for any explicit failure from the end (most recent)
+  const reversedSteps = [...response.steps].reverse();
+  const failedStep = reversedSteps.find(
+    (step) => step.status === 'failed' && step.detail?.trim()
+  );
 
-  if (!relevantStep?.detail?.trim()) {
-    return null;
+  if (failedStep) {
+    const detail = failedStep.detail!.trim();
+    if (failedStep.step === 'Captcha required' || detail.toLowerCase().includes('captcha')) {
+      return 'Tradera login requires manual verification. Solve the captcha in the opened browser window and retry.';
+    }
+    return detail;
   }
 
-  const detail = relevantStep.detail.trim();
-  if (relevantStep.step === 'Captcha required' || detail.toLowerCase().includes('captcha')) {
-    return 'Tradera login requires manual verification. Solve the captcha in the opened browser window and retry.';
+  // Fallback to any pending step that might be holding us up (also from the end)
+  const pendingStep = reversedSteps.find(
+    (step) => step.status === 'pending' && step.detail?.trim()
+  );
+
+  if (pendingStep) {
+    const detail = pendingStep.detail!.trim();
+    if (pendingStep.step === 'Captcha required' || detail.toLowerCase().includes('captcha')) {
+      return 'Tradera login requires manual verification. Solve the captcha in the opened browser window and retry.';
+    }
+    return detail;
   }
 
-  return detail;
+  return null;
 };
 
-export const ensureTraderaBrowserSession = async (params: {
+const runTraderaBrowserSessionRequest = async ({
+  integrationId,
+  connectionId,
+  manualTimeoutMs,
+  mode,
+}: {
   integrationId: string;
   connectionId: string;
   manualTimeoutMs?: number;
+  mode: 'manual' | 'manual_session_refresh';
 }): Promise<{ response: TestConnectionResponse; savedSession: boolean }> => {
   try {
     const response = await api.post<TestConnectionResponse>(
-      `/api/v2/integrations/${params.integrationId}/connections/${params.connectionId}/test`,
+      `/api/v2/integrations/${integrationId}/connections/${connectionId}/test`,
       {
-        mode: 'manual',
-        manualTimeoutMs: params.manualTimeoutMs ?? TRADERA_BROWSER_MANUAL_TIMEOUT_MS,
+        mode,
+        manualTimeoutMs: manualTimeoutMs ?? TRADERA_BROWSER_MANUAL_TIMEOUT_MS,
       },
       {
         timeout: Math.max(
-          params.manualTimeoutMs ?? TRADERA_BROWSER_MANUAL_TIMEOUT_MS,
+          manualTimeoutMs ?? TRADERA_BROWSER_MANUAL_TIMEOUT_MS,
           TRADERA_BROWSER_MANUAL_REQUEST_TIMEOUT_MS
         ),
       }
@@ -102,6 +116,30 @@ export const ensureTraderaBrowserSession = async (params: {
     throw error;
   }
 };
+
+export const ensureTraderaBrowserSession = async (params: {
+  integrationId: string;
+  connectionId: string;
+  manualTimeoutMs?: number;
+}): Promise<{ response: TestConnectionResponse; savedSession: boolean }> =>
+  runTraderaBrowserSessionRequest({
+    integrationId: params.integrationId,
+    connectionId: params.connectionId,
+    manualTimeoutMs: params.manualTimeoutMs,
+    mode: 'manual',
+  });
+
+export const refreshTraderaBrowserSession = async (params: {
+  integrationId: string;
+  connectionId: string;
+  manualTimeoutMs?: number;
+}): Promise<{ response: TestConnectionResponse; savedSession: boolean }> =>
+  runTraderaBrowserSessionRequest({
+    integrationId: params.integrationId,
+    connectionId: params.connectionId,
+    manualTimeoutMs: params.manualTimeoutMs,
+    mode: 'manual_session_refresh',
+  });
 
 export const preflightTraderaQuickListSession = async (params: {
   integrationId: string;

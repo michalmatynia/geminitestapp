@@ -15,12 +15,7 @@ import {
   type ObservabilityLoggingControlType,
 } from './logging-controls';
 
-const LOGGING_CONTROL_CACHE_TTL_MS = 30_000;
-
-const loggingControlCache = new Map<
-  ObservabilityLoggingControlType,
-  { enabled: boolean; fetchedAt: number }
->();
+const loggingControlCache = new Map<ObservabilityLoggingControlType, { enabled: boolean }>();
 const loggingControlInflight = new Map<ObservabilityLoggingControlType, Promise<boolean>>();
 let loggingControlReadDepth = 0;
 
@@ -69,9 +64,8 @@ export const isServerLoggingEnabled = async (
   if (!shouldReadServerLoggingControlsFromStorage()) {
     return defaultEnabled;
   }
-  const now = Date.now();
   const cached = loggingControlCache.get(type);
-  if (cached && now - cached.fetchedAt < LOGGING_CONTROL_CACHE_TTL_MS) {
+  if (cached) {
     return cached.enabled;
   }
 
@@ -90,7 +84,7 @@ export const isServerLoggingEnabled = async (
     try {
       const rawValue = await readStoredLoggingControlValue(getObservabilityLoggingSettingKey(type));
       const enabled = parseObservabilityLoggingEnabledSetting(rawValue, defaultEnabled);
-      loggingControlCache.set(type, { enabled, fetchedAt: Date.now() });
+      loggingControlCache.set(type, { enabled });
       return enabled;
     } catch (error) {
       if (!isTransientMongoConnectionError(error)) {

@@ -4,7 +4,14 @@ import type { AiPathRunNodeRecord } from '@/shared/contracts/ai-paths';
 
 import {
   collectPlaywrightArtifacts,
+  collectPlaywrightRuntimePostures,
   extractPlaywrightArtifactsFromNode,
+  extractPlaywrightRuntimePostureFromNode,
+  formatPlaywrightRuntimePostureBrowser,
+  formatPlaywrightRuntimePostureIdentity,
+  formatPlaywrightRuntimePostureProxy,
+  formatPlaywrightRuntimePostureStickyState,
+  resolvePlaywrightArtifactDisplayName,
 } from '../playwright-artifacts';
 
 const buildNode = (patch: Partial<AiPathRunNodeRecord> = {}): AiPathRunNodeRecord => ({
@@ -115,5 +122,108 @@ describe('playwright-artifacts helpers', () => {
 
     expect(artifacts).toHaveLength(2);
     expect(artifacts.map((artifact) => artifact.name)).toEqual(['a', 'b']);
+  });
+
+  it('extracts runtime posture from the bundled Playwright result payload', () => {
+    const node = buildNode({
+      outputs: {
+        bundle: {
+          result: {
+            runtimePosture: {
+              browser: {
+                engine: 'chromium',
+                label: 'Chrome',
+                headless: false,
+              },
+              antiDetection: {
+                identityProfile: 'search',
+                locale: 'en-US',
+                timezoneId: 'America/New_York',
+                stickyStorageState: {
+                  enabled: true,
+                  loaded: true,
+                },
+                proxy: {
+                  enabled: true,
+                  providerPreset: 'brightdata',
+                  sessionMode: 'sticky',
+                  reason: 'applied',
+                  serverHost: 'proxy.local:8080',
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const runtimePosture = extractPlaywrightRuntimePostureFromNode(node);
+
+    expect(runtimePosture).toMatchObject({
+      nodeId: 'node-playwright',
+      browserLabel: 'Chrome',
+      headless: false,
+      identityProfile: 'search',
+      locale: 'en-US',
+      timezoneId: 'America/New_York',
+      proxyProviderPreset: 'brightdata',
+      proxySessionMode: 'sticky',
+      proxyReason: 'applied',
+      proxyServerHost: 'proxy.local:8080',
+      stickyStorageEnabled: true,
+      stickyStorageLoaded: true,
+    });
+    expect(formatPlaywrightRuntimePostureBrowser(runtimePosture!)).toBe('Chrome · Headed');
+    expect(formatPlaywrightRuntimePostureIdentity(runtimePosture!)).toBe(
+      'Search profile · en-US · America/New_York'
+    );
+    expect(formatPlaywrightRuntimePostureProxy(runtimePosture!)).toBe(
+      'Brightdata · Sticky · Applied · proxy.local:8080'
+    );
+    expect(formatPlaywrightRuntimePostureStickyState(runtimePosture!)).toBe(
+      'Loaded sticky state'
+    );
+  });
+
+  it('collects runtime posture summaries across multiple nodes', () => {
+    const nodes = [
+      buildNode({
+        id: 'a',
+        outputs: {
+          bundle: {
+            result: {
+              runtimePosture: {
+                browser: { label: 'Chrome' },
+              },
+            },
+          },
+        },
+      }),
+      buildNode({
+        id: 'b',
+        nodeId: 'node-no-runtime',
+        outputs: {},
+      }),
+    ];
+
+    const runtimePostures = collectPlaywrightRuntimePostures(nodes);
+
+    expect(runtimePostures).toHaveLength(1);
+    expect(runtimePostures[0]?.nodeId).toBe('node-playwright');
+  });
+
+  it('renames runtime-posture artifacts for display', () => {
+    expect(
+      resolvePlaywrightArtifactDisplayName({
+        name: 'runtime-posture',
+        path: 'run-1/runtime-posture.json',
+      })
+    ).toBe('Runtime posture');
+    expect(
+      resolvePlaywrightArtifactDisplayName({
+        name: 'final',
+        path: 'run-1/final.png',
+      })
+    ).toBe('final');
   });
 });

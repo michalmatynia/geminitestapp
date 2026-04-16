@@ -91,7 +91,20 @@ INVESTIGATION AN PLANNING
 -Scan the application and tell me if there are any modules or application that I could you to improve the app
 
 run application cleanup
+
+reduce Cyclomatic complexity
+replace the in-memory useState with real TanStack Query hooks in the state hook
+file segmentation operation
+component loading segmentation
+
+
+continue building meanigful error messages in products
+build accessibility
 ---
+
+  path is importing the oversized features/integrations/public barrel in
+  multiple core modules, even though the repo already has a narrower
+  product-integrations-adapter.
 
 ERROR DETECTION
 Scan the **\*\*** feature and build logical try and Catch Blocks with error explanantion around potential areas of failure
@@ -133,6 +146,12 @@ STATE MANAGEMENT
 
 › run refactor  improvement of a  table‑driven router
     (pattern → handler) to replace the long if chain. Prepare a plan
+
+Add granular error boundaries
+
+Admin speedup
+split barrel into domain │ Large       │ High — permanent fix   │
+  │  sub-barrels
 
 UI: LAYOUT
 - make mobile responsive

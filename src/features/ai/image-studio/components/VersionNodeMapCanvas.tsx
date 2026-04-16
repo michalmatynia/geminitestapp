@@ -37,7 +37,7 @@ export type { VersionNodeMapCanvasRef } from './version-node-map-canvas/VersionN
 export const VersionNodeMapCanvas = React.forwardRef<
   VersionNodeMapCanvasRef,
   VersionNodeMapCanvasProps
->(function VersionNodeMapCanvas(_props, ref) {
+>((_props, ref) => {
   useSettingsState();
   const {
     nodes,

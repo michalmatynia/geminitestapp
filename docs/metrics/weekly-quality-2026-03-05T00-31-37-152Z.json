@@ -26,7 +26,7 @@
       "exitCode": 1,
       "signal": null,
       "durationMs": 3747,
-      "output": "> libapp2@0.1.0 build\n> prisma generate && next build\n\nLoaded Prisma config from prisma.config.ts.\n\nPrisma schema loaded from prisma/schema.prisma.\n\n✔ Generated Prisma Client (v7.4.2) to ./node_modules/@prisma/client in 445ms\n\nStart by importing your Prisma Client (See: https://pris.ly/d/importing-client)\n\n\n⨯ Unable to acquire lock at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next/lock, is another instance of next build running?\n  Suggestion: If you intended to restart next build, terminate the other process, and then try again."
+      "output": "> libapp2@0.1.0 build\n> removedOrm generate && next build\n\nLoaded removedOrm config from removedOrm.config.ts.\n\nremovedOrm schema loaded from removedOrm/schema.removedOrm.\n\n✔ Generated removedOrm Client (v7.4.2) to ./node_modules/@removedOrm/client in 445ms\n\nStart by importing your removedOrm Client (See: https://pris.ly/d/importing-client)\n\n\n⨯ Unable to acquire lock at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next/lock, is another instance of next build running?\n  Suggestion: If you intended to restart next build, terminate the other process, and then try again."
     },
     {
       "id": "lint",

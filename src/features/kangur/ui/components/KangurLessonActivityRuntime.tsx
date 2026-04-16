@@ -6,6 +6,7 @@ import type {
 } from '@/shared/contracts/kangur-games';
 import type { KangurGameRuntimeRendererProps } from '@/shared/contracts/kangur-game-runtime-renderer-props';
 import type { KangurMiniGameFinishActionProps } from '@/features/kangur/ui/types';
+import { useKangurLessonActivityRuntimeContext } from './lesson-runtime/KangurLessonActivityBlock';
 
 import AddingBallGame from './AddingBallGame';
 import AddingSynthesisGame from './AddingSynthesisGame';
@@ -61,13 +62,13 @@ const resolveGeometryDrawingGameRendererProps = ({
 });
 
 export function KangurLessonActivityRuntime({
-  onFinish,
   rendererProps,
   runtime,
-}: KangurMiniGameFinishActionProps & {
+}: {
   rendererProps?: KangurGameRuntimeRendererProps;
   runtime: KangurLessonActivityRuntimeSpec;
 }): React.JSX.Element {
+  const { onFinish } = useKangurLessonActivityRuntimeContext();
   if (runtime.rendererId === 'calendar_interactive_game') {
     return (
       <CalendarInteractiveGame

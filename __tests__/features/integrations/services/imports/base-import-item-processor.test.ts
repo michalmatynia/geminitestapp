@@ -56,6 +56,7 @@ const buildProductRecord = (
   producers: overrides.producers ?? [],
   images: overrides.images ?? [],
   catalogs: overrides.catalogs ?? [],
+  customFields: overrides.customFields ?? [],
   parameters: overrides.parameters ?? [],
   imageLinks: overrides.imageLinks ?? [],
   imageBase64s: overrides.imageBase64s ?? [],
@@ -219,5 +220,98 @@ describe('base import item processor', () => {
       })
     );
     expect(emitProductCacheInvalidationMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('merges imported custom fields into existing product custom fields on update', async () => {
+    const existingProduct = buildProductRecord({
+      id: 'product-3',
+      sku: 'SKU-3',
+      customFields: [
+        { fieldId: 'market-exclusion', selectedOptionIds: ['tradera'] },
+        { fieldId: 'notes', textValue: 'Preserve manual value' },
+      ],
+    });
+    const updatedProduct = buildProductRecord({ id: 'product-3', sku: 'SKU-3' });
+    const productRepository = {
+      findProductByBaseId: vi.fn(async () => null),
+      getProductBySku: vi.fn(async () => existingProduct),
+      updateProduct: vi.fn(async () => updatedProduct),
+      replaceProductCatalogs: vi.fn(async () => undefined),
+      replaceProductProducers: vi.fn(async () => undefined),
+      replaceProductTags: vi.fn(async () => undefined),
+      replaceProductImages: vi.fn(async () => undefined),
+    };
+
+    const result = await importSingleItem({
+      ...createBaseInput(),
+      raw: {
+        sku: 'SKU-3',
+        tradera_excluded: '0',
+        willhaben_excluded: '1',
+      } as never,
+      productRepository: productRepository as never,
+      mode: 'upsert_on_sku',
+      templateMappings: [
+        {
+          sourceKey: 'tradera_excluded',
+          targetField: 'custom_field_option:market-exclusion:tradera',
+        },
+        {
+          sourceKey: 'willhaben_excluded',
+          targetField: 'custom_field_option:market-exclusion:willhaben',
+        },
+      ],
+    });
+
+    expect(result.status).toBe('updated');
+    expect(productRepository.updateProduct).toHaveBeenCalledWith(
+      'product-3',
+      expect.objectContaining({
+        customFields: [
+          { fieldId: 'market-exclusion', selectedOptionIds: ['willhaben'] },
+          { fieldId: 'notes', textValue: 'Preserve manual value' },
+        ],
+      })
+    );
+  });
+
+  it('attaches custom-field import metadata to dry-run results', async () => {
+    const result = await importSingleItem({
+      ...createBaseInput(),
+      run: { id: 'run-1', params: { dryRun: true } } as never,
+      raw: {
+        product_id: 'base-1',
+        sku: 'SKU-1',
+        Tradera: '1',
+      } as never,
+      productRepository: {
+        findProductByBaseId: vi.fn(async () => null),
+        getProductBySku: vi.fn(async () => null),
+      } as never,
+      dryRun: true,
+      customFieldDefinitions: [
+        {
+          id: 'market-exclusion',
+          name: 'Market Exclusion',
+          type: 'checkbox_set',
+          options: [{ id: 'tradera', label: 'Tradera' }],
+          createdAt: '2026-04-08T00:00:00.000Z',
+          updatedAt: '2026-04-08T00:00:00.000Z',
+        },
+      ],
+      customFieldImportSeededFieldNames: ['Market Exclusion', 'Notes'],
+    });
+
+    expect(result.status).toBe('imported');
+    expect(result.action).toBe('dry_run');
+    expect(result.metadata).toEqual({
+      customFieldImport: {
+        seededFieldNames: ['Market Exclusion'],
+        autoMatchedFieldNames: ['Market Exclusion'],
+        explicitMappedFieldNames: [],
+        skippedFieldNames: [],
+        overriddenFieldNames: [],
+      },
+    });
   });
 });

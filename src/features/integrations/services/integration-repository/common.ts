@@ -1,8 +1,12 @@
 import { ObjectId } from 'mongodb';
 
-import { IntegrationRecord, IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
-import { ConnectionDeleteOptions, ConnectionDependencyCounts } from '@/shared/contracts/integrations/connections';
+import { type IntegrationRecord, type IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
+import { type ConnectionDeleteOptions, type ConnectionDependencyCounts } from '@/shared/contracts/integrations/connections';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import {
+  DEFAULT_INTEGRATION_CONNECTION_PLAYWRIGHT_BROWSER,
+  defaultIntegrationConnectionPlaywrightSettings,
+} from '@/features/integrations/utils/playwright-connection-settings';
 
 
 export type { ConnectionDeleteOptions, ConnectionDependencyCounts };
@@ -10,35 +14,53 @@ export type { ConnectionDeleteOptions, ConnectionDependencyCounts };
 export const INTEGRATION_COLLECTION = 'integrations';
 export const INTEGRATION_CONNECTION_COLLECTION = 'integration_connections';
 export const DEFAULT_CONNECTION_SETTING_KEY = 'base_export_default_connection_id';
+export const DEFAULT_1688_CONNECTION_SETTING_KEY = 'scanner_1688_default_connection_id';
 export const PRODUCT_SYNC_PROFILE_SETTINGS_KEY = 'product_sync_profiles';
 export const ACTIVE_TEMPLATE_SETTING_KEY = 'base_export_active_template_id';
 export const ACTIVE_TEMPLATE_SCOPE_SEPARATOR = '::';
 
 export const CONNECTION_DEFAULTS = {
   traderaBrowserMode: 'builtin' as const,
-  playwrightHeadless: true,
-  playwrightSlowMo: 0,
-  playwrightTimeout: 30000,
-  playwrightNavigationTimeout: 30000,
-  playwrightHumanizeMouse: true,
-  playwrightMouseJitter: 5,
-  playwrightClickDelayMin: 50,
-  playwrightClickDelayMax: 150,
-  playwrightInputDelayMin: 20,
-  playwrightInputDelayMax: 80,
-  playwrightActionDelayMin: 500,
-  playwrightActionDelayMax: 1500,
-  playwrightProxyEnabled: false,
-  playwrightProxyServer: '',
-  playwrightProxyUsername: '',
+  playwrightBrowser: DEFAULT_INTEGRATION_CONNECTION_PLAYWRIGHT_BROWSER,
+  playwrightIdentityProfile: defaultIntegrationConnectionPlaywrightSettings.identityProfile,
+  playwrightHeadless: defaultIntegrationConnectionPlaywrightSettings.headless,
+  playwrightSlowMo: defaultIntegrationConnectionPlaywrightSettings.slowMo,
+  playwrightTimeout: defaultIntegrationConnectionPlaywrightSettings.timeout,
+  playwrightNavigationTimeout: defaultIntegrationConnectionPlaywrightSettings.navigationTimeout,
+  playwrightLocale: defaultIntegrationConnectionPlaywrightSettings.locale,
+  playwrightTimezoneId: defaultIntegrationConnectionPlaywrightSettings.timezoneId,
+  playwrightHumanizeMouse: defaultIntegrationConnectionPlaywrightSettings.humanizeMouse,
+  playwrightMouseJitter: defaultIntegrationConnectionPlaywrightSettings.mouseJitter,
+  playwrightClickDelayMin: defaultIntegrationConnectionPlaywrightSettings.clickDelayMin,
+  playwrightClickDelayMax: defaultIntegrationConnectionPlaywrightSettings.clickDelayMax,
+  playwrightInputDelayMin: defaultIntegrationConnectionPlaywrightSettings.inputDelayMin,
+  playwrightInputDelayMax: defaultIntegrationConnectionPlaywrightSettings.inputDelayMax,
+  playwrightActionDelayMin: defaultIntegrationConnectionPlaywrightSettings.actionDelayMin,
+  playwrightActionDelayMax: defaultIntegrationConnectionPlaywrightSettings.actionDelayMax,
+  playwrightProxyEnabled: defaultIntegrationConnectionPlaywrightSettings.proxyEnabled,
+  playwrightProxyServer: defaultIntegrationConnectionPlaywrightSettings.proxyServer,
+  playwrightProxyUsername: defaultIntegrationConnectionPlaywrightSettings.proxyUsername,
+  playwrightProxySessionAffinity:
+    defaultIntegrationConnectionPlaywrightSettings.proxySessionAffinity,
+  playwrightProxySessionMode:
+    defaultIntegrationConnectionPlaywrightSettings.proxySessionMode,
+  playwrightProxyProviderPreset:
+    defaultIntegrationConnectionPlaywrightSettings.proxyProviderPreset,
   playwrightEmulateDevice: false,
-  playwrightDeviceName: 'Desktop Chrome',
+  playwrightDeviceName: defaultIntegrationConnectionPlaywrightSettings.deviceName,
   playwrightPersonaId: null,
   playwrightListingScript: null,
   playwrightImportScript: null,
   playwrightImportBaseUrl: null,
   playwrightImportCaptureRoutesJson: null,
   playwrightFieldMapperJson: null,
+  scanner1688StartUrl: 'https://www.1688.com/',
+  scanner1688LoginMode: 'session_required' as const,
+  scanner1688DefaultSearchMode: 'local_image' as const,
+  scanner1688CandidateResultLimit: null,
+  scanner1688MinimumCandidateScore: null,
+  scanner1688MaxExtractedImages: null,
+  scanner1688AllowUrlImageSearchFallback: false,
   traderaDefaultTemplateId: '',
   traderaDefaultDurationHours: 72,
   traderaAutoRelistEnabled: true,
@@ -49,6 +71,8 @@ export const CONNECTION_DEFAULTS = {
   traderaApiUserId: 0,
   traderaApiToken: '',
   traderaApiTokenUpdatedAt: null,
+  traderaParameterMapperRulesJson: null,
+  traderaParameterMapperCatalogJson: null,
 };
 
 export const toDocumentIdCandidates = (id: string): Array<string | ObjectId> => {
@@ -227,39 +251,101 @@ export const toConnectionRecord = (doc: unknown): IntegrationConnectionRecord =>
     playwrightStorageState: (d['playwrightStorageState'] as string) ?? null,
     playwrightStorageStateUpdatedAt: toIsoStringOrNull(d['playwrightStorageStateUpdatedAt']),
     playwrightHeadless:
-      (d['playwrightHeadless'] as boolean) ?? CONNECTION_DEFAULTS.playwrightHeadless,
-    playwrightSlowMo: (d['playwrightSlowMo'] as number) ?? CONNECTION_DEFAULTS.playwrightSlowMo,
-    playwrightTimeout: (d['playwrightTimeout'] as number) ?? CONNECTION_DEFAULTS.playwrightTimeout,
+      typeof d['playwrightHeadless'] === 'boolean' ? d['playwrightHeadless'] : undefined,
+    playwrightSlowMo:
+      typeof d['playwrightSlowMo'] === 'number' ? d['playwrightSlowMo'] : undefined,
+    playwrightTimeout:
+      typeof d['playwrightTimeout'] === 'number' ? d['playwrightTimeout'] : undefined,
     playwrightNavigationTimeout:
-      (d['playwrightNavigationTimeout'] as number) ??
-      CONNECTION_DEFAULTS.playwrightNavigationTimeout,
+      typeof d['playwrightNavigationTimeout'] === 'number'
+        ? d['playwrightNavigationTimeout']
+        : undefined,
+    playwrightLocale:
+      typeof d['playwrightLocale'] === 'string' ? d['playwrightLocale'] : undefined,
+    playwrightTimezoneId:
+      typeof d['playwrightTimezoneId'] === 'string' ? d['playwrightTimezoneId'] : undefined,
     playwrightHumanizeMouse:
-      (d['playwrightHumanizeMouse'] as boolean) ?? CONNECTION_DEFAULTS.playwrightHumanizeMouse,
+      typeof d['playwrightHumanizeMouse'] === 'boolean'
+        ? d['playwrightHumanizeMouse']
+        : undefined,
     playwrightMouseJitter:
-      (d['playwrightMouseJitter'] as number) ?? CONNECTION_DEFAULTS.playwrightMouseJitter,
+      typeof d['playwrightMouseJitter'] === 'number'
+        ? d['playwrightMouseJitter']
+        : undefined,
     playwrightClickDelayMin:
-      (d['playwrightClickDelayMin'] as number) ?? CONNECTION_DEFAULTS.playwrightClickDelayMin,
+      typeof d['playwrightClickDelayMin'] === 'number'
+        ? d['playwrightClickDelayMin']
+        : undefined,
     playwrightClickDelayMax:
-      (d['playwrightClickDelayMax'] as number) ?? CONNECTION_DEFAULTS.playwrightClickDelayMax,
+      typeof d['playwrightClickDelayMax'] === 'number'
+        ? d['playwrightClickDelayMax']
+        : undefined,
     playwrightInputDelayMin:
-      (d['playwrightInputDelayMin'] as number) ?? CONNECTION_DEFAULTS.playwrightInputDelayMin,
+      typeof d['playwrightInputDelayMin'] === 'number'
+        ? d['playwrightInputDelayMin']
+        : undefined,
     playwrightInputDelayMax:
-      (d['playwrightInputDelayMax'] as number) ?? CONNECTION_DEFAULTS.playwrightInputDelayMax,
+      typeof d['playwrightInputDelayMax'] === 'number'
+        ? d['playwrightInputDelayMax']
+        : undefined,
     playwrightActionDelayMin:
-      (d['playwrightActionDelayMin'] as number) ?? CONNECTION_DEFAULTS.playwrightActionDelayMin,
+      typeof d['playwrightActionDelayMin'] === 'number'
+        ? d['playwrightActionDelayMin']
+        : undefined,
     playwrightActionDelayMax:
-      (d['playwrightActionDelayMax'] as number) ?? CONNECTION_DEFAULTS.playwrightActionDelayMax,
+      typeof d['playwrightActionDelayMax'] === 'number'
+        ? d['playwrightActionDelayMax']
+        : undefined,
     playwrightProxyEnabled:
-      (d['playwrightProxyEnabled'] as boolean) ?? CONNECTION_DEFAULTS.playwrightProxyEnabled,
+      typeof d['playwrightProxyEnabled'] === 'boolean'
+        ? d['playwrightProxyEnabled']
+        : undefined,
     playwrightProxyServer:
-      (d['playwrightProxyServer'] as string) ?? CONNECTION_DEFAULTS.playwrightProxyServer,
+      typeof d['playwrightProxyServer'] === 'string'
+        ? d['playwrightProxyServer']
+        : undefined,
     playwrightProxyUsername:
-      (d['playwrightProxyUsername'] as string) ?? CONNECTION_DEFAULTS.playwrightProxyUsername,
+      typeof d['playwrightProxyUsername'] === 'string'
+        ? d['playwrightProxyUsername']
+        : undefined,
     playwrightProxyPassword: (d['playwrightProxyPassword'] as string) ?? null,
+    playwrightProxySessionAffinity:
+      typeof d['playwrightProxySessionAffinity'] === 'boolean'
+        ? d['playwrightProxySessionAffinity']
+        : undefined,
+    playwrightProxySessionMode:
+      d['playwrightProxySessionMode'] === 'sticky' ||
+      d['playwrightProxySessionMode'] === 'rotate'
+        ? d['playwrightProxySessionMode']
+        : undefined,
+    playwrightProxyProviderPreset:
+      d['playwrightProxyProviderPreset'] === 'custom' ||
+      d['playwrightProxyProviderPreset'] === 'brightdata' ||
+      d['playwrightProxyProviderPreset'] === 'oxylabs' ||
+      d['playwrightProxyProviderPreset'] === 'decodo'
+        ? d['playwrightProxyProviderPreset']
+        : undefined,
+    playwrightBrowser:
+      d['playwrightBrowser'] === 'auto' ||
+      d['playwrightBrowser'] === 'brave' ||
+      d['playwrightBrowser'] === 'chrome' ||
+      d['playwrightBrowser'] === 'chromium'
+        ? d['playwrightBrowser']
+        : undefined,
+    playwrightIdentityProfile:
+      d['playwrightIdentityProfile'] === 'default' ||
+      d['playwrightIdentityProfile'] === 'search' ||
+      d['playwrightIdentityProfile'] === 'marketplace'
+        ? d['playwrightIdentityProfile']
+        : undefined,
     playwrightEmulateDevice:
-      (d['playwrightEmulateDevice'] as boolean) ?? CONNECTION_DEFAULTS.playwrightEmulateDevice,
+      typeof d['playwrightEmulateDevice'] === 'boolean'
+        ? d['playwrightEmulateDevice']
+        : undefined,
     playwrightDeviceName:
-      (d['playwrightDeviceName'] as string) ?? CONNECTION_DEFAULTS.playwrightDeviceName,
+      typeof d['playwrightDeviceName'] === 'string'
+        ? d['playwrightDeviceName']
+        : undefined,
     playwrightPersonaId:
       (d['playwrightPersonaId'] as string) ?? CONNECTION_DEFAULTS.playwrightPersonaId,
     playwrightListingScript:
@@ -274,6 +360,32 @@ export const toConnectionRecord = (doc: unknown): IntegrationConnectionRecord =>
     playwrightFieldMapperJson:
       (d['playwrightFieldMapperJson'] as string) ??
       CONNECTION_DEFAULTS.playwrightFieldMapperJson,
+    scanner1688StartUrl:
+      (d['scanner1688StartUrl'] as string) ?? CONNECTION_DEFAULTS.scanner1688StartUrl,
+    scanner1688LoginMode:
+      d['scanner1688LoginMode'] === 'manual_login'
+        ? 'manual_login'
+        : CONNECTION_DEFAULTS.scanner1688LoginMode,
+    scanner1688DefaultSearchMode:
+      d['scanner1688DefaultSearchMode'] === 'image_url_fallback'
+        ? 'image_url_fallback'
+        : CONNECTION_DEFAULTS.scanner1688DefaultSearchMode,
+    scanner1688CandidateResultLimit:
+      typeof d['scanner1688CandidateResultLimit'] === 'number'
+        ? (d['scanner1688CandidateResultLimit'])
+        : CONNECTION_DEFAULTS.scanner1688CandidateResultLimit,
+    scanner1688MinimumCandidateScore:
+      typeof d['scanner1688MinimumCandidateScore'] === 'number'
+        ? (d['scanner1688MinimumCandidateScore'])
+        : CONNECTION_DEFAULTS.scanner1688MinimumCandidateScore,
+    scanner1688MaxExtractedImages:
+      typeof d['scanner1688MaxExtractedImages'] === 'number'
+        ? (d['scanner1688MaxExtractedImages'])
+        : CONNECTION_DEFAULTS.scanner1688MaxExtractedImages,
+    scanner1688AllowUrlImageSearchFallback:
+      typeof d['scanner1688AllowUrlImageSearchFallback'] === 'boolean'
+        ? (d['scanner1688AllowUrlImageSearchFallback'])
+        : CONNECTION_DEFAULTS.scanner1688AllowUrlImageSearchFallback,
     allegroAccessToken: (d['allegroAccessToken'] as string) ?? null,
     allegroRefreshToken: (d['allegroRefreshToken'] as string) ?? null,
     allegroTokenType: (d['allegroTokenType'] as string) ?? null,
@@ -311,6 +423,12 @@ export const toConnectionRecord = (doc: unknown): IntegrationConnectionRecord =>
     traderaApiUserId: (d['traderaApiUserId'] as number) ?? CONNECTION_DEFAULTS.traderaApiUserId,
     traderaApiToken: (d['traderaApiToken'] as string) ?? CONNECTION_DEFAULTS.traderaApiToken,
     traderaApiTokenUpdatedAt: toIsoStringOrNull(d['traderaApiTokenUpdatedAt']),
+    traderaParameterMapperRulesJson:
+      (d['traderaParameterMapperRulesJson'] as string) ??
+      CONNECTION_DEFAULTS.traderaParameterMapperRulesJson,
+    traderaParameterMapperCatalogJson:
+      (d['traderaParameterMapperCatalogJson'] as string) ??
+      CONNECTION_DEFAULTS.traderaParameterMapperCatalogJson,
     createdAt: toRequiredIsoString(d['createdAt']),
     updatedAt: toIsoStringOrNull(d['updatedAt']),
   };

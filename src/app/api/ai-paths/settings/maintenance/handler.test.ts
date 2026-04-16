@@ -12,6 +12,7 @@ vi.mock('@/features/ai/ai-paths/server', () => ({
   AI_PATHS_MAINTENANCE_ACTION_IDS: [
     'compact_oversized_configs',
     'repair_path_index',
+    'restore_static_recovery_bundle',
     'ensure_starter_workflow_defaults',
     'refresh_starter_workflow_configs',
     'normalize_runtime_kernel_settings',
@@ -72,6 +73,31 @@ describe('ai-paths maintenance handler', () => {
 
     expect(response.status).toBe(200);
     expect(applyAiPathsSettingsMaintenanceMock).toHaveBeenCalledWith(['repair_path_index']);
+  });
+
+  it('accepts static recovery restore action ids', async () => {
+    applyAiPathsSettingsMaintenanceMock.mockResolvedValue({
+      appliedActionIds: ['restore_static_recovery_bundle'],
+      report: {
+        scannedAt: '2026-03-03T10:00:00.000Z',
+        pendingActions: 0,
+        blockingActions: 0,
+        actions: [],
+      },
+    });
+
+    const response = await POST_handler(
+      new NextRequest('http://localhost/api/ai-paths/settings/maintenance', {
+        method: 'POST',
+        body: JSON.stringify({ actionIds: ['restore_static_recovery_bundle'] }),
+      }),
+      {} as Parameters<typeof POST_handler>[1]
+    );
+
+    expect(response.status).toBe(200);
+    expect(applyAiPathsSettingsMaintenanceMock).toHaveBeenCalledWith([
+      'restore_static_recovery_bundle',
+    ]);
   });
 
   it('accepts deprecated runtime-kernel mode alias and normalizes it before apply', async () => {

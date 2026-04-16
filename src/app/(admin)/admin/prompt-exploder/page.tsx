@@ -1,4 +1,4 @@
-import { JSX } from 'react';
+import { type JSX } from 'react';
 
 import { AdminPromptExploderPage } from '@/features/prompt-exploder/public';
 

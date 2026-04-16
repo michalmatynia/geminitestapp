@@ -414,9 +414,78 @@ export const AI_PATHS_TOOLTIP_CATALOG_CHUNK_05 = [
     ]
   },
   {
+    "id": "node_config_field_db_schema_db_schema_contextcollections",
+    "title": "Database Schema: db_schema.contextCollections",
+    "summary": "Collections to fetch as live context during runtime. Falls back to selected schema collections when empty.",
+    "section": "Node Config - Database Schema",
+    "aliases": [
+      "db_schema",
+      "db_schema.contextCollections",
+      "db_schema.db_schema.contextCollections"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/db_schema.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.db_schema.db_schema.contextCollections"
+    ]
+  },
+  {
+    "id": "node_config_field_db_schema_db_schema_contextlimit",
+    "title": "Database Schema: db_schema.contextLimit",
+    "summary": "Maximum documents fetched per live context collection during runtime.",
+    "section": "Node Config - Database Schema",
+    "aliases": [
+      "db_schema",
+      "db_schema.contextLimit",
+      "db_schema.db_schema.contextLimit"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/db_schema.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.db_schema.db_schema.contextLimit"
+    ]
+  },
+  {
+    "id": "node_config_field_db_schema_db_schema_contextquery",
+    "title": "Database Schema: db_schema.contextQuery",
+    "summary": "Optional JSON filter or free-text search applied to each live context collection.",
+    "section": "Node Config - Database Schema",
+    "aliases": [
+      "db_schema",
+      "db_schema.contextQuery",
+      "db_schema.db_schema.contextQuery"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/db_schema.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.db_schema.db_schema.contextQuery"
+    ]
+  },
+  {
     "id": "node_config_field_db_schema_db_schema_formatas",
     "title": "Database Schema: db_schema.formatAs",
-    "summary": "json emits a JSON object; text emits a compact schema text for prompting.",
+    "summary": "json emits structured schema/context payloads; text emits prompt-ready context text.",
     "section": "Node Config - Database Schema",
     "aliases": [
       "db_schema",
@@ -526,6 +595,29 @@ export const AI_PATHS_TOOLTIP_CATALOG_CHUNK_05 = [
     ],
     "uiTargets": [
       "node-config.db_schema.db_schema.provider"
+    ]
+  },
+  {
+    "id": "node_config_field_db_schema_db_schema_sourcemode",
+    "title": "Database Schema: db_schema.sourceMode",
+    "summary": "schema = emit structure only; live_context = emit latest collection rows; schema_and_live_context = emit both.",
+    "section": "Node Config - Database Schema",
+    "aliases": [
+      "db_schema",
+      "db_schema.sourceMode",
+      "db_schema.db_schema.sourceMode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/db_schema.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.db_schema.db_schema.sourceMode"
     ]
   },
   {
@@ -713,4 +805,3 @@ export const AI_PATHS_TOOLTIP_CATALOG_CHUNK_05 = [
     ]
   }
 ];
-

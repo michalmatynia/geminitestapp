@@ -84,30 +84,35 @@ export function KangurThemeSettingsPanel({
       initialNightly={initialNightly}
       initialDawn={initialDawn}
       initialSunset={initialSunset}
-      onSectionChange={onSectionChange}
-      onThemeChange={onThemeChange}
-      onModeChange={onModeChange}
+      actions={{
+        onSectionChange,
+        onThemeChange,
+        onModeChange,
+      }}
     />
   );
 }
+
+type KangurThemeSettingsPanelActions = {
+  onSectionChange?: (section: string) => void;
+  onThemeChange?: (theme: ThemeSettings) => void;
+  onModeChange?: (mode: KangurThemeMode) => void;
+};
 
 function KangurThemeSettingsPanelContent({
   initialDaily,
   initialNightly,
   initialDawn,
   initialSunset,
-  onSectionChange,
-  onThemeChange,
-  onModeChange,
+  actions = {},
 }: {
   initialDaily: ThemeSettings;
   initialNightly: ThemeSettings;
   initialDawn: ThemeSettings;
   initialSunset: ThemeSettings;
-  onSectionChange?: (section: string) => void;
-  onThemeChange?: (theme: ThemeSettings) => void;
-  onModeChange?: (mode: KangurThemeMode) => void;
+  actions?: KangurThemeSettingsPanelActions;
 }): React.JSX.Element {
+  const { onSectionChange, onThemeChange, onModeChange } = actions;
   const state = useKangurThemeSettingsState(
     initialDaily,
     initialNightly,
@@ -200,12 +205,14 @@ function KangurThemeSettingsPanelContent({
           {sections.map((section) => (
             <ThemeSettingsFieldsSection
               key={section.id}
-              title={section.title}
-              subtitle={section.subtitle}
               fields={section.fields}
-              values={currentDraft}
-              onChange={updateDraft}
-              disabled={isSaving}
+              config={{
+                title: section.title,
+                subtitle: section.subtitle,
+                values: currentDraft,
+                onChange: updateDraft,
+                disabled: isSaving,
+              }}
             />
           ))}
         </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 
 import {
   APP_FONT_SET_SETTING_KEY,
@@ -18,21 +18,10 @@ function applyFontSet(id: AppFontSetId): void {
 
 export function AppFontProvider(): null {
   const settingsStore = useSettingsStore();
-
-  const stored = useMemo(() => {
-    if (typeof window === 'undefined') return null;
-    return window.localStorage.getItem(LOCAL_STORAGE_KEY);
-  }, []);
-
-  // Apply last-used choice ASAP to reduce flicker.
-  useEffect(() => {
-    const initial = getAppFontSet(stored).id;
-    applyFontSet(initial);
-  }, [stored]);
-
   const fontSetting = settingsStore.get(APP_FONT_SET_SETTING_KEY);
 
   useEffect(() => {
+    if (!fontSetting) return;
     const id = getAppFontSet(fontSetting).id;
     applyFontSet(id);
     if (typeof window !== 'undefined') {

@@ -15,8 +15,8 @@ const actionHistory: UserAction[] = [];
 const getSelector = (element: Element | null): string => {
   if (!element) return 'unknown';
   let str = element.tagName.toLowerCase();
-  if (element.id) str += `#${element.id}`;
-  if (element.classList && element.classList.length > 0) {
+  if (element.id.length > 0) str += `#${element.id}`;
+  if (element.classList.length > 0) {
     str += `.${Array.from(element.classList).join('.')}`;
   }
   return str;
@@ -26,8 +26,9 @@ const getSafeText = (element: Element | null): string | undefined => {
   if (!element) return undefined;
   // Only capture text for buttons or links, avoid inputs/paragraphs which might have PII
   const tag = element.tagName.toLowerCase();
-  if (tag === 'button' || tag === 'a' || tag === 'span' || tag === 'div') {
-    const text = element.textContent?.slice(0, 50) || '';
+  const isSafeTag = tag === 'button' || tag === 'a' || tag === 'span' || tag === 'div';
+  if (isSafeTag) {
+    const text = element.textContent.slice(0, 50);
     return text.length > 0 ? text : undefined;
   }
   return undefined;
@@ -40,7 +41,7 @@ export const initUserActionTracker = (): void => {
   if (typeof window === 'undefined' || isInitialized) return;
   isInitialized = true;
 
-  const handler = (event: Event) => {
+  const handler = (event: Event): void => {
     try {
       const target = event.target as Element;
       // Skip frequent non-interactions if needed, but click/change/submit are key.
@@ -57,7 +58,7 @@ export const initUserActionTracker = (): void => {
       }
 
       const text = getSafeText(target);
-      if (text) action.textContent = text;
+      if (text !== undefined) action.textContent = text;
 
       lastAction = action;
       actionHistory.unshift(action);

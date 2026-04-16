@@ -1,31 +1,24 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
+import { type NextRequest, NextResponse } from 'next/server';
+import { type z } from 'zod';
 
 import { getShippingGroupRepository } from '@/features/products/server';
 import { updateProductShippingGroupSchema } from '@/shared/contracts/products/shipping-groups';
-import { type ProductShippingGroup } from '@/shared/contracts/products';
 export { updateProductShippingGroupSchema as productShippingGroupUpdateSchema };
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
-import { conflictError, notFoundError, validationError } from '@/shared/errors/app-error';
+import { notFoundError } from '@/shared/errors/app-error';
 
 import {
   normalizeShippingGroupRuleCategoryIdsForCatalog,
   validateShippingGroupRuleConflictsOrThrow,
 } from '../rule-validation';
-
-const paramsSchema = z.object({
-  id: z.string().trim().min(1, 'Shipping group id is required'),
-});
-
-const parseShippingGroupId = (params: { id: string }): string => {
-  const parsed = paramsSchema.safeParse(params);
-  if (!parsed.success) {
-    throw validationError('Invalid route parameters', {
-      issues: parsed.error.flatten(),
-    });
-  }
-  return parsed.data.id;
-};
+import {
+  assertAvailableShippingGroupName,
+  buildShippingGroupNameLookupInput,
+  buildShippingGroupUpdateInput,
+  buildShippingGroupValidationDraft,
+  parseShippingGroupId,
+  shouldValidateShippingGroupRuleConflicts,
+} from './handler.helpers';
 
 export async function PUT_handler(
   _req: NextRequest,
@@ -34,7 +27,6 @@ export async function PUT_handler(
 ): Promise<Response> {
   const shippingGroupId = parseShippingGroupId(params);
   const data = ctx.body as z.infer<typeof updateProductShippingGroupSchema>;
-  const { name, catalogId } = data;
 
   const repository = await getShippingGroupRepository();
   const current = await repository.getShippingGroupById(shippingGroupId);
@@ -43,7 +35,7 @@ export async function PUT_handler(
     throw notFoundError('Shipping group not found', { shippingGroupId });
   }
 
-  const nextCatalogId = catalogId ?? current.catalogId;
+  const nextCatalogId = data.catalogId ?? current.catalogId;
   const normalizedAutoAssignCategoryIds =
     data.autoAssignCategoryIds !== undefined
       ? await normalizeShippingGroupRuleCategoryIdsForCatalog({
@@ -52,62 +44,32 @@ export async function PUT_handler(
         })
       : undefined;
 
-  if (name !== undefined) {
-    const existing = await repository.findByName(nextCatalogId, name);
-    if (existing && existing.id !== shippingGroupId) {
-      throw conflictError('A shipping group with this name already exists in this catalog', {
-        name,
-        catalogId: nextCatalogId,
-      });
-    }
+  const lookup = buildShippingGroupNameLookupInput(current, data);
+  if (lookup) {
+    const existing = await repository.findByName(lookup.catalogId, lookup.name);
+    assertAvailableShippingGroupName(existing, shippingGroupId, lookup);
   }
 
-  if (
-    catalogId !== undefined ||
-    data.autoAssignCategoryIds !== undefined ||
-    data.autoAssignCurrencyCodes !== undefined
-  ) {
+  if (shouldValidateShippingGroupRuleConflicts(data)) {
     await validateShippingGroupRuleConflictsOrThrow({
-      draftShippingGroup: {
-        id: current.id,
-        name: name ?? current.name,
-        description: data.description !== undefined ? data.description : (current.description ?? null),
-        catalogId: nextCatalogId,
-        traderaShippingCondition:
-          data.traderaShippingCondition !== undefined
-            ? data.traderaShippingCondition
-            : (current.traderaShippingCondition ?? null),
-        traderaShippingPriceEur:
-          data.traderaShippingPriceEur !== undefined
-            ? data.traderaShippingPriceEur
-            : (current.traderaShippingPriceEur ?? null),
-        autoAssignCategoryIds:
-          normalizedAutoAssignCategoryIds !== undefined
-            ? normalizedAutoAssignCategoryIds
-            : (current.autoAssignCategoryIds ?? []),
-        autoAssignCurrencyCodes: data.autoAssignCurrencyCodes ?? (current.autoAssignCurrencyCodes ?? []),
-      } satisfies ProductShippingGroup,
+      draftShippingGroup: buildShippingGroupValidationDraft(
+        current,
+        data,
+        normalizedAutoAssignCategoryIds,
+        data.autoAssignCurrencyCodes
+      ),
       ignoredShippingGroupIds: [shippingGroupId],
     });
   }
 
-  const shippingGroup = await repository.updateShippingGroup(shippingGroupId, {
-    ...(name !== undefined && { name }),
-    ...(data.description !== undefined && { description: data.description }),
-    ...(catalogId !== undefined && { catalogId }),
-    ...(data.traderaShippingCondition !== undefined && {
-      traderaShippingCondition: data.traderaShippingCondition,
-    }),
-    ...(data.traderaShippingPriceEur !== undefined && {
-      traderaShippingPriceEur: data.traderaShippingPriceEur,
-    }),
-    ...(normalizedAutoAssignCategoryIds !== undefined && {
-      autoAssignCategoryIds: normalizedAutoAssignCategoryIds,
-    }),
-    ...(data.autoAssignCurrencyCodes !== undefined && {
-      autoAssignCurrencyCodes: data.autoAssignCurrencyCodes,
-    }),
-  });
+  const shippingGroup = await repository.updateShippingGroup(
+    shippingGroupId,
+    buildShippingGroupUpdateInput(
+      data,
+      normalizedAutoAssignCategoryIds,
+      data.autoAssignCurrencyCodes
+    )
+  );
 
   return NextResponse.json(shippingGroup);
 }

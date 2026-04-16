@@ -1,7 +1,23 @@
 'use client';
+'use no memo';
 
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
+
+// useProductEditHydration: Manages opening the live product editor and
+// hydrating product detail with a non-blocking prefetch-first strategy.
+// Key responsibilities:
+// - Debounced prefetch of product detail + ProductForm JS chunk to keep the
+//   editor responsive while data downloads in the background.
+// - Freshness heuristics (PRODUCT_DETAIL_CACHE_FRESH_MS, PREFETCH_STALE_MS)
+//   decide between instant cached rendering and background refetching.
+// - Carefully decides when to adopt incoming server updates vs preserving
+//   a user's in-progress edits using timestamp and generated-text checks.
+// - Gracefully handles missing products (cleans URL, notifies user, refreshes
+//   list) and exposes a prefetch helper used by hover/prefetch UIs.
+//
+// Keep the 'use no memo' directive: it serves as a runtime development hint
+// to avoid unstable dev-hook layouts in some compilers during Fast Refresh.
 
 import { preloadProductFormChunk } from '@/features/products/components/product-form-preload';
 import {
@@ -14,7 +30,10 @@ import {
   isIncomingProductDetailNewer,
   isIncomingProductDetailSameRevision,
 } from '@/features/products/hooks/product-list-state-utils';
-import { getProductDetailQueryKey } from '@/features/products/hooks/productCache';
+import {
+  getProductDetailEditQueryKey,
+  getProductDetailQueryKey,
+} from '@/features/products/hooks/productCache';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { ApiError, api } from '@/shared/lib/api-client';
 import {
@@ -143,8 +162,8 @@ export function useProductEditHydration({
     id: editingProduct?.id,
     queryKey: (id) =>
       id !== 'none'
-        ? QUERY_KEYS.products.detail(id)
-        : [...QUERY_KEYS.products.details(), 'inactive'],
+        ? QUERY_KEYS.products.detailEdit(id)
+        : [...QUERY_KEYS.products.details(), 'edit', 'inactive'],
     queryFn: () =>
       api.get<ProductWithImages>(`/api/v2/products/${editingProduct?.id}`, {
         timeout: PRODUCT_DETAIL_TIMEOUT_MS,
@@ -157,11 +176,23 @@ export function useProductEditHydration({
     meta: {
       source: 'products.hooks.useProductEditHydration.editingProductDetail',
       operation: 'detail',
-      resource: 'products.detail',
+      resource: 'products.detailEdit',
       domain: 'products',
-      tags: ['products', 'detail', 'editing'],
-      description: 'Loads products detail.'},
+      tags: ['products', 'detail', 'edit', 'editing'],
+      description: 'Loads products detail for the live editor.'},
   });
+
+  const handleMissingEditProduct = useCallback(
+    (message: string) => {
+      openingProductFromQueryRef.current = null;
+      setEditingProduct(null);
+      setIsEditHydrating(false);
+      clearProductEditorQueryParams();
+      toast(message, { variant: 'warning' });
+      setRefreshTrigger((prev: number) => prev + 1);
+    },
+    [clearProductEditorQueryParams, setEditingProduct, setRefreshTrigger, toast]
+  );
 
   const prefetchProductDetail = useCallback(
     (productId: string) => {
@@ -182,7 +213,7 @@ export function useProductEditHydration({
         const queuedProductId = pendingPrefetchProductIdRef.current;
         if (!queuedProductId) return;
 
-        const queryKey = normalizeQueryKey(getProductDetailQueryKey(queuedProductId));
+        const queryKey = normalizeQueryKey(getProductDetailEditQueryKey(queuedProductId));
         const existingState = queryClient.getQueryState<ProductWithImages>(queryKey);
         if (
           typeof existingState?.dataUpdatedAt === 'number' &&
@@ -205,11 +236,11 @@ export function useProductEditHydration({
           meta: {
             source: 'products.hooks.useProductEditHydration.prefetchProductDetail',
             operation: 'detail',
-            resource: 'products.detail',
+            resource: 'products.detailEdit',
             domain: 'products',
             queryKey,
-            tags: ['products', 'detail', 'prefetch'],
-            description: 'Loads products detail.'},
+            tags: ['products', 'detail', 'edit', 'prefetch'],
+            description: 'Prefetches products detail for the live editor.'},
         })();
       }, PRODUCT_DETAIL_PREFETCH_DEBOUNCE_MS);
     },
@@ -230,23 +261,71 @@ export function useProductEditHydration({
       editOpenRequestTokenRef.current += 1;
       const requestToken = editOpenRequestTokenRef.current;
 
-      const queryKey = normalizeQueryKey(getProductDetailQueryKey(product.id));
+      const detailQueryKey = normalizeQueryKey(getProductDetailQueryKey(product.id));
+      const detailEditQueryKey = normalizeQueryKey(getProductDetailEditQueryKey(product.id));
 
-      // Use cached data instantly if the hover-prefetch populated it recently.
-      const cachedState = queryClient.getQueryState<ProductWithImages>(queryKey);
-      const cacheAge =
-        typeof cachedState?.dataUpdatedAt === 'number'
-          ? Date.now() - cachedState.dataUpdatedAt
+      // Prefer the editor cache, but still reuse a recent canonical detail prefetch
+      // while seeding detailEdit so the live editor sticks to one query key.
+      const detailEditCachedState = queryClient.getQueryState<ProductWithImages>(detailEditQueryKey);
+      const detailEditCacheAge =
+        typeof detailEditCachedState?.dataUpdatedAt === 'number'
+          ? Date.now() - detailEditCachedState.dataUpdatedAt
           : Infinity;
-      const cachedData = cacheAge < PRODUCT_DETAIL_CACHE_FRESH_MS
-        ? queryClient.getQueryData<ProductWithImages>(queryKey)
-        : undefined;
+      const detailEditCachedData =
+        detailEditCacheAge < PRODUCT_DETAIL_CACHE_FRESH_MS
+          ? queryClient.getQueryData<ProductWithImages>(detailEditQueryKey)
+          : undefined;
+      const detailCachedState = queryClient.getQueryState<ProductWithImages>(detailQueryKey);
+      const detailCacheAge =
+        typeof detailCachedState?.dataUpdatedAt === 'number'
+          ? Date.now() - detailCachedState.dataUpdatedAt
+          : Infinity;
+      const detailCachedData =
+        detailCacheAge < PRODUCT_DETAIL_CACHE_FRESH_MS
+          ? queryClient.getQueryData<ProductWithImages>(detailQueryKey)
+          : undefined;
+      const cachedData = detailEditCachedData ?? detailCachedData;
 
       if (cachedData) {
+        queryClient.setQueryData(detailEditQueryKey, cachedData);
+
         // Open immediately with cached data, then background-refetch for freshness.
         setEditingProduct(markEditingProductHydrated(cachedData));
         setIsEditHydrating(false);
-        void queryClient.refetchQueries({ queryKey });
+        void fetchQueryV2(queryClient, {
+          queryKey: detailEditQueryKey,
+          queryFn: ({ signal }) =>
+            api.get<ProductWithImages>(`/api/v2/products/${encodeURIComponent(product.id)}?fresh=1`, {
+              signal,
+              cache: 'no-store',
+              logError: false,
+              timeout: PRODUCT_DETAIL_TIMEOUT_MS,
+            }),
+          staleTime: 0,
+          logError: false,
+          meta: {
+            source: 'products.hooks.useProductEditHydration.handleOpenEditModal.cachedRefresh',
+            operation: 'detail',
+            resource: 'products.detailEdit',
+            domain: 'products',
+            queryKey: detailEditQueryKey,
+            tags: ['products', 'detail', 'edit', 'fetch', 'cached-refresh'],
+            description: 'Refreshes cached products edit detail after opening the editor.',
+          },
+        })()
+          .then((freshProduct: ProductWithImages) => {
+            queryClient.setQueryData(detailQueryKey, freshProduct);
+          })
+          .catch((error: unknown) => {
+            if (editOpenRequestTokenRef.current !== requestToken) return;
+            if (error instanceof ApiError && error.status === 404) {
+              handleMissingEditProduct('This product no longer exists. Refreshing the list.');
+              return;
+            }
+            toast(error instanceof Error ? error.message : 'Failed to open product editor.', {
+              variant: 'error',
+            });
+          });
         return;
       }
 
@@ -254,7 +333,7 @@ export function useProductEditHydration({
       setIsEditHydrating(true);
 
       void fetchQueryV2(queryClient, {
-        queryKey,
+        queryKey: detailEditQueryKey,
         queryFn: ({ signal }) =>
           api.get<ProductWithImages>(`/api/v2/products/${encodeURIComponent(product.id)}?fresh=1`, {
             signal,
@@ -267,35 +346,36 @@ export function useProductEditHydration({
         meta: {
           source: 'products.hooks.useProductEditHydration.handleOpenEditModal',
           operation: 'detail',
-          resource: 'products.detail',
+          resource: 'products.detailEdit',
           domain: 'products',
-          queryKey,
-          tags: ['products', 'detail', 'fetch'],
-          description: 'Loads products detail.'},
+          queryKey: detailEditQueryKey,
+          tags: ['products', 'detail', 'edit', 'fetch'],
+          description: 'Loads products edit detail.'},
       })()
         .then((freshProduct: ProductWithImages) => {
+          queryClient.setQueryData(detailQueryKey, freshProduct);
           if (editOpenRequestTokenRef.current !== requestToken) return;
           setEditingProduct(markEditingProductHydrated(freshProduct));
           setIsEditHydrating(false);
         })
         .catch((error: unknown) => {
           if (editOpenRequestTokenRef.current !== requestToken) return;
-          setIsEditHydrating(false);
           if (error instanceof ApiError && error.status === 404) {
-            toast('This product no longer exists. Refreshing the list.', { variant: 'warning' });
-            setRefreshTrigger((prev: number) => prev + 1);
+            handleMissingEditProduct('This product no longer exists. Refreshing the list.');
             return;
           }
+          setIsEditHydrating(false);
           toast(error instanceof Error ? error.message : 'Failed to open product editor.', {
             variant: 'error',
           });
         });
     },
-    [queryClient, setActionError, setEditingProduct, setRefreshTrigger, toast]
+    [handleMissingEditProduct, queryClient, setActionError, setEditingProduct, toast]
   );
 
   const handleCloseEdit = useCallback(() => {
     editOpenRequestTokenRef.current += 1;
+    openingProductFromQueryRef.current = null;
     setEditingProduct(null);
     setIsEditHydrating(false);
     clearProductEditorQueryParams();
@@ -342,9 +422,10 @@ export function useProductEditHydration({
     setEditingProduct(null);
     setIsEditHydrating(true);
 
-    const queryKey = normalizeQueryKey(getProductDetailQueryKey(openProductIdFromQuery));
+    const detailQueryKey = normalizeQueryKey(getProductDetailQueryKey(openProductIdFromQuery));
+    const detailEditQueryKey = normalizeQueryKey(getProductDetailEditQueryKey(openProductIdFromQuery));
     void fetchQueryV2(queryClient, {
-      queryKey,
+      queryKey: detailEditQueryKey,
       queryFn: ({ signal }) =>
         api.get<ProductWithImages>(
           `/api/v2/products/${encodeURIComponent(openProductIdFromQuery)}?fresh=1`,
@@ -360,36 +441,36 @@ export function useProductEditHydration({
       meta: {
         source: 'products.hooks.useProductEditHydration.openingProductFromQuery',
         operation: 'detail',
-        resource: 'products.detail',
+        resource: 'products.detailEdit',
         domain: 'products',
-        queryKey,
-        tags: ['products', 'detail', 'fetch'],
-        description: 'Loads products detail.'},
+        queryKey: detailEditQueryKey,
+        tags: ['products', 'detail', 'edit', 'fetch'],
+        description: 'Loads products edit detail.'},
     })()
       .then((freshProduct: ProductWithImages) => {
+        queryClient.setQueryData(detailQueryKey, freshProduct);
         if (editOpenRequestTokenRef.current !== requestToken) return;
         setEditingProduct(markEditingProductHydrated(freshProduct));
         setIsEditHydrating(false);
       })
       .catch((error: unknown) => {
         if (editOpenRequestTokenRef.current !== requestToken) return;
-        setIsEditHydrating(false);
         if (error instanceof ApiError && error.status === 404) {
-          toast('This product no longer exists. Refreshing the list.', { variant: 'warning' });
-          setRefreshTrigger((prev: number) => prev + 1);
+          handleMissingEditProduct('This product no longer exists. Refreshing the list.');
           return;
         }
+        setIsEditHydrating(false);
         toast(error instanceof Error ? error.message : 'Failed to open product editor.', {
           variant: 'error',
         });
       });
   }, [
     editingProduct?.id,
+    handleMissingEditProduct,
     openProductIdFromQuery,
     queryClient,
     setActionError,
     setEditingProduct,
-    setRefreshTrigger,
     toast,
   ]);
 
@@ -399,16 +480,11 @@ export function useProductEditHydration({
     const error = editingProductDetailQuery.error;
     if (!(error instanceof ApiError) || error.status !== 404) return;
 
-    setEditingProduct(null);
-    setIsEditHydrating(false);
-    toast('This product was deleted or is unavailable.', { variant: 'warning' });
-    setRefreshTrigger((prev: number) => prev + 1);
+    handleMissingEditProduct('This product was deleted or is unavailable.');
   }, [
     editingProduct?.id,
     editingProductDetailQuery.error,
-    setEditingProduct,
-    setRefreshTrigger,
-    toast,
+    handleMissingEditProduct,
   ]);
 
   return {

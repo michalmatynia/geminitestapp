@@ -1,7 +1,7 @@
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import {
-  CmsStorefrontAppearanceMode,
-  CmsAppearanceTone,
+  type CmsStorefrontAppearanceMode,
+  type CmsAppearanceTone,
 } from './CmsStorefrontAppearance.contracts';
 import {
   applyTransparency,

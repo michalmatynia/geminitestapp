@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { resolveKangurActor } from '@/features/kangur/server';
 import { resolveKangurTtsContextRegistryEnvelope } from '@/features/kangur/tts/context-registry/server';

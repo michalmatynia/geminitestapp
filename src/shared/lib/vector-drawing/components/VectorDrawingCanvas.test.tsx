@@ -26,7 +26,7 @@ const {
   useOptionalVectorDrawingActionsMock: vi.fn(),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/data-display.public', () => ({
   VectorCanvas: () => vectorCanvasMock(),
 }));
 
@@ -38,6 +38,7 @@ vi.mock('@/shared/ui/vector-canvas/VectorCanvasContext', () => ({
     value: Record<string, unknown>;
     children: React.ReactNode;
   }) => vectorCanvasProviderMock({ value, children }),
+  useOptionalVectorCanvasContext: vi.fn(),
 }));
 
 vi.mock('../context/VectorDrawingContext', () => ({

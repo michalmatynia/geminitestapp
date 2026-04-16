@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { getCategoryMappingRepository } from '@/features/integrations/services/category-mapping-repository';
 import { categoryMappingUpdateInputSchema } from '@/shared/contracts/integrations/listings';
@@ -6,6 +6,8 @@ import type { IdDto as Params } from '@/shared/contracts/base';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { notFoundError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
+
+import { assertCategoryMappingsCanBeSaved } from '../validation';
 
 /**
  * GET /api/marketplace/mappings/[id]
@@ -53,6 +55,22 @@ export async function PUT_handler(
   const existing = await repo.getById(id);
   if (!existing) {
     throw notFoundError('Mapping not found');
+  }
+
+  const nextInternalCategoryId =
+    body.internalCategoryId !== undefined ? body.internalCategoryId : existing.internalCategoryId;
+  const nextIsActive = body.isActive !== undefined ? body.isActive : existing.isActive;
+
+  if (nextIsActive && nextInternalCategoryId) {
+    await assertCategoryMappingsCanBeSaved({
+      connectionId: existing.connectionId,
+      mappings: [
+        {
+          externalCategoryId: existing.externalCategoryId,
+          internalCategoryId: nextInternalCategoryId,
+        },
+      ],
+    });
   }
 
   const updated = await repo.update(id, {

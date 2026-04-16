@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import {
   buildContextRegistryConsumerEnvelope,
@@ -12,21 +12,26 @@ import {
   requireAiPathsRunAccess,
 } from '@/features/ai/ai-paths/server';
 import { assertAiPathRunQueueReadyForEnqueue } from '@/features/ai/ai-paths/workers/aiPathRunQueue';
-import { upsertAiPathsSettings } from '@/features/ai/ai-paths/server/settings-store';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import {
   aiPathRunEnqueueRequestSchema,
   aiPathRunEnqueueResponseSchema,
+  aiPathRunRecordSchema,
   type AiNode,
   type Edge,
   type PathConfig,
 } from '@/shared/contracts/ai-paths';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, internalError, serviceUnavailableError } from '@/shared/errors/app-error';
-import { compileGraph, evaluateAiPathsValidationPreflight, normalizeNodes, normalizeAiPathsValidationConfig, PATH_CONFIG_PREFIX, palette, sanitizeEdges, stableStringify, validateCanonicalPathNodeIdentities } from '@/shared/lib/ai-paths';
-import { materializeStoredTriggerPathConfig } from '@/shared/lib/ai-paths/core/normalization/stored-trigger-path-config';
+import { compileGraph, sanitizeEdges, stableStringify, validateCanonicalPathNodeIdentities } from '@/shared/lib/ai-paths/core/utils';
+import { evaluateAiPathsValidationPreflight, normalizeAiPathsValidationConfig } from '@/shared/lib/ai-paths/core/validation-engine';
+import { normalizeNodes } from '@/shared/lib/ai-paths/core/normalization';
+import { PATH_CONFIG_PREFIX } from '@/shared/lib/ai-paths/core/constants';
+import { palette } from '@/shared/lib/ai-paths/core/definitions';
+import { loadCanonicalStoredPathConfig } from '@/shared/lib/ai-paths/core/utils/stored-path-config';
 import {
-  remediateRemovedLegacyTriggerContextModes,
+  findRemovedLegacyTriggerContextModes,
+  formatRemovedLegacyTriggerContextModesMessage,
 } from '@/shared/lib/ai-paths/core/utils/legacy-trigger-context-mode';
 import { resolvePathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
@@ -58,22 +63,6 @@ const withTimeout = async <T>(
   }
 };
 
-const resolveEnqueueRunId = (run: unknown): string | null => {
-  if (typeof run === 'string') {
-    const normalized = run.trim();
-    return normalized.length > 0 ? normalized : null;
-  }
-  if (!run || typeof run !== 'object' || Array.isArray(run)) return null;
-  const record = run as Record<string, unknown>;
-  const candidates = [record['id'], record['runId'], record['_id']];
-  for (const candidate of candidates) {
-    if (typeof candidate !== 'string') continue;
-    const normalized = candidate.trim();
-    if (normalized.length > 0) return normalized;
-  }
-  return null;
-};
-
 const hasOwn = (record: Record<string, unknown>, key: string): boolean =>
   Object.prototype.hasOwnProperty.call(record, key);
 
@@ -84,21 +73,19 @@ const loadStoredPathConfig = async (pathId: string): Promise<PathConfig> => {
     throw badRequestError(`Stored AI Path config not found for "${pathId}".`);
   }
 
-  const resolved = materializeStoredTriggerPathConfig({
-    pathId,
-    rawConfig: raw,
-    fallbackName: pathId,
-  });
-  if (resolved.changed) {
-    try {
-      await upsertAiPathsSettings([{ key: configKey, value: JSON.stringify(resolved.config) }]);
-    } catch (error) {
-      void ErrorSystem.captureException(error);
-    
-      // Best-effort persistence only. The repaired config is still safe to execute for this request.
+  try {
+    return loadCanonicalStoredPathConfig({
+      pathId,
+      rawConfig: raw,
+    });
+  } catch (error) {
+    if (error instanceof Error && /non-canonical persisted values/i.test(error.message)) {
+      throw badRequestError(
+        `Stored AI Path "${pathId}" contains non-canonical persisted values. Repair or restore it explicitly before running it.`
+      );
     }
+    throw error;
   }
-  return resolved.config;
 };
 
 export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
@@ -169,9 +156,16 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
     throw badRequestError('Nodes and edges are required to enqueue a run.');
   }
 
-  const normalizedNodes = normalizeNodes(
-    remediateRemovedLegacyTriggerContextModes(resolvedNodesInput).value as AiNode[]
-  );
+  const removedTriggerContextModes = findRemovedLegacyTriggerContextModes(resolvedNodesInput);
+  if (removedTriggerContextModes.length > 0) {
+    throw badRequestError(
+      formatRemovedLegacyTriggerContextModesMessage(removedTriggerContextModes, {
+        surface: 'run graph',
+      })
+    );
+  }
+
+  const normalizedNodes = normalizeNodes(resolvedNodesInput);
   const validationConfig: PathConfig = {
     id: rest.pathId,
     version: 1,
@@ -282,11 +276,12 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
       meta: normalizedMeta,
     });
   });
-  const runId = resolveEnqueueRunId(run);
-  if (!runId) {
-    throw internalError('AI Paths enqueue response missing run identifier.', {
+  const parsedRun = aiPathRunRecordSchema.strict().safeParse(run);
+  if (!parsedRun.success) {
+    throw internalError('AI Paths enqueue service returned a non-canonical run payload.', {
       source: 'ai-paths.runs.enqueue',
       pathId: rest.pathId,
+      issues: parsedRun.error.issues,
     });
   }
   void logSystemEvent({
@@ -318,7 +313,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
     },
   });
 
-  const responsePayload = { run, runId };
+  const responsePayload = { run: parsedRun.data };
   const responseContract = aiPathRunEnqueueResponseSchema.safeParse(responsePayload);
   if (!responseContract.success) {
     throw internalError('AI Paths enqueue response contract violation.', {

@@ -75,7 +75,7 @@ const run = async () => {
   const [propDrilling, uiConsolidation] = await Promise.all([
     collectNumericSummaryMetrics({
       cwd: root,
-      commandArgs: buildScannerArgs(scanPropDrillingScriptPath),
+      commandArgs: [...buildScannerArgs(scanPropDrillingScriptPath), '--guardrails'],
       sourceName: 'scan-prop-drilling',
       fields: {
         componentsWithForwarding: 'componentsWithForwarding',

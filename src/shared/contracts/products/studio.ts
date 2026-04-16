@@ -4,6 +4,8 @@ import { contextRegistryConsumerEnvelopeSchema } from '@/shared/contracts/ai-con
 import { imageStudioRunDispatchModeSchema } from '@/shared/contracts/image-studio/run';
 import { imageStudioSlotSchema } from '@/shared/contracts/image-studio/slot';
 import { productWithImagesSchema } from './product';
+import { statusSchema as productStudioRunStatusSchema, type Status as ProductStudioRunStatus } from '../base';
+export type { ProductStudioRunStatus };
 export const productStudioSequenceGenerationModeSchema = z.enum([
   'studio_prompt_then_sequence',
   'model_full_sequence',
@@ -202,16 +204,6 @@ export const productStudioVariantsResponseSchema = z.object({
 });
 
 export type ProductStudioVariantsResponse = z.infer<typeof productStudioVariantsResponseSchema>;
-
-export const productStudioRunStatusSchema = z.enum([
-  'queued',
-  'running',
-  'completed',
-  'failed',
-  'cancelled',
-]);
-
-export type ProductStudioRunStatus = z.infer<typeof productStudioRunStatusSchema>;
 
 export const productStudioRunKindSchema = z.enum(['generation', 'sequence']);
 export type ProductStudioRunKind = z.infer<typeof productStudioRunKindSchema>;

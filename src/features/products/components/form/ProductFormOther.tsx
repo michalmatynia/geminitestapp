@@ -19,11 +19,11 @@ import {
 } from '@/features/products/validation-engine/core';
 import { applyValidatorFieldReplacement } from '@/features/products/lib/applyValidatorFieldReplacement';
 import { resolveValidatorFieldReplacement } from '@/features/products/lib/resolveValidatorFieldReplacement';
-import { ProductFormData } from '@/shared/contracts/products/drafts';
-import { CatalogRecord } from '@/shared/contracts/products/catalogs';
-import { PriceGroupWithDetails } from '@/shared/contracts/products/product';
-import { ProductCategory } from '@/shared/contracts/products/categories';
-import { ProductShippingGroup } from '@/shared/contracts/products/shipping-groups';
+import { type ProductFormData } from '@/shared/contracts/products/drafts';
+import { type CatalogRecord } from '@/shared/contracts/products/catalogs';
+import { type PriceGroupWithDetails } from '@/shared/contracts/products/product';
+import { type ProductCategory } from '@/shared/contracts/products/categories';
+import { type ProductShippingGroup } from '@/shared/contracts/products/shipping-groups';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { resolveEffectiveShippingGroup } from '@/shared/lib/products/utils/effective-shipping-group';
 import {
@@ -58,9 +58,9 @@ type CategoryIssueHintRowProps = {
   canApplyReplacement: boolean;
 };
 
-const CategoryIssueHintRow = memo(function CategoryIssueHintRow(
+const CategoryIssueHintRow = memo((
   props: CategoryIssueHintRowProps
-): React.JSX.Element {
+): React.JSX.Element => {
   const {
     issue,
     currentCategoryLabel,
@@ -177,7 +177,7 @@ export default function ProductFormOther(): React.JSX.Element {
   // Check if price group is auto-assigned from catalog (for new products only)
   const isNewProduct = !product;
   const selectedCatalog = catalogs.find((c: CatalogRecord) => selectedCatalogIds.includes(c.id));
-  const isPriceGroupAutoAssigned = !!(isNewProduct && selectedCatalog?.defaultPriceGroupId);
+  const isPriceGroupAutoAssigned = Boolean(isNewProduct && selectedCatalog?.defaultPriceGroupId);
 
   // Calculate prices for all price groups
   const priceGroupPrices = filteredPriceGroups.map((group: PriceGroupWithDetails) => {

@@ -1,29 +1,31 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
-import type { BaseProductRecord } from '@/features/integrations/server';
+import type { BaseProductRecord } from '@/features/integrations/services/imports/base-client';
 import {
+  checkBaseSkuExists,
   fetchBaseAllWarehouses,
   fetchBaseAllWarehousesDebug,
   fetchBaseInventories,
   fetchBaseInventoriesDebug,
+  fetchBaseProductById,
   fetchBaseProductIds,
   fetchBaseProductDetails,
   fetchBaseWarehouses,
   fetchBaseWarehousesDebug,
-  getIntegrationRepository,
-  mapBaseProduct,
-  extractBaseImageUrls,
-} from '@/features/integrations/server';
+} from '@/features/integrations/services/imports/base-client';
+import { getIntegrationRepository } from '@/features/integrations/services/integration-repository';
+import { mapBaseProduct } from '@/features/integrations/services/imports/base-mapper';
+import { extractBaseImageUrls } from '@/features/integrations/services/imports/base-mapper-utils';
 import { resolvePriceGroupContext } from '@/features/integrations/services/imports/base-import-service-context';
-import { resolveBaseConnectionToken } from '@/features/integrations/server';
+import { resolveBaseConnectionToken } from '@/features/integrations/services/base-token-resolver';
 import {
   getCatalogRepository,
   getProductDataProvider,
   getProductRepository,
 } from '@/features/products/server';
 import type { ProductCreateInput, ProductWithImages } from '@/features/products/server';
-import { baseImportInventoriesPayloadSchema, baseImportListPayloadSchema, baseImportWarehousesPayloadSchema, baseImportWarehousesDebugPayloadSchema } from '@/shared/contracts/integrations/import-export';
-import { type BaseImportInventoriesResponse, type BaseImportListResponse, type BaseImportWarehousesResponse, type BaseImportWarehousesDebugResponse, type BaseWarehouse, type ImportListItem } from '@/shared/contracts/integrations';
+import { baseImportInventoriesPayloadSchema, baseImportListIdsPayloadSchema, baseImportListPayloadSchema, baseImportWarehousesPayloadSchema, baseImportWarehousesDebugPayloadSchema } from '@/shared/contracts/integrations/import-export';
+import { type BaseImportInventoriesResponse, type BaseImportListIdsResponse, type BaseImportListResponse, type BaseImportWarehousesResponse, type BaseImportWarehousesDebugResponse, type BaseWarehouse, type ImportListItem } from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
@@ -31,7 +33,7 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 export const requestSchema = baseImportInventoriesPayloadSchema.or(
   baseImportWarehousesPayloadSchema
-).or(baseImportWarehousesDebugPayloadSchema).or(baseImportListPayloadSchema);
+).or(baseImportWarehousesDebugPayloadSchema).or(baseImportListPayloadSchema).or(baseImportListIdsPayloadSchema);
 
 type MappedItem = Omit<ImportListItem, 'baseProductId' | 'sku'> & {
   baseProductId: string | null;
@@ -142,20 +144,23 @@ export async function postBaseImportsHandler(
   const inventoryId = data.inventoryId;
   const provider = await getProductDataProvider();
 
-  if (action === 'list') {
+  if (data.action === 'list' || data.action === 'list_ids') {
+    const listData = data;
     const catalogRepository = await getCatalogRepository();
     const catalogs = await catalogRepository.listCatalogs();
     const defaultCatalog = catalogs.find((catalog: (typeof catalogs)[number]) => catalog.isDefault);
-    const targetCatalog = data.catalogId
-      ? (catalogs.find((catalog: (typeof catalogs)[number]) => catalog.id === data.catalogId) ??
+    const targetCatalog = listData.catalogId
+      ? (catalogs.find((catalog: (typeof catalogs)[number]) => catalog.id === listData.catalogId) ??
         defaultCatalog)
       : defaultCatalog;
     const { preferredCurrencies: listPreferredCurrencies } = await resolvePriceGroupContext(
       provider,
-      targetCatalog?.defaultPriceGroupId ?? null
+      targetCatalog?.defaultPriceGroupId ?? null,
+      {
+        baseToken: token,
+        inventoryId,
+      }
     );
-
-    const allBaseIds = await fetchBaseProductIds(token, inventoryId);
 
     // Get existing products using repository to check for baseProductIds and SKUs
     const productRepository = await getProductRepository();
@@ -173,21 +178,28 @@ export async function postBaseImportsHandler(
         .map((product: ProductWithImages) => product.sku)
         .filter((sku): sku is string => typeof sku === 'string' && sku.trim() !== '')
     );
+    const allBaseIds = listData.directTarget ? [] : await fetchBaseProductIds(token, inventoryId);
 
     const listItems = allBaseIds.map((id: string) => ({
       id,
       exists: existingIds.has(id),
     }));
-    const filteredItems = data.uniqueOnly
+    const filteredItems = listData.uniqueOnly
       ? listItems.filter((item: { id: string; exists: boolean }) => !item.exists)
       : listItems;
 
-    const pageSize = data.pageSize ?? data.limit ?? 50;
-    const page = data.page ?? 1;
-    const normalizedName = (data.searchName ?? '').trim().toLowerCase();
-    const normalizedSku = (data.searchSku ?? '').trim().toLowerCase();
+    const scopedLimit = typeof listData.limit === 'number' ? listData.limit : null;
+    const requestedPageSize = listData.action === 'list' ? listData.pageSize : undefined;
+    const effectivePageSize = requestedPageSize ?? scopedLimit ?? 50;
+    const pageSize =
+      scopedLimit != null ? Math.min(effectivePageSize, scopedLimit) : effectivePageSize;
+    const page = listData.action === 'list' ? listData.page ?? 1 : 1;
+    const normalizedName = (listData.searchName ?? '').trim().toLowerCase();
+    const normalizedSku = (listData.searchSku ?? '').trim().toLowerCase();
     const hasSearchFilter = normalizedName.length > 0 || normalizedSku.length > 0;
-    const filteredItemsTotalPages = Math.max(1, Math.ceil(filteredItems.length / pageSize));
+    const scopedFilteredItems =
+      scopedLimit != null ? filteredItems.slice(0, scopedLimit) : filteredItems;
+    const filteredItemsTotalPages = Math.max(1, Math.ceil(scopedFilteredItems.length / pageSize));
 
     const toStringId = (value: unknown): string | null => {
       if (typeof value === 'string' && value.trim()) return value.trim();
@@ -249,17 +261,61 @@ export async function postBaseImportsHandler(
       return mapRecordsToItems(records);
     };
 
+    if (listData.directTarget) {
+      let directRecord: BaseProductRecord | null = null;
+
+      if (listData.directTarget.type === 'base_product_id') {
+        directRecord = await fetchBaseProductById(token, inventoryId, listData.directTarget.value);
+      } else {
+        const skuLookup = await checkBaseSkuExists(token, inventoryId, listData.directTarget.value);
+        if (skuLookup.productId) {
+          directRecord = await fetchBaseProductById(token, inventoryId, skuLookup.productId);
+        }
+      }
+
+      const directItems = directRecord ? mapRecordsToItems([directRecord]) : [];
+
+      if (listData.action === 'list_ids') {
+        const response: BaseImportListIdsResponse = {
+          ids: directItems.map((item: ImportListItem) => item.baseProductId),
+          totalMatching: directItems.length,
+        };
+        return NextResponse.json(response);
+      }
+
+      const pageSize = listData.pageSize ?? 50;
+      const response: BaseImportListResponse = {
+        products: directItems,
+        total: directItems.length,
+        filtered: directItems.length,
+        available: directItems.length,
+        existing: directItems.filter((item: ImportListItem) => item.exists).length,
+        skuDuplicates: directItems.filter((item: ImportListItem) => item.skuExists).length,
+        page: 1,
+        pageSize,
+        totalPages: 1,
+      };
+      return NextResponse.json(response);
+    }
     if (!hasSearchFilter) {
+      if (listData.action === 'list_ids') {
+        const response: BaseImportListIdsResponse = {
+          ids: scopedFilteredItems.map((item: { id: string }) => item.id),
+          totalMatching: scopedFilteredItems.length,
+        };
+        return NextResponse.json(response);
+      }
+
       const startIndex = (page - 1) * pageSize;
       const endIndex = startIndex + pageSize;
-      const pagedItems = filteredItems.slice(startIndex, endIndex);
+      const pagedItems = scopedFilteredItems.slice(startIndex, endIndex);
 
       if (pagedItems.length === 0) {
         const response: BaseImportListResponse = {
           products: [],
           total: listItems.length,
-          filtered: filteredItems.length,
-          available: filteredItems.length,
+          filtered: scopedFilteredItems.length,
+          available: scopedFilteredItems.length,
           existing: listItems.filter((i: { id: string; exists: boolean }) => i.exists).length,
           skuDuplicates: 0,
           page,
@@ -277,8 +333,8 @@ export async function postBaseImportsHandler(
       const response: BaseImportListResponse = {
         products: mappedList,
         total: listItems.length,
-        filtered: filteredItems.length,
-        available: filteredItems.length,
+        filtered: scopedFilteredItems.length,
+        available: scopedFilteredItems.length,
         existing: listItems.filter((item: { id: string; exists: boolean }) => item.exists).length,
         skuDuplicates: skuDuplicateCount,
         page,
@@ -288,7 +344,7 @@ export async function postBaseImportsHandler(
       return NextResponse.json(response);
     }
 
-    const searchableIds = filteredItems.map((item: { id: string; exists: boolean }) => item.id);
+    const searchableIds = scopedFilteredItems.map((item: { id: string; exists: boolean }) => item.id);
     const mappedSearchScope = await fetchMappedItemsByIds(searchableIds);
     const hasExactSkuMatch =
       normalizedSku.length > 0 &&
@@ -308,6 +364,13 @@ export async function postBaseImportsHandler(
       return nameOk && skuOk;
     });
     const searchedTotalPages = Math.max(1, Math.ceil(searchedList.length / pageSize));
+    if (listData.action === 'list_ids') {
+      const response: BaseImportListIdsResponse = {
+        ids: searchedList.map((item: ImportListItem) => item.baseProductId),
+        totalMatching: searchedList.length,
+      };
+      return NextResponse.json(response);
+    }
     const normalizedPage = Math.min(Math.max(page, 1), searchedTotalPages);
     const startIndex = (normalizedPage - 1) * pageSize;
     const endIndex = startIndex + pageSize;
@@ -320,7 +383,7 @@ export async function postBaseImportsHandler(
       products: pagedSearchedList,
       total: listItems.length,
       filtered: searchedList.length,
-      available: filteredItems.length,
+      available: scopedFilteredItems.length,
       existing: listItems.filter((item: { id: string; exists: boolean }) => item.exists).length,
       skuDuplicates: skuDuplicateCount,
       page: normalizedPage,

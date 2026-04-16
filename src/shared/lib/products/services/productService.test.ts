@@ -1,17 +1,22 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ProductWithImages } from '@/shared/contracts/products/product';
+import type { ProductCustomFieldDefinition } from '@/shared/contracts/products/custom-fields';
 import { ActivityTypes } from '@/shared/constants/observability';
 
 const {
   repositoryMock,
   shippingGroupRepositoryMock,
   categoryRepositoryMock,
+  customFieldRepositoryMock,
+  titleTermRepositoryMock,
   imageRepositoryMock,
   getProductRepositoryMock,
   getProductDataProviderMock,
   getShippingGroupRepositoryMock,
   getCategoryRepositoryMock,
+  getCustomFieldRepositoryMock,
+  getTitleTermRepositoryMock,
   uploadFileMock,
   deleteFileFromStorageMock,
   getImageFileRepositoryMock,
@@ -53,6 +58,14 @@ const {
   },
   categoryRepositoryMock: {
     listCategories: vi.fn(),
+    getCategoryById: vi.fn(),
+  },
+  customFieldRepositoryMock: {
+    listCustomFields: vi.fn(),
+  },
+  titleTermRepositoryMock: {
+    findByName: vi.fn(),
+    createTitleTerm: vi.fn(),
   },
   imageRepositoryMock: {
     getImageFileById: vi.fn(),
@@ -62,6 +75,8 @@ const {
   getProductDataProviderMock: vi.fn(),
   getShippingGroupRepositoryMock: vi.fn(),
   getCategoryRepositoryMock: vi.fn(),
+  getCustomFieldRepositoryMock: vi.fn(),
+  getTitleTermRepositoryMock: vi.fn(),
   uploadFileMock: vi.fn(),
   deleteFileFromStorageMock: vi.fn(),
   getImageFileRepositoryMock: vi.fn(),
@@ -88,6 +103,14 @@ vi.mock('@/shared/lib/products/services/shipping-group-repository', () => ({
 
 vi.mock('@/shared/lib/products/services/category-repository', () => ({
   getCategoryRepository: getCategoryRepositoryMock,
+}));
+
+vi.mock('@/shared/lib/products/services/custom-field-repository', () => ({
+  getCustomFieldRepository: getCustomFieldRepositoryMock,
+}));
+
+vi.mock('@/shared/lib/products/services/title-term-repository', () => ({
+  getTitleTermRepository: getTitleTermRepositoryMock,
 }));
 
 vi.mock('@/shared/lib/products/validations', () => ({
@@ -152,6 +175,7 @@ const createProductRecord = (overrides: Partial<ProductWithImages> = {}): Produc
     producers: [],
     images: [],
     catalogs: [],
+    customFields: [],
     parameters: [{ parameterId: 'param-1', value: 'value-1' }],
     imageLinks: [],
     imageBase64s: [],
@@ -169,6 +193,8 @@ describe('productService parameter normalization', () => {
     getProductRepositoryMock.mockResolvedValue(repositoryMock);
     getShippingGroupRepositoryMock.mockResolvedValue(shippingGroupRepositoryMock);
     getCategoryRepositoryMock.mockResolvedValue(categoryRepositoryMock);
+    getCustomFieldRepositoryMock.mockResolvedValue(customFieldRepositoryMock);
+    getTitleTermRepositoryMock.mockResolvedValue(titleTermRepositoryMock);
     getImageFileRepositoryMock.mockResolvedValue(imageRepositoryMock);
     logActivityMock.mockResolvedValue(undefined);
 
@@ -182,7 +208,9 @@ describe('productService parameter normalization', () => {
     repositoryMock.bulkCreateProducts.mockResolvedValue(1);
     repositoryMock.updateProduct.mockResolvedValue(createProductRecord());
     repositoryMock.getProductById.mockResolvedValue(createProductRecord());
-    repositoryMock.getProductBySku.mockResolvedValue(createProductRecord());
+    repositoryMock.getProductBySku.mockImplementation(async (sku: string) =>
+      sku === 'SKU-1' ? createProductRecord() : null
+    );
     repositoryMock.getProductsBySkus.mockResolvedValue([createProductRecord()]);
     repositoryMock.findProductsByBaseIds.mockResolvedValue([createProductRecord()]);
     repositoryMock.duplicateProduct.mockResolvedValue({ id: 'product-2' });
@@ -208,6 +236,24 @@ describe('productService parameter normalization', () => {
     shippingGroupRepositoryMock.listShippingGroups.mockResolvedValue([]);
     shippingGroupRepositoryMock.getShippingGroupById.mockResolvedValue(null);
     categoryRepositoryMock.listCategories.mockResolvedValue([]);
+    categoryRepositoryMock.getCategoryById.mockResolvedValue(null);
+    customFieldRepositoryMock.listCustomFields.mockResolvedValue([
+      {
+        id: 'notes',
+        name: 'Notes',
+        type: 'text',
+        options: [],
+      },
+      {
+        id: 'flags',
+        name: 'Flags',
+        type: 'checkbox_set',
+        options: [
+          { id: 'gift-ready', label: 'Gift Ready' },
+          { id: 'fragile', label: 'Fragile' },
+        ],
+      },
+    ] satisfies Partial<ProductCustomFieldDefinition>[]);
     imageRepositoryMock.getImageFileById.mockResolvedValue({
       id: 'image-file-1',
       filepath: '/uploads/product-1.png',
@@ -215,6 +261,18 @@ describe('productService parameter normalization', () => {
     imageRepositoryMock.deleteImageFile.mockResolvedValue(undefined);
     uploadFileMock.mockResolvedValue({
       id: 'image-file-1',
+    });
+    titleTermRepositoryMock.findByName.mockResolvedValue(null);
+    titleTermRepositoryMock.createTitleTerm.mockResolvedValue({
+      id: 'title-term-1',
+      name: 'Placeholder',
+      description: null,
+      catalogId: 'catalog-1',
+      type: 'size',
+      name_en: 'Placeholder',
+      name_pl: null,
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
     });
     deleteFileFromStorageMock.mockResolvedValue(undefined);
     logWarningMock.mockResolvedValue(undefined);
@@ -340,7 +398,7 @@ describe('productService parameter normalization', () => {
     expect(logWarningMock).not.toHaveBeenCalled();
   });
 
-  it('defaults create payload parameters to an empty array when omitted', async () => {
+  it('defaults create payload custom fields and parameters to empty arrays when omitted', async () => {
     validateProductCreateMock.mockResolvedValue({
       success: true,
       data: {
@@ -353,7 +411,386 @@ describe('productService parameter normalization', () => {
     expect(repositoryMock.createProduct).toHaveBeenCalledTimes(1);
     const [createPayload] = repositoryMock.createProduct.mock.calls[0] as [Record<string, unknown>];
 
-    expect(createPayload).toEqual(expect.objectContaining({ sku: 'SKU-NEW', parameters: [] }));
+    expect(createPayload).toEqual(
+      expect.objectContaining({ sku: 'SKU-NEW', customFields: [], parameters: [] })
+    );
+  });
+
+  it('normalizes notes on create and update payloads', async () => {
+    validateProductCreateMock.mockResolvedValue({
+      success: true,
+      data: {
+        sku: 'SKU-NOTES',
+        notes: {
+          text: '  Keep the original insert sheet.  ',
+          color: '  #fde68a ',
+        },
+      },
+    });
+    validateProductUpdateMock.mockResolvedValue({
+      success: true,
+      data: {
+        notes: {
+          text: '  Updated handling note  ',
+          color: '  #bfdbfe ',
+        },
+      },
+    });
+
+    await productService.createProduct({
+      sku: 'SKU-NOTES',
+      notes: {
+        text: 'Keep the original insert sheet.',
+        color: '#fde68a',
+      },
+    });
+    await productService.updateProduct('product-1', {
+      notes: {
+        text: 'Updated handling note',
+        color: '#bfdbfe',
+      },
+    });
+
+    const [createPayload] = repositoryMock.createProduct.mock.calls[0] as [Record<string, unknown>];
+    const [, updatePayload] = repositoryMock.updateProduct.mock.calls[0] as [
+      string,
+      Record<string, unknown>,
+    ];
+
+    expect(createPayload).toEqual(
+      expect.objectContaining({
+        notes: {
+          text: 'Keep the original insert sheet.',
+          color: '#fde68a',
+        },
+      })
+    );
+    expect(updatePayload).toEqual(
+      expect.objectContaining({
+        notes: {
+          text: 'Updated handling note',
+          color: '#bfdbfe',
+        },
+      })
+    );
+  });
+
+  it('normalizes structured names and auto-creates missing title terms during create', async () => {
+    categoryRepositoryMock.getCategoryById.mockResolvedValue({
+      id: 'category-1',
+      name: 'Anime Pin',
+      description: null,
+      color: null,
+      parentId: null,
+      catalogId: 'catalog-1',
+      name_en: 'Anime Pin',
+      name_pl: null,
+      name_de: null,
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    });
+    validateProductCreateMock.mockResolvedValue({
+      success: true,
+      data: {
+        sku: 'SKU-STRUCTURED',
+        catalogIds: ['catalog-1'],
+        categoryId: 'category-1',
+        name_en: '  Scout Regiment| 4 cm | Metal  | Anime Pin | Attack   On Titan ',
+      },
+    });
+
+    await productService.createProduct({
+      sku: 'SKU-STRUCTURED',
+      catalogIds: ['catalog-1'],
+      categoryId: 'category-1',
+      name_en: '  Scout Regiment| 4 cm | Metal  | Anime Pin | Attack   On Titan ',
+    });
+
+    expect(repositoryMock.createProduct).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sku: 'SKU-STRUCTURED',
+        name_en: 'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan',
+      })
+    );
+    expect(getTitleTermRepositoryMock).toHaveBeenCalledTimes(1);
+    expect(titleTermRepositoryMock.findByName).toHaveBeenNthCalledWith(
+      1,
+      'catalog-1',
+      'size',
+      '4 cm'
+    );
+    expect(titleTermRepositoryMock.findByName).toHaveBeenNthCalledWith(
+      2,
+      'catalog-1',
+      'material',
+      'Metal'
+    );
+    expect(titleTermRepositoryMock.findByName).toHaveBeenNthCalledWith(
+      3,
+      'catalog-1',
+      'theme',
+      'Attack On Titan'
+    );
+    expect(titleTermRepositoryMock.createTitleTerm).toHaveBeenCalledTimes(3);
+    expect(titleTermRepositoryMock.createTitleTerm).toHaveBeenNthCalledWith(1, {
+      catalogId: 'catalog-1',
+      type: 'size',
+      name_en: '4 cm',
+      name_pl: null,
+    });
+    expect(titleTermRepositoryMock.createTitleTerm).toHaveBeenNthCalledWith(2, {
+      catalogId: 'catalog-1',
+      type: 'material',
+      name_en: 'Metal',
+      name_pl: null,
+    });
+    expect(titleTermRepositoryMock.createTitleTerm).toHaveBeenNthCalledWith(3, {
+      catalogId: 'catalog-1',
+      type: 'theme',
+      name_en: 'Attack On Titan',
+      name_pl: null,
+    });
+  });
+
+  it('accepts structured create payloads when the English title category matches category.name_en', async () => {
+    categoryRepositoryMock.getCategoryById.mockResolvedValue({
+      id: 'category-1',
+      name: 'Przypinka Anime',
+      description: null,
+      color: null,
+      parentId: null,
+      catalogId: 'catalog-1',
+      name_en: 'Anime Pin',
+      name_pl: 'Przypinka Anime',
+      name_de: null,
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    });
+    validateProductCreateMock.mockResolvedValue({
+      success: true,
+      data: {
+        sku: 'SKU-CATEGORY-EN',
+        catalogIds: ['catalog-1'],
+        categoryId: 'category-1',
+        name_en: 'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan',
+      },
+    });
+
+    await productService.createProduct({
+      sku: 'SKU-CATEGORY-EN',
+      catalogIds: ['catalog-1'],
+      categoryId: 'category-1',
+      name_en: 'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan',
+    });
+
+    expect(repositoryMock.createProduct).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sku: 'SKU-CATEGORY-EN',
+        name_en: 'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan',
+      })
+    );
+  });
+
+  it('rejects structured create payloads without a selected category', async () => {
+    validateProductCreateMock.mockResolvedValue({
+      success: true,
+      data: {
+        sku: 'SKU-NO-CATEGORY',
+        catalogIds: ['catalog-1'],
+        name_en: 'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan',
+      },
+    });
+
+    await expect(
+      productService.createProduct({
+        sku: 'SKU-NO-CATEGORY',
+        catalogIds: ['catalog-1'],
+        name_en: 'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan',
+      })
+    ).rejects.toMatchObject({
+      httpStatus: 400,
+      code: 'BAD_REQUEST',
+    });
+    expect(repositoryMock.createProduct).not.toHaveBeenCalled();
+  });
+
+  it('rejects structured create payloads when the title category does not match the selected category', async () => {
+    categoryRepositoryMock.getCategoryById.mockResolvedValue({
+      id: 'category-1',
+      name: 'Gaming Pin',
+      description: null,
+      color: null,
+      parentId: null,
+      catalogId: 'catalog-1',
+      name_en: 'Gaming Pin',
+      name_pl: null,
+      name_de: null,
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    });
+    validateProductCreateMock.mockResolvedValue({
+      success: true,
+      data: {
+        sku: 'SKU-CATEGORY-MISMATCH',
+        catalogIds: ['catalog-1'],
+        categoryId: 'category-1',
+        name_en: 'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan',
+      },
+    });
+
+    await expect(
+      productService.createProduct({
+        sku: 'SKU-CATEGORY-MISMATCH',
+        catalogIds: ['catalog-1'],
+        categoryId: 'category-1',
+        name_en: 'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan',
+      })
+    ).rejects.toMatchObject({
+      httpStatus: 400,
+      code: 'BAD_REQUEST',
+    });
+    expect(repositoryMock.createProduct).not.toHaveBeenCalled();
+  });
+
+  it('auto-creates missing title terms during update by using the existing product catalog', async () => {
+    repositoryMock.getProductById.mockResolvedValue(
+      createProductRecord({
+        id: 'product-1',
+        catalogId: 'catalog-existing',
+      })
+    );
+    validateProductUpdateMock.mockResolvedValue({
+      success: true,
+      data: {
+        name_en: 'Scout Regiment | 5 cm | Acrylic | Anime Pin | Survey Corps',
+      },
+    });
+
+    await productService.updateProduct('product-1', {
+      name_en: 'Scout Regiment | 5 cm | Acrylic | Anime Pin | Survey Corps',
+    });
+
+    expect(getTitleTermRepositoryMock).toHaveBeenCalledTimes(1);
+    expect(titleTermRepositoryMock.findByName).toHaveBeenNthCalledWith(
+      1,
+      'catalog-existing',
+      'size',
+      '5 cm'
+    );
+    expect(titleTermRepositoryMock.findByName).toHaveBeenNthCalledWith(
+      2,
+      'catalog-existing',
+      'material',
+      'Acrylic'
+    );
+    expect(titleTermRepositoryMock.findByName).toHaveBeenNthCalledWith(
+      3,
+      'catalog-existing',
+      'theme',
+      'Survey Corps'
+    );
+    expect(titleTermRepositoryMock.createTitleTerm).toHaveBeenNthCalledWith(1, {
+      catalogId: 'catalog-existing',
+      type: 'size',
+      name_en: '5 cm',
+      name_pl: null,
+    });
+    expect(titleTermRepositoryMock.createTitleTerm).toHaveBeenNthCalledWith(2, {
+      catalogId: 'catalog-existing',
+      type: 'material',
+      name_en: 'Acrylic',
+      name_pl: null,
+    });
+    expect(titleTermRepositoryMock.createTitleTerm).toHaveBeenNthCalledWith(3, {
+      catalogId: 'catalog-existing',
+      type: 'theme',
+      name_en: 'Survey Corps',
+      name_pl: null,
+    });
+  });
+
+  it('normalizes custom fields when update payload includes them', async () => {
+    validateProductUpdateMock.mockResolvedValue({
+      success: true,
+      data: {
+        customFields: [
+          {
+            fieldId: '  notes  ',
+            textValue: '  Handle with care  ',
+          },
+          {
+            fieldId: 'flags',
+            selectedOptionIds: ['gift-ready', 'gift-ready', ' fragile '],
+          },
+        ],
+      },
+    });
+
+    await productService.updateProduct('product-1', {
+      customFields: [
+        { fieldId: 'notes', textValue: 'Handle with care' },
+        { fieldId: 'flags', selectedOptionIds: ['gift-ready', 'fragile'] },
+      ],
+    });
+
+    expect(repositoryMock.updateProduct).toHaveBeenCalledTimes(1);
+    const [, updatePayload] = repositoryMock.updateProduct.mock.calls[0] as [
+      string,
+      Record<string, unknown>,
+    ];
+
+    expect(updatePayload).toEqual(
+      expect.objectContaining({
+        customFields: [
+          { fieldId: 'notes', textValue: 'Handle with care' },
+          { fieldId: 'flags', selectedOptionIds: ['gift-ready', 'fragile'] },
+        ],
+      })
+    );
+  });
+
+  it('filters unknown custom fields and stale checkbox option ids before update', async () => {
+    validateProductUpdateMock.mockResolvedValue({
+      success: true,
+      data: {
+        customFields: [
+          {
+            fieldId: 'notes',
+            textValue: '  Keep me  ',
+          },
+          {
+            fieldId: 'flags',
+            selectedOptionIds: ['gift-ready', 'missing-option'],
+          },
+          {
+            fieldId: 'deleted-field',
+            textValue: 'drop me',
+          },
+        ],
+      },
+    });
+
+    await productService.updateProduct('product-1', {
+      customFields: [
+        { fieldId: 'notes', textValue: 'Keep me' },
+        { fieldId: 'flags', selectedOptionIds: ['gift-ready', 'missing-option'] },
+        { fieldId: 'deleted-field', textValue: 'drop me' },
+      ],
+    });
+
+    const [, updatePayload] = repositoryMock.updateProduct.mock.calls[0] as [
+      string,
+      Record<string, unknown>,
+    ];
+
+    expect(updatePayload).toEqual(
+      expect.objectContaining({
+        customFields: [
+          { fieldId: 'notes', textValue: 'Keep me' },
+          { fieldId: 'flags', selectedOptionIds: ['gift-ready'] },
+        ],
+      })
+    );
   });
 
   it('filters invalid entries during bulk create and normalizes payloads', async () => {
@@ -386,8 +823,20 @@ describe('productService parameter normalization', () => {
 
     expect(created).toBe(2);
     expect(repositoryMock.bulkCreateProducts).toHaveBeenCalledWith([
-      { sku: 'SKU-1', parameters: [], imageFileIds: undefined },
-      { sku: 'SKU-2', parameters: [], imageFileIds: ['img-1'] },
+      {
+        sku: 'SKU-1',
+        customFields: [],
+        parameters: [],
+        marketplaceContentOverrides: [],
+        imageFileIds: undefined,
+      },
+      {
+        sku: 'SKU-2',
+        customFields: [],
+        parameters: [],
+        marketplaceContentOverrides: [],
+        imageFileIds: ['img-1'],
+      },
     ]);
   });
 

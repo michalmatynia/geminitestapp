@@ -8,6 +8,23 @@ import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 import { defaultPlaywrightSettings } from './settings';
 
+const normalizePlaywrightIdentityProfile = (
+  value: unknown
+): PlaywrightSettings['identityProfile'] | undefined =>
+  value === 'default' || value === 'search' || value === 'marketplace' ? value : undefined;
+
+const normalizePlaywrightProxySessionMode = (
+  value: unknown
+): PlaywrightSettings['proxySessionMode'] | undefined =>
+  value === 'sticky' || value === 'rotate' ? value : undefined;
+
+const normalizePlaywrightProxyProviderPreset = (
+  value: unknown
+): PlaywrightSettings['proxyProviderPreset'] | undefined =>
+  value === 'custom' || value === 'brightdata' || value === 'oxylabs' || value === 'decodo'
+    ? value
+    : undefined;
+
 export const createPlaywrightPersonaId = (): string => {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
     return crypto.randomUUID();
@@ -20,6 +37,15 @@ export const buildPlaywrightSettings = (
 ): PlaywrightSettings => ({
   ...defaultPlaywrightSettings,
   ...(settings ?? {}),
+  identityProfile:
+    normalizePlaywrightIdentityProfile(settings?.identityProfile) ??
+    defaultPlaywrightSettings.identityProfile,
+  proxySessionMode:
+    normalizePlaywrightProxySessionMode(settings?.proxySessionMode) ??
+    defaultPlaywrightSettings.proxySessionMode,
+  proxyProviderPreset:
+    normalizePlaywrightProxyProviderPreset(settings?.proxyProviderPreset) ??
+    defaultPlaywrightSettings.proxyProviderPreset,
 });
 
 export const normalizePlaywrightPersonas = (value: unknown): PlaywrightPersona[] => {
@@ -61,10 +87,13 @@ export const arePlaywrightSettingsEqual = (
   const proxyPasswordEqual =
     !left.proxyPassword || !right.proxyPassword ? true : left.proxyPassword === right.proxyPassword;
   return (
+    left.identityProfile === right.identityProfile &&
     left.headless === right.headless &&
     left.slowMo === right.slowMo &&
     left.timeout === right.timeout &&
     left.navigationTimeout === right.navigationTimeout &&
+    left.locale === right.locale &&
+    left.timezoneId === right.timezoneId &&
     left.humanizeMouse === right.humanizeMouse &&
     left.mouseJitter === right.mouseJitter &&
     left.clickDelayMin === right.clickDelayMin &&
@@ -77,6 +106,9 @@ export const arePlaywrightSettingsEqual = (
     left.proxyServer === right.proxyServer &&
     left.proxyUsername === right.proxyUsername &&
     proxyPasswordEqual &&
+    left.proxySessionAffinity === right.proxySessionAffinity &&
+    left.proxySessionMode === right.proxySessionMode &&
+    left.proxyProviderPreset === right.proxyProviderPreset &&
     left.emulateDevice === right.emulateDevice &&
     left.deviceName === right.deviceName
   );

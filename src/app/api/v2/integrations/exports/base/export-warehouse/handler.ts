@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { getExportWarehouseId, setExportWarehouseId } from '@/features/integrations/server';
 import { baseExportWarehousePreferencePayloadSchema, baseExportWarehousePreferenceQuerySchema } from '@/shared/contracts/integrations/preferences';

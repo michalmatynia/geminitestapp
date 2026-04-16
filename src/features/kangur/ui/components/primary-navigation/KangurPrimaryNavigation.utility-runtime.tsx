@@ -6,13 +6,13 @@ import { LogOut } from 'lucide-react';
 
 import {
   CmsStorefrontAppearanceButtons,
-  useOptionalCmsStorefrontAppearance,
+  type useOptionalCmsStorefrontAppearance,
 } from '@/shared/ui/cms-appearance/CmsStorefrontAppearance';
 import { KangurElevatedUserMenu } from '@/features/kangur/ui/components/KangurElevatedUserMenu';
 import { KangurProfileMenu } from '@/features/kangur/ui/components/KangurProfileMenu';
 
 import {
-  useKangurPrimaryNavigationState,
+  type useKangurPrimaryNavigationState,
 } from './KangurPrimaryNavigation.hooks';
 import type {
   KangurNavActionConfig,

@@ -45,6 +45,7 @@ describe('TraderaStatusButton', () => {
       integrationSlug: 'tradera',
       status: 'auth_required',
       runId: 'run-tradera-1',
+      failureReason: null,
       requestId: 'job-tradera-1',
       integrationId: 'integration-tradera-1',
       connectionId: 'conn-tradera-1',
@@ -70,6 +71,7 @@ describe('TraderaStatusButton', () => {
       integrationSlug: 'tradera',
       status: 'auth_required',
       runId: null,
+      failureReason: null,
       requestId: null,
       integrationId: null,
       connectionId: null,
@@ -83,6 +85,39 @@ describe('TraderaStatusButton', () => {
       <TraderaStatusButton
         productId='product-1'
         status='active'
+        prefetchListings={vi.fn()}
+        onOpenListings={onOpenListings}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Manage Tradera listing (active).' }));
+
+    expect(onOpenListings).toHaveBeenCalledWith(undefined);
+  });
+
+  it('suppresses stale recovery mode when persisted Tradera feedback is already completed', () => {
+    window.sessionStorage.setItem(
+      'tradera-quick-list-feedback',
+      JSON.stringify({
+        'product-1': {
+          productId: 'product-1',
+          status: 'completed',
+          expiresAt: Date.now() + 60_000,
+          runId: 'run-tradera-1',
+          requestId: 'job-tradera-1',
+          integrationId: 'integration-tradera-1',
+          connectionId: 'conn-tradera-1',
+          duplicateMatchStrategy: 'exact-title-single-candidate',
+        },
+      })
+    );
+
+    const onOpenListings = vi.fn();
+
+    render(
+      <TraderaStatusButton
+        productId='product-1'
+        status='auth_required'
         prefetchListings={vi.fn()}
         onOpenListings={onOpenListings}
       />

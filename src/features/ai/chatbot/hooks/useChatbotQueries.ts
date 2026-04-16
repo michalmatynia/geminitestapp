@@ -58,7 +58,7 @@ export function useChatbotSession(
       if (!sessionId) return null;
       return fetchChatbotSession(sessionId);
     },
-    enabled: (options?.enabled ?? true) && !!sessionId,
+    enabled: (options?.enabled ?? true) && Boolean(sessionId),
     meta: {
       source: 'chatbot.hooks.useChatbotSession',
       operation: 'detail',
@@ -83,7 +83,7 @@ export function useChatbotSettings(
     queryKey,
     queryFn: (): Promise<ChatbotSettingsResponse> =>
       key ? fetchChatbotSettings(key) : Promise.resolve({ settings: null }),
-    enabled: (options?.enabled ?? true) && !!key,
+    enabled: (options?.enabled ?? true) && Boolean(key),
     meta: {
       source: 'chatbot.hooks.useChatbotSettings',
       operation: 'detail',

@@ -47,7 +47,7 @@ export function PlaywrightEngineSettingsModal({
             variant='outline'
             size='sm'
             onClick={() => {
-              window.open(PLAYWRIGHT_SETTINGS_HREF, '_self');
+              window.location.href = PLAYWRIGHT_SETTINGS_HREF;
             }}
           >
             <ExternalLink className='mr-1.5 h-3 w-3' />
@@ -110,7 +110,7 @@ export function PlaywrightEngineSettingsModal({
             variant='outline'
             size='sm'
             onClick={() => {
-              window.open(PLAYWRIGHT_SETTINGS_HREF, '_self');
+              window.location.href = PLAYWRIGHT_SETTINGS_HREF;
             }}
           >
             Open full Playwright settings
@@ -121,3 +121,4 @@ export function PlaywrightEngineSettingsModal({
     </AppModal>
   );
 }
+

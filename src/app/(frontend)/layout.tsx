@@ -3,12 +3,6 @@ import {
   shouldApplyFrontPageAppSelection,
 } from '@/app/(frontend)/home/home-helpers';
 import {
-  getKangurAuthBootstrapScript,
-  getKangurStorefrontInitialState,
-  getKangurSurfaceBootstrapStyle,
-  KANGUR_SURFACE_HINT_SCRIPT,
-} from '@/features/kangur/server';
-import {
   createFrontendLoadTimingRecorder,
   serializeInlineTimingPayload,
   shouldEnableFrontendLoadTiming,
@@ -19,8 +13,6 @@ import { getCmsThemeSettings } from '@/features/cms/server';
 import {
   FrontendPublicOwnerProvider,
   FrontendPublicOwnerShellClient,
-  KangurSSRSkeleton,
-  KangurServerShell,
 } from '@/features/kangur/public';
 import { readOptionalRequestHeadersResult } from '@/shared/lib/request/optional-headers';
 import {
@@ -32,17 +24,10 @@ import {
   type FrontendPublicOwner,
   type FrontendPublicRouteFamily,
 } from '@/shared/lib/frontend-public-route-family';
-import { stripSiteLocalePrefix } from '@/shared/lib/i18n/site-locale';
 import { safeHtml } from '@/shared/lib/security/safe-html';
 import { QueryErrorBoundary } from '@/shared/ui/QueryErrorBoundary';
 
 import type { JSX } from 'react';
-
-import './kangur/kangur.css';
-
-const DEFAULT_CMS_THEME_SETTINGS = {
-  darkMode: false,
-} as const;
 
 const FRONTEND_LAYOUT_REQUEST_HEADERS_TIMEOUT_MS = 1200;
 
@@ -70,29 +55,12 @@ const resolveFrontendRequestPathname = (headerValue: string | null | undefined):
   return pathname.startsWith('/') ? pathname : `/${pathname}`;
 };
 
-const isExplicitKangurAliasRequest = (pathname: string | null): boolean => {
-  if (!pathname) {
-    return false;
-  }
-
-  const normalizedPathname = stripSiteLocalePrefix(pathname);
-  return normalizedPathname === '/kangur' || normalizedPathname.startsWith('/kangur/');
-};
-
-const isCanonicalPublicLoginRequest = (pathname: string | null): boolean => {
-  if (!pathname) {
-    return false;
-  }
-
-  return stripSiteLocalePrefix(pathname) === '/login';
-};
-
 const isRootPublicRequest = (pathname: string | null): boolean => {
   if (!pathname) {
     return true;
   }
 
-  return stripSiteLocalePrefix(pathname) === '/';
+  return pathname === '/';
 };
 
 export default async function FrontendLayout({
@@ -121,72 +89,36 @@ export default async function FrontendLayout({
     resolveFrontendRequestPathname(requestHeaders?.get('x-app-request-url')) ??
     resolveFrontendRequestPathname(requestHeaders?.get('next-url')) ??
     resolveFrontendRequestPathname(requestHeaders?.get('x-matched-path'));
-  const isExplicitKangurAlias = isExplicitKangurAliasRequest(requestPathname);
-  const isCanonicalPublicLogin = isCanonicalPublicLoginRequest(requestPathname);
   const isRootPublicRoute = isRootPublicRequest(requestPathname);
   const shouldUseFrontPageAppSelection = shouldApplyFrontPageAppSelection();
-  const shouldResolveFrontPageSelection = shouldUseFrontPageAppSelection && !isExplicitKangurAlias;
-  const frontPageSelectionPromise = shouldResolveFrontPageSelection
+  const frontPageSelectionPromise = shouldUseFrontPageAppSelection
     ? layoutTiming.withTiming('frontPageSelection', resolveFrontPageSelection)
     : Promise.resolve(null);
   const themePromise = getCmsThemeSettings();
 
   const frontPageSelection = await frontPageSelectionPromise;
-  const publicOwner: FrontendPublicOwner =
-    shouldResolveFrontPageSelection && frontPageSelection
-      ? frontPageSelection.publicOwner
-      : 'cms';
-  const expectsRootRedirectToKangur =
-    publicOwner === 'kangur' && isRootPublicRoute && !isExplicitKangurAlias && !isCanonicalPublicLogin;
-  const shouldRenderStandaloneKangurShell =
-    publicOwner === 'kangur' &&
-    !isExplicitKangurAlias &&
-    !isCanonicalPublicLogin &&
-    !expectsRootRedirectToKangur;
-  const shouldInjectKangurAuthBootstrap =
-    (publicOwner === 'kangur' && !expectsRootRedirectToKangur) || isCanonicalPublicLogin;
-  const shouldLoadKangurStorefrontBootstrap =
-    publicOwner === 'kangur' && shouldRenderStandaloneKangurShell;
+  const publicOwner: FrontendPublicOwner = 'cms';
   const publicRouteFamily: FrontendPublicRouteFamily = resolveFrontendPublicRouteFamily({
     pathname: requestPathname,
     publicOwner,
   });
-  const kangurStatePromise = shouldLoadKangurStorefrontBootstrap
-    ? layoutTiming.withTiming(
-      'kangurStorefrontInitialState',
-      getKangurStorefrontInitialState
-    )
-    : Promise.resolve(null);
-  const kangurAuthBootstrapScriptPromise = shouldInjectKangurAuthBootstrap
-    ? requestHeaders
-      ? layoutTiming.withTiming('kangurAuthBootstrapScript', () =>
-        getKangurAuthBootstrapScript(requestHeaders)
-      )
-      : Promise.resolve('window.__KANGUR_AUTH_BOOTSTRAP__=null;')
-    : Promise.resolve(null);
-  const [themeSettings, kangurInitialState] = await Promise.all([
-    publicOwner === 'cms' && !isExplicitKangurAlias
-      ? layoutTiming.withTiming('cmsThemeSettings', () => themePromise)
-      : Promise.resolve(DEFAULT_CMS_THEME_SETTINGS),
-    kangurStatePromise,
-  ]);
-  const kangurAuthBootstrapScript = await kangurAuthBootstrapScriptPromise;
+  const themeSettings = await layoutTiming.withTiming('cmsThemeSettings', () => themePromise);
   const storefrontAppearanceMode = themeSettings.darkMode ? 'dark' : 'default';
   const frontendLoadTimingPayload = layoutTiming.buildPayload({
     pathname: requestPathname,
     publicOwner,
     routeFamily: publicRouteFamily,
       flags: {
-        explicitKangurAlias: isExplicitKangurAlias,
-        canonicalPublicLogin: isCanonicalPublicLogin,
+        explicitKangurAlias: false,
+        canonicalPublicLogin: false,
         rootPublicRoute: isRootPublicRoute,
         requestHeadersTimedOut,
         frontPageSelectionSource: frontPageSelection?.source ?? null,
         frontPageSelectionFallbackReason: frontPageSelection?.fallbackReason ?? null,
-        expectsRootRedirectToKangur,
-        renderStandaloneKangurShell: shouldRenderStandaloneKangurShell,
-        injectKangurAuthBootstrap: shouldInjectKangurAuthBootstrap,
-        loadKangurStorefrontBootstrap: shouldLoadKangurStorefrontBootstrap,
+        expectsRootRedirectToKangur: false,
+        renderStandaloneKangurShell: false,
+        injectKangurAuthBootstrap: false,
+        loadKangurStorefrontBootstrap: false,
       },
     });
   const inlineFrontendLoadTimingPayload: FrontendLoadTimingPayload | null =
@@ -199,21 +131,8 @@ export default async function FrontendLayout({
           },
         }
       : null;
-  const kangurSurfaceBootstrapStyle =
-    publicOwner === 'kangur' && kangurInitialState
-      ? getKangurSurfaceBootstrapStyle({
-          mode: kangurInitialState.initialMode,
-          themeSettings: kangurInitialState.initialThemeSettings,
-        })
-      : null;
 
-  const frontendShellChildren = shouldRenderStandaloneKangurShell ? (
-    isRootPublicRoute ? (
-      <KangurSSRSkeleton />
-    ) : (
-      <KangurServerShell />
-    )
-  ) : (
+  const frontendShellChildren = (
     <CmsStorefrontAppearanceProvider initialMode={storefrontAppearanceMode}>
       <>{children}</>
     </CmsStorefrontAppearanceProvider>
@@ -221,7 +140,7 @@ export default async function FrontendLayout({
 
   return (
     <main
-      id='kangur-main-content'
+      id='main-content'
       tabIndex={-1}
       className='min-h-screen bg-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background'
       data-frontend-public-route-family={publicRouteFamily}
@@ -235,30 +154,10 @@ export default async function FrontendLayout({
           }}
         />
       ) : null}
-      {publicOwner === 'kangur' ? (
-        <script dangerouslySetInnerHTML={{ __html: safeHtml(KANGUR_SURFACE_HINT_SCRIPT) }} />
-      ) : null}
-      {kangurSurfaceBootstrapStyle ? (
-        <style
-          id='__KANGUR_SURFACE_BOOTSTRAP__'
-          dangerouslySetInnerHTML={{ __html: safeHtml(kangurSurfaceBootstrapStyle) }}
-        />
-      ) : null}
-      {kangurAuthBootstrapScript ? (
-        <script dangerouslySetInnerHTML={{ __html: safeHtml(kangurAuthBootstrapScript) }} />
-      ) : null}
       <FrontendPublicOwnerProvider publicOwner={publicOwner} routeFamily={publicRouteFamily}>
         <QueryErrorBoundary>
           <FrontendPublicOwnerShellClient
             publicOwner={publicOwner}
-            initialAppearance={
-              shouldRenderStandaloneKangurShell
-                ? {
-                    mode: kangurInitialState?.initialMode,
-                    themeSettings: kangurInitialState?.initialThemeSettings,
-                  }
-                : undefined
-            }
           >
             {frontendShellChildren}
           </FrontendPublicOwnerShellClient>

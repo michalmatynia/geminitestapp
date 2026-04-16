@@ -75,15 +75,17 @@ export const agentTeachingDocumentResponseSchema = z.object({
 export type AgentTeachingDocumentResponseDto = z.infer<typeof agentTeachingDocumentResponseSchema>;
 export type AgentTeachingDocumentResponse = AgentTeachingDocumentResponseDto;
 
+import { type SimpleDeleteResponse, type BatchDeleteResponse } from './base';
+
 export const agentTeachingDocumentDeleteResponseSchema = z.object({
   ok: z.literal(true),
   deleted: z.boolean(),
 });
 
-export type AgentTeachingDocumentDeleteResponseDto = z.infer<
-  typeof agentTeachingDocumentDeleteResponseSchema
->;
-export type AgentTeachingDocumentDeleteResponse = AgentTeachingDocumentDeleteResponseDto;
+export type AgentTeachingDocumentDeleteResponse = SimpleDeleteResponse & {
+  ok?: true;
+  deleted?: boolean;
+};
 
 export const agentTeachingCollectionSchema = dtoBaseSchema.extend({
   name: z.string(),
@@ -124,10 +126,11 @@ export const agentTeachingCollectionDeleteResponseSchema = z.object({
   deletedDocuments: z.number(),
 });
 
-export type AgentTeachingCollectionDeleteResponseDto = z.infer<
-  typeof agentTeachingCollectionDeleteResponseSchema
->;
-export type AgentTeachingCollectionDeleteResponse = AgentTeachingCollectionDeleteResponseDto;
+export type AgentTeachingCollectionDeleteResponse = BatchDeleteResponse & {
+  ok?: true;
+  deleted?: boolean;
+  deletedDocuments?: number;
+};
 
 /**
  * Agent Teaching & Context Extension
@@ -175,10 +178,7 @@ export const agentTeachingAgentDeleteResponseSchema = z.object({
   success: z.boolean(),
 });
 
-export type AgentTeachingAgentDeleteResponseDto = z.infer<
-  typeof agentTeachingAgentDeleteResponseSchema
->;
-export type AgentTeachingAgentDeleteResponse = AgentTeachingAgentDeleteResponseDto;
+export type AgentTeachingAgentDeleteResponse = SimpleDeleteResponse;
 
 export const agentTeachingContextSchema = z.object({
   query: z.string(),

@@ -283,7 +283,7 @@ export const persistCaseResolverWorkspaceSnapshot = async (
     };
   }
   const normalizedMutationId = input.mutationId.trim();
-  let workspaceForPersistPipeline =
+  const workspaceForPersistPipeline =
     normalizedMutationId.length > 0 && normalizedWorkspace.lastMutationId !== normalizedMutationId
       ? {
         ...normalizedWorkspace,

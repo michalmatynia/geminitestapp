@@ -1,7 +1,12 @@
-import { JSX } from 'react';
+import { type JSX, Suspense } from 'react';
 
-import { Asset3DListPage } from '@/features/viewer3d/pages.public';
+import { AdminRouteLoading } from '@/features/admin/public';
+import { Asset3DListPage } from '@/features/viewer3d/admin.public';
 
 export default function Page(): JSX.Element {
-  return <Asset3DListPage />;
+  return (
+    <Suspense fallback={<AdminRouteLoading />}>
+      <Asset3DListPage />
+    </Suspense>
+  );
 }

@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { PanelAction } from '@/shared/contracts/ui/panels';
+import { type PanelAction } from '@/shared/contracts/ui/panels';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { Button } from '@/shared/ui/button';
 import { RefreshButton } from '@/shared/ui/RefreshButton';
@@ -17,6 +17,7 @@ import {
 
 interface PanelHeaderProps {
   title: string;
+  titleLevel?: 1 | 2 | 3;
   description?: React.ReactNode;
   subtitle?: React.ReactNode;
   icon?: React.ReactNode;
@@ -35,6 +36,12 @@ type PanelHeaderRuntimeValue = {
   refreshable: boolean;
   onRefresh?: () => void | Promise<void>;
 };
+
+const PANEL_HEADER_TITLE_TAG_BY_LEVEL = {
+  1: 'h1',
+  2: 'h2',
+  3: 'h3',
+} as const;
 
 const {
   Context: PanelHeaderRuntimeContext,
@@ -110,6 +117,7 @@ function PanelHeaderRefreshAction(): React.JSX.Element | null {
  */
 export const PanelHeader: React.FC<PanelHeaderProps> = ({
   title,
+  titleLevel = 2,
   description,
   subtitle,
   icon,
@@ -121,6 +129,7 @@ export const PanelHeader: React.FC<PanelHeaderProps> = ({
   className,
   compact = false,
 }) => {
+  const TitleTag = PANEL_HEADER_TITLE_TAG_BY_LEVEL[titleLevel];
   const runtimeValue = React.useMemo(
     () => ({ actions, isRefreshing, refreshable, onRefresh }),
     [actions, isRefreshing, refreshable, onRefresh]
@@ -144,9 +153,9 @@ export const PanelHeader: React.FC<PanelHeaderProps> = ({
         )}
         <div className='flex-1'>
           <div className='flex items-center gap-2'>
-            <h2 className={cn('font-semibold text-foreground', compact ? 'text-sm' : 'text-base')}>
+            <TitleTag className={cn('font-semibold text-foreground', compact ? 'text-sm' : 'text-base')}>
               {title}
-            </h2>
+            </TitleTag>
             {subtitle && (
               <span className='text-xs text-muted-foreground font-medium'>{subtitle}</span>
             )}

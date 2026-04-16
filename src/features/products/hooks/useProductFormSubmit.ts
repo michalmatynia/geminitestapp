@@ -1,12 +1,23 @@
 'use client';
 
+// useProductFormSubmit: orchestrates form submission flows for product
+// create/update. Handles serializing FormData, coordinating image uploads,
+// showing toasts, and delegating to mutation hooks for server requests.
+// Keeps the submission surface separate from form validation/formatting logic.
+// useProductFormSubmit: handles form submission for product create/update.
+// Builds FormData, normalizes parameters/custom fields, uploads images, and
+// uses create/update mutations. Provides hydation guards and optimistic save
+// behavior while exposing success/error state and a confirmation modal type.
+
 import { useCallback, useRef, useState, useEffect } from 'react';
 
 import type { ProductWithImages, ProductParameterValue, ResolvedProductParameterValue } from '@/shared/contracts/products/product';
+import type { ProductCustomFieldValue } from '@/shared/contracts/products/custom-fields';
 import type { ProductFormData } from '@/shared/contracts/products/drafts';
 import type { ProductImageSlot } from '@/shared/contracts/products/drafts';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { decodeSimpleParameterStorageId } from '@/shared/lib/products/utils/parameter-partition';
+import { normalizeProductCustomFieldValues } from '@/shared/lib/products/utils/custom-field-values';
 import {
   mergeProductParameterValue,
   normalizeParameterValuesByLanguage,
@@ -33,6 +44,7 @@ export interface UseProductFormSubmitProps {
   selectedTagIds: string[];
   selectedProducerIds: string[];
   selectedNoteIds: string[];
+  customFieldValues: ProductCustomFieldValue[];
   parameterValues: ProductParameterValue[];
   studioProjectId: string | null;
   refreshImages: (savedProduct: ProductWithImages) => void;
@@ -90,6 +102,10 @@ export const normalizeProductParametersForSubmission = (
     ).values()
   );
 
+export const normalizeProductCustomFieldsForSubmission = (
+  customFieldValues: ProductCustomFieldValue[]
+): ProductCustomFieldValue[] => normalizeProductCustomFieldValues(customFieldValues);
+
 type BuildProductFormDataInput = {
   data: ProductFormData;
   imageSlots: (ProductImageSlot | null)[];
@@ -100,9 +116,23 @@ type BuildProductFormDataInput = {
   selectedTagIds: string[];
   selectedProducerIds: string[];
   selectedNoteIds: string[];
+  customFieldValues: ProductCustomFieldValue[];
   parameterValues: ProductParameterValue[];
   studioProjectId: string | null;
 };
+
+const MANAGED_FORM_DATA_FIELDS = new Set<string>([
+  'catalogIds',
+  'categoryId',
+  'customFields',
+  'imageBase64s',
+  'imageLinks',
+  'noteIds',
+  'parameters',
+  'producerIds',
+  'studioProjectId',
+  'tagIds',
+]);
 
 function buildFormData(input: BuildProductFormDataInput): FormData {
   const {
@@ -115,12 +145,16 @@ function buildFormData(input: BuildProductFormDataInput): FormData {
     selectedTagIds,
     selectedProducerIds,
     selectedNoteIds,
+    customFieldValues,
     parameterValues,
     studioProjectId,
   } = input;
   const formData = new FormData();
 
   Object.entries(data).forEach(([key, value]: [string, unknown]): void => {
+    if (MANAGED_FORM_DATA_FIELDS.has(key)) {
+      return;
+    }
     if (value !== null && value !== undefined) {
       if (typeof value === 'object') {
         formData.append(key, JSON.stringify(value));
@@ -177,6 +211,9 @@ function buildFormData(input: BuildProductFormDataInput): FormData {
     formData.append('noteIds', '');
   }
 
+  const normalizedCustomFields = normalizeProductCustomFieldsForSubmission(customFieldValues);
+  formData.append('customFields', JSON.stringify(normalizedCustomFields));
+
   const normalizedParameters = normalizeProductParametersForSubmission(parameterValues);
   formData.append('parameters', JSON.stringify(normalizedParameters));
 
@@ -199,6 +236,7 @@ export function useProductFormSubmit(
     selectedTagIds,
     selectedProducerIds,
     selectedNoteIds,
+    customFieldValues,
     parameterValues,
     studioProjectId,
     refreshImages,
@@ -217,6 +255,7 @@ export function useProductFormSubmit(
   // The finally block guarantees this resets even if onSuccess hangs.
   const [isSubmitting, setIsSubmitting] = useState(false);
   const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const submitInFlightRef = useRef(false);
 
   const createMutation = useCreateProductMutation();
   const updateMutation = useUpdateProductMutation();
@@ -251,6 +290,11 @@ export function useProductFormSubmit(
       });
 
       const performSubmit = async () => {
+        if (submitInFlightRef.current) {
+          return;
+        }
+
+        submitInFlightRef.current = true;
         setIsSubmitting(true);
         setUploadError(null);
         setUploadSuccess(false);
@@ -273,19 +317,24 @@ export function useProductFormSubmit(
             selectedTagIds,
             selectedProducerIds,
             selectedNoteIds,
+            customFieldValues,
             parameterValues,
             studioProjectId,
           });
 
           const savedProduct = product
             ? await updateMutationRef.current.mutateAsync({
-                id: product.id,
-                data: formData,
-                originalSku:
-                  typeof product.sku === 'string' && product.sku.trim().length > 0
-                    ? product.sku.trim()
-                    : undefined,
-              })
+              id: product.id,
+              data: formData,
+              originalSku:
+                typeof product.sku === 'string' && product.sku.trim().length > 0
+                  ? product.sku.trim()
+                  : undefined,
+              originalNameEn:
+                typeof product.name_en === 'string' && product.name_en.trim().length > 0
+                  ? product.name_en.trim()
+                  : undefined,
+            })
             : await createMutationRef.current.mutateAsync(formData);
 
           const isQueued = savedProduct == null;
@@ -328,6 +377,7 @@ export function useProductFormSubmit(
             setUploadError('An unknown error occurred');
           }
         } finally {
+          submitInFlightRef.current = false;
           setIsSubmitting(false);
         }
       };
@@ -355,6 +405,7 @@ export function useProductFormSubmit(
       selectedTagIds,
       selectedProducerIds,
       selectedNoteIds,
+      customFieldValues,
       parameterValues,
       studioProjectId,
       toast,

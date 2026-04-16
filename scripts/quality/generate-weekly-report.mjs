@@ -1,7 +1,8 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { spawn, execFile as execFileCallback } from 'node:child_process';
-import { promisify } from 'node:util';
+import {
+  preflightBuildLock,
+} from './lib/weekly-report-build-preflight.mjs';
 
 import { runStabilizationGates } from '../canonical/lib/stabilization-gate-runner.mjs';
 import { collectMetrics } from '../architecture/lib-metrics.mjs';
@@ -10,18 +11,16 @@ import { writeMetricsMarkdownFile } from '../docs/metrics-frontmatter.mjs';
 import { parseCommonCheckArgs, writeSummaryJson } from '../lib/check-cli.mjs';
 import {
   createWeeklyCheckResult,
+  runCommandCheck,
   runStructuredCommandCheck,
-  truncateWeeklyCheckOutput,
 } from './lib/weekly-report-checks.mjs';
 import { applyWeeklyCheckSelection, parseWeeklyCheckSelectionArgs } from './lib/weekly-report-selection.mjs';
 import { summarizeWeeklyChecks } from './lib/weekly-report-aggregation.mjs';
 import {
-  buildKangurAiTutorBridgeSnapshotLines,
-  buildKangurKnowledgeGraphStatusLines,
+  toMarkdown,
+  formatDuration,
 } from './lib/weekly-report-markdown.mjs';
 import { buildWeeklyReportSummaryJsonDetails } from './lib/weekly-report-summary.mjs';
-
-const execFile = promisify(execFileCallback);
 
 const argv = process.argv.slice(2);
 const args = new Set(argv);
@@ -97,31 +96,6 @@ const criticalFlows = [
   },
 ];
 
-const formatDuration = (ms) => {
-  if (!Number.isFinite(ms) || ms < 0) {
-    return 'n/a';
-  }
-  if (ms < 1000) {
-    return `${ms}ms`;
-  }
-  const seconds = ms / 1000;
-  if (seconds < 60) {
-    return `${seconds.toFixed(1)}s`;
-  }
-  const minutes = seconds / 60;
-  return `${minutes.toFixed(1)}m`;
-};
-
-const formatDelta = (deltaMs) => {
-  if (!Number.isFinite(deltaMs)) {
-    return 'n/a';
-  }
-  if (deltaMs === 0) {
-    return '0ms';
-  }
-  return `${deltaMs > 0 ? '+' : '-'}${formatDuration(Math.abs(deltaMs))}`;
-};
-
 const readJsonIfExists = async (relativePath) => {
   const absolutePath = path.join(root, relativePath);
   try {
@@ -131,14 +105,6 @@ const readJsonIfExists = async (relativePath) => {
     return null;
   }
 };
-
-const isProcessInspectionPermissionError = (error) =>
-  Boolean(
-    error &&
-      typeof error === 'object' &&
-      'code' in error &&
-      (error.code === 'EPERM' || error.code === 'EACCES')
-  );
 
 const summarizeTrend = (payload) => {
   if (!payload || !Array.isArray(payload.runs)) {
@@ -219,228 +185,6 @@ const loadKangurKnowledgeGraphStatusSnapshot = async () => {
   };
 };
 
-const listProcessCommands = async () => {
-  const { stdout } = await execFile('ps', ['-Ao', 'pid,command'], {
-    cwd: root,
-    maxBuffer: 4 * 1024 * 1024,
-  });
-
-  return stdout
-    .split('\n')
-    .map((line) => line.trim())
-    .filter(Boolean);
-};
-
-const findActiveRepoBuildProcesses = (processLines) =>
-  processLines.filter((line) => {
-    if (!line.includes('next build')) return false;
-    if (!line.includes(root)) return false;
-    return true;
-  });
-
-const pathExists = async (absolutePath) => {
-  try {
-    await fs.access(absolutePath);
-    return true;
-  } catch {
-    return false;
-  }
-};
-
-const preflightBuildLock = async () => {
-  const hasLock = await pathExists(BUILD_LOCK_PATH);
-  const hasStandalone = await pathExists(BUILD_STANDALONE_PATH);
-  const hasTrace = await pathExists(BUILD_TRACE_PATH);
-
-  if (!hasLock && !hasStandalone && !hasTrace) {
-    return {
-      action: 'none',
-      message: 'No build preflight cleanup required.',
-    };
-  }
-
-  if (hasLock) {
-    let processLines;
-    try {
-      processLines = await listProcessCommands();
-    } catch (error) {
-      if (isProcessInspectionPermissionError(error)) {
-        const code = typeof error?.code === 'string' ? error.code : 'unknown';
-        return {
-          action: 'skip',
-          message:
-            `Skipping build because .next/lock exists and process inspection is unavailable (${code}).`,
-        };
-      }
-      throw error;
-    }
-
-    const activeBuilds = findActiveRepoBuildProcesses(processLines);
-    if (activeBuilds.length > 0) {
-      return {
-        action: 'skip',
-        message:
-          `Skipping build because an active next build process is already running for this workspace (${activeBuilds.length} detected).`,
-      };
-    }
-  }
-
-  const cleanupMessages = [];
-  if (hasLock) {
-    await fs.unlink(BUILD_LOCK_PATH);
-    cleanupMessages.push('Removed stale .next/lock before running build check.');
-  }
-  if (hasStandalone) {
-    await fs.rm(BUILD_STANDALONE_PATH, { recursive: true, force: true });
-    cleanupMessages.push('Removed .next/standalone before build to reclaim disk space.');
-  }
-  if (hasTrace) {
-    await fs.rm(BUILD_TRACE_PATH, { recursive: true, force: true });
-    cleanupMessages.push('Removed stale .next/trace-build before running build check.');
-  }
-
-  return {
-    action: 'removed',
-    message: cleanupMessages.join(' '),
-  };
-};
-
-const runCommandCheckAttempt = ({ command, commandArgs, timeoutMs }) =>
-  new Promise((resolve) => {
-    const startedAt = Date.now();
-    const child = spawn(command, commandArgs, {
-      cwd: root,
-      env: {
-        ...process.env,
-        FORCE_COLOR: '0',
-      },
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
-
-    let output = '';
-    let completed = false;
-    let timedOut = false;
-
-    const append = (chunk) => {
-      output += chunk.toString();
-      if (output.length > MAX_OUTPUT_BYTES) {
-        output = output.slice(-MAX_OUTPUT_BYTES);
-      }
-    };
-
-    child.stdout?.on('data', append);
-    child.stderr?.on('data', append);
-
-    const timer = setTimeout(() => {
-      timedOut = true;
-      child.kill('SIGTERM');
-      setTimeout(() => {
-        if (!completed) {
-          child.kill('SIGKILL');
-        }
-      }, 5000);
-    }, timeoutMs);
-
-    child.on('error', (error) => {
-      completed = true;
-      clearTimeout(timer);
-      resolve({
-        status: 'fail',
-        exitCode: null,
-        signal: null,
-        durationMs: Date.now() - startedAt,
-        output: truncateWeeklyCheckOutput(`${output}\n${error.stack ?? String(error)}`.trim()),
-      });
-    });
-
-    child.on('close', (exitCode, signal) => {
-      completed = true;
-      clearTimeout(timer);
-      resolve({
-        status: timedOut ? 'timeout' : exitCode === 0 ? 'pass' : 'fail',
-        exitCode,
-        signal,
-        durationMs: Date.now() - startedAt,
-        output: output.length <= MAX_OUTPUT_BYTES ? output.trim() : output.slice(-MAX_OUTPUT_BYTES).trim(),
-      });
-    });
-  });
-
-const runCommandCheck = async ({
-  id,
-  label,
-  command,
-  commandArgs,
-  timeoutMs,
-  enabled = true,
-  disabledOutput = 'Skipped by configuration.',
-  confirmFailureRetries = 0,
-}) => {
-  if (!enabled) {
-    return {
-      id,
-      label,
-      command: [command, ...commandArgs].join(' '),
-      status: 'skipped',
-      exitCode: null,
-      signal: null,
-      durationMs: 0,
-      output: disabledOutput,
-    };
-  }
-
-  const commandString = [command, ...commandArgs].join(' ');
-  const attempts = [];
-
-  for (let attemptIndex = 0; attemptIndex <= confirmFailureRetries; attemptIndex += 1) {
-    const result = await runCommandCheckAttempt({
-      command,
-      commandArgs,
-      timeoutMs,
-    });
-    attempts.push(result);
-
-    if (result.status === 'pass' || result.status === 'timeout') {
-      const outputPrefix =
-        attemptIndex > 0
-          ? `[retry] ${label} passed on confirmation attempt ${attemptIndex + 1} of ${confirmFailureRetries + 1}.`
-          : '';
-      return {
-        id,
-        label,
-        command: commandString,
-        status: result.status,
-        exitCode: result.exitCode,
-        signal: result.signal,
-        durationMs: attempts.reduce((total, value) => total + value.durationMs, 0),
-        output:
-          [outputPrefix, result.output].filter(Boolean).join('\n').length <= MAX_OUTPUT_BYTES
-            ? [outputPrefix, result.output].filter(Boolean).join('\n')
-            : [outputPrefix, result.output].filter(Boolean).join('\n').slice(-MAX_OUTPUT_BYTES),
-      };
-    }
-  }
-
-  const finalResult = attempts.at(-1);
-  return {
-    id,
-    label,
-    command: commandString,
-    status: finalResult.status,
-    exitCode: finalResult.exitCode,
-    signal: finalResult.signal,
-    durationMs: attempts.reduce((total, value) => total + value.durationMs, 0),
-    output: (() => {
-      const output = attempts
-        .map((attempt, index) =>
-          [`[attempt ${index + 1}/${attempts.length}]`, attempt.output].filter(Boolean).join('\n')
-        )
-        .join('\n\n');
-      return output.length <= MAX_OUTPUT_BYTES ? output : output.slice(-MAX_OUTPUT_BYTES);
-    })(),
-  };
-};
-
 const parseScannerSummary = async (scriptName) => {
   const result = await execScanOutput({
     command: 'node',
@@ -471,230 +215,6 @@ const getPassRate = (check) => {
     return null;
   }
   return check.status === 'pass' ? 100 : 0;
-};
-
-const toMarkdown = (report) => {
-  const lines = [];
-  const checkMap = new Map(report.checks.map((check) => [check.id, check]));
-  const omittedCheckSet = new Set(report.checkSelection?.omittedChecks ?? []);
-
-  lines.push('# Weekly Quality Report');
-  lines.push('');
-  lines.push(`Generated at: ${report.generatedAt}`);
-  lines.push(`Node: ${report.nodeVersion}`);
-  lines.push('');
-  lines.push('## Quality Check Summary');
-  lines.push('');
-  lines.push(`- Total checks: ${report.summary.totalChecks}`);
-  lines.push(`- Executed checks: ${report.summary.executedChecks}`);
-  lines.push(`- Passed: ${report.summary.passed}`);
-  lines.push(`- Failed: ${report.summary.failed}`);
-  lines.push(`- Timed out: ${report.summary.timedOut}`);
-  lines.push(`- Skipped: ${report.summary.skipped}`);
-  if (report.summary.selectionSkipped > 0) {
-    lines.push(`- Skipped by selection: ${report.summary.selectionSkipped}`);
-  }
-  if (report.summary.otherSkipped > 0) {
-    lines.push(`- Other skipped: ${report.summary.otherSkipped}`);
-  }
-  if ((report.checkSelection?.onlyChecks.length ?? 0) > 0) {
-    lines.push(`- Only checks: ${report.checkSelection.onlyChecks.join(', ')}`);
-  }
-  if ((report.checkSelection?.skipChecks.length ?? 0) > 0) {
-    lines.push(`- Skipped by selection: ${report.checkSelection.skipChecks.join(', ')}`);
-  }
-  lines.push('');
-  lines.push('## Baseline Status');
-  lines.push('');
-  lines.push(`- Build pass rate: ${report.passRates.build ?? 'n/a'}%`);
-  if (report.buildPreflight?.action && report.buildPreflight.action !== 'none') {
-    lines.push(
-      `- Build preflight: ${report.buildPreflight.action} (${report.buildPreflight.message})`
-    );
-  }
-  lines.push(`- Lint pass rate: ${report.passRates.lint ?? 'n/a'}%`);
-  lines.push(`- Lint-domain pass rate: ${report.passRates.lintDomains ?? 'n/a'}%`);
-  lines.push(`- Typecheck pass rate: ${report.passRates.typecheck ?? 'n/a'}%`);
-  lines.push(`- Critical-flow gate pass rate: ${report.passRates.criticalFlows ?? 'n/a'}%`);
-  lines.push(`- Security smoke gate pass rate: ${report.passRates.securitySmoke ?? 'n/a'}%`);
-  lines.push(`- Unit-domain gate pass rate: ${report.passRates.unitDomains ?? 'n/a'}%`);
-  lines.push(`- Full unit pass rate: ${report.passRates.fullUnit ?? 'n/a'}%`);
-  lines.push(`- E2E test pass rate: ${report.passRates.e2e ?? 'n/a'}%`);
-  lines.push(`- Duration budget alerts: ${report.durationAlerts.length}`);
-  lines.push('');
-  if ((report.checkSelection?.omittedChecks.length ?? 0) > 0) {
-    lines.push(`Checks omitted by selection: ${report.checkSelection.omittedChecks.join(', ')}.`);
-    lines.push('');
-  }
-  if (!includeFullLint && checkMap.get('lint')?.status === 'skipped' && !omittedCheckSet.has('lint')) {
-    lines.push(
-      'Full repository lint was skipped in this run. Use `--include-full-lint` to include the broad `eslint src` sweep.'
-    );
-    lines.push('');
-  }
-  if (
-    !includeFullUnit &&
-    checkMap.get('fullUnit')?.status === 'skipped' &&
-    !omittedCheckSet.has('fullUnit')
-  ) {
-    lines.push(
-      'Full unit suite was skipped in this run. Use `--include-full-unit` to include full unit coverage in baseline.'
-    );
-    lines.push('');
-  }
-  if (!includeE2E && checkMap.get('e2e')?.status === 'skipped' && !omittedCheckSet.has('e2e')) {
-    lines.push('E2E tests were skipped in this run. Use `--include-e2e` for full end-to-end baseline.');
-    lines.push('');
-  }
-  lines.push('## Check Details');
-  lines.push('');
-  lines.push('| Check | Status | Duration | Exit | Command |');
-  lines.push('| --- | --- | ---: | ---: | --- |');
-  for (const check of report.checks) {
-    const exit = check.exitCode === null ? '-' : String(check.exitCode);
-    lines.push(
-      `| ${check.label} | ${check.status.toUpperCase()} | ${formatDuration(check.durationMs)} | ${exit} | \`${check.command}\` |`
-    );
-  }
-  lines.push('');
-
-  lines.push('## Guardrail Snapshot');
-  lines.push('');
-  if (report.stabilization) {
-    lines.push(
-      `- Stabilization aggregate: ${report.stabilization.ok ? 'PASS' : 'FAIL'} (refreshed ${report.stabilization.generatedAt})`
-    );
-    lines.push(
-      `- Canonical stabilization: ${report.stabilization.canonical.status} | runtime files=${report.stabilization.canonical.runtimeFileCount ?? 'n/a'} | docs=${report.stabilization.canonical.docsArtifactCount ?? 'n/a'}`
-    );
-    lines.push(
-      `- AI stabilization: ${report.stabilization.ai.status} | source files=${report.stabilization.ai.sourceFileCount ?? 'n/a'}`
-    );
-    lines.push(
-      `- Observability stabilization: ${report.stabilization.observability.status} | legacyCompatViolations=${report.stabilization.observability.legacyCompatibilityViolations ?? 'n/a'} | runtimeErrors=${report.stabilization.observability.runtimeErrors ?? 'n/a'}`
-    );
-  } else {
-    lines.push(
-      `- Stabilization aggregate: unavailable${report.stabilizationError ? ` (${report.stabilizationError})` : ''}`
-    );
-  }
-  lines.push('');
-
-  lines.push('## Trend Snapshot');
-  lines.push('');
-  if (report.trends.weeklyLane) {
-    const trend = report.trends.weeklyLane;
-    lines.push(
-      `- Weekly lane trend: runs=${trend.runCount}, window=${trend.oldest ?? '-'} -> ${trend.newest ?? '-'}, delta=${trend.totalDurationDeltaMs === null ? 'n/a' : formatDelta(trend.totalDurationDeltaMs)}`
-    );
-  } else {
-    lines.push('- Weekly lane trend: unavailable');
-  }
-  if (report.trends.unitDomains) {
-    const trend = report.trends.unitDomains;
-    lines.push(
-      `- Unit-domain trend: runs=${trend.runCount}, window=${trend.oldest ?? '-'} -> ${trend.newest ?? '-'}, delta=${trend.totalDurationDeltaMs === null ? 'n/a' : formatDelta(trend.totalDurationDeltaMs)}`
-    );
-  } else {
-    lines.push('- Unit-domain trend: unavailable');
-  }
-  if (report.trends.lintDomains) {
-    const trend = report.trends.lintDomains;
-    lines.push(
-      `- Lint-domain trend: runs=${trend.runCount}, window=${trend.oldest ?? '-'} -> ${trend.newest ?? '-'}, delta=${trend.totalDurationDeltaMs === null ? 'n/a' : formatDelta(trend.totalDurationDeltaMs)}`
-    );
-  } else {
-    lines.push('- Lint-domain trend: unavailable');
-  }
-  lines.push('');
-
-  lines.push('## Duration Budget Alerts');
-  lines.push('');
-  if (report.durationAlerts.length === 0) {
-    lines.push('- No duration budget alerts in this run.');
-  } else {
-    lines.push('| Check | Duration | Budget | Delta |');
-    lines.push('| --- | ---: | ---: | ---: |');
-    for (const alert of report.durationAlerts) {
-      const delta = alert.durationMs - alert.budgetMs;
-      lines.push(
-        `| ${alert.label} | ${formatDuration(alert.durationMs)} | ${formatDuration(alert.budgetMs)} | +${formatDuration(delta)} |`
-      );
-    }
-  }
-  lines.push('');
-  if (report.propDrilling.summary && report.uiConsolidation.summary) {
-    lines.push(
-      `- Prop forwarding components: ${Number(report.propDrilling.summary.componentsWithForwarding ?? 0)}`
-    );
-    lines.push(
-      `- Prop-drilling depth >=4 chains: ${Number(report.propDrilling.summary.highPriorityChainCount ?? 0)}`
-    );
-    lines.push(
-      `- UI opportunities: ${Number(report.uiConsolidation.summary.totalOpportunities ?? 0)}`
-    );
-    lines.push(
-      `- UI high-priority opportunities: ${Number(report.uiConsolidation.summary.highPriorityCount ?? 0)}`
-    );
-    lines.push(
-      `- Raw UI clusters: duplicate=${Number(report.uiConsolidation.summary.duplicateNameClusterCount ?? 0)} | signature=${Number(report.uiConsolidation.summary.propSignatureClusterCount ?? 0)} | token=${Number(report.uiConsolidation.summary.tokenSimilarityClusterCount ?? 0)}`
-    );
-    if (!report.propDrilling.ok || !report.uiConsolidation.ok) {
-      lines.push(
-        `- Scanner summary recovered from failing command output.${report.propDrilling.error || report.uiConsolidation.error ? ' Inspect JSON payload for failure details.' : ''}`
-      );
-    }
-  } else {
-    lines.push('- Scanner summary unavailable; inspect JSON payload for errors.');
-  }
-  lines.push('');
-
-  lines.push('## Architecture and Performance Snapshot');
-  lines.push('');
-  if (report.metrics) {
-    const largest = report.metrics.source.largestFile;
-    lines.push(`- Source files: ${report.metrics.source.totalFiles}`);
-    lines.push(`- Source lines: ${report.metrics.source.totalLines}`);
-    lines.push(`- API routes: ${report.metrics.api.totalRoutes}`);
-    lines.push(`- Cross-feature edge pairs: ${report.metrics.architecture.crossFeatureEdgePairs}`);
-    lines.push(`- Shared->features imports: ${report.metrics.imports.sharedToFeaturesTotalImports}`);
-    if (largest) {
-      lines.push(`- Largest file: \`${largest.path}\` (${largest.lines} LOC)`);
-    }
-    lines.push(`- use client files: ${report.metrics.source.useClientFiles}`);
-    lines.push(`- setInterval occurrences: ${report.metrics.runtime.setIntervalOccurrences}`);
-  } else {
-    lines.push('- Metrics snapshot unavailable; inspect JSON payload for error details.');
-  }
-  lines.push('');
-
-  lines.push('## Kangur AI Tutor Bridge Snapshot');
-  lines.push('');
-  lines.push(...buildKangurAiTutorBridgeSnapshotLines(report.kangurAiTutorBridge?.summary ?? null));
-  lines.push('');
-
-  lines.push('## Kangur Knowledge Graph Status');
-  lines.push('');
-  lines.push(...buildKangurKnowledgeGraphStatusLines(report.kangurKnowledgeGraphStatus?.summary ?? null));
-  lines.push('');
-
-  lines.push('## Top 5 Critical User Flows (Priority Order)');
-  lines.push('');
-  lines.push('| Priority | Flow | KPI | Target | Scope |');
-  lines.push('| ---: | --- | --- | --- | --- |');
-  report.criticalFlows.forEach((flow, index) => {
-    lines.push(
-      `| ${index + 1} | ${flow.name} | ${flow.kpi} | ${flow.target} | \`${flow.scope}\` |`
-    );
-  });
-  lines.push('');
-
-  lines.push('## Notes');
-  lines.push('');
-  lines.push('- Pass rates are calculated from command exit status for this run (pass=100%, fail/timeout=0%).');
-  lines.push('- For full runtime/performance tuning, pair this report with profiling and production telemetry.');
-
-  return `${lines.join('\n')}\n`;
 };
 
 const run = async () => {
@@ -901,7 +421,7 @@ const run = async () => {
     };
   } else {
     try {
-      buildPreflight = await preflightBuildLock();
+      buildPreflight = await preflightBuildLock({ root, buildLockPath: BUILD_LOCK_PATH, buildStandalonePath: BUILD_STANDALONE_PATH, buildTracePath: BUILD_TRACE_PATH });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       buildPreflight = {
@@ -947,7 +467,7 @@ const run = async () => {
           sourceName: check.sourceName ?? check.commandArgs[0] ?? check.id,
           maxOutputBytes: MAX_OUTPUT_BYTES,
         })
-      : await runCommandCheck(check);
+      : await runCommandCheck({ ...check, cwd: root, maxOutputBytes: MAX_OUTPUT_BYTES });
     if (check.id === 'build' && buildPreflight.action === 'removed') {
       const output = [`[build-preflight] ${buildPreflight.message}`, result.output]
         .filter(Boolean)

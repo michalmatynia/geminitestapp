@@ -81,7 +81,7 @@ export function useCmsPage(id?: string): SingleQuery<Page> {
     id,
     queryKey,
     queryFn: () => fetchPage(id as string),
-    enabled: !!id,
+    enabled: Boolean(id),
     meta: {
       source: 'cms.hooks.useCmsPage',
       operation: 'detail',
@@ -205,7 +205,7 @@ export function useCmsSlug(id?: string, domainId?: string): SingleQuery<Slug> {
     id,
     queryKey,
     queryFn: () => fetchSlug(id as string, domainId),
-    enabled: !!id,
+    enabled: Boolean(id),
     meta: {
       source: 'cms.hooks.useCmsSlug',
       operation: 'detail',
@@ -223,7 +223,7 @@ export function useCmsSlugDomains(id?: string): SingleQuery<{ domainIds: string[
     id,
     queryKey,
     queryFn: () => fetchSlugDomains(id as string),
-    enabled: !!id,
+    enabled: Boolean(id),
     meta: {
       source: 'cms.hooks.useCmsSlugDomains',
       operation: 'detail',
@@ -447,7 +447,7 @@ export function useCmsTheme(id?: string): SingleQuery<CmsTheme> {
     id,
     queryKey,
     queryFn: () => fetchTheme(id as string),
-    enabled: !!id,
+    enabled: Boolean(id),
     meta: {
       source: 'cms.hooks.useCmsTheme',
       operation: 'detail',

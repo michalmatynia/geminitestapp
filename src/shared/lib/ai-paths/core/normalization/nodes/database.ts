@@ -5,65 +5,26 @@ import {
   type DbSchemaConfig,
 } from '@/shared/contracts/ai-paths';
 
-import { DATABASE_INPUT_PORTS } from '../../constants';
+import { DATABASE_INPUT_PORTS, DB_SCHEMA_INPUT_PORTS, DB_SCHEMA_OUTPUT_PORTS } from '../../constants';
 import { ensureUniquePorts } from '../../utils/graph.ports';
 import { normalizeTemplateText } from '../normalization.helpers';
 
-type DerivedUpdateMapping = {
-  targetPath: string;
-  sourcePort: string;
-  sourcePath?: string;
-};
-
-const DIRECT_SET_TEMPLATE_REGEX = /^\{\s*"\$set"\s*:\s*\{([\s\S]*)\}\s*\}\s*$/;
-const DIRECT_SET_ASSIGNMENT_REGEX =
-  /"([^"]+)"\s*:\s*(?:"{{\s*([^}]+)\s*}}"|{{\s*([^}]+)\s*}})\s*(?=,|$)/g;
 const DEFAULT_DB_SCHEMA_CONFIG: DbSchemaConfig = {
   provider: 'auto',
   mode: 'all',
   collections: [],
+  sourceMode: 'schema',
+  contextCollections: [],
+  contextQuery: '',
+  contextLimit: 20,
+  contextTransform: 'none',
+  contextReuseMode: 'never',
   includeFields: true,
   includeRelations: true,
   formatAs: 'text',
 };
 
-const deriveMappingsFromSimpleUpdateTemplate = (
-  template: string
-): DerivedUpdateMapping[] | null => {
-  const normalizedTemplate = normalizeTemplateText(template);
-  if (!normalizedTemplate) return null;
-
-  const match = DIRECT_SET_TEMPLATE_REGEX.exec(normalizedTemplate);
-  if (!match) return null;
-
-  const body = match[1] ?? '';
-  const mappings: DerivedUpdateMapping[] = [];
-  let assignmentMatch: RegExpExecArray | null = null;
-  DIRECT_SET_ASSIGNMENT_REGEX.lastIndex = 0;
-
-  while ((assignmentMatch = DIRECT_SET_ASSIGNMENT_REGEX.exec(body)) !== null) {
-    const targetPath = assignmentMatch[1]?.trim() ?? '';
-    const token = (assignmentMatch[2] ?? assignmentMatch[3] ?? '').trim();
-    if (!targetPath || !token) return null;
-    const sourcePort = token.split('.')[0]?.trim() ?? '';
-    if (!sourcePort) return null;
-    const sourcePath = token.startsWith(`${sourcePort}.`)
-      ? token.slice(sourcePort.length + 1).trim()
-      : '';
-    mappings.push({
-      targetPath,
-      sourcePort,
-      ...(sourcePath ? { sourcePath } : {}),
-    });
-  }
-
-  if (mappings.length === 0) return null;
-
-  const leftover = body.replace(DIRECT_SET_ASSIGNMENT_REGEX, '').replace(/[,\s]/g, '');
-  if (leftover.length > 0) return null;
-
-  return mappings;
-};
+const CANONICAL_LOCALIZED_PARAMETER_TARGET_PATH = 'parameters';
 
 export const normalizeDatabaseNode = (node: AiNode): AiNode => {
   const defaultQuery = {
@@ -89,23 +50,11 @@ export const normalizeDatabaseNode = (node: AiNode): AiNode => {
   };
   const databaseConfig: DatabaseConfig = node.config?.database ?? { operation: 'query' };
   const updateTemplate = normalizeTemplateText(databaseConfig.updateTemplate ?? '');
-  const rawMappings = databaseConfig.mappings ?? [];
+  const mappings = databaseConfig.mappings ?? [];
   const inferredUseMongoActions =
     databaseConfig.useMongoActions ??
     Boolean(databaseConfig.actionCategory || databaseConfig.action);
-  const shouldPreserveExplicitCustomUpdateMode =
-    databaseConfig.operation === 'update' &&
-    databaseConfig.updatePayloadMode === 'custom' &&
-    rawMappings.length > 0 &&
-    (inferredUseMongoActions || Boolean(databaseConfig.parameterInferenceGuard));
-  const derivedMappings =
-    databaseConfig.operation === 'update' &&
-    databaseConfig.updatePayloadMode === 'custom' &&
-    rawMappings.length > 0 &&
-    !shouldPreserveExplicitCustomUpdateMode
-      ? deriveMappingsFromSimpleUpdateTemplate(updateTemplate)
-      : null;
-  const mappings = derivedMappings ?? rawMappings;
+
   const forcedInputs = ['result', 'content_en', 'productId', 'entityId'];
   const parameterInferenceGuard = databaseConfig.parameterInferenceGuard
     ? {
@@ -117,6 +66,16 @@ export const normalizeDatabaseNode = (node: AiNode): AiNode => {
       enforceOptionLabels: databaseConfig.parameterInferenceGuard.enforceOptionLabels ?? true,
       allowUnknownParameterIds:
           databaseConfig.parameterInferenceGuard.allowUnknownParameterIds ?? false,
+    }
+    : undefined;
+  const localizedParameterMerge = databaseConfig.localizedParameterMerge
+    ? {
+      enabled: databaseConfig.localizedParameterMerge.enabled ?? false,
+      targetPath:
+          databaseConfig.localizedParameterMerge.targetPath ??
+          CANONICAL_LOCALIZED_PARAMETER_TARGET_PATH,
+      languageCode: databaseConfig.localizedParameterMerge.languageCode ?? '',
+      requireFullCoverage: databaseConfig.localizedParameterMerge.requireFullCoverage ?? false,
     }
     : undefined;
   const runtimeConfig = node.config?.runtime
@@ -139,8 +98,7 @@ export const normalizeDatabaseNode = (node: AiNode): AiNode => {
         idField: databaseConfig.idField ?? 'entityId',
         mode: databaseConfig.mode ?? 'replace',
         updateStrategy: databaseConfig.updateStrategy ?? 'one',
-        updatePayloadMode:
-          (derivedMappings ? 'mapping' : databaseConfig.updatePayloadMode) ?? 'custom',
+        updatePayloadMode: databaseConfig.updatePayloadMode ?? 'custom',
         useMongoActions: inferredUseMongoActions,
         ...(databaseConfig.actionCategory ? { actionCategory: databaseConfig.actionCategory } : {}),
         ...(databaseConfig.action ? { action: databaseConfig.action } : {}),
@@ -160,6 +118,7 @@ export const normalizeDatabaseNode = (node: AiNode): AiNode => {
         aiPrompt: databaseConfig.aiPrompt ?? '',
         validationRuleIds: databaseConfig.validationRuleIds ?? [],
         ...(parameterInferenceGuard ? { parameterInferenceGuard } : {}),
+        ...(localizedParameterMerge ? { localizedParameterMerge } : {}),
       },
     },
   };
@@ -167,10 +126,19 @@ export const normalizeDatabaseNode = (node: AiNode): AiNode => {
 
 export const normalizeDbSchemaNode = (node: AiNode): AiNode => {
   const schemaConfig = node.config?.db_schema;
+  const runtimeConfig = node.config?.runtime
+    ? {
+      ...node.config.runtime,
+      ...(node.config.runtime.waitForInputs === undefined ? { waitForInputs: false } : {}),
+    }
+    : { waitForInputs: false };
   return {
     ...node,
+    inputs: ensureUniquePorts(node.inputs ?? [], DB_SCHEMA_INPUT_PORTS),
+    outputs: ensureUniquePorts(node.outputs ?? [], DB_SCHEMA_OUTPUT_PORTS),
     config: {
       ...node.config,
+      ...(runtimeConfig ? { runtime: runtimeConfig } : {}),
       db_schema: {
         ...DEFAULT_DB_SCHEMA_CONFIG,
         ...schemaConfig,

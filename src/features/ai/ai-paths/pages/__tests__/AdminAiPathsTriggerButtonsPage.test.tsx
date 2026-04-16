@@ -22,7 +22,6 @@ const mockState = vi.hoisted(() => ({
   routerPush: vi.fn(),
   apiPatch: vi.fn(),
   logClientError: vi.fn(), logClientCatch: vi.fn(),
-  persistLegacyRepair: vi.fn(),
   triggerButtonsApi: {
     create: vi.fn(),
     update: vi.fn(),
@@ -35,14 +34,13 @@ const mockState = vi.hoisted(() => ({
     data: [] as MockRow[],
     error: null as Error | null,
     isFetching: false,
-    isLoading: false,
     refetch: vi.fn(),
   },
   aiPathsSettingsQuery: {
     data: [] as Array<{ key: string; value: string }>,
     refetch: vi.fn(),
   },
-  resolvePortablePathInput: vi.fn(),
+  loadCanonicalStoredPathConfig: vi.fn(),
 }));
 
 const PATH_CONFIG_PREFIX = 'ai_paths:path_config:';
@@ -82,7 +80,7 @@ async function runMutation<Result, Variables>(
   }
 }
 
-vi.mock('next/navigation', () => ({
+vi.mock('nextjs-toploader/app', () => ({
   useRouter: () => ({
     push: mockState.routerPush,
   }),
@@ -128,11 +126,6 @@ vi.mock('@/shared/lib/ai-paths/hooks/useAiPathQueries', () => ({
   useAiPathsSettingsQuery: () => mockState.aiPathsSettingsQuery,
 }));
 
-vi.mock('@/shared/lib/ai-paths/legacy-trigger-context-mode-persistence', () => ({
-  persistLegacyTriggerContextModeRepair: (...args: unknown[]) =>
-    mockState.persistLegacyRepair(...args),
-}));
-
 vi.mock('@/shared/lib/api-client', () => ({
   api: {
     patch: (...args: unknown[]) => mockState.apiPatch(...args),
@@ -141,6 +134,7 @@ vi.mock('@/shared/lib/api-client', () => ({
 
 vi.mock('@/shared/utils/observability/client-error-logger', () => ({
   logClientError: (...args: unknown[]) => mockState.logClientError(...args),
+  logClientCatch: (...args: unknown[]) => mockState.logClientCatch(...args),
 }));
 
 vi.mock('@/shared/lib/query-keys', () => ({
@@ -155,7 +149,7 @@ vi.mock('@/shared/lib/query-keys', () => ({
   },
 }));
 
-vi.mock('@/shared/utils', () => ({
+vi.mock('@/shared/utils/ui-utils', () => ({
   cn: (...values: Array<string | false | null | undefined>) => values.filter(Boolean).join(' '),
 }));
 
@@ -187,114 +181,135 @@ vi.mock('@/shared/lib/icons', () => ({
 vi.mock('@/shared/lib/ai-paths', () => ({
   PATH_CONFIG_PREFIX: 'ai_paths:path_config:',
   PATH_INDEX_KEY: 'ai_paths:path_index',
-  resolvePortablePathInput: (...args: unknown[]) => mockState.resolvePortablePathInput(...args),
-  triggerButtonsApi: mockState.triggerButtonsApi,
+  triggerButtonsApi: {
+    create: (...args: unknown[]) => mockState.triggerButtonsApi.create(...args),
+    update: (...args: unknown[]) => mockState.triggerButtonsApi.update(...args),
+    delete: (...args: unknown[]) => mockState.triggerButtonsApi.delete(...args),
+    reorder: (...args: unknown[]) => mockState.triggerButtonsApi.reorder(...args),
+    cleanupFixtures: (...args: unknown[]) => mockState.triggerButtonsApi.cleanupFixtures(...args),
+    list: (...args: unknown[]) => mockState.triggerButtonsApi.list(...args),
+  },
 }));
 
-vi.mock('@/shared/ui', () => ({
-  ...(() => {
-    const React = require('react') as typeof import('react');
-    return {
-      AppModal: ({
-        open,
-        title,
-        children,
-      }: {
-        open: boolean;
-        title: string;
-        children: React.ReactNode;
-      }): React.JSX.Element | null =>
-        open ? (
-          <div>
-            <h2>{title}</h2>
-            {children}
-          </div>
-        ) : null,
-      Badge: ({ children }: { children: React.ReactNode }): React.JSX.Element => (
-        <span>{children}</span>
-      ),
-      Button: ({
-        children,
-        ...props
-      }: React.ButtonHTMLAttributes<HTMLButtonElement>): React.JSX.Element => (
-        <button {...props}>{children}</button>
-      ),
-      Card: ({ children }: { children: React.ReactNode }): React.JSX.Element => (
-        <div>{children}</div>
-      ),
-      Checkbox: ({
-        checked,
-        onCheckedChange,
-        ...props
-      }: {
-        checked?: boolean;
-        onCheckedChange?: (value: boolean) => void;
-      } & React.InputHTMLAttributes<HTMLInputElement>): React.JSX.Element => (
-        <input
-          {...props}
-          type='checkbox'
-          checked={checked}
-          onChange={(event) => onCheckedChange?.(event.target.checked)}
-        />
-      ),
-      ConfirmModal: ({
-        isOpen,
-        title,
-        message,
-        onConfirm,
-        onClose,
-      }: {
-        isOpen: boolean;
-        title: string;
-        message: string;
-        onConfirm: () => void;
-        onClose: () => void;
-      }): React.JSX.Element | null =>
-        isOpen ? (
-          <div>
-            <h2>{title}</h2>
-            <p>{message}</p>
-            <button type='button' onClick={onConfirm}>
-              Confirm
-            </button>
-            <button type='button' onClick={onClose}>
-              Cancel
-            </button>
-          </div>
-        ) : null,
-      Hint: ({ children }: { children: React.ReactNode }): React.JSX.Element => <span>{children}</span>,
-      PanelHeader: ({
-        title,
-        onRefresh,
-        actions,
-      }: {
-        title: string;
-        onRefresh?: () => void;
-        actions?: Array<{ key: string; label: string; onClick: () => void; disabled?: boolean }>;
-      }): React.JSX.Element => (
-        <div>
-          <h1>{title}</h1>
-          <button type='button' onClick={onRefresh}>
-            Refresh
-          </button>
-          {actions?.map((action) => (
-            <button
-              key={action.key}
-              type='button'
-              disabled={action.disabled}
-              onClick={action.onClick}
-            >
-              {action.label}
-            </button>
-          ))}
-        </div>
-      ),
-      UI_CENTER_ROW_SPACED_CLASSNAME: 'row',
-      useToast: () => ({
-        toast: mockState.toast,
-      }),
-    };
-  })(),
+vi.mock('@/shared/lib/ai-paths/core/utils/stored-path-config', () => ({
+  loadCanonicalStoredPathConfig: (...args: unknown[]) =>
+    mockState.loadCanonicalStoredPathConfig(...args),
+}));
+
+vi.mock('next-auth/react', () => ({
+  useSession: () => ({
+    data: { user: { id: 'user-1', name: 'Test User' } },
+    status: 'authenticated',
+  }),
+}));
+
+vi.mock('@/shared/ui/feedback.public', () => ({
+  AppModal: ({
+    open,
+    title,
+    children,
+  }: {
+    open: boolean;
+    title: string;
+    children: React.ReactNode;
+  }): React.JSX.Element | null =>
+    open ? (
+      <div>
+        <h2>{title}</h2>
+        {children}
+      </div>
+    ) : null,
+}));
+
+vi.mock('@/shared/ui/primitives.public', () => ({
+  Badge: ({ children }: { children: React.ReactNode }): React.JSX.Element => <span>{children}</span>,
+  Button: ({
+    children,
+    ...props
+  }: React.ButtonHTMLAttributes<HTMLButtonElement>): React.JSX.Element => (
+    <button {...props}>{children}</button>
+  ),
+  Card: ({ children }: { children: React.ReactNode }): React.JSX.Element => <div>{children}</div>,
+  Checkbox: ({
+    checked,
+    onCheckedChange,
+    ...props
+  }: {
+    checked?: boolean;
+    onCheckedChange?: (value: boolean) => void;
+  } & React.InputHTMLAttributes<HTMLInputElement>): React.JSX.Element => (
+    <input
+      {...props}
+      type='checkbox'
+      checked={checked}
+      onChange={(event) => onCheckedChange?.(event.target.checked)}
+    />
+  ),
+  useToast: () => ({
+    toast: mockState.toast,
+  }),
+}));
+
+vi.mock('@/shared/ui/templates.public', () => ({
+  ConfirmModal: ({
+    isOpen,
+    title,
+    message,
+    onConfirm,
+    onClose,
+  }: {
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    onClose: () => void;
+  }): React.JSX.Element | null =>
+    isOpen ? (
+      <div>
+        <h2>{title}</h2>
+        <p>{message}</p>
+        <button type='button' onClick={onConfirm}>
+          Confirm
+        </button>
+        <button type='button' onClick={onClose}>
+          Cancel
+        </button>
+      </div>
+    ) : null,
+  PanelHeader: ({
+    title,
+    onRefresh,
+    actions,
+  }: {
+    title: string;
+    onRefresh?: () => void;
+    actions?: Array<{ key: string; label: string; onClick: () => void; disabled?: boolean }>;
+  }): React.JSX.Element => (
+    <div>
+      <h1>{title}</h1>
+      <button type='button' onClick={onRefresh}>
+        Refresh
+      </button>
+      {actions?.map((action) => (
+        <button
+          key={action.key}
+          type='button'
+          disabled={action.disabled}
+          onClick={action.onClick}
+        >
+          {action.label}
+        </button>
+      ))}
+    </div>
+  ),
+}));
+
+vi.mock('@/shared/ui/forms-and-actions.public', () => ({
+  Hint: ({ children }: { children: React.ReactNode }): React.JSX.Element => <span>{children}</span>,
+}));
+
+vi.mock('@/shared/ui/navigation-and-layout.public', () => ({
+  UI_CENTER_ROW_SPACED_CLASSNAME: 'row',
 }));
 
 vi.mock('@/shared/ui/templates/SettingsPanelBuilder', () => ({
@@ -438,7 +453,6 @@ beforeEach(() => {
   mockState.apiPatch.mockReset();
   mockState.apiPatch.mockResolvedValue({});
   mockState.logClientError.mockReset();
-  mockState.persistLegacyRepair.mockReset();
 
   mockState.triggerButtonsApi.create.mockReset();
   mockState.triggerButtonsApi.update.mockReset();
@@ -480,14 +494,10 @@ beforeEach(() => {
   mockState.aiPathsSettingsQuery.refetch.mockReset();
   mockState.aiPathsSettingsQuery.refetch.mockResolvedValue({});
 
-  mockState.resolvePortablePathInput.mockReset();
-  mockState.resolvePortablePathInput.mockImplementation((raw: string) => ({
-    ok: true,
-    value: {
-      pathConfig: JSON.parse(raw),
-      migrationWarnings: [],
-    },
-  }));
+  mockState.loadCanonicalStoredPathConfig.mockReset();
+  mockState.loadCanonicalStoredPathConfig.mockImplementation(
+    ({ rawConfig }: { rawConfig: string }) => JSON.parse(rawConfig)
+  );
 });
 
 afterEach(() => {
@@ -495,7 +505,9 @@ afterEach(() => {
 });
 
 describe('AdminAiPathsTriggerButtonsPage', () => {
-  it('maps path usage, persists repairs, refreshes, cleans fixtures, and opens a path', async () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });  it('maps path usage, persists repairs, refreshes, cleans fixtures, and opens a path', async () => {
     mockState.triggerButtonsQuery.data = [buildRow()];
     mockState.aiPathsSettingsQuery.data = [
       {
@@ -523,21 +535,23 @@ describe('AdminAiPathsTriggerButtonsPage', () => {
         }),
       },
     ];
-    mockState.resolvePortablePathInput.mockImplementation((raw: string) => ({
-      ok: true,
-      value: {
-        pathConfig: JSON.parse(raw),
-        migrationWarnings: [{ code: 'removed_trigger_context_modes_normalized' }],
-      },
-    }));
+    mockState.loadCanonicalStoredPathConfig.mockImplementation(
+      ({ rawConfig }: { rawConfig: string }) => JSON.parse(rawConfig)
+    );
 
+    mockState.triggerButtonsApi.create.mockResolvedValue({
+      ok: true,
+      data: { id: 'btn-2', name: 'Generate Copy', iconId: 'sparkles', enabled: true },
+    });
+    mockState.triggerButtonsApi.update.mockResolvedValue({ ok: true, data: {} });
+    mockState.triggerButtonsApi.delete.mockResolvedValue({ ok: true, data: {} });
     render(<AdminAiPathsTriggerButtonsPage />);
 
     await waitFor(() => {
-      expect(mockState.persistLegacyRepair).toHaveBeenCalledTimes(2);
+      expect(screen.getByText('Generate SEO')).toBeInTheDocument();
     });
-    expect(screen.getByText('Alpha Path')).toBeInTheDocument();
-    expect(screen.getByText('Beta Path')).toBeInTheDocument();
+    expect(screen.getByText('Generate SEO')).toBeInTheDocument();
+    expect(screen.getByText('Summarize Product')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
     expect(mockState.triggerButtonsQuery.refetch).toHaveBeenCalledTimes(1);
@@ -565,6 +579,12 @@ describe('AdminAiPathsTriggerButtonsPage', () => {
   it('shows a toast when loading trigger buttons fails', async () => {
     mockState.triggerButtonsQuery.error = new Error('Load failed');
 
+    mockState.triggerButtonsApi.create.mockResolvedValue({
+      ok: true,
+      data: { id: 'btn-2', name: 'Generate Copy', iconId: 'sparkles', enabled: true },
+    });
+    mockState.triggerButtonsApi.update.mockResolvedValue({ ok: true, data: {} });
+    mockState.triggerButtonsApi.delete.mockResolvedValue({ ok: true, data: {} });
     render(<AdminAiPathsTriggerButtonsPage />);
 
     await waitFor(() => {
@@ -574,6 +594,12 @@ describe('AdminAiPathsTriggerButtonsPage', () => {
   });
 
   it('creates a trigger button after selecting an icon', async () => {
+    mockState.triggerButtonsApi.create.mockResolvedValue({
+      ok: true,
+      data: { id: 'btn-2', name: 'Generate Copy', iconId: 'sparkles', enabled: true },
+    });
+    mockState.triggerButtonsApi.update.mockResolvedValue({ ok: true, data: {} });
+    mockState.triggerButtonsApi.delete.mockResolvedValue({ ok: true, data: {} });
     render(<AdminAiPathsTriggerButtonsPage />);
 
     fireEvent.click(screen.getByRole('button', { name: 'New Trigger Button' }));
@@ -599,6 +625,36 @@ describe('AdminAiPathsTriggerButtonsPage', () => {
     });
     await waitFor(() => {
       expect(screen.queryByText('Create Trigger Button')).not.toBeInTheDocument();
+    });
+  });
+
+  it('allows selecting the marketplace-copy row location when creating a trigger button', async () => {
+    mockState.triggerButtonsApi.create.mockResolvedValue({
+      ok: true,
+      data: { id: 'btn-2', name: 'Generate Copy', iconId: 'sparkles', enabled: true },
+    });
+    mockState.triggerButtonsApi.update.mockResolvedValue({ ok: true, data: {} });
+    mockState.triggerButtonsApi.delete.mockResolvedValue({ ok: true, data: {} });
+    render(<AdminAiPathsTriggerButtonsPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'New Trigger Button' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Choose Icon' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Select Sparkles' }));
+    fireEvent.change(screen.getByLabelText('Button Name'), {
+      target: { value: 'Debrand Marketplace Copy' },
+    });
+    fireEvent.click(screen.getByLabelText('Products: Marketplace Copy Row'));
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => {
+      expect(mockState.triggerButtonsApi.create).toHaveBeenCalledWith({
+        name: 'Debrand Marketplace Copy',
+        iconId: 'sparkles',
+        enabled: true,
+        locations: ['product_modal', 'product_marketplace_copy_row'],
+        mode: 'click',
+        display: 'icon_label',
+      });
     });
   });
 
@@ -632,10 +688,16 @@ describe('AdminAiPathsTriggerButtonsPage', () => {
       },
     ];
 
+    mockState.triggerButtonsApi.create.mockResolvedValue({
+      ok: true,
+      data: { id: 'btn-2', name: 'Generate Copy', iconId: 'sparkles', enabled: true },
+    });
+    mockState.triggerButtonsApi.update.mockResolvedValue({ ok: true, data: {} });
+    mockState.triggerButtonsApi.delete.mockResolvedValue({ ok: true, data: {} });
     render(<AdminAiPathsTriggerButtonsPage />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Edit btn-1' }));
-    expect(screen.getAllByText('Trigger Path')).toHaveLength(2);
+    expect(screen.getAllByText((content) => content.includes('Generate SEO'))).toHaveLength(1);
     fireEvent.change(screen.getByLabelText('Button Name'), {
       target: { value: 'Renamed Trigger' },
     });

@@ -7,12 +7,14 @@ const {
   fetchTraderaCategoriesForConnectionMock,
   resolveBaseConnectionTokenMock,
   getTraderaCategoriesMock,
+  getTraderaSubCategoriesMock,
   resolveTraderaPublicApiCredentialsMock,
 } = vi.hoisted(() => ({
   fetchBaseCategoriesMock: vi.fn(),
   fetchTraderaCategoriesForConnectionMock: vi.fn(),
   resolveBaseConnectionTokenMock: vi.fn(),
   getTraderaCategoriesMock: vi.fn(),
+  getTraderaSubCategoriesMock: vi.fn(),
   resolveTraderaPublicApiCredentialsMock: vi.fn(),
 }));
 
@@ -27,6 +29,7 @@ vi.mock('@/features/integrations/services/tradera-listing/categories', () => ({
 
 vi.mock('@/features/integrations/services/tradera-api-client', () => ({
   getTraderaCategories: getTraderaCategoriesMock,
+  getTraderaSubCategories: getTraderaSubCategoriesMock,
 }));
 
 vi.mock('@/features/integrations/services/tradera-listing/api', () => ({
@@ -34,6 +37,7 @@ vi.mock('@/features/integrations/services/tradera-listing/api', () => ({
 }));
 
 import {
+  buildMarketplaceCategoryStats,
   buildEmptyMarketplaceCategoryFetchResponse,
   buildMarketplaceCategoryFetchResponse,
   fetchMarketplaceCategories,
@@ -67,6 +71,7 @@ const createIntegration = (overrides: Partial<IntegrationRecord> = {}): Integrat
 describe('marketplace categories fetch helpers', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    getTraderaSubCategoriesMock.mockResolvedValue([]);
     resolveBaseConnectionTokenMock.mockReturnValue({
       token: 'base-token',
       source: 'baseApiToken',
@@ -96,6 +101,7 @@ describe('marketplace categories fetch helpers', () => {
       connectionId: 'conn-1',
       inventoryId: 'inventory-1',
       sourceName: 'Base.com',
+      responseSourceName: 'Base.com',
       token: 'base-token',
       mode: 'base',
     });
@@ -127,6 +133,7 @@ describe('marketplace categories fetch helpers', () => {
     expect(traderaContext).toMatchObject({
       connectionId: 'conn-1',
       sourceName: 'Tradera',
+      responseSourceName: 'Tradera public taxonomy pages',
       mode: 'tradera',
     });
     await expect(fetchMarketplaceCategories(traderaContext)).resolves.toEqual([
@@ -165,21 +172,67 @@ describe('marketplace categories fetch helpers', () => {
     expect(traderaApiContext).toMatchObject({
       connectionId: 'conn-1',
       sourceName: 'Tradera',
+      responseSourceName: 'Tradera SOAP API',
       mode: 'tradera-api',
     });
     await expect(fetchMarketplaceCategories(traderaApiContext)).resolves.toEqual([
       { id: 'api-cat-1', name: 'API Category 1', parentId: null },
     ]);
 
-    expect(buildEmptyMarketplaceCategoryFetchResponse('Tradera')).toEqual({
+    expect(buildEmptyMarketplaceCategoryFetchResponse('Tradera public taxonomy pages')).toEqual({
       fetched: 0,
       total: 0,
-      message: 'No categories found in Tradera.',
+      message: 'No categories found in Tradera public taxonomy pages.',
+      source: 'Tradera public taxonomy pages',
+      categoryStats: {
+        rootCount: 0,
+        withParentCount: 0,
+        maxDepth: 0,
+        depthHistogram: {},
+      },
     });
-    expect(buildMarketplaceCategoryFetchResponse('Base.com', 2, 3)).toEqual({
+    expect(
+      buildMarketplaceCategoryStats([
+        { id: '49', name: 'Collectibles', parentId: null },
+        { id: '2929', name: 'Pins & needles', parentId: '49' },
+        { id: '292904', name: 'Other pins & needles', parentId: '2929' },
+      ])
+    ).toEqual({
+      rootCount: 1,
+      withParentCount: 2,
+      maxDepth: 2,
+      depthHistogram: {
+        '0': 1,
+        '1': 1,
+        '2': 1,
+      },
+    });
+    expect(
+      buildMarketplaceCategoryFetchResponse('Base.com', 2, 3, {
+        rootCount: 1,
+        withParentCount: 2,
+        maxDepth: 2,
+        depthHistogram: {
+          '0': 1,
+          '1': 1,
+          '2': 1,
+        },
+      })
+    ).toEqual({
       fetched: 2,
       total: 3,
-      message: 'Successfully synced 2 categories from Base.com',
+      message: 'Successfully synced 2 categories from Base.com (roots: 1, max depth: 2).',
+      source: 'Base.com',
+      categoryStats: {
+        rootCount: 1,
+        withParentCount: 2,
+        maxDepth: 2,
+        depthHistogram: {
+          '0': 1,
+          '1': 1,
+          '2': 1,
+        },
+      },
     });
   });
 });

@@ -1,32 +1,14 @@
 {
   "kind": "general-improvement-report",
-  "generatedAt": "2026-04-02T21:14:56.627Z",
+  "generatedAt": "2026-04-15T10:54:08.335Z",
   "phase": "audit",
   "executionMode": "executed",
   "allowWrite": false,
   "selectedTrackIds": [
-    "products-parameter-integrity",
-    "products-category-schema-normalization",
     "repo-quality-baseline"
   ],
   "reportPath": "artifacts/improvements/audit-report.json",
   "steps": [
-    {
-      "id": "products-parameter-audit",
-      "title": "Audit products with missing parameters",
-      "trackId": "products-parameter-integrity",
-      "phase": "audit",
-      "mode": "automatic",
-      "writes": false,
-      "status": "passed",
-      "outputs": [
-        "/tmp/product-missing-parameters-audit-*.json",
-        "/tmp/product-missing-parameters-audit-latest.json"
-      ],
-      "instructions": [],
-      "script": "products:audit:missing-parameters",
-      "durationMs": 2943
-    },
     {
       "id": "repo-quality-api-error-sources",
       "title": "Check API error source coverage",
@@ -41,7 +23,7 @@
       ],
       "instructions": [],
       "script": "check:api-error-sources",
-      "durationMs": 381
+      "durationMs": 320
     },
     {
       "id": "repo-quality-canonical-sitewide",
@@ -54,7 +36,7 @@
       "outputs": [],
       "instructions": [],
       "script": "canonical:check:sitewide",
-      "durationMs": 2450
+      "durationMs": 2398
     }
   ]
 }

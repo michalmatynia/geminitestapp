@@ -1,0 +1,268 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-04-15T10:54:26.142Z",
+  "track": {
+    "id": "application-performance",
+    "title": "Application performance",
+    "description": "Adds app-level performance regression checks to the improvement portfolio so broad sweeps cover runtime health alongside UI, quality, and data recovery.",
+    "docs": {
+      "category": "performance",
+      "defaultSelected": true,
+      "commands": [
+        "npm run improvements:audit -- --track application-performance",
+        "npm run improvements:classify -- --track application-performance",
+        "npm run perf:ops:baseline"
+      ],
+      "relatedDocs": [
+        "docs/runbooks/application-performance-operations.md",
+        "docs/metrics/README.md"
+      ],
+      "generatedArtifacts": [
+        "docs/metrics/critical-path-performance-latest.md",
+        "docs/metrics/critical-flow-tests-latest.md",
+        "docs/metrics/unit-domain-timings-latest.md",
+        "docs/metrics/route-hotspots.md"
+      ]
+    },
+    "phases": {
+      "audit": [
+        {
+          "id": "application-performance-fast-gate",
+          "title": "Run the fast performance operations gate",
+          "mode": "automatic",
+          "writes": false,
+          "outputs": [],
+          "body": {
+            "kind": "script",
+            "script": "perf:ops:fast"
+          }
+        }
+      ],
+      "classify": [
+        {
+          "id": "application-performance-baseline",
+          "title": "Run the performance baseline pass",
+          "mode": "automatic",
+          "writes": false,
+          "outputs": [
+            "docs/metrics/critical-path-performance-latest.md",
+            "docs/metrics/critical-path-performance-latest.json",
+            "docs/metrics/critical-flow-tests-latest.md",
+            "docs/metrics/critical-flow-tests-latest.json",
+            "docs/metrics/unit-domain-timings-latest.md",
+            "docs/metrics/unit-domain-timings-latest.json",
+            "docs/metrics/route-hotspots.md"
+          ],
+          "body": {
+            "kind": "script",
+            "script": "perf:ops:baseline"
+          }
+        }
+      ],
+      "plan": [
+        {
+          "id": "application-performance-plan",
+          "title": "Review the latest performance baseline outputs before optimization work",
+          "mode": "manual",
+          "writes": false,
+          "outputs": [],
+          "body": {
+            "kind": "manual",
+            "instructions": [
+              "Use docs/metrics/critical-path-performance-latest.md and docs/metrics/critical-flow-tests-latest.md as the default review surfaces.",
+              "Treat docs/metrics/route-hotspots.md as the next-level investigation when baseline output suggests route-level regressions.",
+              "Use the weekly lane only when you need trend context, not for every local improvement pass."
+            ]
+          }
+        }
+      ],
+      "dry-run": [
+        {
+          "id": "application-performance-fast-gate",
+          "title": "Run the fast performance operations gate",
+          "mode": "automatic",
+          "writes": false,
+          "outputs": [],
+          "body": {
+            "kind": "script",
+            "script": "perf:ops:fast"
+          }
+        }
+      ],
+      "apply": [
+        {
+          "id": "application-performance-apply",
+          "title": "Apply performance fixes through targeted implementation work",
+          "mode": "manual",
+          "writes": true,
+          "outputs": [],
+          "body": {
+            "kind": "manual",
+            "instructions": [
+              "This track is read-only and should guide optimization work rather than attempt blind fixes.",
+              "Implement the chosen remediation in the owning code and then re-run the fast gate or baseline lane."
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "summary": {
+    "trackId": "application-performance",
+    "title": "Application performance",
+    "category": "performance",
+    "defaultSelected": true,
+    "description": "Adds app-level performance regression checks to the improvement portfolio so broad sweeps cover runtime health alongside UI, quality, and data recovery.",
+    "overallStatus": "passed",
+    "latestGeneratedAt": "2026-04-15T10:54:26.139Z",
+    "docDir": "docs/build/improvements/application-performance",
+    "phases": [
+      {
+        "phase": "audit",
+        "generatedAt": "2026-04-15T10:54:08.335Z",
+        "reportPath": "artifacts/improvements/audit-report.json",
+        "executionMode": "executed",
+        "allowWrite": false,
+        "stepCount": 0,
+        "automaticStepCount": 0,
+        "manualStepCount": 0,
+        "passedStepCount": 0,
+        "failedStepCount": 0,
+        "blockedStepCount": 0,
+        "plannedStepCount": 0,
+        "outputs": [],
+        "steps": [],
+        "status": "not-selected"
+      },
+      {
+        "phase": "classify",
+        "generatedAt": "2026-04-15T10:36:23.126Z",
+        "reportPath": "artifacts/improvements/classify-report.json",
+        "executionMode": "executed",
+        "allowWrite": false,
+        "stepCount": 1,
+        "automaticStepCount": 1,
+        "manualStepCount": 0,
+        "passedStepCount": 1,
+        "failedStepCount": 0,
+        "blockedStepCount": 0,
+        "plannedStepCount": 0,
+        "outputs": [
+          "docs/metrics/critical-path-performance-latest.md",
+          "docs/metrics/critical-path-performance-latest.json",
+          "docs/metrics/critical-flow-tests-latest.md",
+          "docs/metrics/critical-flow-tests-latest.json",
+          "docs/metrics/unit-domain-timings-latest.md",
+          "docs/metrics/unit-domain-timings-latest.json",
+          "docs/metrics/route-hotspots.md"
+        ],
+        "steps": [
+          {
+            "id": "application-performance-baseline",
+            "title": "Run the performance baseline pass",
+            "trackId": "application-performance",
+            "phase": "classify",
+            "mode": "automatic",
+            "writes": false,
+            "status": "passed",
+            "outputs": [
+              "docs/metrics/critical-path-performance-latest.md",
+              "docs/metrics/critical-path-performance-latest.json",
+              "docs/metrics/critical-flow-tests-latest.md",
+              "docs/metrics/critical-flow-tests-latest.json",
+              "docs/metrics/unit-domain-timings-latest.md",
+              "docs/metrics/unit-domain-timings-latest.json",
+              "docs/metrics/route-hotspots.md"
+            ],
+            "instructions": [],
+            "script": "perf:ops:baseline",
+            "durationMs": 706069
+          }
+        ],
+        "status": "passed"
+      },
+      {
+        "phase": "plan",
+        "generatedAt": "2026-04-15T10:36:23.624Z",
+        "reportPath": "artifacts/improvements/plan-report.json",
+        "executionMode": "planned",
+        "allowWrite": false,
+        "stepCount": 1,
+        "automaticStepCount": 0,
+        "manualStepCount": 1,
+        "passedStepCount": 0,
+        "failedStepCount": 0,
+        "blockedStepCount": 0,
+        "plannedStepCount": 0,
+        "outputs": [],
+        "steps": [
+          {
+            "id": "application-performance-plan",
+            "title": "Review the latest performance baseline outputs before optimization work",
+            "trackId": "application-performance",
+            "phase": "plan",
+            "mode": "manual",
+            "writes": false,
+            "status": "manual",
+            "outputs": [],
+            "instructions": [
+              "Use docs/metrics/critical-path-performance-latest.md and docs/metrics/critical-flow-tests-latest.md as the default review surfaces.",
+              "Treat docs/metrics/route-hotspots.md as the next-level investigation when baseline output suggests route-level regressions.",
+              "Use the weekly lane only when you need trend context, not for every local improvement pass."
+            ]
+          }
+        ],
+        "status": "manual"
+      },
+      {
+        "phase": "dry-run",
+        "generatedAt": "2026-03-14T08:13:11.213Z",
+        "reportPath": "artifacts/improvements/dry-run-report.json",
+        "executionMode": "executed",
+        "allowWrite": false,
+        "stepCount": 0,
+        "automaticStepCount": 0,
+        "manualStepCount": 0,
+        "passedStepCount": 0,
+        "failedStepCount": 0,
+        "blockedStepCount": 0,
+        "plannedStepCount": 0,
+        "outputs": [],
+        "steps": [],
+        "status": "not-selected"
+      },
+      {
+        "phase": "apply",
+        "generatedAt": "2026-04-15T10:54:26.139Z",
+        "reportPath": "artifacts/improvements/apply-report.json",
+        "executionMode": "executed",
+        "allowWrite": true,
+        "stepCount": 1,
+        "automaticStepCount": 0,
+        "manualStepCount": 1,
+        "passedStepCount": 0,
+        "failedStepCount": 0,
+        "blockedStepCount": 0,
+        "plannedStepCount": 0,
+        "outputs": [],
+        "steps": [
+          {
+            "id": "application-performance-apply",
+            "title": "Apply performance fixes through targeted implementation work",
+            "trackId": "application-performance",
+            "phase": "apply",
+            "mode": "manual",
+            "writes": true,
+            "status": "manual",
+            "outputs": [],
+            "instructions": [
+              "This track is read-only and should guide optimization work rather than attempt blind fixes.",
+              "Implement the chosen remediation in the owning code and then re-run the fast gate or baseline lane."
+            ]
+          }
+        ],
+        "status": "manual"
+      }
+    ]
+  }
+}

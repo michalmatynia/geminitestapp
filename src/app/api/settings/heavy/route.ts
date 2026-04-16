@@ -1,5 +1,3 @@
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
 
 import { apiHandler } from '@/shared/lib/api/api-handler';
 
@@ -9,4 +7,5 @@ export const GET = apiHandler(GET_heavy_handler, {
   source: 'settings.heavy.GET',
   rateLimitKey: disableSettingsRateLimit ? false : 'api',
   requireAuth: true,
+  resolveSessionUser: false,
 });

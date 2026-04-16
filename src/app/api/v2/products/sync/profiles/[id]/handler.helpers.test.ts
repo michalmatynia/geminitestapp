@@ -17,6 +17,7 @@ describe('product-sync profile-by-id handler helpers', () => {
     expect(
       buildProductSyncProfilePatch(
         {
+          isDefault: true,
           enabled: true,
           fieldRules: [
             {
@@ -35,6 +36,7 @@ describe('product-sync profile-by-id handler helpers', () => {
         () => 'generated-rule-id'
       )
     ).toEqual({
+      isDefault: true,
       enabled: true,
       fieldRules: [
         {

@@ -18,7 +18,8 @@ import type {
   RuntimeProfileSummary,
   RuntimeTraceRecord,
 } from '@/shared/contracts/ai-paths-runtime';
-import { normalizeNodes, sanitizeEdges } from '@/shared/lib/ai-paths';
+import { normalizeNodes } from '@/shared/lib/ai-paths/core/normalization';
+import { sanitizeEdges } from '@/shared/lib/ai-paths/core/utils/graph';
 import { GraphExecutionCancelled } from '@/shared/lib/ai-paths/core/runtime/engine-core';
 import { evaluateGraphWithIteratorAutoContinue } from '@/shared/lib/ai-paths/core/runtime/engine-server';
 import { resolveAiPathsRuntimeValidationMiddleware } from '@/shared/lib/ai-paths/core/validation-engine';
@@ -44,6 +45,7 @@ import {
   LOG_NODE_START_EVENTS,
   INTERMEDIATE_SAVE_INTERVAL_MS,
   resolveCancellationPollIntervalMs,
+  resolveGraphExecutionMaxDurationMs,
   isMissingRunUpdateError,
 } from './helpers';
 import { runExecutorPreflight } from './preflight';
@@ -109,7 +111,7 @@ export const executePathRun = async (
           void recordRuntimeRunHandoffReady({ runId: run.id });
         }
       }
-      return !!updated;
+      return Boolean(updated);
     } catch (error) {
       void ErrorSystem.captureException(error);
       if (isMissingRunUpdateError(error)) {
@@ -170,7 +172,7 @@ export const executePathRun = async (
     {},
     runtimeState.outputs ?? {}
   );
-  let resolvedRunStartedAt = runStartedAt;
+  const resolvedRunStartedAt = runStartedAt;
 
   const stateManager = new PathRunRuntimeStateManager(
     run,
@@ -408,6 +410,7 @@ export const executePathRun = async (
       },
       runtimeKernelNodeTypes,
       runtimeKernelCodeObjectResolverIds,
+      maxDurationMs: resolveGraphExecutionMaxDurationMs(),
       validationMiddleware: runtimeValidationMiddleware,
       onRuntimeValidation: async ({
         node,

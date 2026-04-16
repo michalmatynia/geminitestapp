@@ -1,6 +1,7 @@
 import type { PathMeta } from '@/shared/contracts/ai-paths';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { StatusVariant } from '@/shared/contracts/ui/base';
+import { normalizeAiPathFolderPath } from '@/shared/lib/ai-paths/core/utils/path-folders';
 
 export const EXECUTION_OPTIONS = [
   { value: 'server', label: 'Run on Server' },
@@ -97,9 +98,11 @@ export const buildSwitchPathOptions = (
   return sortedPaths.map((path: PathMeta) => {
     const isDuplicateName = (nameCounts.get(path.name) ?? 0) > 1;
     const suffix = isDuplicateName || isGenericPathName(path.name) ? ` · ${path.id.slice(-6)}` : '';
+    const folderPath = normalizeAiPathFolderPath(path.folderPath);
+    const folderPrefix = folderPath ? `${folderPath} / ` : '';
     return {
       value: path.id,
-      label: `${path.name}${suffix}`,
+      label: `${folderPrefix}${path.name}${suffix}`,
     };
   });
 };

@@ -3182,9 +3182,78 @@
     ]
   },
   {
+    "id": "node_config_field_db_schema_db_schema_contextcollections",
+    "title": "Database Schema: db_schema.contextCollections",
+    "summary": "Collections to fetch as live context during runtime. Falls back to selected schema collections when empty.",
+    "section": "Node Config - Database Schema",
+    "aliases": [
+      "db_schema",
+      "db_schema.contextCollections",
+      "db_schema.db_schema.contextCollections"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/db_schema.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.db_schema.db_schema.contextCollections"
+    ]
+  },
+  {
+    "id": "node_config_field_db_schema_db_schema_contextlimit",
+    "title": "Database Schema: db_schema.contextLimit",
+    "summary": "Maximum documents fetched per live context collection during runtime.",
+    "section": "Node Config - Database Schema",
+    "aliases": [
+      "db_schema",
+      "db_schema.contextLimit",
+      "db_schema.db_schema.contextLimit"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/db_schema.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.db_schema.db_schema.contextLimit"
+    ]
+  },
+  {
+    "id": "node_config_field_db_schema_db_schema_contextquery",
+    "title": "Database Schema: db_schema.contextQuery",
+    "summary": "Optional JSON filter or free-text search applied to each live context collection. Supports runtime templates such as `{{context.catalogId}}` or `{{bundle.categoryId}}`.",
+    "section": "Node Config - Database Schema",
+    "aliases": [
+      "db_schema",
+      "db_schema.contextQuery",
+      "db_schema.db_schema.contextQuery"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/db_schema.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.db_schema.db_schema.contextQuery"
+    ]
+  },
+  {
     "id": "node_config_field_db_schema_db_schema_formatas",
     "title": "Database Schema: db_schema.formatAs",
-    "summary": "json emits a JSON object; text emits a compact schema text for prompting.",
+    "summary": "json emits structured schema/context payloads; text emits prompt-ready context text.",
     "section": "Node Config - Database Schema",
     "aliases": [
       "db_schema",
@@ -3294,6 +3363,29 @@
     ],
     "uiTargets": [
       "node-config.db_schema.db_schema.provider"
+    ]
+  },
+  {
+    "id": "node_config_field_db_schema_db_schema_sourcemode",
+    "title": "Database Schema: db_schema.sourceMode",
+    "summary": "schema = emit structure only; live_context = emit latest collection rows; schema_and_live_context = emit both.",
+    "section": "Node Config - Database Schema",
+    "aliases": [
+      "db_schema",
+      "db_schema.sourceMode",
+      "db_schema.db_schema.sourceMode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/db_schema.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.db_schema.db_schema.sourceMode"
     ]
   },
   {
@@ -4977,9 +5069,9 @@
   },
   {
     "id": "node_config_field_playwright_playwright_browserengine",
-    "title": "Playwright: playwright.browserEngine",
+    "title": "Playwright: Batch Capture: playwright.browserEngine",
     "summary": "Browser engine to launch: chromium/firefox/webkit.",
-    "section": "Node Config - Playwright",
+    "section": "Node Config - Playwright: Batch Capture",
     "aliases": [
       "playwright",
       "playwright.browserEngine",
@@ -5000,9 +5092,9 @@
   },
   {
     "id": "node_config_field_playwright_playwright_capture_html",
-    "title": "Playwright: playwright.capture.html",
+    "title": "Playwright: Batch Capture: playwright.capture.html",
     "summary": "Capture final page HTML artifact on run completion.",
-    "section": "Node Config - Playwright",
+    "section": "Node Config - Playwright: Batch Capture",
     "aliases": [
       "playwright",
       "playwright.capture.html",
@@ -5023,9 +5115,9 @@
   },
   {
     "id": "node_config_field_playwright_playwright_capture_screenshot",
-    "title": "Playwright: playwright.capture.screenshot",
+    "title": "Playwright: Batch Capture: playwright.capture.screenshot",
     "summary": "Capture final screenshot artifact on run completion.",
-    "section": "Node Config - Playwright",
+    "section": "Node Config - Playwright: Batch Capture",
     "aliases": [
       "playwright",
       "playwright.capture.screenshot",
@@ -5046,9 +5138,9 @@
   },
   {
     "id": "node_config_field_playwright_playwright_capture_trace",
-    "title": "Playwright: playwright.capture.trace",
+    "title": "Playwright: Batch Capture: playwright.capture.trace",
     "summary": "Enable Playwright trace collection and save trace.zip artifact.",
-    "section": "Node Config - Playwright",
+    "section": "Node Config - Playwright: Batch Capture",
     "aliases": [
       "playwright",
       "playwright.capture.trace",
@@ -5069,9 +5161,9 @@
   },
   {
     "id": "node_config_field_playwright_playwright_capture_video",
-    "title": "Playwright: playwright.capture.video",
+    "title": "Playwright: Batch Capture: playwright.capture.video",
     "summary": "Enable Playwright video capture for the run context.",
-    "section": "Node Config - Playwright",
+    "section": "Node Config - Playwright: Batch Capture",
     "aliases": [
       "playwright",
       "playwright.capture.video",
@@ -5092,9 +5184,9 @@
   },
   {
     "id": "node_config_field_playwright_playwright_contextoptionsjson",
-    "title": "Playwright: playwright.contextOptionsJson",
+    "title": "Playwright: Batch Capture: playwright.contextOptionsJson",
     "summary": "Raw Playwright browser context options JSON applied when creating a context/page session.",
-    "section": "Node Config - Playwright",
+    "section": "Node Config - Playwright: Batch Capture",
     "aliases": [
       "playwright",
       "playwright.contextOptionsJson",
@@ -5115,9 +5207,9 @@
   },
   {
     "id": "node_config_field_playwright_playwright_launchoptionsjson",
-    "title": "Playwright: playwright.launchOptionsJson",
+    "title": "Playwright: Batch Capture: playwright.launchOptionsJson",
     "summary": "Raw Playwright launch options JSON merged with persona-driven settings before browser launch.",
-    "section": "Node Config - Playwright",
+    "section": "Node Config - Playwright: Batch Capture",
     "aliases": [
       "playwright",
       "playwright.launchOptionsJson",
@@ -5138,9 +5230,9 @@
   },
   {
     "id": "node_config_field_playwright_playwright_personaid",
-    "title": "Playwright: playwright.personaId",
+    "title": "Playwright: Batch Capture: playwright.personaId",
     "summary": "Optional Playwright Persona ID. When set, node runtime inherits persona browser fidelity settings.",
-    "section": "Node Config - Playwright",
+    "section": "Node Config - Playwright: Batch Capture",
     "aliases": [
       "playwright",
       "playwright.personaId",
@@ -5161,9 +5253,9 @@
   },
   {
     "id": "node_config_field_playwright_playwright_script",
-    "title": "Playwright: playwright.script",
+    "title": "Playwright: Batch Capture: playwright.script",
     "summary": "User script that exports a default async function: `run({ browser, context, page, input, emit, artifacts, log, helpers })`.",
-    "section": "Node Config - Playwright",
+    "section": "Node Config - Playwright: Batch Capture",
     "aliases": [
       "playwright",
       "playwright.script",
@@ -5184,9 +5276,9 @@
   },
   {
     "id": "node_config_field_playwright_playwright_settingsoverrides",
-    "title": "Playwright: playwright.settingsOverrides",
+    "title": "Playwright: Batch Capture: playwright.settingsOverrides",
     "summary": "Optional partial override object for Playwright persona fields (headless, slowMo, timeouts, proxy, device emulation).",
-    "section": "Node Config - Playwright",
+    "section": "Node Config - Playwright: Batch Capture",
     "aliases": [
       "playwright",
       "playwright.settingsOverrides",
@@ -5207,9 +5299,9 @@
   },
   {
     "id": "node_config_field_playwright_playwright_starturltemplate",
-    "title": "Playwright: playwright.startUrlTemplate",
+    "title": "Playwright: Batch Capture: playwright.startUrlTemplate",
     "summary": "Optional URL template rendered from incoming ports before script execution (example: https://example.com/{{entityId}}).",
-    "section": "Node Config - Playwright",
+    "section": "Node Config - Playwright: Batch Capture",
     "aliases": [
       "playwright",
       "playwright.startUrlTemplate",
@@ -5230,9 +5322,9 @@
   },
   {
     "id": "node_config_field_playwright_playwright_timeoutms",
-    "title": "Playwright: playwright.timeoutMs",
+    "title": "Playwright: Batch Capture: playwright.timeoutMs",
     "summary": "Per-run timeout budget in milliseconds.",
-    "section": "Node Config - Playwright",
+    "section": "Node Config - Playwright: Batch Capture",
     "aliases": [
       "playwright",
       "playwright.timeoutMs",
@@ -5253,9 +5345,9 @@
   },
   {
     "id": "node_config_field_playwright_playwright_waitforresult",
-    "title": "Playwright: playwright.waitForResult",
+    "title": "Playwright: Batch Capture: playwright.waitForResult",
     "summary": "When true, waits for Playwright completion and emits final outputs. When false, emits runId/job status immediately.",
-    "section": "Node Config - Playwright",
+    "section": "Node Config - Playwright: Batch Capture",
     "aliases": [
       "playwright",
       "playwright.waitForResult",
@@ -5276,9 +5368,9 @@
   },
   {
     "id": "node_config_field_playwright_runtime_cache_mode",
-    "title": "Playwright: runtime.cache.mode",
+    "title": "Playwright: Batch Capture: runtime.cache.mode",
     "summary": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
-    "section": "Node Config - Playwright",
+    "section": "Node Config - Playwright: Batch Capture",
     "aliases": [
       "playwright",
       "runtime.cache.mode",
@@ -5299,9 +5391,9 @@
   },
   {
     "id": "node_config_field_playwright_runtime_cache_scope",
-    "title": "Playwright: runtime.cache.scope",
+    "title": "Playwright: Batch Capture: runtime.cache.scope",
     "summary": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
-    "section": "Node Config - Playwright",
+    "section": "Node Config - Playwright: Batch Capture",
     "aliases": [
       "playwright",
       "runtime.cache.scope",
@@ -5322,9 +5414,9 @@
   },
   {
     "id": "node_config_field_playwright_runtime_waitforinputs",
-    "title": "Playwright: runtime.waitForInputs",
+    "title": "Playwright: Batch Capture: runtime.waitForInputs",
     "summary": "If true, wait until all connected input ports have values before executing the node.",
-    "section": "Node Config - Playwright",
+    "section": "Node Config - Playwright: Batch Capture",
     "aliases": [
       "playwright",
       "runtime.waitForInputs",
@@ -7773,12 +7865,12 @@
   },
   {
     "id": "node_config_playwright",
-    "title": "Playwright (Configuration)",
-    "summary": "Configuration reference for Playwright.",
+    "title": "Playwright: Batch Capture (Configuration)",
+    "summary": "Configuration reference for Playwright: Batch Capture.",
     "section": "Node Config",
     "aliases": [
       "playwright",
-      "Playwright",
+      "Playwright: Batch Capture",
       "playwright config"
     ],
     "docPath": "/docs/ai-paths/semantic-grammar/nodes/playwright.json",
@@ -8255,7 +8347,7 @@
   {
     "id": "node_palette_db_schema",
     "title": "Database Schema (Palette)",
-    "summary": "Provides live database structure as context for AI.",
+    "summary": "Provides live database structure and optional collection context for AI.",
     "section": "Node Palette",
     "aliases": [
       "db_schema",
@@ -8540,12 +8632,12 @@
   },
   {
     "id": "node_palette_playwright",
-    "title": "Playwright (Palette)",
-    "summary": "Run programmable browser automation with persona-driven fidelity.",
+    "title": "Playwright: Batch Capture (Palette)",
+    "summary": "Capture screenshots from multiple URLs using the engine capture script. Connect a captures array (id, title, url, selector) to the captures input port.",
     "section": "Node Palette",
     "aliases": [
       "playwright",
-      "Playwright",
+      "Playwright: Batch Capture",
       "palette playwright"
     ],
     "docPath": "/docs/ai-paths/semantic-grammar/nodes/playwright.json",
@@ -9402,12 +9494,12 @@
   },
   {
     "id": "semantic_node_playwright",
-    "title": "Semantic Node JSON: Playwright",
+    "title": "Semantic Node JSON: Playwright: Batch Capture",
     "summary": "JSON semantic scaffold and contract for playwright.",
     "section": "Semantic Grammar",
     "aliases": [
       "playwright",
-      "Playwright",
+      "Playwright: Batch Capture",
       "semantic grammar"
     ],
     "docPath": "/docs/ai-paths/semantic-grammar/nodes/playwright.json",

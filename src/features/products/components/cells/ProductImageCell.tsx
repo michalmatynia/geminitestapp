@@ -1,33 +1,48 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
 import Image from 'next/image';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+
+import { updateProduct } from '@/features/products/api';
+import { useProductImagePreview } from '@/features/products/context/ProductImagePreviewContext';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import { AppModal } from '@/shared/ui/feedback.public';
+import { FormActions } from '@/shared/ui/FormActions';
 import MissingImagePlaceholder from '@/shared/ui/missing-image-placeholder';
+import { useToast } from '@/shared/ui/toast';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
+import { cn } from '@/shared/utils/ui-utils';
+
+type ProductNoteValue = {
+  text?: string | null;
+  color?: string | null;
+} | null | undefined;
 
 interface ProductImageCellProps {
   imageUrl: string | null;
+  productId: string;
   productName: string;
+  note?: ProductNoteValue;
 }
 
-const PREVIEW_SIZE = 136;
-const OFFSET_X = 72;
-const OFFSET_Y = -90;
+type ProductListCacheValue =
+  | ProductWithImages[]
+  | { items: ProductWithImages[] }
+  | null
+  | undefined;
 
-// Tiny SVG placeholder (64×64 dark rect) — renders instantly while the real image loads.
 const BLUR_PLACEHOLDER =
   'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjMjcyNzJhIi8+PC9zdmc+';
+const DEFAULT_NOTE_COLOR = '#f5e7c3';
 
-/**
- * Returns true for URLs that must bypass Next.js image optimization
- * (data URIs, blob URIs, and external hosts not in next.config remotePatterns).
- */
 const shouldSkipOptimization = (url: string): boolean => {
   if (url.startsWith('data:') || url.startsWith('blob:')) return true;
-  // Local paths are handled by localPatterns in next.config.
   if (url.startsWith('/')) return false;
+
   try {
     const { hostname } = new URL(url);
-    // Hosts configured in next.config.mjs remotePatterns.
     if (
       hostname === 'ik.imagekit.io' ||
       hostname === 'upload.cdn.baselinker.com' ||
@@ -36,119 +51,275 @@ const shouldSkipOptimization = (url: string): boolean => {
       return false;
     }
   } catch {
-    // Malformed URL — skip optimization to avoid runtime error.
+    return true;
   }
+
   return true;
 };
 
-export const ProductImageCell = React.memo(function ProductImageCell({
+const normalizeNoteText = (value: string | null | undefined): string =>
+  typeof value === 'string' ? value.trim() : '';
+
+const normalizeNoteColor = (value: string | null | undefined): string => {
+  if (typeof value !== 'string') return DEFAULT_NOTE_COLOR;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : DEFAULT_NOTE_COLOR;
+};
+
+const resolveProductNote = (
+  note: ProductNoteValue
+): { text: string; color: string } | null => {
+  if (!note) return null;
+
+  const text = normalizeNoteText(note.text);
+  if (!text) return null;
+  const color = normalizeNoteColor(note.color);
+
+  return {
+    text,
+    color,
+  };
+};
+
+const mergeProductIntoListCache = (
+  cacheValue: ProductListCacheValue,
+  savedProduct: ProductWithImages
+): ProductListCacheValue => {
+  if (!cacheValue) return cacheValue;
+  if (Array.isArray(cacheValue)) {
+    return cacheValue.map((product: ProductWithImages) =>
+      product.id === savedProduct.id ? { ...product, ...savedProduct } : product
+    );
+  }
+  if (Array.isArray(cacheValue.items)) {
+    return {
+      ...cacheValue,
+      items: cacheValue.items.map((product: ProductWithImages) =>
+        product.id === savedProduct.id ? { ...product, ...savedProduct } : product
+      ),
+    };
+  }
+  return cacheValue;
+};
+
+export const ProductImageCell = React.memo(({
   imageUrl,
+  productId,
   productName,
-}: ProductImageCellProps): React.JSX.Element {
-  const [showPreview, setShowPreview] = useState(false);
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  const [viewport, setViewport] = useState({ w: 0, h: 0 });
-  const containerRef = useRef<HTMLDivElement>(null);
-  const rafRef = useRef<number | null>(null);
-  const pendingPosRef = useRef({ x: 0, y: 0 });
+  note,
+}: ProductImageCellProps): React.JSX.Element => {
+  const { showPreview, updatePreview, hidePreview } = useProductImagePreview();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [noteModalOpen, setNoteModalOpen] = useState(false);
+  const [draftNoteText, setDraftNoteText] = useState('');
+  const [isSavingNote, setIsSavingNote] = useState(false);
 
   const unoptimized = useMemo(
     () => (imageUrl ? shouldSkipOptimization(imageUrl) : false),
     [imageUrl]
   );
+  const resolvedNote = useMemo(() => resolveProductNote(note), [note]);
+  const noteColor = resolvedNote?.color ?? DEFAULT_NOTE_COLOR;
+  const hasDraftChanges = Boolean(resolvedNote && draftNoteText !== resolvedNote.text);
 
-  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>): void => {
-    pendingPosRef.current = { x: e.clientX, y: e.clientY };
-    if (rafRef.current !== null) return;
-    rafRef.current = window.requestAnimationFrame(() => {
-      setMousePos(pendingPosRef.current);
-      rafRef.current = null;
-    });
-  }, []);
+  useEffect(() => {
+    if (noteModalOpen && resolvedNote) {
+      setDraftNoteText(resolvedNote.text);
+    }
+  }, [noteModalOpen, resolvedNote]);
 
-  useEffect((): (() => void) => {
-    const updateViewport = (): void => {
-      setViewport({ w: window.innerWidth, h: window.innerHeight });
-    };
-    updateViewport();
-    window.addEventListener('resize', updateViewport);
-    return (): void => {
-      window.removeEventListener('resize', updateViewport);
-      if (rafRef.current !== null) {
-        window.cancelAnimationFrame(rafRef.current);
-        rafRef.current = null;
+  const syncSavedProduct = (savedProduct: ProductWithImages): void => {
+    queryClient.setQueriesData({ queryKey: QUERY_KEYS.products.lists() }, (old: ProductListCacheValue) =>
+      mergeProductIntoListCache(old, savedProduct)
+    );
+    queryClient.setQueryData(QUERY_KEYS.products.detail(savedProduct.id), savedProduct);
+    queryClient.setQueryData(QUERY_KEYS.products.detailEdit(savedProduct.id), savedProduct);
+  };
+
+  const saveNote = async (options: { closeAfter?: boolean } = {}): Promise<void> => {
+    if (!resolvedNote || isSavingNote) {
+      if (options.closeAfter) setNoteModalOpen(false);
+      return;
+    }
+
+    const nextText = draftNoteText.trim();
+    if (nextText === resolvedNote.text) {
+      if (options.closeAfter) setNoteModalOpen(false);
+      return;
+    }
+
+    try {
+      setIsSavingNote(true);
+      const savedProduct = await updateProduct(productId, {
+        notes: nextText
+          ? { text: nextText, color: resolvedNote.color }
+          : { text: null, color: null },
+      } as Partial<ProductWithImages>);
+      syncSavedProduct(savedProduct);
+      toast(nextText ? 'Product note updated' : 'Product note removed', { variant: 'success' });
+      if (options.closeAfter || !nextText) {
+        setNoteModalOpen(false);
       }
-    };
-  }, []);
+    } catch (error) {
+      logClientCatch(error, {
+        source: 'ProductImageCell',
+        action: 'saveNote',
+        productId,
+      });
+      toast(error instanceof Error ? error.message : 'Failed to update product note', {
+        variant: 'error',
+      });
+    } finally {
+      setIsSavingNote(false);
+    }
+  };
 
-  if (!imageUrl) {
-    return <MissingImagePlaceholder className='size-16' />;
-  }
+  const cancelNoteModal = (): void => {
+    if (resolvedNote) {
+      setDraftNoteText(resolvedNote.text);
+    }
+    setNoteModalOpen(false);
+  };
 
   return (
-    <div
-      ref={containerRef}
-      className='relative'
-      onMouseEnter={() => setShowPreview(true)}
-      onMouseLeave={() => setShowPreview(false)}
-      onMouseMove={handleMouseMove}
-    >
-      <div className='relative h-16 w-16'>
-        <Image
-          src={imageUrl}
-          alt={productName}
-          fill
-          sizes='64px'
-          unoptimized={unoptimized}
-          placeholder='blur'
-          blurDataURL={BLUR_PLACEHOLDER}
-          className='rounded-md object-cover cursor-pointer transition-opacity hover:opacity-80'
-        />
-      </div>
+    <>
+      <div
+        className='relative inline-flex h-16 w-16 items-center justify-end overflow-visible'
+        onMouseLeave={hidePreview}
+        onMouseMove={(event) => {
+          updatePreview(event);
+        }}
+      >
+        {resolvedNote ? (
+          <button
+            type='button'
+            aria-label={`View note for ${productName}`}
+            title={`View note for ${productName}`}
+            aria-haspopup='dialog'
+            className={cn(
+              'absolute left-0 top-1/2 z-0 h-11 w-8 -translate-y-1/2 -translate-x-[12px] cursor-pointer rounded-l-sm rounded-r-md border border-black/10',
+              'shadow-[0_10px_24px_rgba(15,23,42,0.22)] transition-[width,transform,box-shadow] duration-300 ease-in-out',
+              'hover:w-11 focus-visible:w-11',
+              'hover:-translate-x-[16px] focus-visible:-translate-x-[16px]',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
+            )}
+            style={{ backgroundColor: resolvedNote.color }}
+            onMouseEnter={(event) => {
+              showPreview({
+                kind: 'note',
+                productName,
+                noteText: resolvedNote.text,
+                noteColor: resolvedNote.color,
+                event,
+              });
+            }}
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              hidePreview();
+              setDraftNoteText(resolvedNote.text);
+              setNoteModalOpen(true);
+            }}
+          />
+        ) : null}
 
-      {showPreview && (
         <div
-          className='fixed z-50 pointer-events-none'
-          style={{
-            left: `${((): number => {
-              const margin = 8;
-              const left = mousePos.x - PREVIEW_SIZE - OFFSET_X;
-              const right = mousePos.x + OFFSET_X;
-              const fitsLeft = left >= margin;
-              const fitsRight = right + PREVIEW_SIZE <= viewport.w - margin;
-              if (fitsLeft) return left;
-              if (fitsRight) return right;
-              return Math.max(margin, Math.min(viewport.w - PREVIEW_SIZE - margin, left));
-            })()}px`,
-            top: `${((): number => {
-              const margin = 8;
-              const below = mousePos.y + OFFSET_Y;
-              const above = mousePos.y - PREVIEW_SIZE - OFFSET_Y;
-              const fitsBelow = below + PREVIEW_SIZE <= viewport.h - margin;
-              const fitsAbove = above >= margin;
-              if (fitsBelow) return below;
-              if (fitsAbove) return above;
-              return Math.max(margin, Math.min(viewport.h - PREVIEW_SIZE - margin, below));
-            })()}px`,
+          className='group/image relative z-10 h-16 w-16'
+          onMouseEnter={(event) => {
+            if (!imageUrl) return;
+            showPreview({
+              kind: 'image',
+              imageUrl,
+              productName,
+              unoptimized,
+              event,
+            });
           }}
         >
-          <div className='bg-card rounded-lg overflow-hidden shadow-2xl border border-border/60'>
-            <div className='relative h-[136px] w-[136px]'>
+          {imageUrl ? (
+            <>
               <Image
                 src={imageUrl}
                 alt={productName}
                 fill
-                sizes={`${PREVIEW_SIZE}px`}
+                sizes='64px'
                 unoptimized={unoptimized}
                 placeholder='blur'
                 blurDataURL={BLUR_PLACEHOLDER}
-                className='rounded-lg object-cover'
-                quality={90}
+                className='cursor-pointer rounded-md object-cover transition-[filter] duration-300 ease-in-out group-hover/image:brightness-70 group-hover/image:contrast-110'
+                quality={75}
               />
-            </div>
-          </div>
+              <div className='pointer-events-none absolute inset-0 rounded-md bg-[radial-gradient(circle,transparent_38%,rgba(15,23,42,0.58)_100%)] opacity-0 transition-opacity duration-300 ease-in-out group-hover/image:opacity-100' />
+            </>
+          ) : (
+            <MissingImagePlaceholder className='size-16' />
+          )}
         </div>
-      )}
-    </div>
+      </div>
+
+      {resolvedNote ? (
+        <AppModal
+          open={noteModalOpen}
+          onClose={cancelNoteModal}
+          title='Product note'
+          titleHidden
+          description={`Internal product note for ${productName}`}
+          size='sm'
+          padding='none'
+          showClose={false}
+          closeOnOutside={!isSavingNote}
+          closeOnEscape={!isSavingNote}
+          className='overflow-hidden border-black/10 text-slate-900 shadow-[0_24px_70px_rgba(15,23,42,0.32)]'
+          bodyClassName='p-0'
+          style={{ backgroundColor: noteColor }}
+          header={
+            <div className='flex flex-col gap-3 text-slate-900 lg:flex-row lg:items-start lg:justify-between'>
+              <div className='min-w-0'>
+                <div className='flex min-w-0 items-center gap-2'>
+                  <FormActions
+                    onSave={() => {
+                      void saveNote();
+                    }}
+                    saveText='Save'
+                    saveVariant={hasDraftChanges ? 'success' : 'outline'}
+                    isSaving={isSavingNote}
+                    isDisabled={!hasDraftChanges || isSavingNote}
+                    className='mr-2'
+                  />
+                  <h2 className='truncate text-lg font-semibold leading-tight'>Product note</h2>
+                </div>
+                <p className='mt-1 truncate text-xs text-slate-700'>{productName}</p>
+              </div>
+              <div className='flex shrink-0 items-center gap-2'>
+                <FormActions
+                  onCancel={cancelNoteModal}
+                  cancelText='Cancel'
+                  isSaving={isSavingNote}
+                  isDisabled={isSavingNote}
+                />
+              </div>
+            </div>
+          }
+        >
+          <textarea
+            value={draftNoteText}
+            onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => {
+              setDraftNoteText(event.target.value);
+            }}
+            onKeyDown={(event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+              if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+                event.preventDefault();
+                void saveNote();
+              }
+            }}
+            disabled={isSavingNote}
+            aria-label={`Edit note for ${productName}`}
+            className='block min-h-56 w-full resize-none border-0 border-t border-black/10 bg-transparent px-6 py-5 text-sm leading-relaxed text-slate-900 outline-none ring-0 placeholder:text-slate-700/50 focus:border-t-black/20 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 disabled:opacity-70'
+            placeholder='Write an internal product note...'
+          />
+        </AppModal>
+      ) : null}
+    </>
   );
 });

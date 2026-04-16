@@ -1,4 +1,5 @@
-import type { RuntimeState, Edge } from '@/shared/lib/ai-paths';
+import type { Edge } from '@/shared/contracts/ai-paths';
+import type { RuntimeState } from '@/shared/contracts/ai-paths-runtime';
 
 export function pruneRuntimeInputsState(
   state: RuntimeState,

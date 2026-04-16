@@ -33,6 +33,12 @@ const buildDbSchemaNode = (overrides: Record<string, unknown> = {}): Record<stri
       provider: 'auto',
       mode: 'all',
       collections: [],
+      sourceMode: 'schema',
+      contextCollections: [],
+      contextQuery: '',
+      contextLimit: 20,
+      contextTransform: 'none',
+      contextReuseMode: 'never',
       includeFields: true,
       includeRelations: true,
       formatAs: 'text',
@@ -82,72 +88,82 @@ vi.mock('../AiPathConfigContext', () => ({
   }),
 }));
 
-vi.mock('@/shared/ui', () => ({
-  ...(() => {
-    const React = require('react') as typeof import('react');
-    return {
-      Button: ({
-        children,
-        ...props
-      }: React.ButtonHTMLAttributes<HTMLButtonElement>): React.JSX.Element => (
-        <button {...props}>{children}</button>
-      ),
-      Card: ({ children }: { children: React.ReactNode }): React.JSX.Element => <div>{children}</div>,
-      Hint: ({ children }: { children: React.ReactNode }): React.JSX.Element => <div>{children}</div>,
-      Label: ({ children }: { children: React.ReactNode }): React.JSX.Element => <label>{children}</label>,
-      Pagination: (props: {
-        page: number;
-        totalPages: number;
-        pageSize: number;
-        onPageChange: (page: number) => void;
-      }): React.JSX.Element => {
-        const { onPageChange } = props;
-        return (
-          <button type='button' onClick={() => onPageChange(2)}>
-            Page 2
-          </button>
-        );
-      },
-      SearchInput: ({
-        onClear,
-        ...props
-      }: React.InputHTMLAttributes<HTMLInputElement> & { onClear?: () => void }): React.JSX.Element => (
-        <div>
-          <input {...props} />
-          <button type='button' onClick={onClear}>
-            Clear Search
-          </button>
-        </div>
-      ),
-      SelectSimple: ({
-        ariaLabel,
-        onValueChange,
-        options,
-        value,
-        placeholder,
-      }: {
-        ariaLabel?: string;
-        onValueChange?: (value: string) => void;
-        options: Array<{ value: string; label: string }>;
-        value?: string;
-        placeholder?: string;
-      }): React.JSX.Element => (
-        <select
-          aria-label={ariaLabel}
-          value={value ?? ''}
-          onChange={(event) => onValueChange?.(event.target.value)}
-        >
-          <option value=''>{placeholder ?? 'Select'}</option>
-          {options.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      ),
-    };
-  })(),
-}));
+vi.mock('@/shared/ui/primitives.public', () => {
+  const React = require('react') as typeof import('react');
+  return {
+    Button: ({
+      children,
+      ...props
+    }: React.ButtonHTMLAttributes<HTMLButtonElement>): React.JSX.Element => (
+      <button {...props}>{children}</button>
+    ),
+    Label: ({ children }: { children: React.ReactNode }): React.JSX.Element => <label>{children}</label>,
+    Card: ({ children }: { children: React.ReactNode }): React.JSX.Element => <div>{children}</div>,
+  };
+});
+
+vi.mock('@/shared/ui/forms-and-actions.public', () => {
+  const React = require('react') as typeof import('react');
+  return {
+    Hint: ({ children }: { children: React.ReactNode }): React.JSX.Element => <div>{children}</div>,
+    SearchInput: ({
+      onClear,
+      ...props
+    }: React.InputHTMLAttributes<HTMLInputElement> & { onClear?: () => void }): React.JSX.Element => (
+      <div>
+        <input {...props} />
+        <button type='button' onClick={onClear}>
+          Clear Search
+        </button>
+      </div>
+    ),
+    SelectSimple: ({
+      ariaLabel,
+      onValueChange,
+      options,
+      value,
+      placeholder,
+    }: {
+      ariaLabel?: string;
+      onValueChange?: (value: string) => void;
+      options: Array<{ value: string; label: string }>;
+      value?: string;
+      placeholder?: string;
+    }): React.JSX.Element => (
+      <select
+        aria-label={ariaLabel}
+        value={value ?? ''}
+        onChange={(event) => onValueChange?.(event.target.value)}
+      >
+        <option value=''>{placeholder ?? 'Select'}</option>
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    ),
+  };
+});
+
+vi.mock('@/shared/ui/navigation-and-layout.public', () => {
+  const React = require('react') as typeof import('react');
+  return {
+    Pagination: (props: {
+      page: number;
+      totalPages: number;
+      pageSize: number;
+      onPageChange: (page: number) => void;
+    }): React.JSX.Element => {
+      const { onPageChange } = props;
+      return (
+        <button type='button' onClick={() => onPageChange(2)}>
+          Page 2
+        </button>
+      );
+    },
+  };
+});
 
 import { DbSchemaNodeConfigSection } from './DbSchemaNodeConfigSection';
 
@@ -227,6 +243,12 @@ describe('DbSchemaNodeConfigSection', () => {
           provider: 'auto',
           mode: 'selected',
           collections: ['mongodb:orders'],
+          sourceMode: 'schema',
+          contextCollections: [],
+          contextQuery: '',
+          contextLimit: 20,
+          contextTransform: 'none',
+          contextReuseMode: 'never',
           includeFields: true,
           includeRelations: true,
           formatAs: 'text',
@@ -311,6 +333,88 @@ describe('DbSchemaNodeConfigSection', () => {
     rerender(<DbSchemaNodeConfigSection />);
 
     expect(screen.getByText('No collections selected')).toBeInTheDocument();
+  });
+
+  it('configures live context collections, filters, and limits', () => {
+    mockState.selectedNode = buildDbSchemaNode({
+      config: {
+        db_schema: {
+          provider: 'auto',
+          mode: 'selected',
+          collections: ['products'],
+          sourceMode: 'schema',
+          contextCollections: [],
+          contextQuery: '',
+          contextLimit: 20,
+          contextTransform: 'none',
+          contextReuseMode: 'never',
+          includeFields: true,
+          includeRelations: true,
+          formatAs: 'text',
+        },
+      },
+    });
+
+    const { rerender } = render(<DbSchemaNodeConfigSection />);
+
+    fireEvent.change(screen.getByLabelText('Context source mode'), {
+      target: { value: 'schema_and_live_context' },
+    });
+    expect(mockState.updateSelectedNodeConfig).toHaveBeenLastCalledWith({
+      db_schema: expect.objectContaining({
+        sourceMode: 'schema_and_live_context',
+        contextCollections: ['products'],
+      }),
+    });
+
+    rerender(<DbSchemaNodeConfigSection />);
+
+    fireEvent.click(screen.getAllByRole('button', { name: /orders/i })[1] as HTMLElement);
+    expect(mockState.updateSelectedNodeConfig).toHaveBeenLastCalledWith({
+      db_schema: expect.objectContaining({
+        contextCollections: ['products', 'orders'],
+      }),
+    });
+
+    fireEvent.change(screen.getByLabelText('Runtime context query filter'), {
+      target: { value: '{"catalogId":"catalog-1"}' },
+    });
+    expect(mockState.updateSelectedNodeConfig).toHaveBeenLastCalledWith({
+      db_schema: expect.objectContaining({
+        contextQuery: '{"catalogId":"catalog-1"}',
+      }),
+    });
+    expect(screen.getByText(/supports runtime templates from connected inputs/i)).toBeInTheDocument();
+    expect(screen.getByText('{{context.catalogId}}')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Documents per collection'), {
+      target: { value: '7' },
+    });
+    expect(mockState.updateSelectedNodeConfig).toHaveBeenLastCalledWith({
+      db_schema: expect.objectContaining({
+        contextLimit: 7,
+      }),
+    });
+
+    fireEvent.change(screen.getByLabelText('Live context transform'), {
+      target: { value: 'product_categories_leaf_only' },
+    });
+    expect(mockState.updateSelectedNodeConfig).toHaveBeenLastCalledWith({
+      db_schema: expect.objectContaining({
+        contextTransform: 'product_categories_leaf_only',
+      }),
+    });
+
+    fireEvent.change(screen.getByLabelText('Live context reuse mode'), {
+      target: { value: 'prefer_transformed_input' },
+    });
+    expect(mockState.updateSelectedNodeConfig).toHaveBeenLastCalledWith({
+      db_schema: expect.objectContaining({
+        contextReuseMode: 'prefer_transformed_input',
+      }),
+    });
+
+    expect(screen.getByText(/Runtime will fetch the latest documents from/i)).toBeInTheDocument();
   });
 
   it('browses documents, expands rows, searches, paginates, and clears the browser', () => {

@@ -3,7 +3,7 @@
 import React from 'react';
 
 import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
-import type { AiNode, Edge } from '@/shared/lib/ai-paths';
+import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
 import { Button } from '@/shared/ui/primitives.public';
 
 import {

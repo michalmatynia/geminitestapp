@@ -1,11 +1,15 @@
 'use client';
 
+// Client-side product query hooks: encapsulates TanStack Query factories
+// and parsing/normalization for product list/detail payloads. Prefer
+// useProductsWithCount for a single request that returns items + total.
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { z } from 'zod';
 
 import { getProducts, countProducts, getProductsWithCount } from '@/features/products/api/products';
 import { logProductListDebug } from '@/features/products/lib/product-list-observability';
+import { catalogSchema } from '@/shared/contracts/products/catalogs';
 import { type ProductFilter as UseProductsFilters } from '@/shared/contracts/products/filters';
 import {
   type ProductWithImages,
@@ -23,6 +27,7 @@ import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { refetchProductsAndCounts } from './productCache';
+import { useProductsPagedDebugLogging } from './useProductsPagedDebugLogging';
 
 export type { UseProductsFilters };
 
@@ -56,7 +61,7 @@ const toOptionalFiniteNumber = (value: unknown): number | undefined => {
 
 const normalizePagedImageFileRecord = (input: unknown): Record<string, unknown> | undefined => {
   const record = toRecord(input);
-  if (!record) return undefined;
+  if (record === null) return undefined;
 
   const filepath = toTrimmedString(record['filepath']);
   const derivedFilename = filepath.split('/').filter(Boolean).pop() ?? 'image';
@@ -78,6 +83,22 @@ const normalizePagedImageFileRecord = (input: unknown): Record<string, unknown> 
   };
 };
 
+const normalizePagedProductCatalogRelation = (input: unknown): Record<string, unknown> => {
+  const record = toRecord(input) ?? {};
+  const catalog = record['catalog'];
+  const parsedCatalog = catalogSchema.safeParse(catalog);
+  if (parsedCatalog.success) {
+    return {
+      ...record,
+      catalog: parsedCatalog.data,
+    };
+  }
+
+  const relation = { ...record };
+  delete relation['catalog'];
+  return relation;
+};
+
 const normalizePagedProductRecord = (input: unknown): Record<string, unknown> => {
   const record = toRecord(input) ?? {};
   const images = Array.isArray(record['images'])
@@ -89,10 +110,14 @@ const normalizePagedProductRecord = (input: unknown): Record<string, unknown> =>
         };
       })
     : record['images'];
+  const catalogs = Array.isArray(record['catalogs'])
+    ? record['catalogs'].map(normalizePagedProductCatalogRelation)
+    : record['catalogs'];
 
   return {
     ...record,
     images,
+    catalogs,
   };
 };
 
@@ -101,59 +126,19 @@ const parseProductsPagedResult = (
 ): {
   products: ProductWithImages[];
   total: number;
-} =>
-  productsPagedResultSchema.parse({
-    ...(toRecord(payload) ?? {}),
-    products: Array.isArray(toRecord(payload)?.['products'])
-      ? (toRecord(payload)?.['products'] as unknown[]).map(normalizePagedProductRecord)
+} => {
+  const record = toRecord(payload) ?? {};
+  const productsRaw = record['products'];
+  return productsPagedResultSchema.parse({
+    ...record,
+    products: Array.isArray(productsRaw)
+      ? (productsRaw as unknown[]).map(normalizePagedProductRecord)
       : [],
   });
+};
 
 const getProductsPagedQueryKey = (filters: UseProductsFilters) =>
   [...QUERY_KEYS.products.lists(), 'paged', { filters }] as const;
-
-type ProductsPagedDebugSnapshot = {
-  queryKey: string;
-  enabled: boolean;
-  isPending: boolean;
-  isFetching: boolean;
-  itemsCount: number;
-  total: number;
-  hasError: boolean;
-  errorMessage: string | null;
-  dataUpdatedAt: number;
-  errorUpdatedAt: number;
-};
-
-const buildProductsPagedDebugSnapshot = (args: {
-  enabled: boolean;
-  queryKey: readonly unknown[];
-  query: {
-    isPending: boolean;
-    isFetching: boolean;
-    data?: { items?: ProductWithImages[]; total?: number };
-    error?: unknown;
-    dataUpdatedAt?: number;
-    errorUpdatedAt?: number;
-  };
-}): ProductsPagedDebugSnapshot => ({
-  queryKey: JSON.stringify(args.queryKey),
-  enabled: args.enabled,
-  isPending: args.query.isPending,
-  isFetching: args.query.isFetching,
-  itemsCount: args.query.data?.items?.length ?? 0,
-  total: args.query.data?.total ?? 0,
-  hasError: Boolean(args.query.error),
-  errorMessage: args.query.error instanceof Error ? args.query.error.message : null,
-  dataUpdatedAt:
-    typeof args.query.dataUpdatedAt === 'number' && Number.isFinite(args.query.dataUpdatedAt)
-      ? args.query.dataUpdatedAt
-      : 0,
-  errorUpdatedAt:
-    typeof args.query.errorUpdatedAt === 'number' && Number.isFinite(args.query.errorUpdatedAt)
-      ? args.query.errorUpdatedAt
-      : 0,
-});
 
 export function useProducts(
   filters: UseProductsFilters,
@@ -240,7 +225,7 @@ export function useProductsWithCount(
   // invalidates it automatically on mutations.
   const queryKey = useMemo(() => getProductsPagedQueryKey(filters), [filters]);
   const query = createPaginatedListQueryV2<ProductWithImages>({
-    id: JSON.stringify(filters) + ':paged',
+    id: `${JSON.stringify(filters)  }:paged`,
     queryKey,
     queryFn: async (context) => {
       try {
@@ -328,66 +313,22 @@ export function useProductsWithCount(
     })();
   }, [enabled, filters, query.data, queryClient, shouldPrefetchNextPage]);
 
-  const previousDebugSnapshotRef = useRef<ProductsPagedDebugSnapshot | null>(null);
-  const debugSnapshot = useMemo(
-    () =>
-      buildProductsPagedDebugSnapshot({
-        enabled,
-        queryKey,
-        query,
-      }),
-    [
-      enabled,
-      queryKey,
-      query.isPending,
-      query.isFetching,
-      query.data,
-      query.error,
-      query.dataUpdatedAt,
-      query.errorUpdatedAt,
-    ]
-  );
-
-  useEffect(() => {
-    const previousSnapshot = previousDebugSnapshotRef.current;
-    if (
-      previousSnapshot?.queryKey === debugSnapshot.queryKey &&
-      previousSnapshot?.enabled === debugSnapshot.enabled &&
-      previousSnapshot?.isPending === debugSnapshot.isPending &&
-      previousSnapshot?.isFetching === debugSnapshot.isFetching &&
-      previousSnapshot?.itemsCount === debugSnapshot.itemsCount &&
-      previousSnapshot?.total === debugSnapshot.total &&
-      previousSnapshot?.hasError === debugSnapshot.hasError &&
-      previousSnapshot?.errorMessage === debugSnapshot.errorMessage &&
-      previousSnapshot?.dataUpdatedAt === debugSnapshot.dataUpdatedAt &&
-      previousSnapshot?.errorUpdatedAt === debugSnapshot.errorUpdatedAt
-    ) {
-      return;
-    }
-
-    logProductListDebug(
-      'paged-query-state-change',
-      {
-        ...debugSnapshot,
-      },
-      {
-        dedupeKey: 'paged-query-state-change',
-        throttleMs: 500,
-      }
-    );
-    previousDebugSnapshotRef.current = debugSnapshot;
-  }, [debugSnapshot]);
+  const debugQueryKey = useProductsPagedDebugLogging({
+    enabled,
+    queryKey,
+    query,
+  });
 
   const refetch = useCallback(async (): Promise<void> => {
     logProductListDebug(
       'paged-query-refetch-requested',
       {
-        queryKey: debugSnapshot.queryKey,
+        queryKey: debugQueryKey,
       },
       { dedupeKey: 'paged-query-refetch-requested', throttleMs: 250 }
     );
     await refetchProductsAndCounts(queryClient);
-  }, [debugSnapshot.queryKey, queryClient]);
+  }, [debugQueryKey, queryClient]);
 
   return {
     products: query.data?.items ?? [],

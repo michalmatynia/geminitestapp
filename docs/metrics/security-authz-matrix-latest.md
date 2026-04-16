@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-30'
+last_reviewed: '2026-04-15'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,15 +8,15 @@ canonical: true
 ---
 # Security Authorization Matrix Report
 
-Generated at: 2026-03-30T15:09:33.797Z
+Generated at: 2026-04-15T09:38:26.380Z
 
 ## Summary
 
 - Status: PASSED
-- Route files scanned: 298
-- Route methods scanned: 215
+- Route files scanned: 313
+- Route methods scanned: 223
 - Public methods: 15
-- Protected methods: 199
+- Protected methods: 207
 - Signed ingress methods: 0
 - Actor-scoped methods: 1
 - Errors: 0
@@ -94,6 +94,12 @@ Generated at: 2026-03-30T15:09:33.797Z
 | chatbot/[[...path]] | PUT | protected | - |
 | chatbot/[[...path]] | PATCH | protected | - |
 | chatbot/[[...path]] | DELETE | protected | - |
+| chatbot/jobs/[jobId] | DELETE | protected | - |
+| chatbot/jobs/[jobId] | GET | protected | - |
+| chatbot/jobs/[jobId] | POST | protected | - |
+| chatbot/jobs | DELETE | protected | - |
+| chatbot/jobs | GET | protected | - |
+| chatbot/jobs | POST | protected | - |
 | client-errors | POST | public | - |
 | cms/css-ai/stream | POST | protected | - |
 | cms/domains/[id] | DELETE | protected | - |
@@ -227,6 +233,8 @@ Generated at: 2026-03-30T15:09:33.797Z
 | v2/integrations/[[...path]] | PUT | protected | - |
 | v2/integrations/[[...path]] | PATCH | protected | - |
 | v2/integrations/[[...path]] | DELETE | protected | - |
+| v2/integrations/product-listings/tradera-status-check | POST | protected | - |
+| v2/integrations/tradera/parameter-mapper/catalog/fetch | POST | protected | - |
 | v2/metadata/[type]/[id] | GET | protected | - |
 | v2/metadata/[type]/[id] | PUT | protected | - |
 | v2/metadata/[type]/[id] | DELETE | protected | - |

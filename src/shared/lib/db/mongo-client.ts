@@ -6,6 +6,8 @@ import type { Db } from 'mongodb';
 import type { MongoClient } from 'mongodb';
 import type { MongoClientOptions } from 'mongodb';
 import { reportRuntimeCatch } from '@/shared/utils/observability/runtime-error-reporting';
+import { applyActiveMongoSourceEnv } from '@/shared/lib/db/mongo-source';
+import type { MongoSource } from '@/shared/contracts/database';
 
 
 const parsePositiveInt = (value: string | undefined, fallback: number): number => {
@@ -107,38 +109,44 @@ const attachMongoObservability = (client: MongoClient): void => {
     });
   }
 
-  // --- Command monitoring (opt-in via MONGODB_MONITOR_COMMANDS=true) ---
-  if (MONITOR_COMMANDS) {
-    observableClient.on('commandFailed', (e) => {
-      mongoLog('warn', `MongoDB command failed: ${e.commandName} (${e.duration}ms)`, {
-        event: 'commandFailed',
-        commandName: e.commandName,
-        durationMs: e.duration,
-        address: e.address,
-        error: e.failure?.message,
-      });
+  // --- Command monitoring (Always enabled for failures, opt-in for all successes) ---
+  observableClient.on('commandFailed', (e) => {
+    mongoLog('error', `MongoDB command failed: ${e.commandName} (${e.duration}ms)`, {
+      event: 'commandFailed',
+      commandName: e.commandName,
+      durationMs: e.duration,
+      address: e.address,
+      error: e.failure?.message,
+      stack: e.failure?.stack,
     });
+  });
 
-    observableClient.on('commandSucceeded', (e) => {
-      if (e.duration < SLOW_COMMAND_THRESHOLD_MS) return;
-      const key = `slowCmd:${e.commandName}`;
-      if (!shouldEmit(key)) return;
-      mongoLog('warn', `MongoDB slow command: ${e.commandName} took ${e.duration}ms`, {
+  observableClient.on('commandSucceeded', (e) => {
+    const isSlow = e.duration >= SLOW_COMMAND_THRESHOLD_MS;
+    if (!isSlow && !MONITOR_COMMANDS) return;
+
+    const key = `cmdSucceeded:${e.commandName}:${isSlow ? 'slow' : 'normal'}`;
+    if (isSlow && !shouldEmit(key)) return;
+
+    mongoLog(
+      isSlow ? 'warn' : 'info',
+      `MongoDB command ${isSlow ? 'slow' : 'succeeded'}: ${e.commandName} (${e.duration}ms)`,
+      {
         event: 'commandSucceeded',
         commandName: e.commandName,
         durationMs: e.duration,
         address: e.address,
         thresholdMs: SLOW_COMMAND_THRESHOLD_MS,
-      });
-    });
-  }
+        isSlow,
+      }
+    );
+  });
 };
 
 type MongoClientCtor = new (uri: string, options?: MongoClientOptions) => MongoClient;
 type MongoGlobalState = {
-  __mongoClient?: MongoClient;
-  __mongoClientPromise?: Promise<MongoClient>;
-  __mongoUri?: string;
+  __mongoClientByKey?: Map<string, MongoClient>;
+  __mongoClientPromiseByKey?: Map<string, Promise<MongoClient>>;
 };
 
 const globalForMongo = globalThis as typeof globalThis & MongoGlobalState;
@@ -157,61 +165,130 @@ const getMongoUri = (): string => {
   return uri;
 };
 
-const getMongoClientOptions = (): MongoClientOptions => ({
-  maxPoolSize: parsePositiveInt(process.env['MONGODB_MAX_POOL_SIZE'], 20),
-  minPoolSize: parsePositiveInt(process.env['MONGODB_MIN_POOL_SIZE'], 1),
-  maxIdleTimeMS: parsePositiveInt(process.env['MONGODB_MAX_IDLE_TIME_MS'], 60_000),
-  serverSelectionTimeoutMS: parsePositiveInt(
-    process.env['MONGODB_SERVER_SELECTION_TIMEOUT_MS'],
-    DEFAULT_MONGO_SERVER_SELECTION_TIMEOUT_MS
-  ),
-  connectTimeoutMS: parsePositiveInt(
-    process.env['MONGODB_CONNECT_TIMEOUT_MS'],
-    DEFAULT_MONGO_CONNECT_TIMEOUT_MS
-  ),
-  socketTimeoutMS: parsePositiveInt(process.env['MONGODB_SOCKET_TIMEOUT_MS'], 120_000),
-  retryWrites: true,
-  // Enable command monitoring only when explicitly opted in (adds minor overhead).
-  ...(MONITOR_COMMANDS ? { monitorCommands: true } : {}),
-});
+const isSingleNodeLocalMongoUri = (uri: string): boolean => {
+  try {
+    const parsed = new URL(uri);
+    const hostname = parsed.hostname.trim().toLowerCase();
+    return (hostname === '127.0.0.1' || hostname === 'localhost') && !parsed.searchParams.has('replicaSet');
+  } catch {
+    return false;
+  }
+};
+
+const getMongoClientOptions = (): MongoClientOptions => {
+  const uri = getMongoUri();
+
+  return {
+    maxPoolSize: parsePositiveInt(process.env['MONGODB_MAX_POOL_SIZE'], 20),
+    minPoolSize: parsePositiveInt(process.env['MONGODB_MIN_POOL_SIZE'], 1),
+    maxIdleTimeMS: parsePositiveInt(process.env['MONGODB_MAX_IDLE_TIME_MS'], 60_000),
+    serverSelectionTimeoutMS: parsePositiveInt(
+      process.env['MONGODB_SERVER_SELECTION_TIMEOUT_MS'],
+      DEFAULT_MONGO_SERVER_SELECTION_TIMEOUT_MS
+    ),
+    connectTimeoutMS: parsePositiveInt(
+      process.env['MONGODB_CONNECT_TIMEOUT_MS'],
+      DEFAULT_MONGO_CONNECT_TIMEOUT_MS
+    ),
+    socketTimeoutMS: parsePositiveInt(process.env['MONGODB_SOCKET_TIMEOUT_MS'], 120_000),
+    retryWrites: true,
+    ...(isSingleNodeLocalMongoUri(uri) ? { directConnection: true } : {}),
+    // Always enable command monitoring to capture failures and slow queries.
+    monitorCommands: true,
+  };
+};
 
 export const __testOnly = {
   getMongoClientOptions,
+  isSingleNodeLocalMongoUri,
 };
 
-export async function getMongoClient(): Promise<MongoClient> {
-  const uri = getMongoUri();
-
-  if (globalForMongo.__mongoUri !== uri) {
-    delete globalForMongo.__mongoClient;
-    delete globalForMongo.__mongoClientPromise;
-    globalForMongo.__mongoUri = uri;
+const getMongoClientByKeyStore = (): Map<string, MongoClient> => {
+  if (!globalForMongo.__mongoClientByKey) {
+    globalForMongo.__mongoClientByKey = new Map<string, MongoClient>();
   }
+  return globalForMongo.__mongoClientByKey;
+};
 
-  if (globalForMongo.__mongoClient) return globalForMongo.__mongoClient;
+const getMongoClientPromiseByKeyStore = (): Map<string, Promise<MongoClient>> => {
+  if (!globalForMongo.__mongoClientPromiseByKey) {
+    globalForMongo.__mongoClientPromiseByKey = new Map<string, Promise<MongoClient>>();
+  }
+  return globalForMongo.__mongoClientPromiseByKey;
+};
 
-  if (!globalForMongo.__mongoClientPromise) {
+const closeMongoClientSafely = async (
+  client: MongoClient,
+  context: 'cached-client' | 'pending-client'
+): Promise<void> => {
+  try {
+    await client.close();
+  } catch (error) {
+    void reportRuntimeCatch(error, {
+      source: 'db.mongo-client',
+      action: 'invalidateMongoClientCache',
+      context,
+    });
+  }
+};
+
+export async function invalidateMongoClientCache(): Promise<void> {
+  const clientByKey = getMongoClientByKeyStore();
+  const clientPromiseByKey = getMongoClientPromiseByKeyStore();
+  const cachedClients = new Set<MongoClient>(clientByKey.values());
+  const pendingClientPromises = [...clientPromiseByKey.values()];
+
+  clientByKey.clear();
+  clientPromiseByKey.clear();
+
+  await Promise.allSettled(
+    [...cachedClients].map((client) => closeMongoClientSafely(client, 'cached-client'))
+  );
+
+  pendingClientPromises.forEach((clientPromise) => {
+    void clientPromise
+      .then(async (client) => {
+        if (cachedClients.has(client)) return;
+        await closeMongoClientSafely(client, 'pending-client');
+      })
+      .catch(() => undefined);
+  });
+}
+
+export async function getMongoClient(preferredSource?: MongoSource): Promise<MongoClient> {
+  const sourceConfig = await applyActiveMongoSourceEnv(preferredSource);
+  const uri = getMongoUri();
+  const clientCacheKey = `${sourceConfig.source}:${uri}`;
+  const clientByKey = getMongoClientByKeyStore();
+  const clientPromiseByKey = getMongoClientPromiseByKeyStore();
+
+  const cachedClient = clientByKey.get(clientCacheKey);
+  if (cachedClient) return cachedClient;
+
+  if (!clientPromiseByKey.has(clientCacheKey)) {
     const { MongoClient } = getMongoClientCtor();
-    globalForMongo.__mongoClientPromise = new MongoClient(uri, getMongoClientOptions()).connect();
+    clientPromiseByKey.set(clientCacheKey, new MongoClient(uri, getMongoClientOptions()).connect());
   }
 
   try {
-    globalForMongo.__mongoClient = await globalForMongo.__mongoClientPromise;
-    attachMongoObservability(globalForMongo.__mongoClient);
-    return globalForMongo.__mongoClient;
+    const resolvedClient = await clientPromiseByKey.get(clientCacheKey)!;
+    clientByKey.set(clientCacheKey, resolvedClient);
+    attachMongoObservability(resolvedClient);
+    return resolvedClient;
   } catch (error) {
     void reportRuntimeCatch(error, {
       source: 'db.mongo-client',
       action: 'getMongoClient',
       hasMongoUri: Boolean(process.env['MONGODB_URI']),
     });
-    delete globalForMongo.__mongoClientPromise;
+    clientPromiseByKey.delete(clientCacheKey);
     throw error;
   }
 }
 
-export async function getMongoDb(): Promise<Db> {
-  const dbName = process.env['MONGODB_DB'] || 'app';
-  const mongoClient = await getMongoClient();
+export async function getMongoDb(preferredSource?: MongoSource): Promise<Db> {
+  const sourceConfig = await applyActiveMongoSourceEnv(preferredSource);
+  const dbName = sourceConfig.dbName || process.env['MONGODB_DB'] || 'app';
+  const mongoClient = await getMongoClient(preferredSource);
   return mongoClient.db(dbName);
 }

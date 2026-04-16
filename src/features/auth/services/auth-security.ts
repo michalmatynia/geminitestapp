@@ -6,7 +6,7 @@ import {
   normalizeAuthSecurityPolicy,
   type AuthSecurityPolicy,
 } from '@/features/auth/utils/auth-security';
-import { MongoSettingRecord } from '@/shared/contracts/base';
+import { type MongoSettingRecord } from '@/shared/contracts/base';
 import { getAuthDataProvider, requireAuthProvider } from '@/shared/lib/auth/services/auth-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
@@ -349,6 +349,17 @@ export const recordLoginFailure = async (input: {
         },
         ...(input.request ? { request: input.request } : {}),
       });
+    } else {
+      await logSystemEvent({
+        level: 'info',
+        message: 'Auth login failure (email)',
+        source: 'auth.security',
+        context: {
+          email: emailKey,
+          attempts: result.count,
+        },
+        ...(input.request ? { request: input.request } : {}),
+      });
     }
   }
 
@@ -368,6 +379,17 @@ export const recordLoginFailure = async (input: {
         context: {
           ip: ipKey,
           lockedUntil: result.lockedUntil.toISOString(),
+          attempts: result.count,
+        },
+        ...(input.request ? { request: input.request } : {}),
+      });
+    } else {
+      await logSystemEvent({
+        level: 'info',
+        message: 'Auth login failure (IP)',
+        source: 'auth.security',
+        context: {
+          ip: ipKey,
           attempts: result.count,
         },
         ...(input.request ? { request: input.request } : {}),

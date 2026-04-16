@@ -12,8 +12,7 @@ const mockState = vi.hoisted(() => ({
   logClientCatch: vi.fn(),
 }));
 
-vi.mock('@/shared/lib/ai-paths', () => ({
-  AI_PATHS_LAST_ERROR_KEY: 'ai-paths:last-error',
+vi.mock('@/shared/lib/ai-paths/core/validation-engine', () => ({
   normalizeAiPathsValidationConfig: (...args: unknown[]) =>
     mockState.normalizeAiPathsValidationConfig(...args),
 }));
@@ -79,8 +78,8 @@ describe('useAiPathsValidationActions', () => {
 
     expect(setLastError).toHaveBeenNthCalledWith(1, 'something failed');
     expect(setLastError).toHaveBeenNthCalledWith(2, null);
-    expect(setItemSpy).toHaveBeenCalledWith('ai-paths:last-error', 'something failed');
-    expect(removeItemSpy).toHaveBeenCalledWith('ai-paths:last-error');
+    expect(setItemSpy).toHaveBeenCalledWith('ai_paths_last_error', 'something failed');
+    expect(removeItemSpy).toHaveBeenCalledWith('ai_paths_last_error');
     expect(mockState.logClientError).not.toHaveBeenCalled();
   });
 
@@ -102,7 +101,7 @@ describe('useAiPathsValidationActions', () => {
       await result.current.persistLastError('persist me');
     });
 
-    expect(setItemSpy).toHaveBeenCalledWith('ai-paths:last-error', 'persist me');
+    expect(setItemSpy).toHaveBeenCalledWith('ai_paths_last_error', 'persist me');
     expect(mockState.logClientCatch).toHaveBeenCalledWith(failure, {
       service: 'ai-paths',
       action: 'persistLastError',
@@ -127,7 +126,7 @@ describe('useAiPathsValidationActions', () => {
     });
 
     expect(toast).toHaveBeenCalledWith('Save failed', { variant: 'error' });
-    expect(setItemSpy).toHaveBeenCalledWith('ai-paths:last-error', 'Save failed');
+    expect(setItemSpy).toHaveBeenCalledWith('ai_paths_last_error', 'Save failed');
     expect(mockState.logClientError).toHaveBeenCalledWith(sourceError, {
       context: {
         service: 'ai-paths',

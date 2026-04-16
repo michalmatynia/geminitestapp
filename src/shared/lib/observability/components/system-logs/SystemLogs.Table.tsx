@@ -4,10 +4,10 @@ import React from 'react';
 import { AlertTriangle, Eye, Monitor, SearchIcon } from 'lucide-react';
 import type { ColumnDef } from '@tanstack/react-table';
 
-import { useSystemLogsActions, useSystemLogsState } from '@/features/observability/context/SystemLogsContext';
+import { useSystemLogsActions, useSystemLogsState } from '@/shared/lib/observability/context/SystemLogsContext';
 import { getDocumentationTooltip } from '@/shared/lib/documentation/tooltips';
 import { DOCUMENTATION_MODULE_IDS } from '@/shared/contracts/documentation';
-import { SystemLogRecordDto as SystemLogRecord } from '@/shared/contracts/observability';
+import { type SystemLogRecordDto as SystemLogRecord } from '@/shared/contracts/observability';
 import type { StatusVariant } from '@/shared/contracts/ui/base';
 import { Alert, Button, Card, Tooltip } from '@/shared/ui/primitives.public';
 import { Hint } from '@/shared/ui/forms-and-actions.public';
@@ -16,13 +16,12 @@ import { StandardDataTablePanel } from '@/shared/ui/templates.public';
 import { StatusBadge } from '@/shared/ui/data-display.public';
 import { DetailModal } from '@/shared/ui/templates/modals';
 import { cn } from '@/shared/utils/ui-utils';
-
 import type {
   ContextDocumentDisplay,
   ContextDocumentSectionDisplay,
   ContextRegistryNodeDisplay,
-} from '../../types';
-import { formatTimestamp } from '../../utils/formatTimestamp';
+} from '@/shared/lib/observability/types';
+import { formatTimestamp } from '@/shared/lib/observability/utils/formatTimestamp';
 import {
   getLogCategory,
   getPrimaryContextDocument,
@@ -30,7 +29,7 @@ import {
   readAlertEvidence,
   readContextString,
   readLogContextRegistry,
-} from '../../utils/logHelpers';
+} from '@/shared/lib/observability/utils/logHelpers';
 
 export function ContextDocumentCard(props: {
   document: ContextDocumentDisplay;

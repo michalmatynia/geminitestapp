@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { encryptSecret } from '@/shared/lib/security/encryption';
+import { baseInventoryProductsListObjectPayload } from '@/features/integrations/services/imports/base-import-fixtures';
 
 const listIntegrationsMock = vi.hoisted(() => vi.fn());
 const listConnectionsMock = vi.hoisted(() => vi.fn());
@@ -76,6 +77,23 @@ describe('base import sample-product route', () => {
     expect(setImportSampleInventoryIdMock).toHaveBeenCalledWith('inventory-1');
     expect(payload).toEqual({
       productId: 'p-1',
+      inventoryId: 'inventory-1',
+    });
+  });
+
+  it('falls back to keyed product-map entries returned by Base list payloads', async () => {
+    callBaseApiMock.mockResolvedValue(baseInventoryProductsListObjectPayload);
+
+    const response = await sampleProductPost(buildSampleProductRequest({
+      inventoryId: 'inventory-1',
+      connectionId: 'conn-1',
+    }));
+    const payload = (await response.json()) as SampleProductResponse;
+
+    expect(response.status).toBe(200);
+    expect(setImportSampleProductIdMock).toHaveBeenCalledWith('2001');
+    expect(payload).toEqual({
+      productId: '2001',
       inventoryId: 'inventory-1',
     });
   });

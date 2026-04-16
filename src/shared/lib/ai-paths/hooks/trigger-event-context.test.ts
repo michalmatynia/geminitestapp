@@ -20,6 +20,21 @@ const TRIGGER_NODE: AiNode = {
   updatedAt: '2026-03-06T00:00:00.000Z',
 };
 
+const createTriggerNode = (entitySnapshotMode?: 'auto' | 'always' | 'never'): AiNode => ({
+  ...TRIGGER_NODE,
+  ...(entitySnapshotMode
+    ? {
+        config: {
+          trigger: {
+            event: 'manual',
+            contextMode: 'trigger_only',
+            entitySnapshotMode,
+          },
+        },
+      }
+    : {}),
+});
+
 describe('buildTriggerContext', () => {
   // ── core fields ──────────────────────────────────────────────────────────
 
@@ -141,6 +156,29 @@ describe('buildTriggerContext', () => {
     expect(ctx['productId']).toBe('product-1');
   });
 
+  it('embeds sanitized entity snapshot for product_marketplace_copy_row', () => {
+    const ctx = buildTriggerContext({
+      triggerNode: TRIGGER_NODE,
+      triggerEventId: 'manual',
+      entityType: 'product',
+      entityId: 'product-1',
+      entityJson: {
+        id: 'product-1',
+        name_en: 'Test',
+        imageBase64s: ['data:image/png;base64,abc'],
+      },
+      source: { location: 'product_marketplace_copy_row' },
+    });
+    const entity = ctx['entity'] as Record<string, unknown> | null;
+    const entityJson = ctx['entityJson'] as Record<string, unknown> | null;
+
+    expect(entity).not.toBeNull();
+    expect(entity?.['id']).toBe('product-1');
+    expect(entity?.['imageBase64s']).toBeUndefined();
+    expect(entityJson).toEqual(entity);
+    expect(ctx['productId']).toBe('product-1');
+  });
+
   it('sets entity to null when entityJson is not provided', () => {
     const ctx = buildTriggerContext({
       triggerNode: TRIGGER_NODE,
@@ -150,6 +188,36 @@ describe('buildTriggerContext', () => {
       source: { location: 'product_modal' },
     });
     expect(ctx['entity']).toBeNull();
+  });
+
+  it('does not embed entity snapshots when trigger.entitySnapshotMode is never', () => {
+    const ctx = buildTriggerContext({
+      triggerNode: createTriggerNode('never'),
+      triggerEventId: 'manual',
+      entityType: 'product',
+      entityId: 'product-1',
+      entityJson: { id: 'product-1', name_en: 'Test' },
+      source: { location: 'product_modal' },
+    });
+
+    expect(ctx['entity']).toBeNull();
+    expect(ctx['entityJson']).toBeUndefined();
+    expect(ctx['productId']).toBeUndefined();
+  });
+
+  it('always embeds entity snapshots when trigger.entitySnapshotMode is always', () => {
+    const ctx = buildTriggerContext({
+      triggerNode: createTriggerNode('always'),
+      triggerEventId: 'manual',
+      entityType: 'product',
+      entityId: 'product-1',
+      entityJson: { id: 'product-1', name_en: 'Test' },
+      source: { location: 'product_list' },
+    });
+
+    expect(ctx['entity']).toEqual({ id: 'product-1', name_en: 'Test' });
+    expect(ctx['entityJson']).toEqual(ctx['entity']);
+    expect(ctx['productId']).toBe('product-1');
   });
 
   // ── extras field ─────────────────────────────────────────────────────────

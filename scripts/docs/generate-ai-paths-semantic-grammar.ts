@@ -86,7 +86,7 @@ for (const doc of AI_PATHS_NODE_DOCS) {
   }));
   const basePayload = {
     specVersion: 'ai-paths.semantic-grammar.v1',
-    nodeDocVersion: '2026-02-20.v1',
+    nodeDocVersion: doc.nodeDocVersion ?? '2026-02-20.v1',
     nodeType: doc.type,
     title: doc.title,
     purpose: doc.purpose,

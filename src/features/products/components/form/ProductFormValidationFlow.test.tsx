@@ -4,6 +4,7 @@ import React, { useMemo, useState } from 'react';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { FormProvider, useForm, useFormContext } from 'react-hook-form';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import {
   ProductValidationSettingsProvider,
@@ -105,6 +106,17 @@ vi.mock('./ValidatedField', () => ({
   ValidatedField: ({ label, name }: { label: string; name: string }) => (
     <div data-testid={`validated-field-${name}`}>{label}</div>
   ),
+}));
+
+vi.mock('./ProductFormLatestAmazonExtraction', () => ({
+  default: () => null,
+}));
+
+vi.mock('@/features/products/hooks/useProductMetadataQueries', () => ({
+  useTitleTerms: () => ({
+    data: [],
+    isLoading: false,
+  }),
 }));
 
 import ProductFormGeneral from './ProductFormGeneral';
@@ -213,6 +225,19 @@ function ValidationHarness({
   const [validationDenyBehavior, setValidationDenyBehavior] =
     useState<ProductValidationDenyBehavior>('mute_session');
 
+  const queryClient = useMemo(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            retry: false,
+            gcTime: Infinity,
+          },
+        },
+      }),
+    []
+  );
+
   const providerValue = useMemo<ProductValidationSettingsValue>(
     () => ({
       validationInstanceScope: 'product_create',
@@ -236,13 +261,15 @@ function ValidationHarness({
   );
 
   return (
-    <FormProvider {...methods}>
-      <ProductValidationSettingsProvider value={providerValue}>
-        <ProductFormGeneral />
-        <ProductFormValidationTab />
-        <ValueProbe />
-      </ProductValidationSettingsProvider>
-    </FormProvider>
+    <QueryClientProvider client={queryClient}>
+      <FormProvider {...methods}>
+        <ProductValidationSettingsProvider value={providerValue}>
+          <ProductFormGeneral />
+          <ProductFormValidationTab />
+          <ValueProbe />
+        </ProductValidationSettingsProvider>
+      </FormProvider>
+    </QueryClientProvider>
   );
 }
 

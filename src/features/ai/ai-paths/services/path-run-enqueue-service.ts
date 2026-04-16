@@ -26,9 +26,13 @@ import type {
   UpdaterSampleState,
 } from '@/shared/contracts/ai-paths';
 import { validationError } from '@/shared/errors/app-error';
-import { evaluateRunPreflight, findRemovedLegacyAiPathNodes, formatRemovedLegacyAiPathNodesMessage, normalizeNodes, normalizeAiPathsValidationConfig, palette, sanitizeEdges, stableStringify, validateCanonicalPathNodeIdentities } from '@/shared/lib/ai-paths';
+import { evaluateRunPreflight, findRemovedLegacyAiPathNodes, formatRemovedLegacyAiPathNodesMessage, sanitizeEdges, stableStringify, validateCanonicalPathNodeIdentities } from '@/shared/lib/ai-paths/core/utils';
+import { normalizeNodes } from '@/shared/lib/ai-paths/core/normalization';
+import { normalizeAiPathsValidationConfig } from '@/shared/lib/ai-paths/core/validation-engine';
+import { palette } from '@/shared/lib/ai-paths/core/definitions';
 import {
-  remediateRemovedLegacyTriggerContextModes,
+  findRemovedLegacyTriggerContextModes,
+  formatRemovedLegacyTriggerContextModesMessage,
 } from '@/shared/lib/ai-paths/core/utils/legacy-trigger-context-mode';
 import { buildAiPathErrorReport } from '@/shared/lib/ai-paths/error-reporting';
 import { resolvePathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
@@ -253,12 +257,25 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
 
     const rawNodes = (input.nodes ?? []);
     const rawEdges = input.edges ?? [];
-    const remediatedNodes = remediateRemovedLegacyTriggerContextModes(rawNodes).value as AiNode[];
-    const normalizedNodes = normalizeNodes(remediatedNodes);
+    const removedTriggerContextModes = findRemovedLegacyTriggerContextModes(rawNodes);
+    if (removedTriggerContextModes.length > 0) {
+      throw validationError(
+        formatRemovedLegacyTriggerContextModesMessage(removedTriggerContextModes, {
+          surface: 'run graph',
+        }),
+        {
+          source: 'ai_paths.run',
+          reason: 'removed_trigger_context_mode',
+          pathId: input.pathId,
+          removedModes: removedTriggerContextModes,
+        }
+      );
+    }
+    const normalizedNodes = normalizeNodes(rawNodes);
     const nodes = normalizedNodes;
     const edges = assertCanonicalRunGraph({
       input,
-      rawNodes: remediatedNodes,
+      rawNodes,
       nodes,
       edges: rawEdges,
     });

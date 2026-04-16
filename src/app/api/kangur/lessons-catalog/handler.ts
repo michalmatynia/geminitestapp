@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { getKangurLessonRepository } from '@/features/kangur/services/kangur-lesson-repository';
 import { getKangurLessonSectionRepository } from '@/features/kangur/services/kangur-lesson-section-repository';

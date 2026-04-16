@@ -2,8 +2,9 @@
 
 import React from 'react';
 
-import type { AiNode } from '@/shared/lib/ai-paths';
-import { CANVAS_HEIGHT, CANVAS_WIDTH, NODE_MIN_HEIGHT, NODE_WIDTH, clampScale } from '@/shared/lib/ai-paths';
+import type { AiNode } from '@/shared/contracts/ai-paths';
+import { CANVAS_HEIGHT, CANVAS_WIDTH, NODE_MIN_HEIGHT, NODE_WIDTH } from '@/shared/lib/ai-paths/core/constants';
+import { clampScale } from '@/shared/lib/ai-paths/core/utils/graph';
 
 import { useCanvasBoardUI } from './CanvasBoardUIContext';
 
@@ -18,7 +19,7 @@ const MAX_MINIMAP_EDGE_RENDER_COUNT = 1400;
 const clamp = (value: number, min: number, max: number): number =>
   Math.min(max, Math.max(min, value));
 
-export const CanvasMinimap = React.memo(function CanvasMinimap(): React.JSX.Element {
+export const CanvasMinimap = React.memo((): React.JSX.Element => {
   const {
     nodes,
     edgePaths,

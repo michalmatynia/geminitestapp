@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-04-05'
+last_reviewed: '2026-04-12'
 status: 'generated'
 doc_type: 'generated'
 scope: 'feature:ai-paths'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # String Mutator Migration Sheet (`string_mutator`)
 
-Generated at: 2026-04-05T14:57:58.017Z
+Generated at: 2026-04-12T04:59:57.716Z
 
 ## Status
 
@@ -29,7 +29,7 @@ Generated at: 2026-04-05T14:57:58.017Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/string_mutator.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/string_mutator.scaffold.json`
 - v3 object id: `node_obj_string_mutator_portable_v3`
-- v3 object hash: `80cb1ef198b2c9396494d561592cb3d850e5de5af9b096c9c8e713b61f1a1b19`
+- v3 object hash: `670eda5c07b1ea4bbeb5c086bd150b03f44808c027a5f759fab63b2031414b74`
 
 ## Ports
 

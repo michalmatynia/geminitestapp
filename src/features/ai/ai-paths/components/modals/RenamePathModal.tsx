@@ -30,10 +30,14 @@ export function RenamePathModal(props: RenamePathModalProps): React.JSX.Element 
 
   const values: RenameFormState = { name: item?.name ?? '' };
 
-  const handleChange = (vals: Partial<RenameFormState>) => {
+  const handleChange = (vals: Partial<RenameFormState>): void => {
     if (vals.name !== undefined) {
       setDraftName(vals.name);
     }
+  };
+
+  const handleSave = (): void => {
+    onSave();
   };
 
   return (
@@ -45,7 +49,7 @@ export function RenamePathModal(props: RenamePathModalProps): React.JSX.Element 
       fields={FIELDS}
       values={values}
       onChange={handleChange}
-      onSave={async () => onSave()}
+      onSave={handleSave}
     />
   );
 }

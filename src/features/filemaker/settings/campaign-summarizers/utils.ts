@@ -15,6 +15,12 @@ export const roundPercentage = (numerator: number, denominator: number): number 
   return Math.round((numerator / denominator) * 1000) / 10;
 };
 
+const hasTextValue = (value: string | null | undefined): value is string =>
+  value !== null && value !== undefined && value.length > 0;
+
+const withFallback = (value: string, fallback: string): string =>
+  value.length > 0 ? value : fallback;
+
 export const summarizeUniqueDeliveryEventCount = (
   events: FilemakerEmailCampaignEvent[]
 ): number => {
@@ -22,9 +28,9 @@ export const summarizeUniqueDeliveryEventCount = (
   const keys = new Set(
     events.map((event: FilemakerEmailCampaignEvent): string => {
       const deliveryId = normalizeString(event.deliveryId);
-      if (deliveryId) return `delivery:${deliveryId}`;
-      const runId = normalizeString(event.runId) || 'runless';
-      const targetUrl = normalizeString(event.targetUrl) || 'targetless';
+      if (deliveryId.length > 0) return `delivery:${deliveryId}`;
+      const runId = withFallback(normalizeString(event.runId), 'runless');
+      const targetUrl = withFallback(normalizeString(event.targetUrl), 'targetless');
       return `event:${runId}:${targetUrl}:${event.id}`;
     })
   );
@@ -33,22 +39,54 @@ export const summarizeUniqueDeliveryEventCount = (
 
 export const toSortedLatestTimestamp = (values: Array<string | null | undefined>): string | null =>
   values
-    .filter((value: string | null | undefined): value is string => Boolean(value))
+    .filter(hasTextValue)
     .sort((left: string, right: string): number => Date.parse(right) - Date.parse(left))[0] ??
   null;
 
 export const toSortedOldestTimestamp = (values: Array<string | null | undefined>): string | null =>
   values
-    .filter((value: string | null | undefined): value is string => Boolean(value))
+    .filter(hasTextValue)
     .sort((left: string, right: string): number => Date.parse(left) - Date.parse(right))[0] ??
   null;
 
 export const resolveEmailDomain = (emailAddress: string | null | undefined): string => {
   const normalized = normalizeString(emailAddress).toLowerCase();
-  if (!normalized) return 'unknown';
+  if (normalized.length === 0) return 'unknown';
   const atIndex = normalized.lastIndexOf('@');
   if (atIndex === -1 || atIndex === normalized.length - 1) return 'unknown';
   return normalized.slice(atIndex + 1);
+};
+
+const hasQueueOlderThan = (
+  queuedCount: number,
+  oldestQueuedAgeMinutes: number | null,
+  thresholdMinutes: number
+): boolean =>
+  queuedCount > 0 &&
+  oldestQueuedAgeMinutes !== null &&
+  oldestQueuedAgeMinutes >= thresholdMinutes;
+
+const hasCriticalDeliverabilityAlert = (
+  input: {
+    bounceRatePercent: number;
+    failureRatePercent: number;
+    queuedCount: number;
+  },
+  oldestQueuedAgeMinutes: number | null
+): boolean => {
+  if (input.bounceRatePercent >= 10) return true;
+  if (input.failureRatePercent >= 25) return true;
+  return hasQueueOlderThan(input.queuedCount, oldestQueuedAgeMinutes, 180);
+};
+
+const hasWarningDeliverabilityAlert = (input: {
+  bounceRatePercent: number;
+  failureRatePercent: number;
+  queuedCount: number;
+}): boolean => {
+  if (input.bounceRatePercent >= 3) return true;
+  if (input.failureRatePercent >= 10) return true;
+  return input.queuedCount > 0;
 };
 
 export const resolveDeliverabilityAlertLevel = (input: {
@@ -59,20 +97,11 @@ export const resolveDeliverabilityAlertLevel = (input: {
 }): FilemakerEmailCampaignDeliverabilityHealthLevel => {
   const oldestQueuedAgeMinutes = input.oldestQueuedAgeMinutes ?? null;
 
-  if (
-    input.bounceRatePercent >= 10 ||
-    input.failureRatePercent >= 25 ||
-    (input.queuedCount > 0 && oldestQueuedAgeMinutes != null && oldestQueuedAgeMinutes >= 180)
-  ) {
+  if (hasCriticalDeliverabilityAlert(input, oldestQueuedAgeMinutes)) {
     return 'critical';
   }
 
-  if (
-    input.bounceRatePercent >= 3 ||
-    input.failureRatePercent >= 10 ||
-    input.queuedCount > 0 ||
-    (input.queuedCount > 0 && oldestQueuedAgeMinutes != null && oldestQueuedAgeMinutes >= 30)
-  ) {
+  if (hasWarningDeliverabilityAlert(input)) {
     return 'warning';
   }
 

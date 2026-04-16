@@ -1,19 +1,27 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import {
   isBaseIntegrationSlug,
   isPlaywrightProgrammableSlug,
   isTraderaIntegrationSlug,
+  isVintedIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
 import {
   getProductListingRepository,
   listingExistsAcrossProviders,
+  listProductListingsByProductIdAcrossProviders,
 } from '@/features/integrations/server';
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { listCanonicalBaseProductListings } from '@/features/integrations/services/base-listing-canonicalization';
+import { resolvePersistedTraderaLinkedTarget } from '@/features/integrations/services/tradera-listing/utils';
+import {
+  resolveRequestedVintedBrowserMode,
+  resolveRequestedVintedBrowserPreference,
+} from '@/features/integrations/services/vinted-listing/vinted-browser-runtime';
 import {
   enqueuePlaywrightListingJob,
   enqueueTraderaListingJob,
+  enqueueVintedListingJob,
   initializeQueues,
 } from '@/features/jobs/server';
 import { getProductRepository, parseJsonBody } from '@/features/products/server';
@@ -31,6 +39,11 @@ const requireProductId = (productId: string | null | undefined): string => {
   return productId;
 };
 
+const toRecord = (value: unknown): Record<string, unknown> =>
+  value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+
 /**
  * GET /api/v2/integrations/products/[id]/listings
  * Fetches all listings for a specific product.
@@ -43,7 +56,9 @@ export async function GET_handler(
   try {
     const productId = requireProductId(params.id);
     const listings = await listCanonicalBaseProductListings(productId);
-    return NextResponse.json(listings);
+    const response = NextResponse.json(listings);
+    response.headers.set('Cache-Control', 'no-store');
+    return response;
   } catch (error) {
     void ErrorSystem.captureException(error);
     const resolved = resolveError(error, {
@@ -122,22 +137,54 @@ export async function POST_handler(
       });
     }
 
+    if (isTraderaIntegrationSlug(integration.slug)) {
+      const productListings = await listProductListingsByProductIdAcrossProviders(productId);
+      const linkedTraderaListing = productListings.find((listing) => {
+        if (listing.connectionId !== data.connectionId) {
+          return false;
+        }
+
+        const linkedTarget = resolvePersistedTraderaLinkedTarget({
+          externalListingId: listing.externalListingId,
+          marketplaceData: listing.marketplaceData,
+        });
+        return Boolean(linkedTarget.externalListingId || linkedTarget.listingUrl);
+      });
+
+      if (linkedTraderaListing) {
+        const linkedTarget = resolvePersistedTraderaLinkedTarget({
+          externalListingId: linkedTraderaListing.externalListingId,
+          marketplaceData: linkedTraderaListing.marketplaceData,
+        });
+        throw conflictError('Product is already linked to a Tradera listing on this account', {
+          productId,
+          connectionId: data.connectionId,
+          listingId: linkedTraderaListing.id,
+          externalListingId: linkedTarget.externalListingId,
+          listingUrl: linkedTarget.listingUrl,
+        });
+      }
+    }
+
     const listing = await listingRepo.createListing({
       productId,
       integrationId: data.integrationId,
       connectionId: data.connectionId,
       status:
         isTraderaIntegrationSlug(integration.slug) ||
+        isVintedIntegrationSlug(integration.slug) ||
         isPlaywrightProgrammableSlug(integration.slug)
           ? 'queued'
           : 'pending',
       marketplaceData: isTraderaIntegrationSlug(integration.slug)
-        ? { source: 'manual-listing', marketplace: 'tradera' }
-        : isPlaywrightProgrammableSlug(integration.slug)
-          ? { source: 'manual-listing', marketplace: 'playwright-programmable' }
-        : isBaseIntegrationSlug(integration.slug)
-          ? { source: 'manual-listing', marketplace: 'base' }
-          : { source: 'manual-listing' },
+        ? { marketplace: 'tradera', source: 'manual-listing' }
+        : isVintedIntegrationSlug(integration.slug)
+          ? { marketplace: 'vinted', source: 'manual-listing' }
+          : isPlaywrightProgrammableSlug(integration.slug)
+            ? { marketplace: 'playwright-programmable', source: 'manual-listing' }
+            : isBaseIntegrationSlug(integration.slug)
+              ? { marketplace: 'base', source: 'manual-listing' }
+              : { source: 'manual-listing' },
       relistPolicy: isTraderaIntegrationSlug(integration.slug)
         ? {
           enabled: data.autoRelistEnabled ?? connection.traderaAutoRelistEnabled ?? true,
@@ -164,6 +211,57 @@ export async function POST_handler(
         queued: true,
         queue: {
           name: 'tradera-listings',
+          jobId,
+          enqueuedAt,
+        },
+      };
+      return NextResponse.json(response, { status: 201 });
+    }
+
+    if (isVintedIntegrationSlug(integration.slug)) {
+      initializeQueues();
+      const enqueuedAt = new Date().toISOString();
+      const requestedBrowserMode = resolveRequestedVintedBrowserMode({
+        requestedBrowserMode: undefined,
+        source: 'api',
+        connectionHeadless: connection.playwrightHeadless,
+      });
+      const requestedBrowserPreference = resolveRequestedVintedBrowserPreference({
+        requestedBrowserPreference: undefined,
+        source: 'api',
+        connectionBrowserPreference: connection.playwrightBrowser,
+      });
+      const jobId = await enqueueVintedListingJob({
+        listingId: listing.id,
+        action: 'list',
+        source: 'api',
+        browserMode: requestedBrowserMode,
+        browserPreference: requestedBrowserPreference,
+      });
+      const queuedMarketplaceData = {
+        ...toRecord(listing.marketplaceData),
+        marketplace: 'vinted',
+        source: 'manual-listing',
+        vinted: {
+          ...toRecord(toRecord(listing.marketplaceData)['vinted']),
+          pendingExecution: {
+            action: 'list',
+            requestedBrowserMode,
+            requestedBrowserPreference,
+            requestId: jobId,
+            queuedAt: enqueuedAt,
+          },
+        },
+      };
+      await listingRepo.updateListing(listing.id, {
+        marketplaceData: queuedMarketplaceData,
+      });
+      const response: ProductListingCreateResponse = {
+        ...listing,
+        marketplaceData: queuedMarketplaceData,
+        queued: true,
+        queue: {
+          name: 'vinted-listings',
           jobId,
           enqueuedAt,
         },

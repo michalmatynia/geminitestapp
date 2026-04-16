@@ -4,8 +4,8 @@ import { ObjectId, type Filter, type UpdateFilter, type Document } from 'mongodb
 
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
-import { CreateProductListingInput, ProductListingExportEventRecord, ProductListingRepository } from '@/shared/contracts/integrations/repositories';
-import { ProductListing, ProductListingExportEvent, ProductListingWithDetails } from '@/shared/contracts/integrations/listings';
+import { type CreateProductListingInput, type ProductListingExportEventRecord, type ProductListingRepository } from '@/shared/contracts/integrations/repositories';
+import { type ProductListing, type ProductListingExportEvent, type ProductListingWithDetails } from '@/shared/contracts/integrations/listings';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
@@ -488,24 +488,42 @@ export async function listProductListingsByProductIdAcrossProviders(
 export async function listProductListingsByProductIdsAcrossProviders(
   productIds: string[]
 ): Promise<
-  Array<Pick<ProductListing, 'productId' | 'status' | 'integrationId' | 'marketplaceData'>>
+  Array<
+    Pick<
+      ProductListing,
+      'productId' | 'status' | 'integrationId' | 'marketplaceData' | 'updatedAt'
+    >
+  >
 > {
   const uniqueProductIds = Array.from(
     new Set(productIds.map((id) => id.trim()).filter((id) => id.length > 0))
   );
   if (uniqueProductIds.length === 0) return [];
 
-  const mongoListings = await mongoRepository.getListingsByProductIds(uniqueProductIds);
+  const collection = await getListingCollection();
+  const mongoListings = await collection
+    .find(buildLookupFilterForIds('productId', uniqueProductIds), {
+      projection: {
+        productId: 1,
+        status: 1,
+        integrationId: 1,
+        marketplaceData: 1,
+        updatedAt: 1,
+      },
+    })
+    .toArray();
+
   return mongoListings.map((listing) => ({
-    productId: listing.productId,
+    productId: normalizeLookupIdOrFallback(listing.productId),
     status: listing.status,
-    integrationId: listing.integrationId,
-    marketplaceData: listing.marketplaceData,
+    integrationId: normalizeLookupIdOrFallback(listing.integrationId),
+    marketplaceData: listing.marketplaceData ?? null,
+    updatedAt: listing.updatedAt.toISOString(),
   }));
 }
 
 export async function listAllProductListingsAcrossProviders(): Promise<
-  Array<Pick<ProductListing, 'productId' | 'status' | 'integrationId' | 'marketplaceData'>>
+  Array<Pick<ProductListing, 'productId' | 'status' | 'integrationId' | 'marketplaceData' | 'updatedAt'>>
   > {
   return mongoRepository.listAllListings();
 }

@@ -2,7 +2,7 @@
 
 import { Droppable } from '@hello-pangea/dnd';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import React from 'react';
+import React, { createContext, useContext } from 'react';
 
 import { KangurDragDropContext } from '@/features/kangur/ui/components/KangurDragDropContext';
 import {
@@ -49,6 +49,21 @@ import { TOTAL_ROUNDS, groupId } from './DivisionGroupsGame.utils';
 type DivisionGroupsState = ReturnType<typeof useDivisionGroupsGameState>;
 type DivisionGroupsStatus = DivisionGroupsState['status'];
 type DivisionGroupsTranslations = DivisionGroupsState['translations'];
+
+type DivisionGroupsContextValue = DivisionGroupsState & {
+  onFinish: () => void;
+  finishLabel: string;
+};
+
+const DivisionGroupsGameContext = createContext<DivisionGroupsContextValue | null>(null);
+
+function useDivisionGroupsGame(): DivisionGroupsContextValue {
+  const context = useContext(DivisionGroupsGameContext);
+  if (!context) {
+    throw new Error('useDivisionGroupsGame must be used within DivisionGroupsGame.');
+  }
+  return context;
+}
 
 const GROUP_ZONE_CLASSNAME =
   'relative flex min-h-[140px] flex-col rounded-[28px] border-2 border-dashed p-4 transition-all touch-manipulation';
@@ -240,42 +255,10 @@ const resolveDivisionGroupsTokenAriaLabel = (
   token: TokenItem
 ): string => translations('division.inRound.tokenAria', { emoji: token.emoji });
 
-type DivisionGroupsDropZoneProps = {
-  ariaLabel: string;
-  baseClassName: string;
-  dataTestId: string;
-  droppableId: ZoneId;
-  isCoarsePointer: boolean;
-  isLocked: boolean;
-  label: string;
-  moveToZone: (destination: ZoneId) => void;
-  onSelectToken: (tokenId: string) => void;
-  ringClassName: string;
-  selectedTokenId: string | null;
-  snapshotClassName: string;
-  tokens: TokenItem[];
-  translations: DivisionGroupsTranslations;
-};
+function DivisionGroupsSummaryView(): React.JSX.Element {
+  const { handleRestart, score, translations, xpBreakdown, xpEarned, finishLabel, onFinish } = useDivisionGroupsGame();
+  const percent = Math.round((score / TOTAL_ROUNDS) * 100);
 
-function DivisionGroupsSummaryView({
-  finishLabel,
-  onFinish,
-  onRestart,
-  percent,
-  score,
-  translations,
-  xpBreakdown,
-  xpEarned,
-}: {
-  finishLabel: string;
-  onFinish: () => void;
-  onRestart: () => void;
-  percent: number;
-  score: number;
-  translations: DivisionGroupsTranslations;
-  xpBreakdown: DivisionGroupsState['xpBreakdown'];
-  xpEarned: number;
-}): React.JSX.Element {
   return (
     <KangurPracticeGameSummary
       dataTestId='division-groups-summary-shell'
@@ -306,7 +289,7 @@ function DivisionGroupsSummaryView({
       <KangurPracticeGameSummaryActions
         finishLabel={finishLabel}
         onFinish={onFinish}
-        onRestart={onRestart}
+        onRestart={handleRestart}
         restartLabel={translations('shared.restart')}
       />
     </KangurPracticeGameSummary>
@@ -318,17 +301,52 @@ function DivisionGroupsDropZone({
   baseClassName,
   dataTestId,
   droppableId,
-  isCoarsePointer,
-  isLocked,
   label,
-  moveToZone,
-  onSelectToken,
   ringClassName,
-  selectedTokenId,
   snapshotClassName,
   tokens,
-  translations,
-}: DivisionGroupsDropZoneProps): React.JSX.Element {
+}: {
+  ariaLabel: string;
+  baseClassName: string;
+  dataTestId: string;
+  droppableId: ZoneId;
+  label: string;
+  ringClassName: string;
+  snapshotClassName: string;
+  tokens: TokenItem[];
+}): React.JSX.Element {
+  const {
+    groups,
+    handleDragEnd,
+    isCoarsePointer,
+    isLocked,
+    pool,
+    remainder,
+    selectedTokenId,
+    setSelectedTokenId,
+    translations,
+  } = useDivisionGroupsGame();
+
+  const moveToZone = (destinationId: ZoneId): void => {
+    moveDivisionGroupsSelectedTokenToZone({
+      destinationId,
+      groups,
+      handleDragEnd,
+      isLocked,
+      pool,
+      remainder,
+      selectedTokenId,
+    });
+  };
+
+  const selectToken = (tokenId: string): void => {
+    toggleDivisionGroupsTokenSelection({
+      isLocked,
+      setSelectedTokenId,
+      tokenId,
+    });
+  };
+
   return (
     <Droppable droppableId={droppableId} direction='horizontal'>
       {(provided, snapshot) => (
@@ -367,8 +385,8 @@ function DivisionGroupsDropZone({
                 isCoarsePointer={isCoarsePointer}
                 isDragDisabled={isLocked}
                 isSelected={selectedTokenId === token.id}
-                onClick={() => onSelectToken(token.id)}
-                onSelect={() => onSelectToken(token.id)}
+                onClick={() => selectToken(token.id)}
+                onSelect={() => selectToken(token.id)}
                 token={token}
               />
             ))}
@@ -380,15 +398,8 @@ function DivisionGroupsDropZone({
   );
 }
 
-function DivisionGroupsHeader({
-  round,
-  roundIndex,
-  translations,
-}: {
-  round: DivisionGroupsState['round'];
-  roundIndex: number;
-  translations: DivisionGroupsTranslations;
-}): React.JSX.Element {
+function DivisionGroupsHeader(): React.JSX.Element {
+  const { round, roundIndex, translations } = useDivisionGroupsGame();
   return (
     <div className='flex w-full flex-col gap-4 sm:flex-row'>
       <KangurInfoCard accent='sky' className='flex-1' padding='md' tone='accent'>
@@ -413,23 +424,9 @@ function DivisionGroupsHeader({
   );
 }
 
-function DivisionGroupsGroupGrid({
-  groups,
-  isCoarsePointer,
-  isLocked,
-  moveToZone,
-  onSelectToken,
-  selectedTokenId,
-  translations,
-}: {
-  groups: DivisionGroupsState['groups'];
-  isCoarsePointer: boolean;
-  isLocked: boolean;
-  moveToZone: (destination: ZoneId) => void;
-  onSelectToken: (tokenId: string) => void;
-  selectedTokenId: string | null;
-  translations: DivisionGroupsTranslations;
-}): React.JSX.Element {
+function DivisionGroupsGroupGrid(): React.JSX.Element {
+  const { groups, translations } = useDivisionGroupsGame();
+
   return (
     <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
       {groups.map((group, groupIndex) => (
@@ -439,91 +436,41 @@ function DivisionGroupsGroupGrid({
           baseClassName={GROUP_ZONE_CLASSNAME}
           dataTestId={`division-groups-group-zone-${groupIndex}`}
           droppableId={groupId(groupIndex)}
-          isCoarsePointer={isCoarsePointer}
-          isLocked={isLocked}
           label={translations('division.inRound.groupLabel', { index: groupIndex + 1 })}
-          moveToZone={moveToZone}
-          onSelectToken={onSelectToken}
           ringClassName='ring-sky-300'
-          selectedTokenId={selectedTokenId}
           snapshotClassName='border-sky-400 bg-sky-50 shadow-inner'
           tokens={group}
-          translations={translations}
         />
       ))}
     </div>
   );
 }
 
-function DivisionGroupsBoard({
-  groups,
-  isCoarsePointer,
-  isLocked,
-  moveToZone,
-  onSelectToken,
-  remainder,
-  selectedTokenId,
-  translations,
-}: {
-  groups: DivisionGroupsState['groups'];
-  isCoarsePointer: boolean;
-  isLocked: boolean;
-  moveToZone: (destination: ZoneId) => void;
-  onSelectToken: (tokenId: string) => void;
-  remainder: DivisionGroupsState['remainder'];
-  selectedTokenId: string | null;
-  translations: DivisionGroupsTranslations;
-}): React.JSX.Element {
+function DivisionGroupsBoard(): React.JSX.Element {
+  const { remainder, translations } = useDivisionGroupsGame();
+
   return (
     <div className='grid gap-4 lg:grid-cols-[minmax(0,1fr)_240px]'>
-      <DivisionGroupsGroupGrid
-        groups={groups}
-        isCoarsePointer={isCoarsePointer}
-        isLocked={isLocked}
-        moveToZone={moveToZone}
-        onSelectToken={onSelectToken}
-        selectedTokenId={selectedTokenId}
-        translations={translations}
-      />
+      <DivisionGroupsGroupGrid />
       <div className='flex flex-col gap-4'>
         <DivisionGroupsDropZone
           ariaLabel={translations('divisionGroups.aria.remainder')}
           baseClassName={REMAINDER_ZONE_CLASSNAME}
           dataTestId='division-groups-remainder-zone'
           droppableId='remainder'
-          isCoarsePointer={isCoarsePointer}
-          isLocked={isLocked}
           label={translations('division.inRound.remainderLabel')}
-          moveToZone={moveToZone}
-          onSelectToken={onSelectToken}
           ringClassName='ring-amber-300'
-          selectedTokenId={selectedTokenId}
           snapshotClassName='border-amber-400 bg-amber-50 shadow-inner'
           tokens={remainder}
-          translations={translations}
         />
       </div>
     </div>
   );
 }
 
-function DivisionGroupsPool({
-  isCoarsePointer,
-  isLocked,
-  moveToZone,
-  onSelectToken,
-  pool,
-  selectedTokenId,
-  translations,
-}: {
-  isCoarsePointer: boolean;
-  isLocked: boolean;
-  moveToZone: (destination: ZoneId) => void;
-  onSelectToken: (tokenId: string) => void;
-  pool: DivisionGroupsState['pool'];
-  selectedTokenId: string | null;
-  translations: DivisionGroupsTranslations;
-}): React.JSX.Element {
+function DivisionGroupsPool(): React.JSX.Element {
+  const { pool, translations } = useDivisionGroupsGame();
+
   return (
     <div className='flex flex-col gap-3'>
       <p className='text-center text-xs font-bold uppercase tracking-[0.14em] text-slate-400'>
@@ -534,16 +481,10 @@ function DivisionGroupsPool({
         baseClassName={POOL_ZONE_CLASSNAME}
         dataTestId='division-groups-pool-zone'
         droppableId='pool'
-        isCoarsePointer={isCoarsePointer}
-        isLocked={isLocked}
         label={translations('division.inRound.poolLabel')}
-        moveToZone={moveToZone}
-        onSelectToken={onSelectToken}
         ringClassName='ring-slate-300'
-        selectedTokenId={selectedTokenId}
         snapshotClassName='border-sky-300 bg-sky-50/80'
         tokens={pool}
-        translations={translations}
       />
     </div>
   );
@@ -569,23 +510,16 @@ function DivisionGroupsSelectionHint({
   );
 }
 
-function DivisionGroupsCheckAction({
-  disabled,
-  onCheck,
-  status,
-  translations,
-}: {
-  disabled: boolean;
-  onCheck: () => void;
-  status: DivisionGroupsStatus;
-  translations: DivisionGroupsTranslations;
-}): React.JSX.Element {
+function DivisionGroupsCheckAction(): React.JSX.Element {
+  const { handleCheck, isLocked, pool, status, translations } = useDivisionGroupsGame();
+  const disabled = pool.length > 0 || isLocked;
+
   return (
     <KangurPanelRow className='justify-center py-2'>
       <KangurButton
         className={getKangurCheckButtonClassName(undefined, DIVISION_GROUPS_CHECK_TONES[status])}
         disabled={disabled}
-        onClick={onCheck}
+        onClick={handleCheck}
         size='lg'
         variant='primary'
       >
@@ -595,26 +529,17 @@ function DivisionGroupsCheckAction({
   );
 }
 
-function DivisionGroupsActiveRound({
-  state,
-}: {
-  state: DivisionGroupsState;
-}): React.JSX.Element {
+function DivisionGroupsActiveRound(): React.JSX.Element {
   const {
     translations,
     isCoarsePointer,
     roundIndex,
-    round,
     pool,
     groups,
     remainder,
     selectedTokenId,
-    setSelectedTokenId,
-    status,
-    isLocked,
-    handleCheck,
     handleDragEnd,
-  } = state;
+  } = useDivisionGroupsGame();
   const prefersReducedMotion = useReducedMotion();
   const roundMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
   const selectedToken = resolveDivisionGroupsSelectedToken({
@@ -628,24 +553,6 @@ function DivisionGroupsActiveRound({
     selectedToken,
     translations,
   });
-  const moveToZone = (destinationId: ZoneId): void => {
-    moveDivisionGroupsSelectedTokenToZone({
-      destinationId,
-      groups,
-      handleDragEnd,
-      isLocked,
-      pool,
-      remainder,
-      selectedTokenId,
-    });
-  };
-  const selectToken = (tokenId: string): void => {
-    toggleDivisionGroupsTokenSelection({
-      isLocked,
-      setSelectedTokenId,
-      tokenId,
-    });
-  };
 
   return (
     <KangurPracticeGameShell
@@ -666,73 +573,28 @@ function DivisionGroupsActiveRound({
               {...roundMotionProps}
               className={cn('flex w-full flex-col', KANGUR_PANEL_GAP_CLASSNAME)}
             >
-              <DivisionGroupsHeader
-                round={round}
-                roundIndex={roundIndex}
-                translations={translations}
-              />
-              <DivisionGroupsBoard
-                groups={groups}
-                isCoarsePointer={isCoarsePointer}
-                isLocked={isLocked}
-                moveToZone={moveToZone}
-                onSelectToken={selectToken}
-                remainder={remainder}
-                selectedTokenId={selectedTokenId}
-                translations={translations}
-              />
-              <DivisionGroupsPool
-                isCoarsePointer={isCoarsePointer}
-                isLocked={isLocked}
-                moveToZone={moveToZone}
-                onSelectToken={selectToken}
-                pool={pool}
-                selectedTokenId={selectedTokenId}
-                translations={translations}
-              />
+              <DivisionGroupsHeader />
+              <DivisionGroupsBoard />
+              <DivisionGroupsPool />
               <DivisionGroupsSelectionHint selectionHint={selectionHint} />
             </motion.div>
           </AnimatePresence>
 
-          <DivisionGroupsCheckAction
-            disabled={pool.length > 0 || isLocked}
-            onCheck={handleCheck}
-            status={status}
-            translations={translations}
-          />
+          <DivisionGroupsCheckAction />
         </div>
       </KangurDragDropContext>
     </KangurPracticeGameShell>
   );
 }
 
-function DivisionGroupsRoundView({
-  finishLabel,
-  onFinish,
-  state,
-}: {
-  finishLabel: string;
-  onFinish: () => void;
-  state: DivisionGroupsState;
-}): React.JSX.Element {
-  const { done, handleRestart, score, translations, xpBreakdown, xpEarned } = state;
+function DivisionGroupsRoundView(): React.JSX.Element {
+  const { done } = useDivisionGroupsGame();
 
   if (done) {
-    return (
-      <DivisionGroupsSummaryView
-        finishLabel={finishLabel}
-        onFinish={onFinish}
-        onRestart={handleRestart}
-        percent={Math.round((score / TOTAL_ROUNDS) * 100)}
-        score={score}
-        translations={translations}
-        xpBreakdown={xpBreakdown}
-        xpEarned={xpEarned}
-      />
-    );
+    return <DivisionGroupsSummaryView />;
   }
 
-  return <DivisionGroupsActiveRound state={state} />;
+  return <DivisionGroupsActiveRound />;
 }
 
 export default function DivisionGroupsGame(
@@ -747,10 +609,14 @@ export default function DivisionGroupsGame(
   );
 
   return (
-    <DivisionGroupsRoundView
-      finishLabel={finishLabel}
-      onFinish={onFinish}
-      state={state}
-    />
+    <DivisionGroupsGameContext.Provider
+      value={{
+        ...state,
+        onFinish,
+        finishLabel,
+      }}
+    >
+      <DivisionGroupsRoundView />
+    </DivisionGroupsGameContext.Provider>
   );
 }

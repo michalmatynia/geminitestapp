@@ -1,8 +1,8 @@
 import type { AiInsightResponse } from '@/shared/contracts/ai-insights';
 import {
   type ClearLogsTargetDto as ClearLogsTarget,
-  ClearLogsResponseDto as ClearLogsResponse,
-  MongoRebuildIndexesResponseDto as MongoRebuildIndexesResponse,
+  type ClearLogsResponseDto as ClearLogsResponse,
+  type MongoRebuildIndexesResponseDto as MongoRebuildIndexesResponse,
   mongoRebuildIndexesResponseSchema,
 } from '@/shared/contracts/observability';
 import type { UpdateMutation } from '@/shared/contracts/ui/queries';

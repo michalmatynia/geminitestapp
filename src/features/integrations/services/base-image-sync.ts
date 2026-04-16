@@ -1,13 +1,13 @@
 import 'server-only';
 
-import { ObjectId } from 'mongodb';
+import { type ObjectId } from 'mongodb';
 
 import { BASE_INTEGRATION_SLUGS } from '@/features/integrations/constants/slugs';
 import { getProductListingRepository } from '@/features/integrations/server';
 import { integrationService } from '@/features/integrations/server';
 import { resolveBaseConnectionToken } from '@/features/integrations/server';
 import { fetchBaseProductDetails } from '@/features/integrations/services/imports/base-client';
-import { extractBaseImageUrls } from '@/features/integrations/services/imports/base-mapper';
+import { extractBaseImageUrls } from '@/features/integrations/services/imports/base-mapper-utils';
 import type { ProductListingExportEvent, ProductListing } from '@/shared/contracts/integrations/listings';
 import type { ProductListingRepository } from '@/shared/contracts/integrations/repositories';
 import type { ProductRepository } from '@/shared/contracts/products/drafts';

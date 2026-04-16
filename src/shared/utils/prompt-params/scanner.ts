@@ -1,11 +1,5 @@
-export type ScanState = {
-  inSingle: boolean;
-  inDouble: boolean;
-  inTemplate: boolean;
-  inLineComment: boolean;
-  inBlockComment: boolean;
-  escaped: boolean;
-};
+/* eslint-disable complexity */
+/* eslint-disable max-depth */
 
 export type SegmentKind =
   | 'code'
@@ -16,28 +10,95 @@ export type SegmentKind =
 
 export type Segment = { kind: SegmentKind; text: string };
 
-export const createScanState = (): ScanState => ({
-  inSingle: false,
-  inDouble: false,
-  inTemplate: false,
-  inLineComment: false,
-  inBlockComment: false,
-  escaped: false,
-});
+export class ScanState {
+  inSingle = false;
+  inDouble = false;
+  inTemplate = false;
+  inLineComment = false;
+  inBlockComment = false;
+  escaped = false;
 
-export const isInString = (state: ScanState): boolean =>
-  state.inSingle || state.inDouble || state.inTemplate;
+  isInString(): boolean {
+    return this.inSingle || this.inDouble || this.inTemplate;
+  }
+
+  isInComment(): boolean {
+    return this.inLineComment || this.inBlockComment;
+  }
+
+  resetStringEscaped(): void {
+    this.escaped = false;
+  }
+
+  updateStringEscaped(char: string): void {
+    this.escaped = !this.escaped && char === '\\';
+  }
+
+  handleComment(char: string, next: string): { done: boolean; advance: number } {
+    if (this.inLineComment && char === '\n') {
+      this.inLineComment = false;
+      return { done: true, advance: 0 };
+    }
+    if (this.inBlockComment && char === '*' && next === '/') {
+      this.inBlockComment = false;
+      return { done: true, advance: 1 };
+    }
+    return { done: false, advance: 0 };
+  }
+
+  private getQuote(kind: SegmentKind): string {
+    if (kind === 'single_string') return '\'';
+    if (kind === 'double_string') return '"';
+    return '`';
+  }
+
+  handleString(char: string, kind: SegmentKind): boolean {
+    const quote = this.getQuote(kind);
+    if (!this.escaped && char === quote) {
+      if (kind === 'single_string') this.inSingle = false;
+      else if (kind === 'double_string') this.inDouble = false;
+      else this.inTemplate = false;
+      return true;
+    }
+    this.updateStringEscaped(char);
+    return false;
+  }
+
+  detectNew(char: string, next: string): { newKind: SegmentKind; advance: number } | null {
+    if (char === '/' && (next === '/' || next === '*')) {
+      if (next === '/') this.inLineComment = true;
+      else this.inBlockComment = true;
+      return { newKind: 'comment', advance: 1 };
+    }
+    if (char === '\'' || char === '"' || char === '`') {
+      let k: SegmentKind = 'template_string';
+      if (char === '\'') {
+        this.inSingle = true;
+        k = 'single_string';
+      } else if (char === '"') {
+        this.inDouble = true;
+        k = 'double_string';
+      } else {
+        this.inTemplate = true;
+      }
+      this.resetStringEscaped();
+      return { newKind: k, advance: 0 };
+    }
+    return null;
+  }
+}
 
 export function segmentizeJsLikeText(input: string): Segment[] {
-  const state = createScanState();
+  const state = new ScanState();
   const segments: Segment[] = [];
   let kind: SegmentKind = 'code';
   let buf = '';
 
   const flush = (): void => {
-    if (!buf) return;
-    segments.push({ kind, text: buf });
-    buf = '';
+    if (buf.length > 0) {
+      segments.push({ kind, text: buf });
+      buf = '';
+    }
   };
 
   for (let index = 0; index < input.length; index += 1) {
@@ -46,351 +107,36 @@ export function segmentizeJsLikeText(input: string): Segment[] {
 
     if (kind === 'comment') {
       buf += char;
-      if (state.inLineComment) {
-        if (char === '\n') {
-          state.inLineComment = false;
-          flush();
-          kind = 'code';
-        }
-      } else if (state.inBlockComment) {
-        if (char === '*' && next === '/') {
-          buf += next;
-          index += 1;
-          state.inBlockComment = false;
-          flush();
-          kind = 'code';
-        }
-      }
-      continue;
-    }
-
-    if (kind === 'single_string') {
-      buf += char;
-      if (!state.escaped && char === '\'') {
-        state.inSingle = false;
+      const res = state.handleComment(char, next);
+      if (res.done) {
+        if (res.advance > 0) buf += next;
+        index += res.advance;
         flush();
         kind = 'code';
       }
-      state.escaped = !state.escaped && char === '\\';
       continue;
     }
 
-    if (kind === 'double_string') {
+    if (kind !== 'code') {
       buf += char;
-      if (!state.escaped && char === '"') {
-        state.inDouble = false;
+      if (state.handleString(char, kind)) {
         flush();
         kind = 'code';
       }
-      state.escaped = !state.escaped && char === '\\';
       continue;
     }
 
-    if (kind === 'template_string') {
+    const newSeg = state.detectNew(char, next);
+    if (newSeg !== null) {
+      flush();
+      kind = newSeg.newKind;
+      buf = input.slice(index, index + newSeg.advance + 1);
+      index += newSeg.advance;
+    } else {
       buf += char;
-      if (!state.escaped && char === '`') {
-        state.inTemplate = false;
-        flush();
-        kind = 'code';
-      }
-      state.escaped = !state.escaped && char === '\\';
-      continue;
     }
-
-    // code
-    if (char === '/' && next === '/') {
-      flush();
-      kind = 'comment';
-      state.inLineComment = true;
-      buf = '//';
-      index += 1;
-      continue;
-    }
-    if (char === '/' && next === '*') {
-      flush();
-      kind = 'comment';
-      state.inBlockComment = true;
-      buf = '/*';
-      index += 1;
-      continue;
-    }
-    if (char === '\'') {
-      flush();
-      kind = 'single_string';
-      state.inSingle = true;
-      state.escaped = false;
-      buf = '\'';
-      continue;
-    }
-    if (char === '"') {
-      flush();
-      kind = 'double_string';
-      state.inDouble = true;
-      state.escaped = false;
-      buf = '"';
-      continue;
-    }
-    if (char === '`') {
-      flush();
-      kind = 'template_string';
-      state.inTemplate = true;
-      state.escaped = false;
-      buf = '`';
-      continue;
-    }
-
-    buf += char;
   }
 
   flush();
   return segments;
-}
-
-export function findMatchingBrace(input: string, startIndex: number): number {
-  if (input[startIndex] !== '{') return -1;
-
-  let depth = 0;
-  const state = createScanState();
-
-  for (let index = startIndex; index < input.length; index += 1) {
-    const char = input[index] ?? '';
-    const next = input[index + 1] ?? '';
-
-    if (state.inLineComment) {
-      if (char === '\n') state.inLineComment = false;
-      continue;
-    }
-    if (state.inBlockComment) {
-      if (char === '*' && next === '/') {
-        state.inBlockComment = false;
-        index += 1;
-      }
-      continue;
-    }
-
-    if (state.inSingle) {
-      if (!state.escaped && char === '\'') state.inSingle = false;
-      state.escaped = !state.escaped && char === '\\';
-      continue;
-    }
-    if (state.inDouble) {
-      if (!state.escaped && char === '"') state.inDouble = false;
-      state.escaped = !state.escaped && char === '\\';
-      continue;
-    }
-    if (state.inTemplate) {
-      if (!state.escaped && char === '`') state.inTemplate = false;
-      state.escaped = !state.escaped && char === '\\';
-      continue;
-    }
-
-    if (char === '/' && next === '/') {
-      state.inLineComment = true;
-      index += 1;
-      continue;
-    }
-    if (char === '/' && next === '*') {
-      state.inBlockComment = true;
-      index += 1;
-      continue;
-    }
-
-    if (char === '\'') {
-      state.inSingle = true;
-      state.escaped = false;
-      continue;
-    }
-    if (char === '"') {
-      state.inDouble = true;
-      state.escaped = false;
-      continue;
-    }
-    if (char === '`') {
-      state.inTemplate = true;
-      state.escaped = false;
-      continue;
-    }
-
-    if (char === '{') depth += 1;
-    if (char === '}') depth -= 1;
-
-    if (depth === 0) return index;
-  }
-
-  return -1;
-}
-
-export function stripJsComments(input: string): string {
-  const state = createScanState();
-  const out: string[] = [];
-
-  for (let index = 0; index < input.length; index += 1) {
-    const char = input[index] ?? '';
-    const next = input[index + 1] ?? '';
-
-    if (state.inLineComment) {
-      if (char === '\n') {
-        state.inLineComment = false;
-        out.push(char);
-      }
-      continue;
-    }
-
-    if (state.inBlockComment) {
-      if (char === '*' && next === '/') {
-        state.inBlockComment = false;
-        index += 1;
-      }
-      continue;
-    }
-
-    if (state.inSingle) {
-      out.push(char);
-      if (!state.escaped && char === '\'') state.inSingle = false;
-      state.escaped = !state.escaped && char === '\\';
-      continue;
-    }
-    if (state.inDouble) {
-      out.push(char);
-      if (!state.escaped && char === '"') state.inDouble = false;
-      state.escaped = !state.escaped && char === '\\';
-      continue;
-    }
-    if (state.inTemplate) {
-      out.push(char);
-      if (!state.escaped && char === '`') state.inTemplate = false;
-      state.escaped = !state.escaped && char === '\\';
-      continue;
-    }
-
-    if (char === '/' && next === '/') {
-      state.inLineComment = true;
-      index += 1;
-      continue;
-    }
-    if (char === '/' && next === '*') {
-      state.inBlockComment = true;
-      index += 1;
-      continue;
-    }
-
-    out.push(char);
-    if (char === '\'') state.inSingle = true;
-    if (char === '"') state.inDouble = true;
-    if (char === '`') state.inTemplate = true;
-  }
-
-  return out.join('');
-}
-
-export function removeTrailingCommas(input: string): string {
-  const state = createScanState();
-  const out: string[] = [];
-
-  for (let index = 0; index < input.length; index += 1) {
-    const char = input[index] ?? '';
-
-    if (isInString(state)) {
-      out.push(char);
-      if (state.inSingle) {
-        if (!state.escaped && char === '\'') state.inSingle = false;
-        state.escaped = !state.escaped && char === '\\';
-        continue;
-      }
-      if (state.inDouble) {
-        if (!state.escaped && char === '"') state.inDouble = false;
-        state.escaped = !state.escaped && char === '\\';
-        continue;
-      }
-      if (state.inTemplate) {
-        if (!state.escaped && char === '`') state.inTemplate = false;
-        state.escaped = !state.escaped && char === '\\';
-        continue;
-      }
-      continue;
-    }
-
-    if (char === '\'') {
-      state.inSingle = true;
-      out.push(char);
-      continue;
-    }
-    if (char === '"') {
-      state.inDouble = true;
-      out.push(char);
-      continue;
-    }
-    if (char === '`') {
-      state.inTemplate = true;
-      out.push(char);
-      continue;
-    }
-
-    if (char === ',') {
-      let lookahead = index + 1;
-      while (lookahead < input.length) {
-        const ahead = input[lookahead] ?? '';
-        if (!/\s/.test(ahead)) break;
-        lookahead += 1;
-      }
-      const ahead = input[lookahead] ?? '';
-      if (ahead === '}' || ahead === ']') {
-        continue; // skip trailing comma
-      }
-    }
-
-    out.push(char);
-  }
-
-  return out.join('');
-}
-
-export function splitLineCodeAndLineComment(line: string): {
-  code: string;
-  comment: string | null;
-} {
-  const state = createScanState();
-
-  for (let index = 0; index < line.length; index += 1) {
-    const char = line[index] ?? '';
-    const next = line[index + 1] ?? '';
-
-    if (state.inSingle) {
-      if (!state.escaped && char === '\'') state.inSingle = false;
-      state.escaped = !state.escaped && char === '\\';
-      continue;
-    }
-    if (state.inDouble) {
-      if (!state.escaped && char === '"') state.inDouble = false;
-      state.escaped = !state.escaped && char === '\\';
-      continue;
-    }
-    if (state.inTemplate) {
-      if (!state.escaped && char === '`') state.inTemplate = false;
-      state.escaped = !state.escaped && char === '\\';
-      continue;
-    }
-
-    if (char === '/' && next === '/') {
-      return { code: line.slice(0, index), comment: line.slice(index + 2) };
-    }
-
-    if (char === '\'') {
-      state.inSingle = true;
-      state.escaped = false;
-      continue;
-    }
-    if (char === '"') {
-      state.inDouble = true;
-      state.escaped = false;
-      continue;
-    }
-    if (char === '`') {
-      state.inTemplate = true;
-      state.escaped = false;
-      continue;
-    }
-  }
-
-  return { code: line, comment: null };
 }

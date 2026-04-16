@@ -26,6 +26,7 @@ describe('DatabaseEngineContext', () => {
       saveSettings: vi.fn(),
       serviceRoutes: [],
       setActiveView: vi.fn(),
+      syncMongoSources: vi.fn(),
       updateBackupSchedule: vi.fn(),
       updateCollectionRoute: vi.fn(),
       updateOperationControls: vi.fn(),

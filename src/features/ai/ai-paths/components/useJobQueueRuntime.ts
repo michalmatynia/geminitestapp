@@ -4,8 +4,8 @@ import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
-import { getAiPathRun, handoffAiPathRun, resumeAiPathRun, retryAiPathRunNode } from '@/shared/lib/ai-paths';
-import type { AiPathRunRecord, AiPathRunVisibility } from '@/shared/lib/ai-paths';
+import { getAiPathRun, handoffAiPathRun, resumeAiPathRun, retryAiPathRunNode } from '@/shared/lib/ai-paths/api';
+import type { AiPathRunRecord, AiPathRunVisibility } from '@/shared/contracts/ai-paths';
 import { useToast } from '@/shared/ui/primitives.public';
 
 import {

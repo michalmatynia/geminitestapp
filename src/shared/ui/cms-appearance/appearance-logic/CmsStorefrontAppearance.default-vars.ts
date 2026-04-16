@@ -1,6 +1,6 @@
 import {
-  CmsStorefrontAppearanceMode,
-  CmsAppearanceTone,
+  type CmsStorefrontAppearanceMode,
+  type CmsAppearanceTone,
   DEFAULT_KANGUR_RUNTIME_VARS,
 } from '../CmsStorefrontAppearance.contracts';
 import { isDarkStorefrontAppearanceMode } from '../CmsStorefrontAppearance.utils';

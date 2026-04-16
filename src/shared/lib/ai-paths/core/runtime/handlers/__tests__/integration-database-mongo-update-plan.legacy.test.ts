@@ -34,6 +34,14 @@ describe('buildMongoUpdatePlan', () => {
         operation: 'update',
         mode: 'replace',
         updatePayloadMode: 'mapping',
+        skipEmpty: true,
+        trimStrings: true,
+        localizedParameterMerge: {
+          enabled: true,
+          targetPath: 'parameters',
+          languageCode: 'pl',
+          requireFullCoverage: false,
+        },
         mappings: [
           {
             targetPath: 'description_pl',
@@ -133,7 +141,7 @@ describe('buildMongoUpdatePlan', () => {
     });
     expect(result.plan.debugPayload).toEqual(
       expect.objectContaining({
-        translationParameterMerge: expect.objectContaining({
+        localizedParameterMerge: expect.objectContaining({
           mergedCount: 1,
           coverage: expect.objectContaining({
             requiredCount: 2,
@@ -173,6 +181,14 @@ describe('buildMongoUpdatePlan', () => {
         operation: 'update',
         mode: 'replace',
         updatePayloadMode: 'mapping',
+        skipEmpty: true,
+        trimStrings: true,
+        localizedParameterMerge: {
+          enabled: true,
+          targetPath: 'parameters',
+          languageCode: 'pl',
+          requireFullCoverage: false,
+        },
         mappings: [
           {
             targetPath: 'description_pl',
@@ -267,7 +283,7 @@ describe('buildMongoUpdatePlan', () => {
     });
     expect(result.plan.debugPayload).toEqual(
       expect.objectContaining({
-        translationParameterMerge: expect.objectContaining({
+        localizedParameterMerge: expect.objectContaining({
           mergedCount: 1,
           coverage: expect.objectContaining({
             requiredCount: 2,
@@ -356,6 +372,14 @@ describe('buildMongoUpdatePlan', () => {
         operation: 'update',
         mode: 'replace',
         updatePayloadMode: 'mapping',
+        skipEmpty: true,
+        trimStrings: true,
+        localizedParameterMerge: {
+          enabled: true,
+          targetPath: 'parameters',
+          languageCode: 'pl',
+          requireFullCoverage: false,
+        },
         mappings: [
           {
             targetPath: 'description_pl',
@@ -469,6 +493,14 @@ describe('buildMongoUpdatePlan', () => {
         operation: 'update',
         mode: 'replace',
         updatePayloadMode: 'mapping',
+        skipEmpty: true,
+        trimStrings: true,
+        localizedParameterMerge: {
+          enabled: true,
+          targetPath: 'parameters',
+          languageCode: 'pl',
+          requireFullCoverage: false,
+        },
         mappings: [
           {
             targetPath: 'description_pl',
@@ -537,7 +569,7 @@ describe('buildMongoUpdatePlan', () => {
     });
     expect(result.plan.debugPayload).toEqual(
       expect.objectContaining({
-        translationParameterMerge: expect.objectContaining({
+        localizedParameterMerge: expect.objectContaining({
           mergedCount: 1,
           writeCandidates: 2,
         }),
@@ -573,6 +605,14 @@ describe('buildMongoUpdatePlan', () => {
         operation: 'update',
         mode: 'replace',
         updatePayloadMode: 'mapping',
+        skipEmpty: true,
+        trimStrings: true,
+        localizedParameterMerge: {
+          enabled: true,
+          targetPath: 'parameters',
+          languageCode: 'pl',
+          requireFullCoverage: false,
+        },
         mappings: [
           {
             targetPath: 'description_pl',
@@ -632,19 +672,19 @@ describe('buildMongoUpdatePlan', () => {
 
     expect(result.output['bundle']).toEqual(
       expect.objectContaining({
-        guardrail: 'translation-no-updates',
+        guardrail: 'no-safe-updates',
       })
     );
     expect(reportAiPathsError).toHaveBeenCalled();
     expect(toast).toHaveBeenCalledWith(
-      expect.stringContaining('No safe description or parameter translation updates were resolved'),
+      expect.stringContaining('No safe write candidates were resolved'),
       {
         variant: 'error',
       }
     );
   });
 
-  it('does not fallback to mappings when custom template guardrail fails', async () => {
+  it('auto-falls back to mapping mode when custom template guardrail fails and mappings are configured', async () => {
     const reportAiPathsError = vi.fn();
     const toast = vi.fn();
     const templateInputs = {
@@ -681,6 +721,14 @@ describe('buildMongoUpdatePlan', () => {
         operation: 'update',
         mode: 'replace',
         updatePayloadMode: 'custom',
+        skipEmpty: true,
+        trimStrings: true,
+        localizedParameterMerge: {
+          enabled: true,
+          targetPath: 'parameters',
+          languageCode: 'pl',
+          requireFullCoverage: false,
+        },
         mappings: [
           {
             sourcePort: 'value',
@@ -730,23 +778,26 @@ describe('buildMongoUpdatePlan', () => {
       aiPrompt: '',
     });
 
-    expect('output' in result).toBe(true);
-    if (!('output' in result)) {
-      throw new Error('Expected guardrail output.');
+    expect('plan' in result).toBe(true);
+    if (!('plan' in result)) {
+      throw new Error('Expected plan after mapping fallback.');
     }
-    const outputBundle = result.output['bundle'] as Record<string, unknown>;
-    expect(outputBundle).toEqual(
-      expect.objectContaining({
-        guardrail: 'write-template-values',
-      })
-    );
-    expect(reportAiPathsError).toHaveBeenCalled();
-    expect(toast).toHaveBeenCalledWith(expect.stringContaining('Database write blocked'), {
-      variant: 'error',
+    expect(result.plan.updateDoc).toEqual({
+      $set: expect.objectContaining({
+        description_pl: 'Opis',
+        parameters: expect.arrayContaining([
+          expect.objectContaining({ parameterId: 'param-1' }),
+        ]),
+      }),
     });
+    expect(reportAiPathsError).toHaveBeenCalled();
+    expect(toast).toHaveBeenCalledWith(
+      expect.stringContaining('Update template has unresolved tokens'),
+      expect.objectContaining({ variant: 'warning' })
+    );
   });
 
-  it('returns explicit guardrail output when update template ports are missing', async () => {
+  it('returns no-safe-updates when custom template ports are missing and mapping inputs are also disconnected', async () => {
     const reportAiPathsError = vi.fn();
     const toast = vi.fn();
     const result = await buildMongoUpdatePlan({
@@ -769,6 +820,14 @@ describe('buildMongoUpdatePlan', () => {
         operation: 'update',
         mode: 'replace',
         updatePayloadMode: 'custom',
+        skipEmpty: true,
+        trimStrings: true,
+        localizedParameterMerge: {
+          enabled: true,
+          targetPath: 'parameters',
+          languageCode: 'pl',
+          requireFullCoverage: false,
+        },
         mappings: [
           {
             targetPath: '__translation_description_payload__',
@@ -839,21 +898,9 @@ describe('buildMongoUpdatePlan', () => {
     const outputBundle = result.output['bundle'] as Record<string, unknown>;
     expect(outputBundle).toEqual(
       expect.objectContaining({
-        guardrail: 'write-template-values',
+        guardrail: 'no-safe-updates',
       })
     );
-    const guardrailMeta = outputBundle['guardrailMeta'] as Record<string, unknown>;
-    expect(guardrailMeta).toEqual(
-      expect.objectContaining({
-        code: 'write-template-values',
-      })
-    );
-    const missingTokens = guardrailMeta['missingTokens'];
-    expect(Array.isArray(missingTokens)).toBe(true);
-    expect(missingTokens).toContain('bundle.parameters');
-    expect(toast).toHaveBeenCalledWith(expect.stringContaining('Database write blocked'), {
-      variant: 'error',
-    });
     expect(reportAiPathsError).toHaveBeenCalled();
   });
 });

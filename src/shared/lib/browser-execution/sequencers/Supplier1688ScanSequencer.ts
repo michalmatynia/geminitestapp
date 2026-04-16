@@ -1,0 +1,1238 @@
+import type { Locator } from 'playwright';
+import {
+  SUPPLIER_1688_FILE_INPUT_SELECTORS,
+  SUPPLIER_1688_IMAGE_SEARCH_ENTRY_SELECTORS,
+  SUPPLIER_1688_SEARCH_RESULT_READY_SELECTORS,
+  SUPPLIER_1688_SUPPLIER_READY_SELECTORS,
+  SUPPLIER_1688_SUBMIT_SEARCH_SELECTORS,
+  SUPPLIER_1688_LOGIN_TEXT_HINTS,
+  SUPPLIER_1688_CAPTCHA_TEXT_HINTS,
+  SUPPLIER_1688_ACCESS_BLOCK_TEXT_HINTS,
+  SUPPLIER_1688_BARRIER_TITLE_HINTS,
+  SUPPLIER_1688_HARD_BLOCKING_SELECTORS,
+  SUPPLIER_1688_SOFT_BLOCKING_SELECTORS,
+  SUPPLIER_1688_SEARCH_BODY_SIGNAL_PATTERN,
+  SUPPLIER_1688_SUPPLIER_BODY_SIGNAL_PATTERN,
+  SUPPLIER_1688_PRICE_TEXT_PATTERN_SOURCE,
+} from '../selectors/supplier-1688';
+import type { ProductScanSequenceEntry } from '../product-scan-step-sequencer';
+import { ProductScanSequencer, type ProductScanSequencerContext } from './ProductScanSequencer';
+
+// ─── Input types ───────────────────────────────────────────────────────────────
+
+export interface Supplier1688ScanImageCandidate {
+  id?: string | null;
+  url?: string | null;
+  localPath?: string | null;
+  buffer?: Buffer | null;
+  rank?: number | null;
+}
+
+export interface Supplier1688ScanInput {
+  imageCandidates?: Supplier1688ScanImageCandidate[];
+  directSupplierCandidateUrls?: string[];
+  directSupplierCandidateUrl?: string;
+  directMatchedImageId?: string;
+  directSupplierCandidateRank?: number;
+  scanner1688StartUrl?: string;
+  productName?: string;
+  candidateResultLimit?: number;
+  minimumCandidateScore?: number;
+  maxExtractedImages?: number;
+  allowUrlImageSearchFallback?: boolean;
+  allowManualVerification?: boolean;
+  manualVerificationTimeoutMs?: number;
+  stepSequenceKey?: string | null;
+  stepSequence?: ProductScanSequenceEntry[] | null;
+}
+
+// ─── Internal types ────────────────────────────────────────────────────────────
+
+type BarrierKind = 'login' | 'captcha' | 'unknown' | 'page_closed' | null;
+type ScanStage = '1688_open' | '1688_upload' | 'supplier_open' | null;
+
+interface BarrierState {
+  blocked: boolean;
+  barrierKind: BarrierKind;
+  currentUrl: string;
+  message: string | null;
+}
+
+interface ReadyState {
+  ready: boolean;
+  currentUrl: string;
+  reason: string;
+  message: string | null;
+  entrySelector?: string | null;
+  resultShellSelector?: string | null;
+  supplierReadySelector?: string | null;
+}
+
+interface SupplierProductData {
+  url: string;
+  title: string | null;
+  price: string | null;
+  description: string | null;
+  imageUrls: string[];
+  supplierDetails: SupplierDetails | null;
+}
+
+interface SupplierDetails {
+  shopName: string | null;
+  location: string | null;
+  minOrderQuantity: string | null;
+  attributes: Array<{ label: string; value: string }>;
+}
+
+interface CaptchaHandleResult {
+  resolved: boolean;
+  captchaEncountered: boolean;
+  captchaRequired: boolean;
+  currentUrl: string;
+  message: string | null;
+  failureCode: string | null;
+}
+
+// ─── Main sequencer ────────────────────────────────────────────────────────────
+
+export class Supplier1688ScanSequencer extends ProductScanSequencer {
+  private readonly input: Supplier1688ScanInput;
+
+  private readonly DEFAULT_1688_IMAGE_SEARCH_START_URL =
+    'https://s.1688.com/youyuan/index.htm?tab=imageSearch';
+  private readonly PRICE_TEXT_PATTERN = new RegExp(SUPPLIER_1688_PRICE_TEXT_PATTERN_SOURCE);
+  private readonly SEARCH_BODY_SIGNAL = new RegExp(SUPPLIER_1688_SEARCH_BODY_SIGNAL_PATTERN);
+  private readonly SUPPLIER_BODY_SIGNAL = new RegExp(SUPPLIER_1688_SUPPLIER_BODY_SIGNAL_PATTERN);
+
+  private get scannerStartUrl(): string {
+    return this.resolve1688ImageSearchStartUrl(this.input.scanner1688StartUrl);
+  }
+
+  private get candidateResultLimit(): number {
+    const v = this.input.candidateResultLimit;
+    return typeof v === 'number' && Number.isFinite(v) && v > 0
+      ? Math.min(20, Math.max(1, Math.trunc(v)))
+      : 8;
+  }
+
+  constructor(context: ProductScanSequencerContext, input: Supplier1688ScanInput = {}) {
+    super(context);
+    this.input = input;
+  }
+
+  // ─── Abstract implementation ─────────────────────────────────────────────────
+
+  async scan(): Promise<void> {
+    const imageCandidates = Array.isArray(this.input.imageCandidates)
+      ? this.input.imageCandidates
+      : [];
+
+    const directCandidateUrls = Array.isArray(this.input.directSupplierCandidateUrls)
+      ? this.input.directSupplierCandidateUrls.filter(Boolean)
+      : this.input.directSupplierCandidateUrl
+        ? [this.input.directSupplierCandidateUrl]
+        : [];
+
+    this.seedStepSequence({
+      defaultSequenceKey:
+        directCandidateUrls.length > 0
+          ? 'supplier_direct_candidate_followup'
+          : 'supplier_reverse_image_scan_browser',
+      sequenceKey: this.normalizeText(this.input.stepSequenceKey),
+      customSequence: Array.isArray(this.input.stepSequence)
+        ? this.input.stepSequence
+        : null,
+    });
+
+    // ── Validate ──────────────────────────────────────────────────────────────
+    this.upsertScanStep({ key: 'validate', status: 'running' });
+
+    if (imageCandidates.length === 0 && directCandidateUrls.length === 0) {
+      this.upsertScanStep({
+        key: 'validate',
+        status: 'failed',
+        resultCode: 'missing_image_source',
+        message: 'No image candidates or direct supplier URLs were provided.',
+      });
+      await this.emitResult({
+        status: 'failed',
+        title: null, price: null, url: null, description: null,
+        message: 'No image candidates or direct supplier URLs were provided.',
+        stage: 'validate',
+      });
+      return;
+    }
+
+    this.upsertScanStep({ key: 'validate', status: 'completed', resultCode: 'ok' });
+
+    // ── Direct URL shortcut ───────────────────────────────────────────────────
+    if (directCandidateUrls.length > 0) {
+      await this.processSupplierCandidateUrls(directCandidateUrls, {
+        matchedImageId: this.normalizeText(this.input.directMatchedImageId),
+        firstCandidateRank: this.input.directSupplierCandidateRank ?? 1,
+      });
+      return;
+    }
+
+    // ── Apply natural browser setup ────────────────────────────────────────────
+    await this.applyNaturalBrowserSetup();
+
+    // ── Select image candidate ────────────────────────────────────────────────
+    const selectedCandidate = imageCandidates[0]!;
+    const candidateId = this.normalizeText(selectedCandidate.id) ?? 'candidate_1';
+    const candidateRank = typeof selectedCandidate.rank === 'number' ? selectedCandidate.rank : 1;
+
+    // ── Open 1688 image search ────────────────────────────────────────────────
+    const openResult = await this.open1688ImageSearch({ candidateId, candidateRank });
+    if (!openResult.success) {
+      await this.emitResult({
+        status: 'failed',
+        title: null, price: null, url: null, description: null,
+        message: openResult.message,
+        stage: '1688_open',
+      });
+      return;
+    }
+
+    // ── Upload image ──────────────────────────────────────────────────────────
+    const uploadResult = await this.upload1688Image({ candidate: selectedCandidate, candidateId, candidateRank });
+
+    if (uploadResult.captchaRequired) {
+      const captchaResult = await this.handle1688Captcha('1688_upload', { candidateId, candidateRank }, null);
+      if (!captchaResult.resolved) {
+        await this.emitResult({
+          status: captchaResult.captchaRequired ? 'captcha_required' : 'failed',
+          title: null, price: null, url: null, description: null,
+          message: captchaResult.message,
+          stage: '1688_upload',
+        });
+        return;
+      }
+    }
+
+    if (!uploadResult.success) {
+      await this.emitResult({
+        status: 'failed',
+        title: null, price: null, url: null, description: null,
+        message: uploadResult.message ?? '1688 image upload did not succeed.',
+        stage: '1688_upload',
+      });
+      return;
+    }
+
+    // ── Collect candidates ────────────────────────────────────────────────────
+    const collectResult = await this.collect1688Candidates({ candidateId, candidateRank });
+    if (collectResult.urls.length === 0) {
+      await this.emitResult({
+        status: 'failed',
+        title: null, price: null, url: null, description: null,
+        message: collectResult.message ?? 'No 1688 supplier candidate URLs were found.',
+        stage: '1688_collect_candidates',
+        candidateUrls: [],
+      });
+      return;
+    }
+
+    // ── Process supplier candidates ───────────────────────────────────────────
+    await this.processSupplierCandidateUrls(collectResult.urls, { matchedImageId: candidateId });
+  }
+
+  // ─── 1688 image search: open ─────────────────────────────────────────────────
+
+  protected async open1688ImageSearch(params: {
+    candidateId: string;
+    candidateRank: number;
+  }): Promise<{ success: boolean; message: string | null }> {
+    const { candidateId, candidateRank } = params;
+
+    this.upsertScanStep({
+      key: '1688_open',
+      status: 'running',
+      candidateId,
+      candidateRank,
+      message: 'Opening 1688 image search.',
+    });
+
+    try {
+      await this.page.goto(this.scannerStartUrl, {
+        waitUntil: 'commit',
+        timeout: 30_000,
+      });
+    } catch {
+      this.log('1688 image search navigation timed out; continuing with the partially loaded page.', {
+        url: this.page.url(),
+      });
+    }
+
+    await this.page.waitForLoadState('domcontentloaded', { timeout: 10_000 }).catch(() => undefined);
+
+    if (this.isChromeNavigationErrorUrl(this.page.url())) {
+      const message = '1688 image search page could not be opened in the browser runtime.';
+      this.upsertScanStep({
+        key: '1688_open',
+        status: 'failed',
+        candidateId,
+        candidateRank,
+        resultCode: 'navigation_failed',
+        message,
+        url: this.page.url(),
+      });
+      return { success: false, message };
+    }
+
+    const captchaState = await this.handle1688Captcha('1688_open', { candidateId, candidateRank }, null);
+    if (!captchaState.resolved) {
+      this.upsertScanStep({
+        key: '1688_open',
+        status: captchaState.captchaRequired ? 'running' : 'failed',
+        candidateId,
+        candidateRank,
+        resultCode: captchaState.failureCode ?? 'captcha_required',
+        message: captchaState.message,
+        url: this.page.url(),
+      });
+      return { success: false, message: captchaState.message };
+    }
+
+    this.upsertScanStep({
+      key: '1688_open',
+      status: 'completed',
+      candidateId,
+      candidateRank,
+      resultCode: 'ok',
+      message: '1688 image search opened.',
+      url: this.page.url(),
+    });
+
+    return { success: true, message: null };
+  }
+
+  // ─── 1688 image search: upload ───────────────────────────────────────────────
+
+  protected async upload1688Image(params: {
+    candidate: Supplier1688ScanImageCandidate;
+    candidateId: string;
+    candidateRank: number;
+  }): Promise<{ success: boolean; captchaRequired: boolean; message: string | null }> {
+    const { candidate, candidateId, candidateRank } = params;
+
+    this.upsertScanStep({
+      key: '1688_upload',
+      status: 'running',
+      candidateId,
+      candidateRank,
+      message: 'Uploading image to 1688 search.',
+    });
+
+    // Find file input
+    const fileInput = await this.findFirstVisibleFileInput();
+
+    if (!fileInput) {
+      const message = '1688 image upload control did not become available after opening image search.';
+      this.upsertScanStep({
+        key: '1688_upload',
+        status: 'failed',
+        candidateId,
+        candidateRank,
+        resultCode: 'file_input_missing',
+        message,
+        url: this.page.url(),
+      });
+      return { success: false, captchaRequired: false, message };
+    }
+
+    try {
+      if (candidate.localPath) {
+        await fileInput.setInputFiles(candidate.localPath);
+      } else if (candidate.buffer) {
+        await fileInput.setInputFiles({
+          name: `image_${candidateId}.jpg`,
+          mimeType: 'image/jpeg',
+          buffer: candidate.buffer,
+        });
+      } else if (candidate.url) {
+        // URL-based fallback: use entry selector if available
+        const entrySelector = await this.findFirstVisibleSelector(SUPPLIER_1688_IMAGE_SEARCH_ENTRY_SELECTORS);
+        if (!entrySelector) {
+          const message = 'Could not find 1688 image search entry for URL-based upload.';
+          this.upsertScanStep({
+            key: '1688_upload',
+            status: 'failed',
+            candidateId,
+            candidateRank,
+            resultCode: 'missing_image_source',
+            message,
+          });
+          return { success: false, captchaRequired: false, message };
+        }
+        await this.clickFirstVisible(SUPPLIER_1688_IMAGE_SEARCH_ENTRY_SELECTORS);
+        await this.humanWait(600, 1_200);
+      } else {
+        const message = 'No usable image source provided for 1688 upload.';
+        this.upsertScanStep({
+          key: '1688_upload',
+          status: 'failed',
+          candidateId,
+          candidateRank,
+          resultCode: 'missing_image_source',
+          message,
+        });
+        return { success: false, captchaRequired: false, message };
+      }
+    } catch {
+      const message = 'Failed to supply image file to 1688 upload input.';
+      this.upsertScanStep({
+        key: '1688_upload',
+        status: 'failed',
+        candidateId,
+        candidateRank,
+        resultCode: 'set_input_files_failed',
+        message,
+      });
+      return { success: false, captchaRequired: false, message };
+    }
+
+    // Wait for upload confirmation and submit
+    await this.humanWait(1_200, 2_400);
+    const submitted = await this.submit1688UploadedImageSearch();
+
+    if (!submitted) {
+      this.upsertScanStep({
+        key: '1688_upload',
+        status: 'failed',
+        candidateId,
+        candidateRank,
+        resultCode: 'submit_failed',
+        message: '1688 image search submit button was not found after upload.',
+        url: this.page.url(),
+      });
+      return { success: false, captchaRequired: false, message: '1688 image search submit failed.' };
+    }
+
+    // Check for barriers after submit
+    await this.page.waitForLoadState('domcontentloaded', { timeout: 10_000 }).catch(() => undefined);
+    const barrier = await this.detect1688AccessBarrier('1688_upload');
+
+    if (barrier.blocked) {
+      if (barrier.barrierKind === 'captcha' || barrier.barrierKind === 'login') {
+        this.upsertScanStep({
+          key: '1688_upload',
+          status: 'running',
+          candidateId,
+          candidateRank,
+          resultCode: barrier.barrierKind === 'captcha' ? 'captcha_required' : 'login_required',
+          message: barrier.message,
+          url: barrier.currentUrl,
+        });
+        return { success: false, captchaRequired: true, message: barrier.message };
+      }
+
+      const message = barrier.message ?? '1688 blocked access after image upload.';
+      this.upsertScanStep({
+        key: '1688_upload',
+        status: 'failed',
+        candidateId,
+        candidateRank,
+        resultCode: 'blocked',
+        message,
+        url: barrier.currentUrl,
+      });
+      return { success: false, captchaRequired: false, message };
+    }
+
+    this.upsertScanStep({
+      key: '1688_upload',
+      status: 'completed',
+      candidateId,
+      candidateRank,
+      resultCode: 'ok',
+      message: 'Image uploaded and 1688 search submitted.',
+      url: this.page.url(),
+    });
+
+    return { success: true, captchaRequired: false, message: null };
+  }
+
+  // ─── 1688: collect candidates ────────────────────────────────────────────────
+
+  protected async collect1688Candidates(params: {
+    candidateId: string;
+    candidateRank: number;
+  }): Promise<{ urls: string[]; message: string | null }> {
+    const { candidateId, candidateRank } = params;
+
+    this.upsertScanStep({
+      key: '1688_collect_candidates',
+      status: 'running',
+      candidateId,
+      candidateRank,
+      message: 'Collecting 1688 supplier candidate URLs.',
+      url: this.page.url(),
+    });
+
+    await this.page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => undefined);
+    await this.humanWait(800, 1_800);
+
+    const urls = await this.collect1688CandidateUrls();
+
+    if (urls.length === 0) {
+      this.upsertScanStep({
+        key: '1688_collect_candidates',
+        status: 'failed',
+        candidateId,
+        candidateRank,
+        resultCode: 'no_candidates',
+        message: '1688 search results did not yield any supplier offer URLs.',
+        url: this.page.url(),
+      });
+      return { urls: [], message: 'No 1688 supplier candidates found.' };
+    }
+
+    this.upsertScanStep({
+      key: '1688_collect_candidates',
+      status: 'completed',
+      candidateId,
+      candidateRank,
+      resultCode: 'ok',
+      message: `Found ${urls.length} supplier candidate URL(s).`,
+      url: this.page.url(),
+      details: urls.slice(0, 5).map((url, i) => ({ label: `Candidate ${i + 1}`, value: url })),
+    });
+
+    return { urls, message: null };
+  }
+
+  // ─── Supplier candidate processing ─────────────────────────────────────────
+
+  protected async processSupplierCandidateUrls(
+    urls: string[],
+    meta: { matchedImageId: string | null; firstCandidateRank?: number }
+  ): Promise<void> {
+    const candidateResults: Array<{ url: string; rank: number }> = [];
+    let bestResult: SupplierProductData | null = null;
+    let bestScore = -1;
+
+    const limit = Math.min(urls.length, this.candidateResultLimit);
+
+    for (let i = 0; i < limit; i++) {
+      const url = urls[i]!;
+      const candidateRank = (meta.firstCandidateRank ?? 1) + i;
+      const candidateId = `supplier_${i + 1}`;
+
+      candidateResults.push({ url, rank: candidateRank });
+
+      const result = await this.probeSupplierCandidate({ url, candidateId, candidateRank });
+      if (!result) continue;
+
+      const score = this.scoreSupplierResult(result);
+      if (score > bestScore) {
+        bestScore = score;
+        bestResult = result;
+      }
+    }
+
+    if (!bestResult) {
+      await this.emitResult({
+        status: 'no_match',
+        title: null, price: null, url: null, description: null,
+        message: 'None of the 1688 supplier candidates yielded usable product data.',
+        stage: 'supplier_extract',
+        matchedImageId: meta.matchedImageId,
+        candidateUrls: urls,
+        candidateResults,
+      });
+      return;
+    }
+
+    await this.emitResult({
+      status: 'matched',
+      title: bestResult.title,
+      price: bestResult.price,
+      url: bestResult.url,
+      description: bestResult.description,
+      imageUrls: bestResult.imageUrls,
+      supplierDetails: bestResult.supplierDetails,
+      matchedImageId: meta.matchedImageId,
+      candidateUrls: urls,
+      candidateResults,
+      stage: 'supplier_extract',
+    });
+  }
+
+  // ─── Supplier: probe a single candidate ────────────────────────────────────
+
+  protected async probeSupplierCandidate(params: {
+    url: string;
+    candidateId: string;
+    candidateRank: number;
+  }): Promise<SupplierProductData | null> {
+    const { url, candidateId, candidateRank } = params;
+
+    // ── Open ──────────────────────────────────────────────────────────────────
+    this.upsertScanStep({
+      key: 'supplier_open',
+      status: 'running',
+      candidateId,
+      candidateRank,
+      message: 'Opening 1688 supplier product page.',
+      url,
+    });
+
+    try {
+      await this.page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+    } catch {
+      this.upsertScanStep({
+        key: 'supplier_open',
+        status: 'failed',
+        candidateId,
+        candidateRank,
+        resultCode: 'navigation_failed',
+        message: '1688 supplier page could not be opened.',
+        url: this.page.url(),
+      });
+      return null;
+    }
+
+    await this.page.waitForLoadState('networkidle', { timeout: 8_000 }).catch(() => undefined);
+    await this.humanWait(600, 1_400);
+
+    // ── Overlays / barriers ───────────────────────────────────────────────────
+    this.upsertScanStep({
+      key: 'supplier_overlays',
+      status: 'running',
+      candidateId,
+      candidateRank,
+      message: 'Checking for 1688 access barriers on supplier page.',
+      url: this.page.url(),
+    });
+
+    const captchaState = await this.handle1688Captcha('supplier_open', { candidateId, candidateRank }, url);
+
+    if (!captchaState.resolved) {
+      this.upsertScanStep({
+        key: 'supplier_overlays',
+        status: captchaState.captchaRequired ? 'running' : 'failed',
+        candidateId,
+        candidateRank,
+        resultCode: captchaState.failureCode ?? 'blocked',
+        message: captchaState.message,
+        url: this.page.url(),
+      });
+      return null;
+    }
+
+    this.upsertScanStep({
+      key: 'supplier_overlays',
+      status: 'completed',
+      candidateId,
+      candidateRank,
+      resultCode: 'ok',
+      message: 'No blocking barriers on 1688 supplier page.',
+      url: this.page.url(),
+    });
+
+    // ── Content ready ─────────────────────────────────────────────────────────
+    this.upsertScanStep({
+      key: 'supplier_content_ready',
+      status: 'running',
+      candidateId,
+      candidateRank,
+      message: 'Waiting for 1688 supplier content.',
+      url: this.page.url(),
+    });
+
+    const contentReady = await this.waitForSupplierContent(url);
+
+    if (!contentReady) {
+      this.upsertScanStep({
+        key: 'supplier_content_ready',
+        status: 'failed',
+        candidateId,
+        candidateRank,
+        resultCode: 'content_timeout',
+        message: '1688 supplier product content did not become visible.',
+        url: this.page.url(),
+      });
+      return null;
+    }
+
+    this.upsertScanStep({
+      key: 'supplier_content_ready',
+      status: 'completed',
+      candidateId,
+      candidateRank,
+      resultCode: 'ok',
+      message: '1688 supplier product content is visible.',
+      url: this.page.url(),
+    });
+
+    // ── Probe ─────────────────────────────────────────────────────────────────
+    this.upsertScanStep({
+      key: 'supplier_probe',
+      status: 'running',
+      candidateId,
+      candidateRank,
+      message: 'Probing 1688 supplier product page.',
+      url: this.page.url(),
+    });
+
+    const normalizedUrl = this.normalize1688OfferUrl(this.page.url());
+
+    this.upsertScanStep({
+      key: 'supplier_probe',
+      status: 'completed',
+      candidateId,
+      candidateRank,
+      resultCode: normalizedUrl ? 'ok' : 'url_not_offer',
+      message: normalizedUrl ? 'Confirmed 1688 offer page.' : 'Page URL does not look like a 1688 offer.',
+      url: this.page.url(),
+    });
+
+    // ── Extract ───────────────────────────────────────────────────────────────
+    this.upsertScanStep({
+      key: 'supplier_extract',
+      status: 'running',
+      candidateId,
+      candidateRank,
+      message: 'Extracting 1688 supplier product details.',
+      url: this.page.url(),
+    });
+
+    const productData = await this.extractSupplierData(url);
+
+    if (!productData.title && !productData.price) {
+      this.upsertScanStep({
+        key: 'supplier_extract',
+        status: 'failed',
+        candidateId,
+        candidateRank,
+        resultCode: 'extract_empty',
+        message: 'Could not extract any usable product data from the 1688 supplier page.',
+        url: this.page.url(),
+      });
+      return null;
+    }
+
+    this.upsertScanStep({
+      key: 'supplier_extract',
+      status: 'completed',
+      candidateId,
+      candidateRank,
+      resultCode: 'ok',
+      message: '1688 supplier details extracted.',
+      url: this.page.url(),
+      details: [
+        { label: 'Title', value: productData.title?.slice(0, 80) ?? undefined },
+        { label: 'Price', value: productData.price ?? undefined },
+      ].filter((d) => d.value != null) as Array<{ label: string; value: string }>,
+    });
+
+    return productData;
+  }
+
+  // ─── Supplier content wait ───────────────────────────────────────────────────
+
+  protected async waitForSupplierContent(_url: string): Promise<boolean> {
+    const currentUrl = this.page.url();
+    const offerUrl = this.normalize1688OfferUrl(currentUrl);
+    if (!offerUrl) return false;
+
+    const visible = await Promise.any(
+      SUPPLIER_1688_SUPPLIER_READY_SELECTORS.map(async (selector) => {
+        const locator = this.page.locator(selector).first();
+        await locator.waitFor({ state: 'visible', timeout: 8_000 });
+        return selector;
+      })
+    ).catch(() => null);
+
+    if (visible) return true;
+
+    // Fallback: check body text for supplier signals
+    const bodyText = (
+      await this.page.locator('body').first().textContent().catch(() => '')
+    )?.toLowerCase() ?? '';
+    return this.PRICE_TEXT_PATTERN.test(bodyText) || this.SUPPLIER_BODY_SIGNAL.test(bodyText);
+  }
+
+  // ─── Supplier data extraction ────────────────────────────────────────────────
+
+  protected async extractSupplierData(originalUrl: string): Promise<SupplierProductData> {
+    const currentUrl = this.page.url();
+
+    const [title, price, description] = await Promise.all([
+      this.readFirstText(['h1', '[class*="title"]', '[data-testid*="title"]']),
+      this.readFirstText([
+        '[class*="price"]',
+        '[data-testid*="price"]',
+        'span[class*="价格"]',
+        '.price',
+      ]),
+      this.readFirstText(['[class*="description"]', '#description', '[data-testid*="description"]']),
+    ]);
+
+    const imageUrls = await this.extractSupplierImageUrls();
+    const supplierDetails = await this.extractSupplierDetails();
+
+    return {
+      url: currentUrl || originalUrl,
+      title,
+      price,
+      description,
+      imageUrls,
+      supplierDetails,
+    };
+  }
+
+  private async extractSupplierImageUrls(): Promise<string[]> {
+    const raw = await this.page
+      .locator('img[src], img[data-src]')
+      .evaluateAll((imgs) =>
+        imgs
+          .map((img) => img.getAttribute('src') ?? img.getAttribute('data-src') ?? null)
+          .filter((src): src is string => typeof src === 'string' && src.startsWith('http'))
+      )
+      .catch(() => [] as string[]);
+
+    const seen = new Set<string>();
+    const result: string[] = [];
+    const maxImages = typeof this.input.maxExtractedImages === 'number'
+      ? Math.min(20, this.input.maxExtractedImages)
+      : 12;
+
+    for (const url of raw) {
+      if (seen.has(url)) continue;
+      seen.add(url);
+      result.push(url);
+      if (result.length >= maxImages) break;
+    }
+    return result;
+  }
+
+  private async extractSupplierDetails(): Promise<SupplierDetails | null> {
+    try {
+      const shopName = await this.readFirstText([
+        'a[href*="shop.1688.com"]',
+        'a[href*="winport"]',
+        '[class*="shop"]',
+        '[class*="store"]',
+      ]);
+
+      const location = await this.readFirstText([
+        '[class*="location"]',
+        '[class*="address"]',
+        '[data-testid*="location"]',
+      ]);
+
+      const minOrderQuantity = await this.readFirstText([
+        '[class*="minOrder"]',
+        '[class*="min-order"]',
+        'td:has-text("起订量"), td:has-text("最小起订量")',
+      ]);
+
+      const attributes = await this.page
+        .evaluate(() => {
+          const pairs: Array<{ label: string; value: string }> = [];
+          document.querySelectorAll('table tr, [class*="attr"] li').forEach((row) => {
+            const cells = row.querySelectorAll('td, th, span');
+            if (cells.length >= 2) {
+              const label = (cells[0]?.textContent ?? '').replace(/\s+/g, ' ').trim();
+              const value = (cells[1]?.textContent ?? '').replace(/\s+/g, ' ').trim();
+              if (label && value && label.length < 80) {
+                pairs.push({ label, value });
+              }
+            }
+          });
+          return pairs.slice(0, 30);
+        })
+        .catch(() => [] as Array<{ label: string; value: string }>);
+
+      if (!shopName && !location && !minOrderQuantity && attributes.length === 0) {
+        return null;
+      }
+
+      return { shopName, location, minOrderQuantity, attributes };
+    } catch {
+      return null;
+    }
+  }
+
+  // ─── Candidate URL collection ────────────────────────────────────────────────
+
+  protected async collect1688CandidateUrls(): Promise<string[]> {
+    const raw = await this.page
+      .locator(SUPPLIER_1688_SEARCH_RESULT_READY_SELECTORS.join(', '))
+      .evaluateAll((nodes) =>
+        nodes
+          .map((node) => (node instanceof HTMLAnchorElement ? node.href : null))
+          .filter((href): href is string => typeof href === 'string' && href.startsWith('http'))
+      )
+      .catch(() => [] as string[]);
+
+    const seen = new Set<string>();
+    const result: string[] = [];
+
+    for (const href of raw) {
+      const normalized = this.normalize1688OfferUrl(href);
+      if (!normalized || seen.has(normalized)) continue;
+      seen.add(normalized);
+      result.push(normalized);
+      if (result.length >= this.candidateResultLimit) break;
+    }
+
+    return result;
+  }
+
+  // ─── Access barrier detection ────────────────────────────────────────────────
+
+  protected async detect1688AccessBarrier(stage: ScanStage): Promise<BarrierState> {
+    const currentUrl = this.page.url();
+    const normalizedUrl = currentUrl.toLowerCase();
+    const pageTitleText = (
+      await this.page.title().catch(() => '')
+    ).toLowerCase();
+    const bodyText = (
+      await this.page.locator('body').first().innerText().catch(() => '')
+    ).toLowerCase();
+
+    const candidateUrls = await this.collect1688CandidateUrls().catch(() => [] as string[]);
+    const normalizedOfferUrl = this.normalize1688OfferUrl(currentUrl);
+    const fileInput = await this.findFirstVisibleFileInput();
+    const entrySelector = await this.findFirstVisibleSelector(SUPPLIER_1688_IMAGE_SEARCH_ENTRY_SELECTORS);
+    const resultShellSelector = await this.findFirstVisibleSelector(SUPPLIER_1688_SEARCH_RESULT_READY_SELECTORS);
+    const supplierReadySelector = await this.findFirstVisibleSelector(SUPPLIER_1688_SUPPLIER_READY_SELECTORS);
+    const hasPriceSignal = this.PRICE_TEXT_PATTERN.test(bodyText);
+    const searchBodySignal = this.SEARCH_BODY_SIGNAL.test(bodyText);
+    const supplierBodySignal = this.SUPPLIER_BODY_SIGNAL.test(bodyText);
+
+    const expectsSearchReady = stage === '1688_open' || stage === '1688_upload' || stage == null;
+    const expectsSupplierReady = stage === 'supplier_open' || stage == null;
+
+    const hasStrongReadySignal =
+      Boolean(resultShellSelector) ||
+      candidateUrls.length > 0 ||
+      (expectsSearchReady && Boolean(searchBodySignal || fileInput || entrySelector)) ||
+      (expectsSupplierReady &&
+        Boolean(normalizedOfferUrl) &&
+        Boolean(supplierReadySelector || hasPriceSignal || supplierBodySignal));
+
+    const urlSuggestsLogin = normalizedUrl.includes('login') || normalizedUrl.includes('signin');
+    const urlSuggestsCaptcha = normalizedUrl.includes('captcha');
+    const bodyHasLoginText = SUPPLIER_1688_LOGIN_TEXT_HINTS.some((h) => bodyText.includes(h.toLowerCase()));
+    const bodyHasCaptchaText = SUPPLIER_1688_CAPTCHA_TEXT_HINTS.some((h) => bodyText.includes(h.toLowerCase()));
+    const bodyHasBlockText = SUPPLIER_1688_ACCESS_BLOCK_TEXT_HINTS.some((h) => bodyText.includes(h.toLowerCase()));
+    const textSuggestsBarrier = bodyHasLoginText || bodyHasCaptchaText || bodyHasBlockText;
+
+    const resolveBarrierKind = (): Exclude<BarrierKind, null | 'page_closed'> => {
+      if (urlSuggestsLogin || bodyHasLoginText) return 'login';
+      if (urlSuggestsCaptcha || bodyHasCaptchaText) return 'captcha';
+      return 'unknown';
+    };
+
+    const resolveBarrierMessage = (kind: BarrierKind): string =>
+      kind === 'login'
+        ? '1688 requested login before the scan could continue. Log in using the opened browser window.'
+        : '1688 requested captcha verification. Solve it in the opened browser window and the scan will continue automatically.';
+
+    const titleSuggestsBarrier = SUPPLIER_1688_BARRIER_TITLE_HINTS.some(
+      (h) => pageTitleText.includes(h.toLowerCase())
+    );
+
+    if (titleSuggestsBarrier && candidateUrls.length === 0) {
+      const kind = resolveBarrierKind();
+      return { blocked: true, barrierKind: kind, currentUrl, message: resolveBarrierMessage(kind) };
+    }
+
+    const visibleHardSelector = await this.findFirstVisibleSelector(SUPPLIER_1688_HARD_BLOCKING_SELECTORS);
+    if (visibleHardSelector && !hasStrongReadySignal) {
+      return { blocked: true, barrierKind: 'login', currentUrl, message: resolveBarrierMessage('login') };
+    }
+
+    const visibleSoftSelector = await this.findFirstVisibleSelector(SUPPLIER_1688_SOFT_BLOCKING_SELECTORS);
+    if (visibleSoftSelector && !hasStrongReadySignal) {
+      return { blocked: true, barrierKind: 'captcha', currentUrl, message: resolveBarrierMessage('captcha') };
+    }
+
+    if (textSuggestsBarrier && candidateUrls.length === 0) {
+      const kind = resolveBarrierKind();
+      return { blocked: true, barrierKind: kind, currentUrl, message: resolveBarrierMessage(kind) };
+    }
+
+    if ((urlSuggestsLogin || urlSuggestsCaptcha) && !hasStrongReadySignal) {
+      const kind = resolveBarrierKind();
+      return { blocked: true, barrierKind: kind, currentUrl, message: resolveBarrierMessage(kind) };
+    }
+
+    return { blocked: false, barrierKind: null, currentUrl, message: null };
+  }
+
+  protected async detect1688ReadyState(stage: ScanStage): Promise<ReadyState> {
+    const currentUrl = this.page.url();
+    const normalizedOfferUrl = this.normalize1688OfferUrl(currentUrl);
+    const candidateUrls = await this.collect1688CandidateUrls().catch(() => [] as string[]);
+    const fileInput = await this.findFirstVisibleFileInput();
+    const entrySelector = await this.findFirstVisibleSelector(SUPPLIER_1688_IMAGE_SEARCH_ENTRY_SELECTORS);
+    const resultShellSelector = await this.findFirstVisibleSelector(SUPPLIER_1688_SEARCH_RESULT_READY_SELECTORS);
+    const supplierReadySelector = await this.findFirstVisibleSelector(SUPPLIER_1688_SUPPLIER_READY_SELECTORS);
+    const bodyText = (
+      await this.page.locator('body').first().textContent().catch(() => '')
+    )?.toLowerCase() ?? '';
+    const hasPriceSignal = this.PRICE_TEXT_PATTERN.test(bodyText);
+
+    if (stage === '1688_open') {
+      if (candidateUrls.length > 0 || normalizedOfferUrl || resultShellSelector) {
+        return { ready: true, currentUrl, reason: 'search_results_ready', message: '1688 image search is ready.', entrySelector, resultShellSelector };
+      }
+      if (fileInput || entrySelector) {
+        return { ready: true, currentUrl, reason: fileInput ? 'file_input_ready' : 'search_entry_ready', message: '1688 image search is ready.', entrySelector, resultShellSelector };
+      }
+      return { ready: false, currentUrl, reason: 'search_entry_not_ready', message: 'Captcha cleared, but 1688 is not back on a usable search page.', entrySelector, resultShellSelector };
+    }
+
+    if (stage === '1688_upload') {
+      if (candidateUrls.length > 0 || normalizedOfferUrl || resultShellSelector) {
+        return { ready: true, currentUrl, reason: 'search_results_ready', message: '1688 image search results are ready.', entrySelector, resultShellSelector };
+      }
+      if (fileInput || entrySelector) {
+        return { ready: true, currentUrl, reason: 'returned_to_search_entry', message: '1688 returned to the image-search entry page after captcha. Re-uploading the product image.', entrySelector, resultShellSelector };
+      }
+      return { ready: false, currentUrl, reason: 'post_captcha_not_ready', message: 'Captcha cleared, but 1688 search results are still not ready.', entrySelector, resultShellSelector };
+    }
+
+    if (stage === 'supplier_open') {
+      if (normalizedOfferUrl && (supplierReadySelector || hasPriceSignal)) {
+        return { ready: true, currentUrl, reason: 'supplier_page_ready', message: '1688 supplier page is ready.', supplierReadySelector };
+      }
+      return { ready: false, currentUrl, reason: 'supplier_page_not_ready', message: 'Captcha cleared, but the supplier page is still not ready.', supplierReadySelector };
+    }
+
+    return { ready: false, currentUrl, reason: 'stage_unknown', message: '1688 page state is not ready.' };
+  }
+
+  // ─── Captcha handling ────────────────────────────────────────────────────────
+
+  protected async handle1688Captcha(
+    stage: ScanStage,
+    _stepMeta: { candidateId: string; candidateRank: number },
+    recoveryUrl: string | null
+  ): Promise<CaptchaHandleResult> {
+    const barrier = await this.detect1688AccessBarrier(stage);
+
+    if (!barrier.blocked) {
+      return { resolved: true, captchaEncountered: false, captchaRequired: false, currentUrl: barrier.currentUrl, message: null, failureCode: null };
+    }
+
+    if (!this.input.allowManualVerification) {
+      return { resolved: false, captchaEncountered: true, captchaRequired: true, currentUrl: barrier.currentUrl, message: barrier.message, failureCode: 'captcha_required' };
+    }
+
+    const waitMessage = barrier.barrierKind === 'login'
+      ? barrier.message
+      : '1688 captcha verification required. Solve it in the opened browser window and the scan will continue automatically.';
+
+    const timeoutMs = typeof this.input.manualVerificationTimeoutMs === 'number'
+      ? this.input.manualVerificationTimeoutMs
+      : 240_000;
+    const deadline = Date.now() + timeoutMs;
+
+    this.log('1688.captcha.waiting', { stage, message: waitMessage, timeoutMs });
+
+    while (Date.now() < deadline) {
+      await this.wait(3_000);
+
+      const currentBarrier = await this.detect1688AccessBarrier(stage);
+      if (!currentBarrier.blocked) {
+        // Attempt post-captcha recovery
+        const readyState = await this.attempt1688PostCaptchaRecovery(stage, recoveryUrl);
+        if (readyState?.ready) {
+          this.log('1688.captcha.resolved', { stage, reason: readyState.reason });
+          return { resolved: true, captchaEncountered: true, captchaRequired: false, currentUrl: readyState.currentUrl, message: '1688 captcha was resolved and the page is ready again.', failureCode: null };
+        }
+        if (readyState?.reason === 'returned_to_search_entry') {
+          return { resolved: true, captchaEncountered: true, captchaRequired: false, currentUrl: readyState.currentUrl, message: readyState.message, failureCode: 'post_captcha_reupload_required' };
+        }
+      }
+    }
+
+    return { resolved: false, captchaEncountered: true, captchaRequired: true, currentUrl: this.page.url(), message: '1688 captcha or barrier was not resolved within the allowed time.', failureCode: 'captcha_timeout' };
+  }
+
+  protected async attempt1688PostCaptchaRecovery(
+    stage: ScanStage,
+    recoveryUrl: string | null
+  ): Promise<ReadyState | null> {
+    const recoveryTargets: Array<{ kind: 'reload' | 'goto_start' | 'goto_url'; label: string }> =
+      stage === '1688_open'
+        ? [
+            { kind: 'reload', label: 'Reload 1688 image search after captcha.' },
+            { kind: 'goto_start', label: 'Reopen 1688 image search after captcha.' },
+          ]
+        : recoveryUrl
+          ? [
+              { kind: 'reload', label: 'Reload 1688 page after captcha.' },
+              { kind: 'goto_url', label: stage === 'supplier_open' ? 'Reopen 1688 supplier page after captcha.' : 'Reopen 1688 image search after captcha.' },
+            ]
+          : [{ kind: 'reload', label: 'Reload 1688 page after captcha.' }];
+
+    for (const target of recoveryTargets) {
+      const navUrl =
+        target.kind === 'goto_start'
+          ? this.scannerStartUrl
+          : target.kind === 'goto_url' && recoveryUrl
+            ? recoveryUrl
+            : null;
+
+      this.log('1688.recovery.attempt', { stage, kind: target.kind, label: target.label });
+
+      if (navUrl) {
+        await this.page.goto(navUrl, { waitUntil: 'domcontentloaded', timeout: 30_000 }).catch(() => undefined);
+      } else {
+        await this.page.reload({ waitUntil: 'domcontentloaded', timeout: 30_000 }).catch(() => undefined);
+      }
+
+      await this.page.waitForLoadState('networkidle', { timeout: 5_000 }).catch(() => undefined);
+      await this.wait(1_200);
+
+      const barrier = await this.detect1688AccessBarrier(stage);
+      if (barrier.blocked) continue;
+
+      const readyState = await this.detect1688ReadyState(stage);
+      if (readyState.ready || readyState.reason === 'returned_to_search_entry') {
+        return readyState;
+      }
+    }
+
+    return null;
+  }
+
+  // ─── Natural browser setup ───────────────────────────────────────────────────
+
+  protected async applyNaturalBrowserSetup(): Promise<void> {
+    await this.page.setExtraHTTPHeaders({
+      'Accept-Language': 'zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7',
+      'Upgrade-Insecure-Requests': '1',
+    }).catch(() => undefined);
+
+    const width = 1_366 + Math.floor(Math.random() * 147);
+    const height = 820 + Math.floor(Math.random() * 121);
+    await this.page.setViewportSize({ width, height }).catch(() => undefined);
+
+    await this.page.addInitScript(() => {
+      try {
+        Object.defineProperty(navigator, 'webdriver', { get: () => undefined, configurable: true });
+      } catch { /* ignore */ }
+      try {
+        Object.defineProperty(navigator, 'languages', { get: () => ['zh-CN', 'zh', 'en-US', 'en'], configurable: true });
+      } catch { /* ignore */ }
+      try {
+        Object.defineProperty(navigator, 'hardwareConcurrency', { get: () => 8, configurable: true });
+      } catch { /* ignore */ }
+      try {
+        Object.defineProperty(navigator, 'deviceMemory', { get: () => 8, configurable: true });
+      } catch { /* ignore */ }
+    }).catch(() => undefined);
+
+    await this.moveMouseNaturally();
+  }
+
+  private async moveMouseNaturally(): Promise<void> {
+    const points = [
+      [120 + Math.floor(Math.random() * 140), 120 + Math.floor(Math.random() * 120)],
+      [320 + Math.floor(Math.random() * 220), 180 + Math.floor(Math.random() * 180)],
+      [620 + Math.floor(Math.random() * 280), 220 + Math.floor(Math.random() * 300)],
+    ] as const;
+    for (const [x, y] of points) {
+      await this.page.mouse.move(x, y, { steps: 8 + Math.floor(Math.random() * 10) }).catch(() => undefined);
+      await this.humanWait(180, 520);
+    }
+  }
+
+  // ─── Submit 1688 image search ────────────────────────────────────────────────
+
+  protected async submit1688UploadedImageSearch(): Promise<boolean> {
+    const hasUploadedImage = await this.page
+      .evaluate(() => /File uploaded|已上传|图片预览|Search for Image|搜图|搜索图片/i.test(document.body?.innerText ?? ''))
+      .catch(() => false);
+
+    if (!hasUploadedImage) return false;
+
+    // Patch window.open so new tabs navigate in-place
+    await this.page.evaluate(() => {
+      try {
+        window.open = (url) => {
+          if (typeof url === 'string' && url.trim()) window.location.assign(url);
+          return null;
+        };
+      } catch { /* ignore */ }
+      try {
+        document.querySelectorAll('form[target="_blank"], a[target="_blank"]').forEach((el) => {
+          el.setAttribute('target', '_self');
+        });
+      } catch { /* ignore */ }
+    }).catch(() => undefined);
+
+    const clicked = await this.clickFirstVisible(SUPPLIER_1688_SUBMIT_SEARCH_SELECTORS);
+    if (!clicked) return false;
+
+    await this.humanWait(1_800, 3_600);
+    await this.page.waitForLoadState('domcontentloaded', { timeout: 8_000 }).catch(() => undefined);
+    await this.page.waitForLoadState('networkidle', { timeout: 8_000 }).catch(() => undefined);
+    return true;
+  }
+
+  // ─── Utility helpers ─────────────────────────────────────────────────────────
+
+  protected async findFirstVisibleFileInput(): Promise<Locator | null> {
+    for (const selector of SUPPLIER_1688_FILE_INPUT_SELECTORS) {
+      const locator = this.page.locator(selector).first();
+      if ((await locator.count().catch(() => 0)) === 0) continue;
+      if (await locator.isVisible().catch(() => false)) return locator;
+    }
+    return null;
+  }
+
+  protected normalize1688OfferUrl(value: string | null | undefined): string | null {
+    const href = this.toAbsoluteUrl(value);
+    if (!href) return null;
+    try {
+      const parsed = new URL(href);
+      if (!parsed.hostname.includes('1688.com')) return null;
+      if (!/\/offer\/\d+\.html/.test(parsed.pathname.toLowerCase())) return null;
+      parsed.search = '';
+      parsed.hash = '';
+      return parsed.toString();
+    } catch {
+      return null;
+    }
+  }
+
+  private resolve1688ImageSearchStartUrl(value: string | undefined): string {
+    const raw = typeof value === 'string' && value.trim() ? value.trim() : this.DEFAULT_1688_IMAGE_SEARCH_START_URL;
+    try {
+      const parsed = new URL(raw);
+      const host = parsed.hostname.toLowerCase();
+      const path = parsed.pathname.toLowerCase();
+      if (host === '1688.com' || host === 'www.1688.com' || (host.endsWith('.1688.com') && (path === '' || path === '/'))) {
+        return this.DEFAULT_1688_IMAGE_SEARCH_START_URL;
+      }
+    } catch {
+      return this.DEFAULT_1688_IMAGE_SEARCH_START_URL;
+    }
+    return raw;
+  }
+
+  private isChromeNavigationErrorUrl(url: string): boolean {
+    return typeof url === 'string' && url.toLowerCase().startsWith('chrome-error://');
+  }
+
+  private scoreSupplierResult(result: SupplierProductData): number {
+    let score = 0;
+    if (result.title) score += 30;
+    if (result.price) score += 20;
+    if (result.description) score += 10;
+    if (result.imageUrls.length > 0) score += Math.min(10, result.imageUrls.length);
+    if (result.supplierDetails?.shopName) score += 8;
+    if (result.supplierDetails?.minOrderQuantity) score += 6;
+    if (result.supplierDetails?.attributes?.length) score += Math.min(15, result.supplierDetails.attributes.length);
+    return score;
+  }
+}

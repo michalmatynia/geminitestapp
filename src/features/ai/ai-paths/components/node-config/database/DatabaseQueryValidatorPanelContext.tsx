@@ -4,7 +4,7 @@ import React from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
-import type { DatabaseConfig, DatabaseOperation, DbQueryConfig } from '@/shared/lib/ai-paths';
+import type { DatabaseConfig, DatabaseOperation, DbQueryConfig } from '@/shared/contracts/ai-paths';
 
 import type { QueryValidationResult } from './query-utils';
 

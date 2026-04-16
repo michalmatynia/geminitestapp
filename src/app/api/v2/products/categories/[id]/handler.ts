@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { CachedProductService } from '@/features/products/server';
@@ -102,6 +102,7 @@ export async function PUT_handler(
 
   const updatePayload = {
     ...(normalizedName !== undefined ? { name: normalizedName } : {}),
+    ...(data.name_pl !== undefined ? { name_pl: data.name_pl } : {}),
     ...(data.description !== undefined ? { description: data.description } : {}),
     ...(data.color !== undefined ? { color: data.color } : {}),
     ...(parentId !== undefined || placementChanged ? { parentId: nextParentId } : {}),

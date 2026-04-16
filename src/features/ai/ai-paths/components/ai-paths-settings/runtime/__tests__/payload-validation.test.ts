@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { createDefaultPathConfig } from '@/shared/lib/ai-paths';
+import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils';
 import type { AiNode } from '@/shared/contracts/ai-paths';
 
 import {

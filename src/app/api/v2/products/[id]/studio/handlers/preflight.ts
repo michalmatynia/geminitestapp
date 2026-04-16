@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { getProductStudioSequencePreflight } from '@/features/ai/server';
 import { productStudioPreflightResponseSchema, productStudioSequenceGenerationModeSchema } from '@/shared/contracts/products/studio';

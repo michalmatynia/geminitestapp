@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import * as React from 'react';
 import { useTranslations } from 'next-intl';
 
 import { KangurActivitySummaryCard } from '@/features/kangur/ui/components/summary-cards/KangurActivitySummaryCard';
@@ -50,59 +51,74 @@ const resolvePlayerProgressSummary = (
   progressSummary: progressContent?.summary ?? translations('fallbackSummary'),
 });
 
-function PlayerProgressLevelMeta(props: {
-  nextLevel: ReturnType<typeof getNextLevel>;
+type PlayerProgressContextValue = {
   translations: ReturnType<typeof useTranslations<'KangurPlayerProgress'>>;
+  nextLevel: ReturnType<typeof getNextLevel>;
   xpIntoLevel: number;
   xpNeeded: number;
-}): React.JSX.Element {
+  topActivity: ReturnType<typeof getProgressTopActivities>[number] | null;
+  nextBadge: ReturnType<typeof getNextLockedBadge>;
+  guidedMomentum: ReturnType<typeof getRecommendedSessionMomentum>;
+};
+
+const PlayerProgressContext = React.createContext<PlayerProgressContextValue | null>(null);
+
+function usePlayerProgress() {
+  const context = React.useContext(PlayerProgressContext);
+  if (!context) {
+    throw new Error('usePlayerProgress must be used within PlayerProgressCard');
+  }
+  return context;
+}
+
+function PlayerProgressLevelMeta(): React.JSX.Element {
+  const { nextLevel, translations, xpIntoLevel, xpNeeded } = usePlayerProgress();
+
   return (
     <KangurMetaText
       as='div'
       className={`mb-1 ${KANGUR_STACK_COMPACT_CLASSNAME} min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between`}
       size='xs'
     >
-      <span>{props.xpIntoLevel} XP</span>
-      {props.nextLevel ? (
+      <span>{xpIntoLevel} XP</span>
+      {nextLevel ? (
         <span>
-          {props.translations('nextLevel', {
-            level: props.nextLevel.level,
-            xp: props.xpNeeded - props.xpIntoLevel,
+          {translations('nextLevel', {
+            level: nextLevel.level,
+            xp: xpNeeded - xpIntoLevel,
           })}
         </span>
       ) : (
-        <span>{props.translations('maxLevel')}</span>
+        <span>{translations('maxLevel')}</span>
       )}
     </KangurMetaText>
   );
 }
 
-function PlayerProgressTopActivitySection(props: {
-  topActivity: ReturnType<typeof getProgressTopActivities>[number] | null;
-  translations: ReturnType<typeof useTranslations<'KangurPlayerProgress'>>;
-}): React.JSX.Element | null {
-  if (!props.topActivity) {
+function PlayerProgressTopActivitySection(): React.JSX.Element | null {
+  const { topActivity, translations } = usePlayerProgress();
+
+  if (!topActivity) {
     return null;
   }
 
   return (
     <KangurActivitySummaryCard
-      activity={props.topActivity}
+      activity={topActivity}
       dataTestId='player-progress-top-activity'
-      description={props.translations('topActivityDescription', {
-        sessions: props.topActivity.sessionsPlayed,
-        xp: props.topActivity.averageXpPerSession,
+      description={translations('topActivityDescription', {
+        sessions: topActivity.sessionsPlayed,
+        xp: topActivity.averageXpPerSession,
       })}
-      eyebrow={props.translations('topActivityEyebrow')}
+      eyebrow={translations('topActivityEyebrow')}
     />
   );
 }
 
-function PlayerProgressNextBadgeSection(props: {
-  nextBadge: ReturnType<typeof getNextLockedBadge>;
-  translations: ReturnType<typeof useTranslations<'KangurPlayerProgress'>>;
-}): React.JSX.Element | null {
-  if (!props.nextBadge) {
+function PlayerProgressNextBadgeSection(): React.JSX.Element | null {
+  const { nextBadge, translations } = usePlayerProgress();
+
+  if (!nextBadge) {
     return null;
   }
 
@@ -117,32 +133,31 @@ function PlayerProgressNextBadgeSection(props: {
       <KangurProgressHighlightCardContent>
         <KangurPanelRow className='items-start sm:justify-between'>
           <KangurProgressHighlightHeader
-            description={props.nextBadge.desc}
-            eyebrow={props.translations('nextBadgeEyebrow')}
+            description={nextBadge.desc}
+            eyebrow={translations('nextBadgeEyebrow')}
             eyebrowClassName='text-amber-700/80'
             title={
               <>
-                {props.nextBadge.emoji} {props.nextBadge.name}
+                {nextBadge.emoji} {nextBadge.name}
               </>
             }
           />
-          <KangurProgressHighlightChip accent='amber' label={props.nextBadge.summary} />
+          <KangurProgressHighlightChip accent='amber' label={nextBadge.summary} />
         </KangurPanelRow>
         <KangurProgressHighlightBar
           accent='amber'
           testId='player-progress-next-badge-bar'
-          value={props.nextBadge.progressPercent}
+          value={nextBadge.progressPercent}
         />
       </KangurProgressHighlightCardContent>
     </div>
   );
 }
 
-function PlayerProgressGuidedMomentumSection(props: {
-  guidedMomentum: ReturnType<typeof getRecommendedSessionMomentum>;
-  translations: ReturnType<typeof useTranslations<'KangurPlayerProgress'>>;
-}): React.JSX.Element | null {
-  if (props.guidedMomentum.completedSessions <= 0) {
+function PlayerProgressGuidedMomentumSection(): React.JSX.Element | null {
+  const { guidedMomentum, translations } = usePlayerProgress();
+
+  if (guidedMomentum.completedSessions <= 0) {
     return null;
   }
 
@@ -158,25 +173,25 @@ function PlayerProgressGuidedMomentumSection(props: {
         <KangurPanelRow className='items-start sm:justify-between'>
           <KangurProgressHighlightHeader
             description={
-              props.guidedMomentum.nextBadgeName
-                ? props.translations('guidedMomentumDescriptionWithBadge', {
-                    badge: props.guidedMomentum.nextBadgeName,
-                    summary: props.guidedMomentum.summary,
+              guidedMomentum.nextBadgeName
+                ? translations('guidedMomentumDescriptionWithBadge', {
+                    badge: guidedMomentum.nextBadgeName,
+                    summary: guidedMomentum.summary,
                   })
-                : props.translations('guidedMomentumDescriptionUnlocked')
+                : translations('guidedMomentumDescriptionUnlocked')
             }
-            eyebrow={props.translations('guidedMomentumEyebrow')}
+            eyebrow={translations('guidedMomentumEyebrow')}
             eyebrowClassName='text-sky-700/80'
-            title={props.translations('guidedMomentumTitle', {
-              count: props.guidedMomentum.completedSessions,
+            title={translations('guidedMomentumTitle', {
+              count: guidedMomentum.completedSessions,
             })}
           />
-          <KangurProgressHighlightChip accent='sky' label={props.guidedMomentum.summary} />
+          <KangurProgressHighlightChip accent='sky' label={guidedMomentum.summary} />
         </KangurPanelRow>
         <KangurProgressHighlightBar
           accent='sky'
           testId='player-progress-guided-momentum-bar'
-          value={props.guidedMomentum.progressPercent}
+          value={guidedMomentum.progressPercent}
         />
       </KangurProgressHighlightCardContent>
     </div>
@@ -208,103 +223,107 @@ export default function PlayerProgressCard({
     translations
   );
 
+  const contextValue: PlayerProgressContextValue = {
+    translations,
+    nextLevel,
+    xpIntoLevel,
+    xpNeeded,
+    topActivity,
+    nextBadge,
+    guidedMomentum,
+  };
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className='w-full max-w-sm'
-    >
-      <KangurGlassPanel
-        className={GAME_HOME_PLAYER_PROGRESS_SHELL_CLASSNAME}
-        data-testid='player-progress-shell'
-        padding='lg'
-        surface='solid'
-        variant='soft'
+    <PlayerProgressContext.Provider value={contextValue}>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className='w-full max-w-sm'
       >
-        <div className='space-y-2' data-testid='player-progress-copy'>
-          <KangurSectionEyebrow as='p' className='tracking-[0.18em]'>
-            {progressTitle}
-          </KangurSectionEyebrow>
-          <KangurCardDescription as='p' size='xs'>
-            {progressSummary}
-          </KangurCardDescription>
-        </div>
-
-        <div className='flex items-start kangur-panel-gap sm:items-center'>
-          <KangurDisplayEmoji size='sm'>🎖️</KangurDisplayEmoji>
-          <div className='min-w-0 flex-1'>
-            <KangurCardTitle as='p' className={currentLevel.color} size='lg'>
-              {currentLevel.title}
-            </KangurCardTitle>
-            <KangurMetaText as='p' size='xs'>
-              {translations('totalXpLine', { level: currentLevel.level, xp: totalXp })}
-            </KangurMetaText>
+        <KangurGlassPanel
+          className={GAME_HOME_PLAYER_PROGRESS_SHELL_CLASSNAME}
+          data-testid='player-progress-shell'
+          padding='lg'
+          surface='solid'
+          variant='soft'
+        >
+          <div className='space-y-2' data-testid='player-progress-copy'>
+            <KangurSectionEyebrow as='p' className='tracking-[0.18em]'>
+              {progressTitle}
+            </KangurSectionEyebrow>
+            <KangurCardDescription as='p' size='xs'>
+              {progressSummary}
+            </KangurCardDescription>
           </div>
-        </div>
 
-        <div>
-          <PlayerProgressLevelMeta
-            nextLevel={nextLevel}
-            translations={translations}
-            xpIntoLevel={xpIntoLevel}
-            xpNeeded={xpNeeded}
-          />
-          <KangurProgressBar
-            accent='indigo'
-            animated
-            data-testid='player-progress-level-bar'
-            size='md'
-            value={percent}
-          />
-        </div>
+          <div className='flex items-start kangur-panel-gap sm:items-center'>
+            <KangurDisplayEmoji size='sm'>🎖️</KangurDisplayEmoji>
+            <div className='min-w-0 flex-1'>
+              <KangurCardTitle as='p' className={currentLevel.color} size='lg'>
+                {currentLevel.title}
+              </KangurCardTitle>
+              <KangurMetaText as='p' size='xs'>
+                {translations('totalXpLine', { level: currentLevel.level, xp: totalXp })}
+              </KangurMetaText>
+            </div>
+          </div>
 
-        <div className='grid grid-cols-1 kangur-panel-gap min-[420px]:grid-cols-2'>
-          <KangurMetricCard
-            accent='indigo'
-            align='center'
-            label={translations('metrics.games')}
-            value={gamesPlayed}
-          />
-          <KangurMetricCard
-            accent='violet'
-            align='center'
-            label={translations('metrics.lessons')}
-            value={lessonsCompleted}
-          />
-          <KangurMetricCard
-            accent='emerald'
-            align='center'
-            label={translations('metrics.accuracy')}
-            value={`${averageAccuracy}%`}
-          />
-          <KangurMetricCard
-            accent='amber'
-            align='center'
-            label={translations('metrics.streak')}
-            value={bestWinStreak}
-          />
-          <KangurMetricCard
-            accent='sky'
-            align='center'
-            label={translations('metrics.xpPerGame')}
-            value={averageXpPerSession}
-          />
-        </div>
+          <div>
+            <PlayerProgressLevelMeta />
+            <KangurProgressBar
+              accent='indigo'
+              animated
+              data-testid='player-progress-level-bar'
+              size='md'
+              value={percent}
+            />
+          </div>
 
-        <PlayerProgressTopActivitySection topActivity={topActivity} translations={translations} />
-        <PlayerProgressNextBadgeSection nextBadge={nextBadge} translations={translations} />
-        <PlayerProgressGuidedMomentumSection
-          guidedMomentum={guidedMomentum}
-          translations={translations}
-        />
+          <div className='grid grid-cols-1 kangur-panel-gap min-[420px]:grid-cols-2'>
+            <KangurMetricCard
+              accent='indigo'
+              align='center'
+              label={translations('metrics.games')}
+              value={gamesPlayed}
+            />
+            <KangurMetricCard
+              accent='violet'
+              align='center'
+              label={translations('metrics.lessons')}
+              value={lessonsCompleted}
+            />
+            <KangurMetricCard
+              accent='emerald'
+              align='center'
+              label={translations('metrics.accuracy')}
+              value={`${averageAccuracy}%`}
+            />
+            <KangurMetricCard
+              accent='amber'
+              align='center'
+              label={translations('metrics.streak')}
+              value={bestWinStreak}
+            />
+            <KangurMetricCard
+              accent='sky'
+              align='center'
+              label={translations('metrics.xpPerGame')}
+              value={averageXpPerSession}
+            />
+          </div>
 
-        <KangurBadgeTrackSection
-          dataTestIdPrefix='player-progress-badge-track'
-          emptyTestId='player-progress-badges-empty'
-          headingClassName='mb-2 text-xs tracking-wide'
-          progress={badgeTrackProgress}
-        />
-      </KangurGlassPanel>
-    </motion.div>
+          <PlayerProgressTopActivitySection />
+          <PlayerProgressNextBadgeSection />
+          <PlayerProgressGuidedMomentumSection />
+
+          <KangurBadgeTrackSection
+            dataTestIdPrefix='player-progress-badge-track'
+            emptyTestId='player-progress-badges-empty'
+            headingClassName='mb-2 text-xs tracking-wide'
+            progress={badgeTrackProgress}
+          />
+        </KangurGlassPanel>
+      </motion.div>
+    </PlayerProgressContext.Provider>
   );
 }

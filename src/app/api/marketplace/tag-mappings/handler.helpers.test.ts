@@ -29,7 +29,7 @@ describe('marketplace tag mappings helpers', () => {
       connectionId: 'conn-1',
     });
     expect(() => parseMarketplaceTagMappingsQuery({ connectionId: '' })).toThrow(
-      'connectionId is required'
+      'Invalid marketplace tag mappings query.'
     );
   });
 

@@ -11,6 +11,11 @@ type ProductSyncQueueJobData = {
   trigger: ProductSyncRunTrigger;
 };
 
+const encodeJobIdPart = (value: string | null | undefined, fallback: string): string => {
+  const normalized = value?.trim();
+  return normalized && normalized.length > 0 ? encodeURIComponent(normalized) : fallback;
+};
+
 const queue = createManagedQueue<ProductSyncQueueJobData>({
   name: 'product-sync',
   concurrency: 1,
@@ -58,6 +63,12 @@ export const stopProductSyncQueue = async (): Promise<void> => {
 
 export const enqueueProductSyncRunJob = async (data: ProductSyncQueueJobData): Promise<string> => {
   const dedupeBucket = Math.floor(Date.now() / 10_000);
-  const jobId = `${data.profileId}:${data.runId}:${data.trigger}:${dedupeBucket}`;
+  // BullMQ rejects custom job IDs containing ":".
+  const jobId = [
+    encodeJobIdPart(data.profileId, 'profile'),
+    encodeJobIdPart(data.runId, 'run'),
+    encodeJobIdPart(data.trigger, 'trigger'),
+    String(dedupeBucket),
+  ].join('__');
   return queue.enqueue(data, { jobId });
 };

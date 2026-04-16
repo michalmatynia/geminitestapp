@@ -100,7 +100,7 @@ export function StudioActionsBar(): React.JSX.Element {
         </Button>
 
         {runStatus && (
-          <StatusBadge status={'Run status: ' + runStatus} variant='processing' size='sm' />
+          <StatusBadge status={`Run status: ${  runStatus}`} variant='processing' size='sm' />
         )}
         <StatusBadge status='Active' variant='success' size='sm' />
       </div>

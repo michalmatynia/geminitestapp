@@ -307,8 +307,6 @@ export const getTraderaUserInfo = async (
   };
 };
 
-const CATEGORY_TAG_REGEX = /<(\/?)(?:\w+:)?Category\b([^>]*?)(\/?)>/gi;
-
 const extractAttribute = (attributes: string, name: string): string | null => {
   const match = attributes.match(new RegExp(`\\b${name}\\s*=\\s*"([^"]*)"`, 'i'));
   if (!match?.[1]) return null;
@@ -318,9 +316,11 @@ const extractAttribute = (attributes: string, name: string): string | null => {
 export const parseTraderaCategoriesXml = (xml: string): BaseCategory[] => {
   const categories: BaseCategory[] = [];
   const parentStack: string[] = [];
+  // Use a fresh regex per call to avoid shared lastIndex state
+  const categoryTagRegex = /<(\/?)(?:\w+:)?Category\b([^>]*?)(\/?)>/gi;
 
   let match: RegExpExecArray | null;
-  while ((match = CATEGORY_TAG_REGEX.exec(xml))) {
+  while ((match = categoryTagRegex.exec(xml))) {
     const isClosing = Boolean(match[1]);
     const attributes = match[2] ?? '';
     const selfClosing = Boolean(match[3]) || /\b(?:\w+:)?nil\s*=\s*"true"/i.test(attributes);
@@ -337,13 +337,17 @@ export const parseTraderaCategoriesXml = (xml: string): BaseCategory[] => {
     const id = normalizeText(extractAttribute(attributes, 'Id'));
     const name = normalizeText(extractAttribute(attributes, 'Name'));
     if (!id || !name) {
+      // Opening tag without valid Id/Name — push the current parent as a pass-through
+      // so children inherit from the nearest valid ancestor and the closing tag pops correctly.
+      parentStack.push(parentStack[parentStack.length - 1] ?? '');
       continue;
     }
 
+    const parentId = parentStack[parentStack.length - 1] ?? null;
     categories.push({
       id,
       name,
-      parentId: parentStack[parentStack.length - 1] ?? null,
+      parentId: parentId || null,
     });
     parentStack.push(id);
   }
@@ -363,6 +367,30 @@ export const getTraderaCategories = async (
 
   const categoryXml = extractFirstTagValue(response, 'GetCategoriesResult') ?? response;
   return parseTraderaCategoriesXml(categoryXml);
+};
+
+/**
+ * Fetches direct subcategories of a given parent category from the Tradera SOAP API.
+ * The returned categories have their parentId set to the given parentCategoryId.
+ * Used to expand the category tree one level deeper than GetCategories returns.
+ */
+export const getTraderaSubCategories = async (
+  parentCategoryId: string | number,
+  credentials: TraderaPublicApiCredentials
+): Promise<BaseCategory[]> => {
+  const response = await callTraderaSoap({
+    service: 'public',
+    method: 'GetSubCategories',
+    bodyXml: `<categoryId>${Number(parentCategoryId)}</categoryId>`,
+    credentials,
+  });
+  const categoryXml = extractFirstTagValue(response, 'GetSubCategoriesResult') ?? response;
+  const subcategories = parseTraderaCategoriesXml(categoryXml);
+  // GetSubCategories returns categories without parent context — inject the parent ID
+  return subcategories.map((cat) => ({
+    ...cat,
+    parentId: String(parentCategoryId),
+  }));
 };
 
 type NormalizedTraderaShopItemInput = {

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { startAiPathRunQueue } from '@/features/ai/ai-paths/workers/aiPathRunQueue';
 import { startAiInsightsQueue } from '@/features/ai/insights/workers/aiInsightsQueue';

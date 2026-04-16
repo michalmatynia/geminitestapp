@@ -59,7 +59,7 @@ export function VersionGraphComparePanel(): React.JSX.Element {
               {getSlotImageSrc(cNode.slot) ? (
                 <img
                   src={getSlotImageSrc(cNode.slot)!}
-                  alt={cNode.label}
+                  alt={`Comparison thumbnail for ${cNode.label}`}
                   className='h-full w-full object-cover'
                 />
               ) : (

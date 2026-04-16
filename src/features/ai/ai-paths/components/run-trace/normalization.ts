@@ -8,7 +8,7 @@ import type {
   RuntimeTraceResumeMode,
   RuntimeTraceResumeReason,
 } from '@/shared/contracts/ai-paths-runtime';
-import { formatRuntimeValue, stableStringify } from '@/shared/lib/ai-paths';
+import { formatRuntimeValue, stableStringify } from '@/shared/lib/ai-paths/core/utils';
 
 import { resolveRunHistoryAction } from '../run-history-entry-actions';
 

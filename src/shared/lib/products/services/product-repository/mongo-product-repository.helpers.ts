@@ -4,6 +4,7 @@ import { productAdvancedFilterGroupSchema } from '@/shared/contracts/products/fi
 import { type ProductAdvancedFilterGroup, type ProductParameterValue } from '@/shared/contracts/products';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { decodeSimpleParameterStorageId } from '@/shared/lib/products/utils/parameter-partition';
+import { normalizeProductCustomFieldValues } from '@/shared/lib/products/utils/custom-field-values';
 import {
   mergeProductParameterValue,
   normalizeParameterValuesByLanguage,
@@ -121,6 +122,8 @@ export const normalizeProductParameterValues = (input: unknown): ProductParamete
 
   return Array.from(byParameterId.values());
 };
+
+export { normalizeProductCustomFieldValues };
 
 export const normalizeImageFileIds = (imageFileIds: string[]): string[] => {
   const unique = new Set<string>();

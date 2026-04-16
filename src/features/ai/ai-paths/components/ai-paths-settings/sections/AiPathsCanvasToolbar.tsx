@@ -1,21 +1,60 @@
 'use client';
 
-import React from 'react';
-import { useRouter } from 'next/navigation';
-import { Button } from '@/shared/ui/primitives.public';
+import React, { startTransition } from 'react';
+import { useRouter } from 'nextjs-toploader/app';
+import { ActionMenu } from '@/shared/ui/forms-and-actions.public';
 import { StatusBadge } from '@/shared/ui/data-display.public';
-import { useSelectionState, useSelectionActions } from '@/features/ai/ai-paths/context';
-import { useAiPathsSettingsPageContext } from '../AiPathsSettingsPageContext';
+import { Drawer } from '@/shared/ui/navigation-and-layout.public';
+import { Button, DropdownMenuItem, DropdownMenuSeparator } from '@/shared/ui/primitives.public';
+import {
+  usePersistenceState,
+  useSelectionState,
+  useSelectionActions,
+} from '@/features/ai/ai-paths/context';
+import {
+  useAiPathsSettingsPageCanvasInteractionsContext,
+  useAiPathsSettingsPageDiagnosticsContext,
+  useAiPathsSettingsPagePathActionsContext,
+  useAiPathsSettingsPagePersistenceContext,
+  useAiPathsSettingsPageRuntimeContext,
+  useAiPathsSettingsPageWorkspaceContext,
+} from '../AiPathsSettingsPageContext';
 
 import { AiPathsRuntimeKernelSettings } from './AiPathsRuntimeKernelSettings';
 
 export function AiPathsCanvasToolbar(): React.JSX.Element | null {
   const router = useRouter();
+  const [runtimeKernelDrawerOpen, setRuntimeKernelDrawerOpen] = React.useState(false);
+  const {
+    setPathSettingsModalOpen,
+    toast,
+  } = useAiPathsSettingsPageWorkspaceContext();
   const {
     activePathId,
+    handleTogglePathLock,
+    isPathLocked,
+    isPathActive,
+    handleTogglePathActive,
+  } = useAiPathsSettingsPagePathActionsContext();
+  const {
+    handleDeleteSelectedNode,
+    isInspectorVisible,
+    setIsInspectorVisible,
+    isPathTreeVisible,
+    setIsPathTreeVisible,
+  } = useAiPathsSettingsPageCanvasInteractionsContext();
+
+  const onToggleInspector = () => setIsInspectorVisible((current) => !current);
+  const onTogglePathTree = () => setIsPathTreeVisible((current) => !current);
+  const {
     savePathConfig,
     saving,
-    setPathSettingsModalOpen,
+    persistLastError,
+    incrementLoadNonce,
+    handleClearConnectorData,
+    handleClearHistory,
+  } = useAiPathsSettingsPagePersistenceContext();
+  const {
     diagnosticsReady,
     nodeValidationEnabled: nodeValidationEnabledFromContext,
     updateAiPathsValidation,
@@ -23,23 +62,11 @@ export function AiPathsCanvasToolbar(): React.JSX.Element | null {
     handleOpenNodeValidator,
     docsTooltipsEnabled,
     setDocsTooltipsEnabled,
-    handleTogglePathLock,
-    isPathLocked,
     handleRunNodeValidationCheck,
-    toast,
-    isPathSwitching,
-    persistLastError,
-    incrementLoadNonce,
-    handleClearConnectorData,
-    handleClearHistory,
-    handleDeleteSelectedNode,
-    isPathActive,
-    handleTogglePathActive,
-    hasHistory,
     selectionScopeMode,
     setSelectionScopeMode,
-    lastError,
-  } = useAiPathsSettingsPageContext();
+  } = useAiPathsSettingsPageDiagnosticsContext();
+  const { lastError } = useAiPathsSettingsPageRuntimeContext();
 
   const {
     selectionToolMode,
@@ -48,6 +75,7 @@ export function AiPathsCanvasToolbar(): React.JSX.Element | null {
     selectedEdgeId: selectedEdgeIdCtx,
   } = useSelectionState();
   const { setSelectionToolMode } = useSelectionActions();
+  const { isPathSwitching } = usePersistenceState();
 
   const notify = toast ?? (() => undefined);
   const savePath = savePathConfig ?? (async (): Promise<boolean> => false);
@@ -81,339 +109,366 @@ export function AiPathsCanvasToolbar(): React.JSX.Element | null {
   const setScopeMode = setSelectionScopeMode ?? (() => undefined);
   const docsTooltipsOn = Boolean(docsTooltipsEnabled);
   const activePath = activePathId ?? null;
+  const menuTriggerClassName =
+    'h-8 rounded-md border border-border/60 bg-card/45 px-3 text-xs text-gray-200 hover:bg-card/70';
+  const toolbarGroupClassName =
+    'flex flex-wrap items-center gap-2 rounded-xl border border-border/60 bg-background/20 p-2';
+  const validationStatus = !nodeValidationEnabled
+    ? 'Validation: off'
+    : !validationDiagnosticsReady
+      ? 'Validation: loading'
+      : validationBlocked
+        ? 'Validation: blocked'
+        : validationWarn
+          ? 'Validation: warning'
+          : 'Validation: ready';
+  const validationVariant = !nodeValidationEnabled
+    ? 'neutral'
+    : !validationDiagnosticsReady
+      ? 'neutral'
+      : validationBlocked
+        ? 'error'
+        : validationWarn
+          ? 'warning'
+          : 'success';
 
-  // I need to decide if I move Runtime Kernel settings here too.
-  // For now let's just move the basic actions.
-  
   return (
-    <div className='flex flex-col items-start gap-2'>
-      <div className='flex flex-wrap items-center gap-3'>
-        <Button
-          data-doc-id='canvas_save_path'
-          className='rounded-md border text-sm text-white hover:bg-muted/60'
-          onClick={() => {
-            if (nodeConfigDirtySelection) {
-              notify(
-                'Unsaved node-config dialog changes are not included. Click "Update Node" first, then "Save Path".',
-                { variant: 'info' }
-              );
-            }
-            void savePath();
-          }}
-          disabled={saving}
-        >
-          {saving ? 'Saving...' : 'Save Path'}
-        </Button>
-        <Button
-          data-doc-id='canvas_paths_settings'
-          type='button'
-          className='rounded-md border border-border text-sm text-gray-200 hover:bg-card/60'
-          onClick={() => {
-            openPathSettings(true);
-          }}
-          disabled={!activePath}
-        >
-            Paths Settings
-        </Button>
-        <Button
-          data-doc-id='canvas_enable_node_validation'
-          type='button'
-          variant={!nodeValidationEnabled ? 'warning' : 'success'}
-          className='rounded-md text-sm'
-          onClick={() => {
-            const nextEnabled = !nodeValidationEnabled;
-            patchAiPathsValidation({ enabled: nextEnabled });
-            notify(
-              nextEnabled
-                ? 'AI Paths node validation enabled.'
-                : 'AI Paths node validation disabled.',
-              {
-                variant: nextEnabled ? 'success' : 'info',
-              }
-            );
-          }}
-          disabled={!activePath || isPathLocked}
-          title={
-            !nodeValidationEnabled
-              ? 'Enable AI Paths node validation'
-              : 'Disable AI Paths node validation'
-          }
-        >
-          {!nodeValidationEnabled
-            ? 'Enable Node Validation'
-            : 'Disable Node Validation'}
-        </Button>
-        <Button
-          data-doc-id='canvas_validate_nodes'
-          type='button'
-          variant='info'
-          className='rounded-md text-sm'
-          onClick={runNodeValidationCheck}
-          disabled={!activePath || !nodeValidationEnabled}
-          title='Run node validation check now'
-        >
-            Validate Nodes
-        </Button>
-        <Button
-          data-doc-id='canvas_open_node_validator'
-          type='button'
-          variant='secondary'
-          className='rounded-md text-sm border-indigo-500/40 text-indigo-200 hover:bg-indigo-500/10'
-          onClick={openNodeValidator}
-          disabled={!activePath}
-          title='Open AI-Paths Node Validator patterns and sequences'
-        >
-            Node Validator
-        </Button>
-        <StatusBadge
-          status={
-            !nodeValidationEnabled
-              ? 'Validation: off'
-              : !validationDiagnosticsReady
-                ? 'Validation: loading'
-              : validationBlocked
-                ? 'Validation: blocked'
-                : validationWarn
-                  ? 'Validation: warning'
-                  : 'Validation: ready'
-          }
-          variant={
-            !nodeValidationEnabled
-              ? 'neutral'
-              : !validationDiagnosticsReady
-                ? 'neutral'
-              : validationBlocked
-                ? 'error'
-                : validationWarn
-                  ? 'warning'
-                  : 'success'
-          }
-          size='sm'
-          className='font-medium'
-        />
-        <StatusBadge
-          status={
-            validationDiagnosticsReady
-              ? `Validation score: ${validationScore}`
-              : 'Validation score: loading'
-          }
-          variant='neutral'
-          size='sm'
-          className='font-medium'
-        />
-        <StatusBadge
-          status={
-            validationDiagnosticsReady
-              ? `Failed rules: ${validationFailedRules}`
-              : 'Failed rules: loading'
-          }
-          variant={
-            !validationDiagnosticsReady
-              ? 'neutral'
-              : (validationFailedRules ?? 0) > 0
-                ? 'warning'
-                : 'success'
-          }
-          size='sm'
-          className='font-medium'
-        />
-        <Button
-          data-doc-id='docs_tooltips_toggle'
-          type='button'
-          className='rounded-md border border-violet-500/40 text-sm text-violet-200 hover:bg-violet-500/10'
-          onClick={() => toggleDocsTooltips(!docsTooltipsOn)}
-        >
-          {docsTooltipsOn ? 'Docs Tooltips: On' : 'Docs Tooltips: Off'}
-        </Button>
-        <Button
-          data-doc-id='canvas_toggle_path_lock'
-          type='button'
-          className='rounded-md border border-border text-sm text-gray-300 hover:bg-card/60'
-          onClick={togglePathLock}
-          disabled={!activePath}
-          title={
-            isPathLocked
-              ? 'Unlock to edit nodes and connections'
-              : 'Lock to prevent edits'
-          }
-        >
-          {isPathLocked ? 'Unlock Path' : 'Lock Path'}
-        </Button>
-
-        <AiPathsRuntimeKernelSettings />
-
-        <div className='flex items-center rounded-md border border-border/60 bg-card/40 p-0.5'>
-          <Button
-            type='button'
-            className={`h-8 rounded-md px-2 text-xs ${
-              selectionToolMode === 'pan'
-                ? 'bg-sky-500/20 text-sky-200'
-                : 'text-gray-300 hover:bg-card/60'
-            }`}
-            onClick={() => setSelectionToolMode('pan')}
-            title='Pan canvas'
-          >
-              Pan
-          </Button>
-          <Button
-            type='button'
-            className={`h-8 rounded-md px-2 text-xs ${
-              selectionToolMode === 'select'
-                ? 'bg-sky-500/20 text-sky-200'
-                : 'text-gray-300 hover:bg-card/60'
-            }`}
-            onClick={() => setSelectionToolMode('select')}
-            title='Rectangle selection tool'
-          >
-              Select
-          </Button>
-        </div>
-        {selectionToolMode === 'select' ? (
-          <div className='flex items-center rounded-md border border-border/60 bg-card/40 p-0.5'>
+    <>
+      <div className='flex flex-col items-start gap-3'>
+        <div className='flex w-full flex-wrap items-start gap-2'>
+          <div className={toolbarGroupClassName}>
             <Button
-              type='button'
-              className={`h-8 rounded-md px-2 text-xs ${
-                scopeMode === 'portion'
-                  ? 'bg-sky-500/20 text-sky-200'
-                  : 'text-gray-300 hover:bg-card/60'
-              }`}
-              onClick={() => setScopeMode('portion')}
-              title='Select only nodes inside the rectangle'
+              data-doc-id='canvas_save_path'
+              className='rounded-md border text-sm text-white hover:bg-muted/60'
+              onClick={() => {
+                if (nodeConfigDirtySelection) {
+                  notify(
+                    'Unsaved node-config dialog changes are not included. Click "Update Node" first, then "Save Path".',
+                    { variant: 'info' }
+                  );
+                }
+                void savePath();
+              }}
+              disabled={saving}
             >
-                Portion
+              {saving ? 'Saving...' : 'Save Path'}
+            </Button>
+            <Button
+              data-doc-id='canvas_paths_settings'
+              type='button'
+              className='rounded-md border border-border text-sm text-gray-200 hover:bg-card/60'
+              onClick={() => {
+                openPathSettings(true);
+              }}
+              disabled={!activePath}
+            >
+              Path Settings
             </Button>
             <Button
               type='button'
-              className={`h-8 rounded-md px-2 text-xs ${
-                scopeMode === 'wiring'
-                  ? 'bg-sky-500/20 text-sky-200'
-                  : 'text-gray-300 hover:bg-card/60'
-              }`}
-              onClick={() => setScopeMode('wiring')}
-              title='Expand marquee selection to connected wiring'
+              className='rounded-md border border-border text-sm text-gray-200 hover:bg-card/60'
+              onClick={() => {
+                setRuntimeKernelDrawerOpen(true);
+              }}
             >
-                With Wiring
+              Runtime Kernel
+            </Button>
+            <Button
+              data-doc-id='canvas_remove_selected'
+              type='button'
+              variant='destructive'
+              className='rounded-md text-sm'
+              onClick={removeSelection}
+              disabled={!canDeleteSelection}
+              title={
+                isPathSwitching
+                  ? 'Delete is temporarily disabled while switching paths'
+                  : canDeleteSelection
+                    ? 'Delete selected nodes or selected edge'
+                    : 'Select at least one node or edge to delete'
+              }
+            >
+              Remove Selected
             </Button>
           </div>
-        ) : null}
-        <StatusBadge
-          status={`Selected: ${selectedCount}`}
-          variant='neutral'
-          size='sm'
-          className='font-medium'
-          title='Selected nodes count'
-        />
-        {isPathSwitching ? (
+
+          <div className={toolbarGroupClassName}>
+            <Button
+              data-doc-id='canvas_toggle_path_tree'
+              type='button'
+              className='rounded-md border border-border text-sm text-gray-200 hover:bg-card/60'
+              onClick={onTogglePathTree}
+              aria-pressed={isPathTreeVisible}
+              title={isPathTreeVisible ? 'Hide path groups' : 'Show path groups'}
+            >
+              {isPathTreeVisible ? 'Hide Path Groups' : 'Show Path Groups'}
+            </Button>
+
+            <div className='flex items-center rounded-md border border-border/60 bg-card/40 p-0.5'>
+              <Button
+                type='button'
+                className={`h-8 rounded-md px-2 text-xs ${
+                  selectionToolMode === 'pan'
+                    ? 'bg-sky-500/20 text-sky-200'
+                    : 'text-gray-300 hover:bg-card/60'
+                }`}
+                onClick={() => setSelectionToolMode('pan')}
+                title='Pan canvas'
+              >
+                Pan
+              </Button>
+              <Button
+                type='button'
+                className={`h-8 rounded-md px-2 text-xs ${
+                  selectionToolMode === 'select'
+                    ? 'bg-sky-500/20 text-sky-200'
+                    : 'text-gray-300 hover:bg-card/60'
+                }`}
+                onClick={() => setSelectionToolMode('select')}
+                title='Rectangle selection tool'
+              >
+                Select
+              </Button>
+            </div>
+
+            <ActionMenu
+              trigger={<span>Path</span>}
+              variant='outline'
+              size='sm'
+              ariaLabel='Open path actions'
+              align='end'
+              triggerClassName={menuTriggerClassName}
+            >
+              <DropdownMenuItem onClick={togglePathLock} disabled={!activePath}>
+                {isPathLocked ? 'Unlock Path' : 'Lock Path'}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={togglePathActive} disabled={!activePath}>
+                {isPathActive ? 'Deactivate Path' : 'Activate Path'}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => {
+                  void clearHistory();
+                }}
+                disabled={!activePath}
+              >
+                Clear History
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  void clearConnectorData();
+                }}
+                disabled={!activePath}
+              >
+                Clear Connector Data
+              </DropdownMenuItem>
+            </ActionMenu>
+
+            <ActionMenu
+              trigger={<span>Validation</span>}
+              variant='outline'
+              size='sm'
+              ariaLabel='Open validation actions'
+              align='end'
+              triggerClassName={menuTriggerClassName}
+            >
+              <DropdownMenuItem
+                data-doc-id='canvas_enable_node_validation'
+                onClick={() => {
+                  const nextEnabled = !nodeValidationEnabled;
+                  patchAiPathsValidation({ enabled: nextEnabled });
+                  notify(
+                    nextEnabled
+                      ? 'AI Paths node validation enabled.'
+                      : 'AI Paths node validation disabled.',
+                    {
+                      variant: nextEnabled ? 'success' : 'info',
+                    }
+                  );
+                }}
+                disabled={!activePath || isPathLocked}
+              >
+                {!nodeValidationEnabled ? 'Enable Node Validation' : 'Disable Node Validation'}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                data-doc-id='canvas_validate_nodes'
+                onClick={runNodeValidationCheck}
+                disabled={!activePath || !nodeValidationEnabled}
+              >
+                Validate Nodes
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                data-doc-id='canvas_open_node_validator'
+                onClick={openNodeValidator}
+                disabled={!activePath}
+              >
+                Open Node Validator
+              </DropdownMenuItem>
+            </ActionMenu>
+
+            <ActionMenu
+              trigger={<span>View</span>}
+              variant='outline'
+              size='sm'
+              ariaLabel='Open canvas view options'
+              align='end'
+              triggerClassName={menuTriggerClassName}
+            >
+              <DropdownMenuItem
+                data-doc-id='docs_tooltips_toggle'
+                onClick={() => toggleDocsTooltips(!docsTooltipsOn)}
+              >
+                {docsTooltipsOn ? 'Turn Docs Tooltips Off' : 'Turn Docs Tooltips On'}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={onToggleInspector}>
+                {isInspectorVisible ? 'Hide Inspector' : 'Show Inspector'}
+              </DropdownMenuItem>
+              {selectionToolMode === 'select' ? (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setScopeMode('portion')}>
+                    Selection Scope: Portion
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setScopeMode('wiring')}>
+                    Selection Scope: With Wiring
+                  </DropdownMenuItem>
+                </>
+              ) : null}
+            </ActionMenu>
+          </div>
+        </div>
+
+        <div className='flex flex-wrap items-center gap-2'>
           <StatusBadge
-            status='Switching path...'
-            variant='processing'
+            status={validationStatus}
+            variant={validationVariant}
             size='sm'
             className='font-medium'
           />
-        ) : null}
-        <Button
-          data-doc-id='canvas_remove_selected'
-          type='button'
-          variant='destructive'
-          className='rounded-md text-sm'
-          onClick={removeSelection}
-          disabled={!canDeleteSelection}
-          title={
-            isPathSwitching
-              ? 'Delete is temporarily disabled while switching paths'
-              : canDeleteSelection
-                ? 'Delete selected nodes or selected edge'
-                : 'Select at least one node or edge to delete'
-          }
-        >
-            Remove Selected
-        </Button>
-        {selectionToolMode === 'select' ? (
-          <div className='text-[11px] text-gray-400'>
-            {scopeMode === 'wiring'
-              ? 'Drag to select connected subgraphs. Shift add, Alt subtract.'
-              : 'Drag to select node portions only. Shift add, Alt subtract.'}
-          </div>
-        ) : null}
-        <Button
-          data-doc-id='canvas_clear_connector_data'
-          className='rounded-md border border-amber-500/40 text-sm text-amber-200 hover:bg-amber-500/10'
-          onClick={() => {
-            void clearConnectorData();
-          }}
-          type='button'
-          disabled={!activePath}
-        >
-            Clear Connector Data
-        </Button>
-        <Button
-          data-doc-id='canvas_toggle_path_active'
-          type='button'
-          className={`rounded-md border text-sm ${isPathActive ? 'border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10' : 'border-rose-500/40 text-rose-200 hover:bg-rose-500/10'}`}
-          onClick={togglePathActive}
-          disabled={!activePath}
-          title={isPathActive ? 'Deactivate to stop runs' : 'Activate to allow runs'}
-        >
-          {isPathActive ? 'Deactivate' : 'Activate'}
-        </Button>
-        <Button
-          data-doc-id='canvas_clear_history'
-          className='rounded-md border border-sky-500/40 text-sm text-sky-200 hover:bg-sky-500/10'
-          onClick={() => {
-            void clearHistory();
-          }}
-          type='button'
-          disabled={!activePath}
-          title={
-            hasHistory
-              ? 'Clear history for all nodes in this path'
-              : 'No history recorded yet'
-          }
-        >
-            Clear History
-        </Button>
-      </div>
-      {lastError && (
-        <div className='flex items-center gap-2 rounded-md border border-rose-500/40 bg-rose-500/10 px-3 py-1 text-xs text-rose-200'>
-          <span className='max-w-[220px] truncate'>
+          <StatusBadge
+            status={
+              validationDiagnosticsReady
+                ? `Score ${validationScore} · ${validationFailedRules} failed`
+                : 'Validation details loading'
+            }
+            variant={
+              !validationDiagnosticsReady
+                ? 'neutral'
+                : (validationFailedRules ?? 0) > 0
+                  ? 'warning'
+                  : 'success'
+            }
+            size='sm'
+            className='font-medium'
+          />
+          <StatusBadge
+            status={isPathLocked ? 'Path locked' : 'Path editable'}
+            variant={isPathLocked ? 'warning' : 'neutral'}
+            size='sm'
+            className='font-medium'
+          />
+          <StatusBadge
+            status={isPathActive ? 'Runs active' : 'Runs paused'}
+            variant={isPathActive ? 'success' : 'warning'}
+            size='sm'
+            className='font-medium'
+          />
+          <StatusBadge
+            status={`Selected: ${selectedCount}`}
+            variant='neutral'
+            size='sm'
+            className='font-medium'
+            title='Selected nodes count'
+          />
+          <StatusBadge
+            status={isInspectorVisible ? 'Inspector visible' : 'Inspector hidden'}
+            variant='neutral'
+            size='sm'
+            className='font-medium'
+          />
+          {selectionToolMode === 'select' ? (
+            <StatusBadge
+              status={`Selection: ${scopeMode === 'wiring' ? 'With Wiring' : 'Portion'}`}
+              variant='info'
+              size='sm'
+              className='font-medium'
+            />
+          ) : null}
+          {isPathSwitching ? (
+            <StatusBadge
+              status='Switching path...'
+              variant='processing'
+              size='sm'
+              className='font-medium'
+            />
+          ) : null}
+          {selectionToolMode === 'select' ? (
+            <div className='text-[11px] text-gray-400'>
+              Adjust selection scope from the View menu. Shift adds to selection, Alt subtracts.
+            </div>
+          ) : null}
+        </div>
+
+        {lastError ? (
+          <div className='flex flex-wrap items-center gap-2 rounded-md border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-xs text-rose-200'>
+            <span className='max-w-[320px] truncate'>
               Last error: {lastError.message}
-          </span>
-          <Button
-            type='button'
-            className='rounded-md border border-rose-400/50 px-2 py-1 text-[10px] text-rose-100 hover:bg-rose-500/20'
-            onClick={() => {
-              void persistLastErrorSafe(null);
-            }}
-          >
-              Clear
-          </Button>
-          {lastError.message.startsWith('Failed to load AI Paths settings') && (
+            </span>
             <Button
               type='button'
               className='rounded-md border border-rose-400/50 px-2 py-1 text-[10px] text-rose-100 hover:bg-rose-500/20'
               onClick={() => {
                 void persistLastErrorSafe(null);
-                bumpLoadNonce();
               }}
             >
-                Retry
+              Clear
             </Button>
-          )}
-          <Button
-            type='button'
-            className='rounded-md border border-rose-400/50 px-2 py-1 text-[10px] text-rose-100 hover:bg-rose-500/20'
-            onClick={(): void => {
-              router.push(
-                `/admin/system/logs?level=error&source=client&query=${encodeURIComponent(
-                  'AI Paths'
-                )}`
-              );
-            }}
-          >
+            {lastError.message.startsWith('Failed to load AI Paths settings') ? (
+              <Button
+                type='button'
+                className='rounded-md border border-rose-400/50 px-2 py-1 text-[10px] text-rose-100 hover:bg-rose-500/20'
+                onClick={() => {
+                  void persistLastErrorSafe(null);
+                  bumpLoadNonce();
+                }}
+              >
+                Retry
+              </Button>
+            ) : null}
+            <Button
+              type='button'
+              className='rounded-md border border-rose-400/50 px-2 py-1 text-[10px] text-rose-100 hover:bg-rose-500/20'
+              onClick={(): void => {
+                startTransition(() => {
+                  router.push(
+                    `/admin/system/logs?level=error&source=client&query=${encodeURIComponent(
+                      'AI Paths'
+                    )}`
+                  );
+                });
+              }}
+            >
               View logs
-          </Button>
+            </Button>
+          </div>
+        ) : null}
+      </div>
+
+      <Drawer
+        open={runtimeKernelDrawerOpen}
+        onClose={() => {
+          setRuntimeKernelDrawerOpen(false);
+        }}
+        title='Runtime Kernel'
+        description='Review global runtime-kernel defaults and override resolver settings for the active path.'
+        width={720}
+      >
+        <div className='space-y-3'>
+          <AiPathsRuntimeKernelSettings />
         </div>
-      )}
-    </div>
+      </Drawer>
+    </>
   );
 }

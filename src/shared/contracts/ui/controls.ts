@@ -1,5 +1,5 @@
 import type { ReactNode, ComponentType } from 'react';
-import type { LabeledOptionWithDisabledDto } from './base';
+import type { LabeledOptionWithDisabledDto, LabeledOptionWithGroupDto } from './base';
 
 export interface SegmentedControlOptionDto<T extends string = string> {
   value: T;
@@ -24,13 +24,7 @@ export interface SegmentedControlProps<T extends string> {
 export type MultiSelectOptionDto = LabeledOptionWithDisabledDto<string>;
 export type MultiSelectOption = MultiSelectOptionDto;
 
-export type SelectSimpleOptionDto = {
-  label: string;
-  value: string;
-  description?: string;
-  disabled?: boolean;
-  group?: string;
-};
+export type SelectSimpleOptionDto = LabeledOptionWithGroupDto<string>;
 export type SelectSimpleOption = SelectSimpleOptionDto;
 
 export interface SearchableSelectProps {
@@ -76,6 +70,7 @@ export interface PaginationProps {
   isLoading?: boolean;
   className?: string;
   showLabels?: boolean;
+  showPageJump?: boolean;
   variant?: 'default' | 'compact' | 'panel';
 }
 
@@ -91,6 +86,7 @@ export interface PaginationContextValue {
   showInfo: boolean;
   isLoading: boolean;
   showLabels: boolean;
+  showPageJump: boolean;
   variant: 'default' | 'compact' | 'panel';
   startItem: number;
   endItem: number;
@@ -114,6 +110,7 @@ export interface ToggleRowProps {
   children?: ReactNode | undefined;
   showBorder?: boolean | undefined;
   controlWrapper?: (control: ReactNode) => ReactNode;
+  toggleOnRowClick?: boolean | undefined;
 }
 
 export interface StatusToggleProps {

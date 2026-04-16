@@ -12,7 +12,7 @@ interface RefreshButtonProps {
   isRefreshing?: boolean;
   label?: string;
   className?: string;
-  size?: 'default' | 'sm' | 'lg' | 'icon';
+  size?: 'default' | 'xs' | 'sm' | 'lg' | 'icon';
   variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
 }
 
@@ -21,7 +21,7 @@ type RefreshButtonResolvedProps = {
   isRefreshing: boolean;
   label: string;
   className?: string;
-  size: 'default' | 'sm' | 'lg' | 'icon';
+  size: 'default' | 'xs' | 'sm' | 'lg' | 'icon';
   variant: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
   ariaLabel?: string;
 };

@@ -4,7 +4,7 @@ import { useState, useMemo, type ReactNode } from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
-import type { AiNode } from '@/shared/lib/ai-paths';
+import type { AiNode } from '@/shared/contracts/ai-paths';
 
 export type SelectionToolMode = 'pan' | 'select';
 export type SelectionScopeMode = 'portion' | 'wiring';

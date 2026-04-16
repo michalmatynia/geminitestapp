@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react';
 import { vi } from 'vitest';
 
-import type { AiNode } from '@/shared/lib/ai-paths';
+import type { AiNode } from '@/shared/contracts/ai-paths';
 import type { PortDataType } from '@/shared/lib/ai-paths/core/utils/port-types';
 
 import { CanvasBoardUIProvider, type CanvasBoardUIContextValue } from '../CanvasBoardUIContext';

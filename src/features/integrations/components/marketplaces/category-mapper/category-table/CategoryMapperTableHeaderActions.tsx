@@ -1,12 +1,22 @@
 import { Download, Link2, Save } from 'lucide-react';
 import React from 'react';
 
+import type { TraderaCategoryFetchMethod } from '@/shared/contracts/integrations/marketplace';
 import { Button } from '@/shared/ui/primitives.public';
+import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
 import type { GenericMapperHeaderActionsProps } from '@/shared/contracts/ui/api';
+
+const TRADERA_FETCH_METHOD_OPTIONS: { value: TraderaCategoryFetchMethod; label: string }[] = [
+  { value: 'playwright', label: 'Public taxonomy pages' },
+  { value: 'soap', label: 'SOAP API' },
+];
 
 type CategoryMapperTableHeaderActionsProps = GenericMapperHeaderActionsProps & {
   onAutoMatchByName: () => void;
   autoMatchDisabled: boolean;
+  /** When set, shows the Tradera fetch method dropdown */
+  categoryFetchMethod?: TraderaCategoryFetchMethod | undefined;
+  onCategoryFetchMethodChange?: ((method: TraderaCategoryFetchMethod) => void) | undefined;
 };
 
 export function CategoryMapperTableHeaderActions(
@@ -20,10 +30,26 @@ export function CategoryMapperTableHeaderActions(
     onSave,
     isSaving,
     pendingCount,
+    categoryFetchMethod,
+    onCategoryFetchMethodChange,
   } = props;
 
   return (
     <div className='flex items-center gap-2'>
+      {categoryFetchMethod !== undefined && onCategoryFetchMethodChange ? (
+        <div className='w-[200px]'>
+          <SelectSimple
+            size='sm'
+            value={categoryFetchMethod}
+            onValueChange={(v) => onCategoryFetchMethodChange(v as TraderaCategoryFetchMethod)}
+            options={TRADERA_FETCH_METHOD_OPTIONS}
+            disabled={isFetching}
+            ariaLabel='Category fetch method'
+            title='Category fetch method'
+          />
+        </div>
+      ) : null}
+
       <Button variant='outline' size='xs' className='h-8' onClick={onFetch} loading={isFetching}>
         <Download className='mr-2 h-3.5 w-3.5' />
         Fetch Categories

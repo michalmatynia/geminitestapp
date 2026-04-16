@@ -1,21 +1,15 @@
 import React from 'react';
-import type {
-  KangurGameOperationSelectorRuntime,
-  KangurOperationSelectorRecommendation as KangurGameOperationSelectorRecommendation,
-} from './KangurGameOperationSelectorWidget.types';
+import { useKangurGameOperationSelector } from './KangurGameOperationSelectorContext';
 import OperationSelector from './OperationSelector';
 
-export function KangurGameOperationSelectorOperationSection({
-  handleSelectOperation,
-  practiceAssignmentsByOperation,
-  recommendation,
-  showMathSections,
-}: {
-  handleSelectOperation: KangurGameOperationSelectorRuntime['handleSelectOperation'];
-  practiceAssignmentsByOperation: KangurGameOperationSelectorRuntime['practiceAssignmentsByOperation'];
-  recommendation: KangurGameOperationSelectorRecommendation | null;
-  showMathSections: boolean;
-}): React.JSX.Element | null {
+export function KangurGameOperationSelectorOperationSection(): React.JSX.Element | null {
+  const {
+    handleSelectOperation,
+    practiceAssignmentsByOperation,
+    recommendation,
+    showMathSections,
+  } = useKangurGameOperationSelector();
+
   if (!showMathSections) {
     return null;
   }

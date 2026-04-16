@@ -39,6 +39,8 @@ export * from './profile/profile-types';
 export { buildLessonMasteryInsights } from './profile/profile-mastery';
 export { translateKangurLearnerProfileWithFallback } from './profile/profile-utils';
 
+// normalizeScoresDesc sorts a score array newest-first. Used throughout the
+// profile snapshot so all derived metrics operate on a consistent ordering.
 const normalizeScoresDesc = (scores: KangurScoreRecord[]): KangurScoreRecord[] =>
   [...scores].sort((left, right) => {
     const leftDate = parseDateOrNull(left.created_date);
@@ -67,6 +69,9 @@ const computeBestAccuracyFromScores = (scores: KangurScoreRecord[]): number =>
     return Math.max(best, toPercent((score.correct_answers / totalQuestions) * 100));
   }, 0);
 
+// resolveActivityStatsStreakFallback derives streak data from the progress
+// activityStats map when the score history is too short to compute streaks
+// directly. Returns zeros when no activity stats are available.
 const resolveActivityStatsStreakFallback = (
   progress: KangurProgressState
 ): {
@@ -108,6 +113,9 @@ const resolveActivityStatsStreakFallback = (
   };
 };
 
+// resolveProfileSnapshotStreaks merges score-derived streaks with the
+// activityStats fallback. Score streaks take precedence when non-zero;
+// activityStats fill in when the score history is insufficient.
 const resolveProfileSnapshotStreaks = (
   progress: KangurProgressState,
   sortedScores: KangurScoreRecord[],
@@ -132,6 +140,9 @@ const resolveProfileSnapshotStreaks = (
   };
 };
 
+// resolveProfileSnapshotAccuracies prefers progress-stored accuracy values
+// (more stable, server-computed) and falls back to computing from the raw
+// score records when the progress values are zero.
 const resolveProfileSnapshotAccuracies = (
   progress: KangurProgressState,
   sortedScores: KangurScoreRecord[]
@@ -149,6 +160,8 @@ const resolveProfileSnapshotAccuracies = (
   };
 };
 
+// resolveTodayGames looks up today's game count from the weekly activity
+// series. Falls back to the last entry when today has no entry yet.
 const resolveTodayGames = (
   weeklyActivity: KangurLearnerProfileSnapshot['weeklyActivity'],
   now: Date
@@ -180,6 +193,11 @@ type BuildProfileSnapshotInput = {
   translate?: KangurLearnerProfileTranslate | undefined;
 };
 
+// buildKangurLearnerProfileSnapshot assembles the full profile snapshot from
+// progress state and score history. All derived metrics (streaks, accuracy,
+// XP analytics, weekly activity, recommendations, badge state, level) are
+// computed here and returned as a single immutable snapshot object consumed
+// by all profile widgets.
 export const buildKangurLearnerProfileSnapshot = (
   input: BuildProfileSnapshotInput
 ): KangurLearnerProfileSnapshot => {

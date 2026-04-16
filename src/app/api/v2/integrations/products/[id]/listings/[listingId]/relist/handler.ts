@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import {
   isPlaywrightProgrammableSlug,
@@ -59,6 +59,15 @@ export async function POST_handler(
   ) {
     throw badRequestError(
       'Browser mode override is only supported for Playwright and Tradera browser relists'
+    );
+  }
+  if (
+    typeof payload.selectorProfile === 'string' &&
+    payload.selectorProfile.length > 0 &&
+    !isTraderaBrowserIntegrationSlug(integrationSlug)
+  ) {
+    throw badRequestError(
+      'Selector profile override is only supported for Tradera browser relists'
     );
   }
 
@@ -129,6 +138,7 @@ export async function POST_handler(
     action: 'relist',
     source: 'manual',
     ...(payload.browserMode ? { browserMode: payload.browserMode } : {}),
+    ...(payload.selectorProfile ? { selectorProfile: payload.selectorProfile } : {}),
   });
   const previousMarketplaceData = toRecord(resolved.listing.marketplaceData);
   const previousTraderaData = toRecord(previousMarketplaceData['tradera']);
@@ -139,7 +149,9 @@ export async function POST_handler(
       tradera: {
         ...previousTraderaData,
         pendingExecution: {
+          action: 'relist',
           requestedBrowserMode: payload.browserMode ?? 'connection_default',
+          ...(payload.selectorProfile ? { requestedSelectorProfile: payload.selectorProfile } : {}),
           requestId: jobId,
           queuedAt: enqueuedAt,
         },

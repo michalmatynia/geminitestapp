@@ -10,6 +10,7 @@ const {
   getMongoDatabaseNameMock,
   getMongoDumpCommandMock,
   mongoExecFileAsyncMock,
+  resolveMongoSourceConfigMock,
   writeFileMock,
   statMock,
   captureExceptionMock,
@@ -20,6 +21,7 @@ const {
   getMongoDatabaseNameMock: vi.fn(),
   getMongoDumpCommandMock: vi.fn(),
   mongoExecFileAsyncMock: vi.fn(),
+  resolveMongoSourceConfigMock: vi.fn(),
   writeFileMock: vi.fn(),
   statMock: vi.fn(),
   captureExceptionMock: vi.fn(),
@@ -44,6 +46,10 @@ vi.mock('@/shared/lib/db/utils/mongo', () => ({
   execFileAsync: mongoExecFileAsyncMock,
 }));
 
+vi.mock('@/shared/lib/db/mongo-source', () => ({
+  resolveMongoSourceConfig: resolveMongoSourceConfigMock,
+}));
+
 vi.mock('@/shared/utils/observability/error-system', () => ({
   ErrorSystem: {
     captureException: captureExceptionMock,
@@ -51,7 +57,7 @@ vi.mock('@/shared/utils/observability/error-system', () => ({
   },
 }));
 
-import { createMongoBackup } from './database-backup';
+import { createMongoBackup, createMongoSourceBackup } from './database-backup';
 
 const originalNodeEnv = process.env['NODE_ENV'];
 
@@ -63,6 +69,13 @@ describe('database-backup', () => {
     getMongoDatabaseNameMock.mockReturnValue('app');
     getMongoDumpCommandMock.mockReturnValue('mongodump');
     ensureMongoBackupsDirMock.mockResolvedValue(undefined);
+    resolveMongoSourceConfigMock.mockResolvedValue({
+      source: 'cloud',
+      configured: true,
+      uri: 'mongodb+srv://cluster.example/app_cloud',
+      dbName: 'app_cloud',
+      usesLegacyEnv: false,
+    });
     writeFileMock.mockResolvedValue(undefined);
     statMock.mockResolvedValue(null);
   });
@@ -126,5 +139,41 @@ describe('database-backup', () => {
     await expect(createMongoBackup()).rejects.toThrow(/disabled in production/i);
     expect(ensureMongoBackupsDirMock).not.toHaveBeenCalled();
     expect(mongoExecFileAsyncMock).not.toHaveBeenCalled();
+  });
+
+  it('creates an explicit source backup for Mongo sync workflows', async () => {
+    mongoExecFileAsyncMock.mockResolvedValue({
+      stdout: 'backup stdout',
+      stderr: '',
+    });
+    const timestamp = 1712637000000;
+
+    const result = await createMongoSourceBackup({
+      source: 'cloud',
+      role: 'source',
+      direction: 'cloud_to_local',
+      timestamp,
+    });
+
+    expect(resolveMongoSourceConfigMock).toHaveBeenCalledWith('cloud');
+    expect(mongoExecFileAsyncMock).toHaveBeenCalledWith('mongodump', [
+      '--uri',
+      'mongodb+srv://cluster.example/app_cloud',
+      '--db',
+      'app_cloud',
+      '--archive=/tmp/backups/app-cloud-cloud-source-pre-sync-cloud-to-local-1712637000000.archive',
+      '--gzip',
+    ]);
+    expect(result).toEqual({
+      role: 'source',
+      source: 'cloud',
+      backupName: 'app-cloud-cloud-source-pre-sync-cloud-to-local-1712637000000.archive',
+      backupPath:
+        '/tmp/backups/app-cloud-cloud-source-pre-sync-cloud-to-local-1712637000000.archive',
+      logPath:
+        '/tmp/backups/app-cloud-cloud-source-pre-sync-cloud-to-local-1712637000000.archive.log',
+      createdAt: new Date(timestamp).toISOString(),
+      warning: null,
+    });
   });
 });

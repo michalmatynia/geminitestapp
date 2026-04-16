@@ -14,15 +14,14 @@ const mockState = vi.hoisted(() => ({
 }));
 
 vi.mock('../AiPathsSettingsPageContext', () => ({
-  useAiPathsSettingsPageContext: () => mockState.pageContext,
+  useAiPathsSettingsPageWorkspaceContext: () => mockState.pageContext,
+  useAiPathsSettingsPageDiagnosticsContext: () => ({
+    docsTooltipsEnabled: mockState.docsTooltipsEnabled,
+  }),
 }));
 
 vi.mock('@/features/ai/ai-paths/context', () => ({
   usePersistenceState: () => mockState.persistenceState,
-}));
-
-vi.mock('@/features/ai/ai-paths/hooks/useAiPathsDocsTooltips', () => ({
-  useAiPathsDocsTooltips: () => ({ docsTooltipsEnabled: mockState.docsTooltipsEnabled }),
 }));
 
 vi.mock('@/shared/contracts/documentation', () => ({

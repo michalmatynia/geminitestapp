@@ -1,5 +1,5 @@
 import {
-  decodeFilemakerPartyReference,
+  type decodeFilemakerPartyReference,
   encodeFilemakerPartyReference,
 } from '@/features/filemaker/public';
 import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';

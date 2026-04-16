@@ -1,8 +1,8 @@
 import { renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const stopServerRunStreamFns = vi.hoisted((): Array<ReturnType<typeof vi.fn>> => []);
-const { graphActionsMock, runtimeContextState } = vi.hoisted(() => ({
+const { graphActionsMock, runtimeContextState, stopServerRunStreamFns } = vi.hoisted(() => ({
+  stopServerRunStreamFns: [] as Array<ReturnType<typeof vi.fn>>,
   graphActionsMock: {
     setPathConfigs: vi.fn(),
   },
@@ -25,7 +25,14 @@ const { graphActionsMock, runtimeContextState } = vi.hoisted(() => ({
 }));
 
 vi.mock('@/features/ai/ai-paths/context/RuntimeContext', () => ({
-  useRuntimeState: () => runtimeContextState,
+  useRuntimeDataState: () => ({
+    runtimeState: runtimeContextState.runtimeState,
+    parserSamples: runtimeContextState.parserSamples,
+    updaterSamples: runtimeContextState.updaterSamples,
+  }),
+  useRuntimeUiState: () => ({
+    sendingToAi: runtimeContextState.sendingToAi,
+  }),
   useRuntimeActions: () => ({
     setRuntimeState: vi.fn(),
     setLastRunAt: vi.fn(),
@@ -49,6 +56,24 @@ vi.mock('@/shared/lib/ai-brain/hooks/useBrainAssignment', () => ({
       enabled: false,
       provider: 'model',
     },
+  }),
+}));
+
+vi.mock('@/shared/lib/ai-brain/hooks/useBrainModelOptions', () => ({
+  useBrainModelOptions: () => ({
+    models: [],
+    descriptors: {},
+    isLoading: false,
+    assignment: {
+      enabled: false,
+      provider: 'model',
+      modelId: '',
+      agentId: '',
+      notes: null,
+    },
+    effectiveModelId: '',
+    sourceWarnings: [],
+    refresh: vi.fn(),
   }),
 }));
 

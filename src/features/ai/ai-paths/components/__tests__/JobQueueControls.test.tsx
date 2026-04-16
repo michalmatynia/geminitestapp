@@ -28,7 +28,7 @@ vi.mock('lucide-react', () => ({
   Trash2: () => <span data-testid='trash-icon' />,
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   Button: ({
     children,
     ...props

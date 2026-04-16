@@ -38,6 +38,7 @@ import {
   aiPathRunEnqueueRequestSchema,
   aiPathRunEnqueueResponseSchema,
   aiPathRunRecordSchema,
+  aiPathRunResultResponseSchema,
   createAiPathRunSchema,
   extractAiPathRunIdFromEnqueueContractPayload,
   parseAiPathRunEnqueuedEventPayload,
@@ -45,6 +46,7 @@ import {
   type AiPathRunEnqueueRequest,
   type AiPathRunEnqueueResponse,
   type AiPathRunRecord,
+  type AiPathRunResultResponse,
   type AiPathRunUpdateInput,
 } from './ai-paths-run-contract';
 import { dtoBaseSchema, namedDtoSchema } from './base';
@@ -59,6 +61,7 @@ export {
   aiPathRunEnqueueRequestSchema,
   aiPathRunEnqueueResponseSchema,
   aiPathRunRecordSchema,
+  aiPathRunResultResponseSchema,
   aiPathRunSchema,
   aiPathRunStatusSchema,
   createAiPathRunSchema,
@@ -69,6 +72,7 @@ export {
   type AiPathRunEnqueueRequest,
   type AiPathRunEnqueueResponse,
   type AiPathRunRecord,
+  type AiPathRunResultResponse,
   type AiPathRun,
   type AiPathRunStatus,
   type AiPathRunUpdateInput,
@@ -189,6 +193,7 @@ export type AiPathRunEventCreateInput = z.infer<typeof aiPathRunEventCreateInput
 export const pathMetaSchema = z.object({
   id: z.string(),
   name: z.string(),
+  folderPath: z.string().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
@@ -598,7 +603,7 @@ export type RuntimeProfileHighlight = {
   iteration?: number | undefined;
   durationMs?: number | undefined;
   hashMs?: number | undefined;
-  runtimeStrategy?: 'compatibility' | 'code_object_v3' | undefined;
+  runtimeStrategy?: 'code_object_v3' | undefined;
   runtimeResolutionSource?: 'override' | 'registry' | 'missing' | undefined;
   runtimeCodeObjectId?: string | null | undefined;
 };

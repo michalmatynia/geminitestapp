@@ -13,6 +13,9 @@
 /.next-dev/
 /.next-dev*/
 /.next-*/
+apps/*/.next/
+apps/*/.next-dev/
+apps/*/out/
 /out/
 
 # production
@@ -40,7 +43,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-/lib/generated/prisma
 
 # build cache
 .next.cache.config.js
@@ -52,23 +54,11 @@ next-env.d.ts
 # chatbot
 /tmp/chatbot-agent
 
-# prisma
-/prisma/dev.db
-/prisma/dev.db-journal
-/prisma/migrations/
-/prisma/.env
-/prisma/generated/
-/.prisma/client/
-/prisma/stardb.db
-/prisma/stardb.db-journal
-/prisma/seed.js
-/prisma/seed.ts
-/prisma/seed.sh
-/prisma/.seed.lock
-
 # Database
 /mongo/backups
-/prisma/backups
+/mongo/local-data
+/mongo/local-data/
+/mongo/runtime
 /backups
 *.dump
 *.archive

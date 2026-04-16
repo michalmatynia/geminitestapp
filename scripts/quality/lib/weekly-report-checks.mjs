@@ -1,3 +1,4 @@
+import { spawn } from 'node:child_process';
 import { execScanOutput } from '../../architecture/lib/exec-scan-output.mjs';
 
 const DEFAULT_MAX_OUTPUT_BYTES = 160_000;
@@ -156,3 +157,144 @@ export const runStructuredCommandCheck = async ({
     scanSummary: buildStructuredCheckSnapshot(result.output),
   };
 };
+
+export const runCommandCheckAttempt = ({ command, commandArgs, timeoutMs, cwd, maxOutputBytes = DEFAULT_MAX_OUTPUT_BYTES }) =>
+  new Promise((resolve) => {
+    const startedAt = Date.now();
+    const child = spawn(command, commandArgs, {
+      cwd,
+      env: {
+        ...process.env,
+        FORCE_COLOR: '0',
+      },
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+
+    let output = '';
+    let completed = false;
+    let timedOut = false;
+
+    const append = (chunk) => {
+      output += chunk.toString();
+      if (output.length > maxOutputBytes) {
+        output = output.slice(-maxOutputBytes);
+      }
+    };
+
+    child.stdout?.on('data', append);
+    child.stderr?.on('data', append);
+
+    const timer = setTimeout(() => {
+      timedOut = true;
+      child.kill('SIGTERM');
+      setTimeout(() => {
+        if (!completed) {
+          child.kill('SIGKILL');
+        }
+      }, 5000);
+    }, timeoutMs);
+
+    child.on('error', (error) => {
+      completed = true;
+      clearTimeout(timer);
+      resolve({
+        status: 'fail',
+        exitCode: null,
+        signal: null,
+        durationMs: Date.now() - startedAt,
+        output: truncateWeeklyCheckOutput(`${output}\n${error.stack ?? String(error)}`.trim(), maxOutputBytes),
+      });
+    });
+
+    child.on('close', (exitCode, signal) => {
+      completed = true;
+      clearTimeout(timer);
+      resolve({
+        status: timedOut ? 'timeout' : exitCode === 0 ? 'pass' : 'fail',
+        exitCode,
+        signal,
+        durationMs: Date.now() - startedAt,
+        output: output.length <= maxOutputBytes ? output.trim() : output.slice(-maxOutputBytes).trim(),
+      });
+    });
+  });
+
+export const runCommandCheck = async ({
+  id,
+  label,
+  command,
+  commandArgs,
+  timeoutMs,
+  enabled = true,
+  disabledOutput = 'Skipped by configuration.',
+  confirmFailureRetries = 0,
+  cwd,
+  maxOutputBytes = DEFAULT_MAX_OUTPUT_BYTES,
+}) => {
+  if (!enabled) {
+    return {
+      id,
+      label,
+      command: [command, ...commandArgs].join(' '),
+      status: 'skipped',
+      exitCode: null,
+      signal: null,
+      durationMs: 0,
+      output: disabledOutput,
+    };
+  }
+
+  const commandString = [command, ...commandArgs].join(' ');
+  const attempts = [];
+
+  for (let attemptIndex = 0; attemptIndex <= confirmFailureRetries; attemptIndex += 1) {
+    const result = await runCommandCheckAttempt({
+      command,
+      commandArgs,
+      timeoutMs,
+      cwd,
+      maxOutputBytes,
+    });
+    attempts.push(result);
+
+    if (result.status === 'pass' || result.status === 'timeout') {
+      const outputPrefix =
+        attemptIndex > 0
+          ? `[retry] ${label} passed on confirmation attempt ${attemptIndex + 1} of ${confirmFailureRetries + 1}.`
+          : '';
+      return {
+        id,
+        label,
+        command: commandString,
+        status: result.status,
+        exitCode: result.exitCode,
+        signal: result.signal,
+        durationMs: attempts.reduce((total, value) => total + value.durationMs, 0),
+        output:
+          [outputPrefix, result.output].filter(Boolean).join('\n').length <= maxOutputBytes
+            ? [outputPrefix, result.output].filter(Boolean).join('\n')
+            : [outputPrefix, result.output].filter(Boolean).join('\n').slice(-maxOutputBytes),
+      };
+    }
+  }
+
+  const finalResult = attempts.at(-1);
+  return {
+    id,
+    label,
+    command: commandString,
+    status: finalResult.status,
+    exitCode: finalResult.exitCode,
+    signal: finalResult.signal,
+    durationMs: attempts.reduce((total, value) => total + value.durationMs, 0),
+    output: (() => {
+      const output = attempts
+        .map((attempt, index) =>
+          [`[attempt ${index + 1}/${attempts.length}]`, attempt.output].filter(Boolean).join('\n')
+        )
+        .join('\n\n');
+      return output.length <= maxOutputBytes ? output : output.slice(-maxOutputBytes);
+    })(),
+  };
+};
+

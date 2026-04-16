@@ -12,6 +12,7 @@ import {
 import type { CategoryMappingWithDetails, ExternalCategory } from '@/shared/contracts/integrations/listings';
 import type { CatalogRecord } from '@/shared/contracts/products/catalogs';
 import type { ProductCategory } from '@/shared/contracts/products/categories';
+import { ApiError } from '@/shared/lib/api-client';
 
 const mocks = vi.hoisted(() => ({
   catalogs: [] as unknown[],
@@ -140,17 +141,20 @@ const createCategoryMapping = (
 
 function Harness(): React.JSX.Element {
   const { selectedCatalogId, categoryTree } = useCategoryMapperData();
-  const { pendingMappings, staleMappings, stats } = useCategoryMapperUIState();
+  const { pendingMappings, lastFetchWarning, staleMappings, stats } = useCategoryMapperUIState();
   const {
     handleAutoMatchByName,
     getMappingForExternal,
     handleFetchExternalCategories,
+    handleMappingChange,
+    handleSave,
   } = useCategoryMapperActions();
 
   return (
     <div>
       <div data-testid='selected-catalog'>{selectedCatalogId ?? 'none'}</div>
       <div data-testid='pending-count'>{String(pendingMappings.size)}</div>
+      <div data-testid='fetch-warning'>{lastFetchWarning?.message ?? 'none'}</div>
       <div data-testid='stale-count'>{String(stats.stale)}</div>
       <div data-testid='unmapped-count'>{String(stats.unmapped)}</div>
       <div data-testid='stale-summary'>
@@ -175,6 +179,12 @@ function Harness(): React.JSX.Element {
       </button>
       <button type='button' onClick={() => void handleFetchExternalCategories()}>
         Fetch external categories
+      </button>
+      <button type='button' onClick={() => handleMappingChange('market-nonleaf', 'int-office')}>
+        Set non-leaf mapping
+      </button>
+      <button type='button' onClick={() => void handleSave()}>
+        Save mappings
       </button>
     </div>
   );
@@ -331,6 +341,157 @@ describe('CategoryMapperProvider auto-match by name', () => {
         'Tradera categories could not be scraped from the public categories pages — the taxonomy page structure may have changed.',
         { variant: 'error' }
       )
+    );
+  });
+
+  it('stores and clears the shallow Tradera fetch warning around successive fetch attempts', async () => {
+    const user = userEvent.setup();
+    const shallowFetchError = new ApiError(
+      'Tradera public taxonomy pages returned a shallower category tree than the categories already stored. Existing categories were kept. Retry the fetch or configure Tradera App ID and App Key to use the SOAP API.',
+      422
+    );
+    shallowFetchError.payload = {
+      message: shallowFetchError.message,
+      code: 'UNPROCESSABLE_ENTITY',
+      httpStatus: 422,
+      meta: {
+        sourceName: 'Tradera public taxonomy pages',
+        existingTotal: 3,
+        existingMaxDepth: 2,
+        fetchedTotal: 2,
+        fetchedMaxDepth: 1,
+      },
+    };
+
+    mocks.fetchMutateAsync
+      .mockRejectedValueOnce(shallowFetchError)
+      .mockResolvedValueOnce({
+        fetched: 3,
+        total: 3,
+        source: 'Tradera SOAP API',
+        message: 'Successfully synced 3 categories from Tradera SOAP API (roots: 1, max depth: 2).',
+        categoryStats: {
+          rootCount: 1,
+          withParentCount: 2,
+          maxDepth: 2,
+          depthHistogram: { '0': 1, '1': 1, '2': 1 },
+        },
+      });
+
+    render(
+      <CategoryMapperProvider
+        connectionId='conn-1'
+        connectionName='Tradera'
+        integrationId='integration-tradera'
+        integrationSlug='tradera'
+      >
+        <Harness />
+      </CategoryMapperProvider>
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Fetch external categories' }));
+
+    await waitFor(() =>
+      expect(screen.getByTestId('fetch-warning')).toHaveTextContent(
+        'Tradera public taxonomy pages returned a shallower category tree than the categories already stored. Existing categories were kept.'
+      )
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Fetch external categories' }));
+
+    await waitFor(() => expect(screen.getByTestId('fetch-warning')).toHaveTextContent('none'));
+  });
+
+  it('skips non-leaf Tradera categories during auto-match', async () => {
+    const user = userEvent.setup();
+
+    mocks.internalCategories = [
+      createInternalCategory({ id: 'int-pins', name: 'Pins & needles' }),
+    ];
+    mocks.externalCategories = [
+      createExternalCategory({
+        id: 'ext-parent',
+        externalId: 'market-parent',
+        name: 'Pins & needles',
+        path: 'Collectibles > Pins & needles',
+        isLeaf: false,
+      }),
+      createExternalCategory({
+        id: 'ext-leaf',
+        externalId: 'market-leaf',
+        name: 'Other pins & needles',
+        path: 'Collectibles > Pins & needles > Other pins & needles',
+        isLeaf: true,
+      }),
+    ];
+    mocks.mappings = [];
+
+    render(
+      <CategoryMapperProvider
+        connectionId='conn-1'
+        connectionName='Tradera'
+        integrationId='integration-tradera'
+        integrationSlug='tradera'
+      >
+        <Harness />
+      </CategoryMapperProvider>
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId('selected-catalog')).toHaveTextContent('catalog-1')
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Run auto match' }));
+
+    expect(screen.getByTestId('pending-count')).toHaveTextContent('0');
+    expect(mocks.toast).toHaveBeenCalledWith('Matched 0 categories, 1 unmatched.', {
+      variant: 'info',
+    });
+  });
+
+  it('blocks saving non-leaf Tradera mappings before the request is sent', async () => {
+    const user = userEvent.setup();
+
+    mocks.externalCategories = [
+      createExternalCategory({
+        id: 'ext-parent',
+        externalId: 'market-nonleaf',
+        name: 'Pins & needles',
+        path: 'Collectibles > Pins & needles',
+        isLeaf: false,
+      }),
+      createExternalCategory({
+        id: 'ext-leaf',
+        externalId: 'market-leaf',
+        name: 'Other pins & needles',
+        path: 'Collectibles > Pins & needles > Other pins & needles',
+        isLeaf: true,
+      }),
+    ];
+    mocks.mappings = [];
+
+    render(
+      <CategoryMapperProvider
+        connectionId='conn-1'
+        connectionName='Tradera'
+        integrationId='integration-tradera'
+        integrationSlug='tradera'
+      >
+        <Harness />
+      </CategoryMapperProvider>
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId('selected-catalog')).toHaveTextContent('catalog-1')
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Set non-leaf mapping' }));
+    await user.click(screen.getByRole('button', { name: 'Save mappings' }));
+
+    expect(mocks.saveMutateAsync).not.toHaveBeenCalled();
+    expect(mocks.toast).toHaveBeenCalledWith(
+      'Tradera mappings must target the deepest category. "Collectibles > Pins & needles" still has child categories. Choose a leaf Tradera category and save again.',
+      { variant: 'error' }
     );
   });
 });

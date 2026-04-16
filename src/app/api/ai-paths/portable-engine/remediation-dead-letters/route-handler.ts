@@ -16,5 +16,5 @@ export const GET = apiHandler(GET_handler, {
 export const POST = apiHandler(POST_handler, {
   source: 'ai-paths.portable-engine.remediation-dead-letters.POST',
   parseJsonBody: true,
-  bodySchema: bodySchema,
+  bodySchema,
 });

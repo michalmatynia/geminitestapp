@@ -33,6 +33,18 @@ vi.mock('next/navigation', () => ({
   })),
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  useSearchParams: vi.fn(() => ({
+    get: searchParamsGetMock,
+  })),
+  useRouter: vi.fn(() => ({
+    push: routerPushMock,
+    replace: vi.fn(),
+    prefetch: vi.fn(),
+    back: vi.fn(),
+  })),
+}));
+
 vi.mock('next-auth/react', () => ({
   signIn: vi.fn(),
   SessionProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,

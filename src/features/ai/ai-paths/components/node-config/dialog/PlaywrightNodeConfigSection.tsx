@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { playwrightSettingsSchema } from '@/shared/contracts/playwright';
 import { usePlaywrightPersonas } from '@/shared/hooks/usePlaywrightPersonas';
-import type { PlaywrightConfig } from '@/shared/lib/ai-paths';
+import type { PlaywrightConfig } from '@/shared/contracts/ai-paths';
 import {
   createDefaultPlaywrightConfig,
   normalizePlaywrightConfig,

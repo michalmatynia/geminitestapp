@@ -1,8 +1,8 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useRouter } from 'nextjs-toploader/app';
+import { useMemo, useState, startTransition } from 'react';
 
 import ProductForm from '@/features/products/components/ProductForm';
 import {
@@ -15,20 +15,23 @@ import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { AdminProductsPageLayout } from '@/shared/ui/admin-products-page-layout';
 import { Button } from '@/shared/ui/button';
 
-const FileManager = dynamic(() => import('@/features/files/components/FileManager'), {
+const FileManager = dynamic(() => import('@/features/files/public').then(m => m.default || m.FileManager), {
   ssr: false,
 });
+
+function resolveValidatorSessionKey(): string {
+  if (typeof globalThis.crypto !== 'undefined' && typeof globalThis.crypto.randomUUID === 'function') {
+    return globalThis.crypto.randomUUID();
+  }
+  return `edit-product-validator-${Date.now().toString(36)}`;
+}
 
 function EditProductForm(): React.JSX.Element {
   const { uploading, handleSubmit, hasUnsavedChanges } = useProductFormCore();
   const { showFileManager, handleMultiFileSelect } = useProductFormImages();
   const router = useRouter();
   const isSaveDisabled = uploading || !hasUnsavedChanges;
-  const [validatorSessionKey] = useState<string>(() =>
-    typeof globalThis.crypto !== 'undefined' && typeof globalThis.crypto.randomUUID === 'function'
-      ? globalThis.crypto.randomUUID()
-      : `edit-product-validator-${Date.now().toString(36)}`
-  );
+  const [validatorSessionKey] = useState<string>(() => resolveValidatorSessionKey());
 
   return (
     <AdminProductsPageLayout
@@ -37,7 +40,7 @@ function EditProductForm(): React.JSX.Element {
       headerActions={
         <>
           <Button
-            onClick={() => router.push('/admin/products')}
+            onClick={() => startTransition(() => { router.push('/admin/products'); })}
             variant='outline'
             className='min-w-[100px] text-foreground'
             aria-label='Back to products'
@@ -46,7 +49,7 @@ function EditProductForm(): React.JSX.Element {
           </Button>
           <Button
             onClick={() => {
-              void handleSubmit();
+              handleSubmit().catch(() => { /* handled by context */ });
             }}
             disabled={isSaveDisabled}
             aria-disabled={isSaveDisabled}
@@ -60,7 +63,7 @@ function EditProductForm(): React.JSX.Element {
       wrapInPanel
       panelClassName='shadow-lg'
     >
-      {showFileManager ? (
+      {showFileManager === true ? (
         <FileManager onSelectFile={handleMultiFileSelect} showFileManager={showFileManager} />
       ) : (
         <ProductForm

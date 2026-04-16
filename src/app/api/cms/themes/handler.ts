@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { getCmsRepository } from '@/features/cms/server';
 import { cmsThemeCreateSchema } from '@/features/cms/server';

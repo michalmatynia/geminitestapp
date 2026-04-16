@@ -1,36 +1,16 @@
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
-
 import type { FilemakerEmailCampaign } from '../types';
+export {
+  createDefaultFilemakerEmailCampaignSchedulerStatus,
+  normalizeFilemakerEmailCampaignSchedulerStatus,
+  parseFilemakerEmailCampaignSchedulerStatus,
+  toPersistedFilemakerEmailCampaignSchedulerStatus,
+} from './campaign-scheduler-status';
+export type { FilemakerEmailCampaignSchedulerStatus } from './campaign-scheduler-status';
 
-const FILEMAKER_EMAIL_CAMPAIGN_SCHEDULER_STATUS_VERSION = 1;
 const DAY_MS = 24 * 60 * 60 * 1_000;
 
-import { type FilemakerEmailCampaignSchedulerSkipReason, type FilemakerEmailCampaignSchedulerLaunchFailure } from '@/shared/contracts/filemaker';
-
-type FilemakerEmailCampaignSchedulerLaunchedRun = {
-  campaignId: string;
-  runId: string;
-  queuedDeliveryCount: number;
-  launchMode: Extract<FilemakerEmailCampaign['launch']['mode'], 'scheduled' | 'recurring'>;
-};
-
-
-export type FilemakerEmailCampaignSchedulerStatus = {
-  version: number;
-  lastStartedAt: string | null;
-  lastCompletedAt: string | null;
-  lastSuccessfulAt: string | null;
-  evaluatedCampaignCount: number;
-  dueCampaignCount: number;
-  launchedRuns: FilemakerEmailCampaignSchedulerLaunchedRun[];
-  queuedDispatchCount: number;
-  inlineDispatchCount: number;
-  skippedByReason: FilemakerEmailCampaignSchedulerSkipReason[];
-  launchFailures: FilemakerEmailCampaignSchedulerLaunchFailure[];
-};
-
 const parseTimestamp = (value: string | null | undefined): number | null => {
-  if (!value) return null;
+  if (value === null || value === undefined || value.length === 0) return null;
   const parsed = Date.parse(value);
   return Number.isNaN(parsed) ? null : parsed;
 };
@@ -50,20 +30,31 @@ const resolveCadenceAnchor = (campaign: FilemakerEmailCampaign): number =>
   parseTimestamp(campaign.createdAt) ??
   Date.now();
 
+const hasHourBound = (value: number | null | undefined): value is number =>
+  value !== null && value !== undefined;
+
+const isWithinBoundedAllowedHours = (
+  hour: number,
+  start: number,
+  end: number
+): boolean => {
+  if (start <= end) {
+    return hour >= start && hour <= end;
+  }
+  return hour >= start || hour <= end;
+};
+
 const isWithinAllowedHours = (
   hour: number,
   start: number | null | undefined,
   end: number | null | undefined
 ): boolean => {
-  if (start == null && end == null) return true;
-  if (start != null && end != null) {
-    if (start <= end) {
-      return hour >= start && hour <= end;
-    }
-    return hour >= start || hour <= end;
+  if (!hasHourBound(start)) {
+    if (!hasHourBound(end)) return true;
+    return hour <= end;
   }
-  if (start != null) return hour >= start;
-  return hour <= (end ?? 23);
+  if (!hasHourBound(end)) return hour >= start;
+  return isWithinBoundedAllowedHours(hour, start, end);
 };
 
 const buildAllowedHours = (campaign: FilemakerEmailCampaign): number[] => {
@@ -86,9 +77,9 @@ const resolveRecurringWindowKeyAt = (
   value: Date
 ): string | null => {
   const recurring = campaign.launch.recurring;
-  if (!recurring) return null;
+  if (recurring === null || recurring === undefined) return null;
 
-  const interval = Math.max(1, recurring.interval || 1);
+  const interval = Math.max(1, recurring.interval);
   const anchorDate = new Date(resolveCadenceAnchor(campaign));
 
   if (recurring.frequency === 'daily') {
@@ -117,7 +108,7 @@ const isRecurringDayEligible = (
   }
 
   const recurring = campaign.launch.recurring;
-  if (!recurring) return false;
+  if (recurring === null || recurring === undefined) return false;
 
   if (recurring.weekdays.length > 0 && !recurring.weekdays.includes(value.getDay())) {
     return false;
@@ -135,153 +126,67 @@ const addLocalDays = (value: Date, days: number): Date =>
 const resolveFirstEligibleHourCandidate = (value: Date, hour: number): Date =>
   new Date(value.getFullYear(), value.getMonth(), value.getDate(), hour, 0, 0, 0);
 
-const normalizeSchedulerSkipReasons = (
-  input: unknown
-): FilemakerEmailCampaignSchedulerSkipReason[] => {
-  if (!Array.isArray(input)) return [];
-  return input
-    .map((entry: unknown): FilemakerEmailCampaignSchedulerSkipReason | null => {
-      if (!entry || typeof entry !== 'object') return null;
-      const record = entry as Record<string, unknown>;
-      const reason = typeof record['reason'] === 'string' ? record['reason'].trim() : '';
-      const count = Math.max(0, Math.trunc(Number(record['count']) || 0));
-      return reason ? { reason, count } : null;
-    })
-    .filter((entry): entry is FilemakerEmailCampaignSchedulerSkipReason => entry != null);
-};
-
-const normalizeSchedulerLaunchFailures = (
-  input: unknown
-): FilemakerEmailCampaignSchedulerLaunchFailure[] => {
-  if (!Array.isArray(input)) return [];
-  return input
-    .map((entry: unknown): FilemakerEmailCampaignSchedulerLaunchFailure | null => {
-      if (!entry || typeof entry !== 'object') return null;
-      const record = entry as Record<string, unknown>;
-      const campaignId =
-        typeof record['campaignId'] === 'string' ? record['campaignId'].trim() : '';
-      const message = typeof record['message'] === 'string' ? record['message'].trim() : '';
-      return campaignId && message ? { campaignId, message } : null;
-    })
-    .filter((entry): entry is FilemakerEmailCampaignSchedulerLaunchFailure => entry != null);
-};
-
-const normalizeSchedulerLaunchedRuns = (
-  input: unknown
-): FilemakerEmailCampaignSchedulerLaunchedRun[] => {
-  if (!Array.isArray(input)) return [];
-  return input
-    .map((entry: unknown): FilemakerEmailCampaignSchedulerLaunchedRun | null => {
-      if (!entry || typeof entry !== 'object') return null;
-      const record = entry as Record<string, unknown>;
-      const campaignId =
-        typeof record['campaignId'] === 'string' ? record['campaignId'].trim() : '';
-      const runId = typeof record['runId'] === 'string' ? record['runId'].trim() : '';
-      const queuedDeliveryCount = Math.max(
-        0,
-        Math.trunc(Number(record['queuedDeliveryCount']) || 0)
-      );
-      const launchMode =
-        record['launchMode'] === 'recurring' ? 'recurring' : record['launchMode'] === 'scheduled'
-          ? 'scheduled'
-          : null;
-      return campaignId && runId && launchMode
-        ? {
-            campaignId,
-            runId,
-            queuedDeliveryCount,
-            launchMode,
-          }
-        : null;
-    })
-    .filter((entry): entry is FilemakerEmailCampaignSchedulerLaunchedRun => entry != null);
-};
-
-export const createDefaultFilemakerEmailCampaignSchedulerStatus =
-  (): FilemakerEmailCampaignSchedulerStatus => ({
-    version: FILEMAKER_EMAIL_CAMPAIGN_SCHEDULER_STATUS_VERSION,
-    lastStartedAt: null,
-    lastCompletedAt: null,
-    lastSuccessfulAt: null,
-    evaluatedCampaignCount: 0,
-    dueCampaignCount: 0,
-    launchedRuns: [],
-    queuedDispatchCount: 0,
-    inlineDispatchCount: 0,
-    skippedByReason: [],
-    launchFailures: [],
-  });
-
-export const normalizeFilemakerEmailCampaignSchedulerStatus = (
-  value: unknown | null | undefined
-): FilemakerEmailCampaignSchedulerStatus => {
-  if (!value || typeof value !== 'object') {
-    return createDefaultFilemakerEmailCampaignSchedulerStatus();
-  }
-
-  const record = value as Record<string, unknown>;
-  const normalizeNullableString = (entry: unknown): string | null =>
-    typeof entry === 'string' && entry.trim() ? entry.trim() : null;
-
-  return {
-    version: FILEMAKER_EMAIL_CAMPAIGN_SCHEDULER_STATUS_VERSION,
-    lastStartedAt: normalizeNullableString(record['lastStartedAt']),
-    lastCompletedAt: normalizeNullableString(record['lastCompletedAt']),
-    lastSuccessfulAt: normalizeNullableString(record['lastSuccessfulAt']),
-    evaluatedCampaignCount: Math.max(0, Math.trunc(Number(record['evaluatedCampaignCount']) || 0)),
-    dueCampaignCount: Math.max(0, Math.trunc(Number(record['dueCampaignCount']) || 0)),
-    launchedRuns: normalizeSchedulerLaunchedRuns(record['launchedRuns']),
-    queuedDispatchCount: Math.max(0, Math.trunc(Number(record['queuedDispatchCount']) || 0)),
-    inlineDispatchCount: Math.max(0, Math.trunc(Number(record['inlineDispatchCount']) || 0)),
-    skippedByReason: normalizeSchedulerSkipReasons(record['skippedByReason']),
-    launchFailures: normalizeSchedulerLaunchFailures(record['launchFailures']),
-  };
-};
-
-export const parseFilemakerEmailCampaignSchedulerStatus = (
-  raw: string | null | undefined
-): FilemakerEmailCampaignSchedulerStatus => {
-  if (typeof raw !== 'string' || !raw.trim()) {
-    return createDefaultFilemakerEmailCampaignSchedulerStatus();
-  }
-
-  try {
-    return normalizeFilemakerEmailCampaignSchedulerStatus(JSON.parse(raw) as unknown);
-  } catch (error) {
-    logClientError(error);
-    return createDefaultFilemakerEmailCampaignSchedulerStatus();
-  }
-};
-
-export const toPersistedFilemakerEmailCampaignSchedulerStatus = (
-  value: FilemakerEmailCampaignSchedulerStatus | null | undefined
-): FilemakerEmailCampaignSchedulerStatus =>
-  normalizeFilemakerEmailCampaignSchedulerStatus(value);
-
 export const resolveFilemakerEmailCampaignRecurringWindowKey = (
   campaign: FilemakerEmailCampaign,
   value: Date
 ): string | null =>
   campaign.launch.mode === 'recurring' ? resolveRecurringWindowKeyAt(campaign, value) : null;
 
-export const resolveFilemakerEmailCampaignNextAutomationAt = (
-  campaign: FilemakerEmailCampaign,
-  now: Date = new Date()
-): string | null => {
-  if (campaign.launch.mode === 'manual') return null;
+const resolveScheduledAutomationAt = (campaign: FilemakerEmailCampaign): string | null => {
+  const scheduledAtMs = parseTimestamp(campaign.launch.scheduledAt);
+  if (scheduledAtMs === null) return null;
+  const lastLaunchedAtMs = parseTimestamp(campaign.lastLaunchedAt);
+  if (lastLaunchedAtMs !== null && lastLaunchedAtMs >= scheduledAtMs) {
+    return null;
+  }
+  return new Date(scheduledAtMs).toISOString();
+};
 
-  if (campaign.launch.mode === 'scheduled') {
-    const scheduledAtMs = parseTimestamp(campaign.launch.scheduledAt);
-    if (scheduledAtMs == null) return null;
-    const lastLaunchedAtMs = parseTimestamp(campaign.lastLaunchedAt);
-    if (lastLaunchedAtMs != null && lastLaunchedAtMs >= scheduledAtMs) {
-      return null;
+const shouldLaunchCurrentRecurringWindow = (input: {
+  campaign: FilemakerEmailCampaign;
+  now: Date;
+  allowedHours: number[];
+  currentWindowKey: string | null;
+  lastWindowKey: string | null;
+}): boolean =>
+  input.currentWindowKey !== null &&
+  input.currentWindowKey !== input.lastWindowKey &&
+  isRecurringDayEligible(input.campaign, input.now) &&
+  input.allowedHours.includes(input.now.getHours());
+
+const resolveFutureRecurringAutomationAt = (input: {
+  campaign: FilemakerEmailCampaign;
+  now: Date;
+  allowedHours: number[];
+  lastWindowKey: string | null;
+}): string | null => {
+  const today = atLocalStartOfDay(input.now);
+
+  for (let dayOffset = 0; dayOffset <= 370; dayOffset += 1) {
+    const day = addLocalDays(today, dayOffset);
+    if (!isRecurringDayEligible(input.campaign, day)) continue;
+
+    for (const hour of input.allowedHours) {
+      const candidate = resolveFirstEligibleHourCandidate(day, hour);
+      if (candidate.getTime() < input.now.getTime()) continue;
+
+      const candidateWindowKey = resolveRecurringWindowKeyAt(input.campaign, candidate);
+      if (candidateWindowKey === null) continue;
+      if (candidateWindowKey === input.lastWindowKey) continue;
+
+      return candidate.toISOString();
     }
-    return new Date(scheduledAtMs).toISOString();
   }
 
+  return null;
+};
+
+const resolveRecurringAutomationAt = (
+  campaign: FilemakerEmailCampaign,
+  now: Date
+): string | null => {
   const recurring = campaign.launch.recurring;
-  if (!recurring) return null;
+  if (recurring === null || recurring === undefined) return null;
 
   const allowedHours = buildAllowedHours(campaign);
   if (allowedHours.length === 0) return null;
@@ -289,36 +194,22 @@ export const resolveFilemakerEmailCampaignNextAutomationAt = (
   const currentWindowKey = resolveRecurringWindowKeyAt(campaign, now);
   const lastLaunchedAtMs = parseTimestamp(campaign.lastLaunchedAt);
   const lastWindowKey =
-    lastLaunchedAtMs == null
+    lastLaunchedAtMs === null
       ? null
       : resolveRecurringWindowKeyAt(campaign, new Date(lastLaunchedAtMs));
 
-  if (
-    currentWindowKey &&
-    currentWindowKey !== lastWindowKey &&
-    isRecurringDayEligible(campaign, now) &&
-    allowedHours.includes(now.getHours())
-  ) {
+  if (shouldLaunchCurrentRecurringWindow({ campaign, now, allowedHours, currentWindowKey, lastWindowKey })) {
     return now.toISOString();
   }
 
-  const today = atLocalStartOfDay(now);
+  return resolveFutureRecurringAutomationAt({ campaign, now, allowedHours, lastWindowKey });
+};
 
-  for (let dayOffset = 0; dayOffset <= 370; dayOffset += 1) {
-    const day = addLocalDays(today, dayOffset);
-    if (!isRecurringDayEligible(campaign, day)) continue;
-
-    for (const hour of allowedHours) {
-      const candidate = resolveFirstEligibleHourCandidate(day, hour);
-      if (candidate.getTime() < now.getTime()) continue;
-
-      const candidateWindowKey = resolveRecurringWindowKeyAt(campaign, candidate);
-      if (!candidateWindowKey) continue;
-      if (candidateWindowKey === lastWindowKey) continue;
-
-      return candidate.toISOString();
-    }
-  }
-
-  return null;
+export const resolveFilemakerEmailCampaignNextAutomationAt = (
+  campaign: FilemakerEmailCampaign,
+  now: Date = new Date()
+): string | null => {
+  if (campaign.launch.mode === 'manual') return null;
+  if (campaign.launch.mode === 'scheduled') return resolveScheduledAutomationAt(campaign);
+  return resolveRecurringAutomationAt(campaign, now);
 };

@@ -69,9 +69,9 @@ export async function ensureAdminSession(
   options: EnsureAdminSessionOptions = {}
 ): Promise<void> {
   const {
-    initialNavigationTimeoutMs = 60_000,
-    destinationNavigationTimeoutMs = 60_000,
-    transitionTimeoutMs = 30_000,
+    initialNavigationTimeoutMs = 180_000,
+    destinationNavigationTimeoutMs = 180_000,
+    transitionTimeoutMs = 90_000,
   } = options;
   const authRequestTimeoutMs = Math.min(
     Math.max(initialNavigationTimeoutMs, transitionTimeoutMs),

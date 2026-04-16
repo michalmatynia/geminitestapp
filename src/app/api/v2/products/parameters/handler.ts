@@ -1,13 +1,16 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { CachedProductService } from '@/features/products/server';
 import { getParameterRepository } from '@/features/products/server';
+import {
+  PRODUCT_PARAMETER_LINKABLE_SELECTOR_TYPES,
+  productParameterLinkedTitleTermTypeSchema,
+} from '@/shared/contracts/products/parameters';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, conflictError } from '@/shared/errors/app-error';
 import {
-  catalogIdQuerySchema,
-  type CatalogIdQuery,
+  catalogIdWithFreshQuerySchema,
 } from '@/shared/validations/product-metadata-api-schemas';
 
 const SELECTOR_TYPES = [
@@ -26,27 +29,11 @@ const SELECTOR_TYPES_REQUIRING_OPTIONS = new Set<(typeof SELECTOR_TYPES)[number]
   'dropdown',
   'checklist',
 ]);
-
-const freshQuerySchema = z.preprocess(
-  (value: unknown) => {
-    if (typeof value === 'boolean') return value;
-    if (typeof value !== 'string') return undefined;
-    const normalized = value.trim().toLowerCase();
-    if (!normalized) return undefined;
-    if (normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on') {
-      return true;
-    }
-    if (normalized === '0' || normalized === 'false' || normalized === 'no' || normalized === 'off') {
-      return false;
-    }
-    return value;
-  },
-  z.boolean().optional()
+const LINKABLE_SELECTOR_TYPES = new Set<(typeof SELECTOR_TYPES)[number]>(
+  PRODUCT_PARAMETER_LINKABLE_SELECTOR_TYPES
 );
 
-export const querySchema = catalogIdQuerySchema.extend({
-  fresh: freshQuerySchema,
-});
+export const querySchema = catalogIdWithFreshQuerySchema;
 
 const resolveParametersQueryInput = (
   req: Request,
@@ -78,6 +65,7 @@ export const productParameterCreateSchema = z
     catalogId: z.string().min(1, 'Catalog ID is required'),
     selectorType: selectorTypeSchema.default('text'),
     optionLabels: z.array(z.string()).optional().default([]),
+    linkedTitleTermType: productParameterLinkedTitleTermTypeSchema.optional(),
   })
   .superRefine((value, ctx) => {
     const normalizedOptionLabels = normalizeOptionLabels(value.optionLabels);
@@ -91,6 +79,13 @@ export const productParameterCreateSchema = z
         message: 'At least one option label is required for this selector type.',
       });
     }
+    if (value.linkedTitleTermType && !LINKABLE_SELECTOR_TYPES.has(value.selectorType)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['linkedTitleTermType'],
+        message: 'Only text and textarea parameters can sync from English Title terms.',
+      });
+    }
   });
 
 /**
@@ -100,9 +95,7 @@ export const productParameterCreateSchema = z
  * - catalogId: Filter by catalog (required)
  */
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const query = querySchema.parse(resolveParametersQueryInput(req, _ctx)) as CatalogIdQuery & {
-    fresh?: boolean;
-  };
+  const query = querySchema.parse(resolveParametersQueryInput(req, _ctx));
   const catalogId = query?.catalogId ?? '';
 
   if (!catalogId) {
@@ -146,6 +139,7 @@ export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): P
     catalogId,
     selectorType: data.selectorType,
     optionLabels: normalizeOptionLabels(data.optionLabels),
+    linkedTitleTermType: data.linkedTitleTermType ?? null,
   });
 
   CachedProductService.invalidateAll();

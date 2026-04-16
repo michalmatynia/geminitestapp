@@ -3,8 +3,7 @@
 import { ArrowLeftRight, Eye, EyeOff, Undo2 } from 'lucide-react';
 import React from 'react';
 
-import { CenterPreviewProvider, useCenterPreviewContext } from '@/features/ai/image-studio/components/center-preview/CenterPreviewContext';
-import { SplitVariantPreview } from '@/features/ai/image-studio/components/center-preview/SplitVariantPreview';
+import { CenterPreviewProvider, useCenterPreviewContext, SplitVariantPreview } from '@/features/ai/public';
 import { useProductStudioContext } from '@/features/products/context/ProductStudioContext';
 import { Button } from '@/shared/ui/button';
 import { FormSection } from '@/shared/ui/form-section';

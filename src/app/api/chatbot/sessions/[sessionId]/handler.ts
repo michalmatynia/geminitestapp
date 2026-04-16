@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { chatbotSessionRepository } from '@/features/ai/chatbot/server';
 import { chatbotSessionResponseSchema } from '@/shared/contracts/chatbot';

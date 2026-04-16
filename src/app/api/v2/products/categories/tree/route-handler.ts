@@ -6,7 +6,7 @@ import { apiHandler } from '@/shared/lib/api/api-handler';
 
 export const GET = apiHandler(GET_handler, {
   source: 'v2.products.categories.tree.GET',
-  cacheControl: 'no-store',
+  cacheControl: 'private, max-age=300, stale-while-revalidate=600',
   querySchema,
   requireAuth: true,
 });

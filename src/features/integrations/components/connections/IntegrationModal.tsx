@@ -46,6 +46,8 @@ export function IntegrationModal(): React.JSX.Element {
     activeTab,
     setActiveTab,
     isTradera,
+    isVinted,
+    is1688,
     isAllegro,
     isLinkedIn,
     isBaselinker,
@@ -56,7 +58,7 @@ export function IntegrationModal(): React.JSX.Element {
     handleSavePlaywrightSettings,
   } = useIntegrationTabs();
 
-  const canSaveBrowserSettings = isTradera && showPlaywright;
+  const canSaveBrowserSettings = showPlaywright;
 
   const handleSave = useCallback(async (): Promise<void> => {
     if (!canSaveBrowserSettings || isSaving) {
@@ -78,6 +80,8 @@ export function IntegrationModal(): React.JSX.Element {
       integrationName: activeIntegration.name,
       activeTab,
       isTradera,
+      isVinted,
+      is1688,
       isAllegro,
       isLinkedIn,
       isBaselinker,
@@ -99,6 +103,8 @@ export function IntegrationModal(): React.JSX.Element {
       isLinkedIn,
       isBaselinker,
       isTradera,
+      isVinted,
+      is1688,
       onOpenSessionModal,
       showAllegroConsole,
       showBaseConsole,

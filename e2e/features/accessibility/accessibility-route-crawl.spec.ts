@@ -50,7 +50,9 @@ for (const routeEntry of routes) {
     await expect(main).toBeVisible({ timeout: MAIN_READY_TIMEOUT_MS });
     await expect(main).toHaveAttribute('tabindex', '-1', { timeout: MAIN_READY_TIMEOUT_MS });
 
-    const skipLink = page.getByRole('link', { name: 'Skip to content', includeHidden: true }).first();
+    const skipLink = page
+      .getByRole('link', { name: /Skip to (main )?content/i, includeHidden: true })
+      .first();
     await expect(skipLink).toBeVisible({ timeout: MAIN_READY_TIMEOUT_MS });
     await skipLink.focus();
     await expect(skipLink).toBeFocused();

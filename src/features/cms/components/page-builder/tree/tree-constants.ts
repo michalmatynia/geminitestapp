@@ -47,7 +47,7 @@ export const SECTION_ICONS: Record<string, LucideIcon> = {
   Grid: LayoutGrid,
   Accordion: ListCollapse,
   Testimonials: Quote,
-  Video: Video,
+  Video,
   Slideshow: GalleryHorizontal,
   Newsletter: Mail,
   ContactForm: Send,
@@ -57,7 +57,7 @@ export const SECTION_ICONS: Record<string, LucideIcon> = {
 export const BLOCK_ICONS: Record<string, LucideIcon> = {
   Row: GripVertical,
   Announcement: Megaphone,
-  Heading: Heading,
+  Heading,
   Text: AlignLeft,
   TextElement: FileText,
   TextAtom: Folder,

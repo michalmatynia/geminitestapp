@@ -1,11 +1,11 @@
-import { JSX } from 'react';
+import { type JSX } from 'react';
 
-import { ImportsPage } from '@/features/data-import-export/public';
+import { ExportsPage } from '@/features/data-import-export/public';
 
 export default function Page(): JSX.Element {
   return (
     <div className='w-full py-2'>
-      <ImportsPage />
+      <ExportsPage />
     </div>
   );
 }

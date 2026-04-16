@@ -16,7 +16,7 @@ import {
 } from './sequence-actions/mirror-actions';
 import { handleCreateLatestPriceStockSequence } from './sequence-actions/price-stock-actions';
 import { handleCreateSkuAutoIncrementSequence } from './sequence-actions/sku-actions';
-import { SequenceActionInput, SequenceActionResult } from './sequence-actions/types';
+import { type SequenceActionInput, type SequenceActionResult } from './sequence-actions/types';
 
 /**
  * Validator docs: see docs/validator/function-reference.md#controller.createsequenceactions

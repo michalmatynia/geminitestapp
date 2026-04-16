@@ -2,12 +2,12 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
-import { isTraderaIntegrationSlug } from '@/features/integrations/constants/slugs';
 import {
+  isTraderaIntegrationSlug,
   useDefaultTraderaConnection,
   useIntegrationsWithConnections,
-} from '@/features/integrations/hooks/useIntegrationQueries';
-import { useLinkExistingTraderaListingMutation } from '@/features/integrations/hooks/useProductListingMutations';
+  useLinkExistingTraderaListingMutation,
+} from '@/features/integrations/product-integrations-adapter';
 import type { IntegrationWithConnections } from '@/shared/contracts/integrations/domain';
 import type { TraderaProductLinkExistingCandidate } from '@/shared/contracts/integrations/listings';
 import type { ProductWithImages } from '@/shared/contracts/products/product';

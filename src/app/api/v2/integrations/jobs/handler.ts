@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { ObjectId, type Document, type Filter } from 'mongodb';
+import { type NextRequest, NextResponse } from 'next/server';
+import { type ObjectId, type Document, type Filter } from 'mongodb';
 
 import { getProductListingRepository } from '@/features/integrations/server';
 import type { ListingJob, ProductJob } from '@/shared/contracts/integrations/domain';

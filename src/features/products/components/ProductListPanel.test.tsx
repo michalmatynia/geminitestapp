@@ -39,7 +39,11 @@ vi.mock('@/features/products/components/list/ProductFilters', () => ({
 }));
 
 vi.mock('@/features/products/components/list/ProductListHeader', () => ({
-  ProductListHeader: ({ filtersContent }: { filtersContent?: React.ReactNode }) => (
+  ProductListHeader: ({
+    filtersContent,
+  }: {
+    filtersContent?: React.ReactNode;
+  }) => (
     <div data-testid='product-list-header'>{filtersContent}</div>
   ),
 }));

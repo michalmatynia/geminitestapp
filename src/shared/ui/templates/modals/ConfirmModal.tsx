@@ -22,7 +22,7 @@ import { logClientCatch } from '@/shared/utils/observability/client-error-logger
 export interface ConfirmModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: () => void | Promise<void>;
+  onConfirm: () => boolean | void | Promise<boolean | void>;
   title: string;
   subtitle?: string;
   message?: React.ReactNode;
@@ -208,8 +208,10 @@ export function ConfirmModal(props: ConfirmModalProps): React.JSX.Element {
     event.preventDefault();
 
     try {
-      await Promise.resolve(onConfirm());
-      onClose();
+      const result = await Promise.resolve(onConfirm());
+      if (result !== false) {
+        onClose();
+      }
     } catch (error) {
       logClientCatch(error, {
         source: 'ConfirmModal',

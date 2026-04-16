@@ -333,7 +333,7 @@ export function CrudPanel(props: {
         )}
 
         <ConfirmModal
-          isOpen={!!deletingRow}
+          isOpen={Boolean(deletingRow)}
           onClose={() => setDeletingRow(null)}
           onConfirm={handleDelete}
           title='Delete Row'

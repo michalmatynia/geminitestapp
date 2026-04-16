@@ -3,9 +3,13 @@
 import React, { useMemo, useCallback } from 'react';
 
 import { useSelectionActions, useSelectionState, useRuntimeActions } from '@/features/ai/ai-paths/context';
-import { useGraphActions, useGraphState } from '@/features/ai/ai-paths/context/GraphContext';
+import {
+  useGraphActions,
+  useGraphDataState,
+  usePathMetadataState,
+} from '@/features/ai/ai-paths/context/GraphContext';
 import type { EntityModalProps } from '@/shared/contracts/ui/modals';
-import type { AiNode } from '@/shared/lib/ai-paths';
+import type { AiNode } from '@/shared/contracts/ai-paths';
 import { Button, Input, Alert } from '@/shared/ui/primitives.public';
 import { FormField } from '@/shared/ui/forms-and-actions.public';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
@@ -29,7 +33,8 @@ const applySimulationEntityId = (node: AiNode, entityId: string): AiNode => ({
 });
 
 export function SimulationDialog(): React.JSX.Element | null {
-  const { nodes, isPathLocked } = useGraphState();
+  const { nodes } = useGraphDataState();
+  const { isPathLocked } = usePathMetadataState();
   const { runSimulation: handleRunSimulation } = useRuntimeActions();
   const { simulationOpenNodeId } = useSelectionState();
   const { setSimulationOpenNodeId } = useSelectionActions();

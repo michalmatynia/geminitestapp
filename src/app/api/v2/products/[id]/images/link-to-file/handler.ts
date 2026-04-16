@@ -1,6 +1,6 @@
 import path from 'path';
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { uploadFile } from '@/features/files/server';

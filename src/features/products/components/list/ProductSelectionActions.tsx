@@ -1,10 +1,12 @@
 'use client';
 
 import {
+  Archive,
   Copy,
   Download,
   FileUp,
   Image as ImageIcon,
+  Search,
   Pencil,
   Save,
   Send,
@@ -13,6 +15,7 @@ import {
   Trash2,
   Upload,
   X,
+  Activity,
 } from 'lucide-react';
 import { memo, useCallback, useMemo, useRef, useState, type ChangeEvent } from 'react';
 
@@ -24,8 +27,14 @@ import {
   useProductListFiltersContext,
   useProductListSelectionContext,
 } from '@/features/products/context/ProductListContext';
-import { useBulkConvertImagesToBase64 } from '@/features/products/hooks/useProductsMutations';
+import { TraderaStatusCheckModal } from '@/features/integrations/product-integrations-adapter';
+import {
+  useBulkSetProductsArchivedState,
+  useBulkConvertImagesToBase64,
+} from '@/features/products/hooks/useProductsMutations';
 import { useTraderaMassQuickExport } from '@/features/products/hooks/product-list/useTraderaMassQuickExport';
+import { useVintedMassQuickExport } from '@/features/products/hooks/product-list/useVintedMassQuickExport';
+import { ProductAmazonScanModal } from '@/features/products/components/list/ProductAmazonScanModal';
 import type { ProductAdvancedFilterPreset } from '@/shared/contracts/products/filters';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { ActionMenu } from '@/shared/ui/ActionMenu';
@@ -51,7 +60,7 @@ import {
 } from './product-filters-utils';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-export const ProductSelectionActions = memo(function ProductSelectionActions() {
+export const ProductSelectionActions = memo(() => {
   const {
     data,
     rowSelection,
@@ -65,6 +74,7 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
     advancedFilter,
     activeAdvancedFilterPresetId,
     advancedFilterPresets,
+    includeArchived,
     setAdvancedFilterPresets,
     setAdvancedFilterState,
   } = useProductListFiltersContext();
@@ -79,8 +89,16 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
   const importFileInputRef = useRef<HTMLInputElement>(null);
   const { mutateAsync: convertSelectedToBase64, isPending: isConvertingSelected } =
     useBulkConvertImagesToBase64();
+  const { mutateAsync: setSelectedProductsArchivedState, isPending: isSettingSelectedArchivedState } =
+    useBulkSetProductsArchivedState();
   const { execute: executeTraderaMassExport, isRunning: isTraderaMassExportRunning } =
     useTraderaMassQuickExport();
+  const { execute: executeVintedMassExport, isRunning: isVintedMassExportRunning } =
+    useVintedMassQuickExport();
+  const [isTraderaStatusCheckOpen, setIsTraderaStatusCheckOpen] = useState(false);
+  const [statusCheckProductIds, setStatusCheckProductIds] = useState<string[]>([]);
+  const [isAmazonScanOpen, setIsAmazonScanOpen] = useState(false);
+  const [amazonScanProductIds, setAmazonScanProductIds] = useState<string[]>([]);
   const currentAdvancedFilterGroup = useMemo(
     () => parseAdvancedFilterPayload(advancedFilter),
     [advancedFilter]
@@ -121,6 +139,82 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
     }
     await executeTraderaMassExport(selectedProductIds);
   }, [executeTraderaMassExport, rowSelection, toast]);
+
+  const handleQuickExportVinted = useCallback(async (): Promise<void> => {
+    const selectedProductIds = Object.keys(rowSelection).filter((id: string) => rowSelection[id]);
+    if (selectedProductIds.length === 0) {
+      toast('Please select products to export.', { variant: 'error' });
+      return;
+    }
+    await executeVintedMassExport(selectedProductIds);
+  }, [executeVintedMassExport, rowSelection, toast]);
+
+  const handleSetArchivedSelected = useCallback(async (archived: boolean): Promise<void> => {
+    const selectedProductIds = Object.keys(rowSelection).filter((id: string) => rowSelection[id]);
+    if (selectedProductIds.length === 0) {
+      toast(`Please select products to ${archived ? 'archive' : 'unarchive'}.`, {
+        variant: 'error',
+      });
+      return;
+    }
+
+    try {
+      const result = await setSelectedProductsArchivedState({
+        productIds: selectedProductIds,
+        archived,
+      });
+      toast(
+        archived
+          ? `Archived ${result.updated} product${result.updated === 1 ? '' : 's'}.`
+          : `Removed ${result.updated} product${result.updated === 1 ? '' : 's'} from archive.`,
+        {
+          variant: 'success',
+        }
+      );
+      setRowSelection({});
+    } catch (error) {
+      logClientError(error);
+      toast(
+        error instanceof Error
+          ? error.message
+          : archived
+            ? 'Failed to archive selected products.'
+            : 'Failed to remove selected products from archive.',
+        {
+          variant: 'error',
+        }
+      );
+    }
+  }, [rowSelection, setRowSelection, setSelectedProductsArchivedState, toast]);
+
+  const [statusCheckProducts, setStatusCheckProducts] = useState<typeof data>([]);
+  const [amazonScanProducts, setAmazonScanProducts] = useState<typeof data>([]);
+
+  const handleCheckTraderaStatus = useCallback((): void => {
+    const selectedProductIds = Object.keys(rowSelection).filter((id: string) => rowSelection[id]);
+    if (selectedProductIds.length === 0) {
+      toast('Please select products to check.', { variant: 'error' });
+      return;
+    }
+    // Snapshot selected products at open time so re-fetches of the list don't affect the modal.
+    const selectedSet = new Set(selectedProductIds);
+    setStatusCheckProductIds(selectedProductIds);
+    setStatusCheckProducts(data.filter((p) => selectedSet.has(p.id)));
+    setIsTraderaStatusCheckOpen(true);
+  }, [data, rowSelection, toast]);
+
+  const handleScanAmazonAsin = useCallback((): void => {
+    const selectedProductIds = Object.keys(rowSelection).filter((id: string) => rowSelection[id]);
+    if (selectedProductIds.length === 0) {
+      toast('Please select products to scan.', { variant: 'error' });
+      return;
+    }
+
+    const selectedSet = new Set(selectedProductIds);
+    setAmazonScanProductIds(selectedProductIds);
+    setAmazonScanProducts(data.filter((product) => selectedSet.has(product.id)));
+    setIsAmazonScanOpen(true);
+  }, [data, rowSelection, toast]);
 
   const selectedCount = useMemo(
     () => Object.keys(rowSelection).filter((key) => rowSelection[key]).length,
@@ -400,6 +494,28 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => {
+                void handleSetArchivedSelected(true);
+              }}
+              className='cursor-pointer gap-2'
+              disabled={isSettingSelectedArchivedState || selectedCount === 0}
+            >
+              <Archive className='h-4 w-4' />
+              {isSettingSelectedArchivedState ? 'Updating archive state...' : 'Send to Archive'}
+            </DropdownMenuItem>
+            {includeArchived ? (
+              <DropdownMenuItem
+                onClick={() => {
+                  void handleSetArchivedSelected(false);
+                }}
+                className='cursor-pointer gap-2'
+                disabled={isSettingSelectedArchivedState || selectedCount === 0}
+              >
+                <Archive className='h-4 w-4' />
+                {isSettingSelectedArchivedState ? 'Updating archive state...' : 'Remove from Archive'}
+              </DropdownMenuItem>
+            ) : null}
+            <DropdownMenuItem
+              onClick={() => {
                 void handleQuickExportTradera();
               }}
               className='cursor-pointer gap-2'
@@ -407,6 +523,32 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
             >
               <Send className='h-4 w-4' />
               {isTraderaMassExportRunning ? 'Exporting to Tradera...' : 'Quick Export to Tradera'}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                void handleQuickExportVinted();
+              }}
+              className='cursor-pointer gap-2'
+              disabled={isVintedMassExportRunning || selectedCount === 0}
+            >
+              <Send className='h-4 w-4' />
+              {isVintedMassExportRunning ? 'Exporting to Vinted...' : 'Quick Export to Vinted'}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={handleCheckTraderaStatus}
+              className='cursor-pointer gap-2'
+              disabled={selectedCount === 0}
+            >
+              <Activity className='h-4 w-4' />
+              Check Tradera Listing Status
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={handleScanAmazonAsin}
+              className='cursor-pointer gap-2'
+              disabled={selectedCount === 0}
+            >
+              <Search className='h-4 w-4' />
+              Scan Amazon ASIN
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => {
@@ -605,6 +747,19 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
         onChange={(event) => {
           void handleImportFromFile(event);
         }}
+      />
+
+      <TraderaStatusCheckModal
+        isOpen={isTraderaStatusCheckOpen}
+        onClose={() => setIsTraderaStatusCheckOpen(false)}
+        productIds={statusCheckProductIds}
+        products={statusCheckProducts}
+      />
+      <ProductAmazonScanModal
+        isOpen={isAmazonScanOpen}
+        onClose={() => setIsAmazonScanOpen(false)}
+        productIds={amazonScanProductIds}
+        products={amazonScanProducts}
       />
     </>
   );

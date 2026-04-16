@@ -5,7 +5,7 @@ import { SYSTEM_LOG_SLOW_REQUEST_THRESHOLD_MS } from '@/shared/lib/observability
 import {
   KANGUR_ROUTE_DEFINITIONS,
 } from './summary.constants';
-import { KangurKnowledgeGraphFreshnessSnapshot } from './summary.contracts';
+import { type KangurKnowledgeGraphFreshnessSnapshot } from './summary.contracts';
 import { eventCount, resolveKnowledgeGraphAlertStatus, buildKnowledgeGraphAlertSummary, rateStatus, countStatus, valueStatus, minimumRateStatus, scaleCountThreshold, buildKangurObservabilitySectionHref } from './summary.alerts';
 import { toPercent } from './summary.analytics';
 import { buildSystemLogsHref } from './summary.routes';

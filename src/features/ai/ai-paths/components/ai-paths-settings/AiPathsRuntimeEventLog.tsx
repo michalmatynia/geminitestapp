@@ -2,7 +2,7 @@
 
 import React, { useMemo } from 'react';
 
-import type { AiPathRuntimeEvent } from '@/shared/lib/ai-paths';
+import type { AiPathRuntimeEvent } from '@/shared/contracts/ai-paths-runtime';
 import { CompactEmptyState } from '@/shared/ui/navigation-and-layout.public';
 import { renderRuntimeEventEntry } from '../runtime-event-entry';
 

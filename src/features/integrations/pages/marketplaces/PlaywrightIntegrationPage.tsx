@@ -15,7 +15,13 @@ import {
   parsePlaywrightFieldMapperJson,
   type PlaywrightFieldMapperTargetField,
 } from '@/features/integrations/services/playwright-listing/field-mapper';
-import { toPlaywrightConnectionPayload } from '@/features/integrations/utils/playwright-connection-payload';
+import { toPlaywrightConnectionOverridePayload } from '@/features/integrations/utils/playwright-connection-payload';
+import {
+  defaultIntegrationConnectionPlaywrightSettings,
+  normalizeIntegrationConnectionPlaywrightPersonaId,
+  resolveIntegrationConnectionPlaywrightSettingsWithPersona,
+  resolveIntegrationPlaywrightPersonaSettings,
+} from '@/features/integrations/utils/playwright-connection-settings';
 import { PlaywrightSettingsForm } from '@/shared/ui/playwright/PlaywrightSettingsForm';
 import type { PlaywrightConfigCaptureRoute } from '@/shared/contracts/ai-paths-core/nodes/external-nodes';
 import { playwrightConfigCaptureRouteSchema } from '@/shared/contracts/ai-paths-core/nodes/external-nodes';
@@ -24,7 +30,6 @@ import type { IntegrationConnection } from '@/shared/contracts/integrations/conn
 import type { PlaywrightSettings } from '@/shared/contracts/playwright';
 import { api } from '@/shared/lib/api-client';
 import { createEmptyPlaywrightCaptureRoute } from '@/shared/lib/ai-paths/core/playwright/capture-defaults';
-import { defaultPlaywrightSettings } from '@/shared/lib/playwright/settings';
 import { PlaywrightCaptureRoutesEditor } from '@/shared/ui/playwright/PlaywrightCaptureRoutesEditor';
 import { AdminIntegrationsPageLayout } from '@/shared/ui/admin.public';
 import { Button, Card, Input, Textarea, useToast } from '@/shared/ui/primitives.public';
@@ -122,63 +127,11 @@ const serializeCaptureRouteConfigJson = ({
     appearanceMode,
   });
 
-const connectionToSettings = (connection: IntegrationConnection | null): PlaywrightSettings => ({
-  ...defaultPlaywrightSettings,
-  ...(typeof connection?.playwrightHeadless === 'boolean'
-    ? { headless: connection.playwrightHeadless }
-    : {}),
-  ...(typeof connection?.playwrightSlowMo === 'number'
-    ? { slowMo: connection.playwrightSlowMo }
-    : {}),
-  ...(typeof connection?.playwrightTimeout === 'number'
-    ? { timeout: connection.playwrightTimeout }
-    : {}),
-  ...(typeof connection?.playwrightNavigationTimeout === 'number'
-    ? { navigationTimeout: connection.playwrightNavigationTimeout }
-    : {}),
-  ...(typeof connection?.playwrightHumanizeMouse === 'boolean'
-    ? { humanizeMouse: connection.playwrightHumanizeMouse }
-    : {}),
-  ...(typeof connection?.playwrightMouseJitter === 'number'
-    ? { mouseJitter: connection.playwrightMouseJitter }
-    : {}),
-  ...(typeof connection?.playwrightClickDelayMin === 'number'
-    ? { clickDelayMin: connection.playwrightClickDelayMin }
-    : {}),
-  ...(typeof connection?.playwrightClickDelayMax === 'number'
-    ? { clickDelayMax: connection.playwrightClickDelayMax }
-    : {}),
-  ...(typeof connection?.playwrightInputDelayMin === 'number'
-    ? { inputDelayMin: connection.playwrightInputDelayMin }
-    : {}),
-  ...(typeof connection?.playwrightInputDelayMax === 'number'
-    ? { inputDelayMax: connection.playwrightInputDelayMax }
-    : {}),
-  ...(typeof connection?.playwrightActionDelayMin === 'number'
-    ? { actionDelayMin: connection.playwrightActionDelayMin }
-    : {}),
-  ...(typeof connection?.playwrightActionDelayMax === 'number'
-    ? { actionDelayMax: connection.playwrightActionDelayMax }
-    : {}),
-  ...(typeof connection?.playwrightProxyEnabled === 'boolean'
-    ? { proxyEnabled: connection.playwrightProxyEnabled }
-    : {}),
-  ...(typeof connection?.playwrightProxyServer === 'string'
-    ? { proxyServer: connection.playwrightProxyServer }
-    : {}),
-  ...(typeof connection?.playwrightProxyUsername === 'string'
-    ? { proxyUsername: connection.playwrightProxyUsername }
-    : {}),
-  ...(typeof connection?.playwrightProxyPassword === 'string'
-    ? { proxyPassword: connection.playwrightProxyPassword }
-    : {}),
-  ...(typeof connection?.playwrightEmulateDevice === 'boolean'
-    ? { emulateDevice: connection.playwrightEmulateDevice }
-    : {}),
-  ...(typeof connection?.playwrightDeviceName === 'string'
-    ? { deviceName: connection.playwrightDeviceName }
-    : {}),
-});
+const connectionToSettings = (
+  connection: IntegrationConnection | null,
+  personas: Array<{ id: string; settings: PlaywrightSettings }> | undefined
+): PlaywrightSettings =>
+  resolveIntegrationConnectionPlaywrightSettingsWithPersona(connection, personas);
 
 const connectionToFieldMapperRows = (connection: IntegrationConnection | null): FieldMapperRow[] =>
   parsePlaywrightFieldMapperJson(connection?.playwrightFieldMapperJson).map((entry) => ({
@@ -213,6 +166,12 @@ const getPersonaOptions = (
     label: persona.name,
   })) as Array<{ value: string; label: string }>),
 ];
+
+const resolvePlaywrightPersonaBaseline = (
+  personas: Array<{ id: string; settings: PlaywrightSettings }> | undefined,
+  personaId: string
+): PlaywrightSettings =>
+  resolveIntegrationPlaywrightPersonaSettings(personas, personaId);
 
 const FIELD_TARGET_OPTIONS = PLAYWRIGHT_FIELD_MAPPER_TARGET_FIELDS.map((field) => ({
   value: field,
@@ -249,7 +208,7 @@ export default function PlaywrightIntegrationPage({
   const [appearanceMode, setAppearanceMode] = useState('');
   const [fieldMapperRows, setFieldMapperRows] = useState<FieldMapperRow[]>([]);
   const [playwrightSettings, setPlaywrightSettings] = useState<PlaywrightSettings>(
-    defaultPlaywrightSettings
+    defaultIntegrationConnectionPlaywrightSettings
   );
   const [testResultJson, setTestResultJson] = useState('');
   const [runningTestType, setRunningTestType] = useState<'listing' | 'import' | null>(null);
@@ -285,16 +244,19 @@ export default function PlaywrightIntegrationPage({
     );
 
     setConnectionName(selectedConnection?.name ?? '');
-    setPersonaId(selectedConnection?.playwrightPersonaId ?? '');
+    setPersonaId(
+      normalizeIntegrationConnectionPlaywrightPersonaId(selectedConnection?.playwrightPersonaId) ??
+        ''
+    );
     setListingScript(selectedConnection?.playwrightListingScript ?? '');
     setImportScript(selectedConnection?.playwrightImportScript ?? '');
     setImportBaseUrl(selectedConnection?.playwrightImportBaseUrl ?? '');
     setCaptureRoutes(captureConfig.routes);
     setAppearanceMode(captureConfig.appearanceMode);
     setFieldMapperRows(connectionToFieldMapperRows(selectedConnection));
-    setPlaywrightSettings(connectionToSettings(selectedConnection));
+    setPlaywrightSettings(connectionToSettings(selectedConnection, personasQuery.data));
     setTestResultJson('');
-  }, [selectedConnection]);
+  }, [personasQuery.data, selectedConnection]);
 
   const saveCurrentConnection = async (showToastOnSuccess: boolean): Promise<IntegrationConnection | null> => {
     if (!programmableIntegration) {
@@ -302,6 +264,12 @@ export default function PlaywrightIntegrationPage({
       return null;
     }
 
+    const baselineSettings = resolvePlaywrightPersonaBaseline(personasQuery.data, personaId.trim());
+    const settingsPayload = toPlaywrightConnectionOverridePayload({
+      settings: playwrightSettings,
+      baselineSettings,
+      includeResetFlag: Boolean(selectedConnection),
+    });
     const payload = {
       name: connectionName.trim() || 'Playwright Connection',
       playwrightPersonaId: personaId.trim() || null,
@@ -313,7 +281,7 @@ export default function PlaywrightIntegrationPage({
         appearanceMode,
       }),
       playwrightFieldMapperJson: serializeFieldMapperRows(fieldMapperRows),
-      ...toPlaywrightConnectionPayload(playwrightSettings),
+      ...settingsPayload,
     };
 
     try {
@@ -349,7 +317,7 @@ export default function PlaywrightIntegrationPage({
     setCaptureRoutes([createEmptyPlaywrightCaptureRoute(1)]);
     setAppearanceMode('');
     setFieldMapperRows([]);
-    setPlaywrightSettings(defaultPlaywrightSettings);
+    setPlaywrightSettings(defaultIntegrationConnectionPlaywrightSettings);
     setSelectedConnectionId('');
 
     const created = await saveCurrentConnection(false);
@@ -479,7 +447,12 @@ export default function PlaywrightIntegrationPage({
               >
                 <SelectSimple
                   value={personaId}
-                  onValueChange={setPersonaId}
+                  onValueChange={(value) => {
+                    setPersonaId(value);
+                    setPlaywrightSettings(
+                      resolvePlaywrightPersonaBaseline(personasQuery.data, value.trim())
+                    );
+                  }}
                   options={getPersonaOptions(personasQuery.data)}
                   ariaLabel='Playwright persona'
                   title='Playwright persona'

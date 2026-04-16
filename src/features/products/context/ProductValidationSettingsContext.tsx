@@ -1,5 +1,9 @@
 'use client';
 
+// ProductValidationSettingsContext: exposes validator configuration and
+// runtime flags to the product form and settings pages. Keeps validation
+// toggle state and default behaviors centralized for consistent UX.
+
 import { useMemo, type Dispatch, type SetStateAction } from 'react';
 
 import type { ProductValidationPattern, ProductValidationDenyBehavior, ProductValidationInstanceScope, ProductValidationDenyIssueInput, ProductValidationAcceptIssueInput } from '@/shared/contracts/products/validation';

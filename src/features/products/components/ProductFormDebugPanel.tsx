@@ -9,6 +9,7 @@ import {
 } from '@/features/products/context/ProductFormCoreContext';
 import { ProductFormImageContext } from '@/features/products/context/ProductFormImageContext';
 import { ProductFormMetadataContext } from '@/features/products/context/ProductFormMetadataContext';
+import { ProductFormCustomFieldContext } from '@/features/products/context/ProductFormCustomFieldContext';
 import { ProductFormParameterContext } from '@/features/products/context/ProductFormParameterContext';
 import {
   ProductFormStudioActionsContext,
@@ -20,6 +21,7 @@ export default function ProductFormDebugPanel(): React.JSX.Element | null {
   const coreActionsContext = useContext(ProductFormCoreActionsContext);
   const metadataContext = useContext(ProductFormMetadataContext);
   const imageContext = useContext(ProductFormImageContext);
+  const customFieldContext = useContext(ProductFormCustomFieldContext);
   const parameterContext = useContext(ProductFormParameterContext);
   const studioStateContext = useContext(ProductFormStudioStateContext);
   const studioActionsContext = useContext(ProductFormStudioActionsContext);
@@ -37,6 +39,7 @@ export default function ProductFormDebugPanel(): React.JSX.Element | null {
     !coreContext &&
     !metadataContext &&
     !imageContext &&
+    !customFieldContext &&
     !parameterContext &&
     !studioContext &&
     !submitContext
@@ -48,6 +51,7 @@ export default function ProductFormDebugPanel(): React.JSX.Element | null {
     core: coreContext,
     metadata: metadataContext,
     images: imageContext,
+    customFields: customFieldContext,
     parameters: parameterContext,
     studio: studioContext,
     submit: submitContext,

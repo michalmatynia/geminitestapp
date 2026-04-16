@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getAsset3DRepository, uploadAsset3D, validate3DFile } from '@/features/viewer3d/server';
@@ -9,6 +9,7 @@ import {
   optionalCsvQueryStringArray,
   optionalTrimmedQueryString,
 } from '@/shared/lib/api/query-schema';
+import { applyCacheLife } from '@/shared/lib/next/cache-life';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
@@ -21,15 +22,36 @@ export const querySchema = z.object({
   tags: optionalCsvQueryStringArray(),
 });
 
+type Asset3DListQuery = {
+  filename: string | null;
+  category: string | null;
+  search: string | null;
+  isPublic: boolean | null;
+  tags: string[];
+};
+
+async function listAssets3DCached(query: Asset3DListQuery) {
+  'use cache';
+  applyCacheLife('swr60');
+
+  const repository = getAsset3DRepository();
+  return repository.listAssets3D({
+    ...(query.filename ? { filename: query.filename } : {}),
+    ...(query.category ? { category: query.category } : {}),
+    ...(query.search ? { search: query.search } : {}),
+    ...(query.isPublic !== null ? { isPublic: query.isPublic } : {}),
+    ...(query.tags.length > 0 ? { tags: query.tags } : {}),
+  });
+}
+
 export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
-  const repository = getAsset3DRepository();
-  const assets = await repository.listAssets3D({
-    ...(query.filename && { filename: query.filename }),
-    ...(query.category && { category: query.category }),
-    ...(query.search && { search: query.search }),
-    ...(query.isPublic !== undefined && { isPublic: query.isPublic }),
-    ...(query.tags && { tags: query.tags }),
+  const assets = await listAssets3DCached({
+    filename: query.filename ?? null,
+    category: query.category ?? null,
+    search: query.search ?? null,
+    isPublic: query.isPublic ?? null,
+    tags: query.tags ?? [],
   });
 
   return NextResponse.json(assets, {

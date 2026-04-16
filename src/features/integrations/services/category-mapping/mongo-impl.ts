@@ -15,7 +15,7 @@ import { notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 import {
-  MongoCategoryMappingDoc,
+  type MongoCategoryMappingDoc,
   CATEGORY_MAPPING_COLLECTION,
   EXTERNAL_CATEGORY_COLLECTION,
   PRODUCT_CATEGORY_COLLECTION,
@@ -23,10 +23,10 @@ import {
   mapMongoCategoryMappingToRecord,
   mapMongoExternalCategory,
   mapMongoInternalCategory,
-  MongoExternalCategoryDoc,
-  MongoProductCategoryDoc,
+  type MongoExternalCategoryDoc,
+  type MongoProductCategoryDoc,
   normalizeInternalCategoryId,
-  UniqueInternalCategoryScope,
+  type UniqueInternalCategoryScope,
 } from './types';
 
 let mongoCategoryMappingIndexesReady: Promise<void> | null = null;
@@ -165,6 +165,111 @@ const loadCanonicalExternalCategoryRefs = async (
   return refs;
 };
 
+const listMongoMappingsWithDetails = async ({
+  db,
+  filter,
+}: {
+  db: Awaited<ReturnType<typeof getMongoDb>>;
+  filter: Filter<MongoCategoryMappingDoc>;
+}): Promise<CategoryMappingWithDetails[]> => {
+  const collection = db.collection<MongoCategoryMappingDoc>(CATEGORY_MAPPING_COLLECTION);
+  const mappings = await collection.find(filter).sort({ createdAt: -1 }).toArray();
+  if (mappings.length === 0) return [];
+
+  const internalCategoryIds = [
+    ...new Set(
+      mappings.map((mapping) => mapping.internalCategoryId).filter((id): id is string => Boolean(id))
+    ),
+  ];
+
+  const externalCategoryCollection = db.collection<MongoExternalCategoryDoc>(
+    EXTERNAL_CATEGORY_COLLECTION
+  );
+  const [externalCategories, internalCategories] = await Promise.all([
+    externalCategoryCollection
+      .find({
+        connectionId: {
+          $in: [...new Set(mappings.map((mapping) => mapping.connectionId).filter(Boolean))],
+        },
+      } as Filter<MongoExternalCategoryDoc>)
+      .toArray(),
+    db
+      .collection<MongoProductCategoryDoc>(PRODUCT_CATEGORY_COLLECTION)
+      .find({
+        _id: {
+          $in: internalCategoryIds
+            .filter((id) => ObjectId.isValid(id))
+            .map((id) => new ObjectId(id)),
+        },
+      } as Filter<MongoProductCategoryDoc>)
+      .toArray(),
+  ]);
+
+  const externalRefs = new Map<string, CanonicalExternalCategoryRef>();
+  for (const record of externalCategories) {
+    const category = mapMongoExternalCategory(record);
+    const aliases = [
+      ...new Set([category.externalId, category.id].map((id) => id.trim()).filter(Boolean)),
+    ];
+    const ref: CanonicalExternalCategoryRef = {
+      canonicalExternalCategoryId: category.externalId,
+      aliases,
+      category,
+    };
+
+    for (const alias of aliases) {
+      externalRefs.set(`${category.connectionId}:${alias}`, ref);
+    }
+  }
+
+  const internalMap = new Map<string, InternalCategory>(
+    internalCategories.map(
+      (category) =>
+        [category._id.toString(), mapMongoInternalCategory(category)] as [string, InternalCategory]
+    )
+  );
+
+  return mappings.map((mapping) => {
+    const resolvedExternal =
+      externalRefs.get(`${mapping.connectionId}:${mapping.externalCategoryId}`) ?? null;
+    const externalCategory =
+      resolvedExternal?.category ||
+      ({
+        id: mapping.externalCategoryId,
+        connectionId: mapping.connectionId,
+        externalId: mapping.externalCategoryId,
+        name: `[Missing external category: ${mapping.externalCategoryId}]`,
+        parentExternalId: null,
+        path: null,
+        depth: 0,
+        isLeaf: true,
+        metadata: null,
+        fetchedAt: mapping.updatedAt.toISOString(),
+        createdAt: mapping.createdAt.toISOString(),
+        updatedAt: mapping.updatedAt.toISOString(),
+      } as ExternalCategory);
+
+    return {
+      ...mapMongoCategoryMappingToRecord(mapping),
+      externalCategoryId:
+        resolvedExternal?.canonicalExternalCategoryId ?? mapping.externalCategoryId,
+      externalCategory,
+      internalCategory:
+        internalMap.get(mapping.internalCategoryId || '') ||
+        ({
+          id: mapping.internalCategoryId || '',
+          name: `[Missing internal category: ${mapping.internalCategoryId}]`,
+          description: null,
+          color: null,
+          parentId: null,
+          catalogId: mapping.catalogId,
+          createdAt: mapping.createdAt.toISOString(),
+          updatedAt: mapping.updatedAt.toISOString(),
+        } as InternalCategory),
+    };
+  });
+};
+
 const buildCanonicalExternalCategoryFilter = (
   connectionId: string,
   catalogId: string,
@@ -271,93 +376,37 @@ export const mongoCategoryMappingImpl = {
     return doc ? mapMongoCategoryMappingToRecord(doc) : null;
   },
 
+  async listByInternalCategory(
+    internalCategoryId: string,
+    catalogId?: string
+  ): Promise<CategoryMappingWithDetails[]> {
+    const normalizedInternalCategoryId = normalizeInternalCategoryId(internalCategoryId);
+    if (!normalizedInternalCategoryId) {
+      return [];
+    }
+
+    const db = await getMongoDb();
+    const filter: Filter<MongoCategoryMappingDoc> = {
+      internalCategoryId: normalizedInternalCategoryId,
+    };
+    if (catalogId) {
+      filter.catalogId = catalogId;
+    }
+
+    return listMongoMappingsWithDetails({ db, filter });
+  },
+
   async listByConnection(
     connectionId: string,
     catalogId?: string
   ): Promise<CategoryMappingWithDetails[]> {
     const db = await getMongoDb();
-    const collection = db.collection<MongoCategoryMappingDoc>(CATEGORY_MAPPING_COLLECTION);
-
     const filter: Filter<MongoCategoryMappingDoc> = { connectionId };
     if (catalogId) {
       filter.catalogId = catalogId;
     }
 
-    const mappings = await collection.find(filter).sort({ createdAt: -1 }).toArray();
-    if (mappings.length === 0) return [];
-
-    const externalCategoryIds = [
-      ...new Set(
-        mappings.map((m) => m.externalCategoryId).filter((id): id is string => Boolean(id))
-      ),
-    ];
-    const internalCategoryIds = [
-      ...new Set(
-        mappings.map((m) => m.internalCategoryId).filter((id): id is string => Boolean(id))
-      ),
-    ];
-
-    const externalCategoryCollection = db.collection<MongoExternalCategoryDoc>(
-      EXTERNAL_CATEGORY_COLLECTION
-    );
-    const [externalRefs, internalCategories] = await Promise.all([
-      loadCanonicalExternalCategoryRefs(externalCategoryCollection, connectionId, externalCategoryIds),
-      db
-        .collection<MongoProductCategoryDoc>(PRODUCT_CATEGORY_COLLECTION)
-        .find({
-          _id: {
-            $in: internalCategoryIds
-              .filter((id) => ObjectId.isValid(id))
-              .map((id) => new ObjectId(id)),
-          },
-        } as Filter<MongoProductCategoryDoc>)
-        .toArray(),
-    ]);
-
-    const internalMap = new Map<string, InternalCategory>(
-      internalCategories.map(
-        (c) => [c._id.toString(), mapMongoInternalCategory(c)] as [string, InternalCategory]
-      )
-    );
-
-    return mappings.map((mapping) => {
-      const resolvedExternal = externalRefs.get(mapping.externalCategoryId);
-      const externalCategory =
-        resolvedExternal?.category ||
-        ({
-          id: mapping.externalCategoryId,
-          connectionId: mapping.connectionId,
-          externalId: mapping.externalCategoryId,
-          name: `[Missing external category: ${mapping.externalCategoryId}]`,
-          parentExternalId: null,
-          path: null,
-          depth: 0,
-          isLeaf: true,
-          metadata: null,
-          fetchedAt: mapping.updatedAt.toISOString(),
-          createdAt: mapping.createdAt.toISOString(),
-          updatedAt: mapping.updatedAt.toISOString(),
-        } as ExternalCategory);
-
-      return {
-        ...mapMongoCategoryMappingToRecord(mapping),
-        externalCategoryId:
-          resolvedExternal?.canonicalExternalCategoryId ?? mapping.externalCategoryId,
-        externalCategory,
-        internalCategory:
-          internalMap.get(mapping.internalCategoryId || '') ||
-          ({
-            id: mapping.internalCategoryId || '',
-            name: `[Missing internal category: ${mapping.internalCategoryId}]`,
-            description: null,
-            color: null,
-            parentId: null,
-            catalogId: mapping.catalogId,
-            createdAt: mapping.createdAt.toISOString(),
-            updatedAt: mapping.updatedAt.toISOString(),
-          } as InternalCategory),
-      };
-    });
+    return listMongoMappingsWithDetails({ db, filter });
   },
 
   async getByExternalCategory(

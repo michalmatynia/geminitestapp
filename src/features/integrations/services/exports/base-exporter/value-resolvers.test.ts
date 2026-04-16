@@ -36,12 +36,16 @@ describe('value-resolvers', () => {
 
     expect(getProductValue(product, 'parameter:material|en')).toBe('Cotton');
     expect(getProductValue(product, 'category_id')).toBe('category-1');
-    expect(getProductValue(product, 'producer_names', null, undefined, { 'producer-1': 'Acme' })).toEqual([
-      'Acme',
-    ]);
-    expect(getProductValue(product, 'tag_id', null, undefined, undefined, undefined, undefined, { 'tag-1': 'ext-tag-1' })).toEqual([
-      'ext-tag-1',
-    ]);
+    expect(
+      getProductValue(product, 'producer_names', {
+        producerNameById: { 'producer-1': 'Acme' },
+      })
+    ).toEqual(['Acme']);
+    expect(
+      getProductValue(product, 'tag_id', {
+        tagExternalIdByInternalId: { 'tag-1': 'ext-tag-1' },
+      })
+    ).toEqual(['ext-tag-1']);
     expect(getProductValue(product, 'sku')).toBe('SKU-123');
   });
 

@@ -49,6 +49,9 @@ const GAME_BRAND_NAME = 'Sprycio';
 const GAME_MAIN_ID = 'kangur-game-main';
 const GAME_TITLE_ID = 'kangur-game-page-title';
 const GAME_SCREEN_TITLE_ID = 'kangur-game-screen-title';
+// GAME_TOP_RESET_SCREENS: screens that scroll the page back to the top when
+// they become active. Setup and operation screens need a clean viewport;
+// playing/result screens preserve the learner's scroll position.
 const GAME_TOP_RESET_SCREENS = new Set<KangurGameScreen>([
   'training',
   'kangur_setup',
@@ -56,6 +59,9 @@ const GAME_TOP_RESET_SCREENS = new Set<KangurGameScreen>([
   ...KANGUR_LAUNCHABLE_GAME_SCREENS,
 ]);
 
+// focusGameScreenHeading moves keyboard focus to the active screen's heading
+// after a screen transition. Uses preventScroll to avoid jarring jumps, with
+// a plain focus() fallback for browsers that don't support the option.
 const focusGameScreenHeading = (heading: HTMLHeadingElement | null): void => {
   if (!heading) {
     return;
@@ -669,6 +675,17 @@ function useGameTutorRuntime(input: {
   };
 }
 
+// GameContent is the inner game page component that consumes KangurGameRuntime.
+// It owns:
+//  - Screen rendering via GameCurrentScreen (home, operation, playing, result,
+//    training, kangur_setup, launchable game instances)
+//  - AI Tutor session sync (registers the current game screen as the tutor context)
+//  - Tutor anchor registration for game home widgets
+//  - Learner activity ping (keeps the session alive during gameplay)
+//  - Route page-ready signalling (tells the shell when the page is interactive)
+//  - Screen heading focus management on screen transitions (accessibility)
+//  - XP toast rendering (lazy-loaded, SSR disabled)
+//  - Scroll-to-top on setup/operation screens
 function GameContent(): React.JSX.Element {
   const translations = useTranslations('KangurGamePage');
   const runtime = useKangurGameRuntime();
@@ -798,6 +815,9 @@ function GameContent(): React.JSX.Element {
   );
 }
 
+// Game is the page entry point. It wraps GameContent in
+// KangurGameRuntimeBoundary so the game runtime context is always available,
+// even when the page is rendered outside the main app shell (e.g. in tests).
 export default function Game(): React.JSX.Element {
   return (
     <KangurGameRuntimeBoundary enabled>

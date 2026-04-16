@@ -31,7 +31,7 @@ vi.mock('@/shared/lib/ai-paths/client-run-tracker', () => ({
   subscribeToTrackedAiPathRun: (...args: unknown[]) => subscribeToTrackedAiPathRunMock(...args),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   useToast: () => ({
     toast: toastMock,
   }),
@@ -166,6 +166,140 @@ describe('useTriggerButtons', () => {
       entityId: 'product-1',
       entityType: 'product',
     });
+  });
+
+  it('passes caller-provided trigger extras into the AI Path event', async () => {
+    const getTriggerExtras = vi.fn(() => ({
+      marketplaceCopyDebrandInput: {
+        rowId: 'row-1',
+      },
+    }));
+    const { result } = renderHook(() =>
+      useTriggerButtons({
+        location: 'product_row',
+        entityType: 'product',
+        entityId: 'product-1',
+        getTriggerExtras,
+      })
+    );
+
+    await act(async () => {
+      await result.current.handleTrigger(BUTTON, { mode: 'click' });
+    });
+
+    expect(getTriggerExtras).toHaveBeenCalled();
+    expect(fireAiPathTriggerEventMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        extras: {
+          marketplaceCopyDebrandInput: {
+            rowId: 'row-1',
+          },
+          mode: 'click',
+        },
+      })
+    );
+  });
+
+  it('fires the marketplace-copy Debrand button through its bound AI Path workflow', async () => {
+    const debrandButton = {
+      ...BUTTON,
+      id: 'bdf0f5d2-a300-4f79-991c-2b5f1e0ef3a4',
+      name: 'Debrand',
+      locations: ['product_marketplace_copy_row'],
+      pathId: 'path_marketplace_copy_debrand_v1',
+      display: {
+        label: 'Debrand',
+      },
+      sortIndex: 35,
+    } satisfies AiTriggerButtonRecord;
+    const getEntityJson = vi.fn(() => ({
+      id: 'product-1',
+      name_en: 'Warhammer 40,000 Space Marine Figure',
+      marketplaceCopyDebrandInput: {
+        sourceEnglishTitle: 'Warhammer 40,000 Space Marine Figure',
+      },
+    }));
+    const getTriggerExtras = vi.fn(() => ({
+      marketplaceCopyDebrandInput: {
+        sourceEnglishTitle: 'Warhammer 40,000 Space Marine Figure',
+        targetRow: {
+          id: 'row-1',
+          index: 0,
+        },
+      },
+    }));
+
+    useAiPathsTriggerButtonsQueryMock.mockReturnValue({
+      data: [debrandButton],
+      isLoading: false,
+    });
+
+    const { result } = renderHook(() =>
+      useTriggerButtons({
+        location: 'product_marketplace_copy_row',
+        entityType: 'product',
+        entityId: 'product-1',
+        getEntityJson,
+        getTriggerExtras,
+      })
+    );
+
+    expect(result.current.buttons).toEqual([debrandButton]);
+
+    await act(async () => {
+      await result.current.handleTrigger(debrandButton, { mode: 'click' });
+    });
+
+    expect(fireAiPathTriggerEventMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        triggerEventId: 'bdf0f5d2-a300-4f79-991c-2b5f1e0ef3a4',
+        triggerLabel: 'Debrand',
+        preferredPathId: 'path_marketplace_copy_debrand_v1',
+        entityType: 'product',
+        entityId: 'product-1',
+        getEntityJson,
+        source: {
+          tab: 'product',
+          location: 'product_marketplace_copy_row',
+        },
+        extras: {
+          marketplaceCopyDebrandInput: {
+            sourceEnglishTitle: 'Warhammer 40,000 Space Marine Figure',
+            targetRow: {
+              id: 'row-1',
+              index: 0,
+            },
+          },
+          mode: 'click',
+        },
+      })
+    );
+  });
+
+  it('shows an error and aborts when trigger extras cannot be built', async () => {
+    const getTriggerExtras = vi.fn(() => {
+      throw new Error('extras exploded');
+    });
+
+    const { result } = renderHook(() =>
+      useTriggerButtons({
+        location: 'product_row',
+        entityType: 'product',
+        entityId: 'product-1',
+        getTriggerExtras,
+      })
+    );
+
+    await act(async () => {
+      await result.current.handleTrigger(BUTTON, { mode: 'click' });
+    });
+
+    expect(getTriggerExtras).toHaveBeenCalled();
+    expect(fireAiPathTriggerEventMock).not.toHaveBeenCalled();
+    expect(toastMock).toHaveBeenCalledWith(
+      'Could not build trigger context for this AI Path trigger.',
+      { variant: 'error' }
+    );
   });
 
   it('derives the queued product identity from the entity snapshot when entityId is missing', async () => {
@@ -494,6 +628,52 @@ describe('useTriggerButtons', () => {
         status: 'failed',
         errorMessage: 'Database write affected 0 records for update.',
       });
+    });
+  });
+
+  it('clears the waiting run placeholder when the trigger fails before enqueue', async () => {
+    fireAiPathTriggerEventMock.mockImplementation(
+      async (args: {
+        onError?: (error: string) => void;
+        onProgress?: (payload: {
+          status: 'running' | 'success' | 'error';
+          progress: number;
+          completedNodes?: number;
+          totalNodes?: number;
+          node?: null;
+          error?: string | null;
+          message?: string | null;
+        }) => void;
+      }) => {
+        args.onError?.('Trigger node not found in path: Trigger');
+        args.onProgress?.({
+          status: 'error',
+          progress: 0,
+          error: 'trigger_node_not_found',
+          message: 'Trigger node not found in path: Trigger',
+          completedNodes: 0,
+          totalNodes: 1,
+          node: null,
+        });
+      }
+    );
+
+    const { result } = renderHook(() =>
+      useTriggerButtons({
+        location: 'product_row',
+        entityType: 'product',
+        entityId: 'product-1',
+      })
+    );
+
+    await act(async () => {
+      await result.current.handleTrigger(BUTTON, { mode: 'click' });
+    });
+
+    expect(result.current.lastRuns[BUTTON.id]).toBeUndefined();
+    expect(result.current.runStates[BUTTON.id]).toMatchObject({
+      status: 'idle',
+      progress: 0,
     });
   });
 

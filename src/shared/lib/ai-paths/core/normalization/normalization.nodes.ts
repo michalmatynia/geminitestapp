@@ -100,6 +100,7 @@ export const getDefaultConfigForType = (
       trigger: {
         event: TRIGGER_EVENTS[0]?.id ?? 'manual',
         contextMode: 'trigger_only',
+        entitySnapshotMode: 'auto',
       },
     };
   }
@@ -471,6 +472,12 @@ export const getDefaultConfigForType = (
         provider: 'auto',
         mode: 'all',
         collections: [],
+        sourceMode: 'schema',
+        contextCollections: [],
+        contextQuery: '',
+        contextLimit: 20,
+        contextTransform: 'none',
+        contextReuseMode: 'never',
         includeFields: true,
         includeRelations: true,
         formatAs: 'text',

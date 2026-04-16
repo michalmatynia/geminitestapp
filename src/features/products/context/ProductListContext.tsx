@@ -1,8 +1,20 @@
 'use client';
 
+// ProductListContext: central composition root for product list UI state.
+// - Composes many small contexts (filters, selection, table, actions, alerts,
+//   modals, row visuals, row runtime store) into a single Provider to avoid
+//   deep prop-drilling and to keep render boundaries explicit.
+// - Uses a global registry when creating contexts to preserve context
+//   identity across hot-reloads and bundler/loader boundaries (prevents
+//   "must be used within a Provider" errors when modules are re-evaluated).
+// - The row runtime store is a lightweight, external store created once per
+//   provider instance; consumers use useSyncExternalStore (via
+//   useProductListRowRuntime) to subscribe to fine-grained per-row snapshots
+//   without forcing whole-list re-renders.
+
 import React, { useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
 
-import { useIntegrationListingBadges } from '@/features/integrations/hooks/useIntegrationOperations';
+import { useIntegrationListingBadges } from '@/features/integrations/product-integrations-adapter';
 import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
@@ -52,13 +64,28 @@ type ProductListProviderProps = {
   children: React.ReactNode;
 };
 
-const createProductListStrictContext = <T,>(hookName: string, displayName: string) =>
-  createStrictContext<T>({
+const createProductListStrictContext = <T,>(hookName: string, displayName: string) => {
+  // Use a global registry to ensure that even if this module is executed multiple times
+  // (e.g., due to dynamic imports in some bundlers like Turbopack), the context objects
+  // remain stable. This prevents \"must be used within a Provider\" errors caused by
+  // context object identity mismatches.
+  const registryKey = `__PRODUCT_LIST_CONTEXT_${hookName}`;
+  const globalObj = (typeof window !== 'undefined' ? (window as unknown as Record<string, unknown>) : (global as unknown as Record<string, unknown>));
+  
+  if (globalObj[registryKey]) {
+    return globalObj[registryKey] as ReturnType<typeof createStrictContext<T>>;
+  }
+
+  const result = createStrictContext<T>({
     hookName,
     providerName: 'a ProductListProvider',
     displayName,
     errorFactory: internalError,
   });
+
+  globalObj[registryKey] = result;
+  return result;
+};
 
 export const {
   Context: ProductListFiltersContext,
@@ -170,6 +197,7 @@ export function ProductListProvider({
     integrationBadgeStatuses: badgeState.integrationBadgeStatuses,
     traderaBadgeStatuses: badgeState.traderaBadgeStatuses,
     playwrightProgrammableBadgeStatuses: badgeState.playwrightProgrammableBadgeStatuses,
+    vintedBadgeStatuses: badgeState.vintedBadgeStatuses,
     visibleProductIdSet,
     triggerJobCompletionHighlight:
       value.triggerListingStatusHighlight ?? NOOP_TRIGGER_LISTING_STATUS_HIGHLIGHT,
@@ -183,8 +211,11 @@ export function ProductListProvider({
       traderaBadgeStatuses: badgeState.traderaBadgeStatuses,
       playwrightProgrammableBadgeIds: badgeState.playwrightProgrammableBadgeIds,
       playwrightProgrammableBadgeStatuses: badgeState.playwrightProgrammableBadgeStatuses,
+      vintedBadgeIds: badgeState.vintedBadgeIds,
+      vintedBadgeStatuses: badgeState.vintedBadgeStatuses,
       queuedProductIds: value.queuedProductIds,
       productAiRunStatusByProductId: value.productAiRunStatusByProductId,
+      productScanRunStatusByProductId: value.productScanRunStatusByProductId,
     }),
     [
       badgeState.integrationBadgeIds,
@@ -195,6 +226,7 @@ export function ProductListProvider({
       badgeState.playwrightProgrammableBadgeStatuses,
       value.queuedProductIds,
       value.productAiRunStatusByProductId,
+      value.productScanRunStatusByProductId,
     ]
   );
 

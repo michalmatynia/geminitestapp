@@ -1,4 +1,4 @@
-import { JSX, Suspense } from 'react';
+import { type JSX, Suspense } from 'react';
 
 import { SlugsPage } from '@/features/cms/public';
 import { LoadingState } from '@/shared/ui/LoadingState';

@@ -120,21 +120,6 @@ const normalizeRequiredString = (value: unknown): string | null => {
   return normalized && normalized.length > 0 ? normalized : null;
 };
 
-const normalizeLegacyButtonIds = (
-  value: readonly string[] | undefined,
-  buttonId: string
-): string[] => {
-  const normalized = new Set<string>();
-  normalized.add(buttonId);
-  value?.forEach((candidate: string) => {
-    const nextValue = normalizeRequiredString(candidate);
-    if (nextValue) {
-      normalized.add(nextValue);
-    }
-  });
-  return Array.from(normalized);
-};
-
 const buildSharedFeedbackKey = (input: {
   identityType: 'button' | 'path';
   identityValue: string;
@@ -181,35 +166,6 @@ const toTriggerButtonRunFeedbackRecord = (
   finishedAt: value.finishedAt,
   errorMessage: value.errorMessage,
 });
-
-const matchesLegacyFeedbackRecord = (
-  value: PersistedTriggerButtonRunFeedback,
-  aliases: ReadonlySet<string>,
-  entityType: string,
-  entityId: string | null
-): boolean =>
-  aliases.has(value.buttonId) &&
-  value.entityType === entityType &&
-  value.entityId === entityId;
-
-const removeLegacyFeedbackRecords = (
-  map: PersistedTriggerButtonRunFeedbackMap,
-  aliases: ReadonlySet<string>,
-  entityType: string,
-  entityId: string | null
-): void => {
-  Object.entries(map).forEach(([key, rawValue]) => {
-    const normalized = normalizePersistedFeedback(rawValue);
-    if (!normalized) {
-      delete map[key];
-      return;
-    }
-    if (!matchesLegacyFeedbackRecord(normalized, aliases, entityType, entityId)) {
-      return;
-    }
-    delete map[key];
-  });
-};
 
 const readPersistedFeedbackMap = (): PersistedTriggerButtonRunFeedbackMap => {
   if (!canUseLocalStorage()) return {};
@@ -338,14 +294,12 @@ const toTriggerButtonRunFeedbackSnapshot = (
 const normalizeFeedbackReadInput = (input: {
   buttonId: string;
   pathId?: string | null;
-  legacyButtonIds?: readonly string[] | undefined;
   entityType: string;
   entityId: string | null;
 }): {
   buttonId: string;
   entityType: string;
   entityId: string | null;
-  aliases: Set<string>;
   feedbackIdentity: ReturnType<typeof resolveFeedbackIdentity>;
 } | null => {
   const buttonId = normalizeRequiredString(input.buttonId);
@@ -355,7 +309,6 @@ const normalizeFeedbackReadInput = (input: {
     buttonId,
     entityType,
     entityId: normalizeOptionalString(input.entityId),
-    aliases: new Set<string>(normalizeLegacyButtonIds(input.legacyButtonIds, buttonId)),
     feedbackIdentity: resolveFeedbackIdentity({
       buttonId,
       pathId: input.pathId,
@@ -372,29 +325,16 @@ const readPrunedPersistedFeedbackMap = (): PersistedTriggerButtonRunFeedbackMap 
   return prunedMap;
 };
 
-const findLegacyFeedbackMatch = (
-  map: PersistedTriggerButtonRunFeedbackMap,
-  aliases: ReadonlySet<string>,
-  entityType: string,
-  entityId: string | null
-): PersistedTriggerButtonRunFeedback | null =>
-  Object.values(map)
-    .map((value) => normalizePersistedFeedback(value))
-    .filter((value): value is PersistedTriggerButtonRunFeedback => Boolean(value))
-    .filter((value) => matchesLegacyFeedbackRecord(value, aliases, entityType, entityId))
-    .sort((left, right) => resolveFeedbackRecency(right) - resolveFeedbackRecency(left))[0] ?? null;
-
 export const readTriggerButtonRunFeedback = (input: {
   buttonId: string;
   pathId?: string | null;
-  legacyButtonIds?: readonly string[] | undefined;
   location?: AiTriggerButtonLocation | undefined;
   entityType: string;
   entityId: string | null;
 }): TriggerButtonRunFeedbackSnapshot | null => {
   const normalizedInput = normalizeFeedbackReadInput(input);
   if (!normalizedInput) return null;
-  const { entityType, entityId, aliases, feedbackIdentity } = normalizedInput;
+  const { entityType, entityId, feedbackIdentity } = normalizedInput;
 
   const prunedMap = readPrunedPersistedFeedbackMap();
 
@@ -411,12 +351,7 @@ export const readTriggerButtonRunFeedback = (input: {
   if (normalized) {
     return toTriggerButtonRunFeedbackSnapshot(normalized);
   }
-
-  const legacyMatch = findLegacyFeedbackMatch(prunedMap, aliases, entityType, entityId);
-
-  if (!legacyMatch) return null;
-
-  return toTriggerButtonRunFeedbackSnapshot(legacyMatch);
+  return null;
 };
 
 const normalizeFeedbackListFilters = (input?: {
@@ -492,7 +427,6 @@ export const listTriggerButtonRunFeedback = (input?: {
 export const persistTriggerButtonRunFeedback = (input: {
   buttonId: string;
   pathId?: string | null;
-  legacyButtonIds?: readonly string[] | undefined;
   location: AiTriggerButtonLocation;
   entityType: string;
   entityId: string | null;
@@ -505,13 +439,11 @@ export const persistTriggerButtonRunFeedback = (input: {
   if (input.run.status === 'waiting') return;
 
   const normalizedEntityId = normalizeOptionalString(input.entityId);
-  const aliases = new Set<string>(normalizeLegacyButtonIds(input.legacyButtonIds, buttonId));
   const feedbackIdentity = resolveFeedbackIdentity({
     buttonId,
     pathId: input.pathId,
   });
   const currentMap = pruneExpiredFeedback(readPersistedFeedbackMap());
-  removeLegacyFeedbackRecords(currentMap, aliases, entityType, normalizedEntityId);
   currentMap[
     buildSharedFeedbackKey({
       identityType: feedbackIdentity.identityType,
@@ -538,7 +470,6 @@ export const persistTriggerButtonRunFeedback = (input: {
 export const clearTriggerButtonRunFeedback = (input: {
   buttonId: string;
   pathId?: string | null;
-  legacyButtonIds?: readonly string[] | undefined;
   location: AiTriggerButtonLocation;
   entityType: string;
   entityId: string | null;
@@ -549,13 +480,11 @@ export const clearTriggerButtonRunFeedback = (input: {
   if (!buttonId || !location || !entityType) return;
 
   const normalizedEntityId = normalizeOptionalString(input.entityId);
-  const aliases = new Set<string>(normalizeLegacyButtonIds(input.legacyButtonIds, buttonId));
   const feedbackIdentity = resolveFeedbackIdentity({
     buttonId,
     pathId: input.pathId,
   });
   const currentMap = pruneExpiredFeedback(readPersistedFeedbackMap());
-  removeLegacyFeedbackRecords(currentMap, aliases, entityType, normalizedEntityId);
   delete currentMap[
     buildSharedFeedbackKey({
       identityType: feedbackIdentity.identityType,

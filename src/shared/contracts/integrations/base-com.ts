@@ -125,6 +125,15 @@ export type BaseImportItemAction = z.infer<typeof baseImportItemActionSchema>;
 export const baseImportModeSchema = z.enum(['create_only', 'upsert_on_base_id', 'upsert_on_sku']);
 export type BaseImportMode = z.infer<typeof baseImportModeSchema>;
 
+export const baseImportDirectTargetTypeSchema = z.enum(['base_product_id', 'sku']);
+export type BaseImportDirectTargetType = z.infer<typeof baseImportDirectTargetTypeSchema>;
+
+export const baseImportDirectTargetSchema = z.object({
+  type: baseImportDirectTargetTypeSchema,
+  value: z.string().trim().min(1),
+});
+export type BaseImportDirectTarget = z.infer<typeof baseImportDirectTargetSchema>;
+
 export const baseImportErrorCodeSchema = z.enum([
   'VALIDATION_ERROR',
   'DUPLICATE_SKU',
@@ -194,6 +203,7 @@ export const baseImportRunParamsSchema = z.object({
   uniqueOnly: z.boolean(),
   allowDuplicateSku: z.boolean(),
   selectedIds: z.array(z.string()).optional(),
+  directTarget: baseImportDirectTargetSchema.optional(),
   dryRun: z.boolean().optional(),
   mode: baseImportModeSchema.optional(),
   requestId: z.string().optional(),
@@ -206,10 +216,11 @@ export const baseImportRunStartPayloadSchema = z.object({
   catalogId: z.string().trim().min(1),
   templateId: z.string().trim().min(1).optional(),
   limit: z.coerce.number().int().positive().optional(),
-  imageMode: z.enum(['links', 'download']).default('links'),
+  imageMode: z.enum(['links', 'download']).default('download'),
   uniqueOnly: z.boolean().default(true),
   allowDuplicateSku: z.boolean().default(false),
   selectedIds: z.array(z.string().trim().min(1)).optional(),
+  directTarget: baseImportDirectTargetSchema.optional(),
   dryRun: z.boolean().optional(),
   mode: baseImportModeSchema.optional(),
   requestId: z.string().trim().min(1).optional(),
@@ -259,12 +270,16 @@ export const baseImportPreflightSchema = z.object({
 });
 export type BaseImportPreflight = z.infer<typeof baseImportPreflightSchema>;
 
+export const baseImportDispatchModeSchema = z.enum(['queued', 'inline']);
+export type BaseImportDispatchMode = z.infer<typeof baseImportDispatchModeSchema>;
+
 export const baseImportRunRecordSchema = z.object({
   id: z.string(),
   status: baseImportRunStatusSchema,
   params: baseImportRunParamsSchema,
   idempotencyKey: z.string().nullable().optional(),
   queueJobId: z.string().nullable().optional(),
+  dispatchMode: baseImportDispatchModeSchema.nullable().optional(),
   lockOwnerId: z.string().nullable().optional(),
   lockToken: z.string().nullable().optional(),
   lockExpiresAt: z.string().nullable().optional(),
@@ -321,6 +336,7 @@ export const baseImportStartResponseSchema = z.object({
   status: baseImportRunStatusSchema,
   preflight: baseImportPreflightSchema.nullable().optional(),
   queueJobId: z.string().nullable(),
+  dispatchMode: baseImportDispatchModeSchema.nullable(),
   summaryMessage: z.string().nullable(),
 });
 export type BaseImportStartResponse = z.infer<typeof baseImportStartResponseSchema>;

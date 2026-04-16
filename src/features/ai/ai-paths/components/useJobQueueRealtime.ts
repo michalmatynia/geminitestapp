@@ -7,7 +7,7 @@ import {
   AI_PATH_RUN_QUEUE_CHANNEL,
   parseAiPathRunEnqueuedEventPayload,
 } from '@/shared/contracts/ai-paths';
-import type { AiPathRunRecord } from '@/shared/lib/ai-paths';
+import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import {
   getRecentAiPathRunEnqueue,
   rememberRecentAiPathRunEnqueue,

@@ -9,7 +9,6 @@ let resolveAiPathsNodeExecutionConfig: typeof import('@/shared/lib/ai-brain/serv
 let getPathRunRepository: typeof import('@/shared/lib/ai-paths/services/path-run-repository').getPathRunRepository;
 let runBrainChatCompletion: typeof import('@/shared/lib/ai-brain/server-runtime-client').runBrainChatCompletion;
 let inferBrainModelVendor: typeof import('@/shared/lib/ai-brain/model-vendor').inferBrainModelVendor;
-
 vi.mock('@/shared/lib/ai-brain/server', () => ({
   resolveAiPathsNodeExecutionConfig: vi.fn(),
   resolveBrainExecutionConfigForCapability: vi.fn(),

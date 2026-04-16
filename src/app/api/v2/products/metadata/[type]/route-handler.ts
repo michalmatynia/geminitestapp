@@ -20,6 +20,7 @@ export const GET = apiHandlerWithParams<{ type: string }>(GET_products_metadata_
   paramsSchema: typeParamSchema,
   querySchema,
   requireAuth: true,
+  cacheControl: 'private, max-age=300, stale-while-revalidate=600',
 });
 
 export const POST = apiHandlerWithParams<{ type: string }>(POST_products_metadata_handler, {

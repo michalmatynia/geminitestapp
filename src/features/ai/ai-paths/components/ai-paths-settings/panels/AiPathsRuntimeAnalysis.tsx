@@ -2,14 +2,25 @@
 
 import React, { useMemo, useCallback } from 'react';
 
-import { useRunHistoryActions, useRuntimeState, useGraphState } from '@/features/ai/ai-paths/context';
+import {
+  useGraphDataState,
+  usePathMetadataState,
+  useRunHistoryActions,
+  useRuntimeStatusState,
+} from '@/features/ai/ai-paths/context';
 import type {
   AiPathRuntimeTraceSlowNode,
   AiPathRuntimeTraceFailedNode,
 } from '@/shared/contracts/ai-paths';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
-import { listAiPathRuns, type AiNode } from '@/shared/lib/ai-paths';
+import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
+import type { AiNode } from '@/shared/contracts/ai-paths';
+import { listAiPathRuns } from '@/shared/lib/ai-paths/api';
 import { useAiPathRuntimeAnalytics } from '@/shared/lib/ai-paths/hooks/useAiPathQueries';
+import {
+  buildVisionModelCapabilityErrorMessage,
+  collectVisionModelCapabilityIssues,
+} from '@/shared/lib/ai-paths/core/utils/model-capability-preflight';
 import { Button, Card, useToast } from '@/shared/ui/primitives.public';
 import { StatusBadge } from '@/shared/ui/data-display.public';
 import { cn } from '@/shared/utils/ui-utils';
@@ -94,19 +105,20 @@ function RuntimeAnalysisTraceActionChip({
 }
 
 export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
-  const { runtimeRunStatus, runtimeNodeStatuses } = useRuntimeState();
-  const { activePathId, nodes } = useGraphState();
+  const { runtimeRunStatus, runtimeNodeStatuses } = useRuntimeStatusState();
+  const { nodes } = useGraphDataState();
+  const { activePathId } = usePathMetadataState();
   const { setRunHistoryNodeId, setRunFilter, openRunDetail } = useRunHistoryActions();
   const { toast } = useToast();
   const { reportAiPathsError } = useAiPathsErrorState({ toast });
   const runtimeAnalyticsCapability = useBrainAssignment({
     capability: 'insights.runtime_analytics',
   });
-  const aiPathsModelCapability = useBrainAssignment({
+  const brainModelOptions = useBrainModelOptions({
     capability: 'ai_paths.model',
   });
   const runtimeAnalyticsEnabled =
-    runtimeAnalyticsCapability.assignment.enabled && aiPathsModelCapability.assignment.enabled;
+    runtimeAnalyticsCapability.assignment.enabled && brainModelOptions.assignment.enabled;
 
   const runtimeAnalyticsQuery = useAiPathRuntimeAnalytics('24h', runtimeAnalyticsEnabled);
   const portableEngineAnalytics = runtimeAnalyticsQuery.data?.portableEngine;
@@ -148,6 +160,16 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
     });
     return map;
   }, [nodes]);
+
+  const visionModelCapabilityIssues = useMemo(
+    () =>
+      collectVisionModelCapabilityIssues({
+        nodes,
+        defaultModelId: brainModelOptions.effectiveModelId,
+        descriptors: brainModelOptions.descriptors,
+      }),
+    [brainModelOptions.descriptors, brainModelOptions.effectiveModelId, nodes]
+  );
 
   const runtimeNodeStatusEntries = useMemo(
     (): Array<[string, string]> =>
@@ -299,6 +321,37 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
         })}
       </div>
 
+      {visionModelCapabilityIssues.length > 0
+        ? renderRuntimeAnalysisCard({
+            title: 'Model Capability',
+            className: 'border-rose-500/40 bg-rose-500/5 p-3 text-[11px] text-rose-100',
+            titleClassName: 'text-rose-300/90',
+            children: (
+              <>
+                <div className='mt-1 text-sm text-rose-50'>
+                  {visionModelCapabilityIssues.length} node
+                  {visionModelCapabilityIssues.length === 1 ? '' : 's'} will be blocked by AI
+                  Brain preflight.
+                </div>
+                <RuntimeAnalysisStatLine className='text-rose-100/80'>
+                  Fix the node model selection in canvas UI or change the AI Brain default to a
+                  multimodal model before running this path.
+                </RuntimeAnalysisStatLine>
+                <div className='mt-2 space-y-1.5'>
+                  {visionModelCapabilityIssues.map((issue) => (
+                    <div
+                      key={`${issue.nodeId}-${issue.modelId}`}
+                      className='rounded border border-rose-500/30 bg-black/20 px-2 py-1.5 text-rose-50'
+                    >
+                      {buildVisionModelCapabilityErrorMessage(issue)}
+                    </div>
+                  ))}
+                </div>
+              </>
+            ),
+          })
+        : null}
+
       <div className='grid grid-cols-2 gap-2 text-[11px] text-gray-300 sm:grid-cols-4'>
         {(['running', 'queued', 'polling', 'completed', 'failed', 'cached'] as const).map(
           (status) => (
@@ -322,7 +375,7 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
               (entry: { nodeId: string; title: string; status: string }) => (
                 <StatusBadge
                   key={entry.nodeId}
-                  status={entry.title + ' · ' + formatStatusLabel(entry.status)}
+                  status={`${entry.title  } · ${  formatStatusLabel(entry.status)}`}
                   variant={statusToVariant(entry.status)}
                   size='sm'
                   title={entry.nodeId}
@@ -475,7 +528,7 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
                   History entries {runtimeKernelSampledHistoryEntries}
                 </RuntimeAnalysisStatLine>
                 <div className='mt-2 text-gray-200'>
-                  v3 {formatPercent(runtimeKernelV3Rate)} · compatibility{' '}
+                  v3 {formatPercent(runtimeKernelV3Rate)} · compat{' '}
                   {formatPercent(runtimeKernelCompatibilityRate)} · unknown{' '}
                   {formatPercent(runtimeKernelUnknownRate)}
                 </div>
@@ -496,12 +549,6 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
                     aria-hidden
                   />
                 </div>
-                {runtimeKernelCompatibilityEntries > 0 ? (
-                  <div className='mt-2 text-[10px] text-amber-200/90'>
-                    Compatibility traces are historical rollout evidence only. Live execution is
-                    strict native.
-                  </div>
-                ) : null}
                 <div className='mt-2 text-gray-400'>
                   Resolution O/R/M/U: {runtimeKernelResolutionOverride}/
                   {runtimeKernelResolutionRegistry}/{runtimeKernelResolutionMissing}/

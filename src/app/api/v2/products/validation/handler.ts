@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
@@ -18,7 +18,9 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   const products = data.products;
 
   if (!Array.isArray(products)) {
-    throw badRequestError('Products must be an array');
+    throw badRequestError('Products must be an array', {
+      receivedType: typeof products,
+    });
   }
 
   const result = await validateProductsBatch(products, 'create');

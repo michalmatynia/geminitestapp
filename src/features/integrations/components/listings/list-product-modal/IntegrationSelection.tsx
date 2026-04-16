@@ -14,29 +14,17 @@ import {
 } from '../product-listings-copy';
 
 export function IntegrationSelection(): React.JSX.Element {
-  const {
+  const { integrations, loadingIntegrations: loading, selectedIntegration } = useListingSelection();
+  const { integrationsWithConnections } = useConnectedIntegrationSelectorOptions(
     integrations,
-    loadingIntegrations: loading,
-    selectedIntegrationId,
-    selectedConnectionId,
-    selectedIntegration,
-    setSelectedIntegrationId,
-    setSelectedConnectionId,
-  } = useListingSelection();
-  const { integrationsWithConnections, integrationOptions, connectionOptions } =
-    useConnectedIntegrationSelectorOptions(
-      integrations,
-      selectedIntegration?.connections ?? null
-    );
-  const {
-    sectionTitle,
-    marketplaceLabel,
-    marketplacePlaceholder,
-    accountLabel,
-    accountPlaceholder,
-    accountDescription,
-  } = resolveListProductIntegrationSelectionCopy({
-    selectedIntegrationName: resolveIntegrationDisplayName(selectedIntegration?.name),
+    selectedIntegration?.connections ?? null
+  );
+  const { sectionTitle } = resolveListProductIntegrationSelectionCopy({
+    selectedIntegrationName: resolveIntegrationDisplayName(
+      selectedIntegration?.name,
+      selectedIntegration?.slug
+    ),
+    selectedIntegrationSlug: selectedIntegration?.slug,
   });
   const { message: emptyStateMessage, detail: emptyStateDetail } =
     resolveIntegrationSelectionConfiguredAccountsEmptyStateCopy();
@@ -46,21 +34,8 @@ export function IntegrationSelection(): React.JSX.Element {
       <ConnectedIntegrationFieldsSection
         title={sectionTitle}
         className='p-4 space-y-4'
-        loading={true}
         loadingVariant='inline-text'
         loadingClassName='text-sm text-gray-400'
-        marketplaceLabel={marketplaceLabel}
-        marketplacePlaceholder={marketplacePlaceholder}
-        selectedIntegrationId={selectedIntegrationId}
-        onIntegrationChange={setSelectedIntegrationId}
-        integrationOptions={integrationOptions}
-        showAccountField={Boolean(selectedIntegration)}
-        accountLabel={accountLabel}
-        accountPlaceholder={accountPlaceholder}
-        selectedConnectionId={selectedConnectionId}
-        onConnectionChange={setSelectedConnectionId}
-        connectionOptions={connectionOptions}
-        accountDescription={accountDescription}
       />
     );
   }
@@ -79,21 +54,8 @@ export function IntegrationSelection(): React.JSX.Element {
     <ConnectedIntegrationFieldsSection
       title={sectionTitle}
       className='p-4 space-y-4'
-      loading={false}
       loadingVariant='inline-text'
       loadingClassName='text-sm text-gray-400'
-      marketplaceLabel={marketplaceLabel}
-      marketplacePlaceholder={marketplacePlaceholder}
-      selectedIntegrationId={selectedIntegrationId}
-      onIntegrationChange={setSelectedIntegrationId}
-      integrationOptions={integrationOptions}
-      showAccountField={Boolean(selectedIntegration)}
-      accountLabel={accountLabel}
-      accountPlaceholder={accountPlaceholder}
-      selectedConnectionId={selectedConnectionId}
-      onConnectionChange={setSelectedConnectionId}
-      connectionOptions={connectionOptions}
-      accountDescription={accountDescription}
     />
   );
 }

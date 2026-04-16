@@ -74,14 +74,14 @@ function DraftList(): React.JSX.Element {
       }
     >
       <ConfirmModal
-        isOpen={!!draftToDelete}
+        isOpen={Boolean(draftToDelete)}
         onClose={() => setDraftToDelete(null)}
         onConfirm={handleConfirmDelete}
         title='Delete Draft'
         message='Are you sure you want to delete this draft? This action cannot be undone.'
         confirmText='Delete'
         isDangerous={true}
-        loading={!!deleting}
+        loading={Boolean(deleting)}
       />
       <SimpleSettingsList<DraftListItem>
         items={drafts.map(

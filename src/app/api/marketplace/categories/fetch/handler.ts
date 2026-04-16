@@ -1,19 +1,42 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { getExternalCategoryRepository, getIntegrationRepository } from '@/features/integrations/server';
+import type { ExternalCategory } from '@/shared/contracts/integrations/listings';
 import { marketplaceConnectionRequestSchema } from '@/shared/contracts/integrations/marketplace';
 import { type MarketplaceConnectionRequest } from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
-import { internalError, isAppError } from '@/shared/errors/app-error';
+import { internalError, isAppError, unprocessableEntityError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
 import {
+  buildMarketplaceCategoryStats,
   buildEmptyMarketplaceCategoryFetchResponse,
   buildMarketplaceCategoryFetchResponse,
   fetchMarketplaceCategories,
   requireMarketplaceConnectionId,
   resolveMarketplaceCategoryFetchContext,
 } from './handler.helpers';
+
+const shouldRejectShallowTraderaPublicSync = ({
+  existingTotal,
+  existingMaxDepth,
+  existingWithParentCount,
+  fetchedTotal,
+  fetchedMaxDepth,
+  fetchedWithParentCount,
+}: {
+  existingTotal: number;
+  existingMaxDepth: number;
+  existingWithParentCount: number;
+  fetchedTotal: number;
+  fetchedMaxDepth: number;
+  fetchedWithParentCount: number;
+}): boolean =>
+  existingTotal > 0 &&
+  existingMaxDepth >= 2 &&
+  fetchedMaxDepth <= 1 &&
+  fetchedMaxDepth < existingMaxDepth &&
+  (fetchedTotal < existingTotal || fetchedWithParentCount < existingWithParentCount);
 
 /**
  * POST /api/marketplace/categories/fetch
@@ -36,7 +59,11 @@ export async function POST_handler(
   const connectionId = requireMarketplaceConnectionId(body);
 
   const integrationRepo = await getIntegrationRepository();
-  const context = await resolveMarketplaceCategoryFetchContext(integrationRepo, connectionId);
+  const context = await resolveMarketplaceCategoryFetchContext(
+    integrationRepo,
+    connectionId,
+    body.categoryFetchMethod
+  );
   const categories = await fetchMarketplaceCategories(context).catch((error: unknown) => {
     if (isAppError(error)) {
       throw error;
@@ -50,11 +77,82 @@ export async function POST_handler(
   });
 
   if (categories.length === 0) {
-    return NextResponse.json(buildEmptyMarketplaceCategoryFetchResponse(context.sourceName));
+    return NextResponse.json(buildEmptyMarketplaceCategoryFetchResponse(context.responseSourceName));
   }
 
+  const categoriesWithFetchMetadata = categories.map((category) => ({
+    ...category,
+    metadata: {
+      ...(category.metadata ?? {}),
+      categoryFetchSource: context.responseSourceName,
+    },
+  }));
+
   const externalCategoryRepo = getExternalCategoryRepository();
-  const syncedCount = await externalCategoryRepo.syncFromBase(connectionId, categories).catch(
+  const fetchedCategoryStats = buildMarketplaceCategoryStats(categoriesWithFetchMetadata);
+
+  if (context.mode === 'tradera' || context.mode === 'tradera-api') {
+    const existingCategories = await externalCategoryRepo.listByConnection(connectionId);
+
+    if (existingCategories.length > 0) {
+      const existingCategoryStats = buildMarketplaceCategoryStats(
+        existingCategories.map((category: ExternalCategory) => ({
+          id: category.externalId,
+          name: category.name,
+          parentId: category.parentExternalId,
+          metadata: category.metadata ?? undefined,
+        }))
+      );
+
+      if (context.mode === 'tradera') {
+        if (
+          shouldRejectShallowTraderaPublicSync({
+            existingTotal: existingCategories.length,
+            existingMaxDepth: existingCategoryStats.maxDepth,
+            existingWithParentCount: existingCategoryStats.withParentCount,
+            fetchedTotal: categoriesWithFetchMetadata.length,
+            fetchedMaxDepth: fetchedCategoryStats.maxDepth,
+            fetchedWithParentCount: fetchedCategoryStats.withParentCount,
+          })
+        ) {
+          throw unprocessableEntityError(
+            'Tradera public taxonomy pages returned a shallower category tree than the categories already stored. Existing categories were kept. Retry the fetch or configure Tradera App ID and App Key to use the SOAP API.',
+            {
+              connectionId,
+              sourceName: context.responseSourceName,
+              existingTotal: existingCategories.length,
+              existingMaxDepth: existingCategoryStats.maxDepth,
+              fetchedTotal: categoriesWithFetchMetadata.length,
+              fetchedMaxDepth: fetchedCategoryStats.maxDepth,
+            }
+          );
+        }
+      }
+
+      // Protect against partial SOAP API responses — reject if fetched count drops below 50% of existing
+      if (
+        context.mode === 'tradera-api' &&
+        existingCategories.length >= 50 &&
+        categoriesWithFetchMetadata.length < existingCategories.length * 0.5
+      ) {
+        throw unprocessableEntityError(
+          `Tradera SOAP API returned ${categoriesWithFetchMetadata.length} categories, significantly fewer than the ${existingCategories.length} already stored. This may indicate a partial API response. Existing categories were kept. Retry the fetch.`,
+          {
+            connectionId,
+            sourceName: context.responseSourceName,
+            existingTotal: existingCategories.length,
+            existingMaxDepth: existingCategoryStats.maxDepth,
+            fetchedTotal: categoriesWithFetchMetadata.length,
+            fetchedMaxDepth: fetchedCategoryStats.maxDepth,
+          }
+        );
+      }
+    }
+  }
+
+  const syncedCount = await externalCategoryRepo
+    .syncFromBase(connectionId, categoriesWithFetchMetadata)
+    .catch(
     (error: unknown) => {
       if (isAppError(error)) {
         throw error;
@@ -64,13 +162,18 @@ export async function POST_handler(
         connectionId,
         sourceName: context.sourceName,
         phase: 'sync',
-        fetchedCount: categories.length,
-        sampleExternalIds: categories.slice(0, 5).map((category) => category.id),
+        fetchedCount: categoriesWithFetchMetadata.length,
+        sampleExternalIds: categoriesWithFetchMetadata.slice(0, 5).map((category) => category.id),
       }).withCause(error);
     }
   );
 
   return NextResponse.json(
-    buildMarketplaceCategoryFetchResponse(context.sourceName, syncedCount, categories.length)
+    buildMarketplaceCategoryFetchResponse(
+      context.responseSourceName,
+      syncedCount,
+      categories.length,
+      fetchedCategoryStats
+    )
   );
 }

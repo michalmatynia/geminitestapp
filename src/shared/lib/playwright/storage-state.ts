@@ -3,9 +3,8 @@ type PlaywrightCookieSameSite = 'Strict' | 'Lax' | 'None';
 export type PlaywrightStorageStateCookie = {
   name: string;
   value: string;
-  url?: string;
-  domain?: string;
-  path?: string;
+  domain: string;
+  path: string;
   secure?: boolean;
   httpOnly?: boolean;
   expires?: number;
@@ -64,7 +63,7 @@ const sanitizeCookieFlags = (params: {
   sameSite: unknown;
   expires: unknown;
   forceSecure?: boolean;
-}): Omit<PlaywrightStorageStateCookie, 'name' | 'value' | 'url' | 'domain' | 'path'> => {
+}): Omit<PlaywrightStorageStateCookie, 'name' | 'value' | 'domain' | 'path'> => {
   const secure = params.forceSecure || params.secure === true ? true : undefined;
   const httpOnly = params.httpOnly === true ? true : undefined;
   const sameSite = sanitizeSameSite(params.sameSite);
@@ -149,57 +148,32 @@ const sanitizeStorageStateCookie = (
   const explicitOriginInfo = resolveOriginInfo(explicitUrl);
   const fallbackOriginInfo = resolveOriginInfo(fallbackOrigin);
   const usableOriginInfo = explicitOriginInfo ?? fallbackOriginInfo;
-  const flags = sanitizeCookieFlags({
-    secure: value['secure'],
-    httpOnly: value['httpOnly'],
-    sameSite: value['sameSite'],
-    expires: value['expires'],
-    forceSecure: isSecurePrefixed,
-  });
 
-  if (isSecurePrefixed) {
-    if (!usableOriginInfo?.securePrefixAllowed) {
-      return null;
-    }
-    return {
-      name,
-      value: cookieValue,
-      url: usableOriginInfo.origin,
-      ...flags,
-    };
+  if (isSecurePrefixed && !usableOriginInfo?.securePrefixAllowed) {
+    return null;
   }
 
-  if (explicitOriginInfo) {
-    return {
-      name,
-      value: cookieValue,
-      url: explicitOriginInfo.origin,
-      ...flags,
-    };
-  }
-
-  const domain = sanitizeCookieDomain(value['domain']);
+  const domain =
+    sanitizeCookieDomain(value['domain']) ?? (usableOriginInfo ? new URL(usableOriginInfo.origin).hostname : null);
   const path = sanitizeCookiePath(value['path']);
-  if (domain) {
-    return {
-      name,
-      value: cookieValue,
-      domain,
-      path,
-      ...flags,
-    };
+
+  if (!domain) {
+    return null;
   }
 
-  if (fallbackOriginInfo) {
-    return {
-      name,
-      value: cookieValue,
-      url: fallbackOriginInfo.origin,
-      ...flags,
-    };
-  }
-
-  return null;
+  return {
+    name,
+    value: cookieValue,
+    domain,
+    path,
+    ...sanitizeCookieFlags({
+      secure: value['secure'],
+      httpOnly: value['httpOnly'],
+      sameSite: value['sameSite'],
+      expires: value['expires'],
+      forceSecure: isSecurePrefixed,
+    }),
+  };
 };
 
 export const sanitizePlaywrightCookiesFromHeader = (
@@ -237,7 +211,8 @@ export const sanitizePlaywrightCookiesFromHeader = (
       cookies.push({
         name,
         value,
-        url: originInfo.origin,
+        domain: new URL(originInfo.origin).hostname,
+        path: '/',
         ...(secure ? { secure: true } : {}),
       });
       return cookies;

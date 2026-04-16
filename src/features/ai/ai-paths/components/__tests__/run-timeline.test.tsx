@@ -17,7 +17,7 @@ vi.mock('@/shared/utils/observability/client-error-logger', () => ({
   logClientError: (...args: unknown[]) => mockState.logClientError(...args),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   Button: ({
     children,
     ...props
@@ -35,6 +35,14 @@ vi.mock('@/shared/ui', () => ({
       {children}
     </div>
   ),
+  Alert: ({
+    children,
+  }: {
+    children: React.ReactNode;
+  }): React.JSX.Element => <div data-testid='alert'>{children}</div>,
+}));
+
+vi.mock('@/shared/ui/data-display.public', () => ({
   StatusBadge: ({
     status,
     variant,
@@ -42,11 +50,6 @@ vi.mock('@/shared/ui', () => ({
     status: React.ReactNode;
     variant?: string;
   }): React.JSX.Element => <span>{`${String(status)}:${variant ?? 'none'}`}</span>,
-  Alert: ({
-    children,
-  }: {
-    children: React.ReactNode;
-  }): React.JSX.Element => <div data-testid='alert'>{children}</div>,
 }));
 
 import { RunTimeline } from '../run-timeline';

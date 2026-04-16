@@ -7,12 +7,13 @@ import path from 'path';
 import sharp from 'sharp';
 
 import {
-  enqueuePlaywrightNodeRun,
-  readPlaywrightNodeArtifact,
-  readPlaywrightNodeRun,
-  type PlaywrightNodeRunArtifact,
-  type PlaywrightNodeRunRecord,
-} from '@/features/ai/server';
+  createSocialCaptureBatchPlaywrightInstance,
+  readPlaywrightEngineArtifact,
+  readPlaywrightEngineRun,
+  startPlaywrightEngineTask,
+  type PlaywrightEngineRunArtifact,
+  type PlaywrightEngineRunRecord,
+} from '@/features/playwright/server';
 import { uploadToConfiguredStorage } from '@/features/files/server';
 import {
   normalizeKangurSocialImageAddon,
@@ -33,10 +34,7 @@ import {
   KANGUR_SOCIAL_PLAYWRIGHT_CAPTURE_TIMEOUT_MS,
 } from '@/features/kangur/social/shared/social-playwright-capture';
 import { KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY } from '@/features/kangur/appearance/storefront-appearance-settings';
-import {
-  sanitizePlaywrightCookiesFromHeader,
-  sanitizePlaywrightStorageState,
-} from '@/shared/lib/playwright/storage-state';
+import { resolvePlaywrightRequestStorageState } from '@/features/playwright/server';
 
 import {
   findLatestAddonByPresetId,
@@ -99,16 +97,16 @@ type ResolvedBatchCaptureRequest = {
 };
 
 export type StartedPlaywrightBatchCapture = ResolvedBatchCaptureRequest & {
-  run: PlaywrightNodeRunRecord;
+  run: PlaywrightEngineRunRecord;
 };
 
 const LIVE_PROGRESS_POLL_INTERVAL_MS = 250;
 const LIVE_PROGRESS_TIMEOUT_MS = 195_000;
 
 const resolveArtifactByName = (
-  artifacts: PlaywrightNodeRunArtifact[],
+  artifacts: PlaywrightEngineRunArtifact[],
   name: string
-): PlaywrightNodeRunArtifact | null =>
+): PlaywrightEngineRunArtifact | null =>
   artifacts.find((artifact) => artifact.name === name) ?? null;
 
 const buildAddonPublicPath = (filename: string): string =>
@@ -189,68 +187,30 @@ const resolvePlaywrightStorageState = (params: {
   cookieHeader: string | null | undefined;
   baseUrl: string;
   appearanceMode: string | null | undefined;
-}):
-  | {
-      cookies: Array<Record<string, unknown>>;
-      origins: Array<{
-        origin: string;
-        localStorage: Array<{ name: string; value: string }>;
-      }>;
-    }
-  | null => {
-  const cookies = params.cookieHeader
-    ? sanitizePlaywrightCookiesFromHeader(params.cookieHeader, params.baseUrl)
-    : [];
+}): ReturnType<typeof resolvePlaywrightRequestStorageState> => {
   const appearanceMode = normalizeCaptureAppearanceMode(params.appearanceMode);
-  let origin: string | null = null;
-  if (appearanceMode) {
-    try {
-      origin = new URL(params.baseUrl).origin;
-    } catch {
-      origin = null;
-    }
-  }
-
-  const origins =
-    appearanceMode && origin
+  const resolved = resolvePlaywrightRequestStorageState({
+    cookieHeader: params.cookieHeader,
+    sourceUrl: params.baseUrl,
+    localStorageEntries: appearanceMode
       ? [
           {
-            origin,
-            localStorage: [
-              {
-                name: KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY,
-                value: appearanceMode,
-              },
-            ],
+            name: KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY,
+            value: appearanceMode,
           },
         ]
-      : [];
+      : null,
+  });
 
-  if (cookies.length === 0 && origins.length === 0) {
-    return null;
-  }
-
-  const storageState = sanitizePlaywrightStorageState(
-    { cookies, origins },
-    { fallbackOrigin: params.baseUrl }
-  );
-  const sanitizedCookieNames = new Set((storageState?.cookies ?? []).map((cookie) => cookie.name));
-  const droppedCookieNames = cookies
-    .map((cookie) => {
-      const name = typeof cookie['name'] === 'string' ? cookie['name'] : null;
-      return name && !sanitizedCookieNames.has(name) ? name : null;
-    })
-    .filter((name): name is string => name !== null);
-
-  if (droppedCookieNames.length > 0) {
+  if (resolved.droppedCookieNames.length > 0) {
     logger.warn('[kangur.social-image-addons.batch] dropped invalid Playwright cookies', {
       baseUrl: params.baseUrl,
-      droppedCookieNames,
+      droppedCookieNames: resolved.droppedCookieNames,
       service: 'kangur.social-image-addons',
     });
   }
 
-  return storageState;
+  return resolved;
 };
 
 const sleep = async (ms: number): Promise<void> =>
@@ -318,7 +278,7 @@ const readBatchCaptureResults = (
 };
 
 const readLiveCaptureProgress = (
-  run: Pick<PlaywrightNodeRunRecord, 'result'> | null
+  run: { result?: unknown } | null
 ): BatchCaptureProgressSnapshot | null => {
   const result = toRecord(run?.result);
   const outputs = toRecord(result?.['outputs']);
@@ -359,13 +319,13 @@ const readLiveCaptureProgress = (
 export const waitForPlaywrightBatchRun = async (params: {
   runId: string;
   onProgress: (progress: BatchCaptureProgressSnapshot) => Promise<void> | void;
-}): Promise<PlaywrightNodeRunRecord> => {
+}): Promise<PlaywrightEngineRunRecord> => {
   const startedAt = Date.now();
-  let latestRun: PlaywrightNodeRunRecord | null = null;
+  let latestRun: PlaywrightEngineRunRecord | null = null;
   let lastProgressSignature: string | null = null;
 
   while (Date.now() - startedAt <= LIVE_PROGRESS_TIMEOUT_MS) {
-    const currentRun = await readPlaywrightNodeRun(params.runId);
+    const currentRun = await readPlaywrightEngineRun(params.runId);
     if (currentRun) {
       latestRun = currentRun;
       const progress = readLiveCaptureProgress(currentRun);
@@ -452,7 +412,7 @@ const resolveBatchCaptureRequest = (
   }
 
   const contextOptions: Record<string, unknown> = {};
-  const storageState = resolvePlaywrightStorageState({
+  const { storageState } = resolvePlaywrightStorageState({
     cookieHeader: input.forwardCookies,
     baseUrl,
     appearanceMode,
@@ -488,7 +448,7 @@ export const startPlaywrightBatchCapture = async (
   }));
 
   logger.info('[BATCH] Enqueueing Playwright run', { captureCount: captures.length });
-  const run = await enqueuePlaywrightNodeRun({
+  const run = await startPlaywrightEngineTask({
     request: {
       script: resolved.playwrightScript,
       input: {
@@ -501,8 +461,8 @@ export const startPlaywrightBatchCapture = async (
       contextOptions: resolved.contextOptions,
       policyAllowedHosts: resolved.trustedSelfOriginHost ? [resolved.trustedSelfOriginHost] : undefined,
     },
-    waitForResult: false,
     ownerUserId: resolved.createdBy,
+    instance: createSocialCaptureBatchPlaywrightInstance(),
   });
 
   return {
@@ -512,7 +472,7 @@ export const startPlaywrightBatchCapture = async (
 };
 
 export const finalizePlaywrightBatchCapture = async (
-  input: StartedPlaywrightBatchCapture & { run: PlaywrightNodeRunRecord }
+  input: StartedPlaywrightBatchCapture & { run: PlaywrightEngineRunRecord }
 ): Promise<KangurSocialImageAddonsBatchResult> => {
   const startedAt = Date.now();
   const {
@@ -590,7 +550,7 @@ export const finalizePlaywrightBatchCapture = async (
     }
 
     logger.info('[BATCH] Reading artifact file', { targetId: target.id });
-    const artifactData = await readPlaywrightNodeArtifact({
+    const artifactData = await readPlaywrightEngineArtifact({
       runId: run.runId,
       fileName: artifactFile,
     });

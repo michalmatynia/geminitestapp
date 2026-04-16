@@ -16,7 +16,7 @@ import {
   toAdvancedStringArrayValues,
   toAdvancedStringValue,
   loadMongoBaseExportLookupContext,
-  BaseExportLookupContext,
+  type BaseExportLookupContext,
 } from './mongo-product-repository.helpers';
 
 const buildEmptyStringPathCondition = (path: string): Filter<ProductDocument> =>
@@ -569,6 +569,15 @@ export const buildMongoWhere = async (
     filter = appendAndCondition(filter, {
       categoryId: filters.categoryId,
     } as Filter<ProductDocument>);
+  }
+
+  if (filters.archived !== undefined) {
+    filter = appendAndCondition(
+      filter,
+      (filters.archived
+        ? { archived: true }
+        : { archived: { $ne: true } }) as Filter<ProductDocument>
+    );
   }
 
   if (filters.baseExported !== undefined || filters.advancedFilter) {

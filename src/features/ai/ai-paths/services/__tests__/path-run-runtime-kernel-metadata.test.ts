@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { HISTORICAL_RUNTIME_COMPATIBILITY_ALIAS } from '@/dev/ai-paths-runtime-compatibility-normalization';
 import {
   DEPRECATED_RUNTIME_KERNEL_CONFIG_MODE_FIELD,
   DEPRECATED_RUNTIME_KERNEL_CONFIG_NODE_TYPES_FIELD,
@@ -21,8 +20,10 @@ import {
   normalizeAiPathRunRuntimeKernelMetadataForRuntimeRead,
 } from '@/features/ai/ai-paths/services/path-run-runtime-kernel-metadata';
 
+const HISTORICAL_RUNTIME_STRATEGY_ALIAS = 'compatibility';
+
 describe('normalizeAiPathRunRuntimeKernelMetadataForCleanup', () => {
-  it('normalizes legacy runtime-kernel config aliases into canonical fields', () => {
+  it('prunes legacy runtime-kernel config aliases instead of translating them', () => {
     const result = normalizeAiPathRunRuntimeKernelMetadataForCleanup({
       runtimeKernelConfig: {
         [DEPRECATED_RUNTIME_KERNEL_CONFIG_MODE_FIELD]: ` ${DEPRECATED_RUNTIME_KERNEL_MODE_ALIAS} `,
@@ -40,12 +41,7 @@ describe('normalizeAiPathRunRuntimeKernelMetadataForCleanup', () => {
       AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelConfigCodeObjectResolverIds,
       AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelConfigStrictNativeRegistry,
     ]);
-    expect(result.meta).toEqual({
-      runtimeKernelConfig: {
-        nodeTypes: ['template_node', 'parser'],
-        codeObjectResolverIds: ['resolver.primary', 'resolver.fallback'],
-      },
-    });
+    expect(result.meta).toEqual({});
   });
 
   it('prunes deprecated runtime-kernel telemetry aliases and typed values', () => {
@@ -73,8 +69,6 @@ describe('normalizeAiPathRunRuntimeKernelMetadataForCleanup', () => {
     ]);
     expect(result.meta).toEqual({
       runtimeKernel: {
-        runtimeKernelNodeTypes: ['constant', 'template'],
-        runtimeKernelNodeTypesSource: 'path',
         runtimeKernelCodeObjectResolverIds: ['resolver.primary', 'resolver.fallback'],
       },
     });
@@ -86,7 +80,7 @@ describe('normalizeAiPathRunRuntimeKernelMetadataForCleanup', () => {
         kernelParity: {
           sampledHistoryEntries: 3,
           strategyCounts: {
-            [HISTORICAL_RUNTIME_COMPATIBILITY_ALIAS]: 2,
+            [HISTORICAL_RUNTIME_STRATEGY_ALIAS]: 2,
             code_object_v3: 1,
             unknown: 0,
           },
@@ -101,7 +95,7 @@ describe('normalizeAiPathRunRuntimeKernelMetadataForCleanup', () => {
         kernelParity: {
           sampledHistoryEntries: 3,
           strategyCounts: {
-            [HISTORICAL_RUNTIME_COMPATIBILITY_ALIAS]: 2,
+            [HISTORICAL_RUNTIME_STRATEGY_ALIAS]: 2,
             code_object_v3: 1,
             unknown: 0,
           },
@@ -207,7 +201,7 @@ describe('normalizeAiPathRunRuntimeKernelMetadataForCleanup', () => {
       runtimeTrace: {
         kernelParity: {
           strategyCounts: {
-            [HISTORICAL_RUNTIME_COMPATIBILITY_ALIAS]: 4,
+            [HISTORICAL_RUNTIME_STRATEGY_ALIAS]: 4,
             code_object_v3: 2,
             unknown: 1,
           },
@@ -221,7 +215,7 @@ describe('normalizeAiPathRunRuntimeKernelMetadataForCleanup', () => {
       runtimeTrace: {
         kernelParity: {
           strategyCounts: {
-            [HISTORICAL_RUNTIME_COMPATIBILITY_ALIAS]: 4,
+            [HISTORICAL_RUNTIME_STRATEGY_ALIAS]: 4,
             code_object_v3: 2,
             unknown: 1,
           },

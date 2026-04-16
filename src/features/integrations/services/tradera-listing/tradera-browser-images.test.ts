@@ -93,6 +93,42 @@ describe('tradera-browser-images', () => {
     ]);
   });
 
+  it('deduplicates repeated canonical product images before appending extra imageLinks', () => {
+    const product = createProduct({
+      imageLinks: [
+        '/images/one.jpg',
+        '/images/extra.jpg',
+        'https://localhost:3000/uploads/one-local.jpg',
+      ],
+      images: [
+        {
+          imageFile: {
+            publicUrl: '/images/one.jpg',
+            filepath: '/uploads/one-local.jpg',
+          },
+        },
+        {
+          imageFile: {
+            publicUrl: ' /images/one.jpg ',
+            filepath: ' /uploads/one-local.jpg ',
+          },
+        },
+        {
+          imageFile: {
+            publicUrl: '/images/two.jpg',
+            filepath: '/uploads/two-local.jpg',
+          },
+        },
+      ],
+    });
+
+    expect(resolveProductImageUrls(product)).toEqual([
+      '/images/one.jpg',
+      '/images/two.jpg',
+      '/images/extra.jpg',
+    ]);
+  });
+
   it('accepts same-host public URLs and rejects remote or invalid absolute URLs', () => {
     expect(toAbsolutePublicFilePath('https://localhost:3000/uploads/example.jpg')).toBe(
       path.join(process.cwd(), 'public', 'uploads/example.jpg')

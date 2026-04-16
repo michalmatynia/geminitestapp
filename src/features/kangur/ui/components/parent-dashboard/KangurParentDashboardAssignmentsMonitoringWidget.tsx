@@ -1,7 +1,6 @@
 'use client';
 
-import { useLocale } from 'next-intl';
-import React, { useMemo } from 'react';
+import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import {
@@ -18,9 +17,7 @@ import {
   KangurTextField,
 } from '@/features/kangur/ui/design/primitives';
 import {
-  formatProgressTimestamp,
   type InteractionFilter,
-  type InteractionView,
 } from './KangurParentDashboardAssignmentsMonitoringWidget.utils';
 import {
   KANGUR_SEGMENTED_CONTROL_CLASSNAME,
@@ -28,10 +25,8 @@ import {
   KANGUR_TIGHT_ROW_CLASSNAME,
   KANGUR_WIDGET_TITLE_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
-import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 
-import { useMonitoringWidgetState } from './monitoring-widget/MonitoringWidget.hooks';
 import { MonitoringWidgetProvider, useMonitoringWidgetContext } from './MonitoringWidget.context';
 
 const MONITORING_FALLBACK_COPY = {
@@ -62,99 +57,8 @@ const MONITORING_FALLBACK_COPY = {
   title: 'Monitorowanie zadań',
 } as const;
 
-type MonitoringWidgetState = ReturnType<typeof useMonitoringWidgetState>;
-type MonitoringTranslate = (
-  key: string,
-  fallback: string,
-  values?: Record<string, string | number>
-) => string;
-type MonitoringInteractionCounts = {
-  lessonPanels: number;
-  openedTasks: number;
-  sessions: number;
-  total: number;
-  totalSessionSeconds: number;
-};
-
-function interpolateTemplate(
-  template: string,
-  values?: Record<string, string | number>
-): string {
-  if (!values) {
-    return template;
-  }
-
-  return template.replace(/\{(\w+)\}/g, (match: string, key: string) => {
-    const value = values[key];
-    return value === undefined ? match : String(value);
-  });
-}
-
-const matchesInteractionKindFilter = (
-  interactionFilter: InteractionFilter,
-  view: InteractionView
-): boolean => interactionFilter === 'all' || view.kind === interactionFilter;
-
-const matchesInteractionDateFrom = (
-  interactionDateFrom: string,
-  viewDate: string | null
-): boolean => !interactionDateFrom || Boolean(viewDate && viewDate >= interactionDateFrom);
-
-const matchesInteractionDateTo = (
-  interactionDateTo: string,
-  viewDate: string | null
-): boolean => !interactionDateTo || Boolean(viewDate && viewDate <= interactionDateTo);
-
-const shouldIncludeInteractionView = ({
-  interactionDateFrom,
-  interactionDateTo,
-  interactionFilter,
-  view,
-}: {
-  interactionDateFrom: string;
-  interactionDateTo: string;
-  interactionFilter: InteractionFilter;
-  view: InteractionView;
-}): boolean => {
-  const viewDate = view.timestamp?.slice(0, 10) ?? null;
-  return (
-    matchesInteractionKindFilter(interactionFilter, view) &&
-    matchesInteractionDateFrom(interactionDateFrom, viewDate) &&
-    matchesInteractionDateTo(interactionDateTo, viewDate)
-  );
-};
-
-function filterInteractionViews(
-  views: ReadonlyArray<InteractionView>,
-  interactionFilter: InteractionFilter,
-  interactionDateFrom: string,
-  interactionDateTo: string
-): InteractionView[] {
-  return views.filter((view) =>
-    shouldIncludeInteractionView({
-      interactionDateFrom,
-      interactionDateTo,
-      interactionFilter,
-      view,
-    })
-  );
-}
-
-const createMonitoringTranslate = (
-  translations: MonitoringWidgetState['translations']
-): MonitoringTranslate => {
-  return (key, fallback, values) => {
-    const translated = translations(key as never, values as never);
-    if (translated === key || translated.endsWith(`.${key}`)) {
-      return interpolateTemplate(fallback, values);
-    }
-
-    return translated;
-  };
-};
-
 const resolveMonitoringInteractionFilterOptions = (
-  translate: MonitoringTranslate
+  translate: (key: string, fallback: string, values?: Record<string, string | number>) => string
 ): ReadonlyArray<LabeledOptionDto<InteractionFilter>> =>
   [
     {
@@ -184,76 +88,8 @@ const resolveMonitoringInteractionFilterOptions = (
     },
   ];
 
-const resolveMonitoringSegmentedFilterClassName = (isCoarsePointer: boolean): string =>
-  isCoarsePointer
-    ? 'min-h-11 min-w-0 flex-1 px-4 text-xs touch-manipulation select-none active:scale-[0.97] sm:flex-none'
-    : 'min-w-0 flex-1 px-3 text-xs sm:flex-none';
-
-const resolveMonitoringHasMoreInteractions = (
-  interactionHistory: MonitoringWidgetState['interactionHistory']
-): boolean =>
-  Boolean(interactionHistory && interactionHistory.items.length < interactionHistory.total);
-
-const resolveMonitoringNextInteractionOffset = (
-  interactionHistory: MonitoringWidgetState['interactionHistory']
-): number | null => interactionHistory?.items.length ?? null;
-
-const resolveMonitoringInteractionCounts = (
-  filteredInteractionViews: InteractionView[]
-): MonitoringInteractionCounts =>
-  filteredInteractionViews.reduce(
-    (acc, view) => {
-      acc.total += 1;
-      if (view.kind === 'session') {
-        acc.sessions += 1;
-        if (typeof view.durationSeconds === 'number' && view.durationSeconds > 0) {
-          acc.totalSessionSeconds += view.durationSeconds;
-        }
-      } else if (view.kind === 'opened_task') {
-        acc.openedTasks += 1;
-      } else if (view.kind === 'lesson_panel') {
-        acc.lessonPanels += 1;
-      }
-      return acc;
-    },
-    {
-      lessonPanels: 0,
-      openedTasks: 0,
-      sessions: 0,
-      total: 0,
-      totalSessionSeconds: 0,
-    }
-  );
-
-const resolveMonitoringAverageSessionDurationLabel = (
-  formatLocalizedDuration: MonitoringWidgetState['formatLocalizedDuration'],
-  interactionCounts: MonitoringInteractionCounts
-): string | null =>
-  interactionCounts.sessions > 0
-    ? formatLocalizedDuration(
-        Math.round(interactionCounts.totalSessionSeconds / interactionCounts.sessions)
-      )
-    : null;
-
-const resolveMonitoringTopLessonPanelCard = (
-  lessonPanelTimeCards: MonitoringWidgetState['lessonPanelTimeCards']
-): MonitoringWidgetState['lessonPanelTimeCards'][number] | null =>
-  lessonPanelTimeCards
-    .slice()
-    .sort((left, right) => right.totalSeconds - left.totalSeconds)[0] ?? null;
-
-const shouldShowMonitoringLoadingState = (
-  isInteractionQueryReady: boolean,
-  isLoadingInteractions: boolean
-): boolean => !isInteractionQueryReady || isLoadingInteractions;
-
-function KangurParentDashboardMonitoringOverviewCards({
-  averageSessionDurationLabel,
-  interactionCounts,
-}: {
-  averageSessionDurationLabel: string | null;
-  interactionCounts: MonitoringInteractionCounts;
-}): React.JSX.Element {
+function KangurParentDashboardMonitoringOverviewCards(): React.JSX.Element {
+  const { averageSessionDurationLabel, interactionCounts } = useMonitoringWidgetContext();
   return (
     <div className='grid grid-cols-2 gap-3 lg:grid-cols-4'>
       <KangurGlassPanel
@@ -313,11 +149,8 @@ function KangurParentDashboardMonitoringOverviewCards({
   );
 }
 
-function KangurParentDashboardMonitoringActivityMix({
-  interactionCounts,
-}: {
-  interactionCounts: MonitoringInteractionCounts;
-}): React.JSX.Element {
+function KangurParentDashboardMonitoringActivityMix(): React.JSX.Element {
+  const { interactionCounts } = useMonitoringWidgetContext();
   return (
     <KangurGlassPanel padding='md' surface='mist' variant='soft'>
       <div className='text-[10px] font-black uppercase tracking-wider text-slate-400'>
@@ -345,18 +178,11 @@ function KangurParentDashboardMonitoringActivityMix({
   );
 }
 
-function KangurParentDashboardMonitoringHistoryFilters({
-  hasActiveFilters,
-  interactionFilterOptions,
-  segmentedFilterClassName,
-  translate,
-}: {
-  hasActiveFilters: boolean;
-  interactionFilterOptions: ReadonlyArray<LabeledOptionDto<InteractionFilter>>;
-  segmentedFilterClassName: string;
-  translate: MonitoringTranslate;
-}): React.JSX.Element {
+function KangurParentDashboardMonitoringHistoryFilters(): React.JSX.Element {
   const {
+    hasActiveFilters,
+    segmentedFilterClassName,
+    translate,
     interactionFilter,
     setInteractionFilter,
     interactionDateFrom,
@@ -364,6 +190,8 @@ function KangurParentDashboardMonitoringHistoryFilters({
     interactionDateTo,
     setInteractionDateTo,
   } = useMonitoringWidgetContext();
+
+  const interactionFilterOptions = resolveMonitoringInteractionFilterOptions(translate);
 
   return (
     <div className='flex flex-wrap items-center gap-3'>
@@ -425,27 +253,19 @@ function KangurParentDashboardMonitoringHistoryFilters({
   );
 }
 
-function KangurParentDashboardMonitoringHistoryContent({
-  filteredInteractionViews,
-  formatTimestamp,
-  hasMoreInteractions,
-  nextInteractionOffset,
-  shouldShowLoadingState,
-  translate,
-}: {
-  filteredInteractionViews: InteractionView[];
-  formatTimestamp: (value: string | null | undefined) => string;
-  hasMoreInteractions: boolean;
-  nextInteractionOffset: number | null;
-  shouldShowLoadingState: boolean;
-  translate: MonitoringTranslate;
-}): React.JSX.Element {
+function KangurParentDashboardMonitoringHistoryContent(): React.JSX.Element {
   const {
     activeLearnerId,
     fetchInteractions,
     interactionsError,
     interactionsLoadMoreError,
     isLoadingMoreInteractions,
+    filteredInteractionViews,
+    formatTimestamp,
+    hasMoreInteractions,
+    nextInteractionOffset,
+    shouldShowLoadingState,
+    translate,
   } = useMonitoringWidgetContext();
 
   if (shouldShowLoadingState) {
@@ -545,27 +365,8 @@ function KangurParentDashboardMonitoringHistoryContent({
   );
 }
 
-function KangurParentDashboardMonitoringHistorySection({
-  filteredInteractionViews,
-  formatTimestamp,
-  hasActiveFilters,
-  hasMoreInteractions,
-  interactionFilterOptions,
-  nextInteractionOffset,
-  segmentedFilterClassName,
-  shouldShowLoadingState,
-  translate,
-}: {
-  filteredInteractionViews: InteractionView[];
-  formatTimestamp: (value: string | null | undefined) => string;
-  hasActiveFilters: boolean;
-  hasMoreInteractions: boolean;
-  interactionFilterOptions: ReadonlyArray<LabeledOptionDto<InteractionFilter>>;
-  nextInteractionOffset: number | null;
-  segmentedFilterClassName: string;
-  shouldShowLoadingState: boolean;
-  translate: MonitoringTranslate;
-}): React.JSX.Element {
+function KangurParentDashboardMonitoringHistorySection(): React.JSX.Element {
+  const { translate } = useMonitoringWidgetContext();
   return (
     <div className={KANGUR_STACK_TIGHT_CLASSNAME}>
       <div className='flex items-center justify-between'>
@@ -574,35 +375,19 @@ function KangurParentDashboardMonitoringHistorySection({
         </h3>
       </div>
 
-      <KangurParentDashboardMonitoringHistoryFilters
-        hasActiveFilters={hasActiveFilters}
-        interactionFilterOptions={interactionFilterOptions}
-        segmentedFilterClassName={segmentedFilterClassName}
-        translate={translate}
-      />
+      <KangurParentDashboardMonitoringHistoryFilters />
 
-      <KangurParentDashboardMonitoringHistoryContent
-        filteredInteractionViews={filteredInteractionViews}
-        formatTimestamp={formatTimestamp}
-        hasMoreInteractions={hasMoreInteractions}
-        nextInteractionOffset={nextInteractionOffset}
-        shouldShowLoadingState={shouldShowLoadingState}
-        translate={translate}
-      />
+      <KangurParentDashboardMonitoringHistoryContent />
     </div>
   );
 }
 
-function KangurParentDashboardMonitoringLessonPanelTimeSection({
-  topLessonPanelCard,
-  translate,
-}: {
-  topLessonPanelCard: MonitoringWidgetState['lessonPanelTimeCards'][number] | null;
-  translate: MonitoringTranslate;
-}): React.JSX.Element {
+function KangurParentDashboardMonitoringLessonPanelTimeSection(): React.JSX.Element {
   const {
     formatLocalizedDuration,
     lessonPanelTimeCards,
+    topLessonPanelCard,
+    translate,
   } = useMonitoringWidgetContext();
 
   return (
@@ -704,65 +489,8 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
 }
 
 function KangurParentDashboardAssignmentsMonitoringWidgetContent(): React.JSX.Element {
-  const locale = useLocale();
-  const isCoarsePointer = useKangurCoarsePointer();
-  const state = useMonitoringWidgetContext();
-  const {
-    translations,
-    interactionFilter,
-    interactionDateFrom,
-    interactionDateTo,
-    interactionHistory,
-    isInteractionQueryReady,
-    isLoadingInteractions,
-    interactionViews,
-    lessonPanelTimeCards,
-    formatLocalizedDuration,
-  } = state;
-
+  const { translate } = useMonitoringWidgetContext();
   const { entry: monitoringContent } = useKangurPageContentEntry('parent-dashboard-monitoring');
-
-  const translate = createMonitoringTranslate(translations);
-  const interactionFilterOptions = useMemo(
-    () => resolveMonitoringInteractionFilterOptions(translate),
-    [translate]
-  );
-
-  const formatTimestamp = (value: string | null | undefined): string =>
-    formatProgressTimestamp({
-      value,
-      locale,
-      fallback: translations('widgets.monitoring.timestampUnavailable'),
-    });
-
-  const segmentedFilterClassName = resolveMonitoringSegmentedFilterClassName(isCoarsePointer);
-  const hasMoreInteractions = resolveMonitoringHasMoreInteractions(interactionHistory);
-  const nextInteractionOffset = resolveMonitoringNextInteractionOffset(interactionHistory);
-  const filteredInteractionViews = useMemo(
-    () =>
-      filterInteractionViews(
-        interactionViews,
-        interactionFilter,
-        interactionDateFrom,
-        interactionDateTo
-      ),
-    [interactionDateFrom, interactionDateTo, interactionFilter, interactionViews]
-  );
-  const interactionCounts = useMemo(
-    () => resolveMonitoringInteractionCounts(filteredInteractionViews),
-    [filteredInteractionViews]
-  );
-  const averageSessionDurationLabel = resolveMonitoringAverageSessionDurationLabel(
-    formatLocalizedDuration,
-    interactionCounts
-  );
-  const topLessonPanelCard = resolveMonitoringTopLessonPanelCard(lessonPanelTimeCards);
-  const hasActiveFilters =
-    interactionFilter !== 'all' || interactionDateFrom.length > 0 || interactionDateTo.length > 0;
-  const shouldShowLoadingState = shouldShowMonitoringLoadingState(
-    isInteractionQueryReady,
-    isLoadingInteractions
-  );
 
   return (
     <KangurPanelStack className='w-full' data-testid='parent-monitoring-overview'>
@@ -783,29 +511,13 @@ function KangurParentDashboardAssignmentsMonitoringWidgetContent(): React.JSX.El
 
       <div className='grid grid-cols-1 gap-6 xl:grid-cols-[1fr_320px]'>
         <div className='space-y-6'>
-          <KangurParentDashboardMonitoringOverviewCards
-            averageSessionDurationLabel={averageSessionDurationLabel}
-            interactionCounts={interactionCounts}
-          />
-          <KangurParentDashboardMonitoringActivityMix interactionCounts={interactionCounts} />
-          <KangurParentDashboardMonitoringHistorySection
-            filteredInteractionViews={filteredInteractionViews}
-            formatTimestamp={formatTimestamp}
-            hasActiveFilters={hasActiveFilters}
-            hasMoreInteractions={hasMoreInteractions}
-            interactionFilterOptions={interactionFilterOptions}
-            nextInteractionOffset={nextInteractionOffset}
-            segmentedFilterClassName={segmentedFilterClassName}
-            shouldShowLoadingState={shouldShowLoadingState}
-            translate={translate}
-          />
+          <KangurParentDashboardMonitoringOverviewCards />
+          <KangurParentDashboardMonitoringActivityMix />
+          <KangurParentDashboardMonitoringHistorySection />
         </div>
 
         <div className='space-y-6'>
-          <KangurParentDashboardMonitoringLessonPanelTimeSection
-            topLessonPanelCard={topLessonPanelCard}
-            translate={translate}
-          />
+          <KangurParentDashboardMonitoringLessonPanelTimeSection />
         </div>
       </div>
     </KangurPanelStack>

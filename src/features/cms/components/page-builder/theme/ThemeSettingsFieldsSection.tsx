@@ -12,8 +12,7 @@ import {
   useOptionalThemeSettingsValue,
 } from '../ThemeSettingsContext';
 
-interface ThemeSettingsFieldsSectionProps {
-  fields: SettingsPanelField<ThemeSettings>[];
+interface ThemeSettingsFieldsSectionConfig {
   title?: React.ReactNode;
   subtitle?: React.ReactNode;
   values?: ThemeSettings;
@@ -21,14 +20,16 @@ interface ThemeSettingsFieldsSectionProps {
   disabled?: boolean;
 }
 
+interface ThemeSettingsFieldsSectionProps {
+  fields: SettingsPanelField<ThemeSettings>[];
+  config?: ThemeSettingsFieldsSectionConfig;
+}
+
 export function ThemeSettingsFieldsSection({
   fields,
-  title,
-  subtitle,
-  values,
-  onChange,
-  disabled = false,
+  config = {},
 }: ThemeSettingsFieldsSectionProps): React.JSX.Element {
+  const { title, subtitle, values, onChange, disabled = false } = config;
   const themeContext = useOptionalThemeSettingsValue();
   const actions = useOptionalThemeSettingsActions();
   const theme = values ?? themeContext;

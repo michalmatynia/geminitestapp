@@ -1,12 +1,14 @@
 {
   "kind": "general-improvement-report",
-  "generatedAt": "2026-04-02T21:21:20.286Z",
+  "generatedAt": "2026-04-15T10:36:23.126Z",
   "phase": "classify",
   "executionMode": "executed",
   "allowWrite": false,
   "selectedTrackIds": [
     "products-parameter-integrity",
     "products-category-schema-normalization",
+    "ui-consolidation",
+    "application-performance",
     "repo-quality-baseline"
   ],
   "reportPath": "artifacts/improvements/classify-report.json",
@@ -25,7 +27,7 @@
       ],
       "instructions": [],
       "script": "products:classify:parameter-recovery",
-      "durationMs": 3182
+      "durationMs": 3689
     },
     {
       "id": "products-parameter-source-report",
@@ -41,7 +43,7 @@
       ],
       "instructions": [],
       "script": "products:report:parameter-source-recovery",
-      "durationMs": 6723
+      "durationMs": 3672
     },
     {
       "id": "products-parameter-source-summary",
@@ -57,7 +59,7 @@
       ],
       "instructions": [],
       "script": "products:summarize:parameter-source-recovery",
-      "durationMs": 398
+      "durationMs": 352
     },
     {
       "id": "products-parameter-source-template",
@@ -73,7 +75,7 @@
       ],
       "instructions": [],
       "script": "products:generate:parameter-source-recovery-template",
-      "durationMs": 415
+      "durationMs": 367
     },
     {
       "id": "products-parameter-source-batch-split",
@@ -88,7 +90,7 @@
       ],
       "instructions": [],
       "script": "products:split:parameter-source-recovery-template",
-      "durationMs": 329
+      "durationMs": 312
     },
     {
       "id": "products-parameter-family-mapping-packs",
@@ -103,7 +105,7 @@
       ],
       "instructions": [],
       "script": "products:generate:parameter-family-mapping-pack",
-      "durationMs": 316
+      "durationMs": 298
     },
     {
       "id": "products-parameter-family-mapping-index",
@@ -118,7 +120,7 @@
       ],
       "instructions": [],
       "script": "products:build:parameter-family-mapping-index",
-      "durationMs": 341
+      "durationMs": 304
     },
     {
       "id": "products-parameter-family-mapping-checklist",
@@ -133,7 +135,7 @@
       ],
       "instructions": [],
       "script": "products:render:parameter-family-mapping-checklist",
-      "durationMs": 301
+      "durationMs": 313
     },
     {
       "id": "products-category-manual-remediation-report",
@@ -149,7 +151,28 @@
       ],
       "instructions": [],
       "script": "products:report:parameter-remediation",
-      "durationMs": 692
+      "durationMs": 834
+    },
+    {
+      "id": "application-performance-baseline",
+      "title": "Run the performance baseline pass",
+      "trackId": "application-performance",
+      "phase": "classify",
+      "mode": "automatic",
+      "writes": false,
+      "status": "passed",
+      "outputs": [
+        "docs/metrics/critical-path-performance-latest.md",
+        "docs/metrics/critical-path-performance-latest.json",
+        "docs/metrics/critical-flow-tests-latest.md",
+        "docs/metrics/critical-flow-tests-latest.json",
+        "docs/metrics/unit-domain-timings-latest.md",
+        "docs/metrics/unit-domain-timings-latest.json",
+        "docs/metrics/route-hotspots.md"
+      ],
+      "instructions": [],
+      "script": "perf:ops:baseline",
+      "durationMs": 706069
     },
     {
       "id": "repo-quality-lint",
@@ -158,11 +181,11 @@
       "phase": "classify",
       "mode": "automatic",
       "writes": false,
-      "status": "passed",
+      "status": "failed",
       "outputs": [],
       "instructions": [],
       "script": "quality:baseline:lint",
-      "durationMs": 280785
+      "durationMs": 19243
     },
     {
       "id": "repo-quality-typecheck",
@@ -171,11 +194,11 @@
       "phase": "classify",
       "mode": "automatic",
       "writes": false,
-      "status": "passed",
+      "status": "failed",
       "outputs": [],
       "instructions": [],
       "script": "quality:baseline:typecheck",
-      "durationMs": 89891
+      "durationMs": 76302
     }
   ]
 }

@@ -108,6 +108,38 @@ export type TraderaDefaultConnectionPreferenceResponse = z.infer<
   typeof traderaDefaultConnectionPreferenceResponseSchema
 >;
 
+export const vintedDefaultConnectionPreferencePayloadSchema = z.object({
+  connectionId: z.string().trim().min(1).nullable().optional(),
+});
+
+export type VintedDefaultConnectionPreferencePayload = z.infer<
+  typeof vintedDefaultConnectionPreferencePayloadSchema
+>;
+
+export const vintedDefaultConnectionPreferenceResponseSchema = z.object({
+  connectionId: z.string().nullable(),
+});
+
+export type VintedDefaultConnectionPreferenceResponse = z.infer<
+  typeof vintedDefaultConnectionPreferenceResponseSchema
+>;
+
+export const scanner1688DefaultConnectionPreferencePayloadSchema = z.object({
+  connectionId: z.string().trim().min(1).nullable().optional(),
+});
+
+export type Scanner1688DefaultConnectionPreferencePayload = z.infer<
+  typeof scanner1688DefaultConnectionPreferencePayloadSchema
+>;
+
+export const scanner1688DefaultConnectionPreferenceResponseSchema = z.object({
+  connectionId: z.string().nullable(),
+});
+
+export type Scanner1688DefaultConnectionPreferenceResponse = z.infer<
+  typeof scanner1688DefaultConnectionPreferenceResponseSchema
+>;
+
 export const baseStockFallbackPreferencePayloadSchema = z.object({
   enabled: z.boolean(),
 });

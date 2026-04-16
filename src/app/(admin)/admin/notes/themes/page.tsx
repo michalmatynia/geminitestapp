@@ -1,4 +1,4 @@
-import { JSX } from 'react';
+import { type JSX } from 'react';
 
 import { AdminNotesThemesPage } from '@/features/notesapp/public';
 

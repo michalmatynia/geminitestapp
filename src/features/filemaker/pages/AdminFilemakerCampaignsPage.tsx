@@ -3,8 +3,8 @@
 import { ActionMenu } from '@/shared/ui/forms-and-actions.public';
 import { Badge, DropdownMenuItem, useToast } from '@/shared/ui/primitives.public';
 import { Megaphone } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import React, { useDeferredValue, useMemo, useState } from 'react';
+import { useRouter } from 'nextjs-toploader/app';
+import React, { useDeferredValue, useMemo, useState, startTransition } from 'react';
 
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
@@ -210,7 +210,7 @@ export function AdminFilemakerCampaignsPage(): React.JSX.Element {
           .sort((left, right) => left.name.localeCompare(right.name))
       );
       toast(`Campaign duplicated as ${duplicatedCampaign.name}.`, { variant: 'success' });
-      router.push(`/admin/filemaker/campaigns/${encodeURIComponent(duplicatedCampaign.id)}`);
+      startTransition(() => { router.push(`/admin/filemaker/campaigns/${encodeURIComponent(duplicatedCampaign.id)}`); });
       settingsStore.refetch();
     } catch (error: unknown) {
       logClientError(error);
@@ -480,11 +480,11 @@ export function AdminFilemakerCampaignsPage(): React.JSX.Element {
                 <DropdownMenuItem
                   onSelect={(event: Event): void => {
                     event.preventDefault();
-                    router.push(
-                      `/admin/filemaker/campaigns/runs/${encodeURIComponent(
-                        row.original.latestRun!.id
-                      )}`
-                    );
+                    startTransition(() => { router.push(
+                                                      `/admin/filemaker/campaigns/runs/${encodeURIComponent(
+                                                        row.original.latestRun!.id
+                                                      )}`
+                                                    ); });
                   }}
                 >
                   Open Run Monitor
@@ -493,9 +493,9 @@ export function AdminFilemakerCampaignsPage(): React.JSX.Element {
               <DropdownMenuItem
                 onSelect={(event: Event): void => {
                   event.preventDefault();
-                  router.push(
-                    `/admin/filemaker/campaigns/${encodeURIComponent(row.original.campaign.id)}`
-                  );
+                  startTransition(() => { router.push(
+                                                `/admin/filemaker/campaigns/${encodeURIComponent(row.original.campaign.id)}`
+                                              ); });
                 }}
               >
                 Edit Campaign
@@ -552,7 +552,7 @@ export function AdminFilemakerCampaignsPage(): React.JSX.Element {
             label: 'New Campaign',
             icon: <Megaphone className='size-4' />,
             onClick: (): void => {
-              router.push('/admin/filemaker/campaigns/new');
+              startTransition(() => { router.push('/admin/filemaker/campaigns/new'); });
             },
           },
           ...buildFilemakerNavActions(router, 'campaigns'),

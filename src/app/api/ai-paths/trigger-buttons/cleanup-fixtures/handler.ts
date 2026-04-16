@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { buildPlaywrightAiPathsFixtureCleanupPlan } from '@/features/ai/ai-paths/lib/playwright-fixture-cleanup';
 import {

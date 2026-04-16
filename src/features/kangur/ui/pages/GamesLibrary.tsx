@@ -34,7 +34,20 @@ import {
   getLocalizedKangurSubjectLabel,
 } from '@/features/kangur/lessons/lesson-catalog-i18n';
 
-type GamesLibraryState = ReturnType<typeof useGamesLibraryState>;
+import {
+  GamesLibraryContext,
+  useGamesLibraryContext,
+  type GamesLibraryState,
+} from './GamesLibrary.context';
+
+function GamesLibraryProvider({ children }: { children: React.ReactNode }) {
+  const state = useGamesLibraryState();
+  return (
+    <GamesLibraryContext.Provider value={state}>
+      {children}
+    </GamesLibraryContext.Provider>
+  );
+}
 
 const createGamesLibraryNavigation = (
   state: GamesLibraryState
@@ -57,12 +70,8 @@ const resolveGamesLibraryFilterSummary = (state: GamesLibraryState): string =>
       })
     : state.translations('filters.summaryAll', { count: state.totalGameCount });
 
-function GamesLibraryPageIntro(props: {
-  basePath: string;
-  replaceRoute: GamesLibraryState['replaceRoute'];
-  translations: GamesLibraryState['translations'];
-}): React.JSX.Element {
-  const { basePath, replaceRoute, translations } = props;
+function GamesLibraryPageIntro(): React.JSX.Element {
+  const { basePath, replaceRoute, translations } = useGamesLibraryContext();
 
   return (
     <KangurPageIntroCard
@@ -83,15 +92,7 @@ function GamesLibraryPageIntro(props: {
   );
 }
 
-function GamesLibraryFilterSelects(props: {
-  catalogFacets: GamesLibraryState['catalogFacets'];
-  engineCatalogFilterOptions: GamesLibraryState['engineCatalogFilterOptions'];
-  filters: GamesLibraryState['filters'];
-  gameFilterOptions: GamesLibraryState['gameFilterOptions'];
-  locale: GamesLibraryState['locale'];
-  translations: GamesLibraryState['translations'];
-  updateFilter: GamesLibraryState['updateFilter'];
-}): React.JSX.Element {
+function GamesLibraryFilterSelects(): React.JSX.Element {
   const {
     catalogFacets,
     engineCatalogFilterOptions,
@@ -100,7 +101,7 @@ function GamesLibraryFilterSelects(props: {
     locale,
     translations,
     updateFilter,
-  } = props;
+  } = useGamesLibraryContext();
 
   return (
     <div className='space-y-3'>
@@ -258,8 +259,8 @@ function GamesLibraryFilterSelects(props: {
   );
 }
 
-function GamesLibraryFiltersCard(props: { state: GamesLibraryState }): React.JSX.Element {
-  const { state } = props;
+function GamesLibraryFiltersCard(): React.JSX.Element {
+  const state = useGamesLibraryContext();
 
   return (
     <KangurInfoCard
@@ -306,23 +307,13 @@ function GamesLibraryFiltersCard(props: { state: GamesLibraryState }): React.JSX
         </div>
       ) : null}
 
-      <GamesLibraryFilterSelects
-        catalogFacets={state.catalogFacets}
-        engineCatalogFilterOptions={state.engineCatalogFilterOptions}
-        filters={state.filters}
-        gameFilterOptions={state.gameFilterOptions}
-        locale={state.locale}
-        translations={state.translations}
-        updateFilter={state.updateFilter}
-      />
+      <GamesLibraryFilterSelects />
     </KangurInfoCard>
   );
 }
 
-function GamesLibraryOverviewRail(props: {
-  orderedOverviewSections: GamesLibraryState['orderedOverviewSections'];
-}): React.JSX.Element {
-  const { orderedOverviewSections } = props;
+function GamesLibraryOverviewRail(): React.JSX.Element {
+  const { orderedOverviewSections } = useGamesLibraryContext();
 
   return (
     <aside
@@ -340,34 +331,20 @@ function GamesLibraryOverviewRail(props: {
   );
 }
 
-function GamesLibraryFiltersSection(props: {
-  state: GamesLibraryState;
-}): React.JSX.Element {
-  const { state } = props;
-
+function GamesLibraryFiltersSection(): React.JSX.Element {
   return (
     <section
       className={`grid items-start ${KANGUR_PANEL_GAP_CLASSNAME} xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]`}
     >
       <div className={`flex min-w-0 flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
-        <GamesLibraryFiltersCard state={state} />
+        <GamesLibraryFiltersCard />
       </div>
-      <GamesLibraryOverviewRail
-        orderedOverviewSections={state.orderedOverviewSections}
-      />
+      <GamesLibraryOverviewRail />
     </section>
   );
 }
 
-function GamesLibraryTabButtons(props: {
-  activeTab: GamesLibraryState['activeTab'];
-  availableTabs: GamesLibraryState['availableTabs'];
-  handlePointerTabMouseDown: GamesLibraryState['handlePointerTabMouseDown'];
-  handleTabChange: GamesLibraryState['handleTabChange'];
-  handleTabKeyDown: GamesLibraryState['handleTabKeyDown'];
-  tabRefs: GamesLibraryState['tabRefs'];
-  translations: GamesLibraryState['translations'];
-}): React.JSX.Element {
+function GamesLibraryTabButtons(): React.JSX.Element {
   const {
     activeTab,
     availableTabs,
@@ -376,7 +353,7 @@ function GamesLibraryTabButtons(props: {
     handleTabKeyDown,
     tabRefs,
     translations,
-  } = props;
+  } = useGamesLibraryContext();
 
   return (
     <div className={`${KANGUR_SEGMENTED_CONTROL_CLASSNAME} w-full`} role='tablist'>
@@ -412,57 +389,31 @@ function GamesLibraryActiveTabContent(props: {
     game: NonNullable<GamesLibraryState['selectedGame']>,
     trigger?: HTMLElement | null
   ) => void;
-  state: GamesLibraryState;
 }): React.JSX.Element | null {
-  const { onSelectGame, state } = props;
+  const { onSelectGame } = props;
+  const state = useGamesLibraryContext();
 
   if (state.activeTab === 'catalog') {
     return (
       <CatalogTab
-        applyFilters={state.applyFilters}
-        basePath={state.basePath}
-        filters={state.filters}
-        groupedGames={state.groupedGames}
-        hasActiveFilters={state.hasActiveFilters}
-        locale={state.locale}
-        selectedGame={state.selectedGame}
         setSelectedGame={onSelectGame}
-        totalGameCount={state.totalGameCount}
-        translations={state.translations}
-        visibleGameCount={state.visibleGameCount}
       />
     );
   }
 
   if (state.activeTab === 'structure') {
     return (
-      <StructureTab
-        coverageGroups={state.coverageGroups}
-        cohortGroups={state.cohortGroups}
-        drawingGroups={state.drawingGroups}
-        engineGroups={state.engineGroups}
-        filters={state.filters}
-        implementationGroups={state.implementationGroups}
-        locale={state.locale}
-        metrics={state.metrics}
-        translations={state.translations}
-        variantGroups={state.variantGroups}
-      />
+      <StructureTab />
     );
   }
 
   return (
-    <RuntimeTab
-      currentGamesLibraryHref={state.currentGamesLibraryHref}
-      serializationAudit={state.serializationAudit}
-      serializationAuditVisible={state.serializationAuditVisible}
-      translations={state.translations}
-    />
+    <RuntimeTab />
   );
 }
 
-function GamesLibraryTabsSection(props: { state: GamesLibraryState }): React.JSX.Element {
-  const { state } = props;
+function GamesLibraryTabsSection(): React.JSX.Element {
+  const state = useGamesLibraryContext();
   const selectedGameTriggerRef = React.useRef<HTMLElement | null>(null);
 
   const handleSelectGame = React.useCallback(
@@ -489,23 +440,13 @@ function GamesLibraryTabsSection(props: { state: GamesLibraryState }): React.JSX
       <div className={cn(GAMES_LIBRARY_PANEL_SURFACE_CLASSNAME, 'space-y-4')}>
         <div className='flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between'>
           <div className='w-full xl:max-w-4xl'>
-            <GamesLibraryTabButtons
-              activeTab={state.activeTab}
-              availableTabs={state.availableTabs}
-              handlePointerTabMouseDown={state.handlePointerTabMouseDown}
-              handleTabChange={state.handleTabChange}
-              handleTabKeyDown={state.handleTabKeyDown}
-              tabRefs={state.tabRefs}
-              translations={state.translations}
-            />
+            <GamesLibraryTabButtons />
           </div>
         </div>
       </div>
 
-      <GamesLibraryActiveTabContent onSelectGame={handleSelectGame} state={state} />
+      <GamesLibraryActiveTabContent onSelectGame={handleSelectGame} />
       <GamesLibraryPreviewModal
-        basePath={state.basePath}
-        selectedGame={state.selectedGame}
         setSelectedGame={handleCloseSelectedGame}
       />
     </section>
@@ -513,11 +454,10 @@ function GamesLibraryTabsSection(props: { state: GamesLibraryState }): React.JSX
 }
 
 function GamesLibraryPreviewModal(props: {
-  basePath: GamesLibraryState['basePath'];
-  selectedGame: GamesLibraryState['selectedGame'];
   setSelectedGame: () => void;
 }): React.JSX.Element {
-  const { basePath, selectedGame, setSelectedGame } = props;
+  const { setSelectedGame } = props;
+  const { basePath, selectedGame } = useGamesLibraryContext();
 
   return (
     <GamesLibraryGameModal
@@ -534,7 +474,7 @@ function GamesLibraryPreviewModal(props: {
 }
 
 function GamesLibraryContent(): React.JSX.Element {
-  const state = useGamesLibraryState();
+  const state = useGamesLibraryContext();
 
   useKangurRoutePageReady({
     pageKey: 'GamesLibrary',
@@ -557,13 +497,9 @@ function GamesLibraryContent(): React.JSX.Element {
         className: cn('flex w-full flex-col', KANGUR_PANEL_GAP_CLASSNAME),
       }}
     >
-      <GamesLibraryPageIntro
-        basePath={state.basePath}
-        replaceRoute={state.replaceRoute}
-        translations={state.translations}
-      />
-      <GamesLibraryFiltersSection state={state} />
-      <GamesLibraryTabsSection state={state} />
+      <GamesLibraryPageIntro />
+      <GamesLibraryFiltersSection />
+      <GamesLibraryTabsSection />
     </KangurStandardPageLayout>
   );
 }
@@ -572,5 +508,9 @@ export default function GamesLibrary(): React.JSX.Element {
   const { canAccess, status } = useKangurPageAccess('GamesLibrary');
   if (status === 'loading') return <></>;
   if (!canAccess) return <PageNotFound />;
-  return <GamesLibraryContent />;
+  return (
+    <GamesLibraryProvider>
+      <GamesLibraryContent />
+    </GamesLibraryProvider>
+  );
 }

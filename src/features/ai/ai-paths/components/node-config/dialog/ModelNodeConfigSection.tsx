@@ -3,7 +3,7 @@
 import { useEffect, useMemo } from 'react';
 
 import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
-import type { AiNode, Edge, ModelConfig } from '@/shared/lib/ai-paths';
+import type { AiNode, Edge, ModelConfig } from '@/shared/contracts/ai-paths';
 import { Button, Card, Input, Textarea } from '@/shared/ui/primitives.public';
 import { FormField, SelectSimple } from '@/shared/ui/forms-and-actions.public';
 
@@ -46,6 +46,7 @@ export function ModelNodeConfigSection(): React.JSX.Element | null {
 
   const effectiveModelId = brainModelOptions.effectiveModelId.trim();
   const selectedModelId = modelConfig.modelId?.trim() || '';
+  const runtimeModelId = selectedModelId || effectiveModelId;
   const selectedModelValue = selectedModelId || BRAIN_DEFAULT_MODEL_OPTION_VALUE;
   const routingMisconfigured =
     !brainModelOptions.assignment.enabled ||
@@ -55,6 +56,19 @@ export function ModelNodeConfigSection(): React.JSX.Element | null {
   const selectedModelMissingFromCatalog =
     Boolean(selectedModelId) &&
     !knownModels.some((modelId: string): boolean => modelId === selectedModelId);
+  const runtimeModelDescriptor = runtimeModelId
+    ? brainModelOptions.descriptors[runtimeModelId] ?? null
+    : null;
+  const visionUnsupportedBySelectedModel =
+    modelConfig.vision &&
+    Boolean(runtimeModelId) &&
+    runtimeModelDescriptor != null &&
+    runtimeModelDescriptor?.modality !== 'multimodal';
+  const visionCapabilityUnknown =
+    modelConfig.vision &&
+    Boolean(runtimeModelId) &&
+    runtimeModelDescriptor == null &&
+    !routingMisconfigured;
   const modelOptions = [
     {
       value: BRAIN_DEFAULT_MODEL_OPTION_VALUE,
@@ -196,6 +210,21 @@ export function ModelNodeConfigSection(): React.JSX.Element | null {
         <Card variant='warning' padding='sm' className='text-[11px] text-amber-100'>
           The selected model is not currently in the AI Brain catalog. It will still run if the
           provider accepts it, but reselecting from the Brain catalog is recommended.
+        </Card>
+      ) : null}
+      {visionUnsupportedBySelectedModel ? (
+        <Card variant='warning' padding='sm' className='text-[11px] text-amber-100'>
+          Accepts Images is enabled, but{' '}
+          <span className='text-amber-50'>{runtimeModelId}</span> is classified as{' '}
+          <span className='text-amber-50'>{runtimeModelDescriptor?.modality ?? 'text'}</span> in
+          AI Brain. Choose a multimodal model or disable image input for this node.
+        </Card>
+      ) : null}
+      {visionCapabilityUnknown ? (
+        <Card variant='warning' padding='sm' className='text-[11px] text-amber-100'>
+          Accepts Images is enabled, but AI Brain cannot verify image support for{' '}
+          <span className='text-amber-50'>{runtimeModelId}</span>. Choose a multimodal Brain model
+          or disable image input for this node.
         </Card>
       ) : null}
       {brainModelOptions.sourceWarnings.length > 0 ? (

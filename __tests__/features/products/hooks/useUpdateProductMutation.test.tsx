@@ -7,7 +7,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { ProductWithImages } from '@/shared/contracts/products';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { useUpdateProductMutation } from '@/features/products/hooks/useProductData';
+import { useUpdateProductMutation } from '@/features/products/hooks/useProductDataMutations';
 
 const mocks = vi.hoisted(() => ({
   useOfflineMutation: vi.fn(() => ({

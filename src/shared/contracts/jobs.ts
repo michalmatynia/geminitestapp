@@ -127,6 +127,21 @@ export const traderaQueueHealthResponseSchema = z.object({
 export type TraderaQueueHealthResponseDto = z.infer<typeof traderaQueueHealthResponseSchema>;
 export type TraderaQueueHealthResponse = TraderaQueueHealthResponseDto;
 
+export const baseImportQueueHealthResponseSchema = z.object({
+  ok: z.boolean(),
+  mode: z.enum(['bullmq', 'inline']),
+  redisAvailable: z.boolean(),
+  timestamp: z.string(),
+  queues: z.object({
+    baseImport: queueHealthStatusSchema.nullable(),
+  }),
+});
+
+export type BaseImportQueueHealthResponseDto = z.infer<
+  typeof baseImportQueueHealthResponseSchema
+>;
+export type BaseImportQueueHealthResponse = BaseImportQueueHealthResponseDto;
+
 /**
  * Product AI Job DTOs
  */
@@ -295,12 +310,13 @@ export const productAiJobActionResponseSchema = z.object({
 export type ProductAiJobActionResponseDto = z.infer<typeof productAiJobActionResponseSchema>;
 export type ProductAiJobActionResponse = ProductAiJobActionResponseDto;
 
+import { type SimpleDeleteResponse } from './base';
+
 export const productAiJobDeleteResponseSchema = z.object({
   success: z.boolean(),
 });
 
-export type ProductAiJobDeleteResponseDto = z.infer<typeof productAiJobDeleteResponseSchema>;
-export type ProductAiJobDeleteResponse = ProductAiJobDeleteResponseDto;
+export type ProductAiJobDeleteResponse = SimpleDeleteResponse;
 
 export const productAiJobsClearResponseSchema = z.object({
   success: z.boolean(),
@@ -322,7 +338,8 @@ export type ProductAiJobEnqueueResponse = ProductAiJobEnqueueResponseDto;
  * Product AI Job Repository Types
  */
 
-export type ProductAiJobStatus = 'pending' | 'running' | 'completed' | 'failed' | 'canceled';
+import { type Status as ProductAiJobStatus } from './base';
+export type { ProductAiJobStatus };
 
 export type ProductAiJobRecord = {
   id: string;

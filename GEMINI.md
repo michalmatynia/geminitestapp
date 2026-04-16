@@ -1,4 +1,4 @@
-# GEMINI.md - Project Reference (Scanned 2026-03-26)
+# GEMINI.md - Project Reference (Scanned 2026-04-11)
 
 This file is a code-backed reference for this repository. It is based on the
 current `package.json`, `src/`, `docs/`, and runtime/bootstrap files.
@@ -25,14 +25,14 @@ root Next.js app.
 
 ## Current Scale Snapshot
 
-Verified from the repository scan:
+Verified from the repository scan (April 2026):
 
-- `25` top-level feature domains in `src/features`
-- `298` `route.ts` API route files in `src/app/api`
-- `182` `page.tsx` files in `src/app`
-- `450` test files under top-level `__tests__`
-- `59` Playwright specs in `e2e/features`
-- `411` files in `scripts`
+- `24` top-level feature domains in `src/features`
+- `311` `route.ts` API route files in `src/app/api`
+- `173` `page.tsx` files in `src/app`
+- `3459` test files (3017 in `src/`, 442 under `__tests__`)
+- `60` Playwright specs in `e2e/features`
+- `467` files in `scripts`
 
 ## Stack
 
@@ -117,7 +117,7 @@ Authenticated admin routes live under `src/app/(admin)/admin`. Verified pages:
 - `image-studio`
 - `import`
 - `integrations`
-- `kangur`
+- `kangur` (Extensively expanded in April 2026: Social, Admin tools)
 - `notes`
 - `products`
 - `prompt-engine`
@@ -138,6 +138,7 @@ Public-facing routes live under `src/app/(frontend)`:
 - `/[...slug]` renders CMS slug pages
 - `/products/[id]` renders public product pages
 - `/preview/[id]` exists for preview flows
+- `/kangur` (New learner app portal)
 
 The home page resolves CMS domain/slugs and can redirect to admin apps such as
 chatbot or notes when front-page settings are configured that way.
@@ -155,7 +156,8 @@ The API is very broad. Major verified groups include:
 - `analytics`, `assets3d`, `auth`, `brain`
 - `case-resolver`, `chatbot`, `client-errors`, `cms`
 - `databases`, `drafts`, `files`, `health`, `image-studio`
-- `kangur`, `marketplace`, `notes`, `prompt-runtime`, `public`
+- `kangur` (Expanded: Social posts pipeline, LinkedIn integration, AI tutor)
+- `marketplace`, `notes`, `prompt-runtime`, `public`
 - `query-telemetry`, `search`, `settings`, `system`, `user`, `v2`
 
 There is no small single-domain backend here; this is a multi-subsystem platform.
@@ -172,18 +174,15 @@ Top-level feature domains under `src/features`:
 - `cms`
 - `data-import-export`
 - `database`
-- `document-editor`
 - `drafter`
 - `filemaker`
 - `files`
-- `foldertree`
 - `gsap`
 - `integrations`
 - `internationalization`
 - `jobs`
-- `kangur`
+- `kangur` (Primary focus of Q2 2026 expansion: UI components, social, progress)
 - `notesapp`
-- `observability`
 - `playwright`
 - `product-sync`
 - `products`
@@ -192,6 +191,8 @@ Top-level feature domains under `src/features`:
 - `tooltip-engine`
 - `viewer3d`
 
+**Consolidated Features**: `document-editor`, `foldertree`, and `observability` have been moved to `src/shared/lib` to serve as cross-feature platform utilities.
+
 ### AI-specific feature area
 
 `src/features/ai` currently contains:
@@ -199,7 +200,7 @@ Top-level feature domains under `src/features`:
 - `agent-runtime`
 - `agentcreator`
 - `ai-context-registry`
-- `ai-paths`
+- `ai-paths` (Refactored workers and enhanced validation in April 2026)
 - `chatbot`
 - `image-studio`
 - `insights`
@@ -244,7 +245,7 @@ Key areas:
 - `src/shared/lib/files`
   - upload, storage selection, file events
 - `src/shared/lib/observability`
-  - structured logging, alerts, runtime context, workers
+  - consolidated structured logging and alerting (moved from features)
 - `src/shared/lib/queue`
   - BullMQ queue factory and Redis wiring
 - `src/shared/lib/security`
@@ -253,6 +254,19 @@ Key areas:
   - settings, query, theme, sync, guards
 - `src/shared/ui`
   - shared design system/templates used across admin pages
+
+## Improvement Operations
+
+A new documentation and automation hub exists in `docs/build/improvements` to manage cross-feature quality tracks:
+
+- `application-performance`
+- `products-category-schema-normalization`
+- `products-parameter-integrity`
+- `repo-quality-baseline`
+- `testing-quality-baseline`
+- `ui-consolidation`
+
+These tracks are governed by `scripts/improvements` and tracked via `scan-latest.md`.
 
 ## Feature Boundary Convention
 
@@ -347,7 +361,7 @@ Queue infrastructure is centered in `src/shared/lib/queue`.
 Verified worker families started from queue init:
 
 - product AI jobs
-- AI Paths runs
+- AI Paths runs (Refactored to modular queue in April 2026)
 - chatbot jobs
 - agent runtime jobs
 - database backup scheduler
@@ -358,8 +372,9 @@ Verified worker families started from queue init:
 - case resolver OCR queue
 - system log alerts
 - AI insights queue
+- Kangur social posts pipeline
 
-AI Paths queue details from `src/features/ai/ai-paths/workers/aiPathRunQueue.ts`:
+AI Paths queue details from `src/features/ai/ai-paths/workers/ai-path-run-queue/config.ts`:
 
 - default concurrency is `3`
 - default per-job timeout is `10 minutes`
@@ -456,6 +471,7 @@ Notable verified concentrated areas:
 - folder tree
 - prompt exploder
 - observability
+- Kangur (Significant test coverage added in April 2026)
 
 ### E2E
 
@@ -474,7 +490,7 @@ Playwright specs exist for:
 - files
 - foldertree
 - integrations
-- kangur
+- kangur (Social, Learner App, Progress)
 - notesapp
 - observability
 - products
@@ -518,6 +534,10 @@ npm run docs:ai-paths:tooltip:check
 
 npm run check:factory-meta
 npm run check:factory-meta:strict
+
+npm run improvements:refresh-docs
+npm run improvements:read-only
+npm run improvements:audit
 ```
 
 ### Data / maintenance
@@ -545,6 +565,7 @@ Verified high-value docs:
 - `docs/ai-paths/reference.md`
 - `docs/case-resolver/index.md`
 - `docs/validator/README.md`
+- `docs/build/improvements/README.md` (New in April 2026)
 
 Generated/maintained docs also exist for:
 
@@ -656,7 +677,7 @@ If you need to change any of these files, stop and ask the user for permission f
 
 ## Last Reviewed
 
-Scanned against the repository on `2026-03-30`.
+Scanned against the repository on `2026-04-11`.
 
 ## Zero-Baseline Achievements (March 2026)
 

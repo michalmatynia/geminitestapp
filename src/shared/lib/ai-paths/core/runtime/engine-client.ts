@@ -59,6 +59,7 @@ import {
 import { createNodeRuntimeHandlerCatalog } from './node-runtime-handler-catalog';
 import { createNodeRuntimeKernel, toNodeRuntimeResolutionTelemetry } from './node-runtime-kernel';
 import { buildPromptOutput, pollGraphJob } from './utils';
+import { ApiError } from '@/shared/lib/api-client';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
@@ -105,6 +106,8 @@ const buildModelTerminalOutputs = (options: {
     ...(options.details ?? {}),
   };
 };
+
+const DEFAULT_LOCAL_GRAPH_MAX_DURATION_MS = 90_000;
 
 const handleModel: NodeHandler = async ({
   node,
@@ -213,11 +216,36 @@ const handleModel: NodeHandler = async ({
     logClientError(error);
     reportAiPathsError(error, { action: 'graphModel', nodeId: node.id }, 'AI model job failed:');
     executed.ai.add(node.id);
+
+    let errorMessage = 'An AI model job failed unexpectedly.'; // Default improved message
+
+    if (error instanceof ApiError) {
+      // Prefer specific ApiError message if available and more informative
+      if (error.message && error.message !== 'An error occurred' && error.message !== 'Failed to process request') {
+        errorMessage = error.message;
+      }
+    } else if (error instanceof Error) {
+      errorMessage = error.message || errorMessage; // Use actual error message if available
+    } else if (typeof error === 'string' && error.trim().length > 0) {
+      errorMessage = error.trim(); // Use string error directly
+    } else if (typeof error === 'object' && error !== null && 'message' in error && typeof error.message === 'string' && error.message.trim().length > 0) {
+      // Try to get message from object if it's not a standard Error but has a message property
+      errorMessage = error.message.trim();
+    } else if (typeof error === 'object' && error !== null && 'error' in error && typeof (error as { error: unknown }).error === 'string' && (error as { error: string }).error.trim().length > 0) {
+      // Attempt to get error from payload structure if available (like ApiError)
+      errorMessage = (error as { error: string }).error.trim();
+    }
+
+    // Ensure a meaningful message is always displayed
+    if (errorMessage === 'AI model job failed.' || !errorMessage.trim()) {
+       errorMessage = 'An unexpected error occurred during AI model job execution.';
+    }
+
     return {
       result: '',
       ...(enqueuedJobId ? { jobId: enqueuedJobId } : {}),
       status: 'failed',
-      error: error instanceof Error ? error.message : 'AI model job failed.',
+      error: errorMessage, // This error property is used by the UI to display messages.
       debugPayload: payload,
     };
   }
@@ -282,7 +310,6 @@ export const CLIENT_NATIVE_CODE_OBJECT_HANDLER_IDS: readonly string[] = Object.f
   ...CLIENT_HANDLER_CATALOG.nativeCodeObjectHandlerIds,
 ]);
 const defaultResolveCodeObjectHandler = createNodeCodeObjectV3ContractResolver({
-  resolveLegacyHandler,
   resolveNativeCodeObjectHandler: CLIENT_HANDLER_CATALOG.resolveNativeCodeObjectHandler,
 });
 const resolveUnsupportedClientCodeObjectHandler = ({
@@ -338,6 +365,7 @@ export async function evaluateGraphClient(
 
   return evaluateGraphInternal(nodes, resolvedEdges, {
     ...resolvedOptions,
+    maxDurationMs: resolvedOptions.maxDurationMs ?? DEFAULT_LOCAL_GRAPH_MAX_DURATION_MS,
     resolveHandler: runtimeKernel.resolveHandler,
     resolveHandlerTelemetry: (type: string) =>
       toNodeRuntimeResolutionTelemetry(runtimeKernel.resolveDescriptor(type)),

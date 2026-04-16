@@ -6,8 +6,11 @@ import { render, screen } from '@testing-library/react';
 const badgeMock = vi.hoisted(() => vi.fn());
 const resolveStatusBadgeVariantMock = vi.hoisted(() => vi.fn());
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   Badge: badgeMock,
+}));
+
+vi.mock('@/shared/ui/data-display.public', () => ({
   resolveStatusBadgeVariant: resolveStatusBadgeVariantMock,
 }));
 

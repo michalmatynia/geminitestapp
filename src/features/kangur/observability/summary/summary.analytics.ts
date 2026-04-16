@@ -1,6 +1,6 @@
 import type { KangurAiTutorAnalyticsSnapshot, KangurAnalyticsSnapshot, KangurDuelLobbyAnalyticsSnapshot } from '@/shared/contracts/kangur-observability';
 import { getKangurAiTutorBridgeFollowUpDirection } from '@/features/kangur/ai-tutor/follow-up-reporting';
-import { AnalyticsEventMongoDoc, LobbyMetricRecord } from './summary.contracts';
+import { type AnalyticsEventMongoDoc, type LobbyMetricRecord } from './summary.contracts';
 import {
   KANGUR_ANALYTICS_EVENT_NAMES,
   LOBBY_EVENT_KEY_MAP,

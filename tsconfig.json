@@ -39,9 +39,6 @@
       "@docs/*": [
         "./docs/*"
       ],
-      "@prisma/client": [
-        "./node_modules/.prisma/client/index.d.ts"
-      ],
       "@/__tests__/*": [
         "./__tests__/*"
       ],

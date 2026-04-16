@@ -5,7 +5,7 @@ import { getLatestKangurPageContentUpdateAt } from '@/features/kangur/server/pag
 import type { KangurKnowledgeGraphStatusSnapshot } from '@/shared/contracts/kangur-observability';
 import type { KangurPerformanceBaseline } from '@/shared/contracts/kangur-observability';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
-import { KangurKnowledgeGraphFreshnessSnapshot, KangurKnowledgeGraphFreshnessSource } from './summary.contracts';
+import { type KangurKnowledgeGraphFreshnessSnapshot, type KangurKnowledgeGraphFreshnessSource } from './summary.contracts';
 
 export const toIso = (value: Date | string | undefined | null): string => {
   if (!value) {

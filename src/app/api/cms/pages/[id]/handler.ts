@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
+import { type NextRequest, NextResponse } from 'next/server';
+import { type z } from 'zod';
 
 import { getCmsRepository } from '@/features/cms/server';
 import { cmsPageUpdateSchema } from '@/features/cms/server';
@@ -9,6 +9,7 @@ import type { IdDto as Params } from '@/shared/contracts/base';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { notFoundError, validationError } from '@/shared/errors/app-error';
 import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
+import { applyCacheLife } from '@/shared/lib/next/cache-life';
 
 // ... existing logCmsActivity function ...
 
@@ -38,14 +39,21 @@ const parseBody = async (
  * GET /api/cms/pages/[id]
  * Fetches a single page by its ID.
  */
+async function getCmsPageByIdCached(id: string) {
+  'use cache';
+  applyCacheLife('swr300');
+
+  const cmsRepository = await getCmsRepository();
+  return cmsRepository.getPageById(id);
+}
+
 export async function GET_handler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: Params
 ): Promise<NextResponse | Response> {
   const { id } = params;
-  const cmsRepository = await getCmsRepository();
-  const page = await cmsRepository.getPageById(id);
+  const page = await getCmsPageByIdCached(id);
 
   if (!page) {
     throw notFoundError('Page not found');

@@ -23,6 +23,11 @@ vi.mock('next/navigation', () => ({
   permanentRedirect: permanentRedirectMock,
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  redirect: redirectMock,
+  permanentRedirect: permanentRedirectMock,
+}));
+
 vi.mock('next/headers', () => ({
   headers: vi.fn(async () => new Headers()),
 }));
@@ -42,7 +47,7 @@ vi.mock('@/features/kangur/public', () => ({
     route === 'dedicated_app' ? '/kangur?__kangurLaunch=dedicated_app' : '/kangur',
 }));
 
-vi.mock('@/features/kangur/server', () => {
+vi.mock('@/features/kangur/server/launch-route', () => {
   return {
     getKangurConfiguredLaunchRoute: getKangurConfiguredLaunchRouteMock,
   };

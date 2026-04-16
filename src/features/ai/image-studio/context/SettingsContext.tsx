@@ -212,7 +212,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
           scope,
           verified: true,
           persistedSequencingEnabled: Boolean(persisted.projectSequencing.enabled),
-          persistedSnapshotHash: persistedSnapshotHash,
+          persistedSnapshotHash,
         };
       }
       if (options?.silent === false) {

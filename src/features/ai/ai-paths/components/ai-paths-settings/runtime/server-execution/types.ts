@@ -1,4 +1,4 @@
-import type { AiNode, AiPathRunRecord } from '@/shared/lib/ai-paths';
+import type { AiNode, AiPathRunRecord } from '@/shared/contracts/ai-paths';
 
 import type { ServerExecutionArgs } from '../types';
 

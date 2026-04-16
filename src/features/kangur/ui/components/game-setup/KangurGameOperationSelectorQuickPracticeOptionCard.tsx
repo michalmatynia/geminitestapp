@@ -11,37 +11,30 @@ import {
   KANGUR_TIGHT_ROW_CLASSNAME,
   KANGUR_WRAP_START_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
-import type { getOperationSelectorFallbackCopy } from './KangurGameOperationSelectorWidget.copy';
-import type {
-  KangurGameOperationSelectorTranslations,
-  KangurOperationSelectorRecommendation as KangurGameOperationSelectorRecommendation,
-  KangurGameOperationSelectorRuntime,
-} from './KangurGameOperationSelectorWidget.types';
 import type { LessonQuizOption } from './KangurGameOperationSelectorWidget.types';
 import {
   renderKangurGameOperationSelectorGameChipLabel,
   renderKangurGameOperationSelectorRecommendationChipLabel,
 } from './KangurGameOperationSelectorWidget.utils';
+import { useKangurGameOperationSelector } from './KangurGameOperationSelectorContext';
 
 export function KangurGameOperationSelectorQuickPracticeOptionCard({
-  fallbackCopy,
-  gamePageTranslations,
-  isRecommended,
-  isSixYearOld,
   option,
-  quickPracticeGameChipLabel,
-  recommendation,
-  setScreen,
 }: {
-  fallbackCopy: ReturnType<typeof getOperationSelectorFallbackCopy>;
-  gamePageTranslations: KangurGameOperationSelectorTranslations;
-  isRecommended: boolean;
-  isSixYearOld: boolean;
   option: LessonQuizOption;
-  quickPracticeGameChipLabel: string;
-  recommendation: KangurGameOperationSelectorRecommendation | null;
-  setScreen: KangurGameOperationSelectorRuntime['setScreen'];
 }): React.JSX.Element {
+  const {
+    fallbackCopy,
+    gamePageTranslations,
+    isSixYearOld,
+    quickPracticeGameChipLabel,
+    recommendation,
+    recommendedLessonQuizScreen,
+    setScreen,
+  } = useKangurGameOperationSelector();
+
+  const isRecommended = recommendedLessonQuizScreen === option.onSelectScreen;
+
   const optionLabel = translateRecommendationWithFallback(
     gamePageTranslations,
     `screens.${option.onSelectScreen}.label`,

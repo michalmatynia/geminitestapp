@@ -2,7 +2,7 @@
 
 import { PlusIcon, SettingsIcon } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'nextjs-toploader/app';
 import { useEffect } from 'react';
 
 import { useIntegrationList } from '@/features/integrations/hooks/useIntegrationList';
@@ -19,6 +19,8 @@ export function IntegrationList(): React.JSX.Element {
     traderaDefinition,
     traderaApiDefinition,
     allegroDefinition,
+    vintedDefinition,
+    scanner1688Definition,
     baselinkerDefinition,
     linkedinDefinition,
   } = useIntegrationList();
@@ -64,6 +66,22 @@ export function IntegrationList(): React.JSX.Element {
                   variant: 'warning' as const,
                   color: 'info' as const,
                   definition: traderaDefinition,
+                },
+                {
+                  slug: 'vinted',
+                  label: 'Vinted.pl',
+                  type: 'Browser',
+                  variant: 'warning' as const,
+                  color: 'success' as const,
+                  definition: vintedDefinition,
+                },
+                {
+                  slug: '1688',
+                  label: '1688',
+                  type: 'Browser',
+                  variant: 'warning' as const,
+                  color: 'warning' as const,
+                  definition: scanner1688Definition,
                 },
                 {
                   slug: 'tradera-api',

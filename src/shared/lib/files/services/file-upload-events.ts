@@ -4,7 +4,10 @@ import { randomUUID } from 'crypto';
 
 import { ObjectId } from 'mongodb';
 
-import type { FileUploadEventRecord } from '@/shared/contracts/files';
+import type {
+  FileUploadEventRecord,
+  FileUploadEventsFilters as ListFileUploadEventsInput,
+} from '@/shared/contracts/files';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 export type FileUploadEventInput = {
@@ -22,17 +25,6 @@ export type FileUploadEventInput = {
   userId?: string | null | undefined;
   meta?: Record<string, unknown> | null | undefined;
   createdAt?: Date | undefined;
-};
-
-export type ListFileUploadEventsInput = {
-  page?: number | undefined;
-  pageSize?: number | undefined;
-  status?: 'success' | 'error' | null | undefined;
-  category?: string | null | undefined;
-  projectId?: string | null | undefined;
-  query?: string | null | undefined;
-  from?: Date | null | undefined;
-  to?: Date | null | undefined;
 };
 
 export type ListFileUploadEventsResult = {

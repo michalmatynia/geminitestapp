@@ -7,7 +7,7 @@ import type {
   JobQueueContextValue,
   JobQueueStateValue,
 } from '@/features/ai/ai-paths/components/JobQueueContext';
-import type { AiPathRunRecord } from '@/shared/lib/ai-paths';
+import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 
 const { useJobQueueStateMock, useJobQueueActionsMock } = vi.hoisted(() => ({
   useJobQueueStateMock: vi.fn(),
@@ -312,5 +312,87 @@ describe('JobQueueRunCard status pills', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Retry node' }));
 
     expect(handleRetryRunNode).toHaveBeenCalledWith('run-1', 'node-failed');
+  });
+
+  it('renders Playwright runtime posture details for expanded Playwright nodes', () => {
+    const contextValue = buildContextValue();
+    contextValue.expandedRunIds = new Set(['run-1']);
+    contextValue.runDetails = {
+      'run-1': {
+        run: createRun('completed'),
+        nodes: [
+          {
+            id: 'node-runtime-1',
+            runId: 'run-1',
+            nodeId: 'node-playwright',
+            nodeType: 'playwright',
+            nodeTitle: 'Playwright node',
+            status: 'completed',
+            attempt: 1,
+            inputs: {},
+            outputs: {
+              bundle: {
+                result: {
+                  runtimePosture: {
+                    browser: {
+                      engine: 'chromium',
+                      label: 'Chrome',
+                      headless: false,
+                    },
+                    antiDetection: {
+                      identityProfile: 'search',
+                      locale: 'en-US',
+                      timezoneId: 'America/New_York',
+                      stickyStorageState: {
+                        enabled: true,
+                        loaded: true,
+                      },
+                      proxy: {
+                        enabled: true,
+                        providerPreset: 'brightdata',
+                        sessionMode: 'sticky',
+                        reason: 'applied',
+                        serverHost: 'proxy.local:8080',
+                      },
+                    },
+                  },
+                },
+                artifacts: [
+                  {
+                    name: 'runtime-posture',
+                    path: 'run-1/runtime-posture.json',
+                    url: '/api/ai-paths/playwright/run-1/artifacts/runtime-posture.json',
+                    mimeType: 'application/json',
+                    kind: 'json',
+                  },
+                ],
+              },
+            },
+            createdAt: '2026-03-05T00:00:00.000Z',
+            updatedAt: '2026-03-05T00:00:01.000Z',
+            startedAt: '2026-03-05T00:00:00.000Z',
+            finishedAt: '2026-03-05T00:00:01.000Z',
+          },
+        ],
+        events: [],
+      },
+    };
+    useJobQueueStateMock.mockReturnValue(toStateValue(contextValue));
+    useJobQueueActionsMock.mockReturnValue(toActionsValue(contextValue));
+
+    render(<JobQueueRunCard runId='run-1' run={createRun('completed')} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Nodes \(1\)/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Playwright node \(playwright\)\s*completed/i }));
+
+    expect(screen.getByText('Runtime posture')).toBeTruthy();
+    expect(screen.getByText('Chrome · Headed')).toBeTruthy();
+    expect(screen.getByText('Search profile · en-US · America/New_York')).toBeTruthy();
+    expect(screen.getByText('Brightdata · Sticky · Applied · proxy.local:8080')).toBeTruthy();
+    expect(screen.getByText('Loaded sticky state')).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Runtime posture (json)' })).toHaveAttribute(
+      'href',
+      '/api/ai-paths/playwright/run-1/artifacts/runtime-posture.json'
+    );
   });
 });

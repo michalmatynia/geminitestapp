@@ -74,4 +74,63 @@ describe('buildAdminNav', () => {
 
     expect(item).not.toBeNull();
   });
+
+  it('includes the Tradera parameter mapping entry', () => {
+    const nav = buildAdminNav({
+      onOpenChat: () => undefined,
+      onCreatePageClick: () => undefined,
+    }) as AdminNavNode[];
+
+    const item = findNavItem(
+      nav,
+      (entry) =>
+        entry.id === 'integrations/marketplaces/tradera/parameter-mapping' &&
+        entry.label === 'Parameter Mapping' &&
+        entry.href === '/admin/integrations/marketplaces/tradera/parameter-mapping'
+    );
+
+    expect(item).not.toBeNull();
+  });
+
+  it('includes the Tradera selector registry entry', () => {
+    const nav = buildAdminNav({
+      onOpenChat: () => undefined,
+      onCreatePageClick: () => undefined,
+    }) as AdminNavNode[];
+
+    const item = findNavItem(
+      nav,
+      (entry) =>
+        entry.id === 'integrations/marketplaces/tradera/selectors' &&
+        entry.label === 'Selector Registry' &&
+        entry.href === '/admin/integrations/marketplaces/tradera/selectors'
+    );
+
+    expect(item).not.toBeNull();
+  });
+
+  it('includes the dedicated product import page and export-focused Base.com entry', () => {
+    const nav = buildAdminNav({
+      onOpenChat: () => undefined,
+      onCreatePageClick: () => undefined,
+    }) as AdminNavNode[];
+
+    const productImportItem = findNavItem(
+      nav,
+      (entry) =>
+        entry.id === 'commerce/products/import' &&
+        entry.label === 'Import' &&
+        entry.href === '/admin/products/import'
+    );
+    const baseExportItem = findNavItem(
+      nav,
+      (entry) =>
+        entry.id === 'integrations/aggregators/base-com/import-export' &&
+        entry.label === 'Export' &&
+        entry.href === '/admin/integrations/aggregators/base-com/import-export'
+    );
+
+    expect(productImportItem).not.toBeNull();
+    expect(baseExportItem).not.toBeNull();
+  });
 });

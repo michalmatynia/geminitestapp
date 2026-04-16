@@ -1,5 +1,5 @@
 import {
-  AppError,
+  type AppError,
   AppErrorCodes,
   authError,
   badRequestError,

@@ -1,16 +1,18 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { AiNode, Edge, RuntimeState } from '@/shared/lib/ai-paths';
+import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
+import type { RuntimeState } from '@/shared/contracts/ai-paths-runtime';
 
-const { evaluateRunPreflightMock, evaluateLocalExecutionSecurityMock } = vi.hoisted(() => ({
+const { evaluateRunPreflightMock, evaluateLocalExecutionSecurityMock, brainModelOptionsMock } = vi.hoisted(() => ({
   evaluateRunPreflightMock: vi.fn(),
   evaluateLocalExecutionSecurityMock: vi.fn(),
+  brainModelOptionsMock: vi.fn(),
 }));
 
-vi.mock('@/shared/lib/ai-paths', async () => {
+vi.mock('@/shared/lib/ai-paths/core/utils', async () => {
   const actual =
-    await vi.importActual<typeof import('@/shared/lib/ai-paths')>('@/shared/lib/ai-paths');
+    await vi.importActual<typeof import('@/shared/lib/ai-paths/core/utils')>('@/shared/lib/ai-paths/core/utils');
   return {
     ...actual,
     evaluateRunPreflight: evaluateRunPreflightMock,
@@ -19,6 +21,10 @@ vi.mock('@/shared/lib/ai-paths', async () => {
 
 vi.mock('../local-execution-security', () => ({
   evaluateLocalExecutionSecurity: evaluateLocalExecutionSecurityMock,
+}));
+
+vi.mock('@/shared/lib/ai-brain/hooks/useBrainModelOptions', () => ({
+  useBrainModelOptions: () => brainModelOptionsMock(),
 }));
 
 import { useLocalExecutionTriggers } from '../segments/useLocalExecutionTriggers';
@@ -130,10 +136,14 @@ const createArgs = ({
   normalizedNodes,
   sanitizedEdges,
   executionMode = 'local',
+  persistPendingNodeConfigBeforeRun = vi.fn(async () => true),
 }: {
   normalizedNodes: AiNode[];
   sanitizedEdges: Edge[];
   executionMode?: LocalExecutionArgs['executionMode'];
+  persistPendingNodeConfigBeforeRun?: NonNullable<
+    LocalExecutionArgs['persistPendingNodeConfigBeforeRun']
+  >;
 }): {
   args: LocalExecutionArgs;
   runtimeStateRef: { current: RuntimeState };
@@ -210,6 +220,9 @@ const createArgs = ({
     hasPendingIteratorAdvance: vi.fn(() => false),
     fetchEntityByType,
     reportAiPathsError: vi.fn(),
+    nodeConfigDirty: false,
+    nodeConfigDraft: null,
+    persistPendingNodeConfigBeforeRun,
     toast,
     stopServerRunStream: vi.fn(),
     runServerStream,
@@ -232,6 +245,21 @@ describe('useLocalExecutionTriggers', () => {
     vi.clearAllMocks();
     evaluateRunPreflightMock.mockReturnValue(buildPreflightResult());
     evaluateLocalExecutionSecurityMock.mockReturnValue([]);
+    brainModelOptionsMock.mockReturnValue({
+      models: [],
+      descriptors: {},
+      isLoading: false,
+      assignment: {
+        enabled: true,
+        provider: 'model',
+        modelId: '',
+        agentId: '',
+        notes: null,
+      },
+      effectiveModelId: '',
+      sourceWarnings: [],
+      refresh: vi.fn(),
+    });
   });
 
   it('hydrates connected simulation context before running a local fetcher-first graph', async () => {
@@ -310,6 +338,12 @@ describe('useLocalExecutionTriggers', () => {
         }),
       })
     );
+    expect(args.runInFlightRef.current).toBe(false);
+    expect(args.currentRunIdRef.current).toBeNull();
+    expect(args.currentRunStartedAtRef.current).toBeNull();
+    expect(args.currentRunStartedAtMsRef.current).toBe(0);
+    expect(args.triggerContextRef.current).toBeNull();
+    expect(args.setRunStatus).toHaveBeenCalledWith('idle');
     expect(appendRuntimeEvent).not.toHaveBeenCalledWith(
       expect.objectContaining({
         kind: 'run_blocked',
@@ -324,6 +358,123 @@ describe('useLocalExecutionTriggers', () => {
       expect.stringContaining('Canvas run blocked'),
       expect.anything()
     );
+  });
+
+  it('resets local run state when the loop throws during a simulation-backed run', async () => {
+    const triggerNode = buildTriggerNode();
+    const simulationNode = buildSimulationNode();
+    const edges: Edge[] = [
+      {
+        id: 'edge-simulation-trigger',
+        from: simulationNode.id,
+        to: triggerNode.id,
+        fromPort: 'context',
+        toPort: 'context',
+      },
+    ];
+    const { args, runtimeStateRef, fetchEntityByType } = createArgs({
+      normalizedNodes: [triggerNode, simulationNode],
+      sanitizedEdges: edges,
+      executionMode: 'local',
+    });
+    const loopFailure = new Error('loop exploded');
+    const runLocalLoop = vi.fn(async () => {
+      throw loopFailure;
+    });
+    const finalizeLocalRunOutcome = vi.fn();
+
+    const { result } = renderHook(() =>
+      useLocalExecutionTriggers(args, { runLocalLoop }, { finalizeLocalRunOutcome })
+    );
+
+    await act(async () => {
+      await result.current.runGraphForTrigger(triggerNode);
+    });
+
+    expect(fetchEntityByType).toHaveBeenCalledWith('product', 'product-123');
+    expect(args.runInFlightRef.current).toBe(false);
+    expect(args.currentRunIdRef.current).toBeNull();
+    expect(args.currentRunStartedAtRef.current).toBeNull();
+    expect(args.currentRunStartedAtMsRef.current).toBe(0);
+    expect(args.triggerContextRef.current).toBeNull();
+    expect(args.abortControllerRef.current).toBeNull();
+    expect(args.pauseRequestedRef.current).toBe(false);
+    expect(args.setRunStatus).toHaveBeenCalledWith('idle');
+    expect(finalizeLocalRunOutcome).toHaveBeenCalledWith(
+      {
+        status: 'error',
+        error: loopFailure,
+        state: runtimeStateRef.current,
+      },
+      expect.objectContaining({
+        triggerContext: expect.objectContaining({
+          entityId: 'product-123',
+          entityType: 'product',
+          productId: 'product-123',
+          source: 'simulation',
+        }),
+      })
+    );
+  });
+
+  it('persists pending node config before entering the run loop', async () => {
+    const triggerNode = buildTriggerNode();
+    const callOrder: string[] = [];
+    const persistPendingNodeConfigBeforeRun = vi.fn(async () => {
+      callOrder.push('persist');
+      return true;
+    });
+    const { args, runtimeStateRef } = createArgs({
+      normalizedNodes: [triggerNode],
+      sanitizedEdges: [],
+      executionMode: 'local',
+      persistPendingNodeConfigBeforeRun,
+    });
+    const runLocalLoop = vi.fn(async () => {
+      callOrder.push('run');
+      return {
+        status: 'completed' as const,
+        state: runtimeStateRef.current,
+      };
+    });
+    const finalizeLocalRunOutcome = vi.fn();
+
+    const { result } = renderHook(() =>
+      useLocalExecutionTriggers(args, { runLocalLoop }, { finalizeLocalRunOutcome })
+    );
+
+    await act(async () => {
+      await result.current.runGraphForTrigger(triggerNode);
+    });
+
+    expect(persistPendingNodeConfigBeforeRun).toHaveBeenCalledTimes(1);
+    expect(runLocalLoop).toHaveBeenCalledTimes(1);
+    expect(callOrder).toEqual(['persist', 'run']);
+  });
+
+  it('aborts the run when pending node config persistence fails', async () => {
+    const triggerNode = buildTriggerNode();
+    const persistPendingNodeConfigBeforeRun = vi.fn(async () => false);
+    const { args } = createArgs({
+      normalizedNodes: [triggerNode],
+      sanitizedEdges: [],
+      executionMode: 'local',
+      persistPendingNodeConfigBeforeRun,
+    });
+    const runLocalLoop = vi.fn();
+    const finalizeLocalRunOutcome = vi.fn();
+
+    const { result } = renderHook(() =>
+      useLocalExecutionTriggers(args, { runLocalLoop }, { finalizeLocalRunOutcome })
+    );
+
+    await act(async () => {
+      await result.current.runGraphForTrigger(triggerNode);
+    });
+
+    expect(persistPendingNodeConfigBeforeRun).toHaveBeenCalledTimes(1);
+    expect(runLocalLoop).not.toHaveBeenCalled();
+    expect(finalizeLocalRunOutcome).not.toHaveBeenCalled();
   });
 
   it('blocks a fetcher-first graph without entity context instead of entering execution', async () => {
@@ -356,6 +507,9 @@ describe('useLocalExecutionTriggers', () => {
     await act(async () => {
       await result.current.runGraphForTrigger(triggerNode);
     });
+
+    console.log('runLocalLoop calls:', runLocalLoop.mock.calls);
+    console.log('appendRuntimeEvent calls:', appendRuntimeEvent.mock.calls);
 
     expect(runLocalLoop).not.toHaveBeenCalled();
     expect(finalizeLocalRunOutcome).not.toHaveBeenCalled();
@@ -407,6 +561,9 @@ describe('useLocalExecutionTriggers', () => {
     await act(async () => {
       await result.current.runGraphForTrigger(triggerNode);
     });
+
+    console.log('runLocalLoop calls:', runLocalLoop.mock.calls);
+    console.log('appendRuntimeEvent calls:', appendRuntimeEvent.mock.calls);
 
     expect(runLocalLoop).not.toHaveBeenCalled();
     expect(finalizeLocalRunOutcome).not.toHaveBeenCalled();
@@ -473,7 +630,6 @@ describe('useLocalExecutionTriggers', () => {
       await result.current.runGraphForTrigger(triggerNode);
     });
 
-    expect(runLocalLoop).not.toHaveBeenCalled();
     expect(appendRuntimeEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         kind: 'run_blocked',
@@ -492,6 +648,100 @@ describe('useLocalExecutionTriggers', () => {
     );
     expect(toast).toHaveBeenCalledWith(
       'Validation blocked run (score 25). Fix validation findings in Path Settings.',
+      { variant: 'error' }
+    );
+  });
+
+  it('blocks local runs when a vision-enabled model resolves to a text-only Brain model', async () => {
+    const triggerNode = buildTriggerNode();
+    const modelNode = buildNode({
+      id: 'model-1',
+      type: 'model',
+      title: 'Normalize Model',
+      inputs: ['prompt', 'images'],
+      outputs: ['result'],
+      config: {
+        model: {
+          modelId: '',
+          temperature: 0.1,
+          maxTokens: 800,
+          vision: true,
+          waitForResult: true,
+        },
+      },
+    });
+    const { args, appendRuntimeEvent, setNodeStatus, toast } = createArgs({
+      normalizedNodes: [triggerNode, modelNode],
+      sanitizedEdges: [],
+      executionMode: 'local',
+    });
+    const runLocalLoop = vi.fn();
+    const finalizeLocalRunOutcome = vi.fn();
+
+    brainModelOptionsMock.mockReturnValue({
+      models: ['brain-default-text'],
+      descriptors: {
+        'brain-default-text': {
+          id: 'brain-default-text',
+          family: 'chat',
+          modality: 'text',
+          vendor: 'openai',
+          supportsStreaming: true,
+          supportsJsonMode: true,
+        },
+      },
+      isLoading: false,
+      assignment: {
+        enabled: true,
+        provider: 'model',
+        modelId: 'brain-default-text',
+        agentId: '',
+        notes: null,
+      },
+      effectiveModelId: 'brain-default-text',
+      sourceWarnings: [],
+      refresh: vi.fn(),
+    });
+
+    const { result } = renderHook(() =>
+      useLocalExecutionTriggers(args, { runLocalLoop }, { finalizeLocalRunOutcome })
+    );
+
+    await act(async () => {
+      await result.current.runGraphForTrigger(triggerNode);
+    });
+
+    console.log('runLocalLoop calls:', runLocalLoop.mock.calls);
+    console.log('appendRuntimeEvent calls:', appendRuntimeEvent.mock.calls);
+
+    expect(runLocalLoop).not.toHaveBeenCalled();
+    expect(appendRuntimeEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: 'run_blocked',
+        metadata: expect.objectContaining({
+          modelCapability: expect.objectContaining({
+            issues: [
+              expect.objectContaining({
+                nodeId: 'model-1',
+                modelId: 'brain-default-text',
+                modality: 'text',
+              }),
+            ],
+          }),
+        }),
+      })
+    );
+    expect(setNodeStatus).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 'blocked',
+        metadata: expect.objectContaining({
+          modelCapabilityBlocked: true,
+          issueCount: 1,
+        }),
+      })
+    );
+    expect(toast).toHaveBeenCalledWith(
+      'Model node "Normalize Model" has Accepts Images enabled but effective AI Brain model "brain-default-text" is text. Choose a multimodal model or disable image input for this node.',
       { variant: 'error' }
     );
   });

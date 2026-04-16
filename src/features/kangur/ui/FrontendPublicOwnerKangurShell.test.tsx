@@ -24,6 +24,10 @@ vi.mock('next/navigation', () => ({
   usePathname: usePathnameMock,
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  usePathname: usePathnameMock,
+}));
+
 vi.mock('@/features/kangur/ui/KangurFeatureRouteShell', () => ({
   KangurFeatureRouteShell: (props: {
     basePath: string;

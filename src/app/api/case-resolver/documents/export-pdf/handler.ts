@@ -1,6 +1,6 @@
 import { createRequire } from 'module';
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { caseResolverPdfExportRequestSchema } from '@/shared/contracts/case-resolver/file';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';

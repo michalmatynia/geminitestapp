@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 
 import { AdminCaseResolverPageLayout } from '@/shared/ui/admin.public';

@@ -96,7 +96,7 @@ type LazyMotionDivProps = HTMLMotionProps<'div'> & {
 };
 
 export const LazyMotionDiv = forwardRef<HTMLDivElement, LazyMotionDivProps>(
-  function LazyMotionDiv(props, ref) {
+  (props, ref) => {
     const fm = useFramerMotion();
 
     if (fm) {

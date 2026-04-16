@@ -1,7 +1,7 @@
-import { BaseInventory, BaseWarehouse } from '@/shared/contracts/integrations/base-com';
+import { type BaseInventory, type BaseWarehouse } from '@/shared/contracts/integrations/base-com';
 import { isAppError } from '@/shared/errors/app-error';
 
-import { callBaseApi, callBaseApiRaw, BaseApiRawResult } from './core';
+import { callBaseApi, callBaseApiRaw, type BaseApiRawResult } from './core';
 import { extractInventoryList, extractWarehouseList } from '../base-client-parsers';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 

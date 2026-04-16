@@ -17,6 +17,14 @@ vi.mock('next/navigation', () => ({
   })),
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  usePathname: vi.fn(() => '/admin'),
+  useRouter: vi.fn(() => ({
+    push: mockPush,
+    prefetch: mockPrefetch,
+  })),
+}));
+
 const createTestQueryClient = () =>
   new QueryClient({
     defaultOptions: {

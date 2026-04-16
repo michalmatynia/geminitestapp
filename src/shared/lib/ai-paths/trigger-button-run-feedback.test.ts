@@ -81,7 +81,39 @@ describe('trigger-button-run-feedback', () => {
     });
   });
 
-  it('falls back to the freshest legacy per-surface feedback for button aliases', () => {
+  it('restores run feedback across product_row and product_marketplace_copy_row when the pathId matches', () => {
+    persistTriggerButtonRunFeedback({
+      buttonId: 'button-marketplace-copy-row',
+      pathId: 'path-marketplace-copy',
+      location: 'product_marketplace_copy_row',
+      entityType: 'product',
+      entityId: 'product-1',
+      run: {
+        runId: 'run-marketplace-copy',
+        status: 'running',
+        updatedAt: '2026-03-11T12:00:06.000Z',
+        finishedAt: null,
+        errorMessage: null,
+      },
+    });
+
+    expect(
+      readTriggerButtonRunFeedback({
+        buttonId: 'button-product-row',
+        pathId: 'path-marketplace-copy',
+        entityType: 'product',
+        entityId: 'product-1',
+      })
+    ).toEqual({
+      runId: 'run-marketplace-copy',
+      status: 'running',
+      updatedAt: '2026-03-11T12:00:06.000Z',
+      finishedAt: null,
+      errorMessage: null,
+    });
+  });
+
+  it('does not fall back to legacy per-surface feedback aliases', () => {
     window.localStorage.setItem(
       'ai-paths-trigger-button-run-feedback',
       JSON.stringify({
@@ -118,17 +150,10 @@ describe('trigger-button-run-feedback', () => {
       readTriggerButtonRunFeedback({
         buttonId: 'button-product-modal',
         pathId: 'path-shared',
-        legacyButtonIds: ['button-product-modal', 'button-product-row'],
         entityType: 'product',
         entityId: 'product-1',
       })
-    ).toEqual({
-      runId: 'run-newer',
-      status: 'running',
-      updatedAt: '2026-03-11T12:00:03.000Z',
-      finishedAt: null,
-      errorMessage: null,
-    });
+    ).toBeNull();
   });
 
   it('clears persisted run feedback for the shared trigger identity', () => {
@@ -150,7 +175,6 @@ describe('trigger-button-run-feedback', () => {
     clearTriggerButtonRunFeedback({
       buttonId: 'button-product-row',
       pathId: 'path-product-trigger',
-      legacyButtonIds: ['button-product-modal', 'button-product-row'],
       location: 'product_row',
       entityType: 'product',
       entityId: 'product-1',

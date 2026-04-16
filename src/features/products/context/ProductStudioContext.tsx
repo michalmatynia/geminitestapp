@@ -1,9 +1,15 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import React, { createContext, useContext, useState, useMemo, useCallback, useEffect } from 'react';
+// ProductStudioContext: manages state related to Image Studio integrations and
+// studio workflows for a product (selected images, variant mappings, run
+// status). Keeps studio state separate from core form state to simplify
+// lifecycle and caching semantics.
+'use no memo';
 
-import { useStudioProjects } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
+import { useRouter } from 'nextjs-toploader/app';
+import React, { createContext, useContext, useState, useMemo, useCallback, useEffect, startTransition } from 'react';
+
+import { useStudioProjects } from '@/features/ai/public';
 import { useProductSettings } from '@/features/products/hooks/useProductSettings';
 import type { ImageStudioSlotDto as ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import { productStudioAuditResponseSchema, productStudioLinkResponseSchema, productStudioVariantsResponseSchema } from '@/shared/contracts/products/studio';
@@ -245,7 +251,7 @@ export function ProductStudioProvider({
     setStudioActionError(null);
     const baselineIds = (variantsData?.variants ?? [])
       .map((s) => s.id)
-      .filter((id): id is string => !!id);
+      .filter((id): id is string => Boolean(id));
     try {
       const result = await sendToStudioMutation.mutateAsync({
         productId: product.id,
@@ -278,7 +284,7 @@ export function ProductStudioProvider({
       );
       const sourceSlotId = response.sourceSlot?.id;
       if (!sourceSlotId) throw internalError('Source slot not found.');
-      router.push(`/admin/image-studio?projectId=${response.projectId}&slotId=${sourceSlotId}`);
+      startTransition(() => { router.push(`/admin/image-studio?projectId=${response.projectId}&slotId=${sourceSlotId}`); });
     } catch (error) {
       logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to open.', { variant: 'error' });

@@ -1,17 +1,16 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { CachedProductService, performanceMonitor } from '@/features/products/performance';
 import { getProductDataProvider } from '@/features/products/server';
 import { validateProductCreateMiddleware } from '@/features/products/validations/middleware';
-import { productCreateInputSchema } from '@/shared/contracts/products/io';
+import { type productCreateInputSchema } from '@/shared/contracts/products/io';
 import { type ProductWithImages } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, payloadTooLargeError } from '@/shared/errors/app-error';
 import { env } from '@/shared/lib/env';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import {
-  formDataToObject,
   productService,
   productFilterSchema,
   type ProductFiltersParsed,
@@ -70,14 +69,6 @@ const attachTimingHeaders = (
   }
 };
 
-const buildProductPayload = (
-  formData: FormData
-): Record<string, unknown> => {
-  const payload = formDataToObject(formData);
-  delete payload['images'];
-  return payload;
-};
-
 const readProductCreateFormData = async (req: NextRequest): Promise<FormData> => {
   try {
     return await req.formData();
@@ -100,7 +91,7 @@ const findIdempotentProductResponse = async (
   payload: z.infer<typeof productCreateInputSchema>
 ): Promise<Response | null> => {
   const idempotencyKey = req.headers.get('idempotency-key') ?? req.headers.get('x-idempotency-key');
-  const normalizedSku = payload.sku.trim();
+  const normalizedSku = typeof payload?.sku === 'string' ? payload.sku.trim() : '';
   if (!idempotencyKey || !normalizedSku) {
     return null;
   }
@@ -175,8 +166,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   if (!validation.success) {
     return validation.response;
   }
-  const payload = buildProductPayload(formData);
-  const validatedPayload = productCreateInputSchema.parse(payload);
+  const validatedPayload = (validation.data ?? {}) as z.infer<typeof productCreateInputSchema>;
 
   const idempotentResponse = await findIdempotentProductResponse(req, validatedPayload);
   if (idempotentResponse) {

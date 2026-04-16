@@ -208,7 +208,7 @@ describe('database node normalization', () => {
     ]);
   });
 
-  it('keeps custom update mode for mongo-action update nodes even when the template is a direct token-only $set payload', () => {
+  it('auto-migrates mongo-action update nodes with direct token-only $set templates to mapping mode', () => {
     const [normalized] = normalizeNodes([
       buildDatabaseNode({
         database: {
@@ -229,7 +229,7 @@ describe('database node normalization', () => {
       }),
     ]);
 
-    expect(normalized?.config?.database?.updatePayloadMode).toBe('custom');
+    expect(normalized?.config?.database?.updatePayloadMode).toBe('mapping');
     expect(normalized?.config?.database?.mappings).toEqual([
       {
         targetPath: 'parameters',
@@ -256,9 +256,18 @@ describe('database node normalization', () => {
       provider: 'auto',
       mode: 'selected',
       collections: ['products'],
+      sourceMode: 'schema',
+      contextCollections: [],
+      contextQuery: '',
+      contextLimit: 20,
+      contextTransform: 'none',
+      contextReuseMode: 'never',
       includeFields: false,
       includeRelations: false,
       formatAs: 'json',
     });
+    expect(normalized?.inputs).toEqual(expect.arrayContaining(['context', 'schema']));
+    expect(normalized?.outputs).toEqual(expect.arrayContaining(['schema', 'context']));
+    expect(normalized?.config?.runtime?.waitForInputs).toBe(false);
   });
 });

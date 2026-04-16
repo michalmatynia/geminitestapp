@@ -1,7 +1,7 @@
 import { existsSync } from 'fs';
 import { readFile } from 'fs/promises';
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { getDiskPathFromPublicPath, isHttpFilepath } from '@/features/files/server';
 import { getAsset3DRepository } from '@/features/viewer3d/server';

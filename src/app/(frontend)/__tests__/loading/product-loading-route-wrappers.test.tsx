@@ -11,7 +11,7 @@ const { productRouteLoadingFallbackMock } = vi.hoisted(() => ({
   )),
 }));
 
-vi.mock('@/features/products/public', () => ({
+vi.mock('@/features/products/public/ProductRouteLoadingFallback', () => ({
   ProductRouteLoadingFallback: productRouteLoadingFallbackMock,
 }));
 

@@ -38,9 +38,9 @@ export const createBrowserKangurAuthAdapter = (
     }
   };
 
-  const signIn = async (input?: { returnUrl?: string }): Promise<KangurAuthSession> => {
+  const signIn = (input?: { returnUrl?: string }): Promise<KangurAuthSession> => {
     authPort.redirectToLogin(input?.returnUrl ?? resolveCurrentUrl());
-    return createAnonymousKangurAuthSession('web-session');
+    return Promise.resolve(createAnonymousKangurAuthSession('web-session'));
   };
 
   const signOut = async (input?: { returnUrl?: string }): Promise<KangurAuthSession> => {

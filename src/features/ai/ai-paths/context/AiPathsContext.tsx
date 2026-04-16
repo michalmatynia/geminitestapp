@@ -5,8 +5,8 @@ import {
   useEffect,
   useMemo,
   type ReactNode,
-  Dispatch,
-  SetStateAction,
+  type Dispatch,
+  type SetStateAction,
   useCallback,
 } from 'react';
 import { internalError } from '@/shared/errors/app-error';
@@ -32,7 +32,7 @@ const {
   useStrictContext: useAiPathsState,
 } = createStrictContext<AiPathsStateContextValue>({
   hookName: 'useAiPathsState',
-  providerName: 'an AiPathsProvider',
+  providerName: 'an AiPathsWorkspaceProvider',
   errorFactory: internalError,
 });
 
@@ -41,13 +41,13 @@ const {
   useStrictContext: useAiPathsActions,
 } = createStrictContext<AiPathsActionsContextValue>({
   hookName: 'useAiPathsActions',
-  providerName: 'an AiPathsProvider',
+  providerName: 'an AiPathsWorkspaceProvider',
   errorFactory: internalError,
 });
 
 export { useAiPathsState, useAiPathsActions };
 
-export function AiPathsProvider({ children }: { children: ReactNode }): React.JSX.Element {
+export function AiPathsWorkspaceProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const [activeTab, setActiveTab] = useState<AdminAiPathsWorkspaceTab>('canvas');
   const [isFocusMode, setIsFocusMode] = useState(false);
   const [mounted, setMounted] = useState(false);

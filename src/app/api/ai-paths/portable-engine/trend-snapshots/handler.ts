@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { requireAiPathsAccess } from '@/features/ai/ai-paths/server';
 import { portablePathTrendSnapshotsQuerySchema } from '@/shared/contracts/ai-paths-portable-engine';

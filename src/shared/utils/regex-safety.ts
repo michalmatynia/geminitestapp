@@ -19,16 +19,42 @@ export type RegexSafetyResult =
     };
 
 const POTENTIAL_BACKTRACKING_PATTERNS: RegExp[] = [
-  /\((?:[^()[\]]|\.)*[+*](?:[^()[\]]|\.)*\)\s*(?:[+*]|\{\s*\d+\s*,\s*\})/,
-  /\((?:[^()[\]]|\.)*\|\s*(?:[^()[\]]|\.)*\)\s*(?:[+*]|\{\s*\d+\s*,\s*\})/,
-  /\.\*\.\*|\.\+\.\+|\.\*\.\+|\.\+\.\*/,
+  /\((?:[^()[\s\]]|\.)*[+*](?:[^()[\s\]]|\.)*\)\s*(?:[+*]|\{\s*\d+\s*,\s*\}|)/,
+  /\((?:[^()[\s\]]|\.)*\|\s*(?:[^()[\s\]]|\.)*\)\s*(?:[+*]|\{\s*\d+\s*,\s*\}|)/,
+  /\.\*.\*|\.\+\.\+|\.\*\.\+|\.\+\.\*/,
 ];
 
 const normalizeFlags = (rawFlags: string | null | undefined): string | null => {
-  if (!rawFlags) return null;
+  if (rawFlags === null || rawFlags === undefined || rawFlags.length === 0) {
+    return null;
+  }
   const trimmed = rawFlags.trim();
-  if (!trimmed) return null;
+  if (trimmed.length === 0) {
+    return null;
+  }
   return trimmed;
+};
+
+const validateFlagsContent = (flags: string): RegexSafetyResult | null => {
+  const seen = new Set<string>();
+  for (const flag of flags) {
+    if (!ALLOWED_REGEX_FLAGS.has(flag)) {
+      return {
+        ok: false,
+        code: 'invalid_flag',
+        message: `Unsupported regex flag "${flag}".`,
+      };
+    }
+    if (seen.has(flag)) {
+      return {
+        ok: false,
+        code: 'duplicate_flag',
+        message: `Duplicate regex flag "${flag}".`,
+      };
+    }
+    seen.add(flag);
+  }
+  return null;
 };
 
 export const validateRegexSafety = (
@@ -45,33 +71,19 @@ export const validateRegexSafety = (
   }
 
   const normalizedFlags = normalizeFlags(rawFlags);
-  if (normalizedFlags && normalizedFlags.length > MAX_REGEX_FLAGS_LENGTH) {
-    return {
-      ok: false,
-      code: 'flags_too_long',
-      message: `Regex flags are too long (max ${MAX_REGEX_FLAGS_LENGTH} chars).`,
-      detail: `length=${normalizedFlags.length}`,
-    };
-  }
+  if (normalizedFlags !== null) {
+    if (normalizedFlags.length > MAX_REGEX_FLAGS_LENGTH) {
+      return {
+        ok: false,
+        code: 'flags_too_long',
+        message: `Regex flags are too long (max ${MAX_REGEX_FLAGS_LENGTH} chars).`,
+        detail: `length=${normalizedFlags.length}`,
+      };
+    }
 
-  if (normalizedFlags) {
-    const seen = new Set<string>();
-    for (const flag of normalizedFlags) {
-      if (!ALLOWED_REGEX_FLAGS.has(flag)) {
-        return {
-          ok: false,
-          code: 'invalid_flag',
-          message: `Unsupported regex flag "${flag}".`,
-        };
-      }
-      if (seen.has(flag)) {
-        return {
-          ok: false,
-          code: 'duplicate_flag',
-          message: `Duplicate regex flag "${flag}".`,
-        };
-      }
-      seen.add(flag);
+    const flagError = validateFlagsContent(normalizedFlags);
+    if (flagError !== null) {
+      return flagError;
     }
   }
 

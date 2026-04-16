@@ -1,56 +1,21 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
+import { type NextRequest, NextResponse } from 'next/server';
+import { type z } from 'zod';
 
 import { CachedProductService } from '@/features/products/server';
 import { getCategoryRepository, getProductDataProvider } from '@/features/products/server';
 import { createProductCategorySchema } from '@/shared/contracts/products/categories';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, conflictError } from '@/shared/errors/app-error';
+import { attachTimingHeaders } from '@/shared/lib/api/timing-utils';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import {
-  catalogIdQuerySchema,
-  type CatalogIdQuery,
+  catalogIdWithFreshQuerySchema,
+  type CatalogIdWithFreshQuery,
 } from '@/shared/validations/product-metadata-api-schemas';
 
 const shouldLogTiming = () => process.env['DEBUG_API_TIMING'] === 'true';
 
-const freshQuerySchema = z.preprocess(
-  (value: unknown) => {
-    if (typeof value === 'boolean') return value;
-    if (typeof value !== 'string') return undefined;
-    const normalized = value.trim().toLowerCase();
-    if (!normalized) return undefined;
-    if (normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on') {
-      return true;
-    }
-    if (normalized === '0' || normalized === 'false' || normalized === 'no' || normalized === 'off') {
-      return false;
-    }
-    return value;
-  },
-  z.boolean().optional()
-);
-
-export const querySchema = catalogIdQuerySchema.extend({
-  fresh: freshQuerySchema,
-});
-
-const buildServerTiming = (entries: Record<string, number | null | undefined>): string => {
-  const parts = Object.entries(entries)
-    .filter(([, value]) => typeof value === 'number' && Number.isFinite(value) && value >= 0)
-    .map(([name, value]) => `${name};dur=${Math.round(value as number)}`);
-  return parts.join(', ');
-};
-
-const attachTimingHeaders = (
-  response: Response,
-  entries: Record<string, number | null | undefined>
-): void => {
-  const value = buildServerTiming(entries);
-  if (value) {
-    response.headers.set('Server-Timing', value);
-  }
-};
+export const querySchema = catalogIdWithFreshQuerySchema;
 
 export { createProductCategorySchema as productCategoryCreateSchema };
 
@@ -63,7 +28,7 @@ export { createProductCategorySchema as productCategoryCreateSchema };
 export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const timings: Record<string, number | null | undefined> = {};
   const requestStart = performance.now();
-  const query = _ctx.query as (CatalogIdQuery & { fresh?: boolean }) | undefined;
+  const query = _ctx.query as CatalogIdWithFreshQuery | undefined;
   const catalogId = query?.catalogId ?? '';
 
   if (!catalogId) {
@@ -124,6 +89,7 @@ export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): P
 
   const category = await repository.createCategory({
     name: normalizedName,
+    ...(data.name_pl !== undefined ? { name_pl: data.name_pl } : {}),
     catalogId,
     color: data.color ?? null,
     parentId: data.parentId ?? null,

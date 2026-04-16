@@ -75,6 +75,16 @@ export const updateProductShippingGroupSchema = z.object({
 
 export type ProductShippingGroupUpdateInput = z.infer<typeof updateProductShippingGroupSchema>;
 
+export type ShippingGroupFormData = {
+  name: string;
+  description: string;
+  catalogId: string;
+  traderaShippingCondition: string;
+  traderaShippingPriceEur: string;
+  autoAssignCategoryIds: string[];
+  autoAssignCurrencyCodes: string[];
+};
+
 export const productShippingGroupFiltersSchema = z.object({
   catalogId: z.string().optional(),
   search: z.string().optional(),

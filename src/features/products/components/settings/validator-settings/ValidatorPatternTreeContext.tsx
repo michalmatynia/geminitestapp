@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import type React from 'react';
 
 import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
 import type { ProductValidationPattern, SequenceGroupDraft } from '@/shared/contracts/products/validation';

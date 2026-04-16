@@ -56,10 +56,14 @@ import {
   DEFAULT_PRODUCT_SYNC_FIELD_RULES,
   productSyncProfileCreatePayloadSchema,
   productSyncProfileSchema,
+  productSyncPreviewSchema,
   productSyncRunListQuerySchema,
+  productSyncSingleProductResponseSchema,
 } from '@/shared/contracts/product-sync';
+import { productScanRecordSchema } from '@/shared/contracts/product-scans';
 import {
   productCatalogRecordSchema,
+  productWithImagesSchema,
   productProducerRelationSchema,
   productTagRelationSchema,
 } from '@/shared/contracts/products/product';
@@ -201,11 +205,32 @@ describe('shared contracts runtime smoke', () => {
       }).batchSize
     ).toBe(50);
 
+    expect(() =>
+      productSyncProfileCreatePayloadSchema.parse({
+        name: 'Base sync',
+        connectionId: 'connection-1',
+        inventoryId: 'inventory-1',
+        fieldRules: [
+          {
+            appField: 'stock',
+            baseField: 'stock',
+            direction: 'base_to_app',
+          },
+          {
+            appField: 'stock',
+            baseField: 'stock.bl_1',
+            direction: 'app_to_base',
+          },
+        ],
+      })
+    ).toThrow();
+
     expect(
       productSyncProfileSchema.parse({
         id: 'profile-1',
         name: 'Base sync',
         description: null,
+        isDefault: true,
         enabled: true,
         connectionId: 'connection-1',
         inventoryId: 'inventory-1',
@@ -220,7 +245,119 @@ describe('shared contracts runtime smoke', () => {
       }).fieldRules
     ).toHaveLength(fieldRules.length);
 
+    expect(
+      productSyncPreviewSchema.parse({
+        status: 'ready',
+        canSync: true,
+        disabledReason: null,
+        profile: {
+          id: 'profile-1',
+          name: 'Base sync',
+          isDefault: true,
+          enabled: true,
+          connectionId: 'connection-1',
+          connectionName: 'Main Base Connection',
+          inventoryId: 'inventory-1',
+          catalogId: null,
+          lastRunAt: null,
+        },
+        linkedBaseProductId: 'base-1',
+        resolvedTargetSource: 'product',
+        fields: [
+          {
+            appField: 'stock',
+            appFieldLabel: 'Stock',
+            baseField: 'stock',
+            baseFieldLabel: 'Inventory stock (stock)',
+            baseFieldDescription: 'Inventory-level stock (no warehouse).',
+            direction: 'base_to_app',
+            appValue: 5,
+            baseValue: 8,
+            hasDifference: true,
+            willWriteToApp: true,
+            willWriteToBase: false,
+          },
+        ],
+      }).fields[0]?.direction
+    ).toBe('base_to_app');
+
+    expect(
+      productSyncSingleProductResponseSchema.parse({
+        preview: {
+          status: 'ready',
+          canSync: true,
+          disabledReason: null,
+          profile: {
+            id: 'profile-1',
+            name: 'Base sync',
+            isDefault: true,
+            enabled: true,
+            connectionId: 'connection-1',
+            connectionName: 'Main Base Connection',
+            inventoryId: 'inventory-1',
+            catalogId: null,
+            lastRunAt: null,
+          },
+          linkedBaseProductId: 'base-1',
+          resolvedTargetSource: 'product',
+          fields: [],
+        },
+        result: {
+          status: 'success',
+          localChanges: ['stock'],
+          baseChanges: [],
+          message: 'Synchronized successfully.',
+          errorMessage: null,
+        },
+      }).result.status
+    ).toBe('success');
+
     expect(productSyncRunListQuerySchema.parse({ limit: '25' }).limit).toBe(25);
+  });
+
+  it('parses supplier-oriented product scans without disturbing amazon defaults', () => {
+    const supplierScan = productScanRecordSchema.parse({
+      id: 'scan-1688-1',
+      productId: 'product-1688-1',
+      provider: '1688',
+      scanType: 'supplier_reverse_image',
+      status: 'completed',
+      productName: 'Supplier Probe',
+      title: '1688 Supplier Listing',
+      price: 'CN¥ 12.50-15.00',
+      url: 'https://detail.1688.com/offer/123456789.html',
+      supplierDetails: {
+        supplierName: 'Yiwu Supplier Co.',
+        supplierProductUrl: 'https://detail.1688.com/offer/123456789.html',
+        supplierStoreUrl: 'https://shop.1688.com/page.html',
+        currency: 'CNY',
+        priceRangeText: 'CN¥ 12.50-15.00',
+        moqText: '2 pcs',
+        images: [
+          {
+            url: 'https://img.alicdn.com/example-1.jpg',
+            source: 'gallery',
+          },
+        ],
+        prices: [
+          {
+            label: '2-9 pcs',
+            amount: '12.50',
+            currency: 'CNY',
+            moq: '2',
+            unit: 'pcs',
+            source: 'offer',
+          },
+        ],
+      },
+    });
+
+    expect(supplierScan.provider).toBe('1688');
+    expect(supplierScan.scanType).toBe('supplier_reverse_image');
+    expect(supplierScan.supplierDetails?.supplierName).toBe('Yiwu Supplier Co.');
+    expect(supplierScan.amazonDetails).toBeNull();
+    expect(supplierScan.amazonProbe).toBeNull();
+    expect(supplierScan.amazonEvaluation).toBeNull();
   });
 
   it('parses persona-memory and prompt-library payloads', () => {
@@ -468,6 +605,41 @@ describe('shared contracts runtime smoke', () => {
         ],
       }).sections
     ).toHaveLength(1);
+  });
+
+  it('parses product list rows with catalog relations that omit nested catalog details', () => {
+    const product = productWithImagesSchema.parse({
+      id: 'product-1',
+      sku: 'KEYCHA329',
+      baseProductId: null,
+      defaultPriceGroupId: null,
+      ean: null,
+      gtin: null,
+      asin: null,
+      name: { en: 'Keychain' },
+      description: { en: '' },
+      supplierName: null,
+      supplierLink: null,
+      priceComment: null,
+      stock: null,
+      price: null,
+      sizeLength: null,
+      sizeWidth: null,
+      weight: null,
+      length: null,
+      published: false,
+      categoryId: null,
+      catalogId: 'catalog-1',
+      catalogs: [
+        {
+          productId: 'product-1',
+          catalogId: 'catalog-1',
+          assignedAt: ISO_TIMESTAMP,
+        },
+      ],
+    });
+
+    expect(product.catalogs[0]?.catalogId).toBe('catalog-1');
   });
 
   it('parses product relation records with nested catalog, tag, and producer payloads', () => {

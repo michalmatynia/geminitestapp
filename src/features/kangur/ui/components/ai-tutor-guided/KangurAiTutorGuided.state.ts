@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { type motion } from 'framer-motion';
 
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 

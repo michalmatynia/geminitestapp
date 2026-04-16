@@ -1,4 +1,5 @@
 'use client';
+'use no memo';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -6,15 +7,17 @@ import {
   useGraphActions,
   usePersistenceActions,
   usePersistenceState,
-  useRuntimeState,
+  useRuntimeDataState,
+  useRuntimeStatusState,
   useRuntimeActions,
   useSelectionActions,
   useSelectionState,
 } from '@/features/ai/ai-paths/context';
 import { pruneRuntimeInputsState } from '@/features/ai/ai-paths/logic/runtime-pruning';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
-import type { Edge, PathMeta, PathConfig } from '@/shared/lib/ai-paths';
-import { triggers } from '@/shared/lib/ai-paths';
+import type { Edge, PathMeta, PathConfig } from '@/shared/contracts/ai-paths';
+import { triggers } from '@/shared/lib/ai-paths/core/constants';
+import { normalizeAiPathTriggerLabel } from '@/shared/lib/ai-paths/core/utils/trigger-label-migration';
 import {
   DOCS_OVERVIEW_SNIPPET,
   DOCS_WIRING_SNIPPET,
@@ -56,7 +59,7 @@ export function useAiPathsSettingsState({
   const { toast } = useToast();
   const { confirm, ConfirmationModal } = useConfirm();
   const { setPathName: setPathNameAction } = useGraphActions();
-  const { selectedNodeId, configOpen, nodeConfigDirty } = useSelectionState();
+  const { selectedNodeId, configOpen, nodeConfigDirty, nodeConfigDraft } = useSelectionState();
   const { setNodeConfigDirty: setNodeConfigDirtyAction } = useSelectionActions();
   const { loading, loadNonce, isPathSwitching } = usePersistenceState();
   const { setOperationHandlers, incrementLoadNonce: incrementLoadNonceAction } =
@@ -67,9 +70,12 @@ export function useAiPathsSettingsState({
     setParserSamples: setParserSamplesAction,
     setUpdaterSamples: setUpdaterSamplesAction,
   } = useRuntimeActions();
-  const { runtimeState, parserSamples, updaterSamples, pathDebugSnapshots, lastRunAt, lastError } =
-    useRuntimeState();
+  const { runtimeState, parserSamples, updaterSamples, pathDebugSnapshots } =
+    useRuntimeDataState();
+  const { lastRunAt, lastError } = useRuntimeStatusState();
   const [triggerButtonsReady, setTriggerButtonsReady] = useState(false);
+  const [isPathTreeVisible, setIsPathTreeVisible] = useState(true);
+  const [isInspectorVisible, setIsInspectorVisible] = useState(true);
 
   useEffect(() => {
     if (activeTab !== 'canvas') {
@@ -101,10 +107,7 @@ export function useAiPathsSettingsState({
     };
   }, [activeTab, triggerButtonsReady]);
 
-  const normalizeTriggerLabel = (value?: string | null): string =>
-    value === 'Product Modal - Context Grabber'
-      ? 'Product Modal - Context Filter'
-      : (value ?? triggers[0] ?? 'Product Modal - Context Filter');
+  const normalizeTriggerLabel = normalizeAiPathTriggerLabel;
 
   const {
     nodes,
@@ -223,6 +226,7 @@ export function useAiPathsSettingsState({
     presetsJson,
     setPresetsJson,
     expandedPaletteGroups,
+    setExpandedPaletteGroups,
     paletteCollapsed,
     setPaletteCollapsed,
     togglePaletteGroup,
@@ -265,13 +269,16 @@ export function useAiPathsSettingsState({
     activeTrigger,
     edges,
     expandedPaletteGroups,
+    setExpandedPaletteGroups,
     isPathActive,
     isPathLocked,
+    isPathTreeVisible,
     lastRunAt,
     loadNonce,
     loading,
     nodes,
     paletteCollapsed,
+    setPaletteCollapsed,
     parserSamples,
     pathConfigs,
     pathDescription,
@@ -282,6 +289,7 @@ export function useAiPathsSettingsState({
     blockedRunPolicy,
     aiPathsValidation: aiPathsValidationState,
     selectedNodeId,
+    setIsPathTreeVisible,
     runtimeState,
     updaterSamples,
     executionMode,
@@ -349,6 +357,41 @@ export function useAiPathsSettingsState({
     const raw = activeConfig.extensions['runtimeKernel'];
     return isObjectRecord(raw) ? raw : undefined;
   }, [activePathId, pathConfigs]);
+  const persistPendingNodeConfigBeforeRun = useCallback(async (): Promise<boolean> => {
+    if (!nodeConfigDirty) {
+      return true;
+    }
+    if (isPathLocked) {
+      toast('This path is locked. Unlock it to save node settings.', { variant: 'info' });
+      return false;
+    }
+
+    const nodeOverride = nodeConfigDraft ?? undefined;
+    const savedWithNodeOverride = await handleSave({
+      silent: true,
+      includeNodeConfig: true,
+      force: true,
+      nodeOverride,
+    });
+    if (savedWithNodeOverride) {
+      return true;
+    }
+
+    const savedWithFallback = await handleSave({
+      silent: true,
+      includeNodeConfig: true,
+      force: true,
+    });
+    if (savedWithFallback) {
+      return true;
+    }
+
+    return handleSave({
+      includeNodeConfig: true,
+      force: true,
+      nodeOverride,
+    });
+  }, [handleSave, isPathLocked, nodeConfigDirty, nodeConfigDraft, toast]);
 
   const runtime = useAiPathsRuntime({
     activePathId,
@@ -366,6 +409,9 @@ export function useAiPathsSettingsState({
     isPathActive,
     nodes,
     edges,
+    nodeConfigDirty,
+    nodeConfigDraft,
+    persistPendingNodeConfigBeforeRun,
     onCanonicalEdgesDetected: handleCanonicalEdgesDetected,
     reportAiPathsError,
     toast,
@@ -572,6 +618,10 @@ export function useAiPathsSettingsState({
     paletteCollapsed,
     setPaletteCollapsed,
     expandedPaletteGroups,
+    isPathTreeVisible,
+    setIsPathTreeVisible,
+    isInspectorVisible,
+    setIsInspectorVisible,
     togglePaletteGroup,
     // Presets
     clusterPresets,

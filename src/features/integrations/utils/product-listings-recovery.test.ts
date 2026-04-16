@@ -4,15 +4,18 @@ import {
   areProductListingsRecoveryContextsEqual,
   createBaseRecoveryContext,
   createTraderaRecoveryContext,
+  createVintedRecoveryContext,
   findTraderaRecoveryListing,
   isBaseQuickExportRecoveryContext,
   isTraderaQuickExportRecoveryContext,
+  isVintedQuickExportRecoveryContext,
   matchesProductListingsIntegrationScope,
   normalizeProductListingsIntegrationScope,
   readProductListingsRecoveryString,
   mergeProductListingsRecoveryContext,
   resolveProductListingsEmptyDescription,
   resolveTraderaRecoverySource,
+  resolveVintedRecoverySource,
   resolveProductListingsRecoveryIdentifiers,
   resolveProductListingsIntegrationScope,
   resolveProductListingsIntegrationScopeLabel,
@@ -64,6 +67,7 @@ describe('product-listings-recovery', () => {
   it('maps scoped labels for the known marketplace groups', () => {
     expect(resolveProductListingsIntegrationScopeLabel('base')).toBe('Base.com');
     expect(resolveProductListingsIntegrationScopeLabel('tradera')).toBe('Tradera');
+    expect(resolveProductListingsIntegrationScopeLabel('vinted')).toBe('Vinted.pl');
     expect(resolveProductListingsIntegrationScopeLabel('playwright-programmable')).toBe(
       'Playwright'
     );
@@ -90,6 +94,14 @@ describe('product-listings-recovery', () => {
         runId: null,
       })
     ).toBe(true);
+    expect(
+      isVintedQuickExportRecoveryContext({
+        source: 'vinted_quick_export_auth_required',
+        integrationSlug: 'vinted',
+        status: 'auth_required',
+        runId: null,
+      })
+    ).toBe(true);
     expect(isTraderaQuickExportRecoveryContext(null)).toBe(false);
   });
 
@@ -98,6 +110,7 @@ describe('product-listings-recovery', () => {
       createBaseRecoveryContext({
         status: 'failed',
         runId: 'run-base-1',
+        failureReason: 'Base export requires a mapped category.',
         requestId: 'job-base-1',
         integrationId: 'integration-base-1',
         connectionId: 'conn-base-1',
@@ -107,6 +120,7 @@ describe('product-listings-recovery', () => {
       integrationSlug: 'baselinker',
       status: 'failed',
       runId: 'run-base-1',
+      failureReason: 'Base export requires a mapped category.',
       requestId: 'job-base-1',
       integrationId: 'integration-base-1',
       connectionId: 'conn-base-1',
@@ -114,6 +128,19 @@ describe('product-listings-recovery', () => {
   });
 
   it('resolves empty-state copy for Base, Tradera, and generic cases', () => {
+    expect(
+      resolveProductListingsEmptyDescription({
+        source: 'base_quick_export_failed',
+        integrationSlug: 'baselinker',
+        status: 'failed',
+        runId: null,
+        failureReason:
+          'Base export requires an active Base.com category mapping for this product category. Map it in Category Mapper and retry.',
+      })
+    ).toBe(
+      'Base export requires an active Base.com category mapping for this product category. Map it in Category Mapper and retry.'
+    );
+
     expect(
       resolveProductListingsEmptyDescription({
         source: 'base_quick_export_failed',
@@ -149,6 +176,30 @@ describe('product-listings-recovery', () => {
       'Tradera export requires an active Tradera category mapping for this product category. Fetch Tradera categories in Category Mapper, map the category, and retry.'
     );
 
+    expect(
+      resolveProductListingsEmptyDescription({
+        source: 'vinted_quick_export_auth_required',
+        integrationSlug: 'vinted',
+        status: 'auth_required',
+        runId: null,
+      })
+    ).toBe(
+      'The last Vinted.pl quick export stopped before a stable listing record was available. Refresh the Vinted browser session if needed, then retry the Vinted listing flow from this modal.'
+    );
+
+    expect(
+      resolveProductListingsEmptyDescription({
+        source: 'vinted_quick_export_auth_required',
+        integrationSlug: 'vinted',
+        status: 'auth_required',
+        runId: null,
+        failureReason:
+          'AUTH_REQUIRED: Google sign-in is blocked in this automated browser. Use Vinted.pl email/password login instead of Continue with Google.',
+      })
+    ).toBe(
+      'Google sign-in is blocked in the automated Vinted.pl browser. Use Vinted.pl email/password instead of Continue with Google, then refresh the Vinted browser session and retry.'
+    );
+
     expect(resolveProductListingsEmptyDescription(null)).toBe(
       'This product is not listed on any marketplace yet. Use the + button in the header to list products on a marketplace.'
     );
@@ -165,6 +216,10 @@ describe('product-listings-recovery', () => {
       'tradera_quick_export_auth_required'
     );
     expect(resolveTraderaRecoverySource('failed')).toBe('tradera_quick_export_failed');
+    expect(resolveVintedRecoverySource('auth_required')).toBe(
+      'vinted_quick_export_auth_required'
+    );
+    expect(resolveVintedRecoverySource('failed')).toBe('vinted_quick_export_failed');
   });
 
   it('extracts recovery identifiers from the recovery context', () => {
@@ -205,6 +260,27 @@ describe('product-listings-recovery', () => {
       requestId: 'job-tradera-1',
       integrationId: 'integration-tradera-1',
       connectionId: 'conn-tradera-1',
+    });
+  });
+
+  it('builds a normalized Vinted recovery context object', () => {
+    expect(
+      createVintedRecoveryContext({
+        status: 'needs_login',
+        runId: 'run-vinted-1',
+        requestId: 'job-vinted-1',
+        integrationId: 'integration-vinted-1',
+        connectionId: 'conn-vinted-1',
+      })
+    ).toEqual({
+      source: 'vinted_quick_export_auth_required',
+      integrationSlug: 'vinted',
+      status: 'needs_login',
+      runId: 'run-vinted-1',
+      failureReason: null,
+      requestId: 'job-vinted-1',
+      integrationId: 'integration-vinted-1',
+      connectionId: 'conn-vinted-1',
     });
   });
 
@@ -326,6 +402,32 @@ describe('product-listings-recovery', () => {
     ).toBe('listing-2');
   });
 
+  it('does not return a duplicate-linked Tradera listing when the queue job matches a relinked row', () => {
+    expect(
+      findTraderaRecoveryListing(
+        [
+          {
+            id: 'listing-1',
+            status: 'failed',
+            integration: { slug: 'tradera' },
+            marketplaceData: {
+              tradera: {
+                lastExecution: {
+                  requestId: 'job-target',
+                  metadata: {
+                    latestStage: 'duplicate_linked',
+                  },
+                },
+              },
+            },
+          } as never,
+        ],
+        'job-target',
+        null
+      )
+    ).toBeNull();
+  });
+
   it('finds the Tradera recovery listing by run id when queue job is unavailable', () => {
     expect(
       findTraderaRecoveryListing(
@@ -363,6 +465,32 @@ describe('product-listings-recovery', () => {
         'run-target'
       )?.id
     ).toBe('listing-2');
+  });
+
+  it('does not return a duplicate-linked Tradera listing when the run id matches a relinked row', () => {
+    expect(
+      findTraderaRecoveryListing(
+        [
+          {
+            id: 'listing-1',
+            status: 'failed',
+            integration: { slug: 'tradera' },
+            marketplaceData: {
+              tradera: {
+                lastExecution: {
+                  metadata: {
+                    runId: 'run-target',
+                    latestStage: 'duplicate_linked',
+                  },
+                },
+              },
+            },
+          } as never,
+        ],
+        null,
+        'run-target'
+      )
+    ).toBeNull();
   });
 
   it('prefers the freshest failed Tradera listing when recovery ids are unavailable', () => {
@@ -410,6 +538,70 @@ describe('product-listings-recovery', () => {
         null
       )?.id
     ).toBe('listing-2');
+  });
+
+  it('skips duplicate-linked Tradera listings when selecting fallback recovery candidates', () => {
+    expect(
+      findTraderaRecoveryListing(
+        [
+          {
+            id: 'listing-1',
+            status: 'failed',
+            integration: { slug: 'tradera' },
+            marketplaceData: {
+              tradera: {
+                lastExecution: {
+                  executedAt: '2026-04-02T19:00:00.000Z',
+                  metadata: {
+                    latestStage: 'duplicate_linked',
+                  },
+                },
+              },
+            },
+          } as never,
+          {
+            id: 'listing-2',
+            status: 'failed',
+            integration: { slug: 'tradera' },
+            marketplaceData: {
+              tradera: {
+                lastExecution: {
+                  executedAt: '2026-04-02T18:00:00.000Z',
+                },
+              },
+            },
+          } as never,
+        ],
+        null,
+        null
+      )?.id
+    ).toBe('listing-2');
+  });
+
+  it('returns null when every Tradera fallback candidate is already duplicate-linked', () => {
+    expect(
+      findTraderaRecoveryListing(
+        [
+          {
+            id: 'listing-1',
+            status: 'failed',
+            integration: { slug: 'tradera' },
+            marketplaceData: {
+              tradera: {
+                lastExecution: {
+                  executedAt: '2026-04-02T19:00:00.000Z',
+                  metadata: {
+                    latestStage: 'duplicate_linked',
+                  },
+                },
+              },
+            },
+          } as never,
+        ],
+        null,
+        null
+      )
+    ).toBeNull();
   });
 
   it('extracts Tradera recovery metadata from listing execution details', () => {

@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { type z } from 'zod';
 
 import {
   kangurAssignmentCreateInputSchema,
@@ -39,7 +39,7 @@ const normalizeSortField = (value: string): KangurScoreSortField => {
 export const normalizeKangurSort = (
   sort?: string
 ): `-${KangurScoreSortField}` | KangurScoreSortField => {
-  if (!sort || sort.trim().length === 0) {
+  if (sort === undefined || sort.trim().length === 0) {
     return '-created_date';
   }
 
@@ -79,7 +79,7 @@ export const parseKangurScoreListQuery = (
 ): KangurScoreListQuery => {
   const parsed = kangurScoreListQuerySchema.safeParse({
     sort: payload['sort'],
-    limit: payload['limit'] ? Number(payload['limit']) : undefined,
+    limit: payload['limit'] !== undefined ? Number(payload['limit']) : undefined,
     player_name: payload['player_name'],
     operation: payload['operation'],
     subject: payload['subject'],

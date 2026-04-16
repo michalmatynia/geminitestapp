@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { getProposal, updateProposal } from '@/features/ai/ai-context-registry/server';
 import { executeActionRequestSchema } from '@/shared/contracts/ai-context-registry';

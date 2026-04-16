@@ -7,25 +7,24 @@ import React from 'react';
 import {
   useSystemLogsActions,
   useSystemLogsState,
-} from '@/features/observability/context/SystemLogsContext';
-import SystemLogsPage from '@/features/observability/pages/SystemLogsPage';
+} from '@/shared/lib/observability/context/SystemLogsContext';
+import SystemLogsPage from '@/shared/lib/observability/components/system-logs/SystemLogsPage';
 
-type ListPanelMockProps = {
-  children?: React.ReactNode;
-  header?: React.ReactNode;
-};
-
-function MockListPanel(props: ListPanelMockProps): React.JSX.Element {
-  const { children, header } = props;
-  return (
+vi.mock('@/shared/ui/list-panel', () => ({
+  ListPanel: ({
+    header,
+    children,
+  }: {
+    header?: React.ReactNode;
+    children?: React.ReactNode;
+  }) => (
     <div data-testid='mock-list-panel'>
-      <div data-testid='mock-list-panel-header'>{header}</div>
-      <div data-testid='mock-list-panel-children'>{children}</div>
+      {header}
+      {children}
     </div>
-  );
-}
+  ),
+}));
 
-// Mock next/navigation
 vi.mock('next/navigation', () => ({
   useSearchParams: vi.fn(() => new URLSearchParams()),
   usePathname: vi.fn(() => '/'),
@@ -36,8 +35,18 @@ vi.mock('next/navigation', () => ({
   })),
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  useSearchParams: vi.fn(() => new URLSearchParams()),
+  usePathname: vi.fn(() => '/'),
+  useRouter: vi.fn(() => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    prefetch: vi.fn(),
+  })),
+}));
+
 // Mock SystemLogsContext
-vi.mock('@/features/observability/context/SystemLogsContext', async (importOriginal) => {
+vi.mock('@/shared/lib/observability/context/SystemLogsContext', async (importOriginal) => {
   const actual = await importOriginal();
   return {
     ...actual,
@@ -79,7 +88,18 @@ vi.mock('@/shared/ui/navigation-and-layout.public', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/shared/ui/navigation-and-layout.public')>();
   return {
     ...actual,
-    ListPanel: MockListPanel,
+    ListPanel: ({
+      header,
+      children,
+    }: {
+      header?: React.ReactNode;
+      children?: React.ReactNode;
+    }) => (
+      <div data-testid='mock-list-panel'>
+        {header}
+        {children}
+      </div>
+    ),
   };
 });
 
@@ -181,7 +201,7 @@ describe('SystemLogsPage', () => {
   it('renders logs list and metrics', async () => {
     const { user } = renderPage();
     expect(screen.getByRole('heading', { name: 'Observation Post' })).toBeInTheDocument();
-    expect(screen.getByTestId('mock-list-panel')).toBeInTheDocument();
+    expect(screen.getAllByTestId('mock-list-panel').length).toBeGreaterThan(0);
     expect(screen.getByRole('tab', { name: /Overview/i })).toBeInTheDocument();
     
     // Switch to Metrics tab

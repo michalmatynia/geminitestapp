@@ -1,9 +1,9 @@
 import type { AiPathsAccessContext } from '@/features/ai/ai-paths/server';
-import type { PlaywrightNodeRunRecord } from '@/features/ai/ai-paths/services/playwright-node-runner';
+import type { PlaywrightEngineRunRecord } from '@/features/playwright/server';
 import { forbiddenError } from '@/shared/errors/app-error';
 
 type AssertPlaywrightRunAccessInput = {
-  run: PlaywrightNodeRunRecord;
+  run: PlaywrightEngineRunRecord;
   access: AiPathsAccessContext;
   isInternal: boolean;
 };

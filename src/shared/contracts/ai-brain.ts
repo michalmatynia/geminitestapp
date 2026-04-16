@@ -51,6 +51,8 @@ export const aiBrainCapabilityKeySchema = z.enum([
   'prompt_engine.prompt_exploder',
   'product.description.vision',
   'product.description.generation',
+  'product.scan.amazon_candidate_match',
+  'product.scan.1688_supplier_match',
   'product.translation',
   'product.validation.runtime',
   'image_studio.general',

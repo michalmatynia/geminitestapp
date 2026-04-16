@@ -2,7 +2,10 @@
 
 import { useState } from 'react';
 
-import { isTraderaBrowserIntegrationSlug } from '@/features/integrations/constants/slugs';
+import {
+  isTraderaBrowserIntegrationSlug,
+  isVintedIntegrationSlug,
+} from '@/features/integrations/constants/slugs';
 import {
   useListingBaseComSettings,
   useListingSelection,
@@ -16,6 +19,12 @@ import {
   isTraderaBrowserAuthRequiredMessage,
   preflightTraderaQuickListSession,
 } from '@/features/integrations/utils/tradera-browser-session';
+import {
+  isVintedBrowserAuthRequiredMessage,
+  preflightVintedQuickListSession,
+} from '@/features/integrations/utils/vinted-browser-session';
+import { normalizeVintedDisplayText } from '@/features/integrations/utils/vinted-display';
+import { getBaseExportPreflightError } from '@/features/integrations/utils/baseExportPreflight';
 import { selectProductForListingFormSchema } from '@/features/integrations/validations/listing-forms';
 import { useToast } from '@/shared/ui/primitives.public';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
@@ -32,7 +41,9 @@ type UseProductSelectionFormResult = {
   handleSubmit: (onSuccess: () => void) => Promise<void>;
 };
 
-export function useProductSelectionForm(): UseProductSelectionFormResult {
+export function useProductSelectionForm(
+  getSelectedProductCategoryId: () => string | null = () => null
+): UseProductSelectionFormResult {
   const [productSearch, setProductSearch] = useState('');
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -75,6 +86,14 @@ export function useProductSelectionForm(): UseProductSelectionFormResult {
     }
 
     try {
+      if (isBaseComIntegration) {
+        const preflightError = getBaseExportPreflightError(getSelectedProductCategoryId());
+        if (preflightError) {
+          setError(preflightError);
+          return;
+        }
+      }
+
       setError(null);
       if (isBaseComIntegration) {
         const exportData: ExportToBaseVariables = {
@@ -90,12 +109,25 @@ export function useProductSelectionForm(): UseProductSelectionFormResult {
       } else {
         const isTraderaBrowserIntegration =
           isTraderaIntegration && isTraderaBrowserIntegrationSlug(selectedIntegration?.slug);
+        const isVintedBrowserIntegration = isVintedIntegrationSlug(selectedIntegration?.slug);
         if (isTraderaBrowserIntegration && selectedConnectionId) {
           await preflightTraderaQuickListSession({
             integrationId: selectedIntegrationId,
             connectionId: selectedConnectionId,
-            productId: selectedProductId,
+            productId: selectedProductId ?? undefined,
           });
+        }
+        if (isVintedBrowserIntegration && selectedConnectionId) {
+          const preflightResponse = await preflightVintedQuickListSession({
+            integrationId: selectedIntegrationId,
+            connectionId: selectedConnectionId,
+            productId: selectedProductId ?? undefined,
+          });
+          if (!preflightResponse.ready) {
+            throw new Error(
+              'Vinted.pl login requires manual verification. Solve the browser challenge in the opened window and retry.'
+            );
+          }
         }
         await createListingMutation.mutateAsync({
           integrationId: selectedIntegrationId,
@@ -106,10 +138,24 @@ export function useProductSelectionForm(): UseProductSelectionFormResult {
     } catch (err: unknown) {
       logClientCatch(err, { source: 'SelectProductForListingModal', action: 'submit' });
       const errorMessage = err instanceof Error ? err.message : 'Failed to list product';
-      if (isTraderaBrowserAuthRequiredMessage(errorMessage)) {
-        toast(errorMessage, { variant: 'error' });
+      const isSelectedVintedIntegration = isVintedIntegrationSlug(selectedIntegration?.slug);
+      const displayErrorMessage = isSelectedVintedIntegration
+        ? normalizeVintedDisplayText(errorMessage)
+        : errorMessage;
+      const isSelectedTraderaBrowserIntegration =
+        isTraderaIntegration && isTraderaBrowserIntegrationSlug(selectedIntegration?.slug);
+      if (
+        isSelectedVintedIntegration &&
+        isVintedBrowserAuthRequiredMessage(displayErrorMessage)
+      ) {
+        toast(displayErrorMessage, { variant: 'error' });
+      } else if (
+        isSelectedTraderaBrowserIntegration &&
+        isTraderaBrowserAuthRequiredMessage(displayErrorMessage)
+      ) {
+        toast(displayErrorMessage, { variant: 'error' });
       }
-      setError(errorMessage);
+      setError(displayErrorMessage);
     }
   };
 

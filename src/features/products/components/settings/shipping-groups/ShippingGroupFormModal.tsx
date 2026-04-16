@@ -9,8 +9,9 @@ import { Input } from '@/shared/ui/input';
 import { MultiSelect } from '@/shared/ui/multi-select';
 import { SelectSimple } from '@/shared/ui/select-simple';
 import { Textarea } from '@/shared/ui/textarea';
+import type { ShippingGroupFormData } from '@/shared/contracts/products/shipping-groups';
 
-import { useShippingGroupsState, type ShippingGroupFormData } from './ShippingGroupsContext';
+import { useShippingGroupsState } from './ShippingGroupsContext';
 import {
   DRAFT_SHIPPING_GROUP_ID,
 } from './shipping-group-utils';

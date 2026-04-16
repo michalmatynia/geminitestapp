@@ -153,7 +153,120 @@ describe('ProductListingsStartPanel', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'List Product' }));
 
-    expect(onStartListing).toHaveBeenCalledWith('integration-tradera-1', 'conn-tradera-1');
+    expect(onStartListing).toHaveBeenCalledWith('integration-tradera-1', 'conn-tradera-1', {
+      autoSubmit: false,
+    });
+  });
+
+  it('auto-submits when restarting from a matching recovery selection', () => {
+    const onStartListing = vi.fn();
+    useProductListingsModalsMock.mockReturnValue({
+      onStartListing,
+      recoveryContext: {
+        source: 'vinted_quick_export_auth_required',
+        integrationSlug: 'vinted',
+        status: 'auth_required',
+        runId: null,
+        integrationId: 'integration-vinted-1',
+        connectionId: 'conn-vinted-1',
+      },
+    });
+    useIntegrationSelectionMock.mockReturnValue({
+      integrations: [
+        {
+          id: 'integration-vinted-1',
+          name: 'Vinted.pl',
+          slug: 'vinted',
+          connections: [
+            { id: 'conn-vinted-1', name: 'Vinted Browser', integrationId: 'integration-vinted-1' },
+          ],
+        },
+      ],
+      loading: false,
+      selectedIntegrationId: 'integration-vinted-1',
+      selectedConnectionId: 'conn-vinted-1',
+      selectedIntegration: undefined,
+      isBaseComIntegration: false,
+      isTraderaIntegration: false,
+      setSelectedIntegrationId: vi.fn(),
+      setSelectedConnectionId: vi.fn(),
+    });
+
+    render(
+      <ProductListingsViewProvider
+        value={{
+          ...baseViewContextValue,
+          integrationScopeLabel: 'Vinted.pl',
+          statusTargetLabel: 'Vinted.pl',
+          filterIntegrationSlug: 'vinted',
+          isScopedMarketplaceFlow: true,
+        }}
+      >
+        <ProductListingsStartPanel />
+      </ProductListingsViewProvider>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'List Product' }));
+
+    expect(onStartListing).toHaveBeenCalledWith('integration-vinted-1', 'conn-vinted-1', {
+      autoSubmit: true,
+    });
+  });
+
+  it('keeps restart manual when the user changes away from the recovery connection', () => {
+    const onStartListing = vi.fn();
+    useProductListingsModalsMock.mockReturnValue({
+      onStartListing,
+      recoveryContext: {
+        source: 'vinted_quick_export_auth_required',
+        integrationSlug: 'vinted',
+        status: 'auth_required',
+        runId: null,
+        integrationId: 'integration-vinted-1',
+        connectionId: 'conn-vinted-1',
+      },
+    });
+    useIntegrationSelectionMock.mockReturnValue({
+      integrations: [
+        {
+          id: 'integration-vinted-1',
+          name: 'Vinted.pl',
+          slug: 'vinted',
+          connections: [
+            { id: 'conn-vinted-1', name: 'Vinted Browser', integrationId: 'integration-vinted-1' },
+            { id: 'conn-vinted-2', name: 'Backup Browser', integrationId: 'integration-vinted-1' },
+          ],
+        },
+      ],
+      loading: false,
+      selectedIntegrationId: 'integration-vinted-1',
+      selectedConnectionId: 'conn-vinted-2',
+      selectedIntegration: undefined,
+      isBaseComIntegration: false,
+      isTraderaIntegration: false,
+      setSelectedIntegrationId: vi.fn(),
+      setSelectedConnectionId: vi.fn(),
+    });
+
+    render(
+      <ProductListingsViewProvider
+        value={{
+          ...baseViewContextValue,
+          integrationScopeLabel: 'Vinted.pl',
+          statusTargetLabel: 'Vinted.pl',
+          filterIntegrationSlug: 'vinted',
+          isScopedMarketplaceFlow: true,
+        }}
+      >
+        <ProductListingsStartPanel />
+      </ProductListingsViewProvider>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'List Product' }));
+
+    expect(onStartListing).toHaveBeenCalledWith('integration-vinted-1', 'conn-vinted-2', {
+      autoSubmit: false,
+    });
   });
 
   it('shows marketplace-specific copy for filtered integration flows', () => {

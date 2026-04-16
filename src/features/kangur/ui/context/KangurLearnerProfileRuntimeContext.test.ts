@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { hasScopedMessage } from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
+import { hasScopedMessage } from './KangurLearnerProfileRuntimeContext.utils';
 
 describe('hasScopedMessage', () => {
   const messages = {

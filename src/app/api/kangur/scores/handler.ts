@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { logKangurServerEvent } from '@/features/kangur/observability/server';
@@ -14,7 +14,7 @@ import {
   resolveKangurScoreSubject,
 } from '@kangur/contracts/kangur';
 import { type KangurLessonSubject } from '@kangur/contracts';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { AppErrorCodes, badRequestError, isAppError } from '@/shared/errors/app-error';
 import {
   normalizeOptionalQueryString,

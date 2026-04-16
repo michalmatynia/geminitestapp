@@ -5,7 +5,7 @@ import React from 'react';
 
 import { useTeachingAgents } from '@/features/ai/agentcreator/teaching/hooks/useAgentTeachingQueries';
 import type { AgentTeachingAgentRecord } from '@/shared/contracts/agent-teaching';
-import type { LearnerAgentConfig } from '@/shared/lib/ai-paths';
+import type { LearnerAgentConfig } from '@/shared/contracts/ai-paths';
 import { Button, Textarea, Card, Alert } from '@/shared/ui/primitives.public';
 import { SelectSimple, FormField } from '@/shared/ui/forms-and-actions.public';
 import { LoadingState } from '@/shared/ui/navigation-and-layout.public';

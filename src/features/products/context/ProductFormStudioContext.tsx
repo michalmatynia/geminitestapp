@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useProductSettings } from '@/features/products/hooks/useProductSettings';
-import { ProductWithImages } from '@/shared/contracts/products/product';
+import { type ProductWithImages } from '@/shared/contracts/products/product';
 import { productStudioConfigResponseSchema } from '@/shared/contracts/products/studio';
 import { internalError } from '@/shared/errors/app-error';
 import { api } from '@/shared/lib/api-client';

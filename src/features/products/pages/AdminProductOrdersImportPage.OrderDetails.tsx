@@ -9,26 +9,25 @@ import {
   formatOrderDate,
   formatOrderTotal,
   formatItemsTotal,
-  OrderChangeSummaryItem,
+  type OrderChangeSummaryItem,
 } from './AdminProductOrdersImportPage.utils';
+
+import { useOrdersImportContext } from './AdminProductOrdersImportPage.context';
 
 interface OrderDetailsProps {
   order: BaseOrderImportPreviewItem;
-  changeSummary: OrderChangeSummaryItem[];
-  isPreviewStale: boolean;
-  isImportPending: boolean;
-  isQuickImportPending: boolean;
   onImport: (orders: BaseOrderImportPreviewItem[]) => void;
 }
 
-export const OrderDetails = React.memo(function OrderDetails({
+export const OrderDetails = React.memo(({
   order,
-  changeSummary,
-  isPreviewStale,
-  isImportPending,
-  isQuickImportPending,
   onImport,
-}: OrderDetailsProps) {
+}: OrderDetailsProps) => {
+  const { isPreviewStale, importMutation, quickImportMutation } = useOrdersImportContext();
+  const isImportPending = importMutation.isPending;
+  const isQuickImportPending = quickImportMutation.isPending;
+  const changeSummary: OrderChangeSummaryItem[] = []; // Currently empty in parent, keeping same behavior
+
   return (
     <div className='rounded-xl border border-border/60 bg-card/10 p-4'>
       <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>

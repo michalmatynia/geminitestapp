@@ -127,7 +127,7 @@ export async function processBaseExportJob(
 
     const { mappings, resolvedTemplateId, requestedTemplateId, exportProduct } =
       preparedExportContext;
-    let { exportImagesAsBase64: resolvedExportImagesAsBase64, imageBase64Mode: resolvedImageBase64Mode, imageTransform: resolvedImageTransform } =
+    const { exportImagesAsBase64: resolvedExportImagesAsBase64, imageBase64Mode: resolvedImageBase64Mode, imageTransform: resolvedImageTransform } =
       preparedExportContext;
     const {
       producerNameById,
@@ -163,6 +163,10 @@ export async function processBaseExportJob(
         baseIntegrationId,
         primaryListingRepo,
       });
+
+    if (listingId) {
+      await listingRepo.updateListing(listingId, { failureReason: null });
+    }
 
     const targetInventoryId =
       imagesOnly && listingInventoryId ? listingInventoryId : inventoryId;
@@ -291,8 +295,12 @@ export async function processBaseExportJob(
     }
 
     if (!result.success) {
+      const failureReason = result.error || 'Failed to export product';
       if (listingId) {
-        await listingRepo.updateListingStatus(listingId, 'failed');
+        await listingRepo.updateListing(listingId, {
+          status: 'failed',
+          failureReason,
+        });
         await listingRepo.appendExportHistory(listingId, {
           exportedAt: new Date().toISOString(),
           status: 'failed',
@@ -300,6 +308,7 @@ export async function processBaseExportJob(
           templateId: resolvedTemplateId ?? (requestedTemplateId || null),
           warehouseId,
           externalListingId: result.productId || null,
+          failureReason,
           fields: exportFields,
           requestId,
         });
@@ -313,7 +322,10 @@ export async function processBaseExportJob(
     // Success path
     if (listingId) {
       if (result.productId) await listingRepo.updateListingExternalId(listingId, result.productId);
-      await listingRepo.updateListingStatus(listingId, 'active');
+      await listingRepo.updateListing(listingId, {
+        status: 'active',
+        failureReason: null,
+      });
       await listingRepo.appendExportHistory(listingId, {
         exportedAt: new Date().toISOString(),
         status: 'success',

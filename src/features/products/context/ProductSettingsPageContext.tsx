@@ -1,5 +1,10 @@
 'use client';
 
+// ProductSettingsPageContext: provides shared state for product settings
+// pages (catalogs, tags, price groups). Centralizes temporary edit state,
+// save/rollback helpers, and cross-panel notifications so individual panels
+// can remain focused.
+
 import { createContext, useContext } from 'react';
 
 import type { Catalog, PriceGroup } from '@/shared/contracts/products/catalogs';

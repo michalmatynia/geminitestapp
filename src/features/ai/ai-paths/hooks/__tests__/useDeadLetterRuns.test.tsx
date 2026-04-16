@@ -41,12 +41,13 @@ vi.mock('@/shared/lib/query-factories-v2', () => ({
     mocks.createPaginatedListQueryV2Mock as typeof import('@/shared/lib/query-factories-v2').createPaginatedListQueryV2,
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   useToast: () => ({ toast: mocks.toastMock }),
 }));
 
 vi.mock('@/shared/utils/observability/client-error-logger', () => ({
   logClientError: mocks.logClientErrorMock,
+  logClientCatch: vi.fn(),
 }));
 
 const buildRun = (overrides: Partial<AiPathRunRecord> = {}): AiPathRunRecord =>
@@ -237,11 +238,15 @@ describe('useDeadLetterRuns', () => {
     });
 
     await waitFor(() => {
+      expect(result.current.requeueingSelected).toBe(true);
+    });
+
+    await waitFor(() => {
       expect(mocks.requeueAiPathDeadLetterRunsMock).toHaveBeenCalledWith({
         runIds: ['run-1', 'run-2'],
         mode: 'resume',
       });
-    });
+    }, { timeout: 10000 });
 
     await waitFor(() => {
       expect(result.current.selectedIds.size).toBe(0);

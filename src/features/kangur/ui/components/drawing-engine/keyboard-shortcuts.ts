@@ -82,6 +82,10 @@ type UseKangurDrawingHistoryKeyDownOptions<
   onUnhandledKeyDown?: (event: ReactKeyboardEvent<TElement>) => void;
 };
 
+type KangurDrawingHistoryKeyDownHandler<
+  TElement extends HTMLElement | SVGElement = HTMLCanvasElement,
+> = (event: ReactKeyboardEvent<TElement>) => void;
+
 export const useKangurDrawingHistoryKeyDown = <
   TElement extends HTMLElement | SVGElement = HTMLCanvasElement,
 >({
@@ -91,7 +95,7 @@ export const useKangurDrawingHistoryKeyDown = <
   onRedo,
   onUndo,
   onUnhandledKeyDown,
-}: UseKangurDrawingHistoryKeyDownOptions<TElement>) =>
+}: UseKangurDrawingHistoryKeyDownOptions<TElement>): KangurDrawingHistoryKeyDownHandler<TElement> =>
   useCallback(
     (event: ReactKeyboardEvent<TElement>): void => {
       if (

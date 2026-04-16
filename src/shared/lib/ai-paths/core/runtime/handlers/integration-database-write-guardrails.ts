@@ -225,6 +225,46 @@ const resolveTokenValue = (
       value: templateContext['value'] !== undefined ? templateContext['value'] : currentValue,
     };
   }
+  if (trimmedToken.startsWith('value.')) {
+    const nestedPath = trimmedToken.slice('value.'.length);
+    const resolvedFromContext = readByPath(templateContext, trimmedToken, policy);
+    if (resolvedFromContext.value !== undefined) {
+      return {
+        value: resolvedFromContext.value,
+        ...(resolvedFromContext.parseDiagnostic
+          ? {
+              parseDiagnostic: {
+                port: normalizeTokenRoot(trimmedToken) || undefined,
+                token: trimmedToken,
+                rawType: resolvedFromContext.parseDiagnostic.rawType,
+                parseState: resolvedFromContext.parseDiagnostic.parseState,
+                repairApplied: resolvedFromContext.parseDiagnostic.repairApplied,
+                parseError: resolvedFromContext.parseDiagnostic.parseError,
+                truncationDetected: resolvedFromContext.parseDiagnostic.truncationDetected,
+                repairSteps: resolvedFromContext.parseDiagnostic.repairSteps,
+              },
+            }
+          : {}),
+      };
+    }
+    const resolvedFromCurrent = readByPath(currentValue, nestedPath, policy);
+    return {
+      value: resolvedFromCurrent.value,
+      ...(resolvedFromCurrent.parseDiagnostic
+        ? {
+            parseDiagnostic: {
+              token: trimmedToken,
+              rawType: resolvedFromCurrent.parseDiagnostic.rawType,
+              parseState: resolvedFromCurrent.parseDiagnostic.parseState,
+              repairApplied: resolvedFromCurrent.parseDiagnostic.repairApplied,
+              parseError: resolvedFromCurrent.parseDiagnostic.parseError,
+              truncationDetected: resolvedFromCurrent.parseDiagnostic.truncationDetected,
+              repairSteps: resolvedFromCurrent.parseDiagnostic.repairSteps,
+            },
+          }
+        : {}),
+    };
+  }
   if (trimmedToken.startsWith('current.')) {
     const resolved = readByPath(currentValue, trimmedToken.slice('current.'.length), policy);
     return {

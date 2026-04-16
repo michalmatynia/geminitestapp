@@ -45,6 +45,10 @@ vi.mock('next/navigation', () => ({
   usePathname: () => pathnameRef.current,
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  usePathname: () => pathnameRef.current,
+}));
+
 vi.mock('@/shared/hooks/use-settings', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/shared/hooks/use-settings')>();
   return {
@@ -157,6 +161,43 @@ describe('SettingsStoreProvider', () => {
 
     expect(useSettingsMapMock).toHaveBeenLastCalledWith({ scope: 'light', enabled: true });
     expect(screen.getByTestId('value')).toHaveTextContent('["products"]');
+    vi.useRealTimers();
+  });
+
+  it('reuses the parent lite settings store inside admin mode instead of issuing a second lite query', () => {
+    vi.useFakeTimers();
+    liteQueryResultRef.current = {
+      data: new Map<string, string>([['query_status_panel_enabled', 'true']]),
+      isLoading: false,
+      isFetching: false,
+      error: null,
+      refetch: vi.fn(),
+    };
+    adminQueryResultRef.current = {
+      data: new Map<string, string>([['admin_menu_favorites', '["products"]']]),
+      isLoading: false,
+      isFetching: false,
+      error: null,
+      refetch: vi.fn(),
+    };
+
+    render(
+      <SettingsStoreProvider mode='lite'>
+        <SettingsStoreProvider mode='admin'>
+          <SettingsProbe settingKey='query_status_panel_enabled' />
+        </SettingsStoreProvider>
+      </SettingsStoreProvider>
+    );
+
+    expect(useLiteSettingsMapMock).toHaveBeenNthCalledWith(1, { enabled: true });
+    expect(useLiteSettingsMapMock).toHaveBeenNthCalledWith(2, { enabled: false });
+    expect(screen.getByTestId('value')).toHaveTextContent('true');
+
+    act(() => {
+      vi.runOnlyPendingTimers();
+    });
+
+    expect(useSettingsMapMock).toHaveBeenLastCalledWith({ scope: 'light', enabled: true });
     vi.useRealTimers();
   });
 

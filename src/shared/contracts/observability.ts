@@ -519,3 +519,87 @@ export type SystemLogRuntimeContextHydrationResult = {
   analysisContextPatch?: Record<string, unknown> | null;
   adapterMeta?: Record<string, unknown> | null;
 };
+
+/**
+ * Context Registry Display DTOs
+ */
+export type ContextDocumentSectionDisplay = {
+  id: string | null;
+  kind: string | null;
+  title: string;
+  summary: string | null;
+  text: string | null;
+  items: Array<Record<string, string>>;
+};
+
+export type ContextDocumentDisplay = {
+  id: string;
+  entityType: string | null;
+  title: string;
+  summary: string | null;
+  status: string | null;
+  tags: string[];
+  facts: Array<{ label: string; value: string }>;
+  sections: ContextDocumentSectionDisplay[];
+};
+
+export type ContextRegistryNodeDisplay = {
+  id: string;
+  kind: string | null;
+  name: string;
+};
+
+export type ContextRegistryDisplay = {
+  refs: string[];
+  documents: ContextDocumentDisplay[];
+  nodes: ContextRegistryNodeDisplay[];
+};
+
+/**
+ * Alert Evidence Core Types
+ */
+export type AlertEvidenceContextRegistry = {
+  refs: Array<{
+    id: string;
+    kind: string;
+    providerId?: string;
+    entityType?: string;
+  }>;
+  engineVersion: string | null;
+};
+
+export type AlertEvidenceSample = {
+  logId: string;
+  createdAt: string;
+  level: string;
+  source: string | null;
+  message: string;
+  fingerprint: string | null;
+  contextRegistry: AlertEvidenceContextRegistry | null;
+};
+
+export type AlertEvidenceContext = {
+  windowStart: string | null;
+  windowEnd: string;
+  matchedCount: number;
+  sampleSize: number;
+  samples: AlertEvidenceSample[];
+  lastObservedLog?: AlertEvidenceSample | null;
+};
+
+/**
+ * Alert Evidence Display DTOs (Safe for public consumption)
+ */
+export type AlertEvidenceSampleDisplay = {
+  [K in keyof AlertEvidenceSample]: K extends 'contextRegistry'
+    ? ContextRegistryDisplay | null
+    : AlertEvidenceSample[K] | null;
+};
+
+export type AlertEvidenceDisplay = {
+  [K in keyof AlertEvidenceContext]: K extends 'samples'
+    ? AlertEvidenceSampleDisplay[]
+    : K extends 'lastObservedLog'
+      ? AlertEvidenceSampleDisplay | null
+      : AlertEvidenceContext[K] | null;
+};

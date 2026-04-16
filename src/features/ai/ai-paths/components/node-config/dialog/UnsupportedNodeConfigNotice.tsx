@@ -1,4 +1,4 @@
-import type { AiNode } from '@/shared/lib/ai-paths';
+import type { AiNode } from '@/shared/contracts/ai-paths';
 
 const SUPPORTED_NODE_TYPES = new Set<AiNode['type']>([
   'trigger',
@@ -6,6 +6,8 @@ const SUPPORTED_NODE_TYPES = new Set<AiNode['type']>([
   'simulation',
   'audio_oscillator',
   'audio_speaker',
+  'bounds_normalizer',
+  'canvas_output',
   'context',
   'parser',
   'regex',
@@ -17,6 +19,10 @@ const SUPPORTED_NODE_TYPES = new Set<AiNode['type']>([
   'validation_pattern',
   'constant',
   'math',
+  'function',
+  'state',
+  'switch',
+  'subgraph',
   'template',
   'bundle',
   'gate',

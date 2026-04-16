@@ -1,7 +1,17 @@
 import { createHash } from 'crypto';
 import path from 'path';
 
-import type { BaseImportErrorClass, BaseImportErrorCode, BaseImportItemRecord, BaseImportParameterImportSummary, BaseImportItemStatus, BaseImportMode, BaseImportRunParams, BaseImportRunStatus } from '@/shared/contracts/integrations/base-com';
+import type {
+  BaseImportDirectTarget,
+  BaseImportErrorClass,
+  BaseImportErrorCode,
+  BaseImportItemRecord,
+  BaseImportParameterImportSummary,
+  BaseImportItemStatus,
+  BaseImportMode,
+  BaseImportRunParams,
+  BaseImportRunStatus,
+} from '@/shared/contracts/integrations/base-com';
 import type { PriceGroupLookup, BaseConnectionContext } from '@/shared/contracts/integrations/base-api';
 import type { ImportDecision, ProcessItemResult, NormalizedMappedProduct } from '@/shared/contracts/integrations/processing';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -10,6 +20,7 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 export type {
   BaseImportErrorClass,
   BaseImportErrorCode,
+  BaseImportDirectTarget,
   BaseImportItemRecord,
   BaseImportParameterImportSummary,
   BaseImportItemStatus,
@@ -40,6 +51,9 @@ const DEFAULT_BASE_IMPORT_RETRY_BASE_DELAY_MS = 2_000;
 const DEFAULT_BASE_IMPORT_RETRY_MAX_DELAY_MS = 60_000;
 const DEFAULT_BASE_IMPORT_LEASE_MS = 60_000;
 const DEFAULT_BASE_IMPORT_HEARTBEAT_EVERY_ITEMS = 10;
+const DEFAULT_BASE_IMPORT_PROCESSING_BATCH_SIZE = 100;
+const DEFAULT_BASE_IMPORT_PROCESSING_SCAN_PAGE_SIZE = 1000;
+const DEFAULT_BASE_IMPORT_QUEUE_LOCK_DURATION_MS = 10 * 60_000;
 
 const toPositiveIntOrFallback = (value: string | undefined, fallback: number): number => {
   if (!value) return fallback;
@@ -73,6 +87,24 @@ export const BASE_IMPORT_HEARTBEAT_EVERY_ITEMS = toPositiveIntOrFallback(
   DEFAULT_BASE_IMPORT_HEARTBEAT_EVERY_ITEMS
 );
 
+export const BASE_IMPORT_PROCESSING_BATCH_SIZE = toPositiveIntOrFallback(
+  process.env['BASE_IMPORT_PROCESSING_BATCH_SIZE'],
+  DEFAULT_BASE_IMPORT_PROCESSING_BATCH_SIZE
+);
+
+export const BASE_IMPORT_PROCESSING_SCAN_PAGE_SIZE = Math.max(
+  BASE_IMPORT_PROCESSING_BATCH_SIZE,
+  toPositiveIntOrFallback(
+    process.env['BASE_IMPORT_PROCESSING_SCAN_PAGE_SIZE'],
+    DEFAULT_BASE_IMPORT_PROCESSING_SCAN_PAGE_SIZE
+  )
+);
+
+export const BASE_IMPORT_QUEUE_LOCK_DURATION_MS = toPositiveIntOrFallback(
+  process.env['BASE_IMPORT_QUEUE_LOCK_DURATION_MS'],
+  DEFAULT_BASE_IMPORT_QUEUE_LOCK_DURATION_MS
+);
+
 export const BASE_DETAILS_BATCH_SIZE = 100;
 export const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);
 
@@ -84,17 +116,17 @@ export const toStringId = (value: unknown): string | null => {
   return null;
 };
 
-const normalizeCurrencyCode = (value: unknown): string | null => {
-  if (typeof value !== 'string') return null;
-  const compact = value
+const normalizePriceIdentifier = (value: unknown): string | null => {
+  if (typeof value !== 'string' && typeof value !== 'number') return null;
+  const compact = String(value)
     .trim()
     .toUpperCase()
-    .replace(/[^A-Z]/g, '');
-  return compact.length === 3 ? compact : null;
+    .replace(/[^A-Z0-9]/g, '');
+  return compact.length > 0 ? compact : null;
 };
 
 export const addCurrencyCandidate = (target: Set<string>, value: unknown): void => {
-  const code = normalizeCurrencyCode(value);
+  const code = normalizePriceIdentifier(value);
   if (code) target.add(code);
 };
 
@@ -146,11 +178,35 @@ export const normalizeSelectedIds = (selectedIds: string[] | undefined): string[
     )
   );
 
+export const normalizeDirectTarget = (
+  directTarget: BaseImportDirectTarget | undefined
+): BaseImportDirectTarget | null => {
+  if (!directTarget) {
+    return null;
+  }
+
+  const value = directTarget.value.trim();
+  if (!value) {
+    return null;
+  }
+
+  return {
+    type: directTarget.type,
+    value,
+  };
+};
+
+export const isExactTargetImport = (
+  directTarget: BaseImportDirectTarget | null | undefined
+): boolean => normalizeDirectTarget(directTarget ?? undefined) !== null;
+
 export const shouldFilterToUniqueOnly = (input: {
   uniqueOnly: boolean;
   selectedIds?: string[];
+  directTarget?: BaseImportDirectTarget | null;
 }): boolean => {
   if (!input.uniqueOnly) return false;
+  if (normalizeDirectTarget(input.directTarget ?? undefined)) return false;
   return normalizeSelectedIds(input.selectedIds).length === 0;
 };
 
@@ -159,6 +215,11 @@ export const shouldReuseIdempotentRun = (status: BaseImportRunStatus): boolean =
 
 export const resolveMode = (mode: BaseImportMode | undefined): BaseImportMode =>
   mode ?? 'upsert_on_base_id';
+
+export const resolveEffectiveMode = (input: {
+  mode?: BaseImportMode | undefined;
+  directTarget?: BaseImportDirectTarget | null;
+}): BaseImportMode => (isExactTargetImport(input.directTarget) ? 'create_only' : resolveMode(input.mode));
 
 export const createRunIdempotencyKey = (params: BaseImportRunParams, ids: string[]): string => {
   const hash = createHash('sha1');
@@ -172,8 +233,9 @@ export const createRunIdempotencyKey = (params: BaseImportRunParams, ids: string
       uniqueOnly: params.uniqueOnly,
       allowDuplicateSku: params.allowDuplicateSku,
       dryRun: params.dryRun ?? false,
-      mode: params.mode ?? 'upsert_on_base_id',
+      mode: resolveEffectiveMode(params),
       requestId: params.requestId ?? null,
+      directTarget: normalizeDirectTarget(params.directTarget) ?? null,
       ids,
     })
   );

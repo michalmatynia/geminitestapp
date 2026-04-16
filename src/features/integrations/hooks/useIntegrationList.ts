@@ -5,7 +5,23 @@ import {
 import { integrationDefinitions } from '@/shared/contracts/integrations/domain';
 import { type Integration } from '@/shared/contracts/integrations';
 
-export function useIntegrationList() {
+type IntegrationDefinition = (typeof integrationDefinitions)[number];
+
+type IntegrationListState = {
+  integrations: ReturnType<typeof useIntegrationsData>['integrations'];
+  handleIntegrationClick: ReturnType<typeof useIntegrationsActions>['handleIntegrationClick'];
+  integrationSlugs: Integration['slug'][];
+  hasIntegrations: boolean;
+  traderaDefinition: IntegrationDefinition | null;
+  traderaApiDefinition: IntegrationDefinition | null;
+  allegroDefinition: IntegrationDefinition | null;
+  vintedDefinition: IntegrationDefinition | null;
+  scanner1688Definition: IntegrationDefinition | null;
+  baselinkerDefinition: IntegrationDefinition | null;
+  linkedinDefinition: IntegrationDefinition | null;
+};
+
+export function useIntegrationList(): IntegrationListState {
   const { integrations } = useIntegrationsData();
   const { handleIntegrationClick } = useIntegrationsActions();
   const integrationSlugs = integrations.map((integration: Integration) => integration.slug);
@@ -17,6 +33,10 @@ export function useIntegrationList() {
     integrationDefinitions.find((definition) => definition.slug === 'tradera-api') ?? null;
   const allegroDefinition =
     integrationDefinitions.find((definition) => definition.slug === 'allegro') ?? null;
+  const vintedDefinition =
+    integrationDefinitions.find((definition) => definition.slug === 'vinted') ?? null;
+  const scanner1688Definition =
+    integrationDefinitions.find((definition) => definition.slug === '1688') ?? null;
   const baselinkerDefinition =
     integrationDefinitions.find((definition) => definition.slug === 'baselinker') ?? null;
   const linkedinDefinition =
@@ -30,6 +50,8 @@ export function useIntegrationList() {
     traderaDefinition,
     traderaApiDefinition,
     allegroDefinition,
+    vintedDefinition,
+    scanner1688Definition,
     baselinkerDefinition,
     linkedinDefinition,
   };

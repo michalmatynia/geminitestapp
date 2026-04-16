@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { Suspense, type ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
@@ -32,6 +32,12 @@ const {
 }));
 
 vi.mock('next/navigation', () => ({
+  notFound: notFoundMock,
+  redirect: redirectMock,
+  permanentRedirect: redirectMock,
+}));
+
+vi.mock('nextjs-toploader/app', () => ({
   notFound: notFoundMock,
   redirect: redirectMock,
   permanentRedirect: redirectMock,
@@ -249,7 +255,13 @@ describe('kangur public-owner frontend routes', () => {
       searchParams: Promise.resolve({ focus: 'division' }),
     });
 
-    expect(result).toBeNull();
+    expect(result).not.toBeNull();
+    expect(result).toMatchObject({
+      props: {
+        fallback: null,
+      },
+    });
+    expect((result as { type: unknown }).type).toBe(Suspense);
     expect(redirectMock).not.toHaveBeenCalled();
   });
 
@@ -264,7 +276,13 @@ describe('kangur public-owner frontend routes', () => {
       params: Promise.resolve({ slug: ['tests'] }),
     });
 
-    expect(result).toBeNull();
+    expect(result).not.toBeNull();
+    expect(result).toMatchObject({
+      props: {
+        fallback: null,
+      },
+    });
+    expect((result as { type: unknown }).type).toBe(Suspense);
 
     expect(redirectMock).not.toHaveBeenCalled();
   });

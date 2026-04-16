@@ -1,5 +1,10 @@
 'use client';
 
+// useProductDataMutations: collection of server-facing mutations for product
+// data (create, update, delete, bulk operations). Each mutation uses the
+// project's query-factory helpers to enable optimistic updates and cache
+// invalidation strategies.
+
 import { type QueryClient, type UseMutationResult } from '@tanstack/react-query';
 
 import { createProduct, updateProduct, deleteProduct } from '@/features/products/api';
@@ -22,6 +27,7 @@ import {
   productsCountsQueryKey,
   getProductDetailQueryKey,
   invalidateProductsAndCounts,
+  invalidateProductTitleTerms,
 } from './productCache';
 
 const PRODUCT_UPDATE_FORM_TIMEOUT_MS = 60_000;
@@ -38,15 +44,18 @@ type ProductListCacheValue =
 const isPaginatedItemsCacheValue = (
   cacheValue: ProductListCacheValue
 ): cacheValue is { items: ProductWithImages[]; total?: number } =>
-  !!cacheValue && !Array.isArray(cacheValue) && 'items' in cacheValue && Array.isArray(cacheValue.items);
+  Boolean(cacheValue) &&
+  !Array.isArray(cacheValue) &&
+  'items' in (cacheValue as any) &&
+  Array.isArray((cacheValue as any).items);
 
 const isProductsArrayCacheValue = (
   cacheValue: ProductListCacheValue
 ): cacheValue is { products: ProductWithImages[] } =>
-  !!cacheValue &&
+  Boolean(cacheValue) &&
   !Array.isArray(cacheValue) &&
-  'products' in cacheValue &&
-  Array.isArray(cacheValue.products);
+  'products' in (cacheValue as any) &&
+  Array.isArray((cacheValue as any).products);
 
 const patchProductListCacheValue = (
   cacheValue: ProductListCacheValue,
@@ -145,43 +154,86 @@ export function useCreateProductMutation(): UseMutationResult<unknown, Error, Fo
     },
     extraInvalidateKeys: [productsCountsQueryKey],
     invalidate: async (queryClient) => {
-      await invalidateProductsAndCounts(queryClient);
+      await Promise.all([
+        invalidateProductsAndCounts(queryClient),
+        invalidateProductTitleTerms(queryClient),
+      ]);
     },
     queuedMessage: 'Product creation queued in runtime queue.',
     processedMessage: 'Queued product creation completed.',
-    errorMessage: 'Failed to create product',
   });
 }
 
 export function useUpdateProductMutation(): UseMutationResult<
   ProductWithImages | null,
   Error,
-  IdDataDto<Partial<ProductWithImages> | FormData> & { originalSku?: string | null },
+  IdDataDto<Partial<ProductWithImages> | FormData> & {
+    originalSku?: string | null;
+    originalNameEn?: string | null;
+  },
   unknown
 > {
+  const normalizeIdentityText = (value?: string | null): string =>
+    typeof value === 'string' ? value.trim() : '';
+
+  const collectFieldErrorMessages = (details: unknown): string[] => {
+    if (!details || typeof details !== 'object' || Array.isArray(details)) {
+      return [];
+    }
+
+    const fields = (details as { fields?: unknown }).fields;
+    if (!fields || typeof fields !== 'object' || Array.isArray(fields)) {
+      return [];
+    }
+
+    return Object.entries(fields as Record<string, unknown>)
+      .flatMap(([field, value]): string[] => {
+        if (!Array.isArray(value)) {
+          return [];
+        }
+
+        return value
+          .map((entry: unknown): string => {
+            const message = typeof entry === 'string' ? entry.trim() : '';
+            return message ? `${field}: ${message}` : '';
+          })
+          .filter((entry: string): boolean => entry.length > 0);
+      })
+      .slice(0, 3);
+  };
+
   const parseUpdateError = async (response: Response): Promise<string> => {
     const errorData = (await response.json().catch(() => ({}))) as {
       error?: string;
       details?: unknown;
     };
     let message = errorData.error || 'Failed to update product';
-    if (Array.isArray(errorData.details) && errorData.details.length > 0) {
-      const detailMessages = errorData.details
+    const detailMessages = Array.isArray(errorData.details)
+      ? errorData.details
         .slice(0, 3)
         .map((d: { field?: unknown; message?: unknown }) => {
           const field = typeof d.field === 'string' && d.field ? d.field : 'field';
           const msg = typeof d.message === 'string' && d.message ? d.message : 'invalid';
           return `${field}: ${msg}`;
         })
-        .join(', ');
-      if (detailMessages) message = `${message} (${detailMessages})`;
+      : collectFieldErrorMessages(errorData.details);
+    if (detailMessages.length > 0) {
+      message = `${message} (${detailMessages.join(', ')})`;
     }
     return message;
   };
 
-  const resolveProductIdBySku = async (originalSku?: string | null): Promise<string | null> => {
-    const normalizedSku = typeof originalSku === 'string' ? originalSku.trim().toUpperCase() : '';
-    if (!normalizedSku) return null;
+  const resolveProductIdByIdentity = async (
+    originalSku?: string | null,
+    originalNameEn?: string | null
+  ): Promise<
+    | { kind: 'resolved'; id: string }
+    | { kind: 'ambiguous'; matchCount: number }
+    | { kind: 'missing' }
+  > => {
+    const normalizedSku = normalizeIdentityText(originalSku).toUpperCase();
+    if (!normalizedSku) return { kind: 'missing' };
+    const normalizedNameEn = normalizeIdentityText(originalNameEn);
 
     const products = await api
       .get<ProductWithImages[]>(`/api/v2/products?sku=${encodeURIComponent(normalizedSku)}`, {
@@ -190,14 +242,32 @@ export function useUpdateProductMutation(): UseMutationResult<
       })
       .catch(() => null);
 
-    if (!products) return null;
+    if (!products) return { kind: 'missing' };
 
     const exactMatches = products.filter(
       (product: ProductWithImages): boolean =>
         typeof product.sku === 'string' && product.sku.trim().toUpperCase() === normalizedSku
     );
 
-    return exactMatches.length === 1 ? exactMatches[0]!.id : null;
+    if (exactMatches.length === 1) {
+      return { kind: 'resolved', id: exactMatches[0]!.id };
+    }
+
+    if (exactMatches.length > 1 && normalizedNameEn) {
+      const exactNameMatches = exactMatches.filter(
+        (product: ProductWithImages): boolean =>
+          typeof product.name_en === 'string' && product.name_en.trim() === normalizedNameEn
+      );
+      if (exactNameMatches.length === 1) {
+        return { kind: 'resolved', id: exactNameMatches[0]!.id };
+      }
+    }
+
+    if (exactMatches.length > 1) {
+      return { kind: 'ambiguous', matchCount: exactMatches.length };
+    }
+
+    return { kind: 'missing' };
   };
 
   return useOfflineMutation(
@@ -205,8 +275,10 @@ export function useUpdateProductMutation(): UseMutationResult<
       id,
       data,
       originalSku,
+      originalNameEn,
     }: IdDataDto<Partial<ProductWithImages> | FormData> & {
       originalSku?: string | null;
+      originalNameEn?: string | null;
     }): Promise<ProductWithImages> => {
       if (data instanceof FormData) {
         const putProductFormData = async (
@@ -240,10 +312,14 @@ export function useUpdateProductMutation(): UseMutationResult<
         let response = await putProductFormData(targetId, data);
 
         if (response.status === 404) {
-          const resolvedId = await resolveProductIdBySku(originalSku);
-          if (resolvedId && resolvedId !== targetId) {
-            targetId = resolvedId;
+          const resolution = await resolveProductIdByIdentity(originalSku, originalNameEn);
+          if (resolution.kind === 'resolved' && resolution.id !== targetId) {
+            targetId = resolution.id;
             response = await putProductFormData(targetId, data);
+          } else if (resolution.kind === 'ambiguous') {
+            throw notFoundError(
+              `Product not found. The opened product id is stale, and SKU ${normalizeIdentityText(originalSku) || 'this product'} matches ${resolution.matchCount} products. Refresh the products list and reopen the correct product.`
+            );
           }
         }
 
@@ -274,27 +350,30 @@ export function useUpdateProductMutation(): UseMutationResult<
         tags: ['products', 'update'],
       },
       invalidate: (queryClient, savedProduct) => {
+        void invalidateProductTitleTerms(queryClient);
         if (!savedProduct) return;
         refreshUpdatedProductCaches(queryClient, savedProduct);
       },
       queuedMessage: 'Product update queued in runtime queue.',
       processedMessage: 'Queued product update completed.',
-      errorMessage: 'Failed to update product',
       onQueued: (variables: {
         id: string;
         data: Partial<ProductWithImages> | FormData;
         originalSku?: string | null;
+        originalNameEn?: string | null;
       }) => addQueuedProductSource(variables.id, PRODUCT_UPDATE_QUEUE_SOURCE),
       onProcessed: (
         variables: {
           id: string;
           data: Partial<ProductWithImages> | FormData;
           originalSku?: string | null;
+          originalNameEn?: string | null;
         },
         { queryClient }
       ) => {
         removeQueuedProductSource(variables.id, PRODUCT_UPDATE_QUEUE_SOURCE);
         void invalidateProductsAndCounts(queryClient);
+        void invalidateProductTitleTerms(queryClient);
         void queryClient.invalidateQueries({
           queryKey: getProductDetailQueryKey(variables.id),
         });
@@ -309,7 +388,39 @@ export function useUpdateProductMutation(): UseMutationResult<
         id: string;
         data: Partial<ProductWithImages> | FormData;
         originalSku?: string | null;
+        originalNameEn?: string | null;
       }) => removeQueuedProductSource(variables.id, PRODUCT_UPDATE_QUEUE_SOURCE),
+    }
+  );
+}
+
+export function useDuplicateProductMutation(): UseMutationResult<
+  ProductWithImages | null,
+  Error,
+  { id: string; sku: string },
+  unknown
+> {
+  return useOfflineMutation(
+    async ({ id, sku }: { id: string; sku: string }): Promise<ProductWithImages> =>
+      await api.post<ProductWithImages>(`/api/v2/products/${id}/duplicate`, { sku }),
+    {
+      queryKey: productsAllQueryKey,
+      meta: {
+        source: 'products.hooks.useDuplicateProductMutation',
+        operation: 'create',
+        resource: 'products.duplicate',
+        domain: 'products',
+        tags: ['products', 'duplicate'],
+      },
+      extraInvalidateKeys: [productsCountsQueryKey],
+      invalidate: async (queryClient) => {
+        await Promise.all([
+          invalidateProductsAndCounts(queryClient),
+          invalidateProductTitleTerms(queryClient),
+        ]);
+      },
+      queuedMessage: 'Product duplication queued in runtime queue.',
+      processedMessage: 'Queued product duplication completed.',
     }
   );
 }
@@ -340,13 +451,19 @@ export function useBulkDeleteProductsMutation(): UseMutationResult<
       extraInvalidateKeys: [productsCountsQueryKey],
       queuedMessage: 'Product deletion queued in runtime queue.',
       processedMessage: 'Queued product deletion completed.',
-      errorMessage: 'Failed to delete some products',
-      onQueued: (ids: string[]) =>
-        ids.forEach((id: string) => addQueuedProductSource(id, PRODUCT_DELETE_QUEUE_SOURCE)),
-      onProcessed: (ids: string[]) =>
-        ids.forEach((id: string) => removeQueuedProductSource(id, PRODUCT_DELETE_QUEUE_SOURCE)),
-      onFailed: (ids: string[]) =>
-        ids.forEach((id: string) => removeQueuedProductSource(id, PRODUCT_DELETE_QUEUE_SOURCE)),
+      onQueued: (ids: string[]) => {
+        ids.forEach((id: string) => addQueuedProductSource(id, PRODUCT_DELETE_QUEUE_SOURCE));
+      },
+      onProcessed: (ids: string[], { queryClient }) => {
+        ids.forEach((id: string) => removeQueuedProductSource(id, PRODUCT_DELETE_QUEUE_SOURCE));
+        void Promise.all([
+          invalidateProductsAndCounts(queryClient),
+          invalidateProductTitleTerms(queryClient),
+        ]);
+      },
+      onFailed: (ids: string[]) => {
+        ids.forEach((id: string) => removeQueuedProductSource(id, PRODUCT_DELETE_QUEUE_SOURCE));
+      },
     }
   );
 }

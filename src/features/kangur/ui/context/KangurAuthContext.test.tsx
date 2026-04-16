@@ -90,6 +90,10 @@ vi.mock('next/navigation', () => ({
   useRouter: () => useRouterMock(),
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  useRouter: () => useRouterMock(),
+}));
+
 vi.mock('@/features/kangur/services/kangur-platform', () => ({
   getKangurPlatform: () => ({
     auth: {

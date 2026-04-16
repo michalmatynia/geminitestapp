@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useCallback, useRef, useEffect } from 'react';
+import type React from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 
-import { MasterFolderTreeController, MasterTreeId } from '@/shared/contracts/master-folder-tree';
-import { ResolvedFolderTreeMultiSelectConfig } from '@/shared/utils/folder-tree-profiles-v2';
+import { type MasterFolderTreeController, type MasterTreeId } from '@/shared/contracts/master-folder-tree';
+import { type ResolvedFolderTreeMultiSelectConfig } from '@/shared/utils/folder-tree-profiles-v2';
 
 import { resolveNextSelectedNodeIds } from '../operations/selection';
-import { FolderTreeNodeView } from '../types';
+import { type FolderTreeNodeView } from '../types';
 
 export function useFolderTreeViewportSelection(args: {
   controller: MasterFolderTreeController;

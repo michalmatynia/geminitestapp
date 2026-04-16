@@ -6,39 +6,26 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
   useSearchParamsMock: vi.fn(),
+  usePathnameMock: vi.fn(),
 }));
 
-type ListPanelMockProps = {
-  eyebrow?: React.ReactNode;
-  header?: React.ReactNode;
-  title?: React.ReactNode;
-  headerActions?: React.ReactNode;
-  filters?: React.ReactNode;
-  actions?: React.ReactNode;
-  children?: React.ReactNode;
-};
-
-function MockListPanel(props: ListPanelMockProps): React.JSX.Element {
-  const { eyebrow, header, title, headerActions, filters, actions, children } = props;
-  return (
-    <div data-testid='list-panel'>
-      {eyebrow}
-      {header}
-      <div>{title}</div>
-      {headerActions}
-      {filters}
-      {actions}
-      {children}
-    </div>
-  );
-}
+import { MockListPanel } from '@/__tests__/mocks/MockListPanel';
 
 vi.mock('next/navigation', () => ({
+
+  useSearchParams: mocks.useSearchParamsMock,
+  usePathname: mocks.usePathnameMock,
+}));
+
+vi.mock('nextjs-toploader/app', () => ({
   useSearchParams: mocks.useSearchParamsMock,
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/admin.public', () => ({
   AdminAiPathsBreadcrumbs: () => <div>ai-paths-breadcrumbs</div>,
+}));
+
+vi.mock('@/shared/ui/primitives.public', () => ({
   Badge: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
   Button: ({
     children,
@@ -51,9 +38,32 @@ vi.mock('@/shared/ui', () => ({
       {children}
     </button>
   ),
+}));
+
+vi.mock('@/shared/ui/navigation-and-layout.public', () => ({
   ListPanel: MockListPanel,
-  Breadcrumbs: () => <div>breadcrumbs</div>,
+}));
+
+vi.mock('@/shared/ui/forms-and-actions.public', () => ({
   Hint: ({ children }: { children?: React.ReactNode }) => <span>{children}</span>,
+}));
+
+vi.mock('@/shared/ui/admin-title-breadcrumb-header', () => ({
+  AdminTitleBreadcrumbHeader: ({
+    title,
+    breadcrumb,
+    actions,
+  }: {
+    title?: React.ReactNode;
+    breadcrumb?: React.ReactNode;
+    actions?: React.ReactNode;
+  }) => (
+    <div>
+      {title}
+      {breadcrumb}
+      {actions}
+    </div>
+  ),
 }));
 
 vi.mock('../components/job-queue-panel', () => ({
@@ -77,6 +87,14 @@ vi.mock('@/shared/lib/jobs/components/ProductListingJobsPanel', () => ({
   default: () => <div data-testid='product-listing-jobs'>product jobs</div>,
 }));
 
+vi.mock('@/shared/lib/jobs/components/BaseImportRunsQueuePanel', () => ({
+  BaseImportRunsQueuePanel: ({ initialSearchQuery }: { initialSearchQuery?: string }) => (
+    <div data-testid='base-import-runs-panel' data-query={initialSearchQuery ?? ''}>
+      base import runs
+    </div>
+  ),
+}));
+
 vi.mock('../components/ImageStudioRunsQueuePanel', () => ({
   ImageStudioRunsQueuePanel: () => <div data-testid='image-studio-runs'>image studio</div>,
 }));
@@ -86,6 +104,8 @@ import { AdminAiPathsQueuePage } from './AdminAiPathsQueuePage';
 describe('AdminAiPathsQueuePage', () => {
   beforeEach(() => {
     mocks.useSearchParamsMock.mockReset();
+    mocks.usePathnameMock.mockReset();
+    mocks.usePathnameMock.mockReturnValue('/admin/ai-paths/queue');
   });
 
   it('passes the query search param into the default all-runs queue panel', () => {
@@ -134,5 +154,18 @@ describe('AdminAiPathsQueuePage', () => {
     const headingIndex = nodes.indexOf(heading);
     const breadcrumbsIndex = nodes.indexOf(breadcrumbs);
     expect(headingIndex).toBeLessThan(breadcrumbsIndex);
+  });
+
+  it('routes the query search param into the product-imports runtime tab', () => {
+    mocks.useSearchParamsMock.mockReturnValue(
+      new URLSearchParams('tab=product-imports&query=run-import-789')
+    );
+
+    render(<AdminAiPathsQueuePage />);
+
+    expect(screen.getByTestId('base-import-runs-panel')).toHaveAttribute(
+      'data-query',
+      'run-import-789'
+    );
   });
 });

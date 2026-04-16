@@ -5,9 +5,11 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import {
+  buildHighRiskCoverageMergeArgs,
   buildHighRiskCoverageVitestArgs,
   collectHighRiskCoverageTestFiles,
   highRiskCoverageDomains,
+  HIGH_RISK_COVERAGE_BLOB_REPORTS_DIRECTORY,
   highRiskCoverageTestRoots,
   HIGH_RISK_COVERAGE_REPORTS_DIRECTORY,
   HIGH_RISK_COVERAGE_SUMMARY_PATH,
@@ -18,8 +20,13 @@ import {
 describe('high-risk coverage baseline helper', () => {
   it('builds a vitest coverage command with the expected report path and include globs', () => {
     const args = buildHighRiskCoverageVitestArgs({
-      coverageIncludeGlobs: ['src/app/api/**'],
+      coverageIncludeGlobs: ['src/app/api/**/*.{ts,tsx}'],
       testFiles: ['src/app/api/example/handler.test.ts', 'src/features/kangur/example.test.tsx'],
+      reporter: 'blob',
+      outputFile: `${HIGH_RISK_COVERAGE_BLOB_REPORTS_DIRECTORY}/api/blob-1.json`,
+      shardIndex: 1,
+      shardCount: 4,
+      maxWorkers: '50%',
     });
 
     expect(args).toEqual(
@@ -28,6 +35,14 @@ describe('high-risk coverage baseline helper', () => {
         'run',
         '--project',
         'unit',
+        '--reporter',
+        'blob',
+        '--outputFile',
+        'coverage/high-risk-blobs/api/blob-1.json',
+        '--maxWorkers',
+        '50%',
+        '--shard',
+        '1/4',
         '--coverage.enabled',
         '--coverage.provider',
         'v8',
@@ -42,13 +57,42 @@ describe('high-risk coverage baseline helper', () => {
 
     expect(args).toContain('src/app/api/example/handler.test.ts');
     expect(args).toContain('src/features/kangur/example.test.tsx');
-    expect(args).toContain('src/app/api/**');
+    expect(args).toContain('src/app/api/**/*.{ts,tsx}');
     expect(args).toEqual(
       expect.arrayContaining(['--coverage.exclude', '**/*.md', '--coverage.exclude', '**/*.markdown'])
     );
     expect(args).not.toContain('src/features/kangur/**');
     expect(args).not.toContain('src/app/api');
     expect(args).not.toContain('src/shared/lib');
+  });
+
+  it('builds a merge-reports command that writes the final merged coverage summary', () => {
+    const args = buildHighRiskCoverageMergeArgs({
+      blobDirectory: 'coverage/high-risk-blobs/kangur',
+      reportsDirectory: 'coverage/high-risk/kangur',
+      coverageIncludeGlobs: ['src/features/kangur/**/*.{ts,tsx}'],
+    });
+
+    expect(args).toEqual(
+      expect.arrayContaining([
+        'vitest',
+        '--mergeReports',
+        'coverage/high-risk-blobs/kangur',
+        '--project',
+        'unit',
+        '--coverage.enabled',
+        '--coverage.provider',
+        'v8',
+        '--coverage.reportsDirectory',
+        'coverage/high-risk/kangur',
+        '--coverage.reporter',
+        'json-summary',
+        '--coverage.reporter',
+        'text-summary',
+      ])
+    );
+
+    expect(args).toContain('src/features/kangur/**/*.{ts,tsx}');
   });
 
   it('keeps the summary path under the dedicated high-risk coverage directory', () => {
@@ -76,17 +120,19 @@ describe('high-risk coverage baseline helper', () => {
         expect.objectContaining({
           id: 'api-routes',
           reportsDirectory: 'coverage/high-risk/api',
-          coverageIncludeGlobs: ['src/app/api/**'],
+          coverageIncludeGlobs: ['src/app/api/**/*.{ts,tsx}'],
+          defaultShardCount: 4,
         }),
         expect.objectContaining({
           id: 'shared-lib',
           reportsDirectory: 'coverage/high-risk/shared-lib',
-          coverageIncludeGlobs: ['src/shared/lib/**'],
+          coverageIncludeGlobs: ['src/shared/lib/**/*.{ts,tsx}'],
         }),
         expect.objectContaining({
           id: 'kangur',
           reportsDirectory: 'coverage/high-risk/kangur',
-          coverageIncludeGlobs: ['src/features/kangur/**'],
+          coverageIncludeGlobs: ['src/features/kangur/**/*.{ts,tsx}'],
+          defaultShardCount: 4,
         }),
       ])
     );

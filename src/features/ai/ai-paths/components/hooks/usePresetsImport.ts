@@ -4,7 +4,8 @@ import { useCallback } from 'react';
 
 import type { ClusterPreset } from '@/shared/contracts/ai-paths';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
-import { CLUSTER_PRESETS_KEY, createPresetId } from '@/shared/lib/ai-paths';
+import { CLUSTER_PRESETS_KEY } from '@/shared/lib/ai-paths/core/constants';
+import { createPresetId } from '@/shared/lib/ai-paths/core/utils';
 import { updateAiPathsSetting } from '@/shared/lib/ai-paths/settings-store-client';
 import { useToast } from '@/shared/ui/primitives.public';
 

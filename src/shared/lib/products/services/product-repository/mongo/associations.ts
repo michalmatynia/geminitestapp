@@ -1,12 +1,12 @@
-import { Collection, Document, AnyBulkWriteOperation, UpdateFilter, Filter } from 'mongodb';
+import { type Collection, type Document, type AnyBulkWriteOperation, type UpdateFilter, type Filter } from 'mongodb';
 
 import type { ImageFile } from '@/shared/contracts/files';
-import { ProductImageRecord } from '@/shared/contracts/products/product';
+import { type ProductImageRecord } from '@/shared/contracts/products/product';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { mongoImageFileRepository } from '@/shared/lib/files/services/image-file-service';
 import { mongoCatalogRepository } from '@/shared/lib/products/services/catalog-repository/mongo-catalog-repository';
 
-import { ProductDocument } from '../mongo-product-repository-mappers';
+import { type ProductDocument } from '../mongo-product-repository-mappers';
 import {
   buildProductIdFilter,
   normalizeLookupId,
@@ -86,7 +86,7 @@ export const mongoProductAssociationsImpl = {
       });
     }
 
-    return parsedEntries.filter((e): e is ProductImageRecord => !!e.imageFile);
+    return parsedEntries.filter((e): e is ProductImageRecord => Boolean(e.imageFile));
   },
 
   async addProductImages(
@@ -187,7 +187,6 @@ export const mongoProductAssociationsImpl = {
       productId,
       catalogId: c.id,
       assignedAt: now,
-      catalog: { id: c.id },
     }));
     const primaryCatalogId = newCatalogs[0]?.catalogId ?? '';
     const update = {
@@ -307,7 +306,6 @@ export const mongoProductAssociationsImpl = {
             productId: pid,
             catalogId: c.id,
             assignedAt: now,
-            catalog: { id: c.id },
           })),
           catalogId: primaryCatalogId,
           updatedAt: new Date(),
@@ -345,7 +343,6 @@ export const mongoProductAssociationsImpl = {
               productId: pid,
               catalogId: c.id,
               assignedAt: now,
-              catalog: { id: c.id },
             })),
           },
         },

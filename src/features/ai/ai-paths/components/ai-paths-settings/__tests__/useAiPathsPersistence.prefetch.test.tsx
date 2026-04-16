@@ -1,11 +1,15 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createDefaultPathConfig, PATH_INDEX_KEY, type PathConfig, type RuntimeState } from '@/shared/lib/ai-paths';
-import { PATH_CONFIG_PREFIX } from '@/shared/lib/ai-paths';
+import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils';
+import { PATH_INDEX_KEY } from '@/shared/lib/ai-paths/core/constants';
+import type { PathConfig } from '@/shared/contracts/ai-paths';
+import type { RuntimeState } from '@/shared/contracts/ai-paths-runtime';
+import { PATH_CONFIG_PREFIX } from '@/shared/lib/ai-paths/core/constants';
+import { sanitizePathConfig } from '@/shared/lib/ai-paths/core/utils/path-config-sanitization';
 import {
   fetchAiPathsSettingsByKeysCached,
-  updateAiPathsSetting,
+  updateAiPathsSettingsBulk,
 } from '@/shared/lib/ai-paths/settings-store-client';
 
 import type { UseAiPathsPersistenceArgs } from '../useAiPathsPersistence.types';
@@ -55,6 +59,9 @@ const setParserSamplesMock = vi.fn();
 const setUpdaterSamplesMock = vi.fn();
 const setLastRunAtMock = vi.fn();
 const setLoadingPersistenceMock = vi.fn();
+const setExpandedPaletteGroupsMock = vi.fn();
+const setPaletteCollapsedMock = vi.fn();
+const setIsPathTreeVisibleMock = vi.fn();
 const selectionActionsMock = {
   selectNode: selectNodeMock,
   setConfigOpen: setConfigOpenSelectionMock,
@@ -71,6 +78,7 @@ const persistenceActionsMock = {
 
 const preferenceMock = {
   resolveUserPreferences: vi.fn(() => null),
+  resolveUiState: vi.fn(() => null),
   persistActivePathPreference: vi.fn(async () => undefined),
   persistUiState: vi.fn(async () => undefined),
   persistUserPreferences: vi.fn(async () => undefined),
@@ -102,7 +110,6 @@ vi.mock('@/shared/lib/ai-paths/settings-store-client', async () => {
     ...actual,
     fetchAiPathsSettingsByKeysCached: vi.fn(),
     updateAiPathsSettingsBulk: vi.fn(async () => []),
-    updateAiPathsSetting: vi.fn(async (key: string, value: string) => ({ key, value })),
   };
 });
 
@@ -124,10 +131,15 @@ vi.mock('@/features/ai/ai-paths/context/SelectionContext', () => ({
 
 vi.mock('@/features/ai/ai-paths/context/GraphContext', () => ({
   useGraphActions: () => graphActionsMock,
+  useGraphState: () => ({}),
+  useGraphDataState: () => ({ nodes: [], edges: [] }),
+  usePathMetadataState: () => ({ paths: [], pathConfigs: {}, activePathId: null }),
 }));
 
 vi.mock('@/features/ai/ai-paths/context/RuntimeContext', () => ({
   useRuntimeActions: () => runtimeActionsMock,
+  useRuntimeDataState: () => ({ runtimeState: emptyRuntimeState(), parserSamples: {}, updaterSamples: {} }),
+  useRuntimeUiState: () => ({ sendingToAi: false }),
 }));
 
 vi.mock('@/features/ai/ai-paths/context/PersistenceContext', () => ({
@@ -135,8 +147,7 @@ vi.mock('@/features/ai/ai-paths/context/PersistenceContext', () => ({
 }));
 
 const mockedFetchAiPathsSettingsByKeysCached = vi.mocked(fetchAiPathsSettingsByKeysCached);
-const mockedUpdateAiPathsSetting = vi.mocked(updateAiPathsSetting);
-
+const mockedUpdateAiPathsSettingsBulk = vi.mocked(updateAiPathsSettingsBulk);
 const emptyRuntimeState = (): RuntimeState => ({
   status: 'idle',
   nodeStatuses: {},
@@ -156,6 +167,9 @@ const buildPathMeta = (
   createdAt: '2026-03-01T00:00:00.000Z',
   updatedAt: '2026-03-01T00:00:00.000Z',
 });
+
+const serializeStoredPathConfig = (config: PathConfig): string =>
+  JSON.stringify(sanitizePathConfig(config));
 
 const buildLegacyTriggerConfig = (pathId: string): PathConfig => {
   const pathConfig = createDefaultPathConfig(pathId);
@@ -185,10 +199,7 @@ const buildLegacyTriggerConfig = (pathId: string): PathConfig => {
 describe('useAiPathsPersistence idle prefetch', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockedUpdateAiPathsSetting.mockImplementation(async (key: string, value: string) => ({
-      key,
-      value,
-    }));
+    mockedUpdateAiPathsSettingsBulk.mockReset().mockResolvedValue([]);
     selectNodeMock.mockReset();
     setConfigOpenSelectionMock.mockReset();
     setNodesGraphMock.mockReset();
@@ -214,12 +225,241 @@ describe('useAiPathsPersistence idle prefetch', () => {
     setUpdaterSamplesMock.mockReset();
     setLastRunAtMock.mockReset();
     setLoadingPersistenceMock.mockReset();
+    setExpandedPaletteGroupsMock.mockReset();
+    setPaletteCollapsedMock.mockReset();
+    setIsPathTreeVisibleMock.mockReset();
+    preferenceMock.resolveUiState.mockReset().mockReturnValue(null);
   });
 
   it('does not request removed legacy validation key during hydration', async () => {
     const activePathId = 'path_active';
     const activeConfig = createDefaultPathConfig(activePathId);
     activeConfig.runMode = 'queue';
+
+    mockedFetchAiPathsSettingsByKeysCached.mockImplementation(async (keys) => {
+      if (keys.includes(`${PATH_CONFIG_PREFIX}${activePathId}`)) {
+        return [
+          {
+            key: `${PATH_CONFIG_PREFIX}${activePathId}`,
+            value: serializeStoredPathConfig(activeConfig),
+          },
+        ];
+      }
+      if (keys.includes(PATH_INDEX_KEY)) {
+        return [
+          {
+            key: PATH_INDEX_KEY,
+            value: JSON.stringify([buildPathMeta(activeConfig)]),
+          },
+        ];
+      }
+      return [];
+    });
+
+    const args: UseAiPathsPersistenceArgs = {
+      activePathId,
+      activeTrigger: activeConfig.trigger,
+      edges: activeConfig.edges,
+      expandedPaletteGroups: new Set(['Trigger']),
+      setExpandedPaletteGroups: setExpandedPaletteGroupsMock,
+      isPathActive: true,
+      isPathLocked: false,
+      isPathTreeVisible: true,
+      lastRunAt: null,
+      loadNonce: 0,
+      loading: false,
+      nodes: activeConfig.nodes,
+      paletteCollapsed: false,
+      setPaletteCollapsed: setPaletteCollapsedMock,
+      parserSamples: {},
+      pathConfigs: { [activePathId]: activeConfig },
+      pathDescription: activeConfig.description,
+      pathName: activeConfig.name,
+      paths: [buildPathMeta(activeConfig)],
+      executionMode: 'server',
+      flowIntensity: 'medium',
+      runMode: 'manual',
+      strictFlowMode: true,
+      blockedRunPolicy: 'fail_run',
+      aiPathsValidation: { enabled: true },
+      selectedNodeId: null,
+      setIsPathTreeVisible: setIsPathTreeVisibleMock,
+      runtimeState: emptyRuntimeState(),
+      updaterSamples: {},
+      normalizeTriggerLabel: (value?: string | null) => value ?? 'Product Modal - Context Filter',
+      reportAiPathsError: vi.fn(),
+      toast: vi.fn(),
+    };
+
+    renderHook(() => useAiPathsPersistence(args));
+
+    await waitFor(() => {
+      expect(mockedFetchAiPathsSettingsByKeysCached).toHaveBeenCalled();
+    });
+
+    const requestedKeys = mockedFetchAiPathsSettingsByKeysCached.mock.calls.flatMap(
+      (call) => call[0] ?? []
+    );
+
+    expect(requestedKeys).not.toContain('ai_paths_validation_v1');
+    expect(requestedKeys).toContain('ai_paths_ui_state');
+  });
+
+  it('hydrates persisted canvas UI state before marking the view ready', async () => {
+    const activePathId = 'path_active';
+    const activeConfig = createDefaultPathConfig(activePathId);
+    preferenceMock.resolveUiState.mockReturnValue({
+      expandedGroups: ['Ops', 'Templates'],
+      paletteCollapsed: true,
+      pathTreeVisible: false,
+    });
+
+    mockedFetchAiPathsSettingsByKeysCached.mockImplementation(async (keys) => {
+      if (keys.includes(`${PATH_CONFIG_PREFIX}${activePathId}`)) {
+        return [
+          {
+            key: `${PATH_CONFIG_PREFIX}${activePathId}`,
+            value: serializeStoredPathConfig(activeConfig),
+          },
+        ];
+      }
+      if (keys.includes(PATH_INDEX_KEY)) {
+        return [
+          {
+            key: PATH_INDEX_KEY,
+            value: JSON.stringify([buildPathMeta(activeConfig)]),
+          },
+        ];
+      }
+      return [];
+    });
+
+    const args: UseAiPathsPersistenceArgs = {
+      activePathId,
+      activeTrigger: activeConfig.trigger,
+      edges: activeConfig.edges,
+      expandedPaletteGroups: new Set(['Trigger']),
+      setExpandedPaletteGroups: setExpandedPaletteGroupsMock,
+      isPathActive: true,
+      isPathLocked: false,
+      isPathTreeVisible: true,
+      lastRunAt: null,
+      loadNonce: 0,
+      loading: false,
+      nodes: activeConfig.nodes,
+      paletteCollapsed: false,
+      setPaletteCollapsed: setPaletteCollapsedMock,
+      parserSamples: {},
+      pathConfigs: { [activePathId]: activeConfig },
+      pathDescription: activeConfig.description,
+      pathName: activeConfig.name,
+      paths: [buildPathMeta(activeConfig)],
+      executionMode: 'server',
+      flowIntensity: 'medium',
+      runMode: 'manual',
+      strictFlowMode: true,
+      blockedRunPolicy: 'fail_run',
+      aiPathsValidation: { enabled: true },
+      selectedNodeId: null,
+      setIsPathTreeVisible: setIsPathTreeVisibleMock,
+      runtimeState: emptyRuntimeState(),
+      updaterSamples: {},
+      normalizeTriggerLabel: (value?: string | null) => value ?? 'Product Modal - Context Filter',
+      reportAiPathsError: vi.fn(),
+      toast: vi.fn(),
+    };
+
+    renderHook(() => useAiPathsPersistence(args));
+
+    await waitFor(() => {
+      expect(setExpandedPaletteGroupsMock).toHaveBeenCalledWith(new Set(['Ops', 'Templates']));
+      expect(setPaletteCollapsedMock).toHaveBeenCalledWith(true);
+      expect(setIsPathTreeVisibleMock).toHaveBeenCalledWith(false);
+    });
+  });
+
+  it('does not replace an invalid active stored path with a default config during hydration', async () => {
+    const activePathId = 'path_invalid_active';
+    const activeConfig = createDefaultPathConfig(activePathId);
+    const reportAiPathsError = vi.fn();
+    const toast = vi.fn();
+
+    mockedFetchAiPathsSettingsByKeysCached.mockImplementation(async (keys) => {
+      if (keys.includes(`${PATH_CONFIG_PREFIX}${activePathId}`)) {
+        return [
+          {
+            key: `${PATH_CONFIG_PREFIX}${activePathId}`,
+            value: 'not-json',
+          },
+        ];
+      }
+      if (keys.includes(PATH_INDEX_KEY)) {
+        return [
+          {
+            key: PATH_INDEX_KEY,
+            value: JSON.stringify([buildPathMeta(activeConfig)]),
+          },
+        ];
+      }
+      return [];
+    });
+
+    const args: UseAiPathsPersistenceArgs = {
+      activePathId,
+      activeTrigger: activeConfig.trigger,
+      edges: activeConfig.edges,
+      expandedPaletteGroups: new Set(['Trigger']),
+      setExpandedPaletteGroups: setExpandedPaletteGroupsMock,
+      isPathActive: true,
+      isPathLocked: false,
+      isPathTreeVisible: true,
+      lastRunAt: null,
+      loadNonce: 0,
+      loading: false,
+      nodes: activeConfig.nodes,
+      paletteCollapsed: false,
+      setPaletteCollapsed: setPaletteCollapsedMock,
+      parserSamples: {},
+      pathConfigs: {},
+      pathDescription: activeConfig.description,
+      pathName: activeConfig.name,
+      paths: [buildPathMeta(activeConfig)],
+      executionMode: 'server',
+      flowIntensity: 'medium',
+      runMode: 'manual',
+      strictFlowMode: true,
+      blockedRunPolicy: 'fail_run',
+      aiPathsValidation: { enabled: true },
+      selectedNodeId: null,
+      setIsPathTreeVisible: setIsPathTreeVisibleMock,
+      runtimeState: emptyRuntimeState(),
+      updaterSamples: {},
+      normalizeTriggerLabel: (value?: string | null) => value ?? 'Product Modal - Context Filter',
+      reportAiPathsError,
+      toast,
+    };
+
+    renderHook(() => useAiPathsPersistence(args));
+
+    await waitFor(() => {
+      expect(reportAiPathsError).toHaveBeenCalled();
+    });
+    expect(setActivePathIdGraphMock).not.toHaveBeenCalledWith(activePathId);
+    expect(setPathConfigsGraphMock).not.toHaveBeenCalled();
+    expect(toast).toHaveBeenCalledWith(expect.stringContaining('Failed to load AI Paths settings'), {
+      variant: 'error',
+    });
+  });
+
+  it('fails non-canonical active path payloads during hydration instead of rewriting them', async () => {
+    const activePathId = 'path_active_noncanonical';
+    const activeConfig = createDefaultPathConfig(activePathId);
+    activeConfig.uiState = {
+      ...(activeConfig.uiState ?? {}),
+      configOpen: true,
+    };
+    const toast = vi.fn();
+    const reportAiPathsError = vi.fn();
 
     mockedFetchAiPathsSettingsByKeysCached.mockImplementation(async (keys) => {
       if (keys.includes(`${PATH_CONFIG_PREFIX}${activePathId}`)) {
@@ -246,15 +486,18 @@ describe('useAiPathsPersistence idle prefetch', () => {
       activeTrigger: activeConfig.trigger,
       edges: activeConfig.edges,
       expandedPaletteGroups: new Set(['Trigger']),
+      setExpandedPaletteGroups: setExpandedPaletteGroupsMock,
       isPathActive: true,
       isPathLocked: false,
+      isPathTreeVisible: true,
       lastRunAt: null,
       loadNonce: 0,
       loading: false,
       nodes: activeConfig.nodes,
       paletteCollapsed: false,
+      setPaletteCollapsed: setPaletteCollapsedMock,
       parserSamples: {},
-      pathConfigs: { [activePathId]: activeConfig },
+      pathConfigs: {},
       pathDescription: activeConfig.description,
       pathName: activeConfig.name,
       paths: [buildPathMeta(activeConfig)],
@@ -265,25 +508,28 @@ describe('useAiPathsPersistence idle prefetch', () => {
       blockedRunPolicy: 'fail_run',
       aiPathsValidation: { enabled: true },
       selectedNodeId: null,
+      setIsPathTreeVisible: setIsPathTreeVisibleMock,
       runtimeState: emptyRuntimeState(),
       updaterSamples: {},
       normalizeTriggerLabel: (value?: string | null) => value ?? 'Product Modal - Context Filter',
-      reportAiPathsError: vi.fn(),
-      toast: vi.fn(),
+      reportAiPathsError,
+      toast,
     };
 
     renderHook(() => useAiPathsPersistence(args));
 
     await waitFor(() => {
-      expect(mockedFetchAiPathsSettingsByKeysCached).toHaveBeenCalled();
+      expect(reportAiPathsError).toHaveBeenCalled();
     });
-
-    const requestedKeys = mockedFetchAiPathsSettingsByKeysCached.mock.calls.flatMap(
-      (call) => call[0] ?? []
+    expect(setActivePathIdGraphMock).not.toHaveBeenCalledWith(activePathId);
+    expect(setPathConfigsGraphMock).not.toHaveBeenCalled();
+    expect(mockedUpdateAiPathsSettingsBulk).not.toHaveBeenCalled();
+    expect(toast).toHaveBeenCalledWith(
+      expect.stringContaining('Failed to load AI Paths settings'),
+      {
+        variant: 'error',
+      }
     );
-
-    expect(requestedKeys).not.toContain('ai_paths_validation_v1');
-    expect(requestedKeys).toContain('ai_paths_ui_state');
   });
 
   it('prefetches non-active path configs after initial hydration', async () => {
@@ -300,7 +546,7 @@ describe('useAiPathsPersistence idle prefetch', () => {
         return [
           {
             key: `${PATH_CONFIG_PREFIX}${secondaryPathId}`,
-            value: JSON.stringify(secondaryConfig),
+            value: serializeStoredPathConfig(secondaryConfig),
           },
         ];
       }
@@ -308,7 +554,7 @@ describe('useAiPathsPersistence idle prefetch', () => {
         return [
           {
             key: `${PATH_CONFIG_PREFIX}${activePathId}`,
-            value: JSON.stringify(activeConfig),
+            value: serializeStoredPathConfig(activeConfig),
           },
         ];
       }
@@ -320,13 +566,16 @@ describe('useAiPathsPersistence idle prefetch', () => {
       activeTrigger: activeConfig.trigger,
       edges: activeConfig.edges,
       expandedPaletteGroups: new Set(['Trigger']),
+      setExpandedPaletteGroups: setExpandedPaletteGroupsMock,
       isPathActive: true,
       isPathLocked: false,
+      isPathTreeVisible: true,
       lastRunAt: null,
       loadNonce: 0,
       loading: false,
       nodes: activeConfig.nodes,
       paletteCollapsed: false,
+      setPaletteCollapsed: setPaletteCollapsedMock,
       parserSamples: {},
       pathConfigs: pathConfigsState,
       pathDescription: activeConfig.description,
@@ -339,6 +588,7 @@ describe('useAiPathsPersistence idle prefetch', () => {
       blockedRunPolicy: 'fail_run',
       aiPathsValidation: { enabled: true },
       selectedNodeId: null,
+      setIsPathTreeVisible: setIsPathTreeVisibleMock,
       runtimeState: emptyRuntimeState(),
       updaterSamples: {},
       normalizeTriggerLabel: (value?: string | null) => value ?? 'Product Modal - Context Filter',
@@ -363,7 +613,7 @@ describe('useAiPathsPersistence idle prefetch', () => {
     });
   });
 
-  it('remediates prefetched configs with removed legacy trigger context modes', async () => {
+  it('does not persist trigger-context remediation while prefetching configs', async () => {
     const activePathId = 'path_active';
     const secondaryPathId = 'path_secondary_legacy_trigger';
     const activeConfig = createDefaultPathConfig(activePathId);
@@ -385,7 +635,7 @@ describe('useAiPathsPersistence idle prefetch', () => {
         return [
           {
             key: `${PATH_CONFIG_PREFIX}${activePathId}`,
-            value: JSON.stringify(activeConfig),
+            value: serializeStoredPathConfig(activeConfig),
           },
         ];
       }
@@ -397,13 +647,16 @@ describe('useAiPathsPersistence idle prefetch', () => {
       activeTrigger: activeConfig.trigger,
       edges: activeConfig.edges,
       expandedPaletteGroups: new Set(['Trigger']),
+      setExpandedPaletteGroups: setExpandedPaletteGroupsMock,
       isPathActive: true,
       isPathLocked: false,
+      isPathTreeVisible: true,
       lastRunAt: null,
       loadNonce: 0,
       loading: false,
       nodes: activeConfig.nodes,
       paletteCollapsed: false,
+      setPaletteCollapsed: setPaletteCollapsedMock,
       parserSamples: {},
       pathConfigs: pathConfigsState,
       pathDescription: activeConfig.description,
@@ -416,6 +669,7 @@ describe('useAiPathsPersistence idle prefetch', () => {
       blockedRunPolicy: 'fail_run',
       aiPathsValidation: { enabled: true },
       selectedNodeId: null,
+      setIsPathTreeVisible: setIsPathTreeVisibleMock,
       runtimeState: emptyRuntimeState(),
       updaterSamples: {},
       normalizeTriggerLabel: (value?: string | null) => value ?? 'Product Modal - Context Filter',
@@ -442,21 +696,8 @@ describe('useAiPathsPersistence idle prefetch', () => {
       );
     });
 
-    await waitFor(() => {
-      expect(setPathConfigsGraphMock).toHaveBeenCalledTimes(1);
-    });
-    const updatePathConfigs = setPathConfigsGraphMock.mock.calls[0]?.[0] as
-      | ((prev: Record<string, PathConfig>) => Record<string, PathConfig>)
-      | undefined;
-    expect(updatePathConfigs).toBeTypeOf('function');
-    const nextPathConfigs = updatePathConfigs?.(pathConfigsState);
-    expect(nextPathConfigs?.[secondaryPathId]?.nodes[0]?.config?.trigger?.contextMode).toBe(
-      'trigger_only'
-    );
-    expect(mockedUpdateAiPathsSetting).toHaveBeenCalledWith(
-      `${PATH_CONFIG_PREFIX}${secondaryPathId}`,
-      expect.any(String)
-    );
+    await new Promise((resolve) => setTimeout(resolve, 75));
+    expect(setPathConfigsGraphMock).toHaveBeenCalledTimes(0);
   });
 
   it('skips prefetch hydration for configs with legacy runtime identity payloads', async () => {
@@ -485,7 +726,7 @@ describe('useAiPathsPersistence idle prefetch', () => {
         return [
           {
             key: `${PATH_CONFIG_PREFIX}${activePathId}`,
-            value: JSON.stringify(activeConfig),
+            value: serializeStoredPathConfig(activeConfig),
           },
         ];
       }
@@ -497,13 +738,16 @@ describe('useAiPathsPersistence idle prefetch', () => {
       activeTrigger: activeConfig.trigger,
       edges: activeConfig.edges,
       expandedPaletteGroups: new Set(['Trigger']),
+      setExpandedPaletteGroups: setExpandedPaletteGroupsMock,
       isPathActive: true,
       isPathLocked: false,
+      isPathTreeVisible: true,
       lastRunAt: null,
       loadNonce: 0,
       loading: false,
       nodes: activeConfig.nodes,
       paletteCollapsed: false,
+      setPaletteCollapsed: setPaletteCollapsedMock,
       parserSamples: {},
       pathConfigs: pathConfigsState,
       pathDescription: activeConfig.description,
@@ -516,6 +760,7 @@ describe('useAiPathsPersistence idle prefetch', () => {
       blockedRunPolicy: 'fail_run',
       aiPathsValidation: { enabled: true },
       selectedNodeId: null,
+      setIsPathTreeVisible: setIsPathTreeVisibleMock,
       runtimeState: emptyRuntimeState(),
       updaterSamples: {},
       normalizeTriggerLabel: (value?: string | null) => value ?? 'Product Modal - Context Filter',

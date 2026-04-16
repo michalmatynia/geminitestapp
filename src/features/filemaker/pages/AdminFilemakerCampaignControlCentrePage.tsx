@@ -1,8 +1,8 @@
 'use client';
 
 import { ShieldAlert, Activity } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import React, { useDeferredValue, useMemo, useState } from 'react';
+import { useRouter } from 'nextjs-toploader/app';
+import React, { useDeferredValue, useMemo, useState, startTransition } from 'react';
 
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Badge, Button } from '@/shared/ui/primitives.public';
@@ -504,9 +504,9 @@ export function AdminFilemakerCampaignControlCentrePage(): React.JSX.Element {
                     size='sm'
                     variant='outline'
                     onClick={(): void => {
-                      router.push(
-                        `/admin/filemaker/campaigns/${encodeURIComponent(failure.campaignId)}`
-                      );
+                      startTransition(() => { router.push(
+                                                `/admin/filemaker/campaigns/${encodeURIComponent(failure.campaignId)}`
+                                              ); });
                     }}
                   >
                     Open Campaign
@@ -619,9 +619,9 @@ export function AdminFilemakerCampaignControlCentrePage(): React.JSX.Element {
                     size='sm'
                     variant='outline'
                     onClick={(): void => {
-                      router.push(
-                        `/admin/filemaker/campaigns/${encodeURIComponent(retry.campaignId)}`
-                      );
+                      startTransition(() => { router.push(
+                                                `/admin/filemaker/campaigns/${encodeURIComponent(retry.campaignId)}`
+                                              ); });
                     }}
                   >
                     Open Campaign
@@ -631,9 +631,9 @@ export function AdminFilemakerCampaignControlCentrePage(): React.JSX.Element {
                     size='sm'
                     variant='outline'
                     onClick={(): void => {
-                      router.push(
-                        `/admin/filemaker/campaigns/runs/${encodeURIComponent(retry.runId)}`
-                      );
+                      startTransition(() => { router.push(
+                                                `/admin/filemaker/campaigns/runs/${encodeURIComponent(retry.runId)}`
+                                              ); });
                     }}
                   >
                     Open Run
@@ -686,9 +686,9 @@ export function AdminFilemakerCampaignControlCentrePage(): React.JSX.Element {
                       size='sm'
                       variant='outline'
                       onClick={(): void => {
-                        router.push(
-                          `/admin/filemaker/campaigns/${encodeURIComponent(alert.campaignId ?? '')}`
-                        );
+                        startTransition(() => { router.push(
+                                                    `/admin/filemaker/campaigns/${encodeURIComponent(alert.campaignId ?? '')}`
+                                                  ); });
                       }}
                     >
                       Open Campaign
@@ -743,9 +743,9 @@ export function AdminFilemakerCampaignControlCentrePage(): React.JSX.Element {
                     size='sm'
                     variant='outline'
                     onClick={(): void => {
-                      router.push(
-                        `/admin/filemaker/campaigns/${encodeURIComponent(campaign.campaignId)}`
-                      );
+                      startTransition(() => { router.push(
+                                                `/admin/filemaker/campaigns/${encodeURIComponent(campaign.campaignId)}`
+                                              ); });
                     }}
                   >
                     Open Campaign
@@ -910,9 +910,9 @@ export function AdminFilemakerCampaignControlCentrePage(): React.JSX.Element {
                     size='sm'
                     variant='outline'
                     onClick={(): void => {
-                      router.push(
-                        `/admin/filemaker/campaigns/${encodeURIComponent(issue.campaignId)}`
-                      );
+                      startTransition(() => { router.push(
+                                                `/admin/filemaker/campaigns/${encodeURIComponent(issue.campaignId)}`
+                                              ); });
                     }}
                   >
                     Open Campaign

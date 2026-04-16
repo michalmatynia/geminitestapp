@@ -7,8 +7,8 @@ import { DocumentationTooltip } from '@/shared/lib/documentation/DocumentationTo
 const tooltipMock = vi.hoisted(() => vi.fn());
 const getDocumentationTooltipMock = vi.hoisted(() => vi.fn());
 
-vi.mock('@/shared/ui', () => ({
-  Tooltip: tooltipMock,
+vi.mock('@/shared/ui/primitives.public', () => ({
+  Tooltip: (props: any) => tooltipMock(props),
 }));
 vi.mock('@/shared/lib/documentation/tooltips', () => ({
   getDocumentationTooltip: getDocumentationTooltipMock,

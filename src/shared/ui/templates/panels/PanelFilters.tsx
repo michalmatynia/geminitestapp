@@ -3,7 +3,8 @@
 import { Search, X } from 'lucide-react';
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 
-import { FilterField } from '@/shared/contracts/ui/panels';
+import { type FilterField } from '@/shared/contracts/ui/panels';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { Button, Label } from '@/shared/ui/primitives.public';
 import { SelectSimple, SearchInput } from '@/shared/ui/forms-and-actions.public';
 import { Checkbox } from '@/shared/ui/checkbox';
@@ -167,6 +168,7 @@ export const PanelFilters: React.FC<PanelFiltersProps> = (props: PanelFiltersPro
                title={effectiveSearchPlaceholder}/>
               {localSearch && (
                 <button
+                  type='button'
                   onClick={() => {
                     setLocalSearch('');
                     onSearchChange?.('');
@@ -295,7 +297,7 @@ const PanelFilterControl: React.FC<PanelFilterControlProps> = (props: PanelFilte
   switch (field.type) {
     case 'multi-select':
     case 'select': {
-      const options = (field.options ?? []).map((option: any) => ({
+      const options = (field.options ?? []).map((option: LabeledOptionDto<string | number>) => ({
         value: String(option.value),
         label: option.label,
       }));
@@ -314,6 +316,7 @@ const PanelFilterControl: React.FC<PanelFilterControlProps> = (props: PanelFilte
               selected={getMultiSelectValues(value)}
               onChange={(selectedValues) => onChange(selectedValues)}
               placeholder={field.placeholder ?? 'Select options...'}
+              ariaLabel={field.label}
               className='w-full'
             />
           </div>
@@ -331,12 +334,12 @@ const PanelFilterControl: React.FC<PanelFilterControlProps> = (props: PanelFilte
           <SelectSimple
             size='sm'
             value={getSingleSelectValue(value)}
-            onValueChange={(val: boolean) => onChange(val)}
+            onValueChange={(val: string) => onChange(val)}
             options={options}
             placeholder={field.placeholder}
             triggerClassName='h-8 w-full min-w-[9rem]'
             ariaLabel={field.label}
-           title={field.placeholder}/>
+          />
         </div>
       );
     }
@@ -356,6 +359,9 @@ const PanelFilterControl: React.FC<PanelFilterControlProps> = (props: PanelFilte
             placeholder={field.placeholder ?? `Search ${field.label.toLowerCase()}...`}
             value={String(localValue ?? '')}
             onChange={(e) => setLocalValue(e.target.value)}
+            {...(field.inputName ? { name: field.inputName } : {})}
+            {...(field.autoComplete ? { autoComplete: field.autoComplete } : {})}
+            {...(field.spellCheck !== undefined ? { spellCheck: field.spellCheck } : {})}
             onClear={() => {
               setLocalValue('');
               onChange('');
@@ -370,11 +376,11 @@ const PanelFilterControl: React.FC<PanelFilterControlProps> = (props: PanelFilte
       return (
         <div style={containerStyle} className={cn('flex items-center gap-2 py-1', field.className)}>
           <Checkbox
-            id={field.key}
+            id={inputId}
             checked={(value as boolean) || false}
             onCheckedChange={onChange}
           />
-          <label htmlFor={field.key} className='text-sm font-medium cursor-pointer'>
+          <label htmlFor={inputId} className='text-sm font-medium cursor-pointer'>
             {field.label}
           </label>
         </div>
@@ -396,8 +402,11 @@ const PanelFilterControl: React.FC<PanelFilterControlProps> = (props: PanelFilte
             placeholder={field.placeholder}
             value={localValue ?? ''}
             onChange={(e) => setLocalValue(e.target.value ? Number(e.target.value) : undefined)}
+            {...(field.inputName ? { name: field.inputName } : {})}
+            {...(field.autoComplete ? { autoComplete: field.autoComplete } : {})}
+            {...(field.spellCheck !== undefined ? { spellCheck: field.spellCheck } : {})}
             className='h-8 w-full text-sm'
-           aria-label={field.placeholder} title={field.placeholder}/>
+          />
         </div>
       );
 
@@ -416,8 +425,11 @@ const PanelFilterControl: React.FC<PanelFilterControlProps> = (props: PanelFilte
             type='date'
             value={(localValue as string) || ''}
             onChange={(e) => setLocalValue(e.target.value || undefined)}
+            {...(field.inputName ? { name: field.inputName } : {})}
+            {...(field.autoComplete ? { autoComplete: field.autoComplete } : {})}
+            {...(field.spellCheck !== undefined ? { spellCheck: field.spellCheck } : {})}
             className='h-8 w-full text-sm'
-           aria-label={inputId} title={inputId}/>
+          />
         </div>
       );
 
@@ -482,8 +494,11 @@ const PanelFilterControl: React.FC<PanelFilterControlProps> = (props: PanelFilte
             placeholder={field.placeholder}
             value={(localValue as string) || ''}
             onChange={(e) => setLocalValue(e.target.value || undefined)}
+            {...(field.inputName ? { name: field.inputName } : {})}
+            {...(field.autoComplete ? { autoComplete: field.autoComplete } : {})}
+            {...(field.spellCheck !== undefined ? { spellCheck: field.spellCheck } : {})}
             className='h-8 w-full text-sm'
-           aria-label={field.placeholder} title={field.placeholder}/>
+          />
         </div>
       );
   }

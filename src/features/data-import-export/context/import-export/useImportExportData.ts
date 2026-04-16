@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, type MutableRefObject } from 'react';
 
 import {
   useInventories,
@@ -8,6 +8,9 @@ import {
   useImportList,
   useImportRun,
 } from '@/features/data-import-export/hooks/useImportQueries';
+import type {
+  BaseImportDirectTargetType,
+} from '@/shared/contracts/integrations/base-com';
 import type { InventoryOption, ImportListItem, ImportRunDetail, WarehouseOption } from '@/shared/contracts/integrations/import-export';
 
 export function useImportExportData({
@@ -15,8 +18,10 @@ export function useImportExportData({
   isBaseConnected,
   inventoriesEnabled,
   inventoryId,
+  inventoryIdRef,
   setInventoryId,
   exportInventoryId,
+  exportInventoryIdRef,
   setExportInventoryId,
   includeAllWarehouses,
   warehousesEnabled,
@@ -26,6 +31,8 @@ export function useImportExportData({
   importListPage,
   importListPageSize,
   importNameSearch,
+  importDirectTargetType,
+  importDirectTargetValue,
   importSkuSearch,
   importListEnabled,
   activeImportRunId,
@@ -36,8 +43,10 @@ export function useImportExportData({
   isBaseConnected: boolean;
   inventoriesEnabled: boolean;
   inventoryId: string;
+  inventoryIdRef: MutableRefObject<string>;
   setInventoryId: (id: string) => void;
   exportInventoryId: string;
+  exportInventoryIdRef: MutableRefObject<string>;
   setExportInventoryId: (id: string) => void;
   includeAllWarehouses: boolean;
   warehousesEnabled: boolean;
@@ -47,6 +56,8 @@ export function useImportExportData({
   importListPage: number;
   importListPageSize: number;
   importNameSearch: string;
+  importDirectTargetType: BaseImportDirectTargetType;
+  importDirectTargetValue: string;
   importSkuSearch: string;
   importListEnabled: boolean;
   activeImportRunId: string;
@@ -56,7 +67,7 @@ export function useImportExportData({
   const normalizedSelectedBaseConnectionId = selectedBaseConnectionId.trim();
   const inventoriesQuery = useInventories(
     normalizedSelectedBaseConnectionId,
-    inventoriesEnabled && isBaseConnected && !!normalizedSelectedBaseConnectionId
+    inventoriesEnabled && isBaseConnected && Boolean(normalizedSelectedBaseConnectionId)
   );
   const inventories = useMemo<InventoryOption[]>(() => {
     const toText = (value: unknown): string => {
@@ -89,10 +100,10 @@ export function useImportExportData({
       if (firstInventory?.id) {
         const firstInventoryId = firstInventory.id;
         const timer = setTimeout(() => {
-          if (!inventoryId) {
+          if (!inventoryIdRef.current.trim()) {
             setInventoryId(firstInventoryId);
           }
-          if (!exportInventoryId) {
+          if (!exportInventoryIdRef.current.trim()) {
             setExportInventoryId(firstInventoryId);
           }
           setHasInitializedInventories(true);
@@ -105,6 +116,8 @@ export function useImportExportData({
     inventories,
     inventoryId,
     exportInventoryId,
+    inventoryIdRef,
+    exportInventoryIdRef,
     hasInitializedInventories,
     setInventoryId,
     setExportInventoryId,
@@ -116,8 +129,8 @@ export function useImportExportData({
     includeAllWarehouses,
     warehousesEnabled &&
       isBaseConnected &&
-      !!normalizedSelectedBaseConnectionId &&
-      !!exportInventoryId
+      Boolean(normalizedSelectedBaseConnectionId) &&
+      Boolean(exportInventoryId)
   );
   const warehousesData = warehousesQuery.data;
   const isFetchingWarehouses = warehousesQuery.isFetching;
@@ -125,6 +138,14 @@ export function useImportExportData({
 
   const warehouses: WarehouseOption[] = warehousesData?.warehouses ?? [];
   const allWarehouses: WarehouseOption[] = warehousesData?.allWarehouses ?? [];
+  const normalizedImportDirectTargetValue = importDirectTargetValue.trim();
+  const importDirectTarget =
+    normalizedImportDirectTargetValue.length > 0
+      ? {
+          type: importDirectTargetType,
+          value: normalizedImportDirectTargetValue,
+        }
+      : undefined;
 
   const importListQuery = useImportList(
     inventoryId,
@@ -136,9 +157,10 @@ export function useImportExportData({
       page: importListPage,
       pageSize: importListPageSize,
       searchName: importNameSearch,
+      directTarget: importDirectTarget,
       searchSku: importSkuSearch,
     },
-    importListEnabled && isBaseConnected && !!inventoryId && !!normalizedSelectedBaseConnectionId
+    importListEnabled && isBaseConnected && Boolean(inventoryId) && Boolean(normalizedSelectedBaseConnectionId)
   );
   const importListData = importListQuery.data;
   const loadingImportList = importListQuery.isFetching;
@@ -172,7 +194,7 @@ export function useImportExportData({
   const activeImportRun = useMemo<ImportRunDetail | null>(() => {
     return activeImportRunQuery.data ?? null;
   }, [activeImportRunQuery.data]);
-  const loadingImportRun = activeImportRunQuery.isFetching && !!activeImportRunId;
+  const loadingImportRun = activeImportRunQuery.isFetching && Boolean(activeImportRunId);
 
   useEffect(() => {
     const status = activeImportRun?.run.status;

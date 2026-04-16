@@ -52,13 +52,26 @@ type LessonActivityShellContextValue = {
   descriptionId?: string;
   headerTestId?: string;
   icon: string;
+  navigationLabel: string;
   navigationPills?: React.ReactNode;
   onBack: () => void;
+  openSecretPanelLabel: string;
   printPanelId: string;
+  printPanelLabel: string;
   resolvePrintPanelId: () => string;
+  secretPanelTitle: string;
   title: string;
   titleId?: string;
   secretLessonPill: ReturnType<typeof useKangurLessonSecretPill>;
+  panelAriaLabel?: string;
+  panelDescribedBy?: string;
+  panelLabelledBy?: string;
+  panelRef: React.RefObject<HTMLDivElement | null>;
+  printInteractiveHint: string;
+  shellPanelClassName: string;
+  shellPanelTestId?: string;
+  shouldRenderShellHeader: boolean;
+  shellVariant: 'panel' | 'plain';
 };
 
 const LessonActivityShellContext = createContext<LessonActivityShellContextValue | null>(null);
@@ -216,19 +229,15 @@ function LessonActivityShellMobilePrintButtons({
   );
 }
 
-function LessonActivityShellPillsRow({
-  isCoarsePointer,
-  navigationPills,
-  openSecretPanelLabel,
-  secretLessonPill,
-  secretPanelTitle,
-}: {
-  isCoarsePointer: boolean;
-  navigationPills?: React.ReactNode;
-  openSecretPanelLabel: string;
-  secretLessonPill: ReturnType<typeof useKangurLessonSecretPill>;
-  secretPanelTitle: string;
-}): React.JSX.Element | null {
+function LessonActivityShellPillsRow(): React.JSX.Element | null {
+  const {
+    navigationPills,
+    openSecretPanelLabel,
+    secretLessonPill,
+    secretPanelTitle,
+  } = useLessonActivityShellContext();
+  const isCoarsePointer = useKangurCoarsePointer();
+
   const shouldRender = Boolean(navigationPills || secretLessonPill?.isUnlocked);
   if (!shouldRender) {
     return null;
@@ -250,18 +259,20 @@ function LessonActivityShellPillsRow({
 }
 
 function LessonActivityShellTopBar(): React.JSX.Element {
-  const lessonChrome = useTranslations('KangurLessonChrome');
-  const lessonNavigationTranslations = useTranslations('KangurLessonsWidgets.navigation');
-  const { backButtonLabel, navigationPills, onBack, resolvePrintPanelId, secretLessonPill } =
-    useLessonActivityShellContext();
+  const {
+    backButtonLabel,
+    navigationLabel,
+    onBack,
+    printPanelLabel,
+    resolvePrintPanelId,
+  } = useLessonActivityShellContext();
   const isCoarsePointer = useKangurCoarsePointer();
-  const lessonPrint = useOptionalKangurLessonPrint();
-  const { navigationLabel, openSecretPanelLabel, printPanelLabel, secretPanelTitle } =
-    resolveLessonActivityShellNavigationLabels(lessonChrome, lessonNavigationTranslations);
+  const { onPrintPanel } = useOptionalKangurLessonPrint() ?? {};
+
   const printButton = (
     <LessonActivityShellPrintButton
       isCoarsePointer={isCoarsePointer}
-      onPrintPanel={lessonPrint?.onPrintPanel}
+      onPrintPanel={onPrintPanel}
       resolvePrintPanelId={resolvePrintPanelId}
       printPanelLabel={printPanelLabel}
     />
@@ -283,15 +294,9 @@ function LessonActivityShellTopBar(): React.JSX.Element {
       <LessonActivityShellMobilePrintButtons
         navigationLabel={navigationLabel}
         printButton={printButton}
-        shouldRender={Boolean(lessonPrint?.onPrintPanel)}
+        shouldRender={Boolean(onPrintPanel)}
       />
-      <LessonActivityShellPillsRow
-        isCoarsePointer={isCoarsePointer}
-        navigationPills={navigationPills}
-        openSecretPanelLabel={openSecretPanelLabel}
-        secretLessonPill={secretLessonPill}
-        secretPanelTitle={secretPanelTitle}
-      />
+      <LessonActivityShellPillsRow />
     </nav>
   );
 }
@@ -352,33 +357,23 @@ function LessonActivityShellPrintSummary({
 
 function LessonActivityShellBody({
   children,
-  description,
-  panelAriaLabel,
-  panelDescribedBy,
-  panelLabelledBy,
-  panelRef,
-  printInteractiveHint,
-  printPanelId,
-  shellPanelClassName,
-  shellPanelTestId,
-  shouldRenderShellHeader,
-  shellVariant,
-  title,
 }: {
   children: React.ReactNode;
-  description?: React.ReactNode;
-  panelAriaLabel: string | undefined;
-  panelDescribedBy: string | undefined;
-  panelLabelledBy: string | undefined;
-  panelRef: React.RefObject<HTMLDivElement | null>;
-  printInteractiveHint: string;
-  printPanelId: string;
-  shellPanelClassName: string;
-  shellPanelTestId?: string;
-  shouldRenderShellHeader: boolean;
-  shellVariant: 'panel' | 'plain';
-  title: string;
 }): React.JSX.Element {
+  const {
+    description,
+    panelAriaLabel,
+    panelDescribedBy,
+    panelLabelledBy,
+    panelRef,
+    printInteractiveHint,
+    printPanelId,
+    shellPanelClassName,
+    shellPanelTestId,
+    shouldRenderShellHeader,
+    shellVariant,
+    title,
+  } = useLessonActivityShellContext();
   const header = shouldRenderShellHeader ? <LessonActivityShellHeader /> : null;
   const content = (
     <>
@@ -440,12 +435,24 @@ function resolveLessonActivityShellContextValue({
   descriptionId,
   headerTestId,
   icon,
+  navigationLabel,
   navigationPills,
   onBack,
+  openSecretPanelLabel,
+  panelAriaLabel,
+  panelDescribedBy,
+  panelLabelledBy,
+  panelRef,
+  printInteractiveHint,
   printPanelId,
+  printPanelLabel,
   resolvePrintPanelId,
   secretLessonPill,
+  secretPanelTitle,
+  shellPanelClassName,
+  shellPanelTestId,
   shouldRenderShellHeader,
+  shellVariant,
   title,
   titleId,
 }: {
@@ -455,12 +462,24 @@ function resolveLessonActivityShellContextValue({
   descriptionId: string;
   headerTestId?: string;
   icon: string;
+  navigationLabel: string;
   navigationPills?: React.ReactNode;
   onBack: () => void;
+  openSecretPanelLabel: string;
+  panelAriaLabel?: string;
+  panelDescribedBy?: string;
+  panelLabelledBy?: string;
+  panelRef: React.RefObject<HTMLDivElement | null>;
+  printInteractiveHint: string;
   printPanelId: string;
+  printPanelLabel: string;
   resolvePrintPanelId: () => string;
   secretLessonPill: ReturnType<typeof useKangurLessonSecretPill>;
+  secretPanelTitle: string;
+  shellPanelClassName: string;
+  shellPanelTestId?: string;
   shouldRenderShellHeader: boolean;
+  shellVariant: 'panel' | 'plain';
   title: string;
   titleId: string;
 }): LessonActivityShellContextValue {
@@ -471,13 +490,26 @@ function resolveLessonActivityShellContextValue({
     descriptionId: shouldRenderShellHeader ? descriptionId : undefined,
     headerTestId,
     icon,
+    navigationLabel,
     navigationPills,
     onBack,
+    openSecretPanelLabel,
     printPanelId,
+    printPanelLabel,
     resolvePrintPanelId,
+    secretPanelTitle,
     title,
     titleId: shouldRenderShellHeader ? titleId : undefined,
     secretLessonPill,
+    panelAriaLabel,
+    panelDescribedBy,
+    panelLabelledBy,
+    panelRef,
+    printInteractiveHint,
+    shellPanelClassName,
+    shellPanelTestId,
+    shouldRenderShellHeader,
+    shellVariant,
   };
 }
 
@@ -621,6 +653,10 @@ export default function LessonActivityShell(props: LessonActivityShellProps): Re
       title,
       titleId,
     });
+  const lessonNavigationTranslations = useTranslations('KangurLessonsWidgets.navigation');
+  const { navigationLabel, openSecretPanelLabel, printPanelLabel, secretPanelTitle } =
+    resolveLessonActivityShellNavigationLabels(lessonChrome, lessonNavigationTranslations);
+
   const resolvedBackButtonLabel = translateLessonChrome(
     lessonChrome,
     'backToTopics',
@@ -646,12 +682,24 @@ export default function LessonActivityShell(props: LessonActivityShellProps): Re
     descriptionId,
     headerTestId,
     icon,
+    navigationLabel,
     navigationPills,
     onBack,
+    openSecretPanelLabel,
+    panelAriaLabel,
+    panelDescribedBy,
+    panelLabelledBy,
+    panelRef: shellPanelRef,
+    printInteractiveHint,
     printPanelId,
+    printPanelLabel,
     resolvePrintPanelId,
     secretLessonPill,
+    secretPanelTitle,
+    shellPanelClassName,
+    shellPanelTestId: shellTestId,
     shouldRenderShellHeader,
+    shellVariant,
     title,
     titleId,
   });
@@ -673,21 +721,9 @@ export default function LessonActivityShell(props: LessonActivityShellProps): Re
         )}
       >
         <LessonActivityShellTopBar />
-        <LessonActivityShellBody
-          children={children}
-          description={description}
-          panelAriaLabel={panelAriaLabel}
-          panelDescribedBy={panelDescribedBy}
-          panelLabelledBy={panelLabelledBy}
-          panelRef={shellPanelRef}
-          printInteractiveHint={printInteractiveHint}
-          printPanelId={printPanelId}
-          shellPanelClassName={shellPanelClassName}
-          shellPanelTestId={shellTestId}
-          shouldRenderShellHeader={shouldRenderShellHeader}
-          shellVariant={shellVariant}
-          title={title}
-        />
+        <LessonActivityShellBody>
+          {children}
+        </LessonActivityShellBody>
         {resolveLessonActivityShellFooter(footerNavigation)}
       </div>
     </LessonActivityShellContext.Provider>

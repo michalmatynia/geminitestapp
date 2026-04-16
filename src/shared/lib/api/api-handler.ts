@@ -2,7 +2,7 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import type { SystemLogLevelDto as SystemLogLevel } from '@/shared/contracts/observability';
 import type { ApiHandlerOptions, ApiHandlerContext, ApiRouteHandler, ApiRouteHandlerWithParams } from '@/shared/contracts/ui/api';
@@ -828,6 +828,7 @@ async function createErrorResponseWithTiming(
       method: request.method,
       traceId: context.traceId,
       correlationId: context.correlationId,
+      userId: context.userId,
       ...(bodyShape ? { bodyShape } : {}),
       ...(queryKeys.length > 0 ? { queryKeys } : {}),
     },
@@ -891,14 +892,12 @@ export function getRequiredParam(searchParams: URLSearchParams, name: string): s
   return value;
 }
 
+import { type PaginationParams } from '@/shared/contracts/base';
+
 /**
  * Helper to parse pagination parameters.
  */
-export function getPaginationParams(searchParams: URLSearchParams): {
-  page: number;
-  pageSize: number;
-  skip: number;
-} {
+export function getPaginationParams(searchParams: URLSearchParams): PaginationParams {
   const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10));
   const pageSize = Math.min(100, Math.max(1, parseInt(searchParams.get('pageSize') ?? '20', 10)));
   const skip = (page - 1) * pageSize;

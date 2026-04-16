@@ -12,6 +12,8 @@ import type {
   KangurXpToastState,
 } from '../../types';
 
+// KangurGameCoreState holds all mutable state for a single game session.
+// It is managed by kangurGameCoreReducer and exposed via useKangurGameCore.
 export type KangurGameCoreState = {
   screen: KangurGameScreen;
   launchableGameInstanceId: KangurGameInstanceId | null;
@@ -28,6 +30,8 @@ export type KangurGameCoreState = {
   xpToast: KangurXpToastState;
 };
 
+// Payload for START_SESSION: atomically sets the operation, difficulty,
+// generated question set, start timestamp, and optional recommendation hint.
 export type KangurGameCoreStartSessionPayload = {
   difficulty: KangurDifficulty;
   operation: KangurOperation;
@@ -36,17 +40,23 @@ export type KangurGameCoreStartSessionPayload = {
   recommendation: KangurSessionRecommendationHint | null;
 };
 
+// Payload for COMPLETE_SESSION: records the final score and elapsed time
+// when the last question has been answered.
 export type KangurGameCoreCompleteSessionPayload = {
   score: number;
   timeTaken: number;
 };
 
+// Payload for RESET_GAME: navigates to a target screen and optionally
+// restores a recommendation hint and a launchable game instance ID.
 export type KangurGameCoreResetPayload = {
   screen: KangurGameScreen;
   recommendation: KangurSessionRecommendationHint | null;
   launchableGameInstanceId: KangurGameInstanceId | null;
 };
 
+// Generic setter action type mirrors React's SetStateAction so consumers can
+// pass either a direct value or an updater function, matching the useState API.
 type SetterAction<Type extends string, Value> = {
   type: Type;
   value: SetStateAction<Value>;
@@ -109,11 +119,16 @@ export const initialKangurGameCoreState: KangurGameCoreState = {
   },
 };
 
+// resolveStateUpdate applies a SetStateAction (value or updater function) to
+// the current state value, mirroring React's useState dispatch behaviour.
 const resolveStateUpdate = <Value,>(current: Value, value: SetStateAction<Value>): Value =>
   typeof value === 'function'
     ? (value as (currentState: Value) => Value)(current)
     : value;
 
+// kangurGameCoreReducer is a pure function that handles all game state
+// transitions. Compound actions (START_SESSION, COMPLETE_SESSION, RESET_GAME)
+// update multiple fields atomically to avoid intermediate inconsistent states.
 export const kangurGameCoreReducer = (
   state: KangurGameCoreState,
   action: KangurGameCoreAction
@@ -161,6 +176,9 @@ export const kangurGameCoreReducer = (
     case 'SET_XP_TOAST':
       return { ...state, xpToast: resolveStateUpdate(state.xpToast, action.value) };
     case 'START_SESSION':
+      // Atomically initialise a new game session: clear the launchable
+      // instance, set operation/difficulty/questions, reset counters, and
+      // transition to the 'playing' screen.
       return {
         ...state,
         launchableGameInstanceId: null,
@@ -193,6 +211,8 @@ export const kangurGameCoreReducer = (
         screen: action.payload.screen,
       };
     case 'DISMISS_XP_TOAST':
+      // Early-return the same state reference when the toast is already
+      // hidden to avoid a spurious re-render.
       if (!state.xpToast.visible) {
         return state;
       }

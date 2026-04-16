@@ -1,9 +1,15 @@
 'use client';
 
+// useProductListIntegrations: provides prefetch and refresh helpers for
+// integrations-related data (connection selection, product listings). The
+// implementation dynamically loads the integrations adapter to avoid pulling
+// heavy integration code into the main product list bundle. Errors caused by a
+// missing listings implementation are treated specially (they clear the
+// query) while other failures are logged for observability.
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
-import { isMissingProductListingsError } from '@/features/integrations/hooks/useListingQueries';
+import { isMissingProductListingsError } from '@/features/integrations/product-integrations-adapter';
 import { loadProductIntegrationsAdapter } from '@/features/products/lib/product-integrations-adapter-loader';
 import { prefetchQueryV2, fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
@@ -18,6 +24,7 @@ export function useProductListIntegrations() {
         fetchIntegrationsWithConnections,
         fetchPreferredBaseConnection,
         fetchPreferredTraderaConnection,
+        fetchPreferredVintedConnection,
         integrationSelectionQueryKeys,
       }) => {
         void prefetchQueryV2(queryClient, {
@@ -57,6 +64,19 @@ export function useProductListIntegrations() {
             domain: 'integrations',
             tags: ['integrations', 'tradera', 'default-connection', 'prefetch'],
             description: 'Loads integrations Tradera default connection.',
+          },
+        })();
+        void prefetchQueryV2(queryClient, {
+          queryKey: normalizeQueryKey(integrationSelectionQueryKeys.vintedDefaultConnection),
+          queryFn: fetchPreferredVintedConnection,
+          staleTime: 5 * 60 * 1000,
+          meta: {
+            source: 'products.hooks.useProductListIntegrations.prefetchVintedDefault',
+            operation: 'detail',
+            resource: 'integrations.vinted-default-connection',
+            domain: 'integrations',
+            tags: ['integrations', 'vinted', 'default-connection', 'prefetch'],
+            description: 'Loads integrations Vinted default connection.',
           },
         })();
       }

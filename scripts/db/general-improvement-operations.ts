@@ -19,10 +19,19 @@ export interface ImprovementStep {
   body: ScriptStepBody | ManualStepBody;
 }
 
+export interface ImprovementTrackDocs {
+  category: 'ui' | 'performance' | 'quality' | 'testing' | 'data';
+  defaultSelected?: boolean;
+  commands: string[];
+  relatedDocs: string[];
+  generatedArtifacts: string[];
+}
+
 export interface ImprovementTrack {
   id: string;
   title: string;
   description: string;
+  docs: ImprovementTrackDocs;
   phases: Record<ImprovementPhase, ImprovementStep[]>;
 }
 
@@ -76,6 +85,24 @@ const improvementTracks: ImprovementTrack[] = [
     title: 'Products parameter integrity',
     description:
       'Audits missing product parameters, refreshes recovery classification, and rebuilds the remaining source-recovery workspace.',
+    docs: {
+      category: 'data',
+      defaultSelected: true,
+      commands: [
+        'npm run improvements:audit -- --track products-parameter-integrity',
+        'npm run improvements:classify -- --track products-parameter-integrity',
+        'npm run improvements:plan -- --track products-parameter-integrity',
+      ],
+      relatedDocs: [
+        'docs/build/general-improvements.md',
+      ],
+      generatedArtifacts: [
+        '/tmp/product-missing-parameters-audit-latest.json',
+        '/tmp/product-parameter-recovery-classification-latest.json',
+        '/tmp/product-parameter-source-recovery-summary-latest.json',
+        '/tmp/product-parameter-source-recovery-batches/family-mapping-index-checklist.md',
+      ],
+    },
     phases: {
       audit: [
         scriptStep(
@@ -235,6 +262,23 @@ const improvementTracks: ImprovementTrack[] = [
     title: 'Products category and schema normalization',
     description:
       'Surfaces the remaining category and parameter-schema decisions that cannot be auto-repaired safely from current live product data.',
+    docs: {
+      category: 'data',
+      defaultSelected: true,
+      commands: [
+        'npm run improvements:classify -- --track products-category-schema-normalization',
+        'npm run improvements:dry-run -- --track products-category-schema-normalization',
+        'npm run improvements:apply -- --track products-category-schema-normalization',
+      ],
+      relatedDocs: [
+        'docs/build/general-improvements.md',
+      ],
+      generatedArtifacts: [
+        '/tmp/product-parameter-manual-remediation-latest.json',
+        '/tmp/product-parameter-curated-build-latest.json',
+        '/tmp/product-parameter-curated-overrides-latest.json',
+      ],
+    },
     phases: {
       audit: [],
       classify: [
@@ -326,10 +370,266 @@ const improvementTracks: ImprovementTrack[] = [
     },
   },
   {
+    id: 'ui-consolidation',
+    title: 'UI consolidation',
+    description:
+      'Runs the shared UI consolidation guardrail so broad improvement sweeps account for cross-feature component convergence, not only data and repo baselines.',
+    docs: {
+      category: 'ui',
+      defaultSelected: true,
+      commands: [
+        'npm run improvements:audit -- --track ui-consolidation',
+        'npm run check:ui-consolidation',
+        'bun run bun:check:ui-consolidation',
+      ],
+      relatedDocs: [
+        'docs/ui-consolidation/README.md',
+        'docs/platform/component-patterns.md',
+      ],
+      generatedArtifacts: [
+        'docs/ui-consolidation/scan-latest.md',
+        'docs/ui-consolidation/scan-latest.json',
+        'docs/ui-consolidation/inventory-latest.csv',
+      ],
+    },
+    phases: {
+      audit: [
+        scriptStep(
+          'ui-consolidation-guardrail',
+          'Run UI consolidation guardrail',
+          'check:ui-consolidation',
+          {
+            outputs: [
+              'docs/ui-consolidation/scan-latest.md',
+              'docs/ui-consolidation/scan-latest.json',
+              'docs/ui-consolidation/inventory-latest.csv',
+            ],
+          },
+        ),
+      ],
+      classify: [],
+      plan: [
+        manualStep(
+          'ui-consolidation-plan',
+          'Review the latest shared UI convergence surface',
+          [
+            'Use docs/ui-consolidation/scan-latest.md as the current shared backlog.',
+            'Prefer migrating to existing shared templates before inventing a new abstraction.',
+            'Keep follow-up migrations inside the owning feature docs once the work stops being cross-feature.',
+          ],
+        ),
+      ],
+      'dry-run': [
+        scriptStep(
+          'ui-consolidation-guardrail',
+          'Run UI consolidation guardrail',
+          'check:ui-consolidation',
+          {
+            outputs: [
+              'docs/ui-consolidation/scan-latest.md',
+              'docs/ui-consolidation/scan-latest.json',
+              'docs/ui-consolidation/inventory-latest.csv',
+            ],
+          },
+        ),
+      ],
+      apply: [
+        manualStep(
+          'ui-consolidation-apply',
+          'Apply UI consolidation changes through targeted feature migrations',
+          [
+            'This track intentionally stops at the shared backlog and guardrail surface.',
+            'Implement migrations in the owning feature areas instead of using the improvement runner for blind UI rewrites.',
+          ],
+          { writes: true },
+        ),
+      ],
+    },
+  },
+  {
+    id: 'application-performance',
+    title: 'Application performance',
+    description:
+      'Adds app-level performance regression checks to the improvement portfolio so broad sweeps cover runtime health alongside UI, quality, and data recovery.',
+    docs: {
+      category: 'performance',
+      defaultSelected: true,
+      commands: [
+        'npm run improvements:audit -- --track application-performance',
+        'npm run improvements:classify -- --track application-performance',
+        'npm run perf:ops:baseline',
+      ],
+      relatedDocs: [
+        'docs/runbooks/application-performance-operations.md',
+        'docs/metrics/README.md',
+      ],
+      generatedArtifacts: [
+        'docs/metrics/critical-path-performance-latest.md',
+        'docs/metrics/critical-flow-tests-latest.md',
+        'docs/metrics/unit-domain-timings-latest.md',
+        'docs/metrics/route-hotspots.md',
+      ],
+    },
+    phases: {
+      audit: [
+        scriptStep(
+          'application-performance-fast-gate',
+          'Run the fast performance operations gate',
+          'perf:ops:fast',
+        ),
+      ],
+      classify: [
+        scriptStep(
+          'application-performance-baseline',
+          'Run the performance baseline pass',
+          'perf:ops:baseline',
+          {
+            outputs: [
+              'docs/metrics/critical-path-performance-latest.md',
+              'docs/metrics/critical-path-performance-latest.json',
+              'docs/metrics/critical-flow-tests-latest.md',
+              'docs/metrics/critical-flow-tests-latest.json',
+              'docs/metrics/unit-domain-timings-latest.md',
+              'docs/metrics/unit-domain-timings-latest.json',
+              'docs/metrics/route-hotspots.md',
+            ],
+          },
+        ),
+      ],
+      plan: [
+        manualStep(
+          'application-performance-plan',
+          'Review the latest performance baseline outputs before optimization work',
+          [
+            'Use docs/metrics/critical-path-performance-latest.md and docs/metrics/critical-flow-tests-latest.md as the default review surfaces.',
+            'Treat docs/metrics/route-hotspots.md as the next-level investigation when baseline output suggests route-level regressions.',
+            'Use the weekly lane only when you need trend context, not for every local improvement pass.',
+          ],
+        ),
+      ],
+      'dry-run': [
+        scriptStep(
+          'application-performance-fast-gate',
+          'Run the fast performance operations gate',
+          'perf:ops:fast',
+        ),
+      ],
+      apply: [
+        manualStep(
+          'application-performance-apply',
+          'Apply performance fixes through targeted implementation work',
+          [
+            'This track is read-only and should guide optimization work rather than attempt blind fixes.',
+            'Implement the chosen remediation in the owning code and then re-run the fast gate or baseline lane.',
+          ],
+          { writes: true },
+        ),
+      ],
+    },
+  },
+  {
+    id: 'testing-quality-baseline',
+    title: 'Testing quality baseline',
+    description:
+      'Tracks the testing inventory and quality snapshot so broader improvement work stays anchored to the current test-system health.',
+    docs: {
+      category: 'testing',
+      defaultSelected: false,
+      commands: [
+        'npm run improvements:audit -- --track testing-quality-baseline',
+        'npm run improvements:classify -- --track testing-quality-baseline',
+        'npm run metrics:test-suite-inventory',
+      ],
+      relatedDocs: [
+        'docs/runbooks/testing-operations.md',
+        'docs/platform/testing-policy.md',
+      ],
+      generatedArtifacts: [
+        'docs/metrics/testing-suite-inventory-latest.md',
+        'docs/metrics/testing-quality-snapshot-latest.md',
+        'docs/metrics/testing-run-ledger-latest.md',
+      ],
+    },
+    phases: {
+      audit: [
+        scriptStep(
+          'testing-quality-suite-inventory',
+          'Refresh the testing suite inventory',
+          'metrics:test-suite-inventory',
+          {
+            outputs: [
+              'docs/metrics/testing-suite-inventory-latest.md',
+              'docs/metrics/testing-suite-inventory-latest.json',
+            ],
+          },
+        ),
+      ],
+      classify: [
+        scriptStep(
+          'testing-quality-snapshot',
+          'Collect the testing quality snapshot',
+          'check:test-quality',
+        ),
+      ],
+      plan: [
+        manualStep(
+          'testing-quality-plan',
+          'Review testing quality drift before changing validation scope',
+          [
+            'Use docs/metrics/testing-suite-inventory-latest.md to confirm lane and suite ownership.',
+            'Use docs/metrics/testing-quality-snapshot-latest.md to identify inventory, quality, or ledger follow-up work.',
+            'Escalate to canonical lanes from docs/runbooks/testing-operations.md when a broad validation pass is required.',
+          ],
+        ),
+      ],
+      'dry-run': [
+        scriptStep(
+          'testing-quality-suite-inventory',
+          'Refresh the testing suite inventory',
+          'metrics:test-suite-inventory',
+          {
+            outputs: [
+              'docs/metrics/testing-suite-inventory-latest.md',
+              'docs/metrics/testing-suite-inventory-latest.json',
+            ],
+          },
+        ),
+      ],
+      apply: [
+        manualStep(
+          'testing-quality-apply',
+          'Apply testing-system fixes through targeted suite or policy updates',
+          [
+            'This track is read-only by default.',
+            'Apply test or lane changes through the owning scripts and policies, then refresh the inventory and quality snapshot.',
+          ],
+          { writes: true },
+        ),
+      ],
+    },
+  },
+  {
     id: 'repo-quality-baseline',
     title: 'Repository quality baseline',
     description:
       'Runs the core read-only quality checks that establish the current repository baseline.',
+    docs: {
+      category: 'quality',
+      defaultSelected: true,
+      commands: [
+        'npm run improvements:audit -- --track repo-quality-baseline',
+        'npm run improvements:classify -- --track repo-quality-baseline',
+        'npm run improvements:plan -- --track repo-quality-baseline',
+      ],
+      relatedDocs: [
+        'docs/build/general-improvements.md',
+        'docs/metrics/README.md',
+      ],
+      generatedArtifacts: [
+        'docs/metrics/api-error-sources-latest.md',
+        'docs/metrics/api-error-sources-latest.json',
+      ],
+    },
     phases: {
       audit: [
         scriptStep(
@@ -398,7 +698,9 @@ const improvementTracks: ImprovementTrack[] = [
   },
 ];
 
-export const defaultImprovementTrackIds = improvementTracks.map((track) => track.id);
+export const defaultImprovementTrackIds = improvementTracks
+  .filter((track) => track.docs.defaultSelected !== false)
+  .map((track) => track.id);
 
 export function getImprovementTrack(trackId: string): ImprovementTrack | undefined {
   return improvementTracks.find((track) => track.id === trackId);

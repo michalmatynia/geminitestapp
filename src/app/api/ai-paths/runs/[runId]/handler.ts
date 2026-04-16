@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import {
   assertAiPathRunAccess,
@@ -36,9 +36,9 @@ export async function GET_handler(
   const runId = parseRunId(params);
   const repoSelection = await resolvePathRunRepository();
   const repo = repoSelection.repo;
-  let readProvider = repoSelection.provider;
+  const readProvider = repoSelection.provider;
   const readMode = 'selected' as const;
-  let run = await repo.findRunById(runId);
+  const run = await repo.findRunById(runId);
   if (run === null) {
     throw notFoundError('Run not found', { runId });
   }

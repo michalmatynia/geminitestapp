@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
-import { useTranslations } from 'next-intl';
+import { type useTranslations } from 'next-intl';
 import type { RefObject } from 'react';
 
 import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
@@ -24,7 +24,7 @@ import {
 import {
   GAME_HOME_LAYOUT_CLASSNAME,
 } from '@/features/kangur/ui/pages/GameHome.constants';
-import { resolveKangurGameHomeVisibility } from '@/features/kangur/ui/pages/GameHome.visibility';
+import { type resolveKangurGameHomeVisibility } from '@/features/kangur/ui/pages/GameHome.visibility';
 import {
   KangurGameHomeSections,
 } from '@/features/kangur/ui/pages/GameHome.layout';
@@ -32,7 +32,7 @@ import {
   createLaunchableGameScreenComponentConfigFromRuntime,
   getKangurLaunchableGameScreenComponentConfig,
 } from '@/features/kangur/ui/pages/Game.launchable-screens';
-import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
+import { type createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import {
   isKangurLaunchableGameScreen,
   type KangurLaunchableGameScreen,

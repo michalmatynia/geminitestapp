@@ -125,19 +125,22 @@ export async function runAgentBrowserControl({
 
     const safeLabel = stepLabel ? `step-${stepLabel}` : `control-${action}`;
 
-    const createdSnapshot = await captureSnapshot(
-      page,
+    const createdSnapshot = await captureSnapshot(page, runDir, {
       runId,
-      runDir,
-      safeLabel,
+      label: safeLabel,
       log,
-      activeStepId
-    );
+      activeStepId,
+    });
 
     // Re-implemented UI inventory and session capture to use shared functions if possible,
     // or keep local if needed. Since I exported them, I can use them.
     await collectUiInventory(page, runId, safeLabel, log, activeStepId);
-    await captureSessionContext(page, context, runId, safeLabel, log, activeStepId);
+    await captureSessionContext(page, context, {
+      runId,
+      label: safeLabel,
+      log,
+      activeStepId,
+    });
 
     const logCount = await agentBrowserLog.count({ where: { runId } });
 

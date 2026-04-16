@@ -4,17 +4,23 @@ import type {
   KangurGameOperationSelectorAssignment,
   KangurGameOperationSelectorAssignmentMode,
 } from './KangurGameOperationSelectorWidget.types';
+import { useKangurGameOperationSelector } from './KangurGameOperationSelectorContext';
 
 export function KangurGameOperationPracticeAssignmentBanner({
-  assignment,
-  basePath,
-  mode,
+  assignment: propsAssignment,
+  basePath: propsBasePath,
+  mode: propsMode,
 }: {
-  assignment: KangurGameOperationSelectorAssignment;
-  basePath: string;
-  mode: KangurGameOperationSelectorAssignmentMode;
+  assignment?: KangurGameOperationSelectorAssignment;
+  basePath?: string;
+  mode?: KangurGameOperationSelectorAssignmentMode;
 }): React.JSX.Element | null {
-  if (!assignment) {
+  const context = useKangurGameOperationSelector();
+  const assignment = propsAssignment ?? context?.operationPracticeAssignment ?? null;
+  const basePath = propsBasePath ?? context?.basePath;
+  const mode = propsMode ?? 'queue';
+
+  if (!assignment || !basePath) {
     return null;
   }
 

@@ -1,5 +1,15 @@
 import type { ProductCategory } from '@/shared/contracts/products/categories';
-import type { ProductParameterValue, ProductRecord, ProductWithImages } from '@/shared/contracts/products/product';
+import { catalogSchema } from '@/shared/contracts/products/catalogs';
+import type {
+  ProductNotes,
+  ProductParameterValue,
+  ProductRecord,
+  ProductWithImages,
+} from '@/shared/contracts/products/product';
+import {
+  normalizeProductMarketplaceContentOverrides,
+  normalizeProductNotes,
+} from '@/shared/contracts/products/product';
 import { validationError } from '@/shared/errors/app-error';
 import { decodeSimpleParameterStorageId } from '@/shared/lib/products/utils/parameter-partition';
 import {
@@ -7,8 +17,11 @@ import {
   normalizeParameterValuesByLanguage,
   resolveStoredParameterValue,
 } from '@/shared/lib/products/utils/parameter-values';
+import { normalizeProductCustomFieldValues } from '@/shared/lib/products/utils/custom-field-values';
 
 import type { WithId } from 'mongodb';
+
+type ProductCatalogRelation = NonNullable<ProductWithImages['catalogs']>[number];
 
 export type ProductDocument = Omit<
   ProductRecord,
@@ -17,17 +30,20 @@ export type ProductDocument = Omit<
   | 'name'
   | 'description'
   | 'published'
+  | 'archived'
   | 'catalogId'
   | 'tags'
   | 'images'
   | 'catalogs'
 > & {
   _id: string;
+  duplicateSkuCount?: number;
   createdAt: Date;
   updatedAt: Date;
   name?: ProductRecord['name'];
   description?: ProductRecord['description'];
   published?: boolean;
+  archived?: boolean;
   catalogId?: string;
   images?: ProductWithImages['images'];
   catalogs?: ProductWithImages['catalogs'];
@@ -161,6 +177,49 @@ const normalizeProductCategory = (
   return normalized;
 };
 
+const normalizeCatalogRelations = (
+  value: unknown,
+  rootProductId: string
+): NonNullable<ProductWithImages['catalogs']> => {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .map((entry: unknown, index: number): ProductCatalogRelation | null => {
+      const record = toPlainRecord(entry);
+      if (!record) return null;
+
+      const embeddedCatalog = toPlainRecord(record['catalog']);
+      const productId = toTrimmedString(record['productId']) ?? rootProductId;
+      const catalogId =
+        toTrimmedString(record['catalogId']) ?? toTrimmedString(embeddedCatalog?.['id']);
+      const assignedAt = toOptionalIsoString(record['assignedAt']);
+
+      if (!productId || !catalogId || !assignedAt) {
+        throw validationError('Invalid product catalog relation payload.', {
+          productId: rootProductId,
+          field: 'catalogs',
+          index,
+          reason: 'missing_required_fields',
+        });
+      }
+
+      const relation: ProductCatalogRelation = {
+        productId,
+        catalogId,
+        assignedAt,
+      };
+      const parsedCatalog = catalogSchema.safeParse(record['catalog']);
+      if (parsedCatalog.success) {
+        relation.catalog = parsedCatalog.data;
+      }
+      return relation;
+    })
+    .filter(
+      (relation: ProductCatalogRelation | null): relation is ProductCatalogRelation =>
+        relation !== null
+    );
+};
+
 const normalizeParameterValues = (input: unknown): ProductParameterValue[] => {
   if (!Array.isArray(input)) return [];
   const byParameterId = new Map<string, ProductParameterValue>();
@@ -191,6 +250,9 @@ const normalizeParameterValues = (input: unknown): ProductParameterValue[] => {
   });
   return Array.from(byParameterId.values());
 };
+
+const normalizeMappedProductNotes = (value: unknown): ProductNotes | undefined =>
+  normalizeProductNotes(value) ?? undefined;
 
 const resolveCanonicalCatalogId = (doc: ProductDocument): string => {
   if (Array.isArray(doc.catalogs)) {
@@ -402,7 +464,7 @@ const normalizeTagRelations = (
 export const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImages => {
   const productId = doc.id ?? doc._id;
   const images = Array.isArray(doc.images) ? doc.images : [];
-  const catalogs = Array.isArray(doc.catalogs) ? doc.catalogs : [];
+  const catalogs = normalizeCatalogRelations(doc.catalogs, productId);
   assertNoUnsupportedLocalizedObjectShape(doc.name, 'name', productId);
   assertNoUnsupportedLocalizedObjectShape(doc.description, 'description', productId);
   assertCanonicalLocalizedScalarField(doc.name_en, 'name_en', productId);
@@ -427,9 +489,16 @@ export const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImag
     canonicalProducers.length > 0
       ? canonicalProducers
       : normalizeLegacyTopLevelProducerRelations(doc, productId);
+  const notes = normalizeMappedProductNotes(doc.notes);
   const noteIds = Array.isArray(doc.noteIds) ? doc.noteIds : [];
   const catalogId = resolveCanonicalCatalogId(doc);
   const category = normalizeProductCategory(doc.category, catalogId);
+  const duplicateSkuCount =
+    typeof doc.duplicateSkuCount === 'number' &&
+    Number.isFinite(doc.duplicateSkuCount) &&
+    doc.duplicateSkuCount > 1
+      ? Math.trunc(doc.duplicateSkuCount)
+      : undefined;
 
   return {
     id: productId,
@@ -458,17 +527,24 @@ export const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImag
     weight: doc.weight ?? null,
     length: doc.length ?? null,
     published: doc.published ?? false,
+    archived: doc.archived ?? false,
     catalogId,
     category,
     shippingGroupId: toTrimmedString(doc.shippingGroupId) ?? null,
+    customFields: normalizeProductCustomFieldValues(doc.customFields),
     parameters: normalizeParameterValues(doc.parameters),
+    marketplaceContentOverrides: normalizeProductMarketplaceContentOverrides(
+      doc.marketplaceContentOverrides
+    ),
+    ...(notes ? { notes } : {}),
     imageLinks: Array.isArray(doc.imageLinks) ? doc.imageLinks : [],
     imageBase64s: Array.isArray(doc.imageBase64s) ? doc.imageBase64s : [],
     noteIds,
+    duplicateSkuCount,
     createdAt: doc.createdAt instanceof Date ? doc.createdAt.toISOString() : String(doc.createdAt),
     updatedAt: doc.updatedAt instanceof Date ? doc.updatedAt.toISOString() : String(doc.updatedAt),
     images: images.map((img) => ({ ...img, assignedAt: img.assignedAt })),
-    catalogs: catalogs.map((cat) => ({ ...cat, assignedAt: cat.assignedAt })),
+    catalogs,
     categoryId: resolveCanonicalCategoryId(doc, productId),
     tags,
     producers,
@@ -495,6 +571,7 @@ export const toProductBase = (doc: ProductDocument): ProductRecord => {
     pl: doc.description_pl,
     de: doc.description_de,
   });
+  const notes = normalizeMappedProductNotes(doc.notes);
   const noteIds = Array.isArray(doc.noteIds) ? doc.noteIds : [];
   const tags = normalizeTagRelations(doc.tags, productId);
   const canonicalProducers = normalizeProducerRelations(doc.producers, productId);
@@ -532,10 +609,16 @@ export const toProductBase = (doc: ProductDocument): ProductRecord => {
     weight: doc.weight ?? null,
     length: doc.length ?? null,
     published: doc.published ?? false,
+    archived: doc.archived ?? false,
     catalogId,
     category,
     shippingGroupId: toTrimmedString(doc.shippingGroupId) ?? null,
+    customFields: normalizeProductCustomFieldValues(doc.customFields),
     parameters: normalizeParameterValues(doc.parameters),
+    marketplaceContentOverrides: normalizeProductMarketplaceContentOverrides(
+      doc.marketplaceContentOverrides
+    ),
+    ...(notes ? { notes } : {}),
     imageLinks: Array.isArray(doc.imageLinks) ? doc.imageLinks : [],
     imageBase64s: Array.isArray(doc.imageBase64s) ? doc.imageBase64s : [],
     noteIds,

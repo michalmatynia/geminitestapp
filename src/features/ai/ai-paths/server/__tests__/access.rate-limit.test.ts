@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AiPathRunRecord, AiPathRunStatus } from '@/shared/contracts/ai-paths';
 
@@ -22,7 +22,10 @@ vi.mock('@/shared/lib/observability/system-logger', () => ({
   logSystemEvent: vi.fn(),
 }));
 
-import { enforceAiPathsRunRateLimit } from '../access';
+import {
+  __resetAiPathsRunRateLimitProbeCacheForTests,
+  enforceAiPathsRunRateLimit,
+} from '../access';
 
 const buildRun = (
   id: string,
@@ -57,7 +60,8 @@ const buildRun = (
 
 describe('enforceAiPathsRunRateLimit', () => {
   beforeEach(() => {
-    listRunsMock.mockReset();
+    __resetAiPathsRunRateLimitProbeCacheForTests();
+    listRunsMock.mockReset().mockResolvedValue({ runs: [], total: 0 });
     getQueueStatsMock.mockReset().mockResolvedValue({
       queuedCount: 0,
       oldestQueuedAt: null,
@@ -68,6 +72,10 @@ describe('enforceAiPathsRunRateLimit', () => {
       getQueueStats: getQueueStatsMock,
       markStaleRunningRuns: markStaleRunningRunsMock,
     });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('does not count queued runs as active-limit blockers', async () => {
@@ -183,21 +191,17 @@ describe('enforceAiPathsRunRateLimit', () => {
     ).rejects.toThrow('Too many active runs. Wait for one to finish before starting another.');
   });
 
-  it('rechecks active slots before rejecting when initial próbę hits the limit', async () => {
-    listRunsMock
-      .mockResolvedValueOnce({ runs: [], total: 0 }) // recent
-      .mockResolvedValueOnce({
-        runs: [
-          buildRun('run-r1', 'running'),
-          buildRun('run-r2', 'running'),
-          buildRun('run-r3', 'running'),
-          buildRun('run-r4', 'running'),
-          buildRun('run-r5', 'running'),
-        ],
-        total: 5,
-      }) // active (initial)
-      .mockResolvedValueOnce({ runs: [], total: 0 }); // active (post-recovery)
-    markStaleRunningRunsMock.mockResolvedValueOnce({ count: 3 });
+  it('does not trigger stale-run recovery from the admission hot path', async () => {
+    listRunsMock.mockResolvedValueOnce({ runs: [], total: 0 }).mockResolvedValueOnce({
+      runs: [
+        buildRun('run-r1', 'running'),
+        buildRun('run-r2', 'running'),
+        buildRun('run-r3', 'running'),
+        buildRun('run-r4', 'running'),
+        buildRun('run-r5', 'running'),
+      ],
+      total: 5,
+    });
 
     await expect(
       enforceAiPathsRunRateLimit({
@@ -205,9 +209,10 @@ describe('enforceAiPathsRunRateLimit', () => {
         permissions: [],
         isElevated: false,
       })
-    ).resolves.toBeUndefined();
+    ).rejects.toThrow('Too many active runs. Wait for one to finish before starting another.');
 
-    expect(listRunsMock).toHaveBeenCalledTimes(3);
+    expect(listRunsMock).toHaveBeenCalledTimes(2);
+    expect(markStaleRunningRunsMock).not.toHaveBeenCalled();
   });
 
   it('ignores stale running runs when all active candidates are older than stale max age', async () => {
@@ -255,5 +260,64 @@ describe('enforceAiPathsRunRateLimit', () => {
         isElevated: false,
       })
     ).resolves.toBeUndefined();
+  });
+
+  it('fails closed with 503 when an active-run probe times out and no cache is available', async () => {
+    vi.useFakeTimers();
+    listRunsMock
+      .mockResolvedValueOnce({ runs: [], total: 0 })
+      .mockImplementationOnce(() => new Promise(() => {}));
+
+    const expectation = expect(
+      enforceAiPathsRunRateLimit({
+        userId: 'user-1',
+        permissions: [],
+        isElevated: false,
+      })
+    ).rejects.toMatchObject({
+      httpStatus: 503,
+      retryAfterMs: 5_000,
+    });
+
+    await vi.advanceTimersByTimeAsync(1_600);
+    await expectation;
+  });
+
+  it('uses a fresh cached active-run probe result when a later active probe times out', async () => {
+    listRunsMock.mockResolvedValue({ runs: [], total: 0 });
+
+    await expect(
+      enforceAiPathsRunRateLimit({
+        userId: 'user-1',
+        permissions: [],
+        isElevated: false,
+      })
+    ).resolves.toBeUndefined();
+
+    vi.useFakeTimers();
+    listRunsMock.mockReset();
+    getQueueStatsMock.mockReset().mockResolvedValue({
+      queuedCount: 0,
+      oldestQueuedAt: null,
+    });
+    listRunsMock.mockImplementation(
+      async (options: { statuses?: AiPathRunStatus[] }) => {
+        if (Array.isArray(options.statuses) && options.statuses.includes('running')) {
+          return new Promise(() => {});
+        }
+        return { runs: [], total: 0 };
+      }
+    );
+
+    const expectation = expect(
+      enforceAiPathsRunRateLimit({
+        userId: 'user-1',
+        permissions: [],
+        isElevated: false,
+      })
+    ).resolves.toBeUndefined();
+
+    await vi.advanceTimersByTimeAsync(1_600);
+    await expectation;
   });
 });

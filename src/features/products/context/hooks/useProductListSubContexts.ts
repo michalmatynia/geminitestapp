@@ -1,5 +1,10 @@
 'use client';
 
+// useProductListSubContexts: splits the large ProductListProvider value into
+// focused, memoized sub-context values (filters, selection, table, alerts,
+// actions, header actions, row actions, visuals, modals). Using separate
+// memoized objects prevents unrelated updates from forcing wide re-renders in
+// consumer components and keeps the provider implementation declarative.
 import { useMemo } from 'react';
 import type {
   ProductListContextType,
@@ -68,6 +73,8 @@ export function useProductListSubContexts(
       setAdvancedFilterState: value.setAdvancedFilterState,
       baseExported: value.baseExported,
       setBaseExported: value.setBaseExported,
+      includeArchived: value.includeArchived,
+      setIncludeArchived: value.setIncludeArchived,
     }),
     [
       value.page,
@@ -117,6 +124,8 @@ export function useProductListSubContexts(
       value.setAdvancedFilterState,
       value.baseExported,
       value.setBaseExported,
+      value.includeArchived,
+      value.setIncludeArchived,
     ]
   );
 

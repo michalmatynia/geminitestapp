@@ -1,7 +1,8 @@
 import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type { AiPathRunRecord, RuntimeHistoryEntry } from '@/shared/lib/ai-paths';
+import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
+import type { RuntimeHistoryEntry } from '@/shared/contracts/ai-paths-runtime';
 import { Label, Alert, Card } from '@/shared/ui/primitives.public';
 import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
 import { StatusBadge } from '@/shared/ui/data-display.public';
@@ -118,7 +119,7 @@ export function RunHistoryList(props: RunHistoryListProps): React.JSX.Element {
                 {run.nextRetryAt && (
                   <div className='mt-1'>
                     <StatusBadge
-                      status={'Retry at ' + new Date(run.nextRetryAt).toLocaleString()}
+                      status={`Retry at ${  new Date(run.nextRetryAt).toLocaleString()}`}
                       variant='warning'
                       size='sm'
                     />

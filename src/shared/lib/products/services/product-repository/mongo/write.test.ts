@@ -67,3 +67,117 @@ describe('mongoProductWriteImpl.duplicateProduct', () => {
     );
   });
 });
+
+describe('mongoProductWriteImpl custom fields persistence', () => {
+  it('stores normalized custom fields on create', async () => {
+    const insertOne = vi.fn().mockResolvedValue({ insertedId: 'product-1' });
+    const collection = {
+      insertOne,
+    };
+
+    await mongoProductWriteImpl.createProduct(
+      {
+        sku: 'SKU-1',
+        customFields: [
+          { fieldId: '  notes  ', textValue: '  Handle with care  ' },
+          { fieldId: 'flags', selectedOptionIds: ['gift-ready', ' gift-ready ', 'fragile'] },
+        ],
+      } as any,
+      async () => collection as any
+    );
+
+    expect(insertOne).toHaveBeenCalledWith(
+      expect.objectContaining({
+        customFields: [
+          { fieldId: 'notes', textValue: 'Handle with care' },
+          { fieldId: 'flags', selectedOptionIds: ['gift-ready', 'fragile'] },
+        ],
+      })
+    );
+  });
+
+  it('stores normalized custom fields on update', async () => {
+    const findOneAndUpdate = vi.fn().mockResolvedValue(null);
+    const collection = {
+      findOneAndUpdate,
+    };
+
+    await mongoProductWriteImpl.updateProduct(
+      'product-1',
+      {
+        customFields: [
+          { fieldId: 'notes', textValue: 'Updated notes' },
+          { fieldId: 'flags', selectedOptionIds: ['gift-ready', 'gift-ready'] },
+        ],
+      } as any,
+      async () => collection as any
+    );
+
+    expect(findOneAndUpdate).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        $set: expect.objectContaining({
+          customFields: [
+            { fieldId: 'notes', textValue: 'Updated notes' },
+            { fieldId: 'flags', selectedOptionIds: ['gift-ready'] },
+          ],
+        }),
+      }),
+      expect.anything()
+    );
+  });
+
+  it('stores normalized notes on create and update', async () => {
+    const insertOne = vi.fn().mockResolvedValue({ insertedId: 'product-1' });
+    const findOneAndUpdate = vi.fn().mockResolvedValue(null);
+    const createCollection = {
+      insertOne,
+    };
+    const updateCollection = {
+      findOneAndUpdate,
+    };
+
+    await mongoProductWriteImpl.createProduct(
+      {
+        sku: 'SKU-1',
+        notes: {
+          text: '  Remember to keep the old insert sheet.  ',
+          color: '  #fecaca ',
+        },
+      } as any,
+      async () => createCollection as any
+    );
+
+    await mongoProductWriteImpl.updateProduct(
+      'product-1',
+      {
+        notes: {
+          text: '  Updated internal note  ',
+          color: '  #bfdbfe ',
+        },
+      } as any,
+      async () => updateCollection as any
+    );
+
+    expect(insertOne).toHaveBeenCalledWith(
+      expect.objectContaining({
+        notes: {
+          text: 'Remember to keep the old insert sheet.',
+          color: '#fecaca',
+        },
+      })
+    );
+    expect(findOneAndUpdate).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        $set: expect.objectContaining({
+          notes: {
+            text: 'Updated internal note',
+            color: '#bfdbfe',
+          },
+        }),
+      }),
+      expect.anything()
+    );
+  });
+});

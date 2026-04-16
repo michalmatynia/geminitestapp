@@ -45,60 +45,58 @@ replaceInFile(
 replaceInFile(
   'src/features/products/components/list/columns/buttons/BaseQuickExportButton.tsx',
   `@/features/integrations/utils/product-listings-recovery`,
-  `@/features/integrations/public`
+  `@/features/integrations/product-integrations-adapter`
 );
 
 // 7, 8, 9. products/components/list/columns/buttons/TraderaQuickListButton.tsx
 replaceInFile(
   'src/features/products/components/list/columns/buttons/TraderaQuickListButton.tsx',
   `@/features/integrations/services/tradera-listing/default-script`,
-  `@/features/integrations/public`
+  `@/features/integrations/product-integrations-adapter`
 );
 replaceInFile(
   'src/features/products/components/list/columns/buttons/TraderaQuickListButton.tsx',
   `@/features/integrations/utils/product-listings-recovery`,
-  `@/features/integrations/public`
+  `@/features/integrations/product-integrations-adapter`
 );
 replaceInFile(
   'src/features/products/components/list/columns/buttons/TraderaQuickListButton.tsx',
   `@/features/integrations/utils/tradera-browser-session`,
-  `@/features/integrations/public`
+  `@/features/integrations/product-integrations-adapter`
 );
 
 // 10. products/components/list/columns/buttons/TraderaStatusButton.tsx
 replaceInFile(
   'src/features/products/components/list/columns/buttons/TraderaStatusButton.tsx',
   `@/features/integrations/utils/product-listings-recovery`,
-  `@/features/integrations/public`
+  `@/features/integrations/product-integrations-adapter`
 );
 
 // 11. products/components/ProductModals.tsx
 replaceInFile(
   'src/features/products/components/ProductModals.tsx',
   `@/features/integrations/utils/product-listings-recovery`,
-  `@/features/integrations/public`
+  `@/features/integrations/product-integrations-adapter`
 );
 
 // 12. products/hooks/product-list/useProductListModals.ts
 replaceInFile(
   'src/features/products/hooks/product-list/useProductListModals.ts',
   `@/features/integrations/utils/product-listings-recovery`,
-  `@/features/integrations/public`
+  `@/features/integrations/product-integrations-adapter`
 );
 
-// Fix products import! Wait, previously I moved traderaQuickListFeedback out of products, but where is it imported in products?
-// E.g., TraderaQuickListButton, TraderaStatusButton etc.
-// Since it's now in integrations, these need to import it from @/features/integrations/public!
+// Fix product-facing integrations imports to point at the dedicated adapter surface.
 replaceInFile(
   'src/features/products/components/list/columns/buttons/TraderaQuickListButton.tsx',
   `import { persistTraderaQuickListFeedback } from './traderaQuickListFeedback';`,
-  `import { persistTraderaQuickListFeedback } from '@/features/integrations/public';`
+  `import { persistTraderaQuickListFeedback } from '@/features/integrations/product-integrations-adapter';`
 );
 
 replaceInFile(
   'src/features/products/components/list/columns/buttons/TraderaStatusButton.tsx',
   `import { persistTraderaQuickListFeedback } from './traderaQuickListFeedback';`,
-  `import { persistTraderaQuickListFeedback } from '@/features/integrations/public';`
+  `import { persistTraderaQuickListFeedback } from '@/features/integrations/product-integrations-adapter';`
 );
 
 console.log('Fixed imports!');

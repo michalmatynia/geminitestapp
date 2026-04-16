@@ -6,12 +6,14 @@ const {
   getIntegrationByIdMock,
   createConnectionMock,
   encryptSecretMock,
+  getSettingValueMock,
 } = vi.hoisted(() => ({
   parseJsonBodyMock: vi.fn(),
   listConnectionsMock: vi.fn(),
   getIntegrationByIdMock: vi.fn(),
   createConnectionMock: vi.fn(),
   encryptSecretMock: vi.fn(),
+  getSettingValueMock: vi.fn(),
 }));
 
 vi.mock('@/shared/lib/api/parse-json', () => ({
@@ -27,12 +29,17 @@ vi.mock('@/features/integrations/server', () => ({
   encryptSecret: (...args: unknown[]) => encryptSecretMock(...args),
 }));
 
+vi.mock('@/shared/lib/ai/server-settings', () => ({
+  getSettingValue: (...args: unknown[]) => getSettingValueMock(...args),
+}));
+
 import { DEFAULT_TRADERA_QUICKLIST_SCRIPT } from '@/features/integrations/services/tradera-listing/default-script';
 import { GET_handler, POST_handler } from './handler';
 
 describe('integration connections handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    getSettingValueMock.mockResolvedValue(null);
     listConnectionsMock.mockResolvedValue([
       {
         id: 'conn-tradera-1',
@@ -69,6 +76,7 @@ describe('integration connections handler', () => {
         playwrightProxyServer: '',
         playwrightProxyUsername: '',
         playwrightProxyPassword: null,
+        playwrightBrowser: 'chrome',
         playwrightEmulateDevice: false,
         playwrightDeviceName: 'Desktop Chrome',
         playwrightPersonaId: null,
@@ -85,6 +93,8 @@ describe('integration connections handler', () => {
         traderaApiAppKey: null,
         traderaApiToken: null,
         traderaApiTokenUpdatedAt: null,
+        traderaParameterMapperRulesJson: '{"version":1,"rules":[]}',
+        traderaParameterMapperCatalogJson: '{"version":1,"entries":[]}',
       },
     ]);
     getIntegrationByIdMock.mockResolvedValue({
@@ -97,6 +107,7 @@ describe('integration connections handler', () => {
         name: 'Tradera browser',
         username: 'seller@example.com',
         password: 'secret',
+        playwrightBrowser: 'chrome',
         traderaBrowserMode: 'scripted',
         playwrightListingScript: 'export default async function run() {}',
       },
@@ -136,6 +147,7 @@ describe('integration connections handler', () => {
       playwrightProxyServer: '',
       playwrightProxyUsername: '',
       playwrightProxyPassword: null,
+      playwrightBrowser: 'chrome',
       playwrightEmulateDevice: false,
       playwrightDeviceName: 'Desktop Chrome',
       playwrightPersonaId: null,
@@ -168,9 +180,12 @@ describe('integration connections handler', () => {
     expect(payload).toEqual([
       expect.objectContaining({
         id: 'conn-tradera-1',
+        playwrightBrowser: 'chrome',
         traderaBrowserMode: 'scripted',
         playwrightListingScript: 'export default async function run() {}',
         hasPlaywrightListingScript: true,
+        traderaParameterMapperRulesJson: '{"version":1,"rules":[]}',
+        traderaParameterMapperCatalogJson: '{"version":1,"entries":[]}',
       }),
     ]);
   });
@@ -190,14 +205,71 @@ describe('integration connections handler', () => {
       name: 'Tradera browser',
       username: 'seller@example.com',
       password: 'enc:secret',
+      playwrightBrowser: 'chrome',
       traderaBrowserMode: 'scripted',
       playwrightListingScript: 'export default async function run() {}',
     });
     expect(payload).toMatchObject({
       id: 'conn-tradera-1',
+      playwrightBrowser: 'chrome',
       traderaBrowserMode: 'scripted',
       playwrightListingScript: 'export default async function run() {}',
       hasPlaywrightListingScript: true,
+    });
+  });
+
+  it('persists Tradera parameter mapper payloads when creating a connection', async () => {
+    const rulesJson = JSON.stringify({
+      version: 1,
+      rules: [{ id: 'rule-1', fieldLabel: 'Jewellery Material' }],
+    });
+    const catalogJson = JSON.stringify({
+      version: 1,
+      entries: [{ id: 'cat-jewellery:jewellerymaterial', fieldLabel: 'Jewellery Material' }],
+    });
+
+    parseJsonBodyMock.mockResolvedValue({
+      ok: true,
+      data: {
+        name: 'Tradera browser',
+        username: 'seller@example.com',
+        password: 'secret',
+        traderaParameterMapperRulesJson: rulesJson,
+        traderaParameterMapperCatalogJson: catalogJson,
+      },
+    });
+    createConnectionMock.mockResolvedValue({
+      id: 'conn-tradera-1',
+      integrationId: 'integration-tradera-1',
+      name: 'Tradera browser',
+      username: 'seller@example.com',
+      createdAt: '2026-04-02T10:00:00.000Z',
+      updatedAt: '2026-04-02T11:00:00.000Z',
+      traderaParameterMapperRulesJson: rulesJson,
+      traderaParameterMapperCatalogJson: catalogJson,
+    });
+
+    const response = await POST_handler(
+      new Request('http://localhost/api/v2/integrations/integration-tradera-1/connections', {
+        method: 'POST',
+      }) as never,
+      {} as never,
+      { id: 'integration-tradera-1' }
+    );
+
+    const payload = await response.json();
+
+    expect(createConnectionMock).toHaveBeenCalledWith('integration-tradera-1', {
+      name: 'Tradera browser',
+      username: 'seller@example.com',
+      password: 'enc:secret',
+      traderaParameterMapperRulesJson: rulesJson,
+      traderaParameterMapperCatalogJson: catalogJson,
+    });
+    expect(payload).toMatchObject({
+      id: 'conn-tradera-1',
+      traderaParameterMapperRulesJson: rulesJson,
+      traderaParameterMapperCatalogJson: catalogJson,
     });
   });
 
@@ -276,5 +348,158 @@ describe('integration connections handler', () => {
     );
 
     expect(createConnectionMock).not.toHaveBeenCalled();
+  });
+
+  it('allows creating a Vinted browser connection without credentials', async () => {
+    getIntegrationByIdMock.mockResolvedValue({
+      id: 'integration-vinted-1',
+      slug: 'vinted',
+    });
+    parseJsonBodyMock.mockResolvedValue({
+      ok: true,
+      data: {
+        name: 'Vinted Browser',
+      },
+    });
+    createConnectionMock.mockResolvedValue({
+      id: 'conn-vinted-1',
+      integrationId: 'integration-vinted-1',
+      name: 'Vinted Browser',
+      username: undefined,
+      createdAt: '2026-04-02T10:00:00.000Z',
+      updatedAt: '2026-04-02T11:00:00.000Z',
+      playwrightStorageStateUpdatedAt: null,
+      playwrightPersonaId: null,
+      traderaBrowserMode: 'builtin',
+      traderaDefaultDurationHours: 72,
+      traderaAutoRelistEnabled: true,
+      traderaAutoRelistLeadMinutes: 180,
+      traderaApiSandbox: false,
+    });
+
+    const response = await POST_handler(
+      new Request('http://localhost/api/v2/integrations/integration-vinted-1/connections', {
+        method: 'POST',
+      }) as never,
+      {} as never,
+      { id: 'integration-vinted-1' }
+    );
+
+    const payload = await response.json();
+
+    expect(createConnectionMock).toHaveBeenCalledWith('integration-vinted-1', {
+      name: 'Vinted Browser',
+    });
+    expect(encryptSecretMock).not.toHaveBeenCalled();
+    expect(payload).toMatchObject({
+      id: 'conn-vinted-1',
+      name: 'Vinted Browser',
+    });
+  });
+
+  it('allows creating programmable Playwright connections without credentials and persists programmable fields', async () => {
+    getIntegrationByIdMock.mockResolvedValue({
+      id: 'integration-playwright-1',
+      slug: 'playwright-programmable',
+    });
+    parseJsonBodyMock.mockResolvedValue({
+      ok: true,
+      data: {
+        name: 'Programmable Browser',
+        playwrightPersonaId: 'persona-1',
+        playwrightHeadless: false,
+        playwrightImportScript: 'export default async function run() {}',
+        playwrightImportBaseUrl: 'https://example.test',
+        playwrightImportCaptureRoutesJson: '{"routes":[],"appearanceMode":""}',
+        playwrightFieldMapperJson: '[]',
+      },
+    });
+    createConnectionMock.mockResolvedValue({
+      id: 'conn-playwright-1',
+      integrationId: 'integration-playwright-1',
+      name: 'Programmable Browser',
+      createdAt: '2026-04-02T10:00:00.000Z',
+      updatedAt: '2026-04-02T11:00:00.000Z',
+      playwrightPersonaId: 'persona-1',
+      playwrightHeadless: false,
+      playwrightImportScript: 'export default async function run() {}',
+      playwrightImportBaseUrl: 'https://example.test',
+      playwrightImportCaptureRoutesJson: '{"routes":[],"appearanceMode":""}',
+      playwrightFieldMapperJson: '[]',
+    });
+
+    const response = await POST_handler(
+      new Request('http://localhost/api/v2/integrations/integration-playwright-1/connections', {
+        method: 'POST',
+      }) as never,
+      {} as never,
+      { id: 'integration-playwright-1' }
+    );
+
+    const payload = await response.json();
+
+    expect(createConnectionMock).toHaveBeenCalledWith('integration-playwright-1', {
+      name: 'Programmable Browser',
+      playwrightPersonaId: 'persona-1',
+      playwrightHeadless: false,
+      playwrightImportScript: 'export default async function run() {}',
+      playwrightImportBaseUrl: 'https://example.test',
+      playwrightImportCaptureRoutesJson: '{"routes":[],"appearanceMode":""}',
+      playwrightFieldMapperJson: '[]',
+    });
+    expect(encryptSecretMock).not.toHaveBeenCalled();
+    expect(payload).toMatchObject({
+      id: 'conn-playwright-1',
+      playwrightPersonaId: 'persona-1',
+      playwrightHeadless: false,
+      playwrightImportScript: 'export default async function run() {}',
+      playwrightImportBaseUrl: 'https://example.test',
+      playwrightImportCaptureRoutesJson: '{"routes":[],"appearanceMode":""}',
+      playwrightFieldMapperJson: '[]',
+    });
+  });
+
+  it('resolves response Playwright settings from persona baselines for listed connections', async () => {
+    getSettingValueMock.mockResolvedValue(
+      JSON.stringify([
+        {
+          id: 'persona-1',
+          name: 'Human runner',
+          settings: {
+            slowMo: 125,
+            humanizeMouse: false,
+            browser: 'chrome',
+          },
+        },
+      ])
+    );
+    listConnectionsMock.mockResolvedValue([
+      {
+        id: 'conn-playwright-1',
+        integrationId: 'integration-playwright-1',
+        name: 'Programmable Browser',
+        createdAt: '2026-04-02T10:00:00.000Z',
+        updatedAt: '2026-04-02T11:00:00.000Z',
+        playwrightPersonaId: 'persona-1',
+      },
+    ]);
+
+    const response = await GET_handler(
+      new Request('http://localhost/api/v2/integrations/integration-playwright-1/connections') as never,
+      {} as never,
+      { id: 'integration-playwright-1' }
+    );
+
+    const payload = await response.json();
+
+    expect(payload).toEqual([
+      expect.objectContaining({
+        id: 'conn-playwright-1',
+        playwrightPersonaId: 'persona-1',
+        playwrightSlowMo: 125,
+        playwrightHumanizeMouse: false,
+        playwrightBrowser: 'chrome',
+      }),
+    ]);
   });
 });

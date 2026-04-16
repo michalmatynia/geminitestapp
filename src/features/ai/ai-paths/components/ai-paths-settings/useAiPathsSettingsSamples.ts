@@ -1,12 +1,20 @@
-import { type QueryClient, useQueryClient } from '@tanstack/react-query';
+'use client';
+'use no memo';
+
+import { type QueryClient, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useRef } from 'react';
 
 import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext';
 import type { Toast } from '@/shared/contracts/ui/base';
 import { getProductDetailQueryKey } from '@/shared/lib/product-query-keys';
-import type { ParserSampleState, UpdaterSampleState } from '@/shared/lib/ai-paths';
-import { dbApi, entityApi } from '@/shared/lib/ai-paths';
-import { createMutationV2, fetchQueryV2 } from '@/shared/lib/query-factories-v2';
+import type { ParserSampleState, UpdaterSampleState } from '@/shared/contracts/ai-paths';
+import { dbApi, entityApi } from '@/shared/lib/ai-paths/api';
+import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
+
+// This hook delegates into query-factory wrappers that call TanStack Query
+// hooks internally. Keep it on the plain hook runtime to avoid React Compiler
+// dev cache-size mismatches in AI Paths settings.
 
 const AI_PATHS_SAMPLE_STALE_MS = 10_000;
 const OBJECT_ID_PATTERN = /^[0-9a-fA-F]{24}$/;
@@ -56,6 +64,14 @@ export type UseAiPathsSettingsSamplesReturn = {
     entityId: string,
     options?: { notify?: boolean }
   ) => Promise<void>;
+};
+
+type SampleMutationConfig<TData, TVariables> = {
+  mutationKey: readonly unknown[];
+  mutationFn: (variables: TVariables) => Promise<TData>;
+  meta?: Record<string, unknown>;
+  onSuccess?: (data: TData, variables: TVariables) => void;
+  onError?: (error: Error, variables: TVariables) => void;
 };
 
 const isObjectId = (value: string): boolean => OBJECT_ID_PATTERN.test(value);
@@ -205,12 +221,33 @@ const fetchUpdaterSampleByEntityType = async ({
   return await fetchUpdaterSampleViaDbQuery(entityType, entityId);
 };
 
+function useSampleMutation<TData, TVariables>({
+  mutationKey,
+  mutationFn,
+  meta,
+  onSuccess,
+  onError,
+}: SampleMutationConfig<TData, TVariables>) {
+  const hookOrderRef = useRef(0);
+  const mutationQueryClient = useQueryClient();
+  void hookOrderRef;
+  void mutationQueryClient;
+
+  return useMutation<TData, Error, TVariables>({
+    mutationKey,
+    mutationFn,
+    meta,
+    onSuccess,
+    onError,
+  });
+}
+
 export function useAiPathsSettingsSamples({
   toast,
 }: UseAiPathsSettingsSamplesInput): UseAiPathsSettingsSamplesReturn {
   const queryClient = useQueryClient();
   const { setParserSamples, setUpdaterSamples } = useRuntimeActions();
-  const fetchParserSampleMutation = createMutationV2({
+  const fetchParserSampleMutation = useSampleMutation({
     mutationKey: QUERY_KEYS.ai.aiPaths.mutation('settings.fetch-parser-sample'),
     mutationFn: async ({
       nodeId,
@@ -314,7 +351,7 @@ export function useAiPathsSettingsSamples({
     },
   });
 
-  const fetchUpdaterSampleMutation = createMutationV2<
+  const fetchUpdaterSampleMutation = useSampleMutation<
     FetchUpdaterSampleResult,
     FetchUpdaterSampleVariables
   >({

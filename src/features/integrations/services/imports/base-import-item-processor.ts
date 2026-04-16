@@ -1,391 +1,55 @@
-import path from 'path';
-
 import type { BaseProductRecord } from '@/features/integrations/services/imports/base-client';
-import { mapBaseProduct } from '@/features/integrations/services/imports/base-mapper';
+import {
+  collectCustomFieldImportDiagnostics,
+  mapBaseProduct,
+} from '@/features/integrations/services/imports/base-mapper';
 import { applyBaseParameterImport } from '@/features/integrations/services/imports/parameter-import/apply';
 import { emitProductCacheInvalidation } from '@/shared/events/products';
 import {
   findProductListingByProductAndConnectionAcrossProviders,
-  getProductListingRepository,
 } from '@/features/integrations/services/product-listing-repository';
-import { getTagMappingRepository } from '@/features/integrations/services/tag-mapping-repository';
-import type { BaseImportErrorClass, BaseImportErrorCode, BaseImportItemRecord, BaseImportMode, BaseImportRunRecord } from '@/shared/contracts/integrations/base-com';
+import type { BaseImportItemRecord, BaseImportMode, BaseImportRunRecord } from '@/shared/contracts/integrations/base-com';
 import type { BaseParameterImportSummary } from '@/shared/contracts/integrations/parameter-import';
 import type { ProductListing } from '@/shared/contracts/integrations/listings';
 import type { ProductListingRepository } from '@/shared/contracts/integrations/repositories';
 import { defaultBaseImportParameterImportSettings, normalizeBaseImportParameterImportSettings } from '@/shared/contracts/integrations/parameter-import';
 import { type ImportTemplateParameterImport } from '@/shared/contracts/integrations/templates';
 import type { ParameterRepository } from '@/shared/contracts/products/drafts';
+import type {
+  ProductCustomFieldDefinition,
+  ProductCustomFieldValue,
+} from '@/shared/contracts/products/custom-fields';
 import type { ProductParameter } from '@/shared/contracts/products/parameters';
 import type { ProductRecord, ProductWithImages, ProductParameterValue } from '@/shared/contracts/products/product';
-import type { CreateProduct as ProductCreateInput, UpdateProduct as ProductUpdateInput } from '@/shared/contracts/products/io';
-import { getFsPromises, joinRuntimePath } from '@/shared/lib/files/runtime-fs';
-import { productsRoot } from '@/shared/lib/files/server-constants';
-import { getImageFileRepository } from '@/shared/lib/files/services/image-file-repository';
-import { getProducerRepository } from '@/shared/lib/products/services/producer-repository';
-import { getProductRepository } from '@/shared/lib/products/services/product-repository';
-import { getTagRepository } from '@/shared/lib/products/services/tag-repository';
-import { validateProductCreate, validateProductUpdate } from '@/shared/lib/products/validations';
+import type { ProductCreateInput, ProductUpdateInput } from '@/shared/contracts/products/io';
+import { type getProductRepository } from '@/shared/lib/products/services/product-repository';
+import { normalizeProductCustomFieldValues } from '@/shared/lib/products/utils/custom-field-values';
+import { filterProductCustomFieldValuesByAllowedFieldNames } from '@/shared/lib/products/utils/custom-field-values';
+import { validateProductUpdate } from '@/shared/lib/products/validations';
 import { listingHasBaseImportProvenance } from '@/features/integrations/services/imports/base-import-provenance';
 
 import {
   MAX_IMAGES_PER_PRODUCT,
-  extractFilename,
-  guessMimeType,
   isSkuConflictError,
-  sanitizeSku,
   toStringId,
-  type ImportDecision,
   type NormalizedMappedProduct,
   type ProcessItemResult,
   type ProductLookupMaps,
 } from './base-import-service-shared';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import {
+  classifyByErrorCode,
+  createLinkedImage,
+  decideImportAction,
+  downloadImage,
+  formatProductValidationFailure,
+  linkImportedProductToBaseListing,
+  resolveProducerIds,
+  resolveTagIds,
+  resolveUniqueSku,
+  validateImportedCreateData,
+} from './base-import-item-processor-utils';
 
-
-export const resolveProducerAndTagLookups = async (
-  connectionId: string
-): Promise<ProductLookupMaps> => {
-  const producerRepository = await getProducerRepository();
-  const producers = await producerRepository.listProducers({});
-  const producerIdSet = new Set(
-    producers
-      .map((producer: { id: string }) => producer.id?.trim())
-      .filter((producerId: string | undefined): producerId is string => Boolean(producerId))
-  );
-  const producerNameToId = new Map(
-    producers
-      .map((producer: { id: string; name: string }) => {
-        const normalizedName =
-          typeof producer.name === 'string' ? producer.name.trim().toLowerCase() : '';
-        const normalizedId = typeof producer.id === 'string' ? producer.id.trim() : '';
-        if (!normalizedName || !normalizedId) return null;
-        return [normalizedName, normalizedId] as const;
-      })
-      .filter((entry): entry is readonly [string, string] => entry !== null)
-  );
-
-  const tagRepository = await getTagRepository();
-  const tags = await tagRepository.listTags({});
-  const tagIdSet = new Set(
-    tags
-      .map((tag: { id: string }) => tag.id?.trim())
-      .filter((tagId: string | undefined): tagId is string => Boolean(tagId))
-  );
-  const tagNameToId = new Map(
-    tags
-      .map((tag: { id: string; name: string }) => {
-        const normalizedName = typeof tag.name === 'string' ? tag.name.trim().toLowerCase() : '';
-        const normalizedId = typeof tag.id === 'string' ? tag.id.trim() : '';
-        if (!normalizedName || !normalizedId) return null;
-        return [normalizedName, normalizedId] as const;
-      })
-      .filter((entry): entry is readonly [string, string] => entry !== null)
-  );
-
-  const externalTagToInternalTagId = new Map<string, string>();
-  try {
-    const tagMappingRepo = getTagMappingRepository();
-    const tagMappings = await tagMappingRepo.listByConnection(connectionId);
-    tagMappings.forEach((mapping) => {
-      if (!mapping.isActive) return;
-      const externalId = mapping.externalTag?.externalId?.trim();
-      const internalId = mapping.internalTagId?.trim();
-      if (!externalId || !internalId) return;
-      externalTagToInternalTagId.set(externalId, internalId);
-      externalTagToInternalTagId.set(externalId.toLowerCase(), internalId);
-    });
-  } catch (error) {
-    logClientError(error);
-  
-    // Optional mapping data.
-  }
-
-  return {
-    producerIdSet,
-    producerNameToId,
-    tagIdSet,
-    tagNameToId,
-    externalTagToInternalTagId,
-  };
-};
-
-const resolveProducerIds = (values: string[] | undefined, lookups: ProductLookupMaps): string[] => {
-  if (!Array.isArray(values) || values.length === 0) return [];
-  const unique = new Set<string>();
-  values.forEach((rawValue: string) => {
-    const trimmed = rawValue.trim();
-    if (!trimmed) return;
-    if (lookups.producerIdSet.has(trimmed)) {
-      unique.add(trimmed);
-      return;
-    }
-    const byName = lookups.producerNameToId.get(trimmed.toLowerCase());
-    if (byName) unique.add(byName);
-  });
-  return Array.from(unique);
-};
-
-const resolveTagIds = (values: string[] | undefined, lookups: ProductLookupMaps): string[] => {
-  if (!Array.isArray(values) || values.length === 0) return [];
-  const unique = new Set<string>();
-  values.forEach((rawValue: string) => {
-    const trimmed = rawValue.trim();
-    if (!trimmed) return;
-
-    const mappedExternal =
-      lookups.externalTagToInternalTagId.get(trimmed) ??
-      lookups.externalTagToInternalTagId.get(trimmed.toLowerCase());
-    if (mappedExternal) {
-      unique.add(mappedExternal);
-      return;
-    }
-
-    if (lookups.tagIdSet.has(trimmed)) {
-      unique.add(trimmed);
-      return;
-    }
-
-    const byName = lookups.tagNameToId.get(trimmed.toLowerCase());
-    if (byName) unique.add(byName);
-  });
-  return Array.from(unique);
-};
-
-const classifyByErrorCode = (
-  code: BaseImportErrorCode
-): { errorClass: BaseImportErrorClass; retryable: boolean } => {
-  if (
-    code === 'MISSING_CONNECTION' ||
-    code === 'MISSING_CATALOG' ||
-    code === 'MISSING_PRICE_GROUP' ||
-    code === 'PRECHECK_FAILED'
-  ) {
-    return { errorClass: 'configuration', retryable: false };
-  }
-  if (code === 'CANCELED') {
-    return { errorClass: 'canceled', retryable: false };
-  }
-  if (code === 'TIMEOUT' || code === 'RATE_LIMITED' || code === 'NETWORK_ERROR') {
-    return { errorClass: 'transient', retryable: true };
-  }
-  if (code === 'BASE_FETCH_ERROR' || code === 'LINKING_ERROR') {
-    return { errorClass: 'transient', retryable: true };
-  }
-  return { errorClass: 'permanent', retryable: false };
-};
-
-const downloadImage = async (url: string, sku: string, index: number): Promise<{ id: string }> => {
-  const nodeFs = getFsPromises();
-  const imageRepository = await getImageFileRepository();
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`Failed to download image (${response.status})`, { cause: response });
-  }
-  const contentType = response.headers.get('content-type') || guessMimeType(url);
-  const buffer = Buffer.from(await response.arrayBuffer());
-  const folderName = sku ? sanitizeSku(sku) : 'temp';
-  const filename = `${Date.now()}-${index}-${extractFilename(url, 'image.jpg')}`;
-  const diskDir = path.join(productsRoot, folderName);
-  const publicPath = `/uploads/products/${folderName}/${filename}`;
-  await nodeFs.mkdir(diskDir, { recursive: true });
-  await nodeFs.writeFile(joinRuntimePath(diskDir, filename), buffer);
-
-  return imageRepository.createImageFile({
-    filename,
-    filepath: publicPath,
-    mimetype: contentType,
-    size: buffer.length,
-  });
-};
-
-const createLinkedImage = async (url: string, index: number): Promise<{ id: string }> => {
-  const imageRepository = await getImageFileRepository();
-  const filename = extractFilename(url, `base-image-${index}.jpg`);
-  return imageRepository.createImageFile({
-    filename,
-    filepath: url,
-    mimetype: guessMimeType(url),
-    size: 0,
-  });
-};
-
-const linkImportedProductToBaseListing = async (input: {
-  product: ProductWithImages | ProductRecord;
-  baseIntegrationId: string;
-  connectionId: string;
-  inventoryId: string;
-  baseProductId: string | null | undefined;
-  existingListing?: { listing: ProductListing; repository: ProductListingRepository } | null;
-}): Promise<void> => {
-  const normalizedBaseProductId = input.baseProductId?.trim() || '';
-  if (!normalizedBaseProductId) return;
-  const baseMarketplaceMetadata = {
-    source: 'base-import',
-    marketplace: 'base',
-  } as const;
-
-  const existingListing =
-    input.existingListing ??
-    (await findProductListingByProductAndConnectionAcrossProviders(
-      input.product.id,
-      input.connectionId
-    ));
-
-  if (existingListing) {
-    if (existingListing.listing.externalListingId !== normalizedBaseProductId) {
-      await existingListing.repository.updateListingExternalId(
-        existingListing.listing.id,
-        normalizedBaseProductId
-      );
-    }
-    if ((existingListing.listing.inventoryId ?? null) !== input.inventoryId) {
-      await existingListing.repository.updateListingInventoryId(
-        existingListing.listing.id,
-        input.inventoryId
-      );
-    }
-    if (existingListing.listing.status !== 'active') {
-      await existingListing.repository.updateListingStatus(existingListing.listing.id, 'active');
-    }
-    await existingListing.repository.updateListing(existingListing.listing.id, {
-      marketplaceData: {
-        ...(existingListing.listing.marketplaceData ?? {}),
-        ...baseMarketplaceMetadata,
-      },
-    });
-    return;
-  }
-
-  const listingRepository = await getProductListingRepository();
-  const createdListing = await listingRepository.createListing({
-    productId: input.product.id,
-    integrationId: input.baseIntegrationId,
-    connectionId: input.connectionId,
-    status: 'active',
-    externalListingId: normalizedBaseProductId,
-    inventoryId: input.inventoryId,
-    marketplaceData: baseMarketplaceMetadata,
-  });
-  await listingRepository.updateListingStatus(createdListing.id, 'active');
-};
-
-const resolveUniqueSku = async (
-  productRepository: Awaited<ReturnType<typeof getProductRepository>>,
-  baseProductId: string | null,
-  fallbackSeed: string
-): Promise<string> => {
-  const normalizedSeed = sanitizeSku(fallbackSeed) || 'BASE';
-  const candidates: string[] = [];
-  if (baseProductId) {
-    candidates.push(`BASE-${sanitizeSku(baseProductId)}`);
-  }
-  candidates.push(normalizedSeed);
-
-  const base = candidates[0] ?? 'BASE';
-  for (let index = 0; index < 1000; index += 1) {
-    const candidate = index === 0 ? base : `${base}-${index}`;
-    const existing = await productRepository.getProductBySku(candidate);
-    if (!existing) return candidate;
-  }
-  return `BASE-${Date.now()}`;
-};
-
-const decideImportAction = (input: {
-  mode: BaseImportMode;
-  allowDuplicateSku: boolean;
-  mappedBaseProductId: string | null;
-  mappedSku: string | null;
-  existingByBaseId: ProductRecord | null;
-  existingBySku: ProductRecord | null;
-}): ImportDecision => {
-  const {
-    mode,
-    allowDuplicateSku,
-    mappedBaseProductId,
-    mappedSku,
-    existingByBaseId,
-    existingBySku,
-  } = input;
-
-  if (mode === 'create_only') {
-    if (existingByBaseId) {
-      return {
-        type: 'skip',
-        code: 'CONFLICT',
-        message: `Product with Base ID ${mappedBaseProductId ?? 'unknown'} already exists.`,
-      };
-    }
-    if (existingBySku && !allowDuplicateSku) {
-      return {
-        type: 'skip',
-        code: 'DUPLICATE_SKU',
-        message: `SKU ${mappedSku ?? 'unknown'} already exists.`,
-      };
-    }
-    return { type: 'create' };
-  }
-
-  if (mode === 'upsert_on_base_id') {
-    if (!mappedBaseProductId) {
-      return {
-        type: 'fail',
-        code: 'MISSING_BASE_ID',
-        message: 'Missing Base product ID for upsert_on_base_id mode.',
-      };
-    }
-
-    if (existingByBaseId) {
-      if (existingBySku && existingBySku.id !== existingByBaseId.id && !allowDuplicateSku) {
-        return {
-          type: 'skip',
-          code: 'CONFLICT',
-          message: `SKU ${mappedSku ?? 'unknown'} belongs to a different product.`,
-        };
-      }
-      return { type: 'update', target: existingByBaseId };
-    }
-
-    if (existingBySku && !allowDuplicateSku) {
-      return {
-        type: 'skip',
-        code: 'DUPLICATE_SKU',
-        message: `SKU ${mappedSku ?? 'unknown'} already exists.`,
-      };
-    }
-
-    return { type: 'create' };
-  }
-
-  if (!mappedSku) {
-    return {
-      type: 'fail',
-      code: 'MISSING_SKU',
-      message: 'Missing SKU for upsert_on_sku mode.',
-    };
-  }
-
-  if (existingBySku) {
-    if (existingByBaseId && existingByBaseId.id !== existingBySku.id) {
-      return {
-        type: 'skip',
-        code: 'CONFLICT',
-        message: 'Base ID and SKU refer to different existing products.',
-      };
-    }
-    return { type: 'update', target: existingBySku };
-  }
-
-  if (existingByBaseId && !allowDuplicateSku) {
-    return {
-      type: 'skip',
-      code: 'CONFLICT',
-      message: 'Base ID already exists on another product.',
-    };
-  }
-
-  return { type: 'create' };
-};
+export { resolveProducerAndTagLookups } from './base-import-item-processor-utils';
 
 export const pickMappedSku = (mapped: NormalizedMappedProduct): string | null => {
   const rawSku = typeof mapped.sku === 'string' ? mapped.sku.trim() : '';
@@ -395,10 +59,12 @@ export const pickMappedSku = (mapped: NormalizedMappedProduct): string | null =>
 export const normalizeMappedProduct = (
   record: BaseProductRecord,
   mappings: Array<{ sourceKey: string; targetField: string }>,
-  preferredCurrencies: string[]
+  preferredCurrencies: string[],
+  customFieldDefinitions?: ProductCustomFieldDefinition[]
 ): NormalizedMappedProduct => {
   const mapped = mapBaseProduct(record, mappings, {
     preferredPriceCurrencies: preferredCurrencies,
+    customFieldDefinitions,
   }) as NormalizedMappedProduct;
 
   const sku = pickMappedSku(mapped);
@@ -454,12 +120,107 @@ const mergeParameterValues = (
   return Array.from(byParameterId.values());
 };
 
+const stripLinkedParameterValues = (input: {
+  values: ProductParameterValue[];
+  parameters: ProductParameter[] | undefined;
+}): ProductParameterValue[] => {
+  const linkedParameterIds = new Set(
+    (input.parameters ?? [])
+      .filter((parameter: ProductParameter): boolean => Boolean(parameter.linkedTitleTermType))
+      .map((parameter: ProductParameter) => parameter.id)
+  );
+  if (linkedParameterIds.size === 0) {
+    return normalizeParameterValues(input.values);
+  }
+  return normalizeParameterValues(input.values).filter(
+    (entry: ProductParameterValue): boolean => !linkedParameterIds.has(entry.parameterId)
+  );
+};
+
+const buildLinkedParameterPlaceholders = (
+  parameters: ProductParameter[] | undefined
+): ProductParameterValue[] =>
+  (parameters ?? []).reduce(
+    (acc: ProductParameterValue[], parameter: ProductParameter): ProductParameterValue[] => {
+      if (!parameter.linkedTitleTermType) return acc;
+      acc.push({
+        parameterId: parameter.id,
+        value: '',
+      });
+      return acc;
+    },
+    []
+  );
+
+const mergeCustomFieldValues = (
+  base: ProductCustomFieldValue[],
+  overrides: ProductCustomFieldValue[]
+): ProductCustomFieldValue[] => {
+  const byFieldId = new Map<string, ProductCustomFieldValue>();
+  normalizeProductCustomFieldValues(base).forEach((entry: ProductCustomFieldValue) => {
+    byFieldId.set(entry.fieldId, entry);
+  });
+  normalizeProductCustomFieldValues(overrides).forEach((entry: ProductCustomFieldValue) => {
+    byFieldId.set(entry.fieldId, entry);
+  });
+  return Array.from(byFieldId.values());
+};
+
 type ParameterImportSummary = BaseParameterImportSummary;
+
+type CustomFieldImportMetadata = {
+  seededFieldNames: string[];
+  autoMatchedFieldNames: string[];
+  explicitMappedFieldNames: string[];
+  skippedFieldNames: string[];
+  overriddenFieldNames: string[];
+};
 
 type ParameterImportResult = {
   applied: boolean;
   parameters: ProductParameterValue[];
   summary: ParameterImportSummary;
+};
+
+const buildCustomFieldImportMetadata = (input: {
+  seededFieldNames?: string[];
+  autoMatchedFieldNames?: string[];
+  explicitMappedFieldNames?: string[];
+  skippedFieldNames?: string[];
+  overriddenFieldNames?: string[];
+}): CustomFieldImportMetadata | null => {
+  const normalize = (values: string[] | undefined): string[] =>
+    Array.from(
+      new Set(
+        (values ?? [])
+          .map((value: string): string => value.trim())
+          .filter((value: string): boolean => value.length > 0)
+      )
+    ).sort((left: string, right: string) => left.localeCompare(right));
+
+  const seededFieldNames = normalize(input.seededFieldNames);
+  const autoMatchedFieldNames = normalize(input.autoMatchedFieldNames);
+  const explicitMappedFieldNames = normalize(input.explicitMappedFieldNames);
+  const skippedFieldNames = normalize(input.skippedFieldNames);
+  const overriddenFieldNames = normalize(input.overriddenFieldNames);
+
+  if (
+    seededFieldNames.length === 0 &&
+    autoMatchedFieldNames.length === 0 &&
+    explicitMappedFieldNames.length === 0 &&
+    skippedFieldNames.length === 0 &&
+    overriddenFieldNames.length === 0
+  ) {
+    return null;
+  }
+
+  return {
+    seededFieldNames,
+    autoMatchedFieldNames,
+    explicitMappedFieldNames,
+    skippedFieldNames,
+    overriddenFieldNames,
+  };
 };
 
 export const importSingleItem = async (input: {
@@ -480,8 +241,12 @@ export const importSingleItem = async (input: {
   dryRun: boolean;
   inventoryId: string;
   mode: BaseImportMode;
+  forceCreateNewProduct: boolean;
+  persistBaseSyncIdentity: boolean;
   allowDuplicateSku: boolean;
   parameterImportSettings?: ImportTemplateParameterImport;
+  customFieldDefinitions?: ProductCustomFieldDefinition[];
+  customFieldImportSeededFieldNames?: string[];
   catalogLanguageCodes?: string[];
   defaultLanguageCode?: string | null;
   prefetchedParameters?: ProductParameter[];
@@ -496,9 +261,38 @@ export const importSingleItem = async (input: {
   const mapped = normalizeMappedProduct(
     input.raw,
     input.templateMappings,
-    input.preferredPriceCurrencies
+    input.preferredPriceCurrencies,
+    input.customFieldDefinitions
   );
   const templateMappedParameterValues = normalizeParameterValues(mapped.parameters);
+  const customFieldDiagnostics = collectCustomFieldImportDiagnostics(
+    input.raw,
+    input.templateMappings,
+    input.customFieldDefinitions
+  );
+  const touchedCustomFieldNames = new Set<string>([
+    ...customFieldDiagnostics.autoMatchedFieldNames,
+    ...customFieldDiagnostics.explicitMappedFieldNames,
+    ...customFieldDiagnostics.skippedFieldNames,
+    ...customFieldDiagnostics.overriddenFieldNames,
+  ]);
+  const customFieldImportMetadata = buildCustomFieldImportMetadata({
+    seededFieldNames: (input.customFieldImportSeededFieldNames ?? []).filter((fieldName: string) =>
+      touchedCustomFieldNames.has(fieldName)
+    ),
+    autoMatchedFieldNames: customFieldDiagnostics.autoMatchedFieldNames,
+    explicitMappedFieldNames: customFieldDiagnostics.explicitMappedFieldNames,
+    skippedFieldNames: customFieldDiagnostics.skippedFieldNames,
+    overriddenFieldNames: customFieldDiagnostics.overriddenFieldNames,
+  });
+  const resultMetadata = customFieldImportMetadata
+    ? { metadata: { customFieldImport: customFieldImportMetadata } }
+    : {};
+
+  const allowedTemplateMappedCustomFieldValues = filterProductCustomFieldValuesByAllowedFieldNames(
+    normalizeProductCustomFieldValues(mapped.customFields),
+    input.customFieldDefinitions ?? []
+  );
   const mappedProducerIds = resolveProducerIds(mapped.producerIds, input.lookups);
   const mappedTagIds = resolveTagIds(mapped.tagIds, input.lookups);
   const imageUrls = (mapped.imageLinks ?? []).slice(0, MAX_IMAGES_PER_PRODUCT);
@@ -521,6 +315,7 @@ export const importSingleItem = async (input: {
 
   const decision = decideImportAction({
     mode: input.mode,
+    forceCreateNewProduct: input.forceCreateNewProduct,
     allowDuplicateSku: input.allowDuplicateSku,
     mappedBaseProductId,
     mappedSku,
@@ -531,6 +326,7 @@ export const importSingleItem = async (input: {
   if (decision.type === 'skip') {
     const classified = classifyByErrorCode(decision.code);
     return {
+      ...resultMetadata,
       status: 'skipped',
       action: input.dryRun ? 'dry_run' : 'skipped',
       baseProductId: mappedBaseProductId,
@@ -546,6 +342,7 @@ export const importSingleItem = async (input: {
   if (decision.type === 'fail') {
     const classified = classifyByErrorCode(decision.code);
     return {
+      ...resultMetadata,
       status: 'failed',
       action: 'failed',
       baseProductId: mappedBaseProductId,
@@ -588,11 +385,33 @@ export const importSingleItem = async (input: {
     const parameterImportSummary: ParameterImportSummary | null = parameterImportResult.applied
       ? parameterImportResult.summary
       : null;
-    const resolvedParameterValues = mergeParameterValues(
+    const shouldResolveLinkedParameters =
+      parameterImportResult.applied || templateMappedParameterValues.length > 0;
+    const mergedImportedParameterValues = mergeParameterValues(
       parameterImportResult.applied ? parameterImportResult.parameters : [],
       templateMappedParameterValues
     );
+    const resolvedParameterValues = shouldResolveLinkedParameters
+      ? mergeParameterValues(
+        stripLinkedParameterValues({
+          values: mergedImportedParameterValues,
+          parameters: input.prefetchedParameters,
+        }),
+        buildLinkedParameterPlaceholders(input.prefetchedParameters)
+      )
+      : [];
     mapped.parameters = resolvedParameterValues.length > 0 ? resolvedParameterValues : undefined;
+    const resolvedCustomFieldValues = mergeCustomFieldValues(
+      filterProductCustomFieldValuesByAllowedFieldNames(
+        Array.isArray(decision.target.customFields) ? decision.target.customFields : [],
+        input.customFieldDefinitions ?? []
+      ),
+      allowedTemplateMappedCustomFieldValues
+    );
+    const shouldPersistCustomFields =
+      (Array.isArray(decision.target.customFields) && decision.target.customFields.length > 0) ||
+      allowedTemplateMappedCustomFieldValues.length > 0;
+    mapped.customFields = shouldPersistCustomFields ? resolvedCustomFieldValues : undefined;
 
     const updateData: ProductUpdateInput = {
       baseProductId: mappedBaseProductId ?? decision.target.baseProductId ?? null,
@@ -612,7 +431,10 @@ export const importSingleItem = async (input: {
       sizeWidth: mapped.sizeWidth,
       length: mapped.length,
       imageLinks: imageUrls,
-      ...(resolvedParameterValues.length > 0 ? { parameters: resolvedParameterValues } : {}),
+      ...(shouldPersistCustomFields
+        ? { customFields: resolvedCustomFieldValues }
+        : {}),
+      ...(shouldResolveLinkedParameters ? { parameters: resolvedParameterValues } : {}),
     };
 
     if (mappedSku && !input.allowDuplicateSku && mappedSku !== decision.target.sku) {
@@ -620,6 +442,7 @@ export const importSingleItem = async (input: {
       if (skuOwner && skuOwner.id !== decision.target.id) {
         const classified = classifyByErrorCode('DUPLICATE_SKU');
         return {
+          ...resultMetadata,
           status: 'skipped',
           action: input.dryRun ? 'dry_run' : 'skipped',
           baseProductId: mappedBaseProductId,
@@ -638,6 +461,7 @@ export const importSingleItem = async (input: {
     if (!validationResult.success) {
       const classified = classifyByErrorCode('VALIDATION_ERROR');
       return {
+        ...resultMetadata,
         status: 'failed',
         action: 'failed',
         baseProductId: mappedBaseProductId,
@@ -645,7 +469,10 @@ export const importSingleItem = async (input: {
         errorCode: 'VALIDATION_ERROR',
         errorClass: classified.errorClass,
         retryable: classified.retryable,
-        errorMessage: `Validation failed for ${mappedSku ?? mappedBaseProductId ?? input.item.itemId}.`,
+        errorMessage: formatProductValidationFailure(
+          mappedSku ?? mappedBaseProductId ?? input.item.itemId,
+          validationResult.errors
+        ),
         payloadSnapshot: mapped,
         parameterImportSummary,
       };
@@ -653,6 +480,7 @@ export const importSingleItem = async (input: {
 
     if (input.dryRun) {
       return {
+        ...resultMetadata,
         status: 'updated',
         action: 'dry_run',
         importedProductId: decision.target.id,
@@ -707,6 +535,7 @@ export const importSingleItem = async (input: {
     emitProductCacheInvalidation();
 
     return {
+      ...resultMetadata,
       status: 'updated',
       action: 'updated',
       importedProductId: updated.id,
@@ -721,6 +550,7 @@ export const importSingleItem = async (input: {
   if (!skuForCreate) {
     const classified = classifyByErrorCode('MISSING_SKU');
     return {
+      ...resultMetadata,
       status: 'failed',
       action: 'failed',
       baseProductId: mappedBaseProductId,
@@ -733,19 +563,25 @@ export const importSingleItem = async (input: {
     };
   }
 
-  if (existingBySku && input.allowDuplicateSku) {
+  const shouldResolveDuplicateSkuByCreating =
+    input.allowDuplicateSku || input.forceCreateNewProduct;
+
+  if (existingBySku && shouldResolveDuplicateSkuByCreating) {
     skuForCreate = await resolveUniqueSku(
       input.productRepository,
-      mappedBaseProductId,
-      `BASE-${mappedBaseProductId ?? skuForCreate}`
+      skuForCreate,
+      mappedBaseProductId
     );
   }
+
+  const shouldPersistImportProvenance =
+    input.persistBaseSyncIdentity || Boolean(input.run.params.directTarget);
 
   const createData: ProductCreateInput = {
     ...mapped,
     sku: skuForCreate,
-    baseProductId: mappedBaseProductId ?? null,
-    importSource: 'base',
+    baseProductId: input.persistBaseSyncIdentity ? mappedBaseProductId ?? null : null,
+    importSource: shouldPersistImportProvenance ? 'base' : null,
     defaultPriceGroupId: input.defaultPriceGroupId,
     imageLinks: imageUrls,
   };
@@ -769,9 +605,25 @@ export const importSingleItem = async (input: {
   const parameterImportSummary: ParameterImportSummary | null = parameterImportResult.applied
     ? parameterImportResult.summary
     : null;
-  const resolvedParameterValues = mergeParameterValues(
+  const shouldResolveLinkedParameters =
+    parameterImportResult.applied || templateMappedParameterValues.length > 0;
+  const mergedImportedParameterValues = mergeParameterValues(
     parameterImportResult.applied ? parameterImportResult.parameters : [],
     templateMappedParameterValues
+  );
+  const resolvedParameterValues = shouldResolveLinkedParameters
+    ? mergeParameterValues(
+      stripLinkedParameterValues({
+        values: mergedImportedParameterValues,
+        parameters: input.prefetchedParameters,
+      }),
+      buildLinkedParameterPlaceholders(input.prefetchedParameters)
+    )
+    : mergedImportedParameterValues;
+  const resolvedCustomFieldValues = normalizeProductCustomFieldValues(mapped.customFields);
+  const allowedResolvedCustomFieldValues = filterProductCustomFieldValuesByAllowedFieldNames(
+    resolvedCustomFieldValues,
+    input.customFieldDefinitions ?? []
   );
   if (resolvedParameterValues.length > 0) {
     createData.parameters = resolvedParameterValues;
@@ -779,11 +631,14 @@ export const importSingleItem = async (input: {
   } else {
     mapped.parameters = undefined;
   }
+  createData.customFields = allowedResolvedCustomFieldValues;
+  mapped.customFields = allowedResolvedCustomFieldValues.length > 0 ? allowedResolvedCustomFieldValues : undefined;
 
-  const validationResult = await validateProductCreate(createData);
+  const validationResult = await validateImportedCreateData(createData);
   if (!validationResult.success) {
     const classified = classifyByErrorCode('VALIDATION_ERROR');
     return {
+      ...resultMetadata,
       status: 'failed',
       action: 'failed',
       baseProductId: mappedBaseProductId,
@@ -791,7 +646,7 @@ export const importSingleItem = async (input: {
       errorCode: 'VALIDATION_ERROR',
       errorClass: classified.errorClass,
       retryable: classified.retryable,
-      errorMessage: `Validation failed for ${skuForCreate}.`,
+      errorMessage: formatProductValidationFailure(skuForCreate, validationResult.errors),
       payloadSnapshot: mapped,
       parameterImportSummary,
     };
@@ -799,6 +654,7 @@ export const importSingleItem = async (input: {
 
   if (input.dryRun) {
     return {
+      ...resultMetadata,
       status: 'imported',
       action: 'dry_run',
       baseProductId: mappedBaseProductId,
@@ -812,14 +668,13 @@ export const importSingleItem = async (input: {
   try {
     created = await input.productRepository.createProduct(validationResult.data);
   } catch (error: unknown) {
-    logClientError(error);
-    if (isSkuConflictError(error) && input.allowDuplicateSku) {
+    if (isSkuConflictError(error) && shouldResolveDuplicateSkuByCreating) {
       const fallbackSku = await resolveUniqueSku(
         input.productRepository,
-        mappedBaseProductId,
-        `BASE-${mappedBaseProductId ?? skuForCreate}`
+        skuForCreate,
+        mappedBaseProductId
       );
-      const fallbackValidation = await validateProductCreate({
+      const fallbackValidation = await validateImportedCreateData({
         ...createData,
         sku: fallbackSku,
       });
@@ -860,17 +715,20 @@ export const importSingleItem = async (input: {
     }
   }
 
-  await linkImportedProductToBaseListing({
-    product: created,
-    baseIntegrationId: input.baseIntegrationId,
-    connectionId: input.connectionId,
-    inventoryId: input.inventoryId,
-    baseProductId: mappedBaseProductId,
-    existingListing: input.prefetchedListings?.get(created.id) ?? null,
-  });
+  if (shouldPersistImportProvenance) {
+    await linkImportedProductToBaseListing({
+      product: created,
+      baseIntegrationId: input.baseIntegrationId,
+      connectionId: input.connectionId,
+      inventoryId: input.inventoryId,
+      baseProductId: mappedBaseProductId,
+      existingListing: input.prefetchedListings?.get(created.id) ?? null,
+    });
+  }
   emitProductCacheInvalidation();
 
   return {
+    ...resultMetadata,
     status: 'imported',
     action: 'imported',
     importedProductId: created.id,

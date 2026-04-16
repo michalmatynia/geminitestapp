@@ -3,8 +3,9 @@
 import { useCallback } from 'react';
 
 import type { Toast } from '@/shared/contracts/ui/base';
-import type { AiPathsValidationConfig } from '@/shared/lib/ai-paths';
-import { normalizeAiPathsValidationConfig, AI_PATHS_LAST_ERROR_KEY } from '@/shared/lib/ai-paths';
+import type { AiPathsValidationConfig } from '@/shared/contracts/ai-paths';
+import { AI_PATHS_LAST_ERROR_KEY } from '@/shared/lib/ai-paths/core/constants/segments/storage';
+import { normalizeAiPathsValidationConfig } from '@/shared/lib/ai-paths/core/validation-engine';
 import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
 
 export function useAiPathsValidationActions(args: {
@@ -45,7 +46,7 @@ export function useAiPathsValidationActions(args: {
       const reportAiPathsError = useCallback(
       (error: unknown, context: Record<string, unknown>, fallbackMessage?: string): void => {
       const message = error instanceof Error ? error.message : String(error);
-      const fullMessage = `[ai-paths] ${fallbackMessage ? fallbackMessage + ' ' : ''}${message}`;
+      const fullMessage = `[ai-paths] ${fallbackMessage ? `${fallbackMessage  } ` : ''}${message}`;
       toast(fallbackMessage || message, { variant: 'error' });
       void persistLastError(fallbackMessage || message);
 

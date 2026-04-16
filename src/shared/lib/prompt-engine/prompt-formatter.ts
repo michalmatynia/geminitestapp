@@ -10,6 +10,8 @@ import type {
 import { recordPromptValidationTiming } from '@/shared/lib/prompt-core/runtime-observability';
 import {
   findMatchingBrace,
+} from '@/shared/utils/prompt-params/scanner-utils';
+import {
   segmentizeJsLikeText,
   type Segment,
 } from '@/shared/utils/prompt-params/scanner';

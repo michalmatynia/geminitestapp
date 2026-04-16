@@ -17,7 +17,7 @@ import {
   kangurParentPasswordSchema,
   postKangurParentPasswordHandler,
 } from '@/app/api/kangur/auth/parent-password/handler';
-import { methodNotAllowed, SimpleRouteHandler } from './routing.utils';
+import { methodNotAllowed, type SimpleRouteHandler } from './routing.utils';
 
 export const authMeHandler: SimpleRouteHandler = apiHandler(getKangurAuthMeHandler, {
   source: 'kangur.auth.me.GET',

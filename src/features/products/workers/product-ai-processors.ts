@@ -116,20 +116,26 @@ const enrichAiPathsConfigError = (
   if (!(error instanceof Error)) throw error;
   const { requestedModelId, runId, nodeId, nodeTitle } = args;
 
-  const failingNodeLabel = nodeTitle
-    ? nodeId
-      ? `Failing AI Paths node "${nodeTitle}" <${nodeId}>`
-      : `Failing AI Paths node "${nodeTitle}"`
-    : nodeId
-      ? `Failing AI Paths node <${nodeId}>`
-      : '';
+  let failingNodeLabel = '';
+  if (typeof nodeTitle === 'string' && nodeTitle !== '') {
+    failingNodeLabel =
+      typeof nodeId === 'string' && nodeId !== ''
+        ? `Failing AI Paths node "${nodeTitle}" <${nodeId}>`
+        : `Failing AI Paths node "${nodeTitle}"`;
+  } else if (typeof nodeId === 'string' && nodeId !== '') {
+    failingNodeLabel = `Failing AI Paths node <${nodeId}>`;
+  }
+
   const detailParts = [
     failingNodeLabel,
-    runId ? `run ${runId}` : '',
+    typeof runId === 'string' && runId !== '' ? `run ${runId}` : '',
     `requested node model: ${requestedModelId || 'none'}`,
   ].filter(Boolean);
   if (detailParts.length > 0) {
-    error.message = `${error.message} ${detailParts.join(', ')}.`;
+    const enrichedMessage = `${error.message} ${detailParts.join(', ')}.`;
+    const enrichedError = new Error(enrichedMessage);
+    // Copy properties if necessary, though simple Error might suffice for re-throw
+    throw enrichedError;
   }
   throw error;
 };
@@ -159,7 +165,8 @@ const buildImageParts = async (
           if (!res.ok) return null;
           const buffer = Buffer.from(await res.arrayBuffer());
           base64Image = buffer.toString('base64');
-          mimetype = res.headers.get('content-type') || 'image/jpeg';
+          const contentType = res.headers.get('content-type');
+          mimetype = typeof contentType === 'string' && contentType !== '' ? contentType : 'image/jpeg';
         } else {
           const imagePath = getDiskPathFromPublicPath(item);
           const buffer = await fs.readFile(imagePath);
@@ -174,7 +181,7 @@ const buildImageParts = async (
           image_url: { url: `data:${mimetype};base64,${base64Image}` },
         };
       } catch (error) {
-        void ErrorSystem.captureException(error);
+        await ErrorSystem.captureException(error);
         return null;
       }
     }
@@ -285,7 +292,6 @@ export async function processGraphModel(job: Job): Promise<Record<string, unknow
     const imageParts = await buildImageParts(imageUrls, isOpenAi);
     content.push(...imageParts);
   }
-
   const messages = [
     { role: 'system' as const, content: systemMessage },
     { role: 'user' as const, content },
@@ -358,8 +364,8 @@ export async function processDatabaseBackup(job: Job): Promise<Record<string, un
 
   try {
     await markDatabaseBackupJobRunning(dbType, job.id);
-  } catch (error) {
-    void ErrorSystem.captureException(error);
+  } catch (markError) {
+    await ErrorSystem.captureException(markError);
   
     // Backup execution should continue even if scheduler metadata persistence fails.
   }
@@ -368,19 +374,19 @@ export async function processDatabaseBackup(job: Job): Promise<Record<string, un
     const result = await createMongoBackup();
     try {
       await markDatabaseBackupJobSucceeded(dbType, job.id);
-    } catch (error) {
-      void ErrorSystem.captureException(error);
+    } catch (markSuccessError) {
+      await ErrorSystem.captureException(markSuccessError);
     
       // Keep backup result successful if status persistence fails.
     }
     return { ...result, dbType };
   } catch (error: unknown) {
-    void ErrorSystem.captureException(error);
+    await ErrorSystem.captureException(error);
     const message = error instanceof Error ? error.message : String(error);
     try {
       await markDatabaseBackupJobFailed(dbType, job.id, message);
-    } catch (error) {
-      void ErrorSystem.captureException(error);
+    } catch (markFailError) {
+      await ErrorSystem.captureException(markFailError);
     
       // Keep original backup failure as the primary error path.
     }
@@ -398,8 +404,8 @@ export async function processBase64ConvertAll(job: Job): Promise<Record<string, 
 
   for (;;) {
     const products = await productRepo.getProducts({
-      page: page,
-      pageSize: pageSize,
+      page,
+      pageSize,
     });
     if (!products.length) {
       break;
@@ -451,7 +457,7 @@ const processBase64ConvertProduct = async (
     await productRepo.updateProduct(product.id, { imageBase64s, imageLinks });
     return true;
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    await ErrorSystem.captureException(error);
     return false;
   }
 };
@@ -490,7 +496,7 @@ export async function processBaseImageSyncAll(job: Job): Promise<Record<string, 
       await syncBaseImagesForListing(listing.id, listing.productId, listing.inventoryId ?? null);
       succeeded += 1;
     } catch (error) {
-      void ErrorSystem.captureException(error);
+      await ErrorSystem.captureException(error);
       failed += 1;
     }
   }

@@ -1,55 +1,48 @@
 import { describe, expect, it } from 'vitest';
 
-import { __testables } from './route';
+import { matchCatchAllPattern } from '@/shared/lib/api/catch-all-router';
 
 describe('agentcreator route matcher', () => {
   it('extracts params for nested agent assets routes', () => {
-    const pattern = __testables.ROUTES.find((route) =>
-      route.pattern.length === 4 &&
-      typeof route.pattern[2] === 'string' &&
-      route.pattern[2] === 'assets'
-    )?.pattern;
-    if (!pattern) {
-      throw new Error('pattern not found');
-    }
+    const pattern = ['agent', { param: 'runId' }, 'assets', { param: 'file' }];
 
-    const params = __testables.matchPattern(pattern, ['agent', 'run-1', 'assets', 'file.png']);
+    const params = matchCatchAllPattern(pattern, ['agent', 'run-1', 'assets', 'file.png']);
     expect(params).toEqual({ runId: 'run-1', file: 'file.png' });
   });
 
   it('allows optional literal tokens to be omitted', () => {
-    const pattern: Parameters<typeof __testables.matchPattern>[0] = [
+    const pattern: Parameters<typeof matchCatchAllPattern>[0] = [
       'personas',
       { param: 'personaId' },
       { literal: 'memory', optional: true },
     ];
 
-    const paramsWithoutLiteral = __testables.matchPattern(pattern, ['personas', 'p-42']);
+    const paramsWithoutLiteral = matchCatchAllPattern(pattern, ['personas', 'p-42']);
     expect(paramsWithoutLiteral).toEqual({ personaId: 'p-42' });
 
-    const paramsWithLiteral = __testables.matchPattern(pattern, ['personas', 'p-42', 'memory']);
+    const paramsWithLiteral = matchCatchAllPattern(pattern, ['personas', 'p-42', 'memory']);
     expect(paramsWithLiteral).toEqual({ personaId: 'p-42' });
   });
 
   it('rejects extra segments that do not match an optional literal token', () => {
-    const pattern: Parameters<typeof __testables.matchPattern>[0] = [
+    const pattern: Parameters<typeof matchCatchAllPattern>[0] = [
       'personas',
       { param: 'personaId' },
       { literal: 'memory', optional: true },
     ];
 
-    const params = __testables.matchPattern(pattern, ['personas', 'p-42', 'visuals']);
+    const params = matchCatchAllPattern(pattern, ['personas', 'p-42', 'visuals']);
     expect(params).toBeNull();
   });
 
   it('returns null when required literals mismatch', () => {
-    const pattern: Parameters<typeof __testables.matchPattern>[0] = [
+    const pattern: Parameters<typeof matchCatchAllPattern>[0] = [
       'teaching',
       'agents',
       { param: 'agentId' },
     ];
 
-    const params = __testables.matchPattern(pattern, ['teaching', 'agents', '123', 'extra']);
+    const params = matchCatchAllPattern(pattern, ['teaching', 'agents', '123', 'extra']);
     expect(params).toBeNull();
   });
 });

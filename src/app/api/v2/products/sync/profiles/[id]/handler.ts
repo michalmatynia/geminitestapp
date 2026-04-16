@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import {
@@ -54,6 +54,7 @@ export async function PUT_handler(
   const body = ctx.body as ProductSyncProfileUpdatePayload;
   const patch: Partial<ProductSyncProfile> = {};
   if (body.name !== undefined) patch.name = body.name;
+  if (body.isDefault !== undefined) patch.isDefault = body.isDefault;
   if (body.enabled !== undefined) patch.enabled = body.enabled;
   if (body.connectionId !== undefined) patch.connectionId = body.connectionId;
   if (body.inventoryId !== undefined) patch.inventoryId = body.inventoryId;

@@ -52,6 +52,8 @@ describe('useProductListSubContexts', () => {
     setAdvancedFilterState: () => {},
     baseExported: null,
     setBaseExported: () => {},
+    includeArchived: false,
+    setIncludeArchived: () => {},
     data: [],
     rowSelection: {},
     setRowSelection: () => {},

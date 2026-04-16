@@ -2,6 +2,15 @@ import 'dotenv/config';
 import '@testing-library/jest-dom/vitest';
 import { vi, beforeAll, afterEach, afterAll } from 'vitest';
 import React from 'react';
+
+// Mock React.startTransition to be synchronous in tests
+vi.mock('react', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('react')>();
+  return {
+    ...actual,
+    startTransition: (scope: () => void) => scope(),
+  };
+});
 import { DEFAULT_KANGUR_AGE_GROUP } from '@/features/kangur/lessons/lesson-catalog';
 import { server } from './src/mocks/server';
 
@@ -350,6 +359,60 @@ vi.mock('use-intl', () => {
 vi.mock('next-intl/server', () => ({
   getTranslations: vi.fn(async () => vi.fn((key: string) => key)),
 }));
+// Mock ClientOnly
+vi.mock('@/shared/ui/client-only', () => ({
+  ClientOnly: ({ children }: { children: React.ReactNode }) => children,
+}));
+
+// Mock forms-and-actions components
+vi.mock('@/shared/ui/forms-and-actions.public', async (importOriginal) => {
+  const actual = await importOriginal<any>();
+  return {
+    ...actual,
+    SelectSimple: (props: any) => {
+      const { value, onValueChange, options, ariaLabel, disabled, placeholder, id } = props;
+      return React.createElement(
+        'select',
+        {
+          id,
+          'aria-label': ariaLabel,
+          value: value ?? '',
+          disabled,
+          onChange: (e: any) => onValueChange?.(e.target.value),
+        },
+        placeholder && React.createElement('option', { value: '', disabled: true }, placeholder),
+        options?.map((opt: any) =>
+          React.createElement('option', { key: opt.value, value: opt.value }, opt.label)
+        )
+      );
+    },
+  };
+});
+
+// Mock useToast
+vi.mock('@/shared/ui/primitives.public', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/ui/primitives.public')>();
+  const toastMock = vi.fn();
+  const dismissMock = vi.fn();
+  return {
+    ...actual,
+    useToast: vi.fn(() => ({
+      toast: toastMock,
+      dismiss: dismissMock,
+    })),
+  };
+});
+
+// Mock nextjs-toploader/app to provide a consistent useRouter mock
+vi.mock('nextjs-toploader/app', () => ({
+  useRouter: vi.fn(() => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    prefetch: vi.fn(),
+    back: vi.fn(),
+    refresh: vi.fn(),
+  })),
+}));
 
 // Mock next/navigation
 vi.mock('next/navigation', () => ({
@@ -359,6 +422,7 @@ vi.mock('next/navigation', () => ({
     replace: vi.fn(),
     prefetch: vi.fn(),
     back: vi.fn(),
+    refresh: vi.fn(),
   })),
   useSearchParams: vi.fn(() => new URLSearchParams()),
   useParams: vi.fn(() => ({})),
@@ -815,10 +879,10 @@ afterEach(async () => {
   }
 
   try {
-    const { __resetQueuedProductOpsState } = await import(
+    const { resetQueuedProductOpsState } = await import(
       '@/features/products/state/queued-product-ops'
     );
-    __resetQueuedProductOpsState?.();
+    resetQueuedProductOpsState?.();
   } catch {
     // ignore cleanup for non-browser test environments
   }

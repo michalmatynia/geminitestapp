@@ -152,6 +152,8 @@ export function MultiSelect(props: MultiSelectProps) {
             disabled={disabled || loading}
             aria-label={labelId ? undefined : ariaLabel}
             aria-labelledby={labelId}
+            aria-haspopup='menu'
+            aria-live='polite'
           >
             <span className='truncate'>{loading ? 'Loading...' : displayValue}</span>
             <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />

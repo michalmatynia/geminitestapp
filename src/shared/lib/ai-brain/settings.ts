@@ -145,6 +145,20 @@ export const BRAIN_CAPABILITY_REGISTRY: Record<AiBrainCapabilityKey, BrainCapabi
     policy: 'model-only',
     modelFamily: 'chat',
   },
+  'product.scan.amazon_candidate_match': {
+    key: 'product.scan.amazon_candidate_match',
+    feature: 'products',
+    label: 'Product Scan Amazon Candidate Match',
+    policy: 'model-only',
+    modelFamily: 'vision_extract',
+  },
+  'product.scan.1688_supplier_match': {
+    key: 'product.scan.1688_supplier_match',
+    feature: 'products',
+    label: 'Product Scan 1688 Supplier Match',
+    policy: 'model-only',
+    modelFamily: 'vision_extract',
+  },
   'product.translation': {
     key: 'product.translation',
     feature: 'products',

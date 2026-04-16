@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { getImportLastTemplateId, setImportLastTemplateId } from '@/features/integrations/server';
 import { parseJsonBody } from '@/features/products/server';

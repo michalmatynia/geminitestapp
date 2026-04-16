@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { badRequestError } from '@/shared/errors/app-error';
 import { assertDatabaseEngineManageAccess } from '@/features/database/server';

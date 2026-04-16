@@ -15,6 +15,31 @@ vi.mock('@tanstack/react-query', async (importOriginal) => {
 import { DataTable } from './data-table';
 
 describe('DataTable fixed layout', () => {
+  it('wires aria-describedby through an element id', () => {
+    render(
+      <DataTable
+        ariaLabel='Products table'
+        ariaDescription='List of products available for export.'
+        columns={[
+          {
+            accessorKey: 'name',
+            header: 'Name',
+            cell: ({ row }) => row.original.name,
+          },
+        ]}
+        data={[{ id: 'product-1', name: 'Product A' }]}
+        getRowId={(row) => row.id}
+      />
+    );
+
+    const table = screen.getByRole('table', { name: 'Products table' });
+    const describedBy = table.getAttribute('aria-describedby');
+    expect(describedBy).toBeTruthy();
+    expect(document.getElementById(describedBy ?? '')).toHaveTextContent(
+      'List of products available for export.'
+    );
+  });
+
   it('uses fixed table layout and applies explicit column widths when requested', () => {
     const { container } = render(
       <DataTable

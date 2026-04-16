@@ -7901,7 +7901,7 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/features/ai/ai-paths/services/path-run-repository/prisma-path-run-repository.ts",
+      "file": "src/features/ai/ai-paths/services/path-run-repository/removedOrm-path-run-repository.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -13325,7 +13325,7 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/features/cms/services/cms-repository/prisma-cms-repository.ts",
+      "file": "src/features/cms/services/cms-repository/removedOrm-cms-repository.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -15413,7 +15413,7 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/features/integrations/services/category-mapping/prisma-impl.ts",
+      "file": "src/features/integrations/services/category-mapping/removedOrm-impl.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -15671,7 +15671,7 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/features/integrations/services/integration-repository/prisma-impl.ts",
+      "file": "src/features/integrations/services/integration-repository/removedOrm-impl.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -15953,7 +15953,7 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/features/internationalization/services/currency-repository/prisma-currency-repository.ts",
+      "file": "src/features/internationalization/services/currency-repository/removedOrm-currency-repository.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -16451,7 +16451,7 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/services/kangur-assignment-repository/prisma-kangur-assignment-repository.ts",
+      "file": "src/features/kangur/services/kangur-assignment-repository/removedOrm-kangur-assignment-repository.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -16505,7 +16505,7 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/services/kangur-progress-repository/prisma-kangur-progress-repository.ts",
+      "file": "src/features/kangur/services/kangur-progress-repository/removedOrm-kangur-progress-repository.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -16529,7 +16529,7 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/services/kangur-score-repository/prisma-kangur-score-repository.ts",
+      "file": "src/features/kangur/services/kangur-score-repository/removedOrm-kangur-score-repository.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -18089,43 +18089,43 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/features/notesapp/services/notes/note-repository/prisma/category-impl.ts",
+      "file": "src/features/notesapp/services/notes/note-repository/removedOrm/category-impl.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/notesapp/services/notes/note-repository/prisma/file-impl.ts",
+      "file": "src/features/notesapp/services/notes/note-repository/removedOrm/file-impl.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/notesapp/services/notes/note-repository/prisma/note-impl.ts",
+      "file": "src/features/notesapp/services/notes/note-repository/removedOrm/note-impl.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/notesapp/services/notes/note-repository/prisma/notebook-impl.ts",
+      "file": "src/features/notesapp/services/notes/note-repository/removedOrm/notebook-impl.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/notesapp/services/notes/note-repository/prisma/tag-impl.ts",
+      "file": "src/features/notesapp/services/notes/note-repository/removedOrm/tag-impl.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/notesapp/services/notes/note-repository/prisma/theme-impl.ts",
+      "file": "src/features/notesapp/services/notes/note-repository/removedOrm/theme-impl.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/notesapp/services/notes/note-repository/prisma-note-repository.ts",
+      "file": "src/features/notesapp/services/notes/note-repository/removedOrm-note-repository.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -20699,7 +20699,7 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/features/viewer3d/services/asset3d-repository/prisma-asset3d-repository.ts",
+      "file": "src/features/viewer3d/services/asset3d-repository/removedOrm-asset3d-repository.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -23573,7 +23573,7 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/shared/lib/ai-paths/services/path-run-repository/prisma-path-run-repository.ts",
+      "file": "src/shared/lib/ai-paths/services/path-run-repository/removedOrm-path-run-repository.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -23795,7 +23795,7 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/shared/lib/db/__mocks__/prisma.ts",
+      "file": "src/shared/lib/db/__mocks__/removedOrm.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -23849,13 +23849,13 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/shared/lib/db/prisma-client.ts",
+      "file": "src/shared/lib/db/removedOrm-client.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/shared/lib/db/prisma.ts",
+      "file": "src/shared/lib/db/removedOrm.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -24143,7 +24143,7 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/shared/lib/files/services/image-file-repository/prisma-image-file-repository.ts",
+      "file": "src/shared/lib/files/services/image-file-repository/removedOrm-image-file-repository.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -24347,7 +24347,7 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/shared/lib/observability/activity-repository/prisma-activity-repository.ts",
+      "file": "src/shared/lib/observability/activity-repository/removedOrm-activity-repository.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -24437,7 +24437,7 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/shared/lib/observability/system-log-prisma-helpers.ts",
+      "file": "src/shared/lib/observability/system-log-removedOrm-helpers.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -24593,7 +24593,7 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/shared/lib/products/services/catalog-repository/prisma-catalog-repository.ts",
+      "file": "src/shared/lib/products/services/catalog-repository/removedOrm-catalog-repository.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -24611,7 +24611,7 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/shared/lib/products/services/category-repository/prisma-category-repository.ts",
+      "file": "src/shared/lib/products/services/category-repository/removedOrm-category-repository.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -24635,7 +24635,7 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/shared/lib/products/services/parameter-repository/prisma-parameter-repository.ts",
+      "file": "src/shared/lib/products/services/parameter-repository/removedOrm-parameter-repository.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -24653,7 +24653,7 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/shared/lib/products/services/producer-repository/prisma-producer-repository.ts",
+      "file": "src/shared/lib/products/services/producer-repository/removedOrm-producer-repository.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -24671,7 +24671,7 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/shared/lib/products/services/product-ai-job-repository/prisma-product-ai-job-repository.ts",
+      "file": "src/shared/lib/products/services/product-ai-job-repository/removedOrm-product-ai-job-repository.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -24743,25 +24743,25 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/shared/lib/products/services/product-repository/prisma-product-repository.filters.ts",
+      "file": "src/shared/lib/products/services/product-repository/removedOrm-product-repository.filters.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/shared/lib/products/services/product-repository/prisma-product-repository.helpers.ts",
+      "file": "src/shared/lib/products/services/product-repository/removedOrm-product-repository.helpers.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/shared/lib/products/services/product-repository/prisma-product-repository.mappers.ts",
+      "file": "src/shared/lib/products/services/product-repository/removedOrm-product-repository.mappers.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/shared/lib/products/services/product-repository/prisma-product-repository.ts",
+      "file": "src/shared/lib/products/services/product-repository/removedOrm-product-repository.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -24815,7 +24815,7 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/shared/lib/products/services/tag-repository/prisma-tag-repository.ts",
+      "file": "src/shared/lib/products/services/tag-repository/removedOrm-tag-repository.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -24833,7 +24833,7 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/shared/lib/products/services/validation-pattern-repository/prisma-validation-pattern-repository.ts",
+      "file": "src/shared/lib/products/services/validation-pattern-repository/removedOrm-validation-pattern-repository.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false

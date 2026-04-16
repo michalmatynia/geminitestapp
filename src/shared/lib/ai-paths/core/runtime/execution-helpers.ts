@@ -112,3 +112,17 @@ export const isAbortError = (error: unknown): boolean => {
   const name = (error as { name?: string }).name;
   return name === 'AbortError' || name === 'CanceledError' || name === 'AbortSignal';
 };
+
+export const resolveAbortSignalMessage = (
+  signal: AbortSignal | undefined,
+  fallback: string
+): string => {
+  const reason = (signal?.reason as unknown);
+  if (reason instanceof Error && typeof reason.message === 'string' && reason.message.trim()) {
+    return reason.message.trim();
+  }
+  if (typeof reason === 'string' && reason.trim()) {
+    return reason.trim();
+  }
+  return fallback;
+};

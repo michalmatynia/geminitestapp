@@ -13,6 +13,13 @@ import { DetailModal } from '@/shared/ui/templates/modals';
 
 import { PAGE_SIZES, calculateNodeStatusSummary, formatTimestamp } from './dead-letter-utils';
 import { useDeadLetterRuns } from '../hooks/useDeadLetterRuns';
+import {
+  collectPlaywrightRuntimePostures,
+  formatPlaywrightRuntimePostureBrowser,
+  formatPlaywrightRuntimePostureIdentity,
+  formatPlaywrightRuntimePostureProxy,
+  formatPlaywrightRuntimePostureStickyState,
+} from '../components/playwright-artifacts';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
@@ -74,7 +81,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
               table.getIsAllPageRowsSelected() ||
               (table.getIsSomePageRowsSelected() && 'indeterminate')
             }
-            onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+            onCheckedChange={(value) => table.toggleAllPageRowsSelected(Boolean(value))}
             aria-label='Select all'
           />
         ),
@@ -181,6 +188,10 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
   );
 
   const nodeStatusSummary = useMemo(() => calculateNodeStatusSummary(detail), [detail]);
+  const playwrightRuntimePostures = useMemo(
+    () => collectPlaywrightRuntimePostures(detail?.nodes ?? []),
+    [detail?.nodes]
+  );
 
   return (
     <PageLayout
@@ -355,6 +366,58 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                 )}
               </div>
             </FormSection>
+
+            {playwrightRuntimePostures.length > 0 ? (
+              <FormSection title='Playwright Runtime Posture' variant='subtle'>
+                <div className='space-y-3'>
+                  {playwrightRuntimePostures.map((runtimePosture) => (
+                    <Card
+                      key={`${runtimePosture.nodeId}:${runtimePosture.browserLabel ?? runtimePosture.browserEngine ?? 'runtime'}`}
+                      variant='subtle-compact'
+                      padding='sm'
+                      className='border-emerald-500/20 bg-emerald-500/5'
+                    >
+                      <div className='text-xs font-medium text-gray-200'>
+                        {runtimePosture.nodeTitle ?? runtimePosture.nodeId}
+                        {runtimePosture.nodeType ? ` (${runtimePosture.nodeType})` : ''}
+                      </div>
+                      <div className='mt-3 grid gap-3 md:grid-cols-2'>
+                        {[
+                          {
+                            label: 'Browser',
+                            value: formatPlaywrightRuntimePostureBrowser(runtimePosture),
+                          },
+                          {
+                            label: 'Identity',
+                            value: formatPlaywrightRuntimePostureIdentity(runtimePosture),
+                          },
+                          {
+                            label: 'Proxy',
+                            value: formatPlaywrightRuntimePostureProxy(runtimePosture),
+                          },
+                          {
+                            label: 'Sticky state',
+                            value: formatPlaywrightRuntimePostureStickyState(runtimePosture),
+                          },
+                        ]
+                          .filter(
+                            (entry): entry is { label: string; value: string } =>
+                              typeof entry.value === 'string' && entry.value.trim().length > 0
+                          )
+                          .map((entry) => (
+                            <div key={entry.label} className='space-y-1'>
+                              <Hint size='xxs' uppercase className='font-bold text-gray-500'>
+                                {entry.label}
+                              </Hint>
+                              <div className='text-xs text-gray-200'>{entry.value}</div>
+                            </div>
+                          ))}
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </FormSection>
+            ) : null}
 
             <div className='space-y-3'>
               <div className='flex items-center justify-between'>

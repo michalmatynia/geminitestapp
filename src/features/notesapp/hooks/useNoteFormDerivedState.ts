@@ -170,7 +170,7 @@ export function useNoteFormDerivedState({
         },
       });
     },
-    enabled: !!relatedNoteQuery,
+    enabled: Boolean(relatedNoteQuery),
     meta: {
       source: 'notes.context.NoteFormContext.relatedNoteSearch',
       operation: 'list',

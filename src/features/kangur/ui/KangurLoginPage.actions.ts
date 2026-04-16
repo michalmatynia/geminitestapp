@@ -1,7 +1,7 @@
 'use client';
 
 import { signIn } from 'next-auth/react';
-import { useTranslations } from 'next-intl';
+import { type useTranslations } from 'next-intl';
 import { useCallback, useMemo } from 'react';
 
 import {
@@ -9,7 +9,7 @@ import {
   KANGUR_PARENT_CAPTCHA_SITE_KEY,
 } from '@/features/kangur/ui/login-page/login-constants';
 import type { KangurLoginPageProps } from '@/features/kangur/ui/login-page/login-context';
-import { useKangurLoginPageState } from './KangurLoginPage.hooks';
+import { type useKangurLoginPageState } from './KangurLoginPage.hooks';
 import {
   isValidParentEmail,
   normalizeParentEmail,

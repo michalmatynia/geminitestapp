@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'nextjs-toploader/app';
 
 import { AdminDatabasePageLayout } from '@/shared/ui/admin.public';
 import { Button, Alert } from '@/shared/ui/primitives.public';
@@ -20,6 +20,7 @@ import {
   useDatabaseBackupsStateContext,
 } from '../context/DatabaseBackupsContext';
 import { DatabaseProvider } from '../context/DatabaseContext';
+import { startTransition } from 'react';
 
 function DatabasesContentInner(): React.JSX.Element {
   const router = useRouter();
@@ -78,7 +79,7 @@ function DatabasesContentInner(): React.JSX.Element {
           <Button
             variant='outline'
             onClick={(): void => {
-              router.push('/admin/databases/engine?view=operations');
+              startTransition(() => { router.push('/admin/databases/engine?view=operations'); });
             }}
           >
             Database Operations
@@ -86,7 +87,7 @@ function DatabasesContentInner(): React.JSX.Element {
           <Button
             variant='outline'
             onClick={(): void => {
-              router.push('/admin/databases/engine');
+              startTransition(() => { router.push('/admin/databases/engine'); });
             }}
           >
             Database Engine
@@ -111,7 +112,7 @@ function DatabasesContentInner(): React.JSX.Element {
       )}
 
       <ConfirmModal
-        isOpen={!!backupToDelete}
+        isOpen={Boolean(backupToDelete)}
         onClose={() => setBackupToDelete(null)}
         onConfirm={handleConfirmDelete}
         title='Delete Backup'

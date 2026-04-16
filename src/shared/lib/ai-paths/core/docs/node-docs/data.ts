@@ -137,6 +137,28 @@ export const databaseDocs: NodeConfigDocField[] = [
     description: 'When true, keeps inferred parameterIds missing from definitions.',
     defaultValue: 'false',
   },
+  {
+    path: 'database.localizedParameterMerge.enabled',
+    description:
+      'When enabled, merge incoming parameter updates into existing parameter rows and write localized values into valuesByLanguage.',
+    defaultValue: 'false',
+  },
+  {
+    path: 'database.localizedParameterMerge.targetPath',
+    description: 'Update field to merge (default: parameters).',
+    defaultValue: 'parameters',
+  },
+  {
+    path: 'database.localizedParameterMerge.languageCode',
+    description: 'Language code written into valuesByLanguage for merged parameter updates.',
+    defaultValue: '""',
+  },
+  {
+    path: 'database.localizedParameterMerge.requireFullCoverage',
+    description:
+      'When true, block the merged parameter write unless the incoming payload covers every existing parameter row.',
+    defaultValue: 'false',
+  },
   ...COMMON_RUNTIME_FIELDS,
 ];
 
@@ -157,6 +179,35 @@ export const dbSchemaDocs: NodeConfigDocField[] = [
     defaultValue: '[]',
   },
   {
+    path: 'db_schema.sourceMode',
+    description:
+      'schema = emit structure only; live_context = emit latest collection rows; schema_and_live_context = emit both.',
+    defaultValue: 'schema',
+  },
+  {
+    path: 'db_schema.contextCollections',
+    description:
+      'Collections to fetch as live context during runtime. Falls back to selected schema collections when empty.',
+    defaultValue: '[]',
+  },
+  {
+    path: 'db_schema.contextQuery',
+    description:
+      'Optional JSON filter or free-text search applied to each live context collection. Supports runtime templates such as `{{context.catalogId}}` or `{{bundle.categoryId}}`.',
+    defaultValue: '""',
+  },
+  {
+    path: 'db_schema.contextLimit',
+    description: 'Maximum documents fetched per live context collection during runtime.',
+    defaultValue: '20',
+  },
+  {
+    path: 'db_schema.contextReuseMode',
+    description:
+      'never = always fetch live context; prefer_transformed_input = reuse matching transformed input context when available, then fall back to fetch.',
+    defaultValue: 'never',
+  },
+  {
     path: 'db_schema.includeFields',
     description: 'Include field lists for each collection.',
     defaultValue: 'true',
@@ -164,12 +215,12 @@ export const dbSchemaDocs: NodeConfigDocField[] = [
   {
     path: 'db_schema.includeRelations',
     description: 'Include inferred relations/foreign key hints when available.',
-    defaultValue: 'false',
+    defaultValue: 'true',
   },
   {
     path: 'db_schema.formatAs',
-    description: 'json emits a JSON object; text emits a compact schema text for prompting.',
-    defaultValue: 'json',
+    description: 'json emits structured schema/context payloads; text emits prompt-ready context text.',
+    defaultValue: 'text',
   },
   ...COMMON_RUNTIME_FIELDS,
 ];

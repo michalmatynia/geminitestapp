@@ -39,7 +39,7 @@ function getSlotsStateMock() {
   };
 }
 
-vi.mock('@/shared/ui', async () => {
+vi.mock('@/shared/ui/primitives.public', async () => {
   const shared = await import('./rightSidebarRuntimeMockComponents');
   return {
     Button: shared.MockButton,
@@ -173,6 +173,12 @@ vi.mock('@/shared/lib/prompt-exploder/bridge', () => ({
 }));
 
 vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: mocks.routerPush,
+  }),
+}));
+
+vi.mock('nextjs-toploader/app', () => ({
   useRouter: () => ({
     push: mocks.routerPush,
   }),

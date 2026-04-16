@@ -5,7 +5,8 @@ import type {
   BaseImportItemStatus,
   BaseImportParameterImportSummary,
 } from './base-com';
-import type { Product as ProductRecord, CreateProduct as ProductCreateInput } from '../products';
+import type { Product as ProductRecord } from '../products';
+import type { ProductCreateInput } from '../products/io';
 
 export type ImportDecision =
   | { type: 'create' }
@@ -25,6 +26,7 @@ export type ProcessItemResult = {
   retryable?: boolean | null;
   nextRetryAt?: string | null;
   lastErrorAt?: string | null;
+  metadata?: Record<string, unknown>;
   payloadSnapshot?: ProductCreateInput | null;
   parameterImportSummary?: BaseImportParameterImportSummary | null;
 };

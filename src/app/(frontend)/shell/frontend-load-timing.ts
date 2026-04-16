@@ -20,6 +20,13 @@ export type FrontendLoadTimingPayload = {
   timingsMs: Record<string, number>;
 };
 
+type FrontendLoadTimingRecorder = {
+  withTiming: <T>(label: string, fn: () => Promise<T>) => Promise<T>;
+  buildPayload: (
+    payload: Omit<FrontendLoadTimingPayload, 'source' | 'timingsMs'>
+  ) => FrontendLoadTimingPayload | null;
+};
+
 const DEBUG_FRONTEND_TIMING_HEADERS = [
   'x-debug-frontend-timing',
   'x-debug-kangur-timing',
@@ -57,7 +64,9 @@ export const shouldEnableFrontendLoadTiming = (requestHeaders: Headers | null): 
   );
 };
 
-export const createFrontendLoadTimingRecorder = (enabled: boolean) => {
+export const createFrontendLoadTimingRecorder = (
+  enabled: boolean
+): FrontendLoadTimingRecorder => {
   const timingsMs: Record<string, number> = {};
   const totalStartedAt = performance.now();
 

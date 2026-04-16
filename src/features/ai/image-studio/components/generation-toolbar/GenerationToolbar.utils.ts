@@ -85,7 +85,7 @@ export const normalizeMaskShapeForExport = (shape: unknown): MaskShapeForExport 
 
   return {
     id,
-    type: type,
+    type,
     points,
     closed,
     visible,

@@ -1,6 +1,4 @@
-import { mkdir, readdir, stat, unlink, writeFile } from 'fs/promises';
-import path from 'path';
-
+import { createPlaywrightConnectionTestFailWithDebug } from '@/features/playwright/server';
 import { internalError } from '@/shared/errors/app-error';
 import {
   TRADERA_COOKIE_ACCEPT_SELECTORS,
@@ -123,52 +121,12 @@ export const createTraderaBrowserTestUtils = (input: {
     }
   };
 
-  const captureDebugArtifacts = async (label: string): Promise<string> => {
-    try {
-      const now = new Date().toISOString().replace(/[:.]/g, '-');
-      const safeLabel = label
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .slice(0, 40);
-      const baseDir = path.join(process.cwd(), 'playwright-debug');
-      await mkdir(baseDir, { recursive: true });
-      try {
-        const entries = await readdir(baseDir);
-        const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
-        await Promise.all(
-          entries.map(async (entry) => {
-            const entryPath = path.join(baseDir, entry);
-            const info = await stat(entryPath);
-            if (info.mtimeMs < cutoff) {
-              await unlink(entryPath);
-            }
-          })
-        );
-      } catch (error) {
-        logClientError(error);
-      
-        // best-effort cleanup only
-      }
-      const prefix = `${input.connectionId}-${now}-${safeLabel || 'debug'}`;
-      const screenshotPath = path.join(baseDir, `${prefix}.png`);
-      const htmlPath = path.join(baseDir, `${prefix}.html`);
-      await input.page.screenshot({ path: screenshotPath, fullPage: true }).catch(() => undefined);
-      const html = await input.page.content().catch(() => '');
-      if (html) {
-        await writeFile(htmlPath, html, 'utf8');
-      }
-      return `Screenshot: ${screenshotPath}\nHTML: ${htmlPath}`;
-    } catch (error) {
-      logClientError(error);
-      return '';
-    }
-  };
-
-  const failWithDebug = async (step: string, detail: string, status = 400): Promise<never> => {
-    const debugInfo = await captureDebugArtifacts(step);
-    const combined = debugInfo ? `${detail}\n\nDebug:\n${debugInfo}` : detail;
-    return input.fail(step, combined, status);
-  };
+  const failWithDebug = createPlaywrightConnectionTestFailWithDebug({
+    page: input.page,
+    connectionId: input.connectionId,
+    fail: input.fail,
+    onError: logClientError,
+  });
 
   const humanizedPause = async (
     min = input.actionDelayMin,
@@ -220,7 +178,23 @@ export const createTraderaBrowserTestUtils = (input: {
       );
       if (!visible) continue;
       try {
-        await humanizedClick(locator);
+        await locator.scrollIntoViewIfNeeded().catch(() => undefined);
+        try {
+          await locator.click({ timeout: 2_000 });
+        } catch {
+          const clicked = await locator
+            .evaluate((element) => {
+              if (element instanceof HTMLElement) {
+                element.click();
+                return true;
+              }
+              return false;
+            })
+            .catch(() => false);
+          if (!clicked) {
+            await humanizedClick(locator);
+          }
+        }
         await input.page.waitForTimeout(600);
         return true;
       } catch (error) {

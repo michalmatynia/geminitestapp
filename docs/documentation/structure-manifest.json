@@ -83,6 +83,34 @@
       "mode": "complete_direct_files"
     },
     {
+      "path": "docs/build/improvements",
+      "mode": "complete_direct_files"
+    },
+    {
+      "path": "docs/build/improvements/application-performance",
+      "mode": "complete_direct_files"
+    },
+    {
+      "path": "docs/build/improvements/products-category-schema-normalization",
+      "mode": "complete_direct_files"
+    },
+    {
+      "path": "docs/build/improvements/products-parameter-integrity",
+      "mode": "complete_direct_files"
+    },
+    {
+      "path": "docs/build/improvements/repo-quality-baseline",
+      "mode": "complete_direct_files"
+    },
+    {
+      "path": "docs/build/improvements/testing-quality-baseline",
+      "mode": "complete_direct_files"
+    },
+    {
+      "path": "docs/build/improvements/ui-consolidation",
+      "mode": "complete_direct_files"
+    },
+    {
       "path": "docs/plans",
       "mode": "complete_direct_files"
     },
@@ -265,6 +293,20 @@
     "docs/build/vercel-deployment.md",
     "docs/build/codeql.md",
     "docs/build/general-improvements.md",
+    "docs/build/improvements/README.md",
+    "docs/build/improvements/scan-latest.md",
+    "docs/build/improvements/application-performance/README.md",
+    "docs/build/improvements/application-performance/scan-latest.md",
+    "docs/build/improvements/products-category-schema-normalization/README.md",
+    "docs/build/improvements/products-category-schema-normalization/scan-latest.md",
+    "docs/build/improvements/products-parameter-integrity/README.md",
+    "docs/build/improvements/products-parameter-integrity/scan-latest.md",
+    "docs/build/improvements/repo-quality-baseline/README.md",
+    "docs/build/improvements/repo-quality-baseline/scan-latest.md",
+    "docs/build/improvements/testing-quality-baseline/README.md",
+    "docs/build/improvements/testing-quality-baseline/scan-latest.md",
+    "docs/build/improvements/ui-consolidation/README.md",
+    "docs/build/improvements/ui-consolidation/scan-latest.md",
     "docs/plans/README.md",
     "docs/decisions/README.md",
     "docs/runbooks/README.md",
@@ -276,6 +318,7 @@
     "docs/metrics/api-input-validation-latest.md",
     "docs/metrics/baseline-latest.md",
     "docs/metrics/bundle-budgets-latest.md",
+    "docs/metrics/client-boundaries-latest.md",
     "docs/metrics/context-health-latest.md",
     "docs/metrics/critical-flow-tests-latest.md",
     "docs/metrics/critical-path-performance-latest.md",
@@ -286,6 +329,7 @@
     "docs/metrics/domain-scans/type-clusters-shared-contracts-latest.md",
     "docs/metrics/domain-scans/type-clusters-shared-latest.md",
     "docs/metrics/env-contract-latest.md",
+    "docs/metrics/external-rule-parity-latest.md",
     "docs/metrics/high-risk-coverage-latest.md",
     "docs/metrics/import-boundaries-latest.md",
     "docs/metrics/integration-mongo-latest.md",
@@ -303,9 +347,9 @@
     "docs/metrics/security-static-latest.md",
     "docs/metrics/storage-and-files-latest.md",
     "docs/metrics/test-distribution-latest.md",
+    "docs/metrics/testing-quality-snapshot-latest.md",
     "docs/metrics/testing-run-ledger-latest.md",
     "docs/metrics/testing-suite-inventory-latest.md",
-    "docs/metrics/testing-quality-snapshot-latest.md",
     "docs/metrics/timer-cleanup-latest.md",
     "docs/metrics/trend-index-latest.md",
     "docs/metrics/type-clusters-domain-scan-latest.md",

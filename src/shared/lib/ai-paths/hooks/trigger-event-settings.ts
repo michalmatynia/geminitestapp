@@ -12,16 +12,66 @@ import {
   sanitizeTriggerPathConfig,
 } from '@/shared/lib/ai-paths/core/normalization/trigger-normalization';
 import { materializeStoredTriggerPathConfig } from '@/shared/lib/ai-paths/core/normalization/stored-trigger-path-config';
-import { persistLegacyTriggerContextModeRepair } from '@/shared/lib/ai-paths/legacy-trigger-context-mode-persistence';
 import {
   fetchAiPathsSettingsCached,
   fetchAiPathsSettingsByKeysCached,
-  updateAiPathsSetting,
-  updateAiPathsSettingsBulk,
 } from '@/shared/lib/ai-paths/settings-store-client';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 export const TRIGGER_SETTINGS_PRELOAD_TIMEOUT_MS = 8_000;
+const TRIGGER_PATH_CONFIG_CACHE_MAX_ENTRIES = 64;
+const triggerPathConfigCache = new Map<string, { rawConfig: string; config: PathConfig }>();
+
+const readTriggerPathConfigCache = (pathId: string, rawConfig: string): PathConfig | null => {
+  const cached = triggerPathConfigCache.get(pathId) ?? null;
+  if (cached?.rawConfig !== rawConfig) {
+    return null;
+  }
+  triggerPathConfigCache.delete(pathId);
+  triggerPathConfigCache.set(pathId, cached);
+  return cached.config;
+};
+
+const writeTriggerPathConfigCache = (
+  pathId: string,
+  rawConfig: string,
+  config: PathConfig
+): void => {
+  if (triggerPathConfigCache.has(pathId)) {
+    triggerPathConfigCache.delete(pathId);
+  }
+  triggerPathConfigCache.set(pathId, { rawConfig, config });
+  if (triggerPathConfigCache.size <= TRIGGER_PATH_CONFIG_CACHE_MAX_ENTRIES) {
+    return;
+  }
+  const oldestKey = triggerPathConfigCache.keys().next().value;
+  if (typeof oldestKey === 'string') {
+    triggerPathConfigCache.delete(oldestKey);
+  }
+};
+
+export const __resetTriggerPathConfigCacheForTests = (): void => {
+  triggerPathConfigCache.clear();
+};
+
+export const loadTriggerPathConfigCached = (args: {
+  pathId: string;
+  rawConfig: string;
+}): PathConfig => {
+  const cached = readTriggerPathConfigCache(args.pathId, args.rawConfig);
+  if (cached) {
+    return cached;
+  }
+  const config = materializeStoredTriggerPathConfig({
+    pathId: args.pathId,
+    rawConfig: args.rawConfig,
+    fallbackName: args.pathId,
+    applyStarterWorkflowUpgrade: true,
+    allowStaticRecoveryFallback: true,
+  }).config;
+  writeTriggerPathConfigCache(args.pathId, args.rawConfig, config);
+  return config;
+};
 
 export const resolveRuntimeStateHint = (value: unknown): RuntimeState | null => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -63,40 +113,12 @@ export const buildSelectiveTriggerSettingsData = async (
       }
     );
   }
-
-  let preferredPathName = `Path ${preferredPathId.slice(0, 6)}`;
-  try {
-    const parsed = JSON.parse(configRecord.value) as { name?: unknown };
-    if (typeof parsed?.name === 'string' && parsed.name.trim().length > 0) {
-      preferredPathName = parsed.name.trim();
-    }
-  } catch (error) {
-    logClientCatch(error, {
-      source: 'useAiPathTriggerEvent',
-      action: 'parsePreferredPathConfigName',
-      preferredPathId,
-    });
-
-    // Keep fallback name when config is malformed.
-  }
-
-  const timestamp = new Date().toISOString();
-  const syntheticIndex = JSON.stringify([
-    {
-      id: preferredPathId,
-      name: preferredPathName,
-      createdAt: timestamp,
-      updatedAt: timestamp,
-    },
-  ]);
-  const baseRecords = selectiveRecords.filter(
-    (item: { key: string }) => item.key !== PATH_INDEX_KEY && item.key !== preferredConfigKey
+  return selectiveRecords.filter(
+    (item: { key: string }) =>
+      item.key === AI_PATHS_HISTORY_RETENTION_KEY ||
+      item.key === AI_PATHS_UI_STATE_KEY ||
+      item.key === preferredConfigKey
   );
-  return [
-    ...baseRecords,
-    { key: PATH_INDEX_KEY, value: syntheticIndex },
-    { key: preferredConfigKey, value: configRecord.value },
-  ];
 };
 
 export const loadTriggerSettingsData = async (args: {
@@ -195,7 +217,6 @@ export const loadPathConfigsFromSettings = async (
   const configs: Record<string, PathConfig> = {};
   const retainedMetas: PathMeta[] = [];
   let removedMissingConfigEntries = false;
-  const pendingRepairs: Array<{ key: string; value: string }> = [];
 
   normalizedMetas.forEach((meta: PathMeta): void => {
     if (!meta?.id) return;
@@ -206,51 +227,16 @@ export const loadPathConfigsFromSettings = async (
       return;
     }
 
-    const resolvedConfig = materializeStoredTriggerPathConfig({
+    const normalizedConfig = loadTriggerPathConfigCached({
       pathId: meta.id,
       rawConfig: configRaw,
-      fallbackName: meta.name,
-    });
-    const normalizedConfig = resolvedConfig.config;
-    if (resolvedConfig.changed) {
-      pendingRepairs.push({
-        key: configKey,
-        value: JSON.stringify(normalizedConfig),
-      });
-    }
-    void persistLegacyTriggerContextModeRepair({
-      pathId: meta.id,
-      rawPayload: configRaw,
-      repairedConfig: resolvedConfig.config,
-      source: 'useAiPathTriggerEvent',
-      action: 'persistLegacyTriggerContextModeRepair',
     });
 
     configs[meta.id] = normalizedConfig;
     retainedMetas.push(meta);
   });
 
-  if (removedMissingConfigEntries) {
-    pendingRepairs.push({
-      key: PATH_INDEX_KEY,
-      value: JSON.stringify(retainedMetas),
-    });
-  }
-
-  if (pendingRepairs.length === 1) {
-    const [repair] = pendingRepairs;
-    if (repair) {
-      void updateAiPathsSetting(repair.key, repair.value).catch(() => {
-        // Best-effort repair only. Trigger loading should remain usable even if persistence fails.
-      });
-    }
-  } else if (pendingRepairs.length > 1) {
-    void updateAiPathsSettingsBulk(pendingRepairs).catch(() => {
-      // Best-effort repair only. Trigger loading should remain usable even if persistence fails.
-    });
-  }
-
-  const settingsPathOrder = retainedMetas
+  const settingsPathOrder = (removedMissingConfigEntries ? retainedMetas : normalizedMetas)
     .map((meta: PathMeta) => meta?.id)
     .filter((id: string | undefined): id is string => typeof id === 'string' && id.length > 0);
 

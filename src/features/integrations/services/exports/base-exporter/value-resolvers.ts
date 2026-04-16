@@ -1,10 +1,10 @@
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 import {
-  ProducerNameLookup,
-  ProducerExternalIdLookup,
-  TagNameLookup,
-  TagExternalIdLookup,
+  type ProducerNameLookup,
+  type ProducerExternalIdLookup,
+  type TagNameLookup,
+  type TagExternalIdLookup,
   getProducerNameFromLookup,
   getProducerExternalIdFromLookup,
   getTagNameFromLookup,
@@ -24,7 +24,7 @@ import {
   parseParameterSourceKey,
   IMAGE_TARGET_FIELDS,
 } from './template-helpers';
-import { ImageExportLogger } from '../base-exporter-images';
+import { type ImageExportLogger } from '../base-exporter-images';
 import { getAllImageUrls, getImageSlotUrl } from '../base-exporter-images';
 
 type ExportValueLookupOptions = {
@@ -212,12 +212,7 @@ const collectResolvedValueList = (
 export const getProductValue = (
   product: ProductWithImages,
   sourceKey: string,
-  imageBaseUrl?: string | null,
-  diagnostics?: ImageExportLogger,
-  producerNameById?: ProducerNameLookup,
-  producerExternalIdByInternalId?: ProducerExternalIdLookup,
-  tagNameById?: TagNameLookup,
-  tagExternalIdByInternalId?: TagExternalIdLookup
+  options?: ExportValueLookupOptions
 ): unknown => {
   if (!sourceKey) return null;
 
@@ -234,15 +229,6 @@ export const getProductValue = (
   if (CATEGORY_SOURCE_KEYS.has(normalized)) {
     return getProductCategoryId(product);
   }
-
-  const options: ExportValueLookupOptions = {
-    imageBaseUrl,
-    diagnostics,
-    producerNameById,
-    producerExternalIdByInternalId,
-    tagNameById,
-    tagExternalIdByInternalId,
-  };
 
   const producerValue = resolveProducerSourceValue(normalized, product, options);
   if (producerValue !== undefined) return producerValue;

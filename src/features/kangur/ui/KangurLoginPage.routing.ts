@@ -33,6 +33,13 @@ type KangurLoginPageSanitizeManagedHref = (input: {
   fallbackHref: string;
 }) => string | null | undefined;
 
+type KangurLoginPageContextValue = Pick<
+  KangurLoginPageProps,
+  'callbackUrl' | 'onClose' | 'parentAuthMode' | 'showParentAuthModeTabs'
+> & {
+  defaultCallbackUrl: string;
+};
+
 const resolveKangurLoginPageCurrentOrigin = (): string | null =>
   typeof window === 'undefined' ? null : window.location.origin;
 
@@ -109,7 +116,7 @@ export const resolveKangurLoginPageContextValue = ({
   routing: KangurLoginPageRouting;
   sanitizeManagedHref: KangurLoginPageSanitizeManagedHref;
   searchParams: KangurLoginPageSearchParamsLike;
-}) => {
+}): KangurLoginPageContextValue => {
   const defaultCallbackUrl = resolveKangurLoginPageDefaultCallbackUrl({
     pathname,
     props,

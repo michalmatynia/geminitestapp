@@ -13,6 +13,8 @@ import {
   resolveScriptInputImageSource,
 } from './tradera-browser-images.helpers';
 
+import { getDiskPathFromPublicPath } from '@/shared/lib/files/file-uploader';
+
 export const MIN_TRADERA_IMAGE_BYTES = 10_240;
 const TRADERA_ORDERED_UPLOAD_DIR_PREFIX = 'tradera-upload-order-';
 
@@ -45,7 +47,7 @@ export const toAbsolutePublicFilePath = (value: string): string | null => {
 
   const publicPath = getPublicPathFromStoredPath(trimmed);
   if (!publicPath?.startsWith('/')) return null;
-  return path.join(process.cwd(), 'public', publicPath.replace(/^\/+/, ''));
+  return getDiskPathFromPublicPath(publicPath);
 };
 
 const validateLocalProductImagePath = async (candidate: string): Promise<string | null> => {
@@ -129,7 +131,11 @@ const stageOrderedLocalProductImagePaths = async ({
 
   for (let index = 0; index < localImagePaths.length; index += 1) {
     const sourcePath = localImagePaths[index];
-    const extension = resolveOrderedUploadExtension(sourcePath, imageUrls[index] ?? null);
+    if (!sourcePath) {
+      continue;
+    }
+    const imageUrl = imageUrls[index];
+    const extension = resolveOrderedUploadExtension(sourcePath, imageUrl ?? null);
     const filename = `${prefix}_${String(index + 1).padStart(padWidth, '0')}${extension}`;
     const stagedPath = path.join(directory, filename);
     await copyFile(sourcePath, stagedPath);

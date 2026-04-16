@@ -1,8 +1,6 @@
 import { Suspense } from 'react';
 
-import { FolderTreeShellRuntimePreviewClient } from '@/shared/lib/foldertree/public';
-
-export const dynamic = 'force-dynamic';
+import FolderTreeShellRuntimePreviewClient from '@/shared/lib/foldertree/pages/FolderTreeShellRuntimePreviewClient';
 
 export default function FolderTreeShellRuntimePreviewPage(): React.JSX.Element {
   return (

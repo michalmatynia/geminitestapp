@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({
   priceGroupFindOne: vi.fn(),
   currencyFindOne: vi.fn(),
+  callBaseApi: vi.fn(),
 }));
 
 vi.mock('@/shared/lib/db/mongo-client', () => ({
@@ -34,6 +35,7 @@ vi.mock('@/features/integrations/services/base-token-resolver', () => ({
 }));
 
 vi.mock('@/features/integrations/services/imports/base-client', () => ({
+  callBaseApi: (...args: unknown[]) => mocks.callBaseApi(...args),
   fetchBaseProductDetails: vi.fn(),
 }));
 
@@ -72,7 +74,43 @@ describe('resolvePriceGroupContext', () => {
     );
     expect(result).toEqual({
       defaultPriceGroupId: 'group-pln',
-      preferredCurrencies: ['PLN'],
+      preferredCurrencies: ['PLN', 'PLNSTANDARD', 'CURRENCYPLN'],
+    });
+  });
+
+  it('adds matching Base inventory price-group ids to the preferred identifiers', async () => {
+    mocks.callBaseApi.mockResolvedValue({
+      status: 'SUCCESS',
+      price_groups: [
+        {
+          price_group_id: 3772,
+          name: 'Domyslna',
+          currency: 'PLN',
+        },
+        {
+          price_group_id: 29877,
+          name: 'GBP Automat',
+          currency: 'GBP',
+        },
+        {
+          price_group_id: 77295,
+          name: 'Allegro Portfele Obnizka',
+          currency: 'PLN',
+        },
+      ],
+    });
+
+    const result = await resolvePriceGroupContext('mongodb' as never, 'PLN_STANDARD', {
+      baseToken: 'token-1',
+      inventoryId: '4069',
+    });
+
+    expect(mocks.callBaseApi).toHaveBeenCalledWith('token-1', 'getInventoryPriceGroups', {
+      inventory_id: '4069',
+    });
+    expect(result).toEqual({
+      defaultPriceGroupId: 'group-pln',
+      preferredCurrencies: ['PLN', 'PLNSTANDARD', 'CURRENCYPLN', '3772', '77295'],
     });
   });
 });

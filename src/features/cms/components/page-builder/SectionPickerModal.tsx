@@ -90,10 +90,10 @@ const CategorySection = ({ title, items }: CategorySectionProps): React.ReactNod
       <div className='mb-2 text-xs font-medium uppercase tracking-wide text-gray-400'>{title}</div>
       <GenericGridPicker
         items={pickerItems}
-        onSelect={(item: any) => {
+        onSelect={(item: GridPickerItem<SectionDefinition>) => {
           if (item.value) onSelect(item.value.type);
         }}
-        renderItem={(item: any) => {
+        renderItem={(item: GridPickerItem<SectionDefinition>) => {
           const def = item.value;
           if (!def) return null;
           return (

@@ -32,6 +32,44 @@ type CacheEntry = {
   insertedAt: number;
 };
 
+type ResolvedOptimizationOptions = {
+  formats: ImageFormat[];
+  sizes: Record<ImageSize, ImageSizeConfig>;
+  quality: number;
+  progressive: boolean;
+  fit: NonNullable<OptimizationOptions['fit']>;
+  withoutEnlargement: boolean;
+};
+
+const DEFAULT_FIT: NonNullable<OptimizationOptions['fit']> = 'inside';
+
+function resolveFormats(options: OptimizationOptions): ImageFormat[] {
+  return options.formats ?? DEFAULT_OPTIONS.formats ?? [];
+}
+
+function resolveSizes(options: OptimizationOptions): Record<ImageSize, ImageSizeConfig> {
+  return { ...DEFAULT_IMAGE_SIZES, ...(options.sizes ?? {}) };
+}
+
+function resolveQuality(options: OptimizationOptions): number {
+  return options.quality ?? DEFAULT_OPTIONS.quality ?? 85;
+}
+
+function resolveProgressive(options: OptimizationOptions): boolean {
+  return options.progressive ?? DEFAULT_OPTIONS.progressive ?? true;
+}
+
+function resolveOptimizationOptions(options: OptimizationOptions): ResolvedOptimizationOptions {
+  return {
+    formats: resolveFormats(options),
+    sizes: resolveSizes(options),
+    quality: resolveQuality(options),
+    progressive: resolveProgressive(options),
+    fit: options.fit ?? DEFAULT_FIT,
+    withoutEnlargement: options.withoutEnlargement ?? true,
+  };
+}
+
 export class ImageOptimizer {
   private cache: Map<string, CacheEntry> = new Map<string, CacheEntry>();
   private readonly maxEntries: number;
@@ -66,77 +104,128 @@ export class ImageOptimizer {
     return `${hash}:${optionsHash}`;
   }
 
+  private getCachedResult(cacheKey: string): OptimizedImageResult[] | null {
+    const cached = this.cache.get(cacheKey);
+    if (!cached) return null;
+
+    if (Date.now() - cached.insertedAt < this.ttlMs) {
+      return cached.result;
+    }
+
+    this.cache.delete(cacheKey);
+    return null;
+  }
+
+  private createProcessor(
+    image: sharp.Sharp,
+    metadataWidth: number,
+    sizeConfig: ImageSizeConfig,
+    options: ResolvedOptimizationOptions
+  ): sharp.Sharp {
+    let processor = image.clone();
+
+    if (sizeConfig.width < metadataWidth) {
+      processor = processor.resize(sizeConfig.width, sizeConfig.height, {
+        fit: options.fit,
+        withoutEnlargement: options.withoutEnlargement,
+      });
+    }
+
+    return processor;
+  }
+
+  private applyFormat(
+    processor: sharp.Sharp,
+    format: ImageFormat,
+    quality: number,
+    progressive: boolean
+  ): sharp.Sharp {
+    switch (format) {
+      case 'webp':
+        return processor.webp({ quality });
+      case 'avif':
+        return processor.avif({ quality });
+      case 'jpeg':
+        return processor.jpeg({ quality, progressive });
+      case 'png':
+        return processor.png({ quality, progressive });
+      default:
+        return processor;
+    }
+  }
+
+  private logOptimizationFailure(error: unknown, format: ImageFormat, size: ImageSize): void {
+    logClientError(error);
+    ErrorSystem.logWarning(`Failed to optimize image for ${format}/${size}`, {
+      service: 'image-optimizer',
+      format,
+      sizeName: size,
+      error,
+    }).catch(() => undefined);
+  }
+
+  private async buildOptimizedResult(
+    image: sharp.Sharp,
+    metadataWidth: number,
+    target: { format: ImageFormat; size: ImageSize; sizeConfig: ImageSizeConfig },
+    options: ResolvedOptimizationOptions
+  ): Promise<OptimizedImageResult | null> {
+    try {
+      const { format, size, sizeConfig } = target;
+      const quality = sizeConfig.quality ?? options.quality;
+      const processor = this.applyFormat(
+        this.createProcessor(image, metadataWidth, sizeConfig, options),
+        format,
+        quality,
+        options.progressive
+      );
+      const buffer = await processor.toBuffer();
+      const info = await sharp(buffer).metadata();
+
+      return {
+        format,
+        size,
+        buffer,
+        width: info.width,
+        height: info.height,
+        fileSize: buffer.length,
+      };
+    } catch (error) {
+      this.logOptimizationFailure(error, target.format, target.size);
+      return null;
+    }
+  }
+
   async optimize(
     input: Buffer | string,
     options: OptimizationOptions = {}
   ): Promise<OptimizedImageResult[]> {
-    const opts = { ...DEFAULT_OPTIONS, ...options };
+    const resolvedOptions = resolveOptimizationOptions(options);
     const inputBuffer = typeof input === 'string' ? Buffer.from(input, 'base64') : input;
+    const cacheKey = this.getCacheKey(inputBuffer, resolvedOptions);
+    const cached = this.getCachedResult(cacheKey);
+    if (cached) return cached;
 
-    const cacheKey = this.getCacheKey(inputBuffer, opts);
-    const cached = this.cache.get(cacheKey);
-    if (cached) {
-      if (Date.now() - cached.insertedAt < this.ttlMs) return cached.result;
-      this.cache.delete(cacheKey);
-    }
-
-    const results: OptimizedImageResult[] = [];
     const image = sharp(inputBuffer);
     const metadata = await image.metadata();
-
-    for (const format of opts.formats!) {
-      for (const [sizeName, sizeConfig] of Object.entries(opts.sizes!)) {
-        try {
-          let processor = image.clone();
-
-          // Resize if needed
-          if (sizeConfig.width < (metadata.width || 0)) {
-            processor = processor.resize(sizeConfig.width, sizeConfig.height, {
-              fit: 'inside',
-              withoutEnlargement: true,
-            });
-          }
-
-          // Apply format-specific optimizations
-          const quality = sizeConfig.quality || opts.quality!;
-
-          switch (format) {
-            case 'webp':
-              processor = processor.webp({ quality });
-              break;
-            case 'avif':
-              processor = processor.avif({ quality });
-              break;
-            case 'jpeg':
-              processor = processor.jpeg({ quality, progressive: opts.progressive });
-              break;
-            case 'png':
-              processor = processor.png({ quality, progressive: opts.progressive });
-              break;
-          }
-
-          const buffer = await processor.toBuffer();
-          const info = await sharp(buffer).metadata();
-
-          results.push({
+    const metadataWidth = metadata.width;
+    const optimizationTasks = resolvedOptions.formats.flatMap((format: ImageFormat) =>
+      Object.entries(resolvedOptions.sizes).map(async ([sizeName, sizeConfig]) =>
+        this.buildOptimizedResult(
+          image,
+          metadataWidth,
+          {
             format,
             size: sizeName as ImageSize,
-            buffer,
-            width: info.width || 0,
-            height: info.height || 0,
-            fileSize: buffer.length,
-          });
-        } catch (error) {
-          logClientError(error);
-          void ErrorSystem.logWarning(`Failed to optimize image for ${format}/${sizeName}`, {
-            service: 'image-optimizer',
-            format,
-            sizeName,
-            error,
-          });
-        }
-      }
-    }
+            sizeConfig,
+          },
+          resolvedOptions
+        )
+      )
+    );
+    const results = (await Promise.all(optimizationTasks)).filter(
+      (result: OptimizedImageResult | null): result is OptimizedImageResult => result !== null
+    );
 
     this.evict();
     this.cache.set(cacheKey, { result: results, insertedAt: Date.now() });
@@ -160,10 +249,15 @@ export class ImageOptimizer {
   }
 
   getBestFormat(userAgent?: string): ImageFormat {
-    if (!userAgent) return 'webp';
+    const normalizedUserAgent = userAgent?.trim();
+    if (normalizedUserAgent === undefined || normalizedUserAgent.length === 0) return 'webp';
 
-    if (userAgent.includes('Chrome') && !userAgent.includes('Edge')) return 'avif';
-    if (userAgent.includes('Firefox') || userAgent.includes('Chrome')) return 'webp';
+    if (normalizedUserAgent.includes('Chrome') && !normalizedUserAgent.includes('Edge')) {
+      return 'avif';
+    }
+    if (normalizedUserAgent.includes('Firefox') || normalizedUserAgent.includes('Chrome')) {
+      return 'webp';
+    }
     return 'jpeg';
   }
 

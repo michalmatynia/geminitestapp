@@ -2,8 +2,9 @@
 
 import { useCallback, useMemo, useRef } from 'react';
 
-import type { AiNode } from '@/shared/lib/ai-paths';
-import { CANVAS_HEIGHT, CANVAS_WIDTH, clampScale, VIEW_MARGIN, NODE_MIN_HEIGHT, NODE_WIDTH } from '@/shared/lib/ai-paths';
+import type { AiNode } from '@/shared/contracts/ai-paths';
+import { CANVAS_HEIGHT, CANVAS_WIDTH, NODE_MIN_HEIGHT, NODE_WIDTH, VIEW_MARGIN } from '@/shared/lib/ai-paths/core/constants';
+import { clampScale } from '@/shared/lib/ai-paths/core/utils/graph';
 
 import {
   ZOOM_ANIMATION_DURATION_MS,
@@ -35,11 +36,13 @@ export interface UseCanvasInteractionsNavigationValue {
     deltaY: number,
     clientX: number,
     clientY: number,
-    deltaMode?: number,
-    ctrlKey?: boolean,
-    metaKey?: boolean,
-    deltaX?: number,
-    options?: { immediate?: boolean }
+    options?: {
+      deltaMode?: number;
+      ctrlKey?: boolean;
+      metaKey?: boolean;
+      deltaX?: number;
+      immediate?: boolean;
+    }
   ) => void;
   wheelZoomRafRef: React.MutableRefObject<number | null>;
   viewAnimationRafRef: React.MutableRefObject<number | null>;
@@ -426,13 +429,20 @@ export function useCanvasInteractionsNavigation({
       deltaY: number,
       clientX: number,
       clientY: number,
-      deltaMode = 0,
-      ctrlKey = false,
-      metaKey = false,
-      deltaX = 0,
-      options?: { immediate?: boolean }
+      options?: {
+        deltaMode?: number;
+        ctrlKey?: boolean;
+        metaKey?: boolean;
+        deltaX?: number;
+        immediate?: boolean;
+      }
     ): void => {
       stopProgrammaticViewAnimation();
+      const deltaMode = options?.deltaMode ?? 0;
+      const ctrlKey = options?.ctrlKey ?? false;
+      const metaKey = options?.metaKey ?? false;
+      const deltaX = options?.deltaX ?? 0;
+
       // Some macOS trackpad pinch streams report minimal deltaY and meaningful deltaX.
       const normalizedDeltaYRaw = Number.isFinite(deltaY) ? deltaY : 0;
       const normalizedDeltaXRaw = Number.isFinite(deltaX) ? deltaX : 0;

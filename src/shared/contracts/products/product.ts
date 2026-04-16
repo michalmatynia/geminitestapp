@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { localizedSchema, dtoBaseSchema, namedDtoSchema } from '../base';
 import { imageFileRecordSchema } from '../files';
 import { catalogSchema } from './catalogs';
+import { productCustomFieldValueSchema } from './custom-fields';
 import { priceGroupSchema } from './catalogs';
 import { productCategorySchema } from './categories';
 import { producerSchema } from './producers';
@@ -135,6 +136,170 @@ export const resolvedProductParameterValueSchema = productParameterValueSchema.e
 
 export type ResolvedProductParameterValue = z.infer<typeof resolvedProductParameterValueSchema>;
 
+const normalizeTrimmedString = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const normalizeNullableOverrideText = (value: unknown): string | null => {
+  if (value === null || value === undefined) return null;
+  return normalizeTrimmedString(value);
+};
+
+const normalizeOverrideIntegrationIds = (value: unknown): string[] => {
+  if (!Array.isArray(value)) return [];
+  const unique = new Set<string>();
+  value.forEach((entry: unknown) => {
+    const normalized = normalizeTrimmedString(entry);
+    if (!normalized) return;
+    unique.add(normalized);
+  });
+  return Array.from(unique);
+};
+
+const normalizeProductMarketplaceContentOverrideEntry = (
+  value: unknown
+): ProductMarketplaceContentOverrideDraft | null => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+
+  const record = value as Record<string, unknown>;
+  return {
+    integrationIds: normalizeOverrideIntegrationIds(record['integrationIds']),
+    title: normalizeNullableOverrideText(record['title']),
+    description: normalizeNullableOverrideText(record['description']),
+  };
+};
+
+export const normalizeProductMarketplaceContentOverrideDrafts = (
+  value: unknown
+): ProductMarketplaceContentOverrideDraft[] => {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .map((entry: unknown): ProductMarketplaceContentOverrideDraft | null =>
+      normalizeProductMarketplaceContentOverrideEntry(entry)
+    )
+    .filter(
+      (
+        entry: ProductMarketplaceContentOverrideDraft | null
+      ): entry is ProductMarketplaceContentOverrideDraft => entry !== null
+    );
+};
+
+export const productMarketplaceContentOverrideDraftSchema = z.object({
+  integrationIds: z.array(z.string()).default([]),
+  title: z.string().nullable().optional(),
+  description: z.string().nullable().optional(),
+});
+
+export type ProductMarketplaceContentOverrideDraft = z.infer<
+  typeof productMarketplaceContentOverrideDraftSchema
+>;
+
+export const productMarketplaceContentOverrideSchema =
+  productMarketplaceContentOverrideDraftSchema.superRefine((entry, ctx) => {
+    if (entry.integrationIds.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['integrationIds'],
+        message: 'Select at least one marketplace integration.',
+      });
+    }
+  });
+
+export type ProductMarketplaceContentOverride = z.infer<
+  typeof productMarketplaceContentOverrideSchema
+>;
+
+export const normalizeProductMarketplaceContentOverrides = (
+  value: unknown
+): ProductMarketplaceContentOverride[] =>
+  normalizeProductMarketplaceContentOverrideDrafts(value).filter(
+    (entry: ProductMarketplaceContentOverrideDraft): entry is ProductMarketplaceContentOverride =>
+      entry.integrationIds.length > 0
+  );
+
+const validateMarketplaceContentOverrideUniqueness = (
+  entries: ProductMarketplaceContentOverrideDraft[],
+  ctx: z.RefinementCtx
+): void => {
+  const assignedIntegrationIndex = new Map<string, number>();
+
+  entries.forEach((entry: ProductMarketplaceContentOverrideDraft, index: number) => {
+    entry.integrationIds.forEach((integrationId: string) => {
+      const previousIndex = assignedIntegrationIndex.get(integrationId);
+      if (previousIndex === undefined) {
+        assignedIntegrationIndex.set(integrationId, index);
+        return;
+      }
+
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [index, 'integrationIds'],
+        message: 'Each marketplace integration can only belong to one alternate copy rule.',
+      });
+    });
+  });
+};
+
+export const productMarketplaceContentOverrideDraftsSchema = z
+  .preprocess(
+    (value: unknown): ProductMarketplaceContentOverrideDraft[] =>
+      normalizeProductMarketplaceContentOverrideDrafts(value),
+    z.array(productMarketplaceContentOverrideDraftSchema)
+  )
+  .superRefine(validateMarketplaceContentOverrideUniqueness);
+
+export const productMarketplaceContentOverridesSchema = z
+  .preprocess(
+    (value: unknown): ProductMarketplaceContentOverrideDraft[] =>
+      normalizeProductMarketplaceContentOverrideDrafts(value),
+    z.array(productMarketplaceContentOverrideSchema)
+  )
+  .superRefine(validateMarketplaceContentOverrideUniqueness);
+
+const toProductNotesRecord = (value: unknown): Record<string, unknown> | null =>
+  value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
+
+const toTrimmedProductNotesValue = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+export const normalizeProductNotes = (
+  value: unknown
+): { text: string | null; color: string | null } | null => {
+  const record = toProductNotesRecord(value);
+  if (!record) return null;
+
+  const text = toTrimmedProductNotesValue(record['text']);
+  const color = toTrimmedProductNotesValue(record['color']);
+
+  if (!text && !color) {
+    return null;
+  }
+
+  return {
+    text,
+    color,
+  };
+};
+
+export const productNotesSchema = z.preprocess(
+  (value: unknown): { text: string | null; color: string | null } | null =>
+    normalizeProductNotes(value),
+  z
+    .object({
+      text: z.string().nullable(),
+      color: z.string().nullable(),
+    })
+    .nullable()
+);
+
+export type ProductNotes = NonNullable<z.infer<typeof productNotesSchema>>;
+
 /**
  * Product Contract
  */
@@ -164,6 +329,7 @@ export const productSchema = dtoBaseSchema.extend({
   weight: z.number().nullable(),
   length: z.number().nullable(),
   published: z.boolean(),
+  archived: z.boolean().default(false),
   categoryId: z.string().nullable(),
   shippingGroupId: z.string().nullable().optional(),
   catalogId: z.string(),
@@ -180,7 +346,10 @@ export const productSchema = dtoBaseSchema.extend({
   producers: z.array(productProducerRelationSchema).optional(),
   images: z.array(productImageSchema).optional(),
   catalogs: z.array(productCatalogSchema).optional(),
+  customFields: z.array(productCustomFieldValueSchema).optional(),
   parameters: z.array(productParameterValueSchema).optional(),
+  marketplaceContentOverrides: productMarketplaceContentOverridesSchema.optional(),
+  notes: productNotesSchema.optional(),
   imageLinks: z.array(z.string()).optional(),
   imageBase64s: z.array(z.string()).optional(),
   noteIds: z.array(z.string()).optional(),
@@ -193,8 +362,9 @@ export type Product = ProductRecord;
  * Product With Images Contract
  */
 export const productWithImagesSchema = productSchema.extend({
+  duplicateSkuCount: z.number().int().min(0).optional(),
   images: z.array(productImageRecordSchema).default([]),
-  catalogs: z.array(productCatalogRecordSchema).default([]),
+  catalogs: z.array(productCatalogSchema).default([]),
   tags: z.array(productTagRelationSchema).default([]),
   producers: z.array(productProducerRelationSchema).default([]),
 });
@@ -224,6 +394,21 @@ export const productBulkImagesBase64ResponseSchema = z.object({
 export type ProductBulkImagesBase64Response = z.infer<
   typeof productBulkImagesBase64ResponseSchema
 >;
+
+export const productBulkArchiveRequestSchema = z.object({
+  productIds: z.array(z.string().min(1)).min(1),
+  archived: z.boolean().default(true),
+});
+
+export type ProductBulkArchiveRequest = z.infer<typeof productBulkArchiveRequestSchema>;
+
+export const productBulkArchiveResponseSchema = z.object({
+  status: z.literal('ok'),
+  archived: z.boolean(),
+  updated: z.number().int().min(0),
+});
+
+export type ProductBulkArchiveResponse = z.infer<typeof productBulkArchiveResponseSchema>;
 
 /**
  * Product API Paged Result

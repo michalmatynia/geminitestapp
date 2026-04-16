@@ -1,22 +1,13 @@
 import type { CurrencyOption } from '@/shared/contracts/internationalization';
 import type { SettingsPanelField } from '@/shared/contracts/ui/settings';
 import { LoadingState } from '@/shared/ui/navigation-and-layout.public';
+import type { CodeNameDto } from '@/shared/contracts/base';
 
 import { renderSelectionChecklistGrid } from '../shared/renderSelectionChecklistGrid';
 
-export type CountryFormState = {
-  code: string;
-  name: string;
-};
-
-export type CountryCodeOption = {
-  code: string;
-  name: string;
-};
-
 export const resolveCountryModalDefaults = (
-  options: readonly CountryCodeOption[]
-): CountryFormState => {
+  options: readonly CodeNameDto[]
+): CodeNameDto => {
   const defaultOption = options[0];
   return {
     code: defaultOption?.code ?? '',
@@ -36,10 +27,10 @@ export const buildCountryModalTitle = (hasActiveCountry: boolean): string =>
   hasActiveCountry ? 'Edit Country' : 'Add Country';
 
 export const resolveCountryFormChange = (
-  previous: CountryFormState,
-  values: Partial<CountryFormState>,
-  options: readonly CountryCodeOption[]
-): CountryFormState => {
+  previous: CodeNameDto,
+  values: Partial<CodeNameDto>,
+  options: readonly CodeNameDto[]
+): CodeNameDto => {
   if (values.code) {
     const selectedOption = options.find((option) => option.code === values.code);
     return {
@@ -55,7 +46,7 @@ export const resolveCountryFormChange = (
 };
 
 export const buildCountryCodeFieldOptions = (
-  options: readonly CountryCodeOption[]
+  options: readonly CodeNameDto[]
 ): Array<{ value: string; label: string }> =>
   options.map((option) => ({
     value: option.code,
@@ -63,12 +54,12 @@ export const buildCountryCodeFieldOptions = (
   }));
 
 export const buildCountryModalFields = (params: {
-  countryCodeOptions: readonly CountryCodeOption[];
+  countryCodeOptions: readonly CodeNameDto[];
   currencyOptions: readonly CurrencyOption[];
   loadingCurrencies: boolean;
   selectedCurrencyIds: readonly string[];
   onToggleCurrency: (id: string) => void;
-}): SettingsPanelField<CountryFormState>[] => [
+}): SettingsPanelField<CodeNameDto>[] => [
   {
     key: 'code',
     label: 'Code',

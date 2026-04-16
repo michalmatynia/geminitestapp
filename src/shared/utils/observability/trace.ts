@@ -19,9 +19,7 @@ export function generateTraceId(): string {
  * The trace ID is stable for the duration of the page session.
  */
 export function getTraceId(): string {
-  if (!currentTraceId) {
-    currentTraceId = generateTraceId();
-  }
+  currentTraceId ??= generateTraceId();
   return currentTraceId;
 }
 

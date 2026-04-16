@@ -7,10 +7,11 @@ import path from 'path';
 import sharp from 'sharp';
 
 import {
-  enqueuePlaywrightNodeRun,
-  readPlaywrightNodeArtifact,
-  type PlaywrightNodeRunArtifact,
-} from '@/features/ai/server';
+  createSocialCaptureSinglePlaywrightInstance,
+  readPlaywrightEngineArtifact,
+  runPlaywrightEngineTask,
+  type PlaywrightEngineRunArtifact,
+} from '@/features/playwright/server';
 import {
   getDiskPathFromPublicPath,
   uploadToConfiguredStorage,
@@ -22,13 +23,10 @@ import {
 } from '@/shared/contracts/kangur-social-image-addons';
 import type { ImageFileSelection } from '@/shared/contracts/files';
 import { operationFailedError } from '@/shared/errors/app-error';
-import {
-  sanitizePlaywrightCookiesFromHeader,
-  sanitizePlaywrightStorageState,
-} from '@/shared/lib/playwright/storage-state';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 import { KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY } from '@/features/kangur/appearance/storefront-appearance-settings';
 import { logger } from '@/shared/utils/logger';
+import { resolvePlaywrightRequestStorageState } from '@/features/playwright/server';
 
 import { upsertKangurSocialImageAddon } from './social-image-addons-repository';
 
@@ -127,9 +125,9 @@ const toSourceHost = (sourceUrl: string): string | null => {
 };
 
 const resolveArtifactByName = (
-  artifacts: PlaywrightNodeRunArtifact[],
+  artifacts: PlaywrightEngineRunArtifact[],
   name: string
-): PlaywrightNodeRunArtifact | null =>
+): PlaywrightEngineRunArtifact | null =>
   artifacts.find((artifact) => artifact.name === name) ?? null;
 
 const buildAddonPublicPath = (filename: string): string =>
@@ -144,68 +142,30 @@ const resolvePlaywrightStorageState = (params: {
   cookieHeader: string | null | undefined;
   sourceUrl: string;
   appearanceMode: string | null | undefined;
-}):
-  | {
-      cookies: Array<Record<string, unknown>>;
-      origins: Array<{
-        origin: string;
-        localStorage: Array<{ name: string; value: string }>;
-      }>;
-    }
-  | null => {
-  const cookies = params.cookieHeader
-    ? sanitizePlaywrightCookiesFromHeader(params.cookieHeader, params.sourceUrl)
-    : [];
+}): ReturnType<typeof resolvePlaywrightRequestStorageState> => {
   const appearanceMode = normalizeCaptureAppearanceMode(params.appearanceMode);
-  let origin: string | null = null;
-  if (appearanceMode) {
-    try {
-      origin = new URL(params.sourceUrl).origin;
-    } catch {
-      origin = null;
-    }
-  }
-
-  const origins =
-    appearanceMode && origin
+  const resolved = resolvePlaywrightRequestStorageState({
+    cookieHeader: params.cookieHeader,
+    sourceUrl: params.sourceUrl,
+    localStorageEntries: appearanceMode
       ? [
           {
-            origin,
-            localStorage: [
-              {
-                name: KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY,
-                value: appearanceMode,
-              },
-            ],
+            name: KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY,
+            value: appearanceMode,
           },
         ]
-      : [];
+      : null,
+  });
 
-  if (cookies.length === 0 && origins.length === 0) {
-    return null;
-  }
-
-  const storageState = sanitizePlaywrightStorageState(
-    { cookies, origins },
-    { fallbackOrigin: params.sourceUrl }
-  );
-  const sanitizedCookieNames = new Set((storageState?.cookies ?? []).map((cookie) => cookie.name));
-  const droppedCookieNames = cookies
-    .map((cookie) => {
-      const name = typeof cookie['name'] === 'string' ? cookie['name'] : null;
-      return name && !sanitizedCookieNames.has(name) ? name : null;
-    })
-    .filter((name): name is string => name !== null);
-
-  if (droppedCookieNames.length > 0) {
+  if (resolved.droppedCookieNames.length > 0) {
     logger.warn('[kangur.social-image-addons] dropped invalid Playwright cookies', {
-      droppedCookieNames,
+      droppedCookieNames: resolved.droppedCookieNames,
       sourceUrl: params.sourceUrl,
       service: 'kangur.social-image-addons',
     });
   }
 
-  return storageState;
+  return resolved;
 };
 
 const writeLocalCopy = async (publicPath: string, buffer: Buffer): Promise<void> => {
@@ -266,7 +226,7 @@ export async function createKangurSocialImageAddonFromPlaywright(
 
     stage = 'enqueue';
     const contextOptions: Record<string, unknown> = {};
-    const storageState = resolvePlaywrightStorageState({
+    const { storageState } = resolvePlaywrightStorageState({
       cookieHeader: input.forwardCookies,
       sourceUrl,
       appearanceMode,
@@ -275,7 +235,7 @@ export async function createKangurSocialImageAddonFromPlaywright(
       contextOptions['storageState'] = storageState;
     }
 
-    const run = await enqueuePlaywrightNodeRun({
+    const run = await runPlaywrightEngineTask({
       request: {
         script: SOCIAL_ADDON_PLAYWRIGHT_SCRIPT,
         input: {
@@ -290,8 +250,8 @@ export async function createKangurSocialImageAddonFromPlaywright(
         contextOptions: Object.keys(contextOptions).length > 0 ? contextOptions : undefined,
         policyAllowedHosts: input.trustedSelfOriginHost ? [input.trustedSelfOriginHost] : undefined,
       },
-      waitForResult: true,
       ownerUserId: input.createdBy ?? null,
+      instance: createSocialCaptureSinglePlaywrightInstance(),
     });
 
     runId = run.runId;
@@ -314,7 +274,7 @@ export async function createKangurSocialImageAddonFromPlaywright(
     }
 
     stage = 'download';
-    const artifactData = await readPlaywrightNodeArtifact({
+    const artifactData = await readPlaywrightEngineArtifact({
       runId: run.runId,
       fileName: artifactFile,
     });

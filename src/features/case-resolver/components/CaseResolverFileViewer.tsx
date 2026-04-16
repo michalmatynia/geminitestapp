@@ -181,7 +181,7 @@ export function CaseResolverFileViewer(): React.JSX.Element {
                   <>
                     <img
                       src={selectedAsset.filepath ?? ''}
-                      alt={selectedAsset.name}
+                      alt={selectedAsset.name || 'Selected asset preview'}
                       className='max-h-full max-w-full rounded object-contain'
                     />
                     <div className='absolute bottom-3 left-1/2 -translate-x-1/2 rounded bg-black/55 px-2 py-1 text-[11px] text-white'>

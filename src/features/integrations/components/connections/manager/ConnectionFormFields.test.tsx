@@ -32,13 +32,16 @@ vi.mock('@/shared/ui/primitives.public', () => ({
 vi.mock('@/shared/ui/forms-and-actions.public', () => ({
   FormField: ({
     label,
+    description,
     children,
   }: {
     label: string;
+    description?: string;
     children: React.ReactNode;
   }) => (
     <div>
       <div>{label}</div>
+      {description ? <div>{description}</div> : null}
       {children}
     </div>
   ),
@@ -111,5 +114,49 @@ describe('ConnectionFormFields', () => {
 
     expect(screen.queryByLabelText('Browser automation mode')).toBeNull();
     expect(screen.queryByLabelText('Playwright listing script')).toBeNull();
+  });
+
+  it('shows optional Vinted credential fields for reusable browser sessions', () => {
+    renderFields('vinted');
+
+    expect(screen.getByLabelText('Integration name (e.g. Vinted Browser)')).toBeInTheDocument();
+    expect(screen.getByLabelText('Vinted email (optional)')).toBeInTheDocument();
+    expect(screen.getByLabelText('Vinted password (optional)')).toBeInTheDocument();
+    expect(
+      screen.getAllByText(
+        'Optional. Leave blank if you will sign in through the login window and reuse the stored browser session.'
+      )
+    ).toHaveLength(2);
+    expect(screen.queryByLabelText('Browser automation mode')).toBeNull();
+  });
+
+  it('shows 1688 profile fields and keeps search mode in sync with URL fallback', () => {
+    renderFields('1688');
+
+    expect(screen.getByLabelText('1688 start URL')).toBeInTheDocument();
+    expect(screen.getByLabelText('1688 login mode')).toBeInTheDocument();
+    expect(screen.getByLabelText('1688 search mode')).toBeInTheDocument();
+    expect(screen.getByLabelText('1688 candidate cap override')).toBeInTheDocument();
+    expect(screen.getByLabelText('1688 minimum score override')).toBeInTheDocument();
+    expect(screen.getByLabelText('1688 max extracted images override')).toBeInTheDocument();
+
+    const searchMode = screen.getByLabelText('1688 search mode') as HTMLSelectElement;
+    const urlFallback = screen.getByLabelText(
+      'Allow image URL fallback for 1688 search'
+    ) as HTMLInputElement;
+
+    expect(searchMode.value).toBe('local_image');
+    expect(urlFallback.checked).toBe(false);
+
+    fireEvent.change(searchMode, {
+      target: { value: 'image_url_fallback' },
+    });
+
+    expect(urlFallback.checked).toBe(true);
+
+    fireEvent.click(urlFallback);
+
+    expect(searchMode.value).toBe('local_image');
+    expect(urlFallback.checked).toBe(false);
   });
 });

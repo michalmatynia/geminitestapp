@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-30'
+last_reviewed: '2026-04-15'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,15 +8,15 @@ canonical: true
 ---
 # API Contract Coverage Report
 
-Generated at: 2026-03-30T15:09:34.339Z
+Generated at: 2026-04-15T09:38:26.983Z
 
 ## Summary
 
 - Status: PASSED
-- Route files scanned: 298
-- Route methods scanned: 215
-- Methods with adjacent tests: 206
-- Mutations with body validation: 37
+- Route files scanned: 313
+- Route methods scanned: 223
+- Methods with adjacent tests: 214
+- Mutations with body validation: 39
 - Query routes with validation: 10
 - Errors: 0
 - Warnings: 0
@@ -103,6 +103,12 @@ No API contract coverage gaps detected.
 | chatbot/[[...path]] | PUT | protected | yes | - | - |
 | chatbot/[[...path]] | PATCH | protected | yes | - | - |
 | chatbot/[[...path]] | DELETE | protected | yes | - | - |
+| chatbot/jobs/[jobId] | DELETE | protected | yes | - | - |
+| chatbot/jobs/[jobId] | GET | protected | yes | - | - |
+| chatbot/jobs/[jobId] | POST | protected | yes | - | - |
+| chatbot/jobs | DELETE | protected | yes | - | - |
+| chatbot/jobs | GET | protected | yes | - | - |
+| chatbot/jobs | POST | protected | yes | yes | - |
 | client-errors | POST | public | yes | yes | - |
 | cms/css-ai/stream | POST | protected | yes | yes | - |
 | cms/domains/[id] | DELETE | protected | yes | - | - |
@@ -236,6 +242,8 @@ No API contract coverage gaps detected.
 | v2/integrations/[[...path]] | PUT | protected | yes | - | - |
 | v2/integrations/[[...path]] | PATCH | protected | yes | - | - |
 | v2/integrations/[[...path]] | DELETE | protected | yes | - | - |
+| v2/integrations/product-listings/tradera-status-check | POST | protected | yes | - | - |
+| v2/integrations/tradera/parameter-mapper/catalog/fetch | POST | protected | yes | yes | - |
 | v2/metadata/[type]/[id] | GET | protected | yes | - | - |
 | v2/metadata/[type]/[id] | PUT | protected | yes | - | - |
 | v2/metadata/[type]/[id] | DELETE | protected | yes | - | - |

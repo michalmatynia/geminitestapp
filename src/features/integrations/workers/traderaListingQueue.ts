@@ -9,10 +9,11 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 type TraderaListingQueueJobData = {
   listingId: string;
-  action: 'list' | 'relist';
+  action: 'list' | 'relist' | 'sync' | 'check_status';
   source?: 'manual' | 'scheduler' | 'api';
   jobId?: string;
   browserMode?: 'connection_default' | 'headless' | 'headed';
+  selectorProfile?: string;
 };
 
 const queue: ManagedQueue<TraderaListingQueueJobData> =
@@ -58,7 +59,18 @@ export const enqueueTraderaListingJob = async (
   data: TraderaListingQueueJobData
 ): Promise<string> => {
   const dedupeBucket = Math.floor(Date.now() / 30_000);
-  const jobId = `${data.action}:${data.listingId}:${dedupeBucket}`;
+  const normalizedSelectorProfile =
+    typeof data.selectorProfile === 'string' && data.selectorProfile.trim().length > 0
+      ? data.selectorProfile.trim()
+      : 'default';
+  const jobIdParts = [
+    data.action,
+    data.listingId,
+    data.browserMode ?? 'connection_default',
+    normalizedSelectorProfile,
+    String(dedupeBucket),
+  ];
+  const jobId = jobIdParts.join(':');
   const queuedJobId = await queue.enqueue(data, {
     jobId,
   });

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { integrationService } from '@/features/integrations/server';
@@ -16,11 +16,7 @@ const integrationSchema = z.object({
  */
 export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const integrations = await integrationService.listIntegrations();
-  return NextResponse.json(integrations, {
-    headers: {
-      'Cache-Control': 'no-store',
-    },
-  });
+  return NextResponse.json(integrations);
 }
 
 /**

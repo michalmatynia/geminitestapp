@@ -6,8 +6,8 @@ import {
   getCaseResolverWorkspaceRevision,
   persistCaseResolverWorkspaceSnapshot,
 } from '@/features/case-resolver/workspace-persistence';
-import { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
-import { CaseResolverFile } from '@/shared/contracts/case-resolver/file';
+import { type CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
+import { type CaseResolverFile } from '@/shared/contracts/case-resolver/file';
 import type { Toast } from '@/shared/contracts/ui/base';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 

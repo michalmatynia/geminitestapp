@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { prewarmLiteSettingsServerCache } from '@/app/api/settings/lite/handler';
+import { applyCacheLife } from '@/shared/lib/next/cache-life';
 import { cloneLiteSettings, getLiteSettingsCache } from '@/shared/lib/settings-lite-server-cache';
 
 import type { SettingRecord } from '@/shared/contracts/settings';
@@ -12,7 +13,7 @@ const parsePositiveInt = (value: string | undefined, fallback: number): number =
 
 const LITE_SETTINGS_SSR_PREWARM_TIMEOUT_MS = parsePositiveInt(
   process.env['LITE_SETTINGS_SSR_PREWARM_TIMEOUT_MS'],
-  process.env['NODE_ENV'] === 'development' ? 75 : 250
+  process.env['NODE_ENV'] === 'development' ? 50 : 150
 );
 
 const waitForLiteSettingsPrewarm = async (): Promise<void> => {
@@ -46,7 +47,20 @@ const waitForLiteSettingsPrewarm = async (): Promise<void> => {
  * /api/settings/lite round-trip on first load.
  */
 export async function getLiteSettingsForHydration(): Promise<SettingRecord[]> {
+  'use cache';
+  applyCacheLife('swr60');
+
   try {
+    const currentCache = getLiteSettingsCache();
+    if (currentCache) {
+      return cloneLiteSettings(currentCache.data);
+    }
+
+    if (process.env['NODE_ENV'] === 'development') {
+      void prewarmLiteSettingsServerCache().catch(() => {});
+      return [];
+    }
+
     await waitForLiteSettingsPrewarm();
     const cache = getLiteSettingsCache();
     return cache ? cloneLiteSettings(cache.data) : [];

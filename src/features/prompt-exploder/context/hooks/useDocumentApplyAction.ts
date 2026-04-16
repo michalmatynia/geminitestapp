@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback } from 'react';
+import { startTransition, useCallback } from 'react';
 
 import type { Toast } from '@/shared/contracts/ui/base';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
@@ -130,7 +130,9 @@ export const useDocumentApplyAction = ({
         savePromptExploderApplyPrompt(reassembled);
       }
 
-      router.push(returnTo);
+      startTransition(() => {
+        router.push(returnTo);
+      });
     } catch (error) {
       logClientCatch(error, {
         source: 'DocumentProvider',

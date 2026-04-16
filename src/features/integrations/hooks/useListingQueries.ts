@@ -12,7 +12,10 @@ export const productListingsQueryKey = (productId: string): readonly unknown[] =
   integrationKeys.listings(productId);
 
 export const fetchProductListings = (productId: string): Promise<ProductListingWithDetails[]> =>
-  api.get<ProductListingWithDetails[]>(`/api/v2/integrations/products/${productId}/listings`);
+  api.get<ProductListingWithDetails[]>(
+    `/api/v2/integrations/products/${productId}/listings`,
+    { cache: 'no-store' }
+  );
 
 export const isMissingProductListingsError = (error: unknown): error is ApiError =>
   error instanceof ApiError &&
@@ -26,6 +29,7 @@ export function useProductListings(productId: string): ListQuery<ProductListingW
     queryFn: () => fetchProductListings(productId),
     enabled: Boolean(productId),
     staleTime: PRODUCT_LISTINGS_STALE_TIME_MS,
+    refetchOnMount: 'always',
     refetchInterval: (
       query: Query<
         ProductListingWithDetails[],

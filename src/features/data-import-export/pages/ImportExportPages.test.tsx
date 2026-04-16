@@ -1,0 +1,304 @@
+/**
+ * @vitest-environment jsdom
+ */
+
+import { render, screen } from '@testing-library/react';
+import React from 'react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const mockState = vi.hoisted(() => ({
+  checkingIntegration: false,
+  isBaseConnected: true,
+  importsPageTab: 'import-list' as 'import-list' | 'import-settings' | 'import-template',
+  setImportsPageTab: vi.fn(),
+  setActiveImportRunId: vi.fn(),
+  searchParams: new URLSearchParams(),
+}));
+
+vi.mock('next/link', () => ({
+  default: ({
+    children,
+    href,
+    ...props
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
+}));
+
+vi.mock('next/navigation', () => ({
+  useSearchParams: () => mockState.searchParams,
+}));
+
+vi.mock('@/features/data-import-export/context/ImportExportContext', () => ({
+  ImportExportProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  useImportExportData: () => ({
+    checkingIntegration: mockState.checkingIntegration,
+    isBaseConnected: mockState.isBaseConnected,
+  }),
+  useImportExportState: () => ({
+    importsPageTab: mockState.importsPageTab,
+    setImportsPageTab: mockState.setImportsPageTab,
+    setActiveImportRunId: mockState.setActiveImportRunId,
+  }),
+}));
+
+vi.mock('@/shared/ui/admin-products-breadcrumbs', () => ({
+  AdminProductsBreadcrumbs: ({ current }: { current: string }) => (
+    <nav data-testid='imports-breadcrumbs'>{current}</nav>
+  ),
+}));
+
+vi.mock('@/shared/ui/admin-title-breadcrumb-header', () => ({
+  AdminTitleBreadcrumbHeader: ({
+    title,
+    breadcrumb,
+  }: {
+    title: React.ReactNode;
+    breadcrumb: React.ReactNode;
+  }) => (
+    <div data-testid='imports-header'>
+      {title}
+      {breadcrumb}
+    </div>
+  ),
+}));
+
+vi.mock('@/shared/ui/admin-integrations-page-layout', () => ({
+  AdminIntegrationsPageLayout: ({
+    title,
+    children,
+  }: {
+    title: string;
+    children: React.ReactNode;
+  }) => (
+    <div>
+      <h1>{title}</h1>
+      {children}
+    </div>
+  ),
+}));
+
+vi.mock('@/shared/ui/primitives.public', () => {
+  const TabsContext = React.createContext<string | undefined>(undefined);
+
+  return {
+    Card: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+    Tabs: ({
+      children,
+      value,
+    }: {
+      children: React.ReactNode;
+      value?: string;
+    }) => (
+      <TabsContext.Provider value={value}>
+        <div data-tabs-value={value}>{children}</div>
+      </TabsContext.Provider>
+    ),
+    TabsList: ({
+      children,
+      ...props
+    }: React.HTMLAttributes<HTMLDivElement> & { children: React.ReactNode }) => (
+      <div {...props}>{children}</div>
+    ),
+    TabsTrigger: ({
+      children,
+      ...props
+    }: React.ButtonHTMLAttributes<HTMLButtonElement> & { children: React.ReactNode }) => (
+      <button type='button' {...props}>
+        {children}
+      </button>
+    ),
+    TabsContent: ({
+      children,
+      value,
+      ...props
+    }: React.HTMLAttributes<HTMLDivElement> & { children: React.ReactNode; value?: string }) => {
+      const activeValue = React.useContext(TabsContext);
+      if (value && activeValue && value !== activeValue) return null;
+      return <div {...props}>{children}</div>;
+    },
+  };
+});
+
+vi.mock('@/shared/ui/navigation-and-layout.public', () => ({
+  LoadingState: ({ message }: { message?: string }) => <div>{message}</div>,
+  DocumentationSection: ({
+    title,
+    children,
+  }: {
+    title: string;
+    children: React.ReactNode;
+  }) => (
+    <section>
+      <h2>{title}</h2>
+      {children}
+    </section>
+  ),
+}));
+
+vi.mock('./imports/TemplatesTabContent', () => ({
+  TemplatesTabContent: ({ scope }: { scope?: 'import' | 'export' }) => (
+    <div data-testid={`templates-${scope ?? 'none'}`}>{scope}</div>
+  ),
+}));
+
+vi.mock('./imports-page/Import.BaseConnection', () => ({
+  ImportBaseConnectionSection: () => <div>import base connection</div>,
+}));
+
+vi.mock('./imports-page/Import.List', () => ({
+  ImportListPreviewSection: () => <div>import list preview</div>,
+}));
+
+vi.mock('./imports-page/Import.RunStatus', () => ({
+  ImportRunStatusSection: () => <div>import run status</div>,
+}));
+
+vi.mock('./imports-page/Import.LastResult', () => ({
+  ImportLastResultSection: () => <div>import last result</div>,
+}));
+
+vi.mock('@/features/data-import-export/components/imports/sections/ExportBaseConfigSection', () => ({
+  ExportBaseConfigSection: () => <div>export base config</div>,
+}));
+
+vi.mock('./imports-page/Export.CategoryStatus', () => ({
+  ExportCategoryStatusSection: () => <div>export category status</div>,
+}));
+
+vi.mock('./imports-page/Export.WarehouseConfig', () => ({
+  ExportWarehouseConfigSection: () => <div>export warehouse config</div>,
+}));
+
+vi.mock('./imports-page/Export.ImageRetryPresets', () => ({
+  ExportImageRetryPresetsSection: () => <div>export image retry presets</div>,
+}));
+
+vi.mock('./imports-page/Export.QuickActions', () => ({
+  ExportQuickActionsSection: () => <div>export quick actions</div>,
+}));
+
+import ExportsPage from './ExportsPage';
+import ImportsPage from './ImportsPage';
+
+describe('Import/export page shells', () => {
+  beforeEach(() => {
+    mockState.checkingIntegration = false;
+    mockState.isBaseConnected = true;
+    mockState.importsPageTab = 'import-list';
+    mockState.setImportsPageTab.mockReset();
+    mockState.setActiveImportRunId.mockReset();
+    mockState.searchParams = new URLSearchParams();
+  });
+
+  it('renders the dedicated product import page with import-only tabs', () => {
+    render(<ImportsPage />);
+
+    expect(screen.getByRole('heading', { name: 'Product Import' })).toBeInTheDocument();
+    expect(screen.getByTestId('imports-breadcrumbs')).toHaveTextContent('Import');
+    expect(screen.getByRole('button', { name: 'Import List Preview' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Import Settings' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Import Template' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Export Template' })).not.toBeInTheDocument();
+    expect(screen.getByText('import list preview')).toBeInTheDocument();
+    expect(screen.getByText('import run status')).toBeInTheDocument();
+    expect(screen.getByText('import last result')).toBeInTheDocument();
+    expect(screen.queryByText('import base connection')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('templates-import')).not.toBeInTheDocument();
+  });
+
+  it('renders import settings only on the dedicated settings tab', () => {
+    mockState.importsPageTab = 'import-settings';
+
+    render(<ImportsPage />);
+
+    expect(screen.getByText('import base connection')).toBeInTheDocument();
+    expect(screen.queryByText('import list preview')).not.toBeInTheDocument();
+    expect(screen.queryByText('import run status')).not.toBeInTheDocument();
+    expect(screen.queryByText('import last result')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('templates-import')).not.toBeInTheDocument();
+  });
+
+  it('renders import template content only on the template tab', () => {
+    mockState.importsPageTab = 'import-template';
+
+    render(<ImportsPage />);
+
+    expect(screen.getByTestId('templates-import')).toBeInTheDocument();
+    expect(screen.queryByText('import base connection')).not.toBeInTheDocument();
+    expect(screen.queryByText('import list preview')).not.toBeInTheDocument();
+  });
+
+  it('moves the breadcrumb under the import heading in the header shell', () => {
+    const { container } = render(<ImportsPage />);
+
+    const header = screen.getByTestId('imports-header');
+    const heading = screen.getByRole('heading', { name: 'Product Import' });
+    const breadcrumb = screen.getByTestId('imports-breadcrumbs');
+
+    expect(header).toContainElement(heading);
+    expect(header).toContainElement(breadcrumb);
+
+    const nodes = Array.from(container.querySelector('[data-testid="imports-header"]')?.children ?? []);
+    expect(nodes.indexOf(heading)).toBeLessThan(nodes.indexOf(breadcrumb));
+  });
+
+  it('uses the tighter imports page shell spacing instead of the default page section padding', () => {
+    render(<ImportsPage />);
+
+    expect(screen.getByTestId('imports-page-shell')).toHaveClass('page-section-tight');
+    expect(screen.getByTestId('imports-page-shell')).not.toHaveClass('page-section');
+  });
+
+  it('hydrates the active import run from the runId query param', () => {
+    mockState.searchParams = new URLSearchParams('runId=run-42');
+
+    render(<ImportsPage />);
+
+    expect(mockState.setImportsPageTab).toHaveBeenCalledWith('import-list');
+    expect(mockState.setActiveImportRunId).toHaveBeenCalledWith('run-42');
+  });
+
+  it('renders the export page with export-only tabs and import guidance link', () => {
+    render(<ExportsPage />);
+
+    expect(screen.getByRole('heading', { name: 'Product Export' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Export' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Export Template' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Import Template' })).not.toBeInTheDocument();
+    expect(screen.getByText('export base config')).toBeInTheDocument();
+    expect(screen.getByTestId('templates-export')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Products → Import' })).toHaveAttribute(
+      'href',
+      '/admin/products/import'
+    );
+  });
+
+  it('shows the integration warning state on both pages when Base.com is disconnected', () => {
+    mockState.isBaseConnected = false;
+
+    render(
+      <>
+        <ImportsPage />
+        <ExportsPage />
+      </>
+    );
+
+    expect(screen.getAllByText('Base.com integration required')).toHaveLength(2);
+  });
+
+  it('shows the loading state while integration status is being checked', () => {
+    mockState.checkingIntegration = true;
+
+    render(
+      <>
+        <ImportsPage />
+        <ExportsPage />
+      </>
+    );
+
+    expect(screen.getAllByText('Checking Base.com integration status...')).toHaveLength(2);
+  });
+});

@@ -32,6 +32,7 @@ export const createProduct = (overrides: Partial<ProductWithImages> = {}): Produ
     weight: null,
     length: null,
     published: false,
+    archived: false,
     categoryId: 'category-1',
     catalogId: 'catalog-1',
     tags: [],
@@ -68,9 +69,12 @@ export const createRowRuntimeContext = (
   integrationStatus: 'not_started',
   showTraderaBadge: false,
   traderaStatus: 'not_started',
+  showVintedBadge: false,
+  vintedStatus: 'not_started',
   showPlaywrightProgrammableBadge: false,
   playwrightProgrammableStatus: 'not_started',
   productAiRunFeedback: null,
+  productScanRunFeedback: null,
   ...overrides,
 });
 

@@ -16,25 +16,22 @@ vi.mock('server-only', () => ({}));
 const {
   ensureKangurStorefrontAppearanceSettingsSeededMock,
   createKangurStorefrontAppearanceSeedSettingsMock,
+  cacheLifeMock,
+  cacheTagMock,
   revalidateTagMock,
 } = vi.hoisted(() => ({
   ensureKangurStorefrontAppearanceSettingsSeededMock: vi.fn(),
   createKangurStorefrontAppearanceSeedSettingsMock: vi.fn(),
+  cacheLifeMock: vi.fn(),
+  cacheTagMock: vi.fn(),
   revalidateTagMock: vi.fn(),
 }));
 
 vi.mock('next/cache', () => ({
-  unstable_cache: <T extends (...args: never[]) => unknown>(fn: T): T => fn,
+  cacheLife: cacheLifeMock,
+  cacheTag: cacheTagMock,
   revalidateTag: revalidateTagMock,
 }));
-
-vi.mock('react', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('react')>();
-  return {
-    ...actual,
-    cache: <T extends (...args: never[]) => unknown>(fn: T): T => fn,
-  };
-});
 
 vi.mock('./storefront-appearance-source', () => ({
   ensureKangurStorefrontAppearanceSettingsSeeded:
@@ -149,4 +146,5 @@ describe('storefront-appearance', () => {
       'max'
     );
   });
+
 });

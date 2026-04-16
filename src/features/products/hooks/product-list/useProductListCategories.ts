@@ -1,5 +1,15 @@
 'use client';
 
+// useProductListCategories: resolves category filters, builds flattened and
+// hierarchical category view for the product list, and exposes helpers
+// for category selection and breadcrumb resolution. Keeps client-only logic
+// (tree expansion, client filtering) out of server entrypoints.
+'use no memo';
+
+// useProductListCategories: derives an embedded category-name map from the
+// current page of products and falls back to a batched category lookup for any
+// missing catalog-scoped categories. Keeps client-side lookups cheap and avoids
+// per-row category API calls.
 import { useMemo } from 'react';
 
 import {
@@ -15,6 +25,10 @@ import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
+
+// This category lookup hook mixes derived maps with a query-backed fallback.
+// Opt out of React Compiler memoization to keep the products list hook graph
+// stable in development.
 
 const PRODUCT_CATEGORY_BATCH_TIMEOUT_MS = 60_000;
 

@@ -1,4 +1,4 @@
-import type { ExternalCategory, CategoryMappingWithDetails } from '@/shared/contracts/integrations/listings';
+import type { ExternalCategory, CategoryMappingWithDetails, ProductListingWithDetails } from '@/shared/contracts/integrations/listings';
 import type { ExternalProducer, ProducerMappingWithDetails } from '@/shared/contracts/integrations/producers';
 import type { ExternalTag, TagMappingWithDetails } from '@/shared/contracts/integrations/listings';
 export { useCategoryMappingsByConnection } from '@/shared/hooks/useIntegrationQueries';
@@ -6,6 +6,7 @@ import type { ListQuery } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { marketplaceKeys } from '@/shared/lib/query-key-exports';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 export function useExternalCategories(connectionId: string): ListQuery<ExternalCategory> {
   const queryKey = marketplaceKeys.categories(connectionId);
@@ -13,7 +14,7 @@ export function useExternalCategories(connectionId: string): ListQuery<ExternalC
     queryKey,
     queryFn: () =>
       api.get<ExternalCategory[]>(`/api/marketplace/categories?connectionId=${connectionId}`),
-    enabled: !!connectionId,
+    enabled: Boolean(connectionId),
     meta: {
       source: 'integrations.hooks.useExternalCategories',
       operation: 'list',
@@ -38,7 +39,7 @@ export function useCategoryMappings(
         `/api/marketplace/mappings?connectionId=${connectionId}&catalogId=${catalogId}`
       );
     },
-    enabled: !!connectionId && !!catalogId,
+    enabled: Boolean(connectionId) && Boolean(catalogId),
     meta: {
       source: 'integrations.hooks.useCategoryMappings',
       operation: 'list',
@@ -56,7 +57,7 @@ export function useExternalProducers(connectionId: string): ListQuery<ExternalPr
     queryKey,
     queryFn: () =>
       api.get<ExternalProducer[]>(`/api/marketplace/producers?connectionId=${connectionId}`),
-    enabled: !!connectionId,
+    enabled: Boolean(connectionId),
     meta: {
       source: 'integrations.hooks.useExternalProducers',
       operation: 'list',
@@ -76,7 +77,7 @@ export function useProducerMappings(connectionId: string): ListQuery<ProducerMap
       api.get<ProducerMappingWithDetails[]>(
         `/api/marketplace/producer-mappings?connectionId=${connectionId}`
       ),
-    enabled: !!connectionId,
+    enabled: Boolean(connectionId),
     meta: {
       source: 'integrations.hooks.useProducerMappings',
       operation: 'list',
@@ -93,7 +94,7 @@ export function useExternalTags(connectionId: string): ListQuery<ExternalTag> {
   return createListQueryV2({
     queryKey,
     queryFn: () => api.get<ExternalTag[]>(`/api/marketplace/tags?connectionId=${connectionId}`),
-    enabled: !!connectionId,
+    enabled: Boolean(connectionId),
     meta: {
       source: 'integrations.hooks.useExternalTags',
       operation: 'list',
@@ -113,7 +114,7 @@ export function useTagMappings(connectionId: string): ListQuery<TagMappingWithDe
       api.get<TagMappingWithDetails[]>(
         `/api/marketplace/tag-mappings?connectionId=${connectionId}`
       ),
-    enabled: !!connectionId,
+    enabled: Boolean(connectionId),
     meta: {
       source: 'integrations.hooks.useTagMappings',
       operation: 'list',
@@ -123,4 +124,27 @@ export function useTagMappings(connectionId: string): ListQuery<TagMappingWithDe
       tags: ['integrations', 'marketplace', 'tag-mappings'],
       description: 'Loads marketplace tag mappings.'},
   });
+}
+
+import { useQuery } from '@tanstack/react-query';
+
+export function useMarketplaceBadgeStatus(
+  productId: string,
+  marketplace: string,
+  enabled: boolean = true
+): { status: string | null; isFetching: boolean } {
+  const { data: listings, isFetching } = useQuery<ProductListingWithDetails[]>({
+    queryKey: QUERY_KEYS.integrations.listings(productId),
+    queryFn: () =>
+      api.get<ProductListingWithDetails[]>(
+        `/api/v2/integrations/products/${productId}/listings`,
+        { cache: 'no-store' }
+      ),
+    enabled: enabled && Boolean(productId),
+    staleTime: 30000,
+  });
+
+  const status = (listings ?? []).find((l) => l.integration?.slug === marketplace)?.status ?? null;
+
+  return { status, isFetching };
 }

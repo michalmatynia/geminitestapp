@@ -1,20 +1,22 @@
-import { decryptSecret } from '@/features/integrations/server';
+import { decryptSecret } from '@/shared/lib/security/encryption';
+import { getExternalCategoryRepository } from '@/features/integrations/services/external-category-repository';
 import {
   addTraderaShopItem,
-  TraderaApiCredentials,
-  TraderaPublicApiCredentials,
+  type TraderaApiCredentials,
+  type TraderaPublicApiCredentials,
 } from '@/features/integrations/services/tradera-api-client';
-import { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
-import { ProductListing } from '@/shared/contracts/integrations/listings';
+import { type IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
+import { type ProductListing } from '@/shared/contracts/integrations/listings';
 import { internalError, notFoundError } from '@/shared/errors/app-error';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
+import { resolveMarketplaceAwareProductCopy } from '@/shared/lib/products/utils/marketplace-content-overrides';
 
 import {
   DEFAULT_TRADERA_API_CATEGORY_ID,
   DEFAULT_TRADERA_API_PAYMENT_CONDITION,
   DEFAULT_TRADERA_API_SHIPPING_CONDITION,
 } from './config';
-import { resolveTraderaCategoryMappingResolutionForProduct } from './category-mapping';
+import { resolveTraderaCategoryMappingResolutionForProduct, resolveToLeafCategory } from './category-mapping';
 import { resolveTraderaShippingGroupResolutionForProduct } from './shipping-group';
 import { toPositiveInt, toRecord } from './utils';
 
@@ -75,15 +77,7 @@ export const resolveTraderaPublicApiCredentials = (
   };
 };
 
-export const resolveTraderaApiCategoryId = async (
-  listing: ProductListing,
-  product: {
-    categoryId?: string | null | undefined;
-    id?: string | null | undefined;
-    catalogId?: string | null | undefined;
-    catalogs?: Array<{ catalogId?: string | null | undefined }> | null | undefined;
-  }
-): Promise<{
+export type ResolvedTraderaApiCategoryId = {
   categoryId: number;
   source: 'marketplaceData' | 'categoryMapper' | 'product' | 'env' | 'default';
   categoryPath: string | null;
@@ -91,7 +85,25 @@ export const resolveTraderaApiCategoryId = async (
   categoryMappingReason: string | null;
   categoryMatchScope: string | null;
   categoryInternalCategoryId: string | null;
-}> => {
+  /** Set when a non-leaf category was automatically resolved to its first leaf descendant */
+  categoryLeafAutoResolved: boolean;
+  /** The original non-leaf category ID, when leaf auto-resolution occurred */
+  categoryLeafOriginalExternalId: string | null;
+};
+
+export const resolveTraderaApiCategoryId = async (
+  listing: ProductListing,
+  product: {
+    categoryId?: string | null | undefined;
+    id?: string | null | undefined;
+    catalogId?: string | null | undefined;
+    catalogs?: Array<{ catalogId?: string | null | undefined }> | null | undefined;
+  },
+  options?: {
+    /** When provided, enables on-demand SOAP leaf resolution for non-leaf categories */
+    publicCredentials?: TraderaPublicApiCredentials;
+  }
+): Promise<ResolvedTraderaApiCategoryId> => {
   const listingData = toRecord(listing.marketplaceData);
   const traderaData = toRecord(listingData['tradera']);
   const fromMarketplaceData = toPositiveInt(traderaData['categoryId']);
@@ -104,6 +116,8 @@ export const resolveTraderaApiCategoryId = async (
       categoryMappingReason: null,
       categoryMatchScope: null,
       categoryInternalCategoryId: null,
+      categoryLeafAutoResolved: false,
+      categoryLeafOriginalExternalId: null,
     };
   }
 
@@ -114,14 +128,25 @@ export const resolveTraderaApiCategoryId = async (
   const mappedCategory = categoryMapping.mapping;
   const fromCategoryMapper = toPositiveInt(mappedCategory?.externalCategoryId ?? null);
   if (fromCategoryMapper) {
+    const externalCategoryId = String(fromCategoryMapper);
+    const externalCategoryRepo = getExternalCategoryRepository();
+    const leafResolution = await resolveToLeafCategory({
+      connectionId: listing.connectionId,
+      externalCategoryId,
+      externalCategoryRepo,
+      credentials: options?.publicCredentials,
+    });
+    const resolvedId = toPositiveInt(leafResolution.resolvedExternalCategoryId) ?? fromCategoryMapper;
     return {
-      categoryId: fromCategoryMapper,
+      categoryId: resolvedId,
       source: 'categoryMapper',
-      categoryPath: mappedCategory?.externalCategoryPath ?? null,
-      categoryName: mappedCategory?.externalCategoryName ?? null,
+      categoryPath: leafResolution.resolvedPath ?? mappedCategory?.externalCategoryPath ?? null,
+      categoryName: leafResolution.resolvedName ?? mappedCategory?.externalCategoryName ?? null,
       categoryMappingReason: categoryMapping.reason,
       categoryMatchScope: categoryMapping.matchScope,
       categoryInternalCategoryId: categoryMapping.internalCategoryId,
+      categoryLeafAutoResolved: leafResolution.autoResolved,
+      categoryLeafOriginalExternalId: leafResolution.originalExternalCategoryId,
     };
   }
 
@@ -135,6 +160,8 @@ export const resolveTraderaApiCategoryId = async (
       categoryMappingReason: categoryMapping.reason,
       categoryMatchScope: categoryMapping.matchScope,
       categoryInternalCategoryId: categoryMapping.internalCategoryId,
+      categoryLeafAutoResolved: false,
+      categoryLeafOriginalExternalId: null,
     };
   }
 
@@ -148,6 +175,8 @@ export const resolveTraderaApiCategoryId = async (
       categoryMappingReason: categoryMapping.reason,
       categoryMatchScope: categoryMapping.matchScope,
       categoryInternalCategoryId: categoryMapping.internalCategoryId,
+      categoryLeafAutoResolved: false,
+      categoryLeafOriginalExternalId: null,
     };
   }
 
@@ -159,6 +188,8 @@ export const resolveTraderaApiCategoryId = async (
     categoryMappingReason: categoryMapping.reason,
     categoryMatchScope: categoryMapping.matchScope,
     categoryInternalCategoryId: categoryMapping.internalCategoryId,
+    categoryLeafAutoResolved: false,
+    categoryLeafOriginalExternalId: null,
   };
 };
 
@@ -180,14 +211,12 @@ export const runTraderaApiListing = async ({
   }
 
   const credentials = resolveTraderaApiCredentials(connection);
-  const title =
-    product.name_en ||
-    product.name_pl ||
-    product.name_de ||
-    product.sku ||
-    `Listing ${listing.productId}`;
-  const description =
-    product.description_en || product.description_pl || product.description_de || title;
+  const publicCredentials = resolveTraderaPublicApiCredentials(connection);
+  const { title, description } = resolveMarketplaceAwareProductCopy({
+    product,
+    integrationId: listing.integrationId,
+    preferredLocales: ['en', 'pl', 'de'],
+  });
   const normalizedPrice =
     typeof product.price === 'number' && Number.isFinite(product.price) && product.price > 0
       ? product.price
@@ -204,7 +233,9 @@ export const runTraderaApiListing = async ({
     categoryMappingReason,
     categoryMatchScope,
     categoryInternalCategoryId,
-  } = await resolveTraderaApiCategoryId(listing, product);
+    categoryLeafAutoResolved,
+    categoryLeafOriginalExternalId,
+  } = await resolveTraderaApiCategoryId(listing, product, { publicCredentials });
   const shippingGroupResolution = await resolveTraderaShippingGroupResolutionForProduct({
     product,
   });
@@ -241,6 +272,8 @@ export const runTraderaApiListing = async ({
       categoryMappingReason,
       categoryMatchScope,
       categoryInternalCategoryId,
+      categoryLeafAutoResolved,
+      categoryLeafOriginalExternalId,
       shippingGroupId: shippingGroupResolution.shippingGroupId,
       shippingGroupName: shippingGroupResolution.shippingGroup?.name ?? null,
       shippingGroupSource: shippingGroupResolution.shippingGroupSource,

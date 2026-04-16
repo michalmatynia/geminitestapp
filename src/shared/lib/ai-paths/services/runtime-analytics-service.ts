@@ -14,8 +14,8 @@ export * from './runtime-analytics/trace';
 export * from './runtime-analytics/recording';
 
 import {
-  AiPathRuntimeAnalyticsRange,
-  AiPathRuntimeAnalyticsSummary,
+  type AiPathRuntimeAnalyticsRange,
+  type AiPathRuntimeAnalyticsSummary,
 } from '@/shared/contracts/ai-paths';
 import { getRedisConnection } from '@/shared/lib/queue';
 
@@ -142,15 +142,15 @@ export const getRuntimeAnalyticsSummary = async (
         range,
         storage: 'redis',
         runs: {
-          total: total,
-          queued: queued,
-          started: started,
-          completed: completed,
-          failed: failed,
-          canceled: canceled,
-          deadLettered: deadLettered,
-          blockedOnLease: blockedOnLease,
-          handoffReady: handoffReady,
+          total,
+          queued,
+          started,
+          completed,
+          failed,
+          canceled,
+          deadLettered,
+          blockedOnLease,
+          handoffReady,
           successRate,
           failureRate,
           deadLetterRate,

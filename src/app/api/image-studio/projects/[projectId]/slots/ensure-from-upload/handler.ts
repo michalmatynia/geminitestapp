@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { ensureImageStudioSlotFromUploadedAsset } from '@/features/ai/image-studio/server/ensure-slot-from-upload';

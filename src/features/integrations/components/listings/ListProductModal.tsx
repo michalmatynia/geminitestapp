@@ -52,19 +52,24 @@ function ListProductModalContent(): React.JSX.Element {
     exportLogs,
     submitting,
     authRequired,
+    authRequiredMarketplace,
     loggingIn,
     handleSubmit,
-    handleTraderaLogin,
+    handleMarketplaceLogin,
     handleImageRetry,
-  } = useListProductForm(product.id);
+  } = useListProductForm(product.id, product.categoryId);
 
   const productName = resolveProductListingsProductName(product);
-  const selectedIntegrationName = resolveIntegrationDisplayName(selectedIntegration?.name);
+  const selectedIntegrationName = resolveIntegrationDisplayName(
+    selectedIntegration?.name,
+    selectedIntegration?.slug
+  );
   const { modalTitle, saveText } = resolveListProductModalCopy({
     productName,
     isBaseComIntegration,
     isTraderaIntegration,
     selectedIntegrationName,
+    selectedIntegrationSlug: selectedIntegration?.slug,
   });
   const autoSubmitAttemptedRef = useRef(false);
 
@@ -100,9 +105,10 @@ function ListProductModalContent(): React.JSX.Element {
           submitting,
           onRetryImageExport: retryImageExport,
           authRequired,
+          authRequiredMarketplace,
           loggingIn,
-          onTraderaLogin: () => {
-            void handleTraderaLogin(onSuccess);
+          onMarketplaceLogin: () => {
+            void handleMarketplaceLogin(onSuccess);
           },
           onRetrySubmit: () => {
             void handleSubmit(onSuccess);

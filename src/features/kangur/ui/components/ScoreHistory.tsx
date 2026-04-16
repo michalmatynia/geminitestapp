@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { createContext, useContext } from 'react';
 import { KangurSessionHistoryRow } from '@/features/kangur/ui/components/KangurSessionHistoryRow';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import {
@@ -87,6 +87,26 @@ type ScoreHistoryTranslateOperationLabel = ScoreHistoryState['translateOperation
 type ScoreHistoryOperationPerformanceEntry = ScoreHistoryInsights['operationPerformance'][number];
 type ScoreHistoryRecentScoreEntry = ScoreHistoryState['subjectScores'][number];
 
+type ScoreHistoryContextValue = {
+  basePath: string | undefined;
+  fallbackCopy: ScoreHistoryFallbackCopy;
+  insights: ScoreHistoryInsights;
+  translations: ScoreHistoryTranslations;
+  actionClassName: string;
+  normalizedLocale: string;
+  translateOperationLabel: ScoreHistoryTranslateOperationLabel;
+};
+
+const ScoreHistoryContext = createContext<ScoreHistoryContextValue | null>(null);
+
+function useScoreHistoryContext(): ScoreHistoryContextValue {
+  const context = useContext(ScoreHistoryContext);
+  if (!context) {
+    throw new Error('useScoreHistoryContext must be used within ScoreHistory');
+  }
+  return context;
+}
+
 const resolveWeakestLessonActionClassName = (isCoarsePointer: boolean): string =>
   isCoarsePointer
     ? 'mt-3 w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto'
@@ -113,63 +133,54 @@ const resolveScoreHistoryAccuracyClassName = (accuracy: number): string =>
 const resolveScoreHistoryXpText = (xpEarned: number | null): string | undefined =>
   xpEarned !== null ? `+${xpEarned} XP` : undefined;
 
-function ScoreHistoryLastActivity(props: {
-  fallbackCopy: ScoreHistoryFallbackCopy;
-  insights: ScoreHistoryInsights;
-  translations: ScoreHistoryTranslations;
-}): React.JSX.Element | null {
-  if (!props.insights.lastPlayedAt) {
+function ScoreHistoryLastActivity(): React.JSX.Element | null {
+  const { fallbackCopy, insights, translations } = useScoreHistoryContext();
+  if (!insights.lastPlayedAt) {
     return null;
   }
 
   return (
     <div className='text-[10px] font-bold text-slate-400'>
       {translateScoreHistoryWithFallback(
-        props.translations,
+        translations,
         'window.lastActivityPrefix',
-        props.fallbackCopy.window.lastActivityPrefix
+        fallbackCopy.window.lastActivityPrefix
       )}{' '}
       <span className='text-slate-600'>
-        {formatRelativeLastPlayed(props.insights.lastPlayedAt, props.translations, props.fallbackCopy)}
+        {formatRelativeLastPlayed(insights.lastPlayedAt, translations, fallbackCopy)}
       </span>
     </div>
   );
 }
 
-function ScoreHistoryWindowHeader(props: {
-  fallbackCopy: ScoreHistoryFallbackCopy;
-  insights: ScoreHistoryInsights;
-  translations: ScoreHistoryTranslations;
-}): React.JSX.Element {
+function ScoreHistoryWindowHeader(): React.JSX.Element {
+  const { fallbackCopy, translations } = useScoreHistoryContext();
   return (
     <div className='flex items-center justify-between'>
       <h2 className='text-sm font-black uppercase tracking-widest text-slate-400'>
         {translateScoreHistoryWithFallback(
-          props.translations,
+          translations,
           'window.title',
-          props.fallbackCopy.window.title,
+          fallbackCopy.window.title,
           { days: SCORE_INSIGHT_WINDOW_DAYS }
         )}
       </h2>
-      <ScoreHistoryLastActivity {...props} />
+      <ScoreHistoryLastActivity />
     </div>
   );
 }
 
-function ScoreHistoryStrongestPanel(props: {
-  fallbackCopy: ScoreHistoryFallbackCopy;
-  insights: ScoreHistoryInsights;
-  translations: ScoreHistoryTranslations;
-}): React.JSX.Element {
-  const strongest = props.insights.strongest;
+function ScoreHistoryStrongestPanel(): React.JSX.Element {
+  const { fallbackCopy, insights, translations } = useScoreHistoryContext();
+  const strongest = insights.strongest;
 
   return (
     <div className={KANGUR_STACK_COMPACT_CLASSNAME}>
       <h3 className='text-xs font-black uppercase tracking-[0.18em] text-slate-400'>
         {translateScoreHistoryWithFallback(
-          props.translations,
+          translations,
           'strongest.label',
-          props.fallbackCopy.strongest.label
+          fallbackCopy.strongest.label
         )}
       </h3>
       <KangurGlassPanel className='flex flex-1 flex-col justify-center' padding='md' surface='solid' variant='soft'>
@@ -182,9 +193,9 @@ function ScoreHistoryStrongestPanel(props: {
               <div className='text-sm font-black text-slate-900'>{strongest.label}</div>
               <p className='text-[11px] font-bold text-slate-500'>
                 {translateScoreHistoryWithFallback(
-                  props.translations,
+                  translations,
                   'shared.operationSummary',
-                  props.fallbackCopy.shared.operationSummary,
+                  fallbackCopy.shared.operationSummary,
                   {
                     accuracy: strongest.averageAccuracy,
                     attempts: strongest.attempts,
@@ -196,7 +207,7 @@ function ScoreHistoryStrongestPanel(props: {
           </div>
         ) : (
           <div className='text-center text-xs font-semibold text-slate-400'>
-            {props.fallbackCopy.strongest.empty}
+            {fallbackCopy.strongest.empty}
           </div>
         )}
       </KangurGlassPanel>
@@ -204,22 +215,17 @@ function ScoreHistoryStrongestPanel(props: {
   );
 }
 
-function ScoreHistoryWeakestPanel(props: {
-  actionClassName: string;
-  basePath: string | undefined;
-  fallbackCopy: ScoreHistoryFallbackCopy;
-  insights: ScoreHistoryInsights;
-  translations: ScoreHistoryTranslations;
-}): React.JSX.Element {
-  const weakest = props.insights.weakest;
+function ScoreHistoryWeakestPanel(): React.JSX.Element {
+  const { actionClassName, basePath, fallbackCopy, insights, translations } = useScoreHistoryContext();
+  const weakest = insights.weakest;
 
   return (
     <div className={KANGUR_STACK_COMPACT_CLASSNAME}>
       <h3 className='text-xs font-black uppercase tracking-[0.18em] text-slate-400'>
         {translateScoreHistoryWithFallback(
-          props.translations,
+          translations,
           'weakest.label',
-          props.fallbackCopy.weakest.label
+          fallbackCopy.weakest.label
         )}
       </h3>
       <KangurGlassPanel className='flex flex-1 flex-col justify-center' padding='md' surface='solid' variant='soft'>
@@ -233,9 +239,9 @@ function ScoreHistoryWeakestPanel(props: {
                 <div className='text-sm font-black text-slate-900'>{weakest.label}</div>
                 <p className='text-[11px] font-bold text-slate-500'>
                   {translateScoreHistoryWithFallback(
-                    props.translations,
+                    translations,
                     'shared.operationSummary',
-                    props.fallbackCopy.shared.operationSummary,
+                    fallbackCopy.shared.operationSummary,
                     {
                       accuracy: weakest.averageAccuracy,
                       attempts: weakest.attempts,
@@ -246,21 +252,21 @@ function ScoreHistoryWeakestPanel(props: {
               </div>
             </div>
             <Link
-              href={buildLessonFocusHref(props.basePath ?? '', weakest.operation)}
-              className={props.actionClassName}
+              href={buildLessonFocusHref(basePath ?? '', weakest.operation)}
+              className={actionClassName}
             >
               <KangurButton variant='surface' size='sm' className='w-full'>
                 {translateScoreHistoryWithFallback(
-                  props.translations,
+                  translations,
                   'weakest.reviewLesson',
-                  props.fallbackCopy.weakest.reviewLesson
+                  fallbackCopy.weakest.reviewLesson
                 )}
               </KangurButton>
             </Link>
           </div>
         ) : (
           <div className='text-center text-xs font-semibold text-slate-400'>
-            {props.fallbackCopy.weakest.empty}
+            {fallbackCopy.weakest.empty}
           </div>
         )}
       </KangurGlassPanel>
@@ -302,38 +308,38 @@ function ScoreHistoryOperationPerformanceCard(props: {
   );
 }
 
-function ScoreHistoryRecentSessionEntry(props: {
-  fallbackCopy: ScoreHistoryFallbackCopy;
-  normalizedLocale: string;
+function ScoreHistoryRecentSessionEntry({
+  score,
+}: {
   score: ScoreHistoryRecentScoreEntry;
-  translateOperationLabel: ScoreHistoryTranslateOperationLabel;
 }): React.JSX.Element {
-  const totalQuestions = Math.max(1, props.score.total_questions || 1);
-  const accuracyPercent = Math.round((props.score.correct_answers / totalQuestions) * 100);
-  const operationInfo = resolveKangurScoreOperationInfo(props.score.operation, {
-    locale: props.normalizedLocale,
-    translateOperationLabel: props.translateOperationLabel,
+  const { fallbackCopy, normalizedLocale, translateOperationLabel } = useScoreHistoryContext();
+  const totalQuestions = Math.max(1, score.total_questions || 1);
+  const accuracyPercent = Math.round((score.correct_answers / totalQuestions) * 100);
+  const operationInfo = resolveKangurScoreOperationInfo(score.operation, {
+    locale: normalizedLocale,
+    translateOperationLabel,
   });
 
   return (
     <KangurSessionHistoryRow
-      accent={resolveOperationAccent(props.score.operation)}
-      dataTestId={`score-history-recent-row-${props.score.id}`}
+      accent={resolveOperationAccent(score.operation)}
+      dataTestId={`score-history-recent-row-${score.id}`}
       durationClassName='text-slate-400'
-      durationText={formatRecentSessionDuration(props.score.time_taken)}
+      durationText={formatRecentSessionDuration(score.time_taken)}
       icon={operationInfo.emoji}
       scoreAccent={resolveAccuracyAccent(accuracyPercent)}
-      scoreTestId={`score-history-recent-score-${props.score.id}`}
-      scoreText={`${props.score.score}/${totalQuestions}`}
+      scoreTestId={`score-history-recent-score-${score.id}`}
+      scoreText={`${score.score}/${totalQuestions}`}
       subtitle={formatRecentSessionDate(
-        props.score.created_date,
-        props.normalizedLocale,
-        props.fallbackCopy.relative.noActivity
+        score.created_date,
+        normalizedLocale,
+        fallbackCopy.relative.noActivity
       )}
       titleClassName='text-slate-700'
       title={operationInfo.label}
-      xpTestId={`score-history-recent-xp-${props.score.id}`}
-      xpText={resolveScoreHistoryXpText(props.score.xp_earned ?? null)}
+      xpTestId={`score-history-recent-xp-${score.id}`}
+      xpText={resolveScoreHistoryXpText(score.xp_earned ?? null)}
     />
   );
 }
@@ -388,121 +394,116 @@ export function ScoreHistory(props: ScoreHistoryProps): React.JSX.Element {
   }
 
   return (
-    <div className={`flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
-      <div className={KANGUR_STACK_COMPACT_CLASSNAME}>
-        <ScoreHistoryWindowHeader
-          fallbackCopy={fallbackCopy}
-          insights={insights}
-          translations={translations}
-        />
+    <ScoreHistoryContext.Provider
+      value={{
+        basePath: props.basePath ?? undefined,
+        fallbackCopy,
+        insights,
+        translations,
+        actionClassName: weakestLessonActionClassName,
+        normalizedLocale,
+        translateOperationLabel,
+      }}
+    >
+      <div className={`flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
+        <div className={KANGUR_STACK_COMPACT_CLASSNAME}>
+          <ScoreHistoryWindowHeader />
 
-        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4'>
-          <KangurMetricCard
-            accent='slate'
-            data-testid='score-history-total-games'
-            label={translateScoreHistoryWithFallback(translations, 'summary.totalGames', fallbackCopy.summary.totalGames)}
-            value={insights.summary.totalGames}
-          />
-          <KangurMetricCard
-            accent='indigo'
-            data-testid='score-history-average-accuracy'
-            label={translateScoreHistoryWithFallback(translations, 'summary.averageAccuracy', fallbackCopy.summary.averageAccuracy)}
-            value={`${insights.summary.averageAccuracy}%`}
-          />
-          <KangurMetricCard
-            accent='emerald'
-            data-testid='score-history-perfect-games'
-            label={translateScoreHistoryWithFallback(translations, 'summary.perfectGames', fallbackCopy.summary.perfectGames)}
-            value={insights.summary.perfectGames}
-          />
-          <KangurMetricCard
-            accent={resolveScoreHistoryTrendAccent(insights.trend.direction)}
-            data-testid='score-history-weekly-trend'
-            label={translateScoreHistoryWithFallback(translations, 'trend.label', fallbackCopy.trend.label)}
-            value={formatTrendValue(insights.trend.deltaAccuracy, translations, fallbackCopy)}
-            description={formatTrendContext(insights.trend, translations, fallbackCopy)}
-          />
-        </div>
-        <div className='grid grid-cols-1 gap-2 text-xs font-bold text-slate-500 sm:grid-cols-2'>
-          <p>
-            {translateScoreHistoryWithFallback(
-              translations,
-              'window.weeklySummary',
-              fallbackCopy.window.weeklySummary,
-              {
-                accuracy: insights.summary.averageAccuracy,
-                perfect: insights.summary.perfectGames,
-              }
-            )}
-          </p>
-          <p>
-            {translateScoreHistoryWithFallback(
-              translations,
-              'window.weeklyXp',
-              fallbackCopy.window.weeklyXp,
-              {
-                xp: subjectScores.reduce(
-                  (sum, score) => sum + (typeof score.xp_earned === 'number' ? score.xp_earned : 0),
-                  0
-                ),
-                average: formatAverageXpPerSession(subjectScores),
-              }
-            )}
-          </p>
-        </div>
-      </div>
-
-      <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
-        <ScoreHistoryStrongestPanel
-          fallbackCopy={fallbackCopy}
-          insights={insights}
-          translations={translations}
-        />
-        <ScoreHistoryWeakestPanel
-          actionClassName={weakestLessonActionClassName}
-          basePath={props.basePath ?? undefined}
-          fallbackCopy={fallbackCopy}
-          insights={insights}
-          translations={translations}
-        />
-      </div>
-
-      <div className={KANGUR_STACK_COMPACT_CLASSNAME}>
-        <h3 className='text-xs font-black uppercase tracking-[0.18em] text-slate-400'>
-          {translateScoreHistoryWithFallback(
-            translations,
-            'byOperation.heading',
-            fallbackCopy.byOperationHeading
-          )}
-        </h3>
-        <div className='grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3'>
-          {insights.operationPerformance.map((op) => (
-            <ScoreHistoryOperationPerformanceCard key={op.operation} entry={op} />
-          ))}
-        </div>
-      </div>
-
-      <div className={KANGUR_STACK_COMPACT_CLASSNAME}>
-        <h3 className='text-xs font-black uppercase tracking-[0.18em] text-slate-400'>
-          {translateScoreHistoryWithFallback(
-            translations,
-            'recent.heading',
-            fallbackCopy.recentHeading
-          )}
-        </h3>
-        <div className='space-y-2'>
-          {subjectScores.slice(0, 10).map((score) => (
-            <ScoreHistoryRecentSessionEntry
-              key={score.id}
-              fallbackCopy={fallbackCopy}
-              normalizedLocale={normalizedLocale}
-              score={score}
-              translateOperationLabel={translateOperationLabel}
+          <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4'>
+            <KangurMetricCard
+              accent='slate'
+              data-testid='score-history-total-games'
+              label={translateScoreHistoryWithFallback(translations, 'summary.totalGames', fallbackCopy.summary.totalGames)}
+              value={insights.summary.totalGames}
             />
-          ))}
+            <KangurMetricCard
+              accent='indigo'
+              data-testid='score-history-average-accuracy'
+              label={translateScoreHistoryWithFallback(translations, 'summary.averageAccuracy', fallbackCopy.summary.averageAccuracy)}
+              value={`${insights.summary.averageAccuracy}%`}
+            />
+            <KangurMetricCard
+              accent='emerald'
+              data-testid='score-history-perfect-games'
+              label={translateScoreHistoryWithFallback(translations, 'summary.perfectGames', fallbackCopy.summary.perfectGames)}
+              value={insights.summary.perfectGames}
+            />
+            <KangurMetricCard
+              accent={resolveScoreHistoryTrendAccent(insights.trend.direction)}
+              data-testid='score-history-weekly-trend'
+              label={translateScoreHistoryWithFallback(translations, 'trend.label', fallbackCopy.trend.label)}
+              value={formatTrendValue(insights.trend.deltaAccuracy, translations, fallbackCopy)}
+              description={formatTrendContext(insights.trend, translations, fallbackCopy)}
+            />
+          </div>
+          <div className='grid grid-cols-1 gap-2 text-xs font-bold text-slate-500 sm:grid-cols-2'>
+            <p>
+              {translateScoreHistoryWithFallback(
+                translations,
+                'window.weeklySummary',
+                fallbackCopy.window.weeklySummary,
+                {
+                  accuracy: insights.summary.averageAccuracy,
+                  perfect: insights.summary.perfectGames,
+                }
+              )}
+            </p>
+            <p>
+              {translateScoreHistoryWithFallback(
+                translations,
+                'window.weeklyXp',
+                fallbackCopy.window.weeklyXp,
+                {
+                  xp: subjectScores.reduce(
+                    (sum, score) => sum + (typeof score.xp_earned === 'number' ? score.xp_earned : 0),
+                    0
+                  ),
+                  average: formatAverageXpPerSession(subjectScores),
+                }
+              )}
+            </p>
+          </div>
+        </div>
+
+        <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
+          <ScoreHistoryStrongestPanel />
+          <ScoreHistoryWeakestPanel />
+        </div>
+
+        <div className={KANGUR_STACK_COMPACT_CLASSNAME}>
+          <h3 className='text-xs font-black uppercase tracking-[0.18em] text-slate-400'>
+            {translateScoreHistoryWithFallback(
+              translations,
+              'byOperation.heading',
+              fallbackCopy.byOperationHeading
+            )}
+          </h3>
+          <div className='grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3'>
+            {insights.operationPerformance.map((op) => (
+              <ScoreHistoryOperationPerformanceCard key={op.operation} entry={op} />
+            ))}
+          </div>
+        </div>
+
+        <div className={KANGUR_STACK_COMPACT_CLASSNAME}>
+          <h3 className='text-xs font-black uppercase tracking-[0.18em] text-slate-400'>
+            {translateScoreHistoryWithFallback(
+              translations,
+              'recent.heading',
+              fallbackCopy.recentHeading
+            )}
+          </h3>
+          <div className='space-y-2'>
+            {subjectScores.slice(0, 10).map((score) => (
+              <ScoreHistoryRecentSessionEntry
+                key={score.id}
+                score={score}
+              />
+            ))}
+          </div>
         </div>
       </div>
-    </div>
+    </ScoreHistoryContext.Provider>
   );
 }
 

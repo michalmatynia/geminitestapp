@@ -7,7 +7,7 @@ import { JobActionsCell } from '@/shared/lib/jobs/components/job-table/JobAction
 
 const buttonMock = vi.hoisted(() => vi.fn());
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   Button: buttonMock,
 }));
 

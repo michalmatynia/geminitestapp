@@ -187,6 +187,8 @@ type CalendarInteractiveState = ReturnType<typeof useCalendarInteractiveGameStat
   guidanceTitle: string | null;
   cells: Array<number | null>;
   monthName: string;
+  onFinish?: () => void;
+  stage?: { onFinish: () => void };
   handleCellClick: (day: number | null) => void;
   handleDragEnd: (result: DropResult) => void;
   handleMonthChange: (delta: number) => void;
@@ -315,6 +317,8 @@ export function CalendarInteractiveProvider({
     guidanceTitle,
     cells,
     monthName,
+    onFinish: props.onFinish,
+    stage: props.stage,
     handleCellClick,
     handleDragEnd,
     handleMonthChange,
@@ -326,6 +330,8 @@ export function CalendarInteractiveProvider({
     guidanceTitle,
     cells,
     monthName,
+    props.onFinish,
+    props.stage,
     handleCellClick,
     handleDragEnd,
     handleMonthChange,
@@ -340,10 +346,12 @@ export function CalendarInteractiveProvider({
   );
 }
 
+import { internalError } from '@/shared/errors/app-error';
+
 export function useCalendarInteractiveContext() {
   const context = useContext(CalendarInteractiveContext);
   if (!context) {
-    throw new Error('useCalendarInteractiveContext must be used within a CalendarInteractiveProvider');
+    throw internalError('useCalendarInteractiveContext must be used within a CalendarInteractiveProvider');
   }
   return context;
 }

@@ -4,7 +4,7 @@ import { Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import React, { useMemo } from 'react';
 
-import { getImageStudioSlotImageSrc } from '@/features/ai/image-studio/image-src';
+import { getImageStudioSlotImageSrc } from '@/features/ai/public';
 import { useProductStudioContext } from '@/features/products/context/ProductStudioContext';
 import { useProductSettings } from '@/features/products/hooks/useProductSettings';
 import { Button } from '@/shared/ui/button';

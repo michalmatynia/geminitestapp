@@ -12,6 +12,9 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('next/navigation', () => ({
   useParams: () => ({ organizationId: 'org-1' }),
+}));
+
+vi.mock('nextjs-toploader/app', () => ({
   useRouter: () => ({ push: mocks.routerPush }),
 }));
 
@@ -32,7 +35,7 @@ vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
   }),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   useToast: () => ({
     toast: mocks.toast,
   }),

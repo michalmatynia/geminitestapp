@@ -208,6 +208,16 @@ const normalizeAiPathsSettingsKeys = (keys: string[]): string[] => {
 
 const createAiPathsKeysCacheKey = (keys: string[]): string => keys.join('\u0001');
 
+const selectAiPathsSettingsByKeys = (
+  records: AiPathsSettingRecord[],
+  keys: string[]
+): AiPathsSettingRecord[] => {
+  const byKey = new Map(records.map((record) => [record.key, record]));
+  return keys
+    .map((key) => byKey.get(key) ?? null)
+    .filter((record): record is AiPathsSettingRecord => Boolean(record));
+};
+
 const buildAiPathsSettingsUrl = (keys?: string[]): string => {
   if (!keys || keys.length === 0) return '/api/ai-paths/settings';
   const params = new URLSearchParams();
@@ -403,8 +413,28 @@ export const fetchAiPathsSettingsByKeysCached = async (
     if (cached && Date.now() - cached.fetchedAt < AI_PATHS_SETTINGS_STALE_MS) {
       return cached.records;
     }
+
+    if (isFreshCache() && aiPathsSettingsCache) {
+      const fromFullCache = selectAiPathsSettingsByKeys(aiPathsSettingsCache, normalizedKeys);
+      aiPathsSettingsByKeysCache.set(cacheKey, {
+        records: fromFullCache,
+        fetchedAt: Date.now(),
+      });
+      return fromFullCache;
+    }
+
     const inflight = aiPathsSettingsByKeysInflight.get(cacheKey);
     if (inflight) return await inflight;
+
+    if (aiPathsSettingsInflight) {
+      const fullRecords = await aiPathsSettingsInflight;
+      const fromInflightFullCache = selectAiPathsSettingsByKeys(fullRecords, normalizedKeys);
+      aiPathsSettingsByKeysCache.set(cacheKey, {
+        records: fromInflightFullCache,
+        fetchedAt: Date.now(),
+      });
+      return fromInflightFullCache;
+    }
   }
 
   const startedAt = Date.now();
@@ -441,10 +471,7 @@ export const fetchAiPathsSettingsByKeysCached = async (
     .catch((error: unknown) => {
       const fullCache = aiPathsSettingsCache;
       if (fullCache) {
-        const byKey = new Map(fullCache.map((record) => [record.key, record]));
-        const fromFullCache = normalizedKeys
-          .map((key) => byKey.get(key) ?? null)
-          .filter((record): record is AiPathsSettingRecord => Boolean(record));
+        const fromFullCache = selectAiPathsSettingsByKeys(fullCache, normalizedKeys);
         if (fromFullCache.length > 0) {
           logClientError(error, {
             context: {
@@ -461,10 +488,7 @@ export const fetchAiPathsSettingsByKeysCached = async (
       }
       const backup = readBackupSettings();
       if (backup && backup.length > 0) {
-        const byKey = new Map(backup.map((record) => [record.key, record]));
-        const fromBackup = normalizedKeys
-          .map((key) => byKey.get(key) ?? null)
-          .filter((record): record is AiPathsSettingRecord => Boolean(record));
+        const fromBackup = selectAiPathsSettingsByKeys(backup, normalizedKeys);
         if (fromBackup.length > 0) {
           logClientError(error, {
             context: {

@@ -9,7 +9,7 @@ import {
   UserRound,
 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
-import { memo, type RefObject, useMemo } from 'react';
+import React, { memo, type RefObject, useMemo } from 'react';
 
 import {
   getKangurHomeHref,
@@ -43,6 +43,32 @@ import { buildKangurLearnerLiveState } from '@/features/kangur/ui/services/learn
 
 const LEARNER_ACTIVITY_REFRESH_MS = 10_000;
 const LEARNER_ACTIVITY_START_DELAY_MS = 1_200;
+
+type KangurParentDashboardHeroContextValue = {
+  activeLearnerLabel: string;
+  activeLearnerName: string;
+  heroContent: ParentDashboardHeroContent;
+  learnerLiveState: ReturnType<typeof buildKangurLearnerLiveState>;
+  learnerManagementAnchorRef?: RefObject<HTMLDivElement | null>;
+  locale: string;
+  onBack: () => void;
+  parentWordmarkLabel: string;
+  showActions: boolean;
+  showLearnerManagement: boolean;
+};
+
+const KangurParentDashboardHeroContext =
+  React.createContext<KangurParentDashboardHeroContextValue | null>(null);
+
+function useKangurParentDashboardHero(): KangurParentDashboardHeroContextValue {
+  const context = React.useContext(KangurParentDashboardHeroContext);
+  if (!context) {
+    throw new Error(
+      'useKangurParentDashboardHero must be used within KangurParentDashboardHeroWidget.'
+    );
+  }
+  return context;
+}
 
 type KangurParentDashboardHeroWidgetProps = {
   showActions?: boolean;
@@ -167,17 +193,8 @@ function KangurParentDashboardGuestActions(): React.JSX.Element {
   );
 }
 
-function KangurParentDashboardGuestCard({
-  heroContent,
-  locale,
-  onBack,
-  parentWordmarkLabel,
-}: {
-  heroContent: ParentDashboardHeroContent;
-  locale: string;
-  onBack: () => void;
-  parentWordmarkLabel: string;
-}): React.JSX.Element {
+function KangurParentDashboardGuestCard(): React.JSX.Element {
+  const { heroContent, locale, onBack, parentWordmarkLabel } = useKangurParentDashboardHero();
   const translations = useTranslations('KangurParentDashboard');
   const guestDescription = heroContent?.summary
     ? `${heroContent.summary} ${translations('hero.unauthenticated.summarySuffix')}`
@@ -203,18 +220,11 @@ function KangurParentDashboardGuestCard({
 }
 
 function KangurParentDashboardRestrictedCard({
-  heroContent,
-  locale,
-  onBack,
   onGoToProfile,
-  parentWordmarkLabel,
 }: {
-  heroContent: ParentDashboardHeroContent;
-  locale: string;
-  onBack: () => void;
   onGoToProfile: () => void;
-  parentWordmarkLabel: string;
 }): React.JSX.Element {
+  const { heroContent, locale, onBack, parentWordmarkLabel } = useKangurParentDashboardHero();
   const isCoarsePointer = useKangurCoarsePointer();
   const translations = useTranslations('KangurParentDashboard');
   const { compactWideActionClassName } = resolveHeroActionClassNames(isCoarsePointer);
@@ -249,11 +259,8 @@ function KangurParentDashboardRestrictedCard({
   );
 }
 
-function KangurParentDashboardLearnerManagementSection({
-  learnerManagementAnchorRef,
-}: {
-  learnerManagementAnchorRef?: RefObject<HTMLDivElement | null>;
-}): React.JSX.Element {
+function KangurParentDashboardLearnerManagementSection(): React.JSX.Element {
+  const { learnerManagementAnchorRef } = useKangurParentDashboardHero();
   const translations = useTranslations('KangurParentDashboard');
   const { activeLearner } = useKangurParentDashboardRuntimeHeroState();
   const hasActiveLearner = Boolean(activeLearner?.id);
@@ -276,11 +283,8 @@ function KangurParentDashboardLearnerManagementSection({
   );
 }
 
-function KangurParentDashboardLearnerActivitySection({
-  learnerLiveState,
-}: {
-  learnerLiveState: ReturnType<typeof buildKangurLearnerLiveState>;
-}): React.JSX.Element {
+function KangurParentDashboardLearnerActivitySection(): React.JSX.Element {
+  const { learnerLiveState } = useKangurParentDashboardHero();
   const isCoarsePointer = useKangurCoarsePointer();
   const translations = useTranslations('KangurParentDashboard');
   const { basePath } = useKangurParentDashboardRuntimeHeroState();
@@ -421,34 +425,23 @@ function KangurParentDashboardQuickActions(): React.JSX.Element {
   );
 }
 
-function KangurParentDashboardAuthenticatedBody({
-  activeLearnerLabel,
-  learnerLiveState,
-  learnerManagementAnchorRef,
-  showActions,
-  showLearnerManagement,
-}: {
-  activeLearnerLabel: string;
-  learnerLiveState: ReturnType<typeof buildKangurLearnerLiveState>;
-  learnerManagementAnchorRef?: RefObject<HTMLDivElement | null>;
-  showActions: boolean;
-  showLearnerManagement: boolean;
-}): React.JSX.Element {
+function KangurParentDashboardAuthenticatedBody(): React.JSX.Element {
+  const {
+    activeLearnerLabel,
+    showActions,
+    showLearnerManagement,
+  } = useKangurParentDashboardHero();
   const { activeLearner } = useKangurParentDashboardRuntimeHeroState();
   const hasActiveLearner = Boolean(activeLearner?.id);
 
   return (
     <>
       {showLearnerManagement ? (
-        <KangurParentDashboardLearnerManagementSection
-          learnerManagementAnchorRef={learnerManagementAnchorRef}
-        />
+        <KangurParentDashboardLearnerManagementSection />
       ) : null}
 
       {hasActiveLearner ? (
-        <KangurParentDashboardLearnerActivitySection
-          learnerLiveState={learnerLiveState}
-        />
+        <KangurParentDashboardLearnerActivitySection />
       ) : null}
 
       {hasActiveLearner ? (
@@ -508,29 +501,8 @@ function KangurParentDashboardCreateLearnerAction(): React.JSX.Element {
   );
 }
 
-function KangurParentDashboardManagedCard({
-  activeLearnerLabel,
-  activeLearnerName,
-  heroContent,
-  learnerLiveState,
-  learnerManagementAnchorRef,
-  locale,
-  onBack,
-  parentWordmarkLabel,
-  showActions,
-  showLearnerManagement,
-}: {
-  activeLearnerLabel: string;
-  activeLearnerName: string;
-  heroContent: ParentDashboardHeroContent;
-  learnerLiveState: ReturnType<typeof buildKangurLearnerLiveState>;
-  learnerManagementAnchorRef?: RefObject<HTMLDivElement | null>;
-  locale: string;
-  onBack: () => void;
-  parentWordmarkLabel: string;
-  showActions: boolean;
-  showLearnerManagement: boolean;
-}): React.JSX.Element {
+function KangurParentDashboardManagedCard(): React.JSX.Element {
+  const { activeLearnerName, heroContent, locale, onBack, parentWordmarkLabel, showLearnerManagement } = useKangurParentDashboardHero();
   const translations = useTranslations('KangurParentDashboard');
 
   return (
@@ -556,22 +528,16 @@ function KangurParentDashboardManagedCard({
         <KangurParentDashboardHeroWordmark label={parentWordmarkLabel} locale={locale} />
       }
     >
-      <KangurParentDashboardAuthenticatedBody
-        activeLearnerLabel={activeLearnerLabel}
-        learnerLiveState={learnerLiveState}
-        learnerManagementAnchorRef={learnerManagementAnchorRef}
-        showActions={showActions}
-        showLearnerManagement={showLearnerManagement}
-      />
+      <KangurParentDashboardAuthenticatedBody />
     </KangurPageIntroCard>
   );
 }
 
-export const KangurParentDashboardHeroWidget = memo(function KangurParentDashboardHeroWidget({
+export const KangurParentDashboardHeroWidget = memo(({
   showActions = true,
   showLearnerManagement = false,
   learnerManagementAnchorRef,
-}: KangurParentDashboardHeroWidgetProps): React.JSX.Element {
+}: KangurParentDashboardHeroWidgetProps): React.JSX.Element => {
   const locale = useLocale();
   const translations = useTranslations('KangurParentDashboard');
   const routeNavigator = useKangurRouteNavigator();
@@ -633,41 +599,42 @@ export const KangurParentDashboardHeroWidget = memo(function KangurParentDashboa
   };
   const activeLearnerName = activeLearner?.displayName ?? translations('hero.noLearnerTitle');
 
+  const contextValue: KangurParentDashboardHeroContextValue = {
+    activeLearnerLabel,
+    activeLearnerName,
+    heroContent,
+    learnerLiveState,
+    learnerManagementAnchorRef,
+    locale,
+    onBack: handleGoHome, // Default back behavior
+    parentWordmarkLabel,
+    showActions,
+    showLearnerManagement,
+  };
+
   if (!isAuthenticated) {
     return (
-      <KangurParentDashboardGuestCard
-        heroContent={heroContent}
-        locale={locale}
-        onBack={handleGoHome}
-        parentWordmarkLabel={parentWordmarkLabel}
-      />
+      <KangurParentDashboardHeroContext.Provider value={contextValue}>
+        <KangurParentDashboardGuestCard />
+      </KangurParentDashboardHeroContext.Provider>
     );
   }
 
   if (!canManageLearners) {
     return (
-      <KangurParentDashboardRestrictedCard
-        heroContent={heroContent}
-        locale={locale}
-        onBack={handleGoToProfile}
-        onGoToProfile={handleGoToProfile}
-        parentWordmarkLabel={parentWordmarkLabel}
-      />
+      <KangurParentDashboardHeroContext.Provider
+        value={{ ...contextValue, onBack: handleGoToProfile }}
+      >
+        <KangurParentDashboardRestrictedCard onGoToProfile={handleGoToProfile} />
+      </KangurParentDashboardHeroContext.Provider>
     );
   }
 
   return (
-    <KangurParentDashboardManagedCard
-      activeLearnerLabel={activeLearnerLabel}
-      activeLearnerName={activeLearnerName}
-      heroContent={heroContent}
-      learnerLiveState={learnerLiveState}
-      learnerManagementAnchorRef={learnerManagementAnchorRef}
-      locale={locale}
-      onBack={handleGoToProfile}
-      parentWordmarkLabel={parentWordmarkLabel}
-      showActions={showActions}
-      showLearnerManagement={showLearnerManagement}
-    />
+    <KangurParentDashboardHeroContext.Provider
+      value={{ ...contextValue, onBack: handleGoToProfile }}
+    >
+      <KangurParentDashboardManagedCard />
+    </KangurParentDashboardHeroContext.Provider>
   );
 });

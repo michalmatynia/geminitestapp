@@ -54,6 +54,12 @@ vi.mock('next/navigation', () => ({
   usePathname: usePathnameMock,
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  useRouter: useRouterMock,
+  useSearchParams: useSearchParamsMock,
+  usePathname: usePathnameMock,
+}));
+
 vi.mock('next-auth/react', () => ({
   signOut: vi.fn(),
 }));

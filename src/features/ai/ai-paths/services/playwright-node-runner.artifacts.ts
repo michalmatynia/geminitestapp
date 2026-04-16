@@ -2,7 +2,8 @@ import path from 'node:path';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { getFsPromises, joinRuntimePath } from '@/shared/lib/files/runtime-fs';
 import type { BrowserContext, Page } from 'playwright';
-import { nowIso, updateRunState, RUN_ROOT_DIR } from './playwright-node-runner';
+import { nowIso, updateRunState } from './playwright-node-runner';
+import { RUN_ROOT_DIR } from './playwright-node-runner.helpers';
 import type {
   PlaywrightNodeRunArtifact,
   PlaywrightNodeRunRecord,
@@ -120,10 +121,22 @@ export const buildCompletedRunState = async (params: {
   logs: string[];
   page: Page;
   returnValue: unknown;
+  runtimePosture: Record<string, unknown> | null;
   runId: string;
   startedAt: string;
 }): Promise<PlaywrightNodeRunRecord> => {
-  const { artifacts, emittedOutputs, existingRun, inlineArtifacts, logs, page, returnValue, runId, startedAt } =
+  const {
+    artifacts,
+    emittedOutputs,
+    existingRun,
+    inlineArtifacts,
+    logs,
+    page,
+    returnValue,
+    runtimePosture,
+    runId,
+    startedAt,
+  } =
     params;
   const completedAt = nowIso();
   return {
@@ -134,12 +147,14 @@ export const buildCompletedRunState = async (params: {
     completedAt,
     createdAt: existingRun?.createdAt ?? startedAt,
     updatedAt: completedAt,
+    instance: existingRun?.instance ?? null,
     result: {
       returnValue,
       outputs: emittedOutputs,
       inlineArtifacts,
       finalUrl: page.url(),
       title: await page.title().catch(() => ''),
+      ...(runtimePosture ? { runtimePosture } : {}),
     },
     error: null,
     artifacts,
@@ -249,10 +264,11 @@ export const buildFailedRunState = (params: {
   errorMessage: string;
   existingRun: PlaywrightNodeRunRecord | null;
   logs: string[];
+  runtimePosture?: Record<string, unknown> | null;
   runId: string;
   startedAt: string;
 }): PlaywrightNodeRunRecord => {
-  const { artifacts, errorMessage, existingRun, logs, runId, startedAt } = params;
+  const { artifacts, errorMessage, existingRun, logs, runtimePosture = null, runId, startedAt } = params;
   const completedAt = nowIso();
   return {
     runId,
@@ -262,7 +278,8 @@ export const buildFailedRunState = (params: {
     completedAt,
     createdAt: existingRun?.createdAt ?? startedAt,
     updatedAt: completedAt,
-    result: null,
+    instance: existingRun?.instance ?? null,
+    result: runtimePosture ? { runtimePosture } : null,
     error: errorMessage,
     artifacts,
     logs,

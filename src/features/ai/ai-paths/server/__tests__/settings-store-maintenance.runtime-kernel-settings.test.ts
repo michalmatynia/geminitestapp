@@ -61,7 +61,7 @@ describe('AI Paths maintenance runtime-kernel settings normalization', () => {
     expect(result.nextRecords).toEqual([]);
   });
 
-  it('normalizes runtime-kernel node type and resolver id list values', () => {
+  it('prunes deprecated pilot-node settings instead of rewriting them into canonical entries', () => {
     const records: AiPathsSettingRecord[] = [
       {
         key: DEPRECATED_AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY,
@@ -92,6 +92,34 @@ describe('AI Paths maintenance runtime-kernel settings normalization', () => {
     expect(result.success).toBe(true);
     expect(result.affectedCount).toBe(2);
     expect(result.deletedKeys).toEqual([DEPRECATED_AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY]);
+    expect(result.nextRecords).toEqual([
+      {
+        key: AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY,
+        value: 'resolver.primary, resolver.fallback',
+      },
+    ]);
+  });
+
+  it('normalizes canonical runtime-kernel node type and resolver id list values', () => {
+    const records: AiPathsSettingRecord[] = [
+      {
+        key: AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY,
+        value: ' Constant , math, Template Node, math ',
+      },
+      {
+        key: AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY,
+        value: ' resolver.primary ,resolver.fallback, resolver.primary ',
+      },
+    ];
+
+    const result = runMaintenanceAction({
+      actionId: 'normalize_runtime_kernel_settings',
+      records,
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.affectedCount).toBe(2);
+    expect(result.deletedKeys).toEqual([]);
     expect(result.nextRecords).toEqual([
       {
         key: AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY,
@@ -174,7 +202,7 @@ describe('AI Paths maintenance runtime-kernel settings normalization', () => {
     );
   });
 
-  it('prunes path runtime-kernel legacy mode/strict fields while normalizing live extension values', () => {
+  it('prunes path runtime-kernel legacy aliases without translating them into canonical values', () => {
     const records: AiPathsSettingRecord[] = [
       {
         key: `${AI_PATHS_CONFIG_KEY_PREFIX}path-main`,
@@ -193,6 +221,45 @@ describe('AI Paths maintenance runtime-kernel settings normalization', () => {
               [DEPRECATED_RUNTIME_KERNEL_CONFIG_NODE_TYPES_FIELD]: ' Template Node, parser ',
               [DEPRECATED_RUNTIME_KERNEL_CONFIG_RESOLVER_IDS_FIELD]:
                 ' resolver.primary , resolver.fallback ',
+              [DEPRECATED_RUNTIME_KERNEL_CONFIG_STRICT_ALIAS_FIELD]: ' YES ',
+            },
+          },
+        }),
+      },
+    ];
+
+    const result = runMaintenanceAction({
+      actionId: 'normalize_runtime_kernel_settings',
+      records,
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.affectedCount).toBe(1);
+    expect(result.deletedKeys).toEqual([]);
+    const parsed = JSON.parse(result.nextRecords[0]?.value ?? '{}') as Record<string, unknown>;
+    expect(parsed).not.toHaveProperty('extensions');
+  });
+
+  it('keeps canonical path runtime-kernel values while pruning deprecated aliases', () => {
+    const records: AiPathsSettingRecord[] = [
+      {
+        key: `${AI_PATHS_CONFIG_KEY_PREFIX}path-main`,
+        value: JSON.stringify({
+          id: 'path-main',
+          name: 'Path Main',
+          description: '',
+          trigger: 'manual',
+          version: 1,
+          updatedAt: '2026-03-05T00:00:00.000Z',
+          nodes: [],
+          edges: [],
+          extensions: {
+            runtimeKernel: {
+              [DEPRECATED_RUNTIME_KERNEL_CONFIG_MODE_FIELD]: DEPRECATED_RUNTIME_KERNEL_MODE_ALIAS,
+              nodeTypes: ' Template Node, parser ',
+              codeObjectResolverIds: ' resolver.primary , resolver.fallback ',
+              [DEPRECATED_RUNTIME_KERNEL_CONFIG_NODE_TYPES_FIELD]: 'legacy template',
+              [DEPRECATED_RUNTIME_KERNEL_CONFIG_RESOLVER_IDS_FIELD]: 'legacy resolver',
               [DEPRECATED_RUNTIME_KERNEL_CONFIG_STRICT_ALIAS_FIELD]: ' YES ',
             },
           },

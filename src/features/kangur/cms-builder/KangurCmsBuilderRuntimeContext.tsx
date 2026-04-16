@@ -7,6 +7,9 @@ import { internalError } from '@/features/kangur/shared/errors/app-error';
 
 import type { KangurCmsProject, KangurCmsScreenKey } from './project';
 
+import type { KangurThemeMode } from '../appearance/theme-settings';
+import type { ThemeSettings } from '@/shared/contracts/cms-theme';
+
 type KangurCmsBuilderRuntimeContextValue = {
   draftProject: KangurCmsProject;
   savedProject: KangurCmsProject;
@@ -14,16 +17,19 @@ type KangurCmsBuilderRuntimeContextValue = {
   onSwitchScreen: (nextScreenKey: KangurCmsScreenKey, sections: SectionInstance[]) => void;
   onSave: (sections: SectionInstance[]) => Promise<void>;
   isSaving: boolean;
+  themePreviewMode: KangurThemeMode;
+  themePreviewFallbacks: Record<KangurThemeMode, ThemeSettings>;
+  setThemePreviewMode: (mode: KangurThemeMode) => void;
 };
 
 type KangurCmsBuilderRuntimeStateContextValue = Pick<
   KangurCmsBuilderRuntimeContextValue,
-  'draftProject' | 'savedProject' | 'activeScreenKey' | 'isSaving'
+  'draftProject' | 'savedProject' | 'activeScreenKey' | 'isSaving' | 'themePreviewMode' | 'themePreviewFallbacks'
 >;
 
 type KangurCmsBuilderRuntimeActionsContextValue = Pick<
   KangurCmsBuilderRuntimeContextValue,
-  'onSwitchScreen' | 'onSave'
+  'onSwitchScreen' | 'onSave' | 'setThemePreviewMode'
 >;
 
 const KangurCmsBuilderRuntimeStateContext =
@@ -39,6 +45,9 @@ export function KangurCmsBuilderRuntimeProvider({
   onSwitchScreen,
   onSave,
   isSaving,
+  themePreviewMode,
+  themePreviewFallbacks,
+  setThemePreviewMode,
 }: KangurCmsBuilderRuntimeContextValue & {
   children: ReactNode;
 }): React.JSX.Element {
@@ -48,15 +57,18 @@ export function KangurCmsBuilderRuntimeProvider({
       savedProject,
       activeScreenKey,
       isSaving,
+      themePreviewMode,
+      themePreviewFallbacks,
     }),
-    [activeScreenKey, draftProject, isSaving, savedProject]
+    [activeScreenKey, draftProject, isSaving, savedProject, themePreviewMode, themePreviewFallbacks]
   );
   const actionsValue = useMemo<KangurCmsBuilderRuntimeActionsContextValue>(
     () => ({
       onSwitchScreen,
       onSave,
+      setThemePreviewMode,
     }),
-    [onSave, onSwitchScreen]
+    [onSave, onSwitchScreen, setThemePreviewMode]
   );
 
   return (

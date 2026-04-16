@@ -42,7 +42,8 @@ const AGENT_RUN_ENQUEUE_RESPONSE = {
 } as const;
 
 const AGENT_RUNS_DELETE_RESPONSE = {
-  deleted: 2,
+  success: true,
+  deletedCount: 2,
 } as const;
 
 const AGENT_BROWSER_SNAPSHOTS_RESPONSE = {
@@ -97,7 +98,7 @@ describe('agent runtime contract runtime', () => {
   it('parses agent run list and queue envelopes', () => {
     expect(agentRunsResponseSchema.parse(AGENT_RUNS_RESPONSE).runs).toHaveLength(1);
     expect(agentRunEnqueueResponseSchema.parse(AGENT_RUN_ENQUEUE_RESPONSE).runId).toBe('run-1');
-    expect(agentRunsDeleteResponseSchema.parse(AGENT_RUNS_DELETE_RESPONSE).deleted).toBe(2);
+    expect(agentRunsDeleteResponseSchema.parse(AGENT_RUNS_DELETE_RESPONSE).deletedCount).toBe(2);
   });
 
   it('parses agent snapshot, log, and audit envelopes', () => {

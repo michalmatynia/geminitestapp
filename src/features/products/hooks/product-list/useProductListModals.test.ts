@@ -5,6 +5,7 @@ import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { persistTraderaQuickListFeedback } from '@/features/integrations/utils/traderaQuickListFeedback';
+import { persistVintedQuickListFeedback } from '@/features/integrations/utils/vintedQuickListFeedback';
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 
@@ -200,6 +201,43 @@ describe('useProductListModals', () => {
     });
   });
 
+  it('suppresses stale Tradera recovery context when persisted quick-export feedback is already completed', () => {
+    persistTraderaQuickListFeedback('product-1', 'completed', {
+      runId: 'run-tradera-1',
+      requestId: 'job-tradera-1',
+      integrationId: 'integration-tradera-1',
+      connectionId: 'conn-tradera-1',
+      duplicateMatchStrategy: 'exact-title-single-candidate',
+    });
+
+    const recoveryContext: ProductListingsRecoveryContext = {
+      source: 'tradera_quick_export_failed',
+      integrationSlug: 'tradera',
+      status: 'failed',
+      runId: null,
+      requestId: null,
+      integrationId: undefined,
+      connectionId: undefined,
+    };
+
+    const { result } = renderHook(() =>
+      useProductListModals({
+        handleOpenCreateModal: vi.fn(),
+        prefetchIntegrationSelectionData: vi.fn(),
+        prefetchProductListingsData: vi.fn(),
+        refreshProductListingsData: vi.fn(),
+        rowSelection: {},
+        toast: vi.fn(),
+      })
+    );
+
+    act(() => {
+      result.current.handleOpenIntegrationsModal(createProduct(), recoveryContext, 'tradera');
+    });
+
+    expect(result.current.integrationsRecoveryContext).toBeNull();
+  });
+
   it('forces a fresh listings refresh when opening the Tradera modal', () => {
     const prefetchProductListingsData = vi.fn();
     const refreshProductListingsData = vi.fn();
@@ -216,6 +254,72 @@ describe('useProductListModals', () => {
 
     act(() => {
       result.current.handleOpenIntegrationsModal(createProduct(), undefined, 'tradera');
+    });
+
+    expect(prefetchProductListingsData).toHaveBeenCalledWith('product-1');
+    expect(refreshProductListingsData).toHaveBeenCalledWith('product-1');
+  });
+
+  it('enriches Vinted recovery context from persisted quick-export feedback', () => {
+    persistVintedQuickListFeedback('product-1', 'failed', {
+      runId: 'run-vinted-1',
+      requestId: 'job-vinted-1',
+      integrationId: 'integration-vinted-1',
+      connectionId: 'conn-vinted-1',
+      failureReason: 'Session expired.',
+    });
+
+    const recoveryContext: ProductListingsRecoveryContext = {
+      source: 'vinted_quick_export_failed',
+      integrationSlug: 'vinted',
+      status: 'failed',
+      runId: null,
+      requestId: null,
+      integrationId: undefined,
+      connectionId: undefined,
+    };
+
+    const { result } = renderHook(() =>
+      useProductListModals({
+        handleOpenCreateModal: vi.fn(),
+        prefetchIntegrationSelectionData: vi.fn(),
+        prefetchProductListingsData: vi.fn(),
+        refreshProductListingsData: vi.fn(),
+        rowSelection: {},
+        toast: vi.fn(),
+      })
+    );
+
+    act(() => {
+      result.current.handleOpenIntegrationsModal(createProduct(), recoveryContext, 'vinted');
+    });
+
+    expect(result.current.integrationsRecoveryContext).toEqual({
+      ...recoveryContext,
+      failureReason: 'Session expired.',
+      runId: 'run-vinted-1',
+      requestId: 'job-vinted-1',
+      integrationId: 'integration-vinted-1',
+      connectionId: 'conn-vinted-1',
+    });
+  });
+
+  it('forces a fresh listings refresh when opening the Vinted modal', () => {
+    const prefetchProductListingsData = vi.fn();
+    const refreshProductListingsData = vi.fn();
+    const { result } = renderHook(() =>
+      useProductListModals({
+        handleOpenCreateModal: vi.fn(),
+        prefetchIntegrationSelectionData: vi.fn(),
+        prefetchProductListingsData,
+        refreshProductListingsData,
+        rowSelection: {},
+        toast: vi.fn(),
+      })
+    );
+
+    act(() => {
+      result.current.handleOpenIntegrationsModal(createProduct(), undefined, 'vinted');
     });
 
     expect(prefetchProductListingsData).toHaveBeenCalledWith('product-1');

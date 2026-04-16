@@ -296,7 +296,12 @@ export async function runExtractionRequest({
             const clickTarget = page.locator(recoveryPlan.clickSelector).first();
             await clickTarget.click({ timeout: 4000 });
             await page.waitForTimeout(1500);
-            await captureSnapshot(page, runId, runDir, 'email-recovery-click', log, activeStepId);
+            await captureSnapshot(page, runDir, {
+              runId,
+              label: 'email-recovery-click',
+              log,
+              activeStepId,
+            });
           } catch (error) {
             void ErrorSystem.captureException(error);
             await log('warning', 'Email recovery click failed.', {
@@ -318,14 +323,12 @@ export async function runExtractionRequest({
             try {
               await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 20000 });
               await dismissConsent(page, 'email-recovery-navigation', log, activeStepId);
-              await captureSnapshot(
-                page,
+              await captureSnapshot(page, runDir, {
                 runId,
-                runDir,
-                'email-recovery-navigation',
+                label: 'email-recovery-navigation',
                 log,
-                activeStepId
-              );
+                activeStepId,
+              });
               const updatedText = await page.evaluate(
                 () => document.body?.innerText || document.documentElement?.innerText || ''
               );
@@ -396,14 +399,12 @@ export async function runExtractionRequest({
         url: finalUrl,
       });
       await autoScroll(page);
-      const scrolledSnapshot = await captureSnapshot(
-        page,
+      const scrolledSnapshot = await captureSnapshot(page, runDir, {
         runId,
-        runDir,
-        'after-scroll',
+        label: 'after-scroll',
         log,
-        activeStepId
-      );
+        activeStepId,
+      });
       domText = scrolledSnapshot.domText;
       extractedNames = cleanProductNames(await extractProductNames(page));
     }
@@ -414,14 +415,12 @@ export async function runExtractionRequest({
         await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
         await dismissConsent(page, 'after-listing-navigation', log, activeStepId);
         await waitForProductContent(page);
-        const listingSnapshot = await captureSnapshot(
-          page,
+        const listingSnapshot = await captureSnapshot(page, runDir, {
           runId,
-          runDir,
-          'listing-navigation',
+          label: 'listing-navigation',
           log,
-          activeStepId
-        );
+          activeStepId,
+        });
         domText = listingSnapshot.domText;
         finalUrl = listingSnapshot.url;
         extractedNames = cleanProductNames(await extractProductNames(page));
@@ -538,14 +537,12 @@ export async function runExtractionRequest({
           const clickTarget = page.locator(recoveryPlan.clickSelector).first();
           await clickTarget.click({ timeout: 4000 });
           await page.waitForTimeout(1500);
-          const clickSnapshot = await captureSnapshot(
-            page,
+          const clickSnapshot = await captureSnapshot(page, runDir, {
             runId,
-            runDir,
-            'product-recovery-click',
+            label: 'product-recovery-click',
             log,
-            activeStepId
-          );
+            activeStepId,
+          });
           domText = clickSnapshot.domText;
           finalUrl = clickSnapshot.url;
         } catch (error) {
@@ -577,14 +574,12 @@ export async function runExtractionRequest({
             });
             await dismissConsent(page, 'product-recovery-navigation', log, activeStepId);
             await waitForProductContent(page);
-            const listingSnapshot = await captureSnapshot(
-              page,
+            const listingSnapshot = await captureSnapshot(page, runDir, {
               runId,
-              runDir,
-              'product-recovery-navigation',
+              label: 'product-recovery-navigation',
               log,
-              activeStepId
-            );
+              activeStepId,
+            });
             domText = listingSnapshot.domText;
             finalUrl = listingSnapshot.url;
             extractedNames = cleanProductNames(await extractProductNames(page));

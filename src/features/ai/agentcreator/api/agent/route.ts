@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { logAgentAudit } from '@/features/ai/agent-runtime/audit';
 import { resolveAgentRuntimeContextRegistryEnvelope } from '@/features/ai/agent-runtime/context-registry/server';
@@ -25,8 +25,6 @@ import { badRequestError, configurationError, internalError } from '@/shared/err
 import { getBrainAssignmentForFeature } from '@/shared/lib/ai-brain/server';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-
-export const dynamic = 'force-dynamic';
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 
@@ -305,7 +303,7 @@ async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promis
   });
   const ids = runs.map((run: AgentRunIdRecord) => run.id);
   if (ids.length === 0) {
-    const response: AgentRunsDeleteResponse = { deleted: 0 };
+    const response: AgentRunsDeleteResponse = { success: true, deletedCount: 0, deleted: 0 };
     return NextResponse.json(response);
   }
   await chatbotAgentRun.deleteMany({
@@ -326,7 +324,11 @@ async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promis
       durationMs: Date.now() - requestStart,
     });
   }
-  const response: AgentRunsDeleteResponse = { deleted: ids.length };
+  const response: AgentRunsDeleteResponse = {
+    success: true,
+    deletedCount: ids.length,
+    deleted: ids.length,
+  };
   return NextResponse.json(response);
 }
 

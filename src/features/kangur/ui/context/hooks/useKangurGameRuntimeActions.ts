@@ -109,6 +109,8 @@ type UseKangurGameRuntimeActionsResult = {
   setPlayerName: (value: string) => void;
 };
 
+// Returns a hidden (invisible) XP toast state. Used to clear the toast when
+// rewards become unavailable (e.g. parent account without an active learner).
 const buildHiddenXpToastState = (): KangurXpToastState => ({
   visible: false,
   xpGained: 0,
@@ -119,6 +121,10 @@ const buildHiddenXpToastState = (): KangurXpToastState => ({
   recommendation: null,
 });
 
+// Resolves the display name shown during gameplay. Priority:
+//  1. Authenticated user's full name
+//  2. Session player name (set at game start)
+//  3. Guest player name (entered on the home screen)
 const resolveRuntimePlayerName = ({
   guestPlayerName,
   sessionPlayerName,
@@ -129,6 +135,8 @@ const resolveRuntimePlayerName = ({
   user: KangurUser | null;
 }): string => user?.full_name?.trim() || sessionPlayerName || guestPlayerName;
 
+// Resolves the player name to persist in the score record. Falls back to
+// the authenticated user's name, then to a generic default ('Gracz').
 const resolveSessionPlayerName = ({
   guestPlayerName,
   user,
@@ -137,6 +145,8 @@ const resolveSessionPlayerName = ({
   user: KangurUser | null;
 }): string => guestPlayerName.trim() || user?.full_name?.trim() || 'Gracz';
 
+// Atomically starts a new game session by dispatching START_SESSION with the
+// generated question set, operation, difficulty, and start timestamp.
 const applyQuestionSessionState = ({
   nextDifficulty,
   nextOperation,
@@ -159,6 +169,8 @@ const applyQuestionSessionState = ({
   });
 };
 
+// Shows the XP reward toast after a completed game session. Skipped when the
+// current user cannot earn rewards (e.g. parent account without a learner).
 const showCompletedGameToast = ({
   canEarnRewards,
   outcome,
@@ -181,6 +193,8 @@ const showCompletedGameToast = ({
   );
 };
 
+// Schedules the next question to appear after a 1 s delay, giving the learner
+// brief visual feedback on their answer before the question changes.
 const scheduleNextQuestion = (
   runGameLoopTimer: UseKangurGameRuntimeActionsInput['runGameLoopTimer'],
   advanceQuestion: UseKangurGameRuntimeActionsInput['advanceQuestion']
@@ -190,6 +204,8 @@ const scheduleNextQuestion = (
   }, 1000);
 };
 
+// Schedules the transition to the result screen after a 1 s delay so the
+// learner sees the final answer feedback before the results appear.
 const scheduleResultScreen = (
   runGameLoopTimer: UseKangurGameRuntimeActionsInput['runGameLoopTimer'],
   setScreen: Setter<KangurGameScreen>
@@ -227,6 +243,13 @@ const buildCompletedGameTrackingPayload = ({
   playerNamePresent: nextPlayerName.length > 0,
 });
 
+// completeGameAnswer handles the final answer in a session:
+//  1. Records elapsed time and dispatches COMPLETE_SESSION.
+//  2. Builds the outcome (XP, badges, recommendations) via kangur-core.
+//  3. Persists the score to the backend (fire-and-forget) when rewards apply.
+//  4. Refreshes parent assignments so the UI reflects completed work.
+//  5. Tracks the game_completed analytics event.
+//  6. Shows the XP toast and schedules the result screen transition.
 const completeGameAnswer = ({
   activeSessionRecommendation,
   canAccessParentAssignments,
@@ -328,6 +351,8 @@ const completeGameAnswer = ({
   scheduleResultScreen(runGameLoopTimer, setScreen);
 };
 
+// Hides the XP toast whenever the user loses reward eligibility (e.g. they
+// switch to a parent account without an active learner mid-session).
 const useRewardAvailabilitySync = ({
   canEarnRewards,
   setXpToast,
@@ -343,6 +368,8 @@ const useRewardAvailabilitySync = ({
   }, [canEarnRewards, setXpToast]);
 };
 
+// Keeps the session player name in sync with the authenticated user's full
+// name. Runs whenever the user object changes (e.g. after learner selection).
 const useSessionPlayerNameSync = ({
   sessionPlayerName,
   setSessionPlayerName,
@@ -361,9 +388,14 @@ const useSessionPlayerNameSync = ({
   }, [sessionPlayerName, setSessionPlayerName, user?.full_name]);
 };
 
+// Parent accounts without an active learner cannot earn XP or badges.
 export const canEarnKangurRewards = (user: KangurUser | null): boolean =>
   !(user?.actorType === 'parent' && !user?.activeLearner?.id);
 
+// useKangurGameRuntimeActions produces all stable action callbacks for the
+// game runtime. It is intentionally separate from useKangurGameCore so the
+// heavy action logic (score persistence, analytics, XP) doesn't live in the
+// reducer and can be tested independently.
 export function useKangurGameRuntimeActions(
   input: UseKangurGameRuntimeActionsInput
 ): UseKangurGameRuntimeActionsResult {
@@ -432,6 +464,10 @@ export function useKangurGameRuntimeActions(
     [ensureSessionPlayerName, input.startSession]
   );
 
+  // handleAnswer processes a single question answer:
+  //  - Increments score on correct answers.
+  //  - On the last question, calls completeGameAnswer (score persist + result).
+  //  - Otherwise schedules the next question after a 1 s feedback delay.
   const handleAnswer = useCallback(
     (correct: boolean): void => {
       const nextScore = correct ? input.score + 1 : input.score;

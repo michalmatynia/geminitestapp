@@ -19,6 +19,7 @@ interface ProductParameterDoc extends Document {
   name_de: string | null;
   selectorType: ProductParameter['selectorType'];
   optionLabels: string[];
+  linkedTitleTermType: ProductParameter['linkedTitleTermType'];
   catalogId: string;
   createdAt: Date;
   updatedAt: Date;
@@ -56,6 +57,17 @@ const normalizeOptionLabels = (input: unknown): string[] => {
   return labels;
 };
 
+const normalizeLinkedTitleTermType = (
+  value: unknown
+): ProductParameter['linkedTitleTermType'] => {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim().toLowerCase();
+  if (normalized === 'size' || normalized === 'material' || normalized === 'theme') {
+    return normalized;
+  }
+  return null;
+};
+
 const toParameterDomain = (doc: ProductParameterDoc): ProductParameter => ({
   id: String(doc.id ?? doc._id),
   name: doc.name_en,
@@ -64,6 +76,7 @@ const toParameterDomain = (doc: ProductParameterDoc): ProductParameter => ({
   name_de: doc.name_de ?? null,
   selectorType: normalizeSelectorType(doc.selectorType),
   optionLabels: normalizeOptionLabels(doc.optionLabels),
+  linkedTitleTermType: normalizeLinkedTitleTermType(doc.linkedTitleTermType),
   catalogId: doc.catalogId?.toString(),
   createdAt: doc.createdAt?.toISOString() ?? new Date().toISOString(),
   updatedAt: doc.updatedAt?.toISOString() ?? new Date().toISOString(),
@@ -123,6 +136,7 @@ export const mongoParameterRepository: ParameterRepository = {
       name_de: data.name_de ?? null,
       selectorType: normalizeSelectorType(data.selectorType),
       optionLabels: normalizeOptionLabels(data.optionLabels ?? []),
+      linkedTitleTermType: normalizeLinkedTitleTermType(data.linkedTitleTermType),
       catalogId: data.catalogId,
       createdAt: now,
       updatedAt: now,
@@ -145,6 +159,9 @@ export const mongoParameterRepository: ParameterRepository = {
       set.selectorType = normalizeSelectorType(data.selectorType);
     if (data.optionLabels !== undefined)
       set.optionLabels = normalizeOptionLabels(data.optionLabels);
+    if (data.linkedTitleTermType !== undefined) {
+      set.linkedTitleTermType = normalizeLinkedTitleTermType(data.linkedTitleTermType);
+    }
 
     await db
       .collection<ProductParameterDoc>(COLLECTION)
@@ -180,6 +197,7 @@ export const mongoParameterRepository: ParameterRepository = {
       name_de: item.name_de ?? null,
       selectorType: normalizeSelectorType(item.selectorType),
       optionLabels: normalizeOptionLabels(item.optionLabels ?? []),
+      linkedTitleTermType: normalizeLinkedTitleTermType(item.linkedTitleTermType),
       createdAt: now,
       updatedAt: now,
     }));

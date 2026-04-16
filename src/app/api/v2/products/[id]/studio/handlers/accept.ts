@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { acceptProductStudioVariant } from '@/features/ai/server';
 import { productStudioAcceptRequestSchema as acceptSchema, productStudioProductResponseSchema } from '@/shared/contracts/products/studio';

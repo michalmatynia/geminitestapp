@@ -239,6 +239,7 @@ export const applyBaseParameterImport = async (
           name_de: names.name_de ?? null,
           selectorType: 'text',
           optionLabels: [],
+          linkedTitleTermType: null,
         });
         if (!matched) continue;
         byId.set(matched.id, matched);
@@ -264,6 +265,10 @@ export const applyBaseParameterImport = async (
         linkUpdates[entry.baseParameterId] = matched.id;
         linkMap[entry.baseParameterId] = matched.id;
       }
+    }
+
+    if (matched.linkedTitleTermType) {
+      continue;
     }
 
     const nextValuePayload = buildParameterValuePayload({

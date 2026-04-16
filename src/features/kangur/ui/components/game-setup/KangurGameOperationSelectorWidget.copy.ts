@@ -2,7 +2,7 @@ import type {
   OperationSelectorFallbackCopy,
 } from './KangurGameOperationSelectorWidget.types';
 import { KANGUR_GEOMETRY_LESSON_COMPONENT_IDS } from '@/features/kangur/settings';
-import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
+import { type normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 export const getOperationSelectorFallbackCopy = (
   locale: ReturnType<typeof normalizeSiteLocale>

@@ -53,7 +53,7 @@ export function useDraft(id: string | null): SingleQuery<ProductDraft> {
     id,
     queryKey: (draftId) => draftKeys.detail(draftId),
     queryFn: () => api.get<ProductDraft>(`/api/drafts/${id}`),
-    enabled: !!id,
+    enabled: Boolean(id),
     meta: {
       source: 'shared.hooks.useDraft',
       operation: 'detail',

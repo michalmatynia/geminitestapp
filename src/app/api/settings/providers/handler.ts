@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { getAuthDataProvider, requireAuthProvider } from '@/features/auth/server';
 import { AUTH_SETTINGS_KEYS } from '@/features/auth/server';
@@ -17,6 +17,7 @@ import {
   type AppDbProvider,
 } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { applyActiveMongoSourceEnv } from '@/shared/lib/db/mongo-source';
 import { getIntegrationDataProvider } from '@/shared/lib/integrations/services/integration-provider';
 import { PRODUCT_DB_PROVIDER_SETTING_KEY } from '@/shared/lib/products/constants';
 import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
@@ -29,6 +30,7 @@ const normalizeProvider = (value?: string | null): AppDbProvider | null => {
 };
 
 const readMongoSetting = async (key: string): Promise<string | null> => {
+  await applyActiveMongoSourceEnv();
   if (!process.env['MONGODB_URI']) return null;
   try {
     const mongo = await getMongoDb();
@@ -68,6 +70,7 @@ const isIntentionalServiceOverride = (
 
 export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertSettingsManageAccess();
+  await applyActiveMongoSourceEnv();
 
   const hasMongoUri = Boolean(process.env['MONGODB_URI']);
   const appDbProviderEnv = process.env['APP_DB_PROVIDER']?.trim() || null;

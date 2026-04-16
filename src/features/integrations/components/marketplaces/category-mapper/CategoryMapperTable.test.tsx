@@ -8,6 +8,7 @@ import { CategoryMapperTable } from './CategoryMapperTable';
 import type { ExternalCategory } from '@/shared/contracts/integrations/listings';
 import type { CatalogRecord } from '@/shared/contracts/products/catalogs';
 import type { ProductCategory } from '@/shared/contracts/products/categories';
+import { ApiError } from '@/shared/lib/api-client';
 
 const mocks = vi.hoisted(() => ({
   catalogs: [] as unknown[],
@@ -368,6 +369,77 @@ describe('CategoryMapperTable', () => {
     );
   });
 
+  it('shows a Tradera warning when saved mappings point to non-leaf marketplace categories', async () => {
+    mocks.externalCategories = [
+      createExternalCategory({
+        id: 'ext-collectibles',
+        externalId: '49',
+        name: 'Collectibles',
+        path: 'Collectibles',
+        isLeaf: false,
+      }),
+      createExternalCategory({
+        id: 'ext-pins',
+        externalId: '2929',
+        name: 'Pins & needles',
+        parentExternalId: '49',
+        path: 'Collectibles > Pins & needles',
+        depth: 1,
+        isLeaf: false,
+      }),
+      createExternalCategory({
+        id: 'ext-other-pins',
+        externalId: '292904',
+        name: 'Other pins & needles',
+        parentExternalId: '2929',
+        path: 'Collectibles > Pins & needles > Other pins & needles',
+        depth: 2,
+        isLeaf: true,
+      }),
+    ];
+
+    mocks.mappings = [
+      {
+        id: 'mapping-parent',
+        connectionId: 'conn-1',
+        externalCategoryId: '2929',
+        internalCategoryId: 'int-1',
+        catalogId: 'catalog-1',
+        isActive: true,
+        createdAt: '2026-03-22T00:00:00.000Z',
+        updatedAt: '2026-03-22T00:00:00.000Z',
+        externalCategory: createExternalCategory({
+          id: 'ext-pins',
+          externalId: '2929',
+          name: 'Pins & needles',
+          parentExternalId: '49',
+          path: 'Collectibles > Pins & needles',
+          depth: 1,
+          isLeaf: false,
+        }),
+        internalCategory: createInternalCategory({ id: 'int-1', name: 'office chairs' }),
+      },
+    ];
+
+    render(
+      <CategoryMapperProvider
+        connectionId='conn-1'
+        connectionName='Tradera'
+        integrationSlug='tradera'
+      >
+        <CategoryMapperTable />
+      </CategoryMapperProvider>
+    );
+
+    const alerts = await screen.findAllByTestId('mapper-alert');
+    expect(alerts[0]).toHaveTextContent(
+      '1 saved Tradera mapping points to a parent category that still has child categories. Remap it to the deepest Tradera category before listing.'
+    );
+    expect(alerts[0]).toHaveTextContent(
+      'Collectibles > Pins & needles -> office chairs'
+    );
+  });
+
   it('rerenders cleanly when fetched external categories appear after an empty state', async () => {
     mocks.externalCategories = [];
 
@@ -399,5 +471,191 @@ describe('CategoryMapperTable', () => {
       expect(screen.getByRole('heading', { name: 'Marketplace Categories' })).toBeInTheDocument();
       expect(screen.getByText('Jewellery')).toBeInTheDocument();
     });
+  });
+
+  it('shows Tradera fetch diagnostics after fetching categories from the public fallback', async () => {
+    const user = userEvent.setup();
+    mocks.fetchMutateAsync.mockResolvedValue({
+      fetched: 12,
+      total: 12,
+      source: 'Tradera public taxonomy pages',
+      message:
+        'Successfully synced 12 categories from Tradera public taxonomy pages (roots: 4, max depth: 1).',
+      categoryStats: {
+        rootCount: 4,
+        withParentCount: 8,
+        maxDepth: 1,
+        depthHistogram: {
+          '0': 4,
+          '1': 8,
+        },
+      },
+    });
+
+    render(
+      <CategoryMapperProvider
+        connectionId='conn-1'
+        connectionName='Tradera'
+        integrationSlug='tradera'
+      >
+        <CategoryMapperTable />
+      </CategoryMapperProvider>
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Fetch Categories' }));
+
+    await waitFor(() => {
+      expect(mocks.toast).toHaveBeenCalledWith(
+        'Successfully synced 12 categories from Tradera public taxonomy pages (roots: 4, max depth: 1).',
+        { variant: 'success' }
+      );
+    });
+
+    const alerts = screen.getAllByTestId('mapper-alert');
+    expect(alerts[0]).toHaveTextContent(
+      'Category source: Tradera public taxonomy pages. Loaded 12 categories.'
+    );
+    expect(alerts[0]).toHaveTextContent(
+      'Roots: 4. Categories with parents: 8. Max depth: 1.'
+    );
+    expect(alerts[0]).toHaveTextContent(
+      'Tradera is using the public taxonomy-page fallback and only reached shallow levels.'
+    );
+  });
+
+  it('shows persisted fetch diagnostics from loaded external category metadata after reload', async () => {
+    mocks.externalCategories = [
+      createExternalCategory({
+        id: 'ext-collectibles',
+        externalId: '49',
+        name: 'Collectibles',
+        path: 'Collectibles',
+        isLeaf: false,
+        metadata: {
+          categoryFetchSource: 'Tradera SOAP API',
+        },
+      }),
+      createExternalCategory({
+        id: 'ext-pins',
+        externalId: '2929',
+        name: 'Pins & needles',
+        parentExternalId: '49',
+        path: 'Collectibles > Pins & needles',
+        depth: 1,
+        isLeaf: false,
+        metadata: {
+          categoryFetchSource: 'Tradera SOAP API',
+        },
+      }),
+      createExternalCategory({
+        id: 'ext-other-pins',
+        externalId: '292904',
+        name: 'Other pins & needles',
+        parentExternalId: '2929',
+        path: 'Collectibles > Pins & needles > Other pins & needles',
+        depth: 2,
+        isLeaf: true,
+        metadata: {
+          categoryFetchSource: 'Tradera SOAP API',
+        },
+      }),
+    ];
+
+    render(
+      <CategoryMapperProvider
+        connectionId='conn-1'
+        connectionName='Tradera'
+        integrationSlug='tradera'
+      >
+        <CategoryMapperTable />
+      </CategoryMapperProvider>
+    );
+
+    const alerts = await screen.findAllByTestId('mapper-alert');
+    expect(alerts[0]).toHaveTextContent(
+      'Category source: Tradera SOAP API. Loaded 3 categories.'
+    );
+    expect(alerts[0]).toHaveTextContent(
+      'Roots: 1. Categories with parents: 2. Max depth: 2.'
+    );
+    expect(alerts[0]).not.toHaveTextContent(
+      'Tradera is using the public taxonomy-page fallback and only reached shallow levels.'
+    );
+  });
+
+  it('shows an inline warning when a shallow Tradera fallback fetch is rejected and existing categories are kept', async () => {
+    const user = userEvent.setup();
+    mocks.externalCategories = [
+      createExternalCategory({
+        id: 'ext-collectibles',
+        externalId: '49',
+        name: 'Collectibles',
+        path: 'Collectibles',
+        isLeaf: false,
+      }),
+      createExternalCategory({
+        id: 'ext-pins',
+        externalId: '2929',
+        name: 'Pins & needles',
+        parentExternalId: '49',
+        path: 'Collectibles > Pins & needles',
+        depth: 1,
+        isLeaf: false,
+      }),
+      createExternalCategory({
+        id: 'ext-other-pins',
+        externalId: '292904',
+        name: 'Other pins & needles',
+        parentExternalId: '2929',
+        path: 'Collectibles > Pins & needles > Other pins & needles',
+        depth: 2,
+        isLeaf: true,
+      }),
+    ];
+
+    const error = new ApiError(
+      'Tradera public taxonomy pages returned a shallower category tree than the categories already stored. Existing categories were kept. Retry the fetch or configure Tradera App ID and App Key to use the SOAP API.',
+      422
+    );
+    error.payload = {
+      message: error.message,
+      code: 'UNPROCESSABLE_ENTITY',
+      httpStatus: 422,
+      meta: {
+        sourceName: 'Tradera public taxonomy pages',
+        existingTotal: 3,
+        existingMaxDepth: 2,
+        fetchedTotal: 2,
+        fetchedMaxDepth: 1,
+      },
+    };
+    mocks.fetchMutateAsync.mockRejectedValue(error);
+
+    render(
+      <CategoryMapperProvider
+        connectionId='conn-1'
+        connectionName='Tradera'
+        integrationSlug='tradera'
+      >
+        <CategoryMapperTable />
+      </CategoryMapperProvider>
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Fetch Categories' }));
+
+    await waitFor(() => {
+      expect(mocks.toast).toHaveBeenCalledWith(error.message, { variant: 'error' });
+    });
+
+    const alerts = screen.getAllByTestId('mapper-alert');
+    expect(alerts[0]).toHaveTextContent(
+      'Tradera public taxonomy pages returned a shallower category tree than the categories already stored. Existing categories were kept.'
+    );
+    expect(alerts[0]).toHaveTextContent(
+      'Stored categories kept: 3. Current max depth: 2. Rejected fetch max depth: 1.'
+    );
+    expect(alerts[0]).toHaveTextContent(
+      'Current loaded tree roots: 1. Categories with parents: 2.'
+    );
   });
 });

@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb';
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import type {
@@ -13,7 +13,7 @@ import {
   optionalTrimmedQueryString,
 } from '@/shared/lib/api/query-schema';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import { assertDatabaseEngineManageAccess } from '@/features/database/server';
+import { assertDatabaseEngineManageAccessOrAiPathsInternal } from '@/features/database/server';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
@@ -89,10 +89,9 @@ async function browseMongoCollection(params: BrowseParams): Promise<BrowseRespon
 }
 
 export async function GET_handler(
-  _request: NextRequest,
+  request: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {
-  await assertDatabaseEngineManageAccess();
   const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
   const collection = query.collection ?? null;
   const providerParam = query.provider?.toLowerCase() ?? '';
@@ -100,6 +99,8 @@ export async function GET_handler(
   if (!collection) {
     throw badRequestError('Collection parameter is required');
   }
+
+  await assertDatabaseEngineManageAccessOrAiPathsInternal(request, { collection });
 
   if (providerParam && providerParam !== 'mongodb' && providerParam !== 'auto') {
     throw badRequestError('Only MongoDB browsing is supported.');

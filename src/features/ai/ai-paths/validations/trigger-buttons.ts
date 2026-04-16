@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { type z } from 'zod';
 
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
 import {

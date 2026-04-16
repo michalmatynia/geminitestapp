@@ -44,9 +44,9 @@ export const looksLikeSvg = (markup: string): boolean => /^\s*<svg[\s>]/i.test(m
 export const insertSnippetIntoSvg = (markup: string, snippet: string): string => {
   const closeIdx = markup.lastIndexOf('</svg>');
   if (closeIdx !== -1) {
-    return markup.slice(0, closeIdx) + '  ' + snippet + '\n' + markup.slice(closeIdx);
+    return `${markup.slice(0, closeIdx)  }  ${  snippet  }\n${  markup.slice(closeIdx)}`;
   }
-  return markup + '\n' + snippet;
+  return `${markup  }\n${  snippet}`;
 };
 
 // ── Types ─────────────────────────────────────────────────────────────────────

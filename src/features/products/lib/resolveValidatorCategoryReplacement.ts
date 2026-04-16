@@ -1,3 +1,7 @@
+// resolveValidatorCategoryReplacement: resolves loose user-provided category
+// replacement strings to canonical category IDs using normalized exact matching
+// and fallback 'loose' label matching. Pure, side-effect-free utility used by
+// validator replacement resolution logic.
 import type { ProductCategory } from '@/shared/contracts/products/categories';
 import {
   normalizeValidatorCategoryLooseComparableText,

@@ -1,15 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const mocks = vi.hoisted(() => ({
-  enqueuePlaywrightNodeRunMock: vi.fn(),
-  readPlaywrightNodeRunMock: vi.fn(),
-  readPlaywrightNodeArtifactMock: vi.fn(),
-  getDiskPathFromPublicPathMock: vi.fn(),
-  uploadToConfiguredStorageMock: vi.fn(),
-  upsertKangurSocialImageAddonMock: vi.fn(),
-  findLatestAddonByPresetIdMock: vi.fn(),
-  sharpMock: vi.fn(),
-}));
+const mocks = vi.hoisted(() => {
+  const startPlaywrightEngineTaskMock = vi.fn();
+  return {
+    startPlaywrightEngineTaskMock,
+    enqueuePlaywrightNodeRunMock: startPlaywrightEngineTaskMock,
+    readPlaywrightNodeRunMock: vi.fn(),
+    readPlaywrightNodeArtifactMock: vi.fn(),
+    getDiskPathFromPublicPathMock: vi.fn(),
+    uploadToConfiguredStorageMock: vi.fn(),
+    upsertKangurSocialImageAddonMock: vi.fn(),
+    findLatestAddonByPresetIdMock: vi.fn(),
+    sharpMock: vi.fn(),
+  };
+});
 
 vi.mock('server-only', () => ({}));
 vi.mock('fs/promises', () => ({ default: { mkdir: vi.fn(), writeFile: vi.fn() } }));
@@ -18,14 +22,27 @@ vi.mock('sharp', () => ({
   default: (...args: unknown[]) => mocks.sharpMock(...args),
 }));
 
-vi.mock('@/features/ai/ai-paths/services/playwright-node-runner', () => ({
-  enqueuePlaywrightNodeRun: (...args: unknown[]) =>
-    mocks.enqueuePlaywrightNodeRunMock(...args),
-  readPlaywrightNodeRun: (...args: unknown[]) =>
-    mocks.readPlaywrightNodeRunMock(...args),
-  readPlaywrightNodeArtifact: (...args: unknown[]) =>
-    mocks.readPlaywrightNodeArtifactMock(...args),
-}));
+vi.mock('@/features/playwright/server', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/playwright/server')>();
+  return {
+    ...actual,
+    startPlaywrightEngineTask: (input: Record<string, unknown>) =>
+      mocks.startPlaywrightEngineTaskMock({
+        ...input,
+        waitForResult: false,
+      }),
+    readPlaywrightEngineRun: (...args: unknown[]) =>
+      mocks.readPlaywrightNodeRunMock(...args),
+    readPlaywrightEngineArtifact: (...args: unknown[]) =>
+      mocks.readPlaywrightNodeArtifactMock(...args),
+    createSocialCaptureBatchPlaywrightInstance: (input: Record<string, unknown> = {}) => ({
+      kind: 'social_capture_batch',
+      label: 'Kangur social batch capture',
+      tags: ['kangur', 'social', 'capture', 'batch'],
+      ...input,
+    }),
+  };
+});
 
 vi.mock('@/features/files/server', () => ({
   getDiskPathFromPublicPath: (...args: unknown[]) =>
@@ -116,7 +133,7 @@ describe('createKangurSocialImageAddonsBatch', () => {
   });
 
   it('captures all presets when presetIds is not specified', async () => {
-    mocks.enqueuePlaywrightNodeRunMock.mockResolvedValue(
+    mocks.startPlaywrightEngineTaskMock.mockResolvedValue(
       makeCompletedRun(['game', 'lessons'])
     );
 
@@ -157,7 +174,7 @@ describe('createKangurSocialImageAddonsBatch', () => {
   });
 
   it('filters presets by presetIds when provided', async () => {
-    mocks.enqueuePlaywrightNodeRunMock.mockResolvedValue(
+    mocks.startPlaywrightEngineTaskMock.mockResolvedValue(
       makeCompletedRun(['game'])
     );
 
@@ -174,7 +191,7 @@ describe('createKangurSocialImageAddonsBatch', () => {
   });
 
   it('limits captures to the configured number of selected presets', async () => {
-    mocks.enqueuePlaywrightNodeRunMock.mockResolvedValue(
+    mocks.startPlaywrightEngineTaskMock.mockResolvedValue(
       makeCompletedRun(['game'])
     );
 
@@ -187,8 +204,11 @@ describe('createKangurSocialImageAddonsBatch', () => {
     expect(result.usedPresetCount).toBe(1);
     expect(result.usedPresetIds).toEqual(['game']);
     expect(result.addons).toHaveLength(1);
-    expect(mocks.enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith(
+    expect(mocks.startPlaywrightEngineTaskMock).toHaveBeenCalledWith(
       expect.objectContaining({
+        instance: expect.objectContaining({
+          kind: 'social_capture_batch',
+        }),
         request: expect.objectContaining({
           input: expect.objectContaining({
             captures: [
@@ -201,7 +221,7 @@ describe('createKangurSocialImageAddonsBatch', () => {
   });
 
   it('forwards request cookies into Playwright storage state', async () => {
-    mocks.enqueuePlaywrightNodeRunMock.mockResolvedValue(
+    mocks.startPlaywrightEngineTaskMock.mockResolvedValue(
       makeCompletedRun(['game'])
     );
 
@@ -211,8 +231,11 @@ describe('createKangurSocialImageAddonsBatch', () => {
       forwardCookies: 'session=abc123; theme=light',
     });
 
-    expect(mocks.enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith(
+    expect(mocks.startPlaywrightEngineTaskMock).toHaveBeenCalledWith(
       expect.objectContaining({
+        instance: expect.objectContaining({
+          kind: 'social_capture_batch',
+        }),
         request: expect.objectContaining({
           contextOptions: {
             storageState: {
@@ -237,7 +260,7 @@ describe('createKangurSocialImageAddonsBatch', () => {
   });
 
   it('normalizes secure auth cookie prefixes into url-scoped Playwright cookies', async () => {
-    mocks.enqueuePlaywrightNodeRunMock.mockResolvedValue(
+    mocks.startPlaywrightEngineTaskMock.mockResolvedValue(
       makeCompletedRun(['game'])
     );
 
@@ -248,8 +271,11 @@ describe('createKangurSocialImageAddonsBatch', () => {
         '__Host-next-auth.csrf-token=csrf123; __Secure-next-auth.session-token=session456',
     });
 
-    expect(mocks.enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith(
+    expect(mocks.startPlaywrightEngineTaskMock).toHaveBeenCalledWith(
       expect.objectContaining({
+        instance: expect.objectContaining({
+          kind: 'social_capture_batch',
+        }),
         request: expect.objectContaining({
           contextOptions: {
             storageState: {
@@ -276,7 +302,7 @@ describe('createKangurSocialImageAddonsBatch', () => {
   });
 
   it('drops secure-prefixed auth cookies for localhost batch captures while keeping plain cookies', async () => {
-    mocks.enqueuePlaywrightNodeRunMock.mockResolvedValue(makeCompletedRun(['game']));
+    mocks.startPlaywrightEngineTaskMock.mockResolvedValue(makeCompletedRun(['game']));
 
     await createKangurSocialImageAddonsBatch({
       baseUrl: 'http://localhost:3000',
@@ -285,8 +311,11 @@ describe('createKangurSocialImageAddonsBatch', () => {
         '__Host-next-auth.csrf-token=csrf123; __Secure-next-auth.session-token=session456; session=abc123',
     });
 
-    expect(mocks.enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith(
+    expect(mocks.startPlaywrightEngineTaskMock).toHaveBeenCalledWith(
       expect.objectContaining({
+        instance: expect.objectContaining({
+          kind: 'social_capture_batch',
+        }),
         request: expect.objectContaining({
           contextOptions: {
             storageState: {
@@ -306,7 +335,7 @@ describe('createKangurSocialImageAddonsBatch', () => {
   });
 
   it('passes the trusted self origin host into the Playwright runner policy override', async () => {
-    mocks.enqueuePlaywrightNodeRunMock.mockResolvedValue(makeCompletedRun(['game']));
+    mocks.startPlaywrightEngineTaskMock.mockResolvedValue(makeCompletedRun(['game']));
 
     await createKangurSocialImageAddonsBatch({
       baseUrl: 'http://localhost:3000',
@@ -314,8 +343,11 @@ describe('createKangurSocialImageAddonsBatch', () => {
       trustedSelfOriginHost: 'localhost:3000',
     });
 
-    expect(mocks.enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith(
+    expect(mocks.startPlaywrightEngineTaskMock).toHaveBeenCalledWith(
       expect.objectContaining({
+        instance: expect.objectContaining({
+          kind: 'social_capture_batch',
+        }),
         request: expect.objectContaining({
           policyAllowedHosts: ['localhost:3000'],
         }),
@@ -324,7 +356,7 @@ describe('createKangurSocialImageAddonsBatch', () => {
   });
 
   it('seeds the requested storefront appearance mode into Playwright storage and batch input', async () => {
-    mocks.enqueuePlaywrightNodeRunMock.mockResolvedValue(
+    mocks.startPlaywrightEngineTaskMock.mockResolvedValue(
       makeCompletedRun(['game'])
     );
 
@@ -334,8 +366,11 @@ describe('createKangurSocialImageAddonsBatch', () => {
       appearanceMode: 'dark',
     });
 
-    expect(mocks.enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith(
+    expect(mocks.startPlaywrightEngineTaskMock).toHaveBeenCalledWith(
       expect.objectContaining({
+        instance: expect.objectContaining({
+          kind: 'social_capture_batch',
+        }),
         request: expect.objectContaining({
           input: expect.objectContaining({
             appearanceMode: 'dark',
@@ -434,7 +469,12 @@ describe('createKangurSocialImageAddonsBatch', () => {
     });
 
     expect(mocks.enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith(
-      expect.objectContaining({ waitForResult: false })
+      expect.objectContaining({
+        waitForResult: false,
+        instance: expect.objectContaining({
+          kind: 'social_capture_batch',
+        }),
+      })
     );
     expect(onProgress).toHaveBeenNthCalledWith(1, {
       processedCount: 1,
@@ -477,6 +517,9 @@ describe('createKangurSocialImageAddonsBatch', () => {
 
     expect(mocks.enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith(
       expect.objectContaining({
+        instance: expect.objectContaining({
+          kind: 'social_capture_batch',
+        }),
         request: expect.objectContaining({
           input: expect.objectContaining({
             captures: [
@@ -493,6 +536,9 @@ describe('createKangurSocialImageAddonsBatch', () => {
     );
     expect(mocks.enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith(
       expect.objectContaining({
+        instance: expect.objectContaining({
+          kind: 'social_capture_batch',
+        }),
         request: expect.objectContaining({
           script: expect.stringContaining('data-kangur-appearance-mode'),
         }),
@@ -500,6 +546,9 @@ describe('createKangurSocialImageAddonsBatch', () => {
     );
     expect(mocks.enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith(
       expect.objectContaining({
+        instance: expect.objectContaining({
+          kind: 'social_capture_batch',
+        }),
         request: expect.objectContaining({
           script: expect.stringContaining('const maxCaptureAttempts = 2;'),
         }),
@@ -646,6 +695,9 @@ describe('createKangurSocialImageAddonsBatch', () => {
 
     expect(mocks.enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith(
       expect.objectContaining({
+        instance: expect.objectContaining({
+          kind: 'social_capture_batch',
+        }),
         request: expect.objectContaining({
           personaId: 'persona-1',
           script: 'return input.captures;',

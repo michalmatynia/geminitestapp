@@ -33,6 +33,7 @@ is specifically for shared build, CI, and package-manager workflow guidance.
 - [`bun.md`](./bun.md)
 - [`codeql.md`](./codeql.md)
 - [`general-improvements.md`](./general-improvements.md)
+- [`improvements/README.md`](./improvements/README.md)
 
 ## Canonical Repo Lanes
 

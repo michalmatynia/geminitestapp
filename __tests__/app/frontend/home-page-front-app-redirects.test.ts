@@ -39,6 +39,11 @@ vi.mock('next/navigation', () => ({
   permanentRedirect: redirectMock,
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  redirect: redirectMock,
+  permanentRedirect: redirectMock,
+}));
+
 vi.mock('@/shared/lib/request/optional-headers', () => ({
   readOptionalRequestHeaders: headersMock,
 }));

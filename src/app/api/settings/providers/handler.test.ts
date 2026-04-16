@@ -13,6 +13,10 @@ vi.mock('@/shared/lib/db/app-db-provider', () => ({
   APP_DB_PROVIDER_SETTING_KEY: 'app_db_provider',
 }));
 
+vi.mock('@/shared/lib/db/mongo-source', () => ({
+  applyActiveMongoSourceEnv: vi.fn(async () => undefined),
+}));
+
 vi.mock('@/features/auth/server', () => ({
   getAuthDataProvider: vi.fn().mockResolvedValue('mongodb'),
   requireAuthProvider: vi.fn((v) => v),

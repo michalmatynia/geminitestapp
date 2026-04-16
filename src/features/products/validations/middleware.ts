@@ -1,5 +1,5 @@
 import { createValidationErrorResponse } from '@/shared/lib/api/handle-api-error';
-import { formDataToObject } from '@/shared/lib/products/services/product-service-form-utils';
+import { buildNormalizedProductValidationPayload } from '@/shared/lib/products/services/product-service-form-utils';
 import {
   validateProductCreate,
   validateProductUpdate,
@@ -12,10 +12,7 @@ export type ValidationMiddlewareOptions = {
 };
 
 const toValidationPayload = (formData: FormData): Record<string, unknown> => {
-  const payload = formDataToObject(formData);
-  // Files are handled in the service layer after validation.
-  delete payload['images'];
-  return payload;
+  return buildNormalizedProductValidationPayload(formData);
 };
 
 export async function validateProductCreateMiddleware(
@@ -35,8 +32,9 @@ export async function validateProductCreateMiddleware(
     }
     const fieldErrors: Record<string, string[]> = {};
     result.errors.forEach((err: ValidationError) => {
-      if (!fieldErrors[err.field]) fieldErrors[err.field] = [];
-      fieldErrors[err.field]!.push(err.message);
+      const messages = fieldErrors[err.field] ?? [];
+      messages.push(err.message);
+      fieldErrors[err.field] = messages;
     });
     const response = await createValidationErrorResponse(fieldErrors, {
       source: 'products.validation.create',
@@ -64,8 +62,9 @@ export async function validateProductUpdateMiddleware(
     }
     const fieldErrors: Record<string, string[]> = {};
     result.errors.forEach((err: ValidationError) => {
-      if (!fieldErrors[err.field]) fieldErrors[err.field] = [];
-      fieldErrors[err.field]!.push(err.message);
+      const messages = fieldErrors[err.field] ?? [];
+      messages.push(err.message);
+      fieldErrors[err.field] = messages;
     });
     const response = await createValidationErrorResponse(fieldErrors, {
       source: 'products.validation.update',

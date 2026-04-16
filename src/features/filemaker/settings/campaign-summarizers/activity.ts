@@ -8,15 +8,216 @@ import type {
   FilemakerEmailCampaignRegistry,
 } from '../../types';
 import {
-  FilemakerEmailCampaignRecipientActivityItem,
-  FilemakerEmailCampaignRecipientActivityType,
-  FilemakerEmailCampaignRecipientActivitySummary,
+  type FilemakerEmailCampaignRecipientActivityItem,
+  type FilemakerEmailCampaignRecipientActivityType,
+  type FilemakerEmailCampaignRecipientActivitySummary,
 } from '../../types/campaigns';
 import {
   normalizeFilemakerEmailCampaignDeliveryRegistry,
   normalizeFilemakerEmailCampaignEventRegistry,
 } from '../campaign-factories';
-import { isRecipientActivityType, toSortedLatestTimestamp } from './utils';
+import {
+  isRecipientActivityType,
+  mapDeliveryStatusToActivityType,
+  toSortedLatestTimestamp,
+} from './utils';
+
+type RecipientActivityEvent = FilemakerEmailCampaignEvent & {
+  type: FilemakerEmailCampaignRecipientActivityType;
+};
+
+const normalizeOptionalCampaignId = (campaignId: string | null | undefined): string | null => {
+  const normalizedCampaignId = normalizeString(campaignId);
+  return normalizedCampaignId.length > 0 ? normalizedCampaignId : null;
+};
+
+const resolveCampaignName = (
+  campaigns: FilemakerEmailCampaign[],
+  campaignId: string | null
+): string | null => {
+  if (campaignId === null) return null;
+  return campaigns.find((campaign: FilemakerEmailCampaign): boolean => campaign.id === campaignId)?.name ?? null;
+};
+
+const getRecipientDeliveries = (input: {
+  emailAddress: string;
+  campaignId: string | null;
+  deliveryRegistry: FilemakerEmailCampaignDeliveryRegistry;
+}): FilemakerEmailCampaignDelivery[] =>
+  normalizeFilemakerEmailCampaignDeliveryRegistry(input.deliveryRegistry).deliveries.filter(
+    (delivery: FilemakerEmailCampaignDelivery): boolean =>
+      delivery.emailAddress === input.emailAddress &&
+      (input.campaignId === null || delivery.campaignId === input.campaignId)
+  );
+
+const isMatchingRecipientActivityEvent = (
+  event: FilemakerEmailCampaignEvent,
+  input: {
+    emailAddress: string;
+    campaignId: string | null;
+    deliveryIds: Set<string>;
+  }
+): event is RecipientActivityEvent => {
+  if (!isRecipientActivityType(event.type)) return false;
+  if (input.campaignId !== null && event.campaignId !== input.campaignId) return false;
+  if (
+    event.deliveryId !== null &&
+    event.deliveryId !== undefined &&
+    input.deliveryIds.has(event.deliveryId)
+  ) {
+    return true;
+  }
+  return event.message.toLowerCase().includes(input.emailAddress);
+};
+
+const getRecipientActivityEvents = (input: {
+  emailAddress: string;
+  campaignId: string | null;
+  deliveryIds: Set<string>;
+  eventRegistry?: FilemakerEmailCampaignEventRegistry | null;
+}): RecipientActivityEvent[] =>
+  normalizeFilemakerEmailCampaignEventRegistry(input.eventRegistry).events.filter(
+    (event: FilemakerEmailCampaignEvent): event is RecipientActivityEvent =>
+      isMatchingRecipientActivityEvent(event, input)
+  );
+
+const toEventActivityItem = (
+  event: RecipientActivityEvent,
+  campaignNameById: Map<string, string>
+): FilemakerEmailCampaignRecipientActivityItem => ({
+  id: event.id,
+  type: event.type,
+  campaignId: event.campaignId,
+  campaignName: campaignNameById.get(event.campaignId) ?? null,
+  runId: event.runId ?? null,
+  deliveryId: event.deliveryId ?? null,
+  timestamp: event.createdAt ?? '',
+  details: event.message,
+});
+
+const resolveDeliveryErrorText = (delivery: FilemakerEmailCampaignDelivery): string | null => {
+  const lastError = delivery.lastError?.trim() ?? '';
+  if (lastError.length > 0) return lastError;
+  const providerMessage = delivery.providerMessage?.trim() ?? '';
+  return providerMessage.length > 0 ? providerMessage : null;
+};
+
+const resolveDefaultDeliveryMessage = (
+  delivery: FilemakerEmailCampaignDelivery,
+  type: FilemakerEmailCampaignRecipientActivityType
+): string =>
+  type === 'delivery_bounced'
+    ? `${delivery.emailAddress} delivery bounced.`
+    : `${delivery.emailAddress} delivery failed.`;
+
+const resolveDeliveryMessage = (
+  delivery: FilemakerEmailCampaignDelivery,
+  type: FilemakerEmailCampaignRecipientActivityType
+): string => {
+  if (type === 'delivery_sent') {
+    return `${delivery.emailAddress} received a campaign delivery.`;
+  }
+  return resolveDeliveryErrorText(delivery) ?? resolveDefaultDeliveryMessage(delivery, type);
+};
+
+const isDeliveryActivityTracked = (
+  activityEvents: RecipientActivityEvent[],
+  delivery: FilemakerEmailCampaignDelivery,
+  type: FilemakerEmailCampaignRecipientActivityType
+): boolean =>
+  activityEvents.some(
+    (event: RecipientActivityEvent): boolean =>
+      event.deliveryId === delivery.id && event.type === type
+  );
+
+const toFallbackDeliveryActivityItem = (
+  delivery: FilemakerEmailCampaignDelivery,
+  activityEvents: RecipientActivityEvent[],
+  campaignNameById: Map<string, string>
+): FilemakerEmailCampaignRecipientActivityItem | null => {
+  const type = mapDeliveryStatusToActivityType(delivery.status);
+  if (type === null) return null;
+  if (isDeliveryActivityTracked(activityEvents, delivery, type)) return null;
+
+  return {
+    id: `recipient-activity-${delivery.id}-${type}`,
+    type,
+    campaignId: delivery.campaignId,
+    campaignName: campaignNameById.get(delivery.campaignId) ?? null,
+    runId: delivery.runId,
+    deliveryId: delivery.id,
+    timestamp: delivery.sentAt ?? delivery.updatedAt ?? delivery.createdAt ?? '',
+    details: resolveDeliveryMessage(delivery, type),
+  };
+};
+
+const buildFallbackDeliveryActivity = (
+  deliveries: FilemakerEmailCampaignDelivery[],
+  activityEvents: RecipientActivityEvent[],
+  campaignNameById: Map<string, string>
+): FilemakerEmailCampaignRecipientActivityItem[] =>
+  deliveries.flatMap((delivery: FilemakerEmailCampaignDelivery) => {
+    const item = toFallbackDeliveryActivityItem(delivery, activityEvents, campaignNameById);
+    return item === null ? [] : [item];
+  });
+
+const countDeliveriesByStatus = (
+  deliveries: FilemakerEmailCampaignDelivery[],
+  status: FilemakerEmailCampaignDelivery['status']
+): number =>
+  deliveries.filter((delivery: FilemakerEmailCampaignDelivery): boolean => delivery.status === status)
+    .length;
+
+const countEventsByType = (
+  events: RecipientActivityEvent[],
+  type: FilemakerEmailCampaignRecipientActivityType
+): number => events.filter((event: RecipientActivityEvent): boolean => event.type === type).length;
+
+const latestEventAt = (
+  events: RecipientActivityEvent[],
+  type: FilemakerEmailCampaignRecipientActivityType
+): string | null =>
+  toSortedLatestTimestamp(
+    events
+      .filter((event: RecipientActivityEvent): boolean => event.type === type)
+      .map((event: RecipientActivityEvent) => event.createdAt ?? null)
+  );
+
+const resolveLatestSentAt = (deliveries: FilemakerEmailCampaignDelivery[]): string | null =>
+  toSortedLatestTimestamp(
+    deliveries
+      .filter((delivery: FilemakerEmailCampaignDelivery): boolean => delivery.status === 'sent')
+      .map((delivery: FilemakerEmailCampaignDelivery) => delivery.sentAt ?? delivery.updatedAt ?? null)
+  );
+
+const buildRecentActivity = (
+  campaigns: FilemakerEmailCampaign[],
+  deliveries: FilemakerEmailCampaignDelivery[],
+  activityEvents: RecipientActivityEvent[]
+): FilemakerEmailCampaignRecipientActivityItem[] => {
+  const campaignNameById = new Map(
+    campaigns.map((campaign: FilemakerEmailCampaign) => [campaign.id, campaign.name])
+  );
+  const eventActivity = activityEvents.map(
+    (event: RecipientActivityEvent): FilemakerEmailCampaignRecipientActivityItem =>
+      toEventActivityItem(event, campaignNameById)
+  );
+  const fallbackDeliveryActivity = buildFallbackDeliveryActivity(
+    deliveries,
+    activityEvents,
+    campaignNameById
+  );
+
+  return eventActivity
+    .concat(fallbackDeliveryActivity)
+    .sort(
+      (
+        left: FilemakerEmailCampaignRecipientActivityItem,
+        right: FilemakerEmailCampaignRecipientActivityItem
+      ): number => Date.parse(right.timestamp) - Date.parse(left.timestamp)
+    )
+    .slice(0, 8);
+};
 
 export const summarizeFilemakerEmailCampaignRecipientActivity = (input: {
   emailAddress: string;
@@ -26,150 +227,39 @@ export const summarizeFilemakerEmailCampaignRecipientActivity = (input: {
   eventRegistry?: FilemakerEmailCampaignEventRegistry | null;
 }): FilemakerEmailCampaignRecipientActivitySummary => {
   const normalizedEmailAddress = normalizeString(input.emailAddress).toLowerCase();
-  const normalizedCampaignId = normalizeString(input.campaignId) || null;
-  const campaignName =
-    normalizedCampaignId
-      ? input.campaignRegistry.campaigns.find(
-          (campaign: FilemakerEmailCampaign): boolean => campaign.id === normalizedCampaignId
-        )?.name ?? null
-      : null;
-
-  const deliveries = normalizeFilemakerEmailCampaignDeliveryRegistry(input.deliveryRegistry).deliveries.filter(
-    (delivery: FilemakerEmailCampaignDelivery): boolean =>
-      delivery.emailAddress === normalizedEmailAddress &&
-      (!normalizedCampaignId || delivery.campaignId === normalizedCampaignId)
-  );
+  const normalizedCampaignId = normalizeOptionalCampaignId(input.campaignId);
+  const campaignName = resolveCampaignName(input.campaignRegistry.campaigns, normalizedCampaignId);
+  const deliveries = getRecipientDeliveries({
+    emailAddress: normalizedEmailAddress,
+    campaignId: normalizedCampaignId,
+    deliveryRegistry: input.deliveryRegistry,
+  });
   const deliveryIds = new Set(deliveries.map((delivery: FilemakerEmailCampaignDelivery) => delivery.id));
-  const deliveryEventRegistry = normalizeFilemakerEmailCampaignEventRegistry(input.eventRegistry);
-  const activityEvents = deliveryEventRegistry.events.filter(
-    (
-      event: FilemakerEmailCampaignEvent
-    ): event is FilemakerEmailCampaignEvent & {
-      type: import('../../types/campaigns').FilemakerEmailCampaignRecipientActivityType;
-    } => {
-      if (!isRecipientActivityType(event.type)) return false;
-      if (normalizedCampaignId && event.campaignId !== normalizedCampaignId) return false;
-      if (event.deliveryId && deliveryIds.has(event.deliveryId)) return true;
-      if (event.message.toLowerCase().includes(normalizedEmailAddress)) return true;
-      return false;
-    }
-  );
-  const campaignNameById = new Map(
-    input.campaignRegistry.campaigns.map((campaign: FilemakerEmailCampaign) => [campaign.id, campaign.name])
-  );
-
-  const eventActivity = activityEvents.map(
-    (
-      event: FilemakerEmailCampaignEvent & {
-        type: import('../../types/campaigns').FilemakerEmailCampaignRecipientActivityType;
-      }
-    ): FilemakerEmailCampaignRecipientActivityItem => ({
-      id: event.id,
-      type: event.type,
-      campaignId: event.campaignId ?? null,
-      campaignName: campaignNameById.get(event.campaignId) ?? null,
-      runId: event.runId ?? null,
-      deliveryId: event.deliveryId ?? null,
-      timestamp: event.createdAt ?? '',
-      details: event.message,
-    })
-  );
-
-  const fallbackDeliveryActivity = deliveries.flatMap(
-    (delivery: FilemakerEmailCampaignDelivery): FilemakerEmailCampaignRecipientActivityItem[] => {
-      const type: FilemakerEmailCampaignRecipientActivityType | null =
-        delivery.status === 'sent'
-          ? 'delivery_sent'
-          : delivery.status === 'bounced'
-            ? 'delivery_bounced'
-            : delivery.status === 'failed'
-              ? 'delivery_failed'
-              : null;
-      if (!type) return [];
-      const alreadyTracked = activityEvents.some(
-        (event: FilemakerEmailCampaignEvent): boolean =>
-          event.deliveryId === delivery.id && event.type === type
-      );
-      if (alreadyTracked) return [];
-
-      const details =
-        type === 'delivery_sent'
-          ? `${delivery.emailAddress} received a campaign delivery.`
-          : type === 'delivery_bounced'
-            ? delivery.lastError?.trim() || delivery.providerMessage?.trim() || `${delivery.emailAddress} delivery bounced.`
-            : delivery.lastError?.trim() || delivery.providerMessage?.trim() || `${delivery.emailAddress} delivery failed.`;
-
-      return [
-        {
-          id: `recipient-activity-${delivery.id}-${type}`,
-          type,
-          campaignId: delivery.campaignId,
-          campaignName: campaignNameById.get(delivery.campaignId) ?? null,
-          runId: delivery.runId,
-          deliveryId: delivery.id,
-          timestamp: delivery.sentAt ?? delivery.updatedAt ?? delivery.createdAt ?? '',
-          details,
-        },
-      ];
-    }
-  );
+  const activityEvents = getRecipientActivityEvents({
+    emailAddress: normalizedEmailAddress,
+    campaignId: normalizedCampaignId,
+    deliveryIds,
+    eventRegistry: input.eventRegistry,
+  });
 
   return {
     emailAddress: normalizedEmailAddress,
     campaignId: normalizedCampaignId,
     campaignName,
     deliveryCount: deliveries.length,
-    sentCount: deliveries.filter((delivery: FilemakerEmailCampaignDelivery): boolean => delivery.status === 'sent')
-      .length,
-    failedCount: deliveries.filter((delivery: FilemakerEmailCampaignDelivery): boolean => delivery.status === 'failed')
-      .length,
-    bouncedCount: deliveries.filter((delivery: FilemakerEmailCampaignDelivery): boolean => delivery.status === 'bounced')
-      .length,
-    skippedCount: deliveries.filter((delivery: FilemakerEmailCampaignDelivery): boolean => delivery.status === 'skipped')
-      .length,
-    openCount: activityEvents.filter((event: FilemakerEmailCampaignEvent): boolean => event.type === 'opened')
-      .length,
-    clickCount: activityEvents.filter((event: FilemakerEmailCampaignEvent): boolean => event.type === 'clicked')
-      .length,
-    unsubscribeCount: activityEvents.filter(
-      (event: FilemakerEmailCampaignEvent): boolean => event.type === 'unsubscribed'
-    ).length,
-    resubscribeCount: activityEvents.filter(
-      (event: FilemakerEmailCampaignEvent): boolean => event.type === 'resubscribed'
-    ).length,
-    latestSentAt: toSortedLatestTimestamp(
-      deliveries
-        .filter((delivery: FilemakerEmailCampaignDelivery): boolean => delivery.status === 'sent')
-        .map((delivery: FilemakerEmailCampaignDelivery) => delivery.sentAt ?? delivery.updatedAt ?? null)
-    ),
-    latestOpenAt: toSortedLatestTimestamp(
-      activityEvents
-        .filter((event: FilemakerEmailCampaignEvent): boolean => event.type === 'opened')
-        .map((event: FilemakerEmailCampaignEvent) => event.createdAt ?? null)
-    ),
-    latestClickAt: toSortedLatestTimestamp(
-      activityEvents
-        .filter((event: FilemakerEmailCampaignEvent): boolean => event.type === 'clicked')
-        .map((event: FilemakerEmailCampaignEvent) => event.createdAt ?? null)
-    ),
-    latestUnsubscribeAt: toSortedLatestTimestamp(
-      activityEvents
-        .filter((event: FilemakerEmailCampaignEvent): boolean => event.type === 'unsubscribed')
-        .map((event: FilemakerEmailCampaignEvent) => event.createdAt ?? null)
-    ),
-    latestResubscribeAt: toSortedLatestTimestamp(
-      activityEvents
-        .filter((event: FilemakerEmailCampaignEvent): boolean => event.type === 'resubscribed')
-        .map((event: FilemakerEmailCampaignEvent) => event.createdAt ?? null)
-    ),
-    recentActivity: eventActivity
-      .concat(fallbackDeliveryActivity)
-      .sort(
-        (
-          left: FilemakerEmailCampaignRecipientActivityItem,
-          right: FilemakerEmailCampaignRecipientActivityItem
-        ): number => Date.parse(right.timestamp ?? '') - Date.parse(left.timestamp ?? '')
-      )
-      .slice(0, 8),
+    sentCount: countDeliveriesByStatus(deliveries, 'sent'),
+    failedCount: countDeliveriesByStatus(deliveries, 'failed'),
+    bouncedCount: countDeliveriesByStatus(deliveries, 'bounced'),
+    skippedCount: countDeliveriesByStatus(deliveries, 'skipped'),
+    openCount: countEventsByType(activityEvents, 'opened'),
+    clickCount: countEventsByType(activityEvents, 'clicked'),
+    unsubscribeCount: countEventsByType(activityEvents, 'unsubscribed'),
+    resubscribeCount: countEventsByType(activityEvents, 'resubscribed'),
+    latestSentAt: resolveLatestSentAt(deliveries),
+    latestOpenAt: latestEventAt(activityEvents, 'opened'),
+    latestClickAt: latestEventAt(activityEvents, 'clicked'),
+    latestUnsubscribeAt: latestEventAt(activityEvents, 'unsubscribed'),
+    latestResubscribeAt: latestEventAt(activityEvents, 'resubscribed'),
+    recentActivity: buildRecentActivity(input.campaignRegistry.campaigns, deliveries, activityEvents),
   };
 };

@@ -1,5 +1,12 @@
 'use client';
 
+// useProductFormValidator: integrates product validation engine with the
+// product form. Responsibilities:
+// - Wire validator settings and decisions, manage accept/deny flow
+// - Provide helpers to accept/deny issues and apply auto-accept rules
+// - Coordinate server-side validation mutations and optimistic formatting
+// Keep client runtime directive; validator hooks rely on react-hook-form context.
+
 import { useCallback, useEffect, useMemo, useRef, useState, type SetStateAction } from 'react';
 import { useFormContext } from 'react-hook-form';
 
@@ -69,6 +76,7 @@ export function useProductFormValidator(
     setFormatterEnabledState,
     setValidatorInitialized,
     setValidatorManuallyChanged,
+    validatorManuallyChangedRef,
     configEnabledByDefault,
     defaultValidatorEnabled,
     defaultFormatterEnabled,
@@ -189,11 +197,18 @@ export function useProductFormValidator(
     const prevIdentity = lastEntityIdentityRef.current;
     lastEntityIdentityRef.current = entityIdentity;
     if (prevIdentity) clearAutoAcceptedForEntity(prevIdentity);
-    setValidatorEnabledState(defaultValidatorEnabled);
-    setFormatterEnabledState(defaultFormatterEnabled);
+    // Only reset to config default if the user has NOT manually changed the setting.
+    // When the user explicitly toggles validation (e.g. turns it off), that preference
+    // is saved globally via the mutation. Resetting here before the query refetches
+    // would clobber their choice — most visibly when a draft auto-saves and gets an id,
+    // causing entityIdentity to change mid-session.
+    if (!validatorManuallyChangedRef.current) {
+      setValidatorEnabledState(defaultValidatorEnabled);
+      setFormatterEnabledState(defaultFormatterEnabled);
+    }
     setValidatorInitialized(typeof configEnabledByDefault === 'boolean');
     setValidatorManuallyChanged(false);
-  }, [configEnabledByDefault, defaultFormatterEnabled, defaultValidatorEnabled, entityIdentity, setFormatterEnabledState, setValidatorEnabledState, setValidatorInitialized, setValidatorManuallyChanged]);
+  }, [configEnabledByDefault, defaultFormatterEnabled, defaultValidatorEnabled, entityIdentity, setFormatterEnabledState, setValidatorEnabledState, setValidatorInitialized, setValidatorManuallyChanged, validatorManuallyChangedRef]);
 
   const validationScopeKey = useMemo((): string => {
     if (validationInstanceScope === 'product_edit' && product?.id?.trim()) return `product:${product.id.trim()}`;

@@ -149,4 +149,4 @@ export const HTTP_OUTPUT_PORTS = ['result', 'status', 'headers'];
 export const API_ADVANCED_INPUT_PORTS = ['url', 'body', 'headers', 'params', 'bundle'];
 export const API_ADVANCED_OUTPUT_PORTS = ['result', 'status', 'headers', 'cursor'];
 export const DB_SCHEMA_INPUT_PORTS = ['context', 'schema'];
-export const DB_SCHEMA_OUTPUT_PORTS = ['schema', 'snapshot'];
+export const DB_SCHEMA_OUTPUT_PORTS = ['schema', 'context'];

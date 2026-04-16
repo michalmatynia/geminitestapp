@@ -3,8 +3,8 @@
 import React, { useMemo, useState } from 'react';
 
 import { formatPlaceholderLabel, formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
-import type { AiNode, NodeDefinition } from '@/shared/lib/ai-paths';
-import { createParserMappings } from '@/shared/lib/ai-paths';
+import type { AiNode, NodeDefinition } from '@/shared/contracts/ai-paths';
+import { createParserMappings } from '@/shared/lib/ai-paths/core/utils';
 import { Button, Input, Label, Textarea, Card, Badge } from '@/shared/ui/primitives.public';
 import { StatusBadge } from '@/shared/ui/data-display.public';
 import { CompactEmptyState } from '@/shared/ui/navigation-and-layout.public';
@@ -12,14 +12,16 @@ import { Hint } from '@/shared/ui/forms-and-actions.public';
 import { cn } from '@/shared/utils/ui-utils';
 
 import {
-  useGraphState,
+  useGraphDataState,
+  usePathMetadataState,
   usePersistenceActions,
   usePresetsState,
   usePresetsActions,
   useRunHistoryActions,
   useSelectionState,
   useSelectionActions,
-  useRuntimeState,
+  useRuntimeDataState,
+  useRuntimeStatusState,
   useRuntimeActions,
 } from '../context';
 import {
@@ -114,9 +116,11 @@ export function CanvasSidebar({ palette }: CanvasSidebarProps): React.JSX.Elemen
   const sourceConnectorDataId = React.useId();
   const targetConnectorDataId = React.useId();
   // --- Context Hooks ---
-  const { nodes, edges, executionMode } = useGraphState();
+  const { nodes, edges } = useGraphDataState();
+  const { executionMode } = usePathMetadataState();
   const { savePathConfig } = usePersistenceActions();
-  const { runtimeRunStatus, runtimeState } = useRuntimeState();
+  const { runtimeRunStatus } = useRuntimeStatusState();
+  const { runtimeState } = useRuntimeDataState();
   const { handoffRun } = useRunHistoryActions();
   const {
     fireTrigger,
@@ -777,18 +781,22 @@ export function CanvasSidebar({ palette }: CanvasSidebarProps): React.JSX.Elemen
                     <div className='space-y-2'>
                       <CanvasSelectedWireEndpointCard
                         title='From'
-                        nodeLabel={fromNode?.title ?? selectedEdge.from ?? 'unknown-node'}
-                        nodeType={fromNode?.type ?? 'unknown'}
-                        portLabel={selectedEdge.fromPort ?? 'default'}
-                        accentClassName='text-amber-300'
+                        config={{
+                          nodeLabel: fromNode?.title ?? selectedEdge.from ?? 'unknown-node',
+                          nodeType: fromNode?.type ?? 'unknown',
+                          portLabel: selectedEdge.fromPort ?? 'default',
+                          accentClassName: 'text-amber-300',
+                        }}
                       />
                       <div className='flex justify-center text-gray-500'>↓</div>
                       <CanvasSelectedWireEndpointCard
                         title='To'
-                        nodeLabel={toNode?.title ?? selectedEdge.to ?? 'unknown-node'}
-                        nodeType={toNode?.type ?? 'unknown'}
-                        portLabel={selectedEdge.toPort ?? 'default'}
-                        accentClassName='text-sky-300'
+                        config={{
+                          nodeLabel: toNode?.title ?? selectedEdge.to ?? 'unknown-node',
+                          nodeType: toNode?.type ?? 'unknown',
+                          portLabel: selectedEdge.toPort ?? 'default',
+                          accentClassName: 'text-sky-300',
+                        }}
                       />
                     </div>
                     <Card

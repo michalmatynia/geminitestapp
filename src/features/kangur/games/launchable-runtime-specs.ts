@@ -7,7 +7,7 @@ import type {
 import { kangurLaunchableGameRuntimeSpecSchema } from '@/shared/contracts/kangur-games';
 import {
   KANGUR_MUSIC_PIANO_ROLL_LAUNCHABLE_RUNTIME_CONFIGS,
-  KANGUR_MUSIC_PIANO_ROLL_LAUNCHABLE_RUNTIME_IDS,
+  type KANGUR_MUSIC_PIANO_ROLL_LAUNCHABLE_RUNTIME_IDS,
 } from './music-piano-roll-contract';
 
 type KangurLaunchableGameRuntimeSpecInput = Omit<

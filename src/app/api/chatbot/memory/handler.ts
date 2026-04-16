@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { getAgentLongTermMemoryDelegate } from '@/features/ai/server';
 import { chatbotMemoryQuerySchema } from '@/shared/contracts/chatbot';

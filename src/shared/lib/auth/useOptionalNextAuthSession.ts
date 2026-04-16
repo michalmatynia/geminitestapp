@@ -7,7 +7,7 @@ import type { SessionContextValue } from 'next-auth/react';
 const FALLBACK_SESSION_CONTEXT: SessionContextValue<false> = {
   data: null,
   status: 'unauthenticated',
-  update: async () => null,
+  update: (): Promise<null> => Promise.resolve(null),
 };
 
 export function useOptionalNextAuthSession(): SessionContextValue<false> {

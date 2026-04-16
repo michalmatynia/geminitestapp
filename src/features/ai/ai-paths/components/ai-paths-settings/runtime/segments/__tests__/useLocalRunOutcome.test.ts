@@ -24,9 +24,12 @@ vi.mock('@/features/ai/ai-paths/context/RuntimeContext', () => ({
   useRuntimeActions: () => mockState.runtimeActions,
 }));
 
+vi.mock('@/shared/lib/ai-paths/local-runs', () => ({
+  appendLocalRun: (...args: unknown[]) => mockState.appendLocalRun(...args),
+}));
+
 vi.mock('@/shared/lib/ai-paths', () => ({
   PATH_DEBUG_PREFIX: 'path-debug:',
-  appendLocalRun: (...args: unknown[]) => mockState.appendLocalRun(...args),
 }));
 
 vi.mock('@/shared/lib/ai-paths/settings-store-client', () => ({
@@ -148,7 +151,7 @@ describe('useLocalRunOutcome', () => {
       entries: [],
     });
     expect(mockState.updateAiPathsSetting).toHaveBeenCalledWith(
-      'path-debug:path-1',
+      'ai_paths_debug_path-1',
       JSON.stringify({
         pathId: 'path-1',
         runAt: '2026-03-19T16:59:00.000Z',
@@ -237,7 +240,7 @@ describe('useLocalRunOutcome', () => {
     });
     expect(args.setLastRunAt).toHaveBeenCalledWith('2026-03-19T17:00:00.000Z');
     expect(mockState.updateAiPathsSetting).toHaveBeenCalledWith(
-      'path-debug:path-1',
+      'ai_paths_debug_path-1',
       JSON.stringify({
         pathId: 'path-1',
         runAt: '2026-03-19T17:00:00.000Z',
@@ -279,6 +282,51 @@ describe('useLocalRunOutcome', () => {
       nodeCount: 2,
       nodeDurations: { 'node-1': 7 },
       source: 'ai_paths_ui',
+    });
+  });
+
+  it('settles currentRun to a terminal status when a local run completes', () => {
+    let runtimeState = {
+      status: 'running',
+      currentRun: {
+        id: 'run-1',
+        status: 'running',
+        startedAt: '2026-03-19T16:59:57.500Z',
+      },
+    };
+    const setRuntimeState = vi.fn((value: unknown) => {
+      runtimeState =
+        typeof value === 'function'
+          ? (value as (prev: typeof runtimeState) => typeof runtimeState)(runtimeState)
+          : (value as typeof runtimeState);
+    });
+    const args = createArgs({ setRuntimeState });
+    const state = { nodeDurations: { 'node-1': 7 } };
+    const meta = {
+      startedAt: '2026-03-19T16:59:57.500Z',
+      startedAtMs: Date.parse('2026-03-19T16:59:57.500Z'),
+      triggerEvent: 'manual.fire',
+      triggerContext: null,
+    };
+    const { result } = renderHook(() => useLocalRunOutcome(args));
+
+    act(() => {
+      result.current.finalizeLocalRunOutcome(
+        { status: 'completed', state: state as never },
+        meta
+      );
+    });
+
+    expect(setRuntimeState).toHaveBeenCalled();
+    expect(runtimeState).toMatchObject({
+      status: 'completed',
+      currentRun: {
+        id: 'run-1',
+        status: 'completed',
+        startedAt: '2026-03-19T16:59:57.500Z',
+        completedAt: '2026-03-19T17:00:00.000Z',
+        finishedAt: '2026-03-19T17:00:00.000Z',
+      },
     });
   });
 

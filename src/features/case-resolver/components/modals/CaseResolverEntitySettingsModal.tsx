@@ -71,10 +71,10 @@ export function CaseResolverEntitySettingsModal(): React.JSX.Element {
   const setFormData = runtimeSetFormData;
   const fields = runtimeFields;
 
-  const handleChange = (vals: Partial<Record<string, unknown>>) => {
+  const handleChange = (vals: Partial<Record<string, unknown>>): void => {
     setFormData((prev) => {
       const next = { ...prev, ...vals };
-      if (!parentNullSentinel) return next;
+      if (typeof parentNullSentinel !== 'string' || parentNullSentinel.length === 0) return next;
 
       const changedParentId = (vals as { parentId?: unknown }).parentId;
       if (changedParentId !== parentNullSentinel) return next;
@@ -90,11 +90,11 @@ export function CaseResolverEntitySettingsModal(): React.JSX.Element {
     <SettingsPanelBuilder
       open={Boolean(isOpen)}
       onClose={onClose}
-      title={item ? editTitle : createTitle}
+      title={item !== null && item !== undefined ? editTitle : createTitle}
       fields={fields}
       values={formData}
       onChange={handleChange}
-      onSave={async () => onSave()}
+      onSave={onSave}
       isSaving={isSaving}
       size='md'
     />

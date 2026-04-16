@@ -103,8 +103,8 @@ import { postKangurTtsStatusHandler } from '../../tts/status/handler';
 import {
   handleGetPost,
   methodNotAllowed,
-  SimpleRouteHandler,
-  ParamRouteHandler,
+  type SimpleRouteHandler,
+  type ParamRouteHandler,
 } from './routing.utils';
 
 export const assignmentsGetHandler: SimpleRouteHandler = apiHandler(getKangurAssignmentsHandler, {

@@ -1,3 +1,5 @@
+'use client';
+
 import { CheckSquare, Settings2, Trash2 } from 'lucide-react';
 import React from 'react';
 
@@ -86,7 +88,7 @@ export function SelectionBar<T>(props: SelectionBarProps<T>): React.JSX.Element 
           <DropdownMenuItem
             onClick={() => void onSelectAllGlobal()}
             className='cursor-pointer'
-            disabled={!!loadingGlobal}
+            disabled={Boolean(loadingGlobal)}
           >
             {loadingGlobal ? 'Loading...' : 'Select All Resultset'}
           </DropdownMenuItem>

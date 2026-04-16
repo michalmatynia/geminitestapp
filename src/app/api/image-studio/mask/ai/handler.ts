@@ -1,7 +1,7 @@
 import fs from 'fs/promises';
 import path from 'node:path';
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 
 import { resolveImageStudioContextRegistryEnvelope } from '@/features/ai/image-studio/context-registry/server';

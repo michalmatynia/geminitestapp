@@ -2,7 +2,7 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import { useState, useCallback, useMemo, useRef } from 'react';
-import { Dispatch, SetStateAction } from 'react';
+import { type Dispatch, type SetStateAction } from 'react';
 
 import { type MarketplaceBadgeEntry, type ListingBadgesPayload } from '@/shared/contracts/integrations';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
@@ -11,12 +11,15 @@ import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateListingBadges } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { readPersistedTraderaQuickListFeedback } from '@/features/integrations/utils/traderaQuickListFeedback';
+import { readPersistedVintedQuickListFeedback } from '@/features/integrations/utils/vintedQuickListFeedback';
 
 
 const listingBadgesQueryKey = QUERY_KEYS.integrations.productListingsBadges();
 const EMPTY_LISTING_BADGES_PAYLOAD: ListingBadgesPayload = Object.freeze({});
 const LISTING_BADGE_IN_FLIGHT_REFETCH_MS = 10_000;
 const LISTING_BADGE_RECONCILIATION_REFETCH_MS = 30_000;
+const LISTING_BADGE_QUERY_TIMEOUT_MS = 45_000;
 const LISTING_BADGE_RECONCILIATION_STATUSES = new Set([
   'failed',
   'needs_login',
@@ -31,6 +34,8 @@ type IntegrationListingBadgeState = {
   traderaBadgeStatuses: Map<string, string>;
   playwrightProgrammableBadgeIds: Set<string>;
   playwrightProgrammableBadgeStatuses: Map<string, string>;
+  vintedBadgeIds: Set<string>;
+  vintedBadgeStatuses: Map<string, string>;
 };
 
 const EMPTY_INTEGRATION_LISTING_BADGE_STATE: IntegrationListingBadgeState = {
@@ -40,6 +45,8 @@ const EMPTY_INTEGRATION_LISTING_BADGE_STATE: IntegrationListingBadgeState = {
   traderaBadgeStatuses: new Map<string, string>(),
   playwrightProgrammableBadgeIds: new Set<string>(),
   playwrightProgrammableBadgeStatuses: new Map<string, string>(),
+  vintedBadgeIds: new Set<string>(),
+  vintedBadgeStatuses: new Map<string, string>(),
 };
 
 const toMarketplaceEntry = (value: unknown): MarketplaceBadgeEntry =>
@@ -89,7 +96,9 @@ const areIntegrationListingBadgeStatesEqual = (
   areStringMapsEqual(
     previous.playwrightProgrammableBadgeStatuses,
     next.playwrightProgrammableBadgeStatuses
-  );
+  ) &&
+  areStringSetsEqual(previous.vintedBadgeIds, next.vintedBadgeIds) &&
+  areStringMapsEqual(previous.vintedBadgeStatuses, next.vintedBadgeStatuses);
 
 const buildIntegrationListingBadgeState = (
   payload: ListingBadgesPayload
@@ -100,6 +109,8 @@ const buildIntegrationListingBadgeState = (
   const nextTraderaBadgeIds = new Set<string>();
   const nextPlaywrightProgrammableBadgeStatuses = new Map<string, string>();
   const nextPlaywrightProgrammableBadgeIds = new Set<string>();
+  const nextVintedBadgeStatuses = new Map<string, string>();
+  const nextVintedBadgeIds = new Set<string>();
 
   for (const [productId, rawMarketplaces] of Object.entries(payload)) {
     const marketplaces = toMarketplaceEntry(rawMarketplaces);
@@ -115,6 +126,13 @@ const buildIntegrationListingBadgeState = (
     if (traderaStatus) {
       nextTraderaBadgeIds.add(productId);
       nextTraderaBadgeStatuses.set(productId, traderaStatus);
+    }
+
+    const vintedStatus =
+      typeof marketplaces?.vinted === 'string' ? marketplaces.vinted.trim().toLowerCase() : '';
+    if (vintedStatus) {
+      nextVintedBadgeIds.add(productId);
+      nextVintedBadgeStatuses.set(productId, vintedStatus);
     }
 
     const playwrightProgrammableStatus =
@@ -134,6 +152,8 @@ const buildIntegrationListingBadgeState = (
     traderaBadgeStatuses: nextTraderaBadgeStatuses,
     playwrightProgrammableBadgeIds: nextPlaywrightProgrammableBadgeIds,
     playwrightProgrammableBadgeStatuses: nextPlaywrightProgrammableBadgeStatuses,
+    vintedBadgeIds: nextVintedBadgeIds,
+    vintedBadgeStatuses: nextVintedBadgeStatuses,
   };
 };
 
@@ -152,6 +172,64 @@ const hasReconciliationCandidateStatus = (payload: ListingBadgesPayload): boolea
         LISTING_BADGE_RECONCILIATION_STATUSES.has(status.trim().toLowerCase())
     )
   );
+
+const normalizeMarketplaceBadgeStatus = (value: unknown): string =>
+  typeof value === 'string' ? value.trim().toLowerCase() : '';
+
+const resolveEffectiveMarketplaceBadgeStatus = (
+  serverStatus: string,
+  localFeedbackStatus: string
+): string => {
+  if (!serverStatus) return '';
+  if (!LISTING_BADGE_RECONCILIATION_STATUSES.has(serverStatus)) {
+    return serverStatus;
+  }
+  if (localFeedbackStatus === 'processing' || localFeedbackStatus === 'queued') {
+    return localFeedbackStatus;
+  }
+  if (localFeedbackStatus === 'completed') {
+    return 'active';
+  }
+  return serverStatus;
+};
+
+export const resolveEffectiveListingBadgesPayload = (
+  payload: ListingBadgesPayload
+): ListingBadgesPayload => {
+  const nextPayload: ListingBadgesPayload = {};
+
+  for (const [productId, rawMarketplaces] of Object.entries(payload)) {
+    const marketplaces = toMarketplaceEntry(rawMarketplaces);
+    const traderaFeedbackStatus = normalizeMarketplaceBadgeStatus(
+      readPersistedTraderaQuickListFeedback(productId)?.status
+    );
+    const vintedFeedbackStatus = normalizeMarketplaceBadgeStatus(
+      readPersistedVintedQuickListFeedback(productId)?.status
+    );
+
+    nextPayload[productId] = {
+      ...marketplaces,
+      ...(marketplaces.tradera
+        ? {
+            tradera: resolveEffectiveMarketplaceBadgeStatus(
+              normalizeMarketplaceBadgeStatus(marketplaces.tradera),
+              traderaFeedbackStatus
+            ),
+          }
+        : {}),
+      ...(marketplaces.vinted
+        ? {
+            vinted: resolveEffectiveMarketplaceBadgeStatus(
+              normalizeMarketplaceBadgeStatus(marketplaces.vinted),
+              vintedFeedbackStatus
+            ),
+          }
+        : {}),
+    };
+  }
+
+  return nextPayload;
+};
 
 export const resolveListingBadgeRefetchInterval = (
   payload: ListingBadgesPayload | undefined
@@ -200,11 +278,12 @@ export function useIntegrationListingBadges(
     queryKey: scopedListingBadgesQueryKey,
     queryFn: async (): Promise<ListingBadgesPayload> => {
       try {
-        const productIdsParam = encodeURIComponent(scopedProductIds.join(','));
-        return await api.get<ListingBadgesPayload>(
-          `/api/v2/integrations/product-listings?productIds=${productIdsParam}`,
+        return await api.post<ListingBadgesPayload>(
+          '/api/v2/integrations/product-listings',
+          { productIds: scopedProductIds },
           {
             cache: 'no-store',
+            timeout: LISTING_BADGE_QUERY_TIMEOUT_MS,
           }
         );
       } catch (error) {
@@ -214,7 +293,12 @@ export function useIntegrationListingBadges(
     },
     enabled: enabled && scopedProductIds.length > 0,
     retry: 1,
-    refetchInterval: (query) => resolveListingBadgeRefetchInterval(query.state.data),
+    refetchInterval: (query) =>
+      resolveListingBadgeRefetchInterval(
+        query.state.data
+          ? resolveEffectiveListingBadgesPayload(query.state.data)
+          : query.state.data
+      ),
     refetchIntervalInBackground: false,
     meta: {
       source: 'integrations.hooks.useIntegrationListingBadges',
@@ -228,7 +312,9 @@ export function useIntegrationListingBadges(
 
   return useMemo(() => {
     const nextState = buildIntegrationListingBadgeState(
-      listingsBadgeQuery.data ?? EMPTY_LISTING_BADGES_PAYLOAD
+      resolveEffectiveListingBadgesPayload(
+        listingsBadgeQuery.data ?? EMPTY_LISTING_BADGES_PAYLOAD
+      )
     );
     if (areIntegrationListingBadgeStatesEqual(badgeStateRef.current, nextState)) {
       return badgeStateRef.current;
@@ -310,6 +396,8 @@ export function useIntegrationOperations(productIds: readonly string[] = []): {
   traderaBadgeStatuses: Map<string, string>;
   playwrightProgrammableBadgeIds: Set<string>;
   playwrightProgrammableBadgeStatuses: Map<string, string>;
+  vintedBadgeIds: Set<string>;
+  vintedBadgeStatuses: Map<string, string>;
   exportSettingsProduct: ProductWithImages | null;
   setExportSettingsProduct: Dispatch<SetStateAction<ProductWithImages | null>>;
   refreshListingBadges: () => Promise<void>;

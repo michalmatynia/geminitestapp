@@ -22,9 +22,9 @@ interface AdvancedFilterBuilderProps {
   fieldValueOptions?: AdvancedFilterBuilderFieldValueOptions;
 }
 
-export const AdvancedFilterBuilder = memo(function AdvancedFilterBuilder(
+export const AdvancedFilterBuilder = memo((
   props: AdvancedFilterBuilderProps
-): React.JSX.Element {
+): React.JSX.Element => {
   const { group, onChange, fieldValueOptions } = props;
 
   const editorRuntime = useMemo<AdvancedFilterEditorRuntime>(

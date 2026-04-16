@@ -5,7 +5,7 @@ import { renderToString } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AI_PATH_RUN_ENQUEUED_EVENT_NAME } from '@/shared/contracts/ai-paths';
-import type { AiPathRunListResult, AiPathRunRecord } from '@/shared/lib/ai-paths';
+import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import {
   listOptimisticAiPathRuns,
   rememberOptimisticAiPathRun,
@@ -38,7 +38,11 @@ vi.mock('next/navigation', () => ({
   usePathname: mocks.usePathnameMock as typeof import('next/navigation').usePathname,
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('nextjs-toploader/app', () => ({
+  usePathname: mocks.usePathnameMock as typeof import('next/navigation').usePathname,
+}));
+
+vi.mock('@/shared/ui/primitives.public', () => ({
   useToast: () => ({ toast: mocks.toastMock }),
 }));
 
@@ -292,7 +296,7 @@ describe('JobQueueProvider enqueue event listeners', () => {
     });
 
     expect(screen.getByTestId('expanded-runs')).toHaveTextContent('run-from-link');
-    expect(mocks.getAiPathRunMock).toHaveBeenCalledWith('run-from-link');
+    expect(mocks.getAiPathRunMock).not.toHaveBeenCalled();
   });
 
   it('refreshes queue only for valid window enqueue events', () => {

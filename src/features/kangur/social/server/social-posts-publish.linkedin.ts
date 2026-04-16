@@ -35,14 +35,14 @@ type RegisteredUpload = {
 };
 
 const toTimestamp = (value: string | Date | null | undefined): number | null => {
-  if (!value) return null;
+  if (value == null || (typeof value === 'string' && value.length === 0)) return null;
   if (value instanceof Date) return value.getTime();
   const parsed = Date.parse(value);
   return Number.isFinite(parsed) ? parsed : null;
 };
 
 const resolveContentType = (value: string | null | undefined): string | null => {
-  if (!value) return null;
+  if (value == null || value.length === 0) return null;
   const normalized = value.split(';')[0]?.trim();
   return normalized ? normalized : null;
 };
@@ -63,7 +63,7 @@ const fetchLinkedInProfile = async (
 };
 
 const extractLinkedInPostUrn = (value: string | null | undefined): string | null => {
-  if (!value) return null;
+  if (value == null || value.length === 0) return null;
   const trimmed = value.trim();
   if (!trimmed) return null;
   if (trimmed.startsWith('urn:li:')) return trimmed;
@@ -71,7 +71,7 @@ const extractLinkedInPostUrn = (value: string | null | undefined): string | null
     try {
       const url = new URL(trimmed);
       const match = url.pathname.match(/\/feed\/update\/([^/]+)/i);
-      if (match?.[1]) {
+      if (match?.[1] != null) {
         return decodeURIComponent(match[1]);
       }
     } catch (_error) {
@@ -184,7 +184,7 @@ const registerLinkedInUpload = async (
 
   if (!response.ok) {
     const detail = await response.text().catch((error) => {
-      void ErrorSystem.captureException(error);
+      ErrorSystem.captureException(error);
       return '';
     });
     throw operationFailedError(
@@ -228,7 +228,7 @@ const uploadLinkedInImage = async (
 
   if (!response.ok) {
     const detail = await response.text().catch((error) => {
-      void ErrorSystem.captureException(error);
+      ErrorSystem.captureException(error);
       return '';
     });
     throw operationFailedError(

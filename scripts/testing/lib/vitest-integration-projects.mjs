@@ -40,6 +40,8 @@ export const dbSpecificUnitTestFiles = [
   'src/shared/lib/ai-paths/services/path-run-repository/mongo-path-run-repository.behavior.test.ts',
   'src/shared/lib/db/mongo-client.test.ts',
   'src/shared/lib/db/utils/mongo.test.ts',
+  'src/shared/lib/db/mongo-source.test.ts',
+  'src/shared/lib/db/services/mongo-source-sync.test.ts',
   'src/shared/lib/db/mongo-write-retry.test.ts',
   'src/shared/lib/products/services/category-repository/mongo-category-repository.test.ts',
   'src/shared/lib/products/services/catalog-repository/mongo-catalog-repository.test.ts',

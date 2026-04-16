@@ -85,22 +85,40 @@ const profileToggleMeta: Array<{
   },
 ];
 
-function InstanceSettingsPanel({
-  id,
-  title,
-  description,
-  profile,
-  updateProfile,
-}: {
-  id: TextEditorEngineInstance;
-  title: string;
-  description: string;
-  profile: TextEditorEngineProfile;
+interface TextEditorSettingsContextValue {
+  draftProfiles: TextEditorEngineProfilesMap;
   updateProfile: (
     instance: TextEditorEngineInstance,
     updater: (profile: TextEditorEngineProfile) => TextEditorEngineProfile
   ) => void;
+  isSaving: boolean;
+}
+
+const TextEditorSettingsContext = React.createContext<TextEditorSettingsContextValue | null>(null);
+
+function useTextEditorSettingsContext(): TextEditorSettingsContextValue {
+  const context = React.useContext(TextEditorSettingsContext);
+  if (!context) {
+    throw new Error(
+      'useTextEditorSettingsContext must be used within an AdminTextEditorSettingsPage'
+    );
+  }
+  return context;
+}
+
+function InstanceSettingsPanel({
+  meta,
+}: {
+  meta: {
+    id: TextEditorEngineInstance;
+    title: string;
+    description: string;
+  };
 }): React.JSX.Element {
+  const { id, title, description } = meta;
+  const { draftProfiles, updateProfile } = useTextEditorSettingsContext();
+  const profile = draftProfiles[id];
+
   return (
     <Card
       id={`text-editor-instance-${id}`}
@@ -208,39 +226,37 @@ export function AdminTextEditorSettingsPage(): React.JSX.Element {
   }, [parsedProfiles]);
 
   return (
-    <AdminSettingsPageLayout
-      title='Text Editors'
-      current='Text Editors'
-      description='Configure reusable text editor engine instances shared by Notes App, Filemaker Email, and Case Resolver.'
-    >
-      <FormActions
-        onCancel={handleRevert}
-        onSave={() => {
-          void handleSave();
-        }}
-        saveText='Save Profiles'
-        cancelText='Revert Changes'
-        isDisabled={!isDirty || isSaving}
-        isSaving={isSaving}
-        className='mb-4 flex-wrap justify-start'
+    <TextEditorSettingsContext.Provider value={{ draftProfiles, updateProfile, isSaving }}>
+      <AdminSettingsPageLayout
+        title='Text Editors'
+        current='Text Editors'
+        description='Configure reusable text editor engine instances shared by Notes App, Filemaker Email, and Case Resolver.'
       >
-        <Button type='button' variant='outline' onClick={handleResetToDefaults} disabled={isSaving}>
-          Reset To Defaults
-        </Button>
-      </FormActions>
+        <FormActions
+          onCancel={handleRevert}
+          onSave={() => {
+            void handleSave();
+          }}
+          saveText='Save Profiles'
+          cancelText='Revert Changes'
+          isDisabled={!isDirty || isSaving}
+          isSaving={isSaving}
+          className='mb-4 flex-wrap justify-start'
+        >
+          <Button type='button' variant='outline' onClick={handleResetToDefaults} disabled={isSaving}>
+            Reset To Defaults
+          </Button>
+        </FormActions>
 
-      <div className='space-y-6'>
-        {TEXT_EDITOR_INSTANCE_META.map((meta) => (
-          <InstanceSettingsPanel
-            key={meta.id}
-            id={meta.id}
-            title={meta.title}
-            description={meta.description}
-            profile={draftProfiles[meta.id]}
-            updateProfile={updateProfile}
-          />
-        ))}
-      </div>
-    </AdminSettingsPageLayout>
+        <div className='space-y-6'>
+          {TEXT_EDITOR_INSTANCE_META.map((meta) => (
+            <InstanceSettingsPanel
+              key={meta.id}
+              meta={meta}
+            />
+          ))}
+        </div>
+      </AdminSettingsPageLayout>
+    </TextEditorSettingsContext.Provider>
   );
 }

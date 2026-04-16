@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest';
 
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 
-import { resolveEffectiveDefaultPriceGroupId } from './product-column-utils';
+import {
+  resolveEffectiveDefaultPriceGroupId,
+  resolveMarketplaceStatusWithLocalFeedback,
+} from './product-column-utils';
 
 const createProduct = (overrides: Partial<ProductWithImages> = {}): ProductWithImages =>
   ({
@@ -83,5 +86,34 @@ describe('resolveEffectiveDefaultPriceGroupId', () => {
     });
 
     expect(resolveEffectiveDefaultPriceGroupId(product, new Map())).toBeNull();
+  });
+});
+
+describe('resolveMarketplaceStatusWithLocalFeedback', () => {
+  it('promotes stale recovery statuses to active when local feedback is completed', () => {
+    expect(
+      resolveMarketplaceStatusWithLocalFeedback({
+        serverStatus: 'auth_required',
+        localFeedbackStatus: 'completed',
+      })
+    ).toBe('active');
+  });
+
+  it('prefers in-flight local feedback over stale failure statuses', () => {
+    expect(
+      resolveMarketplaceStatusWithLocalFeedback({
+        serverStatus: 'failed',
+        localFeedbackStatus: 'queued',
+      })
+    ).toBe('queued');
+  });
+
+  it('keeps the server status when it is already successful', () => {
+    expect(
+      resolveMarketplaceStatusWithLocalFeedback({
+        serverStatus: 'active',
+        localFeedbackStatus: 'completed',
+      })
+    ).toBe('active');
   });
 });

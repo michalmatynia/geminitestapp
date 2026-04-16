@@ -49,7 +49,7 @@ export function AssignmentEditor(props: {
   };
 
   return (
-    <div className={cn('grid gap-3', readOnly ? 'opacity-70' : '')} aria-disabled={!!readOnly}>
+    <div className={cn('grid gap-3', readOnly ? 'opacity-70' : '')} aria-disabled={Boolean(readOnly)}>
       <div className='flex items-center gap-2 text-xs text-gray-300'>
         <Checkbox
           id={enabledCheckboxId}
@@ -57,7 +57,7 @@ export function AssignmentEditor(props: {
           onCheckedChange={(checked: boolean | 'indeterminate') =>
             updateField({ enabled: Boolean(checked) })
           }
-          disabled={!!readOnly}
+          disabled={Boolean(readOnly)}
         />
         <Label htmlFor={enabledCheckboxId} className='cursor-pointer text-xs text-gray-300'>
           Enabled
@@ -71,7 +71,7 @@ export function AssignmentEditor(props: {
             value={resolvedProvider}
             onValueChange={(value: string) => updateField({ provider: value as AiBrainProvider })}
             options={filteredProviderOptions}
-            disabled={!!readOnly || filteredProviderOptions.length <= 1}
+            disabled={Boolean(readOnly) || filteredProviderOptions.length <= 1}
             placeholder='Select provider'
             ariaLabel='Provider'
            title='Select provider'/>
@@ -91,7 +91,7 @@ export function AssignmentEditor(props: {
                 temperature: e.target.value === '' ? undefined : Number(e.target.value),
               })
             }
-            disabled={!!readOnly}
+            disabled={Boolean(readOnly)}
            title='Input field'/>
         </div>
 
@@ -104,7 +104,7 @@ export function AssignmentEditor(props: {
               updateField({ modelId: e.target.value })
             }
             placeholder='gpt-4o-mini'
-            disabled={!!readOnly || resolvedProvider !== 'model'}
+            disabled={Boolean(readOnly) || resolvedProvider !== 'model'}
            title='gpt-4o-mini'/>
           {modelQuickPicks.length > 0 ? (
             <SelectSimple
@@ -112,7 +112,7 @@ export function AssignmentEditor(props: {
               onValueChange={(value: string) => updateField({ modelId: value })}
               options={modelQuickPicks}
               placeholder='Pick model preset'
-              disabled={!!readOnly || resolvedProvider !== 'model'}
+              disabled={Boolean(readOnly) || resolvedProvider !== 'model'}
               size='sm'
               className='mt-1'
               ariaLabel='Model preset'
@@ -129,7 +129,7 @@ export function AssignmentEditor(props: {
               updateField({ agentId: e.target.value })
             }
             placeholder='agent_xxx'
-            disabled={!!readOnly || resolvedProvider !== 'agent'}
+            disabled={Boolean(readOnly) || resolvedProvider !== 'agent'}
            title='agent_xxx'/>
           {agentQuickPicks.length > 0 ? (
             <SelectSimple
@@ -137,7 +137,7 @@ export function AssignmentEditor(props: {
               onValueChange={(value: string) => updateField({ agentId: value })}
               options={agentQuickPicks}
               placeholder='Pick agent/persona preset'
-              disabled={!!readOnly || resolvedProvider !== 'agent'}
+              disabled={Boolean(readOnly) || resolvedProvider !== 'agent'}
               size='sm'
               className='mt-1'
               ariaLabel='Agent preset'
@@ -157,7 +157,7 @@ export function AssignmentEditor(props: {
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               updateField({ maxTokens: e.target.value === '' ? undefined : Number(e.target.value) })
             }
-            disabled={!!readOnly}
+            disabled={Boolean(readOnly)}
            title='Input field'/>
         </div>
       </div>
@@ -172,7 +172,7 @@ export function AssignmentEditor(props: {
               updateField({ systemPrompt: e.target.value })
             }
             placeholder='Optional system prompt enforced by Brain'
-            disabled={!!readOnly}
+            disabled={Boolean(readOnly)}
             className='min-h-[120px]'
            title='Optional system prompt enforced by Brain'/>
         </div>
@@ -187,7 +187,7 @@ export function AssignmentEditor(props: {
             updateField({ notes: e.target.value })
           }
           placeholder='Optional notes for this assignment'
-          disabled={!!readOnly}
+          disabled={Boolean(readOnly)}
          title='Optional notes for this assignment'/>
       </div>
     </div>

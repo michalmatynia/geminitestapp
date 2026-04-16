@@ -96,7 +96,7 @@ export function KangurTestQuestionRenderer(props: Props): React.JSX.Element {
         : null,
       getQuestionStemNarrationText(question),
       ...question.choices.map((choice) =>
-        [choice.label, choice.text, choice.description].filter(Boolean).join('. ') + '.'
+        `${[choice.label, choice.text, choice.description].filter(Boolean).join('. ')  }.`
       ),
       showAnswer ? `Correct answer: ${question.correctChoiceLabel}.` : null,
       showAnswer && question.explanation

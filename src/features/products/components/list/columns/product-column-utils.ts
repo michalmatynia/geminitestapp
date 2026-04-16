@@ -212,28 +212,61 @@ export const resolveEffectiveDefaultPriceGroupId = (
 
 export const hasImportedProductOrigin = (product: ProductWithImages): boolean =>
   typeof product.importSource === 'string' && product.importSource.trim().length > 0;
+import {
+  SUCCESS_STATUSES,
+  PENDING_STATUSES,
+  PROCESSING_STATUSES,
+  FAILURE_STATUSES,
+  normalizeMarketplaceStatus,
+} from '@/features/integrations/utils/marketplace-status';
 
-export const normalizeMarketplaceStatus = (value: string): string => value.trim().toLowerCase();
+export {
+  SUCCESS_STATUSES,
+  PENDING_STATUSES,
+  PROCESSING_STATUSES,
+  FAILURE_STATUSES,
+  normalizeMarketplaceStatus,
+};
 
-export const SUCCESS_STATUSES = new Set(['active', 'success', 'completed', 'listed', 'ok']);
-export const PENDING_STATUSES = new Set([
-  'warning',
-  'pending',
-  'queued',
-  'queued_relist',
-]);
-export const PROCESSING_STATUSES = new Set([
-  'processing',
-  'in_progress',
-  'running',
-]);
-export const FAILURE_STATUSES = new Set([
-  'failed',
-  'error',
-  'removed',
-  'needs_login',
-  'auth_required',
-]);
+export const resolveMarketplaceStatusWithLocalFeedback = ({
+  serverStatus,
+  localFeedbackStatus,
+  submitting = false,
+}: {
+  serverStatus: string;
+  localFeedbackStatus: string | null;
+  submitting?: boolean;
+}): string => {
+  const normalizedServerStatus = normalizeMarketplaceStatus(serverStatus);
+  const normalizedLocalFeedbackStatus = normalizeMarketplaceStatus(localFeedbackStatus ?? '');
+  const hasServerStatus =
+    normalizedServerStatus.length > 0 && normalizedServerStatus !== 'not_started';
+
+  if (submitting) {
+    return 'processing';
+  }
+
+  if (
+    normalizedLocalFeedbackStatus === 'completed' &&
+    !SUCCESS_STATUSES.has(normalizedServerStatus)
+  ) {
+    return 'active';
+  }
+
+  if (
+    (normalizedLocalFeedbackStatus === 'processing' ||
+      normalizedLocalFeedbackStatus === 'queued') &&
+    FAILURE_STATUSES.has(normalizedServerStatus)
+  ) {
+    return normalizedLocalFeedbackStatus;
+  }
+
+  if (hasServerStatus) {
+    return normalizedServerStatus;
+  }
+
+  return normalizedLocalFeedbackStatus || 'not_started';
+};
 
 export const getStatusToneClass = (value: string): string => {
   const normalized = normalizeMarketplaceStatus(value);
@@ -255,7 +288,7 @@ export const getStatusToneClass = (value: string): string => {
 export const getMarketplaceButtonClass = (
   value: string,
   manageMode: boolean,
-  marketplace: 'base' | 'tradera' | 'playwright'
+  marketplace: 'base' | 'tradera' | 'playwright' | 'vinted'
 ): string => {
   if (!manageMode) {
     return getStatusToneClass(value);
@@ -275,6 +308,9 @@ export const getMarketplaceButtonClass = (
   }
   if (marketplace === 'playwright') {
     return 'border-fuchsia-400/70 bg-fuchsia-500/15 text-fuchsia-100 hover:border-fuchsia-300/80 hover:bg-fuchsia-500/25';
+  }
+  if (marketplace === 'vinted') {
+    return 'border-teal-400/70 bg-teal-500/15 text-teal-100 hover:border-teal-300/80 hover:bg-teal-500/25';
   }
   return 'border-sky-400/70 bg-sky-500/15 text-sky-100 hover:border-sky-300/80 hover:bg-sky-500/25';
 };

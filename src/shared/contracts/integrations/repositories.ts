@@ -40,6 +40,39 @@ export type IntegrationConnectionRecord = Omit<
   linkedinExpiresAt?: string | Date | null;
 };
 
+type NullablePlaywrightConnectionOverrideKey =
+  | 'playwrightIdentityProfile'
+  | 'playwrightHeadless'
+  | 'playwrightSlowMo'
+  | 'playwrightTimeout'
+  | 'playwrightNavigationTimeout'
+  | 'playwrightLocale'
+  | 'playwrightTimezoneId'
+  | 'playwrightHumanizeMouse'
+  | 'playwrightMouseJitter'
+  | 'playwrightClickDelayMin'
+  | 'playwrightClickDelayMax'
+  | 'playwrightInputDelayMin'
+  | 'playwrightInputDelayMax'
+  | 'playwrightActionDelayMin'
+  | 'playwrightActionDelayMax'
+  | 'playwrightProxyEnabled'
+  | 'playwrightProxyServer'
+  | 'playwrightProxyUsername'
+  | 'playwrightProxyPassword'
+  | 'playwrightProxySessionAffinity'
+  | 'playwrightProxySessionMode'
+  | 'playwrightProxyProviderPreset'
+  | 'playwrightEmulateDevice'
+  | 'playwrightDeviceName';
+
+export type IntegrationConnectionUpdateInput = Omit<
+  Partial<IntegrationConnectionRecord>,
+  NullablePlaywrightConnectionOverrideKey
+> & {
+  [K in NullablePlaywrightConnectionOverrideKey]?: IntegrationConnectionRecord[K] | null;
+};
+
 export type IntegrationRepository = {
   listIntegrations: () => Promise<IntegrationRecord[]>;
   upsertIntegration: (input: { name: string; slug: string }) => Promise<IntegrationRecord>;
@@ -56,13 +89,18 @@ export type IntegrationRepository = {
   ) => Promise<IntegrationConnectionRecord>;
   updateConnection: (
     id: string,
-    input: Partial<IntegrationConnectionRecord>
+    input: IntegrationConnectionUpdateInput
   ) => Promise<IntegrationConnectionRecord>;
   deleteConnection: (
     id: string,
     options?: ConnectionDeleteOptions
   ) => Promise<void>;
 };
+
+export type IntegrationLookupRepository = Pick<
+  IntegrationRepository,
+  'getConnectionById' | 'getIntegrationById'
+>;
 
 export type ExternalCategoryRepository = {
   syncFromBase: (connectionId: string, categories: BaseCategory[]) => Promise<number>;
@@ -73,6 +111,12 @@ export type ExternalCategoryRepository = {
     connectionId: string,
     externalId: string
   ) => Promise<ExternalCategory | null>;
+  /**
+   * Returns all leaf descendants of the given external category ID.
+   * Traverses the stored tree via the path field to find all categories
+   * that are descended from this category and have no children.
+   */
+  getLeafDescendants: (connectionId: string, externalId: string) => Promise<ExternalCategory[]>;
   deleteByConnection: (connectionId: string) => Promise<number>;
 };
 
@@ -81,6 +125,10 @@ export type CategoryMappingRepository = {
   update: (id: string, input: CategoryMappingUpdateInput) => Promise<CategoryMapping>;
   delete: (id: string) => Promise<void>;
   getById: (id: string) => Promise<CategoryMapping | null>;
+  listByInternalCategory: (
+    internalCategoryId: string,
+    catalogId?: string
+  ) => Promise<CategoryMappingWithDetails[]>;
   listByConnection: (
     connectionId: string,
     catalogId?: string

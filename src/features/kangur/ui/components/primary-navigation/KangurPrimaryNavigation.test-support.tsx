@@ -268,6 +268,16 @@ vi.mock('next/navigation', () => ({
   notFound: vi.fn(),
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  useRouter: () => ({
+    back: vi.fn(),
+    prefetch: prefetchMock,
+    push: pushMock,
+    refresh: vi.fn(),
+    replace: replaceMock,
+  }),
+}));
+
 vi.mock('next-auth/react', () => ({
   useSession: (): unknown => sessionMock() as unknown,
 }));

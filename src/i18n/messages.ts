@@ -2,7 +2,8 @@ import 'server-only';
 
 import { cache } from 'react';
 
-import enMessages from './messages/en.json';
+import type enMessages from './messages/en.json';
+import plMessages from './messages/pl.json';
 
 import {
   getDefaultSiteLocaleCode,
@@ -54,16 +55,14 @@ const mergeSiteMessageDictionaries = (
   return next;
 };
 
-const defaultMessageLoader = () =>
-  import('./messages/pl.json').then((module) =>
-    repairBundledPolishMessages(module.default as SiteMessageDictionary)
-  );
+const repairedBundledPolishMessages = repairBundledPolishMessages(
+  plMessages as SiteMessageDictionary
+);
+
+const defaultMessageLoader = async () => repairedBundledPolishMessages;
 
 const messageLoaders: Partial<Record<string, () => Promise<SiteMessageDictionary>>> = {
-  pl: () =>
-    import('./messages/pl.json').then((module) =>
-      repairBundledPolishMessages(module.default as SiteMessageDictionary)
-    ),
+  pl: async () => repairedBundledPolishMessages,
   en: () => import('./messages/en.json').then((module) => module.default as SiteMessageDictionary),
   de: () => import('./messages/de.json').then((module) => module.default as SiteMessageDictionary),
   uk: () => import('./messages/uk.json').then((module) => module.default as SiteMessageDictionary),

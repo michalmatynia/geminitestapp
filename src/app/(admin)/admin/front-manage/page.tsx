@@ -1,4 +1,4 @@
-import { JSX } from 'react';
+import { type JSX } from 'react';
 
 import { AdminFrontManagePage } from '@/features/admin/public/pages';
 

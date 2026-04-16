@@ -1,10 +1,10 @@
 import 'server-only';
 
 import {
-  AiPathRunRecord,
-  AiPathRuntimeTraceAnalytics,
-  AiPathRuntimeAnalyticsRange,
-  AiPathRuntimeAnalyticsSummary,
+  type AiPathRunRecord,
+  type AiPathRuntimeTraceAnalytics,
+  type AiPathRuntimeAnalyticsRange,
+  type AiPathRuntimeAnalyticsSummary,
 } from '@/shared/contracts/ai-paths';
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
@@ -46,8 +46,8 @@ export const emptyTraceAnalytics = (): AiPathRuntimeTraceAnalytics => ({
     runsWithKernelParity: 0,
     sampledHistoryEntries: 0,
     strategyCounts: {
-      compatibility: 0,
       code_object_v3: 0,
+      compatibility: 0,
       unknown: 0,
     },
     resolutionSourceCounts: {
@@ -80,15 +80,13 @@ const extractRuntimeTraceKernelParity = (
     ? kernelParity['codeObjectIds']
     : [];
 
-  const compatibilityCount = normalizeNonNegativeInteger(strategyCounts?.['compatibility']);
-
   return {
     sampledRuns: 0,
     runsWithKernelParity: 0,
     sampledHistoryEntries: normalizeNonNegativeInteger(kernelParity['sampledHistoryEntries']),
     strategyCounts: {
-      compatibility: compatibilityCount,
       code_object_v3: normalizeNonNegativeInteger(strategyCounts?.['code_object_v3']),
+      compatibility: normalizeNonNegativeInteger(strategyCounts?.['compatibility']),
       unknown: normalizeNonNegativeInteger(strategyCounts?.['unknown']),
     },
     resolutionSourceCounts: {
@@ -143,8 +141,8 @@ const createRuntimeTraceSummaryState = (
     runsWithKernelParity: 0,
     sampledHistoryEntries: 0,
     strategyCounts: {
-      compatibility: 0,
       code_object_v3: 0,
+      compatibility: 0,
       unknown: 0,
     },
     resolutionSourceCounts: {
@@ -164,8 +162,8 @@ const mergeRuntimeTraceKernelParity = (
 ): void => {
   state.kernelParity.runsWithKernelParity += 1;
   state.kernelParity.sampledHistoryEntries += parity.sampledHistoryEntries;
-  state.kernelParity.strategyCounts.compatibility += parity.strategyCounts.compatibility;
   state.kernelParity.strategyCounts.code_object_v3 += parity.strategyCounts.code_object_v3;
+  state.kernelParity.strategyCounts.compatibility += parity.strategyCounts.compatibility;
   state.kernelParity.strategyCounts.unknown += parity.strategyCounts.unknown;
   state.kernelParity.resolutionSourceCounts.override += parity.resolutionSourceCounts.override;
   state.kernelParity.resolutionSourceCounts.registry += parity.resolutionSourceCounts.registry;

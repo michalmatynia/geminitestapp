@@ -9,6 +9,7 @@ import { Tag } from '@/shared/ui/forms-and-actions.public';
 import { cn } from '@/shared/utils/ui-utils';
 
 import { useAdmin3DAssetsContext } from '../context/Admin3DAssetsContext';
+import { formatAssetDate } from '../utils/formatAssetDate';
 
 export interface Asset3DCardProps {
   asset: Asset3DRecord;
@@ -38,18 +39,11 @@ function useAsset3DCardModel(asset: Asset3DRecord) {
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
   };
-  const formatDate = (date: Date | string): string => {
-    return new Date(date).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
   const displayName = asset.name || (asset.filename || '').replace(/^\d+-/, '');
 
   return {
     displayName,
-    formatDate,
+    formatDate: formatAssetDate,
     formatFileSize,
     isDeleting,
     onDeleteAsset,

@@ -1,7 +1,7 @@
 'use client';
 
-import { useCallback, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { startTransition, useCallback, useState } from 'react';
+import { useRouter } from 'nextjs-toploader/app';
 import { useTranslations } from 'next-intl';
 import {
   withKangurClientErrorSync,
@@ -170,11 +170,15 @@ const performKangurLoginRouterNavigation = ({
   }
 
   if (currentPath && href === currentPath) {
-    router.refresh();
+    startTransition(() => {
+      router.refresh();
+    });
     return;
   }
 
-  router.push(href, { scroll: false });
+  startTransition(() => {
+    router.push(href, { scroll: false });
+  });
 };
 
 const performKangurLoginSuccessNavigation = ({

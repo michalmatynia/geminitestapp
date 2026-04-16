@@ -1,14 +1,15 @@
+/* eslint-disable max-lines */
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 
 import {
-  FolderTreePlaceholderPreset,
-  FolderTreePlaceholderStyle,
-  FolderTreePlaceholderEmphasis,
-  FolderTreeSelectionBehavior,
-  FolderTreeIconSlot,
-  FolderTreeInstance,
-  FolderTreeInstanceSettingsMeta,
-  FolderTreePersistFeedback,
+  type FolderTreePlaceholderPreset,
+  type FolderTreePlaceholderStyle,
+  type FolderTreePlaceholderEmphasis,
+  type FolderTreeSelectionBehavior,
+  type FolderTreeIconSlot,
+  type FolderTreeInstance,
+  type FolderTreeInstanceSettingsMeta,
+  type FolderTreePersistFeedback,
   folderTreeInstanceValues,
 } from './types';
 
@@ -60,6 +61,12 @@ export const folderTreeSettingsMetaByInstance: Record<
     description: 'Controls the notes folder tree shown in the Notes workspace.',
     fileHint: 'Example: note',
     folderHint: 'Example: folder',
+  },
+  ai_paths: {
+    title: 'AI Paths',
+    description: 'Controls grouped path navigation and drag/drop behavior in AI Paths canvas.',
+    fileHint: 'Example: path',
+    folderHint: 'Example: path_group',
   },
   image_studio: {
     title: 'Image Studio',
@@ -189,6 +196,12 @@ export const folderTreeSettingsMetaByInstance: Record<
     fileHint: 'Example: social-capture-slide',
     folderHint: 'Example: social-capture-section, social-capture-subsection',
   },
+  playwright_step_seq_constructor: {
+    title: 'Playwright Step Sequencer',
+    description: 'Controls action and step ordering in the Playwright Step Sequencer.',
+    fileHint: 'Example: playwright_action',
+    folderHint: 'Example: playwright_step',
+  },
 };
 
 export const folderTreePersistFeedbackByInstance: Record<
@@ -199,6 +212,11 @@ export const folderTreePersistFeedbackByInstance: Record<
     notifySuccess: false,
     notifyError: true,
     successMessage: 'Folder tree updated.',
+  },
+  ai_paths: {
+    notifySuccess: false,
+    notifyError: true,
+    successMessage: 'AI paths grouping updated.',
   },
   image_studio: {
     notifySuccess: false,
@@ -304,6 +322,11 @@ export const folderTreePersistFeedbackByInstance: Record<
     notifySuccess: false,
     notifyError: false,
     successMessage: 'Social capture browser updated.',
+  },
+  playwright_step_seq_constructor: {
+    notifySuccess: false,
+    notifyError: true,
+    successMessage: 'Step sequence updated.',
   },
 };
 

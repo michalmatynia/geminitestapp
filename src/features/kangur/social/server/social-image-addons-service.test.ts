@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
-  enqueuePlaywrightNodeRunMock: vi.fn(),
+  runPlaywrightEngineTaskMock: vi.fn(),
   readPlaywrightNodeArtifactMock: vi.fn(),
   getDiskPathFromPublicPathMock: vi.fn(),
   uploadToConfiguredStorageMock: vi.fn(),
@@ -15,12 +15,25 @@ vi.mock('sharp', () => ({
   default: (...args: unknown[]) => mocks.sharpMock(...args),
 }));
 
-vi.mock('@/features/ai/server', () => ({
-  enqueuePlaywrightNodeRun: (...args: unknown[]) =>
-    mocks.enqueuePlaywrightNodeRunMock(...args),
-  readPlaywrightNodeArtifact: (...args: unknown[]) =>
-    mocks.readPlaywrightNodeArtifactMock(...args),
-}));
+vi.mock('@/features/playwright/server', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/playwright/server')>();
+  return {
+    ...actual,
+    runPlaywrightEngineTask: (input: Record<string, unknown>) =>
+      mocks.runPlaywrightEngineTaskMock({
+        ...input,
+        waitForResult: true,
+      }),
+    readPlaywrightEngineArtifact: (...args: unknown[]) =>
+      mocks.readPlaywrightNodeArtifactMock(...args),
+    createSocialCaptureSinglePlaywrightInstance: (input: Record<string, unknown> = {}) => ({
+      kind: 'social_capture_single',
+      label: 'Kangur social single capture',
+      tags: ['kangur', 'social', 'capture', 'single'],
+      ...input,
+    }),
+  };
+});
 
 vi.mock('@/features/files/server', () => ({
   getDiskPathFromPublicPath: (...args: unknown[]) =>
@@ -48,7 +61,7 @@ describe('createKangurSocialImageAddonFromPlaywright', () => {
     mocks.sharpMock.mockReturnValue({
       metadata: vi.fn().mockResolvedValue({ width: 1280, height: 720 }),
     });
-    mocks.enqueuePlaywrightNodeRunMock.mockResolvedValue({
+    mocks.runPlaywrightEngineTaskMock.mockResolvedValue({
       runId: 'run-123',
       status: 'completed',
       artifacts: [{ name: 'addon', path: '/artifacts/addon.png' }],
@@ -76,8 +89,11 @@ describe('createKangurSocialImageAddonFromPlaywright', () => {
         'session=abc123; __Host-next-auth.csrf-token=csrf123; __Secure-next-auth.session-token=session456',
     });
 
-    expect(mocks.enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith(
+    expect(mocks.runPlaywrightEngineTaskMock).toHaveBeenCalledWith(
       expect.objectContaining({
+        instance: expect.objectContaining({
+          kind: 'social_capture_single',
+        }),
         request: expect.objectContaining({
           input: expect.objectContaining({
             appearanceMode: 'dark',
@@ -135,8 +151,11 @@ describe('createKangurSocialImageAddonFromPlaywright', () => {
         '__Host-next-auth.csrf-token=csrf123; __Secure-next-auth.session-token=session456; session=abc123',
     });
 
-    expect(mocks.enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith(
+    expect(mocks.runPlaywrightEngineTaskMock).toHaveBeenCalledWith(
       expect.objectContaining({
+        instance: expect.objectContaining({
+          kind: 'social_capture_single',
+        }),
         request: expect.objectContaining({
           contextOptions: {
             storageState: {
@@ -162,8 +181,11 @@ describe('createKangurSocialImageAddonFromPlaywright', () => {
       trustedSelfOriginHost: 'localhost:3000',
     });
 
-    expect(mocks.enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith(
+    expect(mocks.runPlaywrightEngineTaskMock).toHaveBeenCalledWith(
       expect.objectContaining({
+        instance: expect.objectContaining({
+          kind: 'social_capture_single',
+        }),
         request: expect.objectContaining({
           policyAllowedHosts: ['localhost:3000'],
         }),

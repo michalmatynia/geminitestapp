@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   productMetadataKeys,
+  useCategoriesForCatalogs,
   useParameters,
   useDeleteProducerMutation,
   useSaveProducerMutation,
@@ -127,5 +128,48 @@ describe('useProductMetadataQueries invalidation', () => {
         cache: 'no-store',
       })
     );
+  });
+
+  it('useCategoriesForCatalogs requests batched categories and flattens them in catalog order', async () => {
+    vi.mocked(api.get).mockResolvedValue({
+      'catalog-1': [
+        {
+          id: 'cat-1',
+          catalogId: 'catalog-1',
+          name: 'Keychains',
+          name_en: 'Keychains',
+          name_pl: null,
+          name_de: null,
+          color: null,
+          parentId: null,
+        },
+      ],
+      'catalog-2': [
+        {
+          id: 'cat-2',
+          catalogId: 'catalog-2',
+          name: 'Stickers',
+          name_en: 'Stickers',
+          name_pl: null,
+          name_de: null,
+          color: null,
+          parentId: null,
+        },
+      ],
+    } as never);
+
+    const { result } = renderHook(
+      () => useCategoriesForCatalogs([' catalog-2 ', 'catalog-1', 'catalog-2']),
+      { wrapper }
+    );
+
+    await waitFor(() => expect(result.current.data).toHaveLength(2));
+    expect(api.get).toHaveBeenCalledWith(
+      '/api/v2/products/categories/batch?catalogIds=catalog-1,catalog-2'
+    );
+    expect(result.current.data).toEqual([
+      expect.objectContaining({ id: 'cat-1', catalogId: 'catalog-1' }),
+      expect.objectContaining({ id: 'cat-2', catalogId: 'catalog-2' }),
+    ]);
   });
 });

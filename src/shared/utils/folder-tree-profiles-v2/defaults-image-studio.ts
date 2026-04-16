@@ -1,4 +1,4 @@
-import { FolderTreeProfileV2 } from '../../contracts/master-folder-tree';
+import { type FolderTreeProfileV2 } from '../../contracts/master-folder-tree';
 
 export const imageStudioProfiles: Record<string, FolderTreeProfileV2> = {
   image_studio: {

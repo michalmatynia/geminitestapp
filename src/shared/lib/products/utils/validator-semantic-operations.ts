@@ -496,7 +496,7 @@ const PRODUCT_VALIDATION_SEMANTIC_OPERATION_DEFINITIONS: Record<
         presetId: PRODUCT_VALIDATION_SEMANTIC_PRESET_IDS.validateRepeatedWhitespace,
         operation: PRODUCT_VALIDATION_SEMANTIC_OPERATION_IDS.validateRepeatedWhitespace,
         sourceField: targetField,
-        targetField: targetField,
+        targetField,
         tags: ['validation', 'whitespace'],
         metadata: {
           regex: '\\s{2,}',

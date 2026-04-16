@@ -1,7 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { PathMeta } from '@/shared/lib/ai-paths';
+import type { PathMeta } from '@/shared/contracts/ai-paths';
 import type { AiPathsSettingsProps } from '../../AiPathsSettings';
 import type { UseAiPathsSettingsStateReturn } from '../types';
 
@@ -25,6 +25,12 @@ vi.mock('next/navigation', () => ({
   }),
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  useRouter: () => ({
+    push: mockState.routerPush,
+  }),
+}));
+
 vi.mock('@/features/ai/ai-paths/context', () => ({
   useRunHistoryActions: () => ({
     setRunHistoryNodeId: mockState.setRunHistoryNodeId,
@@ -38,6 +44,11 @@ vi.mock('@/features/ai/ai-paths/hooks/useAiPathsDocsTooltips', () => ({
     docsTooltipsEnabled: true,
     setDocsTooltipsEnabled: mockState.setDocsTooltipsEnabled,
   }),
+}));
+
+vi.mock('@/shared/lib/ai-paths/core/utils/data-contract-preflight', () => ({
+  evaluateDataContractPreflight: (...args: unknown[]) =>
+    mockState.evaluateDataContractPreflight(...args),
 }));
 
 vi.mock('@/shared/lib/ai-paths', () => ({
@@ -156,6 +167,8 @@ const createState = (
     paletteCollapsed: false,
     setPaletteCollapsed: vi.fn(),
     expandedPaletteGroups: new Set<string>(),
+    isPathTreeVisible: true,
+    setIsPathTreeVisible: vi.fn(),
     togglePaletteGroup: vi.fn(),
     handleDragStart: vi.fn(),
     selectedNode: null,

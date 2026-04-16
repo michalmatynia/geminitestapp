@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useCallback } from 'react';
+import type React from 'react';
+import { useCallback } from 'react';
 
 import { createId } from '@/features/case-resolver/utils/caseResolverUtils';
 import type { CaseResolverAssetFile } from '@/shared/contracts/case-resolver/file';

@@ -1,4 +1,5 @@
 'use client';
+'use no memo';
 
 import { PlusIcon, Package } from 'lucide-react';
 import dynamic from 'next/dynamic';
@@ -68,10 +69,10 @@ const resolveDraftIconColor = (draft: ProductDraft): string | undefined => {
   return normalized;
 };
 
-export const ProductListHeader = memo(function ProductListHeader({
+export const ProductListHeader = memo(({
   showHeader = true,
   filtersContent,
-}: ProductListHeaderProps) {
+}: ProductListHeaderProps) => {
   const { isMenuHidden } = useAdminLayoutState();
   const { setIsMenuHidden } = useAdminLayoutActions();
   const {
@@ -109,15 +110,19 @@ export const ProductListHeader = memo(function ProductListHeader({
       currencyOptions.map((code: string) => ({ value: code, label: code })),
     [currencyOptions]
   );
-  const renderFiltersContent = (instanceId: 'mobile' | 'desktop'): ReactNode => {
-    if (!filtersContent) return null;
-    if (isValidElement(filtersContent) && typeof filtersContent.type !== 'string') {
-      return cloneElement(filtersContent as ReactElement<Record<string, unknown>>, {
-        instanceId,
-      });
-    }
-    return filtersContent;
-  };
+  let resolvedFiltersContent: ReactNode = filtersContent ?? null;
+  if (
+    resolvedFiltersContent &&
+    isValidElement(resolvedFiltersContent) &&
+    typeof resolvedFiltersContent.type !== 'string'
+  ) {
+    resolvedFiltersContent = cloneElement(
+      resolvedFiltersContent as ReactElement<Record<string, unknown>>,
+      {
+        instanceId: 'header',
+      }
+    );
+  }
 
   useEffect(() => {
     return (): void => {
@@ -144,6 +149,7 @@ export const ProductListHeader = memo(function ProductListHeader({
         {activeDrafts.map((draft: ProductDraft) => {
           const IconComponent = draft.icon ? ICON_LIBRARY_MAP[draft.icon] : null;
           const iconColor = resolveDraftIconColor(draft);
+
           return (
             <Button
               key={draft.id}
@@ -158,13 +164,16 @@ export const ProductListHeader = memo(function ProductListHeader({
                   style={iconColor ? { color: iconColor } : undefined}
                 />
               ) : (
-                <Package className='h-3 w-3' style={iconColor ? { color: iconColor } : undefined} />
+                <Package
+                  className='h-3 w-3'
+                  style={iconColor ? { color: iconColor } : undefined}
+                />
               )}
             </Button>
           );
-      })}
+        })}
+      </div>
     </div>
-  </div>
   );
 
   const renderTitle = (): React.JSX.Element => (
@@ -190,13 +199,16 @@ export const ProductListHeader = memo(function ProductListHeader({
       <SelectSimple
         size='sm'
         value={nameLocale}
-        onValueChange={(value: string) => setNameLocale(value as 'name_en' | 'name_pl' | 'name_de')}
+        onValueChange={(value: string) =>
+          setNameLocale(value as 'name_en' | 'name_pl' | 'name_de')
+        }
         options={languageOptions}
         placeholder='Language'
         className='w-full shrink-0 sm:w-40'
         triggerClassName='h-8 w-full text-xs'
         ariaLabel='Select product name language'
-       title='Language'/>
+        title='Language'
+      />
 
       <SelectSimple
         size='sm'
@@ -207,7 +219,8 @@ export const ProductListHeader = memo(function ProductListHeader({
         className='w-full shrink-0 sm:w-28'
         triggerClassName='h-8 w-full text-xs'
         ariaLabel='Select currency'
-       title='Currency'/>
+        title='Currency'
+      />
 
       <SelectSimple
         size='sm'
@@ -218,7 +231,8 @@ export const ProductListHeader = memo(function ProductListHeader({
         className='w-full shrink-0 sm:w-48'
         triggerClassName='h-8 w-full text-xs'
         ariaLabel='Filter by catalog'
-       title='Catalog'/>
+        title='Catalog'
+      />
 
       {triggerButtonsReady ? (
         <div className='flex w-full flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap'>
@@ -241,6 +255,7 @@ export const ProductListHeader = memo(function ProductListHeader({
       onPageSizeChange={setPageSize}
       pageSizeOptions={[...PRODUCT_PAGE_SIZE_OPTIONS]}
       showPageSize
+      showPageJump
       showLabels={false}
       variant='compact'
     />
@@ -264,7 +279,6 @@ export const ProductListHeader = memo(function ProductListHeader({
               <div className='flex w-full flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-end'>
                 {renderSelectorsAndTriggers()}
               </div>
-              {filtersContent ? <div className='w-full'>{renderFiltersContent('mobile')}</div> : null}
             </div>
           </div>
 
@@ -278,8 +292,8 @@ export const ProductListHeader = memo(function ProductListHeader({
               </>,
               'relative z-0 min-w-0 flex-1 justify-end'
             )}
-            {filtersContent ? <div className='w-full'>{renderFiltersContent('desktop')}</div> : null}
           </div>
+          {resolvedFiltersContent ? <div className='w-full'>{resolvedFiltersContent}</div> : null}
         </div>
       )}
     </div>

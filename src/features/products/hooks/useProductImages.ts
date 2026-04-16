@@ -1,5 +1,10 @@
 'use client';
+// useProductImages: manages local image-slot state, object URL lifecycle,
+// temporary uploads and deletion. Keeps product image previews responsive and
+// invalidates product caches on server-side changes.
+'use no memo';
 
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, useCallback, useRef, useEffect } from 'react';
 
 import type { ImageFileSelection } from '@/shared/contracts/files';
@@ -13,12 +18,15 @@ import {
   createFileImageSlot,
   swapSlots,
 } from '@/shared/lib/image-slots';
-import { createDeleteMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { logger } from '@/shared/utils/logger';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { invalidateProducts } from './productCache';
+
+// This hook mixes local image-slot state, object-URL lifecycle, and a single
+// delete mutation. Keep it on the plain runtime and use explicit TanStack hooks
+// here to avoid unstable dev hook layouts in the product editor modal.
 
 const TOTAL_IMAGE_SLOTS = DEFAULT_IMAGE_SLOT_COUNT;
 
@@ -98,9 +106,11 @@ export function useProductImages(
   const objectUrlsRef = useRef<string[]>([]);
   const isReorderingRef = useRef(false);
   const pendingRefreshRef = useRef<ProductWithImages | null>(null);
+  const queryClient = useQueryClient();
 
-  const disconnectImageMutation = createDeleteMutationV2<
+  const disconnectImageMutation = useMutation<
     void,
+    Error,
     { productId: string; imageFileId: string }
   >({
     mutationFn: ({ productId, imageFileId }) =>
@@ -113,8 +123,9 @@ export function useProductImages(
       domain: 'products',
       mutationKey: QUERY_KEYS.products.all,
       tags: ['products', 'images', 'disconnect'],
-      description: 'Deletes products images.'},
-    invalidate: async (queryClient) => {
+      description: 'Deletes products images.',
+    },
+    onSuccess: async () => {
       await invalidateProducts(queryClient);
     },
   });

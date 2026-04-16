@@ -24,12 +24,14 @@ const mockState = vi.hoisted(() => ({
   })),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   useToast: () => ({ toast: mockState.toast }),
 }));
 
+vi.mock('@/shared/ui', () => ({}));
+
 vi.mock('@/features/ai/ai-paths/context', () => ({
-  useGraphState: () => mockState.graphState,
+  usePathMetadataState: () => mockState.graphState,
   useGraphActions: () => mockState.graphActions,
 }));
 

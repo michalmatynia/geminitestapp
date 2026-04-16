@@ -17,6 +17,7 @@ export const buildProductSyncProfileCreateInput = (
   createId: () => string
 ): Partial<ProductSyncProfile> => ({
   ...(body.name !== undefined ? { name: body.name } : {}),
+  ...(body.isDefault !== undefined ? { isDefault: body.isDefault } : {}),
   ...(body.enabled !== undefined ? { enabled: body.enabled } : {}),
   connectionId: body.connectionId,
   inventoryId: body.inventoryId,

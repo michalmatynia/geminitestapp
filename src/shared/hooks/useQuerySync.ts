@@ -1,9 +1,14 @@
 'use client';
+'use no memo';
 
 import { useQueryClient, type QueryCacheNotifyEvent } from '@tanstack/react-query';
 import { useEffect, useCallback, useRef } from 'react';
 
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
+
+// Query cache syncing relies on ref snapshots plus storage/query-cache
+// subscriptions. Keep it on the plain hook runtime to avoid React Compiler dev
+// hook-order noise in callers such as the admin products page.
 
 interface SyncConfig {
   queryKey: readonly unknown[];

@@ -239,7 +239,7 @@ Ready on http://localhost:51851 { port: 51851, host: '127.0.0.1' }
 [api/settings] [api/settings] [settings] cache fallback {
   service: 'api/settings',
   scope: 'heavy',
-  status: 'timeout-prisma-fallback',
+  status: 'timeout-removedOrm-fallback',
   reason: '[settings] cache miss fetch timed out after 3000ms',
   category: 'SYSTEM',
   otelTraceId: 'ac210c88739454168d0752a5d77cf453',
@@ -1162,13 +1162,13 @@ Ready on http://localhost:51851 { port: 51851, host: '127.0.0.1' }
   correlationId: 'c3843f3c-6513-4bdd-a9bb-36355db9d35d'
 }
 [agent-queue] [agent-queue] 
-Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$prisma$2e$ts__$5b$instrumentation$5d$__$28$ecmascript$29$__["default"].chatbotAgentRun.findFirst()` invocation in
+Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$removedOrm$2e$ts__$5b$instrumentation$5d$__$28$ecmascript$29$__["default"].chatbotAgentRun.findFirst()` invocation in
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-2/dev/server/chunks/src_features_ai_agent-runtime_6c936d39._.js:7491:192
 
   7488 async function processNextQueuedAgentRun() {
-  7489     if (!('chatbotAgentRun' in __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$prisma$2e$ts__$5b$instrumentation$5d$__$28$ecmascript$29$__["default"])) return;
+  7489     if (!('chatbotAgentRun' in __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$removedOrm$2e$ts__$5b$instrumentation$5d$__$28$ecmascript$29$__["default"])) return;
   7490     await recoverStuckRuns();
-→ 7491     const nextRun = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$prisma$2e$ts__$5b$instrumentation$5d$__$28$ecmascript$29$__["default"].chatbotAgentRun.findFirst(
+→ 7491     const nextRun = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$removedOrm$2e$ts__$5b$instrumentation$5d$__$28$ecmascript$29$__["default"].chatbotAgentRun.findFirst(
 The column `(not available)` does not exist in the current database. {
   service: 'agent-queue',
   runId: '__recovery__',
@@ -1177,37 +1177,37 @@ The column `(not available)` does not exist in the current database. {
   productId: undefined,
   error: {
     message: '\n' +
-      'Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$prisma$2e$ts__$5b$instrumentation$5d$__$28$ecmascript$29$__["default"].chatbotAgentRun.findFirst()` invocation in\n' +
+      'Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$removedOrm$2e$ts__$5b$instrumentation$5d$__$28$ecmascript$29$__["default"].chatbotAgentRun.findFirst()` invocation in\n' +
       '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-2/dev/server/chunks/src_features_ai_agent-runtime_6c936d39._.js:7491:192\n' +
       '\n' +
       '  7488 async function processNextQueuedAgentRun() {\n' +
-      `  7489     if (!('chatbotAgentRun' in __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$prisma$2e$ts__$5b$instrumentation$5d$__$28$ecmascript$29$__["default"])) return;\n` +
+      `  7489     if (!('chatbotAgentRun' in __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$removedOrm$2e$ts__$5b$instrumentation$5d$__$28$ecmascript$29$__["default"])) return;\n` +
       '  7490     await recoverStuckRuns();\n' +
-      '→ 7491     const nextRun = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$prisma$2e$ts__$5b$instrumentation$5d$__$28$ecmascript$29$__["default"].chatbotAgentRun.findFirst(\n' +
+      '→ 7491     const nextRun = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$removedOrm$2e$ts__$5b$instrumentation$5d$__$28$ecmascript$29$__["default"].chatbotAgentRun.findFirst(\n' +
       'The column `(not available)` does not exist in the current database.',
-    stack: 'PrismaClientKnownRequestError: \n' +
-      'Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$prisma$2e$ts__$5b$instrumentation$5d$__$28$ecmascript$29$__["default"].chatbotAgentRun.findFirst()` invocation in\n' +
+    stack: 'removedOrmClientKnownRequestError: \n' +
+      'Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$removedOrm$2e$ts__$5b$instrumentation$5d$__$28$ecmascript$29$__["default"].chatbotAgentRun.findFirst()` invocation in\n' +
       '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-2/dev/server/chunks/src_features_ai_agent-runtime_6c936d39._.js:7491:192\n' +
       '\n' +
       '  7488 async function processNextQueuedAgentRun() {\n' +
-      `  7489     if (!('chatbotAgentRun' in __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$prisma$2e$ts__$5b$instrumentation$5d$__$28$ecmascript$29$__["default"])) return;\n` +
+      `  7489     if (!('chatbotAgentRun' in __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$removedOrm$2e$ts__$5b$instrumentation$5d$__$28$ecmascript$29$__["default"])) return;\n` +
       '  7490     await recoverStuckRuns();\n' +
-      '→ 7491     const nextRun = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$prisma$2e$ts__$5b$instrumentation$5d$__$28$ecmascript$29$__["default"].chatbotAgentRun.findFirst(\n' +
+      '→ 7491     const nextRun = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$removedOrm$2e$ts__$5b$instrumentation$5d$__$28$ecmascript$29$__["default"].chatbotAgentRun.findFirst(\n' +
       'The column `(not available)` does not exist in the current database.\n' +
-      '    at zr.handleRequestError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/@prisma/client/runtime/client.js:65:8286)\n' +
-      '    at zr.handleAndLogRequestError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/@prisma/client/runtime/client.js:65:7581)\n' +
-      '    at zr.request (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/@prisma/client/runtime/client.js:65:7288)\n' +
+      '    at zr.handleRequestError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/@removedOrm/client/runtime/client.js:65:8286)\n' +
+      '    at zr.handleAndLogRequestError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/@removedOrm/client/runtime/client.js:65:7581)\n' +
+      '    at zr.request (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/@removedOrm/client/runtime/client.js:65:7288)\n' +
       '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
-      '    at async a (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/@prisma/client/runtime/client.js:75:5816)\n' +
+      '    at async a (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/@removedOrm/client/runtime/client.js:75:5816)\n' +
       '    at async processNextQueuedAgentRun (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-2/dev/server/chunks/src_features_ai_agent-runtime_6c936d39._.js:7491:21)\n' +
       '    at async Object.processor (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated-2/dev/server/chunks/src_features_ai_agent-runtime_6c936d39._.js:7610:13)\n' +
       '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/bullmq/dist/cjs/classes/worker.js:571:32',
-    name: 'PrismaClientKnownRequestError',
+    name: 'removedOrmClientKnownRequestError',
     code: 'P2022',
     meta: { modelName: 'ChatbotAgentRun', driverAdapterError: [Object] }
   },
   errorCode: 'P2022',
-  errorName: 'PrismaClientKnownRequestError',
+  errorName: 'removedOrmClientKnownRequestError',
   fingerprint: '2b46e371c77510a7'
 }
  GET /admin/image-studio 200 in 1744ms (compile: 1683ms, proxy.ts: 5ms, render: 56ms)

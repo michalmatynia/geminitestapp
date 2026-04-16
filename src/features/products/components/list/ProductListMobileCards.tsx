@@ -1,12 +1,12 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
-import { Download } from 'lucide-react';
+import { Archive, Download } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { memo, useCallback, type ReactNode } from 'react';
 
 import { ProductImageCell } from '@/features/products/components/cells/ProductImageCell';
-import { isMissingProductListingsError } from '@/features/integrations/hooks/useListingQueries';
+import { isMissingProductListingsError } from '@/features/integrations/product-integrations-adapter';
 import {
   useProductListRowActionsContext,
   useProductListRowRuntime,
@@ -41,6 +41,7 @@ import {
   getImageFilepath,
   resolveProductCategoryLabel,
 } from './columns/product-column-utils';
+import { ProductListActivityPill } from './ProductListActivityPill';
 
 type ProductListRowActionsContextValue = ReturnType<typeof useProductListRowActionsContext>;
 type ProductListRowVisualsContextValue = ReturnType<typeof useProductListRowVisualsContext>;
@@ -81,10 +82,32 @@ const TraderaQuickListButton = dynamic(
   }
 );
 
+const VintedQuickListButton = dynamic(
+  () =>
+    import('./columns/buttons/VintedQuickListButton').then(
+      (mod: typeof import('./columns/buttons/VintedQuickListButton')) => mod.VintedQuickListButton
+    ),
+  {
+    ssr: false,
+    loading: () => null,
+  }
+);
+
 const TraderaStatusButton = dynamic(
   () =>
     import('./columns/buttons/TraderaStatusButton').then(
       (mod: typeof import('./columns/buttons/TraderaStatusButton')) => mod.TraderaStatusButton
+    ),
+  {
+    ssr: false,
+    loading: () => null,
+  }
+);
+
+const VintedStatusButton = dynamic(
+  () =>
+    import('./columns/buttons/VintedStatusButton').then(
+      (mod: typeof import('./columns/buttons/VintedStatusButton')) => mod.VintedStatusButton
     ),
   {
     ssr: false,
@@ -191,6 +214,8 @@ type ProductListMobileCardResolvedProps = {
   nameValue: string;
   isImported: boolean;
   skuLabel: string;
+  duplicateSkuCount: number | null;
+  duplicateSkuTitle: string | null;
   categoryLabel: string;
   autoShippingGroupLabel: string;
   autoShippingRuleLabel: string;
@@ -218,6 +243,8 @@ const renderProductListMobileCard = ({
   nameValue,
   isImported,
   skuLabel,
+  duplicateSkuCount,
+  duplicateSkuTitle,
   categoryLabel,
   autoShippingGroupLabel,
   autoShippingRuleLabel,
@@ -248,9 +275,12 @@ const renderProductListMobileCard = ({
     integrationStatus: status,
     showTraderaBadge,
     traderaStatus,
+    showVintedBadge,
+    vintedStatus,
     showPlaywrightProgrammableBadge,
     playwrightProgrammableStatus,
     productAiRunFeedback,
+    productScanRunFeedback,
   } = rowRuntime;
 
   return (
@@ -263,10 +293,16 @@ const renderProductListMobileCard = ({
           checked={isSelected}
           onCheckedChange={(checked): void => toggleSelection(product.id, Boolean(checked))}
           aria-label={`Select ${nameValue || 'product'}`}
+          className='cursor-pointer'
         />
 
         <div className='shrink-0'>
-          <ProductImageCell imageUrl={thumbnailUrl} productName={getProductDisplayName(product)} />
+          <ProductImageCell
+            imageUrl={thumbnailUrl}
+            productId={product.id}
+            productName={getProductDisplayName(product)}
+            note={product.notes}
+          />
         </div>
 
         <div className='min-w-0 flex-1'>
@@ -282,6 +318,14 @@ const renderProductListMobileCard = ({
           <div className='mt-1 space-y-1 text-xs text-muted-foreground'>
             <div className='flex flex-wrap items-center gap-2'>
               <span className='truncate'>SKU: {skuLabel}</span>
+              {duplicateSkuCount ? (
+                <span
+                  className='rounded-sm border border-amber-500/40 bg-amber-500/10 px-1 py-0.5 text-[11px] font-medium text-amber-300'
+                  title={duplicateSkuTitle ?? undefined}
+                >
+                  Duplicate SKU
+                </span>
+              ) : null}
               <span aria-hidden='true' className='text-muted-foreground/60'>
                 •
               </span>
@@ -307,20 +351,39 @@ const renderProductListMobileCard = ({
                 <div className='truncate'>{missingManualShippingLabel}</div>
               </div>
             ) : null}
-            {(isImported || productAiRunFeedback) && (
+            {(product.archived || isImported || productAiRunFeedback || productScanRunFeedback) && (
               <div className='flex flex-wrap items-center gap-2'>
+                {product.archived ? (
+                  <Badge variant='removed' icon={<Archive className='size-3' />}>
+                    Archived
+                  </Badge>
+                ) : null}
                 {isImported && (
                   <Badge variant='info' icon={<Download className='size-3' />}>
                     Imported
                   </Badge>
                 )}
                 {productAiRunFeedback ? (
-                  <Badge
-                    variant={productAiRunFeedback.variant}
-                    className={productAiRunFeedback.badgeClassName}
-                  >
-                    {productAiRunFeedback.label}
-                  </Badge>
+                  <ProductListActivityPill
+                    config={{
+                      kind: 'trigger-button',
+                      label: productAiRunFeedback.label,
+                      variant: productAiRunFeedback.variant,
+                      badgeClassName: productAiRunFeedback.badgeClassName,
+                      className: 'ml-0',
+                    }}
+                  />
+                ) : null}
+                {productScanRunFeedback ? (
+                  <ProductListActivityPill
+                    config={{
+                      kind: 'scan',
+                      label: productScanRunFeedback.label,
+                      variant: productScanRunFeedback.variant,
+                      badgeClassName: productScanRunFeedback.badgeClassName,
+                      className: 'ml-0',
+                    }}
+                  />
                 ) : null}
               </div>
             )}
@@ -425,6 +488,35 @@ const renderProductListMobileCard = ({
           showTraderaBadge={showTraderaBadge}
           traderaStatus={traderaStatus}
         />
+        {showTraderaBadge && (
+          <TraderaStatusButton
+            productId={product.id}
+            status={traderaStatus}
+            prefetchListings={() => prefetchListings(product.id)}
+            onOpenListings={(recoveryContext) =>
+              onIntegrationsClick(product, recoveryContext, 'tradera')
+            }
+          />
+        )}
+        <VintedQuickListButton
+          product={product}
+          prefetchListings={() => prefetchListings(product.id)}
+          onOpenIntegrations={(recoveryContext) =>
+            onIntegrationsClick(product, recoveryContext, 'vinted')
+          }
+          showVintedBadge={showVintedBadge}
+          vintedStatus={vintedStatus}
+        />
+        {showVintedBadge && (
+          <VintedStatusButton
+            productId={product.id}
+            status={vintedStatus}
+            prefetchListings={() => prefetchListings(product.id)}
+            onOpenListings={(recoveryContext) =>
+              onIntegrationsClick(product, recoveryContext, 'vinted')
+            }
+          />
+        )}
 
         {triggerButtonsReady ? (
           <TriggerButtonBar
@@ -440,17 +532,6 @@ const renderProductListMobileCard = ({
             className='[&_button]:h-8 [&_button]:px-2 [&_button]:text-[10px] [&_button]:font-black [&_button]:uppercase [&_button]:tracking-tight'
           />
         ) : null}
-
-        {showTraderaBadge && (
-          <TraderaStatusButton
-            productId={product.id}
-            status={traderaStatus}
-            prefetchListings={() => prefetchListings(product.id)}
-            onOpenListings={(recoveryContext) =>
-              onIntegrationsClick(product, recoveryContext, 'tradera')
-            }
-          />
-        )}
 
         {showPlaywrightProgrammableBadge && (
           <PlaywrightStatusButton
@@ -468,7 +549,7 @@ const renderProductListMobileCard = ({
   );
 };
 
-const ProductListMobileCard = memo(function ProductListMobileCard({
+const ProductListMobileCard = memo(({
   product,
   isSelected,
   toggleSelection,
@@ -478,7 +559,7 @@ const ProductListMobileCard = memo(function ProductListMobileCard({
   isSelected: boolean;
   toggleSelection: (productId: string, nextChecked: boolean) => void;
   prefetchListings: (productId: string) => void;
-}) {
+}) => {
   const rowActions = useProductListRowActionsContext();
   const rowVisuals = useProductListRowVisualsContext();
   const rowRuntime = useProductListRowRuntime(product.id, product.baseProductId);
@@ -487,6 +568,11 @@ const ProductListMobileCard = memo(function ProductListMobileCard({
   const nameValue = getProductListDisplayName(product, nameKey);
   const isImported = hasImportedProductOrigin(product);
   const skuLabel = product.sku?.trim() || 'No SKU';
+  const duplicateSkuCount =
+    typeof product.duplicateSkuCount === 'number' && product.duplicateSkuCount > 1
+      ? product.duplicateSkuCount
+      : null;
+  const duplicateSkuTitle = duplicateSkuCount ? `SKU used by ${duplicateSkuCount} products` : null;
   const categoryLabel = resolveProductCategoryLabel(product, rowVisuals.categoryNameById, nameKey);
   const autoShippingGroupLabel =
     product.shippingGroupSource === 'category_rule' ? product.shippingGroup?.name?.trim() ?? '' : '';
@@ -553,6 +639,8 @@ const ProductListMobileCard = memo(function ProductListMobileCard({
     nameValue,
     isImported,
     skuLabel,
+    duplicateSkuCount,
+    duplicateSkuTitle,
     categoryLabel,
     autoShippingGroupLabel,
     autoShippingRuleLabel,
@@ -570,7 +658,7 @@ const ProductListMobileCard = memo(function ProductListMobileCard({
   });
 });
 
-export const ProductListMobileCards = memo(function ProductListMobileCards() {
+export const ProductListMobileCards = memo(() => {
   const { data, rowSelection, setRowSelection } = useProductListSelectionContext();
   const queryClient = useQueryClient();
 

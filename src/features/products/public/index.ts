@@ -1,3 +1,6 @@
+// Public client-safe exports for product UI and utilities.
+// Export only client-safe hooks, components and small helpers here so app-layer
+// code can import without pulling server-only modules.
 export {
   useBaseOrderImportStatuses,
   useImportBaseOrdersMutation,

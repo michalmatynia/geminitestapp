@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { linkProductImageToStudio } from '@/features/ai/server';
 import { productStudioLinkRequestSchema as linkSchema, productStudioLinkResponseSchema } from '@/shared/contracts/products/studio';

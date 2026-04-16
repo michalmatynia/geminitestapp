@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { contextRegistryEngine } from '@/features/ai/ai-context-registry/server';
 import { contextBundleRequestSchema } from '@/shared/contracts/ai-context-registry';

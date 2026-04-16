@@ -37,7 +37,7 @@ export interface ImageStudioSingleSlotManagerHandle {
 }
 
 export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotManagerHandle>(
-  function ImageStudioSingleSlotManager(_props, ref): React.JSX.Element {
+  (_props, ref): React.JSX.Element => {
     const queryClient = useQueryClient();
     const { projectId } = useProjectsState();
     const { selectedFolder, selectedSlot, temporaryObjectUpload } = useSlotsState();

@@ -1,4 +1,4 @@
-import { CmsStorefrontAppearanceMode } from './CmsStorefrontAppearance.contracts';
+import { type CmsStorefrontAppearanceMode } from './CmsStorefrontAppearance.contracts';
 
 export const isNonEmptyString = (value: unknown): value is string =>
   typeof value === 'string' && value.trim().length > 0;

@@ -1,5 +1,9 @@
 'use client';
 
+// useProductSettings: aggregates product settings queries and exposes a
+// snapshot of global product settings (validators, pricing groups, catalogs).
+// Used by settings pages and by default values in product forms.
+
 import { useCallback, useRef } from 'react';
 
 import { normalizeProductStudioSequenceGenerationMode } from '@/shared/contracts/products/studio';

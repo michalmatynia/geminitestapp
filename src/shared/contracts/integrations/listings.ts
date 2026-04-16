@@ -105,6 +105,8 @@ export const playwrightRelistBrowserModeSchema = z.enum([
 
 export type PlaywrightRelistBrowserMode = z.infer<typeof playwrightRelistBrowserModeSchema>;
 
+export const traderaSelectorProfileOverrideSchema = z.string().trim().min(1);
+
 export const productListingCreatePayloadSchema = z.object({
   integrationId: z.string().trim().min(1),
   connectionId: z.string().trim().min(1),
@@ -213,12 +215,14 @@ export type ProductListingSyncBaseImagesResponse = z.infer<
 
 export const productListingRelistPayloadSchema = z.object({
   browserMode: playwrightRelistBrowserModeSchema.optional(),
+  selectorProfile: traderaSelectorProfileOverrideSchema.optional(),
 });
 
 export type ProductListingRelistPayload = z.infer<typeof productListingRelistPayloadSchema>;
 
 export const productListingRelistVariablesSchema = productListingActionSchema.extend({
   browserMode: playwrightRelistBrowserModeSchema.optional(),
+  selectorProfile: traderaSelectorProfileOverrideSchema.optional(),
 });
 
 export type ProductListingRelistVariables = z.infer<typeof productListingRelistVariablesSchema>;
@@ -232,6 +236,96 @@ export const productListingRelistResponseSchema = z.object({
 });
 
 export type ProductListingRelistResponse = z.infer<typeof productListingRelistResponseSchema>;
+
+export const productListingSyncPayloadSchema = z.object({
+  browserMode: playwrightRelistBrowserModeSchema.optional(),
+  selectorProfile: traderaSelectorProfileOverrideSchema.optional(),
+  skipImages: z.boolean().optional(),
+});
+
+export type ProductListingSyncPayload = z.infer<typeof productListingSyncPayloadSchema>;
+
+export const productListingSyncVariablesSchema = productListingActionSchema.extend({
+  browserMode: playwrightRelistBrowserModeSchema.optional(),
+  selectorProfile: traderaSelectorProfileOverrideSchema.optional(),
+  skipImages: z.boolean().optional(),
+});
+
+export type ProductListingSyncVariables = z.infer<typeof productListingSyncVariablesSchema>;
+
+export const productListingSyncResponseSchema = z.object({
+  queued: z.boolean(),
+  alreadyQueued: z.boolean().optional(),
+  listingId: z.string(),
+  status: z.string().optional(),
+  queue: productListingQueueJobSchema.optional(),
+});
+
+export type ProductListingSyncResponse = z.infer<typeof productListingSyncResponseSchema>;
+
+export const traderaExecutionStepStatusSchema = z.enum([
+  'pending',
+  'running',
+  'success',
+  'error',
+  'skipped',
+]);
+
+export type TraderaExecutionStepStatus = z.infer<typeof traderaExecutionStepStatusSchema>;
+
+export const traderaExecutionStepSchema = z.object({
+  id: z.string().trim().min(1),
+  label: z.string().trim().min(1),
+  status: traderaExecutionStepStatusSchema,
+  message: z.string().nullable().optional(),
+});
+
+export type TraderaExecutionStep = z.infer<typeof traderaExecutionStepSchema>;
+
+export const traderaListingStatusCheckBatchPayloadSchema = z.object({
+  productIds: z.array(z.string().trim().min(1)).min(1).max(250),
+  selectorProfile: traderaSelectorProfileOverrideSchema.optional(),
+});
+
+export type TraderaListingStatusCheckBatchPayload = z.infer<
+  typeof traderaListingStatusCheckBatchPayloadSchema
+>;
+
+export const traderaListingStatusCheckBatchItemStatusSchema = z.enum([
+  'queued',
+  'already_queued',
+  'skipped',
+  'error',
+]);
+
+export type TraderaListingStatusCheckBatchItemStatus = z.infer<
+  typeof traderaListingStatusCheckBatchItemStatusSchema
+>;
+
+export const traderaListingStatusCheckBatchItemSchema = z.object({
+  productId: z.string(),
+  listingId: z.string().nullable(),
+  status: traderaListingStatusCheckBatchItemStatusSchema,
+  message: z.string().nullable().optional(),
+  queue: productListingQueueJobSchema.optional(),
+});
+
+export type TraderaListingStatusCheckBatchItem = z.infer<
+  typeof traderaListingStatusCheckBatchItemSchema
+>;
+
+export const traderaListingStatusCheckBatchResponseSchema = z.object({
+  total: z.number().int().nonnegative(),
+  queued: z.number().int().nonnegative(),
+  alreadyQueued: z.number().int().nonnegative(),
+  skipped: z.number().int().nonnegative(),
+  failed: z.number().int().nonnegative(),
+  results: z.array(traderaListingStatusCheckBatchItemSchema),
+});
+
+export type TraderaListingStatusCheckBatchResponse = z.infer<
+  typeof traderaListingStatusCheckBatchResponseSchema
+>;
 
 export const baseProductSkuCheckPayloadSchema = z.object({
   connectionId: z.string().trim().min(1),
@@ -318,6 +412,7 @@ export type TraderaProductLinkExistingResponse = z.infer<
 export type MarketplaceBadgeEntry = {
   base?: string;
   tradera?: string;
+  vinted?: string;
   playwrightProgrammable?: string;
 };
 
@@ -370,6 +465,7 @@ export const baseCategorySchema = z.object({
   id: z.string(),
   name: z.string(),
   parentId: z.string().nullable(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 export type BaseCategory = z.infer<typeof baseCategorySchema>;
@@ -490,6 +586,7 @@ export type ProductListingsRecoveryContext =
     integrationSlug: 'baselinker';
     status: string;
     runId: string | null;
+    failureReason?: string | null | undefined;
     requestId?: string | null | undefined;
     integrationId?: string | null | undefined;
     connectionId?: string | null | undefined;
@@ -503,4 +600,73 @@ export type ProductListingsRecoveryContext =
     requestId?: string | null | undefined;
     integrationId?: string | null | undefined;
     connectionId?: string | null | undefined;
+  }
+  | {
+    source: 'vinted_quick_export_failed' | 'vinted_quick_export_auth_required';
+    integrationSlug: 'vinted';
+    status: string;
+    runId: string | null;
+    failureReason?: string | null | undefined;
+    requestId?: string | null | undefined;
+    integrationId?: string | null | undefined;
+    connectionId?: string | null | undefined;
   };
+
+/**
+ * Browser-based listing execution result
+ */
+export const browserListingResultSchema = z.object({
+  externalListingId: z.string().nullable(),
+  listingUrl: z.string().optional(),
+  completedAt: z.string().optional(),
+  simulated: z.boolean().optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+});
+
+export type BrowserListingResultDto = z.infer<typeof browserListingResultSchema>;
+export type BrowserListingResult = BrowserListingResultDto;
+
+/**
+ * Quick export feedback tracking
+ */
+export type QuickExportFeedbackStatus =
+  | 'processing'
+  | 'queued'
+  | 'completed'
+  | 'failed'
+  | 'auth_required';
+
+export type QuickExportFeedbackOptionsDto = {
+  runId?: string | null | undefined;
+  requestId?: string | null | undefined;
+  integrationId?: string | null | undefined;
+  connectionId?: string | null | undefined;
+  failureReason?: string | null | undefined;
+  listingId?: string | null | undefined;
+  listingUrl?: string | null | undefined;
+  externalListingId?: string | null | undefined;
+  completedAt?: number | null | undefined;
+  duplicateLinked?: boolean | null | undefined;
+  duplicateMatchStrategy?: string | null | undefined;
+  metadata?: Record<string, unknown> | undefined;
+};
+
+export type QuickExportFeedbackOptions = QuickExportFeedbackOptionsDto;
+
+export type PersistedQuickExportFeedbackDto = QuickExportFeedbackOptionsDto & {
+  productId: string;
+  status: QuickExportFeedbackStatus;
+  expiresAt: number;
+};
+
+export type PersistedQuickExportFeedback = PersistedQuickExportFeedbackDto;
+
+/**
+ * Canonical product image entry for listing
+ */
+export type CanonicalProductImageEntryDto = {
+  imageUrls: string[];
+  localCandidates: string[];
+};
+
+export type CanonicalProductImageEntry = CanonicalProductImageEntryDto;

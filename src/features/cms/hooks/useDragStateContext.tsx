@@ -122,7 +122,9 @@ interface DragStateProviderProps {
   children: ReactNode;
 }
 
-export function DragStateProvider({ children }: DragStateProviderProps) {
+export function DragStateProvider({
+  children,
+}: DragStateProviderProps): React.JSX.Element {
   const [state, dispatch] = useReducer(dragReducer, initialDragState);
   const isDraggingBlock = state.block.id !== null;
   const isDraggingSection = state.section.id !== null;

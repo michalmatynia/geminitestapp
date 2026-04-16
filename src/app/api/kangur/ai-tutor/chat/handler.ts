@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { mergeContextRegistryRefs } from '@/features/ai/ai-context-registry/context/page-context-shared';
 import { resolveKangurAiTutorContextRegistryBundle } from '@/features/kangur/server/ai-tutor-context-registry-cache';

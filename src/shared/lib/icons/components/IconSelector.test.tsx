@@ -7,7 +7,7 @@ import { IconSelector } from '@/shared/lib/icons/components/IconSelector';
 const genericGridPickerMock = vi.hoisted(() => vi.fn());
 const tooltipMock = vi.hoisted(() => vi.fn());
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   Tooltip: tooltipMock,
 }));
 vi.mock('@/shared/ui/templates/pickers', () => ({

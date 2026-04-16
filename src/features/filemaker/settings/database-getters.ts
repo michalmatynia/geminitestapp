@@ -6,18 +6,18 @@ import {
 } from '../filemaker-settings.database';
 import { normalizeString } from '../filemaker-settings.helpers';
 import {
-  FilemakerDatabase,
-  FilemakerAddress,
-  FilemakerAddressOwnerKind,
-  FilemakerAddressLink,
-  FilemakerPhoneNumber,
-  FilemakerPhoneNumberLink,
-  FilemakerEmail,
-  FilemakerEmailLink,
-  FilemakerEvent,
-  FilemakerEventOrganizationLink,
-  FilemakerOrganization,
-  FilemakerPerson,
+  type FilemakerDatabase,
+  type FilemakerAddress,
+  type FilemakerAddressOwnerKind,
+  type FilemakerAddressLink,
+  type FilemakerPhoneNumber,
+  type FilemakerPhoneNumberLink,
+  type FilemakerEmail,
+  type FilemakerEmailLink,
+  type FilemakerEvent,
+  type FilemakerEventOrganizationLink,
+  type FilemakerOrganization,
+  type FilemakerPerson,
 } from '../types';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -27,7 +27,7 @@ const parseFilemakerDatabasePayload = (
 ): FilemakerDatabase | null => {
   if (typeof raw !== 'string') return null;
   const trimmedRaw = raw.trim();
-  if (!trimmedRaw) return null;
+  if (trimmedRaw.length === 0) return null;
 
   let parsed: unknown;
   try {
@@ -60,7 +60,7 @@ export const getFilemakerAddressById = (
   addressId: string | null | undefined
 ): FilemakerAddress | null => {
   const normalizedAddressId = normalizeString(addressId);
-  if (!normalizedAddressId) return null;
+  if (normalizedAddressId.length === 0) return null;
   return (
     database.addresses.find((address: FilemakerAddress) => address.id === normalizedAddressId) ??
     null
@@ -73,7 +73,7 @@ export const getFilemakerAddressLinksForOwner = (
   ownerId: string
 ): FilemakerAddressLink[] => {
   const normalizedOwnerId = normalizeString(ownerId);
-  if (!normalizedOwnerId) return [];
+  if (normalizedOwnerId.length === 0) return [];
   return database.addressLinks.filter(
     (link: FilemakerAddressLink): boolean =>
       link.ownerKind === ownerKind && link.ownerId === normalizedOwnerId
@@ -120,7 +120,7 @@ export const getFilemakerPhoneNumberById = (
   phoneNumberId: string | null | undefined
 ): FilemakerPhoneNumber | null => {
   const normalizedPhoneNumberId = normalizeString(phoneNumberId);
-  if (!normalizedPhoneNumberId) return null;
+  if (normalizedPhoneNumberId.length === 0) return null;
   return (
     database.phoneNumbers.find(
       (phoneNumber: FilemakerPhoneNumber): boolean => phoneNumber.id === normalizedPhoneNumberId
@@ -134,7 +134,7 @@ export const getFilemakerPhoneNumberLinksForParty = (
   partyId: string
 ): FilemakerPhoneNumberLink[] => {
   const normalizedPartyId = normalizeString(partyId);
-  if (!normalizedPartyId) return [];
+  if (normalizedPartyId.length === 0) return [];
   return database.phoneNumberLinks.filter(
     (link: FilemakerPhoneNumberLink): boolean =>
       link.partyKind === partyKind && link.partyId === normalizedPartyId
@@ -162,7 +162,7 @@ export const getFilemakerPartiesForPhoneNumber = (
   phoneNumberId: string
 ): { persons: FilemakerPerson[]; organizations: FilemakerOrganization[] } => {
   const normalizedPhoneNumberId = normalizeString(phoneNumberId);
-  if (!normalizedPhoneNumberId) {
+  if (normalizedPhoneNumberId.length === 0) {
     return { persons: [], organizations: [] };
   }
 
@@ -192,7 +192,7 @@ export const getFilemakerEmailById = (
   emailId: string | null | undefined
 ): FilemakerEmail | null => {
   const normalizedEmailId = normalizeString(emailId);
-  if (!normalizedEmailId) return null;
+  if (normalizedEmailId.length === 0) return null;
   return database.emails.find((email: FilemakerEmail) => email.id === normalizedEmailId) ?? null;
 };
 
@@ -202,7 +202,7 @@ export const getFilemakerEmailLinksForParty = (
   partyId: string
 ): FilemakerEmailLink[] => {
   const normalizedPartyId = normalizeString(partyId);
-  if (!normalizedPartyId) return [];
+  if (normalizedPartyId.length === 0) return [];
   return database.emailLinks.filter(
     (link: FilemakerEmailLink): boolean =>
       link.partyKind === partyKind && link.partyId === normalizedPartyId
@@ -228,7 +228,7 @@ export const getFilemakerPartiesForEmail = (
   emailId: string
 ): { persons: FilemakerPerson[]; organizations: FilemakerOrganization[] } => {
   const normalizedEmailId = normalizeString(emailId);
-  if (!normalizedEmailId) {
+  if (normalizedEmailId.length === 0) {
     return { persons: [], organizations: [] };
   }
 
@@ -258,7 +258,7 @@ export const getFilemakerOrganizationsForEvent = (
   eventId: string
 ): FilemakerOrganization[] => {
   const normalizedEventId = normalizeString(eventId);
-  if (!normalizedEventId) return [];
+  if (normalizedEventId.length === 0) return [];
   const organizationIds = new Set<string>();
   database.eventOrganizationLinks.forEach((link: FilemakerEventOrganizationLink): void => {
     if (link.eventId !== normalizedEventId) return;
@@ -275,7 +275,7 @@ export const getFilemakerEventsForOrganization = (
   organizationId: string
 ): FilemakerEvent[] => {
   const normalizedOrganizationId = normalizeString(organizationId);
-  if (!normalizedOrganizationId) return [];
+  if (normalizedOrganizationId.length === 0) return [];
   const eventIds = new Set<string>();
   database.eventOrganizationLinks.forEach((link: FilemakerEventOrganizationLink): void => {
     if (link.organizationId !== normalizedOrganizationId) return;

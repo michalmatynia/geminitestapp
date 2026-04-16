@@ -17,9 +17,9 @@ import { buildBranchStepsFromAlternatives } from '@/features/ai/agent-runtime/pl
 import type { PlanStep, PlannerMeta } from '@/shared/contracts/agent-runtime';
 
 import { evaluateApproval } from './step-runner/approval-logic';
-import { maybeUpdateCheckpointBrief, CheckpointContext } from './step-runner/checkpoint-logic';
+import { maybeUpdateCheckpointBrief, type CheckpointContext } from './step-runner/checkpoint-logic';
 import { executeTool } from './step-runner/tool-logic';
-import { StepLoopInput, StepLoopResult } from './step-runner/types';
+import { type StepLoopInput, type StepLoopResult } from './step-runner/types';
 
 export async function runPlanStepLoop(input: StepLoopInput): Promise<StepLoopResult> {
   const { context, sharedBrowser, sharedContext } = input;

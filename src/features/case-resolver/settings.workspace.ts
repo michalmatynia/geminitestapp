@@ -150,7 +150,7 @@ export const normalizeCaseResolverWorkspaceWithDiagnostics = (
   const lastMutationId = sanitizeOptionalId(workspaceRecord['lastMutationId']);
   const lastMutationAt = normalizeOptionalTimestamp(workspaceRecord['lastMutationAt']);
   let droppedDuplicateCount = 0;
-  let ownershipRepairedCount = 0;
+  const ownershipRepairedCount = 0;
 
   const rawFiles = Array.isArray(workspaceRecord['files'])
     ? (workspaceRecord['files'] as CaseResolverFile[])

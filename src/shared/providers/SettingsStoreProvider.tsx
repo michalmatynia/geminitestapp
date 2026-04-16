@@ -134,11 +134,14 @@ export function SettingsStoreProvider({
   suppressOwnQuery?: boolean;
   canReadAdminSettings?: boolean;
 }): React.JSX.Element {
+  const parentStore = useOptionalSettingsStoreContext();
+  const parentFetching = useOptionalSettingsStoreFetchingContext();
   const pathname = usePathname();
   const currentPathname = resolveCurrentPathname(pathname);
   const useAdmin = mode === 'admin';
   const allowAdminSettings = canReadAdminSettings ?? true;
   const shouldUseAdminSettings = useAdmin && allowAdminSettings;
+  const shouldReuseParentLiteStore = shouldUseAdminSettings && Boolean(parentStore);
   const isAdminRoute = currentPathname.startsWith('/admin');
   const shouldSuppressLiteQuery = suppressOwnQuery || (!useAdmin && isAdminRoute);
   const shouldSuppressAdminQuery = suppressOwnQuery;
@@ -167,27 +170,35 @@ export function SettingsStoreProvider({
     enabled: shouldUseAdminSettings && !shouldSuppressAdminQuery && shouldHydrateAdminSettings,
   });
   const liteQuery = useLiteSettingsMap({
-    enabled: !shouldSuppressLiteQuery,
+    enabled: !shouldSuppressLiteQuery && !shouldReuseParentLiteStore,
   });
 
   const settingsQuery = shouldUseAdminSettings ? adminQuery : liteQuery;
   const mergedAdminMap = useMemo(() => {
     if (!shouldUseAdminSettings) return emptyMap;
 
-    const liteMap = liteQuery.data instanceof Map ? liteQuery.data : emptyMap;
+    const liteMap = shouldReuseParentLiteStore
+      ? parentStore?.map ?? emptyMap
+      : liteQuery.data instanceof Map
+        ? liteQuery.data
+        : emptyMap;
     const fullMap = adminQuery.data instanceof Map ? adminQuery.data : emptyMap;
     return mergeSettingsMaps(liteMap, fullMap);
-  }, [adminQuery.data, liteQuery.data, shouldUseAdminSettings]);
+  }, [adminQuery.data, liteQuery.data, parentStore?.map, shouldReuseParentLiteStore, shouldUseAdminSettings]);
 
   const mapData = shouldUseAdminSettings ? mergedAdminMap : settingsQuery.data;
   const isLoading = shouldUseAdminSettings
-    ? liteQuery.isLoading && mergedAdminMap.size === 0
+    ? (shouldReuseParentLiteStore ? parentStore?.isLoading ?? false : liteQuery.isLoading) &&
+      mergedAdminMap.size === 0
     : settingsQuery.isLoading;
   const isFetching = shouldUseAdminSettings
-    ? liteQuery.isFetching || adminQuery.isFetching
+    ? (shouldReuseParentLiteStore ? parentFetching ?? false : liteQuery.isFetching) ||
+      adminQuery.isFetching
     : settingsQuery.isFetching;
   const error = shouldUseAdminSettings
-    ? liteQuery.error ?? (mergedAdminMap.size === 0 ? adminQuery.error : null) ?? null
+    ? (shouldReuseParentLiteStore ? parentStore?.error ?? null : liteQuery.error) ??
+      (mergedAdminMap.size === 0 ? adminQuery.error : null) ??
+      null
     : settingsQuery.error ?? null;
   const refetch = useMemo(
     () => () => {
@@ -195,7 +206,11 @@ export function SettingsStoreProvider({
         if (!shouldHydrateAdminSettings) {
           setShouldHydrateAdminSettings(true);
         }
-        void liteQuery.refetch();
+        if (shouldReuseParentLiteStore) {
+          parentStore?.refetch();
+        } else {
+          void liteQuery.refetch();
+        }
         void adminQuery.refetch();
         return;
       }
@@ -204,8 +219,10 @@ export function SettingsStoreProvider({
     [
       adminQuery,
       liteQuery,
+      parentStore,
       settingsQuery,
       shouldHydrateAdminSettings,
+      shouldReuseParentLiteStore,
       shouldUseAdminSettings,
     ]
   );

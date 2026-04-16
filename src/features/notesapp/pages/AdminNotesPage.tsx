@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 
 import { CreateNoteModal } from '@/features/notesapp/components/CreateNoteModal';

@@ -1,12 +1,25 @@
 'use client';
+'use no memo';
+// useProductListState: composition hook that builds the ProductListProvider
+// value. Responsibilities:
+// - Orchestrates data hooks (useProductData), user preferences, background
+//   sync, integrations, and row-runtime subscriptions.
+// - Defers heavy initialization (draft bootstrap and row runtime readiness)
+//   to a deferred effect so initial rendering remains snappy.
+// - Exposes memoized callbacks and stable values for pagination, filtering,
+//   selection and modal operations consumed by the ProductListProvider.
+// - Reports debug telemetry when debug mode is enabled and keeps effects
+//   localized to minimize cross-cutting re-renders.
+
+// Note: keep 'use no memo' directive present — it is used as a runtime hint
+// for development tooling and should not be removed without verifying callers.
 
 import {
-  ProfilerOnRenderCallback,
+  type ProfilerOnRenderCallback,
   startTransition,
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
   useSyncExternalStore,
 } from 'react';
@@ -34,7 +47,6 @@ import { useToast } from '@/shared/ui/toast';
 
 import { useProductEditHydration } from './product-list/useProductEditHydration';
 import { useProductListCategories } from './product-list/useProductListCategories';
-import { useProductListFilters } from './product-list/useProductListFilters';
 import { useProductListHighlights } from './product-list/useProductListHighlights';
 import { useProductListIntegrations } from './product-list/useProductListIntegrations';
 import { useProductListModals } from './product-list/useProductListModals';
@@ -43,11 +55,27 @@ import { useProductListSelection } from './product-list/useProductListSelection'
 import { useProductListUrlSync } from './product-list/useProductListUrlSync';
 import { useCreateFromDraft } from './useCreateFromDraft';
 import { useProductAiPathsRunSync } from './useProductAiPathsRunSync';
+import { useProductListScanRunSync } from './useProductListScanRunSync';
+import {
+  applyProductListAdvancedFilterState,
+  applyProductListPageSizeChange,
+  shouldEnableProductListBackgroundSync,
+  shouldEnableProductListBackgroundSyncRuntime,
+  scheduleDeferredProductListDraftBootstrap,
+} from './product-list/productListStateHelpers';
+import { useProductListDebugLogging } from './product-list/useProductListDebugLogging';
 
 import type { ProductListContextType } from '../context/ProductListContext';
 import type { ColumnDef, Row } from '@tanstack/react-table';
 
 export { shouldAdoptIncomingEditProductDetail } from './product-list/useProductEditHydration';
+export {
+  applyProductListAdvancedFilterState,
+  applyProductListPageSizeChange,
+  shouldEnableProductListBackgroundSync,
+  shouldEnableProductListBackgroundSyncRuntime,
+  scheduleDeferredProductListDraftBootstrap,
+};
 
 const subscribeToSearchParams = (callback: () => void): (() => void) => {
   window.addEventListener('popstate', callback);
@@ -62,119 +90,15 @@ function useStableSearchParams(): URLSearchParams {
   return useMemo(() => new URLSearchParams(search), [search]);
 }
 
-type ProductListDebugSnapshot = {
-  page: number;
-  pageSize: number;
-  visibleCount: number;
-  rowSelectionCount: number;
-  isLoading: boolean;
-  isFetching: boolean;
-  hasLoadError: boolean;
-  loadErrorMessage: string | null;
-  queuedProductIdsCount: number;
-  trackedAiRunsCount: number;
-  backgroundSyncEnabled: boolean;
-  catalogFilter: string;
-  hasSearch: boolean;
-  hasSku: boolean;
-  hasDescription: boolean;
-  hasProductId: boolean;
-  hasAdvancedFilter: boolean;
-  baseExported: '' | 'true' | 'false';
-  showTriggerRunFeedback: boolean;
-  isEditHydrating: boolean;
-};
-
-type DeferredDraftBootstrapTarget = {
-  requestIdleCallback?: (callback: () => void) => number;
-  cancelIdleCallback?: (handle: number) => void;
-  setTimeout: (handler: () => void, timeout?: number) => number;
-  clearTimeout: (handle: number) => void;
-};
-
 const EMPTY_INTEGRATION_BADGE_IDS = new Set<string>();
 const EMPTY_INTEGRATION_BADGE_STATUSES = new Map<string, string>();
 const EMPTY_TRADERA_BADGE_IDS = new Set<string>();
 const EMPTY_TRADERA_BADGE_STATUSES = new Map<string, string>();
 const EMPTY_PLAYWRIGHT_PROGRAMMABLE_BADGE_IDS = new Set<string>();
 const EMPTY_PLAYWRIGHT_PROGRAMMABLE_BADGE_STATUSES = new Map<string, string>();
+const EMPTY_VINTED_BADGE_IDS = new Set<string>();
+const EMPTY_VINTED_BADGE_STATUSES = new Map<string, string>();
 const EMPTY_PRODUCT_TABLE_COLUMNS: ColumnDef<ProductWithImages>[] = [];
-
-const buildProductListDebugSnapshot = (args: ProductListDebugSnapshot): ProductListDebugSnapshot => args;
-
-const collectProductListDebugSnapshotChanges = (
-  previous: ProductListDebugSnapshot,
-  next: ProductListDebugSnapshot
-): Record<string, { previous: unknown; next: unknown }> => {
-  const changes: Record<string, { previous: unknown; next: unknown }> = {};
-  (Object.keys(next) as Array<keyof ProductListDebugSnapshot>).forEach((key) => {
-    if (previous[key] !== next[key]) {
-      changes[String(key)] = {
-        previous: previous[key],
-        next: next[key],
-      };
-    }
-  });
-  return changes;
-};
-
-export function applyProductListAdvancedFilterState(args: {
-  value: string;
-  presetId: string | null;
-  setLocalState: (value: string, presetId: string | null) => void;
-  persistState: (state: { advancedFilter: string; presetId: string | null }) => Promise<void>;
-}): void {
-  const normalizedValue = args.value.trim();
-  const normalizedPresetId = normalizedValue.length > 0 ? args.presetId : null;
-
-  args.setLocalState(normalizedValue, normalizedPresetId);
-  void args.persistState({
-    advancedFilter: normalizedValue,
-    presetId: normalizedPresetId,
-  });
-}
-
-export function shouldEnableProductListBackgroundSync(args: {
-  queuedProductIdsCount: number;
-  activeTrackedProductAiRunsCount: number;
-}): boolean {
-  return args.queuedProductIdsCount > 0 || args.activeTrackedProductAiRunsCount > 0;
-}
-
-export function shouldEnableProductListBackgroundSyncRuntime(args: {
-  rowRuntimeReady: boolean;
-  isLoading: boolean;
-  queuedProductIdsCount: number;
-  activeTrackedProductAiRunsCount: number;
-}): boolean {
-  if (!args.rowRuntimeReady) return false;
-  if (args.isLoading) return false;
-  return shouldEnableProductListBackgroundSync({
-    queuedProductIdsCount: args.queuedProductIdsCount,
-    activeTrackedProductAiRunsCount: args.activeTrackedProductAiRunsCount,
-  });
-}
-
-export function scheduleDeferredProductListDraftBootstrap(
-  target: DeferredDraftBootstrapTarget,
-  onReady: () => void
-): () => void {
-  if (typeof target.requestIdleCallback === 'function') {
-    const idleHandle = target.requestIdleCallback(() => {
-      onReady();
-    });
-    return (): void => {
-      target.cancelIdleCallback?.(idleHandle);
-    };
-  }
-
-  const timeoutHandle = target.setTimeout(() => {
-    onReady();
-  }, 1);
-  return (): void => {
-    target.clearTimeout(timeoutHandle);
-  };
-}
 
 export function useProductListState(): ProductListContextType & {
   isDebugOpen: boolean;
@@ -202,12 +126,7 @@ export function useProductListState(): ProductListContextType & {
   const { toast } = useToast();
   const { imageExternalBaseUrl } = useProductSettings();
 
-  const useQueuedAiRunProductIdsHook =
-    queuedProductOps.useQueuedAiRunProductIds ?? queuedProductOps.useQueuedProductIds;
-
-  const queuedProductIds = useQueuedAiRunProductIdsHook
-    ? useQueuedAiRunProductIdsHook()
-    : new Set<string>();
+  const queuedProductIds = queuedProductOps.useQueuedAiRunProductIds();
 
   useProductSync({ enabled: rowRuntimeReady });
   const productAiRunStatusByProductId = useProductAiPathsRunSync({
@@ -232,15 +151,8 @@ export function useProductListState(): ProductListContextType & {
 
   const { catalogs, currencyCode, setCurrencyCode, currencyOptions, priceGroups, languageOptions } =
     useCatalogSync(preferences.catalogFilter || 'all', {
-      // The products table can render a usable first paint with default language/currency state
-      // and then hydrate catalog metadata after the deferred row-runtime bootstrap.
       enabled: rowRuntimeReady,
     });
-
-  const filters = useProductListFilters({
-    updatePageSize,
-    persistAppliedAdvancedFilterState,
-  });
 
   const {
     data,
@@ -248,6 +160,7 @@ export function useProductListState(): ProductListContextType & {
     page,
     setPage,
     pageSize,
+    setPageSize: setLivePageSize,
     search,
     setSearch,
     productId,
@@ -279,6 +192,8 @@ export function useProductListState(): ProductListContextType & {
     setCatalogFilter,
     baseExported,
     setBaseExported,
+    includeArchived,
+    setIncludeArchived,
     loadError,
     isLoading,
     isFetching,
@@ -294,6 +209,10 @@ export function useProductListState(): ProductListContextType & {
     searchLanguage: preferences.nameLocale,
   });
   const visibleData = useMemo(() => (isMounted ? data : []), [data, isMounted]);
+  const productScanRunStatusByProductId = useProductListScanRunSync({
+    enabled: rowRuntimeReady,
+    productIds: visibleData.map((product: ProductWithImages) => product.id),
+  });
 
   const visibleProductIdSet = useMemo(
     () => new Set(visibleData.map((product: ProductWithImages) => product.id)),
@@ -328,6 +247,7 @@ export function useProductListState(): ProductListContextType & {
       advancedFilter,
       catalogFilter,
       baseExported,
+      includeArchived,
       page,
       pageSize,
     },
@@ -349,6 +269,7 @@ export function useProductListState(): ProductListContextType & {
               hasAdvancedFilter: advancedFilter.length > 0,
               catalogFilter,
               baseExported,
+              includeArchived,
             },
           },
           {
@@ -610,81 +531,32 @@ export function useProductListState(): ProductListContextType & {
     ]
   );
 
-  const previousDebugSnapshotRef = useRef<ProductListDebugSnapshot | null>(null);
-  const debugSnapshot = useMemo(
-    () =>
-      buildProductListDebugSnapshot({
-        page,
-        pageSize,
-        visibleCount: visibleData.length,
-        rowSelectionCount: Object.keys(rowSelection).filter((id: string) => rowSelection[id]).length,
-        isLoading,
-        isFetching,
-        hasLoadError: Boolean(loadError),
-        loadErrorMessage: loadError?.message ?? null,
-        queuedProductIdsCount: queuedProductIds.size,
-        trackedAiRunsCount: productAiRunStatusByProductId.size,
-        backgroundSyncEnabled: shouldEnableListBackgroundSync,
-        catalogFilter,
-        hasSearch: search.length > 0,
-        hasSku: sku.length > 0,
-        hasDescription: description.length > 0,
-        hasProductId: productId.length > 0,
-        hasAdvancedFilter: advancedFilter.length > 0,
-        baseExported,
-        showTriggerRunFeedback,
-        isEditHydrating,
-      }),
-    [
-      advancedFilter,
-      baseExported,
-      catalogFilter,
-      isEditHydrating,
-      isFetching,
-      isLoading,
-      loadError,
+  useProductListDebugLogging({
+    enabled: isProductListDebugOpen,
+    snapshot: {
       page,
       pageSize,
-      productAiRunStatusByProductId.size,
-      productId,
-      queuedProductIds.size,
-      rowSelection,
-      search,
-      shouldEnableListBackgroundSync,
+      visibleCount: visibleData.length,
+      rowSelectionCount: Object.keys(rowSelection).filter((id: string) => rowSelection[id]).length,
+      isLoading,
+      isFetching,
+      hasLoadError: Boolean(loadError),
+      loadErrorMessage: loadError?.message ?? null,
+      queuedProductIdsCount: queuedProductIds.size,
+      trackedAiRunsCount: productAiRunStatusByProductId.size,
+      backgroundSyncEnabled: shouldEnableListBackgroundSync,
+      catalogFilter,
+      hasSearch: search.length > 0,
+      hasSku: sku.length > 0,
+      hasDescription: description.length > 0,
+      hasProductId: productId.length > 0,
+      hasAdvancedFilter: advancedFilter.length > 0,
+      baseExported,
+      includeArchived,
       showTriggerRunFeedback,
-      sku,
-      description,
-      visibleData.length,
-    ]
-  );
-
-  useEffect(() => {
-    if (!isProductListDebugOpen) {
-      previousDebugSnapshotRef.current = null;
-      return;
-    }
-
-    const previousSnapshot = previousDebugSnapshotRef.current;
-    const changes = previousSnapshot
-      ? collectProductListDebugSnapshotChanges(previousSnapshot, debugSnapshot)
-      : {};
-    if (previousSnapshot && Object.keys(changes).length === 0) {
-      return;
-    }
-
-    logProductListDebug(
-      previousSnapshot ? 'product-list-state-change' : 'product-list-state-init',
-      {
-        snapshot: debugSnapshot,
-        ...(previousSnapshot ? { changes } : {}),
-      },
-      {
-        dedupeKey: previousSnapshot ? 'product-list-state-change' : 'product-list-state-init',
-        throttleMs: previousSnapshot ? 400 : 0,
-      }
-    );
-    previousDebugSnapshotRef.current = debugSnapshot;
-  }, [debugSnapshot, isProductListDebugOpen]);
+      isEditHydrating,
+    },
+  });
 
   const draftQueries = useDraftQueries as (
     notebookId?: string,
@@ -696,7 +568,16 @@ export function useProductListState(): ProductListContextType & {
     [allDrafts]
   );
 
-  const { handleSetPageSize } = filters;
+  const handleSetPageSize = useCallback(
+    (size: number): void => {
+      applyProductListPageSizeChange({
+        size,
+        setLocalPageSize: setLivePageSize,
+        persistPageSize: updatePageSize,
+      });
+    },
+    [setLivePageSize, updatePageSize]
+  );
   const handleSetAdvancedFilterState = useCallback(
     (value: string, presetId: string | null): void => {
       applyProductListAdvancedFilterState({
@@ -768,10 +649,12 @@ export function useProductListState(): ProductListContextType & {
       catalogId: catalogFilter === 'all' ? undefined : catalogFilter,
       searchLanguage: preferences.nameLocale,
       baseExported: baseExported === 'true' ? true : baseExported === 'false' ? false : undefined,
+      archived: includeArchived ? undefined : false,
     });
   }, [
     advancedFilter,
     baseExported,
+    includeArchived,
     catalogFilter,
     categoryId,
     description,
@@ -814,142 +697,280 @@ export function useProductListState(): ProductListContextType & {
     void refreshListingBadges();
   }, [refreshListingBadges]);
 
-  return {
-    onCreateProduct: handleOpenCreate,
-    onCreateFromDraft: handleCreateFromDraftOpen,
-    activeDrafts,
-    page,
-    totalPages,
-    setPage,
-    pageSize,
-    setPageSize: handleSetPageSize,
-    nameLocale: preferences.nameLocale,
-    setNameLocale: handleSetNameLocale,
-    languageOptions,
-    currencyCode,
-    setCurrencyCode: handleSetCurrencyPreference,
-    currencyOptions,
-    filtersCollapsedByDefault: preferences.filtersCollapsedByDefault ?? true,
-    catalogFilter,
-    setCatalogFilter: handleSetCatalogPreference,
-    baseExported,
-    setBaseExported,
-    catalogs,
-    loadError: loadError?.message || null,
-    actionError,
-    onDismissActionError: handleDismissActionError,
-    search,
-    setSearch,
-    productId,
-    setProductId,
-    idMatchMode,
-    setIdMatchMode,
-    sku,
-    setSku,
-    description,
-    setDescription,
-    categoryId,
-    setCategoryId,
-    minPrice,
-    setMinPrice,
-    maxPrice,
-    setMaxPrice,
-    stockValue,
-    setStockValue,
-    stockOperator,
-    setStockOperator,
-    startDate: startDate || '',
-    setStartDate,
-    endDate: endDate || '',
-    setEndDate,
-    advancedFilter,
-    activeAdvancedFilterPresetId,
-    advancedFilterPresets: preferences.advancedFilterPresets,
-    setAdvancedFilterPresets,
-    setAdvancedFilter: handleSetAdvancedFilter,
-    setAdvancedFilterState: handleSetAdvancedFilterState,
-    data: visibleData,
-    rowSelection,
-    setRowSelection,
-    onSelectAllGlobal: handleSelectAllVisibleProducts,
-    loadingGlobal: loadingGlobalSelection,
-    onDeleteSelected: handleDeleteSelectedOpen,
-    onAddToMarketplace: handleAddToMarketplace,
-    handleProductsTableRender,
-    tableColumns,
-    getRowClassName,
-    setRefreshTrigger,
-    productNameKey: preferences.nameLocale,
-    priceGroups,
-    onPrefetchProductDetail: prefetchProductDetail,
-    onProductNameClick: handleOpenEditModal,
-    onProductEditClick: handleOpenEditModal,
-    onProductDeleteClick: setProductToDelete,
-    onDuplicateProduct: handleDuplicateProduct,
-    onIntegrationsClick: handleOpenIntegrationsModal,
-    onExportSettingsClick: handleOpenExportSettings,
-    integrationBadgeIds: EMPTY_INTEGRATION_BADGE_IDS,
-    integrationBadgeStatuses: EMPTY_INTEGRATION_BADGE_STATUSES,
-    traderaBadgeIds: EMPTY_TRADERA_BADGE_IDS,
-    traderaBadgeStatuses: EMPTY_TRADERA_BADGE_STATUSES,
-    playwrightProgrammableBadgeIds: EMPTY_PLAYWRIGHT_PROGRAMMABLE_BADGE_IDS,
-    playwrightProgrammableBadgeStatuses: EMPTY_PLAYWRIGHT_PROGRAMMABLE_BADGE_STATUSES,
-    queuedProductIds,
-    productAiRunStatusByProductId,
-    categoryNameById,
-    thumbnailSource: preferences.thumbnailSource ?? 'file',
-    showTriggerRunFeedback,
-    setShowTriggerRunFeedback: handleSetShowTriggerRunFeedback,
-    imageExternalBaseUrl,
-    getRowId: getProductRowId,
-    isLoading: !isMounted || !tableColumnsReady || isLoading,
-    skeletonRows: tableSkeleton,
-    maxHeight: 'calc(100vh - 200px)',
-    stickyHeader: true,
-    isCreateOpen,
-    isPromptOpen,
-    setIsPromptOpen,
-    handleConfirmSku,
-    initialSku,
-    createDraft,
-    initialCatalogId:
-      catalogFilter !== 'all' && catalogFilter !== 'unassigned' ? catalogFilter : null,
-    onCloseCreate: handleCloseCreateModal,
-    onCreateSuccess: handleCreateSuccessWithDraftReset,
-    editingProduct,
-    isEditHydrating,
-    onCloseEdit: handleCloseEdit,
-    onEditSuccess: handleEditSuccess,
-    onEditSave: handleEditSave,
-    integrationsProduct,
-    integrationsRecoveryContext,
-    integrationsFilterIntegrationSlug,
-    onCloseIntegrations: handleCloseIntegrations,
-    onStartListing: handleStartListing,
-    showListProductModal,
-    onCloseListProduct: handleCloseListProduct,
-    onListProductSuccess: handleListProductSuccess,
-    listProductPreset,
-    exportSettingsProduct,
-    onCloseExportSettings: handleCloseExportSettingsModal,
-    onListingsUpdated: handleListingsUpdated,
-    massListIntegration,
-    massListProductIds,
-    onCloseMassList: handleCloseMassList,
-    onMassListSuccess: handleMassListSuccess,
-    showIntegrationModal,
-    onCloseIntegrationModal: handleCloseIntegrationModal,
-    onSelectIntegrationFromModal: handleSelectIntegrationFromModal,
-    isDebugOpen,
-    isMounted,
-    rowRuntimeReady,
-    triggerListingStatusHighlight: triggerJobCompletionHighlight,
-    productToDelete,
-    setProductToDelete,
-    isMassDeleteConfirmOpen,
-    setIsMassDeleteConfirmOpen,
-    handleMassDelete,
-    handleConfirmSingleDelete,
-    bulkDeletePending,
-  };
+  const state = useMemo(
+    () => ({
+      onCreateProduct: handleOpenCreate,
+      onCreateFromDraft: handleCreateFromDraftOpen,
+      activeDrafts,
+      page,
+      totalPages,
+      setPage,
+      pageSize,
+      setPageSize: handleSetPageSize,
+      nameLocale: preferences.nameLocale,
+      setNameLocale: handleSetNameLocale,
+      languageOptions,
+      currencyCode,
+      setCurrencyCode: handleSetCurrencyPreference,
+      currencyOptions,
+      filtersCollapsedByDefault: preferences.filtersCollapsedByDefault ?? true,
+      catalogFilter,
+      setCatalogFilter: handleSetCatalogPreference,
+      baseExported,
+      setBaseExported,
+      includeArchived,
+      setIncludeArchived,
+      catalogs,
+      loadError: loadError?.message || null,
+      actionError,
+      onDismissActionError: handleDismissActionError,
+      search,
+      setSearch,
+      productId,
+      setProductId,
+      idMatchMode,
+      setIdMatchMode,
+      sku,
+      setSku,
+      description,
+      setDescription,
+      categoryId,
+      setCategoryId,
+      minPrice,
+      setMinPrice,
+      maxPrice,
+      setMaxPrice,
+      stockValue,
+      setStockValue,
+      stockOperator,
+      setStockOperator,
+      startDate: startDate || '',
+      setStartDate,
+      endDate: endDate || '',
+      setEndDate,
+      advancedFilter,
+      activeAdvancedFilterPresetId,
+      advancedFilterPresets: preferences.advancedFilterPresets,
+      setAdvancedFilterPresets,
+      setAdvancedFilter: handleSetAdvancedFilter,
+      setAdvancedFilterState: handleSetAdvancedFilterState,
+      data: visibleData,
+      rowSelection,
+      setRowSelection,
+      onSelectAllGlobal: handleSelectAllVisibleProducts,
+      loadingGlobal: loadingGlobalSelection,
+      onDeleteSelected: handleDeleteSelectedOpen,
+      onAddToMarketplace: handleAddToMarketplace,
+      handleProductsTableRender,
+      tableColumns,
+      getRowClassName,
+      setRefreshTrigger,
+      productNameKey: preferences.nameLocale,
+      priceGroups,
+      onPrefetchProductDetail: prefetchProductDetail,
+      onProductNameClick: handleOpenEditModal,
+      onProductEditClick: handleOpenEditModal,
+      onProductDeleteClick: setProductToDelete,
+      onDuplicateProduct: handleDuplicateProduct,
+      onIntegrationsClick: handleOpenIntegrationsModal,
+      onExportSettingsClick: handleOpenExportSettings,
+      integrationBadgeIds: EMPTY_INTEGRATION_BADGE_IDS,
+      integrationBadgeStatuses: EMPTY_INTEGRATION_BADGE_STATUSES,
+      traderaBadgeIds: EMPTY_TRADERA_BADGE_IDS,
+      traderaBadgeStatuses: EMPTY_TRADERA_BADGE_STATUSES,
+      playwrightProgrammableBadgeIds: EMPTY_PLAYWRIGHT_PROGRAMMABLE_BADGE_IDS,
+      playwrightProgrammableBadgeStatuses: EMPTY_PLAYWRIGHT_PROGRAMMABLE_BADGE_STATUSES,
+      vintedBadgeIds: EMPTY_VINTED_BADGE_IDS,
+      vintedBadgeStatuses: EMPTY_VINTED_BADGE_STATUSES,
+      queuedProductIds,
+      productAiRunStatusByProductId,
+      productScanRunStatusByProductId,
+      categoryNameById,
+      thumbnailSource: preferences.thumbnailSource ?? 'file',
+      showTriggerRunFeedback,
+      setShowTriggerRunFeedback: handleSetShowTriggerRunFeedback,
+      imageExternalBaseUrl,
+      getRowId: getProductRowId,
+      isLoading: !isMounted || !tableColumnsReady || isLoading,
+      skeletonRows: tableSkeleton,
+      maxHeight: 'calc(100vh - 200px)',
+      stickyHeader: true,
+      isCreateOpen,
+      isPromptOpen,
+      setIsPromptOpen,
+      handleConfirmSku,
+      initialSku,
+      createDraft,
+      initialCatalogId:
+        catalogFilter !== 'all' && catalogFilter !== 'unassigned' ? catalogFilter : null,
+      onCloseCreate: handleCloseCreateModal,
+      onCreateSuccess: handleCreateSuccessWithDraftReset,
+      editingProduct,
+      isEditHydrating,
+      onCloseEdit: handleCloseEdit,
+      onEditSuccess: handleEditSuccess,
+      onEditSave: handleEditSave,
+      integrationsProduct,
+      integrationsRecoveryContext,
+      integrationsFilterIntegrationSlug,
+      onCloseIntegrations: handleCloseIntegrations,
+      onStartListing: handleStartListing,
+      showListProductModal,
+      onCloseListProduct: handleCloseListProduct,
+      onListProductSuccess: handleListProductSuccess,
+      listProductPreset,
+      exportSettingsProduct,
+      onCloseExportSettings: handleCloseExportSettingsModal,
+      onListingsUpdated: handleListingsUpdated,
+      massListIntegration,
+      massListProductIds,
+      onCloseMassList: handleCloseMassList,
+      onMassListSuccess: handleMassListSuccess,
+      showIntegrationModal,
+      onCloseIntegrationModal: handleCloseIntegrationModal,
+      onSelectIntegrationFromModal: handleSelectIntegrationFromModal,
+      isDebugOpen,
+      isMounted,
+      rowRuntimeReady,
+      triggerListingStatusHighlight: triggerJobCompletionHighlight,
+      productToDelete,
+      setProductToDelete,
+      isMassDeleteConfirmOpen,
+      setIsMassDeleteConfirmOpen,
+      handleMassDelete,
+      handleConfirmSingleDelete,
+      bulkDeletePending,
+    }),
+    [
+      handleOpenCreate,
+      handleCreateFromDraftOpen,
+      activeDrafts,
+      page,
+      totalPages,
+      setPage,
+      pageSize,
+      handleSetPageSize,
+      preferences.nameLocale,
+      handleSetNameLocale,
+      languageOptions,
+      currencyCode,
+      handleSetCurrencyPreference,
+      currencyOptions,
+      preferences.filtersCollapsedByDefault,
+      catalogFilter,
+      handleSetCatalogPreference,
+      baseExported,
+      setBaseExported,
+      includeArchived,
+      setIncludeArchived,
+      catalogs,
+      loadError,
+      actionError,
+      handleDismissActionError,
+      search,
+      setSearch,
+      productId,
+      setProductId,
+      idMatchMode,
+      setIdMatchMode,
+      sku,
+      setSku,
+      description,
+      setDescription,
+      categoryId,
+      setCategoryId,
+      minPrice,
+      setMinPrice,
+      maxPrice,
+      setMaxPrice,
+      stockValue,
+      setStockValue,
+      stockOperator,
+      setStockOperator,
+      startDate,
+      setStartDate,
+      endDate,
+      setEndDate,
+      advancedFilter,
+      activeAdvancedFilterPresetId,
+      preferences.advancedFilterPresets,
+      setAdvancedFilterPresets,
+      handleSetAdvancedFilter,
+      handleSetAdvancedFilterState,
+      visibleData,
+      rowSelection,
+      setRowSelection,
+      handleSelectAllVisibleProducts,
+      loadingGlobalSelection,
+      handleDeleteSelectedOpen,
+      handleAddToMarketplace,
+      handleProductsTableRender,
+      tableColumns,
+      getRowClassName,
+      setRefreshTrigger,
+      priceGroups,
+      prefetchProductDetail,
+      handleOpenEditModal,
+      setProductToDelete,
+      handleDuplicateProduct,
+      handleOpenIntegrationsModal,
+      handleOpenExportSettings,
+      queuedProductIds,
+      productAiRunStatusByProductId,
+      productScanRunStatusByProductId,
+      categoryNameById,
+      preferences.thumbnailSource,
+      showTriggerRunFeedback,
+      handleSetShowTriggerRunFeedback,
+      imageExternalBaseUrl,
+      getProductRowId,
+      isMounted,
+      tableColumnsReady,
+      isLoading,
+      tableSkeleton,
+      isCreateOpen,
+      isPromptOpen,
+      setIsPromptOpen,
+      handleConfirmSku,
+      initialSku,
+      createDraft,
+      handleCloseCreateModal,
+      handleCreateSuccessWithDraftReset,
+      editingProduct,
+      isEditHydrating,
+      handleCloseEdit,
+      handleEditSuccess,
+      handleEditSave,
+      integrationsProduct,
+      integrationsRecoveryContext,
+      integrationsFilterIntegrationSlug,
+      handleCloseIntegrations,
+      handleStartListing,
+      showListProductModal,
+      handleCloseListProduct,
+      handleListProductSuccess,
+      listProductPreset,
+      exportSettingsProduct,
+      handleCloseExportSettingsModal,
+      handleListingsUpdated,
+      massListIntegration,
+      massListProductIds,
+      handleCloseMassList,
+      handleMassListSuccess,
+      showIntegrationModal,
+      handleCloseIntegrationModal,
+      handleSelectIntegrationFromModal,
+      isDebugOpen,
+      rowRuntimeReady,
+      triggerJobCompletionHighlight,
+      productToDelete,
+      isMassDeleteConfirmOpen,
+      setIsMassDeleteConfirmOpen,
+      handleMassDelete,
+      handleConfirmSingleDelete,
+      bulkDeletePending,
+    ]
+  );
+
+  return state;
 }

@@ -1,4 +1,14 @@
 'use client';
+'use no memo';
+// useProductData: high-level composition hook that binds local UI state
+// (pagination, filters, debounced search) to TanStack Query factories. It
+// centralizes initialization from user preferences, enforces filter
+// normalization/validation, keeps pagination stable across filter changes, and
+// exposes a single, testable interface consumed by the product list UI.
+//
+// Keep this on the client runtime (no heavy server-only work) and avoid
+// embedding side-effects—use the returned refresh() to trigger explicit
+// invalidation or refetch flows.
 
 import { useQueryClient } from '@tanstack/react-query';
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
@@ -16,6 +26,10 @@ import { normalizeProductPageSize } from '@/shared/lib/products/constants';
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { refetchProductsAndCounts } from './productCache';
+
+// This hook layers a large local-state surface over TanStack Query. Keep it on
+// the plain hook runtime to avoid React Compiler dev mismatches on
+// /admin/products while we stabilize the products page stack.
 
 const isValidAdvancedFilterPayload = (payload: string): boolean => {
   try {
@@ -92,6 +106,8 @@ export interface ProductDataHookResult {
   setCatalogFilter: (f: string) => void;
   baseExported: '' | 'true' | 'false';
   setBaseExported: (value: '' | 'true' | 'false') => void;
+  includeArchived: boolean;
+  setIncludeArchived: (value: boolean) => void;
   loadError: Error | null;
   isLoading: boolean;
   isFetching: boolean;
@@ -130,6 +146,7 @@ export function useProductData({
   );
   const [catalogFilter, setCatalogFilter] = useState(initialCatalogFilter || 'all');
   const [baseExported, setBaseExported] = useState<'' | 'true' | 'false'>('');
+  const [includeArchived, setIncludeArchived] = useState(false);
   const hasInitialized = useRef(false);
   const [filtersInitialized, setFiltersInitialized] = useState(true);
 
@@ -195,6 +212,7 @@ export function useProductData({
         | 'name_de'
         | undefined,
       baseExported: baseExported === 'true' ? true : baseExported === 'false' ? false : undefined,
+      archived: includeArchived ? undefined : false,
     }),
     [
       debouncedSearch,
@@ -215,6 +233,7 @@ export function useProductData({
       catalogFilter,
       searchLanguage,
       baseExported,
+      includeArchived,
     ]
   );
 
@@ -252,6 +271,7 @@ export function useProductData({
     advancedFilter,
     catalogFilter,
     baseExported,
+    includeArchived,
     pageSize,
   ]);
 
@@ -309,6 +329,7 @@ export function useProductData({
     (value: '' | 'true' | 'false') => setBaseExported(value),
     []
   );
+  const handleSetIncludeArchived = useCallback((value: boolean) => setIncludeArchived(value), []);
 
   return {
     data: productsWithCountQuery.products,
@@ -349,6 +370,8 @@ export function useProductData({
     setCatalogFilter: handleSetCatalogFilter,
     baseExported,
     setBaseExported: handleSetBaseExported,
+    includeArchived,
+    setIncludeArchived: handleSetIncludeArchived,
     loadError,
     isLoading: productsWithCountQuery.isLoading,
     isFetching: productsWithCountQuery.isFetching,

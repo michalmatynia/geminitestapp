@@ -122,6 +122,25 @@ const ensureFileCopy = async (sourcePath, targetPath) => {
 
 const nextConfig = {
   reactStrictMode: true,
+  reactCompiler: true,
+  cacheComponents: true,
+  cacheLife: {
+    swr60: {
+      stale: 60,
+      revalidate: 60,
+      expire: 300,
+    },
+    swr300: {
+      stale: 300,
+      revalidate: 300,
+      expire: 3600,
+    },
+    swr86400: {
+      stale: 300,
+      revalidate: 86400,
+      expire: 604800,
+    },
+  },
   devIndicators: false,
   ...(isDev
     ? {
@@ -166,6 +185,10 @@ const nextConfig = {
     // Turbopack is more stable in this repo when it resolves packages normally
     // instead of rewriting import graphs through optimizePackageImports.
     ...(isTurbopack ? {} : { optimizePackageImports }),
+    staleTimes: {
+      dynamic: 60,
+      static: 300,
+    },
   },
   serverExternalPackages: [
     'bcryptjs',

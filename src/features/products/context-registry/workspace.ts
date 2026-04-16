@@ -4,12 +4,16 @@ import type {
   ProductStudioRunStatus,
   ProductStudioVariantsResponse,
 } from '@/features/products/context/ProductStudioContext.types';
+import type { CatalogRecord } from '@/shared/contracts/products/catalogs';
 import type {
   ContextRegistryRef,
   ContextRegistryResolutionBundle,
   ContextRuntimeDocument,
   ContextRuntimeDocumentSection,
 } from '@/shared/contracts/ai-context-registry';
+import type {
+  ProductCategory as ProductCategoryContract,
+} from '@/shared/contracts/products/categories';
 import type { ProductValidationDenyBehavior, ProductValidationInstanceScope } from '@/shared/contracts/products/validation';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { PAGE_CONTEXT_ENGINE_VERSION } from '@/shared/lib/ai-context-registry/page-context-shared';
@@ -20,6 +24,7 @@ import {
   summarizeVariant,
   trimText,
 } from './workspace.helpers';
+import { buildLeafCategoryHierarchyEntries } from '../lib/leafCategoryHierarchy';
 
 export const PRODUCT_EDITOR_CONTEXT_ROOT_IDS = [
   'page:product-editor',
@@ -42,6 +47,11 @@ export const PRODUCT_EDITOR_WORKSPACE_CONTEXT_RUNTIME_PROVIDER_ID = 'product-edi
 export const PRODUCT_EDITOR_WORKSPACE_CONTEXT_RUNTIME_ENTITY_TYPE = 'product_editor_workspace_state';
 export const PRODUCT_EDITOR_WORKSPACE_CONTEXT_RUNTIME_REF_PREFIX =
   'runtime:product-editor:workspace:';
+export const PRODUCT_EDITOR_LEAF_CATEGORIES_CONTEXT_RUNTIME_PROVIDER_ID = 'product-editor-local';
+export const PRODUCT_EDITOR_LEAF_CATEGORIES_CONTEXT_RUNTIME_ENTITY_TYPE =
+  'product_editor_leaf_categories';
+export const PRODUCT_EDITOR_LEAF_CATEGORIES_CONTEXT_RUNTIME_REF_PREFIX =
+  'runtime:product-editor:leaf-categories:';
 
 interface BuildProductEditorWorkspaceContextBundleInput {
   productId: string | null;
@@ -80,6 +90,12 @@ interface BuildProductStudioWorkspaceContextBundleInput {
   auditEntries: ProductStudioAuditEntry[];
 }
 
+interface BuildProductLeafCategoriesContextBundleInput {
+  categories: ProductCategoryContract[];
+  catalogs: CatalogRecord[];
+  selectedCatalogIds: string[];
+}
+
 const encodeSegment = (value: string): string => encodeURIComponent(value.trim());
 
 const createProductEditorWorkspaceRef = ({
@@ -104,6 +120,15 @@ const createProductStudioWorkspaceRef = (productId: string): ContextRegistryRef 
   entityType: PRODUCT_EDITOR_CONTEXT_RUNTIME_ENTITY_TYPE,
 });
 
+const createProductLeafCategoriesWorkspaceRef = (selectedCatalogIds: string[]): ContextRegistryRef => ({
+  id: `${PRODUCT_EDITOR_LEAF_CATEGORIES_CONTEXT_RUNTIME_REF_PREFIX}${encodeSegment(
+    selectedCatalogIds.length > 0 ? selectedCatalogIds.join('|') : 'all'
+  )}`,
+  kind: 'runtime_document',
+  providerId: PRODUCT_EDITOR_LEAF_CATEGORIES_CONTEXT_RUNTIME_PROVIDER_ID,
+  entityType: PRODUCT_EDITOR_LEAF_CATEGORIES_CONTEXT_RUNTIME_ENTITY_TYPE,
+});
+
 const summarizeImageSlot = (slot: ProductImageSlotPreview): Record<string, unknown> => ({
   index: slot.index,
   label: slot.label,
@@ -124,6 +149,43 @@ const summarizeAuditEntry = (entry: ProductStudioAuditEntry): Record<string, unk
   warningCount: entry.warnings.length,
   errorMessage: entry.errorMessage,
 });
+
+const buildLeafCategoryRows = (
+  categories: ProductCategoryContract[],
+  catalogs: CatalogRecord[],
+  selectedCatalogIds: string[]
+): Array<{
+  id: string;
+  name: string;
+  leafName: string;
+  terminalLeafLabel: string;
+  hierarchyPath: string;
+  pathSegments: string[];
+  ancestorSegments: string[];
+  catalogId: string;
+  catalogName: string | null;
+}> => {
+  const catalogFilter = new Set(
+    selectedCatalogIds.map((catalogId) => catalogId.trim()).filter((catalogId) => catalogId.length > 0)
+  );
+  const catalogNameById = new Map(
+    catalogs.map((catalog) => [catalog.id, typeof catalog.name === 'string' ? catalog.name.trim() : ''])
+  );
+
+  return buildLeafCategoryHierarchyEntries(categories)
+    .filter((entry) => catalogFilter.size === 0 || catalogFilter.has(entry.catalogId))
+    .map((entry) => ({
+      id: entry.id,
+      name: entry.leafName,
+      leafName: entry.leafName,
+      terminalLeafLabel: entry.leafName,
+      hierarchyPath: entry.hierarchyPath,
+      pathSegments: entry.pathSegments,
+      ancestorSegments: entry.pathSegments.slice(0, -1),
+      catalogId: entry.catalogId,
+      catalogName: catalogNameById.get(entry.catalogId) || null,
+    }));
+};
 
 const buildProductEditorWorkspaceSections = (
   input: BuildProductEditorWorkspaceContextBundleInput
@@ -383,6 +445,62 @@ export const buildProductStudioWorkspaceContextBundle = (
   };
 };
 
+const buildProductLeafCategoriesRuntimeDocument = (
+  input: BuildProductLeafCategoriesContextBundleInput
+): ContextRuntimeDocument => {
+  const runtimeRef = createProductLeafCategoriesWorkspaceRef(input.selectedCatalogIds);
+  const leafCategories = buildLeafCategoryRows(
+    input.categories,
+    input.catalogs,
+    input.selectedCatalogIds
+  );
+  const selectedCatalogNames = input.selectedCatalogIds
+    .map((catalogId) => input.catalogs.find((catalog) => catalog.id === catalogId)?.name?.trim() || null)
+    .filter((catalogName): catalogName is string => Boolean(catalogName));
+
+  return {
+    id: runtimeRef.id,
+    kind: 'runtime_document',
+    entityType: PRODUCT_EDITOR_LEAF_CATEGORIES_CONTEXT_RUNTIME_ENTITY_TYPE,
+    title: 'Product leaf categories',
+    summary:
+      'Leaf-only product category vocabulary for the current product editor catalog selection. ' +
+      'Use the hierarchy to disambiguate categories, but write only the final leaf label in the normalized title.',
+    status: null,
+    tags: ['products', 'taxonomy', 'categories', 'leaf-categories', 'editor'],
+    relatedNodeIds: [],
+    facts: {
+      selectedCatalogIds: input.selectedCatalogIds,
+      selectedCatalogNames,
+      leafCategoryCount: leafCategories.length,
+      categorySelectionPolicy: 'leaf_only_exact_name_or_full_hierarchy_match',
+      categoryOutputPolicy: 'final_leaf_segment_only',
+      categorySpecificityPolicy: 'prefer_most_specific_terminal_leaf',
+    },
+    sections: [
+      {
+        kind: 'text',
+        title: 'Leaf category options',
+        summary:
+          'Resolved category vocabulary for AI tasks. Match against the hierarchy when needed, but output only the final terminal leaf label as the category value. If a hierarchy ends with a more specific leaf, never collapse it to an ancestor segment.',
+        text: JSON.stringify(
+          {
+            selectedCatalogIds: input.selectedCatalogIds,
+            selectedCatalogNames,
+            leafCategories,
+          },
+          null,
+          2
+        ),
+      },
+    ],
+    provenance: {
+      source: 'products.product-editor.taxonomy.client-state',
+      persisted: false,
+    },
+  };
+};
+
 export const buildProductEditorWorkspaceContextBundle = (
   input: BuildProductEditorWorkspaceContextBundleInput
 ): ContextRegistryResolutionBundle => {
@@ -395,6 +513,18 @@ export const buildProductEditorWorkspaceContextBundle = (
     refs: [runtimeRef],
     nodes: [],
     documents: [buildProductEditorWorkspaceRuntimeDocument(input)],
+    truncated: false,
+    engineVersion: PAGE_CONTEXT_ENGINE_VERSION,
+  };
+};
+
+export const buildProductLeafCategoriesContextBundle = (
+  input: BuildProductLeafCategoriesContextBundleInput
+): ContextRegistryResolutionBundle => {
+  return {
+    refs: [],
+    nodes: [],
+    documents: [buildProductLeafCategoriesRuntimeDocument(input)],
     truncated: false,
     engineVersion: PAGE_CONTEXT_ENGINE_VERSION,
   };

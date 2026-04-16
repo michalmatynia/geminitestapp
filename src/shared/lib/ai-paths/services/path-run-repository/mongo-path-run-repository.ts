@@ -38,6 +38,7 @@ export const AI_PATHS_MONGO_INDEXES: MongoIndexSpec[] = [
   { collection: RUNS_COLLECTION, key: { createdAt: -1 } },
   { collection: RUNS_COLLECTION, key: { pathId: 1, status: 1, createdAt: -1 } },
   { collection: RUNS_COLLECTION, key: { status: 1, createdAt: -1 } },
+  { collection: RUNS_COLLECTION, key: { status: 1, updatedAt: 1 } },
   { collection: RUNS_COLLECTION, key: { userId: 1, createdAt: -1 } },
   { collection: RUNS_COLLECTION, key: { userId: 1, status: 1, createdAt: -1 } },
   { collection: RUNS_COLLECTION, key: { status: 1, nextRetryAt: 1, createdAt: 1 } },

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import type { CaseResolverOcrModelsResponse } from '@/shared/contracts/case-resolver/ocr';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';

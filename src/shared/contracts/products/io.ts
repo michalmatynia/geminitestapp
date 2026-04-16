@@ -1,10 +1,14 @@
 import { z } from 'zod';
 
+import { productCustomFieldValueSchema } from './custom-fields';
 import {
+  productMarketplaceContentOverridesSchema,
+  productNotesSchema,
   productImportSourceSchema,
   productParameterValueSchema,
   productSchema,
 } from './product';
+import { normalizeStructuredProductName, parseStructuredProductName } from '@/shared/lib/products/title-terms';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 /**
@@ -39,6 +43,27 @@ const optionalNonNegativeIntFromFormSchema = z.preprocess(
   normalizeNumericFormValue,
   z.number().int().min(0).optional()
 );
+
+const optionalBooleanFromFormSchema = z.preprocess((value: unknown): unknown => {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (!normalized) return undefined;
+    if (normalized === 'true' || normalized === '1' || normalized === 'yes' || normalized === 'on') {
+      return true;
+    }
+    if (
+      normalized === 'false' ||
+      normalized === '0' ||
+      normalized === 'no' ||
+      normalized === 'off'
+    ) {
+      return false;
+    }
+  }
+  return value;
+}, z.boolean().optional());
 
 const preprocessStringArrayField = (value: unknown): unknown => {
   if (value === undefined || value === null) return undefined;
@@ -92,7 +117,73 @@ const optionalParameterValuesFromFormSchema = z.preprocess((value: unknown): unk
   }
 }, z.array(productParameterValueSchema).optional());
 
-export const productCreateInputSchema = z.object({
+const optionalCustomFieldValuesFromFormSchema = z.preprocess((value: unknown): unknown => {
+  if (value === undefined || value === null) return undefined;
+  if (Array.isArray(value)) return value;
+  if (typeof value !== 'string') return value;
+
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+
+  try {
+    return JSON.parse(trimmed) as unknown;
+  } catch (error) {
+    logClientCatch(error, {
+      source: 'contracts.products.io',
+      action: 'optionalCustomFieldValuesFromFormSchema',
+      valueLength: trimmed.length,
+    });
+    return value;
+  }
+}, z.array(productCustomFieldValueSchema).optional());
+
+const optionalMarketplaceContentOverridesFromFormSchema = z.preprocess(
+  (value: unknown): unknown => {
+    if (value === undefined || value === null) return undefined;
+    if (Array.isArray(value)) return value;
+    if (typeof value !== 'string') return value;
+
+    const trimmed = value.trim();
+    if (!trimmed) return undefined;
+
+    try {
+      return JSON.parse(trimmed) as unknown;
+    } catch (error) {
+      logClientCatch(error, {
+        source: 'contracts.products.io',
+        action: 'optionalMarketplaceContentOverridesFromFormSchema',
+        valueLength: trimmed.length,
+      });
+      return value;
+    }
+  },
+  productMarketplaceContentOverridesSchema.optional()
+);
+
+const optionalProductNotesFromFormSchema = z.preprocess((value: unknown): unknown => {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value === 'object' && !Array.isArray(value)) return value;
+  if (typeof value !== 'string') return value;
+
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+
+  try {
+    return JSON.parse(trimmed) as unknown;
+  } catch (error) {
+    logClientCatch(error, {
+      source: 'contracts.products.io',
+      action: 'optionalProductNotesFromFormSchema',
+      valueLength: trimmed.length,
+    });
+    return value;
+  }
+}, productNotesSchema.optional());
+
+const STRUCTURED_PRODUCT_NAME_FORMAT_MESSAGE =
+  'Name must follow the REQUIRED structured format: <name> | <size> | <material> | <category> | <lore or theme>';
+
+const productInputFieldsSchema = z.object({
   id: z.string().nullable().optional(),
   baseProductId: z.string().nullable().optional(),
   importSource: productImportSourceSchema.nullable().optional(),
@@ -119,6 +210,7 @@ export const productCreateInputSchema = z.object({
   sizeWidth: optionalNonNegativeNumberFromFormSchema,
   weight: optionalNonNegativeNumberFromFormSchema,
   length: optionalNonNegativeNumberFromFormSchema,
+  archived: optionalBooleanFromFormSchema,
   categoryId: z.string().nullable().optional(),
   shippingGroupId: z.string().nullable().optional(),
   catalogIds: optionalStringArrayFromFormSchema,
@@ -130,13 +222,29 @@ export const productCreateInputSchema = z.object({
   imageFileIds: optionalStringArrayFromFormSchema,
   imageBase64s: optionalStringArrayFromFormSchema,
 
+  customFields: optionalCustomFieldValuesFromFormSchema,
   parameters: optionalParameterValuesFromFormSchema,
+  marketplaceContentOverrides: optionalMarketplaceContentOverridesFromFormSchema,
+  notes: optionalProductNotesFromFormSchema,
+});
+
+export const productCreateInputSchema = productInputFieldsSchema.superRefine((data, ctx) => {
+  const nameEn = typeof data.name_en === 'string' ? data.name_en.trim() : '';
+  if (!nameEn) return;
+
+  if (!parseStructuredProductName(normalizeStructuredProductName(nameEn))) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['name_en'],
+      message: STRUCTURED_PRODUCT_NAME_FORMAT_MESSAGE,
+    });
+  }
 });
 
 export type CreateProductInput = z.infer<typeof productCreateInputSchema>;
 export type ProductCreateInput = CreateProductInput;
 
-export const productUpdateInputSchema = productCreateInputSchema.partial().extend({
+export const productUpdateInputSchema = productInputFieldsSchema.partial().extend({
   sku: z.preprocess((value: unknown): unknown => {
     if (value === undefined) return undefined;
     if (value === null) return null;

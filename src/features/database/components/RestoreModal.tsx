@@ -51,7 +51,7 @@ export const RestoreModal = (props: RestoreModalProps): React.JSX.Element | null
     [backupName]
   );
 
-  const handleSave = async () => {
+  const handleSave = (): void => {
     onConfirm(values.truncate);
     onSuccess?.();
   };

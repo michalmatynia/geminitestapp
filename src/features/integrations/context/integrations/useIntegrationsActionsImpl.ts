@@ -3,6 +3,8 @@
 import { useCallback, useState } from 'react';
 
 import {
+  is1688IntegrationSlug,
+  isVintedIntegrationSlug,
   isLinkedInIntegrationSlug,
   isTraderaApiIntegrationSlug,
   isTraderaIntegrationSlug,
@@ -17,24 +19,30 @@ import {
   useBaseApiRequest,
   useAllegroApiRequest,
 } from '@/features/integrations/hooks/useIntegrationMutations';
-import { toPlaywrightConnectionPayload } from '@/features/integrations/utils/playwright-connection-payload';
+import {
+  toPlaywrightConnectionOverridePayload,
+} from '@/features/integrations/utils/playwright-connection-payload';
 import { normalizeSteps } from '@/features/integrations/utils/connections';
+import {
+  defaultIntegrationConnectionPlaywrightSettings,
+  resolveIntegrationPlaywrightPersonaBrowser,
+  resolveIntegrationPlaywrightPersonaSettings,
+} from '@/features/integrations/utils/playwright-connection-settings';
 import type { IntegrationAllegroApiMethod, IntegrationAllegroApiResponse, IntegrationBaseApiResponse } from '@/shared/contracts/integrations/api';
 import type { IntegrationConnectionTestType } from '@/shared/contracts/integrations/session-testing';
-import { Integration } from '@/shared/contracts/integrations/base';
-import { IntegrationConnection } from '@/shared/contracts/integrations/connections';
-import { TestLogEntry } from '@/shared/contracts/integrations/session-testing';
+import { type Integration } from '@/shared/contracts/integrations/base';
+import { type IntegrationConnection } from '@/shared/contracts/integrations/connections';
+import { type TestLogEntry } from '@/shared/contracts/integrations/session-testing';
 import type { PlaywrightPersona, PlaywrightSettings } from '@/shared/contracts/playwright';
 import type { ListQuery } from '@/shared/contracts/ui/queries';
-import { buildPlaywrightSettings } from '@/shared/lib/playwright/personas';
 import { useToast } from '@/shared/ui/primitives.public';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import {
-  IntegrationDefinition,
-  SaveConnectionOptions,
-  StepWithResult,
+  type IntegrationDefinition,
+  type SaveConnectionOptions,
+  type StepWithResult,
 } from '../integrations-context-types';
 
 export function useIntegrationsActionsImpl(args: {
@@ -101,6 +109,13 @@ export function useIntegrationsActionsImpl(args: {
     args.connections[0] ??
     null;
 
+  const resolveSelectedPlaywrightBaseline = (): PlaywrightSettings => {
+    return resolveIntegrationPlaywrightPersonaSettings(
+      args.playwrightPersonas,
+      args.playwrightPersonaId
+    );
+  };
+
   const handleIntegrationClick = async (definition: IntegrationDefinition): Promise<void> => {
     const ensureIntegration = async (def: IntegrationDefinition): Promise<Integration | null> => {
       let currentIntegrations = args.integrations;
@@ -147,6 +162,10 @@ export function useIntegrationsActionsImpl(args: {
     const isTraderaApiIntegration = isTraderaApiIntegrationSlug(args.activeIntegration.slug);
     const isTraderaBrowserIntegration =
       isTraderaIntegration && !isTraderaApiIntegration;
+    const isVintedIntegration = isVintedIntegrationSlug(args.activeIntegration.slug);
+    const is1688Integration = is1688IntegrationSlug(args.activeIntegration.slug);
+    const isBrowserIntegration =
+      isTraderaBrowserIntegration || isVintedIntegration || is1688Integration;
     const isBaselinkerIntegration = args.activeIntegration.slug === 'baselinker';
     const isLinkedInIntegration = isLinkedInIntegrationSlug(args.activeIntegration.slug);
     const requestedConnectionId = options.connectionId?.trim() || null;
@@ -155,12 +174,34 @@ export function useIntegrationsActionsImpl(args: {
       options.mode === 'create' || (options.mode !== 'update' && !resolvedConnectionId);
     const normalizedName = formData.name.trim();
     const normalizedUsername = formData.username.trim();
+    const playwrightBrowserBaseline = resolveIntegrationPlaywrightPersonaBrowser(
+      args.playwrightPersonas,
+      args.playwrightPersonaId
+    );
+    const playwrightBrowserPayload = isBrowserIntegration
+      ? isCreateMode
+        ? formData.playwrightBrowser !== playwrightBrowserBaseline
+          ? { playwrightBrowser: formData.playwrightBrowser }
+          : {}
+        : {
+            playwrightBrowser:
+              formData.playwrightBrowser !== playwrightBrowserBaseline
+                ? formData.playwrightBrowser
+                : null,
+          }
+      : {};
 
     if (!normalizedName) {
       toast('Connection name is required.', { variant: 'error' });
       return null;
     }
-    if (!isBaselinkerIntegration && !isLinkedInIntegration && !normalizedUsername) {
+    if (
+      !isBaselinkerIntegration &&
+      !isLinkedInIntegration &&
+      !isVintedIntegration &&
+      !is1688Integration &&
+      !normalizedUsername
+    ) {
       toast('Username is required for this integration.', { variant: 'error' });
       return null;
     }
@@ -168,19 +209,51 @@ export function useIntegrationsActionsImpl(args: {
       toast('Connection id is required for update.', { variant: 'error' });
       return null;
     }
-    if (isCreateMode && !isLinkedInIntegration && !formData.password.trim()) {
+    if (
+      isCreateMode &&
+      !isLinkedInIntegration &&
+      !isVintedIntegration &&
+      !is1688Integration &&
+      !formData.password.trim()
+    ) {
       toast('Password/Token is required.', { variant: 'error' });
       return null;
     }
     const payload: Record<string, unknown> = {
       name: normalizedName,
-      username: normalizedUsername,
+      ...(normalizedUsername ||
+      !isCreateMode ||
+      (!isVintedIntegration && !is1688Integration)
+        ? { username: normalizedUsername }
+        : {}),
       ...(formData.password.trim() ? { password: formData.password.trim() } : {}),
+      ...playwrightBrowserPayload,
+      ...(is1688Integration
+        ? {
+            scanner1688StartUrl: formData.scanner1688StartUrl.trim() || null,
+            scanner1688LoginMode: formData.scanner1688LoginMode,
+            scanner1688DefaultSearchMode: formData.scanner1688DefaultSearchMode,
+            scanner1688CandidateResultLimit:
+              formData.scanner1688CandidateResultLimit.trim().length > 0
+                ? Math.max(1, Math.floor(Number(formData.scanner1688CandidateResultLimit) || 1))
+                : null,
+            scanner1688MinimumCandidateScore:
+              formData.scanner1688MinimumCandidateScore.trim().length > 0
+                ? Math.max(1, Math.floor(Number(formData.scanner1688MinimumCandidateScore) || 1))
+                : null,
+            scanner1688MaxExtractedImages:
+              formData.scanner1688MaxExtractedImages.trim().length > 0
+                ? Math.max(1, Math.floor(Number(formData.scanner1688MaxExtractedImages) || 1))
+                : null,
+            scanner1688AllowUrlImageSearchFallback: formData.scanner1688AllowUrlImageSearchFallback,
+          }
+        : {}),
       ...(isTraderaIntegration
         ? {
           ...(isTraderaBrowserIntegration
             ? {
               traderaBrowserMode: formData.traderaBrowserMode,
+              traderaCategoryStrategy: formData.traderaCategoryStrategy,
               playwrightListingScript: formData.playwrightListingScript.trim() || null,
             }
             : {}),
@@ -396,16 +469,27 @@ export function useIntegrationsActionsImpl(args: {
       body: { mode: 'manual', manualTimeoutMs: 240000 },
       timeoutMs: 300000,
     });
+  const handleVintedManualLogin = (c: IntegrationConnection) =>
+    handleConnectionTest(c, 'test', 'Vinted manual login test', {
+      body: { mode: 'manual', manualTimeoutMs: 240000 },
+      timeoutMs: 300000,
+    });
+  const handle1688ManualLogin = (c: IntegrationConnection) =>
+    handleConnectionTest(c, 'test', '1688 manual login test', {
+      body: { mode: 'manual', manualTimeoutMs: 300000 },
+      timeoutMs: 360000,
+    });
 
   const handleSelectPlaywrightPersona = async (personaId: string | null): Promise<void> => {
     if (!personaId) {
       args.setPlaywrightPersonaId(null);
+      args.setPlaywrightSettings(defaultIntegrationConnectionPlaywrightSettings);
       return;
     }
     const persona = args.playwrightPersonas.find((p: PlaywrightPersona) => p.id === personaId);
     if (!persona) return;
     args.setPlaywrightPersonaId(persona.id);
-    args.setPlaywrightSettings(buildPlaywrightSettings(persona.settings));
+    args.setPlaywrightSettings(resolveIntegrationPlaywrightPersonaSettings([persona], persona.id));
     toast(`Applied persona "${persona.name}".`, { variant: 'success' });
   };
 
@@ -413,6 +497,7 @@ export function useIntegrationsActionsImpl(args: {
     const connection = activeConnection;
     if (!connection) return;
     try {
+      const baselineSettings = resolveSelectedPlaywrightBaseline();
       await upsertConnectionMutation.mutateAsync({
         integrationId: args.activeIntegration?.id ?? connection.integrationId,
         connectionId: connection.id,
@@ -420,7 +505,11 @@ export function useIntegrationsActionsImpl(args: {
           name: connection.name,
           username: connection.username,
           playwrightPersonaId: args.playwrightPersonaId,
-          ...toPlaywrightConnectionPayload(args.playwrightSettings),
+          ...toPlaywrightConnectionOverridePayload({
+            settings: args.playwrightSettings,
+            baselineSettings,
+            includeResetFlag: true,
+          }),
         },
       });
       toast('Playwright settings saved.', { variant: 'success' });
@@ -675,6 +764,8 @@ export function useIntegrationsActionsImpl(args: {
     handleAllegroTest,
     handleTestConnection,
     handleTraderaManualLogin,
+    handleVintedManualLogin,
+    handle1688ManualLogin,
     handleSelectPlaywrightPersona,
     handleSavePlaywrightSettings,
     handleAllegroAuthorize,

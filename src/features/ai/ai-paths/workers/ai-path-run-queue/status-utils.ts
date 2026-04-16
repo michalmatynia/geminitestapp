@@ -1,4 +1,4 @@
-import { getRuntimeAnalyticsSummary } from '@/features/ai/ai-paths/services/runtime-analytics-service';
+import { type getRuntimeAnalyticsSummary } from '@/features/ai/ai-paths/services/runtime-analytics-service';
 import type { AiPathRunVisibility } from '@/shared/contracts/ai-paths';
 import {
   type AiPathRunQueueBaseStatus,
@@ -6,8 +6,8 @@ import {
 } from '@/shared/contracts/ai-paths-runtime';
 
 import { computeAiPathRunQueueSlo } from '../ai-path-run-queue-slo';
-import { GetAiPathRunQueueStatusOptions } from './status';
-import { AiInsightsQueueStatus } from './types';
+import { type GetAiPathRunQueueStatusOptions } from './status';
+import { type AiInsightsQueueStatus } from './types';
 
 const EMPTY_AI_INSIGHTS_QUEUE_STATUS: AiInsightsQueueStatus = {
   running: false,

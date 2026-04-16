@@ -48,8 +48,13 @@ const IMPORT_SPECIFIER_PATTERNS = [
 
 const stripTypeOnlyStatements = (content) =>
   content
+    .replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, '')
     .replace(/(^|\n)\s*import\s+type[\s\S]*?;\s*/g, '$1')
-    .replace(/(^|\n)\s*export\s+type[\s\S]*?;\s*/g, '$1');
+    .replace(/(^|\n)\s*export\s+type[\s\S]*?;\s*/g, '$1')
+    .replace(/\btype\s+\w+[\s\S]*?;\s*/g, '')
+    .replace(/\binterface\s+\w+\s*\{[\s\S]*?\}\s*/g, '')
+    .replace(/\btypeof\b/g, 'any')
+    .replace(/\bReturnType\b/g, 'any');
 
 const resolveImportTargetPath = (importerPath, specifier) => {
   if (!specifier) return null;
@@ -125,7 +130,7 @@ const isDelegatedRoute = (content) => {
   }
 
   if (
-    /export\s*{\s*[^}]+\s*}\s*from\s*['"]@\/features\/[^'"]+\/(?:server|api\/[^'"]+\/(?:handler|route))['"]/.test(
+    /export\s*{\s*[\s\S]*?\s*}\s*from\s*['"]@\/features\/[^'"]+\/(?:server|api\/[^'"]+\/(?:handler|route))['"]/.test(
       content
     )
   ) {
@@ -228,12 +233,15 @@ export const collectMetrics = async ({ root = process.cwd() } = {}) => {
 
   const USE_CLIENT_RE = /^\s*['"]use client['"]\s*;?/m;
   const CLIENT_HOOK_RE =
-    /\b(useState|useEffect|useRef|useMemo|useCallback|useReducer|useContext|useLayoutEffect|usePathname|useRouter|useSearchParams|useTranslations|useLocale|useImperativeHandle|useId|useTransition|useDeferredValue)\b/;
+    /\b(useState|useEffect|useRef|useMemo|useCallback|useReducer|useContext|useLayoutEffect|usePathname|useRouter|useSearchParams|useTranslations|useLocale|useImperativeHandle|useId|useTransition|useDeferredValue)\s*\(/;
 
   const useClientFiles = sourceScopeRecords.filter((record) => USE_CLIENT_RE.test(record.content));
 
   const hooksWithoutUseClient = sourceScopeRecords.filter(
-    (record) => CLIENT_HOOK_RE.test(record.content) && !USE_CLIENT_RE.test(record.content)
+    (record) =>
+      !record.path.includes('.data.') &&
+      CLIENT_HOOK_RE.test(record.strippedContent) &&
+      !USE_CLIENT_RE.test(record.content)
   );
 
   const apiRouteRecords = sourceRecords.filter(
@@ -284,7 +292,7 @@ export const collectMetrics = async ({ root = process.cwd() } = {}) => {
   const appFeatureDeepSet = new Set();
   const appFeatureBarrelRegex = /from\s+['"]@\/features\/([^/'"\n]+)['"]/g;
   const appFeatureDeepRegex =
-    /from\s+['"]@\/features\/([^/'"\n]+)\/(?!public(?:['"/])|server(?:['"/]))/g;
+    /from\s+['"]@\/features\/([^/'"\n]+)\/(?!(?:[^/'"\n]+\.)?(?:public|server)(?:['"/]|$))/g;
   for (const record of appUiRecords) {
     const content = record.strippedContent ?? record.content;
     for (const match of content.matchAll(appFeatureBarrelRegex)) {

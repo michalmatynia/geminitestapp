@@ -17,6 +17,15 @@ export const createErrorReporting = (ctx: ErrorReportingCtx) => {
   const { run, repo, traceId, runtimeFingerprint, runStartedAt, runtimeKernelExecutionTelemetry } =
     ctx;
 
+  const resolveRunEventLevel = (
+    severity: 'info' | 'warning' | 'error' | 'fatal'
+  ): 'info' | 'warn' | 'error' | 'fatal' => {
+    if (severity === 'info') return 'info';
+    if (severity === 'warning') return 'warn';
+    if (severity === 'fatal') return 'fatal';
+    return 'error';
+  };
+
   const reportAiPathsError = async (
     error: unknown,
     meta: Record<string, unknown>,
@@ -65,6 +74,7 @@ export const createErrorReporting = (ctx: ErrorReportingCtx) => {
         ...meta,
       },
     });
+    const eventLevel = resolveRunEventLevel(errorReport.severity);
 
     await ErrorSystem.captureException(error, {
       service: 'ai-paths-runtime',
@@ -79,7 +89,7 @@ export const createErrorReporting = (ctx: ErrorReportingCtx) => {
     try {
       await repo.createRunEvent({
         runId: run.id,
-        level: 'error',
+        level: eventLevel,
         message: summary ?? errorReport.userMessage,
         metadata: {
           runStartedAt,

@@ -1,3 +1,4 @@
+import type { BaseImportDirectTargetType } from '@/shared/contracts/integrations/base-com';
 import type { ImageRetryPreset } from '@/shared/contracts/integrations/base';
 import type { IntegrationConnectionBasic } from '@/shared/contracts/integrations/domain';
 import type { Toast } from '@/shared/contracts/ui/base';
@@ -16,15 +17,20 @@ interface ImportExportRuntimeResourcesParams {
   activeImportRunId: string;
   catalogId: string;
   exportInventoryId: string;
+  exportInventoryIdRef: MutableRefObject<string>;
   hasInitializedCatalog: MutableRefObject<boolean>;
   importListEnabled: boolean;
   importListPage: number;
   importListPageSize: number;
   importNameSearch: string;
+  importDirectTargetType: BaseImportDirectTargetType;
+  importDirectTargetValue: string;
   importSkuSearch: string;
   importTemplateId: string;
+  importTemplateIdRef: MutableRefObject<string>;
   inventoriesEnabled: boolean;
   inventoryId: string;
+  inventoryIdRef: MutableRefObject<string>;
   includeAllWarehouses: boolean;
   lastHydratedExportActiveTemplateScope: MutableRefObject<string>;
   lastHydratedImportActiveTemplateScope: MutableRefObject<string>;
@@ -35,6 +41,8 @@ interface ImportExportRuntimeResourcesParams {
   limit: string;
   pollImportRun: boolean;
   selectedBaseConnectionId: string;
+  selectedBaseConnectionIdRef: MutableRefObject<string>;
+  catalogIdRef: MutableRefObject<string>;
   setBaseConnections: (connections: IntegrationConnectionBasic[]) => void;
   setCatalogId: (id: string) => void;
   setExportInventoryId: (id: string) => void;
@@ -97,15 +105,20 @@ export function useImportExportRuntimeResources(
     activeImportRunId,
     catalogId,
     exportInventoryId,
+    exportInventoryIdRef,
     hasInitializedCatalog,
     importListEnabled,
     importListPage,
     importListPageSize,
     importNameSearch,
+    importDirectTargetType,
+    importDirectTargetValue,
     importSkuSearch,
     importTemplateId,
+    importTemplateIdRef,
     inventoriesEnabled,
     inventoryId,
+    inventoryIdRef,
     includeAllWarehouses,
     lastHydratedExportActiveTemplateScope,
     lastHydratedImportActiveTemplateScope,
@@ -116,6 +129,8 @@ export function useImportExportRuntimeResources(
     limit,
     pollImportRun,
     selectedBaseConnectionId,
+    selectedBaseConnectionIdRef,
+    catalogIdRef,
     setBaseConnections,
     setCatalogId,
     setExportInventoryId,
@@ -142,8 +157,10 @@ export function useImportExportRuntimeResources(
     loadingCatalogs,
   } = useImportExportBootstrapResources({
     catalogId,
+    catalogIdRef,
     hasInitializedCatalog,
     selectedBaseConnectionId,
+    selectedBaseConnectionIdRef,
     setBaseConnections,
     setCatalogId,
     setIsBaseConnected,
@@ -164,7 +181,9 @@ export function useImportExportRuntimeResources(
     baseConnections,
     exportInventoryId,
     importTemplateId,
+    importTemplateIdRef,
     inventoryId,
+    inventoryIdRef,
     isBaseConnected,
     lastHydratedExportActiveTemplateScope,
     lastHydratedImportActiveTemplateScope,
@@ -173,6 +192,7 @@ export function useImportExportRuntimeResources(
     lastSavedImportActiveTemplateId,
     lastSavedImportTemplateId,
     selectedBaseConnectionId,
+    selectedBaseConnectionIdRef,
     setExportInventoryId,
     setExportStockFallbackEnabled,
     setImageRetryPresets,
@@ -190,8 +210,10 @@ export function useImportExportRuntimeResources(
     isBaseConnected,
     inventoriesEnabled,
     inventoryId,
+    inventoryIdRef,
     setInventoryId,
     exportInventoryId,
+    exportInventoryIdRef,
     setExportInventoryId,
     includeAllWarehouses,
     warehousesEnabled,
@@ -201,6 +223,8 @@ export function useImportExportRuntimeResources(
     importListPage,
     importListPageSize,
     importNameSearch,
+    importDirectTargetType,
+    importDirectTargetValue,
     importSkuSearch,
     importListEnabled,
     activeImportRunId,

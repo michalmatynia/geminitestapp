@@ -1,0 +1,13 @@
+
+> libapp2@0.1.0 lint
+> cross-env NODE_OPTIONS=--max-old-space-size=8192 eslint src --no-error-on-unmatched-pattern
+
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/server/product-scans-service.ts
+  2962:60  error  Unsafe argument of type `any` assigned to a parameter of type `Record<string, unknown>`                                                                                                                                                                                                                                                                 @typescript-eslint/no-unsafe-argument
+  3035:55  error  Unsafe argument of type `any` assigned to a parameter of type `{ runId: string; status: string; imageSearchProvider: "google_images_upload" | "google_images_url" | "google_lens_upload"; allowManualVerification: boolean; manualVerificationTimeoutMs: number; ... 6 more ...; stepSequence?: (string | { ...; })[] | ... 1 more ... | undefined; }`  @typescript-eslint/no-unsafe-argument
+  3084:60  error  Unsafe argument of type `any` assigned to a parameter of type `Record<string, unknown>`                                                                                                                                                                                                                                                                 @typescript-eslint/no-unsafe-argument
+  3152:55  error  Unsafe argument of type `any` assigned to a parameter of type `{ runId: string; status: string; imageSearchProvider: "google_images_upload" | "google_images_url" | "google_lens_upload"; allowManualVerification: boolean; manualVerificationTimeoutMs: number; ... 6 more ...; stepSequence?: (string | { ...; })[] | ... 1 more ... | undefined; }`  @typescript-eslint/no-unsafe-argument
+
+✖ 4 problems (4 errors, 0 warnings)
+

@@ -1,5 +1,12 @@
 'use client';
 
+// useTraderaMassQuickExport: handles mass quick export to Tradera via
+// the browser-integration pipeline. Resolves preferred connections, ensures
+// scripted Playwright listing scripts are present, and runs export jobs with
+// progress snapshots. Uses best-effort upgrades for bootstrap connections and
+// logs errors via the client observability utilities.
+
+
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useRef, useState } from 'react';
 
@@ -7,16 +14,17 @@ import {
   fetchIntegrationsWithConnections,
   fetchPreferredTraderaConnection,
   integrationSelectionQueryKeys,
-} from '@/features/integrations/components/listings/hooks/useIntegrationSelection';
-import { isTraderaBrowserIntegrationSlug } from '@/features/integrations/constants/slugs';
+  isTraderaBrowserIntegrationSlug,
+  persistTraderaQuickListFeedback,
+} from '@/features/integrations/product-integrations-adapter';
 import { DEFAULT_TRADERA_QUICKLIST_SCRIPT } from '@/features/integrations/services/tradera-listing/default-script';
-import { persistTraderaQuickListFeedback } from '@/features/integrations/utils/traderaQuickListFeedback';
 import type { IntegrationWithConnections } from '@/shared/contracts/integrations/domain';
 import { api } from '@/shared/lib/api-client';
 import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateProductListingsAndBadges } from '@/shared/lib/query-invalidation';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { useToast } from '@/shared/ui/toast';
+import type { ProgressSnapshotDto } from '@/shared/contracts/base';
 
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
@@ -27,11 +35,7 @@ type ResolvedConnection = {
   connectionId: string;
 };
 
-export type MassQuickExportProgress = {
-  current: number;
-  total: number;
-  errors: number;
-};
+export type { ProgressSnapshotDto as MassQuickExportProgress };
 
 const hasPlaywrightListingScriptConfigured = (
   connection: BasicTraderaConnection
@@ -55,12 +59,12 @@ const hasScriptedConfig = (connection: BasicTraderaConnection): boolean => {
 export function useTraderaMassQuickExport(): {
   execute: (productIds: string[]) => Promise<void>;
   isRunning: boolean;
-  progress: MassQuickExportProgress;
+  progress: ProgressSnapshotDto;
 } {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [isRunning, setIsRunning] = useState(false);
-  const [progress, setProgress] = useState<MassQuickExportProgress>({
+  const [progress, setProgress] = useState<ProgressSnapshotDto>({
     current: 0,
     total: 0,
     errors: 0,

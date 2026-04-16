@@ -1,5 +1,10 @@
 'use client';
 
+// ProductFormContext: high-level composition of form-related contexts used by
+// the product editor. Wires together Core, Metadata, Image, Parameter and
+// CustomField contexts so nested form tabs can access shared helpers and
+// the current editing product snapshot.
+
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useFormState } from 'react-hook-form';
 
@@ -8,15 +13,9 @@ import {
   warnNonHydratedEditProduct,
 } from '@/features/products/hooks/editingProductHydration';
 import { useProductFormSubmit } from '@/features/products/hooks/useProductFormSubmit';
-import { ProductParameterValue } from '@/shared/contracts/products/product';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import type { ProductDraft } from '@/shared/contracts/products/drafts';
 import { internalError } from '@/shared/errors/app-error';
-import { decodeSimpleParameterStorageId } from '@/shared/lib/products/utils/parameter-partition';
-import {
-  normalizeParameterValuesByLanguage,
-  resolveStoredParameterValue,
-} from '@/shared/lib/products/utils/parameter-values';
 
 import {
   ProductFormCoreProvider,
@@ -26,96 +25,15 @@ import {
 import { ProductFormImageProvider, useProductFormImages } from './ProductFormImageContext';
 import { ProductFormMetadataProvider, useProductFormMetadata } from './ProductFormMetadataContext';
 import {
+  ProductFormCustomFieldProvider,
+  useProductFormCustomFields,
+} from './ProductFormCustomFieldContext';
+import {
   ProductFormParameterProvider,
   useProductFormParameters,
 } from './ProductFormParameterContext';
 import { ProductFormStudioProvider, useProductFormStudio } from './ProductFormStudioContext';
-
-type ComparableParameterValue = {
-  parameterId: string;
-  value: string;
-  valuesByLanguage?: Record<string, string>;
-};
-
-type NonFormComparableState = {
-  selectedCatalogIds: string[];
-  selectedCategoryId: string | null;
-  selectedTagIds: string[];
-  selectedProducerIds: string[];
-  selectedNoteIds: string[];
-  parameterValues: ComparableParameterValue[];
-  imageSlots: string[];
-  imageLinks: string[];
-  imageBase64s: string[];
-};
-
-const normalizeComparableString = (value: unknown): string => {
-  if (typeof value !== 'string') return '';
-  return value.trim();
-};
-
-const normalizeComparableStringList = (values: ReadonlyArray<unknown>): string[] => {
-  const unique = new Set<string>();
-  values.forEach((value: unknown) => {
-    const normalized = normalizeComparableString(value);
-    if (!normalized) return;
-    unique.add(normalized);
-  });
-  return Array.from(unique);
-};
-
-const normalizeComparableNullableString = (value: unknown): string | null => {
-  const normalized = normalizeComparableString(value);
-  return normalized || null;
-};
-
-const normalizeComparableParameterValues = (
-  input: ProductParameterValue[]
-): ComparableParameterValue[] => {
-  return input
-    .map((entry: ProductParameterValue): ComparableParameterValue => {
-      const valuesByLanguage = normalizeParameterValuesByLanguage(entry.valuesByLanguage);
-      const directValue = normalizeComparableString(entry.value);
-      const normalizedParameterId = decodeSimpleParameterStorageId(
-        normalizeComparableString(entry.parameterId)
-      );
-      return {
-        parameterId: normalizedParameterId || '',
-        value: resolveStoredParameterValue(valuesByLanguage, directValue),
-        ...(Object.keys(valuesByLanguage).length > 0 ? { valuesByLanguage } : {}),
-      };
-    })
-    .filter((entry: ComparableParameterValue): boolean => entry.parameterId.length > 0);
-};
-
-const toComparableImageSlot = (slot: unknown): string => {
-  if (!slot || typeof slot !== 'object') return '';
-  const slotRecord = slot as { type?: unknown; data?: unknown };
-  if (slotRecord.type === 'existing') {
-    const existingRecord =
-      slotRecord.data && typeof slotRecord.data === 'object'
-        ? (slotRecord.data as Record<string, unknown>)
-        : {};
-    return `existing:${normalizeComparableString(existingRecord['id'])}`;
-  }
-  const fileRecord =
-    slotRecord.data && typeof slotRecord.data === 'object'
-      ? (slotRecord.data as Record<string, unknown>)
-      : {};
-  const sizeValue = fileRecord['size'];
-  const lastModifiedValue = fileRecord['lastModified'];
-  return [
-    'file',
-    normalizeComparableString(fileRecord['name']),
-    typeof sizeValue === 'number' && Number.isFinite(sizeValue) ? String(sizeValue) : '0',
-    normalizeComparableString(fileRecord['type']),
-    typeof lastModifiedValue === 'number' && Number.isFinite(lastModifiedValue)
-      ? String(lastModifiedValue)
-      : '0',
-  ].join(':');
-};
-
-const serializeComparableState = (value: NonFormComparableState): string => JSON.stringify(value);
+import { serializeNonFormComparableState } from './ProductFormContext.dirty-tracking';
 
 export type ProductFormSubmitContextType = {
   handleSubmit: (e?: React.BaseSyntheticEvent) => Promise<void>;
@@ -186,6 +104,7 @@ function ProductFormSubmitController(props: { children: React.ReactNode }) {
   const { selectedCatalogIds, selectedCategoryId, selectedTagIds, selectedProducerIds } =
     useProductFormMetadata();
   const { imageSlots, imageLinks, imageBase64s, refreshImagesFromProduct } = useProductFormImages();
+  const { customFieldValues } = useProductFormCustomFields();
   const { parameterValues } = useProductFormParameters();
   const { studioProjectId } = useProductFormStudio();
 
@@ -207,6 +126,7 @@ function ProductFormSubmitController(props: { children: React.ReactNode }) {
       selectedTagIds,
       selectedProducerIds,
       selectedNoteIds,
+      customFieldValues,
       parameterValues,
       studioProjectId,
       refreshImages: refreshImagesFromProduct,
@@ -247,30 +167,33 @@ function ProductFormSubmitController(props: { children: React.ReactNode }) {
   const lastEntityIdentityRef = useRef<string>('');
   const lastUploadSuccessRef = useRef<boolean>(false);
 
-  const nonFormComparableKey = useMemo(() => {
-    const comparableState: NonFormComparableState = {
-      selectedCatalogIds: normalizeComparableStringList(selectedCatalogIds),
-      selectedCategoryId: normalizeComparableNullableString(selectedCategoryId),
-      selectedTagIds: normalizeComparableStringList(selectedTagIds),
-      selectedProducerIds: normalizeComparableStringList(selectedProducerIds),
-      selectedNoteIds: normalizeComparableStringList(selectedNoteIds),
-      parameterValues: normalizeComparableParameterValues(parameterValues),
-      imageSlots: imageSlots.map(toComparableImageSlot),
-      imageLinks: imageLinks.map((value: string) => normalizeComparableString(value)),
-      imageBase64s: imageBase64s.map((value: string) => normalizeComparableString(value)),
-    };
-    return serializeComparableState(comparableState);
-  }, [
-    imageBase64s,
-    imageLinks,
-    imageSlots,
+  const nonFormComparableKey = useMemo(
+    () =>
+      serializeNonFormComparableState({
+        selectedCatalogIds,
+        selectedCategoryId,
+        selectedTagIds,
+        selectedProducerIds,
+        selectedNoteIds,
+        customFieldValues,
+        parameterValues,
+        imageSlots,
+        imageLinks,
+        imageBase64s,
+      }),
+    [
+      imageBase64s,
+      imageLinks,
+      imageSlots,
+    customFieldValues,
     parameterValues,
     selectedCatalogIds,
-    selectedCategoryId,
-    selectedNoteIds,
-    selectedProducerIds,
-    selectedTagIds,
-  ]);
+      selectedCategoryId,
+      selectedNoteIds,
+      selectedProducerIds,
+      selectedTagIds,
+    ]
+  );
 
   const [nonFormBaselineKey, setNonFormBaselineKey] = useState<string>(nonFormComparableKey);
 
@@ -457,21 +380,37 @@ function ProductFormSubProvidersInner(props: { children: React.ReactNode }) {
       initialCatalogId={initialCatalogId}
       onInteraction={onInteraction}
     >
-      <ProductFormParameterProviderWrapper onInteraction={onInteraction}>
-        <ProductFormStudioProvider product={product}>
-          <ProductFormImageProvider
-            product={product}
-            draft={draft}
-            uploading={uploading}
-            uploadError={uploadError}
-            uploadSuccess={uploadSuccess}
-            onInteraction={onInteraction}
-          >
-            <ProductFormSubmitController>{children}</ProductFormSubmitController>
-          </ProductFormImageProvider>
-        </ProductFormStudioProvider>
-      </ProductFormParameterProviderWrapper>
+      <ProductFormCustomFieldProviderWrapper onInteraction={onInteraction}>
+        <ProductFormParameterProviderWrapper onInteraction={onInteraction}>
+          <ProductFormStudioProvider product={product}>
+            <ProductFormImageProvider
+              product={product}
+              draft={draft}
+              uploading={uploading}
+              uploadError={uploadError}
+              uploadSuccess={uploadSuccess}
+              onInteraction={onInteraction}
+            >
+              <ProductFormSubmitController>{children}</ProductFormSubmitController>
+            </ProductFormImageProvider>
+          </ProductFormStudioProvider>
+        </ProductFormParameterProviderWrapper>
+      </ProductFormCustomFieldProviderWrapper>
     </ProductFormMetadataProvider>
+  );
+}
+
+function ProductFormCustomFieldProviderWrapper(props: {
+  children: React.ReactNode;
+  onInteraction: () => void;
+}) {
+  const { children, onInteraction } = props;
+
+  const { product, draft } = useProductFormProviderConfigContext();
+  return (
+    <ProductFormCustomFieldProvider product={product} draft={draft} onInteraction={onInteraction}>
+      {children}
+    </ProductFormCustomFieldProvider>
   );
 }
 

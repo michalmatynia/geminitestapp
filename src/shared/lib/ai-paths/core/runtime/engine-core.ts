@@ -1,5 +1,5 @@
-import { AiNode, Edge } from '@/shared/contracts/ai-paths';
-import { RuntimeState } from '@/shared/contracts/ai-paths-runtime';
+import { type AiNode, type Edge } from '@/shared/contracts/ai-paths';
+import { type RuntimeState } from '@/shared/contracts/ai-paths-runtime';
 
 
 // Modular imports
@@ -20,10 +20,65 @@ import {
 import { collectNodeInputs } from './engine-modules/engine-utils';
 import { runRuntimeValidation } from './engine-modules/engine-validation-helpers';
 import { nowMs } from './execution-helpers';
+import { cloneValue } from './utils';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
 export { GraphExecutionError, GraphExecutionCancelled };
+
+const buildExecutionAbortSignal = (
+  options: EvaluateGraphOptions
+): {
+  signal: AbortSignal | undefined;
+  cleanup: () => void;
+} => {
+  const parentSignal = options.abortSignal;
+  const maxDurationMs =
+    typeof options.maxDurationMs === 'number' &&
+    Number.isFinite(options.maxDurationMs) &&
+    options.maxDurationMs > 0
+      ? Math.max(1, Math.trunc(options.maxDurationMs))
+      : null;
+
+  if (!parentSignal && !maxDurationMs) {
+    return {
+      signal: undefined,
+      cleanup: () => undefined,
+    };
+  }
+
+  const controller = new AbortController();
+  const timeoutId =
+    maxDurationMs !== null
+      ? setTimeout(() => {
+        controller.abort(new Error(`Graph execution timed out after ${maxDurationMs}ms.`));
+      }, maxDurationMs)
+      : null;
+
+  const handleParentAbort = (): void => {
+    controller.abort(parentSignal?.reason);
+  };
+
+  if (parentSignal) {
+    if (parentSignal.aborted) {
+      handleParentAbort();
+    } else {
+      parentSignal.addEventListener('abort', handleParentAbort, { once: true });
+    }
+  }
+
+  return {
+    signal: controller.signal,
+    cleanup: () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      if (parentSignal) {
+        parentSignal.removeEventListener('abort', handleParentAbort);
+      }
+    },
+  };
+};
 
 export async function evaluateGraphInternal(
   nodes: AiNode[],
@@ -33,6 +88,12 @@ export async function evaluateGraphInternal(
   const resolvedRunId = options.runId ?? `run_${nowMs()}`;
   const resolvedRunStartedAtMs = nowMs();
   const resolvedRunStartedAt = new Date(resolvedRunStartedAtMs).toISOString();
+  const { signal: executionAbortSignal, cleanup: cleanupExecutionAbortSignal } =
+    buildExecutionAbortSignal(options);
+  const executionOptions: EvaluateGraphOptions = {
+    ...options,
+    abortSignal: executionAbortSignal,
+  };
 
   const {
     sanitizedEdges,
@@ -41,6 +102,7 @@ export async function evaluateGraphInternal(
     outgoingEdgesByNode,
     orderedNodes,
     scopedNodeIds,
+    unsupportedCycleMessage,
   } = prepareGraphForExecution({
     nodes,
     edges,
@@ -48,13 +110,25 @@ export async function evaluateGraphInternal(
     seedHashes: options.seedHashes,
   });
 
-  const state = new EngineStateManager(nodes, scopedNodeIds.size, options, incomingEdgesByNode);
+  const state = new EngineStateManager(
+    nodes,
+    scopedNodeIds.size,
+    executionOptions,
+    incomingEdgesByNode
+  );
 
   Object.keys(state.outputs).forEach((nodeId) => {
     if (!scopedNodeIds.has(nodeId)) {
       delete state.outputs[nodeId];
     }
   });
+
+  if (unsupportedCycleMessage) {
+    throw new GraphExecutionError(
+      unsupportedCycleMessage,
+      state.buildRuntimeStateSnapshot(state.inputs)
+    );
+  }
 
   state.skippedNodes.forEach((id: string) => {
     if (nodeById.has(id)) {
@@ -64,7 +138,9 @@ export async function evaluateGraphInternal(
 
   // Initial input propagation
   nodes.forEach((node) => {
-    state.inputs[node.id] = collectNodeInputs(node.id, state.outputs, incomingEdgesByNode);
+    state.inputs[node.id] = cloneValue(
+      collectNodeInputs(node.id, state.outputs, incomingEdgesByNode)
+    );
   });
 
   const executed = {
@@ -98,7 +174,7 @@ export async function evaluateGraphInternal(
       });
     } catch (error) {
       logClientError(error);
-      options.reportAiPathsError(error, {
+      executionOptions.reportAiPathsError(error, {
         action: 'onHalt',
         reason,
         runId: resolvedRunId,
@@ -131,7 +207,7 @@ export async function evaluateGraphInternal(
     stage: 'graph_parse',
     iteration: 0,
     node: null,
-    options,
+    options: executionOptions,
     resolvedRunId,
     resolvedRunStartedAt,
     nodes,
@@ -148,7 +224,7 @@ export async function evaluateGraphInternal(
     stage: 'graph_bind',
     iteration: 0,
     node: null,
-    options,
+    options: executionOptions,
     resolvedRunId,
     resolvedRunStartedAt,
     nodes,
@@ -163,26 +239,30 @@ export async function evaluateGraphInternal(
 
   const maxIterationsLimit = options.maxIterations ?? MAX_ITERATIONS;
 
-  await runExecutionLoop({
-    state,
-    options,
-    resolvedRunId,
-    resolvedRunStartedAt,
-    maxIterationsLimit,
-    orderedNodes,
-    scopedNodeIds,
-    nodeById,
-    incomingEdgesByNode,
-    outgoingEdgesByNode,
-    triggerContext,
-    internalCheckTriggerProvenance,
-    telemetryResolver,
-    seedHashes: options.seedHashes ?? {},
-    nodes,
-    sanitizedEdges,
-    emitHalt,
-    executed,
-  });
+  try {
+    await runExecutionLoop({
+      state,
+      options: executionOptions,
+      resolvedRunId,
+      resolvedRunStartedAt,
+      maxIterationsLimit,
+      orderedNodes,
+      scopedNodeIds,
+      nodeById,
+      incomingEdgesByNode,
+      outgoingEdgesByNode,
+      triggerContext,
+      internalCheckTriggerProvenance,
+      telemetryResolver,
+      seedHashes: executionOptions.seedHashes ?? {},
+      nodes,
+      sanitizedEdges,
+      emitHalt,
+      executed,
+    });
+  } finally {
+    cleanupExecutionAbortSignal();
+  }
 
   const hasTerminalBlockedNodes = Array.from(state.blockedNodes).some((nodeId) => {
     const rawStatus = state.outputs[nodeId]?.['status'];

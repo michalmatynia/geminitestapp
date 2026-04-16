@@ -1,10 +1,17 @@
 'use client';
 
+// ProductFormCoreContext: provides the core react-hook-form context and
+// helpers for product create/edit flows. Responsibilities:
+// - Initialize form state, validation schema, and submission lifecycle
+// - Offer helpers for normalization and draft bootstrapping used by form tabs
+// Keep this module client-only since it integrates with browser APIs and form
+// lifecycle hooks.
+
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   createContext,
   useContext,
-  BaseSyntheticEvent,
+  type BaseSyntheticEvent,
   useCallback,
   useEffect,
   useState,
@@ -12,18 +19,22 @@ import {
   useRef,
 } from 'react';
 import {
-  UseFormRegister,
-  UseFormSetValue,
-  UseFormGetValues,
-  FieldErrors,
+  type UseFormRegister,
+  type UseFormSetValue,
+  type UseFormGetValues,
+  type FieldErrors,
   useForm,
-  Resolver,
+  type Resolver,
   FormProvider,
-  UseFormReturn,
+  type UseFormReturn,
 } from 'react-hook-form';
 
-import { ProductFormData, ProductDraft } from '@/shared/contracts/products/drafts';
-import { ProductWithImages } from '@/shared/contracts/products/product';
+import { type ProductFormData, type ProductDraft } from '@/shared/contracts/products/drafts';
+import {
+  type ProductWithImages,
+  type ProductNotes,
+  normalizeProductMarketplaceContentOverrideDrafts,
+} from '@/shared/contracts/products/product';
 import { internalError } from '@/shared/errors/app-error';
 import { PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER } from '@/shared/lib/products/constants';
 import {
@@ -32,6 +43,24 @@ import {
 } from '@/shared/lib/products/validations/schemas';
 
 const normalizeOptionalString = (value: string | null | undefined): string => value || '';
+
+const normalizeProductFormNotes = (
+  value: ProductNotes | null | undefined
+): ProductNotes | undefined => {
+  if (!value) return undefined;
+
+  const text = typeof value.text === 'string' ? value.text : null;
+  const color = typeof value.color === 'string' ? value.color : null;
+
+  if (!text && !color) {
+    return undefined;
+  }
+
+  return {
+    text,
+    color,
+  };
+};
 
 export const resolveProductFormDefaultValues = ({
   product,
@@ -71,6 +100,14 @@ export const resolveProductFormDefaultValues = ({
   weight: product?.weight ?? draft?.weight ?? 0,
   length: product?.length ?? draft?.length ?? 0,
   shippingGroupId: product?.shippingGroupId ?? draft?.shippingGroupId ?? '',
+  marketplaceContentOverrides: normalizeProductMarketplaceContentOverrideDrafts(
+    product?.marketplaceContentOverrides ?? draft?.marketplaceContentOverrides ?? []
+  ).map((entry) => ({
+    integrationIds: entry.integrationIds,
+    title: entry.title ?? '',
+    description: entry.description ?? '',
+  })),
+  notes: normalizeProductFormNotes(product?.notes ?? draft?.notes ?? undefined),
 });
 
 export interface ProductFormCoreContextType {
@@ -80,6 +117,7 @@ export interface ProductFormCoreContextType {
   getValues: UseFormGetValues<ProductFormData>;
   selectedNoteIds: string[];
   generationError: string | null;
+  normalizeNameError: string | null;
   product?: ProductWithImages | undefined;
   draft?: ProductDraft | null | undefined;
   ConfirmationModal: React.ComponentType;
@@ -96,6 +134,7 @@ export interface ProductFormCoreActionsContextType {
   toggleNote: (noteId: string) => void;
   removeNote: (noteId: string) => void;
   setGenerationError: (error: string | null) => void;
+  setNormalizeNameError: (error: string | null) => void;
   setHandleSubmit: (fn: (e?: BaseSyntheticEvent) => Promise<void>) => void;
   setConfirmationModal: (component: React.ComponentType) => void;
   setHasUnsavedChanges: (value: boolean) => void;
@@ -172,7 +211,11 @@ export function ProductFormCoreProvider({
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [normalizeNameError, setNormalizeNameError] = useState<string | null>(null);
   const hasAppliedInitialDefaultsRef = useRef(false);
+  const latestDefaultValuesRef = useRef(defaultValues);
+
+  latestDefaultValuesRef.current = defaultValues;
 
   useEffect(() => {
     if (!hasAppliedInitialDefaultsRef.current) {
@@ -180,10 +223,10 @@ export function ProductFormCoreProvider({
       return;
     }
 
-    methods.reset(defaultValues, {
+    methods.reset(latestDefaultValuesRef.current, {
       keepDirtyValues: true,
     });
-  }, [defaultValues, defaultValuesSignature, methods]);
+  }, [defaultValuesSignature, methods]);
 
   const updateHandleSubmit = useCallback((fn: (e?: BaseSyntheticEvent) => Promise<void>): void => {
     setHandleSubmitFn(() => fn);
@@ -215,6 +258,7 @@ export function ProductFormCoreProvider({
       getValues: methods.getValues,
       selectedNoteIds,
       generationError,
+      normalizeNameError,
       product,
       draft,
       ConfirmationModal,
@@ -229,6 +273,7 @@ export function ProductFormCoreProvider({
       hasUnsavedChanges,
       selectedNoteIds,
       generationError,
+      normalizeNameError,
       product,
       draft,
       ConfirmationModal,
@@ -245,6 +290,7 @@ export function ProductFormCoreProvider({
       toggleNote,
       removeNote,
       setGenerationError,
+      setNormalizeNameError,
       setHandleSubmit: updateHandleSubmit,
       setConfirmationModal: updateConfirmationModal,
       setHasUnsavedChanges,
@@ -258,6 +304,7 @@ export function ProductFormCoreProvider({
       toggleNote,
       removeNote,
       setGenerationError,
+      setNormalizeNameError,
       updateHandleSubmit,
       updateConfirmationModal,
       setHasUnsavedChanges,

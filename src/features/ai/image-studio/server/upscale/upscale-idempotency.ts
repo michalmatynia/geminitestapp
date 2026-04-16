@@ -1,6 +1,6 @@
 import { createHash } from 'crypto';
 
-import { NextRequest } from 'next/server';
+import { type NextRequest } from 'next/server';
 
 import {
   type ImageStudioUpscaleMode,
@@ -15,7 +15,7 @@ import {
   resolveUpscaleStrategyFromRequest,
 } from '@/features/ai/image-studio/server/upscale-utils';
 
-import { StudioSlotRecord, UploadedClientUpscaleImage } from './types';
+import { type StudioSlotRecord, type UploadedClientUpscaleImage } from './types';
 
 export const buildClientPayloadSignature = (
   payload: ImageStudioUpscaleRequest,

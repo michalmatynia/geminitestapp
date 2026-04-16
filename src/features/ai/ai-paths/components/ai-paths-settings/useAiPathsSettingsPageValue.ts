@@ -1,12 +1,16 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'nextjs-toploader/app';
 import React from 'react';
 
 import { useRunHistoryActions } from '@/features/ai/ai-paths/context';
 import { useAiPathsDocsTooltips } from '@/features/ai/ai-paths/hooks/useAiPathsDocsTooltips';
 import { evaluateDataContractPreflight } from '@/shared/lib/ai-paths/core/utils/data-contract-preflight';
-import { evaluateAiPathsValidationPreflight, listAiPathRuns, normalizeAiPathsValidationConfig } from '@/shared/lib/ai-paths';
+import { listAiPathRuns } from '@/shared/lib/ai-paths/api';
+import {
+  evaluateAiPathsValidationPreflight,
+  normalizeAiPathsValidationConfig,
+} from '@/shared/lib/ai-paths/core/validation-engine';
 
 import { buildSwitchPathOptions, sortPathMetas } from './ai-paths-settings-view-utils';
 

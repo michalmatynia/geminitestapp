@@ -4,12 +4,17 @@ import { useCallback } from 'react';
 
 import type { AiNode, ClusterPreset, Edge } from '@/shared/contracts/ai-paths';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
-import { BUNDLE_INPUT_PORTS, CLUSTER_PRESETS_KEY, NODE_MIN_HEIGHT, NODE_WIDTH, TEMPLATE_INPUT_PORTS, VIEW_MARGIN, createPresetId, parsePathList } from '@/shared/lib/ai-paths';
+import { BUNDLE_INPUT_PORTS, CLUSTER_PRESETS_KEY, NODE_MIN_HEIGHT, NODE_WIDTH, TEMPLATE_INPUT_PORTS, VIEW_MARGIN } from '@/shared/lib/ai-paths/core/constants';
+import { createPresetId, parsePathList } from '@/shared/lib/ai-paths/core/utils';
 import { updateAiPathsSetting } from '@/shared/lib/ai-paths/settings-store-client';
 import { useToast } from '@/shared/ui/primitives.public';
 
 import { useCanvasActions, useCanvasRefs, useCanvasState } from '../../context/CanvasContext';
-import { useGraphActions, useGraphState } from '../../context/GraphContext';
+import {
+  useGraphActions,
+  useGraphDataState,
+  usePathMetadataState,
+} from '../../context/GraphContext';
 import { usePresetsActions, usePresetsState } from '../../context/PresetsContext';
 import { useSelectionActions, useSelectionState } from '../../context/SelectionContext';
 import { useAiPathsErrorState } from '../ai-paths-settings/hooks/useAiPathsErrorState';
@@ -21,7 +26,8 @@ export function useClusterPresetsActions() {
   const { confirm, ConfirmationModal } = useConfirm();
   const { clusterPresets, presetDraft, editingPresetId } = usePresetsState();
   const presetsActions = usePresetsActions();
-  const { nodes, edges, isPathLocked } = useGraphState();
+  const { nodes, edges } = useGraphDataState();
+  const { isPathLocked } = usePathMetadataState();
   const { setNodes, setEdges } = useGraphActions();
   const { selectedNodeId } = useSelectionState();
   const { selectEdge, selectNode } = useSelectionActions();

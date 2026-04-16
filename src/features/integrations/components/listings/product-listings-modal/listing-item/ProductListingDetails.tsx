@@ -6,213 +6,37 @@ import React from 'react';
 import {
   PLAYWRIGHT_PROGRAMMABLE_INTEGRATION_SLUG,
   TRADERA_INTEGRATION_SLUGS,
+  isVintedIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
 import {
   useProductListingsData,
   useProductListingsUIState,
 } from '@/features/integrations/context/ProductListingsContext';
-import type { ProductListingExportEvent } from '@/shared/contracts/integrations/listings';
+import { useTraderaLiveExecution } from '@/features/integrations/hooks/useTraderaLiveExecution';
+import type {
+  ProductListingExportEvent,
+} from '@/shared/contracts/integrations/listings';
 import { StatusBadge, JsonViewer } from '@/shared/ui/data-display.public';
 import { Card, Button } from '@/shared/ui/primitives.public';
 import { MetadataItem } from '@/shared/ui/navigation-and-layout.public';
 import { Hint, ExternalLink } from '@/shared/ui/forms-and-actions.public';
+import { TraderaExecutionSteps } from '@/features/integrations/components/listings/TraderaExecutionSteps';
+
+import { resolveIntegrationDisplayName } from '../../product-listings-labels';
 import type { ProductListingWithDetailsProps } from './types';
-
-const formatTimestamp = (value: string | Date | null | undefined): string => {
-  if (!value) return '—';
-  const date: Date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) return '—';
-  return date.toLocaleString();
-};
-
-const formatListValue = (value: string | null | undefined): string => (value ? value : '—');
-
-const normalizeIntegrationSlug = (value: string | null | undefined): string =>
-  (value ?? '').trim().toLowerCase();
-
-const toRecord = (value: unknown): Record<string, unknown> =>
-  value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
-
-const readString = (value: unknown): string | null =>
-  typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
-
-const readBoolean = (value: unknown): boolean | null =>
-  typeof value === 'boolean' ? value : null;
-
-const readNumber = (value: unknown): number | null =>
-  typeof value === 'number' && Number.isFinite(value) ? value : null;
-
-const resolveHistoryBrowserMode = (
-  fields: string[] | null | undefined
-): string | null => {
-  const match = (Array.isArray(fields) ? fields : []).find((field) =>
-    field.startsWith('browser_mode:')
-  );
-  if (!match) return null;
-  const value = match.slice('browser_mode:'.length).trim();
-  return value || null;
-};
-
-const resolveDisplayHistoryFields = (
-  fields: string[] | null | undefined
-): string[] => (Array.isArray(fields) ? fields.filter((field) => !field.startsWith('browser_mode:')) : []);
-
-const resolveTraderaExecutionSummary = (
-  marketplaceData: Record<string, unknown> | null | undefined
-): {
-  executedAt: string | null;
-  mode: string | null;
-  browserMode: string | null;
-  requestedBrowserMode: string | null;
-  scriptSource: string | null;
-  scriptKind: string | null;
-  scriptMarker: string | null;
-  listingFormUrl: string | null;
-  pendingBrowserMode: string | null;
-  pendingRequestId: string | null;
-  pendingQueuedAt: string | null;
-  runId: string | null;
-  errorCategory: string | null;
-  requestId: string | null;
-  publishVerified: boolean | null;
-  listingUrl: string | null;
-  latestStage: string | null;
-  latestStageUrl: string | null;
-  failureArtifacts: unknown;
-  logTail: unknown;
-  playwrightPersonaId: string | null;
-  playwrightSlowMo: number | null;
-  playwrightTimeout: number | null;
-  playwrightNavigationTimeout: number | null;
-  playwrightHumanizeMouse: boolean | null;
-  playwrightClickDelayMin: number | null;
-  playwrightClickDelayMax: number | null;
-  playwrightInputDelayMin: number | null;
-  playwrightInputDelayMax: number | null;
-  playwrightActionDelayMin: number | null;
-  playwrightActionDelayMax: number | null;
-  categoryId: string | null;
-  categoryPath: string | null;
-  categorySource: string | null;
-  categoryMappingReason: string | null;
-  categoryMatchScope: string | null;
-  categoryInternalCategoryId: string | null;
-  duplicateLinked: boolean | null;
-  duplicateMatchStrategy: string | null;
-  duplicateMatchedProductId: string | null;
-  duplicateCandidateCount: number | null;
-  duplicateSearchTitle: string | null;
-  shippingCondition: string | null;
-  shippingPriceEur: number | null;
-  imageInputSource: string | null;
-  imageUploadSource: string | null;
-  localImagePathCount: number | null;
-  imageUrlCount: number | null;
-  imageSettleState: unknown;
-  rawResult: unknown;
-} => {
-  const marketplaceRecord = toRecord(marketplaceData);
-  const traderaData = toRecord(marketplaceRecord['tradera']);
-  const lastExecution = toRecord(traderaData['lastExecution']);
-  const pendingExecution = toRecord(traderaData['pendingExecution']);
-  const metadata = toRecord(lastExecution['metadata']);
-  const playwrightSettings = toRecord(metadata['playwrightSettings']);
-
-  return {
-    executedAt: readString(lastExecution['executedAt']),
-    mode: readString(metadata['scriptMode']) ?? readString(metadata['mode']),
-    browserMode: readString(metadata['browserMode']),
-    requestedBrowserMode: readString(metadata['requestedBrowserMode']),
-    scriptSource: readString(metadata['scriptSource']),
-    scriptKind: readString(metadata['scriptKind']),
-    scriptMarker: readString(metadata['scriptMarker']),
-    listingFormUrl: readString(metadata['listingFormUrl']) ?? readString(metadata['startUrl']),
-    pendingBrowserMode: readString(pendingExecution['requestedBrowserMode']),
-    pendingRequestId: readString(pendingExecution['requestId']),
-    pendingQueuedAt: readString(pendingExecution['queuedAt']),
-    runId: readString(metadata['runId']),
-    errorCategory: readString(lastExecution['errorCategory']) ?? readString(traderaData['lastErrorCategory']),
-    requestId: readString(lastExecution['requestId']),
-    publishVerified: readBoolean(metadata['publishVerified']),
-    listingUrl: readString(marketplaceRecord['listingUrl']),
-    latestStage: readString(metadata['latestStage']) ?? readString(toRecord(metadata['rawResult'])['stage']),
-    latestStageUrl:
-      readString(metadata['latestStageUrl']) ??
-      readString(toRecord(metadata['rawResult'])['currentUrl']),
-    failureArtifacts: metadata['failureArtifacts'] ?? null,
-    logTail: metadata['logTail'] ?? null,
-    playwrightPersonaId: readString(metadata['playwrightPersonaId']),
-    playwrightSlowMo: readNumber(playwrightSettings['slowMo']),
-    playwrightTimeout: readNumber(playwrightSettings['timeout']),
-    playwrightNavigationTimeout: readNumber(playwrightSettings['navigationTimeout']),
-    playwrightHumanizeMouse: readBoolean(playwrightSettings['humanizeMouse']),
-    playwrightClickDelayMin: readNumber(playwrightSettings['clickDelayMin']),
-    playwrightClickDelayMax: readNumber(playwrightSettings['clickDelayMax']),
-    playwrightInputDelayMin: readNumber(playwrightSettings['inputDelayMin']),
-    playwrightInputDelayMax: readNumber(playwrightSettings['inputDelayMax']),
-    playwrightActionDelayMin: readNumber(playwrightSettings['actionDelayMin']),
-    playwrightActionDelayMax: readNumber(playwrightSettings['actionDelayMax']),
-    categoryId: readString(metadata['categoryId']),
-    categoryPath: readString(metadata['categoryPath']),
-    categorySource: readString(metadata['categorySource']),
-    categoryMappingReason: readString(metadata['categoryMappingReason']),
-    categoryMatchScope: readString(metadata['categoryMatchScope']),
-    categoryInternalCategoryId: readString(metadata['categoryInternalCategoryId']),
-    duplicateLinked: readBoolean(metadata['duplicateLinked']),
-    duplicateMatchStrategy: readString(metadata['duplicateMatchStrategy']),
-    duplicateMatchedProductId: readString(metadata['duplicateMatchedProductId']),
-    duplicateCandidateCount: readNumber(metadata['duplicateCandidateCount']),
-    duplicateSearchTitle: readString(metadata['duplicateSearchTitle']),
-    shippingCondition: readString(metadata['shippingCondition']),
-    shippingPriceEur: readNumber(metadata['shippingPriceEur']),
-    imageInputSource: readString(metadata['imageInputSource']),
-    imageUploadSource:
-      readString(metadata['imageUploadSource']) ??
-      readString(toRecord(metadata['rawResult'])['imageUploadSource']),
-    localImagePathCount: readNumber(metadata['localImagePathCount']),
-    imageUrlCount: readNumber(metadata['imageUrlCount']),
-    imageSettleState: metadata['imageSettleState'] ?? null,
-    rawResult: metadata['rawResult'] ?? null,
-  };
-};
-
-const resolvePlaywrightExecutionSummary = (
-  marketplaceData: Record<string, unknown> | null | undefined
-): {
-  executedAt: string | null;
-  browserMode: string | null;
-  requestedBrowserMode: string | null;
-  pendingBrowserMode: string | null;
-  pendingRequestId: string | null;
-  pendingQueuedAt: string | null;
-  runId: string | null;
-  errorCategory: string | null;
-  requestId: string | null;
-  publishVerified: boolean | null;
-  listingUrl: string | null;
-  rawResult: unknown;
-} => {
-  const marketplaceRecord = toRecord(marketplaceData);
-  const playwrightData = toRecord(marketplaceRecord['playwright']);
-  const lastExecution = toRecord(playwrightData['lastExecution']);
-  const pendingExecution = toRecord(playwrightData['pendingExecution']);
-  const metadata = toRecord(lastExecution['metadata']);
-
-  return {
-    executedAt: readString(lastExecution['executedAt']),
-    browserMode: readString(metadata['browserMode']),
-    requestedBrowserMode: readString(metadata['requestedBrowserMode']),
-    pendingBrowserMode: readString(pendingExecution['requestedBrowserMode']),
-    pendingRequestId: readString(pendingExecution['requestId']),
-    pendingQueuedAt: readString(pendingExecution['queuedAt']),
-    runId: readString(metadata['runId']),
-    errorCategory: readString(lastExecution['errorCategory']) ?? readString(playwrightData['lastErrorCategory']),
-    requestId: readString(lastExecution['requestId']),
-    publishVerified: readBoolean(metadata['publishVerified']),
-    listingUrl: readString(marketplaceRecord['listingUrl']),
-    rawResult: metadata['rawResult'] ?? null,
-  };
-};
+import {
+  formatTimestamp,
+  formatListValue,
+  formatTraderaDuplicateMatchStrategy,
+  normalizeIntegrationSlug,
+  resolveDisplayedTraderaDuplicateSummary,
+  resolveTraderaStatusBadge,
+  resolveHistoryBrowserMode,
+  resolveDisplayHistoryFields,
+  resolveTraderaExecutionSummary,
+  resolvePlaywrightExecutionSummary,
+  resolveVintedExecutionSummary,
+} from './ProductListingDetails.utils';
 
 type ProductListingDetailsProps = ProductListingWithDetailsProps;
 
@@ -227,14 +51,58 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
   const isTraderaListing = TRADERA_INTEGRATION_SLUGS.has(
     normalizeIntegrationSlug(listing.integration.slug)
   );
+  const isVintedListing = isVintedIntegrationSlug(listing.integration.slug);
   const isPlaywrightListing =
     normalizeIntegrationSlug(listing.integration.slug) === PLAYWRIGHT_PROGRAMMABLE_INTEGRATION_SLUG;
   const traderaExecution = resolveTraderaExecutionSummary(listing.marketplaceData);
+  const liveTraderaExecution = useTraderaLiveExecution(isTraderaListing ? listing : null);
+  const vintedExecution = resolveVintedExecutionSummary(listing.marketplaceData);
   const playwrightExecution = resolvePlaywrightExecutionSummary(listing.marketplaceData);
   const traderaUsesCustomConnectionScript =
     isTraderaListing &&
     traderaExecution.scriptSource === 'connection' &&
     traderaExecution.scriptKind === 'custom';
+  const traderaPendingLabel =
+    traderaExecution.pendingAction === 'check_status'
+      ? 'Pending status check'
+      : traderaExecution.pendingAction === 'sync'
+        ? 'Pending sync'
+        : traderaExecution.pendingAction === 'list'
+          ? 'Pending listing'
+        : 'Pending relist';
+  const displayedTraderaRunId = liveTraderaExecution?.runId ?? traderaExecution.runId;
+  const displayedTraderaLatestStage =
+    liveTraderaExecution?.latestStage ?? traderaExecution.latestStage;
+  const displayedTraderaLatestStageUrl =
+    liveTraderaExecution?.latestStageUrl ?? traderaExecution.latestStageUrl;
+  const displayedTraderaExecutionSteps =
+    liveTraderaExecution && liveTraderaExecution.executionSteps.length > 0
+      ? liveTraderaExecution.executionSteps
+      : traderaExecution.executionSteps;
+  const displayedTraderaRawResult =
+    liveTraderaExecution?.rawResult ?? traderaExecution.rawResult;
+  const displayedTraderaLogTail =
+    liveTraderaExecution?.logTail.length ? liveTraderaExecution.logTail : traderaExecution.logTail;
+  const displayedTraderaLastAction =
+    liveTraderaExecution?.action ?? traderaExecution.lastAction;
+  const displayedTraderaLiveStatus =
+    liveTraderaExecution?.status === 'queued' || liveTraderaExecution?.status === 'running'
+      ? liveTraderaExecution.status
+      : null;
+  const displayedRequestedSelectorProfile =
+    liveTraderaExecution?.requestedSelectorProfile ??
+    traderaExecution.requestedSelectorProfile ??
+    traderaExecution.pendingSelectorProfile;
+  const displayedResolvedSelectorProfile =
+    liveTraderaExecution?.resolvedSelectorProfile ?? traderaExecution.resolvedSelectorProfile;
+  const displayedTraderaDuplicateSummary = resolveDisplayedTraderaDuplicateSummary({
+    persisted: traderaExecution,
+    liveRawResult: liveTraderaExecution?.rawResult,
+    liveLatestStage: liveTraderaExecution?.latestStage,
+  });
+  const traderaStatusBadge = isTraderaListing
+    ? resolveTraderaStatusBadge(listing.status, displayedTraderaDuplicateSummary.duplicateLinked)
+    : null;
 
   const getExportFieldsLabel = (): string => {
     const fields: string[] = [];
@@ -249,12 +117,18 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
   };
 
   const isHistoryOpen = historyOpenByListing[listing.id] ?? false;
+  const integrationDisplayName =
+    resolveIntegrationDisplayName(listing.integration.name, listing.integration.slug) ??
+    listing.integration.name;
 
   return (
     <div className='flex-1 min-w-0'>
       <div className='flex items-center gap-2 mb-2'>
-        <span className='font-semibold text-white truncate'>{listing.integration.name}</span>
-        <StatusBadge status={listing.status} />
+        <span className='font-semibold text-white truncate'>{integrationDisplayName}</span>
+        <StatusBadge
+          status={traderaStatusBadge?.status ?? listing.status}
+          label={traderaStatusBadge?.label}
+        />
       </div>
 
       <div className='grid gap-y-1.5'>
@@ -312,7 +186,7 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
           ) : null}
           {isTraderaListing && traderaExecution.pendingQueuedAt ? (
             <MetadataItem
-              label='Pending relist'
+              label={traderaPendingLabel}
               value={formatTimestamp(traderaExecution.pendingQueuedAt)}
               variant='minimal'
             />
@@ -321,6 +195,13 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
             <MetadataItem
               label='Pending browser mode'
               value={traderaExecution.pendingBrowserMode}
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.pendingSelectorProfile ? (
+            <MetadataItem
+              label='Pending selector profile'
+              value={traderaExecution.pendingSelectorProfile}
               variant='minimal'
             />
           ) : null}
@@ -339,6 +220,13 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
               variant='minimal'
             />
           ) : null}
+          {isTraderaListing && traderaExecution.lastSyncedAt ? (
+            <MetadataItem
+              label='Last synced'
+              value={formatTimestamp(traderaExecution.lastSyncedAt)}
+              variant='minimal'
+            />
+          ) : null}
           {isTraderaListing && traderaExecution.mode ? (
             <MetadataItem
               label='Run mode'
@@ -350,6 +238,23 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
             <MetadataItem
               label='Browser mode'
               value={traderaExecution.browserMode ?? traderaExecution.requestedBrowserMode}
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing &&
+          displayedRequestedSelectorProfile &&
+          displayedRequestedSelectorProfile !== displayedResolvedSelectorProfile ? (
+            <MetadataItem
+              label='Requested selector profile'
+              value={displayedRequestedSelectorProfile}
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing &&
+          (displayedResolvedSelectorProfile ?? displayedRequestedSelectorProfile) ? (
+            <MetadataItem
+              label='Resolved selector profile'
+              value={displayedResolvedSelectorProfile ?? displayedRequestedSelectorProfile}
               variant='minimal'
             />
           ) : null}
@@ -388,10 +293,10 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
               variant='minimal'
             />
           ) : null}
-          {isTraderaListing && traderaExecution.runId ? (
+          {isTraderaListing && displayedTraderaRunId ? (
             <MetadataItem
               label='Run ID'
-              value={traderaExecution.runId}
+              value={displayedTraderaRunId}
               mono
               variant='minimal'
             />
@@ -473,18 +378,18 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
               variant='minimal'
             />
           ) : null}
-          {isTraderaListing && traderaExecution.latestStage ? (
+          {isTraderaListing && displayedTraderaLatestStage ? (
             <MetadataItem
               label='Last stage'
-              value={traderaExecution.latestStage}
+              value={displayedTraderaLatestStage}
               mono
               variant='minimal'
             />
           ) : null}
-          {isTraderaListing && traderaExecution.latestStageUrl ? (
+          {isTraderaListing && displayedTraderaLatestStageUrl ? (
             <MetadataItem
               label='Stage URL'
-              value={traderaExecution.latestStageUrl}
+              value={displayedTraderaLatestStageUrl}
               variant='minimal'
             />
           ) : null}
@@ -492,6 +397,14 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
             <MetadataItem
               label='Category source'
               value={traderaExecution.categorySource}
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.categoryFallbackUsed ? (
+            <MetadataItem
+              label='Category fallback used'
+              value='Yes'
+              valueClassName='text-amber-300'
               variant='minimal'
             />
           ) : null}
@@ -517,6 +430,22 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
               variant='minimal'
             />
           ) : null}
+          {isTraderaListing && traderaExecution.categoryMappingRecoveredFromAnotherConnection ? (
+            <MetadataItem
+              label='Recovered category mapping'
+              value='Yes'
+              valueClassName='text-amber-300'
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.categoryMappingSourceConnectionId ? (
+            <MetadataItem
+              label='Category mapping source connection'
+              value={traderaExecution.categoryMappingSourceConnectionId}
+              mono
+              variant='minimal'
+            />
+          ) : null}
           {isTraderaListing && traderaExecution.categoryId ? (
             <MetadataItem
               label='Category ID'
@@ -532,39 +461,58 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
               variant='minimal'
             />
           ) : null}
-          {isTraderaListing && traderaExecution.duplicateLinked ? (
+          {isTraderaListing && displayedTraderaDuplicateSummary.duplicateLinked ? (
             <MetadataItem
               label='Existing listing linked'
               value='Yes'
               variant='minimal'
             />
           ) : null}
-          {isTraderaListing && traderaExecution.duplicateMatchStrategy ? (
+          {isTraderaListing && displayedTraderaDuplicateSummary.duplicateMatchStrategy ? (
             <MetadataItem
               label='Duplicate match strategy'
-              value={traderaExecution.duplicateMatchStrategy}
+              value={formatTraderaDuplicateMatchStrategy(
+                displayedTraderaDuplicateSummary.duplicateMatchStrategy
+              )}
               variant='minimal'
             />
           ) : null}
-          {isTraderaListing && traderaExecution.duplicateMatchedProductId ? (
+          {isTraderaListing && displayedTraderaDuplicateSummary.duplicateMatchedProductId ? (
             <MetadataItem
               label='Duplicate Product ID'
-              value={traderaExecution.duplicateMatchedProductId}
+              value={displayedTraderaDuplicateSummary.duplicateMatchedProductId}
               mono
               variant='minimal'
             />
           ) : null}
-          {isTraderaListing && traderaExecution.duplicateCandidateCount !== null ? (
+          {isTraderaListing && displayedTraderaDuplicateSummary.duplicateCandidateCount !== null ? (
             <MetadataItem
               label='Duplicate title matches'
-              value={String(traderaExecution.duplicateCandidateCount)}
+              value={String(displayedTraderaDuplicateSummary.duplicateCandidateCount)}
               variant='minimal'
             />
           ) : null}
-          {isTraderaListing && traderaExecution.duplicateSearchTitle ? (
+          {isTraderaListing && displayedTraderaDuplicateSummary.duplicateSearchTitle ? (
             <MetadataItem
               label='Duplicate search title'
-              value={traderaExecution.duplicateSearchTitle}
+              value={displayedTraderaDuplicateSummary.duplicateSearchTitle}
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing &&
+          displayedTraderaDuplicateSummary.duplicateIgnoredNonExactCandidateCount !== null &&
+          displayedTraderaDuplicateSummary.duplicateIgnoredNonExactCandidateCount > 0 ? (
+            <MetadataItem
+              label='Ignored non-exact duplicate matches'
+              value={String(displayedTraderaDuplicateSummary.duplicateIgnoredNonExactCandidateCount)}
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && displayedTraderaDuplicateSummary.duplicateIgnoredCandidateTitles.length > 0 ? (
+            <MetadataItem
+              label='Ignored duplicate titles'
+              value={displayedTraderaDuplicateSummary.duplicateIgnoredCandidateTitles.join(', ')}
+              wrap
               variant='minimal'
             />
           ) : null}
@@ -593,6 +541,82 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
             <MetadataItem
               label='Actual image upload source'
               value={traderaExecution.imageUploadSource}
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.imageUploadFallbackUsed ? (
+            <MetadataItem
+              label='Image upload fallback used'
+              value='Yes'
+              valueClassName='text-amber-300'
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.failureCode ? (
+            <MetadataItem
+              label='Failure code'
+              value={traderaExecution.failureCode}
+              mono
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.staleDraftImages ? (
+            <MetadataItem
+              label='Stale draft images'
+              value='Yes'
+              valueClassName='text-amber-300'
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.duplicateRisk ? (
+            <MetadataItem
+              label='Duplicate risk'
+              value='Yes'
+              valueClassName='text-amber-300'
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.imageRetryCleanupUnsettled ? (
+            <MetadataItem
+              label='Retry cleanup unsettled'
+              value='Yes'
+              valueClassName='text-amber-300'
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.imagePreviewMismatch ? (
+            <MetadataItem
+              label='Image preview mismatch'
+              value='Yes'
+              valueClassName='text-amber-300'
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.expectedImageUploadCount !== null ? (
+            <MetadataItem
+              label='Expected image uploads'
+              value={String(traderaExecution.expectedImageUploadCount)}
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.plannedImageCount !== null ? (
+            <MetadataItem
+              label='Planned image count'
+              value={String(traderaExecution.plannedImageCount)}
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.observedImagePreviewDelta !== null ? (
+            <MetadataItem
+              label='Observed new previews'
+              value={String(traderaExecution.observedImagePreviewDelta)}
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.observedImagePreviewCount !== null ? (
+            <MetadataItem
+              label='Observed total previews'
+              value={String(traderaExecution.observedImagePreviewCount)}
               variant='minimal'
             />
           ) : null}
@@ -632,6 +656,97 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
             <MetadataItem
               label='Last execution'
               value={formatTimestamp(playwrightExecution.executedAt)}
+              variant='minimal'
+            />
+          ) : null}
+          {isVintedListing && vintedExecution.pendingQueuedAt ? (
+            <MetadataItem
+              label='Pending execution'
+              value={formatTimestamp(vintedExecution.pendingQueuedAt)}
+              variant='minimal'
+            />
+          ) : null}
+          {isVintedListing && vintedExecution.pendingBrowserMode ? (
+            <MetadataItem
+              label='Pending browser mode'
+              value={vintedExecution.pendingBrowserMode}
+              variant='minimal'
+            />
+          ) : null}
+          {isVintedListing && vintedExecution.pendingBrowserPreference ? (
+            <MetadataItem
+              label='Pending browser'
+              value={vintedExecution.pendingBrowserPreference}
+              variant='minimal'
+            />
+          ) : null}
+          {isVintedListing && vintedExecution.pendingRequestId ? (
+            <MetadataItem
+              label='Pending queue job'
+              value={vintedExecution.pendingRequestId}
+              mono
+              variant='minimal'
+            />
+          ) : null}
+          {isVintedListing && vintedExecution.executedAt ? (
+            <MetadataItem
+              label='Last execution'
+              value={formatTimestamp(vintedExecution.executedAt)}
+              variant='minimal'
+            />
+          ) : null}
+          {isVintedListing && (vintedExecution.browserMode || vintedExecution.requestedBrowserMode) ? (
+            <MetadataItem
+              label='Browser mode'
+              value={vintedExecution.browserMode ?? vintedExecution.requestedBrowserMode}
+              variant='minimal'
+            />
+          ) : null}
+          {isVintedListing &&
+          (vintedExecution.browserLabel ||
+            vintedExecution.browserPreference ||
+            vintedExecution.requestedBrowserPreference) ? (
+            <MetadataItem
+              label='Browser'
+              value={
+                vintedExecution.browserLabel ??
+                vintedExecution.browserPreference ??
+                vintedExecution.requestedBrowserPreference
+              }
+              variant='minimal'
+            />
+          ) : null}
+          {isVintedListing && vintedExecution.requestId ? (
+            <MetadataItem
+              label='Queue job'
+              value={vintedExecution.requestId}
+              mono
+              variant='minimal'
+            />
+          ) : null}
+          {isVintedListing && vintedExecution.publishVerified !== null ? (
+            <MetadataItem
+              label='Publish verified'
+              value={vintedExecution.publishVerified ? 'Yes' : 'No'}
+              valueClassName={vintedExecution.publishVerified ? 'text-emerald-400' : 'text-rose-400'}
+              variant='minimal'
+            />
+          ) : null}
+          {isVintedListing && vintedExecution.listingUrl ? (
+            <MetadataItem
+              label='Listing URL'
+              value={(
+                <ExternalLink href={vintedExecution.listingUrl} className='text-sky-400 hover:text-sky-300'>
+                  Open listing
+                </ExternalLink>
+              )}
+              variant='minimal'
+            />
+          ) : null}
+          {isVintedListing && vintedExecution.errorCategory ? (
+            <MetadataItem
+              label='Error category'
+              value={vintedExecution.errorCategory}
               variant='minimal'
             />
           ) : null}
@@ -712,11 +827,26 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
         </div>
       </div>
 
-      {isTraderaListing && traderaExecution.rawResult ? (
+      {isTraderaListing && displayedTraderaExecutionSteps.length > 0 ? (
+        <div className='mt-4'>
+          <TraderaExecutionSteps
+            title={
+              displayedTraderaLastAction === 'check_status'
+                ? 'Status check steps'
+                : 'Execution steps'
+            }
+            steps={displayedTraderaExecutionSteps}
+            live={displayedTraderaLiveStatus !== null}
+            liveStatus={displayedTraderaLiveStatus}
+          />
+        </div>
+      ) : null}
+
+      {isTraderaListing && displayedTraderaRawResult ? (
         <div className='mt-4'>
           <JsonViewer
             title='Tradera run result'
-            data={traderaExecution.rawResult}
+            data={displayedTraderaRawResult}
             maxHeight={220}
             className='bg-white/5'
           />
@@ -724,15 +854,21 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
       ) : null}
       {isTraderaListing &&
       (traderaExecution.failureArtifacts ||
-        traderaExecution.logTail ||
+        displayedTraderaLogTail ||
         traderaExecution.imageSettleState) ? (
         <div className='mt-4'>
           <JsonViewer
             title='Tradera failure diagnostics'
             data={{
               failureArtifacts: traderaExecution.failureArtifacts,
-              logTail: traderaExecution.logTail,
+              logTail: displayedTraderaLogTail,
               imageSettleState: traderaExecution.imageSettleState,
+              failureCode: traderaExecution.failureCode,
+              staleDraftImages: traderaExecution.staleDraftImages,
+              duplicateRisk: traderaExecution.duplicateRisk,
+              imageRetryCleanupUnsettled: traderaExecution.imageRetryCleanupUnsettled,
+              expectedImageUploadCount: traderaExecution.expectedImageUploadCount,
+              observedImagePreviewDescriptors: traderaExecution.observedImagePreviewDescriptors,
             }}
             maxHeight={220}
             className='bg-white/5'
@@ -744,6 +880,25 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
           <JsonViewer
             title='Playwright run result'
             data={playwrightExecution.rawResult}
+            maxHeight={220}
+            className='bg-white/5'
+          />
+        </div>
+      ) : null}
+      {isVintedListing && vintedExecution.executionSteps.length > 0 ? (
+        <div className='mt-4'>
+          <TraderaExecutionSteps
+            title='Vinted execution steps'
+            steps={vintedExecution.executionSteps}
+            compact
+          />
+        </div>
+      ) : null}
+      {isVintedListing && vintedExecution.rawResult ? (
+        <div className='mt-4'>
+          <JsonViewer
+            title='Vinted run result'
+            data={vintedExecution.rawResult}
             maxHeight={220}
             className='bg-white/5'
           />
@@ -809,7 +964,7 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
                         value={formatListValue(event.warehouseId)}
                         variant='subtle'
                       />
-                      {(isPlaywrightListing || isTraderaListing) && historyBrowserMode && (
+                      {(isPlaywrightListing || isTraderaListing || isVintedListing) && historyBrowserMode && (
                         <MetadataItem
                           label='Browser mode'
                           value={historyBrowserMode}

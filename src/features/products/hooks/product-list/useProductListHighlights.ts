@@ -1,5 +1,14 @@
 'use client';
 
+// useProductListHighlights: implements transient per-row highlights used to
+// draw attention to recently-changed products (e.g., completed listings,
+// recently-saved edits). Provides TTLs and dedupe logic so rapid state
+// changes don't cause excessive reflows or flicker.
+
+// useProductListHighlights: lightweight UI hook for transient 'job completion'
+// highlights per row. Manages per-product timeouts and exposes a trigger
+// function used by background sync and AI-run updates to visually emphasize
+// updated rows.
 import { useCallback, useRef, useState } from 'react';
 
 import { PRODUCT_ROW_HIGHLIGHT_TOTAL_MS } from '@/features/products/hooks/product-list-state-utils';

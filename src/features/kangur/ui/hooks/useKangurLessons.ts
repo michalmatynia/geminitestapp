@@ -16,7 +16,7 @@ import {
 } from '@/shared/contracts/kangur';
 import type { ListQuery, MutationResult, SingleQuery } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
-import { createListQueryV2, createSingleQueryV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
+import { createListQueryV2, createUpdateMutationV2, useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { normalizeKangurLessonDocumentStore } from '@/features/kangur/lesson-documents';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
@@ -213,7 +213,8 @@ export const useKangurLessonDocument = (
   const routeLocale = useLocale();
   const resolvedLocale = resolveLessonDocumentsLocale(routeLocale, options?.locale);
 
-  return createSingleQueryV2<KangurLessonDocument | null>({
+  return useSingleQueryV2<KangurLessonDocument | null>({
+    id: lessonId,
     queryKey: QUERY_KEYS.kangur.lessonDocument(lessonId, resolvedLocale),
     queryFn: async (): Promise<KangurLessonDocument | null> =>
       lessonId ? await fetchLessonDocument(lessonId, resolvedLocale) : null,

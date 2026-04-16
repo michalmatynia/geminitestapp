@@ -1,6 +1,6 @@
 import React from 'react';
 
-import type { PathFlowIntensity } from '@/shared/lib/ai-paths';
+import type { PathFlowIntensity } from '@/shared/contracts/ai-paths';
 
 // ---------------------------------------------------------------------------
 // Intensity presets — one dot per edge, intensity controls speed/size/glow
@@ -34,11 +34,11 @@ interface SignalDotsProps {
  * Implemented with SVG animateMotion using the edge `path` directly.
  * Avoids mpath/id references to prevent corner-jump artifacts.
  */
-export const SignalDots = React.memo(function SignalDots({
+export const SignalDots = React.memo(({
   path,
   intensity,
   color = 'rgb(56, 189, 248)',
-}: SignalDotsProps): React.JSX.Element {
+}: SignalDotsProps): React.JSX.Element => {
   const { duration, opacity, count, radius } = INTENSITY_CONFIG[intensity];
   const particleSpacing = duration / Math.max(count, 1);
 

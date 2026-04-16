@@ -12,4 +12,9 @@ describe('productFilterSchema pageSize clamp', () => {
     const parsed = productFilterSchema.parse({ pageSize: '24' });
     expect(parsed.pageSize).toBe(24);
   });
+
+  it('parses archived boolean filters from querystring input', () => {
+    expect(productFilterSchema.parse({ archived: 'true' }).archived).toBe(true);
+    expect(productFilterSchema.parse({ archived: 'false' }).archived).toBe(false);
+  });
 });

@@ -115,7 +115,7 @@ describe('portable AI-path engine scaffold', () => {
   );
 
   it.each(['simulation_required', 'simulation_preferred'] as const)(
-    'remediates removed legacy trigger context mode %s from raw path payloads',
+    'rejects removed legacy trigger context mode %s from raw path payloads',
     (contextMode) => {
       const pathConfig = createDefaultPathConfig(`path_removed_trigger_context_${contextMode}`);
       const seedNode = pathConfig.nodes[0];
@@ -139,14 +139,9 @@ describe('portable AI-path engine scaffold', () => {
       pathConfig.edges = [];
 
       const parsed = resolvePortablePathInput(pathConfig);
-      expect(parsed.ok).toBe(true);
-      if (!parsed.ok) return;
-      expect(parsed.value.pathConfig.nodes[0]?.config?.trigger?.contextMode).toBe('trigger_only');
-      expect(
-        parsed.value.migrationWarnings.some(
-          (warning) => warning.code === 'removed_trigger_context_modes_normalized'
-        )
-      ).toBe(true);
+      expect(parsed.ok).toBe(false);
+      if (parsed.ok) return;
+      expect(parsed.error).toMatch(/removed legacy Trigger context modes/i);
     }
   );
 
@@ -275,7 +270,36 @@ describe('portable AI-path engine scaffold', () => {
     expect(parsed.value.pathConfig.edges.length).toBe(pathConfig.edges.length);
   });
 
-  it('keeps alias-only path-config edge fields unresolved when resolving raw payloads', () => {
+  it('preserves raw node identities instead of auto-repairing them during resolution', () => {
+    const pathConfig = createDefaultPathConfig('path_portable_identity_passthrough');
+    const remappedNodeIds = new Map<string, string>();
+    pathConfig.nodes = pathConfig.nodes.map((node, index) => {
+      const nextId = `legacy-node-${index + 1}`;
+      remappedNodeIds.set(node.id, nextId);
+      return {
+        ...node,
+        id: nextId,
+      };
+    });
+    pathConfig.edges = pathConfig.edges.map((edge) => ({
+      ...edge,
+      from: remappedNodeIds.get(edge.from) ?? edge.from,
+      to: remappedNodeIds.get(edge.to) ?? edge.to,
+    }));
+
+    const parsed = resolvePortablePathInput(pathConfig);
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+
+    expect(parsed.value.identityRepaired).toBe(false);
+    expect(parsed.value.identityWarnings).toEqual([]);
+    expect(parsed.value.pathConfig.nodes.map((node) => node.id)).toEqual(
+      pathConfig.nodes.map((node) => node.id)
+    );
+    expect(parsed.value.pathConfig.edges).toEqual(pathConfig.edges);
+  });
+
+  it('rejects alias-only path-config edge fields when resolving raw payloads', () => {
     const pathConfig = createDefaultPathConfig('path_portable_alias_edges');
     const fromNode = pathConfig.nodes[0]!;
     const toNode = pathConfig.nodes[1]!;
@@ -290,19 +314,9 @@ describe('portable AI-path engine scaffold', () => {
     ];
 
     const parsed = resolvePortablePathInput(pathConfig);
-    expect(parsed.ok).toBe(true);
-    if (!parsed.ok) return;
-
-    const edge = parsed.value.pathConfig.edges[0];
-    expect(parsed.value.source).toBe('path_config');
-    expect(edge?.from).toBe('');
-    expect(edge?.to).toBe('');
-    expect(edge?.fromPort).toBeUndefined();
-    expect(edge?.toPort).toBeUndefined();
-    expect(edge?.source).toBeUndefined();
-    expect(edge?.target).toBeUndefined();
-    expect(edge?.sourceHandle).toBeUndefined();
-    expect(edge?.targetHandle).toBeUndefined();
+    expect(parsed.ok).toBe(false);
+    if (parsed.ok) return;
+    expect(parsed.error).toMatch(/unsupported legacy edge alias fields/i);
   });
 
   it('returns compile findings for invalid path payloads', () => {
@@ -341,6 +355,32 @@ describe('portable AI-path engine scaffold', () => {
     expect(
       migrated.value.migrationWarnings.some((warning) => warning.code === 'path_config_upgraded')
     ).toBe(true);
+  });
+
+  it('rejects raw path-config edges that still use semantic edge aliases', () => {
+    const pathConfig = createDefaultPathConfig('path_portable_legacy_edge_aliases');
+    const legacyEdgeConfig = {
+      ...pathConfig,
+      edges: (pathConfig.edges ?? []).map((edge) => ({
+        id: edge.id,
+        fromNodeId: edge.from,
+        toNodeId: edge.to,
+        sourceHandle: edge.fromPort ?? null,
+        targetHandle: edge.toPort ?? null,
+        label: edge.label ?? null,
+        ...(typeof edge.type === 'string' ? { type: edge.type } : {}),
+        ...(edge.data && typeof edge.data === 'object' ? { data: edge.data } : {}),
+        ...(typeof edge.createdAt === 'string' ? { createdAt: edge.createdAt } : {}),
+        ...(typeof edge.updatedAt === 'string' || edge.updatedAt === null
+          ? { updatedAt: edge.updatedAt }
+          : {}),
+      })),
+    };
+
+    const resolved = resolvePortablePathInput(legacyEdgeConfig);
+    expect(resolved.ok).toBe(false);
+    if (resolved.ok) return;
+    expect(resolved.error).toMatch(/unsupported legacy edge alias fields/i);
   });
 
   it('migrates portable package v2 payload through migration registry', () => {

@@ -17,7 +17,11 @@ const {
 
 export { useMailPageContext };
 
-export function MailPageProvider({ children }: { children: React.ReactNode }) {
+export function MailPageProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}): React.JSX.Element {
   const state = useAdminFilemakerMailPageState();
   return (
     <MailPageContext.Provider value={state}>

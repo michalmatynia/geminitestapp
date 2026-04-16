@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'nextjs-toploader/app';
 import { useCallback, useState } from 'react';
 
 import { api } from '@/shared/lib/api-client';

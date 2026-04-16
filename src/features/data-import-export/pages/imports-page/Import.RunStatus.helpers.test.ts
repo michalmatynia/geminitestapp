@@ -1,133 +1,222 @@
 import { describe, expect, it } from 'vitest';
 
-import type { BaseImportItemRecord, BaseImportRunParameterImportSummary } from '@/shared/contracts/integrations/base-com';
-
 import {
-  buildParameterImportSummaryFromItems,
-  compareImportItemsByLatestCompletion,
   getImportRunErrorItems,
-  getParameterSyncHistoryItems,
-  hasRetryableImportItems,
-  resolveImportRunParameterImportSummary,
+  resolveImportRunRetryDiagnostics,
+  resolveImportRunDispatchDiagnostics,
 } from './Import.RunStatus.helpers';
 
-const createItem = (overrides: Partial<BaseImportItemRecord> = {}): BaseImportItemRecord => ({
-  id: overrides.id ?? 'item-1',
-  runId: overrides.runId ?? 'run-1',
-  externalId: overrides.externalId ?? 'ext-1',
-  itemId: overrides.itemId ?? 'base-1',
-  status: overrides.status ?? 'imported',
-  createdAt: overrides.createdAt ?? '2026-01-01T00:00:00.000Z',
-  updatedAt: overrides.updatedAt ?? '2026-01-01T00:00:00.000Z',
-  attempt: overrides.attempt ?? 1,
-  ...overrides,
+describe('resolveImportRunDispatchDiagnostics', () => {
+  it('returns null when the run is missing', () => {
+    expect(resolveImportRunDispatchDiagnostics(null)).toBeNull();
+  });
+
+  it('returns a preflight-blocked diagnostic when preflight fails', () => {
+    expect(
+      resolveImportRunDispatchDiagnostics({
+        id: 'run-1',
+        status: 'failed',
+        params: {
+          connectionId: 'conn-1',
+          inventoryId: 'inv-1',
+          catalogId: 'cat-1',
+          imageMode: 'download',
+          uniqueOnly: true,
+          allowDuplicateSku: false,
+          dryRun: false,
+          mode: 'create_only',
+        },
+        preflight: {
+          ok: false,
+          checkedAt: '2026-04-09T18:00:00.000Z',
+          issues: [{ code: 'MISSING_CATALOG', message: 'Catalog is required.', severity: 'error' }],
+        },
+        stats: {
+          total: 0,
+          pending: 0,
+          processing: 0,
+          imported: 0,
+          updated: 0,
+          skipped: 0,
+          failed: 0,
+        },
+        summaryMessage: 'Preflight failed. Resolve errors and retry import.',
+        createdAt: '2026-04-09T18:00:00.000Z',
+        updatedAt: '2026-04-09T18:00:00.000Z',
+      })
+    ).toEqual({
+      tone: 'error',
+      title: 'Dispatch stopped at preflight',
+      details: [
+        'This run did not reach the runtime queue because the preflight check failed.',
+        'Catalog is required.',
+      ],
+    });
+  });
+
+  it('returns a zero-match diagnostic when no items were resolved', () => {
+    expect(
+      resolveImportRunDispatchDiagnostics({
+        id: 'run-2',
+        status: 'completed',
+        params: {
+          connectionId: 'conn-1',
+          inventoryId: 'inv-1',
+          catalogId: 'cat-1',
+          imageMode: 'download',
+          uniqueOnly: true,
+          allowDuplicateSku: false,
+          dryRun: false,
+          mode: 'create_only',
+        },
+        dispatchMode: null,
+        queueJobId: null,
+        stats: {
+          total: 0,
+          pending: 0,
+          processing: 0,
+          imported: 0,
+          updated: 0,
+          skipped: 0,
+          failed: 0,
+        },
+        summaryMessage: 'No products matched current import filters.',
+        createdAt: '2026-04-09T18:00:00.000Z',
+        updatedAt: '2026-04-09T18:00:00.000Z',
+      })
+    ).toEqual({
+      tone: 'warning',
+      title: 'No products matched the current import filters',
+      details: ['Nothing was queued because item resolution returned zero import candidates.'],
+    });
+  });
+
+  it('returns an inline fallback diagnostic when dispatch mode is inline', () => {
+    expect(
+      resolveImportRunDispatchDiagnostics({
+        id: 'run-3',
+        status: 'running',
+        params: {
+          connectionId: 'conn-1',
+          inventoryId: 'inv-1',
+          catalogId: 'cat-1',
+          imageMode: 'download',
+          uniqueOnly: true,
+          allowDuplicateSku: false,
+          dryRun: false,
+          mode: 'create_only',
+        },
+        dispatchMode: 'inline',
+        queueJobId: 'inline-123',
+        stats: {
+          total: 10,
+          pending: 10,
+          processing: 0,
+          imported: 0,
+          updated: 0,
+          skipped: 0,
+          failed: 0,
+        },
+        summaryMessage: 'Import running inline.',
+        createdAt: '2026-04-09T18:00:00.000Z',
+        updatedAt: '2026-04-09T18:00:00.000Z',
+      })
+    ).toEqual({
+      tone: 'warning',
+      title: 'This run used inline fallback instead of BullMQ',
+      details: [
+        'Base imports use the separate base-import runtime queue.',
+        'This run executed inline because Redis queueing was unavailable or enqueueing failed.',
+      ],
+    });
+  });
 });
 
-describe('Import.RunStatus.helpers', () => {
-  it('detects retryable items and limits visible error rows', () => {
-    const items = [
-      createItem({ id: 'item-1', status: 'imported' }),
-      createItem({ id: 'item-2', status: 'failed', errorMessage: 'Failed to import' }),
-      createItem({ id: 'item-3', status: 'pending', errorMessage: 'Queued again' }),
-    ];
-
-    expect(hasRetryableImportItems(items)).toBe(true);
-    expect(getImportRunErrorItems(items, 1)).toEqual([
-      expect.objectContaining({ id: 'item-2', errorMessage: 'Failed to import' }),
+describe('getImportRunErrorItems', () => {
+  it('returns the most recent failed items first', () => {
+    const items = getImportRunErrorItems([
+      {
+        id: 'item-1',
+        runId: 'run-1',
+        externalId: 'external-1',
+        itemId: '111',
+        sku: 'SKU-1',
+        status: 'failed',
+        errorMessage: 'Older failure',
+        createdAt: '2026-04-09T18:00:00.000Z',
+        updatedAt: '2026-04-09T18:00:05.000Z',
+        finishedAt: '2026-04-09T18:00:05.000Z',
+        attempt: 1,
+      },
+      {
+        id: 'item-2',
+        runId: 'run-1',
+        externalId: 'external-2',
+        itemId: '222',
+        sku: 'SKU-2',
+        status: 'failed',
+        errorMessage: 'Newest failure',
+        createdAt: '2026-04-09T18:00:00.000Z',
+        updatedAt: '2026-04-09T18:00:20.000Z',
+        finishedAt: '2026-04-09T18:00:20.000Z',
+        attempt: 2,
+      },
     ]);
+
+    expect(items.map((item) => item.itemId)).toEqual(['222', '111']);
   });
+});
 
-  it('uses the run summary when it already contains parameter activity', () => {
-    const runSummary: BaseImportRunParameterImportSummary = {
-      itemsApplied: 3,
-      extracted: 7,
-      resolved: 6,
-      created: 2,
-      written: 5,
-    };
-
+describe('resolveImportRunRetryDiagnostics', () => {
+  it('returns the next scheduled retry when pending retryable items exist', () => {
     expect(
-      resolveImportRunParameterImportSummary(runSummary, [
-        createItem({
-          id: 'item-1',
-          parameterImportSummary: { extracted: 1, resolved: 1, created: 1, written: 1 },
-        }),
-      ])
-    ).toBe(runSummary);
-  });
-
-  it('aggregates and sanitizes item parameter summaries when the run summary is empty', () => {
-    expect(
-      buildParameterImportSummaryFromItems([
-        createItem({
-          id: 'item-1',
-          parameterImportSummary: { extracted: 2.9, resolved: -1, created: 3, written: 4 },
-        }),
-        createItem({
-          id: 'item-2',
-          parameterImportSummary: {
-            extracted: Number.NaN,
-            resolved: 5.2,
-            created: Number.POSITIVE_INFINITY,
-            written: 1,
-          },
-        }),
-      ])
-    ).toEqual({
-      itemsApplied: 2,
-      extracted: 2,
-      resolved: 5,
-      created: 3,
-      written: 5,
-    });
-
-    expect(
-      resolveImportRunParameterImportSummary(
+      resolveImportRunRetryDiagnostics([
         {
-          itemsApplied: 0,
-          extracted: 0,
-          resolved: 0,
-          created: 0,
-          written: 0,
+          id: 'item-1',
+          runId: 'run-1',
+          externalId: 'external-1',
+          itemId: '111',
+          status: 'pending',
+          retryable: true,
+          nextRetryAt: '2026-04-09T18:00:20.000Z',
+          createdAt: '2026-04-09T18:00:00.000Z',
+          updatedAt: '2026-04-09T18:00:05.000Z',
+          attempt: 1,
         },
-        [createItem({ parameterImportSummary: { extracted: 1, resolved: 2, created: 0, written: 3 } })]
-      )
+        {
+          id: 'item-2',
+          runId: 'run-1',
+          externalId: 'external-2',
+          itemId: '222',
+          status: 'pending',
+          retryable: true,
+          nextRetryAt: '2026-04-09T18:00:10.000Z',
+          createdAt: '2026-04-09T18:00:00.000Z',
+          updatedAt: '2026-04-09T18:00:06.000Z',
+          attempt: 2,
+        },
+      ])
     ).toEqual({
-      itemsApplied: 1,
-      extracted: 1,
-      resolved: 2,
-      created: 0,
-      written: 3,
+      scheduledCount: 2,
+      nextRetryAt: '2026-04-09T18:00:10.000Z',
     });
   });
 
-  it('sorts recent parameter sync items by finished or updated timestamp and truncates history', () => {
-    const items = [
-      createItem({
-        id: 'item-old',
-        itemId: 'old',
-        finishedAt: '2026-01-01T00:00:00.000Z',
-        parameterImportSummary: { extracted: 1, resolved: 1, created: 1, written: 1 },
-      }),
-      createItem({
-        id: 'item-new',
-        itemId: 'new',
-        finishedAt: '2026-01-03T00:00:00.000Z',
-        parameterImportSummary: { extracted: 2, resolved: 2, created: 2, written: 2 },
-      }),
-      createItem({
-        id: 'item-middle',
-        itemId: 'middle',
-        updatedAt: '2026-01-02T00:00:00.000Z',
-        parameterImportSummary: { extracted: 3, resolved: 3, created: 3, written: 3 },
-      }),
-      createItem({ id: 'item-none', itemId: 'none' }),
-    ];
-
-    expect(compareImportItemsByLatestCompletion(items[0]!, items[1]!)).toBeGreaterThan(0);
-    expect(getParameterSyncHistoryItems(items, 2).map((item: BaseImportItemRecord) => item.itemId)).toEqual([
-      'new',
-      'middle',
-    ]);
+  it('returns null when no scheduled retry items exist', () => {
+    expect(
+      resolveImportRunRetryDiagnostics([
+        {
+          id: 'item-1',
+          runId: 'run-1',
+          externalId: 'external-1',
+          itemId: '111',
+          status: 'failed',
+          retryable: false,
+          createdAt: '2026-04-09T18:00:00.000Z',
+          updatedAt: '2026-04-09T18:00:05.000Z',
+          attempt: 1,
+        },
+      ])
+    ).toBeNull();
   });
 });

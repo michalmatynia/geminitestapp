@@ -1,3 +1,5 @@
+import type { TitleDescriptionDto } from '@/shared/contracts/base';
+
 export const textEditorEngineInstanceValues = [
   'notes_app',
   'filemaker_email',
@@ -23,7 +25,4 @@ export type TextEditorEngineProfilesMap = Record<
   TextEditorEngineProfile
 >;
 
-export type TextEditorEngineSettingsMeta = {
-  title: string;
-  description: string;
-};
+export type { TitleDescriptionDto as TextEditorEngineSettingsMeta };

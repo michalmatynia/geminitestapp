@@ -178,7 +178,7 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
       <StandardDataTablePanel columns={columns} data={docs} isLoading={isLoading} />
 
       <ConfirmModal
-        isOpen={!!docToDelete}
+        isOpen={Boolean(docToDelete)}
         onClose={() => setDocToDelete(null)}
         onConfirm={() => {
           void handleDelete();

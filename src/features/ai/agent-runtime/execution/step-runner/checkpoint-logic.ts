@@ -2,7 +2,7 @@ import { logAgentAudit } from '@/features/ai/agent-runtime/audit';
 import { getBrowserContextSummary } from '@/features/ai/agent-runtime/browsing/context';
 import { persistCheckpoint } from '@/features/ai/agent-runtime/memory/checkpoint';
 import { buildCheckpointBriefWithLLM } from '@/features/ai/agent-runtime/planning/llm';
-import { AgentExecutionContext, PlanStep, PlannerMeta } from '@/shared/contracts/agent-runtime';
+import { type AgentExecutionContext, type PlanStep, type PlannerMeta } from '@/shared/contracts/agent-runtime';
 
 export type CheckpointContext = {
   checkpointBriefStepId: string | null;

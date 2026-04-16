@@ -17,6 +17,7 @@ export * from './core/helpers';
 export * from './core/runtime';
 export * from './core/utils/graph';
 export * from './core/utils/data-contract-preflight';
+export * from './core/utils/path-folders';
 export * from './core/utils/path-templates';
 export * from './core/starter-workflows';
 export * from './portable-engine';

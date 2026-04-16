@@ -1,4 +1,4 @@
-import { TriggerEventEntityType } from '@/shared/contracts/ai-trigger-buttons';
+import { type TriggerEventEntityType } from '@/shared/contracts/ai-trigger-buttons';
 
 export const isTimeoutMessage = (message: string | null | undefined): boolean => {
   if (!message || typeof message !== 'string') return false;

@@ -65,6 +65,7 @@ export function CategoriesSettings(): React.JSX.Element {
   const [editingCategory, setEditingCategory] = useState<ProductCategoryWithChildren | null>(null);
   const [formData, setFormData] = useState<CategoryFormData>({
     name: '',
+    namePl: '',
     description: '',
     color: '#10b981',
     parentId: null,
@@ -165,6 +166,7 @@ export function CategoriesSettings(): React.JSX.Element {
       setEditingCategory(null);
       setFormData({
         name: '',
+        namePl: '',
         description: '',
         color: '#10b981',
         parentId,
@@ -179,7 +181,8 @@ export function CategoriesSettings(): React.JSX.Element {
   const handleOpenEditModal = useCallback((category: ProductCategoryWithChildren): void => {
     setEditingCategory(category);
     setFormData({
-      name: category.name,
+      name: category.name_en ?? category.name,
+      namePl: category.name_pl ?? '',
       description: category.description || '',
       color: category.color || '#10b981',
       parentId: category.parentId ?? null,
@@ -231,6 +234,7 @@ export function CategoriesSettings(): React.JSX.Element {
     try {
       const payload: Partial<ProductCategory> = {
         name: formData.name.trim(),
+        name_pl: formData.namePl.trim() || null,
         description: formData.description.trim() || null,
         color: formData.color,
         parentId: formData.parentId ?? null,
@@ -379,6 +383,50 @@ export function CategoriesSettings(): React.JSX.Element {
     []
   );
 
+  const canStartCategoryDrag = useCallback(
+    (input: {
+      node: MasterTreeNode;
+      event: React.DragEvent<HTMLDivElement>;
+    }): boolean => {
+      const { event } = input;
+      const target = event.target;
+      const eventTarget = target instanceof Element ? target : null;
+      const pointerElement =
+        typeof document !== 'undefined'
+          ? document.elementFromPoint(event.clientX, event.clientY)
+          : null;
+
+      const matchesSelector = (element: Element | null, selector: string): boolean =>
+        Boolean(element?.closest(selector));
+
+      if (
+        matchesSelector(eventTarget, '[data-master-tree-drag-handle="category"]') ||
+        matchesSelector(pointerElement, '[data-master-tree-drag-handle="category"]')
+      ) {
+        return true;
+      }
+
+      if (
+        matchesSelector(
+          eventTarget,
+          'button,[role="button"],input,textarea,select,a,[data-master-tree-no-drag="true"]'
+        ) ||
+        matchesSelector(
+          pointerElement,
+          'button,[role="button"],input,textarea,select,a,[data-master-tree-no-drag="true"]'
+        )
+      ) {
+        return false;
+      }
+
+      return (
+        matchesSelector(eventTarget, '[data-master-tree-drag-surface="category"]') ||
+        matchesSelector(pointerElement, '[data-master-tree-drag-surface="category"]')
+      );
+    },
+    []
+  );
+
   const categoryTreeNodeRuntimeValue = useMemo(
     (): CategoryTreeNodeRuntimeContextValue => ({
       categoryById,
@@ -496,6 +544,7 @@ export function CategoriesSettings(): React.JSX.Element {
                         controller={controller}
                         className='space-y-0.5'
                         rootDropUi={rootDropUi}
+                        canStartDrag={canStartCategoryDrag}
                         resolveDropPosition={resolveCategoryDropPosition}
                         renderNode={(nodeProps) => <CategoryTreeNodeRenderer {...nodeProps} />}
                       />
@@ -516,7 +565,7 @@ export function CategoriesSettings(): React.JSX.Element {
       )}
 
       <ConfirmModal
-        isOpen={!!categoryToDelete}
+        isOpen={Boolean(categoryToDelete)}
         onClose={() => setCategoryToDelete(null)}
         onConfirm={handleConfirmDelete}
         title='Delete Category'
@@ -533,7 +582,7 @@ export function CategoriesSettings(): React.JSX.Element {
         value={{
           open: showModal,
           onClose: (): void => setShowModal(false),
-          isEditing: !!editingCategory,
+          isEditing: Boolean(editingCategory),
           formData,
           onFormDataChange: setFormData,
           onSave: (): void => {

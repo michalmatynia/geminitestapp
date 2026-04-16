@@ -4,19 +4,11 @@ import React from 'react';
 import { Badge, Button } from '@/shared/ui/primitives.public';
 
 import { formatFilemakerMailboxAllowlist } from '../../mail-utils';
+import { useMailPageContext } from '../FilemakerMail.context';
 
-import type { FilemakerMailAccount } from '../../types';
-import type { MailPageSelection } from '../AdminFilemakerMailPage.types';
+export function MailboxesAttentionSection(): React.JSX.Element {
+  const { attentionAccounts, setSelection } = useMailPageContext();
 
-export interface MailboxesAttentionSectionProps {
-  attentionAccounts: FilemakerMailAccount[];
-  onSelectSelection: (selection: MailPageSelection) => void;
-}
-
-export function MailboxesAttentionSection({
-  attentionAccounts,
-  onSelectSelection,
-}: MailboxesAttentionSectionProps): React.JSX.Element {
   return (
     <div className='space-y-6 rounded-lg border border-border/60 bg-card/25 p-4'>
       <div className='flex flex-wrap items-center justify-between gap-3'>
@@ -74,7 +66,7 @@ export function MailboxesAttentionSection({
                   size='sm'
                   variant='outline'
                   onClick={() => {
-                    onSelectSelection({
+                    setSelection({
                       accountId: account.id,
                       mailboxPath: null,
                       panel: 'settings',
@@ -89,7 +81,7 @@ export function MailboxesAttentionSection({
                   size='sm'
                   variant='outline'
                   onClick={() => {
-                    onSelectSelection({
+                    setSelection({
                       accountId: account.id,
                       mailboxPath: null,
                       panel: 'account',

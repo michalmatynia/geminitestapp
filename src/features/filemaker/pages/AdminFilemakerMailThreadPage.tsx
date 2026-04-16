@@ -1,8 +1,9 @@
 'use client';
 
 import { ArrowLeft, Eye, EyeOff, Forward, Reply, Trash2 } from 'lucide-react';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'nextjs-toploader/app';
+import { useParams, useSearchParams } from 'next/navigation';
+import React, { useCallback, useEffect, useMemo, useState, startTransition } from 'react';
 
 import { DocumentWysiwygEditor } from '@/shared/lib/document-editor/public';
 import { FilemakerMailSidebar } from '../components/FilemakerMailSidebar';
@@ -145,19 +146,19 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
       return;
     }
 
-    router.replace(
-      buildThreadHref({
-        threadId,
-        accountId,
-        mailboxPath,
-        originPanel,
-        recentMailboxFilter,
-        recentUnreadOnly,
-        recentQuery,
-        searchAccountId,
-        searchQuery,
-      })
-    );
+    startTransition(() => { router.replace(
+            buildThreadHref({
+              threadId,
+              accountId,
+              mailboxPath,
+              originPanel,
+              recentMailboxFilter,
+              recentUnreadOnly,
+              recentQuery,
+              searchAccountId,
+              searchQuery,
+            })
+          ); });
   }, [
     accountId,
     mailboxPath,
@@ -266,7 +267,7 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
         { method: 'DELETE' }
       );
       toast('Thread deleted.', { variant: 'success' });
-      router.push(backHref);
+      startTransition(() => { router.push(backHref); });
     } catch (error) {
       toast(error instanceof Error ? error.message : 'Failed to delete thread.', {
         variant: 'error',
@@ -281,15 +282,19 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
   return (
     <div className='page-section-compact grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]'>
       <FilemakerMailSidebar
-        selectedAccountId={accountId}
-        selectedMailboxPath={mailboxPath}
-        selectedThreadId={threadId}
-        originPanel={originPanel}
-        recentMailboxFilter={recentMailboxFilter}
-        recentUnreadOnly={recentUnreadOnly}
-        recentQuery={recentQuery}
-        searchContextAccountId={searchContextAccountId}
-        searchQuery={searchQuery}
+        selection={{
+          accountId,
+          mailboxPath,
+          threadId,
+          originPanel,
+        }}
+        filters={{
+          recentMailboxFilter,
+          recentUnreadOnly,
+          recentQuery,
+          searchContextAccountId,
+          searchQuery,
+        }}
         refreshKey={sidebarRefreshKey}
       />
 
@@ -304,7 +309,7 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
               label: backLabel,
               icon: <ArrowLeft className='size-4' />,
               variant: 'outline',
-              onClick: () => router.push(backHref),
+              onClick: () => startTransition(() => { router.push(backHref); }),
             },
             ...(detail
               ? [
@@ -330,19 +335,19 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
                     onClick: () => {
                       const lastMessage = detail.messages[detail.messages.length - 1];
                       if (!lastMessage) return;
-                      router.push(
-                        buildComposeHref({
-                          accountId: detail.thread.accountId,
-                          forwardThreadId: threadId,
-                          mailboxPath: mailboxPath ?? detail.thread.mailboxPath,
-                          originPanel,
-                          recentMailboxFilter,
-                          recentUnreadOnly,
-                          recentQuery,
-                          searchAccountId: isGlobalSearchContext ? 'all' : null,
-                          searchQuery,
-                        })
-                      );
+                      startTransition(() => { router.push(
+                                                buildComposeHref({
+                                                  accountId: detail.thread.accountId,
+                                                  forwardThreadId: threadId,
+                                                  mailboxPath: mailboxPath ?? detail.thread.mailboxPath,
+                                                  originPanel,
+                                                  recentMailboxFilter,
+                                                  recentUnreadOnly,
+                                                  recentQuery,
+                                                  searchAccountId: isGlobalSearchContext ? 'all' : null,
+                                                  searchQuery,
+                                                })
+                                              ); });
                     },
                   },
                   {

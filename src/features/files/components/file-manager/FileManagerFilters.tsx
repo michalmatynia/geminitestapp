@@ -22,7 +22,7 @@ import {
  * Note: Simplified bulk actions rendering to focus on filtering.
  * Bulk actions UI can be extracted to separate component if needed.
  */
-export const FileManagerFilters = memo(function FileManagerFilters(): React.JSX.Element {
+export const FileManagerFilters = memo((): React.JSX.Element => {
   const {
     filenameSearch,
     setFilenameSearch,

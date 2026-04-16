@@ -2,7 +2,7 @@
 
 import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurProgressOwnerKey';
 import { useTranslations } from 'next-intl';
-import { useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 
 import KangurAnswerChoiceCard from '@/features/kangur/ui/components/KangurAnswerChoiceCard';
 import {
@@ -199,6 +199,31 @@ type DivisionChoicePresentation = {
   emphasis: 'neutral' | 'accent';
   state: 'default' | 'muted';
 };
+
+type DivisionGameContextValue = {
+  confirmed: boolean;
+  finishLabel: string;
+  isCoarsePointer: boolean;
+  onConfirm: () => void;
+  onFinish: () => void;
+  onRestart: () => void;
+  onSelect: (choice: number) => void;
+  question: DivisionQuestion;
+  roundIndex: number;
+  selected: number | null;
+  translations: ReturnType<typeof useTranslations>;
+};
+
+const DivisionGameContext = React.createContext<DivisionGameContextValue | null>(null);
+
+function useDivisionGame(): DivisionGameContextValue {
+  const context = React.useContext(DivisionGameContext);
+  if (!context) {
+    throw new Error('useDivisionGame must be used within a DivisionGameContext.Provider');
+  }
+  return context;
+}
+
 
 const resolveDivisionChoicePresentation = ({
   choice,
@@ -434,24 +459,18 @@ const confirmDivisionSelection = ({
 };
 
 function DivisionGameSummaryView({
-  finishLabel,
-  onFinish,
-  onRestart,
-  percent,
-  score,
-  translations,
-  xpBreakdown,
-  xpEarned,
+  results,
 }: {
-  finishLabel: string;
-  onFinish: () => void;
-  onRestart: () => void;
-  percent: number;
-  score: number;
-  translations: ReturnType<typeof useTranslations>;
-  xpBreakdown: KangurRewardBreakdownEntry[];
-  xpEarned: number;
+  results: {
+    percent: number;
+    score: number;
+    xpBreakdown: KangurRewardBreakdownEntry[];
+    xpEarned: number;
+  };
 }): React.JSX.Element {
+  const { finishLabel, onFinish, onRestart, translations } = useDivisionGame();
+  const { percent, score, xpBreakdown, xpEarned } = results;
+
   return (
     <KangurPracticeGameSummary
       dataTestId='division-game-summary-shell'
@@ -485,15 +504,9 @@ function DivisionGameSummaryView({
   );
 }
 
-function DivisionGameQuestionPanel({
-  isCoarsePointer,
-  question,
-  translations,
-}: {
-  isCoarsePointer: boolean;
-  question: DivisionQuestion;
-  translations: ReturnType<typeof useTranslations>;
-}): React.JSX.Element {
+function DivisionGameQuestionPanel(): React.JSX.Element {
+  const { isCoarsePointer, question, translations } = useDivisionGame();
+
   return (
     <>
       <p className='text-xs font-bold text-blue-400 uppercase tracking-wide'>
@@ -534,19 +547,9 @@ function DivisionGameQuestionPanel({
   );
 }
 
-function DivisionGameChoicesGrid({
-  confirmed,
-  isCoarsePointer,
-  onSelect,
-  question,
-  selected,
-}: {
-  confirmed: boolean;
-  isCoarsePointer: boolean;
-  onSelect: (choice: number) => void;
-  question: DivisionQuestion;
-  selected: number | null;
-}): React.JSX.Element {
+function DivisionGameChoicesGrid(): React.JSX.Element {
+  const { confirmed, isCoarsePointer, onSelect, question, selected } = useDivisionGame();
+
   return (
     <div className='grid w-full grid-cols-1 gap-2 sm:grid-cols-2'>
       {question.choices.map((choice, index) => {
@@ -584,25 +587,15 @@ function DivisionGameChoicesGrid({
   );
 }
 
-function DivisionGameRoundView({
-  confirmed,
-  isCoarsePointer,
-  onConfirm,
-  onSelect,
-  question,
-  roundIndex,
-  selected,
-  translations,
-}: {
-  confirmed: boolean;
-  isCoarsePointer: boolean;
-  onConfirm: () => void;
-  onSelect: (choice: number) => void;
-  question: DivisionQuestion;
-  roundIndex: number;
-  selected: number | null;
-  translations: ReturnType<typeof useTranslations>;
-}): React.JSX.Element {
+function DivisionGameRoundView(): React.JSX.Element {
+  const {
+    confirmed,
+    onConfirm,
+    question,
+    roundIndex,
+    selected,
+  } = useDivisionGame();
+
   return (
     <KangurPracticeGameShell className='w-full max-w-4xl' data-testid='division-game-shell'>
       <KangurPracticeGameProgress
@@ -622,21 +615,11 @@ function DivisionGameRoundView({
         >
           <div className='grid w-full gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(300px,0.95fr)] lg:items-start'>
             <div className='flex min-w-0 flex-col items-center gap-4 text-center lg:items-start lg:text-left'>
-              <DivisionGameQuestionPanel
-                isCoarsePointer={isCoarsePointer}
-                question={question}
-                translations={translations}
-              />
+              <DivisionGameQuestionPanel />
             </div>
 
             <div className='flex min-w-0 flex-col gap-4'>
-              <DivisionGameChoicesGrid
-                confirmed={confirmed}
-                isCoarsePointer={isCoarsePointer}
-                onSelect={onSelect}
-                question={question}
-                selected={selected}
-              />
+              <DivisionGameChoicesGrid />
 
               <KangurButton
                 className={resolveDivisionCheckButtonClassName({
@@ -713,44 +696,53 @@ export default function DivisionGame({
     });
   };
 
+  const handleRestart = (): void => {
+    resetDivisionGameSession({
+      sessionStartedAtRef,
+      setConfirmed,
+      setDone,
+      setQuestion,
+      setRoundIndex,
+      setScore,
+      setSelected,
+      setXpBreakdown,
+      setXpEarned,
+    });
+  };
+
+  const contextValue = {
+    confirmed,
+    finishLabel,
+    isCoarsePointer,
+    onConfirm: handleConfirm,
+    onFinish: handleFinishGame,
+    onRestart: handleRestart,
+    onSelect: handleSelect,
+    question,
+    roundIndex,
+    selected,
+    translations,
+  };
+
   if (done) {
     const percent = Math.round((score / TOTAL) * 100);
     return (
-      <DivisionGameSummaryView
-        finishLabel={finishLabel}
-        onFinish={handleFinishGame}
-        onRestart={() =>
-          resetDivisionGameSession({
-            sessionStartedAtRef,
-            setConfirmed,
-            setDone,
-            setQuestion,
-            setRoundIndex,
-            setScore,
-            setSelected,
-            setXpBreakdown,
-            setXpEarned,
-          })
-        }
-        percent={percent}
-        score={score}
-        translations={translations}
-        xpBreakdown={xpBreakdown}
-        xpEarned={xpEarned}
-      />
+      <DivisionGameContext.Provider value={contextValue}>
+        <DivisionGameSummaryView
+          results={{
+            percent,
+            score,
+            xpBreakdown,
+            xpEarned,
+          }}
+        />
+      </DivisionGameContext.Provider>
     );
   }
 
   return (
-    <DivisionGameRoundView
-      confirmed={confirmed}
-      isCoarsePointer={isCoarsePointer}
-      onConfirm={handleConfirm}
-      onSelect={handleSelect}
-      question={question}
-      roundIndex={roundIndex}
-      selected={selected}
-      translations={translations}
-    />
+    <DivisionGameContext.Provider value={contextValue}>
+      <DivisionGameRoundView />
+    </DivisionGameContext.Provider>
   );
 }

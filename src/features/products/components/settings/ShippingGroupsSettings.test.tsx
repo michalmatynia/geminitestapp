@@ -291,6 +291,7 @@ describe('ShippingGroupsSettings', () => {
           traderaShippingCondition: 'Buyer pays shipping',
           traderaShippingPriceEur: 7,
           autoAssignCategoryIds: ['category-jewellery'],
+          autoAssignCurrencyCodes: [],
         },
       });
     });

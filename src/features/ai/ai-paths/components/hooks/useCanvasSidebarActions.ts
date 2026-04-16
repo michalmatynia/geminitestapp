@@ -3,13 +3,15 @@
 import { useCallback } from 'react';
 
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
-import type { AiNode, Edge, NodeDefinition, RuntimeState } from '@/shared/lib/ai-paths';
+import type { AiNode, Edge, NodeDefinition } from '@/shared/contracts/ai-paths';
+import type { RuntimeState } from '@/shared/contracts/ai-paths-runtime';
 import { useToast } from '@/shared/ui/primitives.public';
 import { DRAG_KEYS, setDragData } from '@/shared/utils/drag-drop';
 
 import {
-  useGraphState,
   useGraphActions,
+  useGraphDataState,
+  usePathMetadataState,
   useRuntimeActions,
   useSelectionState,
   useSelectionActions,
@@ -67,7 +69,8 @@ function pruneRuntimeInputs(
 export function useCanvasSidebarActions() {
   const { toast } = useToast();
   const { confirm, ConfirmationModal } = useConfirm();
-  const { nodes, edges, isPathLocked } = useGraphState();
+  const { nodes, edges } = useGraphDataState();
+  const { isPathLocked } = usePathMetadataState();
   const { setNodes, setEdges } = useGraphActions();
   const { setRuntimeState } = useRuntimeActions();
   const { selectedNodeId, selectedNodeIds, selectedEdgeId } = useSelectionState();

@@ -39,7 +39,7 @@ function validationReducer(
         },
       };
     case 'CLEAR_FIELD_VALIDATION': {
-      const { [action.field]: _, ...rest } = state.fieldValidations;
+      const { [action.field]: _omitted, ...rest } = state.fieldValidations;
       return { ...state, fieldValidations: rest };
     }
     case 'SET_VALIDATING':

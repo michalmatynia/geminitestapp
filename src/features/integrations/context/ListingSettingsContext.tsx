@@ -1,6 +1,6 @@
 'use client';
 
-import React, { ReactNode, useEffect, useMemo, useState } from 'react';
+import React, { type ReactNode, useEffect, useMemo, useState } from 'react';
 
 import { DEFAULT_TRADERA_SYSTEM_SETTINGS } from '@/features/integrations/constants/tradera';
 import type { IntegrationWithConnections, IntegrationConnectionBasic } from '@/shared/contracts/integrations/domain';

@@ -1,5 +1,3 @@
-'use client';
-
 import { useNoteContentContext } from './note-form/NoteContentContext';
 import { useNoteEditorContext } from './note-form/NoteEditorContext';
 import { useNoteFilesContext } from './note-form/NoteFilesContext';

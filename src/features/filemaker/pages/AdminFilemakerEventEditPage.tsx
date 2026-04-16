@@ -1,7 +1,8 @@
 'use client';
 
-import { useParams, useRouter } from 'next/navigation';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'nextjs-toploader/app';
+import { useParams } from 'next/navigation';
+import React, { useCallback, useEffect, useMemo, useState, startTransition } from 'react';
 
 import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 import type { CountryOption } from '@/shared/contracts/internationalization';
@@ -422,7 +423,7 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
         value: JSON.stringify(toPersistedFilemakerDatabase(nextDatabase)),
       });
       toast('Event updated.', { variant: 'success' });
-      router.push('/admin/filemaker/events');
+      startTransition(() => { router.push('/admin/filemaker/events'); });
     } catch (error: unknown) {
       logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to update event.', {
@@ -457,7 +458,7 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
           actions={
             <FormActions
               onCancel={(): void => {
-                router.push('/admin/filemaker/events');
+                startTransition(() => { router.push('/admin/filemaker/events'); });
               }}
               cancelText='Back to Events'
             />
@@ -482,7 +483,7 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
         actions={
           <FormActions
             onCancel={(): void => {
-              router.push('/admin/filemaker/events');
+              startTransition(() => { router.push('/admin/filemaker/events'); });
             }}
             cancelText='Back to Events'
             onSave={(): void => {

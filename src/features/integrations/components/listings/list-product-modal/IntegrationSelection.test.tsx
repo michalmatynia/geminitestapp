@@ -129,4 +129,34 @@ describe('IntegrationSelection', () => {
     ).toBeInTheDocument();
     expect(screen.getAllByText('Select an account...').length).toBeGreaterThan(0);
   });
+
+  it('uses the Vinted.pl account description for Vinted listing selection', () => {
+    useListingSelectionMock.mockReturnValue({
+      integrations: [
+        {
+          id: 'integration-vinted-1',
+          name: 'Vinted',
+          slug: 'vinted',
+          connections: [{ id: 'conn-vinted-1', name: 'Vinted Browser' }],
+        },
+      ],
+      loadingIntegrations: false,
+      selectedIntegrationId: 'integration-vinted-1',
+      selectedConnectionId: 'conn-vinted-1',
+      selectedIntegration: {
+        id: 'integration-vinted-1',
+        name: 'Vinted',
+        slug: 'vinted',
+        connections: [{ id: 'conn-vinted-1', name: 'Vinted Browser' }],
+      },
+      setSelectedIntegrationId: vi.fn(),
+      setSelectedConnectionId: vi.fn(),
+    });
+
+    render(<IntegrationSelection />);
+
+    expect(
+      screen.getByText('Choose which account to use for listing this product on Vinted.pl.')
+    ).toBeInTheDocument();
+  });
 });

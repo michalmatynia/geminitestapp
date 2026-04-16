@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
-import { useRouter } from 'next/navigation';
+import React, { startTransition } from 'react';
+import { useRouter } from 'nextjs-toploader/app';
 
 import { Button, Input, Label, Textarea } from '@/shared/ui/primitives.public';
 import { FormSection, SelectSimple, StatusToggle } from '@/shared/ui/forms-and-actions.public';
@@ -76,7 +76,7 @@ export function PromptExploderParserTuningProvider({
           settingsState.activeValidationRuleStack,
           settingsState.validatorPatternLists
         );
-        router.push(`/admin/validator?scope=${validatorScope}`);
+        startTransition(() => { router.push(`/admin/validator?scope=${validatorScope}`); });
       },
       isBusy: settingsState.isBusy,
     };

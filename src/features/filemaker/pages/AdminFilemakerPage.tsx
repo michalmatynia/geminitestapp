@@ -1,7 +1,7 @@
 'use client';
 
 import { CalendarDays, Database, Mail, Megaphone, ShieldAlert } from 'lucide-react';
-import React from 'react';
+import React, { startTransition } from 'react';
 
 import { PanelHeader } from '@/shared/ui/templates.public';
 
@@ -30,35 +30,35 @@ function AdminFilemakerPageInner(): React.JSX.Element {
             label: 'Mail',
             icon: <Mail className='size-4' />,
             variant: 'outline',
-            onClick: () => router.push('/admin/filemaker/mail'),
+            onClick: () => startTransition(() => { router.push('/admin/filemaker/mail'); }),
           },
           {
             key: 'campaigns',
             label: 'Campaigns Page',
             icon: <Megaphone className='size-4' />,
             variant: 'outline',
-            onClick: () => router.push('/admin/filemaker/campaigns'),
+            onClick: () => startTransition(() => { router.push('/admin/filemaker/campaigns'); }),
           },
           {
             key: 'control-centre',
             label: 'Control Centre',
             icon: <ShieldAlert className='size-4' />,
             variant: 'outline',
-            onClick: () => router.push('/admin/filemaker/campaigns/control-centre'),
+            onClick: () => startTransition(() => { router.push('/admin/filemaker/campaigns/control-centre'); }),
           },
           {
             key: 'events',
             label: 'Events Page',
             icon: <CalendarDays className='size-4' />,
             variant: 'outline',
-            onClick: () => router.push('/admin/filemaker/events'),
+            onClick: () => startTransition(() => { router.push('/admin/filemaker/events'); }),
           },
           {
             key: 'emails',
             label: 'Emails Page',
             icon: <Mail className='size-4' />,
             variant: 'outline',
-            onClick: () => router.push('/admin/filemaker/emails'),
+            onClick: () => startTransition(() => { router.push('/admin/filemaker/emails'); }),
           },
         ]}
       />

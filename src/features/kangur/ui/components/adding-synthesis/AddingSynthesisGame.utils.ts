@@ -14,7 +14,7 @@ import {
 import { ADDING_SYNTHESIS_VIEW_KINDS, LANE_STYLES, getFeedbackAccent } from './AddingSynthesisGame.constants';
 import type KangurAnswerChoiceCard from '@/features/kangur/ui/components/KangurAnswerChoiceCard';
 import { 
-  KangurSummaryPanel, 
+  type KangurSummaryPanel, 
 } from '@/features/kangur/ui/design/primitives';
 import { cn } from '@/features/kangur/shared/utils';
 

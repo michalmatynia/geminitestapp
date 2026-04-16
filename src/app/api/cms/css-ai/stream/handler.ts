@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import { type NextRequest } from 'next/server';
 
 import { runTeachingChat } from '@/features/ai/agentcreator/teaching/server/chat';
 import { mergeContextRegistryResolutionBundles } from '@/features/ai/ai-context-registry/context/page-context-shared';

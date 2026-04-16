@@ -10,13 +10,15 @@ import type {
 import {
   buildBlockedRunFailureMessage,
   buildFailedRunFailureMessage,
+  buildWaitingNodeFailureMessage,
   collectBlockedNodeDiagnostics,
   collectFailedNodeDiagnostics,
+  collectWaitingNodeDiagnostics,
   shouldFailBlockedRun,
 } from '../path-run-executor.diagnostics';
 import { summarizeRuntimeKernelParityFromHistory } from '../path-run-executor.runtime-kernel';
-import { PathRunRuntimeStateManager } from './runtime-state-manager';
-import { RuntimeProfileSnapshot } from '../path-run-executor.types';
+import { type PathRunRuntimeStateManager } from './runtime-state-manager';
+import { type RuntimeProfileSnapshot } from '../path-run-executor.types';
 
 export type ExecutionCompletionArgs = {
   run: AiPathRunRecord;
@@ -57,13 +59,18 @@ export const handleExecutionCompletion = async (
 
   let finalStatus: AiPathRunStatus = 'completed';
   let finalError = null;
+  const failedNodeDiagnostics = collectFailedNodeDiagnostics(nodes, accOutputs);
+  const waitingNodeDiagnostics = collectWaitingNodeDiagnostics(nodes, accOutputs);
 
   if (runtimeHaltReason === 'failed') {
     finalStatus = 'failed';
-    finalError = buildFailedRunFailureMessage(collectFailedNodeDiagnostics(nodes, accOutputs));
+    finalError = buildFailedRunFailureMessage(failedNodeDiagnostics);
   } else if (runtimeHaltReason === 'max_iterations') {
     finalStatus = 'failed';
     finalError = 'Maximum iteration limit reached.';
+  } else if (runtimeHaltReason === 'blocked' && failedNodeDiagnostics.length > 0) {
+    finalStatus = 'failed';
+    finalError = buildFailedRunFailureMessage(failedNodeDiagnostics);
   } else if (
     runtimeHaltReason === 'blocked' &&
     shouldFailBlockedRun({
@@ -77,16 +84,16 @@ export const handleExecutionCompletion = async (
       finalStatus = 'failed';
       finalError = buildBlockedRunFailureMessage(blockedDiagnostics);
     }
+  } else if (waitingNodeDiagnostics.length > 0) {
+    finalStatus = 'failed';
+    finalError = buildWaitingNodeFailureMessage(waitingNodeDiagnostics);
   } else if (runtimeHaltReason === 'blocked') {
     finalStatus = 'completed';
   }
 
-  if (finalStatus === 'completed') {
-    const failedNodeDiagnostics = collectFailedNodeDiagnostics(nodes, accOutputs);
-    if (failedNodeDiagnostics.length > 0) {
-      finalStatus = 'failed';
-      finalError = buildFailedRunFailureMessage(failedNodeDiagnostics);
-    }
+  if (finalStatus === 'completed' && failedNodeDiagnostics.length > 0) {
+    finalStatus = 'failed';
+    finalError = buildFailedRunFailureMessage(failedNodeDiagnostics);
   }
 
   const finishedAt = new Date().toISOString();

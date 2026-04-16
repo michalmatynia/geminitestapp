@@ -1,7 +1,7 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { useEffect, useState, useMemo } from 'react';
+import { useRouter } from 'nextjs-toploader/app';
+import { useEffect, useState, useMemo, startTransition } from 'react';
 
 import { useCatalogs } from '@/features/products/hooks/useProductSettingsQueries';
 import {
@@ -107,7 +107,7 @@ export function ProductPreferencesPage(): React.JSX.Element {
     try {
       await updateMutation.mutateAsync(preferences);
       toast('Preferences saved successfully', { variant: 'success' });
-      router.push('/admin/products');
+      startTransition(() => { router.push('/admin/products'); });
     } catch (error) {
       logClientCatch(error, { source: 'ProductPreferencesPage', action: 'handleSave' });
       toast('Failed to save preferences', { variant: 'error' });
@@ -275,7 +275,7 @@ export function ProductPreferencesPage(): React.JSX.Element {
         {/* Action Buttons */}
         <FormActions
           onSave={() => void handleSave()}
-          onCancel={() => router.push('/admin/products')}
+          onCancel={() => startTransition(() => { router.push('/admin/products'); })}
           saveText='Save Preferences'
           isSaving={updateMutation.isPending}
           className='flex-row-reverse justify-between'

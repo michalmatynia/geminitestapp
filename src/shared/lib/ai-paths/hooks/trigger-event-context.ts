@@ -1,9 +1,10 @@
-import React from 'react';
+import type React from 'react';
 
 import type { AiNode } from '@/shared/contracts/ai-paths';
 import { type TriggerEventEntityType } from '@/shared/contracts/ai-trigger-buttons';
 
 import {
+  resolveTriggerEntitySnapshotMode,
   sanitizeTriggerEntitySnapshot,
   shouldEmbedTriggerEntitySnapshot,
 } from './trigger-event-sanitization';
@@ -28,6 +29,7 @@ export const buildTriggerContext = (args: {
   const shouldEmbedEntitySnapshot =
     sanitizedEntitySnapshot !== null &&
     shouldEmbedTriggerEntitySnapshot({
+      mode: resolveTriggerEntitySnapshotMode(args.triggerNode.config?.trigger?.entitySnapshotMode),
       entityType: args.entityType,
       entityId: args.entityId,
       sourceLocation: args.source?.location,

@@ -12,8 +12,8 @@ import {
   KANGUR_THEME_PRESET_MANIFEST_KEY,
 } from '@/shared/contracts/kangur-settings-keys';
 import { parseJsonSetting } from '@/features/kangur/utils/settings-json';
+import { reportObservabilityInternalError } from '@/shared/utils/observability/internal-observability-fallback';
 
-import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 import { KANGUR_DEFAULT_DAILY_THEME } from './themes/daily';
 import { KANGUR_DEFAULT_DAWN_THEME } from './themes/dawn';
 import { KANGUR_DEFAULT_SUNSET_THEME } from './themes/sunset';
@@ -383,6 +383,28 @@ const isKangurThemePresetKind = (value: unknown): value is KangurThemePresetKind
 const normalizeThemePresetManifestSlot = (value: unknown): KangurThemeMode | null =>
   value === 'daily' || value === 'dawn' || value === 'sunset' || value === 'nightly' ? value : null;
 
+const withKangurThemeParseFallback = <T>(
+  context: {
+    action: string;
+    description: string;
+    context?: Record<string, unknown>;
+  },
+  task: () => T,
+  fallback: T
+): T => {
+  try {
+    return task();
+  } catch (error) {
+    reportObservabilityInternalError(error, {
+      source: 'kangur.theme-settings',
+      action: context.action,
+      description: context.description,
+      ...(context.context ?? {}),
+    });
+    return fallback;
+  }
+};
+
 const getKangurThemeBaselineForMode = (mode: KangurThemeMode): ThemeSettings => {
   switch (mode) {
     case 'dawn':
@@ -401,9 +423,8 @@ export const parseKangurThemePresetManifest = (
   raw: string | null | undefined
 ): KangurThemePresetManifestEntry[] => {
   if (typeof raw !== 'string' || !raw.trim()) return [];
-  return withKangurClientErrorSync(
+  return withKangurThemeParseFallback(
     {
-      source: 'kangur.theme-settings',
       action: 'parse-theme-preset-manifest',
       description: 'Parses the Kangur preset manifest payload.',
       context: { rawLength: raw.length },
@@ -439,7 +460,7 @@ export const parseKangurThemePresetManifest = (
         ];
       });
     },
-    { fallback: [] }
+    []
   );
 };
 
@@ -480,9 +501,8 @@ export const parseKangurThemeCatalog = (
   raw: string | null | undefined
 ): KangurThemeCatalogEntry[] => {
   if (typeof raw !== 'string' || !raw.trim()) return [];
-  return withKangurClientErrorSync(
+  return withKangurThemeParseFallback(
     {
-      source: 'kangur.theme-settings',
       action: 'parse-theme-catalog',
       description: 'Parses the Kangur theme catalog payload.',
       context: { rawLength: raw.length },
@@ -498,6 +518,6 @@ export const parseKangurThemeCatalog = (
           typeof (e as Record<string, unknown>)['name'] === 'string'
       );
     },
-    { fallback: [] }
+    []
   );
 };

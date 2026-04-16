@@ -1,3 +1,6 @@
+// Validator target adapters: define how abstract validation targets map to
+// concrete product fields, their value kinds and replacement fields. This is
+// used by the validation engine to extract and coerce values for rules.
 import type { ProductValidationTarget } from '@/shared/contracts/products/validation';
 
 export type ProductValidationValueKind = 'text' | 'number' | 'category';

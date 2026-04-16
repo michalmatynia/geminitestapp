@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { buildKangurKnowledgeGraphFromRepositories } from '@/features/kangur/server/knowledge-graph/source-loader';
 import { syncKangurKnowledgeGraphToNeo4j } from '@/features/kangur/server/knowledge-graph/neo4j-repository';

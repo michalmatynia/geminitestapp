@@ -1,14 +1,21 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+const assertMongoConfiguredMock = vi.fn();
 const fetchMongoAiPathsSettingsMock = vi.fn();
 const upsertMongoAiPathsSettingsMock = vi.fn();
 const deleteMongoAiPathsSettingsMock = vi.fn();
 const ensureMongoIndexesMock = vi.fn();
 
 vi.mock('@/features/ai/ai-paths/server/settings-store.helpers', () => ({
-  assertMongoConfigured: vi.fn(),
+  assertMongoConfigured: assertMongoConfiguredMock,
   isAiPathsKey: (key: string) => key.startsWith('ai_paths_'),
-  parseBooleanEnv: (_raw: string | undefined, defaultValue: boolean) => defaultValue,
+  parseBooleanEnv: (raw: string | undefined, defaultValue: boolean) => {
+    if (raw === undefined) return defaultValue;
+    const normalized = raw.trim().toLowerCase();
+    if (['1', 'true', 'yes', 'on'].includes(normalized)) return true;
+    if (['0', 'false', 'no', 'off'].includes(normalized)) return false;
+    return defaultValue;
+  },
   parsePositiveInt: (_raw: string | undefined, defaultValue: number) => defaultValue,
 }));
 
@@ -24,6 +31,23 @@ vi.mock('@/features/ai/ai-paths/server/starter-workflows-settings', () => ({
     affectedCount: 0,
     nextRecords: records,
   }),
+  restoreStaticStarterWorkflowBundle: () => ({
+    affectedCount: 5,
+    nextRecords: [
+      {
+        key: 'ai_paths_index',
+        value:
+          '[{"id":"path_descv3lite"},{"id":"path_96708d"},{"id":"path_marketplace_copy_debrand_v1"}]',
+      },
+      { key: 'ai_paths_trigger_buttons', value: '[]' },
+      { key: 'ai_paths_config_path_descv3lite', value: '{"id":"path_descv3lite"}' },
+      { key: 'ai_paths_config_path_96708d', value: '{"id":"path_96708d"}' },
+      {
+        key: 'ai_paths_config_path_marketplace_copy_debrand_v1',
+        value: '{"id":"path_marketplace_copy_debrand_v1"}',
+      },
+    ],
+  }),
 }));
 
 const loadSettingsStore = async () => import('@/features/ai/ai-paths/server/settings-store');
@@ -32,6 +56,7 @@ describe('settings-store keyset cache', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.resetModules();
+    assertMongoConfiguredMock.mockImplementation(() => {});
   });
 
   it('reuses cached keyset reads within TTL', async () => {
@@ -80,5 +105,45 @@ describe('settings-store keyset cache', () => {
     const [first, second] = await Promise.all([firstPromise, secondPromise]);
     expect(first).toEqual(second);
     expect(fetchMongoAiPathsSettingsMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not fall back to the static recovery bundle by default when keyset Mongo reads fail', async () => {
+    fetchMongoAiPathsSettingsMock.mockRejectedValue(new Error('mongo unavailable'));
+
+    const { getAiPathsSettings } = await loadSettingsStore();
+
+    await expect(
+      getAiPathsSettings([
+        'ai_paths_index',
+        'ai_paths_config_path_descv3lite',
+        'ai_paths_trigger_buttons',
+      ])
+    ).rejects.toThrow('mongo unavailable');
+  });
+
+  it('does not fall back to the static recovery bundle even when the legacy fallback env is enabled', async () => {
+    process.env['AI_PATHS_STATIC_RECOVERY_FALLBACK_ENABLED'] = 'true';
+    fetchMongoAiPathsSettingsMock.mockRejectedValue(new Error('mongo unavailable'));
+
+    const { getAiPathsSettings } = await loadSettingsStore();
+
+    await expect(
+      getAiPathsSettings([
+        'ai_paths_index',
+        'ai_paths_config_path_descv3lite',
+        'ai_paths_trigger_buttons',
+      ])
+    ).rejects.toThrow('mongo unavailable');
+  });
+
+  it('does not fall back to the static recovery bundle when Mongo is not configured', async () => {
+    process.env['AI_PATHS_STATIC_RECOVERY_FALLBACK_ENABLED'] = 'true';
+    assertMongoConfiguredMock.mockImplementation(() => {
+      throw new Error('AI Paths settings require MongoDB.');
+    });
+
+    const { getAllAiPathsSettings } = await loadSettingsStore();
+
+    await expect(getAllAiPathsSettings()).rejects.toThrow('AI Paths settings require MongoDB.');
   });
 });

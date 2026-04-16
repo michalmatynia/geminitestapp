@@ -2,7 +2,7 @@ import 'server-only';
 
 import { getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
-import { JSX } from 'react';
+import { type JSX } from 'react';
 
 import { renderCmsPage } from '@/app/(frontend)/cms/render';
 import {

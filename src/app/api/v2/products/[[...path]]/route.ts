@@ -1,5 +1,3 @@
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
 
 import type { NextRequest } from 'next/server';
 
@@ -12,132 +10,83 @@ import {
   type CatchAllRoutePathParams as RouteParams,
 } from '@/shared/lib/api/catch-all-router';
 
-import * as productsIndex from '../route-handler';
-import * as productsCount from '../count/route-handler';
-import * as productsPaged from '../paged/route-handler';
-import * as productsIds from '../ids/route-handler';
-import * as productsSimpleParameters from '../simple-parameters/route-handler';
-import * as productsParameters from '../parameters/route-handler';
-import * as productsParametersId from '../parameters/[id]/route-handler';
-import * as productsProducers from '../producers/route-handler';
-import * as productsProducersId from '../producers/[id]/route-handler';
-import * as productsShippingGroups from '../shipping-groups/route-handler';
-import * as productsShippingGroupsId from '../shipping-groups/[id]/route-handler';
-import * as productsTags from '../tags/route-handler';
-import * as productsTagsAll from '../tags/all/route-handler';
-import * as productsTagsId from '../tags/[id]/route-handler';
-import * as productsValidation from '../validation/route-handler';
-import * as productsValidatorConfig from '../validator-config/route-handler';
-import * as productsValidatorDecisions from '../validator-decisions/route-handler';
-import * as productsValidatorDecisionsBatch from '../validator-decisions/batch/route-handler';
-import * as productsValidatorSettings from '../validator-settings/route-handler';
-import * as productsValidatorPatterns from '../validator-patterns/route-handler';
-import * as productsValidatorPatternsImport from '../validator-patterns/import/route-handler';
-import * as productsValidatorPatternsReorder from '../validator-patterns/reorder/route-handler';
-import * as productsValidatorPatternsTemplates from '../validator-patterns/templates/[type]/route-handler';
-import * as productsValidatorPatternsId from '../validator-patterns/[id]/route-handler';
-import * as productsValidatorRuntimeEvaluate from '../validator-runtime/evaluate/route-handler';
-import * as productsCategories from '../categories/route-handler';
-import * as productsCategoriesTree from '../categories/tree/route-handler';
-import * as productsCategoriesBatch from '../categories/batch/route-handler';
-import * as productsCategoriesMigrate from '../categories/migrate/route-handler';
-import * as productsCategoriesReorder from '../categories/reorder/route-handler';
-import * as productsCategoriesId from '../categories/[id]/route-handler';
-import * as productsEntitiesCatalogsAssign from '../entities/catalogs/assign/route-handler';
-import * as productsEntitiesType from '../entities/[type]/route-handler';
-import * as productsEntitiesTypeId from '../entities/[type]/[id]/route-handler';
-import * as productsMetadataType from '../metadata/[type]/route-handler';
-import * as productsMetadataTypeId from '../metadata/[type]/[id]/route-handler';
-import * as productsImagesBase64 from '../images/base64/route-handler';
-import * as productsImagesBase64All from '../images/base64/all/route-handler';
-import * as productsImagesUpload from '../images/upload/route-handler';
-import * as productsImportCsv from '../import/csv/route-handler';
-import * as productsOrdersImportStatuses from '../orders-import/statuses/route-handler';
-import * as productsOrdersImportPreview from '../orders-import/preview/route-handler';
-import * as productsOrdersImportImport from '../orders-import/import/route-handler';
-import * as productsAiJobs from '../ai-jobs/route-handler';
-import * as productsAiJobsBulk from '../ai-jobs/bulk/route-handler';
-import * as productsAiJobsEnqueue from '../ai-jobs/enqueue/route-handler';
-import * as productsAiJobsJob from '../ai-jobs/[jobId]/route-handler';
-import * as productsAiPathsDescriptionContext from '../ai-paths/description-context/route-handler';
-import * as productsSyncProfiles from '../sync/profiles/route-handler';
-import * as productsSyncProfilesId from '../sync/profiles/[id]/route-handler';
-import * as productsSyncProfilesRun from '../sync/profiles/[id]/run/route-handler';
-import * as productsSyncRuns from '../sync/runs/route-handler';
-import * as productsSyncRunsId from '../sync/runs/[runId]/route-handler';
-import * as productsSyncRelink from '../sync/relink/route-handler';
-import * as productIdRoute from '../[id]/route-handler';
-import * as productDuplicate from '../[id]/duplicate/route-handler';
-import * as productImagesBase64 from '../[id]/images/base64/route-handler';
-import * as productImagesLinkToFile from '../[id]/images/link-to-file/route-handler';
-import * as productImagesById from '../[id]/images/[imageFileId]/route-handler';
-import * as productStudio from '../[id]/studio/route-handler';
-import * as productStudioAction from '../[id]/studio/[action]/route-handler';
 
 const param = (name: string): PatternToken => ({ param: name });
 
 const ROUTES: CatchAllRouteDefinition<PatternToken>[] = [
-  { pattern: [], module: productsIndex },
-  { pattern: ['count'], module: productsCount },
-  { pattern: ['paged'], module: productsPaged },
-  { pattern: ['ids'], module: productsIds },
-  { pattern: ['simple-parameters'], module: productsSimpleParameters },
-  { pattern: ['parameters'], module: productsParameters },
-  { pattern: ['parameters', param('id')], module: productsParametersId },
-  { pattern: ['producers'], module: productsProducers },
-  { pattern: ['producers', param('id')], module: productsProducersId },
-  { pattern: ['shipping-groups'], module: productsShippingGroups },
-  { pattern: ['shipping-groups', param('id')], module: productsShippingGroupsId },
-  { pattern: ['tags'], module: productsTags },
-  { pattern: ['tags', 'all'], module: productsTagsAll },
-  { pattern: ['tags', param('id')], module: productsTagsId },
-  { pattern: ['validation'], module: productsValidation },
-  { pattern: ['validator-config'], module: productsValidatorConfig },
-  { pattern: ['validator-decisions', 'batch'], module: productsValidatorDecisionsBatch },
-  { pattern: ['validator-decisions'], module: productsValidatorDecisions },
-  { pattern: ['validator-settings'], module: productsValidatorSettings },
-  { pattern: ['validator-patterns'], module: productsValidatorPatterns },
-  { pattern: ['validator-patterns', 'import'], module: productsValidatorPatternsImport },
-  { pattern: ['validator-patterns', 'reorder'], module: productsValidatorPatternsReorder },
-  { pattern: ['validator-patterns', 'templates', param('type')], module: productsValidatorPatternsTemplates },
-  { pattern: ['validator-patterns', param('id')], module: productsValidatorPatternsId },
-  { pattern: ['validator-runtime', 'evaluate'], module: productsValidatorRuntimeEvaluate },
-  { pattern: ['categories'], module: productsCategories },
-  { pattern: ['categories', 'tree'], module: productsCategoriesTree },
-  { pattern: ['categories', 'batch'], module: productsCategoriesBatch },
-  { pattern: ['categories', 'migrate'], module: productsCategoriesMigrate },
-  { pattern: ['categories', 'reorder'], module: productsCategoriesReorder },
-  { pattern: ['categories', param('id')], module: productsCategoriesId },
-  { pattern: ['entities', 'catalogs', 'assign'], module: productsEntitiesCatalogsAssign },
-  { pattern: ['entities', param('type')], module: productsEntitiesType },
-  { pattern: ['entities', param('type'), param('id')], module: productsEntitiesTypeId },
-  { pattern: ['metadata', param('type')], module: productsMetadataType },
-  { pattern: ['metadata', param('type'), param('id')], module: productsMetadataTypeId },
-  { pattern: ['images', 'base64'], module: productsImagesBase64 },
-  { pattern: ['images', 'base64', 'all'], module: productsImagesBase64All },
-  { pattern: ['images', 'upload'], module: productsImagesUpload },
-  { pattern: ['import', 'csv'], module: productsImportCsv },
-  { pattern: ['orders-import', 'statuses'], module: productsOrdersImportStatuses },
-  { pattern: ['orders-import', 'preview'], module: productsOrdersImportPreview },
-  { pattern: ['orders-import', 'import'], module: productsOrdersImportImport },
-  { pattern: ['ai-jobs'], module: productsAiJobs },
-  { pattern: ['ai-jobs', 'bulk'], module: productsAiJobsBulk },
-  { pattern: ['ai-jobs', 'enqueue'], module: productsAiJobsEnqueue },
-  { pattern: ['ai-jobs', param('jobId')], module: productsAiJobsJob },
-  { pattern: ['ai-paths', 'description-context'], module: productsAiPathsDescriptionContext },
-  { pattern: ['sync', 'profiles'], module: productsSyncProfiles },
-  { pattern: ['sync', 'profiles', param('id')], module: productsSyncProfilesId },
-  { pattern: ['sync', 'profiles', param('id'), 'run'], module: productsSyncProfilesRun },
-  { pattern: ['sync', 'runs'], module: productsSyncRuns },
-  { pattern: ['sync', 'runs', param('runId')], module: productsSyncRunsId },
-  { pattern: ['sync', 'relink'], module: productsSyncRelink },
-  { pattern: [param('id')], module: productIdRoute },
-  { pattern: [param('id'), 'duplicate'], module: productDuplicate },
-  { pattern: [param('id'), 'images', 'base64'], module: productImagesBase64 },
-  { pattern: [param('id'), 'images', 'link-to-file'], module: productImagesLinkToFile },
-  { pattern: [param('id'), 'images', param('imageFileId')], module: productImagesById },
-  { pattern: [param('id'), 'studio'], module: productStudio },
-  { pattern: [param('id'), 'studio', param('action')], module: productStudioAction },
+  { pattern: [], loader: () => import('../route-handler') },
+  { pattern: ['count'], loader: () => import('../count/route-handler') },
+  { pattern: ['paged'], loader: () => import('../paged/route-handler') },
+  { pattern: ['ids'], loader: () => import('../ids/route-handler') },
+  { pattern: ['simple-parameters'], loader: () => import('../simple-parameters/route-handler') },
+  { pattern: ['custom-fields'], loader: () => import('../custom-fields/route-handler') },
+  { pattern: ['custom-fields', param('id')], loader: () => import('../custom-fields/[id]/route-handler') },
+  { pattern: ['parameters'], loader: () => import('../parameters/route-handler') },
+  { pattern: ['parameters', 'batch'], loader: () => import('../parameters/batch/route-handler') },
+  { pattern: ['parameters', param('id')], loader: () => import('../parameters/[id]/route-handler') },
+  { pattern: ['producers'], loader: () => import('../producers/route-handler') },
+  { pattern: ['producers', param('id')], loader: () => import('../producers/[id]/route-handler') },
+  { pattern: ['shipping-groups'], loader: () => import('../shipping-groups/route-handler') },
+  { pattern: ['shipping-groups', param('id')], loader: () => import('../shipping-groups/[id]/route-handler') },
+  { pattern: ['tags'], loader: () => import('../tags/route-handler') },
+  { pattern: ['tags', 'all'], loader: () => import('../tags/all/route-handler') },
+  { pattern: ['tags', param('id')], loader: () => import('../tags/[id]/route-handler') },
+  { pattern: ['validation'], loader: () => import('../validation/route-handler') },
+  { pattern: ['validator-config'], loader: () => import('../validator-config/route-handler') },
+  { pattern: ['validator-decisions', 'batch'], loader: () => import('../validator-decisions/batch/route-handler') },
+  { pattern: ['validator-decisions'], loader: () => import('../validator-decisions/route-handler') },
+  { pattern: ['validator-settings'], loader: () => import('../validator-settings/route-handler') },
+  { pattern: ['validator-patterns'], loader: () => import('../validator-patterns/route-handler') },
+  { pattern: ['validator-patterns', 'import'], loader: () => import('../validator-patterns/import/route-handler') },
+  { pattern: ['validator-patterns', 'reorder'], loader: () => import('../validator-patterns/reorder/route-handler') },
+  { pattern: ['validator-patterns', 'templates', param('type')], loader: () => import('../validator-patterns/templates/[type]/route-handler') },
+  { pattern: ['validator-patterns', param('id')], loader: () => import('../validator-patterns/[id]/route-handler') },
+  { pattern: ['validator-runtime', 'evaluate'], loader: () => import('../validator-runtime/evaluate/route-handler') },
+  { pattern: ['categories'], loader: () => import('../categories/route-handler') },
+  { pattern: ['categories', 'tree'], loader: () => import('../categories/tree/route-handler') },
+  { pattern: ['categories', 'batch'], loader: () => import('../categories/batch/route-handler') },
+  { pattern: ['categories', 'reorder'], loader: () => import('../categories/reorder/route-handler') },
+  { pattern: ['categories', param('id')], loader: () => import('../categories/[id]/route-handler') },
+  { pattern: ['entities', 'catalogs', 'assign'], loader: () => import('../entities/catalogs/assign/route-handler') },
+  { pattern: ['entities', param('type')], loader: () => import('../entities/[type]/route-handler') },
+  { pattern: ['entities', param('type'), param('id')], loader: () => import('../entities/[type]/[id]/route-handler') },
+  { pattern: ['metadata', param('type')], loader: () => import('../metadata/[type]/route-handler') },
+  { pattern: ['metadata', param('type'), param('id')], loader: () => import('../metadata/[type]/[id]/route-handler') },
+  { pattern: ['images', 'base64'], loader: () => import('../images/base64/route-handler') },
+  { pattern: ['images', 'base64', 'all'], loader: () => import('../images/base64/all/route-handler') },
+  { pattern: ['images', 'upload'], loader: () => import('../images/upload/route-handler') },
+  { pattern: ['archive', 'batch'], loader: () => import('../archive/batch/route-handler') },
+  { pattern: ['scans', 'latest'], loader: () => import('../scans/latest/route-handler') },
+  { pattern: ['scans'], loader: () => import('../scans/route-handler') },
+  { pattern: ['scans', param('scanId')], loader: () => import('../scans/[scanId]/route-handler') },
+  { pattern: ['scans', '1688', 'batch'], loader: () => import('../scans/1688/batch/route-handler') },
+  { pattern: ['scans', 'amazon', 'batch'], loader: () => import('../scans/amazon/batch/route-handler') },
+  { pattern: ['import', 'csv'], loader: () => import('../import/csv/route-handler') },
+  { pattern: ['title-terms'], loader: () => import('../title-terms/route-handler') },
+  { pattern: ['title-terms', param('id')], loader: () => import('../title-terms/[id]/route-handler') },
+  { pattern: ['orders-import', 'statuses'], loader: () => import('../orders-import/statuses/route-handler') },
+  { pattern: ['orders-import', 'preview'], loader: () => import('../orders-import/preview/route-handler') },
+  { pattern: ['orders-import', 'import'], loader: () => import('../orders-import/import/route-handler') },
+  { pattern: ['ai-jobs'], loader: () => import('../ai-jobs/route-handler') },
+  { pattern: ['ai-jobs', 'bulk'], loader: () => import('../ai-jobs/bulk/route-handler') },
+  { pattern: ['ai-jobs', 'enqueue'], loader: () => import('../ai-jobs/enqueue/route-handler') },
+  { pattern: ['ai-jobs', param('jobId')], loader: () => import('../ai-jobs/[jobId]/route-handler') },
+  { pattern: ['ai-paths', 'description-context'], loader: () => import('../ai-paths/description-context/route-handler') },
+  { pattern: ['sync', 'profiles'], loader: () => import('../sync/profiles/route-handler') },
+  { pattern: ['sync', 'profiles', param('id')], loader: () => import('../sync/profiles/[id]/route-handler') },
+  { pattern: ['sync', 'profiles', param('id'), 'run'], loader: () => import('../sync/profiles/[id]/run/route-handler') },
+  { pattern: ['sync', 'runs'], loader: () => import('../sync/runs/route-handler') },
+  { pattern: ['sync', 'runs', param('runId')], loader: () => import('../sync/runs/[runId]/route-handler') },
+  { pattern: ['sync', 'relink'], loader: () => import('../sync/relink/route-handler') },
+  { pattern: [param('id'), 'sync', 'base'], loader: () => import('../[id]/sync/base/route-handler') },
+  { pattern: [param('id')], loader: () => import('../[id]/route-handler') },
+  { pattern: [param('id'), 'duplicate'], loader: () => import('../[id]/duplicate/route-handler') },
+  { pattern: [param('id'), 'images', 'base64'], loader: () => import('../[id]/images/base64/route-handler') },
+  { pattern: [param('id'), 'images', 'link-to-file'], loader: () => import('../[id]/images/link-to-file/route-handler') },
+  { pattern: [param('id'), 'images', param('imageFileId')], loader: () => import('../[id]/images/[imageFileId]/route-handler') },
+  { pattern: [param('id'), 'scans'], loader: () => import('../[id]/scans/route-handler') },
+  { pattern: [param('id'), 'studio'], loader: () => import('../[id]/studio/route-handler') },
+  { pattern: [param('id'), 'studio', param('action')], loader: () => import('../[id]/studio/[action]/route-handler') },
 ];
 
 const BASE_PATH = '/api/v2/products';

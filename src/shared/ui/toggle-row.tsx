@@ -89,6 +89,7 @@ export function ToggleRow(props: ToggleRowProps): React.JSX.Element {
     children,
     showBorder = true,
     controlWrapper,
+    toggleOnRowClick = false,
   } = props;
   const controlId = id ?? generatedId;
   const descriptionId = description ? `${controlId}-description` : undefined;
@@ -141,6 +142,24 @@ export function ToggleRow(props: ToggleRowProps): React.JSX.Element {
 
   const control = <ToggleRowControl />;
 
+  const handleCardClick = React.useCallback(
+    (event: React.MouseEvent<HTMLDivElement>): void => {
+      if (!toggleOnRowClick || disabled || loading) return;
+
+      const target = event.target as HTMLElement | null;
+      if (
+        target?.closest(
+          'label,button,input,a,[role="checkbox"],[role="switch"]'
+        )
+      ) {
+        return;
+      }
+
+      onCheckedChange(!checked);
+    },
+    [checked, disabled, loading, onCheckedChange, toggleOnRowClick]
+  );
+
   return (
     <ToggleRowContext.Provider value={contextValue}>
       <Card
@@ -152,6 +171,7 @@ export function ToggleRow(props: ToggleRowProps): React.JSX.Element {
           disabled && 'opacity-50 grayscale-[0.5]',
           className
         )}
+        onClick={handleCardClick}
         title={title}
       >
         <div className='flex min-w-0 flex-1 items-start gap-3'>

@@ -1,4 +1,5 @@
 'use client';
+'use no memo';
 
 import {
   useQueryClient,
@@ -8,10 +9,19 @@ import {
 } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
+// This hook delegates into query factory wrappers that use TanStack Query
+// hooks internally. Opt out of React Compiler memoization here to avoid dev
+// runtime cache-size mismatches in compiled hook paths.
+
 import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import type { TanstackFactoryMeta } from '@/shared/lib/tanstack-factory-v2.types';
+import { ApiError } from '@/shared/lib/api-client';
 import { useToast } from '@/shared/ui/primitives.public';
-import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
+import {
+  logClientCatch,
+  logClientError,
+  logClientEvent,
+} from '@/shared/utils/observability/client-error-logger';
 
 interface QueuedMutation {
   id: string;
@@ -37,6 +47,13 @@ class OfflineMutationQueue {
     if (this.isProcessing || this.queue.length === 0) return;
 
     this.isProcessing = true;
+    const initialQueueLength = this.queue.length;
+
+    logClientEvent({
+      level: 'info',
+      message: `Processing offline mutation queue (${initialQueueLength} items)`,
+      context: { source: 'offline-queue', action: 'process-start', queueLength: initialQueueLength },
+    });
 
     while (this.queue.length > 0) {
       const mutation = this.queue.shift();
@@ -44,6 +61,11 @@ class OfflineMutationQueue {
 
       try {
         await mutation.mutationFn();
+        logClientEvent({
+          level: 'info',
+          message: `Successfully processed offline mutation: ${mutation.id}`,
+          context: { source: 'offline-queue', action: 'processed-item', mutationId: mutation.id, queryKey: mutation.queryKey },
+        });
         void queryClient.invalidateQueries({ queryKey: mutation.queryKey });
         if (mutation.invalidateKeys) {
           mutation.invalidateKeys.forEach((key: readonly unknown[]) => {
@@ -247,11 +269,31 @@ export function useOfflineMutation<
         await options.invalidate(queryClient, data, variables, context);
       }
     },
-    onError: (error: Error): void => {
-      let message = options.errorMessage || 'An error occurred';
-      if (error instanceof Error) {
-        message = options.errorMessage || error.message;
+    onError: (error: unknown): void => {
+      let message = 'An error occurred'; // Default fallback message
+
+      if (error instanceof ApiError) {
+        // Check for specific duplicate SKU error codes/messages from the API.
+        if (error.status === 409 && error.message.toLowerCase().includes('duplicate sku')) {
+          message = 'SKU already exists. Please enter a unique SKU.';
+        } else if (error.status === 400 && error.message.toLowerCase().includes('duplicate entry')) {
+          // Handle potential duplicate entry from DB if not caught as 409
+          message = 'SKU already exists. Please enter a unique SKU.';
+        } else if (error.message && error.message !== options.errorMessage && error.message !== 'An error occurred') {
+          // Use specific API error message if it's more informative than the generic ones.
+          message = error.message;
+        } else if (options.errorMessage) {
+          // Use the mutation-specific error message if provided and no better message is found.
+          message = options.errorMessage;
+        }
+      } else if (error instanceof Error) {
+        // Fallback for generic Error instances.
+        message = error.message || options.errorMessage || message;
+      } else if (options.errorMessage) {
+        // Fallback to option's error message if it's provided and error is not an Error instance
+        message = options.errorMessage;
       }
+
       toast(message, { variant: 'error' });
     },
   });

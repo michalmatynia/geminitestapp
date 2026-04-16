@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { type z } from 'zod';
 
 export type FormFieldErrors = Record<string, string[]>;
 
@@ -22,7 +22,7 @@ const getFirstFieldError = (fieldErrors: FormFieldErrors): string | null => {
     const first = messages.find(
       (message: string) => typeof message === 'string' && message.trim().length > 0
     );
-    if (first) return first;
+    if (first !== undefined) return first;
   }
   return null;
 };
@@ -49,10 +49,8 @@ export const validateFormData = <T>(
     fieldErrors[field] = normalized;
   });
 
-  const formErrors = (flattened.formErrors || []).filter(
-    (message: string) => message.trim().length > 0
-  );
-  const firstError = formErrors[0] || getFirstFieldError(fieldErrors) || fallbackMessage;
+  const formErrors = flattened.formErrors.filter((message: string) => message.trim().length > 0);
+  const firstError = formErrors[0] ?? getFirstFieldError(fieldErrors) ?? fallbackMessage;
 
   return {
     success: false,

@@ -74,18 +74,13 @@ const RUNTIME_KERNEL_CONFIG_CHANGED_FIELD_MAP = {
 } satisfies Record<RuntimeKernelConfigNormalizedField, AiPathRunRuntimeKernelMetadataChangedField>;
 
 const normalizeRuntimeKernelConfigRecord = (
-  value: Record<string, unknown>,
-  options: {
-    translateLegacyAliases: boolean;
-  }
+  value: Record<string, unknown>
 ): {
   changed: boolean;
   value: Record<string, unknown>;
   changedFields: AiPathRunRuntimeKernelMetadataChangedField[];
 } => {
-  const normalized = normalizeRuntimeKernelConfigRecordDetailed(value, {
-    translateLegacyAliases: options.translateLegacyAliases,
-  });
+  const normalized = normalizeRuntimeKernelConfigRecordDetailed(value);
   const changedFields =
     normalized?.changedFields.map((field) => RUNTIME_KERNEL_CONFIG_CHANGED_FIELD_MAP[field]) ?? [];
 
@@ -97,10 +92,7 @@ const normalizeRuntimeKernelConfigRecord = (
 };
 
 const normalizeRuntimeKernelTelemetryRecord = (
-  value: Record<string, unknown>,
-  options: {
-    translateLegacyAliases: boolean;
-  }
+  value: Record<string, unknown>
 ): {
   changed: boolean;
   value: Record<string, unknown>;
@@ -124,12 +116,7 @@ const normalizeRuntimeKernelTelemetryRecord = (
     );
   }
 
-  const nodeTypes = parseRuntimeKernelNodeTypes(
-    options.translateLegacyAliases
-      ? (value['runtimeKernelNodeTypes'] ??
-          value[DEPRECATED_RUNTIME_KERNEL_TELEMETRY_NODE_TYPES_FIELD])
-      : value['runtimeKernelNodeTypes']
-  );
+  const nodeTypes = parseRuntimeKernelNodeTypes(value['runtimeKernelNodeTypes']);
   if (nodeTypes) {
     if (!matchesStringArray(value['runtimeKernelNodeTypes'], nodeTypes)) {
       nextValue['runtimeKernelNodeTypes'] = nodeTypes;
@@ -154,10 +141,7 @@ const normalizeRuntimeKernelTelemetryRecord = (
   }
 
   const nodeTypesSource = normalizeRuntimeKernelNodeTypesSource(
-    options.translateLegacyAliases
-      ? (value['runtimeKernelNodeTypesSource'] ??
-          value[DEPRECATED_RUNTIME_KERNEL_TELEMETRY_NODE_TYPES_SOURCE_FIELD])
-      : value['runtimeKernelNodeTypesSource']
+    value['runtimeKernelNodeTypesSource']
   );
   if (nodeTypesSource !== undefined) {
     if (value['runtimeKernelNodeTypesSource'] !== nodeTypesSource) {
@@ -227,8 +211,7 @@ export const normalizeAiPathRunRuntimeKernelMetadataForCleanup = (
   meta: unknown
 ): NormalizeAiPathRunRuntimeKernelMetadataResult => {
   return normalizeAiPathRunRuntimeKernelMetadataInternal(meta, {
-    translateLegacyAliases: true,
-    dropEmptyObjects: false,
+    dropEmptyObjects: true,
   });
 };
 
@@ -236,7 +219,6 @@ export const normalizeAiPathRunRuntimeKernelMetadataForRuntimeRead = (
   meta: unknown
 ): NormalizeAiPathRunRuntimeKernelMetadataResult => {
   return normalizeAiPathRunRuntimeKernelMetadataInternal(meta, {
-    translateLegacyAliases: false,
     dropEmptyObjects: true,
   });
 };
@@ -244,7 +226,6 @@ export const normalizeAiPathRunRuntimeKernelMetadataForRuntimeRead = (
 const normalizeAiPathRunRuntimeKernelMetadataInternal = (
   meta: unknown,
   options: {
-    translateLegacyAliases: boolean;
     dropEmptyObjects: boolean;
   }
 ): NormalizeAiPathRunRuntimeKernelMetadataResult => {
@@ -263,9 +244,7 @@ const normalizeAiPathRunRuntimeKernelMetadataInternal = (
     ? meta['runtimeKernelConfig']
     : null;
   if (runtimeKernelConfig) {
-    const normalized = normalizeRuntimeKernelConfigRecord(runtimeKernelConfig, {
-      translateLegacyAliases: options.translateLegacyAliases,
-    });
+    const normalized = normalizeRuntimeKernelConfigRecord(runtimeKernelConfig);
     if (normalized.changed) {
       if (options.dropEmptyObjects && Object.keys(normalized.value).length === 0) {
         delete nextMeta['runtimeKernelConfig'];
@@ -278,9 +257,7 @@ const normalizeAiPathRunRuntimeKernelMetadataInternal = (
 
   const runtimeKernel = isObjectRecord(meta['runtimeKernel']) ? meta['runtimeKernel'] : null;
   if (runtimeKernel) {
-    const normalized = normalizeRuntimeKernelTelemetryRecord(runtimeKernel, {
-      translateLegacyAliases: options.translateLegacyAliases,
-    });
+    const normalized = normalizeRuntimeKernelTelemetryRecord(runtimeKernel);
     if (normalized.changed) {
       if (options.dropEmptyObjects && Object.keys(normalized.value).length === 0) {
         delete nextMeta['runtimeKernel'];

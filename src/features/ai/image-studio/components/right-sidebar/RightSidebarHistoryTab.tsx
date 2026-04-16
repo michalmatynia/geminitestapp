@@ -7,7 +7,7 @@ import { ProjectGenerationHistoryTab } from '../ProjectGenerationHistoryTab';
 import { useRightSidebarContext } from '../RightSidebarContext';
 
 export const RightSidebarHistoryTab = React.memo(
-  function RightSidebarHistoryTab(): React.JSX.Element {
+  (): React.JSX.Element => {
     const {
       actionHistoryEntriesLength,
       actionHistoryItems,

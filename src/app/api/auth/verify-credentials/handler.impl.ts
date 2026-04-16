@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { findAuthUserByEmail } from '@/features/auth/server';
 import { getAuthSecurityProfile } from '@/features/auth/server';

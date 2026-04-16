@@ -43,7 +43,9 @@ interface ImportExportTemplateResourcesParams {
   baseConnections: IntegrationConnectionBasic[];
   exportInventoryId: string;
   importTemplateId: string;
+  importTemplateIdRef: MutableRefObject<string>;
   inventoryId: string;
+  inventoryIdRef: MutableRefObject<string>;
   isBaseConnected: boolean;
   lastHydratedExportActiveTemplateScope: MutableRefObject<string>;
   lastHydratedImportActiveTemplateScope: MutableRefObject<string>;
@@ -52,6 +54,7 @@ interface ImportExportTemplateResourcesParams {
   lastSavedImportActiveTemplateId: MutableRefObject<string | null>;
   lastSavedImportTemplateId: MutableRefObject<string | null>;
   selectedBaseConnectionId: string;
+  selectedBaseConnectionIdRef: MutableRefObject<string>;
   setExportInventoryId: (id: string) => void;
   setExportStockFallbackEnabled: (enabled: boolean) => void;
   setImageRetryPresets: Dispatch<SetStateAction<ImageRetryPreset[]>>;
@@ -80,7 +83,9 @@ export function useImportExportTemplateResources({
   baseConnections,
   exportInventoryId,
   importTemplateId,
+  importTemplateIdRef,
   inventoryId,
+  inventoryIdRef,
   isBaseConnected,
   lastHydratedExportActiveTemplateScope,
   lastHydratedImportActiveTemplateScope,
@@ -89,6 +94,7 @@ export function useImportExportTemplateResources({
   lastSavedImportActiveTemplateId,
   lastSavedImportTemplateId,
   selectedBaseConnectionId,
+  selectedBaseConnectionIdRef,
   setExportInventoryId,
   setExportStockFallbackEnabled,
   setImageRetryPresets,
@@ -177,6 +183,9 @@ export function useImportExportTemplateResources({
     imageRetryPresetsPref,
     sampleProductPref,
     baseConnections,
+    importTemplateIdRef,
+    inventoryIdRef,
+    selectedBaseConnectionIdRef,
     setImportTemplateId,
     setExportInventoryId,
     setSelectedBaseConnectionId,

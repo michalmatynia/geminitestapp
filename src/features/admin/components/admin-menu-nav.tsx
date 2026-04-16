@@ -202,6 +202,7 @@ export const buildAdminNav = (handlers: {
             label: 'Orders Import',
             href: '/admin/products/orders-import',
           },
+          { id: 'commerce/products/import', label: 'Import', href: '/admin/products/import' },
           {
             id: 'commerce/products/preferences',
             label: 'Preferences',
@@ -251,7 +252,7 @@ export const buildAdminNav = (handlers: {
               },
               {
                 id: 'integrations/aggregators/base-com/import-export',
-                label: 'Import / Export',
+                label: 'Export',
                 href: '/admin/integrations/aggregators/base-com/import-export',
               },
             ],
@@ -310,6 +311,16 @@ export const buildAdminNav = (handlers: {
                 label: 'Category Mapping',
                 href: '/admin/integrations/marketplaces/category-mapper?marketplace=tradera',
               },
+              {
+                id: 'integrations/marketplaces/tradera/parameter-mapping',
+                label: 'Parameter Mapping',
+                href: '/admin/integrations/marketplaces/tradera/parameter-mapping',
+              },
+              {
+                id: 'integrations/marketplaces/tradera/selectors',
+                label: 'Selector Registry',
+                href: '/admin/integrations/marketplaces/tradera/selectors',
+              },
             ],
           },
           {
@@ -326,6 +337,11 @@ export const buildAdminNav = (handlers: {
                 id: 'integrations/marketplaces/playwright/import',
                 label: 'Import Routes',
                 href: '/admin/integrations/marketplaces/playwright/import',
+              },
+              {
+                id: 'integrations/marketplaces/playwright/step-sequencer',
+                label: 'Step Sequencer',
+                href: '/admin/playwright/step-sequencer',
               },
             ],
           },
@@ -609,6 +625,11 @@ export const buildAdminNav = (handlers: {
             id: 'system/settings/playwright',
             label: 'Playwright Personas',
             href: '/admin/settings/playwright',
+          },
+          {
+            id: 'system/settings/scanner',
+            label: 'Scanner',
+            href: '/admin/settings/scanner',
           },
           {
             id: 'system/settings/folder-trees',

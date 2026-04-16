@@ -15,14 +15,22 @@ import type {
   FilemakerEmailCampaignDeliveryStatus,
 } from '../../types';
 
-interface RunDeliveryLogSectionProps {
+interface RunDeliveryLogSectionData {
   deliveries: FilemakerEmailCampaignDelivery[];
   attemptsByDeliveryId: Map<string, FilemakerEmailCampaignDeliveryAttempt[]>;
   database: FilemakerDatabase;
   retryableDeliveryIds: Set<string>;
   exhaustedRetryDeliveryIds: Set<string>;
+}
+
+interface RunDeliveryLogSectionActions {
   handleRetryDelivery: (deliveryId: string) => Promise<void>;
   isUpdatePending: boolean;
+}
+
+interface RunDeliveryLogSectionProps {
+  data: RunDeliveryLogSectionData;
+  actions: RunDeliveryLogSectionActions;
   deliveryStatusLabels: Record<FilemakerEmailCampaignDeliveryStatus, string>;
 }
 
@@ -41,15 +49,13 @@ const resolveRecipientLabel = (
 };
 
 export function RunDeliveryLogSection({
-  deliveries,
-  attemptsByDeliveryId,
-  database,
-  retryableDeliveryIds,
-  exhaustedRetryDeliveryIds,
-  handleRetryDelivery,
-  isUpdatePending,
+  data,
+  actions,
   deliveryStatusLabels,
 }: RunDeliveryLogSectionProps): React.JSX.Element {
+  const { deliveries, attemptsByDeliveryId, database, retryableDeliveryIds, exhaustedRetryDeliveryIds } = data;
+  const { handleRetryDelivery, isUpdatePending } = actions;
+
   return (
     <FormSection title='Delivery Log' className='space-y-4 p-4'>
       {deliveries.length === 0 ? (

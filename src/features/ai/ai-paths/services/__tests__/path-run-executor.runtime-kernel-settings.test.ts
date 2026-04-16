@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AiPathRunRecord, RuntimeState } from '@/shared/contracts/ai-paths';
-import { AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY, AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY, createDefaultPathConfig } from '@/shared/lib/ai-paths';
+import { AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY, AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY } from '@/shared/lib/ai-paths/core/constants';
+import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils';
 import {
   DEPRECATED_AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_ENV,
   DEPRECATED_AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_ENV,
@@ -477,7 +478,7 @@ describe('path-run-executor runtime-kernel settings integration', () => {
                 pathName: run.pathName,
                 traceId: run.id,
                 spanId: `${node?.id ?? 'node-1'}:1:2`,
-                runtimeStrategy: 'compatibility',
+                runtimeStrategy: 'legacy_mode' as never,
                 runtimeResolutionSource: 'registry',
                 runtimeCodeObjectId: null,
               },
@@ -545,9 +546,8 @@ describe('path-run-executor runtime-kernel settings integration', () => {
     expect(getRecordField(runtimeTrace, 'kernelParity')).toEqual({
       sampledHistoryEntries: 2,
       strategyCounts: {
-        compatibility: 1,
         code_object_v3: 1,
-        unknown: 0,
+        unknown: 1,
       },
       resolutionSourceCounts: {
         override: 1,
@@ -557,6 +557,7 @@ describe('path-run-executor runtime-kernel settings integration', () => {
       },
       codeObjectIds: ['ai-paths.node-code-object.constant.v3'],
     });
+
     expect(nodeFinishEventPayload?.['metadata']).not.toHaveProperty(
       DEPRECATED_RUNTIME_KERNEL_TELEMETRY_NODE_TYPES_FIELD
     );

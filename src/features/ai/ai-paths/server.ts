@@ -5,6 +5,7 @@ export {
   enforceAiPathsActionRateLimit,
   enforceAiPathsRunRateLimit,
   ensureAiPathsPermission,
+  isAiPathsInternalRequest,
   requireAiPathsAccess,
   requireAiPathsAccessOrInternal,
   requireAiPathsRunAccess,

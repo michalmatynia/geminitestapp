@@ -18,7 +18,7 @@ const mocks = vi.hoisted(() => ({
   updateSettingMutateAsync: vi.fn(),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   Button: React.forwardRef<
     HTMLButtonElement,
     React.ButtonHTMLAttributes<HTMLButtonElement> & { size?: string; variant?: string }
@@ -36,6 +36,13 @@ vi.mock('@/shared/ui', () => ({
   >(function MockInput(props, ref) {
     return <input ref={ref} {...props} />;
   }),
+  Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  useToast: () => ({
+    toast: mocks.toast,
+  }),
+}));
+
+vi.mock('@/shared/ui/navigation-and-layout.public', () => ({
   SidePanel: ({
     children,
     isFocusMode: _isFocusMode,
@@ -43,7 +50,6 @@ vi.mock('@/shared/ui', () => ({
   }: React.HTMLAttributes<HTMLDivElement> & { isFocusMode?: boolean }) => (
     <div {...props}>{children}</div>
   ),
-  Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   CompactEmptyState: ({
     title,
     description,
@@ -57,9 +63,6 @@ vi.mock('@/shared/ui', () => ({
       {description ? <div>{description}</div> : null}
     </div>
   ),
-  useToast: () => ({
-    toast: mocks.toast,
-  }),
 }));
 
 vi.mock('@/shared/providers/SettingsStoreProvider', () => ({

@@ -61,9 +61,6 @@ function AdminKangurSocialPageContent(): React.JSX.Element {
     handleCreateDraft,
     handleDeletePost,
     handleUnpublishPost,
-    handleSaveSettings,
-    isSettingsDirty,
-    isSavingSettings,
   } = useSocialPostContext();
   const breadcrumbs = [
     { label: 'Admin', href: '/admin' },
@@ -271,15 +268,7 @@ function AdminKangurSocialPageContent(): React.JSX.Element {
         confirmDisabled={isUnpublishConfirmBlocked}
       />
       {isSettingsModalOpen ? (
-        <AdminKangurSocialSettingsModal
-          open={true}
-          onClose={() => setIsSettingsModalOpen(false)}
-          onSave={() => {
-            void handleSaveSettings();
-          }}
-          isSaving={isSavingSettings}
-          hasUnsavedChanges={isSettingsDirty}
-        />
+        <AdminKangurSocialSettingsModal />
       ) : null}
     </KangurAdminContentShell>
   );

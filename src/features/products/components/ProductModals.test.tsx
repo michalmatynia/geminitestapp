@@ -2,39 +2,55 @@
  * @vitest-environment jsdom
  */
 
-import { fireEvent, render, screen, waitFor } from '@/__tests__/test-utils';
+import { render, screen, waitFor } from '@/__tests__/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import React, { type ReactNode } from 'react';
+import { act } from 'react';
 
 import { markEditingProductHydrated } from '@/features/products/hooks/editingProductHydration';
 import type { ProductDraft } from '@/shared/contracts/products/drafts';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER } from '@/shared/lib/products/constants';
 
-const { useProductListHeaderActionsContextMock, useProductListModalsContextMock } = vi.hoisted(() => ({
+const {
+  useProductListHeaderActionsContextMock,
+  useProductListModalsContextMock,
+  useProductListSelectionContextMock,
+  useProductFormImagesMock,
+} = vi.hoisted(() => ({
   useProductListHeaderActionsContextMock: vi.fn(),
   useProductListModalsContextMock: vi.fn(),
+  useProductListSelectionContextMock: vi.fn(),
+  useProductFormImagesMock: vi.fn(),
 }));
 
 const {
-  productFormPropsMock,
   useProductFormCoreMock,
+  useProductFormParametersMock,
+  useProductFormMetadataMock,
   productFormProviderPropsMock,
   triggerButtonBarMock,
   listProductModalPropsMock,
   productListingsModalPropsMock,
   getNextProviderInstanceIdMock,
   resetProviderInstanceCounterMock,
+  subscribeToTrackedAiPathRunMock,
+  getAiPathRunMock,
+  getAiPathRunResultMock,
 } = vi.hoisted(() => {
   let providerInstanceCounter = 0;
 
   return {
-    productFormPropsMock: vi.fn(),
     useProductFormCoreMock: vi.fn(),
+    useProductFormParametersMock: vi.fn(),
+    useProductFormMetadataMock: vi.fn(),
     productFormProviderPropsMock: vi.fn(),
     triggerButtonBarMock: vi.fn(),
     listProductModalPropsMock: vi.fn(),
     productListingsModalPropsMock: vi.fn(),
+    subscribeToTrackedAiPathRunMock: vi.fn(),
+    getAiPathRunMock: vi.fn(),
+    getAiPathRunResultMock: vi.fn(),
     getNextProviderInstanceIdMock: (): number => {
       providerInstanceCounter += 1;
       return providerInstanceCounter;
@@ -48,6 +64,7 @@ const {
 vi.mock('@/features/products/context/ProductListContext', () => ({
   useProductListHeaderActionsContext: useProductListHeaderActionsContextMock,
   useProductListModalsContext: useProductListModalsContextMock,
+  useProductListSelectionContext: useProductListSelectionContextMock,
 }));
 
 vi.mock('@/features/products/context/ProductFormContext', () => ({
@@ -79,11 +96,37 @@ vi.mock('@/features/products/context/ProductFormCoreContext', () => ({
   useProductFormCore: () => useProductFormCoreMock(),
 }));
 
+vi.mock('@/features/products/context/ProductFormParameterContext', () => ({
+  useProductFormParameters: () => useProductFormParametersMock(),
+}));
+
+vi.mock('@/features/products/context/ProductFormMetadataContext', () => ({
+  useProductFormMetadata: () => useProductFormMetadataMock(),
+  useProductFormMetadataState: () => useProductFormMetadataMock(),
+}));
+
 vi.mock('@/features/products/context/ProductFormImageContext', () => ({
-  useProductFormImages: () => ({
-    showFileManager: false,
-    handleMultiFileSelect: vi.fn(),
+  useProductFormImages: () => useProductFormImagesMock(),
+}));
+
+vi.mock('@/features/products/context-registry/ProductLeafCategoriesContextRegistrySource', () => ({
+  ProductLeafCategoriesContextRegistrySource: () => null,
+}));
+
+vi.mock('./product-form-preload', () => ({
+  loadProductForm: async () => ({
+    default: () => <div data-testid='product-form' />,
   }),
+  preloadProductFormChunk: vi.fn(),
+}));
+
+vi.mock('@/shared/lib/ai-paths/client-run-tracker', () => ({
+  subscribeToTrackedAiPathRun: (...args: unknown[]) => subscribeToTrackedAiPathRunMock(...args),
+}));
+
+vi.mock('@/shared/lib/ai-paths/api/client', () => ({
+  getAiPathRun: (...args: unknown[]) => getAiPathRunMock(...args),
+  getAiPathRunResult: (...args: unknown[]) => getAiPathRunResultMock(...args),
 }));
 
 vi.mock('@/features/products/hooks/editingProductHydration', () => ({
@@ -137,6 +180,18 @@ vi.mock('@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar', () 
     triggerButtonBarMock(props);
     return <div data-testid='trigger-button-bar' />;
   },
+}));
+
+vi.mock('@/features/integrations/product-integrations-adapter', () => ({
+  ProductListingsModal: (props: any) => {
+    productListingsModalPropsMock(props);
+    return <div data-testid='product-listings-modal' />;
+  },
+  ListProductModal: (props: any) => {
+    listProductModalPropsMock(props);
+    return <div data-testid='list-product-modal' />;
+  },
+  MassListProductModal: () => <div data-testid='mass-list-product-modal' />,
 }));
 
 vi.mock('@/features/integrations/components/listings/ProductListingsModal', () => ({
@@ -216,9 +271,46 @@ describe('ProductModals', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     resetProviderInstanceCounterMock();
+    subscribeToTrackedAiPathRunMock.mockReturnValue(() => {});
+    getAiPathRunMock.mockResolvedValue({
+      ok: true,
+      data: {
+        run: {
+          id: 'run-1',
+          status: 'completed',
+          createdAt: '2026-04-09T00:00:00.000Z',
+          updatedAt: '2026-04-09T00:00:05.000Z',
+          startedAt: null,
+          finishedAt: '2026-04-09T00:00:05.000Z',
+          errorMessage: null,
+          pathId: 'path-1',
+          pathName: 'Test Path',
+          triggerEvent: 'trigger-1',
+          triggerNodeId: 'node-trigger',
+          entityId: 'product-1',
+          entityType: 'product',
+          requestId: null,
+          meta: null,
+          graph: null,
+          triggerContext: null,
+          runtimeState: null,
+        },
+        nodes: [],
+        events: [],
+      },
+    });
+    getAiPathRunResultMock.mockResolvedValue({
+      ok: true,
+      data: {
+        nodes: [],
+      },
+    });
     useProductListHeaderActionsContextMock.mockReturnValue({
       showTriggerRunFeedback: false,
       setShowTriggerRunFeedback: vi.fn(),
+    });
+    useProductListSelectionContextMock.mockReturnValue({
+      data: [],
     });
     useProductFormCoreMock.mockReturnValue({
       product: null,
@@ -227,6 +319,37 @@ describe('ProductModals', () => {
       handleSubmit: vi.fn(),
       uploading: false,
       hasUnsavedChanges: false,
+      setValue: vi.fn(),
+      setNormalizeNameError: vi.fn(),
+    });
+    useProductFormParametersMock.mockReturnValue({
+      parameterValues: [],
+      applyLocalizedParameterValues: vi.fn(),
+    });
+    useProductFormImagesMock.mockReturnValue({
+      showFileManager: false,
+      handleMultiFileSelect: vi.fn(),
+      imageLinks: [],
+      imageBase64s: [],
+      imageSlots: [],
+    });
+    useProductFormMetadataMock.mockReturnValue({
+      categories: [
+        {
+          id: 'parent-pins',
+          name: 'Pins',
+          color: null,
+          parentId: null,
+          catalogId: 'catalog-a',
+        },
+        {
+          id: 'leaf-anime-pins',
+          name: 'Anime Pins',
+          color: null,
+          parentId: 'parent-pins',
+          catalogId: 'catalog-a',
+        },
+      ],
     });
   });
 
@@ -260,6 +383,29 @@ describe('ProductModals', () => {
       render(<ProductModals />);
 
       expect(screen.getByRole('button', { name: 'Update' })).toBeDisabled();
+    });
+
+    it('disables product-modal AI trigger buttons while edit hydration is in progress', async () => {
+      useProductListModalsContextMock.mockReturnValue(
+        buildContext({
+          editingProduct: createProduct(),
+          isEditHydrating: true,
+        })
+      );
+
+      render(<ProductModals />);
+
+      await waitFor(() => {
+        expect(triggerButtonBarMock).toHaveBeenCalledWith(
+          expect.objectContaining({
+            location: 'product_modal',
+            disabled: true,
+          })
+        );
+      });
+      expect(
+        screen.getByText('AI actions are unavailable until full product details finish loading.')
+      ).toBeInTheDocument();
     });
 
     it('renders edit form for non-hydrated edit product snapshots while keeping save enabled state external', () => {
@@ -448,7 +594,1064 @@ describe('ProductModals', () => {
     });
   });
 
+  describe('local normalize completion bridge', () => {
+    it('applies the completed normalize result into create-mode name_en', async () => {
+      const setValue = vi.fn();
+      const setNormalizeNameError = vi.fn();
+
+      useProductFormCoreMock.mockReturnValue({
+        product: {
+          id: 'transient-product-1',
+        },
+        draft: { id: 'draft-1', name: 'Draft 1' },
+        getValues: () => ({}),
+        handleSubmit: vi.fn(),
+        uploading: false,
+        hasUnsavedChanges: false,
+        setValue,
+        setNormalizeNameError,
+      });
+      useProductListModalsContextMock.mockReturnValue(
+        buildContext({
+          isCreateOpen: true,
+          createDraft: { id: 'draft-1', name: 'Draft 1' },
+          initialSku: PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER,
+        })
+      );
+      getAiPathRunResultMock.mockResolvedValue({
+        ok: true,
+        data: {
+          nodes: [
+            {
+              nodeType: 'mapper',
+              outputs: {
+                bundle: {
+                  normalizedName: 'Normalized Name | 4 cm | Metal | Anime Pins | Anime',
+                  isValid: true,
+                },
+              },
+            },
+          ],
+        },
+      });
+
+      render(<ProductModals />);
+
+      const onRunQueued = triggerButtonBarMock.mock.calls[0][0].onRunQueued;
+      await act(async () => {
+        onRunQueued({
+          button: {
+            id: 'button-normalize',
+            name: 'Normalize',
+            iconId: null,
+            locations: ['product_modal'],
+            mode: 'execute_path',
+            display: { label: 'Normalize' },
+            pathId: 'path_name_normalize_v1',
+            enabled: true,
+            sortIndex: 0,
+            createdAt: '2026-04-09T00:00:00.000Z',
+            updatedAt: '2026-04-09T00:00:00.000Z',
+          },
+          runId: 'run-normalize-1',
+          entityId: 'transient-product-1',
+          entityType: 'product',
+        });
+      });
+
+      await waitFor(() => {
+        expect(subscribeToTrackedAiPathRunMock).toHaveBeenCalledWith(
+          'run-normalize-1',
+          expect.any(Function)
+        );
+      });
+      const listener = subscribeToTrackedAiPathRunMock.mock.calls[0]?.[1];
+      expect(typeof listener).toBe('function');
+
+      await act(async () => {
+        await listener({
+          runId: 'run-normalize-1',
+          status: 'completed',
+          updatedAt: '2026-04-09T00:00:05.000Z',
+          finishedAt: '2026-04-09T00:00:05.000Z',
+          errorMessage: null,
+          entityId: 'transient-product-1',
+          entityType: 'product',
+          trackingState: 'stopped',
+        });
+      });
+
+      await waitFor(() => {
+        expect(getAiPathRunResultMock).toHaveBeenCalledWith('run-normalize-1', {
+          timeoutMs: 60_000,
+        });
+      });
+      expect(setValue).toHaveBeenCalledWith(
+        'name_en',
+        'Normalized Name | 4 cm | Metal | Anime Pins | Anime',
+        {
+          shouldDirty: true,
+          shouldTouch: true,
+          shouldValidate: true,
+        }
+      );
+      expect(setNormalizeNameError).toHaveBeenCalledWith(null);
+    });
+
+    it('applies streamed normalize results into create-mode name_en without fetching the run result endpoint', async () => {
+      const setValue = vi.fn();
+      const setNormalizeNameError = vi.fn();
+
+      useProductFormCoreMock.mockReturnValue({
+        product: {
+          id: 'transient-product-2',
+        },
+        draft: { id: 'draft-2', name: 'Draft 2' },
+        getValues: () => ({}),
+        handleSubmit: vi.fn(),
+        uploading: false,
+        hasUnsavedChanges: false,
+        setValue,
+        setNormalizeNameError,
+      });
+      useProductListModalsContextMock.mockReturnValue(
+        buildContext({
+          isCreateOpen: true,
+          createDraft: { id: 'draft-2', name: 'Draft 2' },
+          initialSku: PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER,
+        })
+      );
+
+      render(<ProductModals />);
+
+      const onRunQueued = triggerButtonBarMock.mock.calls[0][0].onRunQueued;
+      await act(async () => {
+        onRunQueued({
+          button: {
+            id: 'button-normalize',
+            name: 'Normalize',
+            iconId: null,
+            locations: ['product_modal'],
+            mode: 'execute_path',
+            display: { label: 'Normalize' },
+            pathId: 'path_name_normalize_v1',
+            enabled: true,
+            sortIndex: 0,
+            createdAt: '2026-04-09T00:00:00.000Z',
+            updatedAt: '2026-04-09T00:00:00.000Z',
+          },
+          runId: 'run-normalize-2',
+          entityId: 'transient-product-2',
+          entityType: 'product',
+        });
+      });
+
+      await waitFor(() => {
+        expect(subscribeToTrackedAiPathRunMock).toHaveBeenCalledWith(
+          'run-normalize-2',
+          expect.any(Function)
+        );
+      });
+      const listener = subscribeToTrackedAiPathRunMock.mock.calls[0]?.[1];
+      expect(typeof listener).toBe('function');
+
+      await act(async () => {
+        await listener({
+          runId: 'run-normalize-2',
+          status: 'completed',
+          updatedAt: '2026-04-09T00:00:05.000Z',
+          finishedAt: '2026-04-09T00:00:05.000Z',
+          errorMessage: null,
+          entityId: 'transient-product-2',
+          entityType: 'product',
+          run: {
+            id: 'run-normalize-2',
+            status: 'completed',
+            createdAt: '2026-04-09T00:00:00.000Z',
+            updatedAt: '2026-04-09T00:00:05.000Z',
+            startedAt: null,
+            finishedAt: '2026-04-09T00:00:05.000Z',
+            errorMessage: null,
+            pathId: 'path_name_normalize_v1',
+            pathName: 'Normalize',
+            triggerEvent: 'button-normalize',
+            triggerNodeId: 'node-trigger',
+            entityId: 'transient-product-2',
+            entityType: 'product',
+            requestId: null,
+            meta: null,
+            graph: null,
+            triggerContext: null,
+            runtimeState: {
+              outputs: {
+                'node-mapper': {
+                  bundle: {
+                    normalizedName: 'Streamed Name | 4 cm | Metal | Anime Pins | Anime',
+                    isValid: true,
+                  },
+                },
+              },
+            },
+          },
+          trackingState: 'stopped',
+        });
+      });
+
+      await waitFor(() => {
+        expect(setValue).toHaveBeenCalledWith(
+          'name_en',
+          'Streamed Name | 4 cm | Metal | Anime Pins | Anime',
+          {
+            shouldDirty: true,
+            shouldTouch: true,
+            shouldValidate: true,
+          }
+        );
+      });
+      expect(getAiPathRunResultMock).not.toHaveBeenCalled();
+      expect(setNormalizeNameError).toHaveBeenCalledWith(null);
+    });
+
+    it('applies the completed normalize result into edit-mode name_en', async () => {
+      const product = markEditingProductHydrated(createProduct());
+      const setValue = vi.fn();
+      const setNormalizeNameError = vi.fn();
+
+      useProductFormCoreMock.mockReturnValue({
+        product,
+        draft: null,
+        getValues: () => ({}),
+        handleSubmit: vi.fn(),
+        uploading: false,
+        hasUnsavedChanges: false,
+        setValue,
+        setNormalizeNameError,
+      });
+      useProductListModalsContextMock.mockReturnValue(
+        buildContext({
+          editingProduct: product,
+        })
+      );
+      getAiPathRunResultMock.mockResolvedValue({
+        ok: true,
+        data: {
+          nodes: [
+            {
+              nodeType: 'mapper',
+              outputs: {
+                bundle: {
+                  normalizedName: 'Updated Name | 5 cm | Metal | Anime Pins | Manga',
+                  isValid: true,
+                },
+              },
+            },
+          ],
+        },
+      });
+
+      render(<ProductModals />);
+
+      const onRunQueued = triggerButtonBarMock.mock.calls[0][0].onRunQueued;
+      await act(async () => {
+        onRunQueued({
+          button: {
+            id: 'button-normalize',
+            name: 'Normalize',
+            iconId: null,
+            locations: ['product_modal'],
+            mode: 'execute_path',
+            display: { label: 'Normalize' },
+            pathId: 'path_name_normalize_v1',
+            enabled: true,
+            sortIndex: 0,
+            createdAt: '2026-04-09T00:00:00.000Z',
+            updatedAt: '2026-04-09T00:00:00.000Z',
+          },
+          runId: 'run-normalize-1',
+          entityId: 'product-1',
+          entityType: 'product',
+        });
+      });
+
+      await waitFor(() => {
+        expect(subscribeToTrackedAiPathRunMock).toHaveBeenCalledWith(
+          'run-normalize-1',
+          expect.any(Function)
+        );
+      });
+
+      const listener = subscribeToTrackedAiPathRunMock.mock.calls[0]?.[1];
+      expect(typeof listener).toBe('function');
+
+      await act(async () => {
+        await listener({
+          runId: 'run-normalize-1',
+          status: 'completed',
+          updatedAt: '2026-04-09T00:00:05.000Z',
+          finishedAt: '2026-04-09T00:00:05.000Z',
+          errorMessage: null,
+          entityId: 'product-1',
+          entityType: 'product',
+          trackingState: 'stopped',
+        });
+      });
+
+      await waitFor(() => {
+        expect(setValue).toHaveBeenCalledWith(
+          'name_en',
+          'Updated Name | 5 cm | Metal | Anime Pins | Manga',
+          {
+            shouldDirty: true,
+            shouldTouch: true,
+            shouldValidate: true,
+          }
+        );
+      });
+      expect(setNormalizeNameError).toHaveBeenCalledWith(null);
+    });
+
+    it('canonicalizes a returned category hierarchy down to the final leaf before applying name_en', async () => {
+      const setValue = vi.fn();
+      const setNormalizeNameError = vi.fn();
+
+      useProductFormCoreMock.mockReturnValue({
+        product: {
+          id: 'transient-product-1',
+        },
+        draft: { id: 'draft-1', name: 'Draft 1' },
+        getValues: () => ({}),
+        handleSubmit: vi.fn(),
+        uploading: false,
+        hasUnsavedChanges: false,
+        setValue,
+        setNormalizeNameError,
+      });
+      useProductListModalsContextMock.mockReturnValue(
+        buildContext({
+          isCreateOpen: true,
+          createDraft: { id: 'draft-1', name: 'Draft 1' },
+          initialSku: PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER,
+        })
+      );
+      getAiPathRunResultMock.mockResolvedValue({
+        ok: true,
+        data: {
+          nodes: [
+            {
+              nodeType: 'mapper',
+              outputs: {
+                bundle: {
+                  normalizedName: 'Normalized Name | 4 cm | Metal | Pins > Anime Pins | Anime',
+                  isValid: true,
+                },
+              },
+            },
+          ],
+        },
+      });
+
+      render(<ProductModals />);
+
+      const onRunQueued = triggerButtonBarMock.mock.calls[0][0].onRunQueued;
+      await act(async () => {
+        onRunQueued({
+          button: {
+            id: 'button-normalize',
+            name: 'Normalize',
+            iconId: null,
+            locations: ['product_modal'],
+            mode: 'execute_path',
+            display: { label: 'Normalize' },
+            pathId: 'path_name_normalize_v1',
+            enabled: true,
+            sortIndex: 0,
+            createdAt: '2026-04-09T00:00:00.000Z',
+            updatedAt: '2026-04-09T00:00:00.000Z',
+          },
+          runId: 'run-normalize-leaf-canonicalization',
+          entityId: 'transient-product-1',
+          entityType: 'product',
+        });
+      });
+
+      const listener = subscribeToTrackedAiPathRunMock.mock.calls[0]?.[1];
+      expect(typeof listener).toBe('function');
+
+      await act(async () => {
+        await listener({
+          runId: 'run-normalize-leaf-canonicalization',
+          status: 'completed',
+          updatedAt: '2026-04-09T00:00:05.000Z',
+          finishedAt: '2026-04-09T00:00:05.000Z',
+          errorMessage: null,
+          entityId: 'transient-product-1',
+          entityType: 'product',
+          trackingState: 'stopped',
+        });
+      });
+
+      await waitFor(() => {
+        expect(setValue).toHaveBeenCalledWith(
+          'name_en',
+          'Normalized Name | 4 cm | Metal | Anime Pins | Anime',
+          {
+            shouldDirty: true,
+            shouldTouch: true,
+            shouldValidate: true,
+          }
+        );
+      });
+      expect(setNormalizeNameError).toHaveBeenCalledWith(null);
+    });
+
+    it('prefers a more specific category hierarchy hint when the normalized title still uses a generic parent segment', async () => {
+      const setValue = vi.fn();
+      const setNormalizeNameError = vi.fn();
+
+      useProductFormCoreMock.mockReturnValue({
+        product: {
+          id: 'transient-product-1',
+        },
+        draft: { id: 'draft-1', name: 'Draft 1' },
+        getValues: () => ({}),
+        handleSubmit: vi.fn(),
+        uploading: false,
+        hasUnsavedChanges: false,
+        setValue,
+        setNormalizeNameError,
+      });
+      useProductFormMetadataMock.mockReturnValue({
+        categories: [
+          {
+            id: 'parent-accessories',
+            name: 'Accessories',
+            color: null,
+            parentId: null,
+            catalogId: 'catalog-a',
+          },
+          {
+            id: 'parent-keychains',
+            name: 'Keychains',
+            color: null,
+            parentId: 'parent-accessories',
+            catalogId: 'catalog-a',
+          },
+          {
+            id: 'leaf-movie-keychain',
+            name: 'Movie Keychain',
+            color: null,
+            parentId: 'parent-keychains',
+            catalogId: 'catalog-a',
+          },
+          {
+            id: 'leaf-gaming-keychain',
+            name: 'Gaming Keychain',
+            color: null,
+            parentId: 'parent-keychains',
+            catalogId: 'catalog-a',
+          },
+        ],
+      });
+      useProductListModalsContextMock.mockReturnValue(
+        buildContext({
+          isCreateOpen: true,
+          createDraft: { id: 'draft-1', name: 'Draft 1' },
+          initialSku: PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER,
+        })
+      );
+      getAiPathRunResultMock.mockResolvedValue({
+        ok: true,
+        data: {
+          nodes: [
+            {
+              nodeType: 'mapper',
+              outputs: {
+                bundle: {
+                  normalizedName: 'Normalized Name | 4 cm | Metal | Keychains | Gaming',
+                  category: 'Accessories > Keychains > Gaming Keychain',
+                  isValid: true,
+                },
+              },
+            },
+          ],
+        },
+      });
+
+      render(<ProductModals />);
+
+      const onRunQueued = triggerButtonBarMock.mock.calls[0][0].onRunQueued;
+      await act(async () => {
+        onRunQueued({
+          button: {
+            id: 'button-normalize',
+            name: 'Normalize',
+            iconId: null,
+            locations: ['product_modal'],
+            mode: 'execute_path',
+            display: { label: 'Normalize' },
+            pathId: 'path_name_normalize_v1',
+            enabled: true,
+            sortIndex: 0,
+            createdAt: '2026-04-09T00:00:00.000Z',
+            updatedAt: '2026-04-09T00:00:00.000Z',
+          },
+          runId: 'run-normalize-specific-keychain-leaf',
+          entityId: 'transient-product-1',
+          entityType: 'product',
+        });
+      });
+
+      const listener = subscribeToTrackedAiPathRunMock.mock.calls[0]?.[1];
+      expect(typeof listener).toBe('function');
+
+      await act(async () => {
+        await listener({
+          runId: 'run-normalize-specific-keychain-leaf',
+          status: 'completed',
+          updatedAt: '2026-04-09T00:00:05.000Z',
+          finishedAt: '2026-04-09T00:00:05.000Z',
+          errorMessage: null,
+          entityId: 'transient-product-1',
+          entityType: 'product',
+          trackingState: 'stopped',
+        });
+      });
+
+      await waitFor(() => {
+        expect(setValue).toHaveBeenCalledWith(
+          'name_en',
+          'Normalized Name | 4 cm | Metal | Gaming Keychain | Gaming',
+          {
+            shouldDirty: true,
+            shouldTouch: true,
+            shouldValidate: true,
+          }
+        );
+      });
+      expect(setNormalizeNameError).toHaveBeenCalledWith(null);
+    });
+
+    it('uses AI Path live category context when local category metadata is stale or empty', async () => {
+      const setValue = vi.fn();
+      const setNormalizeNameError = vi.fn();
+
+      useProductFormCoreMock.mockReturnValue({
+        product: {
+          id: 'transient-product-1',
+        },
+        draft: { id: 'draft-1', name: 'Draft 1' },
+        getValues: () => ({}),
+        handleSubmit: vi.fn(),
+        uploading: false,
+        hasUnsavedChanges: false,
+        setValue,
+        setNormalizeNameError,
+      });
+      useProductFormMetadataMock.mockReturnValue({
+        categories: [],
+      });
+      useProductListModalsContextMock.mockReturnValue(
+        buildContext({
+          isCreateOpen: true,
+          createDraft: { id: 'draft-1', name: 'Draft 1' },
+          initialSku: PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER,
+        })
+      );
+      getAiPathRunResultMock.mockResolvedValue({
+        ok: true,
+        data: {
+          nodes: [
+            {
+              nodeType: 'function',
+              outputs: {
+                bundle: {
+                  categoryContext: {
+                    catalogId: 'catalog-a',
+                    totalCategories: 4,
+                    totalLeafCategories: 2,
+                    allowedLeafLabels: ['Movie Keychain', 'Gaming Keychain'],
+                    leafCategories: [
+                      {
+                        id: 'leaf-movie-keychain',
+                        label: 'Movie Keychain',
+                        fullPath: 'Accessories > Keychains > Movie Keychain',
+                        parentId: 'parent-keychains',
+                        isCurrent: false,
+                      },
+                      {
+                        id: 'leaf-gaming-keychain',
+                        label: 'Gaming Keychain',
+                        fullPath: 'Accessories > Keychains > Gaming Keychain',
+                        parentId: 'parent-keychains',
+                        isCurrent: true,
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+            {
+              nodeType: 'mapper',
+              outputs: {
+                bundle: {
+                  normalizedName: 'Normalized Name | 4 cm | Metal | Keychains | Gaming',
+                  category: 'Accessories > Keychains > Gaming Keychain',
+                  isValid: true,
+                },
+              },
+            },
+          ],
+        },
+      });
+
+      render(<ProductModals />);
+
+      const onRunQueued = triggerButtonBarMock.mock.calls[0][0].onRunQueued;
+      await act(async () => {
+        onRunQueued({
+          button: {
+            id: 'button-normalize',
+            name: 'Normalize',
+            iconId: null,
+            locations: ['product_modal'],
+            mode: 'execute_path',
+            display: { label: 'Normalize' },
+            pathId: 'path_name_normalize_v1',
+            enabled: true,
+            sortIndex: 0,
+            createdAt: '2026-04-09T00:00:00.000Z',
+            updatedAt: '2026-04-09T00:00:00.000Z',
+          },
+          runId: 'run-normalize-live-category-context',
+          entityId: 'transient-product-1',
+          entityType: 'product',
+        });
+      });
+
+      const listener = subscribeToTrackedAiPathRunMock.mock.calls[0]?.[1];
+      expect(typeof listener).toBe('function');
+
+      await act(async () => {
+        await listener({
+          runId: 'run-normalize-live-category-context',
+          status: 'completed',
+          updatedAt: '2026-04-09T00:00:05.000Z',
+          finishedAt: '2026-04-09T00:00:05.000Z',
+          errorMessage: null,
+          entityId: 'transient-product-1',
+          entityType: 'product',
+          trackingState: 'stopped',
+        });
+      });
+
+      await waitFor(() => {
+        expect(setValue).toHaveBeenCalledWith(
+          'name_en',
+          'Normalized Name | 4 cm | Metal | Gaming Keychain | Gaming',
+          {
+            shouldDirty: true,
+            shouldTouch: true,
+            shouldValidate: true,
+          }
+        );
+      });
+      expect(setNormalizeNameError).toHaveBeenCalledWith(null);
+    });
+
+    it('keeps pending normalize runs alive across edit hydration remounts', async () => {
+      const partialProduct = createProduct();
+      const hydratedProduct = markEditingProductHydrated(createProduct());
+      const setValue = vi.fn();
+      const setNormalizeNameError = vi.fn();
+      let currentProduct = partialProduct;
+
+      useProductFormCoreMock.mockImplementation(() => ({
+        product: currentProduct,
+        draft: null,
+        getValues: () => ({}),
+        handleSubmit: vi.fn(),
+        uploading: false,
+        hasUnsavedChanges: false,
+        setValue,
+        setNormalizeNameError,
+      }));
+      useProductListModalsContextMock.mockReturnValue(
+        buildContext({
+          editingProduct: partialProduct,
+          isEditHydrating: true,
+        })
+      );
+      getAiPathRunResultMock.mockResolvedValue({
+        ok: true,
+        data: {
+          nodes: [
+            {
+              nodeType: 'mapper',
+              outputs: {
+                bundle: {
+                  normalizedName: 'Updated Name | 5 cm | Metal | Anime Pins | Manga',
+                  isValid: true,
+                },
+              },
+            },
+          ],
+        },
+      });
+
+      const view = render(<ProductModals />);
+      const firstProviderInstanceId = screen
+        .getByTestId('product-form-provider')
+        .getAttribute('data-instance-id');
+
+      const onRunQueued = triggerButtonBarMock.mock.calls[0][0].onRunQueued;
+      await act(async () => {
+        onRunQueued({
+          button: {
+            id: 'button-normalize',
+            name: 'Normalize',
+            iconId: null,
+            locations: ['product_modal'],
+            mode: 'execute_path',
+            display: { label: 'Normalize' },
+            pathId: 'path_name_normalize_v1',
+            enabled: true,
+            sortIndex: 0,
+            createdAt: '2026-04-09T00:00:00.000Z',
+            updatedAt: '2026-04-09T00:00:00.000Z',
+          },
+          runId: 'run-normalize-remount-survival',
+          entityId: 'product-1',
+          entityType: 'product',
+        });
+      });
+
+      await waitFor(() => {
+        expect(subscribeToTrackedAiPathRunMock).toHaveBeenCalledWith(
+          'run-normalize-remount-survival',
+          expect.any(Function)
+        );
+      });
+
+      currentProduct = hydratedProduct;
+      useProductListModalsContextMock.mockReturnValue(
+        buildContext({
+          editingProduct: hydratedProduct,
+          isEditHydrating: false,
+        })
+      );
+      view.rerender(<ProductModals />);
+
+      const secondProviderInstanceId = screen
+        .getByTestId('product-form-provider')
+        .getAttribute('data-instance-id');
+      expect(secondProviderInstanceId).not.toBe(firstProviderInstanceId);
+
+      const listener = subscribeToTrackedAiPathRunMock.mock.calls[0]?.[1];
+      expect(typeof listener).toBe('function');
+
+      await act(async () => {
+        await listener({
+          runId: 'run-normalize-remount-survival',
+          status: 'completed',
+          updatedAt: '2026-04-09T00:00:05.000Z',
+          finishedAt: '2026-04-09T00:00:05.000Z',
+          errorMessage: null,
+          entityId: 'product-1',
+          entityType: 'product',
+          trackingState: 'stopped',
+        });
+      });
+
+      await waitFor(() => {
+        expect(setValue).toHaveBeenCalledWith(
+          'name_en',
+          'Updated Name | 5 cm | Metal | Anime Pins | Manga',
+          {
+            shouldDirty: true,
+            shouldTouch: true,
+            shouldValidate: true,
+          }
+        );
+      });
+      expect(setNormalizeNameError).toHaveBeenCalledWith(null);
+    });
+
+    it('reports an inline normalize error when the AI result is still placeholder shaped', async () => {
+      const setValue = vi.fn();
+      const setNormalizeNameError = vi.fn();
+
+      useProductFormCoreMock.mockReturnValue({
+        product: {
+          id: 'transient-product-1',
+        },
+        draft: { id: 'draft-1', name: 'Draft 1' },
+        getValues: () => ({}),
+        handleSubmit: vi.fn(),
+        uploading: false,
+        hasUnsavedChanges: false,
+        setValue,
+        setNormalizeNameError,
+      });
+      useProductListModalsContextMock.mockReturnValue(
+        buildContext({
+          isCreateOpen: true,
+          createDraft: { id: 'draft-1', name: 'Draft 1' },
+          initialSku: PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER,
+        })
+      );
+      getAiPathRunResultMock.mockResolvedValue({
+        ok: true,
+        data: {
+          nodes: [
+            {
+              nodeType: 'mapper',
+              outputs: {
+                bundle: {
+                  normalizedName: 'Name | X cm | Metal | Pins | Lore',
+                  isValid: true,
+                },
+              },
+            },
+          ],
+        },
+      });
+
+      render(<ProductModals />);
+
+      const onRunQueued = triggerButtonBarMock.mock.calls[0][0].onRunQueued;
+      await act(async () => {
+        onRunQueued({
+          button: {
+            id: 'button-normalize',
+            name: 'Normalize',
+            iconId: null,
+            locations: ['product_modal'],
+            mode: 'execute_path',
+            display: { label: 'Normalize' },
+            pathId: 'path_name_normalize_v1',
+            enabled: true,
+            sortIndex: 0,
+            createdAt: '2026-04-09T00:00:00.000Z',
+            updatedAt: '2026-04-09T00:00:00.000Z',
+          },
+          runId: 'run-normalize-invalid',
+          entityId: 'transient-product-1',
+          entityType: 'product',
+        });
+      });
+
+      const listener = subscribeToTrackedAiPathRunMock.mock.calls[0]?.[1];
+      expect(typeof listener).toBe('function');
+
+      await act(async () => {
+        await listener({
+          runId: 'run-normalize-invalid',
+          status: 'completed',
+          updatedAt: '2026-04-09T00:00:05.000Z',
+          finishedAt: '2026-04-09T00:00:05.000Z',
+          errorMessage: null,
+          entityId: 'transient-product-1',
+          entityType: 'product',
+          trackingState: 'stopped',
+        });
+      });
+
+      await waitFor(() => {
+        expect(setNormalizeNameError).toHaveBeenCalledWith(
+          'Normalize failed: the title segment is still generic. Provide a specific product title.'
+        );
+      });
+      expect(setValue).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('local translation completion bridge', () => {
+    it('applies completed EN->PL translation results into description_pl and localized parameters', async () => {
+      const product = markEditingProductHydrated(createProduct());
+      const setValue = vi.fn();
+      const setNormalizeNameError = vi.fn();
+      const applyLocalizedParameterValues = vi.fn();
+
+      useProductFormCoreMock.mockReturnValue({
+        product,
+        draft: null,
+        getValues: () => ({}),
+        handleSubmit: vi.fn(),
+        uploading: false,
+        hasUnsavedChanges: false,
+        setValue,
+        setNormalizeNameError,
+      });
+      useProductFormParametersMock.mockReturnValue({
+        parameterValues: [
+          {
+            parameterId: 'color',
+            value: 'Blue',
+          },
+        ],
+        applyLocalizedParameterValues,
+      });
+      useProductListModalsContextMock.mockReturnValue(
+        buildContext({
+          editingProduct: product,
+        })
+      );
+      getAiPathRunMock.mockResolvedValue({
+        ok: true,
+        data: {
+          run: {
+            id: 'run-translation-1',
+            status: 'completed',
+            createdAt: '2026-04-09T00:00:00.000Z',
+            updatedAt: '2026-04-09T00:00:05.000Z',
+            startedAt: null,
+            finishedAt: '2026-04-09T00:00:05.000Z',
+            errorMessage: null,
+            pathId: 'path_96708d',
+            pathName: 'Translation EN->PL Description + Parameters v2',
+            triggerEvent: 'button-translate',
+            triggerNodeId: 'node-trigger',
+            entityId: 'product-1',
+            entityType: 'product',
+            requestId: null,
+            meta: null,
+            graph: null,
+            triggerContext: null,
+            runtimeState: null,
+          },
+          nodes: [
+            {
+              nodeType: 'database',
+              outputs: {
+                debugPayload: {
+                  updateDoc: {
+                    $set: {
+                      description_pl: 'Polski opis produktu',
+                      parameters: [
+                        {
+                          parameterId: 'color',
+                          value: 'Blue',
+                          valuesByLanguage: {
+                            pl: 'Niebieski',
+                          },
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+            },
+          ],
+          events: [],
+        },
+      });
+
+      render(<ProductModals />);
+
+      const onRunQueued = triggerButtonBarMock.mock.calls[0][0].onRunQueued;
+      await act(async () => {
+        onRunQueued({
+          button: {
+            id: 'button-translate',
+            name: 'Translation EN->PL Description + Parameters v2',
+            iconId: null,
+            locations: ['product_modal'],
+            mode: 'execute_path',
+            display: { label: 'Translate EN->PL' },
+            pathId: 'path_96708d',
+            enabled: true,
+            sortIndex: 0,
+            createdAt: '2026-04-09T00:00:00.000Z',
+            updatedAt: '2026-04-09T00:00:00.000Z',
+          },
+          runId: 'run-translation-1',
+          entityId: 'product-1',
+          entityType: 'product',
+        });
+      });
+
+      await waitFor(() => {
+        expect(subscribeToTrackedAiPathRunMock).toHaveBeenCalledWith(
+          'run-translation-1',
+          expect.any(Function)
+        );
+      });
+
+      const listener = subscribeToTrackedAiPathRunMock.mock.calls[0]?.[1];
+      expect(typeof listener).toBe('function');
+
+      await act(async () => {
+        await listener({
+          runId: 'run-translation-1',
+          status: 'completed',
+          updatedAt: '2026-04-09T00:00:05.000Z',
+          finishedAt: '2026-04-09T00:00:05.000Z',
+          errorMessage: null,
+          entityId: 'product-1',
+          entityType: 'product',
+          trackingState: 'stopped',
+        });
+      });
+
+      await waitFor(() => {
+        expect(getAiPathRunMock).toHaveBeenCalledWith('run-translation-1', {
+          timeoutMs: 60_000,
+        });
+      });
+      expect(setValue).toHaveBeenCalledWith('description_pl', 'Polski opis produktu', {
+        shouldDirty: true,
+        shouldTouch: true,
+        shouldValidate: true,
+      });
+      expect(applyLocalizedParameterValues).toHaveBeenCalledWith([
+        {
+          parameterId: 'color',
+          languageCode: 'pl',
+          value: 'Niebieski',
+        },
+      ]);
+      expect(getAiPathRunResultMock).not.toHaveBeenCalled();
+      expect(setNormalizeNameError).not.toHaveBeenCalled();
+    });
+  });
+
   describe('trigger entity normalization', () => {
+    it('includes current form image links in the trigger payload', () => {
+      useProductFormImagesMock.mockReturnValue({
+        showFileManager: false,
+        handleMultiFileSelect: vi.fn(),
+        imageLinks: ['https://from-form.com', '   ', 'https://from-form-2.com'],
+        imageBase64s: [],
+        imageSlots: [],
+      });
+
+      const product = markEditingProductHydrated(createProduct());
+      useProductFormCoreMock.mockReturnValue({
+        product,
+        draft: null,
+        getValues: () => ({}),
+        handleSubmit: vi.fn(),
+        uploading: false,
+        hasUnsavedChanges: false,
+      });
+      useProductListModalsContextMock.mockReturnValue(
+        buildContext({
+          editingProduct: product,
+        })
+      );
+
+      render(<ProductModals />);
+
+      return waitFor(() => {
+        const getEntityJson = triggerButtonBarMock.mock.calls[0][0].getEntityJson;
+        const entityJson = getEntityJson();
+
+        expect(entityJson).toMatchObject({
+          imageLinks: ['https://from-form.com', 'https://from-form-2.com'],
+        });
+      });
+    });
+
     it('normalizes trigger entity catalogs from current form catalogIds', () => {
       const product = markEditingProductHydrated(createProduct());
       useProductFormCoreMock.mockReturnValue({
@@ -469,20 +1672,24 @@ describe('ProductModals', () => {
 
       render(<ProductModals />);
 
-      expect(triggerButtonBarMock).toHaveBeenCalledWith(
-        expect.objectContaining({
-          location: 'product_modal',
-          entityType: 'product',
-          entityId: 'product-1',
-        })
-      );
+      return waitFor(() => {
+        expect(triggerButtonBarMock).toHaveBeenCalledWith(
+          expect.objectContaining({
+            location: 'product_modal',
+            entityType: 'product',
+            entityId: 'product-1',
+          })
+        );
 
-      const getEntityJson = triggerButtonBarMock.mock.calls[0][0].getEntityJson;
-      const entityJson = getEntityJson();
+        const getEntityJson = triggerButtonBarMock.mock.calls[0][0].getEntityJson;
+        const entityJson = getEntityJson();
 
-      expect(entityJson).toMatchObject({
-        id: 'product-1',
-        catalogIds: ['cat-1', 'cat-2'],
+        expect(entityJson).toMatchObject({
+          id: 'product-1',
+          catalogIds: ['cat-1', 'cat-2'],
+          catalogId: 'cat-1',
+          catalogs: [{ catalogId: 'cat-1' }, { catalogId: 'cat-2' }],
+        });
       });
     });
 
@@ -506,11 +1713,13 @@ describe('ProductModals', () => {
 
       render(<ProductModals />);
 
-      const getEntityJson = triggerButtonBarMock.mock.calls[0][0].getEntityJson;
-      const entityJson = getEntityJson();
+      return waitFor(() => {
+        const getEntityJson = triggerButtonBarMock.mock.calls[0][0].getEntityJson;
+        const entityJson = getEntityJson();
 
-      expect(entityJson).toMatchObject({
-        status: 'published',
+        expect(entityJson).toMatchObject({
+          status: 'published',
+        });
       });
     });
   });
@@ -554,6 +1763,64 @@ describe('ProductModals', () => {
       useProductListModalsContextMock.mockReturnValue(
         buildContext({
           editingProduct: markEditingProductHydrated(product),
+        })
+      );
+      rerender(<ProductModals />);
+
+      const secondSessionId = productFormProviderPropsMock.mock.calls[1][0].validatorSessionKey;
+      expect(firstSessionId).toBe(secondSessionId);
+    });
+
+    it('keeps the same create-from-draft provider instance after the draft refreshes updatedAt', () => {
+      const draft = { id: 'draft-1', name: 'Draft 1', updatedAt: '2026-03-27T10:00:00Z' };
+
+      useProductListModalsContextMock.mockReturnValue(
+        buildContext({
+          isCreateOpen: true,
+          createDraft: draft,
+          initialSku: PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER,
+        })
+      );
+      const { rerender } = render(<ProductModals />);
+
+      const firstInstanceId = screen
+        .getByTestId('product-form-provider')
+        .getAttribute('data-instance-id');
+
+      useProductListModalsContextMock.mockReturnValue(
+        buildContext({
+          isCreateOpen: true,
+          createDraft: { ...draft, updatedAt: '2026-03-27T11:00:00Z' },
+          initialSku: PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER,
+        })
+      );
+      rerender(<ProductModals />);
+
+      const secondInstanceId = screen
+        .getByTestId('product-form-provider')
+        .getAttribute('data-instance-id');
+      expect(firstInstanceId).toBe(secondInstanceId);
+    });
+
+    it('keeps the same validator session while the create-from-draft source refreshes updatedAt', () => {
+      const draft = { id: 'draft-1', name: 'Draft 1', updatedAt: '2026-03-27T10:00:00Z' };
+
+      useProductListModalsContextMock.mockReturnValue(
+        buildContext({
+          isCreateOpen: true,
+          createDraft: draft,
+          initialSku: PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER,
+        })
+      );
+      const { rerender } = render(<ProductModals />);
+
+      const firstSessionId = productFormProviderPropsMock.mock.calls[0][0].validatorSessionKey;
+
+      useProductListModalsContextMock.mockReturnValue(
+        buildContext({
+          isCreateOpen: true,
+          createDraft: { ...draft, updatedAt: '2026-03-27T11:00:00Z' },
+          initialSku: PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER,
         })
       );
       rerender(<ProductModals />);

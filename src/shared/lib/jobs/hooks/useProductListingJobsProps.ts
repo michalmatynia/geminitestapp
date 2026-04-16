@@ -2,15 +2,10 @@
 
 import { useMemo } from 'react';
 
-import type { ListingJob, ProductJob } from '@/shared/contracts/integrations/domain';
+import type { ListingJob, ProductJob, ListingRow } from '@/shared/contracts/integrations/domain';
 import { useJobsState } from '@/shared/lib/jobs/context/JobsContext';
 
 import { type JobRowData } from '../types';
-
-type ListingRow = {
-  job: ProductJob;
-  listing: ListingJob;
-};
 
 export function useProductListingJobsProps() {
   const { listingJobs, listingJobsLoading: isLoading, query, page, pageSize } = useJobsState();

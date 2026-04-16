@@ -325,28 +325,36 @@ export function CaseResolverDocumentSearchPage(): React.JSX.Element {
               }}
               options={FILE_TYPE_OPTIONS}
               triggerClassName='h-9 border-border bg-card/60 text-xs text-white'
-             ariaLabel='Select option' title='Select option'/>
+              ariaLabel='Filter by file type'
+              title='Filter by file type'
+            />
             <SelectSimple
               size='sm'
               value={selectedTagId}
               onValueChange={setSelectedTagId}
               options={tagOptions}
               triggerClassName='h-9 border-border bg-card/60 text-xs text-white'
-             ariaLabel='Select option' title='Select option'/>
+              ariaLabel='Filter by tag'
+              title='Filter by tag'
+            />
             <SelectSimple
               size='sm'
               value={selectedCaseIdentifierId}
               onValueChange={setSelectedCaseIdentifierId}
               options={caseIdentifierOptions}
               triggerClassName='h-9 border-border bg-card/60 text-xs text-white'
-             ariaLabel='Select option' title='Select option'/>
+              ariaLabel='Filter by case identifier'
+              title='Filter by case identifier'
+            />
             <SelectSimple
               size='sm'
               value={selectedCategoryId}
               onValueChange={setSelectedCategoryId}
               options={categoryOptions}
               triggerClassName='h-9 border-border bg-card/60 text-xs text-white'
-             ariaLabel='Select option' title='Select option'/>
+              ariaLabel='Filter by category'
+              title='Filter by category'
+            />
             <SelectSimple
               size='sm'
               value={sortBy}
@@ -355,7 +363,9 @@ export function CaseResolverDocumentSearchPage(): React.JSX.Element {
               }}
               options={SORT_OPTIONS}
               triggerClassName='h-9 border-border bg-card/60 text-xs text-white'
-             ariaLabel='Select option' title='Select option'/>
+              ariaLabel='Sort documents by'
+              title='Sort documents by'
+            />
             <Button
               type='button'
               variant='outline'
@@ -424,11 +434,11 @@ export function CaseResolverDocumentSearchPage(): React.JSX.Element {
                   {file.fileType}
                 </Badge>
               </div>
-              <div className='mb-2 text-[11px] text-gray-500'>{file.folder || '(root)'}</div>
-              <div className='mb-2 line-clamp-3 text-xs text-gray-300'>
+              <div className='mb-2 text-[11px] text-muted-foreground'>{file.folder || '(root)'}</div>
+              <div className='mb-2 line-clamp-3 text-xs text-muted-foreground'>
                 {previewText || 'No content yet.'}
               </div>
-              <div className='space-y-1 text-[11px] text-gray-400'>
+              <div className='space-y-1 text-[11px] text-muted-foreground'>
                 <div>Tag: {tagLabel}</div>
                 <div>Case Identifier: {caseIdentifierLabel}</div>
                 <div>Category: {categoryLabel}</div>

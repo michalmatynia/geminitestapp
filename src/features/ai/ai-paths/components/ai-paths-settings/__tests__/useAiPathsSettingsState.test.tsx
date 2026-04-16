@@ -13,6 +13,16 @@ const mockState = vi.hoisted(() => ({
     selectedNodeId: 'node-1',
     configOpen: true,
     nodeConfigDirty: true,
+    nodeConfigDraft: {
+      id: 'node-1',
+      type: 'model',
+      title: 'Model Node',
+      config: {
+        model: {
+          modelId: 'gemma',
+        },
+      },
+    },
   },
   selectionActions: {
     setNodeConfigDirty: vi.fn(),
@@ -157,6 +167,7 @@ const mockState = vi.hoisted(() => ({
     presetsJson: '{"ok":true}',
     setPresetsJson: vi.fn(),
     expandedPaletteGroups: new Set(['group-a']),
+    setExpandedPaletteGroups: vi.fn(),
     paletteCollapsed: false,
     setPaletteCollapsed: vi.fn(),
     togglePaletteGroup: vi.fn(),
@@ -171,7 +182,7 @@ const mockState = vi.hoisted(() => ({
     autoSaveStatus: 'saving',
     autoSaveAt: '2026-03-19T10:05:00.000Z',
     saving: true,
-    handleSave: vi.fn(),
+    handleSave: vi.fn(async () => true),
     persistActivePathPreference: vi.fn(),
     persistPathSettings: vi.fn(),
     persistSettingsBulk: vi.fn(),
@@ -234,9 +245,32 @@ const mockState = vi.hoisted(() => ({
 
 vi.mock('@/features/ai/ai-paths/context', () => ({
   useGraphActions: () => mockState.graphActions,
+  useGraphState: () => ({
+    nodes: mockState.coreState.nodes,
+    edges: mockState.coreState.edges,
+  }),
+  useGraphDataState: () => ({
+    nodes: mockState.coreState.nodes,
+    edges: mockState.coreState.edges,
+  }),
+  usePathMetadataState: () => ({
+    activePathId: mockState.coreState.activePathId,
+    isPathLocked: mockState.coreState.isPathLocked,
+    pathConfigs: mockState.coreState.pathConfigs,
+    paths: mockState.coreState.paths,
+  }),
   usePersistenceActions: () => mockState.persistenceActions,
   usePersistenceState: () => mockState.persistenceState,
-  useRuntimeState: () => mockState.runtimeStateCtx,
+  useRuntimeDataState: () => ({
+    runtimeState: mockState.runtimeStateCtx.runtimeState,
+    parserSamples: mockState.runtimeStateCtx.parserSamples,
+    updaterSamples: mockState.runtimeStateCtx.updaterSamples,
+    pathDebugSnapshots: mockState.runtimeStateCtx.pathDebugSnapshots,
+  }),
+  useRuntimeStatusState: () => ({
+    lastRunAt: mockState.runtimeStateCtx.lastRunAt,
+    lastError: mockState.runtimeStateCtx.lastError,
+  }),
   useRuntimeActions: () => mockState.runtimeActions,
   useSelectionActions: () => mockState.selectionActions,
   useSelectionState: () => mockState.selectionState,
@@ -264,9 +298,11 @@ vi.mock('@/shared/lib/ai-paths/core/definitions/docs-snippets', () => ({
   DOCS_JOBS_SNIPPET: 'jobs snippet',
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   useToast: () => ({ toast: mockState.toast }),
 }));
+
+vi.mock('@/shared/ui', () => ({}));
 
 vi.mock('@/shared/utils/object-utils', () => ({
   isObjectRecord: (value: unknown) => typeof value === 'object' && value !== null && !Array.isArray(value),
@@ -400,6 +436,23 @@ describe('useAiPathsSettingsState', () => {
     mockState.canvasArgs.length = 0;
     mockState.runHistoryCalls.length = 0;
     mockState.paletteHookArgs.length = 0;
+    mockState.selectionState = {
+      ...mockState.selectionState,
+      selectedNodeId: 'node-1',
+      configOpen: true,
+      nodeConfigDirty: true,
+      nodeConfigDraft: {
+        id: 'node-1',
+        type: 'model',
+        title: 'Model Node',
+        config: {
+          model: {
+            modelId: 'gemma',
+          },
+        },
+      },
+    };
+    mockState.persistence.handleSave = vi.fn(async () => true);
   });
 
   afterEach(() => {
@@ -449,10 +502,16 @@ describe('useAiPathsSettingsState', () => {
       mockState.runtimeMgmt.pruneRuntimeInputs
     );
     expect(mockState.runtimeArgs[0]?.runtimeKernelConfig).toEqual({ engine: 'node' });
+    expect(mockState.runtimeArgs[0]?.nodeConfigDirty).toBe(true);
+    expect(mockState.runtimeArgs[0]?.nodeConfigDraft).toEqual(
+      mockState.selectionState.nodeConfigDraft
+    );
     expect(mockState.persistenceArgs[0]?.normalizeTriggerLabel('Product Modal - Context Grabber')).toBe(
       'Product Modal - Context Filter'
     );
-    expect(mockState.persistenceArgs[0]?.normalizeTriggerLabel()).toBe('Fallback Trigger');
+    expect(mockState.persistenceArgs[0]?.normalizeTriggerLabel()).toBe(
+      'Product Modal - Context Filter'
+    );
     expect(mockState.pathActionArgs[0]?.normalizeTriggerLabel('Another Trigger')).toBe('Another Trigger');
 
     await act(async () => {
@@ -481,11 +540,19 @@ describe('useAiPathsSettingsState', () => {
       result.current.incrementLoadNonce();
       result.current.updateActivePathMeta('Renamed Path');
       await result.current.persistPathSettings([], 'path-1', { id: 'config-1' } as never);
+      const persistedNodeConfig = await mockState.runtimeArgs[0]?.persistPendingNodeConfigBeforeRun?.();
+      expect(persistedNodeConfig).toBe(true);
     });
     expect(mockState.persistenceActions.incrementLoadNonce).toHaveBeenCalledTimes(1);
     expect(mockState.graphActions.setPathName).toHaveBeenCalledWith('Renamed Path');
     expect(mockState.persistence.persistPathSettings).toHaveBeenCalledWith([], 'path-1', {
       id: 'config-1',
+    });
+    expect(mockState.persistence.handleSave).toHaveBeenCalledWith({
+      silent: true,
+      includeNodeConfig: true,
+      force: true,
+      nodeOverride: mockState.selectionState.nodeConfigDraft,
     });
 
     expect(mockState.persistenceActions.setOperationHandlers).toHaveBeenCalledWith({
@@ -546,7 +613,9 @@ describe('useAiPathsSettingsState', () => {
     const { result } = renderHook(() => useAiPathsSettingsState({ activeTab: 'docs' }));
 
     expect(mockState.runtimeArgs.at(-1)?.runtimeKernelConfig).toBeUndefined();
-    expect(mockState.persistenceArgs.at(-1)?.normalizeTriggerLabel()).toBe('Fallback Trigger');
+    expect(mockState.persistenceArgs.at(-1)?.normalizeTriggerLabel()).toBe(
+      'Product Modal - Context Filter'
+    );
     expect(mockState.pathActionArgs.at(-1)?.normalizeTriggerLabel('Already Normalized')).toBe(
       'Already Normalized'
     );

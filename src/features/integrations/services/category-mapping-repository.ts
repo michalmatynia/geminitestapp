@@ -21,6 +21,13 @@ export const categoryMappingRepository: CategoryMappingRepository = {
     return mongoCategoryMappingImpl.getById(id);
   },
 
+  async listByInternalCategory(
+    internalCategoryId: string,
+    catalogId?: string
+  ): Promise<CategoryMappingWithDetails[]> {
+    return mongoCategoryMappingImpl.listByInternalCategory(internalCategoryId, catalogId);
+  },
+
   async listByConnection(
     connectionId: string,
     catalogId?: string

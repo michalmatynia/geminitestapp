@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { getIntegrationRepository, checkBaseSkuExists } from '@/features/integrations/server';
 import { resolveBaseConnectionToken } from '@/features/integrations/server';

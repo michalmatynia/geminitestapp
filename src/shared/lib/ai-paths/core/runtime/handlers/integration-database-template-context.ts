@@ -130,7 +130,9 @@ export function prepareDatabaseTemplateContext({
   strictFlowMode = true,
 }: PrepareDatabaseTemplateContextInput): PrepareDatabaseTemplateContextResult {
   const templateInputValue: unknown =
-    resolvedInputs['value'] ?? coerceInput(resolvedInputs['jobId']);
+    resolvedInputs['value'] ??
+    resolvedInputs['result'] ??
+    coerceInput(resolvedInputs['jobId']);
 
   const placeholderContext: Record<string, unknown> = {
     'Date: Current': new Date().toISOString(),

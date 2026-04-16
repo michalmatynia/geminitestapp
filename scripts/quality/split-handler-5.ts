@@ -19,11 +19,9 @@ import type { TestConnectionResponse, TestLogEntry } from '@/shared/contracts/in
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 export const handleLinkedinApiTest = async (
-  connection: any,
-  steps: TestLogEntry[],
-  pushStep: any,
-  fail: any
+  ctx: any
 ): Promise<Response> => {
+  const { connection, steps, pushStep, fail } = ctx;
 ${extractedLines.join('\n').replace(`if (integration.slug === 'linkedin') {`, ``).replace(/}$/, ``)}
 };
 `;
@@ -33,7 +31,7 @@ fs.writeFileSync(EXT_FILE, newExtContent);
 const newSrcLines = [
   ...lines.slice(0, startIndex),
   `  if (integration.slug === 'linkedin') {`,
-  `    return handleLinkedinApiTest(connection, steps, pushStep, fail);`,
+  `    return handleLinkedinApiTest(ctx);`,
   `  }`,
   ...lines.slice(endIndex + 1)
 ];

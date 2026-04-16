@@ -13,6 +13,7 @@ export default getRequestConfig(async ({ requestLocale }) => {
 
   return {
     locale,
+    timeZone: process.env['NEXT_INTL_TIME_ZONE']?.trim() || 'Europe/Warsaw',
     messages: await loadSiteMessages(locale),
   };
 });

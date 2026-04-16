@@ -1,5 +1,9 @@
 'use client';
 
+// ProductModals: coordinates product create/edit modals and related
+// modal lifecycle (hydration, dynamic imports, editor providers). Keeps modal
+// orchestration separate from toolbar and table to simplify testing.
+
 import Link from 'next/link';
 import { Eye, EyeOff } from 'lucide-react';
 import dynamic from 'next/dynamic';
@@ -8,17 +12,31 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ProductFormProvider } from '@/features/products/context/ProductFormContext';
 import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
 import { useProductFormImages } from '@/features/products/context/ProductFormImageContext';
+import { useProductFormMetadata } from '@/features/products/context/ProductFormMetadataContext';
+import { useProductFormParameters } from '@/features/products/context/ProductFormParameterContext';
+import { ProductLeafCategoriesContextRegistrySource } from '@/features/products/context-registry/ProductLeafCategoriesContextRegistrySource';
+import { PRODUCT_EDITOR_CONTEXT_ROOT_IDS } from '@/features/products/context-registry/workspace';
 import {
   useProductListHeaderActionsContext,
+  useProductListSelectionContext,
   useProductListModalsContext,
 } from '@/features/products/context/ProductListContext';
 import { resolveProductListingsIntegrationScope } from '@/features/integrations/utils/product-listings-recovery';
 import { isEditingProductHydrated } from '@/features/products/hooks/editingProductHydration';
 import { buildTriggeredProductEntityJson } from '@/features/products/lib/build-triggered-product-entity-json';
-import type { ProductTriggerButtonBarProps } from '@/features/products/lib/product-integrations-adapter-loader';
+import { extractTranslationEnPlFromAiPathRunDetail } from '@/features/products/lib/extractTranslationEnPlFromAiPathRunDetail';
+import {
+  extractNormalizeProductNameResultFromAiPathRunDetail,
+  isNormalizeProductNamePath,
+  type NormalizeProductNameAiPathResult,
+} from '@/features/products/lib/extractNormalizeProductNameFromAiPathRunDetail';
+import { validateNormalizedProductName } from '@/features/products/lib/validateNormalizedProductName';
+import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
 import type { IntegrationWithConnections } from '@/shared/contracts/integrations/domain';
 import type { ProductDraft } from '@/shared/contracts/products/drafts';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
+import { getAiPathRun, getAiPathRunResult } from '@/shared/lib/ai-paths/api/client';
+import { subscribeToTrackedAiPathRun } from '@/shared/lib/ai-paths/client-run-tracker';
 import {
   useDefaultExportConnection,
   useIntegrationsWithConnections,
@@ -27,6 +45,8 @@ import { Button } from '@/shared/ui/button';
 import { FormModal } from '@/shared/ui/FormModal';
 import { IntegrationSelector } from '@/shared/ui/integration-selector';
 import { Skeleton } from '@/shared/ui/skeleton';
+import { ContextRegistryPageProvider } from '@/shared/lib/ai-context-registry/page-context';
+import { ErrorSystem } from '@/shared/utils/observability/error-system-client';
 
 import { loadProductForm } from './product-form-preload';
 
@@ -36,51 +56,44 @@ const ProductForm = dynamic(loadProductForm, {
   loading: () => <EditProductSkeletonContent />,
 });
 
-const FileManager = dynamic(() => import('@/features/files/components/FileManager'), {
+const FileManager = dynamic(() => import('@/features/files/public').then((mod) => mod.default || mod.FileManager), {
   ssr: false,
 });
 
-const TriggerButtonBar = dynamic<ProductTriggerButtonBarProps>(
-  () =>
-    import('@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar').then(
-      (
-        mod: typeof import('@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar')
-      ) => mod.TriggerButtonBar
-    ),
-  {
-    ssr: false,
-    loading: () => null,
-  }
-);
-
-const ListProductModal = dynamic(
-  () =>
-    import('@/features/integrations/components/listings/ListProductModal').then(
-      (mod: typeof import('@/features/integrations/components/listings/ListProductModal')) =>
-        mod.default
-    ),
-  { ssr: false }
-);
-
-const MassListProductModal = dynamic(
-  () =>
-    import('@/features/integrations/components/listings/MassListProductModal').then(
-      (mod: typeof import('@/features/integrations/components/listings/MassListProductModal')) =>
-        mod.default
-    ),
-  { ssr: false }
-);
-
-const ProductListingsModal = dynamic(
-  () =>
-    import('@/features/integrations/components/listings/ProductListingsModal').then(
-      (mod: typeof import('@/features/integrations/components/listings/ProductListingsModal')) =>
-        mod.ProductListingsModal
-    ),
-  { ssr: false }
-);
+import {
+  ListProductModal,
+  MassListProductModal,
+  ProductListingsModal,
+} from '@/features/integrations/product-integrations-adapter';
+import { TriggerButtonBar } from '@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar';
 
 type ProductFormScope = 'draft_template' | 'product_create' | 'product_edit';
+const STARTER_TRANSLATION_EN_PL_PATH_ID = 'path_96708d';
+
+const isTranslationEnPlTriggerButton = (button: AiTriggerButtonRecord): boolean => {
+  if ((button.pathId?.trim() ?? '') === STARTER_TRANSLATION_EN_PL_PATH_ID) {
+    return true;
+  }
+
+  const labels = [button.name, button.display?.label]
+    .map((value) => (typeof value === 'string' ? value.trim().toLowerCase() : ''))
+    .filter((v): v is string => v !== '');
+  return labels.some(
+    (label) => label.includes('translate en->pl') || label.includes('translation en->pl')
+  );
+};
+
+type NormalizeCompletionState =
+  | {
+      kind: 'result';
+      runId: string;
+      result: NormalizeProductNameAiPathResult;
+    }
+  | {
+      kind: 'error';
+      runId: string;
+      error: string;
+    };
 
 function ProductFormModalBridge(props: {
   onIsSavingChange: (value: boolean) => void;
@@ -91,7 +104,9 @@ function ProductFormModalBridge(props: {
   const { handleSubmit, uploading, hasUnsavedChanges } = useProductFormCore();
 
   submitRef.current = () => {
-    void handleSubmit();
+    handleSubmit().catch((error: unknown) => {
+      void ErrorSystem.captureException(error);
+    });
   };
 
   useEffect(() => {
@@ -109,31 +124,209 @@ function ProductFormModalBody(props: {
   submitButtonText: string;
   validationInstanceScopeOverride?: ProductFormScope;
   validatorSessionKey?: string;
+  disableTriggerButtons?: boolean;
+  pendingNormalizeCompletion: NormalizeCompletionState | null;
+  onNormalizeRunQueued: (runId: string) => void;
+  onNormalizeCompletionHandled: (runId: string) => void;
 }): React.JSX.Element {
-  const { submitButtonText, validationInstanceScopeOverride, validatorSessionKey } = props;
+  const {
+    submitButtonText,
+    validationInstanceScopeOverride,
+    validatorSessionKey,
+    disableTriggerButtons = false,
+    pendingNormalizeCompletion,
+    onNormalizeRunQueued,
+    onNormalizeCompletionHandled,
+  } = props;
 
-  const { product, draft, getValues } = useProductFormCore();
-  const { showFileManager, handleMultiFileSelect } = useProductFormImages();
+  const { product, draft, getValues, setValue, setNormalizeNameError } = useProductFormCore();
+  const { applyLocalizedParameterValues } = useProductFormParameters();
+  const { showFileManager, handleMultiFileSelect, imageLinks } = useProductFormImages();
+  const { categories } = useProductFormMetadata();
   const { showTriggerRunFeedback, setShowTriggerRunFeedback } = useProductListHeaderActionsContext();
-  const formInstanceKey = product?.id?.trim() || draft?.id?.trim() || 'product-form';
+  const shouldApplyNormalizeResultLocally = validationInstanceScopeOverride !== undefined;
+  const [pendingTranslationRunId, setPendingTranslationRunId] = useState<string | null>(null);
 
   const getEntityJson = useCallback((): Record<string, unknown> => {
     return buildTriggeredProductEntityJson({
       product,
       draft,
-      values: getValues(),
+      values: {
+        ...getValues(),
+        imageLinks,
+      },
+      categories,
     });
-  }, [getValues, product, draft]);
+  }, [categories, getValues, product, draft, imageLinks]);
+
+  const handleRunQueued = useCallback(
+    (args: {
+      button: AiTriggerButtonRecord;
+      runId: string;
+      entityId?: string | null | undefined;
+      entityType: 'product' | 'note' | 'custom';
+    }): void => {
+      if (!shouldApplyNormalizeResultLocally) return;
+      if (isNormalizeProductNamePath(args.button.pathId)) {
+        setNormalizeNameError(null);
+        onNormalizeRunQueued(args.runId);
+        return;
+      }
+      if (isTranslationEnPlTriggerButton(args.button)) {
+        setPendingTranslationRunId(args.runId);
+      }
+    },
+    [onNormalizeRunQueued, setNormalizeNameError, shouldApplyNormalizeResultLocally]
+  );
+
+  const handleSubmitTranslationSnapshot = useCallback(
+    async (
+      snapshot: any,
+      trackedRunId: string,
+      isActive: () => boolean
+    ): Promise<void> => {
+      if (snapshot.status !== 'completed') {
+        if (isActive()) {
+          setPendingTranslationRunId((current) => (current === trackedRunId ? null : current));
+        }
+        return;
+      }
+
+      const streamedTranslation = snapshot.run
+        ? extractTranslationEnPlFromAiPathRunDetail({ run: snapshot.run })
+        : null;
+      let translationResult = streamedTranslation;
+
+      if (translationResult === null) {
+        const response = await getAiPathRun(trackedRunId, { timeoutMs: 60_000 });
+        if (isActive() === false) return;
+        if (response.ok === false) {
+          setPendingTranslationRunId((current) => (current === trackedRunId ? null : current));
+          return;
+        }
+        translationResult = extractTranslationEnPlFromAiPathRunDetail(response.data);
+      }
+
+      if (isActive() === false) return;
+
+      if (translationResult !== null && (translationResult.descriptionPl ?? '') !== '') {
+        setValue('description_pl', translationResult.descriptionPl!, {
+          shouldDirty: true,
+          shouldTouch: true,
+          shouldValidate: true,
+        });
+      }
+
+      if (translationResult !== null && translationResult.parameterTranslations.length > 0) {
+        applyLocalizedParameterValues(
+          translationResult.parameterTranslations.map((entry) => ({
+            parameterId: entry.parameterId,
+            languageCode: 'pl',
+            value: entry.value,
+          }))
+        );
+      }
+
+      setPendingTranslationRunId((current) => (current === trackedRunId ? null : current));
+    },
+    [applyLocalizedParameterValues, setValue]
+  );
+
+  useEffect(() => {
+    if (pendingTranslationRunId === null) return;
+
+    let active = true;
+    let terminalHandled = false;
+    const trackedRunId = pendingTranslationRunId;
+
+    const unsubscribe = subscribeToTrackedAiPathRun(trackedRunId, (snapshot) => {
+      if (!active || terminalHandled || snapshot.trackingState !== 'stopped') return;
+      terminalHandled = true;
+
+      handleSubmitTranslationSnapshot(snapshot, trackedRunId, () => active).catch((error: unknown) => {
+        void ErrorSystem.captureException(error);
+      });
+    });
+
+    return () => {
+      active = false;
+      unsubscribe();
+    };
+  }, [applyLocalizedParameterValues, pendingTranslationRunId, setValue]);
+
+  useEffect(() => {
+    if (pendingNormalizeCompletion === null || !shouldApplyNormalizeResultLocally) return;
+
+    const completionRunId = pendingNormalizeCompletion.runId;
+
+    try {
+      if (pendingNormalizeCompletion.kind === 'error') {
+        setNormalizeNameError(pendingNormalizeCompletion.error);
+        return;
+      }
+
+      const normalizeResult = pendingNormalizeCompletion.result;
+      if (normalizeResult.isValid === false) {
+        setNormalizeNameError(
+          normalizeResult.validationError ??
+            'Normalize failed: the AI Path returned an invalid normalized title.'
+        );
+        return;
+      }
+      const normalizedName = normalizeResult.normalizedName;
+      if (normalizedName === null || normalizedName === undefined || normalizedName === '') {
+        setNormalizeNameError(
+          normalizeResult.validationError ??
+            'Normalize failed: the AI Path did not return a normalized English title.'
+        );
+        return;
+      }
+
+      const validation = validateNormalizedProductName({
+        normalizedName,
+        categories,
+        categoryHint: normalizeResult.category,
+        categoryContext: normalizeResult.categoryContext,
+      });
+      if (validation.isValid === false) {
+        setNormalizeNameError(validation.error);
+        return;
+      }
+
+      setNormalizeNameError(null);
+      setValue('name_en', validation.normalizedName, {
+        shouldDirty: true,
+        shouldTouch: true,
+        shouldValidate: true,
+      });
+    } finally {
+      onNormalizeCompletionHandled(completionRunId);
+    }
+  }, [
+    categories,
+    onNormalizeCompletionHandled,
+    pendingNormalizeCompletion,
+    setNormalizeNameError,
+    setValue,
+    shouldApplyNormalizeResultLocally,
+  ]);
 
   return (
-    <>
+    <ContextRegistryPageProvider
+      pageId='admin:product-editor-modal'
+      title='Product Editor Modal'
+      rootNodeIds={[...PRODUCT_EDITOR_CONTEXT_ROOT_IDS]}
+    >
+      <ProductLeafCategoriesContextRegistrySource sourceId='product-modal-leaf-categories' />
       <div className='mb-3 flex flex-wrap items-center gap-2'>
         <TriggerButtonBar
           location='product_modal'
           entityType='product'
           entityId={product?.id ?? null}
           getEntityJson={getEntityJson}
+          disabled={disableTriggerButtons}
           showRunFeedback={showTriggerRunFeedback}
+          onRunQueued={handleRunQueued}
         />
         <Button
           type='button'
@@ -147,18 +340,22 @@ function ProductFormModalBody(props: {
           {showTriggerRunFeedback ? <EyeOff className='size-3.5' /> : <Eye className='size-3.5' />}
           <span>{showTriggerRunFeedback ? 'Hide Statuses' : 'Show Statuses'}</span>
         </Button>
+        {disableTriggerButtons ? (
+          <span className='text-xs text-muted-foreground'>
+            AI actions are unavailable until full product details finish loading.
+          </span>
+        ) : null}
       </div>
       {showFileManager ? (
         <FileManager onSelectFile={handleMultiFileSelect} />
       ) : (
         <ProductForm
-          key={formInstanceKey}
           submitButtonText={submitButtonText}
           validatorSessionKey={validatorSessionKey}
           {...(validationInstanceScopeOverride ? { validationInstanceScopeOverride } : {})}
         />
       )}
-    </>
+    </ContextRegistryPageProvider>
   );
 }
 
@@ -205,7 +402,7 @@ function ProductIntegrationSelectionModal(props: {
   );
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (isOpen === false) return;
 
     if (integrations.length === 0) {
       if (selectedIntegrationId !== '') setSelectedIntegrationId('');
@@ -217,13 +414,13 @@ function ProductIntegrationSelectionModal(props: {
       (integration: IntegrationWithConnections) => integration.id === selectedIntegrationId
     );
 
-    if (!hasSelectedIntegration) {
+    if (hasSelectedIntegration === false) {
       setSelectedIntegrationId(integrations[0]?.id ?? '');
     }
   }, [integrations, isOpen, selectedConnectionId, selectedIntegrationId]);
 
   useEffect(() => {
-    if (!isOpen || !selectedIntegrationId) return;
+    if (isOpen === false || selectedIntegrationId === '') return;
 
     const integration = integrations.find(
       (entry: IntegrationWithConnections) => entry.id === selectedIntegrationId
@@ -235,12 +432,12 @@ function ProductIntegrationSelectionModal(props: {
       return;
     }
 
-    if (selectedConnectionId && connectionIds.includes(selectedConnectionId)) {
+    if (selectedConnectionId !== '' && connectionIds.includes(selectedConnectionId)) {
       return;
     }
 
     const preferredConnectionId = preferredConnection?.connectionId ?? null;
-    if (preferredConnectionId && connectionIds.includes(preferredConnectionId)) {
+    if (preferredConnectionId !== null && connectionIds.includes(preferredConnectionId)) {
       setSelectedConnectionId(preferredConnectionId);
       return;
     }
@@ -249,12 +446,12 @@ function ProductIntegrationSelectionModal(props: {
   }, [integrations, isOpen, preferredConnection?.connectionId, selectedConnectionId, selectedIntegrationId]);
 
   const handleContinue = useCallback((): void => {
-    if (selectedIntegrationId && selectedConnectionId) {
+    if (selectedIntegrationId !== '' && selectedConnectionId !== '') {
       onSelect(selectedIntegrationId, selectedConnectionId);
     }
   }, [onSelect, selectedConnectionId, selectedIntegrationId]);
 
-  if (!isOpen) return null;
+  if (isOpen === false) return null;
 
   return (
     <FormModal
@@ -264,10 +461,10 @@ function ProductIntegrationSelectionModal(props: {
       size='md'
       onSave={handleContinue}
       saveText='Continue'
-      isSaveDisabled={!selectedIntegrationId || !selectedConnectionId}
+      isSaveDisabled={selectedIntegrationId === '' || selectedConnectionId === ''}
     >
       <div className='space-y-4'>
-        {isLoading ? (
+        {isLoading === true ? (
           <p className='text-sm text-muted-foreground'>Loading integrations...</p>
         ) : integrations.length === 0 ? (
           <div className='rounded-lg border border-yellow-500/40 bg-yellow-500/10 p-6 text-center'>
@@ -344,8 +541,12 @@ function ProductEditorModal(props: ProductEditorModalProps): React.JSX.Element |
   const [validatorSessionKey, setValidatorSessionKey] = useState<string>(() =>
     `${providerKey}:session:${isOpen ? 1 : 0}`
   );
+  const [pendingNormalizeRunId, setPendingNormalizeRunId] = useState<string | null>(null);
+  const [pendingNormalizeCompletion, setPendingNormalizeCompletion] =
+    useState<NormalizeCompletionState | null>(null);
   const shouldSuppressNonHydratedEditWarning =
     suppressNonHydratedEditWarning || isSaveDisabledOverride;
+  const shouldApplyNormalizeResultLocally = validationInstanceScopeOverride !== undefined;
 
   const onIsSavingChange = useCallback((value: boolean) => setFormIsSaving(value), []);
   const onHasUnsavedChangesChange = useCallback(
@@ -354,7 +555,7 @@ function ProductEditorModal(props: ProductEditorModalProps): React.JSX.Element |
   );
 
   useEffect(() => {
-    if (isOpen && !wasOpenRef.current) {
+    if (isOpen === true && wasOpenRef.current === false) {
       openSessionCounterRef.current += 1;
       setValidatorSessionKey(`${providerKey}:session:${openSessionCounterRef.current}`);
     }
@@ -362,13 +563,97 @@ function ProductEditorModal(props: ProductEditorModalProps): React.JSX.Element |
   }, [isOpen, providerKey]);
 
   useEffect(() => {
-    if (showSkeleton) {
+    if (showSkeleton === true) {
       setFormIsSaving(false);
       setFormHasUnsavedChanges(false);
     }
   }, [showSkeleton]);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (pendingNormalizeRunId === null || shouldApplyNormalizeResultLocally === false) return;
+
+    const activeRef = { current: true };
+    let terminalHandled = false;
+    const trackedRunId = pendingNormalizeRunId;
+
+    const unsubscribe = subscribeToTrackedAiPathRun(trackedRunId, (snapshot) => {
+      if (activeRef.current === false || terminalHandled === true || snapshot.trackingState !== 'stopped') return;
+      terminalHandled = true;
+
+      void (async (): Promise<void> => {
+        if (snapshot.status !== 'completed') {
+          if (activeRef.current === true) {
+            setPendingNormalizeCompletion({
+              kind: 'error',
+              runId: trackedRunId,
+              error:
+                snapshot.errorMessage ??
+                `Normalize failed: the AI Path run ${snapshot.status.replace(/_/g, ' ')}.`,
+            });
+            setPendingNormalizeRunId((current) => (current === trackedRunId ? null : current));
+          }
+          return;
+        }
+
+        const streamedNormalizeResult = snapshot.run
+          ? extractNormalizeProductNameResultFromAiPathRunDetail({ run: snapshot.run })
+          : null;
+        if (streamedNormalizeResult !== null) {
+          setPendingNormalizeCompletion({
+            kind: 'result',
+            runId: trackedRunId,
+            result: streamedNormalizeResult,
+          });
+          setPendingNormalizeRunId((current) => (current === trackedRunId ? null : current));
+          return;
+        }
+
+        const response = await getAiPathRunResult(trackedRunId, { timeoutMs: 60_000 });
+        if (activeRef.current === false) return;
+        if (response.ok === false) {
+          setPendingNormalizeCompletion({
+            kind: 'error',
+            runId: trackedRunId,
+            error:
+              response.error ||
+              'Normalize failed: unable to load the completed AI Path run result.',
+          });
+          setPendingNormalizeRunId((current) => (current === trackedRunId ? null : current));
+          return;
+        }
+
+        const normalizeResult = extractNormalizeProductNameResultFromAiPathRunDetail(response.data);
+        setPendingNormalizeCompletion(
+          normalizeResult !== null
+            ? {
+                kind: 'result',
+                runId: trackedRunId,
+                result: normalizeResult,
+              }
+            : {
+                kind: 'error',
+                runId: trackedRunId,
+                error: 'Normalize failed: the AI Path did not return a normalized English title.',
+              }
+        );
+        setPendingNormalizeRunId((current) => (current === trackedRunId ? null : current));
+      })();
+    });
+
+    return () => {
+      activeRef.current = false;
+      unsubscribe();
+    };
+  }, [pendingNormalizeRunId, shouldApplyNormalizeResultLocally]);
+
+  useEffect(() => {
+    if (isOpen === false) {
+      setPendingNormalizeRunId(null);
+      setPendingNormalizeCompletion(null);
+    }
+  }, [isOpen]);
+
+  if (isOpen === false) return null;
 
   return (
     <FormModal
@@ -379,14 +664,14 @@ function ProductEditorModal(props: ProductEditorModalProps): React.JSX.Element |
       onSave={() => formSubmitRef.current?.()}
       isSaving={formIsSaving}
       disableCloseWhileSaving
-      isSaveDisabled={showSkeleton || formIsSaving || isSaveDisabledOverride}
+      isSaveDisabled={showSkeleton === true || formIsSaving === true || isSaveDisabledOverride === true}
       hasUnsavedChanges={formHasUnsavedChanges}
       saveText={saveText}
       cancelText='Close'
       size='xl'
       className='md:min-w-[63rem] max-w-[66rem]'
     >
-      {showSkeleton ? (
+      {showSkeleton === true ? (
         <EditProductSkeletonContent />
       ) : (
         <ProductFormProvider
@@ -410,6 +695,20 @@ function ProductEditorModal(props: ProductEditorModalProps): React.JSX.Element |
             submitButtonText={submitButtonText}
             validationInstanceScopeOverride={validationInstanceScopeOverride}
             validatorSessionKey={validatorSessionKey}
+            disableTriggerButtons={
+              (isSaveDisabledOverride === true) &&
+              validationInstanceScopeOverride === 'product_edit'
+            }
+            pendingNormalizeCompletion={pendingNormalizeCompletion}
+            onNormalizeRunQueued={(runId: string) => {
+              setPendingNormalizeCompletion(null);
+              setPendingNormalizeRunId(runId);
+            }}
+            onNormalizeCompletionHandled={(runId: string) => {
+              setPendingNormalizeCompletion((current) =>
+                current?.runId === runId ? null : current
+              );
+            }}
           />
         </ProductFormProvider>
       )}
@@ -418,6 +717,7 @@ function ProductEditorModal(props: ProductEditorModalProps): React.JSX.Element |
 }
 
 export function ProductModals(): React.JSX.Element {
+  const { data } = useProductListSelectionContext();
   const {
     isCreateOpen,
     initialSku,
@@ -450,21 +750,26 @@ export function ProductModals(): React.JSX.Element {
     onCloseIntegrationModal,
     onSelectIntegrationFromModal,
   } = useProductListModalsContext();
+  const selectedMassListProducts = React.useMemo(() => {
+    if (massListProductIds === null || massListProductIds === undefined || massListProductIds.length === 0) return [];
+    const productById = new Map(data.map((product) => [product.id, product]));
+    return massListProductIds
+      .map((productId) => productById.get(productId))
+      .filter((product): product is ProductWithImages => product !== undefined && product !== null);
+  }, [data, massListProductIds]);
 
   const hydratedEditingProduct =
-    editingProduct && isEditingProductHydrated(editingProduct) ? editingProduct : null;
+    (editingProduct !== null && editingProduct !== undefined && isEditingProductHydrated(editingProduct)) ? editingProduct : null;
   // Show the form immediately with list-level data while hydrating, instead of a skeleton.
   // The save button stays disabled until hydration completes (showSkeleton controls that).
   const showEditSkeleton = false;
-  const isEditOpen = Boolean(editingProduct);
+  const isEditOpen = editingProduct !== null && editingProduct !== undefined;
 
-  const createProviderKey = createDraft
-    ? ['create', createDraft.id, createDraft.updatedAt ?? ''].join(':')
-    : 'create';
+  const createProviderKey = (createDraft !== null && createDraft !== undefined) ? ['create', createDraft.id].join(':') : 'create';
   // Include hydration state in the key so the form remounts with full data
   // (list-level data may lack descriptions, etc.)
-  const editProviderKey = editingProduct
-    ? ['edit', editingProduct.id, hydratedEditingProduct ? 'h' : 'p'].join(':')
+  const editProviderKey = (editingProduct !== null && editingProduct !== undefined)
+    ? ['edit', editingProduct.id, hydratedEditingProduct !== null ? 'h' : 'p'].join(':')
     : 'edit';
   const effectiveIntegrationsFilterIntegrationSlug = resolveProductListingsIntegrationScope({
     filterIntegrationSlug: integrationsFilterIntegrationSlug,
@@ -477,7 +782,7 @@ export function ProductModals(): React.JSX.Element {
         isOpen={isCreateOpen}
         onClose={onCloseCreate}
         title='Create Product'
-        subtitle={createDraft ? `Using draft template: ${createDraft.name}` : undefined}
+        subtitle={(createDraft !== null && createDraft !== undefined) ? `Using draft template: ${createDraft.name}` : undefined}
         saveText='Create'
         submitButtonText='Create'
         providerKey={createProviderKey}
@@ -485,7 +790,7 @@ export function ProductModals(): React.JSX.Element {
         onSuccess={onCreateSuccess}
         initialSku={initialSku}
         initialCatalogId={initialCatalogId ?? undefined}
-        validationInstanceScopeOverride={createDraft?.id ? 'draft_template' : 'product_create'}
+        validationInstanceScopeOverride={(createDraft?.id ?? '') !== '' ? 'draft_template' : 'product_create'}
       />
 
       <ProductEditorModal
@@ -505,9 +810,9 @@ export function ProductModals(): React.JSX.Element {
         isSaveDisabledOverride={isEditHydrating}
       />
 
-      {integrationsProduct && !showListProductModal && (
+      {integrationsProduct !== null && integrationsProduct !== undefined && !showListProductModal && (
         <ProductListingsModal
-          isOpen={!!integrationsProduct}
+          isOpen={integrationsProduct !== null && integrationsProduct !== undefined}
           item={integrationsProduct}
           onClose={onCloseIntegrations}
           onStartListing={onStartListing}
@@ -517,21 +822,21 @@ export function ProductModals(): React.JSX.Element {
         />
       )}
 
-      {integrationsProduct && showListProductModal && (
+      {integrationsProduct !== null && integrationsProduct !== undefined && showListProductModal && (
         <ListProductModal
-          isOpen={!!integrationsProduct}
+          isOpen={integrationsProduct !== null && integrationsProduct !== undefined}
           item={integrationsProduct}
           onClose={onCloseListProduct}
           onSuccess={onListProductSuccess}
           initialIntegrationId={listProductPreset?.integrationId ?? null}
           initialConnectionId={listProductPreset?.connectionId ?? null}
-          autoSubmitOnOpen={Boolean(listProductPreset?.autoSubmit)}
+          autoSubmitOnOpen={(listProductPreset?.autoSubmit ?? false) === true}
         />
       )}
 
-      {exportSettingsProduct && onCloseExportSettings && (
+      {exportSettingsProduct !== null && exportSettingsProduct !== undefined && onCloseExportSettings !== undefined && onCloseExportSettings !== null && (
         <ProductListingsModal
-          isOpen={!!exportSettingsProduct}
+          isOpen={exportSettingsProduct !== null && exportSettingsProduct !== undefined}
           item={exportSettingsProduct}
           onClose={onCloseExportSettings}
           filterIntegrationSlug='baselinker'
@@ -539,13 +844,14 @@ export function ProductModals(): React.JSX.Element {
         />
       )}
 
-      {massListIntegration && massListProductIds && massListProductIds.length > 0 && (
+      {massListIntegration !== null && massListIntegration !== undefined && massListProductIds !== null && massListProductIds !== undefined && massListProductIds.length > 0 && (
         <MassListProductModal
           isOpen={true}
           onSuccess={onMassListSuccess ?? (() => {})}
           integrationId={massListIntegration.integrationId}
           connectionId={massListIntegration.connectionId}
           item={massListProductIds}
+          products={selectedMassListProducts}
           onClose={onCloseMassList ?? (() => {})}
         />
       )}

@@ -28,11 +28,15 @@ type Props = {
   prefersReducedMotion: boolean;
 };
 
+type GuestIntroProposalActions = {
+  onAccept: () => void;
+  onDismiss: () => void;
+};
+
 type GuestIntroProposalProps = {
   guestTutorLabel: string;
   isCoarsePointer: boolean;
-  onAccept: () => void;
-  onDismiss: () => void;
+  actions: GuestIntroProposalActions;
 };
 
 type GuestIntroProposalActionButtonProps = {
@@ -95,9 +99,9 @@ function GuestIntroProposalActionButton({
 function GuestIntroProposal({
   guestTutorLabel,
   isCoarsePointer,
-  onAccept,
-  onDismiss,
+  actions,
 }: GuestIntroProposalProps): JSX.Element {
+  const { onAccept, onDismiss } = actions;
   const actionClassName = resolveGuestIntroActionClassName(isCoarsePointer);
 
   return (
@@ -149,8 +153,7 @@ function KangurAiTutorGuestIntroContent(props: {
       <GuestIntroProposal
         guestTutorLabel={guestTutorLabel}
         isCoarsePointer={isCoarsePointer}
-        onAccept={onAccept}
-        onDismiss={onDismiss}
+        actions={{ onAccept, onDismiss }}
       />
     );
   }

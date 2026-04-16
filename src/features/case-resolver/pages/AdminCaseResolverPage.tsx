@@ -7,7 +7,7 @@ import { AdminCaseResolverPageProvider, useAdminCaseResolverPageActionsContext a
 
 const LazyCaseResolverPageView = lazy(() => import('../components/CaseResolverPageView').then(m => ({ default: m.CaseResolverPageView })));
 
-function AdminCaseResolverPageInner() {
+function AdminCaseResolverPageInner(): React.JSX.Element {
   const state = useStateCtx(), actions = useActions();
   const val = useMemo(() => ({ ...state, ...actions }), [state, actions]);
   return (
@@ -19,6 +19,6 @@ function AdminCaseResolverPageInner() {
   );
 }
 
-export function AdminCaseResolverPage() {
+export function AdminCaseResolverPage(): React.JSX.Element {
   return <AdminCaseResolverPageProvider><AdminCaseResolverPageInner /></AdminCaseResolverPageProvider>;
 }

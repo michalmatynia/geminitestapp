@@ -1,13 +1,17 @@
 'use client';
 
-import React, { useCallback, useEffect, useRef } from 'react';
+import type React from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import {
   useCanvasActions,
   useCanvasRefs,
   useCanvasState,
 } from '@/features/ai/ai-paths/context/CanvasContext';
-import { useGraphActions, useGraphState } from '@/features/ai/ai-paths/context/GraphContext';
+import {
+  useGraphActions,
+  useGraphDataState,
+} from '@/features/ai/ai-paths/context/GraphContext';
 import {
   computeEdgeSelectionDeleteResult,
   computeNodeSelectionDeleteResult,
@@ -18,8 +22,8 @@ import {
   useSelectionState,
 } from '@/features/ai/ai-paths/context/SelectionContext';
 import { type ConfirmConfig } from '@/shared/hooks/ui/useConfirm';
-import type { AiNode, Edge, NodeDefinition } from '@/shared/lib/ai-paths';
-import { sanitizeEdges } from '@/shared/lib/ai-paths';
+import type { AiNode, Edge, NodeDefinition } from '@/shared/contracts/ai-paths';
+import { sanitizeEdges } from '@/shared/lib/ai-paths/core/utils/graph';
 
 import { isEditableElement } from './utils/canvas-interaction-utils';
 
@@ -121,7 +125,7 @@ export function useAiPathsCanvasInteractions(
 
   const { selectedEdgeId, selectedNodeIds: selectedNodeIdsCtx } = useSelectionState();
   const { selectEdge, selectNode } = useSelectionActions();
-  const { nodes: graphNodes, edges: graphEdges } = useGraphState();
+  const { nodes: graphNodes, edges: graphEdges } = useGraphDataState();
   const { setNodes: setGraphNodes, setEdges: setGraphEdges } = useGraphActions();
 
   const notifyLocked = useCallback((): void => {

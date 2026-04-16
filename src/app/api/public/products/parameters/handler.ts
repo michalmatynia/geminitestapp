@@ -1,9 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { getParameterRepository } from '@/features/products/server';
 import type { ProductParameter } from '@/shared/contracts/products/parameters';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
+import { applyCacheLife } from '@/shared/lib/next/cache-life';
 import type { CatalogIdQuery } from '@/shared/validations/product-metadata-api-schemas';
 
 type PublicProductParameter = {
@@ -46,6 +47,15 @@ const toPublicProductParameter = (parameter: ProductParameter): PublicProductPar
  * GET /api/public/products/parameters
  * Returns catalog-scoped product parameter metadata for public automation/runtime usage.
  */
+async function listPublicProductParametersCached(catalogId: string): Promise<PublicProductParameter[]> {
+  'use cache';
+  applyCacheLife('swr60');
+
+  const repository = await getParameterRepository();
+  const parameters = await repository.listParameters({ catalogId });
+  return parameters.map(toPublicProductParameter);
+}
+
 export async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const query = ctx.query as CatalogIdQuery | undefined;
   const catalogId =
@@ -54,9 +64,5 @@ export async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Pro
   if (!catalogId) {
     throw badRequestError('catalogId query parameter is required');
   }
-
-  const repository = await getParameterRepository();
-  const parameters = await repository.listParameters({ catalogId });
-
-  return NextResponse.json(parameters.map(toPublicProductParameter));
+  return NextResponse.json(await listPublicProductParametersCached(catalogId));
 }

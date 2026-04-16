@@ -11,13 +11,20 @@ import {
   type AuthUserRoleMap,
 } from '@/features/auth/utils/auth-management';
 import type { AuthUserAccessDetail as AuthUserAccess } from '@/shared/contracts/auth';
-import { MongoSettingRecord } from '@/shared/contracts/base';
+import { type MongoSettingRecord } from '@/shared/contracts/base';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 type MongoSettingDoc = Partial<MongoSettingRecord> & {
   updatedAt?: Date | string | null;
+};
+
+type AuthSettingsSnapshot = {
+  permissions: string | null;
+  roles: string | null;
+  userRoles: string | null;
+  defaultRole: string | null;
 };
 
 const getUpdatedAtMs = (value: Date | string | null | undefined): number | null => {
@@ -52,41 +59,36 @@ const pickPreferredSettingDoc = (docs: MongoSettingDoc[]): MongoSettingDoc | nul
   return selected;
 };
 
-const readMongoSetting = async (key: string): Promise<string | null> => {
-  if (!process.env['MONGODB_URI']) return null;
+const readMongoSettings = async (
+  keys: readonly string[]
+): Promise<Record<string, string | null>> => {
+  if (!process.env['MONGODB_URI']) {
+    return Object.fromEntries(keys.map((key) => [key, null]));
+  }
   const mongo = await getMongoDb();
   const docs = await mongo
     .collection<MongoSettingDoc>('settings')
     .find(
-      { $or: [{ _id: key }, { key }] },
+      {
+        $or: keys.flatMap((key) => [{ _id: key }, { key }]),
+      },
       { projection: { _id: 1, key: 1, value: 1, updatedAt: 1 } }
     )
     .toArray();
-  const doc = pickPreferredSettingDoc(docs);
-  return typeof doc?.value === 'string' ? doc.value : null;
+
+  return Object.fromEntries(
+    keys.map((key) => {
+      const doc = pickPreferredSettingDoc(
+        docs.filter((candidate) => candidate._id === key || candidate.key === key)
+      );
+      return [key, typeof doc?.value === 'string' ? doc.value : null];
+    })
+  );
 };
 
-const readSettingValue = async (key: string): Promise<string | null> => readMongoSetting(key);
-
-export const getAuthPermissions = async (): Promise<AuthPermission[]> => {
-  const value = await readSettingValue(AUTH_SETTINGS_KEYS.permissions);
-  return parseJsonSetting<AuthPermission[]>(value, DEFAULT_AUTH_PERMISSIONS);
-};
-
-export const getAuthRoles = async (): Promise<AuthRole[]> => {
-  const value = await readSettingValue(AUTH_SETTINGS_KEYS.roles);
-  return mergeDefaultRoles(parseJsonSetting<AuthRole[]>(value, DEFAULT_AUTH_ROLES));
-};
-
-export const getAuthUserRoles = async (): Promise<AuthUserRoleMap> => {
-  const value = await readSettingValue(AUTH_SETTINGS_KEYS.userRoles);
-  return parseJsonSetting<AuthUserRoleMap>(value, {});
-};
-
-export const getAuthDefaultRoleId = async (): Promise<string | null> => {
-  const value = await readSettingValue(AUTH_SETTINGS_KEYS.defaultRole);
-  if (!value) return null;
-  return value.trim();
+const readSettingValue = async (key: string): Promise<string | null> => {
+  const snapshot = await getAuthSettingsSnapshot();
+  return snapshot[key as keyof AuthSettingsSnapshot] ?? null;
 };
 
 const parseNumber = (value: string | undefined, fallback: number): number => {
@@ -95,15 +97,92 @@ const parseNumber = (value: string | undefined, fallback: number): number => {
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
+const AUTH_ACCESS_SETTING_KEYS = {
+  permissions: AUTH_SETTINGS_KEYS.permissions,
+  roles: AUTH_SETTINGS_KEYS.roles,
+  userRoles: AUTH_SETTINGS_KEYS.userRoles,
+  defaultRole: AUTH_SETTINGS_KEYS.defaultRole,
+} as const;
+
+const AUTH_SETTINGS_CACHE_TTL_MS = parseNumber(
+  process.env['AUTH_SETTINGS_CACHE_TTL_MS'] ?? process.env['AUTH_ACCESS_CACHE_TTL_MS'],
+  60_000
+);
+
+let authSettingsSnapshotCache: { value: AuthSettingsSnapshot; ts: number } | null = null;
+let authSettingsSnapshotInflight: Promise<AuthSettingsSnapshot> | null = null;
+
+const getAuthSettingsSnapshot = async (): Promise<AuthSettingsSnapshot> => {
+  const now = Date.now();
+  if (authSettingsSnapshotCache && now - authSettingsSnapshotCache.ts < AUTH_SETTINGS_CACHE_TTL_MS) {
+    return authSettingsSnapshotCache.value;
+  }
+
+  if (authSettingsSnapshotInflight) {
+    return authSettingsSnapshotInflight;
+  }
+
+  authSettingsSnapshotInflight = (async (): Promise<AuthSettingsSnapshot> => {
+    const keys = [
+      AUTH_SETTINGS_KEYS.permissions,
+      AUTH_SETTINGS_KEYS.roles,
+      AUTH_SETTINGS_KEYS.userRoles,
+      AUTH_SETTINGS_KEYS.defaultRole,
+    ] as const;
+
+    const values = process.env['MONGODB_URI']
+      ? await readMongoSettings(keys)
+      : Object.fromEntries(keys.map((key) => [key, null]));
+
+    return {
+      permissions: values[AUTH_ACCESS_SETTING_KEYS.permissions] ?? null,
+      roles: values[AUTH_ACCESS_SETTING_KEYS.roles] ?? null,
+      userRoles: values[AUTH_ACCESS_SETTING_KEYS.userRoles] ?? null,
+      defaultRole: values[AUTH_ACCESS_SETTING_KEYS.defaultRole] ?? null,
+    };
+  })();
+
+  try {
+    const value = await authSettingsSnapshotInflight;
+    authSettingsSnapshotCache = { value, ts: Date.now() };
+    return value;
+  } finally {
+    authSettingsSnapshotInflight = null;
+  }
+};
+
+export const getAuthPermissions = async (): Promise<AuthPermission[]> => {
+  const value = await readSettingValue('permissions');
+  return parseJsonSetting<AuthPermission[]>(value, DEFAULT_AUTH_PERMISSIONS);
+};
+
+export const getAuthRoles = async (): Promise<AuthRole[]> => {
+  const value = await readSettingValue('roles');
+  return mergeDefaultRoles(parseJsonSetting<AuthRole[]>(value, DEFAULT_AUTH_ROLES));
+};
+
+export const getAuthUserRoles = async (): Promise<AuthUserRoleMap> => {
+  const value = await readSettingValue('userRoles');
+  return parseJsonSetting<AuthUserRoleMap>(value, {});
+};
+
+export const getAuthDefaultRoleId = async (): Promise<string | null> => {
+  const value = await readSettingValue('defaultRole');
+  if (!value) return null;
+  return value.trim();
+};
+
 const AUTH_ACCESS_CACHE_TTL_MS = parseNumber(
   process.env['AUTH_ACCESS_CACHE_TTL_MS'] ?? process.env['AUTH_TOKEN_REFRESH_TTL_MS'],
-  60_000
+  300_000
 );
 
 const accessCache = new Map<string, { value: AuthUserAccess; ts: number }>();
 const accessInflight = new Map<string, Promise<AuthUserAccess>>();
 
 export const invalidateAuthAccessCache = (userId?: string): void => {
+  authSettingsSnapshotCache = null;
+  authSettingsSnapshotInflight = null;
   if (userId) {
     accessCache.delete(userId);
     accessInflight.delete(userId);

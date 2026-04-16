@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { SwitchConfig, SwitchCaseConfig } from '@/shared/lib/ai-paths';
+import type { SwitchConfig, SwitchCaseConfig } from '@/shared/contracts/ai-paths';
 import { Button, Input, Label } from '@/shared/ui/primitives.public';
 import { FormField } from '@/shared/ui/forms-and-actions.public';
 import { insetPanelVariants } from '@/shared/ui/navigation-and-layout.public';

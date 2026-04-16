@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
@@ -14,7 +14,27 @@ vi.mock('../../hooks/useTriggerButtons', () => ({
   useTriggerButtons: (...args: unknown[]) => useTriggerButtonsMock(...args),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/forms-and-actions.public', () => ({
+  ActionMenu: ({
+    children,
+    trigger,
+    ariaLabel,
+  }: {
+    children: React.ReactNode;
+    trigger?: React.ReactNode;
+    ariaLabel?: string;
+  }) => (
+    <div>
+      <button type='button' aria-label={ariaLabel ?? 'Open actions menu'}>
+        {trigger ?? 'Menu'}
+      </button>
+      <div>{children}</div>
+    </div>
+  ),
+  ToggleRow: ({ label }: { label: string }) => <div>{label}</div>,
+}));
+
+vi.mock('@/shared/ui/primitives.public', () => ({
   Button: ({
     children,
     onClick,
@@ -32,8 +52,27 @@ vi.mock('@/shared/ui', () => ({
       {children}
     </button>
   ),
-  ToggleRow: ({ label }: { label: string }) => <div>{label}</div>,
+  Dialog: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  DialogTrigger: ({ children }: { children: React.ReactNode; asChild?: boolean }) => <>{children}</>,
+  DialogContent: ({ children }: { children: React.ReactNode }) => <div role='dialog'>{children}</div>,
+  DialogHeader: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  DialogTitle: ({ children }: { children: React.ReactNode }) => <h2>{children}</h2>,
+  DialogDescription: ({ children }: { children: React.ReactNode; className?: string }) => <p>{children}</p>,
+  DropdownMenuItem: ({
+    children,
+    onSelect,
+  }: {
+    children: React.ReactNode;
+    onSelect?: (event: Event) => void;
+  }) => (
+    <button type='button' onClick={() => onSelect?.(new Event('select'))}>
+      {children}
+    </button>
+  ),
   Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
+vi.mock('@/shared/ui/data-display.public', () => ({
   StatusBadge: ({
     label,
     status,
@@ -49,39 +88,6 @@ vi.mock('@/shared/ui', () => ({
       {label ?? status}
     </span>
   ),
-  ActionMenu: ({
-    children,
-    trigger,
-    ariaLabel,
-  }: {
-    children: React.ReactNode;
-    trigger?: React.ReactNode;
-    ariaLabel?: string;
-  }) => (
-    <div>
-      <button type='button' aria-label={ariaLabel ?? 'Open actions menu'}>
-        {trigger ?? 'Menu'}
-      </button>
-      <div>{children}</div>
-    </div>
-  ),
-  DropdownMenuItem: ({
-    children,
-    onSelect,
-  }: {
-    children: React.ReactNode;
-    onSelect?: (event: Event) => void;
-  }) => (
-    <button type='button' onClick={() => onSelect?.(new Event('select'))}>
-      {children}
-    </button>
-  ),
-  Dialog: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  DialogTrigger: ({ children }: { children: React.ReactNode; asChild?: boolean }) => <>{children}</>,
-  DialogContent: ({ children }: { children: React.ReactNode }) => <div role='dialog'>{children}</div>,
-  DialogHeader: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  DialogTitle: ({ children }: { children: React.ReactNode }) => <h2>{children}</h2>,
-  DialogDescription: ({ children }: { children: React.ReactNode; className?: string }) => <p>{children}</p>,
 }));
 
 import { TriggerButtonBar } from './TriggerButtonBar';
@@ -153,6 +159,30 @@ describe('TriggerButtonBar', () => {
     );
   });
 
+  it('forwards getTriggerExtras into useTriggerButtons', () => {
+    const getTriggerExtras = vi.fn(() => ({
+      marketplaceCopyDebrandInput: { rowId: 'row-1' },
+    }));
+
+    render(
+      <TriggerButtonBar
+        location='product_marketplace_copy_row'
+        entityType='product'
+        entityId='product-1'
+        getTriggerExtras={getTriggerExtras}
+      />
+    );
+
+    expect(useTriggerButtonsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        location: 'product_marketplace_copy_row',
+        entityType: 'product',
+        entityId: 'product-1',
+        getTriggerExtras,
+      })
+    );
+  });
+
   it('hides inline run feedback when showRunFeedback is false', () => {
     useTriggerButtonsMock.mockReturnValue({
       buttons: [BUTTON],
@@ -218,6 +248,37 @@ describe('TriggerButtonBar', () => {
     );
     expect(screen.queryByRole('link', { name: 'Job Queue' })).not.toBeInTheDocument();
     expect(screen.queryByText(/waiting:button-product-row:1/i)).not.toBeInTheDocument();
+  });
+
+  it('shows product run feedback for marketplace-copy row locations', () => {
+    useTriggerButtonsMock.mockReturnValue({
+      buttons: [{ ...BUTTON, locations: ['product_marketplace_copy_row'] }],
+      toggleMap: {},
+      successMap: {},
+      runStates: {},
+      lastRuns: {
+        [BUTTON.id]: {
+          runId: 'run-product-marketplace-copy-feedback',
+          status: 'completed',
+          updatedAt: '2026-03-11T12:00:00.000Z',
+          finishedAt: '2026-03-11T12:00:00.000Z',
+          errorMessage: null,
+        },
+      },
+      handleTrigger: vi.fn(),
+      isLoading: false,
+    });
+
+    render(
+      <TriggerButtonBar
+        location='product_marketplace_copy_row'
+        entityType='product'
+        entityId='product-1'
+      />
+    );
+
+    expect(screen.getByText('Completed')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Job Queue' })).toBeInTheDocument();
   });
 
   it('uses distinct styling for queued and running feedback pills', () => {
@@ -353,5 +414,32 @@ describe('TriggerButtonBar', () => {
     expect(screen.getByRole('button', { name: 'Open 2 more AI actions' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Second Trigger' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Third Trigger' })).toBeInTheDocument();
+  });
+
+  it('disables inline click triggers when the bar is disabled', () => {
+    const handleTrigger = vi.fn();
+    useTriggerButtonsMock.mockReturnValue({
+      buttons: [BUTTON],
+      toggleMap: {},
+      successMap: {},
+      runStates: {},
+      lastRuns: {},
+      handleTrigger,
+      isLoading: false,
+    });
+
+    render(
+      <TriggerButtonBar
+        location='product_modal'
+        entityType='product'
+        entityId='product-1'
+        disabled
+      />
+    );
+
+    const button = screen.getByRole('button', { name: 'Trigger' });
+    expect(button).toBeDisabled();
+    fireEvent.click(button);
+    expect(handleTrigger).not.toHaveBeenCalled();
   });
 });

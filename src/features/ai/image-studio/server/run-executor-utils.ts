@@ -4,7 +4,8 @@ import { randomUUID } from 'crypto';
 import fs from 'fs/promises';
 import path from 'path';
 
-import OpenAI, { toFile } from 'openai';
+import type OpenAI from 'openai';
+import { toFile } from 'openai';
 import sharp from 'sharp';
 
 import { parsePersistedImageStudioSettings } from '@/features/ai/image-studio/utils/studio-settings';

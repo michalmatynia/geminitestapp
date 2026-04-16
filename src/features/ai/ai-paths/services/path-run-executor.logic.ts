@@ -13,7 +13,7 @@ import type {
   RuntimeTraceResumeMode,
   RuntimeTraceResumeReason,
 } from '@/shared/contracts/ai-paths-runtime';
-import { cloneJsonSafe } from '@/shared/lib/ai-paths';
+import { cloneJsonSafe } from '@/shared/lib/ai-paths/core/utils';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
@@ -182,12 +182,7 @@ export const toRuntimeProfileHighlight = (
       durationMs: event.durationMs,
     };
   }
-  const runtimeStrategy =
-    event.runtimeStrategy === 'compatibility'
-      ? 'compatibility'
-      : event.runtimeStrategy === 'code_object_v3'
-        ? 'code_object_v3'
-        : undefined;
+  const runtimeStrategy = event.runtimeStrategy === 'code_object_v3' ? 'code_object_v3' : undefined;
   return {
     type: 'node',
     nodeId: event.nodeId,

@@ -1,13 +1,13 @@
-import { AiNode, Edge, NodeCacheScope } from '@/shared/contracts/ai-paths';
+import { type AiNode, type Edge, type NodeCacheScope } from '@/shared/contracts/ai-paths';
 import {
-  AiPathRuntimeNodeStatus,
-  RuntimeHistoryEntry,
-  RuntimePortValues,
-  RuntimeState,
+  type AiPathRuntimeNodeStatus,
+  type RuntimeHistoryEntry,
+  type RuntimePortValues,
+  type RuntimeState,
 } from '@/shared/contracts/ai-paths-runtime';
 
 import { cloneValue } from '../utils';
-import { RuntimeProfileNodeStats, EvaluateGraphOptions } from './engine-types';
+import { type RuntimeProfileNodeStats, type EvaluateGraphOptions } from './engine-types';
 
 const DEFAULT_NODE_CACHE_SCOPE: NodeCacheScope = 'run';
 

@@ -1,4 +1,7 @@
 'use client';
+// ProductFormParameters: parameter panel inside the product editor.
+// Renders parameter mapping controls and binds to product form metadata.
+// Designed for dynamic parameter schemas per catalog and handles i18n.
 
 import { X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
@@ -98,6 +101,16 @@ const parseChecklistValues = (value: string): string[] => {
 };
 
 const formatChecklistValues = (values: string[]): string => values.join(', ');
+
+const getLinkedTitleTermLabel = (
+  value: ProductParameter['linkedTitleTermType']
+): string | null => {
+  if (!value) return null;
+  if (value === 'size') return 'Size';
+  if (value === 'material') return 'Material';
+  if (value === 'theme') return 'Theme';
+  return value;
+};
 
 export default function ProductFormParameters(): React.JSX.Element {
   const {
@@ -241,12 +254,17 @@ export default function ProductFormParameters(): React.JSX.Element {
             {parameterValues.map((entry: ProductParameterValue, index: number) => {
               const availableOptions = parameters.filter(
                 (param: ProductParameter) =>
-                  !selectedIds.includes(param.id) || param.id === entry.parameterId
+                  (!selectedIds.includes(param.id) || param.id === entry.parameterId) &&
+                  (!param.linkedTitleTermType || param.id === entry.parameterId)
               );
               const parameterOptions = buildParameterOptions(availableOptions, preferredLocale);
               const selectedParameter = entry.parameterId
                 ? (parameterById.get(entry.parameterId) ?? null)
                 : null;
+              const isLinkedParameter = Boolean(selectedParameter?.linkedTitleTermType);
+              const linkedTitleTermLabel = getLinkedTitleTermLabel(
+                selectedParameter?.linkedTitleTermType ?? null
+              );
               const selectorType = selectedParameter?.selectorType ?? 'text';
               const optionLabels = Array.isArray(selectedParameter?.optionLabels)
                 ? selectedParameter.optionLabels
@@ -312,9 +330,18 @@ export default function ProductFormParameters(): React.JSX.Element {
                         placeholder='Select parameter'
                         ariaLabel='Parameter'
                         triggerClassName='h-9 bg-gray-900 border-border/50'
+                        disabled={isLinkedParameter}
                        title='Select parameter'/>
                     </div>
                     <div className='flex-1 space-y-3'>
+                      {isLinkedParameter && linkedTitleTermLabel ? (
+                        <div className='flex items-center gap-2 text-xs text-emerald-300'>
+                          <span className='rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2 py-0.5 font-medium tracking-wide'>
+                            Synced from English Title
+                          </span>
+                          <span>{linkedTitleTermLabel} term</span>
+                        </div>
+                      ) : null}
                       <div key={`${index}-${activeParameterLanguage.code}`} className='space-y-1'>
                         <Label className='text-[11px] font-medium uppercase tracking-wider text-gray-400'>
                           {activeParameterLanguage.label}
@@ -330,7 +357,7 @@ export default function ProductFormParameters(): React.JSX.Element {
                             }
                             aria-label={`Value (${activeParameterLanguage.label})`}
                             placeholder={`Value (${activeParameterLanguage.label})`}
-                            disabled={!entry.parameterId}
+                            disabled={!entry.parameterId || isLinkedParameter}
                             className='min-h-[84px] bg-gray-900'
                            title={`Value (${activeParameterLanguage.label})`}/>
                         ) : selectorType === 'radio' ? (
@@ -341,7 +368,7 @@ export default function ProductFormParameters(): React.JSX.Element {
                                 handleLanguageValueChange(activeParameterLanguage.code, value)
                               }
                               className='gap-2'
-                              disabled={!entry.parameterId}
+                              disabled={!entry.parameterId || isLinkedParameter}
                             >
                               {normalizedOptionLabels.map((optionLabel: string) => {
                                 const radioId = `product-param-${index}-${activeParameterLanguage.code}-${optionLabel}`;
@@ -379,7 +406,7 @@ export default function ProductFormParameters(): React.JSX.Element {
                                 checked ? (normalizedOptionLabels[0] ?? 'true') : ''
                               )
                             }
-                            disabled={!entry.parameterId}
+                            disabled={!entry.parameterId || isLinkedParameter}
                             className='bg-gray-900/50'
                           />
                         ) : selectorType === 'checklist' ? (
@@ -413,7 +440,7 @@ export default function ProductFormParameters(): React.JSX.Element {
                                         )
                                       );
                                     }}
-                                    disabled={!entry.parameterId}
+                                    disabled={!entry.parameterId || isLinkedParameter}
                                     className='border-none bg-transparent p-0 hover:bg-transparent'
                                   />
                                 );
@@ -431,7 +458,7 @@ export default function ProductFormParameters(): React.JSX.Element {
                             ariaLabel={`Value (${activeParameterLanguage.label})`}
                             placeholder={`Select value (${activeParameterLanguage.label})`}
                             triggerClassName='h-9 bg-gray-900 border-border/50'
-                            disabled={!entry.parameterId}
+                            disabled={!entry.parameterId || isLinkedParameter}
                            title={`Select value (${activeParameterLanguage.label})`}/>
                         ) : (
                           <Input
@@ -444,7 +471,7 @@ export default function ProductFormParameters(): React.JSX.Element {
                             }
                             aria-label={`Value (${activeParameterLanguage.label})`}
                             placeholder={`Value (${activeParameterLanguage.label})`}
-                            disabled={!entry.parameterId}
+                            disabled={!entry.parameterId || isLinkedParameter}
                             className='h-9'
                            title={`Value (${activeParameterLanguage.label})`}/>
                         )}
@@ -457,7 +484,13 @@ export default function ProductFormParameters(): React.JSX.Element {
                       className='h-9 w-9 text-gray-500 hover:text-red-400'
                       aria-label='Remove parameter'
                       onClick={() => removeParameterValue(index)}
-                      title={'Remove parameter'}>
+                      disabled={isLinkedParameter}
+                      title={
+                        isLinkedParameter
+                          ? 'Linked parameters are synced from English Title'
+                          : 'Remove parameter'
+                      }
+                    >
                       <X className='h-4 w-4' />
                     </Button>
                   </div>

@@ -59,11 +59,13 @@ export type Edge = z.infer<typeof aiEdgeSchema>;
 export const triggerConfigSchema = z.object({
   event: z.string(),
   contextMode: z.literal('trigger_only').optional(),
+  entitySnapshotMode: z.enum(['auto', 'always', 'never']).optional(),
 });
 
 export type TriggerConfigDto = z.infer<typeof triggerConfigSchema>;
 export type TriggerConfig = TriggerConfigDto;
 export type TriggerContextMode = NonNullable<TriggerConfig['contextMode']>;
+export type TriggerEntitySnapshotMode = NonNullable<TriggerConfig['entitySnapshotMode']>;
 
 export const simulationConfigSchema = z.object({
   productId: z.string(),

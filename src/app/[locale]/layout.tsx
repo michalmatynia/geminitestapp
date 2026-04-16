@@ -1,4 +1,3 @@
-import { NextIntlClientProvider } from 'next-intl';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 
@@ -8,6 +7,7 @@ import {
   isSupportedSiteLocale,
   normalizeSiteLocale,
 } from '@/shared/lib/i18n/site-locale';
+import { AppIntlProvider } from '@/shared/providers/AppIntlProvider';
 import { HtmlLangSync } from '@/shared/ui/HtmlLangSync';
 
 import type { Metadata } from 'next';
@@ -66,9 +66,9 @@ export default async function LocaleLayout({
   const messages = await loadSiteMessages(normalizedLocale);
 
   return (
-    <NextIntlClientProvider locale={normalizedLocale} messages={messages}>
+    <AppIntlProvider locale={normalizedLocale} messages={messages}>
       <HtmlLangSync locale={normalizedLocale} />
       {children}
-    </NextIntlClientProvider>
+    </AppIntlProvider>
   );
 }

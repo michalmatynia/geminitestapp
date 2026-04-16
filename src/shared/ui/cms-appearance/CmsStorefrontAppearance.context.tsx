@@ -2,9 +2,9 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  CmsStorefrontAppearanceMode,
-  CmsStorefrontAppearanceContextValue,
-  CmsStorefrontAppearanceProviderProps,
+  type CmsStorefrontAppearanceMode,
+  type CmsStorefrontAppearanceContextValue,
+  type CmsStorefrontAppearanceProviderProps,
   VALID_MODES,
 } from './CmsStorefrontAppearance.contracts';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';

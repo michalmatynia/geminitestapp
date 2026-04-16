@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-04-05'
+last_reviewed: '2026-04-12'
 status: 'generated'
 doc_type: 'generated'
 scope: 'feature:ai-paths'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Constant Migration Sheet (`constant`)
 
-Generated at: 2026-04-05T14:57:58.017Z
+Generated at: 2026-04-12T04:59:57.716Z
 
 ## Status
 
@@ -29,7 +29,7 @@ Generated at: 2026-04-05T14:57:58.017Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/constant.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/constant.scaffold.json`
 - v3 object id: `node_obj_constant_portable_v3`
-- v3 object hash: `7ab1331fe6184f8e9c794ed3cefbbd865c844c55e87b828ae3ebb8d8c43e3d26`
+- v3 object hash: `813abe83268969cbc3bcf6dd689cf0d09c28e82ee00835a798d709e3c61dbf82`
 
 ## Ports
 

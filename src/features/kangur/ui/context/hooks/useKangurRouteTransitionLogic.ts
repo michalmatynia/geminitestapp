@@ -51,6 +51,18 @@ export type KangurRouteTransitionStartResult = {
   acknowledgeMs: number;
 };
 
+// Timing constants for the four-phase route transition lifecycle:
+//  acknowledging → pending → waiting_for_ready → revealing → (idle)
+//
+// ROUTE_TRANSITION_MAX_ACKNOWLEDGE_MS: cap on the acknowledge window so a
+//   caller can't freeze the UI indefinitely with a large acknowledgeMs value.
+// PENDING_ROUTE_TRANSITION_TIMEOUT_MS: safety timeout that clears a stuck
+//   pending transition if the URL never changes (e.g. navigation cancelled).
+// ROUTE_TRANSITION_READY_TIMEOUT_MS: max time to wait for markRouteTransitionReady
+//   before forcing the reveal phase.
+// ROUTE_TRANSITION_REVEAL_MS: duration of the reveal phase (0 = instant).
+// ROUTE_TRANSITION_SCROLL_RESET_FRAME_COUNT: number of rAF ticks used to
+//   reset scroll position after a page transition commits.
 const ROUTE_TRANSITION_MAX_ACKNOWLEDGE_MS = 400;
 const PENDING_ROUTE_TRANSITION_TIMEOUT_MS = 10_000;
 const ROUTE_TRANSITION_READY_TIMEOUT_MS = 1_200;
@@ -58,6 +70,8 @@ const LOCALE_SWITCH_ROUTE_TRANSITION_READY_TIMEOUT_MS = 1_200;
 const ROUTE_TRANSITION_REVEAL_MS = 0;
 const LOCALE_SWITCH_ROUTE_TRANSITION_REVEAL_MS = 0;
 const ROUTE_TRANSITION_SCROLL_RESET_FRAME_COUNT = 2;
+// Prefix for all Performance API marks/measures emitted by the transition
+// system. Visible in browser DevTools performance traces.
 const KANGUR_ROUTE_TRANSITION_PERFORMANCE_PREFIX = 'kangur:route-transition';
 
 const normalizeTransitionKind = (
@@ -172,6 +186,9 @@ const recordKangurRouteTransitionPerformancePhase = (
   }
 };
 
+// normalizeTransitionHref strips trailing slashes and normalises the href
+// into a canonical pathname+search+hash string. Returns null for empty/invalid
+// input so callers can treat null as "no target href".
 export const normalizeTransitionHref = (href: string | null | undefined): string | null => {
   if (typeof href !== 'string') {
     return null;
@@ -200,6 +217,21 @@ export const normalizeTransitionHref = (href: string | null | undefined): string
   );
 };
 
+// useKangurRouteTransitionLogic manages the four-phase navigation skeleton
+// lifecycle for the StudiQ shell:
+//
+//  acknowledging  – optional hover-feedback window before the skeleton appears
+//  pending        – URL change is in flight; skeleton is visible
+//  waiting_for_ready – URL has changed; waiting for the new page to signal
+//                     readiness via markRouteTransitionReady
+//  revealing      – brief exit animation before the skeleton is removed
+//
+// It also:
+//  - Emits Performance API marks/measures for each phase (DevTools tracing)
+//  - Writes/clears the pending route loading snapshot (used by the shell to
+//    show the correct skeleton shape even before the transition starts)
+//  - Resets scroll position on page-change transitions (not locale switches)
+//  - Guards against duplicate and superseded transitions
 export function useKangurRouteTransitionLogic({
   basePath,
   pageKey,
@@ -211,9 +243,17 @@ export function useKangurRouteTransitionLogic({
 }) {
   const { resolveTransitionTarget } = useKangurRouteAccess();
   const [transitionState, setTransitionState] = useState<KangurRouteTransitionState | null>(null);
+  // transitionStateRef mirrors transitionState so callbacks that close over
+  // it always read the latest value without needing to be recreated.
   const transitionStateRef = useRef<KangurRouteTransitionState | null>(null);
+  // Tracks the previous requested href so the commit effect can detect when
+  // the URL has actually changed.
   const previousRequestedHrefRef = useRef<string | null>(currentRequestedHref);
+  // Whether to reset scroll position when the transition commits. Set to true
+  // for page-change navigations, false for locale switches.
   const shouldResetScrollOnCommitRef = useRef(false);
+  // Timeout ref for the acknowledge phase. Cleared when the transition
+  // advances to pending or is superseded.
   const acknowledgementTimeoutRef = useRef<number | null>(null);
   const currentAccessiblePageKey = pageKey ?? 'Game';
 
@@ -248,6 +288,8 @@ export function useKangurRouteTransitionLogic({
     transitionStateRef.current = transitionState;
   }, [transitionState]);
 
+  // Clears the pending route loading snapshot whenever there is no active
+  // transition so the shell doesn't show a stale skeleton on the next paint.
   useEffect(() => {
     if (!transitionState) {
       clearKangurPendingRouteLoadingSnapshot();
@@ -260,6 +302,9 @@ export function useKangurRouteTransitionLogic({
     };
   }, [clearAcknowledgementTimeout]);
 
+  // Commit effect: detects when the URL has changed during an acknowledging or
+  // pending phase and advances the transition to waiting_for_ready. Also
+  // resets scroll position (multi-frame rAF loop) for page-change navigations.
   useEffect(() => {
     const previousRequestedHref = previousRequestedHrefRef.current;
     let animationFrameId: number | null = null;
@@ -321,6 +366,10 @@ export function useKangurRouteTransitionLogic({
     };
   }, [clearAcknowledgementTimeout, currentRequestedHref, transitionState, updateTransitionState]);
 
+  // Safety timeout effect: clears a stuck pending transition after
+  // PENDING_ROUTE_TRANSITION_TIMEOUT_MS, and forces the reveal phase after
+  // ROUTE_TRANSITION_READY_TIMEOUT_MS if markRouteTransitionReady is never
+  // called (e.g. the new page component doesn't call it).
   useEffect(() => {
     if (
       (transitionState?.phase !== 'pending' && transitionState?.phase !== 'waiting_for_ready') ||
@@ -385,6 +434,16 @@ export function useKangurRouteTransitionLogic({
     };
   }, [transitionState, updateTransitionState]);
 
+  // startRouteTransition initiates a new transition. It:
+  //  1. Normalises the target href and resolves the accessible page key +
+  //     skeleton variant via useKangurRouteAccess.
+  //  2. Guards against no-op navigations (same href/page key).
+  //  3. Guards against concurrent transitions unless the new one supersedes
+  //     the active one (same kind, different target).
+  //  4. Writes the pending route loading snapshot so the shell can show the
+  //     correct skeleton immediately, before the URL changes.
+  //  5. Starts the acknowledge timeout if acknowledgeMs > 0.
+  //  6. Emits a Performance API 'start' mark.
   const startRouteTransition = useCallback(
     (input: KangurRouteTransitionStartInput = {}): KangurRouteTransitionStartResult => {
       const normalizedHref = normalizeTransitionHref(input.href);

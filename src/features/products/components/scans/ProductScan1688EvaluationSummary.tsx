@@ -36,7 +36,8 @@ function resolveProductMatchSummary(evaluation: ProductScanSupplierEvaluation): 
 
 function resolveSummaryText(evaluation: ProductScanSupplierEvaluation): string | null {
   const confidence = formatConfidence(evaluation.confidence);
-  const model = (evaluation.modelId !== null && evaluation.modelId !== undefined) ? `Evaluator ${evaluation.modelId}` : null;
+  const mid = evaluation.modelId ?? null;
+  const model = (typeof mid === 'string' && mid !== '') ? `Evaluator ${mid}` : null;
   const conf = (confidence !== null) ? `Confidence ${confidence}` : null;
   const match = resolveProductMatchSummary(evaluation);
   
@@ -48,39 +49,58 @@ function resolveEvaluatedAt(evalAt: string | null | undefined): string | null {
   return null;
 }
 
+function EvaluationStatusDisplay({ evaluation }: { evaluation: ProductScanSupplierEvaluation }): React.JSX.Element {
+  const summary = resolveSummaryText(evaluation);
+  return (
+    <>
+      <p className='font-medium text-foreground'>{resolveStatusLabel(evaluation.status)}</p>
+      {summary !== null && <p className='text-muted-foreground'>{summary}</p>}
+    </>
+  );
+}
+
+function EvaluationReasons({ reasons }: { reasons: string[] }): React.JSX.Element | null {
+  if (reasons.length === 0) return null;
+  return (
+    <div className='space-y-1'>
+      <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>Reasons</p>
+      <ul className='list-disc space-y-1 pl-5 text-muted-foreground'>
+        {reasons.map((r, i) => <li key={`${r}-${i}`}>{r}</li>)}
+      </ul>
+    </div>
+  );
+}
+
+function EvaluationMismatches({ mismatches }: { mismatches: string[] }): React.JSX.Element | null {
+  if (mismatches.length === 0) return null;
+  return (
+    <div className='space-y-1'>
+      <p className='text-[11px] font-medium uppercase tracking-wide text-destructive'>Mismatches</p>
+      <ul className='list-disc space-y-1 pl-5 text-destructive'>
+        {mismatches.map((m, i) => <li key={`${m}-${i}`}>{m}</li>)}
+      </ul>
+    </div>
+  );
+}
+
 export function ProductScan1688EvaluationSummary({ scanId, evaluation }: ProductScan1688EvaluationSummaryProps): React.JSX.Element {
   if (evaluation === null) return <p className='text-sm text-muted-foreground'>No supplier evaluation was stored for this run.</p>;
 
-  const summary = resolveSummaryText(evaluation);
   const evalAt = resolveEvaluatedAt(evaluation.evaluatedAt);
+  const error = (typeof evaluation.error === 'string' && evaluation.error !== '') ? evaluation.error : null;
 
   return (
     <div id={buildProductScan1688SectionId(scanId, 'match-evaluation') ?? undefined} className='space-y-2'>
       <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>Match evaluation</p>
       <div className='space-y-2 rounded-md border border-border/40 bg-muted/10 px-3 py-2 text-sm'>
-        <p className='font-medium text-foreground'>{resolveStatusLabel(evaluation.status)}</p>
-        {summary !== null && <p className='text-muted-foreground'>{summary}</p>}
+        <EvaluationStatusDisplay evaluation={evaluation} />
         <div className='grid gap-2 sm:grid-cols-2'>
           <ProductScan1688DetailRow label='Proceed' value={String(evaluation.proceed)} />
           <ProductScan1688DetailRow label='Evaluated at' value={formatTimestamp(evalAt)} />
         </div>
-        {evaluation.reasons.length > 0 && (
-          <div className='space-y-1'>
-            <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>Reasons</p>
-            <ul className='list-disc space-y-1 pl-5 text-muted-foreground'>
-              {evaluation.reasons.map((r, i) => <li key={`${r}-${i}`}>{r}</li>)}
-            </ul>
-          </div>
-        )}
-        {evaluation.mismatches.length > 0 && (
-          <div className='space-y-1'>
-            <p className='text-[11px] font-medium uppercase tracking-wide text-destructive'>Mismatches</p>
-            <ul className='list-disc space-y-1 pl-5 text-destructive'>
-              {evaluation.mismatches.map((m, i) => <li key={`${m}-${i}`}>{m}</li>)}
-            </ul>
-          </div>
-        )}
-        {(typeof evaluation.error === 'string' && evaluation.error !== '') ? <p className='text-destructive'>{evaluation.error}</p> : null}
+        <EvaluationReasons reasons={evaluation.reasons} />
+        <EvaluationMismatches mismatches={evaluation.mismatches} />
+        {error !== null ? <p className='text-destructive'>{error}</p> : null}
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { repairRuntimeStatePorts } from '@/features/ai/ai-paths/services/runtime-state-port-repair';
+import { reconcileRuntimeState } from '@/features/ai/ai-paths/runtime/state-reconciler';
 import type {
   AiPathRunNodeRecord,
   AiPathRunRecord,
@@ -58,77 +59,27 @@ export class PathRunRuntimeStateManager {
       startedAt: this.resolvedRunStartedAt,
     };
 
-    const statusFromLatest = this.latestSnapshot?.status ?? this.initialRuntimeState.status;
-    const nodeStatusesFromLatest =
-      this.latestSnapshot?.nodeStatuses ?? this.initialRuntimeState.nodeStatuses;
-    const nodeOutputsFromLatest =
-      this.latestSnapshot?.nodeOutputs ?? this.initialRuntimeState.nodeOutputs;
-    const historyFromLatest = this.latestSnapshot?.history ?? this.initialRuntimeState.history;
-    const hashesFromLatest = this.latestSnapshot?.hashes ?? this.initialRuntimeState.hashes;
-    const hashTimestampsFromLatest =
-      this.latestSnapshot?.hashTimestamps ?? this.initialRuntimeState.hashTimestamps;
-    const nodeDurationsFromLatest =
-      this.latestSnapshot?.nodeDurations ?? this.initialRuntimeState.nodeDurations;
-    const mergedHistory = new Map<string, Map<string, RuntimeHistoryEntry>>();
-    const buildHistoryEntryKey = (entry: RuntimeHistoryEntry): string =>
-      entry.spanId ??
-      [
-        entry.traceId ?? '',
-        entry.timestamp,
-        entry.status,
-        entry.attempt ?? '',
-        entry.iteration,
-      ].join(':');
-    const appendHistory = (
-      source: Record<string, RuntimeHistoryEntry[]> | undefined
-    ): void => {
-      if (!source) return;
-      Object.entries(source).forEach(([nodeId, entries]) => {
-        if (!Array.isArray(entries) || entries.length === 0) return;
-        const existing = mergedHistory.get(nodeId) ?? new Map<string, RuntimeHistoryEntry>();
-        entries.forEach((entry) => {
-          existing.set(buildHistoryEntryKey(entry), entry);
-        });
-        mergedHistory.set(nodeId, existing);
-      });
-    };
-    appendHistory(this.initialRuntimeState.history);
-    appendHistory(historyFromLatest);
-    this.historyEntriesByNode.forEach((entries, nodeId) => {
-      if (!Array.isArray(entries) || entries.length === 0) return;
-      const existing = mergedHistory.get(nodeId) ?? new Map<string, RuntimeHistoryEntry>();
-      entries.forEach((entry) => {
-        existing.set(buildHistoryEntryKey(entry), entry);
-      });
-      mergedHistory.set(nodeId, existing);
-    });
-    const mergedNodeStatuses: RuntimeState['nodeStatuses'] = {
-      ...(nodeStatusesFromLatest ?? {}),
-    };
-    this.nodeStatusOverrides.forEach((status, nodeId) => {
-      mergedNodeStatuses[nodeId] = status;
-    });
-      
-    const candidate: RuntimeState = {
-      status: statusFromLatest ?? 'running',
-      currentRun,
+    // The partial update from our local tracking
+    const localUpdate: Partial<RuntimeState> = {
       inputs: this.accInputs,
       outputs: this.accOutputs,
-      nodeOutputs: nodeOutputsFromLatest ?? this.accOutputs,
-      nodeStatuses: mergedNodeStatuses,
-      history: mergedHistory.size
-        ? Object.fromEntries(
-          Array.from(mergedHistory.entries()).map(([nodeId, entries]) => [
-            nodeId,
-            Array.from(entries.values()),
-          ])
-        )
-        : {},
-      hashes: hashesFromLatest ?? {},
-      hashTimestamps: hashTimestampsFromLatest ?? {},
-      nodeDurations: nodeDurationsFromLatest ?? {},
-      variables: this.latestSnapshot?.variables ?? this.initialRuntimeState.variables ?? {},
-      events: this.latestSnapshot?.events ?? this.initialRuntimeState.events ?? [],
+      nodeStatuses: Object.fromEntries(this.nodeStatusOverrides),
+      history: Object.fromEntries(this.historyEntriesByNode),
+    };
+
+    // Reconcile the initial state with the latest engine snapshot (if any) and our local updates
+    const updates: Partial<RuntimeState>[] = [];
+    if (this.latestSnapshot) {
+      updates.push(this.latestSnapshot);
+    }
+    updates.push(localUpdate);
+
+    const reconciled = reconcileRuntimeState(this.initialRuntimeState, updates);
+
+    // Ensure the currentRun is correctly set
+    const candidate: RuntimeState = {
+      ...reconciled,
+      currentRun,
     };
 
     const repaired = repairRuntimeStatePorts({

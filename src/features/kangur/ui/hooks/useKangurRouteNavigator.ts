@@ -78,8 +78,14 @@ type KangurRouteTransitionPayloadInput = {
   transitionKind?: KangurRouteTransitionKind | null;
 };
 
+// Media queries used to detect touch/coarse-pointer devices so the
+// acknowledge delay can be skipped (touch devices don't need the hover
+// feedback window before the skeleton appears).
 const KANGUR_COARSE_POINTER_QUERY = '(pointer: coarse)';
 const KANGUR_HOVER_NONE_QUERY = '(hover: none)';
+// Fallback result returned when no transition context is available or when
+// a transition bypass condition is met. acknowledgeMs: 0 means navigate
+// immediately without waiting for a skeleton window.
 const KANGUR_STARTED_TRANSITION_FALLBACK: KangurManagedTransitionResult = {
   acknowledgeMs: 0,
   started: true,
@@ -141,6 +147,9 @@ const getManagedPathnameFromHref = (href: string): string | null =>
     { fallback: normalizeManagedKangurPathname(href) }
   );
 
+// shouldBypassManagedNavigationAcknowledge returns true on touch/coarse-pointer
+// devices. On these devices the acknowledge delay is unnecessary because there
+// is no hover state to animate out before the skeleton appears.
 const shouldBypassManagedNavigationAcknowledge = (): boolean => {
   if (typeof window === 'undefined') {
     return false;
@@ -191,6 +200,9 @@ const resolveManagedTransitionPathSnapshot = (
   targetPathname: href ? getManagedPathnameFromHref(href) : null,
 });
 
+// shouldBypassPendingManagedTransition returns true when a transition is
+// already in flight to a different target than the current requested href.
+// Prevents stacking a second transition on top of an in-progress one.
 const shouldBypassPendingManagedTransition = ({
   href,
   routeTransitionState,
@@ -212,6 +224,9 @@ const shouldBypassPendingManagedTransition = ({
   );
 };
 
+// shouldBypassRequestedHrefManagedTransition returns true when the target href
+// matches the already-requested href. Prevents re-triggering a transition for
+// a navigation that is already in progress.
 const shouldBypassRequestedHrefManagedTransition = ({
   href,
   requestedHref,
@@ -313,6 +328,9 @@ const resolveManagedBackPageKey = (
   options: KangurBackNavigationOptions
 ): string | null => options.fallbackPageKey ?? options.pageKey ?? null;
 
+// Module-level ref for the queued navigation timeout. Module-level (not a
+// React ref) so it survives across re-renders and can be cancelled by any
+// navigation call, not just the one that scheduled it.
 let queuedManagedNavigationTimeoutId: number | null = null;
 
 const clearQueuedManagedNavigation = (): void => {
@@ -323,6 +341,17 @@ const clearQueuedManagedNavigation = (): void => {
   queuedManagedNavigationTimeoutId = null;
 };
 
+// useKangurRouteNavigator is the single navigation API for the StudiQ shell.
+// It wraps the Next.js router with:
+//  - Locale-aware href resolution (adds /[locale] prefix when needed)
+//  - Public-alias canonicalisation (strips /kangur prefix when the front page
+//    owner is 'kangur' so URLs stay clean)
+//  - Managed route transition lifecycle (acknowledgeMs delay, skeleton phase)
+//  - Duplicate-navigation guards (bypasses transitions for already-pending
+//    or already-requested hrefs)
+//  - Touch/coarse-pointer detection to skip the acknowledge delay on mobile
+//  - Queued navigation: schedules the actual router call after the skeleton
+//    acknowledge window so the skeleton has time to appear first
 export function useKangurRouteNavigator(): {
   back: (options?: KangurBackNavigationOptions) => void;
   prefetch: (href: string) => void;
@@ -340,6 +369,9 @@ export function useKangurRouteNavigator(): {
   const navigatorState = resolveKangurNavigatorState(routing);
   const publicOwner = resolveKangurFrontendPublicOwner(frontendPublicOwner);
 
+  // Resolves the final href: applies locale prefix and public-alias
+  // canonicalisation. transitionKind is forwarded so locale-switch transitions
+  // can produce a different href format if needed.
   const resolveManagedHref = useCallback(
     (href: string, transitionKind?: KangurRouteTransitionKind | null): string =>
       resolveManagedNavigatorHref({
@@ -363,6 +395,11 @@ export function useKangurRouteNavigator(): {
     [router]
   );
 
+  // startManagedTransition signals the route transition context to begin the
+  // skeleton lifecycle. Returns whether the transition started and the
+  // effective acknowledge delay. Returns the fallback (started: true,
+  // acknowledgeMs: 0) when no transition context is available so callers
+  // can always proceed with the actual navigation.
   const startManagedTransition = useCallback(
     (
       href: string | null,
@@ -429,6 +466,10 @@ export function useKangurRouteNavigator(): {
     clearQueuedManagedNavigation();
   }, []);
 
+  // scheduleManagedNavigation delays the actual router call by acknowledgeMs
+  // so the skeleton animation has time to appear before the page changes.
+  // Returns true when a timeout was scheduled (caller should not navigate
+  // immediately), false when the navigation should happen synchronously.
   const scheduleManagedNavigation = useCallback(
     (acknowledgeMs: number, navigate: () => void): boolean => {
       if (acknowledgeMs <= 0 || typeof window === 'undefined') {
@@ -455,6 +496,9 @@ export function useKangurRouteNavigator(): {
     [resolveManagedHref, router]
   );
 
+  // push: navigate forward. Prefetches the resolved href, starts the managed
+  // transition skeleton, then either schedules or immediately performs the
+  // router.push call.
   const push = useCallback(
     (href: string, options: KangurRouteNavigationOptions = {}): void => {
       const resolvedHref = resolveManagedHref(href, options.transitionKind);
@@ -483,6 +527,8 @@ export function useKangurRouteNavigator(): {
     ]
   );
 
+  // replace: same as push but uses router.replace (no history entry). Wrapped
+  // in startTransition so the URL update doesn't block the React render.
   const replace = useCallback(
     (href: string, options: KangurRouteNavigationOptions = {}): void => {
       const resolvedHref = resolveManagedHref(href, options.transitionKind);
@@ -513,6 +559,8 @@ export function useKangurRouteNavigator(): {
     ]
   );
 
+  // back: navigates to the previous history entry. Falls back to push(fallbackHref)
+  // when there is no browser history to go back to (e.g. direct deep-link).
   const back = useCallback(
     (options: KangurBackNavigationOptions = {}): void => {
       const fallbackHref = resolveTrimmedManagedFallbackHref(options.fallbackHref);

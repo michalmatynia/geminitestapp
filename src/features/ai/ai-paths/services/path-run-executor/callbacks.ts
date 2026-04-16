@@ -361,6 +361,8 @@ export const createCallbacks = (ctx: CallbackCtx) => {
           updatedAt: nodeStartedAt,
         });
 
+        setRuntimeNodeStatus?.(node.id, 'running');
+
         await Promise.all([
           repo
             .upsertRunNode(run.id, node.id, {
@@ -505,6 +507,34 @@ export const createCallbacks = (ctx: CallbackCtx) => {
           finishedAt,
           updatedAt: finishedAt,
           errorMessage: status === 'failed' ? (nextOutputs['message'] as string) : null,
+        });
+
+        setRuntimeNodeStatus?.(node.id, status);
+        appendRuntimeHistoryEntry?.(node.id, {
+          timestamp: finishedAt,
+          pathId: run.pathId ?? null,
+          pathName: run.pathName ?? null,
+          traceId,
+          spanId: nodeSpanId,
+          nodeId: node.id,
+          nodeType: node.type,
+          nodeTitle: node.title ?? null,
+          status,
+          iteration,
+          attempt,
+          inputs: safeInputs,
+          outputs: safeOutputs,
+          inputHash: hashRuntimeValue(safeInputs ?? nodeInputs),
+          cacheDecision: cacheDecision ?? (cached ? 'hit' : 'miss'),
+          sideEffectPolicy,
+          sideEffectDecision,
+          activationHash: activationHash ?? null,
+          idempotencyKey: idempotencyKey ?? null,
+          effectSourceSpanId: effectSourceSpanId ?? null,
+          durationMs: durationMs ?? 0,
+          runtimeStrategy: runtimeStrategy as any,
+          runtimeResolutionSource: runtimeResolutionSource as any,
+          runtimeCodeObjectId: (runtimeCodeObjectId as string) ?? null,
         });
 
         await Promise.all([
@@ -657,6 +687,30 @@ export const createCallbacks = (ctx: CallbackCtx) => {
           errorMessage: message,
         });
 
+        setRuntimeNodeStatus?.(node.id, runtimeStatus);
+        appendRuntimeHistoryEntry?.(node.id, {
+          timestamp: finishedAt,
+          pathId: run.pathId ?? null,
+          pathName: run.pathName ?? null,
+          traceId,
+          spanId: nodeSpanId,
+          nodeId: node.id,
+          nodeType: node.type,
+          nodeTitle: node.title ?? null,
+          status: runtimeStatus,
+          iteration,
+          attempt,
+          inputs: (ctx.accInputs[node.id] as RuntimePortValues) ?? {},
+          outputs: safeOutputs,
+          inputHash: null,
+          skipReason: reason,
+          waitingOnPorts: waitingOnPorts ?? undefined,
+          durationMs: durationMs ?? 0,
+          runtimeStrategy: runtimeStrategy as any,
+          runtimeResolutionSource: runtimeResolutionSource as any,
+          runtimeCodeObjectId: (runtimeCodeObjectId as string) ?? null,
+        });
+
         await Promise.all([
           repo
             .upsertRunNode(run.id, node.id, {
@@ -795,6 +849,29 @@ export const createCallbacks = (ctx: CallbackCtx) => {
           finishedAt,
           updatedAt: finishedAt,
           errorMessage,
+        });
+
+        setRuntimeNodeStatus?.(node.id, 'failed');
+        appendRuntimeHistoryEntry?.(node.id, {
+          timestamp: finishedAt,
+          pathId: run.pathId ?? null,
+          pathName: run.pathName ?? null,
+          traceId,
+          spanId: nodeSpanId,
+          nodeId: node.id,
+          nodeType: node.type,
+          nodeTitle: node.title ?? null,
+          status: 'failed',
+          iteration,
+          attempt,
+          inputs: safeInputs,
+          outputs: safeOutputs,
+          inputHash: hashRuntimeValue(safeInputs ?? nodeInputs),
+          error: errorMessage,
+          durationMs: durationMs ?? 0,
+          runtimeStrategy: runtimeStrategy as any,
+          runtimeResolutionSource: runtimeResolutionSource as any,
+          runtimeCodeObjectId: (runtimeCodeObjectId as string) ?? null,
         });
 
         await Promise.all([

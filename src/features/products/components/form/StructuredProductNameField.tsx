@@ -1,7 +1,7 @@
 'use client';
 
 import { BookType, ChevronRight } from 'lucide-react';
-import React, { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useController, useFormContext } from 'react-hook-form';
 
 import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
@@ -32,11 +32,6 @@ type SuggestionOption = {
   categoryId?: string;
 };
 
-type SuggestionOverlayMetrics = {
-  left: number;
-  width: number;
-};
-
 const TITLE_SEGMENT_LABELS: Record<TitleSegmentStage, string> = {
   1: 'Size',
   2: 'Material',
@@ -45,19 +40,10 @@ const TITLE_SEGMENT_LABELS: Record<TitleSegmentStage, string> = {
 };
 
 const CATEGORY_STAGE = 3;
-const SUGGESTION_ROW_HEIGHT = 36;
-const SUGGESTION_OVERLAY_PADDING = 6;
-const SUGGESTION_VISIBLE_ROWS = 5;
-const SUGGESTION_PREFERRED_BELOW_ROWS = 3;
-const SUGGESTION_MIN_WIDTH = 164;
-const SUGGESTION_MAX_WIDTH = 320;
 
 const normalizeSegmentValue = (value: string): string => value.trim().replace(/\s+/g, ' ');
 
 const normalizeSuggestionKey = (value: string): string => normalizeSegmentValue(value).toLowerCase();
-
-const clampNumber = (value: number, min: number, max: number): number =>
-  Math.min(Math.max(value, min), max);
 
 const sortSuggestionOptions = (options: SuggestionOption[]): SuggestionOption[] =>
   [...options].sort((left, right) =>
@@ -66,26 +52,31 @@ const sortSuggestionOptions = (options: SuggestionOption[]): SuggestionOption[] 
     })
   );
 
-const getSuggestionPanelClassName = (side: 'above' | 'below'): string =>
+const getSuggestionPanelClassName = (): string =>
   cn(
-    'pointer-events-auto absolute -translate-x-1/2 overflow-hidden rounded-xl border border-border/70 bg-card/95 shadow-2xl backdrop-blur',
+    'pointer-events-auto absolute left-0 right-0 top-[calc(100%+6px)] z-30 min-w-0 overflow-hidden rounded-md border border-border/70 bg-card/95 shadow-2xl backdrop-blur',
     'transform-gpu will-change-transform transition-[opacity,transform,box-shadow] duration-200 ease-out motion-reduce:transition-none',
     'motion-safe:animate-in motion-safe:fade-in motion-safe:duration-200 motion-safe:ease-out',
-    side === 'above'
-      ? 'motion-safe:slide-in-from-bottom-2'
-      : 'motion-safe:slide-in-from-top-2'
+    'motion-safe:slide-in-from-top-2'
   );
+
+const getSuggestionOptionStateClassName = (
+  isDisabled: boolean,
+  isHighlighted: boolean
+): string => {
+  if (isDisabled) return 'cursor-not-allowed opacity-50';
+  if (isHighlighted) {
+    return 'cursor-pointer border-foreground/10 bg-foreground/12 font-medium text-foreground shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]';
+  }
+  return 'cursor-pointer text-muted-foreground hover:translate-x-0.5 hover:border-foreground/10 hover:bg-foreground/6 hover:text-foreground hover:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]';
+};
 
 const getSuggestionOptionClassName = (isDisabled: boolean, isHighlighted: boolean): string =>
   cn(
-    'group mx-1 flex h-9 items-center justify-between gap-2 rounded-lg border border-transparent px-3 text-left text-sm',
+    'group flex min-h-9 w-full min-w-0 items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-1 text-left text-sm',
     'transition-[background-color,border-color,color,transform,box-shadow,opacity] duration-200 ease-out motion-reduce:transition-none',
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-1 focus-visible:ring-offset-background',
-    isDisabled
-      ? 'cursor-not-allowed opacity-50'
-      : isHighlighted
-        ? 'cursor-pointer border-foreground/10 bg-foreground/12 font-medium text-foreground shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]'
-        : 'cursor-pointer text-muted-foreground hover:translate-x-0.5 hover:border-foreground/10 hover:bg-foreground/6 hover:text-foreground hover:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]'
+    getSuggestionOptionStateClassName(isDisabled, isHighlighted)
   );
 
 const getSuggestionChevronClassName = (isHighlighted: boolean): string =>
@@ -96,8 +87,11 @@ const getSuggestionChevronClassName = (isHighlighted: boolean): string =>
       : 'text-gray-500 group-hover:translate-x-0.5 group-hover:text-foreground'
   );
 
-const resolveStageType = (stage: TitleSegmentStage): ProductTitleTermType =>
-  (stage === 1 ? 'size' : stage === 2 ? 'material' : 'theme');
+const resolveStageType = (stage: TitleSegmentStage): ProductTitleTermType => {
+  if (stage === 1) return 'size';
+  if (stage === 2) return 'material';
+  return 'theme';
+};
 
 const countPipesBeforeCaret = (value: string, caret: number): number =>
   value.slice(0, caret).split('|').length - 1;
@@ -119,7 +113,8 @@ const resolveSegmentBounds = (
 
 const resolveLastNonEmptySegmentIndex = (segments: string[]): number => {
   for (let index = segments.length - 1; index >= 0; index -= 1) {
-    if (typeof segments[index] === 'string' && segments[index]!.trim() !== '') return index;
+    const segment = segments[index];
+    if (typeof segment === 'string' && segment.trim() !== '') return index;
   }
   return 0;
 };
@@ -290,43 +285,28 @@ const resolveUniqueLeafCategorySuggestion = (
 };
 
 type ProductTitleSuggestionPanelProps = {
-  side: 'above' | 'below';
   listboxId: string;
-  suggestions: Array<{ option: SuggestionOption; index: number }>;
+  listboxLabel: string;
+  suggestions: SuggestionOption[];
   highlightedIndex: number;
-  overlayMetrics: SuggestionOverlayMetrics;
-  panelHeight: number;
   onApply: (option: SuggestionOption) => void;
   onHighlight: (index: number) => void;
 };
 
 function ProductTitleSuggestionPanel(props: ProductTitleSuggestionPanelProps): React.JSX.Element {
-  const { side, listboxId, suggestions, highlightedIndex, overlayMetrics, panelHeight, onApply, onHighlight } = props;
-  const panelStyle = side === 'above' ? {
-    left: overlayMetrics.left,
-    bottom: 'calc(100% + 8px)',
-    width: overlayMetrics.width,
-    height: panelHeight,
-  } : {
-    left: overlayMetrics.left,
-    top: 'calc(100% + 8px)',
-    width: overlayMetrics.width,
-    height: panelHeight,
-  };
+  const { listboxId, listboxLabel, suggestions, highlightedIndex, onApply, onHighlight } = props;
 
   return (
     <div
-      className={getSuggestionPanelClassName(side)}
-      style={panelStyle}
+      id={listboxId}
+      role='listbox'
+      aria-label={listboxLabel}
+      tabIndex={-1}
+      className={getSuggestionPanelClassName()}
       onMouseDown={(event: React.MouseEvent): void => event.preventDefault()}
     >
-      <div className={cn(
-        'pointer-events-none absolute inset-x-0 z-10 bg-gradient-to-b from-card via-card/80 to-transparent',
-        side === 'above' ? 'top-0 h-10' : 'inset-x-2 top-0 h-9 rounded-lg border border-foreground/12 bg-foreground/10 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]'
-      )} />
-      <div className='pointer-events-none absolute inset-x-0 bottom-0 z-10 h-10 bg-gradient-to-t from-card via-card/80 to-transparent' />
-      <div className='py-[6px]'>
-        {suggestions.map(({ option, index }) => (
+      <div className='max-h-60 overflow-y-auto p-1'>
+        {suggestions.map((option, index) => (
           <button
             id={`${listboxId}-option-${index}`}
             key={`${option.label}-${index}`}
@@ -347,10 +327,10 @@ function ProductTitleSuggestionPanel(props: ProductTitleSuggestionPanelProps): R
             )}
             aria-disabled={option.disabled === true ? true : undefined}
           >
-            <span className='min-w-0'>
-              <span className='block truncate'>{option.label}</span>
+            <span className='min-w-0 flex-1'>
+              <span className='block truncate leading-5'>{option.label}</span>
               {typeof option.description === 'string' && option.description !== '' ? (
-                <span className='block text-[11px] text-muted-foreground'>
+                <span className='block truncate text-[11px] leading-4 text-muted-foreground'>
                   {option.description}
                 </span>
               ) : null}
@@ -393,7 +373,6 @@ export function StructuredProductNameField({
   } = config;
 
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const measurementCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const previousSelectedCategoryIdRef = useRef<string | null>(null);
   const listboxId = useId();
   const { control, getValues, setValue } = useFormContext<ProductFormData>();
@@ -427,7 +406,6 @@ export function StructuredProductNameField({
   const [segmentQuery, setSegmentQuery] = useState('');
   const [segmentBounds, setSegmentBounds] = useState<{ start: number; end: number } | null>(null);
   const [highlightedIndex, setHighlightedIndex] = useState(0);
-  const [overlayMetrics, setOverlayMetrics] = useState<SuggestionOverlayMetrics | null>(null);
 
   const fieldError = errors[fieldName]?.message;
   const error = fieldName === 'name_en' ? (normalizeNameError ?? fieldError) : fieldError;
@@ -517,12 +495,14 @@ export function StructuredProductNameField({
     }
 
     const type = resolveStageType(activeStage);
-    const sourceTerms =
-      type === 'size'
-        ? sizeTermsQuery.data ?? []
-        : type === 'material'
-          ? materialTermsQuery.data ?? []
-          : themeTermsQuery.data ?? [];
+    let sourceTerms: ProductTitleTerm[];
+    if (type === 'size') {
+      sourceTerms = sizeTermsQuery.data ?? [];
+    } else if (type === 'material') {
+      sourceTerms = materialTermsQuery.data ?? [];
+    } else {
+      sourceTerms = themeTermsQuery.data ?? [];
+    }
     const baseSuggestions = sourceTerms
       .map((term: ProductTitleTerm): SuggestionOption => buildTitleTermSuggestion(term, locale))
       .filter((option) => option.searchText.toLowerCase().includes(normalizedQuery.toLowerCase()));
@@ -536,51 +516,6 @@ export function StructuredProductNameField({
     sizeTermsQuery.data,
     themeTermsQuery.data,
   ]);
-
-  const visibleSuggestionWindow = useMemo(() => {
-    if (suggestions.length === 0) {
-      return {
-        above: [] as Array<{ option: SuggestionOption; index: number }>,
-        below: [] as Array<{ option: SuggestionOption; index: number }>,
-      };
-    }
-
-    const maxVisibleSuggestions = Math.min(suggestions.length, SUGGESTION_VISIBLE_ROWS);
-    let belowCount = Math.min(
-      suggestions.length - highlightedIndex,
-      SUGGESTION_PREFERRED_BELOW_ROWS
-    );
-    let aboveCount = Math.min(highlightedIndex, maxVisibleSuggestions - belowCount);
-    let remainingSlots = maxVisibleSuggestions - (aboveCount + belowCount);
-
-    if (remainingSlots > 0) {
-      const additionalBelowCount = Math.min(
-        remainingSlots,
-        suggestions.length - highlightedIndex - belowCount
-      );
-      belowCount += additionalBelowCount;
-      remainingSlots -= additionalBelowCount;
-    }
-
-    if (remainingSlots > 0) {
-      const additionalAboveCount = Math.min(remainingSlots, highlightedIndex - aboveCount);
-      aboveCount += additionalAboveCount;
-    }
-
-    const aboveStartIndex = highlightedIndex - aboveCount;
-    const belowEndIndex = highlightedIndex + belowCount;
-
-    return {
-      above: suggestions.slice(aboveStartIndex, highlightedIndex).map((option, offset) => ({
-        option,
-        index: aboveStartIndex + offset,
-      })),
-      below: suggestions.slice(highlightedIndex, belowEndIndex).map((option, offset) => ({
-        option,
-        index: highlightedIndex + offset,
-      })),
-    };
-  }, [highlightedIndex, suggestions]);
 
   useEffect((): void => {
     if (suggestions.length === 0) {
@@ -690,116 +625,9 @@ export function StructuredProductNameField({
     previousSelectedCategoryIdRef.current = selectedCategoryId;
   }, [selectedCategoryId]);
 
-  useLayoutEffect((): (() => void) | void => {
-    if (dropdownOpen === false || segmentBounds === null) {
-      setOverlayMetrics(null);
-      return;
-    }
-
-    const input = inputRef.current;
-    if (input === null) {
-      setOverlayMetrics(null);
-      return;
-    }
-
-    const measureTextWidth = (value: string): number => {
-      if (/jsdom/i.test(window.navigator.userAgent) === true) {
-        return value.length * 8;
-      }
-
-      const canvas = measurementCanvasRef.current ?? document.createElement('canvas');
-      measurementCanvasRef.current = canvas;
-      const context = canvas.getContext('2d');
-      if (context === null) {
-        return value.length * 8;
-      }
-
-      const styles = window.getComputedStyle(input);
-      context.font =
-        (styles.font ?? '') !== '' ?
-        styles.font :
-        `${styles.fontStyle} ${styles.fontVariant} ${styles.fontWeight} ${styles.fontSize} ${styles.fontFamily}`;
-      const measuredValue = value.length > 0 ? value : ' ';
-      const baseWidth = context.measureText(measuredValue).width;
-      const letterSpacingValue = Number.parseFloat(styles.letterSpacing);
-
-      if (Number.isFinite(letterSpacingValue) === true) {
-        return baseWidth + Math.max(0, measuredValue.length - 1) * letterSpacingValue;
-      }
-
-      return baseWidth;
-    };
-
-    const updateOverlayMetrics = ((): void => {
-      if (input === null || segmentBounds === null) return;
-      const styles = window.getComputedStyle(input);
-      const paddingLeft = Number.parseFloat(styles.paddingLeft) || 0;
-      const prefixText = nameValue.slice(0, segmentBounds.start);
-      const rawSegmentText = nameValue.slice(segmentBounds.start, segmentBounds.end);
-      const segmentText = rawSegmentText !== '' ? rawSegmentText : ` ${segmentQuery}`;
-      const prefixWidth = measureTextWidth(prefixText);
-      const segmentWidth = Math.max(measureTextWidth(segmentText), 28);
-      const widestSuggestionWidth = suggestions.reduce(
-        (currentMax, option) => Math.max(currentMax, measureTextWidth(option.label)),
-        segmentWidth
-      );
-      const maxOverlayWidth = Math.max(
-        Math.min(SUGGESTION_MAX_WIDTH, input.clientWidth - 8),
-        SUGGESTION_MIN_WIDTH
-      );
-      const desiredWidth = clampNumber(
-        Math.max(segmentWidth + 72, widestSuggestionWidth + 56),
-        SUGGESTION_MIN_WIDTH,
-        maxOverlayWidth
-      );
-      const rawCenter = paddingLeft + prefixWidth + (segmentWidth / 2) - input.scrollLeft;
-      const clampedCenter = clampNumber(
-        rawCenter,
-        (desiredWidth / 2) + 4,
-        input.clientWidth - (desiredWidth / 2) - 4
-      );
-      const nextMetrics = {
-        left: clampedCenter,
-        width: desiredWidth,
-      };
-
-      setOverlayMetrics((currentMetrics) => {
-        if (
-          currentMetrics !== null &&
-          currentMetrics.left === nextMetrics.left &&
-          currentMetrics.width === nextMetrics.width
-        ) {
-          return currentMetrics;
-        }
-
-        return nextMetrics;
-      });
-    }) as EventListener;
-
-    updateOverlayMetrics();
-    const eventHandler = updateOverlayMetrics as EventListener;
-    input.addEventListener('scroll', eventHandler);
-    window.addEventListener('resize', eventHandler);
-
-    return (): void => {
-      input.removeEventListener('scroll', eventHandler);
-      window.removeEventListener('resize', eventHandler);
-    };
-  }, [dropdownOpen, nameValue, segmentBounds, segmentQuery, suggestions]);
-
   const overlayStageLabel = activeStage !== null ? TITLE_SEGMENT_LABELS[activeStage] : null;
   const activeDescendantId =
     (dropdownOpen && suggestions[highlightedIndex] !== undefined) ? `${listboxId}-option-${highlightedIndex}` : undefined;
-  const aboveSuggestions = visibleSuggestionWindow.above;
-  const belowSuggestions = visibleSuggestionWindow.below;
-  const topPanelHeight =
-    aboveSuggestions.length > 0
-      ? aboveSuggestions.length * SUGGESTION_ROW_HEIGHT + SUGGESTION_OVERLAY_PADDING * 2
-      : 0;
-  const bottomPanelHeight =
-    belowSuggestions.length > 0
-      ? belowSuggestions.length * SUGGESTION_ROW_HEIGHT + SUGGESTION_OVERLAY_PADDING * 2
-      : 0;
 
   return (
     <FormField
@@ -836,7 +664,7 @@ export function StructuredProductNameField({
           value={nameValue}
           onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
             const nextValue = event.target.value;
-            if (fieldName === 'name_en' && (normalizeNameError !== null && normalizeNameError !== undefined && normalizeNameError !== '')) {
+            if (fieldName === 'name_en' && normalizeNameError !== null && normalizeNameError !== '') {
               setNormalizeNameError(null);
             }
             field.onChange(event);
@@ -915,38 +743,15 @@ export function StructuredProductNameField({
           spellCheck={false}
           className={cn(typeof error === 'string' && error !== '' && 'border-red-500/60')}
         />
-        {dropdownOpen && segmentBounds !== null && overlayMetrics !== null ? (
-          <div
-            id={listboxId}
-            role='listbox'
-            aria-label={`${overlayStageLabel ?? 'Title'} suggestions`}
-            className='pointer-events-none absolute inset-0 z-30 overflow-visible'
-          >
-            {aboveSuggestions.length > 0 ? (
-              <ProductTitleSuggestionPanel
-                side='above'
-                listboxId={listboxId}
-                suggestions={aboveSuggestions}
-                highlightedIndex={highlightedIndex}
-                overlayMetrics={overlayMetrics}
-                panelHeight={topPanelHeight}
-                onApply={applySuggestion}
-                onHighlight={setHighlightedIndex}
-              />
-            ) : null}
-            {belowSuggestions.length > 0 ? (
-              <ProductTitleSuggestionPanel
-                side='below'
-                listboxId={listboxId}
-                suggestions={belowSuggestions}
-                highlightedIndex={highlightedIndex}
-                overlayMetrics={overlayMetrics}
-                panelHeight={bottomPanelHeight}
-                onApply={applySuggestion}
-                onHighlight={setHighlightedIndex}
-              />
-            ) : null}
-          </div>
+        {dropdownOpen && segmentBounds !== null ? (
+          <ProductTitleSuggestionPanel
+            listboxId={listboxId}
+            listboxLabel={`${overlayStageLabel ?? 'Title'} suggestions`}
+            suggestions={suggestions}
+            highlightedIndex={highlightedIndex}
+            onApply={applySuggestion}
+            onHighlight={setHighlightedIndex}
+          />
         ) : null}
       </div>
       {(typeof primaryCatalogId !== 'string' || primaryCatalogId === '') && (

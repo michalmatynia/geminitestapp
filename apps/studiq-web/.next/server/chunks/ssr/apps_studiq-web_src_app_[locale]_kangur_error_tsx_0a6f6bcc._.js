@@ -1,3 +1,0 @@
-module.exports=[81363,a=>{"use strict";var b=a.i(87924),c=a.i(72131);function d({error:a,reset:d}){return(0,c.useEffect)(()=>{},[a]),(0,b.jsxs)("section",{role:"alert","aria-live":"assertive",className:"kangur-error-page",children:[(0,b.jsx)("h1",{children:"Something went wrong"}),(0,b.jsx)("p",{children:a.message||"Please try again."}),(0,b.jsxs)("div",{className:"kangur-error-actions",children:[(0,b.jsx)("button",{type:"button",onClick:d,children:"Try again"}),(0,b.jsx)("a",{href:"/kangur",children:"Back to home"})]})]})}a.s(["default",()=>d])}];
-
-//# sourceMappingURL=apps_studiq-web_src_app_%5Blocale%5D_kangur_error_tsx_0a6f6bcc._.js.map

@@ -136,7 +136,7 @@ function renderField(options: RenderFieldOptions = {}): { setCategoryId: ReturnT
     <Wrapper>
       <StructuredProductNameField
         fieldName={options.fieldName ?? 'name_en'}
-        locale={options.locale ?? 'en'}
+        config={{ locale: options.locale ?? 'en' }}
       />
       <CategoryValueProbe />
     </Wrapper>
@@ -257,7 +257,7 @@ describe('StructuredProductNameField', () => {
     expect(setNormalizeNameError).toHaveBeenCalledWith(null);
   });
 
-  it('sorts matching non-category suggestions alphabetically before rendering the split window', async () => {
+  it('sorts matching non-category suggestions alphabetically inside the dropdown', async () => {
     renderField({
       sizeTerms: ['8 cm', '2 cm', '6 cm', '4 cm'],
     });
@@ -358,7 +358,7 @@ describe('StructuredProductNameField', () => {
     expect(input).toHaveAttribute('aria-activedescendant', hoveredOption.id);
   });
 
-  it('keeps the typed segment in the input while showing matches above and below the active suggestion', async () => {
+  it('keeps the typed segment in the input while showing matches in one bounded dropdown', async () => {
     renderField({
       sizeTerms: ['1 cm', '2 cm', '3 cm', '4 cm', '5 cm', '6 cm'],
     });
@@ -369,6 +369,7 @@ describe('StructuredProductNameField', () => {
     fireEvent.keyUp(input, { key: 'm' });
 
     const listbox = await screen.findByRole('listbox', { name: 'Size suggestions' });
+    const scrollRegion = listbox.firstElementChild;
 
     fireEvent.keyDown(input, { key: 'ArrowDown' });
     fireEvent.keyUp(input, { key: 'ArrowDown' });
@@ -376,6 +377,10 @@ describe('StructuredProductNameField', () => {
     fireEvent.keyUp(input, { key: 'ArrowDown' });
 
     expect((input as HTMLInputElement).value).toBe('Scout Regiment | cm');
+    expect(listbox.className).toContain('left-0');
+    expect(listbox.className).toContain('right-0');
+    expect(listbox.className).toContain('overflow-hidden');
+    expect(scrollRegion?.className ?? '').toContain('overflow-y-auto');
     expect(within(listbox).getByRole('option', { name: '1 cm' })).toBeInTheDocument();
     expect(within(listbox).getByRole('option', { name: '2 cm' })).toBeInTheDocument();
     expect(within(listbox).getByRole('option', { name: '3 cm' })).toHaveAttribute(
@@ -384,7 +389,7 @@ describe('StructuredProductNameField', () => {
     );
     expect(within(listbox).getByRole('option', { name: '4 cm' })).toBeInTheDocument();
     expect(within(listbox).getByRole('option', { name: '5 cm' })).toBeInTheDocument();
-    expect(within(listbox).queryByRole('option', { name: '6 cm' })).not.toBeInTheDocument();
+    expect(within(listbox).getByRole('option', { name: '6 cm' })).toBeInTheDocument();
   });
 
   it('shows parent categories as disabled and syncs the selected category when a leaf is chosen', async () => {

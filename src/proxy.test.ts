@@ -384,6 +384,32 @@ describe('proxy api routing', () => {
     expect(ensureCsrfCookieMock).toHaveBeenCalledTimes(1);
   });
 
+  it('keeps playwright fixture routes unprefixed regardless of negotiated locale', async () => {
+    const request = createRequest('http://localhost/__playwright/live-scripter-fixture', {
+      acceptLanguage: 'en-US,en;q=0.9',
+    });
+
+    const response = await Promise.resolve(proxy(request as never, { params: {} }));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('x-middleware-next')).toBe('1');
+    expect(response.headers.get('x-middleware-rewrite')).toBeNull();
+    expect(response.headers.get('location')).toBeNull();
+    expect(ensureCsrfCookieMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps locale-prefixed playwright fixture routes intact instead of canonicalizing them away', async () => {
+    const request = createRequest('http://localhost/pl/__playwright/live-scripter-fixture');
+
+    const response = await Promise.resolve(proxy(request as never, { params: {} }));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('x-middleware-next')).toBe('1');
+    expect(response.headers.get('x-middleware-rewrite')).toBeNull();
+    expect(response.headers.get('location')).toBeNull();
+    expect(ensureCsrfCookieMock).toHaveBeenCalledTimes(1);
+  });
+
   it('canonicalizes superfluous default-locale prefixes', async () => {
     const request = createRequest('http://localhost/pl/about');
 

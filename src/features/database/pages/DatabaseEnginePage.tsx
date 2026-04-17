@@ -61,6 +61,7 @@ function DatabaseEngineSettingsTab(): React.JSX.Element {
   } = useDatabaseEngineActionsContext();
   const activeMongoSource = mongoSourceState?.activeSource ?? null;
   const lastMongoSync = mongoSourceState?.lastSync ?? null;
+  const lastMongoSyncVerification = lastMongoSync?.verification ?? null;
   const mongoSyncInProgress = mongoSourceState?.syncInProgress ?? null;
   const lastMongoSyncBackups = lastMongoSync?.preSyncBackups ?? [];
   const mongoSources = mongoSourceState
@@ -314,12 +315,34 @@ MONGODB_ACTIVE_SOURCE_DEFAULT=${nextMongoSource ?? 'cloud'}`}
                       Synced at: {lastMongoSync.syncedAt}
                     </Badge>
                   ) : null}
+                  {lastMongoSync ? (
+                    <Badge
+                      variant='outline'
+                      className={
+                        lastMongoSyncVerification?.status === 'passed'
+                          ? 'border-emerald-400/30 text-emerald-200'
+                          : 'border-amber-400/30 text-amber-200'
+                      }
+                    >
+                      {lastMongoSyncVerification?.status === 'passed'
+                        ? `Verified exact mirror (${lastMongoSyncVerification.collectionsCompared} collections)`
+                        : 'Verification not recorded'}
+                    </Badge>
+                  ) : null}
                 </div>
                 {lastMongoSync ? (
                   <div className='space-y-1 text-xs text-muted-foreground'>
                     <p>Direction: {lastMongoSync.direction}</p>
                     <p>Transfer archive: {lastMongoSync.archivePath ?? 'Not retained'}</p>
                     <p>Transfer log: {lastMongoSync.logPath ?? 'Not available'}</p>
+                    {lastMongoSyncVerification ? (
+                      <p>
+                        Verification: {lastMongoSyncVerification.status} at{' '}
+                        {lastMongoSyncVerification.verifiedAt}; source collections:{' '}
+                        {lastMongoSyncVerification.sourceCollections}; target collections:{' '}
+                        {lastMongoSyncVerification.targetCollections}
+                      </p>
+                    ) : null}
                     {lastMongoSyncBackups.length > 0 ? (
                       <>
                         <p>Pre-sync backups: {lastMongoSyncBackups.length}</p>

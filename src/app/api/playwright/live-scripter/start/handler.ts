@@ -8,19 +8,19 @@ import {
   type LiveScripterStartRequest,
 } from '@/shared/contracts/playwright-live-scripter';
 import { forbiddenError } from '@/shared/errors/app-error';
-import { getSessionUser } from '@/shared/lib/api/session-registry';
+import { readOptionalServerAuthSession } from '@/features/auth/server';
 import { createLiveScripterSession } from '@/features/playwright/server/live-session';
 
 export { liveScripterStartRequestSchema };
 
 const assertAdminAccess = async (): Promise<string> => {
-  const session = await getSessionUser();
-  const hasElevatedAccess = session?.isElevated === true;
-  const sessionId = typeof session?.id === 'string' ? session.id.trim() : '';
-  if (!hasElevatedAccess || sessionId.length === 0) {
+  const session = await readOptionalServerAuthSession();
+  const hasElevatedAccess = session?.user?.isElevated === true;
+  const userId = typeof session?.user?.id === 'string' ? session.user.id.trim() : '';
+  if (!hasElevatedAccess || userId.length === 0) {
     throw forbiddenError('Admin access is required for Playwright live scripter.');
   }
-  return sessionId;
+  return userId;
 };
 
 const postHandler = async (

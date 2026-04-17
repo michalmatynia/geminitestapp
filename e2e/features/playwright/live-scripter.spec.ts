@@ -59,7 +59,7 @@ const mockLiveScripterPageApis = async (page: Page): Promise<void> => {
 
 const buildFixtureUrl = (page: Page): string => {
   const current = new URL(page.url());
-  const fixtureUrl = new URL('/__playwright/live-scripter-fixture', current);
+  const fixtureUrl = new URL('/playwright-fixtures/live-scripter-fixture', current);
   fixtureUrl.hostname = '2130706433';
   return fixtureUrl.toString();
 };
@@ -81,6 +81,59 @@ const clickPreviewAtFramePoint = async (
   });
 };
 
+const triggerButton = async (button: Locator): Promise<void> => {
+  await button.evaluate((element) => (element as HTMLButtonElement).click());
+};
+
+const waitForLivePreviewReady = async (page: Page): Promise<Locator> => {
+  await expect(page.getByText(/^live$/)).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText(/^http:\/\/127\.0\.0\.1:3000\/playwright-fixtures\/live-scripter-fixture$/)).toBeVisible({
+    timeout: 30_000,
+  });
+
+  const preview = page.getByLabel('Live website preview');
+  await expect(preview).toBeVisible({ timeout: 30_000 });
+  await expect
+    .poll(
+      async () => {
+        const box = await preview.boundingBox();
+        return box !== null && box.width > 200 && box.height > 100;
+      },
+      {
+        timeout: 30_000,
+        message: 'Expected the live preview canvas to become stable before interacting with it.',
+      }
+    )
+    .toBe(true);
+
+  return preview;
+};
+
+const pickFixtureActionFromPreview = async (page: Page): Promise<void> => {
+  const pickButton = page.getByRole('button', { name: 'Pick' });
+
+  for (let attempt = 1; attempt <= 5; attempt += 1) {
+    await triggerButton(pickButton);
+    await expect(page.getByText('Pick mode inspects the clicked element.')).toBeVisible({
+      timeout: 20_000,
+    });
+
+    const preview = await waitForLivePreviewReady(page);
+    await clickPreviewAtFramePoint(preview, FIXTURE_BUTTON_CENTER);
+
+    try {
+      await expect(page.getByText('Fixture action')).toBeVisible({ timeout: 5_000 });
+      await expect(page.getByText('#fixture-action').first()).toBeVisible({ timeout: 5_000 });
+      return;
+    } catch (error) {
+      if (attempt === 5) {
+        throw error;
+      }
+      await page.waitForTimeout(1_000);
+    }
+  }
+};
+
 test.describe('Playwright Live Scripter', () => {
   test('starts a live session, picks an element, and appends a draft step', async ({
     page,
@@ -99,37 +152,15 @@ test.describe('Playwright Live Scripter', () => {
     const fixtureUrl = buildFixtureUrl(page);
 
     await page.getByPlaceholder('https://example.com').fill(fixtureUrl);
-    await page.waitForTimeout(1500);
-    await page
-      .getByRole('button', { name: /^Start$/ })
-      .evaluate((element) => (element as HTMLButtonElement).click());
-
-    await expect(page.getByText(/^Current page title:/)).toBeVisible({
-      timeout: 20_000,
-    });
+    await triggerButton(page.getByRole('button', { name: /^Start$/ }));
     await expect(page.getByRole('button', { name: 'Pick' })).toBeVisible();
-    await expect(page.getByText(/^live$/)).toBeVisible({ timeout: 20_000 });
+    await waitForLivePreviewReady(page);
+    await pickFixtureActionFromPreview(page);
 
-    await page
-      .getByRole('button', { name: 'Pick' })
-      .evaluate((element) => (element as HTMLButtonElement).click());
-    await expect(page.getByText('Pick mode inspects the clicked element.')).toBeVisible({
-      timeout: 20_000,
-    });
-
-    const preview = page.getByLabel('Live website preview');
-    await expect(preview).toBeVisible();
-    await clickPreviewAtFramePoint(preview, FIXTURE_BUTTON_CENTER);
-
-    await expect(page.getByText('Fixture action')).toBeVisible({ timeout: 20_000 });
-    await expect(page.getByText('#fixture-action')).toBeVisible({ timeout: 20_000 });
-
-    await page
-      .getByRole('button', { name: 'Append Step' })
-      .evaluate((element) => (element as HTMLButtonElement).click());
+    await triggerButton(page.getByRole('button', { name: 'Append Step' }));
 
     await expect(page.getByRole('heading', { name: 'Draft Step Set' })).toBeVisible();
     await expect(page.getByText('Click Fixture action')).toBeVisible();
-    await expect(page.getByText('click')).toBeVisible();
+    await expect(page.getByText('click', { exact: true })).toBeVisible();
   });
 });

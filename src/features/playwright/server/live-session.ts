@@ -24,6 +24,7 @@ import {
 import { launchPlaywrightBrowser } from '@/shared/lib/playwright/browser-launch';
 import { defaultPlaywrightSettings } from '@/shared/lib/playwright/settings';
 import { safeClearTimeout, safeSetTimeout, type SafeTimerId } from '@/shared/lib/timers';
+import { stripSiteLocalePrefix } from '@/shared/lib/i18n/site-locale';
 
 const pickDelayBetween = (min: number, max: number): number => {
   const lo = Math.max(0, Math.trunc(Math.min(min, max)));
@@ -55,7 +56,7 @@ const LIVE_SCRIPTER_MAX_SELECTOR_DEPTH = 6;
 const LIVE_SCRIPTER_MAX_FRAME_DIMENSION = 1600;
 const LIVE_SCRIPTER_BRIDGE_KEY = '__geminitestappPlaywrightLiveScripterBridge';
 const LIVE_SCRIPTER_STATE_KEY = '__geminitestappPlaywrightLiveScripterState';
-const LIVE_SCRIPTER_DEV_FIXTURE_PATH = '/__playwright/live-scripter-fixture';
+const LIVE_SCRIPTER_DEV_FIXTURE_PATH = '/playwright-fixtures/live-scripter-fixture';
 
 type LiveScripterSocket = WebSocket;
 
@@ -197,8 +198,10 @@ const sanitizeUrl = (value: string): string => {
     hostname === '127.0.0.1' ||
     hostname === '::1' ||
     hostname.endsWith('.localhost');
+  const normalizedPathname = stripSiteLocalePrefix(parsed.pathname);
   const isAllowedDevFixtureLoopbackUrl =
-    process.env['NODE_ENV'] !== 'production' && parsed.pathname === LIVE_SCRIPTER_DEV_FIXTURE_PATH;
+    process.env['NODE_ENV'] !== 'production' &&
+    normalizedPathname === LIVE_SCRIPTER_DEV_FIXTURE_PATH;
 
   if (isLoopbackHost && !isAllowedDevFixtureLoopbackUrl) {
     throw forbiddenError('Live scripter does not allow loopback URLs.');
@@ -343,48 +346,120 @@ export const pickElementAt = async (
         return segments.length > 0 ? segments.join(' > ') : null;
       };
 
-      const element = document.elementFromPoint(nextX, nextY);
-      if (!(element instanceof Element)) {
+      const buildPayload = (element: Element): LiveScripterPickedElement => {
+        const rect = element.getBoundingClientRect();
+        const testId =
+          clampText(element.getAttribute('data-testid')) ??
+          clampText(element.getAttribute('data-test-id')) ??
+          clampText(element.getAttribute('data-qa'));
+
+        const role = resolveRole(element);
+        const textPreview =
+          clampText(element.textContent) ??
+          clampText(element.getAttribute('aria-label')) ??
+          clampText(element.getAttribute('title')) ??
+          clampText(element.getAttribute('placeholder'));
+
+        return {
+          tag: element.tagName.toLowerCase(),
+          id: clampText(element.getAttribute('id')),
+          classes: Array.from(element.classList)
+            .map((value) => value.trim())
+            .filter((value) => value.length > 0)
+            .slice(0, 12),
+          textPreview,
+          role,
+          attrs: collectAttrs(element),
+          boundingBox: {
+            x: rect.x,
+            y: rect.y,
+            width: rect.width,
+            height: rect.height,
+          },
+          candidates: {
+            css: buildCssPath(element),
+            xpath: resolveXPath(element),
+            role,
+            text: textPreview,
+            testId,
+          },
+        } satisfies LiveScripterPickedElement;
+      };
+
+      const isInteractiveElement = (
+        element: Element,
+        payload: LiveScripterPickedElement
+      ): boolean => {
+        if (
+          payload.role === 'button' ||
+          payload.role === 'link' ||
+          payload.role === 'textbox' ||
+          payload.role === 'combobox'
+        ) {
+          return true;
+        }
+        const tag = element.tagName.toLowerCase();
+        if (tag === 'button' || tag === 'input' || tag === 'textarea' || tag === 'select') {
+          return true;
+        }
+        return tag === 'a' && typeof element.getAttribute('href') === 'string';
+      };
+
+      const isGenericWrapper = (
+        element: Element,
+        payload: LiveScripterPickedElement
+      ): boolean => {
+        const viewportArea = Math.max(1, window.innerWidth * window.innerHeight);
+        const area =
+          Math.max(0, payload.boundingBox.width) * Math.max(0, payload.boundingBox.height);
+        const coversViewport = area / viewportArea >= 0.5;
+        if (element.getAttribute('aria-busy') === 'true' && coversViewport) {
+          return true;
+        }
+
+        if (
+          payload.id !== null ||
+          payload.role !== null ||
+          payload.textPreview !== null ||
+          payload.candidates.testId !== null
+        ) {
+          return false;
+        }
+
+        const tag = element.tagName.toLowerCase();
+        if (tag !== 'div' && tag !== 'main' && tag !== 'section' && tag !== 'article') {
+          return false;
+        }
+        return coversViewport;
+      };
+
+      const elementStack = document
+        .elementsFromPoint(nextX, nextY)
+        .filter((value): value is Element => value instanceof Element);
+      if (elementStack.length === 0) {
         return null;
       }
 
-      const rect = element.getBoundingClientRect();
-      const testId =
-        clampText(element.getAttribute('data-testid')) ??
-        clampText(element.getAttribute('data-test-id')) ??
-        clampText(element.getAttribute('data-qa'));
+      let fallback: LiveScripterPickedElement | null = null;
+      for (const element of elementStack) {
+        const payload = buildPayload(element);
+        if (fallback === null) {
+          fallback = payload;
+        }
+        if (isGenericWrapper(element, payload)) {
+          continue;
+        }
+        if (
+          isInteractiveElement(element, payload) ||
+          payload.candidates.testId !== null ||
+          payload.id !== null ||
+          payload.textPreview !== null
+        ) {
+          return payload;
+        }
+      }
 
-      const role = resolveRole(element);
-      const textPreview =
-        clampText(element.textContent) ??
-        clampText(element.getAttribute('aria-label')) ??
-        clampText(element.getAttribute('title')) ??
-        clampText(element.getAttribute('placeholder'));
-
-      return {
-        tag: element.tagName.toLowerCase(),
-        id: clampText(element.getAttribute('id')),
-        classes: Array.from(element.classList)
-          .map((value) => value.trim())
-          .filter((value) => value.length > 0)
-          .slice(0, 12),
-        textPreview,
-        role,
-        attrs: collectAttrs(element),
-        boundingBox: {
-          x: rect.x,
-          y: rect.y,
-          width: rect.width,
-          height: rect.height,
-        },
-        candidates: {
-          css: buildCssPath(element),
-          xpath: resolveXPath(element),
-          role,
-          text: textPreview,
-          testId,
-        },
-      } satisfies LiveScripterPickedElement;
+      return fallback;
     },
     { nextX: x, nextY: y, maxDepth: LIVE_SCRIPTER_MAX_SELECTOR_DEPTH }
   );

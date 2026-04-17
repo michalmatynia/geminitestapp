@@ -4,17 +4,17 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 const {
-  getSessionUserMock,
+  readOptionalServerAuthSessionMock,
   getLiveScripterSessionMock,
   disposeLiveScripterSessionMock,
 } = vi.hoisted(() => ({
-  getSessionUserMock: vi.fn(),
+  readOptionalServerAuthSessionMock: vi.fn(),
   getLiveScripterSessionMock: vi.fn(),
   disposeLiveScripterSessionMock: vi.fn(),
 }));
 
-vi.mock('@/shared/lib/api/session-registry', () => ({
-  getSessionUser: () => getSessionUserMock(),
+vi.mock('@/features/auth/server', () => ({
+  readOptionalServerAuthSession: () => readOptionalServerAuthSessionMock(),
 }));
 
 vi.mock('@/features/playwright/server/live-session', () => ({
@@ -38,9 +38,11 @@ const createContext = (body: Record<string, unknown>): ApiHandlerContext =>
 describe('playwright live scripter dispose handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    getSessionUserMock.mockResolvedValue({
-      id: 'admin-1',
-      isElevated: true,
+    readOptionalServerAuthSessionMock.mockResolvedValue({
+      user: {
+        id: 'admin-1',
+        isElevated: true,
+      },
     });
     getLiveScripterSessionMock.mockReturnValue({
       id: 'session-123',
@@ -80,9 +82,11 @@ describe('playwright live scripter dispose handler', () => {
   });
 
   it('rejects non-admin access', async () => {
-    getSessionUserMock.mockResolvedValue({
-      id: 'user-1',
-      isElevated: false,
+    readOptionalServerAuthSessionMock.mockResolvedValue({
+      user: {
+        id: 'user-1',
+        isElevated: false,
+      },
     });
 
     await expect(

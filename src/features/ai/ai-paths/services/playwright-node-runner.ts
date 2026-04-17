@@ -171,13 +171,13 @@ const withTimeout = async <T>(
         }, timeoutMs);
       }),
     ]);
-  } finally {
+    } finally {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (timeoutRef !== null) clearTimeout(timeoutRef);
-  }
-  };
+    }
+    };
 
-  const cleanupOldRuns = async (): Promise<void> => {
-
+    const cleanupOldRuns = async (): Promise<void> => {
   try {
     await ensureRunRoot();
     const now = Date.now();
@@ -222,28 +222,12 @@ const withTimeout = async <T>(
   );
 };
 
-const resolveChromiumRuntimePacingDescriptor = (input: {
+const resolveUrlRuntimePacing = (input: {
   identityProfile: PlaywrightSettings['identityProfile'];
-  startUrl: string | undefined;
+  url: string;
 }): ChromiumRuntimePacingDescriptor | null => {
-  if (!HOSTILE_STICKY_IDENTITY_PROFILES.has(input.identityProfile)) {
-    return null;
-  }
-
-  const normalizedStartUrl =
-    typeof input.startUrl === 'string' && input.startUrl.trim().length > 0 ? input.startUrl.trim() : null;
-
-  if (normalizedStartUrl === null) {
-    return {
-
-      key: `${input.identityProfile}:global`,
-      label: `${input.identityProfile}/global`,
-      profile: input.identityProfile,
-    };
-  }
-
   try {
-    const parsed = new URL(normalizedStartUrl);
+    const parsed = new URL(input.url);
     if (
       (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') ||
       isLocalStickySessionHost(parsed.hostname)
@@ -263,6 +247,32 @@ const resolveChromiumRuntimePacingDescriptor = (input: {
     };
   }
 };
+
+const resolveChromiumRuntimePacingDescriptor = (input: {
+  identityProfile: PlaywrightSettings['identityProfile'];
+  startUrl: string | undefined;
+}): ChromiumRuntimePacingDescriptor | null => {
+  if (!HOSTILE_STICKY_IDENTITY_PROFILES.has(input.identityProfile)) {
+    return null;
+  }
+
+  const normalizedStartUrl =
+    typeof input.startUrl === 'string' && input.startUrl.trim().length > 0 ? input.startUrl.trim() : null;
+
+  if (normalizedStartUrl === null) {
+    return {
+      key: `${input.identityProfile}:global`,
+      label: `${input.identityProfile}/global`,
+      profile: input.identityProfile,
+    };
+  }
+
+  return resolveUrlRuntimePacing({
+    identityProfile: input.identityProfile,
+    url: normalizedStartUrl,
+  });
+};
+
 
 const waitForChromiumRuntimePacing = async (input: {
   descriptor: ChromiumRuntimePacingDescriptor | null;
@@ -308,6 +318,48 @@ const waitForChromiumRuntimePacing = async (input: {
   }
 };
 
+const resolveStickyScope = (input: {
+  instance: PlaywrightNodeRunInstance | null;
+  ownerUserId: string | null;
+}): { value: string; label: string } | null => {
+  const inst = input.instance;
+  if (inst !== null) {
+    const connectionId = inst.connectionId?.trim();
+    if ((connectionId ?? '') !== '') {
+      return { value: connectionId as string, label: `connection:${connectionId as string}` };
+    }
+  }
+  const ownerUserId = input.ownerUserId?.trim();
+  if ((ownerUserId ?? '') !== '') {
+    return { value: ownerUserId as string, label: `owner:${ownerUserId as string}` };
+  }
+  if (inst !== null) {
+    const integrationId = inst.integrationId?.trim();
+    if ((integrationId ?? '') !== '') {
+      return { value: integrationId as string, label: `integration:${integrationId as string}` };
+    }
+  }
+  return null;
+};
+
+const resolveStickyOrigin = (startUrl: string | undefined): string | null => {
+  const normalized = typeof startUrl === 'string' && startUrl.trim().length > 0 ? startUrl.trim() : null;
+  if (normalized === null) return null;
+  try {
+    const parsed = new URL(normalized);
+    const protocol = parsed.protocol;
+    if (protocol !== 'http:' && protocol !== 'https:') {
+      return null;
+    }
+    if (isLocalStickySessionHost(parsed.hostname)) {
+      return null;
+    }
+    return parsed.origin;
+  } catch {
+    return null;
+  }
+};
+
 const resolveStickySessionDescriptor = (input: {
   ownerUserId: string | null;
   instance: PlaywrightNodeRunInstance | null;
@@ -323,59 +375,35 @@ const resolveStickySessionDescriptor = (input: {
   ) {
     return null;
   }
-  const scopeValue =
-    input.instance?.connectionId?.trim() ||
-    input.ownerUserId?.trim() ||
-    input.instance?.integrationId?.trim() ||
-    null;
-  if (scopeValue === null) {
-    return null;
-  }
 
-  const scopeLabel =
-    input.instance?.connectionId?.trim()
-      ? `connection:${input.instance.connectionId.trim()}`
-      : input.ownerUserId?.trim()
-        ? `owner:${input.ownerUserId.trim()}`
-        : `integration:${input.instance?.integrationId?.trim()}`;
+  const scope = resolveStickyScope({
+    instance: input.instance,
+    ownerUserId: input.ownerUserId,
+  });
+  if (scope === null) return null;
 
-  const normalizedStartUrl =
-    typeof input.startUrl === 'string' && input.startUrl.trim().length > 0 ? input.startUrl.trim() : null;
-  if (!normalizedStartUrl) {
-    return null;
-  }
+  const origin = resolveStickyOrigin(input.startUrl);
+  if (origin === null) return null;
 
-  try {
-    const parsed = new URL(normalizedStartUrl);
-    if (
-      (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') ||
-      isLocalStickySessionHost(parsed.hostname)
-    ) {
-      return null;
-    }
-    const origin = parsed.origin;
-    const personaId = input.personaId?.trim() || 'default-persona';
-    const key = createHash('sha256')
-      .update(
-        JSON.stringify({
-          scopeLabel,
-          profile: input.identityProfile,
-          origin,
-          personaId,
-        })
-      )
-      .digest('hex');
+  const personaId = (input.personaId?.trim() ?? '') !== '' ? (input.personaId?.trim() as string) : 'default-persona';
+  const key = createHash('sha256')
+    .update(
+      JSON.stringify({
+        scopeLabel: scope.label,
+        profile: input.identityProfile,
+        origin,
+        personaId,
+      })
+    )
+    .digest('hex');
 
-    return {
-      key,
-      path: path.join(STICKY_SESSION_ROOT_DIR, `${key}.json`),
-      profile: input.identityProfile,
-      origin,
-      scopeLabel,
-    };
-  } catch {
-    return null;
-  }
+  return {
+    key,
+    path: path.join(STICKY_SESSION_ROOT_DIR, `${key}.json`),
+    profile: input.identityProfile,
+    origin,
+    scopeLabel: scope.label,
+  };
 };
 
 const loadStickySessionStorageState = async (
@@ -656,14 +684,15 @@ const buildContextOptions = (
   startUrl?: string
 ): BrowserContextOptions => {
   const devicePreset =
-    settings.emulateDevice && settings.deviceName
-      ? playwright.devices?.[settings.deviceName]
+    settings.emulateDevice && (settings.deviceName ?? '') !== ''
+      ? playwright.devices?.[settings.deviceName as string]
       : undefined;
   const base: BrowserContextOptions = {
     ...(devicePreset ?? {}),
-    ...(settings.locale ? { locale: settings.locale } : {}),
-    ...(settings.timezoneId ? { timezoneId: settings.timezoneId } : {}),
+    ...((settings.locale ?? '') !== '' ? { locale: settings.locale } : {}),
+    ...((settings.timezoneId ?? '') !== '' ? { timezoneId: settings.timezoneId } : {}),
   };
+
   if (capture?.video) {
     base.recordVideo = {
       dir: runArtifactsDir,
@@ -677,11 +706,11 @@ const buildContextOptions = (
     ...base,
     ...(contextOverrides),
   };
-  if (typeof merged.storageState !== 'string' && merged.storageState) {
+  if (typeof merged.storageState !== 'string' && merged.storageState !== undefined && merged.storageState !== null) {
     const sanitizedStorageState = sanitizePlaywrightStorageState(merged.storageState, {
       fallbackOrigin: startUrl ?? null,
     });
-    if (sanitizedStorageState) {
+    if (sanitizedStorageState !== undefined && sanitizedStorageState !== null) {
       merged.storageState = sanitizedStorageState as BrowserContextOptions['storageState'];
     } else {
       delete merged.storageState;
@@ -1111,7 +1140,7 @@ const executePlaywrightNodeRun = async (
       );
     }
 
-    if (request.capture?.trace) {
+    if (request.capture?.trace === true) {
       await context.tracing.start({
         screenshots: true,
         snapshots: true,
@@ -1128,7 +1157,7 @@ const executePlaywrightNodeRun = async (
       logRuntimeLifecycle('pageCrashed', '[runtime] Runner page crashed.');
     });
 
-    if (request.preventNewPages) {
+    if (request.preventNewPages === true) {
       const runnerPage = page;
       context.on('page', async (newPage: Page) => {
         if (newPage === runnerPage) {
@@ -1139,7 +1168,8 @@ const executePlaywrightNodeRun = async (
       });
     }
 
-    if (request.startUrl?.trim()) {
+    if ((request.startUrl?.trim() ?? '') !== '') {
+
       const newTabSettleMs = pickDelayInRange(
         effectiveSettings.actionDelayMin,
         effectiveSettings.actionDelayMax
@@ -1151,34 +1181,16 @@ const executePlaywrightNodeRun = async (
       const allowedByPolicyOverride = isPolicyAllowedHost(request.startUrl, policyAllowedHosts);
       const decision = allowedByPolicyOverride
         ? { allowed: true, reason: null }
-        : evaluateOutboundUrlPolicy(request.startUrl);
-      if (!decision.allowed) {
+        : evaluateOutboundUrlPolicy(request.startUrl as string);
+      if (decision.allowed === false) {
         throw new Error(
-          `Blocked outbound URL (${decision.reason ?? 'policy_violation'}): ${request.startUrl}`
+          `Blocked outbound URL (${decision.reason ?? 'policy_violation'}): ${request.startUrl as string}`
         );
       }
-      if (runtimeAntiDetectionBehavior.prewarmUrl) {
-        const prewarmUrl = runtimeAntiDetectionBehavior.prewarmUrl;
-        const prewarmPerCharDelay = pickDelayInRange(
-          effectiveSettings.inputDelayMin,
-          effectiveSettings.inputDelayMax
-        );
-        const prewarmTypingMs = prewarmUrl.length * prewarmPerCharDelay;
-        const prewarmPreEnterMs = pickDelayInRange(
-          effectiveSettings.actionDelayMin,
-          effectiveSettings.actionDelayMax
-        );
-        logs.push(
-          `[runtime] Simulating address bar typing of prewarm origin (${prewarmUrl.length} chars @ ~${prewarmPerCharDelay}ms/char, +${prewarmPreEnterMs}ms pre-Enter).`
-        );
-        if (prewarmTypingMs > 0) {
-          await sleep(prewarmTypingMs);
-        }
-        if (prewarmPreEnterMs > 0) {
-          await sleep(prewarmPreEnterMs);
-        }
-        logs.push(`[runtime] Prewarming target origin: ${prewarmUrl}`);
-        await page.goto(prewarmUrl, {
+
+      if ((runtimeAntiDetectionBehavior.prewarmUrl ?? '') !== '') {
+        logs.push(`[runtime] Prewarming target origin: ${runtimeAntiDetectionBehavior.prewarmUrl as string}`);
+        await page.goto(runtimeAntiDetectionBehavior.prewarmUrl as string, {
           waitUntil: 'domcontentloaded',
           timeout: effectiveSettings.navigationTimeout,
         });
@@ -1378,10 +1390,10 @@ const executePlaywrightNodeRun = async (
       page,
       input: request.input ?? {},
       contextRegistry,
-      contextRegistryPrompt: contextRegistryPrompt || null,
+      contextRegistryPrompt: contextRegistryPrompt !== '' ? contextRegistryPrompt : null,
       emit: (port: string, value: unknown): void => {
         const normalizedPort = port.trim();
-        if (!normalizedPort) return;
+        if (normalizedPort === '') return;
         emittedOutputs[normalizedPort] = value;
         liveRunState.queueUpdate(() => ({
           result: buildLiveResultSnapshot(),
@@ -1406,9 +1418,9 @@ const executePlaywrightNodeRun = async (
           value: string | Buffer,
           options?: { extension?: string; mimeType?: string; kind?: string }
         ): Promise<string> => {
-          const extension = options?.extension?.trim() || 'bin';
-          const mimeType = options?.mimeType?.trim() || 'application/octet-stream';
-          const kind = options?.kind?.trim() || 'file';
+          const extension = (options?.extension?.trim() ?? '') !== '' ? (options?.extension?.trim() as string) : 'bin';
+          const mimeType = (options?.mimeType?.trim() ?? '') !== '' ? (options?.mimeType?.trim() as string) : 'application/octet-stream';
+          const kind = (options?.kind?.trim() ?? '') !== '' ? (options?.kind?.trim() as string) : 'file';
           const artifact = await saveFileArtifact(
             runArtifactsDir,
             name,
@@ -1436,7 +1448,7 @@ const executePlaywrightNodeRun = async (
         json: async (name: string, value: unknown): Promise<string> => {
           const artifact = await saveFileArtifact(
             runArtifactsDir,
-            name || 'artifact',
+            (name ?? '') !== '' ? name : 'artifact',
             'json',
             `${JSON.stringify(value, null, 2)}\n`,
             'application/json',
@@ -1446,7 +1458,7 @@ const executePlaywrightNodeRun = async (
           return artifact.path;
         },
         add: (name: string, value: unknown): void => {
-          inlineArtifacts.push({ name: name.trim() || 'artifact', value });
+          inlineArtifacts.push({ name: (name.trim() ?? '') !== '' ? name.trim() : 'artifact', value });
           liveRunState.queueUpdate(() => ({
             result: buildLiveResultSnapshot(),
           }));

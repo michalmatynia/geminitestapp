@@ -472,6 +472,48 @@ export type DatabaseEngineMongoSyncBackup = z.infer<
   typeof databaseEngineMongoSyncBackupSchema
 >;
 
+export const databaseEngineMongoSyncVerificationCollectionSchema = z.object({
+  name: z.string(),
+  sourceExists: z.boolean(),
+  targetExists: z.boolean(),
+  typeMatches: z.boolean(),
+  optionsMatch: z.boolean(),
+  indexesMatch: z.boolean(),
+  documentsMatch: z.boolean(),
+  sourceType: z.string().nullable(),
+  targetType: z.string().nullable(),
+  sourceCount: z.number().nullable(),
+  targetCount: z.number().nullable(),
+  sourceHash: z.string().nullable(),
+  targetHash: z.string().nullable(),
+  sourceIndexesHash: z.string().nullable(),
+  targetIndexesHash: z.string().nullable(),
+  sourceOptionsHash: z.string().nullable(),
+  targetOptionsHash: z.string().nullable(),
+});
+
+export type DatabaseEngineMongoSyncVerificationCollection = z.infer<
+  typeof databaseEngineMongoSyncVerificationCollectionSchema
+>;
+
+export const databaseEngineMongoSyncVerificationSchema = z.object({
+  status: z.enum(['passed', 'failed']),
+  verifiedAt: z.string(),
+  source: mongoSourceSchema,
+  target: mongoSourceSchema,
+  sourceDbName: z.string(),
+  targetDbName: z.string(),
+  sourceCollections: z.number(),
+  targetCollections: z.number(),
+  collectionsCompared: z.number(),
+  mismatches: z.array(z.string()),
+  collections: z.array(databaseEngineMongoSyncVerificationCollectionSchema),
+});
+
+export type DatabaseEngineMongoSyncVerification = z.infer<
+  typeof databaseEngineMongoSyncVerificationSchema
+>;
+
 export const databaseEngineMongoLastSyncSchema = z.object({
   direction: databaseEngineMongoSyncDirectionSchema,
   source: mongoSourceSchema,
@@ -480,6 +522,7 @@ export const databaseEngineMongoLastSyncSchema = z.object({
   preSyncBackups: z.array(databaseEngineMongoSyncBackupSchema).default([]),
   archivePath: z.string().nullable(),
   logPath: z.string().nullable(),
+  verification: databaseEngineMongoSyncVerificationSchema.nullable().optional(),
 });
 
 export type DatabaseEngineMongoLastSync = z.infer<
@@ -533,6 +576,7 @@ export const databaseEngineMongoSyncResponseSchema = z.object({
   preSyncBackups: z.array(databaseEngineMongoSyncBackupSchema).default([]),
   archivePath: z.string().nullable(),
   logPath: z.string().nullable(),
+  verification: databaseEngineMongoSyncVerificationSchema.nullable().optional(),
 });
 
 export type DatabaseEngineMongoSyncResponse = z.infer<

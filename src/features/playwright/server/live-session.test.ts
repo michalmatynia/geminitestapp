@@ -230,14 +230,36 @@ describe('live-session', () => {
 
     const { sessionId } = await createLiveScripterSession({
       ownerUserId: 'admin-1',
-      url: 'http://127.0.0.1:3000/__playwright/live-scripter-fixture',
+      url: 'http://127.0.0.1:3000/playwright-fixtures/live-scripter-fixture',
       personaId: null,
       selectorProfile: null,
     });
 
     expect(sessionId).toEqual(expect.any(String));
     expect(runtime.page.goto).toHaveBeenCalledWith(
-      'http://127.0.0.1:3000/__playwright/live-scripter-fixture',
+      'http://127.0.0.1:3000/playwright-fixtures/live-scripter-fixture',
+      expect.any(Object)
+    );
+  });
+
+  it('allows the localized dedicated loopback fixture route outside production', async () => {
+    const runtime = createMockSessionRuntime();
+    launchPlaywrightBrowserMock.mockResolvedValue({
+      browser: runtime.browser,
+      label: 'Chromium (bundled)',
+      fallbackMessages: [],
+    });
+
+    const { sessionId } = await createLiveScripterSession({
+      ownerUserId: 'admin-1',
+      url: 'http://127.0.0.1:3000/pl/playwright-fixtures/live-scripter-fixture',
+      personaId: null,
+      selectorProfile: null,
+    });
+
+    expect(sessionId).toEqual(expect.any(String));
+    expect(runtime.page.goto).toHaveBeenCalledWith(
+      'http://127.0.0.1:3000/pl/playwright-fixtures/live-scripter-fixture',
       expect.any(Object)
     );
   });

@@ -67,7 +67,6 @@ function PriceCellBase({ productId, price }: { productId: string, price: number 
 function PriceCellContentIndicator({ info, productPrice }: { info: PriceInfo, productPrice: number | null }): React.JSX.Element | null {
   const { price: displayPrice, currencyCode: actualCurrency } = info;
   if (displayPrice === null || actualCurrency === null) return null;
-  if (displayPrice === productPrice) return null;
 
   return (
     <ConvertedPriceTooltip displayPrice={displayPrice} actualCurrency={actualCurrency} />

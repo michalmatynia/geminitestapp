@@ -39,6 +39,19 @@ const mocks = vi.hoisted(() => ({
   resolveMongoSourceConfig: vi.fn(),
   createMongoSourceBackup: vi.fn(),
   recordMongoSourceSync: vi.fn(async () => undefined),
+  verifyMongoSourceParity: vi.fn(async ({ source, target, sourceDbName, targetDbName }) => ({
+    status: 'passed',
+    verifiedAt: '2026-04-09T04:31:00.000Z',
+    source,
+    target,
+    sourceDbName,
+    targetDbName,
+    sourceCollections: 2,
+    targetCollections: 2,
+    collectionsCompared: 2,
+    mismatches: [],
+    collections: [],
+  })),
   execFileAsync: vi.fn(),
   getMongoDumpCommand: vi.fn(() => 'mongodump'),
   getMongoRestoreCommand: vi.fn(() => 'mongorestore'),
@@ -64,6 +77,10 @@ vi.mock('@/shared/lib/db/utils/mongo', () => ({
 
 vi.mock('@/shared/lib/db/services/database-backup', () => ({
   createMongoSourceBackup: mocks.createMongoSourceBackup,
+}));
+
+vi.mock('@/shared/lib/db/services/mongo-source-parity', () => ({
+  verifyMongoSourceParity: mocks.verifyMongoSourceParity,
 }));
 
 import { syncMongoSources } from './mongo-source-sync';
@@ -103,6 +120,21 @@ describe('mongo-source-sync', () => {
       syncIssue: null,
     });
     process.env['NODE_ENV'] = 'test';
+    mocks.verifyMongoSourceParity.mockImplementation(
+      async ({ source, target, sourceDbName, targetDbName }) => ({
+        status: 'passed',
+        verifiedAt: '2026-04-09T04:31:00.000Z',
+        source,
+        target,
+        sourceDbName,
+        targetDbName,
+        sourceCollections: 2,
+        targetCollections: 2,
+        collectionsCompared: 2,
+        mismatches: [],
+        collections: [],
+      })
+    );
     mocks.createMongoSourceBackup.mockImplementation(async ({ source, role, direction, timestamp }) => ({
       role,
       source,
@@ -196,18 +228,91 @@ describe('mongo-source-sync', () => {
     expect(result.preSyncBackups).toHaveLength(2);
     expect(result.archivePath).toContain('mongo-sync-cloud_to_local-');
     expect(result.logPath).toContain('mongo-sync-cloud_to_local-');
+    expect(result.verification?.status).toBe('passed');
     expect(result.syncedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    expect(mocks.verifyMongoSourceParity).toHaveBeenCalledWith({
+      source: 'cloud',
+      target: 'local',
+      sourceDbName: 'app_cloud',
+      targetDbName: 'app_local',
+    });
     expect(mocks.recordMongoSourceSync).toHaveBeenCalledWith(
       expect.objectContaining({
         direction: 'cloud_to_local',
         source: 'cloud',
         target: 'local',
+        verification: expect.objectContaining({ status: 'passed' }),
         preSyncBackups: expect.arrayContaining([
           expect.objectContaining({ role: 'source', source: 'cloud' }),
           expect.objectContaining({ role: 'target', source: 'local' }),
         ]),
       })
     );
+  });
+
+  it('fails sync and skips success metadata when post-restore parity verification fails', async () => {
+    mocks.resolveMongoSourceConfig
+      .mockResolvedValueOnce({
+        configured: true,
+        source: 'local',
+        uri: 'mongodb://localhost:27017/app_local',
+        dbName: 'app_local',
+      })
+      .mockResolvedValueOnce({
+        configured: true,
+        source: 'cloud',
+        uri: 'mongodb+srv://cluster.example/app_cloud',
+        dbName: 'app_cloud',
+      });
+    mocks.execFileAsync
+      .mockResolvedValueOnce({ stdout: 'dump ok', stderr: '' })
+      .mockResolvedValueOnce({ stdout: 'restore ok', stderr: '' });
+    mocks.verifyMongoSourceParity.mockResolvedValueOnce({
+      status: 'failed',
+      verifiedAt: '2026-04-09T04:31:00.000Z',
+      source: 'local',
+      target: 'cloud',
+      sourceDbName: 'app_local',
+      targetDbName: 'app_cloud',
+      sourceCollections: 1,
+      targetCollections: 1,
+      collectionsCompared: 1,
+      mismatches: ['Collection "products" document mismatch: count 3 != 2.'],
+      collections: [],
+    });
+
+    await expect(syncMongoSources('local_to_cloud')).rejects.toThrow(
+      /sync verification failed/i
+    );
+    expect(mocks.verifyMongoSourceParity).toHaveBeenCalled();
+    expect(mocks.recordMongoSourceSync).not.toHaveBeenCalled();
+  });
+
+  it('redacts MongoDB credentials in sync command logs', async () => {
+    mocks.resolveMongoSourceConfig
+      .mockResolvedValueOnce({
+        configured: true,
+        source: 'local',
+        uri: 'mongodb://local-user:local-secret@localhost:27017/app_local',
+        dbName: 'app_local',
+      })
+      .mockResolvedValueOnce({
+        configured: true,
+        source: 'cloud',
+        uri: 'mongodb+srv://cloud-user:cloud-secret@cluster.example/app_cloud',
+        dbName: 'app_cloud',
+      });
+    mocks.execFileAsync
+      .mockResolvedValueOnce({ stdout: 'dump ok', stderr: '' })
+      .mockResolvedValueOnce({ stdout: 'restore ok', stderr: '' });
+
+    const result = await syncMongoSources('local_to_cloud');
+    const log = await fs.readFile(result.logPath!, 'utf8');
+
+    expect(log).toContain('mongodb://local-user:***@localhost:27017/app_local');
+    expect(log).toContain('mongodb+srv://cloud-user:***@cluster.example/app_cloud');
+    expect(log).not.toContain('local-secret');
+    expect(log).not.toContain('cloud-secret');
   });
 
   it('rejects sync when a Mongo target is already known to be unreachable', async () => {

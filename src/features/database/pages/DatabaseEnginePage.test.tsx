@@ -76,6 +76,19 @@ const mocks = vi.hoisted(() => ({
         ],
         archivePath: '/tmp/mongo-sync.archive',
         logPath: '/tmp/mongo-sync.log',
+        verification: {
+          status: 'passed',
+          verifiedAt: '2026-04-09T04:31:00.000Z',
+          source: 'cloud',
+          target: 'local',
+          sourceDbName: 'app_cloud',
+          targetDbName: 'app_local',
+          sourceCollections: 12,
+          targetCollections: 12,
+          collectionsCompared: 12,
+          mismatches: [],
+          collections: [],
+        },
       },
       local: {
         source: 'local',
@@ -194,6 +207,19 @@ const createState = () => ({
       ],
       archivePath: '/tmp/mongo-sync.archive',
       logPath: '/tmp/mongo-sync.log',
+      verification: {
+        status: 'passed' as const,
+        verifiedAt: '2026-04-09T04:31:00.000Z',
+        source: 'cloud' as const,
+        target: 'local' as const,
+        sourceDbName: 'app_cloud',
+        targetDbName: 'app_local',
+        sourceCollections: 12,
+        targetCollections: 12,
+        collectionsCompared: 12,
+        mismatches: [],
+        collections: [],
+      },
     },
     local: {
       source: 'local' as const,
@@ -436,6 +462,8 @@ describe('DatabaseEnginePage', () => {
     expect(screen.getByText('Direction: cloud_to_local')).toBeInTheDocument();
     expect(screen.getByText('Transfer archive: /tmp/mongo-sync.archive')).toBeInTheDocument();
     expect(screen.getByText('Transfer log: /tmp/mongo-sync.log')).toBeInTheDocument();
+    expect(screen.getByText('Verified exact mirror (12 collections)')).toBeInTheDocument();
+    expect(screen.getByText(/Verification: passed at 2026-04-09T04:31:00.000Z/)).toBeInTheDocument();
     expect(screen.getByText('Pre-sync backups: 2')).toBeInTheDocument();
     expect(
       screen.getByText('Source backup (cloud): cloud-source-pre-sync.archive')

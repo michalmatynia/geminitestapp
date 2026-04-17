@@ -1,4 +1,5 @@
 'use client';
+'use no memo';
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -16,6 +17,7 @@ import {
   useLogInsights,
 } from '../hooks/useLogQueries';
 import type { AiInsightRecord } from '@/shared/contracts/ai-insights';
+import { useOptionalContextRegistryPageEnvelope } from '@/shared/lib/ai-context-registry/page-context';
 import type {
   ClearLogsTargetDto as ClearLogsTarget,
   MongoCollectionIndexStatusDto as MongoCollectionIndexStatus,
@@ -230,7 +232,8 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
   const mongoDiagnosticsQuery = useMongoDiagnostics();
   const insightsQuery = useLogInsights({ limit: 5 });
 
-  const runInsightMutation = useRunLogInsight();
+  const contextRegistry = useOptionalContextRegistryPageEnvelope();
+  const runInsightMutation = useRunLogInsight(contextRegistry);
 
   const handleRunInsight = async () => {
     try {
@@ -246,7 +249,7 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
     }
   };
 
-  const interpretLogMutation = useInterpretLog();
+  const interpretLogMutation = useInterpretLog(contextRegistry);
 
   const handleInterpretLog = async (logId: string) => {
     try {

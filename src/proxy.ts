@@ -71,6 +71,9 @@ const isApiRequest = (pathname: string): boolean => pathname === '/api' || pathn
 const isAdminRequest = (pathname: string): boolean =>
   pathname === '/admin' || pathname.startsWith('/admin/');
 
+const isPlaywrightFixturePath = (pathname: string): boolean =>
+  pathname === '/__playwright' || pathname.startsWith('/__playwright/');
+
 const isSafePageMethod = (request: NextRequest): boolean =>
   request.method === 'GET' || request.method === 'HEAD';
 
@@ -143,6 +146,13 @@ const resolvePublicLocaleResponse = (request: NextRequest): NextResponse | null 
 
   const pathname = request.nextUrl.pathname;
   const pathLocale = getPathLocale(pathname);
+  const strippedPathname = stripSiteLocalePrefix(pathname);
+  if (isPlaywrightFixturePath(strippedPathname)) {
+    return pathLocale
+      ? syncExplicitLocaleCookie(request, baseProxy(request), pathLocale)
+      : baseProxy(request);
+  }
+
   const defaultLocale = getDefaultSiteLocaleCode();
 
   if (pathLocale && pathLocale !== defaultLocale) {

@@ -136,6 +136,17 @@ describe('live-session browser smoke', () => {
     expect(buttonBox).not.toBeNull();
     const buttonCenter = getCenterPoint(buttonBox as { x: number; y: number; width: number; height: number });
 
+    await page.evaluate(() => {
+      const overlay = document.createElement('div');
+      overlay.id = 'busy-shell-overlay';
+      overlay.setAttribute('aria-busy', 'true');
+      overlay.style.position = 'fixed';
+      overlay.style.inset = '0';
+      overlay.style.zIndex = '9999';
+      overlay.style.background = 'rgba(255, 255, 255, 0.01)';
+      document.body.append(overlay);
+    });
+
     const pickedButton = await pickElementAt(page, buttonCenter.x, buttonCenter.y);
     expect(pickedButton).toMatchObject({
       tag: 'button',
@@ -153,6 +164,10 @@ describe('live-session browser smoke', () => {
         text: 'Submit now',
         testId: 'submit-action',
       },
+    });
+
+    await page.evaluate(() => {
+      document.getElementById('busy-shell-overlay')?.remove();
     });
 
     await page.mouse.click(buttonCenter.x, buttonCenter.y);

@@ -1,3 +1,5 @@
+'use no memo';
+
 import type { AiInsightResponse } from '@/shared/contracts/ai-insights';
 import {
   type ClearLogsTargetDto as ClearLogsTarget,
@@ -5,8 +7,8 @@ import {
   type MongoRebuildIndexesResponseDto as MongoRebuildIndexesResponse,
   mongoRebuildIndexesResponseSchema,
 } from '@/shared/contracts/observability';
+import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import type { UpdateMutation } from '@/shared/contracts/ui/queries';
-import { useOptionalContextRegistryPageEnvelope } from '@/shared/lib/ai-context-registry/page-context';
 import { api } from '@/shared/lib/api-client';
 import { createCreateMutationV2, createDeleteMutationV2 } from '@/shared/lib/query-factories-v2';
 import {
@@ -16,6 +18,9 @@ import {
   invalidateSystemLogs,
 } from '@/shared/lib/query-invalidation';
 import { logsKeys, diagnosticsKeys } from '@/shared/lib/query-key-exports';
+
+// These hooks delegate into TanStack Query mutation factory wrappers. Keep them
+// out of React Compiler memoization to avoid dev cache-size mismatches.
 
 export function useClearLogsMutation(): UpdateMutation<ClearLogsResponse, ClearLogsTarget> {
   return createDeleteMutationV2({
@@ -76,9 +81,9 @@ export function useRebuildIndexesMutation(): UpdateMutation<MongoRebuildIndexesR
   });
 }
 
-export function useRunLogInsight(): UpdateMutation<AiInsightResponse, void> {
-  const contextRegistry = useOptionalContextRegistryPageEnvelope();
-
+export function useRunLogInsight(
+  contextRegistry?: ContextRegistryConsumerEnvelope | null
+): UpdateMutation<AiInsightResponse, void> {
   return createCreateMutationV2({
     mutationFn: () =>
       api.post<AiInsightResponse>('/api/system/logs/insights', {
@@ -97,9 +102,9 @@ export function useRunLogInsight(): UpdateMutation<AiInsightResponse, void> {
   });
 }
 
-export function useInterpretLog(): UpdateMutation<AiInsightResponse, string> {
-  const contextRegistry = useOptionalContextRegistryPageEnvelope();
-
+export function useInterpretLog(
+  contextRegistry?: ContextRegistryConsumerEnvelope | null
+): UpdateMutation<AiInsightResponse, string> {
   return createCreateMutationV2({
     mutationFn: (logId: string) =>
       api.post<AiInsightResponse>('/api/system/logs/interpret', {

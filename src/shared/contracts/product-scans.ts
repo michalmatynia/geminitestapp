@@ -440,6 +440,7 @@ export type ProductScanListResponse = z.infer<typeof productScanListResponseSche
 export const productScanBatchRequestSchema = z.object({
   productIds: z.array(trimmedString.min(1).max(160)).min(1).max(100),
   selectorProfile: optionalTrimmedString(120).optional(),
+  imageSearchPageUrl: optionalTrimmedString(2048).optional(),
   stepSequenceKey: optionalTrimmedString(120).optional(),
   stepSequence: z.array(productScanRequestSequenceEntrySchema).max(50).nullable().optional(),
 });

@@ -67,6 +67,27 @@ const AMAZON_IMAGE_SEARCH_FALLBACK_PROVIDER_OPTIONS = [
   ...PRODUCT_SCANNER_AMAZON_IMAGE_SEARCH_PROVIDER_OPTIONS,
 ];
 
+const CUSTOM_AMAZON_IMAGE_SEARCH_PAGE_VALUE = '__custom__';
+
+const AMAZON_IMAGE_SEARCH_PAGE_OPTIONS = [
+  { value: '', label: 'Built-in order (Google Lens, then Google Images)' },
+  { value: 'https://lens.google.com/?hl=en', label: 'Google Lens direct upload' },
+  { value: 'https://images.google.com/?hl=en', label: 'Google Images legacy page' },
+  { value: 'https://www.google.com/imghp?hl=en', label: 'Google Images homepage' },
+  { value: CUSTOM_AMAZON_IMAGE_SEARCH_PAGE_VALUE, label: 'Custom URL' },
+];
+
+const resolveAmazonImageSearchPageSelectValue = (value: string): string => {
+  const trimmed = value.trim();
+  if (trimmed.length === 0) {
+    return '';
+  }
+
+  return AMAZON_IMAGE_SEARCH_PAGE_OPTIONS.some((option) => option.value === trimmed)
+    ? trimmed
+    : CUSTOM_AMAZON_IMAGE_SEARCH_PAGE_VALUE;
+};
+
 const resolveAmazonEvaluatorPolicyLines = (
   evaluator: AmazonCandidateEvaluator
 ): string[] => {
@@ -464,22 +485,63 @@ export function AdminProductScannerSettingsPage(): React.JSX.Element {
               />
             </FormField>
             <FormField
-              label='Image Search Page URL'
-              description='Optional first page to open for reverse-image search. Leave blank to use the built-in Google Lens and Google Images fallback pages.'
+              label='Image Search Page'
+              description='Choose the first reverse-image search page to open. The scanner still falls back to the built-in Google Lens and Google Images pages when needed.'
             >
-              <Input
-                type='url'
-                value={draft.amazonImageSearchPageUrl}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                  setDraft((prev) => ({
-                    ...prev,
-                    amazonImageSearchPageUrl: event.target.value,
-                  }));
-                }}
-                placeholder='https://lens.google.com/?hl=en'
-                aria-label='Amazon image search page URL'
-                title='Amazon image search page URL'
-              />
+              <div className='space-y-2'>
+                <SelectSimple
+                  size='sm'
+                  value={resolveAmazonImageSearchPageSelectValue(
+                    draft.amazonImageSearchPageUrl
+                  )}
+                  onValueChange={(value: string): void => {
+                    setDraft((prev) => {
+                      if (value === CUSTOM_AMAZON_IMAGE_SEARCH_PAGE_VALUE) {
+                        return {
+                          ...prev,
+                          amazonImageSearchPageUrl:
+                            resolveAmazonImageSearchPageSelectValue(
+                              prev.amazonImageSearchPageUrl
+                            ) === CUSTOM_AMAZON_IMAGE_SEARCH_PAGE_VALUE
+                              ? prev.amazonImageSearchPageUrl
+                              : '',
+                        };
+                      }
+
+                      const preset = AMAZON_IMAGE_SEARCH_PAGE_OPTIONS.some(
+                        (option) => option.value === value
+                      )
+                        ? value
+                        : '';
+                      return {
+                        ...prev,
+                        amazonImageSearchPageUrl: preset,
+                      };
+                    });
+                  }}
+                  options={[...AMAZON_IMAGE_SEARCH_PAGE_OPTIONS]}
+                  placeholder='Select image search page'
+                  ariaLabel='Select Amazon image search page'
+                  title='Select Amazon image search page'
+                />
+                <Input
+                  type='url'
+                  value={draft.amazonImageSearchPageUrl}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                    setDraft((prev) => ({
+                      ...prev,
+                      amazonImageSearchPageUrl: event.target.value,
+                    }));
+                  }}
+                  placeholder='https://lens.google.com/?hl=en'
+                  aria-label='Amazon image search page URL'
+                  title='Amazon image search page URL'
+                />
+                <Hint>
+                  Presets write the URL above. Editing the URL switches the selection to
+                  Custom URL.
+                </Hint>
+              </div>
             </FormField>
             <FormField
               label='Fallback Search Provider'

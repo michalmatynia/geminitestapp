@@ -321,6 +321,139 @@ const buildAutomationFlowImportRunResponse = ({
     },
   });
 
+const buildIndexedStringRecords = ({
+  count,
+  key,
+  prefix,
+}: {
+  count: number;
+  key: string;
+  prefix: string;
+}): Record<string, string>[] =>
+  Array.from({ length: count }, (_unused, index) => ({
+    [key]: `${prefix} ${index + 1}`,
+  }));
+
+const buildIndexedSkuPayloads = (count: number): Array<{ sku: string }> =>
+  Array.from({ length: count }, (_unused, index) => ({
+    sku: `SKU-${index + 1}`,
+  }));
+
+const buildIndexedIdRecords = (prefix: string, count: number): Array<{ id: string }> =>
+  Array.from({ length: count }, (_unused, index) => ({
+    id: `${prefix}-${index + 1}`,
+  }));
+
+const buildCreatedWriteOutcomes = ({
+  count,
+  kind,
+  recordPrefix,
+}: {
+  count: number;
+  kind: 'draft' | 'product';
+  recordPrefix: string;
+}): Record<string, unknown>[] =>
+  Array.from({ length: count }, (_unused, index) => ({
+    kind,
+    status: 'created',
+    index,
+    payload: { sku: `SKU-${index + 1}` },
+    record: { id: `${recordPrefix}-${index + 1}` },
+  }));
+
+const buildFailedWriteOutcome = ({
+  errorMessage,
+  index,
+  kind,
+  sku,
+}: {
+  errorMessage: string;
+  index: number;
+  kind: 'draft' | 'product';
+  sku: string;
+}): Record<string, unknown> => ({
+  kind,
+  status: 'failed',
+  index,
+  payload: { sku },
+  record: null,
+  errorMessage,
+});
+
+const buildMappedDrafts = (count: number): Array<{ sku: string; name_en: string }> =>
+  Array.from({ length: count }, (_unused, index) => ({
+    sku: `SKU-${index + 1}`,
+    name_en: `Product ${index + 1}`,
+  }));
+
+const buildDraftWriteErrorResult = (errorMessage: string): Record<string, string> => ({
+  kind: 'write_error',
+  operation: 'create_draft',
+  status: 'failed',
+  errorMessage,
+});
+
+const PRODUCT_WRITE_STATUS_FAILED_OUTCOME_EXPORT = {
+  createdRecord: null,
+  errorMessage: 'Product validation failed',
+  index: 3,
+  payloadRecord: { sku: 'SKU-4' },
+  status: 'failed',
+};
+
+const PRODUCT_WRITE_STATUS_FILTERED_OUTCOME_EXPORTS = [
+  PRODUCT_WRITE_STATUS_FAILED_OUTCOME_EXPORT,
+  {
+    createdRecord: { id: 'product-1' },
+    errorMessage: null,
+    index: 0,
+    payloadRecord: { sku: 'SKU-1' },
+    status: 'created',
+  },
+  {
+    createdRecord: { id: 'product-2' },
+    errorMessage: null,
+    index: 1,
+    payloadRecord: { sku: 'SKU-2' },
+    status: 'created',
+  },
+  {
+    createdRecord: { id: 'product-3' },
+    errorMessage: null,
+    index: 2,
+    payloadRecord: { sku: 'SKU-3' },
+    status: 'created',
+  },
+] as const;
+
+const PRODUCT_WRITE_STATUS_FILTERED_OUTCOMES_JSON = JSON.stringify(
+  PRODUCT_WRITE_STATUS_FILTERED_OUTCOME_EXPORTS,
+  null,
+  2
+);
+
+const PRODUCT_WRITE_STATUS_FAILED_OUTCOMES_JSON = JSON.stringify(
+  [PRODUCT_WRITE_STATUS_FAILED_OUTCOME_EXPORT],
+  null,
+  2
+);
+
+const PRODUCT_WRITE_STATUS_FAILED_PAYLOADS_JSON = JSON.stringify([{ sku: 'SKU-4' }], null, 2);
+const PRODUCT_WRITE_STATUS_FAILED_PAYLOAD_JSON = JSON.stringify({ sku: 'SKU-4' }, null, 2);
+
+const PRODUCT_WRITE_STATUS_FILTERED_OUTCOMES_CSV = [
+  'itemNumber,index,status,errorMessage,payloadSummary,createdSummary',
+  '"4","3","failed","Product validation failed","sku=SKU-4","No created record"',
+  '"1","0","created","","sku=SKU-1","id=product-1"',
+  '"2","1","created","","sku=SKU-2","id=product-2"',
+  '"3","2","created","","sku=SKU-3","id=product-3"',
+].join('\n');
+
+const PRODUCT_WRITE_STATUS_FAILED_OUTCOMES_CSV = [
+  'itemNumber,index,status,errorMessage,payloadSummary,createdSummary',
+  '"4","3","failed","Product validation failed","sku=SKU-4","No created record"',
+].join('\n');
+
 const mockProgrammableImportRuntime = ({
   connection,
   testMutateAsync,
@@ -684,18 +817,16 @@ describe('AdminPlaywrightProgrammableIntegrationPageRuntime', () => {
     const upsertMutateAsync = vi.fn().mockResolvedValue({
       id: 'connection-flow-1',
     });
-    const rawProducts = [
-      { title: 'Product 1' },
-      { title: 'Product 2' },
-      { title: 'Product 3' },
-      { title: 'Product 4' },
-    ];
-    const mappedProducts = [
-      { name: 'Product 1' },
-      { name: 'Product 2' },
-      { name: 'Product 3' },
-      { name: 'Product 4' },
-    ];
+    const rawProducts = buildIndexedStringRecords({
+      count: 4,
+      key: 'title',
+      prefix: 'Product',
+    });
+    const mappedProducts = buildIndexedStringRecords({
+      count: 4,
+      key: 'name',
+      prefix: 'Product',
+    });
     const testMutateAsync = vi.fn().mockResolvedValue(
       buildAutomationFlowImportRunResponse({
         input: {
@@ -710,107 +841,35 @@ describe('AdminPlaywrightProgrammableIntegrationPageRuntime', () => {
         mappedProducts,
         automationFlow: {
           writeOutcomes: [
-            {
+            ...buildCreatedWriteOutcomes({
+              count: 4,
               kind: 'draft',
-              status: 'created',
-              index: 0,
-              payload: { sku: 'SKU-1' },
-              record: { id: 'draft-1' },
-            },
-            {
-              kind: 'draft',
-              status: 'created',
-              index: 1,
-              payload: { sku: 'SKU-2' },
-              record: { id: 'draft-2' },
-            },
-            {
-              kind: 'draft',
-              status: 'created',
-              index: 2,
-              payload: { sku: 'SKU-3' },
-              record: { id: 'draft-3' },
-            },
-            {
-              kind: 'draft',
-              status: 'created',
-              index: 3,
-              payload: { sku: 'SKU-4' },
-              record: { id: 'draft-4' },
-            },
-            {
+              recordPrefix: 'draft',
+            }),
+            ...buildCreatedWriteOutcomes({
+              count: 3,
               kind: 'product',
-              status: 'created',
-              index: 0,
-              payload: { sku: 'SKU-1' },
-              record: { id: 'product-1' },
-            },
-            {
-              kind: 'product',
-              status: 'created',
-              index: 1,
-              payload: { sku: 'SKU-2' },
-              record: { id: 'product-2' },
-            },
-            {
-              kind: 'product',
-              status: 'created',
-              index: 2,
-              payload: { sku: 'SKU-3' },
-              record: { id: 'product-3' },
-            },
-            {
-              kind: 'product',
-              status: 'failed',
-              index: 3,
-              payload: { sku: 'SKU-4' },
-              record: null,
+              recordPrefix: 'product',
+            }),
+            buildFailedWriteOutcome({
               errorMessage: 'Product validation failed',
-            },
+              index: 3,
+              kind: 'product',
+              sku: 'SKU-4',
+            }),
           ],
-          draftPayloads: [
-            { sku: 'SKU-1' },
-            { sku: 'SKU-2' },
-            { sku: 'SKU-3' },
-            { sku: 'SKU-4' },
-          ],
-          drafts: [
-            { id: 'draft-1' },
-            { id: 'draft-2' },
-            { id: 'draft-3' },
-            { id: 'draft-4' },
-          ],
-          productPayloads: [
-            { sku: 'SKU-1' },
-            { sku: 'SKU-2' },
-            { sku: 'SKU-3' },
-            { sku: 'SKU-4' },
-          ],
-          products: [
-            { id: 'product-1' },
-            { id: 'product-2' },
-            { id: 'product-3' },
-          ],
+          draftPayloads: buildIndexedSkuPayloads(4),
+          drafts: buildIndexedIdRecords('draft', 4),
+          productPayloads: buildIndexedSkuPayloads(4),
+          products: buildIndexedIdRecords('product', 3),
           results: {
-            mappedDrafts: [
-              { sku: 'SKU-1', name_en: 'Product 1' },
-              { sku: 'SKU-2', name_en: 'Product 2' },
-              { sku: 'SKU-3', name_en: 'Product 3' },
-              { sku: 'SKU-4', name_en: 'Product 4' },
-            ],
+            mappedDrafts: buildMappedDrafts(4),
             draftWrites: [
-              { id: 'draft-1' },
-              { id: 'draft-2' },
-              { id: 'draft-3' },
-              {
-                kind: 'write_error',
-                operation: 'create_draft',
-                status: 'failed',
-                errorMessage: 'Catalog validation failed',
-              },
+              ...buildIndexedIdRecords('draft', 3),
+              buildDraftWriteErrorResult('Catalog validation failed'),
             ],
-            drafts: [{ id: 'draft-1' }, { id: 'draft-2' }],
-            products: [{ id: 'product-1' }, { id: 'product-2' }],
+            drafts: buildIndexedIdRecords('draft', 2),
+            products: buildIndexedIdRecords('product', 2),
           },
         },
       })
@@ -963,9 +1022,7 @@ describe('AdminPlaywrightProgrammableIntegrationPageRuntime', () => {
     expect(createObjectURLSpy).toHaveBeenCalledTimes(1);
     const downloadedBlob = createObjectURLSpy.mock.calls[0]?.[0];
     expect(downloadedBlob).toBeInstanceOf(Blob);
-    await expect(downloadedBlob?.text()).resolves.toBe(
-      'itemNumber,index,status,errorMessage,payloadSummary,createdSummary\n"4","3","failed","Product validation failed","sku=SKU-4","No created record"\n"1","0","created","","sku=SKU-1","id=product-1"\n"2","1","created","","sku=SKU-2","id=product-2"\n"3","2","created","","sku=SKU-3","id=product-3"'
-    );
+    await expect(downloadedBlob?.text()).resolves.toBe(PRODUCT_WRITE_STATUS_FILTERED_OUTCOMES_CSV);
     expect(anchorClickSpy).toHaveBeenCalledTimes(1);
     expect(revokeObjectURLSpy).toHaveBeenCalledWith('blob:write-status');
     expect(toastMock).toHaveBeenCalledWith('Filtered outcomes CSV for Product Write Status download started', {
@@ -979,9 +1036,7 @@ describe('AdminPlaywrightProgrammableIntegrationPageRuntime', () => {
       productWriteStatusQueries.getByRole('button', { name: 'Copy filtered outcomes CSV (4)' })
     );
     await waitFor(() => {
-      expect(clipboardWriteTextMock).toHaveBeenCalledWith(
-        'itemNumber,index,status,errorMessage,payloadSummary,createdSummary\n"4","3","failed","Product validation failed","sku=SKU-4","No created record"\n"1","0","created","","sku=SKU-1","id=product-1"\n"2","1","created","","sku=SKU-2","id=product-2"\n"3","2","created","","sku=SKU-3","id=product-3"'
-      );
+      expect(clipboardWriteTextMock).toHaveBeenCalledWith(PRODUCT_WRITE_STATUS_FILTERED_OUTCOMES_CSV);
     });
     expect(toastMock).toHaveBeenCalledWith('Filtered outcomes CSV for Product Write Status copied to clipboard', {
       variant: 'success',
@@ -993,7 +1048,7 @@ describe('AdminPlaywrightProgrammableIntegrationPageRuntime', () => {
     );
     await waitFor(() => {
       expect(clipboardWriteTextMock).toHaveBeenCalledWith(
-        '[\n  {\n    "createdRecord": null,\n    "errorMessage": "Product validation failed",\n    "index": 3,\n    "payloadRecord": {\n      "sku": "SKU-4"\n    },\n    "status": "failed"\n  },\n  {\n    "createdRecord": {\n      "id": "product-1"\n    },\n    "errorMessage": null,\n    "index": 0,\n    "payloadRecord": {\n      "sku": "SKU-1"\n    },\n    "status": "created"\n  },\n  {\n    "createdRecord": {\n      "id": "product-2"\n    },\n    "errorMessage": null,\n    "index": 1,\n    "payloadRecord": {\n      "sku": "SKU-2"\n    },\n    "status": "created"\n  },\n  {\n    "createdRecord": {\n      "id": "product-3"\n    },\n    "errorMessage": null,\n    "index": 2,\n    "payloadRecord": {\n      "sku": "SKU-3"\n    },\n    "status": "created"\n  }\n]'
+        PRODUCT_WRITE_STATUS_FILTERED_OUTCOMES_JSON
       );
     });
     expect(toastMock).toHaveBeenCalledWith('Filtered outcomes for Product Write Status copied to clipboard', {
@@ -1005,7 +1060,7 @@ describe('AdminPlaywrightProgrammableIntegrationPageRuntime', () => {
       productWriteStatusQueries.getByRole('button', { name: 'Copy failed payloads JSON (1)' })
     );
     await waitFor(() => {
-      expect(clipboardWriteTextMock).toHaveBeenCalledWith('[\n  {\n    "sku": "SKU-4"\n  }\n]');
+      expect(clipboardWriteTextMock).toHaveBeenCalledWith(PRODUCT_WRITE_STATUS_FAILED_PAYLOADS_JSON);
     });
     expect(toastMock).toHaveBeenCalledWith('Failed payloads for Product Write Status copied to clipboard', {
       variant: 'success',
@@ -1016,9 +1071,7 @@ describe('AdminPlaywrightProgrammableIntegrationPageRuntime', () => {
       productWriteStatusQueries.getByRole('button', { name: 'Copy failed outcomes JSON (1)' })
     );
     await waitFor(() => {
-      expect(clipboardWriteTextMock).toHaveBeenCalledWith(
-        '[\n  {\n    "createdRecord": null,\n    "errorMessage": "Product validation failed",\n    "index": 3,\n    "payloadRecord": {\n      "sku": "SKU-4"\n    },\n    "status": "failed"\n  }\n]'
-      );
+      expect(clipboardWriteTextMock).toHaveBeenCalledWith(PRODUCT_WRITE_STATUS_FAILED_OUTCOMES_JSON);
     });
     expect(toastMock).toHaveBeenCalledWith('Failed outcomes for Product Write Status copied to clipboard', {
       variant: 'success',
@@ -1029,9 +1082,7 @@ describe('AdminPlaywrightProgrammableIntegrationPageRuntime', () => {
       productWriteStatusQueries.getByRole('button', { name: 'Copy failed outcomes CSV (1)' })
     );
     await waitFor(() => {
-      expect(clipboardWriteTextMock).toHaveBeenCalledWith(
-        'itemNumber,index,status,errorMessage,payloadSummary,createdSummary\n"4","3","failed","Product validation failed","sku=SKU-4","No created record"'
-      );
+      expect(clipboardWriteTextMock).toHaveBeenCalledWith(PRODUCT_WRITE_STATUS_FAILED_OUTCOMES_CSV);
     });
     expect(toastMock).toHaveBeenCalledWith('Failed outcomes CSV for Product Write Status copied to clipboard', {
       variant: 'success',
@@ -1040,7 +1091,7 @@ describe('AdminPlaywrightProgrammableIntegrationPageRuntime', () => {
     toastMock.mockClear();
     fireEvent.click(within(failedProductRow as HTMLElement).getByRole('button', { name: 'Copy payload JSON' }));
     await waitFor(() => {
-      expect(clipboardWriteTextMock).toHaveBeenCalledWith('{\n  "sku": "SKU-4"\n}');
+      expect(clipboardWriteTextMock).toHaveBeenCalledWith(PRODUCT_WRITE_STATUS_FAILED_PAYLOAD_JSON);
     });
     expect(toastMock).toHaveBeenCalledWith('Payload for item 4 copied to clipboard', {
       variant: 'success',
@@ -1061,14 +1112,12 @@ describe('AdminPlaywrightProgrammableIntegrationPageRuntime', () => {
         mappedProducts,
         automationFlow: {
           writeOutcomes: [
-            {
-              kind: 'draft',
-              status: 'failed',
-              index: 0,
-              payload: { sku: 'SKU-FAIL-1' },
-              record: null,
+            buildFailedWriteOutcome({
               errorMessage: 'Draft validation failed',
-            },
+              index: 0,
+              kind: 'draft',
+              sku: 'SKU-FAIL-1',
+            }),
           ],
           draftPayloads: [{ sku: 'SKU-FAIL-1' }],
           drafts: [],
@@ -1220,6 +1269,72 @@ describe('AdminPlaywrightProgrammableIntegrationPageRuntime', () => {
     expect(
       within(draftWriteStatusSection as HTMLElement).queryByText(/failed$/i)
     ).not.toBeInTheDocument();
+  });
+
+  it('shows an unknown badge when explicit draft write outcomes contain an unsupported status', async () => {
+    const upsertMutateAsync = vi.fn().mockResolvedValue({
+      id: 'connection-draft-unknown-1',
+    });
+    const rawProducts = [{ title: 'Unknown Status Product' }];
+    const mappedProducts = [{ name: 'Unknown Status Product' }];
+    const testMutateAsync = vi.fn().mockResolvedValue(
+      buildAutomationFlowImportRunResponse({
+        rawProducts,
+        mappedProducts,
+        automationFlow: {
+          writeOutcomes: [
+            {
+              kind: 'draft',
+              status: 'pending_review',
+              index: 0,
+              payload: { sku: 'SKU-UNKNOWN-1' },
+              record: null,
+            },
+          ],
+          draftPayloads: [{ sku: 'SKU-UNKNOWN-1' }],
+          drafts: [],
+          productPayloads: [],
+          products: [],
+        },
+      })
+    );
+
+    mockProgrammableImportRuntime({
+      connection: buildProgrammableImportConnection({
+        id: 'connection-draft-unknown-1',
+        name: 'Programmable Draft Unknown',
+        playwrightImportAutomationFlowJson: '{"name":"Draft unknown","blocks":[{"kind":"create_draft"}]}',
+      }),
+      testMutateAsync,
+      upsertMutateAsync,
+    });
+
+    render(<AdminPlaywrightProgrammableIntegrationPageRuntime />);
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Run Flow' }));
+
+    await waitFor(() => {
+      expect(testMutateAsync).toHaveBeenCalledWith({
+        connectionId: 'connection-draft-unknown-1',
+        executionMode: 'commit',
+        scriptType: 'import',
+      });
+    });
+
+    const draftWriteStatusSection = screen
+      .getByText('Draft Write Status (1)')
+      .closest('details');
+    expect(draftWriteStatusSection).not.toBeNull();
+    expect(draftWriteStatusSection).not.toHaveAttribute('open');
+    expect(
+      within(draftWriteStatusSection as HTMLElement).getByText('1 unknown')
+    ).toBeInTheDocument();
+    expect(
+      within(draftWriteStatusSection as HTMLElement).queryByText(/failed$/i)
+    ).not.toBeInTheDocument();
+    expect(
+      within(draftWriteStatusSection as HTMLElement).getByRole('button', { name: 'unknown (1)' })
+    ).toBeInTheDocument();
   });
 
   it('builds a draft preview from one test scrape using saved draft mapper rules', async () => {

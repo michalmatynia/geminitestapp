@@ -162,6 +162,27 @@ const PRODUCT_SCAN_MODAL_CONFIG: Record<ProductScanModalProvider, ProductScanMod
   },
 };
 
+const CUSTOM_AMAZON_IMAGE_SEARCH_PAGE_VALUE = '__custom__';
+
+const AMAZON_IMAGE_SEARCH_PAGE_OPTIONS = [
+  { value: '', label: 'Built-in order (Google Lens, then Google Images)' },
+  { value: 'https://lens.google.com/?hl=en', label: 'Google Lens direct upload' },
+  { value: 'https://images.google.com/?hl=en', label: 'Google Images legacy page' },
+  { value: 'https://www.google.com/imghp?hl=en', label: 'Google Images homepage' },
+  { value: CUSTOM_AMAZON_IMAGE_SEARCH_PAGE_VALUE, label: 'Custom URL' },
+];
+
+const resolveAmazonImageSearchPageSelectValue = (value: string): string => {
+  const trimmed = value.trim();
+  if (trimmed.length === 0) {
+    return '';
+  }
+
+  return AMAZON_IMAGE_SEARCH_PAGE_OPTIONS.some((option) => option.value === trimmed)
+    ? trimmed
+    : CUSTOM_AMAZON_IMAGE_SEARCH_PAGE_VALUE;
+};
+
 const isManualVerificationPending = (scan: Pick<ProductScanRecord, 'rawResult'> | null): boolean => {
   const rawResult = scan?.rawResult;
   if (rawResult === null || rawResult === undefined || typeof rawResult !== 'object' || Array.isArray(rawResult)) {
@@ -1114,6 +1135,8 @@ export function ProductScanModal(
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPolling, setIsPolling] = useState(false);
   const [amazonSelectorProfile, setAmazonSelectorProfile] = useState('amazon');
+  const [amazonImageSearchPageUrl, setAmazonImageSearchPageUrl] = useState('');
+  const [amazonImageSearchPageDraftUrl, setAmazonImageSearchPageDraftUrl] = useState('');
   const [extractingCandidateUrlsByProductId, setExtractingCandidateUrlsByProductId] = useState<
     Record<string, string | null>
   >({});
@@ -1889,12 +1912,19 @@ export function ProductScanModal(
           provider === 'amazon' && amazonSelectorProfile.trim().length > 0
             ? amazonSelectorProfile.trim()
             : 'amazon';
+        const resolvedAmazonImageSearchPageUrl =
+          provider === 'amazon' ? amazonImageSearchPageUrl.trim() : '';
         const response = await api.post<ProductScanBatchResponse>(
           modalConfig.batchEndpoint,
           {
             productIds: selectedProductEntries.map(({ productId }) => productId),
             ...(provider === 'amazon'
-              ? { selectorProfile: resolvedAmazonSelectorProfile }
+              ? {
+                  selectorProfile: resolvedAmazonSelectorProfile,
+                  ...(resolvedAmazonImageSearchPageUrl.length > 0
+                    ? { imageSearchPageUrl: resolvedAmazonImageSearchPageUrl }
+                    : {}),
+                }
               : {}),
             ...(provider === '1688' ? { connectionId: resolved1688ConnectionId } : {}),
           }
@@ -2092,6 +2122,8 @@ export function ProductScanModal(
     };
   }, [
     is1688ConnectionBootstrapPending,
+    amazonImageSearchPageUrl,
+    amazonSelectorProfile,
     isOpen,
     missingBatchResultMessage,
     missingScanRecordMessage,
@@ -2238,7 +2270,7 @@ export function ProductScanModal(
   const renderAmazonSelectorProfilePanel =
     provider === 'amazon' ? (
       <div className='flex items-start gap-3 rounded-md border border-border/60 bg-card/30 px-3 py-2 text-xs text-muted-foreground'>
-        <div className='flex-1 space-y-2'>
+        <div className='flex-1 space-y-4'>
           <div className='space-y-1'>
             <div className='font-medium text-white'>Amazon selector profile</div>
             <div>
@@ -2267,6 +2299,70 @@ export function ProductScanModal(
               </option>
             ))}
           </select>
+          <div className='space-y-2'>
+            <div className='space-y-1'>
+              <div className='font-medium text-white'>Image search page</div>
+              <div>
+                Choose the first reverse-image page for this batch. Leave built-in order
+                to use the scanner settings fallback chain.
+              </div>
+            </div>
+            <select
+              value={resolveAmazonImageSearchPageSelectValue(amazonImageSearchPageDraftUrl)}
+              onChange={(event): void => {
+                const value = event.target.value;
+                if (value === CUSTOM_AMAZON_IMAGE_SEARCH_PAGE_VALUE) {
+                  setAmazonImageSearchPageDraftUrl((current) =>
+                    resolveAmazonImageSearchPageSelectValue(current) ===
+                    CUSTOM_AMAZON_IMAGE_SEARCH_PAGE_VALUE
+                      ? current
+                      : ''
+                  );
+                  return;
+                }
+                setAmazonImageSearchPageDraftUrl(
+                  AMAZON_IMAGE_SEARCH_PAGE_OPTIONS.some((option) => option.value === value)
+                    ? value
+                    : ''
+                );
+              }}
+              disabled={isSubmitting === true}
+              aria-label='Select Amazon image search page'
+              className='h-8 w-full rounded-md border border-border bg-background px-2 text-sm text-foreground outline-none transition focus:border-primary'
+            >
+              {AMAZON_IMAGE_SEARCH_PAGE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <input
+              type='url'
+              value={amazonImageSearchPageDraftUrl}
+              onChange={(event): void => {
+                setAmazonImageSearchPageDraftUrl(event.target.value);
+              }}
+              disabled={isSubmitting === true}
+              placeholder='https://lens.google.com/?hl=en'
+              aria-label='Amazon image search page URL'
+              className='h-8 w-full rounded-md border border-border bg-background px-2 text-sm text-foreground outline-none transition focus:border-primary'
+            />
+            <Button
+              type='button'
+              variant='outline'
+              size='sm'
+              onClick={(): void => {
+                setAmazonImageSearchPageUrl(amazonImageSearchPageDraftUrl.trim());
+              }}
+              disabled={
+                isSubmitting === true ||
+                amazonImageSearchPageDraftUrl.trim() === amazonImageSearchPageUrl
+              }
+              className='h-7 px-2 text-xs'
+            >
+              Restart search with page
+            </Button>
+          </div>
         </div>
         <Button
           type='button'

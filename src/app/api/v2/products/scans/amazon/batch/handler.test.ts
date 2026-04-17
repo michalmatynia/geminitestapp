@@ -47,6 +47,7 @@ describe('products/scans/amazon/batch handler', () => {
       {
         body: {
           productIds: ['product-1'],
+          imageSearchPageUrl: 'https://images.google.com/?hl=en',
           stepSequenceKey: 'amazon_reverse_image_scan',
           stepSequence: [{ key: 'validate', label: 'Validate trigger' }],
         },
@@ -58,6 +59,7 @@ describe('products/scans/amazon/batch handler', () => {
       productIds: ['product-1'],
       ownerUserId: 'user-42',
       requestInput: {
+        imageSearchPageUrl: 'https://images.google.com/?hl=en',
         stepSequenceKey: 'amazon_reverse_image_scan',
         stepSequence: [{ key: 'validate', label: 'Validate trigger' }],
       },

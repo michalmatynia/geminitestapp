@@ -18,6 +18,7 @@ export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): P
     ownerUserId: ctx.userId ?? null,
     requestInput: {
       ...(body.selectorProfile ? { selectorProfile: body.selectorProfile } : {}),
+      ...(body.imageSearchPageUrl ? { imageSearchPageUrl: body.imageSearchPageUrl } : {}),
       ...(body.stepSequenceKey ? { stepSequenceKey: body.stepSequenceKey } : {}),
       ...(body.stepSequence ? { stepSequence: body.stepSequence } : {}),
     },

@@ -302,6 +302,9 @@ describe('AdminProductScannerSettingsPage', () => {
       screen.getByRole('combobox', { name: 'Select Amazon image search provider' })
     ).toHaveValue('google_images_url');
     expect(
+      screen.getByRole('combobox', { name: 'Select Amazon image search page' })
+    ).toHaveValue('https://lens.google.com/?hl=en');
+    expect(
       screen.getByRole('textbox', { name: 'Amazon image search page URL' })
     ).toHaveValue('https://lens.google.com/?hl=en');
     expect(screen.getByRole('spinbutton', { name: 'Manual verification timeout (ms)' })).toHaveValue(
@@ -471,6 +474,9 @@ describe('AdminProductScannerSettingsPage', () => {
       screen.getByRole('combobox', { name: 'Select Amazon image search provider' })
     ).toHaveValue('google_lens_upload');
     expect(
+      screen.getByRole('combobox', { name: 'Select Amazon image search page' })
+    ).toHaveValue('');
+    expect(
       screen.getByRole('textbox', { name: 'Amazon image search page URL' })
     ).toHaveValue('');
     expect(screen.getByRole('spinbutton', { name: 'Manual verification timeout (ms)' })).toHaveValue(
@@ -527,9 +533,15 @@ describe('AdminProductScannerSettingsPage', () => {
         target: { value: 'google_lens_upload' },
       }
     );
-    fireEvent.change(screen.getByRole('textbox', { name: 'Amazon image search page URL' }), {
-      target: { value: 'https://lens.google.com/?hl=en' },
-    });
+    fireEvent.change(
+      screen.getByRole('combobox', { name: 'Select Amazon image search page' }),
+      {
+        target: { value: 'https://images.google.com/?hl=en' },
+      }
+    );
+    expect(screen.getByRole('textbox', { name: 'Amazon image search page URL' })).toHaveValue(
+      'https://images.google.com/?hl=en'
+    );
     fireEvent.change(screen.getByRole('spinbutton', { name: 'Manual verification timeout (ms)' }), {
       target: { value: '180000' },
     });
@@ -656,7 +668,7 @@ describe('AdminProductScannerSettingsPage', () => {
           manualVerificationTimeoutMs: 180000,
           amazonImageSearchProvider: 'google_lens_upload',
           amazonImageSearchFallbackProvider: null,
-          amazonImageSearchPageUrl: 'https://lens.google.com/?hl=en',
+          amazonImageSearchPageUrl: 'https://images.google.com/?hl=en',
           playwrightSettingsOverrides: {},
           amazonCandidateEvaluator: {
             ...defaultAmazonEvaluator,

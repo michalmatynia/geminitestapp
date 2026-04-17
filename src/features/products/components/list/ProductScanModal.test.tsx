@@ -285,6 +285,70 @@ describe('ProductScanModal', () => {
     });
   });
 
+  it('restarts Amazon scans with the selected image search page override', async () => {
+    mocks.apiPost.mockResolvedValue({
+      queued: 1,
+      running: 0,
+      alreadyRunning: 0,
+      failed: 0,
+      results: [
+        {
+          productId: 'product-1',
+          scanId: 'scan-1',
+          runId: 'run-1',
+          status: 'queued',
+          message: 'Amazon candidate search queued.',
+        },
+      ],
+    });
+
+    const queryClient = createQueryClient();
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ProductScanModal
+          isOpen
+          onClose={vi.fn()}
+          productIds={['product-1']}
+          products={[{ id: 'product-1', name_en: 'Product 1', images: [] } as never]}
+        />
+      </QueryClientProvider>
+    );
+
+    await waitFor(() => {
+      expect(mocks.apiPost).toHaveBeenNthCalledWith(
+        1,
+        '/api/v2/products/scans/amazon/batch',
+        { productIds: ['product-1'], selectorProfile: 'amazon' }
+      );
+    });
+
+    fireEvent.change(screen.getByRole('combobox', { name: 'Select Amazon image search page' }), {
+      target: { value: 'https://images.google.com/?hl=en' },
+    });
+    expect(screen.getByRole('textbox', { name: 'Amazon image search page URL' })).toHaveValue(
+      'https://images.google.com/?hl=en'
+    );
+
+    const restartButton = screen.getByRole('button', { name: 'Restart search with page' });
+    await waitFor(() => {
+      expect(restartButton).not.toBeDisabled();
+    });
+    fireEvent.click(restartButton);
+
+    await waitFor(() => {
+      expect(mocks.apiPost).toHaveBeenNthCalledWith(
+        2,
+        '/api/v2/products/scans/amazon/batch',
+        {
+          productIds: ['product-1'],
+          selectorProfile: 'amazon',
+          imageSearchPageUrl: 'https://images.google.com/?hl=en',
+        }
+      );
+    });
+  });
+
   it('uses the resolved 1688 browser profile when queueing supplier scans', async () => {
     mocks.useIntegrationsWithConnectionsMock.mockReturnValue({
       data: [

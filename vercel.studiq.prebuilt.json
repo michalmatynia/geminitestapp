@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "apps/studiq-web/package.json",
+      "use": "@vercel/next",
+      "config": {
+        "installCommand": "echo using existing node_modules",
+        "buildCommand": "npm run build -w @app/studiq-web"
+      }
+    }
+  ]
+}

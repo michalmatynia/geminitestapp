@@ -26,6 +26,8 @@
   },
   "include": [
     "next-env.d.ts",
+    "../../src/global.d.ts",
+    "../../src/shared/contracts/ambient.d.ts",
     "src/**/*.ts",
     "src/**/*.tsx",
     ".next/types/**/*.ts"

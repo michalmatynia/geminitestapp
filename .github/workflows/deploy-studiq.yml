@@ -1,0 +1,80 @@
+name: Deploy StudiQ
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-studiq-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_PROJECT: geminitestapp
+      VERCEL_SCOPE: frommmishap-1564s-projects
+      STUDIQ_APP_URL: https://studiqbeta.vercel.app
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Link Vercel project
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: npx vercel link --yes --project "$VERCEL_PROJECT" --scope "$VERCEL_SCOPE" --token "$VERCEL_TOKEN"
+
+      - name: Pull Vercel preview environment
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: npx vercel pull --yes --environment=preview --scope "$VERCEL_SCOPE" --token "$VERCEL_TOKEN"
+
+      - name: Build StudiQ prebuilt artifact
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          NEXT_PUBLIC_APP_URL: ${{ env.STUDIQ_APP_URL }}
+          NEXTAUTH_URL: ${{ env.STUDIQ_APP_URL }}
+        run: npx vercel build -A vercel.studiq.prebuilt.json --target preview --scope "$VERCEL_SCOPE" --token "$VERCEL_TOKEN"
+
+      - name: Patch StudiQ prebuilt routes
+        run: node scripts/runtime/patch-studiq-vercel-prebuilt-config.mjs
+
+      - name: Deploy StudiQ preview
+        id: deploy
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          raw_output=$(mktemp)
+          npx vercel deploy --prebuilt -A vercel.studiq.prebuilt.json -y --scope "$VERCEL_SCOPE" --token "$VERCEL_TOKEN" --format json \
+            -e NEXT_PUBLIC_APP_URL="$STUDIQ_APP_URL" \
+            -e NEXTAUTH_URL="$STUDIQ_APP_URL" | tee "$raw_output"
+          url=$(node -e "const fs=require('fs'); const text=fs.readFileSync(process.argv[1],'utf8'); const match=text.match(/\\{[\\s\\S]*\\}\\s*$/); if(!match) process.exit(1); const data=JSON.parse(match[0]); const url=data?.deployment?.url ?? data?.url; if(!url) process.exit(1); process.stdout.write(url.replace(/^https?:\\/\\//,''));" "$raw_output")
+          echo "deployment_url=https://$url" >> "$GITHUB_OUTPUT"
+
+      - name: Point studiqbeta.vercel.app to latest deployment
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: npx vercel alias set "${{ steps.deploy.outputs.deployment_url }}" "$STUDIQ_APP_URL" --scope "$VERCEL_SCOPE" --token "$VERCEL_TOKEN"
+
+      - name: Publish summary
+        run: |
+          {
+            echo "### StudiQ Deploy"
+            echo
+            echo "- Deployment: ${{ steps.deploy.outputs.deployment_url }}"
+            echo "- Alias: $STUDIQ_APP_URL"
+          } >> "$GITHUB_STEP_SUMMARY"

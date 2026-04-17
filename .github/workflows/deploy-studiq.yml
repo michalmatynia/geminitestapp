@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - geet
   workflow_dispatch:
 
 concurrency:

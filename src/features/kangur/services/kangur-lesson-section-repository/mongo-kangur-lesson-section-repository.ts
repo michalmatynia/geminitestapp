@@ -24,6 +24,15 @@ let indexesInitialized = false;
 let indexesInFlight: Promise<void> | null = null;
 let defaultsInitialized = false;
 let defaultsInFlight: Promise<void> | null = null;
+const READ_BOOTSTRAP_SOFT_TIMEOUT_MS = 250;
+
+const waitForBootstrapIfFast = async (task: Promise<void>): Promise<void> => {
+  const guardedTask = task.catch(() => undefined);
+  await Promise.race([
+    guardedTask,
+    new Promise((resolve) => setTimeout(resolve, READ_BOOTSTRAP_SOFT_TIMEOUT_MS)),
+  ]);
+};
 
 const ensureIndexes = async (db: Db): Promise<void> => {
   if (indexesInitialized) return;
@@ -155,9 +164,9 @@ const ensureDefaultSections = async (
 export const mongoKangurLessonSectionRepository: KangurLessonSectionRepository = {
   async listSections(input?: KangurLessonSectionListInput): Promise<KangurLessonSection[]> {
     const db = await getMongoDb();
-    await ensureIndexes(db);
     const collection = db.collection<MongoKangurLessonSectionDocument>(COLLECTION);
-    await ensureDefaultSections(collection);
+    await waitForBootstrapIfFast(ensureIndexes(db));
+    await waitForBootstrapIfFast(ensureDefaultSections(collection));
     const docs = await collection
       .find(buildFilter(input))
       .sort({ sortOrder: 1, id: 1 })

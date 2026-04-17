@@ -30,6 +30,15 @@ let indexesInitialized = false;
 let indexesInFlight: Promise<void> | null = null;
 let defaultsInitialized = false;
 let defaultsInFlight: Promise<void> | null = null;
+const READ_BOOTSTRAP_SOFT_TIMEOUT_MS = 250;
+
+const waitForBootstrapIfFast = async (task: Promise<void>): Promise<void> => {
+  const guardedTask = task.catch(() => undefined);
+  await Promise.race([
+    guardedTask,
+    new Promise((resolve) => setTimeout(resolve, READ_BOOTSTRAP_SOFT_TIMEOUT_MS)),
+  ]);
+};
 
 const ensureIndexes = async (db: Db): Promise<void> => {
   if (indexesInitialized) return;
@@ -193,9 +202,9 @@ const ensureDefaultLessons = async (
 export const mongoKangurLessonRepository: KangurLessonRepository = {
   async listLessons(input?: KangurLessonListInput): Promise<KangurLesson[]> {
     const db = await getMongoDb();
-    await ensureIndexes(db);
     const collection = db.collection<MongoKangurLessonDocument>(COLLECTION);
-    await ensureDefaultLessons(collection);
+    await waitForBootstrapIfFast(ensureIndexes(db));
+    await waitForBootstrapIfFast(ensureDefaultLessons(collection));
     const docs = await collection.find(buildFilter(input)).sort({ sortOrder: 1, id: 1 }).toArray();
     if (docs.length === 0) {
       const fallbackFilter: Filter<MongoKangurLessonDocument> = {};

@@ -48,21 +48,28 @@ const toRuntimeStepId = (value: string): StepId | null =>
 
 const toResolvedRuntimeBlocks = (
   action: PlaywrightAction
-): Array<{ stepId: StepId; config?: BrowserExecutionStep['config'] }> =>
-  action.blocks
-    .filter((block) => block.kind === 'runtime_step' && block.enabled !== false)
-    .map((block) => {
-      const stepId = toRuntimeStepId(block.refId);
-      return stepId === null
-        ? null
-        : {
-            stepId,
-            ...(hasPlaywrightActionBlockConfigOverrides(block.config)
-              ? { config: block.config }
-              : {}),
-          };
-    })
-    .filter((block): block is { stepId: StepId; config?: BrowserExecutionStep['config'] } => block !== null);
+): Array<{ stepId: StepId; config?: BrowserExecutionStep['config'] }> => {
+  const resolvedBlocks: Array<{ stepId: StepId; config?: BrowserExecutionStep['config'] }> = [];
+
+  for (const block of action.blocks) {
+    if (block.kind !== 'runtime_step' || block.enabled === false) {
+      continue;
+    }
+
+    const stepId = toRuntimeStepId(block.refId);
+    if (stepId === null) {
+      continue;
+    }
+
+    resolvedBlocks.push(
+      hasPlaywrightActionBlockConfigOverrides(block.config)
+        ? { stepId, config: block.config }
+        : { stepId }
+    );
+  }
+
+  return resolvedBlocks;
+};
 
 export async function fetchResolvedPlaywrightRuntimeActions(): Promise<PlaywrightAction[]> {
   const raw = await getSettingValue(PLAYWRIGHT_ACTIONS_SETTINGS_KEY);

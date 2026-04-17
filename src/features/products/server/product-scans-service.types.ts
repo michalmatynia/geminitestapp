@@ -9,7 +9,7 @@ import {
   type ProductScanSupplierProbe,
 } from '@/shared/contracts/product-scans';
 
-export type AmazonScanScriptResult = {
+export type AmazonScanRuntimeResult = {
   status:
     | 'matched'
     | 'probe_ready'
@@ -27,6 +27,7 @@ export type AmazonScanScriptResult = {
   amazonProbe: ProductScanAmazonProbe;
   candidateUrls: string[];
   candidateResults: AmazonScanCandidateResult[];
+  candidatePreviews: AmazonScanCandidatePreview[];
   matchedImageId: string | null;
   message: string | null;
   currentUrl: string | null;
@@ -64,5 +65,20 @@ export type AmazonScanCandidateResult = {
   marketplaceDomain: string | null;
   title: string | null;
   snippet: string | null;
+  rank: number | null;
+};
+
+export type AmazonScanCandidatePreview = {
+  id: string | null;
+  matchedImageId: string | null;
+  url: string;
+  asin: string | null;
+  marketplaceDomain: string | null;
+  title: string | null;
+  snippet: string | null;
+  heroImageUrl: string | null;
+  heroImageAlt: string | null;
+  heroImageArtifactName: string | null;
+  artifactKey: string | null;
   rank: number | null;
 };

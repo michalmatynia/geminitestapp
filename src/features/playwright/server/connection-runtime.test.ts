@@ -5,7 +5,6 @@ const {
   resolveConnectionPlaywrightSettingsMock,
   runPlaywrightEngineTaskMock,
   startPlaywrightEngineTaskMock,
-  resolveRuntimeActionExecutionSettingsMock,
   resolveRuntimeActionDefinitionMock,
   resolvePlaywrightActionDefinitionByIdMock,
 } = vi.hoisted(() => ({
@@ -13,7 +12,6 @@ const {
   resolveConnectionPlaywrightSettingsMock: vi.fn(),
   runPlaywrightEngineTaskMock: vi.fn(),
   startPlaywrightEngineTaskMock: vi.fn(),
-  resolveRuntimeActionExecutionSettingsMock: vi.fn(),
   resolveRuntimeActionDefinitionMock: vi.fn(),
   resolvePlaywrightActionDefinitionByIdMock: vi.fn(),
 }));
@@ -42,8 +40,6 @@ vi.mock('./runtime', () => ({
 vi.mock('@/shared/lib/browser-execution/runtime-action-resolver.server', () => ({
   resolvePlaywrightActionDefinitionById: (...args: unknown[]) =>
     resolvePlaywrightActionDefinitionByIdMock(...args),
-  resolveRuntimeActionExecutionSettings: (...args: unknown[]) =>
-    resolveRuntimeActionExecutionSettingsMock(...args),
   resolveRuntimeActionDefinition: (...args: unknown[]) =>
     resolveRuntimeActionDefinitionMock(...args),
 }));
@@ -102,7 +98,6 @@ describe('playwright connection runtime', () => {
       runId: 'run-queued',
       status: 'queued',
     });
-    resolveRuntimeActionExecutionSettingsMock.mockResolvedValue(null);
     resolveRuntimeActionDefinitionMock.mockResolvedValue({
       id: 'runtime_action__playwright_programmable_listing',
       name: 'Programmable Listing Session',
@@ -110,7 +105,7 @@ describe('playwright connection runtime', () => {
       runtimeKey: 'playwright_programmable_listing',
       blocks: [],
       stepSetIds: [],
-      personaId: null,
+      personaId: 'action-persona',
       executionSettings: {
         identityProfile: null,
         headless: null,
@@ -484,17 +479,6 @@ describe('playwright connection runtime', () => {
   });
 
   it('applies runtime action execution settings and browser_preparation overrides to engine tasks', async () => {
-    resolveRuntimeActionExecutionSettingsMock.mockResolvedValue({
-      headless: false,
-      browserPreference: 'brave',
-      emulateDevice: false,
-      deviceName: 'Desktop Chrome',
-      slowMo: null,
-      timeout: null,
-      navigationTimeout: null,
-      locale: 'pl-PL',
-      timezoneId: 'Europe/Warsaw',
-    });
     resolveRuntimeActionDefinitionMock.mockResolvedValue({
       id: 'runtime_action__playwright_programmable_listing',
       name: 'Programmable Listing Session',
@@ -601,7 +585,7 @@ describe('playwright connection runtime', () => {
         },
       ],
       stepSetIds: [],
-      personaId: null,
+      personaId: 'action-persona',
       executionSettings: {
         identityProfile: 'marketplace',
         headless: false,
@@ -644,14 +628,23 @@ describe('playwright connection runtime', () => {
       },
       actionId: 'programmable-draft',
       runtimeActionKey: 'playwright_programmable_listing',
+      browserBehaviorOwner: 'action',
     });
 
     expect(resolvePlaywrightActionDefinitionByIdMock).toHaveBeenCalledWith('programmable-draft');
-    expect(resolveRuntimeActionExecutionSettingsMock).not.toHaveBeenCalledWith(
-      'playwright_programmable_listing'
+    expect(resolveConnectionPlaywrightSettingsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        playwrightPersonaId: ' persona-1 ',
+        playwrightStorageState: 'encrypted-state',
+      }),
+      {
+        includeConnectionBrowserBehavior: false,
+        personaId: 'action-persona',
+      }
     );
     expect(runPlaywrightEngineTaskMock).toHaveBeenCalledWith({
       request: expect.objectContaining({
+        personaId: 'action-persona',
         contextOptions: expect.objectContaining({
           viewport: { width: 1600, height: 1000 },
           locale: 'sv-SE',

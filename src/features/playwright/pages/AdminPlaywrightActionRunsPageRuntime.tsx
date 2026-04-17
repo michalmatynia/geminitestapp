@@ -26,6 +26,7 @@ import {
   usePlaywrightActionRun,
   usePlaywrightActionRuns,
 } from '@/features/playwright/hooks/usePlaywrightActionRuns';
+import { resolvePlaywrightActionRunsHref } from '@/features/playwright/utils/action-runs-links';
 import type {
   PlaywrightActionRunRecord,
   PlaywrightActionRunStatus,
@@ -42,6 +43,7 @@ import {
   useMasterFolderTreeShell,
   type FolderTreeViewportRenderNodeInput,
 } from '@/shared/lib/foldertree/public';
+import { resolveStepSequencerActionHref } from '@/features/playwright/utils/step-sequencer-action-links';
 import {
   Badge,
   Button,
@@ -62,6 +64,7 @@ import { cn } from '@/shared/utils/ui-utils';
 const HISTORY_TREE_INSTANCE = 'playwright_step_seq_action_runs';
 const HISTORY_TREE_SETTINGS_HREF = getFolderTreeInstanceSettingsHref(HISTORY_TREE_INSTANCE);
 const SELECTOR_REGISTRY_HREF = '/admin/integrations/marketplaces/tradera/selectors';
+const AMAZON_SELECTOR_REGISTRY_HREF = '/admin/integrations/amazon/selectors';
 const SUPPLIER_1688_SELECTOR_REGISTRY_HREF = '/admin/integrations/1688/selectors';
 const RUN_PAGE_SIZE = 100;
 
@@ -71,6 +74,8 @@ const resolveSelectorRegistryHref = (input: {
 }): string =>
   input.selectorProfile === '1688' || input.selectorKey?.startsWith('supplier1688.')
     ? SUPPLIER_1688_SELECTOR_REGISTRY_HREF
+    : input.selectorProfile === 'amazon' || input.selectorKey?.startsWith('amazon.')
+      ? AMAZON_SELECTOR_REGISTRY_HREF
     : SELECTOR_REGISTRY_HREF;
 
 const STATUS_OPTIONS: Array<{ value: PlaywrightActionRunStatus | 'all'; label: string }> = [
@@ -203,6 +208,23 @@ function DetailActionLink({
   );
 }
 
+function DetailBadgeLink({
+  href,
+  label,
+}: {
+  href: string;
+  label: string;
+}): React.JSX.Element {
+  return (
+    <a
+      href={href}
+      className='inline-flex items-center rounded-md border border-border/50 bg-card/40 px-2 py-0.5 text-[11px] font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground'
+    >
+      {label}
+    </a>
+  );
+}
+
 function StatusIcon({ status }: { status: string | null | undefined }): React.JSX.Element {
   if (status === 'completed' || status === 'success') {
     return <CheckCircle2 className='size-3.5 text-emerald-300' />;
@@ -223,6 +245,7 @@ function RunHistoryTreeNode(
   input: FolderTreeViewportRenderNodeInput & {
     onSelectRun: (runId: string) => void;
     onSelectStep: (runId: string, stepId: string) => void;
+    firstFailedStepIdByRunId: Record<string, string | undefined>;
   }
 ): React.JSX.Element {
   const {
@@ -237,10 +260,16 @@ function RunHistoryTreeNode(
     toggleExpand,
     onSelectRun,
     onSelectStep,
+    firstFailedStepIdByRunId,
   } = input;
   const decoded = decodePlaywrightActionRunNodeId(node.id);
   const status = metadataString(node.metadata?.['status']);
   const stepCount = node.metadata?.['stepCount'];
+  const actionId = metadataString(node.metadata?.['actionId']);
+  const runtimeKey = metadataString(node.metadata?.['runtimeKey']);
+  const selectorProfile = metadataString(node.metadata?.['selectorProfile']);
+  const firstFailedStepId =
+    decoded?.entity === 'run' ? firstFailedStepIdByRunId[decoded.id] : undefined;
 
   const handleSelect = (): void => {
     select();
@@ -290,11 +319,66 @@ function RunHistoryTreeNode(
       >
         <span className='truncate'>{node.name}</span>
       </button>
+      {decoded?.entity === 'run' ? (
+        <div className='flex items-center gap-1'>
+          {actionId ? (
+            <a
+              href={resolveStepSequencerActionHref(actionId)}
+              aria-label={`Open ${node.name} in sequencer from tree`}
+              className='inline-flex size-5 items-center justify-center rounded border border-transparent text-muted-foreground transition-colors hover:border-border/50 hover:bg-card/40 hover:text-foreground'
+              onClick={(event) => event.stopPropagation()}
+            >
+              <ExternalLink className='size-3' />
+            </a>
+          ) : null}
+          {runtimeKey ? (
+            <a
+              href={resolvePlaywrightActionRunsHref({ runtimeKey })}
+              aria-label={`Filter runs by runtime key ${runtimeKey} from tree`}
+              className='inline-flex size-5 items-center justify-center rounded border border-transparent text-muted-foreground transition-colors hover:border-border/50 hover:bg-card/40 hover:text-foreground'
+              onClick={(event) => event.stopPropagation()}
+            >
+              <Search className='size-3' />
+            </a>
+          ) : null}
+          {selectorProfile ? (
+            <a
+              href={resolvePlaywrightActionRunsHref({ selectorProfile })}
+              aria-label={`Filter runs by selector profile ${selectorProfile} from tree`}
+              className='inline-flex size-5 items-center justify-center rounded border border-transparent text-muted-foreground transition-colors hover:border-border/50 hover:bg-card/40 hover:text-foreground'
+              onClick={(event) => event.stopPropagation()}
+            >
+              <DatabaseIcon className='size-3' />
+            </a>
+          ) : null}
+          {firstFailedStepId ? (
+            <button
+              type='button'
+              aria-label={`Open first failed step for ${node.name} from tree`}
+              className='inline-flex size-5 items-center justify-center rounded border border-transparent text-muted-foreground transition-colors hover:border-border/50 hover:bg-card/40 hover:text-foreground'
+              onClick={(event) => {
+                event.stopPropagation();
+                onSelectStep(decoded.id, firstFailedStepId);
+              }}
+            >
+              <AlertTriangle className='size-3' />
+            </button>
+          ) : null}
+        </div>
+      ) : null}
       {status ? <StatusIcon status={status} /> : null}
       {decoded?.entity === 'run' && typeof stepCount === 'number' ? (
-        <Badge variant='neutral' className='h-5 border-border/50 bg-card/40 px-1.5 text-[10px]'>
+        <button
+          type='button'
+          aria-label={`Open ${node.name} run detail from tree`}
+          className='inline-flex h-5 items-center rounded-md border border-border/50 bg-card/40 px-1.5 text-[10px] font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground'
+          onClick={(event) => {
+            event.stopPropagation();
+            handleSelect();
+          }}
+        >
           {stepCount} steps
-        </Badge>
+        </button>
       ) : null}
     </div>
   );
@@ -347,11 +431,56 @@ function RunDetail({
     <div className='space-y-4'>
       <div className='flex flex-wrap items-center gap-2'>
         <Badge className={RUN_STATUS_CLASSES[run.status]}>{run.status}</Badge>
-        {run.runtimeKey ? <Badge variant='neutral'>{run.runtimeKey}</Badge> : null}
-        {run.selectorProfile ? <Badge variant='neutral'>{run.selectorProfile}</Badge> : null}
+        {run.runtimeKey ? (
+          <DetailBadgeLink
+            href={resolvePlaywrightActionRunsHref({ runtimeKey: run.runtimeKey })}
+            label={run.runtimeKey}
+          />
+        ) : null}
+        {run.selectorProfile ? (
+          <DetailBadgeLink
+            href={resolvePlaywrightActionRunsHref({
+              selectorProfile: run.selectorProfile,
+            })}
+            label={run.selectorProfile}
+          />
+        ) : null}
       </div>
       <div className='flex flex-wrap items-center gap-2'>
-        <DetailActionLink href='/admin/playwright/step-sequencer' label='Open sequencer' />
+        <DetailActionLink
+          href={resolveStepSequencerActionHref(run.actionId)}
+          label='Open action in sequencer'
+        />
+        <DetailActionLink
+          href={resolvePlaywrightActionRunsHref({ actionId: run.actionId })}
+          label='Filter action ID'
+        />
+        {run.runtimeKey ? (
+          <DetailActionLink
+            href={resolvePlaywrightActionRunsHref({ runtimeKey: run.runtimeKey })}
+            label='Filter runtime key'
+          />
+        ) : null}
+        {run.selectorProfile ? (
+          <>
+            <DetailActionLink
+              href={resolvePlaywrightActionRunsHref({
+                selectorProfile: run.selectorProfile,
+              })}
+              label='Filter selector profile'
+            />
+            <DetailActionLink
+              href={resolveSelectorRegistryHref({
+                selectorProfile: run.selectorProfile,
+              })}
+              label={
+                run.selectorProfile === '1688'
+                  ? 'Open 1688 selector registry'
+                  : 'Open selector registry'
+              }
+            />
+          </>
+        ) : null}
         <CopyValueButton label='Copy run ID' value={run.runId} />
         <CopyValueButton label='Copy action ID' value={run.actionId} />
         <CopyValueButton label='Copy runtime key' value={run.runtimeKey} />
@@ -532,10 +661,12 @@ const buildStepBreadcrumbs = (
 function StepDetail({
   step,
   steps,
+  actionId,
   onSelectStep,
 }: {
   step: PlaywrightActionRunStepRecord;
   steps: PlaywrightActionRunStepRecord[];
+  actionId: string;
   onSelectStep: (stepId: string) => void;
 }): React.JSX.Element {
   const inputPreview = formatJsonPreview(step.input);
@@ -566,8 +697,18 @@ function StepDetail({
       </div>
       <div className='flex flex-wrap items-center gap-2'>
         <DetailActionLink
+          href={resolveStepSequencerActionHref(actionId)}
+          label='Open action in sequencer'
+        />
+        <DetailActionLink
           href={resolveSelectorRegistryHref(step)}
-          label={step.selectorProfile === '1688' ? 'Open 1688 selector registry' : 'Open selector registry'}
+          label={
+            step.selectorProfile === '1688'
+              ? 'Open 1688 selector registry'
+              : step.selectorProfile === 'amazon'
+                ? 'Open Amazon selector registry'
+                : 'Open selector registry'
+          }
         />
         <CopyValueButton label='Copy selector' value={step.selector} />
         <CopyValueButton label='Copy selector key' value={step.selectorKey} />
@@ -808,6 +949,19 @@ export function AdminPlaywrightActionRunsPageRuntime(): React.JSX.Element {
     () => detail?.steps.find((step) => step.id === selectedStepId) ?? null,
     [detail, selectedStepId]
   );
+  const firstFailedStepIdByRunId = useMemo<Record<string, string | undefined>>(() => {
+    if (detail === null) {
+      return {};
+    }
+
+    const firstFailedStep = detail.steps.find(
+      (step) => step.status === 'error' || step.status === 'failed'
+    );
+
+    return {
+      [detail.run.runId]: firstFailedStep?.id,
+    };
+  }, [detail]);
   const hasActiveFilters =
     query.trim().length > 0 ||
     status !== 'all' ||
@@ -1076,6 +1230,7 @@ export function AdminPlaywrightActionRunsPageRuntime(): React.JSX.Element {
                     {...input}
                     onSelectRun={handleSelectRun}
                     onSelectStep={handleSelectStep}
+                    firstFailedStepIdByRunId={firstFailedStepIdByRunId}
                   />
                 )}
               />
@@ -1106,9 +1261,16 @@ export function AdminPlaywrightActionRunsPageRuntime(): React.JSX.Element {
             <div className='space-y-4'>
               <div className='flex flex-wrap items-start justify-between gap-3'>
                 <div>
-                  <h2 className='text-base font-semibold'>
-                    {selectedStep ? selectedStep.label : detail.run.actionName}
-                  </h2>
+                  {selectedStep ? (
+                    <h2 className='text-base font-semibold'>{selectedStep.label}</h2>
+                  ) : (
+                    <a
+                      href={resolveStepSequencerActionHref(detail.run.actionId)}
+                      className='text-base font-semibold text-foreground underline-offset-4 transition-colors hover:text-accent-foreground hover:underline'
+                    >
+                      {detail.run.actionName}
+                    </a>
+                  )}
                   <p className='text-xs text-muted-foreground'>
                     {selectedStep ? 'Step detail' : 'Action run detail'}
                   </p>
@@ -1128,6 +1290,7 @@ export function AdminPlaywrightActionRunsPageRuntime(): React.JSX.Element {
                 <StepDetail
                   step={selectedStep}
                   steps={detail.steps}
+                  actionId={detail.run.actionId ?? ''}
                   onSelectStep={(stepId) => setSelectedStepId(stepId)}
                 />
               ) : (

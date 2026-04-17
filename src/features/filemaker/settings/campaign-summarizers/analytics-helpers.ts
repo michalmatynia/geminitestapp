@@ -285,8 +285,21 @@ export const buildEngagementMetrics = (
   };
 };
 
-const resolveLatestRunStatus = (latestRun: FilemakerEmailCampaignRun | null): string | null =>
-  latestRun === null ? null : latestRun.status;
+const resolveLatestRunStatus = (
+  latestRun: FilemakerEmailCampaignRun | null
+): FilemakerEmailCampaignAnalytics['latestRunStatus'] => {
+  const status = latestRun?.status ?? null;
+  return (
+    status === 'pending' ||
+    status === 'queued' ||
+    status === 'running' ||
+    status === 'completed' ||
+    status === 'failed' ||
+    status === 'cancelled'
+  )
+    ? status
+    : null;
+};
 
 const resolveLatestRunAt = (latestRun: FilemakerEmailCampaignRun | null): string | null =>
   latestRun === null ? null : latestRun.createdAt ?? null;

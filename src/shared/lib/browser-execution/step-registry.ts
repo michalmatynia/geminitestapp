@@ -1,4 +1,5 @@
 import type { PlaywrightActionBlockConfig } from '@/shared/contracts/playwright-steps';
+import { SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS } from './supplier-1688-runtime-constants';
 
 export const STEP_REGISTRY = {
   // Browser lifecycle
@@ -39,18 +40,73 @@ export const STEP_REGISTRY = {
   categories_finalize:    { id: 'categories_finalize',    label: 'Finalize category registry' },
 
   // 1688 supplier probe scan
-  supplier_1688_input_validate:     { id: 'supplier_1688_input_validate',     label: 'Validate 1688 probe input' },
-  supplier_1688_open_search:        { id: 'supplier_1688_open_search',        label: 'Open 1688 image search' },
-  supplier_1688_access_check:       { id: 'supplier_1688_access_check',       label: 'Check 1688 access barriers' },
-  supplier_1688_upload_image:       { id: 'supplier_1688_upload_image',       label: 'Upload image to 1688 search' },
-  supplier_1688_submit_search:      { id: 'supplier_1688_submit_search',      label: 'Submit 1688 image search' },
-  supplier_1688_collect_candidates: { id: 'supplier_1688_collect_candidates', label: 'Collect 1688 supplier candidates' },
-  supplier_1688_probe_candidate:    { id: 'supplier_1688_probe_candidate',    label: 'Probe 1688 supplier candidate' },
-  supplier_1688_wait_supplier:      { id: 'supplier_1688_wait_supplier',      label: 'Wait for 1688 supplier content' },
-  supplier_1688_extract_details:    { id: 'supplier_1688_extract_details',    label: 'Extract 1688 supplier details' },
-  supplier_1688_score_candidate:    { id: 'supplier_1688_score_candidate',    label: 'Score 1688 supplier candidate' },
-  supplier_1688_evaluate_match:     { id: 'supplier_1688_evaluate_match',     label: 'Evaluate 1688 supplier match' },
-  supplier_1688_finalize:           { id: 'supplier_1688_finalize',           label: 'Finalize 1688 probe result' },
+  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.inputValidate]: {
+    id: SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.inputValidate,
+    label: 'Validate 1688 probe input',
+  },
+  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.openSearch]: {
+    id: SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.openSearch,
+    label: 'Open 1688 image search',
+  },
+  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.accessCheck]: {
+    id: SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.accessCheck,
+    label: 'Check 1688 access barriers',
+  },
+  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.uploadImage]: {
+    id: SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.uploadImage,
+    label: 'Upload image to 1688 search',
+  },
+  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.submitSearch]: {
+    id: SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.submitSearch,
+    label: 'Submit 1688 image search',
+  },
+  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.collectCandidates]: {
+    id: SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.collectCandidates,
+    label: 'Collect 1688 supplier candidates',
+  },
+  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.probeCandidate]: {
+    id: SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.probeCandidate,
+    label: 'Probe 1688 supplier candidate',
+  },
+  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.waitSupplier]: {
+    id: SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.waitSupplier,
+    label: 'Wait for 1688 supplier content',
+  },
+  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.extractDetails]: {
+    id: SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.extractDetails,
+    label: 'Extract 1688 supplier details',
+  },
+  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.scoreCandidate]: {
+    id: SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.scoreCandidate,
+    label: 'Score 1688 supplier candidate',
+  },
+  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.evaluateMatch]: {
+    id: SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.evaluateMatch,
+    label: 'Evaluate 1688 supplier match',
+  },
+  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.finalize]: {
+    id: SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.finalize,
+    label: 'Finalize 1688 probe result',
+  },
+
+  // Product scan shared / Amazon runtime flow
+  validate:               { id: 'validate',               label: 'Validate scan input' },
+  prepare_scan:           { id: 'prepare_scan',           label: 'Prepare scan input' },
+  queue_scan:             { id: 'queue_scan',             label: 'Queue follow-up scan' },
+  product_asin_update:    { id: 'product_asin_update',    label: 'Update product ASIN' },
+
+  google_lens_open:       { id: 'google_lens_open',       label: 'Open Google reverse image search' },
+  google_upload:          { id: 'google_upload',          label: 'Upload product image to Google' },
+  google_captcha:         { id: 'google_captcha',         label: 'Resolve Google captcha' },
+  google_candidates:      { id: 'google_candidates',      label: 'Collect Amazon candidates from Google' },
+
+  amazon_open:            { id: 'amazon_open',            label: 'Open Amazon candidate' },
+  amazon_overlays:        { id: 'amazon_overlays',        label: 'Dismiss Amazon overlays' },
+  amazon_content_ready:   { id: 'amazon_content_ready',   label: 'Wait for Amazon product content' },
+  amazon_probe:           { id: 'amazon_probe',           label: 'Probe Amazon product page' },
+  amazon_extract:         { id: 'amazon_extract',         label: 'Extract Amazon details' },
+  amazon_ai_triage:       { id: 'amazon_ai_triage',       label: 'Triage Amazon candidates' },
+  amazon_ai_evaluate:     { id: 'amazon_ai_evaluate',     label: 'Evaluate Amazon candidate match' },
 
   // Listing fields — shared
   image_upload:           { id: 'image_upload',           label: 'Upload images' },

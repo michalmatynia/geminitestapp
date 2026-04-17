@@ -47,7 +47,7 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const createEmptyEmailUpsertResult = (
   database: FilemakerDatabase,
-  input: UpsertEmailsInput,
+  _input: UpsertEmailsInput,
   partyFound: boolean,
   invalidEmailCount: number
 ): UpsertFilemakerPartyEmailsResult => ({

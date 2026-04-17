@@ -13,47 +13,33 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type { JSX } from 'react';
 
 const ADMIN_MENU_COLLAPSED_COOKIE_KEY = 'admin_menu_collapsed';
-const isPlaywrightRuntime = Boolean(
-  process.env['PLAYWRIGHT_RUNTIME_LEASE_KEY'] || process.env['PLAYWRIGHT_RUNTIME_AGENT_ID']
-);
+const isPlaywrightRuntime =
+  (process.env['PLAYWRIGHT_RUNTIME_LEASE_KEY'] ?? '') !== '' ||
+  (process.env['PLAYWRIGHT_RUNTIME_AGENT_ID'] ?? '') !== '';
 
-export async function AdminLayoutResolver({ children }: { children: React.ReactNode }) {
-  await connection();
-
-  const requestHeadersPromise = readOptionalRequestHeaders();
-  const cookiesPromise = readOptionalRequestCookies();
-
-  const [requestHeaders, cookieStore] = await Promise.all([
-    requestHeadersPromise,
-    cookiesPromise,
-  ]);
-
-  let session: Awaited<ReturnType<typeof readOptionalServerAuthSession>> = null;
-  let canReadAdminSettings = false;
-
+async function resolveSession(requestHeaders: Headers | null): Promise<Awaited<ReturnType<typeof readOptionalServerAuthSession>>> {
   try {
-    session = parseAdminLayoutSessionHeaderValue(requestHeaders?.get(ADMIN_LAYOUT_SESSION_HEADER));
+    const headerValue = requestHeaders?.get(ADMIN_LAYOUT_SESSION_HEADER);
+    let session = typeof headerValue === 'string' ? parseAdminLayoutSessionHeaderValue(headerValue) : null;
 
-    if (!session?.user?.id) {
+    const sessionUserId = session?.user?.id;
+    if (typeof sessionUserId !== 'string' || sessionUserId === '') {
       // Header missing or invalid, now we must perform the full auth check (hits DB/Redis)
       session = await readOptionalServerAuthSession();
     }
+    return session;
   } catch (error) {
-    void ErrorSystem.captureException(error, {
+    await ErrorSystem.captureException(error, {
       service: 'admin.layout',
       source: 'admin.layout',
       action: 'loadAdminLayout',
     });
     redirect('/auth/signin');
+    return null;
   }
+}
 
-  if (!session?.user?.id) {
-    redirect('/auth/signin');
-  }
-
-  canReadAdminSettings =
-    session.user.isElevated || session.user.permissions?.includes('settings.manage') === true;
-
+async function resolveMenuState(cookieStore: Awaited<ReturnType<typeof readOptionalRequestCookies>>): Promise<{ initialMenuCollapsed: boolean; hasInitialMenuPreference: boolean }> {
   let initialMenuCollapsed = false;
   let hasInitialMenuPreference = false;
 
@@ -64,12 +50,36 @@ export async function AdminLayoutResolver({ children }: { children: React.ReactN
       hasInitialMenuPreference = true;
     }
   } catch (error) {
-    void ErrorSystem.captureException(error, {
+    await ErrorSystem.captureException(error, {
       service: 'admin.layout',
       source: 'admin.layout',
       action: 'loadAdminLayoutCookieState',
     });
   }
+
+  return { initialMenuCollapsed, hasInitialMenuPreference };
+}
+
+export async function AdminLayoutResolver({ children }: { children: React.ReactNode }): Promise<JSX.Element> {
+  await connection();
+
+  const [requestHeaders, cookieStore] = await Promise.all([
+    readOptionalRequestHeaders(),
+    readOptionalRequestCookies(),
+  ]);
+
+  const session = await resolveSession(requestHeaders);
+
+  const userId = session?.user?.id;
+  if (typeof userId !== 'string' || userId === '') {
+    redirect('/auth/signin');
+  }
+
+  const { initialMenuCollapsed, hasInitialMenuPreference } = await resolveMenuState(cookieStore);
+
+  const isElevated = session.user.isElevated === true;
+  const hasSettingsPermission = session.user.permissions?.includes('settings.manage') === true;
+  const canReadAdminSettings = isElevated || hasSettingsPermission;
 
   const shouldEnableAdminSettingsStore = canReadAdminSettings || isPlaywrightRuntime;
 

@@ -48,7 +48,8 @@ import {
 } from './product-scans-service.helpers.steps';
 
 export const AMAZON_SCAN_DEFAULT_SLOW_MO_MS = 80;
-export const AMAZON_BATCH_SCAN_START_CONCURRENCY = 1;
+export const PRODUCT_SCAN_BATCH_START_CONCURRENCY = 1;
+export const AMAZON_BATCH_SCAN_START_CONCURRENCY = PRODUCT_SCAN_BATCH_START_CONCURRENCY;
 export const AMAZON_SCAN_DEFAULT_USER_AGENT =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
 export const AMAZON_SCAN_STEALTH_LAUNCH_ARGS = ['--disable-blink-features=AutomationControlled'];
@@ -366,7 +367,7 @@ export const resolveAmazonImageSearchFallbackProvider = (input: {
   return history.includes(fallbackProvider) ? null : fallbackProvider;
 };
 
-export const formatAmazonEvaluationConfidence = (confidence: number | null | undefined): string | null =>
+export const formatEvaluationConfidence = (confidence: number | null | undefined): string | null =>
   typeof confidence === 'number' && Number.isFinite(confidence)
     ? `${Math.round(confidence * 100)}%`
     : null;
@@ -612,7 +613,7 @@ export const resolveAmazonEvaluationMessage = (
   if (evaluation === undefined || evaluation === null) {
     return 'Amazon candidate AI evaluation failed.';
   }
-  const confidenceLabel = formatAmazonEvaluationConfidence(evaluation.confidence);
+  const confidenceLabel = formatEvaluationConfidence(evaluation.confidence);
   if (evaluation.status === 'approved') {
     return (confidenceLabel ?? null) !== null
       ? `AI evaluator approved the Amazon candidate (${confidenceLabel!}).`
@@ -822,7 +823,7 @@ export const buildAmazonEvaluationStepDetails = (
   },
   {
     label: 'Threshold',
-    value: formatAmazonEvaluationConfidence(evaluatorConfig.threshold),
+    value: formatEvaluationConfidence(evaluatorConfig.threshold),
   },
   {
     label: 'Evaluation scope',
@@ -854,7 +855,7 @@ export const buildAmazonEvaluationStepDetails = (
   },
   {
     label: 'Confidence',
-    value: formatAmazonEvaluationConfidence(evaluation?.confidence),
+    value: formatEvaluationConfidence(evaluation?.confidence),
   },
   {
     label: 'Same product',
@@ -886,7 +887,7 @@ export const buildAmazonEvaluationStepDetails = (
   },
   {
     label: 'Language confidence',
-    value: formatAmazonEvaluationConfidence(evaluation?.languageConfidence),
+    value: formatEvaluationConfidence(evaluation?.languageConfidence),
   },
   {
     label: 'Language reason',
@@ -936,7 +937,7 @@ export const buildAmazonCandidateTriageStepDetails = (
   },
   {
     label: 'Threshold',
-    value: formatAmazonEvaluationConfidence(evaluatorConfig.threshold),
+    value: formatEvaluationConfidence(evaluatorConfig.threshold),
   },
   {
     label: 'Evaluation scope',
@@ -990,11 +991,14 @@ export const buildAmazonScanRequestInput = (input: {
   productName: string | null;
   existingAsin: string | null | undefined;
   imageCandidates: ProductScanRecord['imageCandidates'];
+  runtimeKey?: string | null;
   imageSearchProvider?: ProductScannerAmazonImageSearchProvider | null;
+  selectorProfile?: string | null;
   batchIndex?: number;
   allowManualVerification: boolean;
   manualVerificationTimeoutMs: number;
   triageOnlyOnAmazonCandidates?: boolean;
+  collectAmazonCandidatePreviews?: boolean;
   probeOnlyOnAmazonMatch?: boolean;
   skipAmazonProbe?: boolean;
   directAmazonCandidateUrl?: string | null;
@@ -1008,11 +1012,13 @@ export const buildAmazonScanRequestInput = (input: {
   productName: input.productName,
   existingAsin: input.existingAsin ?? null,
   imageCandidates: input.imageCandidates,
+  runtimeKey: readOptionalString(input.runtimeKey, PRODUCT_SCAN_SEQUENCE_KEY_MAX_LENGTH),
   imageSearchProvider:
     (input.imageSearchProvider === 'google_images_url' ||
     input.imageSearchProvider === 'google_lens_upload')
       ? input.imageSearchProvider
       : 'google_images_upload',
+  selectorProfile: readOptionalString(input.selectorProfile, 120) ?? 'amazon',
   batchIndex:
     typeof input.batchIndex === 'number' && Number.isFinite(input.batchIndex) && input.batchIndex > 0
       ? Math.trunc(input.batchIndex)
@@ -1020,6 +1026,7 @@ export const buildAmazonScanRequestInput = (input: {
   allowManualVerification: input.allowManualVerification,
   manualVerificationTimeoutMs: input.manualVerificationTimeoutMs,
   triageOnlyOnAmazonCandidates: input.triageOnlyOnAmazonCandidates === true,
+  collectAmazonCandidatePreviews: input.collectAmazonCandidatePreviews === true,
   probeOnlyOnAmazonMatch: input.probeOnlyOnAmazonMatch === true,
   skipAmazonProbe: input.skipAmazonProbe === true,
   directAmazonCandidateUrl: readOptionalString(input.directAmazonCandidateUrl, PRODUCT_SCAN_URL_MAX_LENGTH),

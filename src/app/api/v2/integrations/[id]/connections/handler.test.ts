@@ -7,6 +7,7 @@ const {
   createConnectionMock,
   encryptSecretMock,
   getSettingValueMock,
+  fetchResolvedPlaywrightRuntimeActionsMock,
 } = vi.hoisted(() => ({
   parseJsonBodyMock: vi.fn(),
   listConnectionsMock: vi.fn(),
@@ -14,6 +15,7 @@ const {
   createConnectionMock: vi.fn(),
   encryptSecretMock: vi.fn(),
   getSettingValueMock: vi.fn(),
+  fetchResolvedPlaywrightRuntimeActionsMock: vi.fn(),
 }));
 
 vi.mock('@/shared/lib/api/parse-json', () => ({
@@ -33,6 +35,11 @@ vi.mock('@/shared/lib/ai/server-settings', () => ({
   getSettingValue: (...args: unknown[]) => getSettingValueMock(...args),
 }));
 
+vi.mock('@/shared/lib/browser-execution/runtime-action-resolver.server', () => ({
+  fetchResolvedPlaywrightRuntimeActions: (...args: unknown[]) =>
+    fetchResolvedPlaywrightRuntimeActionsMock(...args),
+}));
+
 import { DEFAULT_TRADERA_QUICKLIST_SCRIPT } from '@/features/integrations/services/tradera-listing/default-script';
 import { GET_handler, POST_handler } from './handler';
 
@@ -40,6 +47,32 @@ describe('integration connections handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     getSettingValueMock.mockResolvedValue(null);
+    fetchResolvedPlaywrightRuntimeActionsMock.mockResolvedValue([
+      {
+        id: 'listing-draft',
+        name: 'Listing Draft',
+        description: null,
+        runtimeKey: null,
+        blocks: [],
+        stepSetIds: [],
+        personaId: null,
+        executionSettings: {},
+        createdAt: '2026-04-02T10:00:00.000Z',
+        updatedAt: '2026-04-02T11:00:00.000Z',
+      },
+      {
+        id: 'import-draft',
+        name: 'Import Draft',
+        description: null,
+        runtimeKey: null,
+        blocks: [],
+        stepSetIds: [],
+        personaId: null,
+        executionSettings: {},
+        createdAt: '2026-04-02T10:00:00.000Z',
+        updatedAt: '2026-04-02T11:00:00.000Z',
+      },
+    ]);
     listConnectionsMock.mockResolvedValue([
       {
         id: 'conn-tradera-1',
@@ -397,7 +430,7 @@ describe('integration connections handler', () => {
     });
   });
 
-  it('allows creating programmable Playwright connections without credentials and persists programmable fields', async () => {
+  it('allows creating programmable Playwright connections without credentials', async () => {
     getIntegrationByIdMock.mockResolvedValue({
       id: 'integration-playwright-1',
       slug: 'playwright-programmable',
@@ -406,8 +439,6 @@ describe('integration connections handler', () => {
       ok: true,
       data: {
         name: 'Programmable Browser',
-        playwrightPersonaId: 'persona-1',
-        playwrightHeadless: false,
         playwrightImportScript: 'export default async function run() {}',
         playwrightImportBaseUrl: 'https://example.test',
         playwrightImportCaptureRoutesJson: '{"routes":[],"appearanceMode":""}',
@@ -420,8 +451,6 @@ describe('integration connections handler', () => {
       name: 'Programmable Browser',
       createdAt: '2026-04-02T10:00:00.000Z',
       updatedAt: '2026-04-02T11:00:00.000Z',
-      playwrightPersonaId: 'persona-1',
-      playwrightHeadless: false,
       playwrightImportScript: 'export default async function run() {}',
       playwrightImportBaseUrl: 'https://example.test',
       playwrightImportCaptureRoutesJson: '{"routes":[],"appearanceMode":""}',
@@ -440,8 +469,6 @@ describe('integration connections handler', () => {
 
     expect(createConnectionMock).toHaveBeenCalledWith('integration-playwright-1', {
       name: 'Programmable Browser',
-      playwrightPersonaId: 'persona-1',
-      playwrightHeadless: false,
       playwrightImportScript: 'export default async function run() {}',
       playwrightImportBaseUrl: 'https://example.test',
       playwrightImportCaptureRoutesJson: '{"routes":[],"appearanceMode":""}',
@@ -450,13 +477,48 @@ describe('integration connections handler', () => {
     expect(encryptSecretMock).not.toHaveBeenCalled();
     expect(payload).toMatchObject({
       id: 'conn-playwright-1',
-      playwrightPersonaId: 'persona-1',
-      playwrightHeadless: false,
       playwrightImportScript: 'export default async function run() {}',
       playwrightImportBaseUrl: 'https://example.test',
       playwrightImportCaptureRoutesJson: '{"routes":[],"appearanceMode":""}',
       playwrightFieldMapperJson: '[]',
+      playwrightLegacyBrowserMigration: {
+        hasLegacyBrowserBehavior: false,
+        requiresManualProxyPasswordInput: false,
+        listingDraftActionName: 'Programmable Browser / Listing session',
+        importDraftActionName: 'Programmable Browser / Import session',
+      },
     });
+    expect(payload).not.toHaveProperty('playwrightPersonaId');
+    expect(payload).not.toHaveProperty('playwrightHeadless');
+  });
+
+  it('rejects legacy browser fields for programmable connection creation', async () => {
+    getIntegrationByIdMock.mockResolvedValue({
+      id: 'integration-playwright-1',
+      slug: 'playwright-programmable',
+    });
+    parseJsonBodyMock.mockResolvedValue({
+      ok: true,
+      data: {
+        name: 'Programmable Browser',
+        playwrightPersonaId: 'persona-1',
+        playwrightHeadless: false,
+      },
+    });
+
+    await expect(
+      POST_handler(
+        new Request('http://localhost/api/v2/integrations/integration-playwright-1/connections', {
+          method: 'POST',
+        }) as never,
+        {} as never,
+        { id: 'integration-playwright-1' }
+      )
+    ).rejects.toThrow(
+      'Programmable connections no longer accept connection-level Playwright browser settings. Edit the selected Step Sequencer action instead.'
+    );
+
+    expect(createConnectionMock).not.toHaveBeenCalled();
   });
 
   it('resolves response Playwright settings from persona baselines for listed connections', async () => {
@@ -501,5 +563,45 @@ describe('integration connections handler', () => {
         playwrightBrowser: 'chrome',
       }),
     ]);
+  });
+
+  it('hides browser fields for action-owned programmable connections in list responses', async () => {
+    getIntegrationByIdMock.mockResolvedValue({
+      id: 'integration-playwright-1',
+      slug: 'playwright-programmable',
+    });
+    listConnectionsMock.mockResolvedValue([
+      {
+        id: 'conn-playwright-2',
+        integrationId: 'integration-playwright-1',
+        name: 'Programmable Browser',
+        createdAt: '2026-04-02T10:00:00.000Z',
+        updatedAt: '2026-04-02T11:00:00.000Z',
+        playwrightListingActionId: 'listing-draft',
+        playwrightImportActionId: 'import-draft',
+      },
+    ]);
+
+    const response = await GET_handler(
+      new Request('http://localhost/api/v2/integrations/integration-playwright-1/connections') as never,
+      {} as never,
+      { id: 'integration-playwright-1' }
+    );
+
+    const payload = await response.json();
+    const entry = payload[0] as Record<string, unknown>;
+
+    expect(entry).toMatchObject({
+      id: 'conn-playwright-2',
+      playwrightListingActionId: 'listing-draft',
+      playwrightImportActionId: 'import-draft',
+      playwrightLegacyBrowserMigration: {
+        hasLegacyBrowserBehavior: false,
+        requiresManualProxyPasswordInput: false,
+      },
+    });
+    expect(entry).not.toHaveProperty('playwrightPersonaId');
+    expect(entry).not.toHaveProperty('playwrightBrowser');
+    expect(entry).not.toHaveProperty('playwrightHeadless');
   });
 });

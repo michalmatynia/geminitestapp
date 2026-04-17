@@ -3,8 +3,9 @@ import {
   type PlaywrightAction,
   type PlaywrightActionBlock,
 } from '@/shared/contracts/playwright-steps';
-import { ACTION_SEQUENCES, type ActionSequenceKey } from './action-sequences';
+import type { ActionSequenceKey } from './action-sequences';
 import { getPlaywrightRuntimeActionSeed } from './playwright-runtime-action-seeds';
+import { toActionSequenceKey } from './runtime-action-keys';
 
 type RuntimeActionRepairMode = 'reset_to_seed' | 'clone_to_draft_and_restore';
 
@@ -48,14 +49,6 @@ export type PlaywrightRuntimeActionRepairPreview = {
   repairableActionIds: string[];
   repairedRuntimeKeys: ActionSequenceKey[];
   replacedActionIds: string[];
-};
-
-const toActionSequenceKey = (runtimeKey: string | null): ActionSequenceKey | null => {
-  if (runtimeKey === null || !(runtimeKey in ACTION_SEQUENCES)) {
-    return null;
-  }
-
-  return runtimeKey as ActionSequenceKey;
 };
 
 const cloneBlocksWithNewIds = (

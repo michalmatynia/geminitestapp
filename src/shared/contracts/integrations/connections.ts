@@ -2,6 +2,17 @@ import { z } from 'zod';
 
 import { namedDtoSchema } from '@/shared/contracts/base';
 
+export const programmablePlaywrightLegacyBrowserMigrationSchema = z.object({
+  hasLegacyBrowserBehavior: z.boolean(),
+  legacySummary: z.array(z.string()),
+  requiresManualProxyPasswordInput: z.boolean(),
+  canCleanupPersistedLegacyBrowserFields: z.boolean(),
+  listingDraftActionId: z.string(),
+  listingDraftActionName: z.string(),
+  importDraftActionId: z.string(),
+  importDraftActionName: z.string(),
+});
+
 export const integrationConnectionSchema = namedDtoSchema.extend({
   integrationId: z.string(),
   username: z.string().optional(),
@@ -87,6 +98,9 @@ export const integrationConnectionSchema = namedDtoSchema.extend({
   playwrightImportCaptureRoutesJson: z.string().nullable().optional(),
   /** JSON-encoded key→field mapping: { sourceKey: string, targetField: string }[] */
   playwrightFieldMapperJson: z.string().nullable().optional(),
+  playwrightLegacyBrowserMigration: programmablePlaywrightLegacyBrowserMigrationSchema
+    .nullable()
+    .optional(),
   scanner1688StartUrl: z.string().trim().max(4_000).nullable().optional(),
   scanner1688LoginMode: z.enum(['session_required', 'manual_login']).nullable().optional(),
   scanner1688DefaultSearchMode: z
@@ -100,6 +114,44 @@ export const integrationConnectionSchema = namedDtoSchema.extend({
 });
 
 export type IntegrationConnection = z.infer<typeof integrationConnectionSchema>;
+
+const programmableIntegrationConnectionOmitShape = {
+  playwrightPersonaId: true,
+  playwrightIdentityProfile: true,
+  playwrightHeadless: true,
+  playwrightSlowMo: true,
+  playwrightTimeout: true,
+  playwrightNavigationTimeout: true,
+  playwrightLocale: true,
+  playwrightTimezoneId: true,
+  playwrightHumanizeMouse: true,
+  playwrightMouseJitter: true,
+  playwrightClickDelayMin: true,
+  playwrightClickDelayMax: true,
+  playwrightInputDelayMin: true,
+  playwrightInputDelayMax: true,
+  playwrightActionDelayMin: true,
+  playwrightActionDelayMax: true,
+  playwrightProxyEnabled: true,
+  playwrightProxyServer: true,
+  playwrightProxyUsername: true,
+  playwrightProxyPassword: true,
+  playwrightProxyHasPassword: true,
+  playwrightProxySessionAffinity: true,
+  playwrightProxySessionMode: true,
+  playwrightProxyProviderPreset: true,
+  playwrightBrowser: true,
+  playwrightEmulateDevice: true,
+  playwrightDeviceName: true,
+} as const;
+
+export const programmableIntegrationConnectionSchema = integrationConnectionSchema.omit(
+  programmableIntegrationConnectionOmitShape
+);
+
+export type ProgrammableIntegrationConnection = z.infer<
+  typeof programmableIntegrationConnectionSchema
+>;
 
 export const createIntegrationConnectionSchema = integrationConnectionSchema.omit({
   id: true,

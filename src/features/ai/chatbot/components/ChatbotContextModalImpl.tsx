@@ -17,7 +17,7 @@ interface ChatbotContextModalProps extends EntityModalProps<ContextDraft> {
   tagDraft: string;
   setTagDraft: (value: string) => void;
   isSaving: boolean;
-  onSave: () => void;
+  onSave: () => void | Promise<void>;
 }
 
 const EMPTY_CONTEXT_DRAFT: ContextDraft = {
@@ -38,7 +38,7 @@ export interface ChatbotContextModalRuntimeValue {
   values: ContextDraft;
   onChange: (vals: Partial<ContextDraft>) => void;
   isSaving: boolean;
-  onSave: () => void;
+  onSave: () => Promise<void>;
 }
 
 export const {
@@ -183,7 +183,6 @@ const createChatbotContextFields = (
     label: 'Content',
     type: 'textarea',
     placeholder: 'Add instructions...',
-    className: 'min-h-[240px] font-mono text-xs',
   },
   {
     key: 'active',
@@ -211,7 +210,7 @@ type ChatbotContextModalRuntimeInput = {
   fields: SettingsPanelField<ContextDraft>[];
   effectiveDraft: ContextDraft;
   handleChange: (vals: Partial<ContextDraft>) => void;
-  onSave: () => void;
+  onSave: () => Promise<void>;
   isSaving: boolean;
 };
 
@@ -274,6 +273,9 @@ function useChatbotContextModalRuntimeValue(
     () => modalDraft ?? EMPTY_CONTEXT_DRAFT,
     [modalDraft]
   );
+  const handleSave = useCallback(async (): Promise<void> => {
+    await Promise.resolve(onSave());
+  }, [onSave]);
   const draftTags = effectiveDraft.tags;
 
   const fields = useChatbotContextFields({
@@ -301,7 +303,7 @@ function useChatbotContextModalRuntimeValue(
         fields,
         effectiveDraft,
         handleChange,
-        onSave,
+        onSave: handleSave,
         isSaving,
       }),
     [
@@ -309,11 +311,11 @@ function useChatbotContextModalRuntimeValue(
       effectiveDraft,
       fields,
       handleChange,
+      handleSave,
       isOpen,
       isSaving,
       modalDraft,
       onClose,
-      onSave,
     ]
   );
   return runtimeValue;

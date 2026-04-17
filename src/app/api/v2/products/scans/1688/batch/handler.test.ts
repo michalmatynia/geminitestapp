@@ -11,7 +11,7 @@ vi.mock('@/features/products/server/product-scans-service', () => ({
   queue1688BatchProductScans: (...args: unknown[]) => queue1688BatchProductScansMock(...args),
 }));
 
-import { POST_handler, productScanBatchRequestSchema } from './handler';
+import { POST_handler, product1688BatchScanRequestSchema } from './handler';
 
 describe('products/scans/1688/batch handler', () => {
   beforeEach(() => {
@@ -20,7 +20,7 @@ describe('products/scans/1688/batch handler', () => {
 
   it('exports the batch handler and request schema', () => {
     expect(typeof POST_handler).toBe('function');
-    expect(typeof productScanBatchRequestSchema.safeParse).toBe('function');
+    expect(typeof product1688BatchScanRequestSchema.safeParse).toBe('function');
   });
 
   it('queues 1688 scans with the authenticated user id', async () => {

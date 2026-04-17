@@ -7,6 +7,7 @@ const {
   updateConnectionMock,
   encryptSecretMock,
   getSettingValueMock,
+  fetchResolvedPlaywrightRuntimeActionsMock,
 } = vi.hoisted(() => ({
   parseJsonBodyMock: vi.fn(),
   getConnectionByIdMock: vi.fn(),
@@ -14,6 +15,7 @@ const {
   updateConnectionMock: vi.fn(),
   encryptSecretMock: vi.fn(),
   getSettingValueMock: vi.fn(),
+  fetchResolvedPlaywrightRuntimeActionsMock: vi.fn(),
 }));
 
 vi.mock('@/shared/lib/api/parse-json', () => ({
@@ -38,6 +40,11 @@ vi.mock('@/shared/lib/ai/server-settings', () => ({
   getSettingValue: (...args: unknown[]) => getSettingValueMock(...args),
 }));
 
+vi.mock('@/shared/lib/browser-execution/runtime-action-resolver.server', () => ({
+  fetchResolvedPlaywrightRuntimeActions: (...args: unknown[]) =>
+    fetchResolvedPlaywrightRuntimeActionsMock(...args),
+}));
+
 import { DEFAULT_TRADERA_QUICKLIST_SCRIPT } from '@/features/integrations/services/tradera-listing/default-script';
 import { PUT_handler, deleteQuerySchema } from './handler';
 
@@ -45,6 +52,32 @@ describe('integration connection by-id handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     getSettingValueMock.mockResolvedValue(null);
+    fetchResolvedPlaywrightRuntimeActionsMock.mockResolvedValue([
+      {
+        id: 'listing-draft',
+        name: 'Listing Draft',
+        description: null,
+        runtimeKey: null,
+        blocks: [],
+        stepSetIds: [],
+        personaId: null,
+        executionSettings: {},
+        createdAt: '2026-04-02T10:00:00.000Z',
+        updatedAt: '2026-04-02T11:00:00.000Z',
+      },
+      {
+        id: 'import-draft',
+        name: 'Import Draft',
+        description: null,
+        runtimeKey: null,
+        blocks: [],
+        stepSetIds: [],
+        personaId: null,
+        executionSettings: {},
+        createdAt: '2026-04-02T10:00:00.000Z',
+        updatedAt: '2026-04-02T11:00:00.000Z',
+      },
+    ]);
     parseJsonBodyMock.mockResolvedValue({
       ok: true,
       data: {
@@ -350,14 +383,12 @@ describe('integration connection by-id handler', () => {
     });
   });
 
-  it('persists programmable Playwright fields and can reset explicit Playwright overrides', async () => {
+  it('rejects legacy browser fields for programmable connection updates', async () => {
     parseJsonBodyMock.mockResolvedValue({
       ok: true,
       data: {
         name: 'Programmable Browser',
         playwrightPersonaId: 'persona-1',
-        playwrightImportScript: 'export default async function run() {}',
-        resetPlaywrightOverrides: true,
       },
     });
     getConnectionByIdMock.mockResolvedValue({
@@ -368,48 +399,23 @@ describe('integration connection by-id handler', () => {
       id: 'integration-playwright-1',
       slug: 'playwright-programmable',
     });
-    updateConnectionMock.mockResolvedValue({
-      id: 'conn-playwright-1',
-      integrationId: 'integration-playwright-1',
-      name: 'Programmable Browser',
-      createdAt: '2026-04-02T10:00:00.000Z',
-      updatedAt: '2026-04-02T11:00:00.000Z',
-      playwrightPersonaId: 'persona-1',
-      playwrightImportScript: 'export default async function run() {}',
-      playwrightHeadless: null,
-    });
 
-    const response = await PUT_handler(
-      new Request('http://localhost/api/v2/integrations/connections/conn-playwright-1', {
-        method: 'PUT',
-      }) as never,
-      {} as never,
-      { id: 'conn-playwright-1' }
+    await expect(
+      PUT_handler(
+        new Request('http://localhost/api/v2/integrations/connections/conn-playwright-1', {
+          method: 'PUT',
+        }) as never,
+        {} as never,
+        { id: 'conn-playwright-1' }
+      )
+    ).rejects.toThrow(
+      'Programmable connections no longer accept connection-level Playwright browser settings. Edit the selected Step Sequencer action instead.'
     );
 
-    const payload = await response.json();
-
-    expect(updateConnectionMock).toHaveBeenCalledWith(
-      'conn-playwright-1',
-      expect.objectContaining({
-        name: 'Programmable Browser',
-        playwrightPersonaId: 'persona-1',
-        playwrightImportScript: 'export default async function run() {}',
-        playwrightHeadless: null,
-        playwrightSlowMo: null,
-        playwrightTimeout: null,
-        playwrightNavigationTimeout: null,
-      })
-    );
-    expect(payload).toMatchObject({
-      id: 'conn-playwright-1',
-      playwrightPersonaId: 'persona-1',
-      playwrightImportScript: 'export default async function run() {}',
-      playwrightHeadless: true,
-    });
+    expect(updateConnectionMock).not.toHaveBeenCalled();
   });
 
-  it('resolves response Playwright settings from persona baselines after updates', async () => {
+  it('hides browser settings from programmable update responses after cleanup', async () => {
     getSettingValueMock.mockResolvedValue(
       JSON.stringify([
         {
@@ -427,7 +433,6 @@ describe('integration connection by-id handler', () => {
       ok: true,
       data: {
         name: 'Programmable Browser',
-        playwrightPersonaId: 'persona-1',
         resetPlaywrightOverrides: true,
       },
     });
@@ -445,8 +450,8 @@ describe('integration connection by-id handler', () => {
       name: 'Programmable Browser',
       createdAt: '2026-04-02T10:00:00.000Z',
       updatedAt: '2026-04-02T11:00:00.000Z',
-      playwrightPersonaId: 'persona-1',
-      playwrightHeadless: null,
+      playwrightListingActionId: 'listing-draft',
+      playwrightImportActionId: 'import-draft',
     });
 
     const response = await PUT_handler(
@@ -461,11 +466,16 @@ describe('integration connection by-id handler', () => {
 
     expect(payload).toMatchObject({
       id: 'conn-playwright-1',
-      playwrightPersonaId: 'persona-1',
-      playwrightSlowMo: 125,
-      playwrightHumanizeMouse: false,
-      playwrightBrowser: 'chrome',
+      playwrightListingActionId: 'listing-draft',
+      playwrightImportActionId: 'import-draft',
+      playwrightLegacyBrowserMigration: {
+        hasLegacyBrowserBehavior: false,
+        requiresManualProxyPasswordInput: false,
+      },
     });
+    expect(payload).not.toHaveProperty('playwrightPersonaId');
+    expect(payload).not.toHaveProperty('playwrightSlowMo');
+    expect(payload).not.toHaveProperty('playwrightBrowser');
   });
 
   it('still exports the delete query schema', () => {

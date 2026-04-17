@@ -208,6 +208,7 @@ export const runPlaywrightListingScript = async ({
   const listingId = extractTrimmedString(input['listingId']);
   const sharedTaskInput = {
     connection,
+    browserBehaviorOwner: 'action' as const,
     ...(typeof connection.playwrightListingActionId === 'string' &&
     connection.playwrightListingActionId.trim().length > 0
       ? { actionId: connection.playwrightListingActionId.trim() }
@@ -318,6 +319,7 @@ export const runPlaywrightImportScript = async ({
 }): Promise<PlaywrightImportResult> => {
   const { run, outputs } = await runPlaywrightConnectionScriptTask({
     connection,
+    browserBehaviorOwner: 'action',
     ...(typeof connection.playwrightImportActionId === 'string' &&
     connection.playwrightImportActionId.trim().length > 0
       ? { actionId: connection.playwrightImportActionId.trim() }

@@ -8,7 +8,7 @@ import type { SettingsPanelField } from '@/shared/contracts/ui/settings';
 
 interface RenamePathModalProps extends EntityModalProps<{ name: string }> {
   setDraftName: (value: string) => void;
-  onSave: () => void;
+  onSave: () => void | Promise<void>;
 }
 
 type RenameFormState = {
@@ -36,8 +36,8 @@ export function RenamePathModal(props: RenamePathModalProps): React.JSX.Element 
     }
   };
 
-  const handleSave = (): void => {
-    onSave();
+  const handleSave = async (): Promise<void> => {
+    await Promise.resolve(onSave());
   };
 
   return (

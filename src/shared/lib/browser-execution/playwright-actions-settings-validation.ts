@@ -4,7 +4,8 @@ import {
   type PlaywrightAction,
 } from '@/shared/contracts/playwright-steps';
 
-import { ACTION_SEQUENCES, type ActionSequenceKey } from './action-sequences';
+import type { ActionSequenceKey } from './action-sequences';
+import { toActionSequenceKey } from './runtime-action-keys';
 import { validateRuntimeActionEditorBlocks } from './runtime-action-editor-validation';
 
 type ValidationResult =
@@ -13,14 +14,6 @@ type ValidationResult =
 
 export type LoadedPlaywrightActionAnalysis = {
   runtimeActionErrorsById: Record<string, string>;
-};
-
-const toActionSequenceKey = (runtimeKey: string | null): ActionSequenceKey | null => {
-  if (runtimeKey === null || !(runtimeKey in ACTION_SEQUENCES)) {
-    return null;
-  }
-
-  return runtimeKey as ActionSequenceKey;
 };
 
 const collectActionsByRuntimeKey = (

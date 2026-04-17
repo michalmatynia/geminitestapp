@@ -73,7 +73,7 @@ export const getEventEffectsConfig = (
 });
 
 export const getEventHoverStyle = (config: CmsEventEffectsConfig): React.CSSProperties => {
-  if (!config.hoverEffect || config.hoverEffect === 'none') return {};
+  if (config.hoverEffect === 'none') return {};
   const scale = coerceScale(config.hoverScale);
 
   let transform = `scale(${scale})`;
@@ -114,8 +114,8 @@ export const getEventClassName = (
   options?: { disableClick?: boolean }
 ): string => {
   const classes: string[] = [];
-  if (config.hoverEffect && config.hoverEffect !== 'none') classes.push('cms-event-hover');
-  if (!options?.disableClick && config.clickAction && config.clickAction !== 'none') {
+  if (config.hoverEffect !== 'none') classes.push('cms-event-hover');
+  if ((options?.disableClick ?? false) === false && config.clickAction !== 'none') {
     classes.push('cms-event-clickable');
   }
   return classes.join(' ');
@@ -124,4 +124,4 @@ export const getEventClassName = (
 export const isEventClickEnabled = (
   config: CmsEventEffectsConfig,
   disableClick?: boolean
-): boolean => !disableClick && config.clickAction !== 'none';
+): boolean => (disableClick ?? false) === false && config.clickAction !== 'none';

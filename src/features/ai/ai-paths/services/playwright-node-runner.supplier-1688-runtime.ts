@@ -5,7 +5,10 @@ import {
   Supplier1688ScanSequencer,
   type Supplier1688ScanInput,
 } from '@/shared/lib/browser-execution/sequencers/Supplier1688ScanSequencer';
-import { SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY } from '@/shared/lib/browser-execution/supplier-1688-runtime-constants';
+import {
+  SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY,
+  SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS,
+} from '@/shared/lib/browser-execution/supplier-1688-runtime-constants';
 import type {
   ProductScanArtifacts,
   ProductScanHelpers,
@@ -31,20 +34,25 @@ const SUPPLIER_1688_ACTION_STEPS_BY_PRODUCT_STEP_KEY: Record<
   string,
   readonly Supplier1688ActionStepExpansion[]
 > = {
-  validate: [{ stepId: 'supplier_1688_input_validate' }],
-  '1688_open': [{ stepId: 'supplier_1688_open_search' }],
+  validate: [{ stepId: SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.inputValidate }],
+  '1688_open': [{ stepId: SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.openSearch }],
   '1688_upload': [
-    { stepId: 'supplier_1688_upload_image' },
-    { stepId: 'supplier_1688_submit_search', label: 'Submit 1688 image search' },
+    { stepId: SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.uploadImage },
+    {
+      stepId: SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.submitSearch,
+      label: 'Submit 1688 image search',
+    },
   ],
-  '1688_collect_candidates': [{ stepId: 'supplier_1688_collect_candidates' }],
-  supplier_open: [{ stepId: 'supplier_1688_probe_candidate' }],
-  supplier_overlays: [{ stepId: 'supplier_1688_access_check' }],
-  supplier_content_ready: [{ stepId: 'supplier_1688_wait_supplier' }],
-  supplier_probe: [{ stepId: 'supplier_1688_score_candidate' }],
-  supplier_evaluate: [{ stepId: 'supplier_1688_evaluate_match' }],
-  supplier_extract: [{ stepId: 'supplier_1688_extract_details' }],
-  supplier_ai_evaluate: [{ stepId: 'supplier_1688_evaluate_match' }],
+  '1688_collect_candidates': [
+    { stepId: SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.collectCandidates },
+  ],
+  supplier_open: [{ stepId: SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.probeCandidate }],
+  supplier_overlays: [{ stepId: SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.accessCheck }],
+  supplier_content_ready: [{ stepId: SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.waitSupplier }],
+  supplier_probe: [{ stepId: SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.scoreCandidate }],
+  supplier_evaluate: [{ stepId: SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.evaluateMatch }],
+  supplier_extract: [{ stepId: SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.extractDetails }],
+  supplier_ai_evaluate: [{ stepId: SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.evaluateMatch }],
 };
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -111,8 +119,8 @@ const createSupplier1688ActionRunSteps = (payload: unknown): Array<Record<string
 
   return [
     {
-      key: 'browser_preparation',
-      refId: 'browser_preparation',
+      key: SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.browserPreparation,
+      refId: SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.browserPreparation,
       kind: 'runtime_step',
       order: 1,
       label: 'Prepare browser runtime',
@@ -127,8 +135,8 @@ const createSupplier1688ActionRunSteps = (payload: unknown): Array<Record<string
       output: null,
     },
     {
-      key: 'browser_open',
-      refId: 'browser_open',
+      key: SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.browserOpen,
+      refId: SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.browserOpen,
       kind: 'runtime_step',
       order: 2,
       label: 'Open browser',
@@ -144,8 +152,8 @@ const createSupplier1688ActionRunSteps = (payload: unknown): Array<Record<string
     },
     ...mappedSteps,
     {
-      key: 'supplier_1688_finalize',
-      refId: 'supplier_1688_finalize',
+      key: SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.finalize,
+      refId: SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.finalize,
       kind: 'runtime_step',
       order: mappedSteps.length + 3,
       label: 'Finalize 1688 probe result',
@@ -163,8 +171,8 @@ const createSupplier1688ActionRunSteps = (payload: unknown): Array<Record<string
       },
     },
     {
-      key: 'browser_close',
-      refId: 'browser_close',
+      key: SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.browserClose,
+      refId: SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.browserClose,
       kind: 'runtime_step',
       order: mappedSteps.length + 4,
       label: 'Close browser',

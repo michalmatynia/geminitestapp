@@ -17,7 +17,7 @@ import { enqueueFilemakerEmailCampaignRunJob, startFilemakerEmailCampaignQueue }
 
 const parseMsFromEnv = (raw: string | undefined, fallback: number, min: number): number => {
   const parsed = Number(raw);
-  if (!Number.isFinite(parsed)) return fallback;
+  if (Number.isFinite(parsed) === false) return fallback;
   return Math.max(min, Math.floor(parsed));
 };
 
@@ -49,6 +49,47 @@ const queueState =
     startupTickQueued: false,
   });
 
+const persistSchedulerStatus = async (startedAt: string, completedAt: string, result: any, dispatchModes: any): Promise<void> => {
+  await upsertFilemakerCampaignSettingValue(
+    FILEMAKER_EMAIL_CAMPAIGN_SCHEDULER_STATUS_KEY,
+    JSON.stringify(
+      toPersistedFilemakerEmailCampaignSchedulerStatus({
+        version: 1,
+        lastStartedAt: startedAt,
+        lastCompletedAt: completedAt,
+        lastSuccessfulAt: completedAt,
+        evaluatedCampaignCount: result.evaluatedCampaignCount,
+        dueCampaignCount: result.dueCampaignCount,
+        launchedRuns: result.launchedRuns,
+        queuedDispatchCount: dispatchModes.queued,
+        inlineDispatchCount: dispatchModes.inline,
+        skippedByReason: result.skippedByReason,
+        launchFailures: result.launchFailures,
+      })
+    )
+  );
+};
+
+const logSchedulerTick = async (result: any, dispatchModes: any): Promise<void> => {
+  if (
+    result.launchedRuns.length > 0 ||
+    result.launchFailures.length > 0 ||
+    result.skippedByReason.length > 0
+  ) {
+    await ErrorSystem.logInfo('Filemaker campaign scheduler tick processed', {
+      service: 'filemaker-email-campaign-scheduler-queue',
+      evaluatedCampaignCount: result.evaluatedCampaignCount,
+      dueCampaignCount: result.dueCampaignCount,
+      launchedRunCount: result.launchedRuns.length,
+      launchedRunIds: result.launchedRuns.map((run: any) => run.runId),
+      launchFailures: result.launchFailures,
+      skippedByReason: result.skippedByReason,
+      queuedDispatchCount: dispatchModes.queued,
+      inlineDispatchCount: dispatchModes.inline,
+    });
+  }
+};
+
 const queue = createManagedQueue<ScheduledTickJobData>({
   name: 'filemaker-email-campaign-scheduler',
   concurrency: 1,
@@ -67,59 +108,23 @@ const queue = createManagedQueue<ScheduledTickJobData>({
       startFilemakerEmailCampaignQueue();
     }
 
-    const dispatchModes = {
-      queued: 0,
-      inline: 0,
-    };
-
-    for (const launchedRun of result.launchedRuns) {
-      if (launchedRun.queuedDeliveryCount <= 0) continue;
-
-      const dispatch = await enqueueFilemakerEmailCampaignRunJob({
-        campaignId: launchedRun.campaignId,
-        runId: launchedRun.runId,
+    const dispatchModes = { queued: 0, inline: 0 };
+    const dispatchPromises = result.launchedRuns
+      .filter((run) => run.queuedDeliveryCount > 0)
+      .map((run) => enqueueFilemakerEmailCampaignRunJob({
+        campaignId: run.campaignId,
+        runId: run.runId,
         reason: 'launch',
-      });
-      dispatchModes[dispatch.dispatchMode] += 1;
-    }
+      }));
+
+    const dispatches = await Promise.all(dispatchPromises);
+    dispatches.forEach((d) => {
+      dispatchModes[d.dispatchMode] += 1;
+    });
 
     const completedAt = new Date().toISOString();
-    await upsertFilemakerCampaignSettingValue(
-      FILEMAKER_EMAIL_CAMPAIGN_SCHEDULER_STATUS_KEY,
-      JSON.stringify(
-        toPersistedFilemakerEmailCampaignSchedulerStatus({
-          version: 1,
-          lastStartedAt: startedAt,
-          lastCompletedAt: completedAt,
-          lastSuccessfulAt: completedAt,
-          evaluatedCampaignCount: result.evaluatedCampaignCount,
-          dueCampaignCount: result.dueCampaignCount,
-          launchedRuns: result.launchedRuns,
-          queuedDispatchCount: dispatchModes.queued,
-          inlineDispatchCount: dispatchModes.inline,
-          skippedByReason: result.skippedByReason,
-          launchFailures: result.launchFailures,
-        })
-      )
-    );
-
-    if (
-      result.launchedRuns.length > 0 ||
-      result.launchFailures.length > 0 ||
-      result.skippedByReason.length > 0
-    ) {
-      await ErrorSystem.logInfo('Filemaker campaign scheduler tick processed', {
-        service: 'filemaker-email-campaign-scheduler-queue',
-        evaluatedCampaignCount: result.evaluatedCampaignCount,
-        dueCampaignCount: result.dueCampaignCount,
-        launchedRunCount: result.launchedRuns.length,
-        launchedRunIds: result.launchedRuns.map((run) => run.runId),
-        launchFailures: result.launchFailures,
-        skippedByReason: result.skippedByReason,
-        queuedDispatchCount: dispatchModes.queued,
-        inlineDispatchCount: dispatchModes.inline,
-      });
-    }
+    await persistSchedulerStatus(startedAt, completedAt, result, dispatchModes);
+    await logSchedulerTick(result, dispatchModes);
 
     return {
       ...result,
@@ -135,14 +140,14 @@ const queue = createManagedQueue<ScheduledTickJobData>({
 });
 
 export const startFilemakerEmailCampaignSchedulerQueue = (): void => {
-  if (!queueState.workerStarted) {
+  if (queueState.workerStarted === false) {
     queueState.workerStarted = true;
     queue.startWorker();
   }
 
-  if (!queueState.startupTickQueued) {
+  if (queueState.startupTickQueued === false) {
     queueState.startupTickQueued = true;
-    void queue
+    queue
       .enqueue(
         { type: 'scheduled-tick' },
         {
@@ -151,19 +156,19 @@ export const startFilemakerEmailCampaignSchedulerQueue = (): void => {
           removeOnFail: true,
         }
       )
-      .catch(async (error) => {
+      .catch((error) => {
         queueState.startupTickQueued = false;
-        await ErrorSystem.captureException(error, {
+        ErrorSystem.captureException(error, {
           service: 'filemaker-email-campaign-scheduler-queue',
           action: 'enqueueStartupTick',
-        });
+        }).catch(() => {});
       });
   }
 
-  if (queueState.schedulerRegistered) return;
+  if (queueState.schedulerRegistered === true) return;
   queueState.schedulerRegistered = true;
 
-  void queue
+  queue
     .enqueue(
       { type: 'scheduled-tick' },
       {
@@ -171,11 +176,11 @@ export const startFilemakerEmailCampaignSchedulerQueue = (): void => {
         jobId: 'filemaker-email-campaign-scheduler-tick',
       }
     )
-    .catch(async (error) => {
+    .catch((error) => {
       queueState.schedulerRegistered = false;
-      await ErrorSystem.captureException(error, {
+      ErrorSystem.captureException(error, {
         service: 'filemaker-email-campaign-scheduler-queue',
         action: 'registerScheduler',
-      });
+      }).catch(() => {});
     });
 };

@@ -14,8 +14,8 @@ import {
 } from '@/shared/lib/playwright/step-code-preview';
 import {
   createRuntimeStepSemanticSnippet,
-  getSupplier1688RuntimeStepSelectorKeys,
-} from '@/shared/lib/playwright/supplier-1688-runtime-step-snippets';
+  getRuntimeStepSelectorKeys,
+} from '@/shared/lib/playwright/product-scan-runtime-step-snippets';
 
 const previewStep = (
   step: PlaywrightStep,
@@ -44,7 +44,7 @@ const previewRuntimeStep = (
   const semanticSnippet =
     createRuntimeStepSemanticSnippet(runtimeStepId) ??
     `await runtimeSteps[${JSON.stringify(runtimeStepId)}](context);`;
-  const selectorKeys = getSupplier1688RuntimeStepSelectorKeys(runtimeStepId);
+  const selectorKeys = getRuntimeStepSelectorKeys(runtimeStepId);
 
   return {
     id: blockId,

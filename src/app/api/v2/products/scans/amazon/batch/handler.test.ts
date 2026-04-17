@@ -11,7 +11,7 @@ vi.mock('@/features/products/server/product-scans-service', () => ({
   queueAmazonBatchProductScans: (...args: unknown[]) => queueAmazonBatchProductScansMock(...args),
 }));
 
-import { POST_handler, productAmazonBatchScanRequestSchema } from './handler';
+import { POST_handler, productScanBatchRequestSchema } from './handler';
 
 describe('products/scans/amazon/batch handler', () => {
   beforeEach(() => {
@@ -20,7 +20,7 @@ describe('products/scans/amazon/batch handler', () => {
 
   it('exports the batch handler and request schema', () => {
     expect(typeof POST_handler).toBe('function');
-    expect(typeof productAmazonBatchScanRequestSchema.safeParse).toBe('function');
+    expect(typeof productScanBatchRequestSchema.safeParse).toBe('function');
   });
 
   it('queues amazon scans with the authenticated user id', async () => {
@@ -47,7 +47,7 @@ describe('products/scans/amazon/batch handler', () => {
       {
         body: {
           productIds: ['product-1'],
-          stepSequenceKey: 'amazon_direct_candidate_followup',
+          stepSequenceKey: 'amazon_reverse_image_scan',
           stepSequence: [{ key: 'validate', label: 'Validate trigger' }],
         },
         userId: 'user-42',
@@ -58,7 +58,7 @@ describe('products/scans/amazon/batch handler', () => {
       productIds: ['product-1'],
       ownerUserId: 'user-42',
       requestInput: {
-        stepSequenceKey: 'amazon_direct_candidate_followup',
+        stepSequenceKey: 'amazon_reverse_image_scan',
         stepSequence: [{ key: 'validate', label: 'Validate trigger' }],
       },
     });

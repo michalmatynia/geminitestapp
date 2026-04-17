@@ -1,14 +1,25 @@
+import { Suspense } from 'react';
+import { headers } from 'next/headers';
+
+import { getKangurAuthBootstrapScript } from '@/features/kangur/server/auth-bootstrap';
+import { safeHtml } from '@/shared/lib/security/safe-html';
 import { KangurServerShell } from '@/features/kangur/ui/components/KangurServerShell';
 import { KangurFeatureRouteShellClientBoundary } from '@/features/kangur/ui/KangurFeatureRouteShellClientBoundary';
 
 import type { ReactNode } from 'react';
 
-const KANGUR_AUTH_BOOTSTRAP_SCRIPT = 'window.__KANGUR_AUTH_BOOTSTRAP__=null;';
+async function KangurAuthBootstrapScript(): Promise<ReactNode> {
+  const bootstrapScript = await getKangurAuthBootstrapScript(await headers());
+  if (!bootstrapScript) return null;
+  return <script dangerouslySetInnerHTML={{ __html: safeHtml(bootstrapScript) }} />;
+}
 
 export default function KangurAppLayout({ children }: { children: ReactNode }): ReactNode {
   return (
     <>
-      <script dangerouslySetInnerHTML={{ __html: KANGUR_AUTH_BOOTSTRAP_SCRIPT }} />
+      <Suspense fallback={null}>
+        <KangurAuthBootstrapScript />
+      </Suspense>
       <KangurServerShell />
       {children}
       <KangurFeatureRouteShellClientBoundary />

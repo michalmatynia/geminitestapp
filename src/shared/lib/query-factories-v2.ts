@@ -86,13 +86,19 @@ export type {
   SaveMutationFactoryV2Config,
 };
 
-export function createListQueryV2<TData, TQueryFnData = TData[]>(
+export function useListQueryV2<TData, TQueryFnData = TData[]>(
   config: BaseQueryFactoryV2Config<TQueryFnData, Error, TQueryFnData>
 ): ListQuery<TData, TQueryFnData> {
   return useQueryFactoryV2<TQueryFnData, Error, TQueryFnData>(config) as ListQuery<
     TData,
     TQueryFnData
   >;
+}
+
+export function createListQueryV2<TData, TQueryFnData = TData[]>(
+  config: BaseQueryFactoryV2Config<TQueryFnData, Error, TQueryFnData>
+): ListQuery<TData, TQueryFnData> {
+  return useListQueryV2<TData, TQueryFnData>(config);
 }
 
 type SingleQueryEnabledPredicate = (query: unknown) => boolean;
@@ -328,7 +334,7 @@ export function createSaveMutationV2<
 ): MutationResult<TData, TVariables, TError> {
   const { createFn, updateFn, ...rest } = config;
 
-  return createMutationV2<TData, TVariables, TContext, TError>({
+  return useMutationV2<TData, TVariables, TContext, TError>({
     ...rest,
     mutationFn: (variables: TVariables) => {
       if (variables.id) {
@@ -339,7 +345,7 @@ export function createSaveMutationV2<
   });
 }
 
-export function createMutationV2<TData, TVariables, TContext = unknown, TError = Error>(
+export function useMutationV2<TData, TVariables, TContext = unknown, TError = Error>(
   config: MutationFactoryV2Config<TData, TVariables, TError, TContext>
 ): MutationResult<TData, TVariables, TError> {
   const {
@@ -443,13 +449,19 @@ export function createMutationV2<TData, TVariables, TContext = unknown, TError =
   });
 }
 
+export function createMutationV2<TData, TVariables, TContext = unknown, TError = Error>(
+  config: MutationFactoryV2Config<TData, TVariables, TError, TContext>
+): MutationResult<TData, TVariables, TError> {
+  return useMutationV2<TData, TVariables, TContext, TError>(config);
+}
+
 export function createOptimisticMutationV2<TData, TVariables, TCacheData = TData>(
   config: OptimisticMutationFactoryV2Config<TData, TVariables, TCacheData>
 ): MutationResult<TData, TVariables> {
   const { queryKey, updateFn, revertOnError, onMutate, onError, onSettled, meta, ...rest } = config;
   const queryClient = useQueryClient();
 
-  return createMutationV2<TData, TVariables, { previousData: TCacheData | undefined }>({
+  return useMutationV2<TData, TVariables, { previousData: TCacheData | undefined }>({
     ...rest,
     meta,
     onMutate: async (variables, context) => {
@@ -550,6 +562,38 @@ export const queryFactoriesV2TestUtils = {
   sanitizeRefetchIntervalValue,
 };
 
-export const createCreateMutationV2 = createMutationV2;
-export const createUpdateMutationV2 = createMutationV2;
-export const createDeleteMutationV2 = createMutationV2;
+export function useCreateMutationV2<TData, TVariables, TContext = unknown, TError = Error>(
+  config: MutationFactoryV2Config<TData, TVariables, TError, TContext>
+): MutationResult<TData, TVariables, TError> {
+  return useMutationV2<TData, TVariables, TContext, TError>(config);
+}
+
+export function useUpdateMutationV2<TData, TVariables, TContext = unknown, TError = Error>(
+  config: MutationFactoryV2Config<TData, TVariables, TError, TContext>
+): MutationResult<TData, TVariables, TError> {
+  return useMutationV2<TData, TVariables, TContext, TError>(config);
+}
+
+export function useDeleteMutationV2<TData, TVariables, TContext = unknown, TError = Error>(
+  config: MutationFactoryV2Config<TData, TVariables, TError, TContext>
+): MutationResult<TData, TVariables, TError> {
+  return useMutationV2<TData, TVariables, TContext, TError>(config);
+}
+
+export function createCreateMutationV2<TData, TVariables, TContext = unknown, TError = Error>(
+  config: MutationFactoryV2Config<TData, TVariables, TError, TContext>
+): MutationResult<TData, TVariables, TError> {
+  return useCreateMutationV2<TData, TVariables, TContext, TError>(config);
+}
+
+export function createUpdateMutationV2<TData, TVariables, TContext = unknown, TError = Error>(
+  config: MutationFactoryV2Config<TData, TVariables, TError, TContext>
+): MutationResult<TData, TVariables, TError> {
+  return useUpdateMutationV2<TData, TVariables, TContext, TError>(config);
+}
+
+export function createDeleteMutationV2<TData, TVariables, TContext = unknown, TError = Error>(
+  config: MutationFactoryV2Config<TData, TVariables, TError, TContext>
+): MutationResult<TData, TVariables, TError> {
+  return useDeleteMutationV2<TData, TVariables, TContext, TError>(config);
+}

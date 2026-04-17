@@ -161,6 +161,7 @@ export const isRecoverableKangurClientFetchError = (error: unknown): boolean => 
   return (
     normalizedMessage.includes('failed to fetch') ||
     normalizedMessage.includes('load failed') ||
+    normalizedMessage.includes('kangur api proxy request failed') ||
     normalizedMessage.includes('request timeout after') ||
     normalizedMessage.includes('response body timeout after')
   );

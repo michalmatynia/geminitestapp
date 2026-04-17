@@ -2,6 +2,11 @@ import type {
   ProductScanStep,
   ProductScanStepGroup,
 } from '@/shared/contracts/product-scans';
+import {
+  AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY,
+  AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY,
+  AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY,
+} from './amazon-runtime-constants';
 
 type ProductScanStepDefinition = {
   key: string;
@@ -151,7 +156,18 @@ export const PRODUCT_SCAN_STEP_GROUP_ORDER: Record<ProductScanStepGroup, number>
 };
 
 export const PRODUCT_SCAN_STEP_SEQUENCES = {
-  amazon_reverse_image_scan_browser: [
+  [AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY]: [
+    'validate',
+    'google_lens_open',
+    'google_upload',
+    'google_captcha',
+    'google_candidates',
+    'amazon_open',
+    'amazon_overlays',
+    'amazon_content_ready',
+    'amazon_probe',
+  ],
+  [AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY]: [
     'validate',
     'google_lens_open',
     'google_upload',
@@ -163,23 +179,7 @@ export const PRODUCT_SCAN_STEP_SEQUENCES = {
     'amazon_probe',
     'amazon_extract',
   ],
-  amazon_reverse_image_scan_full: [
-    'validate',
-    'google_lens_open',
-    'google_upload',
-    'google_captcha',
-    'google_candidates',
-    'amazon_open',
-    'amazon_overlays',
-    'amazon_content_ready',
-    'amazon_probe',
-    'amazon_extract',
-    'amazon_ai_triage',
-    'amazon_ai_evaluate',
-    'queue_scan',
-    'product_asin_update',
-  ],
-  amazon_direct_candidate_followup: [
+  [AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY]: [
     'validate',
     'amazon_open',
     'amazon_overlays',

@@ -16,6 +16,7 @@
       "@kangur/platform/*": ["../../packages/kangur-platform/src/*"],
       "@/features/*": ["../../src/features/*"],
       "@/shared/*": ["../../src/shared/*"],
+      "@/server/*": ["../../src/server/*"],
       "@/i18n/*": ["../../src/i18n/*"],
       "@/app/*": ["../../src/app/*"],
       "@docs/*": ["../../docs/*"],

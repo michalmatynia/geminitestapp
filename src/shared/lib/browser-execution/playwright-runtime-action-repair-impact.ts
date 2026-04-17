@@ -1,7 +1,8 @@
 import type { PlaywrightAction } from '@/shared/contracts/playwright-steps';
 
-import { ACTION_SEQUENCES, type ActionSequenceKey } from './action-sequences';
+import type { ActionSequenceKey } from './action-sequences';
 import type { PlaywrightRuntimeActionRepairPreview } from './playwright-runtime-action-repair';
+import { toActionSequenceKey } from './runtime-action-keys';
 
 export type PlaywrightRuntimeActionRepairImpactEntry = {
   actionId: string;
@@ -17,14 +18,6 @@ export type PlaywrightRuntimeActionRepairImpactGroup = {
 
 export type PlaywrightRuntimeActionRepairImpact = {
   groups: PlaywrightRuntimeActionRepairImpactGroup[];
-};
-
-const toActionSequenceKey = (runtimeKey: string | null): ActionSequenceKey | null => {
-  if (runtimeKey === null || !(runtimeKey in ACTION_SEQUENCES)) {
-    return null;
-  }
-
-  return runtimeKey as ActionSequenceKey;
 };
 
 export function buildPlaywrightRuntimeActionRepairImpact(input: {

@@ -473,7 +473,7 @@ describe('product-scans-service batch operations', () => {
     await queueAmazonBatchProductScans({
       productIds: ['product-1'],
       userId: 'user-1',
-      stepSequenceKey: 'amazon_direct_candidate_followup',
+      stepSequenceKey: 'amazon_reverse_image_scan',
       stepSequence: [{ key: 'validate', label: 'Validate trigger button' }],
     });
 
@@ -481,7 +481,7 @@ describe('product-scans-service batch operations', () => {
       expect.objectContaining({
         request: expect.objectContaining({
           input: expect.objectContaining({
-            stepSequenceKey: 'amazon_direct_candidate_followup',
+            stepSequenceKey: 'amazon_reverse_image_scan',
             stepSequence: [{ key: 'validate', label: 'Validate trigger button' }],
           }),
         }),

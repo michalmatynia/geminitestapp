@@ -17,7 +17,7 @@ const mocks = vi.hoisted(() => ({
   apiDeleteMock: vi.fn(),
   invalidateProductsMock: vi.fn().mockResolvedValue(undefined),
   invalidateProductsCountsAndDetailMock: vi.fn().mockResolvedValue(undefined),
-  productAmazonScanModalMock: vi.fn(),
+  productScanModalMock: vi.fn(),
   setValueMock: vi.fn(),
   getValuesMock: vi.fn(),
   addParameterValueMock: vi.fn(),
@@ -62,15 +62,15 @@ vi.mock('@/shared/lib/query-invalidation', async (importOriginal) => {
   };
 });
 
-vi.mock('@/features/products/components/list/ProductAmazonScanModal', () => ({
-  ProductAmazonScanModal: (props: {
+vi.mock('@/features/products/components/list/ProductScanModal', () => ({
+  ProductScanModal: (props: {
     isOpen: boolean;
     productIds: string[];
     products: Array<{ id: string }>;
     onClose: () => void;
     provider?: 'amazon' | '1688';
   }) => {
-    mocks.productAmazonScanModalMock(props);
+    mocks.productScanModalMock(props);
     return props.isOpen ? (
       <div data-testid='product-amazon-scan-modal'>{props.productIds.join(',')}</div>
     ) : null;
@@ -656,7 +656,7 @@ describe('ProductFormScans', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Scan Amazon' }));
 
     expect(await screen.findByTestId('product-amazon-scan-modal')).toHaveTextContent('product-1');
-    expect(mocks.productAmazonScanModalMock).toHaveBeenCalledWith(
+    expect(mocks.productScanModalMock).toHaveBeenCalledWith(
       expect.objectContaining({
         isOpen: true,
         productIds: ['product-1'],
@@ -680,7 +680,7 @@ describe('ProductFormScans', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Scan 1688' }));
 
     expect(await screen.findByTestId('product-amazon-scan-modal')).toHaveTextContent('product-1');
-    expect(mocks.productAmazonScanModalMock).toHaveBeenCalledWith(
+    expect(mocks.productScanModalMock).toHaveBeenCalledWith(
       expect.objectContaining({
         isOpen: true,
         productIds: ['product-1'],

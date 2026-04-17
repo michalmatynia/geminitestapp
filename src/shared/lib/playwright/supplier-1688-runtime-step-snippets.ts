@@ -1,9 +1,22 @@
 import type { PlaywrightStepInputBinding } from '@/shared/contracts/playwright-steps';
-import { SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY } from '@/shared/lib/browser-execution/supplier-1688-runtime-constants';
+import {
+  SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY,
+  SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS,
+} from '@/shared/lib/browser-execution/supplier-1688-runtime-constants';
 
 export { SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY };
 
 const supplier1688RuntimeStepSnippets: Record<string, string> = {
+  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.browserPreparation]: [
+    'await runtimeSteps.prepareBrowserRuntime({',
+    '  identityProfile: "marketplace",',
+    '  selectorProfile: runtime.selectorProfile,',
+    '});',
+  ].join('\n'),
+  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.browserOpen]: [
+    'const page = await runtime.browser.newPage();',
+    'await page.bringToFront();',
+  ].join('\n'),
   validate: [
     'const input = validate1688ProbeInput(runtime.input);',
     'await artifacts.json("1688-probe-input", input);',
@@ -12,7 +25,7 @@ const supplier1688RuntimeStepSnippets: Record<string, string> = {
     'const input = validate1688ProbeInput(runtime.input);',
     'await artifacts.json("1688-probe-input", input);',
   ].join('\n'),
-  supplier_1688_input_validate: [
+  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.inputValidate]: [
     'const input = validate1688ProbeInput(runtime.input);',
     'await artifacts.json("1688-probe-input", input);',
   ].join('\n'),
@@ -20,7 +33,7 @@ const supplier1688RuntimeStepSnippets: Record<string, string> = {
     'await page.goto(runtime.scanner1688StartUrl, { waitUntil: "domcontentloaded" });',
     'await runtimeSteps.detect1688AccessBarrier({ stage: "1688_open" });',
   ].join('\n'),
-  supplier_1688_open_search: [
+  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.openSearch]: [
     'await page.goto(runtime.scanner1688StartUrl, { waitUntil: "domcontentloaded" });',
     'await runtimeSteps.detect1688AccessBarrier({ stage: "1688_open" });',
   ].join('\n'),
@@ -31,7 +44,7 @@ const supplier1688RuntimeStepSnippets: Record<string, string> = {
     '});',
     'if (barrier.blocked) await runtimeSteps.handle1688CaptchaRecovery(barrier);',
   ].join('\n'),
-  supplier_1688_access_check: [
+  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.accessCheck]: [
     'const barrier = await runtimeSteps.detect1688AccessBarrier({',
     '  stage: runtime.stage,',
     '  selectors: selectors.supplier1688.access,',
@@ -45,7 +58,7 @@ const supplier1688RuntimeStepSnippets: Record<string, string> = {
     '  imageCandidates: runtime.imageCandidates,',
     '});',
   ].join('\n'),
-  supplier_1688_upload_image: [
+  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.uploadImage]: [
     'await runtimeSteps.upload1688Image({',
     '  fileInputs: selectors.supplier1688.imageSearch.fileInputs,',
     '  entryTriggers: selectors.supplier1688.imageSearch.entryTriggers,',
@@ -56,7 +69,7 @@ const supplier1688RuntimeStepSnippets: Record<string, string> = {
     'await page.locator(selectors.supplier1688.imageSearch.submitButtons.join(", ")).first().click();',
     'await page.waitForLoadState("domcontentloaded");',
   ].join('\n'),
-  supplier_1688_submit_search: [
+  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.submitSearch]: [
     'await page.locator(selectors.supplier1688.imageSearch.submitButtons.join(", ")).first().click();',
     'await page.waitForLoadState("domcontentloaded");',
   ].join('\n'),
@@ -66,7 +79,7 @@ const supplier1688RuntimeStepSnippets: Record<string, string> = {
     '  limit: runtime.candidateResultLimit,',
     '});',
   ].join('\n'),
-  supplier_1688_collect_candidates: [
+  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.collectCandidates]: [
     'const candidateUrls = await runtimeSteps.collect1688CandidateUrls({',
     '  resultLinks: selectors.supplier1688.imageSearch.resultLinks,',
     '  limit: runtime.candidateResultLimit,',
@@ -79,7 +92,7 @@ const supplier1688RuntimeStepSnippets: Record<string, string> = {
     '  await runtimeSteps.extract1688SupplierDetails({ candidateUrl });',
     '}',
   ].join('\n'),
-  supplier_1688_probe_candidate: [
+  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.probeCandidate]: [
     'for (const candidateUrl of runtime.candidateUrls) {',
     '  await runtimeSteps.open1688SupplierCandidate({ candidateUrl });',
     '  await runtimeSteps.waitFor1688SupplierContent({ candidateUrl });',
@@ -115,7 +128,7 @@ const supplier1688RuntimeStepSnippets: Record<string, string> = {
     '  bodySignalPattern: selectors.supplier1688.content.supplierBodySignalPattern,',
     '});',
   ].join('\n'),
-  supplier_1688_wait_supplier: [
+  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.waitSupplier]: [
     'await runtimeSteps.waitFor1688SupplierContent({',
     '  readySignals: selectors.supplier1688.supplierPage.readySignals,',
     '  bodySignalPattern: selectors.supplier1688.content.supplierBodySignalPattern,',
@@ -127,7 +140,7 @@ const supplier1688RuntimeStepSnippets: Record<string, string> = {
     '  maxImages: runtime.maxExtractedImages,',
     '});',
   ].join('\n'),
-  supplier_1688_extract_details: [
+  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.extractDetails]: [
     'const supplierDetails = await runtimeSteps.extract1688SupplierDetails({',
     '  pricePattern: selectors.supplier1688.content.priceTextPattern,',
     '  maxImages: runtime.maxExtractedImages,',
@@ -145,7 +158,7 @@ const supplier1688RuntimeStepSnippets: Record<string, string> = {
     '  supplierDetails: runtime.supplierDetails,',
     '});',
   ].join('\n'),
-  supplier_1688_score_candidate: [
+  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.scoreCandidate]: [
     'const candidateScore = runtimeSteps.score1688SupplierCandidate({',
     '  product: runtime.product,',
     '  supplierDetails: runtime.supplierDetails,',
@@ -172,7 +185,7 @@ const supplier1688RuntimeStepSnippets: Record<string, string> = {
     '  evaluatorConfig: runtime.evaluatorConfig,',
     '});',
   ].join('\n'),
-  supplier_1688_evaluate_match: [
+  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.evaluateMatch]: [
     'const supplierEvaluation = await runtimeSteps.evaluate1688SupplierMatch({',
     '  product: runtime.product,',
     '  supplierCandidate: runtime.bestCandidate,',
@@ -186,10 +199,16 @@ const supplier1688RuntimeStepSnippets: Record<string, string> = {
     '  artifacts,',
     '});',
   ].join('\n'),
-  supplier_1688_finalize: [
+  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.finalize]: [
     'await runtimeSteps.finalize1688ProbeResult({',
     '  supplierCandidate: runtime.bestCandidate,',
     '  supplierEvaluation: runtime.supplierEvaluation,',
+    '  artifacts,',
+    '});',
+  ].join('\n'),
+  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.browserClose]: [
+    'await runtimeSteps.releaseBrowserRuntime({',
+    '  preserveSession: true,',
     '  artifacts,',
     '});',
   ].join('\n'),
@@ -200,7 +219,7 @@ const supplier1688RuntimeStepSelectorKeys: Record<string, Record<string, string>
   '1688_open': {
     access: 'supplier1688.access.softBlockingSelectors',
   },
-  supplier_1688_open_search: {
+  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.openSearch]: {
     access: 'supplier1688.access.softBlockingSelectors',
   },
   '1688_access_check': {
@@ -211,7 +230,7 @@ const supplier1688RuntimeStepSelectorKeys: Record<string, Record<string, string>
     blockHints: 'supplier1688.access.blockHints',
     barrierTitleHints: 'supplier1688.access.barrierTitleHints',
   },
-  supplier_1688_access_check: {
+  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.accessCheck]: {
     hardBlockingSelectors: 'supplier1688.access.hardBlockingSelectors',
     softBlockingSelectors: 'supplier1688.access.softBlockingSelectors',
     loginHints: 'supplier1688.access.loginHints',
@@ -223,21 +242,21 @@ const supplier1688RuntimeStepSelectorKeys: Record<string, Record<string, string>
     fileInputs: 'supplier1688.imageSearch.fileInputs',
     entryTriggers: 'supplier1688.imageSearch.entryTriggers',
   },
-  supplier_1688_upload_image: {
+  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.uploadImage]: {
     fileInputs: 'supplier1688.imageSearch.fileInputs',
     entryTriggers: 'supplier1688.imageSearch.entryTriggers',
   },
   '1688_submit_search': {
     submitButtons: 'supplier1688.imageSearch.submitButtons',
   },
-  supplier_1688_submit_search: {
+  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.submitSearch]: {
     submitButtons: 'supplier1688.imageSearch.submitButtons',
   },
   '1688_collect_candidates': {
     resultLinks: 'supplier1688.imageSearch.resultLinks',
     searchBodySignalPattern: 'supplier1688.content.searchBodySignalPattern',
   },
-  supplier_1688_collect_candidates: {
+  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.collectCandidates]: {
     resultLinks: 'supplier1688.imageSearch.resultLinks',
     searchBodySignalPattern: 'supplier1688.content.searchBodySignalPattern',
   },
@@ -263,7 +282,7 @@ const supplier1688RuntimeStepSelectorKeys: Record<string, Record<string, string>
     readySignals: 'supplier1688.supplierPage.readySignals',
     supplierBodySignalPattern: 'supplier1688.content.supplierBodySignalPattern',
   },
-  supplier_1688_wait_supplier: {
+  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.waitSupplier]: {
     readySignals: 'supplier1688.supplierPage.readySignals',
     supplierBodySignalPattern: 'supplier1688.content.supplierBodySignalPattern',
   },
@@ -271,7 +290,7 @@ const supplier1688RuntimeStepSelectorKeys: Record<string, Record<string, string>
     readySignals: 'supplier1688.supplierPage.readySignals',
     priceTextPattern: 'supplier1688.content.priceTextPattern',
   },
-  supplier_1688_extract_details: {
+  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.extractDetails]: {
     readySignals: 'supplier1688.supplierPage.readySignals',
     priceTextPattern: 'supplier1688.content.priceTextPattern',
   },
@@ -311,7 +330,6 @@ export const getSupplier1688RuntimeStepInputBindings = (
       field,
       {
         mode: 'selectorRegistry',
-        field,
         selectorKey,
         selectorProfile,
         fallbackSelector: null,

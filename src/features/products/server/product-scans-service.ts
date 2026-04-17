@@ -3,7 +3,6 @@ import 'server-only';
 import {
   isProductScanActiveStatus,
   isProductScanTerminalStatus,
-  type ProductAmazonBatchScanResponse,
   type ProductScanBatchResponse,
   type ProductScanProvider,
   type ProductScanRecord,
@@ -129,7 +128,7 @@ export async function queueAmazonBatchProductScans(input: {
   userId?: string | null;
   stepSequenceKey?: string | null;
   stepSequence?: any[] | null;
-}): Promise<ProductAmazonBatchScanResponse> {
+}): Promise<ProductScanBatchResponse> {
   return await queueAmazonBatch(input);
 }
 

@@ -34,7 +34,7 @@ import {
 } from '@/features/products/hooks/useProductsMutations';
 import { useTraderaMassQuickExport } from '@/features/products/hooks/product-list/useTraderaMassQuickExport';
 import { useVintedMassQuickExport } from '@/features/products/hooks/product-list/useVintedMassQuickExport';
-import { ProductAmazonScanModal } from '@/features/products/components/list/ProductAmazonScanModal';
+import { ProductScanModal } from '@/features/products/components/list/ProductScanModal';
 import type { ProductAdvancedFilterPreset } from '@/shared/contracts/products/filters';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { ActionMenu } from '@/shared/ui/ActionMenu';
@@ -97,8 +97,8 @@ export const ProductSelectionActions = memo(() => {
     useVintedMassQuickExport();
   const [isTraderaStatusCheckOpen, setIsTraderaStatusCheckOpen] = useState(false);
   const [statusCheckProductIds, setStatusCheckProductIds] = useState<string[]>([]);
-  const [isAmazonScanOpen, setIsAmazonScanOpen] = useState(false);
-  const [amazonScanProductIds, setAmazonScanProductIds] = useState<string[]>([]);
+  const [isProductScanOpen, setIsProductScanOpen] = useState(false);
+  const [productScanProductIds, setProductScanProductIds] = useState<string[]>([]);
   const currentAdvancedFilterGroup = useMemo(
     () => parseAdvancedFilterPayload(advancedFilter),
     [advancedFilter]
@@ -188,7 +188,7 @@ export const ProductSelectionActions = memo(() => {
   }, [rowSelection, setRowSelection, setSelectedProductsArchivedState, toast]);
 
   const [statusCheckProducts, setStatusCheckProducts] = useState<typeof data>([]);
-  const [amazonScanProducts, setAmazonScanProducts] = useState<typeof data>([]);
+  const [productScanProducts, setProductScanProducts] = useState<typeof data>([]);
 
   const handleCheckTraderaStatus = useCallback((): void => {
     const selectedProductIds = Object.keys(rowSelection).filter((id: string) => rowSelection[id]);
@@ -211,9 +211,9 @@ export const ProductSelectionActions = memo(() => {
     }
 
     const selectedSet = new Set(selectedProductIds);
-    setAmazonScanProductIds(selectedProductIds);
-    setAmazonScanProducts(data.filter((product) => selectedSet.has(product.id)));
-    setIsAmazonScanOpen(true);
+    setProductScanProductIds(selectedProductIds);
+    setProductScanProducts(data.filter((product) => selectedSet.has(product.id)));
+    setIsProductScanOpen(true);
   }, [data, rowSelection, toast]);
 
   const selectedCount = useMemo(
@@ -755,11 +755,11 @@ export const ProductSelectionActions = memo(() => {
         productIds={statusCheckProductIds}
         products={statusCheckProducts}
       />
-      <ProductAmazonScanModal
-        isOpen={isAmazonScanOpen}
-        onClose={() => setIsAmazonScanOpen(false)}
-        productIds={amazonScanProductIds}
-        products={amazonScanProducts}
+      <ProductScanModal
+        isOpen={isProductScanOpen}
+        onClose={() => setIsProductScanOpen(false)}
+        productIds={productScanProductIds}
+        products={productScanProducts}
       />
     </>
   );

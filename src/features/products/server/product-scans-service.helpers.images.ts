@@ -233,6 +233,29 @@ export const hydrateProductScanImageCandidates = async (input: {
     }
   }
 
+  const productImageBase64s = Array.isArray(input.product.imageBase64s)
+    ? input.product.imageBase64s
+    : [];
+  for (let index = 0; index < productImageBase64s.length; index++) {
+    const resolved = resolveProductScanBase64Image(productImageBase64s[index]);
+    if (resolved === null) {
+      continue;
+    }
+
+    const candidate = await writeProductScanTempImageCandidate({
+      id: `base64-slot-${index + 1}`,
+      filename: null,
+      buffer: resolved.buffer,
+      mimeType: resolved.mimeType,
+      sourceUrl: null,
+      productId: input.product.id,
+      slotIndex: index,
+    });
+    if (candidate !== null) {
+      results.push(candidate);
+    }
+  }
+
   return results;
 };
 
@@ -247,6 +270,35 @@ const resolveProductScanBase64ImageExtension = (mimeType: string): string => {
   if (normalized === 'image/heic') return '.heic';
   if (normalized === 'image/heif') return '.heif';
   return '.jpg';
+};
+
+const resolveProductScanBase64Image = (
+  value: unknown
+): { buffer: Buffer; mimeType: string } | null => {
+  const normalized = readOptionalString(value);
+  if (normalized === null) {
+    return null;
+  }
+
+  const dataUriMatch = normalized.match(/^data:([^;,]+);base64,(.*)$/is);
+  const mimeType = dataUriMatch?.[1]?.trim().toLowerCase() ?? 'image/jpeg';
+  if (!mimeType.startsWith('image/')) {
+    return null;
+  }
+
+  const base64Value = (dataUriMatch?.[2] ?? normalized).replace(/\s+/g, '');
+  if (
+    base64Value.length === 0 ||
+    base64Value.length % 4 !== 0 ||
+    /^[a-zA-Z0-9+/]+={0,2}$/.test(base64Value) === false
+  ) {
+    return null;
+  }
+
+  return {
+    buffer: Buffer.from(base64Value, 'base64'),
+    mimeType,
+  };
 };
 
 const resolveProductScanUrlImageExtension = (input: {

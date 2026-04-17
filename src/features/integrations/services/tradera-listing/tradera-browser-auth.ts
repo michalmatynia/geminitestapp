@@ -426,7 +426,7 @@ export const ensureLoggedIn = async (
       },
       loginUrl: 'https://www.tradera.com/login',
       mode: 'auto',
-      openPage: async (url) => {
+      openPage: async (url: string) => {
         if (url === sessionCheckUrl) {
           emitStatus({
             status: 'opening_session_check',

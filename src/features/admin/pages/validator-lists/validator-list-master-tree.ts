@@ -14,7 +14,7 @@ export const toValidatorListNodeId = (listId: string): string => `${LIST_PREFIX}
 export const fromValidatorListNodeId = (nodeId: string): string | null => {
   if (!nodeId.startsWith(LIST_PREFIX)) return null;
   const value = nodeId.slice(LIST_PREFIX.length).trim();
-  return value || null;
+  return value.length > 0 ? value : null;
 };
 
 // ─── Metadata type ────────────────────────────────────────────────────────────
@@ -35,7 +35,7 @@ export function buildValidatorListMasterNodes(lists: ValidatorPatternList[]): Ma
     type: 'file' as const,
     kind: 'validator-list',
     parentId: null,
-    name: list.name.trim() || 'Unnamed List',
+    name: list.name.trim().length > 0 ? list.name.trim() : 'Unnamed List',
     path: list.id,
     sortOrder: (index + 1) * VALIDATOR_LIST_SORT_ORDER_GAP,
     metadata: {
@@ -65,7 +65,7 @@ export function resolveValidatorListOrderFromNodes(
     .sort((a, b) => a.sortOrder - b.sortOrder)
     .flatMap((node) => {
       const listId = fromValidatorListNodeId(node.id);
-      if (!listId) return [];
+      if (listId === null) return [];
       const list = listById.get(listId);
       return list ? [list] : [];
     });

@@ -12,11 +12,17 @@ export {
 import { fetchSettingsCached } from '@/shared/api/settings-client';
 import { importExportTemplateSchema } from '@/shared/contracts/integrations/import-export';
 import { integrationSchema } from '@/shared/contracts/integrations/base';
-import { integrationConnectionSchema } from '@/shared/contracts/integrations/connections';
+import {
+  integrationConnectionSchema,
+  programmableIntegrationConnectionSchema,
+} from '@/shared/contracts/integrations/connections';
 import { sessionPayloadSchema } from '@/shared/contracts/integrations/session-testing';
 import { type BaseImportInventoriesPayload, type BaseImportInventoriesResponse, type BaseActiveTemplatePreferenceResponse, type BaseDefaultInventoryPreferenceResponse, type ImportExportTemplate, type SessionPayload } from '@/shared/contracts/integrations';
 import type { Integration } from '@/shared/contracts/integrations/base';
-import type { IntegrationConnection } from '@/shared/contracts/integrations/connections';
+import type {
+  IntegrationConnection,
+  ProgrammableIntegrationConnection,
+} from '@/shared/contracts/integrations/connections';
 import type { BaseInventory } from '@/shared/contracts/integrations/base-com';
 import type { PlaywrightPersona } from '@/shared/contracts/playwright';
 import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from '@/shared/contracts/playwright';
@@ -63,7 +69,7 @@ export function useIntegrationConnections(
 ): ListQuery<IntegrationConnection> {
   const queryKey = integrationKeys.connections(integrationId);
   const queryFn = async (): Promise<IntegrationConnection[]> => {
-    if (!integrationId) return [];
+    if (typeof integrationId !== 'string' || integrationId.length === 0) return [];
     const data = await api.get<IntegrationConnection[]>(
       `/api/v2/integrations/${integrationId}/connections`,
       {
@@ -85,6 +91,38 @@ export function useIntegrationConnections(
       queryKey,
       tags: ['integrations', 'connections'],
       description: 'Loads integrations connections.'},
+  });
+}
+
+export function useProgrammableIntegrationConnections(
+  integrationId?: string,
+  options?: { enabled?: boolean }
+): ListQuery<ProgrammableIntegrationConnection> {
+  const queryKey = integrationKeys.connections(integrationId);
+  const queryFn = async (): Promise<ProgrammableIntegrationConnection[]> => {
+    if (typeof integrationId !== 'string' || integrationId.length === 0) return [];
+    const data = await api.get<ProgrammableIntegrationConnection[]>(
+      `/api/v2/integrations/${integrationId}/connections`,
+      {
+        timeout: INTEGRATIONS_QUERY_TIMEOUT_MS,
+      }
+    );
+    return z.array(programmableIntegrationConnectionSchema).parse(data);
+  };
+
+  return createListQueryV2({
+    queryKey,
+    queryFn,
+    enabled: Boolean(integrationId) && (options?.enabled ?? true),
+    meta: {
+      source: 'integrations.hooks.useProgrammableIntegrationConnections',
+      operation: 'list',
+      resource: 'integrations.connections.programmable',
+      domain: 'integrations',
+      queryKey,
+      tags: ['integrations', 'connections', 'playwright-programmable'],
+      description: 'Loads programmable integrations connections.',
+    },
   });
 }
 

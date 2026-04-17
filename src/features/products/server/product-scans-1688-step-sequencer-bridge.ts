@@ -1,28 +1,12 @@
 import 'server-only';
 
 import type { ProductScanStep, ProductScanStepGroup } from '@/shared/contracts/product-scans';
+import {
+  SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEP_IDS,
+  SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS,
+  type Supplier1688ProbeScanRuntimeStepId,
+} from '@/shared/lib/browser-execution/supplier-1688-runtime-constants';
 import type { BrowserExecutionStepStatus } from '@/shared/lib/browser-execution/step-registry';
-
-const SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEP_IDS = [
-  'browser_preparation',
-  'browser_open',
-  'supplier_1688_input_validate',
-  'supplier_1688_open_search',
-  'supplier_1688_access_check',
-  'supplier_1688_upload_image',
-  'supplier_1688_submit_search',
-  'supplier_1688_collect_candidates',
-  'supplier_1688_probe_candidate',
-  'supplier_1688_wait_supplier',
-  'supplier_1688_extract_details',
-  'supplier_1688_score_candidate',
-  'supplier_1688_evaluate_match',
-  'supplier_1688_finalize',
-  'browser_close',
-] as const;
-
-type Supplier1688ProbeScanRuntimeStepId =
-  (typeof SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEP_IDS)[number];
 
 type Supplier1688ProductStepBridgeEntry = {
   key: string;
@@ -34,77 +18,77 @@ const SUPPLIER_1688_PRODUCT_STEP_BRIDGE: Record<
   Supplier1688ProbeScanRuntimeStepId,
   Supplier1688ProductStepBridgeEntry
 > = {
-  browser_preparation: {
+  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.browserPreparation]: {
     key: 'browser_preparation',
     label: 'Prepare browser runtime',
     group: 'input',
   },
-  browser_open: {
+  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.browserOpen]: {
     key: 'browser_open',
     label: 'Open browser',
     group: 'input',
   },
-  supplier_1688_input_validate: {
+  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.inputValidate]: {
     key: '1688_validate_input',
     label: 'Validate 1688 supplier scan input',
     group: 'input',
   },
-  supplier_1688_open_search: {
+  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.openSearch]: {
     key: '1688_open',
     label: 'Open 1688 image search',
     group: 'supplier',
   },
-  supplier_1688_access_check: {
+  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.accessCheck]: {
     key: '1688_access_check',
     label: 'Check 1688 access barriers',
     group: 'supplier',
   },
-  supplier_1688_upload_image: {
+  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.uploadImage]: {
     key: '1688_upload',
     label: 'Upload image to 1688 search',
     group: 'supplier',
   },
-  supplier_1688_submit_search: {
+  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.submitSearch]: {
     key: '1688_submit_search',
     label: 'Submit 1688 image search',
     group: 'supplier',
   },
-  supplier_1688_collect_candidates: {
+  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.collectCandidates]: {
     key: '1688_collect_candidates',
     label: 'Collect 1688 supplier candidates',
     group: 'supplier',
   },
-  supplier_1688_probe_candidate: {
+  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.probeCandidate]: {
     key: '1688_probe_candidate',
     label: 'Probe 1688 supplier candidate',
     group: 'supplier',
   },
-  supplier_1688_wait_supplier: {
+  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.waitSupplier]: {
     key: '1688_wait_supplier',
     label: 'Wait for 1688 supplier content',
     group: 'supplier',
   },
-  supplier_1688_extract_details: {
+  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.extractDetails]: {
     key: '1688_extract_details',
     label: 'Extract 1688 supplier details',
     group: 'supplier',
   },
-  supplier_1688_score_candidate: {
+  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.scoreCandidate]: {
     key: '1688_score_candidate',
     label: 'Score 1688 supplier candidate',
     group: 'supplier',
   },
-  supplier_1688_evaluate_match: {
+  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.evaluateMatch]: {
     key: '1688_evaluate_match',
     label: 'Evaluate 1688 supplier candidate match',
     group: 'supplier',
   },
-  supplier_1688_finalize: {
+  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.finalize]: {
     key: '1688_finalize_result',
     label: 'Finalize 1688 probe result',
     group: 'product',
   },
-  browser_close: {
+  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.browserClose]: {
     key: 'browser_close',
     label: 'Close browser',
     group: 'product',
@@ -177,9 +161,10 @@ const SUPPLIER_1688_PRODUCT_STEP_ALIASES: Record<string, Supplier1688ProductStep
     label: 'Validate scan input',
     group: 'input',
   },
-  '1688_open': SUPPLIER_1688_PRODUCT_STEP_BRIDGE.supplier_1688_open_search,
-  '1688_upload': SUPPLIER_1688_PRODUCT_STEP_BRIDGE.supplier_1688_upload_image,
-  '1688_collect_candidates': SUPPLIER_1688_PRODUCT_STEP_BRIDGE.supplier_1688_collect_candidates,
+  '1688_open': SUPPLIER_1688_PRODUCT_STEP_BRIDGE[SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.openSearch],
+  '1688_upload': SUPPLIER_1688_PRODUCT_STEP_BRIDGE[SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.uploadImage],
+  '1688_collect_candidates':
+    SUPPLIER_1688_PRODUCT_STEP_BRIDGE[SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.collectCandidates],
   supplier_open: {
     key: 'supplier_open',
     label: 'Open supplier product page',

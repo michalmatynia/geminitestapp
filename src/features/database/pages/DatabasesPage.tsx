@@ -22,6 +22,95 @@ import {
 import { DatabaseProvider } from '../context/DatabaseContext';
 import { startTransition } from 'react';
 
+const DatabaseHeaderActions = ({
+  isProd,
+  handleBackup,
+  handleUpload,
+  handlePreviewCurrent,
+  router,
+}: {
+  isProd: boolean;
+  handleBackup: () => Promise<void>;
+  handleUpload: (files: File[], helpers?: FileUploadHelpers) => Promise<void>;
+  handlePreviewCurrent: () => void;
+  router: ReturnType<typeof useRouter>;
+}): React.JSX.Element => (
+  <>
+    <Button
+      disabled={isProd}
+      title={isProd ? 'Disabled in production' : undefined}
+      onClick={() => {
+        handleBackup().catch(() => {});
+      }}
+    >
+      Create Backup
+    </Button>
+    <FileUploadButton
+      onFilesSelected={(files: File[], helpers?: FileUploadHelpers) => {
+        handleUpload(files, helpers).catch(() => {});
+      }}
+      accept='.archive'
+      disabled={isProd}
+      title={isProd ? 'Disabled in production' : undefined}
+    >
+      Upload Backup
+    </FileUploadButton>
+    <Button variant='secondary' onClick={handlePreviewCurrent}>
+      Preview Current DB
+    </Button>
+    <Button
+      variant='outline'
+      onClick={() => {
+        startTransition(() => {
+          router.push('/admin/databases/engine?view=operations');
+        });
+      }}
+    >
+      Database Operations
+    </Button>
+    <Button
+      variant='outline'
+      onClick={() => {
+        startTransition(() => {
+          router.push('/admin/databases/engine');
+        });
+      }}
+    >
+      Database Engine
+    </Button>
+  </>
+);
+
+const DatabaseRestoreSection = ({
+  isRestoreModalOpen,
+  selectedBackupForRestore,
+  setIsRestoreModalOpen,
+  setSelectedBackupForRestore,
+  handleRestoreConfirm,
+}: {
+  isRestoreModalOpen: boolean;
+  selectedBackupForRestore: string | null;
+  setIsRestoreModalOpen: (v: boolean) => void;
+  setSelectedBackupForRestore: (v: string | null) => void;
+  handleRestoreConfirm: (t: boolean) => Promise<void>;
+}): React.JSX.Element | null => {
+  if (!isRestoreModalOpen || selectedBackupForRestore === null) return null;
+
+  return (
+    <RestoreModal
+      isOpen={true}
+      backupName={selectedBackupForRestore}
+      onClose={(): void => {
+        setIsRestoreModalOpen(false);
+        setSelectedBackupForRestore(null);
+      }}
+      onConfirm={(t: boolean): void => {
+        handleRestoreConfirm(t).catch(() => {});
+      }}
+    />
+  );
+};
+
 function DatabasesContentInner(): React.JSX.Element {
   const router = useRouter();
   const {
@@ -53,70 +142,31 @@ function DatabasesContentInner(): React.JSX.Element {
       current='Backups'
       description='MongoDB backups use mongodump/mongorestore archive files and preserve the full document database.'
       headerActions={
-        <>
-          <Button
-            disabled={isProd}
-            title={isProd ? 'Disabled in production' : undefined}
-            onClick={(): void => {
-              void handleBackup();
-            }}
-          >
-            Create Backup
-          </Button>
-          <FileUploadButton
-            onFilesSelected={(files: File[], helpers?: FileUploadHelpers) =>
-              handleUpload(files, helpers)
-            }
-            accept='.archive'
-            disabled={isProd}
-            title={isProd ? 'Disabled in production' : undefined}
-          >
-            Upload Backup
-          </FileUploadButton>
-          <Button variant='secondary' onClick={handlePreviewCurrent}>
-            Preview Current DB
-          </Button>
-          <Button
-            variant='outline'
-            onClick={(): void => {
-              startTransition(() => { router.push('/admin/databases/engine?view=operations'); });
-            }}
-          >
-            Database Operations
-          </Button>
-          <Button
-            variant='outline'
-            onClick={(): void => {
-              startTransition(() => { router.push('/admin/databases/engine'); });
-            }}
-          >
-            Database Engine
-          </Button>
-        </>
+        <DatabaseHeaderActions
+          isProd={isProd}
+          handleBackup={handleBackup}
+          handleUpload={handleUpload}
+          handlePreviewCurrent={handlePreviewCurrent}
+          router={router}
+        />
       }
     >
       {isLogModalOpen && <LogModal isOpen={true} item={logModalContent} onClose={closeLogModal} />}
 
-      {isRestoreModalOpen && selectedBackupForRestore && (
-        <RestoreModal
-          isOpen={true}
-          backupName={selectedBackupForRestore}
-          onClose={(): void => {
-            setIsRestoreModalOpen(false);
-            setSelectedBackupForRestore(null);
-          }}
-          onConfirm={(t: boolean): void => {
-            void handleRestoreConfirm(t).catch(() => {});
-          }}
-        />
-      )}
+      <DatabaseRestoreSection
+        isRestoreModalOpen={isRestoreModalOpen}
+        selectedBackupForRestore={selectedBackupForRestore}
+        setIsRestoreModalOpen={setIsRestoreModalOpen}
+        setSelectedBackupForRestore={setSelectedBackupForRestore}
+        handleRestoreConfirm={handleRestoreConfirm}
+      />
 
       <ConfirmModal
-        isOpen={Boolean(backupToDelete)}
+        isOpen={backupToDelete !== null}
         onClose={() => setBackupToDelete(null)}
         onConfirm={handleConfirmDelete}
         title='Delete Backup'
-        message={`Are you sure you want to delete backup "${backupToDelete}"? This cannot be undone.`}
+        message={`Are you sure you want to delete backup "${backupToDelete ?? ''}"? This cannot be undone.`}
         confirmText='Delete'
         isDangerous={true}
       />

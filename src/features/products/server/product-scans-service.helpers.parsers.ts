@@ -12,20 +12,21 @@ import {
   normalizeParsedSupplierEvaluation,
   normalizeParsedCandidateUrls,
   normalizeParsedAmazonCandidateResults,
+  normalizeParsedAmazonCandidatePreviews,
   normalizeParsedProductScanSteps,
 } from './product-scans-service.helpers.steps';
 import type {
-  AmazonScanScriptResult,
+  AmazonScanRuntimeResult,
   SupplierScanRuntimeResult,
 } from './product-scans-service.types';
 
-export const parseAmazonScanScriptResult = (value: unknown): AmazonScanScriptResult => {
+export const parseAmazonScanRuntimeResult = (value: unknown): AmazonScanRuntimeResult => {
   const record = toRecord(value);
   const rawStatus = readOptionalString(record?.['status']) ?? 'failed';
 
   const status = (['matched', 'probe_ready', 'triage_ready', 'no_match', 'failed', 'captcha_required', 'running'].includes(rawStatus)
     ? rawStatus
-    : 'failed') as AmazonScanScriptResult['status'];
+    : 'failed') as AmazonScanRuntimeResult['status'];
 
   return {
     status,
@@ -38,6 +39,7 @@ export const parseAmazonScanScriptResult = (value: unknown): AmazonScanScriptRes
     amazonProbe: normalizeParsedAmazonProbe(record?.['amazonProbe']),
     candidateUrls: normalizeParsedCandidateUrls(record?.['candidateUrls']),
     candidateResults: normalizeParsedAmazonCandidateResults(record?.['candidateResults']),
+    candidatePreviews: normalizeParsedAmazonCandidatePreviews(record?.['candidatePreviews']),
     matchedImageId: readOptionalString(record?.['matchedImageId']),
     message: readOptionalString(record?.['message']),
     currentUrl: readOptionalString(record?.['currentUrl']),

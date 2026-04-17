@@ -9,12 +9,12 @@ import type { ActionSequenceKey } from '@/shared/lib/browser-execution/action-se
 import {
   resolvePlaywrightActionDefinitionById,
   resolveRuntimeActionDefinition,
-  resolveRuntimeActionExecutionSettings,
 } from '@/shared/lib/browser-execution/runtime-action-resolver.server';
 
 import {
   parsePersistedStorageState,
   resolveConnectionPlaywrightSettings,
+  type ResolveConnectionPlaywrightSettingsOptions,
   type PersistedStorageState,
   type TraderaPlaywrightRuntimeSettings,
 } from './settings';
@@ -45,6 +45,7 @@ export type ResolvedPlaywrightConnectionRuntime = {
 
 export type PlaywrightConnectionSettingsOverridesInput = Pick<
   TraderaPlaywrightRuntimeSettings,
+  | 'browser'
   | 'headless'
   | 'identityProfile'
   | 'slowMo'
@@ -78,10 +79,15 @@ export type PlaywrightConnectionEngineRequestOptions = {
   launchOptions?: Record<string, unknown>;
 };
 
-export type PlaywrightConnectionBaseEngineRunRequest = Omit<
-  PlaywrightEngineRunRequest,
-  'personaId' | 'contextOptions' | 'settingsOverrides' | 'launchOptions'
->;
+export type PlaywrightConnectionBaseEngineRunRequest =
+  | Omit<
+      Extract<PlaywrightEngineRunRequest, { runtimeKey: string }>,
+      'personaId' | 'contextOptions' | 'settingsOverrides' | 'launchOptions'
+    >
+  | Omit<
+      Extract<PlaywrightEngineRunRequest, { script: string }>,
+      'personaId' | 'contextOptions' | 'settingsOverrides' | 'launchOptions'
+    >;
 
 export type PlaywrightConnectionEngineRequestConfig = {
   settings: PlaywrightConnectionSettingsOverridesInput;
@@ -95,6 +101,7 @@ export type PlaywrightConnectionEngineTaskInput = {
   instance?: PlaywrightEngineRunInstance | null;
   actionId?: string | null;
   runtimeActionKey?: ActionSequenceKey;
+  browserBehaviorOwner?: 'action' | 'connection';
   resolveEngineRequestConfig?: (
     runtime: ResolvedPlaywrightConnectionRuntime
   ) => PlaywrightConnectionEngineRequestConfig;
@@ -232,12 +239,14 @@ export const resolvePlaywrightRuntimeDeviceContext = (
 };
 
 export const resolvePlaywrightConnectionRuntime = async (
-  connection: IntegrationConnectionRecord
+  connection: IntegrationConnectionRecord,
+  options?: ResolveConnectionPlaywrightSettingsOptions
 ): Promise<ResolvedPlaywrightConnectionRuntime> => {
-  const settings = await resolveConnectionPlaywrightSettings(connection);
+  const settings = await resolveConnectionPlaywrightSettings(connection, options);
   const storageState = parsePersistedStorageState(connection.playwrightStorageState);
   const personaId =
-    normalizeIntegrationConnectionPlaywrightPersonaId(connection.playwrightPersonaId) ?? undefined;
+    normalizeIntegrationConnectionPlaywrightPersonaId(options?.personaId ?? connection.playwrightPersonaId) ??
+    undefined;
   const deviceContext = resolvePlaywrightRuntimeDeviceContext(settings);
 
   return {
@@ -430,62 +439,63 @@ const buildPlaywrightConnectionEngineRunRequest = (input: {
   settings: PlaywrightConnectionSettingsOverridesInput;
   environmentOverrides?: PlaywrightContextEnvironmentOverrides;
   browserPreference?: PlaywrightBrowserPreference | null;
-}): PlaywrightEngineRunRequest => ({
-  ...input.request,
-  ...buildPlaywrightConnectionEngineRequestOptions({
+}): PlaywrightEngineRunRequest => {
+  const requestOptions = buildPlaywrightConnectionEngineRequestOptions({
     runtime: input.runtime,
     settings: input.settings,
     environmentOverrides: input.environmentOverrides,
     browserPreference: input.browserPreference,
-  }),
-});
+  });
 
-const resolvePlaywrightConnectionRuntimeActionContextOverrides = async (
-  runtimeActionKey: ActionSequenceKey | undefined
-): Promise<PlaywrightContextEnvironmentOverrides> => {
-  if (runtimeActionKey === undefined) {
-    return {};
+  if (
+    'runtimeKey' in input.request &&
+    typeof input.request.runtimeKey === 'string'
+  ) {
+    return {
+      ...input.request,
+      ...requestOptions,
+    };
   }
 
-  const action = await resolveRuntimeActionDefinition(runtimeActionKey);
-  const browserPreparationBlock =
-    action.blocks.find(
-      (block) =>
-        block.kind === 'runtime_step' &&
-        block.enabled !== false &&
-        block.refId === 'browser_preparation'
-    ) ?? null;
-
-  return resolveBrowserPreparationContextOverrides(browserPreparationBlock?.config ?? null);
+  return {
+    ...input.request,
+    ...requestOptions,
+  };
 };
 
 const executePlaywrightConnectionEngineTask = async (
   input: PlaywrightConnectionEngineTaskInput,
   mode: 'run' | 'start'
 ): Promise<PlaywrightConnectionEngineTaskResult> => {
-  const selectedAction =
+  const actionDefinition =
     typeof input.actionId === 'string' && input.actionId.trim().length > 0
       ? await resolvePlaywrightActionDefinitionById(input.actionId)
-      : null;
-  const runtime = applyPlaywrightActionExecutionSettingsToRuntime({
-    runtime: await resolvePlaywrightConnectionRuntime(input.connection),
-    executionSettings:
-      selectedAction?.executionSettings ??
-      (input.runtimeActionKey === undefined
+      : input.runtimeActionKey === undefined
         ? null
-        : await resolveRuntimeActionExecutionSettings(input.runtimeActionKey)),
+        : await resolveRuntimeActionDefinition(input.runtimeActionKey);
+  const runtime = applyPlaywrightActionExecutionSettingsToRuntime({
+    runtime: await resolvePlaywrightConnectionRuntime(
+      input.connection,
+      input.browserBehaviorOwner === 'action'
+        ? {
+            includeConnectionBrowserBehavior: false,
+            personaId: actionDefinition?.personaId ?? null,
+          }
+        : undefined
+    ),
+    executionSettings: actionDefinition?.executionSettings ?? null,
   });
   const contextEnvironmentOverrides =
-    selectedAction !== null
+    actionDefinition !== null
       ? resolveBrowserPreparationContextOverrides(
-          selectedAction.blocks.find(
+          actionDefinition.blocks.find(
             (block) =>
               block.kind === 'runtime_step' &&
               block.enabled !== false &&
               block.refId === 'browser_preparation'
           )?.config ?? null
         )
-      : await resolvePlaywrightConnectionRuntimeActionContextOverrides(input.runtimeActionKey);
+      : {};
   const config = resolvePlaywrightConnectionEngineRequestConfig(
     runtime,
     input.resolveEngineRequestConfig

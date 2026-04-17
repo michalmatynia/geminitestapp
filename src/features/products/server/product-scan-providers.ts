@@ -5,8 +5,8 @@ import type {
   ProductScanRecord,
   ProductScanType,
 } from '@/shared/contracts/product-scans';
-
-import { AMAZON_REVERSE_IMAGE_SCAN_SCRIPT } from './product-scan-amazon-script';
+import { AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY } from '@/shared/lib/browser-execution/amazon-runtime-constants';
+import { SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY } from '@/shared/lib/browser-execution/supplier-1688-runtime-constants';
 import {
   resolve1688ScanDisplayName,
   resolve1688ScanImageCandidates,
@@ -21,7 +21,6 @@ import {
   createAmazonProductScanBaseRecord,
   create1688ProductScanBaseRecord,
 } from './product-scans-service.helpers';
-import { SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY } from '@/shared/lib/browser-execution/supplier-1688-runtime-constants';
 
 type ProductScanBaseRecordInput = {
   productId: string;
@@ -44,6 +43,7 @@ type ProductScanProviderRuntimeBase = {
 export type ProductScanScriptProviderRuntime = ProductScanProviderRuntimeBase & {
   executionMode: 'script';
   script: string;
+  resolveScript?: (input?: { selectorProfile?: string | null }) => Promise<string> | string;
   runtimeKey?: never;
 };
 
@@ -82,8 +82,8 @@ export const PRODUCT_SCAN_PROVIDER_DEFINITIONS: Record<
       createBaseRecord: createAmazonProductScanBaseRecord,
       resolveDisplayName: resolveProductScanDisplayName,
       resolveImageCandidates: resolveProductScanImageCandidates,
-      executionMode: 'script',
-      script: AMAZON_REVERSE_IMAGE_SCAN_SCRIPT,
+      executionMode: 'native',
+      runtimeKey: AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY,
     },
   },
   '1688': {
@@ -107,5 +107,30 @@ export const PRODUCT_SCAN_PROVIDER_DEFINITIONS: Record<
 export const getProductScanProviderDefinition = (
   provider: ProductScanProvider
 ): ProductScanProviderDefinition => PRODUCT_SCAN_PROVIDER_DEFINITIONS[provider];
+
+const createMissingProductScanRuntimeError = (
+  definition: ProductScanProviderDefinition,
+  executionMode: ProductScanProviderRuntime['executionMode']
+): Error => new Error(`${definition.label} ${executionMode} runtime is not configured.`);
+
+export const requireProductScanScriptRuntime = (
+  definition: ProductScanProviderDefinition
+): ProductScanScriptProviderRuntime => {
+  const runtime = definition.runtime;
+  if (runtime === null || runtime.executionMode !== 'script') {
+    throw createMissingProductScanRuntimeError(definition, 'script');
+  }
+  return runtime;
+};
+
+export const requireProductScanNativeRuntime = (
+  definition: ProductScanProviderDefinition
+): ProductScanNativeProviderRuntime => {
+  const runtime = definition.runtime;
+  if (runtime === null || runtime.executionMode !== 'native') {
+    throw createMissingProductScanRuntimeError(definition, 'native');
+  }
+  return runtime;
+};
 
 export const AMAZON_PRODUCT_SCAN_PROVIDER = PRODUCT_SCAN_PROVIDER_DEFINITIONS.amazon;

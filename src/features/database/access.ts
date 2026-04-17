@@ -16,7 +16,7 @@ export async function assertDatabaseEngineManageAccessOrAiPathsInternal(
 ): Promise<{ isInternal: boolean }> {
   if (isAiPathsInternalRequest(request)) {
     const collection = options?.collection?.trim() ?? '';
-    if (collection && !isCollectionAllowed(collection)) {
+    if (collection !== '' && isCollectionAllowed(collection) === false) {
       throw forbiddenError('Forbidden.');
     }
     return { isInternal: true };

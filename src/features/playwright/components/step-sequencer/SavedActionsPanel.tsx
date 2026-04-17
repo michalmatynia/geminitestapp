@@ -4,13 +4,14 @@ import { AlertTriangle, ChevronDown, ChevronRight, Copy, Layers, Play, RotateCcw
 import { memo, useEffect, useMemo, useState } from 'react';
 
 import { PLAYWRIGHT_STEP_TYPE_LABELS, normalizePlaywrightAction, type PlaywrightAction } from '@/shared/contracts/playwright-steps';
-import { ACTION_SEQUENCES, type ActionSequenceKey } from '@/shared/lib/browser-execution/action-sequences';
+import type { ActionSequenceKey } from '@/shared/lib/browser-execution/action-sequences';
 import {
   analyzePlaywrightRuntimeActionRepairPreview,
   selectPlaywrightRuntimeActionRepairPreview,
 } from '@/shared/lib/browser-execution/playwright-runtime-action-repair';
 import { buildPlaywrightRuntimeActionRepairImpact } from '@/shared/lib/browser-execution/playwright-runtime-action-repair-impact';
 import { STEP_REGISTRY } from '@/shared/lib/browser-execution/step-registry';
+import { toActionSequenceKey } from '@/shared/lib/browser-execution/runtime-action-keys';
 import { Badge, Button } from '@/shared/ui/primitives.public';
 import { cn } from '@/shared/utils/ui-utils';
 
@@ -51,8 +52,7 @@ const SavedActionRow = memo(({
   const runtimeLoadError = runtimeActionLoadErrorsById[action.id] ?? null;
   const canRepairRuntimeAction =
     runtimeLoadError !== null &&
-    normalizedAction.runtimeKey !== null &&
-    normalizedAction.runtimeKey in ACTION_SEQUENCES;
+    toActionSequenceKey(normalizedAction.runtimeKey) !== null;
   const isBeingEdited = editingActionId === action.id;
   const { data: personas = [] } = usePlaywrightPersonas();
   const [expanded, setExpanded] = useState(false);
@@ -73,36 +73,40 @@ const SavedActionRow = memo(({
         : 'border-border/40 bg-card/20'
     )}>
       {/* Header row */}
-      <button
-        type='button'
-        onClick={() => setExpanded((prev) => !prev)}
-        className='flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-muted/20'
-      >
-        {expanded ? (
-          <ChevronDown className='size-3.5 shrink-0 text-muted-foreground' />
-        ) : (
-          <ChevronRight className='size-3.5 shrink-0 text-muted-foreground' />
-        )}
+      <div className='flex w-full items-center gap-2 px-3 py-2 transition-colors hover:bg-muted/20'>
+        <button
+          type='button'
+          onClick={() => setExpanded((prev) => !prev)}
+          className='flex min-w-0 flex-1 items-center gap-2 text-left'
+          aria-expanded={expanded}
+          aria-label={`${expanded ? 'Collapse' : 'Expand'} action ${action.name}`}
+        >
+          {expanded ? (
+            <ChevronDown className='size-3.5 shrink-0 text-muted-foreground' />
+          ) : (
+            <ChevronRight className='size-3.5 shrink-0 text-muted-foreground' />
+          )}
 
-        <Play className='size-3.5 shrink-0 text-sky-400' />
+          <Play className='size-3.5 shrink-0 text-sky-400' />
 
-        <span className='min-w-0 flex-1 truncate text-sm font-medium'>{action.name}</span>
-        {hasOrphanedSets ? (
-          <span
-            className='inline-flex items-center gap-0.5 text-[10px] text-amber-400'
-            title='Some referenced step sets have been deleted'
-          >
-            <AlertTriangle className='size-3' />
-          </span>
-        ) : null}
-        {runtimeLoadError !== null ? (
-          <span
-            className='inline-flex items-center gap-0.5 text-[10px] text-destructive'
-            title={runtimeLoadError}
-          >
-            <AlertTriangle className='size-3' />
-          </span>
-        ) : null}
+          <span className='min-w-0 flex-1 truncate text-sm font-medium'>{action.name}</span>
+          {hasOrphanedSets ? (
+            <span
+              className='inline-flex items-center gap-0.5 text-[10px] text-amber-400'
+              title='Some referenced step sets have been deleted'
+            >
+              <AlertTriangle className='size-3' />
+            </span>
+          ) : null}
+          {runtimeLoadError !== null ? (
+            <span
+              className='inline-flex items-center gap-0.5 text-[10px] text-destructive'
+              title={runtimeLoadError}
+            >
+              <AlertTriangle className='size-3' />
+            </span>
+          ) : null}
+        </button>
 
         <div className='flex items-center gap-1.5'>
           <Badge variant='neutral' className='h-5 px-1.5 text-[10px]'>
@@ -181,7 +185,7 @@ const SavedActionRow = memo(({
             <Trash2 className='size-3.5' />
           </Button>
         </div>
-      </button>
+      </div>
 
       {/* Expanded detail */}
       {expanded ? (
@@ -346,7 +350,6 @@ export function SavedActionsPanel(): React.JSX.Element {
   );
   const quarantinedActionCount = Object.keys(runtimeActionLoadErrorsById).length;
   const totalRepairableRuntimeActionCount = repairPreview.repairableActionIds.length;
-  const repairableRuntimeActionCount = selectedRepairPreview.repairableActionIds.length;
   const replacementCount = selectedRepairPreview.replacedActionIds.length;
   const repairedRuntimeKeyCount = selectedRepairPreview.repairedRuntimeKeys.length;
   const nonRepairableQuarantinedCount = repairPreview.nonRepairableQuarantinedActionIds.length;

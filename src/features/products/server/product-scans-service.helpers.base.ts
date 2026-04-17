@@ -6,7 +6,7 @@ import {
 import type { createDefaultProductScannerSettings } from '@/features/products/scanner-settings';
 import {
   type ProductScanRecord,
-  type ProductAmazonBatchScanItem,
+  type ProductScanBatchItem,
 } from '@/shared/contracts/product-scans';
 import {
   PRODUCT_SCAN_ERROR_MAX_LENGTH,
@@ -124,9 +124,12 @@ const normalizeStartedRawStatus = (status: unknown): ProductScanRecord['status']
   return null;
 };
 
-export const createAmazonScanStartedRawResult = (input: {
+export const createProductScanStartedRawResult = (input: {
   runId: string;
   status?: unknown;
+  runtimeKey?: string | null;
+  actionId?: string | null;
+  selectorProfile?: string | null;
   imageSearchProvider?: string | null;
   imageSearchProviderHistory?: unknown;
   allowManualVerification?: boolean;
@@ -142,6 +145,9 @@ export const createAmazonScanStartedRawResult = (input: {
   return {
     runId: input.runId,
     ...(status !== null ? { status } : {}),
+    ...(input.runtimeKey ? { runtimeKey: input.runtimeKey } : {}),
+    ...(input.actionId ? { actionId: input.actionId } : {}),
+    ...(input.selectorProfile ? { selectorProfile: input.selectorProfile } : {}),
     imageSearchProvider: input.imageSearchProvider ?? null,
     ...(input.imageSearchProviderHistory !== undefined
       ? { imageSearchProviderHistory: input.imageSearchProviderHistory }
@@ -161,7 +167,7 @@ export const createAmazonScanStartedRawResult = (input: {
 export const createFailedBatchResult = (
   productId: string,
   message: string
-): ProductAmazonBatchScanItem => ({
+): ProductScanBatchItem => ({
   productId,
   scanId: null,
   runId: null,

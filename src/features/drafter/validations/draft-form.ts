@@ -14,7 +14,7 @@ export const draftSubmitSchema = z
   .superRefine((data, ctx) => {
     if (data.iconColorMode !== 'custom') return;
 
-    const normalized = data.iconColor?.trim() || '';
+    const normalized = (data.iconColor?.trim()) ?? '';
     if (!HEX_COLOR_PATTERN.test(normalized)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

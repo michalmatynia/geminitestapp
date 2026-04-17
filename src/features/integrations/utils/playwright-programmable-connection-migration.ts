@@ -17,35 +17,16 @@ type ProgrammableSessionKind = 'listing' | 'import';
 
 type ProgrammableConnectionLegacyBehaviorFields = Pick<
   IntegrationConnection,
-  | 'playwrightBrowser'
-  | 'playwrightPersonaId'
-  | 'playwrightListingActionId'
-  | 'playwrightImportActionId'
-  | 'playwrightIdentityProfile'
-  | 'playwrightHeadless'
-  | 'playwrightSlowMo'
-  | 'playwrightTimeout'
-  | 'playwrightNavigationTimeout'
-  | 'playwrightLocale'
-  | 'playwrightTimezoneId'
-  | 'playwrightHumanizeMouse'
-  | 'playwrightMouseJitter'
-  | 'playwrightClickDelayMin'
-  | 'playwrightClickDelayMax'
-  | 'playwrightInputDelayMin'
-  | 'playwrightInputDelayMax'
-  | 'playwrightActionDelayMin'
-  | 'playwrightActionDelayMax'
-  | 'playwrightProxyEnabled'
-  | 'playwrightProxyServer'
-  | 'playwrightProxyUsername'
-  | 'playwrightProxyPassword'
-  | 'playwrightProxyHasPassword'
-  | 'playwrightProxySessionAffinity'
-  | 'playwrightProxySessionMode'
-  | 'playwrightProxyProviderPreset'
-  | 'playwrightEmulateDevice'
-  | 'playwrightDeviceName'
+  | 'playwrightBrowser' | 'playwrightPersonaId' | 'playwrightListingActionId'
+  | 'playwrightImportActionId' | 'playwrightIdentityProfile' | 'playwrightHeadless'
+  | 'playwrightSlowMo' | 'playwrightTimeout' | 'playwrightNavigationTimeout'
+  | 'playwrightLocale' | 'playwrightTimezoneId' | 'playwrightHumanizeMouse'
+  | 'playwrightMouseJitter' | 'playwrightClickDelayMin' | 'playwrightClickDelayMax'
+  | 'playwrightInputDelayMin' | 'playwrightInputDelayMax' | 'playwrightActionDelayMin'
+  | 'playwrightActionDelayMax' | 'playwrightProxyEnabled' | 'playwrightProxyServer'
+  | 'playwrightProxyUsername' | 'playwrightProxyPassword' | 'playwrightProxyHasPassword'
+  | 'playwrightProxySessionAffinity' | 'playwrightProxySessionMode'
+  | 'playwrightProxyProviderPreset' | 'playwrightEmulateDevice' | 'playwrightDeviceName'
 >;
 
 export type ProgrammableConnectionActionMigrationSource = Pick<
@@ -58,61 +39,29 @@ const LEGACY_BROWSER_BEHAVIOR_LABELS: Array<[
   keyof PlaywrightActionExecutionSettings | 'browserPreference' | 'personaId',
   string,
 ]> = [
-  ['personaId', 'Persona'],
-  ['browserPreference', 'Browser preference'],
-  ['identityProfile', 'Identity profile'],
-  ['headless', 'Headless mode'],
-  ['slowMo', 'SlowMo'],
-  ['timeout', 'Timeout'],
-  ['navigationTimeout', 'Navigation timeout'],
-  ['locale', 'Locale'],
-  ['timezoneId', 'Timezone'],
-  ['humanizeMouse', 'Humanize mouse'],
-  ['mouseJitter', 'Mouse jitter'],
-  ['clickDelayMin', 'Click delay min'],
-  ['clickDelayMax', 'Click delay max'],
-  ['inputDelayMin', 'Input delay min'],
-  ['inputDelayMax', 'Input delay max'],
-  ['actionDelayMin', 'Action delay min'],
-  ['actionDelayMax', 'Action delay max'],
-  ['proxyEnabled', 'Proxy enabled'],
-  ['proxyServer', 'Proxy server'],
-  ['proxyUsername', 'Proxy username'],
-  ['proxyPassword', 'Proxy password'],
-  ['proxySessionAffinity', 'Proxy session affinity'],
+  ['personaId', 'Persona'], ['browserPreference', 'Browser preference'],
+  ['identityProfile', 'Identity profile'], ['headless', 'Headless mode'], ['slowMo', 'SlowMo'],
+  ['timeout', 'Timeout'], ['navigationTimeout', 'Navigation timeout'], ['locale', 'Locale'],
+  ['timezoneId', 'Timezone'], ['humanizeMouse', 'Humanize mouse'],
+  ['mouseJitter', 'Mouse jitter'], ['clickDelayMin', 'Click delay min'],
+  ['clickDelayMax', 'Click delay max'], ['inputDelayMin', 'Input delay min'],
+  ['inputDelayMax', 'Input delay max'], ['actionDelayMin', 'Action delay min'],
+  ['actionDelayMax', 'Action delay max'], ['proxyEnabled', 'Proxy enabled'],
+  ['proxyServer', 'Proxy server'], ['proxyUsername', 'Proxy username'],
+  ['proxyPassword', 'Proxy password'], ['proxySessionAffinity', 'Proxy session affinity'],
   ['proxySessionMode', 'Proxy session mode'],
-  ['proxyProviderPreset', 'Proxy provider preset'],
-  ['emulateDevice', 'Device emulation'],
+  ['proxyProviderPreset', 'Proxy provider preset'], ['emulateDevice', 'Device emulation'],
   ['deviceName', 'Device'],
 ];
 
 const LEGACY_CONNECTION_OVERRIDE_KEYS: Array<
   Exclude<keyof PlaywrightActionExecutionSettings, 'browserPreference'>
 > = [
-  'identityProfile',
-  'headless',
-  'slowMo',
-  'timeout',
-  'navigationTimeout',
-  'locale',
-  'timezoneId',
-  'humanizeMouse',
-  'mouseJitter',
-  'clickDelayMin',
-  'clickDelayMax',
-  'inputDelayMin',
-  'inputDelayMax',
-  'actionDelayMin',
-  'actionDelayMax',
-  'proxyEnabled',
-  'proxyServer',
-  'proxyUsername',
-  'proxyPassword',
-  'proxySessionAffinity',
-  'proxySessionMode',
-  'proxyProviderPreset',
-  'emulateDevice',
-  'deviceName',
+  'identityProfile', 'headless', 'slowMo', 'timeout', 'navigationTimeout', 'locale',
+  'timezoneId', 'humanizeMouse', 'mouseJitter', 'clickDelayMin', 'clickDelayMax',
+  'inputDelayMin', 'inputDelayMax', 'actionDelayMin', 'actionDelayMax', 'proxyEnabled',
+  'proxyServer', 'proxyUsername', 'proxyPassword', 'proxySessionAffinity',
+  'proxySessionMode', 'proxyProviderPreset', 'emulateDevice', 'deviceName',
 ];
 
 export type ProgrammableConnectionActionMigrationPreview = {
@@ -124,10 +73,30 @@ export type ProgrammableConnectionActionMigrationPreview = {
   listingDraftAction: PlaywrightAction;
   importDraftAction: PlaywrightAction;
   cleanupPayload: {
-    playwrightBrowser: null;
-    playwrightPersonaId: null;
     resetPlaywrightOverrides: boolean;
   };
+};
+
+export type ProgrammableConnectionLegacyBrowserMigrationSummary = NonNullable<
+  IntegrationConnection['playwrightLegacyBrowserMigration']
+>;
+
+export const hasProgrammableConnectionLegacyBrowserBehavior = (
+  connection: ProgrammableConnectionActionMigrationSource
+): boolean => {
+  const { personaId, executionSettings } = extractConnectionActionExecutionSettings(connection);
+  const hasStoredProxyPassword =
+    connection.playwrightProxyHasPassword === true ||
+    (typeof connection.playwrightProxyPassword === 'string' &&
+      connection.playwrightProxyPassword.trim().length > 0);
+
+  return (
+    buildLegacyBrowserBehaviorSummary({
+      personaId,
+      executionSettings,
+      hasStoredProxyPassword,
+    }).length > 0
+  );
 };
 
 const resolveProgrammableBaseAction = ({
@@ -291,8 +260,6 @@ export const buildProgrammableConnectionActionMigrationPreview = ({
       executionSettings,
     }),
     cleanupPayload: {
-      playwrightBrowser: null,
-      playwrightPersonaId: null,
       resetPlaywrightOverrides: legacySummary.length > 0,
     },
   };
@@ -311,4 +278,64 @@ export const mergePlaywrightActionsWithProgrammableConnectionDrafts = ({
   merged.set(listingDraftAction.id, listingDraftAction);
   merged.set(importDraftAction.id, importDraftAction);
   return Array.from(merged.values());
+};
+
+export const canCleanupProgrammableConnectionLegacyBrowserFields = ({
+  connection,
+  actions,
+}: {
+  connection: ProgrammableConnectionActionMigrationSource;
+  actions: PlaywrightAction[] | undefined;
+}): boolean => {
+  const preview = buildProgrammableConnectionActionMigrationPreview({
+    connection,
+    actions,
+  });
+
+  if (!preview.hasLegacyBrowserBehavior) {
+    return false;
+  }
+
+  const listingActionId = connection.playwrightListingActionId?.trim() ?? '';
+  const importActionId = connection.playwrightImportActionId?.trim() ?? '';
+  if (
+    listingActionId.length === 0 ||
+    importActionId.length === 0 ||
+    listingActionId !== preview.listingDraftAction.id ||
+    importActionId !== preview.importDraftAction.id
+  ) {
+    return false;
+  }
+
+  const hasListingDraft = (actions ?? []).some((action) => action.id === listingActionId);
+  const hasImportDraft = (actions ?? []).some((action) => action.id === importActionId);
+  return hasListingDraft && hasImportDraft;
+};
+
+export const serializeProgrammableConnectionLegacyBrowserMigration = ({
+  connection,
+  actions,
+}: {
+  connection: ProgrammableConnectionActionMigrationSource;
+  actions: PlaywrightAction[] | undefined;
+}): ProgrammableConnectionLegacyBrowserMigrationSummary => {
+  const preview = buildProgrammableConnectionActionMigrationPreview({
+    connection,
+    actions,
+  });
+
+  return {
+    hasLegacyBrowserBehavior: preview.hasLegacyBrowserBehavior,
+    legacySummary: preview.legacySummary,
+    requiresManualProxyPasswordInput: preview.requiresManualProxyPasswordInput,
+    canCleanupPersistedLegacyBrowserFields:
+      canCleanupProgrammableConnectionLegacyBrowserFields({
+        connection,
+        actions,
+      }),
+    listingDraftActionId: preview.listingDraftAction.id,
+    listingDraftActionName: preview.listingDraftAction.name,
+    importDraftActionId: preview.importDraftAction.id,
+    importDraftActionName: preview.importDraftAction.name,
+  };
 };

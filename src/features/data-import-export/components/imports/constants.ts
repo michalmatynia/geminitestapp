@@ -74,12 +74,12 @@ export const buildProductCustomFieldTargetOptions = (
 
   customFields.forEach((customField: ProductCustomFieldDefinition) => {
     const fieldId = customField.id.trim();
-    if (!fieldId) return;
+    if (fieldId === '') return;
 
     if (customField.type === 'checkbox_set') {
       customField.options.forEach((option) => {
         const optionId = option.id.trim();
-        if (!optionId) return;
+        if (optionId === '') return;
         const value = buildProductCustomFieldOptionTargetValue(fieldId, optionId);
         const normalizedValue = value.trim().toLowerCase();
         if (seen.has(normalizedValue)) return;

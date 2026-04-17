@@ -10,7 +10,7 @@ import { buildAdminNav } from './admin-menu-nav';
 import { flattenAdminNav } from './menu/admin-menu-utils';
 
 const normalizePathname = (value: string | null | undefined): string => {
-  if (!value) return '';
+  if (value === null || value === undefined || value === '') return '';
   if (value === '/') return '/';
   return value.endsWith('/') ? value.slice(0, -1) : value;
 };
@@ -57,9 +57,72 @@ const resolvePathSpecificity = ({
     return 1;
   }
   if (pathname.startsWith(`${candidatePathname}/`)) {
-    return exact ? 2 : 3;
+    return exact === true ? 2 : 3;
   }
   return null;
+};
+
+interface CandidateMatch {
+  id: string;
+  label: string;
+  pathSpecificity: number;
+  querySpecificity: number;
+  pathLength: number;
+  hrefLength: number;
+}
+
+const compareCandidates = (a: CandidateMatch, b: CandidateMatch): number => {
+  if (a.pathSpecificity !== b.pathSpecificity) return a.pathSpecificity - b.pathSpecificity;
+  if (a.querySpecificity !== b.querySpecificity) return a.querySpecificity - b.querySpecificity;
+  if (a.pathLength !== b.pathLength) return a.pathLength - b.pathLength;
+  return a.hrefLength - b.hrefLength;
+};
+
+const resolveMatch = (
+  entry: ReturnType<typeof flattenAdminNav>[number],
+  normalizedPathname: string,
+  searchParams: URLSearchParams
+): CandidateMatch | null => {
+  const href = entry.href?.trim();
+  if (href === undefined || href === '') return null;
+
+  const { pathname: candidatePathname, searchParams: candidateSearchParams } =
+    buildHrefParts(href);
+  const pathSpecificity = resolvePathSpecificity({
+    pathname: normalizedPathname,
+    candidatePathname,
+    exact: entry.item.exact,
+  });
+  if (pathSpecificity === null) return null;
+
+  const querySpecificity = resolveQuerySpecificity(searchParams, candidateSearchParams);
+  if (querySpecificity === null) return null;
+
+  return {
+    id: entry.id,
+    label: entry.label,
+    pathSpecificity,
+    querySpecificity,
+    pathLength: candidatePathname.length,
+    hrefLength: href.length,
+  };
+};
+
+const findBestCandidate = (
+  candidates: ReturnType<typeof flattenAdminNav>,
+  normalizedPathname: string,
+  searchParams: URLSearchParams
+): AdminFavoriteCandidate | null => {
+  let best: CandidateMatch | null = null;
+
+  for (const entry of candidates) {
+    const match = resolveMatch(entry, normalizedPathname, searchParams);
+    if (match !== null && (best === null || compareCandidates(match, best) > 0)) {
+      best = match;
+    }
+  }
+
+  return best !== null ? { id: best.id, label: best.label } : null;
 };
 
 export function AdminFavoritesRuntimeProvider({
@@ -89,58 +152,7 @@ export function AdminFavoritesRuntimeProvider({
         return null;
       }
 
-      let bestCandidate:
-        | (AdminFavoriteCandidate & {
-            pathSpecificity: number;
-            querySpecificity: number;
-            pathLength: number;
-            hrefLength: number;
-          })
-        | null = null;
-
-      for (const entry of candidates) {
-        const href = entry.href?.trim();
-        if (!href) continue;
-
-        const { pathname: candidatePathname, searchParams: candidateSearchParams } =
-          buildHrefParts(href);
-        const pathSpecificity = resolvePathSpecificity({
-          pathname: normalizedPathname,
-          candidatePathname,
-          exact: entry.item.exact,
-        });
-        if (pathSpecificity === null) continue;
-
-        const querySpecificity = resolveQuerySpecificity(searchParams, candidateSearchParams);
-        if (querySpecificity === null) continue;
-
-        const nextCandidate = {
-          id: entry.id,
-          label: entry.label,
-          pathSpecificity,
-          querySpecificity,
-          pathLength: candidatePathname.length,
-          hrefLength: href.length,
-        };
-
-        if (
-          !bestCandidate ||
-          nextCandidate.pathSpecificity > bestCandidate.pathSpecificity ||
-          (nextCandidate.pathSpecificity === bestCandidate.pathSpecificity &&
-            nextCandidate.querySpecificity > bestCandidate.querySpecificity) ||
-          (nextCandidate.pathSpecificity === bestCandidate.pathSpecificity &&
-            nextCandidate.querySpecificity === bestCandidate.querySpecificity &&
-            nextCandidate.pathLength > bestCandidate.pathLength) ||
-          (nextCandidate.pathSpecificity === bestCandidate.pathSpecificity &&
-            nextCandidate.querySpecificity === bestCandidate.querySpecificity &&
-            nextCandidate.pathLength === bestCandidate.pathLength &&
-            nextCandidate.hrefLength > bestCandidate.hrefLength)
-        ) {
-          bestCandidate = nextCandidate;
-        }
-      }
-
-      return bestCandidate ? { id: bestCandidate.id, label: bestCandidate.label } : null;
+      return findBestCandidate(candidates, normalizedPathname, searchParams);
     },
     [candidates]
   );

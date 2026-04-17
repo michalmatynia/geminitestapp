@@ -7,6 +7,7 @@ export { default as TraderaSettingsPage } from './pages/marketplaces/TraderaSett
 export { default as TraderaParameterMappingPage } from './pages/marketplaces/tradera/TraderaParameterMappingPage';
 export { default as TraderaSelectorRegistryPage } from './pages/marketplaces/tradera/TraderaSelectorRegistryPage';
 export { default as Supplier1688SelectorRegistryPage } from './pages/marketplaces/1688/Supplier1688SelectorRegistryPage';
+export { default as AmazonSelectorRegistryPage } from './pages/marketplaces/amazon/AmazonSelectorRegistryPage';
 export { default as AllegroConnectionsPage } from './pages/marketplaces/allegro/AllegroConnectionsPage';
 export { default as AllegroListingManagementPage } from './pages/marketplaces/allegro/AllegroListingManagementPage';
 export { default as AllegroListingTemplatesPage } from './pages/marketplaces/allegro/AllegroListingTemplatesPage';

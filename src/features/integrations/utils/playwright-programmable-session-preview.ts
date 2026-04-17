@@ -14,7 +14,10 @@ import {
   applyActionExecutionSettingsToPlaywrightSettings,
   formatPlaywrightActionExecutionSettingsSummary,
 } from './playwright-action-execution-settings';
-import { buildIntegrationConnectionPlaywrightSettings } from './playwright-connection-settings';
+import {
+  buildIntegrationConnectionPlaywrightSettings,
+  resolveIntegrationPlaywrightPersonaSettings,
+} from './playwright-connection-settings';
 import { supportsProgrammableSessionProfile } from './playwright-programmable-session-support';
 
 export type ProgrammableSessionPreview = {
@@ -135,10 +138,10 @@ const formatEffectiveSummary = (action: PlaywrightAction, settings: PlaywrightSe
   if (settings.emulateDevice) {
     summary.push(`Device: ${settings.deviceName}`);
   }
-  if (settings.locale.trim().length > 0) {
+  if (settings.locale?.trim().length) {
     summary.push(`Locale: ${settings.locale}`);
   }
-  if (settings.timezoneId.trim().length > 0) {
+  if (settings.timezoneId?.trim().length) {
     summary.push(`Timezone: ${settings.timezoneId}`);
   }
   if (settings.slowMo > 0) {
@@ -199,12 +202,14 @@ export const buildProgrammableSessionPreview = ({
   defaultRuntimeKey,
   personaBaseline,
   currentSettings,
+  personas,
 }: {
   actions: PlaywrightAction[] | undefined;
   selectedActionId: string;
   defaultRuntimeKey: ActionSequenceKey;
   personaBaseline: PlaywrightSettings;
   currentSettings: PlaywrightSettings;
+  personas: Array<{ id: string; settings: PlaywrightSettings }> | undefined;
 }): ProgrammableSessionPreview => {
   const { action, isDefault } = resolveProgrammableSessionAction({
     actions,
@@ -212,8 +217,12 @@ export const buildProgrammableSessionPreview = ({
     defaultRuntimeKey,
   });
   const browserPreparationConfig = resolveBrowserPreparationConfig(action);
+  const actionPersonaBaseline =
+    action.personaId === null
+      ? personaBaseline
+      : resolveIntegrationPlaywrightPersonaSettings(personas, action.personaId);
   const actionBaseline = applyActionExecutionSettingsToPlaywrightSettings({
-    baseSettings: personaBaseline,
+    baseSettings: actionPersonaBaseline,
     action,
   });
   const effectiveSettings = buildIntegrationConnectionPlaywrightSettings({
@@ -229,9 +238,10 @@ export const buildProgrammableSessionPreview = ({
     action,
     isDefault,
     actionBaselineSettings: actionBaseline,
-    actionSettingsSummary: formatPlaywrightActionExecutionSettingsSummary(
-      action.executionSettings
-    ),
+    actionSettingsSummary: [
+      ...(action.personaId !== null ? [`Persona: ${action.personaId}`] : []),
+      ...formatPlaywrightActionExecutionSettingsSummary(action.executionSettings),
+    ],
     browserPreparationSummary: formatBrowserPreparationSummary(browserPreparationConfig),
     effectiveSummary: formatEffectiveSummary(action, effectiveSettings),
     overrideSummary: buildOverrideSummary({

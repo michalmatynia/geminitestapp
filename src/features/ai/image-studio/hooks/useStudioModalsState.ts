@@ -10,7 +10,7 @@ import {
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
 } from '@/shared/lib/products/constants';
-import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui/primitives.public';
 
@@ -89,7 +89,7 @@ export function useStudioModalsState() {
     settingsStore.get(PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY) ??
     DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL;
 
-  const linkedRunsQuery = createListQueryV2<
+  const linkedRunsQuery = useListQueryV2<
     LinkedGeneratedRunsResponse,
     LinkedGeneratedRunsResponse
   >({

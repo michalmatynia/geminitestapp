@@ -37,7 +37,7 @@ const scheduleAutomaticRetry = async (
 ): Promise<void> => {
   if (!isRedisAvailable()) return;
   if (result.retryableDeliveryCount <= 0) return;
-  if (!result.suggestedRetryDelayMs || result.suggestedRetryDelayMs <= 0) return;
+  if (result.suggestedRetryDelayMs === null || result.suggestedRetryDelayMs <= 0) return;
 
   await queue.enqueue(
     {
@@ -66,15 +66,19 @@ const queue = createManagedQueue<FilemakerEmailCampaignQueueJobData>({
       runId: data.runId,
       reason: data.reason === 'launch' ? 'manual' : data.reason,
     });
-    await context?.updateProgress?.({
-      totalCount: result.progress.totalCount,
-      processedCount: result.progress.processedCount,
-      queuedCount: result.progress.queuedCount,
-      sentCount: result.progress.sentCount,
-      failedCount: result.progress.failedCount,
-      skippedCount: result.progress.skippedCount,
-      bouncedCount: result.progress.bouncedCount,
-    });
+    
+    if (context !== null && context !== undefined && typeof context.updateProgress === 'function') {
+      await context.updateProgress({
+        totalCount: result.progress.totalCount,
+        processedCount: result.progress.processedCount,
+        queuedCount: result.progress.queuedCount,
+        sentCount: result.progress.sentCount,
+        failedCount: result.progress.failedCount,
+        skippedCount: result.progress.skippedCount,
+        bouncedCount: result.progress.bouncedCount,
+      });
+    }
+
     return {
       ok: true,
       campaignId: data.campaignId,
@@ -87,14 +91,14 @@ const queue = createManagedQueue<FilemakerEmailCampaignQueueJobData>({
   },
   onCompleted: async (jobId, result, data) => {
     const typedResult =
-      result &&
+      (result !== null &&
       typeof result === 'object' &&
       'ok' in result &&
       'retryableDeliveryCount' in result &&
-      'suggestedRetryDelayMs' in result
+      'suggestedRetryDelayMs' in result)
         ? (result as FilemakerEmailCampaignQueueJobResult)
         : null;
-    if (typedResult) {
+    if (typedResult !== null) {
       try {
         await scheduleAutomaticRetry(data, typedResult);
       } catch (error) {
@@ -129,14 +133,14 @@ const queue = createManagedQueue<FilemakerEmailCampaignQueueJobData>({
 });
 
 const processInlineRunInBackground = (data: FilemakerEmailCampaignQueueJobData): void => {
-  void queue.processInline(data).catch(async (error: unknown) => {
-    await ErrorSystem.captureException(error, {
+  queue.processInline(data).catch((error: unknown) => {
+    ErrorSystem.captureException(error, {
       service: LOG_SOURCE,
       campaignId: data.campaignId,
       runId: data.runId,
       reason: data.reason,
       action: 'inline-background-failed',
-    });
+    }).catch(() => {});
   });
 };
 
@@ -151,7 +155,7 @@ export const stopFilemakerEmailCampaignQueue = async (): Promise<void> => {
 export const enqueueFilemakerEmailCampaignRunJob = async (
   data: FilemakerEmailCampaignQueueJobData
 ): Promise<{ dispatchMode: Exclude<FilemakerEmailCampaignRunDispatchMode, 'dry_run'>; jobId: string | null }> => {
-  if (!isRedisAvailable()) {
+  if (isRedisAvailable() === false) {
     processInlineRunInBackground(data);
     return {
       dispatchMode: 'inline',
@@ -168,13 +172,13 @@ export const enqueueFilemakerEmailCampaignRunJob = async (
       jobId,
     };
   } catch (error) {
-    void ErrorSystem.captureException(error, {
+    ErrorSystem.captureException(error, {
       service: LOG_SOURCE,
       campaignId: data.campaignId,
       runId: data.runId,
       reason: data.reason,
       action: 'enqueue-failed',
-    });
+    }).catch(() => {});
     processInlineRunInBackground(data);
     return {
       dispatchMode: 'inline',

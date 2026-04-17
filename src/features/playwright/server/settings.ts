@@ -124,6 +124,11 @@ export type ResolvedConnectionPlaywrightExplicitPreferences = {
   connectionBrowserPreference: TraderaPlaywrightRuntimeSettings['browser'] | undefined;
 };
 
+export type ResolveConnectionPlaywrightSettingsOptions = {
+  includeConnectionBrowserBehavior?: boolean;
+  personaId?: string | null;
+};
+
 export const parsePersistedStorageState = (
   encryptedValue: string | null | undefined
 ): PersistedStorageState | null => {
@@ -174,16 +179,24 @@ const findPersonaSettings = (raw: unknown, personaId: string): Record<string, un
 };
 
 export const resolveConnectionPlaywrightSettingsProfile = async (
-  connection: IntegrationConnectionRecord
+  connection: IntegrationConnectionRecord,
+  options?: ResolveConnectionPlaywrightSettingsOptions
 ): Promise<ResolvedConnectionPlaywrightSettingsProfile> => {
+  const includeConnectionBrowserBehavior =
+    options?.includeConnectionBrowserBehavior !== false;
   const personaId = normalizeIntegrationConnectionPlaywrightPersonaId(
-    connection.playwrightPersonaId
+    options?.personaId ?? connection.playwrightPersonaId
   );
-  const connectionOverrides = extractIntegrationConnectionPlaywrightSettingsOverrides(connection);
-  const connectionBrowser = resolveIntegrationConnectionPlaywrightBrowserOverride(connection);
-  const connectionProxyPassword = connection.playwrightProxyPassword
-    ? decryptSecret(connection.playwrightProxyPassword)
+  const connectionOverrides = includeConnectionBrowserBehavior
+    ? extractIntegrationConnectionPlaywrightSettingsOverrides(connection)
+    : {};
+  const connectionBrowser = includeConnectionBrowserBehavior
+    ? resolveIntegrationConnectionPlaywrightBrowserOverride(connection)
     : undefined;
+  const connectionProxyPassword =
+    includeConnectionBrowserBehavior && connection.playwrightProxyPassword
+      ? decryptSecret(connection.playwrightProxyPassword)
+      : undefined;
 
   let browser: TraderaPlaywrightRuntimeSettings['browser'] = 'auto';
   let personaProvidesHeadlessPreference = false;
@@ -349,16 +362,18 @@ export const resolveConnectionPlaywrightSettingsProfile = async (
 };
 
 export const resolveConnectionPlaywrightSettings = async (
-  connection: IntegrationConnectionRecord
+  connection: IntegrationConnectionRecord,
+  options?: ResolveConnectionPlaywrightSettingsOptions
 ): Promise<TraderaPlaywrightRuntimeSettings> => {
-  const profile = await resolveConnectionPlaywrightSettingsProfile(connection);
+  const profile = await resolveConnectionPlaywrightSettingsProfile(connection, options);
   return profile.settings;
 };
 
 export const resolveConnectionPlaywrightExplicitPreferences = async (
-  connection: IntegrationConnectionRecord
+  connection: IntegrationConnectionRecord,
+  options?: ResolveConnectionPlaywrightSettingsOptions
 ): Promise<ResolvedConnectionPlaywrightExplicitPreferences> => {
-  const profile = await resolveConnectionPlaywrightSettingsProfile(connection);
+  const profile = await resolveConnectionPlaywrightSettingsProfile(connection, options);
 
   return {
     profile,

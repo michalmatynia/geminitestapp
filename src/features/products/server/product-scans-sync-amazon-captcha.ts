@@ -15,9 +15,15 @@ import { productService } from '@/shared/lib/products/services/productService';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import {
+  AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY,
+  resolveAmazonRuntimeActionName,
+} from '@/shared/lib/browser-execution/amazon-runtime-constants';
+
+import {
   AMAZON_PRODUCT_SCAN_PROVIDER,
-  type ProductScanScriptProviderRuntime,
+  requireProductScanNativeRuntime,
 } from './product-scan-providers';
+import { getPlaywrightRuntimeActionSeed } from '@/shared/lib/browser-execution/playwright-runtime-action-seeds';
 import {
   buildProductScannerEngineRequestOptions,
   getProductScannerSettings,
@@ -25,7 +31,7 @@ import {
 
 import {
   AMAZON_SCAN_TIMEOUT_MS,
-  createAmazonScanStartedRawResult,
+  createProductScanStartedRawResult,
   normalizeErrorMessage,
   persistFailedSynchronization,
   persistSynchronizedScan,
@@ -34,8 +40,9 @@ import {
   resolveProductScanRequestSequenceInput,
   resolveScanManualVerificationTimeoutMs,
   shouldAutoShowScannerCaptchaBrowser,
+  readOptionalString,
   toRecord,
-  type AmazonScanScriptResult,
+  type AmazonScanRuntimeResult,
 } from './product-scans-service.helpers';
 
 import {
@@ -46,14 +53,15 @@ import {
   resolveAmazonTriageEvaluatorConfig,
 } from './product-scans-service.helpers.amazon';
 
-const amazonScanRuntime = AMAZON_PRODUCT_SCAN_PROVIDER.runtime! as ProductScanScriptProviderRuntime;
+const amazonScanRuntime = requireProductScanNativeRuntime(AMAZON_PRODUCT_SCAN_PROVIDER);
+const amazonRuntimeAction = getPlaywrightRuntimeActionSeed(AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY);
 
 type SynchronizeAmazonStatusInput = {
   scan: ProductScanRecord;
   run: PlaywrightEngineRunRecord;
   engineRunId: string;
   resultValue: unknown;
-  parsedResult: AmazonScanScriptResult;
+  parsedResult: AmazonScanRuntimeResult;
 };
 
 export async function synchronizeAmazonCaptchaRequired({
@@ -140,15 +148,23 @@ export async function synchronizeAmazonCaptchaRequired({
       claimedScan.rawResult,
       scannerSettings
     );
+    const amazonSelectorProfile =
+      readOptionalString(toRecord(claimedScan.rawResult)?.['selectorProfile'], 120) ?? 'amazon';
     const runRetry = await startPlaywrightEngineTask({
       request: {
-        script: amazonScanRuntime.script,
+        runtimeKey: amazonScanRuntime.runtimeKey,
+        actionId: amazonRuntimeAction?.id ?? null,
+        actionName:
+          amazonRuntimeAction?.name ??
+          resolveAmazonRuntimeActionName(amazonScanRuntime.runtimeKey),
+        selectorProfile: amazonSelectorProfile,
         input: amazonScanRuntime.buildRequestInput({
           productId: product.id,
           productName: claimedScan.productName,
           existingAsin: product.asin,
           imageCandidates: claimedScan.imageCandidates,
           imageSearchProvider: amazonImageSearchProvider,
+          selectorProfile: amazonSelectorProfile,
           allowManualVerification: true,
           manualVerificationTimeoutMs,
           triageOnlyOnAmazonCandidates: amazonCandidateTriageEnabled,
@@ -181,9 +197,12 @@ export async function synchronizeAmazonCaptchaRequired({
       steps: claimedScan.steps,
       rawResult: {
         ...toRecord(claimedScan.rawResult),
-        ...createAmazonScanStartedRawResult({
+        ...createProductScanStartedRawResult({
           runId: runRetry.runId,
           status: runRetry.status,
+          runtimeKey: amazonScanRuntime.runtimeKey,
+          actionId: amazonRuntimeAction?.id ?? null,
+          selectorProfile: amazonSelectorProfile,
           imageSearchProvider: amazonImageSearchProvider,
           imageSearchProviderHistory: resolveAmazonImageSearchProviderHistory(
             claimedScan.rawResult,

@@ -66,6 +66,28 @@ export type ResolvedSupplier1688SelectorRegistryNativeRuntime = {
   fallbackReason?: string;
 };
 
+export type Supplier1688SelectorRegistryResolutionSummary = Omit<
+  ResolvedSupplier1688SelectorRegistryNativeRuntime,
+  'selectorRuntime' | 'fallbackReason'
+> & {
+  fallbackReason: string | null;
+};
+
+export const toSupplier1688SelectorRegistryResolutionSummary = (
+  resolution: ResolvedSupplier1688SelectorRegistryNativeRuntime | null | undefined
+): Supplier1688SelectorRegistryResolutionSummary | null =>
+  resolution
+    ? {
+        requestedProfile: resolution.requestedProfile,
+        resolvedProfile: resolution.resolvedProfile,
+        sourceProfiles: resolution.sourceProfiles,
+        entryCount: resolution.entryCount,
+        overlayEntryCount: resolution.overlayEntryCount,
+        fallbackToCode: resolution.fallbackToCode,
+        fallbackReason: resolution.fallbackReason ?? null,
+      }
+    : null;
+
 let indexesReady = false;
 
 const getCollection = async (): Promise<Collection<Supplier1688SelectorRegistryDoc>> => {

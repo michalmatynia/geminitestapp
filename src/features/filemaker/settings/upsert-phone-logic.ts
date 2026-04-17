@@ -43,7 +43,7 @@ type PhoneCreationResult = {
 
 const createEmptyPhoneUpsertResult = (
   database: FilemakerDatabase,
-  input: UpsertPhoneNumbersInput,
+  _input: UpsertPhoneNumbersInput,
   partyFound: boolean,
   invalidPhoneNumberCount: number
 ): UpsertFilemakerPartyPhoneNumbersResult => ({

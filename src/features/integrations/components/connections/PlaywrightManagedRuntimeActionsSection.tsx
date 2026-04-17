@@ -4,6 +4,7 @@ import Link from 'next/link';
 import React from 'react';
 
 import type { IntegrationManagedPlaywrightActionSummary } from '@/features/integrations/utils/playwright-managed-actions';
+import { resolveStepSequencerActionHref } from '@/features/playwright/utils/step-sequencer-action-links';
 import { Badge, Button } from '@/shared/ui/primitives.public';
 import { FormSection } from '@/shared/ui/forms-and-actions.public';
 
@@ -57,14 +58,19 @@ function ManagedRuntimeActionCard({
       <div className='flex flex-wrap items-start justify-between gap-3'>
         <div className='space-y-1'>
           <div className='flex flex-wrap items-center gap-2'>
-            <p className='text-sm font-medium text-foreground'>{summary.action.name}</p>
+            <Link
+              href={resolveStepSequencerActionHref(summary.action.id)}
+              className='text-sm font-medium text-foreground underline-offset-4 hover:underline'
+            >
+              {summary.action.name}
+            </Link>
             <Badge variant='neutral'>{summary.runtimeKey}</Badge>
             {summary.fallbackActive ? <Badge variant='outline'>Fallback active</Badge> : null}
           </div>
           <p className='text-xs text-muted-foreground'>{description}</p>
         </div>
         <Button variant='ghost' size='sm' asChild>
-          <Link href='/admin/playwright/step-sequencer'>Edit action</Link>
+          <Link href={resolveStepSequencerActionHref(summary.action.id)}>Edit action</Link>
         </Button>
       </div>
 

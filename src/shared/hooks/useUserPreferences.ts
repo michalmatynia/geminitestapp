@@ -1,3 +1,5 @@
+'use no memo';
+
 import { useQueryClient } from '@tanstack/react-query';
 
 import {
@@ -16,11 +18,18 @@ import {
   normalizeUserPreferencesUpdatePayload,
 } from '@/shared/validations/user-preferences';
 
+// These hooks delegate into TanStack Query factory wrappers. React Compiler can
+// otherwise memoize the factory call and skip hooks inside it on later renders.
+
 const userPreferencesQueryKey = QUERY_KEYS.userPreferences.all;
+const emptyUserPreferences = normalizeUserPreferencesResponse({}) as UserPreferences;
 
 type UserPreferencesQueryOptions = {
   enabled?: boolean;
 };
+
+const isComparableObject = (value: unknown): value is Record<string, unknown> =>
+  value !== null && value !== undefined && typeof value === 'object';
 
 const hasPreferenceChanged = (
   current: UserPreferences | undefined,
@@ -28,12 +37,7 @@ const hasPreferenceChanged = (
   nextValue: unknown
 ): boolean => {
   const currentValue = (current as Record<string, unknown> | undefined)?.[key];
-  if (
-    currentValue &&
-    typeof currentValue === 'object' &&
-    nextValue &&
-    typeof nextValue === 'object'
-  ) {
+  if (isComparableObject(currentValue) && isComparableObject(nextValue)) {
     try {
       return JSON.stringify(currentValue) !== JSON.stringify(nextValue);
     } catch (error) {
@@ -66,7 +70,7 @@ export function useUserPreferences(
             action: 'loadUserPreferences',
             level: 'warn',
           });
-          return {} as UserPreferences;
+          return emptyUserPreferences;
         }),
     staleTime: 1000 * 60 * 5, // 5 minutes
     refetchOnMount: false,
@@ -96,15 +100,18 @@ export function useUpdateUserPreferences(): MutationResult<UserPreferences, User
       const payload = normalizeUserPreferencesUpdatePayload(validation.data);
       const current =
         queryClient.getQueryData<UserPreferences>(userPreferencesQueryKey) ?? undefined;
-      const changedPayload = Object.fromEntries(
+      const changedPayload: UserPreferencesUpdate = Object.fromEntries(
         Object.entries(payload).filter(([key, value]) => hasPreferenceChanged(current, key, value))
-      ) as UserPreferencesUpdate;
+      );
       if (Object.keys(changedPayload).length === 0) {
-        return Promise.resolve((current ?? {}) as UserPreferences);
+        return Promise.resolve(current ?? emptyUserPreferences);
       }
       return api
         .patch<UserPreferencesResponse>('/api/user/preferences', changedPayload)
-        .then((data: UserPreferencesResponse) => normalizeUserPreferencesResponse(data) as UserPreferences);
+        .then(
+          (response: UserPreferencesResponse) =>
+            normalizeUserPreferencesResponse(response) as UserPreferences
+        );
     },
     onSuccess: (data: UserPreferences): void => {
       queryClient.setQueryData(userPreferencesQueryKey, data);

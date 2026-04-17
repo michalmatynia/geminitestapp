@@ -13,8 +13,8 @@ import type { PlaywrightStepInputBinding } from '@/shared/contracts/playwright-s
 import { upsertPlaywrightActionRunHistory } from '@/shared/lib/playwright/action-run-history-repository';
 import {
   createRuntimeStepSemanticSnippet,
-  getSupplier1688RuntimeStepInputBindings,
-} from '@/shared/lib/playwright/supplier-1688-runtime-step-snippets';
+  getRuntimeStepInputBindings,
+} from '@/shared/lib/playwright/product-scan-runtime-step-snippets';
 import {
   createPlaywrightStepCodeSnapshot,
   getPlaywrightStepInputBindings,
@@ -284,7 +284,7 @@ const buildPlannedStepRecords = (
       inputBindings:
         input.inputBindings ??
         (input.kind === 'runtime_step'
-          ? getSupplier1688RuntimeStepInputBindings(input.refId, selectorProfile ?? '1688')
+          ? getRuntimeStepInputBindings(input.refId, selectorProfile)
           : undefined),
     };
     const inputBindings = getPlaywrightStepInputBindings(previewStep);
@@ -495,7 +495,7 @@ const buildStepRecords = (
       const normalizedInputBindings =
         normalizeInputBindings(entry['inputBindings']) ??
         normalizeInputBindings(plannedStep?.['inputBindings']) ??
-        getSupplier1688RuntimeStepInputBindings(key, selectorProfile ?? '1688');
+        getRuntimeStepInputBindings(key, selectorProfile);
       const inputBindings = getPlaywrightStepInputBindings({
         name: label,
         type: stepType ?? 'custom_script',

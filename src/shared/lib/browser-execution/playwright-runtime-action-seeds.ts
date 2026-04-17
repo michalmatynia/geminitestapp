@@ -1,10 +1,19 @@
 import type { PlaywrightAction } from '@/shared/contracts/playwright-steps';
 import {
+  defaultPlaywrightActionBlockConfig,
   defaultPlaywrightActionExecutionSettings,
   normalizePlaywrightAction,
 } from '@/shared/contracts/playwright-steps';
 
 import { ACTION_SEQUENCES, type ActionSequenceKey } from './action-sequences';
+import {
+  AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY,
+  AMAZON_CANDIDATE_EXTRACTION_RUNTIME_NAME,
+  AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY,
+  AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_NAME,
+  AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY,
+  AMAZON_REVERSE_IMAGE_SCAN_LEGACY_RUNTIME_NAME,
+} from './amazon-runtime-constants';
 import { SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY } from './supplier-1688-runtime-constants';
 
 type RuntimeActionSeedDefinition = {
@@ -53,6 +62,21 @@ const RUNTIME_ACTION_SEED_DEFINITIONS: Record<ActionSequenceKey, RuntimeActionSe
     name: 'Tradera Fetch Categories',
     description: 'Default Tradera public category crawl flow.',
   },
+  [AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY]: {
+    name: AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_NAME,
+    description:
+      'Runs Google Lens, collects Amazon matches, probes retained candidates for preview data, and stops for manual candidate selection.',
+  },
+  [AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY]: {
+    name: AMAZON_CANDIDATE_EXTRACTION_RUNTIME_NAME,
+    description:
+      'Starts from a selected Amazon candidate and performs probe, extraction, evaluation, and ASIN update.',
+  },
+  [AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY]: {
+    name: AMAZON_REVERSE_IMAGE_SCAN_LEGACY_RUNTIME_NAME,
+    description:
+      'Legacy compatibility runtime covering Google Lens candidate discovery, Amazon extraction, evaluation, follow-up queueing, and ASIN update in one action.',
+  },
   [SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY]: {
     name: '1688 Supplier Probe Scan',
     description: 'Default 1688 supplier reverse-image probe scan flow.',
@@ -94,6 +118,7 @@ const createSeedAction = (runtimeKey: ActionSequenceKey): PlaywrightAction => {
       refId: stepId,
       enabled: true,
       label: null,
+      config: defaultPlaywrightActionBlockConfig,
     })),
     stepSetIds: [],
     personaId: null,

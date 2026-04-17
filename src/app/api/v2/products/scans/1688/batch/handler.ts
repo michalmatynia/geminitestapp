@@ -2,16 +2,16 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 import { queue1688BatchProductScans } from '@/features/products/server/product-scans-service';
 import {
-  productScanBatchRequestSchema,
+  product1688BatchScanRequestSchema,
   productScanBatchResponseSchema,
-  type ProductScanBatchRequest,
+  type Product1688BatchScanRequest,
 } from '@/shared/contracts/product-scans';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
-export { productScanBatchRequestSchema };
+export { product1688BatchScanRequestSchema };
 
 export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
-  const body = ctx.body as ProductScanBatchRequest;
+  const body = ctx.body as Product1688BatchScanRequest;
 
   const result = await queue1688BatchProductScans({
     productIds: body.productIds,

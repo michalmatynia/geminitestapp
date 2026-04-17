@@ -18,6 +18,7 @@ import { GenericGridPicker } from '@/shared/ui/templates/pickers/GenericGridPick
 import { GenericPickerDropdown } from '@/shared/ui/templates/pickers/GenericPickerDropdown';
 import { TreeHeader } from '@/shared/ui/tree';
 import { TreeCaret } from '@/shared/ui/tree/TreeCaret';
+import { AccessibilityProvider } from '@/shared/providers/AccessibilityProvider';
 
 const SELECT_SIMPLE_STATUS_OPTIONS = [
   { value: 'draft', label: 'Draft' },
@@ -146,6 +147,33 @@ describe('shared accessibility primitives', () => {
 
     region.focus();
     expect(region).toHaveFocus();
+  });
+
+  it('does not mutate explicitly managed scroll regions', async () => {
+    render(
+      <AccessibilityProvider>
+        <div data-testid='auto-scroll-region' style={{ maxHeight: 10, overflowY: 'auto' }}>
+          <div style={{ height: 20 }} />
+        </div>
+        <div
+          data-testid='ignored-scroll-region'
+          data-scroll-focus-ignore='true'
+          style={{ maxHeight: 10, overflowY: 'auto' }}
+        >
+          <div style={{ height: 20 }} />
+        </div>
+        <main data-testid='skip-target' tabIndex={-1} style={{ maxHeight: 10, overflowY: 'auto' }}>
+          Managed main
+        </main>
+      </AccessibilityProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('auto-scroll-region')).toHaveAttribute('tabindex', '0');
+    });
+
+    expect(screen.getByTestId('ignored-scroll-region')).not.toHaveAttribute('tabindex');
+    expect(screen.getByTestId('skip-target')).toHaveAttribute('tabindex', '-1');
   });
 
   it('renders TreeCaret as a native button with expanded state', () => {

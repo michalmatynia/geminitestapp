@@ -60,7 +60,7 @@ const normalizeLookupKey = (value: string): string =>
 /** Try each selector in order, return the first visible locator. Returns null if none found. */
 const findFirstVisible = async (
   page: Page,
-  selectors: string[]
+  selectors: readonly string[]
 ): Promise<Locator | null> => {
   for (const selector of selectors) {
     try {
@@ -78,7 +78,7 @@ const findFirstVisible = async (
 /** Fill a field by trying selectors in order. Throws if required and not found. */
 const fillField = async (
   page: Page,
-  selectors: string[],
+  selectors: readonly string[],
   value: string,
   fieldName: string,
   required = true
@@ -121,7 +121,7 @@ type VisibleOptionCandidate = {
 
 const listVisibleOptions = async (
   page: Page,
-  selectors: string[]
+  selectors: readonly string[]
 ): Promise<VisibleOptionCandidate[]> => {
   const candidates: VisibleOptionCandidate[] = [];
   const seen = new Set<string>();
@@ -152,7 +152,7 @@ const listVisibleOptions = async (
 
 const resolveVisibleOption = async (
   page: Page,
-  selectors: string[],
+  selectors: readonly string[],
   label: string
 ): Promise<VisibleOptionCandidate | null> => {
   const normalizedTarget = normalizeLookupKey(label);
@@ -167,7 +167,7 @@ const resolveVisibleOption = async (
 
 const buildMissingOptionError = async (input: {
   page: Page;
-  selectors: string[];
+  selectors: readonly string[];
   fieldName: string;
   requestedLabel: string;
   extraMeta?: Record<string, unknown>;
@@ -192,8 +192,8 @@ const buildMissingOptionError = async (input: {
  */
 const selectDropdownOptionByLabel = async (input: {
   page: Page;
-  triggerSelectors: string[];
-  optionSelectors: string[];
+  triggerSelectors: readonly string[];
+  optionSelectors: readonly string[];
   label: string;
   fieldName: string;
   extraMeta?: Record<string, unknown>;
@@ -550,7 +550,7 @@ export const runVintedBrowserListing = async ({
       // 9. Submit the listing
       const submitSelectors = action === 'sync' ? VINTED_UPDATE_SUBMIT_SELECTORS : VINTED_SUBMIT_SELECTORS;
       tracker.start('publish');
-      const submitButton = await findFirstVisible(page, [...submitSelectors]);
+      const submitButton = await findFirstVisible(page, submitSelectors);
       if (!submitButton) {
         throw internalError('Submit button not found on Vinted listing form.');
       }

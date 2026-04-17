@@ -1,6 +1,15 @@
 import type { StepId } from './step-registry';
 import { BROWSER_AND_AUTH, STEP_GROUPS } from './step-groups';
-import { SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY } from './supplier-1688-runtime-constants';
+import {
+  AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY,
+  AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY,
+  AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY,
+  AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_STEP_IDS,
+} from './amazon-runtime-constants';
+import {
+  SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY,
+  SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEP_IDS,
+} from './supplier-1688-runtime-constants';
 
 export type ActionSequenceKey =
   | 'playwright_programmable_listing'
@@ -12,6 +21,9 @@ export type ActionSequenceKey =
   | 'tradera_quicklist_sync'
   | 'tradera_check_status'
   | 'tradera_fetch_categories'
+  | typeof AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY
+  | typeof AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY
+  | typeof AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY
   | typeof SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY
   | 'vinted_list'
   | 'vinted_relist'
@@ -94,23 +106,39 @@ export const ACTION_SEQUENCES: Record<ActionSequenceKey, readonly StepId[]> = {
     'browser_close',
   ],
 
-  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY]: [
+  [AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY]: [
     'browser_preparation',
     'browser_open',
-    'supplier_1688_input_validate',
-    'supplier_1688_open_search',
-    'supplier_1688_access_check',
-    'supplier_1688_upload_image',
-    'supplier_1688_submit_search',
-    'supplier_1688_collect_candidates',
-    'supplier_1688_probe_candidate',
-    'supplier_1688_wait_supplier',
-    'supplier_1688_extract_details',
-    'supplier_1688_score_candidate',
-    'supplier_1688_evaluate_match',
-    'supplier_1688_finalize',
+    'validate',
+    'google_lens_open',
+    'google_upload',
+    'google_captcha',
+    'google_candidates',
+    'amazon_open',
+    'amazon_overlays',
+    'amazon_content_ready',
+    'amazon_probe',
     'browser_close',
   ],
+
+  [AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY]: [
+    'browser_preparation',
+    'browser_open',
+    'validate',
+    'amazon_open',
+    'amazon_overlays',
+    'amazon_content_ready',
+    'amazon_probe',
+    'amazon_extract',
+    'amazon_ai_evaluate',
+    'queue_scan',
+    'product_asin_update',
+    'browser_close',
+  ],
+
+  [AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY]: AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_STEP_IDS,
+
+  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY]: SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEP_IDS,
 
   vinted_list: [
     ...BROWSER_AND_AUTH,

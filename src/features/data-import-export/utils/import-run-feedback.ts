@@ -46,7 +46,7 @@ export const areImportResponsesEquivalent = (
   right: ImportResponse | null
 ): boolean => {
   if (left === right) return true;
-  if (!left || !right) return false;
+  if (left === null || right === null) return false;
 
   return (
     left.runId === right.runId &&
@@ -58,20 +58,20 @@ export const areImportResponsesEquivalent = (
   );
 };
 
+const getDispatchModeLabel = (dispatchMode: string | null): string => {
+  if (dispatchMode === 'queued') return 'queued (base-import runtime queue)';
+  if (dispatchMode === 'inline') return 'inline fallback';
+  return 'not dispatched';
+};
+
 export const getImportResultDisplaySummary = (
   result: ImportResponse
 ): ImportResultDisplaySummary => {
-  const isExactTargetSummary = result.summaryMessage?.startsWith('Queued exact ') === true;
-  const dispatchModeLabel =
-    result.dispatchMode === 'queued'
-      ? 'queued (base-import runtime queue)'
-      : result.dispatchMode === 'inline'
-        ? 'inline fallback'
-        : 'not dispatched';
+  const isExactTargetSummary = (result.summaryMessage?.startsWith('Queued exact ') ?? false);
+  const dispatchModeLabel = getDispatchModeLabel(result.dispatchMode);
+  const queueJobLabel = result.queueJobId ?? 'not assigned';
 
-  const queueJobLabel = result.queueJobId || 'not assigned';
-
-  if (result.preflight && !result.preflight.ok) {
+  if (result.preflight?.ok === false) {
     return {
       dispatchModeLabel,
       queueJobLabel,
@@ -83,8 +83,7 @@ export const getImportResultDisplaySummary = (
     return {
       dispatchModeLabel,
       queueJobLabel,
-      explanation:
-        'This run used inline fallback because Redis queueing was unavailable or enqueueing failed.',
+      explanation: 'This run used inline fallback because Redis queueing was unavailable or enqueueing failed.',
     };
   }
 
@@ -98,10 +97,10 @@ export const getImportResultDisplaySummary = (
     };
   }
 
-  if (
-    (result.status === 'completed' || result.status === 'partial_success') &&
-    result.summaryMessage?.includes('No products matched')
-  ) {
+  const isMatchedEmpty = (result.status === 'completed' || result.status === 'partial_success') &&
+    (result.summaryMessage?.includes('No products matched') ?? false);
+
+  if (isMatchedEmpty) {
     return {
       dispatchModeLabel,
       queueJobLabel,
@@ -116,37 +115,35 @@ export const getImportResultDisplaySummary = (
   };
 };
 
+const getImportLabel = (kind: ImportActionKind, dryRun: boolean, isExact: boolean): string => {
+  if (kind === 'resume') return 'Import resume';
+  if (isExact) return 'Exact import';
+  if (dryRun) return 'Dry-run import';
+  return 'Import';
+};
+
 export const buildImportResultToast = (
   result: ImportResponse,
   options: { kind: ImportActionKind; dryRun?: boolean }
 ): { message: string; toast: ToastOptions } => {
-  const isExactTargetSummary = result.summaryMessage?.startsWith('Queued exact ') === true;
-  const label =
-    options.kind === 'resume'
-      ? 'Import resume'
-      : isExactTargetSummary
-        ? 'Exact import'
-      : options.dryRun
-        ? 'Dry-run import'
-        : 'Import';
+  const isExactTarget = (result.summaryMessage?.startsWith('Queued exact ') ?? false);
+  const label = getImportLabel(options.kind, options.dryRun ?? false, isExactTarget);
 
   if (result.status === 'queued' || result.status === 'running') {
-    if (result.dispatchMode === 'inline') {
-      return {
-        message: `${label} running inline${result.queueJobId ? ` (job ${result.queueJobId}).` : '.'}`,
-        toast: { variant: 'warning' },
-      };
-    }
+    const suffix = result.queueJobId !== null ? ` (job ${result.queueJobId}).` : '.';
+    const msg = result.dispatchMode === 'inline' 
+      ? `${label} running inline${suffix}` 
+      : `${label} queued to base-import runtime${suffix}`;
 
     return {
-      message: `${label} queued to base-import runtime${result.queueJobId ? ` (job ${result.queueJobId}).` : '.'}`,
-      toast: { variant: 'success' },
+      message: msg,
+      toast: { variant: result.dispatchMode === 'inline' ? 'warning' : 'success' },
     };
   }
 
   if (result.status === 'completed' || result.status === 'partial_success') {
     return {
-      message: result.summaryMessage || `${label} completed.`,
+      message: result.summaryMessage ?? `${label} completed.`,
       toast: { variant: 'success' },
     };
   }
@@ -161,13 +158,13 @@ export const buildImportResultToast = (
     }
 
     return {
-      message: result.summaryMessage || `${label} failed.`,
+      message: result.summaryMessage ?? `${label} failed.`,
       toast: { variant: 'error' },
     };
   }
 
   return {
-    message: result.summaryMessage || `${label} updated.`,
+    message: result.summaryMessage ?? `${label} updated.`,
     toast: { variant: 'info' },
   };
 };

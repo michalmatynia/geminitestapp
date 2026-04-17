@@ -165,7 +165,7 @@ const resolveAmazonEvaluationStatusLabel = (
   return 'AI failed';
 };
 
-const formatAmazonEvaluationConfidence = (value: number | null | undefined): string | null =>
+const formatEvaluationConfidence = (value: number | null | undefined): string | null =>
   typeof value === 'number' && Number.isFinite(value) ? `${Math.round(value * 100)}%` : null;
 
 const formatAmazonPageLanguage = (value: string | null | undefined): string | null => {
@@ -810,7 +810,7 @@ function ProductScanAmazonDetailsBadgeList(props: {
       ) : null}
       {scan.amazonEvaluation?.confidence !== null && scan.amazonEvaluation?.confidence !== undefined ? (
         <span className='inline-flex items-center rounded-md border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium'>
-          AI confidence {formatAmazonEvaluationConfidence(scan.amazonEvaluation.confidence)}
+          AI confidence {formatEvaluationConfidence(scan.amazonEvaluation.confidence)}
         </span>
       ) : null}
     </div>
@@ -892,7 +892,7 @@ export function ProductScanAmazonDetails(props: {
             },
             {
               label: 'Confidence',
-              value: formatAmazonEvaluationConfidence(scan.amazonEvaluation.confidence),
+              value: formatEvaluationConfidence(scan.amazonEvaluation.confidence),
             },
             { label: 'Model', value: scan.amazonEvaluation.modelId },
             {
@@ -906,7 +906,7 @@ export function ProductScanAmazonDetails(props: {
               value:
                 (latestAmazonEvaluationStep !== null
                   ? resolveStepDetailValue(latestAmazonEvaluationStep, 'Threshold')
-                  : null) ?? formatAmazonEvaluationConfidence(scan.amazonEvaluation.threshold),
+                  : null) ?? formatEvaluationConfidence(scan.amazonEvaluation.threshold),
             },
             {
               label: 'Evaluation scope',
@@ -972,7 +972,7 @@ export function ProductScanAmazonDetails(props: {
             },
             {
               label: 'Language confidence',
-              value: formatAmazonEvaluationConfidence(scan.amazonEvaluation.languageConfidence),
+              value: formatEvaluationConfidence(scan.amazonEvaluation.languageConfidence),
             },
             {
               label: 'Language reason',

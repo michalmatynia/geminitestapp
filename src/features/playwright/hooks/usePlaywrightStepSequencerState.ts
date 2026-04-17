@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type {
   PlaywrightAction,
@@ -30,7 +30,7 @@ import {
   useSavePlaywrightStepsMutation,
   useSavePlaywrightWebsitesMutation,
 } from '@/shared/hooks/usePlaywrightStepSequencer';
-import { ACTION_SEQUENCES, type ActionSequenceKey } from '@/shared/lib/browser-execution/action-sequences';
+import type { ActionSequenceKey } from '@/shared/lib/browser-execution/action-sequences';
 import { analyzeLoadedPlaywrightActions } from '@/shared/lib/browser-execution/playwright-actions-settings-validation';
 import {
   analyzePlaywrightRuntimeActionRepairPreview,
@@ -38,6 +38,7 @@ import {
   repairPlaywrightRuntimeActionsBulk,
   selectPlaywrightRuntimeActionRepairPreview,
 } from '@/shared/lib/browser-execution/playwright-runtime-action-repair';
+import { toActionSequenceKey } from '@/shared/lib/browser-execution/runtime-action-keys';
 import { validateRuntimeActionEditorBlocks } from '@/shared/lib/browser-execution/runtime-action-editor-validation';
 import { extractMutationErrorMessage } from '@/shared/lib/mutation-error-handler';
 import { STEP_REGISTRY } from '@/shared/lib/browser-execution/step-registry';
@@ -108,18 +109,13 @@ function loadActionIntoConstructorState(input: {
   setEditingActionId(action.id);
 }
 
-function toActionSequenceKey(runtimeKey: string | null): ActionSequenceKey | null {
-  if (runtimeKey === null || !(runtimeKey in ACTION_SEQUENCES)) {
-    return null;
-  }
-  return runtimeKey as ActionSequenceKey;
-}
-
 // ---------------------------------------------------------------------------
 // Hook
 // ---------------------------------------------------------------------------
 
-export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContextType {
+export function usePlaywrightStepSequencerState(options?: {
+  initialActionId?: string | null;
+}): PlaywrightStepSequencerContextType {
   const { toast } = useToast();
 
   // --- Server data via TanStack Query ---
@@ -178,6 +174,7 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
   const [actionDraftName, setActionDraftName] = useState('');
   const [actionDraftDescription, setActionDraftDescription] = useState<string | null>(null);
   const [editingActionId, setEditingActionId] = useState<string | null>(null);
+  const appliedInitialActionIdRef = useRef<string | null>(null);
 
   // ---------------------------------------------------------------------------
   // Derived / filtered data
@@ -737,6 +734,33 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
     toast('Action loaded into constructor.', { variant: 'success' });
   }, [toast]);
 
+  useEffect(() => {
+    const requestedActionId = options?.initialActionId?.trim() ?? '';
+    if (requestedActionId.length === 0) {
+      appliedInitialActionIdRef.current = null;
+      return;
+    }
+    if (appliedInitialActionIdRef.current === requestedActionId) {
+      return;
+    }
+
+    const action = actions.find((entry) => entry.id === requestedActionId) ?? null;
+    if (action === null) {
+      return;
+    }
+
+    loadActionIntoConstructorState({
+      action,
+      setActionBlocks,
+      setActionExecutionSettings,
+      setActionDraftName,
+      setActionDraftDescription,
+      setActionPersonaId,
+      setEditingActionId,
+    });
+    appliedInitialActionIdRef.current = requestedActionId;
+  }, [actions, options?.initialActionId]);
+
   const handleClearAction = useCallback((): void => {
     setActionBlocks([]);
     setActionDraftName('');
@@ -850,7 +874,9 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
           : selectPlaywrightRuntimeActionRepairPreview({
               actions: actionsRef.current,
               preview: runtimeActionRepairPreview,
-              runtimeKeys: runtimeKeys.filter((key): key is ActionSequenceKey => key in ACTION_SEQUENCES),
+              runtimeKeys: runtimeKeys
+                .map((key) => toActionSequenceKey(key))
+                .filter((key): key is ActionSequenceKey => key !== null),
             });
       const repairResult = repairPlaywrightRuntimeActionsBulk({
         actions: actionsRef.current,
@@ -895,7 +921,9 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
           : selectPlaywrightRuntimeActionRepairPreview({
               actions: actionsRef.current,
               preview: runtimeActionRepairPreview,
-              runtimeKeys: runtimeKeys.filter((key): key is ActionSequenceKey => key in ACTION_SEQUENCES),
+              runtimeKeys: runtimeKeys
+                .map((key) => toActionSequenceKey(key))
+                .filter((key): key is ActionSequenceKey => key !== null),
             });
       const repairResult = repairPlaywrightRuntimeActionsBulk({
         actions: actionsRef.current,

@@ -33,7 +33,7 @@ const collectProfiles = (
     .sort((left, right) => left.localeCompare(right));
 
 export default function Supplier1688SelectorRegistryPage(): React.JSX.Element {
-  const [profile, setProfile] = useState(DEFAULT_PROFILE);
+  const [profile, setProfile] = useState<string>(DEFAULT_PROFILE);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [draftValueJson, setDraftValueJson] = useState('');
   const [notice, setNotice] = useState<string | null>(null);

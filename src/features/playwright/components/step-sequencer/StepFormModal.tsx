@@ -63,6 +63,18 @@ const TIMEOUT_TYPES: PlaywrightStepType[] = ['wait_for_timeout', 'wait_for_selec
 /** Steps that use a custom script textarea */
 const SCRIPT_TYPES: PlaywrightStepType[] = ['custom_script'];
 const SELECTOR_REGISTRY_HREF = '/admin/integrations/marketplaces/tradera/selectors';
+const AMAZON_SELECTOR_REGISTRY_HREF = '/admin/integrations/amazon/selectors';
+const SUPPLIER_1688_SELECTOR_REGISTRY_HREF = '/admin/integrations/1688/selectors';
+
+const resolveSelectorRegistryHref = (
+  selectorProfile?: string | null,
+  selectorKey?: string | null
+): string =>
+  selectorProfile === '1688' || selectorKey?.startsWith('supplier1688.')
+    ? SUPPLIER_1688_SELECTOR_REGISTRY_HREF
+    : selectorProfile === 'amazon' || selectorKey?.startsWith('amazon.')
+      ? AMAZON_SELECTOR_REGISTRY_HREF
+      : SELECTOR_REGISTRY_HREF;
 
 const buildRegistryOverrideValueJson = (
   entry: TraderaSelectorRegistryEntry,
@@ -74,7 +86,12 @@ const buildRegistryOverrideValueJson = (
   return null;
 };
 
-function buildEmpty(): Partial<PlaywrightStep> {
+type StepDraft = Partial<PlaywrightStep> & {
+  selectorKey?: string | null;
+  selectorProfile?: string | null;
+};
+
+function buildEmpty(): StepDraft {
   return {
     name: '',
     description: null,
@@ -113,7 +130,7 @@ export function StepFormModal(): React.JSX.Element | null {
   const isOpen = isCreateStepOpen || editingStep !== null;
   const isEditing = editingStep !== null;
 
-  const [draft, setDraft] = useState<Partial<PlaywrightStep>>(buildEmpty);
+  const [draft, setDraft] = useState<StepDraft>(buildEmpty);
   const registryQuery = useTraderaSelectorRegistry();
   const saveRegistryMutation = useSaveTraderaSelectorRegistryEntryMutation();
   const [registrySaveMessage, setRegistrySaveMessage] = useState<string | null>(null);
@@ -184,7 +201,7 @@ export function StepFormModal(): React.JSX.Element | null {
     setEditingStep(null);
   };
 
-  const set = <K extends keyof PlaywrightStep>(key: K, value: PlaywrightStep[K]): void =>
+  const set = <K extends keyof StepDraft>(key: K, value: StepDraft[K]): void =>
     setDraft((prev) => ({ ...prev, [key]: value }));
 
   const setSelectorBinding = (updates: Partial<PlaywrightStepInputBinding>): void => {
@@ -575,7 +592,10 @@ export function StepFormModal(): React.JSX.Element | null {
                       Disconnect to local selector
                     </Button>
                     <a
-                      href={SELECTOR_REGISTRY_HREF}
+                      href={resolveSelectorRegistryHref(
+                        selectorBinding?.selectorProfile ?? draft.selectorProfile ?? null,
+                        selectorBinding?.selectorKey ?? draft.selectorKey ?? null
+                      )}
                       className='inline-flex h-7 items-center rounded-md px-2 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground'
                     >
                       Open selector registry

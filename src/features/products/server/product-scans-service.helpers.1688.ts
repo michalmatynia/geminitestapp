@@ -8,6 +8,8 @@ import {
   type ProductScanRequestSequenceEntry,
   type ProductScanSupplierEvaluation,
 } from '@/shared/contracts/product-scans';
+import type { Supplier1688SelectorRegistryResolutionSummary } from '@/features/integrations/services/supplier-1688-selector-registry';
+import type { Supplier1688SelectorRuntime } from '@/shared/lib/browser-execution/selectors/supplier-1688';
 
 import {
   type ProductScanner1688CandidateEvaluatorResolvedConfig,
@@ -27,7 +29,7 @@ import {
   normalizeParsedCandidateUrls,
 } from './product-scans-service.helpers.steps';
 import {
-  formatAmazonEvaluationConfidence,
+  formatEvaluationConfidence,
 } from './product-scans-service.helpers.amazon';
 
 export const resolveNext1688EvaluationStepAttempt = (
@@ -116,7 +118,7 @@ export const resolve1688EvaluationMessage = (
   if (!evaluation) {
     return '1688 supplier AI evaluation failed.';
   }
-  const confidenceLabel = formatAmazonEvaluationConfidence(evaluation.confidence);
+  const confidenceLabel = formatEvaluationConfidence(evaluation.confidence);
   if (evaluation.status === 'approved') {
     return confidenceLabel
       ? `AI evaluator approved the 1688 supplier candidate (${confidenceLabel}).`
@@ -147,7 +149,7 @@ export const build1688EvaluationStepDetails = (
   },
   {
     label: 'Threshold',
-    value: formatAmazonEvaluationConfidence(evaluatorConfig.threshold),
+    value: formatEvaluationConfidence(evaluatorConfig.threshold),
   },
   {
     label: 'Evaluation scope',
@@ -157,7 +159,7 @@ export const build1688EvaluationStepDetails = (
   },
   {
     label: 'Confidence',
-    value: formatAmazonEvaluationConfidence(evaluation?.confidence),
+    value: formatEvaluationConfidence(evaluation?.confidence),
   },
   {
     label: 'Same product',
@@ -216,8 +218,8 @@ export const build1688ScanRequestInput = (input: {
   action?: unknown;
   blocks?: unknown[] | null;
   selectorProfile?: string | null;
-  selectorRegistryResolution?: Record<string, unknown> | null;
-  selectorRuntime?: unknown;
+  selectorRegistryResolution?: Supplier1688SelectorRegistryResolutionSummary | null;
+  selectorRuntime?: Supplier1688SelectorRuntime | null;
   evaluatorConfig?: unknown;
 }): Record<string, unknown> => ({
   productId: input.productId,

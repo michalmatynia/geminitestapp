@@ -80,7 +80,7 @@ describe('ProductScanSequencer', () => {
   // Minimal concrete subclass for base-class testing
   class MinimalSequencer extends ProductScanSequencer {
     async scan(): Promise<void> {
-      this.seedStepSequence({ defaultSequenceKey: 'amazon_reverse_image_scan_browser' });
+      this.seedStepSequence({ defaultSequenceKey: 'amazon_reverse_image_scan' });
       this.upsertScanStep({ key: 'validate', status: 'running' });
       this.upsertScanStep({ key: 'validate', status: 'completed', resultCode: 'ok' });
       await this.emitResult({ status: 'completed', stage: 'validate' });
@@ -227,7 +227,7 @@ describe('AmazonScanSequencer', () => {
     expect(validateStep!.resultCode).toBe('missing_image_source');
   });
 
-  it('seeds the amazon_reverse_image_scan_browser step sequence on construction', async () => {
+  it('seeds the amazon_reverse_image_scan runtime sequence on construction', async () => {
     const ctx = makeContext();
     const seq = new AmazonScanSequencer(ctx, {});
     await seq.scan();
@@ -258,7 +258,7 @@ describe('AmazonScanSequencer', () => {
     expect(lastPayload.stage).toBe('google_lens_open');
   });
 
-  it('uses default sequence key amazon_reverse_image_scan_browser', async () => {
+  it('uses default sequence key amazon_reverse_image_scan', async () => {
     const ctx = makeContext({
       goto: vi.fn().mockRejectedValue(new Error('navigation_failed')),
     });

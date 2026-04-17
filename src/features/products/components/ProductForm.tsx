@@ -7,7 +7,7 @@ import dynamic from 'next/dynamic';
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 
 import { useProductFormCore, type ProductFormCoreContextType } from '@/features/products/context/ProductFormCoreContext';
-import { useProductFormMetadataState, type ProductFormMetadataContextType } from '@/features/products/context/ProductFormMetadataContext';
+import { useProductFormMetadataState, type ProductFormMetadataStateContextType } from '@/features/products/context/ProductFormMetadataContext';
 import { ProductValidationSettingsProvider } from '@/features/products/context/ProductValidationSettingsContext';
 import { PRODUCT_EDITOR_CONTEXT_ROOT_IDS } from '@/features/products/context-registry/workspace';
 import { ProductLeafCategoriesContextRegistrySource } from '@/features/products/context-registry/ProductLeafCategoriesContextRegistrySource';
@@ -54,7 +54,7 @@ function resolveValidatorSessionKey(validatorSessionKey?: string): string {
   return `product-form-validator-${Date.now().toString(36)}`;
 }
 
-function useProductFormCategoryEffect(core: ProductFormCoreContextType, meta: ProductFormMetadataContextType): void {
+function useProductFormCategoryEffect(core: ProductFormCoreContextType, meta: ProductFormMetadataStateContextType): void {
   useEffect(() => {
     const raw = core.methods.getValues('categoryId');
     const current = (typeof raw === 'string') ? raw.trim() : '';
@@ -65,7 +65,7 @@ function useProductFormCategoryEffect(core: ProductFormCoreContextType, meta: Pr
   }, [core.methods, meta.selectedCategoryId]);
 }
 
-function resolveCategoryName(categories: ProductFormMetadataContextType['categories'], id: string | null): string {
+function resolveCategoryName(categories: ProductFormMetadataStateContextType['categories'], id: string | null): string {
   if (id === null) return '';
   const category = categories.find((entry) => entry.id === id);
   return category?.name.trim() ?? '';
@@ -82,7 +82,7 @@ function shouldSkipNameCorrection(core: ProductFormCoreContextType, selectedCate
   return selectedCategoryId === null;
 }
 
-function useProductFormNameEffect(core: ProductFormCoreContextType, meta: ProductFormMetadataContextType): void {
+function useProductFormNameEffect(core: ProductFormCoreContextType, meta: ProductFormMetadataStateContextType): void {
   useEffect(() => {
     if (shouldSkipNameCorrection(core, meta.selectedCategoryId)) return;
     

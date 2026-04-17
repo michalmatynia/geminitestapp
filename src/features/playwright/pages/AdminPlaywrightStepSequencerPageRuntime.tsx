@@ -1,6 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import { useSearchParams } from 'next/navigation';
 
 import { PlaywrightStepSequencerProvider } from '@/features/playwright/context/PlaywrightStepSequencerContext';
 import { usePlaywrightStepSequencerState } from '@/features/playwright/hooks/usePlaywrightStepSequencerState';
@@ -20,7 +21,10 @@ const ConfirmModal = dynamic(
 );
 
 export function AdminPlaywrightStepSequencerPageRuntime(): React.JSX.Element {
-  const state = usePlaywrightStepSequencerState();
+  const searchParams = useSearchParams();
+  const state = usePlaywrightStepSequencerState({
+    initialActionId: searchParams.get('actionId'),
+  });
 
   return (
     <PlaywrightStepSequencerProvider value={state}>

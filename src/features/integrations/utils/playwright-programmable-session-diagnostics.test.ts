@@ -50,6 +50,7 @@ describe('playwright programmable session diagnostics', () => {
       defaultRuntimeKey: 'playwright_programmable_listing',
       personaBaseline,
       currentSettings,
+      personas: undefined,
     });
 
     const importPreview = buildProgrammableSessionPreview({
@@ -68,6 +69,7 @@ describe('playwright programmable session diagnostics', () => {
       defaultRuntimeKey: 'playwright_programmable_import',
       personaBaseline,
       currentSettings,
+      personas: undefined,
     });
 
     expect(
@@ -103,6 +105,7 @@ describe('playwright programmable session diagnostics', () => {
       defaultRuntimeKey: 'playwright_programmable_listing',
       personaBaseline,
       currentSettings,
+      personas: undefined,
     });
 
     const importPreview = buildProgrammableSessionPreview({
@@ -120,6 +123,7 @@ describe('playwright programmable session diagnostics', () => {
       defaultRuntimeKey: 'playwright_programmable_import',
       personaBaseline,
       currentSettings,
+      personas: undefined,
     });
 
     expect(

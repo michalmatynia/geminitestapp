@@ -14,7 +14,10 @@ import {
   get1688DefaultConnectionId,
   getIntegrationRepository,
 } from '@/features/integrations/server';
-import { resolveSupplier1688SelectorRegistryNativeRuntime } from '@/features/integrations/services/supplier-1688-selector-registry';
+import {
+  resolveSupplier1688SelectorRegistryNativeRuntime,
+  toSupplier1688SelectorRegistryResolutionSummary,
+} from '@/features/integrations/services/supplier-1688-selector-registry';
 import type {
   IntegrationConnectionRecord,
   IntegrationRepository,
@@ -24,8 +27,7 @@ import {
 } from '@/features/products/scanner-settings';
 import {
   isProductScanActiveStatus,
-  type ProductAmazonBatchScanItem,
-  type ProductAmazonBatchScanResponse,
+  type ProductScanBatchItem,
   type ProductScanBatchResponse,
 } from '@/shared/contracts/product-scans';
 import { getPlaywrightRuntimeActionSeed } from '@/shared/lib/browser-execution/playwright-runtime-action-seeds';
@@ -35,13 +37,14 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import {
   AMAZON_PRODUCT_SCAN_PROVIDER,
   getProductScanProviderDefinition,
+  requireProductScanNativeRuntime,
   type ProductScanProviderRuntime,
 } from './product-scan-providers';
 import {
   buildProductScannerEngineRequestOptions,
   getProductScannerSettings,
   resolveProductScanner1688CandidateEvaluatorConfig,
-  resolveProductScannerAmazonCandidateEvaluatorTriageConfig,
+  resolveProductScannerAmazonCandidateEvaluatorConfig,
   resolveProductScannerAmazonCandidateEvaluatorProbeConfig,
   resolveProductScannerHeadless,
 } from './product-scanner-settings';
@@ -51,21 +54,21 @@ import {
 } from './product-scans-repository';
 
 import {
-  AMAZON_SCAN_TIMEOUT_MS,
+  PRODUCT_SCAN_TIMEOUT_MS,
   toRecord,
   readOptionalString,
   hydrateProductScanImageCandidates,
   sanitizeProductScanImageCandidates,
   resolveScanManualVerificationTimeoutMs,
   shouldAutoShowScannerCaptchaBrowser,
-  createAmazonScanStartedRawResult,
+  createProductScanStartedRawResult,
   createFailedBatchResult,
   resolveProductScanRequestSequenceInput,
   resolveScanEngineRunId,
   tryDirectQueuedScanUpdate,
 } from './product-scans-service.helpers';
 import {
-  AMAZON_BATCH_SCAN_START_CONCURRENCY,
+  PRODUCT_SCAN_BATCH_START_CONCURRENCY,
   buildAmazonScannerRequestRuntimeOptions,
   resolveAmazonImageSearchProvider,
 } from './product-scans-service.helpers.amazon';
@@ -75,9 +78,13 @@ import {
   resolve1688ConnectionEngineSettings,
 } from './product-scans-sync-1688';
 import {
+  AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY,
+  AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY,
+  AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY,
+  resolveAmazonRuntimeActionName,
   SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY,
   SUPPLIER_1688_PROBE_SCAN_SELECTOR_PROFILE,
-} from '@/shared/lib/browser-execution/supplier-1688-runtime-constants';
+} from '@/shared/lib/browser-execution';
 
 type BatchScanQueueConfig = {
   provider: 'amazon' | '1688';
@@ -103,12 +110,28 @@ const SUPPLIER_1688_QUEUE_CONFIG: BatchScanQueueConfig = {
   resultStatusLabel: '1688 supplier scan queued',
 };
 
+const AMAZON_RUNTIME_KEYS = new Set<string>([
+  AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY,
+  AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY,
+  AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY,
+]);
+
+const resolveAmazonRuntimeKey = (
+  value: unknown
+): typeof AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY | typeof AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY | typeof AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY =>
+  typeof value === 'string' && AMAZON_RUNTIME_KEYS.has(value)
+    ? (value as
+        | typeof AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY
+        | typeof AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY
+        | typeof AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY)
+    : AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY;
+
 async function resolveAlreadyRunningBatchResult(input: {
   productId: string;
   provider: 'amazon' | '1688';
   alreadyRunningMessage: string;
   resultStatusLabel: string;
-}): Promise<ProductAmazonBatchScanItem | null> {
+}): Promise<ProductScanBatchItem | null> {
   const latestScan = await findLatestActiveProductScan({
     productId: input.productId,
     provider: input.provider,
@@ -223,11 +246,16 @@ async function queueBatchProductScans(input: {
   forceVisible?: boolean;
   requestInput?: Record<string, unknown>;
   ownerUserId?: string | null;
-}): Promise<ProductAmazonBatchScanResponse> {
+}): Promise<ProductScanBatchResponse> {
   const productIds = Array.from(new Set(input.productIds));
   if (productIds.length === 0) {
     return { queued: 0, running: 0, alreadyRunning: 0, failed: 0, results: [] };
   }
+  const requestInput = input.requestInput ?? {};
+  const requested1688ConnectionId =
+    input.config.provider === '1688'
+      ? readOptionalString(requestInput['connectionId'], 160)
+      : null;
 
   let scannerSettings = createDefaultProductScannerSettings();
   let scannerHeadless = true;
@@ -246,7 +274,11 @@ async function queueBatchProductScans(input: {
     connection: IntegrationConnectionRecord;
   } | null =
     input.config.provider === '1688'
-      ? await get1688DefaultConnectionId()
+      ? await (
+          requested1688ConnectionId !== null
+            ? Promise.resolve(requested1688ConnectionId)
+            : get1688DefaultConnectionId()
+        )
           .then(async (connectionId) => {
             if (connectionId === null || connectionId === '') return null;
             const repository = await getIntegrationRepository();
@@ -267,8 +299,8 @@ async function queueBatchProductScans(input: {
 
   const results = await mapWithConcurrencyLimit(
     productIds,
-    AMAZON_BATCH_SCAN_START_CONCURRENCY,
-    async (productId, _batchIndex): Promise<ProductAmazonBatchScanItem> => {
+    PRODUCT_SCAN_BATCH_START_CONCURRENCY,
+    async (productId, _batchIndex): Promise<ProductScanBatchItem> => {
       try {
         const alreadyRunningResult = await resolveAlreadyRunningBatchResult({
           productId,
@@ -326,9 +358,23 @@ async function queueBatchProductScans(input: {
           );
         }
 
-        const requestedStepSequenceInput = resolveProductScanRequestSequenceInput(
-          input.requestInput
-        );
+        const requestedStepSequenceInput = resolveProductScanRequestSequenceInput(requestInput);
+        const amazonRuntimeKey =
+          input.config.provider === 'amazon'
+            ? resolveAmazonRuntimeKey(
+                requestInput['runtimeKey'] ?? input.config.runtime.runtimeKey
+              )
+            : null;
+        const amazonRuntimeAction =
+          amazonRuntimeKey !== null
+            ? getPlaywrightRuntimeActionSeed(amazonRuntimeKey)
+            : null;
+        const amazonSelectorProfile =
+          input.config.provider === 'amazon' &&
+          typeof requestInput['selectorProfile'] === 'string' &&
+          requestInput['selectorProfile'].trim().length > 0
+            ? requestInput['selectorProfile'].trim()
+            : 'amazon';
         const scannerEngineRequestOptions =
           buildProductScannerEngineRequestOptions(scannerSettings);
         const manualVerificationTimeoutMs = resolveScanManualVerificationTimeoutMs(
@@ -337,8 +383,8 @@ async function queueBatchProductScans(input: {
 
         let run;
         if (input.config.provider === 'amazon') {
-          if (input.config.runtime.executionMode !== 'script') {
-            return createFailedBatchResult(productId, 'Scanner runtime script is not configured.');
+          if (input.config.runtime.executionMode !== 'native') {
+            return createFailedBatchResult(productId, 'Scanner runtime is not configured.');
           }
 
           const scannerRuntimeOptions = buildAmazonScannerRequestRuntimeOptions({
@@ -346,30 +392,66 @@ async function queueBatchProductScans(input: {
             scannerEngineRequestOptions,
           });
           const imageSearchProvider =
-            resolveAmazonImageSearchProvider(input.requestInput, scannerSettings);
+            resolveAmazonImageSearchProvider(requestInput, scannerSettings);
+          const triageEvaluatorEnabled = (
+            await resolveProductScannerAmazonCandidateEvaluatorConfig(scannerSettings)
+          ).enabled;
+          const probeEvaluatorEnabled = (
+            await resolveProductScannerAmazonCandidateEvaluatorProbeConfig(scannerSettings)
+          ).enabled;
+          const isCandidateSearchRuntime =
+            amazonRuntimeKey === AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY;
+          const isCandidateExtractionRuntime =
+            amazonRuntimeKey === AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY;
           run = await startPlaywrightEngineTask({
             request: {
-              script: input.config.runtime.script,
+              runtimeKey: amazonRuntimeKey ?? AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY,
+              actionId: amazonRuntimeAction?.id ?? null,
+              actionName:
+                amazonRuntimeAction?.name ??
+                resolveAmazonRuntimeActionName(amazonRuntimeKey),
+              selectorProfile: amazonSelectorProfile,
               input: input.config.runtime.buildRequestInput({
                 productId: product.id,
                 productName: product.name['pl'] || product.name['en'] || '',
                 existingAsin: product.asin,
                 imageCandidates,
+                runtimeKey: amazonRuntimeKey,
                 imageSearchProvider,
+                selectorProfile: amazonSelectorProfile,
                 allowManualVerification:
                   shouldAutoShowScannerCaptchaBrowser(scannerSettings) && !scannerHeadless,
                 manualVerificationTimeoutMs,
                 triageOnlyOnAmazonCandidates:
-                  (await resolveProductScannerAmazonCandidateEvaluatorTriageConfig(
-                    scannerSettings
-                  )).enabled,
+                  isCandidateSearchRuntime || isCandidateExtractionRuntime
+                    ? false
+                    : triageEvaluatorEnabled,
+                collectAmazonCandidatePreviews: isCandidateSearchRuntime,
                 probeOnlyOnAmazonMatch:
-                  (await resolveProductScannerAmazonCandidateEvaluatorProbeConfig(
-                    scannerSettings
-                  )).enabled,
+                  isCandidateSearchRuntime || isCandidateExtractionRuntime
+                    ? false
+                    : probeEvaluatorEnabled,
+                skipAmazonProbe:
+                  requestInput['skipAmazonProbe'] === true,
+                directAmazonCandidateUrl:
+                  typeof requestInput['directAmazonCandidateUrl'] === 'string'
+                    ? requestInput['directAmazonCandidateUrl']
+                    : null,
+                directAmazonCandidateUrls:
+                  Array.isArray(requestInput['directAmazonCandidateUrls'])
+                    ? (requestInput['directAmazonCandidateUrls'] as string[])
+                    : null,
+                directMatchedImageId:
+                  typeof requestInput['directMatchedImageId'] === 'string'
+                    ? requestInput['directMatchedImageId']
+                    : null,
+                directAmazonCandidateRank:
+                  typeof requestInput['directAmazonCandidateRank'] === 'number'
+                    ? requestInput['directAmazonCandidateRank']
+                    : null,
                 ...requestedStepSequenceInput,
               }),
-              timeoutMs: AMAZON_SCAN_TIMEOUT_MS,
+              timeoutMs: PRODUCT_SCAN_TIMEOUT_MS,
               browserEngine: 'chromium',
               ...scannerRuntimeOptions,
               capture: {
@@ -386,10 +468,9 @@ async function queueBatchProductScans(input: {
             }),
           });
         } else if (supplierConnectionContext !== null) {
-          if (input.config.runtime.executionMode !== 'native') {
-            return createFailedBatchResult(productId, '1688 native runtime is not configured.');
-          }
-
+          const supplier1688Runtime = requireProductScanNativeRuntime(
+            getProductScanProviderDefinition('1688')
+          );
           const { integrationId, connection: supplierConnection } = supplierConnectionContext;
           const supplier1688RuntimeAction = getPlaywrightRuntimeActionSeed(
             SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY
@@ -407,11 +488,11 @@ async function queueBatchProductScans(input: {
           run = await startPlaywrightConnectionEngineTask({
             connection: supplierConnection,
             request: {
-              runtimeKey: input.config.runtime.runtimeKey ?? null,
+              runtimeKey: supplier1688Runtime.runtimeKey,
               actionId: supplier1688RuntimeAction?.id ?? null,
               actionName: supplier1688RuntimeAction?.name ?? '1688 Supplier Probe Scan',
               selectorProfile: SUPPLIER_1688_PROBE_SCAN_SELECTOR_PROFILE,
-              input: input.config.runtime.buildRequestInput({
+              input: supplier1688Runtime.buildRequestInput({
                 productId: product.id,
                 productName: product.name['pl'] || product.name['en'] || '',
                 imageCandidates,
@@ -421,19 +502,11 @@ async function queueBatchProductScans(input: {
                 actionName: supplier1688RuntimeAction?.name ?? '1688 Supplier Probe Scan',
                 action: supplier1688RuntimeAction,
                 blocks: supplier1688RuntimeAction?.blocks ?? [],
-                runtimeKey: input.config.runtime.runtimeKey ?? null,
+                runtimeKey: supplier1688Runtime.runtimeKey,
                 selectorProfile: SUPPLIER_1688_PROBE_SCAN_SELECTOR_PROFILE,
-                selectorRegistryResolution: selectorNativeRuntimeResolution
-                  ? {
-                      requestedProfile: selectorNativeRuntimeResolution.requestedProfile,
-                      resolvedProfile: selectorNativeRuntimeResolution.resolvedProfile,
-                      sourceProfiles: selectorNativeRuntimeResolution.sourceProfiles,
-                      entryCount: selectorNativeRuntimeResolution.entryCount,
-                      overlayEntryCount: selectorNativeRuntimeResolution.overlayEntryCount,
-                      fallbackToCode: selectorNativeRuntimeResolution.fallbackToCode,
-                      fallbackReason: selectorNativeRuntimeResolution.fallbackReason ?? null,
-                    }
-                  : null,
+                selectorRegistryResolution: toSupplier1688SelectorRegistryResolutionSummary(
+                  selectorNativeRuntimeResolution
+                ),
                 selectorRuntime: selectorNativeRuntimeResolution?.selectorRuntime ?? null,
                 scanner1688StartUrl:
                   supplierConnection.scanner1688StartUrl ?? null,
@@ -457,7 +530,7 @@ async function queueBatchProductScans(input: {
                 ),
                 ...requestedStepSequenceInput,
               }),
-              timeoutMs: AMAZON_SCAN_TIMEOUT_MS,
+              timeoutMs: PRODUCT_SCAN_TIMEOUT_MS,
               capture: {
                 screenshot: true,
                 html: true,
@@ -506,19 +579,30 @@ async function queueBatchProductScans(input: {
 
           asinUpdateMessage:
             startedRun.status === 'running' ? 'Product scan running.' : 'Product scan queued.',
-          rawResult: createAmazonScanStartedRawResult({
+          rawResult: createProductScanStartedRawResult({
             runId: startedRun.runId,
             status: startedRun.status,
-            runtimeKey: input.config.runtime.runtimeKey ?? null,
+            runtimeKey:
+              input.config.provider === '1688'
+                ? SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY
+                : amazonRuntimeKey !== null
+                  ? amazonRuntimeKey
+                  : input.config.runtime.executionMode === 'native'
+                    ? input.config.runtime.runtimeKey
+                  : null,
             actionId:
               input.config.provider === '1688'
                 ? `runtime_action__${SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY}`
-                : null,
+                : amazonRuntimeAction?.id ?? null,
             selectorProfile:
-              input.config.provider === '1688' ? SUPPLIER_1688_PROBE_SCAN_SELECTOR_PROFILE : null,
+              input.config.provider === '1688'
+                ? SUPPLIER_1688_PROBE_SCAN_SELECTOR_PROFILE
+                : input.config.provider === 'amazon'
+                  ? amazonSelectorProfile
+                  : null,
             imageSearchProvider:
               input.config.provider === 'amazon'
-                ? (resolveAmazonImageSearchProvider(input.requestInput, scannerSettings) ?? 'google_images_upload')
+                ? (resolveAmazonImageSearchProvider(requestInput, scannerSettings) ?? 'google_images_upload')
                 : 'google_images_upload',
             allowManualVerification: shouldAutoShowScannerCaptchaBrowser(scannerSettings),
             manualVerificationTimeoutMs,
@@ -565,14 +649,25 @@ export async function queueAmazonBatchProductScans(input: {
   userId?: string | null;
   stepSequenceKey?: string | null;
   stepSequence?: any[] | null;
-}): Promise<ProductAmazonBatchScanResponse> {
+}): Promise<ProductScanBatchResponse> {
+  const requestInput = input.requestInput ?? {
+    runtimeKey: AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY,
+    collectAmazonCandidatePreviews: true,
+    ...((input.stepSequenceKey ?? '') !== '' ? { stepSequenceKey: input.stepSequenceKey } : {}),
+    ...(input.stepSequence !== null && input.stepSequence !== undefined ? { stepSequence: input.stepSequence } : {}),
+  };
+
   return await queueBatchProductScans({
     productIds: input.productIds,
     config: AMAZON_QUEUE_CONFIG,
-    requestInput: input.requestInput ?? {
-      ...((input.stepSequenceKey ?? '') !== '' ? { stepSequenceKey: input.stepSequenceKey } : {}),
-      ...(input.stepSequence !== null && input.stepSequence !== undefined ? { stepSequence: input.stepSequence } : {}),
-    },
+    requestInput:
+      input.requestInput !== undefined
+        ? {
+            runtimeKey: AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY,
+            collectAmazonCandidatePreviews: true,
+            ...input.requestInput,
+          }
+        : requestInput,
     ownerUserId: input.ownerUserId ?? input.userId,
   });
 }

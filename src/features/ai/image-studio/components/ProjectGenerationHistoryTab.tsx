@@ -8,7 +8,7 @@ import type { ImageStudioRunRecord, ImageStudioRunsResponse } from '@/shared/con
 import type { FilterField } from '@/shared/contracts/ui/panels';
 import { IMAGE_STUDIO_RUN_STATUS_OPTIONS } from '@/features/ai/image-studio/utils/run-status-options';
 import { api } from '@/shared/lib/api-client';
-import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { Pagination, LoadingState, insetPanelVariants } from '@/shared/ui/navigation-and-layout.public';
 import { Card, Badge, Alert, Button, Checkbox } from '@/shared/ui/primitives.public';
 import { PanelFilters } from '@/shared/ui/templates.public';
@@ -224,7 +224,7 @@ export function ProjectGenerationHistoryTab(): React.JSX.Element {
     setExpandedRunId(null);
   }, [projectId]);
 
-  const runsQuery = createListQueryV2<ImageStudioRunsResponse, ImageStudioRunsResponse>({
+  const runsQuery = useListQueryV2<ImageStudioRunsResponse, ImageStudioRunsResponse>({
     queryKey: studioKeys.runs({
       projectId: projectId ?? null,
       page,

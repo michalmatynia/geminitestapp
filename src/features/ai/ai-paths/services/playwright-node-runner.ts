@@ -27,7 +27,14 @@ import { isObjectRecord } from '@/shared/utils/object-utils';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 import type { PlaywrightActionRunRequestSummary } from '@/shared/contracts/playwright-action-runs';
 
+import {
+  AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY,
+  AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY,
+  AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY,
+} from '@/shared/lib/browser-execution/amazon-runtime-constants';
+
 import { parseUserScript, safeStringify } from './playwright-node-runner.parser';
+import { executeAmazonReverseImageScanRuntime } from './playwright-node-runner.amazon-runtime';
 import {
   executeSupplier1688ProbeScanRuntime,
   SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY,
@@ -41,6 +48,7 @@ import type {
   PlaywrightNodeRunRequest,
   PlaywrightNodeArtifactReadResult,
 } from './playwright-node-runner.types';
+import { isPlaywrightNodeRuntimeRunRequest } from './playwright-node-runner.types';
 
 import type {
   Browser,
@@ -540,7 +548,7 @@ const summarizePlaywrightRunRequest = (
   if (request.startUrl) summary.startUrl = request.startUrl;
   if (request.browserEngine) summary.browserEngine = request.browserEngine;
   if (typeof request.timeoutMs === 'number') summary.timeoutMs = request.timeoutMs;
-  if (request.runtimeKey) summary.runtimeKey = request.runtimeKey;
+  if (isPlaywrightNodeRuntimeRunRequest(request)) summary.runtimeKey = request.runtimeKey;
   if (request.actionId) summary.actionId = request.actionId;
   if (request.actionName) summary.actionName = request.actionName;
   if (request.selectorProfile) summary.selectorProfile = request.selectorProfile;
@@ -610,7 +618,7 @@ const isChromiumBrowserEngine = (
 
 const buildLaunchOptions = (
   settings: PlaywrightSettings,
-  launchOverrides: Record<string, unknown>,
+  launchOverrides: LaunchOptions,
   capture: PlaywrightNodeRunRequest['capture']
 ): LaunchOptions => {
   const base: LaunchOptions = {
@@ -640,7 +648,7 @@ const buildContextOptions = (
   playwright: typeof import('playwright'),
   settings: PlaywrightSettings,
   runArtifactsDir: string,
-  contextOverrides: Record<string, unknown>,
+  contextOverrides: BrowserContextOptions,
   capture: PlaywrightNodeRunRequest['capture'],
   startUrl?: string
 ): BrowserContextOptions => {
@@ -1453,27 +1461,48 @@ const executePlaywrightNodeRun = async (
       },
     };
 
+    const isSupplier1688RuntimeRequest =
+      isPlaywrightNodeRuntimeRunRequest(request) &&
+      request.runtimeKey === SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY;
+    const isAmazonReverseImageScanRuntimeRequest =
+      isPlaywrightNodeRuntimeRunRequest(request) &&
+      (
+        request.runtimeKey === AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY ||
+        request.runtimeKey === AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY ||
+        request.runtimeKey === AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY
+      );
+
     const returnValue = await withTimeout(
-      request.runtimeKey === SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY
-        ? executeSupplier1688ProbeScanRuntime({
+      (() => {
+        if (isAmazonReverseImageScanRuntimeRequest) {
+          return executeAmazonReverseImageScanRuntime({
+            runtimeKey: request.runtimeKey,
+            input: request.input ?? {},
+            executeScript: async (script) =>
+              Promise.resolve(parseUserScript(script, logs)(userContext)),
+          });
+        }
+        if (isSupplier1688RuntimeRequest) {
+          return executeSupplier1688ProbeScanRuntime({
             page,
             input: request.input ?? {},
             emit: userContext.emit,
             log: userContext.log,
             artifacts: userContext.artifacts,
             helpers: userContext.helpers,
-          })
-        : Promise.resolve(
-            parseUserScript(
-              request.script ??
-                'export default async function run() { throw new Error("Playwright request is missing script."); }',
-              logs
-            )(userContext)
-          ),
+          });
+        }
+        if (isPlaywrightNodeRuntimeRunRequest(request)) {
+          throw new Error(`Unsupported Playwright runtime request: ${request.runtimeKey}`);
+        }
+        return Promise.resolve(parseUserScript(request.script, logs)(userContext));
+      })(),
       timeoutMs,
-      request.runtimeKey === SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY
+      isSupplier1688RuntimeRequest
         ? '1688 supplier probe runtime timed out.'
-        : 'Playwright script timed out.'
+        : isAmazonReverseImageScanRuntimeRequest
+          ? 'Amazon reverse-image runtime timed out.'
+          : 'Playwright script timed out.'
     );
 
     await captureFinalRunArtifacts({

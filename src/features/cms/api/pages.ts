@@ -26,7 +26,7 @@ export const createPage = async (
     return { ok: true, payload };
   } catch (_error) {
     logClientError(_error);
-    return { ok: false, payload: {} as Page };
+    return { ok: false, payload: {} as unknown as Page };
   }
 };
 
@@ -39,7 +39,7 @@ export const updatePage = async (
     return { ok: true, payload };
   } catch (_error) {
     logClientError(_error);
-    return { ok: false, payload: {} as Page };
+    return { ok: false, payload: {} as unknown as Page };
   }
 };
 

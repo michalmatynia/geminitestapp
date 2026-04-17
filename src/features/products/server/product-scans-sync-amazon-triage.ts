@@ -21,9 +21,15 @@ import {
   type AmazonCandidateTriageEvaluationResult,
 } from './product-scan-amazon-evaluator';
 import {
+  AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY,
+  resolveAmazonRuntimeActionName,
+} from '@/shared/lib/browser-execution/amazon-runtime-constants';
+
+import {
   AMAZON_PRODUCT_SCAN_PROVIDER,
-  type ProductScanScriptProviderRuntime,
+  requireProductScanNativeRuntime,
 } from './product-scan-providers';
+import { getPlaywrightRuntimeActionSeed } from '@/shared/lib/browser-execution/playwright-runtime-action-seeds';
 import {
   buildProductScannerEngineRequestOptions,
   getProductScannerSettings,
@@ -32,15 +38,17 @@ import {
 
 import {
   AMAZON_SCAN_TIMEOUT_MS,
-  createAmazonScanStartedRawResult,
+  createProductScanStartedRawResult,
   normalizeErrorMessage,
   persistSynchronizedScan,
   resolvePersistedProductScanSteps,
   resolveProductScanRequestSequenceInput,
   resolveScanManualVerificationTimeoutMs,
   shouldAutoShowScannerCaptchaBrowser,
+  readOptionalString,
+  toRecord,
   upsertPersistedProductScanStep,
-  type AmazonScanScriptResult,
+  type AmazonScanRuntimeResult,
 } from './product-scans-service.helpers';
 
 import {
@@ -60,14 +68,15 @@ import {
   resolveAmazonTriageEvaluatorConfig,
 } from './product-scans-service.helpers.amazon';
 
-const amazonScanRuntime = AMAZON_PRODUCT_SCAN_PROVIDER.runtime! as ProductScanScriptProviderRuntime;
+const amazonScanRuntime = requireProductScanNativeRuntime(AMAZON_PRODUCT_SCAN_PROVIDER);
+const amazonRuntimeAction = getPlaywrightRuntimeActionSeed(AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY);
 
 type SynchronizeAmazonStatusInput = {
   scan: ProductScanRecord;
   run: PlaywrightEngineRunRecord;
   engineRunId: string;
   resultValue: unknown;
-  parsedResult: AmazonScanScriptResult;
+  parsedResult: AmazonScanRuntimeResult;
 };
 
 export async function synchronizeAmazonTriageReady({
@@ -253,6 +262,8 @@ export async function synchronizeAmazonTriageReady({
         : null;
 
     if (fallbackProvider) {
+      const amazonSelectorProfile =
+        readOptionalString(toRecord(scan.rawResult)?.['selectorProfile'], 120) ?? 'amazon';
       const scannerEngineRequestOptions =
         buildProductScannerEngineRequestOptions(scannerSettings);
       const scannerRuntimeOptions = buildAmazonScannerRequestRuntimeOptions({
@@ -266,13 +277,19 @@ export async function synchronizeAmazonTriageReady({
       );
       const fallbackRun = await startPlaywrightEngineTask({
         request: {
-          script: amazonScanRuntime.script,
+          runtimeKey: amazonScanRuntime.runtimeKey,
+          actionId: amazonRuntimeAction?.id ?? null,
+          actionName:
+            amazonRuntimeAction?.name ??
+            resolveAmazonRuntimeActionName(amazonScanRuntime.runtimeKey),
+          selectorProfile: amazonSelectorProfile,
           input: amazonScanRuntime.buildRequestInput({
             productId: product.id,
             productName: scan.productName,
             existingAsin: product.asin,
             imageCandidates: scan.imageCandidates,
             imageSearchProvider: fallbackProvider,
+            selectorProfile: amazonSelectorProfile,
             allowManualVerification:
               shouldAutoShowScannerCaptchaBrowser(scannerSettings) && !scannerHeadless,
             manualVerificationTimeoutMs,
@@ -300,9 +317,12 @@ export async function synchronizeAmazonTriageReady({
       const fallbackStatus = fallbackRun.status === 'running' ? 'running' : 'queued';
       const nextRawResult = appendAmazonAiStageSummary(
         {
-          ...createAmazonScanStartedRawResult({
+          ...createProductScanStartedRawResult({
             runId: fallbackRun.runId,
             status: fallbackRun.status,
+            runtimeKey: amazonScanRuntime.runtimeKey,
+            actionId: amazonRuntimeAction?.id ?? null,
+            selectorProfile: amazonSelectorProfile,
             imageSearchProvider: fallbackProvider,
             imageSearchProviderHistory: [...providerHistory, fallbackProvider],
             allowManualVerification:
@@ -370,6 +390,8 @@ export async function synchronizeAmazonTriageReady({
       1;
 
     if (selectedCandidateUrl) {
+      const amazonSelectorProfile =
+        readOptionalString(toRecord(scan.rawResult)?.['selectorProfile'], 120) ?? 'amazon';
       const scannerEngineRequestOptions =
         buildProductScannerEngineRequestOptions(scannerSettings);
       const scannerRuntimeOptions = buildAmazonScannerRequestRuntimeOptions({
@@ -383,13 +405,19 @@ export async function synchronizeAmazonTriageReady({
       );
       const continuationRun = await startPlaywrightEngineTask({
         request: {
-          script: amazonScanRuntime.script,
+          runtimeKey: amazonScanRuntime.runtimeKey,
+          actionId: amazonRuntimeAction?.id ?? null,
+          actionName:
+            amazonRuntimeAction?.name ??
+            resolveAmazonRuntimeActionName(amazonScanRuntime.runtimeKey),
+          selectorProfile: amazonSelectorProfile,
           input: amazonScanRuntime.buildRequestInput({
             productId: product.id,
             productName: scan.productName,
             existingAsin: product.asin,
             imageCandidates: scan.imageCandidates,
             imageSearchProvider: currentProvider,
+            selectorProfile: amazonSelectorProfile,
             allowManualVerification:
               shouldAutoShowScannerCaptchaBrowser(scannerSettings) && !scannerHeadless,
             manualVerificationTimeoutMs,
@@ -421,9 +449,12 @@ export async function synchronizeAmazonTriageReady({
       const continuationStatus = continuationRun.status === 'running' ? 'running' : 'queued';
       const nextRawResult = appendAmazonAiStageSummary(
         {
-          ...createAmazonScanStartedRawResult({
+          ...createProductScanStartedRawResult({
             runId: continuationRun.runId,
             status: continuationRun.status,
+            runtimeKey: amazonScanRuntime.runtimeKey,
+            actionId: amazonRuntimeAction?.id ?? null,
+            selectorProfile: amazonSelectorProfile,
             imageSearchProvider: currentProvider,
             imageSearchProviderHistory: providerHistory,
             allowManualVerification:

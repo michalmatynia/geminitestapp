@@ -99,6 +99,7 @@ describe('playwright programmable session preview', () => {
         timezoneId: 'Europe/Warsaw',
         humanizeMouse: false,
       },
+      personas: undefined,
     });
 
     expect(preview.isDefault).toBe(false);
@@ -132,5 +133,38 @@ describe('playwright programmable session preview', () => {
     expect(preview.overrideSummary).toEqual(
       expect.arrayContaining(['Locale', 'Timezone', 'Humanize mouse'])
     );
+  });
+
+  it('uses the selected action persona as the action baseline when one is set', () => {
+    const preview = buildProgrammableSessionPreview({
+      actions: [
+        buildAction({
+          id: 'custom-programmable-action',
+          name: 'Custom Programmable Session',
+          runtimeKey: 'playwright_programmable_listing',
+          personaId: 'persona-marketplace',
+        }),
+      ],
+      selectedActionId: 'custom-programmable-action',
+      defaultRuntimeKey: 'playwright_programmable_listing',
+      personaBaseline: defaultIntegrationConnectionPlaywrightSettings,
+      currentSettings: defaultIntegrationConnectionPlaywrightSettings,
+      personas: [
+        {
+          id: 'persona-marketplace',
+          settings: {
+            ...defaultIntegrationConnectionPlaywrightSettings,
+            locale: 'sv-SE',
+            timeout: 45_000,
+          },
+        },
+      ],
+    });
+
+    expect(preview.actionSettingsSummary).toContain('Persona: persona-marketplace');
+    expect(preview.actionBaselineSettings).toMatchObject({
+      locale: 'sv-SE',
+      timeout: 45_000,
+    });
   });
 });

@@ -1,9 +1,11 @@
 'use client';
 
+import Link from 'next/link';
 import React from 'react';
 
 import type { ProgrammableSessionDiagnostics } from '@/features/integrations/utils/playwright-programmable-session-diagnostics';
 import type { ProgrammableSessionPreview } from '@/features/integrations/utils/playwright-programmable-session-preview';
+import { resolveStepSequencerActionHref } from '@/features/playwright/utils/step-sequencer-action-links';
 import { Alert, Badge, Card } from '@/shared/ui/primitives.public';
 import { FormSection } from '@/shared/ui/forms-and-actions.public';
 
@@ -75,7 +77,12 @@ function SessionPreviewHeader({
           <Badge variant='neutral'>{preview.action.runtimeKey}</Badge>
         ) : null}
       </div>
-      <p className='text-sm font-medium text-foreground'>{preview.action.name}</p>
+      <Link
+        href={resolveStepSequencerActionHref(preview.action.id)}
+        className='text-sm font-medium text-foreground underline-offset-4 hover:underline'
+      >
+        {preview.action.name}
+      </Link>
       <p className='text-xs text-muted-foreground'>{actionDescription}</p>
     </div>
   );
@@ -113,9 +120,9 @@ function SessionPreviewCard({
         </div>
 
         <PreviewSection
-          title='Connection overrides'
+          title='Connection browser overrides'
           values={preview.overrideSummary}
-          emptyMessage='No connection overrides. Runtime follows persona baseline plus the selected action.'
+          emptyMessage='Programmable runtime ignores connection-level browser overrides. Browser behavior follows persona baseline plus the selected action.'
         />
       </div>
     </Card>
@@ -158,7 +165,7 @@ export function PlaywrightProgrammableSessionPreviewSection({
   return (
     <FormSection
       title='Programmable session preview'
-      description='Review the browser session posture for listing and import after persona baseline, selected Step Sequencer action, and connection overrides are applied.'
+      description='Review the browser session posture for listing and import after persona baseline and the selected Step Sequencer action are applied.'
       className='p-4'
     >
       <div className='mt-4 space-y-4'>

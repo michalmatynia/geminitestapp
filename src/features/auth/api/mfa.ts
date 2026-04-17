@@ -11,7 +11,7 @@ const safeJson = async <T>(res: Response): Promise<T> => {
     return (await res.json()) as T;
   } catch (error) {
     logClientError(error);
-    return {} as T;
+    return {} as unknown as T;
   }
 };
 

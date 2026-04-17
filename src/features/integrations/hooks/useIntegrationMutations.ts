@@ -14,7 +14,10 @@ import type {
 import type { IntegrationAllegroApiRequest, IntegrationAllegroApiResponse, IntegrationBaseApiRequest, IntegrationBaseApiResponse, IntegrationDisconnectResponse } from '@/shared/contracts/integrations/api';
 import type { IntegrationConnectionActionTarget, IntegrationConnectionTestVariables, TestConnectionResponse } from '@/shared/contracts/integrations/session-testing';
 import type { Integration } from '@/shared/contracts/integrations/base';
-import type { IntegrationConnection } from '@/shared/contracts/integrations/connections';
+import type {
+  IntegrationConnection,
+  ProgrammableIntegrationConnection,
+} from '@/shared/contracts/integrations/connections';
 import type { MutationResult } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
 import {
@@ -78,6 +81,39 @@ export function useUpsertConnection() {
       mutationKey,
       tags: ['integrations', 'connections', 'upsert'],
       description: 'Runs integrations connections.'},
+    invalidate: (queryClient, _data, variables) => {
+      void invalidateIntegrationConnections(queryClient, variables.integrationId);
+    },
+  });
+}
+
+export function useUpsertProgrammableConnection() {
+  const mutationKey = QUERY_KEYS.integrations.connections();
+  return createMutationV2<
+    ProgrammableIntegrationConnection,
+    UpsertConnectionVariables & { id?: string }
+  >({
+    mutationFn: async (variables): Promise<ProgrammableIntegrationConnection> => {
+      const hasConnection = Boolean(variables.connectionId);
+      const url = hasConnection
+        ? `/api/v2/integrations/connections/${variables.connectionId}`
+        : `/api/v2/integrations/${variables.integrationId}/connections`;
+      const body = variables.payload;
+      if (hasConnection) {
+        return api.put<ProgrammableIntegrationConnection>(url, body);
+      }
+      return api.post<ProgrammableIntegrationConnection>(url, body);
+    },
+    mutationKey,
+    meta: {
+      source: 'integrations.hooks.useUpsertProgrammableConnection',
+      operation: 'action',
+      resource: 'integrations.connections.programmable',
+      domain: 'integrations',
+      mutationKey,
+      tags: ['integrations', 'connections', 'upsert', 'playwright-programmable'],
+      description: 'Runs programmable integrations connections.',
+    },
     invalidate: (queryClient, _data, variables) => {
       void invalidateIntegrationConnections(queryClient, variables.integrationId);
     },

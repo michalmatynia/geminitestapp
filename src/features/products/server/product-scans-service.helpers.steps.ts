@@ -25,7 +25,10 @@ import {
   PRODUCT_SCAN_MATCHED_IMAGE_ID_MAX_LENGTH,
   PRODUCT_SCAN_URL_MAX_LENGTH,
 } from './product-scans-service.constants';
-import type { AmazonScanCandidateResult } from './product-scans-service.types';
+import type {
+  AmazonScanCandidatePreview,
+  AmazonScanCandidateResult,
+} from './product-scans-service.types';
 
 export const normalizeParsedProductScanSteps = (value: unknown): ProductScanStep[] => {
   if (!Array.isArray(value)) {
@@ -34,7 +37,17 @@ export const normalizeParsedProductScanSteps = (value: unknown): ProductScanStep
 
   return value
     .map((item: unknown) => {
-      const parsed = productScanStepSchema.safeParse(item);
+      const record = toRecord(item);
+      const sanitizedItem =
+        record === null
+          ? item
+          : {
+              ...record,
+              details: Array.isArray(record['details'])
+                ? record['details'].slice(0, 20)
+                : record['details'],
+            };
+      const parsed = productScanStepSchema.safeParse(sanitizedItem);
       return parsed.success ? parsed.data : null;
     })
     .filter((step): step is ProductScanStep => step !== null);
@@ -99,6 +112,36 @@ export const normalizeParsedAmazonCandidateResults = (
       };
     })
     .filter((item): item is AmazonScanCandidateResult => item !== null);
+};
+
+export const normalizeParsedAmazonCandidatePreviews = (
+  value: unknown
+): AmazonScanCandidatePreview[] => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value
+    .map((item: unknown): AmazonScanCandidatePreview | null => {
+      const record = toRecord(item);
+      if (record === null) return null;
+      const url = readOptionalString(record?.['url']);
+      if (!url) return null;
+      return {
+        id: readOptionalString(record['id']),
+        matchedImageId: readOptionalString(record['matchedImageId']),
+        url,
+        asin: readOptionalString(record['asin']),
+        marketplaceDomain: readOptionalString(record['marketplaceDomain']),
+        title: readOptionalString(record['title']),
+        snippet: readOptionalString(record['snippet']),
+        heroImageUrl: readOptionalString(record['heroImageUrl']),
+        heroImageAlt: readOptionalString(record['heroImageAlt']),
+        heroImageArtifactName: readOptionalString(record['heroImageArtifactName']),
+        artifactKey: readOptionalString(record['artifactKey']),
+        rank: typeof record['rank'] === 'number' ? record['rank'] : null,
+      };
+    })
+    .filter((item): item is AmazonScanCandidatePreview => item !== null);
 };
 
 export const resolveProductScanStepGroup = (

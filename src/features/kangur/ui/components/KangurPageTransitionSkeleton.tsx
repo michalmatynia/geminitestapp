@@ -3,7 +3,6 @@
 import type { CSSProperties } from 'react';
 
 import { usePathname } from 'next/navigation';
-import { useSession } from 'next-auth/react';
 
 import { cn } from '@/features/kangur/shared/utils';
 import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
@@ -45,6 +44,7 @@ import { resolveKangurGameHomeVisibility } from '@/features/kangur/ui/pages/Game
 import {
   KangurGameHomeSections,
 } from '@/features/kangur/ui/pages/GameHome.layout';
+import { useOptionalNextAuthSession } from '@/features/kangur/ui/hooks/useOptionalNextAuthSession';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
 import {
   LESSONS_ACTIVE_LAYOUT_CLASSNAME,
@@ -76,6 +76,18 @@ const resolveNormalizedTopBarHeightCssValue = (value: string | null | undefined)
 
   const trimmedValue = value.trim();
   return trimmedValue.length > 0 ? trimmedValue : null;
+};
+
+const hasSuperAdminRole = (
+  session: ReturnType<typeof useOptionalNextAuthSession>['data']
+): boolean => {
+  const user = session?.user;
+  return (
+    typeof user === 'object' &&
+    user !== null &&
+    'role' in user &&
+    user.role === 'super_admin'
+  );
 };
 
 type KangurTopBarHeightStyle = CSSProperties & {
@@ -455,12 +467,12 @@ export function KangurPageTransitionSkeleton(
 ): React.JSX.Element {
   const pathname = usePathname();
   const routing = useOptionalKangurRouting();
-  const { data: session } = useSession();
+  const { data: session } = useOptionalNextAuthSession();
   const { resolveRoutePageKey } = useKangurRouteAccess();
 
   const requestedPageKey =
     props.forcePageKey ?? props.pageKey ?? resolveRoutePageKey(pathname, routing?.basePath);
-  const isSuperAdmin = session?.user?.role === 'super_admin';
+  const isSuperAdmin = hasSuperAdminRole(session);
   const resolvedPageKey =
     requestedPageKey === 'GamesLibrary' && !isSuperAdmin ? 'Game' : requestedPageKey;
   const resolvedVariant =

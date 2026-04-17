@@ -437,50 +437,61 @@ export const productScanListResponseSchema = z.object({
 });
 export type ProductScanListResponse = z.infer<typeof productScanListResponseSchema>;
 
-export const productAmazonBatchScanRequestSchema = z.object({
+export const productScanBatchRequestSchema = z.object({
   productIds: z.array(trimmedString.min(1).max(160)).min(1).max(100),
-  connectionId: z.string().trim().min(1).nullable().optional(),
+  selectorProfile: optionalTrimmedString(120).optional(),
   stepSequenceKey: optionalTrimmedString(120).optional(),
   stepSequence: z.array(productScanRequestSequenceEntrySchema).max(50).nullable().optional(),
 });
-export type ProductAmazonBatchScanRequest = z.infer<typeof productAmazonBatchScanRequestSchema>;
-export const productScanBatchRequestSchema = productAmazonBatchScanRequestSchema;
-export type ProductScanBatchRequest = ProductAmazonBatchScanRequest;
+export type ProductScanBatchRequest = z.infer<typeof productScanBatchRequestSchema>;
+export const product1688BatchScanRequestSchema = productScanBatchRequestSchema.extend({
+  connectionId: z.string().trim().min(1).nullable().optional(),
+});
+export type Product1688BatchScanRequest = z.infer<typeof product1688BatchScanRequestSchema>;
 
-export const productAmazonBatchScanItemStatusSchema = z.enum([
+export const productScanAmazonExtractCandidateRequestSchema = z.object({
+  productId: trimmedString.min(1).max(160),
+  scanId: optionalTrimmedString(160).optional(),
+  candidateUrl: trimmedString.min(1).max(4_000),
+  candidateRank: z.number().int().positive().nullable().optional(),
+  candidateId: optionalTrimmedString(160).optional(),
+  selectorProfile: optionalTrimmedString(120).optional(),
+});
+export type ProductScanAmazonExtractCandidateRequest = z.infer<
+  typeof productScanAmazonExtractCandidateRequestSchema
+>;
+
+export const productScanBatchItemStatusSchema = z.enum([
   'queued',
   'running',
   'already_running',
   'failed',
 ]);
-export type ProductAmazonBatchScanItemStatus = z.infer<
-  typeof productAmazonBatchScanItemStatusSchema
->;
+export type ProductScanBatchItemStatus = z.infer<typeof productScanBatchItemStatusSchema>;
 
-export const productAmazonBatchScanItemSchema = z.object({
+export const productScanBatchItemSchema = z.object({
   productId: trimmedString.min(1).max(160),
   scanId: optionalTrimmedString(160),
   runId: optionalTrimmedString(160),
-  status: productAmazonBatchScanItemStatusSchema,
+  status: productScanBatchItemStatusSchema,
   currentStatus: productScanStatusSchema.nullable().default(null),
   message: optionalTrimmedString(1_000),
 });
-export type ProductAmazonBatchScanItem = z.infer<typeof productAmazonBatchScanItemSchema>;
-export const productScanBatchItemSchema = productAmazonBatchScanItemSchema;
-export type ProductScanBatchItem = ProductAmazonBatchScanItem;
+export type ProductScanBatchItem = z.infer<typeof productScanBatchItemSchema>;
 
-export const productAmazonBatchScanResponseSchema = z.object({
+export const productScanBatchResponseSchema = z.object({
   queued: z.number().int().nonnegative(),
   running: z.number().int().nonnegative(),
   alreadyRunning: z.number().int().nonnegative(),
   failed: z.number().int().nonnegative(),
-  results: z.array(productAmazonBatchScanItemSchema).default([]),
+  results: z.array(productScanBatchItemSchema).default([]),
 });
-export type ProductAmazonBatchScanResponse = z.infer<
-  typeof productAmazonBatchScanResponseSchema
+export type ProductScanBatchResponse = z.infer<typeof productScanBatchResponseSchema>;
+
+export const productScanAmazonExtractCandidateResponseSchema = productScanBatchItemSchema;
+export type ProductScanAmazonExtractCandidateResponse = z.infer<
+  typeof productScanAmazonExtractCandidateResponseSchema
 >;
-export const productScanBatchResponseSchema = productAmazonBatchScanResponseSchema;
-export type ProductScanBatchResponse = ProductAmazonBatchScanResponse;
 
 export type CreateProductScanInput = Omit<ProductScanRecordInput, 'createdAt' | 'updatedAt'> & {
   createdAt?: string;

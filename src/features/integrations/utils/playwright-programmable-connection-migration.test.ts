@@ -8,6 +8,8 @@ import {
 
 import {
   buildProgrammableConnectionActionMigrationPreview,
+  canCleanupProgrammableConnectionLegacyBrowserFields,
+  hasProgrammableConnectionLegacyBrowserBehavior,
   mergePlaywrightActionsWithProgrammableConnectionDrafts,
 } from './playwright-programmable-connection-migration';
 
@@ -98,8 +100,6 @@ describe('playwright programmable connection migration preview', () => {
       slowMo: 120,
     });
     expect(preview.cleanupPayload).toEqual({
-      playwrightBrowser: null,
-      playwrightPersonaId: null,
       resetPlaywrightOverrides: true,
     });
   });
@@ -175,5 +175,57 @@ describe('playwright programmable connection migration preview', () => {
     ]);
     expect(merged[1]?.name).toBe('New listing draft');
     expect(merged[2]?.name).toBe('New import draft');
+  });
+
+  it('detects when stored legacy browser fields can be cleaned after draft ownership is already in place', () => {
+    expect(
+      canCleanupProgrammableConnectionLegacyBrowserFields({
+        connection: {
+          id: 'connection-6',
+          name: 'Programmable Connection F',
+          integrationId: 'integration-1',
+          playwrightPersonaId: 'persona-1',
+          playwrightBrowser: 'chrome',
+          playwrightListingActionId: 'programmable_connection__connection-6__listing_session',
+          playwrightImportActionId: 'programmable_connection__connection-6__import_session',
+        },
+        actions: [
+          buildAction({
+            id: 'programmable_connection__connection-6__listing_session',
+            name: 'Programmable Connection F / Listing session',
+          }),
+          buildAction({
+            id: 'programmable_connection__connection-6__import_session',
+            name: 'Programmable Connection F / Import session',
+          }),
+        ],
+      })
+    ).toBe(true);
+  });
+
+  it('detects when a programmable connection is already action-owned', () => {
+    expect(
+      hasProgrammableConnectionLegacyBrowserBehavior({
+        id: 'connection-4',
+        name: 'Programmable Connection D',
+        integrationId: 'integration-1',
+        playwrightPersonaId: null,
+        playwrightBrowser: null,
+        playwrightListingActionId: 'listing-draft',
+        playwrightImportActionId: 'import-draft',
+      })
+    ).toBe(false);
+
+    expect(
+      hasProgrammableConnectionLegacyBrowserBehavior({
+        id: 'connection-5',
+        name: 'Programmable Connection E',
+        integrationId: 'integration-1',
+        playwrightPersonaId: 'persona-1',
+        playwrightBrowser: null,
+        playwrightListingActionId: 'listing-draft',
+        playwrightImportActionId: 'import-draft',
+      })
+    ).toBe(true);
   });
 });

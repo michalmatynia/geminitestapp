@@ -287,20 +287,34 @@ export const buildPlaywrightNativeTaskMetadata = <
   requestedBrowserMode: PlaywrightRelistBrowserMode;
   requestedBrowserPreference: PlaywrightBrowserPreference;
 }> &
-  TAdditional => ({
-  browserMode: input.session.effectiveBrowserMode,
-  ...(input.session.requestedBrowserMode !== null
-    ? { requestedBrowserMode: input.session.requestedBrowserMode }
-    : {}),
-  browserPreference: input.session.effectiveBrowserPreference,
-  ...(input.session.requestedBrowserPreference !== null
-    ? { requestedBrowserPreference: input.session.requestedBrowserPreference }
-    : {}),
-  browserLabel: input.session.sessionMetadata.browserLabel,
-  fallbackMessages: input.session.sessionMetadata.fallbackMessages,
-  playwright: input.session.sessionMetadata,
-  ...(input.additional ?? {}),
-});
+  TAdditional => {
+  const metadata = {
+    browserMode: input.session.effectiveBrowserMode,
+    ...(input.session.requestedBrowserMode !== null
+      ? { requestedBrowserMode: input.session.requestedBrowserMode }
+      : {}),
+    browserPreference: input.session.effectiveBrowserPreference,
+    ...(input.session.requestedBrowserPreference !== null
+      ? { requestedBrowserPreference: input.session.requestedBrowserPreference }
+      : {}),
+    browserLabel: input.session.sessionMetadata.browserLabel,
+    fallbackMessages: input.session.sessionMetadata.fallbackMessages,
+    playwright: input.session.sessionMetadata,
+    ...(input.additional ?? {}),
+  };
+
+  return metadata as {
+    browserMode: 'headed' | 'headless';
+    browserPreference: PlaywrightBrowserPreference;
+    browserLabel: string;
+    fallbackMessages: string[];
+    playwright: PlaywrightConnectionSessionMetadata;
+  } & Partial<{
+    requestedBrowserMode: PlaywrightRelistBrowserMode;
+    requestedBrowserPreference: PlaywrightBrowserPreference;
+  }> &
+    TAdditional;
+};
 
 export const openPlaywrightConnectionPageSession = async (
   input: OpenPlaywrightConnectionPageSessionInput

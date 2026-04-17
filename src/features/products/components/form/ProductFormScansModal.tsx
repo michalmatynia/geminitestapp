@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ProductAmazonScanModal } from '@/features/products/components/list/ProductAmazonScanModal';
+import { ProductScanModal } from '@/features/products/components/list/ProductScanModal';
 import type { ProductScanProvider } from '@/shared/contracts/product-scans';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 
@@ -21,7 +21,7 @@ export function ProductFormScansModal({
   if (provider === null) return null;
 
   return (
-    <ProductAmazonScanModal
+    <ProductScanModal
       isOpen={true}
       onClose={onClose}
       productIds={[productId]}

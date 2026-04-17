@@ -3,11 +3,6 @@ import { ObjectId } from 'mongodb';
 import { type IntegrationRecord, type IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
 import { type ConnectionDeleteOptions, type ConnectionDependencyCounts } from '@/shared/contracts/integrations/connections';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import {
-  DEFAULT_INTEGRATION_CONNECTION_PLAYWRIGHT_BROWSER,
-  defaultIntegrationConnectionPlaywrightSettings,
-} from '@/features/integrations/utils/playwright-connection-settings';
-
 
 export type { ConnectionDeleteOptions, ConnectionDependencyCounts };
 
@@ -21,34 +16,6 @@ export const ACTIVE_TEMPLATE_SCOPE_SEPARATOR = '::';
 
 export const CONNECTION_DEFAULTS = {
   traderaBrowserMode: 'builtin' as const,
-  playwrightBrowser: DEFAULT_INTEGRATION_CONNECTION_PLAYWRIGHT_BROWSER,
-  playwrightIdentityProfile: defaultIntegrationConnectionPlaywrightSettings.identityProfile,
-  playwrightHeadless: defaultIntegrationConnectionPlaywrightSettings.headless,
-  playwrightSlowMo: defaultIntegrationConnectionPlaywrightSettings.slowMo,
-  playwrightTimeout: defaultIntegrationConnectionPlaywrightSettings.timeout,
-  playwrightNavigationTimeout: defaultIntegrationConnectionPlaywrightSettings.navigationTimeout,
-  playwrightLocale: defaultIntegrationConnectionPlaywrightSettings.locale,
-  playwrightTimezoneId: defaultIntegrationConnectionPlaywrightSettings.timezoneId,
-  playwrightHumanizeMouse: defaultIntegrationConnectionPlaywrightSettings.humanizeMouse,
-  playwrightMouseJitter: defaultIntegrationConnectionPlaywrightSettings.mouseJitter,
-  playwrightClickDelayMin: defaultIntegrationConnectionPlaywrightSettings.clickDelayMin,
-  playwrightClickDelayMax: defaultIntegrationConnectionPlaywrightSettings.clickDelayMax,
-  playwrightInputDelayMin: defaultIntegrationConnectionPlaywrightSettings.inputDelayMin,
-  playwrightInputDelayMax: defaultIntegrationConnectionPlaywrightSettings.inputDelayMax,
-  playwrightActionDelayMin: defaultIntegrationConnectionPlaywrightSettings.actionDelayMin,
-  playwrightActionDelayMax: defaultIntegrationConnectionPlaywrightSettings.actionDelayMax,
-  playwrightProxyEnabled: defaultIntegrationConnectionPlaywrightSettings.proxyEnabled,
-  playwrightProxyServer: defaultIntegrationConnectionPlaywrightSettings.proxyServer,
-  playwrightProxyUsername: defaultIntegrationConnectionPlaywrightSettings.proxyUsername,
-  playwrightProxySessionAffinity:
-    defaultIntegrationConnectionPlaywrightSettings.proxySessionAffinity,
-  playwrightProxySessionMode:
-    defaultIntegrationConnectionPlaywrightSettings.proxySessionMode,
-  playwrightProxyProviderPreset:
-    defaultIntegrationConnectionPlaywrightSettings.proxyProviderPreset,
-  playwrightEmulateDevice: false,
-  playwrightDeviceName: defaultIntegrationConnectionPlaywrightSettings.deviceName,
-  playwrightPersonaId: null,
   playwrightListingScript: null,
   playwrightImportScript: null,
   playwrightImportBaseUrl: null,
@@ -76,6 +43,48 @@ export const CONNECTION_DEFAULTS = {
   traderaParameterMapperRulesJson: null,
   traderaParameterMapperCatalogJson: null,
 };
+
+export const PROGRAMMABLE_CONNECTION_BROWSER_PERSISTENCE_KEYS = [
+  'playwrightPersonaId',
+  'playwrightBrowser',
+  'playwrightIdentityProfile',
+  'playwrightHeadless',
+  'playwrightSlowMo',
+  'playwrightTimeout',
+  'playwrightNavigationTimeout',
+  'playwrightLocale',
+  'playwrightTimezoneId',
+  'playwrightHumanizeMouse',
+  'playwrightMouseJitter',
+  'playwrightClickDelayMin',
+  'playwrightClickDelayMax',
+  'playwrightInputDelayMin',
+  'playwrightInputDelayMax',
+  'playwrightActionDelayMin',
+  'playwrightActionDelayMax',
+  'playwrightProxyEnabled',
+  'playwrightProxyServer',
+  'playwrightProxyUsername',
+  'playwrightProxyPassword',
+  'playwrightEmulateDevice',
+  'playwrightDeviceName',
+] as const;
+
+export const stripProgrammableConnectionBrowserPersistenceFields = (
+  input: Record<string, unknown>
+): Record<string, unknown> => {
+  const sanitized = { ...input };
+  for (const key of PROGRAMMABLE_CONNECTION_BROWSER_PERSISTENCE_KEYS) {
+    delete sanitized[key];
+  }
+  delete sanitized['resetPlaywrightOverrides'];
+  return sanitized;
+};
+
+export const buildProgrammableConnectionBrowserFieldsUnsetDocument = (): Record<string, ''> =>
+  Object.fromEntries(
+    PROGRAMMABLE_CONNECTION_BROWSER_PERSISTENCE_KEYS.map((key) => [key, ''])
+  ) as Record<string, ''>;
 
 export const toDocumentIdCandidates = (id: string): Array<string | ObjectId> => {
   if (ObjectId.isValid(id) && id.length === 24) {
@@ -348,8 +357,7 @@ export const toConnectionRecord = (doc: unknown): IntegrationConnectionRecord =>
       typeof d['playwrightDeviceName'] === 'string'
         ? d['playwrightDeviceName']
         : undefined,
-    playwrightPersonaId:
-      (d['playwrightPersonaId'] as string) ?? CONNECTION_DEFAULTS.playwrightPersonaId,
+    playwrightPersonaId: (d['playwrightPersonaId'] as string) ?? null,
     playwrightListingScript:
       (d['playwrightListingScript'] as string) ?? CONNECTION_DEFAULTS.playwrightListingScript,
     playwrightImportScript:

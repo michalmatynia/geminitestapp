@@ -445,6 +445,210 @@ function useDataTabContent(
 
 /* ─── Main Page Content ─── */
 
+/* ─── Sub-components for DatabasePreviewContent ─── */
+
+const DatabaseMetrics = ({
+  databaseSize,
+  tablesCount,
+  enumsCount,
+  totalIndexes,
+  totalFks,
+}: {
+  databaseSize: string | null;
+  tablesCount: number;
+  enumsCount: number;
+  totalIndexes: number;
+  totalFks: number;
+}): React.JSX.Element => (
+  <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2 lg:grid-cols-5`}>
+    {databaseSize && (
+      <MetadataItem
+        label='Total Size'
+        value={databaseSize}
+        variant='card'
+        valueClassName='text-lg font-semibold text-white mt-1'
+        className='p-4'
+      />
+    )}
+    <MetadataItem
+      label='Tables'
+      value={tablesCount}
+      variant='card'
+      valueClassName='text-lg font-semibold text-white mt-1'
+      className='p-4'
+    />
+    <MetadataItem
+      label='Enums'
+      value={enumsCount}
+      variant='card'
+      valueClassName='text-lg font-semibold text-white mt-1'
+      className='p-4'
+    />
+    <MetadataItem
+      label='Indexes'
+      value={totalIndexes}
+      variant='card'
+      valueClassName='text-lg font-semibold text-white mt-1'
+      className='p-4'
+    />
+    <MetadataItem
+      label='Relations'
+      value={totalFks}
+      variant='card'
+      valueClassName='text-lg font-semibold text-white mt-1'
+      className='p-4'
+    />
+  </div>
+);
+
+const TableBrowserSection = ({
+  tableDetails,
+  filteredTableDetails,
+  tableQuery,
+  setTableQuery,
+  page,
+  setPage,
+  pageSize,
+  setPageSize,
+  maxPage,
+  handleQueryTable,
+  handleManageTable,
+}: {
+  tableDetails: DatabaseTableDetail[];
+  filteredTableDetails: DatabaseTableDetail[];
+  tableQuery: string;
+  setTableQuery: (v: string) => void;
+  page: number;
+  setPage: (p: number) => void;
+  pageSize: number;
+  setPageSize: (s: number) => void;
+  maxPage: number;
+  handleQueryTable: (tableName: string) => void;
+  handleManageTable: (tableName: string) => void;
+}): React.JSX.Element | null => {
+  if (tableDetails.length === 0) return null;
+
+  return (
+    <FormSection
+      title='Table Browser'
+      description={`${filteredTableDetails.length} items`}
+      actions={
+        <div className={UI_CENTER_ROW_RELAXED_CLASSNAME}>
+          <SearchInput
+            size='sm'
+            value={tableQuery}
+            onChange={(e) => setTableQuery(e.target.value)}
+            onClear={() => setTableQuery('')}
+            placeholder='Filter tables...'
+            className='h-8 w-48'
+          />
+          <div className='flex items-center gap-2'>
+            <Pagination
+              page={page}
+              totalPages={maxPage}
+              onPageChange={setPage}
+              pageSize={pageSize}
+              onPageSizeChange={(s) => {
+                setPage(1);
+                setPageSize(s);
+              }}
+              pageSizeOptions={[10, 20, 50, 100]}
+              showPageSize
+              variant='compact'
+            />
+          </div>
+        </div>
+      }
+      className='p-6'
+    >
+      <div className='grid gap-3 mt-4'>
+        {filteredTableDetails.map((detail) => (
+          <TableDetailCard
+            key={detail.name}
+            detail={detail}
+            onQueryTable={handleQueryTable}
+            onManageTable={handleManageTable}
+          />
+        ))}
+      </div>
+    </FormSection>
+  );
+};
+
+const AdditionalObjectsSection = ({
+  groups,
+  filteredGroups,
+  groupQuery,
+  setGroupQuery,
+  expandedGroups,
+  toggleGroup,
+}: {
+  groups: any[];
+  filteredGroups: any[];
+  groupQuery: string;
+  setGroupQuery: (v: string) => void;
+  expandedGroups: Record<string, boolean>;
+  toggleGroup: (type: string) => void;
+}): React.JSX.Element | null => {
+  if (groups.length === 0) return null;
+
+  return (
+    <FormSection
+      title='Additional Objects'
+      description='Functions, views, and sequences'
+      actions={
+        <SearchInput
+          size='sm'
+          value={groupQuery}
+          onChange={(e) => setGroupQuery(e.target.value)}
+          onClear={() => setGroupQuery('')}
+          placeholder='Search objects...'
+          className='h-8 w-40'
+        />
+      }
+      className='p-6'
+    >
+      <div className='grid gap-2 mt-4'>
+        {filteredGroups.map((group) => {
+          const isExpanded = expandedGroups[group.type] ?? false;
+          const Icon = groupIconMap[group.type] ?? FileTextIcon;
+          return (
+            <CollapsibleSection
+              key={group.type}
+              open={isExpanded}
+              onOpenChange={() => toggleGroup(group.type)}
+              variant='card'
+              className='bg-card/40'
+              title={
+                <div className='flex items-center gap-2 text-xs font-semibold text-gray-200'>
+                  <Icon className='size-4 text-sky-300' />
+                  {group.type}
+                  <Badge variant='outline' className='text-[9px] bg-sky-500/5 ml-1'>
+                    {group.objects.length}
+                  </Badge>
+                </div>
+              }
+            >
+              <div className='p-3 bg-black/20'>
+                <div className='flex flex-wrap gap-2'>
+                  {group.objects.map((obj: string) => (
+                    <span
+                      key={obj}
+                      className='font-mono text-[10px] text-gray-400 bg-white/5 px-1.5 py-0.5 rounded border border-white/5'
+                    >
+                      {obj}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </CollapsibleSection>
+          );
+        })}
+      </div>
+    </FormSection>
+  );
+};
+
 function DatabasePreviewContent(): React.JSX.Element {
   const {
     dbType,
@@ -482,17 +686,17 @@ function DatabasePreviewContent(): React.JSX.Element {
     handleManageTable,
     stats,
   } = useDatabasePreviewState();
+
+  const description =
+    mode === 'current'
+      ? 'Source: Current database instance'
+      : (backupName !== '' ? `Source: ${backupName}` : 'No source selected.');
+
   return (
     <AdminDatabasePageLayout
       title='Database Preview'
       current='Preview'
-      description={
-        mode === 'current'
-          ? 'Source: Current database instance'
-          : backupName
-            ? `Source: ${backupName}`
-            : 'No source selected.'
-      }
+      description={description}
       refresh={{
         onRefresh: () => window.location.reload(),
         isRefreshing: false,
@@ -509,152 +713,37 @@ function DatabasePreviewContent(): React.JSX.Element {
         <LoadingState message='Reconstructing database schema preview...' className='py-20' />
       ) : (
         <div className='space-y-6'>
-          {/* ── Database Metrics ── */}
-          <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2 lg:grid-cols-5`}>
-            {databaseSize && (
-              <MetadataItem
-                label='Total Size'
-                value={databaseSize}
-                variant='card'
-                valueClassName='text-lg font-semibold text-white mt-1'
-                className='p-4'
-              />
-            )}
-            <MetadataItem
-              label='Tables'
-              value={tables.length}
-              variant='card'
-              valueClassName='text-lg font-semibold text-white mt-1'
-              className='p-4'
-            />
-            <MetadataItem
-              label='Enums'
-              value={enums.length}
-              variant='card'
-              valueClassName='text-lg font-semibold text-white mt-1'
-              className='p-4'
-            />
-            <MetadataItem
-              label='Indexes'
-              value={stats.totalIndexes}
-              variant='card'
-              valueClassName='text-lg font-semibold text-white mt-1'
-              className='p-4'
-            />
-            <MetadataItem
-              label='Relations'
-              value={stats.totalFks}
-              variant='card'
-              valueClassName='text-lg font-semibold text-white mt-1'
-              className='p-4'
-            />
-          </div>
+          <DatabaseMetrics
+            databaseSize={databaseSize}
+            tablesCount={tables.length}
+            enumsCount={enums.length}
+            totalIndexes={stats.totalIndexes}
+            totalFks={stats.totalFks}
+          />
 
-          {/* ── Tables Section ── */}
-          {tableDetails.length > 0 && (
-            <FormSection
-              title='Table Browser'
-              description={`${filteredTableDetails.length} items`}
-              actions={
-                <div className={UI_CENTER_ROW_RELAXED_CLASSNAME}>
-                  <SearchInput
-                    size='sm'
-                    value={tableQuery}
-                    onChange={(e) => setTableQuery(e.target.value)}
-                    onClear={() => setTableQuery('')}
-                    placeholder='Filter tables...'
-                    className='h-8 w-48'
-                  />
-                  <div className='flex items-center gap-2'>
-                    <Pagination
-                      page={page}
-                      totalPages={maxPage}
-                      onPageChange={setPage}
-                      pageSize={pageSize}
-                      onPageSizeChange={(s) => {
-                        setPage(1);
-                        setPageSize(s);
-                      }}
-                      pageSizeOptions={[10, 20, 50, 100]}
-                      showPageSize
-                      variant='compact'
-                    />
-                  </div>
-                </div>
-              }
-              className='p-6'
-            >
-              <div className='grid gap-3 mt-4'>
-                {filteredTableDetails.map((detail) => (
-                  <TableDetailCard
-                    key={detail.name}
-                    detail={detail}
-                    onQueryTable={handleQueryTable}
-                    onManageTable={handleManageTable}
-                  />
-                ))}
-              </div>
-            </FormSection>
-          )}
+          <TableBrowserSection
+            tableDetails={tableDetails}
+            filteredTableDetails={filteredTableDetails}
+            tableQuery={tableQuery}
+            setTableQuery={setTableQuery}
+            page={page}
+            setPage={setPage}
+            pageSize={pageSize}
+            setPageSize={setPageSize}
+            maxPage={maxPage}
+            handleQueryTable={handleQueryTable}
+            handleManageTable={handleManageTable}
+          />
 
-          {/* ── Schema Groups ── */}
-          {groups.length > 0 && (
-            <FormSection
-              title='Additional Objects'
-              description='Functions, views, and sequences'
-              actions={
-                <SearchInput
-                  size='sm'
-                  value={groupQuery}
-                  onChange={(e) => setGroupQuery(e.target.value)}
-                  onClear={() => setGroupQuery('')}
-                  placeholder='Search objects...'
-                  className='h-8 w-40'
-                />
-              }
-              className='p-6'
-            >
-              <div className='grid gap-2 mt-4'>
-                {filteredGroups.map((group) => {
-                  const isExpanded = expandedGroups[group.type] ?? false;
-                  const Icon = groupIconMap[group.type] ?? FileTextIcon;
-                  return (
-                    <CollapsibleSection
-                      key={group.type}
-                      open={isExpanded}
-                      onOpenChange={() => toggleGroup(group.type)}
-                      variant='card'
-                      className='bg-card/40'
-                      title={
-                        <div className='flex items-center gap-2 text-xs font-semibold text-gray-200'>
-                          <Icon className='size-4 text-sky-300' />
-                          {group.type}
-                          <Badge variant='outline' className='text-[9px] bg-sky-500/5 ml-1'>
-                            {group.objects.length}
-                          </Badge>
-                        </div>
-                      }
-                    >
-                      <div className='p-3 bg-black/20'>
-                        <div className='flex flex-wrap gap-2'>
-                          {group.objects.map((obj) => (
-                            <span
-                              key={obj}
-                              className='font-mono text-[10px] text-gray-400 bg-white/5 px-1.5 py-0.5 rounded border border-white/5'
-                            >
-                              {obj}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    </CollapsibleSection>
-                  );
-                })}
-              </div>
-            </FormSection>
-          )}
+          <AdditionalObjectsSection
+            groups={groups}
+            filteredGroups={filteredGroups}
+            groupQuery={groupQuery}
+            setGroupQuery={setGroupQuery}
+            expandedGroups={expandedGroups}
+            toggleGroup={toggleGroup}
+          />
 
-          {/* ── Mongo Console ── */}
           <div ref={consoleSectionRef} className='scroll-mt-6'>
             <CollapsibleSection
               title='MongoDB Command Console'
@@ -666,7 +755,6 @@ function DatabasePreviewContent(): React.JSX.Element {
             </CollapsibleSection>
           </div>
 
-          {/* ── Table Manager ── */}
           {showCrud && tableDetails.length > 0 && (
             <div ref={crudSectionRef} className='scroll-mt-6'>
               <FormSection

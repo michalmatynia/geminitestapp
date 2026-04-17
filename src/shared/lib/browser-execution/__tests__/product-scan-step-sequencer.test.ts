@@ -24,7 +24,7 @@ describe('product scan step sequencer', () => {
 
   it('keeps the amazon browser sequence granular', () => {
     const steps = buildProductScanPendingSteps({
-      defaultSequenceKey: 'amazon_reverse_image_scan_browser',
+      defaultSequenceKey: 'amazon_reverse_image_scan',
     });
 
     expect(steps.map((step) => step.key)).toEqual([
@@ -89,7 +89,9 @@ describe('product scan step sequencer', () => {
     expect(runtime).toContain('seedProductScanStepSequence');
     expect(runtime).toContain('productScanIsPendingTemplateStep');
     expect(runtime).toContain('supplier_content_ready');
-    expect(runtime).toContain('amazon_reverse_image_scan_browser');
+    expect(runtime).toContain('amazon_google_lens_candidate_search');
+    expect(runtime).toContain('amazon_candidate_extraction');
+    expect(runtime).toContain('amazon_reverse_image_scan');
     expect(runtime).toContain('supplier_reverse_image_scan_browser');
     expect(runtime).toContain('supplier_direct_candidate_followup');
   });
@@ -99,7 +101,7 @@ describe('product scan step sequencer', () => {
       const scanSteps = [];
       const page = { url: () => 'https://example.com/scan' };
       ${generateProductScanPlaywrightStepSequencerRuntime()}
-      seedProductScanStepSequence({ defaultSequenceKey: 'amazon_reverse_image_scan_browser' });
+      seedProductScanStepSequence({ defaultSequenceKey: 'amazon_reverse_image_scan' });
       upsertScanStep({
         key: 'amazon_open',
         status: 'running',

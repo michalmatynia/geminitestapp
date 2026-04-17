@@ -32,13 +32,14 @@ export const isAdminSession = isElevatedSession;
 export const loadPreviewRenderData = async (id: string): Promise<PreviewRenderData | null> => {
   const cmsRepository = await getCmsRepository();
   const page = await cmsRepository.getPageById(id);
-  if (!page) {
+  if (page === null) {
     return null;
   }
 
   let theme: CmsTheme | null = null;
-  if (page.themeId) {
-    theme = await cmsRepository.getThemeById(page.themeId);
+  const themeId = page.themeId;
+  if (typeof themeId === 'string' && themeId !== '') {
+    theme = await cmsRepository.getThemeById(themeId);
   }
 
   const hdrs = await readOptionalRequestHeaders();
@@ -46,11 +47,12 @@ export const loadPreviewRenderData = async (id: string): Promise<PreviewRenderDa
   const themeSettings = await getCmsThemeSettings();
   const menuSettings = await getCmsMenuSettings(domain.id, page.locale);
   const colorSchemes = buildColorSchemeMap(themeSettings);
-  const layout = { fullWidth: Boolean(themeSettings.fullWidth) };
+  const layout = { fullWidth: themeSettings.fullWidth === true };
   const mediaVars = getMediaStyleVars(themeSettings);
   const mediaStyles = getMediaInlineStyles(themeSettings);
-  const hoverEffect = themeSettings.enableAnimations ? themeSettings.hoverEffect : undefined;
-  const hoverScale = themeSettings.enableAnimations ? themeSettings.hoverScale : undefined;
+  const animationsEnabled = themeSettings.enableAnimations === true;
+  const hoverEffect = animationsEnabled ? themeSettings.hoverEffect : undefined;
+  const hoverScale = animationsEnabled ? themeSettings.hoverScale : undefined;
   const showMenu = page.showMenu !== false;
   const rendererComponents = [...page.components]
     .sort((left, right) => left.order - right.order)

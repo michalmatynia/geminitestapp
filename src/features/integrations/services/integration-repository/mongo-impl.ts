@@ -1,6 +1,6 @@
 import { type ObjectId, type WithId, type Filter, type Document } from 'mongodb';
 
-import { isBaseIntegrationSlug } from '@/features/integrations/constants/slugs';
+import { isBaseIntegrationSlug, isPlaywrightProgrammableSlug } from '@/features/integrations/constants/slugs';
 import { badRequestError, conflictError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
@@ -16,6 +16,8 @@ import {
   remapProductSyncProfilesSetting,
   withDependencyTotal,
   normalizeOptionalConnectionId,
+  stripProgrammableConnectionBrowserPersistenceFields,
+  buildProgrammableConnectionBrowserFieldsUnsetDocument,
   toIntegrationRecord,
   toConnectionRecord,
   type ConnectionDeleteOptions,
@@ -348,6 +350,19 @@ const resolveMongoReplacementConnectionId = async (input: {
   return fallback[0]?._id.toString() ?? null;
 };
 
+const isProgrammableIntegrationId = async (
+  db: Awaited<ReturnType<typeof getMongoDb>>,
+  integrationId: string
+): Promise<boolean> => {
+  const integration = await db
+    .collection<IntegrationDocument>(INTEGRATION_COLLECTION)
+    .findOne({
+      _id: { $in: toDocumentIdCandidates(integrationId) },
+    } as Record<string, unknown>);
+
+  return isPlaywrightProgrammableSlug(integration?.slug ?? null);
+};
+
 export function getMongoIntegrationRepository(): IntegrationRepository {
   return {
     async listIntegrations(): Promise<IntegrationRecord[]> {
@@ -424,12 +439,15 @@ export function getMongoIntegrationRepository(): IntegrationRepository {
     ): Promise<IntegrationConnectionRecord> {
       const db = await getMongoDb();
       const now = new Date();
+      const sanitizedInput = (await isProgrammableIntegrationId(db, integrationId))
+        ? stripProgrammableConnectionBrowserPersistenceFields(input)
+        : { ...input };
       const doc: IntegrationConnectionDocument = {
         integrationId,
-        name: String(input['name'] || 'New Connection'),
-        username: String(input['username'] || ''),
-        password: String(input['password'] || ''),
-        ...input,
+        name: String(sanitizedInput['name'] || 'New Connection'),
+        username: String(sanitizedInput['username'] || ''),
+        password: String(sanitizedInput['password'] || ''),
+        ...sanitizedInput,
         createdAt: now,
         updatedAt: now,
       };
@@ -449,19 +467,37 @@ export function getMongoIntegrationRepository(): IntegrationRepository {
       const db = await getMongoDb();
       const now = new Date();
       const idCandidates = toDocumentIdCandidates(id);
+      const current = await db
+        .collection<IntegrationConnectionDocument>(INTEGRATION_CONNECTION_COLLECTION)
+        .findOne({ _id: { $in: idCandidates } } as Record<string, unknown>);
+      if (!current) throw new Error('Connection not found');
+      const isProgrammable = await isProgrammableIntegrationId(db, current.integrationId);
       const updateData: Record<string, unknown> = {
         ...input,
         updatedAt: now,
       };
+      const shouldResetProgrammableBrowserFields =
+        isProgrammable && updateData['resetPlaywrightOverrides'] === true;
       delete updateData['id'];
       delete updateData['_id'];
       delete updateData['createdAt'];
+      delete updateData['resetPlaywrightOverrides'];
+
+      const sanitizedUpdateData = isProgrammable
+        ? stripProgrammableConnectionBrowserPersistenceFields(updateData)
+        : updateData;
+      const updateOperation: Record<string, unknown> = {
+        $set: sanitizedUpdateData,
+      };
+      if (shouldResetProgrammableBrowserFields) {
+        updateOperation['$unset'] = buildProgrammableConnectionBrowserFieldsUnsetDocument();
+      }
 
       const res = await db
         .collection<IntegrationConnectionDocument>(INTEGRATION_CONNECTION_COLLECTION)
         .findOneAndUpdate(
           { _id: { $in: idCandidates } } as Record<string, unknown>,
-          { $set: updateData },
+          updateOperation,
           { returnDocument: 'after' }
         );
       if (!res) throw new Error('Connection not found');

@@ -54,11 +54,7 @@ const shouldReadFrontPageSettingFromStorage = (
   env: NodeJS.ProcessEnv = process.env
 ): boolean => {
   const explicit = parseEnvBoolean(env['ENABLE_DEV_FRONT_PAGE_SETTING_LOOKUP']);
-  if (explicit !== null) {
-    return explicit;
-  }
-
-  return true;
+  return explicit ?? true;
 };
 
 const isDevelopmentEnvironment = (env: NodeJS.ProcessEnv = process.env): boolean =>
@@ -79,7 +75,7 @@ const frontPageSelectionRecoveryLogCooldownTimers = new Map<
 >();
 
 const clearFrontPageSettingSnapshotExpiryTimer = (): void => {
-  if (frontPageSettingSnapshotExpiryTimer) {
+  if (frontPageSettingSnapshotExpiryTimer !== null) {
     clearTimeout(frontPageSettingSnapshotExpiryTimer);
     frontPageSettingSnapshotExpiryTimer = null;
   }
@@ -89,20 +85,18 @@ const scheduleFrontPageSettingSnapshotExpiry = (): void => {
   clearFrontPageSettingSnapshotExpiryTimer();
   frontPageSettingSnapshotIsFresh = true;
 
-  if (isDevelopmentEnvironment()) {
-    return;
-  }
+  if (isDevelopmentEnvironment()) return;
 
   frontPageSettingSnapshotExpiryTimer = setTimeout(() => {
     frontPageSettingSnapshotIsFresh = false;
     frontPageSettingSnapshotExpiryTimer = null;
   }, FRONT_PAGE_SETTING_CACHE_TTL_MS);
-  frontPageSettingSnapshotExpiryTimer.unref?.();
+  frontPageSettingSnapshotExpiryTimer.unref();
 };
 
 const clearFrontPageSettingRetryCooldown = (): void => {
   frontPageSettingRetryBlocked = false;
-  if (frontPageSettingRetryCooldownTimer) {
+  if (frontPageSettingRetryCooldownTimer !== null) {
     clearTimeout(frontPageSettingRetryCooldownTimer);
     frontPageSettingRetryCooldownTimer = null;
   }
@@ -115,23 +109,20 @@ const startFrontPageSettingRetryCooldown = (): void => {
     frontPageSettingRetryBlocked = false;
     frontPageSettingRetryCooldownTimer = null;
   }, FRONT_PAGE_SETTING_RETRY_COOLDOWN_MS);
-  frontPageSettingRetryCooldownTimer.unref?.();
+  frontPageSettingRetryCooldownTimer.unref();
 };
 
 const scheduleFrontPageSelectionRecoveryLogCooldown = (key: string): void => {
   const existingTimer = frontPageSelectionRecoveryLogCooldownTimers.get(key);
-  if (existingTimer) {
-    clearTimeout(existingTimer);
-  }
+  if (existingTimer !== undefined) clearTimeout(existingTimer);
 
   frontPageSelectionRecoveryLogCooldownKeys.add(key);
-
   const timer = setTimeout(() => {
     frontPageSelectionRecoveryLogCooldownKeys.delete(key);
     frontPageSelectionRecoveryLogCooldownTimers.delete(key);
   }, FRONT_PAGE_SELECTION_LOG_TTL_MS);
 
-  timer.unref?.();
+  timer.unref();
   frontPageSelectionRecoveryLogCooldownTimers.set(key, timer);
 };
 
@@ -141,7 +132,7 @@ const commitFrontPageSettingSnapshot = (
 ): FrontPageSelectableApp | null => {
   const normalizedSetting = normalizeFrontPageApp(value);
   lastKnownFrontPageSetting = normalizedSetting;
-  lastKnownFrontPageSettingSource = normalizedSetting ? source : 'none';
+  lastKnownFrontPageSettingSource = normalizedSetting !== null ? source : 'none';
   lastKnownFrontPageSettingFallbackReason = null;
   hasResolvedFrontPageSettingSnapshot = true;
   scheduleFrontPageSettingSnapshotExpiry();
@@ -149,20 +140,16 @@ const commitFrontPageSettingSnapshot = (
   return normalizedSetting;
 };
 
-const reuseLastKnownFrontPageSetting = (fallbackReason: string): FrontPageSelectableApp | null => {
-  lastKnownFrontPageSettingFallbackReason = fallbackReason;
-  return lastKnownFrontPageSetting;
-};
-
 const readPersistedFrontPageFallback = async (
   fallbackReason: string
 ): Promise<FrontPageSelectableApp | null> => {
-  if (lastKnownFrontPageSetting) {
-    return reuseLastKnownFrontPageSetting(fallbackReason);
+  if (lastKnownFrontPageSetting !== null) {
+    lastKnownFrontPageSettingFallbackReason = fallbackReason;
+    return lastKnownFrontPageSetting;
   }
 
   const devSnapshot = await readFrontPageDevSnapshot();
-  if (!devSnapshot) {
+  if (devSnapshot === null) {
     lastKnownFrontPageSettingFallbackReason = fallbackReason;
     return null;
   }
@@ -174,21 +161,19 @@ const readPersistedFrontPageFallback = async (
 
 export const primeFrontPageSettingRuntime = (
   value: string | null | undefined
-): FrontPageSelectableApp | null => {
-  return commitFrontPageSettingSnapshot(value, 'runtime');
-};
+): FrontPageSelectableApp | null => commitFrontPageSettingSnapshot(value, 'runtime');
 
 const isAdminSession = isElevatedSession;
 
 export const canPreviewDrafts = async (session: Session | null): Promise<boolean> => {
   if (!isAdminSession(session)) return false;
   const userId = session?.user?.id;
-  if (!userId) return false;
+  if (typeof userId !== 'string' || userId === '') return false;
   try {
     const prefs = await getUserPreferences(userId);
     return prefs.cmsPreviewEnabled === true;
   } catch (error) {
-    void ErrorSystem.captureException(error, {
+    await ErrorSystem.captureException(error, {
       service: 'frontend.home-helpers',
       source: 'frontend.home-helpers',
       action: 'canPreviewDrafts',
@@ -199,56 +184,55 @@ export const canPreviewDrafts = async (session: Session | null): Promise<boolean
 };
 
 export const shouldApplyFrontPageAppSelection = (): boolean => {
-  const value = process.env['ENABLE_FRONT_PAGE_APP_REDIRECT']?.trim().toLowerCase();
-  return value !== 'false' && value !== '0';
+  const value = (process.env['ENABLE_FRONT_PAGE_APP_REDIRECT'] ?? '').trim().toLowerCase();
+  return value !== '' && value !== 'false' && value !== '0';
 };
 
 const readBootstrappedFrontPageSetting = async (): Promise<FrontPageSelectableApp | null> => {
   try {
     const liteSettings = await getLiteSettingsForHydration();
-    const frontPageSetting = liteSettings.find((setting) => setting.key === FRONT_PAGE_SETTING_KEY);
-    if (!frontPageSetting) {
-      return null;
-    }
-    return commitFrontPageSettingSnapshot(frontPageSetting.value, 'lite');
+    const setting = liteSettings.find((s) => s.key === FRONT_PAGE_SETTING_KEY);
+    return setting !== undefined ? commitFrontPageSettingSnapshot(setting.value, 'lite') : null;
   } catch {
     return null;
   }
 };
 
-const readDevelopmentFrontPageSettingSnapshot = async (): Promise<FrontPageSelectableApp | null> => {
-  if (!isDevelopmentEnvironment()) {
-    return null;
+async function lookupMongoFrontPageSetting(): Promise<FrontPageSelectableApp | null> {
+  try {
+    const mongo = await getMongoDb();
+    const doc = await mongo
+      .collection<MongoStringSettingRecord<string>>('settings')
+      .findOne({ _id: FRONT_PAGE_SETTING_KEY });
+    const normalizedSetting = commitFrontPageSettingSnapshot(doc?.value, 'mongo');
+    if (normalizedSetting !== null) return normalizedSetting;
+
+    const { logSystemEvent } = await import('@/shared/lib/observability/system-logger');
+    await logSystemEvent({
+      level: 'warn',
+      message: 'No "front_page_app" setting found in MongoDB — defaulting to CMS.',
+      service: 'frontend.home-helpers',
+      source: 'frontend.home-helpers',
+    });
+  } catch (error) {
+    if (isTransientMongoConnectionError(error)) {
+      startFrontPageSettingRetryCooldown();
+      return readPersistedFrontPageFallback('transient-mongo-error');
+    }
+    await ErrorSystem.captureException(error, {
+      service: 'frontend.home-helpers',
+      source: 'frontend.home-helpers',
+      action: 'readMongoFrontPageSetting',
+      settingKey: FRONT_PAGE_SETTING_KEY,
+    });
+    return readPersistedFrontPageFallback('unexpected-mongo-error');
   }
+  return null;
+}
 
-  const devSnapshot = await readFrontPageDevSnapshot();
-  if (!devSnapshot) {
-    return null;
-  }
-
-  return commitFrontPageSettingSnapshot(devSnapshot, 'dev-snapshot');
-};
-
-const readMongoFrontPageSetting = async (): Promise<string | null> => {
-  if (hasResolvedFrontPageSettingSnapshot && isDevelopmentEnvironment()) {
-    return lastKnownFrontPageSetting;
-  }
-
-  if (hasResolvedFrontPageSettingSnapshot && frontPageSettingSnapshotIsFresh) {
-    return lastKnownFrontPageSetting;
-  }
-
-  const developmentSnapshot = await readDevelopmentFrontPageSettingSnapshot();
-  if (developmentSnapshot) {
-    return developmentSnapshot;
-  }
-
-  const bootstrappedSetting = await readBootstrappedFrontPageSetting();
-  if (bootstrappedSetting) {
-    return bootstrappedSetting;
-  }
-
-  if (!process.env['MONGODB_URI'] || !shouldReadFrontPageSettingFromStorage()) {
+const readMongoFrontPageSettingInternal = async (): Promise<FrontPageSelectableApp | null> => {
+  const mongoUri = process.env['MONGODB_URI'];
+  if (typeof mongoUri !== 'string' || mongoUri === '' || !shouldReadFrontPageSettingFromStorage()) {
     return readPersistedFrontPageFallback('storage-unavailable');
   }
 
@@ -256,45 +240,34 @@ const readMongoFrontPageSetting = async (): Promise<string | null> => {
     return readPersistedFrontPageFallback('transient-mongo-cooldown');
   }
 
-  try {
-    const mongo = await getMongoDb();
-    const doc = await mongo
-      .collection<MongoStringSettingRecord<string>>('settings')
-      .findOne({ _id: FRONT_PAGE_SETTING_KEY });
-    const normalizedSetting = commitFrontPageSettingSnapshot(doc?.value, 'mongo');
-    if (normalizedSetting) {
-      return normalizedSetting;
-    }
-    void import('@/shared/lib/observability/system-logger').then(({ logSystemEvent }) =>
-      logSystemEvent({
-        level: 'warn',
-        message:
-          'No "front_page_app" setting found in MongoDB — defaulting to CMS. Set the setting via Admin Settings to change the front page app.',
-        service: 'frontend.home-helpers',
-        source: 'frontend.home-helpers',
-      })
-    );
-  } catch (error) {
-    if (isTransientMongoConnectionError(error)) {
-      startFrontPageSettingRetryCooldown();
-      return readPersistedFrontPageFallback('transient-mongo-error');
-    }
-
-    void ErrorSystem.captureException(error, {
-      service: 'frontend.home-helpers',
-      source: 'frontend.home-helpers',
-      action: 'readMongoFrontPageSetting',
-      settingKey: FRONT_PAGE_SETTING_KEY,
-    });
-
-    return readPersistedFrontPageFallback('unexpected-mongo-error');
-  }
-  return null;
+  return lookupMongoFrontPageSetting();
 };
 
-export const getFrontPageSetting = cache(async (): Promise<string | null> => {
-  return readMongoFrontPageSetting();
-});
+async function resolveDevSnapshot(): Promise<FrontPageSelectableApp | null> {
+  if (!isDevelopmentEnvironment()) return null;
+  const devSnapshot = await readFrontPageDevSnapshot();
+  return (typeof devSnapshot === 'string' && devSnapshot !== '') ? commitFrontPageSettingSnapshot(devSnapshot, 'dev-snapshot') : null;
+}
+
+const readMongoFrontPageSettingFull = async (): Promise<FrontPageSelectableApp | null> => {
+  const devSnapshot = await resolveDevSnapshot();
+  if (devSnapshot !== null) return devSnapshot;
+
+  const bootstrapped = await readBootstrappedFrontPageSetting();
+  if (bootstrapped !== null) return bootstrapped;
+
+  return readMongoFrontPageSettingInternal();
+};
+
+const readMongoFrontPageSetting = async (): Promise<FrontPageSelectableApp | null> => {
+  if (hasResolvedFrontPageSettingSnapshot && (isDevelopmentEnvironment() || frontPageSettingSnapshotIsFresh)) {
+    return lastKnownFrontPageSetting;
+  }
+
+  return readMongoFrontPageSettingFull();
+};
+
+export const getFrontPageSetting = cache(async (): Promise<string | null> => readMongoFrontPageSetting());
 
 const logFrontPageSelectionRecovery = async (
   resolution: FrontPageSelectionResolution
@@ -305,12 +278,10 @@ const logFrontPageSelectionRecovery = async (
     resolution.setting ?? 'null',
     resolution.publicOwner,
   ].join('|');
-  if (frontPageSelectionRecoveryLogCooldownKeys.has(key)) {
-    return;
-  }
+  if (frontPageSelectionRecoveryLogCooldownKeys.has(key)) return;
 
-  const level = resolution.setting ? 'warn' : 'error';
-  const message = resolution.setting
+  const level = resolution.setting !== null ? 'warn' : 'error';
+  const message = resolution.setting !== null
     ? 'Front page selection recovered via fallback path.'
     : 'Front page selection lookup fell back to CMS without a recovered saved owner.';
 
@@ -334,18 +305,10 @@ const logFrontPageSelectionRecovery = async (
 
 export const resolveFrontPageSelection = async (): Promise<FrontPageSelectionResolution> => {
   if (!shouldApplyFrontPageAppSelection()) {
-    return {
-      enabled: false,
-      setting: null,
-      publicOwner: 'cms',
-      redirectPath: null,
-      source: 'disabled',
-      fallbackReason: null,
-    };
+    return { enabled: false, setting: null, publicOwner: 'cms', redirectPath: null, source: 'disabled', fallbackReason: null };
   }
 
   const setting = normalizeFrontPageApp(await getFrontPageSetting());
-
   const resolution: FrontPageSelectionResolution = {
     enabled: true,
     setting,
@@ -355,9 +318,7 @@ export const resolveFrontPageSelection = async (): Promise<FrontPageSelectionRes
     fallbackReason: lastKnownFrontPageSettingFallbackReason,
   };
 
-  if (resolution.fallbackReason !== null) {
-    void logFrontPageSelectionRecovery(resolution);
-  }
+  if (resolution.fallbackReason !== null) await logFrontPageSelectionRecovery(resolution);
 
   return resolution;
 };

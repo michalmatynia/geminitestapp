@@ -24,6 +24,7 @@ import {
   AMAZON_DESCRIPTION_SELECTORS,
   AMAZON_HERO_IMAGE_SELECTORS,
 } from '../selectors/amazon';
+import { AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY } from '../amazon-runtime-constants';
 import type { ProductScanSequenceEntry } from '../product-scan-step-sequencer';
 import { ProductScanSequencer, type ProductScanSequencerContext } from './ProductScanSequencer';
 
@@ -179,7 +180,7 @@ export class AmazonScanSequencer extends ProductScanSequencer {
       : [];
 
     this.seedStepSequence({
-      defaultSequenceKey: 'amazon_reverse_image_scan_browser',
+      defaultSequenceKey: AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY,
       sequenceKey: this.normalizeText(this.input.stepSequenceKey),
       customSequence: Array.isArray(this.input.stepSequence)
         ? this.input.stepSequence

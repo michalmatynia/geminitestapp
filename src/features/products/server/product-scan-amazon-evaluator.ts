@@ -29,7 +29,7 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type { ProductScannerAmazonCandidateEvaluatorResolvedConfig } from './product-scanner-settings';
 import type {
   AmazonScanCandidateResult,
-  AmazonScanScriptResult,
+  AmazonScanRuntimeResult,
 } from './product-scans-service.helpers';
 
 const EVALUATOR_MAX_REASON_COUNT = 10;
@@ -277,7 +277,7 @@ const detectTextLanguage = (value: string | null): {
 };
 
 const resolveDeterministicLanguageDecision = (input: {
-  parsedResult: AmazonScanScriptResult;
+  parsedResult: AmazonScanRuntimeResult;
   evaluatorConfig: Extract<
     ProductScannerAmazonCandidateEvaluatorResolvedConfig,
     { enabled: true }
@@ -711,7 +711,7 @@ const resolveSourceProductDescription = (product: ProductWithImages): string | n
 
 const buildDeterministicMatchReasons = (
   product: ProductWithImages,
-  parsedResult: AmazonScanScriptResult
+  parsedResult: AmazonScanRuntimeResult
 ): string[] => {
   const reasons: string[] = [];
   const productAsin = normalizeIdentifier(product.asin);
@@ -811,7 +811,7 @@ const createCandidateTriageEvaluationResult = (
 export const triageAmazonScanCandidates = async (input: {
   scan: ProductScanRecord;
   product: ProductWithImages;
-  parsedResult: AmazonScanScriptResult;
+  parsedResult: AmazonScanRuntimeResult;
   evaluatorConfig: Extract<
     ProductScannerAmazonCandidateEvaluatorResolvedConfig,
     { enabled: true }
@@ -1186,7 +1186,7 @@ export const triageAmazonScanCandidates = async (input: {
 export const evaluateAmazonScanCandidateMatch = async (input: {
   scan: ProductScanRecord;
   product: ProductWithImages;
-  parsedResult: AmazonScanScriptResult;
+  parsedResult: AmazonScanRuntimeResult;
   run: Pick<PlaywrightEngineRunRecord, 'runId' | 'artifacts'>;
   stage?: 'probe_evaluate' | 'extraction_evaluate';
   evaluatorConfig: Extract<

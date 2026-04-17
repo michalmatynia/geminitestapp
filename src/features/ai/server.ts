@@ -6,10 +6,11 @@ import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 // Register AI-specific error enricher to ErrorSystem without circular dependencies
 if (typeof logAgentAudit === 'function') {
   registerErrorEnricher(async (error, context) => {
-    if (context['runId']) {
+    const runId = context['runId'];
+    if (typeof runId === 'string' && runId.length > 0) {
       const message = error instanceof Error ? error.message : String(error);
       const level = context['level'] === 'warn' ? 'warning' : 'error';
-      await logAgentAudit(context['runId'] as string, level, message, context);
+      await logAgentAudit(runId, level, message, context);
     }
   });
 }
@@ -17,7 +18,7 @@ if (typeof logAgentAudit === 'function') {
 // Register AI Paths specific error enricher
 registerErrorEnricher(async (error, context) => {
   const runId = context['runId'] as string | undefined;
-  if (!runId) return;
+  if (runId === undefined || runId === '') return;
 
   try {
     const repository = await getPathRunRepository();
@@ -35,13 +36,15 @@ registerErrorEnricher(async (error, context) => {
     });
   } catch (enrichError) {
     // Avoid infinite recursion or noisy errors during enrichment
-    void logSystemEvent({
+    logSystemEvent({
       level: 'error',
       source: 'ai-paths-enricher',
       message: 'Failed to enrich error',
       context: {
         error: enrichError instanceof Error ? { message: enrichError.message, stack: enrichError.stack } : enrichError,
       },
+    }).catch(() => {
+      // Ignore failures within enrichment failure logging
     });
   }
 });

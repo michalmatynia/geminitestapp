@@ -4,7 +4,7 @@ import type { StudioSlotsResponse } from '@/shared/contracts/image-studio/slot';
 import { studioSlotsResponseSchema } from '@/shared/contracts/image-studio/slot';
 import type { ListQuery, SingleQuery } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
-import { createListQueryV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2, useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { studioKeys } from '@/shared/lib/query-key-exports';
 
 export { studioKeys };
@@ -67,7 +67,7 @@ export async function fetchStudioProjects(): Promise<ImageStudioProjectRecord[]>
 export function useStudioProjects(): ListQuery<ImageStudioProjectRecord> {
   const queryKey = studioKeys.projects();
 
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: fetchStudioProjects,
     staleTime: 60_000,
@@ -93,7 +93,7 @@ export function useStudioSlots(projectId: string): SingleQuery<StudioSlotsRespon
       await api.get<unknown>(`/api/image-studio/projects/${encodeURIComponent(projectId)}/slots`)
     );
 
-  return createSingleQueryV2({
+  return useSingleQueryV2({
     id: projectId,
     queryKey,
     queryFn,
@@ -122,7 +122,7 @@ export function useStudioImageModels(): SingleQuery<ImageStudioModelsResponse> {
   const queryFn = async (): Promise<ImageStudioModelsResponse> =>
     api.get<ImageStudioModelsResponse>('/api/image-studio/models');
 
-  return createSingleQueryV2({
+  return useSingleQueryV2({
     id: 'models',
     queryKey,
     queryFn,

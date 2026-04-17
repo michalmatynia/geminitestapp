@@ -11,7 +11,7 @@ import {
 } from '@/features/playwright/server';
 import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
 import type { BrowserListingResultDto, ProductListing } from '@/shared/contracts/integrations/listings';
-import type { Product } from '@/shared/contracts/products/product';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { internalError, notFoundError } from '@/shared/errors/app-error';
 import { buildResolvedActionSteps } from '@/shared/lib/browser-execution/runtime-action-resolver.server';
 import { TraderaSequencer } from '@/shared/lib/browser-execution/sequencers/TraderaSequencer';
@@ -142,7 +142,7 @@ export const runTraderaBrowserListingStandard = async ({
       tracker.succeed('browser_open', 'Browser was opened successfully.');
       tracker.start('auth_check', 'Checking whether the stored Tradera session is still valid.');
 
-      let product: Product | null = null;
+      let product: ProductWithImages | null = null;
       let listingDraft: {
         title: string;
         description: string;

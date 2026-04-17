@@ -7,13 +7,18 @@ const outputDir = path.resolve(process.cwd(), process.argv[2] ?? '.vercel/output
 const configPath = path.join(outputDir, 'config.json');
 
 const requestPrefixRoute = {
-  src: '^/(?!(?:_vercel|api(?:/|$)|apps/studiq-web)(?:/|$))(?<path>.*)$',
+  src: '^/(?!(?:_vercel|api|apps/studiq-web)(?:/|$))(?<path>.*)$',
   dest: '/apps/studiq-web/$path',
   continue: true,
 };
 
 const legacyRequestPrefixRoute = {
   src: '^/(?!(?:_vercel|apps/studiq-web)(?:/|$))(?<path>.*)$',
+  dest: '/apps/studiq-web/$path',
+};
+
+const legacyApiAwareRequestPrefixRoute = {
+  src: '^/(?!(?:_vercel|api(?:/|$)|apps/studiq-web)(?:/|$))(?<path>.*)$',
   dest: '/apps/studiq-web/$path',
 };
 
@@ -41,8 +46,10 @@ const existingApiRewriteRouteIndex = routes.findIndex((route) =>
 for (let index = routes.length - 1; index >= 0; index -= 1) {
   const route = routes[index];
   if (
-    route?.src === legacyRequestPrefixRoute.src &&
-    route?.dest === legacyRequestPrefixRoute.dest
+    ((route?.src === legacyRequestPrefixRoute.src &&
+      route?.dest === legacyRequestPrefixRoute.dest) ||
+      (route?.src === legacyApiAwareRequestPrefixRoute.src &&
+        route?.dest === legacyApiAwareRequestPrefixRoute.dest))
   ) {
     routes.splice(index, 1);
   }

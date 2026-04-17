@@ -33,6 +33,7 @@ import type {
   PlaywrightActionRunStepRecord,
   PlaywrightActionRunStepStatus,
 } from '@/shared/contracts/playwright-action-runs';
+import { getPlaywrightActionRunScrapedItems } from '@/shared/lib/playwright/action-run-scrape-results';
 import {
   SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY,
   SUPPLIER_1688_PROBE_SCAN_SELECTOR_PROFILE,
@@ -414,6 +415,14 @@ function RunDetail({
   steps: PlaywrightActionRunStepRecord[];
   onSelectStep: (stepId: string) => void;
 }): React.JSX.Element {
+  const scrapedItems = useMemo(
+    () =>
+      Array.isArray(run.scrapedItems) && run.scrapedItems.length > 0
+        ? run.scrapedItems
+        : getPlaywrightActionRunScrapedItems(run.result),
+    [run.result, run.scrapedItems]
+  );
+  const scrapedItemsPreview = formatJsonPreview(scrapedItems);
   const resultPreview = formatJsonPreview(run.result);
   const actionCodeSnapshot = run.codeSnapshot ?? null;
   const stepStatusCounts = steps.reduce<Record<PlaywrightActionRunStepStatus, number>>(
@@ -598,6 +607,7 @@ function RunDetail({
           ['Instance', run.instanceLabel ?? run.instanceKind],
           ['Connection', run.connectionId],
           ['Integration', run.integrationId],
+          ['Scraped items', scrapedItems.length > 0 ? String(scrapedItems.length) : null],
         ]}
       />
       {run.error !== null && run.error !== '' ? (
@@ -635,6 +645,16 @@ function RunDetail({
               </div>
             ))}
           </div>
+        </div>
+      ) : null}
+      {scrapedItems.length > 0 ? (
+        <div className='rounded border border-border/50 bg-black/20 p-3'>
+          <div className='mb-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground'>
+            Scraped items preview
+          </div>
+          <pre className='max-h-72 overflow-auto whitespace-pre-wrap text-[11px] leading-relaxed text-muted-foreground'>
+            {scrapedItemsPreview}
+          </pre>
         </div>
       ) : null}
       {resultPreview !== '' ? (

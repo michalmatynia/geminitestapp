@@ -216,7 +216,7 @@ describe('playwrightProgrammableIntegrationPage helpers', () => {
       blocks: [
         {
           kind: 'for_each',
-          items: { type: 'path', path: 'vars.rawProducts' },
+          items: { type: 'path', path: 'vars.scrapedItems' },
           blocks: [
             { kind: 'map_draft' },
             { kind: 'create_draft' },
@@ -237,7 +237,7 @@ describe('playwrightProgrammableIntegrationPage helpers', () => {
       blocks: [
         {
           kind: 'for_each',
-          items: { type: 'path', path: 'vars.rawProducts' },
+          items: { type: 'path', path: 'vars.scrapedItems' },
           blocks: [
             { kind: 'map_draft' },
             {
@@ -257,7 +257,7 @@ describe('playwrightProgrammableIntegrationPage helpers', () => {
       blocks: [
         {
           kind: 'for_each',
-          items: { type: 'path', path: 'vars.rawProducts' },
+          items: { type: 'path', path: 'vars.scrapedItems' },
           blocks: [
             { kind: 'map_draft' },
             {

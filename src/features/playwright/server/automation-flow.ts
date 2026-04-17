@@ -94,6 +94,7 @@ export type PlaywrightAutomationWriteOutcome =
 export type PlaywrightImportAutomationRunResult = {
   flow: PlaywrightImportAutomationFlow;
   input: Record<string, unknown>;
+  scrapedItems: Array<Record<string, unknown>>;
   rawProducts: Array<Record<string, unknown>>;
   rawResult: Record<string, unknown>;
   drafts: ProductDraft[];
@@ -513,6 +514,7 @@ export const runPlaywrightImportAutomationFlow = async ({
       input: effectiveInput,
       vars: {
         ...(parsedFlow.initialVars ?? {}),
+        scrapedItems: importResult.products,
         rawProducts: importResult.products,
         rawResult: importResult.rawResult,
       },
@@ -533,6 +535,7 @@ export const runPlaywrightImportAutomationFlow = async ({
   return {
     flow: parsedFlow,
     input: effectiveInput,
+    scrapedItems: importResult.products,
     rawProducts: importResult.products,
     rawResult: importResult.rawResult,
     drafts: context.drafts,

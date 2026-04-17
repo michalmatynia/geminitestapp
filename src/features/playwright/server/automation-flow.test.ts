@@ -83,7 +83,7 @@ describe('runPlaywrightImportAutomationFlow', () => {
         blocks: [
           {
             kind: 'for_each',
-            items: { type: 'path', path: 'vars.rawProducts' },
+            items: { type: 'path', path: 'vars.scrapedItems' },
             blocks: [
               {
                 kind: 'map_product',
@@ -139,6 +139,8 @@ describe('runPlaywrightImportAutomationFlow', () => {
       expect.objectContaining({ id: 'draft-PIN-001' }),
       expect.objectContaining({ id: 'draft-POSTER-001' }),
     ]);
+    expect(result.scrapedItems).toHaveLength(2);
+    expect(result.vars.scrapedItems).toHaveLength(2);
     expect(result.vars.rawProducts).toHaveLength(2);
   });
 
@@ -170,7 +172,7 @@ describe('runPlaywrightImportAutomationFlow', () => {
         blocks: [
           {
             kind: 'for_each',
-            items: { type: 'path', path: 'vars.rawProducts' },
+            items: { type: 'path', path: 'vars.scrapedItems' },
             blocks: [
               {
                 kind: 'map_product',
@@ -254,7 +256,7 @@ describe('runPlaywrightImportAutomationFlow', () => {
         blocks: [
           {
             kind: 'for_each',
-            items: { type: 'path', path: 'vars.rawProducts' },
+            items: { type: 'path', path: 'vars.scrapedItems' },
             blocks: [
               {
                 kind: 'map_product',
@@ -320,10 +322,10 @@ describe('runPlaywrightImportAutomationFlow', () => {
       flow: {
         name: 'Draft import with failures',
         blocks: [
-          {
-            kind: 'for_each',
-            items: { type: 'path', path: 'vars.rawProducts' },
-            blocks: [
+              {
+                kind: 'for_each',
+                items: { type: 'path', path: 'vars.scrapedItems' },
+                blocks: [
               {
                 kind: 'map_product',
                 defaults: {
@@ -401,7 +403,7 @@ describe('runPlaywrightImportAutomationFlow', () => {
           blocks: [
             {
               kind: 'for_each',
-              items: { type: 'path', path: 'vars.rawProducts' },
+              items: { type: 'path', path: 'vars.scrapedItems' },
               blocks: [
                 {
                   kind: 'map_product',
@@ -485,7 +487,7 @@ describe('runPlaywrightImportAutomationFlow', () => {
         blocks: [
           {
             kind: 'for_each',
-            items: { type: 'path', path: 'vars.rawProducts' },
+            items: { type: 'path', path: 'vars.scrapedItems' },
             blocks: [
               {
                 kind: 'map_draft',

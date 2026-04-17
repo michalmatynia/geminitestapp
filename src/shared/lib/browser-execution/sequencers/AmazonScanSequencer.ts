@@ -144,7 +144,7 @@ type GoogleLensUploadFile =
 
 interface GoogleLensFileAttachResult {
   success: boolean;
-  method: 'filechooser' | 'set_input_files' | null;
+  method: 'set_input_files' | null;
   message: string | null;
 }
 
@@ -276,7 +276,6 @@ export class AmazonScanSequencer extends ProductScanSequencer {
   private readonly input: AmazonScanInput;
   private readonly MAX_AMAZON_PREVIEW_CANDIDATES = 5;
   private readonly GOOGLE_LENS_DIRECT_UPLOAD_URL = 'https://lens.google.com/?hl=en';
-  private readonly GOOGLE_IMAGES_LEGACY_UPLOAD_URL = 'https://images.google.com/?hl=en';
 
   private readonly CAPTCHA_REQUIRED_MESSAGE = 'Google Lens requested captcha verification.';
   private readonly CAPTCHA_WAIT_MESSAGE =
@@ -694,52 +693,52 @@ export class AmazonScanSequencer extends ProductScanSequencer {
     });
 
     try {
-      let lastLoginState: GoogleLoginState | null = null;
-      for (const url of this.resolveGoogleLensOpenUrls()) {
-        await this.page.goto(url, {
-          waitUntil: 'domcontentloaded',
-          timeout: 30_000,
-        });
+      const url = this.resolveGoogleLensOpenUrl();
+      await this.page.goto(url, {
+        waitUntil: 'domcontentloaded',
+        timeout: 30_000,
+      });
 
-        await this.clickGoogleConsentIfPresent().catch(() => undefined);
-        await this.page.waitForLoadState('networkidle', { timeout: 5_000 }).catch(() => undefined);
-        await this.wait(800);
+      await this.clickGoogleConsentIfPresent().catch(() => undefined);
+      await this.page.waitForLoadState('networkidle', { timeout: 5_000 }).catch(() => undefined);
+      await this.wait(800);
 
-        const loginState = await this.detectGoogleLoginSurface();
-        if (loginState.detected) {
-          lastLoginState = loginState;
-          continue;
-        }
-
+      const loginState = await this.detectGoogleLoginSurface();
+      if (loginState.detected) {
+        const message = 'Google requested sign-in before the Lens upload page became available.';
         this.upsertScanStep({
           key: 'google_lens_open',
-          status: 'completed',
+          status: 'failed',
           candidateId,
           candidateRank,
-          resultCode: 'ok',
-          message: 'Google Lens search opened.',
+          resultCode: 'google_login_required',
+          message,
           url: this.page.url(),
-          details: [{ label: 'Image search page', value: url }],
+          details: [
+            { label: 'Image search provider', value: this.resolveImageSearchProvider() },
+            { label: 'Image search page', value: url },
+            { label: 'Login detected', value: String(loginState.detected) },
+            { label: 'Login reason', value: loginState.reason ?? null },
+          ],
         });
-
-        return { success: true, message: null };
+        return { success: false, message };
       }
 
-      const message = 'Google requested sign-in before the Lens upload page became available.';
       this.upsertScanStep({
         key: 'google_lens_open',
-        status: 'failed',
+        status: 'completed',
         candidateId,
         candidateRank,
-        resultCode: 'google_login_required',
-        message,
+        resultCode: 'ok',
+        message: 'Google Lens search opened.',
         url: this.page.url(),
         details: [
-          { label: 'Login detected', value: String(lastLoginState?.detected ?? true) },
-          { label: 'Login reason', value: lastLoginState?.reason ?? null },
+          { label: 'Image search provider', value: this.resolveImageSearchProvider() },
+          { label: 'Image search page', value: url },
         ],
       });
-      return { success: false, message };
+
+      return { success: true, message: null };
     } catch (_err) {
       const message = 'Google Lens search could not be opened.';
       this.upsertScanStep({
@@ -769,13 +768,47 @@ export class AmazonScanSequencer extends ProductScanSequencer {
   }> {
     const { candidate, candidateId, candidateRank } = params;
 
+    const provider = this.resolveImageSearchProvider();
+
     this.upsertScanStep({
       key: 'google_upload',
       status: 'running',
       candidateId,
       candidateRank,
-      message: 'Finding Google Lens upload entry.',
+      message:
+        provider === 'google_images_url'
+          ? 'Submitting product image URL to Google Lens.'
+          : 'Finding Google Lens upload entry.',
+      details: [{ label: 'Image search provider', value: provider }],
     });
+
+    const startingUrl = this.page.url();
+
+    if (provider === 'google_images_url') {
+      if (!candidate.url) {
+        const message = 'Google Images URL mode requires an image URL and will not open a manual file upload.';
+        this.upsertScanStep({
+          key: 'google_upload',
+          status: 'failed',
+          candidateId,
+          candidateRank,
+          resultCode: 'missing_image_url',
+          message,
+          url: this.page.url(),
+          details: [{ label: 'Image search provider', value: provider }],
+        });
+        return { advanced: false, captchaRequired: false, error: message, failureCode: 'missing_image_url' };
+      }
+
+      const lensUrl = `https://lens.google.com/uploadbyurl?url=${encodeURIComponent(candidate.url)}`;
+      await this.page.goto(lensUrl, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+      const transitionState = await this.waitForGoogleLensResultState(startingUrl, null, {
+        attempt: candidateRank,
+        candidateId,
+        inputSource: 'url',
+      });
+      return this.resolveUploadOutcome(transitionState, candidateId, candidateRank);
+    }
 
     const inputState = await this.waitForGoogleLensFileInput();
 
@@ -809,7 +842,6 @@ export class AmazonScanSequencer extends ProductScanSequencer {
       return { advanced: false, captchaRequired: false, error: message, failureCode: 'file_input_missing' };
     }
 
-    const startingUrl = this.page.url();
     const candidateFilepath = this.resolveImageCandidateFilepath(candidate);
 
     try {
@@ -846,17 +878,8 @@ export class AmazonScanSequencer extends ProductScanSequencer {
         }
         await this.clickGoogleLensSearchSubmitIfPresent();
         await this.wait(300);
-      } else if (candidate.url) {
-        // URL-based upload: navigate to the URL-based Google Lens endpoint
-        const lensUrl = `https://lens.google.com/uploadbyurl?url=${encodeURIComponent(candidate.url)}`;
-        await this.page.goto(lensUrl, { waitUntil: 'domcontentloaded', timeout: 30_000 });
-        const transitionState = await this.waitForGoogleLensResultState(startingUrl, null, {
-          attempt: candidateRank, candidateId,
-          inputSource: 'url',
-        });
-        return this.resolveUploadOutcome(transitionState, candidateId, candidateRank);
       } else {
-        const message = 'No usable image source (localPath, buffer, or url) was provided.';
+        const message = 'No usable local image source (localPath or buffer) was provided for file upload mode.';
         this.upsertScanStep({
           key: 'google_upload',
           status: 'failed',
@@ -1993,13 +2016,13 @@ export class AmazonScanSequencer extends ProductScanSequencer {
     }
   }
 
-  private resolveGoogleLensOpenUrls(): string[] {
-    const urls = [
-      this.resolveConfiguredImageSearchPageUrl(),
-      this.GOOGLE_LENS_DIRECT_UPLOAD_URL,
-      this.GOOGLE_IMAGES_LEGACY_UPLOAD_URL,
-    ].filter((url): url is string => url !== null);
-    return Array.from(new Set(urls));
+  private resolveGoogleLensOpenUrl(): string {
+    const configuredUrl = this.resolveConfiguredImageSearchPageUrl();
+    if (configuredUrl !== null) {
+      return configuredUrl;
+    }
+
+    return this.GOOGLE_LENS_DIRECT_UPLOAD_URL;
   }
 
   private resolveImageSearchProvider(): AmazonImageSearchProvider {
@@ -2322,24 +2345,7 @@ export class AmazonScanSequencer extends ProductScanSequencer {
     inputLocator: Locator,
     uploadFile: GoogleLensUploadFile
   ): Promise<GoogleLensFileAttachResult> {
-    try {
-      const fileChooserPromise = this.page.waitForEvent('filechooser', { timeout: 3_000 });
-      await inputLocator.click({ force: true, timeout: 2_000 }).catch(async () => {
-        await inputLocator.evaluate((node) => {
-          if (node instanceof HTMLElement) {
-            node.click();
-          }
-        });
-      });
-      const fileChooser = await fileChooserPromise;
-      await fileChooser.setFiles(uploadFile);
-      return { success: true, method: 'filechooser', message: null };
-    } catch {
-      // Hidden inputs, iframes, and Google UI experiments may not produce a
-      // filechooser event. Direct file assignment is the reliable fallback.
-    }
-
-    const fallbackError = await inputLocator
+    const setInputFilesError = await inputLocator
       .setInputFiles(uploadFile)
       .then(() => null)
       .catch((error) =>
@@ -2348,8 +2354,8 @@ export class AmazonScanSequencer extends ProductScanSequencer {
           : 'Google Lens rejected the selected image file.'
       );
 
-    if (fallbackError !== null) {
-      return { success: false, method: null, message: fallbackError };
+    if (setInputFilesError !== null) {
+      return { success: false, method: null, message: setInputFilesError };
     }
 
     await inputLocator.dispatchEvent?.('change').catch(() => undefined);

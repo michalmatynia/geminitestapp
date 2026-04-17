@@ -206,6 +206,7 @@ const runDetail: PlaywrightActionRunDetailResponse = {
     listingId: null,
     request: null,
     codeSnapshot: null,
+    scrapedItems: [{ title: 'Captured item', price: '19.99' }],
     result: null,
     error: 'Step failed',
     artifacts: [],
@@ -337,6 +338,10 @@ describe('AdminPlaywrightActionRunsPageRuntime', () => {
       'href',
       '/admin/playwright/action-runs?selectorProfile=profile-market-a'
     );
+    expect(screen.getByText('Scraped items')).toBeInTheDocument();
+    expect(screen.getByText('1')).toBeInTheDocument();
+    expect(screen.getByText('Scraped items preview')).toBeInTheDocument();
+    expect(screen.getByText(/Captured item/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Open selector registry' })).toHaveAttribute(
       'href',
       '/admin/integrations/selectors?namespace=tradera'

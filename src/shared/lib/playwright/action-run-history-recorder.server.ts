@@ -10,6 +10,7 @@ import type {
   PlaywrightActionRunStepStatus,
 } from '@/shared/contracts/playwright-action-runs';
 import type { PlaywrightStepInputBinding } from '@/shared/contracts/playwright-steps';
+import { getPlaywrightActionRunScrapedItems } from '@/shared/lib/playwright/action-run-scrape-results';
 import { upsertPlaywrightActionRunHistory } from '@/shared/lib/playwright/action-run-history-repository';
 import {
   createRuntimeStepSemanticSnippet,
@@ -640,6 +641,7 @@ export async function recordPlaywrightActionRunSnapshot(run: EngineRunLike): Pro
   const plannedSteps = actualSteps.length === 0 ? buildPlannedStepRecords(run, request) : [];
   const steps = actualSteps.length > 0 ? actualSteps : plannedSteps;
   const codeSnapshot = buildActionCodeSnapshot(steps, run.updatedAt);
+  const scrapedItems = getPlaywrightActionRunScrapedItems(run.result);
   const selectorProfile =
     request?.selectorProfile ??
     readInputString(request, 'selectorProfile') ??
@@ -668,6 +670,7 @@ export async function recordPlaywrightActionRunSnapshot(run: EngineRunLike): Pro
     tags: Array.isArray(run.instance?.tags) ? run.instance.tags.filter(Boolean) : [],
     request,
     codeSnapshot,
+    ...(scrapedItems.length > 0 ? { scrapedItems } : {}),
     ...(run.result !== undefined ? { result: run.result } : {}),
     error: run.error ?? null,
     artifacts: normalizeArtifacts(run.artifacts),

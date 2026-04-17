@@ -15,6 +15,7 @@ import {
   PROGRAMMABLE_DRAFT_TRANSFORM_OPTIONS,
   type ProgrammableDraftMapperRow,
 } from '@/features/playwright/pages/playwright-programmable-integration-page.helpers';
+import { getProgrammableScrapedItemsFromTestResultJson } from '@/features/playwright/components/programmable-integration/playwrightProgrammableScrapeResults';
 import { FormField, SelectSimple } from '@/shared/ui/forms-and-actions.public';
 import { Alert, Button, Card, Input, Textarea } from '@/shared/ui/primitives.public';
 
@@ -32,38 +33,11 @@ const DRAFT_MAPPER_MODE_OPTIONS = [
   { value: 'static', label: 'static' },
 ] as const;
 
-const parseResultJson = (value: string): unknown | null => {
-  if (value.trim().length === 0) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(value) as unknown;
-  } catch {
-    return null;
-  }
-};
-
-const parseRawProducts = (testResultJson: string): Record<string, unknown>[] => {
-  const parsed = parseResultJson(testResultJson);
-  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-    return [];
-  }
-
-  const result = (parsed as Record<string, unknown>)['result'];
-  const rawProducts =
-    result && typeof result === 'object' && !Array.isArray(result)
-      ? (result as Record<string, unknown>)['rawProducts']
-      : undefined;
-  if (!Array.isArray(rawProducts)) {
-    return [];
-  }
-
-  return rawProducts.flatMap((item) => {
+const parseScrapedItems = (testResultJson: string): Record<string, unknown>[] =>
+  getProgrammableScrapedItemsFromTestResultJson(testResultJson).flatMap((item) => {
     const record = toDraftMapperPreviewInput(item);
     return record !== null ? [record] : [];
   });
-};
 
 const formatPreviewValue = (value: unknown): string => {
   if (typeof value === 'string') {
@@ -118,15 +92,15 @@ const getRowStatusClassName = (status: 'error' | 'warning' | 'ok'): string => {
 };
 
 function DraftMapperSamplePanel({
-  rawProducts,
+  scrapedItems,
   sampleIndex,
   setSampleIndex,
 }: {
-  rawProducts: Record<string, unknown>[];
+  scrapedItems: Record<string, unknown>[];
   sampleIndex: number;
   setSampleIndex: React.Dispatch<React.SetStateAction<number>>;
 }): React.JSX.Element {
-  const selectedSample = rawProducts[sampleIndex] ?? null;
+  const selectedSample = scrapedItems[sampleIndex] ?? null;
   const topLevelKeys = selectedSample ? Object.keys(selectedSample) : [];
 
   return (
@@ -134,16 +108,16 @@ function DraftMapperSamplePanel({
       <div>
         <h3 className='text-sm font-semibold text-white'>Scrape Sample</h3>
         <p className='mt-1 text-xs text-gray-400'>
-          Use the latest Test Import result as the mapping source.
+          Use the latest scrape result as the mapping source.
         </p>
       </div>
 
-      {rawProducts.length > 0 ? (
+      {scrapedItems.length > 0 ? (
         <FormField label='Sample'>
           <SelectSimple
             value={String(sampleIndex)}
             onValueChange={(value) => setSampleIndex(Number(value))}
-            options={rawProducts.map((_, index) => ({
+            options={scrapedItems.map((_, index) => ({
               value: String(index),
               label: `Sample ${index + 1}`,
             }))}
@@ -153,7 +127,7 @@ function DraftMapperSamplePanel({
         </FormField>
       ) : null}
 
-      {rawProducts.length === 0 ? (
+      {scrapedItems.length === 0 ? (
         <div className='rounded-lg border border-dashed border-border/60 px-4 py-6 text-sm text-gray-400'>
           Run Test Import to capture sample scrape data for mapping.
         </div>
@@ -433,18 +407,18 @@ export function PlaywrightProgrammableFieldMapperCard({
   handleUpdateDraftMapping,
   testResultJson,
 }: Props): React.JSX.Element {
-  const rawProducts = React.useMemo(() => parseRawProducts(testResultJson), [testResultJson]);
+  const scrapedItems = React.useMemo(() => parseScrapedItems(testResultJson), [testResultJson]);
   const [sampleIndex, setSampleIndex] = React.useState(0);
 
   React.useEffect(() => {
-    if (sampleIndex < rawProducts.length) {
+    if (sampleIndex < scrapedItems.length) {
       return;
     }
 
     setSampleIndex(0);
-  }, [rawProducts.length, sampleIndex]);
+  }, [scrapedItems.length, sampleIndex]);
 
-  const selectedSample = rawProducts[sampleIndex] ?? null;
+  const selectedSample = scrapedItems[sampleIndex] ?? null;
   const preview = React.useMemo(
     () => mapScrapedProductToDraftPreview(selectedSample, draftMapperRows),
     [draftMapperRows, selectedSample]
@@ -478,7 +452,7 @@ export function PlaywrightProgrammableFieldMapperCard({
 
       <div className='grid gap-4 xl:grid-cols-3'>
         <DraftMapperSamplePanel
-          rawProducts={rawProducts}
+          scrapedItems={scrapedItems}
           sampleIndex={sampleIndex}
           setSampleIndex={setSampleIndex}
         />

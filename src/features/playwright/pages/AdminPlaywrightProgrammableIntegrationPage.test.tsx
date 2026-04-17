@@ -245,18 +245,26 @@ const buildImportRunResponse = ({
   input?: Record<string, unknown>;
   ok?: boolean;
   result?: Record<string, unknown>;
-}): Record<string, unknown> => ({
-  ok,
-  scriptType: 'import',
-  input: {
-    sourceUrl: PLAYWRIGHT_IMPORT_BASE_URL,
-    ...input,
-  },
-  result: {
+}): Record<string, unknown> => {
+  const nextResult = {
     rawResult: { ok: true },
     ...result,
-  },
-});
+  };
+
+  if (!Array.isArray(nextResult['scrapedItems']) && Array.isArray(nextResult['rawProducts'])) {
+    nextResult['scrapedItems'] = nextResult['rawProducts'];
+  }
+
+  return {
+    ok,
+    scriptType: 'import',
+    input: {
+      sourceUrl: PLAYWRIGHT_IMPORT_BASE_URL,
+      ...input,
+    },
+    result: nextResult,
+  };
+};
 
 const buildAutomationFlowResult = ({
   rawProducts = [],
@@ -289,6 +297,7 @@ const buildAutomationFlowResult = ({
     ...overrides,
     results: nextResults,
     vars: {
+      scrapedItems: rawProducts,
       rawProducts,
       ...nextVars,
     },
@@ -909,7 +918,7 @@ describe('AdminPlaywrightProgrammableIntegrationPageRuntime', () => {
     expect(screen.getByText('Last Run Result')).toBeInTheDocument();
     expect(screen.getByText('Execution mode: commit')).toBeInTheDocument();
     expect(screen.getByText('Flow: Draft import')).toBeInTheDocument();
-    expect(screen.getByText('Raw Products')).toBeInTheDocument();
+    expect(screen.getByText('Scraped Items')).toBeInTheDocument();
     expect(screen.getByText('Mapped Products')).toBeInTheDocument();
     expect(screen.getByText('Mapped Drafts')).toBeInTheDocument();
     expect(screen.getByText('Drafts Created')).toBeInTheDocument();
@@ -987,7 +996,7 @@ describe('AdminPlaywrightProgrammableIntegrationPageRuntime', () => {
     ).toBeGreaterThan(0);
     expect(screen.getByText('Input Preview')).toBeInTheDocument();
     expect(screen.getByText('Raw Result Preview')).toBeInTheDocument();
-    expect(screen.getByText('Raw Products Preview (4)')).toBeInTheDocument();
+    expect(screen.getByText('Scraped Items Preview (4)')).toBeInTheDocument();
     expect(screen.getByText('Mapped Products Preview (4)')).toBeInTheDocument();
     expect(screen.getByText('Mapped Drafts Preview (4)')).toBeInTheDocument();
     expect(screen.getByText('Draft Payloads Preview (4)')).toBeInTheDocument();
@@ -1344,7 +1353,7 @@ describe('AdminPlaywrightProgrammableIntegrationPageRuntime', () => {
     const testMutateAsync = vi.fn().mockResolvedValue(
       buildImportRunResponse({
         result: {
-        rawProducts: [
+        scrapedItems: [
           {
             title: 'Mapped draft title',
             price: '19,50',
@@ -1434,6 +1443,9 @@ describe('AdminPlaywrightProgrammableIntegrationPageRuntime', () => {
     expect(
       (screen.getByLabelText('Import automation flow editor') as HTMLTextAreaElement).value
     ).toContain('"resultKey": "mappedDrafts"');
+    expect(
+      (screen.getByLabelText('Import automation flow editor') as HTMLTextAreaElement).value
+    ).toContain('"path": "vars.scrapedItems"');
     expect(
       (screen.getByLabelText('Import automation flow editor') as HTMLTextAreaElement).value
     ).not.toContain('"kind": "create_draft"');

@@ -53,6 +53,11 @@ type SeedData = {
   diagnostics: Record<string, unknown>;
 };
 
+type PageExtractResult = {
+  blocked: boolean;
+  children: Array<{ id: string; name: string; parentId: string; url: string }>;
+};
+
 export type TraderaCategorySequencerResult = {
   categories: Array<{ id: string; name: string; parentId: string }>;
   categorySource: string;
@@ -395,7 +400,7 @@ export class TraderaCategorySequencer extends PlaywrightSequencer {
 
       this.pagesVisited += 1;
 
-      const pageResult = await page.evaluate(extractTraderaCategoryPageChildren, {
+      const pageResult = (await page.evaluate(extractTraderaCategoryPageChildren, {
         currentCategory: {
           id: current.id,
           name: current.name,
@@ -404,7 +409,7 @@ export class TraderaCategorySequencer extends PlaywrightSequencer {
         stopTexts,
         blockedUrlHints,
         blockedTextHints,
-      });
+      })) as PageExtractResult;
 
       if (pageResult.blocked) {
         this.pageErrors.push({ categoryId: current.id, categoryName: current.name, blocked: true });

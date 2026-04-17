@@ -68,7 +68,7 @@ export const buildDraftMapperAutomationFlowTemplate = (): string =>
       blocks: [
         {
           kind: 'for_each',
-          items: { type: 'path', path: 'vars.rawProducts' },
+          items: { type: 'path', path: 'vars.scrapedItems' },
           blocks: [
             { kind: 'map_draft' },
             { kind: 'create_draft' },
@@ -92,7 +92,7 @@ export const buildDraftMapperPreviewAutomationFlowTemplate = (): string =>
       blocks: [
         {
           kind: 'for_each',
-          items: { type: 'path', path: 'vars.rawProducts' },
+          items: { type: 'path', path: 'vars.scrapedItems' },
           blocks: [
             { kind: 'map_draft' },
             {
@@ -115,7 +115,7 @@ export const buildDraftMapperResilientAutomationFlowTemplate = (): string =>
       blocks: [
         {
           kind: 'for_each',
-          items: { type: 'path', path: 'vars.rawProducts' },
+          items: { type: 'path', path: 'vars.scrapedItems' },
           blocks: [
             { kind: 'map_draft' },
             {

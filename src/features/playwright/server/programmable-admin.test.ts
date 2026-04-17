@@ -179,6 +179,7 @@ describe('programmable admin server', () => {
       connectionId: 'conn-playwright-1',
       input: {
         name: 'Programmable Browser',
+        playwrightDraftMapperJson: null,
         playwrightListingScript: 'export default async function runListing() {}',
         playwrightImportScript: 'export default async function runImport() {}',
         playwrightImportBaseUrl: 'https://example.test',
@@ -462,6 +463,7 @@ describe('programmable admin server', () => {
       },
       result: {
         rawResult: { ok: true },
+        scrapedItems: [{ title: 'Raw title' }],
         rawProducts: [{ title: 'Raw title' }],
         mappedProducts: [{ name: 'Mapped title' }],
       },
@@ -478,7 +480,7 @@ describe('programmable admin server', () => {
         blocks: [
           {
             kind: 'for_each',
-            items: { type: 'path', path: 'vars.rawProducts' },
+            items: { type: 'path', path: 'vars.scrapedItems' },
             blocks: [{ kind: 'map_product' }, { kind: 'create_draft' }],
           },
         ],
@@ -491,6 +493,7 @@ describe('programmable admin server', () => {
       flow: { name: 'Draft import', blocks: [] },
       input: { sourceUrl: 'https://example.test/import' },
       rawResult: { ok: true },
+      scrapedItems: [{ title: 'Raw title' }],
       rawProducts: [{ title: 'Raw title' }],
       drafts: [],
       draftPayloads: [{ sku: 'SKU-1' }],
@@ -506,7 +509,10 @@ describe('programmable admin server', () => {
       products: [],
       productPayloads: [],
       results: { drafts: [{ sku: 'SKU-1' }] },
-      vars: { rawProducts: [{ title: 'Raw title' }] },
+      vars: {
+        scrapedItems: [{ title: 'Raw title' }],
+        rawProducts: [{ title: 'Raw title' }],
+      },
     });
     mocks.parsePlaywrightFieldMapperJsonMock.mockReturnValue([{ source: 'title', target: 'name' }]);
     mocks.mapPlaywrightImportProductsMock.mockReturnValue([{ name: 'Mapped title' }]);
@@ -524,6 +530,7 @@ describe('programmable admin server', () => {
       },
       result: {
         rawResult: { ok: true },
+        scrapedItems: [{ title: 'Raw title' }],
         rawProducts: [{ title: 'Raw title' }],
         mappedProducts: [{ name: 'Mapped title' }],
         automationFlow: {
@@ -543,7 +550,10 @@ describe('programmable admin server', () => {
           products: [],
           productPayloads: [],
           results: { drafts: [{ sku: 'SKU-1' }] },
-          vars: { rawProducts: [{ title: 'Raw title' }] },
+          vars: {
+            scrapedItems: [{ title: 'Raw title' }],
+            rawProducts: [{ title: 'Raw title' }],
+          },
         },
       },
     });
@@ -551,15 +561,15 @@ describe('programmable admin server', () => {
     expect(mocks.runPlaywrightImportAutomationFlowMock).toHaveBeenCalledWith({
       connection: expect.objectContaining({ id: 'conn-playwright-1' }),
       input: { sourceUrl: 'https://example.test/import' },
-      flow: {
-        name: 'Draft import',
-        blocks: [
-          {
-            kind: 'for_each',
-            items: { type: 'path', path: 'vars.rawProducts' },
-            blocks: [{ kind: 'map_product' }, { kind: 'create_draft' }],
-          },
-        ],
+        flow: {
+          name: 'Draft import',
+          blocks: [
+            {
+              kind: 'for_each',
+              items: { type: 'path', path: 'vars.scrapedItems' },
+              blocks: [{ kind: 'map_product' }, { kind: 'create_draft' }],
+            },
+          ],
       },
       dryRun: true,
     });
@@ -583,6 +593,7 @@ describe('programmable admin server', () => {
       flow: { name: 'Commit import', blocks: [] },
       input: { sourceUrl: 'https://example.test/import' },
       rawResult: { ok: true },
+      scrapedItems: [{ title: 'Raw title' }],
       rawProducts: [{ title: 'Raw title' }],
       drafts: [{ id: 'draft-1' }],
       draftPayloads: [{ sku: 'SKU-1' }],
@@ -605,7 +616,10 @@ describe('programmable admin server', () => {
       products: [{ id: 'product-1' }],
       productPayloads: [{ sku: 'SKU-1' }],
       results: { products: [{ id: 'product-1' }] },
-      vars: { rawProducts: [{ title: 'Raw title' }] },
+      vars: {
+        scrapedItems: [{ title: 'Raw title' }],
+        rawProducts: [{ title: 'Raw title' }],
+      },
     });
     mocks.parsePlaywrightFieldMapperJsonMock.mockReturnValue([{ source: 'title', target: 'name' }]);
     mocks.mapPlaywrightImportProductsMock.mockReturnValue([{ name: 'Mapped title' }]);
@@ -624,6 +638,7 @@ describe('programmable admin server', () => {
       },
       result: {
         rawResult: { ok: true },
+        scrapedItems: [{ title: 'Raw title' }],
         rawProducts: [{ title: 'Raw title' }],
         mappedProducts: [{ name: 'Mapped title' }],
         automationFlow: {
@@ -650,7 +665,10 @@ describe('programmable admin server', () => {
           products: [{ id: 'product-1' }],
           productPayloads: [{ sku: 'SKU-1' }],
           results: { products: [{ id: 'product-1' }] },
-          vars: { rawProducts: [{ title: 'Raw title' }] },
+          vars: {
+            scrapedItems: [{ title: 'Raw title' }],
+            rawProducts: [{ title: 'Raw title' }],
+          },
         },
       },
     });

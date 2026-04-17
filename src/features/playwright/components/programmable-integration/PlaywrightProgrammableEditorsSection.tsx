@@ -12,6 +12,7 @@ import {
 } from '@/features/playwright/pages/playwright-programmable-integration-page.helpers';
 import type { PlaywrightProgrammableIntegrationPageModel } from '@/features/playwright/pages/playwright-programmable-integration-page.types';
 import { PlaywrightProgrammableFieldMapperCard } from '@/features/playwright/components/programmable-integration/PlaywrightProgrammableFieldMapperCard';
+import { getProgrammableScrapedItemsFromResultRecord } from '@/features/playwright/components/programmable-integration/playwrightProgrammableScrapeResults';
 import {
   countWriteStatusRows,
   getDefaultWriteStatusSortMode,
@@ -232,8 +233,8 @@ function ImportConfigurationHeader({
       <div>
         <h2 className='text-base font-semibold text-white'>Import Configuration</h2>
         <p className='mt-1 text-sm text-gray-400'>
-          Capture routes define where the programmable import script navigates before it emits raw
-          product objects.
+          Capture routes define where the programmable import script navigates before it emits
+          scraped item objects.
         </p>
       </div>
       <div className='flex flex-wrap items-center gap-2'>
@@ -1026,7 +1027,7 @@ function TestResultCard({ testResultJson }: Pick<Props, 'testResultJson'>): Reac
     automationFlow !== null && isObjectRecord(automationFlow['results'])
       ? automationFlow['results']
       : null;
-  const rawProducts = toUnknownArray(result?.['rawProducts']);
+  const scrapedItems = getProgrammableScrapedItemsFromResultRecord(result);
   const mappedProducts = toUnknownArray(result?.['mappedProducts']);
   const draftPayloads = toUnknownArray(automationFlow?.['draftPayloads']);
   const drafts = toUnknownArray(automationFlow?.['drafts']);
@@ -1042,7 +1043,7 @@ function TestResultCard({ testResultJson }: Pick<Props, 'testResultJson'>): Reac
     kind: 'product',
     value: automationFlow?.['writeOutcomes'],
   });
-  const rawProductsCount = getArrayCount(result?.['rawProducts']);
+  const scrapedItemsCount = scrapedItems.length;
   const mappedProductsCount = getArrayCount(result?.['mappedProducts']);
   const draftPayloadsCount = getArrayCount(automationFlow?.['draftPayloads']);
   const draftsCount = getArrayCount(automationFlow?.['drafts']);
@@ -1074,7 +1075,7 @@ function TestResultCard({ testResultJson }: Pick<Props, 'testResultJson'>): Reac
   const hasImportPreviews =
     draftWriteOutcomeRows.length > 0 ||
     productWriteOutcomeRows.length > 0 ||
-    rawProducts.length > 0 ||
+    scrapedItems.length > 0 ||
     mappedProducts.length > 0 ||
     draftPayloads.length > 0 ||
     drafts.length > 0 ||
@@ -1116,7 +1117,7 @@ function TestResultCard({ testResultJson }: Pick<Props, 'testResultJson'>): Reac
 
       <dl className='mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4'>
         <ResultMetric label='Input Fields' value={inputFieldCount} />
-        <ResultMetric label='Raw Products' value={rawProductsCount} />
+        <ResultMetric label='Scraped Items' value={scrapedItemsCount} />
         <ResultMetric label='Mapped Products' value={mappedProductsCount} />
         <ResultMetric label='Mapped Drafts' value={mappedDraftsCount} />
         <ResultMetric label='Draft Payloads' value={draftPayloadsCount} />
@@ -1176,7 +1177,7 @@ function TestResultCard({ testResultJson }: Pick<Props, 'testResultJson'>): Reac
         {result !== null && rawResult !== undefined ? (
           <PreviewBlock title='Raw Result Preview' value={rawResult} />
         ) : null}
-        <ArrayPreviewSection title='Raw Products Preview' items={rawProducts} />
+        <ArrayPreviewSection title='Scraped Items Preview' items={scrapedItems} />
         <ArrayPreviewSection title='Mapped Products Preview' items={mappedProducts} />
         <ArrayPreviewSection title='Mapped Drafts Preview' items={mappedDrafts} />
         <ArrayPreviewSection title='Draft Payloads Preview' items={draftPayloads} />

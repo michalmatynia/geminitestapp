@@ -60,12 +60,12 @@ export const runPlaywrightProgrammableConnectionTest = async ({
     ...sampleInput,
   };
   const mappedProductsFromResult = ({
-    rawProducts,
+    scrapedItems,
   }: {
-    rawProducts: Array<Record<string, unknown>>;
+    scrapedItems: Array<Record<string, unknown>>;
   }) =>
     mapPlaywrightImportProducts(
-      rawProducts,
+      scrapedItems,
       parsePlaywrightFieldMapperJson(connection.playwrightFieldMapperJson)
     );
 
@@ -85,9 +85,10 @@ export const runPlaywrightProgrammableConnectionTest = async ({
       input,
       result: {
         rawResult: automationFlow.rawResult,
+        scrapedItems: automationFlow.scrapedItems,
         rawProducts: automationFlow.rawProducts,
         mappedProducts: mappedProductsFromResult({
-          rawProducts: automationFlow.rawProducts,
+          scrapedItems: automationFlow.scrapedItems,
         }),
         automationFlow: {
           executionMode,
@@ -119,8 +120,9 @@ export const runPlaywrightProgrammableConnectionTest = async ({
     input,
     result: {
       rawResult: result.rawResult,
+      scrapedItems: result.products,
       rawProducts: result.products,
-      mappedProducts: mappedProductsFromResult({ rawProducts: result.products }),
+      mappedProducts: mappedProductsFromResult({ scrapedItems: result.products }),
     },
   };
 };

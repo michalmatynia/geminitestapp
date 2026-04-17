@@ -100,6 +100,7 @@ export const playwrightActionRunRecordSchema = z.object({
   tags: z.array(z.string()),
   request: playwrightActionRunRequestSummarySchema.nullable(),
   codeSnapshot: playwrightActionRunCodeSnapshotSchema.nullable().optional(),
+  scrapedItems: z.array(z.record(z.string(), z.unknown())).optional(),
   result: z.unknown().optional(),
   error: z.string().nullable(),
   artifacts: z.array(playwrightActionRunArtifactSchema),

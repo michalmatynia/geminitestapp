@@ -22,10 +22,10 @@ const legacyApiAwareRequestPrefixRoute = {
   dest: '/apps/studiq-web/$path',
 };
 
-const apiPrefixRewriteRoute = {
+const apiPrefixRoute = {
   src: '^/api(?<path>(?:/.*)?)$',
   dest: '/apps/studiq-web/api$path',
-  continue: true,
+  check: true,
 };
 
 const config = JSON.parse(await fs.readFile(configPath, 'utf8'));
@@ -39,8 +39,10 @@ const existingRouteIndex = routes.findIndex((route) =>
   route?.src === requestPrefixRoute.src && route?.dest === requestPrefixRoute.dest,
 );
 
-const existingApiRewriteRouteIndex = routes.findIndex((route) =>
-  route?.src === apiPrefixRewriteRoute.src && route?.dest === apiPrefixRewriteRoute.dest,
+const existingApiPrefixRouteIndex = routes.findIndex((route) =>
+  route?.src === apiPrefixRoute.src &&
+  route?.dest === apiPrefixRoute.dest &&
+  route?.check === apiPrefixRoute.check,
 );
 
 for (let index = routes.length - 1; index >= 0; index -= 1) {
@@ -49,7 +51,8 @@ for (let index = routes.length - 1; index >= 0; index -= 1) {
     ((route?.src === legacyRequestPrefixRoute.src &&
       route?.dest === legacyRequestPrefixRoute.dest) ||
       (route?.src === legacyApiAwareRequestPrefixRoute.src &&
-        route?.dest === legacyApiAwareRequestPrefixRoute.dest))
+        route?.dest === legacyApiAwareRequestPrefixRoute.dest) ||
+      (route?.src === apiPrefixRoute.src && route?.dest === apiPrefixRoute.dest))
   ) {
     routes.splice(index, 1);
   }
@@ -67,14 +70,14 @@ if (existingRouteIndex === -1) {
   routes.splice(middlewareRouteIndex + 1, 0, requestPrefixRoute);
 }
 
-if (existingApiRewriteRouteIndex === -1) {
-  const rewriteHandleIndex = routes.findIndex((route) => route?.handle === 'rewrite');
+if (existingApiPrefixRouteIndex === -1) {
+  const filesystemHandleIndex = routes.findIndex((route) => route?.handle === 'filesystem');
 
-  if (rewriteHandleIndex === -1) {
-    throw new Error(`Unable to locate rewrite handle in ${configPath}`);
+  if (filesystemHandleIndex === -1) {
+    throw new Error(`Unable to locate filesystem handle in ${configPath}`);
   }
 
-  routes.splice(rewriteHandleIndex + 1, 0, apiPrefixRewriteRoute);
+  routes.splice(filesystemHandleIndex, 0, apiPrefixRoute);
 }
 
 await fs.writeFile(configPath, `${JSON.stringify(config, null, 2)}\n`);

@@ -5,5 +5,5 @@ import { siteRouting } from '@/i18n/routing';
 export default createMiddleware(siteRouting);
 
 export const config = {
-  matcher: ['/((?!api|_next|_vercel|.*\\..*).*)'],
+  matcher: ['/((?!(?:api|apps/studiq-web/api)|_next|_vercel|.*\\..*).*)'],
 };

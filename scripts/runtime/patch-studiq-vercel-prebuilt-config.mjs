@@ -7,8 +7,19 @@ const outputDir = path.resolve(process.cwd(), process.argv[2] ?? '.vercel/output
 const configPath = path.join(outputDir, 'config.json');
 
 const requestPrefixRoute = {
+  src: '^/(?!(?:_vercel|api(?:/|$)|apps/studiq-web)(?:/|$))(?<path>.*)$',
+  dest: '/apps/studiq-web/$path',
+  continue: true,
+};
+
+const legacyRequestPrefixRoute = {
   src: '^/(?!(?:_vercel|apps/studiq-web)(?:/|$))(?<path>.*)$',
   dest: '/apps/studiq-web/$path',
+};
+
+const apiPrefixRewriteRoute = {
+  src: '^/api(?<path>(?:/.*)?)$',
+  dest: '/apps/studiq-web/api$path',
   continue: true,
 };
 
@@ -23,6 +34,20 @@ const existingRouteIndex = routes.findIndex((route) =>
   route?.src === requestPrefixRoute.src && route?.dest === requestPrefixRoute.dest,
 );
 
+const existingApiRewriteRouteIndex = routes.findIndex((route) =>
+  route?.src === apiPrefixRewriteRoute.src && route?.dest === apiPrefixRewriteRoute.dest,
+);
+
+for (let index = routes.length - 1; index >= 0; index -= 1) {
+  const route = routes[index];
+  if (
+    route?.src === legacyRequestPrefixRoute.src &&
+    route?.dest === legacyRequestPrefixRoute.dest
+  ) {
+    routes.splice(index, 1);
+  }
+}
+
 if (existingRouteIndex === -1) {
   const middlewareRouteIndex = routes.findIndex(
     (route) => route?.middlewarePath === '/_middleware',
@@ -33,6 +58,16 @@ if (existingRouteIndex === -1) {
   }
 
   routes.splice(middlewareRouteIndex + 1, 0, requestPrefixRoute);
+}
+
+if (existingApiRewriteRouteIndex === -1) {
+  const rewriteHandleIndex = routes.findIndex((route) => route?.handle === 'rewrite');
+
+  if (rewriteHandleIndex === -1) {
+    throw new Error(`Unable to locate rewrite handle in ${configPath}`);
+  }
+
+  routes.splice(rewriteHandleIndex + 1, 0, apiPrefixRewriteRoute);
 }
 
 await fs.writeFile(configPath, `${JSON.stringify(config, null, 2)}\n`);

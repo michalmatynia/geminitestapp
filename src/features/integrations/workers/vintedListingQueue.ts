@@ -1,11 +1,15 @@
 import 'server-only';
 
-import {
-  processVintedListingJob,
-  type VintedListingJobInput,
-} from '@/features/integrations/services/vinted-listing-service';
+import type { VintedListingJobInput } from '@/features/integrations/services/vinted-listing-service';
 import { createManagedQueue, type ManagedQueue } from '@/shared/lib/queue';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
+type VintedListingServiceModule = {
+  processVintedListingJob: (input: VintedListingJobInput) => Promise<void>;
+};
+
+const loadVintedListingService = async (): Promise<VintedListingServiceModule> =>
+  import('../services/' + 'vinted-listing-service') as Promise<VintedListingServiceModule>;
 
 const queue: ManagedQueue<VintedListingJobInput> =
   createManagedQueue<VintedListingJobInput>({
@@ -17,6 +21,7 @@ const queue: ManagedQueue<VintedListingJobInput> =
       removeOnFail: false,
     },
     processor: async (data: VintedListingJobInput, jobId: string) => {
+      const { processVintedListingJob } = await loadVintedListingService();
       await processVintedListingJob({ ...data, jobId });
       return { ok: true, listingId: data.listingId, action: data.action };
     },

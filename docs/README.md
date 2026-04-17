@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-30'
+last_reviewed: '2026-04-17'
 status: 'active'
 doc_type: 'index'
 scope: 'repo'
@@ -20,6 +20,8 @@ avoid becoming another dumping ground.
 - Deep architecture reference: [`GEMINI.md`](../GEMINI.md)
 - Documentation system and placement rules:
   [`docs/documentation/README.md`](./documentation/README.md)
+- Repository documentation map:
+  [`docs/documentation/repo-documentation-map.md`](./documentation/repo-documentation-map.md)
 
 ## Agent Overlays
 
@@ -58,7 +60,10 @@ avoid becoming another dumping ground.
 - Case Resolver: [`docs/case-resolver/index.md`](./case-resolver/index.md)
 - Validator: [`docs/validator/README.md`](./validator/README.md)
 - Kangur: [`docs/kangur/README.md`](./kangur/README.md)
+- Playwright automation docs: [`docs/playwright/README.md`](./playwright/README.md)
 - StudiQ app shell (Kangur integration): [`docs/kangur/studiq-application.md`](./kangur/studiq-application.md)
+- Standalone StudiQ web workspace and commands:
+  [`apps/studiq-web/README.md`](../apps/studiq-web/README.md)
 - Kangur mobile app runtime and commands: [`apps/mobile/README.md`](../apps/mobile/README.md)
 - Kangur mobile-web workspace boundary: [`apps/mobile-web/README.md`](../apps/mobile-web/README.md)
 - Kangur shared packages:
@@ -82,6 +87,8 @@ These are canonical platform guides.
 - [`docs/platform/api-caching.md`](./platform/api-caching.md)
 - [`docs/platform/data-fetching-caching.md`](./platform/data-fetching-caching.md)
 - [`docs/build/README.md`](./build/README.md)
+- [`docs/build/application-workspaces-and-commands.md`](./build/application-workspaces-and-commands.md)
+- [`docs/build/scanner-smoke-tests.md`](./build/scanner-smoke-tests.md)
 - [`docs/build/bazel.md`](./build/bazel.md)
 - [`docs/build/bun.md`](./build/bun.md)
 - [`docs/platform/bun-support.md`](./platform/bun-support.md)

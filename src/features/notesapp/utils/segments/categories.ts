@@ -6,7 +6,7 @@ export const getCategoryIdsWithDescendants = (
 ): string[] => {
   const collectAllDescendantIds = (node: CategoryWithChildren): string[] => {
     const ids = [node.id];
-    if (node.children && node.children.length > 0) {
+    if (Array.isArray(node.children) && node.children.length > 0) {
       for (const child of node.children) {
         ids.push(...collectAllDescendantIds(child));
       }
@@ -16,21 +16,17 @@ export const getCategoryIdsWithDescendants = (
 
   const findCategory = (cats: CategoryWithChildren[]): CategoryWithChildren | null => {
     for (const cat of cats) {
-      if (cat.id === targetId) {
-        return cat;
-      }
-      if (cat.children && cat.children.length > 0) {
+      if (cat.id === targetId) return cat;
+      if (Array.isArray(cat.children) && cat.children.length > 0) {
         const found = findCategory(cat.children);
-        if (found) return found;
+        if (found !== null) return found;
       }
     }
     return null;
   };
 
   const targetCategory = findCategory(categories);
-  if (!targetCategory) {
-    return [];
-  }
+  if (targetCategory === null) return [];
 
   return collectAllDescendantIds(targetCategory);
 };
@@ -48,9 +44,9 @@ export const buildBreadcrumbPath = (
         path.unshift({ id: cat.id, name: cat.name });
         return true;
       }
-      if (cat.children && cat.children.length > 0) {
+      if (Array.isArray(cat.children) && cat.children.length > 0) {
         const found = findPath(cat.children, targetId);
-        if (found) {
+        if (found === true) {
           path.unshift({ id: cat.id, name: cat.name });
           return true;
         }
@@ -59,11 +55,11 @@ export const buildBreadcrumbPath = (
     return false;
   };
 
-  if (categoryId) {
+  if (categoryId !== null && categoryId !== '') {
     findPath(categories, categoryId);
   }
 
-  if (noteTitle) {
+  if (noteTitle !== null && noteTitle !== '') {
     path.push({ id: null, name: noteTitle, isNote: true });
   }
 

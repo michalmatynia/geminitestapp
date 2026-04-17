@@ -7,13 +7,13 @@ import path from 'path';
 import sharp from 'sharp';
 
 import {
-  createSocialCaptureBatchPlaywrightInstance,
   readPlaywrightEngineArtifact,
   readPlaywrightEngineRun,
   startPlaywrightEngineTask,
   type PlaywrightEngineRunArtifact,
   type PlaywrightEngineRunRecord,
-} from '@/features/playwright/server';
+} from '@/features/playwright/server/runtime';
+import { createSocialCaptureBatchPlaywrightInstance } from '@/features/playwright/server/instances';
 import { uploadToConfiguredStorage } from '@/features/files/server';
 import {
   normalizeKangurSocialImageAddon,
@@ -34,7 +34,7 @@ import {
   KANGUR_SOCIAL_PLAYWRIGHT_CAPTURE_TIMEOUT_MS,
 } from '@/features/kangur/social/shared/social-playwright-capture';
 import { KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY } from '@/features/kangur/appearance/storefront-appearance-settings';
-import { resolvePlaywrightRequestStorageState } from '@/features/playwright/server';
+import { resolvePlaywrightRequestStorageState } from '@/features/playwright/server/request-storage-state';
 
 import {
   findLatestAddonByPresetId,

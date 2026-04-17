@@ -16,13 +16,11 @@ const { sendQuickActionMock, useKangurMobileAiTutorMock } = vi.hoisted(() => ({
 vi.mock('react-native', () => {
   const createPrimitive = (tagName: keyof React.JSX.IntrinsicElements) => {
     return ({
-      accessibilityHint: _accessibilityHint,
       accessibilityLabel,
       accessibilityRole,
       children,
       disabled,
       onPress,
-      style: _style,
       testID,
       ...props
     }: React.PropsWithChildren<

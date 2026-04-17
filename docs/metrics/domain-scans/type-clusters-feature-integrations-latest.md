@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-07'
+last_reviewed: '2026-04-17'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,16 +8,16 @@ canonical: true
 ---
 # Type Cluster Scanner Report
 
-Generated at: 2026-03-26T13:27:22.862Z
+Generated at: 2026-04-17T12:20:27.898Z
 Status: ok
 
 ## Summary
 
-- Files scanned: 7787
-- Exported declarations scanned: 5176
-- Candidate declarations scanned: 5152
-- Exact-shape clusters: 12
-- Near-shape clusters: 5
+- Files scanned: 10655
+- Exported declarations scanned: 6312
+- Candidate declarations scanned: 6292
+- Exact-shape clusters: 9
+- Near-shape clusters: 3
 - Clusters after filters: 1
 - Declarations in clusters: 2
 - Highest risk score: 8
@@ -27,7 +27,7 @@ Status: ok
 
 | Cluster | Kind | Risk | Decls | Domains | Candidate DTO |
 | --- | --- | ---: | ---: | --- | --- |
-| `exact-0006` | exact-shape | 8 | 2 | feature:integrations | TBD |
+| `near-0001` | near-shape | 8 | 2 | feature:integrations | TBD |
 
 ## Initial DTO Consolidation Workflow
 

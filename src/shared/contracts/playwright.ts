@@ -45,6 +45,11 @@ export const playwrightSettingsSchema = z.object({
   proxyProviderPreset: playwrightProxyProviderPresetSchema,
   emulateDevice: z.boolean(),
   deviceName: z.string().optional(),
+  launchCooldownMs: z.number().optional(),
+  prewarmWaitMs: z.number().optional(),
+  postStartUrlWaitMs: z.number().optional(),
+  viewportJitterPx: z.number().optional(),
+  postLoadNudgeEnabled: z.boolean().optional(),
 });
 
 export type PlaywrightSettings = z.infer<typeof playwrightSettingsSchema>;

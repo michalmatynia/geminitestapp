@@ -49,6 +49,11 @@ export const defaultPlaywrightSettings: PlaywrightSettings = {
   proxyProviderPreset: 'custom',
   emulateDevice: false,
   deviceName: 'Desktop Chrome',
+  launchCooldownMs: 0,
+  prewarmWaitMs: 0,
+  postStartUrlWaitMs: 0,
+  viewportJitterPx: 6,
+  postLoadNudgeEnabled: true,
 };
 
 export const playwrightDeviceOptions = [

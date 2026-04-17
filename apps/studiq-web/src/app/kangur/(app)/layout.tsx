@@ -10,7 +10,7 @@ import type { ReactNode } from 'react';
 
 async function KangurAuthBootstrapScript(): Promise<ReactNode> {
   const bootstrapScript = await getKangurAuthBootstrapScript(await headers());
-  if (!bootstrapScript) return null;
+  if (bootstrapScript === null || bootstrapScript === '') return null;
   return <script dangerouslySetInnerHTML={{ __html: safeHtml(bootstrapScript) }} />;
 }
 

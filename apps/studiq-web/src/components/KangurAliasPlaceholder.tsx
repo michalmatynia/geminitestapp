@@ -17,7 +17,7 @@ export default function KangurAliasPlaceholder({
       className='kangur-alias-placeholder'
     >
       <h1 id='kangur-alias-placeholder-title'>{title}</h1>
-      {description ? <p>{description}</p> : null}
+      {description !== undefined && description !== '' ? <p>{description}</p> : null}
       {children}
     </section>
   );

@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-26'
+last_reviewed: '2026-04-17'
 status: 'active'
 doc_type: 'index'
 scope: 'cross-feature'
@@ -25,6 +25,8 @@ is specifically for shared build, CI, and package-manager workflow guidance.
 
 ## Current Docs
 
+- [`application-workspaces-and-commands.md`](./application-workspaces-and-commands.md)
+- [`scanner-smoke-tests.md`](./scanner-smoke-tests.md)
 - [`vercel-deployment.md`](./vercel-deployment.md) — **Vercel deploy config (DO NOT MODIFY without approval)**
 - [`agentic-ci.md`](./agentic-ci.md)
 - [`agentic-engineering.md`](./agentic-engineering.md)
@@ -58,6 +60,10 @@ is specifically for shared build, CI, and package-manager workflow guidance.
 
 ## Related Docs
 
+- Workspace-level StudiQ shell guide:
+  [`../../apps/studiq-web/README.md`](../../apps/studiq-web/README.md)
+- Scanner smoke-test guide:
+  [`./scanner-smoke-tests.md`](./scanner-smoke-tests.md)
 - High-memory build fallback when `npm run build` OOMs:
   `npm run build:hi-mem`
 - Bun build/runtime lane overview:

@@ -1,3 +1,16 @@
+---
+owner: 'Platform Team'
+last_reviewed: '2026-04-17'
+status: 'active'
+doc_type: 'architecture'
+scope: 'feature:playwright'
+canonical: true
+related_components:
+  - 'src/features/playwright'
+  - 'src/app/api/playwright/step-snippet'
+  - 'src/app/api/playwright/action-snippet'
+---
+
 # Playwright step code previews and selector modularity
 
 This document defines the intended contract for Playwright Step Sequencer code previews, modular dynamic fields, and selector registry connectivity.
@@ -112,4 +125,3 @@ The UI can fall back to local preview generation if snippet APIs fail, but it sh
 5. Surface unresolved bindings instead of hiding them.
 6. Keep registry key creation separate from registry override saving.
 7. Prefer shared code generation helpers over duplicating snippet templates in components.
-

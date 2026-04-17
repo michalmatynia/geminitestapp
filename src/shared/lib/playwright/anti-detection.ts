@@ -180,18 +180,41 @@ const isLocalHostname = (hostname: string): boolean => {
 export const resolveChromiumAntiDetectionRuntimeBehavior = ({
   identityProfile,
   startUrl,
+  overrides,
 }: {
   identityProfile: PlaywrightIdentityProfile | null | undefined;
   startUrl: string | null | undefined;
+  overrides?: {
+    prewarmWaitMs?: number | null | undefined;
+    postStartUrlWaitMs?: number | null | undefined;
+    launchCooldownMs?: number | null | undefined;
+  };
 }): ChromiumAntiDetectionRuntimeBehavior => {
   const profile = identityProfile ?? 'default';
   const baseBehavior = CHROMIUM_RUNTIME_BEHAVIORS[profile];
   const normalizedStartUrl = readOptionalTrimmedString(startUrl);
+  const applyOverrides = (
+    behavior: Omit<ChromiumAntiDetectionRuntimeBehavior, 'prewarmUrl'>
+  ): Omit<ChromiumAntiDetectionRuntimeBehavior, 'prewarmUrl'> => {
+    const pickPositive = (
+      value: number | null | undefined,
+      fallback: number
+    ): number =>
+      typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : fallback;
+    return {
+      prewarmWaitMs: pickPositive(overrides?.prewarmWaitMs, behavior.prewarmWaitMs),
+      postStartUrlWaitMs: pickPositive(
+        overrides?.postStartUrlWaitMs,
+        behavior.postStartUrlWaitMs
+      ),
+      launchCooldownMs: pickPositive(overrides?.launchCooldownMs, behavior.launchCooldownMs),
+    };
+  };
 
   if (!normalizedStartUrl || profile === 'default') {
     return {
       prewarmUrl: null,
-      ...baseBehavior,
+      ...applyOverrides(baseBehavior),
     };
   }
 
@@ -203,7 +226,7 @@ export const resolveChromiumAntiDetectionRuntimeBehavior = ({
     ) {
       return {
         prewarmUrl: null,
-        ...baseBehavior,
+        ...applyOverrides(baseBehavior),
       };
     }
 
@@ -212,12 +235,12 @@ export const resolveChromiumAntiDetectionRuntimeBehavior = ({
 
     return {
       prewarmUrl: shouldPrewarm ? `${parsed.origin}/` : null,
-      ...baseBehavior,
+      ...applyOverrides(baseBehavior),
     };
   } catch {
     return {
       prewarmUrl: null,
-      ...baseBehavior,
+      ...applyOverrides(baseBehavior),
     };
   }
 };

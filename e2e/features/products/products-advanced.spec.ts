@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Locator, type Page } from '@playwright/test';
 
 test.describe.configure({ timeout: 60_000 });
 
@@ -72,6 +72,21 @@ test.describe('Products Management - Advanced', () => {
     const productModal = page.getByRole('dialog', { name: 'Create Product' }).last();
     await expect(productModal.locator('input#sku')).toHaveValue(sku, { timeout: 15_000 });
     return productModal;
+  };
+
+  const selectModalCatalog = async (page: Page, modal: Locator, catalogLabel: string) => {
+    await modal.getByRole('tab', { name: 'Other' }).click();
+    const catalogTrigger = modal.getByRole('button', { name: /select catalogs|mock catalog/i }).first();
+    await expect(catalogTrigger).toBeVisible({ timeout: 15_000 });
+    await catalogTrigger.click();
+    await page.getByRole('menuitemcheckbox', { name: catalogLabel }).click();
+    await page.keyboard.press('Escape');
+    await modal.getByRole('tab', { name: 'General' }).click();
+  };
+
+  const replaceInputValueSequentially = async (locator: Locator, value: string) => {
+    await locator.fill('');
+    await locator.pressSequentially(value);
   };
 
   async function createTestProduct(page: Page, sku: string, name: string) {
@@ -212,6 +227,121 @@ test.describe('Products Management - Advanced', () => {
     const updatedRow = page.locator('tr').filter({ hasText: sku }).first();
     await expect(updatedRow).toBeVisible({ timeout: 15000 });
     await expect(updatedRow).toContainText(updatedName);
+  });
+
+  test('keeps Polish title synced to English until Polish is edited manually', async ({ page }) => {
+    const catalogId = 'catalog-sync';
+    const catalogLabel = 'Mock Catalog';
+    const languages = [
+      {
+        id: 'lang-en',
+        code: 'en',
+        name: 'English',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      },
+      {
+        id: 'lang-pl',
+        code: 'pl',
+        name: 'Polish',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      },
+    ];
+
+    await page.route('**/api/v2/products/entities/catalogs', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([
+          {
+            id: catalogId,
+            name: catalogLabel,
+            isDefault: true,
+            languageIds: ['en', 'pl'],
+            defaultLanguageId: 'en',
+            defaultPriceGroupId: null,
+            priceGroupIds: [],
+            createdAt: '2026-01-01T00:00:00.000Z',
+            updatedAt: '2026-01-01T00:00:00.000Z',
+          },
+        ]),
+      });
+    });
+
+    await page.route('**/api/v2/metadata/languages', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(languages),
+      });
+    });
+
+    await page.route(`**/api/v2/products/categories/tree?catalogId=${catalogId}`, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([]),
+      });
+    });
+
+    await page.route('**/api/v2/products/title-terms**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([]),
+      });
+    });
+
+    await page.route('**/api/v2/products/metadata/price-groups', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([]),
+      });
+    });
+
+    const modal = await openCreateProductForm(page, `SYNC${Date.now()}`);
+    await selectModalCatalog(page, modal, catalogLabel);
+
+    const nameTabs = modal.getByRole('tablist', { name: 'Product name language tabs' });
+    const englishInput = modal.getByRole('textbox', { name: 'English Name' });
+    const polishInput = modal.getByRole('textbox', { name: 'Polish Name' });
+
+    await expect(englishInput).toBeVisible({ timeout: 15_000 });
+
+    await replaceInputValueSequentially(
+      englishInput,
+      'Parameter Name | 4 cm | Metal | Anime Pin | Attack On Titan'
+    );
+    await nameTabs.getByRole('tab', { name: 'Polish' }).click();
+    await expect(polishInput).toHaveValue(
+      'Parameter Name | 4 cm | Metal | Anime Pin | Attack On Titan',
+      { timeout: 15_000 }
+    );
+
+    await nameTabs.getByRole('tab', { name: 'English' }).click();
+    await replaceInputValueSequentially(
+      englishInput,
+      'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan'
+    );
+    await nameTabs.getByRole('tab', { name: 'Polish' }).click();
+    await expect(polishInput).toHaveValue(
+      'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan',
+      { timeout: 15_000 }
+    );
+
+    await polishInput.fill('Oddzial Zwiadowcow | 4 cm | Metal | Anime Pin | Attack On Titan');
+    await nameTabs.getByRole('tab', { name: 'English' }).click();
+    await replaceInputValueSequentially(
+      englishInput,
+      'Survey Corps | 7 cm | Plastic | Anime Keychain | Naruto'
+    );
+    await nameTabs.getByRole('tab', { name: 'Polish' }).click();
+    await expect(polishInput).toHaveValue(
+      'Oddzial Zwiadowcow | 7 cm | Plastic | Anime Keychain | Naruto',
+      { timeout: 15_000 }
+    );
   });
 
   test('should manage product parameters', async ({ page }) => {

@@ -75,6 +75,8 @@ export default defineConfig({
               process.env['PORT'] ||
               resolvedBaseUrl.port ||
               (resolvedBaseUrl.protocol === 'https:' ? '443' : '80'),
+            SKIP_NEXT_NODE_INSTRUMENTATION:
+              process.env['SKIP_NEXT_NODE_INSTRUMENTATION'] || '1',
             ...(nextDistDir
               ? {
                   NEXT_DIST_DIR: nextDistDir,

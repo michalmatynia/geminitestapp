@@ -22,8 +22,8 @@ vi.mock('sharp', () => ({
   default: (...args: unknown[]) => mocks.sharpMock(...args),
 }));
 
-vi.mock('@/features/playwright/server', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/features/playwright/server')>();
+vi.mock('@/features/playwright/server/runtime', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/playwright/server/runtime')>();
   return {
     ...actual,
     startPlaywrightEngineTask: (input: Record<string, unknown>) =>
@@ -35,14 +35,17 @@ vi.mock('@/features/playwright/server', async (importOriginal) => {
       mocks.readPlaywrightNodeRunMock(...args),
     readPlaywrightEngineArtifact: (...args: unknown[]) =>
       mocks.readPlaywrightNodeArtifactMock(...args),
-    createSocialCaptureBatchPlaywrightInstance: (input: Record<string, unknown> = {}) => ({
-      kind: 'social_capture_batch',
-      label: 'Kangur social batch capture',
-      tags: ['kangur', 'social', 'capture', 'batch'],
-      ...input,
-    }),
   };
 });
+
+vi.mock('@/features/playwright/server/instances', () => ({
+  createSocialCaptureBatchPlaywrightInstance: (input: Record<string, unknown> = {}) => ({
+    kind: 'social_capture_batch',
+    label: 'Kangur social batch capture',
+    tags: ['kangur', 'social', 'capture', 'batch'],
+    ...input,
+  }),
+}));
 
 vi.mock('@/features/files/server', () => ({
   getDiskPathFromPublicPath: (...args: unknown[]) =>

@@ -22,7 +22,32 @@ import {
   installChromiumAntiDetectionInitScript,
 } from '@/shared/lib/playwright/anti-detection';
 import { launchPlaywrightBrowser } from '@/shared/lib/playwright/browser-launch';
+import { defaultPlaywrightSettings } from '@/shared/lib/playwright/settings';
 import { safeClearTimeout, safeSetTimeout, type SafeTimerId } from '@/shared/lib/timers';
+
+const pickDelayBetween = (min: number, max: number): number => {
+  const lo = Math.max(0, Math.trunc(Math.min(min, max)));
+  const hi = Math.max(0, Math.trunc(Math.max(min, max)));
+  if (lo === hi) return lo;
+  return lo + Math.floor(Math.random() * (hi - lo + 1));
+};
+
+const sleepMs = (ms: number): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve, Math.max(0, Math.trunc(ms))));
+
+const simulateAddressBarTyping = async (url: string): Promise<void> => {
+  const perCharDelay = pickDelayBetween(
+    defaultPlaywrightSettings.inputDelayMin,
+    defaultPlaywrightSettings.inputDelayMax
+  );
+  const typingDurationMs = url.length * perCharDelay;
+  const preEnterReviewMs = pickDelayBetween(
+    defaultPlaywrightSettings.actionDelayMin,
+    defaultPlaywrightSettings.actionDelayMax
+  );
+  if (typingDurationMs > 0) await sleepMs(typingDurationMs);
+  if (preEnterReviewMs > 0) await sleepMs(preEnterReviewMs);
+};
 
 const LIVE_SCRIPTER_SESSION_IDLE_MS = 5 * 60 * 1000;
 const LIVE_SCRIPTER_CONCURRENT_SESSION_CAP = 3;
@@ -30,6 +55,7 @@ const LIVE_SCRIPTER_MAX_SELECTOR_DEPTH = 6;
 const LIVE_SCRIPTER_MAX_FRAME_DIMENSION = 1600;
 const LIVE_SCRIPTER_BRIDGE_KEY = '__geminitestappPlaywrightLiveScripterBridge';
 const LIVE_SCRIPTER_STATE_KEY = '__geminitestappPlaywrightLiveScripterState';
+const LIVE_SCRIPTER_DEV_FIXTURE_PATH = '/__playwright/live-scripter-fixture';
 
 type LiveScripterSocket = WebSocket;
 
@@ -166,12 +192,15 @@ const sanitizeUrl = (value: string): string => {
   }
 
   const hostname = parsed.hostname.trim().toLowerCase();
-  if (
+  const isLoopbackHost =
     hostname === 'localhost' ||
     hostname === '127.0.0.1' ||
     hostname === '::1' ||
-    hostname.endsWith('.localhost')
-  ) {
+    hostname.endsWith('.localhost');
+  const isAllowedDevFixtureLoopbackUrl =
+    process.env['NODE_ENV'] !== 'production' && parsed.pathname === LIVE_SCRIPTER_DEV_FIXTURE_PATH;
+
+  if (isLoopbackHost && !isAllowedDevFixtureLoopbackUrl) {
     throw forbiddenError('Live scripter does not allow loopback URLs.');
   }
 
@@ -426,10 +455,13 @@ const handleClientMessage = async (
       publishPickedElement(session, element);
       return;
     }
-    case 'navigate':
-      await session.page.goto(sanitizeUrl(message.url), { waitUntil: 'domcontentloaded' });
+    case 'navigate': {
+      const targetUrl = sanitizeUrl(message.url);
+      await simulateAddressBarTyping(targetUrl);
+      await session.page.goto(targetUrl, { waitUntil: 'domcontentloaded' });
       await publishNavigation(session);
       return;
+    }
     case 'back':
       await session.page.goBack({ waitUntil: 'domcontentloaded' }).catch(() => null);
       await publishNavigation(session);
@@ -604,6 +636,7 @@ export const createLiveScripterSession = async (input: {
   });
 
   try {
+    await simulateAddressBarTyping(sanitizedUrl);
     await page.goto(sanitizedUrl, { waitUntil: 'domcontentloaded' });
   } catch (error) {
     await disposeLiveScripterSession(session.id);

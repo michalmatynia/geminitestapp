@@ -3,7 +3,6 @@ import path from 'node:path';
 
 import { buildScanOutput } from './lib/scan-output.mjs';
 import { writeMetricsMarkdownFile } from '../docs/metrics-frontmatter.mjs';
-import { writeManagedGeneratedDoc } from '../docs/generated-doc-frontmatter.mjs';
 
 import {
   SOURCE_EXTENSIONS,
@@ -120,7 +119,7 @@ const writeOutputs = async (report) => {
 
     await fs.writeFile(latestCsvPath, buildCsv(report.clusters), 'utf8');
 
-    await writeManagedGeneratedDoc({
+    await writeMetricsMarkdownFile({
       root,
       targetPath: latestPlanMdPath,
       content: buildPlanMarkdown(report.clusters, report.filters),

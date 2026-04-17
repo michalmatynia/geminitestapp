@@ -55,7 +55,7 @@ const buildSelectorBinding = (
   };
 };
 
-type AppendLiveScripterStepInput = {
+export type AppendLiveScripterStepInput = {
   name: string;
   description?: string | null;
   type: PlaywrightStepType;

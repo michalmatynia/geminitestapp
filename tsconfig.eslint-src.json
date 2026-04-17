@@ -9,7 +9,9 @@
     "src/**/*.tsx",
     "src/**/*.mts",
     "src/**/*.cts",
-    "src/**/*.d.ts"
+    "src/**/*.d.ts",
+    "apps/**/*.ts",
+    "apps/**/*.tsx"
   ],
   "exclude": [
     "node_modules",
@@ -22,4 +24,3 @@
     "bazel-testlogs",
     "tmp"
   ]
-}

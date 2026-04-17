@@ -123,6 +123,10 @@
       "mode": "complete_direct_files"
     },
     {
+      "path": "docs/playwright",
+      "mode": "complete_direct_files"
+    },
+    {
       "path": "docs/prompt-exploder",
       "mode": "complete_direct_files"
     },
@@ -281,10 +285,13 @@
     "docs/CLAUDE.md",
     "docs/COPILOT.md",
     "docs/documentation/README.md",
+    "docs/documentation/repo-documentation-map.md",
     "docs/platform/README.md",
     "docs/platform/bun-support.md",
     "docs/platform/testing-policy.md",
     "docs/build/README.md",
+    "docs/build/application-workspaces-and-commands.md",
+    "docs/build/scanner-smoke-tests.md",
     "docs/build/agentic-ci.md",
     "docs/build/agentic-engineering.md",
     "docs/build/bazel-buildbuddy.md",
@@ -310,6 +317,11 @@
     "docs/plans/README.md",
     "docs/decisions/README.md",
     "docs/runbooks/README.md",
+    "docs/playwright/README.md",
+    "docs/playwright/action-run-history.md",
+    "docs/playwright/action-run-history-schema.md",
+    "docs/playwright/step-code-modularity.md",
+    "docs/playwright/step-sequencer-integration-checklist.md",
     "docs/metrics/accessibility-component-policies-latest.md",
     "docs/metrics/accessibility-route-crawl-latest.md",
     "docs/metrics/accessibility-smoke-latest.md",

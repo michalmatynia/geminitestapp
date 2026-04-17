@@ -3,9 +3,9 @@ import 'server-only';
 import { type ObjectId } from 'mongodb';
 
 import { BASE_INTEGRATION_SLUGS } from '@/features/integrations/constants/slugs';
-import { getProductListingRepository } from '@/features/integrations/server';
-import { integrationService } from '@/features/integrations/server';
-import { resolveBaseConnectionToken } from '@/features/integrations/server';
+import { getProductListingRepository } from '@/features/integrations/services/product-listing-repository';
+import { integrationService } from '@/features/integrations/services/integration-service';
+import { resolveBaseConnectionToken } from '@/features/integrations/services/base-token-resolver';
 import { fetchBaseProductDetails } from '@/features/integrations/services/imports/base-client';
 import { extractBaseImageUrls } from '@/features/integrations/services/imports/base-mapper-utils';
 import type { ProductListingExportEvent, ProductListing } from '@/shared/contracts/integrations/listings';

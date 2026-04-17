@@ -13,6 +13,20 @@ const serializeFallbackPayload = (value: unknown): string => {
   }
 };
 
+const writeServerFallback = (prefix: string, value: unknown): void => {
+  try {
+    // eslint-disable-next-line no-console
+    console.error(prefix, value);
+  } catch {
+    try {
+      // eslint-disable-next-line no-console
+      console.error(`${prefix} ${serializeFallbackPayload(value)}`);
+    } catch {
+      // No-op fallback.
+    }
+  }
+};
+
 export const reportObservabilityInternalError = (
   error: unknown,
   context: InternalObservabilityErrorContext
@@ -23,18 +37,5 @@ export const reportObservabilityInternalError = (
   }
 
   const prefix = `[${context.source}] ${context.action} failed`;
-  try {
-    process.stderr.write(
-      `${prefix} ${serializeFallbackPayload({
-        error,
-        context,
-      })}\n`
-    );
-  } catch {
-    try {
-      process.stderr.write(`${prefix} ${serializeFallbackPayload(error)}\n`);
-    } catch {
-      // No-op fallback.
-    }
-  }
+  writeServerFallback(prefix, { error, context });
 };

@@ -1,3 +1,15 @@
+---
+owner: 'Platform Team'
+last_reviewed: '2026-04-17'
+status: 'active'
+doc_type: 'overview'
+scope: 'feature:playwright'
+canonical: true
+related_components:
+  - 'src/features/playwright'
+  - 'src/app/api/playwright'
+---
+
 # Playwright Action Run History
 
 The Playwright Step Sequencer run-history surface is available at:

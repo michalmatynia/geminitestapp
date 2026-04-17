@@ -110,7 +110,12 @@ export const arePlaywrightSettingsEqual = (
     left.proxySessionMode === right.proxySessionMode &&
     left.proxyProviderPreset === right.proxyProviderPreset &&
     left.emulateDevice === right.emulateDevice &&
-    left.deviceName === right.deviceName
+    left.deviceName === right.deviceName &&
+    (left.launchCooldownMs ?? 0) === (right.launchCooldownMs ?? 0) &&
+    (left.prewarmWaitMs ?? 0) === (right.prewarmWaitMs ?? 0) &&
+    (left.postStartUrlWaitMs ?? 0) === (right.postStartUrlWaitMs ?? 0) &&
+    (left.viewportJitterPx ?? 0) === (right.viewportJitterPx ?? 0) &&
+    (left.postLoadNudgeEnabled ?? true) === (right.postLoadNudgeEnabled ?? true)
   );
 };
 

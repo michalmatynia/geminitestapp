@@ -1,5 +1,3 @@
-export const runtime = 'nodejs';
-
 import { apiHandler } from '@/shared/lib/api/api-handler';
 
 import { POST_handler, liveScripterStartRequestSchema } from './handler';

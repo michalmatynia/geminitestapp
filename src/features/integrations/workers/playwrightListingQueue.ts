@@ -1,9 +1,6 @@
 import 'server-only';
 
-import {
-  processPlaywrightListingJob,
-  type PlaywrightListingJobInput as _PlaywrightListingJobInput,
-} from '@/features/integrations/services/playwright-listing-service';
+import type { PlaywrightListingJobInput as _PlaywrightListingJobInput } from '@/features/integrations/services/playwright-listing-service';
 import { createManagedQueue, type ManagedQueue } from '@/shared/lib/queue';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
@@ -15,6 +12,15 @@ type PlaywrightListingQueueJobData = {
   browserMode?: 'connection_default' | 'headless' | 'headed';
 };
 
+type PlaywrightListingServiceModule = {
+  processPlaywrightListingJob: (
+    input: PlaywrightListingQueueJobData & { jobId?: string }
+  ) => Promise<void>;
+};
+
+const loadPlaywrightListingService = async (): Promise<PlaywrightListingServiceModule> =>
+  import('../services/' + 'playwright-listing-service') as Promise<PlaywrightListingServiceModule>;
+
 const queue: ManagedQueue<PlaywrightListingQueueJobData> =
   createManagedQueue<PlaywrightListingQueueJobData>({
     name: 'playwright-programmable-listings',
@@ -25,6 +31,7 @@ const queue: ManagedQueue<PlaywrightListingQueueJobData> =
       removeOnFail: false,
     },
     processor: async (data: PlaywrightListingQueueJobData, jobId: string) => {
+      const { processPlaywrightListingJob } = await loadPlaywrightListingService();
       await processPlaywrightListingJob({ ...data, jobId });
       return { ok: true, listingId: data.listingId, action: data.action };
     },

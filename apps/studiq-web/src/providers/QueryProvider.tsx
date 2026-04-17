@@ -11,9 +11,7 @@ const getQueryClient = (): QueryClient => {
   if (typeof window === 'undefined') {
     return new QueryClient();
   }
-  if (!browserQueryClient) {
-    browserQueryClient = new QueryClient();
-  }
+  browserQueryClient ??= new QueryClient();
   return browserQueryClient;
 };
 

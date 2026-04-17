@@ -4,11 +4,7 @@ import {
   DEFAULT_TRADERA_SYSTEM_SETTINGS,
   TRADERA_SETTINGS_KEYS,
 } from '@/features/integrations/constants/tradera';
-import { findProductListingByIdAcrossProviders } from '@/features/integrations/server';
-import {
-  findDueTraderaRelistListingIds,
-  shouldRunTraderaRelistScheduler,
-} from '@/features/integrations/services/tradera-listing-service';
+import { findProductListingByIdAcrossProviders } from '@/features/integrations/services/product-listing-repository';
 import { getSettingValue } from '@/shared/lib/ai/server-settings';
 import { createManagedQueue } from '@/shared/lib/queue';
 import type { ScheduledTickJobData } from '@/shared/lib/queue/scheduler-queue-types';
@@ -20,6 +16,15 @@ import type { Queue, RepeatableJob } from 'bullmq';
 
 const SCHEDULER_QUEUE_NAME = 'tradera-relist-scheduler';
 const SCHEDULER_REPEAT_JOB_ID = 'tradera-relist-scheduler-tick';
+
+type TraderaRelistSchedulerServiceModule = {
+  findDueTraderaRelistListingIds: (limit: number) => Promise<string[]>;
+  shouldRunTraderaRelistScheduler: () => Promise<boolean>;
+};
+
+const loadTraderaRelistSchedulerService =
+  async (): Promise<TraderaRelistSchedulerServiceModule> =>
+    import('../services/' + 'tradera-listing-service') as Promise<TraderaRelistSchedulerServiceModule>;
 
 const parseMs = (value: string | null, fallback: number): number => {
   const parsed = Number(value);
@@ -52,6 +57,10 @@ const queue = createManagedQueue<ScheduledTickJobData>({
     removeOnFail: false,
   },
   processor: async () => {
+    const {
+      shouldRunTraderaRelistScheduler,
+      findDueTraderaRelistListingIds,
+    } = await loadTraderaRelistSchedulerService();
     const enabled = await shouldRunTraderaRelistScheduler();
     if (enabled === false) return { scheduled: false, count: 0 };
 
@@ -145,6 +154,8 @@ export const startTraderaRelistSchedulerQueue = (): void => {
 
   const runStartup = async (): Promise<void> => {
     try {
+      const { shouldRunTraderaRelistScheduler } =
+        await loadTraderaRelistSchedulerService();
       const enabled = await shouldRunTraderaRelistScheduler();
       if (enabled === false) {
         await unregisterRepeatScheduler();

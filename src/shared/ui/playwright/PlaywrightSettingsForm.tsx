@@ -302,6 +302,100 @@ function HumanizeSection(): ReactElement {
   );
 }
 
+function StartupCadenceSection(): ReactElement {
+  const { settings, setSettings } = usePlaywrightSettings();
+  return (
+    <FormSection variant='subtle-compact' className='p-3 space-y-3'>
+      <FormField label='Startup cadence (ms)'>
+        <Hint variant='subtle'>
+          Pre-launch and post-navigation pauses. Leave at <code>0</code> to use the identity profile
+          default.
+        </Hint>
+      </FormField>
+      <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-3`}>
+        <FormField label='Launch cooldown'>
+          <Input
+            type='number'
+            className='h-9'
+            value={settings.launchCooldownMs ?? 0}
+            onChange={(event: ChangeEvent<HTMLInputElement>): void =>
+              setSettings((prev: PlaywrightSettings) => ({
+                ...prev,
+                launchCooldownMs: toNumber(event.target.value, prev.launchCooldownMs ?? 0),
+              }))
+            }
+            aria-label='Launch cooldown (ms)'
+            title='Launch cooldown (ms)'
+          />
+        </FormField>
+        <FormField label='Prewarm wait'>
+          <Input
+            type='number'
+            className='h-9'
+            value={settings.prewarmWaitMs ?? 0}
+            onChange={(event: ChangeEvent<HTMLInputElement>): void =>
+              setSettings((prev: PlaywrightSettings) => ({
+                ...prev,
+                prewarmWaitMs: toNumber(event.target.value, prev.prewarmWaitMs ?? 0),
+              }))
+            }
+            aria-label='Prewarm wait (ms)'
+            title='Prewarm wait (ms)'
+          />
+        </FormField>
+        <FormField label='Post start-URL wait'>
+          <Input
+            type='number'
+            className='h-9'
+            value={settings.postStartUrlWaitMs ?? 0}
+            onChange={(event: ChangeEvent<HTMLInputElement>): void =>
+              setSettings((prev: PlaywrightSettings) => ({
+                ...prev,
+                postStartUrlWaitMs: toNumber(event.target.value, prev.postStartUrlWaitMs ?? 0),
+              }))
+            }
+            aria-label='Post start-URL wait (ms)'
+            title='Post start-URL wait (ms)'
+          />
+        </FormField>
+      </div>
+      <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2`}>
+        <FormField label='Viewport jitter (px)'>
+          <Input
+            type='number'
+            className='h-9'
+            value={settings.viewportJitterPx ?? 0}
+            onChange={(event: ChangeEvent<HTMLInputElement>): void =>
+              setSettings((prev: PlaywrightSettings) => ({
+                ...prev,
+                viewportJitterPx: toNumber(event.target.value, prev.viewportJitterPx ?? 0),
+              }))
+            }
+            aria-label='Viewport jitter (px)'
+            title='Viewport jitter (px)'
+          />
+          <Hint variant='subtle'>
+            Randomly shifts context viewport by ±N px per launch to vary fingerprint.
+          </Hint>
+        </FormField>
+        <ToggleRow
+          label='Post-load cursor nudge'
+          description='Drift the cursor to a natural resting position after navigation.'
+          checked={settings.postLoadNudgeEnabled !== false}
+          onCheckedChange={(checked: boolean): void =>
+            setSettings((prev: PlaywrightSettings) => ({
+              ...prev,
+              postLoadNudgeEnabled: checked,
+            }))
+          }
+          variant='switch'
+          className='border-none bg-transparent p-0 hover:bg-transparent'
+        />
+      </div>
+    </FormSection>
+  );
+}
+
 function DelayInputs(props: {
   label: string;
   minKey: keyof PlaywrightSettings;
@@ -488,6 +582,8 @@ function AdvancedSettingsSection(): ReactElement {
         <DelayInputs label='Click delay' minKey='clickDelayMin' maxKey='clickDelayMax' />
         <DelayInputs label='Input delay' minKey='inputDelayMin' maxKey='inputDelayMax' />
         <DelayInputs label='Action delay' minKey='actionDelayMin' maxKey='actionDelayMax' />
+
+        <StartupCadenceSection />
 
         <ProxySection />
       </div>

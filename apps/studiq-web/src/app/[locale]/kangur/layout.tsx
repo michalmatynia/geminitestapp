@@ -1,6 +1,5 @@
+import React, { type ReactNode } from 'react';
 import SharedKangurLayout from '../../kangur/layout';
-
-import type { ReactNode } from 'react';
 
 export default function LocalizedKangurLayout({
   children,

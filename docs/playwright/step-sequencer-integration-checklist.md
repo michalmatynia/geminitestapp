@@ -1,3 +1,15 @@
+---
+owner: 'Platform Team'
+last_reviewed: '2026-04-17'
+status: 'active'
+doc_type: 'reference'
+scope: 'feature:playwright'
+canonical: true
+related_components:
+  - 'src/features/playwright'
+  - 'src/app/api/playwright'
+---
+
 # Playwright Step Sequencer history and code-preview integration checklist
 
 Use this checklist when reviewing or extending the Playwright Step Sequencer run-history and semantic-code-preview work.
@@ -70,4 +82,3 @@ Use this checklist when reviewing or extending the Playwright Step Sequencer run
 - Add diffing between retained snapshot selectors and current registry selectors.
 - Add retention policy controls if action-run volume grows.
 - Add per-run replay from retained step definitions once replay safety boundaries are defined.
-

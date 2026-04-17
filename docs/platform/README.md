@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-26'
+last_reviewed: '2026-04-17'
 status: 'active'
 doc_type: 'index'
 scope: 'platform'
@@ -46,10 +46,10 @@ onramp.
 - [`migration-checklist.md`](./migration-checklist.md)
 - [`bun-support.md`](./bun-support.md)
 
-### Scan Reports
-- [`repo-deep-scan-2026-03-25.md`](./repo-deep-scan-2026-03-25.md) — dated
-  repository scan and remediation snapshot; use `GEMINI.md` for the current
-  high-level architecture reference
+### Retained Historical Snapshot
+- [`repo-deep-scan-2026-03-25.md`](./repo-deep-scan-2026-03-25.md) — archived
+  repository scan and remediation snapshot; use `GEMINI.md` and the maintained
+  hubs above for current guidance
 
 ## Root Compatibility Stubs
 

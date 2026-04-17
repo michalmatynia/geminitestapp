@@ -6,7 +6,10 @@ import React, { useEffect, useMemo, useState } from 'react';
 
 import { updateProduct } from '@/features/products/api';
 import { useProductImagePreview } from '@/features/products/context/ProductImagePreviewContext';
-import type { ProductWithImages } from '@/shared/contracts/products/product';
+import {
+  normalizeProductNotes,
+  type ProductWithImages,
+} from '@/shared/contracts/products/product';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { AppModal } from '@/shared/ui/feedback.public';
 import { FormActions } from '@/shared/ui/FormActions';
@@ -102,6 +105,17 @@ const mergeProductIntoListCache = (
   return cacheValue;
 };
 
+const applySavedProductNoteOverride = (
+  savedProduct: ProductWithImages,
+  noteOverride?: ProductNoteValue
+): ProductWithImages =>
+  noteOverride === undefined
+    ? savedProduct
+    : {
+        ...savedProduct,
+        notes: normalizeProductNotes(noteOverride),
+      };
+
 export const ProductImageCell = React.memo(({
   imageUrl,
   productId,
@@ -129,12 +143,16 @@ export const ProductImageCell = React.memo(({
     }
   }, [noteModalOpen, resolvedNote]);
 
-  const syncSavedProduct = (savedProduct: ProductWithImages): void => {
+  const syncSavedProduct = (
+    savedProduct: ProductWithImages,
+    noteOverride?: ProductNoteValue
+  ): void => {
+    const mergedSavedProduct = applySavedProductNoteOverride(savedProduct, noteOverride);
     queryClient.setQueriesData({ queryKey: QUERY_KEYS.products.lists() }, (old: ProductListCacheValue) =>
-      mergeProductIntoListCache(old, savedProduct)
+      mergeProductIntoListCache(old, mergedSavedProduct)
     );
-    queryClient.setQueryData(QUERY_KEYS.products.detail(savedProduct.id), savedProduct);
-    queryClient.setQueryData(QUERY_KEYS.products.detailEdit(savedProduct.id), savedProduct);
+    queryClient.setQueryData(QUERY_KEYS.products.detail(savedProduct.id), mergedSavedProduct);
+    queryClient.setQueryData(QUERY_KEYS.products.detailEdit(savedProduct.id), mergedSavedProduct);
   };
 
   const saveNote = async (options: { closeAfter?: boolean } = {}): Promise<void> => {
@@ -151,12 +169,13 @@ export const ProductImageCell = React.memo(({
 
     try {
       setIsSavingNote(true);
+      const nextNotes = nextText
+        ? { text: nextText, color: resolvedNote.color }
+        : null;
       const savedProduct = await updateProduct(productId, {
-        notes: nextText
-          ? { text: nextText, color: resolvedNote.color }
-          : { text: null, color: null },
+        notes: nextNotes ?? { text: null, color: null },
       } as Partial<ProductWithImages>);
-      syncSavedProduct(savedProduct);
+      syncSavedProduct(savedProduct, nextNotes);
       toast(nextText ? 'Product note updated' : 'Product note removed', { variant: 'success' });
       if (options.closeAfter || !nextText) {
         setNoteModalOpen(false);

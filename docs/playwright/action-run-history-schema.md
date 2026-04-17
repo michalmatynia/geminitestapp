@@ -1,3 +1,15 @@
+---
+owner: 'Platform Team'
+last_reviewed: '2026-04-17'
+status: 'active'
+doc_type: 'reference'
+scope: 'feature:playwright'
+canonical: true
+related_components:
+  - 'src/features/playwright'
+  - 'src/app/api/playwright/action-runs'
+---
+
 # Playwright action-run history schema reference
 
 This reference describes the retained MongoDB data model used by Playwright Step Sequencer action-run history.
@@ -126,4 +138,3 @@ The repository should support efficient queries for:
 5. Preserve code snapshots exactly as generated at execution time.
 6. Do not rewrite retained snapshots from current selector registry values.
 7. Treat recorder failures as observability failures, not execution failures.
-

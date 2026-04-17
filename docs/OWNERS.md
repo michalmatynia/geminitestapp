@@ -44,6 +44,7 @@ allowlist instead of a typed subfolder such as `docs/platform/`,
 | AI Paths | AI Paths Team | Platform Operations | Monthly |
 | Prompt Exploder | Prompt Exploder Team | Platform Operations | Monthly |
 | Kangur | Kangur Team | Platform Team | Monthly |
+| Playwright automation | Platform Team | QA / Platform Operations | Monthly |
 | Validator | Products / Platform Team | Platform Team | Monthly |
 
 ## Metadata Contract

@@ -233,7 +233,7 @@ describe('ProductFormScans', () => {
       </QueryClientProvider>
     );
 
-    expect(await screen.findByText('Product ASIN filled from Amazon scan.')).toBeInTheDocument();
+    expect((await screen.findAllByText('Product ASIN filled from Amazon scan.'))[0]).toBeInTheDocument();
     expect(screen.getByText('Amazon title')).toBeInTheDocument();
     expect(screen.getByText('ASIN B000123456 · Price $10.99')).toBeInTheDocument();
     await waitFor(() => {

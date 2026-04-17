@@ -1,9 +1,6 @@
 import 'server-only';
 
-import {
-  processTraderaListingJob,
-  type TraderaListingJobInput as _TraderaListingJobInput,
-} from '@/features/integrations/services/tradera-listing-service';
+import type { TraderaListingJobInput as _TraderaListingJobInput } from '@/features/integrations/services/tradera-listing-service';
 import { createManagedQueue, type ManagedQueue } from '@/shared/lib/queue';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
@@ -16,6 +13,15 @@ type TraderaListingQueueJobData = {
   selectorProfile?: string;
 };
 
+type TraderaListingServiceModule = {
+  processTraderaListingJob: (
+    input: TraderaListingQueueJobData & { jobId?: string }
+  ) => Promise<void>;
+};
+
+const loadTraderaListingService = async (): Promise<TraderaListingServiceModule> =>
+  import('../services/' + 'tradera-listing-service') as Promise<TraderaListingServiceModule>;
+
 const queue: ManagedQueue<TraderaListingQueueJobData> =
   createManagedQueue<TraderaListingQueueJobData>({
     name: 'tradera-listings',
@@ -26,6 +32,7 @@ const queue: ManagedQueue<TraderaListingQueueJobData> =
       removeOnFail: false,
     },
     processor: async (data: TraderaListingQueueJobData, jobId: string) => {
+      const { processTraderaListingJob } = await loadTraderaListingService();
       await processTraderaListingJob({ ...data, jobId });
       return { ok: true, listingId: data.listingId, action: data.action };
     },

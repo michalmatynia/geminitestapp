@@ -33,7 +33,7 @@ export function useNoteTags(notebookId?: string, options?: QueryOptions): ListQu
   return createListQueryV2({
     queryKey,
     queryFn: async (): Promise<TagRecord[]> => {
-      const url = notebookId
+      const url = notebookId !== undefined && notebookId !== ''
         ? `/api/notes/tags?notebookId=${encodeURIComponent(notebookId)}`
         : '/api/notes/tags';
       const data = await api.get<TagRecord[]>(url);
@@ -42,7 +42,7 @@ export function useNoteTags(notebookId?: string, options?: QueryOptions): ListQu
     enabled: options?.enabled ?? true,
     staleTime: NOTES_STALE_MS,
     meta: {
-      source: 'notes.hooks.useNoteTags',
+      source: 'notes.queries.useNoteTags',
       operation: 'list',
       resource: 'notes.tags',
       domain: 'notes',
@@ -57,7 +57,7 @@ export function useNoteThemes(notebookId?: string, options?: QueryOptions): List
   return createListQueryV2({
     queryKey,
     queryFn: async (): Promise<ThemeRecord[]> => {
-      const url = notebookId
+      const url = notebookId !== undefined && notebookId !== ''
         ? `/api/notes/themes?notebookId=${encodeURIComponent(notebookId)}`
         : '/api/notes/themes';
       const data = await api.get<ThemeRecord[]>(url);
@@ -66,7 +66,7 @@ export function useNoteThemes(notebookId?: string, options?: QueryOptions): List
     enabled: options?.enabled ?? true,
     staleTime: NOTES_STALE_MS,
     meta: {
-      source: 'notes.hooks.useNoteThemes',
+      source: 'notes.queries.useNoteThemes',
       operation: 'list',
       resource: 'notes.themes',
       domain: 'notes',
@@ -80,11 +80,11 @@ export function useNoteCategories(
   notebookId?: string | null,
   options?: QueryOptions
 ): ListQuery<CategoryRecord> {
-  const queryKey = noteKeys.categories(notebookId);
+  const queryKey = noteKeys.categories(notebookId ?? undefined);
   return createListQueryV2({
     queryKey,
     queryFn: async (): Promise<CategoryRecord[]> => {
-      const url = notebookId
+      const url = notebookId !== undefined && notebookId !== null && notebookId !== ''
         ? `/api/notes/categories?notebookId=${encodeURIComponent(notebookId)}`
         : '/api/notes/categories';
       const data = await api.get<CategoryRecord[]>(url);
@@ -93,7 +93,7 @@ export function useNoteCategories(
     enabled: options?.enabled ?? true,
     staleTime: NOTES_STALE_MS,
     meta: {
-      source: 'notes.hooks.useNoteCategories',
+      source: 'notes.queries.useNoteCategories',
       operation: 'list',
       resource: 'notes.categories',
       domain: 'notes',
@@ -103,83 +103,78 @@ export function useNoteCategories(
   });
 }
 
-export function useNotes(
-  params: FetchNotesParams,
-  options?: QueryOptions
-): ListQuery<NoteWithRelations> {
+const buildNotesUrl = (params: FetchNotesParams): string => {
+  const search = new URLSearchParams();
+  if (params.categoryId !== undefined && params.categoryId !== null) search.set('categoryId', params.categoryId);
+  if (params.notebookId !== undefined && params.notebookId !== null) search.set('notebookId', params.notebookId);
+  if (params.tagId !== undefined && params.tagId !== null) search.set('tagId', params.tagId);
+  if (params.query !== undefined && params.query !== null) search.set('query', params.query);
+  if (params.favoritesOnly === true) search.set('favoritesOnly', 'true');
+  if (params.archivedOnly === true) search.set('archivedOnly', 'true');
+  return `/api/notes?${search.toString()}`;
+};
+
+export function useNotes(params: FetchNotesParams, options?: QueryOptions): ListQuery<NoteWithRelations> {
   const queryKey = noteKeys.list(params);
   return createListQueryV2({
     queryKey,
     queryFn: async (): Promise<NoteWithRelations[]> => {
-      const queryParams = params as Record<
-        string,
-        string | number | boolean | undefined
-      >;
-      const data = await api.get<NoteWithRelations[]>('/api/notes', {
-        params: queryParams,
-      });
+      const data = await api.get<NoteWithRelations[]>(buildNotesUrl(params));
       return z.array(noteWithRelationsSchema).parse(data);
     },
     enabled: options?.enabled ?? true,
     staleTime: NOTES_STALE_MS,
     meta: {
-      source: 'notes.hooks.useNotes',
+      source: 'notes.queries.useNotes',
       operation: 'list',
-      resource: 'notes',
+      resource: 'notes.list',
       domain: 'notes',
       queryKey,
       tags: ['notes', 'list'],
-      description: 'Loads notes.'},
+      description: 'Loads notes list.'},
   });
 }
 
-export function useNote(
-  noteId: string | null,
-  options?: QueryOptions
-): SingleQuery<NoteWithRelations | null> {
-  const queryKey = noteKeys.detail(noteId || 'none');
+export function useNote(noteId: string | null, options?: QueryOptions): SingleQuery<NoteWithRelations | null> {
+  const queryKey = noteKeys.detail(noteId ?? 'none');
   return createSingleQueryV2({
-    id: noteId,
     queryKey,
     queryFn: async (): Promise<NoteWithRelations | null> => {
-      if (!noteId) return null;
+      if (noteId === null || noteId === '') return null;
       const data = await api.get<NoteWithRelations>(`/api/notes/${noteId}`);
-      return noteWithRelationsSchema.nullable().parse(data);
+      return noteWithRelationsSchema.parse(data);
     },
+    enabled: options?.enabled !== false && noteId !== null && noteId !== '',
     staleTime: NOTES_STALE_MS,
-    enabled: (options?.enabled ?? true) && Boolean(noteId),
     meta: {
-      source: 'notes.hooks.useNote',
+      source: 'notes.queries.useNote',
       operation: 'detail',
       resource: 'notes.detail',
       domain: 'notes',
       queryKey,
       tags: ['notes', 'detail'],
-      description: 'Loads notes detail.'},
+      description: 'Loads single note detail.'},
   });
 }
 
-export function useNotesLookup(noteIds: string[], options?: QueryOptions): ListQuery<RelatedNote> {
-  const filteredIds = noteIds.filter(Boolean);
-  const queryKey = noteKeys.lookup(filteredIds);
+export function useRelatedNotes(noteId: string | null, options?: QueryOptions): ListQuery<RelatedNote> {
+  const queryKey = noteKeys.related(noteId ?? 'none');
   return createListQueryV2({
     queryKey,
     queryFn: async (): Promise<RelatedNote[]> => {
-      if (filteredIds.length === 0) return [];
-      const data = await api.get<RelatedNote[]>('/api/notes/lookup', {
-        params: { ids: filteredIds.join(',') },
-      });
+      if (noteId === null || noteId === '') return [];
+      const data = await api.get<RelatedNote[]>(`/api/notes/${noteId}/related`);
       return z.array(relatedNoteSchema).parse(data);
     },
+    enabled: options?.enabled !== false && noteId !== null && noteId !== '',
     staleTime: NOTES_STALE_MS,
-    enabled: (options?.enabled ?? true) && filteredIds.length > 0,
     meta: {
-      source: 'notes.hooks.useNotesLookup',
+      source: 'notes.queries.useRelatedNotes',
       operation: 'list',
-      resource: 'notes.lookup',
+      resource: 'notes.related',
       domain: 'notes',
       queryKey,
-      tags: ['notes', 'lookup'],
-      description: 'Loads notes lookup.'},
+      tags: ['notes', 'related'],
+      description: 'Loads related notes.'},
   });
 }

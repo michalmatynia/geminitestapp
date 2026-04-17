@@ -13,6 +13,11 @@ This file defines how documentation in this repository should be organized going
 forward. It is the canonical placement and maintenance guide for humans and AI
 agents.
 
+Companion references:
+
+- [`repo-documentation-map.md`](./repo-documentation-map.md) — maintained map of
+  canonical docs surfaces, generated areas, and retained historical surfaces
+
 ## Why This Exists
 
 The docs tree has grown large and mixed:

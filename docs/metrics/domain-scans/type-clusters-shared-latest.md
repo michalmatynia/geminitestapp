@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-07'
+last_reviewed: '2026-04-17'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,30 +8,31 @@ canonical: true
 ---
 # Type Cluster Scanner Report
 
-Generated at: 2026-03-26T13:27:58.830Z
+Generated at: 2026-04-17T12:21:03.075Z
 Status: ok
 
 ## Summary
 
-- Files scanned: 7787
-- Exported declarations scanned: 5176
-- Candidate declarations scanned: 5152
-- Exact-shape clusters: 12
-- Near-shape clusters: 5
-- Clusters after filters: 5
+- Files scanned: 10656
+- Exported declarations scanned: 6312
+- Candidate declarations scanned: 6292
+- Exact-shape clusters: 9
+- Near-shape clusters: 3
+- Clusters after filters: 6
 - Declarations in clusters: 12
-- Highest risk score: 20
+- Highest risk score: 13
 - Domain filter: shared
 
 ## Top Cluster Candidates
 
 | Cluster | Kind | Risk | Decls | Domains | Candidate DTO |
 | --- | --- | ---: | ---: | --- | --- |
-| `exact-0002` | exact-shape | 20 | 3 | shared, shared:contracts | TBD |
-| `near-0001` | near-shape | 16 | 3 | feature:kangur, shared | TBD |
-| `near-0005` | near-shape | 14 | 2 | shared | TBD |
-| `exact-0011` | exact-shape | 13 | 2 | shared, shared:contracts | TBD |
-| `exact-0010` | exact-shape | 11 | 2 | feature:kangur, shared | TBD |
+| `near-0002` | near-shape | 13 | 2 | feature:products, shared | TBD |
+| `exact-0006` | exact-shape | 8 | 2 | shared | TBD |
+| `exact-0007` | exact-shape | 8 | 2 | shared | TBD |
+| `exact-0008` | exact-shape | 8 | 2 | shared | TBD |
+| `exact-0009` | exact-shape | 8 | 2 | shared | TBD |
+| `near-0003` | near-shape | 8 | 2 | shared | TBD |
 
 ## Initial DTO Consolidation Workflow
 

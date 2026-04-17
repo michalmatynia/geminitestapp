@@ -229,6 +229,79 @@ describe('ProductImageCell', () => {
     expect(toastMock).toHaveBeenCalledWith('Product note updated', { variant: 'success' });
   });
 
+  it('removes the cached note when the note text is cleared', async () => {
+    updateProductMock.mockResolvedValue({
+      id: 'product-1',
+    });
+
+    render(
+      <ProductImageCell
+        imageUrl='/images/product.jpg'
+        productId='product-1'
+        productName='Gaming Bottle Opener'
+        note={{
+          text: 'Check the insert before export.',
+          color: '#bfdbfe',
+        }}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', {
+      name: 'View note for Gaming Bottle Opener',
+    }));
+
+    fireEvent.change(screen.getByLabelText('Edit note for Gaming Bottle Opener'), {
+      target: { value: '   ' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => {
+      expect(updateProductMock).toHaveBeenCalledWith('product-1', {
+        notes: {
+          text: null,
+          color: null,
+        },
+      });
+    });
+
+    const listUpdater = queryClientSetQueriesDataMock.mock.calls[0]?.[1] as
+      | ((old: unknown) => unknown)
+      | undefined;
+    expect(listUpdater).toBeTypeOf('function');
+    expect(
+      listUpdater?.([
+        {
+          id: 'product-1',
+          notes: {
+            text: 'Check the insert before export.',
+            color: '#bfdbfe',
+          },
+        },
+      ])
+    ).toEqual([
+      {
+        id: 'product-1',
+        notes: null,
+      },
+    ]);
+
+    expect(queryClientSetQueryDataMock).toHaveBeenCalledWith(
+      ['products', 'detail', 'product-1'],
+      expect.objectContaining({
+        id: 'product-1',
+        notes: null,
+      })
+    );
+    expect(queryClientSetQueryDataMock).toHaveBeenCalledWith(
+      ['products', 'detail', 'product-1', 'edit'],
+      expect.objectContaining({
+        id: 'product-1',
+        notes: null,
+      })
+    );
+    expect(toastMock).toHaveBeenCalledWith('Product note removed', { variant: 'success' });
+  });
+
   it('discards note edits when cancel is clicked', () => {
     render(
       <ProductImageCell

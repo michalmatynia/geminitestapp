@@ -18,6 +18,11 @@ export type PlaywrightExecutionSettingsSummary = Pick<
   | 'actionDelayMax'
   | 'emulateDevice'
   | 'deviceName'
+  | 'launchCooldownMs'
+  | 'prewarmWaitMs'
+  | 'postStartUrlWaitMs'
+  | 'viewportJitterPx'
+  | 'postLoadNudgeEnabled'
 > & {
   proxyEnabled: boolean;
 };
@@ -39,6 +44,11 @@ export const buildPlaywrightExecutionSettingsSummary = (
     | 'actionDelayMax'
     | 'emulateDevice'
     | 'deviceName'
+    | 'launchCooldownMs'
+    | 'prewarmWaitMs'
+    | 'postStartUrlWaitMs'
+    | 'viewportJitterPx'
+    | 'postLoadNudgeEnabled'
   > & {
     proxyEnabled: boolean;
   }
@@ -58,4 +68,9 @@ export const buildPlaywrightExecutionSettingsSummary = (
   proxyEnabled: settings.proxyEnabled,
   emulateDevice: settings.emulateDevice,
   deviceName: settings.deviceName,
+  launchCooldownMs: settings.launchCooldownMs,
+  prewarmWaitMs: settings.prewarmWaitMs,
+  postStartUrlWaitMs: settings.postStartUrlWaitMs,
+  viewportJitterPx: settings.viewportJitterPx,
+  postLoadNudgeEnabled: settings.postLoadNudgeEnabled,
 });

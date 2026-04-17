@@ -1,7 +1,7 @@
 ---
 owner: 'Platform Team'
 last_reviewed: '2026-03-26'
-status: 'active'
+status: 'archived'
 doc_type: 'reference'
 scope: 'platform'
 canonical: true

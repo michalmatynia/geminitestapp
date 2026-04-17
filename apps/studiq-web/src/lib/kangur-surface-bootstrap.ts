@@ -1,6 +1,6 @@
 export const KANGUR_SURFACE_HINT_SCRIPT =
-  "document.documentElement.classList.add('kangur-surface-active');" +
-  "document.body.classList.add('kangur-surface-active');";
+  'document.documentElement.classList.add(\'kangur-surface-active\');' +
+  'document.body.classList.add(\'kangur-surface-active\');';
 
 const KANGUR_SURFACE_BOOTSTRAP_SELECTORS = [
   'html.kangur-surface-active',

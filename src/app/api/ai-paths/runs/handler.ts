@@ -1,1 +1,1 @@
-export { __testOnly, DELETE_handler, GET_handler } from './handler.impl';
+export { __testOnly, deletePathRunsHandler, getPathRunsHandler } from './handler.impl';

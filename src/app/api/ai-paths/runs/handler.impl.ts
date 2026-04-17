@@ -46,7 +46,7 @@ const staleRunningCleanupIntervalMs = parseEnvNumber(
 const staleRunningMaxAgeMs = resolveAiPathsStaleRunningMaxAgeMs();
 const runsListResponseCacheTtlMs = parseEnvNumber(
   process.env['AI_PATHS_RUNS_LIST_CACHE_TTL_MS'],
-  3_000 // 3 s default — avoids repeated MongoDB scans on frequent UI polls
+  3_000
 );
 const runsListResponseCacheMaxEntries = parseEnvNumber(
   process.env['AI_PATHS_RUNS_LIST_CACHE_MAX_ENTRIES'],
@@ -65,9 +65,7 @@ export const __testOnly = {
 
 const pruneRunsListResponseCache = (now: number): void => {
   for (const [key, entry] of runsListResponseCache.entries()) {
-    if (entry.expiresAt <= now) {
-      runsListResponseCache.delete(key);
-    }
+    if (entry.expiresAt <= now) runsListResponseCache.delete(key);
   }
   const overflow = runsListResponseCache.size - runsListResponseCacheMaxEntries;
   if (overflow <= 0) return;
@@ -83,7 +81,7 @@ const scheduleStaleRunningCleanup = (
   repo: AiPathRunRepository
 ): void => {
   const now = Date.now();
-  if (staleRunningCleanupPromise) return;
+  if (staleRunningCleanupPromise !== null) return;
   if (now - lastStaleRunningCleanupAt < staleRunningCleanupIntervalMs) return;
   lastStaleRunningCleanupAt = now;
 
@@ -122,16 +120,16 @@ const buildRunRepositoryHeaders = (
   let firstWriterRouteMode: string | null = null;
 
   runs.forEach((run) => {
-    if (!run || typeof run !== 'object' || Array.isArray(run)) return;
+    if (run === null || typeof run !== 'object' || Array.isArray(run)) return;
     const writerSelection = readPersistedRunRepositorySelection(
       (run as Record<string, unknown>)['meta']
     );
     if (!hasRunRepositorySelectionMismatch(writerSelection, repoSelection)) return;
     mismatchCount += 1;
-    if (!firstWriterProvider && writerSelection?.provider) {
+    if (firstWriterProvider === null && (typeof writerSelection?.provider === 'string' && writerSelection.provider !== '')) {
       firstWriterProvider = writerSelection.provider;
     }
-    if (!firstWriterRouteMode && writerSelection?.routeMode) {
+    if (firstWriterRouteMode === null && (typeof writerSelection?.routeMode === 'string' && writerSelection.routeMode !== '')) {
       firstWriterRouteMode = writerSelection.routeMode;
     }
   });
@@ -139,127 +137,87 @@ const buildRunRepositoryHeaders = (
   if (mismatchCount > 0) {
     headers.set('X-Ai-Paths-Run-Provider-Mismatch', '1');
     headers.set('X-Ai-Paths-Run-Provider-Mismatch-Count', String(mismatchCount));
-    if (firstWriterProvider) {
-      headers.set('X-Ai-Paths-Run-Writer-Provider', firstWriterProvider);
-    }
-    if (firstWriterRouteMode) {
-      headers.set('X-Ai-Paths-Run-Writer-Route-Mode', firstWriterRouteMode);
-    }
+    if (firstWriterProvider !== null) headers.set('X-Ai-Paths-Run-Writer-Provider', firstWriterProvider);
+    if (firstWriterRouteMode !== null) headers.set('X-Ai-Paths-Run-Writer-Route-Mode', firstWriterRouteMode);
   }
 
   return Object.fromEntries(headers.entries());
 };
 
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+async function getCachedResponse(cacheKey: string, now: number, repoSelection: any): Promise<NextResponse | null> {
+  const cached = runsListResponseCache.get(cacheKey);
+  if (cached !== undefined && cached.expiresAt > now) {
+    const headers = {
+      ...buildRunRepositoryHeaders(cached.payload.runs, repoSelection),
+      'Cache-Control': 'no-store',
+      'X-Ai-Poll-Guard': 'runs-cache-hit',
+    };
+    return NextResponse.json(cached.payload, { headers });
+  }
+  return null;
+}
+
+export async function getPathRunsHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const access = await requireAiPathsRunAccess();
   const query = listQuerySchema.parse(resolveAiPathRunsQueryInput(req, _ctx));
-  const visibility = query.visibility;
-  const pathId = query.pathId ?? undefined;
-  const nodeId = query.nodeId ?? undefined;
-  const requestId = query.requestId ?? undefined;
-  const searchQuery = query.query ?? undefined;
-  const source = query.source ?? undefined;
-  const sourceMode = query.sourceMode;
-  const status = query.status ?? undefined;
-  const limit = query.limit ?? undefined;
-  const offset = query.offset ?? undefined;
-  const includeTotal = query.includeTotal;
-  const fresh = query.fresh;
+  const { visibility, pathId, nodeId, requestId, query: searchQuery, source, sourceMode, status, limit, offset, includeTotal, fresh } = query;
+  
   const repoSelection = await resolvePathRunRepository();
   const repo = repoSelection.repo;
   scheduleStaleRunningCleanup(repo);
-  if (pathId === BASE_EXPORT_RUN_PATH_ID || source === BASE_EXPORT_RUN_SOURCE) {
-    await recoverStaleBaseExportRuns({
-      repo,
-      ...(visibility === 'scoped' ? { userId: access.userId } : {}),
-    });
+
+  if ((pathId !== undefined && pathId === BASE_EXPORT_RUN_PATH_ID) || (source !== undefined && source === BASE_EXPORT_RUN_SOURCE)) {
+    await recoverStaleBaseExportRuns({ repo, ...(visibility === 'scoped' ? { userId: access.userId } : {}) });
   }
-  const hasGlobalRunAccess = canAccessGlobalAiPathRuns(access);
-  if (visibility === 'global' && !hasGlobalRunAccess) {
+  
+  if (visibility === 'global' && !canAccessGlobalAiPathRuns(access)) {
     throw forbiddenError('Global run access denied.');
   }
-  const cacheKey = JSON.stringify({
-    visibility,
-    userScope: visibility === 'global' ? 'global' : access.userId,
-    pathId: pathId ?? null,
-    nodeId: nodeId ?? null,
-    requestId: requestId ?? null,
-    query: searchQuery ?? null,
-    source: source ?? null,
-    sourceMode,
-    status: status ?? null,
-    limit: limit ?? null,
-    offset: offset ?? null,
-    includeTotal,
-  });
+
+  const cacheKey = JSON.stringify({ visibility, userScope: visibility === 'global' ? 'global' : access.userId, pathId: pathId ?? null, nodeId: nodeId ?? null, requestId: requestId ?? null, query: searchQuery ?? null, source: source ?? null, sourceMode, status: status ?? null, limit: limit ?? null, offset: offset ?? null, includeTotal });
   const now = Date.now();
   if (!fresh && runsListResponseCacheTtlMs > 0) {
     pruneRunsListResponseCache(now);
-    const cached = runsListResponseCache.get(cacheKey);
-    if (cached && cached.expiresAt > now) {
-      const headers = {
-        ...buildRunRepositoryHeaders(cached.payload.runs, repoSelection),
-        'Cache-Control': 'no-store',
-        'X-Ai-Poll-Guard': 'runs-cache-hit',
-      };
-      return NextResponse.json(cached.payload, {
-        headers,
-      });
-    }
+    const cachedResp = await getCachedResponse(cacheKey, now, repoSelection);
+    if (cachedResp !== null) return cachedResp;
   }
+
   const result = await repo.listRuns({
     ...(visibility === 'scoped' ? { userId: access.userId } : {}),
-    ...(pathId ? { pathId } : {}),
-    ...(nodeId ? { nodeId } : {}),
-    ...(requestId ? { requestId } : {}),
-    ...(searchQuery ? { query: searchQuery } : {}),
-    ...(source ? { source, sourceMode } : {}),
-    ...(status ? { status } : {}),
+    ...(typeof pathId === 'string' && pathId !== '' ? { pathId } : {}),
+    ...(typeof nodeId === 'string' && nodeId !== '' ? { nodeId } : {}),
+    ...(typeof requestId === 'string' && requestId !== '' ? { requestId } : {}),
+    ...(typeof searchQuery === 'string' && searchQuery !== '' ? { query: searchQuery } : {}),
+    ...(typeof source === 'string' && source !== '' ? { source, sourceMode } : {}),
+    ...(typeof status === 'string' && status !== '' ? { status } : {}),
     ...(limit !== undefined ? { limit } : {}),
     ...(offset !== undefined ? { offset } : {}),
     ...(includeTotal ? {} : { includeTotal: false }),
   });
+
   if (!fresh && runsListResponseCacheTtlMs > 0) {
-    runsListResponseCache.set(cacheKey, {
-      expiresAt: now + runsListResponseCacheTtlMs,
-      payload: result as { runs: unknown[]; total: number },
-    });
+    runsListResponseCache.set(cacheKey, { expiresAt: now + runsListResponseCacheTtlMs, payload: result as { runs: unknown[]; total: number } });
   }
-  const headers = {
-    ...buildRunRepositoryHeaders(result.runs, repoSelection),
-    'Cache-Control': 'no-store',
-  };
-  return NextResponse.json(result, {
-    headers,
-  });
+
+  return NextResponse.json(result, { headers: { ...buildRunRepositoryHeaders(result.runs, repoSelection), 'Cache-Control': 'no-store' } });
 }
 
-export async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function deletePathRunsHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const access = await requireAiPathsAccess();
   await enforceAiPathsActionRateLimit(access, 'runs-clear');
   const query = deleteQuerySchema.parse(resolveAiPathRunsQueryInput(req, _ctx));
-  const scope = query.scope;
-  const pathId = query.pathId ?? undefined;
-  const source = query.source ?? undefined;
-  const sourceMode = query.sourceMode;
+  const { scope, pathId, source, sourceMode } = query;
 
   const repo = (await resolvePathRunRepository()).repo;
-  const hasGlobalRunAccess = canAccessGlobalAiPathRuns(access);
   const listOptions: AiPathRunListOptions = {};
-  if (!hasGlobalRunAccess) {
-    listOptions.userId = access.userId;
-  }
-  if (pathId) {
-    listOptions.pathId = pathId;
-  }
-  if (source) {
+  if (!canAccessGlobalAiPathRuns(access)) listOptions.userId = access.userId;
+  if (typeof pathId === 'string' && pathId !== '') listOptions.pathId = pathId;
+  if (typeof source === 'string' && source !== '') {
     listOptions.source = source;
     listOptions.sourceMode = sourceMode;
   }
-  if (scope === 'terminal') {
-    listOptions.statuses = TERMINAL_STATUSES;
-  }
+  if (scope === 'terminal') listOptions.statuses = TERMINAL_STATUSES;
+  
   const result = await deletePathRunsWithRepository(repo, listOptions);
-
   return NextResponse.json({ deleted: result.count, scope });
 }

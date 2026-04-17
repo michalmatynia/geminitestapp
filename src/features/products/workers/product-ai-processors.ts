@@ -28,7 +28,7 @@ import {
 import {
   listBaseListingsForSync,
   syncBaseImagesForListing,
-} from '@/features/integrations/server';
+} from '@/features/integrations/services/base-image-sync';
 import { buildImageBase64Slots } from '@/shared/lib/products/services/image-base64';
 import {
   prepareGraphModelExecutionInput,

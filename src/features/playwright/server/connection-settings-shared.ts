@@ -26,6 +26,11 @@ type PlaywrightConnectionSettingsSource = {
   playwrightProxyProviderPreset?: 'custom' | 'brightdata' | 'oxylabs' | 'decodo' | null | undefined;
   playwrightEmulateDevice?: boolean | null | undefined;
   playwrightDeviceName?: string | null | undefined;
+  playwrightLaunchCooldownMs?: number | null | undefined;
+  playwrightPrewarmWaitMs?: number | null | undefined;
+  playwrightPostStartUrlWaitMs?: number | null | undefined;
+  playwrightViewportJitterPx?: number | null | undefined;
+  playwrightPostLoadNudgeEnabled?: boolean | null | undefined;
   playwrightPersonaId?: string | null | undefined;
 };
 
@@ -56,6 +61,11 @@ export const defaultIntegrationConnectionPlaywrightSettings: PlaywrightSettings 
   proxyProviderPreset: 'custom',
   emulateDevice: false,
   deviceName: 'Desktop Chrome',
+  launchCooldownMs: 0,
+  prewarmWaitMs: 0,
+  postStartUrlWaitMs: 0,
+  viewportJitterPx: 6,
+  postLoadNudgeEnabled: true,
 };
 
 export const extractIntegrationConnectionPlaywrightSettingsOverrides = (
@@ -138,6 +148,21 @@ export const extractIntegrationConnectionPlaywrightSettingsOverrides = (
     : {}),
   ...(typeof connection?.playwrightDeviceName === 'string'
     ? { deviceName: connection.playwrightDeviceName }
+    : {}),
+  ...(typeof connection?.playwrightLaunchCooldownMs === 'number'
+    ? { launchCooldownMs: connection.playwrightLaunchCooldownMs }
+    : {}),
+  ...(typeof connection?.playwrightPrewarmWaitMs === 'number'
+    ? { prewarmWaitMs: connection.playwrightPrewarmWaitMs }
+    : {}),
+  ...(typeof connection?.playwrightPostStartUrlWaitMs === 'number'
+    ? { postStartUrlWaitMs: connection.playwrightPostStartUrlWaitMs }
+    : {}),
+  ...(typeof connection?.playwrightViewportJitterPx === 'number'
+    ? { viewportJitterPx: connection.playwrightViewportJitterPx }
+    : {}),
+  ...(typeof connection?.playwrightPostLoadNudgeEnabled === 'boolean'
+    ? { postLoadNudgeEnabled: connection.playwrightPostLoadNudgeEnabled }
     : {}),
 });
 

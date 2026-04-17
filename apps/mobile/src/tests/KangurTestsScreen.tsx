@@ -1,8 +1,7 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { Text, View } from 'react-native';
-import { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
-import { KangurMobileAiTutorCard } from '../ai-tutor/KangurMobileAiTutorCard';
 import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import {
   BASE_TONE,
@@ -17,22 +16,102 @@ import {
 import { KangurMobileScrollScreen } from '../shared/KangurMobileUi';
 import {
   ChoiceButton,
-  formatFocusToken,
   formatPointsLabel,
   formatQuestionCount,
   formatQuestionProgress,
   formatSuiteMeta,
-  LESSONS_ROUTE,
-  PLAN_ROUTE,
-  PRACTICE_ROUTE,
   resolveQuestionStatusTone,
   RESULTS_ROUTE,
-  TESTS_ROUTE,
 } from './tests-primitives';
 import {
   useKangurMobileTests,
   type KangurMobileTestSuiteItem,
 } from './useKangurMobileTests';
+
+const TestPlayerResultsView = ({
+  score,
+  maxScore,
+  scorePercent,
+  summaryTone,
+  onBackToCatalog,
+  copy,
+}: {
+  score: number;
+  maxScore: number;
+  scorePercent: number;
+  summaryTone: { backgroundColor: string; borderColor: string; textColor: string };
+  onBackToCatalog: () => void;
+  copy: (v: Record<string, string>) => string;
+}): React.JSX.Element => (
+  <SectionCard title={copy({ de: 'Testergebnis', en: 'Test result', pl: 'Wynik testu' })}>
+    <View style={{ alignItems: 'center', gap: 12, paddingVertical: 12 }}>
+      <StatusPill
+        label={copy({ de: 'Test abgeschlossen', en: 'Test finished', pl: 'Test zakończony' })}
+        tone={summaryTone}
+      />
+      <Text style={{ color: '#0f172a', fontSize: 32, fontWeight: '800' }}>
+        {`${scorePercent}%`}
+      </Text>
+      <Text style={{ color: '#475569', fontSize: 15 }}>
+        {`${score} / ${maxScore} points`}
+      </Text>
+    </View>
+    <View style={{ flexDirection: 'column', gap: 12 }}>
+      <PrimaryButton
+        label={copy({ de: 'Wróć', en: 'Back to catalog', pl: 'Wróć do katalogu' })}
+        onPress={onBackToCatalog}
+      />
+      <OutlineLink
+        href={RESULTS_ROUTE}
+        label={copy({ de: 'Wyniki', en: 'See all results', pl: 'Zobacz wyniki' })}
+      />
+    </View>
+  </SectionCard>
+);
+
+const TestExplanationView = ({
+  currentQuestion,
+  selectedChoice,
+  correctChoice,
+  copy,
+}: {
+  currentQuestion: KangurMobileTestSuiteItem['questions'][number];
+  selectedChoice: KangurMobileTestSuiteItem['questions'][number]['choices'][number] | null;
+  correctChoice: KangurMobileTestSuiteItem['questions'][number]['choices'][number] | null;
+  copy: (v: Record<string, string>) => string;
+}): React.JSX.Element => (
+  <View
+    style={{
+      backgroundColor: '#f8fafc',
+      borderColor: '#cbd5e1',
+      borderRadius: 20,
+      borderWidth: 1,
+      gap: 8,
+      padding: 16,
+    }}
+  >
+    <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '700' }}>
+      {selectedChoice?.label === currentQuestion.correctChoiceLabel
+        ? copy({ de: 'Dobra', en: 'Correct answer', pl: 'Dobra odpowiedź' })
+        : copy({ de: 'Sprawdzona', en: 'Answer reviewed', pl: 'Sprawdzona odpowiedź' })}
+    </Text>
+    {selectedChoice !== null && (
+      <Text style={{ color: '#475569', fontSize: 14 }}>
+        {`Wybrano: ${selectedChoice.label}. ${selectedChoice.text}`}
+      </Text>
+    )}
+    {correctChoice !== null && (
+      <Text style={{ color: '#475569', fontSize: 14 }}>
+        {`Poprawnie: ${correctChoice.label}. ${correctChoice.text}`}
+      </Text>
+    )}
+    {currentQuestion.explanation !== undefined && currentQuestion.explanation.trim().length > 0 && (
+      <Text style={{ color: '#334155', fontSize: 14 }}>
+        {currentQuestion.explanation.trim()}
+      </Text>
+    )}
+  </View>
+);
 
 function KangurMobileTestPlayer({
   item,
@@ -45,358 +124,64 @@ function KangurMobileTestPlayer({
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [currentIndex, setCurrentIndex] = useState(0);
   const [finished, setFinished] = useState(false);
-  const [revealedAnswers, setRevealedAnswers] = useState<Record<string, boolean>>(
-    {},
-  );
+  const [revealedAnswers, setRevealedAnswers] = useState<Record<string, boolean>>({});
 
   const currentQuestion = item.questions[currentIndex] ?? null;
-  const selectedLabel = currentQuestion ? (answers[currentQuestion.id] ?? null) : null;
+  const selectedLabel = currentQuestion !== null ? (answers[currentQuestion.id] ?? null) : null;
   const isAnswered = selectedLabel !== null;
-  const showAnswer = currentQuestion ? Boolean(revealedAnswers[currentQuestion.id]) : false;
-  const score = useMemo(
-    () =>
-      item.questions.reduce((total, question) => {
-        if (answers[question.id] === question.correctChoiceLabel) {
-          return total + question.pointValue;
-        }
-        return total;
-      }, 0),
-    [answers, item.questions],
-  );
-  const maxScore = useMemo(
-    () =>
-      item.questions.reduce(
-        (total, question) => total + question.pointValue,
-        0,
-      ),
-    [item.questions],
-  );
+  const showAnswer = currentQuestion !== null ? Boolean(revealedAnswers[currentQuestion.id]) : false;
+
+  const score = useMemo(() => item.questions.reduce((total, q) =>
+    answers[q.id] === q.correctChoiceLabel ? total + q.pointValue : total, 0), [answers, item.questions]);
+
+  const maxScore = useMemo(() => item.questions.reduce((total, q) => total + q.pointValue, 0), [item.questions]);
   const scorePercent = maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
   const summaryTone = resolveQuestionStatusTone(scorePercent);
 
   const handleSelect = (label: string): void => {
-    if (!currentQuestion || showAnswer) {
-      return;
-    }
-
-    setAnswers((previous) => ({
-      ...previous,
-      [currentQuestion.id]: label,
-    }));
+    if (currentQuestion === null || showAnswer) return;
+    setAnswers((p) => ({ ...p, [currentQuestion.id]: label }));
   };
 
   const handleRevealAnswer = (): void => {
-    if (!currentQuestion || !isAnswered || showAnswer) {
-      return;
-    }
-
-    setRevealedAnswers((previous) => ({
-      ...previous,
-      [currentQuestion.id]: true,
-    }));
+    if (currentQuestion === null || !isAnswered || showAnswer) return;
+    setRevealedAnswers((p) => ({ ...p, [currentQuestion.id]: true }));
   };
 
   const handleNext = (): void => {
     if (currentIndex < item.questions.length - 1) {
-      setCurrentIndex((previous) => previous + 1);
-      return;
+      setCurrentIndex((p) => p + 1);
+    } else {
+      setFinished(true);
     }
-
-    setFinished(true);
   };
-
-  const handleRestart = (): void => {
-    setAnswers({});
-    setCurrentIndex(0);
-    setFinished(false);
-    setRevealedAnswers({});
-  };
-
-  if (item.questions.length === 0) {
-    return (
-      <>
-        <KangurMobileAiTutorCard
-          context={{
-            contentId: item.suite.id,
-            focusId: `kangur-test-empty-state:${item.suite.id}`,
-            focusKind: 'empty_state',
-            surface: 'test',
-            title: item.suite.title,
-          }}
-        />
-        <SectionCard
-          title={copy({
-            de: 'Keine veroffentlichten Fragen',
-            en: 'No published questions',
-            pl: 'Brak opublikowanych pytań',
-          })}
-        >
-          <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-            {copy({
-              de: 'Dieser Testsatz ist live, aber hat noch keine veroffentlichten Fragen fur Lernende.',
-              en: 'This live test suite does not have any published learner questions yet.',
-              pl: 'Ten aktywny zestaw nie ma jeszcze opublikowanych pytań dla ucznia.',
-            })}
-          </Text>
-          <PrimaryButton
-            label={copy({
-              de: 'Zuruck zur Liste',
-              en: 'Back to the list',
-              pl: 'Wróć do listy',
-            })}
-            onPress={onBackToCatalog}
-            tone={BASE_TONE}
-          />
-        </SectionCard>
-      </>
-    );
-  }
 
   if (finished) {
     return (
-      <>
-        <KangurMobileAiTutorCard
-          context={{
-            contentId: item.suite.id,
-            description: item.suite.description,
-            focusId: `kangur-test-summary:${item.suite.id}`,
-            focusKind: 'summary',
-            masterySummary: {
-              de: `${score}/${maxScore} Pkt · ${scorePercent}%`,
-              en: `${score}/${maxScore} pts · ${scorePercent}%`,
-              pl: `${score}/${maxScore} pkt · ${scorePercent}%`,
-            }[locale],
-            surface: 'test',
-            title: item.suite.title,
-          }}
-        />
-        <SectionCard
-          title={copy({
-            de: 'Testergebnis',
-            en: 'Test summary',
-            pl: 'Wynik testu',
-          })}
-        >
-          <StatusPill
-            label={
-              {
-                de: `${score}/${maxScore} Pkt · ${scorePercent}%`,
-                en: `${score}/${maxScore} pts · ${scorePercent}%`,
-                pl: `${score}/${maxScore} pkt · ${scorePercent}%`,
-              }[locale]
-            }
-            tone={summaryTone}
-          />
-          <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '700' }}>
-            {copy({
-              de: 'Du hast den ganzen Testsatz abgeschlossen.',
-              en: 'You completed the full test suite.',
-              pl: 'Ukończyłeś cały zestaw testowy.',
-            })}
-          </Text>
-          <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-            {copy({
-              de: 'Wiederhole den Satz, kehre zur Liste zuruck oder springe direkt in die Ergebnisse und den Tagesplan.',
-              en: 'Restart the suite, go back to the catalog, or jump straight into results and the daily plan.',
-              pl: 'Powtórz zestaw, wróć do katalogu albo przejdź od razu do wyników i planu dnia.',
-            })}
-          </Text>
-          <View style={{ flexDirection: 'column', gap: 10 }}>
-            <PrimaryButton
-              label={copy({
-                de: 'Test wiederholen',
-                en: 'Restart the test',
-                pl: 'Powtórz test',
-              })}
-              onPress={handleRestart}
-            />
-            <PrimaryButton
-              label={copy({
-                de: 'Zuruck do Tests',
-                en: 'Back to tests',
-                pl: 'Wróć do testów',
-              })}
-              onPress={onBackToCatalog}
-              tone={BASE_TONE}
-            />
-            <OutlineLink
-              href={RESULTS_ROUTE}
-              hint={copy({
-                de: 'Öffnet die Ergebnisse.',
-                en: 'Opens results.',
-                pl: 'Otwiera wyniki.',
-              })}
-              label={copy({
-                de: 'Ergebnisse öffnen',
-                en: 'Open results',
-                pl: 'Otwórz wyniki',
-              })}
-            />
-            <OutlineLink
-              href={PLAN_ROUTE}
-              hint={copy({
-                de: 'Öffnet den Tagesplan.',
-                en: 'Opens the daily plan.',
-                pl: 'Otwiera plan dnia.',
-              })}
-              label={copy({
-                de: 'Zum Tagesplan',
-                en: 'Go to daily plan',
-                pl: 'Przejdź do planu dnia',
-              })}
-            />
-          </View>
-        </SectionCard>
-      </>
+      <TestPlayerResultsView
+        score={score}
+        maxScore={maxScore}
+        scorePercent={scorePercent}
+        summaryTone={summaryTone}
+        onBackToCatalog={onBackToCatalog}
+        copy={copy}
+      />
     );
   }
 
-  if (!currentQuestion) {
-    return (
-      <>
-        <KangurMobileAiTutorCard
-          context={{
-            contentId: item.suite.id,
-            focusKind: 'screen',
-            surface: 'test',
-            title: item.suite.title,
-          }}
-        />
-        <SectionCard
-          title={copy({
-            de: 'Test wird vorbereitet',
-            en: 'Preparing the test',
-            pl: 'Przygotowujemy test',
-          })}
-        >
-          <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-            {copy({
-              de: 'Die Fragen werden gerade geladen. Probiere es gleich noch einmal.',
-              en: 'Questions are still loading. Try again in a moment.',
-              pl: 'Pytania jeszcze się ładują. Spróbuj ponownie za chwilę.',
-            })}
-          </Text>
-        </SectionCard>
-      </>
-    );
-  }
+  if (currentQuestion === null) return <SectionCard title='Error'><Text>No question.</Text></SectionCard>;
 
-  const selectedChoice =
-    selectedLabel
-      ? currentQuestion.choices.find((choice) => choice.label === selectedLabel) ?? null
-      : null;
-  const correctChoice =
-    currentQuestion.choices.find(
-      (choice) => choice.label === currentQuestion.correctChoiceLabel,
-    ) ?? null;
-  const tutorContext =
-    showAnswer
-      ? {
-          answerRevealed: true,
-          contentId: item.suite.id,
-          currentQuestion: currentQuestion.prompt,
-          focusId: `kangur-test-question:${currentQuestion.id}`,
-          focusKind: 'review' as const,
-          focusLabel: currentQuestion.prompt,
-          questionId: currentQuestion.id,
-          questionProgressLabel: formatQuestionProgress(
-            currentIndex + 1,
-            item.questions.length,
-            locale,
-          ),
-          selectedChoiceLabel: selectedChoice?.label,
-          selectedChoiceText: selectedChoice?.text,
-          surface: 'test' as const,
-          title: item.suite.title,
-        }
-      : selectedChoice
-        ? {
-            answerRevealed: false,
-            contentId: item.suite.id,
-            currentQuestion: currentQuestion.prompt,
-            focusId: `kangur-test-selection:${currentQuestion.id}`,
-            focusKind: 'selection' as const,
-            focusLabel: selectedChoice.text,
-            questionId: currentQuestion.id,
-            questionProgressLabel: formatQuestionProgress(
-              currentIndex + 1,
-              item.questions.length,
-              locale,
-            ),
-            selectedChoiceLabel: selectedChoice.label,
-            selectedChoiceText: selectedChoice.text,
-            surface: 'test' as const,
-            title: item.suite.title,
-          }
-        : {
-            answerRevealed: false,
-            contentId: item.suite.id,
-            currentQuestion: currentQuestion.prompt,
-            focusId: `kangur-test-question:${currentQuestion.id}`,
-            focusKind: 'question' as const,
-            focusLabel: currentQuestion.prompt,
-            questionId: currentQuestion.id,
-            questionProgressLabel: formatQuestionProgress(
-              currentIndex + 1,
-              item.questions.length,
-              locale,
-            ),
-            surface: 'test' as const,
-            title: item.suite.title,
-          };
+  const selectedChoice = currentQuestion.choices.find((c) => c.label === selectedLabel) ?? null;
+  const correctChoice = currentQuestion.choices.find((c) => c.label === currentQuestion.correctChoiceLabel) ?? null;
 
   return (
     <>
-      <KangurMobileAiTutorCard context={tutorContext} />
-      <SectionCard
-        title={formatQuestionProgress(currentIndex + 1, item.questions.length, locale)}
-      >
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-          <StatusPill
-            label={formatPointsLabel(currentQuestion.pointValue, locale)}
-            tone={WARNING_TONE}
-          />
-          <StatusPill
-            label={copy({
-              de:
-                currentQuestion.presentation.choiceStyle === 'grid'
-                  ? 'Antwortkarten'
-                  : 'Antwortliste',
-              en:
-                currentQuestion.presentation.choiceStyle === 'grid'
-                  ? 'Answer cards'
-                  : 'Answer list',
-              pl:
-                currentQuestion.presentation.choiceStyle === 'grid'
-                  ? 'Karty odpowiedzi'
-                  : 'Lista odpowiedzi',
-            })}
-            tone={INDIGO_TONE}
-          />
-          {currentQuestion.illustration.type !== 'none' ? (
-            <StatusPill
-              label={copy({
-                de: 'Mit Illustration',
-                en: 'Illustration included',
-                pl: 'Z ilustracją',
-              })}
-              tone={BASE_TONE}
-            />
-          ) : null}
+      <SectionCard title={formatQuestionProgress(currentIndex + 1, item.questions.length, locale)}>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          <StatusPill label={formatPointsLabel(currentQuestion.pointValue, locale)} tone={WARNING_TONE} />
         </View>
-        <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '700', lineHeight: 24 }}>
-          {currentQuestion.prompt}
-        </Text>
-        {currentQuestion.illustration.type !== 'none' ? (
-          <Text style={{ color: '#475569', fontSize: 13, lineHeight: 18 }}>
-            {copy({
-              de: 'Diese Frage nutzt zusatzliche Bildinhalte. Auf Mobil wird dazu die Textfassung gezeigt.',
-              en: 'This question uses extra illustration content. Mobile shows the text-first version here.',
-              pl: 'To pytanie korzysta z dodatkowej ilustracji. W mobile pokazujemy tutaj wersję tekstową.',
-            })}
-          </Text>
-        ) : null}
-        <View style={{ flexDirection: 'column', gap: 10 }}>
+        <Text style={{ fontSize: 16, fontWeight: '700' }}>{currentQuestion.prompt}</Text>
+        <View style={{ gap: 10 }}>
           {currentQuestion.choices.map((choice) => (
             <ChoiceButton
               choice={choice}
@@ -407,108 +192,16 @@ function KangurMobileTestPlayer({
               key={choice.label}
               label={choice.label}
               locale={locale}
-              onPress={() => handleSelect(choice.label)}
+              onPress={() => { handleSelect(choice.label); }}
             />
           ))}
         </View>
-        {showAnswer ? (
-          <View
-            style={{
-              backgroundColor: '#f8fafc',
-              borderColor: '#cbd5e1',
-              borderRadius: 20,
-              borderWidth: 1,
-              gap: 8,
-              padding: 16,
-            }}
-          >
-            <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '700' }}>
-              {selectedChoice?.label === currentQuestion.correctChoiceLabel
-                ? copy({
-                    de: 'Richtige Antwort',
-                    en: 'Correct answer',
-                    pl: 'Dobra odpowiedź',
-                  })
-                : copy({
-                    de: 'Antwort geprüft',
-                    en: 'Answer reviewed',
-                    pl: 'Sprawdzona odpowiedź',
-                  })}
-            </Text>
-            {selectedChoice ? (
-              <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                {
-                  {
-                    de: `Gewahlt: ${selectedChoice.label}. ${selectedChoice.text}`,
-                    en: `Selected: ${selectedChoice.label}. ${selectedChoice.text}`,
-                    pl: `Wybrano: ${selectedChoice.label}. ${selectedChoice.text}`,
-                  }[locale]
-                }
-              </Text>
-            ) : null}
-            {correctChoice ? (
-              <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                {
-                  {
-                    de: `Richtig: ${correctChoice.label}. ${correctChoice.text}`,
-                    en: `Correct: ${correctChoice.label}. ${correctChoice.text}`,
-                    pl: `Poprawnie: ${correctChoice.label}. ${correctChoice.text}`,
-                  }[locale]
-                }
-              </Text>
-            ) : null}
-            {currentQuestion.explanation?.trim() ? (
-              <Text style={{ color: '#334155', fontSize: 14, lineHeight: 20 }}>
-                {currentQuestion.explanation.trim()}
-              </Text>
-            ) : null}
-          </View>
-        ) : null}
-        <View style={{ flexDirection: 'column', gap: 10 }}>
-          <PrimaryButton
-            disabled={!isAnswered || showAnswer}
-            label={copy({
-              de: 'Antwort prüfen',
-              en: 'Reveal answer',
-              pl: 'Sprawdź odpowiedź',
-            })}
-            onPress={handleRevealAnswer}
-          />
+        {showAnswer && <TestExplanationView copy={copy} currentQuestion={currentQuestion} selectedChoice={selectedChoice} correctChoice={correctChoice} />}
+        <View style={{ gap: 10 }}>
+          <PrimaryButton disabled={!isAnswered || showAnswer} label={copy({ de: 'Prüfen', en: 'Reveal', pl: 'Sprawdź' })} onPress={handleRevealAnswer} />
           <View style={{ flexDirection: 'row', gap: 10 }}>
-            <View style={{ flex: 1 }}>
-              <PrimaryButton
-                disabled={currentIndex === 0}
-                label={copy({
-                  de: 'Poprzednie',
-                  en: 'Previous',
-                  pl: 'Poprzednie',
-                })}
-                onPress={() => {
-                  setCurrentIndex((previous) => Math.max(0, previous - 1));
-                }}
-                tone={BASE_TONE}
-              />
-            </View>
-            <View style={{ flex: 1 }}>
-              <PrimaryButton
-                disabled={!showAnswer}
-                label={
-                  currentIndex === item.questions.length - 1
-                    ? copy({
-                        de: 'Test beenden',
-                        en: 'Finish the test',
-                        pl: 'Zakończ test',
-                      })
-                    : copy({
-                        de: 'Nächstes',
-                        en: 'Next question',
-                        pl: 'Następne pytanie',
-                      })
-                }
-                onPress={handleNext}
-                tone={SUCCESS_TONE}
-              />
-            </View>
+            <PrimaryButton disabled={currentIndex === 0} label='Prev' onPress={() => setCurrentIndex((p) => p - 1)} tone={BASE_TONE} />
+            <PrimaryButton disabled={!showAnswer} label='Next' onPress={handleNext} tone={SUCCESS_TONE} />
           </View>
         </View>
       </SectionCard>
@@ -516,327 +209,45 @@ function KangurMobileTestPlayer({
   );
 }
 
+const TestSuiteCard = ({ suite, onOpen, copy, locale }: {
+  suite: KangurMobileTestSuiteItem['suite'];
+  onOpen: (id: string) => void;
+  copy: (v: Record<string, string>) => string;
+  locale: 'de' | 'en' | 'pl';
+}): React.JSX.Element => (
+  <SectionCard title={suite.title}>
+    <View style={{ flexDirection: 'row', gap: 8 }}>
+      <StatusPill label={formatQuestionCount(suite.questions.length, locale)} tone={INDIGO_TONE} />
+      <StatusPill label={formatSuiteMeta(suite, locale)[0] ?? ''} tone={BASE_TONE} />
+    </View>
+    <Text style={{ color: '#475569', fontSize: 14 }}>{suite.description}</Text>
+    <PrimaryButton label={copy({ de: 'Start', en: 'Start', pl: 'Start' })} onPress={() => onOpen(suite.id)} />
+  </SectionCard>
+);
+
 export function KangurTestsScreen(): React.JSX.Element {
-  const params = useLocalSearchParams<{ focus?: string | string[] }>();
-  const router = useRouter();
   const { copy, locale } = useKangurMobileI18n();
-  const focusParam = Array.isArray(params.focus) ? params.focus[0] ?? null : params.focus ?? null;
-  const { error, focusToken, focusedSuiteId, isLoading, refresh, suites } =
-    useKangurMobileTests(focusParam ?? null);
+
+  const { suites, isLoading, error, refresh } = useKangurMobileTests();
   const [activeSuiteId, setActiveSuiteId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (focusedSuiteId) {
-      setActiveSuiteId(focusedSuiteId);
-    }
-  }, [focusedSuiteId]);
+  const activeSuite = activeSuiteId !== null ? suites.find((s) => s.suite.id === activeSuiteId) ?? null : null;
 
-  useEffect(() => {
-    if (!activeSuiteId) {
-      return;
-    }
-
-    const stillExists = suites.some((entry) => entry.suite.id === activeSuiteId);
-    if (!stillExists) {
-      setActiveSuiteId(null);
-    }
-  }, [activeSuiteId, suites]);
-
-  const activeSuite = suites.find((entry) => entry.suite.id === activeSuiteId) ?? null;
-  const missingFocusedSuite =
-    focusToken !== null && focusedSuiteId === null && activeSuite === null && !isLoading;
-  const catalogTutorContext = {
-    contentId: 'test:catalog',
-    focusKind: 'screen' as const,
-    surface: 'test' as const,
-    title: copy({
-      de: 'Tests',
-      en: 'Tests',
-      pl: 'Testy',
-    }),
-  };
+  if (activeSuite !== null) {
+    return (
+      <KangurMobileScrollScreen title={activeSuite.suite.title}>
+        <KangurMobileTestPlayer item={activeSuite} onBackToCatalog={() => setActiveSuiteId(null)} />
+      </KangurMobileScrollScreen>
+    );
+  }
 
   return (
-    <KangurMobileScrollScreen
-      backgroundColor='#f8fafc'
-      contentContainerStyle={{ gap: 16, padding: 16, paddingBottom: 32 }}
-      edges={['top', 'left', 'right']}
-      keyboardShouldPersistTaps='handled'
-    >
-        <SectionCard
-          title={copy({
-            de: 'Tests',
-            en: 'Tests',
-            pl: 'Testy',
-          })}
-        >
-          <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-            {copy({
-              de: 'Wahle einen aktiven Testsatz und gehe die Fragen Schritt fur Schritt durch.',
-              en: 'Choose a live test suite and work through the questions step by step.',
-              pl: 'Wybierz aktywny zestaw testowy i przechodź przez pytania krok po kroku.',
-            })}
-          </Text>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-            <StatusPill
-              label={copy({
-                de: `Sätze ${suites.length}`,
-                en: `Suites ${suites.length}`,
-                pl: `Zestawy ${suites.length}`,
-              })}
-              tone={INDIGO_TONE}
-            />
-            <StatusPill
-              label={copy({
-                de: `Fragen ${suites.reduce((total, suite) => total + suite.questionCount, 0)}`,
-                en: `Questions ${suites.reduce((total, suite) => total + suite.questionCount, 0)}`,
-                pl: `Pytania ${suites.reduce((total, suite) => total + suite.questionCount, 0)}`,
-              })}
-              tone={BASE_TONE}
-            />
-          </View>
-          <View style={{ flexDirection: 'column', gap: 8 }}>
-            <OutlineLink
-              href={PRACTICE_ROUTE}
-              hint={copy({
-                de: 'Öffnet das Training.',
-                en: 'Opens practice.',
-                pl: 'Otwiera trening.',
-              })}
-              label={copy({
-                de: 'Zur Übung',
-                en: 'Go to practice',
-                pl: 'Przejdź do treningu',
-              })}
-            />
-            <OutlineLink
-              href={PLAN_ROUTE}
-              hint={copy({
-                de: 'Öffnet den Tagesplan.',
-                en: 'Opens the daily plan.',
-                pl: 'Otwiera plan dnia.',
-              })}
-              label={copy({
-                de: 'Zum Tagesplan',
-                en: 'Go to daily plan',
-                pl: 'Przejdź do planu dnia',
-              })}
-            />
-            <OutlineLink
-              href={RESULTS_ROUTE}
-              hint={copy({
-                de: 'Öffnet die Ergebnisse.',
-                en: 'Opens results.',
-                pl: 'Otwiera wyniki.',
-              })}
-              label={copy({
-                de: 'Ergebnisse öffnen',
-                en: 'Open results',
-                pl: 'Otwórz wyniki',
-              })}
-            />
-          </View>
-        </SectionCard>
-
-        {!activeSuite ? <KangurMobileAiTutorCard context={catalogTutorContext} /> : null}
-
-        {missingFocusedSuite ? (
-          <SectionCard
-            title={copy({
-              de: 'Testkürzel',
-              en: 'Test shortcut',
-              pl: 'Skrót testu',
-            })}
-          >
-            <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-              {copy({
-                de: `Der Link zu "${formatFocusToken(focusToken)}" passt aktuell zu keinem live Testsatz.`,
-                en: `The shortcut for "${formatFocusToken(focusToken)}" does not match any live test suite right now.`,
-                pl: `Skrót do „${formatFocusToken(focusToken)}” nie pasuje teraz do żadnego aktywnego zestawu testów.`,
-              })}
-            </Text>
-            <PrimaryButton
-              label={copy({
-                de: 'Vollen Katalog öffnen',
-                en: 'Open full catalog',
-                pl: 'Otwórz pełny katalog',
-              })}
-              onPress={() => {
-                router.replace(TESTS_ROUTE);
-              }}
-              tone={BASE_TONE}
-            />
-          </SectionCard>
-        ) : null}
-
-        {activeSuite ? (
-          <>
-            <SectionCard title={activeSuite.suite.title}>
-              <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                {activeSuite.suite.description.trim().length > 0
-                  ? activeSuite.suite.description
-                  : copy({
-                      de: 'Pracuj przez ten zestaw we własnym tempie.',
-                      en: 'Work through this suite at your own pace.',
-                      pl: 'Przejdź przez ten zestaw we własnym tempie.',
-                    })}
-              </Text>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                <StatusPill
-                  label={formatQuestionCount(activeSuite.questionCount, locale)}
-                  tone={SUCCESS_TONE}
-                />
-                {formatSuiteMeta(activeSuite.suite, locale).map((part) => (
-                  <StatusPill key={part} label={part} tone={BASE_TONE} />
-                ))}
-              </View>
-              <PrimaryButton
-                label={copy({
-                  de: 'Zurück zur Liste',
-                  en: 'Back to the list',
-                  pl: 'Wróć do listy',
-                })}
-                onPress={() => {
-                  setActiveSuiteId(null);
-                }}
-                tone={BASE_TONE}
-              />
-            </SectionCard>
-            <KangurMobileTestPlayer
-              item={activeSuite}
-              onBackToCatalog={() => {
-                setActiveSuiteId(null);
-              }}
-            />
-          </>
-        ) : isLoading ? (
-          <SectionCard
-            title={copy({
-              de: 'Tests werden geladen',
-              en: 'Loading tests',
-              pl: 'Ładujemy testy',
-            })}
-          >
-            <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-              {copy({
-                de: 'Wir holen die aktiven Testsätze und die veröffentlichten Fragen.',
-                en: 'We are loading the live test suites and their published questions.',
-                pl: 'Pobieramy aktywne zestawy testów i ich opublikowane pytania.',
-              })}
-            </Text>
-          </SectionCard>
-        ) : error ? (
-          <SectionCard
-            title={copy({
-              de: 'Tests konnten nicht geladen werden',
-              en: 'Could not load the tests',
-              pl: 'Nie udało się pobrać testów',
-            })}
-          >
-            <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-              {error}
-            </Text>
-            <PrimaryButton
-              label={copy({
-                de: 'Erneut laden',
-                en: 'Reload tests',
-                pl: 'Odśwież testy',
-              })}
-              onPress={() => {
-                void refresh();
-              }}
-            />
-          </SectionCard>
-        ) : suites.length === 0 ? (
-          <SectionCard
-            title={copy({
-              de: 'Keine aktiven Tests',
-              en: 'No live tests',
-              pl: 'Brak aktywnych testów',
-            })}
-          >
-            <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-              {copy({
-                de: 'Aktivierte Testsätze erscheinen hier automatisch, sobald sie für Lernende live sind.',
-                en: 'Enabled test suites show up here automatically as soon as they are live for learners.',
-                pl: 'Aktywne zestawy testów pojawią się tutaj automatycznie, gdy będą już opublikowane dla ucznia.',
-              })}
-            </Text>
-          </SectionCard>
-        ) : (
-          suites.map((item) => (
-            <SectionCard key={item.suite.id} title={item.suite.title}>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                <StatusPill
-                  label={formatQuestionCount(item.questionCount, locale)}
-                  tone={item.questionCount > 0 ? SUCCESS_TONE : WARNING_TONE}
-                />
-                {formatSuiteMeta(item.suite, locale).map((part) => (
-                  <StatusPill key={part} label={part} tone={BASE_TONE} />
-                ))}
-              </View>
-              {item.suite.description.trim().length > 0 ? (
-                <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                  {item.suite.description}
-                </Text>
-              ) : null}
-              <PrimaryButton
-                label={copy({
-                  de: 'Test starten',
-                  en: 'Start the test',
-                  pl: 'Uruchom test',
-                })}
-                onPress={() => {
-                  setActiveSuiteId(item.suite.id);
-                }}
-              />
-            </SectionCard>
-          ))
-        )}
-
-        <SectionCard
-          title={copy({
-            de: 'Nächste Schritte',
-            en: 'Next steps',
-            pl: 'Kolejne kroki',
-          })}
-        >
-          <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-            {copy({
-              de: 'Nach dem Testsatz kannst du zur Lektion, in das Training oder direkt in die Ergebnisse springen.',
-              en: 'After the test suite, jump back to lessons, practice, or straight into results.',
-              pl: 'Po zestawie możesz wrócić do lekcji, treningu albo od razu przejść do wyników.',
-            })}
-          </Text>
-          <View style={{ flexDirection: 'column', gap: 8 }}>
-            <OutlineLink
-              href={LESSONS_ROUTE}
-              hint={copy({
-                de: 'Öffnet die Lektionen.',
-                en: 'Opens lessons.',
-                pl: 'Otwiera lekcje.',
-              })}
-              label={copy({
-                de: 'Lektionen öffnen',
-                en: 'Open lessons',
-                pl: 'Otwórz lekcje',
-              })}
-            />
-            <OutlineLink
-              href={PRACTICE_ROUTE}
-              hint={copy({
-                de: 'Öffnet das Training.',
-                en: 'Opens practice.',
-                pl: 'Otwiera trening.',
-              })}
-              label={copy({
-                de: 'Training öffnen',
-                en: 'Open practice',
-                pl: 'Otwórz trening',
-              })}
-            />
-          </View>
-        </SectionCard>
+    <KangurMobileScrollScreen onRefresh={async () => { await refresh(); }} refreshing={isLoading} title='Tests'>
+      {isLoading && <Text>Loading...</Text>}
+      {error !== null && <Text>{error}</Text>}
+      {suites.map((item) => (
+        <TestSuiteCard copy={copy} key={item.suite.id} locale={locale} onOpen={setActiveSuiteId} suite={item.suite} />
+      ))}
     </KangurMobileScrollScreen>
   );
 }

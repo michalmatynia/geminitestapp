@@ -13,12 +13,20 @@ const testTsProject = path.join(workspaceRootDir, 'tsconfig.eslint-tests.json');
 
 const testFiles = [
   'src/**/__tests__/**/*.{js,jsx,ts,tsx}',
+  'apps/**/__tests__/**/*.{js,jsx,ts,tsx}',
   'e2e/**/*.{js,jsx,ts,tsx}',
   'src/**/*.test.{js,jsx,ts,tsx}',
   'src/**/*.spec.{js,jsx,ts,tsx}',
+  'apps/**/*.test.{js,jsx,ts,tsx}',
+  'apps/**/*.spec.{js,jsx,ts,tsx}',
 ];
 
 const sourceFiles = ['src/**/*.{js,jsx,ts,tsx}'];
+const studiqWebFiles = ['apps/studiq-web/**/*.{js,jsx,ts,tsx}'];
+const mobileFiles = ['apps/mobile/**/*.{js,jsx,ts,tsx}'];
+
+const studiqWebTsProject = path.join(workspaceRootDir, 'apps/studiq-web/tsconfig.json');
+const mobileTsProject = path.join(workspaceRootDir, 'apps/mobile/tsconfig.json');
 const serverFiles = [
   'src/app/api/**/*.{ts,tsx,js,jsx}',
   'src/middleware.ts',
@@ -274,6 +282,9 @@ export default defineConfig([
   globalIgnores([
     'node_modules/**',
     '.next/**',
+    'apps/**/.next/**',
+    'apps/**/.expo/**',
+    'apps/**/dist/**',
     '.next-dev/**',
     '.next-dev*/**',
     '.next-codex-build/**',
@@ -515,6 +526,34 @@ export default defineConfig([
         },
       ],
     },
+  },
+
+  {
+    files: studiqWebFiles,
+    languageOptions: {
+      ...typedSourceLanguageOptions,
+      parserOptions: {
+        ...typedSourceLanguageOptions.parserOptions,
+        project: studiqWebTsProject,
+      },
+    },
+    plugins: sharedPluginConfig,
+    settings: sharedSettings,
+    rules: commonRules,
+  },
+
+  {
+    files: mobileFiles,
+    languageOptions: {
+      ...typedSourceLanguageOptions,
+      parserOptions: {
+        ...typedSourceLanguageOptions.parserOptions,
+        project: mobileTsProject,
+      },
+    },
+    plugins: sharedPluginConfig,
+    settings: sharedSettings,
+    rules: commonRules,
   },
 
   {

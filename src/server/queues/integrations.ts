@@ -3,12 +3,18 @@ import 'server-only';
 export {
   startPlaywrightListingQueue,
   enqueuePlaywrightListingJob,
+} from '@/features/integrations/workers/playwrightListingQueue';
+export {
   startTraderaListingQueue,
   enqueueTraderaListingJob,
+} from '@/features/integrations/workers/traderaListingQueue';
+export {
   startVintedListingQueue,
   enqueueVintedListingJob,
+} from '@/features/integrations/workers/vintedListingQueue';
+export {
   startTraderaRelistSchedulerQueue,
-} from '@/features/integrations/server';
+} from '@/features/integrations/workers/traderaRelistSchedulerQueue';
 export {
   startBaseImportQueue,
   enqueueBaseImportRunJob,

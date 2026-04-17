@@ -172,11 +172,12 @@ const withTimeout = async <T>(
       }),
     ]);
   } finally {
-    if (timeoutRef) clearTimeout(timeoutRef);
+    if (timeoutRef !== null) clearTimeout(timeoutRef);
   }
-};
+  };
 
-const cleanupOldRuns = async (): Promise<void> => {
+  const cleanupOldRuns = async (): Promise<void> => {
+
   try {
     await ensureRunRoot();
     const now = Date.now();
@@ -205,12 +206,13 @@ const cleanupOldRuns = async (): Promise<void> => {
       })
     );
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    await ErrorSystem.captureException(error);
     // best effort cleanup only
   }
-};
+  };
 
-const isLocalStickySessionHost = (hostname: string): boolean => {
+  const isLocalStickySessionHost = (hostname: string): boolean => {
+
   const normalized = hostname.trim().toLowerCase();
   return (
     normalized === 'localhost' ||
@@ -231,8 +233,9 @@ const resolveChromiumRuntimePacingDescriptor = (input: {
   const normalizedStartUrl =
     typeof input.startUrl === 'string' && input.startUrl.trim().length > 0 ? input.startUrl.trim() : null;
 
-  if (!normalizedStartUrl) {
+  if (normalizedStartUrl === null) {
     return {
+
       key: `${input.identityProfile}:global`,
       label: `${input.identityProfile}/global`,
       profile: input.identityProfile,
@@ -314,18 +317,18 @@ const resolveStickySessionDescriptor = (input: {
   explicitStorageState: BrowserContextOptions['storageState'] | undefined;
 }): StickySessionDescriptor | null => {
   if (
-    input.explicitStorageState ||
+    input.explicitStorageState !== undefined &&
+    input.explicitStorageState !== null ||
     !HOSTILE_STICKY_IDENTITY_PROFILES.has(input.identityProfile)
   ) {
     return null;
   }
-
   const scopeValue =
     input.instance?.connectionId?.trim() ||
     input.ownerUserId?.trim() ||
     input.instance?.integrationId?.trim() ||
     null;
-  if (!scopeValue) {
+  if (scopeValue === null) {
     return null;
   }
 
@@ -442,7 +445,7 @@ const persistStickySessionStorageState = async (input: {
       `[runtime] Saved sticky storage state (${input.descriptor.profile}) for ${input.descriptor.scopeLabel} at ${input.descriptor.origin}.`
     );
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    await ErrorSystem.captureException(error);
   }
 };
 
@@ -527,12 +530,12 @@ export const updateRunState = async (
       patch.requestSummary === undefined
         ? (base.requestSummary ?? null)
         : (patch.requestSummary ?? null),
-    artifacts: patch.artifacts ?? base.artifacts ?? [],
-    logs: patch.logs ?? base.logs ?? [],
+    artifacts: patch.artifacts ?? base.artifacts,
+    logs: patch.logs ?? base.logs,
   };
   await writeRunState(next);
-  await recordPlaywrightActionRunSnapshot(next).catch((error: unknown) => {
-    void ErrorSystem.captureException(error, {
+  await recordPlaywrightActionRunSnapshot(next).catch(async (error: unknown) => {
+    await ErrorSystem.captureException(error, {
       service: 'playwright-node-runner',
       action: 'record-action-run-history',
       runId,
@@ -625,11 +628,11 @@ const buildLaunchOptions = (
     headless: settings.headless,
     slowMo: settings.slowMo,
   };
-  if (settings.proxyEnabled && settings.proxyServer) {
+  if (settings.proxyEnabled && (settings.proxyServer ?? '') !== '') {
     base.proxy = {
-      server: settings.proxyServer,
-      ...(settings.proxyUsername ? { username: settings.proxyUsername } : {}),
-      ...(settings.proxyPassword ? { password: settings.proxyPassword } : {}),
+      server: settings.proxyServer as string,
+      ...((settings.proxyUsername ?? '') !== '' ? { username: settings.proxyUsername } : {}),
+      ...((settings.proxyPassword ?? '') !== '' ? { password: settings.proxyPassword } : {}),
     };
   }
   const merged = {
@@ -672,7 +675,7 @@ const buildContextOptions = (
   }
   const merged = {
     ...base,
-    ...(contextOverrides as BrowserContextOptions),
+    ...(contextOverrides),
   };
   if (typeof merged.storageState !== 'string' && merged.storageState) {
     const sanitizedStorageState = sanitizePlaywrightStorageState(merged.storageState, {
@@ -683,6 +686,25 @@ const buildContextOptions = (
     } else {
       delete merged.storageState;
     }
+  }
+  const jitterBudget = Math.max(
+    0,
+    Math.trunc(settings.viewportJitterPx ?? 0)
+  );
+  if (
+    jitterBudget > 0 &&
+    merged.viewport &&
+    typeof merged.viewport === 'object' &&
+    typeof merged.viewport.width === 'number' &&
+    typeof merged.viewport.height === 'number' &&
+    contextOverrides.viewport === undefined
+  ) {
+    const jitterWidth = pickSignedOffset(jitterBudget);
+    const jitterHeight = pickSignedOffset(jitterBudget);
+    merged.viewport = {
+      width: Math.max(320, merged.viewport.width + jitterWidth),
+      height: Math.max(240, merged.viewport.height + jitterHeight),
+    };
   }
   return merged;
 };
@@ -849,7 +871,7 @@ const registerOutboundPolicyRoute = async (
     try {
       parsed = new URL(requestUrl);
     } catch (error) {
-      void ErrorSystem.captureException(error);
+      await ErrorSystem.captureException(error);
       await route.continue();
       return;
     }
@@ -989,6 +1011,11 @@ const executePlaywrightNodeRun = async (
     ? resolveChromiumAntiDetectionRuntimeBehavior({
         identityProfile: effectiveSettings.identityProfile,
         startUrl: request.startUrl,
+        overrides: {
+          launchCooldownMs: effectiveSettings.launchCooldownMs,
+          prewarmWaitMs: effectiveSettings.prewarmWaitMs,
+          postStartUrlWaitMs: effectiveSettings.postStartUrlWaitMs,
+        },
       })
     : {
         prewarmUrl: null,
@@ -1030,7 +1057,7 @@ const executePlaywrightNodeRun = async (
       )
     );
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    await ErrorSystem.captureException(error);
   }
 
   let browser: Browser | null = null;
@@ -1113,6 +1140,14 @@ const executePlaywrightNodeRun = async (
     }
 
     if (request.startUrl?.trim()) {
+      const newTabSettleMs = pickDelayInRange(
+        effectiveSettings.actionDelayMin,
+        effectiveSettings.actionDelayMax
+      );
+      if (newTabSettleMs > 0) {
+        logs.push(`[runtime] New tab opened — settling ${newTabSettleMs}ms before focusing the address bar.`);
+        await sleep(newTabSettleMs);
+      }
       const allowedByPolicyOverride = isPolicyAllowedHost(request.startUrl, policyAllowedHosts);
       const decision = allowedByPolicyOverride
         ? { allowed: true, reason: null }
@@ -1123,8 +1158,27 @@ const executePlaywrightNodeRun = async (
         );
       }
       if (runtimeAntiDetectionBehavior.prewarmUrl) {
-        logs.push(`[runtime] Prewarming target origin: ${runtimeAntiDetectionBehavior.prewarmUrl}`);
-        await page.goto(runtimeAntiDetectionBehavior.prewarmUrl, {
+        const prewarmUrl = runtimeAntiDetectionBehavior.prewarmUrl;
+        const prewarmPerCharDelay = pickDelayInRange(
+          effectiveSettings.inputDelayMin,
+          effectiveSettings.inputDelayMax
+        );
+        const prewarmTypingMs = prewarmUrl.length * prewarmPerCharDelay;
+        const prewarmPreEnterMs = pickDelayInRange(
+          effectiveSettings.actionDelayMin,
+          effectiveSettings.actionDelayMax
+        );
+        logs.push(
+          `[runtime] Simulating address bar typing of prewarm origin (${prewarmUrl.length} chars @ ~${prewarmPerCharDelay}ms/char, +${prewarmPreEnterMs}ms pre-Enter).`
+        );
+        if (prewarmTypingMs > 0) {
+          await sleep(prewarmTypingMs);
+        }
+        if (prewarmPreEnterMs > 0) {
+          await sleep(prewarmPreEnterMs);
+        }
+        logs.push(`[runtime] Prewarming target origin: ${prewarmUrl}`);
+        await page.goto(prewarmUrl, {
           waitUntil: 'domcontentloaded',
           timeout: effectiveSettings.navigationTimeout,
         });
@@ -1163,6 +1217,30 @@ const executePlaywrightNodeRun = async (
         await sleep(runtimeAntiDetectionBehavior.postStartUrlWaitMs);
         logs.push(
           `[runtime] Settled start URL navigation for ${runtimeAntiDetectionBehavior.postStartUrlWaitMs}ms.`
+        );
+      }
+      const viewportSize =
+        effectiveSettings.postLoadNudgeEnabled !== false &&
+        typeof page.viewportSize === 'function'
+          ? page.viewportSize()
+          : null;
+      if (viewportSize) {
+        const baselineX = Math.trunc(viewportSize.width * 0.45);
+        const baselineY = Math.trunc(viewportSize.height * 0.35);
+        const nudgeX = clampNumber(baselineX + pickSignedOffset(80), 4, viewportSize.width - 4);
+        const nudgeY = clampNumber(baselineY + pickSignedOffset(60), 4, viewportSize.height - 4);
+        await page.mouse
+          .move(nudgeX, nudgeY, { steps: 10 + Math.floor(Math.random() * 8) })
+          .catch(() => undefined);
+        const nudgeSettleMs = pickDelayInRange(
+          effectiveSettings.clickDelayMin,
+          effectiveSettings.clickDelayMax
+        );
+        if (nudgeSettleMs > 0) {
+          await sleep(nudgeSettleMs);
+        }
+        logs.push(
+          `[runtime] Nudged cursor to (${nudgeX}, ${nudgeY}) after load (+${nudgeSettleMs}ms settle).`
         );
       }
     }
@@ -1551,7 +1629,7 @@ const executePlaywrightNodeRun = async (
     await writeRunState(finalState);
     return finalState;
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    await ErrorSystem.captureException(error);
     await liveRunState.flush();
     liveRunState.finalize();
     const existingRun = await readPlaywrightNodeRun(runId);
@@ -1618,8 +1696,8 @@ export const enqueuePlaywrightNodeRun = async (input: {
     requestSummary: summarizePlaywrightRunRequest(input.request),
   };
   await writeRunState(queuedState);
-  await recordPlaywrightActionRunSnapshot(queuedState).catch((error: unknown) => {
-    void ErrorSystem.captureException(error, {
+  await recordPlaywrightActionRunSnapshot(queuedState).catch(async (error: unknown) => {
+    await ErrorSystem.captureException(error, {
       service: 'playwright-node-runner',
       action: 'record-action-run-history',
       runId,
@@ -1659,7 +1737,7 @@ export const readPlaywrightNodeRun = async (
       ),
     };
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    await ErrorSystem.captureException(error);
     return null;
   }
 };
@@ -1706,7 +1784,7 @@ export const readPlaywrightNodeArtifact = async (input: {
       content,
     };
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    await ErrorSystem.captureException(error);
     return null;
   }
 };

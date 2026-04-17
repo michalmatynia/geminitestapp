@@ -1,3 +1,5 @@
+'use client';
+
 import type { ImageStudioModelsResponse } from '@/shared/contracts/image-studio/misc';
 import type { ImageStudioProjectRecord, StudioProjectsResponse } from '@/shared/contracts/image-studio/project';
 import type { StudioSlotsResponse } from '@/shared/contracts/image-studio/slot';

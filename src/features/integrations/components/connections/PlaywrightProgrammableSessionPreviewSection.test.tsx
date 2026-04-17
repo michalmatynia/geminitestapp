@@ -49,7 +49,7 @@ vi.mock('@/shared/ui/forms-and-actions.public', () => ({
   ),
 }));
 
-import { PlaywrightProgrammableSessionPreviewSection } from './PlaywrightProgrammableSessionPreviewSection';
+import { PlaywrightProgrammableSessionPreviewSection } from '@/features/playwright/components/PlaywrightProgrammableSessionPreviewSection';
 
 const createPreview = ({
   actionId,

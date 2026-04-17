@@ -1,3 +1,12 @@
+---
+owner: 'Kangur Team'
+last_reviewed: '2026-04-17'
+status: 'active'
+doc_type: 'overview'
+scope: 'workspace:@app/studiq-web'
+canonical: true
+---
+
 # StudiQ Web Workspace
 
 `apps/studiq-web` is a standalone Next.js workspace focused on the StudiQ and

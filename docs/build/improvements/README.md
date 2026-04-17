@@ -16,6 +16,13 @@ It keeps the instruction layer and the latest generated portfolio scans
 together, so improvement work can cover UI, performance, quality, testing, and
 data recovery instead of drifting into a single-track workflow.
 
+## Open This Hub When
+
+- you are running cross-feature improvement sweeps rather than feature-local cleanup
+- you need the current generated portfolio scans and track inventories
+- you need to decide which improvement track to run
+- you are migrating away from older one-off program surfaces such as the legacy UI consolidation folder
+
 ## Key Entry Points
 
 - [`scan-latest.md`](./scan-latest.md)
@@ -30,6 +37,17 @@ data recovery instead of drifting into a single-track workflow.
 - [`repo-quality-baseline/README.md`](./repo-quality-baseline/README.md)
 - [`testing-quality-baseline/README.md`](./testing-quality-baseline/README.md)
 - [`ui-consolidation/README.md`](./ui-consolidation/README.md)
+
+## Which Track To Use
+
+| If you need to... | Open |
+| --- | --- |
+| inspect broad app/runtime performance follow-up | [`application-performance/README.md`](./application-performance/README.md) |
+| normalize products categories or parameter schema | [`products-category-schema-normalization/README.md`](./products-category-schema-normalization/README.md) |
+| recover missing products parameters or source integrity | [`products-parameter-integrity/README.md`](./products-parameter-integrity/README.md) |
+| review repo-wide quality baseline follow-up | [`repo-quality-baseline/README.md`](./repo-quality-baseline/README.md) |
+| review testing inventory and quality-health follow-up | [`testing-quality-baseline/README.md`](./testing-quality-baseline/README.md) |
+| run UI consolidation as part of the broader improvement portfolio | [`ui-consolidation/README.md`](./ui-consolidation/README.md) |
 
 ## Current Workflow
 
@@ -67,3 +85,7 @@ data recovery instead of drifting into a single-track workflow.
   [`../../runbooks/application-performance-operations.md`](../../runbooks/application-performance-operations.md)
 - Testing operations runbook:
   [`../../runbooks/testing-operations.md`](../../runbooks/testing-operations.md)
+
+Prefer the improvement-track UI consolidation surface above for new work. Use
+the legacy residual folder only when a task or existing consumer still points at
+that older surface explicitly.

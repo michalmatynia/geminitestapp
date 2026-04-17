@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-26'
+last_reviewed: '2026-04-17'
 status: 'active'
 doc_type: 'index'
 scope: 'cross-feature'
@@ -15,6 +15,17 @@ convergence work across the repo.
 This folder is intentionally alias-only: it should expose the current generated
 scan outputs, not accumulate dated historical snapshots.
 
+## Open This Hub When
+
+- an existing task, script, or document still points at the legacy UI consolidation surface
+- you need the alias-only latest scan outputs for the legacy program path
+- you are confirming how this residual surface differs from the newer improvement-track hub
+
+For new cross-feature improvement work, prefer
+[`docs/build/improvements/ui-consolidation/README.md`](../build/improvements/ui-consolidation/README.md).
+This folder remains active only as the residual program surface while internal
+consumers still reference it.
+
 ## Key Entry Points
 
 - [`scan-latest.md`](./scan-latest.md)
@@ -27,6 +38,13 @@ scan outputs, not accumulate dated historical snapshots.
 - Bun compatibility lane: `bun run bun:check:ui-consolidation`
 - The guardrail command refreshes the latest markdown, JSON, and CSV aliases before enforcing thresholds.
 - Use `node scripts/architecture/check-ui-consolidation.mjs --no-write --summary-json` only when you intentionally need a read-only check run.
+
+## Residual Surface Rule
+
+- Use this folder as the compatibility-facing alias surface.
+- Use [`../build/improvements/ui-consolidation/README.md`](../build/improvements/ui-consolidation/README.md)
+  for the improvement-portfolio entrypoint and track commands.
+- Keep these two surfaces aligned until the residual program folder can be fully retired.
 
 ## Placement Rule
 

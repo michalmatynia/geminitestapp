@@ -74,6 +74,7 @@ import {
 } from './product-scans-service.helpers.amazon';
 
 import {
+  SCANNER_1688_MISSING_LOCAL_IMAGE_MESSAGE,
   SCANNER_1688_MISSING_PROFILE_MESSAGE,
   resolve1688ConnectionEngineSettings,
 } from './product-scans-sync-1688';
@@ -125,6 +126,21 @@ const resolveAmazonRuntimeKey = (
         | typeof AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY
         | typeof AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY)
     : AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY;
+
+const resolveQueuedProductName = (product: {
+  name?: unknown;
+  name_pl?: unknown;
+  name_en?: unknown;
+}): string => {
+  const localizedName = toRecord(product.name);
+  return (
+    readOptionalString(localizedName?.['pl'], 500) ??
+    readOptionalString(localizedName?.['en'], 500) ??
+    readOptionalString(product.name_pl, 500) ??
+    readOptionalString(product.name_en, 500) ??
+    ''
+  );
+};
 
 async function resolveAlreadyRunningBatchResult(input: {
   productId: string;
@@ -316,6 +332,7 @@ async function queueBatchProductScans(input: {
         if (product === null) {
           return createFailedBatchResult(productId, 'Product not found.');
         }
+        const productName = resolveQueuedProductName(product);
 
         const requestedStepSequenceInput = resolveProductScanRequestSequenceInput(requestInput);
         const amazonRuntimeKey =
@@ -359,12 +376,13 @@ async function queueBatchProductScans(input: {
         );
 
         if (imageCandidates.length === 0 && !hasDirectAmazonCandidateInput) {
-          return createFailedBatchResult(
-            productId,
-            input.config.provider === 'amazon'
-              ? 'No usable product images for Amazon candidate search.'
-              : 'No usable product images for scanning.'
-          );
+          let missingImageMessage = 'No usable product images for scanning.';
+          if (input.config.provider === 'amazon') {
+            missingImageMessage = 'No usable product images for Amazon candidate search.';
+          } else if (input.config.provider === '1688') {
+            missingImageMessage = SCANNER_1688_MISSING_LOCAL_IMAGE_MESSAGE;
+          }
+          return createFailedBatchResult(productId, missingImageMessage);
         }
 
         if (input.config.provider === '1688' && supplierConnectionContext === null) {
@@ -404,9 +422,13 @@ async function queueBatchProductScans(input: {
             return createFailedBatchResult(productId, 'Scanner runtime is not configured.');
           }
 
+          const shouldAutoShowCaptchaBrowser =
+            shouldAutoShowScannerCaptchaBrowser(scannerSettings);
+          const scannerRunsHeadless = shouldAutoShowCaptchaBrowser ? false : scannerHeadless;
           const scannerRuntimeOptions = buildAmazonScannerRequestRuntimeOptions({
             scannerSettings,
             scannerEngineRequestOptions,
+            ...(shouldAutoShowCaptchaBrowser ? { forceHeadless: false } : {}),
           });
           const imageSearchProvider =
             resolveAmazonImageSearchProvider(requestInput, scannerSettings);
@@ -430,14 +452,14 @@ async function queueBatchProductScans(input: {
               selectorProfile: amazonSelectorProfile,
               input: input.config.runtime.buildRequestInput({
                 productId: product.id,
-                productName: product.name['pl'] || product.name['en'] || '',
+                productName,
                 existingAsin: product.asin,
                 imageCandidates,
                 runtimeKey: amazonRuntimeKey,
                 imageSearchProvider,
                 selectorProfile: amazonSelectorProfile,
                 allowManualVerification:
-                  shouldAutoShowScannerCaptchaBrowser(scannerSettings) && !scannerHeadless,
+                  shouldAutoShowCaptchaBrowser && !scannerRunsHeadless,
                 manualVerificationTimeoutMs,
                 triageOnlyOnAmazonCandidates:
                   isCandidateSearchRuntime || isCandidateExtractionRuntime
@@ -511,7 +533,7 @@ async function queueBatchProductScans(input: {
               selectorProfile: SUPPLIER_1688_PROBE_SCAN_SELECTOR_PROFILE,
               input: supplier1688Runtime.buildRequestInput({
                 productId: product.id,
-                productName: product.name['pl'] || product.name['en'] || '',
+                productName,
                 imageCandidates,
                 integrationId,
                 connectionId: supplierConnection.id,
@@ -589,7 +611,7 @@ async function queueBatchProductScans(input: {
           scanType: 'supplier_reverse_image',
           status: startedRun.status,
           engineRunId: startedRun.runId,
-          productName: product.name['pl'] || product.name['en'] || '',
+          productName,
           asin: product.asin,
           imageCandidates,
           asinUpdateStatus: 'pending',

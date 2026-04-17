@@ -50,14 +50,6 @@ vi.mock('@/features/integrations/hooks/useIntegrationMutations', () => ({
   useUpsertProgrammableConnection: () => useUpsertProgrammableConnectionMock(),
 }));
 
-vi.mock('@/features/integrations/components/connections/PlaywrightManagedRuntimeActionsSection', () => ({
-  PlaywrightManagedRuntimeActionsSection: () => <div>managed-runtime-actions</div>,
-}));
-
-vi.mock('@/features/integrations/components/connections/PlaywrightProgrammableSessionPreviewSection', () => ({
-  PlaywrightProgrammableSessionPreviewSection: () => <div>programmable-session-preview</div>,
-}));
-
 vi.mock('@/shared/ui/playwright/PlaywrightSettingsForm', () => ({
   PlaywrightSettingsForm: ({
     title,
@@ -128,6 +120,24 @@ vi.mock('@/shared/ui/forms-and-actions.public', () => ({
       ))}
     </select>
   ),
+  FormSection: ({
+    title,
+    description,
+    actions,
+    children,
+  }: {
+    title?: React.ReactNode;
+    description?: React.ReactNode;
+    actions?: React.ReactNode;
+    children?: React.ReactNode;
+  }) => (
+    <section>
+      <h2>{title}</h2>
+      <p>{description}</p>
+      {actions}
+      {children}
+    </section>
+  ),
 }));
 
 vi.mock('@/shared/ui/primitives.public', async (importOriginal) => {
@@ -176,9 +186,9 @@ vi.mock('@/shared/ui/primitives.public', async (importOriginal) => {
   };
 });
 
-import PlaywrightIntegrationPage from './PlaywrightIntegrationPage';
+import AdminPlaywrightProgrammableIntegrationPage from './AdminPlaywrightProgrammableIntegrationPage';
 
-describe('PlaywrightIntegrationPage', () => {
+describe('AdminPlaywrightProgrammableIntegrationPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     useIntegrationsMock.mockReturnValue({
@@ -260,19 +270,29 @@ describe('PlaywrightIntegrationPage', () => {
       isLoading: false,
     });
 
-    render(<PlaywrightIntegrationPage />);
+    render(<AdminPlaywrightProgrammableIntegrationPage />);
 
     expect(screen.queryByText('Connection Persona')).not.toBeInTheDocument();
     expect(screen.queryByText('Programmable Connection Overrides')).not.toBeInTheDocument();
     expect(screen.getByText('Browser behavior owned by selected actions')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Programmable Listing Session' })).toHaveAttribute(
-      'href',
-      '/admin/playwright/step-sequencer?actionId=runtime_action__playwright_programmable_listing'
-    );
-    expect(screen.getByRole('link', { name: 'Programmable Import Session' })).toHaveAttribute(
-      'href',
-      '/admin/playwright/step-sequencer?actionId=runtime_action__playwright_programmable_import'
-    );
+    expect(
+      screen
+        .getAllByRole('link', { name: 'Programmable Listing Session' })
+        .some(
+          (link) =>
+            link.getAttribute('href') ===
+            '/admin/playwright/step-sequencer?actionId=runtime_action__playwright_programmable_listing'
+        )
+    ).toBe(true);
+    expect(
+      screen
+        .getAllByRole('link', { name: 'Programmable Import Session' })
+        .some(
+          (link) =>
+            link.getAttribute('href') ===
+            '/admin/playwright/step-sequencer?actionId=runtime_action__playwright_programmable_import'
+        )
+    ).toBe(true);
     expect(
       screen.getByText(/This connection no longer owns persona or browser overrides/i)
     ).toBeInTheDocument();
@@ -309,7 +329,7 @@ describe('PlaywrightIntegrationPage', () => {
       isLoading: false,
     });
 
-    render(<PlaywrightIntegrationPage />);
+    render(<AdminPlaywrightProgrammableIntegrationPage />);
 
     expect(screen.queryByText('Connection Persona')).not.toBeInTheDocument();
     expect(screen.queryByText('Programmable Connection Overrides')).not.toBeInTheDocument();
@@ -368,7 +388,7 @@ describe('PlaywrightIntegrationPage', () => {
       isLoading: false,
     });
 
-    render(<PlaywrightIntegrationPage />);
+    render(<AdminPlaywrightProgrammableIntegrationPage />);
 
     expect(screen.getByText('Stored browser fields can be cleared')).toBeInTheDocument();
     expect(
@@ -447,7 +467,7 @@ describe('PlaywrightIntegrationPage', () => {
       isLoading: false,
     });
 
-    render(<PlaywrightIntegrationPage />);
+    render(<AdminPlaywrightProgrammableIntegrationPage />);
 
     expect(
       screen.getByText((content) =>

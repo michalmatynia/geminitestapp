@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-10'
+last_reviewed: '2026-04-17'
 status: 'active'
 doc_type: 'index'
 scope: 'cross-feature'
@@ -12,6 +12,12 @@ canonical: true
 This track keeps the repo-wide quality baseline inside the improvement
 portfolio, covering API error-source coverage, canonical checks, lint, and
 typecheck follow-up.
+
+## Use This Track When
+
+- you need repo-wide quality follow-up rather than feature-local lint or typecheck work
+- you are using the improvement portfolio to classify or plan quality debt
+- you need the latest generated inventory for canonical, lint, or typecheck-oriented cleanup
 
 ## Key Entry Points
 

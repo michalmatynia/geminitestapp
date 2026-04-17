@@ -180,6 +180,26 @@ export const areProductScanStepsEqual = (
   return true;
 };
 
+const normalizeProductScanStepIdentityText = (value: unknown): string | null =>
+  readOptionalString(value);
+
+const normalizeProductScanStepIdentityInt = (value: unknown): number | null =>
+  readOptionalPositiveInt(value);
+
+const hasSameProductScanStepPersistenceIdentity = (
+  existing: Pick<ProductScanStep, 'key' | 'candidateId' | 'candidateRank' | 'attempt' | 'retryOf'>,
+  next: Pick<ProductScanStep, 'key' | 'candidateId' | 'candidateRank' | 'attempt' | 'retryOf'>
+): boolean =>
+  existing.key === next.key &&
+  normalizeProductScanStepIdentityText(existing.candidateId) ===
+    normalizeProductScanStepIdentityText(next.candidateId) &&
+  normalizeProductScanStepIdentityInt(existing.candidateRank) ===
+    normalizeProductScanStepIdentityInt(next.candidateRank) &&
+  normalizeProductScanStepIdentityInt(existing.attempt) ===
+    normalizeProductScanStepIdentityInt(next.attempt) &&
+  normalizeProductScanStepIdentityText(existing.retryOf) ===
+    normalizeProductScanStepIdentityText(next.retryOf);
+
 export const resolvePersistedProductScanSteps = (
   scan: ProductScanRecord,
   nextSteps?: ProductScanStep[] | null
@@ -191,7 +211,9 @@ export const resolvePersistedProductScanSteps = (
 
   const results = [...existingSteps];
   for (const nextStep of nextSteps) {
-    const existingIndex = results.findIndex((s) => s.key === nextStep.key);
+    const existingIndex = results.findIndex((step) =>
+      hasSameProductScanStepPersistenceIdentity(step, nextStep)
+    );
     if (existingIndex >= 0) {
       const existing = results[existingIndex];
       if (existing === undefined) {
@@ -216,7 +238,15 @@ export const upsertPersistedProductScanStep = (
   nextStep: Partial<ProductScanStep> & { key: string; label: string }
 ): ProductScanStep[] => {
   const results = [...steps];
-  const existingIndex = results.findIndex((s) => s.key === nextStep.key);
+  const existingIndex = results.findIndex((step) =>
+    hasSameProductScanStepPersistenceIdentity(step, {
+      key: nextStep.key,
+      candidateId: nextStep.candidateId ?? null,
+      candidateRank: nextStep.candidateRank ?? null,
+      attempt: nextStep.attempt ?? null,
+      retryOf: nextStep.retryOf ?? null,
+    })
+  );
   const existingStep = existingIndex >= 0 ? results[existingIndex] : undefined;
 
   const mergedStep: ProductScanStep = {

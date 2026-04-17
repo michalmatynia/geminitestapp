@@ -127,7 +127,7 @@ const DATE_FORMATTER = new Intl.DateTimeFormat(undefined, {
 });
 
 const formatTimestamp = (value: string | null | undefined): string => {
-  if (!value) return 'Unknown';
+  if (value === null || value === undefined || value === '') return 'Unknown';
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? 'Unknown' : DATE_FORMATTER.format(date);
 };
@@ -149,7 +149,7 @@ const formatJsonPreview = (value: unknown): string => {
 
 const normalizeDateTimeFilter = (value: string): string | undefined => {
   const normalized = value.trim();
-  if (!normalized) return undefined;
+  if (normalized === '') return undefined;
   const date = new Date(normalized);
   return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
 };
@@ -167,7 +167,7 @@ function CopyValueButton({
   const [copied, setCopied] = useState(false);
   const normalized = value?.trim();
 
-  if (!normalized) return null;
+  if (normalized === undefined || normalized === '') return null;
 
   return (
     <Button
@@ -176,8 +176,8 @@ function CopyValueButton({
       variant='outline'
       className='h-7 gap-1.5 px-2 text-[11px]'
       onClick={() => {
-        if (!navigator.clipboard) return;
-        void navigator.clipboard
+        if (typeof navigator.clipboard === 'undefined') return;
+        navigator.clipboard
           .writeText(normalized)
           .then(() => {
             setCopied(true);
@@ -279,7 +279,7 @@ function RunHistoryTreeNode(
       onSelectRun(decoded.id);
     } else if (decoded?.entity === 'step') {
       const runId = metadataString(node.metadata?.['runId']);
-      if (runId) onSelectStep(runId, decoded.id);
+      if (runId !== null) onSelectStep(runId, decoded.id);
     }
   };
 
@@ -287,13 +287,15 @@ function RunHistoryTreeNode(
     <div
       className={cn(
         'group flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-xs transition-colors',
-        isSelected
-          ? 'bg-sky-600/20 text-white ring-1 ring-inset ring-sky-400/40'
-          : dropPosition
-            ? 'bg-sky-500/10 ring-1 ring-inset ring-sky-500/60'
-            : isDragging
-              ? 'opacity-50'
-              : 'text-muted-foreground hover:bg-muted/40 hover:text-foreground'
+        isSelected === true && 'bg-sky-600/20 text-white ring-1 ring-inset ring-sky-400/40',
+        isSelected === false &&
+          Boolean(dropPosition) &&
+          'bg-sky-500/10 ring-1 ring-inset ring-sky-500/60',
+        isSelected === false && !dropPosition && isDragging === true && 'opacity-50',
+        isSelected === false &&
+          !dropPosition &&
+          isDragging === false &&
+          'text-muted-foreground hover:bg-muted/40 hover:text-foreground'
       )}
       style={{ paddingLeft: `${depth * 14 + 8}px` }}
     >
@@ -323,7 +325,7 @@ function RunHistoryTreeNode(
       </button>
       {decoded?.entity === 'run' ? (
         <div className='flex items-center gap-1'>
-          {actionId ? (
+          {actionId !== null ? (
             <a
               href={resolveStepSequencerActionHref(actionId)}
               aria-label={`Open ${node.name} in sequencer from tree`}
@@ -333,7 +335,7 @@ function RunHistoryTreeNode(
               <ExternalLink className='size-3' />
             </a>
           ) : null}
-          {runtimeKey ? (
+          {runtimeKey !== null ? (
             <a
               href={resolvePlaywrightActionRunsHref({ runtimeKey })}
               aria-label={`Filter runs by runtime key ${runtimeKey} from tree`}
@@ -343,7 +345,7 @@ function RunHistoryTreeNode(
               <Search className='size-3' />
             </a>
           ) : null}
-          {selectorProfile ? (
+          {selectorProfile !== null ? (
             <a
               href={resolvePlaywrightActionRunsHref({ selectorProfile })}
               aria-label={`Filter runs by selector profile ${selectorProfile} from tree`}
@@ -353,7 +355,7 @@ function RunHistoryTreeNode(
               <DatabaseIcon className='size-3' />
             </a>
           ) : null}
-          {firstFailedStepId ? (
+          {firstFailedStepId !== undefined ? (
             <button
               type='button'
               aria-label={`Open first failed step for ${node.name} from tree`}
@@ -368,7 +370,7 @@ function RunHistoryTreeNode(
           ) : null}
         </div>
       ) : null}
-      {status ? <StatusIcon status={status} /> : null}
+      {status !== null ? <StatusIcon status={status} /> : null}
       {decoded?.entity === 'run' && typeof stepCount === 'number' ? (
         <button
           type='button'
@@ -394,7 +396,9 @@ function KeyValueGrid({ values }: { values: Array<[string, string | null | undef
           <div className='text-[10px] font-semibold uppercase tracking-wide text-muted-foreground'>
             {label}
           </div>
-          <div className='mt-1 break-words text-xs text-foreground'>{value || 'None'}</div>
+          <div className='mt-1 break-words text-xs text-foreground'>
+            {value === null || value === undefined || value === '' ? 'None' : value}
+          </div>
         </div>
       ))}
     </div>
@@ -413,9 +417,10 @@ function RunDetail({
   const resultPreview = formatJsonPreview(run.result);
   const actionCodeSnapshot = run.codeSnapshot ?? null;
   const stepStatusCounts = steps.reduce<Record<PlaywrightActionRunStepStatus, number>>(
-    (accumulator, step) => {
-      accumulator[step.status] += 1;
-      return accumulator;
+    (acc, step) => {
+      const nextAcc = { ...acc };
+      nextAcc[step.status] += 1;
+      return nextAcc;
     },
     {
       pending: 0,
@@ -428,18 +433,23 @@ function RunDetail({
     }
   );
   const firstFailedStep = steps.find((step) => step.status === 'error' || step.status === 'failed');
+  const firstFailedStepMessage = firstFailedStep
+    ? [firstFailedStep.message, firstFailedStep.warning, firstFailedStep.refId].find(
+        (v) => v !== null && v !== ''
+      ) ?? null
+    : null;
 
   return (
     <div className='space-y-4'>
       <div className='flex flex-wrap items-center gap-2'>
         <Badge className={RUN_STATUS_CLASSES[run.status]}>{run.status}</Badge>
-        {run.runtimeKey ? (
+        {run.runtimeKey !== null && run.runtimeKey !== '' ? (
           <DetailBadgeLink
             href={resolvePlaywrightActionRunsHref({ runtimeKey: run.runtimeKey })}
             label={run.runtimeKey}
           />
         ) : null}
-        {run.selectorProfile ? (
+        {run.selectorProfile !== null && run.selectorProfile !== '' ? (
           <DetailBadgeLink
             href={resolvePlaywrightActionRunsHref({
               selectorProfile: run.selectorProfile,
@@ -457,13 +467,13 @@ function RunDetail({
           href={resolvePlaywrightActionRunsHref({ actionId: run.actionId })}
           label='Filter action ID'
         />
-        {run.runtimeKey ? (
+        {run.runtimeKey !== null && run.runtimeKey !== '' ? (
           <DetailActionLink
             href={resolvePlaywrightActionRunsHref({ runtimeKey: run.runtimeKey })}
             label='Filter runtime key'
           />
         ) : null}
-        {run.selectorProfile ? (
+        {run.selectorProfile !== null && run.selectorProfile !== '' ? (
           <>
             <DetailActionLink
               href={resolvePlaywrightActionRunsHref({
@@ -504,14 +514,14 @@ function RunDetail({
           ) : null}
         </div>
       </div>
-      {firstFailedStep ? (
+      {firstFailedStep !== undefined ? (
         <div className='rounded border border-red-400/30 bg-red-500/10 p-3 text-xs text-red-100'>
           <div className='flex flex-wrap items-start justify-between gap-3'>
             <div className='min-w-0 flex-1'>
               <div className='font-semibold'>First failed step: {firstFailedStep.label}</div>
-              <div className='mt-1 break-words text-red-100/80'>
-                {firstFailedStep.message || firstFailedStep.warning || firstFailedStep.refId}
-              </div>
+              {firstFailedStepMessage !== null ? (
+                <div className='mt-1 break-words text-red-100/80'>{firstFailedStepMessage}</div>
+              ) : null}
             </div>
             <Button
               type='button'
@@ -590,7 +600,7 @@ function RunDetail({
           ['Integration', run.integrationId],
         ]}
       />
-      {run.error ? (
+      {run.error !== null && run.error !== '' ? (
         <div className='rounded border border-red-400/30 bg-red-500/10 p-3 text-xs text-red-100'>
           {run.error}
         </div>
@@ -608,9 +618,18 @@ function RunDetail({
               >
                 <div className='font-medium text-foreground'>{artifact.name}</div>
                 <div className='mt-1 break-all text-muted-foreground'>{artifact.path}</div>
-                {artifact.kind || artifact.mimeType ? (
+                {(artifact.kind !== null &&
+                  artifact.kind !== undefined &&
+                  artifact.kind !== '') ||
+                (artifact.mimeType !== null &&
+                  artifact.mimeType !== undefined &&
+                  artifact.mimeType !== '') ? (
                   <div className='mt-1 text-[10px] text-muted-foreground/80'>
-                    {[artifact.kind, artifact.mimeType].filter(Boolean).join(' · ')}
+                    {[artifact.kind, artifact.mimeType]
+                      .filter(
+                        (v): v is string => v !== null && v !== undefined && v !== ''
+                      )
+                      .join(' · ')}
                   </div>
                 ) : null}
               </div>
@@ -618,7 +637,7 @@ function RunDetail({
           </div>
         </div>
       ) : null}
-      {resultPreview ? (
+      {resultPreview !== '' ? (
         <div className='rounded border border-border/50 bg-black/20 p-3'>
           <div className='mb-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground'>
             Result payload
@@ -651,12 +670,12 @@ const buildStepBreadcrumbs = (
   const visited = new Set<string>();
   let current: PlaywrightActionRunStepRecord | undefined = selectedStep;
 
-  while (current && !visited.has(current.id)) {
+  while (current !== undefined && !visited.has(current.id)) {
     visited.add(current.id);
     breadcrumbs.unshift(current);
-    current = current.parentStepId ? byId.get(current.parentStepId) : undefined;
+    current =
+      current.parentStepId !== null ? byId.get(current.parentStepId) : undefined;
   }
-
   return breadcrumbs;
 };
 
@@ -680,7 +699,7 @@ function StepDetail({
     () =>
       steps
         .filter((candidate) => candidate.parentStepId === step.id)
-        .sort((left, right) => (left.sequenceIndex ?? 0) - (right.sequenceIndex ?? 0)),
+        .sort((left, right) => left.sequenceIndex - right.sequenceIndex),
     [step.id, steps]
   );
 
@@ -689,8 +708,10 @@ function StepDetail({
       <div className='flex flex-wrap items-center gap-2'>
         <Badge className={STEP_STATUS_CLASSES[step.status]}>{step.status}</Badge>
         <Badge variant='neutral'>{step.kind}</Badge>
-        {step.stepType ? <Badge variant='neutral'>{step.stepType}</Badge> : null}
-        {codeSnapshot ? (
+        {step.stepType !== null && step.stepType !== '' ? (
+          <Badge variant='neutral'>{step.stepType}</Badge>
+        ) : null}
+        {codeSnapshot !== null ? (
           <Badge variant='neutral' className='gap-1'>
             <Code2 className='size-3' />
             {codeSnapshot.moduleKey}
@@ -705,11 +726,11 @@ function StepDetail({
         <DetailActionLink
           href={resolveSelectorRegistryHref(step)}
           label={
-            step.selectorProfile === '1688'
-              ? 'Open 1688 selector registry'
-              : step.selectorProfile === 'amazon'
-                ? 'Open Amazon selector registry'
-                : 'Open selector registry'
+            (() => {
+              if (step.selectorProfile === '1688') return 'Open 1688 selector registry';
+              if (step.selectorProfile === 'amazon') return 'Open Amazon selector registry';
+              return 'Open selector registry';
+            })()
           }
         />
         <CopyValueButton label='Copy selector' value={step.selector} />

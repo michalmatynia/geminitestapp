@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-10'
+last_reviewed: '2026-04-17'
 status: 'active'
 doc_type: 'index'
 scope: 'cross-feature'
@@ -12,6 +12,12 @@ canonical: true
 This track brings the testing inventory and quality snapshot into the same
 improvement hub so broader improvement work can include validation-system
 health.
+
+## Use This Track When
+
+- you need testing-quality follow-up beyond a single failing suite
+- you are using the improvement portfolio to classify testing health work
+- you need the current generated inventory before deciding on broader testing cleanup
 
 ## Key Entry Points
 

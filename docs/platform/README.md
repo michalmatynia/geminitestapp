@@ -17,6 +17,13 @@ This directory is the canonical home for stable cross-cutting platform docs:
 - developer handbooks
 - shared UI/data conventions
 
+## Open This Hub When
+
+- you need stable repo-wide engineering guidance rather than feature-specific docs
+- you are changing shared architectural patterns, API conventions, caching, or accessibility behavior
+- you need the current platform baseline instead of a historical scan or one-off plan
+- you need the canonical home for concurrent agentic-coding rules and shared platform practices
+
 ## Placement Rule
 
 New cross-cutting platform docs should land here instead of directly under
@@ -50,6 +57,19 @@ onramp.
 - [`repo-deep-scan-2026-03-25.md`](./repo-deep-scan-2026-03-25.md) — archived
   repository scan and remediation snapshot; use `GEMINI.md` and the maintained
   hubs above for current guidance
+
+## Scenario Map
+
+| If you need to... | Open |
+| --- | --- |
+| understand broad engineering expectations | [`developer-handbook.md`](./developer-handbook.md) |
+| review architecture and dependency rules | [`architecture-guardrails.md`](./architecture-guardrails.md) |
+| choose shared UI and component patterns | [`component-patterns.md`](./component-patterns.md) |
+| review shared accessibility policy | [`accessibility.md`](./accessibility.md) |
+| inspect platform caching rules | [`api-caching.md`](./api-caching.md), [`data-fetching-caching.md`](./data-fetching-caching.md) |
+| verify testing expectations across the repo | [`testing-policy.md`](./testing-policy.md) |
+| review Bun support and parity rules | [`bun-support.md`](./bun-support.md) |
+| work inside the agentic-coding model | [`agentic-coding-overview.md`](./agentic-coding-overview.md) and related docs below |
 
 ## Root Compatibility Stubs
 

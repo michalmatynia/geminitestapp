@@ -6,21 +6,21 @@ import React from 'react';
 import type { ProgrammableSessionDiagnostics } from '@/features/playwright/utils/playwright-programmable-session-diagnostics';
 import type { ProgrammableSessionPreview } from '@/features/playwright/utils/playwright-programmable-session-preview';
 import { resolveStepSequencerActionHref } from '@/features/playwright/utils/step-sequencer-action-links';
-import { Alert, Badge, Card } from '@/shared/ui/primitives.public';
 import { FormSection } from '@/shared/ui/forms-and-actions.public';
+import { Alert, Badge, Card } from '@/shared/ui/primitives.public';
 
 type PlaywrightProgrammableSessionPreviewSectionProps = {
   diagnostics: ProgrammableSessionDiagnostics;
-  listingPreview: ProgrammableSessionPreview;
   importPreview: ProgrammableSessionPreview;
+  listingPreview: ProgrammableSessionPreview;
 };
 
 function SummaryBadges({
-  values,
   emptyMessage,
+  values,
 }: {
-  values: string[];
   emptyMessage: string;
+  values: string[];
 }): React.JSX.Element {
   return values.length > 0 ? (
     <div className='flex flex-wrap gap-1.5'>
@@ -36,13 +36,13 @@ function SummaryBadges({
 }
 
 function PreviewSection({
+  emptyMessage,
   title,
   values,
-  emptyMessage,
 }: {
+  emptyMessage: string;
   title: string;
   values: string[];
-  emptyMessage: string;
 }): React.JSX.Element {
   return (
     <div className='space-y-1'>
@@ -55,11 +55,11 @@ function PreviewSection({
 }
 
 function SessionPreviewHeader({
-  title,
   preview,
+  title,
 }: {
-  title: string;
   preview: ProgrammableSessionPreview;
+  title: string;
 }): React.JSX.Element {
   const actionDescription =
     typeof preview.action.description === 'string' && preview.action.description.trim().length > 0
@@ -89,11 +89,11 @@ function SessionPreviewHeader({
 }
 
 function SessionPreviewCard({
-  title,
   preview,
+  title,
 }: {
-  title: string;
   preview: ProgrammableSessionPreview;
+  title: string;
 }): React.JSX.Element {
   return (
     <Card variant='subtle' padding='md' className='border border-border/50 bg-background/20'>
@@ -131,36 +131,12 @@ function SessionPreviewCard({
 
 export function PlaywrightProgrammableSessionPreviewSection({
   diagnostics,
-  listingPreview,
   importPreview,
+  listingPreview,
 }: PlaywrightProgrammableSessionPreviewSectionProps): React.JSX.Element {
   const hasSharedOverrideConflict = diagnostics.conflictingSharedOverrideSummary.length > 0;
   const hasSharedOverrides = diagnostics.sharedOverrideSummary.length > 0;
   const hasActionDivergence = diagnostics.divergentActionSummary.length > 0;
-  let diagnosticsAlert: React.JSX.Element | null = null;
-
-  if (hasSharedOverrideConflict) {
-    diagnosticsAlert = (
-      <Alert variant='warning' className='text-xs'>
-        This connection keeps one shared override set for listing and import. The current
-        overrides flatten differences between the selected session actions for{' '}
-        <strong>{diagnostics.conflictingSharedOverrideSummary.join(', ')}</strong>.
-      </Alert>
-    );
-  } else if (hasSharedOverrides) {
-    diagnosticsAlert = (
-      <Alert variant='info' className='text-xs'>
-        The current programmable connection overrides apply to both listing and import sessions:{' '}
-        <strong>{diagnostics.sharedOverrideSummary.join(', ')}</strong>.
-        {hasActionDivergence ? (
-          <>
-            {' '}The selected session actions still diverge on{' '}
-            <strong>{diagnostics.divergentActionSummary.join(', ')}</strong>.
-          </>
-        ) : null}
-      </Alert>
-    );
-  }
 
   return (
     <FormSection
@@ -169,7 +145,26 @@ export function PlaywrightProgrammableSessionPreviewSection({
       className='p-4'
     >
       <div className='mt-4 space-y-4'>
-        {diagnosticsAlert}
+        {hasSharedOverrideConflict ? (
+          <Alert variant='warning' className='text-xs'>
+            This connection keeps one shared override set for listing and import. The current
+            overrides flatten differences between the selected session actions for{' '}
+            <strong>{diagnostics.conflictingSharedOverrideSummary.join(', ')}</strong>.
+          </Alert>
+        ) : null}
+
+        {!hasSharedOverrideConflict && hasSharedOverrides ? (
+          <Alert variant='info' className='text-xs'>
+            The current programmable connection overrides apply to both listing and import sessions:{' '}
+            <strong>{diagnostics.sharedOverrideSummary.join(', ')}</strong>.
+            {hasActionDivergence ? (
+              <>
+                {' '}The selected session actions still diverge on{' '}
+                <strong>{diagnostics.divergentActionSummary.join(', ')}</strong>.
+              </>
+            ) : null}
+          </Alert>
+        ) : null}
 
         <div className='grid gap-4 xl:grid-cols-2'>
           <SessionPreviewCard title='Listing session' preview={listingPreview} />

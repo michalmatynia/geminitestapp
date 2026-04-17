@@ -5,8 +5,8 @@ import React from 'react';
 
 import type { ManagedPlaywrightActionSummary } from '@/features/playwright/utils/playwright-managed-runtime-actions';
 import { resolveStepSequencerActionHref } from '@/features/playwright/utils/step-sequencer-action-links';
-import { Badge, Button } from '@/shared/ui/primitives.public';
 import { FormSection } from '@/shared/ui/forms-and-actions.public';
+import { Badge, Button } from '@/shared/ui/primitives.public';
 
 type PlaywrightManagedRuntimeActionsSectionProps = {
   description: string;
@@ -15,13 +15,13 @@ type PlaywrightManagedRuntimeActionsSectionProps = {
 };
 
 function ManagedActionBadges({
+  emptyMessage,
   label,
   values,
-  emptyMessage,
 }: {
+  emptyMessage: string;
   label: string;
   values: string[];
-  emptyMessage: string;
 }): React.JSX.Element {
   return (
     <div className='space-y-1'>

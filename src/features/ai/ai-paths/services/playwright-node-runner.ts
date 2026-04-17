@@ -994,28 +994,19 @@ import {
   persistVideoArtifact
 } from './playwright-node-runner.artifacts';
 
-const executePlaywrightNodeRun = async (
-  runId: string,
-  request: PlaywrightNodeRunRequest
-): Promise<PlaywrightNodeRunRecord> => {
-  const startedAt = nowIso();
-  const logs: string[] = [];
-  const artifacts: PlaywrightNodeRunArtifact[] = [];
-  const runArtifactsDir = resolveRunArtifactsDir(runId);
-  await nodeFs.mkdir(runArtifactsDir, { recursive: true });
-  const queuedRun = await readPlaywrightNodeRun(runId);
-  await updateRunState(runId, {
-    status: 'running',
-    startedAt,
-    logs,
-    artifacts,
-  });
-  const liveRunState = createLiveRunStateCoordinator(runId);
-  const sleep = async (ms: number): Promise<void> => {
-    const safeMs = Math.max(0, Math.trunc(ms));
-    await new Promise<void>((resolve) => setTimeout(resolve, safeMs));
-  };
-
+const prepareRunConfiguration = async (params: {
+  runId: string;
+  request: PlaywrightNodeRunRequest;
+  queuedRun: PlaywrightNodeRunRecord | null;
+  runArtifactsDir: string;
+  logs: string[];
+}): Promise<{
+  effectiveSettings: PlaywrightSettings;
+  launchOptions: LaunchOptions;
+  contextOptions: BrowserContextOptions;
+  proxyAffinityResult: ReturnType<typeof applyPlaywrightProxySessionAffinity>;
+}> => {
+  const { runId, request, queuedRun, runArtifactsDir, logs } = params;
   const playwright = getPlaywright();
   const personaSettings = await resolvePersonaSettings(request.personaId);
   const settingsOverrides = normalizeSettingsOverrides(request.settingsOverrides);
@@ -1047,7 +1038,6 @@ const executePlaywrightNodeRun = async (
         `[runtime] Applied ${proxyAffinityResult.descriptor.mode} proxy session (${effectiveSettings.identityProfile}) for ${proxyAffinityResult.descriptor.scopeLabel}${proxyAffinityResult.descriptor.origin !== null ? ` at ${proxyAffinityResult.descriptor.origin}` : ''}.`
       );
     } else if (proxyAffinityResult.reason === 'no-placeholder') {
-
       logs.push(
         '[runtime] Sticky proxy session is enabled, but the proxy configuration has no session placeholder.'
       );
@@ -1065,7 +1055,48 @@ const executePlaywrightNodeRun = async (
     request.capture,
     request.startUrl
   );
+
+  return {
+    effectiveSettings,
+    launchOptions,
+    contextOptions,
+    proxyAffinityResult,
+  };
+};
+
+const executePlaywrightNodeRun = async (
+  runId: string,
+  request: PlaywrightNodeRunRequest
+): Promise<PlaywrightNodeRunRecord> => {
+  const startedAt = nowIso();
+  const logs: string[] = [];
+  const artifacts: PlaywrightNodeRunArtifact[] = [];
+  const runArtifactsDir = resolveRunArtifactsDir(runId);
+  await nodeFs.mkdir(runArtifactsDir, { recursive: true });
+  const queuedRun = await readPlaywrightNodeRun(runId);
+  await updateRunState(runId, {
+    status: 'running',
+    startedAt,
+    logs,
+    artifacts,
+  });
+  const liveRunState = createLiveRunStateCoordinator(runId);
+  const sleep = async (ms: number): Promise<void> => {
+    const safeMs = Math.max(0, Math.trunc(ms));
+    await new Promise<void>((resolve) => setTimeout(resolve, safeMs));
+  };
+
+  const playwright = getPlaywright();
+  const { effectiveSettings, contextOptions, proxyAffinityResult } = await prepareRunConfiguration({
+    runId,
+    request,
+    queuedRun,
+    runArtifactsDir,
+    logs,
+  });
+
   const timeoutMs = Math.max(1_000, request.timeoutMs ?? 120_000);
+
   const browserEngine = request.browserEngine ?? 'chromium';
   const effectiveLaunchOptions = isChromiumBrowserEngine(browserEngine)
     ? buildChromiumAntiDetectionLaunchOptions(proxyAffinityResult.launchOptions)
@@ -1140,16 +1171,17 @@ const executePlaywrightNodeRun = async (
   });
   try {
     artifacts.push(
-      await saveFileArtifact(
+      await saveFileArtifact({
         runArtifactsDir,
-        'runtime-posture',
-        'json',
-        `${JSON.stringify(runtimePostureSnapshot, null, 2)}\n`,
-        'application/json',
-        'json'
-      )
+        name: 'runtime-posture',
+        extension: 'json',
+        content: `${JSON.stringify(runtimePostureSnapshot, null, 2)}\n`,
+        mimeType: 'application/json',
+        kind: 'json',
+      })
     );
   } catch (error) {
+
     await ErrorSystem.captureException(error);
   }
 
@@ -1465,15 +1497,15 @@ const executePlaywrightNodeRun = async (
       },
       artifacts: {
         screenshot: async (name: string = 'screenshot'): Promise<string> => {
-          if (!page) throw new Error('Page is not available.');
-          const artifact = await saveFileArtifact(
+          if (page === null) throw new Error('Page is not available.');
+          const artifact = await saveFileArtifact({
             runArtifactsDir,
             name,
-            'png',
-            await page.screenshot({ fullPage: true }),
-            'image/png',
-            'screenshot'
-          );
+            extension: 'png',
+            content: await page.screenshot({ fullPage: true }),
+            mimeType: 'image/png',
+            kind: 'screenshot',
+          });
           artifacts.push(artifact);
           return artifact.path;
         },
@@ -1485,39 +1517,39 @@ const executePlaywrightNodeRun = async (
           const extension = (options?.extension?.trim() ?? '') !== '' ? (options?.extension?.trim() as string) : 'bin';
           const mimeType = (options?.mimeType?.trim() ?? '') !== '' ? (options?.mimeType?.trim() as string) : 'application/octet-stream';
           const kind = (options?.kind?.trim() ?? '') !== '' ? (options?.kind?.trim() as string) : 'file';
-          const artifact = await saveFileArtifact(
+          const artifact = await saveFileArtifact({
             runArtifactsDir,
             name,
             extension,
-            value,
+            content: value,
             mimeType,
-            kind
-          );
+            kind,
+          });
           artifacts.push(artifact);
           return artifact.path;
         },
         html: async (name: string = 'page'): Promise<string> => {
-          if (!page) throw new Error('Page is not available.');
-          const artifact = await saveFileArtifact(
+          if (page === null) throw new Error('Page is not available.');
+          const artifact = await saveFileArtifact({
             runArtifactsDir,
             name,
-            'html',
-            await page.content(),
-            'text/html',
-            'html'
-          );
+            extension: 'html',
+            content: await page.content(),
+            mimeType: 'text/html',
+            kind: 'html',
+          });
           artifacts.push(artifact);
           return artifact.path;
         },
         json: async (name: string, value: unknown): Promise<string> => {
-          const artifact = await saveFileArtifact(
+          const artifact = await saveFileArtifact({
             runArtifactsDir,
-            (name ?? '') !== '' ? name : 'artifact',
-            'json',
-            `${JSON.stringify(value, null, 2)}\n`,
-            'application/json',
-            'json'
-          );
+            name: (name ?? '') !== '' ? name : 'artifact',
+            extension: 'json',
+            content: `${JSON.stringify(value, null, 2)}\n`,
+            mimeType: 'application/json',
+            kind: 'json',
+          });
           artifacts.push(artifact);
           return artifact.path;
         },

@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-26'
+last_reviewed: '2026-04-17'
 status: 'active'
 doc_type: 'index'
 scope: 'feature:ai-paths'
@@ -13,6 +13,23 @@ This folder is the maintained generated/scaffold hub for v3 executable
 node-code-object contracts. Use [`../node-code-objects-v3.md`](../node-code-objects-v3.md)
 for the high-level contract summary and [`../reference.md`](../reference.md) for
 the broader AI Paths runtime/operator surface.
+
+## Open This Hub When
+
+- you need the executable v3 node-code-object contracts, migration docs, or rollout evidence
+- you are validating or regenerating scaffold contracts and parity/migration artifacts
+- you need the artifact-level view rather than the higher-level v3 contract summary
+
+## Which Artifact To Use
+
+| Question | Canonical artifact |
+| --- | --- |
+| What is the high-level v3 contract summary? | [`../node-code-objects-v3.md`](../node-code-objects-v3.md) |
+| Where is the migration workflow and coverage guide? | `MIGRATION_GUIDE.md` |
+| Where is the migration matrix? | `migration-index.json` |
+| Where are node-specific migration sheets? | `nodes/README.md` and `nodes/<nodeType>.md` |
+| Where are active v3 contract hashes and indexes? | `index.json` and `contracts.json` |
+| Where is rollout/parity evidence stored? | `parity-evidence.json`, `rollout-approvals.json`, and `rollout-eligibility.json` |
 
 This folder contains migration scaffolding and generated migration docs for executable node
 code-object contracts.

@@ -9,8 +9,8 @@ import {
 } from '@/features/integrations/constants/slugs';
 import { Button } from '@/shared/ui/primitives.public';
 import { FormSection } from '@/shared/ui/forms-and-actions.public';
+import { PlaywrightManagedRuntimeActionsSection } from '@/features/playwright/components/PlaywrightManagedRuntimeActionsSection';
 
-import { PlaywrightManagedRuntimeActionsSection } from './PlaywrightManagedRuntimeActionsSection';
 import { usePlaywrightTabContentModel } from './usePlaywrightTabContentModel';
 
 const resolveSequencerDescription = (integrationSlug: string | null | undefined): string =>

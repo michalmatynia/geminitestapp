@@ -1,7 +1,7 @@
 import { type JSX } from 'react';
 
-import { PlaywrightIntegrationPage } from '@/features/integrations/admin.public';
+import { AdminPlaywrightProgrammableIntegrationPage } from '@/features/playwright/public';
 
 export default function Page(): JSX.Element {
-  return <PlaywrightIntegrationPage />;
+  return <AdminPlaywrightProgrammableIntegrationPage />;
 }

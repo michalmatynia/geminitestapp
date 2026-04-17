@@ -78,6 +78,13 @@ const resolvePublicUploadsFallbackDiskPath = (value: unknown): string | null => 
     : `${PRODUCT_SCAN_DEV_PUBLIC_UPLOADS_ROOT}${sep}${segments.join(sep)}`;
 };
 
+const resolvePublicUploadsPathFromScanImageFilepath = (value: unknown): string | null => {
+  const normalized = readOptionalString(value);
+  return normalized !== null && PRODUCT_SCAN_PUBLIC_UPLOADS_PATH_PATTERN.test(normalized)
+    ? normalized
+    : null;
+};
+
 export const hasSupportedLocalScanImageExtension = (candidate: {
   filepath?: string | null;
   filename?: string | null;
@@ -122,7 +129,9 @@ export const resolveLocalScanImageCandidatePath = async (
     return explicitFilepath;
   }
 
-  const publicPath = resolveLocalPublicPathFromScanImageUrl(candidate.url);
+  const publicPath =
+    resolveLocalPublicPathFromScanImageUrl(candidate.url) ??
+    resolvePublicUploadsPathFromScanImageFilepath(explicitFilepath);
   if (publicPath === null) {
     return null;
   }
@@ -213,23 +222,30 @@ export const hydrateProductScanImageCandidates = async (input: {
   imageCandidates: ProductScanRecord['imageCandidates'];
 }): Promise<ProductScanRecord['imageCandidates']> => {
   const results = [...input.imageCandidates];
-  const processedUrls = new Set(results.map((r) => r.url).filter((u): u is string => u !== null));
+  const processedSources = new Set(
+    results.flatMap((candidate) =>
+      [candidate.url, candidate.filepath].filter((value): value is string => value !== null)
+    )
+  );
 
   const productImages = input.product.images ?? [];
   for (const image of productImages) {
     const imageFile = image.imageFile;
+    const filepath = readOptionalString(imageFile.filepath);
     const url =
       readOptionalString(imageFile.publicUrl) ??
       readOptionalString(imageFile.url) ??
       readOptionalString(imageFile.thumbnailUrl);
-    if (url !== null && !processedUrls.has(url)) {
+    const sourceKey = url ?? filepath;
+    if (sourceKey !== null && !processedSources.has(sourceKey)) {
       results.push({
         id: readOptionalString(imageFile.id) ?? readOptionalString(image.imageFileId),
-        filepath: readOptionalString(imageFile.filepath),
+        filepath,
         url,
         filename: readOptionalString(imageFile.filename),
       });
-      processedUrls.add(url);
+      if (url !== null) processedSources.add(url);
+      if (filepath !== null) processedSources.add(filepath);
     }
   }
 

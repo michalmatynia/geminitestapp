@@ -55,7 +55,7 @@ vi.mock('@/shared/ui/forms-and-actions.public', () => ({
   ),
 }));
 
-import { PlaywrightManagedRuntimeActionsSection } from './PlaywrightManagedRuntimeActionsSection';
+import { PlaywrightManagedRuntimeActionsSection } from '@/features/playwright/components/PlaywrightManagedRuntimeActionsSection';
 
 const seed = getPlaywrightRuntimeActionSeed('tradera_standard_list');
 

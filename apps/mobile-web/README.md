@@ -1,3 +1,12 @@
+---
+owner: 'Kangur Team'
+last_reviewed: '2026-04-17'
+status: 'reserved'
+doc_type: 'overview'
+scope: 'workspace:@kangur/mobile-web'
+canonical: true
+---
+
 # Kangur Mobile Web
 
 `apps/mobile-web` is reserved for a future dedicated Expo or React Native Web
@@ -18,8 +27,20 @@ target for Kangur.
 - Use `npm run dev` for the canonical public web and admin application.
 - Use `npm run dev:mobile:web` when you need the Expo web preview of the native
   app shell.
+- Do not use `npm run build -w @kangur/mobile-web` as a normal workflow today.
+  The only defined workspace script intentionally exits with a scaffold warning
+  until the workspace is explicitly activated.
 - Treat Expo web preview as a parity and validation aid for `apps/mobile`, not
   as a sign that `apps/mobile-web` should own real web traffic.
+
+## Current workspace contract
+
+- Workspace name: `@kangur/mobile-web`
+- Current script surface: `build` only, and it intentionally fails with a
+  scaffold-only message
+- Runtime status: no active app shell, route tree, or deploy target
+- Documentation status: keep this README aligned with the reserved-workspace
+  rule until the repo explicitly activates the workspace
 
 ## Ownership boundary
 

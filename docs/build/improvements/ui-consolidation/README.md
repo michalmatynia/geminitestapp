@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-10'
+last_reviewed: '2026-04-17'
 status: 'active'
 doc_type: 'index'
 scope: 'cross-feature'
@@ -12,6 +12,12 @@ canonical: true
 This track brings the shared UI consolidation guardrail into the broader
 improvement portfolio so application improvement passes do not ignore cross-file
 component convergence.
+
+## Use This Track When
+
+- you want the UI consolidation workflow as part of the shared improvement portfolio
+- you need to run audit/classify style portfolio passes for UI convergence work
+- you need the current portfolio-owned UI consolidation inventory rather than the legacy residual folder directly
 
 ## Key Entry Points
 

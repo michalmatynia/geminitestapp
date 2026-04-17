@@ -2,13 +2,16 @@ import type { Dispatch, RefObject, SetStateAction } from 'react';
 
 import type { Integration } from '@/shared/contracts/integrations/base';
 import type { PlaywrightConfigCaptureRoute } from '@/shared/contracts/ai-paths-core/nodes/external-nodes';
-import { usePlaywrightActions } from '@/shared/hooks/usePlaywrightStepSequencer';
-import { useIntegrations, useProgrammableIntegrationConnections } from '@/features/integrations/hooks/useIntegrationQueries';
-import { useUpsertProgrammableConnection } from '@/features/integrations/hooks/useIntegrationMutations';
+import type { usePlaywrightActions } from '@/shared/hooks/usePlaywrightStepSequencer';
+import type {
+  useIntegrations,
+  useProgrammableIntegrationConnections,
+} from '@/features/integrations/hooks/useIntegrationQueries';
+import type { useUpsertProgrammableConnection } from '@/features/integrations/hooks/useIntegrationMutations';
 import type { ProgrammableFieldMapperRow } from '@/features/playwright/pages/playwright-programmable-integration-page.helpers';
-import { buildManagedPlaywrightActionSummaries } from '@/features/playwright/utils/playwright-managed-runtime-actions';
-import { buildProgrammableSessionDiagnostics } from '@/features/playwright/utils/playwright-programmable-session-diagnostics';
-import { buildProgrammableSessionPreview } from '@/features/playwright/utils/playwright-programmable-session-preview';
+import type { buildManagedPlaywrightActionSummaries } from '@/features/playwright/utils/playwright-managed-runtime-actions';
+import type { buildProgrammableSessionDiagnostics } from '@/features/playwright/utils/playwright-programmable-session-diagnostics';
+import type { buildProgrammableSessionPreview } from '@/features/playwright/utils/playwright-programmable-session-preview';
 
 export type RunningTestType = 'listing' | 'import' | null;
 

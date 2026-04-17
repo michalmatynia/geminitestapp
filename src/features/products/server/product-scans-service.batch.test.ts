@@ -71,6 +71,20 @@ vi.mock('@/features/integrations/server', () => ({
 vi.mock('@/features/integrations/services/supplier-1688-selector-registry', () => ({
   resolveSupplier1688SelectorRegistryNativeRuntime: (...args: unknown[]) =>
     mocks.resolveSupplier1688SelectorRegistryNativeRuntimeMock(...args),
+  toSupplier1688SelectorRegistryResolutionSummary: (
+    resolution: Record<string, unknown> | null | undefined
+  ) =>
+    resolution === null || resolution === undefined
+      ? null
+      : {
+          requestedProfile: resolution.requestedProfile,
+          resolvedProfile: resolution.resolvedProfile,
+          sourceProfiles: resolution.sourceProfiles,
+          entryCount: resolution.entryCount,
+          overlayEntryCount: resolution.overlayEntryCount,
+          fallbackToCode: resolution.fallbackToCode,
+          fallbackReason: resolution.fallbackReason ?? null,
+        },
 }));
 
 vi.mock('@/features/products/performance/cached-service', () => ({
@@ -275,6 +289,9 @@ describe('product-scans-service batch operations', () => {
       playwrightSettingsOverrides: {},
       amazonCandidateEvaluatorProbe: { mode: 'brain_default' },
     });
+    mocks.resolveProductScannerAmazonCandidateEvaluatorConfigMock.mockResolvedValue({
+      enabled: false,
+    });
     mocks.resolveProductScannerAmazonCandidateEvaluatorProbeConfigMock.mockResolvedValue({
       enabled: true,
     });
@@ -374,7 +391,80 @@ describe('product-scans-service batch operations', () => {
     expect(mocks.startPlaywrightEngineTaskMock).toHaveBeenCalledWith(
       expect.objectContaining({
         request: expect.objectContaining({
-          script: expect.stringContaining("label: 'Upload image to Google Lens'"),
+          runtimeKey: 'amazon_google_lens_candidate_search',
+          actionId: 'runtime_action__amazon_google_lens_candidate_search',
+          input: expect.objectContaining({
+            productId: 'product-1',
+            productName: 'Test Product',
+            collectAmazonCandidatePreviews: true,
+            imageCandidates: [
+              expect.objectContaining({
+                id: 'file-1',
+                filepath: '/img.jpg',
+                filename: 'img.jpg',
+              }),
+            ],
+          }),
+        }),
+      })
+    );
+  });
+
+  it('queues Amazon direct candidate extraction even when the product has no usable images', async () => {
+    mocks.findLatestActiveProductScanMock.mockResolvedValue(null);
+    mocks.getProductByIdMock.mockResolvedValue({
+      id: 'product-1',
+      name: { en: 'Direct Candidate Product', pl: '' },
+      name_en: 'Direct Candidate Product',
+      images: [],
+    });
+    mocks.startPlaywrightEngineTaskMock.mockResolvedValue({
+      runId: 'run-direct',
+      status: 'queued',
+    });
+    mocks.upsertProductScanMock.mockImplementation(
+      async (input: any) => ({
+        ...input,
+        id: input.id || 'scan-direct',
+      })
+    );
+
+    const result = await queueAmazonBatchProductScans({
+      productIds: ['product-1'],
+      userId: 'user-1',
+      requestInput: {
+        runtimeKey: 'amazon_candidate_extraction',
+        directAmazonCandidateUrl: 'https://www.amazon.com/dp/B00DIRECT1',
+        directAmazonCandidateUrls: [
+          'https://www.amazon.com/dp/B00DIRECT1',
+          'https://www.amazon.com/dp/B00DIRECT2',
+        ],
+        directMatchedImageId: 'image-1',
+        directAmazonCandidateRank: 1,
+      },
+    });
+
+    expect(result.queued).toBe(1);
+    expect(result.results[0]).toMatchObject({
+      productId: 'product-1',
+      scanId: expect.any(String),
+      runId: 'run-direct',
+      status: 'queued',
+    });
+    expect(mocks.startPlaywrightEngineTaskMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        request: expect.objectContaining({
+          runtimeKey: 'amazon_candidate_extraction',
+          input: expect.objectContaining({
+            imageCandidates: [],
+            directAmazonCandidateUrl: 'https://www.amazon.com/dp/B00DIRECT1',
+            directAmazonCandidateUrls: [
+              'https://www.amazon.com/dp/B00DIRECT1',
+              'https://www.amazon.com/dp/B00DIRECT2',
+            ],
+            directMatchedImageId: 'image-1',
+            directAmazonCandidateRank: 1,
+          }),
         }),
       })
     );
@@ -641,7 +731,7 @@ describe('product-scans-service batch operations', () => {
       expect.objectContaining({
         browserPreference: 'brave',
         settings: expect.objectContaining({
-          headless: false,
+          headless: true,
           identityProfile: 'marketplace',
           locale: 'zh-CN',
           timezoneId: 'Asia/Shanghai',

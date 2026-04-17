@@ -73,4 +73,33 @@ describe('product scan image helper hydration', () => {
     expect(candidates).toEqual([]);
     expect(mocks.writeFileMock).not.toHaveBeenCalled();
   });
+
+  it('hydrates filepath-only product images as scan candidates', async () => {
+    const candidates = await hydrateProductScanImageCandidates({
+      product: {
+        id: 'product-1',
+        images: [
+          {
+            imageFileId: 'image-file-1',
+            imageFile: {
+              id: 'file-1',
+              filename: 'product.jpg',
+              filepath: '/uploads/products/product-1/product.jpg',
+            },
+          },
+        ],
+        imageBase64s: [],
+      } as never,
+      imageCandidates: [],
+    });
+
+    expect(candidates).toEqual([
+      {
+        id: 'file-1',
+        filepath: '/uploads/products/product-1/product.jpg',
+        url: null,
+        filename: 'product.jpg',
+      },
+    ]);
+  });
 });

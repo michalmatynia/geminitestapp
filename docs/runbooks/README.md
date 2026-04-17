@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Operations'
-last_reviewed: '2026-03-26'
+last_reviewed: '2026-04-17'
 status: 'active'
 doc_type: 'index'
 scope: 'cross-feature'
@@ -16,6 +16,13 @@ Use this directory for multi-feature or platform-wide operational procedures:
 - incident response playbooks
 - multi-system recovery guides
 
+## Open This Hub When
+
+- an operational procedure spans multiple features or shared platform systems
+- you need the right runbook before using metrics or ad hoc commands during an incident
+- the needed procedure does not belong to one feature-owned docs folder
+- you need to know whether a runbook should live here or under a feature-local `runbooks/` directory
+
 ## Placement Rule
 
 - Feature-local runbooks should stay in their feature docs directory.
@@ -26,6 +33,14 @@ Use this directory for multi-feature or platform-wide operational procedures:
 
 - [`application-performance-operations.md`](./application-performance-operations.md)
 - [`testing-operations.md`](./testing-operations.md)
+
+## Which Runbook To Use
+
+| If you need to... | Open |
+| --- | --- |
+| respond to app-level performance degradation or runtime regressions | [`application-performance-operations.md`](./application-performance-operations.md) |
+| coordinate testing failures, validation drift, or CI/test-health response | [`testing-operations.md`](./testing-operations.md) |
+| troubleshoot a feature-specific operational issue | the owning feature runbook hub instead of this directory |
 
 ## Related Operational Surfaces
 

@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-10'
+last_reviewed: '2026-04-17'
 status: 'active'
 doc_type: 'index'
 scope: 'cross-feature'
@@ -11,6 +11,12 @@ canonical: true
 
 This track brings the app-level performance operations lane into the shared
 improvement portfolio so broad improvement work keeps runtime health visible.
+
+## Use This Track When
+
+- you need performance-oriented improvement scans instead of a live incident runbook
+- you are classifying or planning app-level performance follow-up work
+- you need the generated latest inventory for runtime performance improvement tasks
 
 ## Key Entry Points
 

@@ -7,6 +7,8 @@ import type { createDefaultProductScannerSettings } from '@/features/products/sc
 import {
   type ProductScanRecord,
   type ProductScanBatchItem,
+  type ProductScanRequestSequenceEntry,
+  type ProductScanStepGroup,
 } from '@/shared/contracts/product-scans';
 import {
   PRODUCT_SCAN_ERROR_MAX_LENGTH,
@@ -69,22 +71,58 @@ export const shouldAutoShowScannerCaptchaBrowser = (
   scannerSettings: ReturnType<typeof createDefaultProductScannerSettings>
 ): boolean => scannerSettings.captchaBehavior === 'auto_show_browser';
 
+const PRODUCT_SCAN_STEP_GROUPS = new Set<ProductScanStepGroup>([
+  'input',
+  'google_lens',
+  'amazon',
+  'supplier',
+  'product',
+]);
+
+const normalizeProductScanStepGroup = (value: unknown): ProductScanStepGroup | null => {
+  const normalized = readOptionalString(value);
+  return normalized !== null && PRODUCT_SCAN_STEP_GROUPS.has(normalized as ProductScanStepGroup)
+    ? (normalized as ProductScanStepGroup)
+    : null;
+};
+
 export const normalizeProductScanRequestSequence = (
   value: unknown
-): ProductScanRecord['steps'][number]['key'][] | null => {
+): ProductScanRequestSequenceEntry[] | null => {
   if (!Array.isArray(value)) {
     return null;
   }
-  return value
-    .map((item: unknown) => readOptionalString(item))
-    .filter((item): item is ProductScanRecord['steps'][number]['key'] => item !== null);
+  const normalized = value
+    .map((item: unknown): ProductScanRequestSequenceEntry | null => {
+      const stepKey = readOptionalString(item, 120);
+      if (stepKey !== null) {
+        return stepKey;
+      }
+
+      const record = toRecord(item);
+      const key = readOptionalString(record?.['key'], 120);
+      if (key === null) {
+        return null;
+      }
+
+      const label = readOptionalString(record?.['label'], 160);
+      const group = normalizeProductScanStepGroup(record?.['group']);
+      return {
+        key,
+        ...(label !== null ? { label } : {}),
+        ...(group !== null ? { group } : {}),
+      };
+    })
+    .filter((item): item is ProductScanRequestSequenceEntry => item !== null);
+
+  return normalized.length > 0 ? normalized : null;
 };
 
 export const resolveProductScanRequestSequenceInput = (
   rawResult: unknown
 ): {
   stepSequenceKey?: string;
-  stepSequence?: ProductScanRecord['steps'][number]['key'][];
+  stepSequence?: ProductScanRequestSequenceEntry[];
 } => {
   const record = toRecord(rawResult);
   const stepSequenceKey = readOptionalString(record?.['stepSequenceKey']) ?? undefined;
@@ -139,7 +177,7 @@ export const createProductScanStartedRawResult = (input: {
   manualVerificationMessage?: string | null;
   manualVerificationTimeoutMs?: number;
   stepSequenceKey?: string;
-  stepSequence?: string[];
+  stepSequence?: ProductScanRequestSequenceEntry[];
 }): Record<string, unknown> => {
   const status = normalizeStartedRawStatus(input.status);
   return {

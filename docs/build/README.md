@@ -16,6 +16,13 @@ For repo-wide entrypoints, start with [`README.md`](../../README.md),
 [`docs/README.md`](../README.md), and [`GEMINI.md`](../../GEMINI.md). This hub
 is specifically for shared build, CI, and package-manager workflow guidance.
 
+## Open This Hub When
+
+- you need to know which repo command starts which application surface
+- you need the right smoke or scanner lane before or after a change
+- you are touching shared Bazel, Bun, CodeQL, Vercel, or CI wiring
+- you need the canonical repo validation lanes rather than feature-local tests
+
 ## Placement Rule
 
 - Use this directory for repo-wide build and package-manager workflow docs.
@@ -25,17 +32,29 @@ is specifically for shared build, CI, and package-manager workflow guidance.
 
 ## Current Docs
 
-- [`application-workspaces-and-commands.md`](./application-workspaces-and-commands.md)
-- [`scanner-smoke-tests.md`](./scanner-smoke-tests.md)
-- [`vercel-deployment.md`](./vercel-deployment.md) — **Vercel deploy config (DO NOT MODIFY without approval)**
-- [`agentic-ci.md`](./agentic-ci.md)
-- [`agentic-engineering.md`](./agentic-engineering.md)
-- [`bazel.md`](./bazel.md)
-- [`bazel-buildbuddy.md`](./bazel-buildbuddy.md)
-- [`bun.md`](./bun.md)
-- [`codeql.md`](./codeql.md)
-- [`general-improvements.md`](./general-improvements.md)
-- [`improvements/README.md`](./improvements/README.md)
+- [`application-workspaces-and-commands.md`](./application-workspaces-and-commands.md) — app/workspace command map and `npm -w` semantics
+- [`scanner-smoke-tests.md`](./scanner-smoke-tests.md) — which scanner smoke test to run and when
+- [`vercel-deployment.md`](./vercel-deployment.md) — Vercel deploy config and operational constraints
+- [`agentic-ci.md`](./agentic-ci.md) — CI behavior for agent-driven workflows
+- [`agentic-engineering.md`](./agentic-engineering.md) — shared engineering workflow guidance
+- [`bazel.md`](./bazel.md) — Bazel entrypoints and repo lanes
+- [`bazel-buildbuddy.md`](./bazel-buildbuddy.md) — BuildBuddy integration notes
+- [`bun.md`](./bun.md) — Bun workflow and parity expectations
+- [`codeql.md`](./codeql.md) — CodeQL scanning workflow and triage
+- [`general-improvements.md`](./general-improvements.md) — broad build/tooling improvement program context
+- [`improvements/README.md`](./improvements/README.md) — generated improvement artifacts and latest aliases
+
+## Scenario Map
+
+| If you need to... | Open |
+| --- | --- |
+| start the right app or workspace | [`application-workspaces-and-commands.md`](./application-workspaces-and-commands.md) |
+| choose the right scanner smoke suite | [`scanner-smoke-tests.md`](./scanner-smoke-tests.md) |
+| understand repo-wide Bazel lanes | [`bazel.md`](./bazel.md) |
+| understand Bun parity or Bun CI lanes | [`bun.md`](./bun.md) |
+| inspect static-analysis or security scanning | [`codeql.md`](./codeql.md) |
+| update Vercel deployment behavior | [`vercel-deployment.md`](./vercel-deployment.md) |
+| review generated improvement outputs | [`improvements/README.md`](./improvements/README.md) |
 
 ## Canonical Repo Lanes
 

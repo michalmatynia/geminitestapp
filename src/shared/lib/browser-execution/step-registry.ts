@@ -95,7 +95,7 @@ export const STEP_REGISTRY = {
   queue_scan:             { id: 'queue_scan',             label: 'Queue follow-up scan' },
   product_asin_update:    { id: 'product_asin_update',    label: 'Update product ASIN' },
 
-  google_lens_open:       { id: 'google_lens_open',       label: 'Open Google reverse image search' },
+  google_lens_open:       { id: 'google_lens_open',       label: 'Open Google Lens search' },
   google_upload:          { id: 'google_upload',          label: 'Upload product image to Google' },
   google_captcha:         { id: 'google_captcha',         label: 'Resolve Google captcha' },
   google_candidates:      { id: 'google_candidates',      label: 'Collect Amazon candidates from Google' },

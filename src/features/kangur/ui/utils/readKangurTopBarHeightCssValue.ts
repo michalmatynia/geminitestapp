@@ -20,7 +20,7 @@ export const rememberKangurTopBarHeightCssValue = (
   value: string | null | undefined
 ): string | null => {
   const normalizedValue = normalizeTopBarHeightCssValue(value);
-  if (!normalizedValue) {
+  if (normalizedValue === null || normalizedValue === '') {
     return latchedKangurTopBarHeightCssValue;
   }
 

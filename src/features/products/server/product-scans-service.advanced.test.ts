@@ -214,7 +214,7 @@ describe('product-scans-service', () => {
         url: null,
         description: null,
         matchedImageId: null,
-        message: 'Google reverse image search did not return a usable Amazon result.',
+        message: 'Amazon candidate search did not return a usable Amazon result.',
       },
       finalUrl: 'https://lens.google.com/',
     });
@@ -230,7 +230,7 @@ describe('product-scans-service', () => {
         url: 'https://lens.google.com/',
         asinUpdateStatus: 'not_needed',
         asinUpdateMessage:
-          'Google reverse image search did not return a usable Amazon result.',
+          'Amazon candidate search did not return a usable Amazon result.',
       })
     );
     expect(result).toEqual(

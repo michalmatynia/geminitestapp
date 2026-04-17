@@ -24,6 +24,19 @@ type ProductListCacheValue =
   | null
   | undefined;
 
+function isProductListItemsCacheValue(
+  cacheValue: ProductListCacheValue
+): cacheValue is { items: ProductWithImages[] } {
+  return (
+    cacheValue !== null &&
+    cacheValue !== undefined &&
+    typeof cacheValue === 'object' &&
+    !Array.isArray(cacheValue) &&
+    'items' in cacheValue &&
+    Array.isArray(cacheValue.items)
+  );
+}
+
 function patchProductListCacheValue(
   cacheValue: ProductListCacheValue,
   productId: string,
@@ -36,7 +49,7 @@ function patchProductListCacheValue(
       product.id === productId ? { ...product, [field]: value } : product
     );
   }
-  if ('items' in cacheValue && Array.isArray(cacheValue.items)) {
+  if (isProductListItemsCacheValue(cacheValue)) {
     return {
       ...cacheValue,
       items: cacheValue.items.map((product: ProductWithImages) =>

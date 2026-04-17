@@ -3,6 +3,7 @@ export { default as CategoryMapperPage } from './pages/CategoryMapperPage';
 export { default as ConnectionsPage } from './pages/ConnectionsPage';
 export { default as MarketplacesPage } from './pages/marketplaces/MarketplacesPage';
 export { default as PlaywrightIntegrationPage } from './pages/marketplaces/PlaywrightIntegrationPage';
+export { default as SelectorRegistryPage } from './pages/marketplaces/SelectorRegistryPage';
 export { default as TraderaSettingsPage } from './pages/marketplaces/TraderaSettingsPage';
 export { default as TraderaParameterMappingPage } from './pages/marketplaces/tradera/TraderaParameterMappingPage';
 export { default as TraderaSelectorRegistryPage } from './pages/marketplaces/tradera/TraderaSelectorRegistryPage';

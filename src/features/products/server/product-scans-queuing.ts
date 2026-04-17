@@ -98,8 +98,8 @@ const AMAZON_QUEUE_CONFIG: BatchScanQueueConfig = {
   provider: 'amazon',
   runtime: AMAZON_PRODUCT_SCAN_PROVIDER.runtime!,
   actionPrefix: 'queueAmazonBatchProductScans',
-  alreadyRunningMessage: 'Amazon reverse image scan is already running for this product.',
-  resultStatusLabel: 'Amazon scan queued',
+  alreadyRunningMessage: 'Amazon candidate search is already running for this product.',
+  resultStatusLabel: 'Amazon candidate search queued',
 };
 
 const SUPPLIER_1688_QUEUE_CONFIG: BatchScanQueueConfig = {
@@ -170,11 +170,11 @@ async function resolveAlreadyRunningBatchResult(input: {
   const runningMessage =
     input.provider === '1688'
       ? '1688 supplier scan running.'
-      : 'Amazon reverse image scan running.';
+      : 'Amazon candidate search running.';
   const queuedMessage =
     input.provider === '1688'
       ? '1688 supplier scan already in progress for this product.'
-      : 'Amazon scan already in progress for this product.';
+      : 'Amazon candidate search already in progress for this product.';
 
   return {
     productId: input.productId,
@@ -340,7 +340,12 @@ async function queueBatchProductScans(input: {
         );
 
         if (imageCandidates.length === 0) {
-          return createFailedBatchResult(productId, 'No usable product images for scanning.');
+          return createFailedBatchResult(
+            productId,
+            input.config.provider === 'amazon'
+              ? 'No usable product images for Amazon candidate search.'
+              : 'No usable product images for scanning.'
+          );
         }
 
         if (input.config.provider === '1688' && supplierConnectionContext === null) {
@@ -618,9 +623,13 @@ async function queueBatchProductScans(input: {
           status: startedRun.status,
           currentStatus: startedRun.status,
           message:
-            startedRun.status === 'running'
-              ? `${input.config.provider === '1688' ? '1688 supplier' : 'Amazon reverse image'} scan running.`
-              : `${input.config.provider === '1688' ? '1688 supplier' : 'Amazon reverse image'} scan queued.`,
+            input.config.provider === '1688'
+              ? startedRun.status === 'running'
+                ? '1688 supplier scan running.'
+                : '1688 supplier scan queued.'
+              : startedRun.status === 'running'
+                ? 'Amazon candidate search running.'
+                : 'Amazon candidate search queued.',
         };
       } catch (error) {
         await ErrorSystem.captureException(error, {

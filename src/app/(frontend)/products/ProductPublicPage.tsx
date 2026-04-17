@@ -178,7 +178,7 @@ function ProductBreadcrumbs({ title, t }: { title: string; t: ProductPageTransla
   );
 }
 
-async function resolveProductData(id: string, locale?: string) {
+async function resolveProductData(id: string, locale?: string): Promise<{ resolvedLocale: string; t: ProductPageTranslations; product: ProductWithImages; localeSuffix: string; title: string; mainImage: string | null; secondaryImages: string[] }> {
   const resolvedLocale = normalizeSiteLocale(locale);
   const t = await getTranslations({ locale: resolvedLocale, namespace: 'Product' });
   const product = await productService.getProductById(id);

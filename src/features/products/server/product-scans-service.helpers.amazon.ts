@@ -161,6 +161,8 @@ export const mergeUniqueStringValues = (
   return Array.from(merged);
 };
 
+import { resolveAmazonRuntimeOperationLabel } from '@/shared/lib/browser-execution/amazon-runtime-constants';
+
 export const buildAmazonScannerRequestRuntimeOptions = (input: {
   scannerSettings: ReturnType<typeof createDefaultProductScannerSettings>;
   scannerEngineRequestOptions: Record<string, unknown>;
@@ -540,11 +542,14 @@ export const buildAmazonActiveRunDiagnostics = (
 export const resolveAmazonActiveRunStallMessage = ({
   reason,
   latestStage,
+  runtimeKey,
 }: {
   reason: 'runtime_exceeded' | 'no_progress' | 'manual_verification_expired';
   latestStage: string | null;
+  runtimeKey?: string | null;
 }): string => {
   const displayStage = humanizeAmazonRuntimeStageLabel(latestStage);
+  const operationLabel = resolveAmazonRuntimeOperationLabel(runtimeKey);
   if (reason === 'manual_verification_expired') {
     return (displayStage ?? null) !== null
       ? `Google Lens manual verification expired at ${displayStage!}.`
@@ -553,13 +558,13 @@ export const resolveAmazonActiveRunStallMessage = ({
 
   if (reason === 'no_progress') {
     return (displayStage ?? null) !== null
-      ? `Amazon reverse image scan stalled at ${displayStage!}.`
-      : 'Amazon reverse image scan stopped making progress.';
+      ? `${operationLabel} stalled at ${displayStage!}.`
+      : `${operationLabel} stopped making progress.`;
   }
 
   return (displayStage ?? null) !== null
-    ? `Amazon reverse image scan timed out at ${displayStage!}.`
-    : 'Amazon reverse image scan exceeded its runtime limit.';
+    ? `${operationLabel} timed out at ${displayStage!}.`
+    : `${operationLabel} exceeded its runtime limit.`;
 };
 
 export const shouldKeepAmazonManualVerificationPending = (input: {
@@ -1074,7 +1079,7 @@ export const createAmazonProductScanBaseRecord = (input: {
     amazonEvaluation: null,
     steps: buildPreparedProductScanSteps({
       prepareLabel: 'Amazon',
-      summaryLabel: 'Amazon reverse image',
+      summaryLabel: 'Amazon candidate search',
       imageCandidateCount: input.imageCandidates.length,
       status: input.status,
       error: input.error ?? null,

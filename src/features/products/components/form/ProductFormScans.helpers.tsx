@@ -76,8 +76,8 @@ export function resolveStatusClassName(scan: ProductScanRecord): string {
 }
 
 export function resolveActiveStatusMessage(status: ProductScanStatus): string | null {
-  if (status === 'queued') return 'Amazon reverse image scan queued.';
-  if (status === 'running') return 'Amazon reverse image scan running.';
+  if (status === 'queued') return 'Amazon candidate search queued.';
+  if (status === 'running') return 'Amazon candidate search running.';
   return null;
 }
 

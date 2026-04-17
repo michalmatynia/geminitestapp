@@ -308,7 +308,7 @@ describe('product-scans-service batch operations', () => {
       runId: 'run-1',
       status: 'already_running',
       currentStatus: 'running',
-      message: 'Amazon reverse image scan running.',
+      message: 'Amazon candidate search running.',
     });
   });
 
@@ -327,7 +327,7 @@ describe('product-scans-service batch operations', () => {
 
     expect(result.alreadyRunning).toBe(1);
     expect(result.results[0]?.currentStatus).toBe('queued');
-    expect(result.results[0]?.message).toBe('Amazon scan already in progress for this product.');
+    expect(result.results[0]?.message).toBe('Amazon candidate search already in progress for this product.');
   });
 
   it('queues a new Amazon reverse-image scan with image candidates', async () => {

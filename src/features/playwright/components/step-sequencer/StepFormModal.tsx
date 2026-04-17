@@ -3,10 +3,13 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import {
-  useSaveTraderaSelectorRegistryEntryMutation,
-  useTraderaSelectorRegistry,
-} from '@/features/integrations/hooks/useTraderaSelectorRegistry';
-import type { TraderaSelectorRegistryEntry } from '@/shared/contracts/integrations/tradera-selector-registry';
+  useSaveSelectorRegistryEntryMutation,
+  useSelectorRegistry,
+} from '@/features/integrations/hooks/useSelectorRegistry';
+import type {
+  SelectorRegistryEntry,
+  SelectorRegistryNamespace,
+} from '@/shared/contracts/integrations/selector-registry';
 import {
   PLAYWRIGHT_STEP_TYPE_LABELS,
   type PlaywrightStep,
@@ -14,6 +17,13 @@ import {
   type PlaywrightStepInputBindingMode,
   type PlaywrightStepType,
 } from '@/shared/contracts/playwright-steps';
+import {
+  formatSelectorRegistryNamespaceLabel,
+  getSelectorRegistryAdminHref,
+  inferSelectorRegistryNamespace,
+  SELECTOR_REGISTRY_DEFAULT_PROFILES,
+  SELECTOR_REGISTRY_NAMESPACES,
+} from '@/shared/lib/browser-execution/selector-registry-metadata';
 import {
   Button,
   Checkbox,
@@ -62,22 +72,8 @@ const TIMEOUT_TYPES: PlaywrightStepType[] = ['wait_for_timeout', 'wait_for_selec
 
 /** Steps that use a custom script textarea */
 const SCRIPT_TYPES: PlaywrightStepType[] = ['custom_script'];
-const SELECTOR_REGISTRY_HREF = '/admin/integrations/marketplaces/tradera/selectors';
-const AMAZON_SELECTOR_REGISTRY_HREF = '/admin/integrations/amazon/selectors';
-const SUPPLIER_1688_SELECTOR_REGISTRY_HREF = '/admin/integrations/1688/selectors';
-
-const resolveSelectorRegistryHref = (
-  selectorProfile?: string | null,
-  selectorKey?: string | null
-): string =>
-  selectorProfile === '1688' || selectorKey?.startsWith('supplier1688.')
-    ? SUPPLIER_1688_SELECTOR_REGISTRY_HREF
-    : selectorProfile === 'amazon' || selectorKey?.startsWith('amazon.')
-      ? AMAZON_SELECTOR_REGISTRY_HREF
-      : SELECTOR_REGISTRY_HREF;
-
 const buildRegistryOverrideValueJson = (
-  entry: TraderaSelectorRegistryEntry,
+  entry: SelectorRegistryEntry,
   selector: string
 ): string | null => {
   if (entry.valueType === 'string') return JSON.stringify(selector, null, 2);
@@ -87,6 +83,7 @@ const buildRegistryOverrideValueJson = (
 };
 
 type StepDraft = Partial<PlaywrightStep> & {
+  selectorNamespace?: string | null;
   selectorKey?: string | null;
   selectorProfile?: string | null;
 };
@@ -131,24 +128,53 @@ export function StepFormModal(): React.JSX.Element | null {
   const isEditing = editingStep !== null;
 
   const [draft, setDraft] = useState<StepDraft>(buildEmpty);
-  const registryQuery = useTraderaSelectorRegistry();
-  const saveRegistryMutation = useSaveTraderaSelectorRegistryEntryMutation();
+  const saveRegistryMutation = useSaveSelectorRegistryEntryMutation();
   const [registrySaveMessage, setRegistrySaveMessage] = useState<string | null>(null);
   const [registrySaveError, setRegistrySaveError] = useState<string | null>(null);
+  const selectorBinding = draft.inputBindings?.['selector'];
+  const selectorBindingMode: PlaywrightStepInputBindingMode =
+    selectorBinding?.mode === 'selectorRegistry' || selectorBinding?.mode === 'disabled'
+      ? selectorBinding.mode
+      : 'literal';
+  const selectorFallback = selectorBinding?.fallbackSelector ?? draft.selector ?? '';
+  const selectedRegistryNamespace = inferSelectorRegistryNamespace({
+    namespace: selectorBinding?.selectorNamespace ?? draft.selectorNamespace ?? null,
+    selectorKey: selectorBinding?.selectorKey ?? draft.selectorKey ?? null,
+    selectorProfile: selectorBinding?.selectorProfile ?? draft.selectorProfile ?? null,
+  });
+  const selectedRegistryProfile =
+    selectorBinding?.selectorProfile ??
+    draft.selectorProfile ??
+    SELECTOR_REGISTRY_DEFAULT_PROFILES[selectedRegistryNamespace];
+  const registryQuery = useSelectorRegistry({
+    namespace: selectedRegistryNamespace,
+    profile: selectedRegistryProfile,
+    effective: true,
+  });
   const registrySelectorEntries = useMemo(
     () =>
       (registryQuery.data?.entries ?? [])
-        .filter((entry) => entry.kind === 'selectors')
+        .filter((entry) => entry.kind === 'selectors' || entry.kind === 'selector')
         .sort((left, right) =>
-          `${left.profile}:${left.group}:${left.key}`.localeCompare(
-            `${right.profile}:${right.group}:${right.key}`
+          `${left.namespace}:${left.profile}:${left.group}:${left.key}`.localeCompare(
+            `${right.namespace}:${right.profile}:${right.group}:${right.key}`
           )
         ),
     [registryQuery.data?.entries]
   );
+  const registryNamespacesForSelect = useMemo(
+    () =>
+      SELECTOR_REGISTRY_NAMESPACES.includes(selectedRegistryNamespace)
+        ? SELECTOR_REGISTRY_NAMESPACES
+        : [selectedRegistryNamespace, ...SELECTOR_REGISTRY_NAMESPACES],
+    [selectedRegistryNamespace]
+  );
   const registryProfiles = useMemo(
-    () => Array.from(new Set(registrySelectorEntries.map((entry) => entry.profile))).sort(),
-    [registrySelectorEntries]
+    () =>
+      Array.from(
+        new Set([selectedRegistryProfile, ...(registryQuery.data?.profiles ?? [])])
+      ).sort(),
+    [registryQuery.data?.profiles, selectedRegistryProfile]
   );
 
   // Sync draft when editing step changes
@@ -162,14 +188,6 @@ export function StepFormModal(): React.JSX.Element | null {
     setRegistrySaveError(null);
   }, [editingStep]);
 
-  const selectorBinding = draft.inputBindings?.['selector'];
-  const selectorBindingMode: PlaywrightStepInputBindingMode =
-    selectorBinding?.mode === 'selectorRegistry' || selectorBinding?.mode === 'disabled'
-      ? selectorBinding.mode
-      : 'literal';
-  const selectorFallback = selectorBinding?.fallbackSelector ?? draft.selector ?? '';
-  const selectedRegistryProfile =
-    selectorBinding?.selectorProfile ?? registryProfiles[0] ?? 'default';
   const registryProfilesForSelect = useMemo(
     () =>
       registryProfiles.includes(selectedRegistryProfile)
@@ -182,16 +200,25 @@ export function StepFormModal(): React.JSX.Element | null {
       registrySelectorEntries.find(
         (entry) =>
           entry.key === selectorBinding?.selectorKey &&
-          entry.profile === selectedRegistryProfile
+          entry.profile === selectedRegistryProfile &&
+          entry.namespace === selectedRegistryNamespace
       ) ??
-      registrySelectorEntries.find((entry) => entry.key === selectorBinding?.selectorKey) ??
+      registrySelectorEntries.find(
+        (entry) =>
+          entry.key === selectorBinding?.selectorKey &&
+          entry.namespace === selectedRegistryNamespace
+      ) ??
       null,
-    [registrySelectorEntries, selectedRegistryProfile, selectorBinding?.selectorKey]
+    [registrySelectorEntries, selectedRegistryNamespace, selectedRegistryProfile, selectorBinding?.selectorKey]
   );
   const registryEntriesForProfile = useMemo(
     () =>
-      registrySelectorEntries.filter((entry) => entry.profile === selectedRegistryProfile),
-    [registrySelectorEntries, selectedRegistryProfile]
+      registrySelectorEntries.filter(
+        (entry) =>
+          entry.namespace === selectedRegistryNamespace &&
+          entry.profile === selectedRegistryProfile
+      ),
+    [registrySelectorEntries, selectedRegistryNamespace, selectedRegistryProfile]
   );
 
   if (!isOpen) return null;
@@ -222,15 +249,19 @@ export function StepFormModal(): React.JSX.Element | null {
     });
   };
 
-  const connectSelectorRegistryEntry = (entry: TraderaSelectorRegistryEntry): void => {
+  const connectSelectorRegistryEntry = (entry: SelectorRegistryEntry): void => {
     const fallbackSelector = (entry.preview[0] ?? selectorFallback) || null;
     setDraft((prev) => ({
       ...prev,
       selector: fallbackSelector,
+      selectorNamespace: entry.namespace,
+      selectorKey: entry.key,
+      selectorProfile: entry.profile,
       inputBindings: {
         ...(prev.inputBindings ?? {}),
         selector: {
           mode: 'selectorRegistry',
+          selectorNamespace: entry.namespace,
           selectorKey: entry.key,
           selectorProfile: entry.profile,
           fallbackSelector,
@@ -254,12 +285,14 @@ export function StepFormModal(): React.JSX.Element | null {
     setRegistrySaveError(null);
     try {
       const result = await saveRegistryMutation.mutateAsync({
+        namespace: selectedRegistryNamespace,
         profile: selectedRegistryProfile,
         key: selectedRegistryEntry.key,
         valueJson,
       });
       setSelectorBinding({
         mode: 'selectorRegistry',
+        selectorNamespace: result.namespace,
         selectorKey: result.key,
         selectorProfile: result.profile,
         fallbackSelector: result.preview[0] ?? selector,
@@ -283,8 +316,14 @@ export function StepFormModal(): React.JSX.Element | null {
     if (SELECTOR_TYPES.includes(draft.type)) {
       const selectorBinding = inputBindings['selector'];
       if (selectorBinding?.mode === 'selectorRegistry') {
+        const selectorNamespace = inferSelectorRegistryNamespace({
+          namespace: selectorBinding.selectorNamespace ?? draft.selectorNamespace ?? null,
+          selectorKey: selectorBinding.selectorKey ?? draft.selectorKey ?? null,
+          selectorProfile: selectorBinding.selectorProfile ?? draft.selectorProfile ?? null,
+        });
         inputBindings['selector'] = {
           mode: 'selectorRegistry',
+          selectorNamespace,
           selectorKey: selectorBinding.selectorKey?.trim() || null,
           selectorProfile: selectorBinding.selectorProfile?.trim() || null,
           fallbackSelector: selectorBinding.fallbackSelector?.trim() || selector,
@@ -405,6 +444,8 @@ export function StepFormModal(): React.JSX.Element | null {
                     if (mode === 'selectorRegistry') {
                       setSelectorBinding({
                         mode,
+                        selectorNamespace: selectedRegistryNamespace,
+                        selectorProfile: selectedRegistryProfile,
                         fallbackSelector: draft.selector ?? null,
                       });
                       return;
@@ -436,7 +477,35 @@ export function StepFormModal(): React.JSX.Element | null {
 
               {selectorBindingMode === 'selectorRegistry' ? (
                 <div className='space-y-3'>
-                  <div className='grid gap-3 sm:grid-cols-2'>
+                  <div className='grid gap-3 sm:grid-cols-3'>
+                    <div className='space-y-1.5'>
+                      <Label>Registry namespace</Label>
+                      <Select
+                        value={selectedRegistryNamespace}
+                        onValueChange={(namespace) => {
+                          const nextNamespace = namespace as SelectorRegistryNamespace;
+                          const nextProfile = SELECTOR_REGISTRY_DEFAULT_PROFILES[nextNamespace];
+                          setSelectorBinding({
+                            mode: 'selectorRegistry',
+                            selectorNamespace: nextNamespace,
+                            selectorProfile: nextProfile,
+                            selectorKey: null,
+                            fallbackSelector: draft.selector ?? null,
+                          });
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder='Namespace' />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {registryNamespacesForSelect.map((entryNamespace) => (
+                            <SelectItem key={entryNamespace} value={entryNamespace}>
+                              {formatSelectorRegistryNamespaceLabel(entryNamespace)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                     <div className='space-y-1.5'>
                       <Label>Registry profile</Label>
                       <Select
@@ -444,11 +513,13 @@ export function StepFormModal(): React.JSX.Element | null {
                         onValueChange={(profile) => {
                           const entry = registrySelectorEntries.find(
                             (candidate) =>
+                              candidate.namespace === selectedRegistryNamespace &&
                               candidate.profile === profile &&
                               candidate.key === selectorBinding?.selectorKey
                           );
                           setSelectorBinding({
                             mode: 'selectorRegistry',
+                            selectorNamespace: selectedRegistryNamespace,
                             selectorProfile: profile,
                             ...(entry?.preview[0]
                               ? { fallbackSelector: entry.preview[0] }
@@ -461,7 +532,9 @@ export function StepFormModal(): React.JSX.Element | null {
                         </SelectTrigger>
                         <SelectContent>
                           {registryProfilesForSelect.length === 0 ? (
-                            <SelectItem value='default'>default</SelectItem>
+                            <SelectItem value={SELECTOR_REGISTRY_DEFAULT_PROFILES[selectedRegistryNamespace]}>
+                              {SELECTOR_REGISTRY_DEFAULT_PROFILES[selectedRegistryNamespace]}
+                            </SelectItem>
                           ) : (
                             registryProfilesForSelect.map((profile) => (
                               <SelectItem key={profile} value={profile}>
@@ -504,6 +577,7 @@ export function StepFormModal(): React.JSX.Element | null {
                       value={selectorBinding?.selectorKey ?? ''}
                       onChange={(e) => setSelectorBinding({
                         mode: 'selectorRegistry',
+                        selectorNamespace: selectedRegistryNamespace,
                         selectorKey: e.target.value || null,
                       })}
                       placeholder='e.g. tradera.search.submitButton'
@@ -519,6 +593,7 @@ export function StepFormModal(): React.JSX.Element | null {
                         set('selector', e.target.value || null);
                         setSelectorBinding({
                           mode: 'selectorRegistry',
+                          selectorNamespace: selectedRegistryNamespace,
                           fallbackSelector: e.target.value || null,
                         });
                       }}
@@ -528,7 +603,8 @@ export function StepFormModal(): React.JSX.Element | null {
                   </div>
                   {selectedRegistryEntry ? (
                     <div className='rounded border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-100'>
-                      Connected to {selectedRegistryEntry.profile}/{selectedRegistryEntry.key}
+                      Connected to {formatSelectorRegistryNamespaceLabel(selectedRegistryEntry.namespace)}/
+                      {selectedRegistryEntry.profile}/{selectedRegistryEntry.key}
                       {selectedRegistryEntry.preview.length > 0 ? (
                         <span className='mt-1 block break-all text-emerald-100/75'>
                           Preview: {selectedRegistryEntry.preview.join(', ')}
@@ -554,6 +630,7 @@ export function StepFormModal(): React.JSX.Element | null {
                         set('selector', selector);
                         setSelectorBinding({
                           mode: 'selectorRegistry',
+                          selectorNamespace: selectedRegistryNamespace,
                           fallbackSelector: selector,
                         });
                       }}
@@ -592,10 +669,7 @@ export function StepFormModal(): React.JSX.Element | null {
                       Disconnect to local selector
                     </Button>
                     <a
-                      href={resolveSelectorRegistryHref(
-                        selectorBinding?.selectorProfile ?? draft.selectorProfile ?? null,
-                        selectorBinding?.selectorKey ?? draft.selectorKey ?? null
-                      )}
+                      href={getSelectorRegistryAdminHref(selectedRegistryNamespace)}
                       className='inline-flex h-7 items-center rounded-md px-2 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground'
                     >
                       Open selector registry

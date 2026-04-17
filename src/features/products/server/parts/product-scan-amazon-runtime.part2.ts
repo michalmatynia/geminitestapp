@@ -1320,7 +1320,7 @@ export const AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_PART_2 = String.raw`    };
     if (batchIndex > 0) {
       await emitProgress({
         stage: 'validate',
-        message: 'Waiting ' + String(batchIndex * 5) + 's to stagger batch reverse image scans.',
+        message: 'Waiting ' + String(batchIndex * 5) + 's to stagger batch Amazon candidate searches.',
       });
       await wait(batchIndex * 5000);
     }
@@ -1839,7 +1839,7 @@ export const AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_PART_2 = String.raw`    };
       description: null,
       matchedImageId: null,
       currentUrl: page.url(),
-      message: 'Google reverse image search did not return a usable Amazon result.',
+      message: 'Amazon candidate search did not return a usable Amazon result.',
       stage: 'google_candidates',
     });
   } catch (error) {

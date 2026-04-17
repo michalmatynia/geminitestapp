@@ -174,12 +174,12 @@ describe('product-scans-service', () => {
       size: 1024,
     });
     mocks.collectPlaywrightEngineRunFailureMessagesMock.mockReturnValue([
-      'Amazon reverse image scan failed.',
+      'Amazon candidate search failed.',
     ]);
     mocks.buildPlaywrightEngineRunFailureMetaMock.mockReturnValue({ reason: 'failed' });
     mocks.createCustomPlaywrightInstanceMock.mockReturnValue({
       family: 'scrape',
-      label: 'Amazon reverse image ASIN scan',
+      label: 'Amazon candidate search manual verification',
     });
     mocks.startPlaywrightConnectionEngineTaskMock.mockResolvedValue({
       run: {

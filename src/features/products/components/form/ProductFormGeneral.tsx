@@ -54,17 +54,15 @@ const coerceWatchedString = (value: unknown): string => (typeof value === 'strin
 
 const resolvePolishBaseNameAutoSyncStateUpdate = ({
   currentNamePl,
-  englishTitle,
   syncResult,
 }: {
   currentNamePl: string;
-  englishTitle: string;
   syncResult: PolishStructuredProductNameSyncResult;
 }): { generatedPolishTitle: string | null; shouldDisableAutoSync: boolean } => {
   if (syncResult.baseNameSynced) {
     return {
       generatedPolishTitle: syncResult.generatedPolishTitle,
-      shouldDisableAutoSync: englishTitle.includes('|'),
+      shouldDisableAutoSync: false,
     };
   }
 
@@ -265,7 +263,6 @@ export default function ProductFormGeneral(): React.JSX.Element {
     const currentNamePl = typeof rawNamePl === 'string' ? rawNamePl : '';
     const autoSyncStateUpdate = resolvePolishBaseNameAutoSyncStateUpdate({
       currentNamePl,
-      englishTitle: coerceWatchedString(nameEn),
       syncResult: generatedPolishName,
     });
     if (autoSyncStateUpdate.generatedPolishTitle !== null) {

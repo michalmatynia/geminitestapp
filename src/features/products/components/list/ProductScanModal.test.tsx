@@ -208,7 +208,7 @@ describe('ProductScanModal', () => {
           scanId: 'scan-1',
           runId: 'run-1',
           status: 'queued',
-          message: 'Amazon reverse image scan queued.',
+          message: 'Amazon candidate search queued.',
         },
       ],
     });
@@ -270,7 +270,7 @@ describe('ProductScanModal', () => {
       'https://www.amazon.com/dp/B000123456'
     );
     expect(screen.getByText('B000123456')).toBeInTheDocument();
-    expect(screen.queryByText('Amazon reverse image scan queued.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Amazon candidate search queued.')).not.toBeInTheDocument();
 
     await waitFor(() => {
       expect(mocks.invalidateProductsAndDetail).toHaveBeenCalledWith(
@@ -1202,7 +1202,7 @@ describe('ProductScanModal', () => {
           scanId: 'scan-1',
           runId: 'run-1',
           status: 'queued',
-          message: 'Amazon reverse image scan queued.',
+          message: 'Amazon candidate search queued.',
         },
       ],
     });
@@ -1762,7 +1762,7 @@ describe('ProductScanModal', () => {
               scanId: 'scan-search-1',
               runId: 'run-search-1',
               status: 'queued',
-              message: 'Amazon reverse image scan queued.',
+              message: 'Amazon candidate search queued.',
             },
           ],
         };
@@ -1920,7 +1920,7 @@ describe('ProductScanModal', () => {
           scanId: 'scan-1',
           runId: 'run-1',
           status: 'queued',
-          message: 'Amazon reverse image scan queued.',
+          message: 'Amazon candidate search queued.',
         },
       ],
     });
@@ -2298,7 +2298,7 @@ describe('ProductScanModal', () => {
           scanId: 'scan-1',
           runId: 'run-1',
           status: 'queued',
-          message: 'Amazon reverse image scan queued.',
+          message: 'Amazon candidate search queued.',
         },
       ],
     });
@@ -2346,8 +2346,8 @@ describe('ProductScanModal', () => {
       </QueryClientProvider>
     );
 
-    await screen.findByText('Amazon reverse image scan running.');
-    expect(screen.queryByText('Amazon reverse image scan queued.')).not.toBeInTheDocument();
+    await screen.findByText('Amazon candidate search running.');
+    expect(screen.queryByText('Amazon candidate search queued.')).not.toBeInTheDocument();
   });
 
   it('shows the manual verification guidance when a running scan is waiting on captcha resolution', async () => {
@@ -2362,7 +2362,7 @@ describe('ProductScanModal', () => {
           scanId: 'scan-1',
           runId: 'run-1',
           status: 'queued',
-          message: 'Amazon reverse image scan queued.',
+          message: 'Amazon candidate search queued.',
         },
       ],
     });
@@ -2418,7 +2418,7 @@ describe('ProductScanModal', () => {
       'Google Lens requested captcha verification. Solve it in the opened browser window and the scan will continue automatically.'
     );
     expect(screen.getByText('Captcha')).toBeInTheDocument();
-    expect(screen.queryByText('Amazon reverse image scan queued.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Amazon candidate search queued.')).not.toBeInTheDocument();
   });
 
   it('shows a running state immediately when the batch response returns a started scan', async () => {
@@ -2433,7 +2433,7 @@ describe('ProductScanModal', () => {
           scanId: 'scan-1',
           runId: 'run-1',
           status: 'running',
-          message: 'Amazon reverse image scan running.',
+          message: 'Amazon candidate search running.',
         },
       ],
     });
@@ -2481,8 +2481,8 @@ describe('ProductScanModal', () => {
       </QueryClientProvider>
     );
 
-    await screen.findByText('Amazon reverse image scan running.');
-    expect(mocks.toast).toHaveBeenCalledWith('Amazon scans: 1 running.', {
+    await screen.findByText('Amazon candidate search running.');
+    expect(mocks.toast).toHaveBeenCalledWith('Amazon candidate searches: 1 running.', {
       variant: 'success',
     });
   });
@@ -2499,7 +2499,7 @@ describe('ProductScanModal', () => {
           scanId: 'scan-1',
           runId: 'run-1',
           status: 'running',
-          message: 'Amazon reverse image scan running.',
+          message: 'Amazon candidate search running.',
         },
       ],
     });
@@ -2620,7 +2620,7 @@ describe('ProductScanModal', () => {
           scanId: 'scan-1',
           runId: 'run-1',
           status: 'running',
-          message: 'Amazon reverse image scan running.',
+          message: 'Amazon candidate search running.',
         },
       ],
     });
@@ -2712,7 +2712,7 @@ describe('ProductScanModal', () => {
           scanId: 'scan-1',
           runId: 'run-1',
           status: 'running',
-          message: 'Amazon reverse image scan running.',
+          message: 'Amazon candidate search running.',
         },
       ],
     });
@@ -2800,7 +2800,7 @@ describe('ProductScanModal', () => {
       </QueryClientProvider>
     );
 
-    await screen.findByText('Amazon reverse image scan running.');
+    await screen.findByText('Amazon candidate search running.');
     expect(screen.getByText('Current step')).toBeInTheDocument();
     expect(screen.getByText('Google Lens')).toBeInTheDocument();
     expect(screen.getByText('Collect Amazon candidates from Google results')).toBeInTheDocument();
@@ -2822,7 +2822,7 @@ describe('ProductScanModal', () => {
           scanId: null,
           runId: 'run-1',
           status: 'running',
-          message: 'Amazon reverse image scan running.',
+          message: 'Amazon candidate search running.',
         },
       ],
     });
@@ -2846,7 +2846,7 @@ describe('ProductScanModal', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('Failed')).toBeInTheDocument();
     expect(mocks.safeSetInterval).not.toHaveBeenCalled();
-    expect(mocks.toast).toHaveBeenCalledWith('Amazon scans: 1 failed.', {
+    expect(mocks.toast).toHaveBeenCalledWith('Amazon candidate searches: 1 failed.', {
       variant: 'warning',
     });
     await waitFor(() => {
@@ -2875,7 +2875,7 @@ describe('ProductScanModal', () => {
           runId: 'run-1',
           status: 'already_running',
           currentStatus: 'queued',
-          message: 'Amazon scan already in progress for this product.',
+          message: 'Amazon candidate search already in progress for this product.',
         },
       ],
     });
@@ -2924,7 +2924,7 @@ describe('ProductScanModal', () => {
 
     await screen.findByText('Queued');
     expect(screen.queryByText('Running')).not.toBeInTheDocument();
-    expect(mocks.toast).toHaveBeenCalledWith('Amazon scans: 1 already in progress.', {
+    expect(mocks.toast).toHaveBeenCalledWith('Amazon candidate searches: 1 already in progress.', {
       variant: 'success',
     });
   });
@@ -2941,7 +2941,7 @@ describe('ProductScanModal', () => {
           scanId: 'scan-1',
           runId: 'run-1',
           status: 'queued',
-          message: 'Amazon reverse image scan queued.',
+          message: 'Amazon candidate search queued.',
         },
       ],
     });
@@ -3060,7 +3060,7 @@ describe('ProductScanModal', () => {
         params: { limit: 1, provider: 'amazon' },
       });
       expect(screen.getByText('Running')).toBeInTheDocument();
-      expect(screen.getByText('Amazon reverse image scan running.')).toBeInTheDocument();
+      expect(screen.getByText('Amazon candidate search running.')).toBeInTheDocument();
       expect(mocks.safeSetInterval).toHaveBeenCalled();
     });
 
@@ -3248,7 +3248,7 @@ describe('ProductScanModal', () => {
         params: { limit: 1, provider: 'amazon' },
       });
       expect(screen.getByText('Running')).toBeInTheDocument();
-      expect(screen.getByText('Amazon reverse image scan running.')).toBeInTheDocument();
+      expect(screen.getByText('Amazon candidate search running.')).toBeInTheDocument();
       expect(mocks.safeSetInterval).toHaveBeenCalled();
     });
   });
@@ -3265,7 +3265,7 @@ describe('ProductScanModal', () => {
           scanId: 'scan-1',
           runId: null,
           status: 'failed',
-          message: 'No product image available for Amazon reverse image scan.',
+          message: 'No usable product images for Amazon candidate search.',
         },
       ],
     });
@@ -3283,7 +3283,7 @@ describe('ProductScanModal', () => {
       </QueryClientProvider>
     );
 
-    await screen.findByText('No product image available for Amazon reverse image scan.');
+    await screen.findByText('No usable product images for Amazon candidate search.');
 
     await waitFor(() => {
       expect(mocks.invalidateProductsAndDetail).toHaveBeenCalledWith(
@@ -3310,7 +3310,7 @@ describe('ProductScanModal', () => {
           scanId: 'scan-1',
           runId: null,
           status: 'failed',
-          message: 'No product image available for Amazon reverse image scan.',
+          message: 'No usable product images for Amazon candidate search.',
         },
       ],
     });
@@ -3330,7 +3330,7 @@ describe('ProductScanModal', () => {
     );
 
     expect(
-      await screen.findByText('No product image available for Amazon reverse image scan.')
+      await screen.findByText('No usable product images for Amazon candidate search.')
     ).toBeInTheDocument();
     expect(mocks.toast).not.toHaveBeenCalledWith('invalidate failed', {
       variant: 'error',
@@ -3349,7 +3349,7 @@ describe('ProductScanModal', () => {
           scanId: 'scan-1',
           runId: 'run-1',
           status: 'queued',
-          message: 'Amazon reverse image scan queued.',
+          message: 'Amazon candidate search queued.',
         },
       ],
     });
@@ -3393,7 +3393,7 @@ describe('ProductScanModal', () => {
           scanId: 'scan-1',
           runId: 'run-1',
           status: 'queued',
-          message: 'Amazon reverse image scan queued.',
+          message: 'Amazon candidate search queued.',
         },
       ],
     });
@@ -3445,7 +3445,7 @@ describe('ProductScanModal', () => {
 
     await screen.findByText('Amazon scan request did not return a result for this product.');
     expect(screen.getByText('Product 2')).toBeInTheDocument();
-    expect(mocks.toast).toHaveBeenCalledWith('Amazon scans: 1 queued, 1 failed.', {
+    expect(mocks.toast).toHaveBeenCalledWith('Amazon candidate searches: 1 queued, 1 failed.', {
       variant: 'warning',
     });
   });
@@ -3507,9 +3507,9 @@ describe('ProductScanModal', () => {
         params: { limit: 1, provider: 'amazon' },
       });
       expect(screen.getByText('Running')).toBeInTheDocument();
-      expect(screen.getByText('Amazon reverse image scan running.')).toBeInTheDocument();
+      expect(screen.getByText('Amazon candidate search running.')).toBeInTheDocument();
       expect(mocks.safeSetInterval).toHaveBeenCalled();
-      expect(mocks.toast).toHaveBeenCalledWith('Amazon scans: 1 running.', {
+      expect(mocks.toast).toHaveBeenCalledWith('Amazon candidate searches: 1 running.', {
         variant: 'success',
       });
     });
@@ -3527,7 +3527,7 @@ describe('ProductScanModal', () => {
           scanId: 'scan-1',
           runId: 'run-1',
           status: 'queued',
-          message: 'Amazon reverse image scan queued.',
+          message: 'Amazon candidate search queued.',
         },
       ],
     });
@@ -3626,7 +3626,7 @@ describe('ProductScanModal', () => {
       });
       expect(screen.getByText('Product 2')).toBeInTheDocument();
       expect(screen.getAllByText('Running').length).toBeGreaterThan(0);
-      expect(screen.getByText('Amazon reverse image scan running.')).toBeInTheDocument();
+      expect(screen.getByText('Amazon candidate search running.')).toBeInTheDocument();
       expect(mocks.safeSetInterval).toHaveBeenCalled();
     });
   });
@@ -3643,7 +3643,7 @@ describe('ProductScanModal', () => {
           scanId: 'scan-1',
           runId: 'run-1',
           status: 'queued',
-          message: 'Amazon reverse image scan queued.',
+          message: 'Amazon candidate search queued.',
         },
       ],
     });
@@ -3710,7 +3710,7 @@ describe('ProductScanModal', () => {
         params: { limit: 1, provider: 'amazon' },
       });
       expect(screen.getByText('Running')).toBeInTheDocument();
-      expect(screen.getByText('Amazon reverse image scan running.')).toBeInTheDocument();
+      expect(screen.getByText('Amazon candidate search running.')).toBeInTheDocument();
     });
 
     expect(mocks.toast).not.toHaveBeenCalledWith('tracked lookup failed', {
@@ -3731,7 +3731,7 @@ describe('ProductScanModal', () => {
           scanId: 'scan-1',
           runId: 'run-1',
           status: 'queued',
-          message: 'Amazon reverse image scan queued.',
+          message: 'Amazon candidate search queued.',
         },
       ],
     });
@@ -3794,7 +3794,7 @@ describe('ProductScanModal', () => {
         params: { limit: 1, provider: 'amazon' },
       });
       expect(screen.getByText('Running')).toBeInTheDocument();
-      expect(screen.getByText('Amazon reverse image scan running.')).toBeInTheDocument();
+      expect(screen.getByText('Amazon candidate search running.')).toBeInTheDocument();
     });
   });
 
@@ -3810,7 +3810,7 @@ describe('ProductScanModal', () => {
           scanId: 'scan-1',
           runId: 'run-1',
           status: 'queued',
-          message: 'Amazon reverse image scan queued.',
+          message: 'Amazon candidate search queued.',
         },
       ],
     });
@@ -3840,7 +3840,7 @@ describe('ProductScanModal', () => {
     );
 
     await screen.findByText('Amazon scan record could not be refreshed.');
-    expect(screen.queryByText('Amazon reverse image scan queued.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Amazon candidate search queued.')).not.toBeInTheDocument();
     expect(mocks.apiGet).toHaveBeenCalledWith('/api/v2/products/product-1/scans', {
       cache: 'no-store',
       params: { limit: 1, provider: 'amazon' },
@@ -3869,7 +3869,7 @@ describe('ProductScanModal', () => {
           scanId: 'scan-1',
           runId: 'run-1',
           status: 'queued',
-          message: 'Amazon reverse image scan queued.',
+          message: 'Amazon candidate search queued.',
         },
       ],
     });
@@ -3928,7 +3928,7 @@ describe('ProductScanModal', () => {
 
     await screen.findByText('Amazon scan record could not be refreshed.');
     expect(screen.queryByText('Older Amazon title')).not.toBeInTheDocument();
-    expect(screen.queryByText('Amazon reverse image scan queued.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Amazon candidate search queued.')).not.toBeInTheDocument();
   });
 
   it('shows a toast and stops polling when background refresh fails', async () => {
@@ -3943,7 +3943,7 @@ describe('ProductScanModal', () => {
           scanId: 'scan-1',
           runId: 'run-1',
           status: 'queued',
-          message: 'Amazon reverse image scan queued.',
+          message: 'Amazon candidate search queued.',
         },
       ],
     });
@@ -4276,7 +4276,7 @@ describe('ProductScanModal', () => {
             scanId: 'scan-1',
             runId: 'run-1',
             status: 'queued',
-            message: 'Amazon reverse image scan queued.',
+            message: 'Amazon candidate search queued.',
           },
         ],
       })

@@ -142,6 +142,13 @@ export {
   extractPlaywrightAppErrorMetadata,
 } from './server/listing-service-utils';
 export {
+  createLiveScripterSession,
+  disposeLiveScripterSession,
+  getLiveScripterBridge,
+  getLiveScripterSession,
+  pickElementAt,
+} from './server/live-session';
+export {
   buildPlaywrightListingExportHistoryRecord,
   buildPlaywrightListingSuccessUpdateFields,
   buildPlaywrightListingFailureUpdateFields,

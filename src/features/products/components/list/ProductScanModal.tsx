@@ -138,14 +138,14 @@ type ProductScanModalConfig = {
 const PRODUCT_SCAN_MODAL_CONFIG: Record<ProductScanModalProvider, ProductScanModalConfig> = {
   amazon: {
     batchEndpoint: '/api/v2/products/scans/amazon/batch',
-    batchFailureMessage: 'Failed to enqueue Amazon scans.',
-    batchLabel: 'Amazon scans',
-    modalTitle: 'Amazon Reverse Image Scan',
-    noQueuedMessage: 'No Amazon scans were queued.',
+    batchFailureMessage: 'Failed to enqueue Amazon candidate searches.',
+    batchLabel: 'Amazon candidate searches',
+    modalTitle: 'Amazon Google Lens Candidate Search',
+    noQueuedMessage: 'No Amazon candidate searches were queued.',
     openResultLabel: 'Open Amazon Result',
-    preparingLabel: 'Preparing Amazon scans...',
-    refreshFailureMessage: 'Failed to refresh Amazon scans.',
-    resultStatusLabel: 'Amazon reverse image scan',
+    preparingLabel: 'Preparing Amazon candidate searches...',
+    refreshFailureMessage: 'Failed to refresh Amazon candidate searches.',
+    resultStatusLabel: 'Amazon candidate search',
     resultTypeLabel: 'Amazon',
   },
   '1688': {

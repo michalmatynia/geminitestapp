@@ -41,7 +41,7 @@ export async function saveCurrency(
   id: string | undefined,
   data: SaveCurrencyInput
 ): Promise<CurrencyOption> {
-  if (id) {
+  if (id !== undefined && id !== '') {
     return api.put<CurrencyOption>(`${CURRENCIES_ENDPOINT}/${id}`, data);
   }
   return api.post<CurrencyOption>(CURRENCIES_ENDPOINT, data);
@@ -51,7 +51,7 @@ export async function saveCountry(
   id: string | undefined,
   data: SaveCountryInput
 ): Promise<CountryOption> {
-  if (id) {
+  if (id !== undefined && id !== '') {
     return api.put<CountryOption>(`${COUNTRIES_ENDPOINT}/${id}`, data);
   }
   return api.post<CountryOption>(COUNTRIES_ENDPOINT, data);
@@ -61,7 +61,7 @@ export async function saveLanguage(
   id: string | undefined,
   data: SaveLanguageInput
 ): Promise<Language> {
-  if (id) {
+  if (id !== undefined && id !== '') {
     return api.put<Language>(`${LANGUAGES_ENDPOINT}/${id}`, data);
   }
   return api.post<Language>(LANGUAGES_ENDPOINT, data);

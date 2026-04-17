@@ -47,18 +47,30 @@ export default function FileManager(props: FileManagerProps): React.JSX.Element 
   const runtime = React.useContext(FileManagerRuntimeContext);
   const resolvedOnSelectFile = onSelectFile ?? runtime?.onSelectFile;
 
+  const providerProps = React.useMemo(() => ({
+    ...(resolvedOnSelectFile !== undefined ? { onSelectFile: resolvedOnSelectFile } : {}),
+    ...(mode !== undefined ? { mode } : {}),
+    ...(selectionMode !== undefined ? { selectionMode } : {}),
+    ...(autoConfirmSelection !== undefined ? { autoConfirmSelection } : {}),
+    ...(showFolderFilter !== undefined ? { showFolderFilter } : {}),
+    ...(defaultFolder !== undefined ? { defaultFolder } : {}),
+    ...(showBulkActions !== undefined ? { showBulkActions } : {}),
+    ...(showTagSearch !== undefined ? { showTagSearch } : {}),
+    ...(filepathFilter !== undefined ? { filepathFilter } : {}),
+  }), [
+    resolvedOnSelectFile,
+    mode,
+    selectionMode,
+    autoConfirmSelection,
+    showFolderFilter,
+    defaultFolder,
+    showBulkActions,
+    showTagSearch,
+    filepathFilter,
+  ]);
+
   return (
-    <FileManagerProvider
-      {...(resolvedOnSelectFile !== undefined ? { onSelectFile: resolvedOnSelectFile } : {})}
-      {...(mode !== undefined ? { mode } : {})}
-      {...(selectionMode !== undefined ? { selectionMode } : {})}
-      {...(autoConfirmSelection !== undefined ? { autoConfirmSelection } : {})}
-      {...(showFolderFilter !== undefined ? { showFolderFilter } : {})}
-      {...(defaultFolder !== undefined ? { defaultFolder } : {})}
-      {...(showBulkActions !== undefined ? { showBulkActions } : {})}
-      {...(showTagSearch !== undefined ? { showTagSearch } : {})}
-      {...(filepathFilter !== undefined ? { filepathFilter } : {})}
-    >
+    <FileManagerProvider {...providerProps}>
       <Card variant='glass' padding='md' className='text-white shadow-xl border-border/60'>
         <FileManagerHeader />
         <FileManagerFilters />

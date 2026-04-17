@@ -22,7 +22,7 @@ export const querySchema = z.object({
   resourceType: optionalTrimmedQueryString(),
 });
 
-function statusForLeaseMutation(code: string) {
+function statusForLeaseMutation(code: string): number {
   switch (code) {
     case 'claimed':
     case 'renewed':
@@ -39,38 +39,47 @@ function statusForLeaseMutation(code: string) {
   }
 }
 
-export const GET_handler = async (_request: Request, ctx: ApiHandlerContext) => {
+async function resolveLeaseStateDetail(resourceId: string, scopeId: string): Promise<NextResponse> {
+  const state = await getAgentLeaseState(resourceId, scopeId);
+
+  if (state === null) {
+    return NextResponse.json(
+      { error: `Unknown agent lease scope: ${resourceId} (${scopeId})` },
+      { status: 404 },
+    );
+  }
+
+  return NextResponse.json({
+    lease: state,
+    limitation: SHARED_LEASE_LIMITATION,
+  });
+}
+
+async function resolveLeaseStateByResource(resourceId: string, activeOnly?: boolean): Promise<NextResponse> {
+  return NextResponse.json({
+    resourceId,
+    leases: await listAgentLeaseStates({
+      resourceId,
+      activeOnly,
+    }),
+    limitation: SHARED_LEASE_LIMITATION,
+  });
+}
+
+export const getLeasesHandler = async (_request: Request, ctx: ApiHandlerContext): Promise<NextResponse> => {
   const query = (ctx.query ?? {}) as z.infer<typeof querySchema>;
   const resourceId = query.resourceId;
   const scopeId = query.scopeId;
 
-  if (resourceId && scopeId) {
-    const state = await getAgentLeaseState(resourceId, scopeId);
+  const hasResourceId = typeof resourceId === 'string' && resourceId !== '';
+  const hasScopeId = typeof scopeId === 'string' && scopeId !== '';
 
-    if (!state) {
-      return NextResponse.json(
-        {
-          error: `Unknown agent lease scope: ${resourceId} (${scopeId})`,
-        },
-        { status: 404 },
-      );
-    }
-
-    return NextResponse.json({
-      lease: state,
-      limitation: SHARED_LEASE_LIMITATION,
-    });
+  if (hasResourceId && hasScopeId) {
+    return resolveLeaseStateDetail(resourceId, scopeId);
   }
 
-  if (resourceId) {
-    return NextResponse.json({
-      resourceId,
-      leases: await listAgentLeaseStates({
-        resourceId,
-        activeOnly: query.activeOnly,
-      }),
-      limitation: SHARED_LEASE_LIMITATION,
-    });
+  if (hasResourceId) {
+    return resolveLeaseStateByResource(resourceId, query.activeOnly);
   }
 
   return NextResponse.json(
@@ -81,7 +90,7 @@ export const GET_handler = async (_request: Request, ctx: ApiHandlerContext) => 
   );
 };
 
-export const POST_handler = async (_request: Request, ctx: ApiHandlerContext) => {
+export const postLeasesHandler = async (_request: Request, ctx: ApiHandlerContext): Promise<NextResponse> => {
   try {
     const body = ctx.body;
     const result = mutateAgentLease(body);
@@ -90,7 +99,7 @@ export const POST_handler = async (_request: Request, ctx: ApiHandlerContext) =>
       status: statusForLeaseMutation(result.code),
     });
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    await ErrorSystem.captureException(error);
     if (error instanceof ZodError) {
       return NextResponse.json(
         {

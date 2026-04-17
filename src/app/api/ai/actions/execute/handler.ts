@@ -8,18 +8,20 @@ import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+async function parseRequestBody(req: NextRequest): Promise<unknown> {
   const rawBody = await req.text();
-  let body: unknown = {};
-
-  if (rawBody) {
-    try {
-      body = JSON.parse(rawBody);
-    } catch (error) {
-      void ErrorSystem.captureException(error);
-      throw badRequestError('Invalid JSON body.');
-    }
+  if (rawBody === '') return {};
+  
+  try {
+    return JSON.parse(rawBody);
+  } catch (error) {
+    await ErrorSystem.captureException(error);
+    throw badRequestError('Invalid JSON body.');
   }
+}
+
+export async function postExecuteHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  const body = await parseRequestBody(req);
 
   const parsed = executeActionRequestSchema.safeParse(body);
   if (!parsed.success) {
@@ -29,7 +31,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   const { proposalId, approval } = parsed.data;
 
   const proposal = getProposal(proposalId);
-  if (!proposal) {
+  if (proposal === undefined) {
     throw notFoundError('Proposal not found.', { proposalId });
   }
 
@@ -46,7 +48,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     approvedBy: approval.approvedBy,
   });
 
-  void logSystemEvent({
+  await logSystemEvent({
     level: 'info',
     message: '[ai-context-registry] actions.execute',
     source: 'ai.actions.execute',
@@ -55,7 +57,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
       approvedBy: approval.approvedBy,
       workflow: proposal.workflow,
     },
-  }).catch(() => {});
+  });
 
   return NextResponse.json({
     ok: true,

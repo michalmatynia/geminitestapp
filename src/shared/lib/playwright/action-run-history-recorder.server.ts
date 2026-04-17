@@ -207,6 +207,7 @@ const normalizeInputBindings = (
         {
           mode,
           ...(rawBinding['value'] !== undefined ? { value: rawBinding['value'] } : {}),
+          selectorNamespace: toStringOrNull(rawBinding['selectorNamespace']),
           selectorKey: toStringOrNull(rawBinding['selectorKey']),
           selectorProfile: toStringOrNull(rawBinding['selectorProfile']),
           fallbackSelector: toStringOrNull(rawBinding['fallbackSelector']),

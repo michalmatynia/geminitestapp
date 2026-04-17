@@ -8,18 +8,20 @@ import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+async function parseRequestBody(req: NextRequest): Promise<unknown> {
   const rawBody = await req.text();
-  let body: unknown = {};
-
-  if (rawBody) {
-    try {
-      body = JSON.parse(rawBody);
-    } catch (error) {
-      void ErrorSystem.captureException(error);
-      throw badRequestError('Invalid JSON body.');
-    }
+  if (rawBody === '') return {};
+  
+  try {
+    return JSON.parse(rawBody);
+  } catch (error) {
+    await ErrorSystem.captureException(error);
+    throw badRequestError('Invalid JSON body.');
   }
+}
+
+export async function postBundleHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  const body = await parseRequestBody(req);
 
   const parsed = contextBundleRequestSchema.safeParse(body);
   if (!parsed.success) {
@@ -33,7 +35,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     maxNodes,
   });
 
-  void logSystemEvent({
+  await logSystemEvent({
     level: 'info',
     message: '[ai-context-registry] context.bundle',
     source: 'ai.context.bundle',
@@ -46,7 +48,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
       truncated: result.truncated,
       engineVersion: result.engineVersion,
     },
-  }).catch(() => {});
+  });
 
   return NextResponse.json(result, {
     headers: {

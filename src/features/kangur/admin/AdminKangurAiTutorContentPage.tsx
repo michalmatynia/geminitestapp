@@ -10,6 +10,51 @@ const AI_TUTOR_CONTENT_ID = 'kangur-ai-tutor-content';
 const AI_TUTOR_CONTENT_TITLE_ID = 'kangur-ai-tutor-content-title';
 const AI_TUTOR_CONTENT_DESCRIPTION_ID = 'kangur-ai-tutor-content-description';
 
+const InfoCards = (): React.JSX.Element => (
+  <div className='space-y-4 xl:sticky xl:top-24 xl:self-start'>
+    <Card
+      aria-labelledby={AI_TUTOR_CONTENT_TITLE_ID}
+      aria-describedby={AI_TUTOR_CONTENT_DESCRIPTION_ID}
+      variant='subtle'
+      padding='md'
+      className='rounded-2xl border-border/60 bg-card/40 text-sm text-muted-foreground shadow-sm'
+    >
+      <div className='flex items-center gap-2'>
+        <h2 id={AI_TUTOR_CONTENT_TITLE_ID} className='text-base font-semibold text-foreground'>
+          AI Tutor content workspace
+        </h2>
+        <Badge variant='outline'>Dedicated editor</Badge>
+      </div>
+      <p
+        id={AI_TUTOR_CONTENT_DESCRIPTION_ID}
+        className='mt-2 max-w-3xl text-sm font-normal text-muted-foreground'
+      >
+        Use this page to edit the AI Tutor content pack without mixing it into the rest of the
+        Kangur settings form.
+      </p>
+    </Card>
+
+    <Card
+      variant='subtle'
+      padding='md'
+      className='rounded-2xl border-border/60 bg-card/40 text-sm text-muted-foreground shadow-sm'
+    >
+      <div className='text-sm font-semibold text-foreground'>Quick links</div>
+      <p className='mt-1 text-sm text-muted-foreground'>
+        Jump back to other Kangur admin surfaces that influence tutor content output.
+      </p>
+      <div className='mt-3 flex flex-col gap-2'>
+        <Button asChild variant='outline' size='sm' className='justify-between'>
+          <Link href='/admin/kangur/settings'>Kangur settings</Link>
+        </Button>
+        <Button asChild variant='outline' size='sm' className='justify-between'>
+          <Link href='/admin/kangur/documentation'>Documentation</Link>
+        </Button>
+      </div>
+    </Card>
+  </div>
+);
+
 export function AdminKangurAiTutorContentPage(): React.JSX.Element {
   const breadcrumbs = [
     { label: 'Admin', href: '/admin' },
@@ -62,51 +107,7 @@ export function AdminKangurAiTutorContentPage(): React.JSX.Element {
             <div className='space-y-6'>
               <KangurAiTutorContentSettingsPanel />
             </div>
-            <div className='space-y-4 xl:sticky xl:top-24 xl:self-start'>
-              <Card
-                aria-labelledby={AI_TUTOR_CONTENT_TITLE_ID}
-                aria-describedby={AI_TUTOR_CONTENT_DESCRIPTION_ID}
-                variant='subtle'
-                padding='md'
-                className='rounded-2xl border-border/60 bg-card/40 text-sm text-muted-foreground shadow-sm'
-              >
-                <div className='flex items-center gap-2'>
-                  <h2
-                    id={AI_TUTOR_CONTENT_TITLE_ID}
-                    className='text-base font-semibold text-foreground'
-                  >
-                    AI Tutor content workspace
-                  </h2>
-                  <Badge variant='outline'>Dedicated editor</Badge>
-                </div>
-                <p
-                  id={AI_TUTOR_CONTENT_DESCRIPTION_ID}
-                  className='mt-2 max-w-3xl text-sm font-normal text-muted-foreground'
-                >
-                  Use this page to edit the AI Tutor content pack without mixing it into the rest of
-                  the Kangur settings form.
-                </p>
-              </Card>
-
-              <Card
-                variant='subtle'
-                padding='md'
-                className='rounded-2xl border-border/60 bg-card/40 text-sm text-muted-foreground shadow-sm'
-              >
-                <div className='text-sm font-semibold text-foreground'>Quick links</div>
-                <p className='mt-1 text-sm text-muted-foreground'>
-                  Jump back to other Kangur admin surfaces that influence tutor content output.
-                </p>
-                <div className='mt-3 flex flex-col gap-2'>
-                  <Button asChild variant='outline' size='sm' className='justify-between'>
-                    <Link href='/admin/kangur/settings'>Kangur settings</Link>
-                  </Button>
-                  <Button asChild variant='outline' size='sm' className='justify-between'>
-                    <Link href='/admin/kangur/documentation'>Documentation</Link>
-                  </Button>
-                </div>
-              </Card>
-            </div>
+            <InfoCards />
           </div>
         </main>
       </KangurAdminContentShell>

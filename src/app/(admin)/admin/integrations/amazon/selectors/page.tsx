@@ -1,5 +1,5 @@
-import { AmazonSelectorRegistryPage } from '@/features/integrations/admin.public';
+import { SelectorRegistryPage } from '@/features/integrations/admin.public';
 
 export default function AdminAmazonSelectorRegistryRoute(): React.JSX.Element {
-  return <AmazonSelectorRegistryPage />;
+  return <SelectorRegistryPage initialNamespace='amazon' />;
 }

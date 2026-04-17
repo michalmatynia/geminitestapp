@@ -1,3 +1,4 @@
+/* eslint-disable max-lines, max-lines-per-function */
 import {
   PackageIcon,
   BookOpenIcon,
@@ -319,7 +320,7 @@ export const buildAdminNav = (handlers: {
               {
                 id: 'integrations/marketplaces/tradera/selectors',
                 label: 'Selector Registry',
-                href: '/admin/integrations/marketplaces/tradera/selectors',
+                href: '/admin/integrations/selectors?namespace=tradera',
               },
             ],
           },
@@ -349,9 +350,9 @@ export const buildAdminNav = (handlers: {
                 href: '/admin/playwright/step-sequencer/runs',
               },
               {
-                id: 'integrations/marketplaces/playwright/1688-selectors',
-                label: '1688 Selector Registry',
-                href: '/admin/integrations/1688/selectors',
+                id: 'integrations/marketplaces/playwright/selector-registry',
+                label: 'Super Selector Registry',
+                href: '/admin/integrations/selectors',
               },
             ],
           },

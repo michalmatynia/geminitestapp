@@ -318,7 +318,7 @@ describe('product-scans-service', () => {
           key: 'prepare_scan',
           label: 'Prepare Amazon scan',
           status: 'completed',
-          message: 'Prepared 1 image candidate for Amazon reverse image scan.',
+          message: 'Prepared 1 image candidate for Amazon candidate search.',
           url: null,
           startedAt: '2026-04-11T03:59:58.000Z',
           completedAt: '2026-04-11T03:59:58.000Z',

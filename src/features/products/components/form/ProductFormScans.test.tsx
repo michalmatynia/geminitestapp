@@ -263,9 +263,9 @@ describe('ProductFormScans', () => {
           url: null,
           description: null,
           rawResult: null,
-          error: 'Google reverse image search did not return a usable Amazon result.',
+          error: 'Amazon candidate search did not return a usable Amazon result.',
           asinUpdateStatus: 'not_needed',
-          asinUpdateMessage: 'Google reverse image search did not return a usable Amazon result.',
+          asinUpdateMessage: 'Amazon candidate search did not return a usable Amazon result.',
           createdBy: null,
           updatedBy: null,
           completedAt: '2026-04-11T04:00:00.000Z',
@@ -282,7 +282,7 @@ describe('ProductFormScans', () => {
     );
 
     expect(
-      await screen.findByText('Google reverse image search did not return a usable Amazon result.')
+      await screen.findByText('Amazon candidate search did not return a usable Amazon result.')
     ).toBeInTheDocument();
   });
 
@@ -363,7 +363,7 @@ describe('ProductFormScans', () => {
       </QueryClientProvider>
     );
 
-    expect(await screen.findByText('Amazon reverse image scan running.')).toBeInTheDocument();
+    expect(await screen.findByText('Amazon candidate search running.')).toBeInTheDocument();
     expect(screen.getByText('Current step')).toBeInTheDocument();
     expect(screen.getByText('Google Lens')).toBeInTheDocument();
     expect(screen.getByText('Collect Amazon candidates from Google results')).toBeInTheDocument();

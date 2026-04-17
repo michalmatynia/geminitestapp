@@ -12,7 +12,7 @@ import {
   toPersistedFilemakerEmailCampaignSchedulerStatus,
 } from '../settings';
 import { upsertFilemakerCampaignSettingValue } from '../server/campaign-settings-store';
-import { runFilemakerEmailCampaignSchedulerTick } from '../server/filemakerEmailCampaignScheduler';
+import { runFilemakerEmailCampaignSchedulerTick, type FilemakerEmailCampaignSchedulerTickResult } from '../server/filemakerEmailCampaignScheduler';
 import { enqueueFilemakerEmailCampaignRunJob, startFilemakerEmailCampaignQueue } from './filemakerEmailCampaignQueue';
 
 const parseMsFromEnv = (raw: string | undefined, fallback: number, min: number): number => {
@@ -49,7 +49,14 @@ const queueState =
     startupTickQueued: false,
   });
 
-const persistSchedulerStatus = async (startedAt: string, completedAt: string, result: any, dispatchModes: any): Promise<void> => {
+type DispatchModes = { queued: number; inline: number };
+
+const persistSchedulerStatus = async (
+  startedAt: string,
+  completedAt: string,
+  result: FilemakerEmailCampaignSchedulerTickResult,
+  dispatchModes: DispatchModes
+): Promise<void> => {
   await upsertFilemakerCampaignSettingValue(
     FILEMAKER_EMAIL_CAMPAIGN_SCHEDULER_STATUS_KEY,
     JSON.stringify(
@@ -70,7 +77,10 @@ const persistSchedulerStatus = async (startedAt: string, completedAt: string, re
   );
 };
 
-const logSchedulerTick = async (result: any, dispatchModes: any): Promise<void> => {
+const logSchedulerTick = async (
+  result: FilemakerEmailCampaignSchedulerTickResult,
+  dispatchModes: DispatchModes
+): Promise<void> => {
   if (
     result.launchedRuns.length > 0 ||
     result.launchFailures.length > 0 ||
@@ -81,7 +91,7 @@ const logSchedulerTick = async (result: any, dispatchModes: any): Promise<void> 
       evaluatedCampaignCount: result.evaluatedCampaignCount,
       dueCampaignCount: result.dueCampaignCount,
       launchedRunCount: result.launchedRuns.length,
-      launchedRunIds: result.launchedRuns.map((run: any) => run.runId),
+      launchedRunIds: result.launchedRuns.map((run) => run.runId),
       launchFailures: result.launchFailures,
       skippedByReason: result.skippedByReason,
       queuedDispatchCount: dispatchModes.queued,
@@ -108,7 +118,7 @@ const queue = createManagedQueue<ScheduledTickJobData>({
       startFilemakerEmailCampaignQueue();
     }
 
-    const dispatchModes = { queued: 0, inline: 0 };
+    const dispatchModes: DispatchModes = { queued: 0, inline: 0 };
     const dispatchPromises = result.launchedRuns
       .filter((run) => run.queuedDeliveryCount > 0)
       .map((run) => enqueueFilemakerEmailCampaignRunJob({

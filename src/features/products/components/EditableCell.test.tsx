@@ -8,6 +8,8 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
+
 const mocks = vi.hoisted(() => ({
   apiPatch: vi.fn(),
   toast: vi.fn(),
@@ -106,5 +108,43 @@ describe('EditableCell', () => {
 
     expect(mocks.apiPatch).not.toHaveBeenCalled();
     expect(onUpdate).not.toHaveBeenCalled();
+  });
+
+  it('does not crash when a matching product list cache entry is false', async () => {
+    const user = userEvent.setup();
+    const onUpdate = vi.fn();
+    const queryClient = createQueryClient();
+
+    queryClient.setQueryData(
+      [...QUERY_KEYS.products.lists(), 'paged', { filters: { page: 1, pageSize: 20 } }],
+      false as never
+    );
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <EditableCell value={100} productId='product-1' field='price' onUpdate={onUpdate} />
+      </QueryClientProvider>
+    );
+
+    await user.dblClick(screen.getByText('100.00'));
+
+    const input = screen.getByRole('spinbutton');
+    await user.clear(input);
+    await user.type(input, '125.5');
+    fireEvent.blur(input);
+
+    await waitFor(() => {
+      expect(mocks.apiPatch).toHaveBeenCalledWith('/api/v2/products/product-1', { price: 125.5 });
+    });
+
+    expect(mocks.toast).toHaveBeenCalledWith('Price updated', { variant: 'success' });
+    expect(onUpdate).toHaveBeenCalledWith(125.5);
+    expect(
+      queryClient.getQueryData([
+        ...QUERY_KEYS.products.lists(),
+        'paged',
+        { filters: { page: 1, pageSize: 20 } },
+      ])
+    ).toBe(false);
   });
 });

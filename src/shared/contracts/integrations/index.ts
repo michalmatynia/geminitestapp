@@ -73,6 +73,7 @@ export * from './processing';
 export * from './producers';
 export * from './repositories';
 export * from './session-testing';
+export * from './selector-registry';
 export * from './tradera';
 export * from './tradera-parameter-mapper';
 export * from './tradera-selector-registry';

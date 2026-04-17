@@ -330,6 +330,7 @@ export const getSupplier1688RuntimeStepInputBindings = (
       field,
       {
         mode: 'selectorRegistry',
+        selectorNamespace: '1688',
         selectorKey,
         selectorProfile,
         fallbackSelector: null,

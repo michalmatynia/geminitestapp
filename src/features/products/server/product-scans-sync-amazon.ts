@@ -5,6 +5,7 @@ import {
   AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY,
   AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY,
   resolveAmazonRuntimeActionName,
+  resolveAmazonRuntimeOperationLabel,
 } from '@/shared/lib/browser-execution/amazon-runtime-constants';
 import {
   buildPlaywrightEngineRunFailureMeta,
@@ -233,6 +234,7 @@ export async function synchronizeAmazonProductScan(
           latestStage:
             readOptionalString((nextRawResult as { latestStage?: unknown })['latestStage']) ??
             readOptionalString((nextRawResult as { stage?: unknown })['stage']),
+          runtimeKey: currentAmazonRuntimeKey,
         });
         return await persistSynchronizedScan(scan, {
           engineRunId,
@@ -287,7 +289,7 @@ export async function synchronizeAmazonProductScan(
       const failureMessages = collectPlaywrightEngineRunFailureMessages(run);
       const failureMessage = normalizeErrorMessage(
         failureMessages[0],
-        'Amazon reverse image scan failed.'
+        `${resolveAmazonRuntimeOperationLabel(currentAmazonRuntimeKey)} failed.`
       );
 
       return await persistSynchronizedScan(scan, {
@@ -388,7 +390,7 @@ export async function synchronizeAmazonProductScan(
     if (parsedResult.status !== 'matched') {
       const failureMessage = normalizeErrorMessage(
         parsedResult.message || collectPlaywrightEngineRunFailureMessages(run)[0],
-        'Amazon reverse image scan failed.'
+        `${resolveAmazonRuntimeOperationLabel(currentAmazonRuntimeKey)} failed.`
       );
       return await persistSynchronizedScan(scan, {
         engineRunId,
@@ -999,7 +1001,9 @@ export async function synchronizeAmazonProductScan(
     });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Failed to synchronize Amazon reverse image scan.';
+      error instanceof Error
+        ? error.message
+        : `Failed to synchronize ${resolveAmazonRuntimeOperationLabel(resolveAmazonScanRuntimeKey(scan))}.`;
     return await persistFailedSynchronization(scan, message);
   }
 }

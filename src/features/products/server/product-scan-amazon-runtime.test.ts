@@ -292,7 +292,7 @@ describe('product-scan-amazon-runtime', () => {
       'Google Lens file upload entry did not become available.'
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_RUNTIME).toContain(
-      'Google reverse image search entry flow did not match the expected Google Images UI.'
+      'Google Lens entry flow did not match the expected Google Images UI.'
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_RUNTIME).toContain(
       "resultCode: 'lens_upload_entry_missing'"

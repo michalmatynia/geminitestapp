@@ -24,6 +24,7 @@ type PreviewStepLike = Omit<
 > & {
   label?: string | null;
   type?: PlaywrightStepType | string | null;
+  selectorNamespace?: string | null;
   selectorKey?: string | null;
   selectorProfile?: string | null;
 };
@@ -56,6 +57,7 @@ export const getPlaywrightStepInputBindings = (
     bindings['selector'] = step.selectorKey
       ? {
           mode: 'selectorRegistry',
+          selectorNamespace: step.selectorNamespace ?? null,
           selectorKey: step.selectorKey,
           selectorProfile: step.selectorProfile ?? null,
           fallbackSelector: step.selector ?? null,
@@ -184,6 +186,7 @@ const selectorResolution = (
   return {
     field,
     mode,
+    selectorNamespace: asString(binding?.selectorNamespace),
     selectorKey: asString(binding?.selectorKey),
     selectorProfile: asString(binding?.selectorProfile) ?? fallbackProfile ?? null,
     fallbackSelector: asString(binding?.fallbackSelector) ?? fallbackSelector,

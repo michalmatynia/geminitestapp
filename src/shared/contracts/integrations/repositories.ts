@@ -71,6 +71,8 @@ export type IntegrationConnectionUpdateInput = Omit<
   NullablePlaywrightConnectionOverrideKey
 > & {
   [K in NullablePlaywrightConnectionOverrideKey]?: IntegrationConnectionRecord[K] | null;
+} & {
+  resetPlaywrightOverrides?: boolean;
 };
 
 export type IntegrationRepository = {

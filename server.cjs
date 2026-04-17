@@ -106,6 +106,8 @@ const DUELS_LOBBY_WS_PATH = '/api/kangur/duels/lobby/ws';
 const DUELS_LOBBY_REDIS_CHANNEL = 'kangur:duels:lobby';
 const DUELS_LOBBY_WS_HEARTBEAT_MS = 15000;
 const DUELS_LOBBY_REDIS_CONNECT_TIMEOUT_MS = 3000;
+const PLAYWRIGHT_LIVE_SCRIPTER_WS_PATH = '/api/playwright/live-scripter/ws';
+const PLAYWRIGHT_LIVE_SCRIPTER_BRIDGE_KEY = '__geminitestappPlaywrightLiveScripterBridge';
 
 const next = require('next');
 const nextOptions = {
@@ -433,6 +435,7 @@ app.prepare().then(async () => {
   });
 
   const wss = new WebSocketServer({ noServer: true });
+  const liveScripterWss = new WebSocketServer({ noServer: true });
 
   const createLobbySubscriber = () => {
     const redisUrl = process.env.REDIS_URL;
@@ -531,8 +534,56 @@ app.prepare().then(async () => {
     });
   });
 
+  const parseLiveScripterSessionId = (req) => {
+    try {
+      const host =
+        req && req.headers && typeof req.headers.host === 'string' && req.headers.host.trim().length > 0
+          ? req.headers.host
+          : 'localhost';
+      const url = new URL(req && typeof req.url === 'string' ? req.url : '/', `http://${host}`);
+      const sessionId = url.searchParams.get('sessionId');
+      return typeof sessionId === 'string' && sessionId.trim().length > 0 ? sessionId.trim() : null;
+    } catch {
+      return null;
+    }
+  };
+
+  liveScripterWss.on('connection', (ws, req) => {
+    const sessionId = parseLiveScripterSessionId(req);
+    const bridge = globalThis[PLAYWRIGHT_LIVE_SCRIPTER_BRIDGE_KEY];
+    const attachClient =
+      bridge && typeof bridge.attachClient === 'function' ? bridge.attachClient.bind(bridge) : null;
+
+    if (!sessionId || !attachClient) {
+      ws.close(1011, 'Live scripter unavailable');
+      return;
+    }
+
+    Promise.resolve(attachClient(sessionId, ws))
+      .then((attached) => {
+        if (!attached) {
+          ws.close(1008, 'Live scripter session not found');
+        }
+      })
+      .catch((err) => {
+        void ErrorSystem.captureException(err, {
+          source: 'server',
+          context: { action: 'live-scripter-attach-failed', url: req?.url ?? null },
+        });
+        try {
+          ws.close(1011, 'Live scripter attach failed');
+        } catch (_error) {
+          // best-effort close
+        }
+      });
+  });
+
   server.on('upgrade', (req, socket, head) => {
-    const upgradeTarget = resolveWebSocketUpgradeTarget(req, DUELS_LOBBY_WS_PATH);
+    const upgradeTarget = resolveWebSocketUpgradeTarget(
+      req,
+      DUELS_LOBBY_WS_PATH,
+      PLAYWRIGHT_LIVE_SCRIPTER_WS_PATH
+    );
 
     if (upgradeTarget === 'reject') {
       socket.destroy();
@@ -548,6 +599,13 @@ app.prepare().then(async () => {
         if (!socket.destroyed) {
           socket.destroy();
         }
+      });
+      return;
+    }
+
+    if (upgradeTarget === 'playwright-live-scripter') {
+      liveScripterWss.handleUpgrade(req, socket, head, (client) => {
+        liveScripterWss.emit('connection', client, req);
       });
       return;
     }

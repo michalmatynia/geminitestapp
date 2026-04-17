@@ -246,7 +246,9 @@ const readMongoFrontPageSettingInternal = async (): Promise<FrontPageSelectableA
 async function resolveDevSnapshot(): Promise<FrontPageSelectableApp | null> {
   if (!isDevelopmentEnvironment()) return null;
   const devSnapshot = await readFrontPageDevSnapshot();
-  return (typeof devSnapshot === 'string' && devSnapshot !== '') ? commitFrontPageSettingSnapshot(devSnapshot, 'dev-snapshot') : null;
+  return devSnapshot !== null
+    ? commitFrontPageSettingSnapshot(devSnapshot, 'dev-snapshot')
+    : null;
 }
 
 const readMongoFrontPageSettingFull = async (): Promise<FrontPageSelectableApp | null> => {

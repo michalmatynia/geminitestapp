@@ -26,7 +26,7 @@ export const PRODUCT_SCAN_STEP_REGISTRY = {
 
   google_lens_open: {
     key: 'google_lens_open',
-    label: 'Open Google reverse image search',
+    label: 'Open Google Lens search',
     group: 'google_lens',
   },
   google_upload: {

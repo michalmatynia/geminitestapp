@@ -35,7 +35,7 @@ describe('products/scans/amazon/batch handler', () => {
           scanId: 'scan-1',
           runId: 'run-1',
           status: 'queued',
-          message: 'Amazon reverse image scan queued.',
+          message: 'Amazon candidate search queued.',
         },
       ],
     });
@@ -75,7 +75,7 @@ describe('products/scans/amazon/batch handler', () => {
           runId: 'run-1',
           status: 'queued',
           currentStatus: null,
-          message: 'Amazon reverse image scan queued.',
+          message: 'Amazon candidate search queued.',
         },
       ],
     });

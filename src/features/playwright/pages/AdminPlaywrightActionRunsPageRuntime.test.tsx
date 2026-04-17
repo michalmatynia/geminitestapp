@@ -339,7 +339,7 @@ describe('AdminPlaywrightActionRunsPageRuntime', () => {
     );
     expect(screen.getByRole('link', { name: 'Open selector registry' })).toHaveAttribute(
       'href',
-      '/admin/integrations/marketplaces/tradera/selectors'
+      '/admin/integrations/selectors?namespace=tradera'
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Open first failed step for Draft Action 1 from tree' }));
@@ -360,7 +360,7 @@ describe('AdminPlaywrightActionRunsPageRuntime', () => {
 
     expect(screen.getByRole('link', { name: 'Open selector registry' })).toHaveAttribute(
       'href',
-      '/admin/integrations/marketplaces/tradera/selectors'
+      '/admin/integrations/selectors?namespace=tradera'
     );
   });
 });

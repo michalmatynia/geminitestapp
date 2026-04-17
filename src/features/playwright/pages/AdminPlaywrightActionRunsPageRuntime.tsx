@@ -38,6 +38,10 @@ import {
   SUPPLIER_1688_PROBE_SCAN_SELECTOR_PROFILE,
 } from '@/shared/lib/browser-execution/supplier-1688-runtime-constants';
 import {
+  getSelectorRegistryAdminHref,
+  inferSelectorRegistryNamespace,
+} from '@/shared/lib/browser-execution/selector-registry-metadata';
+import {
   createMasterFolderTreeTransactionAdapter,
   FolderTreeViewportV2,
   useMasterFolderTreeShell,
@@ -63,20 +67,18 @@ import { cn } from '@/shared/utils/ui-utils';
 
 const HISTORY_TREE_INSTANCE = 'playwright_step_seq_action_runs';
 const HISTORY_TREE_SETTINGS_HREF = getFolderTreeInstanceSettingsHref(HISTORY_TREE_INSTANCE);
-const SELECTOR_REGISTRY_HREF = '/admin/integrations/marketplaces/tradera/selectors';
-const AMAZON_SELECTOR_REGISTRY_HREF = '/admin/integrations/amazon/selectors';
-const SUPPLIER_1688_SELECTOR_REGISTRY_HREF = '/admin/integrations/1688/selectors';
 const RUN_PAGE_SIZE = 100;
 
 const resolveSelectorRegistryHref = (input: {
   selectorKey?: string | null;
   selectorProfile?: string | null;
 }): string =>
-  input.selectorProfile === '1688' || input.selectorKey?.startsWith('supplier1688.')
-    ? SUPPLIER_1688_SELECTOR_REGISTRY_HREF
-    : input.selectorProfile === 'amazon' || input.selectorKey?.startsWith('amazon.')
-      ? AMAZON_SELECTOR_REGISTRY_HREF
-    : SELECTOR_REGISTRY_HREF;
+  getSelectorRegistryAdminHref(
+    inferSelectorRegistryNamespace({
+      selectorKey: input.selectorKey,
+      selectorProfile: input.selectorProfile,
+    })
+  );
 
 const STATUS_OPTIONS: Array<{ value: PlaywrightActionRunStatus | 'all'; label: string }> = [
   { value: 'all', label: 'All statuses' },

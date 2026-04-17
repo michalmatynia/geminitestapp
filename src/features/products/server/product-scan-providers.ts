@@ -73,7 +73,7 @@ export const PRODUCT_SCAN_PROVIDER_DEFINITIONS: Record<
   amazon: {
     provider: 'amazon',
     defaultScanType: 'google_reverse_image',
-    label: 'Amazon reverse image',
+    label: 'Amazon candidate search',
     resultKind: 'marketplace',
     supportsBatchQueue: true,
     runtime: {
@@ -117,7 +117,7 @@ export const requireProductScanScriptRuntime = (
   definition: ProductScanProviderDefinition
 ): ProductScanScriptProviderRuntime => {
   const runtime = definition.runtime;
-  if (runtime === null || runtime.executionMode !== 'script') {
+  if (runtime?.executionMode !== 'script') {
     throw createMissingProductScanRuntimeError(definition, 'script');
   }
   return runtime;
@@ -127,7 +127,7 @@ export const requireProductScanNativeRuntime = (
   definition: ProductScanProviderDefinition
 ): ProductScanNativeProviderRuntime => {
   const runtime = definition.runtime;
-  if (runtime === null || runtime.executionMode !== 'native') {
+  if (runtime?.executionMode !== 'native') {
     throw createMissingProductScanRuntimeError(definition, 'native');
   }
   return runtime;

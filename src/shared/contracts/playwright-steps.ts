@@ -77,6 +77,7 @@ export type PlaywrightStepInputBindingMode = z.infer<
 export const playwrightStepInputBindingSchema = z.object({
   mode: playwrightStepInputBindingModeSchema,
   value: z.unknown().optional(),
+  selectorNamespace: z.string().nullable().optional(),
   selectorKey: z.string().nullable().optional(),
   selectorProfile: z.string().nullable().optional(),
   fallbackSelector: z.string().nullable().optional(),
@@ -92,6 +93,7 @@ export type PlaywrightStepInputBinding = z.infer<
 export const playwrightStepSelectorResolutionSchema = z.object({
   field: z.string(),
   mode: playwrightStepInputBindingModeSchema,
+  selectorNamespace: z.string().nullable().optional(),
   selectorKey: z.string().nullable(),
   selectorProfile: z.string().nullable(),
   fallbackSelector: z.string().nullable(),
@@ -123,6 +125,7 @@ export const playwrightStepCodePreviewStepSchema = z.object({
   label: z.string().nullable().optional(),
   type: playwrightStepTypeSchema.or(z.string()).nullable().optional(),
   selector: z.string().nullable().optional(),
+  selectorNamespace: z.string().nullable().optional(),
   selectorKey: z.string().nullable().optional(),
   selectorProfile: z.string().nullable().optional(),
   value: z.string().nullable().optional(),

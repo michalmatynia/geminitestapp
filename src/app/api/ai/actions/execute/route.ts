@@ -1,9 +1,8 @@
-
 import { apiHandler } from '@/shared/lib/api/api-handler';
 
-import { POST_handler } from './handler';
+import { postExecuteHandler } from './handler';
 
-export const POST = apiHandler(POST_handler, {
+export const POST = apiHandler(postExecuteHandler, {
   source: 'ai.actions.execute.POST',
   rateLimitKey: 'write',
   requireAuth: true,

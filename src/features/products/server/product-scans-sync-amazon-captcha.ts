@@ -183,8 +183,8 @@ export async function synchronizeAmazonCaptchaRequired({
       ownerUserId: claimedScan.updatedBy?.trim() || null,
       instance: createCustomPlaywrightInstance({
         family: 'scrape',
-        label: 'Amazon reverse image ASIN scan',
-        tags: ['product', 'amazon', 'scan', 'google-reverse-image', 'manual-verification'],
+        label: 'Amazon candidate search manual verification',
+        tags: ['product', 'amazon', 'scan', 'google-lens-candidate-search', 'manual-verification'],
       }),
     });
 

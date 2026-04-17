@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { DatabaseIcon, ListTree } from 'lucide-react';
+import { DatabaseIcon, ListTree, WandSparkles } from 'lucide-react';
 
 import { AdminPlaywrightBreadcrumbs } from '@/shared/ui/admin.public';
 import { AppErrorBoundary } from '@/shared/ui/AppErrorBoundary';
@@ -71,15 +71,15 @@ export function AdminPlaywrightStepSequencerPageView(): React.JSX.Element {
                 </Link>
               </Button>
               <Button asChild type='button' size='sm' variant='outline'>
-                <Link href='/admin/integrations/marketplaces/tradera/selectors'>
-                  <DatabaseIcon className='mr-2 size-4' />
-                  Tradera Selectors
+                <Link href='/admin/playwright/step-sequencer/scripter'>
+                  <WandSparkles className='mr-2 size-4' />
+                  Live Scripter
                 </Link>
               </Button>
               <Button asChild type='button' size='sm' variant='outline'>
-                <Link href='/admin/integrations/1688/selectors'>
+                <Link href='/admin/integrations/selectors'>
                   <DatabaseIcon className='mr-2 size-4' />
-                  1688 Selectors
+                  Selector Registry
                 </Link>
               </Button>
             </div>

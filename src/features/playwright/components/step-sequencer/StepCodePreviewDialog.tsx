@@ -3,7 +3,7 @@
 import { Copy, ExternalLink } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
-import { useTraderaSelectorRegistry } from '@/features/integrations/hooks/useTraderaSelectorRegistry';
+import { useSelectorRegistry } from '@/features/integrations/hooks/useSelectorRegistry';
 import { fetchPlaywrightStepSnippet } from '@/features/playwright/hooks/usePlaywrightCodeSnippets';
 import {
   PLAYWRIGHT_STEP_TYPE_LABELS,
@@ -11,6 +11,11 @@ import {
   type PlaywrightStepSnippetResponse,
   type PlaywrightStepInputBinding,
 } from '@/shared/contracts/playwright-steps';
+import {
+  formatSelectorRegistryNamespaceLabel,
+  getSelectorRegistryAdminHref,
+  inferSelectorRegistryNamespace,
+} from '@/shared/lib/browser-execution/selector-registry-metadata';
 import {
   createPlaywrightStepCodeSnapshot,
   getPlaywrightStepInputBindings,
@@ -24,8 +29,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/shared/ui/primitives.public';
-
-const SELECTOR_REGISTRY_HREF = '/admin/integrations/marketplaces/tradera/selectors';
 
 function CopySnippetButton({ value }: { value: string }): React.JSX.Element {
   const [copied, setCopied] = useState(false);
@@ -108,12 +111,26 @@ export function StepCodePreviewDialog({
   const [serverPreviewError, setServerPreviewError] = useState<string | null>(null);
   const [isServerPreviewLoading, setIsServerPreviewLoading] = useState(false);
   const bindings = useMemo(() => (step ? getPlaywrightStepInputBindings(step) : {}), [step]);
-  const registryQuery = useTraderaSelectorRegistry();
   const localSnapshot = useMemo(
     () => (step ? createPlaywrightStepCodeSnapshot({ ...step, inputBindings: bindings }) : null),
     [bindings, step]
   );
   const snapshot = serverPreview?.snapshot ?? localSnapshot;
+  const firstConnectedSelectorBinding =
+    snapshot?.selectorBindings.find((binding) => binding.connected) ?? null;
+  const firstConnectedSelectorNamespace =
+    firstConnectedSelectorBinding !== null
+      ? inferSelectorRegistryNamespace({
+          namespace: firstConnectedSelectorBinding.selectorNamespace ?? null,
+          selectorKey: firstConnectedSelectorBinding.selectorKey,
+          selectorProfile: firstConnectedSelectorBinding.selectorProfile,
+        })
+      : null;
+  const registryQuery = useSelectorRegistry({
+    namespace: firstConnectedSelectorNamespace,
+    profile: firstConnectedSelectorBinding?.selectorProfile ?? null,
+    effective: true,
+  });
   const displayBindings = serverPreview?.inputBindings ?? bindings;
   const bindingEntries = Object.entries(displayBindings);
 
@@ -152,14 +169,23 @@ export function StepCodePreviewDialog({
     return snapshot.selectorBindings
       .filter((binding) => binding.mode === 'selectorRegistry')
       .map((binding) => {
+        const bindingNamespace = inferSelectorRegistryNamespace({
+          namespace: binding.selectorNamespace ?? null,
+          selectorKey: binding.selectorKey,
+          selectorProfile: binding.selectorProfile,
+        });
         const exact = entries.find(
           (entry) =>
-            entry.kind === 'selectors' &&
+            (entry.kind === 'selectors' || entry.kind === 'selector') &&
+            entry.namespace === bindingNamespace &&
             entry.key === binding.selectorKey &&
             entry.profile === binding.selectorProfile
         );
         const fallback = entries.find(
-          (entry) => entry.kind === 'selectors' && entry.key === binding.selectorKey
+          (entry) =>
+            (entry.kind === 'selectors' || entry.kind === 'selector') &&
+            entry.namespace === bindingNamespace &&
+            entry.key === binding.selectorKey
         );
         return {
           binding,
@@ -204,7 +230,7 @@ export function StepCodePreviewDialog({
                 </Badge>
               )}
               <a
-                href={SELECTOR_REGISTRY_HREF}
+                href={getSelectorRegistryAdminHref(firstConnectedSelectorNamespace)}
                 className='inline-flex h-7 items-center gap-1.5 rounded-md border border-input bg-background px-2 text-[11px] font-medium text-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground'
               >
                 <ExternalLink className='size-3' />
@@ -285,6 +311,15 @@ export function StepCodePreviewDialog({
                         {binding.selectorProfile ? (
                           <Badge variant='neutral'>{binding.selectorProfile}</Badge>
                         ) : null}
+                        <Badge variant='neutral'>
+                          {formatSelectorRegistryNamespaceLabel(
+                            inferSelectorRegistryNamespace({
+                              namespace: binding.selectorNamespace ?? null,
+                              selectorKey: binding.selectorKey,
+                              selectorProfile: binding.selectorProfile,
+                            })
+                          )}
+                        </Badge>
                       </div>
                       {entry ? (
                         <div className='mt-2 space-y-1 text-muted-foreground'>

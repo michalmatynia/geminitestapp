@@ -10,6 +10,12 @@ export const AMAZON_CANDIDATE_EXTRACTION_RUNTIME_NAME =
   'Amazon Candidate Extraction Runtime' as const;
 export const AMAZON_REVERSE_IMAGE_SCAN_LEGACY_RUNTIME_NAME =
   'Amazon Reverse Image Scan Runtime (Legacy Full Flow)' as const;
+export const AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_OPERATION_LABEL =
+  'Amazon candidate search' as const;
+export const AMAZON_CANDIDATE_EXTRACTION_OPERATION_LABEL =
+  'Amazon candidate extraction' as const;
+export const AMAZON_REVERSE_IMAGE_SCAN_LEGACY_OPERATION_LABEL =
+  'Amazon reverse image scan' as const;
 
 export const AMAZON_REVERSE_IMAGE_SCAN_SELECTOR_PROFILE = 'amazon' as const;
 
@@ -68,4 +74,18 @@ export const resolveAmazonRuntimeActionName = (
   }
 
   return AMAZON_REVERSE_IMAGE_SCAN_LEGACY_RUNTIME_NAME;
+};
+
+export const resolveAmazonRuntimeOperationLabel = (
+  runtimeKey: string | null | undefined
+): string => {
+  if (runtimeKey === AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY) {
+    return AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_OPERATION_LABEL;
+  }
+
+  if (runtimeKey === AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY) {
+    return AMAZON_CANDIDATE_EXTRACTION_OPERATION_LABEL;
+  }
+
+  return AMAZON_REVERSE_IMAGE_SCAN_LEGACY_OPERATION_LABEL;
 };

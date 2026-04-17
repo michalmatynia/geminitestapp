@@ -42,23 +42,22 @@ const resolveSlugLocale = (locale?: string | null): string | undefined =>
   typeof locale === 'string' ? normalizeSiteLocale(locale) : undefined;
 
 const localizeSlugPath = (pathname: string, locale?: string): string =>
-  locale ? buildLocalizedPathname(pathname, locale) : pathname;
+  (typeof locale === 'string' && locale !== '') ? buildLocalizedPathname(pathname, locale) : pathname;
 
 export const generateCmsSlugRouteMetadata = async ({
   locale,
   slug,
 }: CmsSlugMetadataOptions): Promise<Metadata> => {
   const resolvedLocale = resolveSlugLocale(locale);
-  const routeTranslations = resolvedLocale
+  const hasLocale = typeof resolvedLocale === 'string' && resolvedLocale !== '';
+  const routeTranslations = hasLocale
     ? await getTranslations({ locale: resolvedLocale, namespace: 'Routes' })
     : await getTranslations('Routes');
 
   if (await isKangurFrontPageSelected()) {
+    const isLogin = slug[0]?.trim().toLowerCase() === 'login';
     return {
-      title:
-        slug[0]?.trim().toLowerCase() === 'login'
-          ? routeTranslations('loginTitle')
-          : routeTranslations('siteTitle'),
+      title: isLogin ? routeTranslations('loginTitle') : routeTranslations('siteTitle'),
     };
   }
 
@@ -71,7 +70,7 @@ export const generateCmsSlugRouteMetadata = async ({
       locale: resolvedLocale,
       domainId: domain.id,
     }));
-  if (!page) {
+  if (page === null) {
     return { title: routeTranslations('pageNotFoundTitle') };
   }
 
@@ -107,7 +106,7 @@ export const renderCmsSlugRoute = async ({
       locale: resolvedLocale,
       domainId: domain.id,
     }));
-  if (!page) {
+  if (page === null) {
     notFound();
   }
 

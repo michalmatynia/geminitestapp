@@ -20,14 +20,14 @@ const resolveAliasLocale = (locale?: string | null): string | undefined =>
   typeof locale === 'string' ? normalizeSiteLocale(locale) : undefined;
 
 const localizeAliasPath = (pathname: string, locale?: string): string =>
-  locale ? buildLocalizedPathname(pathname, locale) : pathname;
+  (typeof locale === 'string' && locale !== '') ? buildLocalizedPathname(pathname, locale) : pathname;
 
 export const renderKangurLoginAliasRoute = async ({
   locale,
   searchParams,
 }: RenderKangurLoginAliasRouteOptions = {}): Promise<JSX.Element> => {
   const resolvedLocale = resolveAliasLocale(locale);
-  const translations = resolvedLocale
+  const translations = (typeof resolvedLocale === 'string' && resolvedLocale !== '')
     ? await getTranslations({ locale: resolvedLocale, namespace: 'KangurPublic' })
     : await getTranslations('KangurPublic');
   const frontPageSelection = await resolveFrontPageSelection();

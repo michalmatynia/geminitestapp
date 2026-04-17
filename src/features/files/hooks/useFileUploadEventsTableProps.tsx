@@ -20,9 +20,10 @@ export function useFileUploadEventsTableProps() {
         cell: ({ getValue }) => {
           const value = getValue() as string | Date;
           const date = value instanceof Date ? value : new Date(value);
+          const timeStr = Number.isNaN(date.getTime()) === false ? date.toLocaleString() : '—';
           return (
             <span className='text-xs text-gray-400'>
-              {Number.isNaN(date.getTime()) ? '—' : date.toLocaleString()}
+              {timeStr}
             </span>
           );
         },
@@ -59,7 +60,7 @@ export function useFileUploadEventsTableProps() {
         header: 'Size',
         cell: ({ getValue }) => {
           const size = getValue() as number;
-          return <span className='text-xs'>{size ? `${Math.round(size / 1024)} KB` : '—'}</span>;
+          return <span className='text-xs'>{size !== 0 ? `${Math.round(size / 1024)} KB` : '—'}</span>;
         },
       },
       {

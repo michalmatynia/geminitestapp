@@ -901,7 +901,7 @@ export const buildAmazonReverseImageScanRuntimePart1 = (
 
     return {
       resultCode: 'lens_ui_variant_unknown',
-      message: 'Google reverse image search entry flow did not match the expected Google Images UI.',
+      message: 'Google Lens entry flow did not match the expected Google Images UI.',
     };
   };
 
@@ -1788,8 +1788,8 @@ export const buildAmazonReverseImageScanRuntimePart1 = (
         encodeURIComponent(imageUrl) +
         '&hl=en',
       openingMessage:
-        'Opening Google reverse image search for image ' + (candidateId || 'candidate') + '.',
-      openedMessage: 'Google reverse image search opened.',
+        'Opening Google Lens search for image ' + (candidateId || 'candidate') + '.',
+      openedMessage: 'Google Lens search opened.',
       fallbackContext,
       details: [
         { label: 'Source', value: 'Image URL' },
@@ -1806,7 +1806,7 @@ export const buildAmazonReverseImageScanRuntimePart1 = (
       status: 'running',
       retryOf: toText(fallbackContext?.retryOf),
       resultCode: 'url_submit_start',
-      message: 'Submitting image URL for Google reverse image search.',
+      message: 'Submitting image URL for Google Lens search.',
       url: page.url(),
       warning: toText(fallbackContext?.warning),
       details: sharedDetails,

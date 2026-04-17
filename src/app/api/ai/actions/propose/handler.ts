@@ -12,18 +12,20 @@ import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+async function parseRequestBody(req: NextRequest): Promise<unknown> {
   const rawBody = await req.text();
-  let body: unknown = {};
-
-  if (rawBody) {
-    try {
-      body = JSON.parse(rawBody);
-    } catch (error) {
-      void ErrorSystem.captureException(error);
-      throw badRequestError('Invalid JSON body.');
-    }
+  if (rawBody === '') return {};
+  
+  try {
+    return JSON.parse(rawBody);
+  } catch (error) {
+    await ErrorSystem.captureException(error);
+    throw badRequestError('Invalid JSON body.');
   }
+}
+
+export async function postProposeHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  const body = await parseRequestBody(req);
 
   const parsed = proposeActionRequestSchema.safeParse(body);
   if (!parsed.success) {
@@ -62,7 +64,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     },
   });
 
-  void logSystemEvent({
+  await logSystemEvent({
     level: 'info',
     message: '[ai-context-registry] actions.propose',
     source: 'ai.actions.propose',
@@ -73,7 +75,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
       truncated: resolution.truncated,
       approvalsNeeded,
     },
-  }).catch(() => {});
+  });
 
   return NextResponse.json({
     proposalId: proposal.id,

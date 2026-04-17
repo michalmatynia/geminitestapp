@@ -1,9 +1,8 @@
-
 import { apiHandler } from '@/shared/lib/api/api-handler';
 
-import { POST_handler } from './handler';
+import { postSearchHandler } from './handler';
 
-export const POST = apiHandler(POST_handler, {
+export const POST = apiHandler(postSearchHandler, {
   source: 'ai.context.search.POST',
   requireAuth: true,
 });

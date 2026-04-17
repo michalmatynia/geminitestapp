@@ -89,6 +89,7 @@ const toFilemakerAccountStatusToggleDraft = (
   id: account.id,
   name: account.name,
   emailAddress: account.emailAddress,
+  provider: account.provider,
   status: nextStatus,
   imapHost: account.imapHost,
   imapPort: account.imapPort,

@@ -1,4 +1,4 @@
-import { ObjectId, type Document, type AnyBulkWriteOperation, type UpdateFilter } from 'mongodb';
+import { ObjectId, type Document, type AnyBulkWriteOperation, type UpdateFilter, type Db } from 'mongodb';
 
 import { defaultCurrencies } from '@/features/internationalization/server';
 import type { CurrencyRecord } from '@/shared/contracts/internationalization';
@@ -39,8 +39,48 @@ const toCurrencyDomain = (doc: CurrencyDoc): CurrencyRecord => ({
   isDefault: doc.isDefault ?? false,
   isActive: doc.enabled ?? true,
   createdAt: doc.createdAt.toISOString(),
-  updatedAt: doc.updatedAt ? doc.updatedAt.toISOString() : undefined,
+  updatedAt: doc.updatedAt.toISOString(),
 });
+
+const updateRelatedToCurrencyCode = async (
+  db: Db,
+  id: string,
+  nextCode: string,
+  now: Date
+): Promise<void> => {
+  await db
+    .collection(PRICE_GROUPS_COLLECTION)
+    .updateMany({ currencyId: id }, { $set: { currencyId: nextCode } });
+  
+  const countriesCollection = db.collection<CountryCurrencyDoc>(COUNTRIES_COLLECTION);
+  const countries = await countriesCollection
+    .find({ currencyIds: id }, { projection: { _id: 1, currencyIds: 1 } })
+    .toArray();
+  
+  const operations: AnyBulkWriteOperation<CountryCurrencyDoc>[] = countries.map((country) => {
+    const existingCurrencyIds = Array.isArray(country.currencyIds)
+      ? country.currencyIds.filter(
+        (currencyId): currencyId is string =>
+          typeof currencyId === 'string' && currencyId !== id
+      )
+      : [];
+    return {
+      updateOne: {
+        filter: { _id: country._id },
+        update: {
+          $set: {
+            currencyIds: Array.from(new Set([...existingCurrencyIds, nextCode])),
+            updatedAt: now,
+          },
+        } satisfies UpdateFilter<CountryCurrencyDoc>,
+      },
+    };
+  });
+  
+  if (operations.length > 0) {
+    await countriesCollection.bulkWrite(operations, { ordered: false });
+  }
+};
 
 export const mongoCurrencyRepository: CurrencyRepository = {
   async listCurrencies(filters?: { skip?: number; limit?: number }): Promise<CurrencyRecord[]> {
@@ -57,13 +97,13 @@ export const mongoCurrencyRepository: CurrencyRepository = {
   async getCurrencyByCode(code: string): Promise<CurrencyRecord | null> {
     const db = await getMongoDb();
     const doc = await db.collection<CurrencyDoc>(COLLECTION).findOne({ code });
-    return doc ? toCurrencyDomain(doc) : null;
+    return doc !== null ? toCurrencyDomain(doc) : null;
   },
 
   async getCurrencyById(id: string): Promise<CurrencyRecord | null> {
     const db = await getMongoDb();
     const doc = await db.collection<CurrencyDoc>(COLLECTION).findOne({ id });
-    return doc ? toCurrencyDomain(doc) : null;
+    return doc !== null ? toCurrencyDomain(doc) : null;
   },
 
   async createCurrency(data: {
@@ -74,7 +114,7 @@ export const mongoCurrencyRepository: CurrencyRepository = {
     const db = await getMongoDb();
     const now = new Date();
     const doc: CurrencyDoc = {
-      _id: new ObjectId(), // MongoDB generates _id, but for strict typing, we can add it here.
+      _id: new ObjectId(),
       id: data.code,
       code: data.code,
       name: data.name,
@@ -95,55 +135,25 @@ export const mongoCurrencyRepository: CurrencyRepository = {
     const db = await getMongoDb();
     const collection = db.collection<CurrencyDoc>(COLLECTION);
     const existing = await collection.findOne({ id });
-    if (!existing) throw notFoundError('Currency not found', { id });
+    if (existing === null) throw notFoundError('Currency not found', { id });
 
     const now = new Date();
-
-    if (data.code && data.code !== id) {
-      const nextCode = data.code;
-      // Update related collections
-      await db
-        .collection(PRICE_GROUPS_COLLECTION)
-        .updateMany({ currencyId: id }, { $set: { currencyId: nextCode } });
-      const countriesCollection = db.collection<CountryCurrencyDoc>(COUNTRIES_COLLECTION);
-      const countries = await countriesCollection
-        .find({ currencyIds: id }, { projection: { _id: 1, currencyIds: 1 } })
-        .toArray();
-      const operations: AnyBulkWriteOperation<CountryCurrencyDoc>[] = countries.map((country) => {
-        const existingCurrencyIds = Array.isArray(country.currencyIds)
-          ? country.currencyIds.filter(
-            (currencyId): currencyId is string =>
-              typeof currencyId === 'string' && currencyId !== id
-          )
-          : [];
-        return {
-          updateOne: {
-            filter: { _id: country._id },
-            update: {
-              $set: {
-                currencyIds: Array.from(new Set([...existingCurrencyIds, nextCode])),
-                updatedAt: now,
-              },
-            } satisfies UpdateFilter<CountryCurrencyDoc>,
-          },
-        };
-      });
-      if (operations.length > 0) {
-        await countriesCollection.bulkWrite(operations, { ordered: false });
-      }
+    if (data.code !== undefined && data.code !== id) {
+      await updateRelatedToCurrencyCode(db, id, data.code, now);
     }
 
-    const set: Partial<CurrencyDoc> = { updatedAt: now };
-    if (data.code !== undefined) {
-      set.id = data.code;
-      set.code = data.code;
-    }
-    if (data.name !== undefined) set.name = data.name;
-    if (data.symbol !== undefined) set.symbol = data.symbol;
+    const nextId = data.code ?? id;
+    await collection.updateOne({ id }, {
+      $set: {
+        ...(data.code !== undefined && { id: data.code, code: data.code }),
+        ...(data.name !== undefined && { name: data.name }),
+        ...(data.symbol !== undefined && { symbol: data.symbol }),
+        updatedAt: now,
+      },
+    });
 
-    await collection.updateOne({ id }, { $set: set });
-    const updated = await collection.findOne({ id: data.code ?? id });
-    if (!updated) throw internalError('Failed to update currency', { id: data.code ?? id });
+    const updated = await collection.findOne({ id: nextId });
+    if (updated === null) throw internalError('Failed to update currency', { id: nextId });
     return toCurrencyDomain(updated);
   },
 
@@ -169,7 +179,7 @@ export const mongoCurrencyRepository: CurrencyRepository = {
         filter: { id: currency.code },
         update: {
           $setOnInsert: {
-            _id: new ObjectId(), // Generate _id for new documents
+            _id: new ObjectId(),
             id: currency.code,
             code: currency.code,
             name: currency.name,

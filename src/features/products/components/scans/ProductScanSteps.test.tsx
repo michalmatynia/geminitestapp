@@ -26,7 +26,7 @@ describe('ProductScanSteps', () => {
             retryOf: null,
             resultCode: 'prepared',
             status: 'completed',
-            message: 'Prepared 3 image candidates for Amazon reverse image scan.',
+            message: 'Prepared 3 image candidates for Amazon candidate search.',
             warning: null,
             details: [{ label: 'Image candidates', value: '3' }],
             url: null,

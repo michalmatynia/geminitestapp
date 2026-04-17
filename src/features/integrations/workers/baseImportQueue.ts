@@ -88,7 +88,7 @@ const startInlineBaseImportRunInBackground = (
   queueJobId: string,
   reason: 'redis_unavailable' | 'enqueue_failed'
 ): void => {
-  void processBaseImportRun(data.runId, {
+  processBaseImportRun(data.runId, {
     jobId: queueJobId,
     ...(Array.isArray(data.statuses) ? { allowedStatuses: data.statuses } : {}),
   })
@@ -138,12 +138,12 @@ export const dispatchBaseImportRunJob = async (
     const queueJobId = await enqueueBaseImportRunJob(data);
     return { dispatchMode: 'queued', queueJobId };
   } catch (error: unknown) {
-    void ErrorSystem.captureException(error, {
+    ErrorSystem.captureException(error, {
       service: 'base-import-queue',
       runId: data.runId,
       reason: data.reason,
       action: 'enqueue-failed',
-    });
+    }).catch(() => {});
     const queueJobId = `inline-${Date.now()}`;
     await ErrorSystem.logInfo('Base import enqueue failed, running inline in background', {
       service: 'base-import-queue',

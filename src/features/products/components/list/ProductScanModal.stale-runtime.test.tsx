@@ -6,6 +6,7 @@ import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY } from '@/shared/lib/browser-execution/amazon-runtime-constants';
 
 const mocks = vi.hoisted(() => ({
   apiPost: vi.fn(),
@@ -143,7 +144,7 @@ describe('ProductScanModal stale runtime diagnostics', () => {
           scanId: 'scan-stalled-1',
           runId: 'run-stalled-1',
           status: 'queued',
-          message: 'Amazon reverse image scan queued.',
+          message: 'Amazon candidate search queued.',
         },
       ],
     });
@@ -205,14 +206,15 @@ describe('ProductScanModal stale runtime diagnostics', () => {
             rawResult: {
               runId: 'run-stalled-1',
               runStatus: 'running',
+              runtimeKey: AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY,
               latestStage: 'google_upload',
               latestStageUrl: 'https://images.google.com/?hl=en',
               logTail: ['google lens upload pending'],
               stalledReason: 'no_progress',
             },
-            error: 'Amazon reverse image scan stalled at Google Upload.',
+            error: 'Amazon candidate search stalled at Google Upload.',
             asinUpdateStatus: 'failed',
-            asinUpdateMessage: 'Amazon reverse image scan stalled at Google Upload.',
+            asinUpdateMessage: 'Amazon candidate search stalled at Google Upload.',
             createdBy: null,
             updatedBy: null,
             completedAt: '2026-04-11T04:03:00.000Z',
@@ -250,7 +252,7 @@ describe('ProductScanModal stale runtime diagnostics', () => {
     });
 
     expect(
-      await screen.findByText('Amazon reverse image scan stalled at Google Upload.')
+      await screen.findByText('Amazon candidate search stalled at Google Upload.')
     ).toBeInTheDocument();
     expect(screen.getByText('Google Lens')).toBeInTheDocument();
     expect(screen.getByText('Google Upload')).toBeInTheDocument();

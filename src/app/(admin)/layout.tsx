@@ -35,7 +35,6 @@ async function resolveSession(requestHeaders: Headers | null): Promise<Awaited<R
       action: 'loadAdminLayout',
     });
     redirect('/auth/signin');
-    return null;
   }
 }
 
@@ -69,16 +68,15 @@ export async function AdminLayoutResolver({ children }: { children: React.ReactN
   ]);
 
   const session = await resolveSession(requestHeaders);
-
-  const userId = session?.user?.id;
-  if (typeof userId !== 'string' || userId === '') {
+  const sessionUser = session?.user;
+  if (sessionUser === undefined || typeof sessionUser.id !== 'string' || sessionUser.id === '') {
     redirect('/auth/signin');
   }
 
   const { initialMenuCollapsed, hasInitialMenuPreference } = await resolveMenuState(cookieStore);
 
-  const isElevated = session.user.isElevated === true;
-  const hasSettingsPermission = session.user.permissions?.includes('settings.manage') === true;
+  const isElevated = sessionUser.isElevated === true;
+  const hasSettingsPermission = sessionUser.permissions?.includes('settings.manage') === true;
   const canReadAdminSettings = isElevated || hasSettingsPermission;
 
   const shouldEnableAdminSettingsStore = canReadAdminSettings || isPlaywrightRuntime;

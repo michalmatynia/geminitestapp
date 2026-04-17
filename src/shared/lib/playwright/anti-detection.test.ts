@@ -126,9 +126,9 @@ describe('resolveChromiumAntiDetectionRuntimeBehavior', () => {
       })
     ).toEqual({
       prewarmUrl: 'https://www.google.com/',
-      prewarmWaitMs: 120,
-      postStartUrlWaitMs: 80,
-      launchCooldownMs: 350,
+      prewarmWaitMs: 1400,
+      postStartUrlWaitMs: 900,
+      launchCooldownMs: 2200,
     });
   });
 
@@ -140,9 +140,9 @@ describe('resolveChromiumAntiDetectionRuntimeBehavior', () => {
       })
     ).toEqual({
       prewarmUrl: null,
-      prewarmWaitMs: 0,
-      postStartUrlWaitMs: 0,
-      launchCooldownMs: 0,
+      prewarmWaitMs: 600,
+      postStartUrlWaitMs: 450,
+      launchCooldownMs: 1200,
     });
     expect(
       resolveChromiumAntiDetectionRuntimeBehavior({
@@ -151,9 +151,9 @@ describe('resolveChromiumAntiDetectionRuntimeBehavior', () => {
       })
     ).toEqual({
       prewarmUrl: null,
-      prewarmWaitMs: 90,
-      postStartUrlWaitMs: 60,
-      launchCooldownMs: 250,
+      prewarmWaitMs: 1100,
+      postStartUrlWaitMs: 750,
+      launchCooldownMs: 1800,
     });
   });
 });

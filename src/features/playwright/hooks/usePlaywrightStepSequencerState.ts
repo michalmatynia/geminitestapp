@@ -175,6 +175,8 @@ export function usePlaywrightStepSequencerState(options?: {
   const [actionDraftDescription, setActionDraftDescription] = useState<string | null>(null);
   const [editingActionId, setEditingActionId] = useState<string | null>(null);
   const appliedInitialActionIdRef = useRef<string | null>(null);
+  const [draftStepSetName, setDraftStepSetName] = useState('');
+  const [draftStepSetSteps, setDraftStepSetSteps] = useState<PlaywrightStep[]>([]);
 
   // ---------------------------------------------------------------------------
   // Derived / filtered data
@@ -770,6 +772,104 @@ export function usePlaywrightStepSequencerState(options?: {
     setEditingActionId(null);
   }, []);
 
+  const clearDraftStepSet = useCallback((): void => {
+    setDraftStepSetName('');
+    setDraftStepSetSteps([]);
+  }, []);
+
+  const appendDraftStep = useCallback(
+    (draft: Omit<PlaywrightStep, 'id' | 'createdAt' | 'updatedAt'>): void => {
+      const timestamp = now();
+      setDraftStepSetSteps((prev) => [
+        ...prev,
+        {
+          ...draft,
+          id: createId(),
+          createdAt: timestamp,
+          updatedAt: timestamp,
+        },
+      ]);
+    },
+    []
+  );
+
+  const removeDraftStep = useCallback((index: number): void => {
+    setDraftStepSetSteps((prev) => prev.filter((_, stepIndex) => stepIndex !== index));
+  }, []);
+
+  const moveDraftStep = useCallback((from: number, to: number): void => {
+    setDraftStepSetSteps((prev) => {
+      const next = [...prev];
+      const [moved] = next.splice(from, 1);
+      if (moved === undefined) {
+        return prev;
+      }
+      next.splice(to, 0, moved);
+      return next;
+    });
+  }, []);
+
+  const commitDraftStepSet = useCallback(async (): Promise<void> => {
+    const name = draftStepSetName.trim();
+    if (name.length === 0) {
+      toast('Draft step set name is required.', { variant: 'error' });
+      return;
+    }
+    if (draftStepSetSteps.length === 0) {
+      toast('Add at least one draft step before saving the step set.', { variant: 'error' });
+      return;
+    }
+
+    try {
+      const timestamp = now();
+      const nextSteps = [
+        ...stepsRef.current,
+        ...draftStepSetSteps.map((step, index) => ({
+          ...step,
+          sortOrder: stepsRef.current.length + index,
+          updatedAt: timestamp,
+        })),
+      ];
+      await saveSteps({ steps: nextSteps });
+      await saveStepSets({
+        stepSets: [
+          ...stepSetsRef.current,
+          {
+            id: createId(),
+            name,
+            description: null,
+            stepIds: draftStepSetSteps.map((step) => step.id),
+            websiteId: filterWebsiteId,
+            flowId: filterFlowId,
+            shared: filterWebsiteId === null,
+            tags: [],
+            createdAt: timestamp,
+            updatedAt: timestamp,
+          },
+        ],
+      });
+      clearDraftStepSet();
+      toast('Draft step set saved.', { variant: 'success' });
+    } catch (error) {
+      logClientCatch(error, {
+        source: 'usePlaywrightStepSequencerState',
+        action: 'commitDraftStepSet',
+      });
+      toast(extractMutationErrorMessage(error, 'Failed to save draft step set.'), {
+        variant: 'error',
+      });
+    }
+  }, [
+    clearDraftStepSet,
+    draftStepSetName,
+    draftStepSetSteps,
+    filterFlowId,
+    filterWebsiteId,
+    saveStepSets,
+    saveSteps,
+    toast,
+  ]);
+
   const handleResetRuntimeActionToSeed = useCallback(
     async (id: string): Promise<void> => {
       const repairResult = repairPlaywrightRuntimeAction({
@@ -1200,6 +1300,16 @@ export function usePlaywrightStepSequencerState(options?: {
     setActionDraftDescription,
     handleSaveAction,
     handleUpdateAction,
+
+    // Live-scripter draft step set
+    draftStepSetName,
+    draftStepSetSteps,
+    setDraftStepSetName,
+    appendDraftStep,
+    removeDraftStep,
+    moveDraftStep,
+    clearDraftStepSet,
+    commitDraftStepSet,
 
     // Step CRUD
     handleCreateStep,

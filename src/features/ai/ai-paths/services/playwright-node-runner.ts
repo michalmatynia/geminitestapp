@@ -1135,8 +1135,27 @@ const executePlaywrightNodeRun = async (
           );
         }
       }
-      logs.push(`[runtime] Navigating to start URL: ${request.startUrl}`);
-      await page.goto(request.startUrl, {
+      const trimmedStartUrl = request.startUrl.trim();
+      const perCharTypingDelay = pickDelayInRange(
+        effectiveSettings.inputDelayMin,
+        effectiveSettings.inputDelayMax
+      );
+      const typingDurationMs = trimmedStartUrl.length * perCharTypingDelay;
+      const preEnterReviewMs = pickDelayInRange(
+        effectiveSettings.actionDelayMin,
+        effectiveSettings.actionDelayMax
+      );
+      logs.push(
+        `[runtime] Simulating address bar typing for ${trimmedStartUrl.length} chars @ ~${perCharTypingDelay}ms/char (${typingDurationMs}ms) + ${preEnterReviewMs}ms pre-Enter pause.`
+      );
+      if (typingDurationMs > 0) {
+        await sleep(typingDurationMs);
+      }
+      if (preEnterReviewMs > 0) {
+        await sleep(preEnterReviewMs);
+      }
+      logs.push(`[runtime] Navigating to start URL: ${trimmedStartUrl}`);
+      await page.goto(trimmedStartUrl, {
         waitUntil: 'load',
         timeout: effectiveSettings.navigationTimeout,
       });

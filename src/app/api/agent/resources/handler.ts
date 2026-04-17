@@ -20,14 +20,14 @@ export const querySchema = z.object({
   resourceType: optionalTrimmedQueryString(),
 });
 
-export const GET_handler = async (_request: Request, ctx: ApiHandlerContext) => {
+export const getResourcesHandler = (_request: Request, ctx: ApiHandlerContext): NextResponse => {
   const query = (ctx.query ?? {}) as z.infer<typeof querySchema>;
   const resourceId = query.resourceId;
 
-  if (resourceId) {
+  if (typeof resourceId === 'string' && resourceId !== '') {
     const resource = getAgentResource(resourceId);
 
-    if (!resource) {
+    if (resource === null) {
       return NextResponse.json(
         { error: `Unknown agent resource: ${resourceId}` },
         { status: 404 },

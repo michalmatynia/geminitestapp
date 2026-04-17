@@ -103,7 +103,7 @@ describe('buildAdminNav', () => {
       (entry) =>
         entry.id === 'integrations/marketplaces/tradera/selectors' &&
         entry.label === 'Selector Registry' &&
-        entry.href === '/admin/integrations/marketplaces/tradera/selectors'
+        entry.href === '/admin/integrations/selectors?namespace=tradera'
     );
 
     expect(item).not.toBeNull();

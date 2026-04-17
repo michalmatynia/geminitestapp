@@ -204,6 +204,7 @@ export const getRuntimeStepInputBindings = (
         field,
         {
           mode: 'selectorRegistry',
+          selectorNamespace: 'amazon',
           selectorKey,
           selectorProfile: effectiveSelectorProfile,
           fallbackSelector: null,

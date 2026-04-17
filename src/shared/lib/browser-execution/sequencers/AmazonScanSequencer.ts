@@ -24,7 +24,10 @@ import {
   AMAZON_DESCRIPTION_SELECTORS,
   AMAZON_HERO_IMAGE_SELECTORS,
 } from '../selectors/amazon';
-import { AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY } from '../amazon-runtime-constants';
+import {
+  AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY,
+  resolveAmazonRuntimeOperationLabel,
+} from '../amazon-runtime-constants';
 import type { ProductScanSequenceEntry } from '../product-scan-step-sequencer';
 import { ProductScanSequencer, type ProductScanSequencerContext } from './ProductScanSequencer';
 
@@ -48,6 +51,7 @@ export interface AmazonScanInput {
   imageSearchProvider?: AmazonImageSearchProvider;
   allowManualVerification?: boolean;
   manualVerificationTimeoutMs?: number;
+  runtimeKey?: string | null;
   stepSequenceKey?: string | null;
   stepSequence?: ProductScanSequenceEntry[] | null;
 }
@@ -191,11 +195,12 @@ export class AmazonScanSequencer extends ProductScanSequencer {
     this.upsertScanStep({ key: 'validate', status: 'running' });
 
     if (imageCandidates.length === 0) {
+      const operationLabel = resolveAmazonRuntimeOperationLabel(this.input.runtimeKey);
       this.upsertScanStep({
         key: 'validate',
         status: 'failed',
         resultCode: 'missing_image_source',
-        message: 'No image candidates were provided for the Amazon reverse image scan.',
+        message: `No image candidates were provided for the ${operationLabel}.`,
       });
       await this.emitResult({
         status: 'failed',
@@ -320,7 +325,7 @@ export class AmazonScanSequencer extends ProductScanSequencer {
       status: 'running',
       candidateId,
       candidateRank,
-      message: 'Opening Google reverse image search.',
+      message: 'Opening Google Lens search.',
     });
 
     try {
@@ -338,13 +343,13 @@ export class AmazonScanSequencer extends ProductScanSequencer {
         candidateId,
         candidateRank,
         resultCode: 'ok',
-        message: 'Google reverse image search opened.',
+        message: 'Google Lens search opened.',
         url: this.page.url(),
       });
 
       return { success: true, message: null };
     } catch (_err) {
-      const message = 'Google reverse image search could not be opened.';
+      const message = 'Google Lens search could not be opened.';
       this.upsertScanStep({
         key: 'google_lens_open',
         status: 'failed',

@@ -77,6 +77,11 @@ export interface PlaywrightResolvedActionBlock {
   stepSet: PlaywrightStepSet | null;
 }
 
+export interface PlaywrightStepSequencerDraftStepSetState {
+  draftStepSetName: string;
+  draftStepSetSteps: PlaywrightStep[];
+}
+
 // ---------------------------------------------------------------------------
 // Full context type
 // ---------------------------------------------------------------------------
@@ -84,7 +89,8 @@ export interface PlaywrightResolvedActionBlock {
 export interface PlaywrightStepSequencerContextType
   extends PlaywrightStepSequencerFilters,
     PlaywrightStepSequencerModals,
-    PlaywrightStepSequencerActionState {
+    PlaywrightStepSequencerActionState,
+    PlaywrightStepSequencerDraftStepSetState {
   // --- Data ---
   steps: PlaywrightStep[];
   stepSets: PlaywrightStepSet[];
@@ -187,6 +193,14 @@ export interface PlaywrightStepSequencerContextType
   handleSaveAction: () => Promise<void>;
   /** Overwrite the currently-loaded action in place (requires editingActionId). */
   handleUpdateAction: () => Promise<void>;
+
+  // --- Live-scripter draft step set ---
+  setDraftStepSetName: (name: string) => void;
+  appendDraftStep: (draft: Omit<PlaywrightStep, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  removeDraftStep: (index: number) => void;
+  moveDraftStep: (from: number, to: number) => void;
+  clearDraftStepSet: () => void;
+  commitDraftStepSet: () => Promise<void>;
 
   // --- Modal toggles ---
   setIsCreateStepOpen: (v: boolean) => void;

@@ -2,7 +2,8 @@
 /* eslint-disable max-lines, max-lines-per-function */
 
 import React from 'react';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { FormProvider, useForm, useFormContext } from 'react-hook-form';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -461,7 +462,7 @@ describe('ProductFormGeneral structured name editing', () => {
     });
   });
 
-  it('locks the Polish title base after replacing a generic placeholder once', async () => {
+  it('keeps syncing the Polish title base while a generic placeholder is still being replaced from English', async () => {
     useProductFormMetadataMock.mockReturnValue({
       filteredLanguages: [
         { code: 'en', name: 'English' },
@@ -478,9 +479,57 @@ describe('ProductFormGeneral structured name editing', () => {
     });
 
     renderProductFormGeneral(
-      'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan',
+      'Parameter Name | 4 cm | Metal | Anime Pin | Attack On Titan',
       'Parameter Name | 4 cm | Metal | Anime Pin | Attack On Titan'
     );
+
+    fireEvent.change(screen.getByLabelText('English Name'), {
+      target: { value: 'S | 4 cm | Metal | Anime Pin | Attack On Titan' },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('polish-name-value')).toHaveTextContent(
+        'S | 4 cm | Metal | Anime Pin | Attack On Titan'
+      );
+    });
+
+    fireEvent.change(screen.getByLabelText('English Name'), {
+      target: { value: 'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan' },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('polish-name-value')).toHaveTextContent(
+        'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan'
+      );
+    });
+  });
+
+  it('stops syncing the Polish base after the Polish title is edited manually', async () => {
+    const user = userEvent.setup();
+
+    useProductFormMetadataMock.mockReturnValue({
+      filteredLanguages: [
+        { code: 'en', name: 'English' },
+        { code: 'pl', name: 'Polish' },
+      ],
+      selectedCatalogIds: ['catalog-a'],
+      categories: [],
+      selectedCategoryId: null,
+      setCategoryId: vi.fn(),
+    });
+    useTitleTermsMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+    });
+
+    renderProductFormGeneral(
+      'Parameter Name | 4 cm | Metal | Anime Pin | Attack On Titan',
+      'Parameter Name | 4 cm | Metal | Anime Pin | Attack On Titan'
+    );
+
+    fireEvent.change(screen.getByLabelText('English Name'), {
+      target: { value: 'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan' },
+    });
 
     await waitFor(() => {
       expect(screen.getByTestId('polish-name-value')).toHaveTextContent(
@@ -488,13 +537,26 @@ describe('ProductFormGeneral structured name editing', () => {
       );
     });
 
-    fireEvent.change(screen.getByLabelText('English Name'), {
+    const nameTabs = within(screen.getByRole('tablist', { name: 'Product name language tabs' }));
+    await user.click(nameTabs.getByRole('tab', { name: 'Polish' }));
+    fireEvent.change(await screen.findByLabelText('Polish Name'), {
+      target: { value: 'Oddzial Zwiadowcow | 4 cm | Metal | Anime Pin | Attack On Titan' },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('polish-name-value')).toHaveTextContent(
+        'Oddzial Zwiadowcow | 4 cm | Metal | Anime Pin | Attack On Titan'
+      );
+    });
+
+    await user.click(nameTabs.getByRole('tab', { name: 'English' }));
+    fireEvent.change(await screen.findByLabelText('English Name'), {
       target: { value: 'Survey Corps | 7 cm | Plastic | Anime Keychain | Naruto' },
     });
 
     await waitFor(() => {
       expect(screen.getByTestId('polish-name-value')).toHaveTextContent(
-        'Scout Regiment | 7 cm | Plastic | Anime Keychain | Naruto'
+        'Oddzial Zwiadowcow | 7 cm | Plastic | Anime Keychain | Naruto'
       );
     });
   });

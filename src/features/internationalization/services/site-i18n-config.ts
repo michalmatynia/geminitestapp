@@ -11,7 +11,8 @@ import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 export const getSiteI18nConfig = async (): Promise<SiteI18nConfig> => {
-  if (!process.env['MONGODB_URI']) {
+  const mongoUri = process.env['MONGODB_URI'];
+  if (mongoUri === undefined || mongoUri === '') {
     return DEFAULT_SITE_I18N_CONFIG;
   }
 
@@ -21,7 +22,7 @@ export const getSiteI18nConfig = async (): Promise<SiteI18nConfig> => {
       .collection<MongoStringSettingRecord<string>>('settings')
       .findOne({ _id: SITE_I18N_SETTINGS_KEY });
 
-    if (!doc?.value) {
+    if (doc?.value === undefined || doc.value === '') {
       return DEFAULT_SITE_I18N_CONFIG;
     }
 

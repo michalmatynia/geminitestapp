@@ -39,7 +39,8 @@ export const generateCanonicalLoginMetadata = async ({
   locale,
 }: CanonicalLoginRouteOptions = {}): Promise<Metadata> => {
   const resolvedLocale = resolveCanonicalLoginLocale(locale);
-  const routeTranslations = resolvedLocale
+  const hasLocale = typeof resolvedLocale === 'string' && resolvedLocale !== '';
+  const routeTranslations = hasLocale
     ? await getTranslations({ locale: resolvedLocale, namespace: 'Routes' })
     : await getTranslations('Routes');
   const publicOwner = await resolveCanonicalLoginPublicOwner();
@@ -50,8 +51,8 @@ export const generateCanonicalLoginMetadata = async ({
     };
   }
 
-  const page = await resolveSlugToPage(LOGIN_SLUG, resolvedLocale ? { locale: resolvedLocale } : undefined);
-  if (!page) {
+  const page = await resolveSlugToPage(LOGIN_SLUG, hasLocale ? { locale: resolvedLocale } : undefined);
+  if (page === null) {
     return {
       title: routeTranslations('pageNotFoundTitle'),
     };
@@ -64,6 +65,7 @@ export const renderCanonicalLoginRoute = async ({
   locale,
 }: CanonicalLoginRouteOptions = {}): Promise<JSX.Element> => {
   const resolvedLocale = resolveCanonicalLoginLocale(locale);
+  const hasLocale = typeof resolvedLocale === 'string' && resolvedLocale !== '';
   const publicOwner = await resolveCanonicalLoginPublicOwner();
 
   if (publicOwner === 'kangur') {
@@ -79,14 +81,14 @@ export const renderCanonicalLoginRoute = async ({
     );
   }
 
-  const page = await resolveSlugToPage(LOGIN_SLUG, resolvedLocale ? { locale: resolvedLocale } : undefined);
-  if (!page) {
+  const page = await resolveSlugToPage(LOGIN_SLUG, hasLocale ? { locale: resolvedLocale } : undefined);
+  if (page === null) {
     notFound();
   }
 
   const renderData = await loadSlugRenderData(
     page,
-    resolvedLocale ? { locale: resolvedLocale } : undefined
+    hasLocale ? { locale: resolvedLocale } : undefined
   );
   return renderCmsPage(renderData);
 };

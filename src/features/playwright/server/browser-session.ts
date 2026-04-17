@@ -3,7 +3,7 @@ import 'server-only';
 import type { Browser, BrowserContext, Page } from 'playwright';
 
 import type { IntegrationConnectionRecord } from '@/shared/contracts/integration-storage';
-import type { PlaywrightRelistBrowserMode } from '@/shared/contracts/integrations/listings';
+import type { PlaywrightRelistBrowserMode } from '@/shared/contracts/playwright-listing-runtime';
 import type {
   PlaywrightActionBlockConfig,
   PlaywrightActionExecutionSettings,

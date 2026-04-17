@@ -12,7 +12,7 @@ import { startCaseResolverOcrQueue } from '@/server/queues/case-resolver-ocr';
 import { startFilemakerEmailCampaignSchedulerQueue } from '@/server/queues/filemaker';
 import {
   startTraderaRelistSchedulerQueue,
-} from '@/server/queues/integrations';
+} from '@/features/integrations/workers/traderaRelistSchedulerQueue';
 import {
   startKangurSocialPipelineQueue,
   startKangurSocialSchedulerQueue,

@@ -1,7 +1,7 @@
 import 'server-only';
 
 import type { ProductListingRepository } from '@/shared/contracts/integration-listing-storage';
-import type { ProductListing } from '@/shared/contracts/integrations/listings';
+import type { ProductListing } from '@/shared/contracts/playwright-listing-runtime';
 import type { PlaywrightServiceListingExecutionBase } from './service-result';
 
 export type PlaywrightResolvedListingPersistenceContext = {

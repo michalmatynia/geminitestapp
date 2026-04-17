@@ -14,11 +14,13 @@ const {
   updateConnectionMock: vi.fn(),
 }));
 
-vi.mock('playwright', () => ({
-  chromium: {
-    launch: (...args: unknown[]) => chromiumLaunchMock(...args),
-  },
-  devices: {
+vi.mock('@/shared/lib/playwright/runtime', () => ({
+  getPlaywrightRuntime: () => ({
+    chromium: {
+      launch: (...args: unknown[]) => chromiumLaunchMock(...args),
+    },
+  }),
+  getPlaywrightDevicesCatalog: () => ({
     'Desktop Chrome': {
       defaultBrowserType: 'chromium',
       viewport: { width: 1280, height: 720 },
@@ -27,7 +29,7 @@ vi.mock('playwright', () => ({
       hasTouch: false,
       isMobile: false,
     },
-  },
+  }),
 }));
 
 vi.mock('@/features/integrations/server', () => ({

@@ -1,6 +1,6 @@
 import 'server-only';
 
-import type { BrowserListingResultDto } from '@/shared/contracts/integrations/listings';
+import type { BrowserListingResultDto } from '@/shared/contracts/playwright-listing-runtime';
 import { internalError, type AppError } from '@/shared/errors/app-error';
 import type { ActionSequenceKey } from '@/shared/lib/browser-execution/action-sequences';
 

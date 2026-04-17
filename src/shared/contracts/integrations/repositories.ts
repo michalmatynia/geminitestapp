@@ -5,12 +5,8 @@ import type {
   CategoryMappingCreateInput,
   CategoryMappingUpdateInput,
   CategoryMappingWithDetails,
-  CreateProductListing,
   ExternalCategory,
   ExternalCategoryWithChildren,
-  ProductListing,
-  ProductListingExportEvent,
-  ProductListingWithDetails,
 } from './listings';
 export type {
   CreateProductListingInput,

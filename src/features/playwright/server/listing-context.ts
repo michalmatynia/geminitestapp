@@ -5,7 +5,7 @@ import type {
   IntegrationRecord,
 } from '@/shared/contracts/integration-storage';
 import type { ProductListingRepository } from '@/shared/contracts/integration-listing-storage';
-import type { ProductListing } from '@/shared/contracts/integrations/listings';
+import type { ProductListing } from '@/shared/contracts/playwright-listing-runtime';
 
 export type PlaywrightResolvedListingRunContext = {
   ok: true;

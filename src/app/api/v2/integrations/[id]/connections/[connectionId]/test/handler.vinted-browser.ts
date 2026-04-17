@@ -1,5 +1,4 @@
 import type { BrowserContextOptions, Page } from 'playwright';
-import { devices } from 'playwright';
 
 import {
   createPlaywrightConnectionTestSuccessResponse,
@@ -17,6 +16,7 @@ import {
   VINTED_AUTH_ENTRY_URL,
   VINTED_LISTING_FORM_URL,
 } from '@/features/integrations/services/vinted-listing/config';
+import { getPlaywrightDevicesCatalog } from '@/shared/lib/playwright/runtime';
 
 import {
   type ConnectionTestContext,
@@ -76,6 +76,7 @@ export const handleVintedBrowserTest = async (
   const effectiveDeviceName = manualMode
     ? MANUAL_VINTED_DEVICE_NAME
     : configuredDeviceName || MANUAL_VINTED_DEVICE_NAME;
+  const devices = getPlaywrightDevicesCatalog();
   const deviceProfile =
     shouldApplyDeviceProfile && effectiveDeviceName && devices[effectiveDeviceName]
       ? devices[effectiveDeviceName]

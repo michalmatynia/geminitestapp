@@ -31,11 +31,13 @@ const {
   updateConnectionMock: vi.fn(),
 }));
 
-vi.mock('playwright', () => ({
-  chromium: {
-    launch: (...args: unknown[]) => chromiumLaunchMock(...args),
-  },
-  devices: {},
+vi.mock('@/shared/lib/playwright/runtime', () => ({
+  getPlaywrightRuntime: () => ({
+    chromium: {
+      launch: (...args: unknown[]) => chromiumLaunchMock(...args),
+    },
+  }),
+  getPlaywrightDevicesCatalog: () => ({}),
 }));
 
 vi.mock('@/features/integrations/services/tradera-playwright-settings', () => ({

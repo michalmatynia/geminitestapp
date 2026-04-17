@@ -7,10 +7,12 @@ const { chromiumLaunchMock } = vi.hoisted(() => ({
   chromiumLaunchMock: vi.fn(),
 }));
 
-vi.mock('playwright', () => ({
-  chromium: {
-    launch: chromiumLaunchMock,
-  },
+vi.mock('@/shared/lib/playwright/runtime', () => ({
+  getPlaywrightRuntime: () => ({
+    chromium: {
+      launch: chromiumLaunchMock,
+    },
+  }),
 }));
 
 import {

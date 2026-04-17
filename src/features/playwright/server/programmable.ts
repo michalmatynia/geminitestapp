@@ -2,7 +2,7 @@ import 'server-only';
 
 import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import type { IntegrationConnectionRecord } from '@/shared/contracts/integration-storage';
-import type { PlaywrightRelistBrowserMode } from '@/shared/contracts/integrations/listings';
+import type { PlaywrightRelistBrowserMode } from '@/shared/contracts/playwright-listing-runtime';
 import type { PlaywrightSettings } from '@/shared/contracts/playwright';
 import type { ActionSequenceKey } from '@/shared/lib/browser-execution/action-sequences';
 import { internalError } from '@/shared/errors/app-error';

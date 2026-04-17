@@ -53,14 +53,12 @@ function LiveScripterPreviewCanvas({
   mode,
   onDriveClick,
   onPickAt,
-  onDriveScroll,
 }: {
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
   frame: Frame;
   mode: Props['mode'];
   onDriveClick: Props['onDriveClick'];
   onPickAt: Props['onPickAt'];
-  onDriveScroll: Props['onDriveScroll'];
 }): React.JSX.Element {
   return (
     <canvas
@@ -74,13 +72,6 @@ function LiveScripterPreviewCanvas({
           return;
         }
         onDriveClick(point.x, point.y);
-      }}
-      onWheel={(event) => {
-        if (mode !== 'drive') {
-          return;
-        }
-        event.preventDefault();
-        onDriveScroll(event.deltaX, event.deltaY);
       }}
     />
   );
@@ -111,7 +102,6 @@ function LiveScripterPreviewSurface({
   mode,
   onDriveClick,
   onPickAt,
-  onDriveScroll,
 }: {
   frame: Frame | null;
   status: Props['status'];
@@ -120,10 +110,9 @@ function LiveScripterPreviewSurface({
   mode: Props['mode'];
   onDriveClick: Props['onDriveClick'];
   onPickAt: Props['onPickAt'];
-  onDriveScroll: Props['onDriveScroll'];
 }): React.JSX.Element {
   return (
-    <div className='relative overflow-hidden rounded-md border border-white/10 bg-black'>
+    <div className='relative overflow-hidden overscroll-contain rounded-md border border-white/10 bg-black'>
       {frame === null ? (
         <LiveScripterPreviewEmptyState status={status} />
       ) : (
@@ -134,7 +123,6 @@ function LiveScripterPreviewSurface({
             mode={mode}
             onDriveClick={onDriveClick}
             onPickAt={onPickAt}
-            onDriveScroll={onDriveScroll}
           />
           {overlayStyle !== null ? (
             <div
@@ -180,6 +168,28 @@ export function LiveScripterPreview({
     image.src = frame.dataUrl;
   }, [frame]);
 
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (canvas === null || frame === null) {
+      return;
+    }
+
+    const handleWheel = (event: WheelEvent): void => {
+      if (mode !== 'drive') {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+      onDriveScroll(event.deltaX, event.deltaY);
+    };
+
+    canvas.addEventListener('wheel', handleWheel, { passive: false });
+    return () => {
+      canvas.removeEventListener('wheel', handleWheel);
+    };
+  }, [frame, mode, onDriveScroll]);
+
   const overlayStyle = useMemo(() => {
     if (frame === null || pickedElement === null) {
       return null;
@@ -203,7 +213,6 @@ export function LiveScripterPreview({
         mode={mode}
         onDriveClick={onDriveClick}
         onPickAt={onPickAt}
-        onDriveScroll={onDriveScroll}
       />
     </div>
   );

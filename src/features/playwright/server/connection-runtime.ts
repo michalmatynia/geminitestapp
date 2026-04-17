@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { devices, type BrowserContextOptions, type LaunchOptions } from 'playwright';
+import type { BrowserContextOptions, LaunchOptions } from 'playwright';
 import type {
   PlaywrightActionBlockConfig,
   PlaywrightActionExecutionSettings,
@@ -31,8 +31,12 @@ import {
   resolvePlaywrightBrowserLaunchOptions,
   type PlaywrightBrowserPreference,
 } from '@/shared/lib/playwright/browser-launch';
+import {
+  getPlaywrightDevicesCatalog,
+  type PlaywrightDeviceDescriptor,
+} from '@/shared/lib/playwright/runtime';
 
-type DeviceDescriptor = (typeof devices)[string];
+type DeviceDescriptor = PlaywrightDeviceDescriptor;
 
 export type ResolvedPlaywrightConnectionRuntime = {
   settings: TraderaPlaywrightRuntimeSettings;
@@ -227,6 +231,7 @@ export const resolvePlaywrightRuntimeDeviceContext = (
   settings: Pick<TraderaPlaywrightRuntimeSettings, 'emulateDevice' | 'deviceName'>
 ): Pick<ResolvedPlaywrightConnectionRuntime, 'deviceProfileName' | 'deviceContextOptions'> => {
   const configuredDeviceName = settings.deviceName?.trim() || null;
+  const devices = getPlaywrightDevicesCatalog();
   const deviceProfile =
     settings.emulateDevice && configuredDeviceName && devices[configuredDeviceName]
       ? devices[configuredDeviceName]

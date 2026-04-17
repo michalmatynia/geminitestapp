@@ -7,6 +7,7 @@ import {
   getAgentAuditLogDelegate,
   getAgentBrowserSnapshotDelegate,
 } from '@/features/ai/agent-runtime/store-delegates';
+import { getPlaywrightRuntime } from '@/shared/lib/playwright/runtime';
 
 import { toDataUrl } from '../utils';
 
@@ -43,7 +44,7 @@ const isPlaywrightModule = (value: unknown): value is PlaywrightModule => {
 };
 
 const getPlaywright = async (): Promise<PlaywrightModule> => {
-  const playwrightModule = await import('playwright');
+  const playwrightModule = getPlaywrightRuntime();
   if (!isPlaywrightModule(playwrightModule)) {
     throw new Error('Playwright runtime is unavailable.');
   }

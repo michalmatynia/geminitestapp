@@ -5,6 +5,9 @@ import path from 'node:path';
 
 const outputDir = path.resolve(process.cwd(), process.argv[2] ?? '.vercel/output');
 const configPath = path.join(outputDir, 'config.json');
+const functionsDir = path.join(outputDir, 'functions');
+const TARGET_NODE_RUNTIME = 'nodejs22.x';
+const LEGACY_NODE_RUNTIME = 'nodejs24.x';
 
 const requestPrefixRoute = {
   src: '^/(?!(?:_vercel|api|kangur\\-api|apps/studiq-web)(?:/|$))(?<path>.*)$',
@@ -134,8 +137,44 @@ if (rootApiRoutes.length > 0 || rootKangurApiRoutes.length > 0) {
 
 await fs.writeFile(configPath, `${JSON.stringify(config, null, 2)}\n`);
 
+const patchFunctionRuntimes = async (root) => {
+  const stack = [root];
+  let patchedCount = 0;
+
+  while (stack.length > 0) {
+    const current = stack.pop();
+    const entries = await fs.readdir(current, { withFileTypes: true });
+
+    for (const entry of entries) {
+      const absolutePath = path.join(current, entry.name);
+      if (entry.isDirectory()) {
+        stack.push(absolutePath);
+        continue;
+      }
+
+      if (entry.name !== '.vc-config.json') {
+        continue;
+      }
+
+      const raw = await fs.readFile(absolutePath, 'utf8');
+      const parsed = JSON.parse(raw);
+      if (parsed?.runtime !== LEGACY_NODE_RUNTIME) {
+        continue;
+      }
+
+      parsed.runtime = TARGET_NODE_RUNTIME;
+      await fs.writeFile(absolutePath, `${JSON.stringify(parsed, null, 2)}\n`);
+      patchedCount += 1;
+    }
+  }
+
+  return patchedCount;
+};
+
+const patchedRuntimeCount = await patchFunctionRuntimes(functionsDir);
+
 console.log(
   existingRouteIndex === -1
-    ? `Patched StudiQ prebuilt config: ${configPath}`
-    : `StudiQ prebuilt config already patched: ${configPath}`,
+    ? `Patched StudiQ prebuilt config: ${configPath} (updated ${patchedRuntimeCount} function runtimes to ${TARGET_NODE_RUNTIME})`
+    : `StudiQ prebuilt config already patched: ${configPath} (updated ${patchedRuntimeCount} function runtimes to ${TARGET_NODE_RUNTIME})`,
 );

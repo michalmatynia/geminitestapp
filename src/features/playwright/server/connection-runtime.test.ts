@@ -16,14 +16,14 @@ const {
   resolvePlaywrightActionDefinitionByIdMock: vi.fn(),
 }));
 
-vi.mock('playwright', () => ({
-  devices: {
+vi.mock('@/shared/lib/playwright/runtime', () => ({
+  getPlaywrightDevicesCatalog: () => ({
     'Pixel 7': {
       defaultBrowserType: 'chromium',
       viewport: { width: 412, height: 915 },
       userAgent: 'pixel-ua',
     },
-  },
+  }),
 }));
 
 vi.mock('./settings', () => ({

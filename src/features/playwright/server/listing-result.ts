@@ -3,7 +3,7 @@ import 'server-only';
 import type {
   BrowserListingResultDto,
   PlaywrightRelistBrowserMode,
-} from '@/shared/contracts/integrations/listings';
+} from '@/shared/contracts/playwright-listing-runtime';
 
 import type { PlaywrightListingResult } from './programmable';
 

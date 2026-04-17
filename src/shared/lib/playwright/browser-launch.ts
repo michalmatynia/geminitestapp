@@ -1,5 +1,6 @@
-import { chromium } from 'playwright';
 import type { Browser, LaunchOptions } from 'playwright';
+
+import { getPlaywrightRuntime } from './runtime';
 
 export type PlaywrightBrowserPreference = 'auto' | 'brave' | 'chrome' | 'chromium';
 
@@ -104,6 +105,7 @@ export const launchPlaywrightBrowser = async (
   preference: PlaywrightBrowserPreference,
   baseOptions: LaunchOptions
 ): Promise<BrowserLaunchResult> => {
+  const { chromium } = getPlaywrightRuntime();
   const attempts = buildLaunchAttempts(preference, baseOptions);
   const fallbackMessages: string[] = [];
 

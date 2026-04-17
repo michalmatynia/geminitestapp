@@ -9,6 +9,14 @@ import {
   parsePlaywrightFieldMapperJson,
   type PlaywrightFieldMapperTargetField,
 } from '@/features/integrations/services/playwright-listing/field-mapper';
+import {
+  PLAYWRIGHT_DRAFT_MAPPER_TARGET_PATHS,
+  PLAYWRIGHT_DRAFT_MAPPER_TRANSFORMS,
+  createEmptyPlaywrightDraftMapperRow,
+  parsePlaywrightDraftMapperJson,
+  serializePlaywrightDraftMapperRows,
+  type PlaywrightDraftMapperRow,
+} from '@/features/integrations/services/playwright-listing/draft-mapper';
 import { supportsProgrammableSessionProfile } from '@/features/playwright/utils/playwright-programmable-session-support';
 
 export type ProgrammableFieldMapperRow = {
@@ -16,6 +24,8 @@ export type ProgrammableFieldMapperRow = {
   sourceKey: string;
   targetField: PlaywrightFieldMapperTargetField;
 };
+
+export type ProgrammableDraftMapperRow = PlaywrightDraftMapperRow;
 
 const DEFAULT_PROGRAMMABLE_FIELD_TARGET: PlaywrightFieldMapperTargetField =
   PLAYWRIGHT_FIELD_MAPPER_TARGET_FIELDS[0];
@@ -51,30 +61,103 @@ export const IMPORT_SCRIPT_PLACEHOLDER = `export default async function run({ pa
   emit('result', products);
 }`;
 
-export const IMPORT_AUTOMATION_FLOW_PLACEHOLDER = `{
-  "name": "Draft import",
-  "blocks": [
+export const buildDraftMapperAutomationFlowTemplate = (): string =>
+  JSON.stringify(
     {
-      "kind": "for_each",
-      "items": { "type": "path", "path": "vars.rawProducts" },
-      "blocks": [
+      name: 'Draft mapper import',
+      blocks: [
         {
-          "kind": "map_product",
-          "defaults": {
-            "catalogId": "catalog-id",
-            "importSource": "base"
-          }
+          kind: 'for_each',
+          items: { type: 'path', path: 'vars.rawProducts' },
+          blocks: [
+            { kind: 'map_draft' },
+            { kind: 'create_draft' },
+            {
+              kind: 'append_result',
+              resultKey: 'drafts',
+              value: { type: 'path', path: 'current' },
+            },
+          ],
         },
-        { "kind": "create_draft" }
-      ]
-    }
-  ]
-}`;
+      ],
+    },
+    null,
+    2
+  );
+
+export const buildDraftMapperPreviewAutomationFlowTemplate = (): string =>
+  JSON.stringify(
+    {
+      name: 'Draft mapper preview',
+      blocks: [
+        {
+          kind: 'for_each',
+          items: { type: 'path', path: 'vars.rawProducts' },
+          blocks: [
+            { kind: 'map_draft' },
+            {
+              kind: 'append_result',
+              resultKey: 'mappedDrafts',
+              value: { type: 'path', path: 'current' },
+            },
+          ],
+        },
+      ],
+    },
+    null,
+    2
+  );
+
+export const buildDraftMapperResilientAutomationFlowTemplate = (): string =>
+  JSON.stringify(
+    {
+      name: 'Draft mapper resilient import',
+      blocks: [
+        {
+          kind: 'for_each',
+          items: { type: 'path', path: 'vars.rawProducts' },
+          blocks: [
+            { kind: 'map_draft' },
+            {
+              kind: 'append_result',
+              resultKey: 'mappedDrafts',
+              value: { type: 'path', path: 'current' },
+            },
+            {
+              kind: 'create_draft',
+              onError: 'continue',
+            },
+            {
+              kind: 'append_result',
+              resultKey: 'draftWrites',
+              value: { type: 'path', path: 'current' },
+            },
+          ],
+        },
+      ],
+    },
+    null,
+    2
+  );
+
+export const IMPORT_AUTOMATION_FLOW_PLACEHOLDER = buildDraftMapperAutomationFlowTemplate();
 
 export const PROGRAMMABLE_FIELD_TARGET_OPTIONS =
   PLAYWRIGHT_FIELD_MAPPER_TARGET_FIELDS.map((field) => ({
     value: field,
     label: field,
+  }));
+
+export const PROGRAMMABLE_DRAFT_TARGET_OPTIONS =
+  PLAYWRIGHT_DRAFT_MAPPER_TARGET_PATHS.map((targetPath) => ({
+    value: targetPath,
+    label: targetPath,
+  }));
+
+export const PROGRAMMABLE_DRAFT_TRANSFORM_OPTIONS =
+  PLAYWRIGHT_DRAFT_MAPPER_TRANSFORMS.map((transform) => ({
+    value: transform,
+    label: transform,
   }));
 
 export const getProgrammableConnectionOptions = (
@@ -167,6 +250,14 @@ export const createEmptyProgrammableFieldMapperRow = (): ProgrammableFieldMapper
   targetField: DEFAULT_PROGRAMMABLE_FIELD_TARGET,
 });
 
+export const connectionToProgrammableDraftMapperRows = (
+  connection: ProgrammableIntegrationConnection | null
+): ProgrammableDraftMapperRow[] =>
+  parsePlaywrightDraftMapperJson(connection?.playwrightDraftMapperJson);
+
+export const createEmptyProgrammableDraftMapperRule = (): ProgrammableDraftMapperRow =>
+  createEmptyPlaywrightDraftMapperRow();
+
 export const buildProgrammableActionOptions = (
   actions: PlaywrightAction[] | undefined,
   defaultLabel: string
@@ -191,6 +282,7 @@ export const buildProgrammableConnectionPayload = ({
   captureRoutes,
   appearanceMode,
   automationFlowJson,
+  draftMapperRows,
   fieldMapperRows,
   payloadPatch = {},
 }: {
@@ -198,6 +290,7 @@ export const buildProgrammableConnectionPayload = ({
   automationFlowJson: string;
   captureRoutes: PlaywrightConfigCaptureRoute[];
   connectionName: string;
+  draftMapperRows: ProgrammableDraftMapperRow[];
   fieldMapperRows: ProgrammableFieldMapperRow[];
   importActionId: string;
   importBaseUrl: string;
@@ -231,6 +324,7 @@ export const buildProgrammableConnectionPayload = ({
       appearanceMode,
     }),
     playwrightFieldMapperJson: serializeProgrammableFieldMapperRows(fieldMapperRows),
+    playwrightDraftMapperJson: serializePlaywrightDraftMapperRows(draftMapperRows),
     playwrightImportAutomationFlowJson:
       normalizedAutomationFlowJson.length > 0 ? normalizedAutomationFlowJson : null,
     ...payloadPatch,

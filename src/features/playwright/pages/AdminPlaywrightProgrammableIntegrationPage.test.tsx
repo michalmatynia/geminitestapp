@@ -200,6 +200,150 @@ vi.mock('@/shared/ui/primitives.public', async (importOriginal) => {
 
 import { AdminPlaywrightProgrammableIntegrationPageRuntime } from './AdminPlaywrightProgrammableIntegrationPageRuntime';
 
+const PLAYWRIGHT_LISTING_SCRIPT = 'export default async function runListing() {}';
+const PLAYWRIGHT_IMPORT_SCRIPT = 'export default async function runImport() {}';
+const PLAYWRIGHT_IMPORT_BASE_URL = 'https://example.test/import';
+const DEFAULT_IMPORT_FLOW_JSON = '{"name":"Draft import","blocks":[{"kind":"create_draft"}]}';
+
+const createProgrammableLegacyBrowserMigration = () => ({
+  hasLegacyBrowserBehavior: false,
+  legacySummary: [],
+  requiresManualProxyPasswordInput: false,
+  canCleanupPersistedLegacyBrowserFields: false,
+  listingDraftActionId: 'listing-draft',
+  listingDraftActionName: 'Listing Draft',
+  importDraftActionId: 'import-draft',
+  importDraftActionName: 'Import Draft',
+});
+
+const buildProgrammableImportConnection = (
+  overrides: Record<string, unknown> = {}
+): Record<string, unknown> => ({
+  id: 'connection-programmable-1',
+  integrationId: 'integration-playwright-1',
+  name: 'Programmable Import',
+  playwrightListingActionId: 'listing-draft',
+  playwrightImportActionId: 'import-draft',
+  playwrightLegacyBrowserMigration: createProgrammableLegacyBrowserMigration(),
+  playwrightListingScript: PLAYWRIGHT_LISTING_SCRIPT,
+  playwrightImportScript: PLAYWRIGHT_IMPORT_SCRIPT,
+  playwrightImportBaseUrl: PLAYWRIGHT_IMPORT_BASE_URL,
+  playwrightImportCaptureRoutesJson: null,
+  playwrightImportAutomationFlowJson: DEFAULT_IMPORT_FLOW_JSON,
+  playwrightFieldMapperJson: null,
+  playwrightDraftMapperJson: null,
+  createdAt: '2026-04-17T00:00:00.000Z',
+  updatedAt: '2026-04-17T00:00:00.000Z',
+  ...overrides,
+});
+
+const buildImportRunResponse = ({
+  input = {},
+  result = {},
+  ok = true,
+}: {
+  input?: Record<string, unknown>;
+  ok?: boolean;
+  result?: Record<string, unknown>;
+}): Record<string, unknown> => ({
+  ok,
+  scriptType: 'import',
+  input: {
+    sourceUrl: PLAYWRIGHT_IMPORT_BASE_URL,
+    ...input,
+  },
+  result: {
+    rawResult: { ok: true },
+    ...result,
+  },
+});
+
+const buildAutomationFlowResult = ({
+  rawProducts = [],
+  overrides = {},
+}: {
+  rawProducts?: Record<string, unknown>[];
+  overrides?: Record<string, unknown>;
+}): Record<string, unknown> => {
+  const nextVars =
+    overrides['vars'] !== null &&
+    typeof overrides['vars'] === 'object' &&
+    !Array.isArray(overrides['vars'])
+      ? (overrides['vars'] as Record<string, unknown>)
+      : {};
+  const nextResults =
+    overrides['results'] !== null &&
+    typeof overrides['results'] === 'object' &&
+    !Array.isArray(overrides['results'])
+      ? (overrides['results'] as Record<string, unknown>)
+      : {};
+
+  return {
+    executionMode: 'commit',
+    flow: { name: 'Draft import', blocks: [] },
+    writeOutcomes: [],
+    draftPayloads: [],
+    drafts: [],
+    productPayloads: [],
+    products: [],
+    ...overrides,
+    results: nextResults,
+    vars: {
+      rawProducts,
+      ...nextVars,
+    },
+  };
+};
+
+const buildAutomationFlowImportRunResponse = ({
+  automationFlow = {},
+  input = {},
+  mappedProducts = [],
+  rawProducts = [],
+  result = {},
+}: {
+  automationFlow?: Record<string, unknown>;
+  input?: Record<string, unknown>;
+  mappedProducts?: Record<string, unknown>[];
+  rawProducts?: Record<string, unknown>[];
+  result?: Record<string, unknown>;
+}): Record<string, unknown> =>
+  buildImportRunResponse({
+    input,
+    result: {
+      rawProducts,
+      mappedProducts,
+      automationFlow: buildAutomationFlowResult({
+        rawProducts,
+        overrides: automationFlow,
+      }),
+      ...result,
+    },
+  });
+
+const mockProgrammableImportRuntime = ({
+  connection,
+  testMutateAsync,
+  upsertMutateAsync,
+}: {
+  connection: Record<string, unknown>;
+  testMutateAsync: ReturnType<typeof vi.fn>;
+  upsertMutateAsync: ReturnType<typeof vi.fn>;
+}): void => {
+  useProgrammableIntegrationConnectionsMock.mockReturnValue({
+    data: [connection],
+    isLoading: false,
+  });
+  useUpsertProgrammableConnectionMock.mockReturnValue({
+    mutateAsync: upsertMutateAsync,
+    isPending: false,
+  });
+  useTestPlaywrightProgrammableConnectionMock.mockReturnValue({
+    mutateAsync: testMutateAsync,
+    isPending: false,
+  });
+};
+
 describe('AdminPlaywrightProgrammableIntegrationPageRuntime', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -540,35 +684,31 @@ describe('AdminPlaywrightProgrammableIntegrationPageRuntime', () => {
     const upsertMutateAsync = vi.fn().mockResolvedValue({
       id: 'connection-flow-1',
     });
-    const testMutateAsync = vi.fn().mockResolvedValue({
-      ok: true,
-      scriptType: 'import',
-      input: {
-        sourceUrl: 'https://example.test/import',
-        captures: [
-          { url: 'https://example.test/p/1' },
-          { url: 'https://example.test/p/2' },
-          { url: 'https://example.test/p/3' },
-          { url: 'https://example.test/p/4' },
-        ],
-      },
-      result: {
-        rawResult: { ok: true },
-        rawProducts: [
-          { title: 'Product 1' },
-          { title: 'Product 2' },
-          { title: 'Product 3' },
-          { title: 'Product 4' },
-        ],
-        mappedProducts: [
-          { name: 'Product 1' },
-          { name: 'Product 2' },
-          { name: 'Product 3' },
-          { name: 'Product 4' },
-        ],
+    const rawProducts = [
+      { title: 'Product 1' },
+      { title: 'Product 2' },
+      { title: 'Product 3' },
+      { title: 'Product 4' },
+    ];
+    const mappedProducts = [
+      { name: 'Product 1' },
+      { name: 'Product 2' },
+      { name: 'Product 3' },
+      { name: 'Product 4' },
+    ];
+    const testMutateAsync = vi.fn().mockResolvedValue(
+      buildAutomationFlowImportRunResponse({
+        input: {
+          captures: [
+            { url: 'https://example.test/p/1' },
+            { url: 'https://example.test/p/2' },
+            { url: 'https://example.test/p/3' },
+            { url: 'https://example.test/p/4' },
+          ],
+        },
+        rawProducts,
+        mappedProducts,
         automationFlow: {
-          executionMode: 'commit',
-          flow: { name: 'Draft import', blocks: [] },
           writeOutcomes: [
             {
               kind: 'draft',
@@ -652,59 +792,38 @@ describe('AdminPlaywrightProgrammableIntegrationPageRuntime', () => {
             { id: 'product-3' },
           ],
           results: {
+            mappedDrafts: [
+              { sku: 'SKU-1', name_en: 'Product 1' },
+              { sku: 'SKU-2', name_en: 'Product 2' },
+              { sku: 'SKU-3', name_en: 'Product 3' },
+              { sku: 'SKU-4', name_en: 'Product 4' },
+            ],
+            draftWrites: [
+              { id: 'draft-1' },
+              { id: 'draft-2' },
+              { id: 'draft-3' },
+              {
+                kind: 'write_error',
+                operation: 'create_draft',
+                status: 'failed',
+                errorMessage: 'Catalog validation failed',
+              },
+            ],
             drafts: [{ id: 'draft-1' }, { id: 'draft-2' }],
             products: [{ id: 'product-1' }, { id: 'product-2' }],
           },
-          vars: {
-            rawProducts: [
-              { title: 'Product 1' },
-              { title: 'Product 2' },
-              { title: 'Product 3' },
-              { title: 'Product 4' },
-            ],
-          },
         },
-      },
-    });
+      })
+    );
 
-    useProgrammableIntegrationConnectionsMock.mockReturnValue({
-      data: [
-        {
-          id: 'connection-flow-1',
-          integrationId: 'integration-playwright-1',
-          name: 'Programmable Flow',
-          playwrightListingActionId: 'listing-draft',
-          playwrightImportActionId: 'import-draft',
-          playwrightLegacyBrowserMigration: {
-            hasLegacyBrowserBehavior: false,
-            legacySummary: [],
-            requiresManualProxyPasswordInput: false,
-            canCleanupPersistedLegacyBrowserFields: false,
-            listingDraftActionId: 'listing-draft',
-            listingDraftActionName: 'Listing Draft',
-            importDraftActionId: 'import-draft',
-            importDraftActionName: 'Import Draft',
-          },
-          playwrightListingScript: 'export default async function runListing() {}',
-          playwrightImportScript: 'export default async function runImport() {}',
-          playwrightImportBaseUrl: 'https://example.test/import',
-          playwrightImportCaptureRoutesJson: null,
-          playwrightImportAutomationFlowJson:
-            '{"name":"Draft import","blocks":[{"kind":"create_draft"}]}',
-          playwrightFieldMapperJson: null,
-          createdAt: '2026-04-17T00:00:00.000Z',
-          updatedAt: '2026-04-17T00:00:00.000Z',
-        },
-      ],
-      isLoading: false,
-    });
-    useUpsertProgrammableConnectionMock.mockReturnValue({
-      mutateAsync: upsertMutateAsync,
-      isPending: false,
-    });
-    useTestPlaywrightProgrammableConnectionMock.mockReturnValue({
-      mutateAsync: testMutateAsync,
-      isPending: false,
+    mockProgrammableImportRuntime({
+      connection: buildProgrammableImportConnection({
+        id: 'connection-flow-1',
+        name: 'Programmable Flow',
+        playwrightImportAutomationFlowJson: DEFAULT_IMPORT_FLOW_JSON,
+      }),
+      testMutateAsync,
+      upsertMutateAsync,
     });
 
     render(<AdminPlaywrightProgrammableIntegrationPageRuntime />);
@@ -733,17 +852,37 @@ describe('AdminPlaywrightProgrammableIntegrationPageRuntime', () => {
     expect(screen.getByText('Flow: Draft import')).toBeInTheDocument();
     expect(screen.getByText('Raw Products')).toBeInTheDocument();
     expect(screen.getByText('Mapped Products')).toBeInTheDocument();
+    expect(screen.getByText('Mapped Drafts')).toBeInTheDocument();
     expect(screen.getByText('Drafts Created')).toBeInTheDocument();
+    expect(screen.getByText('Draft Write Results')).toBeInTheDocument();
     expect(screen.getByText('Products Created')).toBeInTheDocument();
     expect(screen.getByText('Flow Results')).toBeInTheDocument();
     expect(screen.getByText('Draft Write Status (4)')).toBeInTheDocument();
     expect(screen.getByText('Product Write Status (4)')).toBeInTheDocument();
+    expect(screen.getByText('Draft Write Result Status (4)')).toBeInTheDocument();
+    const draftWriteResultStatusSection = screen
+      .getByText('Draft Write Result Status (4)')
+      .closest('details');
+    expect(draftWriteResultStatusSection).not.toBeNull();
+    expect(draftWriteResultStatusSection).toHaveAttribute('open');
+    expect(
+      within(draftWriteResultStatusSection as HTMLElement).getByText('3 created')
+    ).toBeInTheDocument();
+    expect(
+      within(draftWriteResultStatusSection as HTMLElement).getByText('1 failed')
+    ).toBeInTheDocument();
+    expect(
+      within(draftWriteResultStatusSection as HTMLElement).getByText('Catalog validation failed')
+    ).toBeInTheDocument();
     const productWriteStatusSection = screen
       .getByText('Product Write Status (4)')
       .closest('details');
     expect(productWriteStatusSection).not.toBeNull();
-    fireEvent.click(screen.getByText('Product Write Status (4)'));
+    expect(productWriteStatusSection).toHaveAttribute('open');
     const productWriteStatusQueries = within(productWriteStatusSection as HTMLElement);
+    expect(productWriteStatusQueries.getByText('3 created')).toBeInTheDocument();
+    expect(productWriteStatusQueries.getByText('1 failed')).toBeInTheDocument();
+    expect(productWriteStatusQueries.getByText('Product validation failed')).toBeInTheDocument();
     expect(productWriteStatusQueries.getByRole('button', { name: 'all (4)' })).toBeInTheDocument();
     expect(
       productWriteStatusQueries.getByRole('button', { name: 'created (3)' })
@@ -767,6 +906,12 @@ describe('AdminPlaywrightProgrammableIntegrationPageRuntime', () => {
       productWriteStatusQueries.getByRole('button', { name: 'Copy filtered outcomes CSV (4)' })
     ).toBeInTheDocument();
     expect(
+      productWriteStatusQueries.getByRole('button', { name: 'Download filtered outcomes JSON (4)' })
+    ).toBeInTheDocument();
+    expect(
+      productWriteStatusQueries.getByRole('button', { name: 'Download filtered outcomes CSV (4)' })
+    ).toBeInTheDocument();
+    expect(
       productWriteStatusQueries.getByRole('button', { name: 'Copy failed payloads JSON (1)' })
     ).toBeInTheDocument();
     expect(
@@ -775,7 +920,6 @@ describe('AdminPlaywrightProgrammableIntegrationPageRuntime', () => {
     expect(
       productWriteStatusQueries.getByRole('button', { name: 'Copy failed outcomes CSV (1)' })
     ).toBeInTheDocument();
-    fireEvent.click(productWriteStatusQueries.getByRole('button', { name: 'failures first' }));
     expect(screen.getAllByText('created').length).toBeGreaterThan(0);
     expect(screen.getAllByText('failed').length).toBeGreaterThan(0);
     expect(screen.queryByText('no-write')).not.toBeInTheDocument();
@@ -786,12 +930,16 @@ describe('AdminPlaywrightProgrammableIntegrationPageRuntime', () => {
     expect(screen.getByText('Raw Result Preview')).toBeInTheDocument();
     expect(screen.getByText('Raw Products Preview (4)')).toBeInTheDocument();
     expect(screen.getByText('Mapped Products Preview (4)')).toBeInTheDocument();
+    expect(screen.getByText('Mapped Drafts Preview (4)')).toBeInTheDocument();
     expect(screen.getByText('Draft Payloads Preview (4)')).toBeInTheDocument();
     expect(screen.getByText('Drafts Preview (4)')).toBeInTheDocument();
+    expect(screen.queryByText('Draft Write Results Preview (4)')).not.toBeInTheDocument();
     expect(screen.getByText('Product Payloads Preview (4)')).toBeInTheDocument();
     expect(screen.getByText('Products Preview (3)')).toBeInTheDocument();
     expect(screen.getByText('Flow Result Preview: drafts (2)')).toBeInTheDocument();
     expect(screen.getByText('Flow Result Preview: products (2)')).toBeInTheDocument();
+    expect(screen.queryByText('Flow Result Preview: mappedDrafts (4)')).not.toBeInTheDocument();
+    expect(screen.queryByText('Flow Result Preview: draftWrites (4)')).not.toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: 'Show all 4 items' }).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Product 1/).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/SKU-1/).length).toBeGreaterThan(0);
@@ -799,12 +947,34 @@ describe('AdminPlaywrightProgrammableIntegrationPageRuntime', () => {
     expect(screen.getAllByText(/draft-1/).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/product-1/).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/draft-4/).length).toBeGreaterThan(0);
-    expect(productWriteStatusQueries.getByText('Product validation failed')).toBeInTheDocument();
     expect(productWriteStatusQueries.getByText('Item 4')).toBeInTheDocument();
     const failedProductRow = productWriteStatusQueries
       .getByText('Item 4')
       .closest('div.rounded-lg');
     expect(failedProductRow).not.toBeNull();
+    const createObjectURLSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:write-status');
+    const revokeObjectURLSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+    const anchorClickSpy = vi
+      .spyOn(HTMLAnchorElement.prototype, 'click')
+      .mockImplementation(() => {});
+    fireEvent.click(
+      productWriteStatusQueries.getByRole('button', { name: 'Download filtered outcomes CSV (4)' })
+    );
+    expect(createObjectURLSpy).toHaveBeenCalledTimes(1);
+    const downloadedBlob = createObjectURLSpy.mock.calls[0]?.[0];
+    expect(downloadedBlob).toBeInstanceOf(Blob);
+    await expect(downloadedBlob?.text()).resolves.toBe(
+      'itemNumber,index,status,errorMessage,payloadSummary,createdSummary\n"4","3","failed","Product validation failed","sku=SKU-4","No created record"\n"1","0","created","","sku=SKU-1","id=product-1"\n"2","1","created","","sku=SKU-2","id=product-2"\n"3","2","created","","sku=SKU-3","id=product-3"'
+    );
+    expect(anchorClickSpy).toHaveBeenCalledTimes(1);
+    expect(revokeObjectURLSpy).toHaveBeenCalledWith('blob:write-status');
+    expect(toastMock).toHaveBeenCalledWith('Filtered outcomes CSV for Product Write Status download started', {
+      variant: 'success',
+    });
+    createObjectURLSpy.mockRestore();
+    revokeObjectURLSpy.mockRestore();
+    anchorClickSpy.mockRestore();
+    toastMock.mockClear();
     fireEvent.click(
       productWriteStatusQueries.getByRole('button', { name: 'Copy filtered outcomes CSV (4)' })
     );
@@ -877,5 +1047,300 @@ describe('AdminPlaywrightProgrammableIntegrationPageRuntime', () => {
     });
     expect(screen.getByText('drafts')).toBeInTheDocument();
     expect(screen.getByText('products')).toBeInTheDocument();
+  });
+
+  it('auto-expands draft write status when commit-mode draft writes fail', async () => {
+    const upsertMutateAsync = vi.fn().mockResolvedValue({
+      id: 'connection-draft-failure-1',
+    });
+    const rawProducts = [{ title: 'Draft Failure Product' }];
+    const mappedProducts = [{ name: 'Draft Failure Product' }];
+    const testMutateAsync = vi.fn().mockResolvedValue(
+      buildAutomationFlowImportRunResponse({
+        rawProducts,
+        mappedProducts,
+        automationFlow: {
+          writeOutcomes: [
+            {
+              kind: 'draft',
+              status: 'failed',
+              index: 0,
+              payload: { sku: 'SKU-FAIL-1' },
+              record: null,
+              errorMessage: 'Draft validation failed',
+            },
+          ],
+          draftPayloads: [{ sku: 'SKU-FAIL-1' }],
+          drafts: [],
+          productPayloads: [],
+          products: [],
+        },
+      })
+    );
+
+    mockProgrammableImportRuntime({
+      connection: buildProgrammableImportConnection({
+        id: 'connection-draft-failure-1',
+        name: 'Programmable Draft Failure',
+        playwrightImportAutomationFlowJson: DEFAULT_IMPORT_FLOW_JSON,
+      }),
+      testMutateAsync,
+      upsertMutateAsync,
+    });
+
+    render(<AdminPlaywrightProgrammableIntegrationPageRuntime />);
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Run Flow' }));
+
+    await waitFor(() => {
+      expect(testMutateAsync).toHaveBeenCalledWith({
+        connectionId: 'connection-draft-failure-1',
+        executionMode: 'commit',
+        scriptType: 'import',
+      });
+    });
+
+    const draftWriteStatusSection = screen
+      .getByText('Draft Write Status (1)')
+      .closest('details');
+    expect(draftWriteStatusSection).not.toBeNull();
+    expect(draftWriteStatusSection).toHaveAttribute('open');
+    expect(within(draftWriteStatusSection as HTMLElement).getByText('1 failed')).toBeInTheDocument();
+    expect(
+      within(draftWriteStatusSection as HTMLElement).queryByText('1 created')
+    ).not.toBeInTheDocument();
+    expect(
+      within(draftWriteStatusSection as HTMLElement).getByText('Draft validation failed')
+    ).toBeInTheDocument();
+  });
+
+  it('shows a dry-run badge when draft writes are inferred from payloads in dry-run mode', async () => {
+    const upsertMutateAsync = vi.fn().mockResolvedValue({
+      id: 'connection-draft-dry-run-1',
+    });
+    const rawProducts = [{ title: 'Dry Run Product 1' }, { title: 'Dry Run Product 2' }];
+    const mappedProducts = [{ name: 'Dry Run Product 1' }, { name: 'Dry Run Product 2' }];
+    const testMutateAsync = vi.fn().mockResolvedValue(
+      buildAutomationFlowImportRunResponse({
+        rawProducts,
+        mappedProducts,
+        automationFlow: {
+          executionMode: 'dry_run',
+          flow: { name: 'Draft preview', blocks: [] },
+          draftPayloads: [{ sku: 'SKU-DRY-1' }, { sku: 'SKU-DRY-2' }],
+          drafts: [],
+          productPayloads: [],
+          products: [],
+        },
+      })
+    );
+
+    mockProgrammableImportRuntime({
+      connection: buildProgrammableImportConnection({
+        id: 'connection-draft-dry-run-1',
+        name: 'Programmable Draft Dry Run',
+        playwrightImportAutomationFlowJson: '{"name":"Draft preview","blocks":[{"kind":"map_draft"}]}',
+      }),
+      testMutateAsync,
+      upsertMutateAsync,
+    });
+
+    render(<AdminPlaywrightProgrammableIntegrationPageRuntime />);
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Run Flow' }));
+
+    await waitFor(() => {
+      expect(testMutateAsync).toHaveBeenCalledWith({
+        connectionId: 'connection-draft-dry-run-1',
+        executionMode: 'commit',
+        scriptType: 'import',
+      });
+    });
+
+    const draftWriteStatusSection = screen
+      .getByText('Draft Write Status (2)')
+      .closest('details');
+    expect(draftWriteStatusSection).not.toBeNull();
+    expect(within(draftWriteStatusSection as HTMLElement).getByText('2 dry-run')).toBeInTheDocument();
+    expect(
+      within(draftWriteStatusSection as HTMLElement).queryByText(/failed$/i)
+    ).not.toBeInTheDocument();
+  });
+
+  it('shows a no-write badge when payloads exist without created drafts in commit mode', async () => {
+    const upsertMutateAsync = vi.fn().mockResolvedValue({
+      id: 'connection-draft-no-write-1',
+    });
+    const rawProducts = [{ title: 'No Write Product' }];
+    const mappedProducts = [{ name: 'No Write Product' }];
+    const testMutateAsync = vi.fn().mockResolvedValue(
+      buildAutomationFlowImportRunResponse({
+        rawProducts,
+        mappedProducts,
+        automationFlow: {
+          flow: { name: 'Draft partial', blocks: [] },
+          draftPayloads: [{ sku: 'SKU-NOWRITE-1' }],
+          drafts: [],
+          productPayloads: [],
+          products: [],
+        },
+      })
+    );
+
+    mockProgrammableImportRuntime({
+      connection: buildProgrammableImportConnection({
+        id: 'connection-draft-no-write-1',
+        name: 'Programmable Draft No Write',
+        playwrightImportAutomationFlowJson: '{"name":"Draft partial","blocks":[{"kind":"create_draft"}]}',
+      }),
+      testMutateAsync,
+      upsertMutateAsync,
+    });
+
+    render(<AdminPlaywrightProgrammableIntegrationPageRuntime />);
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Run Flow' }));
+
+    await waitFor(() => {
+      expect(testMutateAsync).toHaveBeenCalledWith({
+        connectionId: 'connection-draft-no-write-1',
+        executionMode: 'commit',
+        scriptType: 'import',
+      });
+    });
+
+    const draftWriteStatusSection = screen
+      .getByText('Draft Write Status (1)')
+      .closest('details');
+    expect(draftWriteStatusSection).not.toBeNull();
+    expect(draftWriteStatusSection).not.toHaveAttribute('open');
+    expect(
+      within(draftWriteStatusSection as HTMLElement).getByText('1 no-write')
+    ).toBeInTheDocument();
+    expect(
+      within(draftWriteStatusSection as HTMLElement).queryByText(/failed$/i)
+    ).not.toBeInTheDocument();
+  });
+
+  it('builds a draft preview from one test scrape using saved draft mapper rules', async () => {
+    const upsertMutateAsync = vi.fn().mockResolvedValue({
+      id: 'connection-draft-mapper-1',
+    });
+    const testMutateAsync = vi.fn().mockResolvedValue(
+      buildImportRunResponse({
+        result: {
+        rawProducts: [
+          {
+            title: 'Mapped draft title',
+            price: '19,50',
+          },
+        ],
+        },
+      })
+    );
+
+    mockProgrammableImportRuntime({
+      connection: buildProgrammableImportConnection({
+        id: 'connection-draft-mapper-1',
+        name: 'Programmable Draft Mapper',
+        playwrightImportAutomationFlowJson: null,
+        playwrightDraftMapperJson: JSON.stringify([
+          {
+            enabled: true,
+            targetPath: 'name_en',
+            mode: 'scraped',
+            sourcePath: 'title',
+            staticValue: '',
+            transform: 'trim',
+            required: true,
+          },
+          {
+            enabled: true,
+            targetPath: 'catalogIds',
+            mode: 'static',
+            sourcePath: '',
+            staticValue: '["catalog-a"]',
+            transform: 'string_array',
+            required: true,
+          },
+        ]),
+      }),
+      testMutateAsync,
+      upsertMutateAsync,
+    });
+
+    render(<AdminPlaywrightProgrammableIntegrationPageRuntime />);
+
+    expect(
+      screen.getByText('Run Test Import to capture sample scrape data for mapping.')
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Test Import' }));
+
+    await waitFor(() => {
+      expect(upsertMutateAsync).toHaveBeenCalledWith({
+        connectionId: 'connection-draft-mapper-1',
+        payload: expect.objectContaining({
+          name: 'Programmable Draft Mapper',
+          playwrightDraftMapperJson: JSON.stringify([
+            {
+              enabled: true,
+              targetPath: 'name_en',
+              mode: 'scraped',
+              sourcePath: 'title',
+              staticValue: '',
+              transform: 'trim',
+              required: true,
+            },
+            {
+              enabled: true,
+              targetPath: 'catalogIds',
+              mode: 'static',
+              sourcePath: '',
+              staticValue: '["catalog-a"]',
+              transform: 'string_array',
+              required: true,
+            },
+          ]),
+        }),
+      });
+    });
+
+    expect(await screen.findByLabelText('Draft mapper sample selector')).toBeInTheDocument();
+    expect(screen.getByText('Computed draft payload from the selected sample and current rules.')).toBeInTheDocument();
+    expect(screen.getAllByText('Mapped draft title').length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/catalog-a/).length).toBeGreaterThan(0);
+    expect(screen.getByText('Valid')).toBeInTheDocument();
+    const draftMapperPreviewTemplateButton = screen
+      .getByText('Use Draft Mapper Preview Template')
+      .closest('button');
+    expect(draftMapperPreviewTemplateButton).not.toBeNull();
+    fireEvent.click(draftMapperPreviewTemplateButton as HTMLButtonElement);
+    expect(
+      (screen.getByLabelText('Import automation flow editor') as HTMLTextAreaElement).value
+    ).toContain('"resultKey": "mappedDrafts"');
+    expect(
+      (screen.getByLabelText('Import automation flow editor') as HTMLTextAreaElement).value
+    ).not.toContain('"kind": "create_draft"');
+    const resilientDraftMapperTemplateButton = screen
+      .getByText('Use Resilient Draft Mapper Flow Template')
+      .closest('button');
+    expect(resilientDraftMapperTemplateButton).not.toBeNull();
+    fireEvent.click(resilientDraftMapperTemplateButton as HTMLButtonElement);
+    expect(
+      (screen.getByLabelText('Import automation flow editor') as HTMLTextAreaElement).value
+    ).toContain('"resultKey": "draftWrites"');
+    expect(
+      (screen.getByLabelText('Import automation flow editor') as HTMLTextAreaElement).value
+    ).toContain('"onError": "continue"');
+    const draftMapperTemplateButton = screen
+      .getByText('Use Draft Mapper Flow Template')
+      .closest('button');
+    expect(draftMapperTemplateButton).not.toBeNull();
+    fireEvent.click(draftMapperTemplateButton as HTMLButtonElement);
+    expect(
+      (screen.getByLabelText('Import automation flow editor') as HTMLTextAreaElement).value
+    ).toContain('"kind": "map_draft"');
+    expect(screen.getByRole('button', { name: 'Run Flow' })).toBeInTheDocument();
   });
 });

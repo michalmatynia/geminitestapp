@@ -57,6 +57,7 @@ const connectionSchema = z.object({
   playwrightImportActionId: z.string().trim().nullable().optional(),
   playwrightImportCaptureRoutesJson: z.string().nullable().optional(),
   playwrightFieldMapperJson: z.string().nullable().optional(),
+  playwrightDraftMapperJson: z.string().nullable().optional(),
   playwrightImportAutomationFlowJson: z.string().nullable().optional(),
   resetPlaywrightOverrides: z.boolean().optional(),
   allegroUseSandbox: z.boolean().optional(),
@@ -246,6 +247,9 @@ export async function PUT_handler(
     ...(typeof data.playwrightFieldMapperJson === 'string' || data.playwrightFieldMapperJson === null
       ? { playwrightFieldMapperJson: data.playwrightFieldMapperJson ?? null }
       : {}),
+    ...(typeof data.playwrightDraftMapperJson === 'string' || data.playwrightDraftMapperJson === null
+      ? { playwrightDraftMapperJson: data.playwrightDraftMapperJson ?? null }
+      : {}),
     ...(typeof data.playwrightImportAutomationFlowJson === 'string' ||
     data.playwrightImportAutomationFlowJson === null
       ? {
@@ -349,6 +353,7 @@ export async function PUT_handler(
     playwrightImportActionId: connection.playwrightImportActionId ?? null,
     playwrightImportCaptureRoutesJson: connection.playwrightImportCaptureRoutesJson ?? null,
     playwrightFieldMapperJson: connection.playwrightFieldMapperJson ?? null,
+    playwrightDraftMapperJson: connection.playwrightDraftMapperJson ?? null,
     playwrightImportAutomationFlowJson: connection.playwrightImportAutomationFlowJson ?? null,
     hasPlaywrightListingScript: Boolean(connection.playwrightListingScript?.trim()),
     traderaDefaultTemplateId: connection.traderaDefaultTemplateId ?? null,

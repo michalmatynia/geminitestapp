@@ -300,6 +300,58 @@ describe('AmazonScanSequencer', () => {
     expect(openStep!.resultCode).toBe('navigation_failed');
   });
 
+  it('opens direct Google Lens upload before the legacy Google Images page', async () => {
+    const goto = vi.fn().mockResolvedValue(undefined);
+    const ctx = makeContext({ goto });
+    const seq = new AmazonScanSequencer(ctx, {
+      imageSearchProvider: 'google_images_upload',
+    });
+
+    const res = await (seq as any).openGoogleLens({ candidateId: 'img', candidateRank: 1 });
+
+    expect(res.success).toBe(true);
+    expect(goto).toHaveBeenCalledTimes(1);
+    expect(goto).toHaveBeenCalledWith('https://lens.google.com/?hl=en', {
+      waitUntil: 'domcontentloaded',
+      timeout: 30_000,
+    });
+  });
+
+  it('opens the configured image search page before the built-in Google fallbacks', async () => {
+    const goto = vi.fn().mockResolvedValue(undefined);
+    const ctx = makeContext({ goto });
+    const seq = new AmazonScanSequencer(ctx, {
+      imageSearchProvider: 'google_images_upload',
+      imageSearchPageUrl: 'https://www.google.com/imghp?hl=en',
+    });
+
+    const res = await (seq as any).openGoogleLens({ candidateId: 'img', candidateRank: 1 });
+
+    expect(res.success).toBe(true);
+    expect(goto).toHaveBeenCalledTimes(1);
+    expect(goto).toHaveBeenCalledWith('https://www.google.com/imghp?hl=en', {
+      waitUntil: 'domcontentloaded',
+      timeout: 30_000,
+    });
+  });
+
+  it('fails Google Lens open with google_login_required when Google keeps showing sign-in', async () => {
+    const goto = vi.fn().mockResolvedValue(undefined);
+    const ctx = makeContext({
+      goto,
+      url: vi.fn().mockReturnValue('https://accounts.google.com/ServiceLogin'),
+    });
+    const seq = new AmazonScanSequencer(ctx);
+
+    const res = await (seq as any).openGoogleLens({ candidateId: 'img', candidateRank: 1 });
+
+    expect(res.success).toBe(false);
+    expect(goto).toHaveBeenCalledTimes(2);
+    const step = (seq as any).scanSteps.find((s: any) => s.key === 'google_lens_open');
+    expect(step.status).toBe('failed');
+    expect(step.resultCode).toBe('google_login_required');
+  });
+
   it('emits triage_ready with candidate previews for the candidate-search runtime', async () => {
     const ctx = makeContext();
     const seq = new AmazonScanSequencer(ctx, {
@@ -465,6 +517,75 @@ describe('AmazonScanSequencer', () => {
     };
     expect(payload.stage).toBe('google_candidates');
     expect(payload.status).toBe('failed');
+  });
+
+  it('accepts hidden Google Lens file inputs for Playwright uploads', async () => {
+    const hiddenInputLocator = {
+      count: vi.fn().mockResolvedValue(1),
+      evaluateAll: vi.fn().mockImplementation(async (callback: (nodes: Element[]) => number) => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.style.display = 'none';
+        document.body.appendChild(input);
+        try {
+          return callback([input]);
+        } finally {
+          input.remove();
+        }
+      }),
+      nth: vi.fn().mockReturnValue({ setInputFiles: vi.fn().mockResolvedValue(undefined) }),
+      first: vi.fn().mockReturnThis(),
+      isVisible: vi.fn().mockResolvedValue(false),
+    };
+    const emptyLocator = {
+      count: vi.fn().mockResolvedValue(0),
+      evaluateAll: vi.fn().mockResolvedValue(-1),
+      nth: vi.fn().mockReturnThis(),
+      first: vi.fn().mockReturnThis(),
+      isVisible: vi.fn().mockResolvedValue(false),
+      textContent: vi.fn().mockResolvedValue(null),
+    };
+    const ctx = makeContext({
+      locator: vi.fn().mockImplementation((selector: string) =>
+        selector === 'input[type="file"][accept*="image"]' ? hiddenInputLocator : emptyLocator
+      ),
+    });
+    const seq = new AmazonScanSequencer(ctx);
+
+    const state = await (seq as any).resolveGoogleLensFileInput();
+
+    expect(state).toMatchObject({
+      ready: true,
+      selector: 'input[type="file"][accept*="image"]',
+      scopeType: 'page',
+      inputCount: 1,
+    });
+    expect(hiddenInputLocator.nth).toHaveBeenCalledWith(0);
+  });
+
+  it('uses a trusted file chooser interaction before falling back to setInputFiles', async () => {
+    const fileChooser = { setFiles: vi.fn().mockResolvedValue(undefined) };
+    const waitForEvent = vi.fn().mockResolvedValue(fileChooser);
+    const inputLocator = {
+      click: vi.fn().mockResolvedValue(undefined),
+      evaluate: vi.fn().mockResolvedValue(undefined),
+      setInputFiles: vi.fn().mockResolvedValue(undefined),
+      dispatchEvent: vi.fn().mockResolvedValue(undefined),
+    };
+    const ctx = makeContext({ waitForEvent } as unknown as Partial<Page>);
+    const seq = new AmazonScanSequencer(ctx);
+
+    const result = await (seq as any).attachImageToGoogleLensInput(
+      inputLocator,
+      '/tmp/product-source.jpg'
+    );
+
+    expect(result).toEqual({ success: true, method: 'filechooser', message: null });
+    expect(waitForEvent).toHaveBeenCalledWith('filechooser', { timeout: 3_000 });
+    expect(inputLocator.click).toHaveBeenCalledWith({ force: true, timeout: 2_000 });
+    expect(fileChooser.setFiles).toHaveBeenCalledWith('/tmp/product-source.jpg');
+    expect(inputLocator.setInputFiles).not.toHaveBeenCalled();
   });
 
   it('direct candidate extraction skips Google Lens and extracts the selected Amazon page', async () => {

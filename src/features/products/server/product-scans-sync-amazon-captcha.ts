@@ -46,6 +46,7 @@ import {
 import {
   buildAmazonScannerRequestRuntimeOptions,
   resolveAmazonImageSearchProvider,
+  resolveAmazonImageSearchPageUrl,
   resolveAmazonImageSearchProviderHistory,
   resolveAmazonProductScanRuntimeKey,
   resolveAmazonProbeEvaluatorConfig,
@@ -152,6 +153,10 @@ export async function synchronizeAmazonCaptchaRequired({
       claimedScan.rawResult,
       scannerSettings
     );
+    const amazonImageSearchPageUrl = resolveAmazonImageSearchPageUrl(
+      claimedScan.rawResult,
+      scannerSettings
+    );
     const amazonSelectorProfile =
       readOptionalString(toRecord(claimedScan.rawResult)?.['selectorProfile'], 120) ?? 'amazon';
     const runRetry = await startPlaywrightEngineTask({
@@ -168,6 +173,7 @@ export async function synchronizeAmazonCaptchaRequired({
           existingAsin: product.asin,
           imageCandidates: claimedScan.imageCandidates,
           imageSearchProvider: amazonImageSearchProvider,
+          imageSearchPageUrl: amazonImageSearchPageUrl,
           selectorProfile: amazonSelectorProfile,
           allowManualVerification: true,
           manualVerificationTimeoutMs,
@@ -208,6 +214,7 @@ export async function synchronizeAmazonCaptchaRequired({
           actionId: amazonRuntimeAction?.id ?? null,
           selectorProfile: amazonSelectorProfile,
           imageSearchProvider: amazonImageSearchProvider,
+          imageSearchPageUrl: amazonImageSearchPageUrl,
           imageSearchProviderHistory: resolveAmazonImageSearchProviderHistory(
             claimedScan.rawResult,
             amazonImageSearchProvider

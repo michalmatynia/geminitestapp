@@ -30,6 +30,7 @@ export const DEFAULT_PRODUCT_SCANNER_MANUAL_VERIFICATION_TIMEOUT_MS = 240_000;
 export const DEFAULT_PRODUCT_SCANNER_AMAZON_IMAGE_SEARCH_PROVIDER =
   'google_images_upload' as const;
 export const DEFAULT_PRODUCT_SCANNER_AMAZON_IMAGE_SEARCH_FALLBACK_PROVIDER = null;
+export const DEFAULT_PRODUCT_SCANNER_AMAZON_IMAGE_SEARCH_PAGE_URL = null;
 export const DEFAULT_PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_MODE = 'disabled' as const;
 export const DEFAULT_PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_THRESHOLD = 0.7;
 export const DEFAULT_PRODUCT_SCANNER_AMAZON_CANDIDATE_EVALUATOR_ALLOWED_CONTENT_LANGUAGE =
@@ -84,6 +85,7 @@ export type ProductScannerSettingsDraft = {
   manualVerificationTimeoutMs: number;
   amazonImageSearchProvider: ProductScannerAmazonImageSearchProvider;
   amazonImageSearchFallbackProvider: ProductScannerAmazonImageSearchFallbackProvider;
+  amazonImageSearchPageUrl: string;
   amazonCandidateEvaluator: ProductScannerAmazonCandidateEvaluator;
   amazonCandidateEvaluatorTriage: ProductScannerAmazonCandidateEvaluator;
   amazonCandidateEvaluatorProbe: ProductScannerAmazonCandidateEvaluator;
@@ -185,6 +187,7 @@ export const createDefaultProductScannerSettings = (): ProductScannerSettings =>
   amazonImageSearchProvider: DEFAULT_PRODUCT_SCANNER_AMAZON_IMAGE_SEARCH_PROVIDER,
   amazonImageSearchFallbackProvider:
     DEFAULT_PRODUCT_SCANNER_AMAZON_IMAGE_SEARCH_FALLBACK_PROVIDER,
+  amazonImageSearchPageUrl: DEFAULT_PRODUCT_SCANNER_AMAZON_IMAGE_SEARCH_PAGE_URL,
   playwrightSettingsOverrides: {},
   amazonCandidateEvaluator: createDefaultProductScannerAmazonCandidateEvaluator(),
   amazonCandidateEvaluatorTriage: createDefaultProductScannerAmazonCandidateEvaluator(),
@@ -225,6 +228,29 @@ const normalizeProductScannerAmazonImageSearchFallbackProvider = (
   value === 'google_lens_upload'
     ? value
     : DEFAULT_PRODUCT_SCANNER_AMAZON_IMAGE_SEARCH_FALLBACK_PROVIDER;
+
+const normalizeProductScannerAmazonImageSearchPageUrl = (
+  value: unknown
+): string | null => {
+  if (typeof value !== 'string') {
+    return DEFAULT_PRODUCT_SCANNER_AMAZON_IMAGE_SEARCH_PAGE_URL;
+  }
+
+  const trimmed = value.trim();
+  if (trimmed.length === 0) {
+    return DEFAULT_PRODUCT_SCANNER_AMAZON_IMAGE_SEARCH_PAGE_URL;
+  }
+
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      return DEFAULT_PRODUCT_SCANNER_AMAZON_IMAGE_SEARCH_PAGE_URL;
+    }
+    return parsed.toString().slice(0, 2048);
+  } catch {
+    return DEFAULT_PRODUCT_SCANNER_AMAZON_IMAGE_SEARCH_PAGE_URL;
+  }
+};
 
 const normalizeProductScannerManualVerificationTimeoutMs = (value: unknown): number => {
   if (typeof value !== 'number' || !Number.isFinite(value)) {
@@ -462,6 +488,9 @@ export const normalizeProductScannerSettings = (
       normalizeProductScannerAmazonImageSearchFallbackProvider(
         record['amazonImageSearchFallbackProvider']
       ),
+    amazonImageSearchPageUrl: normalizeProductScannerAmazonImageSearchPageUrl(
+      record['amazonImageSearchPageUrl']
+    ),
     playwrightSettingsOverrides:
       Object.keys(normalizedOverrides).length > 0
         ? normalizedOverrides
@@ -521,6 +550,7 @@ export const buildProductScannerSettingsDraft = (
     manualVerificationTimeoutMs: settings.manualVerificationTimeoutMs,
     amazonImageSearchProvider: settings.amazonImageSearchProvider,
     amazonImageSearchFallbackProvider: settings.amazonImageSearchFallbackProvider ?? null,
+    amazonImageSearchPageUrl: settings.amazonImageSearchPageUrl ?? '',
     amazonCandidateEvaluator:
       settings.amazonCandidateEvaluator ?? createDefaultProductScannerAmazonCandidateEvaluator(),
     amazonCandidateEvaluatorTriage:
@@ -592,6 +622,9 @@ export const buildPersistedProductScannerSettings = (
       normalizeProductScannerAmazonImageSearchFallbackProvider(
         draft.amazonImageSearchFallbackProvider
       ),
+    amazonImageSearchPageUrl: normalizeProductScannerAmazonImageSearchPageUrl(
+      draft.amazonImageSearchPageUrl
+    ),
     playwrightSettingsOverrides: buildPlaywrightSettingsOverrides(
       baseline,
       buildIntegrationConnectionPlaywrightSettings(draft.playwrightSettings)

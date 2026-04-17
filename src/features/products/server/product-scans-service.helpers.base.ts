@@ -169,6 +169,7 @@ export const createProductScanStartedRawResult = (input: {
   actionId?: string | null;
   selectorProfile?: string | null;
   imageSearchProvider?: string | null;
+  imageSearchPageUrl?: string | null;
   imageSearchProviderHistory?: unknown;
   allowManualVerification?: boolean;
   previousRunId?: string | null;
@@ -187,6 +188,7 @@ export const createProductScanStartedRawResult = (input: {
     ...(input.actionId ? { actionId: input.actionId } : {}),
     ...(input.selectorProfile ? { selectorProfile: input.selectorProfile } : {}),
     imageSearchProvider: input.imageSearchProvider ?? null,
+    ...(input.imageSearchPageUrl ? { imageSearchPageUrl: input.imageSearchPageUrl } : {}),
     ...(input.imageSearchProviderHistory !== undefined
       ? { imageSearchProviderHistory: input.imageSearchProviderHistory }
       : {}),

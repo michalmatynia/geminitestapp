@@ -88,6 +88,7 @@ const serializeProgrammableScriptFields = (
   | 'playwrightImportActionId'
   | 'playwrightImportCaptureRoutesJson'
   | 'playwrightFieldMapperJson'
+  | 'playwrightDraftMapperJson'
   | 'playwrightImportAutomationFlowJson'
 > => ({
   playwrightListingScript: connection.playwrightListingScript ?? null,
@@ -97,6 +98,7 @@ const serializeProgrammableScriptFields = (
   playwrightImportActionId: connection.playwrightImportActionId ?? null,
   playwrightImportCaptureRoutesJson: connection.playwrightImportCaptureRoutesJson ?? null,
   playwrightFieldMapperJson: connection.playwrightFieldMapperJson ?? null,
+  playwrightDraftMapperJson: connection.playwrightDraftMapperJson ?? null,
   playwrightImportAutomationFlowJson: connection.playwrightImportAutomationFlowJson ?? null,
 });
 

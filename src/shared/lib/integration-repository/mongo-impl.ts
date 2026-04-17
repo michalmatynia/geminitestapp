@@ -77,6 +77,7 @@ type IntegrationConnectionDocument = {
   playwrightImportBaseUrl?: string | null;
   playwrightImportCaptureRoutesJson?: string | null;
   playwrightFieldMapperJson?: string | null;
+  playwrightDraftMapperJson?: string | null;
   scanner1688StartUrl?: string | null;
   scanner1688LoginMode?: 'session_required' | 'manual_login';
   scanner1688DefaultSearchMode?: 'local_image' | 'image_url_fallback';

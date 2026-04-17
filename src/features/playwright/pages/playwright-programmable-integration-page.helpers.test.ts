@@ -4,12 +4,22 @@ import type { PlaywrightAction } from '@/shared/contracts/playwright-steps';
 import { defaultPlaywrightActionExecutionSettings } from '@/shared/contracts/playwright-steps';
 
 import {
+  buildDraftMapperAutomationFlowTemplate,
+  buildDraftMapperPreviewAutomationFlowTemplate,
+  buildDraftMapperResilientAutomationFlowTemplate,
   buildProgrammableActionOptions,
   buildProgrammableConnectionPayload,
+  connectionToProgrammableDraftMapperRows,
   createEmptyProgrammableCaptureRoute,
   parseProgrammableCaptureRouteConfigJson,
   serializeProgrammableFieldMapperRows,
+  createEmptyProgrammableDraftMapperRule,
+  PROGRAMMABLE_DRAFT_TARGET_OPTIONS,
+  PROGRAMMABLE_DRAFT_TRANSFORM_OPTIONS,
 } from './playwright-programmable-integration-page.helpers';
+import {
+  serializePlaywrightDraftMapperRows,
+} from '@/features/integrations/services/playwright-listing/draft-mapper';
 
 const buildAction = (overrides: Partial<PlaywrightAction>): PlaywrightAction => ({
   id: 'action',
@@ -102,6 +112,18 @@ describe('playwrightProgrammableIntegrationPage helpers', () => {
         importActionId: ' ',
         captureRoutes: [],
         appearanceMode: 'grid',
+        draftMapperRows: [
+          {
+            id: 'draft-row-a',
+            enabled: true,
+            targetPath: 'name_en',
+            mode: 'scraped',
+            sourcePath: ' title ',
+            staticValue: '',
+            transform: 'trim',
+            required: true,
+          },
+        ],
         fieldMapperRows: [{ id: 'row-a', sourceKey: ' source.title ', targetField: 'title' }],
         payloadPatch: { custom: true },
       })
@@ -116,7 +138,145 @@ describe('playwrightProgrammableIntegrationPage helpers', () => {
       playwrightFieldMapperJson: JSON.stringify([
         { sourceKey: 'source.title', targetField: 'title' },
       ]),
+      playwrightDraftMapperJson: JSON.stringify([
+        {
+          enabled: true,
+          targetPath: 'name_en',
+          mode: 'scraped',
+          sourcePath: 'title',
+          staticValue: '',
+          transform: 'trim',
+          required: true,
+        },
+      ]),
       custom: true,
+    });
+  });
+
+  it('round-trips programmable draft mapper rows and exposes draft mapper options', () => {
+    const parsedRows = connectionToProgrammableDraftMapperRows({
+      id: 'connection-1',
+      integrationId: 'integration-1',
+      name: 'Programmable',
+      playwrightDraftMapperJson: JSON.stringify([
+        {
+          enabled: true,
+          targetPath: 'catalogIds',
+          mode: 'static',
+          sourcePath: '',
+          staticValue: '["catalog-a"]',
+          transform: 'string_array',
+          required: true,
+        },
+      ]),
+    } as never);
+
+    expect(parsedRows).toHaveLength(1);
+    expect(parsedRows[0]).toMatchObject({
+      enabled: true,
+      targetPath: 'catalogIds',
+      mode: 'static',
+      staticValue: '["catalog-a"]',
+      transform: 'string_array',
+      required: true,
+    });
+    expect(serializePlaywrightDraftMapperRows(parsedRows)).toBe(
+      JSON.stringify([
+        {
+          enabled: true,
+          targetPath: 'catalogIds',
+          mode: 'static',
+          sourcePath: '',
+          staticValue: '["catalog-a"]',
+          transform: 'string_array',
+          required: true,
+        },
+      ])
+    );
+    expect(createEmptyProgrammableDraftMapperRule()).toMatchObject({
+      enabled: true,
+      targetPath: 'name_en',
+      mode: 'scraped',
+      transform: 'trim',
+      required: false,
+    });
+    expect(PROGRAMMABLE_DRAFT_TARGET_OPTIONS).toContainEqual({
+      value: 'catalogIds',
+      label: 'catalogIds',
+    });
+    expect(PROGRAMMABLE_DRAFT_TRANSFORM_OPTIONS).toContainEqual({
+      value: 'string_array',
+      label: 'string_array',
+    });
+  });
+
+  it('builds the draft-mapper automation flow template', () => {
+    expect(JSON.parse(buildDraftMapperAutomationFlowTemplate())).toEqual({
+      name: 'Draft mapper import',
+      blocks: [
+        {
+          kind: 'for_each',
+          items: { type: 'path', path: 'vars.rawProducts' },
+          blocks: [
+            { kind: 'map_draft' },
+            { kind: 'create_draft' },
+            {
+              kind: 'append_result',
+              resultKey: 'drafts',
+              value: { type: 'path', path: 'current' },
+            },
+          ],
+        },
+      ],
+    });
+  });
+
+  it('builds the draft-mapper preview automation flow template', () => {
+    expect(JSON.parse(buildDraftMapperPreviewAutomationFlowTemplate())).toEqual({
+      name: 'Draft mapper preview',
+      blocks: [
+        {
+          kind: 'for_each',
+          items: { type: 'path', path: 'vars.rawProducts' },
+          blocks: [
+            { kind: 'map_draft' },
+            {
+              kind: 'append_result',
+              resultKey: 'mappedDrafts',
+              value: { type: 'path', path: 'current' },
+            },
+          ],
+        },
+      ],
+    });
+  });
+
+  it('builds the draft-mapper resilient automation flow template', () => {
+    expect(JSON.parse(buildDraftMapperResilientAutomationFlowTemplate())).toEqual({
+      name: 'Draft mapper resilient import',
+      blocks: [
+        {
+          kind: 'for_each',
+          items: { type: 'path', path: 'vars.rawProducts' },
+          blocks: [
+            { kind: 'map_draft' },
+            {
+              kind: 'append_result',
+              resultKey: 'mappedDrafts',
+              value: { type: 'path', path: 'current' },
+            },
+            {
+              kind: 'create_draft',
+              onError: 'continue',
+            },
+            {
+              kind: 'append_result',
+              resultKey: 'draftWrites',
+              value: { type: 'path', path: 'current' },
+            },
+          ],
+        },
+      ],
     });
   });
 });

@@ -69,6 +69,8 @@ export const integrationConnectionSchema = namedDtoSchema.extend({
   playwrightImportCaptureRoutesJson: z.string().nullable().optional(),
   /** JSON-encoded key→field mapping: { sourceKey: string, targetField: string }[] */
   playwrightFieldMapperJson: z.string().nullable().optional(),
+  /** JSON-encoded draft mapper definition used to build product draft payload previews and writes. */
+  playwrightDraftMapperJson: z.string().nullable().optional(),
   /** JSON-encoded import automation flow definition executed after raw product extraction. */
   playwrightImportAutomationFlowJson: z.string().nullable().optional(),
   playwrightLegacyBrowserMigration: programmablePlaywrightLegacyBrowserMigrationSchema

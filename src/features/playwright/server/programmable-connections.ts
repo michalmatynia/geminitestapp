@@ -134,6 +134,7 @@ const buildProgrammableConnectionScriptInput = (
       data.playwrightImportCaptureRoutesJson
     ),
     ...withNullableStringField('playwrightFieldMapperJson', data.playwrightFieldMapperJson),
+    ...withNullableStringField('playwrightDraftMapperJson', data.playwrightDraftMapperJson),
     ...withNullableStringField(
       'playwrightImportAutomationFlowJson',
       data.playwrightImportAutomationFlowJson

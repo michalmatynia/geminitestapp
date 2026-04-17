@@ -3,8 +3,10 @@
 import { useEffect, useState, type Dispatch, type SetStateAction } from 'react';
 
 import {
+  connectionToProgrammableDraftMapperRows,
   connectionToProgrammableFieldMapperRows,
   parseProgrammableCaptureRouteConfigJson,
+  type ProgrammableDraftMapperRow,
   type ProgrammableFieldMapperRow,
 } from '@/features/playwright/pages/playwright-programmable-integration-page.helpers';
 import type {
@@ -18,6 +20,7 @@ type DraftFields = {
   automationFlowJson: string;
   captureRoutes: PlaywrightConfigCaptureRoute[];
   connectionName: string;
+  draftMapperRows: ProgrammableDraftMapperRow[];
   fieldMapperRows: ProgrammableFieldMapperRow[];
   importActionId: string;
   importBaseUrl: string;
@@ -35,6 +38,7 @@ const readSelectedConnectionDraft = (
       automationFlowJson: '',
       captureRoutes: [],
       connectionName: '',
+      draftMapperRows: [],
       fieldMapperRows: [],
       importActionId: '',
       importBaseUrl: '',
@@ -53,6 +57,7 @@ const readSelectedConnectionDraft = (
     automationFlowJson: selectedConnection.playwrightImportAutomationFlowJson ?? '',
     captureRoutes: captureConfig.routes,
     connectionName: selectedConnection.name,
+    draftMapperRows: connectionToProgrammableDraftMapperRows(selectedConnection),
     fieldMapperRows: connectionToProgrammableFieldMapperRows(selectedConnection),
     importActionId: selectedConnection.playwrightImportActionId ?? '',
     importBaseUrl: selectedConnection.playwrightImportBaseUrl ?? '',
@@ -107,6 +112,7 @@ export const usePlaywrightProgrammableConnectionDraft = (
     setAutomationFlowJson: Dispatch<SetStateAction<string>>;
     setCaptureRoutes: Dispatch<SetStateAction<PlaywrightConfigCaptureRoute[]>>;
     setConnectionName: Dispatch<SetStateAction<string>>;
+    setDraftMapperRows: Dispatch<SetStateAction<ProgrammableDraftMapperRow[]>>;
     setFieldMapperRows: Dispatch<SetStateAction<ProgrammableFieldMapperRow[]>>;
     setImportActionId: Dispatch<SetStateAction<string>>;
     setImportBaseUrl: Dispatch<SetStateAction<string>>;
@@ -124,6 +130,7 @@ export const usePlaywrightProgrammableConnectionDraft = (
   const [importActionId, setImportActionId] = useState('');
   const [captureRoutes, setCaptureRoutes] = useState<PlaywrightConfigCaptureRoute[]>([]);
   const [appearanceMode, setAppearanceMode] = useState('');
+  const [draftMapperRows, setDraftMapperRows] = useState<ProgrammableDraftMapperRow[]>([]);
   const [fieldMapperRows, setFieldMapperRows] = useState<ProgrammableFieldMapperRow[]>([]);
 
   useEffect(() => {
@@ -133,6 +140,7 @@ export const usePlaywrightProgrammableConnectionDraft = (
     setAutomationFlowJson(draft.automationFlowJson);
     setCaptureRoutes(draft.captureRoutes);
     setConnectionName(draft.connectionName);
+    setDraftMapperRows(draft.draftMapperRows);
     setFieldMapperRows(draft.fieldMapperRows);
     setImportActionId(draft.importActionId);
     setImportBaseUrl(draft.importBaseUrl);
@@ -148,6 +156,7 @@ export const usePlaywrightProgrammableConnectionDraft = (
     automationFlowJson,
     captureRoutes,
     connectionName,
+    draftMapperRows,
     fieldMapperRows,
     importActionId,
     importBaseUrl,
@@ -158,6 +167,7 @@ export const usePlaywrightProgrammableConnectionDraft = (
     setAutomationFlowJson,
     setCaptureRoutes,
     setConnectionName,
+    setDraftMapperRows,
     setFieldMapperRows,
     setImportActionId,
     setImportBaseUrl,

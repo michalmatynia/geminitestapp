@@ -14,7 +14,10 @@ import type {
   usePromotePlaywrightBrowserOwnership,
   useTestPlaywrightProgrammableConnection,
 } from '@/features/playwright/hooks/usePlaywrightProgrammableAdminMutations';
-import type { ProgrammableFieldMapperRow } from '@/features/playwright/pages/playwright-programmable-integration-page.helpers';
+import type {
+  ProgrammableDraftMapperRow,
+  ProgrammableFieldMapperRow,
+} from '@/features/playwright/pages/playwright-programmable-integration-page.helpers';
 import type { buildManagedPlaywrightActionSummaries } from '@/features/playwright/utils/playwright-managed-runtime-actions';
 import type { buildProgrammableSessionDiagnostics } from '@/features/playwright/utils/playwright-programmable-session-diagnostics';
 import type { buildProgrammableSessionPreview } from '@/features/playwright/utils/playwright-programmable-session-preview';
@@ -32,14 +35,20 @@ export type ProgrammableConnections = NonNullable<ProgrammableConnectionsQuery['
 export type ActionOption = { label: string; value: string };
 
 export type PlaywrightProgrammableIntegrationPageActions = {
+  handleAddDraftMapping: () => void;
   handleAddFieldMapping: () => void;
   handleCleanupAllLegacyBrowserFields: () => Promise<void>;
   handleCleanupLegacyBrowserFields: () => Promise<void>;
   handleCreateConnection: () => Promise<void>;
+  handleDeleteDraftMapping: (rowId: string) => void;
   handleDeleteFieldMapping: (rowId: string) => void;
   handlePromoteConnectionSettings: () => Promise<void>;
   handleRunFlow: () => Promise<void>;
   handleRunTest: (scriptType: 'listing' | 'import') => Promise<void>;
+  handleUpdateDraftMapping: (
+    rowId: string,
+    patch: Partial<Omit<ProgrammableDraftMapperRow, 'id'>>
+  ) => void;
   handleUpdateFieldMapping: (
     rowId: string,
     patch: Partial<Omit<ProgrammableFieldMapperRow, 'id'>>
@@ -65,6 +74,7 @@ export type PlaywrightProgrammableIntegrationPageActionArgs = {
   connectionName: string;
   connections: ProgrammableConnections;
   connectionsRefetch?: (() => Promise<unknown>) | undefined;
+  draftMapperRows: ProgrammableDraftMapperRow[];
   fieldMapperRows: ProgrammableFieldMapperRow[];
   importActionId: string;
   importBaseUrl: string;
@@ -84,6 +94,7 @@ export type PlaywrightProgrammableIntegrationPageActionArgs = {
   setAutomationFlowJson: StateSetter<string>;
   setCaptureRoutes: StateSetter<PlaywrightConfigCaptureRoute[]>;
   setConnectionName: StateSetter<string>;
+  setDraftMapperRows: StateSetter<ProgrammableDraftMapperRow[]>;
   setFieldMapperRows: StateSetter<ProgrammableFieldMapperRow[]>;
   setImportActionId: StateSetter<string>;
   setImportBaseUrl: StateSetter<string>;
@@ -126,6 +137,7 @@ export type PlaywrightProgrammableIntegrationPageModel =
     connectionsQuery: ProgrammableConnectionsQuery;
     cleanupAllBrowserPersistence: ReturnType<typeof useCleanupAllPlaywrightBrowserPersistence>;
     cleanupBrowserPersistence: ReturnType<typeof useCleanupPlaywrightBrowserPersistence>;
+    draftMapperRows: ProgrammableDraftMapperRow[];
     fieldMapperRows: ProgrammableFieldMapperRow[];
     importActionId: string;
     importActionOptions: ActionOption[];
@@ -157,6 +169,7 @@ export type PlaywrightProgrammableIntegrationPageModel =
     setAutomationFlowJson: StateSetter<string>;
     setCaptureRoutes: StateSetter<PlaywrightConfigCaptureRoute[]>;
     setConnectionName: StateSetter<string>;
+    setDraftMapperRows: StateSetter<ProgrammableDraftMapperRow[]>;
     setImportActionId: StateSetter<string>;
     setImportBaseUrl: StateSetter<string>;
     setImportScript: StateSetter<string>;

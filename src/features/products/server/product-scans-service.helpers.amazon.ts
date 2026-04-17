@@ -334,6 +334,34 @@ export const normalizeAmazonImageSearchProvider = (
     ? (value)
     : null;
 
+export const normalizeAmazonImageSearchPageUrl = (value: unknown): string | null => {
+  const rawUrl = readOptionalString(value, PRODUCT_SCAN_URL_MAX_LENGTH);
+  if (rawUrl === null) {
+    return null;
+  }
+
+  try {
+    const parsed = new URL(rawUrl);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      return null;
+    }
+    return parsed.toString().slice(0, PRODUCT_SCAN_URL_MAX_LENGTH);
+  } catch {
+    return null;
+  }
+};
+
+export const resolveAmazonImageSearchPageUrl = (
+  rawResult: unknown,
+  scannerSettings: ReturnType<typeof createDefaultProductScannerSettings>
+): string | null => {
+  const rawRecord = toRecord(rawResult);
+  return (
+    normalizeAmazonImageSearchPageUrl(rawRecord?.['imageSearchPageUrl']) ??
+    normalizeAmazonImageSearchPageUrl(scannerSettings.amazonImageSearchPageUrl)
+  );
+};
+
 export const resolveAmazonImageSearchProviderHistory = (
   rawResult: unknown,
   currentProvider: ReturnType<typeof createDefaultProductScannerSettings>['amazonImageSearchProvider']
@@ -1078,6 +1106,7 @@ export const buildAmazonScanRequestInput = (input: {
   imageCandidates: ProductScanRecord['imageCandidates'];
   runtimeKey?: string | null;
   imageSearchProvider?: ProductScannerAmazonImageSearchProvider | null;
+  imageSearchPageUrl?: string | null;
   selectorProfile?: string | null;
   batchIndex?: number;
   allowManualVerification: boolean;
@@ -1103,6 +1132,7 @@ export const buildAmazonScanRequestInput = (input: {
     input.imageSearchProvider === 'google_lens_upload')
       ? input.imageSearchProvider
       : 'google_images_upload',
+  imageSearchPageUrl: normalizeAmazonImageSearchPageUrl(input.imageSearchPageUrl),
   selectorProfile: readOptionalString(input.selectorProfile, 120) ?? 'amazon',
   batchIndex:
     typeof input.batchIndex === 'number' && Number.isFinite(input.batchIndex) && input.batchIndex > 0

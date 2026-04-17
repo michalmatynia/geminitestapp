@@ -22,6 +22,16 @@ import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 const toRecord = (value: unknown): Record<string, unknown> =>
   value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
 
+// Listing scripts time out at most 4 minutes (scripted Tradera). Allow 15 minutes before
+// treating a stuck 'queued' record as stale so relist isn't blocked indefinitely.
+const QUEUED_STALE_THRESHOLD_MS = 15 * 60 * 1000;
+
+const isQueuedStatusStale = (updatedAt: string | Date | null | undefined): boolean => {
+  if (!updatedAt) return true;
+  const ts = typeof updatedAt === 'string' ? new Date(updatedAt).getTime() : updatedAt.getTime();
+  return Number.isFinite(ts) && Date.now() - ts > QUEUED_STALE_THRESHOLD_MS;
+};
+
 export async function POST_handler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
@@ -72,10 +82,13 @@ export async function POST_handler(
   }
 
   const normalizedStatus = (resolved.listing.status ?? '').trim().toLowerCase();
+  const isStaleQueued =
+    normalizedStatus === 'queued' && isQueuedStatusStale(resolved.listing.updatedAt);
   if (
-    normalizedStatus === 'running' ||
-    normalizedStatus === 'queued_relist' ||
-    normalizedStatus === 'queued'
+    !isStaleQueued &&
+    (normalizedStatus === 'running' ||
+      normalizedStatus === 'queued_relist' ||
+      normalizedStatus === 'queued')
   ) {
     const response: ProductListingRelistResponse = {
       queued: true,

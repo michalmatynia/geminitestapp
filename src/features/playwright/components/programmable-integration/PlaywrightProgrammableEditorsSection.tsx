@@ -3,6 +3,9 @@
 import React from 'react';
 
 import {
+  buildDraftMapperAutomationFlowTemplate,
+  buildDraftMapperPreviewAutomationFlowTemplate,
+  buildDraftMapperResilientAutomationFlowTemplate,
   IMPORT_AUTOMATION_FLOW_PLACEHOLDER,
   IMPORT_SCRIPT_PLACEHOLDER,
   LISTING_SCRIPT_PLACEHOLDER,
@@ -19,11 +22,15 @@ type Props = Pick<
   | 'appearanceMode'
   | 'automationFlowJson'
   | 'captureRoutes'
+  | 'draftMapperRows'
+  | 'handleAddDraftMapping'
+  | 'handleDeleteDraftMapping'
   | 'fieldMapperRows'
   | 'handleAddFieldMapping'
   | 'handleDeleteFieldMapping'
   | 'handleRunFlow'
   | 'handleRunTest'
+  | 'handleUpdateDraftMapping'
   | 'handleUpdateFieldMapping'
   | 'importBaseUrl'
   | 'importScript'
@@ -123,6 +130,7 @@ function ImportConfigurationCard({
   appearanceMode,
   automationFlowJson,
   captureRoutes,
+  draftMapperRows,
   handleRunFlow,
   handleRunTest,
   importBaseUrl,
@@ -139,6 +147,7 @@ function ImportConfigurationCard({
   | 'appearanceMode'
   | 'automationFlowJson'
   | 'captureRoutes'
+  | 'draftMapperRows'
   | 'handleRunFlow'
   | 'handleRunTest'
   | 'importBaseUrl'
@@ -181,6 +190,7 @@ function ImportConfigurationCard({
           <ImportScriptEditor importScript={importScript} setImportScript={setImportScript} />
           <ImportAutomationFlowEditor
             automationFlowJson={automationFlowJson}
+            draftMapperRows={draftMapperRows}
             setAutomationFlowJson={setAutomationFlowJson}
           />
         </div>
@@ -251,10 +261,49 @@ function ImportScriptEditor({
 
 function ImportAutomationFlowEditor({
   automationFlowJson,
+  draftMapperRows,
   setAutomationFlowJson,
-}: Pick<Props, 'automationFlowJson' | 'setAutomationFlowJson'>): React.JSX.Element {
+}: Pick<Props, 'automationFlowJson' | 'draftMapperRows' | 'setAutomationFlowJson'>): React.JSX.Element {
+  const hasDraftMapperRows = draftMapperRows.length > 0;
+
   return (
     <FormField label='Automation Flow JSON'>
+      <div className='mb-3 flex flex-wrap items-center gap-2'>
+        <Button
+          type='button'
+          variant='outline'
+          size='sm'
+          onClick={() => setAutomationFlowJson(buildDraftMapperPreviewAutomationFlowTemplate())}
+          disabled={!hasDraftMapperRows}
+        >
+          Use Draft Mapper Preview Template
+        </Button>
+        <Button
+          type='button'
+          variant='outline'
+          size='sm'
+          onClick={() => setAutomationFlowJson(buildDraftMapperResilientAutomationFlowTemplate())}
+          disabled={!hasDraftMapperRows}
+        >
+          Use Resilient Draft Mapper Flow Template
+        </Button>
+        <Button
+          type='button'
+          variant='outline'
+          size='sm'
+          onClick={() => setAutomationFlowJson(buildDraftMapperAutomationFlowTemplate())}
+          disabled={!hasDraftMapperRows}
+        >
+          Use Draft Mapper Flow Template
+        </Button>
+        <span className='text-xs text-gray-400'>
+          Preview template appends <code className='mx-1'>mappedDrafts</code> without writes.
+          Resilient flow captures <code className='mx-1'>mappedDrafts</code> and
+          <code className='mx-1'>draftWrites</code> while continuing on per-item write errors.
+          Flow template adds <code className='mx-1'>create_draft</code> and appends created
+          drafts.
+        </span>
+      </div>
       <Textarea
         value={automationFlowJson}
         onChange={(event) => setAutomationFlowJson(event.target.value)}
@@ -310,6 +359,12 @@ const formatClipboardJson = (value: unknown): string => {
 };
 
 const formatCsvCell = (value: string): string => `"${value.replaceAll('"', '""')}"`;
+
+const toFileSlug = (value: string): string =>
+  value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
 
 const describePreviewItem = (value: unknown, fallback: string): string => {
   if (!isObjectRecord(value)) {
@@ -548,6 +603,21 @@ const WRITE_STATUS_FILTER_ORDER: WriteStatus[] = [
 const getWriteStatusFilterLabel = (status: WriteStatusFilter): string =>
   status === 'all' ? 'all' : getWriteStatusPresentation(status).label;
 
+const isFailedWriteStatusRow = (row: ParsedWriteOutcomeRow): boolean =>
+  row.status === 'failed' || row.errorMessage !== null;
+
+const hasWriteStatusFailures = (rows: ParsedWriteOutcomeRow[]): boolean =>
+  rows.some((row) => isFailedWriteStatusRow(row));
+
+const getDefaultWriteStatusSortMode = (
+  rows: ParsedWriteOutcomeRow[]
+): WriteStatusSortMode => (hasWriteStatusFailures(rows) ? 'failures_first' : 'input_order');
+
+const countWriteStatusRows = (
+  rows: ParsedWriteOutcomeRow[],
+  status: WriteStatus
+): number => rows.filter((row) => row.status === status).length;
+
 const sortWriteRows = (
   rows: ParsedWriteOutcomeRow[],
   mode: WriteStatusSortMode
@@ -557,8 +627,8 @@ const sortWriteRows = (
   }
 
   return [...rows].sort((left, right) => {
-    const leftPriority = left.status === 'failed' || left.errorMessage !== null ? 0 : 1;
-    const rightPriority = right.status === 'failed' || right.errorMessage !== null ? 0 : 1;
+    const leftPriority = isFailedWriteStatusRow(left) ? 0 : 1;
+    const rightPriority = isFailedWriteStatusRow(right) ? 0 : 1;
 
     if (leftPriority !== rightPriority) {
       return leftPriority - rightPriority;
@@ -603,23 +673,70 @@ const parseWriteOutcomeRows = ({
   });
 };
 
+const parseFlowResultWriteRows = ({
+  executionMode,
+  value,
+}: {
+  executionMode: string | null;
+  value: unknown;
+}): ParsedWriteOutcomeRow[] => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.map((item, index) => {
+    if (isObjectRecord(item) && item['kind'] === 'write_error') {
+      return {
+        createdRecord: null,
+        errorMessage: getStringValue(item['errorMessage']),
+        index,
+        payloadRecord: item['payload'],
+        status: 'failed' as const,
+      };
+    }
+
+    if (executionMode === 'dry_run') {
+      return {
+        createdRecord: null,
+        errorMessage: null,
+        index,
+        payloadRecord: item,
+        status: 'dry_run' as const,
+      };
+    }
+
+    return {
+      createdRecord: item,
+      errorMessage: null,
+      index,
+      payloadRecord: null,
+      status: 'created' as const,
+    };
+  });
+};
+
 function WriteStatusSection({
   explicitRows = [],
   createdRecords,
+  defaultExpanded = false,
+  defaultSortMode = 'input_order',
   executionMode,
   payloadRecords,
   title,
 }: {
   explicitRows?: ParsedWriteOutcomeRow[];
   createdRecords: unknown[];
+  defaultExpanded?: boolean;
+  defaultSortMode?: WriteStatusSortMode;
   executionMode: string | null;
   payloadRecords: unknown[];
   title: string;
 }): React.JSX.Element | null {
   const { toast } = useToast();
+  const [isExpanded, setIsExpanded] = React.useState(defaultExpanded);
   const [showAll, setShowAll] = React.useState(false);
   const [statusFilter, setStatusFilter] = React.useState<WriteStatusFilter>('all');
-  const [sortMode, setSortMode] = React.useState<WriteStatusSortMode>('input_order');
+  const [sortMode, setSortMode] = React.useState<WriteStatusSortMode>(defaultSortMode);
   const rows =
     explicitRows.length > 0
       ? explicitRows
@@ -648,7 +765,12 @@ function WriteStatusSection({
     statusFilter === 'all' ? rows : rows.filter((row) => row.status === statusFilter);
   const sortedRows = sortWriteRows(filteredRows, sortMode);
   const visibleRows = showAll ? sortedRows : sortedRows.slice(0, PREVIEW_ITEM_LIMIT);
-  const failedRows = rows.filter((row) => row.status === 'failed' || row.errorMessage !== null);
+  const failedRows = rows.filter((row) => isFailedWriteStatusRow(row));
+  const createdRowCount = countWriteStatusRows(rows, 'created');
+  const dryRunRowCount = countWriteStatusRows(rows, 'dry_run');
+  const noWriteRowCount = countWriteStatusRows(rows, 'no_write');
+  const unknownRowCount = countWriteStatusRows(rows, 'unknown');
+  const titleSlug = toFileSlug(title) || 'write-status';
   const filterOptions = [
     {
       count: rowCount,
@@ -689,11 +811,73 @@ function WriteStatusSection({
     },
     [toast]
   );
+  const handleDownloadText = React.useCallback(
+    ({
+      body,
+      filename,
+      label,
+      mimeType,
+    }: {
+      body: string;
+      filename: string;
+      label: string;
+      mimeType: string;
+    }) => {
+      try {
+        if (typeof URL.createObjectURL !== 'function') {
+          throw new Error('Download unavailable');
+        }
+
+        const blob = new Blob([body], { type: mimeType });
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = filename;
+        anchor.click();
+        URL.revokeObjectURL(url);
+        toast(`${label} download started`, { variant: 'success' });
+      } catch {
+        toast('Failed to download file', { variant: 'error' });
+      }
+    },
+    [toast]
+  );
 
   return (
-    <details className='rounded-lg border border-border/50 bg-background/30'>
-      <summary className='cursor-pointer px-4 py-3 text-sm font-medium text-gray-200'>
-        {title} ({rowCount})
+    <details
+      className='rounded-lg border border-border/50 bg-background/30'
+      open={isExpanded}
+      onToggle={(event) => setIsExpanded((event.currentTarget as HTMLDetailsElement).open)}
+    >
+      <summary className='flex cursor-pointer flex-wrap items-center gap-2 px-4 py-3 text-sm font-medium text-gray-200'>
+        <span>
+          {title} ({rowCount})
+        </span>
+        {createdRowCount > 0 ? (
+          <span className='rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-emerald-200'>
+            {createdRowCount} created
+          </span>
+        ) : null}
+        {dryRunRowCount > 0 ? (
+          <span className='rounded-full border border-blue-500/30 bg-blue-500/10 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-blue-200'>
+            {dryRunRowCount} dry-run
+          </span>
+        ) : null}
+        {noWriteRowCount > 0 ? (
+          <span className='rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-amber-200'>
+            {noWriteRowCount} no-write
+          </span>
+        ) : null}
+        {unknownRowCount > 0 ? (
+          <span className='rounded-full border border-border/40 bg-background/40 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-gray-300'>
+            {unknownRowCount} unknown
+          </span>
+        ) : null}
+        {failedRows.length > 0 ? (
+          <span className='rounded-full border border-red-500/30 bg-red-500/10 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-red-200'>
+            {failedRows.length} failed
+          </span>
+        ) : null}
       </summary>
       <div className='space-y-3 border-t border-border/50 bg-background/40 p-4'>
         <p className='text-xs text-gray-400'>
@@ -784,6 +968,36 @@ function WriteStatusSection({
             }}
           >
             Copy filtered outcomes CSV ({sortedRows.length})
+          </Button>
+          <Button
+            type='button'
+            variant='ghost'
+            size='sm'
+            onClick={() => {
+              handleDownloadText({
+                body: formatClipboardJson(sortedRows.map((row) => serializeWriteOutcomeRow(row))),
+                filename: `${titleSlug}-filtered-outcomes.json`,
+                label: `Filtered outcomes JSON for ${title}`,
+                mimeType: 'application/json;charset=utf-8',
+              });
+            }}
+          >
+            Download filtered outcomes JSON ({sortedRows.length})
+          </Button>
+          <Button
+            type='button'
+            variant='ghost'
+            size='sm'
+            onClick={() => {
+              handleDownloadText({
+                body: formatWriteOutcomeRowsCsv(sortedRows),
+                filename: `${titleSlug}-filtered-outcomes.csv`,
+                label: `Filtered outcomes CSV for ${title}`,
+                mimeType: 'text/csv;charset=utf-8',
+              });
+            }}
+          >
+            Download filtered outcomes CSV ({sortedRows.length})
           </Button>
           {failedRows.length > 0 ? (
             <>
@@ -982,12 +1196,18 @@ function TestResultCard({ testResultJson }: Pick<Props, 'testResultJson'>): Reac
     result !== null && isObjectRecord(result['automationFlow'])
       ? result['automationFlow']
       : null;
+  const flowResults =
+    automationFlow !== null && isObjectRecord(automationFlow['results'])
+      ? automationFlow['results']
+      : null;
   const rawProducts = toUnknownArray(result?.['rawProducts']);
   const mappedProducts = toUnknownArray(result?.['mappedProducts']);
   const draftPayloads = toUnknownArray(automationFlow?.['draftPayloads']);
   const drafts = toUnknownArray(automationFlow?.['drafts']);
   const productPayloads = toUnknownArray(automationFlow?.['productPayloads']);
   const products = toUnknownArray(automationFlow?.['products']);
+  const mappedDrafts = toUnknownArray(flowResults?.['mappedDrafts']);
+  const draftWrites = toUnknownArray(flowResults?.['draftWrites']);
   const draftWriteOutcomeRows = parseWriteOutcomeRows({
     kind: 'draft',
     value: automationFlow?.['writeOutcomes'],
@@ -1002,17 +1222,26 @@ function TestResultCard({ testResultJson }: Pick<Props, 'testResultJson'>): Reac
   const draftsCount = getArrayCount(automationFlow?.['drafts']);
   const productPayloadsCount = getArrayCount(automationFlow?.['productPayloads']);
   const productsCount = getArrayCount(automationFlow?.['products']);
+  const mappedDraftsCount = getArrayCount(flowResults?.['mappedDrafts']);
+  const draftWritesCount = getArrayCount(flowResults?.['draftWrites']);
   const executionMode = getStringValue(automationFlow?.['executionMode']);
+  const draftWriteResultRows = parseFlowResultWriteRows({
+    executionMode,
+    value: flowResults?.['draftWrites'],
+  });
   const flowName =
     automationFlow !== null && isObjectRecord(automationFlow['flow'])
       ? getStringValue(automationFlow['flow']['name'])
       : null;
   const resultBuckets =
-    automationFlow !== null && isObjectRecord(automationFlow['results'])
-      ? Object.entries(automationFlow['results']).filter(
+    flowResults !== null
+      ? Object.entries(flowResults).filter(
           (entry): entry is [string, unknown[]] => Array.isArray(entry[1])
         )
       : [];
+  const genericResultBuckets = resultBuckets.filter(
+    ([key]) => key !== 'mappedDrafts' && key !== 'draftWrites'
+  );
   const input =
     isObjectRecord(parsedResult['input']) ? parsedResult['input'] : null;
   const inputFieldCount = input === null ? 0 : Object.keys(input).length;
@@ -1025,6 +1254,8 @@ function TestResultCard({ testResultJson }: Pick<Props, 'testResultJson'>): Reac
     drafts.length > 0 ||
     productPayloads.length > 0 ||
     products.length > 0 ||
+    mappedDrafts.length > 0 ||
+    draftWrites.length > 0 ||
     resultBuckets.length > 0;
 
   return (
@@ -1061,8 +1292,10 @@ function TestResultCard({ testResultJson }: Pick<Props, 'testResultJson'>): Reac
         <ResultMetric label='Input Fields' value={inputFieldCount} />
         <ResultMetric label='Raw Products' value={rawProductsCount} />
         <ResultMetric label='Mapped Products' value={mappedProductsCount} />
+        <ResultMetric label='Mapped Drafts' value={mappedDraftsCount} />
         <ResultMetric label='Draft Payloads' value={draftPayloadsCount} />
         <ResultMetric label='Drafts Created' value={draftsCount} />
+        <ResultMetric label='Draft Write Results' value={draftWritesCount} />
         <ResultMetric label='Product Payloads' value={productPayloadsCount} />
         <ResultMetric label='Products Created' value={productsCount} />
         <ResultMetric
@@ -1089,6 +1322,8 @@ function TestResultCard({ testResultJson }: Pick<Props, 'testResultJson'>): Reac
         <WriteStatusSection
           title='Draft Write Status'
           explicitRows={draftWriteOutcomeRows}
+          defaultExpanded={hasWriteStatusFailures(draftWriteOutcomeRows)}
+          defaultSortMode={getDefaultWriteStatusSortMode(draftWriteOutcomeRows)}
           executionMode={executionMode}
           payloadRecords={draftPayloads}
           createdRecords={drafts}
@@ -1096,9 +1331,20 @@ function TestResultCard({ testResultJson }: Pick<Props, 'testResultJson'>): Reac
         <WriteStatusSection
           title='Product Write Status'
           explicitRows={productWriteOutcomeRows}
+          defaultExpanded={hasWriteStatusFailures(productWriteOutcomeRows)}
+          defaultSortMode={getDefaultWriteStatusSortMode(productWriteOutcomeRows)}
           executionMode={executionMode}
           payloadRecords={productPayloads}
           createdRecords={products}
+        />
+        <WriteStatusSection
+          title='Draft Write Result Status'
+          explicitRows={draftWriteResultRows}
+          defaultExpanded={hasWriteStatusFailures(draftWriteResultRows)}
+          defaultSortMode={getDefaultWriteStatusSortMode(draftWriteResultRows)}
+          executionMode={executionMode}
+          payloadRecords={[]}
+          createdRecords={[]}
         />
         {input !== null ? <PreviewBlock title='Input Preview' value={input} /> : null}
         {result !== null && rawResult !== undefined ? (
@@ -1106,6 +1352,7 @@ function TestResultCard({ testResultJson }: Pick<Props, 'testResultJson'>): Reac
         ) : null}
         <ArrayPreviewSection title='Raw Products Preview' items={rawProducts} />
         <ArrayPreviewSection title='Mapped Products Preview' items={mappedProducts} />
+        <ArrayPreviewSection title='Mapped Drafts Preview' items={mappedDrafts} />
         <ArrayPreviewSection title='Draft Payloads Preview' items={draftPayloads} />
         <ArrayPreviewSection title='Drafts Preview' items={drafts} />
         <ArrayPreviewSection title='Product Payloads Preview' items={productPayloads} />
@@ -1113,7 +1360,7 @@ function TestResultCard({ testResultJson }: Pick<Props, 'testResultJson'>): Reac
         {!hasImportPreviews && result !== null && rawResult === undefined ? (
           <PreviewBlock title='Result Preview' value={result} />
         ) : null}
-        {resultBuckets.map(([key, value]) => (
+        {genericResultBuckets.map(([key, value]) => (
           <ArrayPreviewSection
             key={key}
             title={`Flow Result Preview: ${key}`}

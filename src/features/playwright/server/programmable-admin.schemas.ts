@@ -10,6 +10,7 @@ export const promotePlaywrightProgrammableBrowserOwnershipSchema = z
     playwrightImportActionId: z.string().trim().nullable().optional(),
     playwrightImportCaptureRoutesJson: z.string().trim().nullable().optional(),
     playwrightFieldMapperJson: z.string().trim().nullable().optional(),
+    playwrightDraftMapperJson: z.string().trim().nullable().optional(),
     playwrightImportAutomationFlowJson: z.string().trim().nullable().optional(),
     proxyPassword: z.string().trim().nullable().optional(),
   })

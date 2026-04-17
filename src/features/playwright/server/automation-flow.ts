@@ -22,6 +22,11 @@ import {
   type PlaywrightFieldMapperEntry,
   type PlaywrightMappedImportProduct,
 } from '@/features/integrations/services/playwright-listing/field-mapper';
+import {
+  mapScrapedProductToDraftPreview,
+  parsePlaywrightDraftMapperJson,
+  type PlaywrightDraftMapperRow,
+} from '@/features/integrations/services/playwright-listing/draft-mapper';
 
 import { buildPlaywrightImportInput } from './import-input';
 import { runPlaywrightProgrammableImportForConnection } from './programmable';
@@ -39,6 +44,12 @@ type PlaywrightMappedProductEnvelope = {
   defaults?: PlaywrightAutomationProductDefaults | null;
 };
 
+type PlaywrightMappedDraftEnvelope = {
+  kind: 'mapped_draft';
+  draftPayload: Parameters<typeof createDraft>[0];
+  diagnostics: ReturnType<typeof mapScrapedProductToDraftPreview>['diagnostics'];
+};
+
 type PlaywrightAutomationWriteErrorEnvelope = {
   kind: 'write_error';
   operation: 'create_draft' | 'create_product';
@@ -50,6 +61,7 @@ type PlaywrightAutomationWriteErrorEnvelope = {
 
 type PlaywrightAutomationExecutionContext = {
   dryRun: boolean;
+  draftMapperRows: PlaywrightDraftMapperRow[];
   fieldMappings: PlaywrightFieldMapperEntry[];
   scope: PlaywrightAutomationScope;
   drafts: ProductDraft[];
@@ -158,9 +170,39 @@ const isMappedProductEnvelope = (value: unknown): value is PlaywrightMappedProdu
   value['kind'] === 'mapped_product' &&
   isObjectRecord(value['mappedProduct']);
 
+const isMappedDraftEnvelope = (value: unknown): value is PlaywrightMappedDraftEnvelope =>
+  isObjectRecord(value) &&
+  value['kind'] === 'mapped_draft' &&
+  isObjectRecord(value['draftPayload']);
+
+const createMappedDraftEnvelope = ({
+  draftMapperRows,
+  rawProduct,
+}: {
+  draftMapperRows: PlaywrightDraftMapperRow[];
+  rawProduct: Record<string, unknown>;
+}): PlaywrightMappedDraftEnvelope => {
+  if (draftMapperRows.length === 0) {
+    throw new Error(
+      'Automation flow map_draft blocks require saved draft mapper JSON on the programmable connection.'
+    );
+  }
+
+  const preview = mapScrapedProductToDraftPreview(rawProduct, draftMapperRows);
+
+  return {
+    kind: 'mapped_draft',
+    draftPayload: preview.draftInput as Parameters<typeof createDraft>[0],
+    diagnostics: preview.diagnostics,
+  };
+};
+
 const resolveDraftPayload = (
   value: unknown
 ): Parameters<typeof createDraft>[0] => {
+  if (isMappedDraftEnvelope(value)) {
+    return value.draftPayload;
+  }
   if (isMappedProductEnvelope(value)) {
     return buildPlaywrightProductDraftInput(value.mappedProduct, value.defaults);
   }
@@ -298,6 +340,22 @@ const executeBlock = async (
         rawProduct: sourceValue,
         fieldMappings: context.fieldMappings,
         defaults: block.defaults,
+      });
+      setValueAtPath(context.scope, block.outputPath ?? 'current', mappedEnvelope);
+      return;
+    }
+    case 'map_draft': {
+      const sourceValue = resolveBlockSourceValue({
+        source: block.source,
+        scope: context.scope,
+      });
+      if (!isObjectRecord(sourceValue)) {
+        throw new Error('Automation flow map_draft blocks require an object source.');
+      }
+
+      const mappedEnvelope = createMappedDraftEnvelope({
+        draftMapperRows: context.draftMapperRows,
+        rawProduct: sourceValue,
       });
       setValueAtPath(context.scope, block.outputPath ?? 'current', mappedEnvelope);
       return;
@@ -445,9 +503,11 @@ export const runPlaywrightImportAutomationFlow = async ({
     input: effectiveInput,
   });
   const fieldMappings = parsePlaywrightFieldMapperJson(connection.playwrightFieldMapperJson);
+  const draftMapperRows = parsePlaywrightDraftMapperJson(connection.playwrightDraftMapperJson);
 
   const context: PlaywrightAutomationExecutionContext = {
     dryRun,
+    draftMapperRows,
     fieldMappings,
     scope: {
       input: effectiveInput,

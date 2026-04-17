@@ -1,7 +1,9 @@
 import {
   buildProgrammableConnectionPayload,
+  createEmptyProgrammableDraftMapperRule,
   createEmptyProgrammableCaptureRoute,
   createEmptyProgrammableFieldMapperRow,
+  type ProgrammableDraftMapperRow,
   type ProgrammableFieldMapperRow,
 } from '@/features/playwright/pages/playwright-programmable-integration-page.helpers';
 import type {
@@ -23,6 +25,7 @@ const buildPromotionPayload = (
     | 'automationFlowJson'
     | 'captureRoutes'
     | 'connectionName'
+    | 'draftMapperRows'
     | 'fieldMapperRows'
     | 'importActionId'
     | 'importBaseUrl'
@@ -42,6 +45,7 @@ const buildPromotionPayload = (
     captureRoutes: args.captureRoutes,
     appearanceMode: args.appearanceMode,
     automationFlowJson: args.automationFlowJson,
+    draftMapperRows: args.draftMapperRows,
     fieldMapperRows: args.fieldMapperRows,
   }),
   proxyPassword:
@@ -71,6 +75,7 @@ const saveCurrentConnection = async (
     captureRoutes: args.captureRoutes,
     appearanceMode: args.appearanceMode,
     automationFlowJson: args.automationFlowJson,
+    draftMapperRows: args.draftMapperRows,
     fieldMapperRows: args.fieldMapperRows,
     payloadPatch:
       args.isBrowserBehaviorActionOwned && args.selectedConnection !== null
@@ -215,6 +220,7 @@ const handleCreateConnection = async (
   args.setImportActionId('');
   args.setCaptureRoutes([createEmptyProgrammableCaptureRoute(1)]);
   args.setAppearanceMode('');
+  args.setDraftMapperRows([]);
   args.setFieldMapperRows([]);
   args.setSelectedConnectionId('');
 
@@ -326,18 +332,51 @@ const handleDeleteFieldMapping = (
   );
 };
 
+const handleAddDraftMapping = (
+  setDraftMapperRows: PlaywrightProgrammableIntegrationPageActionArgs['setDraftMapperRows']
+): void => {
+  setDraftMapperRows((current: ProgrammableDraftMapperRow[]) => [
+    ...current,
+    createEmptyProgrammableDraftMapperRule(),
+  ]);
+};
+
+const handleUpdateDraftMapping = (
+  setDraftMapperRows: PlaywrightProgrammableIntegrationPageActionArgs['setDraftMapperRows'],
+  rowId: string,
+  patch: Partial<Omit<ProgrammableDraftMapperRow, 'id'>>
+): void => {
+  setDraftMapperRows((current: ProgrammableDraftMapperRow[]) =>
+    current.map((row) => (row.id === rowId ? { ...row, ...patch } : row))
+  );
+};
+
+const handleDeleteDraftMapping = (
+  setDraftMapperRows: PlaywrightProgrammableIntegrationPageActionArgs['setDraftMapperRows'],
+  rowId: string
+): void => {
+  setDraftMapperRows((current: ProgrammableDraftMapperRow[]) =>
+    current.filter((row) => row.id !== rowId)
+  );
+};
+
 export const createPlaywrightProgrammableIntegrationPageActions = (
   args: PlaywrightProgrammableIntegrationPageActionArgs
 ): PlaywrightProgrammableIntegrationPageActions => ({
+  handleAddDraftMapping: () => handleAddDraftMapping(args.setDraftMapperRows),
   handleAddFieldMapping: () => handleAddFieldMapping(args.setFieldMapperRows),
   handleCleanupAllLegacyBrowserFields: () => handleCleanupAllLegacyBrowserFields(args),
   handleCleanupLegacyBrowserFields: () => handleCleanupLegacyBrowserFields(args),
   handleCreateConnection: () => handleCreateConnection(args),
+  handleDeleteDraftMapping: (rowId) =>
+    handleDeleteDraftMapping(args.setDraftMapperRows, rowId),
   handleDeleteFieldMapping: (rowId) =>
     handleDeleteFieldMapping(args.setFieldMapperRows, rowId),
   handlePromoteConnectionSettings: () => handlePromoteConnectionSettings(args),
   handleRunFlow: () => handleRunFlow(args),
   handleRunTest: (scriptType) => handleRunTest(args, scriptType),
+  handleUpdateDraftMapping: (rowId, patch) =>
+    handleUpdateDraftMapping(args.setDraftMapperRows, rowId, patch),
   handleUpdateFieldMapping: (rowId, patch) =>
     handleUpdateFieldMapping(args.setFieldMapperRows, rowId, patch),
   saveCurrentConnection: (showToastOnSuccess) =>

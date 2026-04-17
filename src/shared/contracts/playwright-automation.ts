@@ -61,6 +61,12 @@ const playwrightAutomationMapProductBlockSchema = z.object({
   defaults: playwrightAutomationProductDefaultsSchema.optional(),
 });
 
+const playwrightAutomationMapDraftBlockSchema = z.object({
+  kind: z.literal('map_draft'),
+  source: playwrightAutomationValueSourceSchema.optional(),
+  outputPath: trimmedStringSchema.optional(),
+});
+
 const playwrightAutomationCreateDraftBlockSchema = z.object({
   kind: z.literal('create_draft'),
   onError: playwrightAutomationWriteErrorModeSchema.optional(),
@@ -87,6 +93,9 @@ export type PlaywrightAutomationAssignBlock = z.infer<
 export type PlaywrightAutomationMapProductBlock = z.infer<
   typeof playwrightAutomationMapProductBlockSchema
 >;
+export type PlaywrightAutomationMapDraftBlock = z.infer<
+  typeof playwrightAutomationMapDraftBlockSchema
+>;
 export type PlaywrightAutomationCreateDraftBlock = z.infer<
   typeof playwrightAutomationCreateDraftBlockSchema
 >;
@@ -108,6 +117,7 @@ export type PlaywrightAutomationBlock =
   | PlaywrightAutomationAssignBlock
   | PlaywrightAutomationForEachBlock
   | PlaywrightAutomationMapProductBlock
+  | PlaywrightAutomationMapDraftBlock
   | PlaywrightAutomationCreateDraftBlock
   | PlaywrightAutomationCreateProductBlock
   | PlaywrightAutomationAppendResultBlock;
@@ -122,6 +132,7 @@ export const playwrightAutomationBlockSchema: z.ZodType<PlaywrightAutomationBloc
       blocks: z.array(playwrightAutomationBlockSchema),
     }),
     playwrightAutomationMapProductBlockSchema,
+    playwrightAutomationMapDraftBlockSchema,
     playwrightAutomationCreateDraftBlockSchema,
     playwrightAutomationCreateProductBlockSchema,
     playwrightAutomationAppendResultBlockSchema,

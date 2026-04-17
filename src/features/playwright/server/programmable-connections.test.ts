@@ -115,6 +115,7 @@ describe('playwright programmable connections server', () => {
       playwrightImportBaseUrl: 'https://example.test',
       playwrightImportCaptureRoutesJson: '{"routes":[],"appearanceMode":""}',
       playwrightFieldMapperJson: '[]',
+      playwrightDraftMapperJson: '[{"targetPath":"name_en"}]',
       playwrightImportAutomationFlowJson: '{"name":"Draft import","blocks":[]}',
     });
 
@@ -126,6 +127,7 @@ describe('playwright programmable connections server', () => {
         playwrightImportBaseUrl: 'https://example.test',
         playwrightImportCaptureRoutesJson: '{"routes":[],"appearanceMode":""}',
         playwrightFieldMapperJson: '[]',
+        playwrightDraftMapperJson: '[{"targetPath":"name_en"}]',
         playwrightImportAutomationFlowJson: '{"name":"Draft import","blocks":[]}',
       },
     });
@@ -138,6 +140,7 @@ describe('playwright programmable connections server', () => {
         playwrightImportBaseUrl: 'https://example.test',
         playwrightImportCaptureRoutesJson: '{"routes":[],"appearanceMode":""}',
         playwrightFieldMapperJson: '[]',
+        playwrightDraftMapperJson: '[{"targetPath":"name_en"}]',
         playwrightImportAutomationFlowJson: '{"name":"Draft import","blocks":[]}',
       },
     });
@@ -147,6 +150,7 @@ describe('playwright programmable connections server', () => {
       playwrightImportBaseUrl: 'https://example.test',
       playwrightImportCaptureRoutesJson: '{"routes":[],"appearanceMode":""}',
       playwrightFieldMapperJson: '[]',
+      playwrightDraftMapperJson: '[{"targetPath":"name_en"}]',
       playwrightImportAutomationFlowJson: '{"name":"Draft import","blocks":[]}',
       playwrightLegacyBrowserMigration: expect.objectContaining({
         hasLegacyBrowserBehavior: false,

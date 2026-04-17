@@ -51,6 +51,19 @@ const queue: ManagedQueue<TraderaListingQueueJobData> =
         action: data.action,
         jobId,
       });
+      // When the worker is killed mid-job (stall), processTraderaListingJob never runs to
+      // completion, so the listing stays in 'queued' forever and blocks re-listing attempts.
+      try {
+        const { getProductListingRepository } = await import('@/features/integrations/server');
+        const repo = await getProductListingRepository();
+        await repo.updateListingStatus(data.listingId, 'failed');
+      } catch (cleanupError) {
+        void ErrorSystem.captureException(cleanupError, {
+          service: 'tradera-listing-queue',
+          listingId: data.listingId,
+          phase: 'on-failed-status-cleanup',
+        });
+      }
     },
   });
 

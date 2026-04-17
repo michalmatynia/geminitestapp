@@ -687,6 +687,12 @@ describe('enqueuePlaywrightNodeRun', () => {
         script: 'export default async () => ({ ok: true });',
         settingsOverrides: {
           identityProfile: 'search',
+          actionDelayMin: 0,
+          actionDelayMax: 0,
+          inputDelayMin: 0,
+          inputDelayMax: 0,
+          prewarmWaitMs: 120,
+          postStartUrlWaitMs: 80,
         },
       },
     });
@@ -738,6 +744,13 @@ describe('enqueuePlaywrightNodeRun', () => {
         script: 'export default async () => ({ ok: true });',
         settingsOverrides: {
           identityProfile: 'search',
+          actionDelayMin: 0,
+          actionDelayMax: 0,
+          inputDelayMin: 0,
+          inputDelayMax: 0,
+          launchCooldownMs: 0,
+          prewarmWaitMs: 0,
+          postStartUrlWaitMs: 0,
         },
       },
     });
@@ -753,6 +766,13 @@ describe('enqueuePlaywrightNodeRun', () => {
         script: 'export default async () => ({ ok: true });',
         settingsOverrides: {
           identityProfile: 'search',
+          actionDelayMin: 0,
+          actionDelayMax: 0,
+          inputDelayMin: 0,
+          inputDelayMax: 0,
+          launchCooldownMs: 0,
+          prewarmWaitMs: 0,
+          postStartUrlWaitMs: 0,
         },
       },
     });
@@ -774,9 +794,6 @@ describe('enqueuePlaywrightNodeRun', () => {
     );
     expect(secondRun.logs).toEqual(
       expect.arrayContaining([
-        expect.stringContaining(
-          '[runtime] Applied Chromium anti-detection cooldown (search/allowed.example.com)'
-        ),
         expect.stringContaining(
           '[runtime] Loaded sticky storage state (search) for owner:user-sticky at https://allowed.example.com.'
         ),

@@ -445,6 +445,7 @@ describe('integration connections handler', () => {
         playwrightImportBaseUrl: 'https://example.test',
         playwrightImportCaptureRoutesJson: '{"routes":[],"appearanceMode":""}',
         playwrightFieldMapperJson: '[]',
+        playwrightDraftMapperJson: '[{"targetPath":"name_en"}]',
       },
     });
     createPlaywrightProgrammableConnectionMock.mockResolvedValue({
@@ -457,6 +458,7 @@ describe('integration connections handler', () => {
       playwrightImportBaseUrl: 'https://example.test',
       playwrightImportCaptureRoutesJson: '{"routes":[],"appearanceMode":""}',
       playwrightFieldMapperJson: '[]',
+      playwrightDraftMapperJson: '[{"targetPath":"name_en"}]',
       playwrightImportAutomationFlowJson: '{"name":"Draft import","blocks":[]}',
       playwrightLegacyBrowserMigration: {
         hasLegacyBrowserBehavior: false,
@@ -484,6 +486,7 @@ describe('integration connections handler', () => {
         playwrightImportBaseUrl: 'https://example.test',
         playwrightImportCaptureRoutesJson: '{"routes":[],"appearanceMode":""}',
         playwrightFieldMapperJson: '[]',
+        playwrightDraftMapperJson: '[{"targetPath":"name_en"}]',
       },
     });
     expect(encryptSecretMock).not.toHaveBeenCalled();
@@ -493,6 +496,7 @@ describe('integration connections handler', () => {
       playwrightImportBaseUrl: 'https://example.test',
       playwrightImportCaptureRoutesJson: '{"routes":[],"appearanceMode":""}',
       playwrightFieldMapperJson: '[]',
+      playwrightDraftMapperJson: '[{"targetPath":"name_en"}]',
       playwrightImportAutomationFlowJson: '{"name":"Draft import","blocks":[]}',
       playwrightLegacyBrowserMigration: {
         hasLegacyBrowserBehavior: false,

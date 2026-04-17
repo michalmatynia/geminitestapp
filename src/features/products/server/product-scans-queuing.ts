@@ -72,6 +72,7 @@ import {
   buildAmazonScannerRequestRuntimeOptions,
   resolveAmazonRuntimeActionDefinition,
   resolveAmazonImageSearchProvider,
+  resolveAmazonImageSearchPageUrl,
 } from './product-scans-service.helpers.amazon';
 
 import {
@@ -432,6 +433,8 @@ async function queueBatchProductScans(input: {
           });
           const imageSearchProvider =
             resolveAmazonImageSearchProvider(requestInput, scannerSettings);
+          const imageSearchPageUrl =
+            resolveAmazonImageSearchPageUrl(requestInput, scannerSettings);
           const triageEvaluatorEnabled = (
             await resolveProductScannerAmazonCandidateEvaluatorConfig(scannerSettings)
           ).enabled;
@@ -457,6 +460,7 @@ async function queueBatchProductScans(input: {
                 imageCandidates,
                 runtimeKey: amazonRuntimeKey,
                 imageSearchProvider,
+                imageSearchPageUrl,
                 selectorProfile: amazonSelectorProfile,
                 allowManualVerification:
                   shouldAutoShowCaptchaBrowser && !scannerRunsHeadless,
@@ -643,6 +647,10 @@ async function queueBatchProductScans(input: {
               input.config.provider === 'amazon'
                 ? (resolveAmazonImageSearchProvider(requestInput, scannerSettings) ?? 'google_images_upload')
                 : 'google_images_upload',
+            imageSearchPageUrl:
+              input.config.provider === 'amazon'
+                ? resolveAmazonImageSearchPageUrl(requestInput, scannerSettings)
+                : null,
             allowManualVerification: shouldAutoShowScannerCaptchaBrowser(scannerSettings),
             manualVerificationTimeoutMs,
             ...requestedStepSequenceInput,

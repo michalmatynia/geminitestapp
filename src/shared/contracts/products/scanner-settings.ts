@@ -39,6 +39,18 @@ export type ProductScannerAmazonImageSearchFallbackProvider = z.infer<
   typeof productScannerAmazonImageSearchFallbackProviderSchema
 >;
 
+export const productScannerAmazonImageSearchPageUrlSchema = z
+  .string()
+  .trim()
+  .url()
+  .max(2048)
+  .nullable()
+  .optional();
+
+export type ProductScannerAmazonImageSearchPageUrl = z.infer<
+  typeof productScannerAmazonImageSearchPageUrlSchema
+>;
+
 export const productScannerAmazonCandidateEvaluatorModeSchema = z.enum([
   'disabled',
   'brain_default',
@@ -124,6 +136,7 @@ export const productScannerSettingsSchema = z.object({
   manualVerificationTimeoutMs: z.number().int().positive().max(900_000),
   amazonImageSearchProvider: productScannerAmazonImageSearchProviderSchema,
   amazonImageSearchFallbackProvider: productScannerAmazonImageSearchFallbackProviderSchema,
+  amazonImageSearchPageUrl: productScannerAmazonImageSearchPageUrlSchema,
   playwrightSettingsOverrides: playwrightSettingsSchema.partial(),
   amazonCandidateEvaluator: productScannerAmazonCandidateEvaluatorSchema.optional(),
   amazonCandidateEvaluatorTriage: productScannerAmazonCandidateEvaluatorSchema.optional(),

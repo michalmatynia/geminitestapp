@@ -36,6 +36,7 @@ type ScanDiagnostics = {
   runId: string | null;
   runStatus: string | null;
   imageSearchProvider: string | null;
+  imageSearchPageUrl: string | null;
   latestStage: string | null;
   latestStageUrl: string | null;
   amazonAiStages: AmazonAiStageEvidence[];
@@ -454,6 +455,9 @@ export const resolveProductScanDiagnostics = (
   const imageSearchProvider = hasText(String(scan.rawResult['imageSearchProvider'] ?? ''))
     ? String(scan.rawResult['imageSearchProvider']).trim()
     : null;
+  const imageSearchPageUrl = hasText(String(scan.rawResult['imageSearchPageUrl'] ?? ''))
+    ? String(scan.rawResult['imageSearchPageUrl']).trim()
+    : null;
   const latestStage = hasText(String(scan.rawResult['latestStage'] ?? ''))
     ? String(scan.rawResult['latestStage']).trim()
     : null;
@@ -472,6 +476,7 @@ export const resolveProductScanDiagnostics = (
     !runId &&
     !runStatus &&
     !imageSearchProvider &&
+    !imageSearchPageUrl &&
     !latestStage &&
     !latestStageUrl &&
     amazonAiStages.length === 0 &&
@@ -486,6 +491,7 @@ export const resolveProductScanDiagnostics = (
     runId,
     runStatus,
     imageSearchProvider,
+    imageSearchPageUrl,
     latestStage,
     latestStageUrl,
     amazonAiStages,
@@ -588,6 +594,33 @@ export function ProductScanDiagnostics(props: {
               showText
               className='h-7 px-2 text-xs'
               ariaLabel='Copy latest stage URL'
+            />
+          </div>
+        </div>
+      ) : null}
+
+      {(diagnostics.imageSearchPageUrl ?? null) !== null ? (
+        <div className='space-y-1'>
+          <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
+            Image Search Page URL
+          </p>
+          <div className='flex flex-wrap items-center gap-2'>
+            <a
+              href={diagnostics.imageSearchPageUrl!}
+              target='_blank'
+              rel='noopener noreferrer'
+              className='inline-flex items-center gap-1 text-xs text-primary underline-offset-2 hover:underline'
+            >
+              Open search page
+              <ExternalLink className='h-3.5 w-3.5' />
+            </a>
+            <CopyButton
+              value={diagnostics.imageSearchPageUrl!}
+              variant='outline'
+              size='sm'
+              showText
+              className='h-7 px-2 text-xs'
+              ariaLabel='Copy image search page URL'
             />
           </div>
         </div>

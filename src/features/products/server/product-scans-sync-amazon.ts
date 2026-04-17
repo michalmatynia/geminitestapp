@@ -78,6 +78,7 @@ import {
   resolveNextAmazonEvaluationStepAttempt,
   resolveNextQueueStepAttempt,
   resolveAmazonImageSearchProvider,
+  resolveAmazonImageSearchPageUrl,
   resolveAmazonImageSearchFallbackProvider,
   resolveAmazonImageSearchProviderHistory,
   buildAmazonScannerRequestRuntimeOptions,
@@ -543,6 +544,10 @@ export async function synchronizeAmazonProductScan(
             scan.rawResult,
             scannerSettings
           );
+          const amazonImageSearchPageUrl = resolveAmazonImageSearchPageUrl(
+            scan.rawResult,
+            scannerSettings
+          );
           const fallbackProvider =
             amazonEvaluation.recommendedAction === 'fallback_provider'
               ? resolveAmazonImageSearchFallbackProvider({
@@ -590,6 +595,7 @@ export async function synchronizeAmazonProductScan(
                   imageCandidates: scan.imageCandidates,
                   runtimeKey: fallbackRuntimeKey,
                   imageSearchProvider: fallbackProvider,
+                  imageSearchPageUrl: amazonImageSearchPageUrl,
                   selectorProfile: amazonSelectorProfile,
                   allowManualVerification:
                     shouldAutoShowScannerCaptchaBrowser(scannerSettings) && !scannerHeadless,
@@ -657,6 +663,7 @@ export async function synchronizeAmazonProductScan(
                     actionId: fallbackRuntimeAction?.id ?? null,
                     selectorProfile: amazonSelectorProfile,
                     imageSearchProvider: fallbackProvider,
+                    imageSearchPageUrl: amazonImageSearchPageUrl,
                     imageSearchProviderHistory: [...providerHistory, fallbackProvider],
                     allowManualVerification:
                       shouldAutoShowScannerCaptchaBrowser(scannerSettings) && !scannerHeadless,
@@ -717,6 +724,7 @@ export async function synchronizeAmazonProductScan(
                   imageCandidates: scan.imageCandidates,
                   runtimeKey: currentAmazonRuntimeKey,
                   imageSearchProvider: amazonImageSearchProvider,
+                  imageSearchPageUrl: amazonImageSearchPageUrl,
                   selectorProfile: amazonSelectorProfile,
                   allowManualVerification:
                     shouldAutoShowScannerCaptchaBrowser(scannerSettings) && !scannerHeadless,
@@ -787,6 +795,7 @@ export async function synchronizeAmazonProductScan(
                     actionId: currentAmazonRuntimeAction?.id ?? null,
                     selectorProfile: amazonSelectorProfile,
                     imageSearchProvider: amazonImageSearchProvider,
+                    imageSearchPageUrl: amazonImageSearchPageUrl,
                     imageSearchProviderHistory: resolveAmazonImageSearchProviderHistory(
                       scan.rawResult,
                       amazonImageSearchProvider

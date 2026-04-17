@@ -59,6 +59,7 @@ import {
   resolveAmazonEvaluationStepStatus,
   resolveAmazonImageSearchFallbackProvider,
   resolveAmazonImageSearchProvider,
+  resolveAmazonImageSearchPageUrl,
   resolveAmazonImageSearchProviderHistory,
   resolveLatestAmazonCandidateStepMeta,
   resolveNextAmazonCandidateUrl,
@@ -221,6 +222,10 @@ export async function synchronizeAmazonProbeReady({
           scan.rawResult,
           scannerSettings
         );
+        const amazonImageSearchPageUrl = resolveAmazonImageSearchPageUrl(
+          scan.rawResult,
+          scannerSettings
+        );
         const fallbackProvider =
           amazonEvaluation.recommendedAction === 'fallback_provider'
             ? resolveAmazonImageSearchFallbackProvider({
@@ -261,6 +266,7 @@ export async function synchronizeAmazonProbeReady({
                   existingAsin: product.asin,
                   imageCandidates: scan.imageCandidates,
                   imageSearchProvider: fallbackProvider,
+                  imageSearchPageUrl: amazonImageSearchPageUrl,
                   selectorProfile: amazonSelectorProfile,
                   allowManualVerification:
                     shouldAutoShowScannerCaptchaBrowser(scannerSettings) && !scannerHeadless,
@@ -327,6 +333,7 @@ export async function synchronizeAmazonProbeReady({
                     actionId: amazonRuntimeAction?.id ?? null,
                     selectorProfile: amazonSelectorProfile,
                     imageSearchProvider: fallbackProvider,
+                    imageSearchPageUrl: amazonImageSearchPageUrl,
                     imageSearchProviderHistory: [...providerHistory, fallbackProvider],
                     allowManualVerification:
                       shouldAutoShowScannerCaptchaBrowser(scannerSettings) && !scannerHeadless,
@@ -427,6 +434,7 @@ export async function synchronizeAmazonProbeReady({
                   existingAsin: product.asin,
                   imageCandidates: scan.imageCandidates,
                   imageSearchProvider: amazonImageSearchProvider,
+                  imageSearchPageUrl: amazonImageSearchPageUrl,
                   selectorProfile: amazonSelectorProfile,
                   allowManualVerification:
                     shouldAutoShowScannerCaptchaBrowser(scannerSettings) && !scannerHeadless,
@@ -507,6 +515,7 @@ export async function synchronizeAmazonProbeReady({
                     actionId: amazonRuntimeAction?.id ?? null,
                     selectorProfile: amazonSelectorProfile,
                     imageSearchProvider: amazonImageSearchProvider,
+                    imageSearchPageUrl: amazonImageSearchPageUrl,
                     imageSearchProviderHistory: resolveAmazonImageSearchProviderHistory(
                       scan.rawResult,
                       amazonImageSearchProvider
@@ -629,6 +638,10 @@ export async function synchronizeAmazonProbeReady({
       scan.rawResult,
       scannerSettings
     );
+    const amazonImageSearchPageUrl = resolveAmazonImageSearchPageUrl(
+      scan.rawResult,
+      scannerSettings
+    );
     const amazonSelectorProfile =
       readOptionalString(toRecord(scan.rawResult)?.['selectorProfile'], 120) ?? 'amazon';
     const extractionRun = await startPlaywrightEngineTask({
@@ -645,6 +658,7 @@ export async function synchronizeAmazonProbeReady({
           existingAsin: product.asin,
           imageCandidates: scan.imageCandidates,
           imageSearchProvider: amazonImageSearchProvider,
+          imageSearchPageUrl: amazonImageSearchPageUrl,
           selectorProfile: amazonSelectorProfile,
           allowManualVerification:
             shouldAutoShowScannerCaptchaBrowser(scannerSettings) && !scannerHeadless,
@@ -717,6 +731,7 @@ export async function synchronizeAmazonProbeReady({
           actionId: amazonRuntimeAction?.id ?? null,
           selectorProfile: amazonSelectorProfile,
           imageSearchProvider: amazonImageSearchProvider,
+          imageSearchPageUrl: amazonImageSearchPageUrl,
           imageSearchProviderHistory: resolveAmazonImageSearchProviderHistory(
             scan.rawResult,
             amazonImageSearchProvider

@@ -33,6 +33,8 @@ describe('product scanner settings helpers', () => {
         captchaBehavior: 'auto_show_browser',
         manualVerificationTimeoutMs: 180000,
         amazonImageSearchProvider: 'google_images_upload',
+        amazonImageSearchFallbackProvider: null,
+        amazonImageSearchPageUrl: null,
         amazonCandidateEvaluator: {
           mode: 'brain_default',
           modelId: null,
@@ -71,6 +73,7 @@ describe('product scanner settings helpers', () => {
       manualVerificationTimeoutMs: 180000,
       amazonImageSearchProvider: 'google_images_upload',
       amazonImageSearchFallbackProvider: null,
+      amazonImageSearchPageUrl: '',
       amazonCandidateEvaluator: {
         mode: 'brain_default',
         modelId: null,
@@ -114,6 +117,8 @@ describe('product scanner settings helpers', () => {
         captchaBehavior: 'fail',
         manualVerificationTimeoutMs: 120000,
         amazonImageSearchProvider: 'google_images_url',
+        amazonImageSearchFallbackProvider: null,
+        amazonImageSearchPageUrl: 'https://lens.google.com/?hl=en',
         amazonCandidateEvaluator: {
           mode: 'model_override',
           modelId: 'gpt-4.1',
@@ -154,6 +159,7 @@ describe('product scanner settings helpers', () => {
       manualVerificationTimeoutMs: 120000,
       amazonImageSearchProvider: 'google_images_url',
       amazonImageSearchFallbackProvider: null,
+      amazonImageSearchPageUrl: 'https://lens.google.com/?hl=en',
       playwrightSettingsOverrides: {},
       amazonCandidateEvaluator: {
         mode: 'model_override',
@@ -207,6 +213,7 @@ describe('product scanner settings helpers', () => {
       manualVerificationTimeoutMs: 60000,
       amazonImageSearchProvider: 'google_lens_upload',
       amazonImageSearchFallbackProvider: null,
+      amazonImageSearchPageUrl: null,
       amazonCandidateEvaluator: {
         mode: 'disabled',
         modelId: null,
@@ -264,6 +271,7 @@ describe('product scanner settings helpers', () => {
       manualVerificationTimeoutMs: 240000,
       amazonImageSearchProvider: 'google_images_upload',
       amazonImageSearchFallbackProvider: null,
+      amazonImageSearchPageUrl: null,
       playwrightSettingsOverrides: {},
       amazonCandidateEvaluator: {
         mode: 'disabled',

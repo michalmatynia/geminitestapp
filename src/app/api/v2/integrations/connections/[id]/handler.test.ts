@@ -388,6 +388,7 @@ describe('integration connection by-id handler', () => {
       data: {
         name: 'Programmable Browser',
         resetPlaywrightOverrides: true,
+        playwrightDraftMapperJson: '[{"targetPath":"name_en"}]',
       },
     });
     getConnectionByIdMock.mockResolvedValue({
@@ -406,6 +407,7 @@ describe('integration connection by-id handler', () => {
       updatedAt: '2026-04-02T11:00:00.000Z',
       playwrightListingActionId: 'listing-draft',
       playwrightImportActionId: 'import-draft',
+      playwrightDraftMapperJson: '[{"targetPath":"name_en"}]',
       playwrightLegacyBrowserMigration: {
         hasLegacyBrowserBehavior: false,
         requiresManualProxyPasswordInput: false,
@@ -427,6 +429,7 @@ describe('integration connection by-id handler', () => {
       data: {
         name: 'Programmable Browser',
         resetPlaywrightOverrides: true,
+        playwrightDraftMapperJson: '[{"targetPath":"name_en"}]',
       },
     });
 
@@ -434,6 +437,7 @@ describe('integration connection by-id handler', () => {
       id: 'conn-playwright-1',
       playwrightListingActionId: 'listing-draft',
       playwrightImportActionId: 'import-draft',
+      playwrightDraftMapperJson: '[{"targetPath":"name_en"}]',
       playwrightLegacyBrowserMigration: {
         hasLegacyBrowserBehavior: false,
         requiresManualProxyPasswordInput: false,

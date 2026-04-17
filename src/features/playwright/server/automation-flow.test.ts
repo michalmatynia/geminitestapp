@@ -38,6 +38,7 @@ const createConnection = () =>
       sku: 'sku',
       sourceUrl: 'sourceUrl',
     }),
+    playwrightDraftMapperJson: null,
   }) as const;
 
 describe('runPlaywrightImportAutomationFlow', () => {
@@ -425,5 +426,90 @@ describe('runPlaywrightImportAutomationFlow', () => {
         },
       })
     ).rejects.toThrow('Product create failed');
+  });
+
+  it('maps raw scraped products into draft payloads through the saved draft mapper', async () => {
+    mocks.runPlaywrightProgrammableImportForConnectionMock.mockResolvedValue({
+      products: [
+        {
+          title: 'Mapped draft title',
+          sku: 'DRAFT-001',
+          sourceUrl: 'https://example.com/draft-1',
+        },
+      ],
+      rawResult: {
+        result: [{ title: 'Mapped draft title' }],
+      },
+    });
+    mocks.createDraftMock.mockImplementation(async (input: Record<string, unknown>) => ({
+      id: `draft-${String(input['sku'])}`,
+      ...input,
+    }));
+
+    const result = await runPlaywrightImportAutomationFlow({
+      connection: {
+        ...createConnection(),
+        playwrightDraftMapperJson: JSON.stringify([
+          {
+            enabled: true,
+            targetPath: 'name_en',
+            mode: 'scraped',
+            sourcePath: 'title',
+            staticValue: '',
+            transform: 'trim',
+            required: true,
+          },
+          {
+            enabled: true,
+            targetPath: 'catalogIds',
+            mode: 'static',
+            sourcePath: '',
+            staticValue: '["catalog-1"]',
+            transform: 'string_array',
+            required: true,
+          },
+          {
+            enabled: true,
+            targetPath: 'sku',
+            mode: 'scraped',
+            sourcePath: 'sku',
+            staticValue: '',
+            transform: 'trim',
+            required: true,
+          },
+        ]),
+      },
+      input: { baseUrl: 'https://example.com' },
+      flow: {
+        name: 'Draft mapper import',
+        blocks: [
+          {
+            kind: 'for_each',
+            items: { type: 'path', path: 'vars.rawProducts' },
+            blocks: [
+              {
+                kind: 'map_draft',
+              },
+              {
+                kind: 'create_draft',
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    expect(mocks.createDraftMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'Mapped draft title',
+        name_en: 'Mapped draft title',
+        catalogIds: ['catalog-1'],
+      })
+    );
+    expect(result.drafts).toEqual([
+      expect.objectContaining({
+        id: 'draft-DRAFT-001',
+      }),
+    ]);
   });
 });

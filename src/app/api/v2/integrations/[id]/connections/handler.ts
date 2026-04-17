@@ -56,6 +56,7 @@ const createConnectionSchema = z
     playwrightImportActionId: z.string().trim().nullable().optional(),
     playwrightImportCaptureRoutesJson: z.string().trim().nullable().optional(),
     playwrightFieldMapperJson: z.string().trim().nullable().optional(),
+    playwrightDraftMapperJson: z.string().trim().nullable().optional(),
     playwrightImportAutomationFlowJson: z.string().trim().nullable().optional(),
     traderaDefaultTemplateId: z.string().trim().nullable().optional(),
     traderaDefaultDurationHours: z.number().int().min(1).max(720).optional(),
@@ -136,6 +137,7 @@ export async function GET_handler(
     playwrightImportActionId: connection.playwrightImportActionId ?? null,
     playwrightImportCaptureRoutesJson: connection.playwrightImportCaptureRoutesJson ?? null,
     playwrightFieldMapperJson: connection.playwrightFieldMapperJson ?? null,
+    playwrightDraftMapperJson: connection.playwrightDraftMapperJson ?? null,
     playwrightImportAutomationFlowJson: connection.playwrightImportAutomationFlowJson ?? null,
     hasPlaywrightListingScript: Boolean(connection.playwrightListingScript?.trim()),
     traderaDefaultTemplateId: connection.traderaDefaultTemplateId ?? null,
@@ -287,6 +289,9 @@ export async function POST_handler(
     ...(typeof data.playwrightFieldMapperJson === 'string' || data.playwrightFieldMapperJson === null
       ? { playwrightFieldMapperJson: data.playwrightFieldMapperJson ?? null }
       : {}),
+    ...(typeof data.playwrightDraftMapperJson === 'string' || data.playwrightDraftMapperJson === null
+      ? { playwrightDraftMapperJson: data.playwrightDraftMapperJson ?? null }
+      : {}),
     ...(typeof data.playwrightImportAutomationFlowJson === 'string' ||
     data.playwrightImportAutomationFlowJson === null
       ? {
@@ -386,6 +391,7 @@ export async function POST_handler(
     playwrightImportActionId: created.playwrightImportActionId ?? null,
     playwrightImportCaptureRoutesJson: created.playwrightImportCaptureRoutesJson ?? null,
     playwrightFieldMapperJson: created.playwrightFieldMapperJson ?? null,
+    playwrightDraftMapperJson: created.playwrightDraftMapperJson ?? null,
     playwrightImportAutomationFlowJson: created.playwrightImportAutomationFlowJson ?? null,
     hasPlaywrightListingScript: Boolean(created.playwrightListingScript?.trim()),
     traderaDefaultTemplateId: created.traderaDefaultTemplateId ?? null,

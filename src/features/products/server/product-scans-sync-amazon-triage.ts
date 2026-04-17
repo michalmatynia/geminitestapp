@@ -59,6 +59,7 @@ import {
   resolveAmazonCandidateTriageStepStatus,
   resolveAmazonImageSearchFallbackProvider,
   resolveAmazonImageSearchProvider,
+  resolveAmazonImageSearchPageUrl,
   resolveAmazonImageSearchProviderHistory,
   resolveNextAmazonCandidateTriageStepAttempt,
   resolveNextQueueStepAttempt,
@@ -140,6 +141,7 @@ export async function synchronizeAmazonTriageReady({
   }
 
   const currentProvider = resolveAmazonImageSearchProvider(scan.rawResult, scannerSettings);
+  const imageSearchPageUrl = resolveAmazonImageSearchPageUrl(scan.rawResult, scannerSettings);
   const amazonRuntimeAction = await resolveAmazonRuntimeActionDefinition(
     resolveAmazonProductScanRuntimeKey(toRecord(scan.rawResult)?.['runtimeKey'])
   );
@@ -293,6 +295,7 @@ export async function synchronizeAmazonTriageReady({
             existingAsin: product.asin,
             imageCandidates: scan.imageCandidates,
             imageSearchProvider: fallbackProvider,
+            imageSearchPageUrl,
             selectorProfile: amazonSelectorProfile,
             allowManualVerification:
               shouldAutoShowScannerCaptchaBrowser(scannerSettings) && !scannerHeadless,
@@ -328,6 +331,7 @@ export async function synchronizeAmazonTriageReady({
             actionId: amazonRuntimeAction?.id ?? null,
             selectorProfile: amazonSelectorProfile,
             imageSearchProvider: fallbackProvider,
+            imageSearchPageUrl,
             imageSearchProviderHistory: [...providerHistory, fallbackProvider],
             allowManualVerification:
               shouldAutoShowScannerCaptchaBrowser(scannerSettings) && !scannerHeadless,
@@ -423,6 +427,7 @@ export async function synchronizeAmazonTriageReady({
             existingAsin: product.asin,
             imageCandidates: scan.imageCandidates,
             imageSearchProvider: currentProvider,
+            imageSearchPageUrl,
             selectorProfile: amazonSelectorProfile,
             allowManualVerification:
               shouldAutoShowScannerCaptchaBrowser(scannerSettings) && !scannerHeadless,
@@ -462,6 +467,7 @@ export async function synchronizeAmazonTriageReady({
             actionId: amazonRuntimeAction?.id ?? null,
             selectorProfile: amazonSelectorProfile,
             imageSearchProvider: currentProvider,
+            imageSearchPageUrl,
             imageSearchProviderHistory: providerHistory,
             allowManualVerification:
               shouldAutoShowScannerCaptchaBrowser(scannerSettings) && !scannerHeadless,

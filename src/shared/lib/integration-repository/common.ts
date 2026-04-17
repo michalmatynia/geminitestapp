@@ -27,6 +27,7 @@ export const CONNECTION_DEFAULTS = {
   playwrightImportActionId: null,
   playwrightImportCaptureRoutesJson: null,
   playwrightFieldMapperJson: null,
+  playwrightDraftMapperJson: null,
   scanner1688StartUrl: 'https://www.1688.com/',
   scanner1688LoginMode: 'session_required' as const,
   scanner1688DefaultSearchMode: 'local_image' as const,
@@ -378,6 +379,9 @@ export const toConnectionRecord = (doc: unknown): IntegrationConnectionRecord =>
     playwrightFieldMapperJson:
       (d['playwrightFieldMapperJson'] as string) ??
       CONNECTION_DEFAULTS.playwrightFieldMapperJson,
+    playwrightDraftMapperJson:
+      (d['playwrightDraftMapperJson'] as string) ??
+      CONNECTION_DEFAULTS.playwrightDraftMapperJson,
     scanner1688StartUrl:
       (d['scanner1688StartUrl'] as string) ?? CONNECTION_DEFAULTS.scanner1688StartUrl,
     scanner1688LoginMode:

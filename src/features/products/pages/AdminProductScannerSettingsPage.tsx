@@ -443,7 +443,7 @@ export function AdminProductScannerSettingsPage(): React.JSX.Element {
             </FormField>
             <FormField
               label='Amazon Image Search Provider'
-              description='Choose which Google entry flow Amazon reverse-image scans should use.'
+              description='Choose the upload method Amazon reverse-image scans should use.'
             >
               <SelectSimple
                 size='sm'
@@ -461,6 +461,24 @@ export function AdminProductScannerSettingsPage(): React.JSX.Element {
                 placeholder='Select Amazon image search provider'
                 ariaLabel='Select Amazon image search provider'
                 title='Select Amazon image search provider'
+              />
+            </FormField>
+            <FormField
+              label='Image Search Page URL'
+              description='Optional first page to open for reverse-image search. Leave blank to use the built-in Google Lens and Google Images fallback pages.'
+            >
+              <Input
+                type='url'
+                value={draft.amazonImageSearchPageUrl}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                  setDraft((prev) => ({
+                    ...prev,
+                    amazonImageSearchPageUrl: event.target.value,
+                  }));
+                }}
+                placeholder='https://lens.google.com/?hl=en'
+                aria-label='Amazon image search page URL'
+                title='Amazon image search page URL'
               />
             </FormField>
             <FormField

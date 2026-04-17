@@ -5,6 +5,7 @@ import { usePathname, useSearchParams, useSelectedLayoutSegments } from 'next/na
 import { startTransition, useEffect, useMemo, useState } from 'react';
 
 import { useOptionalCmsStorefrontAppearance } from '@/shared/ui/cms-appearance/CmsStorefrontAppearance';
+import { isSupportedSiteLocale } from '@/shared/lib/i18n/site-locale';
 import {
   KANGUR_BASE_PATH,
   getKangurDedicatedAppHref,
@@ -18,6 +19,7 @@ import { KangurRoutingProvider } from '@/features/kangur/ui/context/KangurRoutin
 import { KangurFeaturePageShell } from '@/features/kangur/ui/KangurFeaturePage';
 import { KangurMainRoleProvider } from '@/features/kangur/ui/design/primitives/KangurPageContainer';
 import {
+  canonicalizeKangurPublicAliasPathname,
   getKangurSlugFromPathname,
 } from '@/features/kangur/ui/routing/managed-paths';
 import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
@@ -55,11 +57,43 @@ type KangurFeatureRouteShellPathState = {
 // Strips Next.js layout-segment markers (route groups like "(app)" and
 // parallel-route slots like "@modal") from the selected segments array so
 // only real URL path segments remain.
-const normalizeSelectedKangurSegments = (segments: readonly string[]): string[] =>
-  segments
+const normalizeSelectedKangurSegments = ({
+  normalizedBasePath,
+  segments,
+}: {
+  normalizedBasePath: string;
+  segments: readonly string[];
+}): string[] => {
+  const normalizedSegments = segments
     .map((segment) => segment.trim())
     .filter(Boolean)
     .filter((segment) => !segment.startsWith('(') && !segment.startsWith('@'));
+
+  if (normalizedSegments.length === 0) {
+    return normalizedSegments;
+  }
+
+  const withoutLocale = isSupportedSiteLocale(normalizedSegments[0])
+    ? normalizedSegments.slice(1)
+    : normalizedSegments;
+
+  const basePathSegments = normalizedBasePath
+    .split('/')
+    .map((segment) => segment.trim().toLowerCase())
+    .filter(Boolean);
+  const withoutBasePath =
+    basePathSegments.length > 0 &&
+    withoutLocale.length >= basePathSegments.length &&
+    basePathSegments.every((segment, index) => withoutLocale[index]?.trim().toLowerCase() === segment)
+      ? withoutLocale.slice(basePathSegments.length)
+      : withoutLocale;
+
+  if (normalizedBasePath === '/' && withoutBasePath[0]?.trim().toLowerCase() === 'kangur') {
+    return withoutBasePath.slice(1);
+  }
+
+  return withoutBasePath;
+};
 
 // Returns the current browser pathname during client-side rendering, or null
 // during SSR. Used as a fallback when Next.js usePathname() returns null.
@@ -118,12 +152,20 @@ const resolveKangurFeatureRouteShellSlug = ({
   resolvedPathname: string;
   selectedLayoutSegments: readonly string[];
 }): string[] => {
-  const selectedSlug = normalizeSelectedKangurSegments(selectedLayoutSegments);
+  const selectedSlug = normalizeSelectedKangurSegments({
+    normalizedBasePath,
+    segments: selectedLayoutSegments,
+  });
   if (selectedSlug.length > 0) {
     return selectedSlug;
   }
 
-  return getKangurSlugFromPathname(resolvedPathname, normalizedBasePath);
+  const normalizedPathname =
+    normalizedBasePath === '/'
+      ? canonicalizeKangurPublicAliasPathname(resolvedPathname)
+      : resolvedPathname;
+
+  return getKangurSlugFromPathname(normalizedPathname, normalizedBasePath);
 };
 
 // The /login route is handled by a dedicated Next.js page outside the Kangur

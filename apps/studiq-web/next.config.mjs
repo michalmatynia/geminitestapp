@@ -17,6 +17,23 @@ const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  cacheLife: {
+    swr60: {
+      stale: 60,
+      revalidate: 60,
+      expire: 300,
+    },
+    swr300: {
+      stale: 300,
+      revalidate: 300,
+      expire: 3600,
+    },
+    swr86400: {
+      stale: 300,
+      revalidate: 86400,
+      expire: 604800,
+    },
+  },
   transpilePackages: [
     '@kangur/core',
     '@kangur/contracts',

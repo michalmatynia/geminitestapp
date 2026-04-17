@@ -299,6 +299,44 @@ describe('KangurFeatureRouteShell', () => {
     });
   });
 
+  it('drops locale and base-path layout segments before resolving the localized Kangur home route', () => {
+    usePathnameMock.mockReturnValue('/en/kangur');
+    useSelectedLayoutSegmentsMock.mockReturnValue(['en', 'kangur']);
+
+    render(<KangurFeatureRouteShell />);
+
+    expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
+      pageKey: 'Game',
+      requestedPath: '/kangur',
+      requestedHref: '/en/kangur',
+      basePath: '/kangur',
+      embedded: false,
+    });
+    expect(setKangurClientObservabilityContextMock).toHaveBeenCalledWith({
+      pageKey: 'Game',
+      requestedPath: '/kangur',
+    });
+  });
+
+  it('drops locale and base-path layout segments before resolving the localized lessons route', () => {
+    usePathnameMock.mockReturnValue('/en/kangur/lessons');
+    useSelectedLayoutSegmentsMock.mockReturnValue(['en', 'kangur', 'lessons']);
+
+    render(<KangurFeatureRouteShell />);
+
+    expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
+      pageKey: 'Lessons',
+      requestedPath: '/kangur/lessons',
+      requestedHref: '/en/kangur/lessons',
+      basePath: '/kangur',
+      embedded: false,
+    });
+    expect(setKangurClientObservabilityContextMock).toHaveBeenCalledWith({
+      pageKey: 'Lessons',
+      requestedPath: '/kangur/lessons',
+    });
+  });
+
   it('falls back to the real browser pathname when the router pathname is transiently unavailable', () => {
     window.history.replaceState({}, '', '/en/lessons?focus=division');
     usePathnameMock.mockReturnValue(null);

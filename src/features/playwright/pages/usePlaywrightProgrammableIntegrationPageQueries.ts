@@ -18,7 +18,7 @@ import { usePlaywrightActions } from '@/shared/hooks/usePlaywrightStepSequencer'
 export const usePlaywrightProgrammableIntegrationPageQueries = (): {
   connections: ProgrammableConnections;
   connectionsQuery: ReturnType<typeof usePlaywrightProgrammableConnections>;
-  integrationsQuery: ReturnType<typeof usePlaywrightProgrammableIntegration>['integrationsQuery'];
+  integrationsQuery: ReturnType<typeof usePlaywrightProgrammableIntegration>['integrationQuery'];
   personasQuery: ReturnType<typeof usePlaywrightPersonas>;
   playwrightActionsQuery: ReturnType<typeof usePlaywrightActions>;
   programmableIntegration: ReturnType<

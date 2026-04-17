@@ -166,6 +166,7 @@ export const QUERY_KEYS = {
     list: (filters: unknown) => [...QUERY_KEYS.notes.lists(), { filters }] as const,
     details: () => [...QUERY_KEYS.notes.all, 'detail'] as const,
     detail: (id: string) => [...QUERY_KEYS.notes.details(), id] as const,
+    related: (id: string) => [...QUERY_KEYS.notes.all, 'related', id] as const,
     search: (query: string) => [...QUERY_KEYS.notes.all, 'search', { query }] as const,
     lookup: (ids: string[]) => [...QUERY_KEYS.notes.all, 'lookup', { ids }] as const,
     notebooks: () => [...QUERY_KEYS.notes.all, 'notebooks'] as const,

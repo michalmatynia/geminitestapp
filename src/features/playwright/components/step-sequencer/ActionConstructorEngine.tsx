@@ -696,7 +696,7 @@ export function ActionConstructorEngine(): React.JSX.Element {
                 Action Settings
               </Label>
               <p className='text-[11px] text-muted-foreground/70'>
-                These defaults apply before integration-level Playwright settings. Explicit run overrides still win.
+                These settings belong to this runtime action. Explicit run overrides still win.
               </p>
             </div>
 
@@ -722,10 +722,10 @@ export function ActionConstructorEngine(): React.JSX.Element {
                   }
                 >
                   <SelectTrigger className='h-8 text-xs'>
-                    <SelectValue placeholder='Inherit connection setting' />
+                    <SelectValue placeholder='No action override' />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value='__inherit__'>Inherit connection setting</SelectItem>
+                    <SelectItem value='__inherit__'>No action override</SelectItem>
                     <SelectItem value='headed'>Headed</SelectItem>
                     <SelectItem value='headless'>Headless</SelectItem>
                   </SelectContent>
@@ -747,10 +747,10 @@ export function ActionConstructorEngine(): React.JSX.Element {
                   }
                 >
                   <SelectTrigger className='h-8 text-xs'>
-                    <SelectValue placeholder='Inherit connection browser' />
+                    <SelectValue placeholder='Use runtime browser default' />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value='__inherit__'>Inherit connection browser</SelectItem>
+                    <SelectItem value='__inherit__'>Use runtime browser default</SelectItem>
                     <SelectItem value='auto'>Auto</SelectItem>
                     <SelectItem value='chrome'>Chrome</SelectItem>
                     <SelectItem value='brave'>Brave</SelectItem>
@@ -796,10 +796,10 @@ export function ActionConstructorEngine(): React.JSX.Element {
                   }}
                 >
                   <SelectTrigger className='h-8 text-xs'>
-                    <SelectValue placeholder='Inherit connection setting' />
+                    <SelectValue placeholder='No action override' />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value='__inherit__'>Inherit connection setting</SelectItem>
+                    <SelectItem value='__inherit__'>No action override</SelectItem>
                     <SelectItem value='__disabled__'>No device emulation</SelectItem>
                     {playwrightDeviceOptions.map((device) => (
                       <SelectItem key={device.value} value={device.value}>
@@ -820,7 +820,7 @@ export function ActionConstructorEngine(): React.JSX.Element {
                       slowMo: toNullableInteger(e.target.value),
                     })
                   }
-                  placeholder='Inherit'
+                  placeholder='No override'
                   className='h-8 text-xs'
                   inputMode='numeric'
                 />
@@ -836,7 +836,7 @@ export function ActionConstructorEngine(): React.JSX.Element {
                       timeout: toNullableInteger(e.target.value),
                     })
                   }
-                  placeholder='Inherit'
+                  placeholder='No override'
                   className='h-8 text-xs'
                   inputMode='numeric'
                 />
@@ -852,7 +852,7 @@ export function ActionConstructorEngine(): React.JSX.Element {
                       navigationTimeout: toNullableInteger(e.target.value),
                     })
                   }
-                  placeholder='Inherit'
+                  placeholder='No override'
                   className='h-8 text-xs'
                   inputMode='numeric'
                 />
@@ -869,7 +869,7 @@ export function ActionConstructorEngine(): React.JSX.Element {
                       locale: nextLocale.length > 0 ? nextLocale : null,
                     });
                   }}
-                  placeholder='Inherit'
+                  placeholder='No override'
                   className='h-8 text-xs'
                 />
               </div>
@@ -885,7 +885,7 @@ export function ActionConstructorEngine(): React.JSX.Element {
                       timezoneId: nextTimezoneId.length > 0 ? nextTimezoneId : null,
                     });
                   }}
-                  placeholder='Inherit'
+                  placeholder='No override'
                   className='h-8 text-xs'
                 />
               </div>
@@ -911,10 +911,10 @@ export function ActionConstructorEngine(): React.JSX.Element {
                   }
                 >
                   <SelectTrigger className='h-8 text-xs'>
-                    <SelectValue placeholder='Inherit connection setting' />
+                    <SelectValue placeholder='No action override' />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value='__inherit__'>Inherit connection setting</SelectItem>
+                    <SelectItem value='__inherit__'>No action override</SelectItem>
                     {playwrightIdentityProfileOptions.map((option) => (
                       <SelectItem key={option.value} value={option.value}>
                         {option.label}
@@ -945,10 +945,10 @@ export function ActionConstructorEngine(): React.JSX.Element {
                   }
                 >
                   <SelectTrigger className='h-8 text-xs'>
-                    <SelectValue placeholder='Inherit connection setting' />
+                    <SelectValue placeholder='No action override' />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value='__inherit__'>Inherit connection setting</SelectItem>
+                    <SelectItem value='__inherit__'>No action override</SelectItem>
                     <SelectItem value='__enabled__'>Enabled</SelectItem>
                     <SelectItem value='__disabled__'>Disabled</SelectItem>
                   </SelectContent>
@@ -965,7 +965,7 @@ export function ActionConstructorEngine(): React.JSX.Element {
                       mouseJitter: toNullableInteger(e.target.value),
                     })
                   }
-                  placeholder='Inherit'
+                  placeholder='No override'
                   className='h-8 text-xs'
                   inputMode='numeric'
                 />
@@ -992,10 +992,10 @@ export function ActionConstructorEngine(): React.JSX.Element {
                   }
                 >
                   <SelectTrigger className='h-8 text-xs'>
-                    <SelectValue placeholder='Inherit connection setting' />
+                    <SelectValue placeholder='No action override' />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value='__inherit__'>Inherit connection setting</SelectItem>
+                    <SelectItem value='__inherit__'>No action override</SelectItem>
                     <SelectItem value='__enabled__'>Enabled</SelectItem>
                     <SelectItem value='__disabled__'>Disabled</SelectItem>
                   </SelectContent>
@@ -1023,10 +1023,10 @@ export function ActionConstructorEngine(): React.JSX.Element {
                   }
                 >
                   <SelectTrigger className='h-8 text-xs'>
-                    <SelectValue placeholder='Inherit connection setting' />
+                    <SelectValue placeholder='No action override' />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value='__inherit__'>Inherit connection setting</SelectItem>
+                    <SelectItem value='__inherit__'>No action override</SelectItem>
                     <SelectItem value='__enabled__'>Enabled</SelectItem>
                     <SelectItem value='__disabled__'>Disabled</SelectItem>
                   </SelectContent>
@@ -1050,10 +1050,10 @@ export function ActionConstructorEngine(): React.JSX.Element {
                   }
                 >
                   <SelectTrigger className='h-8 text-xs'>
-                    <SelectValue placeholder='Inherit connection setting' />
+                    <SelectValue placeholder='No action override' />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value='__inherit__'>Inherit connection setting</SelectItem>
+                    <SelectItem value='__inherit__'>No action override</SelectItem>
                     {playwrightProxySessionModeOptions.map((option) => (
                       <SelectItem key={option.value} value={option.value}>
                         {option.label}
@@ -1083,10 +1083,10 @@ export function ActionConstructorEngine(): React.JSX.Element {
                   }
                 >
                   <SelectTrigger className='h-8 text-xs'>
-                    <SelectValue placeholder='Inherit connection setting' />
+                    <SelectValue placeholder='No action override' />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value='__inherit__'>Inherit connection setting</SelectItem>
+                    <SelectItem value='__inherit__'>No action override</SelectItem>
                     {playwrightProxyProviderPresetOptions.map((option) => (
                       <SelectItem key={option.value} value={option.value}>
                         {option.label}
@@ -1107,7 +1107,7 @@ export function ActionConstructorEngine(): React.JSX.Element {
                       proxyServer: nextProxyServer.length > 0 ? nextProxyServer : null,
                     });
                   }}
-                  placeholder='Inherit'
+                  placeholder='No override'
                   className='h-8 text-xs'
                 />
               </div>
@@ -1123,7 +1123,7 @@ export function ActionConstructorEngine(): React.JSX.Element {
                       proxyUsername: nextProxyUsername.length > 0 ? nextProxyUsername : null,
                     });
                   }}
-                  placeholder='Inherit'
+                  placeholder='No override'
                   className='h-8 text-xs'
                 />
               </div>
@@ -1139,7 +1139,7 @@ export function ActionConstructorEngine(): React.JSX.Element {
                       proxyPassword: nextProxyPassword.length > 0 ? nextProxyPassword : null,
                     });
                   }}
-                  placeholder='Inherit'
+                  placeholder='No override'
                   className='h-8 text-xs'
                   type='password'
                 />
@@ -1157,7 +1157,7 @@ export function ActionConstructorEngine(): React.JSX.Element {
                       clickDelayMin: toNullableInteger(e.target.value),
                     })
                   }
-                  placeholder='Inherit'
+                  placeholder='No override'
                   className='h-8 text-xs'
                   inputMode='numeric'
                 />
@@ -1173,7 +1173,7 @@ export function ActionConstructorEngine(): React.JSX.Element {
                       clickDelayMax: toNullableInteger(e.target.value),
                     })
                   }
-                  placeholder='Inherit'
+                  placeholder='No override'
                   className='h-8 text-xs'
                   inputMode='numeric'
                 />
@@ -1189,7 +1189,7 @@ export function ActionConstructorEngine(): React.JSX.Element {
                       inputDelayMin: toNullableInteger(e.target.value),
                     })
                   }
-                  placeholder='Inherit'
+                  placeholder='No override'
                   className='h-8 text-xs'
                   inputMode='numeric'
                 />
@@ -1205,7 +1205,7 @@ export function ActionConstructorEngine(): React.JSX.Element {
                       inputDelayMax: toNullableInteger(e.target.value),
                     })
                   }
-                  placeholder='Inherit'
+                  placeholder='No override'
                   className='h-8 text-xs'
                   inputMode='numeric'
                 />
@@ -1221,7 +1221,7 @@ export function ActionConstructorEngine(): React.JSX.Element {
                       actionDelayMin: toNullableInteger(e.target.value),
                     })
                   }
-                  placeholder='Inherit'
+                  placeholder='No override'
                   className='h-8 text-xs'
                   inputMode='numeric'
                 />
@@ -1237,7 +1237,7 @@ export function ActionConstructorEngine(): React.JSX.Element {
                       actionDelayMax: toNullableInteger(e.target.value),
                     })
                   }
-                  placeholder='Inherit'
+                  placeholder='No override'
                   className='h-8 text-xs'
                   inputMode='numeric'
                 />

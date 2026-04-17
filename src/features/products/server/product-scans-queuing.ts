@@ -70,6 +70,7 @@ import {
 import {
   PRODUCT_SCAN_BATCH_START_CONCURRENCY,
   buildAmazonScannerRequestRuntimeOptions,
+  resolveAmazonRuntimeActionDefinition,
   resolveAmazonImageSearchProvider,
 } from './product-scans-service.helpers.amazon';
 
@@ -400,10 +401,7 @@ async function queueBatchProductScans(input: {
           );
         }
 
-        const amazonRuntimeAction =
-          amazonRuntimeKey !== null
-            ? getPlaywrightRuntimeActionSeed(amazonRuntimeKey)
-            : null;
+        const amazonRuntimeAction = await resolveAmazonRuntimeActionDefinition(amazonRuntimeKey);
         const amazonSelectorProfile =
           input.config.provider === 'amazon' &&
           typeof requestInput['selectorProfile'] === 'string' &&
@@ -428,6 +426,8 @@ async function queueBatchProductScans(input: {
           const scannerRuntimeOptions = buildAmazonScannerRequestRuntimeOptions({
             scannerSettings,
             scannerEngineRequestOptions,
+            actionExecutionSettings: amazonRuntimeAction?.executionSettings ?? null,
+            actionPersonaId: amazonRuntimeAction?.personaId ?? null,
             ...(shouldAutoShowCaptchaBrowser ? { forceHeadless: false } : {}),
           });
           const imageSearchProvider =

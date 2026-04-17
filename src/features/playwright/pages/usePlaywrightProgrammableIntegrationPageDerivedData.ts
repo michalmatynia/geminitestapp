@@ -14,8 +14,8 @@ import { buildManagedPlaywrightActionSummaries } from '@/features/playwright/uti
 import { buildProgrammableSessionDiagnostics } from '@/features/playwright/utils/playwright-programmable-session-diagnostics';
 import { buildProgrammableSessionPreview } from '@/features/playwright/utils/playwright-programmable-session-preview';
 import { defaultIntegrationConnectionPlaywrightSettings } from '@/features/playwright/utils/playwright-settings-baseline';
+import type { PlaywrightPersona } from '@/shared/contracts/playwright';
 import type { PlaywrightAction } from '@/shared/contracts/playwright-steps';
-import type { PlaywrightPersona } from '@/shared/contracts/playwright-personas';
 
 const isCleanupReady = (connection: ProgrammableConnection): boolean =>
   connection.playwrightLegacyBrowserMigration?.canCleanupPersistedLegacyBrowserFields === true;
@@ -32,7 +32,7 @@ const toCleanupPreviewItem = (
 } => {
   const migration = connection.playwrightLegacyBrowserMigration;
 
-  if (migration === null) {
+  if (migration === null || migration === undefined) {
     return {
       id: connection.id,
       importDraftActionId: '',

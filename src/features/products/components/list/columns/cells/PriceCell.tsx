@@ -64,7 +64,7 @@ function PriceCellBase({ productId, price }: { productId: string, price: number 
   );
 }
 
-function PriceCellContentIndicator({ info, productPrice }: { info: PriceInfo, productPrice: number | null }): React.JSX.Element | null {
+function PriceCellContentIndicator({ info }: { info: PriceInfo }): React.JSX.Element | null {
   const { price: displayPrice, currencyCode: actualCurrency } = info;
   if (displayPrice === null || actualCurrency === null) return null;
 
@@ -86,7 +86,7 @@ function PriceCellContent({ product, info, currencyCode }: { product: ProductWit
     <div className='flex items-center gap-1'>
       <PriceCellBase productId={product.id} price={product.price} />
       {showIndicator === true && (
-        <PriceCellContentIndicator info={info} productPrice={product.price} />
+        <PriceCellContentIndicator info={info} />
       )}
     </div>
   );

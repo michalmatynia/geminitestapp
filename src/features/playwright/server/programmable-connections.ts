@@ -19,7 +19,7 @@ const withNullableStringField = <TKey extends string>(
   value: string | null | undefined
 ): Partial<Record<TKey, string | null>> => {
   if (typeof value === 'string' || value === null) {
-    const field: Partial<Record<TKey, string | null>> = { [key]: value ?? null };
+    const field = { [key]: value ?? null } as Partial<Record<TKey, string | null>>;
     return field;
   }
 
@@ -31,7 +31,7 @@ const withNonEmptyStringField = <TKey extends string>(
   value: string | undefined
 ): Partial<Record<TKey, string>> => {
   if (typeof value === 'string' && value.length > 0) {
-    const field: Partial<Record<TKey, string>> = { [key]: value };
+    const field = { [key]: value } as Partial<Record<TKey, string>>;
     return field;
   }
 
@@ -134,6 +134,10 @@ const buildProgrammableConnectionScriptInput = (
       data.playwrightImportCaptureRoutesJson
     ),
     ...withNullableStringField('playwrightFieldMapperJson', data.playwrightFieldMapperJson),
+    ...withNullableStringField(
+      'playwrightImportAutomationFlowJson',
+      data.playwrightImportAutomationFlowJson
+    ),
   };
 };
 

@@ -5,6 +5,7 @@ const {
   getConnectionByIdMock,
   getIntegrationByIdMock,
   updateConnectionMock,
+  updatePlaywrightProgrammableConnectionMock,
   encryptSecretMock,
   fetchResolvedPlaywrightRuntimeActionsMock,
 } = vi.hoisted(() => ({
@@ -12,6 +13,7 @@ const {
   getConnectionByIdMock: vi.fn(),
   getIntegrationByIdMock: vi.fn(),
   updateConnectionMock: vi.fn(),
+  updatePlaywrightProgrammableConnectionMock: vi.fn(),
   encryptSecretMock: vi.fn(),
   fetchResolvedPlaywrightRuntimeActionsMock: vi.fn(),
 }));
@@ -38,6 +40,15 @@ vi.mock('@/shared/lib/browser-execution/runtime-action-resolver.server', () => (
   fetchResolvedPlaywrightRuntimeActions: (...args: unknown[]) =>
     fetchResolvedPlaywrightRuntimeActionsMock(...args),
 }));
+
+vi.mock('@/features/playwright/server', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/playwright/server')>();
+  return {
+    ...actual,
+    updatePlaywrightProgrammableConnection: (...args: unknown[]) =>
+      updatePlaywrightProgrammableConnectionMock(...args),
+  };
+});
 
 import { DEFAULT_TRADERA_QUICKLIST_SCRIPT } from '@/features/integrations/services/tradera-listing/default-script';
 import { PUT_handler, deleteQuerySchema } from './handler';
@@ -344,6 +355,11 @@ describe('integration connection by-id handler', () => {
       id: 'integration-playwright-1',
       slug: 'playwright-programmable',
     });
+    updatePlaywrightProgrammableConnectionMock.mockRejectedValue(
+      new Error(
+        'Programmable connections no longer accept connection-level Playwright browser settings. Edit the selected Step Sequencer action instead.'
+      )
+    );
 
     await expect(
       PUT_handler(
@@ -357,7 +373,13 @@ describe('integration connection by-id handler', () => {
       'Programmable connections no longer accept connection-level Playwright browser settings. Edit the selected Step Sequencer action instead.'
     );
 
-    expect(updateConnectionMock).not.toHaveBeenCalled();
+    expect(updatePlaywrightProgrammableConnectionMock).toHaveBeenCalledWith({
+      connectionId: 'conn-playwright-1',
+      data: {
+        name: 'Programmable Browser',
+        playwrightPersonaId: 'persona-1',
+      },
+    });
   });
 
   it('hides browser settings from programmable update responses after cleanup', async () => {
@@ -376,7 +398,7 @@ describe('integration connection by-id handler', () => {
       id: 'integration-playwright-1',
       slug: 'playwright-programmable',
     });
-    updateConnectionMock.mockResolvedValue({
+    updatePlaywrightProgrammableConnectionMock.mockResolvedValue({
       id: 'conn-playwright-1',
       integrationId: 'integration-playwright-1',
       name: 'Programmable Browser',
@@ -384,6 +406,10 @@ describe('integration connection by-id handler', () => {
       updatedAt: '2026-04-02T11:00:00.000Z',
       playwrightListingActionId: 'listing-draft',
       playwrightImportActionId: 'import-draft',
+      playwrightLegacyBrowserMigration: {
+        hasLegacyBrowserBehavior: false,
+        requiresManualProxyPasswordInput: false,
+      },
     });
 
     const response = await PUT_handler(
@@ -395,6 +421,14 @@ describe('integration connection by-id handler', () => {
     );
 
     const payload = await response.json();
+
+    expect(updatePlaywrightProgrammableConnectionMock).toHaveBeenCalledWith({
+      connectionId: 'conn-playwright-1',
+      data: {
+        name: 'Programmable Browser',
+        resetPlaywrightOverrides: true,
+      },
+    });
 
     expect(payload).toMatchObject({
       id: 'conn-playwright-1',

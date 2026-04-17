@@ -27,6 +27,7 @@ describe('v2 playwright programmable test handler', () => {
       ok: true,
       data: {
         connectionId: 'conn-playwright-1',
+        executionMode: 'commit',
         scriptType: 'listing',
       },
     });
@@ -46,6 +47,7 @@ describe('v2 playwright programmable test handler', () => {
 
     expect(mocks.runPlaywrightProgrammableConnectionTestMock).toHaveBeenCalledWith({
       connectionId: 'conn-playwright-1',
+      executionMode: 'commit',
       scriptType: 'listing',
     });
     await expect(response.json()).resolves.toEqual({

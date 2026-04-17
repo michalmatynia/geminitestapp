@@ -26,8 +26,11 @@ type CleanupAllPlaywrightBrowserPersistenceResponse = {
   cleanedCount: number;
 };
 
+type TestPlaywrightProgrammableExecutionMode = 'dry_run' | 'commit';
+
 type TestPlaywrightProgrammableConnectionVariables = {
   connectionId: string;
+  executionMode?: TestPlaywrightProgrammableExecutionMode;
   scriptType: 'listing' | 'import';
 };
 
@@ -118,9 +121,10 @@ export function useTestPlaywrightProgrammableConnection(): MutationResult<
   const mutationKey = playwrightKeys.programmableConnections();
 
   return createMutationV2<Record<string, unknown>, TestPlaywrightProgrammableConnectionVariables>({
-    mutationFn: ({ connectionId, scriptType }) =>
+    mutationFn: ({ connectionId, executionMode = 'dry_run', scriptType }) =>
       api.post<Record<string, unknown>>('/api/playwright/programmable/test', {
         connectionId,
+        executionMode,
         scriptType,
       }),
     mutationKey,

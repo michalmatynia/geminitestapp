@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   encodeSettingValueMock: vi.fn(),
   runPlaywrightProgrammableListingForConnectionMock: vi.fn(),
   runPlaywrightProgrammableImportForConnectionMock: vi.fn(),
+  runPlaywrightImportAutomationFlowMock: vi.fn(),
   buildPlaywrightImportInputMock: vi.fn(),
   parsePlaywrightFieldMapperJsonMock: vi.fn(),
   mapPlaywrightImportProductsMock: vi.fn(),
@@ -68,7 +69,12 @@ vi.mock('./programmable', () => ({
     mocks.runPlaywrightProgrammableImportForConnectionMock(...args),
 }));
 
-vi.mock('@/features/integrations/services/playwright-import-service', () => ({
+vi.mock('./automation-flow', () => ({
+  runPlaywrightImportAutomationFlow: (...args: unknown[]) =>
+    mocks.runPlaywrightImportAutomationFlowMock(...args),
+}));
+
+vi.mock('./import-input', () => ({
   buildPlaywrightImportInput: (...args: unknown[]) => mocks.buildPlaywrightImportInputMock(...args),
 }));
 
@@ -154,6 +160,7 @@ describe('programmable admin server', () => {
         playwrightImportActionId: 'import-base',
         playwrightImportCaptureRoutesJson: '{"routes":[],"appearanceMode":""}',
         playwrightFieldMapperJson: '[]',
+        playwrightImportAutomationFlowJson: '{"name":"Draft import","blocks":[]}',
         proxyPassword: null,
       },
     });
@@ -177,6 +184,7 @@ describe('programmable admin server', () => {
         playwrightImportBaseUrl: 'https://example.test',
         playwrightImportCaptureRoutesJson: '{"routes":[],"appearanceMode":""}',
         playwrightFieldMapperJson: '[]',
+        playwrightImportAutomationFlowJson: '{"name":"Draft import","blocks":[]}',
         playwrightListingActionId: 'programmable_connection__conn-playwright-1__listing_session',
         playwrightImportActionId: 'programmable_connection__conn-playwright-1__import_session',
         resetPlaywrightOverrides: true,
@@ -458,5 +466,226 @@ describe('programmable admin server', () => {
         mappedProducts: [{ name: 'Mapped title' }],
       },
     });
+  });
+
+  it('runs saved import automation flows in dry-run mode during import tests', async () => {
+    mocks.getConnectionByIdMock.mockResolvedValue({
+      id: 'conn-playwright-1',
+      integrationId: 'integration-playwright-1',
+      playwrightFieldMapperJson: '[{\"source\":\"title\",\"target\":\"name\"}]',
+      playwrightImportAutomationFlowJson: JSON.stringify({
+        name: 'Draft import',
+        blocks: [
+          {
+            kind: 'for_each',
+            items: { type: 'path', path: 'vars.rawProducts' },
+            blocks: [{ kind: 'map_product' }, { kind: 'create_draft' }],
+          },
+        ],
+      }),
+    });
+    mocks.buildPlaywrightImportInputMock.mockReturnValue({
+      sourceUrl: 'https://example.test/import',
+    });
+    mocks.runPlaywrightImportAutomationFlowMock.mockResolvedValue({
+      flow: { name: 'Draft import', blocks: [] },
+      input: { sourceUrl: 'https://example.test/import' },
+      rawResult: { ok: true },
+      rawProducts: [{ title: 'Raw title' }],
+      drafts: [],
+      draftPayloads: [{ sku: 'SKU-1' }],
+      writeOutcomes: [
+        {
+          kind: 'draft',
+          status: 'dry_run',
+          index: 0,
+          payload: { sku: 'SKU-1' },
+          record: null,
+        },
+      ],
+      products: [],
+      productPayloads: [],
+      results: { drafts: [{ sku: 'SKU-1' }] },
+      vars: { rawProducts: [{ title: 'Raw title' }] },
+    });
+    mocks.parsePlaywrightFieldMapperJsonMock.mockReturnValue([{ source: 'title', target: 'name' }]);
+    mocks.mapPlaywrightImportProductsMock.mockReturnValue([{ name: 'Mapped title' }]);
+
+    await expect(
+      runPlaywrightProgrammableConnectionTest({
+        connectionId: 'conn-playwright-1',
+        scriptType: 'import',
+      })
+    ).resolves.toEqual({
+      ok: true,
+      scriptType: 'import',
+      input: {
+        sourceUrl: 'https://example.test/import',
+      },
+      result: {
+        rawResult: { ok: true },
+        rawProducts: [{ title: 'Raw title' }],
+        mappedProducts: [{ name: 'Mapped title' }],
+        automationFlow: {
+          executionMode: 'dry_run',
+          flow: { name: 'Draft import', blocks: [] },
+          drafts: [],
+          draftPayloads: [{ sku: 'SKU-1' }],
+          writeOutcomes: [
+            {
+              kind: 'draft',
+              status: 'dry_run',
+              index: 0,
+              payload: { sku: 'SKU-1' },
+              record: null,
+            },
+          ],
+          products: [],
+          productPayloads: [],
+          results: { drafts: [{ sku: 'SKU-1' }] },
+          vars: { rawProducts: [{ title: 'Raw title' }] },
+        },
+      },
+    });
+
+    expect(mocks.runPlaywrightImportAutomationFlowMock).toHaveBeenCalledWith({
+      connection: expect.objectContaining({ id: 'conn-playwright-1' }),
+      input: { sourceUrl: 'https://example.test/import' },
+      flow: {
+        name: 'Draft import',
+        blocks: [
+          {
+            kind: 'for_each',
+            items: { type: 'path', path: 'vars.rawProducts' },
+            blocks: [{ kind: 'map_product' }, { kind: 'create_draft' }],
+          },
+        ],
+      },
+      dryRun: true,
+    });
+    expect(mocks.runPlaywrightProgrammableImportForConnectionMock).not.toHaveBeenCalled();
+  });
+
+  it('runs saved import automation flows in commit mode during flow runs', async () => {
+    mocks.getConnectionByIdMock.mockResolvedValue({
+      id: 'conn-playwright-1',
+      integrationId: 'integration-playwright-1',
+      playwrightFieldMapperJson: '[{\"source\":\"title\",\"target\":\"name\"}]',
+      playwrightImportAutomationFlowJson: JSON.stringify({
+        name: 'Commit import',
+        blocks: [{ kind: 'create_product' }],
+      }),
+    });
+    mocks.buildPlaywrightImportInputMock.mockReturnValue({
+      sourceUrl: 'https://example.test/import',
+    });
+    mocks.runPlaywrightImportAutomationFlowMock.mockResolvedValue({
+      flow: { name: 'Commit import', blocks: [] },
+      input: { sourceUrl: 'https://example.test/import' },
+      rawResult: { ok: true },
+      rawProducts: [{ title: 'Raw title' }],
+      drafts: [{ id: 'draft-1' }],
+      draftPayloads: [{ sku: 'SKU-1' }],
+      writeOutcomes: [
+        {
+          kind: 'draft',
+          status: 'created',
+          index: 0,
+          payload: { sku: 'SKU-1' },
+          record: { id: 'draft-1' },
+        },
+        {
+          kind: 'product',
+          status: 'created',
+          index: 0,
+          payload: { sku: 'SKU-1' },
+          record: { id: 'product-1' },
+        },
+      ],
+      products: [{ id: 'product-1' }],
+      productPayloads: [{ sku: 'SKU-1' }],
+      results: { products: [{ id: 'product-1' }] },
+      vars: { rawProducts: [{ title: 'Raw title' }] },
+    });
+    mocks.parsePlaywrightFieldMapperJsonMock.mockReturnValue([{ source: 'title', target: 'name' }]);
+    mocks.mapPlaywrightImportProductsMock.mockReturnValue([{ name: 'Mapped title' }]);
+
+    await expect(
+      runPlaywrightProgrammableConnectionTest({
+        connectionId: 'conn-playwright-1',
+        executionMode: 'commit',
+        scriptType: 'import',
+      })
+    ).resolves.toEqual({
+      ok: true,
+      scriptType: 'import',
+      input: {
+        sourceUrl: 'https://example.test/import',
+      },
+      result: {
+        rawResult: { ok: true },
+        rawProducts: [{ title: 'Raw title' }],
+        mappedProducts: [{ name: 'Mapped title' }],
+        automationFlow: {
+          executionMode: 'commit',
+          flow: { name: 'Commit import', blocks: [] },
+          drafts: [{ id: 'draft-1' }],
+          draftPayloads: [{ sku: 'SKU-1' }],
+          writeOutcomes: [
+            {
+              kind: 'draft',
+              status: 'created',
+              index: 0,
+              payload: { sku: 'SKU-1' },
+              record: { id: 'draft-1' },
+            },
+            {
+              kind: 'product',
+              status: 'created',
+              index: 0,
+              payload: { sku: 'SKU-1' },
+              record: { id: 'product-1' },
+            },
+          ],
+          products: [{ id: 'product-1' }],
+          productPayloads: [{ sku: 'SKU-1' }],
+          results: { products: [{ id: 'product-1' }] },
+          vars: { rawProducts: [{ title: 'Raw title' }] },
+        },
+      },
+    });
+
+    expect(mocks.runPlaywrightImportAutomationFlowMock).toHaveBeenCalledWith({
+      connection: expect.objectContaining({ id: 'conn-playwright-1' }),
+      input: { sourceUrl: 'https://example.test/import' },
+      flow: {
+        name: 'Commit import',
+        blocks: [{ kind: 'create_product' }],
+      },
+      dryRun: false,
+    });
+  });
+
+  it('rejects import flow commits when no automation flow is configured', async () => {
+    mocks.getConnectionByIdMock.mockResolvedValue({
+      id: 'conn-playwright-1',
+      integrationId: 'integration-playwright-1',
+      playwrightFieldMapperJson: '[{\"source\":\"title\",\"target\":\"name\"}]',
+      playwrightImportAutomationFlowJson: null,
+    });
+    mocks.buildPlaywrightImportInputMock.mockReturnValue({
+      sourceUrl: 'https://example.test/import',
+    });
+
+    await expect(
+      runPlaywrightProgrammableConnectionTest({
+        connectionId: 'conn-playwright-1',
+        executionMode: 'commit',
+        scriptType: 'import',
+      })
+    ).rejects.toThrow('Import flow execution requires saved automation flow JSON.');
+
+    expect(mocks.runPlaywrightImportAutomationFlowMock).not.toHaveBeenCalled();
+    expect(mocks.runPlaywrightProgrammableImportForConnectionMock).not.toHaveBeenCalled();
   });
 });

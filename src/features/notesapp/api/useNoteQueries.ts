@@ -103,15 +103,29 @@ export function useNoteCategories(
   });
 }
 
+const appendCsvParam = (
+  search: URLSearchParams,
+  key: string,
+  values: string[] | undefined
+): void => {
+  const normalizedValues =
+    values?.map((value) => value.trim()).filter((value) => value.length > 0) ?? [];
+  if (normalizedValues.length > 0) search.set(key, normalizedValues.join(','));
+};
+
 const buildNotesUrl = (params: FetchNotesParams): string => {
   const search = new URLSearchParams();
-  if (params.categoryId !== undefined && params.categoryId !== null) search.set('categoryId', params.categoryId);
   if (params.notebookId !== undefined && params.notebookId !== null) search.set('notebookId', params.notebookId);
-  if (params.tagId !== undefined && params.tagId !== null) search.set('tagId', params.tagId);
-  if (params.query !== undefined && params.query !== null) search.set('query', params.query);
-  if (params.favoritesOnly === true) search.set('favoritesOnly', 'true');
-  if (params.archivedOnly === true) search.set('archivedOnly', 'true');
-  return `/api/notes?${search.toString()}`;
+  if (params.search !== undefined && params.search !== null) search.set('search', params.search);
+  if (params.searchScope !== undefined && params.searchScope !== null) search.set('searchScope', params.searchScope);
+  if (params.isPinned === true) search.set('isPinned', 'true');
+  if (params.isArchived === true) search.set('isArchived', 'true');
+  if (params.isFavorite === true) search.set('isFavorite', 'true');
+  if (params.truncateContent === true) search.set('truncateContent', 'true');
+  appendCsvParam(search, 'categoryIds', params.categoryIds);
+  appendCsvParam(search, 'tagIds', params.tagIds);
+  const query = search.toString();
+  return query.length > 0 ? `/api/notes?${query}` : '/api/notes';
 };
 
 export function useNotes(params: FetchNotesParams, options?: QueryOptions): ListQuery<NoteWithRelations> {

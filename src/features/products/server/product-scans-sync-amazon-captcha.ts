@@ -15,7 +15,6 @@ import { productService } from '@/shared/lib/products/services/productService';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import {
-  AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY,
   resolveAmazonRuntimeActionName,
 } from '@/shared/lib/browser-execution/amazon-runtime-constants';
 
@@ -23,7 +22,6 @@ import {
   AMAZON_PRODUCT_SCAN_PROVIDER,
   requireProductScanNativeRuntime,
 } from './product-scan-providers';
-import { getPlaywrightRuntimeActionSeed } from '@/shared/lib/browser-execution/playwright-runtime-action-seeds';
 import {
   buildProductScannerEngineRequestOptions,
   getProductScannerSettings,
@@ -49,12 +47,13 @@ import {
   buildAmazonScannerRequestRuntimeOptions,
   resolveAmazonImageSearchProvider,
   resolveAmazonImageSearchProviderHistory,
+  resolveAmazonProductScanRuntimeKey,
   resolveAmazonProbeEvaluatorConfig,
+  resolveAmazonRuntimeActionDefinition,
   resolveAmazonTriageEvaluatorConfig,
 } from './product-scans-service.helpers.amazon';
 
 const amazonScanRuntime = requireProductScanNativeRuntime(AMAZON_PRODUCT_SCAN_PROVIDER);
-const amazonRuntimeAction = getPlaywrightRuntimeActionSeed(AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY);
 
 type SynchronizeAmazonStatusInput = {
   scan: ProductScanRecord;
@@ -103,6 +102,9 @@ export async function synchronizeAmazonCaptchaRequired({
   }
 
   const manualVerificationTimeoutMs = resolveScanManualVerificationTimeoutMs(scannerSettings);
+  const amazonRuntimeAction = await resolveAmazonRuntimeActionDefinition(
+    resolveAmazonProductScanRuntimeKey(toRecord(scan.rawResult)?.['runtimeKey'])
+  );
   if (!shouldAutoShowScannerCaptchaBrowser(scannerSettings)) {
     return await persistFailedSynchronization(
       scan,
@@ -142,6 +144,8 @@ export async function synchronizeAmazonCaptchaRequired({
     const scannerRuntimeOptions = buildAmazonScannerRequestRuntimeOptions({
       scannerSettings,
       scannerEngineRequestOptions,
+      actionExecutionSettings: amazonRuntimeAction?.executionSettings ?? null,
+      actionPersonaId: amazonRuntimeAction?.personaId ?? null,
       forceHeadless: false,
     });
     const amazonImageSearchProvider = resolveAmazonImageSearchProvider(

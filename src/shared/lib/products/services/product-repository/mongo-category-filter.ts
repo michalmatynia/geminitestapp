@@ -72,11 +72,9 @@ const buildMongoCategoryIdFilter = (categoryIds: string[]): Filter<ProductDocume
   const lookupValues = buildLookupValues(categoryIds);
   if (lookupValues.length === 0) return null;
   if (lookupValues.length === 1) {
-    const categoryFilter: Filter<ProductDocument> = { categoryId: lookupValues[0] };
-    return categoryFilter;
+    return { categoryId: lookupValues[0] } as unknown as Filter<ProductDocument>;
   }
-  const categoryFilter: Filter<ProductDocument> = { categoryId: { $in: lookupValues } };
-  return categoryFilter;
+  return { categoryId: { $in: lookupValues } } as unknown as Filter<ProductDocument>;
 };
 
 export const buildMongoExpandedCategoryFilter = async (

@@ -140,15 +140,25 @@ export const applyActionExecutionSettingsToPlaywrightSettings = ({
   baseSettings: PlaywrightSettings;
   action: PlaywrightAction;
 }): PlaywrightSettings => {
-  const overrides = Object.fromEntries(
-    PLAYWRIGHT_ACTION_SETTINGS_TO_PLAYWRIGHT_SETTINGS_KEYS.map((key) => [
-      key,
-      action.executionSettings[key],
-    ]).filter(([, value]) => value !== null)
-  ) as Partial<PlaywrightSettings>;
+  const overrides = resolvePlaywrightActionExecutionSettingsOverrides(action.executionSettings);
 
   return buildIntegrationConnectionPlaywrightSettings({
     ...baseSettings,
     ...overrides,
   });
+};
+
+export const resolvePlaywrightActionExecutionSettingsOverrides = (
+  executionSettings: PlaywrightActionExecutionSettings | null | undefined
+): Partial<PlaywrightSettings> => {
+  if (executionSettings === null || executionSettings === undefined) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    PLAYWRIGHT_ACTION_SETTINGS_TO_PLAYWRIGHT_SETTINGS_KEYS.map((key) => [
+      key,
+      executionSettings[key],
+    ]).filter(([, value]) => value !== null && value !== undefined)
+  ) as Partial<PlaywrightSettings>;
 };

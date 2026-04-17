@@ -10,7 +10,6 @@ import {
   isLinkedInIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
 import {
-  useIntegrationsActions,
   useIntegrationsData,
   useIntegrationsForm,
 } from '@/features/integrations/context/IntegrationsContext';

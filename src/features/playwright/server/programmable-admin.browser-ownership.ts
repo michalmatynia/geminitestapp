@@ -96,6 +96,7 @@ export const promotePlaywrightProgrammableConnectionBrowserOwnership = async ({
       playwrightImportBaseUrl: payload.playwrightImportBaseUrl ?? null,
       playwrightImportCaptureRoutesJson: payload.playwrightImportCaptureRoutesJson ?? null,
       playwrightFieldMapperJson: payload.playwrightFieldMapperJson ?? null,
+      playwrightImportAutomationFlowJson: payload.playwrightImportAutomationFlowJson ?? null,
       playwrightListingActionId: preview.listingDraftAction.id,
       playwrightImportActionId: preview.importDraftAction.id,
       resetPlaywrightOverrides: true,

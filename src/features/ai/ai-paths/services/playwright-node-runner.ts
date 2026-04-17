@@ -135,7 +135,8 @@ type RuntimePostureSnapshot = {
         | 'no-proxy'
         | 'no-scope'
         | 'no-placeholder'
-        | 'applied';
+        | 'applied'
+        | null;
       serverHost: string | null;
       hasUsername: boolean;
       scopeLabel: string | null;
@@ -1264,7 +1265,8 @@ const executePlaywrightNodeRun = async (
       });
     }
 
-    if ((request.startUrl?.trim() ?? '') !== '') {
+    const trimmedStartUrl = request.startUrl?.trim() ?? '';
+    if (trimmedStartUrl !== '') {
 
       const newTabSettleMs = pickDelayInRange(
         effectiveSettings.actionDelayMin,
@@ -1274,13 +1276,13 @@ const executePlaywrightNodeRun = async (
         logs.push(`[runtime] New tab opened — settling ${newTabSettleMs}ms before focusing the address bar.`);
         await sleep(newTabSettleMs);
       }
-      const allowedByPolicyOverride = isPolicyAllowedHost(request.startUrl, policyAllowedHosts);
+      const allowedByPolicyOverride = isPolicyAllowedHost(trimmedStartUrl, policyAllowedHosts);
       const decision = allowedByPolicyOverride
         ? { allowed: true, reason: null }
-        : evaluateOutboundUrlPolicy(request.startUrl as string);
+        : evaluateOutboundUrlPolicy(trimmedStartUrl);
       if (decision.allowed === false) {
         throw new Error(
-          `Blocked outbound URL (${decision.reason ?? 'policy_violation'}): ${request.startUrl as string}`
+          `Blocked outbound URL (${decision.reason ?? 'policy_violation'}): ${trimmedStartUrl}`
         );
       }
 
@@ -1297,7 +1299,6 @@ const executePlaywrightNodeRun = async (
           );
         }
       }
-      const trimmedStartUrl = request.startUrl.trim();
       const perCharTypingDelay = pickDelayInRange(
         effectiveSettings.inputDelayMin,
         effectiveSettings.inputDelayMax
@@ -1681,10 +1682,13 @@ const executePlaywrightNodeRun = async (
       (() => {
         if (isAmazonReverseImageScanRuntimeRequest) {
           return executeAmazonReverseImageScanRuntime({
+            page,
             runtimeKey: request.runtimeKey,
             input: request.input ?? {},
-            executeScript: async (script) =>
-              Promise.resolve(parseUserScript(script, logs)(userContext)),
+            emit: userContext.emit,
+            log: userContext.log,
+            artifacts: userContext.artifacts,
+            helpers: userContext.helpers,
           });
         }
         if (isSupplier1688RuntimeRequest) {

@@ -110,6 +110,16 @@ export type {
   PlaywrightImportResult,
 } from './server/programmable';
 export {
+  buildPlaywrightImportInput,
+  parsePlaywrightImportCaptureConfigJson,
+} from './server/import-input';
+export {
+  runPlaywrightImportAutomationFlow,
+} from './server/automation-flow';
+export type {
+  PlaywrightImportAutomationRunResult,
+} from './server/automation-flow';
+export {
   promotePlaywrightProgrammableConnectionBrowserOwnership,
   cleanupPlaywrightProgrammableConnectionBrowserPersistence,
   cleanupAllPlaywrightProgrammableConnectionsBrowserPersistence,

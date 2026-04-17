@@ -51,6 +51,26 @@ export const IMPORT_SCRIPT_PLACEHOLDER = `export default async function run({ pa
   emit('result', products);
 }`;
 
+export const IMPORT_AUTOMATION_FLOW_PLACEHOLDER = `{
+  "name": "Draft import",
+  "blocks": [
+    {
+      "kind": "for_each",
+      "items": { "type": "path", "path": "vars.rawProducts" },
+      "blocks": [
+        {
+          "kind": "map_product",
+          "defaults": {
+            "catalogId": "catalog-id",
+            "importSource": "base"
+          }
+        },
+        { "kind": "create_draft" }
+      ]
+    }
+  ]
+}`;
+
 export const PROGRAMMABLE_FIELD_TARGET_OPTIONS =
   PLAYWRIGHT_FIELD_MAPPER_TARGET_FIELDS.map((field) => ({
     value: field,
@@ -98,7 +118,7 @@ export const parseProgrammableCaptureRouteConfigJson = (
     }
 
     if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
-      return parseCaptureRouteRecord(parsed);
+      return parseCaptureRouteRecord(parsed as Record<string, unknown>);
     }
   } catch (error) {
     logClientError(error);
@@ -170,10 +190,12 @@ export const buildProgrammableConnectionPayload = ({
   importActionId,
   captureRoutes,
   appearanceMode,
+  automationFlowJson,
   fieldMapperRows,
   payloadPatch = {},
 }: {
   appearanceMode: string;
+  automationFlowJson: string;
   captureRoutes: PlaywrightConfigCaptureRoute[];
   connectionName: string;
   fieldMapperRows: ProgrammableFieldMapperRow[];
@@ -190,6 +212,7 @@ export const buildProgrammableConnectionPayload = ({
   const normalizedImportBaseUrl = importBaseUrl.trim();
   const normalizedListingActionId = listingActionId.trim();
   const normalizedImportActionId = importActionId.trim();
+  const normalizedAutomationFlowJson = automationFlowJson.trim();
 
   return {
     name: normalizedName.length > 0 ? normalizedName : 'Playwright Connection',
@@ -208,6 +231,8 @@ export const buildProgrammableConnectionPayload = ({
       appearanceMode,
     }),
     playwrightFieldMapperJson: serializeProgrammableFieldMapperRows(fieldMapperRows),
+    playwrightImportAutomationFlowJson:
+      normalizedAutomationFlowJson.length > 0 ? normalizedAutomationFlowJson : null,
     ...payloadPatch,
   };
 };

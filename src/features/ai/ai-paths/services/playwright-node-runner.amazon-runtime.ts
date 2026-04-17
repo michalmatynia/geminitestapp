@@ -1,12 +1,20 @@
+import type { Page } from 'playwright';
+
 import type { ProductScanStep } from '@/shared/contracts/product-scans';
 import {
   AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY,
   AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY,
   AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY,
   AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_STEPS,
-  AMAZON_REVERSE_IMAGE_SCAN_SELECTOR_PROFILE,
 } from '@/shared/lib/browser-execution/amazon-runtime-constants';
-import { resolveAmazonReverseImageScanRuntime } from '@/features/products/server/product-scan-amazon-runtime';
+import {
+  AmazonScanSequencer,
+  type AmazonScanInput,
+} from '@/shared/lib/browser-execution/sequencers/AmazonScanSequencer';
+import type {
+  ProductScanArtifacts,
+  ProductScanHelpers,
+} from '@/shared/lib/browser-execution/sequencers/ProductScanSequencer';
 
 export {
   AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY,
@@ -15,9 +23,13 @@ export {
 };
 
 type ExecuteAmazonReverseImageScanRuntimeInput = {
+  page: Page;
   runtimeKey: string;
   input: Record<string, unknown>;
-  executeScript: (script: string) => Promise<unknown>;
+  emit: (port: string, value: unknown) => void;
+  log: (...args: unknown[]) => void;
+  artifacts: ProductScanArtifacts;
+  helpers: ProductScanHelpers;
 };
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -145,9 +157,33 @@ const withAmazonActionRunSteps = (payload: unknown): unknown => {
 export async function executeAmazonReverseImageScanRuntime(
   input: ExecuteAmazonReverseImageScanRuntimeInput
 ): Promise<unknown> {
-  const selectorProfile =
-    readString(input.input['selectorProfile']) ?? AMAZON_REVERSE_IMAGE_SCAN_SELECTOR_PROFILE;
-  const script = await resolveAmazonReverseImageScanRuntime({ selectorProfile });
-  const resultPayload = await input.executeScript(script);
-  return withAmazonActionRunSteps(resultPayload);
+  let resultPayload: unknown = null;
+
+  const sequencer = new AmazonScanSequencer(
+    {
+      page: input.page,
+      emit: (type, payload) => {
+        if (type === 'result') {
+          resultPayload = payload;
+        }
+        input.emit(type, payload);
+      },
+      log: (message, context) => input.log(message, context),
+      artifacts: input.artifacts,
+      helpers: input.helpers,
+    },
+    {
+      ...(input.input as AmazonScanInput),
+      runtimeKey: input.runtimeKey,
+    }
+  );
+
+  await sequencer.scan();
+
+  return resultPayload
+    ? withAmazonActionRunSteps(resultPayload)
+    : {
+        status: 'completed',
+        message: 'Amazon scan completed without an explicit result payload.',
+      };
 }

@@ -3,6 +3,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { findProductListingByIdAcrossProviders } from '@/features/integrations/server';
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { deleteBaseProduct } from '@/features/integrations/server';
+import { listProductListingsByProductIdAcrossProviders } from '@/features/integrations/server';
 import { resolveBaseConnectionToken } from '@/features/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
 import { getProductRepository } from '@/features/products/server';
@@ -20,6 +21,27 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 const BASE_DELETE_RUN_PATH_ID = 'integration-base-delete';
 const BASE_DELETE_RUN_PATH_NAME = 'Base.com Deletion Jobs';
 const BASE_DELETE_SOURCE = 'integration_base_delete';
+const BASE_INTEGRATION_SLUGS = new Set(['base', 'base-com', 'baselinker']);
+
+const normalizeString = (value: string | null | undefined): string => (value ?? '').trim();
+
+const resolveCanonicalRemainingBaseProductId = async (
+  productId: string
+): Promise<string | null> => {
+  const listings = await listProductListingsByProductIdAcrossProviders(productId);
+  const remainingBaseIds = Array.from(
+    new Set(
+      listings
+        .filter((candidate) =>
+          BASE_INTEGRATION_SLUGS.has(normalizeString(candidate.integration.slug).toLowerCase())
+        )
+        .map((candidate) => normalizeString(candidate.externalListingId))
+        .filter((candidate) => candidate.length > 0)
+    )
+  );
+
+  return remainingBaseIds.length === 1 ? (remainingBaseIds[0] ?? null) : null;
+};
 
 export async function POST_handler(
   _req: NextRequest,
@@ -144,9 +166,13 @@ export async function POST_handler(
     try {
       const productRepository = await getProductRepository();
       const product = await productRepository.getProductById(productId);
-      const normalizedBaseProductId = product?.baseProductId?.trim() || '';
-      if (normalizedBaseProductId === normalizedExternalListingId) {
-        await productRepository.updateProduct(productId, { baseProductId: null });
+      const normalizedCurrentBaseProductId = normalizeString(product?.baseProductId);
+      const nextBaseProductId = await resolveCanonicalRemainingBaseProductId(productId);
+
+      if (normalizedCurrentBaseProductId !== normalizeString(nextBaseProductId)) {
+        await productRepository.updateProduct(productId, {
+          baseProductId: nextBaseProductId,
+        });
       }
     } catch (error) {
       void ErrorSystem.captureException(error);

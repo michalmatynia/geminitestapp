@@ -16,7 +16,10 @@ export function useLiveScripterRefs(): LiveScripterConnectionRefs {
   return {
     sessionIdRef: useRef<string | null>(null),
     socketRef: useRef<WebSocket | null>(null),
+    socketPathRef: useRef<string | null>(null),
     connectionTokenRef: useRef(0),
+    reconnectAttemptsRef: useRef(0),
+    pendingMessagesRef: useRef<LiveScripterConnectionRefs['pendingMessagesRef']['current']>([]),
   };
 }
 

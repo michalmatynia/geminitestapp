@@ -81,11 +81,12 @@ const collectMappedOverrides = (
   expectedType: 'boolean' | 'number' | 'string'
 ): Partial<PlaywrightSettings> => {
   const overrides: Partial<PlaywrightSettings> = {};
+  const mutableOverrides = overrides as Record<string, unknown>;
 
   for (const [sourceKey, targetKey] of mappings) {
     const value = connection[sourceKey];
     if (typeof value === expectedType) {
-      overrides[targetKey] = value;
+      mutableOverrides[targetKey] = value;
     }
   }
 

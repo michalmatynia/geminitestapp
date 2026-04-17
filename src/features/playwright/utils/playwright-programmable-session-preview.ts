@@ -129,11 +129,13 @@ const formatBrowserPreparationSummary = (
 };
 
 const formatSettingsLocaleSummary = (settings: PlaywrightSettings): string | null => {
-  return settings.locale.trim().length > 0 ? `Locale: ${settings.locale}` : null;
+  const locale = settings.locale ?? '';
+  return locale.trim().length > 0 ? `Locale: ${locale}` : null;
 };
 
 const formatSettingsTimezoneSummary = (settings: PlaywrightSettings): string | null => {
-  return settings.timezoneId.trim().length > 0 ? `Timezone: ${settings.timezoneId}` : null;
+  const timezoneId = settings.timezoneId ?? '';
+  return timezoneId.trim().length > 0 ? `Timezone: ${timezoneId}` : null;
 };
 
 const formatSettingsDeviceSummary = (settings: PlaywrightSettings): string | null => {

@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   readPlaywrightEngineRunMock: vi.fn(),
   readPlaywrightEngineArtifactMock: vi.fn(),
   collectPlaywrightEngineRunFailureMessagesMock: vi.fn(),
+  buildPlaywrightConnectionEngineLaunchOptionsMock: vi.fn(),
   buildPlaywrightEngineRunFailureMetaMock: vi.fn(),
   resolvePlaywrightEngineRunOutputsMock: vi.fn(),
   startPlaywrightEngineTaskMock: vi.fn(),
@@ -34,6 +35,7 @@ const mocks = vi.hoisted(() => ({
   resolveSupplier1688SelectorRegistryNativeRuntimeMock: vi.fn(),
   runBrainChatCompletionMock: vi.fn(),
   evaluate1688SupplierCandidateMatchMock: vi.fn(),
+  resolveRuntimeActionDefinitionMock: vi.fn(),
   captureExceptionMock: vi.fn(),
 }));
 
@@ -46,6 +48,8 @@ vi.mock('@/shared/lib/files/runtime-fs', () => ({
 }));
 
 vi.mock('@/features/playwright/server', () => ({
+  buildPlaywrightConnectionEngineLaunchOptions: (...args: unknown[]) =>
+    mocks.buildPlaywrightConnectionEngineLaunchOptionsMock(...args),
   buildPlaywrightEngineRunFailureMeta: (...args: unknown[]) =>
     mocks.buildPlaywrightEngineRunFailureMetaMock(...args),
   collectPlaywrightEngineRunFailureMessages: (...args: unknown[]) =>
@@ -141,7 +145,18 @@ vi.mock('@/shared/lib/ai-brain/server-runtime-client', () => ({
   runBrainChatCompletion: (...args: unknown[]) => mocks.runBrainChatCompletionMock(...args),
 }));
 
+vi.mock('@/shared/lib/browser-execution/runtime-action-resolver.server', () => ({
+  resolveRuntimeActionDefinition: (...args: unknown[]) =>
+    mocks.resolveRuntimeActionDefinitionMock(...args),
+}));
+
 import type { ProductScanRecord } from '@/shared/contracts/product-scans';
+import {
+  AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY,
+} from '@/shared/lib/browser-execution/amazon-runtime-constants';
+import {
+  getPlaywrightRuntimeActionSeed,
+} from '@/shared/lib/browser-execution/playwright-runtime-action-seeds';
 import {
   SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY,
   SUPPLIER_1688_PROBE_SCAN_SELECTOR_PROFILE,
@@ -197,6 +212,19 @@ describe('product-scans-service batch operations', () => {
   beforeEach(() => {
     vi.unstubAllGlobals();
     vi.clearAllMocks();
+    mocks.buildPlaywrightConnectionEngineLaunchOptionsMock.mockImplementation(
+      ({ browserPreference }: { browserPreference: string }) =>
+        browserPreference === 'chrome' ? { channel: 'chrome' } : {}
+    );
+    mocks.resolveRuntimeActionDefinitionMock.mockImplementation(async (runtimeKey: string) => {
+      const seed = getPlaywrightRuntimeActionSeed(
+        runtimeKey as Parameters<typeof getPlaywrightRuntimeActionSeed>[0]
+      );
+      if (seed === null) {
+        throw new Error(`Unknown runtime action ${runtimeKey}`);
+      }
+      return seed;
+    });
     mocks.statMock.mockResolvedValue({
       isFile: () => true,
       size: 1024,
@@ -408,6 +436,117 @@ describe('product-scans-service batch operations', () => {
         }),
       })
     );
+  });
+
+  it('applies Amazon action runtime humanization and browser settings to the Playwright request', async () => {
+    const seed = getPlaywrightRuntimeActionSeed(AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY);
+    if (seed === null) {
+      throw new Error('Expected Amazon Google Lens candidate search runtime seed');
+    }
+    mocks.resolveRuntimeActionDefinitionMock.mockResolvedValue({
+      ...seed,
+      personaId: 'action-persona-1',
+      executionSettings: {
+        ...seed.executionSettings,
+        browserPreference: 'chromium',
+        humanizeMouse: false,
+        mouseJitter: 13,
+        clickDelayMin: 21,
+        clickDelayMax: 45,
+        inputDelayMin: 7,
+        inputDelayMax: 19,
+        actionDelayMin: 100,
+        actionDelayMax: 240,
+        slowMo: 0,
+      },
+    });
+    mocks.findLatestActiveProductScanMock.mockResolvedValue(null);
+    mocks.getProductScannerSettingsMock.mockResolvedValue({
+      captchaBehavior: 'fail',
+      manualVerificationTimeoutMs: 180000,
+      amazonImageSearchProvider: 'google_images_upload',
+      playwrightPersonaId: null,
+      playwrightBrowser: 'auto',
+      playwrightSettingsOverrides: {},
+    });
+    mocks.buildProductScannerEngineRequestOptionsMock.mockReturnValue({
+      personaId: 'scanner-persona',
+      settingsOverrides: {
+        humanizeMouse: true,
+        mouseJitter: 1,
+        slowMo: 80,
+      },
+      launchOptions: {
+        channel: 'chrome',
+        executablePath: '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser',
+        args: ['--existing'],
+      },
+    });
+    mocks.getProductByIdMock.mockResolvedValue({
+      id: 'product-1',
+      name_en: 'Humanized Product',
+      images: [
+        {
+          id: 'image-1',
+          imageFile: {
+            id: 'file-1',
+            filename: 'img.jpg',
+            filepath: '/img.jpg',
+            mimetype: 'image/jpeg',
+            size: 100,
+          },
+        },
+      ],
+    });
+    mocks.startPlaywrightEngineTaskMock.mockResolvedValue({
+      runId: 'run-action-settings',
+      status: 'queued',
+    });
+    mocks.upsertProductScanMock.mockImplementation(
+      async (input: any) => ({
+        ...input,
+        id: input.id || 'scan-action-settings',
+      })
+    );
+
+    await queueAmazonBatchProductScans({
+      productIds: ['product-1'],
+      userId: 'user-1',
+    });
+
+    expect(mocks.resolveRuntimeActionDefinitionMock).toHaveBeenCalledWith(
+      AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY
+    );
+    expect(mocks.buildPlaywrightConnectionEngineLaunchOptionsMock).toHaveBeenCalledWith({
+      browserPreference: 'chromium',
+    });
+    const request = mocks.startPlaywrightEngineTaskMock.mock.calls[0]?.[0]?.request as
+      | Record<string, any>
+      | undefined;
+    expect(request?.personaId).toBe('action-persona-1');
+    expect(request?.settingsOverrides).toEqual(
+      expect.objectContaining({
+        humanizeMouse: false,
+        mouseJitter: 13,
+        clickDelayMin: 21,
+        clickDelayMax: 45,
+        inputDelayMin: 7,
+        inputDelayMax: 19,
+        actionDelayMin: 100,
+        actionDelayMax: 240,
+        slowMo: 0,
+      })
+    );
+    expect(request?.launchOptions).toEqual(
+      expect.objectContaining({
+        args: expect.arrayContaining([
+          '--existing',
+          '--disable-blink-features=AutomationControlled',
+        ]),
+      })
+    );
+    expect(request?.launchOptions).not.toHaveProperty('channel');
+    expect(request?.launchOptions).not.toHaveProperty('executablePath');
   });
 
   it('queues Amazon direct candidate extraction even when the product has no usable images', async () => {

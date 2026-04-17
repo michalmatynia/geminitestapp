@@ -10,7 +10,7 @@ import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
 const postHandler = async (
   req: NextRequest,
-  ctx: ApiHandlerContext,
+  _ctx: ApiHandlerContext,
   params: { id: string }
 ): Promise<Response> => {
   await assertSettingsManageAccess();

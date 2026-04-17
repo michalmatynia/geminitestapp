@@ -21,7 +21,6 @@ import {
   type AmazonCandidateTriageEvaluationResult,
 } from './product-scan-amazon-evaluator';
 import {
-  AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY,
   resolveAmazonRuntimeActionName,
 } from '@/shared/lib/browser-execution/amazon-runtime-constants';
 
@@ -29,7 +28,6 @@ import {
   AMAZON_PRODUCT_SCAN_PROVIDER,
   requireProductScanNativeRuntime,
 } from './product-scan-providers';
-import { getPlaywrightRuntimeActionSeed } from '@/shared/lib/browser-execution/playwright-runtime-action-seeds';
 import {
   buildProductScannerEngineRequestOptions,
   getProductScannerSettings,
@@ -64,12 +62,13 @@ import {
   resolveAmazonImageSearchProviderHistory,
   resolveNextAmazonCandidateTriageStepAttempt,
   resolveNextQueueStepAttempt,
+  resolveAmazonProductScanRuntimeKey,
   resolveAmazonProbeEvaluatorConfig,
   resolveAmazonTriageEvaluatorConfig,
+  resolveAmazonRuntimeActionDefinition,
 } from './product-scans-service.helpers.amazon';
 
 const amazonScanRuntime = requireProductScanNativeRuntime(AMAZON_PRODUCT_SCAN_PROVIDER);
-const amazonRuntimeAction = getPlaywrightRuntimeActionSeed(AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY);
 
 type SynchronizeAmazonStatusInput = {
   scan: ProductScanRecord;
@@ -141,6 +140,9 @@ export async function synchronizeAmazonTriageReady({
   }
 
   const currentProvider = resolveAmazonImageSearchProvider(scan.rawResult, scannerSettings);
+  const amazonRuntimeAction = await resolveAmazonRuntimeActionDefinition(
+    resolveAmazonProductScanRuntimeKey(toRecord(scan.rawResult)?.['runtimeKey'])
+  );
   const requestedStepSequenceInput = resolveProductScanRequestSequenceInput(scan.rawResult);
   const probeEvaluatorConfig = await resolveAmazonProbeEvaluatorConfig(scannerSettings);
   const triageBaselineCandidates =
@@ -269,6 +271,8 @@ export async function synchronizeAmazonTriageReady({
       const scannerRuntimeOptions = buildAmazonScannerRequestRuntimeOptions({
         scannerSettings,
         scannerEngineRequestOptions,
+        actionExecutionSettings: amazonRuntimeAction?.executionSettings ?? null,
+        actionPersonaId: amazonRuntimeAction?.personaId ?? null,
       });
       const manualVerificationTimeoutMs = resolveScanManualVerificationTimeoutMs(scannerSettings);
       const providerHistory = resolveAmazonImageSearchProviderHistory(
@@ -397,6 +401,8 @@ export async function synchronizeAmazonTriageReady({
       const scannerRuntimeOptions = buildAmazonScannerRequestRuntimeOptions({
         scannerSettings,
         scannerEngineRequestOptions,
+        actionExecutionSettings: amazonRuntimeAction?.executionSettings ?? null,
+        actionPersonaId: amazonRuntimeAction?.personaId ?? null,
       });
       const manualVerificationTimeoutMs = resolveScanManualVerificationTimeoutMs(scannerSettings);
       const providerHistory = resolveAmazonImageSearchProviderHistory(

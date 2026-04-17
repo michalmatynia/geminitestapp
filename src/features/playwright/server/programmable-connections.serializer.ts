@@ -4,6 +4,13 @@ import type { PlaywrightAction } from '@/shared/contracts/playwright-steps';
 
 import { serializeProgrammableConnectionLegacyBrowserMigration } from '../utils/playwright-programmable-connection-migration';
 
+const toIsoStringOrNull = (value: string | Date | null | undefined): string | null => {
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value.toISOString();
+  }
+  return typeof value === 'string' ? value : null;
+};
+
 const serializeBaseFields = (
   connection: IntegrationConnectionRecord
 ): Pick<
@@ -35,23 +42,23 @@ const serializeBaseFields = (
   integrationId: connection.integrationId,
   name: connection.name,
   username: connection.username,
-  createdAt: connection.createdAt,
-  updatedAt: connection.updatedAt,
+  createdAt: toIsoStringOrNull(connection.createdAt) ?? undefined,
+  updatedAt: toIsoStringOrNull(connection.updatedAt),
   hasPlaywrightStorageState: Boolean(connection.playwrightStorageState),
-  playwrightStorageStateUpdatedAt: connection.playwrightStorageStateUpdatedAt,
+  playwrightStorageStateUpdatedAt: toIsoStringOrNull(connection.playwrightStorageStateUpdatedAt),
   hasAllegroAccessToken: Boolean(connection.allegroAccessToken),
-  allegroTokenUpdatedAt: connection.allegroTokenUpdatedAt,
-  allegroExpiresAt: connection.allegroExpiresAt,
+  allegroTokenUpdatedAt: toIsoStringOrNull(connection.allegroTokenUpdatedAt),
+  allegroExpiresAt: toIsoStringOrNull(connection.allegroExpiresAt),
   allegroScope: connection.allegroScope,
   allegroUseSandbox: connection.allegroUseSandbox ?? false,
   hasLinkedInAccessToken: Boolean(connection.linkedinAccessToken),
-  linkedinTokenUpdatedAt: connection.linkedinTokenUpdatedAt ?? null,
-  linkedinExpiresAt: connection.linkedinExpiresAt ?? null,
+  linkedinTokenUpdatedAt: toIsoStringOrNull(connection.linkedinTokenUpdatedAt),
+  linkedinExpiresAt: toIsoStringOrNull(connection.linkedinExpiresAt),
   linkedinScope: connection.linkedinScope ?? null,
   linkedinPersonUrn: connection.linkedinPersonUrn ?? null,
   linkedinProfileUrl: connection.linkedinProfileUrl ?? null,
   hasBaseApiToken: Boolean(connection.baseApiToken),
-  baseTokenUpdatedAt: connection.baseTokenUpdatedAt,
+  baseTokenUpdatedAt: toIsoStringOrNull(connection.baseTokenUpdatedAt),
   baseLastInventoryId: connection.baseLastInventoryId,
 });
 
@@ -81,6 +88,7 @@ const serializeProgrammableScriptFields = (
   | 'playwrightImportActionId'
   | 'playwrightImportCaptureRoutesJson'
   | 'playwrightFieldMapperJson'
+  | 'playwrightImportAutomationFlowJson'
 > => ({
   playwrightListingScript: connection.playwrightListingScript ?? null,
   playwrightImportScript: connection.playwrightImportScript ?? null,
@@ -89,6 +97,7 @@ const serializeProgrammableScriptFields = (
   playwrightImportActionId: connection.playwrightImportActionId ?? null,
   playwrightImportCaptureRoutesJson: connection.playwrightImportCaptureRoutesJson ?? null,
   playwrightFieldMapperJson: connection.playwrightFieldMapperJson ?? null,
+  playwrightImportAutomationFlowJson: connection.playwrightImportAutomationFlowJson ?? null,
 });
 
 const serializeTraderaModeDefaults = (
@@ -132,7 +141,7 @@ const serializeTraderaApiDefaults = (
   traderaParameterMapperCatalogJson: connection.traderaParameterMapperCatalogJson ?? null,
   hasTraderaApiAppKey: Boolean(connection.traderaApiAppKey),
   hasTraderaApiToken: Boolean(connection.traderaApiToken),
-  traderaApiTokenUpdatedAt: connection.traderaApiTokenUpdatedAt ?? null,
+  traderaApiTokenUpdatedAt: toIsoStringOrNull(connection.traderaApiTokenUpdatedAt),
 });
 
 const serializeScannerDefaults = (

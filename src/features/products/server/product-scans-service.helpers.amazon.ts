@@ -4,9 +4,13 @@ import { randomUUID } from 'crypto';
 
 import {
   buildPlaywrightEngineRunFailureMeta,
+  buildPlaywrightConnectionEngineLaunchOptions,
   type startPlaywrightEngineTask,
   type PlaywrightEngineRunRecord,
 } from '@/features/playwright/server';
+import {
+  resolvePlaywrightActionExecutionSettingsOverrides,
+} from '@/features/playwright/utils/playwright-action-execution-settings';
 import {
   type createDefaultProductScannerSettings,
 } from '@/features/products/scanner-settings';
@@ -19,6 +23,22 @@ import {
 import {
   type ProductScannerAmazonImageSearchProvider,
 } from '@/shared/contracts/products/scanner-settings';
+import type {
+  PlaywrightAction,
+  PlaywrightActionExecutionSettings,
+} from '@/shared/contracts/playwright-steps';
+import {
+  resolveRuntimeActionDefinition,
+} from '@/shared/lib/browser-execution/runtime-action-resolver.server';
+import {
+  getPlaywrightRuntimeActionSeed,
+} from '@/shared/lib/browser-execution/playwright-runtime-action-seeds';
+import {
+  AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY,
+  AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY,
+  AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY,
+  resolveAmazonRuntimeOperationLabel,
+} from '@/shared/lib/browser-execution/amazon-runtime-constants';
 
 import {
   type AmazonCandidateTriageEvaluationResult,
@@ -53,6 +73,41 @@ export const AMAZON_BATCH_SCAN_START_CONCURRENCY = PRODUCT_SCAN_BATCH_START_CONC
 export const AMAZON_SCAN_DEFAULT_USER_AGENT =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
 export const AMAZON_SCAN_STEALTH_LAUNCH_ARGS = ['--disable-blink-features=AutomationControlled'];
+
+export type AmazonProductScanRuntimeKey =
+  | typeof AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY
+  | typeof AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY
+  | typeof AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY;
+
+const AMAZON_PRODUCT_SCAN_RUNTIME_KEYS = new Set<string>([
+  AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY,
+  AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY,
+  AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY,
+]);
+
+export const resolveAmazonProductScanRuntimeKey = (
+  value: unknown,
+  fallback: AmazonProductScanRuntimeKey = AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY
+): AmazonProductScanRuntimeKey => {
+  const normalized = readOptionalString(value, PRODUCT_SCAN_SEQUENCE_KEY_MAX_LENGTH);
+  return normalized !== null && AMAZON_PRODUCT_SCAN_RUNTIME_KEYS.has(normalized)
+    ? (normalized as AmazonProductScanRuntimeKey)
+    : fallback;
+};
+
+export const resolveAmazonRuntimeActionDefinition = async (
+  runtimeKey: AmazonProductScanRuntimeKey | null | undefined
+): Promise<PlaywrightAction | null> => {
+  if (runtimeKey === null || runtimeKey === undefined) {
+    return null;
+  }
+
+  try {
+    return await resolveRuntimeActionDefinition(runtimeKey);
+  } catch {
+    return getPlaywrightRuntimeActionSeed(runtimeKey);
+  }
+};
 
 export const isApprovedAmazonCandidateExtractionRun = (
   scan: Pick<ProductScanRecord, 'rawResult' | 'amazonEvaluation'>
@@ -161,11 +216,11 @@ export const mergeUniqueStringValues = (
   return Array.from(merged);
 };
 
-import { resolveAmazonRuntimeOperationLabel } from '@/shared/lib/browser-execution/amazon-runtime-constants';
-
 export const buildAmazonScannerRequestRuntimeOptions = (input: {
   scannerSettings: ReturnType<typeof createDefaultProductScannerSettings>;
   scannerEngineRequestOptions: Record<string, unknown>;
+  actionExecutionSettings?: PlaywrightActionExecutionSettings | null;
+  actionPersonaId?: string | null;
   forceHeadless?: boolean;
 }): Pick<
   NonNullable<Parameters<typeof startPlaywrightEngineTask>[0]['request']>,
@@ -186,31 +241,51 @@ export const buildAmazonScannerRequestRuntimeOptions = (input: {
   const existingLaunchOptions = toRecord(scannerEngineRequestOptions.launchOptions) ?? {};
   const existingContextOptions =
     toRecord(scannerEngineRequestOptions.contextOptions) ?? {};
+  const actionSettingsOverrides = resolvePlaywrightActionExecutionSettingsOverrides(
+    input.actionExecutionSettings
+  );
 
   const settingsOverrides: Record<string, unknown> = {
     ...existingSettingsOverrides,
+    ...actionSettingsOverrides,
   };
-
-  if (typeof input.forceHeadless === 'boolean') {
-    settingsOverrides['headless'] = input.forceHeadless;
-  }
 
   if ((input.scannerSettings.playwrightPersonaId ?? '') === '') {
     if (typeof settingsOverrides['humanizeMouse'] !== 'boolean') {
       settingsOverrides['humanizeMouse'] = true;
     }
     const slowMo = settingsOverrides['slowMo'];
-    if (typeof slowMo !== 'number' || !Number.isFinite(slowMo) || (slowMo as number) <= 0) {
+    if (typeof slowMo !== 'number' || !Number.isFinite(slowMo)) {
       settingsOverrides['slowMo'] = AMAZON_SCAN_DEFAULT_SLOW_MO_MS;
     }
   }
 
-  const existingLaunchArgs = Array.isArray(existingLaunchOptions['args'])
-    ? (existingLaunchOptions['args'] as unknown[]).filter((entry): entry is string => typeof entry === 'string')
+  if (typeof input.forceHeadless === 'boolean') {
+    settingsOverrides['headless'] = input.forceHeadless;
+  }
+
+  const actionBrowserPreference = input.actionExecutionSettings?.browserPreference ?? null;
+  const actionLaunchOptions =
+    actionBrowserPreference !== null
+      ? buildPlaywrightConnectionEngineLaunchOptions({
+          browserPreference: actionBrowserPreference,
+        })
+      : {};
+  const baseLaunchOptions: Record<string, unknown> = { ...existingLaunchOptions };
+  if (actionBrowserPreference !== null) {
+    delete baseLaunchOptions['channel'];
+    delete baseLaunchOptions['executablePath'];
+  }
+  const mergedLaunchOptions: Record<string, unknown> = {
+    ...baseLaunchOptions,
+    ...actionLaunchOptions,
+  };
+  const existingLaunchArgs = Array.isArray(mergedLaunchOptions['args'])
+    ? (mergedLaunchOptions['args'] as unknown[]).filter((entry): entry is string => typeof entry === 'string')
     : [];
 
   const launchOptions: Record<string, unknown> = {
-    ...existingLaunchOptions,
+    ...mergedLaunchOptions,
     args: mergeUniqueStringValues(existingLaunchArgs, AMAZON_SCAN_STEALTH_LAUNCH_ARGS),
   };
 
@@ -222,11 +297,16 @@ export const buildAmazonScannerRequestRuntimeOptions = (input: {
     contextOptions['userAgent'] = AMAZON_SCAN_DEFAULT_USER_AGENT;
   }
 
-  return {
-    ...(typeof scannerEngineRequestOptions.personaId === 'string' &&
+  const actionPersonaId = readOptionalString(input.actionPersonaId, 160);
+  const scannerPersonaId =
+    typeof scannerEngineRequestOptions.personaId === 'string' &&
     scannerEngineRequestOptions.personaId.trim().length > 0
-      ? { personaId: scannerEngineRequestOptions.personaId }
-      : {}),
+      ? scannerEngineRequestOptions.personaId
+      : null;
+  const personaId = actionPersonaId ?? scannerPersonaId;
+
+  return {
+    ...(personaId !== null ? { personaId } : {}),
     settingsOverrides,
     launchOptions,
     contextOptions,

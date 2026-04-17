@@ -34,6 +34,11 @@ type SocketCloseArgs = {
   connectionToken: number;
 } & Pick<SocketLifecycleArgs, 'refs' | 'clearClientState' | 'setters' | 'reconnectSocket'>;
 
+type SocketResetArgs = Pick<
+  SocketLifecycleArgs,
+  'refs' | 'clearClientState' | 'closeSocket' | 'setters'
+>;
+
 const setRefCurrent = <T>(ref: { current: T }, value: T): void => {
   const targetRef = ref;
   targetRef.current = value;
@@ -102,7 +107,7 @@ const applyClosedMessage = ({
   clearClientState,
   closeSocket,
   setters,
-}: SocketLifecycleArgs): void => {
+}: SocketResetArgs): void => {
   const { sessionIdRef } = refs;
   setRefCurrent(sessionIdRef, null);
   const targetRefs = refs;
@@ -184,7 +189,7 @@ export const applyLiveScripterServerMessage = ({
   setters,
 }: {
   message: LiveScripterServerMessage;
-} & SocketLifecycleArgs): void => {
+} & SocketResetArgs): void => {
   if (message.type === 'ready' || message.type === 'frame') {
     applyReadyOrFrameMessage(message, refs, setters);
     return;
@@ -228,7 +233,6 @@ export const attachLiveScripterSocketHandlers = ({
       clearClientState,
       closeSocket,
       setters,
-      reconnectSocket,
     });
   };
   targetSocket.onerror = () => {

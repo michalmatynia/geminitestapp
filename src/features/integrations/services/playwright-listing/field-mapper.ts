@@ -1,5 +1,16 @@
-import type { CreateProduct } from '@/shared/contracts/products/io';
+import type {
+  PlaywrightAutomationProductDefaults,
+  PlaywrightAutomationStructuredNameDefaults,
+} from '@/shared/contracts/playwright-automation';
+import type { CreateProductDraftInput } from '@/shared/contracts/products/drafts';
+import type { ProductCreateInput } from '@/shared/contracts/products/io';
+import {
+  composeStructuredProductName,
+  normalizeStructuredProductName,
+  parseStructuredProductName,
+} from '@/shared/lib/products/title-terms';
 import { getValueAtPath } from '@/shared/lib/ai-paths/core/utils/json';
+import { removeUndefined } from '@/shared/utils/object-utils';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 export const PLAYWRIGHT_FIELD_MAPPER_TARGET_FIELDS = [
@@ -29,7 +40,7 @@ export type PlaywrightMappedImportProduct = {
   ean: string | null;
   sourceUrl: string | null;
   raw: Record<string, unknown>;
-  createInput: CreateProduct;
+  createInput: ProductCreateInput;
 };
 
 const PLAYWRIGHT_FIELD_TARGETS = new Set<string>(PLAYWRIGHT_FIELD_MAPPER_TARGET_FIELDS);
@@ -157,40 +168,142 @@ const getMappedValue = (
   return null;
 };
 
-const toCreateProductInput = (mapped: Omit<PlaywrightMappedImportProduct, 'createInput'>): CreateProduct => ({
-  sku: mapped.sku,
-  baseProductId: null,
-  importSource: undefined,
-  defaultPriceGroupId: null,
-  ean: mapped.ean,
-  gtin: null,
-  asin: null,
-  name: mapped.title ? { en: mapped.title } : {},
-  description: mapped.description ? { en: mapped.description } : {},
-  name_en: mapped.title,
-  name_pl: null,
-  name_de: null,
-  description_en: mapped.description,
-  description_pl: null,
-  description_de: null,
-  supplierName: null,
-  supplierLink: mapped.sourceUrl,
-  priceComment: null,
-  stock: null,
-  price: mapped.price,
-  sizeLength: null,
-  sizeWidth: null,
-  weight: null,
-  length: null,
-  published: false,
-  archived: false,
-  categoryId: null,
-  catalogId: '',
-  parameters: [],
-  imageLinks: mapped.images,
-  imageBase64s: [],
-  noteIds: [],
-});
+const normalizeUniqueStrings = (values: ReadonlyArray<string | null | undefined>): string[] => {
+  const unique = new Set<string>();
+  for (const value of values) {
+    const trimmed = toTrimmedString(value);
+    if (trimmed) unique.add(trimmed);
+  }
+  return Array.from(unique);
+};
+
+const resolveCatalogIds = (
+  defaults: PlaywrightAutomationProductDefaults | null | undefined
+): string[] => {
+  return normalizeUniqueStrings([
+    ...(defaults?.catalogIds ?? []),
+    defaults?.catalogId ?? null,
+  ]);
+};
+
+const buildStructuredProductName = ({
+  title,
+  defaults,
+}: {
+  title: string | null;
+  defaults: PlaywrightAutomationStructuredNameDefaults;
+}): string | null => {
+  if (!title) return null;
+  return composeStructuredProductName({
+    baseName: title,
+    size: defaults.size,
+    material: defaults.material,
+    category: defaults.category,
+    theme: defaults.theme,
+  });
+};
+
+const resolveNameEn = ({
+  mapped,
+  defaults,
+}: {
+  mapped: Omit<PlaywrightMappedImportProduct, 'createInput'>;
+  defaults?: PlaywrightAutomationProductDefaults | null;
+}): string | null => {
+  const title = mapped.title;
+  if (!title) return null;
+
+  const normalizedTitle = normalizeStructuredProductName(title);
+  if (parseStructuredProductName(normalizedTitle)) {
+    return normalizedTitle;
+  }
+
+  if (defaults?.structuredName) {
+    return buildStructuredProductName({
+      title,
+      defaults: defaults.structuredName,
+    });
+  }
+
+  return title;
+};
+
+const buildFallbackDraftName = (mapped: Omit<PlaywrightMappedImportProduct, 'createInput'>): string =>
+  mapped.title ?? mapped.sku ?? mapped.sourceUrl ?? 'Imported product';
+
+export const buildPlaywrightProductCreateInput = (
+  mapped: Omit<PlaywrightMappedImportProduct, 'createInput'>,
+  defaults?: PlaywrightAutomationProductDefaults | null
+): ProductCreateInput => {
+  const catalogIds = resolveCatalogIds(defaults);
+  const nameEn = resolveNameEn({ mapped, defaults });
+
+  return removeUndefined({
+    sku: mapped.sku ?? '',
+    baseProductId: null,
+    importSource: defaults?.importSource ?? null,
+    defaultPriceGroupId: null,
+    ean: mapped.ean ?? null,
+    gtin: null,
+    asin: null,
+    name_en: nameEn,
+    name_pl: null,
+    name_de: null,
+    description_en: mapped.description ?? null,
+    description_pl: null,
+    description_de: null,
+    price: mapped.price ?? undefined,
+    supplierName: null,
+    supplierLink: mapped.sourceUrl ?? null,
+    priceComment: null,
+    stock: undefined,
+    sizeLength: undefined,
+    sizeWidth: undefined,
+    weight: undefined,
+    length: undefined,
+    archived: false,
+    categoryId: defaults?.categoryId ?? null,
+    catalogIds: catalogIds.length > 0 ? catalogIds : undefined,
+    imageLinks: mapped.images.length > 0 ? mapped.images : undefined,
+  }) as ProductCreateInput;
+};
+
+export const buildPlaywrightProductDraftInput = (
+  mapped: Omit<PlaywrightMappedImportProduct, 'createInput'>,
+  defaults?: PlaywrightAutomationProductDefaults | null
+): CreateProductDraftInput => {
+  const catalogIds = resolveCatalogIds(defaults);
+  const nameEn = resolveNameEn({ mapped, defaults });
+
+  return removeUndefined({
+    name: nameEn ?? buildFallbackDraftName(mapped),
+    description: mapped.description ?? null,
+    sku: mapped.sku ?? null,
+    ean: mapped.ean ?? null,
+    gtin: null,
+    asin: null,
+    name_en: nameEn,
+    name_pl: null,
+    name_de: null,
+    description_en: mapped.description ?? null,
+    description_pl: null,
+    description_de: null,
+    price: mapped.price ?? null,
+    supplierName: null,
+    supplierLink: mapped.sourceUrl ?? null,
+    priceComment: null,
+    stock: null,
+    catalogIds,
+    categoryId: defaults?.categoryId ?? null,
+    tagIds: [],
+    producerIds: [],
+    parameters: [],
+    defaultPriceGroupId: null,
+    imageLinks: mapped.images,
+    baseProductId: null,
+    importSource: defaults?.importSource ?? null,
+  }) as CreateProductDraftInput;
+};
 
 export const mapPlaywrightImportProduct = (
   rawProduct: Record<string, unknown>,
@@ -209,7 +322,7 @@ export const mapPlaywrightImportProduct = (
 
   return {
     ...mappedBase,
-    createInput: toCreateProductInput(mappedBase),
+    createInput: buildPlaywrightProductCreateInput(mappedBase),
   };
 };
 

@@ -60,6 +60,7 @@ export const integrationConnectionSchema = namedDtoSchema.extend({
   traderaApiTokenUpdatedAt: z.string().nullable().optional(),
   /** Playwright (Programmable) integration fields */
   playwrightListingScript: z.string().nullable().optional(),
+  hasPlaywrightListingScript: z.boolean().optional(),
   playwrightImportScript: z.string().nullable().optional(),
   playwrightImportBaseUrl: z.string().nullable().optional(),
   playwrightListingActionId: z.string().nullable().optional(),
@@ -68,6 +69,8 @@ export const integrationConnectionSchema = namedDtoSchema.extend({
   playwrightImportCaptureRoutesJson: z.string().nullable().optional(),
   /** JSON-encoded key→field mapping: { sourceKey: string, targetField: string }[] */
   playwrightFieldMapperJson: z.string().nullable().optional(),
+  /** JSON-encoded import automation flow definition executed after raw product extraction. */
+  playwrightImportAutomationFlowJson: z.string().nullable().optional(),
   playwrightLegacyBrowserMigration: programmablePlaywrightLegacyBrowserMigrationSchema
     .nullable()
     .optional(),

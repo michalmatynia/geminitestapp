@@ -370,14 +370,45 @@ export class AmazonScanSequencer extends ProductScanSequencer {
     }
 
     // ── Google Lens: upload ───────────────────────────────────────────────────
-    const uploadResult = await this.uploadToGoogleLens({
+    let uploadResult = await this.uploadToGoogleLens({
       candidate: selectedCandidate,
       candidateId,
       candidateRank,
     });
 
     if (uploadResult.captchaRequired) {
-      await this.handleGoogleCaptcha({ candidateId, candidateRank, waitForClear: true });
+      const captchaResult = await this.handleGoogleCaptcha({
+        candidateId,
+        candidateRank,
+        waitForClear: true,
+      });
+
+      if (!captchaResult.resolved) {
+        await this.emitResult({
+          status: 'failed',
+          asin: null,
+          title: null,
+          price: null,
+          url: null,
+          description: null,
+          amazonDetails: null,
+          amazonProbe: null,
+          matchedImageId: candidateId,
+          candidateUrls: [],
+          candidateResults: [],
+          candidatePreviews: [],
+          currentUrl: this.page.url(),
+          message: uploadResult.error ?? this.CAPTCHA_REQUIRED_MESSAGE,
+          stage: 'google_captcha',
+        });
+        return;
+      }
+
+      uploadResult = await this.continueGoogleLensUploadAfterCaptcha({
+        candidate: selectedCandidate,
+        candidateId,
+        candidateRank,
+      });
     }
 
     if (!uploadResult.advanced) {
@@ -754,6 +785,37 @@ export class AmazonScanSequencer extends ProductScanSequencer {
     );
 
     return this.resolveUploadOutcome(transitionState, candidateId, candidateRank);
+  }
+
+  private async continueGoogleLensUploadAfterCaptcha(params: {
+    candidate: AmazonScanImageCandidate;
+    candidateId: string;
+    candidateRank: number;
+  }): Promise<{
+    advanced: boolean;
+    captchaRequired: boolean;
+    error: string | null;
+    failureCode: string | null;
+  }> {
+    const currentUrl = this.page.url();
+    const processingState = await this.readGoogleLensProcessingState();
+    const hasResultHints = await this.hasGoogleLensResultHints();
+    const isUploadEntryUrl = this.isGoogleImagesUploadEntryUrl(currentUrl);
+
+    if (hasResultHints || processingState.resultShellVisible || !isUploadEntryUrl) {
+      return this.resolveUploadOutcome(
+        {
+          advanced: true,
+          currentUrl,
+          reason: hasResultHints ? 'result_hints' : 'post_captcha_ready',
+          processingState,
+        },
+        params.candidateId,
+        params.candidateRank
+      );
+    }
+
+    return this.uploadToGoogleLens(params);
   }
 
   private resolveUploadOutcome(
@@ -2102,14 +2164,7 @@ export class AmazonScanSequencer extends ProductScanSequencer {
         lastProcessingState = processingState;
       }
 
-      const hasResultHints = await Promise.any(
-        GOOGLE_LENS_RESULT_HINT_SELECTORS.map(async (selector) => {
-          const locator = this.page.locator(selector).first();
-          if ((await locator.count().catch(() => 0)) === 0) throw new Error('nf');
-          if (!(await locator.isVisible().catch(() => false))) throw new Error('nv');
-          return true;
-        })
-      ).catch(() => false);
+      const hasResultHints = await this.hasGoogleLensResultHints();
 
       if (hasResultHints) {
         return { advanced: true, currentUrl, reason: 'result_hints', processingState };
@@ -2157,6 +2212,17 @@ export class AmazonScanSequencer extends ProductScanSequencer {
       reason: lastProcessingState?.processingVisible ? 'upload_processing_timeout' : 'timeout',
       processingState: lastProcessingState,
     };
+  }
+
+  private async hasGoogleLensResultHints(): Promise<boolean> {
+    return await Promise.any(
+      GOOGLE_LENS_RESULT_HINT_SELECTORS.map(async (selector) => {
+        const locator = this.page.locator(selector).first();
+        if ((await locator.count().catch(() => 0)) === 0) throw new Error('nf');
+        if (!(await locator.isVisible().catch(() => false))) throw new Error('nv');
+        return true;
+      })
+    ).catch(() => false);
   }
 
   private isGoogleImagesUploadEntryUrl(url: string): boolean {

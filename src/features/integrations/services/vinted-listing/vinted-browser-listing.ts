@@ -331,7 +331,7 @@ export const runVintedBrowserListing = async ({
   source: 'manual' | 'scheduler' | 'api';
   action: 'list' | 'relist' | 'sync';
   browserMode: PlaywrightRelistBrowserMode;
-  browserPreference: PlaywrightBrowserPreference;
+  browserPreference: PlaywrightBrowserPreference | undefined;
 }): Promise<BrowserListingResultDto> => {
   const actionKey: ActionSequenceKey =
     action === 'sync' ? 'vinted_sync' : action === 'relist' ? 'vinted_relist' : 'vinted_list';

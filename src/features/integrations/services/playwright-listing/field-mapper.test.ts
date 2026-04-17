@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  buildPlaywrightProductCreateInput,
+  buildPlaywrightProductDraftInput,
   mapPlaywrightImportProduct,
   parsePlaywrightFieldMapperJson,
 } from './field-mapper';
@@ -63,5 +65,49 @@ describe('mapPlaywrightImportProduct', () => {
     expect(mapped.sourceUrl).toBe('https://marketplace.example.com/items/123');
     expect(mapped.createInput.name_en).toBe('Programmable product');
     expect(mapped.createInput.imageLinks).toEqual(['https://example.com/a.jpg']);
+  });
+
+  it('builds draft and product payloads with catalog defaults and structured names', () => {
+    const mapped = mapPlaywrightImportProduct(
+      {
+        title: 'Collector Pin',
+        description: 'Metal badge',
+        sku: 'PIN-001',
+        images: ['https://example.com/pin.jpg'],
+        sourceUrl: 'https://example.com/products/pin',
+      },
+      []
+    );
+
+    const draftInput = buildPlaywrightProductDraftInput(mapped, {
+      catalogId: 'catalog-1',
+      importSource: 'base',
+    });
+    const createInput = buildPlaywrightProductCreateInput(mapped, {
+      catalogId: 'catalog-1',
+      categoryId: 'category-1',
+      importSource: 'base',
+      structuredName: {
+        size: 'One Size',
+        material: 'Metal',
+        category: 'Anime Pin',
+        theme: 'Attack On Titan',
+      },
+    });
+
+    expect(draftInput).toMatchObject({
+      name: 'Collector Pin',
+      catalogIds: ['catalog-1'],
+      importSource: 'base',
+      supplierLink: 'https://example.com/products/pin',
+    });
+    expect(createInput).toMatchObject({
+      sku: 'PIN-001',
+      catalogIds: ['catalog-1'],
+      categoryId: 'category-1',
+      importSource: 'base',
+      name_en: 'Collector Pin | One Size | Metal | Anime Pin | Attack On Titan',
+      supplierLink: 'https://example.com/products/pin',
+    });
   });
 });

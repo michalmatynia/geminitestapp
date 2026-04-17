@@ -1,9 +1,25 @@
 import type { IntegrationConnectionBasic, IntegrationWithConnections } from '@/shared/contracts/integrations/domain';
 import type {
   IntegrationConnectionRecord,
+  IntegrationRecord,
   IntegrationRepository,
 } from '@/shared/contracts/integrations/repositories';
 import { getMongoIntegrationRepository } from '@/shared/lib/integration-repository';
+
+const toIsoStringOrNull = (value: string | Date | null | undefined): string | null => {
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value.toISOString();
+  }
+  return typeof value === 'string' ? value : null;
+};
+
+const toIntegrationWithConnectionsBase = (
+  integration: IntegrationRecord
+): Omit<IntegrationWithConnections, 'connections'> => ({
+  ...integration,
+  createdAt: toIsoStringOrNull(integration.createdAt) ?? undefined,
+  updatedAt: toIsoStringOrNull(integration.updatedAt),
+});
 
 const toIntegrationConnectionBasic = (
   connection: IntegrationConnectionRecord
@@ -42,10 +58,10 @@ export async function getIntegrationsWithConnections(): Promise<IntegrationWithC
   return Promise.all(
     integrations.map(async (integration) => {
       const connections = (await repo.listConnections(integration.id)).map((connection) =>
-        toIntegrationConnectionBasic(connection as IntegrationConnectionBasic & Record<string, unknown>)
+        toIntegrationConnectionBasic(connection)
       );
       const integrationWithConnections: IntegrationWithConnections = {
-        ...integration,
+        ...toIntegrationWithConnectionsBase(integration),
         connections,
       };
       return integrationWithConnections;

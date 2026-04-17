@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 const createCreateMutationV2Mock = vi.hoisted(() => vi.fn());
+const createDeleteMutationV2Mock = vi.hoisted(() => vi.fn());
 const apiPostMock = vi.hoisted(() => vi.fn());
 const queryClientMock = vi.hoisted(() => ({
   cancelQueries: vi.fn(),
@@ -28,6 +29,7 @@ vi.mock('@/shared/lib/query-factories-v2', async (importOriginal) => {
   return {
     ...actual,
     createCreateMutationV2: createCreateMutationV2Mock,
+    createDeleteMutationV2: createDeleteMutationV2Mock,
   };
 });
 
@@ -39,6 +41,7 @@ vi.mock('@/shared/lib/api-client', () => ({
 }));
 
 import {
+  useDeleteFromBaseMutation,
   useCheckTraderaStatusMutation,
   useRelistTraderaMutation,
   useSyncTraderaMutation,
@@ -48,6 +51,7 @@ describe('useProductListingMutations', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     createCreateMutationV2Mock.mockReturnValue({ kind: 'mutation' });
+    createDeleteMutationV2Mock.mockReturnValue({ kind: 'delete-mutation' });
     apiPostMock.mockResolvedValue({
       queued: true,
       listingId: 'listing-1',
@@ -60,6 +64,108 @@ describe('useProductListingMutations', () => {
     queryClientMock.cancelQueries.mockResolvedValue(undefined);
     queryClientMock.invalidateQueries.mockResolvedValue(undefined);
     queryClientMock.setQueriesData.mockImplementation(() => undefined);
+  });
+
+  it('patches a deleted Base listing into the cached listing and invalidates product detail state', async () => {
+    const listingsQueryKey = QUERY_KEYS.integrations.listings('product-1');
+    const productDetailQueryKey = QUERY_KEYS.products.detail('product-1');
+    const productDetailEditQueryKey = QUERY_KEYS.products.detailEdit('product-1');
+    let cachedListings = [
+      {
+        id: 'listing-1',
+        status: 'active',
+        externalListingId: 'base-product-123',
+        inventoryId: 'inv-main',
+        failureReason: 'Old issue',
+        exportHistory: [],
+      },
+    ];
+    let cachedJobs = [
+      {
+        id: 'job-1',
+        listings: [
+          {
+            id: 'listing-1',
+            status: 'active',
+            externalListingId: 'base-product-123',
+            inventoryId: 'inv-main',
+            failureReason: 'Old issue',
+            exportHistory: [],
+          },
+        ],
+      },
+    ];
+
+    queryClientMock.getQueryData.mockImplementation((queryKey: readonly unknown[]) => {
+      const key = JSON.stringify(queryKey);
+      if (key === JSON.stringify(listingsQueryKey)) {
+        return cachedListings;
+      }
+      if (key === JSON.stringify(QUERY_KEYS.jobs.integrations())) {
+        return cachedJobs;
+      }
+      return undefined;
+    });
+    queryClientMock.setQueryData.mockImplementation(
+      (queryKey: readonly unknown[], value: unknown) => {
+        const key = JSON.stringify(queryKey);
+        if (key === JSON.stringify(listingsQueryKey)) {
+          cachedListings =
+            typeof value === 'function'
+              ? (value as (current: typeof cachedListings) => typeof cachedListings)(cachedListings)
+              : (value as typeof cachedListings);
+          return;
+        }
+        if (key === JSON.stringify(QUERY_KEYS.jobs.integrations())) {
+          cachedJobs =
+            typeof value === 'function'
+              ? (value as (current: typeof cachedJobs) => typeof cachedJobs)(cachedJobs)
+              : (value as typeof cachedJobs);
+        }
+      }
+    );
+
+    const { result } = renderHook(() => useDeleteFromBaseMutation('product-1'));
+    const config = createDeleteMutationV2Mock.mock.calls[0]?.[0];
+
+    expect(result.current).toEqual({ kind: 'delete-mutation' });
+
+    await config.onMutate({ listingId: 'listing-1', inventoryId: 'inv-main' });
+    expect(cachedListings[0]).toMatchObject({
+      status: 'running',
+      externalListingId: 'base-product-123',
+    });
+
+    await config.invalidate(queryClientMock, { status: 'deleted' }, {
+      listingId: 'listing-1',
+      inventoryId: 'inv-main',
+    });
+
+    expect(cachedListings[0]).toMatchObject({
+      status: 'removed',
+      externalListingId: null,
+      inventoryId: 'inv-main',
+      failureReason: null,
+    });
+    expect(cachedListings[0].exportHistory[0]).toMatchObject({
+      status: 'deleted',
+      inventoryId: 'inv-main',
+      externalListingId: 'base-product-123',
+    });
+    expect(cachedJobs[0]?.listings[0]).toMatchObject({
+      status: 'removed',
+      externalListingId: null,
+      failureReason: null,
+    });
+    expect(queryClientMock.invalidateQueries).toHaveBeenCalledWith({
+      queryKey: QUERY_KEYS.products.lists(),
+    });
+    expect(queryClientMock.invalidateQueries).toHaveBeenCalledWith({
+      queryKey: productDetailQueryKey,
+    });
+    expect(queryClientMock.invalidateQueries).toHaveBeenCalledWith({
+      queryKey: productDetailEditQueryKey,
+    });
   });
 
   it('posts Playwright relist browser-mode overrides to the relist endpoint', async () => {

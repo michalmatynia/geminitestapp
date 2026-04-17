@@ -20,7 +20,6 @@ import {
   evaluateAmazonScanCandidateMatch,
 } from './product-scan-amazon-evaluator';
 import {
-  AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY,
   resolveAmazonRuntimeActionName,
 } from '@/shared/lib/browser-execution/amazon-runtime-constants';
 
@@ -28,7 +27,6 @@ import {
   AMAZON_PRODUCT_SCAN_PROVIDER,
   requireProductScanNativeRuntime,
 } from './product-scan-providers';
-import { getPlaywrightRuntimeActionSeed } from '@/shared/lib/browser-execution/playwright-runtime-action-seeds';
 import {
   buildProductScannerEngineRequestOptions,
   getProductScannerSettings,
@@ -66,12 +64,13 @@ import {
   resolveNextAmazonCandidateUrl,
   resolveNextAmazonEvaluationStepAttempt,
   resolveNextQueueStepAttempt,
+  resolveAmazonProductScanRuntimeKey,
   resolveAmazonProbeEvaluatorConfig,
   resolveAmazonTriageEvaluatorConfig,
+  resolveAmazonRuntimeActionDefinition,
 } from './product-scans-service.helpers.amazon';
 
 const amazonScanRuntime = requireProductScanNativeRuntime(AMAZON_PRODUCT_SCAN_PROVIDER);
-const amazonRuntimeAction = getPlaywrightRuntimeActionSeed(AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY);
 
 type SynchronizeAmazonStatusInput = {
   scan: ProductScanRecord;
@@ -151,6 +150,9 @@ export async function synchronizeAmazonProbeReady({
     });
   }
   const requestedStepSequenceInput = resolveProductScanRequestSequenceInput(scan.rawResult);
+  const amazonRuntimeAction = await resolveAmazonRuntimeActionDefinition(
+    resolveAmazonProductScanRuntimeKey(toRecord(scan.rawResult)?.['runtimeKey'])
+  );
 
   let amazonEvaluation = existingAmazonEvaluation;
   try {
@@ -234,6 +236,8 @@ export async function synchronizeAmazonProbeReady({
             const scannerRuntimeOptions = buildAmazonScannerRequestRuntimeOptions({
               scannerSettings,
               scannerEngineRequestOptions,
+              actionExecutionSettings: amazonRuntimeAction?.executionSettings ?? null,
+              actionPersonaId: amazonRuntimeAction?.personaId ?? null,
             });
             const manualVerificationTimeoutMs =
               resolveScanManualVerificationTimeoutMs(scannerSettings);
@@ -402,6 +406,8 @@ export async function synchronizeAmazonProbeReady({
             const scannerRuntimeOptions = buildAmazonScannerRequestRuntimeOptions({
               scannerSettings,
               scannerEngineRequestOptions,
+              actionExecutionSettings: amazonRuntimeAction?.executionSettings ?? null,
+              actionPersonaId: amazonRuntimeAction?.personaId ?? null,
             });
             const manualVerificationTimeoutMs =
               resolveScanManualVerificationTimeoutMs(scannerSettings);
@@ -615,6 +621,8 @@ export async function synchronizeAmazonProbeReady({
     const scannerRuntimeOptions = buildAmazonScannerRequestRuntimeOptions({
       scannerSettings,
       scannerEngineRequestOptions,
+      actionExecutionSettings: amazonRuntimeAction?.executionSettings ?? null,
+      actionPersonaId: amazonRuntimeAction?.personaId ?? null,
     });
     const manualVerificationTimeoutMs = resolveScanManualVerificationTimeoutMs(scannerSettings);
     const amazonImageSearchProvider = resolveAmazonImageSearchProvider(

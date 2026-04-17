@@ -126,10 +126,10 @@ const buildRunRepositoryHeaders = (
     );
     if (!hasRunRepositorySelectionMismatch(writerSelection, repoSelection)) return;
     mismatchCount += 1;
-    if (firstWriterProvider === null && (typeof writerSelection?.provider === 'string' && writerSelection.provider !== '')) {
+    if (firstWriterProvider === null && writerSelection?.provider) {
       firstWriterProvider = writerSelection.provider;
     }
-    if (firstWriterRouteMode === null && (typeof writerSelection?.routeMode === 'string' && writerSelection.routeMode !== '')) {
+    if (firstWriterRouteMode === null && writerSelection?.routeMode) {
       firstWriterRouteMode = writerSelection.routeMode;
     }
   });
@@ -189,7 +189,7 @@ export async function getPathRunsHandler(req: NextRequest, _ctx: ApiHandlerConte
     ...(typeof requestId === 'string' && requestId !== '' ? { requestId } : {}),
     ...(typeof searchQuery === 'string' && searchQuery !== '' ? { query: searchQuery } : {}),
     ...(typeof source === 'string' && source !== '' ? { source, sourceMode } : {}),
-    ...(typeof status === 'string' && status !== '' ? { status } : {}),
+    ...(status !== undefined ? { status } : {}),
     ...(limit !== undefined ? { limit } : {}),
     ...(offset !== undefined ? { offset } : {}),
     ...(includeTotal ? {} : { includeTotal: false }),

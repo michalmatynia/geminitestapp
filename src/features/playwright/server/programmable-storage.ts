@@ -12,7 +12,7 @@ export const PLAYWRIGHT_PROGRAMMABLE_INTEGRATION_SLUG = 'playwright-programmable
 
 const isPlaywrightProgrammableIntegration = (
   integration: Pick<IntegrationRecord, 'slug'> | null | undefined
-): integration is Pick<IntegrationRecord, 'slug'> =>
+): boolean =>
   typeof integration?.slug === 'string' &&
   integration.slug.trim().toLowerCase() === PLAYWRIGHT_PROGRAMMABLE_INTEGRATION_SLUG;
 

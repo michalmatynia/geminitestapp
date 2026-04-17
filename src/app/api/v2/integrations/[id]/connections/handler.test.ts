@@ -5,6 +5,8 @@ const {
   listConnectionsMock,
   getIntegrationByIdMock,
   createConnectionMock,
+  createPlaywrightProgrammableConnectionMock,
+  listPlaywrightProgrammableConnectionsMock,
   encryptSecretMock,
   fetchResolvedPlaywrightRuntimeActionsMock,
 } = vi.hoisted(() => ({
@@ -12,6 +14,8 @@ const {
   listConnectionsMock: vi.fn(),
   getIntegrationByIdMock: vi.fn(),
   createConnectionMock: vi.fn(),
+  createPlaywrightProgrammableConnectionMock: vi.fn(),
+  listPlaywrightProgrammableConnectionsMock: vi.fn(),
   encryptSecretMock: vi.fn(),
   fetchResolvedPlaywrightRuntimeActionsMock: vi.fn(),
 }));
@@ -33,6 +37,17 @@ vi.mock('@/shared/lib/browser-execution/runtime-action-resolver.server', () => (
   fetchResolvedPlaywrightRuntimeActions: (...args: unknown[]) =>
     fetchResolvedPlaywrightRuntimeActionsMock(...args),
 }));
+
+vi.mock('@/features/playwright/server', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/playwright/server')>();
+  return {
+    ...actual,
+    createPlaywrightProgrammableConnection: (...args: unknown[]) =>
+      createPlaywrightProgrammableConnectionMock(...args),
+    listPlaywrightProgrammableConnections: (...args: unknown[]) =>
+      listPlaywrightProgrammableConnectionsMock(...args),
+  };
+});
 
 import { DEFAULT_TRADERA_QUICKLIST_SCRIPT } from '@/features/integrations/services/tradera-listing/default-script';
 import { GET_handler, POST_handler } from './handler';
@@ -432,7 +447,7 @@ describe('integration connections handler', () => {
         playwrightFieldMapperJson: '[]',
       },
     });
-    createConnectionMock.mockResolvedValue({
+    createPlaywrightProgrammableConnectionMock.mockResolvedValue({
       id: 'conn-playwright-1',
       integrationId: 'integration-playwright-1',
       name: 'Programmable Browser',
@@ -442,6 +457,13 @@ describe('integration connections handler', () => {
       playwrightImportBaseUrl: 'https://example.test',
       playwrightImportCaptureRoutesJson: '{"routes":[],"appearanceMode":""}',
       playwrightFieldMapperJson: '[]',
+      playwrightImportAutomationFlowJson: '{"name":"Draft import","blocks":[]}',
+      playwrightLegacyBrowserMigration: {
+        hasLegacyBrowserBehavior: false,
+        requiresManualProxyPasswordInput: false,
+        listingDraftActionName: 'Programmable Browser / Listing session',
+        importDraftActionName: 'Programmable Browser / Import session',
+      },
     });
 
     const response = await POST_handler(
@@ -454,12 +476,15 @@ describe('integration connections handler', () => {
 
     const payload = await response.json();
 
-    expect(createConnectionMock).toHaveBeenCalledWith('integration-playwright-1', {
-      name: 'Programmable Browser',
-      playwrightImportScript: 'export default async function run() {}',
-      playwrightImportBaseUrl: 'https://example.test',
-      playwrightImportCaptureRoutesJson: '{"routes":[],"appearanceMode":""}',
-      playwrightFieldMapperJson: '[]',
+    expect(createPlaywrightProgrammableConnectionMock).toHaveBeenCalledWith({
+      integrationId: 'integration-playwright-1',
+      data: {
+        name: 'Programmable Browser',
+        playwrightImportScript: 'export default async function run() {}',
+        playwrightImportBaseUrl: 'https://example.test',
+        playwrightImportCaptureRoutesJson: '{"routes":[],"appearanceMode":""}',
+        playwrightFieldMapperJson: '[]',
+      },
     });
     expect(encryptSecretMock).not.toHaveBeenCalled();
     expect(payload).toMatchObject({
@@ -468,6 +493,7 @@ describe('integration connections handler', () => {
       playwrightImportBaseUrl: 'https://example.test',
       playwrightImportCaptureRoutesJson: '{"routes":[],"appearanceMode":""}',
       playwrightFieldMapperJson: '[]',
+      playwrightImportAutomationFlowJson: '{"name":"Draft import","blocks":[]}',
       playwrightLegacyBrowserMigration: {
         hasLegacyBrowserBehavior: false,
         requiresManualProxyPasswordInput: false,
@@ -491,6 +517,11 @@ describe('integration connections handler', () => {
         playwrightPersonaId: 'persona-1',
       },
     });
+    createPlaywrightProgrammableConnectionMock.mockRejectedValue(
+      new Error(
+        'Programmable connections no longer accept connection-level Playwright browser settings. Edit the selected Step Sequencer action instead.'
+      )
+    );
 
     await expect(
       POST_handler(
@@ -504,7 +535,13 @@ describe('integration connections handler', () => {
       'Programmable connections no longer accept connection-level Playwright browser settings. Edit the selected Step Sequencer action instead.'
     );
 
-    expect(createConnectionMock).not.toHaveBeenCalled();
+    expect(createPlaywrightProgrammableConnectionMock).toHaveBeenCalledWith({
+      integrationId: 'integration-playwright-1',
+      data: {
+        name: 'Programmable Browser',
+        playwrightPersonaId: 'persona-1',
+      },
+    });
   });
 
   it('does not expose connection-level Playwright settings in list responses', async () => {
@@ -544,7 +581,7 @@ describe('integration connections handler', () => {
       id: 'integration-playwright-1',
       slug: 'playwright-programmable',
     });
-    listConnectionsMock.mockResolvedValue([
+    listPlaywrightProgrammableConnectionsMock.mockResolvedValue([
       {
         id: 'conn-playwright-2',
         integrationId: 'integration-playwright-1',
@@ -553,6 +590,10 @@ describe('integration connections handler', () => {
         updatedAt: '2026-04-02T11:00:00.000Z',
         playwrightListingActionId: 'listing-draft',
         playwrightImportActionId: 'import-draft',
+        playwrightLegacyBrowserMigration: {
+          hasLegacyBrowserBehavior: false,
+          requiresManualProxyPasswordInput: false,
+        },
       },
     ]);
 
@@ -564,6 +605,10 @@ describe('integration connections handler', () => {
 
     const payload = await response.json();
     const entry = payload[0] as Record<string, unknown>;
+
+    expect(listPlaywrightProgrammableConnectionsMock).toHaveBeenCalledWith(
+      'integration-playwright-1'
+    );
 
     expect(entry).toMatchObject({
       id: 'conn-playwright-2',

@@ -56,6 +56,7 @@ const createConnectionSchema = z
     playwrightImportActionId: z.string().trim().nullable().optional(),
     playwrightImportCaptureRoutesJson: z.string().trim().nullable().optional(),
     playwrightFieldMapperJson: z.string().trim().nullable().optional(),
+    playwrightImportAutomationFlowJson: z.string().trim().nullable().optional(),
     traderaDefaultTemplateId: z.string().trim().nullable().optional(),
     traderaDefaultDurationHours: z.number().int().min(1).max(720).optional(),
     traderaAutoRelistEnabled: z.boolean().optional(),
@@ -135,6 +136,7 @@ export async function GET_handler(
     playwrightImportActionId: connection.playwrightImportActionId ?? null,
     playwrightImportCaptureRoutesJson: connection.playwrightImportCaptureRoutesJson ?? null,
     playwrightFieldMapperJson: connection.playwrightFieldMapperJson ?? null,
+    playwrightImportAutomationFlowJson: connection.playwrightImportAutomationFlowJson ?? null,
     hasPlaywrightListingScript: Boolean(connection.playwrightListingScript?.trim()),
     traderaDefaultTemplateId: connection.traderaDefaultTemplateId ?? null,
     traderaDefaultDurationHours: connection.traderaDefaultDurationHours ?? 72,
@@ -285,6 +287,12 @@ export async function POST_handler(
     ...(typeof data.playwrightFieldMapperJson === 'string' || data.playwrightFieldMapperJson === null
       ? { playwrightFieldMapperJson: data.playwrightFieldMapperJson ?? null }
       : {}),
+    ...(typeof data.playwrightImportAutomationFlowJson === 'string' ||
+    data.playwrightImportAutomationFlowJson === null
+      ? {
+          playwrightImportAutomationFlowJson: data.playwrightImportAutomationFlowJson ?? null,
+        }
+      : {}),
     ...(typeof data.traderaDefaultTemplateId === 'string' || data.traderaDefaultTemplateId === null
       ? { traderaDefaultTemplateId: data.traderaDefaultTemplateId ?? null }
       : {}),
@@ -378,6 +386,7 @@ export async function POST_handler(
     playwrightImportActionId: created.playwrightImportActionId ?? null,
     playwrightImportCaptureRoutesJson: created.playwrightImportCaptureRoutesJson ?? null,
     playwrightFieldMapperJson: created.playwrightFieldMapperJson ?? null,
+    playwrightImportAutomationFlowJson: created.playwrightImportAutomationFlowJson ?? null,
     hasPlaywrightListingScript: Boolean(created.playwrightListingScript?.trim()),
     traderaDefaultTemplateId: created.traderaDefaultTemplateId ?? null,
     traderaDefaultDurationHours: created.traderaDefaultDurationHours ?? 72,

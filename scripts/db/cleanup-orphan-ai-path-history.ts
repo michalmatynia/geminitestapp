@@ -294,7 +294,7 @@ const buildCountMapByRunId = async (
     ])
     .toArray();
   return new Map(
-    rows.map((row) => [row._id, typeof row.count === 'number' ? row.count : 0] as const)
+    rows.map((row) => [row['_id'], typeof row['count'] === 'number' ? row['count'] : 0] as const)
   );
 };
 

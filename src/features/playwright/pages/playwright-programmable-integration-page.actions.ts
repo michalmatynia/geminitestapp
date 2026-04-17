@@ -5,10 +5,13 @@ import {
   type ProgrammableFieldMapperRow,
 } from '@/features/playwright/pages/playwright-programmable-integration-page.helpers';
 import type {
+  RunningTestType,
   PlaywrightProgrammableIntegrationPageActionArgs,
   PlaywrightProgrammableIntegrationPageActions,
 } from '@/features/playwright/pages/playwright-programmable-integration-page.types';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
+type PlaywrightProgrammableExecutionMode = 'dry_run' | 'commit';
 
 const getErrorMessage = (error: unknown, fallback: string): string =>
   error instanceof Error ? error.message : fallback;
@@ -17,6 +20,7 @@ const buildPromotionPayload = (
   args: Pick<
     PlaywrightProgrammableIntegrationPageActionArgs,
     | 'appearanceMode'
+    | 'automationFlowJson'
     | 'captureRoutes'
     | 'connectionName'
     | 'fieldMapperRows'
@@ -37,6 +41,7 @@ const buildPromotionPayload = (
     importActionId: args.importActionId,
     captureRoutes: args.captureRoutes,
     appearanceMode: args.appearanceMode,
+    automationFlowJson: args.automationFlowJson,
     fieldMapperRows: args.fieldMapperRows,
   }),
   proxyPassword:
@@ -65,6 +70,7 @@ const saveCurrentConnection = async (
     importActionId: args.importActionId,
     captureRoutes: args.captureRoutes,
     appearanceMode: args.appearanceMode,
+    automationFlowJson: args.automationFlowJson,
     fieldMapperRows: args.fieldMapperRows,
     payloadPatch:
       args.isBrowserBehaviorActionOwned && args.selectedConnection !== null
@@ -204,6 +210,7 @@ const handleCreateConnection = async (
   args.setListingScript('');
   args.setImportScript('');
   args.setImportBaseUrl('');
+  args.setAutomationFlowJson('');
   args.setListingActionId('');
   args.setImportActionId('');
   args.setCaptureRoutes([createEmptyProgrammableCaptureRoute(1)]);
@@ -217,11 +224,23 @@ const handleCreateConnection = async (
   }
 };
 
-const handleRunTest = async (
+const runProgrammableExecution = async (
   args: PlaywrightProgrammableIntegrationPageActionArgs,
-  scriptType: 'listing' | 'import'
+  {
+    executionMode,
+    failureMessage,
+    runningTestType,
+    scriptType,
+    successMessage,
+  }: {
+    executionMode: PlaywrightProgrammableExecutionMode;
+    failureMessage: string;
+    runningTestType: RunningTestType;
+    scriptType: 'listing' | 'import';
+    successMessage: string;
+  }
 ): Promise<void> => {
-  args.setRunningTestType(scriptType);
+  args.setRunningTestType(runningTestType);
   try {
     const saved = await saveCurrentConnection(args, false);
     if (saved === null) {
@@ -230,20 +249,53 @@ const handleRunTest = async (
 
     const response = await args.testProgrammableConnectionMutateAsync({
       connectionId: saved.id,
+      executionMode,
       scriptType,
     });
     args.setTestResultJson(JSON.stringify(response, null, 2));
-    args.toast(`${scriptType === 'listing' ? 'Listing' : 'Import'} script test completed.`, {
-      variant: 'success',
-    });
+    args.toast(successMessage, { variant: 'success' });
   } catch (error) {
     logClientError(error);
-    const message = getErrorMessage(error, 'Playwright test run failed.');
+    const message = getErrorMessage(error, failureMessage);
     args.setTestResultJson(JSON.stringify({ error: message }, null, 2));
     args.toast(message, { variant: 'error' });
   } finally {
     args.setRunningTestType(null);
   }
+};
+
+const handleRunTest = async (
+  args: PlaywrightProgrammableIntegrationPageActionArgs,
+  scriptType: 'listing' | 'import'
+): Promise<void> => {
+  const resultLabel = scriptType === 'listing' ? 'Listing' : 'Import';
+
+  await runProgrammableExecution(args, {
+    executionMode: 'dry_run',
+    failureMessage: 'Playwright test run failed.',
+    runningTestType: scriptType,
+    scriptType,
+    successMessage: `${resultLabel} script test completed.`,
+  });
+};
+
+const handleRunFlow = async (
+  args: PlaywrightProgrammableIntegrationPageActionArgs
+): Promise<void> => {
+  if (args.automationFlowJson.trim().length === 0) {
+    args.toast('Add automation flow JSON before running the import flow.', {
+      variant: 'error',
+    });
+    return;
+  }
+
+  await runProgrammableExecution(args, {
+    executionMode: 'commit',
+    failureMessage: 'Playwright flow run failed.',
+    runningTestType: 'flow',
+    scriptType: 'import',
+    successMessage: 'Import flow run completed.',
+  });
 };
 
 const handleAddFieldMapping = (
@@ -284,6 +336,7 @@ export const createPlaywrightProgrammableIntegrationPageActions = (
   handleDeleteFieldMapping: (rowId) =>
     handleDeleteFieldMapping(args.setFieldMapperRows, rowId),
   handlePromoteConnectionSettings: () => handlePromoteConnectionSettings(args),
+  handleRunFlow: () => handleRunFlow(args),
   handleRunTest: (scriptType) => handleRunTest(args, scriptType),
   handleUpdateFieldMapping: (rowId, patch) =>
     handleUpdateFieldMapping(args.setFieldMapperRows, rowId, patch),

@@ -97,6 +97,7 @@ describe('playwrightProgrammableIntegrationPage helpers', () => {
         listingScript: '  export default {}  ',
         importScript: '   ',
         importBaseUrl: ' https://example.com/import ',
+        automationFlowJson: '  { "name": "Draft import" }  ',
         listingActionId: ' listing-action ',
         importActionId: ' ',
         captureRoutes: [],
@@ -111,6 +112,7 @@ describe('playwrightProgrammableIntegrationPage helpers', () => {
       playwrightImportBaseUrl: 'https://example.com/import',
       playwrightListingActionId: 'listing-action',
       playwrightImportActionId: null,
+      playwrightImportAutomationFlowJson: '{ "name": "Draft import" }',
       playwrightFieldMapperJson: JSON.stringify([
         { sourceKey: 'source.title', targetField: 'title' },
       ]),

@@ -24,6 +24,7 @@ import {
   type ProductScanAmazonEvaluation,
   type ProductScanRecord,
 } from '@/shared/contracts/product-scans';
+import type { PlaywrightAction } from '@/shared/contracts/playwright-steps';
 import { productService } from '@/shared/lib/products/services/productService';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
@@ -37,7 +38,6 @@ import {
   AMAZON_PRODUCT_SCAN_PROVIDER,
   requireProductScanNativeRuntime,
 } from './product-scan-providers';
-import { getPlaywrightRuntimeActionSeed } from '@/shared/lib/browser-execution/playwright-runtime-action-seeds';
 import {
   buildProductScannerEngineRequestOptions,
   getProductScannerSettings,
@@ -89,6 +89,7 @@ import {
   resolveAmazonProbeEvaluatorConfig,
   shouldWriteAmazonEnglishContent,
   isApprovedAmazonCandidateExtractionRun,
+  resolveAmazonRuntimeActionDefinition,
 } from './product-scans-service.helpers.amazon';
 
 import {
@@ -117,10 +118,10 @@ const resolveAmazonScanRuntimeKey = (
     : AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY;
 };
 
-const resolveAmazonScanRuntimeAction = (scan: ProductScanRecord) =>
-  getPlaywrightRuntimeActionSeed(
-    resolveAmazonScanRuntimeKey(scan) as Parameters<typeof getPlaywrightRuntimeActionSeed>[0]
-  );
+const resolveAmazonScanRuntimeAction = (
+  scan: ProductScanRecord
+): Promise<PlaywrightAction | null> =>
+  resolveAmazonRuntimeActionDefinition(resolveAmazonScanRuntimeKey(scan));
 
 export async function synchronizeAmazonProductScan(
   scan: ProductScanRecord
@@ -165,7 +166,7 @@ export async function synchronizeAmazonProductScan(
     const { resultValue, finalUrl } = resolvePlaywrightEngineRunOutputs(run.result);
     const parsedResult = parseAmazonScanRuntimeResult(resultValue);
     const currentAmazonRuntimeKey = resolveAmazonScanRuntimeKey(scan);
-    const currentAmazonRuntimeAction = resolveAmazonScanRuntimeAction(scan);
+    const currentAmazonRuntimeAction = await resolveAmazonScanRuntimeAction(scan);
     const requestedStepSequenceInput = resolveProductScanRequestSequenceInput(scan.rawResult);
     const existingAmazonEvaluation = scan.amazonEvaluation ?? null;
     const approvedCandidateProbe =
@@ -553,10 +554,6 @@ export async function synchronizeAmazonProductScan(
           if (fallbackProvider) {
             const scannerEngineRequestOptions =
               buildProductScannerEngineRequestOptions(scannerSettings);
-            const scannerRuntimeOptions = buildAmazonScannerRequestRuntimeOptions({
-              scannerSettings,
-              scannerEngineRequestOptions,
-            });
             const manualVerificationTimeoutMs =
               resolveScanManualVerificationTimeoutMs(scannerSettings);
             const amazonSelectorProfile =
@@ -569,9 +566,15 @@ export async function synchronizeAmazonProductScan(
               currentAmazonRuntimeKey === AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY
                 ? AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY
                 : currentAmazonRuntimeKey;
-            const fallbackRuntimeAction = getPlaywrightRuntimeActionSeed(
-              fallbackRuntimeKey as Parameters<typeof getPlaywrightRuntimeActionSeed>[0]
+            const fallbackRuntimeAction = await resolveAmazonRuntimeActionDefinition(
+              fallbackRuntimeKey
             );
+            const fallbackScannerRuntimeOptions = buildAmazonScannerRequestRuntimeOptions({
+              scannerSettings,
+              scannerEngineRequestOptions,
+              actionExecutionSettings: fallbackRuntimeAction?.executionSettings ?? null,
+              actionPersonaId: fallbackRuntimeAction?.personaId ?? null,
+            });
             const fallbackRun = await startPlaywrightEngineTask({
               request: {
                 runtimeKey: fallbackRuntimeKey,
@@ -599,7 +602,7 @@ export async function synchronizeAmazonProductScan(
                 }),
                 timeoutMs: AMAZON_SCAN_TIMEOUT_MS,
                 browserEngine: 'chromium',
-                ...scannerRuntimeOptions,
+                ...fallbackScannerRuntimeOptions,
                 capture: {
                   screenshot: true,
                   html: true,
@@ -692,6 +695,8 @@ export async function synchronizeAmazonProductScan(
             const scannerRuntimeOptions = buildAmazonScannerRequestRuntimeOptions({
               scannerSettings,
               scannerEngineRequestOptions,
+              actionExecutionSettings: currentAmazonRuntimeAction?.executionSettings ?? null,
+              actionPersonaId: currentAmazonRuntimeAction?.personaId ?? null,
             });
             const manualVerificationTimeoutMs =
               resolveScanManualVerificationTimeoutMs(scannerSettings);

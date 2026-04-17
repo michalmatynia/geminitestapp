@@ -115,6 +115,7 @@ describe('playwright programmable connections server', () => {
       playwrightImportBaseUrl: 'https://example.test',
       playwrightImportCaptureRoutesJson: '{"routes":[],"appearanceMode":""}',
       playwrightFieldMapperJson: '[]',
+      playwrightImportAutomationFlowJson: '{"name":"Draft import","blocks":[]}',
     });
 
     const result = await createPlaywrightProgrammableConnection({
@@ -125,6 +126,7 @@ describe('playwright programmable connections server', () => {
         playwrightImportBaseUrl: 'https://example.test',
         playwrightImportCaptureRoutesJson: '{"routes":[],"appearanceMode":""}',
         playwrightFieldMapperJson: '[]',
+        playwrightImportAutomationFlowJson: '{"name":"Draft import","blocks":[]}',
       },
     });
 
@@ -136,6 +138,7 @@ describe('playwright programmable connections server', () => {
         playwrightImportBaseUrl: 'https://example.test',
         playwrightImportCaptureRoutesJson: '{"routes":[],"appearanceMode":""}',
         playwrightFieldMapperJson: '[]',
+        playwrightImportAutomationFlowJson: '{"name":"Draft import","blocks":[]}',
       },
     });
     expect(result).toMatchObject({
@@ -144,6 +147,7 @@ describe('playwright programmable connections server', () => {
       playwrightImportBaseUrl: 'https://example.test',
       playwrightImportCaptureRoutesJson: '{"routes":[],"appearanceMode":""}',
       playwrightFieldMapperJson: '[]',
+      playwrightImportAutomationFlowJson: '{"name":"Draft import","blocks":[]}',
       playwrightLegacyBrowserMigration: expect.objectContaining({
         hasLegacyBrowserBehavior: false,
         listingDraftActionName: 'Programmable Browser / Listing session',

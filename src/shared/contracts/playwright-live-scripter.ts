@@ -142,6 +142,8 @@ export const liveScripterFrameMessageSchema = z.object({
   height: z.number().int().positive(),
 });
 
+export type LiveScripterFrame = z.infer<typeof liveScripterFrameMessageSchema>;
+
 export const liveScripterNavigatedMessageSchema = z.object({
   type: z.literal('navigated'),
   url: z.string(),

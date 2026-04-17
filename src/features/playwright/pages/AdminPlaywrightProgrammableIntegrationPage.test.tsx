@@ -1,12 +1,13 @@
 // @vitest-environment jsdom
 
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { defaultPlaywrightActionExecutionSettings } from '@/shared/contracts/playwright-steps';
 
 const {
+  clipboardWriteTextMock,
   useIntegrationsMock,
   useProgrammableIntegrationConnectionsMock,
   useCleanupAllPlaywrightBrowserPersistenceMock,
@@ -18,6 +19,7 @@ const {
   useUpsertProgrammableConnectionMock,
   toastMock,
 } = vi.hoisted(() => ({
+  clipboardWriteTextMock: vi.fn<() => Promise<void>>(),
   useIntegrationsMock: vi.fn(),
   useProgrammableIntegrationConnectionsMock: vi.fn(),
   useCleanupAllPlaywrightBrowserPersistenceMock: vi.fn(),
@@ -201,6 +203,11 @@ import { AdminPlaywrightProgrammableIntegrationPageRuntime } from './AdminPlaywr
 describe('AdminPlaywrightProgrammableIntegrationPageRuntime', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    clipboardWriteTextMock.mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText: clipboardWriteTextMock },
+    });
     useIntegrationsMock.mockReturnValue({
       data: [
         {
@@ -527,5 +534,348 @@ describe('AdminPlaywrightProgrammableIntegrationPageRuntime', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Programmable D' }));
 
     expect(screen.getByLabelText('Playwright connection name')).toHaveValue('Programmable D');
+  });
+
+  it('shows Run Flow for import connections with automation flow JSON and executes commit mode', async () => {
+    const upsertMutateAsync = vi.fn().mockResolvedValue({
+      id: 'connection-flow-1',
+    });
+    const testMutateAsync = vi.fn().mockResolvedValue({
+      ok: true,
+      scriptType: 'import',
+      input: {
+        sourceUrl: 'https://example.test/import',
+        captures: [
+          { url: 'https://example.test/p/1' },
+          { url: 'https://example.test/p/2' },
+          { url: 'https://example.test/p/3' },
+          { url: 'https://example.test/p/4' },
+        ],
+      },
+      result: {
+        rawResult: { ok: true },
+        rawProducts: [
+          { title: 'Product 1' },
+          { title: 'Product 2' },
+          { title: 'Product 3' },
+          { title: 'Product 4' },
+        ],
+        mappedProducts: [
+          { name: 'Product 1' },
+          { name: 'Product 2' },
+          { name: 'Product 3' },
+          { name: 'Product 4' },
+        ],
+        automationFlow: {
+          executionMode: 'commit',
+          flow: { name: 'Draft import', blocks: [] },
+          writeOutcomes: [
+            {
+              kind: 'draft',
+              status: 'created',
+              index: 0,
+              payload: { sku: 'SKU-1' },
+              record: { id: 'draft-1' },
+            },
+            {
+              kind: 'draft',
+              status: 'created',
+              index: 1,
+              payload: { sku: 'SKU-2' },
+              record: { id: 'draft-2' },
+            },
+            {
+              kind: 'draft',
+              status: 'created',
+              index: 2,
+              payload: { sku: 'SKU-3' },
+              record: { id: 'draft-3' },
+            },
+            {
+              kind: 'draft',
+              status: 'created',
+              index: 3,
+              payload: { sku: 'SKU-4' },
+              record: { id: 'draft-4' },
+            },
+            {
+              kind: 'product',
+              status: 'created',
+              index: 0,
+              payload: { sku: 'SKU-1' },
+              record: { id: 'product-1' },
+            },
+            {
+              kind: 'product',
+              status: 'created',
+              index: 1,
+              payload: { sku: 'SKU-2' },
+              record: { id: 'product-2' },
+            },
+            {
+              kind: 'product',
+              status: 'created',
+              index: 2,
+              payload: { sku: 'SKU-3' },
+              record: { id: 'product-3' },
+            },
+            {
+              kind: 'product',
+              status: 'failed',
+              index: 3,
+              payload: { sku: 'SKU-4' },
+              record: null,
+              errorMessage: 'Product validation failed',
+            },
+          ],
+          draftPayloads: [
+            { sku: 'SKU-1' },
+            { sku: 'SKU-2' },
+            { sku: 'SKU-3' },
+            { sku: 'SKU-4' },
+          ],
+          drafts: [
+            { id: 'draft-1' },
+            { id: 'draft-2' },
+            { id: 'draft-3' },
+            { id: 'draft-4' },
+          ],
+          productPayloads: [
+            { sku: 'SKU-1' },
+            { sku: 'SKU-2' },
+            { sku: 'SKU-3' },
+            { sku: 'SKU-4' },
+          ],
+          products: [
+            { id: 'product-1' },
+            { id: 'product-2' },
+            { id: 'product-3' },
+          ],
+          results: {
+            drafts: [{ id: 'draft-1' }, { id: 'draft-2' }],
+            products: [{ id: 'product-1' }, { id: 'product-2' }],
+          },
+          vars: {
+            rawProducts: [
+              { title: 'Product 1' },
+              { title: 'Product 2' },
+              { title: 'Product 3' },
+              { title: 'Product 4' },
+            ],
+          },
+        },
+      },
+    });
+
+    useProgrammableIntegrationConnectionsMock.mockReturnValue({
+      data: [
+        {
+          id: 'connection-flow-1',
+          integrationId: 'integration-playwright-1',
+          name: 'Programmable Flow',
+          playwrightListingActionId: 'listing-draft',
+          playwrightImportActionId: 'import-draft',
+          playwrightLegacyBrowserMigration: {
+            hasLegacyBrowserBehavior: false,
+            legacySummary: [],
+            requiresManualProxyPasswordInput: false,
+            canCleanupPersistedLegacyBrowserFields: false,
+            listingDraftActionId: 'listing-draft',
+            listingDraftActionName: 'Listing Draft',
+            importDraftActionId: 'import-draft',
+            importDraftActionName: 'Import Draft',
+          },
+          playwrightListingScript: 'export default async function runListing() {}',
+          playwrightImportScript: 'export default async function runImport() {}',
+          playwrightImportBaseUrl: 'https://example.test/import',
+          playwrightImportCaptureRoutesJson: null,
+          playwrightImportAutomationFlowJson:
+            '{"name":"Draft import","blocks":[{"kind":"create_draft"}]}',
+          playwrightFieldMapperJson: null,
+          createdAt: '2026-04-17T00:00:00.000Z',
+          updatedAt: '2026-04-17T00:00:00.000Z',
+        },
+      ],
+      isLoading: false,
+    });
+    useUpsertProgrammableConnectionMock.mockReturnValue({
+      mutateAsync: upsertMutateAsync,
+      isPending: false,
+    });
+    useTestPlaywrightProgrammableConnectionMock.mockReturnValue({
+      mutateAsync: testMutateAsync,
+      isPending: false,
+    });
+
+    render(<AdminPlaywrightProgrammableIntegrationPageRuntime />);
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Run Flow' }));
+
+    await waitFor(() => {
+      expect(upsertMutateAsync).toHaveBeenCalledWith({
+        connectionId: 'connection-flow-1',
+        payload: expect.objectContaining({
+          name: 'Programmable Flow',
+          playwrightImportAutomationFlowJson:
+            '{"name":"Draft import","blocks":[{"kind":"create_draft"}]}',
+        }),
+      });
+    });
+    await waitFor(() => {
+      expect(testMutateAsync).toHaveBeenCalledWith({
+        connectionId: 'connection-flow-1',
+        executionMode: 'commit',
+        scriptType: 'import',
+      });
+    });
+    expect(screen.getByText('Last Run Result')).toBeInTheDocument();
+    expect(screen.getByText('Execution mode: commit')).toBeInTheDocument();
+    expect(screen.getByText('Flow: Draft import')).toBeInTheDocument();
+    expect(screen.getByText('Raw Products')).toBeInTheDocument();
+    expect(screen.getByText('Mapped Products')).toBeInTheDocument();
+    expect(screen.getByText('Drafts Created')).toBeInTheDocument();
+    expect(screen.getByText('Products Created')).toBeInTheDocument();
+    expect(screen.getByText('Flow Results')).toBeInTheDocument();
+    expect(screen.getByText('Draft Write Status (4)')).toBeInTheDocument();
+    expect(screen.getByText('Product Write Status (4)')).toBeInTheDocument();
+    const productWriteStatusSection = screen
+      .getByText('Product Write Status (4)')
+      .closest('details');
+    expect(productWriteStatusSection).not.toBeNull();
+    fireEvent.click(screen.getByText('Product Write Status (4)'));
+    const productWriteStatusQueries = within(productWriteStatusSection as HTMLElement);
+    expect(productWriteStatusQueries.getByRole('button', { name: 'all (4)' })).toBeInTheDocument();
+    expect(
+      productWriteStatusQueries.getByRole('button', { name: 'created (3)' })
+    ).toBeInTheDocument();
+    expect(
+      productWriteStatusQueries.getByRole('button', { name: 'failed (1)' })
+    ).toBeInTheDocument();
+    expect(
+      productWriteStatusQueries.getByRole('button', { name: 'input order' })
+    ).toBeInTheDocument();
+    expect(
+      productWriteStatusQueries.getByRole('button', { name: 'failures first' })
+    ).toBeInTheDocument();
+    expect(
+      productWriteStatusQueries.getByRole('button', { name: 'Copy filtered payloads JSON (4)' })
+    ).toBeInTheDocument();
+    expect(
+      productWriteStatusQueries.getByRole('button', { name: 'Copy filtered outcomes JSON (4)' })
+    ).toBeInTheDocument();
+    expect(
+      productWriteStatusQueries.getByRole('button', { name: 'Copy filtered outcomes CSV (4)' })
+    ).toBeInTheDocument();
+    expect(
+      productWriteStatusQueries.getByRole('button', { name: 'Copy failed payloads JSON (1)' })
+    ).toBeInTheDocument();
+    expect(
+      productWriteStatusQueries.getByRole('button', { name: 'Copy failed outcomes JSON (1)' })
+    ).toBeInTheDocument();
+    expect(
+      productWriteStatusQueries.getByRole('button', { name: 'Copy failed outcomes CSV (1)' })
+    ).toBeInTheDocument();
+    fireEvent.click(productWriteStatusQueries.getByRole('button', { name: 'failures first' }));
+    expect(screen.getAllByText('created').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('failed').length).toBeGreaterThan(0);
+    expect(screen.queryByText('no-write')).not.toBeInTheDocument();
+    expect(
+      screen.getAllByText('Status comes from explicit server write outcomes.').length
+    ).toBeGreaterThan(0);
+    expect(screen.getByText('Input Preview')).toBeInTheDocument();
+    expect(screen.getByText('Raw Result Preview')).toBeInTheDocument();
+    expect(screen.getByText('Raw Products Preview (4)')).toBeInTheDocument();
+    expect(screen.getByText('Mapped Products Preview (4)')).toBeInTheDocument();
+    expect(screen.getByText('Draft Payloads Preview (4)')).toBeInTheDocument();
+    expect(screen.getByText('Drafts Preview (4)')).toBeInTheDocument();
+    expect(screen.getByText('Product Payloads Preview (4)')).toBeInTheDocument();
+    expect(screen.getByText('Products Preview (3)')).toBeInTheDocument();
+    expect(screen.getByText('Flow Result Preview: drafts (2)')).toBeInTheDocument();
+    expect(screen.getByText('Flow Result Preview: products (2)')).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'Show all 4 items' }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Product 1/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/SKU-1/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/SKU-4/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/draft-1/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/product-1/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/draft-4/).length).toBeGreaterThan(0);
+    expect(productWriteStatusQueries.getByText('Product validation failed')).toBeInTheDocument();
+    expect(productWriteStatusQueries.getByText('Item 4')).toBeInTheDocument();
+    const failedProductRow = productWriteStatusQueries
+      .getByText('Item 4')
+      .closest('div.rounded-lg');
+    expect(failedProductRow).not.toBeNull();
+    fireEvent.click(
+      productWriteStatusQueries.getByRole('button', { name: 'Copy filtered outcomes CSV (4)' })
+    );
+    await waitFor(() => {
+      expect(clipboardWriteTextMock).toHaveBeenCalledWith(
+        'itemNumber,index,status,errorMessage,payloadSummary,createdSummary\n"4","3","failed","Product validation failed","sku=SKU-4","No created record"\n"1","0","created","","sku=SKU-1","id=product-1"\n"2","1","created","","sku=SKU-2","id=product-2"\n"3","2","created","","sku=SKU-3","id=product-3"'
+      );
+    });
+    expect(toastMock).toHaveBeenCalledWith('Filtered outcomes CSV for Product Write Status copied to clipboard', {
+      variant: 'success',
+    });
+    clipboardWriteTextMock.mockClear();
+    toastMock.mockClear();
+    fireEvent.click(
+      productWriteStatusQueries.getByRole('button', { name: 'Copy filtered outcomes JSON (4)' })
+    );
+    await waitFor(() => {
+      expect(clipboardWriteTextMock).toHaveBeenCalledWith(
+        '[\n  {\n    "createdRecord": null,\n    "errorMessage": "Product validation failed",\n    "index": 3,\n    "payloadRecord": {\n      "sku": "SKU-4"\n    },\n    "status": "failed"\n  },\n  {\n    "createdRecord": {\n      "id": "product-1"\n    },\n    "errorMessage": null,\n    "index": 0,\n    "payloadRecord": {\n      "sku": "SKU-1"\n    },\n    "status": "created"\n  },\n  {\n    "createdRecord": {\n      "id": "product-2"\n    },\n    "errorMessage": null,\n    "index": 1,\n    "payloadRecord": {\n      "sku": "SKU-2"\n    },\n    "status": "created"\n  },\n  {\n    "createdRecord": {\n      "id": "product-3"\n    },\n    "errorMessage": null,\n    "index": 2,\n    "payloadRecord": {\n      "sku": "SKU-3"\n    },\n    "status": "created"\n  }\n]'
+      );
+    });
+    expect(toastMock).toHaveBeenCalledWith('Filtered outcomes for Product Write Status copied to clipboard', {
+      variant: 'success',
+    });
+    clipboardWriteTextMock.mockClear();
+    toastMock.mockClear();
+    fireEvent.click(
+      productWriteStatusQueries.getByRole('button', { name: 'Copy failed payloads JSON (1)' })
+    );
+    await waitFor(() => {
+      expect(clipboardWriteTextMock).toHaveBeenCalledWith('[\n  {\n    "sku": "SKU-4"\n  }\n]');
+    });
+    expect(toastMock).toHaveBeenCalledWith('Failed payloads for Product Write Status copied to clipboard', {
+      variant: 'success',
+    });
+    clipboardWriteTextMock.mockClear();
+    toastMock.mockClear();
+    fireEvent.click(
+      productWriteStatusQueries.getByRole('button', { name: 'Copy failed outcomes JSON (1)' })
+    );
+    await waitFor(() => {
+      expect(clipboardWriteTextMock).toHaveBeenCalledWith(
+        '[\n  {\n    "createdRecord": null,\n    "errorMessage": "Product validation failed",\n    "index": 3,\n    "payloadRecord": {\n      "sku": "SKU-4"\n    },\n    "status": "failed"\n  }\n]'
+      );
+    });
+    expect(toastMock).toHaveBeenCalledWith('Failed outcomes for Product Write Status copied to clipboard', {
+      variant: 'success',
+    });
+    clipboardWriteTextMock.mockClear();
+    toastMock.mockClear();
+    fireEvent.click(
+      productWriteStatusQueries.getByRole('button', { name: 'Copy failed outcomes CSV (1)' })
+    );
+    await waitFor(() => {
+      expect(clipboardWriteTextMock).toHaveBeenCalledWith(
+        'itemNumber,index,status,errorMessage,payloadSummary,createdSummary\n"4","3","failed","Product validation failed","sku=SKU-4","No created record"'
+      );
+    });
+    expect(toastMock).toHaveBeenCalledWith('Failed outcomes CSV for Product Write Status copied to clipboard', {
+      variant: 'success',
+    });
+    clipboardWriteTextMock.mockClear();
+    toastMock.mockClear();
+    fireEvent.click(within(failedProductRow as HTMLElement).getByRole('button', { name: 'Copy payload JSON' }));
+    await waitFor(() => {
+      expect(clipboardWriteTextMock).toHaveBeenCalledWith('{\n  "sku": "SKU-4"\n}');
+    });
+    expect(toastMock).toHaveBeenCalledWith('Payload for item 4 copied to clipboard', {
+      variant: 'success',
+    });
+    expect(screen.getByText('drafts')).toBeInTheDocument();
+    expect(screen.getByText('products')).toBeInTheDocument();
   });
 });

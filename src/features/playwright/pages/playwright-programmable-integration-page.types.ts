@@ -19,7 +19,7 @@ import type { buildManagedPlaywrightActionSummaries } from '@/features/playwrigh
 import type { buildProgrammableSessionDiagnostics } from '@/features/playwright/utils/playwright-programmable-session-diagnostics';
 import type { buildProgrammableSessionPreview } from '@/features/playwright/utils/playwright-programmable-session-preview';
 
-export type RunningTestType = 'listing' | 'import' | null;
+export type RunningTestType = 'listing' | 'import' | 'flow' | null;
 
 export type UsePlaywrightProgrammableIntegrationPageModelArgs = {
   focusSection?: 'script' | 'import' | null;
@@ -38,6 +38,7 @@ export type PlaywrightProgrammableIntegrationPageActions = {
   handleCreateConnection: () => Promise<void>;
   handleDeleteFieldMapping: (rowId: string) => void;
   handlePromoteConnectionSettings: () => Promise<void>;
+  handleRunFlow: () => Promise<void>;
   handleRunTest: (scriptType: 'listing' | 'import') => Promise<void>;
   handleUpdateFieldMapping: (
     rowId: string,
@@ -52,6 +53,7 @@ type StateSetter<T> = Dispatch<SetStateAction<T>>;
 
 export type PlaywrightProgrammableIntegrationPageActionArgs = {
   appearanceMode: string;
+  automationFlowJson: string;
   captureRoutes: PlaywrightConfigCaptureRoute[];
   cleanupReadyConnections: ProgrammableConnections;
   cleanupAllBrowserPersistenceMutateAsync: ReturnType<
@@ -79,6 +81,7 @@ export type PlaywrightProgrammableIntegrationPageActionArgs = {
   promotionProxyPassword: string;
   selectedConnection: ProgrammableConnection | null;
   setAppearanceMode: StateSetter<string>;
+  setAutomationFlowJson: StateSetter<string>;
   setCaptureRoutes: StateSetter<PlaywrightConfigCaptureRoute[]>;
   setConnectionName: StateSetter<string>;
   setFieldMapperRows: StateSetter<ProgrammableFieldMapperRow[]>;
@@ -107,6 +110,7 @@ export type PlaywrightProgrammableIntegrationPageActionArgs = {
 export type PlaywrightProgrammableIntegrationPageModel =
   PlaywrightProgrammableIntegrationPageActions & {
     appearanceMode: string;
+    automationFlowJson: string;
     captureRoutes: PlaywrightConfigCaptureRoute[];
     cleanupReadyConnections: ProgrammableConnections;
     cleanupReadyPreviewItems: Array<{
@@ -150,6 +154,7 @@ export type PlaywrightProgrammableIntegrationPageModel =
     selectedConnectionId: string;
     sessionDiagnostics: ReturnType<typeof buildProgrammableSessionDiagnostics>;
     setAppearanceMode: StateSetter<string>;
+    setAutomationFlowJson: StateSetter<string>;
     setCaptureRoutes: StateSetter<PlaywrightConfigCaptureRoute[]>;
     setConnectionName: StateSetter<string>;
     setImportActionId: StateSetter<string>;

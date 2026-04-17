@@ -409,6 +409,64 @@ describe('AmazonScanSequencer', () => {
     );
   });
 
+  it('resumes Google Lens upload after manual captcha is resolved', async () => {
+    const ctx = makeContext();
+    const seq = new AmazonScanSequencer(ctx, {
+      runtimeKey: AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY,
+      allowManualVerification: true,
+      imageCandidates: [{ id: 'img-1', filepath: '/tmp/product-source.jpg', rank: 1 }],
+    });
+    const uploadToGoogleLens = vi
+      .fn()
+      .mockResolvedValueOnce({
+        advanced: false,
+        captchaRequired: true,
+        error: 'Google Lens requested captcha verification.',
+        failureCode: 'captcha_required',
+      })
+      .mockResolvedValueOnce({
+        advanced: true,
+        captchaRequired: false,
+        error: null,
+        failureCode: null,
+      });
+
+    (seq as any).openGoogleLens = vi.fn().mockResolvedValue({ success: true, message: null });
+    (seq as any).uploadToGoogleLens = uploadToGoogleLens;
+    (seq as any).handleGoogleCaptcha = vi.fn().mockResolvedValue({ resolved: true });
+    (seq as any).readGoogleLensProcessingState = vi.fn().mockResolvedValue({
+      currentUrl: 'https://images.google.com/',
+      processingVisible: false,
+      progressIndicatorVisible: false,
+      progressIndicatorSelector: null,
+      processingText: null,
+      resultShellVisible: false,
+      resultShellSelector: null,
+    });
+    (seq as any).hasGoogleLensResultHints = vi.fn().mockResolvedValue(false);
+    (seq as any).collectAmazonCandidates = vi.fn().mockResolvedValue({
+      urls: [],
+      results: [],
+      message: 'No Amazon candidate URLs were found in the Google Lens results.',
+    });
+
+    await seq.scan();
+
+    expect(uploadToGoogleLens).toHaveBeenCalledTimes(2);
+    expect((seq as any).handleGoogleCaptcha).toHaveBeenCalledWith({
+      candidateId: 'img-1',
+      candidateRank: 1,
+      waitForClear: true,
+    });
+    expect((seq as any).collectAmazonCandidates).toHaveBeenCalled();
+    const payload = (ctx.emit as ReturnType<typeof vi.fn>).mock.calls[0][1] as {
+      stage: string;
+      status: string;
+    };
+    expect(payload.stage).toBe('google_candidates');
+    expect(payload.status).toBe('failed');
+  });
+
   it('direct candidate extraction skips Google Lens and extracts the selected Amazon page', async () => {
     const ctx = makeContext();
     const seq = new AmazonScanSequencer(ctx, {

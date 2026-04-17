@@ -15,6 +15,7 @@ import type { PlaywrightConfigCaptureRoute } from '@/shared/contracts/ai-paths-c
 
 type DraftFields = {
   appearanceMode: string;
+  automationFlowJson: string;
   captureRoutes: PlaywrightConfigCaptureRoute[];
   connectionName: string;
   fieldMapperRows: ProgrammableFieldMapperRow[];
@@ -31,6 +32,7 @@ const readSelectedConnectionDraft = (
   if (selectedConnection === null) {
     return {
       appearanceMode: '',
+      automationFlowJson: '',
       captureRoutes: [],
       connectionName: '',
       fieldMapperRows: [],
@@ -48,6 +50,7 @@ const readSelectedConnectionDraft = (
 
   return {
     appearanceMode: captureConfig.appearanceMode,
+    automationFlowJson: selectedConnection.playwrightImportAutomationFlowJson ?? '',
     captureRoutes: captureConfig.routes,
     connectionName: selectedConnection.name,
     fieldMapperRows: connectionToProgrammableFieldMapperRows(selectedConnection),
@@ -101,6 +104,7 @@ export const usePlaywrightProgrammableConnectionDraft = (
   selectedConnection: ProgrammableConnection | null
 ): DraftFields & ReturnType<typeof usePlaywrightProgrammableConnectionActivityState> & {
     setAppearanceMode: Dispatch<SetStateAction<string>>;
+    setAutomationFlowJson: Dispatch<SetStateAction<string>>;
     setCaptureRoutes: Dispatch<SetStateAction<PlaywrightConfigCaptureRoute[]>>;
     setConnectionName: Dispatch<SetStateAction<string>>;
     setFieldMapperRows: Dispatch<SetStateAction<ProgrammableFieldMapperRow[]>>;
@@ -115,6 +119,7 @@ export const usePlaywrightProgrammableConnectionDraft = (
   const [listingScript, setListingScript] = useState('');
   const [importScript, setImportScript] = useState('');
   const [importBaseUrl, setImportBaseUrl] = useState('');
+  const [automationFlowJson, setAutomationFlowJson] = useState('');
   const [listingActionId, setListingActionId] = useState('');
   const [importActionId, setImportActionId] = useState('');
   const [captureRoutes, setCaptureRoutes] = useState<PlaywrightConfigCaptureRoute[]>([]);
@@ -125,6 +130,7 @@ export const usePlaywrightProgrammableConnectionDraft = (
     const draft = readSelectedConnectionDraft(selectedConnection);
 
     setAppearanceMode(draft.appearanceMode);
+    setAutomationFlowJson(draft.automationFlowJson);
     setCaptureRoutes(draft.captureRoutes);
     setConnectionName(draft.connectionName);
     setFieldMapperRows(draft.fieldMapperRows);
@@ -139,6 +145,7 @@ export const usePlaywrightProgrammableConnectionDraft = (
   return {
     ...activityState,
     appearanceMode,
+    automationFlowJson,
     captureRoutes,
     connectionName,
     fieldMapperRows,
@@ -148,6 +155,7 @@ export const usePlaywrightProgrammableConnectionDraft = (
     listingActionId,
     listingScript,
     setAppearanceMode,
+    setAutomationFlowJson,
     setCaptureRoutes,
     setConnectionName,
     setFieldMapperRows,

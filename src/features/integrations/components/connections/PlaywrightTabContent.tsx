@@ -27,7 +27,6 @@ const resolveSequencerDescription = (integrationSlug: string | null | undefined)
   })();
 
 const resolveOwnershipCopy = (
-  integrationSlug: string | null | undefined,
   usesSequencerManagedActions: boolean
 ): {
   title: string;
@@ -62,10 +61,7 @@ const resolveOwnershipCopy = (
 
 export function PlaywrightTabContent(): React.JSX.Element {
   const model = usePlaywrightTabContentModel();
-  const ownershipCopy = resolveOwnershipCopy(
-    model.activeIntegrationSlug,
-    model.usesSequencerManagedActions
-  );
+  const ownershipCopy = resolveOwnershipCopy(model.usesSequencerManagedActions);
 
   return (
     <>

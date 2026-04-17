@@ -141,7 +141,7 @@ function BulkCleanupAlert({
   | 'handleCleanupAllLegacyBrowserFields'
   | 'isCleaningAllLegacyBrowserFields'
   | 'setSelectedConnectionId'
->): React.JSX.Element {
+>): React.JSX.Element | null {
   return cleanupReadyConnections.length > 1 ? (
     <Alert variant='warning' className='text-xs'>
       <div className='flex flex-col gap-3 md:flex-row md:items-start md:justify-between'>

@@ -23,6 +23,7 @@ import {
   invalidateListingsBadgesAndQueues,
   invalidateProductListingsAndBadges,
   invalidateProducts,
+  invalidateProductsAndDetail,
 } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -162,6 +163,42 @@ const patchQueuedTraderaStatusCheck = (
         : {}),
     }),
   };
+};
+
+type DeletePatchableListing = {
+  status: string;
+  externalListingId: string | null;
+  inventoryId?: string | null;
+  failureReason?: string | null;
+  updatedAt?: string | null;
+  exportHistory?: ProductListingWithDetails['exportHistory'];
+};
+
+const patchDeletedBaseListing = <TListing extends DeletePatchableListing>(
+  listing: TListing,
+  options: {
+    deletedAt: string;
+    inventoryId?: string;
+  }
+): TListing => {
+  const previousExternalListingId = listing.externalListingId ?? null;
+
+  return {
+    ...listing,
+    status: 'removed',
+    externalListingId: null,
+    failureReason: null,
+    updatedAt: options.deletedAt,
+    exportHistory: [
+      {
+        exportedAt: options.deletedAt,
+        status: 'deleted',
+        inventoryId: options.inventoryId ?? listing.inventoryId ?? null,
+        externalListingId: previousExternalListingId,
+      },
+      ...(listing.exportHistory ?? []),
+    ].slice(0, 50),
+  } as TListing;
 };
 
 const getListingBadgesSnapshot = (
@@ -389,9 +426,37 @@ export function useDeleteFromBaseMutation(
         queryClient.setQueryData(integrationJobsQueryKey, context.previousIntegrationJobs);
       }
     },
-    invalidate: async (queryClient) => {
+    invalidate: async (queryClient, _data, vars) => {
+      const deletedAt = new Date().toISOString();
+      queryClient.setQueryData<ProductListingWithDetails[]>(
+        listingQueryKey,
+        (currentListings) =>
+          currentListings?.map((listing) =>
+            listing.id === vars.listingId
+              ? patchDeletedBaseListing(listing, {
+                  deletedAt,
+                  inventoryId: vars.inventoryId,
+                })
+              : listing
+          ) ?? currentListings
+      );
+      queryClient.setQueryData<ProductJob[]>(
+        integrationJobsQueryKey,
+        (currentJobs) =>
+          currentJobs?.map((job) => ({
+            ...job,
+            listings: job.listings.map((listing) =>
+              listing.id === vars.listingId
+                ? patchDeletedBaseListing(listing, {
+                    deletedAt,
+                    inventoryId: vars.inventoryId,
+                  })
+                : listing
+            ),
+          })) ?? currentJobs
+      );
       await invalidateListingsBadgesAndQueues(queryClient, productId);
-      await invalidateProducts(queryClient);
+      await invalidateProductsAndDetail(queryClient, productId);
     },
   });
 }

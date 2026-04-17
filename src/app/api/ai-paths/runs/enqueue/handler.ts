@@ -179,8 +179,13 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   const report = evaluateAiPathsValidationPreflight({ nodes: normalizedNodes, edges: normalizedEdges, config: validationState });
 
   if (validationState.enabled !== false && report.blocked) {
-    const title = report.findings[0]?.ruleTitle;
-    throw badRequestError(typeof title === 'string' && title !== '' ? `Validation blocked run: ${title}.` : `Validation blocked run: score ${report.score} below threshold ${report.blockThreshold}.`);
+    const finding = report.findings[0];
+    const detail = (typeof finding?.message === 'string' && finding.message.trim() !== '')
+      ? finding.message.trim()
+      : (typeof finding?.ruleTitle === 'string' && finding.ruleTitle.trim() !== '')
+        ? finding.ruleTitle.trim()
+        : null;
+    throw badRequestError(detail !== null ? `Validation blocked run: ${detail}` : `Validation blocked run: score ${report.score} below threshold ${report.blockThreshold}.`);
   }
 
   const compileReport = runCompileGraphSync({ nodes: normalizedNodes, edges: normalizedEdges, triggerNodeId: rest.triggerNodeId, isNodeValidationEnabled: validationState.enabled !== false });

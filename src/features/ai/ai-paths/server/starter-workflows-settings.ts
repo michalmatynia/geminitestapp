@@ -11,7 +11,7 @@ import {
 import {
   resolveStarterWorkflowForPathConfig,
   upgradeStarterWorkflowPathConfig,
-} from '@/shared/lib/ai-paths/core/starter-workflows';
+} from '@/shared/lib/ai-paths/core/starter-workflows/segments/upgrade';
 import { sanitizePathConfig } from '@/shared/lib/ai-paths/core/utils/path-config-sanitization';
 import type {
   AiPathTemplateRegistryEntry,
@@ -26,6 +26,25 @@ import {
 } from './settings-store.constants';
 import { parsePathConfigFlags, parsePathConfigMeta, parsePathMetas, parseTriggerButtons } from './settings-store.parsing';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
+const DEPRECATED_STARTER_WORKFLOW_PATH_IDS = new Set<string>(['path_base_export_blwo_v1']);
+const DEPRECATED_STARTER_WORKFLOW_TRIGGER_BUTTON_IDS = new Set<string>([
+  '5f36f340-3d89-4f6f-a08f-2387f380b90b',
+]);
+
+const isDeprecatedStarterWorkflowPathId = (pathId: string | null | undefined): boolean =>
+  typeof pathId === 'string' && DEPRECATED_STARTER_WORKFLOW_PATH_IDS.has(pathId.trim());
+
+const isDeprecatedStarterWorkflowTriggerButton = (
+  button: Pick<AiTriggerButtonRecord, 'id' | 'pathId'> | null | undefined
+): boolean => {
+  if (!button) return false;
+  const buttonId = typeof button.id === 'string' ? button.id.trim() : '';
+  return (
+    DEPRECATED_STARTER_WORKFLOW_TRIGGER_BUTTON_IDS.has(buttonId) ||
+    isDeprecatedStarterWorkflowPathId(button.pathId)
+  );
+};
 
 
 const toTriggerButtonRecord = (
@@ -211,6 +230,61 @@ export const countPendingStaticStarterWorkflowBundle = (
   records: AiPathsSettingRecord[]
 ): number =>
   ensureStarterWorkflowEntries(records, getStaticRecoveryStarterWorkflowEntries()).affectedCount;
+
+export const pruneDeprecatedStarterWorkflowRecords = (
+  records: AiPathsSettingRecord[]
+): { nextRecords: AiPathsSettingRecord[]; affectedCount: number; deletedKeys: string[] } => {
+  const nextRecords: AiPathsSettingRecord[] = [];
+  const deletedKeys = new Set<string>();
+  let affectedCount = 0;
+
+  records.forEach((record) => {
+    if (record.key.startsWith(AI_PATHS_CONFIG_KEY_PREFIX)) {
+      const pathId = record.key.replace(AI_PATHS_CONFIG_KEY_PREFIX, '');
+      if (isDeprecatedStarterWorkflowPathId(pathId)) {
+        deletedKeys.add(record.key);
+        affectedCount += 1;
+        return;
+      }
+    }
+
+    if (record.key === AI_PATHS_INDEX_KEY) {
+      const metas = parsePathMetas(record.value);
+      const filteredMetas = metas.filter((meta) => !isDeprecatedStarterWorkflowPathId(meta.id));
+      if (filteredMetas.length !== metas.length) {
+        affectedCount += metas.length - filteredMetas.length;
+        nextRecords.push({
+          ...record,
+          value: JSON.stringify(filteredMetas),
+        });
+        return;
+      }
+    }
+
+    if (record.key === AI_PATHS_TRIGGER_BUTTONS_KEY) {
+      const buttons = parseTriggerButtons(record.value);
+      const filteredButtons = buttons.filter(
+        (button) => !isDeprecatedStarterWorkflowTriggerButton(button)
+      );
+      if (filteredButtons.length !== buttons.length) {
+        affectedCount += buttons.length - filteredButtons.length;
+        nextRecords.push({
+          ...record,
+          value: serializeAiTriggerButtonsRaw(filteredButtons),
+        });
+        return;
+      }
+    }
+
+    nextRecords.push(record);
+  });
+
+  return {
+    nextRecords,
+    affectedCount,
+    deletedKeys: [...deletedKeys].sort((left, right) => left.localeCompare(right)),
+  };
+};
 
 const ensureStarterWorkflowEntries = (
   records: AiPathsSettingRecord[],

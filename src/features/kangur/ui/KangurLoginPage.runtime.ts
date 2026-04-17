@@ -16,6 +16,7 @@ import { type useKangurLoginPageState } from './KangurLoginPage.hooks';
 import {
   normalizeParentEmail,
   parseJsonResponse,
+  resolveKangurClientEndpoint,
 } from './KangurLoginPage.utils';
 
 type KangurLoginPageState = ReturnType<typeof useKangurLoginPageState>;
@@ -51,7 +52,7 @@ const resolveKangurLoginSearchParamToken = (
 ): string => searchParams?.get(key)?.trim() ?? '';
 
 const requestKangurParentEmailVerification = async (verificationToken: string) =>
-  fetch('/api/kangur/auth/parent-email/verify', {
+  fetch(resolveKangurClientEndpoint('/api/kangur/auth/parent-email/verify'), {
     method: 'POST',
     credentials: 'same-origin',
     headers: { 'Content-Type': 'application/json' },

@@ -325,32 +325,32 @@ export const buildAdminNav = (handlers: {
             ],
           },
           {
-            id: 'integrations/marketplaces/playwright',
+            id: 'playwright/programmable',
             label: 'Playwright (Programmable)',
-            href: '/admin/integrations/marketplaces/playwright',
+            href: '/admin/playwright/programmable',
             children: [
               {
-                id: 'integrations/marketplaces/playwright/script',
+                id: 'playwright/programmable/script',
                 label: 'Script Editor',
-                href: '/admin/integrations/marketplaces/playwright/script',
+                href: '/admin/playwright/programmable/script',
               },
               {
-                id: 'integrations/marketplaces/playwright/import',
+                id: 'playwright/programmable/import',
                 label: 'Import Routes',
-                href: '/admin/integrations/marketplaces/playwright/import',
+                href: '/admin/playwright/programmable/import',
               },
               {
-                id: 'integrations/marketplaces/playwright/step-sequencer',
+                id: 'playwright/programmable/step-sequencer',
                 label: 'Step Sequencer',
                 href: '/admin/playwright/step-sequencer',
               },
               {
-                id: 'integrations/marketplaces/playwright/action-runs',
+                id: 'playwright/programmable/action-runs',
                 label: 'Action Runs',
                 href: '/admin/playwright/step-sequencer/runs',
               },
               {
-                id: 'integrations/marketplaces/playwright/selector-registry',
+                id: 'playwright/programmable/selector-registry',
                 label: 'Super Selector Registry',
                 href: '/admin/integrations/selectors',
               },

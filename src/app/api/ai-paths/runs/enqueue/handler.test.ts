@@ -130,9 +130,9 @@ const buildLegacyStoredTranslationConfig = () => {
   };
 };
 
-const buildBrokenStoredBlwoConfig = () => ({
-  ...createDefaultPathConfig('path_base_export_blwo_v1'),
-  name: 'Base Export Workflow (BLWo)',
+const buildBrokenStoredTranslationConfig = () => ({
+  ...createDefaultPathConfig('path_96708d'),
+  name: 'Translation EN->PL Description + Parameters',
   nodes: [
     {
       id: 'node-broken-trigger',
@@ -493,8 +493,8 @@ describe('ai-paths runs enqueue handler', () => {
     expect(upsertAiPathsSettingsMock).not.toHaveBeenCalled();
   });
 
-  it('rejects broken BLWo starter configs until they are explicitly restored', async () => {
-    const config = buildBrokenStoredBlwoConfig();
+  it('rejects broken translation starter configs until they are explicitly restored', async () => {
+    const config = buildBrokenStoredTranslationConfig();
     getAiPathsSettingMock.mockResolvedValue(JSON.stringify(config));
 
     await expect(

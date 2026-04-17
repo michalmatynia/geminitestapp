@@ -35,6 +35,7 @@ type CmsDomainSlugLink = {
 const DOMAIN_COLLECTION = 'cms_domains';
 const DOMAIN_SLUGS_COLLECTION = 'cms_domain_slugs';
 const SLUGS_COLLECTION = 'cms_slugs';
+const DEFAULT_DOMAIN_TIMESTAMP = '1970-01-01T00:00:00.000Z';
 
 type SlugDocument = {
   id: string;
@@ -57,9 +58,21 @@ const buildDefaultDomain = (hostHeader: string | null): CmsDomain => ({
   id: 'default-domain',
   name: 'Default domain',
   domain: normalizeHost(hostHeader),
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
+  createdAt: DEFAULT_DOMAIN_TIMESTAMP,
+  updatedAt: DEFAULT_DOMAIN_TIMESTAMP,
 });
+
+const buildUnmappedDomain = (hostHeader: string | null): CmsDomain => {
+  const domain = normalizeHost(hostHeader);
+  return {
+    id: `unmapped-domain:${domain}`,
+    name: domain,
+    domain,
+    aliasOf: null,
+    createdAt: DEFAULT_DOMAIN_TIMESTAMP,
+    updatedAt: DEFAULT_DOMAIN_TIMESTAMP,
+  };
+};
 
 const normalizeHost = (hostHeader: string | null): string => {
   if (!hostHeader) return getFallbackDomain();
@@ -188,18 +201,7 @@ export async function resolveCmsDomainByHost(hostHeader: string | null): Promise
     const scoped = await resolveCmsDomainScopeById(existing.id);
     return scoped ?? toDomainResponse(existing);
   }
-
-  const now = new Date();
-  const doc: CmsDomainRecord = {
-    id: randomUUID(),
-    name: domain,
-    domain,
-    aliasOf: null,
-    createdAt: now,
-    updatedAt: now,
-  };
-  await db.collection<CmsDomainRecord>(DOMAIN_COLLECTION).insertOne(doc);
-  return toDomainResponse(doc);
+  return buildUnmappedDomain(hostHeader);
 }
 
 export async function getCmsDomainById(domainId: string): Promise<CmsDomain | null> {

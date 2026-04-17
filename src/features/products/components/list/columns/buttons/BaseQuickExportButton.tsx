@@ -356,6 +356,13 @@ export function BaseQuickExportButton(props: {
   const handleTrackedExportRunSnapshot = useCallback(
     (runId: string, snapshot: TrackedAiPathRunSnapshot): void => {
       if (trackedExportRunIdRef.current !== runId) return;
+      if (snapshot.trackingState === 'stopped' && !TERMINAL_EXPORT_RUN_STATUSES.has(snapshot.status)) {
+        // Tracking ended without a terminal status (timeout or poll failure).
+        // Clear state so the button falls back to the server-backed badge instead of hanging yellow.
+        stopTrackingExportRun();
+        setTrackedExportStatus(null);
+        return;
+      }
       setTrackedExportStatus(snapshot.status, {
         runId,
         errorMessage: snapshot.errorMessage,

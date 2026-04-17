@@ -110,6 +110,20 @@ export type {
   PlaywrightImportResult,
 } from './server/programmable';
 export {
+  promotePlaywrightProgrammableConnectionBrowserOwnership,
+  cleanupPlaywrightProgrammableConnectionBrowserPersistence,
+  cleanupAllPlaywrightProgrammableConnectionsBrowserPersistence,
+  runPlaywrightProgrammableConnectionTest,
+} from './server/programmable-admin';
+export {
+  promotePlaywrightProgrammableBrowserOwnershipSchema,
+  playwrightProgrammableTestPayloadSchema,
+} from './server/programmable-admin';
+export type {
+  PromotePlaywrightProgrammableBrowserOwnershipInput,
+  PlaywrightProgrammableTestPayload,
+} from './server/programmable-admin';
+export {
   buildPlaywrightListingResult,
   buildPlaywrightScriptListingMetadata,
 } from './server/listing-result';
@@ -148,6 +162,28 @@ export {
   getLiveScripterSession,
   pickElementAt,
 } from './server/live-session';
+export {
+  listPlaywrightProgrammableConnections,
+  createPlaywrightProgrammableConnection,
+  updatePlaywrightProgrammableConnection,
+  assertNoProgrammableConnectionBrowserPayload,
+} from './server/programmable-connections';
+export {
+  PLAYWRIGHT_PROGRAMMABLE_INTEGRATION_SLUG,
+  findPlaywrightProgrammableIntegration,
+  requirePlaywrightProgrammableIntegration,
+  requirePlaywrightProgrammableIntegrationById,
+  requirePlaywrightProgrammableConnectionById,
+  listPlaywrightProgrammableConnectionRecords,
+  createPlaywrightProgrammableConnectionRecord,
+  updatePlaywrightProgrammableConnectionRecord,
+} from './server/programmable-storage';
+export {
+  programmableConnectionMutationSchema,
+} from './server/programmable-connections.schemas';
+export type {
+  PlaywrightProgrammableConnectionMutationInput,
+} from './server/programmable-connections.schemas';
 export {
   buildPlaywrightListingExportHistoryRecord,
   buildPlaywrightListingSuccessUpdateFields,

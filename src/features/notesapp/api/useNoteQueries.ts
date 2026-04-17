@@ -178,3 +178,33 @@ export function useRelatedNotes(noteId: string | null, options?: QueryOptions): 
       description: 'Loads related notes.'},
   });
 }
+
+export function useNotesLookup(noteIds: string[], options?: QueryOptions): ListQuery<RelatedNote> {
+  const ids = noteIds.filter((id): id is string => typeof id === 'string' && id.trim().length > 0);
+  const queryKey = noteKeys.lookup(ids);
+
+  return createListQueryV2({
+    queryKey,
+    queryFn: async (): Promise<RelatedNote[]> => {
+      if (ids.length === 0) return [];
+      const data = await api.get<RelatedNote[]>('/api/notes/lookup', {
+        params: { ids: ids.join(',') },
+      });
+      return z.array(relatedNoteSchema).parse(data);
+    },
+    enabled: (options?.enabled ?? true) && ids.length > 0,
+    staleTime: NOTES_STALE_MS,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    meta: {
+      source: 'notes.queries.useNotesLookup',
+      operation: 'list',
+      resource: 'notes.lookup',
+      domain: 'notes',
+      queryKey,
+      tags: ['notes', 'lookup'],
+      description: 'Loads note lookup results for a list of ids.',
+    },
+  });
+}

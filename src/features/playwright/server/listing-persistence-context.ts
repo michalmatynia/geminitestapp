@@ -1,6 +1,6 @@
 import 'server-only';
 
-import type { ProductListingRepository } from '@/shared/contracts/integrations/repositories';
+import type { ProductListingRepository } from '@/shared/contracts/integration-listing-storage';
 import type { ProductListing } from '@/shared/contracts/integrations/listings';
 import type { PlaywrightServiceListingExecutionBase } from './service-result';
 

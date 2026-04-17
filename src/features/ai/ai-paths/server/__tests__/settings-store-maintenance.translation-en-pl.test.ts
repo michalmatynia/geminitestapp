@@ -14,6 +14,7 @@ import {
   AI_PATHS_INDEX_KEY,
   AI_PATHS_TRIGGER_BUTTONS_KEY,
 } from '@/features/ai/ai-paths/server/settings-store.constants';
+import { serializeAiTriggerButtonsRaw } from '@/features/ai/ai-paths/validations/trigger-buttons';
 import type { PathConfig } from '@/shared/contracts/ai-paths';
 import { evaluateRunPreflight } from '@/shared/lib/ai-paths/core/utils/run-preflight';
 
@@ -256,7 +257,7 @@ const buildStarterRefreshRecords = (): AiPathsSettingRecord[] => [
   },
 ];
 
-const buildBrokenBlwoStarterRefreshRecords = (): AiPathsSettingRecord[] => [
+const buildDeprecatedBlwoStarterRecords = (): AiPathsSettingRecord[] => [
   {
     key: AI_PATHS_INDEX_KEY,
     value: JSON.stringify([
@@ -276,6 +277,27 @@ const buildBrokenBlwoStarterRefreshRecords = (): AiPathsSettingRecord[] => [
       nodes: [{ id: 'node-broken-trigger', type: 'trigger' }],
       edges: [],
     }),
+  },
+  {
+    key: AI_PATHS_TRIGGER_BUTTONS_KEY,
+    value: serializeAiTriggerButtonsRaw([
+      {
+        id: '5f36f340-3d89-4f6f-a08f-2387f380b90b',
+        name: 'BLWo',
+        iconId: null,
+        pathId: 'path_base_export_blwo_v1',
+        enabled: true,
+        locations: ['product_row'],
+        mode: 'click',
+        display: {
+          label: 'BLWo',
+          showLabel: true,
+        },
+        createdAt: '2026-03-03T10:00:00.000Z',
+        updatedAt: '2026-03-03T10:00:00.000Z',
+        sortIndex: 40,
+      },
+    ]),
   },
 ];
 
@@ -463,41 +485,42 @@ describe('AI Paths maintenance forward-only action ids', () => {
     expect(report.compileReport.errors).toBe(0);
   });
 
-  it('repairs broken seeded BLWo starter configs through the generic refresh action', () => {
-    const report = buildAiPathsMaintenanceReport(buildBrokenBlwoStarterRefreshRecords());
+  it('surfaces deprecated BLWo starter artifacts for pruning and removes them through maintenance', () => {
+    const report = buildAiPathsMaintenanceReport(buildDeprecatedBlwoStarterRecords());
 
     expect(report.actions).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          id: 'refresh_starter_workflow_configs',
+          id: 'prune_deprecated_starter_workflows',
           status: 'pending',
-          affectedRecords: 1,
+          affectedRecords: 3,
         }),
       ])
     );
 
     const result = runMaintenanceAction({
-      actionId: 'refresh_starter_workflow_configs',
-      records: buildBrokenBlwoStarterRefreshRecords(),
+      actionId: 'prune_deprecated_starter_workflows',
+      records: buildDeprecatedBlwoStarterRecords(),
     });
 
     expect(result.success).toBe(true);
-    expect(result.affectedCount).toBe(1);
-
-    const configRecord = result.nextRecords.find(
-      (record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_base_export_blwo_v1`
+    expect(result.affectedCount).toBe(3);
+    expect(result.deletedKeys).toEqual([
+      `${AI_PATHS_CONFIG_KEY_PREFIX}path_base_export_blwo_v1`,
+    ]);
+    expect(
+      result.nextRecords.some(
+        (record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_base_export_blwo_v1`
+      )
+    ).toBe(false);
+    const indexRecord = result.nextRecords.find((record) => record.key === AI_PATHS_INDEX_KEY);
+    if (!indexRecord) throw new Error('Expected index record');
+    expect(indexRecord.value).toBe('[]');
+    const triggerButtonsRecord = result.nextRecords.find(
+      (record) => record.key === AI_PATHS_TRIGGER_BUTTONS_KEY
     );
-    if (!configRecord) throw new Error('Expected refreshed BLWo config record');
-
-    const parsed = JSON.parse(configRecord.value) as PathConfig;
-    expect(parsed.id).toBe('path_base_export_blwo_v1');
-    expect(parsed.name).toBe('Base Export Workflow (BLWo)');
-    expect(parsed.nodes.some((node) => node.type === 'trigger')).toBe(true);
-    expect(parsed.extensions?.['aiPathsStarter']).toEqual(
-      expect.objectContaining({
-        templateId: 'starter_base_export_blwo',
-      })
-    );
+    if (!triggerButtonsRecord) throw new Error('Expected trigger buttons record');
+    expect(triggerButtonsRecord.value).toBe('[]');
   });
 
   it('repairs broken recoverable translation default-path configs through the generic refresh action', () => {

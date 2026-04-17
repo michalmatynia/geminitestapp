@@ -11,10 +11,10 @@ import {
   normalizePersistedTraderaPlaywrightListingScript,
 } from '@/features/integrations/services/tradera-listing/managed-script';
 import {
-  serializeProgrammableConnectionLegacyBrowserMigration,
-} from '@/features/playwright/utils/playwright-programmable-connection-migration';
-import { type PlaywrightPersona } from '@/shared/contracts/playwright';
-import { fetchResolvedPlaywrightRuntimeActions } from '@/shared/lib/browser-execution/runtime-action-resolver.server';
+  createPlaywrightProgrammableConnection,
+  listPlaywrightProgrammableConnections,
+  type PlaywrightProgrammableConnectionMutationInput,
+} from '@/features/playwright/server';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
@@ -79,54 +79,6 @@ const createConnectionSchema = z
   .strict();
 
 const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);
-const PROGRAMMABLE_PLAYWRIGHT_BROWSER_PAYLOAD_KEYS = [
-  'playwrightPersonaId',
-  'playwrightBrowser',
-  'playwrightIdentityProfile',
-  'playwrightSlowMo',
-  'playwrightTimeout',
-  'playwrightNavigationTimeout',
-  'playwrightLocale',
-  'playwrightTimezoneId',
-  'playwrightHumanizeMouse',
-  'playwrightMouseJitter',
-  'playwrightClickDelayMin',
-  'playwrightClickDelayMax',
-  'playwrightInputDelayMin',
-  'playwrightInputDelayMax',
-  'playwrightActionDelayMin',
-  'playwrightActionDelayMax',
-  'playwrightProxyEnabled',
-  'playwrightProxyServer',
-  'playwrightProxyUsername',
-  'playwrightProxyPassword',
-  'playwrightEmulateDevice',
-  'playwrightDeviceName',
-] as const;
-
-const assertNoProgrammablePlaywrightBrowserPayload = (
-  data: Record<string, unknown>,
-  integrationSlug: string | null | undefined
-): void => {
-  if (!isPlaywrightProgrammableSlug(integrationSlug)) {
-    return;
-  }
-
-  const rejectedFields = PROGRAMMABLE_PLAYWRIGHT_BROWSER_PAYLOAD_KEYS.filter((key) =>
-    Object.prototype.hasOwnProperty.call(data, key)
-  );
-
-  if (rejectedFields.length > 0) {
-    throw badRequestError(
-      'Programmable connections no longer accept connection-level Playwright browser settings. Edit the selected Step Sequencer action instead.',
-      {
-        rejectedFields,
-        integrationSlug,
-      }
-    );
-  }
-};
-
 /**
  * GET /api/v2/integrations/[id]/connections
  * Fetch connections for an integration.
@@ -143,20 +95,12 @@ export async function GET_handler(
 
   const repo = await getIntegrationRepository();
   const integration = await repo.getIntegrationById(integrationId);
+  if (isPlaywrightProgrammableSlug(integration?.slug)) {
+    return NextResponse.json(await listPlaywrightProgrammableConnections(integrationId));
+  }
+
   const connections = await repo.listConnections(integrationId);
-  const programmableActions = isPlaywrightProgrammableSlug(integration?.slug)
-    ? await fetchResolvedPlaywrightRuntimeActions()
-    : null;
   const payload = connections.map((connection: (typeof connections)[number]) => ({
-    ...(isPlaywrightProgrammableSlug(integration?.slug)
-      ? {
-          playwrightLegacyBrowserMigration:
-            serializeProgrammableConnectionLegacyBrowserMigration({
-              connection,
-              actions: programmableActions ?? undefined,
-            }),
-        }
-      : {}),
     id: connection.id,
     integrationId: connection.integrationId,
     name: connection.name,
@@ -253,7 +197,14 @@ export async function POST_handler(
   const isVintedIntegration = integrationSlug === 'vinted';
   const is1688Integration = is1688IntegrationSlug(integration.slug);
   const isPlaywrightProgrammableIntegration = isPlaywrightProgrammableSlug(integration.slug);
-  assertNoProgrammablePlaywrightBrowserPayload(data, integration.slug);
+  if (isPlaywrightProgrammableIntegration) {
+    return NextResponse.json(
+      await createPlaywrightProgrammableConnection({
+        integrationId,
+        data: data as PlaywrightProgrammableConnectionMutationInput,
+      })
+    );
+  }
   const normalizedPlaywrightListingScript = normalizePersistedTraderaPlaywrightListingScript({
     integrationSlug: integration.slug,
     traderaBrowserMode: resolvedTraderaBrowserMode,
@@ -399,10 +350,6 @@ export async function POST_handler(
       ? { scanner1688AllowUrlImageSearchFallback: data.scanner1688AllowUrlImageSearchFallback ?? null }
       : {}),
   });
-  const programmableActions = isPlaywrightProgrammableSlug(integration.slug)
-    ? await fetchResolvedPlaywrightRuntimeActions()
-    : null;
-
   return NextResponse.json({
     id: created.id,
     integrationId: created.integrationId,
@@ -422,15 +369,6 @@ export async function POST_handler(
     linkedinScope: created.linkedinScope ?? null,
     linkedinPersonUrn: created.linkedinPersonUrn ?? null,
     linkedinProfileUrl: created.linkedinProfileUrl ?? null,
-    ...(isPlaywrightProgrammableSlug(integration.slug)
-      ? {
-          playwrightLegacyBrowserMigration:
-            serializeProgrammableConnectionLegacyBrowserMigration({
-              connection: created,
-              actions: programmableActions ?? undefined,
-            }),
-        }
-      : {}),
     traderaBrowserMode: created.traderaBrowserMode ?? 'builtin',
     traderaCategoryStrategy: created.traderaCategoryStrategy ?? 'mapper',
     playwrightListingScript: created.playwrightListingScript ?? null,

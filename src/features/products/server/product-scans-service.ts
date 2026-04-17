@@ -6,6 +6,7 @@ import {
   type ProductScanBatchResponse,
   type ProductScanProvider,
   type ProductScanRecord,
+  type ProductScanRequestSequenceEntry,
 } from '@/shared/contracts/product-scans';
 import {
   getProductScanById,
@@ -42,7 +43,7 @@ export async function synchronizeProductScan(scan: ProductScanRecord): Promise<P
   try {
     return await synchronizeAmazonProductScan(scan);
   } catch (error) {
-    void ErrorSystem.captureException(error, {
+    await ErrorSystem.captureException(error, {
       service: 'product-scans.service',
       action: 'synchronizeProductScan.catch',
       scanId: scan.id,
@@ -127,7 +128,7 @@ export async function queueAmazonBatchProductScans(input: {
   ownerUserId?: string | null;
   userId?: string | null;
   stepSequenceKey?: string | null;
-  stepSequence?: any[] | null;
+  stepSequence?: ProductScanRequestSequenceEntry[] | null;
 }): Promise<ProductScanBatchResponse> {
   return await queueAmazonBatch(input);
 }
@@ -142,7 +143,7 @@ export async function queue1688BatchProductScans(input: {
   ownerUserId?: string | null;
   userId?: string | null;
   stepSequenceKey?: string | null;
-  stepSequence?: any[] | null;
+  stepSequence?: ProductScanRequestSequenceEntry[] | null;
 }): Promise<ProductScanBatchResponse> {
   return await queue1688Batch(input);
 }

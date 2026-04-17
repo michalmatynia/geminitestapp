@@ -1057,6 +1057,53 @@ describe('BaseQuickExportButton', () => {
     expect(onOpenIntegrations).toHaveBeenCalledWith();
   });
 
+  it('reverts button to normal state when tracking stops with a non-terminal status', async () => {
+    mutateAsyncMock.mockResolvedValue({
+      success: true,
+      status: 'queued',
+      runId: 'run-export-stalled',
+    });
+    apiPostMock.mockImplementation((url: string) => {
+      if (url === '/api/v2/integrations/imports/base') {
+        return Promise.resolve({
+          inventories: [{ id: 'inv-main', name: 'Main inventory', is_default: true }],
+        });
+      }
+      if (url === '/api/v2/integrations/products/product-1/base/sku-check') {
+        return Promise.resolve({ sku: 'SKU-001', exists: false, existingProductId: null });
+      }
+      return Promise.reject(new Error(`Unexpected POST ${url}`));
+    });
+
+    renderButton({ status: 'not_started' });
+
+    fireEvent.click(screen.getByRole('button', { name: 'One-click export to Base.com' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Base.com export queued.' })).toBeDisabled();
+    });
+
+    // Simulate tracker timing out or poll failures: stopped but still queued
+    act(() => {
+      trackedRunListeners.get('run-export-stalled')?.({
+        runId: 'run-export-stalled',
+        status: 'queued',
+        trackingState: 'stopped',
+        updatedAt: '2026-03-23T12:00:00.000Z',
+        finishedAt: null,
+        errorMessage: 'Run tracking timed out.',
+        entityId: product.id,
+        entityType: 'product',
+      });
+    });
+
+    // Button should revert to the server-backed status ('not_started') rather than hanging yellow
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'One-click export to Base.com' })).not.toBeDisabled();
+    });
+    expect(screen.queryByRole('button', { name: 'Base.com export queued.' })).not.toBeInTheDocument();
+  });
+
   it('rehydrates the most recent export run after the button remounts', async () => {
     mutateAsyncMock.mockResolvedValue({
       success: true,

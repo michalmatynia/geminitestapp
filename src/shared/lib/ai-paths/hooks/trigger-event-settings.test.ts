@@ -323,15 +323,18 @@ describe('loadPathConfigsFromSettings', () => {
     );
   });
 
-  it('recovers seeded BLWo starter defaults when the stored config payload is broken', async () => {
-    const pathId = 'path_base_export_blwo_v1';
+  it('recovers seeded translation starter defaults when the stored config payload is broken', async () => {
+    const pathId = 'path_96708d';
     const data: Array<{ key: string; value: string }> = [
-      { key: PATH_INDEX_KEY, value: makeIndex([{ id: pathId, name: 'Base Export Workflow (BLWo)' }]) },
+      {
+        key: PATH_INDEX_KEY,
+        value: makeIndex([{ id: pathId, name: 'Translation EN->PL Description + Parameters' }]),
+      },
       {
         key: `${PATH_CONFIG_PREFIX}${pathId}`,
         value: JSON.stringify({
           id: pathId,
-          name: 'Base Export Workflow (BLWo)',
+          name: 'Translation EN->PL Description + Parameters',
           nodes: [{ id: 'node-broken-trigger', type: 'trigger' }],
           edges: [],
         }),
@@ -344,7 +347,7 @@ describe('loadPathConfigsFromSettings', () => {
     expect(loaded.configs[pathId]?.nodes.some((node) => node.type === 'trigger')).toBe(true);
     expect(loaded.configs[pathId]?.extensions?.['aiPathsStarter']).toEqual(
       expect.objectContaining({
-        templateId: 'starter_base_export_blwo',
+        templateId: 'starter_translation_en_pl',
       })
     );
   });

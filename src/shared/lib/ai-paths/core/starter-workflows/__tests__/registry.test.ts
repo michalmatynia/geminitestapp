@@ -58,18 +58,18 @@ describe('starter workflow registry', () => {
 
   it('materializes seeded starter configs with provenance', () => {
     const config = materializeStarterWorkflowPathConfig(
-      getStarterWorkflowTemplateByIdOrThrow('starter_base_export_blwo'),
+      getStarterWorkflowTemplateByIdOrThrow('starter_marketplace_copy_debrand'),
       {
-        pathId: 'path_base_export_blwo_v1',
+        pathId: 'path_marketplace_copy_debrand_v1',
         seededDefault: true,
       }
     );
 
-    expect(config.id).toBe('path_base_export_blwo_v1');
+    expect(config.id).toBe('path_marketplace_copy_debrand_v1');
     expect(config.extensions?.['aiPathsStarter']).toEqual(
       expect.objectContaining({
-        starterKey: 'base_export_blwo',
-        templateId: 'starter_base_export_blwo',
+        starterKey: 'marketplace_copy_debrand',
+        templateId: 'starter_marketplace_copy_debrand',
         seededDefault: true,
       })
     );
@@ -614,7 +614,6 @@ describe('starter workflow registry', () => {
         'starter_product_name_normalize',
         'starter_description_inference_lite',
         'starter_marketplace_copy_debrand',
-        'starter_base_export_blwo',
       ])
     );
   });

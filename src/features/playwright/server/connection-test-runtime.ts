@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
+import type { IntegrationConnectionRecord } from '@/shared/contracts/integration-storage';
 import { resolvePlaywrightConnectionRuntime } from './connection-runtime';
 import {
   pushPlaywrightStoredSessionLoadingSteps,

@@ -16,6 +16,7 @@ import {
   parseJsonResponse,
   resetSessionsBeforeParentLogin,
   resetSessionsBeforeStudentLogin,
+  resolveKangurClientEndpoint,
   resolveCredentialErrorTarget,
 } from './KangurLoginPage.utils';
 
@@ -53,7 +54,7 @@ const requestKangurParentAccountCreate = async ({
   email: string;
   password: string;
 }) =>
-  fetch('/api/kangur/auth/parent-account/create', {
+  fetch(resolveKangurClientEndpoint('/api/kangur/auth/parent-account/create'), {
     method: 'POST',
     credentials: 'same-origin',
     headers: { 'Content-Type': 'application/json' },
@@ -444,7 +445,7 @@ const requestKangurStudentLogin = async ({
   loginName: string;
   password: string;
 }) =>
-  fetch('/api/kangur/auth/learner-signin', {
+  fetch(resolveKangurClientEndpoint('/api/kangur/auth/learner-signin'), {
     method: 'POST',
     credentials: 'same-origin',
     headers: { 'Content-Type': 'application/json' },

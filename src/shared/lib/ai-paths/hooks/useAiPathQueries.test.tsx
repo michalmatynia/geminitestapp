@@ -76,14 +76,14 @@ describe('useAiPathsTriggerButtonsQuery', () => {
     const buttons: AiTriggerButtonRecord[] = [
       {
         id: 'button-product-row',
-        name: 'BLWo',
+        name: 'Debrand Copy',
         iconId: null,
         locations: ['product_row'],
         mode: 'click',
         display: {
-          label: 'BLWo',
+          label: 'Debrand Copy',
         },
-        pathId: 'path_base_export_blwo_v1',
+        pathId: 'path_marketplace_copy_debrand_v1',
         enabled: true,
         sortIndex: 0,
         createdAt: '2026-03-11T10:00:00.000Z',

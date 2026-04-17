@@ -482,7 +482,7 @@ describe('ai-paths trigger-buttons GET handler', () => {
     ]);
   });
 
-  it('hides BLWo starter buttons when the bound starter config is stale', async () => {
+  it('prunes deprecated BLWo starter buttons and persists the sanitized trigger-button payload', async () => {
     const brokenPathId = 'path_base_export_blwo_v1';
     const brokenConfig = {
       ...createDefaultPathConfig(brokenPathId),
@@ -533,7 +533,7 @@ describe('ai-paths trigger-buttons GET handler', () => {
     );
 
     await expect(response.json()).resolves.toEqual([]);
-    expect(upsertAiPathsSettingMock).not.toHaveBeenCalled();
+    expect(upsertAiPathsSettingMock).toHaveBeenCalledWith('ai_paths_trigger_buttons', '[]');
   });
 
   it('fails open when the AI Paths index payload is malformed', async () => {
@@ -541,10 +541,10 @@ describe('ai-paths trigger-buttons GET handler', () => {
       createSettingsSnapshot({
         triggerButtons: [
           {
-            id: 'btn-blwo',
-            name: 'BLWo',
+            id: 'btn-row',
+            name: 'Row Button',
             iconId: null,
-            pathId: 'path_base_export_blwo_v1',
+            pathId: 'path_marketplace_copy_debrand_v1',
             enabled: true,
             locations: ['product_row'],
             mode: 'click',
@@ -565,7 +565,7 @@ describe('ai-paths trigger-buttons GET handler', () => {
 
     await expect(response.json()).resolves.toEqual([
       expect.objectContaining({
-        id: 'btn-blwo',
+        id: 'btn-row',
       }),
     ]);
   });

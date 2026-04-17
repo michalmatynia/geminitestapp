@@ -9,15 +9,23 @@ import { defaultPlaywrightActionExecutionSettings } from '@/shared/contracts/pla
 const {
   useIntegrationsMock,
   useProgrammableIntegrationConnectionsMock,
+  useCleanupAllPlaywrightBrowserPersistenceMock,
+  useCleanupPlaywrightBrowserPersistenceMock,
   usePlaywrightPersonasMock,
   usePlaywrightActionsMock,
+  usePromotePlaywrightBrowserOwnershipMock,
+  useTestPlaywrightProgrammableConnectionMock,
   useUpsertProgrammableConnectionMock,
   toastMock,
 } = vi.hoisted(() => ({
   useIntegrationsMock: vi.fn(),
   useProgrammableIntegrationConnectionsMock: vi.fn(),
+  useCleanupAllPlaywrightBrowserPersistenceMock: vi.fn(),
+  useCleanupPlaywrightBrowserPersistenceMock: vi.fn(),
   usePlaywrightPersonasMock: vi.fn(),
   usePlaywrightActionsMock: vi.fn(),
+  usePromotePlaywrightBrowserOwnershipMock: vi.fn(),
+  useTestPlaywrightProgrammableConnectionMock: vi.fn(),
   useUpsertProgrammableConnectionMock: vi.fn(),
   toastMock: vi.fn(),
 }));
@@ -32,10 +40,31 @@ vi.mock('next/link', () => ({
   }) => <a href={href}>{children}</a>,
 }));
 
-vi.mock('@/features/integrations/hooks/useIntegrationQueries', () => ({
-  useIntegrations: () => useIntegrationsMock(),
-  useProgrammableIntegrationConnections: (...args: unknown[]) =>
+vi.mock('@/features/playwright/hooks/usePlaywrightProgrammableIntegration', () => ({
+  usePlaywrightProgrammableIntegration: () => {
+    const integrationsQuery = useIntegrationsMock();
+
+    return {
+      integrationQuery: integrationsQuery,
+      programmableIntegration:
+        integrationsQuery.data?.find(
+          (integration: { slug?: string }) => integration.slug === 'playwright-programmable'
+        ) ?? null,
+    };
+  },
+  usePlaywrightProgrammableConnections: (...args: unknown[]) =>
     useProgrammableIntegrationConnectionsMock(...args),
+  useUpsertPlaywrightProgrammableConnection: () => useUpsertProgrammableConnectionMock(),
+}));
+
+vi.mock('@/features/playwright/hooks/usePlaywrightProgrammableAdminMutations', () => ({
+  usePromotePlaywrightBrowserOwnership: () => usePromotePlaywrightBrowserOwnershipMock(),
+  useCleanupPlaywrightBrowserPersistence: () =>
+    useCleanupPlaywrightBrowserPersistenceMock(),
+  useCleanupAllPlaywrightBrowserPersistence: () =>
+    useCleanupAllPlaywrightBrowserPersistenceMock(),
+  useTestPlaywrightProgrammableConnection: () =>
+    useTestPlaywrightProgrammableConnectionMock(),
 }));
 
 vi.mock('@/features/playwright/hooks/usePlaywrightPersonas', () => ({
@@ -44,10 +73,6 @@ vi.mock('@/features/playwright/hooks/usePlaywrightPersonas', () => ({
 
 vi.mock('@/shared/hooks/usePlaywrightStepSequencer', () => ({
   usePlaywrightActions: () => usePlaywrightActionsMock(),
-}));
-
-vi.mock('@/features/integrations/hooks/useIntegrationMutations', () => ({
-  useUpsertProgrammableConnection: () => useUpsertProgrammableConnectionMock(),
 }));
 
 vi.mock('@/shared/ui/playwright/PlaywrightSettingsForm', () => ({
@@ -60,21 +85,6 @@ vi.mock('@/shared/ui/playwright/PlaywrightSettingsForm', () => ({
 
 vi.mock('@/shared/ui/playwright/PlaywrightCaptureRoutesEditor', () => ({
   PlaywrightCaptureRoutesEditor: () => <div>capture-routes-editor</div>,
-}));
-
-vi.mock('@/shared/ui/admin.public', () => ({
-  AdminIntegrationsPageLayout: ({
-    title,
-    children,
-  }: {
-    title?: React.ReactNode;
-    children?: React.ReactNode;
-  }) => (
-    <div>
-      <h1>{title}</h1>
-      {children}
-    </div>
-  ),
 }));
 
 vi.mock('@/shared/ui/navigation-and-layout.public', () => ({
@@ -186,9 +196,9 @@ vi.mock('@/shared/ui/primitives.public', async (importOriginal) => {
   };
 });
 
-import AdminPlaywrightProgrammableIntegrationPage from './AdminPlaywrightProgrammableIntegrationPage';
+import { AdminPlaywrightProgrammableIntegrationPageRuntime } from './AdminPlaywrightProgrammableIntegrationPageRuntime';
 
-describe('AdminPlaywrightProgrammableIntegrationPage', () => {
+describe('AdminPlaywrightProgrammableIntegrationPageRuntime', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     useIntegrationsMock.mockReturnValue({
@@ -237,6 +247,22 @@ describe('AdminPlaywrightProgrammableIntegrationPage', () => {
       mutateAsync: vi.fn(),
       isPending: false,
     });
+    usePromotePlaywrightBrowserOwnershipMock.mockReturnValue({
+      mutateAsync: vi.fn(),
+      isPending: false,
+    });
+    useCleanupPlaywrightBrowserPersistenceMock.mockReturnValue({
+      mutateAsync: vi.fn(),
+      isPending: false,
+    });
+    useCleanupAllPlaywrightBrowserPersistenceMock.mockReturnValue({
+      mutateAsync: vi.fn(),
+      isPending: false,
+    });
+    useTestPlaywrightProgrammableConnectionMock.mockReturnValue({
+      mutateAsync: vi.fn(),
+      isPending: false,
+    });
   });
 
   it('hides connection-scoped browser editors after the connection is migrated', () => {
@@ -270,7 +296,7 @@ describe('AdminPlaywrightProgrammableIntegrationPage', () => {
       isLoading: false,
     });
 
-    render(<AdminPlaywrightProgrammableIntegrationPage />);
+    render(<AdminPlaywrightProgrammableIntegrationPageRuntime />);
 
     expect(screen.queryByText('Connection Persona')).not.toBeInTheDocument();
     expect(screen.queryByText('Programmable Connection Overrides')).not.toBeInTheDocument();
@@ -329,7 +355,7 @@ describe('AdminPlaywrightProgrammableIntegrationPage', () => {
       isLoading: false,
     });
 
-    render(<AdminPlaywrightProgrammableIntegrationPage />);
+    render(<AdminPlaywrightProgrammableIntegrationPageRuntime />);
 
     expect(screen.queryByText('Connection Persona')).not.toBeInTheDocument();
     expect(screen.queryByText('Programmable Connection Overrides')).not.toBeInTheDocument();
@@ -388,7 +414,7 @@ describe('AdminPlaywrightProgrammableIntegrationPage', () => {
       isLoading: false,
     });
 
-    render(<AdminPlaywrightProgrammableIntegrationPage />);
+    render(<AdminPlaywrightProgrammableIntegrationPageRuntime />);
 
     expect(screen.getByText('Stored browser fields can be cleared')).toBeInTheDocument();
     expect(
@@ -467,7 +493,7 @@ describe('AdminPlaywrightProgrammableIntegrationPage', () => {
       isLoading: false,
     });
 
-    render(<AdminPlaywrightProgrammableIntegrationPage />);
+    render(<AdminPlaywrightProgrammableIntegrationPageRuntime />);
 
     expect(
       screen.getByText((content) =>

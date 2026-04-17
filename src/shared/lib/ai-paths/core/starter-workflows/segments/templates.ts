@@ -7,7 +7,6 @@ import {
   MARKETPLACE_COPY_DEBRAND_TRIGGER_NAME,
   MARKETPLACE_COPY_DEBRAND_TRIGGER_SORT_INDEX,
 } from '@/shared/lib/ai-paths/marketplace-copy-debrand';
-import baseExportBlwoAsset from '../assets/base-export-blwo.canvas.json';
 import descriptionInferenceLiteAsset from '../assets/description-inference-lite.canvas.json';
 import gemmaVisionObjectAnalyserApiAsset from '../assets/gemma-vision-object-analyser-api.canvas.json';
 import gemmaVisionObjectAnalyserModelAsset from '../assets/gemma-vision-object-analyser-model.canvas.json';
@@ -170,37 +169,6 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
     },
     upgradePolicy: {
       versionedOverlayScope: 'any_provenance_path',
-    },
-  },
-  {
-    templateId: 'starter_base_export_blwo',
-    name: 'Base Export Workflow (BLWo)',
-    description: 'Product-row workflow export to Base.com launched by BLWo trigger button.',
-    semanticAsset: baseExportBlwoAsset as CanvasSemanticDocument,
-    seedPolicy: {
-      autoSeed: true,
-      defaultPathId: 'path_base_export_blwo_v1',
-      isActive: true,
-      isLocked: false,
-      sortOrder: 40,
-      restoreOnStaticRecovery: true,
-    },
-    triggerButtonPresets: [
-      {
-        id: '5f36f340-3d89-4f6f-a08f-2387f380b90b',
-        name: 'BLWo',
-        pathId: 'path_base_export_blwo_v1',
-        locations: ['product_row'],
-        display: buildTriggerDisplay('BLWo'),
-        enabled: true,
-        mode: 'click',
-        sortIndex: 40,
-      },
-    ],
-    starterLineage: {
-      starterKey: 'base_export_blwo',
-      templateVersion: 2,
-      canonicalGraphHashes: [],
     },
   },
   {

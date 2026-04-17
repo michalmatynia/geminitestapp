@@ -60,6 +60,7 @@ const LIVE_SCRIPTER_DEV_FIXTURE_PATH = '/playwright-fixtures/live-scripter-fixtu
 const LIVE_SCRIPTER_TITLE_SETTLE_TIMEOUT_MS = 2_000;
 const LIVE_SCRIPTER_TITLE_SETTLE_POLL_MS = 100;
 const LIVE_SCRIPTER_TITLE_SETTLE_STABLE_MS = 250;
+const URL_SCHEME_PATTERN = /^[a-z][a-z\d+\-.]*:/i;
 
 type LiveScripterSocket = WebSocket;
 
@@ -182,12 +183,33 @@ const refreshIdleTimeout = (session: LiveScripterSession): void => {
   }, LIVE_SCRIPTER_SESSION_IDLE_MS);
 };
 
-const sanitizeUrl = (value: string): string => {
+const normalizeLiveScripterUrlCandidate = (value: string): string => {
   const trimmed = value.trim();
+  if (URL_SCHEME_PATTERN.test(trimmed)) {
+    return trimmed;
+  }
+
+  if (trimmed.startsWith('//')) {
+    return `https:${trimmed}`;
+  }
+
+  if (trimmed.startsWith('/') || trimmed.startsWith('?') || trimmed.startsWith('#')) {
+    throw badRequestError('Live scripter URL is invalid.');
+  }
+
+  return `https://${trimmed}`;
+};
+
+const sanitizeUrl = (value: string): string => {
+  const candidate = normalizeLiveScripterUrlCandidate(value);
   let parsed: URL;
   try {
-    parsed = new URL(trimmed);
+    parsed = new URL(candidate);
   } catch {
+    throw badRequestError('Live scripter URL is invalid.');
+  }
+
+  if (parsed.hostname.trim().length === 0) {
     throw badRequestError('Live scripter URL is invalid.');
   }
 

@@ -50,8 +50,8 @@ describe('settings-store flag preservation and maintenance-only starter policy',
         pathId: 'path_descv3lite',
       },
       {
-        templateId: 'starter_base_export_blwo',
-        pathId: 'path_base_export_blwo_v1',
+        templateId: 'starter_marketplace_copy_debrand',
+        pathId: 'path_marketplace_copy_debrand_v1',
       },
     ].map((entry) => {
       const template = getStarterWorkflowTemplateById(entry.templateId);
@@ -101,11 +101,6 @@ describe('settings-store flag preservation and maintenance-only starter policy',
     ).toBe(true);
     expect(
       seeded.nextRecords.some(
-        (record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_base_export_blwo_v1`
-      )
-    ).toBe(true);
-    expect(
-      seeded.nextRecords.some(
         (record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_name_normalize_v1`
       )
     ).toBe(true);
@@ -125,9 +120,6 @@ describe('settings-store flag preservation and maintenance-only starter policy',
     ).toBe(true);
     expect(
       triggerButtons.some((button) => button['id'] === '4c07d35b-ea92-4d1f-b86b-c586359f68de')
-    ).toBe(true);
-    expect(
-      triggerButtons.some((button) => button['id'] === '5f36f340-3d89-4f6f-a08f-2387f380b90b')
     ).toBe(true);
     expect(
       triggerButtons.some((button) => button['id'] === '7d58d6a0-44c7-4d69-a2e4-8d8d1f3f5a27')

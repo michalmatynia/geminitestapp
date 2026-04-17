@@ -4,7 +4,7 @@ import type {
   CreateProductListingInput,
   ProductListingExportEventRecord,
   ProductListingRepository,
-} from '@/shared/contracts/integrations/repositories';
+} from '@/shared/contracts/integration-listing-storage';
 import type { PlaywrightServiceListingExecutionBase } from './service-result';
 import {
   buildPlaywrightListingExportHistoryRecord,

@@ -4,10 +4,16 @@ import type { Integration } from '@/shared/contracts/integrations/base';
 import type { PlaywrightConfigCaptureRoute } from '@/shared/contracts/ai-paths-core/nodes/external-nodes';
 import type { usePlaywrightActions } from '@/shared/hooks/usePlaywrightStepSequencer';
 import type {
-  useIntegrations,
-  useProgrammableIntegrationConnections,
-} from '@/features/integrations/hooks/useIntegrationQueries';
-import type { useUpsertProgrammableConnection } from '@/features/integrations/hooks/useIntegrationMutations';
+  usePlaywrightProgrammableConnections,
+  usePlaywrightProgrammableIntegration,
+  useUpsertPlaywrightProgrammableConnection,
+} from '@/features/playwright/hooks/usePlaywrightProgrammableIntegration';
+import type {
+  useCleanupAllPlaywrightBrowserPersistence,
+  useCleanupPlaywrightBrowserPersistence,
+  usePromotePlaywrightBrowserOwnership,
+  useTestPlaywrightProgrammableConnection,
+} from '@/features/playwright/hooks/usePlaywrightProgrammableAdminMutations';
 import type { ProgrammableFieldMapperRow } from '@/features/playwright/pages/playwright-programmable-integration-page.helpers';
 import type { buildManagedPlaywrightActionSummaries } from '@/features/playwright/utils/playwright-managed-runtime-actions';
 import type { buildProgrammableSessionDiagnostics } from '@/features/playwright/utils/playwright-programmable-session-diagnostics';
@@ -19,7 +25,7 @@ export type UsePlaywrightProgrammableIntegrationPageModelArgs = {
   focusSection?: 'script' | 'import' | null;
 };
 
-export type ProgrammableConnectionsQuery = ReturnType<typeof useProgrammableIntegrationConnections>;
+export type ProgrammableConnectionsQuery = ReturnType<typeof usePlaywrightProgrammableConnections>;
 export type ProgrammableConnection = NonNullable<ProgrammableConnectionsQuery['data']>[number];
 export type ProgrammableConnections = NonNullable<ProgrammableConnectionsQuery['data']>;
 
@@ -48,6 +54,12 @@ export type PlaywrightProgrammableIntegrationPageActionArgs = {
   appearanceMode: string;
   captureRoutes: PlaywrightConfigCaptureRoute[];
   cleanupReadyConnections: ProgrammableConnections;
+  cleanupAllBrowserPersistenceMutateAsync: ReturnType<
+    typeof useCleanupAllPlaywrightBrowserPersistence
+  >['mutateAsync'];
+  cleanupBrowserPersistenceMutateAsync: ReturnType<
+    typeof useCleanupPlaywrightBrowserPersistence
+  >['mutateAsync'];
   connectionName: string;
   connections: ProgrammableConnections;
   connectionsRefetch?: (() => Promise<unknown>) | undefined;
@@ -61,6 +73,9 @@ export type PlaywrightProgrammableIntegrationPageActionArgs = {
   migrationInfo: ProgrammableConnection['playwrightLegacyBrowserMigration'] | null;
   playableActionsRefetch?: (() => Promise<unknown>) | undefined;
   programmableIntegration: Pick<Integration, 'id'> | null;
+  promoteBrowserOwnershipMutateAsync: ReturnType<
+    typeof usePromotePlaywrightBrowserOwnership
+  >['mutateAsync'];
   promotionProxyPassword: string;
   selectedConnection: ProgrammableConnection | null;
   setAppearanceMode: StateSetter<string>;
@@ -80,9 +95,11 @@ export type PlaywrightProgrammableIntegrationPageActionArgs = {
   setSelectedConnectionId: StateSetter<string>;
   setTestResultJson: StateSetter<string>;
   toast: (message: string, options: { variant: 'error' | 'success' }) => void;
+  testProgrammableConnectionMutateAsync: ReturnType<
+    typeof useTestPlaywrightProgrammableConnection
+  >['mutateAsync'];
   upsertConnectionMutateAsync: (args: {
     connectionId?: string;
-    integrationId: string;
     payload: Record<string, unknown>;
   }) => Promise<ProgrammableConnection>;
 };
@@ -103,6 +120,8 @@ export type PlaywrightProgrammableIntegrationPageModel =
     connectionName: string;
     connections: ProgrammableConnections;
     connectionsQuery: ProgrammableConnectionsQuery;
+    cleanupAllBrowserPersistence: ReturnType<typeof useCleanupAllPlaywrightBrowserPersistence>;
+    cleanupBrowserPersistence: ReturnType<typeof useCleanupPlaywrightBrowserPersistence>;
     fieldMapperRows: ProgrammableFieldMapperRow[];
     importActionId: string;
     importActionOptions: ActionOption[];
@@ -110,7 +129,7 @@ export type PlaywrightProgrammableIntegrationPageModel =
     importScript: string;
     importSectionRef: RefObject<HTMLDivElement | null>;
     importSessionPreview: ReturnType<typeof buildProgrammableSessionPreview>;
-    integrationsQuery: ReturnType<typeof useIntegrations>;
+    integrationsQuery: ReturnType<typeof usePlaywrightProgrammableIntegration>['integrationQuery'];
     isBrowserBehaviorActionOwned: boolean;
     isCleaningAllLegacyBrowserFields: boolean;
     isCleaningLegacyBrowserFields: boolean;
@@ -122,6 +141,7 @@ export type PlaywrightProgrammableIntegrationPageModel =
     managedActionSummaries: ReturnType<typeof buildManagedPlaywrightActionSummaries>;
     migrationInfo: ProgrammableConnection['playwrightLegacyBrowserMigration'] | null;
     playwrightActionsQuery: ReturnType<typeof usePlaywrightActions>;
+    promoteBrowserOwnership: ReturnType<typeof usePromotePlaywrightBrowserOwnership>;
     programmableIntegration: Integration | null;
     promotionProxyPassword: string;
     runningTestType: RunningTestType;
@@ -140,5 +160,6 @@ export type PlaywrightProgrammableIntegrationPageModel =
     setPromotionProxyPassword: StateSetter<string>;
     setSelectedConnectionId: StateSetter<string>;
     testResultJson: string;
-    upsertConnection: ReturnType<typeof useUpsertProgrammableConnection>;
+    testProgrammableConnection: ReturnType<typeof useTestPlaywrightProgrammableConnection>;
+    upsertConnection: ReturnType<typeof useUpsertPlaywrightProgrammableConnection>;
   };

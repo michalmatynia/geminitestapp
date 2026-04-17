@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 
-import { PLAYWRIGHT_PROGRAMMABLE_INTEGRATION_SLUG } from '@/features/integrations/constants/slugs';
+import { PLAYWRIGHT_PROGRAMMABLE_INTEGRATION_SLUG } from '@/shared/lib/integration-slugs';
 import { resolveIntegrationManagedRuntimeActionKeys } from '@/features/integrations/utils/playwright-managed-actions';
 import { buildProgrammableActionOptions } from '@/features/playwright/pages/playwright-programmable-integration-page.helpers';
 import type {

@@ -94,7 +94,7 @@ describe('useKangurLearnerActivityStatus', () => {
 
     await waitFor(() => {
       expect(eventSourceCtor).toHaveBeenCalledWith(
-        '/api/kangur/learner-activity/stream?learnerId=learner-1'
+        '/kangur-api/learner-activity/stream?learnerId=learner-1'
       );
     });
 
@@ -177,7 +177,7 @@ describe('useKangurLearnerActivityStatus', () => {
 
     expect(learnerActivityGetMock).not.toHaveBeenCalled();
     expect(eventSourceCtor).toHaveBeenCalledWith(
-      '/api/kangur/learner-activity/stream?learnerId=learner-1'
+      '/kangur-api/learner-activity/stream?learnerId=learner-1'
     );
   });
 

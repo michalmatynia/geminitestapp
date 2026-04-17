@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import { connection } from 'next/server';
 import { type JSX } from 'react';
 
 import type { CmsDomain, Slug } from '@/shared/contracts/cms';
@@ -88,15 +89,14 @@ const getFallbackHomeHost = (
 const buildFallbackHomeDomain = (
   headers: RequestHeaders | null | undefined
 ): CmsDomain => {
-  const now = new Date().toISOString();
   const host = getFallbackHomeHost(headers);
 
   return {
     id: 'default-domain',
     name: 'Default domain',
     domain: host,
-    createdAt: now,
-    updatedAt: now,
+    createdAt: '1970-01-01T00:00:00.000Z',
+    updatedAt: '1970-01-01T00:00:00.000Z',
   };
 };
 
@@ -159,6 +159,8 @@ async function handleFrontPageRedirects(
 export const renderHomeRoute = async ({
   locale,
 }: RenderHomeRouteOptions = {}): Promise<JSX.Element | null> => {
+  await connection();
+
   const resolvedLocale = resolveHomeLocale(locale);
   const { withTiming, flush } = createHomeTimingRecorder();
 

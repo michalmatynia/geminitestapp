@@ -18,13 +18,18 @@ export const resolveKangurApiPathSegments = (
     return [pathParam];
   }
   const pathname = request.nextUrl?.pathname ?? new URL(request.url).pathname;
-  const prefix = '/api/kangur/';
-  if (!pathname.startsWith(prefix)) {
-    return [];
+  for (const prefix of ['/api/kangur/', '/kangur-api/']) {
+    if (!pathname.startsWith(prefix)) {
+      continue;
+    }
+
+    const rest = pathname.slice(prefix.length);
+    if (!rest) {
+      return [];
+    }
+
+    return rest.split('/').filter(Boolean);
   }
-  const rest = pathname.slice(prefix.length);
-  if (!rest) {
-    return [];
-  }
-  return rest.split('/').filter(Boolean);
+
+  return [];
 };

@@ -264,6 +264,28 @@ describe('live-session', () => {
     );
   });
 
+  it('normalizes a scheme-less public URL to https before navigation', async () => {
+    const runtime = createMockSessionRuntime();
+    launchPlaywrightBrowserMock.mockResolvedValue({
+      browser: runtime.browser,
+      label: 'Chromium (bundled)',
+      fallbackMessages: [],
+    });
+
+    const { sessionId } = await createLiveScripterSession({
+      ownerUserId: 'admin-1',
+      url: 'example.com/product?sku=123',
+      personaId: null,
+      selectorProfile: null,
+    });
+
+    expect(sessionId).toEqual(expect.any(String));
+    expect(runtime.page.goto).toHaveBeenCalledWith(
+      'https://example.com/product?sku=123',
+      expect.any(Object)
+    );
+  });
+
   it('still rejects general loopback URLs', async () => {
     await expect(
       createLiveScripterSession({

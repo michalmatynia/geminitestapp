@@ -13,10 +13,9 @@ import {
   normalizePersistedTraderaPlaywrightListingScript,
 } from '@/features/integrations/services/tradera-listing/managed-script';
 import {
-  serializeProgrammableConnectionLegacyBrowserMigration,
-} from '@/features/playwright/utils/playwright-programmable-connection-migration';
-import { type PlaywrightPersona } from '@/shared/contracts/playwright';
-import { fetchResolvedPlaywrightRuntimeActions } from '@/shared/lib/browser-execution/runtime-action-resolver.server';
+  type PlaywrightProgrammableConnectionMutationInput,
+  updatePlaywrightProgrammableConnection,
+} from '@/features/playwright/server';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { authError, badRequestError } from '@/shared/errors/app-error';
@@ -82,30 +81,6 @@ const connectionSchema = z.object({
 });
 
 const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);
-const PROGRAMMABLE_PLAYWRIGHT_BROWSER_PAYLOAD_KEYS = [
-  'playwrightPersonaId',
-  'playwrightBrowser',
-  'playwrightIdentityProfile',
-  'playwrightSlowMo',
-  'playwrightTimeout',
-  'playwrightNavigationTimeout',
-  'playwrightLocale',
-  'playwrightTimezoneId',
-  'playwrightHumanizeMouse',
-  'playwrightMouseJitter',
-  'playwrightClickDelayMin',
-  'playwrightClickDelayMax',
-  'playwrightInputDelayMin',
-  'playwrightInputDelayMax',
-  'playwrightActionDelayMin',
-  'playwrightActionDelayMax',
-  'playwrightProxyEnabled',
-  'playwrightProxyServer',
-  'playwrightProxyUsername',
-  'playwrightProxyPassword',
-  'playwrightEmulateDevice',
-  'playwrightDeviceName',
-] as const;
 const PLAYWRIGHT_OVERRIDE_RESET_VALUES = {
   playwrightPersonaId: null,
   playwrightIdentityProfile: null,
@@ -132,29 +107,6 @@ const PLAYWRIGHT_OVERRIDE_RESET_VALUES = {
   playwrightEmulateDevice: null,
   playwrightDeviceName: null,
 } as const;
-
-const assertNoProgrammablePlaywrightBrowserPayload = (
-  data: Record<string, unknown>,
-  integrationSlug: string | null | undefined
-): void => {
-  if (!isPlaywrightProgrammableSlug(integrationSlug)) {
-    return;
-  }
-
-  const rejectedFields = PROGRAMMABLE_PLAYWRIGHT_BROWSER_PAYLOAD_KEYS.filter((key) =>
-    Object.prototype.hasOwnProperty.call(data, key)
-  );
-
-  if (rejectedFields.length > 0) {
-    throw badRequestError(
-      'Programmable connections no longer accept connection-level Playwright browser settings. Edit the selected Step Sequencer action instead.',
-      {
-        rejectedFields,
-        integrationSlug,
-      }
-    );
-  }
-};
 
 const deleteConnectionSchema = z.object({
   userPassword: z.string().trim().min(1),
@@ -212,7 +164,14 @@ export async function PUT_handler(
   const isPlaywrightProgrammableIntegration = Boolean(
     integration && isPlaywrightProgrammableSlug(integration.slug)
   );
-  assertNoProgrammablePlaywrightBrowserPayload(data, integration?.slug);
+  if (isPlaywrightProgrammableIntegration) {
+    return NextResponse.json(
+      await updatePlaywrightProgrammableConnection({
+        connectionId: id,
+        data: data as PlaywrightProgrammableConnectionMutationInput,
+      })
+    );
+  }
 
   if (
     integration &&
@@ -356,11 +315,6 @@ export async function PUT_handler(
       ? { scanner1688AllowUrlImageSearchFallback: data.scanner1688AllowUrlImageSearchFallback ?? null }
       : {}),
   });
-  const programmableActions =
-    integration && isPlaywrightProgrammableSlug(integration.slug)
-      ? await fetchResolvedPlaywrightRuntimeActions()
-      : null;
-
   return NextResponse.json({
     id: connection.id,
     integrationId: connection.integrationId,
@@ -379,15 +333,6 @@ export async function PUT_handler(
     linkedinScope: connection.linkedinScope ?? null,
     linkedinPersonUrn: connection.linkedinPersonUrn ?? null,
     linkedinProfileUrl: connection.linkedinProfileUrl ?? null,
-    ...(integration && isPlaywrightProgrammableSlug(integration.slug)
-      ? {
-          playwrightLegacyBrowserMigration:
-            serializeProgrammableConnectionLegacyBrowserMigration({
-              connection,
-              actions: programmableActions ?? undefined,
-            }),
-        }
-      : {}),
     traderaBrowserMode: connection.traderaBrowserMode ?? 'builtin',
     traderaCategoryStrategy: connection.traderaCategoryStrategy ?? 'mapper',
     playwrightListingScript: connection.playwrightListingScript ?? null,

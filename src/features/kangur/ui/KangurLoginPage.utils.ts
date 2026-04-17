@@ -1,4 +1,5 @@
 import { signOut } from 'next-auth/react';
+import { resolveKangurClientEndpoint } from '@/features/kangur/services/resolve-kangur-client-endpoint';
 import {
   type KangurAuthMode,
 } from '@/features/kangur/shared/contracts/kangur-auth';
@@ -65,7 +66,7 @@ export const resolveCredentialErrorTarget = (
 };
 
 export const clearLearnerSession = async (): Promise<void> => {
-  await fetch('/api/kangur/auth/learner-signout', {
+  await fetch(resolveKangurClientEndpoint('/api/kangur/auth/learner-signout'), {
     method: 'POST',
     credentials: 'same-origin',
   });
@@ -85,3 +86,5 @@ export type VerificationCardState = {
   error?: string | null;
   verificationUrl?: string | null;
 };
+
+export { resolveKangurClientEndpoint };

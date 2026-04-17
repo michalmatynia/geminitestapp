@@ -3,7 +3,7 @@ import 'server-only';
 import type {
   CreateProductListingInput,
   ProductListingExportEventRecord,
-} from '@/shared/contracts/integrations/repositories';
+} from '@/shared/contracts/integration-listing-storage';
 
 export const buildPlaywrightListingExportHistoryRecord = <
   TExtra extends Record<string, unknown> = Record<string, unknown>,

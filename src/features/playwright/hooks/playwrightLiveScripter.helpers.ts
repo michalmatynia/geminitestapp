@@ -35,7 +35,8 @@ const resetReconnectAttempts = (refs: LiveScripterConnectionRefs): void => {
 };
 
 const clearPendingMessages = (refs: LiveScripterConnectionRefs): void => {
-  refs.pendingMessagesRef.current = [];
+  const targetRefs = refs;
+  targetRefs.pendingMessagesRef.current = [];
 };
 
 const resetSocketHandlers = (socket: WebSocket): void => {
@@ -121,11 +122,28 @@ const bindLiveScripterSocket = ({
   });
 };
 
+const readStructuredErrorMessage = (value: string): string | null => {
+  try {
+    const parsed = JSON.parse(value) as Record<string, unknown>;
+    if (typeof parsed['error'] === 'string' && parsed['error'].trim().length > 0) {
+      return parsed['error'].trim();
+    }
+    if (typeof parsed['message'] === 'string' && parsed['message'].trim().length > 0) {
+      return parsed['message'].trim();
+    }
+  } catch {
+    return null;
+  }
+  return null;
+};
+
 const readFailedStartResponse = async (response: Response): Promise<string> => {
   const text = await response.text().catch(() => '');
-  return text.length > 0
-    ? text
-    : `Live scripter start failed with ${response.status}.`;
+  if (text.length === 0) {
+    return `Live scripter start failed with ${response.status}.`;
+  }
+
+  return readStructuredErrorMessage(text) ?? text;
 };
 
 export const toWebSocketUrl = (socketPath: string): string => {

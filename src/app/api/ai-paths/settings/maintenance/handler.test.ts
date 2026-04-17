@@ -12,6 +12,7 @@ vi.mock('@/features/ai/ai-paths/server', () => ({
   AI_PATHS_MAINTENANCE_ACTION_IDS: [
     'compact_oversized_configs',
     'repair_path_index',
+    'prune_deprecated_starter_workflows',
     'restore_static_recovery_bundle',
     'ensure_starter_workflow_defaults',
     'refresh_starter_workflow_configs',

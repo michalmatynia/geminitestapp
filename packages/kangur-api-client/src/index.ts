@@ -63,6 +63,10 @@ export type KangurApiRequestError = Error & {
 };
 
 const resolveBaseUrl = (baseUrl?: string): string => baseUrl?.replace(/\/$/, '') ?? '';
+const resolveBrowserPath = (path: string): string =>
+  typeof window !== 'undefined' && path.startsWith('/api/kangur')
+    ? `/kangur-api${path.slice('/api/kangur'.length)}`
+    : path;
 
 const resolveHeaders = async (
   getHeaders?: KangurApiClientOptions['getHeaders'],
@@ -345,7 +349,8 @@ export const createKangurApiClient = (options: KangurApiClientOptions = {}) => {
     init: RequestInit = {},
   ): Promise<TResponse> => {
     const includeJsonContentType = typeof init.body === 'string';
-    const response = await fetchImpl(`${baseUrl}${path}`, {
+    const resolvedPath = resolveBrowserPath(path);
+    const response = await fetchImpl(`${baseUrl}${resolvedPath}`, {
       ...init,
       credentials: init.credentials ?? credentials,
       headers: await resolveHeaders(options.getHeaders, init.headers, includeJsonContentType),
@@ -365,7 +370,8 @@ export const createKangurApiClient = (options: KangurApiClientOptions = {}) => {
     init: RequestInit = {},
   ): Promise<TResponse> => {
     const includeJsonContentType = typeof init.body === 'string';
-    const response = await fetchImpl(`${baseUrl}${path}`, {
+    const resolvedPath = resolveBrowserPath(path);
+    const response = await fetchImpl(`${baseUrl}${resolvedPath}`, {
       ...init,
       credentials: init.credentials ?? credentials,
       headers: await resolveHeaders(options.getHeaders, init.headers, includeJsonContentType),

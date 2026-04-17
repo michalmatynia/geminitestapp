@@ -25,6 +25,9 @@ import {
   useTurnstileMock,
 } from './KangurLoginPage.test-support';
 
+const KANGUR_LEARNER_SIGN_IN_ENDPOINT = '/kangur-api/auth/learner-signin';
+const KANGUR_LEARNER_SIGN_OUT_ENDPOINT = '/kangur-api/auth/learner-signout';
+
 describe('KangurLoginPage', () => {
   let KangurLoginPage: typeof import('./KangurLoginPage').KangurLoginPage;
 
@@ -182,14 +185,14 @@ describe('KangurLoginPage', () => {
 
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input.toString();
-      if (url.endsWith('/api/kangur/auth/learner-signout')) {
+      if (url.endsWith(KANGUR_LEARNER_SIGN_OUT_ENDPOINT)) {
         return {
           ok: true,
           status: 200,
           json: async () => ({}),
         };
       }
-      if (url.endsWith('/api/kangur/auth/learner-signin')) {
+      if (url.endsWith(KANGUR_LEARNER_SIGN_IN_ENDPOINT)) {
         return {
           ok: true,
           status: 200,
@@ -229,7 +232,7 @@ describe('KangurLoginPage', () => {
 
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input.toString();
-      if (url.endsWith('/api/kangur/auth/learner-signout')) {
+      if (url.endsWith(KANGUR_LEARNER_SIGN_OUT_ENDPOINT)) {
         return {
           ok: true,
           status: 200,
@@ -284,7 +287,7 @@ describe('KangurLoginPage', () => {
 
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input.toString();
-      if (url.endsWith('/api/kangur/auth/learner-signout')) {
+      if (url.endsWith(KANGUR_LEARNER_SIGN_OUT_ENDPOINT)) {
         return {
           ok: true,
           status: 200,
@@ -343,7 +346,7 @@ describe('KangurLoginPage', () => {
 
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input.toString();
-      if (url.endsWith('/api/kangur/auth/learner-signout')) {
+      if (url.endsWith(KANGUR_LEARNER_SIGN_OUT_ENDPOINT)) {
         return {
           ok: true,
           status: 200,
@@ -413,7 +416,7 @@ describe('KangurLoginPage', () => {
 
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input.toString();
-      if (url.endsWith('/api/kangur/auth/learner-signout')) {
+      if (url.endsWith(KANGUR_LEARNER_SIGN_OUT_ENDPOINT)) {
         return {
           ok: true,
           status: 200,
@@ -468,7 +471,7 @@ describe('KangurLoginPage', () => {
   it('normalizes parent email casing and switches the identifier field into email mode', async () => {
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input.toString();
-      if (url.endsWith('/api/kangur/auth/learner-signout')) {
+      if (url.endsWith(KANGUR_LEARNER_SIGN_OUT_ENDPOINT)) {
         return {
           ok: true,
           status: 200,
@@ -642,7 +645,7 @@ describe('KangurLoginPage', () => {
 
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input.toString();
-      if (url.endsWith('/api/kangur/auth/learner-signout')) {
+      if (url.endsWith(KANGUR_LEARNER_SIGN_OUT_ENDPOINT)) {
         return {
           ok: true,
           status: 200,
@@ -700,7 +703,7 @@ describe('KangurLoginPage', () => {
   it('moves to password setup, clears the old password, and focuses the password field when the account needs setup', async () => {
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input.toString();
-      if (url.endsWith('/api/kangur/auth/learner-signout')) {
+      if (url.endsWith(KANGUR_LEARNER_SIGN_OUT_ENDPOINT)) {
         return {
           ok: true,
           status: 200,
@@ -761,14 +764,14 @@ describe('KangurLoginPage', () => {
 
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input.toString();
-      if (url.endsWith('/api/kangur/auth/learner-signout')) {
+      if (url.endsWith(KANGUR_LEARNER_SIGN_OUT_ENDPOINT)) {
         return {
           ok: true,
           status: 200,
           json: async () => ({}),
         };
       }
-      if (url.endsWith('/api/kangur/auth/learner-signin')) {
+      if (url.endsWith(KANGUR_LEARNER_SIGN_IN_ENDPOINT)) {
         return {
           ok: true,
           status: 200,
@@ -821,10 +824,10 @@ describe('KangurLoginPage', () => {
 
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input.toString();
-      if (url.endsWith('/api/kangur/auth/learner-signout')) {
+      if (url.endsWith(KANGUR_LEARNER_SIGN_OUT_ENDPOINT)) {
         throw new Error('cleanup failed');
       }
-      if (url.endsWith('/api/kangur/auth/learner-signin')) {
+      if (url.endsWith(KANGUR_LEARNER_SIGN_IN_ENDPOINT)) {
         return {
           ok: true,
           status: 200,
@@ -850,7 +853,7 @@ describe('KangurLoginPage', () => {
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(
-        '/api/kangur/auth/learner-signin',
+        KANGUR_LEARNER_SIGN_IN_ENDPOINT,
         expect.objectContaining({ method: 'POST' })
       );
       expect(checkAppStateMock).toHaveBeenCalledTimes(1);

@@ -1,5 +1,3 @@
-import type { registerNodeInstrumentation as RegisterNodeInstrumentation } from './instrumentation.node';
-
 const parseEnvBoolean = (value: string | undefined): boolean => {
   if (typeof value !== 'string') {
     return false;
@@ -13,7 +11,7 @@ export const shouldSkipNodeInstrumentation = (
 ): boolean => parseEnvBoolean(env['SKIP_NEXT_NODE_INSTRUMENTATION']);
 
 type NodeInstrumentationModule = {
-  registerNodeInstrumentation: typeof RegisterNodeInstrumentation;
+  registerNodeInstrumentation: () => Promise<void>;
 };
 
 const loadNodeInstrumentationModule = async (): Promise<NodeInstrumentationModule> =>

@@ -3,8 +3,8 @@ import 'server-only';
 import type {
   IntegrationConnectionRecord,
   IntegrationRecord,
-  ProductListingRepository,
-} from '@/shared/contracts/integrations/repositories';
+} from '@/shared/contracts/integration-storage';
+import type { ProductListingRepository } from '@/shared/contracts/integration-listing-storage';
 import type { ProductListing } from '@/shared/contracts/integrations/listings';
 
 export type PlaywrightResolvedListingRunContext = {

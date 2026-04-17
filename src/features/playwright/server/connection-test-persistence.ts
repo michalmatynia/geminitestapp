@@ -2,7 +2,7 @@ import 'server-only';
 
 import type { Page } from 'playwright';
 
-import type { IntegrationRepository } from '@/shared/contracts/integrations/repositories';
+import type { IntegrationRepository } from '@/shared/contracts/integration-storage';
 import {
   persistPlaywrightConnectionStorageState,
 } from './storage-state';

@@ -545,23 +545,25 @@ async function getProducts(
 ): Promise<ProductWithImages[]> {
   try {
     const timings = options?.timings;
-    const totalStart = performance.now();
+    const logTiming = shouldLogTiming();
+    const shouldMeasureTiming = Boolean(timings) || logTiming;
+    const totalStart = shouldMeasureTiming ? performance.now() : 0;
     const provider = options?.provider ?? (await getProductDataProvider());
     const productRepository = await resolveProductRepository(provider);
 
-    const repoStart = performance.now();
+    const repoStart = shouldMeasureTiming ? performance.now() : 0;
     const products = await productRepository.getProducts(filters);
-    const repoMs = performance.now() - repoStart;
-    if (timings) {
+    const repoMs = shouldMeasureTiming ? performance.now() - repoStart : null;
+    if (timings && repoMs !== null) {
       timings['repo'] = repoMs;
     }
 
-    const totalMs = performance.now() - totalStart;
-    if (timings) {
+    const totalMs = shouldMeasureTiming ? performance.now() - totalStart : null;
+    if (timings && totalMs !== null) {
       timings['total'] = totalMs;
     }
 
-    if (shouldLogTiming()) {
+    if (logTiming && totalMs !== null && repoMs !== null) {
       await ErrorSystem.logInfo(
         `[getProducts] Total: ${totalMs.toFixed(2)}ms, Repo: ${repoMs.toFixed(2)}ms`,
         {

@@ -69,7 +69,7 @@ const createLockedTestPromptMessage = (l: 'de' | 'en' | 'pl'): string =>
   ({ de: 'Sprawdź odpowiedź, aby odblokować szybkie podpowiedzi tutora przy tym pytaniu.', en: 'Reveal the answer to unlock tutor prompts for this test question.', pl: 'Sprawdź odpowiedź, aby odblokować szybkie podpowiedzi tutora przy tym pytaniu.' })[l];
 
 const buildTReviewActions = (l: 'de' | 'en' | 'pl'): KangurMobileAiTutorQuickAction[] => [
-  { id: 'review', label: { de: 'Omów odpowiedź', en: 'Review answer', pl: 'Omów odpowiedź' }[l], prompt: { de: 'Omów mój wynik testu: co poszło dobrze i co warto poprawić następnym razem.', en: 'Review my test result: what went well and what to improve next.', pl: 'Omów mój wynik testu: co poszło dobrze i co warto poprawić następnym razem.' }[l] },
+  { id: 'review', label: { de: 'Antwort besprechen', en: 'Review answer', pl: 'Omów odpowiedź' }[l], prompt: { de: 'Omów mój wynik testu: co poszło dobrze i co warto poprawić następnym razem.', en: 'Review my test result: what went well and what to improve next.', pl: 'Omów mój wynik testu: co poszło dobrze i co warto poprawić następnym razem.' }[l] },
   { id: 'next_step', label: { de: 'Co dalej?', en: 'What next?', pl: 'Co dalej?' }[l], prompt: { de: 'Powiedz, jaki powinien być mój następny krok po tym teście.', en: 'Tell me what my next step should be after this test.', pl: 'Powiedz, jaki powinien być mój następny krok po tym teście.' }[l] },
   { id: 'explain', label: { de: 'Wyjaśnij', en: 'Explain', pl: 'Wyjaśnij' }[l], prompt: { de: 'Wyjaśnij mi to prostymi słowami.', en: 'Explain this in simple words.', pl: 'Wyjaśnij mi to prostymi słowami.' }[l] },
 ];
@@ -95,12 +95,11 @@ const buildFallbackQuickActions = (l: 'de' | 'en' | 'pl', s: string, fk: string,
 
 const buildCReviewActions = (cont: KangurAiTutorContent, c: KangurAiTutorConversationContext): KangurMobileAiTutorQuickAction[] => {
   const hasQ = c.questionId !== null && c.questionId !== undefined;
-  const isAns = c.answerRevealed === true;
   const { review, nextStep, explain } = cont.quickActions;
   const rL = (hasQ && c.focusKind === 'review') ? review.questionLabel : review.resultLabel;
   const rP = (hasQ && c.focusKind === 'review') ? review.questionPrompt : review.resultPrompt;
-  const nL = (hasQ && isAns) ? nextStep.reviewQuestionLabel : nextStep.reviewOtherLabel;
-  const nP = (hasQ && isAns) ? nextStep.reviewQuestionPrompt : nextStep.reviewTestPrompt;
+  const nL = (hasQ && c.answerRevealed) ? nextStep.reviewQuestionLabel : nextStep.reviewOtherLabel;
+  const nP = (hasQ && c.answerRevealed) ? nextStep.reviewQuestionPrompt : nextStep.reviewTestPrompt;
   return [
     { id: 'review', label: rL, prompt: rP },
     { id: 'next_step', label: nL, prompt: nP },
@@ -129,7 +128,7 @@ const buildCDefaultActions = (cont: KangurAiTutorContent, c: KangurAiTutorConver
 
 const buildQuickActions = (cont: KangurAiTutorContent | null, c: KangurAiTutorConversationContext, l: 'de' | 'en' | 'pl'): KangurMobileAiTutorQuickAction[] => {
   if (cont === null) return buildFallbackQuickActions(l, c.surface, c.focusKind ?? '', c.answerRevealed === true);
-  const isR = c.answerRevealed === true || c.focusKind === 'review' || c.focusKind === 'summary';
+  const isR = c.answerRevealed || c.focusKind === 'review' || c.focusKind === 'summary';
   if (c.surface === 'test' && isR) return buildCReviewActions(cont, c);
   if (c.surface === 'game' && c.focusKind === 'summary') return buildCGameActions(cont);
   return buildCDefaultActions(cont, c);
@@ -139,15 +138,14 @@ const resolveTutorAvailability = (e: boolean, r: boolean, a: boolean, u?: string
   if (!e) return 'unavailable';
   if (r) return 'restoring_sign_in';
   if (!a) return 'signed_out';
-  if (u !== undefined && u !== null && u.length > 0) return 'unavailable';
-  return 'available';
+  return (typeof u === 'string' && u.length > 0) ? 'unavailable' : 'available';
 };
 
 const resolveAvailabilityMessage = (s: string, l: 'de' | 'en' | 'pl', u?: string | null, e?: Error | null): string | null => {
   if (s === 'restoring_sign_in') return createRestoringSignInMessage(l);
   if (s === 'signed_out') return createSignedOutMessage(l);
   if (s === 'unavailable') {
-    if (u !== undefined && u !== null && u.length > 0) return u;
+    if (typeof u === 'string' && u.length > 0) return u;
     return e?.message ?? null;
   }
   return null;
@@ -155,14 +153,15 @@ const resolveAvailabilityMessage = (s: string, l: 'de' | 'en' | 'pl', u?: string
 
 const resolveResponseMessage = (d?: KangurAiTutorChatResponse | null, e?: Error | null): string | null => {
   const m = d?.message;
-  if (m !== undefined && m !== null && m.length > 0) return m;
-  return e?.message ?? null;
+  return (typeof m === 'string' && m.length > 0) ? m : (e?.message ?? null);
 };
 
 const resolveIsL = (c: KangurAiTutorConversationContext): boolean => {
   const isQ = c.focusKind === 'question' || c.focusKind === 'selection';
   return c.surface === 'test' && isQ && c.answerRevealed === false;
 };
+
+const resolveIsLoading = (cQ: { isLoading: boolean }, nQ: { isLoading: boolean }, uQ: { isLoading: boolean }, a: boolean): boolean => cQ.isLoading || nQ.isLoading || (a && uQ.isLoading);
 
 export const useKangurMobileAiTutor = ({ context, enabled = true, gameTarget = 'practice' }: UseKangurMobileAiTutorOptions): UseKangurMobileAiTutorResult => {
   const { apiBaseUrl } = useKangurMobileRuntime();
@@ -178,23 +177,25 @@ export const useKangurMobileAiTutor = ({ context, enabled = true, gameTarget = '
   useEffect(() => { chatM.reset(); }, [context.surface, context.contentId, context.focusKind, context.focusId, context.questionId, context.answerRevealed]);
   const aState = resolveTutorAvailability(enabled, isRestAuth, isAuth, usageQuery.data?.message);
   const qActions = useMemo(() => isL ? [] : buildQuickActions(contentQuery.data ?? null, context, locale), [contentQuery.data, context, isL, locale]);
+  const resActions = useMemo(() => (chatM.data?.followUpActions ?? []).map((a) => ({ href: resolveKangurMobileActionHref(a, { gameTarget }), id: a.id, label: a.label, reason: a.reason ?? null })), [chatM.data?.followUpActions, gameTarget]);
+  const helpTarget = useMemo(() => {
+    const t = chatM.data?.websiteHelpTarget as KangurAiTutorWebsiteHelpTarget | undefined;
+    return (t !== undefined && t !== null) ? { href: resolveKangurMobileWebsiteHelpHref(t, { gameTarget }), label: t.label } : null;
+  }, [chatM.data?.websiteHelpTarget, gameTarget]);
   return {
     availabilityMessage: resolveAvailabilityMessage(aState, locale, usageQuery.data?.message, chatM.error),
     availabilityState: aState,
     canSendMessages: aState === 'available' && !isL && qActions.length > 0,
     guideEntry: useMemo(() => selectKangurMobileAiTutorGuideEntry(nativeGuideQuery.data?.entries ?? [], context), [context, nativeGuideQuery.data?.entries]),
     interactionHint: isL ? createLockedTestPromptMessage(locale) : null,
-    isLoading: contentQuery.isLoading || nativeGuideQuery.isLoading || (isAuth && usageQuery.isLoading),
+    isLoading: resolveIsLoading(contentQuery, nativeGuideQuery, usageQuery, isAuth),
     isSending: chatM.isPending,
     quickActions: qActions,
-    responseActions: useMemo(() => (chatM.data?.followUpActions ?? []).map((a) => ({ href: resolveKangurMobileActionHref(a, { gameTarget }), id: a.id, label: a.label, reason: a.reason ?? null })), [chatM.data?.followUpActions, gameTarget]),
+    responseActions: resActions,
     responseMessage: resolveResponseMessage(chatM.data, chatM.error),
     sendQuickAction: async (id: string) => { if (aState === 'available') { const a = qActions.find((c) => c.id === id); if (a) await chatM.mutateAsync(a); } },
     tutorName: contentQuery.data?.common.defaultTutorName ?? FALLBACK_TUTOR_NAME[locale],
     usage: usageQuery.data?.usage ?? null,
-    websiteHelpTarget: useMemo(() => {
-      const t = chatM.data?.websiteHelpTarget as KangurAiTutorWebsiteHelpTarget | undefined;
-      return (t !== undefined && t !== null) ? { href: resolveKangurMobileWebsiteHelpHref(t, { gameTarget }), label: t.label } : null;
-    }, [chatM.data?.websiteHelpTarget, gameTarget]),
+    websiteHelpTarget: helpTarget,
   };
 };

@@ -43,6 +43,10 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
 const AI_PATHS_TRIGGER_BUTTONS_KEY = 'ai_paths_trigger_buttons';
+const DEPRECATED_STARTER_WORKFLOW_PATH_IDS = new Set<string>(['path_base_export_blwo_v1']);
+const DEPRECATED_STARTER_WORKFLOW_TRIGGER_BUTTON_IDS = new Set<string>([
+  '5f36f340-3d89-4f6f-a08f-2387f380b90b',
+]);
 export { aiTriggerButtonsQuerySchema as querySchema };
 const readAllAiPathsSettings = getAllAiPathsSettings as () => Promise<AiPathsSettingRecord[]>;
 const readTriggerButtonsRaw = async (): Promise<string | null> =>
@@ -190,6 +194,28 @@ const readRequestCookie = (req: NextRequest, name: string): string | null => {
   return cookies?.get?.(name)?.value ?? null;
 };
 
+const isDeprecatedStarterWorkflowTriggerButton = (
+  button: Pick<AiTriggerButtonRecord, 'id' | 'pathId'> | null | undefined
+): boolean => {
+  if (!button) return false;
+  const buttonId = typeof button.id === 'string' ? button.id.trim() : '';
+  const pathId = typeof button.pathId === 'string' ? button.pathId.trim() : '';
+  return (
+    DEPRECATED_STARTER_WORKFLOW_TRIGGER_BUTTON_IDS.has(buttonId) ||
+    DEPRECATED_STARTER_WORKFLOW_PATH_IDS.has(pathId)
+  );
+};
+
+const pruneDeprecatedTriggerButtons = (
+  buttons: AiTriggerButtonRecord[]
+): { nextButtons: AiTriggerButtonRecord[]; removedCount: number } => {
+  const nextButtons = buttons.filter((button) => !isDeprecatedStarterWorkflowTriggerButton(button));
+  return {
+    nextButtons,
+    removedCount: buttons.length - nextButtons.length,
+  };
+};
+
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     await requireAiPathsRunAccess();
@@ -222,6 +248,11 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
         'Cache-Control': 'no-store',
       },
     });
+  }
+  const deprecatedPrune = pruneDeprecatedTriggerButtons(parsedButtons);
+  if (deprecatedPrune.removedCount > 0) {
+    parsedButtons = deprecatedPrune.nextButtons;
+    await writeTriggerButtonsRaw(serializeAiTriggerButtonsRaw(parsedButtons));
   }
   const query = aiTriggerButtonsQuerySchema.parse(_ctx.query ?? {});
   const fixtureCookieValue = readRequestCookie(req, PLAYWRIGHT_AI_PATHS_TRIGGER_BUTTONS_COOKIE_NAME);

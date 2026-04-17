@@ -15,6 +15,10 @@ import {
   useRouterMock,
 } from './KangurLoginPage.test-support';
 
+const KANGUR_LEARNER_SIGN_IN_ENDPOINT = '/kangur-api/auth/learner-signin';
+const KANGUR_LEARNER_SIGN_OUT_ENDPOINT = '/kangur-api/auth/learner-signout';
+const KANGUR_PARENT_ACCOUNT_CREATE_ENDPOINT = '/kangur-api/auth/parent-account/create';
+
 describe('KangurLoginPage', () => {
   let KangurLoginPage: typeof import('./KangurLoginPage').KangurLoginPage;
 
@@ -39,7 +43,7 @@ describe('KangurLoginPage', () => {
 
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input.toString();
-      if (url.endsWith('/api/kangur/auth/learner-signout')) {
+      if (url.endsWith(KANGUR_LEARNER_SIGN_OUT_ENDPOINT)) {
         return {
           ok: true,
           status: 200,
@@ -98,7 +102,7 @@ describe('KangurLoginPage', () => {
 
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input.toString();
-      if (url.endsWith('/api/kangur/auth/learner-signout')) {
+      if (url.endsWith(KANGUR_LEARNER_SIGN_OUT_ENDPOINT)) {
         throw new Error('cleanup failed');
       }
       if (url.endsWith('/api/auth/verify-credentials')) {
@@ -158,7 +162,7 @@ describe('KangurLoginPage', () => {
 
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input.toString();
-      if (url.endsWith('/api/kangur/auth/learner-signout')) {
+      if (url.endsWith(KANGUR_LEARNER_SIGN_OUT_ENDPOINT)) {
         return {
           ok: true,
           status: 200,
@@ -211,14 +215,14 @@ describe('KangurLoginPage', () => {
 
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input.toString();
-      if (url.endsWith('/api/kangur/auth/learner-signout')) {
+      if (url.endsWith(KANGUR_LEARNER_SIGN_OUT_ENDPOINT)) {
         return {
           ok: true,
           status: 200,
           json: async () => ({}),
         };
       }
-      if (url.endsWith('/api/kangur/auth/learner-signin')) {
+      if (url.endsWith(KANGUR_LEARNER_SIGN_IN_ENDPOINT)) {
         return {
           ok: true,
           status: 200,
@@ -261,7 +265,7 @@ describe('KangurLoginPage', () => {
 
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input.toString();
-      if (url.endsWith('/api/kangur/auth/parent-account/create')) {
+      if (url.endsWith(KANGUR_PARENT_ACCOUNT_CREATE_ENDPOINT)) {
         return {
           ok: true,
           status: 200,
@@ -314,7 +318,7 @@ describe('KangurLoginPage', () => {
 
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input.toString();
-      if (url.endsWith('/api/kangur/auth/parent-account/create')) {
+      if (url.endsWith(KANGUR_PARENT_ACCOUNT_CREATE_ENDPOINT)) {
         return {
           ok: true,
           status: 200,
@@ -366,7 +370,7 @@ describe('KangurLoginPage', () => {
 
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input.toString();
-      if (url.endsWith('/api/kangur/auth/parent-account/create')) {
+      if (url.endsWith(KANGUR_PARENT_ACCOUNT_CREATE_ENDPOINT)) {
         return {
           ok: true,
           status: 200,
@@ -405,7 +409,7 @@ describe('KangurLoginPage', () => {
 
     const createCall = fetchMock.mock.calls.find(([input]) => {
       const url = typeof input === 'string' ? input : input.toString();
-      return url.endsWith('/api/kangur/auth/parent-account/create');
+      return url.endsWith(KANGUR_PARENT_ACCOUNT_CREATE_ENDPOINT);
     });
 
     expect(createCall).toBeDefined();
@@ -425,7 +429,7 @@ describe('KangurLoginPage', () => {
 
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input.toString();
-      if (url.endsWith('/api/kangur/auth/parent-account/create')) {
+      if (url.endsWith(KANGUR_PARENT_ACCOUNT_CREATE_ENDPOINT)) {
         return {
           ok: true,
           status: 200,
@@ -486,7 +490,7 @@ describe('KangurLoginPage', () => {
 
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input.toString();
-      if (url.endsWith('/api/kangur/auth/parent-account/create')) {
+      if (url.endsWith(KANGUR_PARENT_ACCOUNT_CREATE_ENDPOINT)) {
         return {
           ok: true,
           status: 200,

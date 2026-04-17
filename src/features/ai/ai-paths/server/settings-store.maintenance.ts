@@ -31,6 +31,7 @@ import {
   countPendingStarterWorkflowConfigRefreshes,
   countPendingStarterWorkflowDefaults,
   ensureStarterWorkflowDefaults,
+  pruneDeprecatedStarterWorkflowRecords,
   refreshStarterWorkflowConfigs,
   restoreStaticStarterWorkflowBundle,
 } from './starter-workflows-settings';
@@ -269,6 +270,19 @@ export const buildAiPathsMaintenanceReport = (
     });
   }
 
+  const deprecatedStarterPruneCount = pruneDeprecatedStarterWorkflowRecords(records).affectedCount;
+  if (deprecatedStarterPruneCount > 0) {
+    actions.push({
+      id: 'prune_deprecated_starter_workflows',
+      title: 'Prune Deprecated Starter Workflows',
+      description:
+        'Delete deprecated starter-workflow path configs, index entries, and trigger buttons that should no longer be exposed.',
+      blocking: false,
+      status: 'pending',
+      affectedRecords: deprecatedStarterPruneCount,
+    });
+  }
+
   const staticRecoveryCount = countPendingStaticStarterWorkflowBundle(records);
   if (staticRecoveryCount > 0) {
     actions.push({
@@ -364,6 +378,18 @@ export const runMaintenanceAction = (args: {
       });
       break;
 
+    case 'prune_deprecated_starter_workflows': {
+      const pruned = pruneDeprecatedStarterWorkflowRecords(args.records);
+      return {
+        actionId: args.actionId,
+        affectedCount: pruned.affectedCount,
+        deletedKeys: pruned.deletedKeys,
+        durationMs: Date.now() - startedAt,
+        nextRecords: pruned.nextRecords,
+        success: true,
+      };
+    }
+
     case 'ensure_starter_workflow_defaults': {
       const result = ensureStarterWorkflowDefaults(args.records);
       nextRecords.push(...result.nextRecords);
@@ -436,6 +462,7 @@ export const runFullMaintenance = (records: AiPathsSettingRecord[]): AiPathsMain
     [
       'compact_oversized_configs',
       'repair_path_index',
+      'prune_deprecated_starter_workflows',
       'restore_static_recovery_bundle',
       'ensure_starter_workflow_defaults',
       'refresh_starter_workflow_configs',

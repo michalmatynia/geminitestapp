@@ -12,10 +12,10 @@ type RenderProductPublicRouteOptions = {
   locale?: string | null;
 };
 
-export function renderProductPublicRoute({
+export async function renderProductPublicRoute({
   id,
   locale,
-}: RenderProductPublicRouteOptions): JSX.Element {
+}: RenderProductPublicRouteOptions): Promise<JSX.Element> {
   'use cache';
   applyCacheLife('hours');
 

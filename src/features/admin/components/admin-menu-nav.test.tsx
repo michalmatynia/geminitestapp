@@ -50,9 +50,9 @@ describe('buildAdminNav', () => {
     const item = findNavItem(
       nav,
       (entry) =>
-        entry.id === 'integrations/marketplaces/playwright/script' &&
+        entry.id === 'playwright/programmable/script' &&
         entry.label === 'Script Editor' &&
-        entry.href === '/admin/integrations/marketplaces/playwright/script'
+        entry.href === '/admin/playwright/programmable/script'
     );
 
     expect(item).not.toBeNull();

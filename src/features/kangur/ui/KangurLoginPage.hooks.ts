@@ -32,6 +32,7 @@ import {
 import { useTurnstile } from '@/features/kangur/ui/login-page/use-turnstile';
 import {
   parseJsonResponse,
+  resolveKangurClientEndpoint,
   resolveLoginKind,
   type KangurLoginInputErrorTarget,
   type KangurLoginSubmitStage,
@@ -153,7 +154,7 @@ const requestKangurParentVerificationResend = async ({
   callbackValue: string | undefined;
   email: string;
 }) =>
-  fetch('/api/kangur/auth/parent-account/resend', {
+  fetch(resolveKangurClientEndpoint('/api/kangur/auth/parent-account/resend'), {
     method: 'POST',
     credentials: 'same-origin',
     headers: {

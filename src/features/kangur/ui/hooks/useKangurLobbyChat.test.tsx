@@ -125,7 +125,7 @@ describe('useKangurLobbyChat', () => {
     );
 
     await waitFor(() => {
-      expect(eventSourceCtor).toHaveBeenCalledWith('/api/kangur/duels/lobby-chat/stream?limit=40');
+      expect(eventSourceCtor).toHaveBeenCalledWith('/kangur-api/duels/lobby-chat/stream?limit=40');
     });
 
     act(() => {

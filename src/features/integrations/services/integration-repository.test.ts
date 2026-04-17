@@ -5,7 +5,7 @@ const { listIntegrationsMock, listConnectionsMock } = vi.hoisted(() => ({
   listConnectionsMock: vi.fn(),
 }));
 
-vi.mock('./integration-repository/mongo-impl', () => ({
+vi.mock('@/shared/lib/integration-repository', () => ({
   getMongoIntegrationRepository: () => ({
     listIntegrations: (...args: unknown[]) => listIntegrationsMock(...args),
     listConnections: (...args: unknown[]) => listConnectionsMock(...args),
@@ -62,8 +62,16 @@ describe('getIntegrationsWithConnections', () => {
             id: 'conn-tradera-1',
             integrationId: 'integration-tradera-1',
             name: 'Tradera browser',
+            hasPlaywrightStorageState: false,
             traderaBrowserMode: 'scripted',
             hasPlaywrightListingScript: true,
+            scanner1688StartUrl: null,
+            scanner1688LoginMode: null,
+            scanner1688DefaultSearchMode: null,
+            scanner1688CandidateResultLimit: null,
+            scanner1688MinimumCandidateScore: null,
+            scanner1688MaxExtractedImages: null,
+            scanner1688AllowUrlImageSearchFallback: null,
             traderaDefaultTemplateId: null,
             traderaDefaultDurationHours: 72,
             traderaAutoRelistEnabled: true,

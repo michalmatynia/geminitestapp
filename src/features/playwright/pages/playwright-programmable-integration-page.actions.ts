@@ -8,7 +8,6 @@ import type {
   PlaywrightProgrammableIntegrationPageActionArgs,
   PlaywrightProgrammableIntegrationPageActions,
 } from '@/features/playwright/pages/playwright-programmable-integration-page.types';
-import { api } from '@/shared/lib/api-client';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 const getErrorMessage = (error: unknown, fallback: string): string =>
@@ -75,7 +74,6 @@ const saveCurrentConnection = async (
 
   try {
     const saved = await args.upsertConnectionMutateAsync({
-      integrationId: args.programmableIntegration.id,
       ...(args.selectedConnection !== null
         ? { connectionId: args.selectedConnection.id }
         : {}),
@@ -105,16 +103,10 @@ const handlePromoteConnectionSettings = async (
 
   args.setIsPromotingConnectionSettings(true);
   try {
-    const response = await api.post<{
-      connectionId: string;
-      importActionId: string;
-      importDraftActionName: string;
-      listingActionId: string;
-      listingDraftActionName: string;
-    }>(
-      `/api/v2/integrations/connections/${args.selectedConnection.id}/promote-playwright-browser-ownership`,
-      buildPromotionPayload(args)
-    );
+    const response = await args.promoteBrowserOwnershipMutateAsync({
+      connectionId: args.selectedConnection.id,
+      payload: buildPromotionPayload(args),
+    });
 
     args.setSelectedConnectionId(response.connectionId);
     args.setListingActionId(response.listingActionId);
@@ -151,10 +143,9 @@ const handleCleanupLegacyBrowserFields = async (
 
   args.setIsCleaningLegacyBrowserFields(true);
   try {
-    await api.post(
-      `/api/v2/integrations/connections/${args.selectedConnection.id}/cleanup-playwright-browser-persistence`,
-      {}
-    );
+    await args.cleanupBrowserPersistenceMutateAsync({
+      connectionId: args.selectedConnection.id,
+    });
     await args.connectionsRefetch?.();
     args.toast('Stored programmable browser fields cleared from the connection record.', {
       variant: 'success',
@@ -182,10 +173,7 @@ const handleCleanupAllLegacyBrowserFields = async (
 
   args.setIsCleaningAllLegacyBrowserFields(true);
   try {
-    const response = await api.post<{ cleanedCount: number }>(
-      `/api/v2/integrations/${args.programmableIntegration.id}/connections/cleanup-playwright-browser-persistence`,
-      {}
-    );
+    const response = await args.cleanupAllBrowserPersistenceMutateAsync();
     await args.connectionsRefetch?.();
     args.toast(
       `Cleared stored programmable browser fields for ${response.cleanedCount} connections.`,
@@ -240,10 +228,10 @@ const handleRunTest = async (
       return;
     }
 
-    const response = await api.post<Record<string, unknown>>(
-      '/api/v2/integrations/playwright/test',
-      { connectionId: saved.id, scriptType }
-    );
+    const response = await args.testProgrammableConnectionMutateAsync({
+      connectionId: saved.id,
+      scriptType,
+    });
     args.setTestResultJson(JSON.stringify(response, null, 2));
     args.toast(`${scriptType === 'listing' ? 'Listing' : 'Import'} script test completed.`, {
       variant: 'success',

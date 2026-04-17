@@ -82,22 +82,22 @@ describe('ai-paths settings handler', () => {
 
   it('allows config keys when the path id ends with a version suffix', async () => {
     listAiPathsSettingsMock.mockResolvedValue([
-      { key: 'ai_paths_config_path_base_export_blwo_v1', value: '{"id":"path_base_export_blwo_v1"}' },
+      { key: 'ai_paths_config_path_name_normalize_v1', value: '{"id":"path_name_normalize_v1"}' },
     ]);
 
     const response = await GET_handler(
       new NextRequest(
-        'http://localhost/api/ai-paths/settings?keys=ai_paths_config_path_base_export_blwo_v1'
+        'http://localhost/api/ai-paths/settings?keys=ai_paths_config_path_name_normalize_v1'
       ),
       {} as Parameters<typeof GET_handler>[1]
     );
 
     expect(response.status).toBe(200);
     expect(listAiPathsSettingsMock).toHaveBeenCalledWith([
-      'ai_paths_config_path_base_export_blwo_v1',
+      'ai_paths_config_path_name_normalize_v1',
     ]);
     await expect(response.json()).resolves.toEqual([
-      { key: 'ai_paths_config_path_base_export_blwo_v1', value: '{"id":"path_base_export_blwo_v1"}' },
+      { key: 'ai_paths_config_path_name_normalize_v1', value: '{"id":"path_name_normalize_v1"}' },
     ]);
   });
 
@@ -130,8 +130,8 @@ describe('ai-paths settings handler', () => {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
-          key: 'ai_paths_config_path_base_export_blwo_v1',
-          value: '{"id":"path_base_export_blwo_v1"}',
+          key: 'ai_paths_config_path_name_normalize_v1',
+          value: '{"id":"path_name_normalize_v1"}',
         }),
       }),
       {} as Parameters<typeof POST_handler>[1]
@@ -139,12 +139,12 @@ describe('ai-paths settings handler', () => {
 
     expect(response.status).toBe(200);
     expect(upsertAiPathsSettingMock).toHaveBeenCalledWith(
-      'ai_paths_config_path_base_export_blwo_v1',
-      '{"id":"path_base_export_blwo_v1"}'
+      'ai_paths_config_path_name_normalize_v1',
+      '{"id":"path_name_normalize_v1"}'
     );
     await expect(response.json()).resolves.toEqual({
-      key: 'ai_paths_config_path_base_export_blwo_v1',
-      value: '{"id":"path_base_export_blwo_v1"}',
+      key: 'ai_paths_config_path_name_normalize_v1',
+      value: '{"id":"path_name_normalize_v1"}',
     });
   });
 

@@ -289,11 +289,11 @@ function RunHistoryTreeNode(
         'group flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-xs transition-colors',
         isSelected === true && 'bg-sky-600/20 text-white ring-1 ring-inset ring-sky-400/40',
         isSelected === false &&
-          Boolean(dropPosition) &&
+          dropPosition !== null &&
           'bg-sky-500/10 ring-1 ring-inset ring-sky-500/60',
-        isSelected === false && !dropPosition && isDragging === true && 'opacity-50',
+        isSelected === false && dropPosition === null && isDragging === true && 'opacity-50',
         isSelected === false &&
-          !dropPosition &&
+          dropPosition === null &&
           isDragging === false &&
           'text-muted-foreground hover:bg-muted/40 hover:text-foreground'
       )}
@@ -834,8 +834,14 @@ function StepDetail({
                     {binding.connected ? 'registry' : binding.mode}
                   </Badge>
                   <div className='break-words text-muted-foreground'>
-                    {binding.selectorKey ?? binding.resolvedSelector ?? binding.fallbackSelector ?? 'Unresolved'}
-                    {binding.selectorProfile ? ` (${binding.selectorProfile})` : ''}
+                    {binding.selectorKey ??
+                      binding.resolvedSelector ??
+                      binding.fallbackSelector ??
+                      'Unresolved'}
+                    {binding.selectorProfile !== null &&
+                    binding.selectorProfile !== ''
+                      ? ` (${binding.selectorProfile})`
+                      : ''}
                   </div>
                 </div>
               ))}
@@ -861,15 +867,20 @@ function StepDetail({
           ['Duration', formatDuration(step.durationMs)],
         ]}
       />
-      {step.message || step.warning ? (
+      {(step.message !== null && step.message !== '') ||
+      (step.warning !== null && step.warning !== '') ? (
         <div className='rounded border border-border/50 bg-card/20 p-3 text-xs'>
-          {step.message ? <p>{step.message}</p> : null}
-          {step.warning ? <p className='mt-2 text-amber-200'>{step.warning}</p> : null}
+          {step.message !== null && step.message !== '' ? <p>{step.message}</p> : null}
+          {step.warning !== null && step.warning !== '' ? (
+            <p className='mt-2 text-amber-200'>{step.warning}</p>
+          ) : null}
         </div>
       ) : null}
       {step.details.length > 0 ? (
         <div className='space-y-2'>
-          <Label className='text-[11px] uppercase tracking-wide text-muted-foreground'>Details</Label>
+          <Label className='text-[11px] uppercase tracking-wide text-muted-foreground'>
+            Details
+          </Label>
           <KeyValueGrid
             values={step.details.map(
               (detail): [string, string | null | undefined] => [detail.label, detail.value]
@@ -895,9 +906,9 @@ function StepDetail({
           </div>
         </div>
       ) : null}
-      {inputPreview || outputPreview ? (
+      {inputPreview !== '' || outputPreview !== '' ? (
         <div className='grid gap-3 lg:grid-cols-2'>
-          {inputPreview ? (
+          {inputPreview !== '' ? (
             <div className='rounded border border-border/50 bg-black/20 p-3'>
               <div className='mb-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground'>
                 Input
@@ -907,7 +918,7 @@ function StepDetail({
               </pre>
             </div>
           ) : null}
-          {outputPreview ? (
+          {outputPreview !== '' ? (
             <div className='rounded border border-border/50 bg-black/20 p-3'>
               <div className='mb-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground'>
                 Output
@@ -951,13 +962,15 @@ export function AdminPlaywrightActionRunsPageRuntime(): React.JSX.Element {
       const normalizedDateTo = normalizeDateTimeFilter(dateTo);
       return {
         status,
-        ...(normalizedQuery ? { query: normalizedQuery } : {}),
-        ...(normalizedActionId ? { actionId: normalizedActionId } : {}),
-        ...(normalizedRuntimeKey ? { runtimeKey: normalizedRuntimeKey } : {}),
-        ...(normalizedSelectorProfile ? { selectorProfile: normalizedSelectorProfile } : {}),
-        ...(normalizedDateFrom ? { dateFrom: normalizedDateFrom } : {}),
-        ...(normalizedDateTo ? { dateTo: normalizedDateTo } : {}),
-        ...(cursor ? { cursor } : {}),
+        ...(normalizedQuery !== '' ? { query: normalizedQuery } : {}),
+        ...(normalizedActionId !== '' ? { actionId: normalizedActionId } : {}),
+        ...(normalizedRuntimeKey !== '' ? { runtimeKey: normalizedRuntimeKey } : {}),
+        ...(normalizedSelectorProfile !== ''
+          ? { selectorProfile: normalizedSelectorProfile }
+          : {}),
+        ...(normalizedDateFrom !== undefined ? { dateFrom: normalizedDateFrom } : {}),
+        ...(normalizedDateTo !== undefined ? { dateTo: normalizedDateTo } : {}),
+        ...(cursor !== null ? { cursor } : {}),
         limit: RUN_PAGE_SIZE,
       };
     },
@@ -1007,7 +1020,10 @@ export function AdminPlaywrightActionRunsPageRuntime(): React.JSX.Element {
       return;
     }
     if (selectedRunId !== null && runs.some((run) => run.runId === selectedRunId)) return;
-    setSelectedRunId(runs[0]!.runId);
+    const firstRun = runs[0];
+    if (firstRun !== undefined) {
+      setSelectedRunId(firstRun.runId);
+    }
     setSelectedStepId(null);
   }, [runs, selectedRunId]);
 
@@ -1028,7 +1044,7 @@ export function AdminPlaywrightActionRunsPageRuntime(): React.JSX.Element {
   const adapter = useMemo(
     () =>
       createMasterFolderTreeTransactionAdapter({
-        onApply: async () => undefined,
+        onApply: () => Promise.resolve(undefined),
       }),
     []
   );
@@ -1056,12 +1072,11 @@ export function AdminPlaywrightActionRunsPageRuntime(): React.JSX.Element {
   }, []);
 
   const handleNextPage = useCallback((): void => {
-    if (!nextCursor) return;
+    if (nextCursor === null) return;
     setCursorStack((stack) => [...stack, cursor]);
     setCursor(nextCursor);
     setSelectedStepId(null);
   }, [cursor, nextCursor]);
-
   const handlePreviousPage = useCallback((): void => {
     setCursorStack((stack) => {
       const previousCursor = stack.length > 0 ? stack[stack.length - 1] : null;
@@ -1191,11 +1206,12 @@ export function AdminPlaywrightActionRunsPageRuntime(): React.JSX.Element {
             type='button'
             variant='outline'
             onClick={() => {
-              void runsQuery.refetch();
-              if (selectedRunId) void detailQuery.refetch();
+              runsQuery.refetch().catch(() => undefined);
+              if (selectedRunId !== null) {
+                detailQuery.refetch().catch(() => undefined);
+              }
             }}
-          >
-            Refresh
+          >            Refresh
           </Button>
         </div>
       </Card>
@@ -1223,108 +1239,132 @@ export function AdminPlaywrightActionRunsPageRuntime(): React.JSX.Element {
                 type='button'
                 size='sm'
                 variant='outline'
-                disabled={!nextCursor || isPagingDisabled}
+                disabled={nextCursor === null || isPagingDisabled}
                 onClick={handleNextPage}
               >
                 Next
               </Button>
               <DatabaseIcon className='size-4 text-muted-foreground' />
             </div>
-          </div>
-          {isLoading ? (
-            <div className='space-y-2'>
-              {Array.from({ length: 9 }).map((_, index) => (
-                <Skeleton key={index} className='h-8 w-full' />
-              ))}
             </div>
-          ) : masterNodes.length === 0 ? (
-            <div className='flex min-h-[360px] items-center justify-center rounded border border-dashed border-border/60 text-center text-sm text-muted-foreground'>
-              No retained Playwright action runs found.
-            </div>
-          ) : (
-            <div className='max-h-[640px] overflow-auto rounded border border-border/60 bg-background/20 p-1'>
-              <FolderTreeViewportV2
-                controller={controller}
-                scrollToNodeRef={scrollToNodeRef}
-                enableDnd={false}
-                rootDropUi={rootDropUi}
-                renderNode={(input) => (
-                  <RunHistoryTreeNode
-                    {...input}
-                    onSelectRun={handleSelectRun}
-                    onSelectStep={handleSelectStep}
-                    firstFailedStepIdByRunId={firstFailedStepIdByRunId}
-                  />
-                )}
-              />
-            </div>
-          )}
-          <MasterTreeSettingsButton
+            {(() => {
+            if (isLoading) {
+              return (
+                <div className='space-y-2'>
+                  {Array.from({ length: 9 }).map((_, index) => (
+                    <Skeleton key={index} className='h-8 w-full' />
+                  ))}
+                </div>
+              );
+            }
+
+            if (masterNodes.length === 0) {
+              return (
+                <div className='flex min-h-[360px] items-center justify-center rounded border border-dashed border-border/60 text-center text-sm text-muted-foreground'>
+                  No retained Playwright action runs found.
+                </div>
+              );
+            }
+
+            return (
+              <div className='max-h-[640px] overflow-auto rounded border border-border/60 bg-background/20 p-1'>
+                <FolderTreeViewportV2
+                  controller={controller}
+                  scrollToNodeRef={scrollToNodeRef}
+                  enableDnd={false}
+                  rootDropUi={rootDropUi}
+                  renderNode={(input) => (
+                    <RunHistoryTreeNode
+                      {...input}
+                      onSelectRun={handleSelectRun}
+                      onSelectStep={handleSelectStep}
+                      firstFailedStepIdByRunId={firstFailedStepIdByRunId}
+                    />
+                  )}
+                />
+              </div>
+            );
+            })()}
+            <MasterTreeSettingsButton
             instance={HISTORY_TREE_INSTANCE}
             href={HISTORY_TREE_SETTINGS_HREF}
-          />
+            />
         </Card>
 
         <Card className='min-h-[520px] border-border/60 bg-card/25 p-4'>
-          {!selectedRunId ? (
-            <div className='flex h-full min-h-[360px] items-center justify-center text-sm text-muted-foreground'>
-              Select a run to inspect its action and step details.
-            </div>
-          ) : detailQuery.isLoading ? (
-            <div className='space-y-3'>
-              <Skeleton className='h-7 w-48' />
-              <Skeleton className='h-24 w-full' />
-              <Skeleton className='h-40 w-full' />
-            </div>
-          ) : !detail ? (
-            <div className='flex h-full min-h-[360px] items-center justify-center text-sm text-muted-foreground'>
-              Run detail is unavailable.
-            </div>
-          ) : (
-            <div className='space-y-4'>
-              <div className='flex flex-wrap items-start justify-between gap-3'>
-                <div>
-                  {selectedStep ? (
-                    <h2 className='text-base font-semibold'>{selectedStep.label}</h2>
-                  ) : (
-                    <a
-                      href={resolveStepSequencerActionHref(detail.run.actionId)}
-                      className='text-base font-semibold text-foreground underline-offset-4 transition-colors hover:text-accent-foreground hover:underline'
-                    >
-                      {detail.run.actionName}
-                    </a>
-                  )}
-                  <p className='text-xs text-muted-foreground'>
-                    {selectedStep ? 'Step detail' : 'Action run detail'}
-                  </p>
+          {(() => {
+            if (selectedRunId === null) {
+              return (
+                <div className='flex h-full min-h-[360px] items-center justify-center text-sm text-muted-foreground'>
+                  Select a run to inspect its action and step details.
                 </div>
-                {selectedStep ? (
-                  <Button
-                    type='button'
-                    size='sm'
-                    variant='outline'
-                    onClick={() => setSelectedStepId(null)}
-                  >
-                    Show run
-                  </Button>
-                ) : null}
+              );
+            }
+
+            if (detailQuery.isLoading) {
+              return (
+                <div className='space-y-3'>
+                  <Skeleton className='h-7 w-48' />
+                  <Skeleton className='h-24 w-full' />
+                  <Skeleton className='h-40 w-full' />
+                </div>
+              );
+            }
+
+            if (detail === null) {
+              return (
+                <div className='flex h-full min-h-[360px] items-center justify-center text-sm text-muted-foreground'>
+                  Run detail is unavailable.
+                </div>
+              );
+            }
+
+            return (
+              <div className='space-y-4'>
+                <div className='flex flex-wrap items-start justify-between gap-3'>
+                  <div>
+                    {selectedStep !== null ? (
+                      <h2 className='text-base font-semibold'>{selectedStep.label}</h2>
+                    ) : (
+                      <a
+                        href={resolveStepSequencerActionHref(detail.run.actionId)}
+                        className='text-base font-semibold text-foreground underline-offset-4 transition-colors hover:text-accent-foreground hover:underline'
+                      >
+                        {detail.run.actionName}
+                      </a>
+                    )}
+                    <p className='text-xs text-muted-foreground'>
+                      {selectedStep !== null ? 'Step detail' : 'Action run detail'}
+                    </p>
+                  </div>
+                  {selectedStep !== null ? (
+                    <Button
+                      type='button'
+                      size='sm'
+                      variant='outline'
+                      onClick={() => setSelectedStepId(null)}
+                    >
+                      Show run
+                    </Button>
+                  ) : null}
+                </div>
+                {selectedStep !== null ? (
+                  <StepDetail
+                    step={selectedStep}
+                    steps={detail.steps}
+                    actionId={detail.run.actionId ?? ''}
+                    onSelectStep={(stepId) => setSelectedStepId(stepId)}
+                  />
+                ) : (
+                  <RunDetail
+                    run={detail.run}
+                    steps={detail.steps}
+                    onSelectStep={(stepId) => setSelectedStepId(stepId)}
+                  />
+                )}
               </div>
-              {selectedStep ? (
-                <StepDetail
-                  step={selectedStep}
-                  steps={detail.steps}
-                  actionId={detail.run.actionId ?? ''}
-                  onSelectStep={(stepId) => setSelectedStepId(stepId)}
-                />
-              ) : (
-                <RunDetail
-                  run={detail.run}
-                  steps={detail.steps}
-                  onSelectStep={(stepId) => setSelectedStepId(stepId)}
-                />
-              )}
-            </div>
-          )}
+            );
+          })()}
         </Card>
       </div>
     </div>

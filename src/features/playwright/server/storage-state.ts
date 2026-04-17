@@ -1,6 +1,6 @@
 import 'server-only';
 
-import type { IntegrationRepository } from '@/shared/contracts/integrations/repositories';
+import type { IntegrationRepository } from '@/shared/contracts/integration-storage';
 import { encryptSecret } from '@/shared/lib/security/encryption';
 import type { PersistedStorageState } from './settings';
 

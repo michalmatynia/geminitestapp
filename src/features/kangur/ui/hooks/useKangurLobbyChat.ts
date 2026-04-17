@@ -16,6 +16,7 @@ import {
   withKangurClientErrorSync,
 } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
+import { resolveKangurClientEndpoint } from '@/features/kangur/services/resolve-kangur-client-endpoint';
 import { KANGUR_DUELS_LOBBY_CHAT_STREAM_ENDPOINT } from '@/features/kangur/services/local-kangur-platform-endpoints';
 import { useInterval } from '@/features/kangur/shared/hooks/use-interval';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
@@ -220,7 +221,7 @@ const applyKangurLobbyChatOlderResponse = ({
 };
 
 const openKangurLobbyChatStream = (limit: number): EventSource | null => {
-  const streamUrl = `${KANGUR_DUELS_LOBBY_CHAT_STREAM_ENDPOINT}?limit=${encodeURIComponent(limit)}`;
+  const streamUrl = `${resolveKangurClientEndpoint(KANGUR_DUELS_LOBBY_CHAT_STREAM_ENDPOINT)}?limit=${encodeURIComponent(limit)}`;
   return withKangurClientErrorSync(
     {
       source: 'kangur.hooks.useKangurLobbyChat',

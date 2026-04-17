@@ -60,6 +60,7 @@ import {
   hasPresetNameConflict,
   normalizePresetName,
 } from './product-filters-utils';
+import { buildCategoryFilterOptions } from './product-category-filter-options';
 
 export { ProductSelectionActions } from './ProductSelectionActions';
 
@@ -178,54 +179,12 @@ export function ProductFilters({
   const { data: rawProducers } = useProducers({ enabled: filterMetadataEnabled });
   const producers = Array.isArray(rawProducers) ? rawProducers.filter(isProducer) : [];
 
-  const categoryOptions: Array<LabeledOptionDto<string>> = [
-    { value: '__all__', label: 'All categories' },
-  ];
-  const categoryEntries = categories.map((category: ProductCategory) => {
-    const localizedName = normalizeString(category[nameLocale]);
-    const fallbackName =
-      normalizeString(category.name_en) ||
-      normalizeString(category.name) ||
-      normalizeString(category.name_pl) ||
-      normalizeString(category.name_de);
-    return {
-      category,
-      label: localizedName || fallbackName || normalizeString(category.id) || 'Unlabeled category',
-    };
+  const categoryOptions = buildCategoryFilterOptions({
+    categories,
+    catalogNameById,
+    nameLocale,
+    selectedCatalogId,
   });
-  const duplicateCountByLabel = new Map<string, number>();
-
-  categoryEntries.forEach(({ label }) => {
-    duplicateCountByLabel.set(label, (duplicateCountByLabel.get(label) ?? 0) + 1);
-  });
-
-  categoryEntries
-    .sort((left, right) => {
-      const labelComparison = left.label.localeCompare(right.label);
-      if (labelComparison !== 0) return labelComparison;
-
-      const leftCatalog =
-        normalizeString(catalogNameById.get(left.category.catalogId)) ||
-        normalizeString(left.category.catalogId) ||
-        'Unknown catalog';
-      const rightCatalog =
-        normalizeString(catalogNameById.get(right.category.catalogId)) ||
-        normalizeString(right.category.catalogId) ||
-        'Unknown catalog';
-      return leftCatalog.localeCompare(rightCatalog);
-    })
-    .forEach(({ category, label }) => {
-      const catalogLabel =
-        normalizeString(catalogNameById.get(category.catalogId)) ||
-        normalizeString(category.catalogId) ||
-        'Unknown catalog';
-      const isDuplicateLabel = (duplicateCountByLabel.get(label) ?? 0) > 1;
-
-      categoryOptions.push({
-        value: normalizeString(category.id),
-        label: !selectedCatalogId && isDuplicateLabel ? `${label} (${catalogLabel})` : label,
-      });
-    });
 
   const fallbackTagOptionMap = new Map<string, { id: string; name: string }>();
   availableTags.forEach((tag) => {
@@ -249,6 +208,7 @@ export function ProductFilters({
       value: normalizeString(tag.id),
       label: normalizeString(tag.name) || normalizeString(tag.id),
     })),
+    categoryId: categoryOptions.filter((option) => option.value !== '__all__'),
     producerId: producers.map((producer) => ({
       value: normalizeString(producer.id),
       label: normalizeString(producer.name) || normalizeString(producer.id),

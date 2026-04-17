@@ -26,10 +26,6 @@ vi.mock('@/shared/hooks/usePlaywrightStepSequencer', () => ({
   usePlaywrightActions: (options?: { enabled?: boolean }) => usePlaywrightActionsMock(options),
 }));
 
-vi.mock('./DynamicPlaywrightSettingsForm', () => ({
-  DynamicPlaywrightSettingsForm: () => <div data-testid='dynamic-playwright-settings-form' />,
-}));
-
 import { PlaywrightTabContent } from './PlaywrightTabContent';
 
 describe('PlaywrightTabContent', () => {
@@ -73,10 +69,8 @@ describe('PlaywrightTabContent', () => {
     });
     useIntegrationsFormMock.mockReturnValue({
       editingConnectionId: 'connection-tradera-1',
-      playwrightPersonaId: null,
     });
     useIntegrationsActionsMock.mockReturnValue({
-      handleSelectPlaywrightPersona: vi.fn(),
       handleResetListingScript: vi.fn(),
     });
     usePlaywrightActionsMock.mockReturnValue({
@@ -91,10 +85,13 @@ describe('PlaywrightTabContent', () => {
     expect(screen.getByText('Headed')).toBeInTheDocument();
     expect(screen.getByText('Browser: chrome')).toBeInTheDocument();
     expect(screen.getByText('Viewport: 1440x900')).toBeInTheDocument();
-    expect(screen.getByText('Legacy connection fallback overrides')).toBeInTheDocument();
+    expect(screen.getByText('Playwright settings moved to Step Sequencer')).toBeInTheDocument();
+    expect(
+      screen.getAllByRole('link', { name: 'Open Step Sequencer' }).at(0)
+    ).toHaveAttribute('href', '/admin/playwright/step-sequencer');
   });
 
-  it('keeps the legacy connection editor primary for 1688 integrations', () => {
+  it('redirects 1688 browser automation settings away from Integrations', () => {
     useIntegrationsDataMock.mockReturnValue({
       activeIntegration: { id: 'integration-1688', slug: '1688', name: '1688' },
       connections: [{ id: 'connection-1688-1' }],
@@ -103,10 +100,8 @@ describe('PlaywrightTabContent', () => {
     });
     useIntegrationsFormMock.mockReturnValue({
       editingConnectionId: 'connection-1688-1',
-      playwrightPersonaId: null,
     });
     useIntegrationsActionsMock.mockReturnValue({
-      handleSelectPlaywrightPersona: vi.fn(),
       handleResetListingScript: vi.fn(),
     });
     usePlaywrightActionsMock.mockReturnValue({
@@ -117,7 +112,12 @@ describe('PlaywrightTabContent', () => {
     render(<PlaywrightTabContent />);
 
     expect(screen.queryByText('Step Sequencer runtime actions')).not.toBeInTheDocument();
-    expect(screen.getByText('Playwright connection settings')).toBeInTheDocument();
-    expect(screen.getByTestId('dynamic-playwright-settings-form')).toBeInTheDocument();
+    expect(
+      screen.getByText('Browser automation settings moved out of Integrations')
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open Scanner Settings' })).toHaveAttribute(
+      'href',
+      '/admin/settings/scanner'
+    );
   });
 });

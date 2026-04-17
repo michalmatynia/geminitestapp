@@ -3,6 +3,7 @@ import type { CategoryMappingAssignment } from './base-com';
 import type {
   ConnectionDeleteOptions,
   IntegrationConnection,
+  LegacyIntegrationConnectionPlaywrightSettings,
 } from './connections';
 import type {
   BaseCategory,
@@ -31,7 +32,8 @@ export type IntegrationConnectionRecord = Omit<
   | 'traderaApiTokenUpdatedAt'
   | 'linkedinTokenUpdatedAt'
   | 'linkedinExpiresAt'
-> & {
+> &
+  LegacyIntegrationConnectionPlaywrightSettings & {
   createdAt: string | Date;
   updatedAt: string | Date | null;
   playwrightStorageStateUpdatedAt?: string | Date | null;
@@ -42,7 +44,6 @@ export type IntegrationConnectionRecord = Omit<
 
 type NullablePlaywrightConnectionOverrideKey =
   | 'playwrightIdentityProfile'
-  | 'playwrightHeadless'
   | 'playwrightSlowMo'
   | 'playwrightTimeout'
   | 'playwrightNavigationTimeout'

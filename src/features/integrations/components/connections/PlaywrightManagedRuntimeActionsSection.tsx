@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import React from 'react';
 
-import type { IntegrationManagedPlaywrightActionSummary } from '@/features/integrations/utils/playwright-managed-actions';
+import type { ManagedPlaywrightActionSummary } from '@/features/playwright/utils/playwright-managed-runtime-actions';
 import { resolveStepSequencerActionHref } from '@/features/playwright/utils/step-sequencer-action-links';
 import { Badge, Button } from '@/shared/ui/primitives.public';
 import { FormSection } from '@/shared/ui/forms-and-actions.public';
@@ -11,7 +11,7 @@ import { FormSection } from '@/shared/ui/forms-and-actions.public';
 type PlaywrightManagedRuntimeActionsSectionProps = {
   description: string;
   isLoading: boolean;
-  summaries: IntegrationManagedPlaywrightActionSummary[];
+  summaries: ManagedPlaywrightActionSummary[];
 };
 
 function ManagedActionBadges({
@@ -46,7 +46,7 @@ function ManagedActionBadges({
 function ManagedRuntimeActionCard({
   summary,
 }: {
-  summary: IntegrationManagedPlaywrightActionSummary;
+  summary: ManagedPlaywrightActionSummary;
 }): React.JSX.Element {
   const description =
     typeof summary.action.description === 'string' && summary.action.description.trim().length > 0
@@ -78,7 +78,7 @@ function ManagedRuntimeActionCard({
         <ManagedActionBadges
           label='Action settings'
           values={summary.executionSettingsSummary}
-          emptyMessage='Inherits connection fallback where unset.'
+          emptyMessage='No action-specific browser settings are configured.'
         />
         <ManagedActionBadges
           label='browser_preparation step'

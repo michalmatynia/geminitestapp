@@ -3,14 +3,12 @@
 import { renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from '@/shared/contracts/playwright';
 import { integrationKeys } from '@/shared/lib/query-key-exports';
 
 const createListQueryV2Mock = vi.hoisted(() => vi.fn());
 const createSingleQueryV2Mock = vi.hoisted(() => vi.fn());
 const apiGetMock = vi.hoisted(() => vi.fn());
 const apiPostMock = vi.hoisted(() => vi.fn());
-const fetchSettingsCachedMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@/shared/lib/query-factories-v2', () => ({
   createListQueryV2: createListQueryV2Mock,
@@ -25,16 +23,11 @@ vi.mock('@/shared/lib/api-client', () => ({
   ApiError: class ApiError extends Error {},
 }));
 
-vi.mock('@/shared/api/settings-client', () => ({
-  fetchSettingsCached: fetchSettingsCachedMock,
-}));
-
 import {
   useDefaultTraderaConnection,
   useDefaultVintedConnection,
   useIntegrationConnections,
   useIntegrations,
-  usePlaywrightPersonas,
 } from './useIntegrationQueries';
 
 describe('useIntegrationQueries', () => {
@@ -43,7 +36,6 @@ describe('useIntegrationQueries', () => {
     createListQueryV2Mock.mockReturnValue({ kind: 'list-query' });
     createSingleQueryV2Mock.mockReturnValue({ kind: 'single-query' });
     apiGetMock.mockResolvedValue([]);
-    fetchSettingsCachedMock.mockResolvedValue([]);
   });
 
   it('uses an extended timeout for integrations list requests', async () => {
@@ -122,39 +114,5 @@ describe('useIntegrationQueries', () => {
     expect(apiGetMock).toHaveBeenCalledWith(
       '/api/v2/integrations/exports/vinted/default-connection'
     );
-  });
-
-  it('loads integrations personas on top of the canonical integration Playwright defaults', async () => {
-    fetchSettingsCachedMock.mockResolvedValue([
-      {
-        key: PLAYWRIGHT_PERSONA_SETTINGS_KEY,
-        value: JSON.stringify([
-          {
-            id: 'persona-1',
-            name: ' Runner ',
-            settings: {
-              slowMo: 125,
-            },
-          },
-        ]),
-      },
-    ]);
-
-    const { result } = renderHook(() => usePlaywrightPersonas());
-    const config = createListQueryV2Mock.mock.calls[0]?.[0];
-
-    expect(result.current).toEqual({ kind: 'list-query' });
-    await expect(config.queryFn()).resolves.toEqual([
-      expect.objectContaining({
-        id: 'persona-1',
-        name: 'Runner',
-        settings: expect.objectContaining({
-          slowMo: 125,
-          humanizeMouse: true,
-          timeout: 30000,
-          actionDelayMin: 500,
-        }),
-      }),
-    ]);
   });
 });

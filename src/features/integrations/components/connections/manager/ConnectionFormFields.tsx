@@ -4,8 +4,6 @@ import React from 'react';
 
 import {
   is1688IntegrationSlug,
-  isBrowserAutomationIntegrationSlug,
-  isPlaywrightProgrammableSlug,
   isTraderaApiIntegrationSlug,
   isTraderaIntegrationSlug,
   isLinkedInIntegrationSlug,
@@ -26,13 +24,6 @@ const TRADERA_CATEGORY_STRATEGY_OPTIONS = [
 const TRADERA_BROWSER_MODE_OPTIONS = [
   { value: 'builtin', label: 'Built-in form automation' },
   { value: 'scripted', label: 'Playwright script' },
-] as const;
-
-const PLAYWRIGHT_BROWSER_OPTIONS = [
-  { value: 'auto', label: 'Auto (Brave → Chrome → Chromium)' },
-  { value: 'brave', label: 'Brave' },
-  { value: 'chrome', label: 'Chrome' },
-  { value: 'chromium', label: 'Chromium (bundled)' },
 ] as const;
 
 const SCANNER_1688_LOGIN_MODE_OPTIONS = [
@@ -73,9 +64,6 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
   const isLinkedIn = isLinkedInIntegrationSlug(integrationSlug);
   const isVinted = isVintedIntegrationSlug(integrationSlug);
   const is1688 = is1688IntegrationSlug(integrationSlug);
-  const showBrowserSelector =
-    isBrowserAutomationIntegrationSlug(integrationSlug) ||
-    isPlaywrightProgrammableSlug(integrationSlug);
 
   const connectionNamePlaceholder = isAllegro
     ? 'Integration name (e.g. Allegro Main)'
@@ -207,26 +195,6 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
           }
          aria-label={passwordPlaceholder} title={passwordPlaceholder}/>
       </FormField>
-      {showBrowserSelector && (
-        <FormField label='Browser' description='Which browser to use for Playwright automation'>
-          <SelectSimple
-            id={`${idPrefix}-playwrightBrowser`}
-            value={form.playwrightBrowser}
-            onValueChange={(nextValue): void =>
-              setForm((prev) => ({
-                ...prev,
-                playwrightBrowser:
-                  nextValue === 'brave' || nextValue === 'chrome' || nextValue === 'chromium'
-                    ? nextValue
-                    : 'auto',
-              }))
-            }
-            options={[...PLAYWRIGHT_BROWSER_OPTIONS]}
-            ariaLabel='Browser'
-            placeholder='Browser'
-          />
-        </FormField>
-      )}
       {is1688 && (
         <>
           <FormField

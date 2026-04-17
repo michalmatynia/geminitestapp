@@ -6,7 +6,6 @@ const {
   getIntegrationByIdMock,
   createConnectionMock,
   encryptSecretMock,
-  getSettingValueMock,
   fetchResolvedPlaywrightRuntimeActionsMock,
 } = vi.hoisted(() => ({
   parseJsonBodyMock: vi.fn(),
@@ -14,7 +13,6 @@ const {
   getIntegrationByIdMock: vi.fn(),
   createConnectionMock: vi.fn(),
   encryptSecretMock: vi.fn(),
-  getSettingValueMock: vi.fn(),
   fetchResolvedPlaywrightRuntimeActionsMock: vi.fn(),
 }));
 
@@ -31,10 +29,6 @@ vi.mock('@/features/integrations/server', () => ({
   encryptSecret: (...args: unknown[]) => encryptSecretMock(...args),
 }));
 
-vi.mock('@/shared/lib/ai/server-settings', () => ({
-  getSettingValue: (...args: unknown[]) => getSettingValueMock(...args),
-}));
-
 vi.mock('@/shared/lib/browser-execution/runtime-action-resolver.server', () => ({
   fetchResolvedPlaywrightRuntimeActions: (...args: unknown[]) =>
     fetchResolvedPlaywrightRuntimeActionsMock(...args),
@@ -46,7 +40,6 @@ import { GET_handler, POST_handler } from './handler';
 describe('integration connections handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    getSettingValueMock.mockResolvedValue(null);
     fetchResolvedPlaywrightRuntimeActionsMock.mockResolvedValue([
       {
         id: 'listing-draft',
@@ -93,7 +86,6 @@ describe('integration connections handler', () => {
         hasBaseApiToken: false,
         baseTokenUpdatedAt: null,
         baseLastInventoryId: null,
-        playwrightHeadless: true,
         playwrightSlowMo: 0,
         playwrightTimeout: 30000,
         playwrightNavigationTimeout: 30000,
@@ -109,7 +101,6 @@ describe('integration connections handler', () => {
         playwrightProxyServer: '',
         playwrightProxyUsername: '',
         playwrightProxyPassword: null,
-        playwrightBrowser: 'chrome',
         playwrightEmulateDevice: false,
         playwrightDeviceName: 'Desktop Chrome',
         playwrightPersonaId: null,
@@ -140,7 +131,6 @@ describe('integration connections handler', () => {
         name: 'Tradera browser',
         username: 'seller@example.com',
         password: 'secret',
-        playwrightBrowser: 'chrome',
         traderaBrowserMode: 'scripted',
         playwrightListingScript: 'export default async function run() {}',
       },
@@ -164,7 +154,6 @@ describe('integration connections handler', () => {
       hasBaseApiToken: false,
       baseTokenUpdatedAt: null,
       baseLastInventoryId: null,
-      playwrightHeadless: true,
       playwrightSlowMo: 0,
       playwrightTimeout: 30000,
       playwrightNavigationTimeout: 30000,
@@ -180,7 +169,6 @@ describe('integration connections handler', () => {
       playwrightProxyServer: '',
       playwrightProxyUsername: '',
       playwrightProxyPassword: null,
-      playwrightBrowser: 'chrome',
       playwrightEmulateDevice: false,
       playwrightDeviceName: 'Desktop Chrome',
       playwrightPersonaId: null,
@@ -213,7 +201,6 @@ describe('integration connections handler', () => {
     expect(payload).toEqual([
       expect.objectContaining({
         id: 'conn-tradera-1',
-        playwrightBrowser: 'chrome',
         traderaBrowserMode: 'scripted',
         playwrightListingScript: 'export default async function run() {}',
         hasPlaywrightListingScript: true,
@@ -221,6 +208,8 @@ describe('integration connections handler', () => {
         traderaParameterMapperCatalogJson: '{"version":1,"entries":[]}',
       }),
     ]);
+    expect(payload[0]).not.toHaveProperty('playwrightPersonaId');
+    expect(payload[0]).not.toHaveProperty('playwrightSlowMo');
   });
 
   it('persists scripted Tradera fields when creating a connection', async () => {
@@ -238,13 +227,11 @@ describe('integration connections handler', () => {
       name: 'Tradera browser',
       username: 'seller@example.com',
       password: 'enc:secret',
-      playwrightBrowser: 'chrome',
       traderaBrowserMode: 'scripted',
       playwrightListingScript: 'export default async function run() {}',
     });
     expect(payload).toMatchObject({
       id: 'conn-tradera-1',
-      playwrightBrowser: 'chrome',
       traderaBrowserMode: 'scripted',
       playwrightListingScript: 'export default async function run() {}',
       hasPlaywrightListingScript: true,
@@ -502,7 +489,6 @@ describe('integration connections handler', () => {
       data: {
         name: 'Programmable Browser',
         playwrightPersonaId: 'persona-1',
-        playwrightHeadless: false,
       },
     });
 
@@ -521,48 +507,36 @@ describe('integration connections handler', () => {
     expect(createConnectionMock).not.toHaveBeenCalled();
   });
 
-  it('resolves response Playwright settings from persona baselines for listed connections', async () => {
-    getSettingValueMock.mockResolvedValue(
-      JSON.stringify([
-        {
-          id: 'persona-1',
-          name: 'Human runner',
-          settings: {
-            slowMo: 125,
-            humanizeMouse: false,
-            browser: 'chrome',
-          },
-        },
-      ])
-    );
+  it('does not expose connection-level Playwright settings in list responses', async () => {
     listConnectionsMock.mockResolvedValue([
       {
         id: 'conn-playwright-1',
-        integrationId: 'integration-playwright-1',
-        name: 'Programmable Browser',
+        integrationId: 'integration-tradera-1',
+        name: 'Tradera browser',
         createdAt: '2026-04-02T10:00:00.000Z',
         updatedAt: '2026-04-02T11:00:00.000Z',
         playwrightPersonaId: 'persona-1',
+        playwrightSlowMo: 125,
+        playwrightHumanizeMouse: false,
       },
     ]);
 
     const response = await GET_handler(
-      new Request('http://localhost/api/v2/integrations/integration-playwright-1/connections') as never,
+      new Request('http://localhost/api/v2/integrations/integration-tradera-1/connections') as never,
       {} as never,
-      { id: 'integration-playwright-1' }
+      { id: 'integration-tradera-1' }
     );
 
     const payload = await response.json();
+    const entry = payload[0] as Record<string, unknown>;
 
-    expect(payload).toEqual([
-      expect.objectContaining({
-        id: 'conn-playwright-1',
-        playwrightPersonaId: 'persona-1',
-        playwrightSlowMo: 125,
-        playwrightHumanizeMouse: false,
-        playwrightBrowser: 'chrome',
-      }),
-    ]);
+    expect(entry).toMatchObject({
+      id: 'conn-playwright-1',
+      name: 'Tradera browser',
+    });
+    expect(entry).not.toHaveProperty('playwrightPersonaId');
+    expect(entry).not.toHaveProperty('playwrightSlowMo');
+    expect(entry).not.toHaveProperty('playwrightHumanizeMouse');
   });
 
   it('hides browser fields for action-owned programmable connections in list responses', async () => {

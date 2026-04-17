@@ -20,36 +20,6 @@ export const integrationConnectionSchema = namedDtoSchema.extend({
   hasPlaywrightStorageState: z.boolean().optional(),
   playwrightStorageState: z.string().nullable().optional(),
   playwrightStorageStateUpdatedAt: z.string().nullable().optional(),
-  playwrightPersonaId: z.string().nullable().optional(),
-  playwrightIdentityProfile: z.enum(['default', 'search', 'marketplace']).nullable().optional(),
-  playwrightHeadless: z.boolean().optional(),
-  playwrightSlowMo: z.number().optional(),
-  playwrightTimeout: z.number().optional(),
-  playwrightNavigationTimeout: z.number().optional(),
-  playwrightLocale: z.string().nullable().optional(),
-  playwrightTimezoneId: z.string().nullable().optional(),
-  playwrightHumanizeMouse: z.boolean().optional(),
-  playwrightMouseJitter: z.number().optional(),
-  playwrightClickDelayMin: z.number().optional(),
-  playwrightClickDelayMax: z.number().optional(),
-  playwrightInputDelayMin: z.number().optional(),
-  playwrightInputDelayMax: z.number().optional(),
-  playwrightActionDelayMin: z.number().optional(),
-  playwrightActionDelayMax: z.number().optional(),
-  playwrightProxyEnabled: z.boolean().optional(),
-  playwrightProxyServer: z.string().nullable().optional(),
-  playwrightProxyUsername: z.string().nullable().optional(),
-  playwrightProxyPassword: z.string().nullable().optional(),
-  playwrightProxyHasPassword: z.boolean().optional(),
-  playwrightProxySessionAffinity: z.boolean().optional(),
-  playwrightProxySessionMode: z.enum(['sticky', 'rotate']).nullable().optional(),
-  playwrightProxyProviderPreset: z
-    .enum(['custom', 'brightdata', 'oxylabs', 'decodo'])
-    .nullable()
-    .optional(),
-  playwrightBrowser: z.enum(['auto', 'brave', 'chrome', 'chromium']).nullable().optional(),
-  playwrightEmulateDevice: z.boolean().optional(),
-  playwrightDeviceName: z.string().nullable().optional(),
   allegroAccessToken: z.string().nullable().optional(),
   allegroRefreshToken: z.string().nullable().optional(),
   allegroTokenType: z.string().nullable().optional(),
@@ -115,39 +85,43 @@ export const integrationConnectionSchema = namedDtoSchema.extend({
 
 export type IntegrationConnection = z.infer<typeof integrationConnectionSchema>;
 
-const programmableIntegrationConnectionOmitShape = {
-  playwrightPersonaId: true,
-  playwrightIdentityProfile: true,
-  playwrightHeadless: true,
-  playwrightSlowMo: true,
-  playwrightTimeout: true,
-  playwrightNavigationTimeout: true,
-  playwrightLocale: true,
-  playwrightTimezoneId: true,
-  playwrightHumanizeMouse: true,
-  playwrightMouseJitter: true,
-  playwrightClickDelayMin: true,
-  playwrightClickDelayMax: true,
-  playwrightInputDelayMin: true,
-  playwrightInputDelayMax: true,
-  playwrightActionDelayMin: true,
-  playwrightActionDelayMax: true,
-  playwrightProxyEnabled: true,
-  playwrightProxyServer: true,
-  playwrightProxyUsername: true,
-  playwrightProxyPassword: true,
-  playwrightProxyHasPassword: true,
-  playwrightProxySessionAffinity: true,
-  playwrightProxySessionMode: true,
-  playwrightProxyProviderPreset: true,
-  playwrightBrowser: true,
-  playwrightEmulateDevice: true,
-  playwrightDeviceName: true,
-} as const;
+export const legacyIntegrationConnectionPlaywrightSettingsSchema = z.object({
+  playwrightPersonaId: z.string().nullable().optional(),
+  playwrightIdentityProfile: z.enum(['default', 'search', 'marketplace']).nullable().optional(),
+  playwrightSlowMo: z.number().optional(),
+  playwrightTimeout: z.number().optional(),
+  playwrightNavigationTimeout: z.number().optional(),
+  playwrightLocale: z.string().nullable().optional(),
+  playwrightTimezoneId: z.string().nullable().optional(),
+  playwrightHumanizeMouse: z.boolean().optional(),
+  playwrightMouseJitter: z.number().optional(),
+  playwrightClickDelayMin: z.number().optional(),
+  playwrightClickDelayMax: z.number().optional(),
+  playwrightInputDelayMin: z.number().optional(),
+  playwrightInputDelayMax: z.number().optional(),
+  playwrightActionDelayMin: z.number().optional(),
+  playwrightActionDelayMax: z.number().optional(),
+  playwrightProxyEnabled: z.boolean().optional(),
+  playwrightProxyServer: z.string().nullable().optional(),
+  playwrightProxyUsername: z.string().nullable().optional(),
+  playwrightProxyPassword: z.string().nullable().optional(),
+  playwrightProxyHasPassword: z.boolean().optional(),
+  playwrightProxySessionAffinity: z.boolean().optional(),
+  playwrightProxySessionMode: z.enum(['sticky', 'rotate']).nullable().optional(),
+  playwrightProxyProviderPreset: z
+    .enum(['custom', 'brightdata', 'oxylabs', 'decodo'])
+    .nullable()
+    .optional(),
+  playwrightBrowser: z.enum(['auto', 'brave', 'chrome', 'chromium']).nullable().optional(),
+  playwrightEmulateDevice: z.boolean().optional(),
+  playwrightDeviceName: z.string().nullable().optional(),
+});
 
-export const programmableIntegrationConnectionSchema = integrationConnectionSchema.omit(
-  programmableIntegrationConnectionOmitShape
-);
+export type LegacyIntegrationConnectionPlaywrightSettings = z.infer<
+  typeof legacyIntegrationConnectionPlaywrightSettingsSchema
+>;
+
+export const programmableIntegrationConnectionSchema = integrationConnectionSchema;
 
 export type ProgrammableIntegrationConnection = z.infer<
   typeof programmableIntegrationConnectionSchema
@@ -185,10 +159,6 @@ export type ConnectionFormState = {
   name: string;
   username: string;
   password: string;
-  playwrightBrowser: 'auto' | 'brave' | 'chrome' | 'chromium';
-  playwrightIdentityProfile?: 'default' | 'search' | 'marketplace' | null;
-  playwrightLocale?: string | null;
-  playwrightTimezoneId?: string | null;
   scanner1688StartUrl: string;
   scanner1688LoginMode: 'session_required' | 'manual_login';
   scanner1688DefaultSearchMode: 'local_image' | 'image_url_fallback';

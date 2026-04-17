@@ -3,12 +3,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const {
   resolvePlaywrightConnectionRuntimeMock,
   launchPlaywrightBrowserMock,
-  resolveRuntimeActionExecutionSettingsMock,
   resolveRuntimeActionDefinitionMock,
 } = vi.hoisted(() => ({
   resolvePlaywrightConnectionRuntimeMock: vi.fn(),
   launchPlaywrightBrowserMock: vi.fn(),
-  resolveRuntimeActionExecutionSettingsMock: vi.fn(),
   resolveRuntimeActionDefinitionMock: vi.fn(),
 }));
 
@@ -45,8 +43,6 @@ vi.mock('@/shared/lib/playwright/browser-launch', () => ({
 }));
 
 vi.mock('@/shared/lib/browser-execution/runtime-action-resolver.server', () => ({
-  resolveRuntimeActionExecutionSettings: (...args: unknown[]) =>
-    resolveRuntimeActionExecutionSettingsMock(...args),
   resolveRuntimeActionDefinition: (...args: unknown[]) =>
     resolveRuntimeActionDefinitionMock(...args),
 }));
@@ -63,7 +59,6 @@ import {
 describe('openPlaywrightConnectionPageSession', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    resolveRuntimeActionExecutionSettingsMock.mockResolvedValue(null);
     resolveRuntimeActionDefinitionMock.mockResolvedValue({
       id: 'runtime_action__tradera_standard_list',
       name: 'Tradera Standard List',
@@ -140,9 +135,12 @@ describe('openPlaywrightConnectionPageSession', () => {
       viewport: { width: 1280, height: 720 },
     });
 
-    expect(resolvePlaywrightConnectionRuntimeMock).toHaveBeenCalledWith({
-      id: 'connection-1',
-    });
+    expect(resolvePlaywrightConnectionRuntimeMock).toHaveBeenCalledWith(
+      {
+        id: 'connection-1',
+      },
+      undefined
+    );
     expect(launchPlaywrightBrowserMock).toHaveBeenCalledWith(
       'chrome',
       expect.objectContaining({
@@ -299,17 +297,6 @@ describe('openPlaywrightConnectionPageSession', () => {
       storageState: null,
       personaId: 'persona-1',
     });
-    resolveRuntimeActionExecutionSettingsMock.mockResolvedValue({
-      headless: false,
-      browserPreference: 'chrome',
-      emulateDevice: true,
-      deviceName: 'Pixel 7',
-      slowMo: 125,
-      timeout: 45_000,
-      navigationTimeout: 46_000,
-      locale: 'en-US',
-      timezoneId: 'Europe/Warsaw',
-    });
     resolveRuntimeActionDefinitionMock.mockResolvedValue({
       id: 'custom_tradera_standard',
       name: 'Custom Tradera Standard',
@@ -367,8 +354,14 @@ describe('openPlaywrightConnectionPageSession', () => {
       runtimeActionKey: 'tradera_standard_list',
     });
 
-    expect(resolveRuntimeActionExecutionSettingsMock).toHaveBeenCalledWith('tradera_standard_list');
     expect(resolveRuntimeActionDefinitionMock).toHaveBeenCalledWith('tradera_standard_list');
+    expect(resolvePlaywrightConnectionRuntimeMock).toHaveBeenCalledWith(
+      { id: 'connection-1' },
+      {
+        includeConnectionBrowserBehavior: false,
+        personaId: null,
+      }
+    );
     expect(launchPlaywrightBrowserMock).toHaveBeenCalledWith(
       'chrome',
       expect.objectContaining({
@@ -606,13 +599,13 @@ describe('openPlaywrightConnectionPageSession', () => {
     expect(
       resolvePlaywrightEffectiveBrowserMode({
         requestedBrowserMode: 'connection_default',
-        connectionHeadless: true,
+        defaultHeadless: true,
       })
     ).toBe('headless');
     expect(
       resolvePlaywrightEffectiveBrowserMode({
         requestedBrowserMode: 'headed',
-        connectionHeadless: true,
+        defaultHeadless: true,
       })
     ).toBe('headed');
     expect(

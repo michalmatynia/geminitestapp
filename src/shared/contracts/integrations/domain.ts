@@ -26,10 +26,6 @@ export const integrationConnectionBasicSchema = z.object({
   traderaApiPublicKey: z.string().nullable().optional(),
   traderaApiUserId: z.number().nullable().optional(),
   traderaApiSandbox: z.boolean().nullable().optional(),
-  playwrightBrowser: z.enum(['auto', 'brave', 'chrome', 'chromium']).nullable().optional(),
-  playwrightIdentityProfile: z.enum(['default', 'search', 'marketplace']).nullable().optional(),
-  playwrightPersonaId: z.string().nullable().optional(),
-  playwrightHumanizeMouse: z.boolean().optional(),
   playwrightStorageStateUpdatedAt: z.string().nullable().optional(),
 });
 

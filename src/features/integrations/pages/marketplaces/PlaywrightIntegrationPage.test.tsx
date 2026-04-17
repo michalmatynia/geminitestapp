@@ -36,6 +36,9 @@ vi.mock('@/features/integrations/hooks/useIntegrationQueries', () => ({
   useIntegrations: () => useIntegrationsMock(),
   useProgrammableIntegrationConnections: (...args: unknown[]) =>
     useProgrammableIntegrationConnectionsMock(...args),
+}));
+
+vi.mock('@/features/playwright/hooks/usePlaywrightPersonas', () => ({
   usePlaywrightPersonas: () => usePlaywrightPersonasMock(),
 }));
 

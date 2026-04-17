@@ -261,8 +261,6 @@ export const toConnectionRecord = (doc: unknown): IntegrationConnectionRecord =>
     password: d['password'] ? String(d['password']) : undefined,
     playwrightStorageState: (d['playwrightStorageState'] as string) ?? null,
     playwrightStorageStateUpdatedAt: toIsoStringOrNull(d['playwrightStorageStateUpdatedAt']),
-    playwrightHeadless:
-      typeof d['playwrightHeadless'] === 'boolean' ? d['playwrightHeadless'] : undefined,
     playwrightSlowMo:
       typeof d['playwrightSlowMo'] === 'number' ? d['playwrightSlowMo'] : undefined,
     playwrightTimeout:

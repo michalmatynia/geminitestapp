@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { assertSettingsManageAccess } from '@/features/auth/server';
 import { isPlaywrightProgrammableSlug } from '@/features/integrations/constants/slugs';
 import { getIntegrationRepository } from '@/features/integrations/server';
-import { canCleanupProgrammableConnectionLegacyBrowserFields } from '@/features/integrations/utils/playwright-programmable-connection-migration';
+import { canCleanupProgrammableConnectionLegacyBrowserFields } from '@/features/playwright/utils/playwright-programmable-connection-migration';
 import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';

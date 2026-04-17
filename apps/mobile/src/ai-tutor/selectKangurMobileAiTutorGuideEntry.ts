@@ -32,7 +32,7 @@ const matchesTriggerPhrases = (
   value: string | null | undefined,
 ): boolean => {
   const normalized = normalizeMessage(value);
-  if (!normalized) {
+  if (normalized.length === 0) {
     return false;
   }
 
@@ -52,7 +52,7 @@ const matchLookupPrefixes = (
   },
 ): { score: number; signal: KangurMobileAiTutorGuideMatchSignal | null } => {
   const normalizedValue = normalizeMessage(value);
-  if (!normalizedValue) {
+  if (normalizedValue.length === 0) {
     return { score: 0, signal: null };
   }
 
@@ -60,7 +60,7 @@ const matchLookupPrefixes = (
   let signal: KangurMobileAiTutorGuideMatchSignal | null = null;
   for (const prefix of prefixes) {
     const normalizedPrefix = normalizeMessage(prefix);
-    if (!normalizedPrefix) {
+    if (normalizedPrefix.length === 0) {
       continue;
     }
 
@@ -81,91 +81,119 @@ const matchLookupPrefixes = (
   return { score, signal };
 };
 
+const rankSurface = (
+  entry: KangurAiTutorNativeGuideEntry,
+  context: KangurAiTutorConversationContext | undefined,
+): { score: number; signal: KangurMobileAiTutorGuideMatchSignal | null } => {
+  if (entry.surface !== null && entry.surface === context?.surface) {
+    return { score: 40, signal: 'surface' };
+  }
+  if (entry.surface === null) {
+    return { score: 10, signal: null };
+  }
+  return { score: 0, signal: null };
+};
+
+const rankFocusKind = (
+  entry: KangurAiTutorNativeGuideEntry,
+  context: KangurAiTutorConversationContext | undefined,
+): { score: number; signal: KangurMobileAiTutorGuideMatchSignal | null } => {
+  if (entry.focusKind !== null && entry.focusKind === context?.focusKind) {
+    return { score: 60, signal: 'focus_kind' };
+  }
+  if (entry.focusKind === null) {
+    return { score: 5, signal: null };
+  }
+  return { score: 0, signal: null };
+};
+
 const rankGuideEntry = (
   entry: KangurAiTutorNativeGuideEntry,
   context: KangurAiTutorConversationContext | undefined,
 ): RankedGuideEntry => {
+  if (context === undefined) {
+    return { entry, matchedSignals: [], score: 0 };
+  }
+
   let score = 0;
   const matchedSignals: KangurMobileAiTutorGuideMatchSignal[] = [];
 
-  if (entry.surface && entry.surface === context?.surface) {
-    score += 40;
-    matchedSignals.push('surface');
-  } else if (entry.surface === null) {
-    score += 10;
+  const surfaceRank = rankSurface(entry, context);
+  score += surfaceRank.score;
+  if (surfaceRank.signal !== null) {
+    matchedSignals.push(surfaceRank.signal);
   }
 
-  if (entry.focusKind && entry.focusKind === context?.focusKind) {
-    score += 60;
-    matchedSignals.push('focus_kind');
-  } else if (entry.focusKind === null) {
-    score += 5;
+  const focusKindRank = rankFocusKind(entry, context);
+  score += focusKindRank.score;
+  if (focusKindRank.signal !== null) {
+    matchedSignals.push(focusKindRank.signal);
   }
 
-  const focusIdMatch = matchLookupPrefixes(entry.focusIdPrefixes, context?.focusId, {
+  const focusIdMatch = matchLookupPrefixes(entry.focusIdPrefixes, context.focusId, {
     exact: 80,
     exactSignal: 'focus_id_exact',
     prefix: 45,
     prefixSignal: 'focus_id_prefix',
   });
   score += focusIdMatch.score;
-  if (focusIdMatch.signal) {
+  if (focusIdMatch.signal !== null) {
     matchedSignals.push(focusIdMatch.signal);
   }
 
-  const contentIdMatch = matchLookupPrefixes(entry.contentIdPrefixes, context?.contentId, {
+  const contentIdMatch = matchLookupPrefixes(entry.contentIdPrefixes, context.contentId, {
     exact: 70,
     exactSignal: 'content_id_exact',
     prefix: 35,
     prefixSignal: 'content_id_prefix',
   });
   score += contentIdMatch.score;
-  if (contentIdMatch.signal) {
+  if (contentIdMatch.signal !== null) {
     matchedSignals.push(contentIdMatch.signal);
   }
 
-  if (matchesTriggerPhrases(entry, context?.focusLabel)) {
+  if (matchesTriggerPhrases(entry, context.focusLabel)) {
     score += 15;
     matchedSignals.push('focus_label_trigger');
   }
 
-  if (matchesTriggerPhrases(entry, context?.title)) {
+  if (matchesTriggerPhrases(entry, context.title)) {
     score += 18;
     matchedSignals.push('title_trigger');
   }
 
-  return {
-    entry,
-    matchedSignals,
-    score,
-  };
+  return { entry, matchedSignals, score };
+};
+
+const isFocusMatch = (
+  entry: KangurAiTutorNativeGuideEntry,
+  context: KangurAiTutorConversationContext | undefined,
+): boolean => {
+  if (entry.focusKind !== null && entry.focusKind === context?.focusKind) return true;
+  return entry.focusKind === null && entry.surface === context?.surface;
+};
+
+const isMatch = (
+  ranked: RankedGuideEntry,
+  context: KangurAiTutorConversationContext | undefined,
+): boolean => {
+  if (ranked.score > 0) return true;
+  return isFocusMatch(ranked.entry, context);
 };
 
 export const selectKangurMobileAiTutorGuideEntry = (
   entries: KangurAiTutorNativeGuideEntry[],
   context: KangurAiTutorConversationContext | undefined,
 ): KangurAiTutorNativeGuideEntry | null => {
-  const rankedEntries = entries
-    .filter((entry) => entry.enabled)
-    .map((entry) => rankGuideEntry(entry, context))
-    .filter(({ entry, score }) => {
-      if (score > 0) {
-        return true;
-      }
+  const ranked = entries
+    .filter((e) => e.enabled)
+    .map((e) => rankGuideEntry(e, context))
+    .filter((r) => isMatch(r, context));
 
-      if (entry.focusKind && entry.focusKind === context?.focusKind) {
-        return true;
-      }
+  ranked.sort((left, right) => {
+    if (right.score !== left.score) return right.score - left.score;
+    return left.entry.sortOrder - right.entry.sortOrder;
+  });
 
-      return entry.focusKind === null && entry.surface === context?.surface;
-    })
-    .sort((left, right) => {
-      if (right.score !== left.score) {
-        return right.score - left.score;
-      }
-
-      return left.entry.sortOrder - right.entry.sortOrder;
-    });
-
-  return rankedEntries[0]?.entry ?? null;
+  return ranked[0]?.entry ?? null;
 };

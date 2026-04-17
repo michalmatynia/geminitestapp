@@ -317,6 +317,25 @@ async function queueBatchProductScans(input: {
           return createFailedBatchResult(productId, 'Product not found.');
         }
 
+        const requestedStepSequenceInput = resolveProductScanRequestSequenceInput(requestInput);
+        const amazonRuntimeKey =
+          input.config.provider === 'amazon'
+            ? resolveAmazonRuntimeKey(
+                requestInput['runtimeKey'] ?? input.config.runtime.runtimeKey
+              )
+            : null;
+        const hasDirectAmazonCandidateInput =
+          input.config.provider === 'amazon' &&
+          (
+            readOptionalString(requestInput['directAmazonCandidateUrl'], 4_000) !== null ||
+            (
+              Array.isArray(requestInput['directAmazonCandidateUrls']) &&
+              requestInput['directAmazonCandidateUrls'].some(
+                (value) => readOptionalString(value, 4_000) !== null
+              )
+            )
+          );
+
         const hydratedImageCandidates = await hydrateProductScanImageCandidates({
           product,
           imageCandidates: input.config.runtime.resolveImageCandidates(product),
@@ -339,7 +358,7 @@ async function queueBatchProductScans(input: {
           }
         );
 
-        if (imageCandidates.length === 0) {
+        if (imageCandidates.length === 0 && !hasDirectAmazonCandidateInput) {
           return createFailedBatchResult(
             productId,
             input.config.provider === 'amazon'
@@ -363,13 +382,6 @@ async function queueBatchProductScans(input: {
           );
         }
 
-        const requestedStepSequenceInput = resolveProductScanRequestSequenceInput(requestInput);
-        const amazonRuntimeKey =
-          input.config.provider === 'amazon'
-            ? resolveAmazonRuntimeKey(
-                requestInput['runtimeKey'] ?? input.config.runtime.runtimeKey
-              )
-            : null;
         const amazonRuntimeAction =
           amazonRuntimeKey !== null
             ? getPlaywrightRuntimeActionSeed(amazonRuntimeKey)

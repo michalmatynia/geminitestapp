@@ -4,27 +4,18 @@ import { buildPlaywrightListingHistoryFields } from '@/features/playwright/serve
 
 export type VintedListingSource = 'manual' | 'scheduler' | 'api';
 
-const isBrowserPreference = (value: unknown): value is PlaywrightBrowserPreference =>
-  value === 'auto' || value === 'brave' || value === 'chrome' || value === 'chromium';
-
-const normalizeConfiguredBrowserPreference = (
-  value: unknown
-): PlaywrightBrowserPreference => (isBrowserPreference(value) ? value : 'auto');
-
 export const resolveRequestedVintedBrowserMode = ({
   requestedBrowserMode,
   source,
-  connectionHeadless,
 }: {
   requestedBrowserMode: PlaywrightRelistBrowserMode | undefined;
   source: VintedListingSource;
-  connectionHeadless: boolean | null | undefined;
 }): PlaywrightRelistBrowserMode => {
-  if (requestedBrowserMode) return requestedBrowserMode;
+  if (requestedBrowserMode !== undefined) {
+    return requestedBrowserMode;
+  }
 
   if (source === 'scheduler') {
-    if (connectionHeadless === false) return 'headed';
-    if (connectionHeadless === true) return 'headless';
     return 'connection_default';
   }
 
@@ -36,22 +27,16 @@ export const resolveRequestedVintedBrowserMode = ({
 export const resolveRequestedVintedBrowserPreference = ({
   requestedBrowserPreference,
   source,
-  connectionBrowserPreference,
 }: {
   requestedBrowserPreference: PlaywrightBrowserPreference | undefined;
   source: VintedListingSource;
-  connectionBrowserPreference: unknown;
-}): PlaywrightBrowserPreference => {
-  if (requestedBrowserPreference) return requestedBrowserPreference;
-
-  const configuredPreference = normalizeConfiguredBrowserPreference(connectionBrowserPreference);
-
-  if (source === 'scheduler') {
-    return configuredPreference;
+}): PlaywrightBrowserPreference | undefined => {
+  if (requestedBrowserPreference !== undefined) {
+    return requestedBrowserPreference;
   }
 
-  if (configuredPreference === 'brave' || configuredPreference === 'chrome') {
-    return configuredPreference;
+  if (source === 'scheduler') {
+    return undefined;
   }
 
   // Upgrade generic/default Chromium-style choices to Brave for Vinted.
@@ -64,14 +49,15 @@ export const resolveEffectiveVintedBrowserMode = ({
 }: {
   requestedBrowserMode: PlaywrightRelistBrowserMode;
   connectionHeadless: boolean;
-}): 'headed' | 'headless' =>
-  requestedBrowserMode === 'headed'
-    ? 'headed'
-    : requestedBrowserMode === 'headless'
-      ? 'headless'
-      : connectionHeadless
-        ? 'headless'
-        : 'headed';
+}): 'headed' | 'headless' => {
+  if (requestedBrowserMode === 'headed') {
+    return 'headed';
+  }
+  if (requestedBrowserMode === 'headless') {
+    return 'headless';
+  }
+  return connectionHeadless ? 'headless' : 'headed';
+};
 
 export const resolveEffectiveBrowserPreferenceFromLabel = ({
   launchLabel,

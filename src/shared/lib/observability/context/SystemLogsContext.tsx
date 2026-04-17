@@ -2,7 +2,7 @@
 'use no memo';
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import {
   useClearLogsMutation,
@@ -149,83 +149,43 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
     userId,
   ]);
 
-  const filters = useMemo(
-    () => ({
-      page,
-      pageSize,
-      level: level === 'all' ? null : level,
-      query,
-      source,
-      service,
-      method,
-      statusCode: parseStatusCodeInput(statusCode),
-      minDurationMs: parseMinDurationInput(minDurationMs),
-      requestId,
-      traceId,
-      correlationId,
-      userId,
-      fingerprint,
-      category,
-      from: formatDateParam(fromDate),
-      to: formatDateParam(toDate, true),
-    }),
-    [
-      page,
-      pageSize,
-      level,
-      query,
-      source,
-      method,
-      statusCode,
-      minDurationMs,
-      requestId,
-      traceId,
-      correlationId,
-      userId,
-      fingerprint,
-      category,
-      fromDate,
-      toDate,
-      service,
-    ]
-  );
+  const filters = {
+    page,
+    pageSize,
+    level: level === 'all' ? null : level,
+    query,
+    source,
+    service,
+    method,
+    statusCode: parseStatusCodeInput(statusCode),
+    minDurationMs: parseMinDurationInput(minDurationMs),
+    requestId,
+    traceId,
+    correlationId,
+    userId,
+    fingerprint,
+    category,
+    from: formatDateParam(fromDate),
+    to: formatDateParam(toDate, true),
+  };
 
-  const metricsFilters = useMemo(
-    () => ({
-      level: level === 'all' ? null : level,
-      query,
-      source,
-      service,
-      method,
-      statusCode: parseStatusCodeInput(statusCode),
-      minDurationMs: parseMinDurationInput(minDurationMs),
-      requestId,
-      traceId,
-      correlationId,
-      userId,
-      fingerprint,
-      category,
-      from: formatDateParam(fromDate),
-      to: formatDateParam(toDate, true),
-    }),
-    [
-      level,
-      query,
-      source,
-      method,
-      statusCode,
-      minDurationMs,
-      requestId,
-      traceId,
-      correlationId,
-      userId,
-      fingerprint,
-      category,
-      fromDate,
-      toDate,
-      service,
-    ]
-  );
+  const metricsFilters = {
+    level: level === 'all' ? null : level,
+    query,
+    source,
+    service,
+    method,
+    statusCode: parseStatusCodeInput(statusCode),
+    minDurationMs: parseMinDurationInput(minDurationMs),
+    requestId,
+    traceId,
+    correlationId,
+    userId,
+    fingerprint,
+    category,
+    from: formatDateParam(fromDate),
+    to: formatDateParam(toDate, true),
+  };
 
   const logsQuery = useSystemLogs(filters);
   const metricsQuery = useSystemLogMetrics(metricsFilters);
@@ -301,19 +261,13 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
     }
   }, [mongoDiagnosticsQuery.error, toast]);
 
-  const logs = useMemo(() => logsQuery.data?.logs ?? [], [logsQuery.data]);
+  const logs = logsQuery.data?.logs ?? [];
   const total = logsQuery.data?.total ?? 0;
   const metrics = metricsQuery.data?.metrics ?? null;
-  const diagnostics = useMemo(
-    (): MongoCollectionIndexStatus[] => mongoDiagnosticsQuery.data?.collections ?? [],
-    [mongoDiagnosticsQuery.data]
-  );
+  const diagnostics: MongoCollectionIndexStatus[] = mongoDiagnosticsQuery.data?.collections ?? [];
   const diagnosticsUpdatedAt = mongoDiagnosticsQuery.data?.generatedAt ?? null;
-  const logsJson = useMemo(() => JSON.stringify(logs, null, 2), [logs]);
-
-  const totalPages: number = useMemo((): number => {
-    return Math.max(1, Math.ceil(total / pageSize));
-  }, [total, pageSize]);
+  const logsJson = JSON.stringify(logs, null, 2);
+  const totalPages: number = Math.max(1, Math.ceil(total / pageSize));
 
   const levels = metrics?.levels ?? { error: 0, warn: 0, info: 0 };
 

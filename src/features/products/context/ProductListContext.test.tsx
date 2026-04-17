@@ -313,6 +313,25 @@ describe('ProductListProvider runtime bridge', () => {
     expect(rowRuntimeRenderCount).toBeGreaterThan(1);
   });
 
+  it('does not treat a Base product id alone as an active Base listing badge', () => {
+    function RowRuntimeProbe(): React.JSX.Element {
+      const runtime = useProductListRowRuntime('product-1', 'base-123');
+      return (
+        <div data-testid='row-runtime-base'>
+          {String(runtime.showMarketplaceBadge)}:{runtime.integrationStatus}
+        </div>
+      );
+    }
+
+    render(
+      <ProductListProvider value={createProviderValue()}>
+        <RowRuntimeProbe />
+      </ProductListProvider>
+    );
+
+    expect(screen.getByTestId('row-runtime-base').textContent).toBe('false:not_started');
+  });
+
   it('keeps provider-side badge polling disabled until row runtime is ready', () => {
     render(
       <ProductListProvider value={createProviderValue({ rowRuntimeReady: false })}>

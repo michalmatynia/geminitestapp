@@ -21,7 +21,7 @@ import {
   normalizeIntegrationConnectionPlaywrightPersonaId,
   resolveIntegrationPlaywrightPersonaSettings,
   type IntegrationConnectionPlaywrightBrowser,
-} from '@/features/integrations/utils/playwright-connection-settings';
+} from '@/features/playwright/utils/playwright-settings-baseline';
 
 export const PRODUCT_SCANNER_SETTINGS_KEY = 'product_scanner_settings_v1';
 export const PRODUCT_SCANNER_SETTINGS_HREF = '/admin/settings/scanner';

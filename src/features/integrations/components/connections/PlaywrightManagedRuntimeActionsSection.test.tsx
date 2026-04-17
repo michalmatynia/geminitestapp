@@ -4,8 +4,8 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+import type { ManagedPlaywrightActionSummary } from '@/features/playwright/utils/playwright-managed-runtime-actions';
 import { getPlaywrightRuntimeActionSeed } from '@/shared/lib/browser-execution/playwright-runtime-action-seeds';
-import type { IntegrationManagedPlaywrightActionSummary } from '@/features/integrations/utils/playwright-managed-actions';
 
 vi.mock('next/link', () => ({
   default: ({
@@ -63,7 +63,7 @@ if (seed === null) {
   throw new Error('Missing tradera_standard_list runtime action seed');
 }
 
-const summary: IntegrationManagedPlaywrightActionSummary = {
+const summary: ManagedPlaywrightActionSummary = {
   action: seed,
   browserPreparationConfig: null,
   browserPreparationSummary: ['Viewport: 1440x900'],

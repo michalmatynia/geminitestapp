@@ -170,7 +170,7 @@ export function KangurMobileAiTutorCard({
               label={action.label}
               minHeight={44}
               onPress={() => {
-                tutor.sendQuickAction(action.id);
+                tutor.sendQuickAction(action.id).catch(() => {});
               }}
               tone='secondary'
             />

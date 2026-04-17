@@ -1,6 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { loadMongoBaseExportLookupContextMock, loggerInfoMock } = vi.hoisted(() => ({
+const {
+  categoryFindMock,
+  categoryFindOneMock,
+  categoryToArrayMock,
+  getMongoDbMock,
+  loadMongoBaseExportLookupContextMock,
+  loggerInfoMock,
+} = vi.hoisted(() => ({
+  categoryFindMock: vi.fn(),
+  categoryFindOneMock: vi.fn(),
+  categoryToArrayMock: vi.fn(),
+  getMongoDbMock: vi.fn(),
   loadMongoBaseExportLookupContextMock: vi.fn(),
   loggerInfoMock: vi.fn(),
 }));
@@ -14,6 +25,10 @@ vi.mock('./mongo-product-repository.helpers', async () => {
     loadMongoBaseExportLookupContext: () => loadMongoBaseExportLookupContextMock(),
   };
 });
+
+vi.mock('@/shared/lib/db/mongo-client', () => ({
+  getMongoDb: () => getMongoDbMock(),
+}));
 
 vi.mock('@/shared/utils/logger', () => ({
   logger: {
@@ -41,6 +56,15 @@ describe('mongo-product-repository.filters', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     loadMongoBaseExportLookupContextMock.mockResolvedValue(baseExportContext);
+    categoryFindOneMock.mockResolvedValue(null);
+    categoryToArrayMock.mockResolvedValue([]);
+    categoryFindMock.mockReturnValue({ toArray: categoryToArrayMock });
+    getMongoDbMock.mockResolvedValue({
+      collection: () => ({
+        findOne: categoryFindOneMock,
+        find: categoryFindMock,
+      }),
+    });
   });
 
   it('builds explicit base-exported and unexported filters', () => {
@@ -96,7 +120,7 @@ describe('mongo-product-repository.filters', () => {
     ).toBeNull();
   });
 
-  it('compiles advanced filters across string, numeric, nested-id, date, boolean, and not branches', () => {
+  it('compiles advanced filters across string, numeric, nested-id, date, boolean, and not branches', async () => {
     const payload = JSON.stringify({
       type: 'group',
       id: 'root',
@@ -163,7 +187,7 @@ describe('mongo-product-repository.filters', () => {
       ],
     });
 
-    const result = buildAdvancedMongoWhere(payload, baseExportContext);
+    const result = await buildAdvancedMongoWhere(payload, baseExportContext);
 
     expect(result).toMatchObject({
       $and: [
@@ -213,12 +237,12 @@ describe('mongo-product-repository.filters', () => {
     );
   });
 
-  it('returns null when the advanced filter payload is invalid', () => {
-    expect(buildAdvancedMongoWhere('{bad-json', baseExportContext)).toBeNull();
+  it('returns null when the advanced filter payload is invalid', async () => {
+    await expect(buildAdvancedMongoWhere('{bad-json', baseExportContext)).resolves.toBeNull();
     expect(loggerInfoMock).not.toHaveBeenCalled();
   });
 
-  it('compiles additional advanced operators for ids, strings, nested ids, dates, booleans, and base-export state', () => {
+  it('compiles additional advanced operators for ids, strings, nested ids, dates, booleans, and base-export state', async () => {
     const payload = JSON.stringify({
       type: 'group',
       id: 'root-extra',
@@ -289,7 +313,7 @@ describe('mongo-product-repository.filters', () => {
       ],
     });
 
-    const result = buildAdvancedMongoWhere(payload, baseExportContext);
+    const result = await buildAdvancedMongoWhere(payload, baseExportContext);
 
     expect(result).toMatchObject({
       $and: [
@@ -397,6 +421,75 @@ describe('mongo-product-repository.filters', () => {
     expect(JSON.stringify(filter)).toContain('SKU-1');
   });
 
+  it('expands classic category filters to descendant category ids', async () => {
+    categoryFindOneMock.mockResolvedValue({
+      _id: 'cat-pins',
+      catalogId: 'catalog-1',
+    });
+    categoryToArrayMock.mockResolvedValue([
+      { _id: 'cat-pins', parentId: null, catalogId: 'catalog-1' },
+      { _id: 'cat-anime-pins', parentId: 'cat-pins', catalogId: 'catalog-1' },
+      { _id: 'cat-game-pins', parentId: 'cat-pins', catalogId: 'catalog-1' },
+      { _id: 'cat-naruto-pins', parentId: 'cat-anime-pins', catalogId: 'catalog-1' },
+      { _id: 'cat-keychains', parentId: null, catalogId: 'catalog-1' },
+    ]);
+
+    const filter = await buildMongoWhere({
+      categoryId: 'cat-pins',
+    });
+
+    expect(categoryFindOneMock).toHaveBeenCalledWith(
+      { _id: { $in: ['cat-pins'] } },
+      { projection: { _id: 1, catalogId: 1 } }
+    );
+    expect(categoryFindMock).toHaveBeenCalledWith(
+      { catalogId: 'catalog-1' },
+      { projection: { _id: 1, parentId: 1, catalogId: 1 } }
+    );
+    expect(filter).toEqual({
+      categoryId: {
+        $in: ['cat-pins', 'cat-anime-pins', 'cat-game-pins', 'cat-naruto-pins'],
+      },
+    });
+  });
+
+  it('expands advanced category equality filters to descendant category ids', async () => {
+    categoryFindOneMock.mockResolvedValue({
+      _id: 'cat-pins',
+      catalogId: 'catalog-1',
+    });
+    categoryToArrayMock.mockResolvedValue([
+      { _id: 'cat-pins', parentId: null, catalogId: 'catalog-1' },
+      { _id: 'cat-anime-pins', parentId: 'cat-pins', catalogId: 'catalog-1' },
+      { _id: 'cat-game-pins', parentId: 'cat-pins', catalogId: 'catalog-1' },
+    ]);
+
+    const filter = await buildAdvancedMongoWhere(
+      JSON.stringify({
+        type: 'group',
+        id: 'root',
+        combinator: 'and',
+        not: false,
+        rules: [
+          {
+            type: 'condition',
+            id: 'category-parent',
+            field: 'categoryId',
+            operator: 'eq',
+            value: 'cat-pins',
+          },
+        ],
+      }),
+      baseExportContext
+    );
+
+    expect(filter).toEqual({
+      categoryId: {
+        $in: ['cat-pins', 'cat-anime-pins', 'cat-game-pins'],
+      },
+    });
+  });
+
   it('builds classic mongo where clauses for exact ids, language-scoped search, stock equality, and assigned catalogs', async () => {
     const filter = await buildMongoWhere({
       id: 'product-2',
@@ -436,7 +529,7 @@ describe('mongo-product-repository.filters', () => {
     });
   });
 
-  it('compiles the remaining string, id, and empty-state advanced operators', () => {
+  it('compiles the remaining string, id, and empty-state advanced operators', async () => {
     const payload = JSON.stringify({
       type: 'group',
       id: 'root-string-rest',
@@ -485,7 +578,7 @@ describe('mongo-product-repository.filters', () => {
       ],
     });
 
-    const result = buildAdvancedMongoWhere(payload, baseExportContext);
+    const result = await buildAdvancedMongoWhere(payload, baseExportContext);
 
     expect(result).toMatchObject({
       $and: [
@@ -531,7 +624,7 @@ describe('mongo-product-repository.filters', () => {
     });
   });
 
-  it('compiles the remaining nested-id, numeric, date, boolean, and base-export operators', () => {
+  it('compiles the remaining nested-id, numeric, date, boolean, and base-export operators', async () => {
     const payload = JSON.stringify({
       type: 'group',
       id: 'root-numeric-rest',
@@ -643,7 +736,7 @@ describe('mongo-product-repository.filters', () => {
       ],
     });
 
-    const result = buildAdvancedMongoWhere(payload, baseExportContext);
+    const result = await buildAdvancedMongoWhere(payload, baseExportContext);
 
     expect(result).toMatchObject({
       $and: [
@@ -684,7 +777,7 @@ describe('mongo-product-repository.filters', () => {
   });
 
   it('returns null when advanced rules collapse to nothing and skips export lookup for classic-only filters', async () => {
-    const advancedNull = buildAdvancedMongoWhere(
+    const advancedNull = await buildAdvancedMongoWhere(
       JSON.stringify({
         type: 'group',
         id: 'null-root',

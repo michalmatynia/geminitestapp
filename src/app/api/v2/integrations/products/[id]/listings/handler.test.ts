@@ -231,7 +231,6 @@ describe('integration product listings handler', () => {
     getConnectionByIdAndIntegrationMock.mockResolvedValue({
       id: 'connection-vinted-1',
       integrationId: 'integration-vinted-1',
-      playwrightHeadless: true,
       playwrightBrowser: 'auto',
     });
     createListingMock.mockResolvedValue({

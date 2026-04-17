@@ -5,6 +5,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
+  advancedFilterModalMock,
   filterPanelMock,
   useCatalogsMock,
   useFilterTagsMock,
@@ -13,6 +14,7 @@ const {
   useProductListFiltersContextMock,
   useProducersMock,
 } = vi.hoisted(() => ({
+  advancedFilterModalMock: vi.fn(),
   filterPanelMock: vi.fn(),
   useCatalogsMock: vi.fn(),
   useFilterTagsMock: vi.fn(),
@@ -39,7 +41,10 @@ vi.mock('@/features/products/hooks/useProductMetadataQueries', () => ({
 }));
 
 vi.mock('@/features/products/components/list/advanced-filter', () => ({
-  AdvancedFilterModal: () => <div data-testid='advanced-filter-modal' />,
+  AdvancedFilterModal: (props: Record<string, unknown>) => {
+    advancedFilterModalMock(props);
+    return <div data-testid='advanced-filter-modal' />;
+  },
 }));
 
 vi.mock('@/shared/ui/button', () => ({
@@ -270,6 +275,111 @@ describe('ProductFilters layout contract', () => {
         { value: 'cat-3', label: 'Stickers' },
       ])
     );
+  });
+
+  it('orders category options hierarchically and skips corrupted records', () => {
+    useProductListFiltersContextMock.mockReturnValue(
+      buildFiltersContextValue({ catalogFilter: 'catalog-1' })
+    );
+    useProductCategoriesMock.mockReturnValue({
+      data: [
+        {
+          id: 'cat-pins',
+          catalogId: 'catalog-1',
+          name: 'Pins',
+          name_en: 'Pins',
+          name_pl: null,
+          name_de: null,
+          color: null,
+          parentId: null,
+          sortIndex: 2,
+        },
+        {
+          id: 'cat-keychains',
+          catalogId: 'catalog-1',
+          name: 'Keychains',
+          name_en: 'Keychains',
+          name_pl: null,
+          name_de: null,
+          color: null,
+          parentId: null,
+          sortIndex: 1,
+        },
+        {
+          id: 'cat-anime-pins',
+          catalogId: 'catalog-1',
+          name: 'Anime Pins',
+          name_en: 'Anime Pins',
+          name_pl: null,
+          name_de: null,
+          color: null,
+          parentId: 'cat-pins',
+          sortIndex: 1,
+        },
+        {
+          id: 'cat-game-pins',
+          catalogId: 'catalog-1',
+          name: 'Game Pins',
+          name_en: 'Game Pins',
+          name_pl: null,
+          name_de: null,
+          color: null,
+          parentId: 'cat-pins',
+          sortIndex: 0,
+        },
+        {
+          id: 'cat-orphan',
+          catalogId: 'catalog-1',
+          name: 'Orphan',
+          name_en: 'Orphan',
+          name_pl: null,
+          name_de: null,
+          color: null,
+          parentId: 'cat-missing',
+          sortIndex: 0,
+        },
+        {
+          id: 'cat-self',
+          catalogId: 'catalog-1',
+          name: 'Self Cycle',
+          name_en: 'Self Cycle',
+          name_pl: null,
+          name_de: null,
+          color: null,
+          parentId: 'cat-self',
+          sortIndex: 0,
+        },
+      ],
+    });
+
+    render(<ProductFilters />);
+
+    const filterPanelProps = filterPanelMock.mock.lastCall?.[0] as {
+      filters: Array<{
+        key: string;
+        options?: Array<{ value: string; label: string }>;
+      }>;
+    };
+    const categoryFilter = filterPanelProps.filters.find((field) => field.key === 'categoryId');
+
+    expect(categoryFilter?.options).toEqual([
+      { value: '__all__', label: 'All categories' },
+      { value: 'cat-keychains', label: 'Keychains' },
+      { value: 'cat-pins', label: 'Pins' },
+      { value: 'cat-game-pins', label: 'Pins / Game Pins' },
+      { value: 'cat-anime-pins', label: 'Pins / Anime Pins' },
+    ]);
+    fireEvent.click(screen.getByRole('button', { name: 'Advanced Filter' }));
+
+    const advancedFilterModalProps = advancedFilterModalMock.mock.lastCall?.[0] as {
+      fieldValueOptions?: Record<string, Array<{ value: string; label: string }>>;
+    };
+    expect(advancedFilterModalProps.fieldValueOptions?.categoryId).toEqual([
+      { value: 'cat-keychains', label: 'Keychains' },
+      { value: 'cat-pins', label: 'Pins' },
+      { value: 'cat-game-pins', label: 'Pins / Game Pins' },
+      { value: 'cat-anime-pins', label: 'Pins / Anime Pins' },
+    ]);
   });
 
   it('maps category option selection back to setCategoryId', () => {

@@ -3,13 +3,13 @@ import { createServer, type Server } from 'node:http';
 import { afterEach, describe, expect, it } from 'vitest';
 import { chromium, type Browser } from 'playwright';
 
-import { pickElementAt } from './live-session';
+import { pickElementAt, readSettledLiveScripterPageTitle } from './live-session';
 
 const FIXTURE_HTML = `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Live Scripter Fixture</title>
+    <title>StudiQ</title>
     <style>
       body {
         margin: 0;
@@ -60,6 +60,9 @@ const FIXTURE_HTML = `<!doctype html>
       <div class="spacer"></div>
     </main>
     <script>
+      window.setTimeout(() => {
+        document.title = 'Live Scripter Fixture';
+      }, 120);
       const status = document.getElementById('status');
       const button = document.getElementById('submit-action');
       button.addEventListener('click', () => {
@@ -131,6 +134,7 @@ describe('live-session browser smoke', () => {
     browser = await chromium.launch({ headless: true });
     const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
     await page.goto(fixture.url, { waitUntil: 'domcontentloaded' });
+    await expect(readSettledLiveScripterPageTitle(page)).resolves.toBe('Live Scripter Fixture');
 
     const buttonBox = await page.locator('#submit-action').boundingBox();
     expect(buttonBox).not.toBeNull();

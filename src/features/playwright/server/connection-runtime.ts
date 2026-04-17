@@ -245,7 +245,7 @@ export const resolvePlaywrightConnectionRuntime = async (
   const settings = await resolveConnectionPlaywrightSettings(connection, options);
   const storageState = parsePersistedStorageState(connection.playwrightStorageState);
   const personaId =
-    normalizeIntegrationConnectionPlaywrightPersonaId(options?.personaId ?? connection.playwrightPersonaId) ??
+    normalizeIntegrationConnectionPlaywrightPersonaId(options?.personaId) ??
     undefined;
   const deviceContext = resolvePlaywrightRuntimeDeviceContext(settings);
 

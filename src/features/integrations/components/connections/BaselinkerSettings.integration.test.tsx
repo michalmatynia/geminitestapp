@@ -251,7 +251,6 @@ const baseConnection = (overrides: Partial<IntegrationConnection>): IntegrationC
   hasBaseApiToken: false,
   hasPlaywrightStorageState: false,
   playwrightStorageStateUpdatedAt: null,
-  playwrightHeadless: null,
   playwrightSlowMo: null,
   playwrightTimeout: null,
   playwrightNavigationTimeout: null,

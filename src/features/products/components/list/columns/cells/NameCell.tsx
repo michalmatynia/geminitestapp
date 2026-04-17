@@ -51,12 +51,13 @@ function resolveShippingInfo(product: ProductWithImages, categoryNameById: Reado
 
 function NameCellButton({ name, onClick }: { name: string, onClick: () => void }): React.JSX.Element {
   const display = name !== '' ? name : '—';
+  const actionLabel = name !== '' ? `Open ${display}` : 'Open product';
   return (
     <button
       type='button'
       title={display}
       className='inline-block max-w-full min-w-0 overflow-hidden text-ellipsis whitespace-nowrap align-top select-text cursor-pointer hover:underline border-0 bg-transparent p-0 text-left text-sm font-normal text-white/90 hover:text-white/80'
-      aria-label={`Open ${display}`}
+      aria-label={actionLabel}
       onClick={(): void => {
         const selection = typeof window !== 'undefined' ? window.getSelection() : null;
         if (selection !== null && selection.toString().trim() !== '') return;

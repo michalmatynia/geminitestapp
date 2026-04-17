@@ -5,9 +5,9 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { defaultPlaywrightActionExecutionSettings } from '@/shared/contracts/playwright-steps';
-import { defaultIntegrationConnectionPlaywrightSettings } from '@/features/integrations/utils/playwright-connection-settings';
-import type { ProgrammableSessionDiagnostics } from '@/features/integrations/utils/playwright-programmable-session-diagnostics';
-import type { ProgrammableSessionPreview } from '@/features/integrations/utils/playwright-programmable-session-preview';
+import { defaultIntegrationConnectionPlaywrightSettings } from '@/features/playwright/utils/playwright-settings-baseline';
+import type { ProgrammableSessionDiagnostics } from '@/features/playwright/utils/playwright-programmable-session-diagnostics';
+import type { ProgrammableSessionPreview } from '@/features/playwright/utils/playwright-programmable-session-preview';
 
 vi.mock('next/link', () => ({
   default: ({

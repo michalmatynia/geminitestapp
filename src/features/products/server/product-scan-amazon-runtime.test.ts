@@ -689,10 +689,19 @@ describe('product-scan-amazon-runtime', () => {
 
   it('supports a direct Amazon candidate extraction mode that skips Google Lens', () => {
     expect(AMAZON_REVERSE_IMAGE_SCAN_RUNTIME).toContain(
-      'const directAmazonCandidateUrl = toText(input?.directAmazonCandidateUrl);'
+      'const directAmazonCandidateUrls = Array.isArray(input?.directAmazonCandidateUrls)'
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_RUNTIME).toContain(
-      'const directAmazonCandidateUrls = Array.isArray(input?.directAmazonCandidateUrls)'
+      'toText(input?.directAmazonCandidateUrl) || directAmazonCandidateUrls[0] || null;'
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_RUNTIME).toContain(
+      'if (imageCandidates.length === 0 && !hasDirectAmazonCandidateInput) {'
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_RUNTIME).toContain(
+      "const validationMessage = directAmazonCandidateUrl"
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_RUNTIME).toContain(
+      "'Validated direct Amazon candidate URL.'"
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_RUNTIME).toContain(
       'const skipAmazonProbe = input?.skipAmazonProbe === true;'
@@ -708,6 +717,9 @@ describe('product-scan-amazon-runtime', () => {
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_RUNTIME).toContain(
       'candidateUrls: directCandidateUrls,'
+    );
+    expect(AMAZON_REVERSE_IMAGE_SCAN_RUNTIME).toContain(
+      'Array.from(new Set([directAmazonCandidateUrl, ...directAmazonCandidateUrls]))'
     );
     expect(AMAZON_REVERSE_IMAGE_SCAN_RUNTIME).toContain(
       "resultCode: 'probe_reused'"

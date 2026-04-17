@@ -14,7 +14,6 @@ describe('vinted-browser-runtime', () => {
       resolveRequestedVintedBrowserMode({
         requestedBrowserMode: undefined,
         source: 'api',
-        connectionHeadless: true,
       })
     ).toBe('headed');
 
@@ -22,7 +21,6 @@ describe('vinted-browser-runtime', () => {
       resolveRequestedVintedBrowserPreference({
         requestedBrowserPreference: undefined,
         source: 'manual',
-        connectionBrowserPreference: 'auto',
       })
     ).toBe('brave');
   });
@@ -32,17 +30,15 @@ describe('vinted-browser-runtime', () => {
       resolveRequestedVintedBrowserMode({
         requestedBrowserMode: undefined,
         source: 'scheduler',
-        connectionHeadless: true,
       })
-    ).toBe('headless');
+    ).toBe('connection_default');
 
     expect(
       resolveRequestedVintedBrowserPreference({
         requestedBrowserPreference: undefined,
         source: 'scheduler',
-        connectionBrowserPreference: 'chromium',
       })
-    ).toBe('chromium');
+    ).toBeUndefined();
 
     expect(
       resolveEffectiveVintedBrowserMode({

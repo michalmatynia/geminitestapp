@@ -5,6 +5,7 @@ import { type ProductAdvancedFilterCondition, type ProductAdvancedFilterRule, ty
 import { logger } from '@/shared/utils/logger';
 
 import { type ProductDocument } from './mongo-product-repository-mappers';
+import { buildMongoExpandedCategoryFilter } from './mongo-category-filter';
 import {
   appendAndCondition,
   buildProductIdFilter,
@@ -152,9 +153,9 @@ const buildMongoIdCondition = (
   return null;
 };
 
-const buildMongoCategoryCondition = (
+const buildMongoCategoryCondition = async (
   condition: ProductAdvancedFilterCondition
-): Filter<ProductDocument> | null => {
+): Promise<Filter<ProductDocument> | null> => {
   if (condition.operator === 'isEmpty') {
     return {
       $or: [{ categoryId: { $exists: false } }, { categoryId: null }, { categoryId: '' }],
@@ -176,11 +177,11 @@ const buildMongoCategoryCondition = (
   }
 
   if (condition.operator === 'eq') {
-    return { categoryId: value } as Filter<ProductDocument>;
+    return buildMongoExpandedCategoryFilter(value);
   }
 
   if (condition.operator === 'neq') {
-    const eqCondition = buildMongoCategoryCondition({
+    const eqCondition = await buildMongoCategoryCondition({
       ...condition,
       operator: 'eq',
     });
@@ -374,10 +375,10 @@ export const buildMongoBaseExportedCondition = (
   } as Filter<ProductDocument>;
 };
 
-const compileAdvancedMongoCondition = (
+const compileAdvancedMongoCondition = async (
   condition: ProductAdvancedFilterCondition,
   context: BaseExportLookupContext
-): Filter<ProductDocument> | null => {
+): Promise<Filter<ProductDocument> | null> => {
   if (condition.field === 'id') return buildMongoIdCondition(condition);
   if (condition.field === 'sku') return buildMongoStringFieldCondition(['sku'], condition);
   if (condition.field === 'name')
@@ -410,17 +411,19 @@ const compileAdvancedMongoCondition = (
   return null;
 };
 
-const compileAdvancedMongoRule = (
+const compileAdvancedMongoRule = async (
   rule: ProductAdvancedFilterRule,
   context: BaseExportLookupContext
-): Filter<ProductDocument> | null => {
+): Promise<Filter<ProductDocument> | null> => {
   if (rule.type === 'condition') {
     return compileAdvancedMongoCondition(rule, context);
   }
 
-  const compiledRules = rule.rules
-    .map((nested: ProductAdvancedFilterRule) => compileAdvancedMongoRule(nested, context))
-    .filter((nested): nested is Filter<ProductDocument> => nested !== null);
+  const compiledRules = (await Promise.all(
+    rule.rules.map((nested: ProductAdvancedFilterRule) =>
+      compileAdvancedMongoRule(nested, context)
+    )
+  )).filter((nested): nested is Filter<ProductDocument> => nested !== null);
 
   if (compiledRules.length === 0) return null;
 
@@ -435,15 +438,15 @@ const compileAdvancedMongoRule = (
   return { $nor: [combined] } as Filter<ProductDocument>;
 };
 
-export const buildAdvancedMongoWhere = (
+export const buildAdvancedMongoWhere = async (
   payload: string | undefined,
   context: BaseExportLookupContext
-): Filter<ProductDocument> | null => {
+): Promise<Filter<ProductDocument> | null> => {
   const parsedGroup = parseAdvancedFilterGroup(payload);
   if (!parsedGroup) return null;
   const metrics = getProductAdvancedFilterMetrics(parsedGroup);
   const compileStart = Date.now();
-  const compiled = compileAdvancedMongoRule(parsedGroup, context);
+  const compiled = await compileAdvancedMongoRule(parsedGroup, context);
   logger.info('[products.advanced-filter.mongo] compiled', {
     rules: metrics.rules,
     depth: metrics.depth,
@@ -565,10 +568,11 @@ export const buildMongoWhere = async (
     }
   }
 
-  if (filters.categoryId) {
-    filter = appendAndCondition(filter, {
-      categoryId: filters.categoryId,
-    } as Filter<ProductDocument>);
+  if (typeof filters.categoryId === 'string' && filters.categoryId.trim().length > 0) {
+    const categoryFilter = await buildMongoExpandedCategoryFilter(filters.categoryId);
+    if (categoryFilter !== null) {
+      filter = appendAndCondition(filter, categoryFilter);
+    }
   }
 
   if (filters.archived !== undefined) {
@@ -591,7 +595,7 @@ export const buildMongoWhere = async (
     }
 
     if (filters.advancedFilter) {
-      const advancedWhere = buildAdvancedMongoWhere(filters.advancedFilter, exportContext);
+      const advancedWhere = await buildAdvancedMongoWhere(filters.advancedFilter, exportContext);
       if (advancedWhere) {
         filter = appendAndCondition(filter, advancedWhere);
       }

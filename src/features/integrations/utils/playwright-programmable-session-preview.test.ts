@@ -5,12 +5,12 @@ import {
   normalizePlaywrightAction,
   type PlaywrightAction,
 } from '@/shared/contracts/playwright-steps';
-import { defaultIntegrationConnectionPlaywrightSettings } from './playwright-connection-settings';
+import { defaultIntegrationConnectionPlaywrightSettings } from '@/features/playwright/utils/playwright-settings-baseline';
 
 import {
   applyActionExecutionSettingsToPlaywrightSettings,
   buildProgrammableSessionPreview,
-} from './playwright-programmable-session-preview';
+} from '@/features/playwright/utils/playwright-programmable-session-preview';
 
 const buildAction = (
   overrides: Partial<PlaywrightAction>

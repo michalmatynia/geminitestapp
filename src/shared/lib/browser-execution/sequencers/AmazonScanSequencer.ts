@@ -25,6 +25,8 @@ import {
   AMAZON_HERO_IMAGE_SELECTORS,
 } from '../selectors/amazon';
 import {
+  AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY,
+  AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY,
   AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY,
   resolveAmazonRuntimeOperationLabel,
 } from '../amazon-runtime-constants';
@@ -41,8 +43,10 @@ export type AmazonImageSearchProvider =
 export interface AmazonScanImageCandidate {
   id?: string | null;
   url?: string | null;
+  filepath?: string | null;
   localPath?: string | null;
   buffer?: Buffer | null;
+  filename?: string | null;
   rank?: number | null;
 }
 
@@ -52,6 +56,14 @@ export interface AmazonScanInput {
   allowManualVerification?: boolean;
   manualVerificationTimeoutMs?: number;
   runtimeKey?: string | null;
+  triageOnlyOnAmazonCandidates?: boolean;
+  collectAmazonCandidatePreviews?: boolean;
+  probeOnlyOnAmazonMatch?: boolean;
+  skipAmazonProbe?: boolean;
+  directAmazonCandidateUrl?: string | null;
+  directAmazonCandidateUrls?: string[] | null;
+  directMatchedImageId?: string | null;
+  directAmazonCandidateRank?: number | null;
   stepSequenceKey?: string | null;
   stepSequence?: ProductScanSequenceEntry[] | null;
 }
@@ -123,6 +135,64 @@ interface AmazonProductData {
   amazonDetails: AmazonDetails | null;
 }
 
+interface AmazonProbeData {
+  asin: string | null;
+  pageTitle: string | null;
+  descriptionSnippet: string | null;
+  pageLanguage: string | null;
+  pageLanguageSource: string | null;
+  marketplaceDomain: string | null;
+  candidateUrl: string | null;
+  canonicalUrl: string | null;
+  heroImageUrl: string | null;
+  heroImageAlt: string | null;
+  heroImageArtifactName: string | null;
+  artifactKey: string | null;
+  bulletPoints: string[];
+  bulletCount: number | null;
+  attributeCount: number | null;
+}
+
+interface AmazonCandidateResult {
+  url: string;
+  score: number | null;
+  asin: string | null;
+  marketplaceDomain: string | null;
+  title: string | null;
+  snippet: string | null;
+  rank: number | null;
+}
+
+interface AmazonCandidatePreview {
+  id: string | null;
+  matchedImageId: string | null;
+  url: string;
+  asin: string | null;
+  marketplaceDomain: string | null;
+  title: string | null;
+  snippet: string | null;
+  heroImageUrl: string | null;
+  heroImageAlt: string | null;
+  heroImageArtifactName: string | null;
+  artifactKey: string | null;
+  rank: number | null;
+}
+
+interface AmazonCandidateOutcome {
+  status: 'matched' | 'probe_ready' | 'failed' | 'no_match';
+  asin: string | null;
+  title: string | null;
+  price: string | null;
+  url: string | null;
+  description: string | null;
+  heroImageUrl: string | null;
+  amazonDetails: AmazonDetails | null;
+  amazonProbe: AmazonProbeData | null;
+  candidatePreview: AmazonCandidatePreview | null;
+  message: string | null;
+  stage: string;
+}
+
 interface AmazonDetails {
   brand: string | null;
   manufacturer: string | null;
@@ -165,6 +235,7 @@ interface AmazonRanking {
 
 export class AmazonScanSequencer extends ProductScanSequencer {
   private readonly input: AmazonScanInput;
+  private readonly MAX_AMAZON_PREVIEW_CANDIDATES = 5;
 
   private readonly CAPTCHA_REQUIRED_MESSAGE = 'Google Lens requested captcha verification.';
   private readonly CAPTCHA_WAIT_MESSAGE =
@@ -182,9 +253,17 @@ export class AmazonScanSequencer extends ProductScanSequencer {
     const imageCandidates = Array.isArray(this.input.imageCandidates)
       ? this.input.imageCandidates
       : [];
+    const directCandidateUrls = this.resolveDirectAmazonCandidateUrls();
+    const runtimeKey = this.resolveRuntimeKey();
+    const isCandidateSearchRuntime =
+      runtimeKey === AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY;
+    const shouldCollectCandidatePreviews =
+      isCandidateSearchRuntime || this.input.collectAmazonCandidatePreviews === true;
+    const shouldStopAtCandidateTriage = this.input.triageOnlyOnAmazonCandidates === true;
+    const shouldReturnProbeOnly = this.input.probeOnlyOnAmazonMatch === true;
 
     this.seedStepSequence({
-      defaultSequenceKey: AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY,
+      defaultSequenceKey: this.resolveDefaultSequenceKey(runtimeKey, directCandidateUrls.length > 0),
       sequenceKey: this.normalizeText(this.input.stepSequenceKey),
       customSequence: Array.isArray(this.input.stepSequence)
         ? this.input.stepSequence
@@ -194,13 +273,13 @@ export class AmazonScanSequencer extends ProductScanSequencer {
     // ── Validate ──────────────────────────────────────────────────────────────
     this.upsertScanStep({ key: 'validate', status: 'running' });
 
-    if (imageCandidates.length === 0) {
-      const operationLabel = resolveAmazonRuntimeOperationLabel(this.input.runtimeKey);
+    if (imageCandidates.length === 0 && directCandidateUrls.length === 0) {
+      const operationLabel = resolveAmazonRuntimeOperationLabel(runtimeKey);
       this.upsertScanStep({
         key: 'validate',
         status: 'failed',
         resultCode: 'missing_image_source',
-        message: `No image candidates were provided for the ${operationLabel}.`,
+        message: `No image candidates or direct Amazon candidate URLs were provided for the ${operationLabel}.`,
       });
       await this.emitResult({
         status: 'failed',
@@ -209,13 +288,63 @@ export class AmazonScanSequencer extends ProductScanSequencer {
         price: null,
         url: null,
         description: null,
-        message: 'No image candidates were provided.',
+        amazonDetails: null,
+        amazonProbe: null,
+        matchedImageId: null,
+        candidateUrls: [],
+        candidateResults: [],
+        candidatePreviews: [],
+        currentUrl: this.page.url(),
+        message: 'No image candidates or direct Amazon candidate URLs were provided.',
         stage: 'validate',
       });
       return;
     }
 
     this.upsertScanStep({ key: 'validate', status: 'completed', resultCode: 'ok' });
+
+    if (directCandidateUrls.length > 0) {
+      const directCandidateUrl = directCandidateUrls[0]!;
+      const directCandidateRank =
+        typeof this.input.directAmazonCandidateRank === 'number' &&
+        Number.isFinite(this.input.directAmazonCandidateRank) &&
+        this.input.directAmazonCandidateRank > 0
+          ? Math.trunc(this.input.directAmazonCandidateRank)
+          : 1;
+      const matchedImageId = this.normalizeText(this.input.directMatchedImageId);
+      const directOutcome = await this.processAmazonCandidate({
+        url: directCandidateUrl,
+        candidateId: matchedImageId ?? 'direct_candidate',
+        candidateRank: directCandidateRank,
+        attempt: 1,
+        candidateResult: this.buildCandidateResultFromUrl(directCandidateUrl, directCandidateRank),
+        skipProbe: this.input.skipAmazonProbe === true,
+        returnProbeOnly: shouldReturnProbeOnly,
+      });
+
+      await this.emitResult({
+        status: directOutcome.status,
+        asin: directOutcome.asin,
+        title: directOutcome.title,
+        price: directOutcome.price,
+        url: directOutcome.url,
+        description: directOutcome.description,
+        heroImageUrl: directOutcome.heroImageUrl,
+        amazonDetails: directOutcome.amazonDetails,
+        amazonProbe: directOutcome.amazonProbe,
+        matchedImageId,
+        candidateUrls: directCandidateUrls,
+        candidateResults: directCandidateUrls.map((url, index) =>
+          this.buildCandidateResultFromUrl(url, index === 0 ? directCandidateRank : index + 1)
+        ),
+        candidatePreviews:
+          directOutcome.candidatePreview !== null ? [directOutcome.candidatePreview] : [],
+        currentUrl: this.page.url(),
+        message: directOutcome.message,
+        stage: directOutcome.stage,
+      });
+      return;
+    }
 
     // ── Google Lens: open ─────────────────────────────────────────────────────
     const selectedCandidate = imageCandidates[0]!;
@@ -227,6 +356,13 @@ export class AmazonScanSequencer extends ProductScanSequencer {
       await this.emitResult({
         status: 'failed',
         asin: null, title: null, price: null, url: null, description: null,
+        amazonDetails: null,
+        amazonProbe: null,
+        matchedImageId: candidateId,
+        candidateUrls: [],
+        candidateResults: [],
+        candidatePreviews: [],
+        currentUrl: this.page.url(),
         message: openResult.message,
         stage: 'google_lens_open',
       });
@@ -248,6 +384,13 @@ export class AmazonScanSequencer extends ProductScanSequencer {
       await this.emitResult({
         status: 'failed',
         asin: null, title: null, price: null, url: null, description: null,
+        amazonDetails: null,
+        amazonProbe: null,
+        matchedImageId: candidateId,
+        candidateUrls: [],
+        candidateResults: [],
+        candidatePreviews: [],
+        currentUrl: this.page.url(),
         message: uploadResult.error ?? 'Google Lens did not accept the image upload.',
         stage: 'google_upload',
       });
@@ -261,39 +404,175 @@ export class AmazonScanSequencer extends ProductScanSequencer {
       await this.emitResult({
         status: 'failed',
         asin: null, title: null, price: null, url: null, description: null,
+        amazonDetails: null,
+        amazonProbe: null,
+        matchedImageId: candidateId,
+        candidateUrls: [],
+        candidateResults: [],
+        candidatePreviews: [],
+        currentUrl: this.page.url(),
         message: candidatesResult.message ?? 'No Amazon candidate URLs were found in the Google Lens results.',
         stage: 'google_candidates',
       });
       return;
     }
 
-    // ── Amazon: probe candidates ──────────────────────────────────────────────
-    let bestResult: AmazonProductData | null = null;
-    let bestScore = -1;
+    if (shouldCollectCandidatePreviews) {
+      const candidatePreviews: AmazonCandidatePreview[] = [];
+      const candidateResults: AmazonCandidateResult[] = [];
 
-    for (let i = 0; i < candidatesResult.urls.length; i++) {
-      const url = candidatesResult.urls[i]!;
-      const rank = i + 1;
+      for (const candidateResult of candidatesResult.results.slice(0, this.MAX_AMAZON_PREVIEW_CANDIDATES)) {
+        const previewOutcome = await this.processAmazonCandidate({
+          url: candidateResult.url,
+          candidateId,
+          candidateRank: candidateResult.rank ?? candidateRank,
+          attempt: candidateResult.rank ?? candidateResults.length + 1,
+          candidateResult,
+          skipProbe: false,
+          returnProbeOnly: true,
+        });
 
-      const probeResult = await this.probeAmazonCandidate({ url, candidateId, candidateRank: rank });
-      if (!probeResult) continue;
+        if (previewOutcome.candidatePreview !== null) {
+          candidatePreviews.push(previewOutcome.candidatePreview);
+          candidateResults.push(this.buildCandidateResultFromPreview(previewOutcome.candidatePreview));
+          continue;
+        }
 
-      const score = this.scoreAmazonResult(probeResult);
-      if (score > bestScore) {
-        bestScore = score;
-        bestResult = probeResult;
+        candidateResults.push(candidateResult);
       }
 
-      if (this.isStrongAmazonMatch(probeResult)) break;
+      const resolvedCandidateResults =
+        candidateResults.length > 0 ? candidateResults : candidatesResult.results;
+      await this.emitResult({
+        status: 'triage_ready',
+        asin: null,
+        title: null,
+        price: null,
+        url:
+          candidatePreviews[0]?.url ??
+          resolvedCandidateResults[0]?.url ??
+          candidatesResult.urls[0] ??
+          this.page.url(),
+        description: null,
+        amazonDetails: null,
+        amazonProbe: null,
+        matchedImageId: candidateId,
+        candidateUrls: candidatesResult.urls,
+        candidateResults: resolvedCandidateResults,
+        candidatePreviews,
+        currentUrl: this.page.url(),
+        message:
+          candidatePreviews.length > 0
+            ? 'Collected Amazon candidate previews for manual selection.'
+            : 'Collected Amazon candidates for manual selection.',
+        stage: 'amazon_probe',
+      });
+      return;
+    }
+
+    if (shouldStopAtCandidateTriage) {
+      await this.emitResult({
+        status: 'triage_ready',
+        asin: null,
+        title: null,
+        price: null,
+        url: candidatesResult.urls[0] ?? this.page.url(),
+        description: null,
+        amazonDetails: null,
+        amazonProbe: null,
+        matchedImageId: candidateId,
+        candidateUrls: candidatesResult.urls,
+        candidateResults: candidatesResult.results,
+        candidatePreviews: [],
+        currentUrl: this.page.url(),
+        message: 'Collected Amazon candidates for AI triage before opening Amazon.',
+        stage: 'google_candidates',
+      });
+      return;
+    }
+
+    // ── Amazon: probe candidates ──────────────────────────────────────────────
+    let bestResult: AmazonCandidateOutcome | null = null;
+    let bestScore = -1;
+
+    for (const candidateResult of candidatesResult.results) {
+      const url = candidateResult.url;
+      const rank = candidateResult.rank ?? 1;
+
+      const outcome = await this.processAmazonCandidate({
+        url,
+        candidateId,
+        candidateRank: rank,
+        attempt: rank,
+        candidateResult,
+        skipProbe: this.input.skipAmazonProbe === true,
+        returnProbeOnly: shouldReturnProbeOnly,
+      });
+
+      if (outcome.status === 'probe_ready') {
+        await this.emitResult({
+          status: 'probe_ready',
+          asin: outcome.asin,
+          title: outcome.title,
+          price: null,
+          url: outcome.url,
+          description: outcome.description,
+          amazonDetails: null,
+          amazonProbe: outcome.amazonProbe,
+          matchedImageId: candidateId,
+          candidateUrls: candidatesResult.urls,
+          candidateResults: candidatesResult.results,
+          candidatePreviews:
+            outcome.candidatePreview !== null ? [outcome.candidatePreview] : [],
+          currentUrl: this.page.url(),
+          message: outcome.message,
+          stage: outcome.stage,
+        });
+        return;
+      }
+
+      if (outcome.status !== 'matched') {
+        continue;
+      }
+
+      const score = this.scoreAmazonResult({
+        asin: outcome.asin,
+        title: outcome.title,
+        price: outcome.price,
+        url: outcome.url,
+        description: outcome.description,
+        heroImageUrl: outcome.heroImageUrl,
+        amazonDetails: outcome.amazonDetails,
+      });
+      if (score > bestScore) {
+        bestScore = score;
+        bestResult = outcome;
+      }
+
+      if (this.isStrongAmazonMatch({
+        asin: outcome.asin,
+        title: outcome.title,
+        price: outcome.price,
+        url: outcome.url,
+        description: outcome.description,
+        heroImageUrl: outcome.heroImageUrl,
+        amazonDetails: outcome.amazonDetails,
+      })) break;
     }
 
     if (!bestResult) {
       await this.emitResult({
         status: 'no_match',
         asin: null, title: null, price: null, url: null, description: null,
+        amazonDetails: null,
+        amazonProbe: null,
+        matchedImageId: candidateId,
+        candidateUrls: candidatesResult.urls,
+        candidateResults: candidatesResult.results,
+        candidatePreviews: [],
+        currentUrl: this.page.url(),
         message: 'None of the Amazon candidates yielded usable product data.',
         stage: 'amazon_extract',
-        candidateResults: candidatesResult.urls.map((url, i) => ({ url, rank: i + 1 })),
       });
       return;
     }
@@ -307,7 +586,13 @@ export class AmazonScanSequencer extends ProductScanSequencer {
       description: bestResult.description,
       heroImageUrl: bestResult.heroImageUrl,
       amazonDetails: bestResult.amazonDetails,
-      candidateResults: candidatesResult.urls.map((url, i) => ({ url, rank: i + 1 })),
+      amazonProbe: bestResult.amazonProbe,
+      matchedImageId: candidateId,
+      candidateUrls: candidatesResult.urls,
+      candidateResults: candidatesResult.results,
+      candidatePreviews:
+        bestResult.candidatePreview !== null ? [bestResult.candidatePreview] : [],
+      currentUrl: this.page.url(),
       stage: 'amazon_extract',
     });
   }
@@ -416,14 +701,17 @@ export class AmazonScanSequencer extends ProductScanSequencer {
     }
 
     const startingUrl = this.page.url();
+    const candidateFilepath = this.resolveImageCandidateFilepath(candidate);
 
     try {
       // Set input file — covers local path or URL scenarios
-      if (candidate.localPath) {
-        await inputState.inputLocator.setInputFiles(candidate.localPath);
+      if (candidateFilepath) {
+        await inputState.inputLocator.setInputFiles(candidateFilepath);
       } else if (candidate.buffer) {
         await inputState.inputLocator.setInputFiles({
-          name: `image_${candidateId}.jpg`,
+          name:
+            this.normalizeText(candidate.filename) ??
+            `image_${candidateId}.jpg`,
           mimeType: 'image/jpeg',
           buffer: candidate.buffer,
         });
@@ -580,7 +868,7 @@ export class AmazonScanSequencer extends ProductScanSequencer {
   protected async collectAmazonCandidates(params: {
     candidateId: string;
     candidateRank: number;
-  }): Promise<{ urls: string[]; message: string | null }> {
+  }): Promise<{ urls: string[]; results: AmazonCandidateResult[]; message: string | null }> {
     const { candidateId, candidateRank } = params;
 
     this.upsertScanStep({
@@ -608,8 +896,10 @@ export class AmazonScanSequencer extends ProductScanSequencer {
         message: 'Google Lens results did not contain any Amazon product URLs.',
         url: this.page.url(),
       });
-      return { urls: [], message: 'No Amazon candidates found in Google Lens results.' };
+      return { urls: [], results: [], message: 'No Amazon candidates found in Google Lens results.' };
     }
+
+    const results = urls.map((url, index) => this.buildCandidateResultFromUrl(url, index + 1));
 
     this.upsertScanStep({
       key: 'google_candidates',
@@ -622,7 +912,7 @@ export class AmazonScanSequencer extends ProductScanSequencer {
       details: urls.slice(0, 5).map((url, i) => ({ label: `Candidate ${i + 1}`, value: url })),
     });
 
-    return { urls, message: null };
+    return { urls, results, message: null };
   }
 
   private async extractAmazonCandidateUrls(): Promise<string[]> {
@@ -684,17 +974,22 @@ export class AmazonScanSequencer extends ProductScanSequencer {
 
   // ─── Amazon: probe a single candidate ──────────────────────────────────────
 
-  protected async probeAmazonCandidate(params: {
+  protected async processAmazonCandidate(params: {
     url: string;
     candidateId: string;
     candidateRank: number;
-  }): Promise<AmazonProductData | null> {
-    const { url, candidateId, candidateRank } = params;
+    attempt: number;
+    candidateResult?: AmazonCandidateResult | null;
+    skipProbe: boolean;
+    returnProbeOnly: boolean;
+  }): Promise<AmazonCandidateOutcome> {
+    const { url, candidateId, candidateRank, attempt, candidateResult, skipProbe, returnProbeOnly } = params;
 
     // ── Open ──────────────────────────────────────────────────────────────────
     this.upsertScanStep({
       key: 'amazon_open',
       status: 'running',
+      attempt,
       candidateId,
       candidateRank,
       message: 'Opening Amazon product page.',
@@ -708,18 +1003,33 @@ export class AmazonScanSequencer extends ProductScanSequencer {
       this.upsertScanStep({
         key: 'amazon_open',
         status: 'failed',
+        attempt,
         candidateId,
         candidateRank,
         resultCode: 'navigation_failed',
         message: 'Amazon product page could not be opened.',
         url: this.page.url(),
       });
-      return null;
+      return {
+        status: 'failed',
+        asin: null,
+        title: null,
+        price: null,
+        url,
+        description: null,
+        heroImageUrl: null,
+        amazonDetails: null,
+        amazonProbe: null,
+        candidatePreview: null,
+        message: 'Amazon product page could not be opened.',
+        stage: 'amazon_open',
+      };
     }
 
     this.upsertScanStep({
       key: 'amazon_open',
       status: 'completed',
+      attempt,
       candidateId,
       candidateRank,
       resultCode: 'ok',
@@ -731,6 +1041,7 @@ export class AmazonScanSequencer extends ProductScanSequencer {
     this.upsertScanStep({
       key: 'amazon_overlays',
       status: 'running',
+      attempt,
       candidateId,
       candidateRank,
       message: 'Dismissing Amazon overlays.',
@@ -742,6 +1053,7 @@ export class AmazonScanSequencer extends ProductScanSequencer {
     this.upsertScanStep({
       key: 'amazon_overlays',
       status: overlayResult.cleared ? 'completed' : 'skipped',
+      attempt,
       candidateId,
       candidateRank,
       resultCode: overlayResult.cleared ? 'ok' : 'overlay_persisted',
@@ -753,6 +1065,7 @@ export class AmazonScanSequencer extends ProductScanSequencer {
     this.upsertScanStep({
       key: 'amazon_content_ready',
       status: 'running',
+      attempt,
       candidateId,
       candidateRank,
       message: 'Waiting for Amazon product content.',
@@ -765,18 +1078,33 @@ export class AmazonScanSequencer extends ProductScanSequencer {
       this.upsertScanStep({
         key: 'amazon_content_ready',
         status: 'failed',
+        attempt,
         candidateId,
         candidateRank,
         resultCode: 'content_timeout',
         message: 'Amazon product content did not become visible.',
         url: this.page.url(),
       });
-      return null;
+      return {
+        status: 'failed',
+        asin: null,
+        title: null,
+        price: null,
+        url,
+        description: null,
+        heroImageUrl: null,
+        amazonDetails: null,
+        amazonProbe: null,
+        candidatePreview: null,
+        message: 'Amazon product content did not become visible.',
+        stage: 'amazon_content_ready',
+      };
     }
 
     this.upsertScanStep({
       key: 'amazon_content_ready',
       status: 'completed',
+      attempt,
       candidateId,
       candidateRank,
       resultCode: 'ok',
@@ -784,57 +1112,119 @@ export class AmazonScanSequencer extends ProductScanSequencer {
       url: this.page.url(),
     });
 
-    // ── Probe ─────────────────────────────────────────────────────────────────
-    this.upsertScanStep({
-      key: 'amazon_probe',
-      status: 'running',
-      candidateId,
-      candidateRank,
-      message: 'Probing Amazon product page.',
-      url: this.page.url(),
-    });
+    let amazonProbe: AmazonProbeData | null = null;
+    if (skipProbe) {
+      this.upsertScanStep({
+        key: 'amazon_probe',
+        status: 'skipped',
+        attempt,
+        candidateId,
+        candidateRank,
+        resultCode: 'probe_reused',
+        message: 'Reused earlier Amazon probe evidence for approved direct extraction.',
+        url: this.page.url(),
+      });
+    } else {
+      amazonProbe = await this.collectAmazonProbeData({
+        url,
+        candidateId,
+        candidateRank,
+        attempt,
+      });
 
-    const asin = await this.extractAmazonAsin();
+      if (amazonProbe === null) {
+        return {
+          status: 'failed',
+          asin: null,
+          title: null,
+          price: null,
+          url,
+          description: null,
+          heroImageUrl: null,
+          amazonDetails: null,
+          amazonProbe: null,
+          candidatePreview: null,
+          message: 'Could not collect Amazon candidate probe evidence.',
+          stage: 'amazon_probe',
+        };
+      }
+    }
 
-    this.upsertScanStep({
-      key: 'amazon_probe',
-      status: 'completed',
-      candidateId,
-      candidateRank,
-      resultCode: asin ? 'ok' : 'asin_missing',
-      message: asin ? `ASIN found: ${asin}` : 'ASIN not found on page.',
-      url: this.page.url(),
-      details: asin ? [{ label: 'ASIN', value: asin }] : [],
-    });
+    const candidatePreview =
+      amazonProbe !== null
+        ? this.buildCandidatePreview({
+            amazonProbe,
+            candidateId,
+            candidateRank,
+            candidateResult,
+            fallbackUrl: url,
+          })
+        : null;
+
+    if (returnProbeOnly) {
+      return {
+        status: 'probe_ready',
+        asin: amazonProbe?.asin ?? candidateResult?.asin ?? null,
+        title: amazonProbe?.pageTitle ?? candidateResult?.title ?? null,
+        price: null,
+        url:
+          amazonProbe?.canonicalUrl ??
+          amazonProbe?.candidateUrl ??
+          url,
+        description: amazonProbe?.descriptionSnippet ?? candidateResult?.snippet ?? null,
+        heroImageUrl: amazonProbe?.heroImageUrl ?? null,
+        amazonDetails: null,
+        amazonProbe,
+        candidatePreview,
+        message: 'Collected Amazon candidate evidence for AI evaluation.',
+        stage: 'amazon_probe',
+      };
+    }
 
     // ── Extract ───────────────────────────────────────────────────────────────
     this.upsertScanStep({
       key: 'amazon_extract',
       status: 'running',
+      attempt,
       candidateId,
       candidateRank,
       message: 'Extracting Amazon product details.',
       url: this.page.url(),
     });
 
-    const productData = await this.extractAmazonProductData(asin);
+    const productData = await this.extractAmazonProductData(amazonProbe?.asin ?? null);
 
     if (!productData.title && !productData.asin) {
       this.upsertScanStep({
         key: 'amazon_extract',
         status: 'failed',
+        attempt,
         candidateId,
         candidateRank,
         resultCode: 'extract_empty',
         message: 'Could not extract any usable product data from the Amazon page.',
         url: this.page.url(),
       });
-      return null;
+      return {
+        status: 'no_match',
+        asin: null,
+        title: null,
+        price: null,
+        url,
+        description: null,
+        heroImageUrl: null,
+        amazonDetails: null,
+        amazonProbe,
+        candidatePreview,
+        message: 'Could not extract any usable product data from the Amazon page.',
+        stage: 'amazon_extract',
+      };
     }
 
     this.upsertScanStep({
       key: 'amazon_extract',
       status: 'completed',
+      attempt,
       candidateId,
       candidateRank,
       resultCode: 'ok',
@@ -847,7 +1237,20 @@ export class AmazonScanSequencer extends ProductScanSequencer {
       ].filter((d) => d.value != null) as Array<{ label: string; value: string }>,
     });
 
-    return productData;
+    return {
+      status: 'matched',
+      asin: productData.asin,
+      title: productData.title,
+      price: productData.price,
+      url: productData.url,
+      description: productData.description,
+      heroImageUrl: productData.heroImageUrl,
+      amazonDetails: productData.amazonDetails,
+      amazonProbe,
+      candidatePreview,
+      message: 'Amazon product details extracted.',
+      stage: 'amazon_extract',
+    };
   }
 
   // ─── Amazon overlay helpers ─────────────────────────────────────────────────
@@ -945,6 +1348,124 @@ export class AmazonScanSequencer extends ProductScanSequencer {
       heroImageUrl: this.normalizeText(heroImageUrl),
       amazonDetails,
     };
+  }
+
+  protected async collectAmazonProbeData(params: {
+    url: string;
+    candidateId: string;
+    candidateRank: number;
+    attempt: number;
+  }): Promise<AmazonProbeData | null> {
+    const { url, candidateId, candidateRank, attempt } = params;
+
+    this.upsertScanStep({
+      key: 'amazon_probe',
+      status: 'running',
+      attempt,
+      candidateId,
+      candidateRank,
+      message: 'Collecting candidate page evidence before detailed extraction.',
+      url: this.page.url(),
+    });
+
+    try {
+      const currentUrl = this.page.url();
+      const artifactKey = this.buildProbeArtifactKey({
+        candidateId,
+        attempt,
+        candidateRank,
+      });
+      const canonicalHref = await this.page
+        .locator('link[rel="canonical"]')
+        .first()
+        .getAttribute('href')
+        .catch(() => null);
+      const canonicalUrl = this.toAbsoluteUrl(canonicalHref, currentUrl) ?? currentUrl;
+      const pageLanguage = this.normalizeText(
+        await this.page
+          .evaluate(() => document.documentElement?.lang || null)
+          .catch(() => null)
+      );
+      const marketplaceDomain = this.resolveMarketplaceDomain(canonicalUrl);
+      const asin =
+        this.extractAmazonAsinFromValue(currentUrl) ??
+        this.extractAmazonAsinFromValue(canonicalUrl) ??
+        this.extractAmazonAsinFromValue(
+          await this.page.locator('[data-asin]').first().getAttribute('data-asin').catch(() => null)
+        ) ??
+        (await this.extractAmazonAsin());
+      const pageTitle =
+        await this.readFirstText(AMAZON_TITLE_SELECTORS);
+      const descriptionSnippet =
+        await this.readFirstText(AMAZON_DESCRIPTION_SELECTORS);
+      const heroImage = await this.captureAmazonHeroImageArtifact(artifactKey);
+      const bulletPoints = (await this.readAmazonBulletPoints()).slice(0, 8);
+      const attributeCount = (await this.readAmazonAttributePairs()).length;
+
+      await this.captureArtifacts(artifactKey);
+
+      const amazonProbe: AmazonProbeData = {
+        asin,
+        pageTitle,
+        descriptionSnippet,
+        pageLanguage,
+        pageLanguageSource:
+          pageLanguage !== null
+            ? 'html_lang'
+            : marketplaceDomain !== null
+              ? 'marketplace_domain'
+              : null,
+        marketplaceDomain,
+        candidateUrl: url,
+        canonicalUrl,
+        heroImageUrl: heroImage.url,
+        heroImageAlt: heroImage.alt,
+        heroImageArtifactName: heroImage.artifactName,
+        artifactKey,
+        bulletPoints,
+        bulletCount: bulletPoints.length,
+        attributeCount,
+      };
+
+      this.upsertScanStep({
+        key: 'amazon_probe',
+        status: 'completed',
+        attempt,
+        candidateId,
+        candidateRank,
+        resultCode: asin ? 'probe_ready' : 'asin_missing',
+        message: 'Collected Amazon candidate page evidence before extraction.',
+        url: currentUrl,
+        details: [
+          { label: 'ASIN', value: asin },
+          { label: 'Title', value: pageTitle },
+          { label: 'Description', value: descriptionSnippet },
+          { label: 'Page language', value: pageLanguage },
+          { label: 'Language source', value: amazonProbe.pageLanguageSource },
+          { label: 'Marketplace domain', value: marketplaceDomain },
+          { label: 'Canonical URL', value: canonicalUrl },
+          { label: 'Hero image URL', value: heroImage.url },
+          { label: 'Hero image artifact', value: heroImage.artifactName },
+          { label: 'Artifact key', value: artifactKey },
+          { label: 'Bullet count', value: String(bulletPoints.length) },
+          { label: 'Attribute count', value: String(attributeCount) },
+        ],
+      });
+
+      return amazonProbe;
+    } catch {
+      this.upsertScanStep({
+        key: 'amazon_probe',
+        status: 'failed',
+        attempt,
+        candidateId,
+        candidateRank,
+        resultCode: 'probe_failed',
+        message: 'Could not collect Amazon candidate probe evidence.',
+        url: this.page.url(),
+      });
+      return null;
+    }
   }
 
   private async buildAmazonDetails(): Promise<AmazonDetails | null> {
@@ -1136,6 +1657,186 @@ export class AmazonScanSequencer extends ProductScanSequencer {
       if (result.length >= limit) break;
     }
     return result;
+  }
+
+  private resolveRuntimeKey():
+    | typeof AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY
+    | typeof AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY
+    | typeof AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY {
+    const runtimeKey = this.normalizeText(this.input.runtimeKey);
+    if (runtimeKey === AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY) {
+      return AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY;
+    }
+    if (runtimeKey === AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY) {
+      return AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY;
+    }
+    return AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY;
+  }
+
+  private resolveDefaultSequenceKey(
+    runtimeKey:
+      | typeof AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY
+      | typeof AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY
+      | typeof AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY,
+    hasDirectCandidateUrls: boolean
+  ):
+    | typeof AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY
+    | typeof AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY
+    | typeof AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY {
+    if (hasDirectCandidateUrls) {
+      return AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY;
+    }
+    return runtimeKey;
+  }
+
+  private resolveDirectAmazonCandidateUrls(): string[] {
+    const directAmazonCandidateUrls = Array.isArray(this.input.directAmazonCandidateUrls)
+      ? this.input.directAmazonCandidateUrls
+      : [];
+    const normalizedUrls = directAmazonCandidateUrls
+      .map((url) => this.normalizeText(url))
+      .filter((url): url is string => url !== null);
+    const directAmazonCandidateUrl = this.normalizeText(this.input.directAmazonCandidateUrl);
+
+    if (directAmazonCandidateUrl !== null) {
+      return Array.from(new Set([directAmazonCandidateUrl, ...normalizedUrls]));
+    }
+
+    return Array.from(new Set(normalizedUrls));
+  }
+
+  private resolveImageCandidateFilepath(candidate: AmazonScanImageCandidate): string | null {
+    return this.normalizeText(candidate.localPath) ?? this.normalizeText(candidate.filepath);
+  }
+
+  private buildCandidateResultFromUrl(url: string, rank: number): AmazonCandidateResult {
+    return {
+      url,
+      score: null,
+      asin: this.extractAmazonAsinFromValue(url),
+      marketplaceDomain: this.resolveMarketplaceDomain(url),
+      title: null,
+      snippet: null,
+      rank,
+    };
+  }
+
+  private buildCandidateResultFromPreview(preview: AmazonCandidatePreview): AmazonCandidateResult {
+    return {
+      url: preview.url,
+      score: null,
+      asin: preview.asin,
+      marketplaceDomain: preview.marketplaceDomain,
+      title: preview.title,
+      snippet: preview.snippet,
+      rank: preview.rank,
+    };
+  }
+
+  private buildCandidatePreview(input: {
+    amazonProbe: AmazonProbeData;
+    candidateId: string;
+    candidateRank: number;
+    candidateResult?: AmazonCandidateResult | null;
+    fallbackUrl: string;
+  }): AmazonCandidatePreview {
+    const { amazonProbe, candidateId, candidateRank, candidateResult, fallbackUrl } = input;
+    return {
+      id:
+        amazonProbe.asin ??
+        candidateResult?.asin ??
+        this.normalizeText(candidateId) ??
+        fallbackUrl,
+      matchedImageId: this.normalizeText(candidateId),
+      url: amazonProbe.canonicalUrl ?? amazonProbe.candidateUrl ?? fallbackUrl,
+      asin: amazonProbe.asin ?? candidateResult?.asin ?? null,
+      marketplaceDomain:
+        amazonProbe.marketplaceDomain ?? candidateResult?.marketplaceDomain ?? null,
+      title: amazonProbe.pageTitle ?? candidateResult?.title ?? null,
+      snippet: amazonProbe.descriptionSnippet ?? candidateResult?.snippet ?? null,
+      heroImageUrl: amazonProbe.heroImageUrl,
+      heroImageAlt: amazonProbe.heroImageAlt,
+      heroImageArtifactName: amazonProbe.heroImageArtifactName,
+      artifactKey: amazonProbe.artifactKey,
+      rank: candidateRank,
+    };
+  }
+
+  private buildProbeArtifactKey(input: {
+    candidateId: string;
+    attempt: number;
+    candidateRank: number;
+  }): string {
+    const candidateFragment =
+      this.normalizeText(input.candidateId)
+        ?.toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 80) ?? 'candidate';
+    return [
+      'amazon-scan-probe',
+      candidateFragment,
+      `attempt-${String(Math.trunc(input.attempt))}`,
+      `rank-${String(Math.trunc(input.candidateRank))}`,
+    ].join('-');
+  }
+
+  private async captureAmazonHeroImageArtifact(
+    artifactKey: string
+  ): Promise<{ url: string | null; alt: string | null; artifactName: string | null }> {
+    for (const selector of AMAZON_HERO_IMAGE_SELECTORS) {
+      const locator = this.page.locator(selector).first();
+      const nextUrl = this.normalizeText(await locator.getAttribute('src').catch(() => null));
+      const nextAlt = this.normalizeText(await locator.getAttribute('alt').catch(() => null));
+      if (nextUrl === null && nextAlt === null) {
+        continue;
+      }
+
+      let artifactName: string | null = null;
+      const screenshotFn = (locator as unknown as {
+        screenshot?: () => Promise<Buffer>;
+      }).screenshot;
+      if (typeof screenshotFn === 'function' && typeof this.artifacts.file === 'function') {
+        const artifactPath = await screenshotFn
+          .call(locator)
+          .then((value) =>
+            this.artifacts.file?.(artifactKey + '-hero', value, {
+              extension: 'png',
+              mimeType: 'image/png',
+              kind: 'screenshot',
+            })
+          )
+          .catch(() => null);
+        artifactName = this.normalizeText(artifactPath?.split('/').pop());
+      }
+
+      return {
+        url: nextUrl,
+        alt: nextAlt,
+        artifactName,
+      };
+    }
+
+    return { url: null, alt: null, artifactName: null };
+  }
+
+  private resolveMarketplaceDomain(url: string | null): string | null {
+    if (url === null) {
+      return null;
+    }
+    try {
+      return new URL(url).hostname.toLowerCase();
+    } catch {
+      return null;
+    }
+  }
+
+  private extractAmazonAsinFromValue(value: unknown): string | null {
+    const text = this.normalizeText(value);
+    if (text === null) {
+      return null;
+    }
+    return text.match(/([A-Z0-9]{10})/)?.[1] ?? null;
   }
 
   // ─── Google consent helpers ─────────────────────────────────────────────────

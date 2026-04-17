@@ -28,12 +28,6 @@ import { SessionModal } from './SessionModal';
 import { TestLogModal } from './TestLogModal';
 import { TestResultModal } from './TestResultModal';
 
-type BrowserSettingsSaveState = {
-  canSaveBrowserSettings: boolean;
-  handleSave: () => Promise<void>;
-  isSaving: boolean;
-};
-
 type IntegrationModalPanelsProps = {
   activeTab: string;
   setActiveTab: (value: string) => void;
@@ -54,11 +48,7 @@ type IntegrationModalDialogsProps = {
 };
 
 type IntegrationModalFrameProps = {
-  canSaveBrowserSettings: boolean;
-  handleSave: () => Promise<void>;
-  isSaving: boolean;
   onCloseModal: () => void;
-  playwrightSaveLabel: string;
   showAllegroConsole: boolean;
   showBaseConsole: boolean;
   showPlaywright: boolean;
@@ -66,32 +56,6 @@ type IntegrationModalFrameProps = {
   setActiveTab: (value: string) => void;
   dialogs: IntegrationModalDialogsProps;
 };
-
-function useBrowserSettingsSaveState(
-  canSaveBrowserSettings: boolean,
-  handleSavePlaywrightFallbackSettings: () => Promise<void>
-): BrowserSettingsSaveState {
-  const [isSaving, setIsSaving] = useState(false);
-
-  const handleSave = useCallback(async (): Promise<void> => {
-    if (!canSaveBrowserSettings || isSaving) {
-      return;
-    }
-
-    setIsSaving(true);
-    try {
-      await handleSavePlaywrightFallbackSettings();
-    } finally {
-      setIsSaving(false);
-    }
-  }, [canSaveBrowserSettings, handleSavePlaywrightFallbackSettings, isSaving]);
-
-  return {
-    canSaveBrowserSettings,
-    handleSave,
-    isSaving,
-  };
-}
 
 function IntegrationModalPanels({
   activeTab,
@@ -168,11 +132,7 @@ function IntegrationModalDialogs({
 }
 
 function IntegrationModalFrame({
-  canSaveBrowserSettings,
-  handleSave,
-  isSaving,
   onCloseModal,
-  playwrightSaveLabel,
   showAllegroConsole,
   showBaseConsole,
   showPlaywright,
@@ -186,15 +146,13 @@ function IntegrationModalFrame({
       onClose={onCloseModal}
       title={<IntegrationModalHeader />}
       subtitle={<IntegrationModalSubtitle />}
-      onSave={() => {
-        handleSave().catch(() => undefined);
-      }}
-      isSaving={isSaving}
-      disableCloseWhileSaving={canSaveBrowserSettings}
-      showSaveButton={canSaveBrowserSettings}
+      onSave={() => undefined}
+      isSaving={false}
+      disableCloseWhileSaving={false}
+      showSaveButton={false}
       showCancelButton={true}
       cancelText='Close'
-      saveText={canSaveBrowserSettings ? playwrightSaveLabel : 'Save'}
+      saveText='Save'
       size='xl'
     >
       <IntegrationModalPanels
@@ -215,7 +173,6 @@ export function IntegrationModal(): React.JSX.Element {
   const testing = useIntegrationsTesting();
   const session = useIntegrationsSession();
   const tabs = useIntegrationTabs();
-  const saveState = useBrowserSettingsSaveState(tabs.showPlaywright, tabs.handleSavePlaywrightFallbackSettings);
   if (!activeIntegration) return <></>;
 
   const modalViewContextValue: IntegrationModalViewContextValue = useMemo(
@@ -233,21 +190,14 @@ export function IntegrationModal(): React.JSX.Element {
       showBaseConsole: tabs.showBaseConsole,
       activeConnection: tabs.activeConnection,
       onOpenSessionModal,
-      onSavePlaywrightFallbackSettings: () => {
-        saveState.handleSave().catch(() => undefined);
-      },
     }),
-    [activeIntegration.name, onOpenSessionModal, saveState.handleSave, tabs]
+    [activeIntegration.name, onOpenSessionModal, tabs]
   );
 
   return (
     <IntegrationModalViewProvider value={modalViewContextValue}>
       <IntegrationModalFrame
-        canSaveBrowserSettings={saveState.canSaveBrowserSettings}
-        handleSave={saveState.handleSave}
-        isSaving={saveState.isSaving}
         onCloseModal={onCloseModal}
-        playwrightSaveLabel={tabs.playwrightSaveLabel}
         showAllegroConsole={tabs.showAllegroConsole}
         showBaseConsole={tabs.showBaseConsole}
         showPlaywright={tabs.showPlaywright}

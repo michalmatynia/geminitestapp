@@ -4,7 +4,7 @@ import type {
 } from '@/shared/contracts/playwright-steps';
 import type { PlaywrightSettings } from '@/shared/contracts/playwright';
 
-import { buildIntegrationConnectionPlaywrightSettings } from './playwright-connection-settings';
+import { buildIntegrationConnectionPlaywrightSettings } from './playwright-settings-baseline';
 
 export const PLAYWRIGHT_ACTION_SETTINGS_TO_PLAYWRIGHT_SETTINGS_KEYS: Array<
   Exclude<keyof PlaywrightActionExecutionSettings, 'browserPreference'>

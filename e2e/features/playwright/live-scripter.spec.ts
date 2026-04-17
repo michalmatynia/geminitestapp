@@ -86,6 +86,11 @@ const triggerButton = async (button: Locator): Promise<void> => {
 };
 
 const waitForLivePreviewReady = async (page: Page): Promise<Locator> => {
+  await expect(
+    page.getByText(new RegExp(`^Current page title: .*Live Scripter Fixture.*$`))
+  ).toBeVisible({
+    timeout: 30_000,
+  });
   await expect(page.getByText(/^live$/)).toBeVisible({ timeout: 30_000 });
   await expect(page.getByText(/^http:\/\/127\.0\.0\.1:3000\/playwright-fixtures\/live-scripter-fixture$/)).toBeVisible({
     timeout: 30_000,

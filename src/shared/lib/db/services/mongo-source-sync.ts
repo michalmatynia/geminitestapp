@@ -17,6 +17,7 @@ import {
   forbiddenError,
   operationFailedError,
 } from '@/shared/errors/app-error';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { acquireMongoSyncLock } from '@/shared/lib/db/mongo-sync-lock';
 import { createMongoSourceBackup } from '@/shared/lib/db/services/database-backup';
 import { verifyMongoSourceParity } from '@/shared/lib/db/services/mongo-source-parity';
@@ -57,6 +58,11 @@ type MongoTransferCommands = {
   restoreCommand: string;
   dumpArgs: string[];
   restoreArgs: string[];
+};
+
+type MongoToolResult = {
+  stdout: string;
+  stderr: string;
 };
 
 const resolveSyncEndpoints = (
@@ -208,20 +214,39 @@ const formatBackupLog = (backup: DatabaseEngineMongoSyncBackup): string =>
     .filter((line): line is string => line !== null)
     .join('\n');
 
+const readMongoToolOutput = (error: unknown): MongoToolResult => {
+  const cause = (error as { cause?: { stdout?: unknown; stderr?: unknown } }).cause;
+  return {
+    stdout: typeof cause?.stdout === 'string' ? cause.stdout : '',
+    stderr: typeof cause?.stderr === 'string' ? cause.stderr : '',
+  };
+};
+
+const getErrorMessage = (error: unknown): string =>
+  redactMongoUri(error instanceof Error ? error.message : String(error));
+
+const dropTargetDatabaseBeforeRestore = async (
+  context: MongoSyncContext
+): Promise<void> => {
+  const targetDb = await getMongoDb(context.target);
+  await targetDb.dropDatabase();
+};
+
 const writeMongoSyncLog = async (params: {
   context: MongoSyncContext;
   commands: MongoTransferCommands;
-  dumpResult: { stdout: string; stderr: string };
-  restoreResult: { stdout: string; stderr: string };
+  dumpResult: MongoToolResult;
+  restoreResult: MongoToolResult;
   verification: DatabaseEngineMongoSyncVerification;
 }): Promise<void> => {
   const { context, commands, dumpResult, restoreResult, verification } = params;
   await fs.writeFile(
     context.logPath,
     [
-      'pre-sync backups:',
-      ...context.preSyncBackups.map(formatBackupLog),
-      `dump command: ${formatCommandForLog(commands.dumpCommand, commands.dumpArgs)}`,
+        'pre-sync backups:',
+        ...context.preSyncBackups.map(formatBackupLog),
+        'target database dropped before restore: true',
+        `dump command: ${formatCommandForLog(commands.dumpCommand, commands.dumpArgs)}`,
       dumpResult.stdout,
       dumpResult.stderr,
       `restore command: ${formatCommandForLog(commands.restoreCommand, commands.restoreArgs)}`,
@@ -232,6 +257,37 @@ const writeMongoSyncLog = async (params: {
     ].join('\n\n'),
     'utf8'
   );
+};
+
+const writeMongoSyncFailureLog = async (params: {
+  context: MongoSyncContext;
+  commands: MongoTransferCommands;
+  phase: 'dump' | 'restore';
+  dumpResult: MongoToolResult | null;
+  restoreResult: MongoToolResult | null;
+  targetDropped: boolean;
+  error: unknown;
+}): Promise<void> => {
+  const { context, commands, phase, dumpResult, restoreResult, targetDropped, error } = params;
+  await fs
+    .writeFile(
+      context.logPath,
+      [
+        'pre-sync backups:',
+        ...context.preSyncBackups.map(formatBackupLog),
+        `failed phase: ${phase}`,
+        `target database dropped before restore: ${targetDropped ? 'true' : 'false'}`,
+        `dump command: ${formatCommandForLog(commands.dumpCommand, commands.dumpArgs)}`,
+        dumpResult?.stdout ?? '',
+        dumpResult?.stderr ?? '',
+        `restore command: ${formatCommandForLog(commands.restoreCommand, commands.restoreArgs)}`,
+        restoreResult?.stdout ?? '',
+        restoreResult?.stderr ?? '',
+        `error: ${getErrorMessage(error)}`,
+      ].join('\n\n'),
+      'utf8'
+    )
+    .catch(() => undefined);
 };
 
 const assertVerificationPassed = (
@@ -253,8 +309,40 @@ const assertVerificationPassed = (
 
 const runMongoTransfer = async (context: MongoSyncContext): Promise<DatabaseEngineMongoLastSync> => {
   const commands = buildMongoTransferCommands(context);
-  const dumpResult = await execFileAsync(commands.dumpCommand, commands.dumpArgs);
-  const restoreResult = await execFileAsync(commands.restoreCommand, commands.restoreArgs);
+  let dumpResult: MongoToolResult | null = null;
+  let restoreResult: MongoToolResult | null = null;
+  try {
+    dumpResult = await execFileAsync(commands.dumpCommand, commands.dumpArgs);
+  } catch (error) {
+    await writeMongoSyncFailureLog({
+      context,
+      commands,
+      phase: 'dump',
+      dumpResult: readMongoToolOutput(error),
+      restoreResult,
+      targetDropped: false,
+      error,
+    });
+    throw error;
+  }
+
+  await dropTargetDatabaseBeforeRestore(context);
+
+  try {
+    restoreResult = await execFileAsync(commands.restoreCommand, commands.restoreArgs);
+  } catch (error) {
+    await writeMongoSyncFailureLog({
+      context,
+      commands,
+      phase: 'restore',
+      dumpResult,
+      restoreResult: readMongoToolOutput(error),
+      targetDropped: true,
+      error,
+    });
+    throw error;
+  }
+
   const verification = await verifyMongoSourceParity({
     source: context.source,
     target: context.target,

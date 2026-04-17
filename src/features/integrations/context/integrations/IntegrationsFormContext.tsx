@@ -1,7 +1,6 @@
 'use client';
 
 import type { IntegrationConnection } from '@/shared/contracts/integrations/connections';
-import type { PlaywrightSettings } from '@/shared/contracts/playwright';
 import { createStrictContext } from '../createStrictContext';
 
 export interface IntegrationsForm {
@@ -11,9 +10,6 @@ export interface IntegrationsForm {
   setEditingConnectionId: (id: string | null) => void;
   connectionToDelete: IntegrationConnection | null;
   setConnectionToDelete: (conn: IntegrationConnection | null) => void;
-  playwrightSettings: PlaywrightSettings;
-  setPlaywrightSettings: React.Dispatch<React.SetStateAction<PlaywrightSettings>>;
-  playwrightPersonaId: string | null;
   savingAllegroSandbox: boolean;
 }
 

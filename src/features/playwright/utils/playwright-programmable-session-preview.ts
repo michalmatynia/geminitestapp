@@ -17,7 +17,7 @@ import {
 import {
   buildIntegrationConnectionPlaywrightSettings,
   resolveIntegrationPlaywrightPersonaSettings,
-} from './playwright-connection-settings';
+} from './playwright-settings-baseline';
 import { supportsProgrammableSessionProfile } from './playwright-programmable-session-support';
 
 export type ProgrammableSessionPreview = {
@@ -128,29 +128,31 @@ const formatBrowserPreparationSummary = (
   return summary.filter((entry): entry is string => typeof entry === 'string');
 };
 
+const formatSettingsLocaleSummary = (settings: PlaywrightSettings): string | null => {
+  return settings.locale.trim().length > 0 ? `Locale: ${settings.locale}` : null;
+};
+
+const formatSettingsTimezoneSummary = (settings: PlaywrightSettings): string | null => {
+  return settings.timezoneId.trim().length > 0 ? `Timezone: ${settings.timezoneId}` : null;
+};
+
+const formatSettingsDeviceSummary = (settings: PlaywrightSettings): string | null => {
+  return settings.emulateDevice ? `Device: ${settings.deviceName}` : null;
+};
+
 const formatEffectiveSummary = (action: PlaywrightAction, settings: PlaywrightSettings): string[] => {
-  const summary: string[] = [];
-  summary.push(settings.headless ? 'Headless' : 'Headed');
-
-  if (action.executionSettings.browserPreference !== null) {
-    summary.push(`Browser: ${action.executionSettings.browserPreference}`);
-  }
-  if (settings.emulateDevice) {
-    summary.push(`Device: ${settings.deviceName}`);
-  }
-  if (settings.locale?.trim().length) {
-    summary.push(`Locale: ${settings.locale}`);
-  }
-  if (settings.timezoneId?.trim().length) {
-    summary.push(`Timezone: ${settings.timezoneId}`);
-  }
-  if (settings.slowMo > 0) {
-    summary.push(`SlowMo: ${settings.slowMo}ms`);
-  }
-  summary.push(`Timeout: ${settings.timeout}ms`);
-  summary.push(`Navigation timeout: ${settings.navigationTimeout}ms`);
-
-  return summary;
+  return [
+    settings.headless ? 'Headless' : 'Headed',
+    action.executionSettings.browserPreference !== null
+      ? `Browser: ${action.executionSettings.browserPreference}`
+      : null,
+    formatSettingsDeviceSummary(settings),
+    formatSettingsLocaleSummary(settings),
+    formatSettingsTimezoneSummary(settings),
+    settings.slowMo > 0 ? `SlowMo: ${settings.slowMo}ms` : null,
+    `Timeout: ${settings.timeout}ms`,
+    `Navigation timeout: ${settings.navigationTimeout}ms`,
+  ].filter((entry): entry is string => entry !== null);
 };
 
 const buildOverrideSummary = ({

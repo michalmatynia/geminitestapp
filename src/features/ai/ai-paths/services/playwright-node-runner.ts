@@ -228,15 +228,18 @@ const resolveUrlRuntimePacing = (input: {
 }): ChromiumRuntimePacingDescriptor | null => {
   try {
     const parsed = new URL(input.url);
-    if (
-      (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') ||
-      isLocalStickySessionHost(parsed.hostname)
-    ) {
+    const protocol = parsed.protocol;
+    if (protocol !== 'http:' && protocol !== 'https:') {
       return null;
     }
+    const hostname = parsed.hostname;
+    if (isLocalStickySessionHost(hostname)) {
+      return null;
+    }
+    const host = parsed.host.toLowerCase();
     return {
-      key: `${input.identityProfile}:${parsed.host.toLowerCase()}`,
-      label: `${input.identityProfile}/${parsed.host.toLowerCase()}`,
+      key: `${input.identityProfile}:${host}`,
+      label: `${input.identityProfile}/${host}`,
       profile: input.identityProfile,
     };
   } catch {
@@ -323,21 +326,20 @@ const resolveStickyScope = (input: {
   ownerUserId: string | null;
 }): { value: string; label: string } | null => {
   const inst = input.instance;
-  if (inst !== null) {
-    const connectionId = inst.connectionId?.trim();
-    if ((connectionId ?? '') !== '') {
-      return { value: connectionId as string, label: `connection:${connectionId as string}` };
-    }
+  const connectionId = inst !== null ? inst.connectionId : undefined;
+  if (connectionId !== undefined && connectionId !== null && connectionId.trim() !== '') {
+    const cid = connectionId.trim();
+    return { value: cid, label: `connection:${cid}` };
   }
-  const ownerUserId = input.ownerUserId?.trim();
-  if ((ownerUserId ?? '') !== '') {
-    return { value: ownerUserId as string, label: `owner:${ownerUserId as string}` };
+  const ownerUserId = input.ownerUserId;
+  if (ownerUserId !== null && ownerUserId.trim() !== '') {
+    const oid = ownerUserId.trim();
+    return { value: oid, label: `owner:${oid}` };
   }
-  if (inst !== null) {
-    const integrationId = inst.integrationId?.trim();
-    if ((integrationId ?? '') !== '') {
-      return { value: integrationId as string, label: `integration:${integrationId as string}` };
-    }
+  const integrationId = inst !== null ? inst.integrationId : undefined;
+  if (integrationId !== undefined && integrationId !== null && integrationId.trim() !== '') {
+    const iid = integrationId.trim();
+    return { value: iid, label: `integration:${iid}` };
   }
   return null;
 };
@@ -675,6 +677,61 @@ const buildLaunchOptions = (
   return merged;
 };
 
+const buildBaseContextOptions = (
+  playwright: typeof import('playwright'),
+  settings: PlaywrightSettings
+): BrowserContextOptions => {
+  const devicePreset =
+    settings.emulateDevice && (settings.deviceName ?? '') !== ''
+      ? playwright.devices?.[settings.deviceName as string]
+      : undefined;
+  return {
+    ...(devicePreset ?? {}),
+    ...((settings.locale ?? '') !== '' ? { locale: settings.locale } : {}),
+    ...((settings.timezoneId ?? '') !== '' ? { timezoneId: settings.timezoneId } : {}),
+  };
+};
+
+const resolveStorageStateOption = (
+  storageState: BrowserContextOptions['storageState'],
+  startUrl: string | undefined
+): BrowserContextOptions['storageState'] | undefined => {
+  if (typeof storageState !== 'string' && storageState !== undefined && storageState !== null) {
+    const sanitized = sanitizePlaywrightStorageState(storageState, {
+      fallbackOrigin: startUrl ?? null,
+    });
+    if (sanitized !== undefined && sanitized !== null) {
+      return sanitized as BrowserContextOptions['storageState'];
+    }
+    return undefined;
+  }
+  return storageState;
+};
+
+const resolveViewportWithJitter = (
+  viewport: BrowserContextOptions['viewport'],
+  settings: PlaywrightSettings,
+  isViewportOverridden: boolean
+): BrowserContextOptions['viewport'] => {
+  const jitterBudget = Math.max(0, Math.trunc(settings.viewportJitterPx ?? 0));
+  if (
+    jitterBudget > 0 &&
+    viewport !== undefined &&
+    viewport !== null &&
+    typeof viewport === 'object' &&
+    typeof (viewport as { width: number }).width === 'number' &&
+    typeof (viewport as { height: number }).height === 'number' &&
+    !isViewportOverridden
+  ) {
+    const v = viewport as { width: number; height: number };
+    return {
+      width: Math.max(320, v.width + pickSignedOffset(jitterBudget)),
+      height: Math.max(240, v.height + pickSignedOffset(jitterBudget)),
+    };
+  }
+  return viewport;
+};
+
 const buildContextOptions = (
   playwright: typeof import('playwright'),
   settings: PlaywrightSettings,
@@ -683,59 +740,22 @@ const buildContextOptions = (
   capture: PlaywrightNodeRunRequest['capture'],
   startUrl?: string
 ): BrowserContextOptions => {
-  const devicePreset =
-    settings.emulateDevice && (settings.deviceName ?? '') !== ''
-      ? playwright.devices?.[settings.deviceName as string]
-      : undefined;
-  const base: BrowserContextOptions = {
-    ...(devicePreset ?? {}),
-    ...((settings.locale ?? '') !== '' ? { locale: settings.locale } : {}),
-    ...((settings.timezoneId ?? '') !== '' ? { timezoneId: settings.timezoneId } : {}),
-  };
+  const base = buildBaseContextOptions(playwright, settings);
+  const videoOptions: BrowserContextOptions = capture?.video === true
+    ? { recordVideo: { dir: runArtifactsDir, size: { width: 1280, height: 720 } } }
+    : {};
 
-  if (capture?.video) {
-    base.recordVideo = {
-      dir: runArtifactsDir,
-      size: {
-        width: 1280,
-        height: 720,
-      },
-    };
-  }
-  const merged = {
+  const merged: BrowserContextOptions = {
     ...base,
+    ...videoOptions,
     ...(contextOverrides),
   };
-  if (typeof merged.storageState !== 'string' && merged.storageState !== undefined && merged.storageState !== null) {
-    const sanitizedStorageState = sanitizePlaywrightStorageState(merged.storageState, {
-      fallbackOrigin: startUrl ?? null,
-    });
-    if (sanitizedStorageState !== undefined && sanitizedStorageState !== null) {
-      merged.storageState = sanitizedStorageState as BrowserContextOptions['storageState'];
-    } else {
-      delete merged.storageState;
-    }
-  }
-  const jitterBudget = Math.max(
-    0,
-    Math.trunc(settings.viewportJitterPx ?? 0)
-  );
-  if (
-    jitterBudget > 0 &&
-    merged.viewport &&
-    typeof merged.viewport === 'object' &&
-    typeof merged.viewport.width === 'number' &&
-    typeof merged.viewport.height === 'number' &&
-    contextOverrides.viewport === undefined
-  ) {
-    const jitterWidth = pickSignedOffset(jitterBudget);
-    const jitterHeight = pickSignedOffset(jitterBudget);
-    merged.viewport = {
-      width: Math.max(320, merged.viewport.width + jitterWidth),
-      height: Math.max(240, merged.viewport.height + jitterHeight),
-    };
-  }
-  return merged;
+
+  return {
+    ...merged,
+    storageState: resolveStorageStateOption(merged.storageState, startUrl),
+    viewport: resolveViewportWithJitter(merged.viewport, settings, contextOverrides.viewport !== undefined),
+  };
 };
 
 const readOptionalTrimmedString = (value: unknown): string | null =>
@@ -788,6 +808,55 @@ const resolveProxyServerHost = (value: unknown): string | null => {
   }
 };
 
+const resolveAcceptLanguageHeader = (contextOptions: BrowserContextOptions): string | null => {
+  const header = Object.entries(contextOptions.extraHTTPHeaders ?? {}).find(
+    ([key]) => key.trim().toLowerCase() === 'accept-language'
+  );
+  return typeof header?.[1] === 'string' ? header[1] : null;
+};
+
+const buildAntiDetectionSnapshot = (input: {
+  browserEngine: 'chromium' | 'firefox' | 'webkit';
+  effectiveContextOptions: BrowserContextOptions;
+  effectiveSettings: PlaywrightSettings;
+  runtimeAntiDetectionBehavior: ReturnType<typeof resolveChromiumAntiDetectionRuntimeBehavior>;
+  runtimePacingDescriptor: ChromiumRuntimePacingDescriptor | null;
+  acceptLanguage: string | null;
+}): RuntimePostureSnapshot['antiDetection'] => ({
+  identityProfile: input.effectiveSettings.identityProfile,
+  locale: readOptionalTrimmedString(input.effectiveContextOptions.locale),
+  timezoneId: readOptionalTrimmedString(input.effectiveContextOptions.timezoneId),
+  userAgent: readOptionalTrimmedString(input.effectiveContextOptions.userAgent),
+  acceptLanguage: input.acceptLanguage,
+  chromiumDefaultsApplied: isChromiumBrowserEngine(input.browserEngine),
+  runtimePacingScope: input.runtimePacingDescriptor?.label ?? null,
+  runtimeBehavior: {
+    prewarmUrl: input.runtimeAntiDetectionBehavior.prewarmUrl,
+    prewarmWaitMs: input.runtimeAntiDetectionBehavior.prewarmWaitMs,
+    postStartUrlWaitMs: input.runtimeAntiDetectionBehavior.postStartUrlWaitMs,
+    launchCooldownMs: input.runtimeAntiDetectionBehavior.launchCooldownMs,
+  },
+  stickyStorageState: {
+    enabled: false, // will be updated
+    loaded: false, // will be updated
+    scopeLabel: null, // will be updated
+    origin: null, // will be updated
+  },
+  proxy: {
+    enabled: false, // will be updated
+    providerPreset: input.effectiveSettings.proxyProviderPreset,
+    sessionAffinityEnabled: input.effectiveSettings.proxySessionAffinity,
+    sessionMode: input.effectiveSettings.proxySessionMode,
+    applied: false, // will be updated
+    reason: null, // will be updated
+    serverHost: null, // will be updated
+    hasUsername: false, // will be updated
+    scopeLabel: null, // will be updated
+    origin: null, // will be updated
+    mutations: [], // will be updated
+  },
+});
+
 const buildRuntimePostureSnapshot = (input: {
   browserEngine: 'chromium' | 'firefox' | 'webkit';
   effectiveLaunchOptions: LaunchOptions;
@@ -803,59 +872,50 @@ const buildRuntimePostureSnapshot = (input: {
     browserEngine: input.browserEngine,
     launchOptions: input.effectiveLaunchOptions,
   });
-  const acceptLanguageHeader =
-    Object.entries(input.effectiveContextOptions.extraHTTPHeaders ?? {}).find(
-      ([key]) => key.trim().toLowerCase() === 'accept-language'
-    )?.[1] ?? null;
+  const acceptLanguage = resolveAcceptLanguageHeader(input.effectiveContextOptions);
 
-  return {
+  const snapshot: RuntimePostureSnapshot = {
     browser: {
       engine: input.browserEngine,
       label: browserLaunch.label,
       headless: input.effectiveLaunchOptions.headless !== false,
-      slowMo:
-        typeof input.effectiveLaunchOptions.slowMo === 'number'
-          ? input.effectiveLaunchOptions.slowMo
-          : 0,
+      slowMo: typeof input.effectiveLaunchOptions.slowMo === 'number' ? input.effectiveLaunchOptions.slowMo : 0,
       channel: browserLaunch.channel,
       executablePathLabel: browserLaunch.executablePathLabel,
     },
-    antiDetection: {
-      identityProfile: input.effectiveSettings.identityProfile,
-      locale: readOptionalTrimmedString(input.effectiveContextOptions.locale),
-      timezoneId: readOptionalTrimmedString(input.effectiveContextOptions.timezoneId),
-      userAgent: readOptionalTrimmedString(input.effectiveContextOptions.userAgent),
-      acceptLanguage:
-        typeof acceptLanguageHeader === 'string' ? acceptLanguageHeader : null,
-      chromiumDefaultsApplied: isChromiumBrowserEngine(input.browserEngine),
-      runtimePacingScope: input.runtimePacingDescriptor?.label ?? null,
-      runtimeBehavior: {
-        prewarmUrl: input.runtimeAntiDetectionBehavior.prewarmUrl,
-        prewarmWaitMs: input.runtimeAntiDetectionBehavior.prewarmWaitMs,
-        postStartUrlWaitMs: input.runtimeAntiDetectionBehavior.postStartUrlWaitMs,
-        launchCooldownMs: input.runtimeAntiDetectionBehavior.launchCooldownMs,
-      },
-      stickyStorageState: {
-        enabled: Boolean(input.stickySessionDescriptor),
-        loaded: Boolean(input.stickySessionStorageState),
-        scopeLabel: input.stickySessionDescriptor?.scopeLabel ?? null,
-        origin: input.stickySessionDescriptor?.origin ?? null,
-      },
-      proxy: {
-        enabled: Boolean(input.effectiveLaunchOptions.proxy?.server),
-        providerPreset: input.effectiveSettings.proxyProviderPreset,
-        sessionAffinityEnabled: input.effectiveSettings.proxySessionAffinity,
-        sessionMode: input.effectiveSettings.proxySessionMode,
-        applied: input.proxyAffinityResult.applied,
-        reason: input.proxyAffinityResult.reason,
-        serverHost: resolveProxyServerHost(input.effectiveLaunchOptions.proxy?.server),
-        hasUsername: Boolean(readOptionalTrimmedString(input.effectiveLaunchOptions.proxy?.username)),
-        scopeLabel: input.proxyAffinityResult.descriptor?.scopeLabel ?? null,
-        origin: input.proxyAffinityResult.descriptor?.origin ?? null,
-        mutations: [...input.proxyAffinityResult.mutations],
-      },
-    },
+    antiDetection: buildAntiDetectionSnapshot({
+      browserEngine: input.browserEngine,
+      effectiveContextOptions: input.effectiveContextOptions,
+      effectiveSettings: input.effectiveSettings,
+      runtimeAntiDetectionBehavior: input.runtimeAntiDetectionBehavior,
+      runtimePacingDescriptor: input.runtimePacingDescriptor,
+      acceptLanguage,
+    }),
   };
+
+  const ad = snapshot.antiDetection;
+  ad.stickyStorageState = {
+    enabled: input.stickySessionDescriptor !== null,
+    loaded: input.stickySessionStorageState !== undefined && input.stickySessionStorageState !== null,
+    scopeLabel: input.stickySessionDescriptor?.scopeLabel ?? null,
+    origin: input.stickySessionDescriptor?.origin ?? null,
+  };
+
+  ad.proxy = {
+    enabled: (input.effectiveLaunchOptions.proxy?.server ?? '') !== '',
+    providerPreset: input.effectiveSettings.proxyProviderPreset,
+    sessionAffinityEnabled: input.effectiveSettings.proxySessionAffinity,
+    sessionMode: input.effectiveSettings.proxySessionMode,
+    applied: input.proxyAffinityResult.applied,
+    reason: input.proxyAffinityResult.reason,
+    serverHost: resolveProxyServerHost(input.effectiveLaunchOptions.proxy?.server),
+    hasUsername: (readOptionalTrimmedString(input.effectiveLaunchOptions.proxy?.username) ?? '') !== '',
+    scopeLabel: input.proxyAffinityResult.descriptor?.scopeLabel ?? null,
+    origin: input.proxyAffinityResult.descriptor?.origin ?? null,
+    mutations: [...input.proxyAffinityResult.mutations],
+  };
+
+  return snapshot;
 };
 
 
@@ -982,11 +1042,12 @@ const executePlaywrightNodeRun = async (
     runScopeKey: runId,
   });
   if (effectiveSettings.proxySessionAffinity) {
-    if (proxyAffinityResult.reason === 'applied' && proxyAffinityResult.descriptor) {
+    if (proxyAffinityResult.reason === 'applied' && proxyAffinityResult.descriptor !== null) {
       logs.push(
-        `[runtime] Applied ${proxyAffinityResult.descriptor.mode} proxy session (${effectiveSettings.identityProfile}) for ${proxyAffinityResult.descriptor.scopeLabel}${proxyAffinityResult.descriptor.origin ? ` at ${proxyAffinityResult.descriptor.origin}` : ''}.`
+        `[runtime] Applied ${proxyAffinityResult.descriptor.mode} proxy session (${effectiveSettings.identityProfile}) for ${proxyAffinityResult.descriptor.scopeLabel}${proxyAffinityResult.descriptor.origin !== null ? ` at ${proxyAffinityResult.descriptor.origin}` : ''}.`
       );
     } else if (proxyAffinityResult.reason === 'no-placeholder') {
+
       logs.push(
         '[runtime] Sticky proxy session is enabled, but the proxy configuration has no session placeholder.'
       );
@@ -1020,16 +1081,19 @@ const executePlaywrightNodeRun = async (
           typeof contextOptions.storageState === 'string' ? undefined : contextOptions.storageState,
       })
     : null;
-  const stickySessionStorageState = stickySessionDescriptor
+  const stickySessionStorageState = stickySessionDescriptor !== null
     ? await loadStickySessionStorageState(stickySessionDescriptor, logs)
     : undefined;
   const contextOptionsWithStickyState =
-    stickySessionStorageState && !contextOptions.storageState
+    stickySessionStorageState !== undefined &&
+    stickySessionStorageState !== null &&
+    contextOptions.storageState === undefined
       ? {
           ...contextOptions,
           storageState: stickySessionStorageState,
         }
       : contextOptions;
+
   const effectiveContextOptions = isChromiumBrowserEngine(browserEngine)
     ? buildChromiumAntiDetectionContextOptions(
         contextOptionsWithStickyState,

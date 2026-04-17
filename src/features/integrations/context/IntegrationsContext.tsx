@@ -74,8 +74,7 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
         : null;
   const form = useIntegrationsFormImpl(
     data.connections,
-    preferredConnectionId,
-    data.playwrightPersonas
+    preferredConnectionId
   );
   const testing = useIntegrationsTestingImpl();
   const session = useIntegrationsSessionImpl(
@@ -101,11 +100,6 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
     setTestErrorMeta: testing.setTestErrorMeta,
     setShowTestSuccessModal: testing.setShowTestSuccessModal,
     setTestSuccessMessage: testing.setTestSuccessMessage,
-    playwrightPersonas: data.playwrightPersonas,
-    setPlaywrightPersonaId: form.setPlaywrightPersonaId,
-    setPlaywrightSettings: form.setPlaywrightSettings,
-    playwrightPersonaId: form.playwrightPersonaId,
-    playwrightSettings: form.playwrightSettings,
     setShowSessionModal: session.setShowSessionModal,
     baseApiMethod: apiConsole.baseApiMethod,
     baseApiParams: apiConsole.baseApiParams,
@@ -143,9 +137,6 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
       setEditingConnectionId: form.setEditingConnectionId,
       connectionToDelete: form.connectionToDelete,
       setConnectionToDelete: form.setConnectionToDelete,
-      playwrightSettings: form.playwrightSettings,
-      setPlaywrightSettings: form.setPlaywrightSettings,
-      playwrightPersonaId: form.playwrightPersonaId,
       savingAllegroSandbox: actions.savingAllegroSandbox,
     }),
     [form, actions.savingAllegroSandbox]
@@ -217,8 +208,6 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
       handleTraderaManualLogin: actions.handleTraderaManualLogin,
       handleVintedManualLogin: actions.handleVintedManualLogin,
       handle1688ManualLogin: actions.handle1688ManualLogin,
-      handleSelectPlaywrightPersona: actions.handleSelectPlaywrightPersona,
-      handleSavePlaywrightFallbackSettings: actions.handleSavePlaywrightFallbackSettings,
       handleAllegroAuthorize: actions.handleAllegroAuthorize,
       handleAllegroDisconnect: actions.handleAllegroDisconnect,
       handleAllegroSandboxToggle: actions.handleAllegroSandboxToggle,

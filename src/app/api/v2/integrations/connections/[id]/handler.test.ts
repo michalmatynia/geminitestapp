@@ -6,7 +6,6 @@ const {
   getIntegrationByIdMock,
   updateConnectionMock,
   encryptSecretMock,
-  getSettingValueMock,
   fetchResolvedPlaywrightRuntimeActionsMock,
 } = vi.hoisted(() => ({
   parseJsonBodyMock: vi.fn(),
@@ -14,7 +13,6 @@ const {
   getIntegrationByIdMock: vi.fn(),
   updateConnectionMock: vi.fn(),
   encryptSecretMock: vi.fn(),
-  getSettingValueMock: vi.fn(),
   fetchResolvedPlaywrightRuntimeActionsMock: vi.fn(),
 }));
 
@@ -36,10 +34,6 @@ vi.mock('@/features/integrations/server', () => ({
   encryptSecret: (...args: unknown[]) => encryptSecretMock(...args),
 }));
 
-vi.mock('@/shared/lib/ai/server-settings', () => ({
-  getSettingValue: (...args: unknown[]) => getSettingValueMock(...args),
-}));
-
 vi.mock('@/shared/lib/browser-execution/runtime-action-resolver.server', () => ({
   fetchResolvedPlaywrightRuntimeActions: (...args: unknown[]) =>
     fetchResolvedPlaywrightRuntimeActionsMock(...args),
@@ -51,7 +45,6 @@ import { PUT_handler, deleteQuerySchema } from './handler';
 describe('integration connection by-id handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    getSettingValueMock.mockResolvedValue(null);
     fetchResolvedPlaywrightRuntimeActionsMock.mockResolvedValue([
       {
         id: 'listing-draft',
@@ -102,7 +95,6 @@ describe('integration connection by-id handler', () => {
       username: 'seller@example.com',
       createdAt: '2026-04-02T10:00:00.000Z',
       updatedAt: '2026-04-02T11:00:00.000Z',
-      playwrightHeadless: true,
       playwrightSlowMo: 0,
       playwrightTimeout: 30000,
       playwrightNavigationTimeout: 30000,
@@ -118,7 +110,6 @@ describe('integration connection by-id handler', () => {
       playwrightProxyServer: '',
       playwrightProxyUsername: '',
       playwrightProxyPassword: null,
-      playwrightBrowser: 'chromium',
       playwrightEmulateDevice: false,
       playwrightDeviceName: 'Desktop Chrome',
       playwrightPersonaId: null,
@@ -152,17 +143,17 @@ describe('integration connection by-id handler', () => {
 
     expect(updateConnectionMock).toHaveBeenCalledWith('conn-tradera-1', {
       name: 'Tradera browser',
-      playwrightBrowser: 'chromium',
       traderaBrowserMode: 'scripted',
       playwrightListingScript: 'export default async function run() {}',
     });
     expect(payload).toMatchObject({
       id: 'conn-tradera-1',
-      playwrightBrowser: 'chromium',
       traderaBrowserMode: 'scripted',
       playwrightListingScript: 'export default async function run() {}',
       hasPlaywrightListingScript: true,
     });
+    expect(payload).not.toHaveProperty('playwrightPersonaId');
+    expect(payload).not.toHaveProperty('playwrightSlowMo');
   });
 
   it('persists Tradera parameter mapper payloads and returns them in the response', async () => {
@@ -255,52 +246,6 @@ describe('integration connection by-id handler', () => {
       traderaBrowserMode: 'scripted',
       playwrightListingScript: null,
       hasPlaywrightListingScript: false,
-    });
-  });
-
-  it('persists an explicit headed preference for Playwright-backed Tradera connections', async () => {
-    parseJsonBodyMock.mockResolvedValue({
-      ok: true,
-      data: {
-        name: 'Tradera browser',
-        playwrightHeadless: false,
-      },
-    });
-    updateConnectionMock.mockResolvedValue({
-      id: 'conn-tradera-1',
-      integrationId: 'integration-tradera-1',
-      name: 'Tradera browser',
-      username: 'seller@example.com',
-      createdAt: '2026-04-02T10:00:00.000Z',
-      updatedAt: '2026-04-02T11:00:00.000Z',
-      playwrightHeadless: false,
-      traderaBrowserMode: 'scripted',
-      traderaDefaultDurationHours: 72,
-      traderaAutoRelistEnabled: true,
-      traderaAutoRelistLeadMinutes: 180,
-      traderaApiSandbox: false,
-    });
-
-    const response = await PUT_handler(
-      new Request('http://localhost/api/v2/integrations/connections/conn-tradera-1', {
-        method: 'PUT',
-      }) as never,
-      {} as never,
-      { id: 'conn-tradera-1' }
-    );
-
-    const payload = await response.json();
-
-    expect(updateConnectionMock).toHaveBeenCalledWith(
-      'conn-tradera-1',
-      expect.objectContaining({
-        name: 'Tradera browser',
-        playwrightHeadless: false,
-      })
-    );
-    expect(payload).toMatchObject({
-      id: 'conn-tradera-1',
-      playwrightHeadless: false,
     });
   });
 
@@ -416,19 +361,6 @@ describe('integration connection by-id handler', () => {
   });
 
   it('hides browser settings from programmable update responses after cleanup', async () => {
-    getSettingValueMock.mockResolvedValue(
-      JSON.stringify([
-        {
-          id: 'persona-1',
-          name: 'Human runner',
-          settings: {
-            slowMo: 125,
-            humanizeMouse: false,
-            browser: 'chrome',
-          },
-        },
-      ])
-    );
     parseJsonBodyMock.mockResolvedValue({
       ok: true,
       data: {

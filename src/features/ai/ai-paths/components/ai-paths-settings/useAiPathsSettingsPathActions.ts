@@ -6,6 +6,7 @@ import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
 import { usePersistenceActions } from '@/features/ai/ai-paths/context/PersistenceContext';
 import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext';
 import { useSelectionActions } from '@/features/ai/ai-paths/context/SelectionContext';
+import { clearAiPathRuns } from '@/shared/lib/ai-paths/api/client';
 import type { Toast } from '@/shared/contracts/ui/base';
 import type { ConfirmConfig } from '@/shared/hooks/ui/useConfirm';
 import type { AiNode, PathConfig, PathMeta } from '@/shared/contracts/ai-paths';
@@ -55,6 +56,21 @@ type UseAiPathsSettingsPathActionsInput = {
 };
 
 const SWITCH_PATH_FETCH_TIMEOUT_MS = 25_000;
+
+const clearPersistedPathRunHistory = async (pathId: string): Promise<void> => {
+  const normalizedPathId = pathId.trim();
+  if (!normalizedPathId) return;
+
+  const response = await clearAiPathRuns({
+    pathId: normalizedPathId,
+    scope: 'all',
+  });
+  if (!response.ok) {
+    throw new Error(
+      response.error || `Failed to delete execution history for path "${normalizedPathId}".`
+    );
+  }
+};
 
 export type PathCreateOptions = {
   folderPath?: string | null;
@@ -395,51 +411,73 @@ export function useAiPathsSettingsPathActions(
       const targetPath = paths.find((path) => path.id === targetId);
       const label = targetPath?.name || targetId;
 
-      confirm({
-        title: 'Delete AI Path?',
-        message: `Are you sure you want to delete "${label}"? This will permanently remove all node configurations and history for this path.`,
-        confirmText: 'Delete Path',
-        isDangerous: true,
-        onConfirm: async () => {
-          const nextPaths = paths.filter((path: PathMeta): boolean => path.id !== targetId);
-          if (nextPaths.length === 0) {
-            const fallbackId = 'default';
-            const fallback = createDefaultPathConfig(fallbackId);
-            const fallbackMeta = createPathMeta(fallback);
-            setPaths([fallbackMeta]);
-            setPathConfigs({ [fallbackId]: fallback });
-            setActivePathId(fallbackId);
-            applyPathConfigState(fallback);
-            try {
-              await persistSettingsBulk([
-                { key: PATH_INDEX_KEY, value: JSON.stringify([fallbackMeta]) },
-                {
-                  key: `${PATH_CONFIG_PREFIX}${fallbackId}`,
+	      confirm({
+	        title: 'Delete AI Path?',
+	        message: `Are you sure you want to delete "${label}"? This will permanently remove all node configurations and history for this path.`,
+	        confirmText: 'Delete Path',
+	        isDangerous: true,
+	        onConfirm: async () => {
+	          const restorePreviousState = (): void => {
+	            setPaths(paths);
+	            setPathConfigs(pathConfigs);
+	            if (activePathId) {
+	              setActivePathId(activePathId);
+	              const previousConfig = pathConfigs[activePathId];
+	              if (previousConfig) {
+	                applyPathConfigState(previousConfig);
+	              }
+	              return;
+	            }
+	            setActivePathId(null);
+	          };
+
+	          const nextPaths = paths.filter((path: PathMeta): boolean => path.id !== targetId);
+	          if (nextPaths.length === 0) {
+	            const fallbackId = 'default';
+	            const fallback = createDefaultPathConfig(fallbackId);
+	            const fallbackMeta = createPathMeta(fallback);
+	            let didResetToFallback = false;
+	            setPaths([fallbackMeta]);
+	            setPathConfigs({ [fallbackId]: fallback });
+	            setActivePathId(fallbackId);
+	            applyPathConfigState(fallback);
+	            try {
+	              if (targetId !== fallbackId) {
+	                await clearPersistedPathRunHistory(targetId);
+	              }
+	              await persistSettingsBulk([
+	                { key: PATH_INDEX_KEY, value: JSON.stringify([fallbackMeta]) },
+	                {
+	                  key: `${PATH_CONFIG_PREFIX}${fallbackId}`,
                   value: JSON.stringify(fallback),
                 },
               ]);
               if (targetId !== fallbackId) {
                 await deleteAiPathsSettings([
                   `${PATH_CONFIG_PREFIX}${targetId}`,
-                  `${PATH_DEBUG_PREFIX}${targetId}`,
-                ]);
-              }
-            } catch (error) {
-              logClientError(error);
-              reportAiPathsError(
-                error,
-                { action: 'deleteLastPathFallback', pathId: targetId },
-                'Failed to persist fallback path:'
-              );
-              toast('Failed to persist fallback path.', { variant: 'error' });
-            }
-            toast('Cannot delete the last path. Reset to default instead.', {
-              variant: 'info',
-            });
-            return;
-          }
+	                  `${PATH_DEBUG_PREFIX}${targetId}`,
+	                ]);
+	              }
+	              didResetToFallback = true;
+	            } catch (error) {
+	              restorePreviousState();
+	              logClientError(error);
+	              reportAiPathsError(
+	                error,
+	                { action: 'deleteLastPathFallback', pathId: targetId },
+	                'Failed to delete path and history:'
+	              );
+	              toast('Failed to delete path and history.', { variant: 'error' });
+	            }
+	            if (didResetToFallback) {
+	              toast('Cannot delete the last path. Reset to default instead.', {
+	                variant: 'info',
+	              });
+	            }
+	            return;
+	          }
 
-          const nextId = nextPaths[0]?.id ?? null;
+	          const nextId = nextPaths[0]?.id ?? null;
           setPaths(nextPaths);
           const nextConfigs = { ...pathConfigs };
           delete nextConfigs[targetId];
@@ -448,36 +486,38 @@ export function useAiPathsSettingsPathActions(
             const nextConfig = nextConfigs[nextId] ?? createDefaultPathConfig(nextId);
             setActivePathId(nextId);
             applyPathConfigState(nextConfig);
-          } else {
-            setActivePathId(null);
-          }
+	          } else {
+	            setActivePathId(null);
+		          }
 
-          try {
-            if (nextId) {
-              const nextConfig = nextConfigs[nextId] ?? createDefaultPathConfig(nextId);
-              await persistPathSettings(nextPaths, nextId, nextConfig);
-            } else {
+	          try {
+	            await clearPersistedPathRunHistory(targetId);
+	            if (nextId) {
+	              const nextConfig = nextConfigs[nextId] ?? createDefaultPathConfig(nextId);
+	              await persistPathSettings(nextPaths, nextId, nextConfig);
+	            } else {
               await persistSettingsBulk([
                 { key: PATH_INDEX_KEY, value: JSON.stringify(nextPaths) },
               ]);
             }
-            await deleteAiPathsSettings([
-              `${PATH_CONFIG_PREFIX}${targetId}`,
-              `${PATH_DEBUG_PREFIX}${targetId}`,
-            ]);
-            toast('Path removed from the index.', { variant: 'success' });
-          } catch (error) {
-            logClientError(error);
-            reportAiPathsError(
-              error,
-              { action: 'deletePath', pathId: targetId },
-              'Failed to update path index:'
-            );
-            toast('Failed to update path index.', { variant: 'error' });
-          }
-        },
-      });
-    },
+	            await deleteAiPathsSettings([
+	              `${PATH_CONFIG_PREFIX}${targetId}`,
+	              `${PATH_DEBUG_PREFIX}${targetId}`,
+	            ]);
+	            toast('Path and history deleted.', { variant: 'success' });
+	          } catch (error) {
+	            restorePreviousState();
+	            logClientError(error);
+	            reportAiPathsError(
+	              error,
+	              { action: 'deletePath', pathId: targetId },
+	              'Failed to delete path and history:'
+	            );
+	            toast('Failed to delete path and history.', { variant: 'error' });
+	          }
+	        },
+	      });
+	    },
     [
       activePathId,
       applyPathConfigState,

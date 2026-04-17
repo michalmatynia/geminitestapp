@@ -21,7 +21,6 @@ export const createEmptyConnectionForm = (): ConnectionFormState => ({
   name: '',
   username: '',
   password: '',
-  playwrightBrowser: 'auto',
   scanner1688StartUrl: 'https://www.1688.com/',
   scanner1688LoginMode: 'session_required',
   scanner1688DefaultSearchMode: 'local_image',

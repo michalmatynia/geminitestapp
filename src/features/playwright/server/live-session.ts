@@ -57,6 +57,9 @@ const LIVE_SCRIPTER_MAX_FRAME_DIMENSION = 1600;
 const LIVE_SCRIPTER_BRIDGE_KEY = '__geminitestappPlaywrightLiveScripterBridge';
 const LIVE_SCRIPTER_STATE_KEY = '__geminitestappPlaywrightLiveScripterState';
 const LIVE_SCRIPTER_DEV_FIXTURE_PATH = '/playwright-fixtures/live-scripter-fixture';
+const LIVE_SCRIPTER_TITLE_SETTLE_TIMEOUT_MS = 2_000;
+const LIVE_SCRIPTER_TITLE_SETTLE_POLL_MS = 100;
+const LIVE_SCRIPTER_TITLE_SETTLE_STABLE_MS = 250;
 
 type LiveScripterSocket = WebSocket;
 
@@ -208,6 +211,40 @@ const sanitizeUrl = (value: string): string => {
   }
 
   return parsed.toString();
+};
+
+const normalizeLiveScripterPageTitle = (value: string | null | undefined): string | null => {
+  if (typeof value !== 'string') {
+    return null;
+  }
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const readLiveScripterPageTitle = async (page: Pick<Page, 'title'>): Promise<string | null> =>
+  normalizeLiveScripterPageTitle(await page.title().catch(() => null));
+
+export const readSettledLiveScripterPageTitle = async (
+  page: Pick<Page, 'title'>
+): Promise<string | null> => {
+  let currentTitle = await readLiveScripterPageTitle(page);
+  let lastTitleChangeAt = Date.now();
+  const deadline = Date.now() + LIVE_SCRIPTER_TITLE_SETTLE_TIMEOUT_MS;
+
+  while (Date.now() < deadline) {
+    await sleepMs(LIVE_SCRIPTER_TITLE_SETTLE_POLL_MS);
+    const nextTitle = await readLiveScripterPageTitle(page);
+    if (nextTitle !== currentTitle) {
+      currentTitle = nextTitle;
+      lastTitleChangeAt = Date.now();
+      continue;
+    }
+    if (Date.now() - lastTitleChangeAt >= LIVE_SCRIPTER_TITLE_SETTLE_STABLE_MS) {
+      break;
+    }
+  }
+
+  return currentTitle;
 };
 
 export const pickElementAt = async (
@@ -480,12 +517,27 @@ const queueSessionAction = (
   return next;
 };
 
-const publishNavigation = async (session: LiveScripterSession): Promise<void> => {
+const publishNavigation = async (
+  session: LiveScripterSession,
+  options?: {
+    settleTitle?: boolean;
+  }
+): Promise<void> => {
+  const title =
+    options?.settleTitle === true
+      ? await readSettledLiveScripterPageTitle(session.page)
+      : await readLiveScripterPageTitle(session.page);
   const message: Extract<LiveScripterServerMessage, { type: 'navigated' }> = {
     type: 'navigated',
     url: session.page.url(),
-    title: await session.page.title().catch(() => null),
+    title,
   };
+  if (
+    session.lastNavigation?.url === message.url &&
+    session.lastNavigation?.title === message.title
+  ) {
+    return;
+  }
   session.lastNavigation = message;
   broadcastToSockets(session, message);
 };
@@ -534,20 +586,20 @@ const handleClientMessage = async (
       const targetUrl = sanitizeUrl(message.url);
       await simulateAddressBarTyping(targetUrl);
       await session.page.goto(targetUrl, { waitUntil: 'domcontentloaded' });
-      await publishNavigation(session);
+      await publishNavigation(session, { settleTitle: true });
       return;
     }
     case 'back':
       await session.page.goBack({ waitUntil: 'domcontentloaded' }).catch(() => null);
-      await publishNavigation(session);
+      await publishNavigation(session, { settleTitle: true });
       return;
     case 'forward':
       await session.page.goForward({ waitUntil: 'domcontentloaded' }).catch(() => null);
-      await publishNavigation(session);
+      await publishNavigation(session, { settleTitle: true });
       return;
     case 'reload':
       await session.page.reload({ waitUntil: 'domcontentloaded' });
-      await publishNavigation(session);
+      await publishNavigation(session, { settleTitle: true });
       return;
     case 'dispose':
       await disposeLiveScripterSession(session.id);
@@ -677,7 +729,7 @@ export const createLiveScripterSession = async (input: {
     if (frame !== page.mainFrame()) {
       return;
     }
-    void publishNavigation(session);
+    void publishNavigation(session, { settleTitle: true });
   });
   page.on('close', () => {
     void disposeLiveScripterSession(session.id);
@@ -718,7 +770,7 @@ export const createLiveScripterSession = async (input: {
     throw error;
   }
 
-  await publishNavigation(session);
+  await publishNavigation(session, { settleTitle: true });
 
   return { sessionId };
 };

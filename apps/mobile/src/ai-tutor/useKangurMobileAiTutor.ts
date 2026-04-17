@@ -1,4 +1,3 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo } from 'react';
 
 import type {
@@ -8,10 +7,7 @@ import type {
   KangurAiTutorWebsiteHelpTarget,
 } from '../../../../src/shared/contracts/kangur-ai-tutor';
 import type { KangurAiTutorContent } from '../../../../src/shared/contracts/kangur-ai-tutor-content';
-import type {
-  KangurAiTutorNativeGuideEntry,
-  KangurAiTutorNativeGuideStore,
-} from '../../../../src/shared/contracts/kangur-ai-tutor-native-guide';
+import type { KangurAiTutorNativeGuideEntry } from '../../../../src/shared/contracts/kangur-ai-tutor-native-guide';
 import { useKangurMobileAuth } from '../auth/KangurMobileAuthContext';
 import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import { useKangurMobileRuntime } from '../providers/KangurRuntimeContext';
@@ -20,12 +16,11 @@ import {
   resolveKangurMobileWebsiteHelpHref,
 } from '../shared/resolveKangurMobileActionHref';
 import { selectKangurMobileAiTutorGuideEntry } from './selectKangurMobileAiTutorGuideEntry';
-
-type KangurMobileAiTutorQuickAction = {
-  id: string;
-  label: string;
-  prompt: string;
-};
+import {
+  useKangurMobileAiTutorMutation,
+  useKangurMobileAiTutorQueries,
+  type KangurMobileAiTutorQuickAction,
+} from './useKangurMobileAiTutorHooks';
 
 type KangurMobileAiTutorResolvedAction = {
   href: ReturnType<typeof resolveKangurMobileActionHref>;
@@ -62,526 +57,139 @@ type UseKangurMobileAiTutorResult = {
   sendQuickAction: (actionId: string) => Promise<void>;
 };
 
-type TutorUsageQueryResult = {
-  message: string | null;
-  usage: KangurAiTutorUsageSummary | null;
+const FALLBACK_TUTOR_NAME = { de: 'KI-Tutor', en: 'AI Tutor', pl: 'AI Tutor' } as const;
+
+const createSignedOutMessage = (l: 'de' | 'en' | 'pl'): string =>
+  ({ de: 'Melde dich an, um den KI-Tutor in diesem kroku zu öffnen.', en: 'Sign in to open AI Tutor for this step.', pl: 'Zaloguj się, aby otworzyć AI Tutora przy tym kroku.' })[l];
+
+const createRestoringSignInMessage = (l: 'de' | 'en' | 'pl'): string =>
+  ({ de: 'Die Anmeldung wird wiederhergestellt, damit der KI-Tutor starten kann.', en: 'Restoring sign-in so AI Tutor can open here.', pl: 'Przywracamy logowanie, aby AI Tutor mógł się tutaj otworzyć.' })[l];
+
+const createLockedTestPromptMessage = (l: 'de' | 'en' | 'pl'): string =>
+  ({ de: 'Sprawdź odpowiedź, aby odblokować szybkie podpowiedzi tutora przy tym pytaniu.', en: 'Reveal the answer to unlock tutor prompts for this test question.', pl: 'Sprawdź odpowiedź, aby odblokować szybkie podpowiedzi tutora przy tym pytaniu.' })[l];
+
+const buildTReviewActions = (l: 'de' | 'en' | 'pl'): KangurMobileAiTutorQuickAction[] => [
+  { id: 'review', label: { de: 'Antwort besprechen', en: 'Review answer', pl: 'Omów odpowiedź' }[l], prompt: { de: 'Omów mój wynik testu: co poszło dobrze i co warto poprawić następnym razem.', en: 'Review my test result: what went well and what to improve next.', pl: 'Omów mój wynik testu: co poszło dobrze i co warto poprawić następnym razem.' }[l] },
+  { id: 'next_step', label: { de: 'Co dalej?', en: 'What next?', pl: 'Co dalej?' }[l], prompt: { de: 'Powiedz, jaki powinien być mój następny krok po tym teście.', en: 'Tell me what my next step should be after this test.', pl: 'Powiedz, jaki powinien być mój następny krok po tym teście.' }[l] },
+  { id: 'explain', label: { de: 'Wyjaśnij', en: 'Explain', pl: 'Wyjaśnij' }[l], prompt: { de: 'Wyjaśnij mi to prostymi słowami.', en: 'Explain this in simple words.', pl: 'Wyjaśnij mi to prostymi słowami.' }[l] },
+];
+
+const buildGSummaryActions = (l: 'de' | 'en' | 'pl'): KangurMobileAiTutorQuickAction[] => [
+  { id: 'review', label: { de: 'Omów grę', en: 'Review the round', pl: 'Omów rundę' }[l], prompt: { de: 'Omów moją ostatnią grę: co poszło dobrze i co warto ćwiczyć dalej.', en: 'Review my latest round: what went well and what should I practise next.', pl: 'Omów moją ostatnią grę: co poszło dobrze i co warto ćwiczyć dalej.' }[l] },
+  { id: 'next_step', label: { de: 'Co dalej?', en: 'What next?', pl: 'Co dalej?' }[l], prompt: { de: 'Powiedz, jaki powinien być mój następny krok po tej grze.', en: 'Tell me what my next step should be after this round.', pl: 'Powiedz, jaki powinien być mój następny krok po tej grze.' }[l] },
+  { id: 'explain', label: { de: 'Wyjaśnij', en: 'Explain', pl: 'Wyjaśnij' }[l], prompt: { de: 'Wyjaśnij mi to prostymi słowami.', en: 'Explain this in simple words.', pl: 'Wyjaśnij mi to prostymi słowami.' }[l] },
+];
+
+const buildDFallbackActions = (l: 'de' | 'en' | 'pl'): KangurMobileAiTutorQuickAction[] => [
+  { id: 'hint', label: { de: 'Podpowiedź', en: 'Hint', pl: 'Podpowiedź' }[l], prompt: { de: 'Daj mi małą podpowiedź, ale bez gotowej odpowiedzi.', en: 'Give me a small hint without the final answer.', pl: 'Daj mi małą podpowiedź, ale bez gotowej odpowiedzi.' }[l] },
+  { id: 'how_think', label: { de: 'Jak myśleć?', en: 'How should I think?', pl: 'Jak myśleć?' }[l], prompt: { de: 'Wyjaśnij, jak podejść do tego pytania krok po kroku, bez podawania odpowiedzi.', en: 'Explain how to approach this step by step without giving the answer.', pl: 'Wyjaśnij, jak podejść do tego pytania krok po kroku, bez podawania odpowiedzi.' }[l] },
+  { id: 'next_step', label: { de: 'Co dalej?', en: 'What next?', pl: 'Co dalej?' }[l], prompt: { de: 'Powiedz, co warto ćwiczyć dalej na podstawie mojego postępu.', en: 'Tell me what is worth practising next based on my progress.', pl: 'Powiedz, co warto ćwiczyć dalej na podstawie mojego postępu.' }[l] },
+];
+
+const buildFallbackQuickActions = (l: 'de' | 'en' | 'pl', c: KangurAiTutorConversationContext): KangurMobileAiTutorQuickAction[] => {
+  const isR = c.focusKind === 'review' || c.focusKind === 'summary' || c.answerRevealed === true;
+  if (c.surface === 'test' && isR) return buildTReviewActions(l);
+  if (c.surface === 'game' && c.focusKind === 'summary') return buildGSummaryActions(l);
+  return buildDFallbackActions(l);
 };
 
-const FALLBACK_TUTOR_NAME = {
-  de: 'KI-Tutor',
-  en: 'AI Tutor',
-  pl: 'AI Tutor',
-} as const;
-
-const readResponseMessage = async (response: Response): Promise<string | null> => {
-  try {
-    const payload = await response.json();
-    return typeof payload?.message === 'string' && payload.message.trim().length > 0
-      ? payload.message.trim()
-      : null;
-  } catch {
-    return null;
-  }
-};
-
-const createTutorFetchErrorMessage = (
-  locale: 'de' | 'en' | 'pl',
-): string =>
-  ({
-    de: 'Der KI-Tutor konnte nicht geöffnet werden.',
-    en: 'Could not open AI Tutor.',
-    pl: 'Nie udało się otworzyć AI Tutora.',
-  })[locale];
-
-const createSignedOutMessage = (
-  locale: 'de' | 'en' | 'pl',
-): string =>
-  ({
-    de: 'Melde dich an, um den KI-Tutor in diesem kroku zu öffnen.',
-    en: 'Sign in to open AI Tutor for this step.',
-    pl: 'Zaloguj się, aby otworzyć AI Tutora przy tym kroku.',
-  })[locale];
-
-const createRestoringSignInMessage = (
-  locale: 'de' | 'en' | 'pl',
-): string =>
-  ({
-    de: 'Die Anmeldung wird wiederhergestellt, damit der KI-Tutor starten kann.',
-    en: 'Restoring sign-in so AI Tutor can open here.',
-    pl: 'Przywracamy logowanie, aby AI Tutor mógł się tutaj otworzyć.',
-  })[locale];
-
-const createLockedTestPromptMessage = (
-  locale: 'de' | 'en' | 'pl',
-): string =>
-  ({
-    de: 'Sprawdź odpowiedź, aby odblokować szybkie podpowiedzi tutora przy tym pytaniu.',
-    en: 'Reveal the answer to unlock tutor prompts for this test question.',
-    pl: 'Sprawdź odpowiedź, aby odblokować szybkie podpowiedzi tutora przy tym pytaniu.',
-  })[locale];
-
-const buildFallbackQuickActions = (
-  locale: 'de' | 'en' | 'pl',
-  context: KangurAiTutorConversationContext,
-): KangurMobileAiTutorQuickAction[] => {
-  const isReviewing =
-    context.answerRevealed === true ||
-    context.focusKind === 'review' ||
-    context.focusKind === 'summary';
-
-  if (context.surface === 'test' && isReviewing) {
-    return [
-      {
-        id: 'review',
-        label: {
-          de: 'Antwort besprechen',
-          en: 'Review answer',
-          pl: 'Omów odpowiedź',
-        }[locale],
-        prompt: {
-          de: 'Omów mój wynik testu: co poszło dobrze i co warto poprawić następnym razem.',
-          en: 'Review my test result: what went well and what to improve next.',
-          pl: 'Omów mój wynik testu: co poszło dobrze i co warto poprawić następnym razem.',
-        }[locale],
-      },
-      {
-        id: 'next_step',
-        label: {
-          de: 'Co dalej?',
-          en: 'What next?',
-          pl: 'Co dalej?',
-        }[locale],
-        prompt: {
-          de: 'Powiedz, jaki powinien być mój następny krok po tym teście.',
-          en: 'Tell me what my next step should be after this test.',
-          pl: 'Powiedz, jaki powinien być mój następny krok po tym teście.',
-        }[locale],
-      },
-      {
-        id: 'explain',
-        label: {
-          de: 'Wyjaśnij',
-          en: 'Explain',
-          pl: 'Wyjaśnij',
-        }[locale],
-        prompt: {
-          de: 'Wyjaśnij mi to prostymi słowami.',
-          en: 'Explain this in simple words.',
-          pl: 'Wyjaśnij mi to prostymi słowami.',
-        }[locale],
-      },
-    ];
-  }
-
-  if (context.surface === 'game' && context.focusKind === 'summary') {
-    return [
-      {
-        id: 'review',
-        label: {
-          de: 'Omów grę',
-          en: 'Review the round',
-          pl: 'Omów rundę',
-        }[locale],
-        prompt: {
-          de: 'Omów moją ostatnią grę: co poszło dobrze i co warto ćwiczyć dalej.',
-          en: 'Review my latest round: what went well and what should I practise next.',
-          pl: 'Omów moją ostatnią grę: co poszło dobrze i co warto ćwiczyć dalej.',
-        }[locale],
-      },
-      {
-        id: 'next_step',
-        label: {
-          de: 'Co dalej?',
-          en: 'What next?',
-          pl: 'Co dalej?',
-        }[locale],
-        prompt: {
-          de: 'Powiedz, jaki powinien być mój następny krok po tej grze.',
-          en: 'Tell me what my next step should be after this round.',
-          pl: 'Powiedz, jaki powinien być mój następny krok po tej grze.',
-        }[locale],
-      },
-      {
-        id: 'explain',
-        label: {
-          de: 'Wyjaśnij',
-          en: 'Explain',
-          pl: 'Wyjaśnij',
-        }[locale],
-        prompt: {
-          de: 'Wyjaśnij mi to prostymi słowami.',
-          en: 'Explain this in simple words.',
-          pl: 'Wyjaśnij mi to prostymi słowami.',
-        }[locale],
-      },
-    ];
-  }
-
+const buildCReviewActions = (cont: KangurAiTutorContent, c: KangurAiTutorConversationContext): KangurMobileAiTutorQuickAction[] => {
+  const hasQ = c.questionId !== null && c.questionId !== undefined;
+  const isAns = c.answerRevealed === true;
+  const { review, nextStep, explain } = cont.quickActions;
+  const rL = (hasQ && c.focusKind === 'review') ? review.questionLabel : review.resultLabel;
+  const rP = (hasQ && c.focusKind === 'review') ? review.questionPrompt : review.resultPrompt;
+  const nL = (hasQ && isAns) ? nextStep.reviewQuestionLabel : nextStep.reviewOtherLabel;
+  const nP = (hasQ && isAns) ? nextStep.reviewQuestionPrompt : nextStep.reviewTestPrompt;
   return [
-    {
-      id: 'hint',
-      label: {
-        de: 'Podpowiedź',
-        en: 'Hint',
-        pl: 'Podpowiedź',
-      }[locale],
-      prompt: {
-        de: 'Daj mi małą podpowiedź, ale bez gotowej odpowiedzi.',
-        en: 'Give me a small hint without the final answer.',
-        pl: 'Daj mi małą podpowiedź, ale bez gotowej odpowiedzi.',
-      }[locale],
-    },
-    {
-      id: 'how_think',
-      label: {
-        de: 'Jak myśleć?',
-        en: 'How should I think?',
-        pl: 'Jak myśleć?',
-      }[locale],
-      prompt: {
-        de: 'Wyjaśnij, jak podejść do tego pytania krok po kroku, bez podawania odpowiedzi.',
-        en: 'Explain how to approach this step by step without giving the answer.',
-        pl: 'Wyjaśnij, jak podejść do tego pytania krok po kroku, bez podawania odpowiedzi.',
-      }[locale],
-    },
-    {
-      id: 'next_step',
-      label: {
-        de: 'Co dalej?',
-        en: 'What next?',
-        pl: 'Co dalej?',
-      }[locale],
-      prompt: {
-        de: 'Powiedz, co warto ćwiczyć dalej na podstawie mojego postępu.',
-        en: 'Tell me what is worth practising next based on my progress.',
-        pl: 'Powiedz, co warto ćwiczyć dalej na podstawie mojego postępu.',
-      }[locale],
-    },
+    { id: 'review', label: rL, prompt: rP },
+    { id: 'next_step', label: nL, prompt: nP },
+    { id: 'explain', label: explain.defaultLabel, prompt: explain.defaultPrompt },
   ];
 };
 
-const buildQuickActions = (
-  content: KangurAiTutorContent | null,
-  context: KangurAiTutorConversationContext,
-  locale: 'de' | 'en' | 'pl',
-): KangurMobileAiTutorQuickAction[] => {
-  const fallbackActions = buildFallbackQuickActions(locale, context);
-  if (!content) {
-    return fallbackActions;
-  }
-
-  const isReviewing =
-    context.answerRevealed === true ||
-    context.focusKind === 'review' ||
-    context.focusKind === 'summary';
-
-  if (context.surface === 'test' && isReviewing) {
-    return [
-      {
-        id: 'review',
-        label:
-          context.questionId && context.focusKind === 'review'
-            ? content.quickActions.review.questionLabel
-            : content.quickActions.review.resultLabel,
-        prompt:
-          context.questionId && context.focusKind === 'review'
-            ? content.quickActions.review.questionPrompt
-            : content.quickActions.review.resultPrompt,
-      },
-      {
-        id: 'next_step',
-        label:
-          context.questionId && context.answerRevealed
-            ? content.quickActions.nextStep.reviewQuestionLabel
-            : content.quickActions.nextStep.reviewOtherLabel,
-        prompt:
-          context.questionId && context.answerRevealed
-            ? content.quickActions.nextStep.reviewQuestionPrompt
-            : content.quickActions.nextStep.reviewTestPrompt,
-      },
-      {
-        id: 'explain',
-        label: content.quickActions.explain.defaultLabel,
-        prompt: content.quickActions.explain.defaultPrompt,
-      },
-    ];
-  }
-
-  if (context.surface === 'game' && context.focusKind === 'summary') {
-    return [
-      {
-        id: 'review',
-        label: content.quickActions.review.gameLabel,
-        prompt: content.quickActions.review.gamePrompt,
-      },
-      {
-        id: 'next_step',
-        label: content.quickActions.nextStep.reviewOtherLabel,
-        prompt: content.quickActions.nextStep.reviewGamePrompt,
-      },
-      {
-        id: 'explain',
-        label: content.quickActions.explain.defaultLabel,
-        prompt: content.quickActions.explain.defaultPrompt,
-      },
-    ];
-  }
-
+const buildCGameActions = (cont: KangurAiTutorContent): KangurMobileAiTutorQuickAction[] => {
+  const { review, nextStep, explain } = cont.quickActions;
   return [
-    {
-      id: 'hint',
-      label: content.quickActions.hint.defaultLabel,
-      prompt: content.quickActions.hint.defaultPrompt,
-    },
-    {
-      id: 'how_think',
-      label: content.quickActions.howThink.defaultLabel,
-      prompt: content.quickActions.howThink.defaultPrompt,
-    },
-    {
-      id: 'next_step',
-      label:
-        context.surface === 'game'
-          ? content.quickActions.nextStep.defaultLabel
-          : content.quickActions.explain.defaultLabel,
-      prompt:
-        context.surface === 'game'
-          ? content.quickActions.nextStep.gamePrompt
-          : content.quickActions.explain.defaultPrompt,
-    },
+    { id: 'review', label: review.gameLabel, prompt: review.gamePrompt },
+    { id: 'next_step', label: nextStep.reviewOtherLabel, prompt: nextStep.reviewGamePrompt },
+    { id: 'explain', label: explain.defaultLabel, prompt: explain.defaultPrompt },
   ];
 };
 
-export const useKangurMobileAiTutor = ({
-  context,
-  enabled = true,
-  gameTarget = 'practice',
-}: UseKangurMobileAiTutorOptions): UseKangurMobileAiTutorResult => {
+const buildCDefaultActions = (cont: KangurAiTutorContent, c: KangurAiTutorConversationContext): KangurMobileAiTutorQuickAction[] => {
+  const { hint, howThink, nextStep, explain } = cont.quickActions;
+  const isG = c.surface === 'game';
+  return [
+    { id: 'hint', label: hint.defaultLabel, prompt: hint.defaultPrompt },
+    { id: 'how_think', label: howThink.defaultLabel, prompt: howThink.defaultPrompt },
+    { id: 'next_step', label: isG ? nextStep.defaultLabel : explain.defaultLabel, prompt: isG ? nextStep.gamePrompt : explain.defaultPrompt },
+  ];
+};
+
+const buildQuickActions = (cont: KangurAiTutorContent | null, c: KangurAiTutorConversationContext, l: 'de' | 'en' | 'pl'): KangurMobileAiTutorQuickAction[] => {
+  if (cont === null) return buildFallbackQuickActions(l, c);
+  const isR = c.answerRevealed === true || c.focusKind === 'review' || c.focusKind === 'summary';
+  if (c.surface === 'test' && isR) return buildCReviewActions(cont, c);
+  if (c.surface === 'game' && c.focusKind === 'summary') return buildCGameActions(cont);
+  return buildCDefaultActions(cont, c);
+};
+
+const resolveTutorAvailability = (e: boolean, r: boolean, a: boolean, u?: string | null): 'available' | 'restoring_sign_in' | 'signed_out' | 'unavailable' => {
+  if (!e) return 'unavailable';
+  if (r) return 'restoring_sign_in';
+  if (!a) return 'signed_out';
+  return (u !== null && u !== undefined && u.length > 0) ? 'unavailable' : 'available';
+};
+
+const resolveAvailabilityMessage = (s: string, l: 'de' | 'en' | 'pl', u?: string | null, e?: Error | null): string | null => {
+  if (s === 'restoring_sign_in') return createRestoringSignInMessage(l);
+  if (s === 'signed_out') return createSignedOutMessage(l);
+  if (s === 'unavailable') return (u !== null && u !== undefined && u.length > 0) ? u : (e?.message ?? null);
+  return null;
+};
+
+const resolveResponseMessage = (d?: KangurAiTutorChatResponse | null, e?: Error | null): string | null => {
+  const m = d?.message;
+  return (m !== undefined && m !== null && m.length > 0) ? m : (e?.message ?? null);
+};
+
+export const useKangurMobileAiTutor = ({ context, enabled = true, gameTarget = 'practice' }: UseKangurMobileAiTutorOptions): UseKangurMobileAiTutorResult => {
   const { apiBaseUrl } = useKangurMobileRuntime();
   const { isLoadingAuth, session } = useKangurMobileAuth();
   const { locale } = useKangurMobileI18n();
-  const isAuthenticated = session.status === 'authenticated';
-  const isRestoringAuth = isLoadingAuth && !isAuthenticated;
-  const isLockedTestQuestion =
-    context.surface === 'test' &&
-    (context.focusKind === 'question' || context.focusKind === 'selection') &&
-    context.answerRevealed !== true;
-  const canLoadTutorCatalog = enabled && !isRestoringAuth;
+  const isAuth = session.status === 'authenticated';
+  const isRestAuth = isLoadingAuth && !isAuth;
+  const isAns = context.answerRevealed === true;
+  const isL = context.surface === 'test' && (context.focusKind === 'question' || context.focusKind === 'selection') && !isAns;
 
-  const contentQuery = useQuery({
-    enabled: canLoadTutorCatalog,
-    queryKey: ['kangur-mobile', 'ai-tutor', 'content', apiBaseUrl, locale],
-    queryFn: async (): Promise<KangurAiTutorContent> => {
-      const response = await fetch(
-        `${apiBaseUrl}/api/kangur/ai-tutor/content?locale=${encodeURIComponent(locale)}`,
-        {
-          cache: 'no-store',
-          credentials: 'include',
-        },
-      );
-
-      if (!response.ok) {
-        throw new Error(createTutorFetchErrorMessage(locale));
-      }
-
-      return (await response.json()) as KangurAiTutorContent;
-    },
-    staleTime: 300_000,
+  const { contentQuery, nativeGuideQuery, usageQuery } = useKangurMobileAiTutorQueries({
+    apiBaseUrl, canLoadTutorCatalog: enabled && !isRestAuth, enabled, isAuthenticated: isAuth, isRestoringAuth: isRestAuth, locale, userId: session.user?.id ?? 'anonymous',
   });
 
-  const nativeGuideQuery = useQuery({
-    enabled: canLoadTutorCatalog,
-    queryKey: ['kangur-mobile', 'ai-tutor', 'native-guide', apiBaseUrl, locale],
-    queryFn: async (): Promise<KangurAiTutorNativeGuideStore> => {
-      const response = await fetch(
-        `${apiBaseUrl}/api/kangur/ai-tutor/native-guide?locale=${encodeURIComponent(locale)}`,
-        {
-          cache: 'no-store',
-          credentials: 'include',
-        },
-      );
+  const chatM = useKangurMobileAiTutorMutation({ apiBaseUrl, context, locale });
+  useEffect(() => { chatM.reset(); }, [context.surface, context.contentId, context.focusKind, context.focusId, context.questionId, context.answerRevealed]);
 
-      if (!response.ok) {
-        throw new Error(createTutorFetchErrorMessage(locale));
-      }
-
-      return (await response.json()) as KangurAiTutorNativeGuideStore;
-    },
-    staleTime: 300_000,
-  });
-
-  const usageQuery = useQuery({
-    enabled: enabled && isAuthenticated && !isRestoringAuth,
-    queryKey: ['kangur-mobile', 'ai-tutor', 'usage', apiBaseUrl, session.user?.id ?? 'anonymous'],
-    queryFn: async (): Promise<TutorUsageQueryResult> => {
-      const response = await fetch(`${apiBaseUrl}/api/kangur/ai-tutor/usage`, {
-        cache: 'no-store',
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        return {
-          message: (await readResponseMessage(response)) ?? createTutorFetchErrorMessage(locale),
-          usage: null,
-        };
-      }
-
-      const payload = (await response.json()) as { usage?: KangurAiTutorUsageSummary };
-      return {
-        message: null,
-        usage: payload.usage ?? null,
-      };
-    },
-    staleTime: 30_000,
-  });
-
-  const chatMutation = useMutation({
-    mutationFn: async (
-      action: KangurMobileAiTutorQuickAction,
-    ): Promise<KangurAiTutorChatResponse> => {
-      const response = await fetch(`${apiBaseUrl}/api/kangur/ai-tutor/chat`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          messages: [
-            {
-              role: 'user',
-              content: action.prompt,
-            },
-          ],
-          context,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(
-          (await readResponseMessage(response)) ?? createTutorFetchErrorMessage(locale),
-        );
-      }
-
-      return (await response.json()) as KangurAiTutorChatResponse;
-    },
-  });
-
-  const contextResetKey = [
-    context.surface,
-    context.contentId ?? '',
-    context.focusKind ?? '',
-    context.focusId ?? '',
-    context.questionId ?? '',
-    context.answerRevealed ? 'revealed' : 'hidden',
-  ].join(':');
-
-  useEffect(() => {
-    chatMutation.reset();
-  }, [contextResetKey]);
-
-  const guideEntry = useMemo(
-    () =>
-      selectKangurMobileAiTutorGuideEntry(
-        nativeGuideQuery.data?.entries ?? [],
-        context,
-      ),
-    [context, nativeGuideQuery.data?.entries],
-  );
-
-  const quickActions = useMemo(() => {
-    if (isLockedTestQuestion) {
-      return [];
-    }
-
-    return buildQuickActions(contentQuery.data ?? null, context, locale);
-  }, [contentQuery.data, context, isLockedTestQuestion, locale]);
-
-  const availabilityState: UseKangurMobileAiTutorResult['availabilityState'] =
-    !enabled
-      ? 'unavailable'
-      : isRestoringAuth
-        ? 'restoring_sign_in'
-        : !isAuthenticated
-          ? 'signed_out'
-          : usageQuery.data?.message
-            ? 'unavailable'
-            : 'available';
-
-  const availabilityMessage =
-    availabilityState === 'restoring_sign_in'
-      ? createRestoringSignInMessage(locale)
-      : availabilityState === 'signed_out'
-        ? createSignedOutMessage(locale)
-        : availabilityState === 'unavailable'
-          ? usageQuery.data?.message ??
-            (chatMutation.error instanceof Error ? chatMutation.error.message : null)
-          : null;
-
-  const responseMessage =
-    chatMutation.data?.message ??
-    (chatMutation.error instanceof Error ? chatMutation.error.message : null);
-
-  const responseActions = useMemo<KangurMobileAiTutorResolvedAction[]>(
-    () =>
-      (chatMutation.data?.followUpActions ?? []).map((action) => ({
-        href: resolveKangurMobileActionHref(action, {
-          gameTarget,
-        }),
-        id: action.id,
-        label: action.label,
-        reason: action.reason ?? null,
-      })),
-    [chatMutation.data?.followUpActions, gameTarget],
-  );
-
-  const websiteHelpTarget = useMemo<KangurMobileAiTutorResolvedWebsiteHelp | null>(() => {
-    const target = chatMutation.data?.websiteHelpTarget as
-      | KangurAiTutorWebsiteHelpTarget
-      | undefined;
-    if (!target) {
-      return null;
-    }
-
-    return {
-      href: resolveKangurMobileWebsiteHelpHref(target, {
-        gameTarget,
-      }),
-      label: target.label,
-    };
-  }, [chatMutation.data?.websiteHelpTarget, gameTarget]);
+  const aState = resolveTutorAvailability(enabled, isRestAuth, isAuth, usageQuery.data?.message);
+  const qActions = useMemo(() => isL ? [] : buildQuickActions(contentQuery.data ?? null, context, locale), [contentQuery.data, context, isL, locale]);
 
   return {
-    availabilityMessage,
-    availabilityState,
-    canSendMessages: availabilityState === 'available' && quickActions.length > 0,
-    guideEntry,
-    interactionHint: isLockedTestQuestion
-      ? createLockedTestPromptMessage(locale)
-      : null,
-    isLoading:
-      contentQuery.isLoading ||
-      nativeGuideQuery.isLoading ||
-      (isAuthenticated && usageQuery.isLoading),
-    isSending: chatMutation.isPending,
-    quickActions,
-    responseActions,
-    responseMessage,
-    sendQuickAction: async (actionId: string) => {
-      if (availabilityState !== 'available') {
-        return;
-      }
-
-      const action = quickActions.find((candidate) => candidate.id === actionId);
-      if (!action) {
-        return;
-      }
-
-      await chatMutation.mutateAsync(action);
-    },
-    tutorName:
-      contentQuery.data?.common.defaultTutorName ??
-      FALLBACK_TUTOR_NAME[locale],
+    availabilityMessage: resolveAvailabilityMessage(aState, locale, usageQuery.data?.message, chatM.error),
+    availabilityState: aState,
+    canSendMessages: aState === 'available' && !isL && qActions.length > 0,
+    guideEntry: useMemo(() => selectKangurMobileAiTutorGuideEntry(nativeGuideQuery.data?.entries ?? [], context), [context, nativeGuideQuery.data?.entries]),
+    interactionHint: isL ? createLockedTestPromptMessage(locale) : null,
+    isLoading: contentQuery.isLoading || nativeGuideQuery.isLoading || (isAuth && usageQuery.isLoading),
+    isSending: chatM.isPending,
+    quickActions: qActions,
+    responseActions: useMemo(() => (chatM.data?.followUpActions ?? []).map((a) => ({ href: resolveKangurMobileActionHref(a, { gameTarget }), id: a.id, label: a.label, reason: a.reason ?? null })), [chatM.data?.followUpActions, gameTarget]),
+    responseMessage: resolveResponseMessage(chatM.data, chatM.error),
+    sendQuickAction: async (id: string) => { if (aState === 'available') { const a = qActions.find((c) => c.id === id); if (a) await chatM.mutateAsync(a); } },
+    tutorName: contentQuery.data?.common.defaultTutorName ?? FALLBACK_TUTOR_NAME[locale],
     usage: usageQuery.data?.usage ?? null,
-    websiteHelpTarget,
+    websiteHelpTarget: useMemo(() => {
+      const t = chatM.data?.websiteHelpTarget as KangurAiTutorWebsiteHelpTarget | undefined;
+      return (t !== undefined && t !== null) ? { href: resolveKangurMobileWebsiteHelpHref(t, { gameTarget }), label: t.label } : null;
+    }, [chatM.data?.websiteHelpTarget, gameTarget]),
   };
 };

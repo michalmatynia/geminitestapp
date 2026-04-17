@@ -9,6 +9,10 @@ import {
   type AmazonScanInput,
 } from '../sequencers/AmazonScanSequencer';
 import {
+  AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY,
+  AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY,
+} from '../amazon-runtime-constants';
+import {
   Supplier1688ScanSequencer,
   type Supplier1688ScanInput,
 } from '../sequencers/Supplier1688ScanSequencer';
@@ -294,6 +298,208 @@ describe('AmazonScanSequencer', () => {
     const openStep = payload.steps.find((s) => s.key === 'google_lens_open');
     expect(openStep!.status).toBe('failed');
     expect(openStep!.resultCode).toBe('navigation_failed');
+  });
+
+  it('emits triage_ready with candidate previews for the candidate-search runtime', async () => {
+    const ctx = makeContext();
+    const seq = new AmazonScanSequencer(ctx, {
+      runtimeKey: AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY,
+      imageCandidates: [{ id: 'img-1', filepath: '/tmp/product-source.jpg', rank: 1 }],
+    });
+
+    (seq as any).openGoogleLens = vi.fn().mockResolvedValue({ success: true, message: null });
+    (seq as any).uploadToGoogleLens = vi.fn().mockResolvedValue({
+      advanced: true,
+      captchaRequired: false,
+      error: null,
+      failureCode: null,
+    });
+    (seq as any).collectAmazonCandidates = vi.fn().mockResolvedValue({
+      urls: [
+        'https://www.amazon.com/dp/B000000001',
+        'https://www.amazon.com/dp/B000000002',
+      ],
+      results: [
+        {
+          url: 'https://www.amazon.com/dp/B000000001',
+          score: null,
+          asin: 'B000000001',
+          marketplaceDomain: 'www.amazon.com',
+          title: null,
+          snippet: null,
+          rank: 1,
+        },
+        {
+          url: 'https://www.amazon.com/dp/B000000002',
+          score: null,
+          asin: 'B000000002',
+          marketplaceDomain: 'www.amazon.com',
+          title: null,
+          snippet: null,
+          rank: 2,
+        },
+      ],
+      message: null,
+    });
+    (seq as any).processAmazonCandidate = vi
+      .fn()
+      .mockImplementation(async ({ url, candidateId, candidateRank }) => ({
+        status: 'probe_ready',
+        asin: `B00000000${candidateRank}`,
+        title: `Candidate ${String(candidateRank)}`,
+        price: null,
+        url,
+        description: `Snippet ${String(candidateRank)}`,
+        heroImageUrl: `https://images.example/${String(candidateRank)}.jpg`,
+        amazonDetails: null,
+        amazonProbe: {
+          asin: `B00000000${String(candidateRank)}`,
+          pageTitle: `Candidate ${String(candidateRank)}`,
+          descriptionSnippet: `Snippet ${String(candidateRank)}`,
+          pageLanguage: 'en',
+          pageLanguageSource: 'html_lang',
+          marketplaceDomain: 'www.amazon.com',
+          candidateUrl: url,
+          canonicalUrl: url,
+          heroImageUrl: `https://images.example/${String(candidateRank)}.jpg`,
+          heroImageAlt: `Candidate ${String(candidateRank)}`,
+          heroImageArtifactName: `candidate-${String(candidateRank)}.png`,
+          artifactKey: `artifact-${String(candidateRank)}`,
+          bulletPoints: [],
+          bulletCount: 0,
+          attributeCount: 0,
+        },
+        candidatePreview: {
+          id: `B00000000${String(candidateRank)}`,
+          matchedImageId: candidateId,
+          url,
+          asin: `B00000000${String(candidateRank)}`,
+          marketplaceDomain: 'www.amazon.com',
+          title: `Candidate ${String(candidateRank)}`,
+          snippet: `Snippet ${String(candidateRank)}`,
+          heroImageUrl: `https://images.example/${String(candidateRank)}.jpg`,
+          heroImageAlt: `Candidate ${String(candidateRank)}`,
+          heroImageArtifactName: `candidate-${String(candidateRank)}.png`,
+          artifactKey: `artifact-${String(candidateRank)}`,
+          rank: candidateRank,
+        },
+        message: 'Collected Amazon candidate preview for manual selection.',
+        stage: 'amazon_probe',
+      }));
+
+    await seq.scan();
+
+    const payload = (ctx.emit as ReturnType<typeof vi.fn>).mock.calls[0][1] as {
+      status: string;
+      stage: string;
+      candidatePreviews: Array<{ asin: string | null; rank: number | null }>;
+      candidateResults: Array<{ title: string | null }>;
+      matchedImageId: string | null;
+    };
+
+    expect(payload.status).toBe('triage_ready');
+    expect(payload.stage).toBe('amazon_probe');
+    expect(payload.matchedImageId).toBe('img-1');
+    expect(payload.candidatePreviews).toHaveLength(2);
+    expect(payload.candidatePreviews[0]).toEqual(
+      expect.objectContaining({ asin: 'B000000001', rank: 1 })
+    );
+    expect(payload.candidateResults[0]).toEqual(
+      expect.objectContaining({ title: 'Candidate 1' })
+    );
+  });
+
+  it('direct candidate extraction skips Google Lens and extracts the selected Amazon page', async () => {
+    const ctx = makeContext();
+    const seq = new AmazonScanSequencer(ctx, {
+      runtimeKey: AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY,
+      directAmazonCandidateUrl: 'https://www.amazon.com/dp/B000DIRECT1',
+      directAmazonCandidateUrls: [
+        'https://www.amazon.com/dp/B000DIRECT2',
+        'https://www.amazon.com/dp/B000DIRECT1',
+      ],
+      directMatchedImageId: 'img-1',
+      directAmazonCandidateRank: 2,
+    });
+
+    (seq as any).openGoogleLens = vi.fn().mockResolvedValue({ success: true, message: null });
+    (seq as any).processAmazonCandidate = vi.fn().mockImplementation(async ({ url }) => ({
+      status: 'matched',
+      asin: 'B000DIRECT1',
+      title: 'Selected candidate',
+      price: '$19.99',
+      url,
+      description: 'Extracted description',
+      heroImageUrl: 'https://images.example/direct.jpg',
+      amazonDetails: null,
+      amazonProbe: null,
+      candidatePreview: null,
+      message: 'Amazon product details extracted.',
+      stage: 'amazon_extract',
+    }));
+
+    await seq.scan();
+
+    const payload = (ctx.emit as ReturnType<typeof vi.fn>).mock.calls[0][1] as {
+      status: string;
+      stage: string;
+      title: string | null;
+      candidateUrls: string[];
+      candidateResults: Array<{ url: string; rank: number | null }>;
+      steps: Array<{ key: string }>;
+    };
+
+    expect((seq as any).openGoogleLens).not.toHaveBeenCalled();
+    expect(payload.status).toBe('matched');
+    expect(payload.stage).toBe('amazon_extract');
+    expect(payload.title).toBe('Selected candidate');
+    expect(payload.candidateUrls).toEqual([
+      'https://www.amazon.com/dp/B000DIRECT1',
+      'https://www.amazon.com/dp/B000DIRECT2',
+    ]);
+    expect(payload.candidateResults[0]).toEqual(
+      expect.objectContaining({
+        url: 'https://www.amazon.com/dp/B000DIRECT1',
+        rank: 2,
+      })
+    );
+    expect(payload.steps.map((step) => step.key)).not.toContain('google_lens_open');
+  });
+
+  it('uploadToGoogleLens accepts persisted filepath candidates', async () => {
+    const ctx = makeContext();
+    const seq = new AmazonScanSequencer(ctx);
+    const setInputFiles = vi.fn().mockResolvedValue(undefined);
+
+    (seq as any).waitForGoogleLensFileInput = vi.fn().mockResolvedValue({
+      ready: true,
+      inputLocator: {
+        setInputFiles,
+      },
+      currentUrl: 'https://images.google.com/',
+      selector: 'input[type="file"]',
+      scopeType: 'page',
+      frameUrl: null,
+      inputCount: 1,
+    });
+    (seq as any).waitForGoogleLensResultState = vi.fn().mockResolvedValue({
+      advanced: true,
+      currentUrl: 'https://lens.google.com/search?p=uploaded',
+      reason: 'result_ready',
+      processingState: null,
+    });
+
+    const uploadResult = await (seq as any).uploadToGoogleLens({
+      candidate: {
+        id: 'img-1',
+        filepath: '/tmp/persisted-product-image.jpg',
+      },
+      candidateId: 'img-1',
+      candidateRank: 1,
+    });
+
+    expect(uploadResult.advanced).toBe(true);
+    expect(setInputFiles).toHaveBeenCalledWith('/tmp/persisted-product-image.jpg');
   });
 
   describe('dismissAmazonOverlays', () => {

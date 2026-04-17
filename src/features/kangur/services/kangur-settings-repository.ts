@@ -11,6 +11,7 @@ import {
   type KangurLegacySettingDocument,
 } from '@/features/kangur/services/kangur-legacy-settings-store';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { applyActiveMongoSourceEnv } from '@/shared/lib/db/mongo-source';
 import { isTransientMongoConnectionError } from '@/shared/lib/db/utils/mongo';
 import { decodeSettingValue, encodeSettingValue } from '@/shared/lib/settings/settings-compression';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
@@ -24,8 +25,13 @@ let kangurSettingsIndexesEnsured: Promise<void> | null = null;
 export const isKangurSettingKey = (key: string): boolean =>
   key.trim().startsWith(KANGUR_SETTINGS_KEY_PREFIX);
 
+const hasConfiguredMongo = async (): Promise<boolean> => {
+  await applyActiveMongoSourceEnv();
+  return Boolean(process.env['MONGODB_URI']);
+};
+
 const ensureKangurSettingsIndexes = async (): Promise<void> => {
-  if (!process.env['MONGODB_URI']) return;
+  if (!(await hasConfiguredMongo())) return;
   if (!kangurSettingsIndexesEnsured) {
     kangurSettingsIndexesEnsured = (async (): Promise<void> => {
       try {
@@ -71,7 +77,7 @@ const toSettingRecord = (
 };
 
 const readLegacySettingsByKeys = async (keys: string[]): Promise<SettingRecord[]> => {
-  if (!process.env['MONGODB_URI']) return [];
+  if (!(await hasConfiguredMongo())) return [];
   if (keys.length === 0) return [];
   const mongo = await getMongoDb();
   const docs = await mongo
@@ -93,7 +99,7 @@ const readLegacySettingValue = async (key: string): Promise<string | null> => {
 };
 
 const readKangurSettingsByKeysFromMongo = async (keys: string[]): Promise<SettingRecord[]> => {
-  if (!process.env['MONGODB_URI']) return [];
+  if (!(await hasConfiguredMongo())) return [];
   if (keys.length === 0) return [];
   const mongo = await getMongoDb();
   const docs = await mongo
@@ -123,7 +129,7 @@ const backfillKangurSettingValue = async (key: string, value: string): Promise<v
 };
 
 export const readKangurSettingValue = cache(async (key: string): Promise<string | null> => {
-  if (!process.env['MONGODB_URI']) return null;
+  if (!(await hasConfiguredMongo())) return null;
   void ensureKangurSettingsIndexes();
   const mongo = await getMongoDb();
   const doc = await mongo
@@ -142,7 +148,7 @@ export const readKangurSettingValue = cache(async (key: string): Promise<string 
 });
 
 export const listKangurSettings = async (): Promise<SettingRecord[]> => {
-  if (!process.env['MONGODB_URI']) return [];
+  if (!(await hasConfiguredMongo())) return [];
   void ensureKangurSettingsIndexes();
   const mongo = await getMongoDb();
   const docs = await mongo
@@ -157,7 +163,7 @@ export const listKangurSettings = async (): Promise<SettingRecord[]> => {
 
 export const listKangurSettingsByKeys = async (keys: string[]): Promise<SettingRecord[]> => {
   const kangurKeys = keys.filter(isKangurSettingKey);
-  if (!process.env['MONGODB_URI']) return [];
+  if (!(await hasConfiguredMongo())) return [];
   if (kangurKeys.length === 0) return [];
   void ensureKangurSettingsIndexes();
   const merged = new Map<string, string>();
@@ -182,7 +188,7 @@ export const upsertKangurSettingValue = async (
   key: string,
   value: string
 ): Promise<SettingRecord | null> => {
-  if (!process.env['MONGODB_URI']) return null;
+  if (!(await hasConfiguredMongo())) return null;
   await ensureKangurSettingsIndexes();
   const mongo = await getMongoDb();
   const now = new Date();
@@ -201,7 +207,7 @@ export const upsertKangurSettingValue = async (
 };
 
 export const deleteKangurSettingValue = async (key: string): Promise<boolean> => {
-  if (!process.env['MONGODB_URI']) return false;
+  if (!(await hasConfiguredMongo())) return false;
   const mongo = await getMongoDb();
   await Promise.all([
     mongo

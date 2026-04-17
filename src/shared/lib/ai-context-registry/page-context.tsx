@@ -175,7 +175,7 @@ export function useContextRegistryPageEnvelope(): ContextRegistryConsumerEnvelop
 }
 
 export function useOptionalContextRegistryPageEnvelope(): ContextRegistryConsumerEnvelope | null {
-  return useOptionalContextRegistryPageState()?.envelope ?? null;
+  return useOptionalContextRegistryPageStateValue()?.envelope ?? null;
 }
 
 export function useRegisterContextRegistryPageSource(

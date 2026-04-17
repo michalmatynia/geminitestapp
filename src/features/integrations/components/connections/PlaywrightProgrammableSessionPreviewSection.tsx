@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import React from 'react';
 
-import type { ProgrammableSessionDiagnostics } from '@/features/integrations/utils/playwright-programmable-session-diagnostics';
-import type { ProgrammableSessionPreview } from '@/features/integrations/utils/playwright-programmable-session-preview';
+import type { ProgrammableSessionDiagnostics } from '@/features/playwright/utils/playwright-programmable-session-diagnostics';
+import type { ProgrammableSessionPreview } from '@/features/playwright/utils/playwright-programmable-session-preview';
 import { resolveStepSequencerActionHref } from '@/features/playwright/utils/step-sequencer-action-links';
 import { Alert, Badge, Card } from '@/shared/ui/primitives.public';
 import { FormSection } from '@/shared/ui/forms-and-actions.public';
@@ -110,7 +110,7 @@ function SessionPreviewCard({
           <PreviewSection
             title='Action-owned settings'
             values={preview.actionSettingsSummary}
-            emptyMessage='This action inherits browser settings from the connection fallback.'
+            emptyMessage='No action-specific browser settings are configured.'
           />
           <PreviewSection
             title='browser_preparation step'
@@ -120,7 +120,7 @@ function SessionPreviewCard({
         </div>
 
         <PreviewSection
-          title='Connection browser overrides'
+          title='Legacy connection overrides'
           values={preview.overrideSummary}
           emptyMessage='Programmable runtime ignores connection-level browser overrides. Browser behavior follows persona baseline plus the selected action.'
         />

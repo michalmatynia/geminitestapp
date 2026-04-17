@@ -5,15 +5,15 @@ import { internalError } from '@/shared/errors/app-error';
 const {
   findProductListingByIdAcrossProvidersMock,
   getConnectionByIdMock,
+  getIntegrationByIdMock,
   runVintedBrowserListingMock,
   captureExceptionMock,
-  resolveConnectionPlaywrightExplicitPreferencesMock,
 } = vi.hoisted(() => ({
   findProductListingByIdAcrossProvidersMock: vi.fn(),
   getConnectionByIdMock: vi.fn(),
+  getIntegrationByIdMock: vi.fn(),
   runVintedBrowserListingMock: vi.fn(),
   captureExceptionMock: vi.fn(),
-  resolveConnectionPlaywrightExplicitPreferencesMock: vi.fn(),
 }));
 
 vi.mock('@/features/integrations/server', () => ({
@@ -21,6 +21,7 @@ vi.mock('@/features/integrations/server', () => ({
     findProductListingByIdAcrossProvidersMock(...args) as Promise<unknown>,
   getIntegrationRepository: async () => ({
     getConnectionById: (...args: unknown[]) => getConnectionByIdMock(...args),
+    getIntegrationById: (...args: unknown[]) => getIntegrationByIdMock(...args),
   }),
 }));
 
@@ -28,18 +29,6 @@ vi.mock('./vinted-listing/vinted-browser-listing', () => ({
   runVintedBrowserListing: (...args: unknown[]) =>
     runVintedBrowserListingMock(...args) as Promise<unknown>,
 }));
-
-vi.mock('@/features/playwright/server', async () => {
-  const actual =
-    await vi.importActual<typeof import('@/features/playwright/server')>(
-      '@/features/playwright/server'
-    );
-  return {
-    ...actual,
-    resolveConnectionPlaywrightExplicitPreferences: (...args: unknown[]) =>
-      resolveConnectionPlaywrightExplicitPreferencesMock(...args) as Promise<unknown>,
-  };
-});
 
 vi.mock('@/shared/utils/observability/error-system', () => ({
   ErrorSystem: {
@@ -55,23 +44,14 @@ import {
 describe('vinted-listing-service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    getIntegrationByIdMock.mockResolvedValue({
+      id: 'integration-1',
+      slug: 'vinted',
+    });
     getConnectionByIdMock.mockResolvedValue({
       id: 'connection-1',
       integrationId: 'integration-1',
-      playwrightHeadless: true,
       playwrightBrowser: 'auto',
-    });
-    resolveConnectionPlaywrightExplicitPreferencesMock.mockResolvedValue({
-      connectionHeadless: undefined,
-      connectionBrowserPreference: undefined,
-      profile: {
-        hasExplicitHeadlessPreference: false,
-        hasExplicitBrowserPreference: false,
-        settings: {
-          headless: true,
-          browser: 'auto',
-        },
-      },
     });
   });
 
@@ -130,31 +110,18 @@ describe('vinted-listing-service', () => {
     getConnectionByIdMock.mockResolvedValue({
       id: 'connection-1',
       integrationId: 'integration-1',
-      playwrightHeadless: true,
       playwrightBrowser: 'auto',
       playwrightPersonaId: 'persona-1',
-    });
-    resolveConnectionPlaywrightExplicitPreferencesMock.mockResolvedValue({
-      connectionHeadless: false,
-      connectionBrowserPreference: 'chrome',
-      profile: {
-        hasExplicitHeadlessPreference: true,
-        hasExplicitBrowserPreference: true,
-        settings: {
-          headless: false,
-          browser: 'chrome',
-        },
-      },
     });
     runVintedBrowserListingMock.mockResolvedValue({
       externalListingId: 'external-1',
       listingUrl: 'https://www.vinted.pl/items/123456-example',
       metadata: {
         browserMode: 'headed',
-        requestedBrowserMode: 'headed',
-        browserPreference: 'chrome',
-        requestedBrowserPreference: 'chrome',
-        browserLabel: 'Chrome',
+        requestedBrowserMode: 'connection_default',
+        browserPreference: 'brave',
+        requestedBrowserPreference: null,
+        browserLabel: 'Brave',
         publishVerified: true,
       },
     });
@@ -167,15 +134,14 @@ describe('vinted-listing-service', () => {
 
     expect(runVintedBrowserListingMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        browserMode: 'headed',
-        browserPreference: 'chrome',
+        browserMode: 'connection_default',
+        browserPreference: undefined,
       })
     );
     expect(result).toMatchObject({
       ok: true,
       metadata: expect.objectContaining({
-        requestedBrowserMode: 'headed',
-        requestedBrowserPreference: 'chrome',
+        requestedBrowserMode: 'connection_default',
       }),
     });
   });

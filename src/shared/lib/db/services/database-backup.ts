@@ -40,7 +40,8 @@ const assertBackupsAllowed = (): void => {
 
 const sanitizeBackupSegment = (value: string): string => {
   const normalized = value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-');
-  return normalized.replace(/^-+|-+$/g, '') || 'backup';
+  const sanitized = normalized.replace(/^-+|-+$/g, '');
+  return sanitized.length > 0 ? sanitized : 'backup';
 };
 
 const buildMongoBackupName = (
@@ -48,11 +49,38 @@ const buildMongoBackupName = (
   timestamp: number,
   descriptor?: string
 ): string => {
-  if (!descriptor) {
+  if (descriptor === undefined || descriptor.trim().length === 0) {
     return `${databaseName}-backup-${timestamp}.archive`;
   }
 
   return `${sanitizeBackupSegment(databaseName)}-${sanitizeBackupSegment(descriptor)}-${timestamp}.archive`;
+};
+
+const redactMongoUri = (value: string): string =>
+  value.replace(
+    /(mongodb(?:\+srv)?:\/\/)([^@/\s]+)@/g,
+    (_match, prefix: string, auth: string) => {
+      const [rawUsername] = auth.split(':');
+      const username = rawUsername === undefined || rawUsername === '' ? '***' : rawUsername;
+      return `${prefix}${username}:***@`;
+    }
+  );
+
+const readMongoToolOutput = (
+  error: unknown
+): { stdout: string; stderr: string } => {
+  const cause = (error as { cause?: { stdout?: unknown; stderr?: unknown } }).cause;
+  return {
+    stdout: typeof cause?.stdout === 'string' ? cause.stdout : '',
+    stderr: typeof cause?.stderr === 'string' ? cause.stderr : '',
+  };
+};
+
+const requireMongoConfigValue = (value: string | null, label: string): string => {
+  if (value === null || value.trim().length === 0) {
+    throw operationFailedError(`MongoDB source backup requires ${label} to be configured.`);
+  }
+  return value;
 };
 
 const runMongoBackup = async (params: {
@@ -66,8 +94,8 @@ const runMongoBackup = async (params: {
   const logPath = path.join(mongoBackupsDir, `${backupName}.log`);
 
   const command = getMongoDumpCommand();
-  const args = ['--uri', mongoUri, '--db', databaseName, `--archive=${  backupPath}`, '--gzip'];
-  const commandString = `${command} ${args.join(' ')}`;
+  const args = ['--uri', mongoUri, '--db', databaseName, `--archive=${backupPath}`, '--gzip'];
+  const commandString = `${command} ${args.map(redactMongoUri).join(' ')}`;
 
   let stdout: string;
   let stderr: string;
@@ -87,25 +115,25 @@ const runMongoBackup = async (params: {
       warning: null,
     };
   } catch (error) {
-    void ErrorSystem.captureException(error);
     await ErrorSystem.captureException(error, {
       service: 'database-backup-mongo',
       databaseName,
     });
     const message = error instanceof Error ? error.message : 'Unknown error';
-    const cause = (error as { cause?: { stdout?: string; stderr?: string } }).cause;
-    stdout = cause?.stdout || '';
-    stderr = cause?.stderr || '';
+    const output = readMongoToolOutput(error);
+    stdout = output.stdout;
+    stderr = output.stderr;
 
     const logContent = `command:\n${commandString}\n\nstdout:\n${stdout}\n\nstderr:\n${stderr}\n\nerror:\n${message}`;
     await fs.writeFile(logPath, logContent);
 
-    const details = stderr.trim() || message;
+    const trimmedStderr = stderr.trim();
+    const details = trimmedStderr.length > 0 ? trimmedStderr : message;
     const stat = await fs.stat(backupPath).catch(() => null);
-    if (stat && stat.size > 0) {
+    if (stat !== null && stat.size > 0) {
       return {
         backupName,
-        warning: details || message,
+        warning: details,
         backupPath,
         logPath,
         logContent,
@@ -128,7 +156,10 @@ export const createMongoBackup = async (): Promise<DatabaseBackupResult> => {
   });
 
   return {
-    message: result.warning ? 'Backup created with warnings' : 'Backup created',
+    message:
+      result.warning !== null && result.warning !== ''
+        ? 'Backup created with warnings'
+        : 'Backup created',
     backupName: result.backupName,
     warning: result.warning ?? undefined,
     log: result.logContent,
@@ -147,11 +178,12 @@ export const createMongoSourceBackup = async (params: {
   const timestamp = params.timestamp ?? Date.now();
   const createdAt = new Date(timestamp).toISOString();
   const config = await resolveMongoSourceConfig(source);
+  const databaseName = requireMongoConfigValue(config.dbName, `${source} database name`);
   const result = await runMongoBackup({
-    mongoUri: config.uri!,
-    databaseName: config.dbName!,
+    mongoUri: requireMongoConfigValue(config.uri, `${source} URI`),
+    databaseName,
     backupName: buildMongoBackupName(
-      config.dbName!,
+      databaseName,
       timestamp,
       `${source}-${role}-pre-sync-${direction}`
     ),

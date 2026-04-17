@@ -224,12 +224,10 @@ export async function POST_handler(
       const requestedBrowserMode = resolveRequestedVintedBrowserMode({
         requestedBrowserMode: undefined,
         source: 'api',
-        connectionHeadless: connection.playwrightHeadless,
       });
       const requestedBrowserPreference = resolveRequestedVintedBrowserPreference({
         requestedBrowserPreference: undefined,
         source: 'api',
-        connectionBrowserPreference: connection.playwrightBrowser,
       });
       const jobId = await enqueueVintedListingJob({
         listingId: listing.id,

@@ -8,7 +8,7 @@ import type {
   ProductScannerAmazonCandidateEvaluator,
   ProductScannerSettings,
 } from '@/shared/contracts/products/scanner-settings';
-import { buildIntegrationConnectionPlaywrightSettings } from '@/features/integrations/server';
+import { buildIntegrationConnectionPlaywrightSettings } from '@/features/playwright/utils/playwright-settings-baseline';
 import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
 import { getSettingValue } from '@/shared/lib/ai/server-settings';
 import { normalizePlaywrightPersonas } from '@/shared/lib/playwright/personas';

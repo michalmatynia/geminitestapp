@@ -14,7 +14,6 @@ const {
   resolveEffectiveListingSettingsMock,
   buildRelistPolicyMock,
   captureExceptionMock,
-  resolveConnectionPlaywrightExplicitPreferencesMock,
 } = vi.hoisted(() => ({
   findProductListingByIdAcrossProvidersMock: vi.fn(),
   listProductListingsByProductIdAcrossProvidersMock: vi.fn(),
@@ -27,7 +26,6 @@ const {
   resolveEffectiveListingSettingsMock: vi.fn(),
   buildRelistPolicyMock: vi.fn(),
   captureExceptionMock: vi.fn(),
-  resolveConnectionPlaywrightExplicitPreferencesMock: vi.fn(),
 }));
 
 vi.mock('@/features/integrations/services/product-listing-repository', () => ({
@@ -80,11 +78,7 @@ vi.mock('@/features/playwright/server', async () => {
     await vi.importActual<typeof import('@/features/playwright/server')>(
       '@/features/playwright/server'
     );
-  return {
-    ...actual,
-    resolveConnectionPlaywrightExplicitPreferences: (...args: unknown[]) =>
-      resolveConnectionPlaywrightExplicitPreferencesMock(...args) as Promise<unknown>,
-  };
+  return actual;
 });
 
 import { processTraderaListingJob } from './tradera-listing-service';
@@ -108,17 +102,6 @@ describe('processTraderaListingJob', () => {
       id: 'connection-1',
       integrationId: 'integration-1',
       traderaBrowserMode: 'scripted',
-    });
-    resolveConnectionPlaywrightExplicitPreferencesMock.mockResolvedValue({
-      connectionHeadless: undefined,
-      connectionBrowserPreference: undefined,
-      profile: {
-        hasExplicitHeadlessPreference: false,
-        hasExplicitBrowserPreference: false,
-        settings: {
-          headless: true,
-        },
-      },
     });
     getIntegrationByIdMock.mockResolvedValue({
       id: 'integration-1',
@@ -217,7 +200,7 @@ describe('processTraderaListingJob', () => {
     );
   });
 
-  it('uses headed browser mode for API-triggered Tradera runs when the connection disables headless mode', async () => {
+  it('uses headed browser mode for API-triggered scripted Tradera runs', async () => {
     const updateListingStatusMock = vi.fn();
     const updateListingMock = vi.fn();
     const appendExportHistoryMock = vi.fn();
@@ -245,18 +228,6 @@ describe('processTraderaListingJob', () => {
       id: 'connection-1',
       integrationId: 'integration-1',
       traderaBrowserMode: 'scripted',
-      playwrightHeadless: false,
-    });
-    resolveConnectionPlaywrightExplicitPreferencesMock.mockResolvedValue({
-      connectionHeadless: false,
-      connectionBrowserPreference: undefined,
-      profile: {
-        hasExplicitHeadlessPreference: true,
-        hasExplicitBrowserPreference: false,
-        settings: {
-          headless: false,
-        },
-      },
     });
     runTraderaBrowserListingMock.mockResolvedValue({
       externalListingId: 'external-1',
@@ -291,7 +262,7 @@ describe('processTraderaListingJob', () => {
     );
   });
 
-  it('uses canonical resolved Playwright settings for Tradera browser mode decisions', async () => {
+  it('does not let connection-owned Playwright headless state override scripted Tradera defaults', async () => {
     findProductListingByIdAcrossProvidersMock.mockResolvedValue({
       listing: {
         id: 'listing-1',
@@ -316,17 +287,6 @@ describe('processTraderaListingJob', () => {
       traderaBrowserMode: 'scripted',
       playwrightHeadless: true,
       playwrightPersonaId: 'persona-1',
-    });
-    resolveConnectionPlaywrightExplicitPreferencesMock.mockResolvedValue({
-      connectionHeadless: false,
-      connectionBrowserPreference: undefined,
-      profile: {
-        hasExplicitHeadlessPreference: true,
-        hasExplicitBrowserPreference: false,
-        settings: {
-          headless: false,
-        },
-      },
     });
     runTraderaBrowserListingMock.mockResolvedValue({
       externalListingId: 'external-1',
@@ -667,18 +627,6 @@ describe('processTraderaListingJob', () => {
       id: 'connection-1',
       integrationId: 'integration-1',
       traderaBrowserMode: 'scripted',
-      playwrightHeadless: false,
-    });
-    resolveConnectionPlaywrightExplicitPreferencesMock.mockResolvedValue({
-      connectionHeadless: false,
-      connectionBrowserPreference: undefined,
-      profile: {
-        hasExplicitHeadlessPreference: true,
-        hasExplicitBrowserPreference: false,
-        settings: {
-          headless: false,
-        },
-      },
     });
     runTraderaBrowserCheckStatusMock.mockResolvedValue({
       externalListingId: 'external-1',

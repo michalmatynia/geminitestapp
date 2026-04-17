@@ -11,7 +11,6 @@ import type {
 import type { ActionSequenceKey } from '@/shared/lib/browser-execution/action-sequences';
 import {
   resolveRuntimeActionDefinition,
-  resolveRuntimeActionExecutionSettings,
 } from '@/shared/lib/browser-execution/runtime-action-resolver.server';
 import {
   buildChromiumAntiDetectionContextOptions,
@@ -112,10 +111,10 @@ const resolveRequestedHeadlessForBrowserMode = (
 
 export const resolvePlaywrightEffectiveBrowserMode = ({
   requestedBrowserMode,
-  connectionHeadless,
+  defaultHeadless,
 }: {
   requestedBrowserMode: PlaywrightRelistBrowserMode | undefined;
-  connectionHeadless: boolean;
+  defaultHeadless: boolean;
 }): 'headed' | 'headless' => {
   if (requestedBrowserMode === 'headed') {
     return 'headed';
@@ -125,7 +124,7 @@ export const resolvePlaywrightEffectiveBrowserMode = ({
     return 'headless';
   }
 
-  return connectionHeadless ? 'headless' : 'headed';
+  return defaultHeadless ? 'headless' : 'headed';
 };
 
 const applyRuntimeActionExecutionSettings = ({
@@ -218,16 +217,25 @@ const resolveBrowserPreparationContextOverrides = (
 const resolvePlaywrightPageSessionRuntime = async (
   input: OpenPlaywrightConnectionPageSessionInput
 ): Promise<ResolvedPlaywrightConnectionRuntime> => {
-  const runtime =
-    input.runtime ?? (await resolvePlaywrightConnectionRuntime(input.connection));
-  const runtimeActionExecutionSettings =
+  const runtimeAction =
     input.runtimeActionKey === undefined
       ? null
-      : await resolveRuntimeActionExecutionSettings(input.runtimeActionKey);
+      : await resolveRuntimeActionDefinition(input.runtimeActionKey);
+  const runtime =
+    input.runtime ??
+    (await resolvePlaywrightConnectionRuntime(
+      input.connection,
+      runtimeAction === null
+        ? undefined
+        : {
+            includeConnectionBrowserBehavior: false,
+            personaId: runtimeAction.personaId ?? null,
+          }
+    ));
 
   return applyRuntimeActionExecutionSettings({
     runtime,
-    executionSettings: runtimeActionExecutionSettings,
+    executionSettings: runtimeAction?.executionSettings ?? null,
   });
 };
 
@@ -417,7 +425,7 @@ export const openPlaywrightConnectionNativeTaskSession = async (
     requestedBrowserPreference: input.requestedBrowserPreference ?? null,
     effectiveBrowserMode: resolvePlaywrightEffectiveBrowserMode({
       requestedBrowserMode: input.requestedBrowserMode,
-      connectionHeadless: session.runtime.settings.headless,
+      defaultHeadless: session.runtime.settings.headless,
     }),
     effectiveBrowserPreference: resolvePlaywrightBrowserPreferenceFromLabel({
       launchLabel: session.launchLabel,

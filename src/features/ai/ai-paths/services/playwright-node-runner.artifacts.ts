@@ -15,15 +15,16 @@ const nodeFs = getFsPromises();
 export const resolveRelativeArtifactPath = (artifactPath: string): string =>
   path.relative(RUN_ROOT_DIR, artifactPath).replace(/\\/g, '/');
 
-export const saveFileArtifact = async (
-  runArtifactsDir: string,
-  name: string,
-  extension: string,
-  content: string | Buffer,
-  mimeType: string,
-  kind: string
-): Promise<PlaywrightNodeRunArtifact> => {
-  const safeName = name.trim().replace(/[^a-zA-Z0-9-_]+/g, '_') || kind;
+export const saveFileArtifact = async (params: {
+  runArtifactsDir: string;
+  name: string;
+  extension: string;
+  content: string | Buffer;
+  mimeType: string;
+  kind: string;
+}): Promise<PlaywrightNodeRunArtifact> => {
+  const { runArtifactsDir, name, extension, content, mimeType, kind } = params;
+  const safeName = name.trim() !== '' ? name.trim().replace(/[^a-zA-Z0-9-_]+/g, '_') : kind;
   const fileName = `${safeName}-${Date.now()}.${extension}`;
   const filePath = joinRuntimePath(runArtifactsDir, fileName);
   await nodeFs.writeFile(filePath, content);
@@ -52,13 +53,13 @@ export const createLiveRunStateCoordinator = (runId: string): LiveRunStateCoordi
           if (isFinalizingLiveState) return;
           await updateRunState(runId, patchFactory());
         })
-        .catch((error) => {
-          void ErrorSystem.captureException(error);
+        .catch(async (error) => {
+          await ErrorSystem.captureException(error);
         });
     },
     flush: async (): Promise<void> => {
-      await liveStateWriteChain.catch((error) => {
-        void ErrorSystem.captureException(error);
+      await liveStateWriteChain.catch(async (error) => {
+        await ErrorSystem.captureException(error);
       });
     },
     finalize: (): void => {
@@ -76,31 +77,31 @@ export const captureFinalRunArtifacts = async (params: {
   runArtifactsDir: string;
 }): Promise<void> => {
   const { artifacts, context, logs, page, request, runArtifactsDir } = params;
-  if (request.capture?.screenshot) {
+  if (request.capture?.screenshot === true) {
     artifacts.push(
-      await saveFileArtifact(
+      await saveFileArtifact({
         runArtifactsDir,
-        'final',
-        'png',
-        await page.screenshot({ fullPage: true }),
-        'image/png',
-        'screenshot'
-      )
+        name: 'final',
+        extension: 'png',
+        content: await page.screenshot({ fullPage: true }),
+        mimeType: 'image/png',
+        kind: 'screenshot',
+      })
     );
   }
-  if (request.capture?.html) {
+  if (request.capture?.html === true) {
     artifacts.push(
-      await saveFileArtifact(
+      await saveFileArtifact({
         runArtifactsDir,
-        'final',
-        'html',
-        await page.content(),
-        'text/html',
-        'html'
-      )
+        name: 'final',
+        extension: 'html',
+        content: await page.content(),
+        mimeType: 'text/html',
+        kind: 'html',
+      })
     );
   }
-  if (request.capture?.trace && context) {
+  if (request.capture?.trace === true && context !== null) {
     const tracePath = path.join(runArtifactsDir, `trace-${Date.now()}.zip`);
     await context.tracing.stop({ path: tracePath });
     artifacts.push({
@@ -162,6 +163,80 @@ export const buildCompletedRunState = async (params: {
   };
 };
 
+const captureFailureScreenshot = async (page: Page, runArtifactsDir: string): Promise<PlaywrightNodeRunArtifact | null> => {
+  try {
+    const screenshot = await page.screenshot({ fullPage: true });
+    return await saveFileArtifact({
+      runArtifactsDir,
+      name: 'failure',
+      extension: 'png',
+      content: screenshot,
+      mimeType: 'image/png',
+      kind: 'screenshot',
+    });
+  } catch (error) {
+    await ErrorSystem.captureException(error);
+    return null;
+  }
+};
+
+const captureFailureHtml = async (page: Page, runArtifactsDir: string): Promise<PlaywrightNodeRunArtifact | null> => {
+  try {
+    const content = await page.content();
+    return await saveFileArtifact({
+      runArtifactsDir,
+      name: 'failure',
+      extension: 'html',
+      content,
+      mimeType: 'text/html',
+      kind: 'html',
+    });
+  } catch (error) {
+    await ErrorSystem.captureException(error);
+    return null;
+  }
+};
+
+const captureFailureState = async (params: {
+  page: Page;
+  runArtifactsDir: string;
+  errorMessage: string;
+  browserDisconnected: boolean;
+  contextClosed: boolean;
+  pageClosed: boolean;
+  pageCrashed: boolean;
+}): Promise<PlaywrightNodeRunArtifact | null> => {
+  const { page, runArtifactsDir, errorMessage, browserDisconnected, contextClosed, pageClosed, pageCrashed } = params;
+  try {
+    const finalUrl = page.url();
+    const title = await page.title().catch(() => '');
+    const failureStateJson = `${JSON.stringify(
+      {
+        error: errorMessage,
+        finalUrl,
+        title,
+        browserDisconnected,
+        contextClosed,
+        pageClosed,
+        pageCrashed,
+      },
+      null,
+      2
+    )}\n`;
+    return await saveFileArtifact({
+      runArtifactsDir,
+      name: 'failure-state',
+      extension: 'json',
+      content: failureStateJson,
+      mimeType: 'application/json',
+      kind: 'json',
+    });
+  } catch (error) {
+    await ErrorSystem.captureException(error);
+    return null;
+  }
+};
+
 export const captureFailureArtifacts = async (params: {
   artifacts: PlaywrightNodeRunArtifact[];
   browserDisconnected?: boolean;
@@ -182,81 +257,27 @@ export const captureFailureArtifacts = async (params: {
     pageCrashed = false,
     runArtifactsDir,
   } = params;
-  if (!page) return;
+  if (page === null) return;
 
-  const resolvedPageClosed =
-    typeof (page as { isClosed?: (() => boolean) | undefined }).isClosed === 'function'
-      ? Boolean((page as { isClosed: () => boolean }).isClosed())
-      : pageClosed;
+  const isClosed = typeof (page as { isClosed?: (() => boolean) }).isClosed === 'function' && (page as { isClosed: () => boolean }).isClosed();
+  const resolvedPageClosed = isClosed || pageClosed;
 
-  const finalUrl =
-    typeof page.url === 'function'
-      ? (() => {
-          try {
-            return page.url();
-          } catch {
-            return null;
-          }
-        })()
-      : null;
-  const title = await page.title().catch(() => '');
+  const screenshot = await captureFailureScreenshot(page, runArtifactsDir);
+  if (screenshot !== null) artifacts.push(screenshot);
 
-  try {
-    artifacts.push(
-      await saveFileArtifact(
-        runArtifactsDir,
-        'failure',
-        'png',
-        await page.screenshot({ fullPage: true }),
-        'image/png',
-        'screenshot'
-      )
-    );
-  } catch (captureError) {
-    void ErrorSystem.captureException(captureError);
-  }
+  const html = await captureFailureHtml(page, runArtifactsDir);
+  if (html !== null) artifacts.push(html);
 
-  try {
-    artifacts.push(
-      await saveFileArtifact(
-        runArtifactsDir,
-        'failure',
-        'html',
-        await page.content(),
-        'text/html',
-        'html'
-      )
-    );
-  } catch (captureError) {
-    void ErrorSystem.captureException(captureError);
-  }
-
-  try {
-    artifacts.push(
-      await saveFileArtifact(
-        runArtifactsDir,
-        'failure-state',
-        'json',
-        `${JSON.stringify(
-          {
-            error: errorMessage,
-            finalUrl,
-            title,
-            browserDisconnected,
-            contextClosed,
-            pageClosed: resolvedPageClosed,
-            pageCrashed,
-          },
-          null,
-          2
-        )}\n`,
-        'application/json',
-        'json'
-      )
-    );
-  } catch (captureError) {
-    void ErrorSystem.captureException(captureError);
-  }
+  const state = await captureFailureState({
+    page,
+    runArtifactsDir,
+    errorMessage,
+    browserDisconnected,
+    contextClosed,
+    pageClosed: resolvedPageClosed,
+    pageCrashed,
+  });
+  if (state !== null) artifacts.push(state);
 };
 
 export const buildFailedRunState = (params: {
@@ -294,12 +315,12 @@ export const persistVideoArtifact = async (params: {
   runArtifactsDir: string;
 }): Promise<boolean> => {
   const { artifacts, logs, page, request, runArtifactsDir } = params;
-  if (!page || !request.capture?.video) {
+  if (page === null || request.capture?.video !== true) {
     return false;
   }
   try {
     const video = page.video();
-    if (!video) {
+    if (video === null) {
       return false;
     }
     const videoPath = await video.path();
@@ -314,7 +335,7 @@ export const persistVideoArtifact = async (params: {
     logs.push('[runtime] Video capture saved.');
     return true;
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    await ErrorSystem.captureException(error);
     return false;
   }
 };

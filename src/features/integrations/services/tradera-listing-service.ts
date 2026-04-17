@@ -58,7 +58,6 @@ import {
   buildPlaywrightServiceListingSuccess,
   resolvePlaywrightFailureListingStatus,
   resolvePlaywrightListingRunContext,
-  resolveConnectionPlaywrightExplicitPreferences,
   type PlaywrightServiceListingExecutionBase,
 } from '@/features/playwright/server';
 import type { PlaywrightRelistBrowserMode } from '@/shared/contracts/integrations/listings';
@@ -67,18 +66,14 @@ const resolveRequestedTraderaBrowserMode = ({
   requestedBrowserMode,
   source,
   browserMode,
-  playwrightHeadless,
 }: {
   requestedBrowserMode: PlaywrightRelistBrowserMode | undefined;
   source: 'manual' | 'scheduler' | 'api';
   browserMode: 'builtin' | 'scripted' | null | undefined;
-  playwrightHeadless: boolean | null | undefined;
 }): PlaywrightRelistBrowserMode => {
   if (requestedBrowserMode) return requestedBrowserMode;
-  // Respect the connection's explicit headed/headless preference
-  if (playwrightHeadless === false) return 'headed';
-  if (playwrightHeadless === true) return 'headless';
-  // No explicit preference — legacy default
+  // No explicit override. Scripted Tradera runs still default to a real browser
+  // outside scheduler-triggered automation; otherwise defer to the Playwright action.
   return browserMode === 'scripted' && source !== 'scheduler' ? 'headed' : 'connection_default';
 };
 
@@ -259,13 +254,10 @@ export const runTraderaListing = async (
         });
       }
     }
-    const { connectionHeadless } =
-      await resolveConnectionPlaywrightExplicitPreferences(connection);
     const requestedBrowserMode = resolveRequestedTraderaBrowserMode({
       requestedBrowserMode: input.browserMode,
       source,
       browserMode: connection.traderaBrowserMode,
-      playwrightHeadless: connectionHeadless,
     });
     const persistPendingRunId = async (runId: string): Promise<void> => {
       try {

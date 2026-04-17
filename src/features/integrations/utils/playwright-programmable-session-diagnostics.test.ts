@@ -5,10 +5,10 @@ import {
   normalizePlaywrightAction,
   type PlaywrightAction,
 } from '@/shared/contracts/playwright-steps';
-import { defaultIntegrationConnectionPlaywrightSettings } from './playwright-connection-settings';
-import { buildProgrammableSessionPreview } from './playwright-programmable-session-preview';
+import { defaultIntegrationConnectionPlaywrightSettings } from '@/features/playwright/utils/playwright-settings-baseline';
+import { buildProgrammableSessionPreview } from '@/features/playwright/utils/playwright-programmable-session-preview';
 
-import { buildProgrammableSessionDiagnostics } from './playwright-programmable-session-diagnostics';
+import { buildProgrammableSessionDiagnostics } from '@/features/playwright/utils/playwright-programmable-session-diagnostics';
 
 const buildAction = (overrides: Partial<PlaywrightAction>): PlaywrightAction =>
   normalizePlaywrightAction({

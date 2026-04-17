@@ -9,7 +9,6 @@ export {
   useDefault1688Connection,
   useDefaultExportInventory,
 } from '@/shared/hooks/useIntegrationQueries';
-import { fetchSettingsCached } from '@/shared/api/settings-client';
 import { importExportTemplateSchema } from '@/shared/contracts/integrations/import-export';
 import { integrationSchema } from '@/shared/contracts/integrations/base';
 import {
@@ -24,8 +23,6 @@ import type {
   ProgrammableIntegrationConnection,
 } from '@/shared/contracts/integrations/connections';
 import type { BaseInventory } from '@/shared/contracts/integrations/base-com';
-import type { PlaywrightPersona } from '@/shared/contracts/playwright';
-import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from '@/shared/contracts/playwright';
 import type { ListQuery, SingleQuery } from '@/shared/contracts/ui/queries';
 import { api, ApiError } from '@/shared/lib/api-client';
 import {
@@ -33,9 +30,7 @@ import {
   createSingleQueryV2,
   type QueryDescriptorV2,
 } from '@/shared/lib/query-factories-v2';
-import { integrationKeys, playwrightKeys } from '@/shared/lib/query-key-exports';
-import { parseJsonSetting } from '@/shared/utils/settings-json';
-import { normalizeIntegrationPlaywrightPersonas } from '@/features/integrations/utils/playwright-connection-settings';
+import { integrationKeys } from '@/shared/lib/query-key-exports';
 
 const INTEGRATIONS_QUERY_TIMEOUT_MS = 30_000;
 
@@ -150,32 +145,6 @@ export function useConnectionSession(
       queryKey,
       tags: ['integrations', 'session'],
       description: 'Loads integrations connection session.'},
-  });
-}
-
-export function usePlaywrightPersonas(): ListQuery<PlaywrightPersona> {
-  const queryKey = playwrightKeys.personas();
-  const queryFn = async (): Promise<PlaywrightPersona[]> => {
-    const data = await fetchSettingsCached();
-    const map = new Map(data.map((item: { key: string; value: string }) => [item.key, item.value]));
-    const stored = parseJsonSetting<PlaywrightPersona[]>(
-      map.get(PLAYWRIGHT_PERSONA_SETTINGS_KEY),
-      []
-    );
-    return normalizeIntegrationPlaywrightPersonas(stored);
-  };
-
-  return createListQueryV2({
-    queryKey,
-    queryFn,
-    meta: {
-      source: 'integrations.hooks.usePlaywrightPersonas',
-      operation: 'list',
-      resource: 'playwright.personas',
-      domain: 'playwright',
-      queryKey,
-      tags: ['playwright', 'personas'],
-      description: 'Loads playwright personas.'},
   });
 }
 

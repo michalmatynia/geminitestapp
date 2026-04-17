@@ -139,11 +139,14 @@ describe('playwright connection runtime', () => {
     resolvePlaywrightActionDefinitionByIdMock.mockResolvedValue(null);
   });
 
-  it('resolves persona-aware runtime context once for browser consumers', async () => {
+  it('resolves explicit action persona context once for browser consumers', async () => {
     const runtime = await resolvePlaywrightConnectionRuntime({
       playwrightPersonaId: ' persona-1 ',
       playwrightStorageState: 'encrypted-state',
-    } as never);
+    } as never, {
+      includeConnectionBrowserBehavior: false,
+      personaId: ' persona-1 ',
+    });
 
     expect(parsePersistedStorageStateMock).toHaveBeenCalledWith('encrypted-state');
     expect(resolveConnectionPlaywrightSettingsMock).toHaveBeenCalled();
@@ -388,7 +391,6 @@ describe('playwright connection runtime', () => {
         script: 'export default async function run() {}',
         input: { title: 'Example' },
         browserEngine: 'chromium',
-        personaId: 'persona-1',
         contextOptions: {
           storageState: {
             cookies: [{ name: 'session', value: 'abc', domain: '.example.com', path: '/' }],
@@ -411,7 +413,7 @@ describe('playwright connection runtime', () => {
     });
     expect(result).toMatchObject({
       runtime: {
-        personaId: 'persona-1',
+        personaId: undefined,
       },
       settings: expect.objectContaining({
         headless: true,
@@ -529,11 +531,22 @@ describe('playwright connection runtime', () => {
         browserEngine: 'chromium',
       },
       runtimeActionKey: 'playwright_programmable_listing',
+      browserBehaviorOwner: 'action',
     });
+
+    expect(resolveConnectionPlaywrightSettingsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        playwrightPersonaId: ' persona-1 ',
+        playwrightStorageState: 'encrypted-state',
+      }),
+      {
+        includeConnectionBrowserBehavior: false,
+        personaId: null,
+      }
+    );
 
     expect(runPlaywrightEngineTaskMock).toHaveBeenCalledWith({
       request: expect.objectContaining({
-        personaId: 'persona-1',
         contextOptions: expect.objectContaining({
           locale: 'en-GB',
           viewport: { width: 1440, height: 900 },
@@ -559,6 +572,7 @@ describe('playwright connection runtime', () => {
       ownerUserId: undefined,
       instance: undefined,
     });
+    expect(runPlaywrightEngineTaskMock.mock.calls[0]?.[0]?.request).not.toHaveProperty('personaId');
     expect(result.runtime.browserPreference).toBe('brave');
     expect(result.runtime.settings.headless).toBe(false);
     expect(result.runtime.settings.locale).toBe('pl-PL');
@@ -677,5 +691,71 @@ describe('playwright connection runtime', () => {
       ownerUserId: undefined,
       instance: undefined,
     });
+  });
+
+  it('does not fall back to the connection persona when an action explicitly has no persona', async () => {
+    resolvePlaywrightActionDefinitionByIdMock.mockResolvedValue({
+      id: 'programmable-draft',
+      name: 'Programmable Draft',
+      description: null,
+      runtimeKey: null,
+      blocks: [],
+      stepSetIds: [],
+      personaId: null,
+      executionSettings: {
+        identityProfile: null,
+        headless: false,
+        browserPreference: null,
+        emulateDevice: null,
+        deviceName: null,
+        slowMo: null,
+        timeout: null,
+        navigationTimeout: null,
+        locale: null,
+        timezoneId: null,
+        humanizeMouse: null,
+        mouseJitter: null,
+        clickDelayMin: null,
+        clickDelayMax: null,
+        inputDelayMin: null,
+        inputDelayMax: null,
+        actionDelayMin: null,
+        actionDelayMax: null,
+        proxyEnabled: null,
+        proxyServer: null,
+        proxyUsername: null,
+        proxyPassword: null,
+        proxySessionAffinity: null,
+        proxySessionMode: null,
+        proxyProviderPreset: null,
+      },
+      createdAt: '2026-04-17T00:00:00.000Z',
+      updatedAt: '2026-04-17T00:00:00.000Z',
+    });
+
+    await runPlaywrightConnectionEngineTask({
+      connection: {
+        playwrightPersonaId: ' connection-persona ',
+        playwrightStorageState: 'encrypted-state',
+      } as never,
+      request: {
+        script: 'export default async function run() {}',
+        browserEngine: 'chromium',
+      },
+      actionId: 'programmable-draft',
+      runtimeActionKey: 'playwright_programmable_listing',
+      browserBehaviorOwner: 'action',
+    });
+
+    expect(resolveConnectionPlaywrightSettingsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        playwrightPersonaId: ' connection-persona ',
+        playwrightStorageState: 'encrypted-state',
+      }),
+      {
+        includeConnectionBrowserBehavior: false,
+        personaId: null,
+      }
+    );
   });
 });

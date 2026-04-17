@@ -6,7 +6,6 @@ import {
   defaultIntegrationConnectionPlaywrightSettings,
   extractIntegrationConnectionPlaywrightSettingsOverrides,
   normalizeIntegrationConnectionPlaywrightPersonaId,
-  resolveIntegrationConnectionPlaywrightBrowserOverride,
 } from './connection-settings-shared';
 import {
   type IntegrationConnectionRecord,
@@ -121,7 +120,6 @@ export type ResolvedConnectionPlaywrightSettingsProfile = {
 export type ResolvedConnectionPlaywrightExplicitPreferences = {
   profile: ResolvedConnectionPlaywrightSettingsProfile;
   connectionHeadless: boolean | undefined;
-  connectionBrowserPreference: TraderaPlaywrightRuntimeSettings['browser'] | undefined;
 };
 
 export type ResolveConnectionPlaywrightSettingsOptions = {
@@ -183,16 +181,13 @@ export const resolveConnectionPlaywrightSettingsProfile = async (
   options?: ResolveConnectionPlaywrightSettingsOptions
 ): Promise<ResolvedConnectionPlaywrightSettingsProfile> => {
   const includeConnectionBrowserBehavior =
-    options?.includeConnectionBrowserBehavior !== false;
+    options?.includeConnectionBrowserBehavior === true;
   const personaId = normalizeIntegrationConnectionPlaywrightPersonaId(
-    options?.personaId ?? connection.playwrightPersonaId
+    options?.personaId
   );
   const connectionOverrides = includeConnectionBrowserBehavior
     ? extractIntegrationConnectionPlaywrightSettingsOverrides(connection)
     : {};
-  const connectionBrowser = includeConnectionBrowserBehavior
-    ? resolveIntegrationConnectionPlaywrightBrowserOverride(connection)
-    : undefined;
   const connectionProxyPassword =
     includeConnectionBrowserBehavior && connection.playwrightProxyPassword
       ? decryptSecret(connection.playwrightProxyPassword)
@@ -329,10 +324,9 @@ export const resolveConnectionPlaywrightSettingsProfile = async (
   return {
     hasExplicitHeadlessPreference:
       'headless' in connectionOverrides || personaProvidesHeadlessPreference,
-    hasExplicitBrowserPreference:
-      typeof connectionBrowser !== 'undefined' || personaProvidesBrowserPreference,
+    hasExplicitBrowserPreference: personaProvidesBrowserPreference,
     settings: {
-      browser: connectionBrowser ?? browser,
+      browser,
       ...settings,
       ...connectionOverrides,
       proxyServer: nextProxyServer,
@@ -379,9 +373,6 @@ export const resolveConnectionPlaywrightExplicitPreferences = async (
     profile,
     connectionHeadless: profile.hasExplicitHeadlessPreference
       ? profile.settings.headless
-      : undefined,
-    connectionBrowserPreference: profile.hasExplicitBrowserPreference
-      ? profile.settings.browser
       : undefined,
   };
 };

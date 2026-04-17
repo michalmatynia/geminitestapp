@@ -14,7 +14,6 @@ import {
   useIntegrationsData,
   useIntegrationsForm,
 } from '@/features/integrations/context/IntegrationsContext';
-import type { PlaywrightPersona } from '@/shared/contracts/playwright';
 
 type UseIntegrationTabsResult = {
   activeTab: string;
@@ -30,21 +29,11 @@ type UseIntegrationTabsResult = {
   showAllegroConsole: boolean;
   showBaseConsole: boolean;
   activeConnection: unknown;
-  selectedPersona: PlaywrightPersona | null;
-  playwrightPersonas: PlaywrightPersona[];
-  playwrightPersonasLoading: boolean;
-  playwrightPersonaId: string | null;
-  handleSelectPlaywrightPersona: (id: string | null) => Promise<void>;
-  handleSavePlaywrightFallbackSettings: () => Promise<void>;
-  playwrightSaveLabel: string;
 };
 
 export function useIntegrationTabs(): UseIntegrationTabsResult {
-  const { activeIntegration, connections, playwrightPersonas, playwrightPersonasLoading } =
-    useIntegrationsData();
-  const { editingConnectionId, playwrightPersonaId } = useIntegrationsForm();
-  const { handleSelectPlaywrightPersona, handleSavePlaywrightFallbackSettings } =
-    useIntegrationsActions();
+  const { activeIntegration, connections } = useIntegrationsData();
+  const { editingConnectionId } = useIntegrationsForm();
 
   const [activeTab, setActiveTab] = useState('connections');
 
@@ -63,13 +52,6 @@ export function useIntegrationTabs(): UseIntegrationTabsResult {
       showAllegroConsole: false,
       showBaseConsole: false,
       activeConnection: null,
-      selectedPersona: null,
-      playwrightPersonas: [],
-      playwrightPersonasLoading: false,
-      playwrightPersonaId: null,
-      handleSelectPlaywrightPersona,
-      handleSavePlaywrightFallbackSettings,
-      playwrightSaveLabel: 'Save Playwright settings',
     };
   }
 
@@ -84,16 +66,9 @@ export function useIntegrationTabs(): UseIntegrationTabsResult {
   const showPlaywright = (isTradera && !isTraderaApi) || isVinted || is1688;
   const showAllegroConsole = isAllegro;
   const showBaseConsole = isBaselinker;
-  const playwrightSaveLabel =
-    (isTradera && !isTraderaApi) || isVinted
-      ? 'Save fallback settings'
-      : 'Save Playwright settings';
   const activeConnection =
     connections.find((connection) => connection.id === editingConnectionId) ??
     connections[0] ??
-    null;
-  const selectedPersona =
-    playwrightPersonas.find((persona: PlaywrightPersona) => persona.id === playwrightPersonaId) ??
     null;
 
   return {
@@ -110,12 +85,5 @@ export function useIntegrationTabs(): UseIntegrationTabsResult {
     showAllegroConsole,
     showBaseConsole,
     activeConnection,
-    selectedPersona,
-    playwrightPersonas,
-    playwrightPersonasLoading,
-    playwrightPersonaId,
-    handleSelectPlaywrightPersona,
-    handleSavePlaywrightFallbackSettings,
-    playwrightSaveLabel,
   };
 }

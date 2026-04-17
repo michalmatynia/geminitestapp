@@ -11,6 +11,7 @@ import {
 } from '@/shared/contracts/cms-theme';
 import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { applyActiveMongoSourceEnv } from '@/shared/lib/db/mongo-source';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
@@ -66,6 +67,7 @@ const toMongoId = (id: string): string | ObjectId => {
 };
 
 const readMongoSetting = async (key: string): Promise<string | null> => {
+  await applyActiveMongoSourceEnv();
   if (!process.env['MONGODB_URI']) return null;
   try {
     const mongo = await getMongoDb();

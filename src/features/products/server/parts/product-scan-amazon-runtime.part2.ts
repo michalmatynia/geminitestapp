@@ -1306,10 +1306,11 @@ export const AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_PART_2 = String.raw`    };
       typeof input?.batchIndex === 'number' && Number.isFinite(input.batchIndex) && input.batchIndex > 0
         ? Math.trunc(input.batchIndex)
         : 0;
-    const directAmazonCandidateUrl = toText(input?.directAmazonCandidateUrl);
     const directAmazonCandidateUrls = Array.isArray(input?.directAmazonCandidateUrls)
       ? input.directAmazonCandidateUrls.map((value) => toText(value)).filter(Boolean)
       : [];
+    const directAmazonCandidateUrl =
+      toText(input?.directAmazonCandidateUrl) || directAmazonCandidateUrls[0] || null;
     const directMatchedImageId = toText(input?.directMatchedImageId);
     const directAmazonCandidateRank =
       typeof input?.directAmazonCandidateRank === 'number' &&
@@ -1333,7 +1334,7 @@ export const AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_PART_2 = String.raw`    };
       message: 'Validating scan request.',
       url: page.url(),
     });
-    if (imageCandidates.length === 0) {
+    if (imageCandidates.length === 0 && !hasDirectAmazonCandidateInput) {
       upsertScanStep({
         key: 'validate',
         label: 'Validate scan input',
@@ -1350,27 +1351,24 @@ export const AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_PART_2 = String.raw`    };
       });
       return;
     }
+    const validationMessage = directAmazonCandidateUrl
+      ? 'Validated direct Amazon candidate URL.'
+      : 'Validated ' +
+        imageCandidates.length +
+        ' product image candidate' +
+        (imageCandidates.length === 1 ? '' : 's') +
+        '.';
     upsertScanStep({
       key: 'validate',
       label: 'Validate scan input',
       status: 'completed',
       resultCode: 'input_validated',
-      message:
-        'Validated ' +
-        imageCandidates.length +
-        ' product image candidate' +
-        (imageCandidates.length === 1 ? '' : 's') +
-        '.',
+      message: validationMessage,
       url: page.url(),
     });
     await emitProgress({
       stage: 'validate',
-      message:
-        'Validated ' +
-        imageCandidates.length +
-        ' product image candidate' +
-        (imageCandidates.length === 1 ? '' : 's') +
-        '.',
+      message: validationMessage,
     });
 
     if (directAmazonCandidateUrl) {
@@ -1382,7 +1380,7 @@ export const AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_PART_2 = String.raw`    };
       );
       const directCandidateUrls =
         directAmazonCandidateUrls.length > 0
-          ? directAmazonCandidateUrls
+          ? Array.from(new Set([directAmazonCandidateUrl, ...directAmazonCandidateUrls]))
           : [directAmazonCandidateUrl].filter(Boolean);
 
       if (extracted.status === 'matched') {

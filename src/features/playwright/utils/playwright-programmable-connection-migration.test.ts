@@ -37,7 +37,6 @@ describe('playwright programmable connection migration preview', () => {
         integrationId: 'integration-1',
         playwrightPersonaId: 'persona-marketplace',
         playwrightBrowser: 'brave',
-        playwrightHeadless: false,
         playwrightLocale: 'pl-PL',
         playwrightProxyEnabled: true,
         playwrightProxyServer: 'http://proxy.test:8080',
@@ -72,7 +71,6 @@ describe('playwright programmable connection migration preview', () => {
       expect.arrayContaining([
         'Persona',
         'Browser preference',
-        'Headless mode',
         'Locale',
         'Proxy enabled',
         'Proxy server',
@@ -85,7 +83,6 @@ describe('playwright programmable connection migration preview', () => {
     expect(preview.listingDraftAction.personaId).toBe('persona-marketplace');
     expect(preview.listingDraftAction.executionSettings).toMatchObject({
       browserPreference: 'brave',
-      headless: false,
       locale: 'pl-PL',
       proxyEnabled: true,
       proxyServer: 'http://proxy.test:8080',
@@ -93,7 +90,6 @@ describe('playwright programmable connection migration preview', () => {
     });
     expect(preview.importDraftAction.executionSettings).toMatchObject({
       browserPreference: 'brave',
-      headless: false,
       locale: 'pl-PL',
       proxyEnabled: true,
       proxyServer: 'http://proxy.test:8080',
@@ -112,7 +108,6 @@ describe('playwright programmable connection migration preview', () => {
         integrationId: 'integration-1',
         playwrightPersonaId: null,
         playwrightBrowser: null,
-        playwrightHeadless: undefined,
         playwrightLocale: null,
         playwrightListingActionId: null,
         playwrightImportActionId: null,

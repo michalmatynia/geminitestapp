@@ -7,7 +7,7 @@ import { getIntegrationRepository } from '@/features/integrations/server';
 import {
   buildProgrammableConnectionActionMigrationPreview,
   mergePlaywrightActionsWithProgrammableConnectionDrafts,
-} from '@/features/integrations/utils/playwright-programmable-connection-migration';
+} from '@/features/playwright/utils/playwright-programmable-connection-migration';
 import { PLAYWRIGHT_ACTIONS_SETTINGS_KEY } from '@/shared/contracts/playwright-steps';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { defaultIntegrationConnectionPlaywrightSettings } from '@/features/integrations/utils/playwright-connection-settings';
+import { defaultIntegrationConnectionPlaywrightSettings } from '@/features/playwright/utils/playwright-settings-baseline';
 
 import {
   buildPersistedProductScannerSettings,

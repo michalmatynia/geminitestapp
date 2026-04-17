@@ -4,6 +4,5 @@ export * from './utils/baseExportPreflight';
 export * from './utils/traderaQuickListFeedback';
 export * from './utils/vintedQuickListFeedback';
 export * from './utils/product-listings-recovery';
-export * from './utils/playwright-connection-settings';
 export * from './utils/tradera-browser-session';
 export * from './utils/marketplace-status';

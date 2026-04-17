@@ -24,7 +24,6 @@ import {
   resolvePlaywrightListingPersistenceContext,
   resolvePlaywrightListingPersistenceContextAfterRun,
   resolvePlaywrightListingRunContext,
-  resolveConnectionPlaywrightExplicitPreferences,
   type PlaywrightServiceListingExecutionBase,
 } from '@/features/playwright/server';
 
@@ -94,18 +93,13 @@ export const runVintedListing = async (
       });
     }
     const { listing, connection } = runContext;
-    const { connectionBrowserPreference, connectionHeadless } =
-      await resolveConnectionPlaywrightExplicitPreferences(connection);
-
     requestedBrowserMode = resolveRequestedVintedBrowserMode({
       requestedBrowserMode: input.browserMode,
       source,
-      connectionHeadless,
     });
     requestedBrowserPreference = resolveRequestedVintedBrowserPreference({
       requestedBrowserPreference: input.browserPreference,
       source,
-      connectionBrowserPreference,
     });
 
     const result = await runVintedBrowserListing({

@@ -89,6 +89,7 @@ describe('database-backup', () => {
   });
 
   it('creates a successful mongo backup and writes the execution log', async () => {
+    getMongoConnectionUrlMock.mockReturnValue('mongodb://user:secret@localhost:27017/app');
     mongoExecFileAsyncMock.mockResolvedValue({
       stdout: 'backup stdout',
       stderr: '',
@@ -99,13 +100,21 @@ describe('database-backup', () => {
     expect(ensureMongoBackupsDirMock).toHaveBeenCalledTimes(1);
     expect(mongoExecFileAsyncMock).toHaveBeenCalledWith('mongodump', [
       '--uri',
-      'mongodb://localhost:27017/app',
+      'mongodb://user:secret@localhost:27017/app',
       '--db',
       'app',
       expect.stringMatching(/^--archive=\/tmp\/backups\/app-backup-\d+\.archive$/),
       '--gzip',
     ]);
     expect(writeFileMock).toHaveBeenCalledTimes(1);
+    expect(writeFileMock).toHaveBeenCalledWith(
+      expect.stringMatching(/\.archive\.log$/),
+      expect.stringContaining('mongodb://user:***@localhost:27017/app')
+    );
+    expect(writeFileMock).not.toHaveBeenCalledWith(
+      expect.any(String),
+      expect.stringContaining('secret')
+    );
     expect(result).toMatchObject({
       message: 'Backup created',
       backupName: expect.stringMatching(/^app-backup-\d+\.archive$/),

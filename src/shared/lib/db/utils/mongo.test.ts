@@ -89,6 +89,7 @@ describe('shared db mongo utils', () => {
       (
         _command: string,
         _args: string[],
+        _options: { maxBuffer: number },
         callback: (error: Error | null, stdout: string, stderr: string) => void
       ) => {
         callback(null, 'stdout-data', 'stderr-data');
@@ -99,6 +100,12 @@ describe('shared db mongo utils', () => {
       stdout: 'stdout-data',
       stderr: 'stderr-data',
     });
+    expect(execFileMock).toHaveBeenCalledWith(
+      'mongodump',
+      ['--help'],
+      { maxBuffer: 128 * 1024 * 1024 },
+      expect.any(Function)
+    );
   });
 
   it('wraps execFile failures and preserves stdout/stderr on the error cause', async () => {
@@ -106,6 +113,7 @@ describe('shared db mongo utils', () => {
       (
         _command: string,
         _args: string[],
+        _options: { maxBuffer: number },
         callback: (error: Error | null, stdout: string, stderr: string) => void
       ) => {
         callback(new Error('mongodump failed'), 'partial-stdout', 'partial-stderr');

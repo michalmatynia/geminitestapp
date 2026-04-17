@@ -538,15 +538,60 @@ describe('Admin Products List UI', () => {
 
     expect(onIntegrationsClick).toHaveBeenCalledWith(
       expect.objectContaining({ id: 'product-1' }),
-      {
+      expect.objectContaining({
         source: 'base_quick_export_failed',
         integrationSlug: 'baselinker',
         status: 'failed',
         runId: 'run-failed-recovery',
-      },
+      }),
       'baselinker'
     );
     expect(exportCalls).toBe(0);
+  });
+
+  it('still exports when a product only has a Base product id but no listing badge', async () => {
+    let exportCalls = 0;
+
+    server.use(
+      http.get('/api/v2/integrations/exports/base/default-connection', () =>
+        HttpResponse.json({ connectionId: 'base-conn-1' })
+      ),
+      http.get('/api/v2/integrations/exports/base/default-inventory', () =>
+        HttpResponse.json({ inventoryId: 'inv-1' })
+      ),
+      http.post('/api/v2/integrations/imports/base', async () =>
+        HttpResponse.json({
+          inventories: [{ id: 'inv-1', name: 'Inventory 1', is_default: true }],
+        })
+      ),
+      http.get('/api/v2/integrations/exports/base/active-template', () =>
+        HttpResponse.json({ templateId: null })
+      ),
+      http.post('/api/v2/integrations/products/:id/base/sku-check', () =>
+        HttpResponse.json({ exists: false })
+      ),
+      http.post('/api/v2/integrations/products/:id/export-to-base', () => {
+        exportCalls += 1;
+        return HttpResponse.json({ success: true });
+      }),
+      http.post('/api/v2/integrations/product-listings', () => HttpResponse.json({}))
+    );
+
+    renderProductTable({
+      data: [
+        {
+          ...mockProducts[0],
+          baseProductId: 'base-123',
+        } as ProductWithImages,
+        mockProducts[1]!,
+      ],
+    });
+
+    await clickFirstOneClickExport();
+
+    await waitFor(() => {
+      expect(exportCalls).toBe(1);
+    });
   });
 
   it('opens the Base listings modal instead of re-exporting when the Base badge is green', async () => {
@@ -554,6 +599,9 @@ describe('Admin Products List UI', () => {
     const onIntegrationsClick = vi.fn();
 
     server.use(
+      http.post('/api/v2/integrations/product-listings', () =>
+        HttpResponse.json({ 'product-1': { base: 'active' } })
+      ),
       http.post('/api/v2/integrations/products/:id/export-to-base', () => {
         exportCalls += 1;
         return HttpResponse.json({ success: true });
@@ -562,13 +610,6 @@ describe('Admin Products List UI', () => {
 
     renderProductTable({
       onIntegrationsClick,
-      data: [
-        {
-          ...mockProducts[0],
-          baseProductId: 'base-123',
-        } as ProductWithImages,
-        mockProducts[1]!,
-      ],
     });
 
     const user = userEvent.setup();

@@ -53,6 +53,8 @@ const mocks = vi.hoisted(() => ({
     collections: [],
   })),
   execFileAsync: vi.fn(),
+  dropDatabase: vi.fn(async () => undefined),
+  getMongoDb: vi.fn(),
   getMongoDumpCommand: vi.fn(() => 'mongodump'),
   getMongoRestoreCommand: vi.fn(() => 'mongorestore'),
 }));
@@ -75,6 +77,10 @@ vi.mock('@/shared/lib/db/utils/mongo', () => ({
   getMongoRestoreCommand: mocks.getMongoRestoreCommand,
 }));
 
+vi.mock('@/shared/lib/db/mongo-client', () => ({
+  getMongoDb: mocks.getMongoDb,
+}));
+
 vi.mock('@/shared/lib/db/services/database-backup', () => ({
   createMongoSourceBackup: mocks.createMongoSourceBackup,
 }));
@@ -88,7 +94,8 @@ import { syncMongoSources } from './mongo-source-sync';
 describe('mongo-source-sync', () => {
   const syncLockPath = path.join(process.cwd(), 'mongo', 'runtime', 'sync.lock');
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    await fs.unlink(syncLockPath).catch(() => undefined);
     vi.clearAllMocks();
     mocks.getMongoSourceState.mockResolvedValue({
       timestamp: '2026-04-09T04:00:00.000Z',
@@ -120,6 +127,7 @@ describe('mongo-source-sync', () => {
       syncIssue: null,
     });
     process.env['NODE_ENV'] = 'test';
+    mocks.getMongoDb.mockResolvedValue({ dropDatabase: mocks.dropDatabase });
     mocks.verifyMongoSourceParity.mockImplementation(
       async ({ source, target, sourceDbName, targetDbName }) => ({
         status: 'passed',

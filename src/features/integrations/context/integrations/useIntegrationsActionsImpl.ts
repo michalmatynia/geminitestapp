@@ -19,21 +19,12 @@ import {
   useBaseApiRequest,
   useAllegroApiRequest,
 } from '@/features/integrations/hooks/useIntegrationMutations';
-import {
-  toPlaywrightConnectionOverridePayload,
-} from '@/features/integrations/utils/playwright-connection-payload';
 import { normalizeSteps } from '@/features/integrations/utils/connections';
-import {
-  defaultIntegrationConnectionPlaywrightSettings,
-  resolveIntegrationPlaywrightPersonaBrowser,
-  resolveIntegrationPlaywrightPersonaSettings,
-} from '@/features/integrations/utils/playwright-connection-settings';
 import type { IntegrationAllegroApiMethod, IntegrationAllegroApiResponse, IntegrationBaseApiResponse } from '@/shared/contracts/integrations/api';
 import type { IntegrationConnectionTestType } from '@/shared/contracts/integrations/session-testing';
 import { type Integration } from '@/shared/contracts/integrations/base';
 import { type IntegrationConnection } from '@/shared/contracts/integrations/connections';
 import { type TestLogEntry } from '@/shared/contracts/integrations/session-testing';
-import type { PlaywrightPersona, PlaywrightSettings } from '@/shared/contracts/playwright';
 import type { ListQuery } from '@/shared/contracts/ui/queries';
 import { useToast } from '@/shared/ui/primitives.public';
 import { isObjectRecord } from '@/shared/utils/object-utils';
@@ -70,11 +61,6 @@ export function useIntegrationsActionsImpl(args: {
   ) => void;
   setShowTestSuccessModal: (show: boolean) => void;
   setTestSuccessMessage: (msg: string | null) => void;
-  playwrightPersonas: PlaywrightPersona[];
-  setPlaywrightPersonaId: (id: string | null) => void;
-  setPlaywrightSettings: (s: PlaywrightSettings) => void;
-  playwrightPersonaId: string | null;
-  playwrightSettings: PlaywrightSettings;
   setShowSessionModal: (show: boolean) => void;
   baseApiMethod: string;
   baseApiParams: string;
@@ -108,13 +94,6 @@ export function useIntegrationsActionsImpl(args: {
     ) ??
     args.connections[0] ??
     null;
-
-  const resolveSelectedPlaywrightBaseline = (): PlaywrightSettings => {
-    return resolveIntegrationPlaywrightPersonaSettings(
-      args.playwrightPersonas,
-      args.playwrightPersonaId
-    );
-  };
 
   const handleIntegrationClick = async (definition: IntegrationDefinition): Promise<void> => {
     const ensureIntegration = async (def: IntegrationDefinition): Promise<Integration | null> => {
@@ -164,8 +143,6 @@ export function useIntegrationsActionsImpl(args: {
       isTraderaIntegration && !isTraderaApiIntegration;
     const isVintedIntegration = isVintedIntegrationSlug(args.activeIntegration.slug);
     const is1688Integration = is1688IntegrationSlug(args.activeIntegration.slug);
-    const isBrowserIntegration =
-      isTraderaBrowserIntegration || isVintedIntegration || is1688Integration;
     const isBaselinkerIntegration = args.activeIntegration.slug === 'baselinker';
     const isLinkedInIntegration = isLinkedInIntegrationSlug(args.activeIntegration.slug);
     const requestedConnectionId = options.connectionId?.trim() || null;
@@ -174,23 +151,6 @@ export function useIntegrationsActionsImpl(args: {
       options.mode === 'create' || (options.mode !== 'update' && !resolvedConnectionId);
     const normalizedName = formData.name.trim();
     const normalizedUsername = formData.username.trim();
-    const playwrightBrowserBaseline = resolveIntegrationPlaywrightPersonaBrowser(
-      args.playwrightPersonas,
-      args.playwrightPersonaId
-    );
-    const playwrightBrowserPayload = isBrowserIntegration
-      ? isCreateMode
-        ? formData.playwrightBrowser !== playwrightBrowserBaseline
-          ? { playwrightBrowser: formData.playwrightBrowser }
-          : {}
-        : {
-            playwrightBrowser:
-              formData.playwrightBrowser !== playwrightBrowserBaseline
-                ? formData.playwrightBrowser
-                : null,
-          }
-      : {};
-
     if (!normalizedName) {
       toast('Connection name is required.', { variant: 'error' });
       return null;
@@ -227,7 +187,6 @@ export function useIntegrationsActionsImpl(args: {
         ? { username: normalizedUsername }
         : {}),
       ...(formData.password.trim() ? { password: formData.password.trim() } : {}),
-      ...playwrightBrowserPayload,
       ...(is1688Integration
         ? {
             scanner1688StartUrl: formData.scanner1688StartUrl.trim() || null,
@@ -480,51 +439,6 @@ export function useIntegrationsActionsImpl(args: {
       timeoutMs: 360000,
     });
 
-  const handleSelectPlaywrightPersona = async (personaId: string | null): Promise<void> => {
-    if (!personaId) {
-      args.setPlaywrightPersonaId(null);
-      args.setPlaywrightSettings(defaultIntegrationConnectionPlaywrightSettings);
-      return;
-    }
-    const persona = args.playwrightPersonas.find((p: PlaywrightPersona) => p.id === personaId);
-    if (!persona) return;
-    args.setPlaywrightPersonaId(persona.id);
-    args.setPlaywrightSettings(resolveIntegrationPlaywrightPersonaSettings([persona], persona.id));
-    toast(`Applied persona "${persona.name}".`, { variant: 'success' });
-  };
-
-  const handleSavePlaywrightFallbackSettings = async (): Promise<void> => {
-    const connection = activeConnection;
-    if (!connection) return;
-    try {
-      const baselineSettings = resolveSelectedPlaywrightBaseline();
-      await upsertConnectionMutation.mutateAsync({
-        integrationId: args.activeIntegration?.id ?? connection.integrationId,
-        connectionId: connection.id,
-        payload: {
-          name: connection.name,
-          username: connection.username,
-          playwrightPersonaId: args.playwrightPersonaId,
-          ...toPlaywrightConnectionOverridePayload({
-            settings: args.playwrightSettings,
-            baselineSettings,
-            includeResetFlag: true,
-          }),
-        },
-      });
-      toast('Playwright fallback settings saved.', { variant: 'success' });
-    } catch (error: unknown) {
-      logClientCatch(error, {
-        source: 'IntegrationsContext',
-        action: 'handleSavePlaywrightFallbackSettings',
-        connectionId: connection.id,
-      });
-      toast((error as Error)?.message ?? 'Failed to save Playwright fallback settings.', {
-        variant: 'error',
-      });
-    }
-  };
-
   const handleAllegroAuthorize = (): void => {
     if (!args.activeIntegration || !activeConnection) {
       toast('Create an Allegro connection first.', { variant: 'error' });
@@ -766,8 +680,6 @@ export function useIntegrationsActionsImpl(args: {
     handleTraderaManualLogin,
     handleVintedManualLogin,
     handle1688ManualLogin,
-    handleSelectPlaywrightPersona,
-    handleSavePlaywrightFallbackSettings,
     handleAllegroAuthorize,
     handleAllegroDisconnect,
     handleAllegroSandboxToggle,

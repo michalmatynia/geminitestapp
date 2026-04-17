@@ -5,7 +5,6 @@ export const toConnectionFormState = (connection: IntegrationConnection): Connec
   name: connection.name,
   username: connection.username ?? '',
   password: '',
-  playwrightBrowser: connection.playwrightBrowser ?? 'auto',
   scanner1688StartUrl: connection.scanner1688StartUrl ?? 'https://www.1688.com/',
   scanner1688LoginMode: connection.scanner1688LoginMode ?? 'session_required',
   scanner1688DefaultSearchMode: connection.scanner1688DefaultSearchMode ?? 'local_image',

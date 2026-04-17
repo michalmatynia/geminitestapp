@@ -4,7 +4,7 @@ const { decryptSecretMock } = vi.hoisted(() => ({
   decryptSecretMock: vi.fn(),
 }));
 
-vi.mock('@/features/integrations/server', () => ({
+vi.mock('@/shared/lib/security/encryption', () => ({
   decryptSecret: (...args: unknown[]) => decryptSecretMock(...args),
 }));
 
@@ -138,7 +138,7 @@ describe('tradera-playwright-settings', () => {
     });
   });
 
-  it('applies personas as a baseline and lets explicit connection overrides win', async () => {
+  it('applies personas as a baseline and ignores legacy connection headless flags', async () => {
     getSettingValueMock.mockResolvedValue(
       JSON.stringify([
         {
@@ -169,7 +169,6 @@ describe('tradera-playwright-settings', () => {
       createdAt: '2026-04-10T00:00:00.000Z',
       updatedAt: '2026-04-10T00:00:00.000Z',
       playwrightPersonaId: 'persona-1',
-      playwrightBrowser: 'chrome',
       playwrightHeadless: true,
       playwrightHumanizeMouse: false,
       playwrightClickDelayMin: 10,
@@ -177,18 +176,21 @@ describe('tradera-playwright-settings', () => {
       playwrightProxyServer: '',
       playwrightProxyUsername: '',
       playwrightProxyPassword: 'encrypted-proxy-pass',
-    } as never);
+    } as never, {
+      includeConnectionBrowserBehavior: false,
+      personaId: 'persona-1',
+    });
 
     expect(resolved).toMatchObject({
-      browser: 'chrome',
-      headless: true,
-      humanizeMouse: false,
-      clickDelayMin: 10,
+      browser: 'brave',
+      headless: false,
+      humanizeMouse: true,
+      clickDelayMin: 90,
       clickDelayMax: 190,
-      proxyEnabled: false,
-      proxyServer: '',
-      proxyUsername: '',
-      proxyPassword: 'connection-pass',
+      proxyEnabled: true,
+      proxyServer: 'http://persona.proxy',
+      proxyUsername: 'persona-user',
+      proxyPassword: 'persona-pass',
       deviceName: 'Pixel 7',
     });
   });
@@ -215,7 +217,10 @@ describe('tradera-playwright-settings', () => {
       createdAt: '2026-04-10T00:00:00.000Z',
       updatedAt: '2026-04-10T00:00:00.000Z',
       playwrightPersonaId: 'persona-1',
-    } as never);
+    } as never, {
+      includeConnectionBrowserBehavior: false,
+      personaId: 'persona-1',
+    });
 
     expect(resolved).toMatchObject({
       browser: 'auto',
@@ -223,6 +228,40 @@ describe('tradera-playwright-settings', () => {
       humanizeMouse: false,
       clickDelayMin: 33,
       actionDelayMax: 999,
+    });
+  });
+
+  it('does not fall back to the connection persona when personaId is explicitly cleared', async () => {
+    getSettingValueMock.mockResolvedValue(
+      JSON.stringify([
+        {
+          id: 'persona-1',
+          settings: {
+            headless: false,
+            slowMo: 125,
+          },
+        },
+      ])
+    );
+
+    const resolved = await resolveConnectionPlaywrightSettings(
+      {
+        id: 'connection-1',
+        integrationId: 'integration-1',
+        name: 'Connection',
+        createdAt: '2026-04-10T00:00:00.000Z',
+        updatedAt: '2026-04-10T00:00:00.000Z',
+        playwrightPersonaId: 'persona-1',
+      } as never,
+      {
+        includeConnectionBrowserBehavior: false,
+        personaId: null,
+      }
+    );
+
+    expect(resolved).toMatchObject({
+      headless: true,
+      slowMo: 0,
     });
   });
 
@@ -246,17 +285,18 @@ describe('tradera-playwright-settings', () => {
       createdAt: '2026-04-10T00:00:00.000Z',
       updatedAt: '2026-04-10T00:00:00.000Z',
       playwrightPersonaId: 'persona-1',
-      playwrightBrowser: 'chrome',
-    } as never);
+    } as never, {
+      includeConnectionBrowserBehavior: false,
+      personaId: 'persona-1',
+    });
 
     expect(resolved).toMatchObject({
       connectionHeadless: false,
-      connectionBrowserPreference: 'chrome',
       profile: {
         hasExplicitHeadlessPreference: true,
         hasExplicitBrowserPreference: true,
         settings: {
-          browser: 'chrome',
+          browser: 'brave',
           headless: false,
         },
       },

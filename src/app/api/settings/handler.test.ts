@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { KANGUR_LAUNCH_ROUTE_SETTINGS_KEY } from '@/shared/contracts/kangur-settings-keys';
 import { OBSERVABILITY_LOGGING_KEYS } from '@/shared/contracts/observability';
+import { PLAYWRIGHT_ACTIONS_SETTINGS_KEY } from '@/shared/contracts/playwright-steps';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { KANGUR_SLOT_ASSIGNMENTS_KEY, KANGUR_THEME_CATALOG_KEY } from '@/shared/contracts/kangur';
 
@@ -485,6 +486,161 @@ describe('settings handler', () => {
     await expect(response.json()).resolves.toEqual({
       key: KANGUR_LAUNCH_ROUTE_SETTINGS_KEY,
       value: JSON.stringify({ route: 'dedicated_app' }),
+    });
+  });
+
+  it('rejects invalid playwright runtime action manifests before writing settings', async () => {
+    mocks.parseJsonBodyMock.mockResolvedValue({
+      ok: true,
+      data: {
+        key: PLAYWRIGHT_ACTIONS_SETTINGS_KEY,
+        value: JSON.stringify([
+          {
+            id: 'runtime_action__tradera_quicklist_list',
+            name: 'Tradera Quicklist List',
+            description: 'Invalid runtime manifest',
+            runtimeKey: 'tradera_quicklist_list',
+            blocks: [
+              {
+                id: 'block_sell_page_open',
+                kind: 'runtime_step',
+                refId: 'sell_page_open',
+                enabled: true,
+                label: null,
+              },
+              {
+                id: 'block_browser_open',
+                kind: 'runtime_step',
+                refId: 'browser_open',
+                enabled: true,
+                label: null,
+              },
+              {
+                id: 'block_publish',
+                kind: 'runtime_step',
+                refId: 'publish',
+                enabled: true,
+                label: null,
+              },
+            ],
+            stepSetIds: [],
+            personaId: null,
+            createdAt: '2026-04-17T00:00:00.000Z',
+            updatedAt: '2026-04-17T00:00:00.000Z',
+          },
+        ]),
+      },
+    });
+
+    const response = await POST_handler(
+      new NextRequest('http://localhost/api/settings', {
+        method: 'POST',
+        body: JSON.stringify({
+          key: PLAYWRIGHT_ACTIONS_SETTINGS_KEY,
+          value: 'ignored-by-mock',
+        }),
+      }),
+      createContext()
+    );
+
+    expect(response.status).toBe(400);
+    expect(mocks.updateOneMock).not.toHaveBeenCalled();
+    await expect(response.json()).resolves.toEqual({
+      error: 'Runtime action "tradera_quicklist_list" must include publish and publish_verify.',
+    });
+  });
+
+  it('canonicalizes valid playwright actions before persisting them', async () => {
+    const incomingValue = JSON.stringify([
+      {
+        id: 'legacy_action',
+        name: 'Legacy action',
+        description: null,
+        runtimeKey: null,
+        blocks: [],
+        stepSetIds: ['step_set_1'],
+        personaId: null,
+        createdAt: '2026-04-17T00:00:00.000Z',
+        updatedAt: '2026-04-17T00:00:00.000Z',
+      },
+    ]);
+
+    const normalizedValue = JSON.stringify([
+      {
+        id: 'legacy_action',
+        name: 'Legacy action',
+        description: null,
+        runtimeKey: null,
+        blocks: [
+          {
+            id: 'legacy_action__step_set__0',
+            kind: 'step_set',
+            refId: 'step_set_1',
+            enabled: true,
+            label: null,
+            config: {
+              viewportWidth: null,
+              viewportHeight: null,
+              settleDelayMs: null,
+              locale: null,
+              timezoneId: null,
+              userAgent: null,
+              colorScheme: null,
+              reducedMotion: null,
+              geolocationLatitude: null,
+              geolocationLongitude: null,
+              permissions: [],
+            },
+          },
+        ],
+        stepSetIds: ['step_set_1'],
+        personaId: null,
+        executionSettings: {
+          headless: null,
+          browserPreference: null,
+          emulateDevice: null,
+          deviceName: null,
+          slowMo: null,
+          timeout: null,
+          navigationTimeout: null,
+          locale: null,
+          timezoneId: null,
+        },
+        createdAt: '2026-04-17T00:00:00.000Z',
+        updatedAt: '2026-04-17T00:00:00.000Z',
+      },
+    ]);
+
+    mocks.parseJsonBodyMock.mockResolvedValue({
+      ok: true,
+      data: {
+        key: PLAYWRIGHT_ACTIONS_SETTINGS_KEY,
+        value: incomingValue,
+      },
+    });
+
+    const response = await POST_handler(
+      new NextRequest('http://localhost/api/settings', {
+        method: 'POST',
+        body: JSON.stringify({
+          key: PLAYWRIGHT_ACTIONS_SETTINGS_KEY,
+          value: incomingValue,
+        }),
+      }),
+      createContext()
+    );
+
+    expect(response.status).toBe(200);
+    expect(mocks.updateOneMock).toHaveBeenCalledWith(
+      { key: PLAYWRIGHT_ACTIONS_SETTINGS_KEY },
+      expect.objectContaining({
+        $set: expect.objectContaining({ value: normalizedValue }),
+      }),
+      { upsert: true }
+    );
+    await expect(response.json()).resolves.toEqual({
+      key: PLAYWRIGHT_ACTIONS_SETTINGS_KEY,
+      value: normalizedValue,
     });
   });
 

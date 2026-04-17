@@ -36,17 +36,47 @@ import {
   type PlaywrightSequencerContext,
 } from './PlaywrightSequencer';
 
+type TraderaSequencerState = {
+  authenticated?: boolean;
+  authStateResolved?: boolean;
+  listingFormAccessible?: boolean;
+  manualLoginCompleted?: boolean;
+  sessionPersisted?: boolean;
+};
+
 type TraderaSequencerHelpers = {
+  acceptCookieConsent?: () => Promise<void>;
+  authCheckMode?: 'observe' | 'require';
+  browserOpenLabel?: string;
+  browserOpenUrl?: string;
   brand?: string;
   categoryPath?: string;
+  checkAuthStatus?: () => Promise<boolean>;
   description?: string;
   ean?: string;
+  fillDescription?: () => Promise<void>;
+  fillPrice?: () => Promise<void>;
+  fillTitle?: () => Promise<void>;
   height?: number | string;
   imagePath?: string | string[];
+  isListingFormVisible?: () => Promise<boolean>;
   length?: number | string;
+  loadProduct?: () => Promise<void>;
+  loginUrl?: string;
+  manualLoginTimeoutMs?: number;
+  mode?: 'auto' | 'manual' | 'manual_session_refresh' | 'quicklist_preflight';
+  openPage?: (url: string, label?: string) => Promise<void>;
+  openSellPage?: () => Promise<void>;
+  performLogin?: () => Promise<void>;
+  persistSession?: () => Promise<void>;
   price?: number | string;
+  publish?: () => Promise<void>;
   quantity?: number | string;
+  resolvePrice?: () => Promise<void>;
+  state?: TraderaSequencerState;
   title?: string;
+  verifyPublish?: () => Promise<void>;
+  waitForManualLogin?: (timeoutMs: number) => Promise<boolean>;
   weight?: number | string;
   width?: number | string;
 };
@@ -55,6 +85,8 @@ const DIRECT_SELL_URL = 'https://www.tradera.com/en/selling/new';
 const LEGACY_SELL_URL = 'https://www.tradera.com/en/sell';
 
 export class TraderaSequencer extends PlaywrightSequencer {
+  private readonly fallbackState: TraderaSequencerState = {};
+
   constructor(context: PlaywrightSequencerContext) {
     super(context);
   }
@@ -64,38 +96,140 @@ export class TraderaSequencer extends PlaywrightSequencer {
 
     switch (stepId) {
       case 'browser_preparation':
-        this.note(stepId, 'Applying browser viewport.');
-        await this.context.page.setViewportSize({ width: 1_280, height: 800 });
-        this.complete(stepId, 'Browser viewport prepared.');
+        this.note(stepId, 'Applying browser preparation settings.');
+        if (typeof this.context.page.setViewportSize === 'function') {
+          const config = this.getStepConfig(stepId);
+          await this.context.page.setViewportSize({
+            width: config.viewportWidth ?? 1_280,
+            height: config.viewportHeight ?? 800,
+          });
+          if (config.settleDelayMs !== null && config.settleDelayMs > 0) {
+            await this.wait(config.settleDelayMs);
+          }
+          this.complete(stepId, 'Browser preparation settings applied.');
+        } else {
+          this.complete(stepId, 'Browser viewport is already managed by the outer runtime.');
+        }
         break;
       case 'browser_open':
-        this.note(stepId, 'Opening Tradera home.');
-        await this.context.page.goto('https://www.tradera.com', {
-          waitUntil: 'domcontentloaded',
-        });
+        this.note(stepId, this.toText(helpers.browserOpenLabel) ?? 'Opening Tradera home.');
+        await this.openConfiguredPage(
+          this.toText(helpers.browserOpenUrl) ?? 'https://www.tradera.com',
+          this.toText(helpers.browserOpenLabel) ?? 'Tradera home'
+        );
         await this.waitForPageSettled();
-        this.complete(stepId, 'Tradera home opened.');
+        this.complete(stepId, 'Tradera page opened.');
         break;
       case 'cookie_accept':
         this.note(stepId, 'Checking cookie consent.');
-        await this.acceptCookies(COOKIE_ACCEPT_SELECTORS);
+        await this.handleCookieConsent();
         this.complete(stepId, 'Cookie consent checked.');
         break;
       case 'auth_check': {
         this.note(stepId, 'Validating stored Tradera session.');
-        const isAuthenticated = await this.checkAuthStatus(this.context.page);
-        if (!isAuthenticated) {
+        const isAuthenticated = await this.resolveAuthStatus();
+        this.state.authenticated = isAuthenticated;
+        this.state.authStateResolved = true;
+        if (!isAuthenticated && this.authCheckMode === 'require') {
           throw new Error('AUTH_REQUIRED: Tradera session not found.');
         }
-        this.complete(stepId, 'Stored Tradera session is valid.');
+        this.complete(
+          stepId,
+          isAuthenticated ? 'Stored Tradera session is valid.' : 'Tradera session requires login.'
+        );
+        break;
+      }
+      case 'auth_login': {
+        if (this.state.authenticated === true) {
+          this.skip(stepId, 'Stored Tradera session is already active.');
+          break;
+        }
+
+        if (helpers.mode === 'manual' || helpers.mode === 'manual_session_refresh') {
+          this.skip(stepId, 'Automated login is disabled for manual Tradera auth flows.');
+          break;
+        }
+
+        this.note(stepId, 'Submitting Tradera login credentials.');
+        await this.ensureLoginPage();
+        if (helpers.performLogin) {
+          await helpers.performLogin();
+        } else {
+          throw new Error('FAIL_AUTH_LOGIN: No Tradera login handler is configured.');
+        }
+
+        const isAuthenticated = await this.resolveAuthStatus();
+        if (!isAuthenticated) {
+          throw new Error('AUTH_REQUIRED: Tradera login did not create an active session.');
+        }
+
+        this.state.authenticated = true;
+        this.complete(stepId, 'Tradera login completed.');
+        break;
+      }
+      case 'auth_manual': {
+        if (this.state.authenticated === true) {
+          this.skip(stepId, 'Stored Tradera session is already active.');
+          break;
+        }
+
+        if (helpers.mode !== 'manual' && helpers.mode !== 'manual_session_refresh') {
+          this.skip(stepId, 'Manual Tradera login is not enabled for this action.');
+          break;
+        }
+
+        const timeoutMs = helpers.manualLoginTimeoutMs ?? 240_000;
+        this.note(stepId, `Waiting up to ${Math.round(timeoutMs / 1000)}s for manual Tradera login.`);
+        await this.ensureLoginPage();
+        const success = helpers.waitForManualLogin
+          ? await helpers.waitForManualLogin(timeoutMs)
+          : await this.waitForManualLogin(timeoutMs);
+        if (!success) {
+          throw new Error(`AUTH_REQUIRED: Manual Tradera login timed out after ${Math.round(timeoutMs / 1000)}s.`);
+        }
+
+        this.state.authenticated = true;
+        this.state.manualLoginCompleted = true;
+        this.complete(stepId, 'Manual Tradera login completed.');
         break;
       }
       case 'sell_page_open':
         this.note(stepId, 'Opening the Tradera listing editor.');
-        await this.openSellPage();
+        if (this.state.authenticated === false) {
+          throw new Error('AUTH_REQUIRED: Tradera session must be authenticated before opening the listing editor.');
+        }
+
+        if (helpers.openSellPage) {
+          await helpers.openSellPage();
+        } else {
+          await this.openSellPage();
+        }
+        this.state.listingFormAccessible = true;
         this.complete(stepId, 'Tradera listing editor is ready.');
         break;
+      case 'load_product':
+        if (!helpers.loadProduct) {
+          throw new Error('FAIL_LOAD_PRODUCT: No product-loading handler is configured.');
+        }
+        this.note(stepId, 'Loading the linked product record.');
+        await helpers.loadProduct();
+        this.complete(stepId, 'Loaded product data for the listing.');
+        break;
+      case 'resolve_price':
+        if (!helpers.resolvePrice) {
+          throw new Error('FAIL_PRICE_RESOLUTION: No price-resolution handler is configured.');
+        }
+        this.note(stepId, 'Resolving the Tradera listing price in EUR.');
+        await helpers.resolvePrice();
+        this.complete(stepId, 'Resolved a Tradera listing price in EUR.');
+        break;
       case 'title_fill': {
+        if (helpers.fillTitle) {
+          this.note(stepId, 'Entering the Tradera listing title.');
+          await helpers.fillTitle();
+          this.complete(stepId, 'Title was entered.');
+          break;
+        }
         const title = this.toText(helpers.title) ?? 'Default Title';
         await this.fillField(TITLE_SELECTORS, title, {
           fieldLabel: 'title',
@@ -105,6 +239,12 @@ export class TraderaSequencer extends PlaywrightSequencer {
         break;
       }
       case 'description_fill': {
+        if (helpers.fillDescription) {
+          this.note(stepId, 'Entering the Tradera listing description.');
+          await helpers.fillDescription();
+          this.complete(stepId, 'Description was entered.');
+          break;
+        }
         const description = this.toText(helpers.description) ?? 'Default Description';
         await this.fillField(DESCRIPTION_SELECTORS, description, {
           fieldLabel: 'description',
@@ -118,6 +258,12 @@ export class TraderaSequencer extends PlaywrightSequencer {
         this.complete(stepId, 'Buy-now listing format selected.');
         break;
       case 'price_set': {
+        if (helpers.fillPrice) {
+          this.note(stepId, 'Setting the Tradera price.');
+          await helpers.fillPrice();
+          this.complete(stepId, 'Price was set.');
+          break;
+        }
         const price = this.toText(helpers.price) ?? '0';
         await this.fillField(PRICE_SELECTORS, price, {
           fieldLabel: 'price',
@@ -217,8 +363,31 @@ export class TraderaSequencer extends PlaywrightSequencer {
         break;
       }
       case 'publish':
-        await this.publishListing(stepId);
+        if (helpers.publish) {
+          await helpers.publish();
+        } else {
+          await this.publishListing(stepId);
+        }
         this.complete(stepId, 'Publish flow triggered.');
+        break;
+      case 'publish_verify':
+        if (!helpers.verifyPublish) {
+          throw new Error('FAIL_PUBLISH_VERIFICATION: No publish verification handler is configured.');
+        }
+        this.note(stepId, 'Verifying the published Tradera listing.');
+        await helpers.verifyPublish();
+        this.complete(stepId, 'The listing was published and verified successfully.');
+        break;
+      case 'browser_close':
+        if (helpers.persistSession) {
+          this.note(stepId, 'Persisting Tradera browser session state.');
+          await helpers.persistSession();
+          this.state.sessionPersisted = true;
+          this.complete(stepId, 'Tradera browser session state was persisted.');
+          break;
+        }
+
+        this.skip(stepId, 'Browser teardown is handled by the outer runtime.');
         break;
       default:
         await logSystemEvent({
@@ -233,12 +402,30 @@ export class TraderaSequencer extends PlaywrightSequencer {
     return (this.context.helpers as TraderaSequencerHelpers | undefined) ?? {};
   }
 
+  private get authCheckMode(): 'observe' | 'require' {
+    return this.helpers.authCheckMode ?? 'require';
+  }
+
+  private get state(): TraderaSequencerState {
+    const helpers = this.context.helpers as TraderaSequencerHelpers | undefined;
+    if (!helpers) {
+      return this.fallbackState;
+    }
+
+    helpers.state ??= {};
+    return helpers.state;
+  }
+
   private note(stepId: StepId, message: string): void {
     this.context.tracker.start(stepId, message);
   }
 
   private complete(stepId: StepId, message: string): void {
     this.context.tracker.succeed(stepId, message);
+  }
+
+  private skip(stepId: StepId, message: string): void {
+    this.context.tracker.skip(stepId, message);
   }
 
   private toText(value: string | number | null | undefined): string | null {
@@ -267,6 +454,55 @@ export class TraderaSequencer extends PlaywrightSequencer {
     return rawValues
       .map((entry) => this.toText(entry))
       .filter((entry): entry is string => entry !== null);
+  }
+
+  private async openConfiguredPage(url: string, label: string): Promise<void> {
+    if (this.helpers.openPage) {
+      await this.helpers.openPage(url, label);
+      return;
+    }
+
+    await this.context.page.goto(url, {
+      waitUntil: 'domcontentloaded',
+    });
+  }
+
+  private async handleCookieConsent(): Promise<void> {
+    await this.helpers.acceptCookieConsent?.().catch(() => undefined);
+    await this.acceptCookies(COOKIE_ACCEPT_SELECTORS).catch(() => undefined);
+  }
+
+  private async resolveAuthStatus(): Promise<boolean> {
+    if (this.helpers.checkAuthStatus) {
+      return this.helpers.checkAuthStatus();
+    }
+
+    return this.checkAuthStatus(this.context.page);
+  }
+
+  private async ensureLoginPage(): Promise<void> {
+    const loginUrl = this.toText(this.helpers.loginUrl) ?? 'https://www.tradera.com/login';
+
+    if (!this.context.page.url().includes('/login')) {
+      await this.openConfiguredPage(loginUrl, 'Tradera login');
+      await this.waitForPageSettled();
+    }
+
+    await this.handleCookieConsent();
+  }
+
+  private async waitForManualLogin(timeoutMs: number): Promise<boolean> {
+    const deadline = Date.now() + timeoutMs;
+
+    while (Date.now() < deadline) {
+      await this.handleCookieConsent();
+      if (await this.resolveAuthStatus()) {
+        return true;
+      }
+      await this.wait(1_000);
+    }
+
+    return false;
   }
 
   private async waitForPageSettled(): Promise<void> {

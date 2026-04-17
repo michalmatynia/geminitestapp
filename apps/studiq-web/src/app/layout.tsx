@@ -1,6 +1,8 @@
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages } from 'next-intl/server';
 
+import { StudiqQueryProvider } from '@/providers/QueryProvider';
+
 import type { Metadata } from 'next';
 import type { JSX, ReactNode } from 'react';
 
@@ -19,11 +21,13 @@ export default async function RootLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale}>
-      <body>
-        <NextIntlClientProvider locale={locale} messages={messages}>
-          <main id='kangur-main-content'>{children}</main>
-        </NextIntlClientProvider>
+    <html lang={locale} className='kangur-surface-active'>
+      <body className='kangur-surface-active'>
+        <StudiqQueryProvider>
+          <NextIntlClientProvider locale={locale} messages={messages}>
+            <main id='kangur-main-content'>{children}</main>
+          </NextIntlClientProvider>
+        </StudiqQueryProvider>
       </body>
     </html>
   );

@@ -502,6 +502,9 @@ export const QUERY_KEYS = {
     steps: () => [...QUERY_KEYS.playwright.lists(), 'steps'] as const,
     stepSets: () => [...QUERY_KEYS.playwright.lists(), 'step-sets'] as const,
     actions: () => [...QUERY_KEYS.playwright.lists(), 'actions'] as const,
+    actionRuns: (filters?: Record<string, unknown>) =>
+      [...QUERY_KEYS.playwright.lists(), 'action-runs', filters ?? {}] as const,
+    actionRun: (runId: string) => [...QUERY_KEYS.playwright.all, 'detail', 'action-run', runId] as const,
     websites: () => [...QUERY_KEYS.playwright.lists(), 'websites'] as const,
     flows: () => [...QUERY_KEYS.playwright.lists(), 'flows'] as const,
   },

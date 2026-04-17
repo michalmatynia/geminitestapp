@@ -9,8 +9,11 @@ export function IntegrationModalSubtitle(): React.JSX.Element {
   if (isBaselinker) {
     return <>Manage connections and warehouse sync settings.</>;
   }
-  if (showPlaywright && (isTradera || isVinted || is1688)) {
+  if (showPlaywright && is1688) {
     return <>Manage connections via browser automation (Playwright).</>;
+  }
+  if (showPlaywright && (isTradera || isVinted)) {
+    return <>Manage connections and Step Sequencer-backed browser automation.</>;
   }
   if (isTradera) {
     return <>Manage connections via Tradera API credentials and tokens.</>;

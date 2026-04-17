@@ -29,7 +29,7 @@ describe('IntegrationModalViewContext', () => {
           showBaseConsole: false,
           activeConnection: null,
           onOpenSessionModal: () => {},
-          onSavePlaywrightSettings: () => {},
+          onSavePlaywrightFallbackSettings: () => {},
         }}
       >
         <Consumer />

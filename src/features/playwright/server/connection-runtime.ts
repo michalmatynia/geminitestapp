@@ -1,6 +1,16 @@
 import 'server-only';
 
 import { devices, type BrowserContextOptions, type LaunchOptions } from 'playwright';
+import type {
+  PlaywrightActionBlockConfig,
+  PlaywrightActionExecutionSettings,
+} from '@/shared/contracts/playwright-steps';
+import type { ActionSequenceKey } from '@/shared/lib/browser-execution/action-sequences';
+import {
+  resolvePlaywrightActionDefinitionById,
+  resolveRuntimeActionDefinition,
+  resolveRuntimeActionExecutionSettings,
+} from '@/shared/lib/browser-execution/runtime-action-resolver.server';
 
 import {
   parsePersistedStorageState,
@@ -63,7 +73,7 @@ export type PlaywrightConnectionSettingsOverridesInput = Pick<
 
 export type PlaywrightConnectionEngineRequestOptions = {
   personaId?: string;
-  contextOptions?: { storageState: PersistedStorageState };
+  contextOptions?: BrowserContextOptions;
   settingsOverrides: Record<string, unknown>;
   launchOptions?: Record<string, unknown>;
 };
@@ -83,6 +93,8 @@ export type PlaywrightConnectionEngineTaskInput = {
   request: PlaywrightConnectionBaseEngineRunRequest;
   ownerUserId?: string | null;
   instance?: PlaywrightEngineRunInstance | null;
+  actionId?: string | null;
+  runtimeActionKey?: ActionSequenceKey;
   resolveEngineRequestConfig?: (
     runtime: ResolvedPlaywrightConnectionRuntime
   ) => PlaywrightConnectionEngineRequestConfig;
@@ -93,6 +105,104 @@ export type PlaywrightConnectionEngineTaskResult = {
   settings: PlaywrightConnectionSettingsOverridesInput;
   browserPreference: PlaywrightBrowserPreference | null;
   run: PlaywrightEngineRunRecord;
+};
+
+export type PlaywrightContextEnvironmentOverrides = {
+  viewport?: NonNullable<BrowserContextOptions['viewport']> | null;
+  locale?: string | null;
+  timezoneId?: string | null;
+  userAgent?: string | null;
+  colorScheme?: BrowserContextOptions['colorScheme'] | null;
+  reducedMotion?: BrowserContextOptions['reducedMotion'] | null;
+  geolocation?: BrowserContextOptions['geolocation'] | null;
+  permissions?: string[] | null;
+};
+
+const applyPlaywrightActionExecutionSettingsToRuntime = ({
+  runtime,
+  executionSettings,
+}: {
+  runtime: ResolvedPlaywrightConnectionRuntime;
+  executionSettings: PlaywrightActionExecutionSettings | null;
+}): ResolvedPlaywrightConnectionRuntime => {
+  if (executionSettings === null) {
+    return runtime;
+  }
+
+  const settings = { ...runtime.settings };
+  const applySetting = <TKey extends keyof typeof settings>(
+    key: TKey,
+    value: (typeof settings)[TKey] | null
+  ): void => {
+    if (value !== null) {
+      settings[key] = value;
+    }
+  };
+
+  applySetting('headless', executionSettings.headless);
+  applySetting('identityProfile', executionSettings.identityProfile);
+  applySetting('slowMo', executionSettings.slowMo);
+  applySetting('timeout', executionSettings.timeout);
+  applySetting('navigationTimeout', executionSettings.navigationTimeout);
+  applySetting('locale', executionSettings.locale);
+  applySetting('timezoneId', executionSettings.timezoneId);
+  applySetting('humanizeMouse', executionSettings.humanizeMouse);
+  applySetting('mouseJitter', executionSettings.mouseJitter);
+  applySetting('clickDelayMin', executionSettings.clickDelayMin);
+  applySetting('clickDelayMax', executionSettings.clickDelayMax);
+  applySetting('inputDelayMin', executionSettings.inputDelayMin);
+  applySetting('inputDelayMax', executionSettings.inputDelayMax);
+  applySetting('actionDelayMin', executionSettings.actionDelayMin);
+  applySetting('actionDelayMax', executionSettings.actionDelayMax);
+  applySetting('proxyEnabled', executionSettings.proxyEnabled);
+  applySetting('proxyServer', executionSettings.proxyServer);
+  applySetting('proxyUsername', executionSettings.proxyUsername);
+  applySetting('proxyPassword', executionSettings.proxyPassword);
+  applySetting('proxySessionAffinity', executionSettings.proxySessionAffinity);
+  applySetting('proxySessionMode', executionSettings.proxySessionMode);
+  applySetting('proxyProviderPreset', executionSettings.proxyProviderPreset);
+  applySetting('emulateDevice', executionSettings.emulateDevice);
+  applySetting('deviceName', executionSettings.deviceName);
+  const deviceContext = resolvePlaywrightRuntimeDeviceContext(settings);
+
+  return {
+    ...runtime,
+    browserPreference: executionSettings.browserPreference ?? runtime.browserPreference,
+    settings,
+    deviceProfileName: deviceContext.deviceProfileName,
+    deviceContextOptions: deviceContext.deviceContextOptions,
+  };
+};
+
+const resolveBrowserPreparationContextOverrides = (
+  config: PlaywrightActionBlockConfig | null
+): PlaywrightContextEnvironmentOverrides => {
+  if (config === null) {
+    return {};
+  }
+
+  const viewport =
+    config.viewportWidth !== null && config.viewportHeight !== null
+      ? { width: config.viewportWidth, height: config.viewportHeight }
+      : null;
+  const geolocation =
+    config.geolocationLatitude !== null && config.geolocationLongitude !== null
+      ? {
+          latitude: config.geolocationLatitude,
+          longitude: config.geolocationLongitude,
+        }
+      : null;
+
+  return {
+    viewport,
+    locale: config.locale,
+    timezoneId: config.timezoneId,
+    userAgent: config.userAgent,
+    colorScheme: config.colorScheme,
+    reducedMotion: config.reducedMotion,
+    geolocation,
+    permissions: config.permissions,
+  };
 };
 
 const toDeviceContextOptions = (
@@ -106,13 +216,9 @@ const toDeviceContextOptions = (
   return rest;
 };
 
-export const resolvePlaywrightConnectionRuntime = async (
-  connection: IntegrationConnectionRecord
-): Promise<ResolvedPlaywrightConnectionRuntime> => {
-  const settings = await resolveConnectionPlaywrightSettings(connection);
-  const storageState = parsePersistedStorageState(connection.playwrightStorageState);
-  const personaId =
-    normalizeIntegrationConnectionPlaywrightPersonaId(connection.playwrightPersonaId) ?? undefined;
+export const resolvePlaywrightRuntimeDeviceContext = (
+  settings: Pick<TraderaPlaywrightRuntimeSettings, 'emulateDevice' | 'deviceName'>
+): Pick<ResolvedPlaywrightConnectionRuntime, 'deviceProfileName' | 'deviceContextOptions'> => {
   const configuredDeviceName = settings.deviceName?.trim() || null;
   const deviceProfile =
     settings.emulateDevice && configuredDeviceName && devices[configuredDeviceName]
@@ -120,12 +226,27 @@ export const resolvePlaywrightConnectionRuntime = async (
       : null;
 
   return {
+    deviceProfileName: deviceProfile ? configuredDeviceName : null,
+    deviceContextOptions: toDeviceContextOptions(deviceProfile),
+  };
+};
+
+export const resolvePlaywrightConnectionRuntime = async (
+  connection: IntegrationConnectionRecord
+): Promise<ResolvedPlaywrightConnectionRuntime> => {
+  const settings = await resolveConnectionPlaywrightSettings(connection);
+  const storageState = parsePersistedStorageState(connection.playwrightStorageState);
+  const personaId =
+    normalizeIntegrationConnectionPlaywrightPersonaId(connection.playwrightPersonaId) ?? undefined;
+  const deviceContext = resolvePlaywrightRuntimeDeviceContext(settings);
+
+  return {
     settings,
     storageState,
     personaId,
     browserPreference: settings.browser,
-    deviceProfileName: deviceProfile ? configuredDeviceName : null,
-    deviceContextOptions: toDeviceContextOptions(deviceProfile),
+    deviceProfileName: deviceContext.deviceProfileName,
+    deviceContextOptions: deviceContext.deviceContextOptions,
   };
 };
 
@@ -166,17 +287,44 @@ export const buildPlaywrightConnectionContextOptions = (input: {
     'deviceContextOptions' | 'deviceProfileName' | 'storageState' | 'settings'
   >;
   viewport?: NonNullable<BrowserContextOptions['viewport']>;
-}): BrowserContextOptions => ({
-  ...input.runtime.deviceContextOptions,
-  ...(input.runtime.storageState ? { storageState: input.runtime.storageState } : {}),
-  ...(input.runtime.settings.locale ? { locale: input.runtime.settings.locale } : {}),
-  ...(input.runtime.settings.timezoneId
-    ? { timezoneId: input.runtime.settings.timezoneId }
-    : {}),
-  ...(!input.runtime.deviceProfileName && input.viewport
-    ? { viewport: input.viewport }
-    : {}),
-});
+  environmentOverrides?: PlaywrightContextEnvironmentOverrides;
+}): BrowserContextOptions => {
+  const locale =
+    input.environmentOverrides?.locale?.trim() || input.runtime.settings.locale || undefined;
+  const timezoneId =
+    input.environmentOverrides?.timezoneId?.trim() ||
+    input.runtime.settings.timezoneId ||
+    undefined;
+  const viewport =
+    input.environmentOverrides?.viewport ??
+    (!input.runtime.deviceProfileName ? input.viewport : undefined);
+  const userAgent =
+    input.environmentOverrides?.userAgent?.trim() ||
+    input.runtime.deviceContextOptions.userAgent ||
+    undefined;
+  const permissions =
+    input.environmentOverrides?.permissions?.filter((permission) => permission.trim().length > 0) ??
+    undefined;
+
+  return {
+    ...input.runtime.deviceContextOptions,
+    ...(input.runtime.storageState ? { storageState: input.runtime.storageState } : {}),
+    ...(locale ? { locale } : {}),
+    ...(timezoneId ? { timezoneId } : {}),
+    ...(!input.runtime.deviceProfileName && viewport ? { viewport } : {}),
+    ...(userAgent ? { userAgent } : {}),
+    ...(input.environmentOverrides?.colorScheme
+      ? { colorScheme: input.environmentOverrides.colorScheme }
+      : {}),
+    ...(input.environmentOverrides?.reducedMotion
+      ? { reducedMotion: input.environmentOverrides.reducedMotion }
+      : {}),
+    ...(input.environmentOverrides?.geolocation
+      ? { geolocation: input.environmentOverrides.geolocation }
+      : {}),
+    ...(permissions && permissions.length > 0 ? { permissions } : {}),
+  };
+};
 
 export const buildPlaywrightConnectionSettingsOverrides = (
   settings: PlaywrightConnectionSettingsOverridesInput
@@ -216,6 +364,7 @@ export const buildPlaywrightConnectionEngineLaunchOptions = (input: {
 export const buildPlaywrightConnectionEngineRequestOptions = (input: {
   runtime: Pick<ResolvedPlaywrightConnectionRuntime, 'personaId' | 'storageState'>;
   settings: PlaywrightConnectionSettingsOverridesInput;
+  environmentOverrides?: PlaywrightContextEnvironmentOverrides;
   browserPreference?: PlaywrightBrowserPreference | null;
 }): PlaywrightConnectionEngineRequestOptions => {
   const launchOptions =
@@ -224,12 +373,36 @@ export const buildPlaywrightConnectionEngineRequestOptions = (input: {
           browserPreference: input.browserPreference,
         })
       : {};
+  const contextOptions: BrowserContextOptions = {
+    ...(input.runtime.storageState ? { storageState: input.runtime.storageState } : {}),
+    ...(input.environmentOverrides?.viewport ? { viewport: input.environmentOverrides.viewport } : {}),
+    ...(input.environmentOverrides?.locale?.trim()
+      ? { locale: input.environmentOverrides.locale.trim() }
+      : {}),
+    ...(input.environmentOverrides?.timezoneId?.trim()
+      ? { timezoneId: input.environmentOverrides.timezoneId.trim() }
+      : {}),
+    ...(input.environmentOverrides?.userAgent?.trim()
+      ? { userAgent: input.environmentOverrides.userAgent.trim() }
+      : {}),
+    ...(input.environmentOverrides?.colorScheme
+      ? { colorScheme: input.environmentOverrides.colorScheme }
+      : {}),
+    ...(input.environmentOverrides?.reducedMotion
+      ? { reducedMotion: input.environmentOverrides.reducedMotion }
+      : {}),
+    ...(input.environmentOverrides?.geolocation
+      ? { geolocation: input.environmentOverrides.geolocation }
+      : {}),
+    ...(input.environmentOverrides?.permissions &&
+    input.environmentOverrides.permissions.length > 0
+      ? { permissions: input.environmentOverrides.permissions }
+      : {}),
+  };
 
   return {
     ...(input.runtime.personaId ? { personaId: input.runtime.personaId } : {}),
-    ...(input.runtime.storageState
-      ? { contextOptions: { storageState: input.runtime.storageState } }
-      : {}),
+    ...(Object.keys(contextOptions).length > 0 ? { contextOptions } : {}),
     settingsOverrides: buildPlaywrightConnectionSettingsOverrides(input.settings),
     ...(Object.keys(launchOptions).length > 0 ? { launchOptions } : {}),
   };
@@ -255,30 +428,84 @@ const buildPlaywrightConnectionEngineRunRequest = (input: {
   request: PlaywrightConnectionBaseEngineRunRequest;
   runtime: ResolvedPlaywrightConnectionRuntime;
   settings: PlaywrightConnectionSettingsOverridesInput;
+  environmentOverrides?: PlaywrightContextEnvironmentOverrides;
   browserPreference?: PlaywrightBrowserPreference | null;
 }): PlaywrightEngineRunRequest => ({
   ...input.request,
   ...buildPlaywrightConnectionEngineRequestOptions({
     runtime: input.runtime,
     settings: input.settings,
+    environmentOverrides: input.environmentOverrides,
     browserPreference: input.browserPreference,
   }),
 });
+
+const resolvePlaywrightConnectionRuntimeActionContextOverrides = async (
+  runtimeActionKey: ActionSequenceKey | undefined
+): Promise<PlaywrightContextEnvironmentOverrides> => {
+  if (runtimeActionKey === undefined) {
+    return {};
+  }
+
+  const action = await resolveRuntimeActionDefinition(runtimeActionKey);
+  const browserPreparationBlock =
+    action.blocks.find(
+      (block) =>
+        block.kind === 'runtime_step' &&
+        block.enabled !== false &&
+        block.refId === 'browser_preparation'
+    ) ?? null;
+
+  return resolveBrowserPreparationContextOverrides(browserPreparationBlock?.config ?? null);
+};
 
 const executePlaywrightConnectionEngineTask = async (
   input: PlaywrightConnectionEngineTaskInput,
   mode: 'run' | 'start'
 ): Promise<PlaywrightConnectionEngineTaskResult> => {
-  const runtime = await resolvePlaywrightConnectionRuntime(input.connection);
+  const selectedAction =
+    typeof input.actionId === 'string' && input.actionId.trim().length > 0
+      ? await resolvePlaywrightActionDefinitionById(input.actionId)
+      : null;
+  const runtime = applyPlaywrightActionExecutionSettingsToRuntime({
+    runtime: await resolvePlaywrightConnectionRuntime(input.connection),
+    executionSettings:
+      selectedAction?.executionSettings ??
+      (input.runtimeActionKey === undefined
+        ? null
+        : await resolveRuntimeActionExecutionSettings(input.runtimeActionKey)),
+  });
+  const contextEnvironmentOverrides =
+    selectedAction !== null
+      ? resolveBrowserPreparationContextOverrides(
+          selectedAction.blocks.find(
+            (block) =>
+              block.kind === 'runtime_step' &&
+              block.enabled !== false &&
+              block.refId === 'browser_preparation'
+          )?.config ?? null
+        )
+      : await resolvePlaywrightConnectionRuntimeActionContextOverrides(input.runtimeActionKey);
   const config = resolvePlaywrightConnectionEngineRequestConfig(
     runtime,
     input.resolveEngineRequestConfig
   );
   const browserPreference = config.browserPreference ?? runtime.browserPreference;
+  const deviceContext = resolvePlaywrightRuntimeDeviceContext(config.settings);
+  const effectiveRuntime: ResolvedPlaywrightConnectionRuntime = {
+    ...runtime,
+    browserPreference,
+    settings: {
+      ...config.settings,
+    },
+    deviceProfileName: deviceContext.deviceProfileName,
+    deviceContextOptions: deviceContext.deviceContextOptions,
+  };
   const request = buildPlaywrightConnectionEngineRunRequest({
     request: input.request,
-    runtime,
+    runtime: effectiveRuntime,
     settings: config.settings,
+    environmentOverrides: contextEnvironmentOverrides,
     browserPreference,
   });
 
@@ -296,7 +523,7 @@ const executePlaywrightConnectionEngineTask = async (
         });
 
   return {
-    runtime,
+    runtime: effectiveRuntime,
     settings: config.settings,
     browserPreference,
     run,

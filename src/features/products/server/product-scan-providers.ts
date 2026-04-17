@@ -6,7 +6,6 @@ import type {
   ProductScanType,
 } from '@/shared/contracts/product-scans';
 
-import { SCAN_1688_REVERSE_IMAGE_SCRIPT } from './product-scan-1688-script';
 import { AMAZON_REVERSE_IMAGE_SCAN_SCRIPT } from './product-scan-amazon-script';
 import {
   resolve1688ScanDisplayName,
@@ -22,6 +21,7 @@ import {
   createAmazonProductScanBaseRecord,
   create1688ProductScanBaseRecord,
 } from './product-scans-service.helpers';
+import { SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY } from '@/shared/lib/browser-execution/supplier-1688-runtime-constants';
 
 type ProductScanBaseRecordInput = {
   productId: string;
@@ -34,13 +34,28 @@ type ProductScanBaseRecordInput = {
   error?: string | null;
 };
 
-export type ProductScanProviderRuntime = {
+type ProductScanProviderRuntimeBase = {
   buildRequestInput: (input: Record<string, unknown>) => Record<string, unknown>;
   createBaseRecord: (input: ProductScanBaseRecordInput) => ProductScanRecord;
   resolveDisplayName: typeof resolveProductScanDisplayName;
   resolveImageCandidates: typeof resolveProductScanImageCandidates;
-  script: string;
 };
+
+export type ProductScanScriptProviderRuntime = ProductScanProviderRuntimeBase & {
+  executionMode: 'script';
+  script: string;
+  runtimeKey?: never;
+};
+
+export type ProductScanNativeProviderRuntime = ProductScanProviderRuntimeBase & {
+  executionMode: 'native';
+  runtimeKey: string;
+  script?: never;
+};
+
+export type ProductScanProviderRuntime =
+  | ProductScanScriptProviderRuntime
+  | ProductScanNativeProviderRuntime;
 
 export type ProductScanProviderDefinition = {
   provider: ProductScanProvider;
@@ -67,6 +82,7 @@ export const PRODUCT_SCAN_PROVIDER_DEFINITIONS: Record<
       createBaseRecord: createAmazonProductScanBaseRecord,
       resolveDisplayName: resolveProductScanDisplayName,
       resolveImageCandidates: resolveProductScanImageCandidates,
+      executionMode: 'script',
       script: AMAZON_REVERSE_IMAGE_SCAN_SCRIPT,
     },
   },
@@ -82,7 +98,8 @@ export const PRODUCT_SCAN_PROVIDER_DEFINITIONS: Record<
       createBaseRecord: create1688ProductScanBaseRecord,
       resolveDisplayName: resolve1688ScanDisplayName,
       resolveImageCandidates: resolve1688ScanImageCandidates,
-      script: SCAN_1688_REVERSE_IMAGE_SCRIPT,
+      executionMode: 'native',
+      runtimeKey: SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY,
     },
   },
 };

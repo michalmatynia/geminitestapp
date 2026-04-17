@@ -22,7 +22,7 @@ import { fetchWithOutboundUrlPolicy } from '@/shared/lib/security/outbound-url-p
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import type { ProductScanner1688CandidateEvaluatorResolvedConfig } from './product-scanner-settings';
-import type { SupplierScanScriptResult } from './product-scans-service.helpers';
+import type { SupplierScanRuntimeResult } from './product-scans-service.helpers';
 
 const SUPPLIER_EVALUATOR_MAX_REASON_COUNT = 10;
 const SUPPORTED_IMAGE_RUNTIME_VENDORS = new Set(['openai', 'ollama']);
@@ -203,7 +203,7 @@ const createSupplierEvaluation = (
 export const evaluate1688SupplierCandidateMatch = async (input: {
   scan: ProductScanRecord;
   product: ProductWithImages;
-  parsedResult: SupplierScanScriptResult;
+  parsedResult: SupplierScanRuntimeResult;
   run: Pick<PlaywrightEngineRunRecord, 'runId' | 'artifacts'>;
   evaluatorConfig: Extract<ProductScanner1688CandidateEvaluatorResolvedConfig, { enabled: true }>;
 }): Promise<ProductScanSupplierEvaluation> => {

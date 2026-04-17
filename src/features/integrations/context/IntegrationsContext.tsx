@@ -218,7 +218,7 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
       handleVintedManualLogin: actions.handleVintedManualLogin,
       handle1688ManualLogin: actions.handle1688ManualLogin,
       handleSelectPlaywrightPersona: actions.handleSelectPlaywrightPersona,
-      handleSavePlaywrightSettings: actions.handleSavePlaywrightSettings,
+      handleSavePlaywrightFallbackSettings: actions.handleSavePlaywrightFallbackSettings,
       handleAllegroAuthorize: actions.handleAllegroAuthorize,
       handleAllegroDisconnect: actions.handleAllegroDisconnect,
       handleAllegroSandboxToggle: actions.handleAllegroSandboxToggle,

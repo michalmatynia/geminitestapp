@@ -1,5 +1,6 @@
 import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import type { ImageStudioRunStatus } from '@/shared/contracts/image-studio/base';
+import type { PlaywrightActionRunRequestSummary } from '@/shared/contracts/playwright-action-runs';
 
 export type PlaywrightNodeRunArtifact = {
   name: string;
@@ -51,14 +52,19 @@ export type PlaywrightNodeRunRecord = {
   result?: unknown;
   error?: string | null;
   instance?: PlaywrightNodeRunInstance | null;
+  requestSummary?: PlaywrightActionRunRequestSummary | null;
   artifacts: PlaywrightNodeRunArtifact[];
   logs: string[];
 };
 
 export type PlaywrightNodeRunRequest = {
-  script: string;
+  script?: string;
   input?: Record<string, unknown> | undefined;
   startUrl?: string | undefined;
+  runtimeKey?: string | null | undefined;
+  actionId?: string | null | undefined;
+  actionName?: string | null | undefined;
+  selectorProfile?: string | null | undefined;
   timeoutMs?: number | undefined;
   browserEngine?: 'chromium' | 'firefox' | 'webkit' | undefined;
   personaId?: string | undefined;

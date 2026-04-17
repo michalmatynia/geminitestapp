@@ -34,6 +34,7 @@ export const TRADERA_QUICKLIST_PUBLISH_LABELS = {
 
 type TraderaQuicklistStepSequenceOverrides = {
   listStepIds?: readonly string[];
+  relistStepIds?: readonly string[];
   syncStepIds?: readonly string[];
 };
 
@@ -57,55 +58,36 @@ const resolveLabel = (id: string): string => {
   return id;
 };
 
-const stepEntry = (id: string): string =>
-  `{ id: '${id}', label: '${resolveLabel(id)}', status: 'pending', info: null }`;
-
-const splitQuicklistSequenceIds = (
-  listSeq: readonly string[],
-  syncSeq: readonly string[]
-): {
-  listOnlyIds: string[];
-  prefixIds: string[];
-  suffixIds: string[];
-  syncOnlyIds: string[];
-} => {
-  const listSet = new Set(listSeq);
-  const syncSet = new Set(syncSeq);
-
-  const syncOnlyIds = syncSeq.filter((id) => !listSet.has(id));
-  const listOnlyIds = listSeq.filter((id) => !syncSet.has(id));
-  const branchSet = new Set([...syncOnlyIds, ...listOnlyIds]);
-  const prefixIds: string[] = [];
-  const suffixIds: string[] = [];
-  let pastBranch = false;
-
-  for (const id of listSeq) {
-    if (branchSet.has(id)) {
-      pastBranch = true;
-      continue;
-    }
-    (pastBranch ? suffixIds : prefixIds).push(id);
+const buildQuicklistManifestEntry = (
+  id: string,
+  action: keyof typeof TRADERA_QUICKLIST_PUBLISH_LABELS
+): string => {
+  if (id === 'publish') {
+    return `{ id: 'publish', label: '${TRADERA_QUICKLIST_PUBLISH_LABELS[action].publish}', status: 'pending', info: null }`;
   }
 
-  return {
-    listOnlyIds,
-    prefixIds,
-    suffixIds,
-    syncOnlyIds,
-  };
+  if (id === 'publish_verify') {
+    return `{ id: 'publish_verify', label: '${TRADERA_QUICKLIST_PUBLISH_LABELS[action].publish_verify}', status: 'pending', info: null }`;
+  }
+
+  return `{ id: '${id}', label: '${resolveLabel(id)}', status: 'pending', info: null }`;
 };
+
+const buildQuicklistManifestEntries = (
+  stepIds: readonly string[],
+  action: keyof typeof TRADERA_QUICKLIST_PUBLISH_LABELS
+): string[] => stepIds.map((id) => buildQuicklistManifestEntry(id, action));
 
 // ── Generator ────────────────────────────────────────────────────────────────
 
 /**
- * Generates the JavaScript `const executionSteps = (...)()` initialisation
+ * Generates the JavaScript `const executionSteps = ...` initialization
  * block embedded verbatim into the Tradera quicklist browser script template.
  *
  * The registry (`ACTION_SEQUENCES`) is the authoritative source for step IDs
- * and ordering.  The generated code references `listingAction` — a runtime
- * variable already in scope inside the browser script — to branch between the
- * sync path (uses `sync_check`) and the list/relist path (uses
- * `duplicate_check` … `image_cleanup`).
+ * and ordering. The generated code materializes separate manifests for
+ * `list`, `relist`, and `sync`, then selects the one matching the runtime
+ * `listingAction` already in scope inside the browser script.
  *
  * Calling this at TypeScript module-load time means the browser script body
  * is computed once; the resulting string is a pure-JS snippet with no imports.
@@ -114,61 +96,31 @@ export const generateTraderaQuicklistBrowserStepsInit = (
   options: TraderaQuicklistStepSequenceOverrides = {}
 ): string => {
   const listSeq = options.listStepIds ?? ACTION_SEQUENCES.tradera_quicklist_list;
+  const relistSeq = options.relistStepIds ?? ACTION_SEQUENCES.tradera_quicklist_relist;
   const syncSeq = options.syncStepIds ?? ACTION_SEQUENCES.tradera_quicklist_sync;
-  const { listOnlyIds, prefixIds, suffixIds, syncOnlyIds } = splitQuicklistSequenceIds(
-    listSeq,
-    syncSeq
-  );
 
   const i1 = '  ';
   const i2 = '    ';
-  const i3 = '      ';
-
-  const { sync: syncPublish, relist: relistPublish, list: listPublish } =
-    TRADERA_QUICKLIST_PUBLISH_LABELS;
 
   const lines: string[] = [
     '// --- Execution step tracking ---',
     '// Each step has: id, label, status (\'pending\'|\'running\'|\'success\'|\'skipped\'|\'error\'), info (null or object)',
-    'const executionSteps = (() => {',
-    `${i1}const steps = [`,
-    ...prefixIds.map((id) => `${i2}${stepEntry(id)},`),
-    `${i1}];`,
-    `${i1}if (listingAction === 'sync') {`,
-    `${i2}steps.push(`,
-    ...syncOnlyIds.map((id, idx) =>
-      `${i3}${stepEntry(id)}${idx < syncOnlyIds.length - 1 ? ',' : ''}`
-    ),
-    `${i2});`,
-    `${i1}} else {`,
-    `${i2}steps.push(`,
-    ...listOnlyIds.map((id, idx) =>
-      `${i3}${stepEntry(id)}${idx < listOnlyIds.length - 1 ? ',' : ''}`
-    ),
-    `${i2});`,
-    `${i1}}`,
-    `${i1}steps.push(`,
-    ...suffixIds.map((id) => {
-      if (id === 'publish') {
-        return (
-          `${i2}{ id: 'publish', ` +
-          `label: listingAction === 'sync' ? '${syncPublish.publish}' ` +
-          `: listingAction === 'relist' ? '${relistPublish.publish}' ` +
-          `: '${listPublish.publish}', status: 'pending', info: null },`
-        );
-      }
-      if (id === 'publish_verify') {
-        return (
-          `${i2}{ id: 'publish_verify', ` +
-          `label: listingAction === 'sync' ? '${syncPublish.publish_verify}' ` +
-          `: '${listPublish.publish_verify}', status: 'pending', info: null },`
-        );
-      }
-      return `${i2}${stepEntry(id)},`;
-    }),
-    `${i1});`,
-    `${i1}return steps;`,
-    '})();',
+    'const QUICKLIST_ACTION_EXECUTION_STEPS = {',
+    `${i1}list: [`,
+    ...buildQuicklistManifestEntries(listSeq, 'list').map((entry) => `${i2}${entry},`),
+    `${i1}],`,
+    `${i1}relist: [`,
+    ...buildQuicklistManifestEntries(relistSeq, 'relist').map((entry) => `${i2}${entry},`),
+    `${i1}],`,
+    `${i1}sync: [`,
+    ...buildQuicklistManifestEntries(syncSeq, 'sync').map((entry) => `${i2}${entry},`),
+    `${i1}],`,
+    '};',
+    'const executionSteps = (',
+    `${i1}Array.isArray(QUICKLIST_ACTION_EXECUTION_STEPS[listingAction])`,
+    `${i1}  ? QUICKLIST_ACTION_EXECUTION_STEPS[listingAction]`,
+    `${i1}  : QUICKLIST_ACTION_EXECUTION_STEPS.list`,
+    `${i1}).map((step) => ({ ...step }));`,
   ];
 
   return lines.join('\n');

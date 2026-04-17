@@ -57,6 +57,8 @@ const connectionSchema = z.object({
   playwrightListingScript: z.string().nullable().optional(),
   playwrightImportScript: z.string().nullable().optional(),
   playwrightImportBaseUrl: z.string().nullable().optional(),
+  playwrightListingActionId: z.string().trim().nullable().optional(),
+  playwrightImportActionId: z.string().trim().nullable().optional(),
   playwrightImportCaptureRoutesJson: z.string().nullable().optional(),
   playwrightFieldMapperJson: z.string().nullable().optional(),
   resetPlaywrightOverrides: z.boolean().optional(),
@@ -337,6 +339,14 @@ export async function PUT_handler(
     ...(typeof data.playwrightImportBaseUrl === 'string' || data.playwrightImportBaseUrl === null
       ? { playwrightImportBaseUrl: data.playwrightImportBaseUrl ?? null }
       : {}),
+    ...(typeof data.playwrightListingActionId === 'string' ||
+    data.playwrightListingActionId === null
+      ? { playwrightListingActionId: data.playwrightListingActionId ?? null }
+      : {}),
+    ...(typeof data.playwrightImportActionId === 'string' ||
+    data.playwrightImportActionId === null
+      ? { playwrightImportActionId: data.playwrightImportActionId ?? null }
+      : {}),
     ...(typeof data.playwrightImportCaptureRoutesJson === 'string' ||
     data.playwrightImportCaptureRoutesJson === null
       ? {
@@ -444,6 +454,8 @@ export async function PUT_handler(
     playwrightListingScript: connection.playwrightListingScript ?? null,
     playwrightImportScript: connection.playwrightImportScript ?? null,
     playwrightImportBaseUrl: connection.playwrightImportBaseUrl ?? null,
+    playwrightListingActionId: connection.playwrightListingActionId ?? null,
+    playwrightImportActionId: connection.playwrightImportActionId ?? null,
     playwrightImportCaptureRoutesJson: connection.playwrightImportCaptureRoutesJson ?? null,
     playwrightFieldMapperJson: connection.playwrightFieldMapperJson ?? null,
     hasPlaywrightListingScript: Boolean(connection.playwrightListingScript?.trim()),

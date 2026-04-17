@@ -52,6 +52,8 @@ export const CONNECTION_DEFAULTS = {
   playwrightListingScript: null,
   playwrightImportScript: null,
   playwrightImportBaseUrl: null,
+  playwrightListingActionId: null,
+  playwrightImportActionId: null,
   playwrightImportCaptureRoutesJson: null,
   playwrightFieldMapperJson: null,
   scanner1688StartUrl: 'https://www.1688.com/',
@@ -354,6 +356,12 @@ export const toConnectionRecord = (doc: unknown): IntegrationConnectionRecord =>
       (d['playwrightImportScript'] as string) ?? CONNECTION_DEFAULTS.playwrightImportScript,
     playwrightImportBaseUrl:
       (d['playwrightImportBaseUrl'] as string) ?? CONNECTION_DEFAULTS.playwrightImportBaseUrl,
+    playwrightListingActionId:
+      (d['playwrightListingActionId'] as string) ??
+      CONNECTION_DEFAULTS.playwrightListingActionId,
+    playwrightImportActionId:
+      (d['playwrightImportActionId'] as string) ??
+      CONNECTION_DEFAULTS.playwrightImportActionId,
     playwrightImportCaptureRoutesJson:
       (d['playwrightImportCaptureRoutesJson'] as string) ??
       CONNECTION_DEFAULTS.playwrightImportCaptureRoutesJson,

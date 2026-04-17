@@ -4,6 +4,15 @@ import type { Browser, BrowserContext, Page } from 'playwright';
 
 import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
 import type { PlaywrightRelistBrowserMode } from '@/shared/contracts/integrations/listings';
+import type {
+  PlaywrightActionBlockConfig,
+  PlaywrightActionExecutionSettings,
+} from '@/shared/contracts/playwright-steps';
+import type { ActionSequenceKey } from '@/shared/lib/browser-execution/action-sequences';
+import {
+  resolveRuntimeActionDefinition,
+  resolveRuntimeActionExecutionSettings,
+} from '@/shared/lib/browser-execution/runtime-action-resolver.server';
 import {
   buildChromiumAntiDetectionContextOptions,
   buildChromiumAntiDetectionLaunchOptions,
@@ -18,6 +27,8 @@ import {
   buildPlaywrightConnectionContextOptions,
   buildPlaywrightConnectionLaunchOptions,
   resolvePlaywrightConnectionRuntime,
+  resolvePlaywrightRuntimeDeviceContext,
+  type PlaywrightContextEnvironmentOverrides,
   type ResolvedPlaywrightConnectionRuntime,
 } from './connection-runtime';
 import type { TraderaPlaywrightRuntimeSettings } from './settings';
@@ -41,6 +52,7 @@ export type OpenPlaywrightConnectionPageSessionInput = {
   connection: IntegrationConnectionRecord;
   instance?: PlaywrightEngineRunInstance | null;
   runtime?: ResolvedPlaywrightConnectionRuntime;
+  runtimeActionKey?: ActionSequenceKey;
   browserPreference?: PlaywrightBrowserPreference;
   headless?: boolean;
   launchSettingsOverrides?: OpenPlaywrightConnectionPageSessionLaunchSettingsOverrides;
@@ -86,12 +98,17 @@ export type OpenPlaywrightConnectionNativeTaskSessionResult =
 
 const resolveRequestedHeadlessForBrowserMode = (
   requestedBrowserMode: PlaywrightRelistBrowserMode | undefined
-): boolean | undefined =>
-  requestedBrowserMode === 'headless'
-    ? true
-    : requestedBrowserMode === 'headed'
-      ? false
-      : undefined;
+): boolean | undefined => {
+  if (requestedBrowserMode === 'headless') {
+    return true;
+  }
+
+  if (requestedBrowserMode === 'headed') {
+    return false;
+  }
+
+  return undefined;
+};
 
 export const resolvePlaywrightEffectiveBrowserMode = ({
   requestedBrowserMode,
@@ -99,14 +116,138 @@ export const resolvePlaywrightEffectiveBrowserMode = ({
 }: {
   requestedBrowserMode: PlaywrightRelistBrowserMode | undefined;
   connectionHeadless: boolean;
-}): 'headed' | 'headless' =>
-  requestedBrowserMode === 'headed'
-    ? 'headed'
-    : requestedBrowserMode === 'headless'
-      ? 'headless'
-      : connectionHeadless
-        ? 'headless'
-        : 'headed';
+}): 'headed' | 'headless' => {
+  if (requestedBrowserMode === 'headed') {
+    return 'headed';
+  }
+
+  if (requestedBrowserMode === 'headless') {
+    return 'headless';
+  }
+
+  return connectionHeadless ? 'headless' : 'headed';
+};
+
+const applyRuntimeActionExecutionSettings = ({
+  runtime,
+  executionSettings,
+}: {
+  runtime: ResolvedPlaywrightConnectionRuntime;
+  executionSettings: PlaywrightActionExecutionSettings | null;
+}): ResolvedPlaywrightConnectionRuntime => {
+  if (executionSettings === null) {
+    return runtime;
+  }
+
+  const settings = { ...runtime.settings };
+  const applySetting = <TKey extends keyof typeof settings>(
+    key: TKey,
+    value: (typeof settings)[TKey] | null
+  ): void => {
+    if (value !== null) {
+      settings[key] = value;
+    }
+  };
+
+  applySetting('headless', executionSettings.headless);
+  applySetting('identityProfile', executionSettings.identityProfile);
+  applySetting('slowMo', executionSettings.slowMo);
+  applySetting('timeout', executionSettings.timeout);
+  applySetting('navigationTimeout', executionSettings.navigationTimeout);
+  applySetting('locale', executionSettings.locale);
+  applySetting('timezoneId', executionSettings.timezoneId);
+  applySetting('humanizeMouse', executionSettings.humanizeMouse);
+  applySetting('mouseJitter', executionSettings.mouseJitter);
+  applySetting('clickDelayMin', executionSettings.clickDelayMin);
+  applySetting('clickDelayMax', executionSettings.clickDelayMax);
+  applySetting('inputDelayMin', executionSettings.inputDelayMin);
+  applySetting('inputDelayMax', executionSettings.inputDelayMax);
+  applySetting('actionDelayMin', executionSettings.actionDelayMin);
+  applySetting('actionDelayMax', executionSettings.actionDelayMax);
+  applySetting('proxyEnabled', executionSettings.proxyEnabled);
+  applySetting('proxyServer', executionSettings.proxyServer);
+  applySetting('proxyUsername', executionSettings.proxyUsername);
+  applySetting('proxyPassword', executionSettings.proxyPassword);
+  applySetting('proxySessionAffinity', executionSettings.proxySessionAffinity);
+  applySetting('proxySessionMode', executionSettings.proxySessionMode);
+  applySetting('proxyProviderPreset', executionSettings.proxyProviderPreset);
+  applySetting('emulateDevice', executionSettings.emulateDevice);
+  applySetting('deviceName', executionSettings.deviceName);
+  const deviceContext = resolvePlaywrightRuntimeDeviceContext(settings);
+
+  return {
+    ...runtime,
+    browserPreference: executionSettings.browserPreference ?? runtime.browserPreference,
+    settings,
+    deviceProfileName: deviceContext.deviceProfileName,
+    deviceContextOptions: deviceContext.deviceContextOptions,
+  };
+};
+
+const resolveBrowserPreparationContextOverrides = (
+  config: PlaywrightActionBlockConfig | null
+): PlaywrightContextEnvironmentOverrides => {
+  if (config === null) {
+    return {};
+  }
+
+  const viewport =
+    config.viewportWidth !== null && config.viewportHeight !== null
+      ? { width: config.viewportWidth, height: config.viewportHeight }
+      : null;
+  const geolocation =
+    config.geolocationLatitude !== null && config.geolocationLongitude !== null
+      ? {
+          latitude: config.geolocationLatitude,
+          longitude: config.geolocationLongitude,
+        }
+      : null;
+
+  return {
+    viewport,
+    locale: config.locale,
+    timezoneId: config.timezoneId,
+    userAgent: config.userAgent,
+    colorScheme: config.colorScheme,
+    reducedMotion: config.reducedMotion,
+    geolocation,
+    permissions: config.permissions,
+  };
+};
+
+const resolvePlaywrightPageSessionRuntime = async (
+  input: OpenPlaywrightConnectionPageSessionInput
+): Promise<ResolvedPlaywrightConnectionRuntime> => {
+  const runtime =
+    input.runtime ?? (await resolvePlaywrightConnectionRuntime(input.connection));
+  const runtimeActionExecutionSettings =
+    input.runtimeActionKey === undefined
+      ? null
+      : await resolveRuntimeActionExecutionSettings(input.runtimeActionKey);
+
+  return applyRuntimeActionExecutionSettings({
+    runtime,
+    executionSettings: runtimeActionExecutionSettings,
+  });
+};
+
+const resolvePlaywrightPageSessionContextOverrides = async (
+  input: Pick<OpenPlaywrightConnectionPageSessionInput, 'runtimeActionKey'>
+): Promise<PlaywrightContextEnvironmentOverrides> => {
+  if (input.runtimeActionKey === undefined) {
+    return {};
+  }
+
+  const action = await resolveRuntimeActionDefinition(input.runtimeActionKey);
+  const browserPreparationBlock = action.blocks.find(
+    (block) =>
+      block.kind === 'runtime_step' &&
+      block.enabled !== false &&
+      block.refId === 'browser_preparation'
+  ) ?? null;
+
+  return resolveBrowserPreparationContextOverrides(browserPreparationBlock?.config ?? null);
+};
 
 export const resolvePlaywrightBrowserPreferenceFromLabel = ({
   launchLabel,
@@ -148,29 +289,30 @@ export const buildPlaywrightNativeTaskMetadata = <
 }> &
   TAdditional => ({
   browserMode: input.session.effectiveBrowserMode,
-  ...(input.session.requestedBrowserMode
+  ...(input.session.requestedBrowserMode !== null
     ? { requestedBrowserMode: input.session.requestedBrowserMode }
     : {}),
   browserPreference: input.session.effectiveBrowserPreference,
-  ...(input.session.requestedBrowserPreference
+  ...(input.session.requestedBrowserPreference !== null
     ? { requestedBrowserPreference: input.session.requestedBrowserPreference }
     : {}),
   browserLabel: input.session.sessionMetadata.browserLabel,
   fallbackMessages: input.session.sessionMetadata.fallbackMessages,
   playwright: input.session.sessionMetadata,
-  ...(input.additional ?? ({} as TAdditional)),
+  ...(input.additional ?? {}),
 });
 
 export const openPlaywrightConnectionPageSession = async (
   input: OpenPlaywrightConnectionPageSessionInput
 ): Promise<OpenPlaywrightConnectionPageSessionResult> => {
-  const runtime =
-    input.runtime ?? (await resolvePlaywrightConnectionRuntime(input.connection));
-  const browserPreference = input.browserPreference ?? runtime.browserPreference;
+  const resolvedRuntime = await resolvePlaywrightPageSessionRuntime(input);
+  const contextEnvironmentOverrides =
+    await resolvePlaywrightPageSessionContextOverrides(input);
+  const browserPreference = input.browserPreference ?? resolvedRuntime.browserPreference;
   const headless =
-    typeof input.headless === 'boolean' ? input.headless : runtime.settings.headless;
+    typeof input.headless === 'boolean' ? input.headless : resolvedRuntime.settings.headless;
   const launchSettings = {
-    ...runtime.settings,
+    ...resolvedRuntime.settings,
     ...(input.launchSettingsOverrides ?? {}),
   };
   const launchOptionsWithProxyAffinity = applyPlaywrightProxySessionAffinity({
@@ -181,10 +323,10 @@ export const openPlaywrightConnectionPageSession = async (
       settings: launchSettings,
       headless,
     }),
-    identityProfile: runtime.settings.identityProfile,
+    identityProfile: resolvedRuntime.settings.identityProfile,
     connectionId: input.connection.id,
     integrationId: input.connection.integrationId,
-    personaId: runtime.personaId,
+    personaId: resolvedRuntime.personaId,
   }).launchOptions;
 
   const launchResult = await launchPlaywrightBrowser(
@@ -194,14 +336,15 @@ export const openPlaywrightConnectionPageSession = async (
 
   const contextOptions = buildChromiumAntiDetectionContextOptions(
     buildPlaywrightConnectionContextOptions({
-      runtime,
+      runtime: resolvedRuntime,
       viewport: input.viewport,
+      environmentOverrides: contextEnvironmentOverrides,
     }),
-    runtime.settings.identityProfile
+    resolvedRuntime.settings.identityProfile
   );
   const context = await launchResult.browser.newContext(contextOptions);
-  context.setDefaultTimeout(runtime.settings.timeout);
-  context.setDefaultNavigationTimeout(runtime.settings.navigationTimeout);
+  context.setDefaultTimeout(resolvedRuntime.settings.timeout);
+  context.setDefaultNavigationTimeout(resolvedRuntime.settings.navigationTimeout);
   await installChromiumAntiDetectionInitScript(context, {
     locale: contextOptions.locale,
     userAgent: contextOptions.userAgent,
@@ -210,7 +353,7 @@ export const openPlaywrightConnectionPageSession = async (
   const page = await context.newPage();
 
   return {
-    runtime,
+    runtime: resolvedRuntime,
     instance: input.instance ?? null,
     browser: launchResult.browser,
     context,
@@ -244,6 +387,7 @@ export const openPlaywrightConnectionNativeTaskSession = async (
   const session = await openPlaywrightConnectionPageSession({
     connection: input.connection,
     instance: input.instance,
+    runtimeActionKey: input.runtimeActionKey,
     browserPreference: input.requestedBrowserPreference,
     headless: resolveRequestedHeadlessForBrowserMode(input.requestedBrowserMode),
     viewport: input.viewport,

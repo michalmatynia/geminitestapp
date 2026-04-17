@@ -3,14 +3,31 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const {
   resolvePlaywrightConnectionRuntimeMock,
   launchPlaywrightBrowserMock,
+  resolveRuntimeActionExecutionSettingsMock,
+  resolveRuntimeActionDefinitionMock,
 } = vi.hoisted(() => ({
   resolvePlaywrightConnectionRuntimeMock: vi.fn(),
   launchPlaywrightBrowserMock: vi.fn(),
+  resolveRuntimeActionExecutionSettingsMock: vi.fn(),
+  resolveRuntimeActionDefinitionMock: vi.fn(),
 }));
 
 vi.mock('./connection-runtime', () => ({
   resolvePlaywrightConnectionRuntime: (...args: unknown[]) =>
     resolvePlaywrightConnectionRuntimeMock(...args),
+  resolvePlaywrightRuntimeDeviceContext: (settings: { emulateDevice?: boolean; deviceName?: string }) =>
+    settings.emulateDevice && settings.deviceName === 'Pixel 7'
+      ? {
+          deviceProfileName: 'Pixel 7',
+          deviceContextOptions: {
+            viewport: { width: 412, height: 915 },
+            userAgent: 'pixel-ua',
+          },
+        }
+      : {
+          deviceProfileName: null,
+          deviceContextOptions: {},
+        },
   buildPlaywrightConnectionLaunchOptions: (...args: unknown[]) =>
     ({
       fromHelper: true,
@@ -27,6 +44,13 @@ vi.mock('@/shared/lib/playwright/browser-launch', () => ({
   launchPlaywrightBrowser: (...args: unknown[]) => launchPlaywrightBrowserMock(...args),
 }));
 
+vi.mock('@/shared/lib/browser-execution/runtime-action-resolver.server', () => ({
+  resolveRuntimeActionExecutionSettings: (...args: unknown[]) =>
+    resolveRuntimeActionExecutionSettingsMock(...args),
+  resolveRuntimeActionDefinition: (...args: unknown[]) =>
+    resolveRuntimeActionDefinitionMock(...args),
+}));
+
 import {
   buildPlaywrightConnectionSessionMetadata,
   buildPlaywrightNativeTaskMetadata,
@@ -39,6 +63,29 @@ import {
 describe('openPlaywrightConnectionPageSession', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    resolveRuntimeActionExecutionSettingsMock.mockResolvedValue(null);
+    resolveRuntimeActionDefinitionMock.mockResolvedValue({
+      id: 'runtime_action__tradera_standard_list',
+      name: 'Tradera Standard List',
+      description: null,
+      runtimeKey: 'tradera_standard_list',
+      blocks: [],
+      stepSetIds: [],
+      personaId: null,
+      executionSettings: {
+        headless: null,
+        browserPreference: null,
+        emulateDevice: null,
+        deviceName: null,
+        slowMo: null,
+        timeout: null,
+        navigationTimeout: null,
+        locale: null,
+        timezoneId: null,
+      },
+      createdAt: '2026-04-17T00:00:00.000Z',
+      updatedAt: '2026-04-17T00:00:00.000Z',
+    });
   });
 
   it('opens a configured browser page session with unified runtime settings', async () => {
@@ -218,6 +265,149 @@ describe('openPlaywrightConnectionPageSession', () => {
       })
     );
     expect(addInitScriptMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('applies action-owned execution settings before the browser session opens', async () => {
+    const newContextMock = vi.fn().mockResolvedValue({
+      setDefaultTimeout: vi.fn(),
+      setDefaultNavigationTimeout: vi.fn(),
+      addInitScript: vi.fn().mockResolvedValue(undefined),
+      newPage: vi.fn().mockResolvedValue({}),
+      close: vi.fn().mockResolvedValue(undefined),
+    });
+
+    resolvePlaywrightConnectionRuntimeMock.mockResolvedValue({
+      browserPreference: 'auto',
+      deviceProfileName: null,
+      deviceContextOptions: {},
+      settings: {
+        identityProfile: 'default',
+        headless: true,
+        slowMo: 50,
+        timeout: 15_000,
+        navigationTimeout: 30_000,
+        locale: '',
+        timezoneId: '',
+        proxyEnabled: false,
+        proxyServer: '',
+        proxyUsername: '',
+        proxyPassword: '',
+        proxySessionAffinity: false,
+        proxySessionMode: 'sticky',
+        proxyProviderPreset: 'custom',
+      },
+      storageState: null,
+      personaId: 'persona-1',
+    });
+    resolveRuntimeActionExecutionSettingsMock.mockResolvedValue({
+      headless: false,
+      browserPreference: 'chrome',
+      emulateDevice: true,
+      deviceName: 'Pixel 7',
+      slowMo: 125,
+      timeout: 45_000,
+      navigationTimeout: 46_000,
+      locale: 'en-US',
+      timezoneId: 'Europe/Warsaw',
+    });
+    resolveRuntimeActionDefinitionMock.mockResolvedValue({
+      id: 'custom_tradera_standard',
+      name: 'Custom Tradera Standard',
+      description: null,
+      runtimeKey: 'tradera_standard_list',
+      blocks: [
+        {
+          id: 'block_1',
+          kind: 'runtime_step',
+          refId: 'browser_preparation',
+          enabled: true,
+          label: null,
+          config: {
+            viewportWidth: 1440,
+            viewportHeight: 900,
+            settleDelayMs: 300,
+            locale: 'pl-PL',
+            timezoneId: 'Europe/Warsaw',
+            userAgent: 'custom-ua',
+            colorScheme: 'dark',
+            reducedMotion: 'reduce',
+            geolocationLatitude: 52.2297,
+            geolocationLongitude: 21.0122,
+            permissions: ['geolocation'],
+          },
+        },
+      ],
+      stepSetIds: [],
+      personaId: null,
+      executionSettings: {
+        headless: false,
+        browserPreference: 'chrome',
+        emulateDevice: true,
+        deviceName: 'Pixel 7',
+        slowMo: 125,
+        timeout: 45_000,
+        navigationTimeout: 46_000,
+        locale: 'en-US',
+        timezoneId: 'Europe/Warsaw',
+      },
+      createdAt: '2026-04-17T00:00:00.000Z',
+      updatedAt: '2026-04-17T00:00:00.000Z',
+    });
+    launchPlaywrightBrowserMock.mockResolvedValue({
+      browser: {
+        newContext: newContextMock,
+        close: vi.fn().mockResolvedValue(undefined),
+      },
+      label: 'Chrome',
+      fallbackMessages: [],
+    });
+
+    await openPlaywrightConnectionPageSession({
+      connection: { id: 'connection-1' } as never,
+      runtimeActionKey: 'tradera_standard_list',
+    });
+
+    expect(resolveRuntimeActionExecutionSettingsMock).toHaveBeenCalledWith('tradera_standard_list');
+    expect(resolveRuntimeActionDefinitionMock).toHaveBeenCalledWith('tradera_standard_list');
+    expect(launchPlaywrightBrowserMock).toHaveBeenCalledWith(
+      'chrome',
+      expect.objectContaining({
+        settings: expect.objectContaining({
+          emulateDevice: true,
+          deviceName: 'Pixel 7',
+          slowMo: 125,
+          timeout: 45_000,
+          navigationTimeout: 46_000,
+          locale: 'en-US',
+          timezoneId: 'Europe/Warsaw',
+        }),
+        headless: false,
+      })
+    );
+    expect(newContextMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        runtime: expect.objectContaining({
+          deviceProfileName: 'Pixel 7',
+          deviceContextOptions: {
+            viewport: { width: 412, height: 915 },
+            userAgent: 'pixel-ua',
+          },
+        }),
+        environmentOverrides: {
+          viewport: { width: 1440, height: 900 },
+          locale: 'pl-PL',
+          timezoneId: 'Europe/Warsaw',
+          userAgent: 'custom-ua',
+          colorScheme: 'dark',
+          reducedMotion: 'reduce',
+          geolocation: {
+            latitude: 52.2297,
+            longitude: 21.0122,
+          },
+          permissions: ['geolocation'],
+        },
+      })
+    );
   });
 
   it('reuses a provided runtime and applies launch setting overrides', async () => {

@@ -339,6 +339,7 @@ export const runVintedBrowserListing = async ({
 
   return runPlaywrightConnectionNativeTask({
     connection,
+    runtimeActionKey: actionKey,
     instance: createVintedBrowserListingPlaywrightInstance({
       connectionId: connection.id,
       integrationId: connection.integrationId,

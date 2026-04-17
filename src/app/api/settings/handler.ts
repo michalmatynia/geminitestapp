@@ -67,6 +67,7 @@ import {
   getFrontPageRedirectPath,
   normalizeFrontPageApp,
 } from '@/shared/lib/front-page-app';
+import { parseAndValidatePlaywrightActionsSettingValue } from '@/shared/lib/browser-execution/playwright-actions-settings-validation';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { resetServerLoggingControlsCache } from '@/shared/lib/observability/logging-controls-server';
 import { decodeSettingValue, encodeSettingValue } from '@/shared/lib/settings/settings-compression';
@@ -100,6 +101,7 @@ import {
 import { isLiteSettingsKey } from '@/shared/lib/settings-lite-keys';
 import { clearLiteSettingsServerCache } from '@/shared/lib/settings-lite-server-cache';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { PLAYWRIGHT_ACTIONS_SETTINGS_KEY } from '@/shared/contracts/playwright-steps';
 
 
 const shouldLog = () => process.env['DEBUG_SETTINGS'] === 'true';
@@ -402,6 +404,15 @@ const normalizeIncomingSettingValue = (
   key: string,
   value: string
 ): { ok: true; value: string } | { ok: false; error: string } => {
+  if (key === PLAYWRIGHT_ACTIONS_SETTINGS_KEY) {
+    const result = parseAndValidatePlaywrightActionsSettingValue(value);
+    if (!result.ok) {
+      return result;
+    }
+
+    return { ok: true, value: result.value };
+  }
+
   if (key !== FRONT_PAGE_SETTING_KEY) {
     return { ok: true, value };
   }

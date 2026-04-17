@@ -2,6 +2,7 @@ import 'server-only';
 
 import type { BrowserListingResultDto } from '@/shared/contracts/integrations/listings';
 import { internalError, type AppError } from '@/shared/errors/app-error';
+import type { ActionSequenceKey } from '@/shared/lib/browser-execution/action-sequences';
 
 import {
   buildPlaywrightNativeTaskMetadata,
@@ -36,6 +37,7 @@ export type RunPlaywrightConnectionNativeTaskInput<
   TResult,
   TErrorAdditional extends Record<string, unknown> = Record<string, unknown>,
 > = OpenPlaywrightConnectionNativeTaskSessionInput & {
+  runtimeActionKey?: ActionSequenceKey;
   execute: (session: OpenPlaywrightConnectionNativeTaskSessionResult) => Promise<TResult>;
   buildErrorAdditional?: (input: {
     error: unknown;
@@ -102,6 +104,7 @@ export const runPlaywrightConnectionNativeTask = async <
   const session = await openPlaywrightConnectionNativeTaskSession({
     connection: input.connection,
     instance: input.instance,
+    runtimeActionKey: input.runtimeActionKey,
     requestedBrowserMode: input.requestedBrowserMode,
     requestedBrowserPreference: input.requestedBrowserPreference,
     viewport: input.viewport,

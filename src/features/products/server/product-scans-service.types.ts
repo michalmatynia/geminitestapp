@@ -34,7 +34,7 @@ export type AmazonScanScriptResult = {
   steps: ProductScanStep[];
 };
 
-export type SupplierScanScriptResult = {
+export type SupplierScanRuntimeResult = {
   status:
     | 'matched'
     | 'probe_ready'

@@ -174,6 +174,7 @@ describe('playwright native task helpers', () => {
         id: 'connection-1',
       },
       instance: undefined,
+      runtimeActionKey: undefined,
       requestedBrowserMode: undefined,
       requestedBrowserPreference: undefined,
       viewport: undefined,

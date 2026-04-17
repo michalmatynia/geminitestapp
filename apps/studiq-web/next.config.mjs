@@ -20,6 +20,12 @@ const nextConfig = {
   ],
   turbopack: {
     root: monorepoRoot,
+    resolveAlias: {
+      '@/app': path.resolve(monorepoRoot, 'src/app'),
+      '@/features': path.resolve(monorepoRoot, 'src/features'),
+      '@/shared': path.resolve(monorepoRoot, 'src/shared'),
+      '@docs': path.resolve(monorepoRoot, 'docs'),
+    },
   },
   outputFileTracingRoot: monorepoRoot,
   typescript: {

@@ -202,6 +202,12 @@ export const folderTreeSettingsMetaByInstance: Record<
     fileHint: 'Example: playwright_action',
     folderHint: 'Example: playwright_step',
   },
+  playwright_step_seq_action_runs: {
+    title: 'Playwright Action Runs',
+    description: 'Controls the retained Step Sequencer action run history tree.',
+    fileHint: 'Example: playwright_action_run_step',
+    folderHint: 'Example: playwright_action_run',
+  },
 };
 
 export const folderTreePersistFeedbackByInstance: Record<
@@ -327,6 +333,11 @@ export const folderTreePersistFeedbackByInstance: Record<
     notifySuccess: false,
     notifyError: true,
     successMessage: 'Step sequence updated.',
+  },
+  playwright_step_seq_action_runs: {
+    notifySuccess: false,
+    notifyError: true,
+    successMessage: 'Action run history tree updated.',
   },
 };
 

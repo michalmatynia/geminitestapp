@@ -4,6 +4,7 @@ import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-cont
 import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
 import type { PlaywrightRelistBrowserMode } from '@/shared/contracts/integrations/listings';
 import type { PlaywrightSettings } from '@/shared/contracts/playwright';
+import type { ActionSequenceKey } from '@/shared/lib/browser-execution/action-sequences';
 import { internalError } from '@/shared/errors/app-error';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
@@ -37,6 +38,11 @@ const TRADERA_NEW_LISTING_PATH_PATTERN =
   /^\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?selling\/new\/?$/i;
 const TRADERA_LEGACY_LISTING_PATH_PATTERN =
   /^\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?selling\/?$/i;
+
+export const PROGRAMMABLE_PLAYWRIGHT_LISTING_RUNTIME_ACTION_KEY =
+  'playwright_programmable_listing' as const satisfies ActionSequenceKey;
+export const PROGRAMMABLE_PLAYWRIGHT_IMPORT_RUNTIME_ACTION_KEY =
+  'playwright_programmable_import' as const satisfies ActionSequenceKey;
 
 const normalizeTraderaListingFormUrl = (value: string | null | undefined): string => {
   const trimmed = value?.trim();
@@ -182,6 +188,7 @@ export const runPlaywrightListingScript = async ({
   disableStartUrlBootstrap = false,
   failureHoldOpenMs,
   runtimeSettingsOverrides,
+  runtimeActionKey,
   onRunStarted,
 }: {
   script: string;
@@ -194,12 +201,18 @@ export const runPlaywrightListingScript = async ({
   disableStartUrlBootstrap?: boolean;
   failureHoldOpenMs?: number;
   runtimeSettingsOverrides?: Partial<PlaywrightSettings>;
+  runtimeActionKey?: ActionSequenceKey;
   onRunStarted?: ((runId: string) => Promise<void> | void) | undefined;
 }): Promise<PlaywrightListingResult> => {
   const startUrl = disableStartUrlBootstrap ? undefined : resolveListingRunStartUrl(input);
   const listingId = extractTrimmedString(input['listingId']);
   const sharedTaskInput = {
     connection,
+    ...(typeof connection.playwrightListingActionId === 'string' &&
+    connection.playwrightListingActionId.trim().length > 0
+      ? { actionId: connection.playwrightListingActionId.trim() }
+      : {}),
+    ...(runtimeActionKey !== undefined ? { runtimeActionKey } : {}),
     request: {
       script,
       input,
@@ -294,15 +307,22 @@ export const runPlaywrightImportScript = async ({
   connection,
   contextRegistry,
   timeoutMs = 240_000,
+  runtimeActionKey,
 }: {
   script: string;
   input: Record<string, unknown>;
   connection: IntegrationConnectionRecord;
   contextRegistry?: ContextRegistryConsumerEnvelope | null;
   timeoutMs?: number;
+  runtimeActionKey?: ActionSequenceKey;
 }): Promise<PlaywrightImportResult> => {
   const { run, outputs } = await runPlaywrightConnectionScriptTask({
     connection,
+    ...(typeof connection.playwrightImportActionId === 'string' &&
+    connection.playwrightImportActionId.trim().length > 0
+      ? { actionId: connection.playwrightImportActionId.trim() }
+      : {}),
+    ...(runtimeActionKey !== undefined ? { runtimeActionKey } : {}),
     request: {
       script,
       input,
@@ -353,6 +373,7 @@ export const runPlaywrightProgrammableListingForConnection = async ({
         input,
         connection,
         browserMode,
+        runtimeActionKey: PROGRAMMABLE_PLAYWRIGHT_LISTING_RUNTIME_ACTION_KEY,
       }),
     mapResult: async (result) => result,
   });
@@ -373,6 +394,7 @@ export const runPlaywrightProgrammableImportForConnection = async ({
         script,
         input,
         connection,
+        runtimeActionKey: PROGRAMMABLE_PLAYWRIGHT_IMPORT_RUNTIME_ACTION_KEY,
       }),
     mapResult: async (result) => result,
   });

@@ -20,12 +20,18 @@ import {
 import { applyPlaywrightProxySessionAffinity } from '@/shared/lib/playwright/proxy-affinity';
 import { sanitizePlaywrightStorageState } from '@/shared/lib/playwright/storage-state';
 import { defaultPlaywrightSettings } from '@/shared/lib/playwright/settings';
+import { recordPlaywrightActionRunSnapshot } from '@/shared/lib/playwright/action-run-history-recorder.server';
 import { evaluateOutboundUrlPolicy } from '@/shared/lib/security/outbound-url-policy';
 import { getFsPromises } from '@/shared/lib/files/runtime-fs';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
+import type { PlaywrightActionRunRequestSummary } from '@/shared/contracts/playwright-action-runs';
 
 import { parseUserScript, safeStringify } from './playwright-node-runner.parser';
+import {
+  executeSupplier1688ProbeScanRuntime,
+  SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY,
+} from './playwright-node-runner.supplier-1688-runtime';
 export { validatePlaywrightNodeScript } from './playwright-node-runner.parser';
 export * from './playwright-node-runner.types';
 import type {
@@ -456,6 +462,7 @@ const buildBaseRunState = (runId: string): PlaywrightNodeRunRecord => {
     instance: null,
     artifacts: [],
     logs: [],
+    requestSummary: null,
   };
 };
 
@@ -479,9 +486,11 @@ const normalizeRunInstance = (
         .map((tag) => (typeof tag === 'string' ? tag.trim() : ''))
         .filter((tag) => tag.length > 0)
     : [];
+  const normalizedFamily = toOptionalString(value.family) as PlaywrightNodeRunInstance['family'];
 
   return {
     kind: normalizedKind as PlaywrightNodeRunInstance['kind'],
+    family: normalizedFamily ?? null,
     label: toOptionalString(value.label),
     connectionId: toOptionalString(value.connectionId),
     integrationId: toOptionalString(value.integrationId),
@@ -506,11 +515,44 @@ export const updateRunState = async (
       patch.instance === undefined
         ? (base.instance ?? null)
         : normalizeRunInstance(patch.instance ?? null),
+    requestSummary:
+      patch.requestSummary === undefined
+        ? (base.requestSummary ?? null)
+        : (patch.requestSummary ?? null),
     artifacts: patch.artifacts ?? base.artifacts ?? [],
     logs: patch.logs ?? base.logs ?? [],
   };
   await writeRunState(next);
+  await recordPlaywrightActionRunSnapshot(next).catch((error: unknown) => {
+    void ErrorSystem.captureException(error, {
+      service: 'playwright-node-runner',
+      action: 'record-action-run-history',
+      runId,
+    });
+  });
   return next;
+};
+
+const summarizePlaywrightRunRequest = (
+  request: PlaywrightNodeRunRequest
+): PlaywrightActionRunRequestSummary => {
+  const summary: PlaywrightActionRunRequestSummary = {};
+  if (request.startUrl) summary.startUrl = request.startUrl;
+  if (request.browserEngine) summary.browserEngine = request.browserEngine;
+  if (typeof request.timeoutMs === 'number') summary.timeoutMs = request.timeoutMs;
+  if (request.runtimeKey) summary.runtimeKey = request.runtimeKey;
+  if (request.actionId) summary.actionId = request.actionId;
+  if (request.actionName) summary.actionName = request.actionName;
+  if (request.selectorProfile) summary.selectorProfile = request.selectorProfile;
+  if (request.input && isObjectRecord(request.input)) summary.input = request.input;
+  if (request.personaId) {
+    summary.input = {
+      ...(summary.input ?? {}),
+      personaId: request.personaId,
+    };
+  }
+  if (request.capture && isObjectRecord(request.capture)) summary.capture = request.capture;
+  return summary;
 };
 
 const normalizeSettingsOverrides = (
@@ -1115,7 +1157,6 @@ const executePlaywrightNodeRun = async (
       outputs: { ...emittedOutputs },
       inlineArtifacts: [...inlineArtifacts],
     });
-    const userScript = parseUserScript(request.script, logs);
     const pauseForRange = async (min: number, max: number): Promise<number> => {
       const delayMs = pickDelayInRange(min, max);
       if (delayMs > 0) {
@@ -1413,9 +1454,26 @@ const executePlaywrightNodeRun = async (
     };
 
     const returnValue = await withTimeout(
-      Promise.resolve(userScript(userContext)),
+      request.runtimeKey === SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY
+        ? executeSupplier1688ProbeScanRuntime({
+            page,
+            input: request.input ?? {},
+            emit: userContext.emit,
+            log: userContext.log,
+            artifacts: userContext.artifacts,
+            helpers: userContext.helpers,
+          })
+        : Promise.resolve(
+            parseUserScript(
+              request.script ??
+                'export default async function run() { throw new Error("Playwright request is missing script."); }',
+              logs
+            )(userContext)
+          ),
       timeoutMs,
-      'Playwright script timed out.'
+      request.runtimeKey === SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY
+        ? '1688 supplier probe runtime timed out.'
+        : 'Playwright script timed out.'
     );
 
     await captureFinalRunArtifacts({
@@ -1509,8 +1567,16 @@ export const enqueuePlaywrightNodeRun = async (input: {
     ...buildBaseRunState(runId),
     ownerUserId: input.ownerUserId?.trim() || null,
     instance: normalizeRunInstance(input.instance ?? null),
+    requestSummary: summarizePlaywrightRunRequest(input.request),
   };
   await writeRunState(queuedState);
+  await recordPlaywrightActionRunSnapshot(queuedState).catch((error: unknown) => {
+    void ErrorSystem.captureException(error, {
+      service: 'playwright-node-runner',
+      action: 'record-action-run-history',
+      runId,
+    });
+  });
 
   if (input.waitForResult) {
     return executePlaywrightNodeRun(runId, input.request);

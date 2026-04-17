@@ -29,6 +29,7 @@ export const integrationConnectionSchema = namedDtoSchema.extend({
   playwrightProxyServer: z.string().nullable().optional(),
   playwrightProxyUsername: z.string().nullable().optional(),
   playwrightProxyPassword: z.string().nullable().optional(),
+  playwrightProxyHasPassword: z.boolean().optional(),
   playwrightProxySessionAffinity: z.boolean().optional(),
   playwrightProxySessionMode: z.enum(['sticky', 'rotate']).nullable().optional(),
   playwrightProxyProviderPreset: z
@@ -80,6 +81,8 @@ export const integrationConnectionSchema = namedDtoSchema.extend({
   playwrightListingScript: z.string().nullable().optional(),
   playwrightImportScript: z.string().nullable().optional(),
   playwrightImportBaseUrl: z.string().nullable().optional(),
+  playwrightListingActionId: z.string().nullable().optional(),
+  playwrightImportActionId: z.string().nullable().optional(),
   /** JSON-encoded import config. Supports either PlaywrightConfigCaptureRoute[] or { routes, appearanceMode }. */
   playwrightImportCaptureRoutesJson: z.string().nullable().optional(),
   /** JSON-encoded key→field mapping: { sourceKey: string, targetField: string }[] */

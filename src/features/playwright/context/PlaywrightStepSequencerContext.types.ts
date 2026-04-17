@@ -1,6 +1,8 @@
 import type {
   PlaywrightAction,
   PlaywrightActionBlock,
+  PlaywrightActionBlockConfig,
+  PlaywrightActionExecutionSettings,
   PlaywrightFlow,
   PlaywrightStep,
   PlaywrightStepSet,
@@ -50,6 +52,8 @@ export interface PlaywrightStepSequencerActionState {
   actionBlocks: PlaywrightActionBlock[];
   /** Persona to use when running the action. */
   actionPersonaId: string | null;
+  /** Action-owned Playwright execution settings. */
+  actionExecutionSettings: PlaywrightActionExecutionSettings;
   /** Draft name for saving the action. */
   actionDraftName: string;
   /** Draft description for saving the action. */
@@ -59,6 +63,10 @@ export interface PlaywrightStepSequencerActionState {
    * handleLoadActionIntoConstructor). "Update Action" overwrites it in place.
    */
   editingActionId: string | null;
+  /** Runtime key for the action being edited, when applicable. */
+  editingActionRuntimeKey: string | null;
+  /** Validation errors that currently block updating a runtime action. */
+  actionValidationErrors: string[];
 }
 
 export interface PlaywrightResolvedActionBlock {
@@ -102,6 +110,8 @@ export interface PlaywrightStepSequencerContextType
   orphanedActionStepIds: Set<string>;
   /** Step Set IDs that are referenced by actions but no longer exist. */
   orphanedStepSetIds: Set<string>;
+  /** Runtime-action load errors keyed by saved action id. */
+  runtimeActionLoadErrorsById: Record<string, string>;
 
   // --- Filter actions ---
   setSearchQuery: (q: string) => void;
@@ -140,6 +150,10 @@ export interface PlaywrightStepSequencerContextType
   handleDeleteAction: (id: string) => Promise<void>;
   handleDuplicateAction: (id: string) => Promise<void>;
   handleLoadActionIntoConstructor: (id: string) => void;
+  handleResetRuntimeActionToSeed: (id: string) => Promise<void>;
+  handleCloneRuntimeActionAsDraft: (id: string) => Promise<void>;
+  handleResetAllRuntimeActionsToSeed: (runtimeKeys?: string[]) => Promise<void>;
+  handleCloneAllRuntimeActionsAsDrafts: (runtimeKeys?: string[]) => Promise<void>;
 
   // --- Cleanup ---
   handleCleanOrphanedSteps: () => Promise<void>;
@@ -161,8 +175,13 @@ export interface PlaywrightStepSequencerContextType
   handleRemoveFromAction: (index: number) => void;
   handleMoveActionItem: (from: number, to: number) => void;
   handleToggleActionBlockEnabled: (index: number) => void;
+  handleUpdateActionBlockConfig: (
+    index: number,
+    updates: Partial<PlaywrightActionBlockConfig>
+  ) => void;
   handleClearAction: () => void;
   setActionPersonaId: (id: string | null) => void;
+  setActionExecutionSettings: (settings: PlaywrightActionExecutionSettings) => void;
   setActionDraftName: (name: string) => void;
   setActionDraftDescription: (description: string | null) => void;
   handleSaveAction: () => Promise<void>;

@@ -202,7 +202,7 @@ describe('useIntegrationsActionsImpl', () => {
     };
     const { result } = renderHook(() => useIntegrationsActionsImpl(args));
 
-    await result.current.handleSavePlaywrightSettings();
+    await result.current.handleSavePlaywrightFallbackSettings();
 
     expect(upsertConnectionMutateAsyncMock).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -419,7 +419,7 @@ describe('useIntegrationsActionsImpl', () => {
     };
     const { result } = renderHook(() => useIntegrationsActionsImpl(args));
 
-    await result.current.handleSavePlaywrightSettings();
+    await result.current.handleSavePlaywrightFallbackSettings();
 
     const [{ payload }] = upsertConnectionMutateAsyncMock.mock.calls.at(-1) as [
       { payload: Record<string, unknown> },

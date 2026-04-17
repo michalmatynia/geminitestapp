@@ -61,6 +61,10 @@ vi.mock('./form/ProductFormGeneral', () => ({
   default: () => <div data-testid='product-form-general'>general tab</div>,
 }));
 
+vi.mock('./form/ProductFormOther', () => ({
+  default: () => <div data-testid='product-form-other'>other tab</div>,
+}));
+
 vi.mock('../hooks/useProductFormValidator', () => ({
   useProductFormValidator: (...args: unknown[]) => useProductFormValidatorMock(...args),
 }));

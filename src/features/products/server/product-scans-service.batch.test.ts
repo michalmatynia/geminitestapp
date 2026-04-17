@@ -31,6 +31,7 @@ const mocks = vi.hoisted(() => ({
   resolveProductScannerAmazonCandidateEvaluatorProbeConfigMock: vi.fn(),
   resolveProductScannerAmazonCandidateEvaluatorExtractionConfigMock: vi.fn(),
   resolveProductScanner1688CandidateEvaluatorConfigMock: vi.fn(),
+  resolveSupplier1688SelectorRegistryNativeRuntimeMock: vi.fn(),
   runBrainChatCompletionMock: vi.fn(),
   evaluate1688SupplierCandidateMatchMock: vi.fn(),
   captureExceptionMock: vi.fn(),
@@ -65,6 +66,11 @@ vi.mock('@/features/integrations/server', () => ({
   getIntegrationRepository: (...args: unknown[]) => mocks.getIntegrationRepositoryMock(...args),
   get1688DefaultConnectionId: (...args: unknown[]) =>
     mocks.get1688DefaultConnectionIdMock(...args),
+}));
+
+vi.mock('@/features/integrations/services/supplier-1688-selector-registry', () => ({
+  resolveSupplier1688SelectorRegistryNativeRuntime: (...args: unknown[]) =>
+    mocks.resolveSupplier1688SelectorRegistryNativeRuntimeMock(...args),
 }));
 
 vi.mock('@/features/products/performance/cached-service', () => ({
@@ -122,6 +128,10 @@ vi.mock('@/shared/lib/ai-brain/server-runtime-client', () => ({
 }));
 
 import type { ProductScanRecord } from '@/shared/contracts/product-scans';
+import {
+  SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY,
+  SUPPLIER_1688_PROBE_SCAN_SELECTOR_PROFILE,
+} from '@/shared/lib/browser-execution/supplier-1688-runtime-constants';
 
 import {
   queue1688BatchProductScans,
@@ -231,6 +241,30 @@ describe('product-scans-service batch operations', () => {
       ]),
     });
     mocks.get1688DefaultConnectionIdMock.mockResolvedValue('connection-1688');
+    mocks.resolveSupplier1688SelectorRegistryNativeRuntimeMock.mockResolvedValue({
+      selectorRuntime: {
+        fileInputSelectors: ['input[type="file"]'],
+        imageSearchEntrySelectors: ['button:has-text("以图搜")'],
+        searchResultReadySelectors: ['a[href*="/offer/"]'],
+        supplierReadySelectors: ['h1'],
+        submitSearchSelectors: ['button:has-text("搜图")'],
+        loginTextHints: ['登录'],
+        captchaTextHints: ['验证码'],
+        accessBlockTextHints: ['访问受限'],
+        barrierTitleHints: ['captcha'],
+        hardBlockingSelectors: ['input[type="password"]'],
+        softBlockingSelectors: ['iframe[src*="captcha"]'],
+        searchBodySignalPattern: '搜索结果',
+        supplierBodySignalPattern: '供应商',
+        priceTextPatternSource: '(?:¥|￥)\\s*\\d+',
+      },
+      requestedProfile: SUPPLIER_1688_PROBE_SCAN_SELECTOR_PROFILE,
+      resolvedProfile: SUPPLIER_1688_PROBE_SCAN_SELECTOR_PROFILE,
+      sourceProfiles: [SUPPLIER_1688_PROBE_SCAN_SELECTOR_PROFILE, 'code'],
+      entryCount: 14,
+      overlayEntryCount: 0,
+      fallbackToCode: false,
+    });
     mocks.buildProductScannerEngineRequestOptionsMock.mockReturnValue({});
     mocks.getProductScannerSettingsMock.mockResolvedValue({
       playwrightPersonaId: null,
@@ -560,10 +594,21 @@ describe('product-scans-service batch operations', () => {
           playwrightPersonaId: 'persona-1688',
         }),
         request: expect.objectContaining({
-          script: expect.stringContaining("label: 'Open supplier product page'"),
+          runtimeKey: SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY,
+          selectorProfile: SUPPLIER_1688_PROBE_SCAN_SELECTOR_PROFILE,
           input: expect.objectContaining({
             integrationId: 'integration-1688',
             connectionId: 'connection-1688',
+            runtimeKey: SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY,
+            selectorProfile: SUPPLIER_1688_PROBE_SCAN_SELECTOR_PROFILE,
+            selectorRuntime: expect.objectContaining({
+              fileInputSelectors: ['input[type="file"]'],
+              supplierBodySignalPattern: '供应商',
+            }),
+            selectorRegistryResolution: expect.objectContaining({
+              requestedProfile: SUPPLIER_1688_PROBE_SCAN_SELECTOR_PROFILE,
+              fallbackToCode: false,
+            }),
             scanner1688StartUrl: 'https://www.1688.com/',
             scanner1688DefaultSearchMode: 'local_image',
             candidateResultLimit: 12,

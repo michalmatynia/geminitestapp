@@ -179,13 +179,14 @@ describe('IntegrationModal', () => {
       showAllegroConsole: false,
       showBaseConsole: false,
       activeConnection: { id: 'connection-1' },
-      handleSavePlaywrightSettings: vi.fn().mockResolvedValue(undefined),
+      handleSavePlaywrightFallbackSettings: vi.fn().mockResolvedValue(undefined),
+      playwrightSaveLabel: 'Save fallback settings',
     });
   });
 
   it('shows close and save actions for Tradera browser settings, even on the settings tab', async () => {
     const onCloseModal = vi.fn();
-    const handleSavePlaywrightSettings = vi.fn().mockResolvedValue(undefined);
+    const handleSavePlaywrightFallbackSettings = vi.fn().mockResolvedValue(undefined);
 
     useIntegrationsActionsMock.mockReturnValue({
       onCloseModal,
@@ -203,23 +204,24 @@ describe('IntegrationModal', () => {
       showAllegroConsole: false,
       showBaseConsole: false,
       activeConnection: { id: 'connection-1' },
-      handleSavePlaywrightSettings,
+      handleSavePlaywrightFallbackSettings,
+      playwrightSaveLabel: 'Save fallback settings',
     });
 
     render(<IntegrationModal />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save fallback settings' }));
     fireEvent.click(screen.getByRole('button', { name: 'Close' }));
 
     await waitFor(() => {
-      expect(handleSavePlaywrightSettings).toHaveBeenCalledTimes(1);
+      expect(handleSavePlaywrightFallbackSettings).toHaveBeenCalledTimes(1);
     });
     expect(onCloseModal).toHaveBeenCalledTimes(1);
     expect(formModalRenderSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         showSaveButton: true,
         showCancelButton: true,
-        saveText: 'Save',
+        saveText: 'Save fallback settings',
         cancelText: 'Close',
       })
     );
@@ -244,7 +246,8 @@ describe('IntegrationModal', () => {
       showAllegroConsole: false,
       showBaseConsole: true,
       activeConnection: null,
-      handleSavePlaywrightSettings: vi.fn(),
+      handleSavePlaywrightFallbackSettings: vi.fn(),
+      playwrightSaveLabel: 'Save Playwright settings',
     });
 
     render(<IntegrationModal />);
@@ -261,7 +264,7 @@ describe('IntegrationModal', () => {
   });
 
   it('shows save actions for Vinted browser settings on the settings tab', async () => {
-    const handleSavePlaywrightSettings = vi.fn().mockResolvedValue(undefined);
+    const handleSavePlaywrightFallbackSettings = vi.fn().mockResolvedValue(undefined);
 
     useIntegrationsDataMock.mockReturnValue({
       activeIntegration: {
@@ -281,21 +284,22 @@ describe('IntegrationModal', () => {
       showAllegroConsole: false,
       showBaseConsole: false,
       activeConnection: { id: 'connection-vinted-1' },
-      handleSavePlaywrightSettings,
+      handleSavePlaywrightFallbackSettings,
+      playwrightSaveLabel: 'Save fallback settings',
     });
 
     render(<IntegrationModal />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save fallback settings' }));
 
     await waitFor(() => {
-      expect(handleSavePlaywrightSettings).toHaveBeenCalledTimes(1);
+      expect(handleSavePlaywrightFallbackSettings).toHaveBeenCalledTimes(1);
     });
     expect(formModalRenderSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         showSaveButton: true,
         showCancelButton: true,
-        saveText: 'Save',
+        saveText: 'Save fallback settings',
       })
     );
   });

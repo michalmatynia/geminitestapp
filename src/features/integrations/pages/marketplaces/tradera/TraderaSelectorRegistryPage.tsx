@@ -5,6 +5,7 @@ import Link from 'next/link';
 import {
   CopyIcon,
   DatabaseIcon,
+  ListTree,
   PencilIcon,
   RefreshCw,
   RotateCcw,
@@ -653,6 +654,12 @@ export default function TraderaSelectorRegistryPage(): React.JSX.Element {
             <Link href='/admin/playwright/step-sequencer'>
               <WorkflowIcon className='mr-2 size-4' />
               Step Sequencer
+            </Link>
+          </Button>
+          <Button asChild type='button' size='sm' variant='outline'>
+            <Link href='/admin/playwright/step-sequencer/runs'>
+              <ListTree className='mr-2 size-4' />
+              Run History
             </Link>
           </Button>
           {selectedProfile !== DEFAULT_PROFILE ? (

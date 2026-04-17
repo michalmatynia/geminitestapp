@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { DatabaseIcon } from 'lucide-react';
+import { DatabaseIcon, ListTree } from 'lucide-react';
 
 import { AdminPlaywrightBreadcrumbs } from '@/shared/ui/admin.public';
 import { AppErrorBoundary } from '@/shared/ui/AppErrorBoundary';
@@ -63,12 +63,26 @@ export function AdminPlaywrightStepSequencerPageView(): React.JSX.Element {
                 using the tree constructor.
               </p>
             </div>
-            <Button asChild type='button' size='sm' variant='outline'>
-              <Link href='/admin/integrations/marketplaces/tradera/selectors'>
-                <DatabaseIcon className='mr-2 size-4' />
-                Tradera Selectors
-              </Link>
-            </Button>
+            <div className='flex flex-wrap items-center gap-2'>
+              <Button asChild type='button' size='sm' variant='outline'>
+                <Link href='/admin/playwright/step-sequencer/runs'>
+                  <ListTree className='mr-2 size-4' />
+                  Run History
+                </Link>
+              </Button>
+              <Button asChild type='button' size='sm' variant='outline'>
+                <Link href='/admin/integrations/marketplaces/tradera/selectors'>
+                  <DatabaseIcon className='mr-2 size-4' />
+                  Tradera Selectors
+                </Link>
+              </Button>
+              <Button asChild type='button' size='sm' variant='outline'>
+                <Link href='/admin/integrations/1688/selectors'>
+                  <DatabaseIcon className='mr-2 size-4' />
+                  1688 Selectors
+                </Link>
+              </Button>
+            </div>
           </div>
         </div>
         <AdminPlaywrightStepSequencerPageRuntime />

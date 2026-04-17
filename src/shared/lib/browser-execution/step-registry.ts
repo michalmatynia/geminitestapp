@@ -1,3 +1,5 @@
+import type { PlaywrightActionBlockConfig } from '@/shared/contracts/playwright-steps';
+
 export const STEP_REGISTRY = {
   // Browser lifecycle
   browser_preparation:    { id: 'browser_preparation',    label: 'Browser preparation' },
@@ -19,6 +21,8 @@ export const STEP_REGISTRY = {
   duplicate_check:        { id: 'duplicate_check',        label: 'Duplicate check' },
   deep_duplicate_check:   { id: 'deep_duplicate_check',   label: 'Deep duplicate check' },
   sell_page_open:         { id: 'sell_page_open',         label: 'Open listing editor' },
+  load_product:           { id: 'load_product',           label: 'Load product data' },
+  resolve_price:          { id: 'resolve_price',          label: 'Resolve listing price' },
   image_cleanup:          { id: 'image_cleanup',          label: 'Clear draft images' },
 
   // Tradera check_status path
@@ -33,6 +37,20 @@ export const STEP_REGISTRY = {
   categories_seed_extract:{ id: 'categories_seed_extract',label: 'Extract category seed page' },
   categories_crawl:       { id: 'categories_crawl',       label: 'Crawl category pages' },
   categories_finalize:    { id: 'categories_finalize',    label: 'Finalize category registry' },
+
+  // 1688 supplier probe scan
+  supplier_1688_input_validate:     { id: 'supplier_1688_input_validate',     label: 'Validate 1688 probe input' },
+  supplier_1688_open_search:        { id: 'supplier_1688_open_search',        label: 'Open 1688 image search' },
+  supplier_1688_access_check:       { id: 'supplier_1688_access_check',       label: 'Check 1688 access barriers' },
+  supplier_1688_upload_image:       { id: 'supplier_1688_upload_image',       label: 'Upload image to 1688 search' },
+  supplier_1688_submit_search:      { id: 'supplier_1688_submit_search',      label: 'Submit 1688 image search' },
+  supplier_1688_collect_candidates: { id: 'supplier_1688_collect_candidates', label: 'Collect 1688 supplier candidates' },
+  supplier_1688_probe_candidate:    { id: 'supplier_1688_probe_candidate',    label: 'Probe 1688 supplier candidate' },
+  supplier_1688_wait_supplier:      { id: 'supplier_1688_wait_supplier',      label: 'Wait for 1688 supplier content' },
+  supplier_1688_extract_details:    { id: 'supplier_1688_extract_details',    label: 'Extract 1688 supplier details' },
+  supplier_1688_score_candidate:    { id: 'supplier_1688_score_candidate',    label: 'Score 1688 supplier candidate' },
+  supplier_1688_evaluate_match:     { id: 'supplier_1688_evaluate_match',     label: 'Evaluate 1688 supplier match' },
+  supplier_1688_finalize:           { id: 'supplier_1688_finalize',           label: 'Finalize 1688 probe result' },
 
   // Listing fields — shared
   image_upload:           { id: 'image_upload',           label: 'Upload images' },
@@ -69,5 +87,9 @@ export type BrowserExecutionStep = {
   id: string;
   label: string;
   status: BrowserExecutionStepStatus;
+  config?: PlaywrightActionBlockConfig | null;
   message?: string | null;
+  startedAt?: string | null;
+  completedAt?: string | null;
+  durationMs?: number | null;
 };

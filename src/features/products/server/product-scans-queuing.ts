@@ -14,6 +14,7 @@ import {
   get1688DefaultConnectionId,
   getIntegrationRepository,
 } from '@/features/integrations/server';
+import { resolveSupplier1688SelectorRegistryNativeRuntime } from '@/features/integrations/services/supplier-1688-selector-registry';
 import type {
   IntegrationConnectionRecord,
   IntegrationRepository,
@@ -27,6 +28,7 @@ import {
   type ProductAmazonBatchScanResponse,
   type ProductScanBatchResponse,
 } from '@/shared/contracts/product-scans';
+import { getPlaywrightRuntimeActionSeed } from '@/shared/lib/browser-execution/playwright-runtime-action-seeds';
 import { productService } from '@/shared/lib/products/services/productService';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
@@ -72,6 +74,10 @@ import {
   SCANNER_1688_MISSING_PROFILE_MESSAGE,
   resolve1688ConnectionEngineSettings,
 } from './product-scans-sync-1688';
+import {
+  SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY,
+  SUPPLIER_1688_PROBE_SCAN_SELECTOR_PROFILE,
+} from '@/shared/lib/browser-execution/supplier-1688-runtime-constants';
 
 type BatchScanQueueConfig = {
   provider: 'amazon' | '1688';
@@ -331,6 +337,10 @@ async function queueBatchProductScans(input: {
 
         let run;
         if (input.config.provider === 'amazon') {
+          if (input.config.runtime.executionMode !== 'script') {
+            return createFailedBatchResult(productId, 'Scanner runtime script is not configured.');
+          }
+
           const scannerRuntimeOptions = buildAmazonScannerRequestRuntimeOptions({
             scannerSettings,
             scannerEngineRequestOptions,
@@ -376,17 +386,55 @@ async function queueBatchProductScans(input: {
             }),
           });
         } else if (supplierConnectionContext !== null) {
+          if (input.config.runtime.executionMode !== 'native') {
+            return createFailedBatchResult(productId, '1688 native runtime is not configured.');
+          }
+
           const { integrationId, connection: supplierConnection } = supplierConnectionContext;
+          const supplier1688RuntimeAction = getPlaywrightRuntimeActionSeed(
+            SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY
+          );
+          const selectorNativeRuntimeResolution = await resolveSupplier1688SelectorRegistryNativeRuntime({
+            profile: SUPPLIER_1688_PROBE_SCAN_SELECTOR_PROFILE,
+          }).catch(async (error) => {
+            await ErrorSystem.captureException(error, {
+              service: 'product-scans.service',
+              action: `${input.config.actionPrefix}.resolve1688SelectorRegistryRuntime`,
+                      productId,
+            });
+            return null;
+          });
           run = await startPlaywrightConnectionEngineTask({
             connection: supplierConnection,
             request: {
-              script: input.config.runtime.script,
+              runtimeKey: input.config.runtime.runtimeKey ?? null,
+              actionId: supplier1688RuntimeAction?.id ?? null,
+              actionName: supplier1688RuntimeAction?.name ?? '1688 Supplier Probe Scan',
+              selectorProfile: SUPPLIER_1688_PROBE_SCAN_SELECTOR_PROFILE,
               input: input.config.runtime.buildRequestInput({
                 productId: product.id,
                 productName: product.name['pl'] || product.name['en'] || '',
                 imageCandidates,
                 integrationId,
                 connectionId: supplierConnection.id,
+                actionId: supplier1688RuntimeAction?.id ?? null,
+                actionName: supplier1688RuntimeAction?.name ?? '1688 Supplier Probe Scan',
+                action: supplier1688RuntimeAction,
+                blocks: supplier1688RuntimeAction?.blocks ?? [],
+                runtimeKey: input.config.runtime.runtimeKey ?? null,
+                selectorProfile: SUPPLIER_1688_PROBE_SCAN_SELECTOR_PROFILE,
+                selectorRegistryResolution: selectorNativeRuntimeResolution
+                  ? {
+                      requestedProfile: selectorNativeRuntimeResolution.requestedProfile,
+                      resolvedProfile: selectorNativeRuntimeResolution.resolvedProfile,
+                      sourceProfiles: selectorNativeRuntimeResolution.sourceProfiles,
+                      entryCount: selectorNativeRuntimeResolution.entryCount,
+                      overlayEntryCount: selectorNativeRuntimeResolution.overlayEntryCount,
+                      fallbackToCode: selectorNativeRuntimeResolution.fallbackToCode,
+                      fallbackReason: selectorNativeRuntimeResolution.fallbackReason ?? null,
+                    }
+                  : null,
+                selectorRuntime: selectorNativeRuntimeResolution?.selectorRuntime ?? null,
                 scanner1688StartUrl:
                   supplierConnection.scanner1688StartUrl ?? null,
                 scanner1688LoginMode:
@@ -461,6 +509,13 @@ async function queueBatchProductScans(input: {
           rawResult: createAmazonScanStartedRawResult({
             runId: startedRun.runId,
             status: startedRun.status,
+            runtimeKey: input.config.runtime.runtimeKey ?? null,
+            actionId:
+              input.config.provider === '1688'
+                ? `runtime_action__${SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY}`
+                : null,
+            selectorProfile:
+              input.config.provider === '1688' ? SUPPLIER_1688_PROBE_SCAN_SELECTOR_PROFILE : null,
             imageSearchProvider:
               input.config.provider === 'amazon'
                 ? (resolveAmazonImageSearchProvider(input.requestInput, scannerSettings) ?? 'google_images_upload')

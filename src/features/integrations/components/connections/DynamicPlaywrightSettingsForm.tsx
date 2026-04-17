@@ -3,7 +3,12 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import {
+  isTraderaBrowserIntegrationSlug,
+  isVintedIntegrationSlug,
+} from '@/features/integrations/constants/slugs';
+import {
   useIntegrationsActions,
+  useIntegrationsData,
   useIntegrationsForm,
 } from '@/features/integrations/context/IntegrationsContext';
 import { LoadingState } from '@/shared/ui/navigation-and-layout.public';
@@ -14,7 +19,8 @@ import {
 
 export function DynamicPlaywrightSettingsForm(): React.JSX.Element {
   const { playwrightSettings, setPlaywrightSettings } = useIntegrationsForm();
-  const { handleSavePlaywrightSettings } = useIntegrationsActions();
+  const { activeIntegration } = useIntegrationsData();
+  const { handleSavePlaywrightFallbackSettings } = useIntegrationsActions();
   const [Component, setComponent] = useState<React.ComponentType | null>(null);
 
   useEffect(() => {
@@ -22,16 +28,23 @@ export function DynamicPlaywrightSettingsForm(): React.JSX.Element {
       const { PlaywrightSettingsFormContent } = await import('@/shared/ui/playwright/PlaywrightSettingsForm');
       setComponent(() => PlaywrightSettingsFormContent);
     };
-    void loadComponent();
+    loadComponent().catch(() => undefined);
   }, []);
+
+  const saveLabel =
+    isTraderaBrowserIntegrationSlug(activeIntegration?.slug) ||
+    isVintedIntegrationSlug(activeIntegration?.slug)
+      ? 'Save fallback settings'
+      : 'Save Playwright settings';
 
   const viewValue = useMemo(
     () => ({
       onSave: () => {
-        void handleSavePlaywrightSettings();
+        handleSavePlaywrightFallbackSettings().catch(() => undefined);
       },
+      saveLabel,
     }),
-    [handleSavePlaywrightSettings]
+    [handleSavePlaywrightFallbackSettings, saveLabel]
   );
 
   if (!Component) {

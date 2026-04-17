@@ -22,6 +22,8 @@ vi.mock('@/features/playwright/server/script-task', () => ({
 }));
 
 import {
+  PROGRAMMABLE_PLAYWRIGHT_IMPORT_RUNTIME_ACTION_KEY,
+  PROGRAMMABLE_PLAYWRIGHT_LISTING_RUNTIME_ACTION_KEY,
   runPlaywrightListingScript,
   runPlaywrightProgrammableImportForConnection,
   runPlaywrightProgrammableListingForConnection,
@@ -412,6 +414,7 @@ describe('runPlaywrightProgrammableListingForConnection', () => {
         id: 'connection-1',
         integrationId: 'integration-1',
         playwrightListingScript: 'export default async function run() {}',
+        playwrightListingActionId: 'programmable-listing-draft',
       } as never,
       input: {
         title: 'Example',
@@ -421,6 +424,8 @@ describe('runPlaywrightProgrammableListingForConnection', () => {
 
     expect(runPlaywrightConnectionEngineTaskMock).toHaveBeenCalledWith(
       expect.objectContaining({
+        actionId: 'programmable-listing-draft',
+        runtimeActionKey: PROGRAMMABLE_PLAYWRIGHT_LISTING_RUNTIME_ACTION_KEY,
         request: expect.objectContaining({
           script: 'export default async function run() {}',
           input: {
@@ -482,6 +487,7 @@ describe('runPlaywrightProgrammableImportForConnection', () => {
         id: 'connection-1',
         integrationId: 'integration-1',
         playwrightImportScript: 'export default async function run() {}',
+        playwrightImportActionId: 'programmable-import-draft',
       } as never,
       input: {
         baseUrl: 'https://example.com',
@@ -490,6 +496,8 @@ describe('runPlaywrightProgrammableImportForConnection', () => {
 
     expect(runPlaywrightConnectionScriptTaskMock).toHaveBeenCalledWith(
       expect.objectContaining({
+        actionId: 'programmable-import-draft',
+        runtimeActionKey: PROGRAMMABLE_PLAYWRIGHT_IMPORT_RUNTIME_ACTION_KEY,
         request: expect.objectContaining({
           script: 'export default async function run() {}',
           input: {

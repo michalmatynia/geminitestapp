@@ -5,13 +5,19 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import type {
   PlaywrightAction,
   PlaywrightActionBlock,
+  PlaywrightActionBlockConfig,
+  PlaywrightActionExecutionSettings,
   PlaywrightFlow,
   PlaywrightStep,
   PlaywrightStepSet,
   PlaywrightStepType,
   PlaywrightWebsite,
 } from '@/shared/contracts/playwright-steps';
-import { normalizePlaywrightAction } from '@/shared/contracts/playwright-steps';
+import {
+  defaultPlaywrightActionExecutionSettings,
+  normalizePlaywrightAction,
+  normalizePlaywrightActionBlockConfig,
+} from '@/shared/contracts/playwright-steps';
 import {
   usePlaywrightActions,
   usePlaywrightFlows,
@@ -24,6 +30,16 @@ import {
   useSavePlaywrightStepsMutation,
   useSavePlaywrightWebsitesMutation,
 } from '@/shared/hooks/usePlaywrightStepSequencer';
+import { ACTION_SEQUENCES, type ActionSequenceKey } from '@/shared/lib/browser-execution/action-sequences';
+import { analyzeLoadedPlaywrightActions } from '@/shared/lib/browser-execution/playwright-actions-settings-validation';
+import {
+  analyzePlaywrightRuntimeActionRepairPreview,
+  repairPlaywrightRuntimeAction,
+  repairPlaywrightRuntimeActionsBulk,
+  selectPlaywrightRuntimeActionRepairPreview,
+} from '@/shared/lib/browser-execution/playwright-runtime-action-repair';
+import { validateRuntimeActionEditorBlocks } from '@/shared/lib/browser-execution/runtime-action-editor-validation';
+import { extractMutationErrorMessage } from '@/shared/lib/mutation-error-handler';
 import { STEP_REGISTRY } from '@/shared/lib/browser-execution/step-registry';
 import { useToast } from '@/shared/ui/primitives.public';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
@@ -61,7 +77,42 @@ function createActionBlock(
     refId,
     enabled: true,
     label: null,
+    config: normalizePlaywrightActionBlockConfig(null),
   };
+}
+
+function loadActionIntoConstructorState(input: {
+  action: PlaywrightAction;
+  setActionBlocks: (value: PlaywrightActionBlock[]) => void;
+  setActionExecutionSettings: (value: PlaywrightActionExecutionSettings) => void;
+  setActionDraftName: (value: string) => void;
+  setActionDraftDescription: (value: string | null) => void;
+  setActionPersonaId: (value: string | null) => void;
+  setEditingActionId: (value: string | null) => void;
+}): void {
+  const {
+    action,
+    setActionBlocks,
+    setActionExecutionSettings,
+    setActionDraftName,
+    setActionDraftDescription,
+    setActionPersonaId,
+    setEditingActionId,
+  } = input;
+
+  setActionBlocks(action.blocks.map((block) => ({ ...block })));
+  setActionExecutionSettings(action.executionSettings);
+  setActionDraftName(action.name);
+  setActionDraftDescription(action.description);
+  setActionPersonaId(action.personaId);
+  setEditingActionId(action.id);
+}
+
+function toActionSequenceKey(runtimeKey: string | null): ActionSequenceKey | null {
+  if (runtimeKey === null || !(runtimeKey in ACTION_SEQUENCES)) {
+    return null;
+  }
+  return runtimeKey as ActionSequenceKey;
 }
 
 // ---------------------------------------------------------------------------
@@ -121,6 +172,9 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
   // --- Action constructor state ---
   const [actionBlocks, setActionBlocks] = useState<PlaywrightActionBlock[]>([]);
   const [actionPersonaId, setActionPersonaId] = useState<string | null>(null);
+  const [actionExecutionSettings, setActionExecutionSettings] = useState<PlaywrightActionExecutionSettings>(
+    defaultPlaywrightActionExecutionSettings
+  );
   const [actionDraftName, setActionDraftName] = useState('');
   const [actionDraftDescription, setActionDraftDescription] = useState<string | null>(null);
   const [editingActionId, setEditingActionId] = useState<string | null>(null);
@@ -203,6 +257,35 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
           : null,
       })),
     [actionBlocks, steps, stepSets]
+  );
+
+  const editingActionRuntimeKey = useMemo(() => {
+    const runtimeKey = actions.find((action) => action.id === editingActionId)?.runtimeKey ?? null;
+    return toActionSequenceKey(runtimeKey);
+  }, [actions, editingActionId]);
+
+  const actionValidationErrors = useMemo(() => {
+    if (editingActionRuntimeKey === null) {
+      return [];
+    }
+
+    return validateRuntimeActionEditorBlocks({
+      runtimeKey: editingActionRuntimeKey,
+      blocks: actionBlocks,
+    });
+  }, [actionBlocks, editingActionRuntimeKey]);
+
+  const runtimeActionLoadErrorsById = useMemo(
+    () => analyzeLoadedPlaywrightActions(actions).runtimeActionErrorsById,
+    [actions]
+  );
+  const runtimeActionRepairPreview = useMemo(
+    () =>
+      analyzePlaywrightRuntimeActionRepairPreview({
+        actions,
+        runtimeActionLoadErrorsById,
+      }),
+    [actions, runtimeActionLoadErrorsById]
   );
 
   const stepSetUsageCounts = useMemo(() => {
@@ -552,10 +635,10 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
     try {
       await saveActions({ actions: cleaned });
       toast('Orphaned action block references removed.', { variant: 'success' });
-    } catch (error) {
-      logClientCatch(error, { source: 'usePlaywrightStepSequencerState', action: 'cleanOrphanedStepSets' });
-      toast('Cleanup failed.', { variant: 'error' });
-    }
+      } catch (error) {
+        logClientCatch(error, { source: 'usePlaywrightStepSequencerState', action: 'cleanOrphanedStepSets' });
+        toast(extractMutationErrorMessage(error, 'Cleanup failed.'), { variant: 'error' });
+      }
   }, [saveActions, toast]);
 
   const handleBatchImport = useCallback(
@@ -604,7 +687,7 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
         }
       } catch (error) {
         logClientCatch(error, { source: 'usePlaywrightStepSequencerState', action: 'batchImport' });
-        toast('Import failed.', { variant: 'error' });
+        toast(extractMutationErrorMessage(error, 'Import failed.'), { variant: 'error' });
       }
       return { imported };
     },
@@ -633,7 +716,7 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
         toast('Action duplicated.', { variant: 'success' });
       } catch (error) {
         logClientCatch(error, { source: 'usePlaywrightStepSequencerState', action: 'duplicateAction' });
-        toast('Failed to duplicate action.', { variant: 'error' });
+        toast(extractMutationErrorMessage(error, 'Failed to duplicate action.'), { variant: 'error' });
       }
     },
     [saveActions, toast]
@@ -642,13 +725,242 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
   const handleLoadActionIntoConstructor = useCallback((id: string): void => {
     const action = actionsRef.current.find((a) => a.id === id);
     if (!action) return;
-    setActionBlocks(action.blocks.map((block) => ({ ...block })));
-    setActionDraftName(action.name);
-    setActionDraftDescription(action.description);
-    setActionPersonaId(action.personaId);
-    setEditingActionId(id);
+    loadActionIntoConstructorState({
+      action,
+      setActionBlocks,
+      setActionExecutionSettings,
+      setActionDraftName,
+      setActionDraftDescription,
+      setActionPersonaId,
+      setEditingActionId,
+    });
     toast('Action loaded into constructor.', { variant: 'success' });
   }, [toast]);
+
+  const handleClearAction = useCallback((): void => {
+    setActionBlocks([]);
+    setActionDraftName('');
+    setActionDraftDescription(null);
+    setActionPersonaId(null);
+    setActionExecutionSettings(defaultPlaywrightActionExecutionSettings);
+    setEditingActionId(null);
+  }, []);
+
+  const handleResetRuntimeActionToSeed = useCallback(
+    async (id: string): Promise<void> => {
+      const repairResult = repairPlaywrightRuntimeAction({
+        actions: actionsRef.current,
+        targetActionId: id,
+        mode: 'reset_to_seed',
+        nowIso: now(),
+        createId,
+      });
+      if (!repairResult.ok) {
+        toast(repairResult.error, { variant: 'error' });
+        return;
+      }
+
+      try {
+        await saveActions({ actions: repairResult.result.actions });
+        if (editingActionId !== null && repairResult.result.replacedActionIds.includes(editingActionId)) {
+          handleClearAction();
+        }
+        toast(`Runtime action reset to seeded "${repairResult.result.runtimeKey}" flow.`, {
+          variant: 'success',
+        });
+      } catch (error) {
+        logClientCatch(error, {
+          source: 'usePlaywrightStepSequencerState',
+          action: 'resetRuntimeActionToSeed',
+          actionId: id,
+        });
+        toast(extractMutationErrorMessage(error, 'Failed to reset runtime action.'), {
+          variant: 'error',
+        });
+      }
+    },
+    [editingActionId, handleClearAction, saveActions, toast]
+  );
+
+  const handleCloneRuntimeActionAsDraft = useCallback(
+    async (id: string): Promise<void> => {
+      const repairResult = repairPlaywrightRuntimeAction({
+        actions: actionsRef.current,
+        targetActionId: id,
+        mode: 'clone_to_draft_and_restore',
+        nowIso: now(),
+        createId,
+      });
+      if (!repairResult.ok) {
+        toast(repairResult.error, { variant: 'error' });
+        return;
+      }
+
+      try {
+        await saveActions({ actions: repairResult.result.actions });
+        const draftAction = repairResult.result.clonedDraftAction;
+        if (draftAction !== null) {
+          loadActionIntoConstructorState({
+            action: draftAction,
+            setActionBlocks,
+            setActionExecutionSettings,
+            setActionDraftName,
+            setActionDraftDescription,
+            setActionPersonaId,
+            setEditingActionId,
+          });
+        } else if (
+          editingActionId !== null &&
+          repairResult.result.replacedActionIds.includes(editingActionId)
+        ) {
+          handleClearAction();
+        }
+        toast(
+          `Runtime action restored to seed and cloned into a draft for "${repairResult.result.runtimeKey}".`,
+          { variant: 'success' }
+        );
+      } catch (error) {
+        logClientCatch(error, {
+          source: 'usePlaywrightStepSequencerState',
+          action: 'cloneRuntimeActionAsDraft',
+          actionId: id,
+        });
+        toast(extractMutationErrorMessage(error, 'Failed to repair runtime action.'), {
+          variant: 'error',
+        });
+      }
+    },
+    [
+      editingActionId,
+      handleClearAction,
+      saveActions,
+      setActionBlocks,
+      setActionDraftDescription,
+      setActionDraftName,
+      setActionPersonaId,
+      toast,
+    ]
+  );
+
+  const handleResetAllRuntimeActionsToSeed = useCallback(
+    async (runtimeKeys?: string[]): Promise<void> => {
+      const targetedPreview =
+        runtimeKeys === undefined
+          ? runtimeActionRepairPreview
+          : selectPlaywrightRuntimeActionRepairPreview({
+              actions: actionsRef.current,
+              preview: runtimeActionRepairPreview,
+              runtimeKeys: runtimeKeys.filter((key): key is ActionSequenceKey => key in ACTION_SEQUENCES),
+            });
+      const repairResult = repairPlaywrightRuntimeActionsBulk({
+        actions: actionsRef.current,
+        targetActionIds: targetedPreview.repairableActionIds,
+        mode: 'reset_to_seed',
+        nowIso: now(),
+        createId,
+      });
+      if (!repairResult.ok) {
+        toast(repairResult.error, { variant: 'error' });
+        return;
+      }
+
+      try {
+        await saveActions({ actions: repairResult.result.actions });
+        if (editingActionId !== null && repairResult.result.replacedActionIds.includes(editingActionId)) {
+          handleClearAction();
+        }
+        const repairedCount = repairResult.result.repairedRuntimeKeys.length;
+        toast(
+          `Reset ${repairedCount} quarantined runtime action${repairedCount === 1 ? '' : 's'} to seeded flows.`,
+          { variant: 'success' }
+        );
+      } catch (error) {
+        logClientCatch(error, {
+          source: 'usePlaywrightStepSequencerState',
+          action: 'resetAllRuntimeActionsToSeed',
+        });
+        toast(extractMutationErrorMessage(error, 'Failed to reset runtime actions.'), {
+          variant: 'error',
+        });
+      }
+    },
+    [editingActionId, handleClearAction, runtimeActionRepairPreview, saveActions, toast]
+  );
+
+  const handleCloneAllRuntimeActionsAsDrafts = useCallback(
+    async (runtimeKeys?: string[]): Promise<void> => {
+      const targetedPreview =
+        runtimeKeys === undefined
+          ? runtimeActionRepairPreview
+          : selectPlaywrightRuntimeActionRepairPreview({
+              actions: actionsRef.current,
+              preview: runtimeActionRepairPreview,
+              runtimeKeys: runtimeKeys.filter((key): key is ActionSequenceKey => key in ACTION_SEQUENCES),
+            });
+      const repairResult = repairPlaywrightRuntimeActionsBulk({
+        actions: actionsRef.current,
+        targetActionIds: targetedPreview.repairableActionIds,
+        mode: 'clone_to_draft_and_restore',
+        nowIso: now(),
+        createId,
+      });
+      if (!repairResult.ok) {
+        toast(repairResult.error, { variant: 'error' });
+        return;
+      }
+
+      try {
+        await saveActions({ actions: repairResult.result.actions });
+        const draftAction =
+          editingActionId === null
+            ? null
+            : (repairResult.result.clonedDraftActions.find(
+                (entry) => entry.sourceActionId === editingActionId
+              )?.action ?? null);
+        if (draftAction !== null) {
+          loadActionIntoConstructorState({
+            action: draftAction,
+            setActionBlocks,
+            setActionExecutionSettings,
+            setActionDraftName,
+            setActionDraftDescription,
+            setActionPersonaId,
+            setEditingActionId,
+          });
+        } else if (
+          editingActionId !== null &&
+          repairResult.result.replacedActionIds.includes(editingActionId)
+        ) {
+          handleClearAction();
+        }
+        const repairedCount = repairResult.result.repairedRuntimeKeys.length;
+        const draftCount = repairResult.result.clonedDraftActions.length;
+        toast(
+          `Restored ${repairedCount} runtime action${repairedCount === 1 ? '' : 's'} and preserved ${draftCount} draft${draftCount === 1 ? '' : 's'}.`,
+          { variant: 'success' }
+        );
+      } catch (error) {
+        logClientCatch(error, {
+          source: 'usePlaywrightStepSequencerState',
+          action: 'cloneAllRuntimeActionsAsDrafts',
+        });
+        toast(extractMutationErrorMessage(error, 'Failed to repair runtime actions.'), {
+          variant: 'error',
+        });
+      }
+    },
+    [
+      editingActionId,
+      handleClearAction,
+      runtimeActionRepairPreview,
+      saveActions,
+      setActionBlocks,
+      setActionDraftDescription,
+      setActionDraftName,
+      setActionPersonaId,
+      toast,
+    ]
+  );
 
   // ---------------------------------------------------------------------------
   // Action constructor
@@ -687,17 +999,28 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
     );
   }, []);
 
-  const handleClearAction = useCallback((): void => {
-    setActionBlocks([]);
-    setActionDraftName('');
-    setActionDraftDescription(null);
-    setActionPersonaId(null);
-    setEditingActionId(null);
+  const handleUpdateActionBlockConfig = useCallback((
+    index: number,
+    updates: Partial<PlaywrightActionBlockConfig>
+  ): void => {
+    setActionBlocks((prev) =>
+      prev.map((block, blockIndex) =>
+        blockIndex === index
+          ? {
+              ...block,
+              config: normalizePlaywrightActionBlockConfig({
+                ...block.config,
+                ...updates,
+              }),
+            }
+          : block
+      )
+    );
   }, []);
 
   const handleSaveAction = useCallback(async (): Promise<void> => {
     const name = actionDraftName.trim();
-    if (!name) {
+    if (name.length === 0) {
       toast('Action name is required.', { variant: 'error' });
       return;
     }
@@ -707,13 +1030,16 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
     }
     try {
       const ts = now();
+      const description = actionDraftDescription?.trim() ?? null;
       const next = normalizePlaywrightAction({
         id: createId(),
         name,
-        description: actionDraftDescription?.trim() || null,
+        description: description !== null && description.length > 0 ? description : null,
+        runtimeKey: null,
         blocks: actionBlocks.map((block) => ({ ...block })),
         stepSetIds: [],
         personaId: actionPersonaId,
+        executionSettings: actionExecutionSettings,
         createdAt: ts,
         updatedAt: ts,
       });
@@ -723,19 +1049,23 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
       toast('Action saved.', { variant: 'success' });
     } catch (error) {
       logClientCatch(error, { source: 'usePlaywrightStepSequencerState', action: 'saveAction' });
-      toast('Failed to save action.', { variant: 'error' });
+      toast(extractMutationErrorMessage(error, 'Failed to save action.'), { variant: 'error' });
     }
-  }, [actionDraftName, actionDraftDescription, actionBlocks, actionPersonaId, handleClearAction, saveActions, toast]);
+  }, [actionDraftName, actionDraftDescription, actionBlocks, actionPersonaId, actionExecutionSettings, handleClearAction, saveActions, toast]);
 
   const handleUpdateAction = useCallback(async (): Promise<void> => {
-    if (!editingActionId) return;
+    if (editingActionId === null) return;
     const name = actionDraftName.trim();
-    if (!name) {
+    if (name.length === 0) {
       toast('Action name is required.', { variant: 'error' });
       return;
     }
     if (actionBlocks.length === 0) {
       toast('Add at least one action block before saving.', { variant: 'error' });
+      return;
+    }
+    if (actionValidationErrors.length > 0) {
+      toast(actionValidationErrors[0] ?? 'Runtime action validation failed.', { variant: 'error' });
       return;
     }
     try {
@@ -748,6 +1078,7 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
               blocks: actionBlocks.map((block) => ({ ...block })),
               stepSetIds: [],
               personaId: actionPersonaId,
+              executionSettings: actionExecutionSettings,
               updatedAt: now(),
             })
           : a
@@ -757,9 +1088,9 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
       toast('Action updated.', { variant: 'success' });
     } catch (error) {
       logClientCatch(error, { source: 'usePlaywrightStepSequencerState', action: 'updateAction' });
-      toast('Failed to update action.', { variant: 'error' });
+      toast(extractMutationErrorMessage(error, 'Failed to update action.'), { variant: 'error' });
     }
-  }, [editingActionId, actionDraftName, actionDraftDescription, actionBlocks, actionPersonaId, handleClearAction, saveActions, toast]);
+  }, [editingActionId, actionDraftName, actionDraftDescription, actionBlocks, actionPersonaId, actionExecutionSettings, actionValidationErrors, handleClearAction, saveActions, toast]);
 
   // ---------------------------------------------------------------------------
   // Assemble context value
@@ -784,6 +1115,7 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
     orphanedStepIds,
     orphanedActionStepIds,
     orphanedStepSetIds,
+    runtimeActionLoadErrorsById,
 
     // Filters
     searchQuery,
@@ -820,17 +1152,22 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
     // Action constructor
     actionBlocks,
     actionPersonaId,
+    actionExecutionSettings,
     actionDraftName,
     actionDraftDescription,
     editingActionId,
+    editingActionRuntimeKey,
+    actionValidationErrors,
     handleAddStepToAction,
     handleAddRuntimeStepToAction,
     handleAddStepSetToAction,
     handleRemoveFromAction,
     handleMoveActionItem,
     handleToggleActionBlockEnabled,
+    handleUpdateActionBlockConfig,
     handleClearAction,
     setActionPersonaId,
+    setActionExecutionSettings,
     setActionDraftName,
     setActionDraftDescription,
     handleSaveAction,
@@ -862,6 +1199,10 @@ export function usePlaywrightStepSequencerState(): PlaywrightStepSequencerContex
     handleDeleteAction,
     handleDuplicateAction,
     handleLoadActionIntoConstructor,
+    handleResetRuntimeActionToSeed,
+    handleCloneRuntimeActionAsDraft,
+    handleResetAllRuntimeActionsToSeed,
+    handleCloneAllRuntimeActionsAsDrafts,
 
     // Cleanup
     handleCleanOrphanedSteps,

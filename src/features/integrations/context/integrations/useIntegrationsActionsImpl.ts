@@ -493,7 +493,7 @@ export function useIntegrationsActionsImpl(args: {
     toast(`Applied persona "${persona.name}".`, { variant: 'success' });
   };
 
-  const handleSavePlaywrightSettings = async (): Promise<void> => {
+  const handleSavePlaywrightFallbackSettings = async (): Promise<void> => {
     const connection = activeConnection;
     if (!connection) return;
     try {
@@ -512,14 +512,14 @@ export function useIntegrationsActionsImpl(args: {
           }),
         },
       });
-      toast('Playwright settings saved.', { variant: 'success' });
+      toast('Playwright fallback settings saved.', { variant: 'success' });
     } catch (error: unknown) {
       logClientCatch(error, {
         source: 'IntegrationsContext',
-        action: 'handleSavePlaywrightSettings',
+        action: 'handleSavePlaywrightFallbackSettings',
         connectionId: connection.id,
       });
-      toast((error as Error)?.message ?? 'Failed to save Playwright settings.', {
+      toast((error as Error)?.message ?? 'Failed to save Playwright fallback settings.', {
         variant: 'error',
       });
     }
@@ -767,7 +767,7 @@ export function useIntegrationsActionsImpl(args: {
     handleVintedManualLogin,
     handle1688ManualLogin,
     handleSelectPlaywrightPersona,
-    handleSavePlaywrightSettings,
+    handleSavePlaywrightFallbackSettings,
     handleAllegroAuthorize,
     handleAllegroDisconnect,
     handleAllegroSandboxToggle,

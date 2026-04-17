@@ -356,6 +356,7 @@ function AdminLayoutContent({
         aria-label='Admin sidebar'
         className={`fixed inset-y-0 left-0 z-30 flex flex-col overflow-x-hidden border-r border-border/70 bg-slate-900/95 backdrop-blur transition-all duration-300 ${sidebarClassName}`}
         aria-hidden={isMenuHidden}
+        data-scroll-focus-ignore='true'
       >
         {!isMenuHidden ? (
           <>
@@ -378,7 +379,7 @@ function AdminLayoutContent({
                 />
               </Button>
             </div>
-            <div className='flex-1 overflow-y-auto pr-1'>
+            <div className='flex-1 overflow-y-auto pr-1' data-scroll-focus-ignore='true'>
               <Menu />
             </div>
           </>
@@ -386,6 +387,7 @@ function AdminLayoutContent({
       </aside>
       <div
         className={`relative flex h-full min-w-0 flex-col overflow-x-hidden transition-[padding-left] duration-300 ${contentClassName}`}
+        data-scroll-focus-ignore='true'
       >
         <header
           className='absolute top-0 right-0 z-[90] flex h-14 items-center px-6 pointer-events-none'
@@ -403,6 +405,7 @@ function AdminLayoutContent({
           id='kangur-main-content'
           tabIndex={-1}
           className={`${mainClassName} focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background`}
+          data-scroll-focus-ignore='true'
         >
           <QueryErrorBoundary>
             <div className='min-w-0 max-w-full'>

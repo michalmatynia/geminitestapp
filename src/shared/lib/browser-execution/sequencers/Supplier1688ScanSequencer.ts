@@ -1,19 +1,7 @@
 import type { Locator } from 'playwright';
 import {
-  SUPPLIER_1688_FILE_INPUT_SELECTORS,
-  SUPPLIER_1688_IMAGE_SEARCH_ENTRY_SELECTORS,
-  SUPPLIER_1688_SEARCH_RESULT_READY_SELECTORS,
-  SUPPLIER_1688_SUPPLIER_READY_SELECTORS,
-  SUPPLIER_1688_SUBMIT_SEARCH_SELECTORS,
-  SUPPLIER_1688_LOGIN_TEXT_HINTS,
-  SUPPLIER_1688_CAPTCHA_TEXT_HINTS,
-  SUPPLIER_1688_ACCESS_BLOCK_TEXT_HINTS,
-  SUPPLIER_1688_BARRIER_TITLE_HINTS,
-  SUPPLIER_1688_HARD_BLOCKING_SELECTORS,
-  SUPPLIER_1688_SOFT_BLOCKING_SELECTORS,
-  SUPPLIER_1688_SEARCH_BODY_SIGNAL_PATTERN,
-  SUPPLIER_1688_SUPPLIER_BODY_SIGNAL_PATTERN,
-  SUPPLIER_1688_PRICE_TEXT_PATTERN_SOURCE,
+  SUPPLIER_1688_DEFAULT_SELECTOR_RUNTIME,
+  type Supplier1688SelectorRuntime,
 } from '../selectors/supplier-1688';
 import type { ProductScanSequenceEntry } from '../product-scan-step-sequencer';
 import { ProductScanSequencer, type ProductScanSequencerContext } from './ProductScanSequencer';
@@ -44,6 +32,7 @@ export interface Supplier1688ScanInput {
   manualVerificationTimeoutMs?: number;
   stepSequenceKey?: string | null;
   stepSequence?: ProductScanSequenceEntry[] | null;
+  selectorRuntime?: Partial<Supplier1688SelectorRuntime> | null;
 }
 
 // ─── Internal types ────────────────────────────────────────────────────────────
@@ -93,16 +82,89 @@ interface CaptchaHandleResult {
   failureCode: string | null;
 }
 
+const isSelectorRuntimeRecord = (
+  value: unknown
+): value is Partial<Record<keyof Supplier1688SelectorRuntime, unknown>> =>
+  value !== null && typeof value === 'object' && !Array.isArray(value);
+
+const readSelectorStringArray = (
+  value: unknown,
+  fallback: readonly string[]
+): readonly string[] =>
+  Array.isArray(value) && value.every((entry) => typeof entry === 'string')
+    ? value
+    : fallback;
+
+const readSelectorString = (value: unknown, fallback: string): string =>
+  typeof value === 'string' ? value : fallback;
+
+const normalizeSupplier1688SelectorRuntime = (
+  value: unknown
+): Supplier1688SelectorRuntime => {
+  const source = isSelectorRuntimeRecord(value) ? value : {};
+  const fallback = SUPPLIER_1688_DEFAULT_SELECTOR_RUNTIME;
+  return {
+    fileInputSelectors: readSelectorStringArray(source.fileInputSelectors, fallback.fileInputSelectors),
+    imageSearchEntrySelectors: readSelectorStringArray(
+      source.imageSearchEntrySelectors,
+      fallback.imageSearchEntrySelectors
+    ),
+    searchResultReadySelectors: readSelectorStringArray(
+      source.searchResultReadySelectors,
+      fallback.searchResultReadySelectors
+    ),
+    supplierReadySelectors: readSelectorStringArray(
+      source.supplierReadySelectors,
+      fallback.supplierReadySelectors
+    ),
+    submitSearchSelectors: readSelectorStringArray(
+      source.submitSearchSelectors,
+      fallback.submitSearchSelectors
+    ),
+    loginTextHints: readSelectorStringArray(source.loginTextHints, fallback.loginTextHints),
+    captchaTextHints: readSelectorStringArray(source.captchaTextHints, fallback.captchaTextHints),
+    accessBlockTextHints: readSelectorStringArray(
+      source.accessBlockTextHints,
+      fallback.accessBlockTextHints
+    ),
+    barrierTitleHints: readSelectorStringArray(
+      source.barrierTitleHints,
+      fallback.barrierTitleHints
+    ),
+    hardBlockingSelectors: readSelectorStringArray(
+      source.hardBlockingSelectors,
+      fallback.hardBlockingSelectors
+    ),
+    softBlockingSelectors: readSelectorStringArray(
+      source.softBlockingSelectors,
+      fallback.softBlockingSelectors
+    ),
+    searchBodySignalPattern: readSelectorString(
+      source.searchBodySignalPattern,
+      fallback.searchBodySignalPattern
+    ),
+    supplierBodySignalPattern: readSelectorString(
+      source.supplierBodySignalPattern,
+      fallback.supplierBodySignalPattern
+    ),
+    priceTextPatternSource: readSelectorString(
+      source.priceTextPatternSource,
+      fallback.priceTextPatternSource
+    ),
+  };
+};
+
 // ─── Main sequencer ────────────────────────────────────────────────────────────
 
 export class Supplier1688ScanSequencer extends ProductScanSequencer {
   private readonly input: Supplier1688ScanInput;
+  private readonly selectorRuntime: Supplier1688SelectorRuntime;
 
   private readonly DEFAULT_1688_IMAGE_SEARCH_START_URL =
     'https://s.1688.com/youyuan/index.htm?tab=imageSearch';
-  private readonly PRICE_TEXT_PATTERN = new RegExp(SUPPLIER_1688_PRICE_TEXT_PATTERN_SOURCE);
-  private readonly SEARCH_BODY_SIGNAL = new RegExp(SUPPLIER_1688_SEARCH_BODY_SIGNAL_PATTERN);
-  private readonly SUPPLIER_BODY_SIGNAL = new RegExp(SUPPLIER_1688_SUPPLIER_BODY_SIGNAL_PATTERN);
+  private readonly PRICE_TEXT_PATTERN: RegExp;
+  private readonly SEARCH_BODY_SIGNAL: RegExp;
+  private readonly SUPPLIER_BODY_SIGNAL: RegExp;
 
   private get scannerStartUrl(): string {
     return this.resolve1688ImageSearchStartUrl(this.input.scanner1688StartUrl);
@@ -118,6 +180,10 @@ export class Supplier1688ScanSequencer extends ProductScanSequencer {
   constructor(context: ProductScanSequencerContext, input: Supplier1688ScanInput = {}) {
     super(context);
     this.input = input;
+    this.selectorRuntime = normalizeSupplier1688SelectorRuntime(input.selectorRuntime);
+    this.PRICE_TEXT_PATTERN = new RegExp(this.selectorRuntime.priceTextPatternSource);
+    this.SEARCH_BODY_SIGNAL = new RegExp(this.selectorRuntime.searchBodySignalPattern);
+    this.SUPPLIER_BODY_SIGNAL = new RegExp(this.selectorRuntime.supplierBodySignalPattern);
   }
 
   // ─── Abstract implementation ─────────────────────────────────────────────────
@@ -352,7 +418,9 @@ export class Supplier1688ScanSequencer extends ProductScanSequencer {
         });
       } else if (candidate.url) {
         // URL-based fallback: use entry selector if available
-        const entrySelector = await this.findFirstVisibleSelector(SUPPLIER_1688_IMAGE_SEARCH_ENTRY_SELECTORS);
+        const entrySelector = await this.findFirstVisibleSelector(
+          this.selectorRuntime.imageSearchEntrySelectors
+        );
         if (!entrySelector) {
           const message = 'Could not find 1688 image search entry for URL-based upload.';
           this.upsertScanStep({
@@ -365,7 +433,7 @@ export class Supplier1688ScanSequencer extends ProductScanSequencer {
           });
           return { success: false, captchaRequired: false, message };
         }
-        await this.clickFirstVisible(SUPPLIER_1688_IMAGE_SEARCH_ENTRY_SELECTORS);
+        await this.clickFirstVisible(this.selectorRuntime.imageSearchEntrySelectors);
         await this.humanWait(600, 1_200);
       } else {
         const message = 'No usable image source provided for 1688 upload.';
@@ -738,7 +806,7 @@ export class Supplier1688ScanSequencer extends ProductScanSequencer {
     if (!offerUrl) return false;
 
     const visible = await Promise.any(
-      SUPPLIER_1688_SUPPLIER_READY_SELECTORS.map(async (selector) => {
+      this.selectorRuntime.supplierReadySelectors.map(async (selector) => {
         const locator = this.page.locator(selector).first();
         await locator.waitFor({ state: 'visible', timeout: 8_000 });
         return selector;
@@ -860,7 +928,7 @@ export class Supplier1688ScanSequencer extends ProductScanSequencer {
 
   protected async collect1688CandidateUrls(): Promise<string[]> {
     const raw = await this.page
-      .locator(SUPPLIER_1688_SEARCH_RESULT_READY_SELECTORS.join(', '))
+      .locator(this.selectorRuntime.searchResultReadySelectors.join(', '))
       .evaluateAll((nodes) =>
         nodes
           .map((node) => (node instanceof HTMLAnchorElement ? node.href : null))
@@ -897,9 +965,15 @@ export class Supplier1688ScanSequencer extends ProductScanSequencer {
     const candidateUrls = await this.collect1688CandidateUrls().catch(() => [] as string[]);
     const normalizedOfferUrl = this.normalize1688OfferUrl(currentUrl);
     const fileInput = await this.findFirstVisibleFileInput();
-    const entrySelector = await this.findFirstVisibleSelector(SUPPLIER_1688_IMAGE_SEARCH_ENTRY_SELECTORS);
-    const resultShellSelector = await this.findFirstVisibleSelector(SUPPLIER_1688_SEARCH_RESULT_READY_SELECTORS);
-    const supplierReadySelector = await this.findFirstVisibleSelector(SUPPLIER_1688_SUPPLIER_READY_SELECTORS);
+    const entrySelector = await this.findFirstVisibleSelector(
+      this.selectorRuntime.imageSearchEntrySelectors
+    );
+    const resultShellSelector = await this.findFirstVisibleSelector(
+      this.selectorRuntime.searchResultReadySelectors
+    );
+    const supplierReadySelector = await this.findFirstVisibleSelector(
+      this.selectorRuntime.supplierReadySelectors
+    );
     const hasPriceSignal = this.PRICE_TEXT_PATTERN.test(bodyText);
     const searchBodySignal = this.SEARCH_BODY_SIGNAL.test(bodyText);
     const supplierBodySignal = this.SUPPLIER_BODY_SIGNAL.test(bodyText);
@@ -917,9 +991,15 @@ export class Supplier1688ScanSequencer extends ProductScanSequencer {
 
     const urlSuggestsLogin = normalizedUrl.includes('login') || normalizedUrl.includes('signin');
     const urlSuggestsCaptcha = normalizedUrl.includes('captcha');
-    const bodyHasLoginText = SUPPLIER_1688_LOGIN_TEXT_HINTS.some((h) => bodyText.includes(h.toLowerCase()));
-    const bodyHasCaptchaText = SUPPLIER_1688_CAPTCHA_TEXT_HINTS.some((h) => bodyText.includes(h.toLowerCase()));
-    const bodyHasBlockText = SUPPLIER_1688_ACCESS_BLOCK_TEXT_HINTS.some((h) => bodyText.includes(h.toLowerCase()));
+    const bodyHasLoginText = this.selectorRuntime.loginTextHints.some((h) =>
+      bodyText.includes(h.toLowerCase())
+    );
+    const bodyHasCaptchaText = this.selectorRuntime.captchaTextHints.some((h) =>
+      bodyText.includes(h.toLowerCase())
+    );
+    const bodyHasBlockText = this.selectorRuntime.accessBlockTextHints.some((h) =>
+      bodyText.includes(h.toLowerCase())
+    );
     const textSuggestsBarrier = bodyHasLoginText || bodyHasCaptchaText || bodyHasBlockText;
 
     const resolveBarrierKind = (): Exclude<BarrierKind, null | 'page_closed'> => {
@@ -933,7 +1013,7 @@ export class Supplier1688ScanSequencer extends ProductScanSequencer {
         ? '1688 requested login before the scan could continue. Log in using the opened browser window.'
         : '1688 requested captcha verification. Solve it in the opened browser window and the scan will continue automatically.';
 
-    const titleSuggestsBarrier = SUPPLIER_1688_BARRIER_TITLE_HINTS.some(
+    const titleSuggestsBarrier = this.selectorRuntime.barrierTitleHints.some(
       (h) => pageTitleText.includes(h.toLowerCase())
     );
 
@@ -942,12 +1022,16 @@ export class Supplier1688ScanSequencer extends ProductScanSequencer {
       return { blocked: true, barrierKind: kind, currentUrl, message: resolveBarrierMessage(kind) };
     }
 
-    const visibleHardSelector = await this.findFirstVisibleSelector(SUPPLIER_1688_HARD_BLOCKING_SELECTORS);
+    const visibleHardSelector = await this.findFirstVisibleSelector(
+      this.selectorRuntime.hardBlockingSelectors
+    );
     if (visibleHardSelector && !hasStrongReadySignal) {
       return { blocked: true, barrierKind: 'login', currentUrl, message: resolveBarrierMessage('login') };
     }
 
-    const visibleSoftSelector = await this.findFirstVisibleSelector(SUPPLIER_1688_SOFT_BLOCKING_SELECTORS);
+    const visibleSoftSelector = await this.findFirstVisibleSelector(
+      this.selectorRuntime.softBlockingSelectors
+    );
     if (visibleSoftSelector && !hasStrongReadySignal) {
       return { blocked: true, barrierKind: 'captcha', currentUrl, message: resolveBarrierMessage('captcha') };
     }
@@ -970,9 +1054,15 @@ export class Supplier1688ScanSequencer extends ProductScanSequencer {
     const normalizedOfferUrl = this.normalize1688OfferUrl(currentUrl);
     const candidateUrls = await this.collect1688CandidateUrls().catch(() => [] as string[]);
     const fileInput = await this.findFirstVisibleFileInput();
-    const entrySelector = await this.findFirstVisibleSelector(SUPPLIER_1688_IMAGE_SEARCH_ENTRY_SELECTORS);
-    const resultShellSelector = await this.findFirstVisibleSelector(SUPPLIER_1688_SEARCH_RESULT_READY_SELECTORS);
-    const supplierReadySelector = await this.findFirstVisibleSelector(SUPPLIER_1688_SUPPLIER_READY_SELECTORS);
+    const entrySelector = await this.findFirstVisibleSelector(
+      this.selectorRuntime.imageSearchEntrySelectors
+    );
+    const resultShellSelector = await this.findFirstVisibleSelector(
+      this.selectorRuntime.searchResultReadySelectors
+    );
+    const supplierReadySelector = await this.findFirstVisibleSelector(
+      this.selectorRuntime.supplierReadySelectors
+    );
     const bodyText = (
       await this.page.locator('body').first().textContent().catch(() => '')
     )?.toLowerCase() ?? '';
@@ -1170,7 +1260,7 @@ export class Supplier1688ScanSequencer extends ProductScanSequencer {
       } catch { /* ignore */ }
     }).catch(() => undefined);
 
-    const clicked = await this.clickFirstVisible(SUPPLIER_1688_SUBMIT_SEARCH_SELECTORS);
+    const clicked = await this.clickFirstVisible(this.selectorRuntime.submitSearchSelectors);
     if (!clicked) return false;
 
     await this.humanWait(1_800, 3_600);
@@ -1182,7 +1272,7 @@ export class Supplier1688ScanSequencer extends ProductScanSequencer {
   // ─── Utility helpers ─────────────────────────────────────────────────────────
 
   protected async findFirstVisibleFileInput(): Promise<Locator | null> {
-    for (const selector of SUPPLIER_1688_FILE_INPUT_SELECTORS) {
+    for (const selector of this.selectorRuntime.fileInputSelectors) {
       const locator = this.page.locator(selector).first();
       if ((await locator.count().catch(() => 0)) === 0) continue;
       if (await locator.isVisible().catch(() => false)) return locator;

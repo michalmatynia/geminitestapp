@@ -582,13 +582,12 @@ describe('Selector registry runtime coverage', () => {
     expect(AMAZON_SELECTOR_REGISTRY_RUNTIME).toContain("'button:has-text(\"Accept all\")'");
   });
 
-  it('SUPPLIER_1688_SELECTOR_REGISTRY_RUNTIME contains all key constants', async () => {
-    const { SUPPLIER_1688_SELECTOR_REGISTRY_RUNTIME } = await import('../selectors/supplier-1688');
-    expect(SUPPLIER_1688_SELECTOR_REGISTRY_RUNTIME).toContain('const SUPPLIER_1688_FILE_INPUT_SELECTORS =');
-    expect(SUPPLIER_1688_SELECTOR_REGISTRY_RUNTIME).toContain('const SUPPLIER_1688_HARD_BLOCKING_SELECTORS =');
-    expect(SUPPLIER_1688_SELECTOR_REGISTRY_RUNTIME).toContain('const PRICE_TEXT_PATTERN = new RegExp(');
-    // Verify a known login hint
-    expect(SUPPLIER_1688_SELECTOR_REGISTRY_RUNTIME).toContain("'请登录'");
+  it('SUPPLIER_1688_DEFAULT_SELECTOR_RUNTIME exposes the native selector object', async () => {
+    const { SUPPLIER_1688_DEFAULT_SELECTOR_RUNTIME } = await import('../selectors/supplier-1688');
+    expect(SUPPLIER_1688_DEFAULT_SELECTOR_RUNTIME.fileInputSelectors).toContain('input[type="file"]');
+    expect(SUPPLIER_1688_DEFAULT_SELECTOR_RUNTIME.hardBlockingSelectors).toContain('input[type="password"]');
+    expect(SUPPLIER_1688_DEFAULT_SELECTOR_RUNTIME.priceTextPatternSource).toContain('¥');
+    expect(SUPPLIER_1688_DEFAULT_SELECTOR_RUNTIME.loginTextHints).toContain('请登录');
   });
 
   it('generateAmazonSelectorRegistryRuntime() is stable — calling it twice produces identical output', async () => {
@@ -596,8 +595,13 @@ describe('Selector registry runtime coverage', () => {
     expect(generateAmazonSelectorRegistryRuntime()).toBe(generateAmazonSelectorRegistryRuntime());
   });
 
-  it('generateSupplier1688SelectorRegistryRuntime() is stable', async () => {
-    const { generateSupplier1688SelectorRegistryRuntime } = await import('../selectors/supplier-1688');
-    expect(generateSupplier1688SelectorRegistryRuntime()).toBe(generateSupplier1688SelectorRegistryRuntime());
+  it('resolveSupplier1688SelectorRuntimeFromEntries() is stable', async () => {
+    const {
+      SUPPLIER_1688_SELECTOR_REGISTRY_SEED_ENTRIES,
+      resolveSupplier1688SelectorRuntimeFromEntries,
+    } = await import('../selectors/supplier-1688');
+    expect(resolveSupplier1688SelectorRuntimeFromEntries(SUPPLIER_1688_SELECTOR_REGISTRY_SEED_ENTRIES)).toEqual(
+      resolveSupplier1688SelectorRuntimeFromEntries(SUPPLIER_1688_SELECTOR_REGISTRY_SEED_ENTRIES)
+    );
   });
 });

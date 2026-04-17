@@ -1,5 +1,8 @@
 import type { Page, Locator } from 'playwright';
 import { normalizeTraderaListingFormUrl } from '@/features/integrations/constants/tradera';
+import { buildResolvedActionSteps } from '@/shared/lib/browser-execution/runtime-action-resolver.server';
+import { TraderaSequencer } from '@/shared/lib/browser-execution/sequencers/TraderaSequencer';
+import { StepTracker } from '@/shared/lib/browser-execution/step-tracker';
 import { decryptSecret } from '@/shared/lib/security/encryption';
 import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
 import { internalError } from '@/shared/errors/app-error';
@@ -358,186 +361,199 @@ export const ensureLoggedIn = async (
   const normalizedListingFormUrl = normalizeTraderaListingFormUrl(listingFormUrl);
   const hasStoredSession = Boolean(connection.playwrightStorageState?.trim());
   const sessionCheckUrl = 'https://www.tradera.com/en/my/listings?tab=active';
+  const authFlowState: {
+    currentAuthState: TraderaAuthState | null;
+    sessionResolved: boolean;
+    authSource: 'stored_session' | 'credential_login';
+  } = {
+    currentAuthState: null,
+    sessionResolved: false,
+    authSource: hasStoredSession ? 'stored_session' : 'credential_login',
+  };
 
-  emitStatus({
-    status: 'opening_session_check',
-    message: 'Opening Tradera session check page.',
-  });
-  await page.goto(sessionCheckUrl, {
-    waitUntil: 'domcontentloaded',
-    timeout: 30_000,
-  });
-  await acceptTraderaCookies(page);
-  emitStatus({
-    status: 'waiting_for_session_check',
-    message: 'Waiting for Tradera account state.',
-  });
-  const initialAuthState = await waitForTraderaAuthResolution({
+  const tracker = StepTracker.fromSteps(await buildResolvedActionSteps('tradera_auth'));
+  const sequencer = new TraderaSequencer({
     page,
-    phase: 'session_check',
-    hasStoredSession,
-  });
-  if (initialAuthState.resolution === 'authenticated') {
-    emitStatus({
-      status: 'stored_session_accepted',
-      message: 'Stored Tradera session was accepted.',
-      authState: initialAuthState,
-    });
-    emitStatus({
-      status: 'opening_listing_form',
-      message: 'Opening Tradera listing form.',
-      authState: initialAuthState,
-    });
-    await page.goto(normalizedListingFormUrl, {
-      waitUntil: 'domcontentloaded',
-      timeout: 30_000,
-    });
-    await acceptTraderaCookies(page);
-    emitStatus({
-      status: 'waiting_for_listing_form',
-      message: 'Verifying Tradera listing form access.',
-    });
-    const listingAuthState = await waitForTraderaAuthResolution({
-      page,
-      phase: 'listing_form',
-      hasStoredSession,
-    });
-    if (
-      listingAuthState.resolution !== 'authenticated' &&
-      (listingAuthState.loginFormVisible || listingAuthState.manualVerificationDetected)
-    ) {
-      throw buildTraderaAuthRequiredError({
-        hasStoredSession,
-        authState: listingAuthState,
-      });
-    }
-    return;
-  }
+    tracker,
+    actionKey: 'tradera_auth',
+    emit: () => undefined,
+    helpers: {
+      acceptCookieConsent: async () => {
+        await acceptTraderaCookies(page);
+      },
+      authCheckMode: 'observe',
+      browserOpenLabel: 'Opening Tradera session check page.',
+      browserOpenUrl: sessionCheckUrl,
+      checkAuthStatus: async () => {
+        if (authFlowState.sessionResolved) {
+          return true;
+        }
 
-  if (hasStoredSession) {
-    emitStatus({
-      status: 'stored_session_rejected',
-      message: 'Stored Tradera session needs login or manual verification.',
-      authState: initialAuthState,
-    });
-    throw buildTraderaAuthRequiredError({
-      hasStoredSession: true,
-      authState: initialAuthState,
-    });
-  }
+        emitStatus({
+          status: 'waiting_for_session_check',
+          message: 'Waiting for Tradera account state.',
+        });
+        const initialAuthState = await waitForTraderaAuthResolution({
+          page,
+          phase: 'session_check',
+          hasStoredSession,
+        });
+        authFlowState.currentAuthState = initialAuthState;
 
-  emitStatus({
-    status: 'opening_login',
-    message: 'Opening Tradera login form.',
-    authState: initialAuthState,
-  });
-  await page.goto('https://www.tradera.com/login', {
-    waitUntil: 'domcontentloaded',
-    timeout: 30_000,
-  });
-  await acceptTraderaCookies(page);
-  emitStatus({
-    status: 'waiting_for_login_entry',
-    message: 'Waiting for Tradera login page.',
-  });
-  const loginEntryAuthState = await waitForTraderaAuthResolution({
-    page,
-    phase: 'login',
-    hasStoredSession: false,
-  });
-  if (loginEntryAuthState.resolution === 'manual_verification_required') {
-    throw buildTraderaAuthRequiredError({
-      hasStoredSession: false,
-      authState: loginEntryAuthState,
-    });
-  }
-  if (loginEntryAuthState.resolution === 'authenticated') {
-    emitStatus({
-      status: 'stored_session_accepted',
-      message: 'Stored Tradera session was accepted.',
-      authState: loginEntryAuthState,
-    });
-    emitStatus({
-      status: 'opening_listing_form',
-      message: 'Opening Tradera listing form.',
-      authState: loginEntryAuthState,
-    });
-    await page.goto(normalizedListingFormUrl, {
-      waitUntil: 'domcontentloaded',
-      timeout: 30_000,
-    });
-    await acceptTraderaCookies(page);
-    return;
-  }
+        if (initialAuthState.resolution === 'authenticated') {
+          emitStatus({
+            status: 'stored_session_accepted',
+            message: 'Stored Tradera session was accepted.',
+            authState: initialAuthState,
+          });
+          authFlowState.sessionResolved = true;
+          return true;
+        }
 
-  emitStatus({
-    status: 'waiting_for_login_controls',
-    message: 'Waiting for Tradera login controls.',
-    authState: loginEntryAuthState,
-  });
-  const { usernameInput, passwordInput, submitButton } =
-    await waitForTraderaLoginControls(page);
+        if (hasStoredSession) {
+          emitStatus({
+            status: 'stored_session_rejected',
+            message: 'Stored Tradera session needs login or manual verification.',
+            authState: initialAuthState,
+          });
+          throw buildTraderaAuthRequiredError({
+            hasStoredSession: true,
+            authState: initialAuthState,
+          });
+        }
 
-  const decryptedPassword = decryptSecret(connection.password ?? '');
-  await usernameInput.fill(connection.username ?? '');
-  await passwordInput.fill(decryptedPassword);
+        return false;
+      },
+      loginUrl: 'https://www.tradera.com/login',
+      mode: 'auto',
+      openPage: async (url) => {
+        if (url === sessionCheckUrl) {
+          emitStatus({
+            status: 'opening_session_check',
+            message: 'Opening Tradera session check page.',
+          });
+        } else if (url.includes('/login')) {
+          emitStatus({
+            status: 'opening_login',
+            message: 'Opening Tradera login form.',
+            authState: authFlowState.currentAuthState,
+          });
+        }
 
-  emitStatus({
-    status: 'submitting_login',
-    message: 'Submitting Tradera login credentials.',
-  });
-  await Promise.allSettled([
-    page.waitForNavigation({
-      waitUntil: 'domcontentloaded',
-      timeout: 20_000,
-    }),
-    submitButton.click(),
-  ]);
-  await waitOnPage(page, 1500);
-  await acceptTraderaCookies(page);
+        await page.goto(url, {
+          waitUntil: 'domcontentloaded',
+          timeout: 30_000,
+        });
+      },
+      openSellPage: async () => {
+        emitStatus({
+          status: 'opening_listing_form',
+          message: 'Opening Tradera listing form.',
+          authState: authFlowState.currentAuthState,
+        });
+        await page.goto(normalizedListingFormUrl, {
+          waitUntil: 'domcontentloaded',
+          timeout: 30_000,
+        });
+        await acceptTraderaCookies(page);
+        emitStatus({
+          status: 'waiting_for_listing_form',
+          message: 'Verifying Tradera listing form access.',
+        });
+        const listingAuthState = await waitForTraderaAuthResolution({
+          page,
+          phase: 'listing_form',
+          hasStoredSession: authFlowState.authSource === 'stored_session',
+        });
+        authFlowState.currentAuthState = listingAuthState;
+        if (
+          listingAuthState.resolution !== 'authenticated' &&
+          (listingAuthState.loginFormVisible || listingAuthState.manualVerificationDetected)
+        ) {
+          throw buildTraderaAuthRequiredError({
+            hasStoredSession: authFlowState.authSource === 'stored_session',
+            authState: listingAuthState,
+          });
+        }
+      },
+      performLogin: async () => {
+        emitStatus({
+          status: 'waiting_for_login_entry',
+          message: 'Waiting for Tradera login page.',
+        });
+        const loginEntryAuthState = await waitForTraderaAuthResolution({
+          page,
+          phase: 'login',
+          hasStoredSession: false,
+        });
+        authFlowState.currentAuthState = loginEntryAuthState;
 
-  emitStatus({
-    status: 'waiting_for_post_login',
-    message: 'Waiting for Tradera post-login verification.',
-  });
-  const postLoginAuthState = await waitForTraderaAuthResolution({
-    page,
-    phase: 'post_login',
-    hasStoredSession: false,
-  });
-  if (postLoginAuthState.resolution !== 'authenticated') {
-    throw buildTraderaAuthRequiredError({
-      hasStoredSession: false,
-      authState: postLoginAuthState,
-    });
-  }
+        if (loginEntryAuthState.resolution === 'manual_verification_required') {
+          throw buildTraderaAuthRequiredError({
+            hasStoredSession: false,
+            authState: loginEntryAuthState,
+          });
+        }
 
-  emitStatus({
-    status: 'opening_listing_form',
-    message: 'Opening Tradera listing form.',
-    authState: postLoginAuthState,
+        if (loginEntryAuthState.resolution === 'authenticated') {
+          emitStatus({
+            status: 'stored_session_accepted',
+            message: 'Stored Tradera session was accepted.',
+            authState: loginEntryAuthState,
+          });
+          authFlowState.sessionResolved = true;
+          authFlowState.authSource = 'credential_login';
+          return;
+        }
+
+        emitStatus({
+          status: 'waiting_for_login_controls',
+          message: 'Waiting for Tradera login controls.',
+          authState: loginEntryAuthState,
+        });
+        const { usernameInput, passwordInput, submitButton } =
+          await waitForTraderaLoginControls(page);
+
+        const decryptedPassword = decryptSecret(connection.password ?? '');
+        await usernameInput.fill(connection.username ?? '');
+        await passwordInput.fill(decryptedPassword);
+
+        emitStatus({
+          status: 'submitting_login',
+          message: 'Submitting Tradera login credentials.',
+        });
+        await Promise.allSettled([
+          page.waitForNavigation({
+            waitUntil: 'domcontentloaded',
+            timeout: 20_000,
+          }),
+          submitButton.click(),
+        ]);
+        await waitOnPage(page, 1500);
+        await acceptTraderaCookies(page);
+
+        emitStatus({
+          status: 'waiting_for_post_login',
+          message: 'Waiting for Tradera post-login verification.',
+        });
+        const postLoginAuthState = await waitForTraderaAuthResolution({
+          page,
+          phase: 'post_login',
+          hasStoredSession: false,
+        });
+        authFlowState.currentAuthState = postLoginAuthState;
+        if (postLoginAuthState.resolution !== 'authenticated') {
+          throw buildTraderaAuthRequiredError({
+            hasStoredSession: false,
+            authState: postLoginAuthState,
+          });
+        }
+
+        authFlowState.sessionResolved = true;
+        authFlowState.authSource = 'credential_login';
+      },
+    },
   });
-  await page.goto(normalizedListingFormUrl, {
-    waitUntil: 'domcontentloaded',
-    timeout: 30_000,
-  });
-  await acceptTraderaCookies(page);
-  emitStatus({
-    status: 'waiting_for_listing_form',
-    message: 'Verifying Tradera listing form access.',
-  });
-  const listingAuthState = await waitForTraderaAuthResolution({
-    page,
-    phase: 'listing_form',
-    hasStoredSession: false,
-  });
-  if (
-    listingAuthState.resolution !== 'authenticated' &&
-    (listingAuthState.loginFormVisible || listingAuthState.manualVerificationDetected)
-  ) {
-    throw buildTraderaAuthRequiredError({
-      hasStoredSession: false,
-      authState: listingAuthState,
-    });
-  }
+
+  await sequencer.run();
 };

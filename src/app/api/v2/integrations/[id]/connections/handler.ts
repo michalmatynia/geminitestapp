@@ -55,6 +55,8 @@ const createConnectionSchema = z
     playwrightListingScript: z.string().trim().nullable().optional(),
     playwrightImportScript: z.string().trim().nullable().optional(),
     playwrightImportBaseUrl: z.string().trim().nullable().optional(),
+    playwrightListingActionId: z.string().trim().nullable().optional(),
+    playwrightImportActionId: z.string().trim().nullable().optional(),
     playwrightImportCaptureRoutesJson: z.string().trim().nullable().optional(),
     playwrightFieldMapperJson: z.string().trim().nullable().optional(),
     traderaDefaultTemplateId: z.string().trim().nullable().optional(),
@@ -173,6 +175,8 @@ export async function GET_handler(
     playwrightListingScript: connection.playwrightListingScript ?? null,
     playwrightImportScript: connection.playwrightImportScript ?? null,
     playwrightImportBaseUrl: connection.playwrightImportBaseUrl ?? null,
+    playwrightListingActionId: connection.playwrightListingActionId ?? null,
+    playwrightImportActionId: connection.playwrightImportActionId ?? null,
     playwrightImportCaptureRoutesJson: connection.playwrightImportCaptureRoutesJson ?? null,
     playwrightFieldMapperJson: connection.playwrightFieldMapperJson ?? null,
     hasPlaywrightListingScript: Boolean(connection.playwrightListingScript?.trim()),
@@ -369,6 +373,14 @@ export async function POST_handler(
     ...(typeof data.playwrightImportBaseUrl === 'string' || data.playwrightImportBaseUrl === null
       ? { playwrightImportBaseUrl: data.playwrightImportBaseUrl ?? null }
       : {}),
+    ...(typeof data.playwrightListingActionId === 'string' ||
+    data.playwrightListingActionId === null
+      ? { playwrightListingActionId: data.playwrightListingActionId ?? null }
+      : {}),
+    ...(typeof data.playwrightImportActionId === 'string' ||
+    data.playwrightImportActionId === null
+      ? { playwrightImportActionId: data.playwrightImportActionId ?? null }
+      : {}),
     ...(typeof data.playwrightImportCaptureRoutesJson === 'string' ||
     data.playwrightImportCaptureRoutesJson === null
       ? {
@@ -472,6 +484,8 @@ export async function POST_handler(
     playwrightListingScript: created.playwrightListingScript ?? null,
     playwrightImportScript: created.playwrightImportScript ?? null,
     playwrightImportBaseUrl: created.playwrightImportBaseUrl ?? null,
+    playwrightListingActionId: created.playwrightListingActionId ?? null,
+    playwrightImportActionId: created.playwrightImportActionId ?? null,
     playwrightImportCaptureRoutesJson: created.playwrightImportCaptureRoutesJson ?? null,
     playwrightFieldMapperJson: created.playwrightFieldMapperJson ?? null,
     hasPlaywrightListingScript: Boolean(created.playwrightListingScript?.trim()),

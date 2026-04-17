@@ -1,3 +1,5 @@
+import KangurAppLayout from '../../../kangur/(app)/layout';
+
 import type { ReactNode } from 'react';
 
 export default function LocalizedKangurAppLayout({
@@ -5,12 +7,5 @@ export default function LocalizedKangurAppLayout({
 }: {
   children: ReactNode;
 }): ReactNode {
-  return (
-    <div className='kangur-alias-app'>
-      <a className='kangur-skip-link sr-only focus:not-sr-only' href='#kangur-alias-main'>
-        Skip to content
-      </a>
-      <main id='kangur-alias-main'>{children}</main>
-    </div>
-  );
+  return <KangurAppLayout>{children}</KangurAppLayout>;
 }

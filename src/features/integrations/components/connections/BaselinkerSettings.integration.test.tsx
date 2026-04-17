@@ -314,7 +314,7 @@ const renderWithProviders = ({
     handleTraderaManualLogin: noopAsync,
     handleVintedManualLogin: noopAsync,
     handleSelectPlaywrightPersona: noopAsync,
-    handleSavePlaywrightSettings: noopAsync,
+    handleSavePlaywrightFallbackSettings: noopAsync,
     handleAllegroAuthorize: vi.fn(),
     handleAllegroDisconnect: noopAsync,
     handleAllegroSandboxToggle: noopAsync,

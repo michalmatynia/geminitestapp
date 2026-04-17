@@ -343,6 +343,16 @@ export const buildAdminNav = (handlers: {
                 label: 'Step Sequencer',
                 href: '/admin/playwright/step-sequencer',
               },
+              {
+                id: 'integrations/marketplaces/playwright/action-runs',
+                label: 'Action Runs',
+                href: '/admin/playwright/step-sequencer/runs',
+              },
+              {
+                id: 'integrations/marketplaces/playwright/1688-selectors',
+                label: '1688 Selector Registry',
+                href: '/admin/integrations/1688/selectors',
+              },
             ],
           },
         ],

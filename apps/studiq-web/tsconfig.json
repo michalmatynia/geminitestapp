@@ -14,10 +14,11 @@
       "@kangur/api-client/*": ["../../packages/kangur-api-client/src/*"],
       "@kangur/platform": ["../../packages/kangur-platform/src/index.ts"],
       "@kangur/platform/*": ["../../packages/kangur-platform/src/*"],
-      "@/features/kangur/*": ["../../src/features/kangur/*"],
+      "@/features/*": ["../../src/features/*"],
       "@/shared/*": ["../../src/shared/*"],
       "@/i18n/*": ["../../src/i18n/*"],
       "@/app/*": ["../../src/app/*"],
+      "@docs/*": ["../../docs/*"],
       "@/*": ["./src/*"]
     },
     "types": ["react", "react-dom"]

@@ -26,10 +26,18 @@ export const AccessibilityProvider = ({ children }: { children: React.ReactNode 
       return el.matches(focusableSelector);
     };
 
+    const shouldSkipScrollableEnhancement = (el: HTMLElement) =>
+      el.hasAttribute('data-scroll-focus-ignore') ||
+      el.hasAttribute('tabindex') ||
+      el.getAttribute('aria-hidden') === 'true';
+
     const setScrollablesFocusable = () => {
       const all = Array.from(document.querySelectorAll<HTMLElement>('*'));
       for (const el of all) {
         try {
+          if (shouldSkipScrollableEnhancement(el)) {
+            continue;
+          }
           const style = window.getComputedStyle(el);
           const overflowY = style.getPropertyValue('overflow-y');
           const overflowX = style.getPropertyValue('overflow-x');

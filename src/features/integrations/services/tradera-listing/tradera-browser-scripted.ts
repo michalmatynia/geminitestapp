@@ -529,20 +529,22 @@ const runTraderaScriptedListingForProduct = async ({
     scriptSource,
     scriptValidationError,
   } = resolveManagedTraderaScript(connection);
-  const [selectorRuntimeResolution, listStepIds, syncStepIds] =
+  const [selectorRuntimeResolution, listStepIds, relistStepIds, syncStepIds] =
     scriptSource === 'connection'
-      ? [null, null, null]
+      ? [null, null, null, null]
       : await Promise.all([
           resolveTraderaSelectorRegistryRuntime({
             profile: systemSettings.selectorProfile,
           }),
           resolveRuntimeActionStepIds('tradera_quicklist_list'),
+          resolveRuntimeActionStepIds('tradera_quicklist_relist'),
           resolveRuntimeActionStepIds('tradera_quicklist_sync'),
         ]);
   const quicklistStepsInit =
-    listStepIds !== null && syncStepIds !== null
+    listStepIds !== null && relistStepIds !== null && syncStepIds !== null
       ? generateTraderaQuicklistBrowserStepsInit({
           listStepIds,
+          relistStepIds,
           syncStepIds,
         })
       : undefined;

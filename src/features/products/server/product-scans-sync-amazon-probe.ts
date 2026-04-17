@@ -21,6 +21,7 @@ import {
 } from './product-scan-amazon-evaluator';
 import {
   AMAZON_PRODUCT_SCAN_PROVIDER,
+  type ProductScanScriptProviderRuntime,
 } from './product-scan-providers';
 import {
   buildProductScannerEngineRequestOptions,
@@ -61,7 +62,7 @@ import {
   resolveAmazonTriageEvaluatorConfig,
 } from './product-scans-service.helpers.amazon';
 
-const amazonScanRuntime = AMAZON_PRODUCT_SCAN_PROVIDER.runtime!;
+const amazonScanRuntime = AMAZON_PRODUCT_SCAN_PROVIDER.runtime! as ProductScanScriptProviderRuntime;
 
 type SynchronizeAmazonStatusInput = {
   scan: ProductScanRecord;

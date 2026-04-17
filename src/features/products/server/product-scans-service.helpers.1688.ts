@@ -210,6 +210,15 @@ export const build1688ScanRequestInput = (input: {
   directSupplierCandidateRank?: number | null;
   stepSequenceKey?: string | null;
   stepSequence?: ProductScanRequestSequenceEntry[] | null;
+  runtimeKey?: string | null;
+  actionId?: string | null;
+  actionName?: string | null;
+  action?: unknown;
+  blocks?: unknown[] | null;
+  selectorProfile?: string | null;
+  selectorRegistryResolution?: Record<string, unknown> | null;
+  selectorRuntime?: unknown;
+  evaluatorConfig?: unknown;
 }): Record<string, unknown> => ({
   productId: input.productId,
   productName: input.productName,
@@ -265,6 +274,15 @@ export const build1688ScanRequestInput = (input: {
       : null,
   stepSequenceKey: readOptionalString(input.stepSequenceKey, PRODUCT_SCAN_SEQUENCE_KEY_MAX_LENGTH),
   stepSequence: normalizeProductScanRequestSequence(input.stepSequence),
+  runtimeKey: readOptionalString(input.runtimeKey, 160),
+  actionId: readOptionalString(input.actionId, 160),
+  actionName: readOptionalString(input.actionName, 240),
+  action: input.action ?? null,
+  blocks: Array.isArray(input.blocks) ? input.blocks : [],
+  selectorProfile: readOptionalString(input.selectorProfile, 120),
+  selectorRegistryResolution: input.selectorRegistryResolution ?? null,
+  selectorRuntime: input.selectorRuntime ?? null,
+  evaluatorConfig: input.evaluatorConfig ?? null,
 });
 
 export const create1688ProductScanBaseRecord = (input: {

@@ -16,7 +16,7 @@ import {
 } from './product-scans-service.helpers.steps';
 import type {
   AmazonScanScriptResult,
-  SupplierScanScriptResult,
+  SupplierScanRuntimeResult,
 } from './product-scans-service.types';
 
 export const parseAmazonScanScriptResult = (value: unknown): AmazonScanScriptResult => {
@@ -46,13 +46,13 @@ export const parseAmazonScanScriptResult = (value: unknown): AmazonScanScriptRes
   };
 };
 
-export const parse1688ScanScriptResult = (value: unknown): SupplierScanScriptResult => {
+export const parse1688ScanRuntimeResult = (value: unknown): SupplierScanRuntimeResult => {
   const record = toRecord(value);
   const rawStatus = readOptionalString(record?.['status']) ?? 'failed';
 
   const status = (['matched', 'probe_ready', 'no_match', 'failed', 'captcha_required', 'running'].includes(rawStatus)
     ? rawStatus
-    : 'failed') as SupplierScanScriptResult['status'];
+    : 'failed') as SupplierScanRuntimeResult['status'];
 
   return {
     status,

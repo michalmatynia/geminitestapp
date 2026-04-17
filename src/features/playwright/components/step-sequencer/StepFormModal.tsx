@@ -1,10 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
+import {
+  useSaveTraderaSelectorRegistryEntryMutation,
+  useTraderaSelectorRegistry,
+} from '@/features/integrations/hooks/useTraderaSelectorRegistry';
+import type { TraderaSelectorRegistryEntry } from '@/shared/contracts/integrations/tradera-selector-registry';
 import {
   PLAYWRIGHT_STEP_TYPE_LABELS,
   type PlaywrightStep,
+  type PlaywrightStepInputBinding,
+  type PlaywrightStepInputBindingMode,
   type PlaywrightStepType,
 } from '@/shared/contracts/playwright-steps';
 import {
@@ -55,6 +62,17 @@ const TIMEOUT_TYPES: PlaywrightStepType[] = ['wait_for_timeout', 'wait_for_selec
 
 /** Steps that use a custom script textarea */
 const SCRIPT_TYPES: PlaywrightStepType[] = ['custom_script'];
+const SELECTOR_REGISTRY_HREF = '/admin/integrations/marketplaces/tradera/selectors';
+
+const buildRegistryOverrideValueJson = (
+  entry: TraderaSelectorRegistryEntry,
+  selector: string
+): string | null => {
+  if (entry.valueType === 'string') return JSON.stringify(selector, null, 2);
+  if (entry.valueType === 'string_array') return JSON.stringify([selector], null, 2);
+  if (entry.valueType === 'nested_string_array') return JSON.stringify([[selector]], null, 2);
+  return null;
+};
 
 function buildEmpty(): Partial<PlaywrightStep> {
   return {
@@ -67,6 +85,7 @@ function buildEmpty(): Partial<PlaywrightStep> {
     key: null,
     timeout: null,
     script: null,
+    inputBindings: {},
     websiteId: null,
     flowId: null,
     tags: [],
@@ -95,6 +114,25 @@ export function StepFormModal(): React.JSX.Element | null {
   const isEditing = editingStep !== null;
 
   const [draft, setDraft] = useState<Partial<PlaywrightStep>>(buildEmpty);
+  const registryQuery = useTraderaSelectorRegistry();
+  const saveRegistryMutation = useSaveTraderaSelectorRegistryEntryMutation();
+  const [registrySaveMessage, setRegistrySaveMessage] = useState<string | null>(null);
+  const [registrySaveError, setRegistrySaveError] = useState<string | null>(null);
+  const registrySelectorEntries = useMemo(
+    () =>
+      (registryQuery.data?.entries ?? [])
+        .filter((entry) => entry.kind === 'selectors')
+        .sort((left, right) =>
+          `${left.profile}:${left.group}:${left.key}`.localeCompare(
+            `${right.profile}:${right.group}:${right.key}`
+          )
+        ),
+    [registryQuery.data?.entries]
+  );
+  const registryProfiles = useMemo(
+    () => Array.from(new Set(registrySelectorEntries.map((entry) => entry.profile))).sort(),
+    [registrySelectorEntries]
+  );
 
   // Sync draft when editing step changes
   useEffect(() => {
@@ -103,7 +141,41 @@ export function StepFormModal(): React.JSX.Element | null {
     } else {
       setDraft(buildEmpty());
     }
+    setRegistrySaveMessage(null);
+    setRegistrySaveError(null);
   }, [editingStep]);
+
+  const selectorBinding = draft.inputBindings?.['selector'];
+  const selectorBindingMode: PlaywrightStepInputBindingMode =
+    selectorBinding?.mode === 'selectorRegistry' || selectorBinding?.mode === 'disabled'
+      ? selectorBinding.mode
+      : 'literal';
+  const selectorFallback = selectorBinding?.fallbackSelector ?? draft.selector ?? '';
+  const selectedRegistryProfile =
+    selectorBinding?.selectorProfile ?? registryProfiles[0] ?? 'default';
+  const registryProfilesForSelect = useMemo(
+    () =>
+      registryProfiles.includes(selectedRegistryProfile)
+        ? registryProfiles
+        : [selectedRegistryProfile, ...registryProfiles],
+    [registryProfiles, selectedRegistryProfile]
+  );
+  const selectedRegistryEntry = useMemo(
+    () =>
+      registrySelectorEntries.find(
+        (entry) =>
+          entry.key === selectorBinding?.selectorKey &&
+          entry.profile === selectedRegistryProfile
+      ) ??
+      registrySelectorEntries.find((entry) => entry.key === selectorBinding?.selectorKey) ??
+      null,
+    [registrySelectorEntries, selectedRegistryProfile, selectorBinding?.selectorKey]
+  );
+  const registryEntriesForProfile = useMemo(
+    () =>
+      registrySelectorEntries.filter((entry) => entry.profile === selectedRegistryProfile),
+    [registrySelectorEntries, selectedRegistryProfile]
+  );
 
   if (!isOpen) return null;
 
@@ -115,21 +187,118 @@ export function StepFormModal(): React.JSX.Element | null {
   const set = <K extends keyof PlaywrightStep>(key: K, value: PlaywrightStep[K]): void =>
     setDraft((prev) => ({ ...prev, [key]: value }));
 
+  const setSelectorBinding = (updates: Partial<PlaywrightStepInputBinding>): void => {
+    setDraft((prev) => {
+      const existing = prev.inputBindings?.['selector'];
+      const nextBinding: PlaywrightStepInputBinding = {
+        mode: existing?.mode ?? 'literal',
+        ...existing,
+        ...updates,
+      };
+      return {
+        ...prev,
+        inputBindings: {
+          ...(prev.inputBindings ?? {}),
+          selector: nextBinding,
+        },
+      };
+    });
+  };
+
+  const connectSelectorRegistryEntry = (entry: TraderaSelectorRegistryEntry): void => {
+    const fallbackSelector = (entry.preview[0] ?? selectorFallback) || null;
+    setDraft((prev) => ({
+      ...prev,
+      selector: fallbackSelector,
+      inputBindings: {
+        ...(prev.inputBindings ?? {}),
+        selector: {
+          mode: 'selectorRegistry',
+          selectorKey: entry.key,
+          selectorProfile: entry.profile,
+          fallbackSelector,
+        },
+      },
+    }));
+  };
+
+  const handleSaveFallbackAsRegistryOverride = async (): Promise<void> => {
+    if (!selectedRegistryEntry) return;
+    const selector = selectorFallback.trim();
+    if (!selector) return;
+    const valueJson = buildRegistryOverrideValueJson(selectedRegistryEntry, selector);
+    if (!valueJson) {
+      setRegistrySaveMessage(null);
+      setRegistrySaveError('This registry entry type cannot be updated from a single selector.');
+      return;
+    }
+
+    setRegistrySaveMessage(null);
+    setRegistrySaveError(null);
+    try {
+      const result = await saveRegistryMutation.mutateAsync({
+        profile: selectedRegistryProfile,
+        key: selectedRegistryEntry.key,
+        valueJson,
+      });
+      setSelectorBinding({
+        mode: 'selectorRegistry',
+        selectorKey: result.key,
+        selectorProfile: result.profile,
+        fallbackSelector: result.preview[0] ?? selector,
+      });
+      set('selector', result.preview[0] ?? selector);
+      setRegistrySaveMessage(`Saved registry override for ${result.profile}/${result.key}.`);
+    } catch (error) {
+      setRegistrySaveError(error instanceof Error ? error.message : 'Failed to save registry override.');
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     const name = draft.name?.trim();
     if (!name || !draft.type) return;
+    const inputBindings: Record<string, PlaywrightStepInputBinding> = {
+      ...(draft.inputBindings ?? {}),
+    };
+    const selector = draft.selector?.trim() || null;
+
+    if (SELECTOR_TYPES.includes(draft.type)) {
+      const selectorBinding = inputBindings['selector'];
+      if (selectorBinding?.mode === 'selectorRegistry') {
+        inputBindings['selector'] = {
+          mode: 'selectorRegistry',
+          selectorKey: selectorBinding.selectorKey?.trim() || null,
+          selectorProfile: selectorBinding.selectorProfile?.trim() || null,
+          fallbackSelector: selectorBinding.fallbackSelector?.trim() || selector,
+        };
+      } else if (selectorBinding?.mode === 'disabled') {
+        inputBindings['selector'] = {
+          mode: 'disabled',
+          disabledReason: selectorBinding.disabledReason?.trim() || 'Selector intentionally disabled',
+          fallbackSelector: selectorBinding.fallbackSelector?.trim() || selector,
+        };
+      } else {
+        inputBindings['selector'] = {
+          mode: 'literal',
+          value: selector,
+        };
+      }
+    } else {
+      delete inputBindings['selector'];
+    }
 
     const payload = {
       name,
       description: draft.description?.trim() || null,
       type: draft.type,
-      selector: draft.selector?.trim() || null,
+      selector,
       value: draft.value?.trim() || null,
       url: draft.url?.trim() || null,
       key: draft.key?.trim() || null,
       timeout: draft.timeout ?? null,
       script: draft.script?.trim() || null,
+      inputBindings,
       websiteId: draft.websiteId ?? null,
       flowId: draft.flowId ?? null,
       tags: draft.tags ?? [],
@@ -209,15 +378,247 @@ export function StepFormModal(): React.JSX.Element | null {
 
           {/* Type-specific parameters */}
           {showSelector ? (
-            <div className='space-y-1.5'>
-              <Label htmlFor='step-selector'>CSS Selector</Label>
-              <Input
-                id='step-selector'
-                value={draft.selector ?? ''}
-                onChange={(e) => set('selector', e.target.value || null)}
-                placeholder='e.g. button[data-testid="add-to-cart"]'
-                className='font-mono text-xs'
-              />
+            <div className='space-y-3 rounded border border-border/50 bg-card/20 p-3'>
+              <div className='space-y-1.5'>
+                <Label>Selector binding</Label>
+                <Select
+                  value={selectorBindingMode}
+                  onValueChange={(value) => {
+                    const mode = value as PlaywrightStepInputBindingMode;
+                    if (mode === 'selectorRegistry') {
+                      setSelectorBinding({
+                        mode,
+                        fallbackSelector: draft.selector ?? null,
+                      });
+                      return;
+                    }
+                    if (mode === 'disabled') {
+                      setSelectorBinding({
+                        mode,
+                        disabledReason: 'Selector intentionally disabled',
+                        fallbackSelector: draft.selector ?? null,
+                      });
+                      return;
+                    }
+                    setSelectorBinding({
+                      mode: 'literal',
+                      value: draft.selector ?? null,
+                    });
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='literal'>Literal/local selector</SelectItem>
+                    <SelectItem value='selectorRegistry'>Selector registry</SelectItem>
+                    <SelectItem value='disabled'>Disabled selector</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {selectorBindingMode === 'selectorRegistry' ? (
+                <div className='space-y-3'>
+                  <div className='grid gap-3 sm:grid-cols-2'>
+                    <div className='space-y-1.5'>
+                      <Label>Registry profile</Label>
+                      <Select
+                        value={selectedRegistryProfile}
+                        onValueChange={(profile) => {
+                          const entry = registrySelectorEntries.find(
+                            (candidate) =>
+                              candidate.profile === profile &&
+                              candidate.key === selectorBinding?.selectorKey
+                          );
+                          setSelectorBinding({
+                            mode: 'selectorRegistry',
+                            selectorProfile: profile,
+                            ...(entry?.preview[0]
+                              ? { fallbackSelector: entry.preview[0] }
+                              : {}),
+                          });
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder='Select profile' />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {registryProfilesForSelect.length === 0 ? (
+                            <SelectItem value='default'>default</SelectItem>
+                          ) : (
+                            registryProfilesForSelect.map((profile) => (
+                              <SelectItem key={profile} value={profile}>
+                                {profile}
+                              </SelectItem>
+                            ))
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className='space-y-1.5'>
+                      <Label>Registry entry</Label>
+                      <Select
+                        value={selectedRegistryEntry?.id ?? '__manual__'}
+                        onValueChange={(entryId) => {
+                          const entry = registrySelectorEntries.find(
+                            (candidate) => candidate.id === entryId
+                          );
+                          if (entry) connectSelectorRegistryEntry(entry);
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder='Choose selector entry' />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value='__manual__'>Manual registry key</SelectItem>
+                          {registryEntriesForProfile.map((entry) => (
+                            <SelectItem key={entry.id} value={entry.id}>
+                              {entry.group} / {entry.key}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className='space-y-1.5'>
+                    <Label htmlFor='step-selector-key'>Registry selector key</Label>
+                    <Input
+                      id='step-selector-key'
+                      value={selectorBinding?.selectorKey ?? ''}
+                      onChange={(e) => setSelectorBinding({
+                        mode: 'selectorRegistry',
+                        selectorKey: e.target.value || null,
+                      })}
+                      placeholder='e.g. tradera.search.submitButton'
+                      className='font-mono text-xs'
+                    />
+                  </div>
+                  <div className='space-y-1.5'>
+                    <Label htmlFor='step-selector-fallback'>Fallback CSS selector</Label>
+                    <Input
+                      id='step-selector-fallback'
+                      value={selectorFallback}
+                      onChange={(e) => {
+                        set('selector', e.target.value || null);
+                        setSelectorBinding({
+                          mode: 'selectorRegistry',
+                          fallbackSelector: e.target.value || null,
+                        });
+                      }}
+                      placeholder='Used if registry lookup is unavailable'
+                      className='font-mono text-xs'
+                    />
+                  </div>
+                  {selectedRegistryEntry ? (
+                    <div className='rounded border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-100'>
+                      Connected to {selectedRegistryEntry.profile}/{selectedRegistryEntry.key}
+                      {selectedRegistryEntry.preview.length > 0 ? (
+                        <span className='mt-1 block break-all text-emerald-100/75'>
+                          Preview: {selectedRegistryEntry.preview.join(', ')}
+                        </span>
+                      ) : null}
+                    </div>
+                  ) : (
+                    <div className='rounded border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-100'>
+                      No registry entry is currently matched. Enter a key manually or select one from
+                      the loaded registry entries.
+                    </div>
+                  )}
+                  <div className='flex flex-wrap items-center gap-2'>
+                    <Button
+                      type='button'
+                      variant='outline'
+                      size='sm'
+                      className='h-7 text-xs'
+                      disabled={!selectedRegistryEntry?.preview[0]}
+                      onClick={() => {
+                        const selector = selectedRegistryEntry?.preview[0];
+                        if (!selector) return;
+                        set('selector', selector);
+                        setSelectorBinding({
+                          mode: 'selectorRegistry',
+                          fallbackSelector: selector,
+                        });
+                      }}
+                    >
+                      Use registry preview as fallback
+                    </Button>
+                    <Button
+                      type='button'
+                      variant='outline'
+                      size='sm'
+                      className='h-7 text-xs'
+                      disabled={
+                        !selectedRegistryEntry ||
+                        !selectorFallback.trim() ||
+                        saveRegistryMutation.isPending
+                      }
+                      loading={saveRegistryMutation.isPending}
+                      onClick={() => {
+                        handleSaveFallbackAsRegistryOverride().catch(() => undefined);
+                      }}
+                    >
+                      Save fallback as registry override
+                    </Button>
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      size='sm'
+                      className='h-7 text-xs'
+                      onClick={() => {
+                        setSelectorBinding({
+                          mode: 'literal',
+                          value: selectorFallback || draft.selector || null,
+                        });
+                      }}
+                    >
+                      Disconnect to local selector
+                    </Button>
+                    <a
+                      href={SELECTOR_REGISTRY_HREF}
+                      className='inline-flex h-7 items-center rounded-md px-2 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground'
+                    >
+                      Open selector registry
+                    </a>
+                  </div>
+                  {registrySaveMessage ? (
+                    <div className='rounded border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-100'>
+                      {registrySaveMessage}
+                    </div>
+                  ) : null}
+                  {registrySaveError ? (
+                    <div className='rounded border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive'>
+                      {registrySaveError}
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+
+              {selectorBindingMode === 'literal' ? (
+                <div className='space-y-1.5'>
+                  <Label htmlFor='step-selector'>CSS Selector</Label>
+                  <Input
+                    id='step-selector'
+                    value={draft.selector ?? ''}
+                    onChange={(e) => {
+                      set('selector', e.target.value || null);
+                      setSelectorBinding({
+                        mode: 'literal',
+                        value: e.target.value || null,
+                      });
+                    }}
+                    placeholder='e.g. button[data-testid="add-to-cart"]'
+                    className='font-mono text-xs'
+                  />
+                </div>
+              ) : null}
+
+              {selectorBindingMode === 'disabled' ? (
+                <div className='rounded border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-100'>
+                  This step keeps selector metadata disabled. You can reconnect it to a literal selector
+                  or selector registry entry at any time.
+                </div>
+              ) : null}
             </div>
           ) : null}
 

@@ -24,9 +24,17 @@ export class VintedSequencer extends PlaywrightSequencer {
     const { page } = this.context;
 
     switch (stepId) {
-      case 'browser_preparation':
-        await page.setViewportSize({ width: 375, height: 812 });
+      case 'browser_preparation': {
+        const config = this.getStepConfig(stepId);
+        await page.setViewportSize({
+          width: config.viewportWidth ?? 375,
+          height: config.viewportHeight ?? 812,
+        });
+        if (config.settleDelayMs !== null && config.settleDelayMs > 0) {
+          await this.wait(config.settleDelayMs);
+        }
         break;
+      }
       case 'browser_open':
         await page.goto('https://www.vinted.pl');
         break;

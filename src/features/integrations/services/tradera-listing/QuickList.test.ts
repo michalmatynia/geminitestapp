@@ -176,7 +176,12 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
   });
 
   it('opens the create listing form from the selling landing page when needed', () => {
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('tradera-quicklist-default:v143');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('tradera-quicklist-default:v144');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const hasExecutionStep = (id) => getExecutionStep(id) !== null;');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('FAIL_ACTION_MANIFEST: Required Tradera quicklist step "');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const QUICKLIST_ACTION_EXECUTION_STEPS = {');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('relist: [');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("label: 'Relist'");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('button:has-text("Allow all cookies")');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('button:has-text("Godkänn alla")');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("await acceptCookiesIfPresent({ context: 'before-click' })");
@@ -774,48 +779,45 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const listingFormatTrigger = await findFieldTriggerByLabels(LISTING_FORMAT_FIELD_LABELS);');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const FIXED_PRICE_INPUT_SELECTORS = [');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('log?.(\'tradera.quicklist.listing_format.inferred\'');
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('await fillTitleAndDescription();');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      'const MANIFEST_ORDERED_TRADERA_RUNTIME_STEP_IDS = executionSteps'
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      'const MANIFEST_ORDERED_TRADERA_FORM_STEP_IDS =\n      MANIFEST_ORDERED_TRADERA_RUNTIME_STEP_IDS.filter((id) =>'
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const fillTitleField = async (resolvedInputs = null) => {');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      'const fillDescriptionField = async (resolvedInputs = null) => {'
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      'for (const stepId of MANIFEST_ORDERED_TRADERA_FORM_STEP_IDS) {'
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("case 'title_fill':");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("case 'description_fill':");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("case 'listing_format_select':");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("case 'price_set':");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("case 'category_select':");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("case 'attribute_select':");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("case 'shipping_set':");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const runPublishStep = async () => {');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      'const runPublishVerifyStep = async (publishStepContext) => {'
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      'const MANIFEST_ORDERED_TRADERA_PUBLISH_STEP_IDS =\n      MANIFEST_ORDERED_TRADERA_RUNTIME_STEP_IDS.filter((id) =>'
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      'for (const stepId of MANIFEST_ORDERED_TRADERA_PUBLISH_STEP_IDS) {'
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("case 'publish': {");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("case 'publish_verify':");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('await fillPriceField({ required: true, context: \'post-listing-format\' });');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
-      'const finalPriceApplied = await fillPriceField({\n      required: false,\n      context: \'pre-publish-finalize\',\n    });'
+      'const finalPriceApplied = priceSetEnabled\n        ? await fillPriceField({\n            required: false,\n            context: \'pre-publish-finalize\',\n          })\n        : false;'
     );
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('context: \'delivery-configuration\',');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('context: \'pre-publish-finalize\',');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('reason: \'already-matched\'');
-    expect(
-      DEFAULT_TRADERA_QUICKLIST_SCRIPT.indexOf('await fillTitleAndDescription();')
-    ).toBeLessThan(
-      DEFAULT_TRADERA_QUICKLIST_SCRIPT.indexOf('await chooseBuyNowListingFormat();')
-    );
-    expect(
-      DEFAULT_TRADERA_QUICKLIST_SCRIPT.indexOf('await chooseBuyNowListingFormat();')
-    ).toBeLessThan(
-      DEFAULT_TRADERA_QUICKLIST_SCRIPT.indexOf(
-        'await fillPriceField({ required: true, context: \'post-listing-format\' });'
-      )
-    );
-    expect(
-      DEFAULT_TRADERA_QUICKLIST_SCRIPT.indexOf(
-        'await fillPriceField({ required: true, context: \'post-listing-format\' });'
-      )
-    ).toBeLessThan(
-      DEFAULT_TRADERA_QUICKLIST_SCRIPT.indexOf('await applyCategorySelection();')
-    );
-    expect(
-      DEFAULT_TRADERA_QUICKLIST_SCRIPT.indexOf('await applyCategorySelection();')
-    ).toBeLessThan(
-      DEFAULT_TRADERA_QUICKLIST_SCRIPT.indexOf('await applyConfiguredExtraFieldSelections();')
-    );
-    expect(
-      DEFAULT_TRADERA_QUICKLIST_SCRIPT.indexOf('await applyConfiguredExtraFieldSelections();')
-    ).toBeLessThan(
-      DEFAULT_TRADERA_QUICKLIST_SCRIPT.indexOf('await applyDeliverySelection();')
-    );
-    expect(
-      DEFAULT_TRADERA_QUICKLIST_SCRIPT.indexOf('await applyDeliverySelection();')
-    ).toBeLessThan(
-      DEFAULT_TRADERA_QUICKLIST_SCRIPT.indexOf('context: \'pre-publish-finalize\',')
-    );
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('reason: \'fixed-price-input-visible\'');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const isSafeDraftImageRemoveControl = async (locator) => {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('return !resolveExternalClickTargetUrl(metadata);');
@@ -993,7 +995,7 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
       'FAIL_PUBLISH_VERIFICATION: Published listing could not be confirmed in Active listings.'
     );
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
-      'publishVerification.externalListingId || externalListingId || existingExternalListingId || null;'
+      'publishVerification.externalListingId ||\n        externalListingId ||\n        existingExternalListingId ||\n        null;'
     );
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const effectiveListingUrl =');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('currentUrl: effectiveListingUrl || page.url(),');

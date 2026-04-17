@@ -1,15 +1,31 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 
 import { PLAYWRIGHT_PROGRAMMABLE_INTEGRATION_SLUG } from '@/features/integrations/constants/slugs';
+import { PlaywrightManagedRuntimeActionsSection } from '@/features/integrations/components/connections/PlaywrightManagedRuntimeActionsSection';
+import { PlaywrightProgrammableSessionPreviewSection } from '@/features/integrations/components/connections/PlaywrightProgrammableSessionPreviewSection';
 import {
   useIntegrationConnections,
   useIntegrations,
   usePlaywrightPersonas,
 } from '@/features/integrations/hooks/useIntegrationQueries';
+import { buildIntegrationManagedPlaywrightActionSummaries, resolveIntegrationManagedRuntimeActionKeys } from '@/features/integrations/utils/playwright-managed-actions';
+import {
+  buildProgrammableConnectionActionMigrationPreview,
+  mergePlaywrightActionsWithProgrammableConnectionDrafts,
+  type ProgrammableConnectionActionMigrationSource,
+} from '@/features/integrations/utils/playwright-programmable-connection-migration';
+import { buildProgrammableSessionDiagnostics } from '@/features/integrations/utils/playwright-programmable-session-diagnostics';
+import { buildProgrammableSessionPreview } from '@/features/integrations/utils/playwright-programmable-session-preview';
+import { supportsProgrammableSessionProfile } from '@/features/integrations/utils/playwright-programmable-session-support';
 import { useUpsertConnection } from '@/features/integrations/hooks/useIntegrationMutations';
+import {
+  usePlaywrightActions,
+  useSavePlaywrightActionsMutation,
+} from '@/shared/hooks/usePlaywrightStepSequencer';
 import {
   PLAYWRIGHT_FIELD_MAPPER_TARGET_FIELDS,
   parsePlaywrightFieldMapperJson,
@@ -27,12 +43,13 @@ import type { PlaywrightConfigCaptureRoute } from '@/shared/contracts/ai-paths-c
 import { playwrightConfigCaptureRouteSchema } from '@/shared/contracts/ai-paths-core/nodes/external-nodes';
 import type { Integration } from '@/shared/contracts/integrations/base';
 import type { IntegrationConnection } from '@/shared/contracts/integrations/connections';
+import type { PlaywrightAction } from '@/shared/contracts/playwright-steps';
 import type { PlaywrightSettings } from '@/shared/contracts/playwright';
 import { api } from '@/shared/lib/api-client';
 import { createEmptyPlaywrightCaptureRoute } from '@/shared/lib/ai-paths/core/playwright/capture-defaults';
 import { PlaywrightCaptureRoutesEditor } from '@/shared/ui/playwright/PlaywrightCaptureRoutesEditor';
 import { AdminIntegrationsPageLayout } from '@/shared/ui/admin.public';
-import { Button, Card, Input, Textarea, useToast } from '@/shared/ui/primitives.public';
+import { Alert, Button, Card, Input, Textarea, useToast } from '@/shared/ui/primitives.public';
 import { FormField, SelectSimple } from '@/shared/ui/forms-and-actions.public';
 import { LoadingState } from '@/shared/ui/navigation-and-layout.public';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -178,12 +195,96 @@ const FIELD_TARGET_OPTIONS = PLAYWRIGHT_FIELD_MAPPER_TARGET_FIELDS.map((field) =
   label: field,
 }));
 
+const buildProgrammableActionOptions = (
+  actions: PlaywrightAction[] | undefined,
+  defaultLabel: string
+): Array<{ value: string; label: string }> => [
+  { value: '', label: defaultLabel },
+  ...((actions ?? [])
+    .filter((action) => supportsProgrammableSessionProfile(action))
+    .map((action) => ({
+      value: action.id,
+      label:
+        action.runtimeKey !== null ? `${action.name} (${action.runtimeKey})` : action.name,
+    })) as Array<{ value: string; label: string }>),
+];
+
+const buildProgrammableConnectionPayload = ({
+  connectionName,
+  listingScript,
+  importScript,
+  importBaseUrl,
+  listingActionId,
+  importActionId,
+  captureRoutes,
+  appearanceMode,
+  fieldMapperRows,
+  payloadPatch = {},
+}: {
+  connectionName: string;
+  listingScript: string;
+  importScript: string;
+  importBaseUrl: string;
+  listingActionId: string;
+  importActionId: string;
+  captureRoutes: PlaywrightConfigCaptureRoute[];
+  appearanceMode: string;
+  fieldMapperRows: FieldMapperRow[];
+  payloadPatch?: Record<string, unknown>;
+}): Record<string, unknown> => ({
+  name: connectionName.trim() || 'Playwright Connection',
+  playwrightListingScript: listingScript.trim() || null,
+  playwrightImportScript: importScript.trim() || null,
+  playwrightImportBaseUrl: importBaseUrl.trim() || null,
+  playwrightListingActionId: listingActionId.trim() || null,
+  playwrightImportActionId: importActionId.trim() || null,
+  playwrightImportCaptureRoutesJson: serializeCaptureRouteConfigJson({
+    routes: captureRoutes,
+    appearanceMode,
+  }),
+  playwrightFieldMapperJson: serializeFieldMapperRows(fieldMapperRows),
+  ...payloadPatch,
+});
+
+const buildEditableProgrammableConnectionMigrationSource = ({
+  connection,
+  connectionName,
+  personaId,
+  listingActionId,
+  importActionId,
+  settings,
+  baselineSettings,
+}: {
+  connection: IntegrationConnection;
+  connectionName: string;
+  personaId: string;
+  listingActionId: string;
+  importActionId: string;
+  settings: PlaywrightSettings;
+  baselineSettings: PlaywrightSettings;
+}): ProgrammableConnectionActionMigrationSource => ({
+  id: connection.id,
+  integrationId: connection.integrationId,
+  name: connectionName.trim() || connection.name,
+  playwrightPersonaId: personaId.trim() || null,
+  playwrightBrowser: connection.playwrightBrowser ?? null,
+  playwrightProxyHasPassword: connection.playwrightProxyHasPassword === true,
+  playwrightListingActionId: listingActionId.trim() || null,
+  playwrightImportActionId: importActionId.trim() || null,
+  ...toPlaywrightConnectionOverridePayload({
+    settings,
+    baselineSettings,
+  }),
+});
+
 export default function PlaywrightIntegrationPage({
   focusSection = null,
 }: PlaywrightIntegrationPageProps): React.JSX.Element {
   const { toast } = useToast();
   const integrationsQuery = useIntegrations();
   const personasQuery = usePlaywrightPersonas();
+  const playwrightActionsQuery = usePlaywrightActions();
+  const savePlaywrightActions = useSavePlaywrightActionsMutation();
   const upsertConnection = useUpsertConnection();
 
   const scriptSectionRef = useRef<HTMLDivElement | null>(null);
@@ -197,6 +298,37 @@ export default function PlaywrightIntegrationPage({
     enabled: Boolean(programmableIntegration?.id),
   });
   const connections = connectionsQuery.data ?? [];
+  const managedRuntimeKeys = useMemo(
+    () =>
+      resolveIntegrationManagedRuntimeActionKeys({
+        integrationSlug: PLAYWRIGHT_PROGRAMMABLE_INTEGRATION_SLUG,
+      }),
+    []
+  );
+  const managedActionSummaries = useMemo(
+    () =>
+      buildIntegrationManagedPlaywrightActionSummaries({
+        actions: playwrightActionsQuery.data ?? [],
+        runtimeKeys: managedRuntimeKeys,
+      }),
+    [managedRuntimeKeys, playwrightActionsQuery.data]
+  );
+  const listingActionOptions = useMemo(
+    () =>
+      buildProgrammableActionOptions(
+        playwrightActionsQuery.data,
+        'Default programmable listing session'
+      ),
+    [playwrightActionsQuery.data]
+  );
+  const importActionOptions = useMemo(
+    () =>
+      buildProgrammableActionOptions(
+        playwrightActionsQuery.data,
+        'Default programmable import session'
+      ),
+    [playwrightActionsQuery.data]
+  );
 
   const [selectedConnectionId, setSelectedConnectionId] = useState('');
   const [connectionName, setConnectionName] = useState('');
@@ -204,6 +336,8 @@ export default function PlaywrightIntegrationPage({
   const [listingScript, setListingScript] = useState('');
   const [importScript, setImportScript] = useState('');
   const [importBaseUrl, setImportBaseUrl] = useState('');
+  const [listingActionId, setListingActionId] = useState('');
+  const [importActionId, setImportActionId] = useState('');
   const [captureRoutes, setCaptureRoutes] = useState<PlaywrightConfigCaptureRoute[]>([]);
   const [appearanceMode, setAppearanceMode] = useState('');
   const [fieldMapperRows, setFieldMapperRows] = useState<FieldMapperRow[]>([]);
@@ -212,10 +346,80 @@ export default function PlaywrightIntegrationPage({
   );
   const [testResultJson, setTestResultJson] = useState('');
   const [runningTestType, setRunningTestType] = useState<'listing' | 'import' | null>(null);
+  const [isPromotingConnectionSettings, setIsPromotingConnectionSettings] = useState(false);
 
   const selectedConnection =
     connections.find((connection: IntegrationConnection) => connection.id === selectedConnectionId) ??
     null;
+  const personaBaseline = useMemo(
+    () => resolvePlaywrightPersonaBaseline(personasQuery.data, personaId.trim()),
+    [personaId, personasQuery.data]
+  );
+  const listingSessionPreview = useMemo(
+    () =>
+      buildProgrammableSessionPreview({
+        actions: playwrightActionsQuery.data,
+        selectedActionId: listingActionId,
+        defaultRuntimeKey: 'playwright_programmable_listing',
+        personaBaseline,
+        currentSettings: playwrightSettings,
+      }),
+    [listingActionId, personaBaseline, playwrightActionsQuery.data, playwrightSettings]
+  );
+  const importSessionPreview = useMemo(
+    () =>
+      buildProgrammableSessionPreview({
+        actions: playwrightActionsQuery.data,
+        selectedActionId: importActionId,
+        defaultRuntimeKey: 'playwright_programmable_import',
+        personaBaseline,
+        currentSettings: playwrightSettings,
+      }),
+    [importActionId, personaBaseline, playwrightActionsQuery.data, playwrightSettings]
+  );
+  const sessionDiagnostics = useMemo(
+    () =>
+      buildProgrammableSessionDiagnostics({
+        listingPreview: listingSessionPreview,
+        importPreview: importSessionPreview,
+        currentSettings: playwrightSettings,
+        personaBaseline,
+      }),
+    [importSessionPreview, listingSessionPreview, personaBaseline, playwrightSettings]
+  );
+  const editableMigrationConnection = useMemo(
+    () =>
+      selectedConnection === null
+        ? null
+        : buildEditableProgrammableConnectionMigrationSource({
+            connection: selectedConnection,
+            connectionName,
+            personaId,
+            listingActionId,
+            importActionId,
+            settings: playwrightSettings,
+            baselineSettings: personaBaseline,
+          }),
+    [
+      connectionName,
+      importActionId,
+      listingActionId,
+      personaBaseline,
+      personaId,
+      playwrightSettings,
+      selectedConnection,
+    ]
+  );
+  const migrationPreview = useMemo(
+    () =>
+      editableMigrationConnection === null
+        ? null
+        : buildProgrammableConnectionActionMigrationPreview({
+            connection: editableMigrationConnection,
+            actions: playwrightActionsQuery.data,
+          }),
+    [editableMigrationConnection, playwrightActionsQuery.data]
+  );
 
   useEffect(() => {
     if (!focusSection) return;
@@ -251,6 +455,8 @@ export default function PlaywrightIntegrationPage({
     setListingScript(selectedConnection?.playwrightListingScript ?? '');
     setImportScript(selectedConnection?.playwrightImportScript ?? '');
     setImportBaseUrl(selectedConnection?.playwrightImportBaseUrl ?? '');
+    setListingActionId(selectedConnection?.playwrightListingActionId ?? '');
+    setImportActionId(selectedConnection?.playwrightImportActionId ?? '');
     setCaptureRoutes(captureConfig.routes);
     setAppearanceMode(captureConfig.appearanceMode);
     setFieldMapperRows(connectionToFieldMapperRows(selectedConnection));
@@ -264,25 +470,26 @@ export default function PlaywrightIntegrationPage({
       return null;
     }
 
-    const baselineSettings = resolvePlaywrightPersonaBaseline(personasQuery.data, personaId.trim());
     const settingsPayload = toPlaywrightConnectionOverridePayload({
       settings: playwrightSettings,
-      baselineSettings,
+      baselineSettings: personaBaseline,
       includeResetFlag: Boolean(selectedConnection),
     });
-    const payload = {
-      name: connectionName.trim() || 'Playwright Connection',
-      playwrightPersonaId: personaId.trim() || null,
-      playwrightListingScript: listingScript.trim() || null,
-      playwrightImportScript: importScript.trim() || null,
-      playwrightImportBaseUrl: importBaseUrl.trim() || null,
-      playwrightImportCaptureRoutesJson: serializeCaptureRouteConfigJson({
-        routes: captureRoutes,
-        appearanceMode,
-      }),
-      playwrightFieldMapperJson: serializeFieldMapperRows(fieldMapperRows),
-      ...settingsPayload,
-    };
+    const payload = buildProgrammableConnectionPayload({
+      connectionName,
+      listingScript,
+      importScript,
+      importBaseUrl,
+      listingActionId,
+      importActionId,
+      captureRoutes,
+      appearanceMode,
+      fieldMapperRows,
+      payloadPatch: {
+        playwrightPersonaId: personaId.trim() || null,
+        ...settingsPayload,
+      },
+    });
 
     try {
       const saved = await upsertConnection.mutateAsync({
@@ -304,6 +511,63 @@ export default function PlaywrightIntegrationPage({
     }
   };
 
+  const handlePromoteConnectionSettings = async (): Promise<void> => {
+    if (!programmableIntegration || !selectedConnection || !migrationPreview) {
+      toast('Select a programmable connection before promoting its browser settings.', {
+        variant: 'error',
+      });
+      return;
+    }
+
+    setIsPromotingConnectionSettings(true);
+    try {
+      await savePlaywrightActions.mutateAsync({
+        actions: mergePlaywrightActionsWithProgrammableConnectionDrafts({
+          actions: playwrightActionsQuery.data ?? [],
+          listingDraftAction: migrationPreview.listingDraftAction,
+          importDraftAction: migrationPreview.importDraftAction,
+        }),
+      });
+
+      const saved = await upsertConnection.mutateAsync({
+        integrationId: programmableIntegration.id,
+        connectionId: selectedConnection.id,
+        payload: buildProgrammableConnectionPayload({
+          connectionName,
+          listingScript,
+          importScript,
+          importBaseUrl,
+          listingActionId: migrationPreview.listingDraftAction.id,
+          importActionId: migrationPreview.importDraftAction.id,
+          captureRoutes,
+          appearanceMode,
+          fieldMapperRows,
+          payloadPatch: migrationPreview.cleanupPayload,
+        }),
+      });
+
+      setSelectedConnectionId(saved.id);
+      setPersonaId('');
+      setListingActionId(migrationPreview.listingDraftAction.id);
+      setImportActionId(migrationPreview.importDraftAction.id);
+      setPlaywrightSettings(defaultIntegrationConnectionPlaywrightSettings);
+      toast(
+        `Promoted browser settings into "${migrationPreview.listingDraftAction.name}" and "${migrationPreview.importDraftAction.name}".`,
+        { variant: 'success' }
+      );
+    } catch (error) {
+      logClientError(error);
+      toast(
+        error instanceof Error
+          ? error.message
+          : 'Failed to promote programmable browser settings into Step Sequencer drafts.',
+        { variant: 'error' }
+      );
+    } finally {
+      setIsPromotingConnectionSettings(false);
+    }
+  };
+
   const handleCreateConnection = async (): Promise<void> => {
     if (!programmableIntegration) {
       toast('Create the Playwright (Programmable) integration first.', { variant: 'error' });
@@ -314,6 +578,8 @@ export default function PlaywrightIntegrationPage({
     setListingScript('');
     setImportScript('');
     setImportBaseUrl('');
+    setListingActionId('');
+    setImportActionId('');
     setCaptureRoutes([createEmptyPlaywrightCaptureRoute(1)]);
     setAppearanceMode('');
     setFieldMapperRows([]);
@@ -382,7 +648,7 @@ export default function PlaywrightIntegrationPage({
       title='Playwright (Programmable)'
       current='Playwright (Programmable)'
       parent={{ label: 'Marketplaces', href: '/admin/integrations/marketplaces' }}
-      description='Configure programmable marketplace listing and import scripts on top of the shared Playwright engine.'
+      description='Configure programmable marketplace scripts, capture routes, field mapping, selected Step Sequencer session actions, and connection-scoped Playwright overrides.'
     >
       {integrationsQuery.isLoading || (programmableIntegration?.id && connectionsQuery.isLoading) ? (
         <LoadingState message='Loading marketplace integrations…' className='py-12' />
@@ -399,10 +665,42 @@ export default function PlaywrightIntegrationPage({
       ) : (
         <div className='space-y-6'>
           <Card variant='subtle' padding='md' className='border-border bg-card/40'>
+            <div className='flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
+              <div className='space-y-2'>
+                <h2 className='text-base font-semibold text-white'>Runtime Ownership</h2>
+                <p className='text-sm text-gray-400'>
+                  The Step Sequencer owns marketplace-native runtime actions like Tradera and
+                  Vinted browser flows, including headless or headed mode and
+                  <code className='mx-1'>browser_preparation</code> step settings.
+                </p>
+                <p className='text-sm text-gray-400'>
+                  This programmable page owns connection-scoped scripts, import routing, field
+                  mapping, and the selected listing or import session action. The Step Sequencer
+                  now owns browser mode and browser_preparation for programmable runs too.
+                </p>
+              </div>
+              <div className='flex flex-wrap gap-2'>
+                <Button variant='outline' size='sm' asChild>
+                  <Link href='/admin/playwright/step-sequencer'>Open Step Sequencer</Link>
+                </Button>
+                <Button variant='outline' size='sm' asChild>
+                  <Link href='/admin/settings/playwright'>Manage Personas</Link>
+                </Button>
+              </div>
+            </div>
+          </Card>
+
+          <PlaywrightManagedRuntimeActionsSection
+            description='Programmable listing and import runs now resolve headless or headed mode, browser preference, and browser_preparation step overrides from these Step Sequencer runtime actions.'
+            isLoading={playwrightActionsQuery.isPending}
+            summaries={managedActionSummaries}
+          />
+
+          <Card variant='subtle' padding='md' className='border-border bg-card/40'>
             <div className='grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-end'>
               <FormField
                 label='Connection'
-                description='Each connection stores its own persona, scripts, import routes, and engine overrides.'
+                description='Each programmable connection stores its own scripts, import routes, field mapping, persona selection, and selected listing or import session actions.'
               >
                 <SelectSimple
                   value={selectedConnectionId}
@@ -423,9 +721,13 @@ export default function PlaywrightIntegrationPage({
                   onClick={() => {
                     void saveCurrentConnection(true);
                   }}
-                  loading={upsertConnection.isPending && runningTestType === null}
+                  loading={
+                    !isPromotingConnectionSettings &&
+                    upsertConnection.isPending &&
+                    runningTestType === null
+                  }
                 >
-                  Save
+                  Save Connection
                 </Button>
               </div>
             </div>
@@ -442,8 +744,8 @@ export default function PlaywrightIntegrationPage({
                 />
               </FormField>
               <FormField
-                label='Playwright Persona'
-                description='Reuse a shared persona for browser behavior, proxy, and device defaults.'
+                label='Connection Persona'
+                description='Reuse a shared persona as the baseline for this programmable connection before applying the selected session action and any connection overrides.'
               >
                 <SelectSimple
                   value={personaId}
@@ -459,7 +761,76 @@ export default function PlaywrightIntegrationPage({
                 />
               </FormField>
             </div>
+
+            <div className='mt-4 grid gap-4 lg:grid-cols-2'>
+              <FormField
+                label='Listing Runtime Action'
+                description='Select which Step Sequencer action owns browser mode and browser_preparation for programmable listing runs on this connection.'
+              >
+                <SelectSimple
+                  value={listingActionId}
+                  onValueChange={setListingActionId}
+                  options={listingActionOptions}
+                  ariaLabel='Programmable listing runtime action'
+                  title='Programmable listing runtime action'
+                />
+              </FormField>
+              <FormField
+                label='Import Runtime Action'
+                description='Select which Step Sequencer action owns browser mode and browser_preparation for programmable import runs on this connection.'
+              >
+                <SelectSimple
+                  value={importActionId}
+                  onValueChange={setImportActionId}
+                  options={importActionOptions}
+                  ariaLabel='Programmable import runtime action'
+                  title='Programmable import runtime action'
+                />
+              </FormField>
+            </div>
           </Card>
+
+          <PlaywrightProgrammableSessionPreviewSection
+            diagnostics={sessionDiagnostics}
+            listingPreview={listingSessionPreview}
+            importPreview={importSessionPreview}
+          />
+
+          {migrationPreview?.hasLegacyBrowserBehavior ? (
+            <Alert variant='warning' className='text-xs'>
+              <div className='flex flex-col gap-3 md:flex-row md:items-start md:justify-between'>
+                <div>
+                  This programmable connection still stores browser behavior on the connection
+                  model: <strong>{migrationPreview.legacySummary.join(', ')}</strong>. The safe
+                  migration path is to fork the selected session actions into connection-owned
+                  drafts and clear the connection-level Playwright settings afterward. Planned
+                  drafts: <strong>{migrationPreview.listingDraftAction.name}</strong> and{' '}
+                  <strong>{migrationPreview.importDraftAction.name}</strong>.
+                </div>
+                <Button
+                  type='button'
+                  size='sm'
+                  onClick={() => {
+                    void handlePromoteConnectionSettings();
+                  }}
+                  disabled={
+                    playwrightActionsQuery.isPending ||
+                    migrationPreview.requiresManualProxyPasswordInput
+                  }
+                  loading={isPromotingConnectionSettings || savePlaywrightActions.isPending}
+                >
+                  Promote to action drafts
+                </Button>
+              </div>
+              {migrationPreview.requiresManualProxyPasswordInput ? (
+                <div className='text-[11px] text-amber-200/90'>
+                  Re-enter the proxy password in Programmable Connection Overrides before
+                  promotion. The stored password is masked in the connection payload and cannot be
+                  copied into the action drafts unless you provide it again here.
+                </div>
+              ) : null}
+            </Alert>
+          ) : null}
 
           <div ref={scriptSectionRef}>
             <Card variant='subtle' padding='md' className='border-border bg-card/40'>
@@ -617,8 +988,8 @@ export default function PlaywrightIntegrationPage({
               settings={playwrightSettings}
               setSettings={setPlaywrightSettings}
               showSave={false}
-              title='Playwright Engine Overrides'
-              description='These settings are stored per programmable connection and applied on top of the selected persona during test runs, listing jobs, and imports.'
+              title='Programmable Connection Overrides'
+              description='These compatibility overrides are applied after the selected persona baseline and the selected listing or import session action. Keep them for connection-specific exceptions; move reusable browser mode and browser_preparation behavior into the Step Sequencer action.'
             />
           </Card>
 

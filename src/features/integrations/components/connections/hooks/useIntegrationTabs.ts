@@ -35,14 +35,16 @@ type UseIntegrationTabsResult = {
   playwrightPersonasLoading: boolean;
   playwrightPersonaId: string | null;
   handleSelectPlaywrightPersona: (id: string | null) => Promise<void>;
-  handleSavePlaywrightSettings: () => Promise<void>;
+  handleSavePlaywrightFallbackSettings: () => Promise<void>;
+  playwrightSaveLabel: string;
 };
 
 export function useIntegrationTabs(): UseIntegrationTabsResult {
   const { activeIntegration, connections, playwrightPersonas, playwrightPersonasLoading } =
     useIntegrationsData();
   const { editingConnectionId, playwrightPersonaId } = useIntegrationsForm();
-  const { handleSelectPlaywrightPersona, handleSavePlaywrightSettings } = useIntegrationsActions();
+  const { handleSelectPlaywrightPersona, handleSavePlaywrightFallbackSettings } =
+    useIntegrationsActions();
 
   const [activeTab, setActiveTab] = useState('connections');
 
@@ -66,7 +68,8 @@ export function useIntegrationTabs(): UseIntegrationTabsResult {
       playwrightPersonasLoading: false,
       playwrightPersonaId: null,
       handleSelectPlaywrightPersona,
-      handleSavePlaywrightSettings,
+      handleSavePlaywrightFallbackSettings,
+      playwrightSaveLabel: 'Save Playwright settings',
     };
   }
 
@@ -81,6 +84,10 @@ export function useIntegrationTabs(): UseIntegrationTabsResult {
   const showPlaywright = (isTradera && !isTraderaApi) || isVinted || is1688;
   const showAllegroConsole = isAllegro;
   const showBaseConsole = isBaselinker;
+  const playwrightSaveLabel =
+    (isTradera && !isTraderaApi) || isVinted
+      ? 'Save fallback settings'
+      : 'Save Playwright settings';
   const activeConnection =
     connections.find((connection) => connection.id === editingConnectionId) ??
     connections[0] ??
@@ -108,6 +115,7 @@ export function useIntegrationTabs(): UseIntegrationTabsResult {
     playwrightPersonasLoading,
     playwrightPersonaId,
     handleSelectPlaywrightPersona,
-    handleSavePlaywrightSettings,
+    handleSavePlaywrightFallbackSettings,
+    playwrightSaveLabel,
   };
 }

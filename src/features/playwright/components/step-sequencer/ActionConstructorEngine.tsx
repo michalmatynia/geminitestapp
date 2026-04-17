@@ -6,6 +6,7 @@ import {
   AlertTriangle,
   ChevronDown,
   ChevronRight,
+  Code2,
   Folder,
   GripVertical,
   Layers,
@@ -20,11 +21,22 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
-import { memo, useEffect, useMemo, useRef } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { PlaywrightResolvedActionBlock } from '../../context/PlaywrightStepSequencerContext.types';
-import { PLAYWRIGHT_STEP_TYPE_LABELS } from '@/shared/contracts/playwright-steps';
+import {
+  PLAYWRIGHT_STEP_TYPE_LABELS,
+  type PlaywrightActionExecutionBrowserPreference,
+  type PlaywrightStep,
+  type PlaywrightStepSet,
+} from '@/shared/contracts/playwright-steps';
 import { STEP_REGISTRY, type StepId } from '@/shared/lib/browser-execution/step-registry';
+import {
+  playwrightDeviceOptions,
+  playwrightIdentityProfileOptions,
+  playwrightProxyProviderPresetOptions,
+  playwrightProxySessionModeOptions,
+} from '@/shared/lib/playwright/settings';
 import {
   createMasterFolderTreeTransactionAdapter,
   FolderTreeViewportV2,
@@ -51,6 +63,9 @@ import {
   buildStepSequencerMasterNodes,
   decodeStepSeqNodeId,
 } from '../../step-sequencer-master-tree';
+import { ActionSequenceCodePreviewDialog } from './ActionSequenceCodePreviewDialog';
+import { StepCodePreviewDialog } from './StepCodePreviewDialog';
+import { StepSetCodePreviewDialog } from './StepSetCodePreviewDialog';
 import { StepTypeIcon } from './StepTypeIcon';
 
 type RuntimeStepGroup = {
@@ -114,6 +129,32 @@ const RUNTIME_STEP_GROUPS: readonly RuntimeStepGroup[] = [
     stepIds: ['brand_fill', 'condition_set', 'size_set'],
   },
 ];
+
+const toNullableInteger = (value: string): number | null => {
+  const trimmed = value.trim();
+  if (trimmed.length === 0) {
+    return null;
+  }
+
+  const parsed = Number.parseInt(trimmed, 10);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const toNullableFloat = (value: string): number | null => {
+  const trimmed = value.trim();
+  if (trimmed.length === 0) {
+    return null;
+  }
+
+  const parsed = Number.parseFloat(trimmed);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const toPermissionList = (value: string): string[] =>
+  value
+    .split(',')
+    .map((permission) => permission.trim())
+    .filter((permission) => permission.length > 0);
 
 // ---------------------------------------------------------------------------
 // Tree node renderer
@@ -222,11 +263,15 @@ function ActionSequenceItem({
   index,
   dragProvided,
   isDragging,
+  onPreviewStep,
+  onPreviewStepSet,
 }: {
   item: PlaywrightResolvedActionBlock;
   index: number;
   dragProvided: DraggableProvided;
   isDragging: boolean;
+  onPreviewStep: (step: PlaywrightStep) => void;
+  onPreviewStepSet: (stepSet: PlaywrightStepSet) => void;
 }): React.JSX.Element {
   const { handleRemoveFromAction, handleToggleActionBlockEnabled } = usePlaywrightStepSequencer();
   const { block, runtimeStepLabel, step, stepSet } = item;
@@ -244,6 +289,29 @@ function ActionSequenceItem({
     : isStep
       ? (step ? PLAYWRIGHT_STEP_TYPE_LABELS[step.type] : 'Missing step')
       : `${stepSet?.stepIds.length ?? 0} steps`;
+  const previewStep: PlaywrightStep | null = step ?? (
+    isRuntimeStep && runtimeStepLabel
+      ? {
+          id: block.refId,
+          name: runtimeStepLabel,
+          description: 'Browser-execution runtime step module.',
+          type: 'custom_script',
+          selector: null,
+          value: null,
+          url: null,
+          key: null,
+          timeout: null,
+          script: `await runtimeSteps[${JSON.stringify(block.refId)}](context);`,
+          inputBindings: {},
+          websiteId: null,
+          flowId: null,
+          tags: ['runtime_step'],
+          sortOrder: index,
+          createdAt: '',
+          updatedAt: '',
+        }
+      : null
+  );
 
   return (
     <div
@@ -299,6 +367,30 @@ function ActionSequenceItem({
         {badgeLabel}
       </Badge>
 
+      {previewStep ? (
+        <button
+          type='button'
+          onClick={() => onPreviewStep(previewStep)}
+          className='inline-flex size-5 items-center justify-center rounded text-muted-foreground hover:text-sky-300'
+          aria-label='Preview Playwright code'
+          title='Preview semantic Playwright code'
+        >
+          <Code2 className='size-3.5' />
+        </button>
+      ) : null}
+
+      {!previewStep && stepSet ? (
+        <button
+          type='button'
+          onClick={() => onPreviewStepSet(stepSet)}
+          className='inline-flex size-5 items-center justify-center rounded text-muted-foreground hover:text-sky-300'
+          aria-label='Preview composed Playwright code'
+          title='Preview composed Playwright code'
+        >
+          <Code2 className='size-3.5' />
+        </button>
+      ) : null}
+
       <button
         type='button'
         onClick={() => handleToggleActionBlockEnabled(index)}
@@ -326,7 +418,11 @@ function ActionSequenceItem({
 // ---------------------------------------------------------------------------
 
 export function ActionConstructorEngine(): React.JSX.Element {
+  const [previewStep, setPreviewStep] = useState<PlaywrightStep | null>(null);
+  const [previewStepSet, setPreviewStepSet] = useState<PlaywrightStepSet | null>(null);
+  const [isActionCodePreviewOpen, setIsActionCodePreviewOpen] = useState(false);
   const {
+    steps,
     stepSets,
     websites,
     flows,
@@ -335,13 +431,18 @@ export function ActionConstructorEngine(): React.JSX.Element {
     actionDraftName,
     actionDraftDescription,
     actionPersonaId,
+    actionExecutionSettings,
     editingActionId,
+    editingActionRuntimeKey,
+    actionValidationErrors,
     setActionDraftName,
     setActionDraftDescription,
     setActionPersonaId,
+    setActionExecutionSettings,
     handleAddRuntimeStepToAction,
     handleAddStepSetToAction,
     handleMoveActionItem,
+    handleUpdateActionBlockConfig,
     handleClearAction,
     handleUpdateAction,
     setIsSaveActionOpen,
@@ -359,6 +460,13 @@ export function ActionConstructorEngine(): React.JSX.Element {
     : null;
 
   const { data: personas = [] } = usePlaywrightPersonas();
+  const browserPreparationBlocks = useMemo(
+    () =>
+      resolvedActionBlocks
+        .map((item, index) => ({ item, index }))
+        .filter(({ item }) => item.block.kind === 'runtime_step' && item.block.refId === 'browser_preparation'),
+    [resolvedActionBlocks]
+  );
 
   const masterNodes = useMemo(
     () => buildStepSequencerMasterNodes({ stepSets, websites, flows }),
@@ -480,22 +588,41 @@ export function ActionConstructorEngine(): React.JSX.Element {
               Action Sequence
             </Label>
             {editingAction ? (
-              <span className='inline-flex items-center gap-1 rounded bg-sky-500/15 px-1.5 py-0.5 text-[10px] text-sky-300 ring-1 ring-inset ring-sky-500/30'>
-                <Pencil className='size-2.5' />
-                Editing: {editingAction.name}
-              </span>
+              <>
+                <span className='inline-flex items-center gap-1 rounded bg-sky-500/15 px-1.5 py-0.5 text-[10px] text-sky-300 ring-1 ring-inset ring-sky-500/30'>
+                  <Pencil className='size-2.5' />
+                  Editing: {editingAction.name}
+                </span>
+                {editingActionRuntimeKey !== null ? (
+                  <span className='inline-flex items-center rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] text-amber-200 ring-1 ring-inset ring-amber-500/20'>
+                    Runtime: {editingActionRuntimeKey}
+                  </span>
+                ) : null}
+              </>
             ) : null}
           </div>
-          {resolvedActionBlocks.length > 0 ? (
-            <button
-              type='button'
-              onClick={handleClearAction}
-              className='inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-destructive'
-            >
-              <Trash2 className='size-3' />
-              {editingActionId !== null ? 'Discard' : 'Clear'}
-            </button>
-          ) : null}
+          <div className='flex items-center gap-2'>
+            {resolvedActionBlocks.length > 0 ? (
+              <button
+                type='button'
+                onClick={() => setIsActionCodePreviewOpen(true)}
+                className='inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-sky-300'
+              >
+                <Code2 className='size-3' />
+                Preview code
+              </button>
+            ) : null}
+            {resolvedActionBlocks.length > 0 ? (
+              <button
+                type='button'
+                onClick={handleClearAction}
+                className='inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-destructive'
+              >
+                <Trash2 className='size-3' />
+                {editingActionId !== null ? 'Discard' : 'Clear'}
+              </button>
+            ) : null}
+          </div>
         </div>
 
         {/* Sequence list */}
@@ -531,6 +658,8 @@ export function ActionConstructorEngine(): React.JSX.Element {
                           index={idx}
                           dragProvided={dragProvided}
                           isDragging={dragSnapshot.isDragging}
+                          onPreviewStep={setPreviewStep}
+                          onPreviewStepSet={setPreviewStepSet}
                         />
                       )}
                     </Draggable>
@@ -541,6 +670,805 @@ export function ActionConstructorEngine(): React.JSX.Element {
             </Droppable>
           </DragDropContext>
         )}
+
+        {editingActionRuntimeKey !== null && actionValidationErrors.length > 0 ? (
+          <div className='rounded border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive'>
+            <div className='flex items-start gap-2'>
+              <AlertTriangle className='mt-0.5 size-3.5 shrink-0' />
+              <div className='space-y-1'>
+                <p className='font-medium'>
+                  This runtime action cannot be updated until the manifest is valid.
+                </p>
+                <ul className='list-disc space-y-0.5 pl-4'>
+                  {actionValidationErrors.map((error) => (
+                    <li key={error}>{error}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {resolvedActionBlocks.length > 0 ? (
+          <div className='space-y-3 rounded border border-border/40 bg-card/20 p-3'>
+            <div className='space-y-1'>
+              <Label className='text-[11px] font-semibold uppercase tracking-wider text-muted-foreground'>
+                Action Settings
+              </Label>
+              <p className='text-[11px] text-muted-foreground/70'>
+                These defaults apply before integration-level Playwright settings. Explicit run overrides still win.
+              </p>
+            </div>
+
+            <div className='grid gap-2 md:grid-cols-2 xl:grid-cols-3'>
+              <div className='space-y-1'>
+                <Label className='text-[11px] text-muted-foreground'>Browser mode</Label>
+                <Select
+                  value={
+                    actionExecutionSettings.headless === null
+                      ? '__inherit__'
+                      : actionExecutionSettings.headless
+                        ? 'headless'
+                        : 'headed'
+                  }
+                  onValueChange={(value) =>
+                    setActionExecutionSettings({
+                      ...actionExecutionSettings,
+                      headless:
+                        value === '__inherit__'
+                          ? null
+                          : value === 'headless',
+                    })
+                  }
+                >
+                  <SelectTrigger className='h-8 text-xs'>
+                    <SelectValue placeholder='Inherit connection setting' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='__inherit__'>Inherit connection setting</SelectItem>
+                    <SelectItem value='headed'>Headed</SelectItem>
+                    <SelectItem value='headless'>Headless</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className='space-y-1'>
+                <Label className='text-[11px] text-muted-foreground'>Browser</Label>
+                <Select
+                  value={actionExecutionSettings.browserPreference ?? '__inherit__'}
+                  onValueChange={(value) =>
+                    setActionExecutionSettings({
+                      ...actionExecutionSettings,
+                      browserPreference:
+                        value === '__inherit__'
+                          ? null
+                          : (value as PlaywrightActionExecutionBrowserPreference),
+                    })
+                  }
+                >
+                  <SelectTrigger className='h-8 text-xs'>
+                    <SelectValue placeholder='Inherit connection browser' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='__inherit__'>Inherit connection browser</SelectItem>
+                    <SelectItem value='auto'>Auto</SelectItem>
+                    <SelectItem value='chrome'>Chrome</SelectItem>
+                    <SelectItem value='brave'>Brave</SelectItem>
+                    <SelectItem value='chromium'>Chromium</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className='space-y-1'>
+                <Label className='text-[11px] text-muted-foreground'>Device emulation</Label>
+                <Select
+                  value={
+                    actionExecutionSettings.emulateDevice === null
+                      ? '__inherit__'
+                      : actionExecutionSettings.emulateDevice
+                        ? (actionExecutionSettings.deviceName ?? 'Desktop Chrome')
+                        : '__disabled__'
+                  }
+                  onValueChange={(value) => {
+                    if (value === '__inherit__') {
+                      setActionExecutionSettings({
+                        ...actionExecutionSettings,
+                        emulateDevice: null,
+                        deviceName: null,
+                      });
+                      return;
+                    }
+
+                    if (value === '__disabled__') {
+                      setActionExecutionSettings({
+                        ...actionExecutionSettings,
+                        emulateDevice: false,
+                        deviceName: null,
+                      });
+                      return;
+                    }
+
+                    setActionExecutionSettings({
+                      ...actionExecutionSettings,
+                      emulateDevice: true,
+                      deviceName: value,
+                    });
+                  }}
+                >
+                  <SelectTrigger className='h-8 text-xs'>
+                    <SelectValue placeholder='Inherit connection setting' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='__inherit__'>Inherit connection setting</SelectItem>
+                    <SelectItem value='__disabled__'>No device emulation</SelectItem>
+                    {playwrightDeviceOptions.map((device) => (
+                      <SelectItem key={device.value} value={device.value}>
+                        {device.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className='space-y-1'>
+                <Label className='text-[11px] text-muted-foreground'>Slow Mo (ms)</Label>
+                <Input
+                  value={actionExecutionSettings.slowMo?.toString() ?? ''}
+                  onChange={(e) =>
+                    setActionExecutionSettings({
+                      ...actionExecutionSettings,
+                      slowMo: toNullableInteger(e.target.value),
+                    })
+                  }
+                  placeholder='Inherit'
+                  className='h-8 text-xs'
+                  inputMode='numeric'
+                />
+              </div>
+
+              <div className='space-y-1'>
+                <Label className='text-[11px] text-muted-foreground'>Timeout (ms)</Label>
+                <Input
+                  value={actionExecutionSettings.timeout?.toString() ?? ''}
+                  onChange={(e) =>
+                    setActionExecutionSettings({
+                      ...actionExecutionSettings,
+                      timeout: toNullableInteger(e.target.value),
+                    })
+                  }
+                  placeholder='Inherit'
+                  className='h-8 text-xs'
+                  inputMode='numeric'
+                />
+              </div>
+
+              <div className='space-y-1'>
+                <Label className='text-[11px] text-muted-foreground'>Navigation timeout (ms)</Label>
+                <Input
+                  value={actionExecutionSettings.navigationTimeout?.toString() ?? ''}
+                  onChange={(e) =>
+                    setActionExecutionSettings({
+                      ...actionExecutionSettings,
+                      navigationTimeout: toNullableInteger(e.target.value),
+                    })
+                  }
+                  placeholder='Inherit'
+                  className='h-8 text-xs'
+                  inputMode='numeric'
+                />
+              </div>
+
+              <div className='space-y-1'>
+                <Label className='text-[11px] text-muted-foreground'>Locale</Label>
+                <Input
+                  value={actionExecutionSettings.locale ?? ''}
+                  onChange={(e) => {
+                    const nextLocale = e.target.value.trim();
+                    setActionExecutionSettings({
+                      ...actionExecutionSettings,
+                      locale: nextLocale.length > 0 ? nextLocale : null,
+                    });
+                  }}
+                  placeholder='Inherit'
+                  className='h-8 text-xs'
+                />
+              </div>
+
+              <div className='space-y-1 md:col-span-2 xl:col-span-1'>
+                <Label className='text-[11px] text-muted-foreground'>Timezone</Label>
+                <Input
+                  value={actionExecutionSettings.timezoneId ?? ''}
+                  onChange={(e) => {
+                    const nextTimezoneId = e.target.value.trim();
+                    setActionExecutionSettings({
+                      ...actionExecutionSettings,
+                      timezoneId: nextTimezoneId.length > 0 ? nextTimezoneId : null,
+                    });
+                  }}
+                  placeholder='Inherit'
+                  className='h-8 text-xs'
+                />
+              </div>
+            </div>
+
+            <div className='grid gap-2 md:grid-cols-2 xl:grid-cols-3'>
+              <div className='space-y-1'>
+                <Label className='text-[11px] text-muted-foreground'>Identity profile</Label>
+                <Select
+                  value={actionExecutionSettings.identityProfile ?? '__inherit__'}
+                  onValueChange={(value) =>
+                    setActionExecutionSettings({
+                      ...actionExecutionSettings,
+                      identityProfile:
+                        value === '__inherit__'
+                          ? null
+                          : value === 'default' ||
+                              value === 'search' ||
+                              value === 'marketplace'
+                            ? value
+                            : null,
+                    })
+                  }
+                >
+                  <SelectTrigger className='h-8 text-xs'>
+                    <SelectValue placeholder='Inherit connection setting' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='__inherit__'>Inherit connection setting</SelectItem>
+                    {playwrightIdentityProfileOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className='space-y-1'>
+                <Label className='text-[11px] text-muted-foreground'>Humanize mouse</Label>
+                <Select
+                  value={
+                    actionExecutionSettings.humanizeMouse === null
+                      ? '__inherit__'
+                      : actionExecutionSettings.humanizeMouse
+                        ? '__enabled__'
+                        : '__disabled__'
+                  }
+                  onValueChange={(value) =>
+                    setActionExecutionSettings({
+                      ...actionExecutionSettings,
+                      humanizeMouse:
+                        value === '__inherit__'
+                          ? null
+                          : value === '__enabled__',
+                    })
+                  }
+                >
+                  <SelectTrigger className='h-8 text-xs'>
+                    <SelectValue placeholder='Inherit connection setting' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='__inherit__'>Inherit connection setting</SelectItem>
+                    <SelectItem value='__enabled__'>Enabled</SelectItem>
+                    <SelectItem value='__disabled__'>Disabled</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className='space-y-1'>
+                <Label className='text-[11px] text-muted-foreground'>Mouse jitter</Label>
+                <Input
+                  value={actionExecutionSettings.mouseJitter?.toString() ?? ''}
+                  onChange={(e) =>
+                    setActionExecutionSettings({
+                      ...actionExecutionSettings,
+                      mouseJitter: toNullableInteger(e.target.value),
+                    })
+                  }
+                  placeholder='Inherit'
+                  className='h-8 text-xs'
+                  inputMode='numeric'
+                />
+              </div>
+
+              <div className='space-y-1'>
+                <Label className='text-[11px] text-muted-foreground'>Proxy</Label>
+                <Select
+                  value={
+                    actionExecutionSettings.proxyEnabled === null
+                      ? '__inherit__'
+                      : actionExecutionSettings.proxyEnabled
+                        ? '__enabled__'
+                        : '__disabled__'
+                  }
+                  onValueChange={(value) =>
+                    setActionExecutionSettings({
+                      ...actionExecutionSettings,
+                      proxyEnabled:
+                        value === '__inherit__'
+                          ? null
+                          : value === '__enabled__',
+                    })
+                  }
+                >
+                  <SelectTrigger className='h-8 text-xs'>
+                    <SelectValue placeholder='Inherit connection setting' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='__inherit__'>Inherit connection setting</SelectItem>
+                    <SelectItem value='__enabled__'>Enabled</SelectItem>
+                    <SelectItem value='__disabled__'>Disabled</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className='space-y-1'>
+                <Label className='text-[11px] text-muted-foreground'>Proxy session affinity</Label>
+                <Select
+                  value={
+                    actionExecutionSettings.proxySessionAffinity === null
+                      ? '__inherit__'
+                      : actionExecutionSettings.proxySessionAffinity
+                        ? '__enabled__'
+                        : '__disabled__'
+                  }
+                  onValueChange={(value) =>
+                    setActionExecutionSettings({
+                      ...actionExecutionSettings,
+                      proxySessionAffinity:
+                        value === '__inherit__'
+                          ? null
+                          : value === '__enabled__',
+                    })
+                  }
+                >
+                  <SelectTrigger className='h-8 text-xs'>
+                    <SelectValue placeholder='Inherit connection setting' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='__inherit__'>Inherit connection setting</SelectItem>
+                    <SelectItem value='__enabled__'>Enabled</SelectItem>
+                    <SelectItem value='__disabled__'>Disabled</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className='space-y-1'>
+                <Label className='text-[11px] text-muted-foreground'>Proxy session mode</Label>
+                <Select
+                  value={actionExecutionSettings.proxySessionMode ?? '__inherit__'}
+                  onValueChange={(value) =>
+                    setActionExecutionSettings({
+                      ...actionExecutionSettings,
+                      proxySessionMode:
+                        value === '__inherit__'
+                          ? null
+                          : value === 'sticky' || value === 'rotate'
+                            ? value
+                            : null,
+                    })
+                  }
+                >
+                  <SelectTrigger className='h-8 text-xs'>
+                    <SelectValue placeholder='Inherit connection setting' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='__inherit__'>Inherit connection setting</SelectItem>
+                    {playwrightProxySessionModeOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className='space-y-1'>
+                <Label className='text-[11px] text-muted-foreground'>Proxy provider preset</Label>
+                <Select
+                  value={actionExecutionSettings.proxyProviderPreset ?? '__inherit__'}
+                  onValueChange={(value) =>
+                    setActionExecutionSettings({
+                      ...actionExecutionSettings,
+                      proxyProviderPreset:
+                        value === '__inherit__'
+                          ? null
+                          : value === 'custom' ||
+                              value === 'brightdata' ||
+                              value === 'oxylabs' ||
+                              value === 'decodo'
+                            ? value
+                            : null,
+                    })
+                  }
+                >
+                  <SelectTrigger className='h-8 text-xs'>
+                    <SelectValue placeholder='Inherit connection setting' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='__inherit__'>Inherit connection setting</SelectItem>
+                    {playwrightProxyProviderPresetOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className='space-y-1'>
+                <Label className='text-[11px] text-muted-foreground'>Proxy server</Label>
+                <Input
+                  value={actionExecutionSettings.proxyServer ?? ''}
+                  onChange={(e) => {
+                    const nextProxyServer = e.target.value.trim();
+                    setActionExecutionSettings({
+                      ...actionExecutionSettings,
+                      proxyServer: nextProxyServer.length > 0 ? nextProxyServer : null,
+                    });
+                  }}
+                  placeholder='Inherit'
+                  className='h-8 text-xs'
+                />
+              </div>
+
+              <div className='space-y-1'>
+                <Label className='text-[11px] text-muted-foreground'>Proxy username</Label>
+                <Input
+                  value={actionExecutionSettings.proxyUsername ?? ''}
+                  onChange={(e) => {
+                    const nextProxyUsername = e.target.value.trim();
+                    setActionExecutionSettings({
+                      ...actionExecutionSettings,
+                      proxyUsername: nextProxyUsername.length > 0 ? nextProxyUsername : null,
+                    });
+                  }}
+                  placeholder='Inherit'
+                  className='h-8 text-xs'
+                />
+              </div>
+
+              <div className='space-y-1'>
+                <Label className='text-[11px] text-muted-foreground'>Proxy password</Label>
+                <Input
+                  value={actionExecutionSettings.proxyPassword ?? ''}
+                  onChange={(e) => {
+                    const nextProxyPassword = e.target.value.trim();
+                    setActionExecutionSettings({
+                      ...actionExecutionSettings,
+                      proxyPassword: nextProxyPassword.length > 0 ? nextProxyPassword : null,
+                    });
+                  }}
+                  placeholder='Inherit'
+                  className='h-8 text-xs'
+                  type='password'
+                />
+              </div>
+            </div>
+
+            <div className='grid gap-2 md:grid-cols-2 xl:grid-cols-3'>
+              <div className='space-y-1'>
+                <Label className='text-[11px] text-muted-foreground'>Click delay min (ms)</Label>
+                <Input
+                  value={actionExecutionSettings.clickDelayMin?.toString() ?? ''}
+                  onChange={(e) =>
+                    setActionExecutionSettings({
+                      ...actionExecutionSettings,
+                      clickDelayMin: toNullableInteger(e.target.value),
+                    })
+                  }
+                  placeholder='Inherit'
+                  className='h-8 text-xs'
+                  inputMode='numeric'
+                />
+              </div>
+
+              <div className='space-y-1'>
+                <Label className='text-[11px] text-muted-foreground'>Click delay max (ms)</Label>
+                <Input
+                  value={actionExecutionSettings.clickDelayMax?.toString() ?? ''}
+                  onChange={(e) =>
+                    setActionExecutionSettings({
+                      ...actionExecutionSettings,
+                      clickDelayMax: toNullableInteger(e.target.value),
+                    })
+                  }
+                  placeholder='Inherit'
+                  className='h-8 text-xs'
+                  inputMode='numeric'
+                />
+              </div>
+
+              <div className='space-y-1'>
+                <Label className='text-[11px] text-muted-foreground'>Input delay min (ms)</Label>
+                <Input
+                  value={actionExecutionSettings.inputDelayMin?.toString() ?? ''}
+                  onChange={(e) =>
+                    setActionExecutionSettings({
+                      ...actionExecutionSettings,
+                      inputDelayMin: toNullableInteger(e.target.value),
+                    })
+                  }
+                  placeholder='Inherit'
+                  className='h-8 text-xs'
+                  inputMode='numeric'
+                />
+              </div>
+
+              <div className='space-y-1'>
+                <Label className='text-[11px] text-muted-foreground'>Input delay max (ms)</Label>
+                <Input
+                  value={actionExecutionSettings.inputDelayMax?.toString() ?? ''}
+                  onChange={(e) =>
+                    setActionExecutionSettings({
+                      ...actionExecutionSettings,
+                      inputDelayMax: toNullableInteger(e.target.value),
+                    })
+                  }
+                  placeholder='Inherit'
+                  className='h-8 text-xs'
+                  inputMode='numeric'
+                />
+              </div>
+
+              <div className='space-y-1'>
+                <Label className='text-[11px] text-muted-foreground'>Action delay min (ms)</Label>
+                <Input
+                  value={actionExecutionSettings.actionDelayMin?.toString() ?? ''}
+                  onChange={(e) =>
+                    setActionExecutionSettings({
+                      ...actionExecutionSettings,
+                      actionDelayMin: toNullableInteger(e.target.value),
+                    })
+                  }
+                  placeholder='Inherit'
+                  className='h-8 text-xs'
+                  inputMode='numeric'
+                />
+              </div>
+
+              <div className='space-y-1'>
+                <Label className='text-[11px] text-muted-foreground'>Action delay max (ms)</Label>
+                <Input
+                  value={actionExecutionSettings.actionDelayMax?.toString() ?? ''}
+                  onChange={(e) =>
+                    setActionExecutionSettings({
+                      ...actionExecutionSettings,
+                      actionDelayMax: toNullableInteger(e.target.value),
+                    })
+                  }
+                  placeholder='Inherit'
+                  className='h-8 text-xs'
+                  inputMode='numeric'
+                />
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {resolvedActionBlocks.length > 0 ? (
+          <div className='space-y-3 rounded border border-border/40 bg-card/20 p-3'>
+            <div className='space-y-1'>
+              <Label className='text-[11px] font-semibold uppercase tracking-wider text-muted-foreground'>
+                Step Settings
+              </Label>
+              <p className='text-[11px] text-muted-foreground/70'>
+                Browser preparation is step-owned. Use it to shape viewport and initial page settle behavior.
+              </p>
+            </div>
+
+            {browserPreparationBlocks.length === 0 ? (
+              <div className='rounded border border-dashed border-border/50 px-3 py-2 text-[11px] text-muted-foreground/70'>
+                Add a <span className='font-medium text-foreground'>Browser preparation</span> runtime step to configure viewport and settle timing.
+              </div>
+            ) : (
+              browserPreparationBlocks.map(({ item, index }) => (
+                <div
+                  key={item.block.id}
+                  className='grid gap-2 rounded border border-border/40 bg-card/30 p-3 md:grid-cols-3'
+                >
+                  <div className='space-y-1 md:col-span-3'>
+                    <div className='text-xs font-medium'>
+                      Browser preparation
+                      <span className='ml-1 text-[11px] text-muted-foreground'>
+                        block {index + 1}
+                      </span>
+                    </div>
+                    <div className='text-[11px] text-muted-foreground/70'>
+                      Overrides only this step. Leave fields empty to use the action or integration defaults.
+                    </div>
+                  </div>
+
+                  <div className='space-y-1'>
+                    <Label className='text-[11px] text-muted-foreground'>Viewport width</Label>
+                    <Input
+                      value={item.block.config.viewportWidth?.toString() ?? ''}
+                      onChange={(e) =>
+                        handleUpdateActionBlockConfig(index, {
+                          viewportWidth: toNullableInteger(e.target.value),
+                        })
+                      }
+                      placeholder='Default'
+                      className='h-8 text-xs'
+                      inputMode='numeric'
+                    />
+                  </div>
+
+                  <div className='space-y-1'>
+                    <Label className='text-[11px] text-muted-foreground'>Viewport height</Label>
+                    <Input
+                      value={item.block.config.viewportHeight?.toString() ?? ''}
+                      onChange={(e) =>
+                        handleUpdateActionBlockConfig(index, {
+                          viewportHeight: toNullableInteger(e.target.value),
+                        })
+                      }
+                      placeholder='Default'
+                      className='h-8 text-xs'
+                      inputMode='numeric'
+                    />
+                  </div>
+
+                  <div className='space-y-1'>
+                    <Label className='text-[11px] text-muted-foreground'>Settle delay (ms)</Label>
+                    <Input
+                      value={item.block.config.settleDelayMs?.toString() ?? ''}
+                      onChange={(e) =>
+                        handleUpdateActionBlockConfig(index, {
+                          settleDelayMs: toNullableInteger(e.target.value),
+                        })
+                      }
+                      placeholder='Default'
+                      className='h-8 text-xs'
+                      inputMode='numeric'
+                    />
+                  </div>
+
+                  <div className='space-y-1'>
+                    <Label className='text-[11px] text-muted-foreground'>Locale override</Label>
+                    <Input
+                      value={item.block.config.locale ?? ''}
+                      onChange={(e) => {
+                        const nextLocale = e.target.value.trim();
+                        handleUpdateActionBlockConfig(index, {
+                          locale: nextLocale.length > 0 ? nextLocale : null,
+                        });
+                      }}
+                      placeholder='Use action default'
+                      className='h-8 text-xs'
+                    />
+                  </div>
+
+                  <div className='space-y-1'>
+                    <Label className='text-[11px] text-muted-foreground'>Timezone override</Label>
+                    <Input
+                      value={item.block.config.timezoneId ?? ''}
+                      onChange={(e) => {
+                        const nextTimezoneId = e.target.value.trim();
+                        handleUpdateActionBlockConfig(index, {
+                          timezoneId: nextTimezoneId.length > 0 ? nextTimezoneId : null,
+                        });
+                      }}
+                      placeholder='Use action default'
+                      className='h-8 text-xs'
+                    />
+                  </div>
+
+                  <div className='space-y-1'>
+                    <Label className='text-[11px] text-muted-foreground'>User agent override</Label>
+                    <Input
+                      value={item.block.config.userAgent ?? ''}
+                      onChange={(e) => {
+                        const nextUserAgent = e.target.value.trim();
+                        handleUpdateActionBlockConfig(index, {
+                          userAgent: nextUserAgent.length > 0 ? nextUserAgent : null,
+                        });
+                      }}
+                      placeholder='Use action/default fingerprint'
+                      className='h-8 text-xs'
+                    />
+                  </div>
+
+                  <div className='space-y-1'>
+                    <Label className='text-[11px] text-muted-foreground'>Color scheme</Label>
+                    <Select
+                      value={item.block.config.colorScheme ?? '__inherit__'}
+                      onValueChange={(value) =>
+                        handleUpdateActionBlockConfig(index, {
+                          colorScheme:
+                            value === '__inherit__'
+                              ? null
+                              : value === 'light' || value === 'dark'
+                                ? value
+                                : null,
+                        })
+                      }
+                    >
+                      <SelectTrigger className='h-8 text-xs'>
+                        <SelectValue placeholder='Use default' />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value='__inherit__'>Use default</SelectItem>
+                        <SelectItem value='light'>Light</SelectItem>
+                        <SelectItem value='dark'>Dark</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className='space-y-1'>
+                    <Label className='text-[11px] text-muted-foreground'>Reduced motion</Label>
+                    <Select
+                      value={item.block.config.reducedMotion ?? '__inherit__'}
+                      onValueChange={(value) =>
+                        handleUpdateActionBlockConfig(index, {
+                          reducedMotion:
+                            value === '__inherit__'
+                              ? null
+                              : value === 'reduce' || value === 'no-preference'
+                                ? value
+                                : null,
+                        })
+                      }
+                    >
+                      <SelectTrigger className='h-8 text-xs'>
+                        <SelectValue placeholder='Use default' />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value='__inherit__'>Use default</SelectItem>
+                        <SelectItem value='no-preference'>No preference</SelectItem>
+                        <SelectItem value='reduce'>Reduce</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className='space-y-1'>
+                    <Label className='text-[11px] text-muted-foreground'>Permissions</Label>
+                    <Input
+                      value={item.block.config.permissions.join(', ')}
+                      onChange={(e) =>
+                        handleUpdateActionBlockConfig(index, {
+                          permissions: toPermissionList(e.target.value),
+                        })
+                      }
+                      placeholder='geolocation, clipboard-read'
+                      className='h-8 text-xs'
+                    />
+                  </div>
+
+                  <div className='space-y-1'>
+                    <Label className='text-[11px] text-muted-foreground'>Latitude</Label>
+                    <Input
+                      value={item.block.config.geolocationLatitude?.toString() ?? ''}
+                      onChange={(e) =>
+                        handleUpdateActionBlockConfig(index, {
+                          geolocationLatitude: toNullableFloat(e.target.value),
+                        })
+                      }
+                      placeholder='Leave blank'
+                      className='h-8 text-xs'
+                      inputMode='decimal'
+                    />
+                  </div>
+
+                  <div className='space-y-1'>
+                    <Label className='text-[11px] text-muted-foreground'>Longitude</Label>
+                    <Input
+                      value={item.block.config.geolocationLongitude?.toString() ?? ''}
+                      onChange={(e) =>
+                        handleUpdateActionBlockConfig(index, {
+                          geolocationLongitude: toNullableFloat(e.target.value),
+                        })
+                      }
+                      placeholder='Leave blank'
+                      className='h-8 text-xs'
+                      inputMode='decimal'
+                    />
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        ) : null}
 
         {/* Save bar */}
         {resolvedActionBlocks.length > 0 ? (
@@ -587,7 +1515,7 @@ export function ActionConstructorEngine(): React.JSX.Element {
                 className='h-7 w-[160px] text-xs'
                 aria-label='Action description'
               />
-              {editingActionId ? (
+              {editingActionId !== null ? (
                 <>
                   <Button
                     size='sm'
@@ -595,7 +1523,7 @@ export function ActionConstructorEngine(): React.JSX.Element {
                     onClick={() => {
                       handleUpdateAction().catch(() => undefined);
                     }}
-                    disabled={!actionDraftName.trim() || isSaving}
+                    disabled={actionDraftName.trim().length === 0 || isSaving || actionValidationErrors.length > 0}
                     loading={isSaving}
                   >
                     <RefreshCw className='size-3.5' />
@@ -606,7 +1534,7 @@ export function ActionConstructorEngine(): React.JSX.Element {
                     variant='outline'
                     className='h-7 gap-1 text-xs'
                     onClick={() => setIsSaveActionOpen(true)}
-                    disabled={!actionDraftName.trim()}
+                    disabled={actionDraftName.trim().length === 0}
                     title='Save as a new separate action'
                   >
                     <Save className='size-3.5' />
@@ -618,7 +1546,7 @@ export function ActionConstructorEngine(): React.JSX.Element {
                   size='sm'
                   className='h-7 gap-1 text-xs'
                   onClick={() => setIsSaveActionOpen(true)}
-                  disabled={!actionDraftName.trim()}
+                  disabled={actionDraftName.trim().length === 0}
                 >
                   <Save className='size-3.5' />
                   Save Action
@@ -628,6 +1556,29 @@ export function ActionConstructorEngine(): React.JSX.Element {
           </div>
         ) : null}
       </div>
+      <StepCodePreviewDialog
+        step={previewStep}
+        open={previewStep !== null}
+        onOpenChange={(open) => {
+          if (!open) setPreviewStep(null);
+        }}
+      />
+      <StepSetCodePreviewDialog
+        stepSet={previewStepSet}
+        steps={steps}
+        open={previewStepSet !== null}
+        onOpenChange={(open) => {
+          if (!open) setPreviewStepSet(null);
+        }}
+      />
+      <ActionSequenceCodePreviewDialog
+        actionName={actionDraftName}
+        blocks={resolvedActionBlocks}
+        steps={steps}
+        stepSets={stepSets}
+        open={isActionCodePreviewOpen}
+        onOpenChange={setIsActionCodePreviewOpen}
+      />
     </div>
   );
 }

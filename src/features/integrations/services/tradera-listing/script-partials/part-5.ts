@@ -108,80 +108,94 @@ export const PART_5 = String.raw`
     await ensureLoggedIn();
     emitStage(listingAction === 'sync' ? 'sync_target_loaded' : 'active_loaded');
 
+    const duplicateCheckEnabled = hasExecutionStep('duplicate_check');
+    const imageCleanupEnabled = hasExecutionStep('image_cleanup');
+    const imageUploadEnabled = hasExecutionStep('image_upload');
+
     if (listingAction === 'sync') {
       skipStep('duplicate_check', 'sync action');
       skipStep('deep_duplicate_check', 'sync action');
       skipStep('sell_page_open', 'sync action');
+      assertExecutionStepEnabled('sync_check', 'sync listing editor bootstrap');
       updateStep('sync_check', 'running');
       await openExistingListingEditorForSync();
       updateStep('sync_check', 'completed', { listingUrl: existingListingUrl || null });
     } else {
       skipStep('sync_check', 'not a sync action');
-      updateStep('duplicate_check', 'running');
-      const duplicateMatch = await checkDuplicate(duplicateSearchTerms);
-      duplicateSearchSummary = {
-        duplicateCandidateCount:
-          typeof duplicateMatch.candidateCount === 'number' ? duplicateMatch.candidateCount : null,
-        duplicateSearchTitle: duplicateMatch.searchTitle || duplicateSearchTitle || null,
-        ignoredNonExactCandidateCount:
-          typeof duplicateMatch.ignoredNonExactCandidateCount === 'number'
-            ? duplicateMatch.ignoredNonExactCandidateCount
-            : null,
-        ignoredCandidateTitles: Array.isArray(duplicateMatch.ignoredCandidateTitles)
-          ? duplicateMatch.ignoredCandidateTitles.filter((value) => typeof value === 'string').slice(0, 5)
-          : [],
-      };
-      if (duplicateMatch.duplicateFound) {
-        const duplicateResult = {
-          stage: 'duplicate_linked',
-          currentUrl: duplicateMatch.listingUrl || page.url(),
-          externalListingId:
-            duplicateMatch.listingId ||
-            extractListingId(duplicateMatch.listingUrl || '') ||
-            null,
-          listingUrl: duplicateMatch.listingUrl || null,
-          publishVerified: false,
-          duplicateLinked: true,
-          duplicateMatchStrategy: duplicateMatch.matchStrategy || null,
-          duplicateMatchedProductId: duplicateMatch.matchedProductId || null,
-          duplicateCandidateCount: duplicateMatch.candidateCount || null,
+      if (duplicateCheckEnabled) {
+        updateStep('duplicate_check', 'running');
+        const duplicateMatch = await checkDuplicate(duplicateSearchTerms);
+        duplicateSearchSummary = {
+          duplicateCandidateCount:
+            typeof duplicateMatch.candidateCount === 'number' ? duplicateMatch.candidateCount : null,
           duplicateSearchTitle: duplicateMatch.searchTitle || duplicateSearchTitle || null,
-          categoryPath: null,
-          categorySource: null,
-          imageUploadSource: null,
+          ignoredNonExactCandidateCount:
+            typeof duplicateMatch.ignoredNonExactCandidateCount === 'number'
+              ? duplicateMatch.ignoredNonExactCandidateCount
+              : null,
+          ignoredCandidateTitles: Array.isArray(duplicateMatch.ignoredCandidateTitles)
+            ? duplicateMatch.ignoredCandidateTitles.filter((value) => typeof value === 'string').slice(0, 5)
+            : [],
         };
-        updateStep('duplicate_check', 'completed', { duplicateFound: true, listingId: duplicateResult.externalListingId });
-        skipStep('deep_duplicate_check', 'duplicate linked');
-        skipStep('sell_page_open', 'duplicate linked');
-        skipStep('image_cleanup', 'duplicate linked');
-        skipStep('image_upload', 'duplicate linked');
-        skipStep('title_fill', 'duplicate linked');
-        skipStep('description_fill', 'duplicate linked');
-        skipStep('price_set', 'duplicate linked');
-        skipStep('category_select', 'duplicate linked');
-        skipStep('shipping_set', 'duplicate linked');
-        skipStep('publish', 'duplicate linked');
-        updateStep('browser_close', 'completed');
-        log?.('tradera.quicklist.duplicate.linked', duplicateResult);
-        emitStage('duplicate_linked', {
-          duplicateMatchStrategy: duplicateResult.duplicateMatchStrategy,
-          duplicateMatchedProductId: duplicateResult.duplicateMatchedProductId,
-          duplicateCandidateCount: duplicateResult.duplicateCandidateCount,
-          externalListingId: duplicateResult.externalListingId,
-          listingUrl: duplicateResult.listingUrl,
+        if (duplicateMatch.duplicateFound) {
+          const duplicateResult = {
+            stage: 'duplicate_linked',
+            currentUrl: duplicateMatch.listingUrl || page.url(),
+            externalListingId:
+              duplicateMatch.listingId ||
+              extractListingId(duplicateMatch.listingUrl || '') ||
+              null,
+            listingUrl: duplicateMatch.listingUrl || null,
+            publishVerified: false,
+            duplicateLinked: true,
+            duplicateMatchStrategy: duplicateMatch.matchStrategy || null,
+            duplicateMatchedProductId: duplicateMatch.matchedProductId || null,
+            duplicateCandidateCount: duplicateMatch.candidateCount || null,
+            duplicateSearchTitle: duplicateMatch.searchTitle || duplicateSearchTitle || null,
+            categoryPath: null,
+            categorySource: null,
+            imageUploadSource: null,
+          };
+          updateStep('duplicate_check', 'completed', { duplicateFound: true, listingId: duplicateResult.externalListingId });
+          skipStep('deep_duplicate_check', 'duplicate linked');
+          skipStep('sell_page_open', 'duplicate linked');
+          skipStep('image_cleanup', 'duplicate linked');
+          skipStep('image_upload', 'duplicate linked');
+          skipStep('title_fill', 'duplicate linked');
+          skipStep('description_fill', 'duplicate linked');
+          skipStep('listing_format_select', 'duplicate linked');
+          skipStep('price_set', 'duplicate linked');
+          skipStep('category_select', 'duplicate linked');
+          skipStep('attribute_select', 'duplicate linked');
+          skipStep('shipping_set', 'duplicate linked');
+          skipStep('publish', 'duplicate linked');
+          skipStep('publish_verify', 'duplicate linked');
+          updateStep('browser_close', 'completed');
+          log?.('tradera.quicklist.duplicate.linked', duplicateResult);
+          emitStage('duplicate_linked', {
+            duplicateMatchStrategy: duplicateResult.duplicateMatchStrategy,
+            duplicateMatchedProductId: duplicateResult.duplicateMatchedProductId,
+            duplicateCandidateCount: duplicateResult.duplicateCandidateCount,
+            externalListingId: duplicateResult.externalListingId,
+            listingUrl: duplicateResult.listingUrl,
+          });
+          emit('result', duplicateResult);
+          return duplicateResult;
+        }
+        updateStep('duplicate_check', 'completed', { duplicateFound: false });
+        skipStep('deep_duplicate_check', 'no pre-listing deep check required');
+        emitStage('duplicate_checked', {
+          duplicateCandidateCount: duplicateSearchSummary.duplicateCandidateCount,
+          duplicateSearchTitle: duplicateSearchSummary.duplicateSearchTitle,
+          ignoredNonExactCandidateCount: duplicateSearchSummary.ignoredNonExactCandidateCount,
+          ignoredCandidateTitles: duplicateSearchSummary.ignoredCandidateTitles,
         });
-        emit('result', duplicateResult);
-        return duplicateResult;
+      } else {
+        logOmittedStep('duplicate_check', 'pre-listing duplicate search');
+        skipStep('deep_duplicate_check', 'duplicate search omitted from runtime action manifest');
       }
-      updateStep('duplicate_check', 'completed', { duplicateFound: false });
-      skipStep('deep_duplicate_check', 'no pre-listing deep check required');
-      emitStage('duplicate_checked', {
-        duplicateCandidateCount: duplicateSearchSummary.duplicateCandidateCount,
-        duplicateSearchTitle: duplicateSearchSummary.duplicateSearchTitle,
-        ignoredNonExactCandidateCount: duplicateSearchSummary.ignoredNonExactCandidateCount,
-        ignoredCandidateTitles: duplicateSearchSummary.ignoredCandidateTitles,
-      });
 
+      assertExecutionStepEnabled('sell_page_open', 'listing editor bootstrap');
       updateStep('sell_page_open', 'running');
       await gotoSellPage();
       updateStep('sell_page_open', 'completed', { url: page.url() });
@@ -201,13 +215,15 @@ export const PART_5 = String.raw`
     await dismissVisibleAutofillDialogIfPresent({
       context: listingAction === 'sync' ? 'sync-editor-ready' : 'listing-editor-ready',
     }).catch(() => false);
-    if (listingAction !== 'sync') {
+    if (listingAction !== 'sync' && imageCleanupEnabled) {
       updateStep('image_cleanup', 'running');
     }
-    if (!syncSkipImages) {
+    if (!syncSkipImages && imageCleanupEnabled) {
       await ensureInitialImageCleanupSettled();
+    } else if (!syncSkipImages && !imageCleanupEnabled) {
+      logOmittedStep('image_cleanup', 'draft image cleanup');
     }
-    if (listingAction !== 'sync') {
+    if (listingAction !== 'sync' && imageCleanupEnabled) {
       updateStep('image_cleanup', 'completed');
     }
     emitStage('draft_cleared');
@@ -974,6 +990,17 @@ export const PART_5 = String.raw`
       skipStep('image_upload', 'sync-skip-images');
       log?.('tradera.quicklist.image.skipped', { reason: 'sync-skip-images' });
       emitStage('images_preserved', { reason: 'sync-skip-images' });
+    } else if (!imageUploadEnabled) {
+      imageUploadResult = {
+        imageCount: 0,
+        uploadSource: 'manifest-omitted',
+        observedPreviewCount: null,
+        observedPreviewDelta: null,
+        observedPreviewDescriptors: [],
+      };
+      skipStep('image_upload', 'step omitted from runtime action manifest');
+      logOmittedStep('image_upload', 'listing image upload');
+      emitStage('images_preserved', { reason: 'manifest-omitted' });
     } else {
       updateStep('image_upload', 'running', { imageCount: imageUrls.length });
       const initialUploadFiles = await resolveUploadFiles();
@@ -1133,14 +1160,20 @@ export const PART_5 = String.raw`
       return { titleInput, descriptionInput };
     };
 
-    const fillTitleAndDescription = async () => {
+    const resolveRequiredTitleAndDescriptionInputs = async () => {
       const { titleInput, descriptionInput } = await resolveTitleAndDescriptionInputs();
-
       if (!titleInput || !descriptionInput) {
         throw new Error(
           'FAIL_PUBLISH_VALIDATION: Tradera listing form selectors were not found (title/description).'
         );
       }
+
+      return { titleInput, descriptionInput };
+    };
+
+    const fillTitleField = async (resolvedInputs = null) => {
+      const { titleInput } =
+        resolvedInputs || (await resolveRequiredTitleAndDescriptionInputs());
 
       if (listingAction === 'sync' && (await isControlDisabled(titleInput))) {
         log?.('tradera.quicklist.field.skipped', {
@@ -1155,7 +1188,11 @@ export const PART_5 = String.raw`
           errorPrefix: 'FAIL_PUBLISH_VALIDATION',
         });
       }
+    };
 
+    const fillDescriptionField = async (resolvedInputs = null) => {
+      const { descriptionInput } =
+        resolvedInputs || (await resolveRequiredTitleAndDescriptionInputs());
       if (listingAction === 'sync' && (await isControlDisabled(descriptionInput))) {
         log?.('tradera.quicklist.field.skipped', {
           field: 'description',
@@ -1170,6 +1207,12 @@ export const PART_5 = String.raw`
           inputMethod: 'paste',
         });
       }
+    };
+
+    const fillTitleAndDescription = async () => {
+      const resolvedInputs = await resolveRequiredTitleAndDescriptionInputs();
+      await fillTitleField(resolvedInputs);
+      await fillDescriptionField(resolvedInputs);
     };
 
     const fillPriceField = async ({ required = true, context = 'unknown' } = {}) => {

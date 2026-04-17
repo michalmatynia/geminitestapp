@@ -4,6 +4,10 @@ import {
   getKangurSurfaceBootstrapFallbackStyle,
 } from '@/lib/kangur-surface-bootstrap';
 
+import './kangur.css';
+import { KangurStorefrontAppearanceProvider } from '@/features/kangur/ui/KangurStorefrontAppearanceProvider';
+import { KangurSurfaceClassSync } from '@/features/kangur/ui/KangurSurfaceClassSync';
+
 import type { ReactNode } from 'react';
 
 export default function KangurLayout({
@@ -20,7 +24,9 @@ export default function KangurLayout({
         id='__KANGUR_SURFACE_BOOTSTRAP__'
         dangerouslySetInnerHTML={{ __html: escapeForInlineScript(surfaceBootstrapStyle) }}
       />
-      {children}
+      <KangurStorefrontAppearanceProvider>
+        <KangurSurfaceClassSync>{children}</KangurSurfaceClassSync>
+      </KangurStorefrontAppearanceProvider>
     </>
   );
 }

@@ -28,7 +28,7 @@ import {
 } from './product-scan-amazon.helpers';
 import {
   AMAZON_PRODUCT_SCAN_PROVIDER,
-  type ProductScanProviderRuntime,
+  type ProductScanScriptProviderRuntime,
 } from './product-scan-providers';
 import {
   buildProductScannerEngineRequestOptions,
@@ -93,7 +93,7 @@ import {
   synchronizeAmazonProbeReady,
 } from './product-scans-sync-amazon-probe';
 
-const amazonScanRuntime: ProductScanProviderRuntime = AMAZON_PRODUCT_SCAN_PROVIDER.runtime!;
+const amazonScanRuntime = AMAZON_PRODUCT_SCAN_PROVIDER.runtime! as ProductScanScriptProviderRuntime;
 
 export async function synchronizeAmazonProductScan(
   scan: ProductScanRecord

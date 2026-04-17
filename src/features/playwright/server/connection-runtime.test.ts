@@ -5,11 +5,17 @@ const {
   resolveConnectionPlaywrightSettingsMock,
   runPlaywrightEngineTaskMock,
   startPlaywrightEngineTaskMock,
+  resolveRuntimeActionExecutionSettingsMock,
+  resolveRuntimeActionDefinitionMock,
+  resolvePlaywrightActionDefinitionByIdMock,
 } = vi.hoisted(() => ({
   parsePersistedStorageStateMock: vi.fn(),
   resolveConnectionPlaywrightSettingsMock: vi.fn(),
   runPlaywrightEngineTaskMock: vi.fn(),
   startPlaywrightEngineTaskMock: vi.fn(),
+  resolveRuntimeActionExecutionSettingsMock: vi.fn(),
+  resolveRuntimeActionDefinitionMock: vi.fn(),
+  resolvePlaywrightActionDefinitionByIdMock: vi.fn(),
 }));
 
 vi.mock('playwright', () => ({
@@ -33,12 +39,22 @@ vi.mock('./runtime', () => ({
   startPlaywrightEngineTask: (...args: unknown[]) => startPlaywrightEngineTaskMock(...args),
 }));
 
+vi.mock('@/shared/lib/browser-execution/runtime-action-resolver.server', () => ({
+  resolvePlaywrightActionDefinitionById: (...args: unknown[]) =>
+    resolvePlaywrightActionDefinitionByIdMock(...args),
+  resolveRuntimeActionExecutionSettings: (...args: unknown[]) =>
+    resolveRuntimeActionExecutionSettingsMock(...args),
+  resolveRuntimeActionDefinition: (...args: unknown[]) =>
+    resolveRuntimeActionDefinitionMock(...args),
+}));
+
 import {
   buildPlaywrightConnectionContextOptions,
   buildPlaywrightConnectionEngineRequestOptions,
   buildPlaywrightConnectionEngineLaunchOptions,
   buildPlaywrightConnectionLaunchOptions,
   buildPlaywrightConnectionSettingsOverrides,
+  resolvePlaywrightRuntimeDeviceContext,
   resolvePlaywrightConnectionRuntime,
   runPlaywrightConnectionEngineTask,
   startPlaywrightConnectionEngineTask,
@@ -86,6 +102,46 @@ describe('playwright connection runtime', () => {
       runId: 'run-queued',
       status: 'queued',
     });
+    resolveRuntimeActionExecutionSettingsMock.mockResolvedValue(null);
+    resolveRuntimeActionDefinitionMock.mockResolvedValue({
+      id: 'runtime_action__playwright_programmable_listing',
+      name: 'Programmable Listing Session',
+      description: null,
+      runtimeKey: 'playwright_programmable_listing',
+      blocks: [],
+      stepSetIds: [],
+      personaId: null,
+      executionSettings: {
+        identityProfile: null,
+        headless: null,
+        browserPreference: null,
+        emulateDevice: null,
+        deviceName: null,
+        slowMo: null,
+        timeout: null,
+        navigationTimeout: null,
+        locale: null,
+        timezoneId: null,
+        humanizeMouse: null,
+        mouseJitter: null,
+        clickDelayMin: null,
+        clickDelayMax: null,
+        inputDelayMin: null,
+        inputDelayMax: null,
+        actionDelayMin: null,
+        actionDelayMax: null,
+        proxyEnabled: null,
+        proxyServer: null,
+        proxyUsername: null,
+        proxyPassword: null,
+        proxySessionAffinity: null,
+        proxySessionMode: null,
+        proxyProviderPreset: null,
+      },
+      createdAt: '2026-04-17T00:00:00.000Z',
+      updatedAt: '2026-04-17T00:00:00.000Z',
+    });
+    resolvePlaywrightActionDefinitionByIdMock.mockResolvedValue(null);
   });
 
   it('resolves persona-aware runtime context once for browser consumers', async () => {
@@ -151,16 +207,55 @@ describe('playwright connection runtime', () => {
         },
       },
       viewport: { width: 1280, height: 720 },
+      environmentOverrides: {
+        locale: 'pl-PL',
+        timezoneId: 'Europe/Warsaw',
+        userAgent: 'custom-ua',
+        colorScheme: 'dark',
+        reducedMotion: 'reduce',
+        geolocation: { latitude: 52.2297, longitude: 21.0122 },
+        permissions: ['geolocation'],
+      },
     });
 
     expect(contextOptions).toEqual({
-      locale: 'en-US',
+      locale: 'pl-PL',
       storageState: {
         cookies: [{ name: 'session', value: 'abc', domain: '.example.com', path: '/' }],
         origins: [],
       },
       timezoneId: 'Europe/Warsaw',
       viewport: { width: 1280, height: 720 },
+      userAgent: 'custom-ua',
+      colorScheme: 'dark',
+      reducedMotion: 'reduce',
+      geolocation: { latitude: 52.2297, longitude: 21.0122 },
+      permissions: ['geolocation'],
+    });
+  });
+
+  it('recomputes device context from action-owned emulation settings', () => {
+    expect(
+      resolvePlaywrightRuntimeDeviceContext({
+        emulateDevice: true,
+        deviceName: 'Pixel 7',
+      })
+    ).toEqual({
+      deviceProfileName: 'Pixel 7',
+      deviceContextOptions: {
+        viewport: { width: 412, height: 915 },
+        userAgent: 'pixel-ua',
+      },
+    });
+
+    expect(
+      resolvePlaywrightRuntimeDeviceContext({
+        emulateDevice: false,
+        deviceName: 'Pixel 7',
+      })
+    ).toEqual({
+      deviceProfileName: null,
+      deviceContextOptions: {},
     });
   });
 
@@ -385,6 +480,209 @@ describe('playwright connection runtime', () => {
       instance: {
         kind: 'social_capture_batch',
       },
+    });
+  });
+
+  it('applies runtime action execution settings and browser_preparation overrides to engine tasks', async () => {
+    resolveRuntimeActionExecutionSettingsMock.mockResolvedValue({
+      headless: false,
+      browserPreference: 'brave',
+      emulateDevice: false,
+      deviceName: 'Desktop Chrome',
+      slowMo: null,
+      timeout: null,
+      navigationTimeout: null,
+      locale: 'pl-PL',
+      timezoneId: 'Europe/Warsaw',
+    });
+    resolveRuntimeActionDefinitionMock.mockResolvedValue({
+      id: 'runtime_action__playwright_programmable_listing',
+      name: 'Programmable Listing Session',
+      description: null,
+      runtimeKey: 'playwright_programmable_listing',
+      blocks: [
+        {
+          id: 'runtime_action__playwright_programmable_listing__browser_preparation',
+          kind: 'runtime_step',
+          refId: 'browser_preparation',
+          enabled: true,
+          label: null,
+          config: {
+            viewportWidth: 1440,
+            viewportHeight: 900,
+            locale: 'en-GB',
+            userAgent: 'custom-ua',
+            permissions: ['geolocation'],
+            geolocationLatitude: 52.2297,
+            geolocationLongitude: 21.0122,
+          },
+        },
+      ],
+      stepSetIds: [],
+      personaId: null,
+      executionSettings: {
+        headless: false,
+        browserPreference: 'brave',
+        emulateDevice: false,
+        deviceName: 'Desktop Chrome',
+        slowMo: null,
+        timeout: null,
+        navigationTimeout: null,
+        locale: 'pl-PL',
+        timezoneId: 'Europe/Warsaw',
+      },
+      createdAt: '2026-04-17T00:00:00.000Z',
+      updatedAt: '2026-04-17T00:00:00.000Z',
+    });
+
+    const result = await runPlaywrightConnectionEngineTask({
+      connection: {
+        playwrightPersonaId: ' persona-1 ',
+        playwrightStorageState: 'encrypted-state',
+      } as never,
+      request: {
+        script: 'export default async function run() {}',
+        browserEngine: 'chromium',
+      },
+      runtimeActionKey: 'playwright_programmable_listing',
+    });
+
+    expect(runPlaywrightEngineTaskMock).toHaveBeenCalledWith({
+      request: expect.objectContaining({
+        personaId: 'persona-1',
+        contextOptions: expect.objectContaining({
+          locale: 'en-GB',
+          viewport: { width: 1440, height: 900 },
+          userAgent: 'custom-ua',
+          permissions: ['geolocation'],
+          geolocation: { latitude: 52.2297, longitude: 21.0122 },
+          storageState: {
+            cookies: [{ name: 'session', value: 'abc', domain: '.example.com', path: '/' }],
+            origins: [],
+          },
+        }),
+        settingsOverrides: expect.objectContaining({
+          headless: false,
+          locale: 'pl-PL',
+          timezoneId: 'Europe/Warsaw',
+          emulateDevice: false,
+          deviceName: 'Desktop Chrome',
+        }),
+        launchOptions: {
+          executablePath: '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser',
+        },
+      }),
+      ownerUserId: undefined,
+      instance: undefined,
+    });
+    expect(result.runtime.browserPreference).toBe('brave');
+    expect(result.runtime.settings.headless).toBe(false);
+    expect(result.runtime.settings.locale).toBe('pl-PL');
+  });
+
+  it('prefers a selected action id over the default runtime key when building engine request options', async () => {
+    resolvePlaywrightActionDefinitionByIdMock.mockResolvedValue({
+      id: 'programmable-draft',
+      name: 'Programmable Draft',
+      description: null,
+      runtimeKey: null,
+      blocks: [
+        {
+          id: 'block_1',
+          kind: 'runtime_step',
+          refId: 'browser_preparation',
+          enabled: true,
+          label: null,
+          config: {
+            viewportWidth: 1600,
+            viewportHeight: 1000,
+            locale: 'sv-SE',
+          },
+        },
+      ],
+      stepSetIds: [],
+      personaId: null,
+      executionSettings: {
+        identityProfile: 'marketplace',
+        headless: false,
+        browserPreference: 'chromium',
+        emulateDevice: null,
+        deviceName: null,
+        slowMo: 50,
+        timeout: 40_000,
+        navigationTimeout: 41_000,
+        locale: 'sv-SE',
+        timezoneId: 'Europe/Stockholm',
+        humanizeMouse: false,
+        mouseJitter: 8,
+        clickDelayMin: 25,
+        clickDelayMax: 90,
+        inputDelayMin: 15,
+        inputDelayMax: 45,
+        actionDelayMin: 200,
+        actionDelayMax: 700,
+        proxyEnabled: true,
+        proxyServer: 'http://proxy.internal:8080',
+        proxyUsername: 'proxy-user',
+        proxyPassword: 'proxy-pass',
+        proxySessionAffinity: true,
+        proxySessionMode: 'rotate',
+        proxyProviderPreset: 'brightdata',
+      },
+      createdAt: '2026-04-17T00:00:00.000Z',
+      updatedAt: '2026-04-17T00:00:00.000Z',
+    });
+
+    await runPlaywrightConnectionEngineTask({
+      connection: {
+        playwrightPersonaId: ' persona-1 ',
+        playwrightStorageState: 'encrypted-state',
+      } as never,
+      request: {
+        script: 'export default async function run() {}',
+        browserEngine: 'chromium',
+      },
+      actionId: 'programmable-draft',
+      runtimeActionKey: 'playwright_programmable_listing',
+    });
+
+    expect(resolvePlaywrightActionDefinitionByIdMock).toHaveBeenCalledWith('programmable-draft');
+    expect(resolveRuntimeActionExecutionSettingsMock).not.toHaveBeenCalledWith(
+      'playwright_programmable_listing'
+    );
+    expect(runPlaywrightEngineTaskMock).toHaveBeenCalledWith({
+      request: expect.objectContaining({
+        contextOptions: expect.objectContaining({
+          viewport: { width: 1600, height: 1000 },
+          locale: 'sv-SE',
+        }),
+        settingsOverrides: expect.objectContaining({
+          identityProfile: 'marketplace',
+          headless: false,
+          slowMo: 50,
+          timeout: 40_000,
+          navigationTimeout: 41_000,
+          locale: 'sv-SE',
+          timezoneId: 'Europe/Stockholm',
+          humanizeMouse: false,
+          mouseJitter: 8,
+          clickDelayMin: 25,
+          clickDelayMax: 90,
+          inputDelayMin: 15,
+          inputDelayMax: 45,
+          actionDelayMin: 200,
+          actionDelayMax: 700,
+          proxyEnabled: true,
+          proxyServer: 'http://proxy.internal:8080',
+          proxyUsername: 'proxy-user',
+          proxyPassword: 'proxy-pass',
+          proxySessionAffinity: true,
+          proxySessionMode: 'rotate',
+          proxyProviderPreset: 'brightdata',
+        }),
+      }),
+      ownerUserId: undefined,
+      instance: undefined,
     });
   });
 });

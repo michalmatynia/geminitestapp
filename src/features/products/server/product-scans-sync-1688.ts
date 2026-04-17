@@ -12,16 +12,14 @@ import {
 } from '@/features/products/scanner-settings';
 import {
   type ProductScanRecord,
+  type ProductScanStep,
   type ProductScanStatus,
 } from '@/shared/contracts/product-scans';
+import { getPlaywrightActionRunDetail } from '@/shared/lib/playwright/action-run-history-repository';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { productService } from '@/shared/lib/products/services/productService';
 
 import { evaluate1688SupplierCandidateMatch } from './product-scan-1688-evaluator';
-import {
-  getProductScanProviderDefinition,
-  type ProductScanProviderRuntime,
-} from './product-scan-providers';
 import {
   getProductScannerSettings,
   resolveProductScanner1688CandidateEvaluatorConfig,
@@ -40,8 +38,12 @@ import {
   resolvePersistedProductScanSteps,
   persistSynchronizedScan,
   persistFailedSynchronization,
-  parse1688ScanScriptResult,
+  parse1688ScanRuntimeResult,
 } from './product-scans-service.helpers';
+import {
+  mapSupplier1688ActionRunStepsToProductScanSteps,
+} from './product-scans-1688-step-sequencer-bridge';
+import { SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY } from '@/shared/lib/browser-execution/supplier-1688-runtime-constants';
 
 export const SCANNER_1688_MISSING_PROFILE_MESSAGE =
   'No 1688 browser profile is configured. Create or select a 1688 connection before scanning.';
@@ -54,8 +56,6 @@ export const SCANNER_1688_UNUSABLE_IMAGE_INPUT_PATTERN =
 export const SCANNER_1688_DEFAULT_LOCALE = 'zh-CN';
 export const SCANNER_1688_DEFAULT_TIMEZONE_ID = 'Asia/Shanghai';
 export const SCANNER_1688_DEFAULT_SLOW_MO_MS = 140;
-
-export const supplierScanRuntime: ProductScanProviderRuntime = getProductScanProviderDefinition('1688').runtime!;
 
 export const resolve1688ManualVerificationMessage = (
   value: unknown,
@@ -118,6 +118,32 @@ export const resolve1688ConnectionEngineSettings = (
   } as PlaywrightConnectionSettingsOverridesInput;
 };
 
+const readRetained1688ActionRunProductSteps = async (
+  engineRunId: string,
+  scan: ProductScanRecord
+): Promise<ProductScanStep[] | null> => {
+  try {
+    const detail = await getPlaywrightActionRunDetail(engineRunId);
+    if (!detail || detail.run.runtimeKey !== SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY) {
+      return null;
+    }
+    if (!Array.isArray(detail.steps) || detail.steps.length === 0) {
+      return null;
+    }
+    const mappedSteps = mapSupplier1688ActionRunStepsToProductScanSteps(detail.steps);
+    return mappedSteps.length > 0 ? mappedSteps : null;
+  } catch (error) {
+    void ErrorSystem.captureException(error, {
+      service: 'product-scans.service',
+      action: 'synchronize1688ProductScan.readRetainedActionRun',
+      scanId: scan.id,
+      productId: scan.productId,
+      engineRunId,
+    });
+    return null;
+  }
+};
+
 export async function synchronize1688ProductScan(scan: ProductScanRecord): Promise<ProductScanRecord> {
   const engineRunId = resolveScanEngineRunId(scan);
 
@@ -161,12 +187,14 @@ export async function synchronize1688ProductScan(scan: ProductScanRecord): Promi
     }
 
     const { resultValue, finalUrl } = resolvePlaywrightEngineRunOutputs(run.result);
-    const parsedResult = parse1688ScanScriptResult(resultValue);
+    const parsedResult = parse1688ScanRuntimeResult(resultValue);
+    const retainedProductScanSteps = await readRetained1688ActionRunProductSteps(engineRunId, scan);
+    const productScanStepSource = retainedProductScanSteps ?? parsedResult.steps;
 
     if (run.status === 'queued' || run.status === 'running') {
       const existingRawResult = toRecord(scan.rawResult) ?? {};
       const manualVerificationTimeoutMs = resolveScanManualVerificationTimeoutMs(existingRawResult);
-      const nextSteps = resolvePersistedProductScanSteps(scan, parsedResult.steps);
+      const nextSteps = resolvePersistedProductScanSteps(scan, productScanStepSource);
       const manualVerificationPending =
         parsedResult.status === 'captcha_required' ||
         (existingRawResult['manualVerificationPending'] === true &&
@@ -237,7 +265,7 @@ export async function synchronize1688ProductScan(scan: ProductScanRecord): Promi
       return await persistSynchronizedScan(scan, {
         engineRunId,
         status: 'failed',
-        steps: resolvePersistedProductScanSteps(scan, parsedResult.steps),
+        steps: resolvePersistedProductScanSteps(scan, productScanStepSource),
         error: failureMessage,
         rawResult: buildPlaywrightEngineRunFailureMeta(run, { includeRawResult: true }),
         asinUpdateStatus: 'not_needed',
@@ -273,7 +301,7 @@ export async function synchronize1688ProductScan(scan: ProductScanRecord): Promi
     }
 
     const resolvedScanUrl = resolvePersistableScanUrl(parsedResult.url, parsedResult.currentUrl, finalUrl);
-    let finalizedSteps = resolvePersistedProductScanSteps(scan, parsedResult.steps);
+    let finalizedSteps = resolvePersistedProductScanSteps(scan, productScanStepSource);
     let nextStatus: ProductScanStatus = parsedResult.status === 'no_match' ? 'no_match' : 'completed';
     let nextMessage =
       parsedResult.message ??
@@ -337,7 +365,7 @@ export async function synchronize1688ProductScan(scan: ProductScanRecord): Promi
       }
 
       finalizedSteps = resolvePersistedProductScanSteps(scan, [
-        ...(parsedResult.steps ?? []),
+        ...(productScanStepSource ?? []),
         {
           key: 'supplier_ai_evaluate',
           label: 'Evaluate 1688 supplier candidate match',

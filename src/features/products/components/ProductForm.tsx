@@ -167,7 +167,7 @@ export default function ProductForm({
           </Tabs>
         </ProductValidationSettingsProvider>
         <ProductFormFooter entityId={resolveFooterEntityId(core)} />
-        <ConfirmationModal />
+        <core.ConfirmationModal />
       </form>
     </ContextRegistryPageProvider>
   );

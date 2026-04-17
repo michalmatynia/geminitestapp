@@ -1,12 +1,17 @@
+import { KangurServerShell } from '@/features/kangur/ui/components/KangurServerShell';
+import { KangurFeatureRouteShellClientBoundary } from '@/features/kangur/ui/KangurFeatureRouteShellClientBoundary';
+
 import type { ReactNode } from 'react';
 
-export default function Layout({ children }: { children: ReactNode }): ReactNode {
+const KANGUR_AUTH_BOOTSTRAP_SCRIPT = 'window.__KANGUR_AUTH_BOOTSTRAP__=null;';
+
+export default function KangurAppLayout({ children }: { children: ReactNode }): ReactNode {
   return (
-    <div className='kangur-alias-app'>
-      <a className='kangur-skip-link sr-only focus:not-sr-only' href='#kangur-alias-main'>
-        Skip to content
-      </a>
-      <main id='kangur-alias-main'>{children}</main>
-    </div>
+    <>
+      <script dangerouslySetInnerHTML={{ __html: KANGUR_AUTH_BOOTSTRAP_SCRIPT }} />
+      <KangurServerShell />
+      {children}
+      <KangurFeatureRouteShellClientBoundary />
+    </>
   );
 }

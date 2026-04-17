@@ -1,6 +1,6 @@
 'use client';
 
-import { AlertTriangle, ChevronDown, ChevronRight, Copy, Globe, Lock, MoreHorizontal, Pencil, Plus, Share2, Tag, Trash2 } from 'lucide-react';
+import { AlertTriangle, ChevronDown, ChevronRight, Code2, Copy, Globe, Lock, MoreHorizontal, Pencil, Plus, Share2, Tag, Trash2 } from 'lucide-react';
 import { memo, useState } from 'react';
 
 import { PLAYWRIGHT_STEP_TYPE_LABELS } from '@/shared/contracts/playwright-steps';
@@ -25,13 +25,54 @@ import {
 
 import { usePlaywrightStepSequencer } from '../../context/PlaywrightStepSequencerContext';
 import { StepListTableSkeleton } from './StepListTableSkeleton';
+import { StepCodePreviewDialog } from './StepCodePreviewDialog';
+import { StepSetCodePreviewDialog } from './StepSetCodePreviewDialog';
 import { StepTypeIcon } from './StepTypeIcon';
 
 // ---------------------------------------------------------------------------
 // Inline step preview (used inside StepSetRow expansion)
 // ---------------------------------------------------------------------------
 
-function StepPreviewRow({ stepId }: { stepId: string }): React.JSX.Element {
+function SelectorBindingBadge({
+  step,
+  compact = false,
+}: {
+  step: PlaywrightStep;
+  compact?: boolean;
+}): React.JSX.Element | null {
+  const binding = step.inputBindings?.['selector'];
+  if (!step.selector && !binding) return null;
+
+  if (binding?.mode === 'selectorRegistry') {
+    return (
+      <Badge className='h-4 shrink-0 border-emerald-400/30 bg-emerald-500/10 px-1 text-[9px] text-emerald-200'>
+        {compact ? 'Registry' : binding.selectorKey ? `Registry: ${binding.selectorKey}` : 'Registry'}
+      </Badge>
+    );
+  }
+
+  if (binding?.mode === 'disabled') {
+    return (
+      <Badge className='h-4 shrink-0 border-amber-400/30 bg-amber-500/10 px-1 text-[9px] text-amber-200'>
+        Disabled selector
+      </Badge>
+    );
+  }
+
+  return (
+    <Badge className='h-4 shrink-0 border-slate-400/30 bg-slate-500/10 px-1 text-[9px] text-slate-200'>
+      {compact ? 'Local' : 'Local selector'}
+    </Badge>
+  );
+}
+
+function StepPreviewRow({
+  stepId,
+  onPreview,
+}: {
+  stepId: string;
+  onPreview: (step: PlaywrightStep) => void;
+}): React.JSX.Element {
   const { steps } = usePlaywrightStepSequencer();
   const step = steps.find((s) => s.id === stepId);
   if (!step) {
@@ -42,13 +83,20 @@ function StepPreviewRow({ stepId }: { stepId: string }): React.JSX.Element {
     );
   }
   return (
-    <div className='flex items-center gap-2 px-2 py-0.5 text-[11px]'>
+    <button
+      type='button'
+      className='flex min-w-0 flex-1 items-center gap-2 rounded px-2 py-0.5 text-left text-[11px] transition-colors hover:bg-muted/40'
+      onClick={() => onPreview(step)}
+      title='Preview semantic Playwright code'
+    >
       <StepTypeIcon type={step.type} className='size-3 shrink-0' withColor />
       <span className='min-w-0 flex-1 truncate text-muted-foreground'>{step.name}</span>
       <Badge variant='neutral' className='h-3.5 shrink-0 px-1 text-[9px]'>
         {PLAYWRIGHT_STEP_TYPE_LABELS[step.type]}
       </Badge>
-    </div>
+      <SelectorBindingBadge step={step} compact />
+      <Code2 className='size-3 shrink-0 text-sky-300' />
+    </button>
   );
 }
 
@@ -56,7 +104,13 @@ function StepPreviewRow({ stepId }: { stepId: string }): React.JSX.Element {
 // Steps table
 // ---------------------------------------------------------------------------
 
-const StepRow = memo(({ step }: { step: PlaywrightStep }) => {
+const StepRow = memo(({
+  step,
+  onPreview,
+}: {
+  step: PlaywrightStep;
+  onPreview: (step: PlaywrightStep) => void;
+}) => {
   const {
     setEditingStep,
     handleDeleteStep,
@@ -81,13 +135,23 @@ const StepRow = memo(({ step }: { step: PlaywrightStep }) => {
       <TableCell>
         <div className='flex items-center gap-2'>
           <StepTypeIcon type={step.type} className='size-3.5 shrink-0' />
-          <span className='font-medium text-sm'>{step.name}</span>
+          <button
+            type='button'
+            className='text-left text-sm font-medium hover:text-sky-300'
+            onClick={() => onPreview(step)}
+            title='Preview semantic Playwright code'
+          >
+            {step.name}
+          </button>
         </div>
       </TableCell>
       <TableCell>
-        <Badge variant='neutral' className='text-[10px] uppercase tracking-wide'>
-          {PLAYWRIGHT_STEP_TYPE_LABELS[step.type]}
-        </Badge>
+        <div className='flex flex-wrap gap-1'>
+          <Badge variant='neutral' className='text-[10px] uppercase tracking-wide'>
+            {PLAYWRIGHT_STEP_TYPE_LABELS[step.type]}
+          </Badge>
+          <SelectorBindingBadge step={step} />
+        </div>
       </TableCell>
       <TableCell className='max-w-[240px] truncate text-xs text-muted-foreground'>
         {step.description ?? <span className='opacity-40'>—</span>}
@@ -134,6 +198,16 @@ const StepRow = memo(({ step }: { step: PlaywrightStep }) => {
           <Button
             variant='ghost'
             size='sm'
+            className='h-7 gap-1 px-2 text-xs text-muted-foreground hover:text-sky-300'
+            onClick={() => onPreview(step)}
+            title='Preview semantic Playwright code'
+          >
+            <Code2 className='size-3' />
+            Code
+          </Button>
+          <Button
+            variant='ghost'
+            size='sm'
             className='h-7 gap-1 px-2 text-xs text-sky-400 hover:text-sky-300'
             onClick={() => handleAddStepToAction(step.id)}
             title='Add direct step to action constructor'
@@ -176,7 +250,7 @@ const StepRow = memo(({ step }: { step: PlaywrightStep }) => {
   );
 });
 
-function StepsTable(): React.JSX.Element {
+function StepsTable({ onPreview }: { onPreview: (step: PlaywrightStep) => void }): React.JSX.Element {
   const { filteredSteps, isLoading, setIsCreateStepOpen } = usePlaywrightStepSequencer();
 
   return (
@@ -212,7 +286,7 @@ function StepsTable(): React.JSX.Element {
             </TableCell>
           </TableRow>
         ) : (
-          filteredSteps.map((step) => <StepRow key={step.id} step={step} />)
+          filteredSteps.map((step) => <StepRow key={step.id} step={step} onPreview={onPreview} />)
         )}
       </TableBody>
     </Table>
@@ -223,7 +297,15 @@ function StepsTable(): React.JSX.Element {
 // Step Sets table
 // ---------------------------------------------------------------------------
 
-const StepSetRow = memo(({ set }: { set: PlaywrightStepSet }) => {
+const StepSetRow = memo(({
+  set,
+  onPreview,
+  onPreviewSet,
+}: {
+  set: PlaywrightStepSet;
+  onPreview: (step: PlaywrightStep) => void;
+  onPreviewSet: (stepSet: PlaywrightStepSet) => void;
+}) => {
   const {
     setEditingSet,
     handleDeleteStepSet,
@@ -328,6 +410,16 @@ const StepSetRow = memo(({ set }: { set: PlaywrightStepSet }) => {
           <Button
             variant='ghost'
             size='sm'
+            className='h-7 gap-1 px-2 text-xs text-muted-foreground hover:text-sky-300'
+            onClick={() => onPreviewSet(set)}
+            title='Preview composed Playwright code'
+          >
+            <Code2 className='size-3' />
+            Code
+          </Button>
+          <Button
+            variant='ghost'
+            size='sm'
             className='h-7 gap-1 px-2 text-xs text-sky-400 hover:text-sky-300'
             onClick={() => handleAddStepSetToAction(set.id)}
             title='Add to action constructor'
@@ -376,7 +468,7 @@ const StepSetRow = memo(({ set }: { set: PlaywrightStepSet }) => {
                 <span className='w-5 shrink-0 text-right text-[10px] font-mono text-muted-foreground/40'>
                   {idx + 1}.
                 </span>
-                <StepPreviewRow stepId={stepId} />
+                <StepPreviewRow stepId={stepId} onPreview={onPreview} />
               </div>
             ))}
           </div>
@@ -387,7 +479,13 @@ const StepSetRow = memo(({ set }: { set: PlaywrightStepSet }) => {
   );
 });
 
-function StepSetsTable(): React.JSX.Element {
+function StepSetsTable({
+  onPreview,
+  onPreviewSet,
+}: {
+  onPreview: (step: PlaywrightStep) => void;
+  onPreviewSet: (stepSet: PlaywrightStepSet) => void;
+}): React.JSX.Element {
   const { filteredStepSets, isLoading, setIsCreateSetOpen } = usePlaywrightStepSequencer();
 
   return (
@@ -423,7 +521,14 @@ function StepSetsTable(): React.JSX.Element {
             </TableCell>
           </TableRow>
         ) : (
-          filteredStepSets.map((set) => <StepSetRow key={set.id} set={set} />)
+          filteredStepSets.map((set) => (
+            <StepSetRow
+              key={set.id}
+              set={set}
+              onPreview={onPreview}
+              onPreviewSet={onPreviewSet}
+            />
+          ))
         )}
       </TableBody>
     </Table>
@@ -435,6 +540,32 @@ function StepSetsTable(): React.JSX.Element {
 // ---------------------------------------------------------------------------
 
 export function StepListTable(): React.JSX.Element {
-  const { activeTab } = usePlaywrightStepSequencer();
-  return activeTab === 'steps' ? <StepsTable /> : <StepSetsTable />;
+  const { activeTab, steps } = usePlaywrightStepSequencer();
+  const [previewStep, setPreviewStep] = useState<PlaywrightStep | null>(null);
+  const [previewStepSet, setPreviewStepSet] = useState<PlaywrightStepSet | null>(null);
+
+  return (
+    <>
+      {activeTab === 'steps' ? (
+        <StepsTable onPreview={setPreviewStep} />
+      ) : (
+        <StepSetsTable onPreview={setPreviewStep} onPreviewSet={setPreviewStepSet} />
+      )}
+      <StepCodePreviewDialog
+        step={previewStep}
+        open={previewStep !== null}
+        onOpenChange={(open) => {
+          if (!open) setPreviewStep(null);
+        }}
+      />
+      <StepSetCodePreviewDialog
+        stepSet={previewStepSet}
+        steps={steps}
+        open={previewStepSet !== null}
+        onOpenChange={(open) => {
+          if (!open) setPreviewStepSet(null);
+        }}
+      />
+    </>
+  );
 }

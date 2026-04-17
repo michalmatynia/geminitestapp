@@ -1,7 +1,11 @@
 import type { PlaywrightAction } from '@/shared/contracts/playwright-steps';
-import { normalizePlaywrightAction } from '@/shared/contracts/playwright-steps';
+import {
+  defaultPlaywrightActionExecutionSettings,
+  normalizePlaywrightAction,
+} from '@/shared/contracts/playwright-steps';
 
 import { ACTION_SEQUENCES, type ActionSequenceKey } from './action-sequences';
+import { SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY } from './supplier-1688-runtime-constants';
 
 type RuntimeActionSeedDefinition = {
   description: string;
@@ -11,9 +15,23 @@ type RuntimeActionSeedDefinition = {
 const SEEDED_ACTION_TIMESTAMP = '2026-04-17T00:00:00.000Z';
 
 const RUNTIME_ACTION_SEED_DEFINITIONS: Record<ActionSequenceKey, RuntimeActionSeedDefinition> = {
+  playwright_programmable_listing: {
+    name: 'Programmable Listing Session',
+    description:
+      'Default programmable listing browser-session profile. Owns execution settings and browser_preparation for programmable listing scripts.',
+  },
+  playwright_programmable_import: {
+    name: 'Programmable Import Session',
+    description:
+      'Default programmable import browser-session profile. Owns execution settings and browser_preparation for programmable import scripts.',
+  },
   tradera_auth: {
     name: 'Tradera Auth',
     description: 'Default Tradera session validation and login recovery flow.',
+  },
+  tradera_standard_list: {
+    name: 'Tradera Standard List',
+    description: 'Default Tradera standard browser listing flow.',
   },
   tradera_quicklist_list: {
     name: 'Tradera Quicklist List',
@@ -34,6 +52,10 @@ const RUNTIME_ACTION_SEED_DEFINITIONS: Record<ActionSequenceKey, RuntimeActionSe
   tradera_fetch_categories: {
     name: 'Tradera Fetch Categories',
     description: 'Default Tradera public category crawl flow.',
+  },
+  [SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY]: {
+    name: '1688 Supplier Probe Scan',
+    description: 'Default 1688 supplier reverse-image probe scan flow.',
   },
   vinted_list: {
     name: 'Vinted List',
@@ -75,6 +97,7 @@ const createSeedAction = (runtimeKey: ActionSequenceKey): PlaywrightAction => {
     })),
     stepSetIds: [],
     personaId: null,
+    executionSettings: defaultPlaywrightActionExecutionSettings,
     createdAt: SEEDED_ACTION_TIMESTAMP,
     updatedAt: SEEDED_ACTION_TIMESTAMP,
   });
@@ -83,6 +106,20 @@ const createSeedAction = (runtimeKey: ActionSequenceKey): PlaywrightAction => {
 export const PLAYWRIGHT_RUNTIME_ACTION_SEEDS: readonly PlaywrightAction[] = (
   Object.keys(RUNTIME_ACTION_SEED_DEFINITIONS) as ActionSequenceKey[]
 ).map((runtimeKey) => createSeedAction(runtimeKey));
+
+export function getPlaywrightRuntimeActionSeed(
+  runtimeKey: ActionSequenceKey
+): PlaywrightAction | null {
+  const seed = PLAYWRIGHT_RUNTIME_ACTION_SEEDS.find((action) => action.runtimeKey === runtimeKey);
+  if (seed === undefined) {
+    return null;
+  }
+
+  return normalizePlaywrightAction({
+    ...seed,
+    blocks: seed.blocks.map((block) => ({ ...block })),
+  });
+}
 
 export function mergeSeededPlaywrightActions(actions: PlaywrightAction[]): PlaywrightAction[] {
   const normalizedActions = actions.map((action) => normalizePlaywrightAction(action));

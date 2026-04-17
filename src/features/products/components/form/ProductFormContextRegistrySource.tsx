@@ -14,8 +14,8 @@ function resolveTextCandidate(val: string | null | undefined): string | null {
   return (typeof val === 'string' && val.trim() !== '') ? val.trim() : null;
 }
 
-function resolveProductTitle(p: ProductWithImages | null): string | null {
-  if (p === null) return null;
+function resolveProductTitle(p: ProductWithImages | null | undefined): string | null {
+  if (p === null || p === undefined) return null;
   const nEn = resolveTextCandidate(p.name_en);
   const nPl = resolveTextCandidate(p.name_pl);
   const nDe = resolveTextCandidate(p.name_de);
@@ -23,8 +23,8 @@ function resolveProductTitle(p: ProductWithImages | null): string | null {
   return nEn ?? nPl ?? nDe ?? sku;
 }
 
-function resolveDraftTitle(d: ProductDraft | null): string | null {
-  if (d === null) return null;
+function resolveDraftTitle(d: ProductDraft | null | undefined): string | null {
+  if (d === null || d === undefined) return null;
   const nEn = resolveTextCandidate(d.name_en);
   const nPl = resolveTextCandidate(d.name_pl);
   const nDe = resolveTextCandidate(d.name_de);
@@ -32,7 +32,10 @@ function resolveDraftTitle(d: ProductDraft | null): string | null {
   return nEn ?? nPl ?? nDe ?? sku;
 }
 
-function resolveProductEditorTitle(product: ProductWithImages | null, draft: ProductDraft | null): string | null {
+function resolveProductEditorTitle(
+  product: ProductWithImages | null | undefined,
+  draft: ProductDraft | null | undefined
+): string | null {
   return resolveProductTitle(product) ?? resolveDraftTitle(draft);
 }
 

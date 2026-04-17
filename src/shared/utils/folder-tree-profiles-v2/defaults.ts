@@ -819,4 +819,68 @@ export const defaultFolderTreeProfilesV2: FolderTreeProfilesV2Map = {
       selectionBehavior: 'click_away',
     },
   },
+  playwright_step_seq_action_runs: {
+    version: 2,
+    placeholders: {
+      preset: 'sublime',
+      style: 'ghost',
+      emphasis: 'subtle',
+      rootDropLabel: 'Drop to Root',
+      inlineDropLabel: 'Drop to run',
+    },
+    icons: {
+      slots: {
+        folderClosed: 'Folder',
+        folderOpen: 'FolderOpen',
+        file: 'FileText',
+        root: 'Folder',
+        dragHandle: 'GripVertical',
+      },
+      byKind: {},
+    },
+    nesting: {
+      defaultAllow: false,
+      blockedTargetKinds: [],
+      rules: [
+        {
+          childType: 'folder',
+          childKinds: ['playwright_action_run_date'],
+          targetType: 'root',
+          targetKinds: ['root'],
+          allow: true,
+        },
+        {
+          childType: 'folder',
+          childKinds: ['playwright_action_run'],
+          targetType: 'folder',
+          targetKinds: ['playwright_action_run_date'],
+          allow: true,
+        },
+        {
+          childType: 'file',
+          childKinds: ['playwright_action_run_step'],
+          targetType: 'folder',
+          targetKinds: ['playwright_action_run'],
+          allow: true,
+        },
+        {
+          childType: 'file',
+          childKinds: ['playwright_action_run_step'],
+          targetType: 'folder',
+          targetKinds: ['playwright_action_run_step'],
+          allow: true,
+        },
+        {
+          childType: 'folder',
+          childKinds: ['playwright_action_run_step'],
+          targetType: 'folder',
+          targetKinds: ['playwright_action_run'],
+          allow: true,
+        },
+      ],
+    },
+    interactions: {
+      selectionBehavior: 'click_away',
+    },
+  },
 };

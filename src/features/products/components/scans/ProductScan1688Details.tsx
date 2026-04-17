@@ -8,6 +8,7 @@ import type {
   ProductScanSupplierProbe,
   ProductScanSupplierPrice
 } from '@/shared/contracts/product-scans';
+import { SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY } from '@/shared/lib/browser-execution/supplier-1688-runtime-constants';
 import {
   hasProductScan1688Details,
   resolveSupplierCandidateUrls,
@@ -45,10 +46,33 @@ type ProductScan1688DetailsProps = {
     | 'supplierProbe'
     | 'supplierEvaluation'
     | 'rawResult'
-  >;
+  > & {
+    engineRunId?: string | null;
+  };
   scanId?: string | null;
   connectionLabel?: string | null;
 };
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function resolve1688ActionRunId(scan: ProductScan1688DetailsProps['scan']): string | null {
+  if (typeof scan.engineRunId === 'string' && scan.engineRunId.trim() !== '') {
+    return scan.engineRunId.trim();
+  }
+  const raw = isRecord(scan.rawResult) ? scan.rawResult : null;
+  const runId = raw?.['runId'];
+  return typeof runId === 'string' && runId.trim() !== '' ? runId.trim() : null;
+}
+
+function build1688ActionRunHistoryHref(runId: string): string {
+  const params = new URLSearchParams({
+    runtimeKey: SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY,
+    query: runId,
+  });
+  return `/admin/playwright/step-sequencer/runs?${params.toString()}`;
+}
 
 function resolvePriceFromPrices(prices: ProductScanSupplierPrice[]): string | null {
   const f = Array.isArray(prices) ? prices[0] : null;
@@ -249,10 +273,26 @@ export function ProductScan1688Details(props: ProductScan1688DetailsProps): Reac
   const priceSum = resolvePriceSummary(details);
   const connectionLabel = props.connectionLabel;
   const cLab = (typeof connectionLabel === 'string' && connectionLabel.trim() !== '') ? connectionLabel.trim() : null;
+  const actionRunId = resolve1688ActionRunId(scan);
 
   return (
     <div className='space-y-3 rounded-md border border-border/50 bg-background/70 px-3 py-3'>
       <ProductScan1688QualitySummary scan={scan} />
+      {actionRunId ? (
+        <div className='flex flex-wrap items-center justify-between gap-2 rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-950'>
+          <span>
+            Playwright Step Sequencer run retained for this 1688 probe:
+            {' '}
+            <span className='font-mono'>{actionRunId}</span>
+          </span>
+          <a
+            className='font-medium underline decoration-sky-400 underline-offset-2 hover:text-sky-700'
+            href={build1688ActionRunHistoryHref(actionRunId)}
+          >
+            Open run history
+          </a>
+        </div>
+      ) : null}
       <ProductScan1688SummaryLine details={details} probe={scan.supplierProbe} connectionLabel={cLab} priceSummary={priceSum} />
       <ProductScan1688DetailsGrid details={details} probe={scan.supplierProbe} scanUrl={scan.url} scanTitle={scan.title} connectionLabel={cLab} />
       <ProductScan1688CandidateUrlsList scanId={resScanId} urls={resolveSupplierCandidateUrls(scan)} />

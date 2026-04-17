@@ -8,6 +8,7 @@ import {
   getDefaultSiteLocaleCode,
   getPathLocale,
   resolvePreferredSiteLocale,
+  stripSiteLocalePrefix,
 } from '@/shared/lib/i18n/site-locale';
 import { applyEdgeTrafficGuard } from '@/shared/lib/security/edge-traffic-guard';
 import { CSRF_COOKIE_NAME, ensureCsrfCookie } from '@/shared/lib/security/csrf';
@@ -57,6 +58,13 @@ const baseProxy = (request: NextRequest, requestHeaders?: Headers): NextResponse
 type NextRequestHandler = NonNullable<typeof handler>;
 type HandlerContext = Parameters<NextRequestHandler>[1];
 type AuthenticatedProxyRequest = NextRequest & { auth?: Session | null };
+
+const STUDIQ_WEB_ORIGIN = process.env['STUDIQ_WEB_ORIGIN'] || '';
+
+const isKangurPageRequest = (pathname: string): boolean => {
+  const stripped = stripSiteLocalePrefix(pathname);
+  return stripped === '/kangur' || stripped.startsWith('/kangur/');
+};
 
 const isApiRequest = (pathname: string): boolean => pathname === '/api' || pathname.startsWith('/api/');
 
@@ -198,6 +206,12 @@ export function proxy(
 
   if (isApiRequest(pathname)) {
     return baseProxy(request);
+  }
+
+  if (STUDIQ_WEB_ORIGIN && isKangurPageRequest(pathname)) {
+    const target = new URL(pathname, STUDIQ_WEB_ORIGIN);
+    target.search = request.nextUrl.search;
+    return NextResponse.redirect(target.toString(), 307);
   }
 
   if (!isAdminRequest(pathname)) {

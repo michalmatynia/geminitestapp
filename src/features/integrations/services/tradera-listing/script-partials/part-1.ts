@@ -15,7 +15,7 @@ export default async function run({
   log,
   helpers,
 }) {
-  // tradera-quicklist-default:v143
+  // tradera-quicklist-default:v144
   const ACTIVE_URL = 'https://www.tradera.com/en/my/listings?tab=active';
   const DIRECT_SELL_URL = 'https://www.tradera.com/en/selling/new';
   const LEGACY_SELL_URL = 'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts';
@@ -166,6 +166,37 @@ ${selectorRegistryRuntime}
   const requiresConfiguredDeliveryOption = Boolean(configuredDeliveryOptionLabel);
 
   ${quicklistStepsInit}
+
+  const getExecutionStep = (id) =>
+    executionSteps.find((step) => step.id === id) || null;
+  const hasExecutionStep = (id) => getExecutionStep(id) !== null;
+  const hasAnyExecutionStep = (...ids) =>
+    ids.some((id) => hasExecutionStep(id));
+  const logOmittedStep = (id, context = 'runtime') => {
+    log?.('tradera.quicklist.step.omitted', {
+      stepId: id,
+      context,
+      executionStepIds: executionSteps.map((step) => step.id),
+    });
+  };
+  const assertExecutionStepEnabled = (id, context = 'runtime') => {
+    if (hasExecutionStep(id)) {
+      return;
+    }
+
+    log?.('tradera.quicklist.step.missing', {
+      stepId: id,
+      context,
+      executionStepIds: executionSteps.map((step) => step.id),
+    });
+    throw new Error(
+      'FAIL_ACTION_MANIFEST: Required Tradera quicklist step "' +
+        id +
+        '" is missing for ' +
+        context +
+        '.'
+    );
+  };
 
   const normalizeStepStatus = (status) => {
     if (status === 'completed') return 'success';

@@ -18,7 +18,7 @@ export type IntegrationModalViewContextValue = {
   showBaseConsole: boolean;
   activeConnection: unknown;
   onOpenSessionModal: () => void;
-  onSavePlaywrightSettings: () => void;
+  onSavePlaywrightFallbackSettings: () => void;
 };
 
 export const { Context: IntegrationModalViewContext, useValue: useIntegrationModalViewContext } =

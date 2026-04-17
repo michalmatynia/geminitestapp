@@ -2,6 +2,10 @@ import { type Page } from 'playwright';
 import { type StepTracker } from '../step-tracker';
 import { type StepId } from '../step-registry';
 import { type ActionSequenceKey } from '../action-sequences';
+import {
+  normalizePlaywrightActionBlockConfig,
+  type PlaywrightActionBlockConfig,
+} from '@/shared/contracts/playwright-steps';
 
 export interface PlaywrightSequencerContext {
   page: Page;
@@ -23,7 +27,13 @@ export abstract class PlaywrightSequencer {
   async run(): Promise<void> {
     const steps = this.context.tracker.getSteps();
     for (const step of steps) {
-      if (step.status === 'success' || step.status === 'error') continue;
+      if (
+        step.status === 'success' ||
+        step.status === 'error' ||
+        step.status === 'skipped'
+      ) {
+        continue;
+      }
 
       try {
         if (this.context.tracker.getStatus(step.id) === 'pending') {
@@ -61,6 +71,10 @@ export abstract class PlaywrightSequencer {
   }
 
   protected abstract executeStep(stepId: StepId): Promise<void>;
+
+  protected getStepConfig(stepId: StepId): PlaywrightActionBlockConfig {
+    return normalizePlaywrightActionBlockConfig(this.context.tracker.getStep(stepId)?.config);
+  }
 
   protected async acceptCookies(selectors: readonly string[]): Promise<void> {
     const { page } = this.context;

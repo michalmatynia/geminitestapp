@@ -1,9 +1,15 @@
 'use client';
 
 import { AlertTriangle, ChevronDown, ChevronRight, Copy, Layers, Play, RotateCcw, Trash2, User } from 'lucide-react';
-import { memo, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 
 import { PLAYWRIGHT_STEP_TYPE_LABELS, normalizePlaywrightAction, type PlaywrightAction } from '@/shared/contracts/playwright-steps';
+import { ACTION_SEQUENCES, type ActionSequenceKey } from '@/shared/lib/browser-execution/action-sequences';
+import {
+  analyzePlaywrightRuntimeActionRepairPreview,
+  selectPlaywrightRuntimeActionRepairPreview,
+} from '@/shared/lib/browser-execution/playwright-runtime-action-repair';
+import { buildPlaywrightRuntimeActionRepairImpact } from '@/shared/lib/browser-execution/playwright-runtime-action-repair-impact';
 import { STEP_REGISTRY } from '@/shared/lib/browser-execution/step-registry';
 import { Badge, Button } from '@/shared/ui/primitives.public';
 import { cn } from '@/shared/utils/ui-utils';
@@ -28,8 +34,11 @@ const SavedActionRow = memo(({
     handleDeleteAction,
     handleDuplicateAction,
     handleLoadActionIntoConstructor,
+    handleResetRuntimeActionToSeed,
+    handleCloneRuntimeActionAsDraft,
     orphanedActionStepIds,
     orphanedStepSetIds,
+    runtimeActionLoadErrorsById,
     editingActionId,
   } =
     usePlaywrightStepSequencer();
@@ -39,6 +48,11 @@ const SavedActionRow = memo(({
       (block.kind === 'step_set' && orphanedStepSetIds.has(block.refId)) ||
       (block.kind === 'step' && orphanedActionStepIds.has(block.refId))
   );
+  const runtimeLoadError = runtimeActionLoadErrorsById[action.id] ?? null;
+  const canRepairRuntimeAction =
+    runtimeLoadError !== null &&
+    normalizedAction.runtimeKey !== null &&
+    normalizedAction.runtimeKey in ACTION_SEQUENCES;
   const isBeingEdited = editingActionId === action.id;
   const { data: personas = [] } = usePlaywrightPersonas();
   const [expanded, setExpanded] = useState(false);
@@ -81,6 +95,14 @@ const SavedActionRow = memo(({
             <AlertTriangle className='size-3' />
           </span>
         ) : null}
+        {runtimeLoadError !== null ? (
+          <span
+            className='inline-flex items-center gap-0.5 text-[10px] text-destructive'
+            title={runtimeLoadError}
+          >
+            <AlertTriangle className='size-3' />
+          </span>
+        ) : null}
 
         <div className='flex items-center gap-1.5'>
           <Badge variant='neutral' className='h-5 px-1.5 text-[10px]'>
@@ -97,6 +119,11 @@ const SavedActionRow = memo(({
           {normalizedAction.runtimeKey !== null ? (
             <Badge variant='neutral' className='h-5 px-1.5 text-[10px]'>
               {normalizedAction.runtimeKey}
+            </Badge>
+          ) : null}
+          {runtimeLoadError !== null ? (
+            <Badge variant='neutral' className='h-5 px-1.5 text-[10px] border-destructive/40 text-destructive'>
+              fallback active
             </Badge>
           ) : null}
           <Badge variant='neutral' className='h-5 px-1.5 text-[10px]'>
@@ -161,6 +188,40 @@ const SavedActionRow = memo(({
         <div className='space-y-1 border-t border-border/30 px-4 py-2'>
           {action.description !== null ? (
             <p className='text-xs text-muted-foreground'>{action.description}</p>
+          ) : null}
+          {runtimeLoadError !== null ? (
+            <div className='rounded border border-destructive/30 bg-destructive/10 px-2 py-1.5 text-xs text-destructive'>
+              <p className='font-medium'>Runtime fallback is active for this action.</p>
+              <p>{runtimeLoadError}</p>
+              {canRepairRuntimeAction ? (
+                <div className='mt-2 flex items-center gap-2'>
+                  <Button
+                    size='sm'
+                    variant='outline'
+                    className='h-6 gap-1 text-[11px]'
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleResetRuntimeActionToSeed(action.id).catch(() => undefined);
+                    }}
+                  >
+                    <RotateCcw className='size-3' />
+                    Reset to seed
+                  </Button>
+                  <Button
+                    size='sm'
+                    variant='outline'
+                    className='h-6 gap-1 text-[11px]'
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCloneRuntimeActionAsDraft(action.id).catch(() => undefined);
+                    }}
+                  >
+                    <Copy className='size-3' />
+                    Draft + restore
+                  </Button>
+                </div>
+              ) : null}
+            </div>
           ) : null}
           <ol className='space-y-1'>
             {normalizedAction.blocks.map((block, idx) => {
@@ -240,18 +301,230 @@ const SavedActionRow = memo(({
 // ---------------------------------------------------------------------------
 
 export function SavedActionsPanel(): React.JSX.Element {
-  const { actions } = usePlaywrightStepSequencer();
+  const {
+    actions,
+    runtimeActionLoadErrorsById,
+    handleResetAllRuntimeActionsToSeed,
+    handleCloneAllRuntimeActionsAsDrafts,
+  } = usePlaywrightStepSequencer();
+  const repairPreview = analyzePlaywrightRuntimeActionRepairPreview({
+    actions,
+    runtimeActionLoadErrorsById,
+  });
+  const availableRuntimeKeys = repairPreview.repairedRuntimeKeys;
+  const [selectedRuntimeKeys, setSelectedRuntimeKeys] = useState<ActionSequenceKey[] | null>(null);
+  const [isImpactExpanded, setIsImpactExpanded] = useState(false);
+  const availableRuntimeKeySignature = availableRuntimeKeys.join('|');
+  useEffect(() => {
+    setSelectedRuntimeKeys((currentSelection) => {
+      if (availableRuntimeKeys.length === 0) {
+        return [];
+      }
+      if (currentSelection === null) {
+        return [...availableRuntimeKeys];
+      }
+      return currentSelection.filter((runtimeKey) => availableRuntimeKeys.includes(runtimeKey));
+    });
+  }, [availableRuntimeKeySignature]);
+  const activeRuntimeKeys = selectedRuntimeKeys ?? availableRuntimeKeys;
+  const selectedRepairPreview = useMemo(
+    () =>
+      selectPlaywrightRuntimeActionRepairPreview({
+        actions,
+        preview: repairPreview,
+        runtimeKeys: activeRuntimeKeys.filter((key) => availableRuntimeKeys.includes(key)),
+      }),
+    [actions, activeRuntimeKeys, availableRuntimeKeys, repairPreview]
+  );
+  const repairImpact = useMemo(
+    () =>
+      buildPlaywrightRuntimeActionRepairImpact({
+        actions,
+        preview: selectedRepairPreview,
+      }),
+    [actions, selectedRepairPreview]
+  );
+  const quarantinedActionCount = Object.keys(runtimeActionLoadErrorsById).length;
+  const totalRepairableRuntimeActionCount = repairPreview.repairableActionIds.length;
+  const repairableRuntimeActionCount = selectedRepairPreview.repairableActionIds.length;
+  const replacementCount = selectedRepairPreview.replacedActionIds.length;
+  const repairedRuntimeKeyCount = selectedRepairPreview.repairedRuntimeKeys.length;
+  const nonRepairableQuarantinedCount = repairPreview.nonRepairableQuarantinedActionIds.length;
+  useEffect(() => {
+    if (repairImpact.groups.length === 0 && isImpactExpanded) {
+      setIsImpactExpanded(false);
+    }
+  }, [isImpactExpanded, repairImpact.groups.length]);
 
   if (actions.length === 0) return <></>;
 
   return (
     <section className='space-y-2'>
-      <div className='flex items-center gap-2'>
-        <h2 className='text-sm font-semibold'>Saved Actions</h2>
-        <Badge variant='neutral' className='h-5 px-1.5 text-[10px]'>
-          {actions.length}
-        </Badge>
+      <div className='flex items-center justify-between gap-2'>
+        <div className='flex items-center gap-2'>
+          <h2 className='text-sm font-semibold'>Saved Actions</h2>
+          <Badge variant='neutral' className='h-5 px-1.5 text-[10px]'>
+            {actions.length}
+          </Badge>
+          {quarantinedActionCount > 0 ? (
+            <Badge
+              variant='neutral'
+              className='h-5 gap-1 border-destructive/40 px-1.5 text-[10px] text-destructive'
+            >
+              <AlertTriangle className='size-3' />
+              {quarantinedActionCount} quarantined
+            </Badge>
+          ) : null}
+        </div>
+        {totalRepairableRuntimeActionCount > 0 ? (
+          <div className='flex items-center gap-2'>
+            <Button
+              size='sm'
+              variant='outline'
+              className='h-7 gap-1 text-[11px]'
+              onClick={() => {
+                handleResetAllRuntimeActionsToSeed(activeRuntimeKeys).catch(() => undefined);
+              }}
+              disabled={repairedRuntimeKeyCount === 0}
+            >
+              <RotateCcw className='size-3' />
+              Repair all
+            </Button>
+            <Button
+              size='sm'
+              variant='outline'
+              className='h-7 gap-1 text-[11px]'
+              onClick={() => {
+                handleCloneAllRuntimeActionsAsDrafts(activeRuntimeKeys).catch(() => undefined);
+              }}
+              disabled={repairedRuntimeKeyCount === 0}
+            >
+              <Copy className='size-3' />
+              Draft + restore all
+            </Button>
+          </div>
+        ) : null}
       </div>
+      {totalRepairableRuntimeActionCount > 0 ? (
+        <div className='rounded border border-destructive/20 bg-destructive/5 px-3 py-2'>
+          <div className='flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground'>
+            <span>
+              Selected {repairedRuntimeKeyCount} of {repairPreview.repairedRuntimeKeys.length} runtime key
+              {repairPreview.repairedRuntimeKeys.length === 1 ? '' : 's'}
+            </span>
+            <span>
+              Preview: restore {repairedRuntimeKeyCount} runtime key
+              {repairedRuntimeKeyCount === 1 ? '' : 's'}
+            </span>
+            <span>
+              replace {replacementCount} persisted runtime action
+              {replacementCount === 1 ? '' : 's'}
+            </span>
+            <span>
+              preserve {replacementCount} draft{replacementCount === 1 ? '' : 's'} with
+              {' '}Draft + restore all
+            </span>
+            {nonRepairableQuarantinedCount > 0 ? (
+              <span className='text-destructive'>
+                {nonRepairableQuarantinedCount} quarantined action
+                {nonRepairableQuarantinedCount === 1 ? '' : 's'} still need manual cleanup
+              </span>
+            ) : null}
+          </div>
+          <div className='mt-2 flex flex-wrap items-center gap-2'>
+            <Button
+              size='sm'
+              variant='outline'
+              className='h-6 text-[11px]'
+              onClick={() => {
+                setSelectedRuntimeKeys([...availableRuntimeKeys]);
+              }}
+            >
+              Select all
+            </Button>
+            <Button
+              size='sm'
+              variant='outline'
+              className='h-6 text-[11px]'
+              onClick={() => {
+                setSelectedRuntimeKeys([]);
+              }}
+            >
+              Clear
+            </Button>
+            {repairImpact.groups.length > 0 ? (
+              <Button
+                size='sm'
+                variant='outline'
+                className='h-6 text-[11px]'
+                onClick={() => {
+                  setIsImpactExpanded((currentValue) => !currentValue);
+                }}
+              >
+                {isImpactExpanded ? 'Hide impacted actions' : 'Show impacted actions'}
+              </Button>
+            ) : null}
+          </div>
+          <div className='mt-2 flex flex-wrap items-center gap-1.5'>
+            {repairPreview.repairedRuntimeKeys.map((runtimeKey) => (
+              <button
+                key={runtimeKey}
+                type='button'
+                className={cn(
+                  'inline-flex h-5 items-center rounded border px-1.5 text-[10px]',
+                  activeRuntimeKeys.includes(runtimeKey)
+                    ? 'border-destructive/40 text-destructive'
+                    : 'border-border/40 text-muted-foreground opacity-60'
+                )}
+                onClick={() => {
+                  setSelectedRuntimeKeys((currentSelection) => {
+                    const baseSelection = currentSelection ?? [...availableRuntimeKeys];
+                    return baseSelection.includes(runtimeKey)
+                      ? baseSelection.filter((key) => key !== runtimeKey)
+                      : [...baseSelection, runtimeKey];
+                  });
+                }}
+              >
+                {runtimeKey}
+              </button>
+            ))}
+          </div>
+          {isImpactExpanded ? (
+            <div className='mt-3 space-y-2 rounded border border-destructive/20 bg-background/40 p-2'>
+              {repairImpact.groups.map((group) => (
+                <div key={group.runtimeKey} className='space-y-1.5'>
+                  <div className='text-[11px] font-medium text-destructive'>
+                    {group.runtimeKey}
+                  </div>
+                  <div className='space-y-1'>
+                    {group.actions.map((entry) => (
+                      <div
+                        key={entry.actionId}
+                        className='grid gap-2 rounded border border-border/40 bg-card/20 px-2 py-1.5 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]'
+                      >
+                        <div className='min-w-0'>
+                          <div className='text-[10px] uppercase tracking-wide text-muted-foreground'>
+                            Replace
+                          </div>
+                          <div className='truncate text-xs'>{entry.actionName}</div>
+                        </div>
+                        <div className='min-w-0'>
+                          <div className='text-[10px] uppercase tracking-wide text-muted-foreground'>
+                            Draft + restore creates
+                          </div>
+                          <div className='truncate text-xs text-muted-foreground'>
+                            {entry.draftName}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
       <div className='space-y-1.5'>
         {actions.map((action) => (
           <SavedActionRow key={action.id} action={action} />

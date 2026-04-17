@@ -62,6 +62,26 @@ describe('ACTION_SEQUENCES', () => {
     );
   });
 
+  it('tradera_standard_list uses the centralized standard browser publish flow', () => {
+    expect(getActionStepIds('tradera_standard_list')).toEqual([
+      'browser_preparation',
+      'browser_open',
+      'cookie_accept',
+      'auth_check',
+      'auth_login',
+      'auth_manual',
+      'sell_page_open',
+      'load_product',
+      'resolve_price',
+      'title_fill',
+      'description_fill',
+      'price_set',
+      'publish',
+      'publish_verify',
+      'browser_close',
+    ]);
+  });
+
   it('tradera_quicklist_sync uses sync_check instead of the duplicate-check block', () => {
     const listIds = getActionStepIds('tradera_quicklist_list');
     const syncIds = getActionStepIds('tradera_quicklist_sync');
@@ -209,14 +229,23 @@ describe('generateTraderaQuicklistBrowserStepsInit', () => {
     expect(typeof generated).toBe('string');
   });
 
-  it('declares const executionSteps via IIFE', () => {
-    expect(generated).toContain('const executionSteps = (() => {');
-    expect(generated).toContain('return steps;');
-    expect(generated).toContain('})();');
+  it('declares per-action quicklist manifests and clones the selected one at runtime', () => {
+    expect(generated).toContain('const QUICKLIST_ACTION_EXECUTION_STEPS = {');
+    expect(generated).toContain('list: [');
+    expect(generated).toContain('relist: [');
+    expect(generated).toContain('sync: [');
+    expect(generated).toContain('QUICKLIST_ACTION_EXECUTION_STEPS[listingAction]');
+    expect(generated).toContain('.map((step) => ({ ...step }));');
   });
 
   it('contains every step ID from the list sequence', () => {
     for (const id of ACTION_SEQUENCES.tradera_quicklist_list) {
+      expect(generated, `missing step id "${id}"`).toContain(`'${id}'`);
+    }
+  });
+
+  it('contains every step ID from the relist sequence', () => {
+    for (const id of ACTION_SEQUENCES.tradera_quicklist_relist) {
       expect(generated, `missing step id "${id}"`).toContain(`'${id}'`);
     }
   });
@@ -227,8 +256,8 @@ describe('generateTraderaQuicklistBrowserStepsInit', () => {
     }
   });
 
-  it('branches on listingAction for sync vs list/relist', () => {
-    expect(generated).toContain("listingAction === 'sync'");
+  it('selects the quicklist manifest from listingAction', () => {
+    expect(generated).toContain('QUICKLIST_ACTION_EXECUTION_STEPS[listingAction]');
   });
 
   it('includes Tradera-specific label overrides in the output', () => {

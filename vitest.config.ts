@@ -8,6 +8,7 @@ const bazelWorkspaceMirrorExcludes = [
   'bazel-bin/**',
   'bazel-out/**',
   'bazel-testlogs/**',
+  '.claude/worktrees/**',
 ];
 
 export default defineConfig({

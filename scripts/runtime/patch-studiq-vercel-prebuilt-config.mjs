@@ -22,12 +22,6 @@ const legacyApiAwareRequestPrefixRoute = {
   dest: '/apps/studiq-web/$path',
 };
 
-const apiPrefixRoute = {
-  src: '^/api(?<path>(?:/.*)?)$',
-  dest: '/apps/studiq-web/api$path',
-  check: true,
-};
-
 const config = JSON.parse(await fs.readFile(configPath, 'utf8'));
 const routes = Array.isArray(config.routes) ? config.routes : null;
 
@@ -39,11 +33,14 @@ const existingRouteIndex = routes.findIndex((route) =>
   route?.src === requestPrefixRoute.src && route?.dest === requestPrefixRoute.dest,
 );
 
-const existingApiPrefixRouteIndex = routes.findIndex((route) =>
-  route?.src === apiPrefixRoute.src &&
-  route?.dest === apiPrefixRoute.dest &&
-  route?.check === apiPrefixRoute.check,
-);
+const internalApiRoutePrefix = '^/apps/studiq-web/api';
+const rootApiRoutePrefix = '^/api';
+const rootApiRoutes = routes
+  .filter((route) => typeof route?.src === 'string' && route.src.startsWith(internalApiRoutePrefix))
+  .map((route) => ({
+    ...route,
+    src: route.src.replace(internalApiRoutePrefix, rootApiRoutePrefix),
+  }));
 
 for (let index = routes.length - 1; index >= 0; index -= 1) {
   const route = routes[index];
@@ -52,7 +49,10 @@ for (let index = routes.length - 1; index >= 0; index -= 1) {
       route?.dest === legacyRequestPrefixRoute.dest) ||
       (route?.src === legacyApiAwareRequestPrefixRoute.src &&
         route?.dest === legacyApiAwareRequestPrefixRoute.dest) ||
-      (route?.src === apiPrefixRoute.src && route?.dest === apiPrefixRoute.dest))
+      (typeof route?.src === 'string' &&
+        route.src.startsWith(rootApiRoutePrefix) &&
+        typeof route?.dest === 'string' &&
+        route.dest.startsWith('/apps/studiq-web/api')))
   ) {
     routes.splice(index, 1);
   }
@@ -70,14 +70,14 @@ if (existingRouteIndex === -1) {
   routes.splice(middlewareRouteIndex + 1, 0, requestPrefixRoute);
 }
 
-if (existingApiPrefixRouteIndex === -1) {
+if (rootApiRoutes.length > 0) {
   const filesystemHandleIndex = routes.findIndex((route) => route?.handle === 'filesystem');
 
   if (filesystemHandleIndex === -1) {
     throw new Error(`Unable to locate filesystem handle in ${configPath}`);
   }
 
-  routes.splice(filesystemHandleIndex, 0, apiPrefixRoute);
+  routes.splice(filesystemHandleIndex, 0, ...rootApiRoutes);
 }
 
 await fs.writeFile(configPath, `${JSON.stringify(config, null, 2)}\n`);

@@ -24,14 +24,16 @@ import { useKangurMobileLessonsLessonMastery } from './useKangurMobileLessonsLes
 import { useKangurMobileLessonsRecentResults } from './useKangurMobileLessonsRecentResults';
 import { useKangurMobileLessons } from './useKangurMobileLessons';
 import {
+  getMasteryTone,
+  renderLessonPracticeLink,
+} from './lessons-screen-primitives';
+import {
   LessonBadgeChip,
   LessonCheckpointRow,
   LessonMasteryRow,
   LessonRecentResultRow,
   LessonsAssignmentRow,
-  getMasteryTone,
-  renderLessonPracticeLink,
-} from './lessons-screen-primitives';
+} from './lesson-row-primitives';
 
 type LessonsSecondarySectionsProps = {
   copy: ReturnType<typeof useKangurMobileI18n>['copy'];

@@ -4,6 +4,7 @@ import { SparklesIcon } from 'lucide-react';
 
 import { formatSelectorRegistryRoleLabel } from '@/shared/lib/browser-execution/selector-registry-roles';
 import { Badge } from '@/shared/ui/primitives.public';
+import type { SelectorRegistryRole } from '@/shared/contracts/integrations/selector-registry';
 
 type SelectorRegistryProbeSuggestionBadgeDescriptor = {
   key: string;
@@ -13,7 +14,7 @@ type SelectorRegistryProbeSuggestionBadgeDescriptor = {
 };
 
 type SelectorRegistryProbeSuggestionBadgesProps = {
-  role: string;
+  role: SelectorRegistryRole;
   confidence: number;
   tag: string;
   draftTargetHints: string[];

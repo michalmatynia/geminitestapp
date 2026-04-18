@@ -73,6 +73,7 @@ const modalState = vi.hoisted(() => ({
     setSettingsOpen: vi.fn(),
     handleCloseModal: vi.fn(),
     supportsPreviewSettings: true,
+    game: null as any,
     lessonGameSectionsQuery: {
       data: [
         {
@@ -145,6 +146,8 @@ const TEST_GAME =
   createDefaultKangurGames().find((game) => game.id === 'clock_training') ??
   createDefaultKangurGames()[0];
 
+console.log('TEST_GAME:', TEST_GAME?.id);
+
 const resetModalState = (): void => {
   modalState.value = {
     ...modalState.value,
@@ -153,6 +156,7 @@ const resetModalState = (): void => {
     setSettingsOpen: vi.fn(),
     handleCloseModal: vi.fn(),
     supportsPreviewSettings: true,
+    game: TEST_GAME,
     lessonGameSectionsQuery: {
       data: [
         {
@@ -212,6 +216,8 @@ describe('GamesLibraryGameModal', () => {
         open
       />
     );
+
+    screen.debug();
 
     expect(screen.getByTestId('games-library-modal-variants')).toBeInTheDocument();
     expect(screen.getByTestId('games-library-modal-instances')).toBeInTheDocument();

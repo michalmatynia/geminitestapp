@@ -1,3 +1,4 @@
+import type { UseMutationResult, UseQueryResult } from '@tanstack/react-query';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import type {
   KangurAiTutorChatResponse,
@@ -16,6 +17,12 @@ export type KangurMobileAiTutorQuickAction = {
 export type TutorUsageQueryResult = {
   message: string | null;
   usage: KangurAiTutorUsageSummary | null;
+};
+
+export type KangurMobileAiTutorQueries = {
+  contentQuery: UseQueryResult<KangurAiTutorContent, Error>;
+  nativeGuideQuery: UseQueryResult<KangurAiTutorNativeGuideStore, Error>;
+  usageQuery: UseQueryResult<TutorUsageQueryResult, Error>;
 };
 
 export const createTutorFetchErrorMessage = (
@@ -39,6 +46,49 @@ export const readResponseMessage = async (response: Response): Promise<string | 
   }
 };
 
+const fetchTutorContent = async (apiBaseUrl: string, locale: 'de' | 'en' | 'pl'): Promise<KangurAiTutorContent> => {
+  const response = await fetch(
+    `${apiBaseUrl}/api/kangur/ai-tutor/content?locale=${encodeURIComponent(locale)}`,
+    {
+      cache: 'no-store',
+      credentials: 'include',
+    },
+  );
+  if (!response.ok) {
+    throw new Error(createTutorFetchErrorMessage(locale));
+  }
+  return (await response.json()) as KangurAiTutorContent;
+};
+
+const fetchTutorNativeGuide = async (apiBaseUrl: string, locale: 'de' | 'en' | 'pl'): Promise<KangurAiTutorNativeGuideStore> => {
+  const response = await fetch(
+    `${apiBaseUrl}/api/kangur/ai-tutor/native-guide?locale=${encodeURIComponent(locale)}`,
+    {
+      cache: 'no-store',
+      credentials: 'include',
+    },
+  );
+  if (!response.ok) {
+    throw new Error(createTutorFetchErrorMessage(locale));
+  }
+  return (await response.json()) as KangurAiTutorNativeGuideStore;
+};
+
+const fetchTutorUsage = async (apiBaseUrl: string, locale: 'de' | 'en' | 'pl'): Promise<TutorUsageQueryResult> => {
+  const response = await fetch(`${apiBaseUrl}/api/kangur/ai-tutor/usage`, {
+    cache: 'no-store',
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    const message = (await readResponseMessage(response)) ?? createTutorFetchErrorMessage(locale);
+    return { message, usage: null };
+  }
+
+  const payload = (await response.json()) as { usage?: KangurAiTutorUsageSummary };
+  return { message: null, usage: payload.usage ?? null };
+};
+
 export const useKangurMobileAiTutorQueries = ({
   apiBaseUrl,
   canLoadTutorCatalog,
@@ -55,70 +105,25 @@ export const useKangurMobileAiTutorQueries = ({
   isRestoringAuth: boolean;
   locale: 'de' | 'en' | 'pl';
   userId: string;
-}) => {
+}): KangurMobileAiTutorQueries => {
   const contentQuery = useQuery<KangurAiTutorContent, Error>({
     enabled: canLoadTutorCatalog,
     queryKey: ['kangur-mobile', 'ai-tutor', 'content', apiBaseUrl, locale],
-    queryFn: async (): Promise<KangurAiTutorContent> => {
-      const response = await fetch(
-        `${apiBaseUrl}/api/kangur/ai-tutor/content?locale=${encodeURIComponent(locale)}`,
-        {
-          cache: 'no-store',
-          credentials: 'include',
-        },
-      );
-      if (!response.ok) {
-        throw new Error(createTutorFetchErrorMessage(locale));
-      }
-      const data = (await response.json()) as unknown;
-      return data as KangurAiTutorContent;
-    },
+    queryFn: () => fetchTutorContent(apiBaseUrl, locale),
     staleTime: 300_000,
   });
 
   const nativeGuideQuery = useQuery<KangurAiTutorNativeGuideStore, Error>({
     enabled: canLoadTutorCatalog,
     queryKey: ['kangur-mobile', 'ai-tutor', 'native-guide', apiBaseUrl, locale],
-    queryFn: async (): Promise<KangurAiTutorNativeGuideStore> => {
-      const response = await fetch(
-        `${apiBaseUrl}/api/kangur/ai-tutor/native-guide?locale=${encodeURIComponent(locale)}`,
-        {
-          cache: 'no-store',
-          credentials: 'include',
-        },
-      );
-      if (!response.ok) {
-        throw new Error(createTutorFetchErrorMessage(locale));
-      }
-      const data = (await response.json()) as unknown;
-      return data as KangurAiTutorNativeGuideStore;
-    },
+    queryFn: () => fetchTutorNativeGuide(apiBaseUrl, locale),
     staleTime: 300_000,
   });
 
   const usageQuery = useQuery<TutorUsageQueryResult, Error>({
     enabled: enabled && isAuthenticated && !isRestoringAuth,
     queryKey: ['kangur-mobile', 'ai-tutor', 'usage', apiBaseUrl, userId],
-    queryFn: async (): Promise<TutorUsageQueryResult> => {
-      const response = await fetch(`${apiBaseUrl}/api/kangur/ai-tutor/usage`, {
-        cache: 'no-store',
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        const message = (await readResponseMessage(response)) ?? createTutorFetchErrorMessage(locale);
-        return {
-          message,
-          usage: null,
-        };
-      }
-
-      const payload = (await response.json()) as { usage?: KangurAiTutorUsageSummary };
-      return {
-        message: null,
-        usage: payload.usage ?? null,
-      };
-    },
+    queryFn: () => fetchTutorUsage(apiBaseUrl, locale),
     staleTime: 30_000,
   });
 
@@ -133,7 +138,7 @@ export const useKangurMobileAiTutorMutation = ({
   apiBaseUrl: string;
   context: KangurAiTutorConversationContext;
   locale: 'de' | 'en' | 'pl';
-}) => {
+}): UseMutationResult<KangurAiTutorChatResponse, Error, KangurMobileAiTutorQuickAction> => {
   return useMutation<KangurAiTutorChatResponse, Error, KangurMobileAiTutorQuickAction>({
     mutationFn: async (
       action: KangurMobileAiTutorQuickAction,

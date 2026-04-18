@@ -295,8 +295,7 @@ export async function synchronize1688ProductScan(scan: ProductScanRecord): Promi
         normalize1688ScanFailureMessage(
           parsedResult.message,
           '1688 supplier reverse image scan failed.'
-        ),
-        '1688 supplier reverse image scan failed.'
+        )
       );
     }
 

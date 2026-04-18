@@ -56,7 +56,7 @@ export const resolveIsoAgeMs = (value: string | null | undefined): number | null
 };
 
 export const resolveScanEngineRunId = (scan: ProductScanRecord): string | null =>
-  readOptionalString(scan.engineRunId);
+  readOptionalString(scan.engineRunId) ?? readOptionalString(toRecord(scan.rawResult)?.['runId']);
 
 export const resolveScanManualVerificationTimeoutMs = (
   rawResult: Record<string, unknown> | ReturnType<typeof createDefaultProductScannerSettings>

@@ -74,8 +74,9 @@ export const readPlaywrightEngineArtifact = async (input: {
   fileName: string;
 }): Promise<PlaywrightEngineArtifactReadResult | null> => await readPlaywrightNodeArtifact(input);
 
-export const validatePlaywrightEngineScript = (script: string): string[] =>
-  validatePlaywrightNodeScript(script);
+export const validatePlaywrightEngineScript = (
+  script: string
+): ReturnType<typeof validatePlaywrightNodeScript> => validatePlaywrightNodeScript(script);
 
 // Backward-compatible exports for legacy consumers that still use node-runner names.
 export {

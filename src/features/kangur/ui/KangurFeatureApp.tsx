@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import { useLocale } from 'next-intl';
-import { Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
 import {
@@ -31,8 +31,6 @@ const KangurCmsRuntimeScreen = dynamic(
 import { KangurRouteAccessibilityAnnouncer } from '@/features/kangur/ui/components/KangurRouteAccessibilityAnnouncer';
 const PageNotFound = dynamic(() => import('@/features/kangur/ui/components/PageNotFound').then(m => ({ default: m.PageNotFound })), { ssr: false });
 const UserNotRegisteredError = dynamic(() => import('@/features/kangur/ui/components/UserNotRegisteredError'), { ssr: false });
-import { KangurAiTutorContentProvider } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
-import { KangurAiTutorDeferredProvider } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { KangurAuthProvider, useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { KangurContextRegistryPageBoundary } from '@/features/kangur/ui/context/KangurContextRegistryPageBoundary';
 import { KangurAgeGroupFocusProvider } from '@/features/kangur/ui/context/KangurAgeGroupFocusContext';
@@ -54,7 +52,6 @@ import {
   KangurTopNavigationHost,
   KangurTopNavigationProvider,
 } from '@/features/kangur/ui/context/KangurTopNavigationContext';
-import { KangurTutorAnchorProvider } from '@/features/kangur/ui/context/KangurTutorAnchorContext';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import { prefetchKangurPageContentStore } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
@@ -69,6 +66,7 @@ import { readKangurTopBarHeightCssValue } from '@/features/kangur/ui/utils/readK
 import { cn } from '@/features/kangur/shared/utils';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
+import { KangurDeferredAiTutorProviders } from '@/features/kangur/ui/KangurDeferredAiTutorProviders';
 
 import type { JSX } from 'react';
 
@@ -304,8 +302,12 @@ const AuthenticatedApp = (): JSX.Element | null => {
     }) ?? embedded;
   const snapshotTransitionTopBarHeightCssValue =
     pendingRouteLoadingSnapshot?.topBarHeightCssValue ?? null;
+  // Only keep the initial route skeleton around while the route content has
+  // not resolved yet. Once the page content exists, leaving this overlay on
+  // top of the screen causes the cold `/ -> /[locale]/kangur` redirect path
+  // to hide the home actions until a later rerender.
   const isInitialMountSkeletonVisible =
-    !hasInitialContentSettled && !hasPresentedInteractiveShell;
+    routeContent === null && !hasInitialContentSettled && !hasPresentedInteractiveShell;
   const isRouteSkeletonVisible =
     shouldShowAcknowledgingNavigationSkeleton ||
     isNavigationSkeletonVisible ||
@@ -801,27 +803,6 @@ const AuthenticatedApp = (): JSX.Element | null => {
   );
 };
 
-// DeferredAiTutorProviders delays mounting the AI Tutor context tree until
-// after the first client render. This prevents the heavy AI Tutor bundle from
-// blocking the initial paint and avoids SSR hydration mismatches for
-// client-only AI Tutor state.
-const DeferredAiTutorProviders = ({ children }: { children: ReactNode }): JSX.Element => {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
-
-  if (!mounted) return <>{children}</>;
-
-  return (
-    <KangurAiTutorContentProvider>
-      <KangurAiTutorDeferredProvider>
-        <KangurTutorAnchorProvider>
-          {children}
-        </KangurTutorAnchorProvider>
-      </KangurAiTutorDeferredProvider>
-    </KangurAiTutorContentProvider>
-  );
-};
-
 // KangurFeatureApp is the root of the StudiQ learner experience. It composes
 // all global context providers in the correct order:
 //
@@ -836,7 +817,9 @@ const DeferredAiTutorProviders = ({ children }: { children: ReactNode }): JSX.El
 //  KangurProgressSyncProvider     – background progress polling/sync
 //  KangurScoreSyncProvider        – background score polling/sync
 //  KangurContextRegistryPageBoundary – scopes AI Tutor context to the page
-//  DeferredAiTutorProviders       – lazy-mounts AI Tutor context after paint
+//  KangurDeferredAiTutorProviders – mounts dormant AI Tutor contexts from the
+//                                   first render; the heavy runtime still
+//                                   activates lazily via the widget bridge
 //
 // AuthenticatedApp and KangurAiTutorWidget are rendered inside the deferred
 // AI Tutor tree so they can access tutor context without blocking first paint.
@@ -853,11 +836,11 @@ export function KangurFeatureApp(): JSX.Element {
                   <KangurProgressSyncProvider />
                   <KangurScoreSyncProvider />
                   <KangurContextRegistryPageBoundary>
-                    <DeferredAiTutorProviders>
+                    <KangurDeferredAiTutorProviders>
                       <AuthenticatedApp />
                       <KangurAiTutorWidget />
                       <KangurLoginModalMount />
-                    </DeferredAiTutorProviders>
+                    </KangurDeferredAiTutorProviders>
                   </KangurContextRegistryPageBoundary>
                 </KangurAgeGroupFocusProvider>
               </KangurSubjectFocusProvider>

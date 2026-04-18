@@ -36,7 +36,10 @@ export function GamesLibraryGameModalProvider({
   const { game, locale, translations, lessonGameSectionsQuery, gameInstancesQuery } = state;
 
   const value = useMemo<GamesLibraryGameModalContextValue | null>(() => {
-    if (!game) return null;
+    if (!game) {
+      console.log('GamesLibraryGameModalProvider: game is null');
+      return null;
+    }
 
     const resolvedAgeGroupLabel = game.ageGroup
       ? getLocalizedKangurAgeGroupLabel(game.ageGroup, locale)

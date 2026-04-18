@@ -13,6 +13,8 @@ import {
   PRODUCT_SCAN_URL_MAX_LENGTH,
   PRODUCT_SCAN_PRICE_MAX_LENGTH,
   PRODUCT_SCAN_TITLE_MAX_LENGTH,
+  PRODUCT_SCAN_DESCRIPTION_MAX_LENGTH,
+  PRODUCT_SCAN_MATCHED_IMAGE_ID_MAX_LENGTH,
 } from './product-scans-service.constants';
 import {
   readOptionalString,
@@ -29,15 +31,19 @@ export const persistSynchronizedScan = async (
   let attempt = 0;
   let lastError: unknown = null;
 
+  const truncatedUpdates = {
+    ...updates,
+    error: readOptionalString(updates.error, PRODUCT_SCAN_ERROR_MAX_LENGTH),
+    url: readOptionalString(updates.url, PRODUCT_SCAN_URL_MAX_LENGTH),
+    price: readOptionalString(updates.price, PRODUCT_SCAN_PRICE_MAX_LENGTH),
+    title: readOptionalString(updates.title, PRODUCT_SCAN_TITLE_MAX_LENGTH),
+    description: readOptionalString(updates.description, PRODUCT_SCAN_DESCRIPTION_MAX_LENGTH),
+    matchedImageId: readOptionalString(updates.matchedImageId, PRODUCT_SCAN_MATCHED_IMAGE_ID_MAX_LENGTH),
+  };
+
   while (attempt < PRODUCT_SCAN_SYNC_PERSIST_ATTEMPTS) {
     try {
-      const result = await updateProductScan(scan.id, {
-        ...updates,
-        error: readOptionalString(updates.error, PRODUCT_SCAN_ERROR_MAX_LENGTH),
-        url: readOptionalString(updates.url, PRODUCT_SCAN_URL_MAX_LENGTH),
-        price: readOptionalString(updates.price, PRODUCT_SCAN_PRICE_MAX_LENGTH),
-        title: readOptionalString(updates.title, PRODUCT_SCAN_TITLE_MAX_LENGTH),
-      });
+      const result = await updateProductScan(scan.id, truncatedUpdates);
       if (result === null) {
         throw new Error(`Product scan ${scan.id} could not be updated.`);
       }
@@ -51,15 +57,18 @@ export const persistSynchronizedScan = async (
     }
   }
 
+  const effectiveEngineRunId =
+    readOptionalString(updates.engineRunId) ?? readOptionalString(scan.engineRunId);
+
   void ErrorSystem.captureException(lastError, {
     service: 'product-scans.service',
     action: 'persistSynchronizedScan',
     scanId: scan.id,
     productId: scan.productId,
-    attempt,
+    engineRunId: effectiveEngineRunId,
   });
 
-  throw lastError;
+  return normalizeProductScanRecord({ ...scan, ...truncatedUpdates });
 };
 
 export const persistFailedSynchronization = async (

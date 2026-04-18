@@ -607,7 +607,7 @@ const resolveNumberBalanceRushViewKind = ({
   return 'active';
 };
 
-function renderNumberBalanceRushPhaseView({
+function NumberBalanceRushPhaseView({
   props,
 }: {
   props: NumberBalanceRushGameProps;
@@ -658,7 +658,7 @@ export default function NumberBalanceRushGame(
   const state = useNumberBalanceRushGameState(props);
   return (
     <NumberBalanceRushGameProvider state={state}>
-      {renderNumberBalanceRushPhaseView({ props })}
+      <NumberBalanceRushPhaseView props={props} />
     </NumberBalanceRushGameProvider>
   );
 }

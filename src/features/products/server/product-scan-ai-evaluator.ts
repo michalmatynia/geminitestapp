@@ -5,10 +5,15 @@ import path from 'node:path';
 import { z } from 'zod';
 
 import {
+  type PlaywrightVerificationCaptureParamsBase,
+  type PlaywrightVerificationInjectionConfig,
   type PlaywrightVerificationObservationLike,
+  type PlaywrightVerificationReviewLoopProfile,
   type PlaywrightVerificationReviewProfile,
   evaluateStepWithAI,
   evaluateStructuredPlaywrightScreenshotWithAI,
+  runPlaywrightVerificationReviewCapture,
+  type RunPlaywrightVerificationReviewCaptureOptions,
 } from '@/features/playwright/server/ai-step-service';
 import type { PlaywrightCapturedPageObservation } from '@/features/playwright/server/ai-step-service';
 import {
@@ -222,11 +227,42 @@ export type ProductScanVerificationObservationBase<
   fingerprint: string;
 };
 
+export type ProductScanVerificationState<
+  TReview extends ProductScanVerificationReviewCloneable,
+  TObservation extends ProductScanVerificationReviewCloneable,
+> = {
+  review: TReview | null;
+  observations: TObservation[];
+};
+
 type ProductScanVerificationReviewCloneable = {
   visibleInstructions: string[];
   uiElements: string[];
   brainApplied: Record<string, unknown> | null;
 };
+
+type ProductScanVerificationBarrierEvaluationProfileLike<
+  TParams,
+  TReview extends PlaywrightVerificationObservationLike,
+> =
+  | Pick<PlaywrightVerificationReviewProfile<TParams, TReview>, 'evaluation'>
+  | Pick<
+      PlaywrightVerificationReviewLoopProfile<
+        unknown,
+        unknown,
+        TParams & PlaywrightVerificationCaptureParamsBase,
+        TReview
+      >,
+      'review'
+    >;
+
+const resolveProductScanVerificationBarrierEvaluationProfile = <
+  TParams,
+  TReview extends PlaywrightVerificationObservationLike,
+>(
+  profile: ProductScanVerificationBarrierEvaluationProfileLike<TParams, TReview>
+): Pick<PlaywrightVerificationReviewProfile<TParams, TReview>, 'evaluation'> =>
+  'review' in profile ? profile.review : profile;
 
 export const cloneProductScanVerificationReview = <
   TReview extends ProductScanVerificationReviewCloneable,
@@ -244,6 +280,48 @@ export const cloneProductScanVerificationObservations = <
 >(
   observations: readonly TReview[]
 ): TReview[] => observations.map((observation) => cloneProductScanVerificationReview(observation));
+
+export const createProductScanVerificationState = <
+  TReview extends ProductScanVerificationReviewCloneable,
+  TObservation extends ProductScanVerificationReviewCloneable,
+>(): ProductScanVerificationState<TReview, TObservation> => ({
+  review: null,
+  observations: [],
+});
+
+export const cloneProductScanVerificationStateReview = <
+  TReview extends ProductScanVerificationReviewCloneable,
+  TObservation extends ProductScanVerificationReviewCloneable,
+>(
+  state: ProductScanVerificationState<TReview, TObservation>
+): TReview | null =>
+  state.review !== null ? cloneProductScanVerificationReview(state.review) : null;
+
+export const cloneProductScanVerificationStateObservations = <
+  TReview extends ProductScanVerificationReviewCloneable,
+  TObservation extends ProductScanVerificationReviewCloneable,
+>(
+  state: ProductScanVerificationState<TReview, TObservation>
+): TObservation[] => cloneProductScanVerificationObservations(state.observations);
+
+export const getLastProductScanVerificationObservation = <
+  TReview extends ProductScanVerificationReviewCloneable,
+  TObservation extends ProductScanVerificationReviewCloneable,
+>(
+  state: ProductScanVerificationState<TReview, TObservation>
+): TObservation | null => state.observations[state.observations.length - 1] ?? null;
+
+export const commitProductScanVerificationObservation = <
+  TReview extends ProductScanVerificationReviewCloneable,
+  TObservation extends ProductScanVerificationReviewCloneable,
+>(
+  state: ProductScanVerificationState<TReview, TObservation>,
+  input: { review: TReview; observation: TObservation }
+): readonly TObservation[] => {
+  state.review = input.review;
+  state.observations.push(input.observation);
+  return state.observations;
+};
 
 export const buildProductScanVerificationDiagnosticsPayload = <
   TReview extends ProductScanVerificationReviewCloneable,
@@ -268,6 +346,21 @@ export const buildProductScanVerificationDiagnosticsPayload = <
 
   return payload;
 };
+
+export const buildProductScanVerificationDiagnosticsPayloadFromState = <
+  TReview extends ProductScanVerificationReviewCloneable,
+  TObservation extends ProductScanVerificationReviewCloneable,
+>(options: {
+  reviewKey: string;
+  observationsKey: string;
+  state: ProductScanVerificationState<TReview, TObservation>;
+}): Record<string, unknown> =>
+  buildProductScanVerificationDiagnosticsPayload({
+    reviewKey: options.reviewKey,
+    observationsKey: options.observationsKey,
+    review: options.state.review,
+    observations: options.state.observations,
+  });
 
 export type ProductScanVerificationBarrierEvaluationInput = {
   provider: string;
@@ -310,7 +403,7 @@ export const createProductScanVerificationBarrierEvaluationInputFromProfile = <
   TParams,
   TReview extends PlaywrightVerificationObservationLike,
 >(options: {
-  profile: Pick<PlaywrightVerificationReviewProfile<TParams, TReview>, 'evaluation'>;
+  profile: ProductScanVerificationBarrierEvaluationProfileLike<TParams, TReview>;
   params: TParams;
   capture: Pick<
     PlaywrightCapturedPageObservation,
@@ -321,16 +414,199 @@ export const createProductScanVerificationBarrierEvaluationInputFromProfile = <
     | 'screenshotArtifactName'
     | 'htmlArtifactName'
   >;
-}): ProductScanVerificationBarrierEvaluationInput =>
-  createProductScanVerificationBarrierEvaluationInput({
-    provider: options.profile.evaluation.provider,
-    stage: options.profile.evaluation.resolveStage(options.params),
+}): ProductScanVerificationBarrierEvaluationInput => {
+  const profile = resolveProductScanVerificationBarrierEvaluationProfile(options.profile);
+  return createProductScanVerificationBarrierEvaluationInput({
+    provider: profile.evaluation.provider,
+    stage: profile.evaluation.resolveStage(options.params),
     objective:
-      typeof options.profile.evaluation.objective === 'function'
-        ? options.profile.evaluation.objective(options.params) ?? null
-        : options.profile.evaluation.objective ?? null,
+      typeof profile.evaluation.objective === 'function'
+        ? profile.evaluation.objective(options.params) ?? null
+        : profile.evaluation.objective ?? null,
     capture: options.capture,
   });
+};
+
+export const evaluateProductScanVerificationBarrierFromProfile = async <
+  TParams,
+  TReview extends PlaywrightVerificationObservationLike,
+>(options: {
+  profile: ProductScanVerificationBarrierEvaluationProfileLike<TParams, TReview>;
+  params: TParams;
+  capture: Pick<
+    PlaywrightCapturedPageObservation,
+    | 'currentUrl'
+    | 'pageTitle'
+    | 'pageTextSnippet'
+    | 'screenshotBase64'
+    | 'screenshotArtifactName'
+    | 'htmlArtifactName'
+  >;
+}): Promise<ProductScanVerificationReview> =>
+  evaluateProductScanVerificationBarrier(
+    createProductScanVerificationBarrierEvaluationInputFromProfile(options)
+  );
+
+export type RunProductScanVerificationBarrierReviewCaptureOptions<
+  TState,
+  TBaseParams,
+  TParams extends PlaywrightVerificationCaptureParamsBase,
+  TObservation extends ProductScanVerificationObservationBase,
+  TExtra extends object = Record<never, never>,
+> = Omit<
+  RunPlaywrightVerificationReviewCaptureOptions<
+    TParams,
+    ProductScanVerificationReview,
+    TObservation,
+    TExtra
+  >,
+  'profile' | 'evaluate'
+> & {
+  profile: PlaywrightVerificationReviewLoopProfile<
+    TState,
+    TBaseParams,
+    TParams,
+    TObservation,
+    TExtra
+  >;
+};
+
+export type RunProductScanVerificationBarrierReviewCaptureWithStateOptions<
+  TState,
+  TBaseParams,
+  TParams extends PlaywrightVerificationCaptureParamsBase,
+  TObservation extends ProductScanVerificationObservationBase,
+  TExtra extends object = Record<never, never>,
+> = Omit<
+  RunProductScanVerificationBarrierReviewCaptureOptions<
+    TState,
+    TBaseParams,
+    TParams,
+    TObservation,
+    TExtra
+  >,
+  'previousObservation' | 'commitObservation'
+> & {
+  verificationState: ProductScanVerificationState<
+    ProductScanVerificationReview,
+    TObservation
+  >;
+};
+
+export const runProductScanVerificationBarrierReviewCapture = async <
+  TState,
+  TBaseParams,
+  TParams extends PlaywrightVerificationCaptureParamsBase,
+  TObservation extends ProductScanVerificationObservationBase,
+  TExtra extends object = Record<never, never>,
+>(
+  options: RunProductScanVerificationBarrierReviewCaptureOptions<
+    TState,
+    TBaseParams,
+    TParams,
+    TObservation,
+    TExtra
+  >
+): Promise<TObservation | null> => {
+  const { profile, ...rest } = options;
+
+  return runPlaywrightVerificationReviewCapture<
+    TParams,
+    ProductScanVerificationReview,
+    TObservation,
+    TExtra
+  >({
+    ...rest,
+    profile: profile.review,
+    evaluate: (capture, params) =>
+      evaluateProductScanVerificationBarrierFromProfile({
+        profile,
+        params,
+        capture,
+      }),
+  });
+};
+
+export const runProductScanVerificationBarrierReviewCaptureWithState = async <
+  TState,
+  TBaseParams,
+  TParams extends PlaywrightVerificationCaptureParamsBase,
+  TObservation extends ProductScanVerificationObservationBase,
+  TExtra extends object = Record<never, never>,
+>(
+  options: RunProductScanVerificationBarrierReviewCaptureWithStateOptions<
+    TState,
+    TBaseParams,
+    TParams,
+    TObservation,
+    TExtra
+  >
+): Promise<TObservation | null> => {
+  const { verificationState, ...rest } = options;
+  return runProductScanVerificationBarrierReviewCapture({
+    ...rest,
+    previousObservation: getLastProductScanVerificationObservation(verificationState),
+    commitObservation: ({ review, observation }) =>
+      commitProductScanVerificationObservation(verificationState, {
+        review,
+        observation,
+      }),
+  });
+};
+
+/**
+ * Creates an injection config that fires when the AI evaluator detects a solvable verification
+ * challenge (`status === 'analyzed' && manualActionRequired === true`). The injector receives
+ * the challenge type, visible question, instructions, and UI elements as context so it can
+ * generate targeted Playwright code to resolve the barrier.
+ *
+ * After each injection attempt the page is re-captured and re-evaluated so the loop can
+ * immediately detect a successful resolution.
+ */
+export const createProductScanVerificationBarrierAutoInjectionConfig = (options?: {
+  /** Freeform label used in the injector goal (e.g. 'Google', '1688'). */
+  provider?: string;
+  /** Maximum code-generation iterations per observation (default: 3). */
+  maxIterations?: number;
+}): PlaywrightVerificationInjectionConfig<ProductScanVerificationReview> => ({
+  shouldInject: (review) =>
+    review.status === 'analyzed' && review.manualActionRequired === true,
+  goal: (review) => {
+    const parts: string[] = [];
+    const providerLabel = options?.provider ? `${options.provider} ` : '';
+    parts.push(`Solve the ${providerLabel}verification challenge visible on the page.`);
+    if (review.challengeType) {
+      parts.push(`Challenge type: ${review.challengeType}.`);
+    }
+    if (review.visibleQuestion) {
+      parts.push(`Visible question: "${review.visibleQuestion}".`);
+    }
+    return parts.join(' ');
+  },
+  buildEvaluatorContext: (review) => {
+    const lines: string[] = [
+      `Provider: ${review.provider}`,
+      `Stage: ${review.stage}`,
+      `Challenge type: ${review.challengeType ?? 'unknown'}`,
+      `Manual action required: ${String(review.manualActionRequired ?? 'unknown')}`,
+    ];
+    if (review.visibleQuestion) {
+      lines.push(`Visible question: ${review.visibleQuestion}`);
+    }
+    if (review.visibleInstructions.length > 0) {
+      lines.push(`Instructions: ${review.visibleInstructions.join('; ')}`);
+    }
+    if (review.uiElements.length > 0) {
+      lines.push(`UI elements: ${review.uiElements.join(', ')}`);
+    }
+    if (review.pageSummary) {
+      lines.push(`Page summary: ${review.pageSummary}`);
+    }
+    return lines.join('\n');
+  },
+  maxIterations: options?.maxIterations ?? 3,
+  reEvaluateAfterInjection: true,
+});
 
 export const evaluateProductScanVerificationBarrier = async (
   input: ProductScanVerificationBarrierEvaluationInput

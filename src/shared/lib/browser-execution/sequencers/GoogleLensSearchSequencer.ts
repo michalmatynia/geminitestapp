@@ -1,21 +1,16 @@
 import type { Frame, Locator, Page } from 'playwright';
 
 import {
-  buildPlaywrightVerificationReviewDetailsFromProfile,
-  captureAndEvaluatePlaywrightObservation,
-  createPlaywrightVerificationObservation,
-  createPlaywrightVerificationReviewProfile,
-  finalizePlaywrightVerificationReview,
-  resolvePlaywrightVerificationReviewCaptureContext,
+  createPlaywrightVerificationReviewLoopProfile,
+  runPlaywrightVerificationObservationLoopWithProfile,
   slugifyPlaywrightVerificationReviewSegment,
-  runPlaywrightObservationLoop,
   type PlaywrightObservationLoopDecision,
 } from '@/features/playwright/server/ai-step-service';
 import {
-  createProductScanVerificationBarrierEvaluationInputFromProfile,
-  cloneProductScanVerificationObservations,
-  cloneProductScanVerificationReview,
-  evaluateProductScanVerificationBarrier,
+  buildProductScanVerificationDiagnosticsPayloadFromState,
+  createProductScanVerificationState,
+  createProductScanVerificationBarrierAutoInjectionConfig,
+  runProductScanVerificationBarrierReviewCaptureWithState,
   type ProductScanVerificationObservationBase,
   type ProductScanVerificationReview as GoogleVerificationReview,
 } from '@/features/products/server/product-scan-ai-evaluator';
@@ -217,6 +212,12 @@ type GoogleVerificationObservationCaptureParams = {
   currentUrl?: string | null;
 };
 
+type GoogleVerificationLoopBaseParams = {
+  candidateId: string;
+  candidateRank: number;
+  resolveCurrentUrl: () => string | null;
+};
+
 const mapGoogleVerificationLoopDecision = (
   decision: PlaywrightObservationLoopDecision
 ): GoogleVerificationLoopDecision => {
@@ -234,8 +235,10 @@ const mapGoogleVerificationLoopDecision = (
   }
 };
 
-const GOOGLE_VERIFICATION_REVIEW_PROFILE =
-  createPlaywrightVerificationReviewProfile<
+const GOOGLE_VERIFICATION_LOOP_PROFILE =
+  createPlaywrightVerificationReviewLoopProfile<
+    CaptchaState,
+    GoogleVerificationLoopBaseParams,
     GoogleVerificationObservationCaptureParams,
     GoogleVerificationObservation
   >({
@@ -245,10 +248,14 @@ const GOOGLE_VERIFICATION_REVIEW_PROFILE =
     historyArtifactKey: 'google-verification-review-history',
     artifactKeyPrefix: 'google-verification-review',
     analysisFailureLogKey: 'google.verification.review.analysis_failed',
+    screenshotFailureLogKey: 'google.verification.review.screenshot_failed',
     evaluationProvider: 'google_lens',
     resolveEvaluationStage: () => 'google_captcha',
     evaluationObjective:
       'Describe the visible Google verification barrier for manual handling only. Do not solve it.',
+    buildObservationExtra: (params) => ({
+      captchaDetected: params.captchaDetected,
+    }),
     buildArtifactSegments: (params) => [
       slugifyPlaywrightVerificationReviewSegment(params.candidateId, 'unknown-candidate'),
       `rank-${String(params.candidateRank)}`,
@@ -261,6 +268,18 @@ const GOOGLE_VERIFICATION_REVIEW_PROFILE =
       captchaDetected: params.captchaDetected,
     }),
     detailDescriptors: GOOGLE_VERIFICATION_REVIEW_DETAIL_DESCRIPTORS,
+    buildLoopCaptureParams: ({ iteration, decision, snapshot, stableForMs }, baseParams) => ({
+      candidateId: baseParams.candidateId,
+      candidateRank: baseParams.candidateRank,
+      iteration,
+      loopDecision: mapGoogleVerificationLoopDecision(decision),
+      captchaDetected: snapshot.blocked,
+      stableForMs,
+      currentUrl:
+        snapshot.currentUrl ??
+        snapshot.state?.currentUrl ??
+        baseParams.resolveCurrentUrl(),
+    }),
   });
 
 export abstract class GoogleLensSearchSequencer<
@@ -272,22 +291,22 @@ export abstract class GoogleLensSearchSequencer<
     'Google Lens requested captcha verification. Solve it in the opened browser window and the scan will continue automatically.';
   protected readonly CAPTCHA_STABLE_CLEAR_WINDOW_MS = 10_000;
 
-  private googleVerificationReview: GoogleVerificationReview | null = null;
-  private googleVerificationObservations: GoogleVerificationObservation[] = [];
+  private readonly googleVerificationState = createProductScanVerificationState<
+    GoogleVerificationReview,
+    GoogleVerificationObservation
+  >();
 
   constructor(context: ProductScanSequencerContext, input: TInput) {
     super(context);
     this.input = input;
   }
 
-  protected getGoogleVerificationReview(): GoogleVerificationReview | null {
-    return this.googleVerificationReview !== null
-      ? cloneProductScanVerificationReview(this.googleVerificationReview)
-      : null;
-  }
-
-  protected getGoogleVerificationObservations(): GoogleVerificationObservation[] {
-    return cloneProductScanVerificationObservations(this.googleVerificationObservations);
+  protected buildGoogleVerificationDiagnosticsPayload(): Record<string, unknown> {
+    return buildProductScanVerificationDiagnosticsPayloadFromState({
+      reviewKey: 'googleVerificationReview',
+      observationsKey: 'googleVerificationObservations',
+      state: this.googleVerificationState,
+    });
   }
 
   protected resolveImageSearchProvider(): GoogleLensSearchProvider {
@@ -724,7 +743,13 @@ export abstract class GoogleLensSearchSequencer<
     }
 
     const loopResult =
-      await runPlaywrightObservationLoop<CaptchaState, GoogleVerificationObservation>({
+      await runPlaywrightVerificationObservationLoopWithProfile<
+        CaptchaState,
+        GoogleVerificationObservation,
+        GoogleVerificationLoopBaseParams,
+        GoogleVerificationObservationCaptureParams,
+        GoogleVerificationObservation
+      >({
         timeoutMs,
         stableClearWindowMs: this.CAPTCHA_STABLE_CLEAR_WINDOW_MS,
         intervalMs: 2_000,
@@ -743,16 +768,14 @@ export abstract class GoogleLensSearchSequencer<
             currentUrl: state.currentUrl,
           };
         },
-        observe: async ({ iteration, decision, snapshot, stableForMs }) =>
-          this.captureGoogleVerificationObservation({
-            candidateId,
-            candidateRank,
-            iteration,
-            loopDecision: mapGoogleVerificationLoopDecision(decision),
-            captchaDetected: snapshot.blocked,
-            stableForMs,
-            currentUrl: snapshot.currentUrl ?? snapshot.state?.currentUrl ?? this.safePageUrl(),
-          }),
+        profile: GOOGLE_VERIFICATION_LOOP_PROFILE,
+        baseParams: {
+          candidateId,
+          candidateRank,
+          resolveCurrentUrl: () => this.safePageUrl(),
+        },
+        captureObservation: (captureParams) =>
+          this.captureGoogleVerificationObservation(captureParams),
       });
 
     if (loopResult.resolved) {
@@ -787,87 +810,19 @@ export abstract class GoogleLensSearchSequencer<
     params: GoogleVerificationObservationCaptureParams
   ): Promise<GoogleVerificationObservation | null> {
     const currentUrl = params.currentUrl ?? this.safePageUrl();
-    const previousObservation =
-      this.googleVerificationObservations[this.googleVerificationObservations.length - 1] ?? null;
-    const { artifactKey, extraFingerprintParts } =
-      resolvePlaywrightVerificationReviewCaptureContext(
-        GOOGLE_VERIFICATION_REVIEW_PROFILE.capture,
-        params
-      );
-
-    this.upsertScanStep({
-      key: GOOGLE_VERIFICATION_REVIEW_PROFILE.runtime.step.key,
-      status: 'running',
-      candidateId: params.candidateId,
-      candidateRank: params.candidateRank,
-      message: GOOGLE_VERIFICATION_REVIEW_PROFILE.runtime.step.runningMessage,
-      url: currentUrl,
-    });
-
-    const { observation, review, deduped } =
-      await captureAndEvaluatePlaywrightObservation<
-        GoogleVerificationReview,
-        GoogleVerificationObservation
-      >({
-        page: this.page,
-        artifacts: this.artifacts,
-        artifactKey,
-        currentUrl,
-        previousObservation,
-        previousFingerprint: previousObservation?.fingerprint ?? null,
-        extraFingerprintParts,
-        log: this.log,
-        screenshotFailureLogKey: 'google.verification.review.screenshot_failed',
-        evaluate: async (capture) =>
-          evaluateProductScanVerificationBarrier(
-            createProductScanVerificationBarrierEvaluationInputFromProfile({
-              profile: GOOGLE_VERIFICATION_REVIEW_PROFILE,
-              params,
-              capture,
-            })
-          ),
-        buildObservation: ({ capture, review: nextReview }) =>
-          createPlaywrightVerificationObservation({
-            review: nextReview,
-            capture,
-            iteration: params.iteration,
-            loopDecision: params.loopDecision,
-            stableForMs: params.stableForMs,
-            extra: {
-              captchaDetected: params.captchaDetected,
-            },
-          }),
-      });
-
-    if (deduped) {
-      return observation;
-    }
-
-    const nextReview = review!;
-    this.googleVerificationReview = nextReview;
-    this.googleVerificationObservations.push(observation);
-    await finalizePlaywrightVerificationReview({
-      runtime: GOOGLE_VERIFICATION_REVIEW_PROFILE.runtime,
-      artifactKey,
-      artifacts: this.artifacts,
-      review: nextReview,
-      observations: this.googleVerificationObservations,
+    return runProductScanVerificationBarrierReviewCaptureWithState({
+      profile: GOOGLE_VERIFICATION_LOOP_PROFILE,
+      verificationState: this.googleVerificationState,
+      params,
       currentUrl,
-      details: buildPlaywrightVerificationReviewDetailsFromProfile(
-        observation,
-        GOOGLE_VERIFICATION_REVIEW_PROFILE
-      ),
+      page: this.page,
+      artifacts: this.artifacts,
       log: this.log,
-      analysisFailureLogKey: GOOGLE_VERIFICATION_REVIEW_PROFILE.analysisFailureLogKey,
-      upsertStep: (step) =>
-        this.upsertScanStep({
-          ...step,
-          candidateId: params.candidateId,
-          candidateRank: params.candidateRank,
-        }),
+      upsertStep: (step) => this.upsertScanStep(step),
+      injectOnEvaluation: createProductScanVerificationBarrierAutoInjectionConfig({
+        provider: 'Google',
+      }),
     });
-
-    return observation;
   }
 
   private resolveGoogleLensOpenUrl(): string {

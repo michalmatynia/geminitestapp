@@ -24,7 +24,8 @@ Rules:
 5. "reasoning" must briefly explain what the code does and what remains if done=false.
 6. Do not use require() or import statements. Do not wrap in async function declarations.
 7. Keep code minimal and targeted. One clear action per iteration.
-8. Read runtime['aiEvaluatorOutput'] to access the last AI Evaluator analysis.`;
+8. Read runtime['aiEvaluatorOutput'] to access the last AI Evaluator analysis.
+9. When a screenshot is provided, use it to understand the current visual state of the page before writing code.`;
 
 export type PlaywrightStepEvaluateOptions = {
   inputSource: 'screenshot' | 'html' | 'text_content' | 'selector_text';
@@ -71,6 +72,34 @@ export type PlaywrightCapturedPageObservation = {
   observedAt: string;
 };
 
+export type PlaywrightVerificationInjectionConfig<TReview> = {
+  /** Return true to trigger the injector after this evaluation result */
+  shouldInject: (review: TReview) => boolean;
+  /** Natural-language goal for the AI code injector, or a function deriving it from the review */
+  goal: string | ((review: TReview) => string);
+  /** Optional system prompt override for the injector */
+  systemPrompt?: string | null | undefined;
+  /** Maximum injector iterations per observation (default: 3) */
+  maxIterations?: number | null | undefined;
+  /** Serialize the evaluation result into a text context string for the injector (default: JSON) */
+  buildEvaluatorContext?: ((review: TReview) => string) | null | undefined;
+  /**
+   * When true, re-captures the page state and re-runs the evaluate function after injection
+   * completes. The returned observation, review, and capture reflect the post-injection state.
+   */
+  reEvaluateAfterInjection?: boolean | null | undefined;
+};
+
+export type PlaywrightInjectionAttemptResult = {
+  attempted: boolean;
+  iterationsRun: number;
+  done: boolean;
+  lastReasoning: string | null;
+  modelId: string | null;
+  /** Page URL after the injection loop completed */
+  finalUrl: string | null;
+};
+
 export type CaptureAndEvaluatePlaywrightObservationOptions<TReview, TObservation> = {
   page: Page;
   artifacts?: PlaywrightObservationArtifacts | null | undefined;
@@ -89,6 +118,8 @@ export type CaptureAndEvaluatePlaywrightObservationOptions<TReview, TObservation
     capture: PlaywrightCapturedPageObservation;
     review: TReview;
   }) => TObservation;
+  /** When set, runs the AI code injector after each evaluation that passes `shouldInject` */
+  injectOnEvaluation?: PlaywrightVerificationInjectionConfig<TReview> | null | undefined;
 };
 
 export type CaptureAndEvaluatePlaywrightObservationResult<TReview, TObservation> = {
@@ -96,6 +127,13 @@ export type CaptureAndEvaluatePlaywrightObservationResult<TReview, TObservation>
   review: TReview | null;
   capture: PlaywrightCapturedPageObservation;
   deduped: boolean;
+  /** Present when the injector ran after this evaluation; null if no injection was attempted */
+  injection: PlaywrightInjectionAttemptResult | null;
+  /**
+   * True when reEvaluateAfterInjection was set and the observation/review/capture reflect a
+   * fresh capture taken after injection completed rather than the pre-injection state.
+   */
+  injectionReEvaluated: boolean;
 };
 
 export type PlaywrightVerificationReviewLike = {
@@ -114,6 +152,7 @@ export type PlaywrightVerificationObservationLike = PlaywrightVerificationReview
   observedAt?: string | null | undefined;
   loopDecision: string;
   stableForMs?: number | null | undefined;
+  fingerprint: string;
 };
 
 export type PlaywrightVerificationReviewStepOutcome = {
@@ -169,6 +208,16 @@ export type PlaywrightVerificationReviewObservationConfig<
   buildExtra: (params: TParams) => TExtra;
 };
 
+export type PlaywrightVerificationCaptureParamsBase<
+  TLoopDecision extends string = string,
+> = {
+  candidateId: string;
+  candidateRank: number;
+  iteration: number;
+  loopDecision: TLoopDecision;
+  stableForMs: number | null;
+};
+
 export type PlaywrightVerificationReviewProfile<
   TParams,
   TReview extends PlaywrightVerificationObservationLike,
@@ -180,6 +229,33 @@ export type PlaywrightVerificationReviewProfile<
   observation: PlaywrightVerificationReviewObservationConfig<TParams, TExtra>;
   detailDescriptors: readonly PlaywrightVerificationReviewDetailDescriptor<TReview>[];
   analysisFailureLogKey: string | null;
+  screenshotFailureLogKey: string | null;
+};
+
+export type PlaywrightVerificationReviewProfileOptions<
+  TParams,
+  TReview extends PlaywrightVerificationObservationLike,
+  TExtra extends object = Record<never, never>,
+> = {
+  key: string;
+  subject: string;
+  runningMessage: string;
+  historyArtifactKey: string;
+  artifactKeyPrefix: string;
+  analysisArtifactSuffix?: string;
+  group?: string;
+  label?: string;
+  analysisFailureLogKey?: string | null;
+  screenshotFailureLogKey?: string | null;
+  evaluationProvider: string;
+  resolveEvaluationStage: (params: TParams) => string;
+  evaluationObjective?: string | ((params: TParams) => string | null | undefined) | null;
+  buildObservationExtra?: (params: TParams) => TExtra;
+  buildArtifactSegments: (
+    params: TParams
+  ) => readonly (string | null | undefined)[];
+  buildFingerprintPartMap: (params: TParams) => Record<string, unknown>;
+  detailDescriptors: readonly PlaywrightVerificationReviewDetailDescriptor<TReview>[];
 };
 
 const normalizeOptionalText = (value: unknown): string | null => {
@@ -246,6 +322,96 @@ export const slugifyPlaywrightVerificationReviewSegment = (
   return normalizeOptionalText(fallback) ?? 'unknown';
 };
 
+const executeInjectedPlaywrightCode = async (page: Page, code: string): Promise<void> => {
+  if (!code.trim()) return;
+  const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor as new (
+    ...args: string[]
+  ) => (...a: unknown[]) => Promise<unknown>;
+  await new AsyncFunction('page', code)(page);
+};
+
+async function runPlaywrightVerificationInjectionLoop<TReview>(
+  page: Page,
+  config: PlaywrightVerificationInjectionConfig<TReview>,
+  review: TReview,
+  currentUrl: string
+): Promise<PlaywrightInjectionAttemptResult> {
+  const maxIterations =
+    typeof config.maxIterations === 'number' &&
+    Number.isFinite(config.maxIterations) &&
+    config.maxIterations > 0
+      ? Math.trunc(config.maxIterations)
+      : 3;
+  const goal = typeof config.goal === 'function' ? config.goal(review) : config.goal;
+  const evaluatorContext =
+    typeof config.buildEvaluatorContext === 'function'
+      ? config.buildEvaluatorContext(review)
+      : (() => {
+          try {
+            return JSON.stringify(review);
+          } catch {
+            return String(review);
+          }
+        })();
+
+  let iterationsRun = 0;
+  let done = false;
+  let lastReasoning: string | null = null;
+  let modelId: string | null = null;
+  let priorInjectorReasoning: string | null = null;
+  let activeUrl = currentUrl;
+
+  while (iterationsRun < maxIterations && !done) {
+    iterationsRun++;
+
+    const [dom, screenshotBuffer] = await Promise.all([
+      page.content().catch(() => null),
+      page.screenshot({ type: 'png' }).catch(() => null),
+    ]);
+    const screenshotBase64 = screenshotBuffer ? screenshotBuffer.toString('base64') : null;
+
+    const result = await injectCodeWithAI({
+      goal,
+      systemPrompt: config.systemPrompt ?? null,
+      context: {
+        iteration: iterationsRun,
+        maxIterations,
+        url: activeUrl,
+        dom,
+        screenshotBase64,
+        priorEvaluation: evaluatorContext,
+        priorInjectorReasoning,
+      },
+    });
+
+    modelId = result.modelId;
+    lastReasoning = result.reasoning;
+    done = result.done;
+    priorInjectorReasoning = result.reasoning;
+
+    if (result.code) {
+      try {
+        await executeInjectedPlaywrightCode(page, result.code);
+      } catch {
+        lastReasoning = `Code execution failed on iteration ${iterationsRun}.`;
+        done = false;
+        break;
+      }
+    }
+
+    if (!done && iterationsRun < maxIterations) {
+      await page.waitForTimeout(500).catch(() => undefined);
+    }
+    try {
+      activeUrl = page.url();
+    } catch {
+      // page may still be navigating
+    }
+  }
+
+  return { attempted: true, iterationsRun, done, lastReasoning, modelId, finalUrl: activeUrl };
+}
+
 export async function captureAndEvaluatePlaywrightObservation<TReview, TObservation>(
   options: CaptureAndEvaluatePlaywrightObservationOptions<TReview, TObservation>
 ): Promise<CaptureAndEvaluatePlaywrightObservationResult<TReview, TObservation>> {
@@ -288,6 +454,8 @@ export async function captureAndEvaluatePlaywrightObservation<TReview, TObservat
       review: null,
       capture: baseCapture,
       deduped: true,
+      injection: null,
+      injectionReEvaluated: false,
     };
   }
 
@@ -319,19 +487,82 @@ export async function captureAndEvaluatePlaywrightObservation<TReview, TObservat
     htmlArtifactName = toArtifactName(htmlArtifact);
   }
 
-  const capture: PlaywrightCapturedPageObservation = {
+  let capture: PlaywrightCapturedPageObservation = {
     ...baseCapture,
     screenshotBase64: screenshotBuffer?.toString('base64') ?? null,
     screenshotArtifactName,
     htmlArtifactName,
   };
-  const review = await options.evaluate(capture);
+  let review = await options.evaluate(capture);
+
+  let injection: PlaywrightInjectionAttemptResult | null = null;
+  let injectionReEvaluated = false;
+
+  if (options.injectOnEvaluation && options.injectOnEvaluation.shouldInject(review)) {
+    injection = await runPlaywrightVerificationInjectionLoop(
+      options.page,
+      options.injectOnEvaluation,
+      review,
+      capture.currentUrl ?? ''
+    );
+
+    if (options.injectOnEvaluation.reEvaluateAfterInjection) {
+      const postUrl = safePageUrl(options.page);
+      const postTitle = normalizeOptionalText(await options.page.title().catch(() => null));
+      const postTextSnippet = normalizeOptionalText(
+        (
+          await options.page
+            .locator(options.textSelector?.trim() || 'body')
+            .first()
+            .textContent()
+            .catch(() => null)
+        )?.replace(/\s+/g, ' ').slice(0, options.maxTextLength ?? 2_500) ?? null
+      );
+      const postFingerprint = buildPlaywrightObservationFingerprint([
+        postUrl ?? '',
+        postTitle ?? '',
+        postTextSnippet ?? '',
+        ...(options.extraFingerprintParts ?? []),
+      ]);
+
+      let postScreenshotBuffer: Buffer | null = null;
+      let postScreenshotArtifactName: string | null = null;
+      try {
+        postScreenshotBuffer = await options.page.screenshot({ type: 'png' });
+        if (typeof options.artifacts?.file === 'function') {
+          const artifactPath = await options.artifacts.file(
+            `${options.artifactKey}-post-inject`,
+            postScreenshotBuffer,
+            { extension: 'png', mimeType: 'image/png', kind: options.screenshotKind?.trim() || 'screenshot' }
+          );
+          postScreenshotArtifactName = toArtifactName(artifactPath);
+        }
+      } catch {
+        // proceed without screenshot
+      }
+
+      capture = {
+        currentUrl: postUrl,
+        pageTitle: postTitle,
+        pageTextSnippet: postTextSnippet,
+        screenshotBase64: postScreenshotBuffer?.toString('base64') ?? null,
+        screenshotArtifactName: postScreenshotArtifactName,
+        htmlArtifactName: null,
+        fingerprint: postFingerprint,
+        observedAt: new Date().toISOString(),
+      };
+      review = await options.evaluate(capture);
+      injectionReEvaluated = true;
+    }
+  }
 
   return {
     observation: options.buildObservation({ capture, review }),
     review,
     capture,
     deduped: false,
+    injection,
+    injectionReEvaluated,
   };
 }
 
@@ -454,26 +685,9 @@ export const createPlaywrightVerificationReviewProfile = <
   TParams,
   TReview extends PlaywrightVerificationObservationLike,
   TExtra extends object = Record<never, never>,
->(options: {
-  key: string;
-  subject: string;
-  runningMessage: string;
-  historyArtifactKey: string;
-  artifactKeyPrefix: string;
-  analysisArtifactSuffix?: string;
-  group?: string;
-  label?: string;
-  analysisFailureLogKey?: string | null;
-  evaluationProvider: string;
-  resolveEvaluationStage: (params: TParams) => string;
-  evaluationObjective?: string | ((params: TParams) => string | null | undefined) | null;
-  buildObservationExtra?: (params: TParams) => TExtra;
-  buildArtifactSegments: (
-    params: TParams
-  ) => readonly (string | null | undefined)[];
-  buildFingerprintPartMap: (params: TParams) => Record<string, unknown>;
-  detailDescriptors: readonly PlaywrightVerificationReviewDetailDescriptor<TReview>[];
-}): PlaywrightVerificationReviewProfile<TParams, TReview, TExtra> => {
+>(
+  options: PlaywrightVerificationReviewProfileOptions<TParams, TReview, TExtra>
+): PlaywrightVerificationReviewProfile<TParams, TReview, TExtra> => {
   const runtime = createPlaywrightVerificationReviewRuntimeConfig({
     key: options.key,
     subject: options.subject,
@@ -502,8 +716,60 @@ export const createPlaywrightVerificationReviewProfile = <
     },
     detailDescriptors: options.detailDescriptors,
     analysisFailureLogKey: normalizeOptionalText(options.analysisFailureLogKey),
+    screenshotFailureLogKey: normalizeOptionalText(options.screenshotFailureLogKey),
   };
 };
+
+export type PlaywrightVerificationReviewLoopProfile<
+  TState,
+  TBaseParams,
+  TParams extends PlaywrightVerificationCaptureParamsBase,
+  TReview extends PlaywrightVerificationObservationLike,
+  TExtra extends object = Record<never, never>,
+> = {
+  review: PlaywrightVerificationReviewProfile<TParams, TReview, TExtra>;
+  adapter: PlaywrightVerificationObservationLoopAdapter<TState, TBaseParams, TParams>;
+};
+
+export type PlaywrightVerificationReviewLoopProfileOptions<
+  TState,
+  TBaseParams,
+  TParams extends PlaywrightVerificationCaptureParamsBase,
+  TReview extends PlaywrightVerificationObservationLike,
+  TExtra extends object = Record<never, never>,
+> = PlaywrightVerificationReviewProfileOptions<TParams, TReview, TExtra> & {
+  buildLoopCaptureParams: (
+    input: PlaywrightObservationLoopObserveInput<TState>,
+    baseParams: TBaseParams
+  ) => TParams;
+};
+
+export const createPlaywrightVerificationReviewLoopProfile = <
+  TState,
+  TBaseParams,
+  TParams extends PlaywrightVerificationCaptureParamsBase,
+  TReview extends PlaywrightVerificationObservationLike,
+  TExtra extends object = Record<never, never>,
+>(
+  options: PlaywrightVerificationReviewLoopProfileOptions<
+    TState,
+    TBaseParams,
+    TParams,
+    TReview,
+    TExtra
+  >
+): PlaywrightVerificationReviewLoopProfile<
+  TState,
+  TBaseParams,
+  TParams,
+  TReview,
+  TExtra
+> => ({
+  review: createPlaywrightVerificationReviewProfile(options),
+  adapter: createPlaywrightVerificationObservationLoopAdapter({
+    buildCaptureParams: options.buildLoopCaptureParams,
+  }),
+});
 
 export const resolvePlaywrightVerificationReviewArtifactKeys = (
   artifactKey: string,
@@ -570,13 +836,14 @@ export const createPlaywrightVerificationObservation = <
 
 export const createPlaywrightVerificationObservationFromProfile = <
   TParams,
+  TProfileReview extends PlaywrightVerificationObservationLike,
   TBaseReview extends PlaywrightVerificationReviewLike,
   TLoopDecision extends string,
   TExtra extends object = Record<never, never>,
 >(
   options: {
     profile: Pick<
-      PlaywrightVerificationReviewProfile<TParams, PlaywrightVerificationObservationLike, TExtra>,
+      PlaywrightVerificationReviewProfile<TParams, TProfileReview, TExtra>,
       'observation'
     >;
     params: TParams;
@@ -602,6 +869,149 @@ export const createPlaywrightVerificationObservationFromProfile = <
     stableForMs: options.stableForMs,
     extra: options.profile.observation.buildExtra(options.params),
   });
+
+export type RunPlaywrightVerificationReviewCaptureOptions<
+  TParams extends PlaywrightVerificationCaptureParamsBase,
+  TReview extends PlaywrightVerificationReviewLike,
+  TObservation extends PlaywrightVerificationObservationLike,
+  TExtra extends object = Record<never, never>,
+> = {
+  profile: PlaywrightVerificationReviewProfile<TParams, TObservation, TExtra>;
+  params: TParams;
+  currentUrl: string | null;
+  previousObservation: TObservation | null;
+  page: Page;
+  artifacts?: PlaywrightObservationArtifacts & {
+    json?: ((key: string, data: unknown) => Promise<unknown>) | null | undefined;
+  };
+  log?: ((message: string, context?: unknown) => void) | null | undefined;
+  screenshotFailureLogKey?: string | null | undefined;
+  evaluate: (
+    capture: PlaywrightCapturedPageObservation,
+    params: TParams
+  ) => Promise<TReview>;
+  commitObservation: (input: {
+    review: TReview;
+    observation: TObservation;
+  }) => readonly TObservation[] | Promise<readonly TObservation[]>;
+  upsertStep: (step: {
+    key: string;
+    status: 'running' | 'failed' | 'completed';
+    candidateId: string;
+    candidateRank: number;
+    message: string;
+    url: string | null;
+    resultCode?: string;
+    warning?: string | null;
+    details?: Array<{ label: string; value?: string | null }>;
+    group?: string;
+    label?: string;
+  }) => void | Promise<void>;
+  /** When set, runs the AI code injector after each evaluation that passes `shouldInject` */
+  injectOnEvaluation?: PlaywrightVerificationInjectionConfig<TReview> | null | undefined;
+};
+
+export async function runPlaywrightVerificationReviewCapture<
+  TParams extends PlaywrightVerificationCaptureParamsBase,
+  TReview extends PlaywrightVerificationReviewLike,
+  TObservation extends PlaywrightVerificationObservationLike,
+  TExtra extends object = Record<never, never>,
+>(
+  options: RunPlaywrightVerificationReviewCaptureOptions<
+    TParams,
+    TReview,
+    TObservation,
+    TExtra
+  >
+): Promise<TObservation | null> {
+  const { artifactKey, extraFingerprintParts } =
+    resolvePlaywrightVerificationReviewCaptureContext(
+      options.profile.capture,
+      options.params
+    );
+
+  await options.upsertStep({
+    key: options.profile.runtime.step.key,
+    status: 'running',
+    candidateId: options.params.candidateId,
+    candidateRank: options.params.candidateRank,
+    message: options.profile.runtime.step.runningMessage,
+    url: options.currentUrl,
+    ...(options.profile.runtime.step.group
+      ? { group: options.profile.runtime.step.group }
+      : {}),
+    ...(options.profile.runtime.step.label
+      ? { label: options.profile.runtime.step.label }
+      : {}),
+  });
+
+  const { observation, review, deduped, injection } =
+    await captureAndEvaluatePlaywrightObservation<TReview, TObservation>({
+      page: options.page,
+      artifacts: options.artifacts,
+      artifactKey,
+      currentUrl: options.currentUrl,
+      previousObservation: options.previousObservation,
+      previousFingerprint: options.previousObservation?.fingerprint ?? null,
+      extraFingerprintParts,
+      log: options.log,
+      screenshotFailureLogKey:
+        options.screenshotFailureLogKey ?? options.profile.screenshotFailureLogKey,
+      evaluate: (capture) => options.evaluate(capture, options.params),
+      buildObservation: ({ capture, review: nextReview }) =>
+        createPlaywrightVerificationObservationFromProfile({
+          profile: options.profile,
+          params: options.params,
+          review: nextReview,
+          capture,
+          iteration: options.params.iteration,
+          loopDecision: options.params.loopDecision,
+          stableForMs: options.params.stableForMs,
+        }) as TObservation,
+      injectOnEvaluation: options.injectOnEvaluation ?? null,
+    });
+
+  if (deduped) {
+    return observation;
+  }
+
+  const nextReview = review!;
+  const observations = await options.commitObservation({
+    review: nextReview,
+    observation,
+  });
+
+  const baseDetails = buildPlaywrightVerificationReviewDetailsFromProfile(observation, options.profile);
+  const injectionDetails: Array<{ label: string; value?: string | null }> = injection
+    ? [
+        { label: 'AI inject iterations', value: String(injection.iterationsRun) },
+        { label: 'AI inject done', value: String(injection.done) },
+        { label: 'AI inject model', value: injection.modelId },
+        { label: 'AI inject reasoning', value: injection.lastReasoning },
+        { label: 'AI inject final URL', value: injection.finalUrl },
+      ]
+    : [];
+
+  await finalizePlaywrightVerificationReview({
+    runtime: options.profile.runtime,
+    artifactKey,
+    artifacts: options.artifacts,
+    review: nextReview,
+    observations,
+    currentUrl: options.currentUrl,
+    details: [...baseDetails, ...injectionDetails],
+    log: options.log,
+    analysisFailureLogKey: options.profile.analysisFailureLogKey,
+    upsertStep: (step) =>
+      options.upsertStep({
+        ...step,
+        candidateId: options.params.candidateId,
+        candidateRank: options.params.candidateRank,
+      }),
+  });
+
+  return observation;
+}
 
 export const buildPlaywrightVerificationReviewDetails = <
   TReview extends PlaywrightVerificationObservationLike,
@@ -846,6 +1256,70 @@ export type PlaywrightObservationLoopOptions<TState, TObservation> = {
   ) => Promise<TObservation | null>;
 };
 
+export type PlaywrightVerificationObservationLoopOptions<
+  TState,
+  TObservation,
+  TParams extends PlaywrightVerificationCaptureParamsBase,
+> = Omit<PlaywrightObservationLoopOptions<TState, TObservation>, 'observe'> & {
+  buildCaptureParams: (
+    input: PlaywrightObservationLoopObserveInput<TState>
+  ) => TParams;
+  captureObservation: (params: TParams) => Promise<TObservation | null>;
+};
+
+export type PlaywrightVerificationObservationLoopAdapter<
+  TState,
+  TBaseParams,
+  TParams extends PlaywrightVerificationCaptureParamsBase,
+> = {
+  buildCaptureParams: (
+    input: PlaywrightObservationLoopObserveInput<TState>,
+    baseParams: TBaseParams
+  ) => TParams;
+};
+
+export const createPlaywrightVerificationObservationLoopAdapter = <
+  TState,
+  TBaseParams,
+  TParams extends PlaywrightVerificationCaptureParamsBase,
+>(
+  adapter: PlaywrightVerificationObservationLoopAdapter<TState, TBaseParams, TParams>
+): PlaywrightVerificationObservationLoopAdapter<TState, TBaseParams, TParams> => adapter;
+
+export type PlaywrightVerificationObservationLoopWithAdapterOptions<
+  TState,
+  TObservation,
+  TBaseParams,
+  TParams extends PlaywrightVerificationCaptureParamsBase,
+> = Omit<
+  PlaywrightVerificationObservationLoopOptions<TState, TObservation, TParams>,
+  'buildCaptureParams'
+> & {
+  adapter: PlaywrightVerificationObservationLoopAdapter<TState, TBaseParams, TParams>;
+  baseParams: TBaseParams;
+};
+
+export type PlaywrightVerificationObservationLoopWithProfileOptions<
+  TState,
+  TObservation,
+  TBaseParams,
+  TParams extends PlaywrightVerificationCaptureParamsBase,
+  TReview extends PlaywrightVerificationObservationLike,
+  TExtra extends object = Record<never, never>,
+> = Omit<
+  PlaywrightVerificationObservationLoopOptions<TState, TObservation, TParams>,
+  'buildCaptureParams'
+> & {
+  profile: PlaywrightVerificationReviewLoopProfile<
+    TState,
+    TBaseParams,
+    TParams,
+    TReview,
+    TExtra
+  >;
+  baseParams: TBaseParams;
+};
+
 export type PlaywrightObservationLoopResult<TState, TObservation> = {
   resolved: boolean;
   finalDecision: Extract<
@@ -1012,6 +1486,92 @@ export async function runPlaywrightObservationLoop<TState, TObservation>(
   };
 }
 
+export async function runPlaywrightVerificationObservationLoop<
+  TState,
+  TObservation,
+  TParams extends PlaywrightVerificationCaptureParamsBase,
+>(
+  options: PlaywrightVerificationObservationLoopOptions<
+    TState,
+    TObservation,
+    TParams
+  >
+): Promise<PlaywrightObservationLoopResult<TState, TObservation>> {
+  return runPlaywrightObservationLoop<TState, TObservation>({
+    timeoutMs: options.timeoutMs,
+    stableClearWindowMs: options.stableClearWindowMs,
+    intervalMs: options.intervalMs,
+    initialSnapshot: options.initialSnapshot,
+    isPageClosed: options.isPageClosed,
+    wait: options.wait,
+    readSnapshot: options.readSnapshot,
+    observe: (input) => options.captureObservation(options.buildCaptureParams(input)),
+  });
+}
+
+export async function runPlaywrightVerificationObservationLoopWithAdapter<
+  TState,
+  TObservation,
+  TBaseParams,
+  TParams extends PlaywrightVerificationCaptureParamsBase,
+>(
+  options: PlaywrightVerificationObservationLoopWithAdapterOptions<
+    TState,
+    TObservation,
+    TBaseParams,
+    TParams
+  >
+): Promise<PlaywrightObservationLoopResult<TState, TObservation>> {
+  return runPlaywrightVerificationObservationLoop<TState, TObservation, TParams>({
+    timeoutMs: options.timeoutMs,
+    stableClearWindowMs: options.stableClearWindowMs,
+    intervalMs: options.intervalMs,
+    initialSnapshot: options.initialSnapshot,
+    isPageClosed: options.isPageClosed,
+    wait: options.wait,
+    readSnapshot: options.readSnapshot,
+    buildCaptureParams: (input) =>
+      options.adapter.buildCaptureParams(input, options.baseParams),
+    captureObservation: options.captureObservation,
+  });
+}
+
+export async function runPlaywrightVerificationObservationLoopWithProfile<
+  TState,
+  TObservation,
+  TBaseParams,
+  TParams extends PlaywrightVerificationCaptureParamsBase,
+  TReview extends PlaywrightVerificationObservationLike,
+  TExtra extends object = Record<never, never>,
+>(
+  options: PlaywrightVerificationObservationLoopWithProfileOptions<
+    TState,
+    TObservation,
+    TBaseParams,
+    TParams,
+    TReview,
+    TExtra
+  >
+): Promise<PlaywrightObservationLoopResult<TState, TObservation>> {
+  return runPlaywrightVerificationObservationLoopWithAdapter<
+    TState,
+    TObservation,
+    TBaseParams,
+    TParams
+  >({
+    timeoutMs: options.timeoutMs,
+    stableClearWindowMs: options.stableClearWindowMs,
+    intervalMs: options.intervalMs,
+    initialSnapshot: options.initialSnapshot,
+    isPageClosed: options.isPageClosed,
+    wait: options.wait,
+    readSnapshot: options.readSnapshot,
+    adapter: options.profile.adapter,
+    baseParams: options.baseParams,
+    captureObservation: options.captureObservation,
+  });
+}
+
 export async function evaluateStepWithAI(
   options: PlaywrightStepEvaluateOptions
 ): Promise<PlaywrightStepEvaluateResult> {
@@ -1068,6 +1628,8 @@ export type PlaywrightStepInjectContext = {
   maxIterations: number;
   url: string;
   dom?: string | null | undefined;
+  /** Base64-encoded PNG screenshot of the current page; used for vision-capable models */
+  screenshotBase64?: string | null | undefined;
   priorEvaluation?: string | null | undefined;
   priorInjectorReasoning?: string | null | undefined;
 };
@@ -1157,12 +1719,24 @@ export async function injectCodeWithAI(
   const systemPrompt =
     options.systemPrompt?.trim() || brainConfig.systemPrompt || INJECTOR_DEFAULT_SYSTEM_PROMPT;
   const userMessage = buildInjectorUserMessage(options);
+  const screenshotBase64 = options.context.screenshotBase64;
+
+  const userContent: unknown =
+    screenshotBase64 && isBrainModelVisionCapable(brainConfig.modelId)
+      ? [
+          {
+            type: 'image_url' as const,
+            image_url: { url: `data:image/png;base64,${screenshotBase64}` },
+          },
+          { type: 'text' as const, text: userMessage },
+        ]
+      : userMessage;
 
   const result = await runBrainChatCompletion({
     modelId: brainConfig.modelId,
     messages: [
       { role: 'system', content: systemPrompt },
-      { role: 'user', content: userMessage },
+      { role: 'user', content: userContent as string },
     ],
     temperature: brainConfig.temperature ?? 0.2,
   });

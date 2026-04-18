@@ -801,6 +801,7 @@ export function LiveScripterProbePanel({
                     suggestions: liveScripter.probeResult.suggestions,
                   },
                 });
+                const { session, message } = response;
                 setSavedProbeSessionHint({
                   href: getSelectorRegistryAdminHref(registryNamespace, {
                     profile: effectiveRegistryProfile,
@@ -808,15 +809,15 @@ export function LiveScripterProbePanel({
                     hash: 'probe-sessions',
                   }),
                   sourceTitle:
-                    response.session.sourceTitle?.trim().length > 0
-                      ? response.session.sourceTitle
-                      : liveScripter.probeResult.title,
-                  scannedPages: response.session.scannedPages,
+                    session.sourceTitle?.trim() ||
+                    liveScripter.probeResult.title ||
+                    'Untitled',
+                  scannedPages: session.scannedPages,
                   templateLabel: formatSelectorRegistryProbeTemplateLabel(
-                    response.session.templateFingerprint
+                    session.templateFingerprint
                   ),
                 });
-                toast(response.message, { variant: 'success' });
+                toast(message, { variant: 'success' });
                 if (registryNamespace === 'custom') {
                   try {
                     await syncCustomRegistryProbeUrl(

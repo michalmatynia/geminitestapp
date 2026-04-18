@@ -119,8 +119,9 @@ describe('playwright server runtime helpers', () => {
   });
 
   it('validates scripts through the shared parser helper', () => {
-    validatePlaywrightNodeScriptMock.mockReturnValueOnce(['bad script']);
-    expect(validatePlaywrightEngineScript('test()')).toEqual(['bad script']);
+    const mockResult = { ok: true, logs: ['test log'] };
+    validatePlaywrightNodeScriptMock.mockReturnValueOnce(mockResult);
+    expect(validatePlaywrightEngineScript('test()')).toEqual(mockResult);
     expect(validatePlaywrightNodeScriptMock).toHaveBeenCalledWith('test()');
   });
 });

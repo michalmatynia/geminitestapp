@@ -113,6 +113,7 @@ export function GamesLibraryGameModal(props: GamesLibraryGameModalProps): React.
   const state = useGamesLibraryGameModalState(props);
 
   if (!game) {
+    console.log('GamesLibraryGameModal: game prop is null');
     return null;
   }
 

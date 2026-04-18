@@ -49,11 +49,58 @@ vi.mock('@/features/products/server/product-scan-ai-evaluator', async () => {
   const actual = await vi.importActual<typeof import('@/features/products/server/product-scan-ai-evaluator')>(
     '@/features/products/server/product-scan-ai-evaluator'
   );
+  const aiStep = await vi.importActual<typeof import('@/features/playwright/server/ai-step-service')>(
+    '@/features/playwright/server/ai-step-service'
+  );
 
   return {
     ...actual,
     evaluateProductScanVerificationBarrier: (...args: unknown[]) =>
       mocks.evaluateProductScanVerificationBarrier(...args),
+    evaluateProductScanVerificationBarrierFromProfile: (options: Parameters<
+      typeof actual.evaluateProductScanVerificationBarrierFromProfile
+    >[0]) =>
+      mocks.evaluateProductScanVerificationBarrier(
+        actual.createProductScanVerificationBarrierEvaluationInputFromProfile(options)
+      ),
+    runProductScanVerificationBarrierReviewCapture: (options: Parameters<
+      typeof actual.runProductScanVerificationBarrierReviewCapture
+    >[0]) =>
+      aiStep.runPlaywrightVerificationReviewCapture({
+        ...options,
+        profile: options.profile.review,
+        evaluate: (capture, params) =>
+          mocks.evaluateProductScanVerificationBarrier(
+            actual.createProductScanVerificationBarrierEvaluationInputFromProfile({
+              profile: options.profile.review,
+              params,
+              capture,
+            })
+          ),
+      }),
+    runProductScanVerificationBarrierReviewCaptureWithState: (options: Parameters<
+      typeof actual.runProductScanVerificationBarrierReviewCaptureWithState
+    >[0]) =>
+      aiStep.runPlaywrightVerificationReviewCapture({
+        ...options,
+        profile: options.profile.review,
+        previousObservation: actual.getLastProductScanVerificationObservation(
+          options.verificationState
+        ),
+        evaluate: (capture, params) =>
+          mocks.evaluateProductScanVerificationBarrier(
+            actual.createProductScanVerificationBarrierEvaluationInputFromProfile({
+              profile: options.profile,
+              params,
+              capture,
+            })
+          ),
+        commitObservation: ({ review, observation }) =>
+          actual.commitProductScanVerificationObservation(options.verificationState, {
+            review,
+            observation,
+          }),
+      }),
   };
 });
 
@@ -1016,11 +1063,15 @@ describe('AmazonScanSequencer', () => {
         ])
       );
 
-      const observations = (seq as any).getGoogleVerificationObservations() as Array<{
-        loopDecision: string;
-        iteration: number;
-        captchaDetected: boolean;
-      }>;
+      const observations = (
+        (seq as any).buildGoogleVerificationDiagnosticsPayload() as {
+          googleVerificationObservations: Array<{
+            loopDecision: string;
+            iteration: number;
+            captchaDetected: boolean;
+          }>;
+        }
+      ).googleVerificationObservations;
       expect(observations).toHaveLength(3);
       expect(observations.map((entry) => entry.loopDecision)).toEqual([
         'captcha_present',

@@ -53,6 +53,32 @@ describe('KangurFeatureApp', () => {
     expect(screen.queryByTestId('kangur-login-modal')).toBeNull();
   });
 
+  it('does not cover the initial home route with a transition skeleton while theme settings are still hydrating', () => {
+    routingStateMock.mockReturnValue({
+      pageKey: 'Game',
+      embedded: false,
+      requestedPath: '/kangur',
+      requestedHref: '/kangur',
+      basePath: '/kangur',
+    });
+    settingsStoreStateMock.mockReturnValue({
+      map: new Map(),
+      isLoading: true,
+      isFetching: false,
+      error: null,
+      get: vi.fn(),
+      getBoolean: vi.fn(),
+      getNumber: vi.fn(),
+      refetch: vi.fn(),
+    });
+
+    render(<KangurFeatureApp />);
+
+    expect(screen.getByTestId('kangur-route-content')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-page-game')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-page-transition-skeleton')).toBeNull();
+  });
+
   it('preloads the hot Lessons page after the Game route settles', async () => {
     routingStateMock.mockReturnValue({
       pageKey: 'Game',

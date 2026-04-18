@@ -70,14 +70,15 @@ const loadProgressMock = vi.fn(() => ({
 vi.mock('@/features/kangur/ui/components/KangurLessonActivityInstanceRuntime', () => ({
   __esModule: true,
   default: ({
-    gameId,
-    instanceId,
-    onFinish,
+    config,
   }: {
-    gameId: string;
-    instanceId: string;
-    onFinish: () => void;
+    config: {
+      gameId: string;
+      instanceId: string;
+      onFinish: () => void;
+    };
   }): React.JSX.Element => {
+    const { gameId, instanceId, onFinish } = config;
     const section =
       instanceId === 'calendar_interactive:instance:calendar-days'
         ? 'dni'

@@ -66,68 +66,64 @@ const createMissingPersistedSessionError = (): Error =>
     'Learner sign-in did not produce a persisted learner session. Check cookie/session support for the current device runtime.',
   );
 
+const resolveLearnerSession = async (
+  apiClient: KangurApiClient,
+  storage: KangurClientStorageAdapter,
+): Promise<KangurAuthSession> => {
+  try {
+    const user = await apiClient.getAuthMe({
+      cache: 'no-store',
+      credentials: 'include',
+    });
+    const session = createAuthenticatedKangurAuthSession(user, 'native-learner-session');
+    persistResolvedLearnerSession(storage, session);
+    return session;
+  } catch (error) {
+    const status = resolveStatusCode(error);
+    if (status === 401 || status === 403) {
+      const anonymousSession = createAnonymousLearnerSession();
+      persistResolvedLearnerSession(storage, anonymousSession);
+      return anonymousSession;
+    }
+    throw error;
+  }
+};
+
+const resolveAuthenticatedLearnerSession = async (
+  apiClient: KangurApiClient,
+  storage: KangurClientStorageAdapter,
+): Promise<KangurAuthSession> => {
+  const session = await resolveLearnerSession(apiClient, storage);
+  if (session.status !== 'authenticated') {
+    throw createMissingPersistedSessionError();
+  }
+  return session;
+};
+
+const isNonEmptyString = (value: unknown): value is string =>
+  typeof value === 'string' && value !== '';
+
 export const createLearnerSessionKangurAuthAdapter = ({
   apiClient,
   storage,
 }: CreateLearnerSessionKangurAuthAdapterOptions): KangurAuthAdapter => {
-  const resolveSession = async (): Promise<KangurAuthSession> => {
-    try {
-      const user = await apiClient.getAuthMe({
-        cache: 'no-store',
-        credentials: 'include',
-      });
-      const session = createAuthenticatedKangurAuthSession(
-        user,
-        'native-learner-session',
-      );
-      persistResolvedLearnerSession(storage, session);
-      return session;
-    } catch (error) {
-      const status = resolveStatusCode(error);
-      if (status === 401 || status === 403) {
-        const anonymousSession = createAnonymousLearnerSession();
-        persistResolvedLearnerSession(storage, anonymousSession);
-        return anonymousSession;
-      }
-      throw error;
-    }
-  };
-
-  const resolveAuthenticatedSession = async (): Promise<KangurAuthSession> => {
-    const session = await resolveSession();
-    if (session.status !== 'authenticated') {
-      throw createMissingPersistedSessionError();
-    }
-    return session;
-  };
-
   return {
-    getSession: async () => resolveSession(),
+    getSession: () => resolveLearnerSession(apiClient, storage),
     signIn: async (input?: KangurAuthTransitionInput) => {
-      const loginName = input?.learnerCredentials?.loginName?.trim();
-      const password = input?.learnerCredentials?.password;
+      const credentials = input?.learnerCredentials;
+      const loginName = credentials?.loginName.trim();
+      const password = credentials?.password;
 
-      if (!loginName || !password) {
+      if (!isNonEmptyString(loginName) || !isNonEmptyString(password)) {
         throw createMissingCredentialsError();
       }
 
-      await apiClient.signInLearner(
-        {
-          loginName,
-          password,
-        },
-        {
-          credentials: 'include',
-        },
-      );
-
-      return resolveAuthenticatedSession();
+      await apiClient.signInLearner({ loginName, password }, { credentials: 'include' });
+      return resolveAuthenticatedLearnerSession(apiClient, storage);
     },
     signOut: async () => {
       try {
-        await apiClient.signOutLearner({
-          credentials: 'include',
-        });
+        await apiClient.signOutLearner({ credentials: 'include' });
       } catch (error) {
         const status = resolveStatusCode(error);
         if (status !== 401 && status !== 403) {

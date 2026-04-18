@@ -1,21 +1,15 @@
 import type { Locator } from 'playwright';
 import {
-  buildPlaywrightVerificationReviewDetailsFromProfile,
-  captureAndEvaluatePlaywrightObservation,
-  createPlaywrightVerificationObservation,
-  createPlaywrightVerificationReviewProfile,
-  finalizePlaywrightVerificationReview,
-  resolvePlaywrightVerificationReviewCaptureContext,
+  createPlaywrightVerificationReviewLoopProfile,
+  runPlaywrightVerificationObservationLoopWithProfile,
   slugifyPlaywrightVerificationReviewSegment,
-  runPlaywrightObservationLoop,
   type PlaywrightObservationLoopDecision,
 } from '@/features/playwright/server/ai-step-service';
 import {
-  buildProductScanVerificationDiagnosticsPayload,
-  createProductScanVerificationBarrierEvaluationInputFromProfile,
-  cloneProductScanVerificationObservations,
-  cloneProductScanVerificationReview,
-  evaluateProductScanVerificationBarrier,
+  buildProductScanVerificationDiagnosticsPayloadFromState,
+  createProductScanVerificationState,
+  createProductScanVerificationBarrierAutoInjectionConfig,
+  runProductScanVerificationBarrierReviewCaptureWithState,
   type ProductScanVerificationObservationBase,
   type ProductScanVerificationReview,
 } from '@/features/products/server/product-scan-ai-evaluator';
@@ -142,6 +136,13 @@ type SupplierVerificationObservationCaptureParams = {
   recoveryMessage: string | null;
 };
 
+type SupplierVerificationLoopBaseParams = {
+  stage: ScanStage;
+  candidateId: string;
+  candidateRank: number;
+  resolveFallbackUrl: () => string;
+};
+
 const isSelectorRuntimeRecord = (
   value: unknown
 ): value is Partial<Record<keyof Supplier1688SelectorRuntime, unknown>> =>
@@ -214,8 +215,10 @@ const normalizeSupplier1688SelectorRuntime = (
   };
 };
 
-const SUPPLIER_VERIFICATION_REVIEW_PROFILE =
-  createPlaywrightVerificationReviewProfile<
+const SUPPLIER_VERIFICATION_LOOP_PROFILE =
+  createPlaywrightVerificationReviewLoopProfile<
+    Supplier1688VerificationSnapshotState,
+    SupplierVerificationLoopBaseParams,
     SupplierVerificationObservationCaptureParams,
     Supplier1688VerificationObservation
   >({
@@ -227,10 +230,19 @@ const SUPPLIER_VERIFICATION_REVIEW_PROFILE =
     group: 'supplier',
     label: 'Inspect supplier verification barrier',
     analysisFailureLogKey: '1688.verification.review.analysis_failed',
+    screenshotFailureLogKey: '1688.verification.review.screenshot_failed',
     evaluationProvider: '1688',
     resolveEvaluationStage: (params) => params.stage ?? '1688_barrier',
     evaluationObjective:
       'Describe the visible 1688 login, captcha, or access barrier for manual handling. If the barrier appears cleared, say so explicitly. Do not solve it.',
+    buildObservationExtra: (params) => ({
+      blocked: params.blocked,
+      barrierKind: params.barrierKind,
+      stage: params.stage,
+      barrierMessage: params.barrierMessage,
+      recoveryReason: params.recoveryReason,
+      recoveryMessage: params.recoveryMessage,
+    }),
     buildArtifactSegments: (params) => [
       slugifyPlaywrightVerificationReviewSegment(params.stage, 'unknown-stage'),
       slugifyPlaywrightVerificationReviewSegment(params.candidateId, 'unknown-candidate'),
@@ -247,6 +259,24 @@ const SUPPLIER_VERIFICATION_REVIEW_PROFILE =
       recoveryReason: params.recoveryReason ?? '',
     }),
     detailDescriptors: SUPPLIER_VERIFICATION_REVIEW_DETAIL_DESCRIPTORS,
+    buildLoopCaptureParams: ({ iteration, decision, snapshot, stableForMs }, baseParams) => ({
+      stage: baseParams.stage,
+      candidateId: baseParams.candidateId,
+      candidateRank: baseParams.candidateRank,
+      iteration,
+      loopDecision: decision,
+      blocked: snapshot.blocked,
+      barrierKind: snapshot.state?.barrier.barrierKind ?? null,
+      barrierMessage: snapshot.state?.barrier.message ?? null,
+      stableForMs,
+      currentUrl:
+        snapshot.currentUrl ??
+        snapshot.state?.readyState?.currentUrl ??
+        snapshot.state?.barrier.currentUrl ??
+        baseParams.resolveFallbackUrl(),
+      recoveryReason: snapshot.state?.readyState?.reason ?? null,
+      recoveryMessage: snapshot.state?.readyState?.message ?? null,
+    }),
   });
 
 // ─── Main sequencer ────────────────────────────────────────────────────────────
@@ -260,8 +290,10 @@ export class Supplier1688ScanSequencer extends ProductScanSequencer {
   private readonly PRICE_TEXT_PATTERN: RegExp;
   private readonly SEARCH_BODY_SIGNAL: RegExp;
   private readonly SUPPLIER_BODY_SIGNAL: RegExp;
-  private supplierVerificationReview: ProductScanVerificationReview | null = null;
-  private supplierVerificationObservations: Supplier1688VerificationObservation[] = [];
+  private readonly supplierVerificationState = createProductScanVerificationState<
+    ProductScanVerificationReview,
+    Supplier1688VerificationObservation
+  >();
 
   private get scannerStartUrl(): string {
     return this.resolve1688ImageSearchStartUrl(this.input.scanner1688StartUrl);
@@ -285,24 +317,13 @@ export class Supplier1688ScanSequencer extends ProductScanSequencer {
 
   protected override async emitResult(payload: Record<string, unknown>): Promise<void> {
     await super.emitResult({
-      ...buildProductScanVerificationDiagnosticsPayload({
+      ...buildProductScanVerificationDiagnosticsPayloadFromState({
         reviewKey: 'supplierVerificationReview',
         observationsKey: 'supplierVerificationObservations',
-        review: this.supplierVerificationReview,
-        observations: this.supplierVerificationObservations,
+        state: this.supplierVerificationState,
       }),
       ...payload,
     });
-  }
-
-  protected getSupplierVerificationReview(): ProductScanVerificationReview | null {
-    return this.supplierVerificationReview !== null
-      ? cloneProductScanVerificationReview(this.supplierVerificationReview)
-      : null;
-  }
-
-  protected getSupplierVerificationObservations(): Supplier1688VerificationObservation[] {
-    return cloneProductScanVerificationObservations(this.supplierVerificationObservations);
   }
 
   // ─── Abstract implementation ─────────────────────────────────────────────────
@@ -1334,8 +1355,11 @@ export class Supplier1688ScanSequencer extends ProductScanSequencer {
 
     this.log('1688.captcha.waiting', { stage, message: waitMessage, timeoutMs });
     const loopResult =
-      await runPlaywrightObservationLoop<
+      await runPlaywrightVerificationObservationLoopWithProfile<
         Supplier1688VerificationSnapshotState,
+        Supplier1688VerificationObservation,
+        SupplierVerificationLoopBaseParams,
+        SupplierVerificationObservationCaptureParams,
         Supplier1688VerificationObservation
       >({
         timeoutMs,
@@ -1382,25 +1406,15 @@ export class Supplier1688ScanSequencer extends ProductScanSequencer {
             currentUrl: readyState?.currentUrl ?? currentBarrier.currentUrl,
           };
         },
-        observe: async ({ iteration, decision, snapshot, stableForMs }) =>
-          this.captureSupplierVerificationObservation({
-            stage,
-            candidateId: stepMeta.candidateId,
-            candidateRank: stepMeta.candidateRank,
-            iteration,
-            loopDecision: decision,
-            blocked: snapshot.blocked,
-            barrierKind: snapshot.state?.barrier.barrierKind ?? null,
-            barrierMessage: snapshot.state?.barrier.message ?? null,
-            stableForMs,
-            currentUrl:
-              snapshot.currentUrl ??
-              snapshot.state?.readyState?.currentUrl ??
-              snapshot.state?.barrier.currentUrl ??
-              this.page.url(),
-            recoveryReason: snapshot.state?.readyState?.reason ?? null,
-            recoveryMessage: snapshot.state?.readyState?.message ?? null,
-          }),
+        profile: SUPPLIER_VERIFICATION_LOOP_PROFILE,
+        baseParams: {
+          stage,
+          candidateId: stepMeta.candidateId,
+          candidateRank: stepMeta.candidateRank,
+          resolveFallbackUrl: () => this.page.url(),
+        },
+        captureObservation: (captureParams) =>
+          this.captureSupplierVerificationObservation(captureParams),
       });
 
     if (loopResult.resolved) {
@@ -1446,96 +1460,19 @@ export class Supplier1688ScanSequencer extends ProductScanSequencer {
     params: SupplierVerificationObservationCaptureParams
   ): Promise<Supplier1688VerificationObservation | null> {
     const currentUrl = params.currentUrl ?? this.safePageUrl();
-    const previousObservation =
-      this.supplierVerificationObservations[
-        this.supplierVerificationObservations.length - 1
-      ] ?? null;
-    const { artifactKey, extraFingerprintParts } =
-      resolvePlaywrightVerificationReviewCaptureContext(
-        SUPPLIER_VERIFICATION_REVIEW_PROFILE.capture,
-        params
-      );
-
-    this.upsertScanStep({
-      key: SUPPLIER_VERIFICATION_REVIEW_PROFILE.runtime.step.key,
-      status: 'running',
-      candidateId: params.candidateId,
-      candidateRank: params.candidateRank,
-      message: SUPPLIER_VERIFICATION_REVIEW_PROFILE.runtime.step.runningMessage,
-      url: currentUrl,
-      group: SUPPLIER_VERIFICATION_REVIEW_PROFILE.runtime.step.group,
-      label: SUPPLIER_VERIFICATION_REVIEW_PROFILE.runtime.step.label,
-    });
-
-    const { observation, review, deduped } =
-      await captureAndEvaluatePlaywrightObservation<
-        ProductScanVerificationReview,
-        Supplier1688VerificationObservation
-      >({
-        page: this.page,
-        artifacts: this.artifacts,
-        artifactKey,
-        currentUrl,
-        previousObservation,
-        previousFingerprint: previousObservation?.fingerprint ?? null,
-        extraFingerprintParts,
-        log: this.log,
-        screenshotFailureLogKey: '1688.verification.review.screenshot_failed',
-        evaluate: async (capture) =>
-          evaluateProductScanVerificationBarrier(
-            createProductScanVerificationBarrierEvaluationInputFromProfile({
-              profile: SUPPLIER_VERIFICATION_REVIEW_PROFILE,
-              params,
-              capture,
-            })
-          ),
-        buildObservation: ({ capture, review: nextReview }) =>
-          createPlaywrightVerificationObservation({
-            review: nextReview,
-            capture,
-            iteration: params.iteration,
-            loopDecision: params.loopDecision,
-            stableForMs: params.stableForMs,
-            extra: {
-              blocked: params.blocked,
-              barrierKind: params.barrierKind,
-              stage: params.stage,
-              barrierMessage: params.barrierMessage,
-              recoveryReason: params.recoveryReason,
-              recoveryMessage: params.recoveryMessage,
-            },
-          }),
-      });
-
-    if (deduped) {
-      return observation;
-    }
-
-    const nextReview = review!;
-    this.supplierVerificationReview = nextReview;
-    this.supplierVerificationObservations.push(observation);
-    await finalizePlaywrightVerificationReview({
-      runtime: SUPPLIER_VERIFICATION_REVIEW_PROFILE.runtime,
-      artifactKey,
-      artifacts: this.artifacts,
-      review: nextReview,
-      observations: this.supplierVerificationObservations,
+    return runProductScanVerificationBarrierReviewCaptureWithState({
+      profile: SUPPLIER_VERIFICATION_LOOP_PROFILE,
+      verificationState: this.supplierVerificationState,
+      params,
       currentUrl,
-      details: buildPlaywrightVerificationReviewDetailsFromProfile(
-        observation,
-        SUPPLIER_VERIFICATION_REVIEW_PROFILE
-      ),
+      page: this.page,
+      artifacts: this.artifacts,
       log: this.log,
-      analysisFailureLogKey: SUPPLIER_VERIFICATION_REVIEW_PROFILE.analysisFailureLogKey,
-      upsertStep: (step) =>
-        this.upsertScanStep({
-          ...step,
-          candidateId: params.candidateId,
-          candidateRank: params.candidateRank,
-        }),
+      upsertStep: (step) => this.upsertScanStep(step),
+      injectOnEvaluation: createProductScanVerificationBarrierAutoInjectionConfig({
+        provider: '1688',
+      }),
     });
-
-    return observation;
   }
 
   protected async attempt1688PostCaptchaRecovery(

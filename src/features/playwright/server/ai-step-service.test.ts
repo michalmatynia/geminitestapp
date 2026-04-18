@@ -24,11 +24,17 @@ import {
   buildPlaywrightVerificationReviewFingerprintParts,
   captureAndEvaluatePlaywrightObservation,
   buildPlaywrightVerificationReviewArtifactKey,
+  createPlaywrightVerificationObservationLoopAdapter,
   createPlaywrightVerificationObservationFromProfile,
+  createPlaywrightVerificationReviewLoopProfile,
   createPlaywrightVerificationReviewProfile,
   createPlaywrightVerificationObservation,
   finalizePlaywrightVerificationReview,
   resolvePlaywrightVerificationReviewCaptureContext,
+  runPlaywrightVerificationReviewCapture,
+  runPlaywrightVerificationObservationLoop,
+  runPlaywrightVerificationObservationLoopWithAdapter,
+  runPlaywrightVerificationObservationLoopWithProfile,
   createPlaywrightVerificationReviewArtifactConfig,
   buildPlaywrightVerificationReviewDetailsWithAdapter,
   createPlaywrightVerificationReviewStepMessages,
@@ -205,6 +211,308 @@ describe('runPlaywrightObservationLoop', () => {
   });
 });
 
+describe('runPlaywrightVerificationObservationLoop', () => {
+  it('bridges loop snapshots into provider capture params through the shared helper', async () => {
+    const dateSpy = vi.spyOn(Date, 'now');
+    let now = 10_000;
+    dateSpy.mockImplementation(() => now);
+    const capturedParams: Array<Record<string, unknown>> = [];
+
+    try {
+      const result = await runPlaywrightVerificationObservationLoop<
+        { currentUrl: string },
+        { iteration: number; decision: string },
+        {
+          candidateId: string;
+          candidateRank: number;
+          iteration: number;
+          loopDecision: string;
+          stableForMs: number | null;
+          currentUrl: string;
+        }
+      >({
+        timeoutMs: 500,
+        intervalMs: 1_000,
+        stableClearWindowMs: 2_000,
+        initialSnapshot: {
+          state: { currentUrl: 'https://example.com/challenge' },
+          blocked: true,
+          currentUrl: 'https://example.com/challenge',
+        },
+        isPageClosed: () => false,
+        wait: async (ms) => {
+          now += ms;
+        },
+        readSnapshot: async () => ({
+          state: { currentUrl: 'https://example.com/challenge' },
+          blocked: true,
+          currentUrl: 'https://example.com/challenge',
+        }),
+        buildCaptureParams: ({ iteration, decision, snapshot, stableForMs }) => ({
+          candidateId: 'pin-badge',
+          candidateRank: 2,
+          iteration,
+          loopDecision: decision,
+          stableForMs,
+          currentUrl: snapshot.currentUrl ?? 'unknown',
+        }),
+        captureObservation: async (params) => {
+          capturedParams.push(params);
+          return { iteration: params.iteration, decision: params.loopDecision };
+        },
+      });
+
+      expect(result).toEqual(
+        expect.objectContaining({
+          resolved: false,
+          finalDecision: 'timeout',
+          iterations: 3,
+        })
+      );
+      expect(capturedParams).toEqual([
+        {
+          candidateId: 'pin-badge',
+          candidateRank: 2,
+          iteration: 1,
+          loopDecision: 'blocked',
+          stableForMs: null,
+          currentUrl: 'https://example.com/challenge',
+        },
+        {
+          candidateId: 'pin-badge',
+          candidateRank: 2,
+          iteration: 2,
+          loopDecision: 'blocked',
+          stableForMs: null,
+          currentUrl: 'https://example.com/challenge',
+        },
+        {
+          candidateId: 'pin-badge',
+          candidateRank: 2,
+          iteration: 3,
+          loopDecision: 'timeout',
+          stableForMs: null,
+          currentUrl: 'https://example.com/challenge',
+        },
+      ]);
+    } finally {
+      dateSpy.mockRestore();
+    }
+  });
+});
+
+describe('runPlaywrightVerificationObservationLoopWithAdapter', () => {
+  it('bridges loop snapshots into provider capture params through a reusable adapter', async () => {
+    const dateSpy = vi.spyOn(Date, 'now');
+    let now = 10_000;
+    dateSpy.mockImplementation(() => now);
+    const capturedParams: Array<Record<string, unknown>> = [];
+
+    try {
+      const result = await runPlaywrightVerificationObservationLoopWithAdapter<
+        { currentUrl: string },
+        { iteration: number; decision: string },
+        { candidateId: string; candidateRank: number },
+        {
+          candidateId: string;
+          candidateRank: number;
+          iteration: number;
+          loopDecision: string;
+          stableForMs: number | null;
+          currentUrl: string;
+        }
+      >({
+        timeoutMs: 500,
+        intervalMs: 1_000,
+        stableClearWindowMs: 2_000,
+        initialSnapshot: {
+          state: { currentUrl: 'https://example.com/challenge' },
+          blocked: true,
+          currentUrl: 'https://example.com/challenge',
+        },
+        isPageClosed: () => false,
+        wait: async (ms) => {
+          now += ms;
+        },
+        readSnapshot: async () => ({
+          state: { currentUrl: 'https://example.com/challenge' },
+          blocked: true,
+          currentUrl: 'https://example.com/challenge',
+        }),
+        adapter: createPlaywrightVerificationObservationLoopAdapter({
+          buildCaptureParams: ({ iteration, decision, snapshot, stableForMs }, baseParams) => ({
+            candidateId: baseParams.candidateId,
+            candidateRank: baseParams.candidateRank,
+            iteration,
+            loopDecision: decision,
+            stableForMs,
+            currentUrl: snapshot.currentUrl ?? 'unknown',
+          }),
+        }),
+        baseParams: {
+          candidateId: 'pin-badge',
+          candidateRank: 2,
+        },
+        captureObservation: async (params) => {
+          capturedParams.push(params);
+          return { iteration: params.iteration, decision: params.loopDecision };
+        },
+      });
+
+      expect(result).toEqual(
+        expect.objectContaining({
+          resolved: false,
+          finalDecision: 'timeout',
+          iterations: 3,
+        })
+      );
+      expect(capturedParams).toEqual([
+        {
+          candidateId: 'pin-badge',
+          candidateRank: 2,
+          iteration: 1,
+          loopDecision: 'blocked',
+          stableForMs: null,
+          currentUrl: 'https://example.com/challenge',
+        },
+        {
+          candidateId: 'pin-badge',
+          candidateRank: 2,
+          iteration: 2,
+          loopDecision: 'blocked',
+          stableForMs: null,
+          currentUrl: 'https://example.com/challenge',
+        },
+        {
+          candidateId: 'pin-badge',
+          candidateRank: 2,
+          iteration: 3,
+          loopDecision: 'timeout',
+          stableForMs: null,
+          currentUrl: 'https://example.com/challenge',
+        },
+      ]);
+    } finally {
+      dateSpy.mockRestore();
+    }
+  });
+});
+
+describe('runPlaywrightVerificationObservationLoopWithProfile', () => {
+  it('bridges loop snapshots through a reusable verification loop profile', async () => {
+    const dateSpy = vi.spyOn(Date, 'now');
+    let now = 10_000;
+    dateSpy.mockImplementation(() => now);
+    const capturedParams: Array<Record<string, unknown>> = [];
+
+    try {
+      const result = await runPlaywrightVerificationObservationLoopWithProfile<
+        { currentUrl: string },
+        { iteration: number; decision: string },
+        { candidateId: string; candidateRank: number },
+        {
+          candidateId: string;
+          candidateRank: number;
+          iteration: number;
+          loopDecision: string;
+          stableForMs: number | null;
+          currentUrl: string;
+        },
+        {
+          status: string;
+          iteration: number;
+          loopDecision: string;
+        }
+      >({
+        timeoutMs: 500,
+        intervalMs: 1_000,
+        stableClearWindowMs: 2_000,
+        initialSnapshot: {
+          state: { currentUrl: 'https://example.com/challenge' },
+          blocked: true,
+          currentUrl: 'https://example.com/challenge',
+        },
+        isPageClosed: () => false,
+        wait: async (ms) => {
+          now += ms;
+        },
+        readSnapshot: async () => ({
+          state: { currentUrl: 'https://example.com/challenge' },
+          blocked: true,
+          currentUrl: 'https://example.com/challenge',
+        }),
+        profile: createPlaywrightVerificationReviewLoopProfile({
+          key: 'google_verification_review',
+          subject: 'Google verification screen',
+          runningMessage: 'Capturing Google verification screen for AI review.',
+          historyArtifactKey: 'google-verification-review-history',
+          artifactKeyPrefix: 'google-verification-review',
+          evaluationProvider: 'google_lens',
+          resolveEvaluationStage: () => 'google_captcha',
+          buildArtifactSegments: () => [],
+          buildFingerprintPartMap: () => ({}),
+          detailDescriptors: [],
+          buildLoopCaptureParams: (
+            { iteration, decision, snapshot, stableForMs },
+            baseParams: { candidateId: string; candidateRank: number }
+          ) => ({
+            candidateId: baseParams.candidateId,
+            candidateRank: baseParams.candidateRank,
+            iteration,
+            loopDecision: decision,
+            stableForMs,
+            currentUrl: snapshot.currentUrl ?? 'unknown',
+          }),
+        }),
+        baseParams: {
+          candidateId: 'pin-badge',
+          candidateRank: 2,
+        },
+        captureObservation: async (params) => {
+          capturedParams.push(params);
+          return { iteration: params.iteration, decision: params.loopDecision };
+        },
+      });
+
+      expect(result).toEqual(
+        expect.objectContaining({
+          resolved: false,
+          finalDecision: 'timeout',
+          iterations: 3,
+        })
+      );
+      expect(capturedParams).toEqual([
+        {
+          candidateId: 'pin-badge',
+          candidateRank: 2,
+          iteration: 1,
+          loopDecision: 'blocked',
+          stableForMs: null,
+          currentUrl: 'https://example.com/challenge',
+        },
+        {
+          candidateId: 'pin-badge',
+          candidateRank: 2,
+          iteration: 2,
+          loopDecision: 'blocked',
+          stableForMs: null,
+          currentUrl: 'https://example.com/challenge',
+        },
+        {
+          candidateId: 'pin-badge',
+          candidateRank: 2,
+          iteration: 3,
+          loopDecision: 'timeout',
+          stableForMs: null,
+          currentUrl: 'https://example.com/challenge',
+        },
+      ]);
+    } finally {
+      dateSpy.mockRestore();
+    }
+  });
+});
+
 describe('evaluateStructuredPlaywrightScreenshotWithAI', () => {
   it('runs screenshot evaluation and parses structured JSON through the shared helper', async () => {
     mockedResolveBrainExecutionConfigForCapability.mockResolvedValue({
@@ -338,6 +646,186 @@ describe('captureAndEvaluatePlaywrightObservation', () => {
     expect(result.observation).toBe(previousObservation);
     expect(evaluate).not.toHaveBeenCalled();
   });
+
+  it('runs the code injector after evaluation when shouldInject returns true', async () => {
+    vi.clearAllMocks();
+    const page = makeMockPage({
+      content: vi.fn().mockResolvedValue('<html><body>Challenge</body></html>'),
+      url: vi.fn().mockReturnValue('https://example.com/challenge'),
+      waitForTimeout: vi.fn().mockResolvedValue(undefined),
+    });
+    const evaluate = vi.fn().mockResolvedValue({ status: 'blocked', challengeType: 'captcha' });
+
+    mockedResolveBrainExecutionConfigForCapability.mockResolvedValue({
+      modelId: 'claude-sonnet-4-6',
+      systemPrompt: null,
+      temperature: 0.2,
+      brainApplied: false,
+    });
+    mockedRunBrainChatCompletion.mockResolvedValue({
+      text: JSON.stringify({ code: '// no-op', done: true, reasoning: 'Clicked solve button.' }),
+      modelId: 'claude-sonnet-4-6',
+    });
+
+    const result = await captureAndEvaluatePlaywrightObservation({
+      page,
+      artifactKey: 'verification-shot',
+      evaluate,
+      buildObservation: ({ review }) => review,
+      injectOnEvaluation: {
+        shouldInject: (review) => review.status === 'blocked',
+        goal: 'Resolve the captcha challenge on the page.',
+        maxIterations: 1,
+        buildEvaluatorContext: (review) =>
+          `Status: ${review.status}. Challenge: ${(review as { challengeType?: string }).challengeType ?? 'unknown'}.`,
+      },
+    });
+
+    expect(result.deduped).toBe(false);
+    expect(result.injectionReEvaluated).toBe(false);
+    expect(result.injection).toEqual(
+      expect.objectContaining({
+        attempted: true,
+        iterationsRun: 1,
+        done: true,
+        lastReasoning: 'Clicked solve button.',
+        modelId: 'claude-sonnet-4-6',
+        finalUrl: 'https://example.com/challenge',
+      })
+    );
+    expect(mockedRunBrainChatCompletion).toHaveBeenCalledWith(
+      expect.objectContaining({
+        messages: expect.arrayContaining([
+          expect.objectContaining({
+            role: 'user',
+            content: expect.arrayContaining([
+              expect.objectContaining({
+                type: 'text',
+                text: expect.stringContaining('Status: blocked. Challenge: captcha.'),
+              }),
+            ]),
+          }),
+        ]),
+      })
+    );
+  });
+
+  it('skips injection when shouldInject returns false', async () => {
+    vi.clearAllMocks();
+    const page = makeMockPage();
+    const evaluate = vi.fn().mockResolvedValue({ status: 'clear' });
+
+    const result = await captureAndEvaluatePlaywrightObservation({
+      page,
+      artifactKey: 'verification-shot',
+      evaluate,
+      buildObservation: ({ review }) => review,
+      injectOnEvaluation: {
+        shouldInject: (review) => review.status === 'blocked',
+        goal: 'Resolve the captcha.',
+      },
+    });
+
+    expect(result.injection).toBeNull();
+    expect(result.injectionReEvaluated).toBe(false);
+    expect(mockedRunBrainChatCompletion).not.toHaveBeenCalled();
+  });
+
+  it('sends a multimodal message when the model is vision-capable', async () => {
+    vi.clearAllMocks();
+    const page = makeMockPage({
+      content: vi.fn().mockResolvedValue('<html><body>Challenge</body></html>'),
+      url: vi.fn().mockReturnValue('https://example.com/challenge'),
+      waitForTimeout: vi.fn().mockResolvedValue(undefined),
+    });
+    const evaluate = vi.fn().mockResolvedValue({ status: 'blocked' });
+
+    mockedResolveBrainExecutionConfigForCapability.mockResolvedValue({
+      modelId: 'claude-sonnet-4-6',
+      systemPrompt: null,
+      temperature: 0.2,
+      brainApplied: false,
+    });
+    mockedIsBrainModelVisionCapable.mockReturnValue(true);
+    mockedRunBrainChatCompletion.mockResolvedValue({
+      text: JSON.stringify({ code: '', done: true, reasoning: 'Done.' }),
+      modelId: 'claude-sonnet-4-6',
+    });
+
+    await captureAndEvaluatePlaywrightObservation({
+      page,
+      artifactKey: 'verification-shot',
+      evaluate,
+      buildObservation: ({ review }) => review,
+      injectOnEvaluation: {
+        shouldInject: () => true,
+        goal: 'Solve it.',
+        maxIterations: 1,
+      },
+    });
+
+    expect(mockedRunBrainChatCompletion).toHaveBeenCalledWith(
+      expect.objectContaining({
+        messages: expect.arrayContaining([
+          expect.objectContaining({
+            role: 'user',
+            content: expect.arrayContaining([
+              expect.objectContaining({ type: 'image_url' }),
+              expect.objectContaining({ type: 'text' }),
+            ]),
+          }),
+        ]),
+      })
+    );
+  });
+
+  it('re-captures and re-evaluates after injection when reEvaluateAfterInjection is true', async () => {
+    vi.clearAllMocks();
+    const page = makeMockPage({
+      content: vi.fn().mockResolvedValue('<html><body>Challenge</body></html>'),
+      url: vi.fn()
+        .mockReturnValueOnce('https://example.com/challenge')
+        .mockReturnValue('https://example.com/resolved'),
+      title: vi.fn()
+        .mockResolvedValueOnce('Challenge page')
+        .mockResolvedValue('Resolved page'),
+      waitForTimeout: vi.fn().mockResolvedValue(undefined),
+    });
+    const evaluate = vi
+      .fn()
+      .mockResolvedValueOnce({ status: 'blocked' })
+      .mockResolvedValueOnce({ status: 'clear' });
+
+    mockedResolveBrainExecutionConfigForCapability.mockResolvedValue({
+      modelId: 'claude-sonnet-4-6',
+      systemPrompt: null,
+      temperature: 0.2,
+      brainApplied: false,
+    });
+    mockedRunBrainChatCompletion.mockResolvedValue({
+      text: JSON.stringify({ code: '', done: true, reasoning: 'Challenge resolved.' }),
+      modelId: 'claude-sonnet-4-6',
+    });
+
+    const result = await captureAndEvaluatePlaywrightObservation({
+      page,
+      artifactKey: 'verification-shot',
+      evaluate,
+      buildObservation: ({ review }) => review,
+      injectOnEvaluation: {
+        shouldInject: (review) => review.status === 'blocked',
+        goal: 'Resolve the challenge.',
+        maxIterations: 1,
+        reEvaluateAfterInjection: true,
+      },
+    });
+
+    expect(result.injection).not.toBeNull();
+    expect(result.injectionReEvaluated).toBe(true);
+    expect(result.review).toEqual(expect.objectContaining({ status: 'clear' }));
+    expect(result.capture.currentUrl).toBe('https://example.com/resolved');
+    expect(evaluate).toHaveBeenCalledTimes(2);
+  });
 });
 
 describe('buildPlaywrightVerificationReviewDetailsWithAdapter', () => {
@@ -446,6 +934,7 @@ describe('createPlaywrightVerificationReviewProfile', () => {
       historyArtifactKey: 'google-verification-review-history',
       artifactKeyPrefix: 'google-verification-review',
       analysisFailureLogKey: 'google.verification.review.analysis_failed',
+      screenshotFailureLogKey: 'google.verification.review.screenshot_failed',
       evaluationProvider: 'google_lens',
       resolveEvaluationStage: () => 'google_captcha',
       evaluationObjective: 'Describe the visible Google verification barrier.',
@@ -502,8 +991,88 @@ describe('createPlaywrightVerificationReviewProfile', () => {
         resolveStage: expect.any(Function),
         objective: 'Describe the visible Google verification barrier.',
       },
+      observation: {
+        buildExtra: expect.any(Function),
+      },
       detailDescriptors: [{ label: 'Captcha detected', value: 'challengeType' }],
       analysisFailureLogKey: 'google.verification.review.analysis_failed',
+      screenshotFailureLogKey: 'google.verification.review.screenshot_failed',
+    });
+  });
+});
+
+describe('createPlaywrightVerificationReviewLoopProfile', () => {
+  it('combines the review profile and loop adapter into one reusable config', () => {
+    const loopProfile = createPlaywrightVerificationReviewLoopProfile<
+      { currentUrl: string },
+      { candidateId: string; candidateRank: number },
+      {
+        candidateId: string;
+        candidateRank: number;
+        iteration: number;
+        loopDecision: string;
+        stableForMs: number | null;
+        currentUrl: string;
+      },
+      {
+        status: string;
+        iteration: number;
+        loopDecision: string;
+      }
+    >({
+      key: 'google_verification_review',
+      subject: 'Google verification screen',
+      runningMessage: 'Capturing Google verification screen for AI review.',
+      historyArtifactKey: 'google-verification-review-history',
+      artifactKeyPrefix: 'google-verification-review',
+      screenshotFailureLogKey: 'google.verification.review.screenshot_failed',
+      evaluationProvider: 'google_lens',
+      resolveEvaluationStage: () => 'google_captcha',
+      buildArtifactSegments: (params) => [params.candidateId],
+      buildFingerprintPartMap: (params) => ({
+        candidateId: params.candidateId,
+      }),
+      detailDescriptors: [],
+      buildLoopCaptureParams: (
+        { iteration, decision, snapshot, stableForMs },
+        baseParams
+      ) => ({
+        candidateId: baseParams.candidateId,
+        candidateRank: baseParams.candidateRank,
+        iteration,
+        loopDecision: decision,
+        stableForMs,
+        currentUrl: snapshot.currentUrl ?? 'unknown',
+      }),
+    });
+
+    expect(loopProfile.review.screenshotFailureLogKey).toBe(
+      'google.verification.review.screenshot_failed'
+    );
+    expect(
+      loopProfile.adapter.buildCaptureParams(
+        {
+          iteration: 2,
+          decision: 'blocked',
+          snapshot: {
+            state: { currentUrl: 'https://example.com/challenge' },
+            blocked: true,
+            currentUrl: 'https://example.com/challenge',
+          },
+          stableForMs: null,
+        },
+        {
+          candidateId: 'pin-badge',
+          candidateRank: 2,
+        }
+      )
+    ).toEqual({
+      candidateId: 'pin-badge',
+      candidateRank: 2,
+      iteration: 2,
+      loopDecision: 'blocked',
+      stableForMs: null,
+      currentUrl: 'https://example.com/challenge',
     });
   });
 });
@@ -534,6 +1103,7 @@ describe('buildPlaywrightVerificationReviewDetailsFromProfile', () => {
         artifactKeyPrefix: '1688-verification-review',
         evaluationProvider: '1688',
         resolveEvaluationStage: () => '1688_barrier',
+        buildObservationExtra: () => ({ blocked: true }),
         buildArtifactSegments: () => [],
         buildFingerprintPartMap: () => ({}),
         detailDescriptors: [{ label: 'Blocked', value: 'blocked' }],
@@ -674,6 +1244,230 @@ describe('createPlaywrightVerificationObservation', () => {
       blocked: true,
       barrierKind: 'captcha',
     });
+  });
+});
+
+describe('createPlaywrightVerificationObservationFromProfile', () => {
+  it('builds the shared observation shape from a review profile', () => {
+    expect(
+      createPlaywrightVerificationObservationFromProfile({
+        profile: createPlaywrightVerificationReviewProfile({
+          key: 'supplier_verification_review',
+          subject: 'supplier verification barrier',
+          runningMessage: 'Capturing supplier verification barrier for AI review.',
+          historyArtifactKey: '1688-verification-review-history',
+          artifactKeyPrefix: '1688-verification-review',
+          evaluationProvider: '1688',
+          resolveEvaluationStage: () => 'supplier_open',
+          buildObservationExtra: () => ({
+            blocked: true,
+            barrierKind: 'captcha',
+          }),
+          buildArtifactSegments: () => [],
+          buildFingerprintPartMap: () => ({}),
+          detailDescriptors: [{ label: 'Blocked', value: 'blocked' }],
+        }),
+        params: {},
+        review: {
+          status: 'analyzed',
+          challengeType: 'captcha',
+          manualActionRequired: true,
+        },
+        capture: {
+          observedAt: '2026-04-18T19:00:00.000Z',
+          fingerprint: 'fingerprint-2',
+        },
+        iteration: 4,
+        loopDecision: 'blocked',
+        stableForMs: null,
+      })
+    ).toEqual({
+      status: 'analyzed',
+      challengeType: 'captcha',
+      manualActionRequired: true,
+      iteration: 4,
+      observedAt: '2026-04-18T19:00:00.000Z',
+      loopDecision: 'blocked',
+      stableForMs: null,
+      fingerprint: 'fingerprint-2',
+      blocked: true,
+      barrierKind: 'captcha',
+    });
+  });
+});
+
+describe('runPlaywrightVerificationReviewCapture', () => {
+  it('runs the shared capture, observation commit, and finalization flow from one helper', async () => {
+    const page = makeMockPage();
+    const json = vi.fn().mockResolvedValue(undefined);
+    const file = vi.fn().mockResolvedValue('/tmp/google-shot.png');
+    const html = vi.fn().mockResolvedValue('/tmp/google-shot.html');
+    const upsertStep = vi.fn();
+    const profile = createPlaywrightVerificationReviewProfile({
+      key: 'google_verification_review',
+      subject: 'Google verification screen',
+      runningMessage: 'Capturing Google verification screen for AI review.',
+      historyArtifactKey: 'google-verification-review-history',
+      artifactKeyPrefix: 'google-verification-review',
+      analysisFailureLogKey: 'google.verification.review.analysis_failed',
+      evaluationProvider: 'google_lens',
+      resolveEvaluationStage: () => 'google_captcha',
+      buildObservationExtra: (params: { captchaDetected: boolean }) => ({
+        captchaDetected: params.captchaDetected,
+      }),
+      buildArtifactSegments: (params: {
+        candidateId: string;
+        candidateRank: number;
+        iteration: number;
+      }) => [params.candidateId, `rank-${params.candidateRank}`, `iter-${params.iteration}`],
+      buildFingerprintPartMap: (params: {
+        candidateId: string;
+        candidateRank: number;
+        captchaDetected: boolean;
+      }) => ({
+        candidateId: params.candidateId,
+        candidateRank: params.candidateRank,
+        captchaDetected: params.captchaDetected,
+      }),
+      detailDescriptors: [{ label: 'Captcha detected', value: 'captchaDetected' }],
+    });
+    const observations: Array<Record<string, unknown>> = [];
+
+    const observation = await runPlaywrightVerificationReviewCapture({
+      profile,
+      params: {
+        candidateId: 'pin-badge',
+        candidateRank: 2,
+        iteration: 1,
+        loopDecision: 'captcha_present',
+        stableForMs: null,
+        captchaDetected: true,
+      },
+      currentUrl: 'https://lens.google.com',
+      previousObservation: null,
+      page,
+      artifacts: { file, html, json },
+      evaluate: async () => ({
+        status: 'analyzed',
+        challengeType: 'captcha',
+        manualActionRequired: true,
+      }),
+      commitObservation: ({ observation: nextObservation }) => {
+        observations.push(nextObservation as Record<string, unknown>);
+        return observations;
+      },
+      upsertStep,
+    });
+
+    expect(observation).toMatchObject({
+      status: 'analyzed',
+      challengeType: 'captcha',
+      captchaDetected: true,
+      iteration: 1,
+      loopDecision: 'captcha_present',
+    });
+    expect(upsertStep).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        key: 'google_verification_review',
+        status: 'running',
+        candidateId: 'pin-badge',
+        candidateRank: 2,
+      })
+    );
+    expect(upsertStep).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        key: 'google_verification_review',
+        status: 'completed',
+        candidateId: 'pin-badge',
+        candidateRank: 2,
+        resultCode: 'manual_review_ready',
+      })
+    );
+    expect(json).toHaveBeenNthCalledWith(
+      1,
+      'google-verification-review-pin-badge-rank-2-iter-1-analysis',
+      expect.objectContaining({
+        status: 'analyzed',
+      })
+    );
+    expect(json).toHaveBeenNthCalledWith(
+      2,
+      'google-verification-review-history',
+      expect.arrayContaining([
+        expect.objectContaining({
+          captchaDetected: true,
+        }),
+      ])
+    );
+  });
+
+  it('uses the review profile screenshot failure log key when capture logging is not passed inline', async () => {
+    const log = vi.fn();
+    const upsertStep = vi.fn();
+    const page = makeMockPage({
+      screenshot: vi.fn().mockRejectedValue(new Error('capture failed')),
+    });
+    const profile = createPlaywrightVerificationReviewProfile({
+      key: 'google_verification_review',
+      subject: 'Google verification screen',
+      runningMessage: 'Capturing Google verification screen for AI review.',
+      historyArtifactKey: 'google-verification-review-history',
+      artifactKeyPrefix: 'google-verification-review',
+      screenshotFailureLogKey: 'google.verification.review.screenshot_failed',
+      evaluationProvider: 'google_lens',
+      resolveEvaluationStage: () => 'google_captcha',
+      buildObservationExtra: (params: { captchaDetected: boolean }) => ({
+        captchaDetected: params.captchaDetected,
+      }),
+      buildArtifactSegments: (params: {
+        candidateId: string;
+        candidateRank: number;
+        iteration: number;
+      }) => [params.candidateId, `rank-${params.candidateRank}`, `iter-${params.iteration}`],
+      buildFingerprintPartMap: (params: {
+        candidateId: string;
+        candidateRank: number;
+        captchaDetected: boolean;
+      }) => ({
+        candidateId: params.candidateId,
+        candidateRank: params.candidateRank,
+        captchaDetected: params.captchaDetected,
+      }),
+      detailDescriptors: [{ label: 'Captcha detected', value: 'captchaDetected' }],
+    });
+
+    await runPlaywrightVerificationReviewCapture({
+      profile,
+      params: {
+        candidateId: 'pin-badge',
+        candidateRank: 2,
+        iteration: 1,
+        loopDecision: 'captcha_present',
+        stableForMs: null,
+        captchaDetected: true,
+      },
+      currentUrl: 'https://lens.google.com',
+      previousObservation: null,
+      page,
+      log,
+      evaluate: async () => ({
+        status: 'capture_only',
+        challengeType: 'captcha',
+        manualActionRequired: true,
+        error: 'Screenshot input is required.',
+      }),
+      commitObservation: ({ observation: nextObservation }) => [nextObservation],
+      upsertStep,
+    });
+
+    expect(log).toHaveBeenCalledWith(
+      'google.verification.review.screenshot_failed',
+      expect.objectContaining({
+        error: 'capture failed',
+      })
+    );
   });
 });
 

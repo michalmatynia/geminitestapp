@@ -7,6 +7,38 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { GamesLibraryGameDialog } from './GamesLibraryGameModal.components';
+import { GamesLibraryGameModalProvider } from './GamesLibraryGameModal.context';
+
+const mockTranslations = ((key: string) => key) as any;
+const mockGame = {
+  id: 'clock_training',
+  title: 'Clock training preview',
+  description: 'Preview the runtime configuration for this game.',
+  engineId: 'clock_training_engine',
+  status: 'active',
+  emoji: '🕐',
+  ageGroup: 'age_6_7',
+  subject: 'maths',
+  mechanic: 'clock_training',
+  variants: [],
+  lessonComponentIds: [],
+  legacyScreenIds: [],
+} as any;
+
+const createMockState = (overrides = {}) => ({
+  open: true,
+  onOpenChange: vi.fn(),
+  translations: mockTranslations,
+  locale: 'en',
+  settingsOpen: false,
+  setSettingsOpen: vi.fn(),
+  handleCloseModal: vi.fn(),
+  game: mockGame,
+  supportsPreviewSettings: false,
+  lessonGameSectionsQuery: { isPending: false } as any,
+  gameInstancesQuery: { isPending: false, data: [] } as any,
+  ...overrides,
+}) as any;
 
 describe('GamesLibraryGameDialog', () => {
   it('provides hidden dialog metadata required by Radix accessibility checks', () => {
@@ -14,14 +46,11 @@ describe('GamesLibraryGameDialog', () => {
 
     try {
       render(
-        <GamesLibraryGameDialog
-          open
-          onOpenChange={() => undefined}
-          title='Clock training preview'
-          description='Preview the runtime configuration for this game.'
-        >
-          <div>Modal body</div>
-        </GamesLibraryGameDialog>
+        <GamesLibraryGameModalProvider basePath='/kangur' state={createMockState()}>
+          <GamesLibraryGameDialog>
+            <div>Modal body</div>
+          </GamesLibraryGameDialog>
+        </GamesLibraryGameModalProvider>
       );
 
       expect(screen.getByText('Clock training preview')).toBeInTheDocument();
@@ -50,14 +79,11 @@ describe('GamesLibraryGameDialog', () => {
       const [open, setOpen] = React.useState(true);
 
       return (
-        <GamesLibraryGameDialog
-          open={open}
-          onOpenChange={setOpen}
-          title='Clock training preview'
-          description='Preview the runtime configuration for this game.'
-        >
-          <div>Modal body</div>
-        </GamesLibraryGameDialog>
+        <GamesLibraryGameModalProvider basePath='/kangur' state={createMockState({ open, onOpenChange: setOpen })}>
+          <GamesLibraryGameDialog>
+            <div>Modal body</div>
+          </GamesLibraryGameDialog>
+        </GamesLibraryGameModalProvider>
       );
     }
 
@@ -78,14 +104,11 @@ describe('GamesLibraryGameDialog', () => {
       const [open, setOpen] = React.useState(true);
 
       return (
-        <GamesLibraryGameDialog
-          open={open}
-          onOpenChange={setOpen}
-          title='Clock training preview'
-          description='Preview the runtime configuration for this game.'
-        >
-          <div>Modal body</div>
-        </GamesLibraryGameDialog>
+        <GamesLibraryGameModalProvider basePath='/kangur' state={createMockState({ open, onOpenChange: setOpen })}>
+          <GamesLibraryGameDialog>
+            <div>Modal body</div>
+          </GamesLibraryGameDialog>
+        </GamesLibraryGameModalProvider>
       );
     }
 

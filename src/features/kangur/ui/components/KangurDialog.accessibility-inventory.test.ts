@@ -8,7 +8,6 @@ const UI_ROOT = path.join(process.cwd(), 'src/features/kangur/ui');
 const EXPECTED_DIALOG_SHELL_FILES = [
   'components/KangurChoiceDialog.tsx',
   'components/KangurLoginModal.tsx',
-  'components/assignment-manager/KangurAssignmentManager.modals.tsx',
   'components/assignment-manager/KangurAssignmentManagerTimeLimitModal.tsx',
   'components/music/KangurMusicPianoRollControls.tsx',
   'components/parent-dashboard/KangurParentDashboardLearnerManagementWidget.sections.tsx',

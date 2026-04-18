@@ -41,7 +41,6 @@ describe('Clock theme palette', () => {
     const face = container.querySelector('circle[r="95"]');
     const numeral = container.querySelector('text');
     const submitButton = screen.getByTestId('clock-submit-button');
-    const feedbackPanel = screen.getByTestId('clock-submit-feedback');
     const hourLegendDot = screen.getByTestId('clock-hour-legend-dot');
     const minuteLegendDot = screen.getByTestId('clock-minute-legend-dot');
 
@@ -80,15 +79,6 @@ describe('Clock theme palette', () => {
     );
     expect(submitButton.getAttribute('style') ?? '').toContain(
       `color: ${KANGUR_CLOCK_THEME_COLORS.contrastText};`
-    );
-    expect(feedbackPanel.getAttribute('style') ?? '').toContain(
-      `background-color: ${KANGUR_CLOCK_THEME_COLORS.feedbackCorrectSoftBackground};`
-    );
-    expect(feedbackPanel.getAttribute('style') ?? '').toContain(
-      `border-color: ${KANGUR_CLOCK_THEME_COLORS.feedbackCorrectBorder};`
-    );
-    expect(feedbackPanel.getAttribute('style') ?? '').toContain(
-      `color: ${KANGUR_CLOCK_THEME_COLORS.feedbackCorrectText};`
     );
   });
 

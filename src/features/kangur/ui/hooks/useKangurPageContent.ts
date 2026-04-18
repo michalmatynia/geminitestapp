@@ -9,6 +9,10 @@ import {
   type KangurPageContentEntry,
   type KangurPageContentStore,
 } from '@/features/kangur/shared/contracts/kangur-page-content';
+import {
+  attachTanstackFactoryMeta,
+  resolveTanstackFactoryMeta,
+} from '@/shared/lib/observability/tanstack-telemetry';
 import { prefetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { api } from '@/shared/lib/api-client';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
@@ -22,6 +26,17 @@ const resolveKangurPageContentLocale = (locale?: string | null, routeLocale?: st
 
 export const createKangurPageContentQueryKey = (locale: string) =>
   ['kangur', 'page-content', { locale }] as const;
+
+const createKangurPageContentQueryMeta = (locale: string) => ({
+  source: 'kangur.hooks.useKangurPageContentStore',
+  operation: 'list' as const,
+  resource: 'kangur.page-content',
+  domain: 'kangur' as const,
+  queryKey: createKangurPageContentQueryKey(locale),
+  tags: ['kangur', 'page-content'],
+  description: 'Loads Kangur page content.',
+  errorPresentation: 'silent' as const,
+});
 
 export const fetchKangurPageContentStore = async (
   locale?: string | null
@@ -53,12 +68,8 @@ export const prefetchKangurPageContentStore = async (
     queryFn: () => fetchKangurPageContentStore(resolvedLocale),
     staleTime: KANGUR_PAGE_CONTENT_STALE_TIME_MS,
     meta: {
+      ...createKangurPageContentQueryMeta(resolvedLocale),
       source: 'kangur.hooks.prefetchKangurPageContentStore',
-      operation: 'list',
-      resource: 'kangur.page-content',
-      domain: 'kangur',
-      queryKey: createKangurPageContentQueryKey(resolvedLocale),
-      tags: ['kangur', 'page-content'],
       description: 'Prefetches Kangur page content.',
     },
   })();
@@ -74,6 +85,9 @@ export const useKangurPageContentStore = (
     queryKey: createKangurPageContentQueryKey(resolvedLocale),
     queryFn: () => fetchKangurPageContentStore(resolvedLocale),
     gcTime: KANGUR_PAGE_CONTENT_GC_TIME_MS,
+    meta: attachTanstackFactoryMeta(
+      resolveTanstackFactoryMeta(createKangurPageContentQueryMeta(resolvedLocale))
+    ),
     staleTime: KANGUR_PAGE_CONTENT_STALE_TIME_MS,
     refetchOnMount: false,
     refetchOnReconnect: false,

@@ -209,6 +209,11 @@ describe('KangurParentDashboardAiTutorWidget', () => {
         refetchOnWindowFocus: false,
         refetchInterval: 30_000,
         staleTime: 10_000,
+        meta: {
+          tanstackFactoryV2Meta: {
+            errorPresentation: 'inline',
+          },
+        },
       });
     } finally {
       vi.useRealTimers();

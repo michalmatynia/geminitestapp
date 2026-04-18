@@ -244,6 +244,7 @@ const toFallbackMeta = (meta: TanstackFactoryMeta | null | undefined): TanstackF
   mutationKey: meta?.mutationKey,
   criticality: meta?.criticality,
   samplingRate: meta?.samplingRate,
+  errorPresentation: meta?.errorPresentation,
   domain: meta?.domain ?? 'global',
   tags: meta?.tags,
 });
@@ -287,6 +288,7 @@ export const resolveTanstackFactoryMeta = (
     criticality: safeMeta.criticality ?? 'normal',
     samplingRate: clampSamplingRate(safeMeta.samplingRate),
     logError: safeMeta.logError !== false,
+    errorPresentation: safeMeta.errorPresentation ?? 'toast',
     domain: safeMeta.domain ?? 'global',
     tags: sanitizeTags(safeMeta.tags),
   };
@@ -317,6 +319,12 @@ export const getTanstackFactoryMetaFromBag = (
       samplingRate:
         typeof storedMeta['samplingRate'] === 'number' ? storedMeta['samplingRate'] : undefined,
       logError: typeof storedMeta['logError'] === 'boolean' ? storedMeta['logError'] : undefined,
+      errorPresentation:
+        storedMeta['errorPresentation'] === 'inline' ||
+        storedMeta['errorPresentation'] === 'silent' ||
+        storedMeta['errorPresentation'] === 'toast'
+          ? storedMeta['errorPresentation']
+          : undefined,
       domain: (storedMeta['domain'] as TanstackFactoryMeta['domain'] | undefined) ?? 'global',
       tags: Array.isArray(storedMeta['tags'])
         ? storedMeta['tags'].filter((tag): tag is string => typeof tag === 'string')

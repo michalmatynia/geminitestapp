@@ -127,4 +127,23 @@ describe('useKangurPageContentStore', () => {
     expect(query.result.current.data).toBeUndefined();
     expect(apiGetMock).toHaveBeenCalledTimes(1);
   });
+
+  it('marks page-content queries as silent so timeout fallbacks do not raise global toasts', async () => {
+    const { queryClient, wrapper } = createWrapper();
+    const query = renderHook(() => useKangurPageContentStore(), { wrapper });
+
+    await waitFor(() => {
+      expect(query.result.current.data?.entries.length).toBeGreaterThan(0);
+    });
+
+    const cachedQuery = queryClient.getQueryCache().find({
+      queryKey: ['kangur', 'page-content', { locale: 'pl' }],
+    });
+
+    expect(cachedQuery?.meta).toMatchObject({
+      tanstackFactoryV2Meta: {
+        errorPresentation: 'silent',
+      },
+    });
+  });
 });

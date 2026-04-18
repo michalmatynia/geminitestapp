@@ -131,6 +131,7 @@ function useAiTutorUsageState({
       queryKey: kangurKeys.aiTutor.usage(activeLearnerId),
       tags: ['kangur', 'ai-tutor', 'usage'],
       description: 'Loads AI tutor usage for the active learner.',
+      errorPresentation: 'inline',
     },
   });
 

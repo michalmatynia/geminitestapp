@@ -26,6 +26,7 @@ import {
   cloneCustomSelectorRegistryProfile,
   deleteCustomSelectorRegistryEntry,
   deleteCustomSelectorRegistryProfile,
+  setCustomSelectorRegistryProfileProbeUrl,
   listCustomSelectorRegistry,
   renameCustomSelectorRegistryProfile,
   saveCustomSelectorRegistryEntry,
@@ -61,6 +62,7 @@ import type {
   SelectorRegistryKind,
   SelectorRegistryListResponse,
   SelectorRegistryNamespace,
+  SelectorRegistryProfileMetadata,
   SelectorRegistryProfileActionResponse,
   SelectorRegistryProbeResponse,
   SelectorRegistryRole,
@@ -606,6 +608,7 @@ const listNamespaceRaw = async (
 ): Promise<{
   entries: SelectorRegistryEntry[];
   profiles: string[];
+  profileMetadata: SelectorRegistryProfileMetadata | null;
   syncedAt: string | null;
 }> => {
   if (namespace === 'tradera') {
@@ -616,6 +619,7 @@ const listNamespaceRaw = async (
     return {
       entries,
       profiles: collectProfiles(namespace, entries),
+      profileMetadata: null,
       syncedAt: response.syncedAt,
     };
   }
@@ -626,6 +630,7 @@ const listNamespaceRaw = async (
     return {
       entries,
       profiles: collectProfiles(namespace, entries, response.profiles),
+      profileMetadata: null,
       syncedAt: response.syncedAt,
     };
   }
@@ -636,6 +641,7 @@ const listNamespaceRaw = async (
     return {
       entries,
       profiles: collectProfiles(namespace, entries, [normalizeProfile(namespace, profile)]),
+      profileMetadata: null,
       syncedAt: response.syncedAt,
     };
   }
@@ -645,6 +651,7 @@ const listNamespaceRaw = async (
     return {
       entries: response.entries,
       profiles: collectProfiles(namespace, response.entries, response.profiles),
+      profileMetadata: response.profileMetadata,
       syncedAt: response.syncedAt,
     };
   }
@@ -653,6 +660,7 @@ const listNamespaceRaw = async (
   return {
     entries,
     profiles: collectProfiles(namespace, entries),
+    profileMetadata: null,
     syncedAt: EPOCH_ISO,
   };
 };
@@ -663,6 +671,7 @@ const buildEffectiveEntries = async (
 ): Promise<{
   entries: SelectorRegistryEntry[];
   profiles: string[];
+  profileMetadata: SelectorRegistryProfileMetadata | null;
   syncedAt: string | null;
 }> => {
   const defaultProfile = SELECTOR_REGISTRY_DEFAULT_PROFILES[namespace];
@@ -672,6 +681,7 @@ const buildEffectiveEntries = async (
     return {
       entries,
       profiles: collectProfiles(namespace, entries),
+      profileMetadata: null,
       syncedAt: EPOCH_ISO,
     };
   }
@@ -719,6 +729,7 @@ const buildEffectiveEntries = async (
     return {
       entries,
       profiles: raw.profiles,
+      profileMetadata: raw.profileMetadata,
       syncedAt: raw.syncedAt,
     };
   }
@@ -770,6 +781,7 @@ const buildEffectiveEntries = async (
       ...(profileRaw?.profiles ?? []),
       profile,
     ]),
+    profileMetadata: profileRaw?.profileMetadata ?? defaultRaw.profileMetadata,
     syncedAt: latestSyncedAt(entries),
   };
 };
@@ -794,6 +806,7 @@ export async function listSelectorRegistry(options?: {
       entries,
       probeSessions: [],
       probeSessionClusters: [],
+      profileMetadata: null,
       namespaces: SELECTOR_REGISTRY_NAMESPACES,
       profiles: [],
       namespace: null,
@@ -829,6 +842,7 @@ export async function listSelectorRegistry(options?: {
     entries: result.entries,
     probeSessions,
     probeSessionClusters,
+    profileMetadata: result.profileMetadata,
     namespaces: SELECTOR_REGISTRY_NAMESPACES,
     profiles: result.profiles,
     namespace,
@@ -951,9 +965,24 @@ export async function mutateSelectorRegistryProfile(input:
       profile: string;
       key: string;
     }
+  | {
+      action: 'set_probe_url';
+      namespace: SelectorRegistryNamespace;
+      profile: string;
+      probeUrl: string | null;
+    }
 ): Promise<SelectorRegistryProfileActionResponse> {
   if (input.action === 'classify_role') {
     return classifySelectorRegistryRole({ namespace: input.namespace, profile: input.profile, key: input.key });
+  }
+  if (input.action === 'set_probe_url') {
+    if (input.namespace !== 'custom') {
+      throw new Error('Probe site URL metadata is only supported for custom selector registries.');
+    }
+    return setCustomSelectorRegistryProfileProbeUrl({
+      profile: normalizeProfile(input.namespace, input.profile),
+      probeUrl: input.probeUrl,
+    });
   }
 
   assertWritableNamespace(input.namespace);
@@ -1218,7 +1247,10 @@ export async function probeSelectorRegistryEntry(input: {
     throw new Error(`Selector registry entry "${input.key}" not found in namespace "${input.namespace}" profile "${profile}".`);
   }
 
-  const probeUrl = input.probeUrl ?? NAMESPACE_PROBE_URLS[input.namespace];
+  const probeUrl =
+    input.probeUrl ??
+    listResponse.profileMetadata?.probeUrl ??
+    NAMESPACE_PROBE_URLS[input.namespace];
 
   let selectors: string[] = [];
   try {

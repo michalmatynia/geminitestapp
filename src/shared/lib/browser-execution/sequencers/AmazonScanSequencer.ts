@@ -50,6 +50,8 @@ const GOOGLE_LENS_SAFE_ENTRY_TRIGGER_SELECTORS = [
   '[data-base-uri*="lens"]',
 ] as const;
 
+const GOOGLE_IMAGES_UPLOAD_ENTRY_URL = 'https://www.google.com/imghp?hl=en';
+
 // ─── Input types ───────────────────────────────────────────────────────────────
 
 export type AmazonImageSearchProvider =
@@ -143,6 +145,13 @@ interface GoogleLensUploadEntryState {
   consentFrameUrl: string | null;
   loginDetected: boolean;
   loginReason: string | null;
+}
+
+interface GoogleLensOpenReadinessState extends GoogleLensUploadEntryState {
+  requestedUrl: string;
+  uploadEntryUrl: boolean;
+  ready: boolean;
+  readyReason: string | null;
 }
 
 interface GoogleLoginState {
@@ -723,81 +732,70 @@ export class AmazonScanSequencer extends ProductScanSequencer {
     });
 
     try {
-      const url = this.resolveGoogleLensOpenUrl();
-      await this.page.goto(url, {
-        waitUntil: 'domcontentloaded',
-        timeout: 30_000,
-      });
+      const attemptUrls = this.resolveGoogleLensOpenAttemptUrls();
+      let lastState: GoogleLensOpenReadinessState | null = null;
 
-      const consentState = await this.clickGoogleConsentIfPresent().catch(() => ({ resolved: false }));
-      await this.page.waitForLoadState('networkidle', { timeout: 5_000 }).catch(() => undefined);
-      await this.wait(800);
-      if (consentState.resolved && this.shouldReopenImageSearchPageAfterConsent(url)) {
-        await this.page.goto(url, {
-          waitUntil: 'domcontentloaded',
-          timeout: 30_000,
-        });
-        await this.clickGoogleConsentIfPresent().catch(() => undefined);
-        await this.page.waitForLoadState('networkidle', { timeout: 5_000 }).catch(() => undefined);
-        await this.wait(800);
+      for (const [attemptIndex, url] of attemptUrls.entries()) {
+        const consentState = await this.openGoogleLensAttemptUrl(url);
+        let state = await this.readGoogleLensOpenReadinessState(url);
+
+        if (
+          consentState.resolved &&
+          !state.ready &&
+          !state.loginDetected &&
+          this.shouldReopenImageSearchPageAfterConsent(url)
+        ) {
+          await this.openGoogleLensAttemptUrl(url);
+          state = await this.readGoogleLensOpenReadinessState(url);
+        }
+
+        lastState = state;
+
+        if (state.loginDetected) {
+          const message = 'Google requested sign-in before the Lens upload page became available.';
+          this.upsertScanStep({
+            key: 'google_lens_open',
+            status: 'failed',
+            candidateId,
+            candidateRank,
+            resultCode: 'google_login_required',
+            message,
+            url: state.currentUrl,
+            details: this.buildGoogleLensOpenDetails(state, attemptIndex + 1),
+          });
+          return { success: false, message };
+        }
+
+        if (state.ready) {
+          this.upsertScanStep({
+            key: 'google_lens_open',
+            status: 'completed',
+            candidateId,
+            candidateRank,
+            resultCode: 'ok',
+            message: 'Google Lens search opened.',
+            url: state.currentUrl,
+            details: this.buildGoogleLensOpenDetails(state, attemptIndex + 1),
+          });
+
+          return { success: true, message: null };
+        }
       }
 
-      const loginState = await this.detectGoogleLoginSurface();
-      if (loginState.detected) {
-        const message = 'Google requested sign-in before the Lens upload page became available.';
-        this.upsertScanStep({
-          key: 'google_lens_open',
-          status: 'failed',
-          candidateId,
-          candidateRank,
-          resultCode: 'google_login_required',
-          message,
-          url: this.page.url(),
-          details: [
-            { label: 'Image search provider', value: this.resolveImageSearchProvider() },
-            { label: 'Image search page', value: url },
-            { label: 'Login detected', value: String(loginState.detected) },
-            { label: 'Login reason', value: loginState.reason ?? null },
-          ],
-        });
-        return { success: false, message };
-      }
-
-      const captchaState = await this.detectGoogleLensCaptcha();
-      if (!captchaState.detected && this.shouldReopenImageSearchPageAfterConsent(url)) {
-        const message = 'Google did not keep the browser on the selected image search page after consent.';
-        this.upsertScanStep({
-          key: 'google_lens_open',
-          status: 'failed',
-          candidateId,
-          candidateRank,
-          resultCode: 'image_search_page_unavailable',
-          message,
-          url: this.page.url(),
-          details: [
-            { label: 'Image search provider', value: this.resolveImageSearchProvider() },
-            { label: 'Image search page', value: url },
-            { label: 'Current URL', value: this.page.url() },
-          ],
-        });
-        return { success: false, message };
-      }
-
+      const fallbackUrl = attemptUrls[attemptUrls.length - 1] ?? this.resolveGoogleLensOpenUrl();
+      const fallbackState = lastState ?? await this.readGoogleLensOpenReadinessState(fallbackUrl);
+      const message = 'Google did not keep the browser on a usable image search page after consent.';
       this.upsertScanStep({
         key: 'google_lens_open',
-        status: 'completed',
+        status: 'failed',
         candidateId,
         candidateRank,
-        resultCode: 'ok',
-        message: 'Google Lens search opened.',
-        url: this.page.url(),
-        details: [
-          { label: 'Image search provider', value: this.resolveImageSearchProvider() },
-          { label: 'Image search page', value: url },
-        ],
+        resultCode: 'image_search_page_unavailable',
+        message,
+        url: fallbackState.currentUrl,
+        details: this.buildGoogleLensOpenDetails(fallbackState, attemptUrls.length),
       });
-
-      return { success: true, message: null };
+      return { success: false, message };
     } catch (_err) {
       const message = 'Google Lens search could not be opened.';
       this.upsertScanStep({
@@ -2095,6 +2093,102 @@ export class AmazonScanSequencer extends ProductScanSequencer {
     }
 
     return this.GOOGLE_LENS_DIRECT_UPLOAD_URL;
+  }
+
+  private resolveGoogleLensOpenAttemptUrls(): string[] {
+    const urls: string[] = [];
+    const configuredUrl = this.resolveConfiguredImageSearchPageUrl();
+    const candidates = [
+      configuredUrl ?? this.GOOGLE_LENS_DIRECT_UPLOAD_URL,
+      this.GOOGLE_LENS_DIRECT_UPLOAD_URL,
+      GOOGLE_IMAGES_UPLOAD_ENTRY_URL,
+    ];
+
+    for (const candidate of candidates) {
+      if (!urls.includes(candidate)) {
+        urls.push(candidate);
+      }
+    }
+
+    return urls;
+  }
+
+  private async openGoogleLensAttemptUrl(url: string): Promise<{ resolved: boolean }> {
+    await this.page.goto(url, {
+      waitUntil: 'domcontentloaded',
+      timeout: 30_000,
+    });
+
+    const consentState = await this.clickGoogleConsentIfPresent().catch(() => ({ resolved: false }));
+    await this.page.waitForLoadState('networkidle', { timeout: 5_000 }).catch(() => undefined);
+    await this.wait(800);
+    return consentState;
+  }
+
+  private async readGoogleLensOpenReadinessState(
+    requestedUrl: string
+  ): Promise<GoogleLensOpenReadinessState> {
+    const inputState = await this.resolveGoogleLensFileInput();
+    const entryState = await this.describeGoogleLensUploadEntryState(inputState);
+    const uploadEntryUrl = this.isGoogleImagesUploadEntryUrl(entryState.currentUrl);
+    const readyReason = this.resolveGoogleLensOpenReadyReason({
+      entryState,
+      inputReady: inputState.ready,
+      uploadEntryUrl,
+    });
+
+    return {
+      ...entryState,
+      requestedUrl,
+      uploadEntryUrl,
+      ready: readyReason !== null,
+      readyReason,
+    };
+  }
+
+  private resolveGoogleLensOpenReadyReason(input: {
+    entryState: GoogleLensUploadEntryState;
+    inputReady: boolean;
+    uploadEntryUrl: boolean;
+  }): string | null {
+    if (input.entryState.loginDetected) {
+      return null;
+    }
+
+    const readinessSignals: Array<{ ready: boolean; reason: string }> = [
+      { ready: input.inputReady, reason: 'file_input_ready' },
+      { ready: input.entryState.resultHintsVisible, reason: 'result_hints' },
+      { ready: input.entryState.resultShellVisible, reason: 'result_shell' },
+      { ready: input.entryState.processingVisible, reason: 'processing' },
+      { ready: input.entryState.captchaDetected, reason: 'captcha' },
+      { ready: input.entryState.consentPresent, reason: 'consent_present' },
+      {
+        ready: input.entryState.searchTriggerSelector !== null,
+        reason: 'image_search_entry',
+      },
+      { ready: input.entryState.uploadTabSelector !== null, reason: 'upload_tab' },
+      { ready: input.uploadEntryUrl, reason: 'upload_entry_url' },
+    ];
+
+    return readinessSignals.find((signal) => signal.ready)?.reason ?? null;
+  }
+
+  private buildGoogleLensOpenDetails(
+    state: GoogleLensOpenReadinessState,
+    attempt: number
+  ): Array<{ label: string; value?: string | null }> {
+    return [
+      { label: 'Image search provider', value: this.resolveImageSearchProvider() },
+      { label: 'Open attempt', value: String(attempt) },
+      { label: 'Image search page', value: state.requestedUrl },
+      { label: 'Current URL', value: state.currentUrl },
+      { label: 'Ready', value: String(state.ready) },
+      { label: 'Ready reason', value: state.readyReason },
+      { label: 'Upload entry URL', value: String(state.uploadEntryUrl) },
+      ...this.buildGoogleLensUploadEntryDetails(state).filter(
+        (detail) => detail.label !== 'Current URL'
+      ),
+    ];
   }
 
   private resolveImageSearchProvider(): AmazonImageSearchProvider {

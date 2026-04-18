@@ -215,6 +215,12 @@ export function LiveScripterProbePanel({
     [registryQuery.data?.entries]
   );
   const probeSessions = registryQuery.data?.probeSessions ?? [];
+  const savedProbeUrl =
+    registryNamespace === 'custom' ? registryQuery.data?.profileMetadata?.probeUrl ?? null : null;
+  const savedProbePathHint =
+    registryNamespace === 'custom'
+      ? registryQuery.data?.profileMetadata?.probePathHint ?? null
+      : null;
   const activeProbeSessions = useMemo(
     () => probeSessions.filter((session) => session.archivedAt === null),
     [probeSessions]
@@ -355,6 +361,18 @@ export function LiveScripterProbePanel({
     }
   }, [liveScripter.probeResult]);
 
+  const syncCustomRegistryProbeUrl = async (profile: string): Promise<void> => {
+    if (registryNamespace !== 'custom') {
+      return;
+    }
+    await profileMutation.mutateAsync({
+      action: 'set_probe_url',
+      namespace: registryNamespace,
+      profile,
+      probeUrl: liveScripter.currentUrl,
+    });
+  };
+
   const handleCreateSeededRegistry = async (): Promise<void> => {
     const targetProfile = newRegistryProfile.trim();
     if (targetProfile.length === 0) {
@@ -370,6 +388,18 @@ export function LiveScripterProbePanel({
       setRegistryProfile(targetProfile);
       setNewRegistryProfile('');
       toast(response.message, { variant: 'success' });
+      if (registryNamespace === 'custom') {
+        try {
+          await syncCustomRegistryProbeUrl(targetProfile);
+        } catch (error) {
+          toast(
+            error instanceof Error
+              ? error.message
+              : 'Registry was created, but probe site URL could not be saved.',
+            { variant: 'error' }
+          );
+        }
+      }
     } catch (error) {
       toast(
         error instanceof Error ? error.message : 'Registry profile could not be created.',
@@ -398,6 +428,18 @@ export function LiveScripterProbePanel({
       setRegistryProfile(targetProfile);
       setNewRegistryProfile('');
       toast(response.message, { variant: 'success' });
+      if (registryNamespace === 'custom') {
+        try {
+          await syncCustomRegistryProbeUrl(targetProfile);
+        } catch (error) {
+          toast(
+            error instanceof Error
+              ? error.message
+              : 'Registry was cloned, but probe site URL could not be saved.',
+            { variant: 'error' }
+          );
+        }
+      }
     } catch (error) {
       toast(
         error instanceof Error ? error.message : 'Registry profile could not be cloned.',
@@ -560,12 +602,23 @@ export function LiveScripterProbePanel({
 
         <div className='space-y-3 rounded-md border border-white/10 bg-black/20 p-3'>
           <div className='flex flex-wrap items-center justify-between gap-2'>
-            <div className='text-sm font-medium'>Registry Target</div>
-            <Badge variant='outline'>
-              {formatSelectorRegistryNamespaceLabel(registryNamespace)} / {effectiveRegistryProfile}
-            </Badge>
+          <div className='text-sm font-medium'>Registry Target</div>
+          <Badge variant='outline'>
+            {formatSelectorRegistryNamespaceLabel(registryNamespace)} / {effectiveRegistryProfile}
+          </Badge>
+        </div>
+        {savedProbeUrl !== null ? (
+          <div className='rounded-md border border-white/10 bg-black/10 px-3 py-2 text-xs text-muted-foreground'>
+            Probe target: <span className='font-mono'>{savedProbeUrl}</span>
+            {savedProbePathHint !== null ? (
+              <>
+                {' · '}
+                Path hint: <span className='font-mono'>{savedProbePathHint}</span>
+              </>
+            ) : null}
           </div>
-          <div className='grid gap-3 sm:grid-cols-[minmax(0,180px)_minmax(0,1fr)]'>
+        ) : null}
+        <div className='grid gap-3 sm:grid-cols-[minmax(0,180px)_minmax(0,1fr)]'>
             <div className='space-y-2'>
               <Label>Registry Namespace</Label>
               <Select
@@ -764,6 +817,25 @@ export function LiveScripterProbePanel({
                   ),
                 });
                 toast(response.message, { variant: 'success' });
+                if (registryNamespace === 'custom') {
+                  try {
+                    await syncCustomRegistryProbeUrl(
+                      registryProfile.trim().length > 0
+                        ? registryProfile.trim()
+                        : getSuggestedRegistryProfile(
+                            registryNamespace,
+                            liveScripter.currentUrl
+                          )
+                    );
+                  } catch (error) {
+                    toast(
+                      error instanceof Error
+                        ? error.message
+                        : 'Probe session was saved, but probe site URL could not be saved.',
+                      { variant: 'error' }
+                    );
+                  }
+                }
               } catch (error) {
                 setSavedProbeSessionHint(null);
                 toast(

@@ -415,7 +415,49 @@ describe('AmazonScanSequencer', () => {
     });
   });
 
-  it('fails open with a clear page-unavailable result when Google keeps bouncing away from the selected page', async () => {
+  it('continues when Google redirects after consent but exposes a usable upload input', async () => {
+    let currentUrl = 'https://images.google.com/';
+    const goto = vi.fn().mockImplementation(async (url: string) => {
+      currentUrl = url;
+    });
+    const ctx = makeContext({
+      goto,
+      url: vi.fn(() => currentUrl),
+    });
+    const seq = new AmazonScanSequencer(ctx, {
+      imageSearchProvider: 'google_images_upload',
+    });
+    (seq as any).clickGoogleConsentIfPresent = vi
+      .fn()
+      .mockImplementationOnce(async () => {
+        currentUrl = 'https://www.google.com/?olud';
+        return { resolved: true };
+      })
+      .mockResolvedValue({ resolved: false });
+    (seq as any).resolveGoogleLensFileInput = vi.fn().mockResolvedValue({
+      ready: true,
+      inputLocator: { setInputFiles: vi.fn() },
+      currentUrl,
+      selector: 'input[type="file"][accept*="image"]',
+      scopeType: 'page',
+      frameUrl: null,
+      inputCount: 1,
+    });
+
+    const res = await (seq as any).openGoogleLens({ candidateId: 'img', candidateRank: 1 });
+
+    expect(res.success).toBe(true);
+    expect(goto).toHaveBeenCalledTimes(1);
+    const step = (seq as any).scanSteps.find((s: any) => s.key === 'google_lens_open');
+    expect(step.status).toBe('completed');
+    expect(step.details).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ label: 'Ready reason', value: 'file_input_ready' }),
+      ])
+    );
+  });
+
+  it('uses the Google Images upload entry fallback before page-unavailable failure', async () => {
     let currentUrl = 'https://images.google.com/';
     const goto = vi.fn().mockResolvedValue(undefined);
     const ctx = makeContext({
@@ -436,10 +478,62 @@ describe('AmazonScanSequencer', () => {
     const res = await (seq as any).openGoogleLens({ candidateId: 'img', candidateRank: 1 });
 
     expect(res.success).toBe(false);
-    expect(goto).toHaveBeenCalledTimes(2);
+    expect(goto).toHaveBeenCalledTimes(3);
+    expect(goto).toHaveBeenNthCalledWith(3, 'https://www.google.com/imghp?hl=en', {
+      waitUntil: 'domcontentloaded',
+      timeout: 30_000,
+    });
     const step = (seq as any).scanSteps.find((s: any) => s.key === 'google_lens_open');
     expect(step.status).toBe('failed');
     expect(step.resultCode).toBe('image_search_page_unavailable');
+    expect(step.details).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          label: 'Image search page',
+          value: 'https://www.google.com/imghp?hl=en',
+        }),
+        expect.objectContaining({ label: 'Ready', value: 'false' }),
+      ])
+    );
+  });
+
+  it('opens Google Lens through the fallback entry when the direct Lens page is bounced', async () => {
+    let currentUrl = 'https://images.google.com/';
+    const goto = vi.fn().mockImplementation(async (url: string) => {
+      if (url === 'https://www.google.com/imghp?hl=en') {
+        currentUrl = url;
+      }
+    });
+    const ctx = makeContext({
+      goto,
+      url: vi.fn(() => currentUrl),
+    });
+    const seq = new AmazonScanSequencer(ctx, {
+      imageSearchProvider: 'google_images_upload',
+    });
+    (seq as any).clickGoogleConsentIfPresent = vi
+      .fn()
+      .mockImplementationOnce(async () => {
+        currentUrl = 'https://www.google.com/?olud';
+        return { resolved: true };
+      })
+      .mockResolvedValue({ resolved: false });
+
+    const res = await (seq as any).openGoogleLens({ candidateId: 'img', candidateRank: 1 });
+
+    expect(res.success).toBe(true);
+    expect(goto).toHaveBeenCalledTimes(3);
+    const step = (seq as any).scanSteps.find((s: any) => s.key === 'google_lens_open');
+    expect(step.status).toBe('completed');
+    expect(step.details).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          label: 'Image search page',
+          value: 'https://www.google.com/imghp?hl=en',
+        }),
+        expect.objectContaining({ label: 'Ready reason', value: 'upload_entry_url' }),
+      ])
+    );
   });
 
   it('opens the configured image search page before the built-in Google fallbacks', async () => {

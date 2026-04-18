@@ -40,22 +40,13 @@ type ProductScanProviderRuntimeBase = {
   resolveImageCandidates: typeof resolveProductScanImageCandidates;
 };
 
-export type ProductScanScriptProviderRuntime = ProductScanProviderRuntimeBase & {
-  executionMode: 'script';
-  script: string;
-  resolveScript?: (input?: { selectorProfile?: string | null }) => Promise<string> | string;
-  runtimeKey?: never;
-};
-
 export type ProductScanNativeProviderRuntime = ProductScanProviderRuntimeBase & {
   executionMode: 'native';
   runtimeKey: string;
   script?: never;
 };
 
-export type ProductScanProviderRuntime =
-  | ProductScanScriptProviderRuntime
-  | ProductScanNativeProviderRuntime;
+export type ProductScanProviderRuntime = ProductScanNativeProviderRuntime;
 
 export type ProductScanProviderDefinition = {
   provider: ProductScanProvider;
@@ -109,26 +100,15 @@ export const getProductScanProviderDefinition = (
 ): ProductScanProviderDefinition => PRODUCT_SCAN_PROVIDER_DEFINITIONS[provider];
 
 const createMissingProductScanRuntimeError = (
-  definition: ProductScanProviderDefinition,
-  executionMode: ProductScanProviderRuntime['executionMode']
-): Error => new Error(`${definition.label} ${executionMode} runtime is not configured.`);
-
-export const requireProductScanScriptRuntime = (
   definition: ProductScanProviderDefinition
-): ProductScanScriptProviderRuntime => {
-  const runtime = definition.runtime;
-  if (runtime?.executionMode !== 'script') {
-    throw createMissingProductScanRuntimeError(definition, 'script');
-  }
-  return runtime;
-};
+): Error => new Error(`${definition.label} native runtime is not configured.`);
 
 export const requireProductScanNativeRuntime = (
   definition: ProductScanProviderDefinition
 ): ProductScanNativeProviderRuntime => {
   const runtime = definition.runtime;
   if (runtime?.executionMode !== 'native') {
-    throw createMissingProductScanRuntimeError(definition, 'native');
+    throw createMissingProductScanRuntimeError(definition);
   }
   return runtime;
 };

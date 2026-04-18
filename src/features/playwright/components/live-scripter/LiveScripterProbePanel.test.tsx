@@ -228,6 +228,7 @@ describe('LiveScripterProbePanel', () => {
             updatedAt: '2026-04-18T11:00:00.000Z',
           },
         ],
+        profileMetadata: null,
       },
       isLoading: false,
     });
@@ -348,6 +349,7 @@ describe('LiveScripterProbePanel', () => {
       data: {
         entries: [customRegistryEntry],
         probeSessions: [],
+        profileMetadata: null,
       },
       isLoading: false,
     });
@@ -383,6 +385,66 @@ describe('LiveScripterProbePanel', () => {
       includeArchived: true,
     });
     expect(screen.getByText('Custom / example_shop_com')).toBeInTheDocument();
+  });
+
+  it('creates a custom registry and stores the current site as its probe target', async () => {
+    useSelectorRegistryMock.mockReturnValueOnce({
+      data: {
+        entries: [customRegistryEntry],
+        probeSessions: [],
+        profileMetadata: null,
+      },
+      isLoading: false,
+    });
+    syncSelectorRegistryMutateAsyncMock.mockResolvedValueOnce({
+      namespace: 'custom',
+      profile: 'example_shop_clone',
+      insertedCount: 0,
+      updatedCount: 0,
+      deletedCount: 0,
+      total: 0,
+      syncedAt: '2026-04-18T08:30:00.000Z',
+      message: 'Seeded selector registry profile "example_shop_clone".',
+    });
+    mutateSelectorRegistryProfileMutateAsyncMock.mockResolvedValueOnce({
+      namespace: 'custom',
+      action: 'set_probe_url',
+      profile: 'example_shop_clone',
+      targetProfile: null,
+      probeOrigin: 'https://www.example-shop.com',
+      probePathHint: '/item',
+      probeUrl: 'https://www.example-shop.com/item',
+      affectedEntries: 0,
+      message: 'Saved probe site URL for custom selector registry "example_shop_clone".',
+    });
+
+    const liveScripter = createLiveScripterResult();
+    liveScripter.currentUrl = 'https://www.example-shop.com/item/123';
+    liveScripter.probeResult = {
+      ...liveScripter.probeResult!,
+      url: 'https://www.example-shop.com/item/123',
+      title: 'Example shop item',
+    };
+
+    render(<LiveScripterProbePanel liveScripter={liveScripter} />);
+
+    fireEvent.change(screen.getByLabelText('New Registry'), {
+      target: { value: 'example_shop_clone' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Create Seeded Registry' }));
+
+    await waitFor(() => {
+      expect(syncSelectorRegistryMutateAsyncMock).toHaveBeenCalledWith({
+        namespace: 'custom',
+        profile: 'example_shop_clone',
+      });
+      expect(mutateSelectorRegistryProfileMutateAsyncMock).toHaveBeenCalledWith({
+        action: 'set_probe_url',
+        namespace: 'custom',
+        profile: 'example_shop_clone',
+        probeUrl: 'https://www.example-shop.com/item/123',
+      });
+    });
   });
 
   it('creates a seeded registry profile directly from the probe panel', async () => {

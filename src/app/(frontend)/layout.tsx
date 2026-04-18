@@ -1,163 +1,152 @@
-import {
-  resolveFrontPageSelection,
-  shouldApplyFrontPageAppSelection,
-} from '@/app/(frontend)/home/home-helpers';
+import { Suspense } from 'react';
+
 import {
   createFrontendLoadTimingRecorder,
-  serializeInlineTimingPayload,
   shouldEnableFrontendLoadTiming,
-  type FrontendLoadTimingPayload,
 } from '@/app/(frontend)/shell/frontend-load-timing';
 import { CmsStorefrontAppearanceProvider } from '@/features/cms/public';
-import { getCmsThemeSettings } from '@/features/cms/server';
 import {
   FrontendPublicOwnerProvider,
   FrontendPublicOwnerShellClient,
+  KangurServerShell,
 } from '@/features/kangur/public';
-import { readOptionalRequestHeadersResult } from '@/shared/lib/request/optional-headers';
+import {
+  getKangurSurfaceBootstrapStyle,
+  KANGUR_SURFACE_HINT_SCRIPT,
+} from '@/features/kangur/server';
+import {
+  buildRequestPathname,
+  buildTimingPayload,
+  FrontendLayoutFallback,
+  FrontendLayoutMain,
+  InlineSafeScript,
+  InlineSafeStyle,
+  KANGUR_SURFACE_BOOTSTRAP_ID,
+  resolveRequestHeaders,
+  serializeInlineTimingPayload,
+} from '@/app/(frontend)/layout.shared';
+import { resolveResolvedFrontendLayoutState } from '@/app/(frontend)/layout.state';
 import {
   readServerRequestHeaders,
   readServerRequestPathname,
 } from '@/shared/lib/request/server-request-context';
-import {
-  resolveFrontendPublicRouteFamily,
-  type FrontendPublicOwner,
-  type FrontendPublicRouteFamily,
-} from '@/shared/lib/frontend-public-route-family';
-import { safeHtml } from '@/shared/lib/security/safe-html';
 import { QueryErrorBoundary } from '@/shared/ui/QueryErrorBoundary';
 
-import type { JSX } from 'react';
+import type { JSX, ReactNode } from 'react';
 
-const FRONTEND_LAYOUT_REQUEST_HEADERS_TIMEOUT_MS = 1200;
-
-const resolveFrontendRequestPathname = (headerValue: string | null | undefined): string | null => {
-  if (typeof headerValue !== 'string') return null;
-
-  const trimmed = headerValue.trim();
-  if (trimmed === '') return null;
-
-  const pathname = (() => {
-    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
-      try {
-        return new URL(trimmed).pathname;
-      } catch {
-        return trimmed;
-      }
-    }
-    return trimmed.split('?')[0] ?? trimmed;
-  })();
-
-  return pathname.startsWith('/') ? pathname : `/${pathname}`;
-};
-
-const isRootPublicRequest = (pathname: string | null): boolean => {
-  if (pathname === null || pathname === '') return true;
-  return pathname === '/';
-};
-
-async function resolveRequestHeaders(): Promise<{ headers: Headers | null; timedOut: boolean }> {
-  const requestContextHeaders = readServerRequestHeaders();
-  if (requestContextHeaders !== null) {
-    return { headers: requestContextHeaders, timedOut: false };
-  }
-  return readOptionalRequestHeadersResult({
-    timeoutMs: FRONTEND_LAYOUT_REQUEST_HEADERS_TIMEOUT_MS,
-  });
-}
-
-function buildRequestPathname(headers: Headers | null): string | null {
-  const contextPathname = readServerRequestPathname();
-  if (contextPathname !== null) return contextPathname;
-
-  const keys = ['x-app-request-pathname', 'x-app-request-url', 'next-url', 'x-matched-path'];
-  for (const key of keys) {
-    const val = resolveFrontendRequestPathname(headers?.get(key));
-    if (val !== null) return val;
-  }
-  return null;
-}
-
-type TimingPayloadOptions = {
-  layoutTiming: ReturnType<typeof createFrontendLoadTimingRecorder>;
-  requestPathname: string | null;
-  publicOwner: FrontendPublicOwner;
-  publicRouteFamily: FrontendPublicRouteFamily;
-  isRootPublicRoute: boolean;
-  requestHeadersTimedOut: boolean;
-  frontPageSelection: Awaited<ReturnType<typeof resolveFrontPageSelection>> | null;
-  readRequestHeadersMs: number;
-};
-
-function buildTimingPayload(options: TimingPayloadOptions): FrontendLoadTimingPayload | null {
-  const { layoutTiming, requestPathname, publicOwner, publicRouteFamily, isRootPublicRoute, requestHeadersTimedOut, frontPageSelection, readRequestHeadersMs } = options;
-  const payload = layoutTiming.buildPayload({
-    pathname: requestPathname,
-    publicOwner,
-    routeFamily: publicRouteFamily,
-    flags: {
-      explicitKangurAlias: false,
-      canonicalPublicLogin: false,
-      rootPublicRoute: isRootPublicRoute,
-      requestHeadersTimedOut,
-      frontPageSelectionSource: frontPageSelection?.source ?? null,
-      frontPageSelectionFallbackReason: frontPageSelection?.fallbackReason ?? null,
-      expectsRootRedirectToKangur: false,
-      renderStandaloneKangurShell: false,
-      injectKangurAuthBootstrap: false,
-      loadKangurStorefrontBootstrap: false,
-    },
-  });
-  if (payload === null) return null;
-  return {
-    ...payload,
-    timingsMs: {
-      readRequestHeaders: Math.round(readRequestHeadersMs * 10) / 10,
-      ...payload.timingsMs,
-    },
-  };
-}
-
-export default async function FrontendLayout({
+function ResolvedFrontendLayoutContent({
   children,
+  inlinePayload,
+  layoutState,
 }: {
-  children: React.ReactNode;
-}): Promise<JSX.Element> {
-  const start = performance.now();
-  const { headers, timedOut } = await resolveRequestHeaders();
-  const headersMs = performance.now() - start;
-  const layoutTiming = createFrontendLoadTimingRecorder(shouldEnableFrontendLoadTiming(headers));
-  const pathname = buildRequestPathname(headers);
-  const isRoot = isRootPublicRequest(pathname);
-  const selection = shouldApplyFrontPageAppSelection() ? await layoutTiming.withTiming('frontPageSelection', resolveFrontPageSelection) : null;
-  const publicOwner: FrontendPublicOwner = 'cms';
-  const routeFamily = resolveFrontendPublicRouteFamily({ pathname, publicOwner });
-  const themeSettings = await layoutTiming.withTiming('cmsThemeSettings', getCmsThemeSettings);
-  const inlinePayload = buildTimingPayload({ layoutTiming, requestPathname: pathname, publicOwner, publicRouteFamily: routeFamily, isRootPublicRoute: isRoot, requestHeadersTimedOut: timedOut, frontPageSelection: selection, readRequestHeadersMs: headersMs });
-
+  children: ReactNode;
+  inlinePayload:
+    | ReturnType<typeof buildTimingPayload>
+    | null;
+  layoutState: Awaited<ReturnType<typeof resolveResolvedFrontendLayoutState>>;
+}): JSX.Element {
   return (
-    <main
-      id='main-content'
-      tabIndex={-1}
-      className='min-h-screen bg-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background'
-      data-frontend-public-route-family={routeFamily}
-    >
+    <FrontendLayoutMain routeFamily={layoutState.routeFamily}>
       {inlinePayload !== null && (
-        <script
+        <InlineSafeScript
           id='__FRONTEND_LAYOUT_TIMING__'
-          type='application/json'
-          dangerouslySetInnerHTML={{ __html: safeHtml(serializeInlineTimingPayload(inlinePayload)) }}
+          code={serializeInlineTimingPayload(inlinePayload)}
         />
       )}
-      <FrontendPublicOwnerProvider publicOwner={publicOwner} routeFamily={routeFamily}>
+      {layoutState.shouldApplyKangurSurfaceBootstrap && (
+        <InlineSafeStyle
+          id={KANGUR_SURFACE_BOOTSTRAP_ID}
+          css={getKangurSurfaceBootstrapStyle(layoutState.initialAppearance)}
+        />
+      )}
+      {layoutState.shouldApplyKangurSurfaceBootstrap && (
+        <InlineSafeScript code={KANGUR_SURFACE_HINT_SCRIPT} />
+      )}
+      {layoutState.kangurAuthBootstrapScript !== null && (
+        <InlineSafeScript code={layoutState.kangurAuthBootstrapScript} />
+      )}
+      {layoutState.loadKangurStorefrontBootstrap ? <KangurServerShell /> : null}
+      <FrontendPublicOwnerProvider
+        publicOwner={layoutState.publicOwner}
+        routeFamily={layoutState.routeFamily}
+      >
         <QueryErrorBoundary>
-          <FrontendPublicOwnerShellClient publicOwner={publicOwner}>
-            <CmsStorefrontAppearanceProvider initialMode={themeSettings.darkMode === true ? 'dark' : 'default'}>
-              {children}
+          <FrontendPublicOwnerShellClient
+            publicOwner={layoutState.publicOwner}
+            initialAppearance={layoutState.initialAppearance}
+          >
+            <CmsStorefrontAppearanceProvider
+              initialMode={
+                layoutState.themeSettings.darkMode === true ? 'dark' : 'default'
+              }
+            >
+              {children as JSX.Element}
             </CmsStorefrontAppearanceProvider>
           </FrontendPublicOwnerShellClient>
         </QueryErrorBoundary>
       </FrontendPublicOwnerProvider>
-    </main>
+    </FrontendLayoutMain>
+  );
+}
+
+async function ResolvedFrontendLayout({
+  children,
+}: {
+  children: ReactNode;
+}): Promise<JSX.Element> {
+  const startedAt = performance.now();
+  const requestContextHeaders = readServerRequestHeaders();
+  const { headers: requestHeaders, timedOut: requestHeadersTimedOut } =
+    requestContextHeaders === null
+      ? await resolveRequestHeaders()
+      : { headers: requestContextHeaders, timedOut: false };
+  const readRequestHeadersMs = performance.now() - startedAt;
+  const requestPathname = readServerRequestPathname() ?? buildRequestPathname(requestHeaders);
+  const layoutTiming = createFrontendLoadTimingRecorder(
+    shouldEnableFrontendLoadTiming(requestHeaders)
+  );
+  const layoutState = await resolveResolvedFrontendLayoutState({
+    layoutTiming,
+    requestHeaders,
+    requestPathname,
+  });
+  const inlinePayload = buildTimingPayload({
+    layoutTiming,
+    requestPathname,
+    publicOwner: layoutState.publicOwner,
+    publicRouteFamily: layoutState.routeFamily,
+    isRootPublicRoute: layoutState.isRootPublicRoute,
+    requestHeadersTimedOut,
+    frontPageSelection: layoutState.frontPageSelection,
+    readRequestHeadersMs,
+    explicitKangurAlias: layoutState.explicitKangurAlias,
+    canonicalPublicLogin: layoutState.canonicalPublicLogin,
+    expectsRootRedirectToKangur: layoutState.expectsRootRedirectToKangur,
+    renderStandaloneKangurShell: layoutState.renderStandaloneKangurShell,
+    injectKangurAuthBootstrap: layoutState.injectKangurAuthBootstrap,
+    loadKangurStorefrontBootstrap: layoutState.loadKangurStorefrontBootstrap,
+  });
+
+  return (
+    <ResolvedFrontendLayoutContent
+      children={children}
+      inlinePayload={inlinePayload}
+      layoutState={layoutState}
+    />
+  );
+}
+
+export default function FrontendLayout({
+  children,
+}: {
+  children: ReactNode;
+}): JSX.Element {
+  const requestPathname =
+    readServerRequestPathname() ?? buildRequestPathname(readServerRequestHeaders());
+
+  return (
+    <Suspense fallback={<FrontendLayoutFallback pathname={requestPathname} />}>
+      <ResolvedFrontendLayout>{children}</ResolvedFrontendLayout>
+    </Suspense>
   );
 }

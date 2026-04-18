@@ -3,6 +3,7 @@ import type { Collection, Document, Filter, ObjectId } from 'mongodb';
 import type {
   SelectorRegistryDeleteResponse,
   SelectorRegistryEntry,
+  SelectorRegistryProfileMetadata,
   SelectorRegistryProfileActionResponse,
   SelectorRegistryRole,
   SelectorRegistrySaveResponse,
@@ -13,6 +14,7 @@ import { inferSelectorRegistryRole } from '@/shared/lib/browser-execution/select
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 const COLLECTION_NAME = 'integration_custom_selector_registry';
+const PROFILE_METADATA_COLLECTION_NAME = 'integration_custom_selector_registry_profiles';
 const DEFAULT_SELECTOR_PROFILE = 'custom';
 
 type CustomSelectorRegistryValue = string | string[];
@@ -30,6 +32,15 @@ type CustomSelectorRegistryDoc = Document & {
   itemCount: number;
   preview: string[];
   source: 'code' | 'mongo';
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type CustomSelectorRegistryProfileMetadataDoc = Document & {
+  _id: ObjectId;
+  profile: string;
+  probeOrigin: string | null;
+  probePathHint: string | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -169,6 +180,7 @@ const SEED_ENTRY_BY_KEY = new Map(
 );
 
 let indexesReady = false;
+let profileMetadataIndexesReady = false;
 
 const getCollection = async (): Promise<Collection<CustomSelectorRegistryDoc>> => {
   const db = await getMongoDb();
@@ -177,6 +189,20 @@ const getCollection = async (): Promise<Collection<CustomSelectorRegistryDoc>> =
     indexesReady = true;
     void collection.createIndex({ profile: 1, key: 1 }, { unique: true });
     void collection.createIndex({ profile: 1, group: 1 });
+  }
+  return collection;
+};
+
+const getProfileMetadataCollection = async (): Promise<
+  Collection<CustomSelectorRegistryProfileMetadataDoc>
+> => {
+  const db = await getMongoDb();
+  const collection = db.collection<CustomSelectorRegistryProfileMetadataDoc>(
+    PROFILE_METADATA_COLLECTION_NAME
+  );
+  if (!profileMetadataIndexesReady) {
+    profileMetadataIndexesReady = true;
+    void collection.createIndex({ profile: 1 }, { unique: true });
   }
   return collection;
 };
@@ -207,6 +233,80 @@ const buildProfileScopedFilter = (
 const requireNonDefaultProfile = (profile: string, actionLabel: string): void => {
   if (profile === DEFAULT_SELECTOR_PROFILE) {
     throw new Error(`${actionLabel} is not supported for the default selector profile.`);
+  }
+};
+
+const normalizeProbePathHint = (pathname: string): string | null => {
+  const segments = pathname
+    .split('/')
+    .map((segment) => segment.trim())
+    .filter(Boolean);
+
+  if (segments.length === 0) {
+    return null;
+  }
+
+  const [firstSegment, secondSegment] = segments;
+  const localeLike = /^[a-z]{2}(?:-[a-z]{2})?$/i.test(firstSegment);
+  const stableSegments: string[] = [];
+
+  if (/^[a-z][a-z0-9_-]*$/i.test(firstSegment) && !/^\d+$/.test(firstSegment)) {
+    stableSegments.push(firstSegment);
+  }
+
+  if (
+    localeLike &&
+    typeof secondSegment === 'string' &&
+    /^[a-z][a-z0-9_-]*$/i.test(secondSegment) &&
+    !/^\d+$/.test(secondSegment)
+  ) {
+    return `/${firstSegment}/${secondSegment}`;
+  }
+
+  if (stableSegments.length === 0) {
+    return null;
+  }
+
+  return `/${stableSegments[0]}`;
+};
+
+const resolveProbeUrl = (
+  probeOrigin: string | null,
+  probePathHint: string | null
+): string | null => {
+  if (probeOrigin === null) {
+    return null;
+  }
+  if (probePathHint === null) {
+    return probeOrigin;
+  }
+  return new URL(probePathHint, probeOrigin).toString();
+};
+
+const normalizeProbeTarget = (value: string | null | undefined): {
+  probeOrigin: string | null;
+  probePathHint: string | null;
+  probeUrl: string | null;
+} => {
+  const trimmed = typeof value === 'string' ? value.trim() : '';
+  if (trimmed.length === 0) {
+    return {
+      probeOrigin: null,
+      probePathHint: null,
+      probeUrl: null,
+    };
+  }
+  try {
+    const parsed = new URL(trimmed);
+    const probeOrigin = parsed.origin;
+    const probePathHint = normalizeProbePathHint(parsed.pathname);
+    return {
+      probeOrigin,
+      probePathHint,
+      probeUrl: resolveProbeUrl(probeOrigin, probePathHint),
+    };
+  } catch {
+    throw new Error('Probe site URL must be a valid absolute URL.');
   }
 };
 
@@ -318,6 +418,26 @@ const buildEffectiveEntriesForProfile = async (
   );
 };
 
+const toProfileMetadata = (
+  doc: CustomSelectorRegistryProfileMetadataDoc
+): SelectorRegistryProfileMetadata => ({
+  namespace: 'custom',
+  profile: normalizeSelectorProfile(doc.profile),
+  probeOrigin: doc.probeOrigin,
+  probePathHint: doc.probePathHint,
+  probeUrl: resolveProbeUrl(doc.probeOrigin, doc.probePathHint),
+  updatedAt: doc.updatedAt.toISOString(),
+});
+
+export async function getCustomSelectorRegistryProfileMetadata(options?: {
+  profile?: string | null;
+}): Promise<SelectorRegistryProfileMetadata | null> {
+  const profile = normalizeSelectorProfile(options?.profile);
+  const collection = await getProfileMetadataCollection();
+  const doc = await collection.findOne({ profile });
+  return doc ? toProfileMetadata(doc) : null;
+}
+
 const latestSyncedAt = (entries: readonly SelectorRegistryEntry[]): string | null =>
   entries.reduce<string | null>((latest, entry) => {
     const candidate = entry.updatedAt;
@@ -400,21 +520,28 @@ export async function listCustomSelectorRegistry(options?: {
 }): Promise<{
   entries: SelectorRegistryEntry[];
   profiles: string[];
+  profileMetadata: SelectorRegistryProfileMetadata | null;
   syncedAt: string | null;
 }> {
   const profile = normalizeSelectorProfile(options?.profile);
-  const collection = await getCollection();
-  const [entries, storedProfiles] = await Promise.all([
+  const [collection, profileMetadataCollection] = await Promise.all([
+    getCollection(),
+    getProfileMetadataCollection(),
+  ]);
+  const [entries, storedProfiles, metadataProfiles, profileMetadata] = await Promise.all([
     buildEffectiveEntriesForProfile(collection, profile),
     collection.distinct('profile'),
+    profileMetadataCollection.distinct('profile'),
+    getCustomSelectorRegistryProfileMetadata({ profile }),
   ]);
   return {
     entries,
     profiles: Array.from(
-      new Set([DEFAULT_SELECTOR_PROFILE, profile, ...storedProfiles])
+      new Set([DEFAULT_SELECTOR_PROFILE, profile, ...storedProfiles, ...metadataProfiles])
     )
       .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
       .sort((left, right) => left.localeCompare(right)),
+    profileMetadata,
     syncedAt: latestSyncedAt(entries),
   };
 }
@@ -520,11 +647,21 @@ export async function cloneCustomSelectorRegistryProfile(input: {
     throw new Error('The target profile must be different from the source profile.');
   }
 
-  const collection = await getCollection();
-  const targetExists = await collection.countDocuments(buildProfileFilter(targetProfile), {
-    limit: 1,
-  });
+  const [collection, profileMetadataCollection] = await Promise.all([
+    getCollection(),
+    getProfileMetadataCollection(),
+  ]);
+  const [targetExists, sourceProfileMetadata, targetProfileMetadata] = await Promise.all([
+    collection.countDocuments(buildProfileFilter(targetProfile), {
+      limit: 1,
+    }),
+    profileMetadataCollection.findOne({ profile: sourceProfile }),
+    profileMetadataCollection.findOne({ profile: targetProfile }),
+  ]);
   if (targetExists > 0) {
+    throw new Error(`Custom selector registry profile "${targetProfile}" already exists.`);
+  }
+  if (targetProfileMetadata !== null) {
     throw new Error(`Custom selector registry profile "${targetProfile}" already exists.`);
   }
 
@@ -558,6 +695,24 @@ export async function cloneCustomSelectorRegistryProfile(input: {
     }))
   );
 
+  if (sourceProfileMetadata !== null) {
+    await profileMetadataCollection.updateOne(
+      { profile: targetProfile },
+      {
+        $set: {
+          profile: targetProfile,
+          probeOrigin: sourceProfileMetadata.probeOrigin,
+          probePathHint: sourceProfileMetadata.probePathHint,
+          updatedAt: now,
+        },
+        $setOnInsert: {
+          createdAt: now,
+        },
+      },
+      { upsert: true }
+    );
+  }
+
   return {
     namespace: 'custom',
     action: 'clone_profile',
@@ -580,22 +735,38 @@ export async function renameCustomSelectorRegistryProfile(input: {
     throw new Error('The target profile name must be different.');
   }
 
-  const collection = await getCollection();
-  const [profileCount, targetCount] = await Promise.all([
+  const [collection, profileMetadataCollection] = await Promise.all([
+    getCollection(),
+    getProfileMetadataCollection(),
+  ]);
+  const [profileCount, targetCount, targetMetadata] = await Promise.all([
     collection.countDocuments(buildProfileFilter(profile), { limit: 1 }),
     collection.countDocuments(buildProfileFilter(targetProfile), { limit: 1 }),
+    profileMetadataCollection.findOne({ profile: targetProfile }),
   ]);
 
   if (profileCount === 0) {
     throw new Error(`Custom selector registry profile "${profile}" does not exist.`);
   }
-  if (targetCount > 0) {
+  if (targetCount > 0 || targetMetadata !== null) {
     throw new Error(`Custom selector registry profile "${targetProfile}" already exists.`);
   }
 
-  const result = await collection.updateMany(buildProfileFilter(profile), {
-    $set: { profile: targetProfile, updatedAt: new Date() },
-  });
+  const now = new Date();
+  const [result] = await Promise.all([
+    collection.updateMany(buildProfileFilter(profile), {
+      $set: { profile: targetProfile, updatedAt: now },
+    }),
+    profileMetadataCollection.updateMany(
+      { profile },
+      {
+        $set: {
+          profile: targetProfile,
+          updatedAt: now,
+        },
+      }
+    ),
+  ]);
 
   return {
     namespace: 'custom',
@@ -612,8 +783,14 @@ export async function deleteCustomSelectorRegistryProfile(input: {
 }): Promise<SelectorRegistryProfileActionResponse> {
   const profile = normalizeSelectorProfile(input.profile);
   requireNonDefaultProfile(profile, 'Deleting');
-  const collection = await getCollection();
-  const result = await collection.deleteMany(buildProfileFilter(profile));
+  const [collection, profileMetadataCollection] = await Promise.all([
+    getCollection(),
+    getProfileMetadataCollection(),
+  ]);
+  const [result] = await Promise.all([
+    collection.deleteMany(buildProfileFilter(profile)),
+    profileMetadataCollection.deleteMany({ profile }),
+  ]);
   return {
     namespace: 'custom',
     action: 'delete_profile',
@@ -621,5 +798,58 @@ export async function deleteCustomSelectorRegistryProfile(input: {
     targetProfile: null,
     affectedEntries: result.deletedCount,
     message: `Deleted custom selector registry profile "${profile}".`,
+  };
+}
+
+export async function setCustomSelectorRegistryProfileProbeUrl(input: {
+  profile: string;
+  probeUrl: string | null;
+}): Promise<SelectorRegistryProfileActionResponse> {
+  const profile = normalizeSelectorProfile(input.profile);
+  const normalizedProbeTarget = normalizeProbeTarget(input.probeUrl);
+  const collection = await getProfileMetadataCollection();
+
+  if (normalizedProbeTarget.probeUrl === null) {
+    await collection.deleteMany({ profile });
+    return {
+      namespace: 'custom',
+      action: 'set_probe_url',
+      profile,
+      targetProfile: null,
+      probeOrigin: null,
+      probePathHint: null,
+      probeUrl: null,
+      affectedEntries: 0,
+      message: `Cleared probe site URL for custom selector registry "${profile}".`,
+    };
+  }
+
+  const now = new Date();
+  await collection.updateOne(
+    { profile },
+    {
+      $set: {
+        profile,
+        probeOrigin: normalizedProbeTarget.probeOrigin,
+        probePathHint: normalizedProbeTarget.probePathHint,
+        updatedAt: now,
+      },
+      $setOnInsert: {
+        createdAt: now,
+      },
+    },
+    { upsert: true }
+  );
+
+  return {
+    namespace: 'custom',
+    action: 'set_probe_url',
+    profile,
+    targetProfile: null,
+    probeOrigin: normalizedProbeTarget.probeOrigin,
+    probePathHint: normalizedProbeTarget.probePathHint,
+    probeUrl: normalizedProbeTarget.probeUrl,
+    affectedEntries: 0,
+    message: `Saved probe site URL for custom selector registry "${profile}".`,
   };
 }

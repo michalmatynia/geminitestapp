@@ -12,7 +12,7 @@ import {
   AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY,
   AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_NAME,
   AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY,
-  AMAZON_REVERSE_IMAGE_SCAN_LEGACY_RUNTIME_NAME,
+  AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_NAME,
 } from './amazon-runtime-constants';
 import { SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY } from './supplier-1688-runtime-constants';
 
@@ -73,9 +73,9 @@ const RUNTIME_ACTION_SEED_DEFINITIONS: Record<ActionSequenceKey, RuntimeActionSe
       'Starts from a selected Amazon candidate and performs probe, extraction, evaluation, and ASIN update.',
   },
   [AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY]: {
-    name: AMAZON_REVERSE_IMAGE_SCAN_LEGACY_RUNTIME_NAME,
+    name: AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_NAME,
     description:
-      'Legacy compatibility runtime covering Google Lens candidate discovery, Amazon extraction, evaluation, follow-up queueing, and ASIN update in one action.',
+      'Native sequencer-backed runtime covering Google Lens candidate discovery, Amazon extraction, evaluation, follow-up queueing, and ASIN update in one action.',
   },
   [SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY]: {
     name: '1688 Supplier Probe Scan',

@@ -124,6 +124,19 @@ export type SelectorRegistryProbeTemplateFingerprint = z.infer<
   typeof selectorRegistryProbeTemplateFingerprintSchema
 >;
 
+export const selectorRegistryProfileMetadataSchema = z.object({
+  namespace: selectorRegistryNamespaceSchema,
+  profile: z.string().trim().min(1),
+  probeOrigin: z.string().trim().min(1).nullable().default(null),
+  probePathHint: z.string().trim().min(1).nullable().default(null),
+  probeUrl: z.string().trim().min(1).nullable().default(null),
+  updatedAt: z.string().trim().min(1).nullable().default(null),
+});
+
+export type SelectorRegistryProfileMetadata = z.infer<
+  typeof selectorRegistryProfileMetadataSchema
+>;
+
 export const selectorRegistryProbeSessionSchema = z.object({
   id: z.string().trim().min(1),
   namespace: selectorRegistryNamespaceSchema,
@@ -192,6 +205,7 @@ export const selectorRegistryListResponseSchema = z.object({
   entries: z.array(selectorRegistryEntrySchema).default([]),
   probeSessions: z.array(selectorRegistryProbeSessionSchema).default([]),
   probeSessionClusters: z.array(selectorRegistryProbeSessionClusterSchema).default([]),
+  profileMetadata: selectorRegistryProfileMetadataSchema.nullable().optional(),
   namespaces: z.array(selectorRegistryNamespaceSchema).default([]),
   profiles: z.array(z.string().trim().min(1)).default([]),
   namespace: selectorRegistryNamespaceSchema.nullable().optional(),
@@ -396,6 +410,12 @@ export const selectorRegistryProfileActionRequestSchema = z.discriminatedUnion('
     profile: z.string().trim().min(1),
     key: z.string().trim().min(1),
   }),
+  z.object({
+    action: z.literal('set_probe_url'),
+    namespace: selectorRegistryNamespaceSchema,
+    profile: z.string().trim().min(1),
+    probeUrl: z.string().trim().min(1).nullable(),
+  }),
 ]);
 
 export type SelectorRegistryProfileActionRequest = z.infer<
@@ -404,11 +424,20 @@ export type SelectorRegistryProfileActionRequest = z.infer<
 
 export const selectorRegistryProfileActionResponseSchema = z.object({
   namespace: selectorRegistryNamespaceSchema,
-  action: z.enum(['clone_profile', 'rename_profile', 'delete_profile', 'classify_role']),
+  action: z.enum([
+    'clone_profile',
+    'rename_profile',
+    'delete_profile',
+    'classify_role',
+    'set_probe_url',
+  ]),
   profile: z.string().trim().min(1),
   targetProfile: z.string().trim().min(1).nullable().optional(),
   key: z.string().trim().min(1).nullable().optional(),
   role: selectorRegistryRoleSchema.nullable().optional(),
+  probeOrigin: z.string().trim().min(1).nullable().optional(),
+  probePathHint: z.string().trim().min(1).nullable().optional(),
+  probeUrl: z.string().trim().min(1).nullable().optional(),
   affectedEntries: z.number().int().min(0),
   message: z.string().trim().min(1),
 });

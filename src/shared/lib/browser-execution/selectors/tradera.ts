@@ -216,6 +216,9 @@ const TRADERA_SELECTOR_REGISTRY_ROLE_OVERRIDES: Partial<Record<string, SelectorR
   SHIPPING_DIALOG_SAVE_LABELS: 'submit',
   LISTING_CONFIRMATION_LABELS: 'option',
   DRAFT_SAVED_SELECTORS: 'ready_signal',
+  ACTIVE_SEARCH_SELECTORS: 'input',
+  ACTIVE_SEARCH_TRIGGER_LABELS: 'trigger',
+  DRAFT_IMAGE_REMOVE_ACTION_HINTS: 'overlay_dismiss',
 };
 
 const defineRegistryEntry = (
@@ -446,6 +449,8 @@ export const WIDTH_SELECTORS = [
   '#bredd',
   'input[placeholder*="width" i]',
   'input[placeholder*="bredd" i]',
+  'input[aria-label*="width" i]',
+  'input[aria-label*="bredd" i]',
 ] as const;
 
 export const LENGTH_SELECTORS = [
@@ -455,6 +460,8 @@ export const LENGTH_SELECTORS = [
   '#längd',
   'input[placeholder*="length" i]',
   'input[placeholder*="längd" i]',
+  'input[aria-label*="length" i]',
+  'input[aria-label*="längd" i]',
 ] as const;
 
 export const HEIGHT_SELECTORS = [
@@ -464,6 +471,8 @@ export const HEIGHT_SELECTORS = [
   '#höjd',
   'input[placeholder*="height" i]',
   'input[placeholder*="höjd" i]',
+  'input[aria-label*="height" i]',
+  'input[aria-label*="höjd" i]',
 ] as const;
 
 export const IMAGE_INPUT_SELECTORS = [

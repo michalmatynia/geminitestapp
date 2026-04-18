@@ -343,7 +343,8 @@ export function useMutateSelectorRegistryProfileMutation(): MutationResult<
       resource: 'integrations.selector-registry.profile',
       domain: 'integrations',
       tags: ['integrations', 'selector-registry', 'profile'],
-      description: 'Clones, renames, or deletes selector registry profiles.',
+      description:
+        'Clones, renames, deletes, or updates selector registry profile metadata.',
     },
   });
 }

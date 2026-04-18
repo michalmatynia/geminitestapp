@@ -152,6 +152,7 @@ export default function SelectorRegistryPage({
   );
   const [query, setQuery] = useState('');
   const [newProfile, setNewProfile] = useState('');
+  const [customProbeUrlDraft, setCustomProbeUrlDraft] = useState('');
   const [editingEntry, setEditingEntry] = useState<SelectorRegistryEntry | null>(null);
   const [draftValueJson, setDraftValueJson] = useState('');
   const [renameProfileOpen, setRenameProfileOpen] = useState(false);
@@ -194,6 +195,10 @@ export default function SelectorRegistryPage({
     [defaultProfile, rawProfiles, selectedProfile]
   );
   const entries = registryQuery.data?.entries ?? [];
+  const profileMetadata = registryQuery.data?.profileMetadata ?? null;
+  const savedCustomProbeUrl = namespace === 'custom' ? profileMetadata?.probeUrl ?? null : null;
+  const savedCustomProbePathHint =
+    namespace === 'custom' ? profileMetadata?.probePathHint ?? null : null;
   const probeSessions = registryQuery.data?.probeSessions ?? [];
   const probeSessionClusters = registryQuery.data?.probeSessionClusters ?? [];
   const activeProbeSessions = useMemo(
@@ -245,6 +250,14 @@ export default function SelectorRegistryPage({
     }
     setDraftValueJson(formatValueJsonForEditor(editingEntry.valueJson));
   }, [editingEntry]);
+
+  useEffect(() => {
+    if (namespace !== 'custom') {
+      setCustomProbeUrlDraft('');
+      return;
+    }
+    setCustomProbeUrlDraft(profileMetadata?.probeUrl ?? '');
+  }, [namespace, profileMetadata?.probeUrl, selectedProfile]);
 
   const filteredEntries = useMemo(() => {
     const normalizedQuery = normalizeSearchValue(query);
@@ -423,6 +436,35 @@ export default function SelectorRegistryPage({
         }
       },
     });
+  };
+
+  const persistCustomProbeUrl = async (probeUrl: string | null): Promise<void> => {
+    if (namespace !== 'custom') return;
+    const actionKey = `probe-url:${selectedProfile}`;
+    setProfileActionKey(actionKey);
+    try {
+      const response = await profileMutation.mutateAsync({
+        action: 'set_probe_url',
+        namespace,
+        profile: selectedProfile,
+        probeUrl,
+      });
+      setCustomProbeUrlDraft(response.probeUrl ?? '');
+      toast(response.message, { variant: 'success' });
+    } catch (error) {
+      logClientCatch(error, {
+        source: 'SelectorRegistryPage',
+        action: 'setProbeUrl',
+        namespace,
+        profile: selectedProfile,
+        probeUrl,
+      });
+      toast(error instanceof Error ? error.message : 'Failed to save probe site URL.', {
+        variant: 'error',
+      });
+    } finally {
+      setProfileActionKey(null);
+    }
   };
 
   const handleSaveEntry = async (): Promise<void> => {
@@ -672,6 +714,16 @@ export default function SelectorRegistryPage({
                     {archivedProbeTemplateCount} templates
                   </Badge>
                 ) : null}
+                {savedCustomProbeUrl !== null ? (
+                  <Badge variant='outline' className='max-w-[420px] truncate font-mono text-[11px]'>
+                    Probe target: {savedCustomProbeUrl}
+                  </Badge>
+                ) : null}
+                {savedCustomProbePathHint !== null ? (
+                  <Badge variant='outline' className='font-mono text-[11px]'>
+                    Path hint: {savedCustomProbePathHint}
+                  </Badge>
+                ) : null}
                 {selectedProfile !== defaultProfile ? (
                   <>
                     <Badge variant='outline'>{overrideCount} overrides</Badge>
@@ -734,6 +786,61 @@ export default function SelectorRegistryPage({
           {errorMessage !== null ? (
             <div className='mt-4 rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200'>
               {errorMessage}
+            </div>
+          ) : null}
+
+          {namespace === 'custom' ? (
+            <div className='mt-4 rounded-md border border-border/60 bg-muted/10 p-3'>
+              <div className='flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between'>
+                <div className='w-full space-y-1.5 xl:max-w-2xl'>
+                  <Label htmlFor='custom-registry-probe-url'>Probe Site Target</Label>
+                  <Input
+                    id='custom-registry-probe-url'
+                    value={customProbeUrlDraft}
+                    onChange={(event) => setCustomProbeUrlDraft(event.target.value)}
+                    placeholder='https://www.example-shop.com/product/123'
+                  />
+                  <p className='text-xs text-muted-foreground'>
+                    Page-level Probe and Classify will normalize this into a stable site target
+                    for the selected custom registry, using the base origin plus an optional path
+                    hint.
+                  </p>
+                </div>
+                <div className='flex flex-col gap-2 sm:flex-row'>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    loading={profileActionKey === `probe-url:${selectedProfile}`}
+                    loadingText='Saving'
+                    onClick={() => {
+                      persistCustomProbeUrl(customProbeUrlDraft.trim() || null).catch(
+                        () => undefined
+                      );
+                    }}
+                  >
+                    Save Probe Target
+                  </Button>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    disabled={
+                      (savedCustomProbeUrl === null &&
+                        customProbeUrlDraft.trim().length === 0) ||
+                      profileActionKey === `probe-url:${selectedProfile}`
+                    }
+                    loading={
+                      profileActionKey === `probe-url:${selectedProfile}` &&
+                      customProbeUrlDraft.trim().length === 0
+                    }
+                    loadingText='Clearing'
+                    onClick={() => {
+                      persistCustomProbeUrl(null).catch(() => undefined);
+                    }}
+                  >
+                    Clear
+                  </Button>
+                </div>
+              </div>
             </div>
           ) : null}
 

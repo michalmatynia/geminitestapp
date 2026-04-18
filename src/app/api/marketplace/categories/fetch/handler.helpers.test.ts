@@ -5,17 +5,21 @@ import type { IntegrationConnectionRecord, IntegrationRecord } from '@/shared/co
 const {
   fetchBaseCategoriesMock,
   fetchTraderaCategoriesForConnectionMock,
+  fetchTraderaCategoriesFromListingFormForConnectionMock,
   resolveBaseConnectionTokenMock,
   getTraderaCategoriesMock,
   getTraderaSubCategoriesMock,
   resolveTraderaPublicApiCredentialsMock,
+  loadTraderaSystemSettingsMock,
 } = vi.hoisted(() => ({
   fetchBaseCategoriesMock: vi.fn(),
   fetchTraderaCategoriesForConnectionMock: vi.fn(),
+  fetchTraderaCategoriesFromListingFormForConnectionMock: vi.fn(),
   resolveBaseConnectionTokenMock: vi.fn(),
   getTraderaCategoriesMock: vi.fn(),
   getTraderaSubCategoriesMock: vi.fn(),
   resolveTraderaPublicApiCredentialsMock: vi.fn(),
+  loadTraderaSystemSettingsMock: vi.fn(),
 }));
 
 vi.mock('@/features/integrations/server', () => ({
@@ -25,6 +29,12 @@ vi.mock('@/features/integrations/server', () => ({
 
 vi.mock('@/features/integrations/services/tradera-listing/categories', () => ({
   fetchTraderaCategoriesForConnection: fetchTraderaCategoriesForConnectionMock,
+  fetchTraderaCategoriesFromListingFormForConnection:
+    fetchTraderaCategoriesFromListingFormForConnectionMock,
+}));
+
+vi.mock('@/features/integrations/services/tradera-system-settings', () => ({
+  loadTraderaSystemSettings: loadTraderaSystemSettingsMock,
 }));
 
 vi.mock('@/features/integrations/services/tradera-api-client', () => ({
@@ -76,6 +86,17 @@ describe('marketplace categories fetch helpers', () => {
       token: 'base-token',
       source: 'baseApiToken',
       error: null,
+    });
+    loadTraderaSystemSettingsMock.mockResolvedValue({
+      defaultDurationHours: 72,
+      autoRelistEnabled: true,
+      autoRelistLeadMinutes: 180,
+      schedulerEnabled: false,
+      schedulerIntervalMs: 300000,
+      allowSimulatedSuccess: false,
+      listingFormUrl: 'https://www.tradera.com/en/selling/new',
+      selectorProfile: 'default',
+      categoryFetchMethod: 'playwright',
     });
   });
 

@@ -13,6 +13,8 @@ import {
 import type { PlaywrightProgrammableIntegrationPageModel } from '@/features/playwright/pages/playwright-programmable-integration-page.types';
 import { PlaywrightProgrammableFieldMapperCard } from '@/features/playwright/components/programmable-integration/PlaywrightProgrammableFieldMapperCard';
 import { getProgrammableScrapedItemsFromResultRecord } from '@/features/playwright/components/programmable-integration/playwrightProgrammableScrapeResults';
+import { resolvePlaywrightActionRunsHref } from '@/features/playwright/utils/action-runs-links';
+import { resolveStepSequencerActionHref } from '@/features/playwright/utils/step-sequencer-action-links';
 import {
   countWriteStatusRows,
   getDefaultWriteStatusSortMode,
@@ -46,6 +48,7 @@ type Props = Pick<
   | 'fieldMapperRows'
   | 'handleAddFieldMapping'
   | 'handleDeleteFieldMapping'
+  | 'importActionId'
   | 'handleRunFlow'
   | 'handleRunTest'
   | 'handleUpdateDraftMapping'
@@ -354,6 +357,78 @@ const toUnknownArray = (value: unknown): unknown[] =>
 const getStringValue = (value: unknown): string | null =>
   typeof value === 'string' && value.trim().length > 0 ? value : null;
 
+type ProgrammableScrapeSourceSummary = {
+  type: 'script' | 'retained_action_run';
+  label: string;
+  actionId: string | null;
+  runId: string | null;
+  failedStepId: string | null;
+  failedStepRefId: string | null;
+  failedStepLabel: string | null;
+};
+
+type WriteStatusContextLink = {
+  label: string;
+  href: string;
+  rowActionLabel: string;
+};
+
+const getProgrammableScrapeSourceSummary = (
+  value: unknown
+): ProgrammableScrapeSourceSummary | null => {
+  if (!isObjectRecord(value)) return null;
+
+  const type = getStringValue(value['type']);
+  if (type !== 'script' && type !== 'retained_action_run') {
+    return null;
+  }
+
+  return {
+    type,
+    label: type === 'script' ? 'Script run' : 'Retained action run',
+    actionId: getStringValue(value['actionId']),
+    runId: getStringValue(value['runId']),
+    failedStepId: getStringValue(value['failedStepId']),
+    failedStepRefId: getStringValue(value['failedStepRefId']),
+    failedStepLabel: getStringValue(value['failedStepLabel']),
+  };
+};
+
+const getRetainedScrapeFailureContextLinks = (
+  scrapeSource: ProgrammableScrapeSourceSummary | null
+): WriteStatusContextLink[] => {
+  if (scrapeSource?.type !== 'retained_action_run') {
+    return [];
+  }
+
+  const links: WriteStatusContextLink[] = [];
+
+  if (scrapeSource.actionId && scrapeSource.runId && scrapeSource.failedStepId) {
+    links.push({
+      label: `Retained step detail: ${scrapeSource.failedStepLabel ?? scrapeSource.failedStepId}`,
+      href: resolvePlaywrightActionRunsHref({
+        actionId: scrapeSource.actionId,
+        runId: scrapeSource.runId,
+        stepId: scrapeSource.failedStepId,
+      }),
+      rowActionLabel: 'Open retained step',
+    });
+  }
+
+  if (scrapeSource.actionId && scrapeSource.failedStepRefId) {
+    links.push({
+      label: `Sequencer block: ${scrapeSource.failedStepLabel ?? scrapeSource.failedStepRefId}`,
+      href: resolveStepSequencerActionHref(
+        scrapeSource.actionId,
+        scrapeSource.failedStepRefId
+      ),
+      rowActionLabel: 'Open sequencer block',
+    });
+  }
+
+  return links;
+};
+
 const PREVIEW_ITEM_LIMIT = 3;
 
 const formatPreviewValue = (value: unknown): string => {
@@ -544,6 +619,7 @@ function ArrayPreviewSection({
 
 function WriteStatusSection({
   explicitRows = [],
+  contextLinks = [],
   createdRecords,
   defaultExpanded = false,
   defaultSortMode = 'input_order',
@@ -552,6 +628,7 @@ function WriteStatusSection({
   title,
 }: {
   explicitRows?: ParsedWriteOutcomeRow[];
+  contextLinks?: WriteStatusContextLink[];
   createdRecords: unknown[];
   defaultExpanded?: boolean;
   defaultSortMode?: WriteStatusSortMode;
@@ -712,6 +789,19 @@ function WriteStatusSection({
             ? 'Status comes from explicit server write outcomes.'
             : 'Status is inferred from payload and created-record ordering in the run result.'}
         </p>
+        {failedRows.length > 0 && contextLinks.length > 0 ? (
+          <div className='flex flex-wrap gap-2'>
+            {contextLinks.map((link) => (
+              <a
+                key={`${title}-${link.href}`}
+                href={link.href}
+                className='rounded-full border border-border/50 bg-background/50 px-2.5 py-1 text-[11px] font-medium text-gray-200 hover:bg-background/70'
+              >
+                {link.label}
+              </a>
+            ))}
+          </div>
+        ) : null}
         <div className='flex flex-wrap gap-2'>
           {filterOptions.map((option) => (
             <Button
@@ -877,6 +967,7 @@ function WriteStatusSection({
         ) : null}
         {visibleRows.map((row) => {
           const status = getWriteStatusPresentation(row.status);
+          const rowContextLinks = isFailedWriteStatusRow(row) ? contextLinks : [];
           return (
             <div
               key={`${title}-write-${row.index.toString(36)}`}
@@ -892,6 +983,11 @@ function WriteStatusSection({
                   </span>
                 </div>
                 <div className='flex flex-wrap gap-2'>
+                  {rowContextLinks.map((link) => (
+                    <Button key={`${title}-row-action-${row.index}-${link.href}`} asChild type='button' variant='ghost' size='sm'>
+                      <a href={link.href}>{link.rowActionLabel}</a>
+                    </Button>
+                  ))}
                   <Button
                     type='button'
                     variant='ghost'
@@ -1023,6 +1119,9 @@ function TestResultCard({ testResultJson }: Pick<Props, 'testResultJson'>): Reac
     result !== null && isObjectRecord(result['automationFlow'])
       ? result['automationFlow']
       : null;
+  const scrapeSource =
+    getProgrammableScrapeSourceSummary(result?.['scrapeSource']) ??
+    getProgrammableScrapeSourceSummary(automationFlow?.['scrapeSource']);
   const flowResults =
     automationFlow !== null && isObjectRecord(automationFlow['results'])
       ? automationFlow['results']
@@ -1072,6 +1171,7 @@ function TestResultCard({ testResultJson }: Pick<Props, 'testResultJson'>): Reac
   const input =
     isObjectRecord(parsedResult['input']) ? parsedResult['input'] : null;
   const inputFieldCount = input === null ? 0 : Object.keys(input).length;
+  const retainedScrapeFailureContextLinks = getRetainedScrapeFailureContextLinks(scrapeSource);
   const hasImportPreviews =
     draftWriteOutcomeRows.length > 0 ||
     productWriteOutcomeRows.length > 0 ||
@@ -1113,10 +1213,57 @@ function TestResultCard({ testResultJson }: Pick<Props, 'testResultJson'>): Reac
             Flow: {flowName}
           </span>
         ) : null}
+        {scrapeSource !== null ? (
+          <span className='rounded-full border border-border/50 bg-background/40 px-2.5 py-1'>
+            Source: {scrapeSource.label}
+          </span>
+        ) : null}
+        {scrapeSource?.actionId ? (
+          <span className='rounded-full border border-border/50 bg-background/40 px-2.5 py-1'>
+            Action: {scrapeSource.actionId}
+          </span>
+        ) : null}
+        {scrapeSource?.runId ? (
+          <a
+            href={resolvePlaywrightActionRunsHref({
+              actionId: scrapeSource.actionId,
+              runId: scrapeSource.runId,
+            })}
+            className='rounded-full border border-border/50 bg-background/40 px-2.5 py-1 hover:bg-background/60'
+          >
+            Run: {scrapeSource.runId}
+          </a>
+        ) : null}
+        {scrapeSource?.actionId && scrapeSource?.runId && scrapeSource?.failedStepId ? (
+          <a
+            href={resolvePlaywrightActionRunsHref({
+              actionId: scrapeSource.actionId,
+              runId: scrapeSource.runId,
+              stepId: scrapeSource.failedStepId,
+            })}
+            className='rounded-full border border-border/50 bg-background/40 px-2.5 py-1 hover:bg-background/60'
+          >
+            Step detail: {scrapeSource.failedStepLabel ?? scrapeSource.failedStepId}
+          </a>
+        ) : null}
+        {scrapeSource?.actionId && scrapeSource?.failedStepRefId ? (
+          <a
+            href={resolveStepSequencerActionHref(
+              scrapeSource.actionId,
+              scrapeSource.failedStepRefId
+            )}
+            className='rounded-full border border-border/50 bg-background/40 px-2.5 py-1 hover:bg-background/60'
+          >
+            Failed step: {scrapeSource.failedStepLabel ?? scrapeSource.failedStepRefId}
+          </a>
+        ) : null}
       </div>
 
       <dl className='mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4'>
         <ResultMetric label='Input Fields' value={inputFieldCount} />
+        {scrapeSource !== null ? (
+          <ResultMetric label='Scrape Source' value={scrapeSource.label} />
+        ) : null}
         <ResultMetric label='Scraped Items' value={scrapedItemsCount} />
         <ResultMetric label='Mapped Products' value={mappedProductsCount} />
         <ResultMetric label='Mapped Drafts' value={mappedDraftsCount} />
@@ -1149,6 +1296,7 @@ function TestResultCard({ testResultJson }: Pick<Props, 'testResultJson'>): Reac
         <WriteStatusSection
           title='Draft Write Status'
           explicitRows={draftWriteOutcomeRows}
+          contextLinks={retainedScrapeFailureContextLinks}
           defaultExpanded={hasWriteStatusFailures(draftWriteOutcomeRows)}
           defaultSortMode={getDefaultWriteStatusSortMode(draftWriteOutcomeRows)}
           executionMode={executionMode}
@@ -1158,6 +1306,7 @@ function TestResultCard({ testResultJson }: Pick<Props, 'testResultJson'>): Reac
         <WriteStatusSection
           title='Product Write Status'
           explicitRows={productWriteOutcomeRows}
+          contextLinks={retainedScrapeFailureContextLinks}
           defaultExpanded={hasWriteStatusFailures(productWriteOutcomeRows)}
           defaultSortMode={getDefaultWriteStatusSortMode(productWriteOutcomeRows)}
           executionMode={executionMode}
@@ -1167,6 +1316,7 @@ function TestResultCard({ testResultJson }: Pick<Props, 'testResultJson'>): Reac
         <WriteStatusSection
           title='Draft Write Result Status'
           explicitRows={draftWriteResultRows}
+          contextLinks={retainedScrapeFailureContextLinks}
           defaultExpanded={hasWriteStatusFailures(draftWriteResultRows)}
           defaultSortMode={getDefaultWriteStatusSortMode(draftWriteResultRows)}
           executionMode={executionMode}

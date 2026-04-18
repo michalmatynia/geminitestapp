@@ -14,7 +14,7 @@ const mocks = vi.hoisted(() => ({
   clearSettingsCacheMock: vi.fn(),
   encodeSettingValueMock: vi.fn(),
   runPlaywrightProgrammableListingForConnectionMock: vi.fn(),
-  runPlaywrightProgrammableImportForConnectionMock: vi.fn(),
+  resolvePlaywrightProgrammableImportSourceMock: vi.fn(),
   runPlaywrightImportAutomationFlowMock: vi.fn(),
   buildPlaywrightImportInputMock: vi.fn(),
   parsePlaywrightFieldMapperJsonMock: vi.fn(),
@@ -65,8 +65,11 @@ vi.mock('@/shared/lib/settings/settings-compression', () => ({
 vi.mock('./programmable', () => ({
   runPlaywrightProgrammableListingForConnection: (...args: unknown[]) =>
     mocks.runPlaywrightProgrammableListingForConnectionMock(...args),
-  runPlaywrightProgrammableImportForConnection: (...args: unknown[]) =>
-    mocks.runPlaywrightProgrammableImportForConnectionMock(...args),
+}));
+
+vi.mock('./programmable-import-source', () => ({
+  resolvePlaywrightProgrammableImportSource: (...args: unknown[]) =>
+    mocks.resolvePlaywrightProgrammableImportSourceMock(...args),
 }));
 
 vi.mock('./automation-flow', () => ({
@@ -443,9 +446,14 @@ describe('programmable admin server', () => {
     mocks.buildPlaywrightImportInputMock.mockReturnValue({
       sourceUrl: 'https://example.test/import',
     });
-    mocks.runPlaywrightProgrammableImportForConnectionMock.mockResolvedValue({
+    mocks.resolvePlaywrightProgrammableImportSourceMock.mockResolvedValue({
       rawResult: { ok: true },
       products: [{ title: 'Raw title' }],
+      source: {
+        type: 'script',
+        actionId: null,
+        runId: null,
+      },
     });
     mocks.parsePlaywrightFieldMapperJsonMock.mockReturnValue([{ source: 'title', target: 'name' }]);
     mocks.mapPlaywrightImportProductsMock.mockReturnValue([{ name: 'Mapped title' }]);
@@ -462,6 +470,11 @@ describe('programmable admin server', () => {
         sourceUrl: 'https://example.test/import',
       },
       result: {
+        scrapeSource: {
+          type: 'script',
+          actionId: null,
+          runId: null,
+        },
         rawResult: { ok: true },
         scrapedItems: [{ title: 'Raw title' }],
         rawProducts: [{ title: 'Raw title' }],
@@ -492,6 +505,11 @@ describe('programmable admin server', () => {
     mocks.runPlaywrightImportAutomationFlowMock.mockResolvedValue({
       flow: { name: 'Draft import', blocks: [] },
       input: { sourceUrl: 'https://example.test/import' },
+      scrapeSource: {
+        type: 'script',
+        actionId: 'import-base',
+        runId: null,
+      },
       rawResult: { ok: true },
       scrapedItems: [{ title: 'Raw title' }],
       rawProducts: [{ title: 'Raw title' }],
@@ -529,6 +547,11 @@ describe('programmable admin server', () => {
         sourceUrl: 'https://example.test/import',
       },
       result: {
+        scrapeSource: {
+          type: 'script',
+          actionId: 'import-base',
+          runId: null,
+        },
         rawResult: { ok: true },
         scrapedItems: [{ title: 'Raw title' }],
         rawProducts: [{ title: 'Raw title' }],
@@ -536,6 +559,11 @@ describe('programmable admin server', () => {
         automationFlow: {
           executionMode: 'dry_run',
           flow: { name: 'Draft import', blocks: [] },
+          scrapeSource: {
+            type: 'script',
+            actionId: 'import-base',
+            runId: null,
+          },
           drafts: [],
           draftPayloads: [{ sku: 'SKU-1' }],
           writeOutcomes: [
@@ -573,7 +601,7 @@ describe('programmable admin server', () => {
       },
       dryRun: true,
     });
-    expect(mocks.runPlaywrightProgrammableImportForConnectionMock).not.toHaveBeenCalled();
+    expect(mocks.resolvePlaywrightProgrammableImportSourceMock).not.toHaveBeenCalled();
   });
 
   it('runs saved import automation flows in commit mode during flow runs', async () => {
@@ -592,6 +620,11 @@ describe('programmable admin server', () => {
     mocks.runPlaywrightImportAutomationFlowMock.mockResolvedValue({
       flow: { name: 'Commit import', blocks: [] },
       input: { sourceUrl: 'https://example.test/import' },
+      scrapeSource: {
+        type: 'script',
+        actionId: 'import-base',
+        runId: null,
+      },
       rawResult: { ok: true },
       scrapedItems: [{ title: 'Raw title' }],
       rawProducts: [{ title: 'Raw title' }],
@@ -637,6 +670,11 @@ describe('programmable admin server', () => {
         sourceUrl: 'https://example.test/import',
       },
       result: {
+        scrapeSource: {
+          type: 'script',
+          actionId: 'import-base',
+          runId: null,
+        },
         rawResult: { ok: true },
         scrapedItems: [{ title: 'Raw title' }],
         rawProducts: [{ title: 'Raw title' }],
@@ -644,6 +682,11 @@ describe('programmable admin server', () => {
         automationFlow: {
           executionMode: 'commit',
           flow: { name: 'Commit import', blocks: [] },
+          scrapeSource: {
+            type: 'script',
+            actionId: 'import-base',
+            runId: null,
+          },
           drafts: [{ id: 'draft-1' }],
           draftPayloads: [{ sku: 'SKU-1' }],
           writeOutcomes: [
@@ -704,6 +747,6 @@ describe('programmable admin server', () => {
     ).rejects.toThrow('Import flow execution requires saved automation flow JSON.');
 
     expect(mocks.runPlaywrightImportAutomationFlowMock).not.toHaveBeenCalled();
-    expect(mocks.runPlaywrightProgrammableImportForConnectionMock).not.toHaveBeenCalled();
+    expect(mocks.resolvePlaywrightProgrammableImportSourceMock).not.toHaveBeenCalled();
   });
 });

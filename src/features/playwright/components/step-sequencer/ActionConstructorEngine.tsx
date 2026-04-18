@@ -263,6 +263,7 @@ function ActionSequenceItem({
   index,
   dragProvided,
   isDragging,
+  isHighlighted,
   onPreviewStep,
   onPreviewStepSet,
 }: {
@@ -270,6 +271,7 @@ function ActionSequenceItem({
   index: number;
   dragProvided: DraggableProvided;
   isDragging: boolean;
+  isHighlighted: boolean;
   onPreviewStep: (step: PlaywrightStep) => void;
   onPreviewStepSet: (stepSet: PlaywrightStepSet) => void;
 }): React.JSX.Element {
@@ -317,10 +319,12 @@ function ActionSequenceItem({
     <div
       ref={dragProvided.innerRef}
       {...dragProvided.draggableProps}
+      data-action-block-id={block.id}
       className={cn(
         'group flex items-center gap-2 rounded border border-border/40 bg-card/30 px-2 py-1.5 transition-shadow',
         !block.enabled && 'opacity-60',
-        isDragging && 'shadow-lg ring-1 ring-sky-500/40 opacity-90'
+        isDragging && 'shadow-lg ring-1 ring-sky-500/40 opacity-90',
+        isHighlighted && 'border-amber-400/50 bg-amber-500/10 ring-1 ring-amber-400/40'
       )}
     >
       {/* Drag handle */}
@@ -366,6 +370,11 @@ function ActionSequenceItem({
       <Badge variant='neutral' className='shrink-0 h-4 px-1 text-[9px] border-border/50 bg-card/40'>
         {badgeLabel}
       </Badge>
+      {isHighlighted ? (
+        <Badge className='shrink-0 h-4 px-1 text-[9px] border-amber-400/40 bg-amber-500/10 text-amber-100'>
+          Linked step
+        </Badge>
+      ) : null}
 
       {previewStep ? (
         <button
@@ -435,6 +444,7 @@ export function ActionConstructorEngine(): React.JSX.Element {
     editingActionId,
     editingActionRuntimeKey,
     actionValidationErrors,
+    highlightedActionBlockId,
     setActionDraftName,
     setActionDraftDescription,
     setActionPersonaId,
@@ -460,6 +470,22 @@ export function ActionConstructorEngine(): React.JSX.Element {
     : null;
 
   const { data: personas = [] } = usePlaywrightPersonas();
+
+  useEffect(() => {
+    if (highlightedActionBlockId === null) {
+      return;
+    }
+
+    const rafId = window.requestAnimationFrame(() => {
+      const highlightedBlock = Array.from(
+        document.querySelectorAll<HTMLElement>('[data-action-block-id]')
+      ).find((element) => element.dataset['actionBlockId'] === highlightedActionBlockId);
+      highlightedBlock?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    });
+
+    return () => window.cancelAnimationFrame(rafId);
+  }, [highlightedActionBlockId]);
+
   const browserPreparationBlocks = useMemo(
     () =>
       resolvedActionBlocks
@@ -658,6 +684,7 @@ export function ActionConstructorEngine(): React.JSX.Element {
                           index={idx}
                           dragProvided={dragProvided}
                           isDragging={dragSnapshot.isDragging}
+                          isHighlighted={item.block.id === highlightedActionBlockId}
                           onPreviewStep={setPreviewStep}
                           onPreviewStepSet={setPreviewStepSet}
                         />

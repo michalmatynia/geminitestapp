@@ -4,6 +4,8 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { DatabaseIcon, ListTree, WandSparkles } from 'lucide-react';
 
+import { SequencerActionAssignmentsPanel } from '@/features/playwright/components/step-sequencer/SequencerActionAssignmentsPanel';
+
 import { AdminPlaywrightBreadcrumbs } from '@/shared/ui/admin.public';
 import { AppErrorBoundary } from '@/shared/ui/AppErrorBoundary';
 import { Button } from '@/shared/ui/button';
@@ -86,6 +88,7 @@ export function AdminPlaywrightStepSequencerPageView(): React.JSX.Element {
           </div>
         </div>
         <AdminPlaywrightStepSequencerPageRuntime />
+        <SequencerActionAssignmentsPanel />
       </div>
     </AppErrorBoundary>
   );

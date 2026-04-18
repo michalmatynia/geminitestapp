@@ -67,6 +67,8 @@ export interface PlaywrightStepSequencerActionState {
   editingActionRuntimeKey: string | null;
   /** Validation errors that currently block updating a runtime action. */
   actionValidationErrors: string[];
+  /** Action block ID highlighted from a deep-linked step ref, when available. */
+  highlightedActionBlockId: string | null;
 }
 
 export interface PlaywrightResolvedActionBlock {

@@ -8,7 +8,11 @@ import {
   type TraderaPublicApiCredentials,
 } from '@/features/integrations/services/tradera-api-client';
 import { resolveTraderaPublicApiCredentials } from '@/features/integrations/services/tradera-listing/api';
-import { fetchTraderaCategoriesForConnection } from '@/features/integrations/services/tradera-listing/categories';
+import {
+  fetchTraderaCategoriesForConnection,
+  fetchTraderaCategoriesFromListingFormForConnection,
+} from '@/features/integrations/services/tradera-listing/categories';
+import { loadTraderaSystemSettings } from '@/features/integrations/services/tradera-system-settings';
 import type { BaseCategory } from '@/shared/contracts/integrations/listings';
 import type { IntegrationConnectionRecord, IntegrationLookupRepository } from '@/shared/contracts/integrations/repositories';
 import type {
@@ -111,6 +115,14 @@ export type MarketplaceCategoryFetchContext =
       responseSourceName: 'Tradera SOAP API';
       apiCredentials: TraderaPublicApiCredentials;
       mode: 'tradera-api';
+    }
+  | {
+      connectionId: string;
+      connection: IntegrationConnectionRecord;
+      sourceName: 'Tradera';
+      responseSourceName: 'Tradera listing form picker';
+      listingFormUrl: string;
+      mode: 'tradera-listing-form';
     };
 
 export const requireMarketplaceConnectionId = (
@@ -164,8 +176,32 @@ export const resolveMarketplaceCategoryFetchContext = async (
   }
 
   if (TRADERA_MARKETPLACE_SLUGS.has(integrationSlug)) {
+    const systemSettings = await loadTraderaSystemSettings();
+
+    // Resolve the effective method.
+    // - Explicit request param always wins.
+    // - A stored setting that differs from the default 'playwright' acts as an override.
+    // - 'playwright' stored (the default) + no explicit param → original auto-detect behaviour
+    //   (try SOAP if credentials are present, fall back to public pages playwright).
+    const storedOverride =
+      systemSettings.categoryFetchMethod !== 'playwright'
+        ? systemSettings.categoryFetchMethod
+        : undefined;
+    const effectiveMethod = categoryFetchMethod ?? storedOverride;
+
+    if (effectiveMethod === 'playwright_listing_form') {
+      return {
+        connectionId,
+        connection,
+        sourceName: 'Tradera',
+        responseSourceName: 'Tradera listing form picker',
+        listingFormUrl: systemSettings.listingFormUrl,
+        mode: 'tradera-listing-form',
+      };
+    }
+
     // If 'playwright' is explicitly requested, skip SOAP and use the scraper.
-    if (categoryFetchMethod !== 'playwright') {
+    if (effectiveMethod !== 'playwright') {
       // Try SOAP API when credentials are present (or when explicitly requested via 'soap').
       try {
         const apiCredentials = resolveTraderaPublicApiCredentials(connection);
@@ -178,7 +214,7 @@ export const resolveMarketplaceCategoryFetchContext = async (
           mode: 'tradera-api',
         };
       } catch {
-        if (categoryFetchMethod === 'soap') {
+        if (effectiveMethod === 'soap') {
           // Credentials are required when SOAP is explicitly selected
           throw badRequestError(
             'Tradera SOAP API is not configured for this connection. Add Tradera App ID and App Key in the connection settings, or switch to the public taxonomy pages fetch method.'
@@ -275,6 +311,12 @@ export const fetchMarketplaceCategories = async (
   if (context.mode === 'tradera-api') {
     const categories = await getTraderaCategories(context.apiCredentials);
     return expandTraderaSubcategories(categories, context.apiCredentials);
+  }
+
+  if (context.mode === 'tradera-listing-form') {
+    return fetchTraderaCategoriesFromListingFormForConnection(context.connection, {
+      listingFormUrl: context.listingFormUrl,
+    });
   }
 
   return fetchTraderaCategoriesForConnection(context.connection);

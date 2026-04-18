@@ -1,4 +1,6 @@
 import {
+  buildDraftMapperAutomationFlowTemplate,
+  buildDraftMapperPreviewAutomationFlowTemplate,
   buildProgrammableConnectionPayload,
   createEmptyProgrammableDraftMapperRule,
   createEmptyProgrammableCaptureRoute,
@@ -17,6 +19,26 @@ type PlaywrightProgrammableExecutionMode = 'dry_run' | 'commit';
 
 const getErrorMessage = (error: unknown, fallback: string): string =>
   error instanceof Error ? error.message : fallback;
+
+const createHintedImportDraftMapperRows = (): ProgrammableDraftMapperRow[] => {
+  const row = createEmptyProgrammableDraftMapperRule();
+  return [
+    {
+      ...row,
+      targetPath: 'name_en',
+      mode: 'scraped',
+      sourcePath: 'title',
+      staticValue: '',
+      transform: 'trim',
+      required: true,
+    },
+  ];
+};
+
+const createHintedImportAutomationFlowJson = (flowMode: 'preview' | 'draft'): string =>
+  flowMode === 'draft'
+    ? buildDraftMapperAutomationFlowTemplate()
+    : buildDraftMapperPreviewAutomationFlowTemplate();
 
 const buildPromotionPayload = (
   args: Pick<
@@ -202,7 +224,12 @@ const handleCleanupAllLegacyBrowserFields = async (
 };
 
 const handleCreateConnection = async (
-  args: PlaywrightProgrammableIntegrationPageActionArgs
+  args: PlaywrightProgrammableIntegrationPageActionArgs,
+  options: {
+    connectionName?: string;
+    flowMode?: 'preview' | 'draft';
+    importActionId?: string;
+  } = {}
 ): Promise<void> => {
   if (args.programmableIntegration === null) {
     args.toast('Create the Playwright (Programmable) integration first.', {
@@ -211,22 +238,90 @@ const handleCreateConnection = async (
     return;
   }
 
-  args.setConnectionName(`Playwright Connection ${args.connections.length + 1}`);
+  const normalizedHintedImportActionId = options.importActionId?.trim() ?? '';
+  const flowMode = options.flowMode ?? 'preview';
+  const hintedDraftMapperRows =
+    normalizedHintedImportActionId.length > 0 ? createHintedImportDraftMapperRows() : [];
+  const hintedAutomationFlowJson =
+    normalizedHintedImportActionId.length > 0
+      ? createHintedImportAutomationFlowJson(flowMode)
+      : '';
+  const nextConnectionName =
+    options.connectionName?.trim() ??
+    (normalizedHintedImportActionId.length > 0
+      ? `Import ${normalizedHintedImportActionId}`
+      : `Playwright Connection ${args.connections.length + 1}`);
+
+  args.setConnectionName(nextConnectionName);
   args.setListingScript('');
   args.setImportScript('');
   args.setImportBaseUrl('');
-  args.setAutomationFlowJson('');
+  args.setAutomationFlowJson(hintedAutomationFlowJson);
   args.setListingActionId('');
-  args.setImportActionId('');
+  args.setImportActionId(normalizedHintedImportActionId);
   args.setCaptureRoutes([createEmptyProgrammableCaptureRoute(1)]);
   args.setAppearanceMode('');
-  args.setDraftMapperRows([]);
+  args.setDraftMapperRows(hintedDraftMapperRows);
   args.setFieldMapperRows([]);
   args.setSelectedConnectionId('');
 
-  const created = await saveCurrentConnection(args, false);
-  if (created !== null) {
-    args.toast('New programmable Playwright connection created.', { variant: 'success' });
+  try {
+    const created = await args.upsertConnectionMutateAsync({
+      payload: buildProgrammableConnectionPayload({
+        connectionName: nextConnectionName,
+        listingScript: '',
+        importScript: '',
+        importBaseUrl: '',
+        listingActionId: '',
+        importActionId: normalizedHintedImportActionId,
+        captureRoutes: [createEmptyProgrammableCaptureRoute(1)],
+        appearanceMode: '',
+        automationFlowJson: hintedAutomationFlowJson,
+        draftMapperRows: hintedDraftMapperRows,
+        fieldMapperRows: [],
+      }),
+    });
+    args.setSelectedConnectionId(created.id);
+    if (normalizedHintedImportActionId.length > 0 && flowMode === 'preview') {
+      args.setRunningTestType('import');
+      try {
+        const response = await args.testProgrammableConnectionMutateAsync({
+          connectionId: created.id,
+          executionMode: 'dry_run',
+          scriptType: 'import',
+        });
+        args.setTestResultJson(JSON.stringify(response, null, 2));
+        args.toast(
+          `New programmable Playwright connection created for import action "${normalizedHintedImportActionId}" and preview run completed.`,
+          { variant: 'success' }
+        );
+      } catch (error) {
+        logClientError(error);
+        const message = getErrorMessage(error, 'Preview run failed.');
+        args.setTestResultJson(JSON.stringify({ error: message }, null, 2));
+        args.toast(
+          `New programmable Playwright connection created for import action "${normalizedHintedImportActionId}", but preview run failed: ${message}`,
+          { variant: 'error' }
+        );
+      } finally {
+        args.setRunningTestType(null);
+      }
+      return;
+    }
+
+    args.toast(
+      normalizedHintedImportActionId.length > 0
+        ? flowMode === 'draft'
+          ? `New programmable Playwright connection created for import action "${normalizedHintedImportActionId}" with a draft-write flow.`
+          : `New programmable Playwright connection created for import action "${normalizedHintedImportActionId}".`
+        : 'New programmable Playwright connection created.',
+      { variant: 'success' }
+    );
+  } catch (error) {
+    logClientError(error);
+    args.toast(getErrorMessage(error, 'Failed to create connection.'), {
+      variant: 'error',
+    });
   }
 };
 
@@ -368,6 +463,8 @@ export const createPlaywrightProgrammableIntegrationPageActions = (
   handleCleanupAllLegacyBrowserFields: () => handleCleanupAllLegacyBrowserFields(args),
   handleCleanupLegacyBrowserFields: () => handleCleanupLegacyBrowserFields(args),
   handleCreateConnection: () => handleCreateConnection(args),
+  handleCreateConnectionFromImportHint: (importActionId, flowMode = 'preview') =>
+    handleCreateConnection(args, { importActionId, flowMode }),
   handleDeleteDraftMapping: (rowId) =>
     handleDeleteDraftMapping(args.setDraftMapperRows, rowId),
   handleDeleteFieldMapping: (rowId) =>

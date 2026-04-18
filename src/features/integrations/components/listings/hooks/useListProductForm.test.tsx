@@ -8,6 +8,7 @@ import { BASE_EXPORT_MISSING_CATEGORY_MESSAGE } from '@/features/integrations/ut
 const {
   toastMock,
   preflightTraderaQuickListSessionMock,
+  ensureTraderaBrowserSessionMock,
   preflightVintedQuickListSessionMock,
   ensureVintedBrowserSessionMock,
   createListingMutateAsyncMock,
@@ -20,6 +21,7 @@ const {
 } = vi.hoisted(() => ({
   toastMock: vi.fn(),
   preflightTraderaQuickListSessionMock: vi.fn(),
+  ensureTraderaBrowserSessionMock: vi.fn(),
   preflightVintedQuickListSessionMock: vi.fn(),
   ensureVintedBrowserSessionMock: vi.fn(),
   createListingMutateAsyncMock: vi.fn(),
@@ -64,8 +66,14 @@ vi.mock('@/features/integrations/hooks/useIntegrationMutations', () => ({
 }));
 
 vi.mock('@/features/integrations/utils/tradera-browser-session', () => ({
+  TRADERA_BROWSER_MANUAL_VERIFICATION_MESSAGE:
+    'Tradera login requires manual verification. Solve the captcha in the opened browser window and retry.',
+  TRADERA_BROWSER_SESSION_SAVE_FAILURE_MESSAGE:
+    'Tradera login session could not be saved. Complete login verification and retry.',
   preflightTraderaQuickListSession: (...args: unknown[]) =>
     preflightTraderaQuickListSessionMock(...args) as Promise<unknown>,
+  ensureTraderaBrowserSession: (...args: unknown[]) =>
+    ensureTraderaBrowserSessionMock(...args) as Promise<unknown>,
   isTraderaBrowserAuthRequiredMessage: (value: string | null | undefined) => {
     const normalized = value?.trim().toLowerCase() ?? '';
     return (
@@ -126,6 +134,10 @@ describe('useListProductForm', () => {
     preflightVintedQuickListSessionMock.mockResolvedValue({
       response: { ok: true, sessionReady: true, steps: [] },
       ready: true,
+    });
+    ensureTraderaBrowserSessionMock.mockResolvedValue({
+      response: { ok: true, sessionReady: true, steps: [{ step: 'Saving session', status: 'ok' }] },
+      savedSession: true,
     });
     ensureVintedBrowserSessionMock.mockResolvedValue({
       response: { ok: true, sessionReady: true, steps: [{ step: 'Saving session', status: 'ok' }] },
@@ -274,6 +286,107 @@ describe('useListProductForm', () => {
     expect(result.current.authRequired).toBe(true);
     expect(result.current.error).toBe(
       'Tradera login requires manual verification. Solve the captcha in the opened browser window and retry.'
+    );
+    expect(createListingMutateAsyncMock).not.toHaveBeenCalled();
+    expect(onSuccess).not.toHaveBeenCalled();
+  });
+
+  it('treats a non-ready Tradera quick preflight response as auth-required recovery', async () => {
+    preflightTraderaQuickListSessionMock.mockResolvedValueOnce({
+      response: { ok: true, sessionReady: false, steps: [] },
+      ready: false,
+    });
+
+    const onSuccess = vi.fn();
+    const { result } = renderHook(() => useListProductForm('product-1', 'category-1'));
+
+    await act(async () => {
+      await result.current.handleSubmit(onSuccess);
+    });
+
+    expect(result.current.authRequired).toBe(true);
+    expect(result.current.authRequiredMarketplace).toBe('tradera');
+    expect(result.current.error).toBe(
+      'Tradera login requires manual verification. Solve the captcha in the opened browser window and retry.'
+    );
+    expect(createListingMutateAsyncMock).not.toHaveBeenCalled();
+    expect(onSuccess).not.toHaveBeenCalled();
+  });
+
+  it('refreshes the Tradera session and resumes listing after auth-required recovery', async () => {
+    preflightTraderaQuickListSessionMock
+      .mockRejectedValueOnce(
+        new Error(
+          'Tradera login requires manual verification. Solve the captcha in the opened browser window and retry.'
+        )
+      )
+      .mockResolvedValueOnce({
+        response: { ok: true, sessionReady: true, steps: [] },
+        ready: true,
+      });
+
+    const onSuccess = vi.fn();
+    const { result } = renderHook(() => useListProductForm('product-1', 'category-1'));
+
+    await act(async () => {
+      await result.current.handleSubmit(onSuccess);
+    });
+
+    expect(result.current.authRequired).toBe(true);
+    expect(result.current.authRequiredMarketplace).toBe('tradera');
+
+    await act(async () => {
+      await result.current.handleMarketplaceLogin(onSuccess);
+    });
+
+    expect(ensureTraderaBrowserSessionMock).toHaveBeenCalledWith({
+      integrationId: 'integration-tradera-1',
+      connectionId: 'conn-tradera-1',
+    });
+    expect(toastMock).toHaveBeenCalledWith('Tradera login session refreshed.', {
+      variant: 'success',
+    });
+    expect(createListingMutateAsyncMock).toHaveBeenCalledWith({
+      integrationId: 'integration-tradera-1',
+      connectionId: 'conn-tradera-1',
+      durationHours: 168,
+      autoRelistEnabled: true,
+      autoRelistLeadMinutes: 30,
+      templateId: 'template-tradera-1',
+    });
+    expect(onSuccess).toHaveBeenCalled();
+  });
+
+  it('keeps Tradera auth recovery blocked when the manual login flow cannot save a session', async () => {
+    preflightTraderaQuickListSessionMock.mockRejectedValueOnce(
+      new Error(
+        'Tradera login requires manual verification. Solve the captcha in the opened browser window and retry.'
+      )
+    );
+    ensureTraderaBrowserSessionMock.mockResolvedValueOnce({
+      response: { ok: true, sessionReady: true, steps: [] },
+      savedSession: false,
+    });
+
+    const onSuccess = vi.fn();
+    const { result } = renderHook(() => useListProductForm('product-1', 'category-1'));
+
+    await act(async () => {
+      await result.current.handleSubmit(onSuccess);
+    });
+
+    await act(async () => {
+      await result.current.handleMarketplaceLogin(onSuccess);
+    });
+
+    expect(ensureTraderaBrowserSessionMock).toHaveBeenCalledWith({
+      integrationId: 'integration-tradera-1',
+      connectionId: 'conn-tradera-1',
+    });
+    expect(result.current.authRequired).toBe(true);
+    expect(result.current.authRequiredMarketplace).toBe('tradera');
+    expect(result.current.error).toBe(
+      'Tradera login session could not be saved. Complete login verification and retry.'
     );
     expect(createListingMutateAsyncMock).not.toHaveBeenCalled();
     expect(onSuccess).not.toHaveBeenCalled();

@@ -39,7 +39,12 @@ describe('AdminPlaywrightStepSequencerPageRuntime', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     useSearchParamsMock.mockReturnValue({
-      get: (key: string) => (key === 'actionId' ? 'draft-action-1' : null),
+      get: (key: string) =>
+        key === 'actionId'
+          ? 'draft-action-1'
+          : key === 'blockRefId'
+            ? 'step_ref_error'
+            : null,
     });
     usePlaywrightStepSequencerStateMock.mockReturnValue({
       isSaveActionOpen: false,
@@ -56,6 +61,7 @@ describe('AdminPlaywrightStepSequencerPageRuntime', () => {
 
     expect(usePlaywrightStepSequencerStateMock).toHaveBeenCalledWith({
       initialActionId: 'draft-action-1',
+      initialActionBlockRefId: 'step_ref_error',
     });
     expect(screen.getByText('dynamic-component')).toBeInTheDocument();
   });

@@ -84,6 +84,7 @@ const buildModel = ({
   programmableIntegration: queries.programmableIntegration,
   selectedConnection: selection.selectedConnection,
   selectedConnectionId: selection.selectedConnectionId,
+  importSelectionHint: selection.importSelectionHint,
   sessionDiagnostics: derived.sessionDiagnostics,
   setSelectedConnectionId: selection.setSelectedConnectionId,
   testProgrammableConnection: queries.testProgrammableConnection,

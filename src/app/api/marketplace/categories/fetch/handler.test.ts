@@ -6,6 +6,7 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 const {
   fetchBaseCategoriesMock,
   fetchTraderaCategoriesForConnectionMock,
+  fetchTraderaCategoriesFromListingFormForConnectionMock,
   getExternalCategoryRepositoryMock,
   getIntegrationRepositoryMock,
   resolveBaseConnectionTokenMock,
@@ -13,9 +14,11 @@ const {
   listByConnectionMock,
   getConnectionByIdMock,
   getIntegrationByIdMock,
+  loadTraderaSystemSettingsMock,
 } = vi.hoisted(() => ({
   fetchBaseCategoriesMock: vi.fn(),
   fetchTraderaCategoriesForConnectionMock: vi.fn(),
+  fetchTraderaCategoriesFromListingFormForConnectionMock: vi.fn(),
   getExternalCategoryRepositoryMock: vi.fn(),
   getIntegrationRepositoryMock: vi.fn(),
   resolveBaseConnectionTokenMock: vi.fn(),
@@ -23,6 +26,7 @@ const {
   listByConnectionMock: vi.fn(),
   getConnectionByIdMock: vi.fn(),
   getIntegrationByIdMock: vi.fn(),
+  loadTraderaSystemSettingsMock: vi.fn(),
 }));
 
 vi.mock('@/features/integrations/server', () => ({
@@ -34,6 +38,12 @@ vi.mock('@/features/integrations/server', () => ({
 
 vi.mock('@/features/integrations/services/tradera-listing/categories', () => ({
   fetchTraderaCategoriesForConnection: fetchTraderaCategoriesForConnectionMock,
+  fetchTraderaCategoriesFromListingFormForConnection:
+    fetchTraderaCategoriesFromListingFormForConnectionMock,
+}));
+
+vi.mock('@/features/integrations/services/tradera-system-settings', () => ({
+  loadTraderaSystemSettings: loadTraderaSystemSettingsMock,
 }));
 
 import { POST_handler } from './handler';
@@ -50,6 +60,17 @@ const createContext = (): ApiHandlerContext =>
 describe('marketplace categories fetch handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    loadTraderaSystemSettingsMock.mockResolvedValue({
+      defaultDurationHours: 72,
+      autoRelistEnabled: true,
+      autoRelistLeadMinutes: 180,
+      schedulerEnabled: false,
+      schedulerIntervalMs: 300000,
+      allowSimulatedSuccess: false,
+      listingFormUrl: 'https://www.tradera.com/en/selling/new',
+      selectorProfile: 'default',
+      categoryFetchMethod: 'playwright',
+    });
     getIntegrationRepositoryMock.mockResolvedValue({
       getConnectionById: getConnectionByIdMock,
       getIntegrationById: getIntegrationByIdMock,

@@ -1,14 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
-  runPlaywrightProgrammableImportForConnectionMock: vi.fn(),
+  resolvePlaywrightProgrammableImportSourceMock: vi.fn(),
   createDraftMock: vi.fn(),
   createProductMock: vi.fn(),
 }));
 
-vi.mock('./programmable', () => ({
-  runPlaywrightProgrammableImportForConnection: (...args: unknown[]) =>
-    mocks.runPlaywrightProgrammableImportForConnectionMock(...args),
+vi.mock('./programmable-import-source', () => ({
+  resolvePlaywrightProgrammableImportSource: (...args: unknown[]) =>
+    mocks.resolvePlaywrightProgrammableImportSourceMock(...args),
 }));
 
 vi.mock('@/features/drafter/server', () => ({
@@ -47,7 +47,12 @@ describe('runPlaywrightImportAutomationFlow', () => {
   });
 
   it('loops through imported products and creates drafts in a designated catalog', async () => {
-    mocks.runPlaywrightProgrammableImportForConnectionMock.mockResolvedValue({
+    mocks.resolvePlaywrightProgrammableImportSourceMock.mockResolvedValue({
+      source: {
+        type: 'script',
+        actionId: 'import-action-1',
+        runId: null,
+      },
       products: [
         {
           title: 'Imported pin',
@@ -140,12 +145,22 @@ describe('runPlaywrightImportAutomationFlow', () => {
       expect.objectContaining({ id: 'draft-POSTER-001' }),
     ]);
     expect(result.scrapedItems).toHaveLength(2);
+    expect(result.scrapeSource).toEqual({
+      type: 'script',
+      actionId: 'import-action-1',
+      runId: null,
+    });
     expect(result.vars.scrapedItems).toHaveLength(2);
     expect(result.vars.rawProducts).toHaveLength(2);
   });
 
   it('creates products from mapped imports when structured name defaults are provided', async () => {
-    mocks.runPlaywrightProgrammableImportForConnectionMock.mockResolvedValue({
+    mocks.resolvePlaywrightProgrammableImportSourceMock.mockResolvedValue({
+      source: {
+        type: 'script',
+        actionId: 'import-action-1',
+        runId: null,
+      },
       products: [
         {
           title: 'Collector Pin',
@@ -233,7 +248,12 @@ describe('runPlaywrightImportAutomationFlow', () => {
   });
 
   it('emits dry-run write outcomes without creating records', async () => {
-    mocks.runPlaywrightProgrammableImportForConnectionMock.mockResolvedValue({
+    mocks.resolvePlaywrightProgrammableImportSourceMock.mockResolvedValue({
+      source: {
+        type: 'script',
+        actionId: 'import-action-1',
+        runId: null,
+      },
       products: [
         {
           title: 'Dry Run Pin',
@@ -287,7 +307,12 @@ describe('runPlaywrightImportAutomationFlow', () => {
   });
 
   it('captures failed draft writes and continues by default', async () => {
-    mocks.runPlaywrightProgrammableImportForConnectionMock.mockResolvedValue({
+    mocks.resolvePlaywrightProgrammableImportSourceMock.mockResolvedValue({
+      source: {
+        type: 'script',
+        actionId: 'import-action-1',
+        runId: null,
+      },
       products: [
         {
           title: 'Broken Pin',
@@ -379,7 +404,12 @@ describe('runPlaywrightImportAutomationFlow', () => {
   });
 
   it('rethrows failed product writes when the block opts into throw behavior', async () => {
-    mocks.runPlaywrightProgrammableImportForConnectionMock.mockResolvedValue({
+    mocks.resolvePlaywrightProgrammableImportSourceMock.mockResolvedValue({
+      source: {
+        type: 'script',
+        actionId: 'import-action-1',
+        runId: null,
+      },
       products: [
         {
           title: 'Throwing Pin',
@@ -431,7 +461,12 @@ describe('runPlaywrightImportAutomationFlow', () => {
   });
 
   it('maps raw scraped products into draft payloads through the saved draft mapper', async () => {
-    mocks.runPlaywrightProgrammableImportForConnectionMock.mockResolvedValue({
+    mocks.resolvePlaywrightProgrammableImportSourceMock.mockResolvedValue({
+      source: {
+        type: 'script',
+        actionId: 'import-action-1',
+        runId: null,
+      },
       products: [
         {
           title: 'Mapped draft title',

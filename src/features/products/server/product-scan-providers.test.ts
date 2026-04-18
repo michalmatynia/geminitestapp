@@ -4,15 +4,19 @@ import {
   AMAZON_PRODUCT_SCAN_PROVIDER,
   getProductScanProviderDefinition,
 } from './product-scan-providers';
+import { AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY } from '@/shared/lib/browser-execution/amazon-runtime-constants';
 import { SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY } from '@/shared/lib/browser-execution/supplier-1688-runtime-constants';
 
 describe('product-scan-providers', () => {
-  it('keeps the amazon scanner wired as a runtime-backed provider', () => {
+  it('keeps the amazon scanner wired as a native sequencer-backed provider', () => {
     expect(AMAZON_PRODUCT_SCAN_PROVIDER.provider).toBe('amazon');
     expect(AMAZON_PRODUCT_SCAN_PROVIDER.defaultScanType).toBe('google_reverse_image');
     expect(AMAZON_PRODUCT_SCAN_PROVIDER.runtime).not.toBeNull();
-    expect(AMAZON_PRODUCT_SCAN_PROVIDER.runtime?.executionMode).toBe('script');
-    expect(AMAZON_PRODUCT_SCAN_PROVIDER.runtime?.script).toContain('google');
+    expect(AMAZON_PRODUCT_SCAN_PROVIDER.runtime?.executionMode).toBe('native');
+    expect(AMAZON_PRODUCT_SCAN_PROVIDER.runtime?.runtimeKey).toBe(
+      AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY
+    );
+    expect(AMAZON_PRODUCT_SCAN_PROVIDER.runtime?.script).toBeUndefined();
   });
 
   it('registers 1688 supplier scanning as a native sequencer-backed batch-capable provider', () => {

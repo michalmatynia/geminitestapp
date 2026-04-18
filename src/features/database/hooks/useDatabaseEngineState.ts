@@ -132,8 +132,13 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
   const schemaQuery = useAllCollectionsSchema();
 
   const requestedView = searchParams.get('view');
+  const VALID_VIEWS = new Set<DatabaseEngineWorkspaceView>([
+    'engine', 'backups', 'operations', 'redis', 'preview', 'crud',
+  ]);
   const activeView: DatabaseEngineWorkspaceView =
-    requestedView === 'crud' || requestedView === 'engine' ? requestedView : 'engine';
+    requestedView !== null && VALID_VIEWS.has(requestedView as DatabaseEngineWorkspaceView)
+      ? (requestedView as DatabaseEngineWorkspaceView)
+      : 'engine';
 
   const setActiveView = useCallback(
     (view: DatabaseEngineWorkspaceView) => {

@@ -249,6 +249,7 @@ const runDetail: PlaywrightActionRunDetailResponse = {
 describe('AdminPlaywrightActionRunsPageRuntime', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    window.history.replaceState({}, '', '/admin/playwright/action-runs');
     masterNodesMock.mockReturnValue([
       {
         id: 'pw_run__run-1',
@@ -313,6 +314,10 @@ describe('AdminPlaywrightActionRunsPageRuntime', () => {
         '/admin/playwright/step-sequencer?actionId=draft-action-1'
       );
     });
+    expect(screen.getByRole('link', { name: 'Open failed step in sequencer' })).toHaveAttribute(
+      'href',
+      '/admin/playwright/step-sequencer?actionId=draft-action-1&blockRefId=title_fill'
+    );
     expect(screen.getByRole('link', { name: 'Draft Action 1' })).toHaveAttribute(
       'href',
       '/admin/playwright/step-sequencer?actionId=draft-action-1'
@@ -329,6 +334,10 @@ describe('AdminPlaywrightActionRunsPageRuntime', () => {
     expect(screen.getByRole('link', { name: 'Filter action ID' })).toHaveAttribute(
       'href',
       '/admin/playwright/action-runs?actionId=draft-action-1'
+    );
+    expect(screen.getByRole('link', { name: 'Open in programmable mapper' })).toHaveAttribute(
+      'href',
+      '/admin/playwright/programmable/import?connectionId=connection-1&importActionId=draft-action-1&retainedRunId=run-1'
     );
     expect(screen.getByRole('link', { name: 'Filter runtime key' })).toHaveAttribute(
       'href',
@@ -359,7 +368,7 @@ describe('AdminPlaywrightActionRunsPageRuntime', () => {
     await waitFor(() => {
       expect(screen.getByRole('link', { name: 'Open action in sequencer' })).toHaveAttribute(
         'href',
-        '/admin/playwright/step-sequencer?actionId=draft-action-1'
+        '/admin/playwright/step-sequencer?actionId=draft-action-1&blockRefId=title_fill'
       );
     });
 
@@ -367,5 +376,92 @@ describe('AdminPlaywrightActionRunsPageRuntime', () => {
       'href',
       '/admin/integrations/selectors?namespace=tradera'
     );
+  });
+
+  it('hydrates actionId, selected run, and selected step from the URL query string', async () => {
+    const secondRunSummary: PlaywrightActionRunSummary = {
+      ...runSummary,
+      runId: 'run-2',
+      actionId: 'draft-action-2',
+      actionName: 'Draft Action 2',
+      runtimeKey: 'amazon_scan_runtime',
+      selectorProfile: 'profile-market-b',
+    };
+    const secondRunDetail: PlaywrightActionRunDetailResponse = {
+      ...runDetail,
+      run: {
+        ...runDetail.run,
+        ...secondRunSummary,
+        scrapedItems: [{ title: 'Deep-linked item' }],
+      },
+      steps: runDetail.steps.map((step) => ({
+        ...step,
+        runId: 'run-2',
+      })),
+    };
+
+    window.history.replaceState(
+      {},
+      '',
+      '/admin/playwright/action-runs?actionId=draft-action-2&runId=run-2&stepId=step-1'
+    );
+    usePlaywrightActionRunsMock.mockReturnValue({
+      data: {
+        runs: [runSummary, secondRunSummary],
+        nextCursor: null,
+        total: 2,
+      },
+      isLoading: false,
+      isFetching: false,
+      refetch: vi.fn(),
+    });
+    usePlaywrightActionRunMock.mockImplementation((runId: string | null) => ({
+      data: runId === 'run-2' ? secondRunDetail : runId === 'run-1' ? runDetail : null,
+      isLoading: false,
+      refetch: vi.fn(),
+    }));
+
+    render(<AdminPlaywrightActionRunsPageRuntime />);
+
+    expect(usePlaywrightActionRunsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actionId: 'draft-action-2',
+      })
+    );
+    await waitFor(() => {
+      expect(usePlaywrightActionRunMock).toHaveBeenCalledWith('run-2', { enabled: true });
+    });
+    expect(screen.getByDisplayValue('draft-action-2')).toBeInTheDocument();
+    expect(screen.getByText('Step detail')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open action in sequencer' })).toHaveAttribute(
+      'href',
+      '/admin/playwright/step-sequencer?actionId=draft-action-2&blockRefId=title_fill'
+    );
+  });
+
+  it('links retained runs into the programmable mapper even without a stored connection', async () => {
+    usePlaywrightActionRunMock.mockImplementation((runId: string | null) => ({
+      data:
+        runId === 'run-1'
+          ? {
+              ...runDetail,
+              run: {
+                ...runDetail.run,
+                connectionId: null,
+              },
+            }
+          : null,
+      isLoading: false,
+      refetch: vi.fn(),
+    }));
+
+    render(<AdminPlaywrightActionRunsPageRuntime />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('link', { name: 'Open in programmable mapper' })).toHaveAttribute(
+        'href',
+        '/admin/playwright/programmable/import?importActionId=draft-action-1&retainedRunId=run-1'
+      );
+    });
   });
 });

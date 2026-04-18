@@ -26,7 +26,6 @@ const AUTH_FAIL_SELECTORS = [
 const TOTAL_BUDGET_MS = 270_000;
 const PICKER_SETTLE_MS = 700;
 const ITEM_CLICK_SETTLE_MS = 500;
-const MAX_DEPTH = 3;
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -189,31 +188,6 @@ export class TraderaListingFormCategorySequencer extends PlaywrightSequencer {
       await byText.click();
       await this.wait(ITEM_CLICK_SETTLE_MS);
       return true;
-    }
-
-    return false;
-  }
-
-  private async tryClickPickerBack(): Promise<boolean> {
-    const { page } = this.context;
-    const picker = page.locator(PICKER_SELECTOR).first();
-
-    for (const sel of [
-      '[data-test-category-back]',
-      '[aria-label*="back" i]',
-      '[aria-label*="Back"]',
-      '[aria-label*="tillbaka" i]',
-      'button:has([class*="back"])',
-      'button:has([class*="arrow-left"])',
-      'button:has([class*="chevron-left"])',
-      '[class*="back-button"]',
-    ]) {
-      const btn = picker.locator(sel).first();
-      if (await btn.isVisible({ timeout: 300 }).catch(() => false)) {
-        await btn.click();
-        await this.wait(400);
-        return true;
-      }
     }
 
     return false;
@@ -408,20 +382,6 @@ export class TraderaListingFormCategorySequencer extends PlaywrightSequencer {
           const l3Id = this.resolveId(l3Item, l2Id);
           this.addCategory(l3Id, l3Item.name, l2Id);
         }
-
-        if (MAX_DEPTH > 3) {
-          for (const l3Item of l3Items) {
-            if (this.isBudgetExhausted()) break;
-            const l3Id = this.resolveId(l3Item, l2Id);
-            const l4Items = await this.drillAndRead([l1Item, l2Item, l3Item]);
-            totalVisited += 1;
-            if (l4Items === null || l4Items.length === 0) continue;
-            for (const l4Item of l4Items) {
-              const l4Id = this.resolveId(l4Item, l3Id);
-              this.addCategory(l4Id, l4Item.name, l3Id);
-            }
-          }
-        }
       }
     }
 
@@ -434,6 +394,15 @@ export class TraderaListingFormCategorySequencer extends PlaywrightSequencer {
     this.complete('categories_crawl', message);
   }
 
+  /**
+   * Opens the picker fresh, navigates to `path` by clicking each level's item
+   * in sequence, then reads and returns all items visible at that level.
+   *
+   * Returns null when:
+   * - The picker could not be opened
+   * - An intermediate item could not be found
+   * - An item in the path committed the selection (leaf reached before end of path)
+   */
   private async drillAndRead(path: PickerItem[]): Promise<PickerItem[] | null> {
     const { page } = this.context;
 
@@ -449,14 +418,8 @@ export class TraderaListingFormCategorySequencer extends PlaywrightSequencer {
 
       const pickerStillOpen = await this.isPickerVisible();
       if (!pickerStillOpen) {
+        // Item was a leaf — picker committed and closed automatically
         return null;
-      }
-
-      const wentBack = await this.tryClickPickerBack();
-      if (wentBack) {
-        this.context.log?.('tradera.listing-form-category.picker-back', {
-          atItem: item.name,
-        });
       }
     }
 

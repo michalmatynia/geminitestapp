@@ -23,6 +23,8 @@ import {
   ensureTraderaBrowserSession,
   isTraderaBrowserAuthRequiredMessage,
   preflightTraderaQuickListSession,
+  TRADERA_BROWSER_MANUAL_VERIFICATION_MESSAGE,
+  TRADERA_BROWSER_SESSION_SAVE_FAILURE_MESSAGE,
 } from '@/features/integrations/utils/tradera-browser-session';
 import {
   ensureVintedBrowserSession,
@@ -172,11 +174,14 @@ export function useListProductForm(
           isTraderaIntegration && isTraderaBrowserIntegrationSlug(selectedIntegration?.slug);
         const isVintedBrowserIntegration = isVintedIntegrationSlug(selectedIntegration?.slug);
         if (isTraderaBrowserIntegration && selectedConnectionId) {
-          await preflightTraderaQuickListSession({
+          const preflightResponse = await preflightTraderaQuickListSession({
             integrationId: selectedIntegrationId,
             connectionId: selectedConnectionId,
             productId,
           });
+          if (!preflightResponse.ready) {
+            throw new Error(TRADERA_BROWSER_MANUAL_VERIFICATION_MESSAGE);
+          }
         }
         if (isVintedBrowserIntegration && selectedConnectionId) {
           const preflightResponse = await preflightVintedQuickListSession({
@@ -322,22 +327,40 @@ export function useListProductForm(
   };
 
   const handleMarketplaceLogin = async (onSuccess: () => void): Promise<void> => {
-    if (!selectedIntegrationId || !selectedConnectionId) return;
     const isTraderaBrowserIntegration =
       isTraderaIntegration && isTraderaBrowserIntegrationSlug(selectedIntegration?.slug);
     const isVintedBrowserIntegration = isVintedIntegrationSlug(selectedIntegration?.slug);
     const marketplace =
       authRequiredMarketplace ??
       (isTraderaBrowserIntegration ? 'tradera' : isVintedBrowserIntegration ? 'vinted' : null);
-    if (!marketplace) return;
+    if (!marketplace) {
+      setError('The selected marketplace no longer supports browser login recovery. Reopen listing settings and retry.');
+      return;
+    }
+    if (!selectedIntegrationId || !selectedConnectionId) {
+      setError(
+        marketplace === 'vinted'
+          ? 'Vinted.pl connection is no longer selected. Reopen listing settings and retry.'
+          : 'Tradera connection is no longer selected. Reopen listing settings and retry.'
+      );
+      setAuthRequired(true);
+      setAuthRequiredMarketplace(marketplace);
+      return;
+    }
     try {
       setLoggingIn(true);
       setError(null);
       if (marketplace === 'tradera') {
-        await ensureTraderaBrowserSession({
+        const response = await ensureTraderaBrowserSession({
           integrationId: selectedIntegrationId,
           connectionId: selectedConnectionId,
         });
+        if (!response.savedSession) {
+          setError(TRADERA_BROWSER_SESSION_SAVE_FAILURE_MESSAGE);
+          setAuthRequired(true);
+          setAuthRequiredMarketplace('tradera');
+          return;
+        }
         toast('Tradera login session refreshed.', { variant: 'success' });
       } else {
         const response = await ensureVintedBrowserSession({

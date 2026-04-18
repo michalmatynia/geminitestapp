@@ -43,12 +43,14 @@ export async function fetchPlaywrightActionRun(
 }
 
 export function usePlaywrightActionRuns(
-  filters: PlaywrightActionRunListFilters = {}
+  filters: PlaywrightActionRunListFilters = {},
+  options?: { enabled?: boolean }
 ): ListQuery<PlaywrightActionRunSummary, PlaywrightActionRunListResponse> {
   const queryKey = playwrightKeys.actionRuns(filters);
   return createListQueryV2<PlaywrightActionRunSummary, PlaywrightActionRunListResponse>({
     queryKey,
     queryFn: () => fetchPlaywrightActionRuns(filters),
+    enabled: options?.enabled ?? true,
     meta: {
       source: 'playwright.hooks.usePlaywrightActionRuns',
       operation: 'list',

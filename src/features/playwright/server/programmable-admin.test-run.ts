@@ -8,9 +8,9 @@ import { runPlaywrightImportAutomationFlow } from './automation-flow';
 import type { PlaywrightProgrammableTestPayload } from './programmable-admin.schemas';
 import { buildDefaultListingSampleInput } from './programmable-admin.shared';
 import { buildPlaywrightImportInput } from './import-input';
+import { resolvePlaywrightProgrammableImportSource } from './programmable-import-source';
 import { requirePlaywrightProgrammableConnectionById } from './programmable-storage';
 import {
-  runPlaywrightProgrammableImportForConnection,
   runPlaywrightProgrammableListingForConnection,
 } from './programmable';
 
@@ -84,6 +84,7 @@ export const runPlaywrightProgrammableConnectionTest = async ({
       scriptType: 'import',
       input,
       result: {
+        scrapeSource: automationFlow.scrapeSource,
         rawResult: automationFlow.rawResult,
         scrapedItems: automationFlow.scrapedItems,
         rawProducts: automationFlow.rawProducts,
@@ -93,6 +94,7 @@ export const runPlaywrightProgrammableConnectionTest = async ({
         automationFlow: {
           executionMode,
           flow: automationFlow.flow,
+          scrapeSource: automationFlow.scrapeSource,
           drafts: automationFlow.drafts,
           draftPayloads: automationFlow.draftPayloads,
           writeOutcomes: automationFlow.writeOutcomes,
@@ -109,7 +111,7 @@ export const runPlaywrightProgrammableConnectionTest = async ({
     throw new Error('Import flow execution requires saved automation flow JSON.');
   }
 
-  const result = await runPlaywrightProgrammableImportForConnection({
+  const result = await resolvePlaywrightProgrammableImportSource({
     connection,
     input,
   });
@@ -119,6 +121,7 @@ export const runPlaywrightProgrammableConnectionTest = async ({
     scriptType: 'import',
     input,
     result: {
+      scrapeSource: result.source,
       rawResult: result.rawResult,
       scrapedItems: result.products,
       rawProducts: result.products,

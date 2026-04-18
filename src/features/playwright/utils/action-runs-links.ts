@@ -2,6 +2,8 @@ type PlaywrightActionRunsFilterArgs = {
   actionId?: string | null;
   runtimeKey?: string | null;
   selectorProfile?: string | null;
+  runId?: string | null;
+  stepId?: string | null;
 };
 
 const addTrimmedQueryParam = (
@@ -24,6 +26,8 @@ export const resolvePlaywrightActionRunsHref = (
   addTrimmedQueryParam(params, 'actionId', args.actionId);
   addTrimmedQueryParam(params, 'runtimeKey', args.runtimeKey);
   addTrimmedQueryParam(params, 'selectorProfile', args.selectorProfile);
+  addTrimmedQueryParam(params, 'runId', args.runId);
+  addTrimmedQueryParam(params, 'stepId', args.stepId);
 
   const query = params.toString();
   return query.length > 0

@@ -12,6 +12,11 @@ import {
   type ProductScanSequenceEntry,
   type ProductScanStepKey,
 } from '../product-scan-step-sequencer';
+import { getProductScanScrapedItems } from './product-scan-scraped-items';
+
+export type ProductScanClickTarget = {
+  click?: ((options?: Record<string, unknown>) => Promise<unknown> | unknown) | undefined;
+};
 
 // ─── Context ──────────────────────────────────────────────────────────────────
 
@@ -28,6 +33,17 @@ export interface ProductScanArtifacts {
 
 export interface ProductScanHelpers {
   sleep?: (ms: number) => Promise<void>;
+  actionPause?: () => Promise<number>;
+  click?: (
+    target: ProductScanClickTarget,
+    options?: {
+      scroll?: boolean;
+      pauseBefore?: boolean;
+      pauseAfter?: boolean;
+      delayMs?: number | null;
+      clickOptions?: Record<string, unknown>;
+    }
+  ) => Promise<void>;
   [key: string]: unknown;
 }
 
@@ -234,6 +250,7 @@ export abstract class ProductScanSequencer {
   protected async emitResult(payload: Record<string, unknown>): Promise<void> {
     const payloadWithSteps = {
       ...payload,
+      scrapedItems: getProductScanScrapedItems(payload),
       steps: this.scanSteps.map((s) => ({ ...s })),
     };
     this.emit('result', payloadWithSteps);
@@ -263,10 +280,27 @@ export abstract class ProductScanSequencer {
       const locator = this.page.locator(selector).first();
       if ((await locator.count().catch(() => 0)) === 0) continue;
       if (!(await locator.isVisible().catch(() => false))) continue;
-      await locator.click().catch(() => undefined);
+      await this.clickLocator(locator, { timeout: 5_000 });
       return true;
     }
     return false;
+  }
+
+  /** Click a Playwright locator through runtime helpers when available. */
+  protected async clickLocator(
+    target: ProductScanClickTarget,
+    clickOptions: Record<string, unknown> = { timeout: 5_000 }
+  ): Promise<void> {
+    if (typeof this.helpers.click === 'function') {
+      await this.helpers
+        .click(target, { clickOptions })
+        .catch(() => undefined);
+      return;
+    }
+
+    if (typeof target.click === 'function') {
+      await Promise.resolve(target.click(clickOptions)).catch(() => undefined);
+    }
   }
 
   /** Return the first selector that matches a visible element, or null. */

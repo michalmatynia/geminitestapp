@@ -62,10 +62,13 @@ type PlaywrightProgrammableConnectionControlsSectionProps = Pick<
   | 'connections'
   | 'handleCleanupAllLegacyBrowserFields'
   | 'handleCreateConnection'
+  | 'handleCreateConnectionFromImportHint'
   | 'isCleaningAllLegacyBrowserFields'
+  | 'importSelectionHint'
   | 'isPromotingConnectionSettings'
   | 'runningTestType'
   | 'saveCurrentConnection'
+  | 'selectedConnection'
   | 'selectedConnectionId'
   | 'setSelectedConnectionId'
   | 'upsertConnection'
@@ -73,25 +76,85 @@ type PlaywrightProgrammableConnectionControlsSectionProps = Pick<
 
 function ConnectionSelectorCard({
   connections,
+  handleCreateConnectionFromImportHint,
+  importSelectionHint,
   isPromotingConnectionSettings,
   onCreateConnection,
   onSaveConnection,
   runningTestType,
+  selectedConnection,
   selectedConnectionId,
   setSelectedConnectionId,
   upsertConnection,
 }: {
   connections: PlaywrightProgrammableConnectionControlsSectionProps['connections'];
+  handleCreateConnectionFromImportHint: PlaywrightProgrammableConnectionControlsSectionProps['handleCreateConnectionFromImportHint'];
+  importSelectionHint: PlaywrightProgrammableConnectionControlsSectionProps['importSelectionHint'];
   isPromotingConnectionSettings: boolean;
   onCreateConnection: () => Promise<void>;
   onSaveConnection: () => Promise<void>;
   runningTestType: PlaywrightProgrammableConnectionControlsSectionProps['runningTestType'];
+  selectedConnection: PlaywrightProgrammableConnectionControlsSectionProps['selectedConnection'];
   selectedConnectionId: string;
   setSelectedConnectionId: (value: string) => void;
   upsertConnection: PlaywrightProgrammableConnectionControlsSectionProps['upsertConnection'];
 }): React.JSX.Element {
+  const hasUnmatchedImportSelectionHint =
+    importSelectionHint !== null && importSelectionHint.matchedConnectionId === null;
+
   return (
-    <Card variant='subtle' padding='md' className='border-border bg-card/40'>
+    <Card variant='subtle' padding='md' className='space-y-4 border-border bg-card/40'>
+      {hasUnmatchedImportSelectionHint ? (
+        <Alert variant='warning' className='text-xs'>
+          <div className='flex flex-col gap-3 md:flex-row md:items-start md:justify-between'>
+            <div>
+              No programmable connection matches import action{' '}
+              <code>{importSelectionHint.importActionId}</code>
+              {importSelectionHint.retainedRunId !== null ? (
+                <>
+                  {' '}
+                  from retained run <code>{importSelectionHint.retainedRunId}</code>
+                </>
+              ) : null}
+              . Showing{' '}
+              <strong>
+                {selectedConnection?.name ?? connections[0]?.name ?? 'the first available connection'}
+              </strong>{' '}
+              instead.
+            </div>
+            <div className='flex flex-wrap gap-2'>
+              <Button
+                type='button'
+                size='sm'
+                variant='outline'
+                disabled={isPromotingConnectionSettings || upsertConnection.isPending}
+                onClick={toAsyncClickHandler(() =>
+                  handleCreateConnectionFromImportHint(
+                    importSelectionHint.importActionId,
+                    'preview'
+                  )
+                )}
+              >
+                Create preview connection
+              </Button>
+              <Button
+                type='button'
+                size='sm'
+                variant='outline'
+                disabled={isPromotingConnectionSettings || upsertConnection.isPending}
+                onClick={toAsyncClickHandler(() =>
+                  handleCreateConnectionFromImportHint(
+                    importSelectionHint.importActionId,
+                    'draft'
+                  )
+                )}
+              >
+                Create draft flow connection
+              </Button>
+            </div>
+          </div>
+        </Alert>
+      ) : null}
       <div className='grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-end'>
         <FormField
           label='Connection'
@@ -178,10 +241,13 @@ export function PlaywrightProgrammableConnectionControlsSection({
   connections,
   handleCleanupAllLegacyBrowserFields,
   handleCreateConnection,
+  handleCreateConnectionFromImportHint,
+  importSelectionHint,
   isCleaningAllLegacyBrowserFields,
   isPromotingConnectionSettings,
   runningTestType,
   saveCurrentConnection,
+  selectedConnection,
   selectedConnectionId,
   setSelectedConnectionId,
   upsertConnection,
@@ -190,10 +256,13 @@ export function PlaywrightProgrammableConnectionControlsSection({
     <>
       <ConnectionSelectorCard
         connections={connections}
+        handleCreateConnectionFromImportHint={handleCreateConnectionFromImportHint}
+        importSelectionHint={importSelectionHint}
         isPromotingConnectionSettings={isPromotingConnectionSettings}
         onCreateConnection={handleCreateConnection}
         onSaveConnection={() => saveCurrentConnection(true).then(() => undefined)}
         runningTestType={runningTestType}
+        selectedConnection={selectedConnection}
         selectedConnectionId={selectedConnectionId}
         setSelectedConnectionId={setSelectedConnectionId}
         upsertConnection={upsertConnection}

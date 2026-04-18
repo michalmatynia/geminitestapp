@@ -115,6 +115,7 @@ function loadActionIntoConstructorState(input: {
 
 export function usePlaywrightStepSequencerState(options?: {
   initialActionId?: string | null;
+  initialActionBlockRefId?: string | null;
 }): PlaywrightStepSequencerContextType {
   const { toast } = useToast();
 
@@ -174,7 +175,8 @@ export function usePlaywrightStepSequencerState(options?: {
   const [actionDraftName, setActionDraftName] = useState('');
   const [actionDraftDescription, setActionDraftDescription] = useState<string | null>(null);
   const [editingActionId, setEditingActionId] = useState<string | null>(null);
-  const appliedInitialActionIdRef = useRef<string | null>(null);
+  const [highlightedActionBlockId, setHighlightedActionBlockId] = useState<string | null>(null);
+  const appliedInitialActionLoadRef = useRef<string | null>(null);
   const [draftStepSetName, setDraftStepSetName] = useState('');
   const [draftStepSetSteps, setDraftStepSetSteps] = useState<PlaywrightStep[]>([]);
 
@@ -733,16 +735,20 @@ export function usePlaywrightStepSequencerState(options?: {
       setActionPersonaId,
       setEditingActionId,
     });
+    setHighlightedActionBlockId(null);
     toast('Action loaded into constructor.', { variant: 'success' });
   }, [toast]);
 
   useEffect(() => {
     const requestedActionId = options?.initialActionId?.trim() ?? '';
+    const requestedActionBlockRefId = options?.initialActionBlockRefId?.trim() ?? '';
     if (requestedActionId.length === 0) {
-      appliedInitialActionIdRef.current = null;
+      appliedInitialActionLoadRef.current = null;
+      setHighlightedActionBlockId(null);
       return;
     }
-    if (appliedInitialActionIdRef.current === requestedActionId) {
+    const requestedInitialLoadKey = `${requestedActionId}::${requestedActionBlockRefId}`;
+    if (appliedInitialActionLoadRef.current === requestedInitialLoadKey) {
       return;
     }
 
@@ -760,8 +766,22 @@ export function usePlaywrightStepSequencerState(options?: {
       setActionPersonaId,
       setEditingActionId,
     });
-    appliedInitialActionIdRef.current = requestedActionId;
-  }, [actions, options?.initialActionId]);
+    setHighlightedActionBlockId(
+      requestedActionBlockRefId.length > 0
+        ? (action.blocks.find((block) => block.refId === requestedActionBlockRefId)?.id ?? null)
+        : null
+    );
+    appliedInitialActionLoadRef.current = requestedInitialLoadKey;
+  }, [actions, options?.initialActionBlockRefId, options?.initialActionId]);
+
+  useEffect(() => {
+    if (highlightedActionBlockId === null) {
+      return;
+    }
+    if (!actionBlocks.some((block) => block.id === highlightedActionBlockId)) {
+      setHighlightedActionBlockId(null);
+    }
+  }, [actionBlocks, highlightedActionBlockId]);
 
   const handleClearAction = useCallback((): void => {
     setActionBlocks([]);
@@ -770,6 +790,7 @@ export function usePlaywrightStepSequencerState(options?: {
     setActionPersonaId(null);
     setActionExecutionSettings(defaultPlaywrightActionExecutionSettings);
     setEditingActionId(null);
+    setHighlightedActionBlockId(null);
   }, []);
 
   const clearDraftStepSet = useCallback((): void => {
@@ -1286,6 +1307,7 @@ export function usePlaywrightStepSequencerState(options?: {
     editingActionId,
     editingActionRuntimeKey,
     actionValidationErrors,
+    highlightedActionBlockId,
     handleAddStepToAction,
     handleAddRuntimeStepToAction,
     handleAddStepSetToAction,

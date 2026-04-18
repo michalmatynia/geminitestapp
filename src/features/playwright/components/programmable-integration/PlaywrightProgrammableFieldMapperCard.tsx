@@ -9,6 +9,10 @@ import {
   type PlaywrightDraftMapperDiagnostic,
   type PlaywrightDraftMapperResolvedField,
 } from '@/features/integrations/services/playwright-listing/draft-mapper';
+import {
+  usePlaywrightActionRun,
+  usePlaywrightActionRuns,
+} from '@/features/playwright/hooks/usePlaywrightActionRuns';
 import type { PlaywrightProgrammableIntegrationPageModel } from '@/features/playwright/pages/playwright-programmable-integration-page.types';
 import {
   PROGRAMMABLE_DRAFT_TARGET_OPTIONS,
@@ -16,6 +20,7 @@ import {
   type ProgrammableDraftMapperRow,
 } from '@/features/playwright/pages/playwright-programmable-integration-page.helpers';
 import { getProgrammableScrapedItemsFromTestResultJson } from '@/features/playwright/components/programmable-integration/playwrightProgrammableScrapeResults';
+import { getPlaywrightActionRunScrapedItems } from '@/shared/lib/playwright/action-run-scrape-results';
 import { FormField, SelectSimple } from '@/shared/ui/forms-and-actions.public';
 import { Alert, Button, Card, Input, Textarea } from '@/shared/ui/primitives.public';
 
@@ -25,6 +30,7 @@ type Props = Pick<
   | 'handleAddDraftMapping'
   | 'handleDeleteDraftMapping'
   | 'handleUpdateDraftMapping'
+  | 'importActionId'
   | 'testResultJson'
 >;
 
@@ -38,6 +44,12 @@ const parseScrapedItems = (testResultJson: string): Record<string, unknown>[] =>
     const record = toDraftMapperPreviewInput(item);
     return record !== null ? [record] : [];
   });
+
+const readInitialRetainedRunIdFromQuery = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  const runId = new URLSearchParams(window.location.search).get('retainedRunId')?.trim() ?? '';
+  return runId.length > 0 ? runId : null;
+};
 
 const formatPreviewValue = (value: unknown): string => {
   if (typeof value === 'string') {
@@ -93,10 +105,12 @@ const getRowStatusClassName = (status: 'error' | 'warning' | 'ok'): string => {
 
 function DraftMapperSamplePanel({
   scrapedItems,
+  sourceDescription,
   sampleIndex,
   setSampleIndex,
 }: {
   scrapedItems: Record<string, unknown>[];
+  sourceDescription: string;
   sampleIndex: number;
   setSampleIndex: React.Dispatch<React.SetStateAction<number>>;
 }): React.JSX.Element {
@@ -107,9 +121,7 @@ function DraftMapperSamplePanel({
     <div className='space-y-3 rounded-xl border border-border/50 bg-background/30 p-4'>
       <div>
         <h3 className='text-sm font-semibold text-white'>Scrape Sample</h3>
-        <p className='mt-1 text-xs text-gray-400'>
-          Use the latest scrape result as the mapping source.
-        </p>
+        <p className='mt-1 text-xs text-gray-400'>{sourceDescription}</p>
       </div>
 
       {scrapedItems.length > 0 ? (
@@ -405,9 +417,55 @@ export function PlaywrightProgrammableFieldMapperCard({
   handleAddDraftMapping,
   handleDeleteDraftMapping,
   handleUpdateDraftMapping,
+  importActionId,
   testResultJson,
 }: Props): React.JSX.Element {
-  const scrapedItems = React.useMemo(() => parseScrapedItems(testResultJson), [testResultJson]);
+  const testScrapedItems = React.useMemo(() => parseScrapedItems(testResultJson), [testResultJson]);
+  const normalizedImportActionId = importActionId.trim();
+  const pinnedRetainedRunId = React.useMemo(() => readInitialRetainedRunIdFromQuery(), []);
+  const hasImportActionId = normalizedImportActionId.length > 0;
+  const retainedRunsQuery = usePlaywrightActionRuns(
+    {
+      actionId: normalizedImportActionId,
+      status: 'completed',
+      limit: 1,
+    },
+    { enabled: hasImportActionId && pinnedRetainedRunId === null }
+  );
+  const selectedRetainedRunId = pinnedRetainedRunId ?? retainedRunsQuery.data?.runs[0]?.runId ?? null;
+  const retainedRunDetailQuery = usePlaywrightActionRun(selectedRetainedRunId, {
+    enabled: selectedRetainedRunId !== null,
+  });
+  const retainedRunScrapedItems = React.useMemo(() => {
+    const retainedRun = retainedRunDetailQuery.data?.run;
+    if (!retainedRun) return [];
+
+    const rawItems =
+      Array.isArray(retainedRun.scrapedItems) && retainedRun.scrapedItems.length > 0
+        ? retainedRun.scrapedItems
+        : getPlaywrightActionRunScrapedItems(retainedRun.result);
+
+    return rawItems.flatMap((item) => {
+      const record = toDraftMapperPreviewInput(item);
+      return record !== null ? [record] : [];
+    });
+  }, [retainedRunDetailQuery.data?.run]);
+  const scrapedItems =
+    testScrapedItems.length > 0 ? testScrapedItems : retainedRunScrapedItems;
+  const sourceDescription =
+    testScrapedItems.length > 0
+      ? 'Using the latest Test Import result as the mapping source.'
+      : retainedRunScrapedItems.length > 0
+        ? pinnedRetainedRunId !== null
+          ? `Using retained import action run ${pinnedRetainedRunId} as the mapping source.`
+          : 'Using the latest retained completed import action run as the mapping source.'
+        : retainedRunsQuery.isLoading || retainedRunDetailQuery.isLoading
+          ? pinnedRetainedRunId !== null
+            ? `Loading retained import action run ${pinnedRetainedRunId}.`
+            : 'Loading retained completed import action run samples.'
+          : pinnedRetainedRunId !== null
+            ? `Retained import action run ${pinnedRetainedRunId} did not return sample scrape data for mapping.`
+            : 'Run Test Import or use a retained completed import action run to capture sample scrape data for mapping.';
   const [sampleIndex, setSampleIndex] = React.useState(0);
 
   React.useEffect(() => {
@@ -453,6 +511,7 @@ export function PlaywrightProgrammableFieldMapperCard({
       <div className='grid gap-4 xl:grid-cols-3'>
         <DraftMapperSamplePanel
           scrapedItems={scrapedItems}
+          sourceDescription={sourceDescription}
           sampleIndex={sampleIndex}
           setSampleIndex={setSampleIndex}
         />

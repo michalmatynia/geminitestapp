@@ -8,10 +8,13 @@ import { AppError, AppErrorCodes } from '@/shared/errors/app-error';
 import { buildResolvedActionSteps } from '@/shared/lib/browser-execution/runtime-action-resolver.server';
 import { StepTracker } from '@/shared/lib/browser-execution/step-tracker';
 import { TraderaCategorySequencer } from '@/shared/lib/browser-execution/sequencers/TraderaCategorySequencer';
+import { TraderaListingFormCategorySequencer } from '@/shared/lib/browser-execution/sequencers/TraderaListingFormCategorySequencer';
 import {
   createTraderaCategoryScrapePlaywrightInstance,
+  createTraderaStandardListingPlaywrightInstance,
   runPlaywrightConnectionNativeTask,
 } from '@/features/playwright/server';
+import type { TraderaSystemSettings } from '@/features/integrations/constants/tradera';
 
 const extractTrimmedString = (value: unknown): string | null =>
   typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
@@ -149,5 +152,97 @@ export const fetchTraderaCategoriesForConnection = async (
     },
     getErrorMessage: (error) =>
       error instanceof Error ? error.message : 'Tradera category fetch failed',
+  });
+};
+
+export const fetchTraderaCategoriesFromListingFormForConnection = async (
+  connection: IntegrationConnectionRecord,
+  systemSettings: Pick<TraderaSystemSettings, 'listingFormUrl'>
+): Promise<TraderaCategoryRecord[]> => {
+  return runPlaywrightConnectionNativeTask<TraderaCategoryRecord[]>({
+    connection,
+    instance: createTraderaStandardListingPlaywrightInstance({
+      connectionId: connection.id,
+      integrationId: connection.integrationId,
+    }),
+    runtimeActionKey: 'tradera_fetch_categories',
+    execute: async (session) => {
+      const tracker = StepTracker.fromSteps(
+        await buildResolvedActionSteps('tradera_fetch_categories')
+      );
+
+      const sequencer = new TraderaListingFormCategorySequencer(
+        {
+          page: session.page,
+          tracker,
+          actionKey: 'tradera_fetch_categories',
+          emit: () => undefined,
+          log: (msg, ctx) => {
+            logger.info(msg, ctx as Record<string, unknown>);
+          },
+        },
+        { listingFormUrl: systemSettings.listingFormUrl }
+      );
+
+      await sequencer.run();
+
+      const result = sequencer.result;
+
+      if (!result) {
+        throw new AppError(
+          'Tradera listing form category sequencer produced no result.',
+          {
+            code: AppErrorCodes.operationFailed,
+            httpStatus: 422,
+            meta: { connectionId: connection.id },
+            expected: false,
+          }
+        );
+      }
+
+      const categories = normalizeCategories(result.categories);
+      const withParent = categories.filter(
+        (category) => category.parentId && category.parentId !== '0'
+      );
+
+      logger.info('[tradera-listing-form-category-fetch]', {
+        categorySource: result.categorySource,
+        total: categories.length,
+        withParentCount: withParent.length,
+        rootCount: categories.length - withParent.length,
+        scrapedFrom: result.scrapedFrom,
+        sampleCategories: categories.slice(0, 5).map((category) => ({
+          id: category.id,
+          name: category.name,
+          parentId: category.parentId,
+        })),
+        crawlStats: result.crawlStats,
+      });
+
+      if (categories.length === 0) {
+        throw new AppError(
+          'No categories could be scraped from the Tradera listing form category picker. Ensure the connection session is authenticated and the listing form is accessible.',
+          {
+            code: AppErrorCodes.operationFailed,
+            httpStatus: 422,
+            meta: {
+              connectionId: connection.id,
+              scrapedFrom: result.scrapedFrom,
+              categorySource: result.categorySource,
+              diagnostics: result.diagnostics,
+              crawlStats: result.crawlStats,
+              recoveryAction: 'tradera_configure_api_credentials',
+              recoveryMessage:
+                'Authenticate the Tradera connection session, then retry category fetch.',
+            },
+            expected: true,
+          }
+        );
+      }
+
+      return categories;
+    },
+    getErrorMessage: (error) =>
+      error instanceof Error ? error.message : 'Tradera listing form category fetch failed',
   });
 };

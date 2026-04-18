@@ -80,7 +80,11 @@
       "Bash(for file:*)",
       "Bash(do echo:*)",
       "Bash(npm test:*)",
-      "Bash(NODE_OPTIONS=\"--max-old-space-size=8192\" npx tsc --noEmit)"
+      "Bash(NODE_OPTIONS=\"--max-old-space-size=8192\" npx tsc --noEmit)",
+      "Bash(git -C \"/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\" diff --name-only HEAD)",
+      "Bash(git -C \"/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\" stash list)",
+      "Bash(git -C \"/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\" diff HEAD -- \"src/features/playwright/components/programmable-integration/PlaywrightProgrammableEditorsSection.tsx\")",
+      "Bash(git *)"
     ]
   }
 }

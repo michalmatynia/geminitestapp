@@ -29,7 +29,10 @@ import {
 } from '@/features/integrations/services/playwright-listing/draft-mapper';
 
 import { buildPlaywrightImportInput } from './import-input';
-import { runPlaywrightProgrammableImportForConnection } from './programmable';
+import {
+  resolvePlaywrightProgrammableImportSource,
+  type PlaywrightProgrammableImportSourceMeta,
+} from './programmable-import-source';
 
 type PlaywrightAutomationScope = {
   input: Record<string, unknown>;
@@ -94,6 +97,7 @@ export type PlaywrightAutomationWriteOutcome =
 export type PlaywrightImportAutomationRunResult = {
   flow: PlaywrightImportAutomationFlow;
   input: Record<string, unknown>;
+  scrapeSource: PlaywrightProgrammableImportSourceMeta;
   scrapedItems: Array<Record<string, unknown>>;
   rawProducts: Array<Record<string, unknown>>;
   rawResult: Record<string, unknown>;
@@ -499,7 +503,7 @@ export const runPlaywrightImportAutomationFlow = async ({
 }): Promise<PlaywrightImportAutomationRunResult> => {
   const parsedFlow = playwrightImportAutomationFlowSchema.parse(flow);
   const effectiveInput = input ?? buildPlaywrightImportInput(connection);
-  const importResult = await runPlaywrightProgrammableImportForConnection({
+  const importResult = await resolvePlaywrightProgrammableImportSource({
     connection,
     input: effectiveInput,
   });
@@ -535,6 +539,7 @@ export const runPlaywrightImportAutomationFlow = async ({
   return {
     flow: parsedFlow,
     input: effectiveInput,
+    scrapeSource: importResult.source,
     scrapedItems: importResult.products,
     rawProducts: importResult.products,
     rawResult: importResult.rawResult,

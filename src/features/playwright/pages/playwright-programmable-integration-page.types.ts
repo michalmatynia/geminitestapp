@@ -34,12 +34,22 @@ export type ProgrammableConnections = NonNullable<ProgrammableConnectionsQuery['
 
 export type ActionOption = { label: string; value: string };
 
+export type ProgrammableImportSelectionHint = {
+  importActionId: string;
+  retainedRunId: string | null;
+  matchedConnectionId: string | null;
+};
+
 export type PlaywrightProgrammableIntegrationPageActions = {
   handleAddDraftMapping: () => void;
   handleAddFieldMapping: () => void;
   handleCleanupAllLegacyBrowserFields: () => Promise<void>;
   handleCleanupLegacyBrowserFields: () => Promise<void>;
   handleCreateConnection: () => Promise<void>;
+  handleCreateConnectionFromImportHint: (
+    importActionId: string,
+    flowMode?: 'preview' | 'draft'
+  ) => Promise<void>;
   handleDeleteDraftMapping: (rowId: string) => void;
   handleDeleteFieldMapping: (rowId: string) => void;
   handlePromoteConnectionSettings: () => Promise<void>;
@@ -162,6 +172,7 @@ export type PlaywrightProgrammableIntegrationPageModel =
     promotionProxyPassword: string;
     runningTestType: RunningTestType;
     scriptSectionRef: RefObject<HTMLDivElement | null>;
+    importSelectionHint: ProgrammableImportSelectionHint | null;
     selectedConnection: ProgrammableConnection | null;
     selectedConnectionId: string;
     sessionDiagnostics: ReturnType<typeof buildProgrammableSessionDiagnostics>;

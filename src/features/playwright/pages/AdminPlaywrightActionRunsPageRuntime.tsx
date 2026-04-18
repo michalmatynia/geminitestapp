@@ -16,7 +16,7 @@ import {
   Search,
   XCircle,
 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   buildPlaywrightActionRunMasterNodes,
@@ -80,6 +80,32 @@ const resolveSelectorRegistryHref = (input: {
       selectorProfile: input.selectorProfile,
     })
   );
+
+const resolveProgrammableImportMapperHref = (input: {
+  connectionId?: string | null;
+  importActionId?: string | null;
+  retainedRunId?: string | null;
+}): string => {
+  const params = new URLSearchParams();
+  const connectionId = input.connectionId?.trim();
+  const importActionId = input.importActionId?.trim();
+  const retainedRunId = input.retainedRunId?.trim();
+
+  if (connectionId) {
+    params.set('connectionId', connectionId);
+  }
+  if (importActionId) {
+    params.set('importActionId', importActionId);
+  }
+  if (retainedRunId) {
+    params.set('retainedRunId', retainedRunId);
+  }
+
+  const query = params.toString();
+  return query.length > 0
+    ? `/admin/playwright/programmable/import?${query}`
+    : '/admin/playwright/programmable/import';
+};
 
 const STATUS_OPTIONS: Array<{ value: PlaywrightActionRunStatus | 'all'; label: string }> = [
   { value: 'all', label: 'All statuses' },
@@ -472,10 +498,26 @@ function RunDetail({
           href={resolveStepSequencerActionHref(run.actionId)}
           label='Open action in sequencer'
         />
+        {firstFailedStep !== undefined && firstFailedStep.refId !== null && firstFailedStep.refId !== '' ? (
+          <DetailActionLink
+            href={resolveStepSequencerActionHref(run.actionId, firstFailedStep.refId)}
+            label='Open failed step in sequencer'
+          />
+        ) : null}
         <DetailActionLink
           href={resolvePlaywrightActionRunsHref({ actionId: run.actionId })}
           label='Filter action ID'
         />
+        {run.actionId !== '' ? (
+          <DetailActionLink
+            href={resolveProgrammableImportMapperHref({
+              connectionId: run.connectionId,
+              importActionId: run.actionId,
+              retainedRunId: run.runId,
+            })}
+            label='Open in programmable mapper'
+          />
+        ) : null}
         {run.runtimeKey !== null && run.runtimeKey !== '' ? (
           <DetailActionLink
             href={resolvePlaywrightActionRunsHref({ runtimeKey: run.runtimeKey })}
@@ -740,7 +782,7 @@ function StepDetail({
       </div>
       <div className='flex flex-wrap items-center gap-2'>
         <DetailActionLink
-          href={resolveStepSequencerActionHref(actionId)}
+          href={resolveStepSequencerActionHref(actionId, step.refId)}
           label='Open action in sequencer'
         />
         <DetailActionLink
@@ -962,15 +1004,22 @@ const readInitialFilterParam = (key: string): string => {
 export function AdminPlaywrightActionRunsPageRuntime(): React.JSX.Element {
   const [query, setQuery] = useState(() => readInitialFilterParam('query'));
   const [status, setStatus] = useState<PlaywrightActionRunStatus | 'all'>('all');
-  const [actionId, setActionId] = useState('');
+  const [actionId, setActionId] = useState(() => readInitialFilterParam('actionId'));
   const [runtimeKey, setRuntimeKey] = useState(() => readInitialFilterParam('runtimeKey'));
   const [selectorProfile, setSelectorProfile] = useState(() => readInitialFilterParam('selectorProfile'));
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [cursor, setCursor] = useState<string | null>(null);
   const [cursorStack, setCursorStack] = useState<Array<string | null>>([]);
-  const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
-  const [selectedStepId, setSelectedStepId] = useState<string | null>(null);
+  const [selectedRunId, setSelectedRunId] = useState<string | null>(() => {
+    const runId = readInitialFilterParam('runId').trim();
+    return runId.length > 0 ? runId : null;
+  });
+  const [selectedStepId, setSelectedStepId] = useState<string | null>(() => {
+    const stepId = readInitialFilterParam('stepId').trim();
+    return stepId.length > 0 ? stepId : null;
+  });
+  const didApplyInitialFilterResetRef = useRef(false);
 
   const filters = useMemo(
     () => {
@@ -1029,6 +1078,10 @@ export function AdminPlaywrightActionRunsPageRuntime(): React.JSX.Element {
   const currentPage = cursorStack.length + 1;
 
   useEffect(() => {
+    if (!didApplyInitialFilterResetRef.current) {
+      didApplyInitialFilterResetRef.current = true;
+      return;
+    }
     setCursor(null);
     setCursorStack([]);
     setSelectedStepId(null);
@@ -1036,16 +1089,32 @@ export function AdminPlaywrightActionRunsPageRuntime(): React.JSX.Element {
 
   useEffect(() => {
     if (runs.length === 0) {
+      if (detail?.run.runId === selectedRunId) return;
       if (selectedRunId !== null) setSelectedRunId(null);
       return;
     }
-    if (selectedRunId !== null && runs.some((run) => run.runId === selectedRunId)) return;
+    if (
+      selectedRunId !== null &&
+      (runs.some((run) => run.runId === selectedRunId) || detail?.run.runId === selectedRunId)
+    ) {
+      return;
+    }
     const firstRun = runs[0];
     if (firstRun !== undefined) {
       setSelectedRunId(firstRun.runId);
     }
     setSelectedStepId(null);
-  }, [runs, selectedRunId]);
+  }, [detail?.run.runId, runs, selectedRunId]);
+
+  useEffect(() => {
+    if (selectedStepId === null || detail === null) {
+      return;
+    }
+
+    if (!detail.steps.some((step) => step.id === selectedStepId)) {
+      setSelectedStepId(null);
+    }
+  }, [detail, selectedStepId]);
 
   const masterNodes = useMemo(
     () => buildPlaywrightActionRunMasterNodes({ runs, selectedRunDetail: detail }),

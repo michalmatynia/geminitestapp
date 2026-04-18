@@ -33,6 +33,23 @@ import {
 import type { ProductScanSequenceEntry } from '../product-scan-step-sequencer';
 import { ProductScanSequencer, type ProductScanSequencerContext } from './ProductScanSequencer';
 
+const GOOGLE_LENS_SAFE_ENTRY_TRIGGER_SELECTORS = [
+  'div[aria-label="Search by image"]',
+  'button[aria-label="Search by image"]',
+  'div[aria-label="Search with an image"]',
+  'button[aria-label="Search with an image"]',
+  'div[aria-label="Search with Google Lens"]',
+  'button[aria-label="Search with Google Lens"]',
+  'div[aria-label="Google Lens"]',
+  'button[aria-label="Google Lens"]',
+  'div[role="button"]:has-text("Search by image")',
+  'button:has-text("Search by image")',
+  'div[role="button"]:has-text("Search with an image")',
+  'button:has-text("Search with an image")',
+  '[data-base-uri="/searchbyimage"]',
+  '[data-base-uri*="lens"]',
+] as const;
+
 // ─── Input types ───────────────────────────────────────────────────────────────
 
 export type AmazonImageSearchProvider =
@@ -394,27 +411,40 @@ export class AmazonScanSequencer extends ProductScanSequencer {
       return;
     }
 
-    // ── Google Lens: open ─────────────────────────────────────────────────────
     const selectedCandidate = imageCandidates[0]!;
     const candidateId = this.normalizeText(selectedCandidate.id) ?? 'candidate_1';
     const candidateRank = typeof selectedCandidate.rank === 'number' ? selectedCandidate.rank : 1;
+    const imageSearchProvider = this.resolveImageSearchProvider();
 
-    const openResult = await this.openGoogleLens({ candidateId, candidateRank });
-    if (!openResult.success) {
-      await this.emitResult({
-        status: 'failed',
-        asin: null, title: null, price: null, url: null, description: null,
-        amazonDetails: null,
-        amazonProbe: null,
-        matchedImageId: candidateId,
-        candidateUrls: [],
-        candidateResults: [],
-        candidatePreviews: [],
-        currentUrl: this.page.url(),
-        message: openResult.message,
-        stage: 'google_lens_open',
+    // ── Google Lens: open ─────────────────────────────────────────────────────
+    if (imageSearchProvider === 'google_images_url') {
+      this.upsertScanStep({
+        key: 'google_lens_open',
+        status: 'completed',
+        candidateId,
+        candidateRank,
+        resultCode: 'skipped_url_mode',
+        message: 'URL image-search mode submits the image URL directly without opening a file upload page.',
+        details: [{ label: 'Image search provider', value: imageSearchProvider }],
       });
-      return;
+    } else {
+      const openResult = await this.openGoogleLens({ candidateId, candidateRank });
+      if (!openResult.success) {
+        await this.emitResult({
+          status: 'failed',
+          asin: null, title: null, price: null, url: null, description: null,
+          amazonDetails: null,
+          amazonProbe: null,
+          matchedImageId: candidateId,
+          candidateUrls: [],
+          candidateResults: [],
+          candidatePreviews: [],
+          currentUrl: this.page.url(),
+          message: openResult.message,
+          stage: 'google_lens_open',
+        });
+        return;
+      }
     }
 
     // ── Google Lens: upload ───────────────────────────────────────────────────
@@ -699,9 +729,18 @@ export class AmazonScanSequencer extends ProductScanSequencer {
         timeout: 30_000,
       });
 
-      await this.clickGoogleConsentIfPresent().catch(() => undefined);
+      const consentState = await this.clickGoogleConsentIfPresent().catch(() => ({ resolved: false }));
       await this.page.waitForLoadState('networkidle', { timeout: 5_000 }).catch(() => undefined);
       await this.wait(800);
+      if (consentState.resolved && this.shouldReopenImageSearchPageAfterConsent(url)) {
+        await this.page.goto(url, {
+          waitUntil: 'domcontentloaded',
+          timeout: 30_000,
+        });
+        await this.clickGoogleConsentIfPresent().catch(() => undefined);
+        await this.page.waitForLoadState('networkidle', { timeout: 5_000 }).catch(() => undefined);
+        await this.wait(800);
+      }
 
       const loginState = await this.detectGoogleLoginSurface();
       if (loginState.detected) {
@@ -719,6 +758,26 @@ export class AmazonScanSequencer extends ProductScanSequencer {
             { label: 'Image search page', value: url },
             { label: 'Login detected', value: String(loginState.detected) },
             { label: 'Login reason', value: loginState.reason ?? null },
+          ],
+        });
+        return { success: false, message };
+      }
+
+      const captchaState = await this.detectGoogleLensCaptcha();
+      if (!captchaState.detected && this.shouldReopenImageSearchPageAfterConsent(url)) {
+        const message = 'Google did not keep the browser on the selected image search page after consent.';
+        this.upsertScanStep({
+          key: 'google_lens_open',
+          status: 'failed',
+          candidateId,
+          candidateRank,
+          resultCode: 'image_search_page_unavailable',
+          message,
+          url: this.page.url(),
+          details: [
+            { label: 'Image search provider', value: this.resolveImageSearchProvider() },
+            { label: 'Image search page', value: url },
+            { label: 'Current URL', value: this.page.url() },
           ],
         });
         return { success: false, message };
@@ -785,22 +844,28 @@ export class AmazonScanSequencer extends ProductScanSequencer {
     const startingUrl = this.page.url();
 
     if (provider === 'google_images_url') {
-      if (!candidate.url) {
-        const message = 'Google Images URL mode requires an image URL and will not open a manual file upload.';
+      const imageUrl = this.normalizeText(candidate.url);
+      if (!this.canUseGoogleReverseImageUrl(imageUrl)) {
+        const message = imageUrl
+          ? 'Google Images URL mode requires a public HTTP image URL and will not open a manual file upload.'
+          : 'Google Images URL mode requires an image URL and will not open a manual file upload.';
         this.upsertScanStep({
           key: 'google_upload',
           status: 'failed',
           candidateId,
           candidateRank,
-          resultCode: 'missing_image_url',
+          resultCode: 'provider_requires_image_url',
           message,
           url: this.page.url(),
-          details: [{ label: 'Image search provider', value: provider }],
+          details: [
+            { label: 'Image search provider', value: provider },
+            { label: 'Image URL', value: imageUrl },
+          ],
         });
-        return { advanced: false, captchaRequired: false, error: message, failureCode: 'missing_image_url' };
+        return { advanced: false, captchaRequired: false, error: message, failureCode: 'provider_requires_image_url' };
       }
 
-      const lensUrl = `https://lens.google.com/uploadbyurl?url=${encodeURIComponent(candidate.url)}`;
+      const lensUrl = `https://www.google.com/searchbyimage?image_url=${encodeURIComponent(imageUrl!)}&hl=en`;
       await this.page.goto(lensUrl, { waitUntil: 'domcontentloaded', timeout: 30_000 });
       const transitionState = await this.waitForGoogleLensResultState(startingUrl, null, {
         attempt: candidateRank,
@@ -2049,6 +2114,47 @@ export class AmazonScanSequencer extends ProductScanSequencer {
     }
   }
 
+  private canUseGoogleReverseImageUrl(value: string | null): boolean {
+    if (value === null) {
+      return false;
+    }
+
+    try {
+      const parsed = new URL(value);
+      return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+    } catch {
+      return false;
+    }
+  }
+
+  private shouldReopenImageSearchPageAfterConsent(requestedUrl: string): boolean {
+    const currentUrl = this.page.url();
+    try {
+      const requested = new URL(requestedUrl);
+      const current = new URL(currentUrl);
+      const requestedHost = requested.hostname.toLowerCase();
+      const currentHost = current.hostname.toLowerCase();
+
+      if (currentHost.includes('consent.google')) {
+        return true;
+      }
+
+      if (requestedHost !== currentHost || requested.pathname !== current.pathname) {
+        return true;
+      }
+
+      for (const [key, value] of requested.searchParams.entries()) {
+        if (current.searchParams.get(key) !== value) {
+          return true;
+        }
+      }
+
+      return false;
+    } catch {
+      return false;
+    }
+  }
+
   private extractAmazonAsinFromValue(value: unknown): string | null {
     const text = this.normalizeText(value);
     if (text === null) {
@@ -2066,7 +2172,7 @@ export class AmazonScanSequencer extends ProductScanSequencer {
     for (const { frame } of frames) {
       const control = await this.findGoogleConsentAcceptControl(frame);
       if (!control) continue;
-      await control.locator.click({ timeout: 5_000 }).catch(() => undefined);
+      await this.clickLocator(control.locator, { timeout: 5_000 });
       await this.wait(600);
       return { resolved: true };
     }
@@ -2160,6 +2266,11 @@ export class AmazonScanSequencer extends ProductScanSequencer {
 
   private async detectGoogleLoginSurface(): Promise<GoogleLoginState> {
     const currentUrl = this.page.url();
+    const consentFrames = await this.listGoogleConsentFrames().catch(() => []);
+    if (consentFrames.length > 0) {
+      return { detected: false, currentUrl, reason: 'google_consent' };
+    }
+
     try {
       const parsed = new URL(currentUrl);
       const host = parsed.hostname.toLowerCase();
@@ -2265,16 +2376,19 @@ export class AmazonScanSequencer extends ProductScanSequencer {
     if (state) return state;
 
     await this.clickGoogleConsentIfPresent().catch(() => undefined);
-    await this.clickFirstVisible(GOOGLE_LENS_ENTRY_TRIGGER_SELECTORS).catch(() => undefined);
+    await this.clickGoogleLensSafeImageSearchEntryIfPresent().catch(() => false);
 
     state = await poll(4_000);
     if (state) return state;
 
     await this.clickGoogleConsentIfPresent().catch(() => undefined);
-    await this.clickFirstVisible(GOOGLE_LENS_UPLOAD_TAB_SELECTORS).catch(() => undefined);
 
     state = await poll(7_000);
     return state ?? { ready: false, inputLocator: null, currentUrl: this.page.url(), selector: null, scopeType: null, frameUrl: null, inputCount: 0 };
+  }
+
+  private async clickGoogleLensSafeImageSearchEntryIfPresent(): Promise<boolean> {
+    return await this.clickFirstVisible(GOOGLE_LENS_SAFE_ENTRY_TRIGGER_SELECTORS);
   }
 
   private async resolveGoogleLensFileInput(): Promise<FileInputState> {
@@ -2445,10 +2559,6 @@ export class AmazonScanSequencer extends ProductScanSequencer {
         continue;
       }
 
-      if (currentUrl !== startingUrl && !this.isGoogleImagesUploadEntryUrl(currentUrl)) {
-        return { advanced: true, currentUrl, reason: 'url_changed', processingState: lastProcessingState };
-      }
-
       const processingState = await this.readGoogleLensProcessingState();
       if (processingState.processingVisible || processingState.resultShellVisible) {
         lastProcessingState = processingState;
@@ -2463,6 +2573,10 @@ export class AmazonScanSequencer extends ProductScanSequencer {
       const captchaState = await this.detectGoogleLensCaptcha();
       if (captchaState.detected) {
         return { advanced: true, currentUrl: captchaState.currentUrl, reason: 'captcha', processingState };
+      }
+
+      if (currentUrl !== startingUrl && !this.isGoogleImagesUploadEntryUrl(currentUrl)) {
+        return { advanced: true, currentUrl, reason: 'url_changed', processingState: lastProcessingState };
       }
 
       if (processingState.resultShellVisible) {
@@ -2543,7 +2657,7 @@ export class AmazonScanSequencer extends ProductScanSequencer {
       const locator = this.page.locator(selector).first();
       if ((await locator.count().catch(() => 0)) === 0) continue;
       if (!(await locator.isVisible().catch(() => false))) continue;
-      await locator.click({ timeout: 5_000 }).catch(() => undefined);
+      await this.clickLocator(locator, { timeout: 5_000 });
       await this.page.waitForLoadState('domcontentloaded', { timeout: 15_000 }).catch(() => undefined);
       await this.wait(500);
       return true;

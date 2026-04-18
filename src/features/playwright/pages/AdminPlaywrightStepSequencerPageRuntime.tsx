@@ -24,6 +24,7 @@ export function AdminPlaywrightStepSequencerPageRuntime(): React.JSX.Element {
   const searchParams = useSearchParams();
   const state = usePlaywrightStepSequencerState({
     initialActionId: searchParams.get('actionId'),
+    initialActionBlockRefId: searchParams.get('blockRefId'),
   });
 
   return (

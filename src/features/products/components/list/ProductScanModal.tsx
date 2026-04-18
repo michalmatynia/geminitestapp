@@ -165,7 +165,7 @@ const PRODUCT_SCAN_MODAL_CONFIG: Record<ProductScanModalProvider, ProductScanMod
 const CUSTOM_AMAZON_IMAGE_SEARCH_PAGE_VALUE = '__custom__';
 
 const AMAZON_IMAGE_SEARCH_PAGE_OPTIONS = [
-  { value: '', label: 'Built-in order (Google Lens, then Google Images)' },
+  { value: '', label: 'Built-in Google Lens direct upload' },
   { value: 'https://lens.google.com/?hl=en', label: 'Google Lens direct upload' },
   { value: 'https://images.google.com/?hl=en', label: 'Google Images legacy page' },
   { value: 'https://www.google.com/imghp?hl=en', label: 'Google Images homepage' },
@@ -2303,8 +2303,8 @@ export function ProductScanModal(
             <div className='space-y-1'>
               <div className='font-medium text-white'>Image search page</div>
               <div>
-                Choose the first reverse-image page for this batch. Leave built-in order
-                to use the scanner settings fallback chain.
+                Choose the reverse-image page for this batch. Leave built-in to use the
+                scanner settings page.
               </div>
             </div>
             <select

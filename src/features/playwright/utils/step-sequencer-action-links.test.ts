@@ -20,4 +20,10 @@ describe('resolveStepSequencerActionHref', () => {
       '/admin/playwright/step-sequencer?actionId=draft%2Faction%3Fx%3D1'
     );
   });
+
+  it('includes a linked block ref id when provided', () => {
+    expect(resolveStepSequencerActionHref('draft-action-1', 'step/ref?x=1')).toBe(
+      '/admin/playwright/step-sequencer?actionId=draft-action-1&blockRefId=step%2Fref%3Fx%3D1'
+    );
+  });
 });

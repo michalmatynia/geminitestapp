@@ -61,6 +61,10 @@ vi.mock('@/features/integrations/hooks/useIntegrationMutations', () => ({
 }));
 
 vi.mock('@/features/integrations/utils/tradera-browser-session', () => ({
+  TRADERA_BROWSER_MANUAL_VERIFICATION_MESSAGE:
+    'Tradera login requires manual verification. Solve the captcha in the opened browser window and retry.',
+  TRADERA_BROWSER_SESSION_SAVE_FAILURE_MESSAGE:
+    'Tradera login session could not be saved. Complete login verification and retry.',
   preflightTraderaQuickListSession: (...args: unknown[]) =>
     preflightTraderaQuickListSessionMock(...args) as Promise<unknown>,
   ensureTraderaBrowserSession: (...args: unknown[]) =>
@@ -323,6 +327,61 @@ describe('useMassListForm', () => {
     });
     expect(updateDefaultTraderaConnectionMutateAsyncMock).toHaveBeenCalledTimes(1);
     expect(onSuccessMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('treats a non-ready Tradera preflight response as auth-required recovery', async () => {
+    preflightTraderaQuickListSessionMock.mockResolvedValueOnce({
+      response: { ok: true, sessionReady: false, steps: [] },
+      ready: false,
+    });
+
+    const { result } = renderHook(() => useMassListForm());
+
+    await act(async () => {
+      await result.current.handleSubmit();
+    });
+
+    expect(result.current.authRequired).toBe(true);
+    expect(result.current.authRequiredMarketplace).toBe('tradera');
+    expect(result.current.error).toBe(
+      'Tradera login requires manual verification. Solve the captcha in the opened browser window and retry.'
+    );
+    expect(createListingMutateAsyncMock).not.toHaveBeenCalled();
+    expect(onSuccessMock).not.toHaveBeenCalled();
+  });
+
+  it('keeps Tradera bulk recovery blocked when the manual login flow cannot save a session', async () => {
+    preflightTraderaQuickListSessionMock.mockRejectedValueOnce(
+      new Error(
+        'Tradera login requires manual verification. Solve the captcha in the opened browser window and retry.'
+      )
+    );
+    ensureTraderaBrowserSessionMock.mockResolvedValueOnce({
+      response: { ok: true, sessionReady: true, steps: [] },
+      savedSession: false,
+    });
+
+    const { result } = renderHook(() => useMassListForm());
+
+    await act(async () => {
+      await result.current.handleSubmit();
+    });
+
+    await act(async () => {
+      await result.current.handleMarketplaceLogin();
+    });
+
+    expect(ensureTraderaBrowserSessionMock).toHaveBeenCalledWith({
+      integrationId: 'integration-tradera-1',
+      connectionId: 'conn-tradera-1',
+    });
+    expect(result.current.authRequired).toBe(true);
+    expect(result.current.authRequiredMarketplace).toBe('tradera');
+    expect(result.current.error).toBe(
+      'Tradera login session could not be saved. Complete login verification and retry.'
+    );
+    expect(createListingMutateAsyncMock).not.toHaveBeenCalled();
+    expect(onSuccessMock).not.toHaveBeenCalled();
   });
 
   it('keeps Vinted bulk recovery blocked when the manual login flow cannot save a session', async () => {

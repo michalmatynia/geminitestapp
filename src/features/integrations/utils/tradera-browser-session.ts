@@ -5,6 +5,10 @@ export const TRADERA_BROWSER_MANUAL_TIMEOUT_MS = 240000;
 export const TRADERA_BROWSER_MANUAL_REQUEST_TIMEOUT_MS =
   TRADERA_BROWSER_MANUAL_TIMEOUT_MS + 30000;
 export const TRADERA_BROWSER_QUICKLIST_PREFLIGHT_TIMEOUT_MS = 20000;
+export const TRADERA_BROWSER_MANUAL_VERIFICATION_MESSAGE =
+  'Tradera login requires manual verification. Solve the captcha in the opened browser window and retry.';
+export const TRADERA_BROWSER_SESSION_SAVE_FAILURE_MESSAGE =
+  'Tradera login session could not be saved. Complete login verification and retry.';
 
 export const isTraderaBrowserAuthRequiredMessage = (
   value: string | null | undefined
@@ -55,7 +59,7 @@ const describeManualVerificationFailure = (
   if (failedStep) {
     const detail = failedStep.detail!.trim();
     if (failedStep.step === 'Captcha required' || detail.toLowerCase().includes('captcha')) {
-      return 'Tradera login requires manual verification. Solve the captcha in the opened browser window and retry.';
+      return TRADERA_BROWSER_MANUAL_VERIFICATION_MESSAGE;
     }
     return detail;
   }
@@ -68,7 +72,7 @@ const describeManualVerificationFailure = (
   if (pendingStep) {
     const detail = pendingStep.detail!.trim();
     if (pendingStep.step === 'Captcha required' || detail.toLowerCase().includes('captcha')) {
-      return 'Tradera login requires manual verification. Solve the captcha in the opened browser window and retry.';
+      return TRADERA_BROWSER_MANUAL_VERIFICATION_MESSAGE;
     }
     return detail;
   }

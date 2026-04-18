@@ -5,8 +5,12 @@ import { useCallback, useEffect, useRef } from 'react';
 
 import { ERROR_CATEGORY } from '@/shared/contracts/observability';
 import { classifyError } from '@/shared/errors/error-classifier';
+import { getTanstackFactoryMetaFromBag } from '@/shared/lib/observability/tanstack-telemetry';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
-import type { TanstackFactoryDomain } from '@/shared/lib/tanstack-factory-v2.types';
+import type {
+  TanstackErrorPresentation,
+  TanstackFactoryDomain,
+} from '@/shared/lib/tanstack-factory-v2.types';
 import { useToast } from '@/shared/ui/primitives.public';
 import {
   logClientCatch,
@@ -33,6 +37,7 @@ const NOISE_MESSAGES = new Set(['{}', '[]', '[object Object]']);
 const DEFAULT_TOAST_DEDUPE_WINDOW_MS = 20_000;
 const DEFAULT_AUTO_RETRY_DELAY_MS = 5_000;
 const DEFAULT_MAX_AUTO_RETRIES_PER_QUERY = 1;
+const DEFAULT_QUERY_ERROR_PRESENTATION: TanstackErrorPresentation = 'toast';
 
 const isMeaningfulMessage = (message: string): boolean => {
   const trimmed = message.trim();
@@ -152,6 +157,14 @@ export const buildErrorToastSignature = (
   return buildQueryErrorSignature(queryKey, message);
 };
 
+export const resolveQueryErrorPresentationFromMetaBag = (
+  metaBag: unknown
+): TanstackErrorPresentation =>
+  getTanstackFactoryMetaFromBag(metaBag)?.errorPresentation ?? DEFAULT_QUERY_ERROR_PRESENTATION;
+
+export const shouldShowGlobalQueryErrorToastForQuery = (metaBag: unknown): boolean =>
+  resolveQueryErrorPresentationFromMetaBag(metaBag) === 'toast';
+
 export const shouldEmitDedupedErrorToast = (args: {
   signature: string;
   dedupeWindowMs: number;
@@ -264,7 +277,7 @@ export function useGlobalQueryErrorHandler(config: ErrorHandlingConfig = {}): vo
         }
 
         // Show toast notification
-        if (showToast && toast) {
+        if (showToast && toast && shouldShowGlobalQueryErrorToastForQuery(event.query.meta)) {
           const shouldShowToast = shouldEmitDedupedErrorToast({
             signature: buildErrorToastSignature(queryKey, message, error),
             dedupeWindowMs: toastDedupeWindowMs,

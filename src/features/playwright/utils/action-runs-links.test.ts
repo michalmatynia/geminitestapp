@@ -13,9 +13,11 @@ describe('resolvePlaywrightActionRunsHref', () => {
         actionId: 'draft-action-1',
         runtimeKey: 'tradera_standard_list',
         selectorProfile: 'profile-market-a',
+        runId: 'run-1',
+        stepId: 'step-1',
       })
     ).toBe(
-      '/admin/playwright/action-runs?actionId=draft-action-1&runtimeKey=tradera_standard_list&selectorProfile=profile-market-a'
+      '/admin/playwright/action-runs?actionId=draft-action-1&runtimeKey=tradera_standard_list&selectorProfile=profile-market-a&runId=run-1&stepId=step-1'
     );
   });
 

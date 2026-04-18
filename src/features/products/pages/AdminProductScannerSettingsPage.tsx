@@ -70,7 +70,7 @@ const AMAZON_IMAGE_SEARCH_FALLBACK_PROVIDER_OPTIONS = [
 const CUSTOM_AMAZON_IMAGE_SEARCH_PAGE_VALUE = '__custom__';
 
 const AMAZON_IMAGE_SEARCH_PAGE_OPTIONS = [
-  { value: '', label: 'Built-in order (Google Lens, then Google Images)' },
+  { value: '', label: 'Built-in Google Lens direct upload' },
   { value: 'https://lens.google.com/?hl=en', label: 'Google Lens direct upload' },
   { value: 'https://images.google.com/?hl=en', label: 'Google Images legacy page' },
   { value: 'https://www.google.com/imghp?hl=en', label: 'Google Images homepage' },
@@ -486,7 +486,7 @@ export function AdminProductScannerSettingsPage(): React.JSX.Element {
             </FormField>
             <FormField
               label='Image Search Page'
-              description='Choose the first reverse-image search page to open. The scanner still falls back to the built-in Google Lens and Google Images pages when needed.'
+              description='Choose the reverse-image search page to open for Amazon scans. A scan attempt uses one page; fallback providers start a separate retry.'
             >
               <div className='space-y-2'>
                 <SelectSimple

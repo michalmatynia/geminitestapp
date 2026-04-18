@@ -150,12 +150,70 @@ describe('ProductScanSequencer', () => {
     expect(ctx.emit).toHaveBeenCalledWith('result', expect.objectContaining({ steps: expect.any(Array) }));
   });
 
+  it('emitResult adds canonical scrapedItems for direct product payloads', async () => {
+    const ctx = makeContext();
+    class DirectProductSeq extends ProductScanSequencer {
+      async scan(): Promise<void> {
+        await this.emitResult({
+          status: 'matched',
+          title: 'Mapped product',
+          price: '19.99',
+          url: 'https://example.com/product',
+          description: 'Captured description',
+        });
+      }
+    }
+
+    const seq = new DirectProductSeq(ctx);
+    await seq.scan();
+
+    const payload = (ctx.emit as ReturnType<typeof vi.fn>).mock.calls[0][1] as {
+      scrapedItems: Array<{ title?: string; url?: string }>;
+    };
+
+    expect(payload.scrapedItems).toEqual([
+      expect.objectContaining({
+        title: 'Mapped product',
+        url: 'https://example.com/product',
+      }),
+    ]);
+  });
+
   it('emitResult calls artifacts.json when available', async () => {
     const ctx = makeContext();
     const seq = new MinimalSequencer(ctx);
     await seq.scan();
 
     expect(ctx.artifacts!.json).toHaveBeenCalled();
+  });
+
+  it('clickFirstVisible uses runtime helper clicks so action humanization settings apply', async () => {
+    class ClickSeq extends ProductScanSequencer {
+      async scan(): Promise<void> {}
+      async clickVisible(selectors: readonly string[]): Promise<boolean> {
+        return this.clickFirstVisible(selectors);
+      }
+    }
+    const locator = {
+      count: vi.fn().mockResolvedValue(1),
+      isVisible: vi.fn().mockResolvedValue(true),
+      click: vi.fn().mockResolvedValue(undefined),
+      first: vi.fn().mockReturnThis(),
+    };
+    const helperClick = vi.fn().mockResolvedValue(undefined);
+    const ctx = makeContext({
+      locator: vi.fn().mockReturnValue(locator),
+    } as unknown as Partial<Page>);
+    ctx.helpers.click = helperClick;
+    const seq = new ClickSeq(ctx);
+
+    const clicked = await seq.clickVisible(['button.safe']);
+
+    expect(clicked).toBe(true);
+    expect(helperClick).toHaveBeenCalledWith(locator, {
+      clickOptions: { timeout: 5_000 },
+    });
+    expect(locator.click).not.toHaveBeenCalled();
   });
 
   it('normalizeText trims whitespace and returns null for empty strings', () => {
@@ -300,9 +358,15 @@ describe('AmazonScanSequencer', () => {
     expect(openStep!.resultCode).toBe('navigation_failed');
   });
 
-  it('opens direct Google Lens upload before the legacy Google Images page', async () => {
-    const goto = vi.fn().mockResolvedValue(undefined);
-    const ctx = makeContext({ goto });
+  it('opens one stable built-in Google Lens upload page without cycling to Google Images', async () => {
+    let currentUrl = 'https://images.google.com/';
+    const goto = vi.fn().mockImplementation(async (url: string) => {
+      currentUrl = url;
+    });
+    const ctx = makeContext({
+      goto,
+      url: vi.fn(() => currentUrl),
+    });
     const seq = new AmazonScanSequencer(ctx, {
       imageSearchProvider: 'google_images_upload',
     });
@@ -317,9 +381,76 @@ describe('AmazonScanSequencer', () => {
     });
   });
 
-  it('opens the configured image search page before the built-in Google fallbacks', async () => {
+  it('reopens the selected image search page once when Google consent redirects away from it', async () => {
+    let currentUrl = 'https://images.google.com/';
+    const goto = vi.fn().mockImplementation(async (url: string) => {
+      currentUrl = url;
+    });
+    const ctx = makeContext({
+      goto,
+      url: vi.fn(() => currentUrl),
+    });
+    const seq = new AmazonScanSequencer(ctx, {
+      imageSearchProvider: 'google_images_upload',
+    });
+    (seq as any).clickGoogleConsentIfPresent = vi
+      .fn()
+      .mockImplementationOnce(async () => {
+        currentUrl = 'https://www.google.com/?olud';
+        return { resolved: true };
+      })
+      .mockResolvedValue({ resolved: false });
+
+    const res = await (seq as any).openGoogleLens({ candidateId: 'img', candidateRank: 1 });
+
+    expect(res.success).toBe(true);
+    expect(goto).toHaveBeenCalledTimes(2);
+    expect(goto).toHaveBeenNthCalledWith(1, 'https://lens.google.com/?hl=en', {
+      waitUntil: 'domcontentloaded',
+      timeout: 30_000,
+    });
+    expect(goto).toHaveBeenNthCalledWith(2, 'https://lens.google.com/?hl=en', {
+      waitUntil: 'domcontentloaded',
+      timeout: 30_000,
+    });
+  });
+
+  it('fails open with a clear page-unavailable result when Google keeps bouncing away from the selected page', async () => {
+    let currentUrl = 'https://images.google.com/';
     const goto = vi.fn().mockResolvedValue(undefined);
-    const ctx = makeContext({ goto });
+    const ctx = makeContext({
+      goto,
+      url: vi.fn(() => currentUrl),
+    });
+    const seq = new AmazonScanSequencer(ctx, {
+      imageSearchProvider: 'google_images_upload',
+    });
+    (seq as any).clickGoogleConsentIfPresent = vi
+      .fn()
+      .mockImplementationOnce(async () => {
+        currentUrl = 'https://www.google.com/?olud';
+        return { resolved: true };
+      })
+      .mockResolvedValue({ resolved: false });
+
+    const res = await (seq as any).openGoogleLens({ candidateId: 'img', candidateRank: 1 });
+
+    expect(res.success).toBe(false);
+    expect(goto).toHaveBeenCalledTimes(2);
+    const step = (seq as any).scanSteps.find((s: any) => s.key === 'google_lens_open');
+    expect(step.status).toBe('failed');
+    expect(step.resultCode).toBe('image_search_page_unavailable');
+  });
+
+  it('opens the configured image search page before the built-in Google fallbacks', async () => {
+    let currentUrl = 'https://images.google.com/';
+    const goto = vi.fn().mockImplementation(async (url: string) => {
+      currentUrl = url;
+    });
+    const ctx = makeContext({
+      goto,
+      url: vi.fn(() => currentUrl),
+    });
     const seq = new AmazonScanSequencer(ctx, {
       imageSearchProvider: 'google_images_upload',
       imageSearchPageUrl: 'https://www.google.com/imghp?hl=en',
@@ -346,10 +477,96 @@ describe('AmazonScanSequencer', () => {
     const res = await (seq as any).openGoogleLens({ candidateId: 'img', candidateRank: 1 });
 
     expect(res.success).toBe(false);
-    expect(goto).toHaveBeenCalledTimes(2);
+    expect(goto).toHaveBeenCalledTimes(1);
     const step = (seq as any).scanSteps.find((s: any) => s.key === 'google_lens_open');
     expect(step.status).toBe('failed');
     expect(step.resultCode).toBe('google_login_required');
+  });
+
+  it('uses runtime helper clicks for Google consent acceptance', async () => {
+    const locator = {
+      click: vi.fn().mockResolvedValue(undefined),
+    };
+    const helperClick = vi.fn().mockResolvedValue(undefined);
+    const ctx = makeContext();
+    ctx.helpers.click = helperClick;
+    const seq = new AmazonScanSequencer(ctx);
+    (seq as any).listGoogleConsentFrames = vi
+      .fn()
+      .mockResolvedValue([{ frame: {}, frameUrl: 'https://consent.google.com/' }]);
+    (seq as any).findGoogleConsentAcceptControl = vi.fn().mockResolvedValue({
+      locator,
+      label: 'accept',
+      frameUrl: 'https://consent.google.com/',
+    });
+
+    const result = await (seq as any).clickGoogleConsentIfPresent();
+
+    expect(result).toEqual({ resolved: true });
+    expect(helperClick).toHaveBeenCalledWith(locator, {
+      clickOptions: { timeout: 5_000 },
+    });
+    expect(locator.click).not.toHaveBeenCalled();
+  });
+
+  it('uses runtime helper clicks for Google redirect interstitial dismissal', async () => {
+    const locator = {
+      count: vi.fn().mockResolvedValue(1),
+      isVisible: vi.fn().mockResolvedValue(true),
+      click: vi.fn().mockResolvedValue(undefined),
+      first: vi.fn().mockReturnThis(),
+    };
+    const helperClick = vi.fn().mockResolvedValue(undefined);
+    const ctx = makeContext({
+      url: vi.fn().mockReturnValue('https://www.google.com/url?q=https%3A%2F%2Fwww.amazon.com%2Fdp%2FB000000001'),
+      locator: vi.fn().mockReturnValue(locator),
+    } as unknown as Partial<Page>);
+    ctx.helpers.click = helperClick;
+    const seq = new AmazonScanSequencer(ctx);
+
+    const result = await (seq as any).dismissGoogleRedirectInterstitialIfPresent();
+
+    expect(result).toBe(true);
+    expect(helperClick).toHaveBeenCalledWith(locator, {
+      clickOptions: { timeout: 5_000 },
+    });
+    expect(locator.click).not.toHaveBeenCalled();
+  });
+
+  it('skips the upload-page open step for URL image-search mode', async () => {
+    const ctx = makeContext();
+    const seq = new AmazonScanSequencer(ctx, {
+      imageSearchProvider: 'google_images_url',
+      imageCandidates: [{ id: 'img-1', url: 'https://example.com/product.jpg', rank: 1 }],
+    });
+    (seq as any).openGoogleLens = vi.fn().mockResolvedValue({ success: true, message: null });
+    (seq as any).uploadToGoogleLens = vi.fn().mockResolvedValue({
+      advanced: false,
+      captchaRequired: false,
+      error: 'stop after upload',
+      failureCode: 'test_stop',
+    });
+
+    await seq.scan();
+
+    expect((seq as any).openGoogleLens).not.toHaveBeenCalled();
+    expect((seq as any).uploadToGoogleLens).toHaveBeenCalledWith({
+      candidate: expect.objectContaining({ id: 'img-1' }),
+      candidateId: 'img-1',
+      candidateRank: 1,
+    });
+
+    const payload = (ctx.emit as ReturnType<typeof vi.fn>).mock.calls[0][1] as {
+      steps: Array<{ key: string; resultCode: string | null }>;
+    };
+    expect(payload.steps).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'google_lens_open',
+          resultCode: 'skipped_url_mode',
+        }),
+      ])
+    );
   });
 
   it('emits triage_ready with candidate previews for the candidate-search runtime', async () => {
@@ -446,6 +663,7 @@ describe('AmazonScanSequencer', () => {
       stage: string;
       candidatePreviews: Array<{ asin: string | null; rank: number | null }>;
       candidateResults: Array<{ title: string | null }>;
+      scrapedItems: Array<{ asin: string | null; rank: number | null }>;
       matchedImageId: string | null;
     };
 
@@ -454,6 +672,10 @@ describe('AmazonScanSequencer', () => {
     expect(payload.matchedImageId).toBe('img-1');
     expect(payload.candidatePreviews).toHaveLength(2);
     expect(payload.candidatePreviews[0]).toEqual(
+      expect.objectContaining({ asin: 'B000000001', rank: 1 })
+    );
+    expect(payload.scrapedItems).toHaveLength(2);
+    expect(payload.scrapedItems[0]).toEqual(
       expect.objectContaining({ asin: 'B000000001', rank: 1 })
     );
     expect(payload.candidateResults[0]).toEqual(
@@ -564,9 +786,50 @@ describe('AmazonScanSequencer', () => {
     expect(hiddenInputLocator.nth).toHaveBeenCalledWith(0);
   });
 
-  it('uses a trusted file chooser interaction before falling back to setInputFiles', async () => {
-    const fileChooser = { setFiles: vi.fn().mockResolvedValue(undefined) };
-    const waitForEvent = vi.fn().mockResolvedValue(fileChooser);
+  it('only clicks safe image-search entry controls while waiting for a file input', async () => {
+    const ctx = makeContext();
+    const seq = new AmazonScanSequencer(ctx);
+    (seq as any).resolveGoogleLensFileInput = vi.fn().mockResolvedValue({
+      ready: false,
+      inputLocator: null,
+      currentUrl: 'https://lens.google.com/',
+      selector: null,
+      scopeType: null,
+      frameUrl: null,
+      inputCount: 0,
+    });
+    (seq as any).clickGoogleConsentIfPresent = vi.fn().mockResolvedValue({ resolved: false });
+    (seq as any).clickFirstVisible = vi.fn().mockResolvedValue(false);
+    (seq as any).wait = vi.fn().mockResolvedValue(undefined);
+    const nowSpy = vi.spyOn(Date, 'now');
+    let now = 0;
+    nowSpy.mockImplementation(() => {
+      now += 1_000;
+      return now;
+    });
+
+    try {
+      const state = await (seq as any).waitForGoogleLensFileInput();
+
+      expect(state.ready).toBe(false);
+      expect((seq as any).clickGoogleConsentIfPresent).toHaveBeenCalled();
+      expect((seq as any).clickFirstVisible).toHaveBeenCalledTimes(1);
+      const clickedSelectors = ((seq as any).clickFirstVisible as ReturnType<typeof vi.fn>)
+        .mock.calls[0]?.[0] as string[];
+      expect(clickedSelectors).toEqual(
+        expect.arrayContaining([
+          'button[aria-label="Search by image"]',
+          '[data-base-uri="/searchbyimage"]',
+        ])
+      );
+      expect(clickedSelectors.some((selector) => /upload/i.test(selector))).toBe(false);
+    } finally {
+      nowSpy.mockRestore();
+    }
+  });
+
+  it('attaches image files programmatically without opening the native file chooser', async () => {
+    const waitForEvent = vi.fn();
     const inputLocator = {
       click: vi.fn().mockResolvedValue(undefined),
       evaluate: vi.fn().mockResolvedValue(undefined),
@@ -581,11 +844,67 @@ describe('AmazonScanSequencer', () => {
       '/tmp/product-source.jpg'
     );
 
-    expect(result).toEqual({ success: true, method: 'filechooser', message: null });
-    expect(waitForEvent).toHaveBeenCalledWith('filechooser', { timeout: 3_000 });
-    expect(inputLocator.click).toHaveBeenCalledWith({ force: true, timeout: 2_000 });
-    expect(fileChooser.setFiles).toHaveBeenCalledWith('/tmp/product-source.jpg');
-    expect(inputLocator.setInputFiles).not.toHaveBeenCalled();
+    expect(result).toEqual({ success: true, method: 'set_input_files', message: null });
+    expect(waitForEvent).not.toHaveBeenCalled();
+    expect(inputLocator.click).not.toHaveBeenCalled();
+    expect(inputLocator.evaluate).not.toHaveBeenCalled();
+    expect(inputLocator.setInputFiles).toHaveBeenCalledWith('/tmp/product-source.jpg');
+    expect(inputLocator.dispatchEvent).toHaveBeenCalledWith('change');
+    expect(inputLocator.dispatchEvent).toHaveBeenCalledWith('input');
+  });
+
+  it('uses URL mode without waiting for a file input', async () => {
+    const goto = vi.fn().mockResolvedValue(undefined);
+    const ctx = makeContext({ goto });
+    const seq = new AmazonScanSequencer(ctx, {
+      imageSearchProvider: 'google_images_url',
+    });
+    (seq as any).waitForGoogleLensFileInput = vi.fn().mockResolvedValue({
+      ready: true,
+      inputLocator: { setInputFiles: vi.fn() },
+    });
+    (seq as any).waitForGoogleLensResultState = vi.fn().mockResolvedValue({
+      advanced: true,
+      currentUrl: 'https://lens.google.com/search',
+      reason: 'result_hints',
+      processingState: null,
+    });
+
+    const result = await (seq as any).uploadToGoogleLens({
+      candidate: { id: 'img-1', url: 'https://example.com/product.jpg' },
+      candidateId: 'img-1',
+      candidateRank: 1,
+    });
+
+    expect(result).toMatchObject({ advanced: true, captchaRequired: false });
+    expect((seq as any).waitForGoogleLensFileInput).not.toHaveBeenCalled();
+    expect(goto).toHaveBeenCalledWith(
+      'https://www.google.com/searchbyimage?image_url=https%3A%2F%2Fexample.com%2Fproduct.jpg&hl=en',
+      { waitUntil: 'domcontentloaded', timeout: 30_000 }
+    );
+  });
+
+  it('fails URL mode before upload controls when the image URL is not public HTTP', async () => {
+    const goto = vi.fn().mockResolvedValue(undefined);
+    const ctx = makeContext({ goto });
+    const seq = new AmazonScanSequencer(ctx, {
+      imageSearchProvider: 'google_images_url',
+    });
+    (seq as any).waitForGoogleLensFileInput = vi.fn();
+
+    const result = await (seq as any).uploadToGoogleLens({
+      candidate: { id: 'img-1', url: '/local/product.jpg' },
+      candidateId: 'img-1',
+      candidateRank: 1,
+    });
+
+    expect(result).toMatchObject({
+      advanced: false,
+      captchaRequired: false,
+      failureCode: 'provider_requires_image_url',
+    });
+    expect(goto).not.toHaveBeenCalled();
+    expect((seq as any).waitForGoogleLensFileInput).not.toHaveBeenCalled();
   });
 
   it('direct candidate extraction skips Google Lens and extracts the selected Amazon page', async () => {
@@ -625,6 +944,7 @@ describe('AmazonScanSequencer', () => {
       title: string | null;
       candidateUrls: string[];
       candidateResults: Array<{ url: string; rank: number | null }>;
+      scrapedItems: Array<{ title: string | null; url: string | null }>;
       steps: Array<{ key: string }>;
     };
 
@@ -635,6 +955,12 @@ describe('AmazonScanSequencer', () => {
     expect(payload.candidateUrls).toEqual([
       'https://www.amazon.com/dp/B000DIRECT1',
       'https://www.amazon.com/dp/B000DIRECT2',
+    ]);
+    expect(payload.scrapedItems).toEqual([
+      expect.objectContaining({
+        title: 'Selected candidate',
+        url: 'https://www.amazon.com/dp/B000DIRECT1',
+      }),
     ]);
     expect(payload.candidateResults[0]).toEqual(
       expect.objectContaining({
@@ -701,6 +1027,39 @@ describe('AmazonScanSequencer', () => {
   });
 
   describe('isGoogleImagesUploadEntryUrl (via waitForGoogleLensResultState fallback)', () => {
+    it('reports captcha before treating Google sorry navigation as successful advancement', async () => {
+      const sorryUrl = 'https://www.google.com/sorry/index?continue=https%3A%2F%2Fwww.google.com%2Fsearch';
+      const ctx = makeContext({
+        url: vi.fn().mockReturnValue(sorryUrl),
+      });
+      const seq = new AmazonScanSequencer(ctx);
+      (seq as any).isGoogleConsentPresent = vi.fn().mockResolvedValue(false);
+      (seq as any).readGoogleLensProcessingState = vi.fn().mockResolvedValue({
+        currentUrl: sorryUrl,
+        processingVisible: false,
+        progressIndicatorVisible: false,
+        progressIndicatorSelector: null,
+        processingText: null,
+        resultShellVisible: false,
+        resultShellSelector: null,
+      });
+      (seq as any).hasGoogleLensResultHints = vi.fn().mockResolvedValue(false);
+
+      const result = await (seq as any).waitForGoogleLensResultState(
+        'https://images.google.com/',
+        null,
+        null
+      );
+
+      expect(result).toEqual(
+        expect.objectContaining({
+          advanced: true,
+          currentUrl: sorryUrl,
+          reason: 'captcha',
+        })
+      );
+    });
+
     it('scan completes when goto fails to advance to result page', async () => {
       // Use a sleep mock that fast-forwards time so the 25s wait loop terminates instantly
       let elapsed = 0;

@@ -26,7 +26,7 @@ const shouldLimitKangurWarmup = (): boolean => {
   }
 
   const maxTouchPoints =
-    typeof navigator === 'undefined' ? 0 : Math.max(navigator.maxTouchPoints ?? 0, 0);
+    typeof navigator === 'undefined' ? 0 : Math.max(navigator.maxTouchPoints, 0);
   const prefersTouchOnlyInteraction =
     typeof window.matchMedia === 'function'
       ? window.matchMedia(KANGUR_HOVER_NONE_QUERY).matches
@@ -58,20 +58,18 @@ const scheduleKangurWarmupTask = (callback: () => void): (() => void) => {
   };
 };
 
-type FrontendPublicOwnerKangurShellComponent = (
-  typeof import('@/features/kangur/ui/FrontendPublicOwnerKangurShell')
-)['FrontendPublicOwnerKangurShell'];
+type FrontendPublicOwnerKangurShellComponent = (props: {
+  initialAppearance?: FrontendPublicOwnerKangurShellInitialAppearance;
+}) => JSX.Element;
 
 let frontendPublicOwnerKangurShellPromise:
   | Promise<FrontendPublicOwnerKangurShellComponent>
   | null = null;
 
 const loadFrontendPublicOwnerKangurShell = async (): Promise<FrontendPublicOwnerKangurShellComponent> => {
-  if (!frontendPublicOwnerKangurShellPromise) {
-    frontendPublicOwnerKangurShellPromise = import(
-      '@/features/kangur/ui/FrontendPublicOwnerKangurShell'
-    ).then((module) => module.FrontendPublicOwnerKangurShell);
-  }
+  frontendPublicOwnerKangurShellPromise ??= import(
+    '@/features/kangur/ui/FrontendPublicOwnerKangurShell'
+  ).then((module) => module.FrontendPublicOwnerKangurShell);
 
   return frontendPublicOwnerKangurShellPromise;
 };
@@ -79,16 +77,33 @@ const loadFrontendPublicOwnerKangurShell = async (): Promise<FrontendPublicOwner
 export type FrontendPublicOwnerShellProps = {
   publicOwner: 'cms' | 'kangur';
   initialAppearance?: FrontendPublicOwnerKangurShellInitialAppearance;
+  renderStandaloneKangurShell?: boolean;
   children: JSX.Element;
 };
 
-const resolveFrontendPublicOwnerShellBrowserPathname = (): string | null =>
-  typeof window === 'undefined' ? null : window.location.pathname?.trim() || null;
+const resolveFrontendPublicOwnerShellBrowserPathname = (): string | null => {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  const trimmedPathname = window.location.pathname.trim();
+  return trimmedPathname === '' ? null : trimmedPathname;
+};
 
 const resolveFrontendPublicOwnerShellPathname = (
   pathname: string | null,
   browserPathname: string | null
-): string => pathname?.trim() || browserPathname || '/';
+): string => {
+  if (typeof pathname === 'string' && pathname.trim() !== '') {
+    return pathname.trim();
+  }
+
+  if (typeof browserPathname === 'string' && browserPathname.trim() !== '') {
+    return browserPathname.trim();
+  }
+
+  return '/';
+};
 
 const resolveFrontendPublicOwnerShellRouteState = ({
   pathname,
@@ -96,7 +111,7 @@ const resolveFrontendPublicOwnerShellRouteState = ({
 }: {
   pathname: string;
   publicOwner: FrontendPublicOwnerShellProps['publicOwner'];
-}) => {
+}): { shouldRenderStandaloneKangurShell: boolean } => {
   const normalizedPathname = stripSiteLocalePrefix(pathname);
   const isCanonicalPublicLoginRoute = normalizedPathname === '/login';
   const isKangurAliasRoute =
@@ -129,56 +144,47 @@ const renderFrontendPublicOwnerShell = ({
   return <KangurShellComponent initialAppearance={initialAppearance} />;
 };
 
-export default function FrontendPublicOwnerShellClient({
+const warmupKangurAuth = (): void => {
+  import('@/features/kangur/services/kangur-auth-prefetch')
+    .then((m) => m.prefetchKangurAuth())
+    .catch(() => {});
+};
+
+const useKangurAuthWarmup = ({
   publicOwner,
-  initialAppearance,
-  children,
-}: FrontendPublicOwnerShellProps): JSX.Element {
-  const [kangurShellComponent, setKangurShellComponent] =
-    useState<FrontendPublicOwnerKangurShellComponent | null>(null);
-  const pathname = usePathname();
-  const browserPathname = resolveFrontendPublicOwnerShellBrowserPathname();
-  const resolvedPathname = resolveFrontendPublicOwnerShellPathname(
-    pathname,
-    browserPathname
-  );
-  const { shouldRenderStandaloneKangurShell } =
-    resolveFrontendPublicOwnerShellRouteState({
-      pathname: resolvedPathname,
-      publicOwner,
-    });
-
+}: {
+  publicOwner: FrontendPublicOwnerShellProps['publicOwner'];
+}): void => {
   useEffect(() => {
-    if (process.env['NODE_ENV'] === 'test') {
+    if (process.env['NODE_ENV'] === 'test' || publicOwner !== 'kangur') {
       return undefined;
     }
-
-    if (publicOwner !== 'kangur') {
-      return undefined;
-    }
-
-    const warmupAuth = (): void => {
-      void import('@/features/kangur/services/kangur-auth-prefetch')
-        .then((m) => m.prefetchKangurAuth())
-        .catch(() => {});
-    };
 
     if (shouldLimitKangurWarmup()) {
-      return scheduleKangurWarmupTask(warmupAuth);
+      return scheduleKangurWarmupTask(warmupKangurAuth);
     }
 
-    warmupAuth();
+    warmupKangurAuth();
     return undefined;
   }, [publicOwner]);
+};
+
+const useStandaloneKangurShellLoader = ({
+  shouldRenderStandaloneKangurShell,
+}: {
+  shouldRenderStandaloneKangurShell: boolean;
+}): FrontendPublicOwnerKangurShellComponent | null => {
+  const [kangurShellComponent, setKangurShellComponent] =
+    useState<FrontendPublicOwnerKangurShellComponent | null>(null);
 
   useEffect(() => {
-    if (!shouldRenderStandaloneKangurShell || kangurShellComponent) {
-      return;
+    if (!shouldRenderStandaloneKangurShell || kangurShellComponent !== null) {
+      return undefined;
     }
 
     let cancelled = false;
 
-    void loadFrontendPublicOwnerKangurShell()
+    loadFrontendPublicOwnerKangurShell()
       .then((component) => {
         if (!cancelled) {
           setKangurShellComponent(() => component);
@@ -190,6 +196,33 @@ export default function FrontendPublicOwnerShellClient({
       cancelled = true;
     };
   }, [kangurShellComponent, shouldRenderStandaloneKangurShell]);
+
+  return kangurShellComponent;
+};
+
+export default function FrontendPublicOwnerShellClient({
+  publicOwner,
+  initialAppearance,
+  renderStandaloneKangurShell,
+  children,
+}: FrontendPublicOwnerShellProps): JSX.Element {
+  const pathname = usePathname();
+  const browserPathname = resolveFrontendPublicOwnerShellBrowserPathname();
+  const resolvedPathname = resolveFrontendPublicOwnerShellPathname(
+    pathname,
+    browserPathname
+  );
+  const { shouldRenderStandaloneKangurShell: inferredShouldRenderStandaloneKangurShell } =
+    resolveFrontendPublicOwnerShellRouteState({
+      pathname: resolvedPathname,
+      publicOwner,
+    });
+  const shouldRenderStandaloneKangurShell =
+    renderStandaloneKangurShell ?? inferredShouldRenderStandaloneKangurShell;
+  const kangurShellComponent = useStandaloneKangurShellLoader({
+    shouldRenderStandaloneKangurShell,
+  });
+  useKangurAuthWarmup({ publicOwner });
 
   return renderFrontendPublicOwnerShell({
     children,

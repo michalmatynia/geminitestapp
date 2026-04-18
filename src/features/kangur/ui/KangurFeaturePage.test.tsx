@@ -30,6 +30,7 @@ const kangurRoutingProviderMock = vi.fn();
 const mockKangurRoutingState = {
   pageKey: null as string | null,
   requestedPath: '/',
+  requestedHref: '/',
   basePath: '/kangur',
   embedded: false,
 };
@@ -121,6 +122,7 @@ vi.mock('@/features/kangur/ui/context/KangurRoutingContext', async () => {
       });
       mockKangurRoutingState.pageKey = accessibleRouteState.pageKey ?? null;
       mockKangurRoutingState.requestedPath = accessibleRouteState.requestedPath;
+      mockKangurRoutingState.requestedHref = props.requestedHref?.trim() || normalizedRequestedPath;
       mockKangurRoutingState.basePath = resolvedBasePath;
       mockKangurRoutingState.embedded = props.embedded;
       return <div data-testid='kangur-routing-provider'>{children}</div>;
@@ -137,7 +139,7 @@ vi.mock('@/features/kangur/ui/useKangurStorefrontAppearance', () => ({
   useKangurStorefrontAppearance: () => kangurAppearanceMock as any,
 }));
 
-import { KangurFeaturePage } from '@/features/kangur/ui/KangurFeaturePage';
+import { KangurFeaturePage, KangurFeaturePageShell } from '@/features/kangur/ui/KangurFeaturePage';
 
 const renderWithIntl = (ui: ReactElement) =>
   render(
@@ -153,6 +155,11 @@ describe('KangurFeaturePage', () => {
       data: null,
       status: 'unauthenticated',
     });
+    mockKangurRoutingState.pageKey = null;
+    mockKangurRoutingState.requestedPath = '/';
+    mockKangurRoutingState.requestedHref = '/';
+    mockKangurRoutingState.basePath = '/kangur';
+    mockKangurRoutingState.embedded = false;
     clearLatchedKangurTopBarHeightCssValue();
     document.documentElement.style.removeProperty('--kangur-top-bar-height');
     setEnvValue('NEXT_PUBLIC_KANGUR_CUSTOM_CSS_ENABLED', originalCustomCssEnv);
@@ -323,13 +330,32 @@ describe('KangurFeaturePage', () => {
   });
 
   it('localizes the footer social updates link on root-mounted Kangur pages', () => {
-    window.history.replaceState({}, '', '/en');
+    mockKangurRoutingState.pageKey = 'Game';
+    mockKangurRoutingState.basePath = '/';
+    mockKangurRoutingState.requestedPath = '/';
+    mockKangurRoutingState.requestedHref = '/en';
+    mockKangurRoutingState.embedded = false;
 
-    renderWithIntl(<KangurFeaturePage basePath='/' />);
+    renderWithIntl(<KangurFeaturePageShell />);
 
     expect(screen.getByRole('link', { name: 'Aktualnosci spolecznosciowe' })).toHaveAttribute(
       'href',
       '/en/social-updates'
+    );
+  });
+
+  it('localizes the footer social updates link on alias-mounted Kangur pages', () => {
+    mockKangurRoutingState.pageKey = 'Game';
+    mockKangurRoutingState.basePath = '/kangur';
+    mockKangurRoutingState.requestedPath = '/kangur';
+    mockKangurRoutingState.requestedHref = '/en/kangur';
+    mockKangurRoutingState.embedded = false;
+
+    renderWithIntl(<KangurFeaturePageShell />);
+
+    expect(screen.getByRole('link', { name: 'Aktualnosci spolecznosciowe' })).toHaveAttribute(
+      'href',
+      '/en/kangur/social-updates'
     );
   });
 

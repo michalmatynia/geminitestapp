@@ -661,7 +661,12 @@ describe('product-scans-service batch operations', () => {
         manualVerificationTimeoutMs: 180000,
       })
     );
-    expect(startRequest?.settingsOverrides ?? {}).not.toHaveProperty('headless');
+    expect(startRequest?.timeoutMs).toBe(240000);
+    expect(startRequest?.settingsOverrides).toEqual(
+      expect.objectContaining({
+        headless: true,
+      })
+    );
     expect(mocks.resolveProductScannerHeadlessMock).not.toHaveBeenCalled();
   });
 

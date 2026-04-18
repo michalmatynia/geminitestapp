@@ -83,9 +83,19 @@ const SCRIPT_TYPES: PlaywrightStepType[] = ['custom_script'];
 /** Steps that use the AI Evaluate configuration */
 const AI_EVALUATE_TYPES: PlaywrightStepType[] = ['ai_evaluate'];
 
+/** Steps that use the AI Inject configuration */
+const AI_INJECT_TYPES: PlaywrightStepType[] = ['ai_inject'];
+
 const AI_EVALUATE_INPUT_SOURCES = Object.entries(
   PLAYWRIGHT_AI_EVALUATE_INPUT_SOURCE_LABELS
 ) as [PlaywrightAiEvaluateInputSource, string][];
+
+const AI_INJECT_LOOP_EVALUATOR_OPTIONS: [PlaywrightAiEvaluateInputSource | '', string][] = [
+  ['', 'Disabled — injector only'],
+  ['screenshot', 'Screenshot after each injection'],
+  ['html', 'Full page HTML after each injection'],
+  ['text_content', 'Page text after each injection'],
+];
 const buildRegistryOverrideValueJson = (
   entry: SelectorRegistryEntry,
   selector: string
@@ -120,6 +130,9 @@ function buildEmpty(): StepDraft {
     sortOrder: 0,
     aiSystemPrompt: null,
     aiInputSource: 'screenshot',
+    aiGoal: null,
+    aiMaxIterations: 3,
+    aiLoopEvaluatorInputSource: null,
   };
 }
 
@@ -402,6 +415,9 @@ export function StepFormModal(): React.JSX.Element | null {
       sortOrder: draft.sortOrder ?? 0,
       aiSystemPrompt: draft.aiSystemPrompt?.trim() || null,
       aiInputSource: draft.aiInputSource ?? null,
+      aiGoal: draft.aiGoal?.trim() || null,
+      aiMaxIterations: draft.aiMaxIterations ?? null,
+      aiLoopEvaluatorInputSource: draft.aiLoopEvaluatorInputSource ?? null,
     };
 
     if (isEditing && editingStep) {
@@ -412,12 +428,15 @@ export function StepFormModal(): React.JSX.Element | null {
   };
 
   const stepType = draft.type ?? 'click';
-  const showSelector = SELECTOR_TYPES.includes(stepType) || (AI_EVALUATE_TYPES.includes(stepType) && draft.aiInputSource === 'selector_text');
+  const showSelector = SELECTOR_TYPES.includes(stepType)
+    || (AI_EVALUATE_TYPES.includes(stepType) && draft.aiInputSource === 'selector_text')
+    || (AI_INJECT_TYPES.includes(stepType) && draft.aiLoopEvaluatorInputSource === 'selector_text');
   const showValue = VALUE_TYPES.includes(stepType);
   const showUrl = URL_TYPES.includes(stepType);
   const showTimeout = TIMEOUT_TYPES.includes(stepType);
   const showScript = SCRIPT_TYPES.includes(stepType);
   const showAiEvaluate = AI_EVALUATE_TYPES.includes(stepType);
+  const showAiInject = AI_INJECT_TYPES.includes(stepType);
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) close(); }}>
@@ -888,6 +907,78 @@ export function StepFormModal(): React.JSX.Element | null {
                   onChange={(e) => set('aiSystemPrompt', e.target.value || null)}
                   placeholder='Describe what you want the AI to evaluate. For example: "Determine whether the checkout button is visible and enabled. Respond with YES or NO followed by a brief explanation."'
                   rows={5}
+                />
+              </div>
+            </div>
+          ) : null}
+
+          {showAiInject ? (
+            <div className='space-y-3 rounded border border-violet-500/20 bg-violet-500/5 p-3'>
+              <div className='space-y-1.5'>
+                <Label htmlFor='step-ai-goal'>Goal</Label>
+                <Textarea
+                  id='step-ai-goal'
+                  value={draft.aiGoal ?? ''}
+                  onChange={(e) => set('aiGoal', e.target.value || null)}
+                  placeholder='Describe the objective. For example: "Click the Accept cookies button if it is present, then navigate to the checkout page."'
+                  rows={3}
+                />
+                <p className='text-xs text-muted-foreground'>
+                  The AI will generate and execute Playwright code each iteration to pursue this goal.
+                </p>
+              </div>
+
+              <div className='space-y-1.5'>
+                <Label htmlFor='step-ai-max-iterations'>Max iterations</Label>
+                <Input
+                  id='step-ai-max-iterations'
+                  type='number'
+                  min={1}
+                  max={10}
+                  value={draft.aiMaxIterations ?? 3}
+                  onChange={(e) => set('aiMaxIterations', Math.min(10, Math.max(1, Number(e.target.value) || 3)))}
+                />
+                <p className='text-xs text-muted-foreground'>
+                  How many inject–execute cycles to attempt before giving up. 1–10.
+                </p>
+              </div>
+
+              <div className='space-y-1.5'>
+                <Label>Evaluator loop</Label>
+                <Select
+                  value={draft.aiLoopEvaluatorInputSource ?? ''}
+                  onValueChange={(v) => set('aiLoopEvaluatorInputSource', v ? v as PlaywrightAiEvaluateInputSource : null)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder='Disabled' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {AI_INJECT_LOOP_EVALUATOR_OPTIONS.map(([source, label]) => (
+                      <SelectItem key={source} value={source}>{label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className='text-xs text-muted-foreground'>
+                  When enabled, the AI Evaluator re-assesses page state between injections, feeding its output back to the injector for the next iteration.
+                </p>
+              </div>
+
+              <p className='text-xs text-muted-foreground'>
+                The AI model is configured in{' '}
+                <a href='/admin/brain?tab=routing' className='underline' target='_blank' rel='noreferrer'>
+                  AI Brain → Playwright
+                </a>{' '}
+                (capability: <code className='rounded bg-muted px-0.5 font-mono'>playwright.ai_code_injector</code>).
+              </p>
+
+              <div className='space-y-1.5'>
+                <Label htmlFor='step-ai-inject-prompt'>System prompt override</Label>
+                <Textarea
+                  id='step-ai-inject-prompt'
+                  value={draft.aiSystemPrompt ?? ''}
+                  onChange={(e) => set('aiSystemPrompt', e.target.value || null)}
+                  placeholder='Optional: override the default injector system prompt.'
+                  rows={3}
                 />
               </div>
             </div>

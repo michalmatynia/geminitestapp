@@ -207,10 +207,12 @@ export async function ProductPublicPage({
   const stockLabel = typeof product.stock === 'number' ? t('available', { count: product.stock > 0 ? product.stock : 0 }) : null;
   const details = resolveDetails(product, categoryLabel, stockLabel, t);
   const tags = product.tags.map((tg) => tg.tag?.name ?? '').filter((tag): tag is string => tag !== '');
+  const requestHeaders = await readOptionalRequestHeaders();
+  const cmsDomain = await resolveCmsDomainFromHeaders(requestHeaders);
 
   const [themeSettings, menuSettings] = await Promise.all([
     getCmsThemeSettings(),
-    resolveCmsDomainFromHeaders(await readOptionalRequestHeaders()).then(d => getCmsMenuSettings(d.id, resolvedLocale)),
+    getCmsMenuSettings(cmsDomain.id, resolvedLocale),
   ]);
 
   return (

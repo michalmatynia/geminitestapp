@@ -484,15 +484,10 @@ export class AmazonScanSequencer extends ProductScanSequencer {
     });
 
     if (uploadResult.captchaRequired) {
-      const captchaResult = await this.handleGoogleCaptcha({
-        candidateId,
-        candidateRank,
-        waitForClear: true,
-      });
-
-      if (!captchaResult.resolved) {
+      if (this.isPageClosed()) {
+        const currentUrl = this.safePageUrl();
         await this.emitResult({
-          status: 'failed',
+          status: 'captcha_required',
           asin: null,
           title: null,
           price: null,
@@ -504,7 +499,35 @@ export class AmazonScanSequencer extends ProductScanSequencer {
           candidateUrls: [],
           candidateResults: [],
           candidatePreviews: [],
-          currentUrl: this.page.url(),
+          currentUrl,
+          message: uploadResult.error ?? this.CAPTCHA_REQUIRED_MESSAGE,
+          stage: 'google_captcha',
+        });
+        return;
+      }
+
+      const captchaResult = await this.handleGoogleCaptcha({
+        candidateId,
+        candidateRank,
+        waitForClear: true,
+      });
+
+      if (!captchaResult.resolved) {
+        const currentUrl = this.safePageUrl();
+        await this.emitResult({
+          status: 'captcha_required',
+          asin: null,
+          title: null,
+          price: null,
+          url: null,
+          description: null,
+          amazonDetails: null,
+          amazonProbe: null,
+          matchedImageId: candidateId,
+          candidateUrls: [],
+          candidateResults: [],
+          candidatePreviews: [],
+          currentUrl,
           message: uploadResult.error ?? this.CAPTCHA_REQUIRED_MESSAGE,
           stage: 'google_captcha',
         });
@@ -1085,7 +1108,7 @@ export class AmazonScanSequencer extends ProductScanSequencer {
       candidateRank,
       resultCode: 'captcha_required',
       message: allowManual ? this.CAPTCHA_WAIT_MESSAGE : this.CAPTCHA_REQUIRED_MESSAGE,
-      url: this.page.url(),
+      url: this.safePageUrl(),
     });
 
     if (!waitForClear || !allowManual) {
@@ -1097,7 +1120,13 @@ export class AmazonScanSequencer extends ProductScanSequencer {
     let stableSince: number | null = null;
 
     while (Date.now() < deadline) {
+      if (this.isPageClosed()) {
+        return { resolved: false };
+      }
       await this.wait(2_000);
+      if (this.isPageClosed()) {
+        return { resolved: false };
+      }
       const state = await this.detectGoogleLensCaptcha();
       if (!state.detected) {
         if (stableSince === null) {
@@ -1110,7 +1139,7 @@ export class AmazonScanSequencer extends ProductScanSequencer {
             candidateRank,
             resultCode: 'captcha_resolved',
             message: 'Google captcha was resolved and the page is ready again.',
-            url: this.page.url(),
+            url: this.safePageUrl(),
           });
           return { resolved: true };
         }
@@ -1126,7 +1155,7 @@ export class AmazonScanSequencer extends ProductScanSequencer {
       candidateRank,
       resultCode: 'captcha_timeout',
       message: 'Google captcha was not resolved within the allowed time.',
-      url: this.page.url(),
+      url: this.safePageUrl(),
     });
     return { resolved: false };
   }
@@ -2378,8 +2407,8 @@ export class AmazonScanSequencer extends ProductScanSequencer {
   // ─── Google Lens captcha detection ──────────────────────────────────────────
 
   protected async detectGoogleLensCaptcha(): Promise<CaptchaState> {
-    const url = this.page.url();
-    if (url.includes('sorry') || url.includes('ipv4.google.com') || url.includes('ipv6.google.com')) {
+    const url = this.safePageUrl() ?? '';
+    if (this.isGoogleCaptchaUrl(url)) {
       return { detected: true, currentUrl: url };
     }
 
@@ -2398,6 +2427,15 @@ export class AmazonScanSequencer extends ProductScanSequencer {
     }
 
     return { detected: false, currentUrl: url };
+  }
+
+  private isGoogleCaptchaUrl(url: string | null): boolean {
+    const normalizedUrl = this.normalizeText(url)?.toLowerCase() ?? '';
+    return (
+      normalizedUrl.includes('sorry') ||
+      normalizedUrl.includes('ipv4.google.com') ||
+      normalizedUrl.includes('ipv6.google.com')
+    );
   }
 
   private async detectGoogleLoginSurface(): Promise<GoogleLoginState> {
@@ -2513,6 +2551,17 @@ export class AmazonScanSequencer extends ProductScanSequencer {
     const poll = async (timeoutMs: number): Promise<FileInputState | null> => {
       const deadline = Date.now() + timeoutMs;
       while (Date.now() < deadline) {
+        if (this.isPageClosed()) {
+          return {
+            ready: false,
+            inputLocator: null,
+            currentUrl: this.safePageUrl() ?? '',
+            selector: null,
+            scopeType: null,
+            frameUrl: null,
+            inputCount: 0,
+          };
+        }
         const state = await this.resolveGoogleLensFileInput();
         if (state.ready) return state;
         await this.wait(500);
@@ -2697,9 +2746,24 @@ export class AmazonScanSequencer extends ProductScanSequencer {
     let deadline = Date.now() + 25_000;
     let extendedForProcessing = false;
     let lastProcessingState: ProcessingState | null = null;
+    let lastObservedUrl = startingUrl;
+    const resolveClosedPageTransition = (): TransitionState => {
+      const currentUrl = this.safePageUrl() ?? lastObservedUrl;
+      return {
+        advanced: this.isGoogleCaptchaUrl(currentUrl),
+        currentUrl,
+        reason: this.isGoogleCaptchaUrl(currentUrl) ? 'captcha' : 'page_closed',
+        processingState: lastProcessingState,
+      };
+    };
 
     while (Date.now() < deadline) {
-      const currentUrl = this.page.url();
+      if (this.isPageClosed()) {
+        return resolveClosedPageTransition();
+      }
+
+      const currentUrl = this.safePageUrl() ?? lastObservedUrl;
+      lastObservedUrl = currentUrl;
 
       if (await this.isGoogleConsentPresent()) {
         await this.clickGoogleConsentIfPresent().catch(() => undefined);
@@ -2758,7 +2822,11 @@ export class AmazonScanSequencer extends ProductScanSequencer {
       await this.wait(500);
     }
 
-    const finalCurrentUrl = this.page.url();
+    if (this.isPageClosed()) {
+      return resolveClosedPageTransition();
+    }
+
+    const finalCurrentUrl = this.safePageUrl() ?? lastObservedUrl;
     const finalProcessingState = await this.readGoogleLensProcessingState().catch(() => lastProcessingState);
     const finalHasResultHints = await this.hasGoogleLensResultHints();
 

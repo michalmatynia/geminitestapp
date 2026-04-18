@@ -117,7 +117,7 @@ export const parseUserScript = (
   }
 
   // Retry: wrap the source in an async function (handles bare function bodies)
-  const wrappedSource = `async function run(context) {\nconst { page, input, emit, artifacts, log, helpers } = context;\n${normalizedSource}\n}`;
+  const wrappedSource = `async function run(context) {\nconst { page, input, emit, artifacts, log, helpers, runtime } = context;\n${normalizedSource}\n}`;
   let resolved: unknown;
   try {
     const wrappedScript = new vm.Script(buildBootstrap(wrappedSource), {

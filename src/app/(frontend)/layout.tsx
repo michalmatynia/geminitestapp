@@ -74,6 +74,7 @@ function ResolvedFrontendLayoutContent({
           <FrontendPublicOwnerShellClient
             publicOwner={layoutState.publicOwner}
             initialAppearance={layoutState.initialAppearance}
+            renderStandaloneKangurShell={layoutState.renderStandaloneKangurShell}
           >
             <CmsStorefrontAppearanceProvider
               initialMode={

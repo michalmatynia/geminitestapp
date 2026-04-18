@@ -84,6 +84,7 @@ export const aiBrainCapabilityKeySchema = z.enum([
   'insights.error_logs',
   'playwright.ai_evaluator_step',
   'playwright.probe_suggestions',
+  'playwright.ai_code_injector',
 ]);
 export type AiBrainCapabilityKey = z.infer<typeof aiBrainCapabilityKeySchema>;
 

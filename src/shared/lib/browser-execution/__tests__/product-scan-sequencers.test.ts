@@ -41,6 +41,7 @@ function makeMockPage(overrides: Partial<Page> = {}): Page {
 
   return {
     url: vi.fn().mockReturnValue('https://images.google.com/'),
+    isClosed: vi.fn().mockReturnValue(false),
     goto: vi.fn().mockResolvedValue(undefined),
     reload: vi.fn().mockResolvedValue(undefined),
     title: vi.fn().mockResolvedValue(''),
@@ -833,6 +834,57 @@ describe('AmazonScanSequencer', () => {
     };
     expect(payload.stage).toBe('google_candidates');
     expect(payload.status).toBe('failed');
+  });
+
+  it('emits captcha_required when manual captcha cannot continue', async () => {
+    const ctx = makeContext({
+      url: vi.fn().mockReturnValue('https://www.google.com/sorry/index'),
+    });
+    const seq = new AmazonScanSequencer(ctx, {
+      runtimeKey: AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY,
+      allowManualVerification: true,
+      imageCandidates: [{ id: 'img-1', filepath: '/tmp/product-source.jpg', rank: 1 }],
+    });
+
+    (seq as any).openGoogleLens = vi.fn().mockResolvedValue({ success: true, message: null });
+    (seq as any).uploadToGoogleLens = vi.fn().mockResolvedValue({
+      advanced: false,
+      captchaRequired: true,
+      error: 'Google Lens requested captcha verification.',
+      failureCode: 'captcha_required',
+    });
+    (seq as any).handleGoogleCaptcha = vi.fn().mockResolvedValue({ resolved: false });
+
+    await seq.scan();
+
+    const payload = (ctx.emit as ReturnType<typeof vi.fn>).mock.calls[0][1] as {
+      stage: string;
+      status: string;
+      currentUrl: string | null;
+    };
+    expect(payload.stage).toBe('google_captcha');
+    expect(payload.status).toBe('captcha_required');
+    expect(payload.currentUrl).toContain('google.com/sorry');
+  });
+
+  it('treats a closed Google sorry page as a captcha transition', async () => {
+    const ctx = makeContext({
+      url: vi.fn().mockReturnValue('https://www.google.com/sorry/index?continue=https://www.google.com/search'),
+      isClosed: vi.fn().mockReturnValue(true),
+    });
+    const seq = new AmazonScanSequencer(ctx);
+
+    const transition = await (seq as any).waitForGoogleLensResultState(
+      'https://lens.google.com/upload',
+      null,
+      null
+    );
+
+    expect(transition).toMatchObject({
+      advanced: true,
+      reason: 'captcha',
+    });
+    expect(transition.currentUrl).toContain('google.com/sorry');
   });
 
   it('accepts hidden Google Lens file inputs for Playwright uploads', async () => {

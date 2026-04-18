@@ -363,6 +363,13 @@ export const BRAIN_CAPABILITY_REGISTRY: Record<AiBrainCapabilityKey, BrainCapabi
     policy: 'model-only',
     modelFamily: 'chat',
   },
+  'playwright.ai_code_injector': {
+    key: 'playwright.ai_code_injector',
+    feature: 'playwright',
+    label: 'Playwright AI Code Injector',
+    policy: 'model-only',
+    modelFamily: 'chat',
+  },
 };
 
 export const BRAIN_CAPABILITY_KEYS = Object.keys(

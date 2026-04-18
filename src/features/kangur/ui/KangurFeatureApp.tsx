@@ -329,7 +329,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
     ? latchedNavigationSkeletonRef.current?.embedded ?? (embedded && transitionEmbedded)
     : embedded;
   const currentNavigationTopBarHeightCssValue =
-    isNavigationTransitionActive || isRouteSkeletonVisible
+    isNavigationTransitionActive || (isRouteSkeletonVisible && !isInitialMountSkeletonVisible)
       ? readKangurTopBarHeightCssValue()
       : null;
   const visibleTransitionSkeletonTopBarHeightCssValue = isPendingRouteSnapshotVisible

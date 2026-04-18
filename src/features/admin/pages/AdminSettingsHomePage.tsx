@@ -95,6 +95,15 @@ const settings: SettingsOption[] = [
     bgColor: 'bg-orange-500/10',
   },
   {
+    id: 'playwright-ai',
+    href: '/admin/settings/playwright-ai',
+    icon: Brain,
+    title: 'Playwright AI',
+    description: 'AI model routing for step sequencer evaluation and live scripter probe suggestions.',
+    color: 'fuchsia',
+    bgColor: 'bg-fuchsia-500/10',
+  },
+  {
     id: 'playwright-step-sequencer',
     href: '/admin/playwright/step-sequencer',
     icon: Clapperboard,

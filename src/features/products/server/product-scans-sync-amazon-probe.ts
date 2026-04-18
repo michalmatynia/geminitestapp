@@ -33,7 +33,6 @@ import {
 } from './product-scanner-settings';
 
 import {
-  AMAZON_SCAN_TIMEOUT_MS,
   normalizeErrorMessage,
   persistSynchronizedScan,
   resolvePersistableScanUrl,
@@ -66,6 +65,7 @@ import {
   resolveNextQueueStepAttempt,
   resolveAmazonProductScanRuntimeKey,
   resolveAmazonProbeEvaluatorConfig,
+  resolveAmazonScanRuntimeTimeoutMs,
   resolveAmazonTriageEvaluatorConfig,
   resolveAmazonRuntimeActionDefinition,
 } from './product-scans-service.helpers.amazon';
@@ -273,7 +273,10 @@ export async function synchronizeAmazonProbeReady({
                   probeOnlyOnAmazonMatch: true,
                   ...requestedStepSequenceInput,
                 }),
-                timeoutMs: AMAZON_SCAN_TIMEOUT_MS,
+                timeoutMs: resolveAmazonScanRuntimeTimeoutMs({
+                  allowManualVerification: shouldAutoShowScannerCaptchaBrowser(scannerSettings),
+                  manualVerificationTimeoutMs,
+                }),
                 browserEngine: 'chromium',
                 ...scannerRuntimeOptions,
                 capture: {
@@ -444,7 +447,10 @@ export async function synchronizeAmazonProbeReady({
                   directAmazonCandidateRank: nextCandidate.nextRank,
                   ...requestedStepSequenceInput,
                 }),
-                timeoutMs: AMAZON_SCAN_TIMEOUT_MS,
+                timeoutMs: resolveAmazonScanRuntimeTimeoutMs({
+                  allowManualVerification: shouldAutoShowScannerCaptchaBrowser(scannerSettings),
+                  manualVerificationTimeoutMs,
+                }),
                 browserEngine: 'chromium',
                 ...scannerRuntimeOptions,
                 capture: {
@@ -671,7 +677,10 @@ export async function synchronizeAmazonProbeReady({
               .find((step) => step.key === 'amazon_probe')?.candidateRank ?? 1,
           ...requestedStepSequenceInput,
         }),
-        timeoutMs: AMAZON_SCAN_TIMEOUT_MS,
+        timeoutMs: resolveAmazonScanRuntimeTimeoutMs({
+          allowManualVerification: shouldAutoShowScannerCaptchaBrowser(scannerSettings),
+          manualVerificationTimeoutMs,
+        }),
         browserEngine: 'chromium',
         ...scannerRuntimeOptions,
         capture: {

@@ -83,6 +83,7 @@ const adminNestedRoutesWithDedicatedLoading = [
   'settings/menu',
   'settings/notifications',
   'settings/playwright',
+  'settings/playwright-ai',
   'settings/recovery',
   'settings/storage',
   'settings/sync',

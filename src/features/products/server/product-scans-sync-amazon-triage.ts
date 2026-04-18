@@ -34,7 +34,6 @@ import {
 } from './product-scanner-settings';
 
 import {
-  AMAZON_SCAN_TIMEOUT_MS,
   createProductScanStartedRawResult,
   normalizeErrorMessage,
   persistSynchronizedScan,
@@ -64,6 +63,7 @@ import {
   resolveNextQueueStepAttempt,
   resolveAmazonProductScanRuntimeKey,
   resolveAmazonProbeEvaluatorConfig,
+  resolveAmazonScanRuntimeTimeoutMs,
   resolveAmazonTriageEvaluatorConfig,
   resolveAmazonRuntimeActionDefinition,
 } from './product-scans-service.helpers.amazon';
@@ -301,7 +301,10 @@ export async function synchronizeAmazonTriageReady({
             probeOnlyOnAmazonMatch: probeEvaluatorConfig.enabled,
             ...requestedStepSequenceInput,
           }),
-          timeoutMs: AMAZON_SCAN_TIMEOUT_MS,
+          timeoutMs: resolveAmazonScanRuntimeTimeoutMs({
+            allowManualVerification: shouldAutoShowScannerCaptchaBrowser(scannerSettings),
+            manualVerificationTimeoutMs,
+          }),
           browserEngine: 'chromium',
           ...scannerRuntimeOptions,
           capture: {
@@ -437,7 +440,10 @@ export async function synchronizeAmazonTriageReady({
             directAmazonCandidateRank: selectedCandidateRank,
             ...requestedStepSequenceInput,
           }),
-          timeoutMs: AMAZON_SCAN_TIMEOUT_MS,
+          timeoutMs: resolveAmazonScanRuntimeTimeoutMs({
+            allowManualVerification: shouldAutoShowScannerCaptchaBrowser(scannerSettings),
+            manualVerificationTimeoutMs,
+          }),
           browserEngine: 'chromium',
           ...scannerRuntimeOptions,
           capture: {

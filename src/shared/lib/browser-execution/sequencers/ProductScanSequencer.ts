@@ -334,6 +334,14 @@ export abstract class ProductScanSequencer {
     return this.wait(ms);
   }
 
+  protected isPageClosed(): boolean {
+    try {
+      return typeof this.page.isClosed === 'function' ? this.page.isClosed() : false;
+    } catch {
+      return true;
+    }
+  }
+
   // ─── Text utilities ───────────────────────────────────────────────────────
 
   /** Trim a value to a non-empty string, or return null. */
@@ -380,7 +388,7 @@ export abstract class ProductScanSequencer {
 
   // ─── Private helpers ──────────────────────────────────────────────────────
 
-  private safePageUrl(): string | null {
+  protected safePageUrl(): string | null {
     try {
       return this.page.url();
     } catch {

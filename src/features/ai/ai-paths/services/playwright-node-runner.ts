@@ -34,6 +34,10 @@ import {
 } from '@/shared/lib/browser-execution/amazon-runtime-constants';
 
 import { parseUserScript, safeStringify } from './playwright-node-runner.parser';
+import {
+  evaluateStepWithAI,
+  injectCodeWithAI,
+} from '@/features/playwright/server/ai-step-service';
 import { executeAmazonReverseImageScanRuntime } from './playwright-node-runner.amazon-runtime';
 import {
   executeSupplier1688ProbeScanRuntime,
@@ -1481,11 +1485,13 @@ const executePlaywrightNodeRun = async (
       await pressKey('Delete', { delayMs: 0 });
       await pressKey('Backspace', { delayMs: 0 });
     };
+    const aiRuntime: Record<string, unknown> = {};
     const userContext = {
       browser,
       context,
       page,
       input: request.input ?? {},
+      runtime: aiRuntime,
       contextRegistry,
       contextRegistryPrompt: contextRegistryPrompt !== '' ? contextRegistryPrompt : null,
       emit: (port: string, value: unknown): void => {
@@ -1663,6 +1669,33 @@ const executePlaywrightNodeRun = async (
           if (options?.pauseAfter !== false) {
             await pauseForAction();
           }
+        },
+        aiEvaluate: async (opts: {
+          inputSource: 'screenshot' | 'html' | 'text_content' | 'selector_text';
+          data: string;
+          systemPrompt?: string | null | undefined;
+        }): Promise<{ output: string; modelId: string }> => {
+          return evaluateStepWithAI(opts);
+        },
+        aiInject: async (opts: {
+          goal: string;
+          systemPrompt?: string | null | undefined;
+          context: {
+            iteration: number;
+            maxIterations: number;
+            url: string;
+            dom?: string | null | undefined;
+            priorEvaluation?: string | null | undefined;
+            priorInjectorReasoning?: string | null | undefined;
+          };
+        }): Promise<{ code: string; done: boolean; reasoning: string; modelId: string }> => {
+          return injectCodeWithAI(opts);
+        },
+        aiInjectExecute: async (code: string): Promise<void> => {
+          if (!code.trim()) return;
+          const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor as new (...args: string[]) => (...args: unknown[]) => Promise<unknown>;
+          const fn = new AsyncFunction('page', 'runtime', code);
+          await fn(page, aiRuntime);
         },
       },
     };

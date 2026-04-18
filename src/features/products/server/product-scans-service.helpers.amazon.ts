@@ -52,6 +52,7 @@ import {
 } from './product-scanner-settings';
 
 import {
+  AMAZON_SCAN_TIMEOUT_MS,
   PRODUCT_SCAN_MATCHED_IMAGE_ID_MAX_LENGTH,
   PRODUCT_SCAN_SEQUENCE_KEY_MAX_LENGTH,
   PRODUCT_SCAN_URL_MAX_LENGTH,
@@ -73,6 +74,7 @@ export const AMAZON_BATCH_SCAN_START_CONCURRENCY = PRODUCT_SCAN_BATCH_START_CONC
 export const AMAZON_SCAN_DEFAULT_USER_AGENT =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
 export const AMAZON_SCAN_STEALTH_LAUNCH_ARGS = ['--disable-blink-features=AutomationControlled'];
+export const AMAZON_SCAN_MANUAL_VERIFICATION_BUFFER_MS = 60_000;
 
 export type AmazonProductScanRuntimeKey =
   | typeof AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY
@@ -260,9 +262,8 @@ export const buildAmazonScannerRequestRuntimeOptions = (input: {
     }
   }
 
-  if (typeof input.forceHeadless === 'boolean') {
-    settingsOverrides['headless'] = input.forceHeadless;
-  }
+  settingsOverrides['headless'] =
+    typeof input.forceHeadless === 'boolean' ? input.forceHeadless : true;
 
   const actionBrowserPreference = input.actionExecutionSettings?.browserPreference ?? null;
   const actionLaunchOptions =
@@ -312,6 +313,17 @@ export const buildAmazonScannerRequestRuntimeOptions = (input: {
     contextOptions,
   };
 };
+
+export const resolveAmazonScanRuntimeTimeoutMs = (input: {
+  allowManualVerification: boolean;
+  manualVerificationTimeoutMs: number;
+}): number =>
+  input.allowManualVerification
+    ? Math.max(
+        AMAZON_SCAN_TIMEOUT_MS,
+        input.manualVerificationTimeoutMs + AMAZON_SCAN_MANUAL_VERIFICATION_BUFFER_MS
+      )
+    : AMAZON_SCAN_TIMEOUT_MS;
 
 export const resolveAmazonImageSearchProvider = (
   rawResult: unknown,

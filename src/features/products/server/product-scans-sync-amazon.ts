@@ -81,6 +81,7 @@ import {
   resolveAmazonImageSearchFallbackProvider,
   resolveAmazonImageSearchProviderHistory,
   buildAmazonScannerRequestRuntimeOptions,
+  resolveAmazonScanRuntimeTimeoutMs,
   resolveAmazonActiveRunStallMessage,
   buildAmazonActiveRunDiagnostics,
   shouldKeepAmazonManualVerificationPending,
@@ -262,7 +263,10 @@ const retryAmazonScanWithFallbackProviderAfterNoCandidates = async (input: {
           skipAmazonProbe: false,
           ...input.requestedStepSequenceInput,
         }),
-        timeoutMs: AMAZON_SCAN_TIMEOUT_MS,
+        timeoutMs: resolveAmazonScanRuntimeTimeoutMs({
+          allowManualVerification: shouldAutoShowScannerCaptchaBrowser(scannerSettings),
+          manualVerificationTimeoutMs,
+        }),
         browserEngine: 'chromium',
         ...scannerRuntimeOptions,
         capture: {
@@ -415,12 +419,15 @@ export async function synchronizeAmazonProductScan(
         existingPending: existingRawResult['manualVerificationPending'] === true,
         latestStage: latestActiveStage,
       });
+      const allowManualVerification =
+        manualVerificationPending || existingRawResult['allowManualVerification'] === true;
       const activeMessage =
         manualVerificationPending ? normalizeErrorMessage(parsedResult.message, '') : null;
 
-      const allowedRuntimeMs = manualVerificationPending
-        ? Math.max(AMAZON_SCAN_TIMEOUT_MS, manualVerificationTimeoutMs + 60_000)
-        : AMAZON_SCAN_TIMEOUT_MS;
+      const allowedRuntimeMs = resolveAmazonScanRuntimeTimeoutMs({
+        allowManualVerification,
+        manualVerificationTimeoutMs,
+      });
       const activeRunAgeMs = resolveIsoAgeMs(run.startedAt) ?? resolveIsoAgeMs(run.createdAt);
       const activeRunIdleAgeMs = resolveIsoAgeMs(run.updatedAt);
       const nextRawResult =
@@ -851,7 +858,10 @@ export async function synchronizeAmazonProductScan(
                     (await resolveAmazonProbeEvaluatorConfig(scannerSettings)).enabled,
                   ...requestedStepSequenceInput,
                 }),
-                timeoutMs: AMAZON_SCAN_TIMEOUT_MS,
+                timeoutMs: resolveAmazonScanRuntimeTimeoutMs({
+                  allowManualVerification: shouldAutoShowScannerCaptchaBrowser(scannerSettings),
+                  manualVerificationTimeoutMs,
+                }),
                 browserEngine: 'chromium',
                 ...fallbackScannerRuntimeOptions,
                 capture: {
@@ -982,7 +992,10 @@ export async function synchronizeAmazonProductScan(
                   directAmazonCandidateRank: nextCandidate.nextRank,
                   ...requestedStepSequenceInput,
                 }),
-                timeoutMs: AMAZON_SCAN_TIMEOUT_MS,
+                timeoutMs: resolveAmazonScanRuntimeTimeoutMs({
+                  allowManualVerification: shouldAutoShowScannerCaptchaBrowser(scannerSettings),
+                  manualVerificationTimeoutMs,
+                }),
                 browserEngine: 'chromium',
                 ...scannerRuntimeOptions,
                 capture: {

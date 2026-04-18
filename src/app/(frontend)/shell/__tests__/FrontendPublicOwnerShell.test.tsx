@@ -138,6 +138,21 @@ describe('FrontendPublicOwnerShell', () => {
     });
   });
 
+  it('lets the root route keep its children when the server suppresses standalone shell rendering', () => {
+    render(
+      <FrontendPublicOwnerShell
+        publicOwner='kangur'
+        renderStandaloneKangurShell={false}
+      >
+        <div data-testid='frontend-children'>children</div>
+      </FrontendPublicOwnerShell>
+    );
+
+    expect(screen.getByTestId('frontend-children')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-feature-route-shell')).not.toBeInTheDocument();
+    expect(frontendPublicOwnerKangurShellMock).not.toHaveBeenCalled();
+  });
+
   it('lets the canonical public login route render its children when Kangur owns the root', () => {
     usePathnameMock.mockReturnValue('/login');
 

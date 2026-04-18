@@ -1,8 +1,10 @@
+import { SettingsStoreProvider } from '@/shared/providers/SettingsStoreProvider';
 import {
+  getKangurStorefrontInitialState,
+  getKangurSurfaceBootstrapStyle,
   KANGUR_SURFACE_HINT_SCRIPT,
-  escapeForInlineScript,
-  getKangurSurfaceBootstrapFallbackStyle,
-} from '@/lib/kangur-surface-bootstrap';
+} from '@/features/kangur/server';
+import { escapeForInlineScript } from '../../lib/kangur-surface-bootstrap';
 
 import './kangur.css';
 import { KangurStorefrontAppearanceProvider } from '@/features/kangur/ui/KangurStorefrontAppearanceProvider';
@@ -10,12 +12,17 @@ import { KangurSurfaceClassSync } from '@/features/kangur/ui/KangurSurfaceClassS
 
 import type { ReactNode } from 'react';
 
-export default function KangurLayout({
+export default async function KangurLayout({
   children,
 }: {
   children: ReactNode;
-}): ReactNode {
-  const surfaceBootstrapStyle = getKangurSurfaceBootstrapFallbackStyle();
+}): Promise<ReactNode> {
+  const initialState = await getKangurStorefrontInitialState();
+  const initialAppearance = {
+    mode: initialState.initialMode,
+    themeSettings: initialState.initialThemeSettings,
+  };
+  const surfaceBootstrapStyle = getKangurSurfaceBootstrapStyle(initialAppearance);
 
   return (
     <>
@@ -24,9 +31,11 @@ export default function KangurLayout({
         id='__KANGUR_SURFACE_BOOTSTRAP__'
         dangerouslySetInnerHTML={{ __html: escapeForInlineScript(surfaceBootstrapStyle) }}
       />
-      <KangurStorefrontAppearanceProvider>
-        <KangurSurfaceClassSync>{children}</KangurSurfaceClassSync>
-      </KangurStorefrontAppearanceProvider>
+      <SettingsStoreProvider mode='lite'>
+        <KangurStorefrontAppearanceProvider initialAppearance={initialAppearance}>
+          <KangurSurfaceClassSync>{children}</KangurSurfaceClassSync>
+        </KangurStorefrontAppearanceProvider>
+      </SettingsStoreProvider>
     </>
   );
 }

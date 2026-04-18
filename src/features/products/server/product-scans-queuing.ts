@@ -72,6 +72,7 @@ import {
   resolveAmazonRuntimeActionDefinition,
   resolveAmazonImageSearchProvider,
   resolveAmazonImageSearchPageUrl,
+  resolveAmazonScanRuntimeTimeoutMs,
 } from './product-scans-service.helpers.amazon';
 
 import {
@@ -489,7 +490,10 @@ async function queueBatchProductScans(input: {
                     : null,
                 ...requestedStepSequenceInput,
               }),
-              timeoutMs: PRODUCT_SCAN_TIMEOUT_MS,
+              timeoutMs: resolveAmazonScanRuntimeTimeoutMs({
+                allowManualVerification: shouldAutoShowCaptchaBrowser,
+                manualVerificationTimeoutMs,
+              }),
               browserEngine: 'chromium',
               ...scannerRuntimeOptions,
               capture: {

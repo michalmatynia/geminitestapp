@@ -93,14 +93,14 @@ const resolveKangurInitialAppearance = (
 
 const loadKangurStorefrontState = async ({
   layoutTiming,
-  loadKangurStorefrontBootstrap,
+  shouldLoadKangurStorefrontInitialState,
 }: {
   layoutTiming: LayoutTimingRecorder;
-  loadKangurStorefrontBootstrap: boolean;
+  shouldLoadKangurStorefrontInitialState: boolean;
 }): Promise<
   Awaited<ReturnType<typeof getKangurStorefrontInitialState>> | null
 > =>
-  loadKangurStorefrontBootstrap
+  shouldLoadKangurStorefrontInitialState
     ? layoutTiming.withTiming(
         'kangurStorefrontInitialState',
         getKangurStorefrontInitialState
@@ -149,9 +149,11 @@ const resolveKangurBootstrapState = async ({
     publicOwner,
   });
   const loadKangurStorefrontBootstrap = renderStandaloneKangurShell;
+  const shouldLoadKangurStorefrontInitialState =
+    explicitKangurAlias || loadKangurStorefrontBootstrap;
   const kangurInitialState = await loadKangurStorefrontState({
     layoutTiming,
-    loadKangurStorefrontBootstrap,
+    shouldLoadKangurStorefrontInitialState,
   });
   const initialAppearance = resolveKangurInitialAppearance(kangurInitialState);
   const injectKangurAuthBootstrap =

@@ -16,7 +16,7 @@ function CapabilityRow({
 }: {
   label: string;
   description: string;
-  capability: 'playwright.ai_evaluator_step' | 'playwright.probe_suggestions';
+  capability: 'playwright.ai_evaluator_step' | 'playwright.probe_suggestions' | 'playwright.ai_code_injector';
   inputSource: string;
 }): React.JSX.Element {
   const brainOptions = useBrainModelOptions({ capability });
@@ -72,6 +72,13 @@ export function AdminPlaywrightAiSettingsPage(): React.JSX.Element {
             />
 
             <CapabilityRow
+              capability='playwright.ai_code_injector'
+              label='AI Code Injector'
+              description='Chat model used by ai_inject steps to generate and execute Playwright code dynamically. Loops until a goal is achieved or max iterations are reached. Can cooperate with the AI Evaluator between iterations.'
+              inputSource='page DOM + prior evaluator output + selector registry keys'
+            />
+
+            <CapabilityRow
               capability='playwright.probe_suggestions'
               label='Probe Suggestions'
               description='Chat model used by the live scripter to suggest selector improvements and next-step recommendations based on Playwright probe results.'
@@ -122,6 +129,30 @@ export function AdminPlaywrightAiSettingsPage(): React.JSX.Element {
               <code className='rounded bg-muted px-1 py-0.5 font-mono'>gpt-4o</code>,{' '}
               <code className='rounded bg-muted px-1 py-0.5 font-mono'>gemini-2.0-flash</code>). The
               API returns a 422 error if the configured model does not support image inputs.
+            </p>
+            <p>
+              <span className='font-medium text-foreground'>AI Code Injector</span> — Add an{' '}
+              <code className='rounded bg-muted px-1 py-0.5 font-mono'>ai_inject</code> step and set
+              a natural-language goal. The injector calls the AI with the current page DOM, URL, prior
+              evaluator output, and available selector keys. The AI responds with a Playwright code
+              snippet, which is executed via{' '}
+              <code className='rounded bg-muted px-1 py-0.5 font-mono'>new Function()</code> in the
+              running browser context. The loop repeats until the AI reports{' '}
+              <code className='rounded bg-muted px-1 py-0.5 font-mono'>done: true</code> or max
+              iterations are reached. Results are written to{' '}
+              <code className='rounded bg-muted px-1 py-0.5 font-mono'>runtime['aiInjectorOutput']</code>{' '}
+              and{' '}
+              <code className='rounded bg-muted px-1 py-0.5 font-mono'>runtime['aiInjectorDone']</code>.
+            </p>
+            <p>
+              <span className='font-medium text-foreground'>Evaluator–Injector Cooperation Loop</span>{' '}
+              — Enable the "Evaluator loop" on an{' '}
+              <code className='rounded bg-muted px-1 py-0.5 font-mono'>ai_inject</code> step to have
+              the AI Evaluator re-assess page state after each code injection. The evaluator output is
+              stored in{' '}
+              <code className='rounded bg-muted px-1 py-0.5 font-mono'>runtime['aiEvaluatorOutput']</code>{' '}
+              and automatically included in the next injector iteration. This creates a tight
+              observe→act→evaluate loop that can steer Playwright dynamically toward complex goals.
             </p>
             <p>
               <span className='font-medium text-foreground'>Probe Suggestions</span> — When the live

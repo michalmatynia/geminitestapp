@@ -35,6 +35,7 @@ export const playwrightStepTypeSchema = z.enum([
   'upload_file',
   'custom_script',
   'ai_evaluate',
+  'ai_inject',
 ]);
 
 export const playwrightAiEvaluateInputSourceSchema = z.enum([
@@ -78,6 +79,7 @@ export const PLAYWRIGHT_STEP_TYPE_LABELS: Record<PlaywrightStepType, string> = {
   upload_file: 'Upload file',
   custom_script: 'Custom script',
   ai_evaluate: 'AI Evaluate',
+  ai_inject: 'AI Inject',
 };
 
 // ---------------------------------------------------------------------------
@@ -163,6 +165,10 @@ export const playwrightStepCodePreviewStepSchema = z.object({
   // AI Evaluate step parameters
   aiSystemPrompt: z.string().nullable().optional(),
   aiInputSource: playwrightAiEvaluateInputSourceSchema.nullable().optional(),
+  // AI Inject step parameters
+  aiGoal: z.string().nullable().optional(),
+  aiMaxIterations: z.number().int().min(1).max(10).nullable().optional(),
+  aiLoopEvaluatorInputSource: playwrightAiEvaluateInputSourceSchema.nullable().optional(),
 });
 
 export type PlaywrightStepCodePreviewStep = z.infer<
@@ -214,6 +220,10 @@ export const playwrightStepSchema = z.object({
   // AI Evaluate step parameters
   aiSystemPrompt: z.string().nullable().optional(),
   aiInputSource: playwrightAiEvaluateInputSourceSchema.nullable().optional(),
+  // AI Inject step parameters
+  aiGoal: z.string().nullable().optional(),
+  aiMaxIterations: z.number().int().min(1).max(10).nullable().optional(),
+  aiLoopEvaluatorInputSource: playwrightAiEvaluateInputSourceSchema.nullable().optional(),
   // Scope — null means "shared" (available to all websites / flows)
   websiteId: z.string().nullable(),
   flowId: z.string().nullable(),

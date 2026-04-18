@@ -32,6 +32,10 @@ vi.mock('next/headers', () => ({
   headers: vi.fn(async () => new Headers()),
 }));
 
+vi.mock('next/server', () => ({
+  connection: vi.fn(async () => undefined),
+}));
+
 vi.mock('@/features/cms/server', () => ({
   getCmsRepository: getCmsRepositoryMock,
   getSlugsForDomain: getSlugsForDomainMock,

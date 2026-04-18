@@ -157,6 +157,7 @@ describe('frontend layout bootstrap', () => {
       expect.objectContaining({
         publicOwner: 'cms',
         initialAppearance: undefined,
+        renderStandaloneKangurShell: false,
       }),
       undefined
     );
@@ -252,6 +253,7 @@ describe('frontend layout bootstrap', () => {
             sunset: null,
           },
         },
+        renderStandaloneKangurShell: true,
       }),
       undefined
     );
@@ -284,6 +286,7 @@ describe('frontend layout bootstrap', () => {
       expect.objectContaining({
         publicOwner: 'kangur',
         initialAppearance: undefined,
+        renderStandaloneKangurShell: false,
       }),
       undefined
     );
@@ -324,6 +327,7 @@ describe('frontend layout bootstrap', () => {
             sunset: null,
           },
         },
+        renderStandaloneKangurShell: true,
       }),
       undefined
     );
@@ -368,6 +372,7 @@ describe('frontend layout bootstrap', () => {
             sunset: '{"backgroundColor":"#ef4444"}',
           },
         },
+        renderStandaloneKangurShell: true,
       }),
       undefined
     );
@@ -425,7 +430,7 @@ describe('frontend layout bootstrap', () => {
     });
   });
 
-  it('skips front-page selection and cms theme reads for explicit Kangur alias routes', async () => {
+  it('skips front-page selection while still loading Kangur appearance bootstrap for explicit alias routes', async () => {
     headersMock.mockResolvedValue(
       new Headers({
         'x-app-request-pathname': '/en/kangur/library',
@@ -440,7 +445,7 @@ describe('frontend layout bootstrap', () => {
     );
     expect(resolveFrontPageSelectionMock).not.toHaveBeenCalled();
     expect(getCmsThemeSettingsMock).toHaveBeenCalledTimes(1);
-    expect(getKangurStorefrontInitialStateMock).not.toHaveBeenCalled();
+    expect(getKangurStorefrontInitialStateMock).toHaveBeenCalledTimes(1);
     expect(getKangurAuthBootstrapScriptMock).not.toHaveBeenCalled();
     expect(
       document.querySelector('#__KANGUR_SURFACE_BOOTSTRAP__')?.textContent
@@ -455,7 +460,16 @@ describe('frontend layout bootstrap', () => {
     expect(frontendPublicOwnerShellClientMock).toHaveBeenCalledWith(
       expect.objectContaining({
         publicOwner: 'cms',
-        initialAppearance: undefined,
+        initialAppearance: {
+          mode: 'default',
+          themeSettings: {
+            dark: null,
+            dawn: null,
+            default: null,
+            sunset: null,
+          },
+        },
+        renderStandaloneKangurShell: false,
       }),
       undefined
     );
@@ -491,6 +505,7 @@ describe('frontend layout bootstrap', () => {
             sunset: null,
           },
         },
+        renderStandaloneKangurShell: true,
       }),
       undefined
     );
@@ -509,7 +524,7 @@ describe('frontend layout bootstrap', () => {
 
     expect(headersMock).not.toHaveBeenCalled();
     expect(resolveFrontPageSelectionMock).not.toHaveBeenCalled();
-    expect(getKangurStorefrontInitialStateMock).not.toHaveBeenCalled();
+    expect(getKangurStorefrontInitialStateMock).toHaveBeenCalledTimes(1);
     expect(getKangurAuthBootstrapScriptMock).not.toHaveBeenCalled();
   });
 
@@ -546,6 +561,7 @@ describe('frontend layout bootstrap', () => {
         expect.objectContaining({
           publicOwner: 'kangur',
           initialAppearance: undefined,
+          renderStandaloneKangurShell: false,
         }),
         undefined
       );

@@ -67,7 +67,7 @@ const {
   pendingRouteLoadingSnapshotMock: vi.fn<() => MockedPendingRouteLoadingSnapshot>(),
   preloadKangurPageMock: vi.fn<(pageKey: string) => void>(),
   prefetchKangurPageContentStoreMock: vi.fn<
-    (queryClient: QueryClient | null | undefined, locale?: string | null) => Promise<void>
+    (queryClient: QueryClient | null | undefined, locale?: string | null) => Promise<boolean>
   >(),
   queryClientMock: vi.fn<() => MockedQueryClient>(),
   routingStateMock: vi.fn<() => MockedRoutingState>(),
@@ -511,7 +511,7 @@ export async function setupKangurFeatureAppTest() {
   topNavigationHostVisibleMock.mockReturnValue(true);
   preloadKangurPageMock.mockReset();
   prefetchKangurPageContentStoreMock.mockReset();
-  prefetchKangurPageContentStoreMock.mockResolvedValue(undefined);
+  prefetchKangurPageContentStoreMock.mockResolvedValue(true);
   queryClientMock.mockReturnValue({
     prefetchQuery: vi.fn() as QueryClient['prefetchQuery'],
   });

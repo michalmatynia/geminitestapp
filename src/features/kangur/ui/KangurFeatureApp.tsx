@@ -516,8 +516,11 @@ const AuthenticatedApp = (): JSX.Element | null => {
     }
 
     const prefetch = (): void => {
-      prefetchedPageContentLocalesRef.current.add(routeLocale);
-      void prefetchKangurPageContentStore(queryClient, routeLocale);
+      void prefetchKangurPageContentStore(queryClient, routeLocale).then((didPrefetch) => {
+        if (didPrefetch) {
+          prefetchedPageContentLocalesRef.current.add(routeLocale);
+        }
+      });
     };
 
     if (typeof window.requestIdleCallback === 'function') {

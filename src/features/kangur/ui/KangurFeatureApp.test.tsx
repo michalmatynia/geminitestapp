@@ -145,6 +145,40 @@ describe('KangurFeatureApp', () => {
     expect(prefetchKangurPageContentStoreMock).toHaveBeenCalledWith(queryClient, 'pl');
   });
 
+  it('retries a locale prefetch after an earlier prefetch for that locale did not complete', async () => {
+    const queryClient = { prefetchQuery: vi.fn() };
+    queryClientMock.mockReturnValue(queryClient);
+    prefetchKangurPageContentStoreMock
+      .mockResolvedValueOnce(false)
+      .mockResolvedValueOnce(true)
+      .mockResolvedValueOnce(true);
+
+    useLocaleMock.mockReturnValue('pl');
+    const { rerender } = render(<KangurFeatureApp />);
+
+    await act(async () => {
+      vi.runAllTimers();
+    });
+
+    useLocaleMock.mockReturnValue('en');
+    rerender(<KangurFeatureApp />);
+
+    await act(async () => {
+      vi.runAllTimers();
+    });
+
+    useLocaleMock.mockReturnValue('pl');
+    rerender(<KangurFeatureApp />);
+
+    await act(async () => {
+      vi.runAllTimers();
+    });
+
+    expect(prefetchKangurPageContentStoreMock).toHaveBeenNthCalledWith(1, queryClient, 'pl');
+    expect(prefetchKangurPageContentStoreMock).toHaveBeenNthCalledWith(2, queryClient, 'en');
+    expect(prefetchKangurPageContentStoreMock).toHaveBeenNthCalledWith(3, queryClient, 'pl');
+  });
+
   it('cancels scheduled hot-route preloads when requestIdleCallback is available and the app unmounts first', () => {
     const requestIdleCallbackMock = vi.fn(() => 41);
     const cancelIdleCallbackMock = vi.fn();

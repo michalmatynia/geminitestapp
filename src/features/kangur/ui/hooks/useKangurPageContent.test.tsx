@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import {
   QueryClient,
   QueryClientProvider,
@@ -26,7 +26,10 @@ vi.mock('@/shared/lib/api-client', () => ({
 }));
 
 import { buildDefaultKangurPageContentStore } from '@/features/kangur/ai-tutor/page-content-catalog';
-import { useKangurPageContentStore } from '@/features/kangur/ui/hooks/useKangurPageContent';
+import {
+  prefetchKangurPageContentStore,
+  useKangurPageContentStore,
+} from '@/features/kangur/ui/hooks/useKangurPageContent';
 
 const STALE_TIME_MS = 5 * 60_000;
 
@@ -71,7 +74,7 @@ describe('useKangurPageContentStore', () => {
 
     expect(apiGetMock).toHaveBeenCalledTimes(1);
     expect(apiGetMock).toHaveBeenCalledWith('/api/kangur/ai-tutor/page-content?locale=pl', {
-      timeout: 30000,
+      timeout: 45000,
     });
   });
 
@@ -128,6 +131,24 @@ describe('useKangurPageContentStore', () => {
     expect(apiGetMock).toHaveBeenCalledTimes(1);
   });
 
+  it('retries a recoverable timeout once so cold-start fetches can self-heal without refresh', async () => {
+    vi.useFakeTimers();
+    apiGetMock
+      .mockRejectedValueOnce(new Error('Request timeout after 45000ms'))
+      .mockResolvedValueOnce(buildDefaultKangurPageContentStore('pl'));
+
+    const { wrapper } = createWrapper();
+    const query = renderHook(() => useKangurPageContentStore(), { wrapper });
+
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
+
+    expect(apiGetMock).toHaveBeenCalledTimes(2);
+    expect(query.result.current.data?.entries.length).toBeGreaterThan(0);
+    expect(query.result.current.isSuccess).toBe(true);
+  });
+
   it('marks page-content queries as silent so timeout fallbacks do not raise global toasts', async () => {
     const { queryClient, wrapper } = createWrapper();
     const query = renderHook(() => useKangurPageContentStore(), { wrapper });
@@ -145,5 +166,18 @@ describe('useKangurPageContentStore', () => {
         errorPresentation: 'silent',
       },
     });
+  });
+
+  it('returns false from prefetch when the query still ends in error after the prefetch attempt', async () => {
+    apiGetMock.mockRejectedValueOnce(new Error('Request timeout after 45000ms'));
+
+    const { queryClient } = createWrapper();
+    const didPrefetch = await prefetchKangurPageContentStore(queryClient, 'pl');
+
+    expect(didPrefetch).toBe(false);
+    expect(apiGetMock).toHaveBeenCalledTimes(1);
+    expect(queryClient.getQueryState(['kangur', 'page-content', { locale: 'pl' }])?.status).toBe(
+      'error'
+    );
   });
 });

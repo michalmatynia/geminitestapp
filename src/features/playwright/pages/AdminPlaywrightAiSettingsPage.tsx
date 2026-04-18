@@ -110,10 +110,13 @@ export function AdminPlaywrightAiSettingsPage(): React.JSX.Element {
               <span className='font-medium text-foreground'>AI Evaluator Step</span> — Add an{' '}
               <code className='rounded bg-muted px-1 py-0.5 font-mono'>ai_evaluate</code> step to any
               Playwright action in the step sequencer. The step captures page state (screenshot, HTML,
-              element text, or full body text) and calls the configured AI model with an optional
-              system prompt. The result is available as{' '}
-              <code className='rounded bg-muted px-1 py-0.5 font-mono'>_aiResult.output</code> in
-              subsequent custom script steps.
+              element text, or full body text) and calls the configured AI model via{' '}
+              <code className='rounded bg-muted px-1 py-0.5 font-mono'>helpers.aiEvaluate()</code>{' '}
+              with an optional system prompt. The result is written to{' '}
+              <code className='rounded bg-muted px-1 py-0.5 font-mono'>runtime['aiEvaluatorOutput']</code>{' '}
+              and also available as{' '}
+              <code className='rounded bg-muted px-1 py-0.5 font-mono'>_aiResult.output</code> in the
+              same step.
             </p>
             <p>
               <span className='font-medium text-foreground'>System Prompt Override</span> — Each{' '}
@@ -128,16 +131,20 @@ export function AdminPlaywrightAiSettingsPage(): React.JSX.Element {
               <code className='rounded bg-muted px-1 py-0.5 font-mono'>claude-sonnet-4-6</code>,{' '}
               <code className='rounded bg-muted px-1 py-0.5 font-mono'>gpt-4o</code>,{' '}
               <code className='rounded bg-muted px-1 py-0.5 font-mono'>gemini-2.0-flash</code>). The
-              API returns a 422 error if the configured model does not support image inputs.
+              step throws a 422-equivalent error if the configured model does not support image inputs.
             </p>
             <p>
               <span className='font-medium text-foreground'>AI Code Injector</span> — Add an{' '}
               <code className='rounded bg-muted px-1 py-0.5 font-mono'>ai_inject</code> step and set
-              a natural-language goal. The injector calls the AI with the current page DOM, URL, prior
-              evaluator output, and available selector keys. The AI responds with a Playwright code
-              snippet, which is executed via{' '}
-              <code className='rounded bg-muted px-1 py-0.5 font-mono'>new Function()</code> in the
-              running browser context. The loop repeats until the AI reports{' '}
+              a natural-language goal. Each iteration calls{' '}
+              <code className='rounded bg-muted px-1 py-0.5 font-mono'>helpers.aiInject()</code> with
+              the current page DOM, URL, and prior evaluator output. The AI responds with a Playwright
+              code snippet executed via{' '}
+              <code className='rounded bg-muted px-1 py-0.5 font-mono'>helpers.aiInjectExecute()</code>{' '}
+              — an async function running outside the VM sandbox with{' '}
+              <code className='rounded bg-muted px-1 py-0.5 font-mono'>page</code> and{' '}
+              <code className='rounded bg-muted px-1 py-0.5 font-mono'>runtime</code> in scope. The
+              loop repeats until the AI reports{' '}
               <code className='rounded bg-muted px-1 py-0.5 font-mono'>done: true</code> or max
               iterations are reached. Results are written to{' '}
               <code className='rounded bg-muted px-1 py-0.5 font-mono'>runtime['aiInjectorOutput']</code>{' '}

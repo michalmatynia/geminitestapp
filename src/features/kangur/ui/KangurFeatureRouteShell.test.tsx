@@ -176,7 +176,7 @@ describe('KangurFeatureRouteShell', () => {
     }));
   });
 
-  it('marks the client shell active instead of removing the server shell overlay directly', () => {
+  it('marks the client shell active and hides the server shell from assistive tech', () => {
     const serverShell = document.createElement('div');
     serverShell.setAttribute('data-kangur-server-shell', '');
     document.body.appendChild(serverShell);
@@ -186,11 +186,15 @@ describe('KangurFeatureRouteShell', () => {
     expect(document.documentElement.classList.contains('kangur-client-shell-active')).toBe(true);
     expect(document.body.classList.contains('kangur-client-shell-active')).toBe(true);
     expect(document.body.contains(serverShell)).toBe(true);
+    expect(serverShell.getAttribute('aria-hidden')).toBe('true');
+    expect(serverShell.hasAttribute('hidden')).toBe(true);
 
     unmount();
 
     expect(document.documentElement.classList.contains('kangur-client-shell-active')).toBe(false);
     expect(document.body.classList.contains('kangur-client-shell-active')).toBe(false);
+    expect(serverShell.hasAttribute('hidden')).toBe(false);
+    expect(serverShell.hasAttribute('aria-hidden')).toBe(false);
 
     serverShell.remove();
   });

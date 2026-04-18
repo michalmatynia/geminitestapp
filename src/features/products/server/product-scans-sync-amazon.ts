@@ -421,6 +421,25 @@ export async function synchronizeAmazonProductScan(
       });
       const allowManualVerification =
         manualVerificationPending || existingRawResult['allowManualVerification'] === true;
+      const runtimePosture = toRecord(activeRunDiagnostics['runtimePosture']);
+      const runtimeBrowser = toRecord(runtimePosture?.['browser']);
+      const activeRunIsHeadless = runtimeBrowser?.['headless'] === true;
+      const shouldRelaunchCaptchaRun =
+        parsedResult.status === 'captcha_required' &&
+        allowManualVerification &&
+        existingRawResult['captchaRetryStarted'] !== true &&
+        activeRunIsHeadless;
+
+      if (shouldRelaunchCaptchaRun) {
+        return await synchronizeAmazonCaptchaRequired({
+          scan,
+          run,
+          engineRunId,
+          resultValue,
+          parsedResult,
+        });
+      }
+
       const activeMessage =
         manualVerificationPending ? normalizeErrorMessage(parsedResult.message, '') : null;
 
@@ -428,6 +447,8 @@ export async function synchronizeAmazonProductScan(
         allowManualVerification,
         manualVerificationTimeoutMs,
       });
+      const staleSyncGraceMs = PRODUCT_SCAN_ORPHANED_ACTIVE_MAX_AGE_MS;
+      const activeRunStallThresholdMs = allowedRuntimeMs + staleSyncGraceMs;
       const activeRunAgeMs = resolveIsoAgeMs(run.startedAt) ?? resolveIsoAgeMs(run.createdAt);
       const activeRunIdleAgeMs = resolveIsoAgeMs(run.updatedAt);
       const nextRawResult =
@@ -457,9 +478,9 @@ export async function synchronizeAmazonProductScan(
         activeRunAgeMs != null &&
         activeRunAgeMs >= allowedRuntimeMs
           ? 'manual_verification_expired'
-          : activeRunIdleAgeMs != null && activeRunIdleAgeMs >= allowedRuntimeMs
+          : activeRunIdleAgeMs != null && activeRunIdleAgeMs >= activeRunStallThresholdMs
             ? 'no_progress'
-            : activeRunAgeMs != null && activeRunAgeMs >= allowedRuntimeMs
+            : activeRunAgeMs != null && activeRunAgeMs >= activeRunStallThresholdMs
               ? 'runtime_exceeded'
               : null;
 

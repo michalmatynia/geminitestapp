@@ -14,12 +14,14 @@ import {
   resolveTanstackFactoryMeta,
 } from '@/shared/lib/observability/tanstack-telemetry';
 import { prefetchQueryV2 } from '@/shared/lib/query-factories-v2';
+import { isRecoverableKangurClientFetchError } from '@/features/kangur/observability/client';
 import { api } from '@/shared/lib/api-client';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 const KANGUR_PAGE_CONTENT_STALE_TIME_MS = 5 * 60_000;
 const KANGUR_PAGE_CONTENT_GC_TIME_MS = 30 * 60_000;
-const KANGUR_PAGE_CONTENT_REQUEST_TIMEOUT_MS = 30_000;
+const KANGUR_PAGE_CONTENT_REQUEST_TIMEOUT_MS = 45_000;
+const KANGUR_PAGE_CONTENT_RECOVERABLE_RETRY_DELAY_MS = 1_000;
 
 const resolveKangurPageContentLocale = (locale?: string | null, routeLocale?: string | null): string =>
   normalizeSiteLocale(locale ?? routeLocale);
@@ -27,7 +29,16 @@ const resolveKangurPageContentLocale = (locale?: string | null, routeLocale?: st
 export const createKangurPageContentQueryKey = (locale: string) =>
   ['kangur', 'page-content', { locale }] as const;
 
-const createKangurPageContentQueryMeta = (locale: string) => ({
+const createKangurPageContentQueryMeta = (locale: string): {
+  description: string;
+  domain: 'kangur';
+  errorPresentation: 'silent';
+  operation: 'list';
+  queryKey: ReturnType<typeof createKangurPageContentQueryKey>;
+  resource: 'kangur.page-content';
+  source: string;
+  tags: string[];
+} => ({
   source: 'kangur.hooks.useKangurPageContentStore',
   operation: 'list' as const,
   resource: 'kangur.page-content',
@@ -56,15 +67,16 @@ export const fetchKangurPageContentStore = async (
 export const prefetchKangurPageContentStore = async (
   queryClient: QueryClient | null | undefined,
   locale?: string | null
-): Promise<void> => {
+): Promise<boolean> => {
   if (!queryClient) {
-    return;
+    return false;
   }
 
   const resolvedLocale = resolveKangurPageContentLocale(locale);
+  const queryKey = createKangurPageContentQueryKey(resolvedLocale);
 
   await prefetchQueryV2(queryClient, {
-    queryKey: createKangurPageContentQueryKey(resolvedLocale),
+    queryKey,
     queryFn: () => fetchKangurPageContentStore(resolvedLocale),
     staleTime: KANGUR_PAGE_CONTENT_STALE_TIME_MS,
     meta: {
@@ -73,6 +85,8 @@ export const prefetchKangurPageContentStore = async (
       description: 'Prefetches Kangur page content.',
     },
   })();
+
+  return queryClient.getQueryState(queryKey)?.status === 'success';
 };
 
 export const useKangurPageContentStore = (
@@ -92,7 +106,9 @@ export const useKangurPageContentStore = (
     refetchOnMount: false,
     refetchOnReconnect: false,
     refetchOnWindowFocus: false,
-    retry: false,
+    retry: (failureCount, error) =>
+      isRecoverableKangurClientFetchError(error) && failureCount < 2,
+    retryDelay: KANGUR_PAGE_CONTENT_RECOVERABLE_RETRY_DELAY_MS,
   });
 };
 
@@ -104,7 +120,10 @@ export const useKangurPageContentEntry = (
 } => {
   const query = useKangurPageContentStore(locale);
   const entry = useMemo(
-    () => (entryId ? query.data?.entries.find((candidate) => candidate.id === entryId) ?? null : null),
+    () =>
+      entryId !== null && entryId !== undefined
+        ? query.data?.entries.find((candidate) => candidate.id === entryId) ?? null
+        : null,
     [entryId, query.data]
   );
 

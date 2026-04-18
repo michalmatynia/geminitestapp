@@ -398,12 +398,34 @@ function useSyncKangurFeatureRouteShellActiveClass(): void {
       return;
     }
 
+    const serverShell = document.querySelector<HTMLElement>('[data-kangur-server-shell]');
+    const previousAriaHidden = serverShell?.getAttribute('aria-hidden') ?? null;
+    const previousHidden = serverShell?.hasAttribute('hidden') ?? false;
+
     document.documentElement.classList.add(KANGUR_CLIENT_SHELL_ACTIVE_CLASSNAME);
     document.body.classList.add(KANGUR_CLIENT_SHELL_ACTIVE_CLASSNAME);
+    serverShell?.setAttribute('aria-hidden', 'true');
+    serverShell?.setAttribute('hidden', '');
 
     return () => {
       document.documentElement.classList.remove(KANGUR_CLIENT_SHELL_ACTIVE_CLASSNAME);
       document.body.classList.remove(KANGUR_CLIENT_SHELL_ACTIVE_CLASSNAME);
+
+      if (!serverShell) {
+        return;
+      }
+
+      if (previousAriaHidden === null) {
+        serverShell.removeAttribute('aria-hidden');
+      } else {
+        serverShell.setAttribute('aria-hidden', previousAriaHidden);
+      }
+
+      if (previousHidden) {
+        serverShell.setAttribute('hidden', '');
+      } else {
+        serverShell.removeAttribute('hidden');
+      }
     };
   }, []);
 }

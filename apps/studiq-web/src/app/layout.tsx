@@ -16,6 +16,16 @@ export const metadata: Metadata = {
   title: 'StudiQ',
 };
 
+const parsePositiveInt = (value: string | undefined, fallback: number): number => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : fallback;
+};
+
+const STUDIQ_LITE_SETTINGS_HYDRATION_TIMEOUT_MS = parsePositiveInt(
+  process.env['STUDIQ_LITE_SETTINGS_HYDRATION_TIMEOUT_MS'],
+  2_000
+);
+
 export default async function RootLayout({
   children,
 }: {
@@ -24,7 +34,9 @@ export default async function RootLayout({
   const locale = DEFAULT_SITE_I18N_CONFIG.defaultLocale;
   const [messages, liteSettings] = await Promise.all([
     loadSiteMessages(locale),
-    getLiteSettingsForHydration(),
+    getLiteSettingsForHydration({
+      timeoutMs: STUDIQ_LITE_SETTINGS_HYDRATION_TIMEOUT_MS,
+    }),
   ]);
   const sanitizedLiteSettingsScript =
     liteSettings.length > 0

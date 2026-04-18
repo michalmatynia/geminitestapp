@@ -221,4 +221,21 @@ describe('agent persona visuals handler', () => {
       ),
     ).rejects.toThrow(/agent persona not found/i);
   });
+
+  it('returns null for optional requests when the requested persona does not exist', async () => {
+    readStoredSettingValueMock.mockResolvedValue(JSON.stringify([]));
+
+    const response = await GET_handler(
+      new NextRequest('http://localhost/api/agentcreator/personas/missing/visuals?optional=1'),
+      {
+        ...createRequestContext(),
+        query: { optional: true },
+      } as ApiHandlerContext,
+      { personaId: 'missing' },
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Cache-Control')).toBe('no-store');
+    await expect(response.json()).resolves.toBeNull();
+  });
 });

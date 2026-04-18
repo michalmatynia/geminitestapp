@@ -16,11 +16,22 @@ const LITE_SETTINGS_SSR_PREWARM_TIMEOUT_MS = parsePositiveInt(
   process.env['NODE_ENV'] === 'development' ? 50 : 150
 );
 
-const waitForLiteSettingsPrewarm = async (): Promise<void> => {
+type LiteSettingsHydrationOptions = {
+  timeoutMs?: number;
+};
+
+const resolveLiteSettingsPrewarmTimeoutMs = (timeoutMs?: number): number => {
+  if (typeof timeoutMs !== 'number' || !Number.isFinite(timeoutMs)) {
+    return LITE_SETTINGS_SSR_PREWARM_TIMEOUT_MS;
+  }
+  return timeoutMs > 0 ? Math.floor(timeoutMs) : timeoutMs;
+};
+
+const waitForLiteSettingsPrewarm = async (timeoutMs: number): Promise<void> => {
   const prewarmPromise = prewarmLiteSettingsServerCache();
   void prewarmPromise.catch(() => {});
 
-  if (LITE_SETTINGS_SSR_PREWARM_TIMEOUT_MS <= 0) {
+  if (timeoutMs <= 0) {
     await prewarmPromise;
     return;
   }
@@ -31,7 +42,7 @@ const waitForLiteSettingsPrewarm = async (): Promise<void> => {
     await Promise.race([
       prewarmPromise,
       new Promise<void>((resolve) => {
-        timeoutId = setTimeout(resolve, LITE_SETTINGS_SSR_PREWARM_TIMEOUT_MS);
+        timeoutId = setTimeout(resolve, timeoutMs);
       }),
     ]);
   } finally {
@@ -46,7 +57,9 @@ const waitForLiteSettingsPrewarm = async (): Promise<void> => {
  * The result is injected into a <script> tag so the client can skip the
  * /api/settings/lite round-trip on first load.
  */
-export async function getLiteSettingsForHydration(): Promise<SettingRecord[]> {
+export async function getLiteSettingsForHydration(
+  options?: LiteSettingsHydrationOptions
+): Promise<SettingRecord[]> {
   'use cache';
   applyCacheLife('swr60');
 
@@ -61,7 +74,7 @@ export async function getLiteSettingsForHydration(): Promise<SettingRecord[]> {
       return [];
     }
 
-    await waitForLiteSettingsPrewarm();
+    await waitForLiteSettingsPrewarm(resolveLiteSettingsPrewarmTimeoutMs(options?.timeoutMs));
     const cache = getLiteSettingsCache();
     return cache ? cloneLiteSettings(cache.data) : [];
   } catch {

@@ -63,6 +63,9 @@ describe('StudiQ RootLayout', () => {
     const rootClientShell = findElementByType(bodyChildren, rootClientShellMock);
 
     expect(getLiteSettingsForHydrationMock).toHaveBeenCalledTimes(1);
+    expect(getLiteSettingsForHydrationMock).toHaveBeenCalledWith({
+      timeoutMs: 2000,
+    });
     expect(loadSiteMessagesMock).toHaveBeenCalledWith('pl');
     expect(intlProvider?.props.locale).toBe('pl');
     expect(intlProvider?.props.messages).toEqual(

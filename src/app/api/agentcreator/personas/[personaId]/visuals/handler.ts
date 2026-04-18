@@ -1,16 +1,22 @@
 import { type NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { readAgentPersonaAvatarThumbnailByRef } from '@/features/ai/agentcreator/server/persona-avatar-thumbnails';
 import type { AgentPersona } from '@/shared/contracts/agents';
 import { AGENT_PERSONA_SETTINGS_KEY } from '@/shared/contracts/agents';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { optionalBooleanQuerySchema } from '@/shared/lib/api/query-schema';
 import { normalizeAgentPersonas } from '@/shared/lib/agent-personas';
 import { readStoredSettingValue, upsertStoredSettingValue } from '@/shared/lib/ai-brain/server';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
 type AgentPersonaMood = NonNullable<AgentPersona['moods']>[number];
+
+export const querySchema = z.object({
+  optional: optionalBooleanQuerySchema(),
+});
 
 const resolveMoodVisuals = async (
   mood: AgentPersonaMood
@@ -67,6 +73,7 @@ export async function GET_handler(
   _ctx: ApiHandlerContext,
   params: { personaId: string }
 ): Promise<Response> {
+  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
   const personaId = params.personaId?.trim();
   if (!personaId) {
     throw badRequestError('Persona id is required.');
@@ -76,6 +83,13 @@ export async function GET_handler(
   const personas = normalizeAgentPersonas(raw?.trim() ? JSON.parse(raw) : []);
   const persona = personas.find((candidate) => candidate.id === personaId) ?? null;
   if (!persona) {
+    if (query.optional === true) {
+      return NextResponse.json(null, {
+        headers: {
+          'Cache-Control': 'no-store',
+        },
+      });
+    }
     throw notFoundError('Agent persona not found.');
   }
 

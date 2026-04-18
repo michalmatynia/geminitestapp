@@ -30,15 +30,20 @@ export function useAgentPersonaVisuals(
       if (!normalizedPersonaId) {
         return [];
       }
-      const persona = await api.get<AgentPersona>(
-        `/api/agentcreator/personas/${encodeURIComponent(normalizedPersonaId)}/visuals`
+      const persona = await api.get<AgentPersona | null>(
+        `/api/agentcreator/personas/${encodeURIComponent(normalizedPersonaId)}/visuals?optional=1`
       );
-      return [persona];
+      return persona ? [persona] : [];
     },
     enabled: normalizedPersonaId !== null,
     staleTime: 10 * 60 * 1000,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
+    retry: false,
+    meta: {
+      source: 'shared.hooks.useAgentPersonaVisuals',
+      errorPresentation: 'silent',
+    },
   });
 }

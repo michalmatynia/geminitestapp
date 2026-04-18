@@ -7,6 +7,7 @@
 
 import dynamic from 'next/dynamic';
 
+import { ProductModals } from '@/features/products/components/ProductModals';
 import { ProductListPanel } from '@/features/products/components/ProductListPanel';
 import { ProductImagePreviewProvider } from '@/features/products/context/ProductImagePreviewContext';
 import { ProductListProvider } from '@/features/products/context/ProductListContext';
@@ -14,14 +15,6 @@ import { useProductListState } from '@/features/products/hooks/useProductListSta
 
 const ProductFormDebugPanel = dynamic(
   () => import('@/features/products/components/ProductFormDebugPanel'),
-  { ssr: false }
-);
-
-const ProductModals = dynamic(
-  () =>
-    import('@/features/products/components/ProductModals').then(
-      (mod: typeof import('@/features/products/components/ProductModals')) => mod.ProductModals
-    ),
   { ssr: false }
 );
 

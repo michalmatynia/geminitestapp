@@ -82,6 +82,17 @@ const resolveTraderaListingSelectorProfile = (
     ? selectorProfile.trim()
     : 'default';
 
+const sanitizeTraderaListingQueueJobIdSegment = (value: string): string => {
+  const normalized = value.trim().replace(/[:\s]+/g, '_');
+  return normalized.length > 0 ? normalized : 'default';
+};
+
+const sanitizeTraderaListingQueueJobId = (value: string): string =>
+  value
+    .split('__')
+    .map((segment) => sanitizeTraderaListingQueueJobIdSegment(segment))
+    .join('__');
+
 export const buildTraderaListingQueueJobId = (
   data: TraderaListingQueueJobData,
   nowMs = Date.now()
@@ -94,14 +105,14 @@ export const buildTraderaListingQueueJobId = (
     resolveTraderaListingSelectorProfile(data.selectorProfile),
     String(dedupeBucket),
   ];
-  return jobIdParts.join(':');
+  return jobIdParts.map(sanitizeTraderaListingQueueJobIdSegment).join('__');
 };
 
 const resolveRequestedTraderaListingQueueJobId = (
   data: TraderaListingQueueJobData
 ): string =>
   typeof data.jobId === 'string' && data.jobId.trim().length > 0
-    ? data.jobId.trim()
+    ? sanitizeTraderaListingQueueJobId(data.jobId)
     : buildTraderaListingQueueJobId(data);
 
 export const enqueueTraderaListingJob = async (

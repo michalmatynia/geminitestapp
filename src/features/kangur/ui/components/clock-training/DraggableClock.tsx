@@ -152,8 +152,17 @@ const releaseDraggableClockPointerCapture = ({
 }): void => {
   const target = activePointerTargetRef.current;
   const activePointerId = activePointerIdRef.current;
+  const hasPointerCapture =
+    target !== null &&
+    typeof (target as SVGElement & { hasPointerCapture?: unknown }).hasPointerCapture ===
+      'function';
 
-  if (target && activePointerId !== null && target.hasPointerCapture?.(activePointerId)) {
+  if (
+    target !== null &&
+    activePointerId !== null &&
+    hasPointerCapture &&
+    target.hasPointerCapture(activePointerId)
+  ) {
     try {
       target.releasePointerCapture(activePointerId);
     } catch {
@@ -161,7 +170,8 @@ const releaseDraggableClockPointerCapture = ({
     }
   }
 
-  activePointerTargetRef.current = null;
+  const pointerTargetRef = activePointerTargetRef;
+  pointerTargetRef.current = null;
 };
 
 const canStartDraggableClockHand = ({
@@ -219,6 +229,7 @@ function useDraggableClockDragState({
   unlockMobileInteraction: () => void;
 }): {
   activeHand: Hand | null;
+  onSingleHandFacePointerDown: DraggableClockPointerDownHandler | null;
   onHourPointerDown: DraggableClockPointerDownHandler;
   onMinutePointerDown: DraggableClockPointerDownHandler;
   svgRef: React.RefObject<SVGSVGElement | null>;
@@ -264,7 +275,13 @@ function useDraggableClockDragState({
       event.preventDefault();
       activePointerIdRef.current = event.pointerId;
       activePointerTargetRef.current = event.currentTarget;
-      event.currentTarget.setPointerCapture?.(event.pointerId);
+      if (
+        typeof (
+          event.currentTarget as SVGElement & { setPointerCapture?: unknown }
+        ).setPointerCapture === 'function'
+      ) {
+        event.currentTarget.setPointerCapture(event.pointerId);
+      }
       draggingRef.current = hand;
       setActiveHand(hand);
       lockMobileInteraction();
@@ -286,10 +303,21 @@ function useDraggableClockDragState({
     [startDragging]
   );
 
+  const onSingleHandFacePointerDown = useMemo<DraggableClockPointerDownHandler | null>(() => {
+    if (hourHandEnabled === minuteHandEnabled) {
+      return null;
+    }
+
+    const hand: Hand = hourHandEnabled ? 'hour' : 'minute';
+    return (event) => {
+      startDragging(hand, event);
+    };
+  }, [hourHandEnabled, minuteHandEnabled, startDragging]);
+
   const onMove = useCallback(
     (event: PointerEvent): void => {
       const draggingHand = draggingRef.current;
-      if (!draggingHand || activePointerIdRef.current !== event.pointerId) {
+      if (draggingHand === null || activePointerIdRef.current !== event.pointerId) {
         return;
       }
       if (event.cancelable) {
@@ -328,6 +356,7 @@ function useDraggableClockDragState({
 
   return {
     activeHand,
+    onSingleHandFacePointerDown,
     onHourPointerDown,
     onMinutePointerDown,
     svgRef,
@@ -359,7 +388,13 @@ export function DraggableClock(props: DraggableClockProps): React.JSX.Element {
   const minuteStep = MINUTE_STEP_BY_MODE[minuteSnapMode];
   const hourHandEnabled = section !== 'minutes';
   const minuteHandEnabled = section !== 'hours';
-  const { activeHand, svgRef, onHourPointerDown, onMinutePointerDown } =
+  const {
+    activeHand,
+    svgRef,
+    onHourPointerDown,
+    onMinutePointerDown,
+    onSingleHandFacePointerDown,
+  } =
     useDraggableClockDragState({
       hourHandEnabled,
       lockMobileInteraction,
@@ -412,6 +447,7 @@ export function DraggableClock(props: DraggableClockProps): React.JSX.Element {
       minuteHandX,
       minuteHandY,
       minuteSnapMode,
+      onSingleHandFacePointerDown,
       onHourPointerDown,
       onMinutePointerDown,
       onSubmitClick: handleSubmitClick,
@@ -445,6 +481,7 @@ export function DraggableClock(props: DraggableClockProps): React.JSX.Element {
       minuteHandX,
       minuteHandY,
       minuteSnapMode,
+      onSingleHandFacePointerDown,
       onHourPointerDown,
       onMinutePointerDown,
       handleSubmitClick,

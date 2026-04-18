@@ -46,7 +46,7 @@ describe('traderaListingQueue', () => {
         },
         90_000
       )
-    ).toBe('list:listing-1:connection_default:default:3');
+    ).toBe('list__listing-1__connection_default__default__3');
     expect(
       buildTraderaListingQueueJobId(
         {
@@ -57,7 +57,7 @@ describe('traderaListingQueue', () => {
         },
         29_999
       )
-    ).toBe('relist:listing-1:headed:custom-profile:0');
+    ).toBe('relist__listing-1__headed__custom-profile__0');
   });
 
   it('uses supplied job ids for enqueue payload and BullMQ dedupe options', async () => {
@@ -80,6 +80,29 @@ describe('traderaListingQueue', () => {
         jobId: 'job-known',
       },
       { jobId: 'job-known' }
+    );
+  });
+
+  it('sanitizes custom job ids before enqueueing to BullMQ', async () => {
+    const { enqueueTraderaListingJob } = await import('./traderaListingQueue');
+
+    await expect(
+      enqueueTraderaListingJob({
+        listingId: 'listing-1',
+        action: 'list',
+        source: 'api',
+        jobId: 'job:known headed',
+      })
+    ).resolves.toBe('queued-job-id');
+
+    expect(mocks.queueMock.enqueue).toHaveBeenCalledWith(
+      {
+        listingId: 'listing-1',
+        action: 'list',
+        source: 'api',
+        jobId: 'job_known_headed',
+      },
+      { jobId: 'job_known_headed' }
     );
   });
 });

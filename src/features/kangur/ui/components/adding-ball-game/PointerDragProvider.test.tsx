@@ -29,7 +29,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurMobileInteractionScrollLock', () =>
 const TEST_BALL: BallItem = {
   id: 'ball-1',
   num: 1,
-  color: 'bg-sky-500',
+  color: '#0ea5e9',
 };
 
 const mockRect = (x: number, y: number, width: number, height: number): DOMRect =>

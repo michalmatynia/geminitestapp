@@ -12,10 +12,10 @@ import {
 describe('adding-ball-game utils', () => {
   it('creates unit balls for count-based rounds', () => {
     expect(createBalls(4)).toEqual([
-      expect.objectContaining({ id: 'ball-0', num: 1 }),
-      expect.objectContaining({ id: 'ball-1', num: 1 }),
-      expect.objectContaining({ id: 'ball-2', num: 1 }),
-      expect.objectContaining({ id: 'ball-3', num: 1 }),
+      expect.objectContaining({ id: 'ball-0', num: 1, color: '#f87171' }),
+      expect.objectContaining({ id: 'ball-1', num: 1, color: '#60a5fa' }),
+      expect.objectContaining({ id: 'ball-2', num: 1, color: '#4ade80' }),
+      expect.objectContaining({ id: 'ball-3', num: 1, color: '#facc15' }),
     ]);
   });
 

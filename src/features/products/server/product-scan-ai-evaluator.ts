@@ -4,7 +4,13 @@ import path from 'node:path';
 
 import { z } from 'zod';
 
-import { evaluateStepWithAI } from '@/features/playwright/server/ai-step-service';
+import {
+  type PlaywrightVerificationObservationLike,
+  type PlaywrightVerificationReviewProfile,
+  evaluateStepWithAI,
+  evaluateStructuredPlaywrightScreenshotWithAI,
+} from '@/features/playwright/server/ai-step-service';
+import type { PlaywrightCapturedPageObservation } from '@/features/playwright/server/ai-step-service';
 import {
   readPlaywrightEngineArtifact,
   type PlaywrightEngineRunRecord,
@@ -206,7 +212,64 @@ export type ProductScanVerificationReview = {
   evaluatedAt: string | null;
 };
 
-export const evaluateProductScanVerificationBarrier = async (input: {
+export type ProductScanVerificationObservationBase<
+  TLoopDecision extends string = string,
+> = ProductScanVerificationReview & {
+  iteration: number;
+  observedAt: string | null;
+  loopDecision: TLoopDecision;
+  stableForMs: number | null;
+  fingerprint: string;
+};
+
+type ProductScanVerificationReviewCloneable = {
+  visibleInstructions: string[];
+  uiElements: string[];
+  brainApplied: Record<string, unknown> | null;
+};
+
+export const cloneProductScanVerificationReview = <
+  TReview extends ProductScanVerificationReviewCloneable,
+>(
+  review: TReview
+): TReview => ({
+  ...review,
+  visibleInstructions: [...review.visibleInstructions],
+  uiElements: [...review.uiElements],
+  brainApplied: review.brainApplied !== null ? { ...review.brainApplied } : null,
+});
+
+export const cloneProductScanVerificationObservations = <
+  TReview extends ProductScanVerificationReviewCloneable,
+>(
+  observations: readonly TReview[]
+): TReview[] => observations.map((observation) => cloneProductScanVerificationReview(observation));
+
+export const buildProductScanVerificationDiagnosticsPayload = <
+  TReview extends ProductScanVerificationReviewCloneable,
+  TObservation extends ProductScanVerificationReviewCloneable,
+>(options: {
+  reviewKey: string;
+  observationsKey: string;
+  review: TReview | null;
+  observations: readonly TObservation[];
+}): Record<string, unknown> => {
+  const payload: Record<string, unknown> = {};
+
+  if (options.review !== null) {
+    payload[options.reviewKey] = cloneProductScanVerificationReview(options.review);
+  }
+
+  if (options.observations.length > 0) {
+    payload[options.observationsKey] = cloneProductScanVerificationObservations(
+      options.observations
+    );
+  }
+
+  return payload;
+};
+
+export type ProductScanVerificationBarrierEvaluationInput = {
   provider: string;
   stage: string;
   currentUrl: string | null;
@@ -216,7 +279,62 @@ export const evaluateProductScanVerificationBarrier = async (input: {
   screenshotArtifactName?: string | null;
   htmlArtifactName?: string | null;
   objective?: string | null;
-}): Promise<ProductScanVerificationReview> => {
+};
+
+export const createProductScanVerificationBarrierEvaluationInput = (options: {
+  provider: string;
+  stage: string;
+  objective?: string | null;
+  capture: Pick<
+    PlaywrightCapturedPageObservation,
+    | 'currentUrl'
+    | 'pageTitle'
+    | 'pageTextSnippet'
+    | 'screenshotBase64'
+    | 'screenshotArtifactName'
+    | 'htmlArtifactName'
+  >;
+}): ProductScanVerificationBarrierEvaluationInput => ({
+  provider: options.provider,
+  stage: options.stage,
+  currentUrl: options.capture.currentUrl,
+  pageTitle: options.capture.pageTitle,
+  pageTextSnippet: options.capture.pageTextSnippet,
+  screenshotBase64: options.capture.screenshotBase64,
+  screenshotArtifactName: options.capture.screenshotArtifactName,
+  htmlArtifactName: options.capture.htmlArtifactName,
+  objective: options.objective,
+});
+
+export const createProductScanVerificationBarrierEvaluationInputFromProfile = <
+  TParams,
+  TReview extends PlaywrightVerificationObservationLike,
+>(options: {
+  profile: Pick<PlaywrightVerificationReviewProfile<TParams, TReview>, 'evaluation'>;
+  params: TParams;
+  capture: Pick<
+    PlaywrightCapturedPageObservation,
+    | 'currentUrl'
+    | 'pageTitle'
+    | 'pageTextSnippet'
+    | 'screenshotBase64'
+    | 'screenshotArtifactName'
+    | 'htmlArtifactName'
+  >;
+}): ProductScanVerificationBarrierEvaluationInput =>
+  createProductScanVerificationBarrierEvaluationInput({
+    provider: options.profile.evaluation.provider,
+    stage: options.profile.evaluation.resolveStage(options.params),
+    objective:
+      typeof options.profile.evaluation.objective === 'function'
+        ? options.profile.evaluation.objective(options.params) ?? null
+        : options.profile.evaluation.objective ?? null,
+    capture: options.capture,
+  });
+
+export const evaluateProductScanVerificationBarrier = async (
+  input: ProductScanVerificationBarrierEvaluationInput
+): Promise<ProductScanVerificationReview> => {
   const baseReview: ProductScanVerificationReview = {
     status: input.screenshotBase64 !== null ? 'capture_only' : 'failed',
     provider: input.provider,
@@ -265,18 +383,18 @@ export const evaluateProductScanVerificationBarrier = async (input: {
         confidence: 'number | null',
       },
     };
-    const completion = await evaluateStepWithAI({
-      inputSource: 'screenshot',
-      data: input.screenshotBase64,
-      systemPrompt: [
-        PRODUCT_SCAN_VERIFICATION_REVIEW_SYSTEM_PROMPT,
-        JSON.stringify(promptPayload, null, 2),
-      ].join('\n\n'),
+    const completion = await evaluateStructuredPlaywrightScreenshotWithAI({
+      screenshotBase64: input.screenshotBase64,
+      systemPrompt: PRODUCT_SCAN_VERIFICATION_REVIEW_SYSTEM_PROMPT,
+      promptPayload,
+      responseSchema: productScanVerificationReviewResponseSchema,
     });
 
-    const parsed = productScanVerificationReviewResponseSchema.parse(
-      JSON.parse(completion.output) as unknown
-    );
+    if (completion.parsed === null) {
+      throw new Error(completion.error ?? 'Structured screenshot evaluation failed.');
+    }
+
+    const parsed = completion.parsed;
 
     return {
       ...baseReview,

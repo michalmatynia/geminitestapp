@@ -1,6 +1,7 @@
 import 'server-only';
 
 import type { Page } from 'playwright';
+import type { z } from 'zod';
 
 import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/segments/api';
 import {
@@ -34,6 +35,20 @@ export type PlaywrightStepEvaluateOptions = {
 export type PlaywrightStepEvaluateResult = {
   output: string;
   modelId: string;
+};
+
+export type PlaywrightStructuredScreenshotEvaluationOptions<TParsed> = {
+  screenshotBase64: string | null;
+  systemPrompt: string;
+  promptPayload?: unknown;
+  responseSchema: z.ZodType<TParsed>;
+};
+
+export type PlaywrightStructuredScreenshotEvaluationResult<TParsed> = {
+  parsed: TParsed | null;
+  rawOutput: string | null;
+  modelId: string | null;
+  error: string | null;
 };
 
 export type PlaywrightObservationArtifacts = {
@@ -83,6 +98,90 @@ export type CaptureAndEvaluatePlaywrightObservationResult<TReview, TObservation>
   deduped: boolean;
 };
 
+export type PlaywrightVerificationReviewLike = {
+  status: string;
+  challengeType?: string | null | undefined;
+  visibleQuestion?: string | null | undefined;
+  manualActionRequired?: boolean | null | undefined;
+  modelId?: string | null | undefined;
+  screenshotArtifactName?: string | null | undefined;
+  htmlArtifactName?: string | null | undefined;
+  error?: string | null | undefined;
+};
+
+export type PlaywrightVerificationObservationLike = PlaywrightVerificationReviewLike & {
+  iteration: number;
+  observedAt?: string | null | undefined;
+  loopDecision: string;
+  stableForMs?: number | null | undefined;
+};
+
+export type PlaywrightVerificationReviewStepOutcome = {
+  status: 'failed' | 'completed';
+  resultCode: string;
+  message: string;
+  warning: string | null;
+};
+
+export type PlaywrightVerificationReviewStepMessages = {
+  analyzed: string;
+  captureOnly: string;
+  failed: string;
+};
+
+export type PlaywrightVerificationReviewArtifactConfig = {
+  historyArtifactKey: string;
+  artifactKeyPrefix: string;
+  analysisArtifactSuffix?: string;
+};
+
+export type PlaywrightVerificationReviewStepConfig = {
+  key: string;
+  runningMessage: string;
+  messages: PlaywrightVerificationReviewStepMessages;
+  group?: string;
+  label?: string;
+};
+
+export type PlaywrightVerificationReviewRuntimeConfig = {
+  step: PlaywrightVerificationReviewStepConfig;
+  artifacts: PlaywrightVerificationReviewArtifactConfig;
+};
+
+export type PlaywrightVerificationReviewCaptureConfig<TParams> = {
+  runtime: PlaywrightVerificationReviewRuntimeConfig;
+  buildArtifactSegments: (
+    params: TParams
+  ) => readonly (string | null | undefined)[];
+  buildFingerprintPartMap: (params: TParams) => Record<string, unknown>;
+};
+
+export type PlaywrightVerificationReviewEvaluationConfig<TParams> = {
+  provider: string;
+  resolveStage: (params: TParams) => string;
+  objective?: string | ((params: TParams) => string | null | undefined) | null;
+};
+
+export type PlaywrightVerificationReviewObservationConfig<
+  TParams,
+  TExtra extends object,
+> = {
+  buildExtra: (params: TParams) => TExtra;
+};
+
+export type PlaywrightVerificationReviewProfile<
+  TParams,
+  TReview extends PlaywrightVerificationObservationLike,
+  TExtra extends object = Record<never, never>,
+> = {
+  runtime: PlaywrightVerificationReviewRuntimeConfig;
+  capture: PlaywrightVerificationReviewCaptureConfig<TParams>;
+  evaluation: PlaywrightVerificationReviewEvaluationConfig<TParams>;
+  observation: PlaywrightVerificationReviewObservationConfig<TParams, TExtra>;
+  detailDescriptors: readonly PlaywrightVerificationReviewDetailDescriptor<TReview>[];
+  analysisFailureLogKey: string | null;
+};
+
 const normalizeOptionalText = (value: unknown): string | null => {
   if (typeof value !== 'string') {
     return null;
@@ -102,27 +201,50 @@ const safePageUrl = (page: Pick<Page, 'url'>): string | null => {
   }
 };
 
+const serializePlaywrightObservationFingerprintPart = (part: unknown): string => {
+  if (part === null || part === undefined) {
+    return '';
+  }
+  if (typeof part === 'string') {
+    return part;
+  }
+  if (typeof part === 'number' || typeof part === 'boolean' || typeof part === 'bigint') {
+    return String(part);
+  }
+  try {
+    return JSON.stringify(part);
+  } catch {
+    return String(part);
+  }
+};
+
 export const buildPlaywrightObservationFingerprint = (
   parts: readonly unknown[]
 ): string =>
-  parts
-    .map((part) => {
-      if (part === null || part === undefined) {
-        return '';
-      }
-      if (typeof part === 'string') {
-        return part;
-      }
-      if (typeof part === 'number' || typeof part === 'boolean' || typeof part === 'bigint') {
-        return String(part);
-      }
-      try {
-        return JSON.stringify(part);
-      } catch {
-        return String(part);
-      }
-    })
-    .join('::');
+  parts.map((part) => serializePlaywrightObservationFingerprintPart(part)).join('::');
+
+export const buildPlaywrightVerificationReviewFingerprintParts = (
+  parts: Record<string, unknown>
+): string[] =>
+  Object.entries(parts).map(
+    ([key, value]) => `${key}=${serializePlaywrightObservationFingerprintPart(value)}`
+  );
+
+export const slugifyPlaywrightVerificationReviewSegment = (
+  value: string | null | undefined,
+  fallback?: string
+): string => {
+  const normalized = normalizeOptionalText(value)
+    ?.toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+  if (normalized && normalized.length > 0) {
+    return normalized;
+  }
+
+  return normalizeOptionalText(fallback) ?? 'unknown';
+};
 
 export async function captureAndEvaluatePlaywrightObservation<TReview, TObservation>(
   options: CaptureAndEvaluatePlaywrightObservationOptions<TReview, TObservation>
@@ -211,6 +333,484 @@ export async function captureAndEvaluatePlaywrightObservation<TReview, TObservat
     capture,
     deduped: false,
   };
+}
+
+export async function evaluateStructuredPlaywrightScreenshotWithAI<TParsed>(
+  options: PlaywrightStructuredScreenshotEvaluationOptions<TParsed>
+): Promise<PlaywrightStructuredScreenshotEvaluationResult<TParsed>> {
+  if (options.screenshotBase64 === null) {
+    return {
+      parsed: null,
+      rawOutput: null,
+      modelId: null,
+      error: 'Screenshot input is required.',
+    };
+  }
+
+  try {
+    const completion = await evaluateStepWithAI({
+      inputSource: 'screenshot',
+      data: options.screenshotBase64,
+      systemPrompt:
+        options.promptPayload === undefined
+          ? options.systemPrompt
+          : [options.systemPrompt, JSON.stringify(options.promptPayload, null, 2)].join('\n\n'),
+    });
+
+    return {
+      parsed: options.responseSchema.parse(JSON.parse(completion.output) as unknown),
+      rawOutput: completion.output,
+      modelId: completion.modelId,
+      error: null,
+    };
+  } catch (error) {
+    return {
+      parsed: null,
+      rawOutput: null,
+      modelId: null,
+      error: error instanceof Error ? error.message : String(error ?? 'Unknown error'),
+    };
+  }
+}
+
+export const resolvePlaywrightVerificationReviewStepOutcome = (
+  review: Pick<PlaywrightVerificationReviewLike, 'status' | 'error'>,
+  messages: PlaywrightVerificationReviewStepMessages
+): PlaywrightVerificationReviewStepOutcome => {
+  if (review.status === 'failed') {
+    return {
+      status: 'failed',
+      resultCode: 'capture_failed',
+      message: messages.failed,
+      warning: null,
+    };
+  }
+
+  return {
+    status: 'completed',
+    resultCode: review.status === 'analyzed' ? 'manual_review_ready' : 'capture_only',
+    message: review.status === 'analyzed' ? messages.analyzed : messages.captureOnly,
+    warning: review.status === 'capture_only' ? normalizeOptionalText(review.error) : null,
+  };
+};
+
+export const createPlaywrightVerificationReviewStepMessages = (
+  subject: string
+): PlaywrightVerificationReviewStepMessages => ({
+  analyzed: `Captured and classified the ${subject} for manual review.`,
+  captureOnly: `Captured the ${subject}, but AI review was unavailable.`,
+  failed: `Could not capture the ${subject} for AI review.`,
+});
+
+export const createPlaywrightVerificationReviewArtifactConfig = (options: {
+  historyArtifactKey: string;
+  artifactKeyPrefix: string;
+  analysisArtifactSuffix?: string;
+}): PlaywrightVerificationReviewArtifactConfig => ({
+  historyArtifactKey: options.historyArtifactKey,
+  artifactKeyPrefix: options.artifactKeyPrefix,
+  analysisArtifactSuffix: options.analysisArtifactSuffix ?? '-analysis',
+});
+
+export const createPlaywrightVerificationReviewStepConfig = (options: {
+  key: string;
+  subject: string;
+  runningMessage: string;
+  group?: string;
+  label?: string;
+}): PlaywrightVerificationReviewStepConfig => ({
+  key: options.key,
+  runningMessage: options.runningMessage,
+  messages: createPlaywrightVerificationReviewStepMessages(options.subject),
+  ...(options.group ? { group: options.group } : {}),
+  ...(options.label ? { label: options.label } : {}),
+});
+
+export const createPlaywrightVerificationReviewRuntimeConfig = (options: {
+  key: string;
+  subject: string;
+  runningMessage: string;
+  historyArtifactKey: string;
+  artifactKeyPrefix: string;
+  analysisArtifactSuffix?: string;
+  group?: string;
+  label?: string;
+}): PlaywrightVerificationReviewRuntimeConfig => ({
+  step: createPlaywrightVerificationReviewStepConfig({
+    key: options.key,
+    subject: options.subject,
+    runningMessage: options.runningMessage,
+    ...(options.group ? { group: options.group } : {}),
+    ...(options.label ? { label: options.label } : {}),
+  }),
+  artifacts: createPlaywrightVerificationReviewArtifactConfig({
+    historyArtifactKey: options.historyArtifactKey,
+    artifactKeyPrefix: options.artifactKeyPrefix,
+    analysisArtifactSuffix: options.analysisArtifactSuffix,
+  }),
+});
+
+export const createPlaywrightVerificationReviewProfile = <
+  TParams,
+  TReview extends PlaywrightVerificationObservationLike,
+  TExtra extends object = Record<never, never>,
+>(options: {
+  key: string;
+  subject: string;
+  runningMessage: string;
+  historyArtifactKey: string;
+  artifactKeyPrefix: string;
+  analysisArtifactSuffix?: string;
+  group?: string;
+  label?: string;
+  analysisFailureLogKey?: string | null;
+  evaluationProvider: string;
+  resolveEvaluationStage: (params: TParams) => string;
+  evaluationObjective?: string | ((params: TParams) => string | null | undefined) | null;
+  buildObservationExtra?: (params: TParams) => TExtra;
+  buildArtifactSegments: (
+    params: TParams
+  ) => readonly (string | null | undefined)[];
+  buildFingerprintPartMap: (params: TParams) => Record<string, unknown>;
+  detailDescriptors: readonly PlaywrightVerificationReviewDetailDescriptor<TReview>[];
+}): PlaywrightVerificationReviewProfile<TParams, TReview, TExtra> => {
+  const runtime = createPlaywrightVerificationReviewRuntimeConfig({
+    key: options.key,
+    subject: options.subject,
+    runningMessage: options.runningMessage,
+    historyArtifactKey: options.historyArtifactKey,
+    artifactKeyPrefix: options.artifactKeyPrefix,
+    analysisArtifactSuffix: options.analysisArtifactSuffix,
+    group: options.group,
+    label: options.label,
+  });
+
+  return {
+    runtime,
+    capture: {
+      runtime,
+      buildArtifactSegments: options.buildArtifactSegments,
+      buildFingerprintPartMap: options.buildFingerprintPartMap,
+    },
+    evaluation: {
+      provider: options.evaluationProvider,
+      resolveStage: options.resolveEvaluationStage,
+      objective: options.evaluationObjective ?? null,
+    },
+    observation: {
+      buildExtra: options.buildObservationExtra ?? (() => ({} as TExtra)),
+    },
+    detailDescriptors: options.detailDescriptors,
+    analysisFailureLogKey: normalizeOptionalText(options.analysisFailureLogKey),
+  };
+};
+
+export const resolvePlaywrightVerificationReviewArtifactKeys = (
+  artifactKey: string,
+  config: PlaywrightVerificationReviewArtifactConfig
+): { analysisArtifactKey: string; historyArtifactKey: string } => ({
+  analysisArtifactKey: `${artifactKey}${config.analysisArtifactSuffix ?? '-analysis'}`,
+  historyArtifactKey: config.historyArtifactKey,
+});
+
+export const buildPlaywrightVerificationReviewArtifactKey = (
+  config: Pick<PlaywrightVerificationReviewArtifactConfig, 'artifactKeyPrefix'>,
+  segments: readonly (string | null | undefined)[]
+): string =>
+  [config.artifactKeyPrefix, ...segments]
+    .map((segment) => normalizeOptionalText(segment))
+    .filter((segment): segment is string => segment !== null)
+    .join('-');
+
+export const resolvePlaywrightVerificationReviewCaptureContext = <TParams>(
+  config: PlaywrightVerificationReviewCaptureConfig<TParams>,
+  params: TParams
+): {
+  artifactKey: string;
+  extraFingerprintParts: string[];
+} => ({
+  artifactKey: buildPlaywrightVerificationReviewArtifactKey(
+    config.runtime.artifacts,
+    config.buildArtifactSegments(params)
+  ),
+  extraFingerprintParts: buildPlaywrightVerificationReviewFingerprintParts(
+    config.buildFingerprintPartMap(params)
+  ),
+});
+
+export const createPlaywrightVerificationObservation = <
+  TReview extends PlaywrightVerificationReviewLike,
+  TLoopDecision extends string,
+  TExtra extends object = Record<never, never>,
+>(
+  options: {
+    review: TReview;
+    capture: Pick<PlaywrightCapturedPageObservation, 'observedAt' | 'fingerprint'>;
+    iteration: number;
+    loopDecision: TLoopDecision;
+    stableForMs: number | null;
+    extra?: TExtra;
+  }
+): TReview &
+  TExtra & {
+    iteration: number;
+    observedAt: string;
+    loopDecision: TLoopDecision;
+    stableForMs: number | null;
+    fingerprint: string;
+  } => ({
+  ...options.review,
+  iteration: options.iteration,
+  observedAt: options.capture.observedAt,
+  loopDecision: options.loopDecision,
+  stableForMs: options.stableForMs,
+  fingerprint: options.capture.fingerprint,
+  ...((options.extra ?? {}) as TExtra),
+});
+
+export const createPlaywrightVerificationObservationFromProfile = <
+  TParams,
+  TBaseReview extends PlaywrightVerificationReviewLike,
+  TLoopDecision extends string,
+  TExtra extends object = Record<never, never>,
+>(
+  options: {
+    profile: Pick<
+      PlaywrightVerificationReviewProfile<TParams, PlaywrightVerificationObservationLike, TExtra>,
+      'observation'
+    >;
+    params: TParams;
+    review: TBaseReview;
+    capture: Pick<PlaywrightCapturedPageObservation, 'observedAt' | 'fingerprint'>;
+    iteration: number;
+    loopDecision: TLoopDecision;
+    stableForMs: number | null;
+  }
+): TBaseReview &
+  TExtra & {
+    iteration: number;
+    observedAt: string;
+    loopDecision: TLoopDecision;
+    stableForMs: number | null;
+    fingerprint: string;
+  } =>
+  createPlaywrightVerificationObservation({
+    review: options.review,
+    capture: options.capture,
+    iteration: options.iteration,
+    loopDecision: options.loopDecision,
+    stableForMs: options.stableForMs,
+    extra: options.profile.observation.buildExtra(options.params),
+  });
+
+export const buildPlaywrightVerificationReviewDetails = <
+  TReview extends PlaywrightVerificationObservationLike,
+>(
+  review: TReview,
+  extraDetails: Array<{ label: string; value?: string | null }> = []
+): Array<{ label: string; value?: string | null }> => [
+  { label: 'Observation iteration', value: String(review.iteration) },
+  { label: 'Loop decision', value: normalizeOptionalText(review.loopDecision) },
+  { label: 'Observed at', value: normalizeOptionalText(review.observedAt) },
+  {
+    label: 'Stable clear ms',
+    value:
+      typeof review.stableForMs === 'number' ? String(review.stableForMs) : null,
+  },
+  ...extraDetails,
+  { label: 'Review status', value: normalizeOptionalText(review.status) },
+  { label: 'Challenge type', value: normalizeOptionalText(review.challengeType) },
+  { label: 'Visible question', value: normalizeOptionalText(review.visibleQuestion) },
+  {
+    label: 'Manual action required',
+    value:
+      typeof review.manualActionRequired === 'boolean'
+        ? String(review.manualActionRequired)
+        : null,
+  },
+  { label: 'Evaluator model', value: normalizeOptionalText(review.modelId) },
+  {
+    label: 'Screenshot artifact',
+    value: normalizeOptionalText(review.screenshotArtifactName),
+  },
+  { label: 'HTML artifact', value: normalizeOptionalText(review.htmlArtifactName) },
+  { label: 'Review error', value: normalizeOptionalText(review.error) },
+];
+
+export type PlaywrightVerificationReviewDetailsAdapter<
+  TReview extends PlaywrightVerificationObservationLike,
+> = (review: TReview) => Array<{ label: string; value?: string | null }>;
+
+export type PlaywrightVerificationReviewDetailDescriptor<
+  TReview extends PlaywrightVerificationObservationLike,
+> = {
+  label: string;
+  value: keyof TReview | ((review: TReview) => unknown);
+};
+
+const normalizePlaywrightVerificationReviewDetailValue = (value: unknown): string | null => {
+  if (typeof value === 'string') {
+    return normalizeOptionalText(value);
+  }
+  if (
+    typeof value === 'number' ||
+    typeof value === 'boolean' ||
+    typeof value === 'bigint'
+  ) {
+    return String(value);
+  }
+  return null;
+};
+
+const resolvePlaywrightVerificationReviewDetailValue = <
+  TReview extends PlaywrightVerificationObservationLike,
+>(
+  review: TReview,
+  selector: keyof TReview | ((review: TReview) => unknown)
+): string | null =>
+  normalizePlaywrightVerificationReviewDetailValue(
+    typeof selector === 'function' ? selector(review) : review[selector]
+  );
+
+export const buildPlaywrightVerificationReviewExtraDetailsFromDescriptors = <
+  TReview extends PlaywrightVerificationObservationLike,
+>(
+  review: TReview,
+  descriptors: readonly PlaywrightVerificationReviewDetailDescriptor<TReview>[]
+): Array<{ label: string; value?: string | null }> =>
+  descriptors.map((descriptor) => ({
+    label: descriptor.label,
+    value: resolvePlaywrightVerificationReviewDetailValue(review, descriptor.value),
+  }));
+
+export const buildPlaywrightVerificationReviewDetailsWithDescriptors = <
+  TReview extends PlaywrightVerificationObservationLike,
+>(
+  review: TReview,
+  descriptors: readonly PlaywrightVerificationReviewDetailDescriptor<TReview>[]
+): Array<{ label: string; value?: string | null }> =>
+  buildPlaywrightVerificationReviewDetails(
+    review,
+    buildPlaywrightVerificationReviewExtraDetailsFromDescriptors(review, descriptors)
+  );
+
+export const buildPlaywrightVerificationReviewDetailsFromProfile = <
+  TParams,
+  TReview extends PlaywrightVerificationObservationLike,
+>(
+  review: TReview,
+  profile: Pick<PlaywrightVerificationReviewProfile<TParams, TReview>, 'detailDescriptors'>
+): Array<{ label: string; value?: string | null }> =>
+  buildPlaywrightVerificationReviewDetailsWithDescriptors(
+    review,
+    profile.detailDescriptors
+  );
+
+export const buildPlaywrightVerificationReviewDetailsWithAdapter = <
+  TReview extends PlaywrightVerificationObservationLike,
+>(
+  review: TReview,
+  adapter: PlaywrightVerificationReviewDetailsAdapter<TReview>
+): Array<{ label: string; value?: string | null }> =>
+  buildPlaywrightVerificationReviewDetails(review, adapter(review));
+
+export type FinalizePlaywrightVerificationReviewOptions<
+  TReview extends PlaywrightVerificationReviewLike,
+  TObservation,
+> = {
+  runtime: PlaywrightVerificationReviewRuntimeConfig;
+  artifactKey: string;
+  artifacts?: PlaywrightObservationArtifacts & {
+    json?: ((key: string, data: unknown) => Promise<unknown>) | null | undefined;
+  };
+  review: TReview;
+  observations: readonly TObservation[];
+  currentUrl: string | null;
+  details: Array<{ label: string; value?: string | null }>;
+  log?: ((message: string, context?: unknown) => void) | null | undefined;
+  analysisFailureLogKey?: string | null | undefined;
+  upsertStep: (step: {
+    key: string;
+    status: 'failed' | 'completed';
+    resultCode: string;
+    message: string;
+    warning: string | null;
+    url: string | null;
+    details: Array<{ label: string; value?: string | null }>;
+    group?: string;
+    label?: string;
+  }) => void | Promise<void>;
+};
+
+export const finalizePlaywrightVerificationReview = async <
+  TReview extends PlaywrightVerificationReviewLike,
+  TObservation,
+>(
+  options: FinalizePlaywrightVerificationReviewOptions<TReview, TObservation>
+): Promise<PlaywrightVerificationReviewStepOutcome> => {
+  if (options.review.status === 'capture_only' && options.review.error !== null) {
+    const logMessage = normalizeOptionalText(options.analysisFailureLogKey);
+    if (logMessage && typeof options.log === 'function') {
+      options.log(logMessage, {
+        error: options.review.error,
+      });
+    }
+  }
+
+  const stepOutcome = resolvePlaywrightVerificationReviewStepOutcome(
+    options.review,
+    options.runtime.step.messages
+  );
+
+  await options.upsertStep({
+    key: options.runtime.step.key,
+    status: stepOutcome.status,
+    resultCode: stepOutcome.resultCode,
+    message: stepOutcome.message,
+    warning: stepOutcome.warning,
+    url: options.currentUrl,
+    details: options.details,
+    ...(options.runtime.step.group ? { group: options.runtime.step.group } : {}),
+    ...(options.runtime.step.label ? { label: options.runtime.step.label } : {}),
+  });
+
+  await persistPlaywrightObservationReviewArtifacts({
+    artifacts: options.artifacts,
+    ...resolvePlaywrightVerificationReviewArtifactKeys(
+      options.artifactKey,
+      options.runtime.artifacts
+    ),
+    review: options.review,
+    observations: options.observations,
+  });
+
+  return stepOutcome;
+};
+
+export async function persistPlaywrightObservationReviewArtifacts<
+  TReview,
+  TObservation,
+>(
+  options: {
+    artifacts?: PlaywrightObservationArtifacts & {
+      json?: ((key: string, data: unknown) => Promise<unknown>) | null | undefined;
+    };
+    analysisArtifactKey: string;
+    historyArtifactKey: string;
+    review: TReview;
+    observations: readonly TObservation[];
+  }
+): Promise<void> {
+  if (typeof options.artifacts?.json !== 'function') {
+    return;
+  }
+
+  await options.artifacts
+    .json(options.analysisArtifactKey, options.review)
+    .catch(() => undefined);
+  await options.artifacts
+    .json(options.historyArtifactKey, options.observations)
+    .catch(() => undefined);
 }
 
 export type PlaywrightObservationLoopDecision =

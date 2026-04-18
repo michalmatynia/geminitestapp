@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { z } from 'zod';
 
 vi.mock('@/shared/lib/ai-brain/segments/api', () => ({
   resolveBrainExecutionConfigForCapability: vi.fn(),
@@ -10,9 +11,33 @@ vi.mock('@/shared/lib/ai-brain/server-runtime-client', () => ({
 }));
 
 import type { Page } from 'playwright';
+import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/segments/api';
+import {
+  isBrainModelVisionCapable,
+  runBrainChatCompletion,
+} from '@/shared/lib/ai-brain/server-runtime-client';
 
 import {
+  buildPlaywrightVerificationReviewDetailsFromProfile,
+  buildPlaywrightVerificationReviewDetailsWithDescriptors,
+  buildPlaywrightVerificationReviewExtraDetailsFromDescriptors,
+  buildPlaywrightVerificationReviewFingerprintParts,
   captureAndEvaluatePlaywrightObservation,
+  buildPlaywrightVerificationReviewArtifactKey,
+  createPlaywrightVerificationObservationFromProfile,
+  createPlaywrightVerificationReviewProfile,
+  createPlaywrightVerificationObservation,
+  finalizePlaywrightVerificationReview,
+  resolvePlaywrightVerificationReviewCaptureContext,
+  createPlaywrightVerificationReviewArtifactConfig,
+  buildPlaywrightVerificationReviewDetailsWithAdapter,
+  createPlaywrightVerificationReviewStepMessages,
+  createPlaywrightVerificationReviewRuntimeConfig,
+  createPlaywrightVerificationReviewStepConfig,
+  evaluateStructuredPlaywrightScreenshotWithAI,
+  resolvePlaywrightVerificationReviewArtifactKeys,
+  resolvePlaywrightVerificationReviewStepOutcome,
+  slugifyPlaywrightVerificationReviewSegment,
   runPlaywrightObservationLoop,
 } from './ai-step-service';
 
@@ -27,6 +52,12 @@ const makeMockPage = (overrides: Partial<Page> = {}): Page =>
     })),
     ...overrides,
   }) as unknown as Page;
+
+const mockedResolveBrainExecutionConfigForCapability = vi.mocked(
+  resolveBrainExecutionConfigForCapability
+);
+const mockedIsBrainModelVisionCapable = vi.mocked(isBrainModelVisionCapable);
+const mockedRunBrainChatCompletion = vi.mocked(runBrainChatCompletion);
 
 describe('runPlaywrightObservationLoop', () => {
   it('resolves after the page stays clear for the stable window', async () => {
@@ -174,6 +205,58 @@ describe('runPlaywrightObservationLoop', () => {
   });
 });
 
+describe('evaluateStructuredPlaywrightScreenshotWithAI', () => {
+  it('runs screenshot evaluation and parses structured JSON through the shared helper', async () => {
+    mockedResolveBrainExecutionConfigForCapability.mockResolvedValue({
+      modelId: 'gemma',
+      systemPrompt: null,
+      temperature: 0,
+    } as never);
+    mockedIsBrainModelVisionCapable.mockReturnValue(true);
+    mockedRunBrainChatCompletion.mockResolvedValue({
+      text: JSON.stringify({ challengeType: 'captcha', manualActionRequired: true }),
+      modelId: 'gemma',
+    } as never);
+
+    const result = await evaluateStructuredPlaywrightScreenshotWithAI({
+      screenshotBase64: Buffer.from('shot').toString('base64'),
+      systemPrompt: 'Describe the screenshot.',
+      promptPayload: { stage: 'captcha' },
+      responseSchema: z.object({
+        challengeType: z.string(),
+        manualActionRequired: z.boolean(),
+      }),
+    });
+
+    expect(result).toEqual({
+      parsed: { challengeType: 'captcha', manualActionRequired: true },
+      rawOutput: JSON.stringify({ challengeType: 'captcha', manualActionRequired: true }),
+      modelId: 'gemma',
+      error: null,
+    });
+    expect(mockedRunBrainChatCompletion).toHaveBeenCalledWith(
+      expect.objectContaining({
+        modelId: 'gemma',
+      })
+    );
+  });
+
+  it('returns a structured error when the screenshot input is missing', async () => {
+    const result = await evaluateStructuredPlaywrightScreenshotWithAI({
+      screenshotBase64: null,
+      systemPrompt: 'Describe the screenshot.',
+      responseSchema: z.object({ challengeType: z.string() }),
+    });
+
+    expect(result).toEqual({
+      parsed: null,
+      rawOutput: null,
+      modelId: null,
+      error: 'Screenshot input is required.',
+    });
+  });
+});
+
 describe('captureAndEvaluatePlaywrightObservation', () => {
   it('captures page state, persists artifacts, and builds an observation through the shared helper', async () => {
     const page = makeMockPage();
@@ -254,5 +337,507 @@ describe('captureAndEvaluatePlaywrightObservation', () => {
     expect(result.deduped).toBe(true);
     expect(result.observation).toBe(previousObservation);
     expect(evaluate).not.toHaveBeenCalled();
+  });
+});
+
+describe('buildPlaywrightVerificationReviewDetailsWithAdapter', () => {
+  it('merges common review details with adapter-provided provider details', () => {
+    const details = buildPlaywrightVerificationReviewDetailsWithAdapter(
+      {
+        iteration: 2,
+        observedAt: '2026-04-18T19:00:00.000Z',
+        loopDecision: 'blocked',
+        stableForMs: null,
+        status: 'analyzed',
+        challengeType: 'captcha',
+        visibleQuestion: 'Verify you are human',
+        manualActionRequired: true,
+        modelId: 'gemma',
+        screenshotArtifactName: 'shot.png',
+        htmlArtifactName: 'page.html',
+        error: null,
+      },
+      (review) => [
+        { label: 'Blocked', value: review.loopDecision === 'blocked' ? 'true' : 'false' },
+      ]
+    );
+
+    expect(details).toEqual(
+      expect.arrayContaining([
+        { label: 'Observation iteration', value: '2' },
+        { label: 'Loop decision', value: 'blocked' },
+        { label: 'Blocked', value: 'true' },
+        { label: 'Review status', value: 'analyzed' },
+        { label: 'Challenge type', value: 'captcha' },
+      ])
+    );
+  });
+});
+
+describe('buildPlaywrightVerificationReviewExtraDetailsFromDescriptors', () => {
+  it('builds provider extra details from declarative descriptors', () => {
+    expect(
+      buildPlaywrightVerificationReviewExtraDetailsFromDescriptors(
+        {
+          iteration: 2,
+          observedAt: '2026-04-18T19:00:00.000Z',
+          loopDecision: 'blocked',
+          stableForMs: null,
+          status: 'analyzed',
+          challengeType: 'captcha',
+          visibleQuestion: 'Verify you are human',
+          manualActionRequired: true,
+          modelId: 'gemma',
+          screenshotArtifactName: 'shot.png',
+          htmlArtifactName: 'page.html',
+          error: null,
+          blocked: true,
+          barrierKind: 'captcha',
+        },
+        [
+          { label: 'Blocked', value: 'blocked' },
+          { label: 'Barrier kind', value: 'barrierKind' },
+        ]
+      )
+    ).toEqual([
+      { label: 'Blocked', value: 'true' },
+      { label: 'Barrier kind', value: 'captcha' },
+    ]);
+  });
+});
+
+describe('buildPlaywrightVerificationReviewDetailsWithDescriptors', () => {
+  it('merges common review details with declarative provider descriptors', () => {
+    const details = buildPlaywrightVerificationReviewDetailsWithDescriptors(
+      {
+        iteration: 2,
+        observedAt: '2026-04-18T19:00:00.000Z',
+        loopDecision: 'blocked',
+        stableForMs: null,
+        status: 'analyzed',
+        challengeType: 'captcha',
+        visibleQuestion: 'Verify you are human',
+        manualActionRequired: true,
+        modelId: 'gemma',
+        screenshotArtifactName: 'shot.png',
+        htmlArtifactName: 'page.html',
+        error: null,
+        blocked: true,
+      },
+      [{ label: 'Blocked', value: 'blocked' }]
+    );
+
+    expect(details).toEqual(
+      expect.arrayContaining([
+        { label: 'Observation iteration', value: '2' },
+        { label: 'Blocked', value: 'true' },
+        { label: 'Review status', value: 'analyzed' },
+      ])
+    );
+  });
+});
+
+describe('createPlaywrightVerificationReviewProfile', () => {
+  it('builds a combined review profile with runtime, capture config, details, and log key', () => {
+    const profile = createPlaywrightVerificationReviewProfile({
+      key: 'google_verification_review',
+      subject: 'Google verification screen',
+      runningMessage: 'Capturing Google verification screen for AI review.',
+      historyArtifactKey: 'google-verification-review-history',
+      artifactKeyPrefix: 'google-verification-review',
+      analysisFailureLogKey: 'google.verification.review.analysis_failed',
+      evaluationProvider: 'google_lens',
+      resolveEvaluationStage: () => 'google_captcha',
+      evaluationObjective: 'Describe the visible Google verification barrier.',
+      buildArtifactSegments: (params: { candidateId: string }) => [params.candidateId],
+      buildFingerprintPartMap: (params: { candidateId: string }) => ({
+        candidateId: params.candidateId,
+      }),
+      detailDescriptors: [{ label: 'Captcha detected', value: 'challengeType' }],
+    });
+
+    expect(profile).toEqual({
+      runtime: {
+        step: {
+          key: 'google_verification_review',
+          runningMessage: 'Capturing Google verification screen for AI review.',
+          messages: {
+            analyzed:
+              'Captured and classified the Google verification screen for manual review.',
+            captureOnly:
+              'Captured the Google verification screen, but AI review was unavailable.',
+            failed: 'Could not capture the Google verification screen for AI review.',
+          },
+        },
+        artifacts: {
+          historyArtifactKey: 'google-verification-review-history',
+          artifactKeyPrefix: 'google-verification-review',
+          analysisArtifactSuffix: '-analysis',
+        },
+      },
+      capture: {
+        runtime: {
+          step: {
+            key: 'google_verification_review',
+            runningMessage: 'Capturing Google verification screen for AI review.',
+            messages: {
+              analyzed:
+                'Captured and classified the Google verification screen for manual review.',
+              captureOnly:
+                'Captured the Google verification screen, but AI review was unavailable.',
+              failed: 'Could not capture the Google verification screen for AI review.',
+            },
+          },
+          artifacts: {
+            historyArtifactKey: 'google-verification-review-history',
+            artifactKeyPrefix: 'google-verification-review',
+            analysisArtifactSuffix: '-analysis',
+          },
+        },
+        buildArtifactSegments: expect.any(Function),
+        buildFingerprintPartMap: expect.any(Function),
+      },
+      evaluation: {
+        provider: 'google_lens',
+        resolveStage: expect.any(Function),
+        objective: 'Describe the visible Google verification barrier.',
+      },
+      detailDescriptors: [{ label: 'Captcha detected', value: 'challengeType' }],
+      analysisFailureLogKey: 'google.verification.review.analysis_failed',
+    });
+  });
+});
+
+describe('buildPlaywrightVerificationReviewDetailsFromProfile', () => {
+  it('builds common and provider details from a shared review profile', () => {
+    const details = buildPlaywrightVerificationReviewDetailsFromProfile(
+      {
+        iteration: 2,
+        observedAt: '2026-04-18T19:00:00.000Z',
+        loopDecision: 'blocked',
+        stableForMs: null,
+        status: 'analyzed',
+        challengeType: 'captcha',
+        visibleQuestion: 'Verify you are human',
+        manualActionRequired: true,
+        modelId: 'gemma',
+        screenshotArtifactName: 'shot.png',
+        htmlArtifactName: 'page.html',
+        error: null,
+        blocked: true,
+      },
+      createPlaywrightVerificationReviewProfile({
+        key: 'supplier_verification_review',
+        subject: 'supplier verification barrier',
+        runningMessage: 'Capturing supplier verification barrier for AI review.',
+        historyArtifactKey: '1688-verification-review-history',
+        artifactKeyPrefix: '1688-verification-review',
+        evaluationProvider: '1688',
+        resolveEvaluationStage: () => '1688_barrier',
+        buildArtifactSegments: () => [],
+        buildFingerprintPartMap: () => ({}),
+        detailDescriptors: [{ label: 'Blocked', value: 'blocked' }],
+      })
+    );
+
+    expect(details).toEqual(
+      expect.arrayContaining([
+        { label: 'Observation iteration', value: '2' },
+        { label: 'Blocked', value: 'true' },
+        { label: 'Review status', value: 'analyzed' },
+      ])
+    );
+  });
+});
+
+describe('createPlaywrightVerificationReviewStepMessages', () => {
+  it('builds the standard analyzed/capture-only/failed message set for a subject', () => {
+    expect(createPlaywrightVerificationReviewStepMessages('Google verification screen')).toEqual({
+      analyzed: 'Captured and classified the Google verification screen for manual review.',
+      captureOnly:
+        'Captured the Google verification screen, but AI review was unavailable.',
+      failed: 'Could not capture the Google verification screen for AI review.',
+    });
+  });
+});
+
+describe('createPlaywrightVerificationReviewArtifactConfig', () => {
+  it('builds the standard artifact config and resolves concrete keys', () => {
+    const config = createPlaywrightVerificationReviewArtifactConfig({
+      historyArtifactKey: 'google-verification-review-history',
+      artifactKeyPrefix: 'google-verification-review',
+    });
+
+    expect(config).toEqual({
+      historyArtifactKey: 'google-verification-review-history',
+      artifactKeyPrefix: 'google-verification-review',
+      analysisArtifactSuffix: '-analysis',
+    });
+    expect(
+      resolvePlaywrightVerificationReviewArtifactKeys(
+        'google-verification-review-rank-1',
+        config
+      )
+    ).toEqual({
+      analysisArtifactKey: 'google-verification-review-rank-1-analysis',
+      historyArtifactKey: 'google-verification-review-history',
+    });
+  });
+});
+
+describe('buildPlaywrightVerificationReviewArtifactKey', () => {
+  it('builds the prefixed artifact key from normalized segments', () => {
+    expect(
+      buildPlaywrightVerificationReviewArtifactKey(
+        { artifactKeyPrefix: '1688-verification-review' },
+        ['supplier-open', 'pin-badge', 'rank-1', 'iter-2']
+      )
+    ).toBe('1688-verification-review-supplier-open-pin-badge-rank-1-iter-2');
+  });
+});
+
+describe('resolvePlaywrightVerificationReviewCaptureContext', () => {
+  it('builds the shared artifact key and fingerprint parts from declarative capture config', () => {
+    expect(
+      resolvePlaywrightVerificationReviewCaptureContext(
+        {
+          runtime: createPlaywrightVerificationReviewRuntimeConfig({
+            key: 'google_verification_review',
+            subject: 'Google verification screen',
+            runningMessage: 'Capturing Google verification screen for AI review.',
+            historyArtifactKey: 'google-verification-review-history',
+            artifactKeyPrefix: 'google-verification-review',
+          }),
+          buildArtifactSegments: (params: {
+            candidateId: string;
+            candidateRank: number;
+            iteration: number;
+          }) => [params.candidateId, `rank-${params.candidateRank}`, `iter-${params.iteration}`],
+          buildFingerprintPartMap: (params: {
+            candidateId: string;
+            candidateRank: number;
+            captchaDetected: boolean;
+          }) => ({
+            candidateId: params.candidateId,
+            candidateRank: params.candidateRank,
+            captchaDetected: params.captchaDetected,
+          }),
+        },
+        {
+          candidateId: 'pin-badge',
+          candidateRank: 2,
+          iteration: 4,
+          captchaDetected: true,
+        }
+      )
+    ).toEqual({
+      artifactKey: 'google-verification-review-pin-badge-rank-2-iter-4',
+      extraFingerprintParts: [
+        'candidateId=pin-badge',
+        'candidateRank=2',
+        'captchaDetected=true',
+      ],
+    });
+  });
+});
+
+describe('createPlaywrightVerificationObservation', () => {
+  it('builds the shared observation shape from review, capture, and provider extras', () => {
+    expect(
+      createPlaywrightVerificationObservation({
+        review: {
+          status: 'analyzed',
+          challengeType: 'captcha',
+          manualActionRequired: true,
+        },
+        capture: {
+          observedAt: '2026-04-18T19:00:00.000Z',
+          fingerprint: 'fingerprint-1',
+        },
+        iteration: 3,
+        loopDecision: 'blocked',
+        stableForMs: null,
+        extra: {
+          blocked: true,
+          barrierKind: 'captcha',
+        },
+      })
+    ).toEqual({
+      status: 'analyzed',
+      challengeType: 'captcha',
+      manualActionRequired: true,
+      iteration: 3,
+      observedAt: '2026-04-18T19:00:00.000Z',
+      loopDecision: 'blocked',
+      stableForMs: null,
+      fingerprint: 'fingerprint-1',
+      blocked: true,
+      barrierKind: 'captcha',
+    });
+  });
+});
+
+describe('finalizePlaywrightVerificationReview', () => {
+  it('resolves the step outcome, logs capture-only failures, and persists artifacts', async () => {
+    const upsertStep = vi.fn();
+    const json = vi.fn().mockResolvedValue(undefined);
+    const log = vi.fn();
+
+    const outcome = await finalizePlaywrightVerificationReview({
+      runtime: createPlaywrightVerificationReviewRuntimeConfig({
+        key: 'supplier_verification_review',
+        subject: 'supplier verification barrier',
+        runningMessage: 'Capturing supplier verification barrier for AI review.',
+        historyArtifactKey: '1688-verification-review-history',
+        artifactKeyPrefix: '1688-verification-review',
+        group: 'supplier',
+        label: 'Inspect supplier verification barrier',
+      }),
+      artifactKey: '1688-verification-review-supplier-open-pin-badge-rank-1-iter-2',
+      artifacts: { json },
+      review: {
+        status: 'capture_only',
+        error: 'Vision runtime unavailable',
+      },
+      observations: [{ iteration: 1 }],
+      currentUrl: 'https://s.1688.com/youyuan/index.htm',
+      details: [{ label: 'Blocked', value: 'true' }],
+      log,
+      analysisFailureLogKey: '1688.verification.review.analysis_failed',
+      upsertStep,
+    });
+
+    expect(outcome).toEqual({
+      status: 'completed',
+      resultCode: 'capture_only',
+      message: 'Captured the supplier verification barrier, but AI review was unavailable.',
+      warning: 'Vision runtime unavailable',
+    });
+    expect(log).toHaveBeenCalledWith('1688.verification.review.analysis_failed', {
+      error: 'Vision runtime unavailable',
+    });
+    expect(upsertStep).toHaveBeenCalledWith({
+      key: 'supplier_verification_review',
+      status: 'completed',
+      resultCode: 'capture_only',
+      message: 'Captured the supplier verification barrier, but AI review was unavailable.',
+      warning: 'Vision runtime unavailable',
+      url: 'https://s.1688.com/youyuan/index.htm',
+      details: [{ label: 'Blocked', value: 'true' }],
+      group: 'supplier',
+      label: 'Inspect supplier verification barrier',
+    });
+    expect(json).toHaveBeenNthCalledWith(
+      1,
+      '1688-verification-review-supplier-open-pin-badge-rank-1-iter-2-analysis',
+      { status: 'capture_only', error: 'Vision runtime unavailable' }
+    );
+    expect(json).toHaveBeenNthCalledWith(2, '1688-verification-review-history', [
+      { iteration: 1 },
+    ]);
+  });
+});
+
+describe('buildPlaywrightVerificationReviewFingerprintParts', () => {
+  it('builds labeled fingerprint parts with stable serialization', () => {
+    expect(
+      buildPlaywrightVerificationReviewFingerprintParts({
+        candidateId: 'img-1',
+        candidateRank: 2,
+        captchaDetected: true,
+      })
+    ).toEqual([
+      'candidateId=img-1',
+      'candidateRank=2',
+      'captchaDetected=true',
+    ]);
+  });
+});
+
+describe('slugifyPlaywrightVerificationReviewSegment', () => {
+  it('slugifies dynamic review segments and falls back when empty', () => {
+    expect(slugifyPlaywrightVerificationReviewSegment(' Pin Badge / Blue ')).toBe(
+      'pin-badge-blue'
+    );
+    expect(slugifyPlaywrightVerificationReviewSegment('', 'unknown-segment')).toBe(
+      'unknown-segment'
+    );
+  });
+});
+
+describe('createPlaywrightVerificationReviewStepConfig', () => {
+  it('builds the shared step config for a verification review step', () => {
+    expect(
+      createPlaywrightVerificationReviewStepConfig({
+        key: 'supplier_verification_review',
+        subject: 'supplier verification barrier',
+        runningMessage: 'Capturing supplier verification barrier for AI review.',
+        group: 'supplier',
+        label: 'Inspect supplier verification barrier',
+      })
+    ).toEqual({
+      key: 'supplier_verification_review',
+      runningMessage: 'Capturing supplier verification barrier for AI review.',
+      messages: {
+        analyzed:
+          'Captured and classified the supplier verification barrier for manual review.',
+        captureOnly:
+          'Captured the supplier verification barrier, but AI review was unavailable.',
+        failed: 'Could not capture the supplier verification barrier for AI review.',
+      },
+      group: 'supplier',
+      label: 'Inspect supplier verification barrier',
+    });
+  });
+});
+
+describe('createPlaywrightVerificationReviewRuntimeConfig', () => {
+  it('builds the combined verification review runtime config', () => {
+    expect(
+      createPlaywrightVerificationReviewRuntimeConfig({
+        key: 'google_verification_review',
+        subject: 'Google verification screen',
+        runningMessage: 'Capturing Google verification screen for AI review.',
+        historyArtifactKey: 'google-verification-review-history',
+        artifactKeyPrefix: 'google-verification-review',
+      })
+    ).toEqual({
+      step: {
+        key: 'google_verification_review',
+        runningMessage: 'Capturing Google verification screen for AI review.',
+        messages: {
+          analyzed:
+            'Captured and classified the Google verification screen for manual review.',
+          captureOnly:
+            'Captured the Google verification screen, but AI review was unavailable.',
+          failed: 'Could not capture the Google verification screen for AI review.',
+        },
+      },
+      artifacts: {
+        historyArtifactKey: 'google-verification-review-history',
+        artifactKeyPrefix: 'google-verification-review',
+        analysisArtifactSuffix: '-analysis',
+      },
+    });
+  });
+});
+
+describe('resolvePlaywrightVerificationReviewStepOutcome', () => {
+  it('maps analyzed reviews to the shared manual-review-ready outcome', () => {
+    const outcome = resolvePlaywrightVerificationReviewStepOutcome(
+      {
+        status: 'analyzed',
+        error: null,
+      },
+      createPlaywrightVerificationReviewStepMessages('supplier verification barrier')
+    );
+
+    expect(outcome).toEqual({
+      status: 'completed',
+      resultCode: 'manual_review_ready',
+      message:
+        'Captured and classified the supplier verification barrier for manual review.',
+      warning: null,
+    });
   });
 });

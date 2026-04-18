@@ -1790,6 +1790,27 @@ const executePlaywrightNodeRun = async (
       runArtifactsDir,
     });
     logs.push(`[runtime][error] ${message}`);
+    const failureHoldOpenMs =
+      typeof request.failureHoldOpenMs === 'number' &&
+      Number.isFinite(request.failureHoldOpenMs)
+        ? Math.max(0, Math.trunc(request.failureHoldOpenMs))
+        : 0;
+    const shouldHoldBrowserOpenOnFailure =
+      failureHoldOpenMs > 0 &&
+      effectiveSettings.headless === false &&
+      browser !== null &&
+      context !== null &&
+      page !== null &&
+      runtimeLifecycle.browserDisconnected === false &&
+      runtimeLifecycle.contextClosed === false &&
+      runtimeLifecycle.pageClosed === false &&
+      runtimeLifecycle.pageCrashed === false &&
+      (typeof page.isClosed !== 'function' || page.isClosed() === false);
+    if (shouldHoldBrowserOpenOnFailure) {
+      logs.push(
+        `[runtime] Holding headed browser open for ${failureHoldOpenMs}ms after failure.`
+      );
+    }
     const failedState = buildFailedRunState({
       artifacts,
       errorMessage: message,
@@ -1800,6 +1821,9 @@ const executePlaywrightNodeRun = async (
       startedAt,
     });
     await writeRunState(failedState);
+    if (shouldHoldBrowserOpenOnFailure) {
+      await sleep(failureHoldOpenMs);
+    }
     return failedState;
   } finally {
     await persistStickySessionStorageState({

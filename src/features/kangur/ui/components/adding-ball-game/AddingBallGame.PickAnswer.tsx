@@ -183,7 +183,10 @@ function PickAnswerBallPreview({
   }
 
   return (
-    <div className={`flex h-16 w-16 items-center justify-center rounded-full ${dropped.color} shadow-md`}>
+    <div
+      className='flex h-16 w-16 items-center justify-center rounded-full shadow-md'
+      style={{ backgroundColor: dropped.color }}
+    >
       <span className='text-xl font-extrabold text-white'>{dropped.num}</span>
     </div>
   );

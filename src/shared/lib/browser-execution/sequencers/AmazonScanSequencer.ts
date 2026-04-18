@@ -31,6 +31,7 @@ import {
   resolveAmazonRuntimeOperationLabel,
 } from '../amazon-runtime-constants';
 import type { ProductScanSequenceEntry } from '../product-scan-step-sequencer';
+import { buildProductScanVerificationDiagnosticsPayload } from '@/features/products/server/product-scan-ai-evaluator';
 import {
   GoogleLensSearchSequencer,
   type GoogleLensSearchImageCandidate,
@@ -319,15 +320,15 @@ export class AmazonScanSequencer extends GoogleLensSearchSequencer<AmazonScanInp
   }
 
   protected override async emitResult(payload: Record<string, unknown>): Promise<void> {
-    const googleVerificationReview = this.getGoogleVerificationReview();
-    const googleVerificationObservations = this.getGoogleVerificationObservations();
     await super.emitResult({
       imageSearchProvider: this.resolveImageSearchProvider(),
       imageSearchPageUrl: this.resolveConfiguredImageSearchPageUrl(),
-      ...(googleVerificationReview !== null ? { googleVerificationReview } : {}),
-      ...(googleVerificationObservations.length > 0
-        ? { googleVerificationObservations }
-        : {}),
+      ...buildProductScanVerificationDiagnosticsPayload({
+        reviewKey: 'googleVerificationReview',
+        observationsKey: 'googleVerificationObservations',
+        review: this.getGoogleVerificationReview(),
+        observations: this.getGoogleVerificationObservations(),
+      }),
       ...payload,
     });
   }

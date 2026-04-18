@@ -987,6 +987,7 @@ describe('enqueuePlaywrightNodeRun', () => {
 
     expect(run.status).toBe('failed');
     expect(run.error).toContain('AUTH_REQUIRED: Tradera login requires manual verification.');
+    expect(run.logs).toContain('[runtime] Holding headed browser open for 5ms after failure.');
     expect(run.artifacts).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ name: 'failure', kind: 'screenshot', mimeType: 'image/png' }),

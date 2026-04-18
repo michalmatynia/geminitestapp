@@ -80,7 +80,9 @@ describe('PickAnswer touch interactions', () => {
 
     const selectedPreview = within(answerSlot).getByText('5');
     expect(selectedPreview).toBeInTheDocument();
-    expect(selectedPreview.closest('div.rounded-full')).toHaveClass('bg-red-400');
-    expect(selectedPreview.closest('div.rounded-full')).not.toHaveAttribute('style');
+    expect(selectedPreview.closest('div.rounded-full')).not.toHaveClass('bg-red-400');
+    expect(selectedPreview.closest('div.rounded-full')).toHaveStyle({
+      backgroundColor: '#f87171',
+    });
   });
 });

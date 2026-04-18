@@ -26,7 +26,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
   }
 
   return (
-    <div id='ai-paths-docs-root' className={isFocusMode ? 'h-full space-y-0' : 'space-y-6'}>
+    <div id='ai-paths-docs-root' className={isFocusMode === true ? 'h-full space-y-0' : 'space-y-6'}>
       <DocsTooltipEnhancer
         rootId='ai-paths-docs-root'
         enabled={docsTooltipsEnabled}

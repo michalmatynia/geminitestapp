@@ -65,6 +65,7 @@ type PlaywrightNodeRunRequestBase = {
   actionName?: string | null | undefined;
   selectorProfile?: string | null | undefined;
   timeoutMs?: number | undefined;
+  failureHoldOpenMs?: number | undefined;
   browserEngine?: 'chromium' | 'firefox' | 'webkit' | undefined;
   personaId?: string | undefined;
   settingsOverrides?: Record<string, unknown> | undefined;

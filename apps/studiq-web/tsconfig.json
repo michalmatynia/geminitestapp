@@ -26,6 +26,7 @@
   },
   "include": [
     "next-env.d.ts",
+    "tailwind.config.ts",
     "../../src/global.d.ts",
     "../../src/shared/contracts/ambient.d.ts",
     "src/**/*.ts",

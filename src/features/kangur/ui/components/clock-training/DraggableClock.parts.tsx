@@ -39,6 +39,7 @@ export type DraggableClockContextValue = {
   minuteHandX: number;
   minuteHandY: number;
   minuteSnapMode: MinuteSnapMode;
+  onSingleHandFacePointerDown: DraggableClockPointerDownHandler | null;
   onHourPointerDown: DraggableClockPointerDownHandler;
   onMinutePointerDown: DraggableClockPointerDownHandler;
   onSubmitClick: () => void;
@@ -91,11 +92,19 @@ const resolveDraggableClockHandInteractionStyle = ({
   activeHand: Hand | null;
   enabled: boolean;
   hand: Hand;
-}): React.CSSProperties => ({
-  cursor: enabled ? (activeHand === hand ? 'grabbing' : 'grab') : 'not-allowed',
-  opacity: enabled ? 1 : 0.45,
-  touchAction: 'none',
-});
+}): React.CSSProperties => {
+  let cursor: React.CSSProperties['cursor'] = 'not-allowed';
+  if (enabled) {
+    cursor = activeHand === hand ? 'grabbing' : 'grab';
+  }
+
+  return {
+    cursor,
+    opacity: enabled ? 1 : 0.45,
+    pointerEvents: enabled ? 'auto' : 'none',
+    touchAction: 'none',
+  };
+};
 
 export const resolveDraggableClockSubmitButtonLabel = ({
   submitFeedback,
@@ -150,26 +159,6 @@ const resolveDraggableClockSubmitButtonStyle = (
 
   return undefined;
 };
-
-const resolveDraggableClockFeedbackClassName = (): string =>
-  'max-w-md rounded-3xl border px-4 py-3 text-center shadow-sm';
-
-const resolveDraggableClockFeedbackStyle = (
-  submitFeedback: Feedback
-): React.CSSProperties => ({
-  backgroundColor:
-    submitFeedback === 'correct'
-      ? KANGUR_CLOCK_THEME_COLORS.feedbackCorrectSoftBackground
-      : KANGUR_CLOCK_THEME_COLORS.feedbackWrongSoftBackground,
-  borderColor:
-    submitFeedback === 'correct'
-      ? KANGUR_CLOCK_THEME_COLORS.feedbackCorrectBorder
-      : KANGUR_CLOCK_THEME_COLORS.feedbackWrongBorder,
-  color:
-    submitFeedback === 'correct'
-      ? KANGUR_CLOCK_THEME_COLORS.feedbackCorrectText
-      : KANGUR_CLOCK_THEME_COLORS.feedbackWrongText,
-});
 
 const resolveDraggableClockCorrectInteractionHint = ({
   submitNextStep,
@@ -361,7 +350,7 @@ export function DraggableClockInteractionHint(): React.JSX.Element | null {
     translations,
   });
 
-  if (!interactionHint) {
+  if (interactionHint === null || interactionHint === '') {
     return null;
   }
 
@@ -488,6 +477,13 @@ function DraggableClockHand({
     hand,
   });
   const isActive = activeHand === hand;
+  const strokeWidth = (() => {
+    if (hand === 'hour') {
+      return isActive ? '9' : '7';
+    }
+
+    return isActive ? '7' : '5';
+  })();
 
   return (
     <>
@@ -501,7 +497,7 @@ function DraggableClockHand({
         stroke='transparent'
         strokeWidth={hand === 'hour' ? '24' : '20'}
         strokeLinecap='round'
-        pointerEvents='stroke'
+        pointerEvents={enabled ? 'stroke' : 'none'}
         style={interactionStyle}
         onPointerDown={onPointerDown}
       />
@@ -512,7 +508,7 @@ function DraggableClockHand({
         x2={x}
         y2={y}
         stroke={color}
-        strokeWidth={hand === 'hour' ? (isActive ? '9' : '7') : isActive ? '7' : '5'}
+        strokeWidth={strokeWidth}
         strokeLinecap='round'
         style={interactionStyle}
         onPointerDown={onPointerDown}
@@ -536,6 +532,7 @@ export function DraggableClockFace(): React.JSX.Element {
     hourHandY,
     minuteHandX,
     minuteHandY,
+    onSingleHandFacePointerDown,
     showChallengeRing,
     showHourHand,
     showMinuteHand,
@@ -563,6 +560,19 @@ export function DraggableClockFace(): React.JSX.Element {
         stroke={KANGUR_CLOCK_THEME_COLORS.faceStroke}
         strokeWidth='4'
       />
+      {onSingleHandFacePointerDown ? (
+        <circle
+          aria-hidden='true'
+          cx='100'
+          cy='100'
+          r='88'
+          data-testid='clock-single-hand-face-hit-area'
+          fill='transparent'
+          pointerEvents='all'
+          style={{ touchAction: 'none' }}
+          onPointerDown={onSingleHandFacePointerDown}
+        />
+      ) : null}
       <DraggableClockFaceTicks />
       <DraggableClockFaceNumbers />
       {showHourHand ? (
@@ -636,39 +646,20 @@ export function DraggableClockSubmitArea(): React.JSX.Element {
     onSubmitClick,
     submitButtonLabel,
     submitFeedback,
-    submitFeedbackDetails,
-    submitFeedbackTitle,
     submitLocked,
   } = useDraggableClock();
 
   return (
-    <>
-      <KangurButton
-        className={resolveDraggableClockSubmitButtonClassName()}
-        data-testid='clock-submit-button'
-        disabled={submitLocked}
-        onClick={onSubmitClick}
-        size='xl'
-        style={resolveDraggableClockSubmitButtonStyle(submitFeedback)}
-        variant='primary'
-      >
-        {submitButtonLabel}
-      </KangurButton>
-      {submitFeedbackTitle ? (
-        <div
-          aria-live='polite'
-          role='status'
-          aria-atomic='true'
-          className={resolveDraggableClockFeedbackClassName()}
-          data-testid='clock-submit-feedback'
-          style={resolveDraggableClockFeedbackStyle(submitFeedback)}
-        >
-          <p className='text-sm font-extrabold'>{submitFeedbackTitle}</p>
-          {submitFeedbackDetails ? (
-            <p className='mt-1 text-xs font-medium leading-relaxed'>{submitFeedbackDetails}</p>
-          ) : null}
-        </div>
-      ) : null}
-    </>
+    <KangurButton
+      className={resolveDraggableClockSubmitButtonClassName()}
+      data-testid='clock-submit-button'
+      disabled={submitLocked}
+      onClick={onSubmitClick}
+      size='xl'
+      style={resolveDraggableClockSubmitButtonStyle(submitFeedback)}
+      variant='primary'
+    >
+      {submitButtonLabel}
+    </KangurButton>
   );
 }

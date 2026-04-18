@@ -17,7 +17,7 @@ const KANGUR_LESSON_BORDER_ACCENT_CLASSNAMES = {
 } satisfies Record<KangurAccent, string>;
 
 const kangurLessonCalloutVariants = cva(
-  'soft-card kangur-lesson-callout w-full border shadow-[0_18px_44px_-36px_rgba(15,23,42,0.24)] [color:var(--kangur-page-text)]',
+  'soft-card kangur-lesson-callout w-full min-w-0 border shadow-[0_18px_44px_-36px_rgba(15,23,42,0.24)] [color:var(--kangur-page-text)]',
   {
     variants: {
       accent: KANGUR_LESSON_BORDER_ACCENT_CLASSNAMES,
@@ -116,7 +116,9 @@ const kangurLessonLeadVariants = cva('[color:var(--kangur-page-text)]', {
 type KangurLessonLeadProps = React.HTMLAttributes<HTMLParagraphElement> &
   VariantProps<typeof kangurLessonLeadVariants>;
 
-const kangurLessonCaptionVariants = cva('text-sm [color:var(--kangur-page-muted-text)]', {
+const kangurLessonCaptionVariants = cva(
+  'max-w-full whitespace-normal break-words [overflow-wrap:anywhere] text-sm [color:var(--kangur-page-muted-text)]',
+  {
   variants: {
     align: {
       center: 'text-center',

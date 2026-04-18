@@ -1,0 +1,68 @@
+
+> libapp2@0.1.0 lint:features
+> eslint "src/features/**/*.{ts,tsx,js,jsx}" --cache --cache-location .eslintcache --no-error-on-unmatched-pattern
+
+
+<--- Last few GCs --->
+
+[33553:0xbe0000000]   117442 ms: Mark-Compact 4017.5 (4129.3) -> 3977.6 (4129.1) MB, pooled: 4 MB, 1681.21 / 0.04 ms  (average mu = 0.180, current mu = 0.178) allocation failure; scavenge might not succeed
+[33553:0xbe0000000]   118787 ms: Mark-Compact 3995.1 (4129.7) -> 3982.0 (4115.1) MB, pooled: 18 MB, 1294.42 / 0.00 ms  (average mu = 0.114, current mu = 0.038) allocation failure; scavenge might not succeed
+
+
+<--- JS stacktrace --->
+
+FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed - JavaScript heap out of memory
+----- Native stack trace -----
+
+ 1: 0x1022bb040 node::OOMErrorHandler(char const*, v8::OOMDetails const&) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+ 2: 0x10249779c v8::internal::V8::FatalProcessOutOfMemory(v8::internal::Isolate*, char const*, v8::OOMDetails const&) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+ 3: 0x1026a6f30 v8::internal::Heap::stack() [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+ 4: 0x1026bd3a8 v8::internal::Heap::CollectGarbage(v8::internal::AllocationSpace, v8::internal::GarbageCollectionReason, v8::GCCallbackFlags)::$_1::operator()() const [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+ 5: 0x1026bcc3c void heap::base::Stack::SetMarkerAndCallbackImpl<v8::internal::Heap::CollectGarbage(v8::internal::AllocationSpace, v8::internal::GarbageCollectionReason, v8::GCCallbackFlags)::$_1>(heap::base::Stack*, void*, void const*) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+ 6: 0x102e76e08 PushAllRegistersAndIterateStack [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+ 7: 0x1026a50f0 v8::internal::Heap::CollectGarbage(v8::internal::AllocationSpace, v8::internal::GarbageCollectionReason, v8::GCCallbackFlags) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+ 8: 0x1026998c4 v8::internal::HeapAllocator::AllocateRawWithLightRetrySlowPath(int, v8::internal::AllocationType, v8::internal::AllocationOrigin, v8::internal::AllocationAlignment) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+ 9: 0x10269a0fc v8::internal::HeapAllocator::AllocateRawWithRetryOrFailSlowPath(int, v8::internal::AllocationType, v8::internal::AllocationOrigin, v8::internal::AllocationAlignment) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+10: 0x10267d41c v8::internal::Factory::NewFillerObject(int, v8::internal::AllocationAlignment, v8::internal::AllocationType, v8::internal::AllocationOrigin) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+11: 0x102a98ee0 v8::internal::Runtime_AllocateInYoungGeneration(int, unsigned long*, v8::internal::Isolate*) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+12: 0x102f59af4 Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+13: 0x102ec2510 Builtins_FastNewClosure [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+14: 0x10e3f6f28 
+15: 0x10e3f6610 
+16: 0x10efe0bc4 
+17: 0x10e693224 
+18: 0x10e9583e8 
+19: 0x10f377878 
+20: 0x10efe1988 
+21: 0x10e3f16fc 
+22: 0x102f746ec Builtins_ArrayForEach [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+23: 0x10e99aa08 
+24: 0x10e99d594 
+25: 0x10e99f380 
+26: 0x10e99fa3c 
+27: 0x10e99efac 
+28: 0x10e9a007c 
+29: 0x10e9a1b60 
+30: 0x10e9a14b0 
+31: 0x102f01290 Builtins_AsyncFunctionAwaitResolveClosure [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+32: 0x102fcc4d8 Builtins_PromiseFulfillReactionJob [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+33: 0x102ef1594 Builtins_RunMicrotasks [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+34: 0x102ec2af4 Builtins_JSRunMicrotasksEntry [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+35: 0x1025fedf8 v8::internal::(anonymous namespace)::Invoke(v8::internal::Isolate*, v8::internal::(anonymous namespace)::InvokeParams const&) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+36: 0x1025ff6a0 v8::internal::(anonymous namespace)::InvokeWithTryCatch(v8::internal::Isolate*, v8::internal::(anonymous namespace)::InvokeParams const&) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+37: 0x1025ff7d8 v8::internal::Execution::TryRunMicrotasks(v8::internal::Isolate*, v8::internal::MicrotaskQueue*) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+38: 0x10262c9fc v8::internal::MicrotaskQueue::RunMicrotasks(v8::internal::Isolate*) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+39: 0x10262d180 v8::internal::MicrotaskQueue::PerformCheckpoint(v8::Isolate*) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+40: 0x1021b99dc node::InternalCallbackScope::Close() [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+41: 0x1021b9484 node::InternalCallbackScope::~InternalCallbackScope() [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+42: 0x1022bf2e4 node::fs::FileHandle::CloseReq::Resolve() [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+43: 0x1022d9c8c node::fs::FileHandle::ClosePromise()::$_0::__invoke(uv_fs_s*) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+44: 0x1022b2cfc node::MakeLibuvRequestCallback<uv_fs_s, void (*)(uv_fs_s*)>::Wrapper(uv_fs_s*) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+45: 0x102e9eaec uv__work_done [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+46: 0x102ea281c uv__async_io [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+47: 0x102eb6bb4 uv__io_poll [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+48: 0x102ea2d84 uv_run [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+49: 0x1021ba518 node::SpinEventLoopInternal(node::Environment*) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+50: 0x10230593c node::NodeMainInstance::Run() [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+51: 0x102275d50 node::Start(int, char**) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+52: 0x187e2fda4 start [/usr/lib/dyld]

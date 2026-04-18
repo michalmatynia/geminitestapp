@@ -35,14 +35,35 @@ const resolveClockTrainingProgressPillColor = ({
 }: {
   gameMode: ClockGameMode;
   isActive: boolean;
-}): string =>
-  gameMode === 'challenge'
-    ? isActive
+}): string => {
+  if (gameMode === 'challenge') {
+    return isActive
       ? KANGUR_CLOCK_THEME_COLORS.progressChallengeActive
-      : KANGUR_CLOCK_THEME_COLORS.progressChallengeDone
-    : isActive
-      ? KANGUR_CLOCK_THEME_COLORS.progressPracticeActive
-      : KANGUR_CLOCK_THEME_COLORS.progressPracticeDone;
+      : KANGUR_CLOCK_THEME_COLORS.progressChallengeDone;
+  }
+
+  return isActive
+    ? KANGUR_CLOCK_THEME_COLORS.progressPracticeActive
+    : KANGUR_CLOCK_THEME_COLORS.progressPracticeDone;
+};
+
+const resolveClockTrainingProgressPillClassName = ({
+  isActive,
+  isCompleted,
+}: {
+  isActive: boolean;
+  isCompleted: boolean;
+}): string => {
+  if (isActive) {
+    return 'w-7';
+  }
+
+  if (isCompleted) {
+    return 'w-4';
+  }
+
+  return KANGUR_PENDING_STEP_PILL_CLASSNAME;
+};
 
 const resolveClockTrainingCompletedSubmitFeedback = ({
   done,
@@ -51,6 +72,60 @@ const resolveClockTrainingCompletedSubmitFeedback = ({
   done: boolean;
   gameMode: ClockGameMode;
 }): 'correct' | null => (done && gameMode === 'practice' ? 'correct' : null);
+
+const resolveClockTrainingPromptPanelAccent = (
+  feedback: ClockFeedback | null
+): React.ComponentProps<typeof KangurSummaryPanel>['accent'] => {
+  if (feedback?.kind === 'correct') {
+    return 'emerald';
+  }
+
+  if (feedback?.kind === 'wrong') {
+    return 'rose';
+  }
+
+  return 'amber';
+};
+
+const resolveClockTrainingPromptPanelTitle = ({
+  feedback,
+  showTaskTitle,
+  task,
+}: {
+  feedback: ClockFeedback | null;
+  showTaskTitle: boolean;
+  task: { hours: number; minutes: number };
+}): string | undefined =>
+  feedback?.title ?? (showTaskTitle ? `${task.hours}:${pad(task.minutes)}` : undefined);
+
+const resolveClockTrainingPromptPanelTone = (
+  feedback: ClockFeedback | null
+): React.ComponentProps<typeof KangurSummaryPanel>['tone'] =>
+  feedback ? 'neutral' : 'accent';
+
+const resolveClockTrainingPromptPanelBodyClassName = ({
+  feedback,
+}: {
+  feedback: ClockFeedback | null;
+}): string =>
+  cn(
+    'flex min-h-[5.5rem] items-center justify-center text-center transition-colors duration-200',
+    feedback ? 'text-sm font-medium leading-relaxed' : 'text-xs font-semibold'
+  );
+
+const resolveClockTrainingPromptPanelBodyStyle = ({
+  feedback,
+}: {
+  feedback: ClockFeedback | null;
+}): React.CSSProperties =>
+  feedback
+    ? {
+        color:
+          feedback.kind === 'correct'
+            ? KANGUR_CLOCK_THEME_COLORS.feedbackCorrectText
+            : KANGUR_CLOCK_THEME_COLORS.feedbackWrongText,
+      }
+    : { color: KANGUR_CLOCK_THEME_COLORS.promptText };
 
 const resolveClockTrainingSubmitFeedback = ({
   done,
@@ -117,11 +192,15 @@ function ClockTrainingModeSwitch(): React.JSX.Element {
 function ClockTrainingGuidance(): React.JSX.Element | null {
   const { state } = useClockTrainingContext();
   const { trainingSectionContent } = state;
+  const { guidanceTitle, guidance, legend } = trainingSectionContent;
 
   if (
-    !trainingSectionContent.guidanceTitle ||
-    !trainingSectionContent.guidance ||
-    !trainingSectionContent.legend
+    typeof guidanceTitle !== 'string' ||
+    guidanceTitle === '' ||
+    typeof guidance !== 'string' ||
+    guidance === '' ||
+    typeof legend !== 'string' ||
+    legend === ''
   ) {
     return null;
   }
@@ -258,7 +337,10 @@ function ClockTrainingTaskProgressView(): React.JSX.Element {
               className={cn(
                 KANGUR_STEP_PILL_CLASSNAME,
                 'h-[12px] min-w-[12px]',
-                isActive ? 'w-7' : isCompleted ? 'w-4' : KANGUR_PENDING_STEP_PILL_CLASSNAME
+                resolveClockTrainingProgressPillClassName({
+                  isActive,
+                  isCompleted,
+                })
               )}
               data-testid={`clock-task-progress-pill-${index}`}
               style={
@@ -281,32 +363,49 @@ function ClockTrainingTaskProgressView(): React.JSX.Element {
 
 function ClockTrainingPromptPanel(): React.JSX.Element {
   const { props, state } = useClockTrainingContext();
-  const { section, task, trainingSectionContent, translations } = state;
+  const { feedback, section, task, trainingSectionContent, translations } = state;
   const { showTaskTitle } = props;
 
   if (!task) {
     return <></>;
   }
 
-  const taskSummaryTitle = (showTaskTitle ?? true) ? `${task.hours}:${pad(task.minutes)}` : undefined;
+  const taskSummaryTitle = resolveClockTrainingPromptPanelTitle({
+    feedback,
+    showTaskTitle: showTaskTitle ?? true,
+    task,
+  });
 
   return (
     <KangurSummaryPanel
-      accent='amber'
+      accent={resolveClockTrainingPromptPanelAccent(feedback)}
       align='center'
       className='w-full max-w-md'
       label={trainingSectionContent.promptLabel}
       padding='md'
       title={taskSummaryTitle}
-      tone='accent'
+      tone={resolveClockTrainingPromptPanelTone(feedback)}
     >
-      <p
-        data-testid='clock-task-prompt'
-        className='mt-1 text-xs font-semibold'
-        style={{ color: KANGUR_CLOCK_THEME_COLORS.promptText }}
-      >
-        {buildClockTaskPrompt(task, section, translations)}
-      </p>
+      {feedback ? (
+        <div
+          aria-atomic='true'
+          aria-live='polite'
+          className={resolveClockTrainingPromptPanelBodyClassName({ feedback })}
+          data-testid='clock-submit-feedback'
+          role='status'
+          style={resolveClockTrainingPromptPanelBodyStyle({ feedback })}
+        >
+          {feedback.details}
+        </div>
+      ) : (
+        <p
+          data-testid='clock-task-prompt'
+          className={resolveClockTrainingPromptPanelBodyClassName({ feedback })}
+          style={resolveClockTrainingPromptPanelBodyStyle({ feedback })}
+        >
+          {buildClockTaskPrompt(task, section, translations)}
+        </p>
+      )}
     </KangurSummaryPanel>
   );
 }
@@ -333,7 +432,7 @@ function ClockTrainingModeSwitchSlot(): React.JSX.Element | null {
   const { props } = useClockTrainingContext();
   const { hideModeSwitch } = props;
 
-  if (hideModeSwitch) {
+  if (hideModeSwitch === true) {
     return null;
   }
 

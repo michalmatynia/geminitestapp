@@ -33,6 +33,7 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
 let initialized = false;
+let initializing = false;
 const LOG_SOURCE = 'queue-init';
 type QueueStarter = () => void;
 const STARTUP_GATED_QUEUE_NAMES = [
@@ -146,10 +147,10 @@ const startFeatureAwareWorkers = (): void => {
 };
 
 export const initializeQueues = (): void => {
-  if (initialized) return;
-  initialized = true;
+  if (initialized || initializing) return;
 
   if (process.env['DISABLE_QUEUE_WORKERS'] === 'true') {
+    initialized = true;
     logSystemEvent({ level: 'info', source: LOG_SOURCE, message: 'Worker startup disabled by DISABLE_QUEUE_WORKERS' }).catch(() => {});
     runStartupBackupSchedulerCatchup();
     return;
@@ -161,23 +162,38 @@ export const initializeQueues = (): void => {
     return;
   }
 
+  initializing = true;
   (async (): Promise<void> => {
-    if (await isRedisReachable() === false) {
-      logSystemEvent({ level: 'warn', source: LOG_SOURCE, message: 'Redis unreachable, skipping BullMQ workers' }).catch(() => {});
-      runStartupBackupSchedulerCatchup();
-      return;
-    }
+    try {
+      if (await isRedisReachable() === false) {
+        logSystemEvent({ level: 'warn', source: LOG_SOURCE, message: 'Redis unreachable, skipping BullMQ workers' }).catch(() => {});
+        runStartupBackupSchedulerCatchup();
+        return;
+      }
 
-    const shouldStartKangurSocial = shouldStartKangurSocialQueues();
-    const excludedQueueNames = shouldStartKangurSocial ? [...STARTUP_GATED_QUEUE_NAMES] : [...STARTUP_GATED_QUEUE_NAMES, ...KANGUR_SOCIAL_QUEUE_NAMES];
+      const shouldStartKangurSocial = shouldStartKangurSocialQueues();
+      const excludedQueueNames = shouldStartKangurSocial ? [...STARTUP_GATED_QUEUE_NAMES] : [...STARTUP_GATED_QUEUE_NAMES, ...KANGUR_SOCIAL_QUEUE_NAMES];
 
-    callSpecializedStartup(shouldStartKangurSocial);
-    logSystemEvent({ level: 'info', source: LOG_SOURCE, message: 'Starting BullMQ workers...' }).catch(() => {});
-    startAllWorkers({ excludeQueueNames: excludedQueueNames });
-    startFeatureAwareWorkers();
+      callSpecializedStartup(shouldStartKangurSocial);
+      logSystemEvent({ level: 'info', source: LOG_SOURCE, message: 'Starting BullMQ workers...' }).catch(() => {});
+      startAllWorkers({ excludeQueueNames: excludedQueueNames });
+      startFeatureAwareWorkers();
 
-    if (isQueueStarter(startAiInsightsQueue)) {
-      startAiInsightsQueue();
+      if (isQueueStarter(startAiInsightsQueue)) {
+        startAiInsightsQueue();
+      }
+
+      initialized = true;
+    } catch (error) {
+      ErrorSystem.captureException(error).catch(() => {});
+      logSystemEvent({
+        level: 'warn',
+        source: LOG_SOURCE,
+        message: 'BullMQ worker startup failed',
+        error,
+      }).catch(() => {});
+    } finally {
+      initializing = false;
     }
   })().catch(() => {});
 };
@@ -185,5 +201,6 @@ export const initializeQueues = (): void => {
 export const testOnly = {
   resetInitialized(): void {
     initialized = false;
+    initializing = false;
   },
 };

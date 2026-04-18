@@ -162,9 +162,70 @@ const validateBuildIdentifiers = (config: KangurExpoConfig, issues: KangurMobile
 };
 
 const resolveEasProjectId = (config: KangurExpoConfig): string | null => {
-  const extra = config.extra as Record<string, unknown> | undefined;
+  const extra = config.extra;
   const eas = extra?.['eas'] as Record<string, unknown> | undefined;
   return typeof eas?.['projectId'] === 'string' ? eas['projectId'] : null;
+};
+
+type ValidationParams = {
+  config: KangurExpoConfig;
+  profile: KangurMobileBuildProfile;
+  owner: string | null;
+  projectId: string | null;
+  issues: KangurMobileBuildEnvIssue[];
+};
+
+const validateNonLocalProfile = ({
+  config,
+  profile,
+  owner,
+  projectId,
+  issues,
+}: ValidationParams): void => {
+  if (profile === 'local') {
+    return;
+  }
+
+  validateBuildIdentifiers(config, issues);
+  if (owner === null) {
+    issues.push({ level: 'error', message: 'KANGUR_EXPO_OWNER is required for preview and production builds.' });
+  }
+  if (projectId === null) {
+    issues.push({ level: 'error', message: 'KANGUR_EXPO_PROJECT_ID is required for preview and production builds.' });
+  }
+};
+
+type ReportParams = {
+  config: KangurExpoConfig;
+  profile: KangurMobileBuildProfile;
+  apiUrl: string | null;
+  owner: string | null;
+  projectId: string | null;
+  issues: KangurMobileBuildEnvIssue[];
+};
+
+const resolveBuildEnvReport = ({
+  config,
+  profile,
+  apiUrl,
+  owner,
+  projectId,
+  issues,
+}: ReportParams): KangurMobileBuildEnvReport => {
+  const resolved = {
+    androidPackage: config.android?.package ?? DEFAULT_KANGUR_ANDROID_PACKAGE,
+    apiUrl,
+    iosBundleIdentifier: config.ios?.bundleIdentifier ?? DEFAULT_KANGUR_IOS_BUNDLE_IDENTIFIER,
+    owner,
+    projectId,
+  };
+
+  return {
+    issues,
+    profile,
+    resolved,
+    status: issues.some((issue) => issue.level === 'error') ? 'error' : 'ok',
+  };
 };
 
 export const analyzeKangurMobileBuildEnv = (
@@ -176,27 +237,24 @@ export const analyzeKangurMobileBuildEnv = (
   const projectId = resolveEasProjectId(config);
   const owner = config.owner ?? null;
 
-  if (profile !== 'local') {
-    validateBuildIdentifiers(config, issues);
-    if (owner === null) issues.push({ level: 'error', message: 'KANGUR_EXPO_OWNER is required for preview and production builds.' });
-    if (projectId === null) issues.push({ level: 'error', message: 'KANGUR_EXPO_PROJECT_ID is required for preview and production builds.' });
+  validateNonLocalProfile({ config, profile, owner, projectId, issues });
+
+  const apiUrl = (config.extra?.['kangurApiUrl'] as string | undefined) ?? null;
+  if (apiUrl === null) {
+    issues.push({
+      level: 'warning',
+      message: 'EXPO_PUBLIC_KANGUR_API_URL is unset; mobile builds will rely on runtime API URL fallback.',
+    });
   }
 
-  const apiUrl = (config.extra as Record<string, unknown> | undefined)?.['kangurApiUrl'] as string | undefined ?? null;
-  if (apiUrl === null) issues.push({ level: 'warning', message: 'EXPO_PUBLIC_KANGUR_API_URL is unset; mobile builds will rely on runtime API URL fallback.' });
-
-  return {
-    issues,
+  return resolveBuildEnvReport({
+    config,
     profile,
-    resolved: {
-      androidPackage: config.android?.package ?? DEFAULT_KANGUR_ANDROID_PACKAGE,
-      apiUrl,
-      iosBundleIdentifier: config.ios?.bundleIdentifier ?? DEFAULT_KANGUR_IOS_BUNDLE_IDENTIFIER,
-      owner,
-      projectId,
-    },
-    status: issues.some((issue) => issue.level === 'error') ? 'error' : 'ok',
-  };
+    apiUrl,
+    owner,
+    projectId,
+    issues,
+  });
 };
 
 const kangurMobileExpoConfig = {

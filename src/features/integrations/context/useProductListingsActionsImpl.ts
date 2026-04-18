@@ -286,6 +286,7 @@ export const useProductListingsActionsImpl = ({
         );
         if (
           !options?.skipSessionPreflight &&
+          options?.browserMode !== 'headed' &&
           listing &&
           isTraderaBrowserIntegrationSlug(listing.integration.slug) &&
           listing.integrationId &&

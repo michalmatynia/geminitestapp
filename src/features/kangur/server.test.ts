@@ -5,16 +5,10 @@ const { registerProviderMock, registerSettingsProviderMock } = vi.hoisted(() => 
   registerSettingsProviderMock: vi.fn(),
 }));
 
-vi.mock('@/features/ai/server', () => ({
+vi.mock('@/features/ai/ai-context-registry/server', () => ({
   contextRegistryEngine: {
     registerProvider: registerProviderMock,
   },
-  enqueuePlaywrightNodeRun: vi.fn(),
-  readPlaywrightNodeArtifact: vi.fn(),
-  readPlaywrightNodeRun: vi.fn(),
-  validatePlaywrightNodeScript: vi.fn(),
-  kangurRecentFeaturesContextProvider: { id: 'kangur-recent-features-context-provider' },
-  createKangurRecentFeaturesRef: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/server/context-registry/kangur-ai-context-provider', () => ({

@@ -4,8 +4,8 @@ import {
   enqueuePlaywrightNodeRun,
   readPlaywrightNodeArtifact,
   readPlaywrightNodeRun,
-} from '@/features/ai/server';
-import { validatePlaywrightNodeScript } from '@/features/ai/server';
+} from '@/features/ai/ai-paths/services/playwright-node-runner';
+import { validatePlaywrightNodeScript } from '@/features/ai/ai-paths/services/playwright-node-runner.parser';
 import type {
   PlaywrightNodeArtifactReadResult,
   PlaywrightNodeRunArtifact,
@@ -14,7 +14,7 @@ import type {
   PlaywrightNodeRunInstanceKind,
   PlaywrightNodeRunRecord,
   PlaywrightNodeRunRequest,
-} from '@/features/ai/server';
+} from '@/features/ai/ai-paths/services/playwright-node-runner.types';
 
 export type PlaywrightEngineRunRequest = PlaywrightNodeRunRequest;
 export type PlaywrightEngineRunArtifact = PlaywrightNodeRunArtifact;
@@ -65,9 +65,17 @@ export const startPlaywrightEngineTask = async (input: {
     instance: input.instance,
   });
 
-export const readPlaywrightEngineRun = readPlaywrightNodeRun;
-export const readPlaywrightEngineArtifact = readPlaywrightNodeArtifact;
-export const validatePlaywrightEngineScript = validatePlaywrightNodeScript;
+export const readPlaywrightEngineRun = async (
+  runId: string
+): Promise<PlaywrightEngineRunRecord | null> => await readPlaywrightNodeRun(runId);
+
+export const readPlaywrightEngineArtifact = async (input: {
+  runId: string;
+  fileName: string;
+}): Promise<PlaywrightEngineArtifactReadResult | null> => await readPlaywrightNodeArtifact(input);
+
+export const validatePlaywrightEngineScript = (script: string): string[] =>
+  validatePlaywrightNodeScript(script);
 
 // Backward-compatible exports for legacy consumers that still use node-runner names.
 export {

@@ -356,7 +356,7 @@ beforeEach(() => {
         scriptMode: 'scripted',
         scriptSource: 'default-fallback',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v144',
+        scriptMarker: 'tradera-quicklist-default:v145',
         scriptStoredOnConnection: false,
         runId: 'run-connection-default-relist',
         requestedBrowserMode: 'connection_default',
@@ -678,7 +678,7 @@ describe('ensureLoggedIn', () => {
         username: 'user@example.com',
         password: 'encrypted-password',
       } as never,
-      'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts'
+      'https://www.tradera.com/en/selling/new'
     );
 
     expect(gotoMock).toHaveBeenNthCalledWith(
@@ -790,7 +790,7 @@ describe('ensureLoggedIn', () => {
           password: 'encrypted-password',
           playwrightStorageState: 'stored-state',
         } as never,
-        'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts'
+        'https://www.tradera.com/en/selling/new'
       )
     ).rejects.toThrow('AUTH_STATE_TIMEOUT: Tradera session validation did not resolve.');
 

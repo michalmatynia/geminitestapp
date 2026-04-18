@@ -1,5 +1,7 @@
 import 'server-only';
 
+import type { Page } from 'playwright';
+
 import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/segments/api';
 import {
   isBrainModelVisionCapable,
@@ -33,6 +35,382 @@ export type PlaywrightStepEvaluateResult = {
   output: string;
   modelId: string;
 };
+
+export type PlaywrightObservationArtifacts = {
+  html?: ((key: string) => Promise<unknown>) | null | undefined;
+  file?: ((
+    key: string,
+    data: Buffer,
+    options: { extension: string; mimeType: string; kind: string }
+  ) => Promise<string | null | undefined>) | null | undefined;
+};
+
+export type PlaywrightCapturedPageObservation = {
+  currentUrl: string | null;
+  pageTitle: string | null;
+  pageTextSnippet: string | null;
+  screenshotBase64: string | null;
+  screenshotArtifactName: string | null;
+  htmlArtifactName: string | null;
+  fingerprint: string;
+  observedAt: string;
+};
+
+export type CaptureAndEvaluatePlaywrightObservationOptions<TReview, TObservation> = {
+  page: Page;
+  artifacts?: PlaywrightObservationArtifacts | null | undefined;
+  artifactKey: string;
+  currentUrl?: string | null | undefined;
+  previousObservation?: TObservation | null | undefined;
+  previousFingerprint?: string | null | undefined;
+  extraFingerprintParts?: readonly unknown[] | null | undefined;
+  textSelector?: string | null | undefined;
+  maxTextLength?: number | null | undefined;
+  screenshotKind?: string | null | undefined;
+  log?: ((message: string, context?: unknown) => void) | null | undefined;
+  screenshotFailureLogKey?: string | null | undefined;
+  evaluate: (capture: PlaywrightCapturedPageObservation) => Promise<TReview>;
+  buildObservation: (input: {
+    capture: PlaywrightCapturedPageObservation;
+    review: TReview;
+  }) => TObservation;
+};
+
+export type CaptureAndEvaluatePlaywrightObservationResult<TReview, TObservation> = {
+  observation: TObservation;
+  review: TReview | null;
+  capture: PlaywrightCapturedPageObservation;
+  deduped: boolean;
+};
+
+const normalizeOptionalText = (value: unknown): string | null => {
+  if (typeof value !== 'string') {
+    return null;
+  }
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const toArtifactName = (value: unknown): string | null =>
+  normalizeOptionalText(typeof value === 'string' ? value.split('/').pop() : null);
+
+const safePageUrl = (page: Pick<Page, 'url'>): string | null => {
+  try {
+    return page.url();
+  } catch {
+    return null;
+  }
+};
+
+export const buildPlaywrightObservationFingerprint = (
+  parts: readonly unknown[]
+): string =>
+  parts
+    .map((part) => {
+      if (part === null || part === undefined) {
+        return '';
+      }
+      if (typeof part === 'string') {
+        return part;
+      }
+      if (typeof part === 'number' || typeof part === 'boolean' || typeof part === 'bigint') {
+        return String(part);
+      }
+      try {
+        return JSON.stringify(part);
+      } catch {
+        return String(part);
+      }
+    })
+    .join('::');
+
+export async function captureAndEvaluatePlaywrightObservation<TReview, TObservation>(
+  options: CaptureAndEvaluatePlaywrightObservationOptions<TReview, TObservation>
+): Promise<CaptureAndEvaluatePlaywrightObservationResult<TReview, TObservation>> {
+  const currentUrl = options.currentUrl ?? safePageUrl(options.page);
+  const pageTitle = normalizeOptionalText(await options.page.title().catch(() => null));
+  const pageTextSnippet = normalizeOptionalText(
+    (
+      await options.page
+        .locator(options.textSelector?.trim() || 'body')
+        .first()
+        .textContent()
+        .catch(() => null)
+    )?.replace(/\s+/g, ' ').slice(0, options.maxTextLength ?? 2_500) ?? null
+  );
+  const fingerprint = buildPlaywrightObservationFingerprint([
+    currentUrl ?? '',
+    pageTitle ?? '',
+    pageTextSnippet ?? '',
+    ...(options.extraFingerprintParts ?? []),
+  ]);
+  const observedAt = new Date().toISOString();
+  const baseCapture: PlaywrightCapturedPageObservation = {
+    currentUrl,
+    pageTitle,
+    pageTextSnippet,
+    screenshotBase64: null,
+    screenshotArtifactName: null,
+    htmlArtifactName: null,
+    fingerprint,
+    observedAt,
+  };
+
+  if (
+    options.previousObservation !== null &&
+    options.previousObservation !== undefined &&
+    options.previousFingerprint === fingerprint
+  ) {
+    return {
+      observation: options.previousObservation,
+      review: null,
+      capture: baseCapture,
+      deduped: true,
+    };
+  }
+
+  let screenshotBuffer: Buffer | null = null;
+  let screenshotArtifactName: string | null = null;
+  let htmlArtifactName: string | null = null;
+
+  try {
+    screenshotBuffer = await options.page.screenshot({ type: 'png' });
+    if (typeof options.artifacts?.file === 'function') {
+      const artifactPath = await options.artifacts.file(options.artifactKey, screenshotBuffer, {
+        extension: 'png',
+        mimeType: 'image/png',
+        kind: options.screenshotKind?.trim() || 'screenshot',
+      });
+      screenshotArtifactName = toArtifactName(artifactPath);
+    }
+  } catch (error) {
+    const logMessage = normalizeOptionalText(options.screenshotFailureLogKey);
+    if (logMessage && typeof options.log === 'function') {
+      options.log(logMessage, {
+        error: error instanceof Error ? error.message : String(error ?? 'Unknown error'),
+      });
+    }
+  }
+
+  if (typeof options.artifacts?.html === 'function') {
+    const htmlArtifact = await options.artifacts.html(options.artifactKey).catch(() => null);
+    htmlArtifactName = toArtifactName(htmlArtifact);
+  }
+
+  const capture: PlaywrightCapturedPageObservation = {
+    ...baseCapture,
+    screenshotBase64: screenshotBuffer?.toString('base64') ?? null,
+    screenshotArtifactName,
+    htmlArtifactName,
+  };
+  const review = await options.evaluate(capture);
+
+  return {
+    observation: options.buildObservation({ capture, review }),
+    review,
+    capture,
+    deduped: false,
+  };
+}
+
+export type PlaywrightObservationLoopDecision =
+  | 'blocked'
+  | 'awaiting_stable_clear'
+  | 'resolved'
+  | 'page_closed'
+  | 'timeout';
+
+export type PlaywrightObservationLoopSnapshot<TState> = {
+  state: TState | null;
+  blocked: boolean;
+  currentUrl?: string | null | undefined;
+};
+
+export type PlaywrightObservationLoopObserveInput<TState> = {
+  iteration: number;
+  decision: PlaywrightObservationLoopDecision;
+  snapshot: PlaywrightObservationLoopSnapshot<TState>;
+  stableForMs: number | null;
+};
+
+export type PlaywrightObservationLoopOptions<TState, TObservation> = {
+  timeoutMs: number;
+  stableClearWindowMs: number;
+  intervalMs?: number | null | undefined;
+  initialSnapshot: PlaywrightObservationLoopSnapshot<TState>;
+  isPageClosed: () => boolean;
+  wait: (ms: number) => Promise<void>;
+  readSnapshot: () => Promise<PlaywrightObservationLoopSnapshot<TState>>;
+  observe: (
+    input: PlaywrightObservationLoopObserveInput<TState>
+  ) => Promise<TObservation | null>;
+};
+
+export type PlaywrightObservationLoopResult<TState, TObservation> = {
+  resolved: boolean;
+  finalDecision: Extract<
+    PlaywrightObservationLoopDecision,
+    'resolved' | 'page_closed' | 'timeout'
+  >;
+  finalSnapshot: PlaywrightObservationLoopSnapshot<TState> | null;
+  stableForMs: number | null;
+  iterations: number;
+  lastObservation: TObservation | null;
+};
+
+export async function runPlaywrightObservationLoop<TState, TObservation>(
+  options: PlaywrightObservationLoopOptions<TState, TObservation>
+): Promise<PlaywrightObservationLoopResult<TState, TObservation>> {
+  const intervalMs =
+    typeof options.intervalMs === 'number' && Number.isFinite(options.intervalMs)
+      ? Math.max(0, Math.trunc(options.intervalMs))
+      : 2_000;
+
+  let iteration = 1;
+  let stableSince: number | null = null;
+  let lastObservation = await options.observe({
+    iteration,
+    decision: options.initialSnapshot.blocked ? 'blocked' : 'awaiting_stable_clear',
+    snapshot: options.initialSnapshot,
+    stableForMs: null,
+  });
+
+  if (options.isPageClosed()) {
+    iteration += 1;
+    lastObservation = await options.observe({
+      iteration,
+      decision: 'page_closed',
+      snapshot: {
+        state: null,
+        blocked: options.initialSnapshot.blocked,
+        currentUrl: options.initialSnapshot.currentUrl ?? null,
+      },
+      stableForMs: null,
+    });
+    return {
+      resolved: false,
+      finalDecision: 'page_closed',
+      finalSnapshot: null,
+      stableForMs: null,
+      iterations: iteration,
+      lastObservation,
+    };
+  }
+
+  const deadline = Date.now() + options.timeoutMs;
+
+  while (Date.now() < deadline) {
+    if (options.isPageClosed()) {
+      iteration += 1;
+      lastObservation = await options.observe({
+        iteration,
+        decision: 'page_closed',
+        snapshot: {
+          state: null,
+          blocked: true,
+          currentUrl: null,
+        },
+        stableForMs: null,
+      });
+      return {
+        resolved: false,
+        finalDecision: 'page_closed',
+        finalSnapshot: null,
+        stableForMs: null,
+        iterations: iteration,
+        lastObservation,
+      };
+    }
+
+    await options.wait(intervalMs);
+
+    if (options.isPageClosed()) {
+      iteration += 1;
+      lastObservation = await options.observe({
+        iteration,
+        decision: 'page_closed',
+        snapshot: {
+          state: null,
+          blocked: true,
+          currentUrl: null,
+        },
+        stableForMs: null,
+      });
+      return {
+        resolved: false,
+        finalDecision: 'page_closed',
+        finalSnapshot: null,
+        stableForMs: null,
+        iterations: iteration,
+        lastObservation,
+      };
+    }
+
+    const snapshot = await options.readSnapshot();
+    iteration += 1;
+
+    if (snapshot.blocked) {
+      stableSince = null;
+      lastObservation = await options.observe({
+        iteration,
+        decision: 'blocked',
+        snapshot,
+        stableForMs: null,
+      });
+      continue;
+    }
+
+    if (stableSince === null) {
+      stableSince = Date.now();
+    }
+    const stableForMs = Math.max(0, Date.now() - stableSince);
+    const decision: PlaywrightObservationLoopDecision =
+      stableForMs >= options.stableClearWindowMs ? 'resolved' : 'awaiting_stable_clear';
+    lastObservation = await options.observe({
+      iteration,
+      decision,
+      snapshot,
+      stableForMs,
+    });
+
+    if (decision === 'resolved') {
+      return {
+        resolved: true,
+        finalDecision: 'resolved',
+        finalSnapshot: snapshot,
+        stableForMs,
+        iterations: iteration,
+        lastObservation,
+      };
+    }
+  }
+
+  iteration += 1;
+  const timeoutSnapshot = options.isPageClosed()
+    ? null
+    : await options.readSnapshot().catch(() => null);
+  const stableForMs = stableSince === null ? null : Math.max(0, Date.now() - stableSince);
+  lastObservation = await options.observe({
+    iteration,
+    decision: 'timeout',
+    snapshot:
+      timeoutSnapshot ?? {
+        state: null,
+        blocked: true,
+        currentUrl: null,
+      },
+    stableForMs,
+  });
+
+  return {
+    resolved: false,
+    finalDecision: 'timeout',
+    finalSnapshot: timeoutSnapshot,
+    stableForMs,
+    iterations: iteration,
+    lastObservation,
+  };
+}
 
 export async function evaluateStepWithAI(
   options: PlaywrightStepEvaluateOptions

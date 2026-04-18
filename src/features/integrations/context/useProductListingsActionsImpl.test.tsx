@@ -302,6 +302,36 @@ describe('useProductListingsActionsImpl', () => {
     });
   });
 
+  it('skips the invisible preflight for explicit headed Tradera browser relists', async () => {
+    const { result } = renderHook(() =>
+      useProductListingsActionsImpl(
+        buildBaseParams({
+          listings: [
+            {
+              id: 'listing-1',
+              productId: 'product-1',
+              integrationId: 'integration-tradera-1',
+              connectionId: 'connection-tradera-1',
+              integration: { slug: 'tradera' },
+            },
+          ],
+        })
+      )
+    );
+
+    await act(async () => {
+      await result.current.handleRelistTradera('listing-1', {
+        browserMode: 'headed',
+      });
+    });
+
+    expect(preflightTraderaQuickListSessionMock).not.toHaveBeenCalled();
+    expect(relistTraderaMutateAsyncMock).toHaveBeenCalledWith({
+      listingId: 'listing-1',
+      browserMode: 'headed',
+    });
+  });
+
   it('runs fast Tradera quicklist preflight before queueing a Tradera sync', async () => {
     const setSyncingTraderaListing = vi.fn();
     const { result } = renderHook(() =>

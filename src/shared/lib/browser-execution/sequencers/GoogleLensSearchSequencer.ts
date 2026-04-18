@@ -1,7 +1,14 @@
 import type { Frame, Locator, Page } from 'playwright';
-import { z } from 'zod';
 
-import { evaluateStepWithAI } from '@/features/playwright/server/ai-step-service';
+import {
+  captureAndEvaluatePlaywrightObservation,
+  runPlaywrightObservationLoop,
+  type PlaywrightObservationLoopDecision,
+} from '@/features/playwright/server/ai-step-service';
+import {
+  evaluateProductScanVerificationBarrier,
+  type ProductScanVerificationReview as GoogleVerificationReview,
+} from '@/features/products/server/product-scan-ai-evaluator';
 
 import {
   GOOGLE_LENS_FILE_INPUT_SELECTORS,
@@ -59,57 +66,6 @@ const GOOGLE_LENS_CAPTCHA_TEXT_HINTS = [
   'nietypowy ruch pochodzacy z twojej sieci komputerowej',
   'nie jestem robotem',
 ] as const;
-const GOOGLE_VERIFICATION_REVIEW_SYSTEM_PROMPT = [
-  'Inspect the provided browser screenshot and text context.',
-  'Describe the visible Google verification or anti-bot screen conservatively and precisely.',
-  'Transcribe the visible question or instruction text when it is legible.',
-  'Identify the challenge type and how the verification UI is structured.',
-  'Do not solve the challenge, do not suggest bypasses, and do not provide attack guidance.',
-  'State only what is visible and whether manual human verification is required.',
-  'Return only JSON.',
-].join(' ');
-
-const normalizeConfidenceInput = (value: unknown): number => {
-  let parsed = Number.NaN;
-  if (typeof value === 'number') {
-    parsed = value;
-  } else if (typeof value === 'string' && value.trim().length > 0) {
-    parsed = Number(value);
-  }
-
-  if (Number.isFinite(parsed) === false) {
-    return Number.NaN;
-  }
-  if (parsed > 1 && parsed <= 100) {
-    return parsed / 100;
-  }
-  return parsed;
-};
-
-const googleVerificationReviewResponseSchema = z.object({
-  challengeType: z.string().trim().min(1).max(120).nullable().optional().default(null),
-  visibleQuestion: z.string().trim().min(1).max(1_500).nullable().optional().default(null),
-  visibleInstructions: z
-    .array(z.string().trim().min(1).max(500))
-    .max(8)
-    .default([]),
-  uiElements: z
-    .array(z.string().trim().min(1).max(300))
-    .max(12)
-    .default([]),
-  pageSummary: z.string().trim().min(1).max(2_000).nullable().optional().default(null),
-  manualActionRequired: z.boolean().nullable().optional().default(true),
-  confidence: z.preprocess(
-    (value) => {
-      if (value === null || value === undefined || value === '') {
-        return null;
-      }
-      return normalizeConfidenceInput(value);
-    },
-    z.number().min(0).max(1).nullable()
-  ).optional().default(null),
-});
-
 export type GoogleLensSearchProvider =
   | 'google_images_upload'
   | 'google_lens_upload'
@@ -129,28 +85,6 @@ export interface GoogleLensSearchInput {
   imageSearchPageUrl?: string | null;
   allowManualVerification?: boolean;
   manualVerificationTimeoutMs?: number;
-}
-
-export interface GoogleVerificationReview {
-  status: 'analyzed' | 'capture_only' | 'failed';
-  provider: 'google_lens';
-  stage: 'google_captcha';
-  currentUrl: string | null;
-  pageTitle: string | null;
-  pageTextSnippet: string | null;
-  challengeType: string | null;
-  visibleQuestion: string | null;
-  visibleInstructions: string[];
-  uiElements: string[];
-  pageSummary: string | null;
-  manualActionRequired: boolean | null;
-  confidence: number | null;
-  screenshotArtifactName: string | null;
-  htmlArtifactName: string | null;
-  modelId: string | null;
-  brainApplied: Record<string, unknown> | null;
-  error: string | null;
-  evaluatedAt: string | null;
 }
 
 interface GoogleLensSearchScope {
@@ -247,6 +181,39 @@ interface CaptchaState {
   currentUrl: string;
 }
 
+export type GoogleVerificationLoopDecision =
+  | 'captcha_present'
+  | 'awaiting_stable_clear'
+  | 'resolved'
+  | 'page_closed'
+  | 'timeout';
+
+export type GoogleVerificationObservation = GoogleVerificationReview & {
+  iteration: number;
+  observedAt: string | null;
+  loopDecision: GoogleVerificationLoopDecision;
+  captchaDetected: boolean;
+  stableForMs: number | null;
+  fingerprint: string;
+};
+
+const mapGoogleVerificationLoopDecision = (
+  decision: PlaywrightObservationLoopDecision
+): GoogleVerificationLoopDecision => {
+  switch (decision) {
+    case 'blocked':
+      return 'captcha_present';
+    case 'awaiting_stable_clear':
+      return 'awaiting_stable_clear';
+    case 'resolved':
+      return 'resolved';
+    case 'page_closed':
+      return 'page_closed';
+    case 'timeout':
+      return 'timeout';
+  }
+};
+
 export abstract class GoogleLensSearchSequencer<
   TInput extends GoogleLensSearchInput,
 > extends ProductScanSequencer {
@@ -257,7 +224,7 @@ export abstract class GoogleLensSearchSequencer<
   protected readonly CAPTCHA_STABLE_CLEAR_WINDOW_MS = 10_000;
 
   private googleVerificationReview: GoogleVerificationReview | null = null;
-  private googleVerificationReviewFingerprint: string | null = null;
+  private googleVerificationObservations: GoogleVerificationObservation[] = [];
 
   constructor(context: ProductScanSequencerContext, input: TInput) {
     super(context);
@@ -266,6 +233,16 @@ export abstract class GoogleLensSearchSequencer<
 
   protected getGoogleVerificationReview(): GoogleVerificationReview | null {
     return this.googleVerificationReview;
+  }
+
+  protected getGoogleVerificationObservations(): GoogleVerificationObservation[] {
+    return this.googleVerificationObservations.map((observation) => ({
+      ...observation,
+      visibleInstructions: [...observation.visibleInstructions],
+      uiElements: [...observation.uiElements],
+      brainApplied:
+        observation.brainApplied !== null ? { ...observation.brainApplied } : null,
+    }));
   }
 
   protected resolveImageSearchProvider(): GoogleLensSearchProvider {
@@ -679,11 +656,6 @@ export abstract class GoogleLensSearchSequencer<
         ? this.input.manualVerificationTimeoutMs
         : 240_000;
 
-    await this.captureGoogleVerificationReview({
-      candidateId,
-      candidateRank,
-    });
-
     this.upsertScanStep({
       key: 'google_captcha',
       status: allowManual ? 'running' : 'failed',
@@ -695,82 +667,96 @@ export abstract class GoogleLensSearchSequencer<
     });
 
     if (!waitForClear || !allowManual) {
+      await this.captureGoogleVerificationObservation({
+        candidateId,
+        candidateRank,
+        iteration: 1,
+        loopDecision: 'captcha_present',
+        captchaDetected: true,
+        stableForMs: null,
+      });
       return { resolved: false };
     }
 
-    const deadline = Date.now() + timeoutMs;
-    let stableSince: number | null = null;
-
-    while (Date.now() < deadline) {
-      if (this.isPageClosed()) {
-        return { resolved: false };
-      }
-      await this.wait(2_000);
-      if (this.isPageClosed()) {
-        return { resolved: false };
-      }
-      const state = await this.detectGoogleLensCaptcha();
-      if (!state.detected) {
-        if (stableSince === null) {
-          stableSince = Date.now();
-        } else if (Date.now() - stableSince >= this.CAPTCHA_STABLE_CLEAR_WINDOW_MS) {
-          this.upsertScanStep({
-            key: 'google_captcha',
-            status: 'completed',
+    const loopResult =
+      await runPlaywrightObservationLoop<CaptchaState, GoogleVerificationObservation>({
+        timeoutMs,
+        stableClearWindowMs: this.CAPTCHA_STABLE_CLEAR_WINDOW_MS,
+        intervalMs: 2_000,
+        initialSnapshot: {
+          state: null,
+          blocked: true,
+          currentUrl: this.safePageUrl(),
+        },
+        isPageClosed: () => this.isPageClosed(),
+        wait: (ms) => this.wait(ms),
+        readSnapshot: async () => {
+          const state = await this.detectGoogleLensCaptcha();
+          return {
+            state,
+            blocked: state.detected,
+            currentUrl: state.currentUrl,
+          };
+        },
+        observe: async ({ iteration, decision, snapshot, stableForMs }) =>
+          this.captureGoogleVerificationObservation({
             candidateId,
             candidateRank,
-            resultCode: 'captcha_resolved',
-            message: 'Google captcha was resolved and the page is ready again.',
-            url: this.safePageUrl(),
-          });
-          return { resolved: true };
-        }
-      } else {
-        stableSince = null;
-      }
+            iteration,
+            loopDecision: mapGoogleVerificationLoopDecision(decision),
+            captchaDetected: snapshot.blocked,
+            stableForMs,
+            currentUrl: snapshot.currentUrl ?? snapshot.state?.currentUrl ?? this.safePageUrl(),
+          }),
+      });
+
+    if (loopResult.resolved) {
+      this.upsertScanStep({
+        key: 'google_captcha',
+        status: 'completed',
+        candidateId,
+        candidateRank,
+        resultCode: 'captcha_resolved',
+        message: 'Google captcha was resolved and the page is ready again.',
+        url: this.safePageUrl(),
+      });
+      return { resolved: true };
     }
 
-    this.upsertScanStep({
-      key: 'google_captcha',
-      status: 'failed',
-      candidateId,
-      candidateRank,
-      resultCode: 'captcha_timeout',
-      message: 'Google captcha was not resolved within the allowed time.',
-      url: this.safePageUrl(),
-    });
+    if (loopResult.finalDecision === 'timeout') {
+      this.upsertScanStep({
+        key: 'google_captcha',
+        status: 'failed',
+        candidateId,
+        candidateRank,
+        resultCode: 'captcha_timeout',
+        message: 'Google captcha was not resolved within the allowed time.',
+        url: this.safePageUrl(),
+      });
+    }
+
     return { resolved: false };
   }
 
-  private async captureGoogleVerificationReview(params: {
+  private async captureGoogleVerificationObservation(params: {
     candidateId: string;
     candidateRank: number;
-  }): Promise<GoogleVerificationReview | null> {
-    const fingerprint = [
-      params.candidateId,
-      String(params.candidateRank),
-      this.safePageUrl() ?? '',
-    ].join('::');
-
-    if (
-      this.googleVerificationReview !== null &&
-      this.googleVerificationReviewFingerprint === fingerprint
-    ) {
-      return this.googleVerificationReview;
-    }
+    iteration: number;
+    loopDecision: GoogleVerificationLoopDecision;
+    captchaDetected: boolean;
+    stableForMs: number | null;
+    currentUrl?: string | null;
+  }): Promise<GoogleVerificationObservation | null> {
+    const currentUrl = params.currentUrl ?? this.safePageUrl();
+    const previousObservation =
+      this.googleVerificationObservations[this.googleVerificationObservations.length - 1] ?? null;
 
     const artifactKey = [
       'google-verification-review',
       params.candidateId.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
       `rank-${String(params.candidateRank)}`,
+      `iter-${String(params.iteration)}`,
     ].join('-');
-    const currentUrl = this.safePageUrl();
-    const pageTitle = this.normalizeText(await this.page.title().catch(() => null));
-    const pageTextSnippet = this.normalizeText(
-      (
-        await this.page.locator('body').first().textContent().catch(() => null)
-      )?.replace(/\s+/g, ' ').slice(0, 2_500) ?? null
-    );
 
     this.upsertScanStep({
       key: 'google_verification_review',
@@ -781,62 +767,65 @@ export abstract class GoogleLensSearchSequencer<
       url: currentUrl,
     });
 
-    let screenshotBuffer: Buffer | null = null;
-    let screenshotArtifactName: string | null = null;
-    let htmlArtifactName: string | null = null;
+    const { observation, review, deduped } =
+      await captureAndEvaluatePlaywrightObservation<
+        GoogleVerificationReview,
+        GoogleVerificationObservation
+      >({
+        page: this.page,
+        artifacts: this.artifacts,
+        artifactKey,
+        currentUrl,
+        previousObservation,
+        previousFingerprint: previousObservation?.fingerprint ?? null,
+        extraFingerprintParts: [
+          params.candidateId,
+          params.candidateRank,
+          params.loopDecision,
+          params.captchaDetected,
+        ],
+        log: this.log,
+        screenshotFailureLogKey: 'google.verification.review.screenshot_failed',
+        evaluate: async (capture) =>
+          evaluateProductScanVerificationBarrier({
+            provider: 'google_lens',
+            stage: 'google_captcha',
+            currentUrl: capture.currentUrl,
+            pageTitle: capture.pageTitle,
+            pageTextSnippet: capture.pageTextSnippet,
+            screenshotBase64: capture.screenshotBase64,
+            screenshotArtifactName: capture.screenshotArtifactName,
+            htmlArtifactName: capture.htmlArtifactName,
+            objective:
+              'Describe the visible Google verification barrier for manual handling only. Do not solve it.',
+          }),
+        buildObservation: ({ capture, review: nextReview }) => ({
+          ...nextReview,
+          iteration: params.iteration,
+          observedAt: capture.observedAt,
+          loopDecision: params.loopDecision,
+          captchaDetected: params.captchaDetected,
+          stableForMs: params.stableForMs,
+          fingerprint: capture.fingerprint,
+        }),
+      });
 
-    try {
-      screenshotBuffer = await this.page.screenshot({ type: 'png' });
-      if (typeof this.artifacts.file === 'function') {
-        const artifactPath = await this.artifacts.file(artifactKey, screenshotBuffer, {
-          extension: 'png',
-          mimeType: 'image/png',
-          kind: 'screenshot',
-        });
-        screenshotArtifactName = this.normalizeText(
-          typeof artifactPath === 'string' ? artifactPath.split('/').pop() : null
-        );
-      }
-    } catch (error) {
-      this.log('google.verification.review.screenshot_failed', {
-        error: error instanceof Error ? error.message : String(error ?? 'Unknown error'),
+    if (deduped) {
+      return observation;
+    }
+
+    const nextReview = review!;
+
+    if (nextReview.status === 'capture_only' && nextReview.error !== null) {
+      this.log('google.verification.review.analysis_failed', {
+        error: nextReview.error,
       });
     }
 
-    if (typeof this.artifacts.html === 'function') {
-      const htmlArtifact = await this.artifacts.html(artifactKey).catch(() => null);
-      htmlArtifactName = this.normalizeText(
-        typeof htmlArtifact === 'string' ? htmlArtifact.split('/').pop() : null
-      );
-    }
+    this.googleVerificationReview = nextReview;
+    this.googleVerificationObservations.push(observation);
 
-    const baseReview: GoogleVerificationReview = {
-      status: screenshotBuffer !== null ? 'capture_only' : 'failed',
-      provider: 'google_lens',
-      stage: 'google_captcha',
-      currentUrl,
-      pageTitle,
-      pageTextSnippet,
-      challengeType: null,
-      visibleQuestion: null,
-      visibleInstructions: [],
-      uiElements: [],
-      pageSummary: screenshotBuffer !== null
-        ? 'Google verification screen captured for manual review.'
-        : 'Google verification screen could not be captured.',
-      manualActionRequired: true,
-      confidence: null,
-      screenshotArtifactName,
-      htmlArtifactName,
-      modelId: null,
-      brainApplied: null,
-      error: screenshotBuffer !== null ? null : 'Screenshot capture failed.',
-      evaluatedAt: null,
-    };
-
-    if (screenshotBuffer === null) {
-      this.googleVerificationReview = baseReview;
-      this.googleVerificationReviewFingerprint = fingerprint;
+    if (nextReview.status === 'failed') {
       this.upsertScanStep({
         key: 'google_verification_review',
         status: 'failed',
@@ -846,128 +835,49 @@ export abstract class GoogleLensSearchSequencer<
         message: 'Could not capture the Google verification screen for AI review.',
         url: currentUrl,
       });
-      if (typeof this.artifacts.json === 'function') {
-        await this.artifacts.json(`${artifactKey}-analysis`, baseReview).catch(() => undefined);
-      }
-      return baseReview;
-    }
-
-    try {
-      const promptPayload = {
-        objective:
-          'Describe the visible Google verification barrier for manual handling only. Do not solve it.',
-        currentUrl,
-        pageTitle,
-        visibleTextSnippet: pageTextSnippet,
-        returnShape: {
-          challengeType:
-            'string | null',
-          visibleQuestion:
-            'string | null',
-          visibleInstructions: 'string[]',
-          uiElements: 'string[]',
-          pageSummary: 'string | null',
-          manualActionRequired: 'boolean | null',
-          confidence: 'number | null',
-        },
-      };
-      const completion = await evaluateStepWithAI({
-        inputSource: 'screenshot',
-        data: screenshotBuffer.toString('base64'),
-        systemPrompt: [
-          GOOGLE_VERIFICATION_REVIEW_SYSTEM_PROMPT,
-          JSON.stringify(promptPayload, null, 2),
-        ].join('\n\n'),
-      });
-
-      const parsed = googleVerificationReviewResponseSchema.parse(
-        JSON.parse(completion.output) as unknown
-      );
-      const review: GoogleVerificationReview = {
-        status: 'analyzed',
-        provider: 'google_lens',
-        stage: 'google_captcha',
-        currentUrl,
-        pageTitle,
-        pageTextSnippet,
-        challengeType: parsed.challengeType,
-        visibleQuestion: parsed.visibleQuestion,
-        visibleInstructions: parsed.visibleInstructions,
-        uiElements: parsed.uiElements,
-        pageSummary: parsed.pageSummary,
-        manualActionRequired: parsed.manualActionRequired,
-        confidence: parsed.confidence,
-        screenshotArtifactName,
-        htmlArtifactName,
-        modelId: completion.modelId,
-        brainApplied: {
-          capability: 'playwright.ai_evaluator_step',
-          runtimeKind: 'vision',
-          systemPromptApplied: true,
-        },
-        error: null,
-        evaluatedAt: new Date().toISOString(),
-      };
-
-      this.googleVerificationReview = review;
-      this.googleVerificationReviewFingerprint = fingerprint;
-
+    } else {
       this.upsertScanStep({
         key: 'google_verification_review',
         status: 'completed',
         candidateId: params.candidateId,
         candidateRank: params.candidateRank,
-        resultCode: 'manual_review_ready',
-        message: 'Captured and classified the Google verification screen for manual review.',
+        resultCode:
+          nextReview.status === 'analyzed' ? 'manual_review_ready' : 'capture_only',
+        message:
+          nextReview.status === 'analyzed'
+            ? 'Captured and classified the Google verification screen for manual review.'
+            : 'Captured the Google verification screen, but AI review was unavailable.',
+        warning: nextReview.status === 'capture_only' ? nextReview.error : null,
         url: currentUrl,
-        details: this.buildGoogleVerificationReviewDetails(review),
+        details: this.buildGoogleVerificationReviewDetails(observation),
       });
-
-      if (typeof this.artifacts.json === 'function') {
-        await this.artifacts.json(`${artifactKey}-analysis`, review).catch(() => undefined);
-      }
-
-      return review;
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error ?? 'Unknown error');
-      const review: GoogleVerificationReview = {
-        ...baseReview,
-        status: 'capture_only',
-        error: errorMessage,
-      };
-
-      this.log('google.verification.review.analysis_failed', {
-        error: errorMessage,
-      });
-
-      this.googleVerificationReview = review;
-      this.googleVerificationReviewFingerprint = fingerprint;
-
-      this.upsertScanStep({
-        key: 'google_verification_review',
-        status: 'completed',
-        candidateId: params.candidateId,
-        candidateRank: params.candidateRank,
-        resultCode: 'capture_only',
-        message: 'Captured the Google verification screen, but AI review was unavailable.',
-        warning: errorMessage,
-        url: currentUrl,
-        details: this.buildGoogleVerificationReviewDetails(review),
-      });
-
-      if (typeof this.artifacts.json === 'function') {
-        await this.artifacts.json(`${artifactKey}-analysis`, review).catch(() => undefined);
-      }
-
-      return review;
     }
+
+    if (typeof this.artifacts.json === 'function') {
+      await this.artifacts
+        .json(`${artifactKey}-analysis`, nextReview)
+        .catch(() => undefined);
+      await this.artifacts
+        .json('google-verification-review-history', this.googleVerificationObservations)
+        .catch(() => undefined);
+    }
+
+    return observation;
   }
 
   private buildGoogleVerificationReviewDetails(
-    review: GoogleVerificationReview
+    review: GoogleVerificationObservation
   ): Array<{ label: string; value?: string | null }> {
     return [
+      { label: 'Observation iteration', value: String(review.iteration) },
+      { label: 'Loop decision', value: review.loopDecision },
+      { label: 'Observed at', value: review.observedAt },
+      { label: 'Captcha detected', value: String(review.captchaDetected) },
+      {
+        label: 'Stable clear ms',
+        value:
+          typeof review.stableForMs === 'number' ? String(review.stableForMs) : null,
+      },
       { label: 'Review status', value: review.status },
       { label: 'Challenge type', value: review.challengeType },
       { label: 'Visible question', value: review.visibleQuestion },
@@ -1030,10 +940,12 @@ export abstract class GoogleLensSearchSequencer<
     const inputState = await this.resolveGoogleLensFileInput();
     const entryState = await this.describeGoogleLensUploadEntryState(inputState);
     const uploadEntryUrl = this.isGoogleImagesUploadEntryUrl(entryState.currentUrl);
+    const directUploadUrl = this.isGoogleLensDirectUploadUrl(entryState.currentUrl);
     const readyReason = this.resolveGoogleLensOpenReadyReason({
       entryState,
       inputReady: inputState.ready,
       uploadEntryUrl,
+      directUploadUrl,
     });
 
     return {
@@ -1049,6 +961,7 @@ export abstract class GoogleLensSearchSequencer<
     entryState: GoogleLensUploadEntryState;
     inputReady: boolean;
     uploadEntryUrl: boolean;
+    directUploadUrl: boolean;
   }): string | null {
     if (input.entryState.loginDetected) {
       return null;
@@ -1066,6 +979,7 @@ export abstract class GoogleLensSearchSequencer<
         reason: 'image_search_entry',
       },
       { ready: input.entryState.uploadTabSelector !== null, reason: 'upload_tab' },
+      { ready: input.directUploadUrl, reason: 'direct_upload_url' },
       { ready: input.uploadEntryUrl, reason: 'upload_entry_url' },
     ];
 
@@ -1101,6 +1015,11 @@ export abstract class GoogleLensSearchSequencer<
     } catch {
       return false;
     }
+  }
+
+  private isGoogleLensDirectUploadUrl(value: string | null): boolean {
+    const normalized = this.normalizeText(value);
+    return normalized !== null && normalized.startsWith('https://lens.google.com/');
   }
 
   private shouldReopenImageSearchPageAfterConsent(requestedUrl: string): boolean {

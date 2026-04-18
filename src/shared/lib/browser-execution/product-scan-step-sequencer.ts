@@ -97,6 +97,11 @@ export const PRODUCT_SCAN_STEP_REGISTRY = {
     label: 'Collect 1688 supplier candidates',
     group: 'supplier',
   },
+  supplier_verification_review: {
+    key: 'supplier_verification_review',
+    label: 'Inspect supplier verification barrier',
+    group: 'supplier',
+  },
   supplier_open: {
     key: 'supplier_open',
     label: 'Open supplier product page',

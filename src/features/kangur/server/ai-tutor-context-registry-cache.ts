@@ -1,7 +1,7 @@
 import 'server-only';
 
 import type { ContextRegistryRef, ContextRegistryResolutionBundle } from '@/shared/contracts/ai-context-registry';
-import { contextRegistryEngine } from '@/features/ai/server';
+import { contextRegistryEngine } from '@/features/ai/ai-context-registry/server';
 
 // ---------------------------------------------------------------------------
 // In-process TTL cache for context registry bundle resolution.

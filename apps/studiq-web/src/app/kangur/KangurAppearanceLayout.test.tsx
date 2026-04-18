@@ -1,14 +1,25 @@
+import { Children } from 'react';
 import { render, screen } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ReactNode } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 
-const getKangurStorefrontInitialStateMock = vi.fn();
-const getKangurSurfaceBootstrapStyleMock = vi.fn();
-const settingsStoreProviderMock = vi.fn();
-const storefrontAppearanceProviderMock = vi.fn();
+const {
+  getKangurStorefrontInitialStateMock,
+  getKangurSurfaceBootstrapStyleMock,
+  kangurSurfaceHintScriptMock,
+  settingsStoreProviderMock,
+  storefrontAppearanceProviderMock,
+} = vi.hoisted(() => ({
+  getKangurStorefrontInitialStateMock: vi.fn(),
+  getKangurSurfaceBootstrapStyleMock: vi.fn(),
+  kangurSurfaceHintScriptMock: 'window.__kangurSurfaceHint = "<unsafe>&";',
+  settingsStoreProviderMock: vi.fn(),
+  storefrontAppearanceProviderMock: vi.fn(),
+}));
 
 vi.mock('@/features/kangur/server', () => ({
-  KANGUR_SURFACE_HINT_SCRIPT: 'window.__kangurSurfaceHint = true;',
+  KANGUR_SURFACE_HINT_SCRIPT: kangurSurfaceHintScriptMock,
   getKangurStorefrontInitialState: getKangurStorefrontInitialStateMock,
   getKangurSurfaceBootstrapStyle: getKangurSurfaceBootstrapStyleMock,
 }));
@@ -71,7 +82,7 @@ describe('apps/studiq-web KangurAppearanceLayout', () => {
         dark: '{"slot":"dark"}',
       },
     });
-    getKangurSurfaceBootstrapStyleMock.mockReturnValue('--bootstrap-style: 1;');
+    getKangurSurfaceBootstrapStyleMock.mockReturnValue(':root{--bootstrap-style:1;}');
 
     const { default: KangurAppearanceLayout } = await import('./KangurAppearanceLayout');
     const result = await KangurAppearanceLayout({
@@ -107,10 +118,51 @@ describe('apps/studiq-web KangurAppearanceLayout', () => {
     expect(screen.getByTestId('kangur-surface-class-sync')).toBeInTheDocument();
     expect(screen.getByTestId('workspace-child')).toBeInTheDocument();
     expect(container.querySelector('#__KANGUR_SURFACE_BOOTSTRAP__')?.textContent).toBe(
-      '--bootstrap-style: 1;'
+      ':root{--bootstrap-style:1;}'
     );
     expect(container.querySelector('script')?.textContent).toContain(
-      'window.__kangurSurfaceHint = true;'
+      'window.__kangurSurfaceHint'
     );
+  });
+
+  it('escapes inline bootstrap script and style payloads before rendering', async () => {
+    getKangurStorefrontInitialStateMock.mockResolvedValue({
+      initialMode: 'default',
+      initialThemeSettings: {
+        default: null,
+        dawn: null,
+        sunset: null,
+        dark: null,
+      },
+    });
+    getKangurSurfaceBootstrapStyleMock.mockReturnValue('body::before{content:"<unsafe>&";}');
+
+    const { default: KangurAppearanceLayout } = await import('./KangurAppearanceLayout');
+    const result = await KangurAppearanceLayout({
+      children: <div data-testid='workspace-child'>Workspace child</div>,
+    });
+
+    const fragment = result as ReactElement<{ children?: ReactNode }>;
+    const nodes = Children.toArray(fragment.props.children) as Array<
+      ReactElement<{
+        children?: ReactNode;
+        dangerouslySetInnerHTML?: { __html: string };
+        id?: string;
+      }>
+    >;
+    const scriptNode = nodes.find((node) => node.type === 'script');
+    const styleNode = nodes.find((node) => node.props.id === '__KANGUR_SURFACE_BOOTSTRAP__');
+    const inlineScript = scriptNode?.props.dangerouslySetInnerHTML?.__html ?? '';
+    const inlineStyle = styleNode?.props.dangerouslySetInnerHTML?.__html ?? '';
+
+    expect(inlineScript).not.toContain('<');
+    expect(inlineScript).not.toContain('&');
+    expect(inlineScript).toContain('window.__kangurSurfaceHint');
+    expect(inlineScript).toContain('\\u003c');
+    expect(inlineScript).toContain('\\u0026');
+    expect(inlineStyle).not.toContain('<');
+    expect(inlineStyle).not.toContain('&');
+    expect(inlineStyle).toContain('\\u003c');
+    expect(inlineStyle).toContain('\\u0026');
   });
 });

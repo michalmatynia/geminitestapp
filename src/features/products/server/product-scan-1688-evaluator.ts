@@ -1,10 +1,8 @@
 import 'server-only';
 
-import fs from 'fs/promises';
 import path from 'node:path';
 
 import { z } from 'zod';
-import type { ChatCompletionContentPart } from 'openai/resources/chat/completions';
 
 import {
   readPlaywrightEngineArtifact,
@@ -17,15 +15,18 @@ import type {
 } from '@/shared/contracts/product-scans';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
-import { getDiskPathFromPublicPath } from '@/shared/lib/files/file-uploader';
-import { fetchWithOutboundUrlPolicy } from '@/shared/lib/security/outbound-url-policy';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
+import {
+  buildProductScanImagePart,
+  loadProductScanImageSourceAsDataUrl,
+  PRODUCT_SCAN_SUPPORTED_IMAGE_RUNTIME_VENDORS,
+  productScanBufferToDataUrl,
+} from './product-scan-ai-evaluator.shared';
 import type { ProductScanner1688CandidateEvaluatorResolvedConfig } from './product-scanner-settings';
 import type { SupplierScanRuntimeResult } from './product-scans-service.helpers';
 
 const SUPPLIER_EVALUATOR_MAX_REASON_COUNT = 10;
-const SUPPORTED_IMAGE_RUNTIME_VENDORS = new Set(['openai', 'ollama']);
 
 const supplierEvaluatorResponseSchema = z.object({
   sameProduct: z.boolean(),
@@ -73,67 +74,6 @@ const normalizeTextList = (values: Array<string | null | undefined>): string[] =
   }
   return normalized;
 };
-
-const toDataUrl = (content: Buffer, mimeType: string): string =>
-  `data:${mimeType};base64,${content.toString('base64')}`;
-
-const readLocalImageAsDataUrl = async (source: string): Promise<string | null> => {
-  const candidates = [source];
-  if (!path.isAbsolute(source)) {
-    candidates.push(getDiskPathFromPublicPath(source));
-  }
-  if (source.startsWith('/')) {
-    candidates.push(getDiskPathFromPublicPath(source));
-  }
-
-  for (const candidate of candidates) {
-    try {
-      const content = await fs.readFile(candidate);
-      const extension = path.extname(candidate).toLowerCase();
-      const mimeType =
-        extension === '.png'
-          ? 'image/png'
-          : extension === '.webp'
-            ? 'image/webp'
-            : extension === '.gif'
-              ? 'image/gif'
-              : 'image/jpeg';
-      return toDataUrl(content, mimeType);
-    } catch {
-      continue;
-    }
-  }
-
-  return null;
-};
-
-const readRemoteImageAsDataUrl = async (source: string): Promise<string | null> => {
-  const response = await fetchWithOutboundUrlPolicy(source, {
-    method: 'GET',
-    maxRedirects: 3,
-  });
-  if (!response.ok) {
-    return null;
-  }
-  const content = Buffer.from(await response.arrayBuffer());
-  const mimeType = readOptionalString(response.headers.get('content-type')) ?? 'image/jpeg';
-  return toDataUrl(content, mimeType);
-};
-
-const loadImageSourceAsDataUrl = async (source: string): Promise<string | null> => {
-  if (source.startsWith('data:')) {
-    return source;
-  }
-  if (/^https?:\/\//i.test(source)) {
-    return await readRemoteImageAsDataUrl(source);
-  }
-  return await readLocalImageAsDataUrl(source);
-};
-
-const buildImagePart = (dataUrl: string): ChatCompletionContentPart => ({
-  type: 'image_url',
-  image_url: { url: dataUrl },
-});
 
 const resolveArtifactFileNameByKey = (
   run: Pick<PlaywrightEngineRunRecord, 'artifacts'>,
@@ -239,7 +179,7 @@ export const evaluate1688SupplierCandidateMatch = async (input: {
     });
   }
 
-  const productImageDataUrl = await loadImageSourceAsDataUrl(productImageSource).catch((error) => {
+  const productImageDataUrl = await loadProductScanImageSourceAsDataUrl(productImageSource).catch((error) => {
     void ErrorSystem.captureException(error, {
       service: 'product-scan-1688-evaluator',
       action: 'loadProductImage',
@@ -314,7 +254,7 @@ export const evaluate1688SupplierCandidateMatch = async (input: {
     readOptionalString(input.parsedResult.supplierProbe?.heroImageUrl) ??
     readOptionalString(input.parsedResult.supplierDetails?.images?.[0]?.url);
   const heroImageDataUrl = heroImageSource
-    ? await loadImageSourceAsDataUrl(heroImageSource).catch((error) => {
+    ? await loadProductScanImageSourceAsDataUrl(heroImageSource).catch((error) => {
         void ErrorSystem.captureException(error, {
           service: 'product-scan-1688-evaluator',
           action: 'loadSupplierHeroImage',
@@ -391,14 +331,14 @@ export const evaluate1688SupplierCandidateMatch = async (input: {
           .filter(Boolean)
           .join('\n\n'),
       },
-      buildImagePart(productImageDataUrl),
+      buildProductScanImagePart(productImageDataUrl),
     ];
     if (heroImageDataUrl) {
-      userContent.push(buildImagePart(heroImageDataUrl));
+      userContent.push(buildProductScanImagePart(heroImageDataUrl));
     }
     userContent.push(
-      buildImagePart(
-        toDataUrl(
+      buildProductScanImagePart(
+        productScanBufferToDataUrl(
           screenshotArtifact.content,
           readOptionalString(screenshotArtifact.artifact.mimeType) ?? 'image/png'
         )
@@ -427,7 +367,7 @@ export const evaluate1688SupplierCandidateMatch = async (input: {
       ],
     });
 
-    if (!SUPPORTED_IMAGE_RUNTIME_VENDORS.has(completion.vendor)) {
+    if (!PRODUCT_SCAN_SUPPORTED_IMAGE_RUNTIME_VENDORS.has(completion.vendor)) {
       return createSupplierEvaluation({
         status: 'failed',
         sameProduct: null,

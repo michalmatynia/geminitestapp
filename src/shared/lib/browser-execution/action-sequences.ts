@@ -112,6 +112,7 @@ export const ACTION_SEQUENCES: Record<ActionSequenceKey, readonly StepId[]> = {
     'validate',
     'google_lens_open',
     'google_upload',
+    'google_verification_review',
     'google_captcha',
     'google_candidates',
     'amazon_open',

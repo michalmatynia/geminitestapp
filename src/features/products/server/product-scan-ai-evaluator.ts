@@ -1,11 +1,10 @@
 import 'server-only';
 
-import fs from 'fs/promises';
 import path from 'node:path';
 
 import { z } from 'zod';
-import type { ChatCompletionContentPart } from 'openai/resources/chat/completions';
 
+import { evaluateStepWithAI } from '@/features/playwright/server/ai-step-service';
 import {
   readPlaywrightEngineArtifact,
   type PlaywrightEngineRunRecord,
@@ -20,12 +19,14 @@ import type {
 } from '@/shared/contracts/product-scans';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
-import { getDiskPathFromPublicPath } from '@/shared/lib/files/file-uploader';
-import {
-  fetchWithOutboundUrlPolicy,
-} from '@/shared/lib/security/outbound-url-policy';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
+import {
+  buildProductScanImagePart,
+  loadProductScanImageSourceAsDataUrl,
+  PRODUCT_SCAN_SUPPORTED_IMAGE_RUNTIME_VENDORS,
+  productScanBufferToDataUrl,
+} from './product-scan-ai-evaluator.shared';
 import type { ProductScannerAmazonCandidateEvaluatorResolvedConfig } from './product-scanner-settings';
 import type {
   AmazonScanCandidateResult,
@@ -33,7 +34,15 @@ import type {
 } from './product-scans-service.helpers';
 
 const EVALUATOR_MAX_REASON_COUNT = 10;
-const SUPPORTED_IMAGE_RUNTIME_VENDORS = new Set(['openai', 'ollama']);
+const PRODUCT_SCAN_VERIFICATION_REVIEW_SYSTEM_PROMPT = [
+  'Inspect the provided browser screenshot and text context.',
+  'Describe the visible verification or anti-bot screen conservatively and precisely.',
+  'Transcribe the visible question or instruction text when it is legible.',
+  'Identify the challenge type and how the verification UI is structured.',
+  'Do not solve the challenge, do not suggest bypasses, and do not provide attack guidance.',
+  'State only what is visible and whether manual human verification is required.',
+  'Return only JSON.',
+].join(' ');
 const AMAZON_RECOMMENDED_ACTION_VALUES = [
   'accept',
   'reject',
@@ -157,7 +166,149 @@ const amazonCandidateTriageResponseSchema = z.object({
     .default([]),
 });
 
-export type AmazonCandidateTriageEvaluationCandidate = {
+const productScanVerificationReviewResponseSchema = z.object({
+  challengeType: z.string().trim().min(1).max(120).nullable().optional().default(null),
+  visibleQuestion: z.string().trim().min(1).max(1_500).nullable().optional().default(null),
+  visibleInstructions: z.array(z.string().trim().min(1).max(500)).max(8).default([]),
+  uiElements: z.array(z.string().trim().min(1).max(300)).max(12).default([]),
+  pageSummary: z.string().trim().min(1).max(2_000).nullable().optional().default(null),
+  manualActionRequired: z.boolean().nullable().optional().default(true),
+  confidence: z.preprocess(
+    (value) => {
+      if (value === null || value === undefined || value === '') {
+        return null;
+      }
+      return normalizeConfidenceInput(value);
+    },
+    z.number().min(0).max(1).nullable()
+  ).optional().default(null),
+});
+
+export type ProductScanVerificationReview = {
+  status: 'analyzed' | 'capture_only' | 'failed';
+  provider: string;
+  stage: string;
+  currentUrl: string | null;
+  pageTitle: string | null;
+  pageTextSnippet: string | null;
+  challengeType: string | null;
+  visibleQuestion: string | null;
+  visibleInstructions: string[];
+  uiElements: string[];
+  pageSummary: string | null;
+  manualActionRequired: boolean | null;
+  confidence: number | null;
+  screenshotArtifactName: string | null;
+  htmlArtifactName: string | null;
+  modelId: string | null;
+  brainApplied: Record<string, unknown> | null;
+  error: string | null;
+  evaluatedAt: string | null;
+};
+
+export const evaluateProductScanVerificationBarrier = async (input: {
+  provider: string;
+  stage: string;
+  currentUrl: string | null;
+  pageTitle: string | null;
+  pageTextSnippet: string | null;
+  screenshotBase64: string | null;
+  screenshotArtifactName?: string | null;
+  htmlArtifactName?: string | null;
+  objective?: string | null;
+}): Promise<ProductScanVerificationReview> => {
+  const baseReview: ProductScanVerificationReview = {
+    status: input.screenshotBase64 !== null ? 'capture_only' : 'failed',
+    provider: input.provider,
+    stage: input.stage,
+    currentUrl: input.currentUrl,
+    pageTitle: input.pageTitle,
+    pageTextSnippet: input.pageTextSnippet,
+    challengeType: null,
+    visibleQuestion: null,
+    visibleInstructions: [],
+    uiElements: [],
+    pageSummary:
+      input.screenshotBase64 !== null
+        ? 'Verification barrier captured for manual review.'
+        : 'Verification barrier could not be captured.',
+    manualActionRequired: true,
+    confidence: null,
+    screenshotArtifactName: readOptionalString(input.screenshotArtifactName),
+    htmlArtifactName: readOptionalString(input.htmlArtifactName),
+    modelId: null,
+    brainApplied: null,
+    error: input.screenshotBase64 !== null ? null : 'Screenshot capture failed.',
+    evaluatedAt: null,
+  };
+
+  if (input.screenshotBase64 === null) {
+    return baseReview;
+  }
+
+  try {
+    const promptPayload = {
+      objective:
+        readOptionalString(input.objective) ??
+        'Describe the visible verification barrier for manual handling only. Do not solve it.',
+      provider: input.provider,
+      currentUrl: input.currentUrl,
+      pageTitle: input.pageTitle,
+      visibleTextSnippet: input.pageTextSnippet,
+      returnShape: {
+        challengeType: 'string | null',
+        visibleQuestion: 'string | null',
+        visibleInstructions: 'string[]',
+        uiElements: 'string[]',
+        pageSummary: 'string | null',
+        manualActionRequired: 'boolean | null',
+        confidence: 'number | null',
+      },
+    };
+    const completion = await evaluateStepWithAI({
+      inputSource: 'screenshot',
+      data: input.screenshotBase64,
+      systemPrompt: [
+        PRODUCT_SCAN_VERIFICATION_REVIEW_SYSTEM_PROMPT,
+        JSON.stringify(promptPayload, null, 2),
+      ].join('\n\n'),
+    });
+
+    const parsed = productScanVerificationReviewResponseSchema.parse(
+      JSON.parse(completion.output) as unknown
+    );
+
+    return {
+      ...baseReview,
+      status: 'analyzed',
+      challengeType: parsed.challengeType,
+      visibleQuestion: parsed.visibleQuestion,
+      visibleInstructions: parsed.visibleInstructions,
+      uiElements: parsed.uiElements,
+      pageSummary: parsed.pageSummary,
+      manualActionRequired: parsed.manualActionRequired,
+      confidence: parsed.confidence,
+      modelId: completion.modelId,
+      brainApplied: {
+        capability: 'playwright.ai_evaluator_step',
+        runtimeKind: 'vision',
+        systemPromptApplied: true,
+      },
+      error: null,
+      evaluatedAt: new Date().toISOString(),
+    };
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : String(error ?? 'Unknown error');
+    return {
+      ...baseReview,
+      status: 'capture_only',
+      error: errorMessage,
+    };
+  }
+};
+
+export type ProductScanCandidateTriageEvaluationCandidate = {
   url: string;
   rankBefore: number;
   rankAfter: number | null;
@@ -175,7 +326,7 @@ export type AmazonCandidateTriageEvaluationCandidate = {
   mismatchLabels: ProductScanAmazonMismatchLabel[];
 };
 
-export type AmazonCandidateTriageEvaluationResult = {
+export type ProductScanCandidateTriageEvaluationResult = {
   status: 'approved' | 'rejected' | 'skipped' | 'failed';
   stage: 'candidate_triage';
   confidence: number | null;
@@ -186,7 +337,7 @@ export type AmazonCandidateTriageEvaluationResult = {
   mismatchLabels: ProductScanAmazonMismatchLabel[];
   modelId: string | null;
   brainApplied: Record<string, unknown> | null;
-  candidates: AmazonCandidateTriageEvaluationCandidate[];
+  candidates: ProductScanCandidateTriageEvaluationCandidate[];
   keptCandidateUrls: string[];
   provider: string | null;
   error: string | null;
@@ -557,67 +708,6 @@ const resolveDeterministicCandidateLanguageDecision = (
   };
 };
 
-const toDataUrl = (content: Buffer, mimeType: string): string =>
-  `data:${mimeType};base64,${content.toString('base64')}`;
-
-const readLocalImageAsDataUrl = async (source: string): Promise<string | null> => {
-  const candidates = [source];
-  if (path.isAbsolute(source) === false) {
-    candidates.push(getDiskPathFromPublicPath(source));
-  }
-  if (source.startsWith('/')) {
-    candidates.push(getDiskPathFromPublicPath(source));
-  }
-
-  for (const candidate of candidates) {
-    try {
-      const content = await fs.readFile(candidate);
-      const extension = path.extname(candidate).toLowerCase();
-      const mimeType =
-        extension === '.png'
-          ? 'image/png'
-          : extension === '.webp'
-            ? 'image/webp'
-            : extension === '.gif'
-              ? 'image/gif'
-              : 'image/jpeg';
-      return toDataUrl(content, mimeType);
-    } catch {
-      continue;
-    }
-  }
-
-  return null;
-};
-
-const readRemoteImageAsDataUrl = async (source: string): Promise<string | null> => {
-  const response = await fetchWithOutboundUrlPolicy(source, {
-    method: 'GET',
-    maxRedirects: 3,
-  });
-  if (response.ok === false) {
-    return null;
-  }
-  const content = Buffer.from(await response.arrayBuffer());
-  const mimeType = readOptionalString(response.headers.get('content-type')) ?? 'image/jpeg';
-  return toDataUrl(content, mimeType);
-};
-
-const loadImageSourceAsDataUrl = async (source: string): Promise<string | null> => {
-  if (source.startsWith('data:')) {
-    return source;
-  }
-  if (/^https?:\/\//i.test(source) === true) {
-    return await readRemoteImageAsDataUrl(source);
-  }
-  return await readLocalImageAsDataUrl(source);
-};
-
-const buildImagePart = (dataUrl: string): ChatCompletionContentPart => ({
-  type: 'image_url',
-  image_url: { url: dataUrl },
-});
-
 const resolveArtifactFileName = (
   run: Pick<PlaywrightEngineRunRecord, 'artifacts'>,
   matcher: (artifact: PlaywrightEngineRunRecord['artifacts'][number]) => boolean
@@ -805,15 +895,15 @@ const createEvaluationResult = (
 });
 
 const createCandidateTriageEvaluationResult = (
-  input: Omit<AmazonCandidateTriageEvaluationResult, 'evaluatedAt'> & {
+  input: Omit<ProductScanCandidateTriageEvaluationResult, 'evaluatedAt'> & {
     evaluatedAt?: string | null;
   }
-): AmazonCandidateTriageEvaluationResult => ({
+): ProductScanCandidateTriageEvaluationResult => ({
   ...input,
   evaluatedAt: input.evaluatedAt ?? new Date().toISOString(),
 });
 
-export const triageAmazonScanCandidates = async (input: {
+export const evaluateProductScanCandidateTriage = async (input: {
   scan: ProductScanRecord;
   product: ProductWithImages;
   parsedResult: AmazonScanRuntimeResult;
@@ -822,7 +912,7 @@ export const triageAmazonScanCandidates = async (input: {
     { enabled: true }
   >;
   provider: string | null;
-}): Promise<AmazonCandidateTriageEvaluationResult> => {
+}): Promise<ProductScanCandidateTriageEvaluationResult> => {
   const candidates =
     input.parsedResult.candidateResults.length > 0
       ? input.parsedResult.candidateResults
@@ -1188,7 +1278,7 @@ export const triageAmazonScanCandidates = async (input: {
   }
 };
 
-export const evaluateAmazonScanCandidateMatch = async (input: {
+export const evaluateProductScanCandidateMatch = async (input: {
   scan: ProductScanRecord;
   product: ProductWithImages;
   parsedResult: AmazonScanRuntimeResult;
@@ -1342,9 +1432,9 @@ export const evaluateAmazonScanCandidateMatch = async (input: {
     });
   }
 
-  const productImageDataUrl = await loadImageSourceAsDataUrl(productImageSource).catch(async (error) => {
+  const productImageDataUrl = await loadProductScanImageSourceAsDataUrl(productImageSource).catch(async (error) => {
     await ErrorSystem.captureException(error, {
-      service: 'product-scan-amazon-evaluator',
+      service: 'product-scan-ai-evaluator',
       action: 'loadProductImage',
       productId: input.product.id,
       source: productImageSource,
@@ -1375,7 +1465,7 @@ export const evaluateAmazonScanCandidateMatch = async (input: {
         fileName: evidence.heroImageArtifactName,
       }).catch(async (error) => {
         await ErrorSystem.captureException(error, {
-          service: 'product-scan-amazon-evaluator',
+          service: 'product-scan-ai-evaluator',
           action: 'readAmazonHeroImageArtifact',
           productId: input.product.id,
           fileName: evidence.heroImageArtifactName!,
@@ -1384,14 +1474,14 @@ export const evaluateAmazonScanCandidateMatch = async (input: {
       })
     : null;
   const heroImageDataUrl = heroImageArtifact !== null
-    ? toDataUrl(
+    ? productScanBufferToDataUrl(
         heroImageArtifact.content,
         readOptionalString(heroImageArtifact.artifact.mimeType) ?? 'image/png'
       )
     : (typeof evidence.heroImageSource === 'string' && evidence.heroImageSource !== '')
-      ? await loadImageSourceAsDataUrl(evidence.heroImageSource).catch(async (error) => {
+      ? await loadProductScanImageSourceAsDataUrl(evidence.heroImageSource).catch(async (error) => {
           await ErrorSystem.captureException(error, {
-            service: 'product-scan-amazon-evaluator',
+            service: 'product-scan-ai-evaluator',
             action: 'loadAmazonHeroImage',
             productId: input.product.id,
             source: evidence.heroImageSource!,
@@ -1551,14 +1641,14 @@ export const evaluateAmazonScanCandidateMatch = async (input: {
           .filter((v): v is string => v !== null && v !== undefined && v !== '')
           .join('\n\n'),
       },
-      buildImagePart(productImageDataUrl),
+      buildProductScanImagePart(productImageDataUrl),
     ];
     if (heroImageDataUrl !== null) {
-      userContent.push(buildImagePart(heroImageDataUrl));
+      userContent.push(buildProductScanImagePart(heroImageDataUrl));
     }
     userContent.push(
-      buildImagePart(
-        toDataUrl(
+      buildProductScanImagePart(
+        productScanBufferToDataUrl(
           screenshotArtifact.content,
           readOptionalString(screenshotArtifact.artifact.mimeType) ?? 'image/png'
         )
@@ -1582,7 +1672,7 @@ export const evaluateAmazonScanCandidateMatch = async (input: {
       ],
     });
 
-    if (SUPPORTED_IMAGE_RUNTIME_VENDORS.has(completion.vendor) === false) {
+    if (PRODUCT_SCAN_SUPPORTED_IMAGE_RUNTIME_VENDORS.has(completion.vendor) === false) {
       return createEvaluationResult({
         ...evaluationBase,
         status: 'failed',

@@ -6,12 +6,17 @@ import { Children } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReactElement, ReactNode } from 'react';
 
-const { queryProviderMock } = vi.hoisted(() => ({
+const { queryProviderMock, kangurLoadingFallbackMock } = vi.hoisted(() => ({
   queryProviderMock: vi.fn(({ children }: { children: ReactNode }) => <>{children}</>),
+  kangurLoadingFallbackMock: vi.fn(() => <div data-testid='kangur-loading-fallback' />),
 }));
 
 vi.mock('../providers/QueryProvider', () => ({
   StudiqQueryProvider: queryProviderMock,
+}));
+
+vi.mock('../components/KangurLoadingFallback', () => ({
+  default: kangurLoadingFallbackMock,
 }));
 
 describe('apps/studiq-web RootLayout', () => {
@@ -29,6 +34,7 @@ describe('apps/studiq-web RootLayout', () => {
     const bodyElement = htmlElement.props.children as ReactElement<{ children?: ReactNode }>;
     const suspenseElement = Children.only(bodyElement.props.children) as ReactElement<{
       children?: ReactNode;
+      fallback?: ReactNode;
     }>;
     const queryProviderElement = Children.only(suspenseElement.props.children) as ReactElement<{
       children?: ReactNode;
@@ -41,5 +47,6 @@ describe('apps/studiq-web RootLayout', () => {
     expect(htmlElement.props.lang).toBe('pl');
     expect(queryProviderElement.type).toBe(queryProviderMock);
     expect(mainElement.props.id).toBe('kangur-main-content');
+    expect((suspenseElement.props.fallback as ReactElement).type).toBe(kangurLoadingFallbackMock);
   });
 });

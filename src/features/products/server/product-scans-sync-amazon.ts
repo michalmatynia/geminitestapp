@@ -29,8 +29,8 @@ import { productService } from '@/shared/lib/products/services/productService';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import {
-  evaluateAmazonScanCandidateMatch,
-} from './product-scan-amazon-evaluator';
+  evaluateProductScanCandidateMatch,
+} from './product-scan-ai-evaluator';
 import {
   resolveDetectedAmazonAsinOutcome,
 } from './product-scan-amazon.helpers';
@@ -751,7 +751,7 @@ export async function synchronizeAmazonProductScan(
     try {
       const evaluatorConfig = await resolveAmazonExtractionEvaluatorConfig(scannerSettings);
       if (evaluatorConfig.enabled && !isApprovedAmazonCandidateExtractionRun(scan)) {
-        amazonEvaluation = await evaluateAmazonScanCandidateMatch({
+      amazonEvaluation = await evaluateProductScanCandidateMatch({
           scan,
           product,
           parsedResult,

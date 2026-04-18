@@ -665,6 +665,7 @@ describe('ProductListingActions', () => {
                 pendingExecution: {
                   requestedBrowserMode: 'headed',
                   requestId: 'job-tradera-1',
+                  queuedAt: new Date().toISOString(),
                 },
               },
             },
@@ -675,6 +676,50 @@ describe('ProductListingActions', () => {
 
     expect(screen.getByRole('button', { name: 'Queued headed relist' })).toBeDisabled();
   });
+
+  it.each(['queued_relist', 'running'])(
+    'allows retry when a persisted %s Tradera relist is stale',
+    async (status) => {
+      const queuedAt = new Date(Date.now() - 16 * 60 * 1000).toISOString();
+
+      render(
+        <ProductListingActions
+          listing={
+            {
+              id: 'listing-1',
+              status,
+              integrationId: 'integration-1',
+              connectionId: 'connection-1',
+              integration: {
+                name: 'Tradera',
+                slug: 'tradera',
+              },
+              marketplaceData: {
+                tradera: {
+                  pendingExecution: {
+                    action: 'relist',
+                    requestedBrowserMode: 'headed',
+                    requestId: 'job-tradera-stale',
+                    queuedAt,
+                  },
+                },
+              },
+            } as never
+          }
+        />
+      );
+
+      const relistButton = screen.getByRole('button', { name: 'Relist now' });
+      expect(relistButton).toBeEnabled();
+
+      fireEvent.click(relistButton);
+      await Promise.resolve();
+
+      expect(handleRelistTradera).toHaveBeenCalledWith('listing-1', {
+        browserMode: 'headed',
+      });
+    }
+  );
 
   it('shows headed and headless relist actions for Playwright programmable listings', () => {
     render(

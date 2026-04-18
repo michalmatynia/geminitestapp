@@ -10,7 +10,7 @@
  * shells and bootstrapping scripts. Ensure server-rendered shells include
  * accessible landmarks, meta tags, and skip links when composing responses.
  */
-import { contextRegistryEngine } from '@/features/ai/server';
+import { contextRegistryEngine } from '@/features/ai/ai-context-registry/server';
 import { kangurRuntimeContextProvider } from '@/features/kangur/server/context-registry/kangur-ai-context-provider';
 import { registerSettingsProvider } from '@/shared/lib/db/settings-registry';
 import {

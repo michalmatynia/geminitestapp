@@ -15,21 +15,32 @@ export default async function run({
   log,
   helpers,
 }) {
-  // tradera-quicklist-default:v144
+  // tradera-quicklist-default:v145
   const ACTIVE_URL = 'https://www.tradera.com/en/my/listings?tab=active';
   const DIRECT_SELL_URL = 'https://www.tradera.com/en/selling/new';
-  const LEGACY_SELL_URL = 'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts';
+  const TRADERA_ALLOWED_PAGE_HOSTS = ['www.tradera.com', 'tradera.com'];
   const configuredSellUrl =
     typeof input?.traderaConfig?.listingFormUrl === 'string' &&
     input.traderaConfig.listingFormUrl.trim()
       ? input.traderaConfig.listingFormUrl.trim()
       : null;
-  const normalizedConfiguredSellUrl =
-    configuredSellUrl === LEGACY_SELL_URL ? DIRECT_SELL_URL : configuredSellUrl;
-  const TRADERA_ALLOWED_PAGE_HOSTS = ['www.tradera.com', 'tradera.com'];
+  const normalizeSellUrl = (value) => {
+    if (!value) return null;
+    try {
+      const parsed = new URL(value, DIRECT_SELL_URL);
+      if (!TRADERA_ALLOWED_PAGE_HOSTS.includes(parsed.host.toLowerCase())) return null;
+      if (!/^\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?selling\/new\/?$/i.test(parsed.pathname)) {
+        return null;
+      }
+      return parsed.href;
+    } catch {
+      return null;
+    }
+  };
+  const normalizedConfiguredSellUrl = normalizeSellUrl(configuredSellUrl);
   const SELL_URL_CANDIDATES = Array.from(
     new Set(
-      [normalizedConfiguredSellUrl, DIRECT_SELL_URL, LEGACY_SELL_URL].filter(
+      [normalizedConfiguredSellUrl, DIRECT_SELL_URL].filter(
         (value) => typeof value === 'string' && value.trim().length > 0
       )
     )

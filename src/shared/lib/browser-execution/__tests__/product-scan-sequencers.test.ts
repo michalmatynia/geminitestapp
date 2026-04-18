@@ -17,6 +17,46 @@ import {
   type Supplier1688ScanInput,
 } from '../sequencers/Supplier1688ScanSequencer';
 
+const makeDefaultVerificationReview = () => ({
+  status: 'analyzed' as const,
+  provider: 'google_lens',
+  stage: 'google_captcha',
+  currentUrl: 'https://www.google.com/sorry/index',
+  pageTitle: null,
+  pageTextSnippet: null,
+  challengeType: 'captcha',
+  visibleQuestion: 'Verify you are human',
+  visibleInstructions: [],
+  uiElements: ['captcha form'],
+  pageSummary: 'Verification barrier detected.',
+  manualActionRequired: true,
+  confidence: 0.9,
+  screenshotArtifactName: 'google-verification-review.png',
+  htmlArtifactName: 'google-verification-review.html',
+  modelId: 'gemma',
+  brainApplied: { capability: 'playwright.ai_evaluator_step' },
+  error: null,
+  evaluatedAt: '2026-04-18T00:00:00.000Z',
+});
+
+const mocks = {
+  evaluateProductScanVerificationBarrier: vi
+    .fn()
+    .mockResolvedValue(makeDefaultVerificationReview()),
+};
+
+vi.mock('@/features/products/server/product-scan-ai-evaluator', async () => {
+  const actual = await vi.importActual<typeof import('@/features/products/server/product-scan-ai-evaluator')>(
+    '@/features/products/server/product-scan-ai-evaluator'
+  );
+
+  return {
+    ...actual,
+    evaluateProductScanVerificationBarrier: (...args: unknown[]) =>
+      mocks.evaluateProductScanVerificationBarrier(...args),
+  };
+});
+
 // ─── Shared mock page factory ─────────────────────────────────────────────────
 
 function makeMockPage(overrides: Partial<Page> = {}): Page {
@@ -46,6 +86,7 @@ function makeMockPage(overrides: Partial<Page> = {}): Page {
     reload: vi.fn().mockResolvedValue(undefined),
     title: vi.fn().mockResolvedValue(''),
     waitForLoadState: vi.fn().mockResolvedValue(undefined),
+    screenshot: vi.fn().mockResolvedValue(Buffer.from('mock-screenshot')),
     mainFrame: vi.fn().mockReturnValue({ url: () => 'https://images.google.com/' }),
     frames: vi.fn().mockReturnValue([]),
     locator: vi.fn().mockImplementation(locatorMock),
@@ -68,6 +109,7 @@ function makeContext(pageOverrides: Partial<Page> = {}): ProductScanSequencerCon
     emit: vi.fn((type, payload) => { emitted.push({ type, payload }); }),
     log: vi.fn(),
     artifacts: {
+      file: vi.fn().mockResolvedValue('/tmp/google-verification-review.png'),
       json: vi.fn().mockResolvedValue(undefined),
       screenshot: vi.fn().mockResolvedValue(undefined),
       html: vi.fn().mockResolvedValue(undefined),
@@ -270,6 +312,13 @@ describe('ProductScanSequencer', () => {
     const step = payload.steps.find((s) => s.key === 'validate');
     expect(step!.durationMs).toBeGreaterThanOrEqual(0);
   });
+});
+
+beforeEach(() => {
+  mocks.evaluateProductScanVerificationBarrier.mockReset();
+  mocks.evaluateProductScanVerificationBarrier.mockResolvedValue(
+    makeDefaultVerificationReview()
+  );
 });
 
 // ─── AmazonScanSequencer ──────────────────────────────────────────────────────
@@ -865,6 +914,221 @@ describe('AmazonScanSequencer', () => {
     expect(payload.stage).toBe('google_captcha');
     expect(payload.status).toBe('captcha_required');
     expect(payload.currentUrl).toContain('google.com/sorry');
+  });
+
+  it('captures verification observations across the captcha loop and dedupes identical screens', async () => {
+    const dateSpy = vi.spyOn(Date, 'now');
+    let fakeNow = 1_000_000;
+    dateSpy.mockImplementation(() => fakeNow);
+
+    const captchaUrl = 'https://www.google.com/sorry/index';
+    const clearUrl = 'https://lens.google.com/search?p=cleared';
+    let currentUrl = captchaUrl;
+    const makeLocator = (textContent: string | null) => ({
+      count: vi.fn().mockResolvedValue(1),
+      isVisible: vi.fn().mockResolvedValue(true),
+      click: vi.fn().mockResolvedValue(undefined),
+      first: vi.fn().mockReturnThis(),
+      nth: vi.fn().mockReturnThis(),
+      evaluateAll: vi.fn().mockResolvedValue([]),
+      setInputFiles: vi.fn().mockResolvedValue(undefined),
+      waitFor: vi.fn().mockRejectedValue(new Error('timeout')),
+      textContent: vi.fn().mockResolvedValue(textContent),
+    });
+    const ctx = makeContext({
+      url: vi.fn(() => currentUrl),
+      title: vi.fn().mockImplementation(async () =>
+        currentUrl === captchaUrl ? 'Google verification' : 'Google Lens results'
+      ),
+      locator: vi.fn().mockImplementation((selector: string) => {
+        if (selector === 'body') {
+          return makeLocator(
+            currentUrl === captchaUrl
+              ? 'Verify you are human before continuing.'
+              : 'Lens results are ready.'
+          );
+        }
+        return makeLocator(null);
+      }),
+    });
+    ctx.helpers.sleep = vi.fn().mockImplementation(async (ms: number) => {
+      fakeNow += ms;
+    });
+
+    mocks.evaluateProductScanVerificationBarrier.mockImplementation(
+      async (input: {
+        currentUrl: string | null;
+        pageTitle: string | null;
+        pageTextSnippet: string | null;
+        screenshotArtifactName?: string | null;
+        htmlArtifactName?: string | null;
+      }) => ({
+        ...makeDefaultVerificationReview(),
+        currentUrl: input.currentUrl,
+        pageTitle: input.pageTitle,
+        pageTextSnippet: input.pageTextSnippet,
+        visibleQuestion:
+          input.currentUrl === captchaUrl ? 'Verify you are human' : 'Search results ready',
+        pageSummary:
+          input.currentUrl === captchaUrl
+            ? 'Captcha is still visible.'
+            : 'Captcha is gone and Lens results are visible.',
+        screenshotArtifactName: input.screenshotArtifactName ?? null,
+        htmlArtifactName: input.htmlArtifactName ?? null,
+      })
+    );
+
+    try {
+      const seq = new AmazonScanSequencer(ctx, {
+        allowManualVerification: true,
+        manualVerificationTimeoutMs: 12_000,
+      });
+      Object.defineProperty(seq, 'CAPTCHA_STABLE_CLEAR_WINDOW_MS', {
+        value: 2_000,
+        configurable: true,
+      });
+
+      (seq as any).detectGoogleLensCaptcha = vi
+        .fn()
+        .mockImplementationOnce(async () => ({ detected: true, currentUrl }))
+        .mockImplementationOnce(async () => {
+          currentUrl = clearUrl;
+          return { detected: false, currentUrl };
+        })
+        .mockImplementationOnce(async () => ({ detected: false, currentUrl }));
+
+      const result = await (seq as any).handleGoogleCaptcha({
+        candidateId: 'img-1',
+        candidateRank: 1,
+        waitForClear: true,
+      });
+
+      expect(result).toEqual({ resolved: true });
+      expect(mocks.evaluateProductScanVerificationBarrier).toHaveBeenCalledTimes(3);
+      expect(ctx.artifacts.file).toHaveBeenCalledTimes(3);
+      expect(ctx.artifacts.html).toHaveBeenCalledTimes(3);
+      expect(ctx.artifacts.json).toHaveBeenCalledWith(
+        'google-verification-review-history',
+        expect.arrayContaining([
+          expect.objectContaining({ loopDecision: 'captcha_present', iteration: 1 }),
+          expect.objectContaining({ loopDecision: 'awaiting_stable_clear' }),
+          expect.objectContaining({ loopDecision: 'resolved' }),
+        ])
+      );
+
+      const observations = (seq as any).getGoogleVerificationObservations() as Array<{
+        loopDecision: string;
+        iteration: number;
+        captchaDetected: boolean;
+      }>;
+      expect(observations).toHaveLength(3);
+      expect(observations.map((entry) => entry.loopDecision)).toEqual([
+        'captcha_present',
+        'awaiting_stable_clear',
+        'resolved',
+      ]);
+      expect(observations[0]).toEqual(
+        expect.objectContaining({ iteration: 1, captchaDetected: true })
+      );
+      expect(observations[2]).toEqual(
+        expect.objectContaining({ captchaDetected: false })
+      );
+    } finally {
+      dateSpy.mockRestore();
+    }
+  });
+
+  it('records a timeout observation and emits the observation history in the result payload', async () => {
+    const dateSpy = vi.spyOn(Date, 'now');
+    let fakeNow = 2_000_000;
+    dateSpy.mockImplementation(() => fakeNow);
+
+    const currentUrl = 'https://www.google.com/sorry/index';
+    const makeLocator = (textContent: string | null) => ({
+      count: vi.fn().mockResolvedValue(1),
+      isVisible: vi.fn().mockResolvedValue(true),
+      click: vi.fn().mockResolvedValue(undefined),
+      first: vi.fn().mockReturnThis(),
+      nth: vi.fn().mockReturnThis(),
+      evaluateAll: vi.fn().mockResolvedValue([]),
+      setInputFiles: vi.fn().mockResolvedValue(undefined),
+      waitFor: vi.fn().mockRejectedValue(new Error('timeout')),
+      textContent: vi.fn().mockResolvedValue(textContent),
+    });
+    const ctx = makeContext({
+      url: vi.fn().mockReturnValue(currentUrl),
+      title: vi.fn().mockResolvedValue('Google verification'),
+      locator: vi.fn().mockImplementation((selector: string) => {
+        if (selector === 'body') {
+          return makeLocator('Verify you are human before continuing.');
+        }
+        return makeLocator(null);
+      }),
+    });
+    ctx.helpers.sleep = vi.fn().mockImplementation(async (ms: number) => {
+      fakeNow += ms;
+    });
+
+    mocks.evaluateProductScanVerificationBarrier.mockImplementation(
+      async (input: {
+        currentUrl: string | null;
+        pageTitle: string | null;
+        pageTextSnippet: string | null;
+        screenshotArtifactName?: string | null;
+        htmlArtifactName?: string | null;
+      }) => ({
+        ...makeDefaultVerificationReview(),
+        currentUrl: input.currentUrl,
+        pageTitle: input.pageTitle,
+        pageTextSnippet: input.pageTextSnippet,
+        screenshotArtifactName: input.screenshotArtifactName ?? null,
+        htmlArtifactName: input.htmlArtifactName ?? null,
+      })
+    );
+
+    try {
+      const seq = new AmazonScanSequencer(ctx, {
+        allowManualVerification: true,
+        manualVerificationTimeoutMs: 4_000,
+      });
+
+      (seq as any).detectGoogleLensCaptcha = vi
+        .fn()
+        .mockResolvedValue({ detected: true, currentUrl });
+
+      const result = await (seq as any).handleGoogleCaptcha({
+        candidateId: 'img-1',
+        candidateRank: 1,
+        waitForClear: true,
+      });
+
+      expect(result).toEqual({ resolved: false });
+      expect(mocks.evaluateProductScanVerificationBarrier).toHaveBeenCalledTimes(2);
+      expect(ctx.artifacts.file).toHaveBeenCalledTimes(2);
+
+      await (seq as any).emitResult({
+        status: 'captcha_required',
+        stage: 'google_captcha',
+      });
+
+      const payload = (ctx.emit as ReturnType<typeof vi.fn>).mock.calls[0][1] as {
+        googleVerificationReview: { loopDecision?: string } | null;
+        googleVerificationObservations: Array<{ loopDecision: string }>;
+      };
+      expect(payload.googleVerificationReview).toEqual(
+        expect.objectContaining({})
+      );
+      expect(payload.googleVerificationObservations).toHaveLength(2);
+      expect(payload.googleVerificationObservations.map((entry) => entry.loopDecision)).toEqual([
+        'captcha_present',
+        'timeout',
+      ]);
+      expect(payload.googleVerificationObservations[1]).toEqual(
+        expect.objectContaining({ loopDecision: 'timeout' })
+      );
+    } finally {
+      dateSpy.mockRestore();
+    }
   });
 
   it('treats a closed Google sorry page as a captcha transition', async () => {
@@ -1554,6 +1818,239 @@ describe('Supplier1688ScanSequencer', () => {
         .detect1688AccessBarrier('1688_open');
       expect(barrier.blocked).toBe(true);
       expect(barrier.barrierKind).toBe('login');
+    });
+  });
+
+  describe('handle1688Captcha', () => {
+    it('uses the shared observation loop and emits supplier verification observations when recovery succeeds', async () => {
+      const dateSpy = vi.spyOn(Date, 'now');
+      let fakeNow = 3_000_000;
+      dateSpy.mockImplementation(() => fakeNow);
+
+      const blockedUrl = 'https://s.1688.com/youyuan/index.htm?tab=imageSearch';
+      const recoveredUrl = 'https://detail.1688.com/offer/123456789.html';
+      let currentUrl = blockedUrl;
+      const makeLocator = (textContent: string | null) => ({
+        count: vi.fn().mockResolvedValue(1),
+        isVisible: vi.fn().mockResolvedValue(true),
+        click: vi.fn().mockResolvedValue(undefined),
+        first: vi.fn().mockReturnThis(),
+        nth: vi.fn().mockReturnThis(),
+        evaluateAll: vi.fn().mockResolvedValue([]),
+        setInputFiles: vi.fn().mockResolvedValue(undefined),
+        waitFor: vi.fn().mockRejectedValue(new Error('timeout')),
+        textContent: vi.fn().mockResolvedValue(textContent),
+        innerText: vi.fn().mockResolvedValue(textContent),
+      });
+      const ctx = makeContext({
+        url: vi.fn(() => currentUrl),
+        title: vi.fn().mockImplementation(async () =>
+          currentUrl === blockedUrl ? '1688 verification' : '1688 supplier page'
+        ),
+        locator: vi.fn().mockImplementation((selector: string) => {
+          if (selector === 'body') {
+            return makeLocator(
+              currentUrl === blockedUrl
+                ? '请完成验证后继续访问'
+                : '商品信息 起订量 供应商'
+            );
+          }
+          return makeLocator(null);
+        }),
+      });
+      ctx.helpers.sleep = vi.fn().mockImplementation(async (ms: number) => {
+        fakeNow += ms;
+      });
+
+      mocks.evaluateProductScanVerificationBarrier.mockImplementation(
+        async (input: {
+          provider: string;
+          stage: string;
+          currentUrl: string | null;
+          pageTitle: string | null;
+          pageTextSnippet: string | null;
+          screenshotArtifactName?: string | null;
+          htmlArtifactName?: string | null;
+        }) => ({
+          ...makeDefaultVerificationReview(),
+          provider: input.provider,
+          stage: input.stage,
+          currentUrl: input.currentUrl,
+          pageTitle: input.pageTitle,
+          pageTextSnippet: input.pageTextSnippet,
+          challengeType: input.currentUrl === blockedUrl ? 'captcha' : 'clear_page',
+          visibleQuestion:
+            input.currentUrl === blockedUrl ? '请完成验证后继续访问' : 'Barrier appears cleared',
+          pageSummary:
+            input.currentUrl === blockedUrl
+              ? '1688 verification barrier is visible.'
+              : '1688 barrier appears cleared and the supplier page is ready.',
+          screenshotArtifactName: input.screenshotArtifactName ?? null,
+          htmlArtifactName: input.htmlArtifactName ?? null,
+        })
+      );
+
+      try {
+        const seq = new Supplier1688ScanSequencer(ctx, {
+          allowManualVerification: true,
+          manualVerificationTimeoutMs: 12_000,
+        });
+
+        (seq as any).detect1688AccessBarrier = vi
+          .fn()
+          .mockResolvedValueOnce({
+            blocked: true,
+            barrierKind: 'captcha',
+            currentUrl: blockedUrl,
+            message:
+              '1688 requested captcha verification. Solve it in the opened browser window and the scan will continue automatically.',
+          })
+          .mockResolvedValueOnce({
+            blocked: true,
+            barrierKind: 'captcha',
+            currentUrl: blockedUrl,
+            message:
+              '1688 requested captcha verification. Solve it in the opened browser window and the scan will continue automatically.',
+          })
+          .mockResolvedValueOnce({
+            blocked: false,
+            barrierKind: null,
+            currentUrl: blockedUrl,
+            message: null,
+          });
+        (seq as any).attempt1688PostCaptchaRecovery = vi.fn().mockImplementation(async () => {
+          currentUrl = recoveredUrl;
+          return {
+            ready: true,
+            currentUrl: recoveredUrl,
+            reason: 'supplier_page_ready',
+            message: '1688 supplier page is ready.',
+            supplierReadySelector: '.offer-detail',
+          };
+        });
+
+        const result = await (seq as any).handle1688Captcha(
+          'supplier_open',
+          { candidateId: 'img-1', candidateRank: 1 },
+          recoveredUrl
+        );
+
+        expect(result).toEqual(
+          expect.objectContaining({
+            resolved: true,
+            captchaEncountered: true,
+            captchaRequired: false,
+            currentUrl: recoveredUrl,
+            failureCode: null,
+          })
+        );
+        expect(ctx.artifacts.file).toHaveBeenCalledTimes(2);
+
+        await (seq as any).emitResult({
+          status: 'running',
+          stage: 'supplier_open',
+        });
+        const payload = (ctx.emit as ReturnType<typeof vi.fn>).mock.calls[0][1] as {
+          supplierVerificationReview: { provider: string } | null;
+          supplierVerificationObservations: Array<{ loopDecision: string; barrierKind: string | null }>;
+        };
+        expect(payload.supplierVerificationReview).toEqual(
+          expect.objectContaining({ provider: '1688' })
+        );
+        expect(payload.supplierVerificationObservations).toHaveLength(2);
+        expect(payload.supplierVerificationObservations.map((entry) => entry.loopDecision)).toEqual([
+          'blocked',
+          'resolved',
+        ]);
+        expect(payload.supplierVerificationObservations[0]).toEqual(
+          expect.objectContaining({ barrierKind: 'captcha' })
+        );
+      } finally {
+        dateSpy.mockRestore();
+      }
+    });
+
+    it('returns post_captcha_reupload_required when 1688 recovery lands back on the search entry page', async () => {
+      const dateSpy = vi.spyOn(Date, 'now');
+      let fakeNow = 4_000_000;
+      dateSpy.mockImplementation(() => fakeNow);
+
+      const blockedUrl = 'https://s.1688.com/youyuan/index.htm?tab=imageSearch';
+      const recoveryUrl = blockedUrl;
+      const makeLocator = (textContent: string | null) => ({
+        count: vi.fn().mockResolvedValue(1),
+        isVisible: vi.fn().mockResolvedValue(true),
+        click: vi.fn().mockResolvedValue(undefined),
+        first: vi.fn().mockReturnThis(),
+        nth: vi.fn().mockReturnThis(),
+        evaluateAll: vi.fn().mockResolvedValue([]),
+        setInputFiles: vi.fn().mockResolvedValue(undefined),
+        waitFor: vi.fn().mockRejectedValue(new Error('timeout')),
+        textContent: vi.fn().mockResolvedValue(textContent),
+        innerText: vi.fn().mockResolvedValue(textContent),
+      });
+      const ctx = makeContext({
+        url: vi.fn().mockReturnValue(blockedUrl),
+        title: vi.fn().mockResolvedValue('1688 verification'),
+        locator: vi.fn().mockImplementation((selector: string) => {
+          if (selector === 'body') {
+            return makeLocator('请完成验证后继续访问');
+          }
+          return makeLocator(null);
+        }),
+      });
+      ctx.helpers.sleep = vi.fn().mockImplementation(async (ms: number) => {
+        fakeNow += ms;
+      });
+
+      try {
+        const seq = new Supplier1688ScanSequencer(ctx, {
+          allowManualVerification: true,
+          manualVerificationTimeoutMs: 12_000,
+        });
+
+        (seq as any).detect1688AccessBarrier = vi
+          .fn()
+          .mockResolvedValueOnce({
+            blocked: true,
+            barrierKind: 'captcha',
+            currentUrl: blockedUrl,
+            message:
+              '1688 requested captcha verification. Solve it in the opened browser window and the scan will continue automatically.',
+          })
+          .mockResolvedValueOnce({
+            blocked: false,
+            barrierKind: null,
+            currentUrl: blockedUrl,
+            message: null,
+          });
+        (seq as any).attempt1688PostCaptchaRecovery = vi.fn().mockResolvedValue({
+          ready: true,
+          currentUrl: recoveryUrl,
+          reason: 'returned_to_search_entry',
+          message:
+            '1688 returned to the image-search entry page after captcha. Re-uploading the product image.',
+          entrySelector: '.upload-entry',
+        });
+
+        const result = await (seq as any).handle1688Captcha(
+          '1688_upload',
+          { candidateId: 'img-1', candidateRank: 1 },
+          null
+        );
+
+        expect(result).toEqual(
+          expect.objectContaining({
+            resolved: true,
+            captchaEncountered: true,
+            captchaRequired: false,
+            failureCode: 'post_captcha_reupload_required',
+            currentUrl: recoveryUrl,
+          })
+        );
+      } finally {
+        dateSpy.mockRestore();
+      }
     });
   });
 

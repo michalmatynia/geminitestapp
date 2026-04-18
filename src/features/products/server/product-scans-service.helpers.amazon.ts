@@ -41,8 +41,8 @@ import {
 } from '@/shared/lib/browser-execution/amazon-runtime-constants';
 
 import {
-  type AmazonCandidateTriageEvaluationResult,
-} from './product-scan-amazon-evaluator';
+  type ProductScanCandidateTriageEvaluationResult,
+} from './product-scan-ai-evaluator';
 import {
   type ProductScannerAmazonCandidateEvaluatorResolvedConfig,
   resolveProductScannerAmazonCandidateEvaluatorConfig,
@@ -183,7 +183,7 @@ export const buildAmazonEvaluationStageSummary = (
 });
 
 export const buildAmazonCandidateTriageStageSummary = (
-  evaluation: AmazonCandidateTriageEvaluationResult,
+  evaluation: ProductScanCandidateTriageEvaluationResult,
   provider: string | null
 ): AmazonAiStageSummary => ({
   stage: 'candidate_triage',
@@ -510,7 +510,7 @@ export const resolveAmazonEvaluationStepStatus = (
 };
 
 export const resolveAmazonCandidateTriageStepStatus = (
-  evaluation: AmazonCandidateTriageEvaluationResult | null | undefined
+  evaluation: ProductScanCandidateTriageEvaluationResult | null | undefined
 ): ProductScanRecord['steps'][number]['status'] => {
   if (evaluation === undefined || evaluation === null) {
     return 'failed';
@@ -525,7 +525,7 @@ export const resolveAmazonCandidateTriageStepStatus = (
 };
 
 export const resolveAmazonCandidateTriageStepResultCode = (
-  evaluation: AmazonCandidateTriageEvaluationResult | null | undefined
+  evaluation: ProductScanCandidateTriageEvaluationResult | null | undefined
 ): string => {
   if (evaluation === undefined || evaluation === null) {
     return 'triage_failed';
@@ -543,7 +543,7 @@ export const resolveAmazonCandidateTriageStepResultCode = (
 };
 
 export const resolveAmazonCandidateTriageMessage = (
-  evaluation: AmazonCandidateTriageEvaluationResult | null | undefined
+  evaluation: ProductScanCandidateTriageEvaluationResult | null | undefined
 ): string => {
   if (evaluation === undefined || evaluation === null) {
     return 'Amazon candidate triage failed.';
@@ -1050,7 +1050,7 @@ export const buildAmazonEvaluationStepDetails = (
 ];
 
 export const buildAmazonCandidateTriageStepDetails = (
-  evaluation: AmazonCandidateTriageEvaluationResult,
+  evaluation: ProductScanCandidateTriageEvaluationResult,
   evaluatorConfig: ProductScannerAmazonCandidateEvaluatorResolvedConfig,
   provider: string | null
 ): Array<{ label: string; value: string | null }> => [

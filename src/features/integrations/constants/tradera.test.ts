@@ -5,7 +5,6 @@ import {
   normalizeTraderaListingFormUrl,
   resolveTraderaSystemSettings,
   TRADERA_DIRECT_LISTING_FORM_URL,
-  TRADERA_LEGACY_LISTING_FORM_URL,
 } from './tradera';
 
 describe('tradera listing form url normalization', () => {
@@ -13,7 +12,9 @@ describe('tradera listing form url normalization', () => {
     expect(normalizeTraderaListingFormUrl(TRADERA_DIRECT_LISTING_FORM_URL)).toBe(
       TRADERA_DIRECT_LISTING_FORM_URL
     );
-    expect(normalizeTraderaListingFormUrl(TRADERA_LEGACY_LISTING_FORM_URL)).toBe(
+    expect(
+      normalizeTraderaListingFormUrl('https://www.tradera.com/en/selling')
+    ).toBe(
       TRADERA_DIRECT_LISTING_FORM_URL
     );
     expect(normalizeTraderaListingFormUrl('/en/selling/new')).toBe(

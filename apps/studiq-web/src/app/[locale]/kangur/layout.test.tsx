@@ -98,6 +98,22 @@ describe('apps/studiq-web localized Kangur layout', () => {
     expect(screen.getByTestId('workspace-child')).toBeInTheDocument();
   });
 
+  it('normalizes uppercase locale params before loading localized Kangur content', async () => {
+    const { default: LocalizedKangurLayout } = await import('./layout');
+
+    const result = await LocalizedKangurLayout({
+      children: <div data-testid='workspace-child'>Workspace child</div>,
+      params: Promise.resolve({ locale: 'EN' }),
+    });
+
+    render(result);
+
+    expect(setRequestLocaleMock).toHaveBeenCalledWith('en');
+    expect(loadSiteMessagesMock).toHaveBeenCalledWith('en');
+    expect(screen.getByTestId('next-intl-provider')).toHaveAttribute('data-locale', 'en');
+    expect(screen.getByTestId('html-lang-sync')).toHaveAttribute('data-locale', 'en');
+  });
+
   it('rejects unsupported locales', async () => {
     const { default: LocalizedKangurLayout } = await import('./layout');
 

@@ -277,7 +277,7 @@ describe('runPlaywrightListingScript', () => {
       input: {
         title: 'Example',
         traderaConfig: {
-          listingFormUrl: 'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts',
+          listingFormUrl: 'https://www.tradera.com/en/selling/new',
         },
       },
       connection: {} as never,
@@ -356,7 +356,7 @@ describe('runPlaywrightListingScript', () => {
       input: {
         title: 'Example',
         traderaConfig: {
-          listingFormUrl: 'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts',
+          listingFormUrl: 'https://www.tradera.com/en/selling/new',
         },
       },
       connection: {} as never,

@@ -1,23 +1,34 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { enqueuePlaywrightNodeRunMock } = vi.hoisted(() => ({
+const {
+  enqueuePlaywrightNodeRunMock,
+  readPlaywrightNodeArtifactMock,
+  readPlaywrightNodeRunMock,
+  validatePlaywrightNodeScriptMock,
+} = vi.hoisted(() => ({
   enqueuePlaywrightNodeRunMock: vi.fn(),
+  readPlaywrightNodeArtifactMock: vi.fn(),
+  readPlaywrightNodeRunMock: vi.fn(),
+  validatePlaywrightNodeScriptMock: vi.fn(),
 }));
 
 vi.mock('@/features/ai/ai-paths/services/playwright-node-runner', () => ({
   enqueuePlaywrightNodeRun: (...args: unknown[]) => enqueuePlaywrightNodeRunMock(...args),
-  readPlaywrightNodeArtifact: vi.fn(),
-  readPlaywrightNodeRun: vi.fn(),
+  readPlaywrightNodeArtifact: (...args: unknown[]) => readPlaywrightNodeArtifactMock(...args),
+  readPlaywrightNodeRun: (...args: unknown[]) => readPlaywrightNodeRunMock(...args),
 }));
 
 vi.mock('@/features/ai/ai-paths/services/playwright-node-runner.parser', () => ({
-  validatePlaywrightNodeScript: vi.fn(),
+  validatePlaywrightNodeScript: (...args: unknown[]) => validatePlaywrightNodeScriptMock(...args),
 }));
 
 import {
   enqueuePlaywrightEngineRun,
+  readPlaywrightEngineArtifact,
+  readPlaywrightEngineRun,
   runPlaywrightEngineTask,
   startPlaywrightEngineTask,
+  validatePlaywrightEngineScript,
 } from './runtime';
 
 describe('playwright server runtime helpers', () => {
@@ -27,6 +38,15 @@ describe('playwright server runtime helpers', () => {
       runId: 'run-123',
       status: 'queued',
     });
+    readPlaywrightNodeRunMock.mockResolvedValue({
+      runId: 'run-123',
+      status: 'completed',
+    });
+    readPlaywrightNodeArtifactMock.mockResolvedValue({
+      artifact: { path: 'run-123/final.png' },
+      content: Buffer.from('artifact'),
+    });
+    validatePlaywrightNodeScriptMock.mockReturnValue([]);
   });
 
   it('runs synchronous engine tasks with waitForResult enabled', async () => {
@@ -73,5 +93,34 @@ describe('playwright server runtime helpers', () => {
       ownerUserId: null,
       instance: null,
     });
+  });
+
+  it('reads run records lazily through the node runner helper', async () => {
+    await expect(readPlaywrightEngineRun('run-123')).resolves.toMatchObject({
+      runId: 'run-123',
+      status: 'completed',
+    });
+    expect(readPlaywrightNodeRunMock).toHaveBeenCalledWith('run-123');
+  });
+
+  it('reads artifacts lazily through the node runner helper', async () => {
+    await expect(
+      readPlaywrightEngineArtifact({
+        runId: 'run-123',
+        fileName: 'final.png',
+      })
+    ).resolves.toMatchObject({
+      artifact: { path: 'run-123/final.png' },
+    });
+    expect(readPlaywrightNodeArtifactMock).toHaveBeenCalledWith({
+      runId: 'run-123',
+      fileName: 'final.png',
+    });
+  });
+
+  it('validates scripts through the shared parser helper', () => {
+    validatePlaywrightNodeScriptMock.mockReturnValueOnce(['bad script']);
+    expect(validatePlaywrightEngineScript('test()')).toEqual(['bad script']);
+    expect(validatePlaywrightNodeScriptMock).toHaveBeenCalledWith('test()');
   });
 });

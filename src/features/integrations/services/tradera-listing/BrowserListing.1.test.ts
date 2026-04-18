@@ -338,7 +338,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
         playwrightListingScript: 'export default async function run() {}',
       } as never,
       systemSettings: {
-        listingFormUrl: 'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts',
+        listingFormUrl: 'https://www.tradera.com/en/selling/new',
       } as never,
       source: 'manual',
       action: 'list',

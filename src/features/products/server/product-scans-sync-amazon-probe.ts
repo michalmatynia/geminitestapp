@@ -17,8 +17,8 @@ import { productService } from '@/shared/lib/products/services/productService';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import {
-  evaluateAmazonScanCandidateMatch,
-} from './product-scan-amazon-evaluator';
+  evaluateProductScanCandidateMatch,
+} from './product-scan-ai-evaluator';
 import {
   resolveAmazonRuntimeActionName,
 } from '@/shared/lib/browser-execution/amazon-runtime-constants';
@@ -157,7 +157,7 @@ export async function synchronizeAmazonProbeReady({
     const evaluatorConfig = await resolveAmazonProbeEvaluatorConfig(scannerSettings);
     let probeEvaluationRawResult: unknown = resultValue;
     if (evaluatorConfig.enabled) {
-      amazonEvaluation = await evaluateAmazonScanCandidateMatch({
+      amazonEvaluation = await evaluateProductScanCandidateMatch({
         scan,
         product,
         parsedResult,

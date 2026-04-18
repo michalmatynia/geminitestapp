@@ -82,7 +82,6 @@ type TraderaSequencerHelpers = {
 };
 
 const DIRECT_SELL_URL = 'https://www.tradera.com/en/selling/new';
-const LEGACY_SELL_URL = 'https://www.tradera.com/en/sell';
 
 export class TraderaSequencer extends PlaywrightSequencer {
   private readonly fallbackState: TraderaSequencerState = {};
@@ -632,12 +631,6 @@ export class TraderaSequencer extends PlaywrightSequencer {
     const { page } = this.context;
 
     await page.goto(DIRECT_SELL_URL, { waitUntil: 'domcontentloaded' });
-    await this.waitForPageSettled();
-    if (await this.isListingEditorReady()) {
-      return;
-    }
-
-    await page.goto(LEGACY_SELL_URL, { waitUntil: 'domcontentloaded' });
     await this.waitForPageSettled();
     if (await this.isListingEditorReady()) {
       return;

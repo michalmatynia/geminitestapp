@@ -176,7 +176,7 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
   });
 
   it('opens the create listing form from the selling landing page when needed', () => {
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('tradera-quicklist-default:v144');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('tradera-quicklist-default:v145');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const hasExecutionStep = (id) => getExecutionStep(id) !== null;');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('FAIL_ACTION_MANIFEST: Required Tradera quicklist step "');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const QUICKLIST_ACTION_EXECUTION_STEPS = {');
@@ -225,7 +225,7 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const readRuntimeEnvironment = async () => {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const findPublishButton = async (options = {}) => {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const DIRECT_SELL_URL = \'https://www.tradera.com/en/selling/new\';');
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const LEGACY_SELL_URL = \'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts\';');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).not.toContain('/en/selling?');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const normalizedConfiguredSellUrl =');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const CREATE_LISTING_TRIGGER_SELECTORS = [');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("const CATEGORY_FIELD_LABELS = ['Category', 'Kategori'];");

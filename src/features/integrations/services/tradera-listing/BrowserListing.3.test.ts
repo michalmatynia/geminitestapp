@@ -328,7 +328,7 @@ beforeEach(() => {
           'export default async function run() { const fs = await import(\'node:fs/promises\'); return fs; }\n// tradera-quicklist',
       } as never,
       systemSettings: {
-        listingFormUrl: 'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts',
+        listingFormUrl: 'https://www.tradera.com/en/selling/new',
       } as never,
       source: 'manual',
       action: 'list',
@@ -354,7 +354,7 @@ beforeEach(() => {
         scriptMode: 'scripted',
         scriptSource: 'legacy-default-refresh',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v144',
+        scriptMarker: 'tradera-quicklist-default:v145',
         scriptStoredOnConnection: false,
         runId: 'run-456',
         requestedBrowserMode: 'headed',
@@ -452,7 +452,7 @@ beforeEach(() => {
         playwrightListingScript: staleManagedDefaultScript,
       } as never,
       systemSettings: {
-        listingFormUrl: 'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts',
+        listingFormUrl: 'https://www.tradera.com/en/selling/new',
       } as never,
       source: 'manual',
       action: 'list',
@@ -478,7 +478,7 @@ beforeEach(() => {
         scriptMode: 'scripted',
         scriptSource: 'legacy-default-refresh',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v144',
+        scriptMarker: 'tradera-quicklist-default:v145',
         scriptStoredOnConnection: false,
         runId: 'run-789',
         requestedBrowserMode: 'headed',
@@ -557,7 +557,7 @@ beforeEach(() => {
     });
 
     const staleMarkedManagedScript = DEFAULT_TRADERA_QUICKLIST_SCRIPT
-      .replace('tradera-quicklist-default:v144', 'tradera-quicklist-default:v143')
+      .replace('tradera-quicklist-default:v145', 'tradera-quicklist-default:v144')
       .replace(
         'let currentImageUploadSource = null;\n\n  try {',
         'try {\n    emitStage(\'draft_cleared\');\n\n    let currentImageUploadSource = null;'
@@ -576,7 +576,7 @@ beforeEach(() => {
         playwrightListingScript: staleMarkedManagedScript,
       } as never,
       systemSettings: {
-        listingFormUrl: 'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts',
+        listingFormUrl: 'https://www.tradera.com/en/selling/new',
       } as never,
       source: 'manual',
       action: 'list',
@@ -850,7 +850,7 @@ beforeEach(() => {
         playwrightListingScript: 'export default async function run() {}',
       } as never,
       systemSettings: {
-        listingFormUrl: 'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts',
+        listingFormUrl: 'https://www.tradera.com/en/selling/new',
       } as never,
       source: 'manual',
       action: 'list',
@@ -897,7 +897,7 @@ beforeEach(() => {
         playwrightListingScript: 'export default async function run() {}',
       } as never,
       systemSettings: {
-        listingFormUrl: 'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts',
+        listingFormUrl: 'https://www.tradera.com/en/selling/new',
       } as never,
       source: 'manual',
       action: 'list',
@@ -1074,7 +1074,7 @@ beforeEach(() => {
     );
 
     const staleManagedDefaultScript = DEFAULT_TRADERA_QUICKLIST_SCRIPT.replace(
-      'tradera-quicklist-default:v144',
+      'tradera-quicklist-default:v145',
       'tradera-quicklist-default:v89'
     );
 
@@ -1163,7 +1163,7 @@ beforeEach(() => {
         playwrightListingScript: 'export default async function run() {}',
       } as never,
       systemSettings: {
-        listingFormUrl: 'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts',
+        listingFormUrl: 'https://www.tradera.com/en/selling/new',
       } as never,
       source: 'manual',
       action: 'list',
@@ -1248,8 +1248,9 @@ beforeEach(() => {
         }),
       })
     );
-    expect(runPlaywrightListingScriptMock.mock.calls.at(-1)?.[0]).not.toHaveProperty(
-      'failureHoldOpenMs'
+    expect(runPlaywrightListingScriptMock.mock.calls.at(-1)?.[0]).toHaveProperty(
+      'failureHoldOpenMs',
+      30_000
     );
     expect(result).toMatchObject({
       externalListingId: 'listing-headed-recovery',
@@ -1258,7 +1259,7 @@ beforeEach(() => {
         scriptMode: 'scripted',
         scriptSource: 'default-fallback',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v144',
+        scriptMarker: 'tradera-quicklist-default:v145',
         scriptStoredOnConnection: false,
         runId: 'run-headed-recovery',
         requestedBrowserMode: 'headed',

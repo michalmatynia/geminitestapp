@@ -568,7 +568,7 @@ const runTraderaScriptedListingForProduct = async ({
     timeoutMs: TRADERA_SCRIPTED_LISTING_TIMEOUT_MS,
     browserMode,
     disableStartUrlBootstrap: true,
-    ...(browserMode === 'headed' && action === 'list'
+    ...(browserMode === 'headed'
       ? { failureHoldOpenMs: TRADERA_HEADED_FAILURE_HOLD_OPEN_MS }
       : {}),
     runtimeSettingsOverrides,

@@ -31,6 +31,7 @@ describe('product scan step sequencer', () => {
       'validate',
       'google_lens_open',
       'google_upload',
+      'google_verification_review',
       'google_captcha',
       'google_candidates',
       'amazon_open',

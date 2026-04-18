@@ -48,6 +48,17 @@ const hasTraderaAuthSignal = (value: string | null | undefined): boolean => {
   );
 };
 
+const STALE_TRADERA_QUEUE_THRESHOLD_MS = 15 * 60 * 1000;
+
+const isStaleQueuedTraderaExecution = (queuedAt: string | null): boolean => {
+  if (!queuedAt) return true;
+  const timestamp = Date.parse(queuedAt);
+  return (
+    !Number.isFinite(timestamp) ||
+    Date.now() - timestamp > STALE_TRADERA_QUEUE_THRESHOLD_MS
+  );
+};
+
 type ProductListingActionsProps = ProductListingWithDetailsProps;
 
 export function ProductListingActions(props: ProductListingActionsProps): React.JSX.Element {
@@ -152,13 +163,22 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
   );
   const persistedTraderaPendingSkipImages = traderaPendingExecution['skipImages'] === true;
   const persistedTraderaPendingAction = (readString(traderaPendingExecution['action']) ?? '').trim().toLowerCase();
+  const persistedTraderaPendingQueuedAt = readString(traderaPendingExecution['queuedAt']);
   const isQueuedTraderaStatusCheck =
     isTraderaBrowserListing && isTraderaStatusCheckPending(listing);
+  const isStalePersistedTraderaQueueState =
+    isTraderaBrowserListing &&
+    ['queued', 'queued_relist', 'running', 'pending', 'processing', 'in_progress'].includes(
+      normalizedListingStatus
+    ) &&
+    Boolean(persistedTraderaPendingBrowserMode || persistedTraderaPendingAction) &&
+    isStaleQueuedTraderaExecution(persistedTraderaPendingQueuedAt);
   const isPersistedTraderaQueueState =
     isTraderaBrowserListing &&
     ['queued', 'queued_relist', 'running', 'processing', 'pending', 'in_progress'].includes(
       normalizedListingStatus
     ) &&
+    !isStalePersistedTraderaQueueState &&
     Boolean(persistedTraderaPendingBrowserMode || persistedTraderaPendingAction);
   const isQueuedTraderaSync =
     !isSyncingCurrentListing &&

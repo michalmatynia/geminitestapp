@@ -160,6 +160,100 @@ describe('integration listing relist handler', () => {
     );
   });
 
+  it('returns already queued for fresh queued relist records', async () => {
+    const queuedAt = new Date().toISOString();
+    findProductListingByIdAcrossProvidersMock.mockResolvedValue({
+      listing: {
+        id: 'listing-1',
+        productId: 'product-1',
+        integrationId: 'integration-tradera-1',
+        status: 'queued_relist',
+        updatedAt: queuedAt,
+        marketplaceData: {
+          tradera: {
+            pendingExecution: {
+              action: 'relist',
+              requestedBrowserMode: 'headed',
+              requestId: 'job-existing',
+              queuedAt,
+            },
+          },
+        },
+      },
+      repository: {
+        updateListingStatus: (...args: unknown[]) => updateListingStatusMock(...args),
+        updateListing: (...args: unknown[]) => updateListingMock(...args),
+      },
+    });
+
+    const response = await POST_handler(
+      new Request('http://localhost/api') as never,
+      {} as never,
+      { id: 'product-1', listingId: 'listing-1' }
+    );
+
+    await expect(response.json()).resolves.toMatchObject({
+      queued: true,
+      alreadyQueued: true,
+      listingId: 'listing-1',
+      status: 'queued_relist',
+    });
+    expect(enqueueTraderaListingJobMock).not.toHaveBeenCalled();
+  });
+
+  it.each(['queued_relist', 'running'])(
+    'requeues stale %s relist records instead of blocking forever',
+    async (status) => {
+      const queuedAt = new Date(Date.now() - 16 * 60 * 1000).toISOString();
+      findProductListingByIdAcrossProvidersMock.mockResolvedValue({
+        listing: {
+          id: 'listing-1',
+          productId: 'product-1',
+          integrationId: 'integration-tradera-1',
+          status,
+          updatedAt: queuedAt,
+          marketplaceData: {
+            tradera: {
+              pendingExecution: {
+                action: 'relist',
+                requestedBrowserMode: 'headed',
+                requestId: 'job-stale',
+                queuedAt,
+              },
+            },
+          },
+        },
+        repository: {
+          updateListingStatus: (...args: unknown[]) => updateListingStatusMock(...args),
+          updateListing: (...args: unknown[]) => updateListingMock(...args),
+        },
+      });
+
+      const response = await POST_handler(
+        new Request('http://localhost/api', {
+          method: 'POST',
+          body: JSON.stringify({ browserMode: 'headed' }),
+          headers: {
+            'content-type': 'application/json',
+          },
+        }) as never,
+        {} as never,
+        { id: 'product-1', listingId: 'listing-1' }
+      );
+
+      const payload = await response.json();
+
+      expect(payload.alreadyQueued).toBeUndefined();
+      expect(enqueueTraderaListingJobMock).toHaveBeenCalledWith({
+        listingId: 'listing-1',
+        action: 'relist',
+        source: 'manual',
+        browserMode: 'headed',
+      });
+      expect(updateListingStatusMock).toHaveBeenCalledWith('listing-1', 'queued_relist');
+    }
+  );
+
   it('passes headed/headless overrides through for Playwright programmable relists', async () => {
     findProductListingByIdAcrossProvidersMock.mockResolvedValue({
       listing: {

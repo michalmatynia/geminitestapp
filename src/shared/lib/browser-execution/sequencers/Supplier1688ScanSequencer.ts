@@ -1,5 +1,14 @@
 import type { Locator } from 'playwright';
 import {
+  captureAndEvaluatePlaywrightObservation,
+  runPlaywrightObservationLoop,
+  type PlaywrightObservationLoopDecision,
+} from '@/features/playwright/server/ai-step-service';
+import {
+  evaluateProductScanVerificationBarrier,
+  type ProductScanVerificationReview,
+} from '@/features/products/server/product-scan-ai-evaluator';
+import {
   SUPPLIER_1688_DEFAULT_SELECTOR_RUNTIME,
   type Supplier1688SelectorRuntime,
 } from '../selectors/supplier-1688';
@@ -81,6 +90,27 @@ interface CaptchaHandleResult {
   message: string | null;
   failureCode: string | null;
 }
+
+interface Supplier1688VerificationSnapshotState {
+  barrier: BarrierState;
+  readyState: ReadyState | null;
+  recoveryReady: boolean;
+  reuploadRequired: boolean;
+}
+
+type Supplier1688VerificationObservation = ProductScanVerificationReview & {
+  iteration: number;
+  observedAt: string | null;
+  loopDecision: PlaywrightObservationLoopDecision;
+  blocked: boolean;
+  barrierKind: BarrierKind;
+  stage: ScanStage;
+  stableForMs: number | null;
+  barrierMessage: string | null;
+  recoveryReason: string | null;
+  recoveryMessage: string | null;
+  fingerprint: string;
+};
 
 const isSelectorRuntimeRecord = (
   value: unknown
@@ -165,6 +195,8 @@ export class Supplier1688ScanSequencer extends ProductScanSequencer {
   private readonly PRICE_TEXT_PATTERN: RegExp;
   private readonly SEARCH_BODY_SIGNAL: RegExp;
   private readonly SUPPLIER_BODY_SIGNAL: RegExp;
+  private supplierVerificationReview: ProductScanVerificationReview | null = null;
+  private supplierVerificationObservations: Supplier1688VerificationObservation[] = [];
 
   private get scannerStartUrl(): string {
     return this.resolve1688ImageSearchStartUrl(this.input.scanner1688StartUrl);
@@ -184,6 +216,32 @@ export class Supplier1688ScanSequencer extends ProductScanSequencer {
     this.PRICE_TEXT_PATTERN = new RegExp(this.selectorRuntime.priceTextPatternSource);
     this.SEARCH_BODY_SIGNAL = new RegExp(this.selectorRuntime.searchBodySignalPattern);
     this.SUPPLIER_BODY_SIGNAL = new RegExp(this.selectorRuntime.supplierBodySignalPattern);
+  }
+
+  protected override async emitResult(payload: Record<string, unknown>): Promise<void> {
+    const supplierVerificationReview = this.getSupplierVerificationReview();
+    const supplierVerificationObservations = this.getSupplierVerificationObservations();
+    await super.emitResult({
+      ...(supplierVerificationReview !== null ? { supplierVerificationReview } : {}),
+      ...(supplierVerificationObservations.length > 0
+        ? { supplierVerificationObservations }
+        : {}),
+      ...payload,
+    });
+  }
+
+  protected getSupplierVerificationReview(): ProductScanVerificationReview | null {
+    return this.supplierVerificationReview;
+  }
+
+  protected getSupplierVerificationObservations(): Supplier1688VerificationObservation[] {
+    return this.supplierVerificationObservations.map((observation) => ({
+      ...observation,
+      visibleInstructions: [...observation.visibleInstructions],
+      uiElements: [...observation.uiElements],
+      brainApplied:
+        observation.brainApplied !== null ? { ...observation.brainApplied } : null,
+    }));
   }
 
   // ─── Abstract implementation ─────────────────────────────────────────────────
@@ -1178,7 +1236,7 @@ export class Supplier1688ScanSequencer extends ProductScanSequencer {
 
   protected async handle1688Captcha(
     stage: ScanStage,
-    _stepMeta: { candidateId: string; candidateRank: number },
+    stepMeta: { candidateId: string; candidateRank: number },
     recoveryUrl: string | null
   ): Promise<CaptchaHandleResult> {
     const barrier = await this.detect1688AccessBarrier(stage);
@@ -1188,6 +1246,20 @@ export class Supplier1688ScanSequencer extends ProductScanSequencer {
     }
 
     if (!this.input.allowManualVerification) {
+      await this.captureSupplierVerificationObservation({
+        stage,
+        candidateId: stepMeta.candidateId,
+        candidateRank: stepMeta.candidateRank,
+        iteration: 1,
+        loopDecision: 'blocked',
+        blocked: true,
+        barrierKind: barrier.barrierKind,
+        barrierMessage: barrier.message,
+        stableForMs: null,
+        currentUrl: barrier.currentUrl,
+        recoveryReason: null,
+        recoveryMessage: null,
+      });
       return { resolved: false, captchaEncountered: true, captchaRequired: true, currentUrl: barrier.currentUrl, message: barrier.message, failureCode: 'captcha_required' };
     }
 
@@ -1198,28 +1270,298 @@ export class Supplier1688ScanSequencer extends ProductScanSequencer {
     const timeoutMs = typeof this.input.manualVerificationTimeoutMs === 'number'
       ? this.input.manualVerificationTimeoutMs
       : 240_000;
-    const deadline = Date.now() + timeoutMs;
 
     this.log('1688.captcha.waiting', { stage, message: waitMessage, timeoutMs });
+    const loopResult =
+      await runPlaywrightObservationLoop<
+        Supplier1688VerificationSnapshotState,
+        Supplier1688VerificationObservation
+      >({
+        timeoutMs,
+        intervalMs: 3_000,
+        stableClearWindowMs: 0,
+        initialSnapshot: {
+          state: {
+            barrier,
+            readyState: null,
+            recoveryReady: false,
+            reuploadRequired: false,
+          },
+          blocked: true,
+          currentUrl: barrier.currentUrl,
+        },
+        isPageClosed: () => this.isPageClosed(),
+        wait: (ms) => this.wait(ms),
+        readSnapshot: async () => {
+          const currentBarrier = await this.detect1688AccessBarrier(stage);
+          if (currentBarrier.blocked) {
+            return {
+              state: {
+                barrier: currentBarrier,
+                readyState: null,
+                recoveryReady: false,
+                reuploadRequired: false,
+              },
+              blocked: true,
+              currentUrl: currentBarrier.currentUrl,
+            };
+          }
 
-    while (Date.now() < deadline) {
-      await this.wait(3_000);
+          const readyState = await this.attempt1688PostCaptchaRecovery(stage, recoveryUrl);
+          const recoveryReady = readyState?.ready === true;
+          const reuploadRequired = readyState?.reason === 'returned_to_search_entry';
+          return {
+            state: {
+              barrier: currentBarrier,
+              readyState,
+              recoveryReady,
+              reuploadRequired,
+            },
+            blocked: !(recoveryReady || reuploadRequired),
+            currentUrl: readyState?.currentUrl ?? currentBarrier.currentUrl,
+          };
+        },
+        observe: async ({ iteration, decision, snapshot, stableForMs }) =>
+          this.captureSupplierVerificationObservation({
+            stage,
+            candidateId: stepMeta.candidateId,
+            candidateRank: stepMeta.candidateRank,
+            iteration,
+            loopDecision: decision,
+            blocked: snapshot.blocked,
+            barrierKind: snapshot.state?.barrier.barrierKind ?? null,
+            barrierMessage: snapshot.state?.barrier.message ?? null,
+            stableForMs,
+            currentUrl:
+              snapshot.currentUrl ??
+              snapshot.state?.readyState?.currentUrl ??
+              snapshot.state?.barrier.currentUrl ??
+              this.page.url(),
+            recoveryReason: snapshot.state?.readyState?.reason ?? null,
+            recoveryMessage: snapshot.state?.readyState?.message ?? null,
+          }),
+      });
 
-      const currentBarrier = await this.detect1688AccessBarrier(stage);
-      if (!currentBarrier.blocked) {
-        // Attempt post-captcha recovery
-        const readyState = await this.attempt1688PostCaptchaRecovery(stage, recoveryUrl);
-        if (readyState?.ready) {
-          this.log('1688.captcha.resolved', { stage, reason: readyState.reason });
-          return { resolved: true, captchaEncountered: true, captchaRequired: false, currentUrl: readyState.currentUrl, message: '1688 captcha was resolved and the page is ready again.', failureCode: null };
-        }
-        if (readyState?.reason === 'returned_to_search_entry') {
-          return { resolved: true, captchaEncountered: true, captchaRequired: false, currentUrl: readyState.currentUrl, message: readyState.message, failureCode: 'post_captcha_reupload_required' };
-        }
+    if (loopResult.resolved) {
+      const snapshot = loopResult.finalSnapshot?.state;
+      const readyState = snapshot?.readyState ?? null;
+      if (snapshot?.reuploadRequired) {
+      return {
+        resolved: true,
+        captchaEncountered: true,
+        captchaRequired: false,
+        currentUrl: readyState?.currentUrl ?? this.safePageUrl() ?? '',
+        message: readyState?.message ?? '1688 returned to the image-search entry page after captcha.',
+        failureCode: 'post_captcha_reupload_required',
+      };
       }
+
+      this.log('1688.captcha.resolved', { stage, reason: readyState?.reason ?? null });
+      return {
+        resolved: true,
+        captchaEncountered: true,
+        captchaRequired: false,
+        currentUrl: readyState?.currentUrl ?? this.safePageUrl() ?? '',
+        message: '1688 captcha was resolved and the page is ready again.',
+        failureCode: null,
+      };
     }
 
-    return { resolved: false, captchaEncountered: true, captchaRequired: true, currentUrl: this.page.url(), message: '1688 captcha or barrier was not resolved within the allowed time.', failureCode: 'captcha_timeout' };
+    if (loopResult.finalDecision === 'page_closed') {
+      return {
+        resolved: false,
+        captchaEncountered: true,
+        captchaRequired: false,
+        currentUrl: loopResult.finalSnapshot?.currentUrl ?? this.safePageUrl() ?? '',
+        message: '1688 browser page closed before the verification barrier was resolved.',
+        failureCode: 'page_closed',
+      };
+    }
+
+    return { resolved: false, captchaEncountered: true, captchaRequired: true, currentUrl: this.safePageUrl() ?? '', message: '1688 captcha or barrier was not resolved within the allowed time.', failureCode: 'captcha_timeout' };
+  }
+
+  private async captureSupplierVerificationObservation(params: {
+    stage: ScanStage;
+    candidateId: string;
+    candidateRank: number;
+    iteration: number;
+    loopDecision: PlaywrightObservationLoopDecision;
+    blocked: boolean;
+    barrierKind: BarrierKind;
+    barrierMessage: string | null;
+    stableForMs: number | null;
+    currentUrl: string | null;
+    recoveryReason: string | null;
+    recoveryMessage: string | null;
+  }): Promise<Supplier1688VerificationObservation | null> {
+    const currentUrl = params.currentUrl ?? this.safePageUrl();
+    const previousObservation =
+      this.supplierVerificationObservations[
+        this.supplierVerificationObservations.length - 1
+      ] ?? null;
+
+    const artifactKey = [
+      '1688-verification-review',
+      params.stage ?? 'unknown-stage',
+      params.candidateId.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
+      `rank-${String(params.candidateRank)}`,
+      `iter-${String(params.iteration)}`,
+    ].join('-');
+
+    this.upsertScanStep({
+      key: 'supplier_verification_review',
+      status: 'running',
+      candidateId: params.candidateId,
+      candidateRank: params.candidateRank,
+      message: 'Capturing supplier verification barrier for AI review.',
+      url: currentUrl,
+      group: 'supplier',
+      label: 'Inspect supplier verification barrier',
+    });
+
+    const { observation, review, deduped } =
+      await captureAndEvaluatePlaywrightObservation<
+        ProductScanVerificationReview,
+        Supplier1688VerificationObservation
+      >({
+        page: this.page,
+        artifacts: this.artifacts,
+        artifactKey,
+        currentUrl,
+        previousObservation,
+        previousFingerprint: previousObservation?.fingerprint ?? null,
+        extraFingerprintParts: [
+          params.stage ?? 'unknown_stage',
+          params.candidateId,
+          params.candidateRank,
+          params.loopDecision,
+          params.blocked,
+          params.barrierKind ?? 'none',
+          params.recoveryReason ?? '',
+        ],
+        log: this.log,
+        screenshotFailureLogKey: '1688.verification.review.screenshot_failed',
+        evaluate: async (capture) =>
+          evaluateProductScanVerificationBarrier({
+            provider: '1688',
+            stage: params.stage ?? '1688_barrier',
+            currentUrl: capture.currentUrl,
+            pageTitle: capture.pageTitle,
+            pageTextSnippet: capture.pageTextSnippet,
+            screenshotBase64: capture.screenshotBase64,
+            screenshotArtifactName: capture.screenshotArtifactName,
+            htmlArtifactName: capture.htmlArtifactName,
+            objective:
+              'Describe the visible 1688 login, captcha, or access barrier for manual handling. If the barrier appears cleared, say so explicitly. Do not solve it.',
+          }),
+        buildObservation: ({ capture, review: nextReview }) => ({
+          ...nextReview,
+          iteration: params.iteration,
+          observedAt: capture.observedAt,
+          loopDecision: params.loopDecision,
+          blocked: params.blocked,
+          barrierKind: params.barrierKind,
+          stage: params.stage,
+          stableForMs: params.stableForMs,
+          barrierMessage: params.barrierMessage,
+          recoveryReason: params.recoveryReason,
+          recoveryMessage: params.recoveryMessage,
+          fingerprint: capture.fingerprint,
+        }),
+      });
+
+    if (deduped) {
+      return observation;
+    }
+
+    const nextReview = review!;
+
+    if (nextReview.status === 'capture_only' && nextReview.error !== null) {
+      this.log('1688.verification.review.analysis_failed', {
+        error: nextReview.error,
+      });
+    }
+
+    this.supplierVerificationReview = nextReview;
+    this.supplierVerificationObservations.push(observation);
+
+    if (nextReview.status === 'failed') {
+      this.upsertScanStep({
+        key: 'supplier_verification_review',
+        status: 'failed',
+        candidateId: params.candidateId,
+        candidateRank: params.candidateRank,
+        resultCode: 'capture_failed',
+        message: 'Could not capture the supplier verification barrier for AI review.',
+        url: currentUrl,
+        group: 'supplier',
+        label: 'Inspect supplier verification barrier',
+      });
+    } else {
+      this.upsertScanStep({
+        key: 'supplier_verification_review',
+        status: 'completed',
+        candidateId: params.candidateId,
+        candidateRank: params.candidateRank,
+        resultCode:
+          nextReview.status === 'analyzed' ? 'manual_review_ready' : 'capture_only',
+        message:
+          nextReview.status === 'analyzed'
+            ? 'Captured and classified the supplier verification barrier for manual review.'
+            : 'Captured the supplier verification barrier, but AI review was unavailable.',
+        warning: nextReview.status === 'capture_only' ? nextReview.error : null,
+        url: currentUrl,
+        details: this.buildSupplierVerificationReviewDetails(observation),
+        group: 'supplier',
+        label: 'Inspect supplier verification barrier',
+      });
+    }
+
+    if (typeof this.artifacts.json === 'function') {
+      await this.artifacts
+        .json(`${artifactKey}-analysis`, nextReview)
+        .catch(() => undefined);
+      await this.artifacts
+        .json('1688-verification-review-history', this.supplierVerificationObservations)
+        .catch(() => undefined);
+    }
+
+    return observation;
+  }
+
+  private buildSupplierVerificationReviewDetails(
+    review: Supplier1688VerificationObservation
+  ): Array<{ label: string; value?: string | null }> {
+    return [
+      { label: 'Observation iteration', value: String(review.iteration) },
+      { label: 'Loop decision', value: review.loopDecision },
+      { label: 'Observed at', value: review.observedAt },
+      { label: 'Blocked', value: String(review.blocked) },
+      { label: 'Barrier kind', value: review.barrierKind },
+      { label: 'Barrier message', value: review.barrierMessage },
+      { label: 'Recovery reason', value: review.recoveryReason },
+      { label: 'Recovery message', value: review.recoveryMessage },
+      {
+        label: 'Stable clear ms',
+        value:
+          typeof review.stableForMs === 'number' ? String(review.stableForMs) : null,
+      },
+      { label: 'Review status', value: review.status },
+      { label: 'Challenge type', value: review.challengeType },
+      { label: 'Visible question', value: review.visibleQuestion },
+      {
+        label: 'Manual action required',
+        value:
+          typeof review.manualActionRequired === 'boolean'
+            ? String(review.manualActionRequired)
+            : null,
+      },
+      { label: 'Evaluator model', value: review.modelId },
+      { label: 'Screenshot artifact', value: review.screenshotArtifactName },
+      { label: 'HTML artifact', value: review.htmlArtifactName },
+      { label: 'Review error', value: review.error },
+    ];
   }
 
   protected async attempt1688PostCaptchaRecovery(

@@ -17,29 +17,18 @@ export const TRADERA_SETTINGS_KEYS = {
 } as const;
 
 export const TRADERA_DIRECT_LISTING_FORM_URL = 'https://www.tradera.com/en/selling/new';
-export const TRADERA_LEGACY_LISTING_FORM_URL =
-  'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts';
 export const TRADERA_PUBLIC_CATEGORIES_URL = 'https://www.tradera.com/en/categories';
 
 const TRADERA_ALLOWED_HOSTS = new Set(['www.tradera.com', 'tradera.com']);
 const TRADERA_NEW_LISTING_PATH_PATTERN =
   /^\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?selling\/new\/?$/i;
-const TRADERA_LEGACY_LISTING_PATH_PATTERN =
-  /^\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?selling\/?$/i;
 
 const isAllowedTraderaListingFormUrl = (value: URL): boolean => {
   if (!TRADERA_ALLOWED_HOSTS.has(value.host.toLowerCase())) {
     return false;
   }
 
-  if (TRADERA_NEW_LISTING_PATH_PATTERN.test(value.pathname)) {
-    return true;
-  }
-
-  return (
-    TRADERA_LEGACY_LISTING_PATH_PATTERN.test(value.pathname) &&
-    value.searchParams.has('redirectToNewIfNoDrafts')
-  );
+  return TRADERA_NEW_LISTING_PATH_PATTERN.test(value.pathname);
 };
 
 export const normalizeTraderaListingFormUrl = (value: string | null | undefined): string => {

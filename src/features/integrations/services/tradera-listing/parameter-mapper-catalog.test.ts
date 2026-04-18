@@ -93,7 +93,7 @@ describe('fetchAndStoreTraderaParameterMapperCatalog', () => {
       path: 'Collectibles > Pins',
     });
     loadTraderaSystemSettingsMock.mockResolvedValue({
-      listingFormUrl: 'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts',
+      listingFormUrl: 'https://www.tradera.com/en/selling/new',
     });
     runPlaywrightScrapeScriptMock.mockResolvedValue({
       runId: 'run-123',

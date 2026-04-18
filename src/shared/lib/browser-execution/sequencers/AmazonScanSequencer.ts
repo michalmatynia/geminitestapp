@@ -56,6 +56,7 @@ const GOOGLE_LENS_SAFE_ENTRY_TRIGGER_SELECTORS = [
 ] as const;
 
 const GOOGLE_IMAGES_UPLOAD_ENTRY_URL = 'https://www.google.com/imghp?hl=en';
+const GOOGLE_LENS_DIRECT_UPLOAD_URL = 'https://lens.google.com/?hl=en';
 const GOOGLE_LENS_CAPTCHA_SELECTORS = [
   '#captcha-form',
   '.g-recaptcha',
@@ -319,10 +320,14 @@ export class AmazonScanSequencer extends GoogleLensSearchSequencer<AmazonScanInp
 
   protected override async emitResult(payload: Record<string, unknown>): Promise<void> {
     const googleVerificationReview = this.getGoogleVerificationReview();
+    const googleVerificationObservations = this.getGoogleVerificationObservations();
     await super.emitResult({
       imageSearchProvider: this.resolveImageSearchProvider(),
       imageSearchPageUrl: this.resolveConfiguredImageSearchPageUrl(),
       ...(googleVerificationReview !== null ? { googleVerificationReview } : {}),
+      ...(googleVerificationObservations.length > 0
+        ? { googleVerificationObservations }
+        : {}),
       ...payload,
     });
   }
@@ -1774,15 +1779,15 @@ export class AmazonScanSequencer extends GoogleLensSearchSequencer<AmazonScanInp
       return configuredUrl;
     }
 
-    return this.GOOGLE_LENS_DIRECT_UPLOAD_URL;
+    return GOOGLE_LENS_DIRECT_UPLOAD_URL;
   }
 
   private resolveGoogleLensOpenAttemptUrls(): string[] {
     const urls: string[] = [];
     const configuredUrl = this.resolveConfiguredImageSearchPageUrl();
     const candidates = [
-      configuredUrl ?? this.GOOGLE_LENS_DIRECT_UPLOAD_URL,
-      this.GOOGLE_LENS_DIRECT_UPLOAD_URL,
+      configuredUrl ?? GOOGLE_LENS_DIRECT_UPLOAD_URL,
+      GOOGLE_LENS_DIRECT_UPLOAD_URL,
       GOOGLE_IMAGES_UPLOAD_ENTRY_URL,
     ];
 
@@ -1813,10 +1818,12 @@ export class AmazonScanSequencer extends GoogleLensSearchSequencer<AmazonScanInp
     const inputState = await this.resolveGoogleLensFileInput();
     const entryState = await this.describeGoogleLensUploadEntryState(inputState);
     const uploadEntryUrl = this.isGoogleImagesUploadEntryUrl(entryState.currentUrl);
+    const directUploadUrl = this.isGoogleLensDirectUploadUrl(entryState.currentUrl);
     const readyReason = this.resolveGoogleLensOpenReadyReason({
       entryState,
       inputReady: inputState.ready,
       uploadEntryUrl,
+      directUploadUrl,
     });
 
     return {
@@ -1832,6 +1839,7 @@ export class AmazonScanSequencer extends GoogleLensSearchSequencer<AmazonScanInp
     entryState: GoogleLensUploadEntryState;
     inputReady: boolean;
     uploadEntryUrl: boolean;
+    directUploadUrl: boolean;
   }): string | null {
     if (input.entryState.loginDetected) {
       return null;
@@ -1849,6 +1857,7 @@ export class AmazonScanSequencer extends GoogleLensSearchSequencer<AmazonScanInp
         reason: 'image_search_entry',
       },
       { ready: input.entryState.uploadTabSelector !== null, reason: 'upload_tab' },
+      { ready: input.directUploadUrl, reason: 'direct_upload_url' },
       { ready: input.uploadEntryUrl, reason: 'upload_entry_url' },
     ];
 
@@ -1908,6 +1917,11 @@ export class AmazonScanSequencer extends GoogleLensSearchSequencer<AmazonScanInp
     } catch {
       return false;
     }
+  }
+
+  private isGoogleLensDirectUploadUrl(value: string | null): boolean {
+    const normalized = this.normalizeText(value);
+    return normalized !== null && normalized.startsWith('https://lens.google.com/');
   }
 
   private shouldReopenImageSearchPageAfterConsent(requestedUrl: string): boolean {

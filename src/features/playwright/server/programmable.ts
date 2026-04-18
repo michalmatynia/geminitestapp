@@ -36,8 +36,6 @@ const TRADERA_DIRECT_LISTING_FORM_URL = 'https://www.tradera.com/en/selling/new'
 const TRADERA_ALLOWED_HOSTS = new Set(['www.tradera.com', 'tradera.com']);
 const TRADERA_NEW_LISTING_PATH_PATTERN =
   /^\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?selling\/new\/?$/i;
-const TRADERA_LEGACY_LISTING_PATH_PATTERN =
-  /^\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?selling\/?$/i;
 
 export const PROGRAMMABLE_PLAYWRIGHT_LISTING_RUNTIME_ACTION_KEY =
   'playwright_programmable_listing' as const satisfies ActionSequenceKey;
@@ -53,10 +51,7 @@ const normalizeTraderaListingFormUrl = (value: string | null | undefined): strin
   try {
     const parsed = new URL(trimmed, TRADERA_DIRECT_LISTING_FORM_URL);
     const isAllowedHost = TRADERA_ALLOWED_HOSTS.has(parsed.host.toLowerCase());
-    const isAllowedPath =
-      TRADERA_NEW_LISTING_PATH_PATTERN.test(parsed.pathname) ||
-      (TRADERA_LEGACY_LISTING_PATH_PATTERN.test(parsed.pathname) &&
-        parsed.searchParams.has('redirectToNewIfNoDrafts'));
+    const isAllowedPath = TRADERA_NEW_LISTING_PATH_PATTERN.test(parsed.pathname);
     if (!isAllowedHost || !isAllowedPath) {
       return TRADERA_DIRECT_LISTING_FORM_URL;
     }

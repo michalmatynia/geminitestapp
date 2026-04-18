@@ -45,6 +45,15 @@ describe('getSettingValue', () => {
     });
   });
 
+  it('returns null without logging when mongo is configured but unavailable in-process', async () => {
+    process.env['MONGODB_URI'] = 'mongodb://localhost:27017/test';
+    getMongoDbMock.mockResolvedValue(undefined);
+
+    await expect(getSettingValue('feature_flag')).resolves.toBeNull();
+    expect(captureExceptionMock).not.toHaveBeenCalled();
+    expect(logWarningMock).not.toHaveBeenCalled();
+  });
+
   it('captures and downgrades mongo failures to null', async () => {
     process.env['MONGODB_URI'] = 'mongodb://localhost:27017/test';
     const error = new Error('mongo unavailable');

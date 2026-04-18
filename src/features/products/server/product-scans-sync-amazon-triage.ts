@@ -17,9 +17,9 @@ import { productService } from '@/shared/lib/products/services/productService';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import {
-  triageAmazonScanCandidates,
-  type AmazonCandidateTriageEvaluationResult,
-} from './product-scan-amazon-evaluator';
+  evaluateProductScanCandidateTriage,
+  type ProductScanCandidateTriageEvaluationResult,
+} from './product-scan-ai-evaluator';
 import {
   resolveAmazonRuntimeActionName,
 } from '@/shared/lib/browser-execution/amazon-runtime-constants';
@@ -159,8 +159,8 @@ export async function synchronizeAmazonTriageReady({
 
   try {
     const triageEvaluatorConfig = await resolveAmazonTriageEvaluatorConfig(scannerSettings);
-    const triageEvaluation: AmazonCandidateTriageEvaluationResult = triageEvaluatorConfig.enabled
-      ? await triageAmazonScanCandidates({
+    const triageEvaluation: ProductScanCandidateTriageEvaluationResult = triageEvaluatorConfig.enabled
+      ? await evaluateProductScanCandidateTriage({
           scan,
           product,
           parsedResult,

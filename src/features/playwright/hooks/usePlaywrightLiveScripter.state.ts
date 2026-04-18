@@ -2,7 +2,10 @@
 
 import { useRef, useState } from 'react';
 
-import type { LiveScripterPickedElement } from '@/shared/contracts/playwright-live-scripter';
+import type {
+  LiveScripterPickedElement,
+  LiveScripterProbeResult,
+} from '@/shared/contracts/playwright-live-scripter';
 
 import type {
   LiveScripterConnectionRefs,
@@ -32,6 +35,8 @@ export type LiveScripterClientState = {
   >;
   pickedElement: LiveScripterPickedElement | null;
   setPickedElement: React.Dispatch<React.SetStateAction<LiveScripterPickedElement | null>>;
+  probeResult: LiveScripterProbeResult | null;
+  setProbeResult: React.Dispatch<React.SetStateAction<LiveScripterProbeResult | null>>;
   currentUrl: string;
   setCurrentUrl: React.Dispatch<React.SetStateAction<string>>;
   currentTitle: string | null;
@@ -46,6 +51,7 @@ export function useLiveScripterClientState(): LiveScripterClientState {
   const [status, setStatus] = useState<LiveScripterStatus>('idle');
   const [frame, setFrame] = useState<Pick<LiveScripterFrame, 'dataUrl' | 'width' | 'height'> | null>(null);
   const [pickedElement, setPickedElement] = useState<LiveScripterPickedElement | null>(null);
+  const [probeResult, setProbeResult] = useState<LiveScripterProbeResult | null>(null);
   const [currentUrl, setCurrentUrl] = useState('');
   const [currentTitle, setCurrentTitle] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -58,6 +64,8 @@ export function useLiveScripterClientState(): LiveScripterClientState {
     setFrame,
     pickedElement,
     setPickedElement,
+    probeResult,
+    setProbeResult,
     currentUrl,
     setCurrentUrl,
     currentTitle,
@@ -73,6 +81,7 @@ export function useLiveScripterStateSetters({
   setStatus,
   setFrame,
   setPickedElement,
+  setProbeResult,
   setCurrentUrl,
   setCurrentTitle,
   setErrorMessage,
@@ -82,6 +91,7 @@ export function useLiveScripterStateSetters({
     React.SetStateAction<Pick<LiveScripterFrame, 'dataUrl' | 'width' | 'height'> | null>
   >;
   setPickedElement: React.Dispatch<React.SetStateAction<LiveScripterPickedElement | null>>;
+  setProbeResult: React.Dispatch<React.SetStateAction<LiveScripterProbeResult | null>>;
   setCurrentUrl: React.Dispatch<React.SetStateAction<string>>;
   setCurrentTitle: React.Dispatch<React.SetStateAction<string | null>>;
   setErrorMessage: React.Dispatch<React.SetStateAction<string | null>>;
@@ -90,6 +100,7 @@ export function useLiveScripterStateSetters({
     setStatus,
     setFrame,
     setPickedElement,
+    setProbeResult,
     setCurrentUrl,
     setCurrentTitle,
     setErrorMessage,

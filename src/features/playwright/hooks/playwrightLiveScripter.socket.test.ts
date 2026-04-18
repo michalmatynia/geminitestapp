@@ -3,6 +3,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import type { LiveScripterPickedElement } from '@/shared/contracts/playwright-live-scripter';
+import type { LiveScripterProbeResult } from '@/shared/contracts/playwright-live-scripter';
 
 import {
   applyLiveScripterServerMessage,
@@ -44,10 +45,46 @@ const createSetters = (): LiveScripterStateSetters => ({
   setStatus: vi.fn(),
   setFrame: vi.fn(),
   setPickedElement: vi.fn(),
+  setProbeResult: vi.fn(),
   setCurrentUrl: vi.fn(),
   setCurrentTitle: vi.fn(),
   setErrorMessage: vi.fn(),
 });
+
+const probeResult: LiveScripterProbeResult = {
+  type: 'probe_result',
+  url: 'https://example.com/item',
+  title: 'Item',
+  scope: 'main_content',
+  sameOriginOnly: true,
+  linkDepth: 0,
+  maxPages: 1,
+  scannedPages: 1,
+  visitedUrls: ['https://example.com/item'],
+  pages: [
+    {
+      url: 'https://example.com/item',
+      title: 'Item',
+      suggestionCount: 1,
+    },
+  ],
+  suggestionCount: 1,
+  suggestions: [
+    {
+      ...pickedElement,
+      suggestionId: 'button::submit',
+      pageUrl: 'https://example.com/item',
+      pageTitle: 'Item',
+      repeatedSiblingCount: 1,
+      childLinkCount: 0,
+      childImageCount: 0,
+      classificationRole: 'submit',
+      draftTargetHints: [],
+      confidence: 0.91,
+      evidence: ['Interactive button semantics detected.'],
+    },
+  ],
+};
 
 describe('playwrightLiveScripter.socket', () => {
   it('reports invalid server messages', () => {
@@ -87,9 +124,28 @@ describe('playwrightLiveScripter.socket', () => {
 
     expect(setters.setCurrentUrl).toHaveBeenCalledWith('https://example.com/item');
     expect(setters.setCurrentTitle).toHaveBeenCalledWith('Item');
+    expect(setters.setProbeResult).toHaveBeenCalledWith(null);
     expect(closeSocket).toHaveBeenCalled();
     expect(clearClientState).toHaveBeenCalled();
     expect(refs.sessionIdRef.current).toBeNull();
+  });
+
+  it('routes probe results through the assigned handlers', () => {
+    const refs = createRefs();
+    const setters = createSetters();
+    const clearClientState = vi.fn();
+    const closeSocket = vi.fn();
+
+    applyLiveScripterServerMessage({
+      message: probeResult,
+      refs,
+      clearClientState,
+      closeSocket,
+      setters,
+      reconnectSocket: vi.fn(),
+    });
+
+    expect(setters.setProbeResult).toHaveBeenCalledWith(probeResult);
   });
 
   it('routes WebSocket picked messages through the assigned handlers', () => {

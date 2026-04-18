@@ -42,6 +42,7 @@ import {
   getLiveScripterBridge,
   getLiveScripterSession,
   pickElementAt,
+  probeLiveScripterDom,
 } from './live-session';
 
 type MockSocket = {
@@ -218,6 +219,84 @@ describe('live-session', () => {
     await expect(pickElementAt(page as never, 5, 6)).rejects.toMatchObject(
       notFoundError('No element was found at the requested point.')
     );
+  });
+
+  it('classifies probed DOM candidates into selector suggestions', async () => {
+    const page = {
+      url: vi.fn().mockReturnValue('https://example.com/product'),
+      title: vi.fn().mockResolvedValue('Example product'),
+      evaluate: vi.fn().mockResolvedValue([
+        {
+          tag: 'h1',
+          id: 'product-title',
+          classes: ['product-title'],
+          textPreview: 'Vintage Lamp',
+          role: null,
+          attrs: { id: 'product-title' },
+          boundingBox: { x: 10, y: 20, width: 260, height: 40 },
+          candidates: {
+            css: '#product-title',
+            xpath: '//*[@id="product-title"]',
+            role: null,
+            text: 'Vintage Lamp',
+            testId: null,
+          },
+          repeatedSiblingCount: 1,
+          childLinkCount: 0,
+          childImageCount: 0,
+        },
+        {
+          tag: 'span',
+          id: null,
+          classes: ['price'],
+          textPreview: '$149.00',
+          role: null,
+          attrs: { class: 'price' },
+          boundingBox: { x: 10, y: 80, width: 120, height: 24 },
+          candidates: {
+            css: '.price',
+            xpath: '/html/body/main/span[1]',
+            role: null,
+            text: '$149.00',
+            testId: null,
+          },
+          repeatedSiblingCount: 1,
+          childLinkCount: 0,
+          childImageCount: 0,
+        },
+      ]),
+    };
+
+    const result = await probeLiveScripterDom(page as never, {
+      scope: 'main_content',
+      maxNodes: 24,
+    });
+
+    expect(page.evaluate).toHaveBeenCalledWith(expect.any(Function), {
+      nextScope: 'main_content',
+      nextMaxNodes: 24,
+      maxDepth: 6,
+    });
+    expect(result).toMatchObject({
+      type: 'probe_result',
+      url: 'https://example.com/product',
+      title: 'Example product',
+      scope: 'main_content',
+      sameOriginOnly: true,
+      linkDepth: 0,
+      maxPages: 1,
+      scannedPages: 1,
+      visitedUrls: ['https://example.com/product'],
+      suggestionCount: 2,
+    });
+    expect(result.suggestions[0]).toMatchObject({
+      classificationRole: 'content_price',
+      draftTargetHints: ['price'],
+    });
+    expect(result.suggestions[1]).toMatchObject({
+      classificationRole: 'content_title',
+      draftTargetHints: ['name_en'],
+    });
   });
 
   it('allows the dedicated loopback fixture route outside production', async () => {

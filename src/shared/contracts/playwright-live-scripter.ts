@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { selectorRegistryRoleSchema } from '@/shared/contracts/integrations/selector-registry';
+
 export const PLAYWRIGHT_LIVE_SCRIPTER_DEFAULT_VIEWPORT = {
   width: 1280,
   height: 800,
@@ -65,6 +67,32 @@ export type LiveScripterPickedElement = z.infer<typeof liveScripterPickedElement
 
 const liveScripterSessionIdSchema = z.string().trim().min(1);
 
+export const liveScripterProbeScopeSchema = z.enum(['main_content', 'whole_page']);
+export type LiveScripterProbeScope = z.infer<typeof liveScripterProbeScopeSchema>;
+
+export const liveScripterProbeSuggestionSchema = liveScripterPickedElementSchema.extend({
+  suggestionId: z.string().trim().min(1),
+  pageUrl: z.string().trim().min(1),
+  pageTitle: z.string().trim().nullable(),
+  repeatedSiblingCount: z.number().int().min(0).default(0),
+  childLinkCount: z.number().int().min(0).default(0),
+  childImageCount: z.number().int().min(0).default(0),
+  classificationRole: selectorRegistryRoleSchema,
+  draftTargetHints: z.array(z.string().trim().min(1)).default([]),
+  confidence: z.number().min(0).max(1),
+  evidence: z.array(z.string().trim().min(1)).default([]),
+});
+
+export type LiveScripterProbeSuggestion = z.infer<typeof liveScripterProbeSuggestionSchema>;
+
+export const liveScripterProbePageSummarySchema = z.object({
+  url: z.string().trim().min(1),
+  title: z.string().trim().nullable(),
+  suggestionCount: z.number().int().min(0),
+});
+
+export type LiveScripterProbePageSummary = z.infer<typeof liveScripterProbePageSummarySchema>;
+
 export const liveScripterDriveClickMessageSchema = z.object({
   type: z.literal('drive_click'),
   x: z.number().finite(),
@@ -105,6 +133,15 @@ export const liveScripterReloadMessageSchema = z.object({
   type: z.literal('reload'),
 });
 
+export const liveScripterProbeDomMessageSchema = z.object({
+  type: z.literal('probe_dom'),
+  scope: liveScripterProbeScopeSchema.default('main_content'),
+  maxNodes: z.number().int().min(12).max(240).default(48),
+  sameOriginOnly: z.boolean().default(true),
+  linkDepth: z.number().int().min(0).max(2).default(0),
+  maxPages: z.number().int().min(1).max(8).default(1),
+});
+
 export const liveScripterDisposeMessageSchema = z.object({
   type: z.literal('dispose'),
 });
@@ -118,6 +155,7 @@ export const liveScripterClientMessageSchema = z.discriminatedUnion('type', [
   liveScripterBackMessageSchema,
   liveScripterForwardMessageSchema,
   liveScripterReloadMessageSchema,
+  liveScripterProbeDomMessageSchema,
   liveScripterDisposeMessageSchema,
 ]);
 
@@ -155,6 +193,23 @@ export const liveScripterPickedMessageSchema = z.object({
   element: liveScripterPickedElementSchema,
 });
 
+export const liveScripterProbeResultMessageSchema = z.object({
+  type: z.literal('probe_result'),
+  url: z.string().trim().min(1),
+  title: z.string().trim().nullable(),
+  scope: liveScripterProbeScopeSchema,
+  sameOriginOnly: z.boolean().default(true),
+  linkDepth: z.number().int().min(0).default(0),
+  maxPages: z.number().int().min(1).default(1),
+  scannedPages: z.number().int().min(0).default(0),
+  visitedUrls: z.array(z.string().trim().min(1)).default([]),
+  pages: z.array(liveScripterProbePageSummarySchema).default([]),
+  suggestionCount: z.number().int().min(0),
+  suggestions: z.array(liveScripterProbeSuggestionSchema).default([]),
+});
+
+export type LiveScripterProbeResult = z.infer<typeof liveScripterProbeResultMessageSchema>;
+
 export const liveScripterErrorMessageSchema = z.object({
   type: z.literal('error'),
   message: z.string(),
@@ -173,6 +228,7 @@ export const liveScripterServerMessageSchema = z.discriminatedUnion('type', [
   liveScripterFrameMessageSchema,
   liveScripterNavigatedMessageSchema,
   liveScripterPickedMessageSchema,
+  liveScripterProbeResultMessageSchema,
   liveScripterErrorMessageSchema,
   liveScripterClosedMessageSchema,
   liveScripterReadyMessageSchema,

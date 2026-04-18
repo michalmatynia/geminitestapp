@@ -16,6 +16,7 @@ import {
   getSelectorRegistryAdminHref,
   inferSelectorRegistryNamespace,
 } from '@/shared/lib/browser-execution/selector-registry-metadata';
+import { formatSelectorRegistryRoleLabel } from '@/shared/lib/browser-execution/selector-registry-roles';
 import {
   createPlaywrightStepCodeSnapshot,
   getPlaywrightStepInputBindings,
@@ -133,6 +134,8 @@ export function StepCodePreviewDialog({
   });
   const displayBindings = serverPreview?.inputBindings ?? bindings;
   const bindingEntries = Object.entries(displayBindings);
+  const incompatibleSelectorBindingCount =
+    snapshot?.selectorBindings.filter((binding) => binding.roleMatchesExpected === false).length ?? 0;
 
   useEffect(() => {
     if (!open || !step) return;
@@ -229,6 +232,12 @@ export function StepCodePreviewDialog({
                   Literal/local bindings
                 </Badge>
               )}
+              {incompatibleSelectorBindingCount > 0 ? (
+                <Badge className='border-amber-400/30 bg-amber-500/10 text-amber-100'>
+                  {incompatibleSelectorBindingCount} role mismatch
+                  {incompatibleSelectorBindingCount === 1 ? '' : 'es'}
+                </Badge>
+              ) : null}
               <a
                 href={getSelectorRegistryAdminHref(firstConnectedSelectorNamespace)}
                 className='inline-flex h-7 items-center gap-1.5 rounded-md border border-input bg-background px-2 text-[11px] font-medium text-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground'
@@ -260,7 +269,14 @@ export function StepCodePreviewDialog({
                       <Badge variant='neutral' className='w-fit'>
                         {binding.mode}
                       </Badge>
-                      <div className='break-words text-muted-foreground'>{bindingLabel(binding)}</div>
+                      <div className='break-words text-muted-foreground'>
+                        {bindingLabel(binding)}
+                        {binding.mode === 'selectorRegistry' && binding.selectorRole ? (
+                          <span className='mt-1 block'>
+                            Role: {formatSelectorRegistryRoleLabel(binding.selectorRole) ?? binding.selectorRole}
+                          </span>
+                        ) : null}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -311,6 +327,17 @@ export function StepCodePreviewDialog({
                         {binding.selectorProfile ? (
                           <Badge variant='neutral'>{binding.selectorProfile}</Badge>
                         ) : null}
+                        {binding.selectorRole ? (
+                          <Badge
+                            className={
+                              binding.roleMatchesExpected === false
+                                ? 'border-amber-400/30 bg-amber-500/10 text-amber-100'
+                                : undefined
+                            }
+                          >
+                            {formatSelectorRegistryRoleLabel(binding.selectorRole) ?? binding.selectorRole}
+                          </Badge>
+                        ) : null}
                         <Badge variant='neutral'>
                           {formatSelectorRegistryNamespaceLabel(
                             inferSelectorRegistryNamespace({
@@ -326,12 +353,25 @@ export function StepCodePreviewDialog({
                           <div>
                             Current registry profile: <span className='text-foreground'>{entry.profile}</span>
                           </div>
+                          <div>
+                            Current role:{' '}
+                            <span className='text-foreground'>
+                              {formatSelectorRegistryRoleLabel(entry.role) ?? entry.role}
+                            </span>
+                          </div>
                           <div className='break-all'>
                             Current preview: {entry.preview.join(', ') || 'No preview available'}
                           </div>
                           <div className='break-all'>
                             Saved fallback: {binding.fallbackSelector ?? 'None'}
                           </div>
+                          {binding.roleMatchesExpected === false && binding.expectedRoles?.length ? (
+                            <div className='text-amber-200'>
+                              Expected roles: {binding.expectedRoles
+                                .map((role) => formatSelectorRegistryRoleLabel(role) ?? role)
+                                .join(', ')}
+                            </div>
+                          ) : null}
                         </div>
                       ) : (
                         <div className='mt-2 text-amber-200'>

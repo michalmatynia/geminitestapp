@@ -9,6 +9,18 @@ import {
   type SelectorRegistryProfileActionRequest,
   type SelectorRegistryProfileActionResponse,
   selectorRegistryProfileActionResponseSchema,
+  type SelectorRegistryProbeRequest,
+  type SelectorRegistryProbeResponse,
+  selectorRegistryProbeResponseSchema,
+  type SelectorRegistryProbeSessionArchiveRequest,
+  type SelectorRegistryProbeSessionArchiveResponse,
+  selectorRegistryProbeSessionArchiveResponseSchema,
+  type SelectorRegistryProbeSessionDeleteRequest,
+  type SelectorRegistryProbeSessionDeleteResponse,
+  selectorRegistryProbeSessionDeleteResponseSchema,
+  type SelectorRegistryProbeSessionSaveRequest,
+  type SelectorRegistryProbeSessionSaveResponse,
+  selectorRegistryProbeSessionSaveResponseSchema,
   type SelectorRegistrySaveRequest,
   type SelectorRegistrySaveResponse,
   selectorRegistrySaveResponseSchema,
@@ -25,6 +37,8 @@ import {
 } from '@/shared/lib/query-factories-v2';
 
 const ENDPOINT = '/api/v2/integrations/selectors';
+const PROBE_SESSIONS_ENDPOINT = '/api/v2/integrations/selectors/probe-sessions';
+const PROBE_ENDPOINT = '/api/v2/integrations/selectors/probe';
 
 export const SELECTOR_REGISTRY_QUERY_KEY = [
   'integrations',
@@ -171,6 +185,98 @@ export function useDeleteSelectorRegistryEntryMutation(): MutationResult<
   });
 }
 
+export function useSaveSelectorRegistryProbeSessionMutation(): MutationResult<
+  SelectorRegistryProbeSessionSaveResponse,
+  SelectorRegistryProbeSessionSaveRequest
+> {
+  return createMutationV2<
+    SelectorRegistryProbeSessionSaveResponse,
+    SelectorRegistryProbeSessionSaveRequest
+  >({
+    mutationKey: [...SELECTOR_REGISTRY_QUERY_KEY, 'probe-sessions', 'save'],
+    mutationFn: async (
+      payload: SelectorRegistryProbeSessionSaveRequest
+    ): Promise<SelectorRegistryProbeSessionSaveResponse> => {
+      const data = await api.post<SelectorRegistryProbeSessionSaveResponse>(
+        PROBE_SESSIONS_ENDPOINT,
+        payload
+      );
+      return selectorRegistryProbeSessionSaveResponseSchema.parse(data);
+    },
+    invalidateKeys: [SELECTOR_REGISTRY_QUERY_KEY],
+    meta: {
+      source: 'integrations.hooks.useSaveSelectorRegistryProbeSessionMutation',
+      operation: 'create',
+      resource: 'integrations.selector-registry.probe-session',
+      domain: 'integrations',
+      tags: ['integrations', 'selector-registry', 'probe-sessions'],
+      description: 'Persists a live-scripter DOM probe session for later selector-registry review.',
+    },
+  });
+}
+
+export function useDeleteSelectorRegistryProbeSessionMutation(): MutationResult<
+  SelectorRegistryProbeSessionDeleteResponse,
+  SelectorRegistryProbeSessionDeleteRequest
+> {
+  return createDeleteMutationV2<
+    SelectorRegistryProbeSessionDeleteResponse,
+    SelectorRegistryProbeSessionDeleteRequest
+  >({
+    mutationKey: [...SELECTOR_REGISTRY_QUERY_KEY, 'probe-sessions', 'delete'],
+    mutationFn: async (
+      payload: SelectorRegistryProbeSessionDeleteRequest
+    ): Promise<SelectorRegistryProbeSessionDeleteResponse> => {
+      const data = await api.delete<SelectorRegistryProbeSessionDeleteResponse>(
+        PROBE_SESSIONS_ENDPOINT,
+        {
+          body: JSON.stringify(payload),
+        }
+      );
+      return selectorRegistryProbeSessionDeleteResponseSchema.parse(data);
+    },
+    invalidateKeys: [SELECTOR_REGISTRY_QUERY_KEY],
+    meta: {
+      source: 'integrations.hooks.useDeleteSelectorRegistryProbeSessionMutation',
+      operation: 'delete',
+      resource: 'integrations.selector-registry.probe-session',
+      domain: 'integrations',
+      tags: ['integrations', 'selector-registry', 'probe-sessions'],
+      description: 'Deletes a persisted DOM probe session from selector-registry review.',
+    },
+  });
+}
+
+export function useArchiveSelectorRegistryProbeSessionMutation(): MutationResult<
+  SelectorRegistryProbeSessionArchiveResponse,
+  SelectorRegistryProbeSessionArchiveRequest
+> {
+  return createMutationV2<
+    SelectorRegistryProbeSessionArchiveResponse,
+    SelectorRegistryProbeSessionArchiveRequest
+  >({
+    mutationKey: [...SELECTOR_REGISTRY_QUERY_KEY, 'probe-sessions', 'archive'],
+    mutationFn: async (
+      payload: SelectorRegistryProbeSessionArchiveRequest
+    ): Promise<SelectorRegistryProbeSessionArchiveResponse> => {
+      const data = await api.patch<SelectorRegistryProbeSessionArchiveResponse>(
+        PROBE_SESSIONS_ENDPOINT,
+        payload
+      );
+      return selectorRegistryProbeSessionArchiveResponseSchema.parse(data);
+    },
+    invalidateKeys: [SELECTOR_REGISTRY_QUERY_KEY],
+    meta: {
+      source: 'integrations.hooks.useArchiveSelectorRegistryProbeSessionMutation',
+      operation: 'update',
+      resource: 'integrations.selector-registry.probe-session.archive',
+      domain: 'integrations',
+      tags: ['integrations', 'selector-registry', 'probe-sessions', 'archive'],
+      description: 'Archives a persisted DOM probe session without hard deleting it.',
+    },
+  });
+}
+
 export function useMutateSelectorRegistryProfileMutation(): MutationResult<
   SelectorRegistryProfileActionResponse,
   SelectorRegistryProfileActionRequest
@@ -194,6 +300,60 @@ export function useMutateSelectorRegistryProfileMutation(): MutationResult<
       domain: 'integrations',
       tags: ['integrations', 'selector-registry', 'profile'],
       description: 'Clones, renames, or deletes selector registry profiles.',
+    },
+  });
+}
+
+type ClassifyRolePayload = {
+  namespace: SelectorRegistryNamespace;
+  profile: string;
+  key: string;
+};
+
+export function useClassifySelectorRoleMutation(): MutationResult<
+  SelectorRegistryProfileActionResponse,
+  ClassifyRolePayload
+> {
+  return createMutationV2<SelectorRegistryProfileActionResponse, ClassifyRolePayload>({
+    mutationKey: [...SELECTOR_REGISTRY_QUERY_KEY, 'classify-role'],
+    mutationFn: async (payload: ClassifyRolePayload): Promise<SelectorRegistryProfileActionResponse> => {
+      const data = await api.patch<SelectorRegistryProfileActionResponse>(ENDPOINT, {
+        action: 'classify_role' as const,
+        ...payload,
+      });
+      return selectorRegistryProfileActionResponseSchema.parse(data);
+    },
+    invalidateKeys: [SELECTOR_REGISTRY_QUERY_KEY],
+    meta: {
+      source: 'integrations.hooks.useClassifySelectorRoleMutation',
+      operation: 'action',
+      resource: 'integrations.selector-registry.role',
+      domain: 'integrations',
+      tags: ['integrations', 'selector-registry', 'classify'],
+      description: 'Uses an AI model to classify the role of a selector registry entry.',
+    },
+  });
+}
+
+export function useProbeSelectorMutation(): MutationResult<
+  SelectorRegistryProbeResponse,
+  SelectorRegistryProbeRequest
+> {
+  return createMutationV2<SelectorRegistryProbeResponse, SelectorRegistryProbeRequest>({
+    mutationKey: [...SELECTOR_REGISTRY_QUERY_KEY, 'probe'],
+    mutationFn: async (
+      payload: SelectorRegistryProbeRequest
+    ): Promise<SelectorRegistryProbeResponse> => {
+      const data = await api.post<SelectorRegistryProbeResponse>(PROBE_ENDPOINT, payload);
+      return selectorRegistryProbeResponseSchema.parse(data);
+    },
+    meta: {
+      source: 'integrations.hooks.useProbeSelectorMutation',
+      operation: 'action',
+      resource: 'integrations.selector-registry.probe',
+      domain: 'integrations',
+      tags: ['integrations', 'selector-registry', 'probe'],
+      description: 'Launches a Playwright session to probe a selector on the target marketplace URL.',
     },
   });
 }

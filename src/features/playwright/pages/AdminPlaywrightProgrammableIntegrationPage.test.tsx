@@ -1300,7 +1300,23 @@ describe('AdminPlaywrightProgrammableIntegrationPageRuntime', () => {
     await waitFor(() => {
       expect(screen.getByLabelText('Draft mapper source path 1')).toHaveValue('title');
     });
+    await waitFor(() => {
+      expect(screen.getByText('Suggested')).toBeInTheDocument();
+    });
+    expect(
+      screen.getByText('Auto-seeded from signal: title to name_en using trim.')
+    ).toBeInTheDocument();
     expect(screen.getByText(/"name_en": "Manual Seed Product"/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Accept suggestion' }));
+
+    await waitFor(() => {
+      expect(screen.queryByText('Suggested')).not.toBeInTheDocument();
+    });
+    expect(
+      screen.queryByText('Auto-seeded from signal: title to name_en using trim.')
+    ).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Draft mapper source path 1')).toHaveValue('title');
   });
 
   it('re-seeds from the selected sample when the mapper is cleared and the sample changes', async () => {
@@ -1352,6 +1368,14 @@ describe('AdminPlaywrightProgrammableIntegrationPageRuntime', () => {
         'offer.price.value'
       );
     });
+    expect(screen.getByText('Suggested')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
+    await waitFor(() => {
+      expect(screen.queryByText('Suggested')).not.toBeInTheDocument();
+    });
+    expect(screen.getByLabelText('Draft mapper source path 1')).toHaveValue(
+      'offer.price.value'
+    );
     expect(screen.getByText(/"price": 13.25/)).toBeInTheDocument();
   });
 

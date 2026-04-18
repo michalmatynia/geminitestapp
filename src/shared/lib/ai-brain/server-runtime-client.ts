@@ -80,12 +80,37 @@ const buildOpenAiCompatibleMessages = (
     };
   });
 
-const assertTextOnlyMessages = (messages: BrainChatMessage[]): void => {
-  if (messages.some((message: BrainChatMessage): boolean => typeof message.content !== 'string')) {
-    throw configurationError(
-      'This Brain-assigned provider only supports text-only messages in this runtime.'
+export const isBrainModelVisionCapable = (modelId: string): boolean => {
+  const vendor = inferBrainRuntimeVendor(modelId);
+  const normalized = normalizeBrainRuntimeModelId(modelId).toLowerCase();
+  if (vendor === 'openai') {
+    return (
+      normalized.startsWith('gpt-4o') ||
+      normalized.startsWith('gpt-4-turbo') ||
+      normalized.startsWith('gpt-4-vision') ||
+      normalized.startsWith('o1') ||
+      normalized.startsWith('o3') ||
+      normalized.startsWith('o4')
     );
   }
+  if (vendor === 'anthropic') {
+    return (
+      normalized.startsWith('claude-3') ||
+      normalized.startsWith('claude-4') ||
+      normalized.startsWith('claude-opus-4') ||
+      normalized.startsWith('claude-sonnet-4') ||
+      normalized.startsWith('claude-haiku-4')
+    );
+  }
+  if (vendor === 'gemini') {
+    return (
+      normalized.startsWith('gemini-1.5') ||
+      normalized.startsWith('gemini-2') ||
+      normalized.startsWith('gemini-pro') ||
+      normalized.startsWith('gemini-flash')
+    );
+  }
+  return false;
 };
 
 export const supportsBrainJsonMode = (modelId: string): boolean => {
@@ -122,8 +147,15 @@ const createOpenAiCompatibleClient = async (
   };
 };
 
+const extractBase64ImageData = (
+  dataUrl: string
+): { mediaType: string; data: string } | null => {
+  const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+  if (!match) return null;
+  return { mediaType: match[1] ?? '', data: match[2] ?? '' };
+};
+
 const buildAnthropicMessages = (messages: BrainChatMessage[]) => {
-  assertTextOnlyMessages(messages);
   const systemPrompt = messages
     .filter((message: BrainChatMessage): boolean => message.role === 'system')
     .map((message: BrainChatMessage): string => String(message.content))
@@ -133,16 +165,33 @@ const buildAnthropicMessages = (messages: BrainChatMessage[]) => {
     .filter((message: BrainChatMessage): boolean => message.role !== 'system')
     .map((message: BrainChatMessage) => ({
       role: message.role === 'assistant' ? 'assistant' : 'user',
-      content: [{ type: 'text', text: String(message.content) }],
+      content:
+        typeof message.content === 'string'
+          ? [{ type: 'text' as const, text: message.content }]
+          : message.content.map((part: ChatCompletionContentPart) => {
+              if (part.type === 'text') return { type: 'text' as const, text: part.text ?? '' };
+              if (part.type === 'image_url') {
+                const parsed = extractBase64ImageData(
+                  typeof part.image_url === 'string' ? part.image_url : part.image_url.url
+                );
+                if (parsed) {
+                  return {
+                    type: 'image' as const,
+                    source: {
+                      type: 'base64' as const,
+                      media_type: parsed.mediaType as 'image/png' | 'image/jpeg' | 'image/gif' | 'image/webp',
+                      data: parsed.data,
+                    },
+                  };
+                }
+              }
+              return { type: 'text' as const, text: '' };
+            }),
     }));
-  return {
-    systemPrompt,
-    chatMessages,
-  };
+  return { systemPrompt, chatMessages };
 };
 
 const buildGeminiMessages = (messages: BrainChatMessage[]) => {
-  assertTextOnlyMessages(messages);
   const systemPrompt = messages
     .filter((message: BrainChatMessage): boolean => message.role === 'system')
     .map((message: BrainChatMessage): string => String(message.content))
@@ -152,12 +201,23 @@ const buildGeminiMessages = (messages: BrainChatMessage[]) => {
     .filter((message: BrainChatMessage): boolean => message.role !== 'system')
     .map((message: BrainChatMessage) => ({
       role: message.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: String(message.content) }],
+      parts:
+        typeof message.content === 'string'
+          ? [{ text: message.content }]
+          : message.content.map((part: ChatCompletionContentPart) => {
+              if (part.type === 'text') return { text: part.text ?? '' };
+              if (part.type === 'image_url') {
+                const parsed = extractBase64ImageData(
+                  typeof part.image_url === 'string' ? part.image_url : part.image_url.url
+                );
+                if (parsed) {
+                  return { inline_data: { mime_type: parsed.mediaType, data: parsed.data } };
+                }
+              }
+              return { text: '' };
+            }),
     }));
-  return {
-    systemPrompt,
-    contents,
-  };
+  return { systemPrompt, contents };
 };
 
 export const runBrainChatCompletion = async (input: {

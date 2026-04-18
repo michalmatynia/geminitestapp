@@ -297,6 +297,7 @@ export async function saveAmazonSelectorRegistryEntry(input: {
   profile: string;
   key: string;
   valueJson: string;
+  role?: AmazonSelectorRegistrySeedEntry['role'];
 }): Promise<AmazonSelectorRegistrySaveResponse> {
   const profile = normalizeSelectorProfile(input.profile);
   const seedEntry = resolveSeedEntry(input.key.trim());
@@ -316,7 +317,7 @@ export async function saveAmazonSelectorRegistryEntry(input: {
         key: seedEntry.key,
         group: resolveGroup(seedEntry.key),
         kind: seedEntry.kind,
-        role: seedEntry.role,
+        role: input.role ?? seedEntry.role,
         description: seedEntry.description ?? null,
         valueType: seedEntry.valueType,
         valueJson: normalizedValueJson,

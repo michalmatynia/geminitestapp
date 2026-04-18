@@ -50,6 +50,75 @@ const tokenize = (value: string | null | undefined): string => {
 const includesAny = (value: string, needles: readonly string[]): boolean =>
   needles.some((needle) => value.includes(needle));
 
+const PRICE_SIGNAL_PATTERN =
+  /(?:[$€£¥]|(?:\b(?:usd|eur|sek|pln|cad|aud|nok|dkk|czk|huf|kr)\b)).*\d|\d(?:[\d\s.,])*(?:[$€£¥]|(?:\b(?:usd|eur|sek|pln|cad|aud|nok|dkk|czk|huf|kr)\b))/i;
+
+export type SelectorRegistryProbeRoleInput = {
+  tag: string;
+  role: string | null;
+  textPreview: string | null;
+  attrs: Record<string, string>;
+  classes: string[];
+  repeatedSiblingCount?: number;
+  childLinkCount?: number;
+  childImageCount?: number;
+};
+
+export type SelectorRegistryProbeRoleClassification = {
+  role: SelectorRegistryRole;
+  confidence: number;
+  evidence: string[];
+  draftTargetHints: string[];
+};
+
+const collectProbeSearchText = ({
+  tag,
+  role,
+  textPreview,
+  attrs,
+  classes,
+}: SelectorRegistryProbeRoleInput): string =>
+  [
+    tag,
+    role ?? '',
+    textPreview ?? '',
+    ...classes,
+    ...Object.keys(attrs),
+    ...Object.values(attrs),
+  ]
+    .map((value) => tokenize(value))
+    .filter(Boolean)
+    .join('_');
+
+const getDraftTargetHintsForRole = (
+  role: SelectorRegistryRole,
+  input: SelectorRegistryProbeRoleInput
+): string[] => {
+  if (role === 'content_title') return ['name_en'];
+  if (role === 'content_price') return ['price'];
+  if (role === 'content_description') return ['description_en'];
+  if (role === 'content_image') return ['imageLinks'];
+
+  const href = input.attrs['href']?.trim() ?? '';
+  if ((role === 'candidate_hint' || role === 'result_hint' || role === 'navigation') && href.length > 0) {
+    return ['supplierLink'];
+  }
+
+  return [];
+};
+
+const buildProbeClassification = (
+  role: SelectorRegistryRole,
+  confidence: number,
+  evidence: string[],
+  input: SelectorRegistryProbeRoleInput
+): SelectorRegistryProbeRoleClassification => ({
+  role,
+  confidence,
+  evidence,
+  draftTargetHints: getDraftTargetHintsForRole(role, input),
+});
+
 const inferRoleFromHintKey = (normalizedKey: string): SelectorRegistryRole => {
   if (
     includesAny(normalizedKey, [
@@ -224,6 +293,150 @@ export const inferSelectorRegistryRole = (input: {
   }
 
   return inferRoleFromSelectorKey(combined);
+};
+
+export const inferSelectorRegistryRoleFromProbe = (
+  input: SelectorRegistryProbeRoleInput
+): SelectorRegistryProbeRoleClassification => {
+  const normalizedTag = tokenize(input.tag);
+  const normalizedRole = tokenize(input.role);
+  const normalizedText = (input.textPreview ?? '').trim();
+  const searchText = collectProbeSearchText(input);
+  const href = input.attrs['href']?.trim() ?? '';
+  const type = tokenize(input.attrs['type']);
+  const repeatedSiblingCount = input.repeatedSiblingCount ?? 0;
+  const childLinkCount = input.childLinkCount ?? 0;
+  const childImageCount = input.childImageCount ?? 0;
+
+  if (
+    normalizedTag === 'img' ||
+    normalizedRole === 'img' ||
+    includesAny(searchText, ['image', 'gallery', 'thumbnail', 'heroimage', 'hero_image']) ||
+    typeof input.attrs['src'] === 'string'
+  ) {
+    return buildProbeClassification(
+      'content_image',
+      0.94,
+      ['Image semantics detected in the element tag or attributes.'],
+      input
+    );
+  }
+
+  if (
+    PRICE_SIGNAL_PATTERN.test(normalizedText) ||
+    includesAny(searchText, ['price', 'amount', 'saleprice', 'sale_price', 'currentprice', 'current_price'])
+  ) {
+    return buildProbeClassification(
+      'content_price',
+      0.96,
+      ['Visible text or attributes look like a price.'],
+      input
+    );
+  }
+
+  if (
+    normalizedTag === 'input' ||
+    normalizedTag === 'textarea' ||
+    normalizedTag === 'select' ||
+    includesAny(normalizedRole, ['textbox', 'combobox', 'checkbox', 'radio'])
+  ) {
+    return buildProbeClassification(
+      type === 'file' ? 'upload_input' : 'input',
+      0.92,
+      ['Form control semantics detected.'],
+      input
+    );
+  }
+
+  if (
+    normalizedTag === 'button' ||
+    (normalizedTag === 'input' && includesAny(type, ['submit', 'button'])) ||
+    (includesAny(normalizedRole, ['button']) &&
+      includesAny(searchText, ['submit', 'save', 'publish', 'confirm', 'continue', 'login']))
+  ) {
+    return buildProbeClassification(
+      includesAny(searchText, ['submit', 'save', 'publish', 'confirm']) ? 'submit' : 'trigger',
+      0.9,
+      ['Interactive button semantics detected.'],
+      input
+    );
+  }
+
+  if (
+    normalizedTag === 'a' &&
+    href.length > 0 &&
+    includesAny(searchText, ['next', 'previous', 'prev', 'pagination', 'page']) &&
+    repeatedSiblingCount <= 2
+  ) {
+    return buildProbeClassification(
+      'navigation',
+      0.88,
+      ['Link text suggests page navigation.'],
+      input
+    );
+  }
+
+  if (
+    normalizedTag === 'a' &&
+    href.length > 0 &&
+    (repeatedSiblingCount >= 2 || childImageCount > 0 || childLinkCount > 0)
+  ) {
+    return buildProbeClassification(
+      'candidate_hint',
+      0.87,
+      ['Repeated link candidate looks like a product/result entry.'],
+      input
+    );
+  }
+
+  if (
+    includesAny(normalizedTag, ['h1', 'h2', 'h3']) ||
+    includesAny(searchText, ['title', 'productname', 'product_name', 'listingname', 'listing_name']) ||
+    (normalizedText.length >= 4 && normalizedText.length <= 160 && repeatedSiblingCount <= 2)
+  ) {
+    return buildProbeClassification(
+      'content_title',
+      0.84,
+      ['Heading or concise content text looks like a title.'],
+      input
+    );
+  }
+
+  if (
+    normalizedText.length >= 120 ||
+    includesAny(searchText, ['description', 'details', 'about', 'summary'])
+  ) {
+    return buildProbeClassification(
+      'content_description',
+      0.82,
+      ['Long-form visible text looks descriptive.'],
+      input
+    );
+  }
+
+  if (
+    repeatedSiblingCount >= 2 &&
+    (childLinkCount > 0 || childImageCount > 0) &&
+    includesAny(normalizedTag, ['article', 'li', 'div', 'section'])
+  ) {
+    return buildProbeClassification(
+      'result_shell',
+      0.78,
+      ['Repeated container with links or images looks like a result shell.'],
+      input
+    );
+  }
+
+  if (normalizedText.length > 0) {
+    return buildProbeClassification(
+      'content',
+      0.6,
+      ['Visible content text is available but not strongly classified.'],
+      input
+    );
+  }
+
+  return buildProbeClassification('generic', 0.35, ['No strong semantic signal detected.'], input);
 };
 
 export const formatSelectorRegistryRoleLabel = (

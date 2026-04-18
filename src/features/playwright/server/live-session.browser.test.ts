@@ -3,13 +3,29 @@ import { createServer, type Server } from 'node:http';
 import { afterEach, describe, expect, it } from 'vitest';
 import { chromium, type Browser } from 'playwright';
 
-import { pickElementAt, readSettledLiveScripterPageTitle } from './live-session';
+import {
+  pickElementAt,
+  probeLiveScripterDom,
+  readSettledLiveScripterPageTitle,
+} from './live-session';
 
-const FIXTURE_HTML = `<!doctype html>
+const renderFixtureHtml = ({
+  pageTitle,
+  heading,
+  price,
+  description,
+  nextHref,
+}: {
+  pageTitle: string;
+  heading: string;
+  price: string;
+  description: string;
+  nextHref?: string;
+}) => `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>StudiQ</title>
+    <title>${pageTitle}</title>
     <style>
       body {
         margin: 0;
@@ -45,7 +61,25 @@ const FIXTURE_HTML = `<!doctype html>
   <body>
     <main>
       <div class="stack">
-        <h1 id="fixture-title">Live Scripter Fixture</h1>
+        <h1 id="fixture-title">${heading}</h1>
+        <div class="product-meta">
+          <span class="fixture-price">${price}</span>
+          <img
+            id="fixture-image"
+            src="https://example.com/product.jpg"
+            alt="Fixture image"
+            width="120"
+            height="120"
+          />
+          <p id="fixture-description">
+            ${description}
+          </p>
+        </div>
+        ${
+          typeof nextHref === 'string'
+            ? `<a id="next-item-link" href="${nextHref}">Next fixture item</a>`
+            : ''
+        }
         <button id="submit-action" data-testid="submit-action" type="button">Submit now</button>
         <label for="title-field">Title</label>
         <input
@@ -61,7 +95,7 @@ const FIXTURE_HTML = `<!doctype html>
     </main>
     <script>
       window.setTimeout(() => {
-        document.title = 'Live Scripter Fixture';
+        document.title = ${JSON.stringify(pageTitle)};
       }, 120);
       const status = document.getElementById('status');
       const button = document.getElementById('submit-action');
@@ -85,10 +119,31 @@ const closeServer = async (server: Server): Promise<void> => {
 };
 
 const startFixtureServer = async (): Promise<{ server: Server; url: string }> => {
-  const server = createServer((_request, response) => {
+  const server = createServer((request, response) => {
     response.statusCode = 200;
     response.setHeader('content-type', 'text/html; charset=utf-8');
-    response.end(FIXTURE_HTML);
+    if (request.url === '/item-2') {
+      response.end(
+        renderFixtureHtml({
+          pageTitle: 'Live Scripter Fixture 2',
+          heading: 'Live Scripter Fixture 2',
+          price: '$189.00',
+          description:
+            'This second fixture page gives the DOM probe a bounded same-origin traversal target.',
+        })
+      );
+      return;
+    }
+    response.end(
+      renderFixtureHtml({
+        pageTitle: 'Live Scripter Fixture',
+        heading: 'Live Scripter Fixture',
+        price: '$129.00',
+        description:
+          'This fixture description is intentionally long enough to trigger description probing and mapper hinting in the live scripter DOM probe path.',
+        nextHref: '/item-2',
+      })
+    );
   });
 
   await new Promise<void>((resolve, reject) => {
@@ -209,5 +264,62 @@ describe('live-session browser smoke', () => {
     await page.waitForFunction(() => window.scrollY > 0);
     const scrollY = await page.evaluate(() => window.scrollY);
     expect(scrollY).toBeGreaterThan(0);
+  }, 30_000);
+
+  it('probes the current page and classifies content selectors with mapper hints', async () => {
+    const fixture = await startFixtureServer();
+    server = fixture.server;
+
+    browser = await chromium.launch({ headless: true });
+    const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+    await page.goto(fixture.url, { waitUntil: 'domcontentloaded' });
+
+    const result = await probeLiveScripterDom(page, {
+      scope: 'main_content',
+      maxNodes: 24,
+      sameOriginOnly: true,
+      linkDepth: 1,
+      maxPages: 2,
+    });
+
+    expect(result.type).toBe('probe_result');
+    expect(result.scannedPages).toBe(2);
+    expect(result.pages).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          title: 'Live Scripter Fixture',
+        }),
+        expect.objectContaining({
+          title: 'Live Scripter Fixture 2',
+        }),
+      ])
+    );
+    expect(result.suggestions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          pageTitle: 'Live Scripter Fixture',
+          classificationRole: 'content_title',
+          draftTargetHints: ['name_en'],
+          textPreview: 'Live Scripter Fixture',
+        }),
+        expect.objectContaining({
+          pageTitle: 'Live Scripter Fixture',
+          classificationRole: 'content_price',
+          draftTargetHints: ['price'],
+          textPreview: expect.stringContaining('$129.00'),
+        }),
+        expect.objectContaining({
+          pageTitle: 'Live Scripter Fixture',
+          classificationRole: 'content_image',
+          draftTargetHints: ['imageLinks'],
+        }),
+        expect.objectContaining({
+          pageTitle: 'Live Scripter Fixture 2',
+          classificationRole: 'content_price',
+          draftTargetHints: ['price'],
+          textPreview: expect.stringContaining('$189.00'),
+        }),
+      ])
+    );
   }, 30_000);
 });

@@ -42,6 +42,7 @@ import {
   getSelectorRegistryAdminHref,
   inferSelectorRegistryNamespace,
 } from '@/shared/lib/browser-execution/selector-registry-metadata';
+import { formatSelectorRegistryRoleLabel } from '@/shared/lib/browser-execution/selector-registry-roles';
 import {
   createMasterFolderTreeTransactionAdapter,
   FolderTreeViewportV2,
@@ -881,40 +882,52 @@ function StepDetail({
               </pre>
             </div>
           </div>
-          {selectorResolution.length > 0 ? (
-            <div className='space-y-2'>
-              <div className='text-[10px] font-semibold uppercase tracking-wide text-muted-foreground'>
-                Selector resolution
-              </div>
-              {selectorResolution.map((binding) => (
-                <div
-                  key={`${binding.field}:${binding.selectorKey ?? binding.resolvedSelector ?? binding.mode}`}
-                  className='grid gap-2 rounded border border-border/40 bg-background/20 px-3 py-2 text-xs sm:grid-cols-[120px_140px_1fr]'
-                >
-                  <div className='font-medium text-foreground'>{binding.field}</div>
-                  <Badge variant='neutral' className='w-fit'>
-                    {binding.connected ? 'registry' : binding.mode}
-                  </Badge>
-                  <div className='break-words text-muted-foreground'>
-                    {binding.selectorKey ??
-                      binding.resolvedSelector ??
-                      binding.fallbackSelector ??
-                      'Unresolved'}
-                    {binding.selectorProfile !== null &&
-                    binding.selectorProfile !== ''
-                      ? ` (${binding.selectorProfile})`
-                      : ''}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : null}
           {codeSnapshot.unresolvedBindings.length > 0 ? (
             <div className='rounded border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-100'>
               <div className='mb-1 font-semibold'>Unresolved bindings</div>
               <div>{codeSnapshot.unresolvedBindings.join(', ')}</div>
             </div>
           ) : null}
+        </div>
+      ) : null}
+      {selectorResolution.length > 0 ? (
+        <div className='space-y-2'>
+          <div className='text-[10px] font-semibold uppercase tracking-wide text-muted-foreground'>
+            Selector resolution
+          </div>
+          {selectorResolution.map((binding) => (
+            <div
+              key={`${binding.field}:${binding.selectorKey ?? binding.resolvedSelector ?? binding.mode}`}
+              className='grid gap-2 rounded border border-border/40 bg-background/20 px-3 py-2 text-xs sm:grid-cols-[120px_140px_1fr]'
+            >
+              <div className='font-medium text-foreground'>{binding.field}</div>
+              <Badge variant='neutral' className='w-fit'>
+                {binding.connected ? 'registry' : binding.mode}
+              </Badge>
+              <div className='break-words text-muted-foreground'>
+                {binding.selectorKey ??
+                  binding.resolvedSelector ??
+                  binding.fallbackSelector ??
+                  'Unresolved'}
+                {binding.selectorProfile !== null &&
+                binding.selectorProfile !== ''
+                  ? ` (${binding.selectorProfile})`
+                  : ''}
+                {binding.selectorRole ? (
+                  <span className='mt-1 block'>
+                    Role: {formatSelectorRegistryRoleLabel(binding.selectorRole) ?? binding.selectorRole}
+                  </span>
+                ) : null}
+                {binding.roleMatchesExpected === false && binding.expectedRoles?.length ? (
+                  <span className='mt-1 block text-amber-200'>
+                    Expected roles: {binding.expectedRoles
+                      .map((role) => formatSelectorRegistryRoleLabel(role) ?? role)
+                      .join(', ')}
+                  </span>
+                ) : null}
+              </div>
+            </div>
+          ))}
         </div>
       ) : null}
       <KeyValueGrid

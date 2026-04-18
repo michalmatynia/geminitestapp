@@ -1,4 +1,18 @@
 /* eslint-disable complexity, max-lines, max-lines-per-function */
+import 'server-only';
+
+import {
+  resolveBrainExecutionConfigForCapability,
+} from '@/shared/lib/ai-brain/segments/api';
+import {
+  isBrainModelVisionCapable,
+  runBrainChatCompletion,
+} from '@/shared/lib/ai-brain/server-runtime-client';
+import {
+  readPlaywrightEngineArtifact,
+  runPlaywrightEngineTask,
+} from '@/features/playwright/server';
+
 import {
   cloneAmazonSelectorRegistryProfile,
   deleteAmazonSelectorRegistryEntry,
@@ -18,6 +32,10 @@ import {
   syncSupplier1688SelectorRegistryFromCode,
 } from '@/features/integrations/services/supplier-1688-selector-registry';
 import {
+  listSelectorRegistryProbeSessionClusters,
+  listSelectorRegistryProbeSessions,
+} from '@/features/integrations/services/selector-registry-probe-sessions';
+import {
   cloneTraderaSelectorRegistryProfile,
   deleteTraderaSelectorRegistryEntry,
   deleteTraderaSelectorRegistryProfile,
@@ -27,16 +45,21 @@ import {
   syncTraderaSelectorRegistryFromCode,
 } from '@/features/integrations/services/tradera-selector-registry';
 import type {
+  SelectorRegistryClassifySuggestionItem,
+  SelectorRegistryClassifySuggestionsResponse,
   SelectorRegistryDeleteResponse,
   SelectorRegistryEntry,
   SelectorRegistryKind,
   SelectorRegistryListResponse,
   SelectorRegistryNamespace,
   SelectorRegistryProfileActionResponse,
+  SelectorRegistryProbeResponse,
+  SelectorRegistryRole,
   SelectorRegistrySaveResponse,
   SelectorRegistrySyncResponse,
   SelectorRegistryValueType,
 } from '@/shared/contracts/integrations/selector-registry';
+import { selectorRegistryRoleSchema } from '@/shared/contracts/integrations/selector-registry';
 import {
   SELECTOR_REGISTRY_DEFAULT_PROFILES,
   SELECTOR_REGISTRY_NAMESPACES,
@@ -750,6 +773,8 @@ export async function listSelectorRegistry(options?: {
     const entries = namespaceResponses.flatMap((response) => response.entries);
     return {
       entries,
+      probeSessions: [],
+      probeSessionClusters: [],
       namespaces: SELECTOR_REGISTRY_NAMESPACES,
       profiles: [],
       namespace: null,
@@ -767,9 +792,21 @@ export async function listSelectorRegistry(options?: {
     effective === false
       ? await listNamespaceRaw(namespace, requestedProfile)
       : await buildEffectiveEntries(namespace, profile);
+  const [probeSessions, probeSessionClusters] = await Promise.all([
+    listSelectorRegistryProbeSessions({
+      namespace,
+      profile,
+    }).catch(() => []),
+    listSelectorRegistryProbeSessionClusters({
+      namespace,
+      profile,
+    }).catch(() => []),
+  ]);
 
   return {
     entries: result.entries,
+    probeSessions,
+    probeSessionClusters,
     namespaces: SELECTOR_REGISTRY_NAMESPACES,
     profiles: result.profiles,
     namespace,
@@ -819,6 +856,7 @@ export async function saveSelectorRegistryEntry(input: {
   profile: string;
   key: string;
   valueJson: string;
+  role?: SelectorRegistryRole;
 }): Promise<SelectorRegistrySaveResponse> {
   assertWritableNamespace(input.namespace);
 
@@ -873,7 +911,17 @@ export async function mutateSelectorRegistryProfile(input:
       namespace: SelectorRegistryNamespace;
       profile: string;
     }
+  | {
+      action: 'classify_role';
+      namespace: SelectorRegistryNamespace;
+      profile: string;
+      key: string;
+    }
 ): Promise<SelectorRegistryProfileActionResponse> {
+  if (input.action === 'classify_role') {
+    return classifySelectorRegistryRole({ namespace: input.namespace, profile: input.profile, key: input.key });
+  }
+
   assertWritableNamespace(input.namespace);
 
   if (input.action === 'clone_profile') {
@@ -1062,3 +1110,336 @@ export async function resolveSelectorRegistryRuntime(input: {
 
 export const isSelectorRegistrySelectorKind = (kind: SelectorRegistryKind): boolean =>
   kind === 'selector' || kind === 'selectors';
+
+const ROLE_CLASSIFICATION_SYSTEM_PROMPT = `You are a browser automation expert. Given a selector registry entry, classify its role.
+
+Available roles and when to use them:
+- generic: Default/unspecified role, no clear semantic meaning
+- input: Text input fields for data entry
+- upload_input: File upload inputs
+- trigger: Buttons or clickable elements that trigger an action
+- option: Dropdown options or selectable items
+- submit: Form submission buttons
+- ready_signal: Selectors that indicate the page/process is ready or succeeded
+- result_hint: Individual search result items or links
+- result_shell: Container wrapping search results
+- candidate_hint: Candidate matches in a search or comparison flow
+- overlay_accept: Accept/agree buttons on overlays (cookie consent, popups)
+- overlay_dismiss: Close/reject buttons on overlays
+- navigation: Navigation elements (menus, links, breadcrumbs)
+- content: General product or page content
+- content_title: Product title content
+- content_price: Product price content
+- content_description: Product description content
+- content_image: Product image content
+- feedback: Status/feedback messages (errors, validation, pending, saving)
+- barrier: Access barriers like captcha, login gates, verification prompts
+- barrier_title: Title text of an access barrier
+- text_hint: General text hints used for pattern matching
+- negative_text_hint: Text hints indicating rejection or negative states
+- pattern: Regex or string patterns for matching
+- path: URL paths or navigation paths
+- label: Display labels
+
+Respond with ONLY the role identifier (e.g. "input", "trigger", "content_title"). No explanation.`;
+
+const parseAiRoleResponse = (text: string): SelectorRegistryRole => {
+  const trimmed = text.trim().toLowerCase().replace(/[^a-z_]/g, '');
+  const parsed = selectorRegistryRoleSchema.safeParse(trimmed);
+  return parsed.success ? parsed.data : 'generic';
+};
+
+const NAMESPACE_PROBE_URLS: Record<SelectorRegistryNamespace, string> = {
+  tradera: 'https://www.tradera.com',
+  amazon: 'https://www.amazon.com',
+  '1688': 'https://www.1688.com',
+  vinted: 'https://www.vinted.com',
+};
+
+export async function probeSelectorRegistryEntry(input: {
+  namespace: SelectorRegistryNamespace;
+  profile: string;
+  key: string;
+  probeUrl?: string;
+}): Promise<SelectorRegistryProbeResponse> {
+  const profile = normalizeProfile(input.namespace, input.profile);
+
+  const listResponse = await listSelectorRegistry({ namespace: input.namespace, profile, effective: true });
+  const entry = listResponse.entries.find((e) => e.key === input.key.trim());
+  if (!entry) {
+    throw new Error(`Selector registry entry "${input.key}" not found in namespace "${input.namespace}" profile "${profile}".`);
+  }
+
+  const probeUrl = input.probeUrl ?? NAMESPACE_PROBE_URLS[input.namespace];
+
+  let selectors: string[] = [];
+  try {
+    const parsed: unknown = JSON.parse(entry.valueJson);
+    if (typeof parsed === 'string') selectors = [parsed];
+    else if (Array.isArray(parsed)) selectors = parsed.filter((s): s is string => typeof s === 'string').slice(0, 5);
+  } catch {
+    selectors = entry.preview.slice(0, 5);
+  }
+
+  const selectorsJson = JSON.stringify(selectors);
+
+  const probeScript = `
+await page.waitForLoadState('domcontentloaded', { timeout: 12000 }).catch(() => null);
+const selectorsToTest = ${selectorsJson};
+let matchCount = 0;
+let domSnippet = null;
+let matchedSelector = null;
+for (const selector of selectorsToTest) {
+  try {
+    const elements = await page.$$(selector);
+    if (elements.length > 0) {
+      matchCount = elements.length;
+      matchedSelector = selector;
+      try {
+        domSnippet = await elements[0].evaluate(function(el) { return el.outerHTML.substring(0, 1000); });
+      } catch (_e) {}
+      break;
+    }
+  } catch (_e) {}
+}
+return { matchCount, domSnippet, matchedSelector };
+`.trim();
+
+  const runRecord = await runPlaywrightEngineTask({
+    request: {
+      script: probeScript,
+      startUrl: probeUrl,
+      capture: { screenshot: true },
+      timeoutMs: 45000,
+    },
+    instance: {
+      kind: 'custom',
+      family: 'custom',
+      label: `selector-registry-probe:${input.namespace}:${entry.key}`,
+    },
+  });
+
+  let screenshotBase64: string | null = null;
+  const screenshotArtifact = runRecord.artifacts.find(
+    (a) => a.mimeType === 'image/png' || a.name.endsWith('.png') || a.kind === 'screenshot'
+  );
+  if (screenshotArtifact) {
+    const artifactResult = await readPlaywrightEngineArtifact({
+      runId: runRecord.runId,
+      fileName: screenshotArtifact.name,
+    }).catch(() => null);
+    if (artifactResult) {
+      screenshotBase64 = artifactResult.content.toString('base64');
+    }
+  }
+
+  const probeResult = runRecord.result as { matchCount?: number; domSnippet?: string | null; matchedSelector?: string | null } | null;
+  const resolvedMatchCount = probeResult?.matchCount ?? 0;
+  const resolvedDomSnippet = probeResult?.domSnippet ?? null;
+  const resolvedMatchedSelector = probeResult?.matchedSelector ?? null;
+
+  return {
+    namespace: input.namespace,
+    profile,
+    key: entry.key,
+    probeUrl,
+    matchCount: resolvedMatchCount,
+    screenshotBase64,
+    domSnippet: resolvedDomSnippet,
+    matchedSelector: resolvedMatchedSelector,
+    probedAt: new Date().toISOString(),
+    message: `Probed "${entry.key}" on ${probeUrl} — ${resolvedMatchCount} match(es) found.`,
+  };
+}
+
+export async function classifySelectorRegistryRole(input: {
+  namespace: SelectorRegistryNamespace;
+  profile: string;
+  key: string;
+}): Promise<SelectorRegistryProfileActionResponse> {
+  assertWritableNamespace(input.namespace);
+
+  const profile = normalizeProfile(input.namespace, input.profile);
+
+  const listResponse = await listSelectorRegistry({ namespace: input.namespace, profile, effective: true });
+  const entry = listResponse.entries.find((e) => e.key === input.key.trim());
+  if (!entry) {
+    throw new Error(`Selector registry entry "${input.key}" not found in namespace "${input.namespace}" profile "${profile}".`);
+  }
+
+  const brainConfig = await resolveBrainExecutionConfigForCapability(
+    'selector_registry.role_classification',
+    { defaultTemperature: 0, defaultMaxTokens: 50 }
+  );
+
+  const isVisionCapable = isBrainModelVisionCapable(brainConfig.modelId);
+
+  const probeData = await probeSelectorRegistryEntry({
+    namespace: input.namespace,
+    profile,
+    key: entry.key,
+  }).catch(() => null);
+
+  const textContext = [
+    `Namespace: ${entry.namespace}`,
+    `Key: ${entry.key}`,
+    `Group: ${entry.group}`,
+    `Kind: ${entry.kind}`,
+    `Description: ${entry.description ?? 'none'}`,
+    `Sample values: ${entry.preview.slice(0, 3).join(', ') || 'none'}`,
+    ...(probeData?.matchCount !== undefined
+      ? [`DOM matches found: ${probeData.matchCount}${probeData.matchedSelector ? ` (selector: ${probeData.matchedSelector})` : ''}`]
+      : []),
+    ...(probeData?.domSnippet ? [`DOM snippet of first match:\n${probeData.domSnippet}`] : []),
+  ].join('\n');
+
+  type ContentPart = { type: 'text'; text: string } | { type: 'image_url'; image_url: { url: string } };
+
+  const userContent: string | ContentPart[] =
+    isVisionCapable && probeData?.screenshotBase64
+      ? [
+          { type: 'image_url', image_url: { url: `data:image/png;base64,${probeData.screenshotBase64}` } },
+          { type: 'text', text: textContext },
+        ]
+      : textContext;
+
+  const { text } = await runBrainChatCompletion({
+    modelId: brainConfig.modelId,
+    temperature: brainConfig.temperature,
+    maxTokens: brainConfig.maxTokens,
+    messages: [
+      { role: 'system', content: ROLE_CLASSIFICATION_SYSTEM_PROMPT },
+      { role: 'user', content: userContent },
+    ],
+  });
+
+  const classifiedRole = parseAiRoleResponse(text);
+
+  await saveSelectorRegistryEntry({
+    namespace: input.namespace,
+    profile,
+    key: entry.key,
+    valueJson: entry.valueJson,
+    role: classifiedRole,
+  });
+
+  return {
+    namespace: input.namespace,
+    action: 'classify_role',
+    profile,
+    key: entry.key,
+    role: classifiedRole,
+    affectedEntries: 1,
+    message: [
+      `Selector "${entry.key}" classified as role "${classifiedRole}" by AI (${brainConfig.modelId})`,
+      isVisionCapable && probeData?.screenshotBase64 ? 'with visual context' : null,
+      probeData?.matchCount !== undefined ? `— ${probeData.matchCount} DOM match(es)` : null,
+    ].filter(Boolean).join(' ') + '.',
+  };
+}
+
+const SUGGESTION_BATCH_SIZE = 10;
+
+const SUGGESTION_CLASSIFICATION_SYSTEM_PROMPT = `You are a browser automation expert classifying DOM elements for selector-registry roles.
+For each numbered element, respond with ONLY the role identifier on its own line, in the same order. No extra text.
+
+Available roles:
+generic, input, upload_input, trigger, option, submit, ready_signal, result_hint, result_shell,
+candidate_hint, overlay_accept, overlay_dismiss, navigation, content, content_title, content_price,
+content_description, content_image, feedback, barrier, barrier_title, text_hint, negative_text_hint,
+pattern, path, label`;
+
+const formatSuggestionForPrompt = (
+  index: number,
+  suggestion: SelectorRegistryClassifySuggestionItem
+): string => {
+  const parts: string[] = [`Element ${index + 1}:`];
+  parts.push(`  tag: ${suggestion.tag}`);
+  if (suggestion.id) parts.push(`  id: ${suggestion.id}`);
+  if (suggestion.classes.length > 0) parts.push(`  classes: ${suggestion.classes.slice(0, 5).join(' ')}`);
+  if (suggestion.role) parts.push(`  role attr: ${suggestion.role}`);
+  if (suggestion.textPreview) parts.push(`  text: ${suggestion.textPreview.slice(0, 80)}`);
+  const selector = suggestion.candidates.css ?? suggestion.candidates.xpath;
+  if (selector) parts.push(`  selector: ${selector.slice(0, 120)}`);
+  const relevantAttrs = Object.entries(suggestion.attrs)
+    .filter(([key]) => ['type', 'name', 'placeholder', 'aria-label', 'data-testid'].includes(key))
+    .slice(0, 4)
+    .map(([k, v]) => `${k}="${v}"`)
+    .join(' ');
+  if (relevantAttrs) parts.push(`  attrs: ${relevantAttrs}`);
+  return parts.join('\n');
+};
+
+const parseBatchRoleResponse = (
+  text: string,
+  batchSize: number
+): SelectorRegistryRole[] => {
+  const lines = text
+    .split('\n')
+    .map((line) => line.replace(/^\d+[.):\-\s]*/, '').trim().toLowerCase().replace(/[^a-z_]/g, ''))
+    .filter((line) => line.length > 0);
+
+  const roles: SelectorRegistryRole[] = [];
+  for (let i = 0; i < batchSize; i++) {
+    const raw = lines[i] ?? '';
+    const parsed = selectorRegistryRoleSchema.safeParse(raw);
+    roles.push(parsed.success ? parsed.data : 'generic');
+  }
+  return roles;
+};
+
+export async function classifyProbeSuggestions(input: {
+  namespace: SelectorRegistryNamespace;
+  suggestions: SelectorRegistryClassifySuggestionItem[];
+}): Promise<SelectorRegistryClassifySuggestionsResponse> {
+  if (input.suggestions.length === 0) {
+    return {
+      namespace: input.namespace,
+      results: [],
+      classifiedCount: 0,
+      modelId: 'none',
+      message: 'No suggestions to classify.',
+    };
+  }
+
+  const brainConfig = await resolveBrainExecutionConfigForCapability(
+    'selector_registry.role_classification',
+    { defaultTemperature: 0, defaultMaxTokens: 200 }
+  );
+
+  const results: Array<{ suggestionId: string; classificationRole: SelectorRegistryRole }> = [];
+
+  for (let offset = 0; offset < input.suggestions.length; offset += SUGGESTION_BATCH_SIZE) {
+    const batch = input.suggestions.slice(offset, offset + SUGGESTION_BATCH_SIZE);
+    const userMessage = `Namespace: ${input.namespace}\n\n${batch.map((s, i) => formatSuggestionForPrompt(i, s)).join('\n\n')}`;
+
+    const { text } = await runBrainChatCompletion({
+      modelId: brainConfig.modelId,
+      temperature: brainConfig.temperature,
+      maxTokens: Math.max(brainConfig.maxTokens ?? 200, batch.length * 20),
+      messages: [
+        { role: 'system', content: SUGGESTION_CLASSIFICATION_SYSTEM_PROMPT },
+        { role: 'user', content: userMessage },
+      ],
+    });
+
+    const roles = parseBatchRoleResponse(text, batch.length);
+    for (let i = 0; i < batch.length; i++) {
+      const suggestion = batch[i];
+      if (suggestion) {
+        results.push({
+          suggestionId: suggestion.suggestionId,
+          classificationRole: roles[i] ?? 'generic',
+        });
+      }
+    }
+  }
+
+  return {
+    namespace: input.namespace,
+    results,
+    classifiedCount: results.length,
+    modelId: brainConfig.modelId,
+    message: `AI classified ${results.length} probe suggestion(s) using ${brainConfig.modelId}.`,
+  };
+}

@@ -5,7 +5,11 @@ import type WebSocket from 'ws';
 
 import type {
   LiveScripterClientMessage,
+  LiveScripterProbePageSummary,
   LiveScripterPickedElement,
+  LiveScripterProbeResult,
+  LiveScripterProbeScope,
+  LiveScripterProbeSuggestion,
   LiveScripterServerMessage,
   LiveScripterStartRequest,
   LiveScripterViewport,
@@ -16,6 +20,7 @@ import {
   liveScripterClientMessageSchema,
 } from '@/shared/contracts/playwright-live-scripter';
 import { badRequestError, forbiddenError, notFoundError } from '@/shared/errors/app-error';
+import { inferSelectorRegistryRoleFromProbe } from '@/shared/lib/browser-execution/selector-registry-roles';
 import {
   buildChromiumAntiDetectionContextOptions,
   buildChromiumAntiDetectionLaunchOptions,
@@ -81,8 +86,15 @@ type LiveScripterSession = {
   lastFrame: Extract<LiveScripterServerMessage, { type: 'frame' }> | null;
   lastNavigation: Extract<LiveScripterServerMessage, { type: 'navigated' }> | null;
   lastPicked: Extract<LiveScripterServerMessage, { type: 'picked' }> | null;
+  lastProbe: Extract<LiveScripterServerMessage, { type: 'probe_result' }> | null;
   disposed: boolean;
   pendingAction: Promise<void>;
+};
+
+type LiveScripterProbeCandidate = LiveScripterPickedElement & {
+  repeatedSiblingCount: number;
+  childLinkCount: number;
+  childImageCount: number;
 };
 
 type LiveScripterBridge = {
@@ -530,6 +542,632 @@ export const pickElementAt = async (
   return payload;
 };
 
+const buildProbeSuggestionId = (
+  candidate: Pick<LiveScripterProbeCandidate, 'tag' | 'id' | 'candidates'>
+): string =>
+  [
+    candidate.tag,
+    candidate.id ?? '',
+    candidate.candidates.css ?? '',
+    candidate.candidates.xpath ?? '',
+    candidate.candidates.testId ?? '',
+  ]
+    .filter(Boolean)
+    .join('::');
+
+const normalizeLiveScripterProbeUrl = (value: string): string | null => {
+  try {
+    const parsed = new URL(value);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      return null;
+    }
+    parsed.hash = '';
+    return parsed.toString();
+  } catch {
+    return null;
+  }
+};
+
+const collectLiveScripterProbeCandidatesOnPage = async (
+  page: Page,
+  options: {
+    scope: LiveScripterProbeScope;
+    maxNodes: number;
+  }
+): Promise<LiveScripterProbeCandidate[]> =>
+  page.evaluate(
+    ({
+      nextScope,
+      nextMaxNodes,
+      maxDepth,
+    }: {
+      nextScope: LiveScripterProbeScope;
+      nextMaxNodes: number;
+      maxDepth: number;
+    }): LiveScripterProbeCandidate[] => {
+      const clampText = (value: string | null | undefined): string | null => {
+        if (typeof value !== 'string') return null;
+        const normalized = value.replace(/\s+/g, ' ').trim();
+        if (normalized.length === 0) return null;
+        return normalized.slice(0, 280);
+      };
+
+      const buildCssSegment = (element: Element): string => {
+        const tag = element.tagName.toLowerCase();
+        const id =
+          typeof element.getAttribute('id') === 'string' &&
+          element.getAttribute('id')!.trim().length > 0
+            ? element.getAttribute('id')!.trim()
+            : null;
+        if (id !== null) {
+          return `#${CSS.escape(id)}`;
+        }
+
+        const classNames = Array.from(element.classList)
+          .map((value) => value.trim())
+          .filter((value) => value.length > 0)
+          .slice(0, 2);
+        if (classNames.length > 0) {
+          return `${tag}${classNames.map((name) => `.${CSS.escape(name)}`).join('')}`;
+        }
+
+        const parent = element.parentElement;
+        if (parent === null) {
+          return tag;
+        }
+
+        const sameTagSiblings = Array.from(parent.children).filter(
+          (child) => child.tagName.toLowerCase() === tag
+        );
+        if (sameTagSiblings.length <= 1) {
+          return tag;
+        }
+
+        const index = sameTagSiblings.indexOf(element) + 1;
+        return `${tag}:nth-of-type(${index})`;
+      };
+
+      const collectAttrs = (element: Element): Record<string, string> => {
+        const result: Record<string, string> = {};
+        for (const attr of Array.from(element.attributes).slice(0, 16)) {
+          if (result[attr.name] !== undefined) continue;
+          result[attr.name] = attr.value.slice(0, 280);
+        }
+        return result;
+      };
+
+      const resolveRole = (element: Element): string | null => {
+        const explicitRole = clampText(element.getAttribute('role'));
+        if (explicitRole !== null) return explicitRole;
+        const tag = element.tagName.toLowerCase();
+        if (tag === 'a' && element.getAttribute('href')) return 'link';
+        if (tag === 'button') return 'button';
+        if (tag === 'img') return 'img';
+        if (tag === 'input') {
+          const type = clampText(element.getAttribute('type')) ?? 'text';
+          if (type === 'checkbox') return 'checkbox';
+          if (type === 'radio') return 'radio';
+          if (type === 'submit' || type === 'button') return 'button';
+          return 'textbox';
+        }
+        if (tag === 'textarea') return 'textbox';
+        if (tag === 'select') return 'combobox';
+        return null;
+      };
+
+      const resolveXPath = (element: Element): string => {
+        const segments: string[] = [];
+        let current: Element | null = element;
+        while (current !== null) {
+          const tag = current.tagName.toLowerCase();
+          const id = clampText(current.getAttribute('id'));
+          if (id !== null) {
+            return `//*[@id="${id.replace(/"/g, '\\"')}"]`;
+          }
+          const parentElement: Element | null = current.parentElement;
+          if (parentElement === null) {
+            segments.unshift(tag);
+            break;
+          }
+          const currentTagName = current.tagName;
+          const siblings = Array.from(parentElement.children).filter(
+            (child: Element) => child.tagName === currentTagName
+          );
+          const index = siblings.indexOf(current) + 1;
+          segments.unshift(`${tag}[${index}]`);
+          current = parentElement;
+        }
+        return `/${segments.join('/')}`;
+      };
+
+      const buildCssPath = (element: Element): string | null => {
+        const segments: string[] = [];
+        let current: Element | null = element;
+        let depth = 0;
+        while (current !== null && depth < maxDepth) {
+          const id = clampText(current.getAttribute('id'));
+          if (id !== null) {
+            segments.unshift(`#${CSS.escape(id)}`);
+            return segments.join(' > ');
+          }
+
+          const segment = buildCssSegment(current);
+          segments.unshift(segment);
+          const selector = segments.join(' > ');
+          try {
+            if (document.querySelectorAll(selector).length === 1) {
+              return selector;
+            }
+          } catch {
+            // Ignore invalid selector segments and keep walking.
+          }
+
+          current = current.parentElement;
+          depth += 1;
+        }
+        return segments.length > 0 ? segments.join(' > ') : null;
+      };
+
+      const isVisible = (element: Element): boolean => {
+        const rect = element.getBoundingClientRect();
+        if (rect.width < 18 || rect.height < 12) {
+          return false;
+        }
+        const style = window.getComputedStyle(element);
+        if (
+          style.display === 'none' ||
+          style.visibility === 'hidden' ||
+          style.pointerEvents === 'none'
+        ) {
+          return false;
+        }
+        const opacity = Number.parseFloat(style.opacity || '1');
+        return Number.isNaN(opacity) || opacity > 0.02;
+      };
+
+      const buildPayload = (element: Element): LiveScripterProbeCandidate => {
+        const rect = element.getBoundingClientRect();
+        const testId =
+          clampText(element.getAttribute('data-testid')) ??
+          clampText(element.getAttribute('data-test-id')) ??
+          clampText(element.getAttribute('data-qa'));
+        const role = resolveRole(element);
+        const textPreview =
+          clampText((element as HTMLElement).innerText) ??
+          clampText(element.textContent) ??
+          clampText(element.getAttribute('aria-label')) ??
+          clampText(element.getAttribute('title')) ??
+          clampText(element.getAttribute('placeholder')) ??
+          clampText(element.getAttribute('alt'));
+
+        const parent = element.parentElement;
+        const repeatedSiblingCount =
+          parent === null
+            ? 0
+            : Array.from(parent.children).filter(
+                (child) => child.tagName === element.tagName
+              ).length;
+
+        return {
+          tag: element.tagName.toLowerCase(),
+          id: clampText(element.getAttribute('id')),
+          classes: Array.from(element.classList)
+            .map((value) => value.trim())
+            .filter((value) => value.length > 0)
+            .slice(0, 12),
+          textPreview,
+          role,
+          attrs: collectAttrs(element),
+          boundingBox: {
+            x: rect.x,
+            y: rect.y,
+            width: rect.width,
+            height: rect.height,
+          },
+          candidates: {
+            css: buildCssPath(element),
+            xpath: resolveXPath(element),
+            role,
+            text: textPreview,
+            testId,
+          },
+          repeatedSiblingCount,
+          childLinkCount: Math.min(24, element.querySelectorAll('a[href]').length),
+          childImageCount: Math.min(24, element.querySelectorAll('img[src]').length),
+        } satisfies LiveScripterProbeCandidate;
+      };
+
+      const isGenericWrapper = (payload: LiveScripterProbeCandidate): boolean => {
+        const viewportArea = Math.max(1, window.innerWidth * window.innerHeight);
+        const area =
+          Math.max(0, payload.boundingBox.width) * Math.max(0, payload.boundingBox.height);
+        const coversViewport = area / viewportArea >= 0.65;
+
+        if (
+          payload.id !== null ||
+          payload.role !== null ||
+          payload.textPreview !== null ||
+          payload.candidates.testId !== null
+        ) {
+          return false;
+        }
+
+        return coversViewport && payload.childLinkCount === 0 && payload.childImageCount === 0;
+      };
+
+      const computeProbeScore = (payload: LiveScripterProbeCandidate): number => {
+        let score = 0;
+        if (payload.id !== null) score += 18;
+        if (payload.candidates.testId !== null) score += 18;
+        if (payload.role !== null) score += 12;
+        if (payload.textPreview !== null) score += Math.min(20, payload.textPreview.length / 8);
+        if (typeof payload.attrs['href'] === 'string') score += 14;
+        if (typeof payload.attrs['src'] === 'string') score += 14;
+        if (payload.repeatedSiblingCount >= 2) score += 10;
+        if (payload.childLinkCount > 0) score += 6;
+        if (payload.childImageCount > 0) score += 6;
+        if (
+          payload.tag === 'h1' ||
+          payload.tag === 'h2' ||
+          payload.tag === 'h3' ||
+          payload.tag === 'a' ||
+          payload.tag === 'img' ||
+          payload.tag === 'button' ||
+          payload.tag === 'input'
+        ) {
+          score += 16;
+        }
+        const combined = [
+          payload.id ?? '',
+          payload.textPreview ?? '',
+          ...payload.classes,
+          ...Object.keys(payload.attrs),
+          ...Object.values(payload.attrs),
+        ]
+          .join(' ')
+          .toLowerCase();
+        if (
+          combined.includes('title') ||
+          combined.includes('price') ||
+          combined.includes('image') ||
+          combined.includes('description') ||
+          combined.includes('gallery') ||
+          combined.includes('product')
+        ) {
+          score += 14;
+        }
+        return score;
+      };
+
+      const root: Node =
+        nextScope === 'main_content'
+          ? document.querySelector('main, [role="main"], article, #main, #content') ??
+            document.body ??
+            document.documentElement
+          : document.body ?? document.documentElement;
+
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
+      const scored: Array<{ score: number; payload: LiveScripterProbeCandidate }> = [];
+      let current: Node | null = walker.currentNode;
+      while (current !== null) {
+        const element = current instanceof Element ? current : null;
+        current = walker.nextNode();
+        if (element === null) {
+          continue;
+        }
+
+        const tag = element.tagName.toLowerCase();
+        if (
+          tag === 'script' ||
+          tag === 'style' ||
+          tag === 'noscript' ||
+          tag === 'template' ||
+          tag === 'svg' ||
+          tag === 'path'
+        ) {
+          continue;
+        }
+        if (!isVisible(element)) {
+          continue;
+        }
+
+        const payload = buildPayload(element);
+        if (isGenericWrapper(payload)) {
+          continue;
+        }
+
+        const score = computeProbeScore(payload);
+        if (score < 16) {
+          continue;
+        }
+        scored.push({ score, payload });
+      }
+
+      scored.sort((left, right) => right.score - left.score);
+      return scored.slice(0, nextMaxNodes * 3).map((entry) => entry.payload);
+    },
+    {
+      nextScope: options.scope,
+      nextMaxNodes: options.maxNodes,
+      maxDepth: LIVE_SCRIPTER_MAX_SELECTOR_DEPTH,
+    }
+  );
+
+const buildProbeSuggestionsForPage = async (
+  page: Page,
+  options: {
+    scope: LiveScripterProbeScope;
+    maxNodes: number;
+  }
+): Promise<{
+  url: string;
+  title: string | null;
+  suggestions: LiveScripterProbeSuggestion[];
+  pageSummary: LiveScripterProbePageSummary;
+}> => {
+  const title = await readLiveScripterPageTitle(page);
+  const url = page.url();
+  const rawCandidates = await collectLiveScripterProbeCandidatesOnPage(page, options);
+  const seenSuggestionIds = new Set<string>();
+  const suggestions: LiveScripterProbeSuggestion[] = [];
+
+  for (const candidate of rawCandidates) {
+    const classification = inferSelectorRegistryRoleFromProbe({
+      tag: candidate.tag,
+      role: candidate.role,
+      textPreview: candidate.textPreview,
+      attrs: candidate.attrs,
+      classes: candidate.classes,
+      repeatedSiblingCount: candidate.repeatedSiblingCount,
+      childLinkCount: candidate.childLinkCount,
+      childImageCount: candidate.childImageCount,
+    });
+    const suggestionId = buildProbeSuggestionId(candidate);
+    if (suggestionId.length === 0 || seenSuggestionIds.has(suggestionId)) {
+      continue;
+    }
+    if (classification.role === 'generic' && classification.confidence < 0.5) {
+      continue;
+    }
+    seenSuggestionIds.add(suggestionId);
+    suggestions.push({
+      ...candidate,
+      suggestionId,
+      pageUrl: url,
+      pageTitle: title,
+      classificationRole: classification.role,
+      draftTargetHints: classification.draftTargetHints,
+      confidence: classification.confidence,
+      evidence: classification.evidence,
+    });
+  }
+
+  suggestions.sort((left, right) => {
+    if (right.confidence !== left.confidence) {
+      return right.confidence - left.confidence;
+    }
+    return (right.textPreview?.length ?? 0) - (left.textPreview?.length ?? 0);
+  });
+
+  return {
+    url,
+    title,
+    suggestions,
+    pageSummary: {
+      url,
+      title,
+      suggestionCount: suggestions.length,
+    },
+  };
+};
+
+const collectLiveScripterTraversalLinks = async (
+  page: Page,
+  options: {
+    scope: LiveScripterProbeScope;
+    sameOriginOnly: boolean;
+    origin: string;
+    maxLinks: number;
+  }
+): Promise<string[]> =>
+  page.evaluate(
+    ({
+      nextScope,
+      nextSameOriginOnly,
+      nextOrigin,
+      nextMaxLinks,
+    }: {
+      nextScope: LiveScripterProbeScope;
+      nextSameOriginOnly: boolean;
+      nextOrigin: string;
+      nextMaxLinks: number;
+    }): string[] => {
+      const root =
+        nextScope === 'main_content'
+          ? document.querySelector('main, [role="main"], article, #main, #content') ?? document.body
+          : document.body;
+      const seen = new Set<string>();
+      const links: string[] = [];
+
+      for (const anchor of Array.from(root.querySelectorAll('a[href]'))) {
+        const href = anchor.getAttribute('href')?.trim() ?? '';
+        if (href.length === 0 || href.startsWith('#') || href.startsWith('javascript:')) {
+          continue;
+        }
+        let resolved: URL;
+        try {
+          resolved = new URL(href, window.location.href);
+        } catch {
+          continue;
+        }
+        if (resolved.protocol !== 'http:' && resolved.protocol !== 'https:') {
+          continue;
+        }
+        if (nextSameOriginOnly && resolved.origin !== nextOrigin) {
+          continue;
+        }
+        resolved.hash = '';
+        const normalized = resolved.toString();
+        if (seen.has(normalized)) {
+          continue;
+        }
+        seen.add(normalized);
+        links.push(normalized);
+        if (links.length >= nextMaxLinks) {
+          break;
+        }
+      }
+
+      return links;
+    },
+    {
+      nextScope: options.scope,
+      nextSameOriginOnly: options.sameOriginOnly,
+      nextOrigin: options.origin,
+      nextMaxLinks: options.maxLinks,
+    }
+  );
+
+export const probeLiveScripterDom = async (
+  page: Page,
+  options?: {
+    scope?: LiveScripterProbeScope;
+    maxNodes?: number;
+    sameOriginOnly?: boolean;
+    linkDepth?: number;
+    maxPages?: number;
+  }
+): Promise<LiveScripterProbeResult> => {
+  const scope = options?.scope ?? 'main_content';
+  const maxNodes = Math.max(12, Math.min(240, Math.trunc(options?.maxNodes ?? 48)));
+  const sameOriginOnly = options?.sameOriginOnly ?? true;
+  const linkDepth = Math.max(0, Math.min(2, Math.trunc(options?.linkDepth ?? 0)));
+  const maxPages = Math.max(1, Math.min(8, Math.trunc(options?.maxPages ?? 1)));
+
+  const initialUrl = normalizeLiveScripterProbeUrl(page.url()) ?? page.url();
+  const initialOrigin = (() => {
+    try {
+      return new URL(initialUrl).origin;
+    } catch {
+      return '';
+    }
+  })();
+
+  const pageSummaries: LiveScripterProbePageSummary[] = [];
+  const visitedUrls: string[] = [];
+  const allSuggestions: LiveScripterProbeSuggestion[] = [];
+  const seenVisitUrls = new Set<string>();
+  const queuedUrls = new Set<string>([initialUrl]);
+  const queue: Array<{ url: string; depth: number }> = [{ url: initialUrl, depth: 0 }];
+
+  while (queue.length > 0 && visitedUrls.length < maxPages) {
+    const next = queue.shift()!;
+    const normalizedUrl = normalizeLiveScripterProbeUrl(next.url);
+    if (normalizedUrl === null || seenVisitUrls.has(normalizedUrl)) {
+      continue;
+    }
+
+    let targetPage: Page | null = null;
+    let shouldClosePage = false;
+    if (normalizedUrl === initialUrl) {
+      targetPage = page;
+    } else {
+      const browser = page.context().browser();
+      if (browser === null) {
+        throw new Error('Live scripter probe could not open a traversal page.');
+      }
+      targetPage = await browser.newPage({
+        viewport: page.viewportSize() ?? undefined,
+      });
+      shouldClosePage = true;
+      await targetPage.goto(normalizedUrl, { waitUntil: 'domcontentloaded' });
+    }
+
+    try {
+      const result = await buildProbeSuggestionsForPage(targetPage, {
+        scope,
+        maxNodes,
+      });
+      const resolvedUrl = normalizeLiveScripterProbeUrl(result.url) ?? normalizedUrl;
+      if (sameOriginOnly && initialOrigin.length > 0) {
+        try {
+          if (new URL(resolvedUrl).origin !== initialOrigin) {
+            continue;
+          }
+        } catch {
+          continue;
+        }
+      }
+
+      seenVisitUrls.add(resolvedUrl);
+      visitedUrls.push(resolvedUrl);
+      pageSummaries.push({
+        ...result.pageSummary,
+        url: resolvedUrl,
+      });
+      allSuggestions.push(
+        ...result.suggestions.map((suggestion) => ({
+          ...suggestion,
+          pageUrl: resolvedUrl,
+        }))
+      );
+
+      if (next.depth < linkDepth && visitedUrls.length < maxPages) {
+        const candidateLinks = await collectLiveScripterTraversalLinks(targetPage, {
+          scope,
+          sameOriginOnly,
+          origin: initialOrigin,
+          maxLinks: maxPages * 4,
+        });
+        for (const candidateLink of candidateLinks) {
+          const normalizedCandidateUrl = normalizeLiveScripterProbeUrl(candidateLink);
+          if (
+            normalizedCandidateUrl === null ||
+            seenVisitUrls.has(normalizedCandidateUrl) ||
+            queuedUrls.has(normalizedCandidateUrl)
+          ) {
+            continue;
+          }
+          queuedUrls.add(normalizedCandidateUrl);
+          queue.push({ url: normalizedCandidateUrl, depth: next.depth + 1 });
+          if (queue.length + visitedUrls.length >= maxPages * 3) {
+            break;
+          }
+        }
+      }
+    } finally {
+      if (shouldClosePage) {
+        await targetPage.close().catch(() => undefined);
+      }
+    }
+  }
+
+  allSuggestions.sort((left, right) => {
+    if (right.confidence !== left.confidence) {
+      return right.confidence - left.confidence;
+    }
+    if (left.pageUrl !== right.pageUrl) {
+      return left.pageUrl.localeCompare(right.pageUrl);
+    }
+    return (right.textPreview?.length ?? 0) - (left.textPreview?.length ?? 0);
+  });
+
+  return {
+    type: 'probe_result',
+    url: initialUrl,
+    title: pageSummaries[0]?.title ?? (await readLiveScripterPageTitle(page)),
+    scope,
+    sameOriginOnly,
+    linkDepth,
+    maxPages,
+    scannedPages: pageSummaries.length,
+    visitedUrls,
+    pages: pageSummaries,
+    suggestionCount: Math.min(allSuggestions.length, maxNodes),
+    suggestions: allSuggestions.slice(0, maxNodes),
+  };
+};
+
 const queueSessionAction = (
   session: LiveScripterSession,
   action: () => Promise<void>
@@ -560,6 +1198,7 @@ const publishNavigation = async (
   ) {
     return;
   }
+  session.lastProbe = null;
   session.lastNavigation = message;
   broadcastToSockets(session, message);
 };
@@ -571,6 +1210,14 @@ const publishPickedElement = (session: LiveScripterSession, element: LiveScripte
   };
   session.lastPicked = message;
   broadcastToSockets(session, message);
+};
+
+const publishProbeResult = (
+  session: LiveScripterSession,
+  result: LiveScripterProbeResult
+): void => {
+  session.lastProbe = result;
+  broadcastToSockets(session, result);
 };
 
 const publishError = (session: LiveScripterSession, message: string): void => {
@@ -602,6 +1249,17 @@ const handleClientMessage = async (
     case 'pick_at': {
       const element = await pickElementAt(session.page, message.x, message.y);
       publishPickedElement(session, element);
+      return;
+    }
+    case 'probe_dom': {
+      const result = await probeLiveScripterDom(session.page, {
+        scope: message.scope,
+        maxNodes: message.maxNodes,
+        sameOriginOnly: message.sameOriginOnly,
+        linkDepth: message.linkDepth,
+        maxPages: message.maxPages,
+      });
+      publishProbeResult(session, result);
       return;
     }
     case 'navigate': {
@@ -641,6 +1299,9 @@ const attachSocketClient = (session: LiveScripterSession, socket: LiveScripterSo
   }
   if (session.lastPicked !== null) {
     sendSocketMessage(socket, session.lastPicked);
+  }
+  if (session.lastProbe !== null) {
+    sendSocketMessage(socket, session.lastProbe);
   }
 
   socket.on('message', (raw) => {
@@ -741,6 +1402,7 @@ export const createLiveScripterSession = async (input: {
     lastFrame: null,
     lastNavigation: null,
     lastPicked: null,
+    lastProbe: null,
     disposed: false,
     pendingAction: Promise.resolve(),
   };

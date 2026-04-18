@@ -105,6 +105,8 @@ function LiveScripterAssignDrawerFields({
         saveToRegistry={model.saveToRegistry}
         setSaveToRegistry={model.setSaveToRegistry}
         selectedRegistryEntry={model.selectedRegistryEntry}
+        selectedRegistryEntryCompatible={model.selectedRegistryEntryCompatible}
+        stepType={model.stepType}
       />
 
       <LiveScripterStepDetailFields

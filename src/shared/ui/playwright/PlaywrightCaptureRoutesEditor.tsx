@@ -46,6 +46,14 @@ const CAPTURE_SELECTOR_ROLE_OPTIONS = [
 ];
 
 type RoutePatch = Partial<PlaywrightConfigCaptureRoute>;
+type CaptureSelectorRole = Exclude<PlaywrightConfigCaptureRoute['selectorRole'], null | undefined>;
+
+const normalizeRouteText = (value: string | undefined, fallback = ''): string => value ?? fallback;
+
+const parseCaptureSelectorRole = (value: string): CaptureSelectorRole | null =>
+  getCaptureCompatibleSelectorRoles().includes(value as CaptureSelectorRole)
+    ? (value as CaptureSelectorRole)
+    : null;
 
 type PlaywrightCaptureRoutesEditorContextValue = {
   baseUrl: string;
@@ -76,8 +84,10 @@ type RouteRowProps = {
 function RouteRow({ route, index }: RouteRowProps): React.JSX.Element {
   const { baseUrl, onUpdateRoute, onDeleteRoute } = usePlaywrightCaptureRoutesEditor();
   const [expanded, setExpanded] = useState(false);
+  const routeTitle = normalizeRouteText(route.title);
+  const routePath = normalizeRouteText(route.path, '/');
 
-  const resolvedUrl = buildCaptureRouteUrl(baseUrl, route.path);
+  const resolvedUrl = buildCaptureRouteUrl(baseUrl, routePath);
   const hasIssue = !resolvedUrl;
 
   const onUpdate = (patch: RoutePatch) => onUpdateRoute(index, patch);
@@ -102,15 +112,15 @@ function RouteRow({ route, index }: RouteRowProps): React.JSX.Element {
         <div className='flex-1 min-w-0'>
           <div className='flex items-center gap-1.5'>
             <span className='text-[11px] font-medium text-foreground truncate'>
-              {route.title.trim() || <span className='text-muted-foreground italic'>Untitled</span>}
+              {routeTitle.trim() || <span className='text-muted-foreground italic'>Untitled</span>}
             </span>
-            <span className='text-muted-foreground/60 text-[10px] truncate'>{route.path}</span>
+            <span className='text-muted-foreground/60 text-[10px] truncate'>{routePath}</span>
           </div>
           {resolvedUrl ? (
             <div className='text-[9px] text-muted-foreground/70 truncate font-mono'>{resolvedUrl}</div>
           ) : hasIssue ? (
             <div className='text-[9px] text-amber-400/80'>
-              {!route.path.trim() ? 'Add a path.' : 'Add a base URL to resolve this route.'}
+              {!routePath.trim() ? 'Add a path.' : 'Add a base URL to resolve this route.'}
             </div>
           ) : null}
         </div>
@@ -133,7 +143,7 @@ function RouteRow({ route, index }: RouteRowProps): React.JSX.Element {
               <Input
                 variant='subtle'
                 size='sm'
-                value={route.title}
+                value={routeTitle}
                 onChange={(e) => onUpdate({ title: e.target.value })}
                 placeholder='e.g. Homepage'
                 aria-label='Route title'
@@ -143,7 +153,7 @@ function RouteRow({ route, index }: RouteRowProps): React.JSX.Element {
               <Input
                 variant='subtle'
                 size='sm'
-                value={route.path}
+                value={routePath}
                 onChange={(e) => onUpdate({ path: e.target.value })}
                 placeholder='/about or https://…'
                 aria-label='Route path'
@@ -179,7 +189,7 @@ function RouteRow({ route, index }: RouteRowProps): React.JSX.Element {
               size='sm'
               variant='subtle'
               value={route.selectorRole ?? ''}
-              onValueChange={(value) => onUpdate({ selectorRole: value || null })}
+              onValueChange={(value) => onUpdate({ selectorRole: parseCaptureSelectorRole(value) })}
               options={CAPTURE_SELECTOR_ROLE_OPTIONS}
               disabled={!route.selector}
             />

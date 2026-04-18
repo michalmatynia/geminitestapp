@@ -34,8 +34,7 @@ async function resolveSession(requestHeaders: Headers | null): Promise<Awaited<R
       source: 'admin.layout',
       action: 'loadAdminLayout',
     });
-    redirect('/auth/signin');
-    return null;
+    return redirect('/auth/signin');
   }
 }
 

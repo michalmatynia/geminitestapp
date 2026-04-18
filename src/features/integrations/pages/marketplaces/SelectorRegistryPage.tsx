@@ -4,29 +4,38 @@
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import {
+  BotIcon,
   CopyIcon,
   DatabaseIcon,
   PencilIcon,
+  RadarIcon,
   RefreshCw,
   RotateCcw,
+  SparklesIcon,
   Trash2,
   WorkflowIcon,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 import {
+  useClassifySelectorRoleMutation,
   useDeleteSelectorRegistryEntryMutation,
   useMutateSelectorRegistryProfileMutation,
+  useProbeSelectorMutation,
   useSaveSelectorRegistryEntryMutation,
   useSelectorRegistry,
   useSyncSelectorRegistryMutation,
 } from '@/features/integrations/hooks/useSelectorRegistry';
+import type { SelectorRegistryProbeResponse } from '@/shared/contracts/integrations/selector-registry';
+import { SelectorRegistryProbeSessionsSection } from '@/features/integrations/components/SelectorRegistryProbeSessionsSection';
+import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
 import {
   SELECTOR_REGISTRY_DEFAULT_PROFILES,
   SELECTOR_REGISTRY_NAMESPACES,
   formatSelectorRegistryNamespaceLabel,
   isSelectorRegistryNamespace,
 } from '@/shared/lib/browser-execution/selector-registry-metadata';
+import { formatSelectorRegistryRoleLabel } from '@/shared/lib/browser-execution/selector-registry-roles';
 import type {
   SelectorRegistryEntry,
   SelectorRegistryNamespace,
@@ -143,6 +152,10 @@ export default function SelectorRegistryPage({
   const [profileActionKey, setProfileActionKey] = useState<string | null>(null);
   const [syncTargetProfile, setSyncTargetProfile] = useState<string | null>(null);
   const [resettingKey, setResettingKey] = useState<string | null>(null);
+  const [classifyingKey, setClassifyingKey] = useState<string | null>(null);
+  const [classifyAllProgress, setClassifyAllProgress] = useState<{ done: number; total: number } | null>(null);
+  const [probingKey, setProbingKey] = useState<string | null>(null);
+  const [probeResult, setProbeResult] = useState<SelectorRegistryProbeResponse | null>(null);
   const { toast } = useToast();
   const { confirm, ConfirmationModal } = useConfirm();
 
@@ -155,6 +168,9 @@ export default function SelectorRegistryPage({
   const saveMutation = useSaveSelectorRegistryEntryMutation();
   const deleteMutation = useDeleteSelectorRegistryEntryMutation();
   const profileMutation = useMutateSelectorRegistryProfileMutation();
+  const classifyMutation = useClassifySelectorRoleMutation();
+  const probeMutation = useProbeSelectorMutation();
+  const brainRoleClassifier = useBrainModelOptions({ capability: 'selector_registry.role_classification' });
 
   const defaultProfile =
     registryQuery.data?.defaultProfile ?? SELECTOR_REGISTRY_DEFAULT_PROFILES[namespace];
@@ -168,7 +184,15 @@ export default function SelectorRegistryPage({
     [defaultProfile, rawProfiles, selectedProfile]
   );
   const entries = registryQuery.data?.entries ?? [];
+  const probeSessions = registryQuery.data?.probeSessions ?? [];
+  const probeSessionClusters = registryQuery.data?.probeSessionClusters ?? [];
   const errorMessage = registryQuery.error instanceof Error ? registryQuery.error.message : null;
+
+  const promotableEntries = useMemo(
+    () =>
+      entries.filter((entry) => entry.kind === 'selector' && entry.valueType === 'string'),
+    [entries]
+  );
 
   useEffect(() => {
     setSelectedProfile(SELECTOR_REGISTRY_DEFAULT_PROFILES[namespace]);
@@ -424,6 +448,79 @@ export default function SelectorRegistryPage({
     }
   };
 
+  const handleClassifyRole = async (entry: SelectorRegistryEntry): Promise<void> => {
+    const key = `${entry.namespace}:${entry.profile}:${entry.key}`;
+    setClassifyingKey(key);
+    try {
+      const response = await classifyMutation.mutateAsync({
+        namespace: entry.namespace,
+        profile: entry.profile,
+        key: entry.key,
+      });
+      toast(response.message, { variant: 'success' });
+    } catch (error) {
+      logClientCatch(error, {
+        source: 'SelectorRegistryPage',
+        action: 'classifyRole',
+        namespace: entry.namespace,
+        key: entry.key,
+        profile: entry.profile,
+      });
+      toast(error instanceof Error ? error.message : 'Failed to classify selector role.', {
+        variant: 'error',
+      });
+    } finally {
+      setClassifyingKey(null);
+    }
+  };
+
+  const handleClassifyAll = async (): Promise<void> => {
+    const targets = filteredEntries.filter((e) => e.namespace !== 'vinted');
+    if (targets.length === 0) return;
+    setClassifyAllProgress({ done: 0, total: targets.length });
+    let done = 0;
+    for (const entry of targets) {
+      try {
+        await classifyMutation.mutateAsync({
+          namespace: entry.namespace,
+          profile: entry.profile,
+          key: entry.key,
+        });
+      } catch {
+        // continue on individual failures
+      }
+      done += 1;
+      setClassifyAllProgress({ done, total: targets.length });
+    }
+    setClassifyAllProgress(null);
+    toast(`Classified ${done} of ${targets.length} selectors.`, { variant: 'success' });
+  };
+
+  const handleProbeEntry = async (entry: SelectorRegistryEntry): Promise<void> => {
+    const key = `${entry.namespace}:${entry.profile}:${entry.key}`;
+    setProbingKey(key);
+    try {
+      const response = await probeMutation.mutateAsync({
+        namespace: entry.namespace,
+        profile: entry.profile,
+        key: entry.key,
+      });
+      setProbeResult(response);
+      toast(response.message, { variant: 'success' });
+    } catch (error) {
+      logClientCatch(error, {
+        source: 'SelectorRegistryPage',
+        action: 'probeEntry',
+        namespace: entry.namespace,
+        key: entry.key,
+        profile: entry.profile,
+      });
+      toast(error instanceof Error ? error.message : 'Probe failed.', { variant: 'error' });
+    } finally {
+      setProbingKey(null);
+    }
+  };
+
   const pageTitle =
     initialNamespace === undefined
       ? 'Super Selector Registry'
@@ -484,6 +581,31 @@ export default function SelectorRegistryPage({
             type='button'
             size='sm'
             variant='outline'
+            disabled={isReadOnly || !brainRoleClassifier.effectiveModelId || classifyAllProgress !== null}
+            title={
+              !brainRoleClassifier.effectiveModelId
+                ? 'Configure a model for Selector Registry Role Classification in AI Brain settings'
+                : classifyAllProgress !== null
+                  ? `Classifying ${classifyAllProgress.done}/${classifyAllProgress.total}…`
+                  : `Classify all ${filteredEntries.filter((e) => e.namespace !== 'vinted').length} visible selectors`
+            }
+            onClick={() => {
+              handleClassifyAll().catch(() => undefined);
+            }}
+            loading={classifyAllProgress !== null}
+            loadingText={
+              classifyAllProgress !== null
+                ? `${classifyAllProgress.done}/${classifyAllProgress.total}`
+                : 'Classifying'
+            }
+          >
+            {classifyAllProgress === null ? <SparklesIcon className='mr-2 size-4' /> : null}
+            Classify All
+          </Button>
+          <Button
+            type='button'
+            size='sm'
+            variant='outline'
             disabled={isReadOnly}
             onClick={() => {
               performSync(selectedProfile).catch(() => undefined);
@@ -520,7 +642,23 @@ export default function SelectorRegistryPage({
               <p className='max-w-3xl text-sm text-muted-foreground'>
                 {getNamespaceDescription(namespace)}
               </p>
-              <p className='text-xs text-muted-foreground'>Last sync: {formatTimestamp(syncedAt)}</p>
+              <div className='flex flex-wrap items-center gap-2 text-xs text-muted-foreground'>
+                <span>Last sync: {formatTimestamp(syncedAt)}</span>
+                <span>·</span>
+                <span className='flex items-center gap-1'>
+                  <BotIcon className='size-3' />
+                  Role AI:
+                  {brainRoleClassifier.effectiveModelId ? (
+                    <Badge variant='outline' className='font-mono text-[11px]'>
+                      {brainRoleClassifier.effectiveModelId}
+                    </Badge>
+                  ) : (
+                    <Badge variant='neutral' className='text-[11px]'>
+                      not configured
+                    </Badge>
+                  )}
+                </span>
+              </div>
             </div>
             <div className='flex flex-col gap-2 sm:flex-row'>
               {initialNamespace === undefined ? (
@@ -603,6 +741,15 @@ export default function SelectorRegistryPage({
           </div>
         </section>
 
+        <SelectorRegistryProbeSessionsSection
+          namespace={namespace}
+          profile={selectedProfile}
+          sessions={probeSessions}
+          clusters={probeSessionClusters}
+          promotableEntries={promotableEntries}
+          isReadOnly={isReadOnly}
+        />
+
         <section className='overflow-hidden rounded-lg border border-border'>
           <div className='overflow-auto'>
             <table className='min-w-full divide-y divide-border text-sm'>
@@ -628,6 +775,14 @@ export default function SelectorRegistryPage({
                               {entry.kind}
                             </Badge>
                             <Badge variant='neutral'>{entry.valueType.replace(/_/g, ' ')}</Badge>
+                          </div>
+                          <div className='flex flex-wrap items-center gap-1.5'>
+                            <Badge
+                              variant={entry.role === 'generic' ? 'neutral' : 'success'}
+                              className='text-[11px]'
+                            >
+                              {formatSelectorRegistryRoleLabel(entry.role) ?? entry.role}
+                            </Badge>
                           </div>
                           <p className='text-xs text-muted-foreground'>
                             {entry.description ?? 'No registry description.'}
@@ -680,7 +835,44 @@ export default function SelectorRegistryPage({
                         </div>
                       </td>
                       <td className='px-4 py-3 align-top'>
-                        <div className='flex items-center justify-end gap-2'>
+                        <div className='flex flex-wrap items-center justify-end gap-2'>
+                          <Button
+                            type='button'
+                            size='xs'
+                            variant='outline'
+                            disabled={isReadOnly || !brainRoleClassifier.effectiveModelId}
+                            title={
+                              !brainRoleClassifier.effectiveModelId
+                                ? 'Configure a model for Selector Registry Role Classification in AI Brain settings'
+                                : `Classify role using ${brainRoleClassifier.effectiveModelId}`
+                            }
+                            onClick={() => {
+                              handleClassifyRole(entry).catch(() => undefined);
+                            }}
+                            loading={classifyingKey === resetKey}
+                            loadingText='Classifying'
+                          >
+                            {classifyingKey !== resetKey ? (
+                              <SparklesIcon className='mr-2 size-3.5' />
+                            ) : null}
+                            Classify
+                          </Button>
+                          <Button
+                            type='button'
+                            size='xs'
+                            variant='outline'
+                            title={`Probe "${entry.key}" on the live ${entry.namespace} website`}
+                            onClick={() => {
+                              handleProbeEntry(entry).catch(() => undefined);
+                            }}
+                            loading={probingKey === resetKey}
+                            loadingText='Probing'
+                          >
+                            {probingKey !== resetKey ? (
+                              <RadarIcon className='mr-2 size-3.5' />
+                            ) : null}
+                            Probe
+                          </Button>
                           <Button
                             type='button'
                             size='xs'
@@ -840,6 +1032,58 @@ export default function SelectorRegistryPage({
                 </Button>
               </DialogFooter>
             </form>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+      <Dialog
+        open={probeResult !== null}
+        onOpenChange={(open) => {
+          if (!open) setProbeResult(null);
+        }}
+      >
+        <DialogContent className='max-w-3xl'>
+          <DialogHeader>
+            <DialogTitle>Probe Result — {probeResult?.key}</DialogTitle>
+            <DialogDescription>
+              Playwright probed{' '}
+              <span className='font-mono text-xs'>{probeResult?.probeUrl}</span> at{' '}
+              {probeResult?.probedAt ? formatTimestamp(probeResult.probedAt) : ''}
+            </DialogDescription>
+          </DialogHeader>
+          {probeResult !== null ? (
+            <div className='space-y-4'>
+              <div className='flex flex-wrap items-center gap-2'>
+                <Badge variant={probeResult.matchCount > 0 ? 'success' : 'neutral'}>
+                  {probeResult.matchCount} match{probeResult.matchCount !== 1 ? 'es' : ''}
+                </Badge>
+                {probeResult.matchedSelector !== null ? (
+                  <Badge variant='outline' className='max-w-xs truncate font-mono text-[11px]'>
+                    {probeResult.matchedSelector}
+                  </Badge>
+                ) : null}
+              </div>
+              {probeResult.screenshotBase64 !== null ? (
+                <div className='overflow-hidden rounded-md border border-border'>
+                  <img
+                    src={`data:image/png;base64,${probeResult.screenshotBase64}`}
+                    alt='Probe screenshot'
+                    className='max-h-[420px] w-full object-contain'
+                  />
+                </div>
+              ) : (
+                <div className='rounded-md border border-border bg-muted/20 px-3 py-6 text-center text-xs text-muted-foreground'>
+                  No screenshot captured.
+                </div>
+              )}
+              {probeResult.domSnippet !== null ? (
+                <div className='space-y-1.5'>
+                  <p className='text-xs font-medium text-muted-foreground'>DOM snippet (first match)</p>
+                  <pre className='max-h-[180px] overflow-auto rounded-md border border-border bg-muted/20 p-3 font-mono text-[11px] text-muted-foreground'>
+                    {probeResult.domSnippet}
+                  </pre>
+                </div>
+              ) : null}
+            </div>
           ) : null}
         </DialogContent>
       </Dialog>

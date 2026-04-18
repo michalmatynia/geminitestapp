@@ -236,7 +236,21 @@ const runDetail: PlaywrightActionRunDetailResponse = {
       details: [],
       codeSnapshot: null,
       inputBindings: {},
-      selectorResolution: [],
+      selectorResolution: [
+        {
+          field: 'selector',
+          mode: 'selectorRegistry',
+          selectorNamespace: 'tradera',
+          selectorKey: 'tradera.title.input',
+          selectorProfile: 'profile-market-a',
+          selectorRole: 'submit',
+          expectedRoles: ['input', 'generic'],
+          roleMatchesExpected: false,
+          fallbackSelector: 'input[name="title"]',
+          resolvedSelector: 'input[name="title"]',
+          connected: true,
+        },
+      ],
       input: null,
       output: null,
       artifacts: [],
@@ -360,6 +374,21 @@ describe('AdminPlaywrightActionRunsPageRuntime', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Step detail')).toBeInTheDocument();
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getAllByText((_, element) => element?.textContent?.includes('Role: Submit') ?? false)
+          .length
+      ).toBeGreaterThan(0);
+    });
+    await waitFor(() => {
+      expect(
+        screen.getAllByText(
+          (_, element) =>
+            element?.textContent?.includes('Expected roles: Input, Generic') ?? false
+        ).length
+      ).toBeGreaterThan(0);
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Show run' }));

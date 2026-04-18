@@ -155,11 +155,13 @@ export const toWebSocketUrl = (socketPath: string): string => {
 export const clearLiveScripterClientState = ({
   setFrame,
   setPickedElement,
+  setProbeResult,
   setCurrentUrl,
   setCurrentTitle,
 }: LiveScripterStateSetters): void => {
   setFrame(null);
   setPickedElement(null);
+  setProbeResult(null);
   setCurrentUrl('');
   setCurrentTitle(null);
 };

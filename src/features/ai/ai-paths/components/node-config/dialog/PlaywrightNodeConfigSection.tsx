@@ -8,6 +8,10 @@ import { playwrightSettingsSchema } from '@/shared/contracts/playwright';
 import { usePlaywrightPersonas } from '@/shared/hooks/usePlaywrightPersonas';
 import type { PlaywrightConfig } from '@/shared/contracts/ai-paths';
 import {
+  playwrightConfigCaptureRouteSchema,
+  type PlaywrightConfigCaptureRoute,
+} from '@/shared/contracts/ai-paths-core/nodes';
+import {
   createDefaultPlaywrightConfig,
   normalizePlaywrightConfig,
 } from '@/shared/lib/ai-paths/core/playwright/default-config';
@@ -84,6 +88,11 @@ const parseJsonObject = (value: string): Record<string, unknown> | null => {
     return null;
   }
 };
+
+const normalizeCaptureRoutes = (
+  routes: PlaywrightConfigCaptureRoute[]
+): NonNullable<PlaywrightConfig['captureRoutes']> =>
+  routes.map((route) => playwrightConfigCaptureRouteSchema.parse(route));
 
 export function PlaywrightNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode } = useAiPathSelection();
@@ -349,7 +358,9 @@ export function PlaywrightNodeConfigSection(): React.JSX.Element | null {
           appearanceMode={playwrightConfig.captureAppearanceMode ?? ''}
           onChange={(patch) =>
             updateConfig({
-              ...(patch.routes !== undefined ? { captureRoutes: patch.routes } : {}),
+              ...(patch.routes !== undefined
+                ? { captureRoutes: normalizeCaptureRoutes(patch.routes) }
+                : {}),
               ...(patch.baseUrl !== undefined ? { captureBaseUrl: patch.baseUrl } : {}),
               ...(patch.appearanceMode !== undefined
                 ? { captureAppearanceMode: patch.appearanceMode }

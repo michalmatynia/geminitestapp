@@ -62,6 +62,7 @@ type Props = Pick<
   | 'listingScript'
   | 'runningTestType'
   | 'scriptSectionRef'
+  | 'selectedConnectionId'
   | 'setAppearanceMode'
   | 'setAutomationFlowJson'
   | 'setCaptureRoutes'

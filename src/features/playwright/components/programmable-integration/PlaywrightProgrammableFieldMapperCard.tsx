@@ -109,7 +109,7 @@ const getRowStatusClassName = (status: 'error' | 'warning' | 'ok'): string => {
 };
 
 function DraftMapperSamplePanel({
-  handleSeedDraftMappingFromSourcePath,
+  handleSeedSamplePath,
   orderedSamplePaths,
   matchedSamplePaths,
   sampleCount,
@@ -118,7 +118,7 @@ function DraftMapperSamplePanel({
   sampleIndex,
   setSampleIndex,
 }: {
-  handleSeedDraftMappingFromSourcePath: Props['handleSeedDraftMappingFromSourcePath'];
+  handleSeedSamplePath: (sourcePath: string) => void;
   matchedSamplePaths: {
     primaryMatches: string[];
     secondaryMatches: string[];
@@ -179,7 +179,7 @@ function DraftMapperSamplePanel({
                           ? 'inline-flex items-center gap-1 rounded-full border border-amber-300/40 bg-amber-500/10 px-2.5 py-1 text-[11px] tracking-wide text-amber-100 transition hover:bg-amber-500/20 hover:text-white'
                           : 'rounded-full border border-border/50 bg-background/50 px-2.5 py-1 text-[11px] tracking-wide text-gray-300 transition hover:border-white/20 hover:bg-background/70 hover:text-white'
                       }
-                      onClick={() => handleSeedDraftMappingFromSourcePath(path)}
+                      onClick={() => handleSeedSamplePath(path)}
                     >
                       {path}
                       {isSignal ? (
@@ -206,13 +206,19 @@ function DraftMapperRuleCard({
   row,
   rowIndex,
   diagnostics,
+  handleAcceptSuggestion,
+  isSuggested,
   resolvedField,
+  handleDismissSuggestion,
   handleDeleteDraftMapping,
   handleUpdateDraftMapping,
 }: {
   diagnostics: PlaywrightDraftMapperDiagnostic[];
+  handleAcceptSuggestion: (rowId: string) => void;
+  handleDismissSuggestion: (rowId: string) => void;
   handleDeleteDraftMapping: Props['handleDeleteDraftMapping'];
   handleUpdateDraftMapping: Props['handleUpdateDraftMapping'];
+  isSuggested: boolean;
   resolvedField: PlaywrightDraftMapperResolvedField | undefined;
   row: ProgrammableDraftMapperRow;
   rowIndex: number;
@@ -251,12 +257,40 @@ function DraftMapperRuleCard({
           >
             {rowStatus}
           </span>
+          {isSuggested ? (
+            <>
+              <span className='inline-flex rounded-full border border-sky-400/30 bg-sky-500/10 px-2.5 py-1 text-[11px] font-medium uppercase tracking-wide text-sky-100'>
+                Suggested
+              </span>
+              <Button
+                type='button'
+                variant='ghost'
+                onClick={() => handleAcceptSuggestion(row.id)}
+              >
+                Accept suggestion
+              </Button>
+              <Button
+                type='button'
+                variant='ghost'
+                onClick={() => handleDismissSuggestion(row.id)}
+              >
+                Dismiss
+              </Button>
+            </>
+          ) : null}
         </div>
         <Button type='button' variant='ghost' onClick={() => handleDeleteDraftMapping(row.id)}>
           <Trash2 className='mr-1.5 h-3.5 w-3.5' />
           Remove
         </Button>
       </div>
+
+      {isSuggested ? (
+        <div className='rounded-lg border border-sky-400/20 bg-sky-500/5 px-3 py-2 text-xs text-sky-100'>
+          Auto-seeded from signal: {row.sourcePath.trim().length > 0 ? row.sourcePath : row.targetPath} to{' '}
+          {row.targetPath} using {row.transform}.
+        </div>
+      ) : null}
 
       <div className='grid gap-3 lg:grid-cols-3'>
         <FormField label='Target Field'>
@@ -348,14 +382,20 @@ function DraftMapperRulesPanel({
   diagnosticsByRowId,
   draftMapperRows,
   handleAddDraftMapping,
+  handleAcceptSuggestion,
   handleDeleteDraftMapping,
+  handleDismissSuggestion,
+  suggestedRowIds,
   handleUpdateDraftMapping,
   resolvedFieldByRowId,
 }: {
   diagnosticsByRowId: Map<string, PlaywrightDraftMapperDiagnostic[]>;
   draftMapperRows: ProgrammableDraftMapperRow[];
   handleAddDraftMapping: Props['handleAddDraftMapping'];
+  handleAcceptSuggestion: (rowId: string) => void;
   handleDeleteDraftMapping: Props['handleDeleteDraftMapping'];
+  handleDismissSuggestion: (rowId: string) => void;
+  suggestedRowIds: Set<string>;
   handleUpdateDraftMapping: Props['handleUpdateDraftMapping'];
   resolvedFieldByRowId: Map<string, PlaywrightDraftMapperResolvedField>;
 }): React.JSX.Element {
@@ -386,6 +426,9 @@ function DraftMapperRulesPanel({
               row={row}
               rowIndex={rowIndex}
               diagnostics={diagnosticsByRowId.get(row.id) ?? []}
+              handleAcceptSuggestion={handleAcceptSuggestion}
+              handleDismissSuggestion={handleDismissSuggestion}
+              isSuggested={suggestedRowIds.has(row.id)}
               resolvedField={resolvedFieldByRowId.get(row.id)}
               handleDeleteDraftMapping={handleDeleteDraftMapping}
               handleUpdateDraftMapping={handleUpdateDraftMapping}
@@ -535,8 +578,45 @@ export function PlaywrightProgrammableFieldMapperCard({
     () => mapScrapedProductToDraftPreview(selectedSample, draftMapperRows),
     [draftMapperRows, selectedSample]
   );
+  const [suggestedRowIds, setSuggestedRowIds] = React.useState<string[]>([]);
   const autoSeededSampleSourceRef = React.useRef<Set<string>>(new Set());
   const pendingAutoSeedSampleSourceKeyRef = React.useRef<string | null>(null);
+
+  const clearSuggestedRow = React.useCallback((rowId: string) => {
+    setSuggestedRowIds((current) => current.filter((entry) => entry !== rowId));
+  }, []);
+
+  const handleSuggestedRowUpdate = React.useCallback<Props['handleUpdateDraftMapping']>(
+    (rowId, patch) => {
+      clearSuggestedRow(rowId);
+      handleUpdateDraftMapping(rowId, patch);
+    },
+    [clearSuggestedRow, handleUpdateDraftMapping]
+  );
+
+  const handleSuggestedRowDelete = React.useCallback<Props['handleDeleteDraftMapping']>(
+    (rowId) => {
+      clearSuggestedRow(rowId);
+      handleDeleteDraftMapping(rowId);
+    },
+    [clearSuggestedRow, handleDeleteDraftMapping]
+  );
+
+  const handleSamplePathSeed = React.useCallback(
+    (sourcePath: string) => {
+      const firstRowId = draftMapperRows[0]?.id;
+      if (firstRowId) {
+        clearSuggestedRow(firstRowId);
+      }
+      handleSeedDraftMappingFromSourcePath(sourcePath);
+    },
+    [clearSuggestedRow, draftMapperRows, handleSeedDraftMappingFromSourcePath]
+  );
+
+  React.useEffect(() => {
+    const validRowIds = new Set(draftMapperRows.map((row) => row.id));
+    setSuggestedRowIds((current) => current.filter((rowId) => validRowIds.has(rowId)));
+  }, [draftMapperRows]);
 
   React.useEffect(() => {
     const normalizedConnectionId = selectedConnectionId.trim();
@@ -558,6 +638,12 @@ export function PlaywrightProgrammableFieldMapperCard({
       if (pendingAutoSeedSampleSourceKeyRef.current === autoSeedKey) {
         autoSeededSampleSourceRef.current.add(autoSeedKey);
         pendingAutoSeedSampleSourceKeyRef.current = null;
+        const firstRowId = draftMapperRows[0]?.id;
+        if (firstRowId) {
+          setSuggestedRowIds((current) =>
+            current.includes(firstRowId) ? current : [...current, firstRowId]
+          );
+        }
       }
       return;
     }
@@ -572,7 +658,9 @@ export function PlaywrightProgrammableFieldMapperCard({
     }
 
     pendingAutoSeedSampleSourceKeyRef.current = autoSeedKey;
-    handleSeedDraftMappingFromSourcePath(strongestSignalPath);
+    if (strongestSignalPath !== null) {
+      handleSeedDraftMappingFromSourcePath(strongestSignalPath);
+    }
   }, [
     draftMapperRows.length,
     handleSeedDraftMappingFromSourcePath,
@@ -615,7 +703,7 @@ export function PlaywrightProgrammableFieldMapperCard({
 
       <div className='grid gap-4 xl:grid-cols-3'>
         <DraftMapperSamplePanel
-          handleSeedDraftMappingFromSourcePath={handleSeedDraftMappingFromSourcePath}
+          handleSeedSamplePath={handleSamplePathSeed}
           matchedSamplePaths={matchedSelectedSamplePaths}
           orderedSamplePaths={orderedSelectedSamplePaths}
           sampleCount={scrapedItems.length}
@@ -629,8 +717,11 @@ export function PlaywrightProgrammableFieldMapperCard({
           diagnosticsByRowId={diagnosticsByRowId}
           resolvedFieldByRowId={resolvedFieldByRowId}
           handleAddDraftMapping={handleAddDraftMapping}
-          handleDeleteDraftMapping={handleDeleteDraftMapping}
-          handleUpdateDraftMapping={handleUpdateDraftMapping}
+          handleAcceptSuggestion={clearSuggestedRow}
+          handleDeleteDraftMapping={handleSuggestedRowDelete}
+          handleDismissSuggestion={clearSuggestedRow}
+          suggestedRowIds={new Set(suggestedRowIds)}
+          handleUpdateDraftMapping={handleSuggestedRowUpdate}
         />
         <DraftMapperPreviewPanel preview={preview} />
       </div>

@@ -37,6 +37,7 @@ export const aiBrainFeatureSchema = z.enum([
   'agent_runtime',
   'agent_teaching',
   'prompt_engine',
+  'integrations',
 ]);
 export type AiBrainFeature = z.infer<typeof aiBrainFeatureSchema>;
 
@@ -74,6 +75,7 @@ export const aiBrainCapabilityKeySchema = z.enum([
   'agent_runtime.selector_inference',
   'agent_runtime.output_normalization',
   'agent_teaching.chat',
+  'selector_registry.role_classification',
   'agent_teaching.embeddings',
   'insights.analytics',
   'insights.runtime_analytics',

@@ -508,6 +508,7 @@ export async function saveTraderaSelectorRegistryEntry(input: {
   profile: string | null | undefined;
   key: string;
   valueJson: string;
+  role?: TraderaSelectorRegistrySeedEntry['role'];
 }): Promise<TraderaSelectorRegistrySaveResponse> {
   const normalizedProfile = normalizeSelectorProfile(input.profile);
   const normalizedKey = input.key.trim();
@@ -527,7 +528,7 @@ export async function saveTraderaSelectorRegistryEntry(input: {
         key: normalizedKey,
         group: seedEntry.group,
         kind: seedEntry.kind,
-        role: seedEntry.role,
+        role: input.role ?? seedEntry.role,
         description: seedEntry.description,
         valueType: seedEntry.valueType,
         valueJson: normalizedValueJson,

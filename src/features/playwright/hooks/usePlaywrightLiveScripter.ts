@@ -6,6 +6,7 @@ import type {
   LiveScripterFrame,
   LiveScripterClientMessage,
   LiveScripterPickedElement,
+  LiveScripterProbeResult,
 } from '@/shared/contracts/playwright-live-scripter';
 
 import {
@@ -28,6 +29,7 @@ export function usePlaywrightLiveScripter(): LiveScripterResult {
   const [status, setStatus] = useState<LiveScripterStatus>('idle');
   const [frame, setFrame] = useState<Pick<LiveScripterFrame, 'dataUrl' | 'width' | 'height'> | null>(null);
   const [pickedElement, setPickedElement] = useState<LiveScripterPickedElement | null>(null);
+  const [probeResult, setProbeResult] = useState<LiveScripterProbeResult | null>(null);
   const [currentUrl, setCurrentUrl] = useState('');
   const [currentTitle, setCurrentTitle] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -56,6 +58,7 @@ export function usePlaywrightLiveScripter(): LiveScripterResult {
       setStatus,
       setFrame,
       setPickedElement,
+      setProbeResult,
       setCurrentUrl,
       setCurrentTitle,
       setErrorMessage,
@@ -131,6 +134,7 @@ export function usePlaywrightLiveScripter(): LiveScripterResult {
         status,
         frame,
         pickedElement,
+        probeResult,
         currentUrl,
         currentTitle,
         errorMessage,
@@ -139,6 +143,7 @@ export function usePlaywrightLiveScripter(): LiveScripterResult {
         start,
         send,
         setPickedElement,
+        setProbeResult,
         dispose,
       }),
     [
@@ -151,8 +156,10 @@ export function usePlaywrightLiveScripter(): LiveScripterResult {
       frame,
       mode,
       pickedElement,
+      probeResult,
       setMode,
       setPickedElement,
+      setProbeResult,
     ]
   );
 }

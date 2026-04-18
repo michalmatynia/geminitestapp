@@ -91,15 +91,20 @@ const applyReadyOrFrameMessage = (
 };
 
 const applyNavigatedOrPickedMessage = (
-  message: Extract<LiveScripterServerMessage, { type: 'navigated' | 'picked' }>,
+  message: Extract<LiveScripterServerMessage, { type: 'navigated' | 'picked' | 'probe_result' }>,
   setters: LiveScripterStateSetters
 ): void => {
   if (message.type === 'navigated') {
     setters.setCurrentUrl(message.url);
     setters.setCurrentTitle(message.title);
+    setters.setProbeResult(null);
     return;
   }
-  setters.setPickedElement(message.element);
+  if (message.type === 'picked') {
+    setters.setPickedElement(message.element);
+    return;
+  }
+  setters.setProbeResult(message);
 };
 
 const applyClosedMessage = ({
@@ -194,7 +199,7 @@ export const applyLiveScripterServerMessage = ({
     applyReadyOrFrameMessage(message, refs, setters);
     return;
   }
-  if (message.type === 'navigated' || message.type === 'picked') {
+  if (message.type === 'navigated' || message.type === 'picked' || message.type === 'probe_result') {
     applyNavigatedOrPickedMessage(message, setters);
     return;
   }

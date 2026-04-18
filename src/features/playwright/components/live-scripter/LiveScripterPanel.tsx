@@ -2,6 +2,7 @@
 
 import { LiveScripterAssignDrawer } from './LiveScripterAssignDrawer';
 import { LiveScripterDraftList } from './LiveScripterDraftList';
+import { LiveScripterProbePanel } from './LiveScripterProbePanel';
 import { LiveScripterPreview } from './LiveScripterPreview';
 import { LiveScripterScopeControls } from './LiveScripterScopeControls';
 import { LiveScripterUrlBar } from './LiveScripterUrlBar';
@@ -62,6 +63,7 @@ function LiveScripterWorkspace({
       />
 
       <div className='space-y-4'>
+        <LiveScripterProbePanel liveScripter={liveScripter} />
         <LiveScripterAssignDrawer
           pickedElement={liveScripter.pickedElement}
           websiteId={websiteId}

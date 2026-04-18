@@ -312,6 +312,7 @@ export async function saveSupplier1688SelectorRegistryEntry(input: {
   profile: string;
   key: string;
   valueJson: string;
+  role?: Supplier1688SelectorRegistrySeedEntry['role'];
 }): Promise<Supplier1688SelectorRegistrySaveResponse> {
   const profile = normalizeSelectorProfile(input.profile);
   const seedEntry = resolveSeedEntry(input.key.trim());
@@ -331,7 +332,7 @@ export async function saveSupplier1688SelectorRegistryEntry(input: {
         key: seedEntry.key,
         group: resolveGroup(seedEntry.key),
         kind: seedEntry.kind,
-        role: seedEntry.role,
+        role: input.role ?? seedEntry.role,
         description: seedEntry.description ?? null,
         valueType: seedEntry.valueType,
         valueJson: normalizedValueJson,

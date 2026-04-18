@@ -341,6 +341,13 @@ export const BRAIN_CAPABILITY_REGISTRY: Record<AiBrainCapabilityKey, BrainCapabi
     policy: 'model-only',
     modelFamily: 'validation',
   },
+  'selector_registry.role_classification': {
+    key: 'selector_registry.role_classification',
+    feature: 'integrations',
+    label: 'Selector Registry Role Classification',
+    policy: 'model-only',
+    modelFamily: 'chat',
+  },
 };
 
 export const BRAIN_CAPABILITY_KEYS = Object.keys(
@@ -363,6 +370,7 @@ export const DEFAULT_BRAIN_CAPABILITY_BY_FEATURE: Record<AiBrainFeature, AiBrain
   agent_runtime: 'agent_runtime.default',
   agent_teaching: 'agent_teaching.chat',
   prompt_engine: 'prompt_engine.prompt_exploder',
+  integrations: 'selector_registry.role_classification',
 };
 
 export const defaultBrainAssignment: AiBrainAssignment = {

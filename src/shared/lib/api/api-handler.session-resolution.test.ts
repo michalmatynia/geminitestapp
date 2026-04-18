@@ -18,8 +18,8 @@ const loadApiHandler = async () => {
     logSystemEvent: mockedLogSystemEvent,
     getErrorFingerprint: vi.fn(() => 'test-fingerprint'),
   }));
-  const { apiHandler } = await import('@/shared/lib/api/api-handler');
-  return { apiHandler };
+  const { apiHandler, apiHandlerWithParams } = await import('@/shared/lib/api/api-handler');
+  return { apiHandler, apiHandlerWithParams };
 };
 
 describe('apiHandler session resolution', () => {
@@ -66,5 +66,31 @@ describe('apiHandler session resolution', () => {
 
     expect(getSessionUserMock).not.toHaveBeenCalled();
     expect(observedUserId).toBeNull();
+  });
+
+  it('skips session resolution for parameterized handlers when resolveSessionUser is false', async () => {
+    const { apiHandlerWithParams } = await loadApiHandler();
+    let observedUserId: string | null | undefined;
+    let observedParams: { id: string } | undefined;
+
+    const handler = apiHandlerWithParams<{ id: string }>(
+      async (_request, ctx, params) => {
+        observedUserId = ctx.userId;
+        observedParams = params;
+        return NextResponse.json({ ok: true });
+      },
+      {
+        source: 'api-handler.session-skip-params.GET',
+        resolveSessionUser: false,
+      }
+    );
+
+    await handler(new NextRequest('http://localhost/api/test/123', { method: 'GET' }), {
+      params: Promise.resolve({ id: '123' }),
+    });
+
+    expect(getSessionUserMock).not.toHaveBeenCalled();
+    expect(observedUserId).toBeNull();
+    expect(observedParams).toEqual({ id: '123' });
   });
 });

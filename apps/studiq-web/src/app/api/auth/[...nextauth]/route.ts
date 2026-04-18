@@ -6,6 +6,7 @@ export const GET = apiHandlerWithParams<{ nextauth: string[] }>(
   async (request, ctx, params) => GET_handler(request, { ...ctx, params }),
   {
     source: 'auth.[...nextauth].GET',
+    resolveSessionUser: false,
   }
 );
 
@@ -14,5 +15,6 @@ export const POST = apiHandlerWithParams<{ nextauth: string[] }>(
   {
     source: 'auth.[...nextauth].POST',
     requireCsrf: false,
+    resolveSessionUser: false,
   }
 );

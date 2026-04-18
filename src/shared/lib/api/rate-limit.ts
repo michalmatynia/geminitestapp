@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { rateLimitedError } from '@/shared/errors/app-error';
-import { getRedisClient } from '@/shared/lib/redis';
+import { closeRedisClient, getRedisClient } from '@/shared/lib/redis';
 import { safeSetInterval } from '@/shared/lib/timers';
 import { logger } from '@/shared/utils/logger';
 
@@ -47,6 +47,52 @@ const RATE_LIMIT_LUA_SCRIPT = `
   end
 `;
 
+const REDIS_RATE_LIMIT_TIMEOUT_MS = (() => {
+  const raw = process.env['REDIS_RATE_LIMIT_TIMEOUT_MS'];
+  if (!raw) return 400;
+  const parsed = Number.parseInt(raw, 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) return 400;
+  return parsed;
+})();
+
+const REDIS_RATE_LIMIT_COOLDOWN_MS = (() => {
+  const raw = process.env['REDIS_RATE_LIMIT_COOLDOWN_MS'];
+  if (!raw) return 30_000;
+  const parsed = Number.parseInt(raw, 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) return 30_000;
+  return parsed;
+})();
+
+let redisRateLimitDisabledUntilMs = 0;
+
+const isRedisRateLimitTemporarilyDisabled = (now: number): boolean =>
+  redisRateLimitDisabledUntilMs > now;
+
+const disableRedisRateLimitTemporarily = (now: number): void => {
+  redisRateLimitDisabledUntilMs = now + REDIS_RATE_LIMIT_COOLDOWN_MS;
+  void closeRedisClient().catch((error) => {
+    void ErrorSystem.captureException(error);
+  });
+};
+
+const withRedisRateLimitTimeout = async <T>(operation: Promise<T>): Promise<T> => {
+  let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      operation,
+      new Promise<T>((_, reject) => {
+        timeoutHandle = setTimeout(() => {
+          reject(new Error(`Redis rate limit timed out after ${REDIS_RATE_LIMIT_TIMEOUT_MS}ms`));
+        }, REDIS_RATE_LIMIT_TIMEOUT_MS);
+      }),
+    ]);
+  } finally {
+    if (timeoutHandle) {
+      clearTimeout(timeoutHandle);
+    }
+  }
+};
+
 class RateLimiter {
   private store: Map<string, RateLimitEntry> = new Map<string, RateLimitEntry>();
   private config: Required<RateLimitConfig>;
@@ -60,25 +106,33 @@ class RateLimiter {
 
   async check(req: NextRequest, prefix: string): Promise<RateLimitResult> {
     const key = `${prefix}:${this.config.keyGenerator(req)}`;
+    const now = Date.now();
+
+    if (isRedisRateLimitTemporarilyDisabled(now)) {
+      return this.checkInMemory(req);
+    }
+
     const redis = getRedisClient();
 
     if (redis) {
       try {
-        const now = Date.now();
         const requestId = `${now}-${Math.random()}`;
 
         // Use Lua script for atomic execution
-        const results = (await redis.eval(
-          RATE_LIMIT_LUA_SCRIPT,
-          1,
-          key,
-          now.toString(),
-          this.config.windowMs.toString(),
-          this.config.maxRequests.toString(),
-          requestId
+        const results = (await withRedisRateLimitTimeout(
+          redis.eval(
+            RATE_LIMIT_LUA_SCRIPT,
+            1,
+            key,
+            now.toString(),
+            this.config.windowMs.toString(),
+            this.config.maxRequests.toString(),
+            requestId
+          )
         )) as [number, number];
 
         const [allowed, remaining] = results;
+        redisRateLimitDisabledUntilMs = 0;
 
         return {
           allowed: allowed === 1,
@@ -87,6 +141,7 @@ class RateLimiter {
           totalHits: this.config.maxRequests - (remaining ?? 0),
         };
       } catch (error) {
+        disableRedisRateLimitTemporarily(now);
         void ErrorSystem.captureException(error);
         logger.warn('[rate-limit] Redis failure, falling back to memory', { error });
       }
@@ -189,6 +244,10 @@ export const enforceRateLimit = async (
     });
   }
   return { headers };
+};
+
+export const resetRedisRateLimitFallbackState = (): void => {
+  redisRateLimitDisabledUntilMs = 0;
 };
 
 if (typeof setInterval !== 'undefined') {

@@ -72,14 +72,15 @@ export const getRedisInitializationTimestampMs = (): number | null => {
 };
 
 export async function closeRedisClient(): Promise<void> {
-  if (redis) {
-    try {
-      await redis.quit();
-    } catch (error) {
-      void ErrorSystem.captureException(error);
-    
-      // Already disconnected
-    }
-    redis = null;
+  const client = redis;
+  redis = null;
+  redisInitializedAtMs = null;
+
+  if (!client) return;
+
+  try {
+    client.disconnect();
+  } catch (error) {
+    void ErrorSystem.captureException(error);
   }
 }

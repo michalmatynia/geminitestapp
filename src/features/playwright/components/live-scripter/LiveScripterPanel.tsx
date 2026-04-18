@@ -51,26 +51,29 @@ function LiveScripterWorkspace({
   flowId: string | null;
 }): React.JSX.Element {
   return (
-    <div className='grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(360px,420px)]'>
-      <LiveScripterPreview
-        frame={liveScripter.frame}
-        pickedElement={liveScripter.pickedElement}
-        mode={liveScripter.mode}
-        status={liveScripter.status}
-        onDriveClick={liveScripter.driveClick}
-        onPickAt={liveScripter.pickAt}
-        onDriveScroll={liveScripter.driveScroll}
-      />
+    <div className='space-y-4'>
+      <LiveScripterProbePanel liveScripter={liveScripter} />
 
-      <div className='space-y-4'>
-        <LiveScripterProbePanel liveScripter={liveScripter} />
-        <LiveScripterAssignDrawer
+      <div className='grid gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(360px,420px)]'>
+        <LiveScripterPreview
+          frame={liveScripter.frame}
           pickedElement={liveScripter.pickedElement}
-          websiteId={websiteId}
-          flowId={flowId}
-          onStepAppended={liveScripter.clearPickedElement}
+          mode={liveScripter.mode}
+          status={liveScripter.status}
+          onDriveClick={liveScripter.driveClick}
+          onPickAt={liveScripter.pickAt}
+          onDriveScroll={liveScripter.driveScroll}
         />
-        <LiveScripterDraftList />
+
+        <div className='space-y-4'>
+          <LiveScripterAssignDrawer
+            pickedElement={liveScripter.pickedElement}
+            websiteId={websiteId}
+            flowId={flowId}
+            onStepAppended={liveScripter.clearPickedElement}
+          />
+          <LiveScripterDraftList />
+        </div>
       </div>
     </div>
   );

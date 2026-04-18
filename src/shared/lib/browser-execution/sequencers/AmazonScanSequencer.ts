@@ -1580,11 +1580,14 @@ export class AmazonScanSequencer extends ProductScanSequencer {
   protected async extractAmazonProductData(asin: string | null): Promise<AmazonProductData> {
     const url = this.page.url();
 
+    const heroImageLocator = this.page.locator(AMAZON_HERO_IMAGE_SELECTORS.join(', ')).first();
     const [title, price, description, heroImageUrl] = await Promise.all([
       this.readFirstText(AMAZON_TITLE_SELECTORS),
       this.readFirstText(AMAZON_PRICE_SELECTORS),
       this.readFirstText(AMAZON_DESCRIPTION_SELECTORS),
-      this.page.locator(AMAZON_HERO_IMAGE_SELECTORS.join(', ')).first().getAttribute('src').catch(() => null),
+      heroImageLocator
+        .evaluate((el) => el.getAttribute('data-old-hires') || el.getAttribute('src') || null)
+        .catch(() => null),
     ]);
 
     const amazonDetails = await this.buildAmazonDetails();
@@ -1835,7 +1838,9 @@ export class AmazonScanSequencer extends ProductScanSequencer {
         collectDetailBullets('#detailBulletsWrapper_feature_div li', 'detail_bullets');
         collectTableRows('#productDetails_techSpec_section_1 tr', 'technical_details');
         collectTableRows('#productDetails_detailBullets_sections1 tr', 'product_details');
+        collectTableRows('#productDetails_feature_div tr', 'product_details_alt');
         collectTableRows('#technicalSpecifications_section_1 tr', 'technical_specifications');
+        collectTableRows('#tech-spec-product-overview tr', 'tech_spec_overview');
         collectTableRows('#productOverview_feature_div tr', 'product_overview');
 
         return pairs;
@@ -2036,7 +2041,9 @@ export class AmazonScanSequencer extends ProductScanSequencer {
   ): Promise<{ url: string | null; alt: string | null; artifactName: string | null }> {
     for (const selector of AMAZON_HERO_IMAGE_SELECTORS) {
       const locator = this.page.locator(selector).first();
-      const nextUrl = this.normalizeText(await locator.getAttribute('src').catch(() => null));
+      const nextUrl = this.normalizeText(
+        await locator.evaluate((el) => el.getAttribute('data-old-hires') || el.getAttribute('src') || null).catch(() => null)
+      );
       const nextAlt = this.normalizeText(await locator.getAttribute('alt').catch(() => null));
       if (nextUrl === null && nextAlt === null) {
         continue;

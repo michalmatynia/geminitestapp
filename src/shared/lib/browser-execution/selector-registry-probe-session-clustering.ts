@@ -2,7 +2,10 @@ import type {
   SelectorRegistryProbeSession,
   SelectorRegistryProbeSessionCluster,
 } from '@/shared/contracts/integrations/selector-registry';
-import { buildSelectorRegistryProbeTemplateFingerprint } from './selector-registry-probe-template';
+import {
+  buildSelectorRegistryProbeTemplateFingerprint,
+  formatSelectorRegistryProbeTemplateLabel,
+} from './selector-registry-probe-template';
 
 export const buildSelectorRegistryProbeSessionClusters = (
   sessions: SelectorRegistryProbeSession[]
@@ -27,7 +30,7 @@ export const buildSelectorRegistryProbeSessionClusters = (
 
     clusters.set(clusterKey, {
       clusterKey,
-      label: `${host}${normalizedPath}`,
+      label: formatSelectorRegistryProbeTemplateLabel(templateFingerprint),
       host,
       normalizedPath,
       roleSignature,

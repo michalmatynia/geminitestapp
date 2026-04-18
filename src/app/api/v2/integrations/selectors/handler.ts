@@ -35,11 +35,13 @@ const readListRequest = (request: NextRequest): SelectorRegistryListRequest => {
     : null;
   const profile = request.nextUrl.searchParams.get('profile');
   const effectiveParam = request.nextUrl.searchParams.get('effective');
+  const includeArchivedParam = request.nextUrl.searchParams.get('includeArchived');
 
   return {
     namespace,
     profile,
     effective: effectiveParam === null ? undefined : effectiveParam !== 'false',
+    includeArchived: includeArchivedParam === null ? undefined : includeArchivedParam === 'true',
   };
 };
 

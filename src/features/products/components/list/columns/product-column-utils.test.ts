@@ -108,6 +108,15 @@ describe('resolveMarketplaceStatusWithLocalFeedback', () => {
     ).toBe('queued');
   });
 
+  it('prefers expired local recovery feedback over stale in-flight server statuses', () => {
+    expect(
+      resolveMarketplaceStatusWithLocalFeedback({
+        serverStatus: 'queued',
+        localFeedbackStatus: 'failed',
+      })
+    ).toBe('failed');
+  });
+
   it('keeps the server status when it is already successful', () => {
     expect(
       resolveMarketplaceStatusWithLocalFeedback({

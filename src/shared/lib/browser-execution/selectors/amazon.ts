@@ -206,7 +206,9 @@ export const AMAZON_PRODUCT_CONTENT_SELECTORS = [
   '#productTitle',
   '[data-asin]',
   'input[name="ASIN"]',
+  '#ppd',
   '#dp-container',
+  '#centerCol',
   '#corePrice_feature_div',
   '#feature-bullets',
 ];
@@ -220,7 +222,10 @@ export const AMAZON_TITLE_SELECTORS = [
 export const AMAZON_PRICE_SELECTORS = [
   '.priceToPay .a-offscreen',
   '#corePrice_feature_div .a-offscreen',
+  '#apex_desktop .a-price[data-a-size="xl"] .a-offscreen',
+  '.reinventPricePriceToPayMargin .a-offscreen',
   '#tp_price_block_total_price_ww .a-offscreen',
+  '#sns-base-price .a-offscreen',
   '#priceblock_ourprice',
   '#priceblock_dealprice',
 ];
@@ -228,13 +233,17 @@ export const AMAZON_PRICE_SELECTORS = [
 export const AMAZON_DESCRIPTION_SELECTORS = [
   '#feature-bullets',
   '#productDescription',
+  '#aplus',
+  '#dpx-aplus-product-description_feature_div',
   '#bookDescription_feature_div',
 ];
 
 export const AMAZON_HERO_IMAGE_SELECTORS = [
   '#landingImage',
   '#imgTagWrapperId img',
+  '#imageBlock img[data-old-hires]',
   '#main-image-container img',
+  '#ebooks-img-canvas img',
   '#ebooksImgBlkFront',
   '#imgBlkFront',
 ];
@@ -388,10 +397,10 @@ export const AMAZON_DEFAULT_SELECTOR_RUNTIME: AmazonSelectorRuntime = {
 };
 
 const defineAmazonSelectorRegistryEntry = (
-  definition: Omit<AmazonSelectorRegistryDefinition, 'role'>
+  definition: Omit<AmazonSelectorRegistryDefinition, 'role'> & { role?: SelectorRegistryRole | undefined }
 ): AmazonSelectorRegistryDefinition => ({
   ...definition,
-  role: inferSelectorRegistryRole({
+  role: definition.role ?? inferSelectorRegistryRole({
     namespace: 'amazon',
     key: definition.key,
     kind: definition.kind,
@@ -422,6 +431,7 @@ export const AMAZON_SELECTOR_REGISTRY_DEFINITIONS: AmazonSelectorRegistryDefinit
     label: 'Google Lens upload tabs',
     description: 'Selectors used to switch into upload mode inside Google Lens.',
     kind: 'selector',
+    role: 'trigger',
     value: GOOGLE_LENS_UPLOAD_TAB_SELECTORS,
   }),
   defineAmazonSelectorRegistryEntry({
@@ -443,6 +453,7 @@ export const AMAZON_SELECTOR_REGISTRY_DEFINITIONS: AmazonSelectorRegistryDefinit
     label: 'Google Lens processing indicators',
     description: 'Selectors indicating that Google Lens is still processing the uploaded image.',
     kind: 'selector',
+    role: 'ready_signal',
     value: GOOGLE_LENS_PROCESSING_INDICATOR_SELECTORS,
   }),
   defineAmazonSelectorRegistryEntry({
@@ -450,6 +461,7 @@ export const AMAZON_SELECTOR_REGISTRY_DEFINITIONS: AmazonSelectorRegistryDefinit
     label: 'Google Lens processing text hints',
     description: 'Text hints indicating that Google Lens is still processing.',
     kind: 'text_hint',
+    role: 'feedback',
     value: GOOGLE_LENS_PROCESSING_TEXT_HINTS,
   }),
   defineAmazonSelectorRegistryEntry({
@@ -471,6 +483,7 @@ export const AMAZON_SELECTOR_REGISTRY_DEFINITIONS: AmazonSelectorRegistryDefinit
     label: 'Google consent control selector',
     description: 'Base selector used to inspect consent controls on Google interstitials.',
     kind: 'selector',
+    role: 'trigger',
     value: GOOGLE_CONSENT_CONTROL_SELECTOR,
   }),
   defineAmazonSelectorRegistryEntry({
@@ -485,6 +498,7 @@ export const AMAZON_SELECTOR_REGISTRY_DEFINITIONS: AmazonSelectorRegistryDefinit
     label: 'Google consent surface hints',
     description: 'Text hints indicating that a Google consent surface is visible.',
     kind: 'text_hint',
+    role: 'barrier',
     value: GOOGLE_CONSENT_SURFACE_TEXT_HINTS,
   }),
   defineAmazonSelectorRegistryEntry({

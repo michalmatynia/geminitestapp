@@ -83,8 +83,8 @@ export const PART_4B = String.raw`
         await Promise.all([
           readLocatorTextSnapshot(listingFormatTrigger),
           firstVisible(FIXED_PRICE_INPUT_SELECTORS).then(Boolean).catch(() => false),
-          firstVisible(PRICE_SELECTORS).then(Boolean).catch(() => false),
-          firstVisible(PUBLISH_SELECTORS).then(Boolean).catch(() => false),
+          firstListingInput(PRICE_SELECTORS, 'price').then(Boolean).catch(() => false),
+          firstActionTarget(PUBLISH_SELECTORS, 'publish-button').then(Boolean).catch(() => false),
         ]);
 
       const triggerText = [
@@ -610,10 +610,10 @@ export const PART_4B = String.raw`
       listingFormatTrigger,
       autofillPending,
     ] = await Promise.all([
-      firstVisible(TITLE_SELECTORS),
-      firstVisible(DESCRIPTION_SELECTORS),
-      firstVisible(PRICE_SELECTORS),
-      firstVisible(PUBLISH_SELECTORS),
+      firstListingInput(TITLE_SELECTORS, 'title'),
+      firstListingInput(DESCRIPTION_SELECTORS, 'description'),
+      firstListingInput(PRICE_SELECTORS, 'price'),
+      firstActionTarget(PUBLISH_SELECTORS, 'publish-button'),
       findFieldTriggerByLabels(CATEGORY_FIELD_LABELS),
       findFieldTriggerByLabels(LISTING_FORMAT_FIELD_LABELS),
       firstVisible(AUTOFILL_PENDING_SELECTORS).then(Boolean).catch(() => false),
@@ -684,7 +684,7 @@ export const PART_4B = String.raw`
         log?.('tradera.quicklist.image.upload_error', lastObservedState);
         return lastObservedState;
       }
-      const continueButton = await firstVisible(CONTINUE_SELECTORS);
+      const continueButton = await firstActionTarget(CONTINUE_SELECTORS, 'listing-format-continue');
       let continueButtonDisabled = null;
       if (continueButton) {
         continueButtonDisabled = await continueButton.isDisabled().catch(async () => {

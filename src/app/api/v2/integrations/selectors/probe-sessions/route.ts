@@ -1,1 +1,1 @@
-export { DELETE, POST } from './route-handler';
+export { DELETE, PATCH, POST, PUT } from './route-handler';

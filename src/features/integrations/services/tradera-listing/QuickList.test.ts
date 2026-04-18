@@ -785,6 +785,11 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
       'const MANIFEST_ORDERED_TRADERA_FORM_STEP_IDS =\n      MANIFEST_ORDERED_TRADERA_RUNTIME_STEP_IDS.filter((id) =>'
     );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const TRADERA_SELECTOR_REGISTRY_META = {');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const checkSelectorRegistryRoleForUse = (selectors, options = {}) => {');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.selector.role_mismatch'");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const firstListingInput = async (selectors, field) =>');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("allowedRoleClasses: ['write_target']");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const fillTitleField = async (resolvedInputs = null) => {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
       'const fillDescriptionField = async (resolvedInputs = null) => {'

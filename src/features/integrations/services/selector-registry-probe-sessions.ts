@@ -6,6 +6,7 @@ import type {
   SelectorRegistryProbeSessionCluster,
   SelectorRegistryProbeSessionArchiveResponse,
   SelectorRegistryProbeSessionDeleteResponse,
+  SelectorRegistryProbeSessionRestoreResponse,
   SelectorRegistryProbeSessionSaveRequest,
   SelectorRegistryProbeSessionSaveResponse,
 } from '@/shared/contracts/integrations/selector-registry';
@@ -110,9 +111,13 @@ const toDomain = (
   updatedAt: doc.updatedAt.toISOString(),
 });
 
+const buildArchivedFilter = (includeArchived?: boolean): Record<string, null> =>
+  includeArchived === true ? {} : { archivedAt: null };
+
 export async function listSelectorRegistryProbeSessions(input: {
   namespace: SelectorRegistryNamespace;
   profile?: string | null;
+  includeArchived?: boolean;
 }): Promise<SelectorRegistryProbeSession[]> {
   await ensureIndexes();
   const collection = await getCollection();
@@ -121,7 +126,7 @@ export async function listSelectorRegistryProbeSessions(input: {
     .find({
       namespace: input.namespace,
       ...(profile.length > 0 ? { profile } : {}),
-      archivedAt: null,
+      ...buildArchivedFilter(input.includeArchived),
     })
     .sort({ updatedAt: -1, createdAt: -1 })
     .toArray();
@@ -131,6 +136,7 @@ export async function listSelectorRegistryProbeSessions(input: {
 export async function listSelectorRegistryProbeSessionClusters(input: {
   namespace: SelectorRegistryNamespace;
   profile?: string | null;
+  includeArchived?: boolean;
 }): Promise<SelectorRegistryProbeSessionCluster[]> {
   await ensureIndexes();
   const collection = await getCollection();
@@ -139,7 +145,7 @@ export async function listSelectorRegistryProbeSessionClusters(input: {
     .find({
       namespace: input.namespace,
       ...(profile.length > 0 ? { profile } : {}),
-      archivedAt: null,
+      ...buildArchivedFilter(input.includeArchived),
     })
     .sort({
       'templateFingerprint.clusterKey': 1,
@@ -230,5 +236,27 @@ export async function archiveSelectorRegistryProbeSession(input: {
       result !== null
         ? 'Archived probe session.'
         : 'Probe session was already archived or missing.',
+  };
+}
+
+export async function restoreSelectorRegistryProbeSession(input: {
+  id: string;
+}): Promise<SelectorRegistryProbeSessionRestoreResponse> {
+  await ensureIndexes();
+  const collection = await getCollection();
+  const now = new Date();
+  const result = await collection.findOneAndUpdate(
+    { _id: new ObjectId(input.id), archivedAt: { $ne: null } },
+    { $set: { archivedAt: null, updatedAt: now } },
+    { returnDocument: 'after' }
+  );
+
+  return {
+    id: input.id,
+    restored: result !== null,
+    message:
+      result !== null
+        ? 'Restored probe session to active review.'
+        : 'Probe session was already active or missing.',
   };
 }

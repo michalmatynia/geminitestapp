@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
+import { selectorRegistryRoleSchema } from '@/shared/contracts/integrations/selector-registry';
+
 import {
+  SELECTOR_REGISTRY_ROLE_CLASSIFICATIONS,
+  classifySelectorRegistryRole,
   formatSelectorRegistryRoleLabel,
   inferSelectorRegistryRoleFromProbe,
   inferSelectorRegistryRole,
@@ -8,6 +12,29 @@ import {
 } from './selector-registry-roles';
 
 describe('selector-registry-roles', () => {
+  it('classifies every selector registry role into an operational role class', () => {
+    expect(Object.keys(SELECTOR_REGISTRY_ROLE_CLASSIFICATIONS).sort()).toEqual(
+      [...selectorRegistryRoleSchema.options].sort()
+    );
+
+    expect(classifySelectorRegistryRole('input')).toMatchObject({
+      roleClass: 'write_target',
+      capabilities: { fillable: true },
+    });
+    expect(classifySelectorRegistryRole('submit')).toMatchObject({
+      roleClass: 'action_target',
+      capabilities: { clickable: true },
+    });
+    expect(classifySelectorRegistryRole('feedback')).toMatchObject({
+      roleClass: 'state_signal',
+      capabilities: { waitable: true },
+    });
+    expect(classifySelectorRegistryRole('pattern')).toMatchObject({
+      roleClass: 'hint_metadata',
+      capabilities: { hintOnly: true },
+    });
+  });
+
   it('infers semantic roles from selector keys', () => {
     expect(
       inferSelectorRegistryRole({

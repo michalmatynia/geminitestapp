@@ -857,6 +857,45 @@ describe('TraderaQuickListButton', () => {
     expect(mutateAsyncMock).not.toHaveBeenCalled();
   });
 
+  it('opens recovery options when local failed feedback overrides a stale queued server badge', () => {
+    const onOpenIntegrations = vi.fn();
+    window.sessionStorage.setItem(
+      'tradera-quick-list-feedback',
+      JSON.stringify({
+        'product-1': {
+          productId: 'product-1',
+          status: 'failed',
+          expiresAt: Date.now() + 30 * 60 * 1000,
+          runId: 'run-tradera-stale',
+          requestId: 'job-tradera-stale',
+          integrationId: 'integration-tradera-1',
+          connectionId: 'conn-tradera-1',
+        },
+      })
+    );
+
+    renderButton({ onOpenIntegrations, traderaStatus: 'queued' });
+
+    const button = screen.getByRole('button', {
+      name: 'Open Tradera recovery options (failed).',
+    });
+    expect(button).toBeEnabled();
+
+    fireEvent.click(button);
+
+    expect(onOpenIntegrations).toHaveBeenCalledWith({
+      source: 'tradera_quick_export_failed',
+      integrationSlug: 'tradera',
+      status: 'failed',
+      runId: 'run-tradera-stale',
+      failureReason: null,
+      requestId: 'job-tradera-stale',
+      integrationId: 'integration-tradera-1',
+      connectionId: 'conn-tradera-1',
+    });
+    expect(mutateAsyncMock).not.toHaveBeenCalled();
+  });
+
   it('opens integrations instead of persisting failed feedback when the listing already exists', async () => {
     const onOpenIntegrations = vi.fn();
     mutateAsyncMock.mockRejectedValue(

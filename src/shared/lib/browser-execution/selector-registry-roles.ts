@@ -35,6 +35,200 @@ const ROLE_LABELS: Record<SelectorRegistryRole, string> = {
   label: 'Label',
 };
 
+export type SelectorRegistryRoleClass =
+  | 'fallback'
+  | 'write_target'
+  | 'action_target'
+  | 'read_target'
+  | 'state_signal'
+  | 'discovery_signal'
+  | 'hint_metadata';
+
+export type SelectorRegistryRoleCapabilities = {
+  fillable: boolean;
+  uploadable: boolean;
+  clickable: boolean;
+  selectable: boolean;
+  waitable: boolean;
+  readable: boolean;
+  blocksAutomation: boolean;
+  hintOnly: boolean;
+};
+
+export type SelectorRegistryRoleClassification = {
+  role: SelectorRegistryRole;
+  roleClass: SelectorRegistryRoleClass;
+  capabilities: SelectorRegistryRoleCapabilities;
+};
+
+const createRoleCapabilities = (
+  overrides: Partial<SelectorRegistryRoleCapabilities> = {}
+): SelectorRegistryRoleCapabilities => ({
+  fillable: false,
+  uploadable: false,
+  clickable: false,
+  selectable: false,
+  waitable: false,
+  readable: false,
+  blocksAutomation: false,
+  hintOnly: false,
+  ...overrides,
+});
+
+export const SELECTOR_REGISTRY_ROLE_CLASSIFICATIONS: Record<
+  SelectorRegistryRole,
+  SelectorRegistryRoleClassification
+> = {
+  generic: {
+    role: 'generic',
+    roleClass: 'fallback',
+    capabilities: createRoleCapabilities({
+      clickable: true,
+      fillable: true,
+      readable: true,
+      waitable: true,
+    }),
+  },
+  input: {
+    role: 'input',
+    roleClass: 'write_target',
+    capabilities: createRoleCapabilities({ fillable: true, readable: true, waitable: true }),
+  },
+  upload_input: {
+    role: 'upload_input',
+    roleClass: 'write_target',
+    capabilities: createRoleCapabilities({ uploadable: true, waitable: true }),
+  },
+  trigger: {
+    role: 'trigger',
+    roleClass: 'action_target',
+    capabilities: createRoleCapabilities({ clickable: true, waitable: true }),
+  },
+  option: {
+    role: 'option',
+    roleClass: 'action_target',
+    capabilities: createRoleCapabilities({
+      clickable: true,
+      selectable: true,
+      readable: true,
+      waitable: true,
+    }),
+  },
+  submit: {
+    role: 'submit',
+    roleClass: 'action_target',
+    capabilities: createRoleCapabilities({ clickable: true, waitable: true }),
+  },
+  ready_signal: {
+    role: 'ready_signal',
+    roleClass: 'state_signal',
+    capabilities: createRoleCapabilities({ readable: true, waitable: true }),
+  },
+  result_hint: {
+    role: 'result_hint',
+    roleClass: 'discovery_signal',
+    capabilities: createRoleCapabilities({ clickable: true, readable: true, waitable: true }),
+  },
+  result_shell: {
+    role: 'result_shell',
+    roleClass: 'discovery_signal',
+    capabilities: createRoleCapabilities({ readable: true, waitable: true }),
+  },
+  candidate_hint: {
+    role: 'candidate_hint',
+    roleClass: 'discovery_signal',
+    capabilities: createRoleCapabilities({ clickable: true, readable: true, waitable: true }),
+  },
+  overlay_accept: {
+    role: 'overlay_accept',
+    roleClass: 'action_target',
+    capabilities: createRoleCapabilities({ clickable: true, waitable: true }),
+  },
+  overlay_dismiss: {
+    role: 'overlay_dismiss',
+    roleClass: 'action_target',
+    capabilities: createRoleCapabilities({ clickable: true, waitable: true }),
+  },
+  navigation: {
+    role: 'navigation',
+    roleClass: 'action_target',
+    capabilities: createRoleCapabilities({ clickable: true, readable: true, waitable: true }),
+  },
+  content: {
+    role: 'content',
+    roleClass: 'read_target',
+    capabilities: createRoleCapabilities({ readable: true, waitable: true }),
+  },
+  content_title: {
+    role: 'content_title',
+    roleClass: 'read_target',
+    capabilities: createRoleCapabilities({ readable: true, waitable: true }),
+  },
+  content_price: {
+    role: 'content_price',
+    roleClass: 'read_target',
+    capabilities: createRoleCapabilities({ readable: true, waitable: true }),
+  },
+  content_description: {
+    role: 'content_description',
+    roleClass: 'read_target',
+    capabilities: createRoleCapabilities({ readable: true, waitable: true }),
+  },
+  content_image: {
+    role: 'content_image',
+    roleClass: 'read_target',
+    capabilities: createRoleCapabilities({ readable: true, waitable: true }),
+  },
+  feedback: {
+    role: 'feedback',
+    roleClass: 'state_signal',
+    capabilities: createRoleCapabilities({ readable: true, waitable: true }),
+  },
+  barrier: {
+    role: 'barrier',
+    roleClass: 'state_signal',
+    capabilities: createRoleCapabilities({
+      blocksAutomation: true,
+      readable: true,
+      waitable: true,
+    }),
+  },
+  barrier_title: {
+    role: 'barrier_title',
+    roleClass: 'state_signal',
+    capabilities: createRoleCapabilities({
+      blocksAutomation: true,
+      readable: true,
+      waitable: true,
+    }),
+  },
+  text_hint: {
+    role: 'text_hint',
+    roleClass: 'hint_metadata',
+    capabilities: createRoleCapabilities({ hintOnly: true, readable: true }),
+  },
+  negative_text_hint: {
+    role: 'negative_text_hint',
+    roleClass: 'hint_metadata',
+    capabilities: createRoleCapabilities({ hintOnly: true, readable: true }),
+  },
+  pattern: {
+    role: 'pattern',
+    roleClass: 'hint_metadata',
+    capabilities: createRoleCapabilities({ hintOnly: true }),
+  },
+  path: {
+    role: 'path',
+    roleClass: 'hint_metadata',
+    capabilities: createRoleCapabilities({ hintOnly: true }),
+  },
+  label: {
+    role: 'label',
+    roleClass: 'hint_metadata',
+    capabilities: createRoleCapabilities({ hintOnly: true, readable: true }),
+  },
+};
+
 const tokenize = (value: string | null | undefined): string => {
   if (typeof value !== 'string') {
     return '';
@@ -442,17 +636,32 @@ export const inferSelectorRegistryRoleFromProbe = (
 export const formatSelectorRegistryRoleLabel = (
   role: SelectorRegistryRole | null | undefined
 ): string | null => {
-  if (!role) {
+  if (role === null || role === undefined) {
     return null;
   }
-  return ROLE_LABELS[role] ?? null;
+  return ROLE_LABELS[role];
 };
+
+export const classifySelectorRegistryRole = (
+  role: SelectorRegistryRole | null | undefined
+): SelectorRegistryRoleClassification | null => {
+  if (role === null || role === undefined) {
+    return null;
+  }
+
+  return SELECTOR_REGISTRY_ROLE_CLASSIFICATIONS[role];
+};
+
+export const getSelectorRegistryRoleClass = (
+  role: SelectorRegistryRole | null | undefined
+): SelectorRegistryRoleClass | null =>
+  classifySelectorRegistryRole(role)?.roleClass ?? null;
 
 export const getExpectedSelectorRolesForBindingField = (
   field: string | null | undefined
 ): SelectorRegistryRole[] => {
   const normalizedField = tokenize(field);
-  if (!normalizedField) {
+  if (normalizedField.length === 0) {
     return [];
   }
 
@@ -493,13 +702,13 @@ export const getExpectedSelectorRolesForBindingField = (
     return ['feedback', 'ready_signal'];
   }
   if (includesAny(normalizedField, ['title'])) {
-    return ['content_title', 'content'];
+    return ['input', 'content_title', 'content'];
   }
   if (includesAny(normalizedField, ['price'])) {
-    return ['content_price', 'content'];
+    return ['input', 'content_price', 'content'];
   }
   if (includesAny(normalizedField, ['description'])) {
-    return ['content_description', 'content'];
+    return ['input', 'content_description', 'content'];
   }
   if (includesAny(normalizedField, ['heroimage', 'image'])) {
     return ['content_image', 'content'];
@@ -583,7 +792,7 @@ export const isSelectorRoleCompatibleWithStepField = (
   stepType: PlaywrightStepType,
   field: string = 'selector'
 ): boolean => {
-  if (!role) {
+  if (role === null || role === undefined) {
     return true;
   }
 
@@ -612,7 +821,8 @@ const CAPTURE_COMPATIBLE_ROLES = new Set<SelectorRegistryRole>([
 
 export const isSelectorRoleCompatibleWithCaptureTarget = (
   role: SelectorRegistryRole | null | undefined
-): boolean => !role || CAPTURE_COMPATIBLE_ROLES.has(role);
+): boolean =>
+  role === null || role === undefined || CAPTURE_COMPATIBLE_ROLES.has(role);
 
 export const getCaptureCompatibleSelectorRoles = (): SelectorRegistryRole[] => [
   'content',

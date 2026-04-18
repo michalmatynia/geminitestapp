@@ -843,10 +843,10 @@ export const PART_2 = String.raw`      /(delivery|shipping|ship|leverans|frakt)/
       currentUrl.includes('/selling?') ||
       new RegExp('/selling(?:[?#]|$)').test(currentUrl)
     ) {
-      const hasImageInput = Boolean(await firstExisting(IMAGE_INPUT_SELECTORS));
-      const hasContinue = Boolean(await firstVisible(CONTINUE_SELECTORS));
-      const hasTitleInput = Boolean(await firstVisible(TITLE_SELECTORS));
-      const hasPublishButton = Boolean(await firstVisible(PUBLISH_SELECTORS));
+      const hasImageInput = Boolean(await firstUploadInput(IMAGE_INPUT_SELECTORS));
+      const hasContinue = Boolean(await firstActionTarget(CONTINUE_SELECTORS, 'sell-page-continue'));
+      const hasTitleInput = Boolean(await firstListingInput(TITLE_SELECTORS, 'title'));
+      const hasPublishButton = Boolean(await firstActionTarget(PUBLISH_SELECTORS, 'publish-button'));
       if (hasImageInput || hasContinue || hasTitleInput || hasPublishButton) {
         log?.('tradera.quicklist.page_detection', { method: 'url_selling_with_dom', currentUrl, hasImageInput, hasContinue, hasTitleInput, hasPublishButton });
         return true;
@@ -854,8 +854,8 @@ export const PART_2 = String.raw`      /(delivery|shipping|ship|leverans|frakt)/
     }
 
     // Original checks: title+publish or heading
-    const titleInput = await firstVisible(TITLE_SELECTORS);
-    const publishButton = await firstVisible(PUBLISH_SELECTORS);
+    const titleInput = await firstListingInput(TITLE_SELECTORS, 'title');
+    const publishButton = await firstActionTarget(PUBLISH_SELECTORS, 'publish-button');
     const heading = await page
       .getByRole('heading', { name: /Create( a)? new listing|Skapa en ny annons|Skapa annons|New listing|Ny annons/i })
       .first()

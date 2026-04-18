@@ -9,6 +9,9 @@ import {
   type SelectorRegistryProfileActionRequest,
   type SelectorRegistryProfileActionResponse,
   selectorRegistryProfileActionResponseSchema,
+  type SelectorRegistryClassifySuggestionsRequest,
+  type SelectorRegistryClassifySuggestionsResponse,
+  selectorRegistryClassifySuggestionsResponseSchema,
   type SelectorRegistryProbeRequest,
   type SelectorRegistryProbeResponse,
   selectorRegistryProbeResponseSchema,
@@ -18,6 +21,9 @@ import {
   type SelectorRegistryProbeSessionDeleteRequest,
   type SelectorRegistryProbeSessionDeleteResponse,
   selectorRegistryProbeSessionDeleteResponseSchema,
+  type SelectorRegistryProbeSessionRestoreRequest,
+  type SelectorRegistryProbeSessionRestoreResponse,
+  selectorRegistryProbeSessionRestoreResponseSchema,
   type SelectorRegistryProbeSessionSaveRequest,
   type SelectorRegistryProbeSessionSaveResponse,
   selectorRegistryProbeSessionSaveResponseSchema,
@@ -39,6 +45,7 @@ import {
 const ENDPOINT = '/api/v2/integrations/selectors';
 const PROBE_SESSIONS_ENDPOINT = '/api/v2/integrations/selectors/probe-sessions';
 const PROBE_ENDPOINT = '/api/v2/integrations/selectors/probe';
+const CLASSIFY_SUGGESTIONS_ENDPOINT = '/api/v2/integrations/selectors/classify-suggestions';
 
 export const SELECTOR_REGISTRY_QUERY_KEY = [
   'integrations',
@@ -49,12 +56,14 @@ const buildSelectorRegistryQueryKey = (options?: {
   namespace?: SelectorRegistryNamespace | null;
   profile?: string | null;
   effective?: boolean;
+  includeArchived?: boolean;
 }) => [
   ...SELECTOR_REGISTRY_QUERY_KEY,
   {
     namespace: options?.namespace ?? null,
     profile: options?.profile?.trim() ?? null,
     effective: options?.effective ?? true,
+    includeArchived: options?.includeArchived ?? false,
   },
 ] as const;
 
@@ -62,6 +71,7 @@ const buildSelectorRegistryParams = (options?: {
   namespace?: SelectorRegistryNamespace | null;
   profile?: string | null;
   effective?: boolean;
+  includeArchived?: boolean;
 }): Record<string, string> => {
   const params: Record<string, string> = {};
   const namespace = options?.namespace ?? null;
@@ -76,6 +86,9 @@ const buildSelectorRegistryParams = (options?: {
   if (options?.effective === false) {
     params['effective'] = 'false';
   }
+  if (options?.includeArchived === true) {
+    params['includeArchived'] = 'true';
+  }
 
   return params;
 };
@@ -84,6 +97,7 @@ export function useSelectorRegistry(options?: {
   namespace?: SelectorRegistryNamespace | null;
   profile?: string | null;
   effective?: boolean;
+  includeArchived?: boolean;
 }): ListQuery<SelectorRegistryListResponse, SelectorRegistryListResponse> {
   const queryKey = buildSelectorRegistryQueryKey(options);
 
@@ -277,6 +291,36 @@ export function useArchiveSelectorRegistryProbeSessionMutation(): MutationResult
   });
 }
 
+export function useRestoreSelectorRegistryProbeSessionMutation(): MutationResult<
+  SelectorRegistryProbeSessionRestoreResponse,
+  SelectorRegistryProbeSessionRestoreRequest
+> {
+  return createMutationV2<
+    SelectorRegistryProbeSessionRestoreResponse,
+    SelectorRegistryProbeSessionRestoreRequest
+  >({
+    mutationKey: [...SELECTOR_REGISTRY_QUERY_KEY, 'probe-sessions', 'restore'],
+    mutationFn: async (
+      payload: SelectorRegistryProbeSessionRestoreRequest
+    ): Promise<SelectorRegistryProbeSessionRestoreResponse> => {
+      const data = await api.put<SelectorRegistryProbeSessionRestoreResponse>(
+        PROBE_SESSIONS_ENDPOINT,
+        payload
+      );
+      return selectorRegistryProbeSessionRestoreResponseSchema.parse(data);
+    },
+    invalidateKeys: [SELECTOR_REGISTRY_QUERY_KEY],
+    meta: {
+      source: 'integrations.hooks.useRestoreSelectorRegistryProbeSessionMutation',
+      operation: 'update',
+      resource: 'integrations.selector-registry.probe-session',
+      domain: 'integrations',
+      tags: ['integrations', 'selector-registry', 'probe-sessions'],
+      description: 'Restores an archived DOM probe session back into active selector-registry review.',
+    },
+  });
+}
+
 export function useMutateSelectorRegistryProfileMutation(): MutationResult<
   SelectorRegistryProfileActionResponse,
   SelectorRegistryProfileActionRequest
@@ -354,6 +398,35 @@ export function useProbeSelectorMutation(): MutationResult<
       domain: 'integrations',
       tags: ['integrations', 'selector-registry', 'probe'],
       description: 'Launches a Playwright session to probe a selector on the target marketplace URL.',
+    },
+  });
+}
+
+export function useClassifyProbeSuggestionsMutation(): MutationResult<
+  SelectorRegistryClassifySuggestionsResponse,
+  SelectorRegistryClassifySuggestionsRequest
+> {
+  return createMutationV2<
+    SelectorRegistryClassifySuggestionsResponse,
+    SelectorRegistryClassifySuggestionsRequest
+  >({
+    mutationKey: [...SELECTOR_REGISTRY_QUERY_KEY, 'classify-suggestions'],
+    mutationFn: async (
+      payload: SelectorRegistryClassifySuggestionsRequest
+    ): Promise<SelectorRegistryClassifySuggestionsResponse> => {
+      const data = await api.post<SelectorRegistryClassifySuggestionsResponse>(
+        CLASSIFY_SUGGESTIONS_ENDPOINT,
+        payload
+      );
+      return selectorRegistryClassifySuggestionsResponseSchema.parse(data);
+    },
+    meta: {
+      source: 'integrations.hooks.useClassifyProbeSuggestionsMutation',
+      operation: 'action',
+      resource: 'integrations.selector-registry.classify-suggestions',
+      domain: 'integrations',
+      tags: ['integrations', 'selector-registry', 'classify', 'probe'],
+      description: 'Uses Brain AI to classify roles of live DOM probe suggestions in batches.',
     },
   });
 }

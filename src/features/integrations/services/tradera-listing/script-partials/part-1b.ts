@@ -414,7 +414,118 @@ export const PART_1B = String.raw`
       .replace(/^-+|-+\$/g, '')
       .slice(0, 48) || 'artifact';
 
-  const firstExisting = async (selectors) => {
+  const loggedSelectorRoleChecks = new Set();
+
+  const resolveSelectorRegistryMeta = (selectors, options = {}) => {
+    const registryKey =
+      toText(options?.registryKey) ||
+      (typeof TRADERA_SELECTOR_REGISTRY_VALUE_KEYS !== 'undefined' &&
+      TRADERA_SELECTOR_REGISTRY_VALUE_KEYS instanceof Map
+        ? TRADERA_SELECTOR_REGISTRY_VALUE_KEYS.get(selectors)
+        : null);
+    const metadata =
+      registryKey &&
+      typeof TRADERA_SELECTOR_REGISTRY_META !== 'undefined' &&
+      TRADERA_SELECTOR_REGISTRY_META &&
+      typeof TRADERA_SELECTOR_REGISTRY_META === 'object'
+        ? TRADERA_SELECTOR_REGISTRY_META[registryKey] || null
+        : null;
+
+    return { registryKey: registryKey || null, metadata };
+  };
+
+  const normalizeSelectorExpectationList = (value) =>
+    Array.isArray(value)
+      ? value
+          .map((entry) => toText(entry))
+          .filter((entry) => typeof entry === 'string')
+      : [];
+
+  const selectorRegistryRoleMatches = (metadata, options = {}) => {
+    if (!metadata) {
+      return true;
+    }
+
+    const allowedRoles = normalizeSelectorExpectationList(options?.allowedRoles);
+    const allowedClasses = normalizeSelectorExpectationList(options?.allowedRoleClasses);
+    const requiredCapabilities = normalizeSelectorExpectationList(options?.requiredCapabilities);
+    const hasRoleExpectation = allowedRoles.length > 0;
+    const hasClassExpectation = allowedClasses.length > 0;
+    const hasCapabilityExpectation = requiredCapabilities.length > 0;
+
+    if (!hasRoleExpectation && !hasClassExpectation && !hasCapabilityExpectation) {
+      return true;
+    }
+
+    return (
+      (hasRoleExpectation && allowedRoles.includes(metadata.role)) ||
+      (hasClassExpectation && allowedClasses.includes(metadata.roleClass)) ||
+      (hasCapabilityExpectation &&
+        requiredCapabilities.every((capability) => metadata.capabilities?.[capability] === true))
+    );
+  };
+
+  const selectorRoleCheckLogKey = (eventName, registryKey, options = {}) =>
+    [
+      eventName,
+      registryKey || 'unregistered',
+      toText(options?.usage) || 'unknown',
+      normalizeSelectorExpectationList(options?.allowedRoles).join(','),
+      normalizeSelectorExpectationList(options?.allowedRoleClasses).join(','),
+      normalizeSelectorExpectationList(options?.requiredCapabilities).join(','),
+    ].join('|');
+
+  const checkSelectorRegistryRoleForUse = (selectors, options = {}) => {
+    const hasExpectations =
+      normalizeSelectorExpectationList(options?.allowedRoles).length > 0 ||
+      normalizeSelectorExpectationList(options?.allowedRoleClasses).length > 0 ||
+      normalizeSelectorExpectationList(options?.requiredCapabilities).length > 0;
+    if (!hasExpectations) {
+      return true;
+    }
+
+    const { registryKey, metadata } = resolveSelectorRegistryMeta(selectors, options);
+    if (!metadata) {
+      const logKey = selectorRoleCheckLogKey('missing', registryKey, options);
+      if (!loggedSelectorRoleChecks.has(logKey)) {
+        loggedSelectorRoleChecks.add(logKey);
+        log?.('tradera.quicklist.selector.role_missing', {
+          registryKey,
+          usage: toText(options?.usage) || null,
+          allowedRoles: normalizeSelectorExpectationList(options?.allowedRoles),
+          allowedRoleClasses: normalizeSelectorExpectationList(options?.allowedRoleClasses),
+          requiredCapabilities: normalizeSelectorExpectationList(options?.requiredCapabilities),
+        });
+      }
+      return true;
+    }
+
+    if (selectorRegistryRoleMatches(metadata, options)) {
+      return true;
+    }
+
+    const logKey = selectorRoleCheckLogKey('mismatch', registryKey, options);
+    if (!loggedSelectorRoleChecks.has(logKey)) {
+      loggedSelectorRoleChecks.add(logKey);
+      log?.('tradera.quicklist.selector.role_mismatch', {
+        registryKey,
+        usage: toText(options?.usage) || null,
+        role: metadata.role,
+        roleClass: metadata.roleClass,
+        allowedRoles: normalizeSelectorExpectationList(options?.allowedRoles),
+        allowedRoleClasses: normalizeSelectorExpectationList(options?.allowedRoleClasses),
+        requiredCapabilities: normalizeSelectorExpectationList(options?.requiredCapabilities),
+      });
+    }
+
+    return options?.enforce === true ? false : true;
+  };
+
+  const firstExisting = async (selectors, options = {}) => {
+    if (!checkSelectorRegistryRoleForUse(selectors, options)) {
+      return null;
+    }
+
     for (const selector of selectors) {
       const locator = page.locator(selector).first();
       const count = await locator.count().catch(() => 0);
@@ -423,7 +534,11 @@ export const PART_1B = String.raw`
     return null;
   };
 
-  const firstVisible = async (selectors) => {
+  const firstVisible = async (selectors, options = {}) => {
+    if (!checkSelectorRegistryRoleForUse(selectors, options)) {
+      return null;
+    }
+
     for (const selector of selectors) {
       const locator = page.locator(selector).first();
       const count = await locator.count().catch(() => 0);
@@ -433,6 +548,30 @@ export const PART_1B = String.raw`
     }
     return null;
   };
+
+  const firstListingInput = async (selectors, field) =>
+    firstVisible(selectors, {
+      usage: 'listing-input:' + field,
+      allowedRoleClasses: ['write_target'],
+      requiredCapabilities: ['fillable'],
+      enforce: true,
+    });
+
+  const firstUploadInput = async (selectors) =>
+    firstExisting(selectors, {
+      usage: 'image-upload-input',
+      allowedRoles: ['upload_input'],
+      requiredCapabilities: ['uploadable'],
+      enforce: true,
+    });
+
+  const firstActionTarget = async (selectors, usage) =>
+    firstVisible(selectors, {
+      usage,
+      allowedRoleClasses: ['action_target'],
+      requiredCapabilities: ['clickable'],
+      enforce: true,
+    });
 
   const isControlDisabled = async (locator) => {
     if (!locator) return true;

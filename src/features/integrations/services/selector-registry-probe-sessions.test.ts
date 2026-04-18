@@ -27,6 +27,7 @@ import {
   deleteSelectorRegistryProbeSession,
   listSelectorRegistryProbeSessionClusters,
   listSelectorRegistryProbeSessions,
+  restoreSelectorRegistryProbeSession,
   saveSelectorRegistryProbeSession,
 } from './selector-registry-probe-sessions';
 
@@ -104,7 +105,7 @@ describe('selector-registry-probe-sessions service', () => {
       profile: 'amazon',
       archivedAt: null,
     });
-    expect(mocks.createIndex).toHaveBeenCalledTimes(2);
+    expect(mocks.createIndex).toHaveBeenCalledTimes(3);
     expect(sessions).toEqual([
       expect.objectContaining({
         id: '507f1f77bcf86cd799439011',
@@ -113,6 +114,52 @@ describe('selector-registry-probe-sessions service', () => {
         sourceTitle: 'Example item',
         templateFingerprint,
         archivedAt: null,
+      }),
+    ]);
+  });
+
+  it('includes archived probe sessions only when explicitly requested', async () => {
+    const templateFingerprint = buildSelectorRegistryProbeTemplateFingerprint({
+      sourceUrl: 'https://www.amazon.com/example-item-archived',
+      suggestions: [],
+    });
+    mocks.sortedToArray.mockResolvedValueOnce([
+      {
+        _id: new ObjectId('507f1f77bcf86cd799439099'),
+        namespace: 'amazon',
+        profile: 'amazon',
+        sourceUrl: 'https://www.amazon.com/example-item-archived',
+        sourceTitle: 'Archived example item',
+        scope: 'main_content',
+        sameOriginOnly: true,
+        linkDepth: 0,
+        maxPages: 1,
+        scannedPages: 1,
+        visitedUrls: ['https://www.amazon.com/example-item-archived'],
+        pages: [],
+        suggestionCount: 0,
+        suggestions: [],
+        templateFingerprint,
+        archivedAt: new Date('2026-04-18T10:00:00.000Z'),
+        createdAt: new Date('2026-04-18T08:00:00.000Z'),
+        updatedAt: new Date('2026-04-18T10:00:00.000Z'),
+      },
+    ]);
+
+    const sessions = await listSelectorRegistryProbeSessions({
+      namespace: 'amazon',
+      profile: 'amazon',
+      includeArchived: true,
+    });
+
+    expect(mocks.find).toHaveBeenCalledWith({
+      namespace: 'amazon',
+      profile: 'amazon',
+    });
+    expect(sessions).toEqual([
+      expect.objectContaining({
+        id: '507f1f77bcf86cd799439099',
+        archivedAt: '2026-04-18T10:00:00.000Z',
       }),
     ]);
   });
@@ -461,6 +508,43 @@ describe('selector-registry-probe-sessions service', () => {
       archived: true,
       archivedAt: '2026-04-18T10:00:00.000Z',
       message: 'Archived probe session.',
+    });
+  });
+
+  it('restores an archived probe session back into active review', async () => {
+    mocks.findOneAndUpdate.mockResolvedValueOnce({
+      _id: new ObjectId('507f1f77bcf86cd799439032'),
+      namespace: 'amazon',
+      profile: 'amazon',
+      sourceUrl: 'https://www.amazon.com/example-item-restored',
+      sourceTitle: 'Restored example item',
+      scope: 'main_content',
+      sameOriginOnly: true,
+      linkDepth: 0,
+      maxPages: 1,
+      scannedPages: 1,
+      visitedUrls: ['https://www.amazon.com/example-item-restored'],
+      pages: [],
+      suggestionCount: 0,
+      suggestions: [],
+      archivedAt: null,
+      createdAt: new Date('2026-04-18T08:00:00.000Z'),
+      updatedAt: new Date('2026-04-18T10:05:00.000Z'),
+    });
+
+    const response = await restoreSelectorRegistryProbeSession({
+      id: '507f1f77bcf86cd799439032',
+    });
+
+    expect(mocks.findOneAndUpdate).toHaveBeenCalledWith(
+      { _id: expect.any(ObjectId), archivedAt: { $ne: null } },
+      { $set: { archivedAt: null, updatedAt: expect.any(Date) } },
+      { returnDocument: 'after' }
+    );
+    expect(response).toEqual({
+      id: '507f1f77bcf86cd799439032',
+      restored: true,
+      message: 'Restored probe session to active review.',
     });
   });
 });

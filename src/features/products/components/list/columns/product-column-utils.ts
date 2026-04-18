@@ -261,6 +261,14 @@ export const resolveMarketplaceStatusWithLocalFeedback = ({
     return normalizedLocalFeedbackStatus;
   }
 
+  if (
+    FAILURE_STATUSES.has(normalizedLocalFeedbackStatus) &&
+    (PENDING_STATUSES.has(normalizedServerStatus) ||
+      PROCESSING_STATUSES.has(normalizedServerStatus))
+  ) {
+    return normalizedLocalFeedbackStatus;
+  }
+
   if (hasServerStatus) {
     return normalizedServerStatus;
   }

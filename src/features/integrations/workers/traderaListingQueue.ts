@@ -58,7 +58,7 @@ const queue: ManagedQueue<TraderaListingQueueJobData> =
         const repo = await getProductListingRepository();
         await repo.updateListingStatus(data.listingId, 'failed');
       } catch (cleanupError) {
-        void ErrorSystem.captureException(cleanupError, {
+        await ErrorSystem.captureException(cleanupError, {
           service: 'tradera-listing-queue',
           listingId: data.listingId,
           phase: 'on-failed-status-cleanup',
@@ -75,23 +75,40 @@ export const stopTraderaListingQueue = async (): Promise<void> => {
   await queue.stopWorker();
 };
 
-export const enqueueTraderaListingJob = async (
-  data: TraderaListingQueueJobData
-): Promise<string> => {
-  const dedupeBucket = Math.floor(Date.now() / 30_000);
-  const normalizedSelectorProfile =
-    typeof data.selectorProfile === 'string' && data.selectorProfile.trim().length > 0
-      ? data.selectorProfile.trim()
-      : 'default';
+const resolveTraderaListingSelectorProfile = (
+  selectorProfile: string | undefined
+): string =>
+  typeof selectorProfile === 'string' && selectorProfile.trim().length > 0
+    ? selectorProfile.trim()
+    : 'default';
+
+export const buildTraderaListingQueueJobId = (
+  data: TraderaListingQueueJobData,
+  nowMs = Date.now()
+): string => {
+  const dedupeBucket = Math.floor(nowMs / 30_000);
   const jobIdParts = [
     data.action,
     data.listingId,
     data.browserMode ?? 'connection_default',
-    normalizedSelectorProfile,
+    resolveTraderaListingSelectorProfile(data.selectorProfile),
     String(dedupeBucket),
   ];
-  const jobId = jobIdParts.join(':');
-  const queuedJobId = await queue.enqueue(data, {
+  return jobIdParts.join(':');
+};
+
+const resolveRequestedTraderaListingQueueJobId = (
+  data: TraderaListingQueueJobData
+): string =>
+  typeof data.jobId === 'string' && data.jobId.trim().length > 0
+    ? data.jobId.trim()
+    : buildTraderaListingQueueJobId(data);
+
+export const enqueueTraderaListingJob = async (
+  data: TraderaListingQueueJobData
+): Promise<string> => {
+  const jobId = resolveRequestedTraderaListingQueueJobId(data);
+  const queuedJobId = await queue.enqueue({ ...data, jobId }, {
     jobId,
   });
   await ErrorSystem.logInfo('Tradera listing job queued', {

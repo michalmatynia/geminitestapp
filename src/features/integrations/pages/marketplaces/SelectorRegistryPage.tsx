@@ -15,7 +15,7 @@ import {
   Trash2,
   WorkflowIcon,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   useClassifySelectorRoleMutation,
@@ -28,6 +28,7 @@ import {
 } from '@/features/integrations/hooks/useSelectorRegistry';
 import type { SelectorRegistryProbeResponse } from '@/shared/contracts/integrations/selector-registry';
 import { SelectorRegistryProbeSessionsSection } from '@/features/integrations/components/SelectorRegistryProbeSessionsSection';
+import { buildSelectorRegistryProbeSessionClusters } from '@/features/integrations/components/selectorRegistryProbeSessionClustering';
 import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
 import {
   SELECTOR_REGISTRY_DEFAULT_PROFILES,
@@ -92,13 +93,16 @@ const normalizeSearchValue = (value: string): string =>
 
 const getNamespaceDescription = (namespace: SelectorRegistryNamespace): string => {
   if (namespace === 'tradera') {
-    return 'Tradera listing, relist, sync, and status-check selectors with profile inheritance.';
+    return 'Tradera listing, relist, sync, and status-check selectors with registry inheritance.';
   }
   if (namespace === 'amazon') {
     return 'Amazon and Google Lens selectors, text hints, extraction patterns, and scan runtime signals.';
   }
   if (namespace === '1688') {
     return '1688 image-search selectors, access-barrier hints, and supplier-page extraction signals.';
+  }
+  if (namespace === 'custom') {
+    return 'Custom website selector registries with generic probe-ready keys for product content, navigation, overlays, and form automation.';
   }
   return 'Vinted selector constants exposed as read-only code-seeded registry entries.';
 };
@@ -134,6 +138,9 @@ export default function SelectorRegistryPage({
 }: Props): React.JSX.Element {
   const searchParams = useSearchParams();
   const namespaceParam = searchParams.get('namespace');
+  const profileParam = searchParams.get('profile')?.trim() ?? '';
+  const initialSearchProfile = profileParam.length > 0 ? profileParam : null;
+  const initialIncludeArchived = searchParams.get('includeArchived') === 'true';
   const initialSearchNamespace = isSelectorRegistryNamespace(namespaceParam)
     ? namespaceParam
     : null;
@@ -141,7 +148,7 @@ export default function SelectorRegistryPage({
     initialNamespace ?? initialSearchNamespace ?? 'tradera'
   );
   const [selectedProfile, setSelectedProfile] = useState(
-    SELECTOR_REGISTRY_DEFAULT_PROFILES[namespace]
+    initialSearchProfile ?? SELECTOR_REGISTRY_DEFAULT_PROFILES[namespace]
   );
   const [query, setQuery] = useState('');
   const [newProfile, setNewProfile] = useState('');
@@ -156,6 +163,8 @@ export default function SelectorRegistryPage({
   const [classifyAllProgress, setClassifyAllProgress] = useState<{ done: number; total: number } | null>(null);
   const [probingKey, setProbingKey] = useState<string | null>(null);
   const [probeResult, setProbeResult] = useState<SelectorRegistryProbeResponse | null>(null);
+  const [showArchivedProbeSessions, setShowArchivedProbeSessions] = useState(initialIncludeArchived);
+  const hasInitializedNamespaceRef = useRef(false);
   const { toast } = useToast();
   const { confirm, ConfirmationModal } = useConfirm();
 
@@ -163,6 +172,7 @@ export default function SelectorRegistryPage({
     namespace,
     profile: selectedProfile,
     effective: true,
+    includeArchived: showArchivedProbeSessions,
   });
   const syncMutation = useSyncSelectorRegistryMutation();
   const saveMutation = useSaveSelectorRegistryEntryMutation();
@@ -186,6 +196,22 @@ export default function SelectorRegistryPage({
   const entries = registryQuery.data?.entries ?? [];
   const probeSessions = registryQuery.data?.probeSessions ?? [];
   const probeSessionClusters = registryQuery.data?.probeSessionClusters ?? [];
+  const activeProbeSessions = useMemo(
+    () => probeSessions.filter((session) => session.archivedAt === null),
+    [probeSessions]
+  );
+  const archivedProbeSessions = useMemo(
+    () => probeSessions.filter((session) => session.archivedAt !== null),
+    [probeSessions]
+  );
+  const activeProbeTemplateCount = useMemo(
+    () => buildSelectorRegistryProbeSessionClusters(activeProbeSessions).length,
+    [activeProbeSessions]
+  );
+  const archivedProbeTemplateCount = useMemo(
+    () => buildSelectorRegistryProbeSessionClusters(archivedProbeSessions).length,
+    [archivedProbeSessions]
+  );
   const errorMessage = registryQuery.error instanceof Error ? registryQuery.error.message : null;
 
   const promotableEntries = useMemo(
@@ -195,10 +221,15 @@ export default function SelectorRegistryPage({
   );
 
   useEffect(() => {
+    if (!hasInitializedNamespaceRef.current) {
+      hasInitializedNamespaceRef.current = true;
+      return;
+    }
     setSelectedProfile(SELECTOR_REGISTRY_DEFAULT_PROFILES[namespace]);
     setNewProfile('');
     setEditingEntry(null);
     setQuery('');
+    setShowArchivedProbeSessions(false);
   }, [namespace]);
 
   useEffect(() => {
@@ -281,7 +312,7 @@ export default function SelectorRegistryPage({
   const handleCreateProfile = (): void => {
     const targetProfile = newProfile.trim();
     if (targetProfile.length === 0) {
-      toast('Profile name is required.', { variant: 'error' });
+      toast('Registry name is required.', { variant: 'error' });
       return;
     }
     performSync(targetProfile)
@@ -292,7 +323,7 @@ export default function SelectorRegistryPage({
   const handleCloneProfile = (): void => {
     const targetProfile = newProfile.trim();
     if (targetProfile.length === 0) {
-      toast('Target profile name is required.', { variant: 'error' });
+      toast('Target registry name is required.', { variant: 'error' });
       return;
     }
     const actionKey = `clone:${targetProfile}`;
@@ -317,7 +348,7 @@ export default function SelectorRegistryPage({
           profile: selectedProfile,
           targetProfile,
         });
-        toast(error instanceof Error ? error.message : 'Failed to clone selector profile.', {
+        toast(error instanceof Error ? error.message : 'Failed to clone selector registry.', {
           variant: 'error',
         });
       })
@@ -327,7 +358,7 @@ export default function SelectorRegistryPage({
   const handleRenameProfile = (): void => {
     const targetProfile = renameTargetProfile.trim();
     if (targetProfile.length === 0) {
-      toast('Target profile name is required.', { variant: 'error' });
+      toast('Target registry name is required.', { variant: 'error' });
       return;
     }
     const actionKey = `rename:${selectedProfile}`;
@@ -352,7 +383,7 @@ export default function SelectorRegistryPage({
           profile: selectedProfile,
           targetProfile,
         });
-        toast(error instanceof Error ? error.message : 'Failed to rename selector profile.', {
+        toast(error instanceof Error ? error.message : 'Failed to rename selector registry.', {
           variant: 'error',
         });
       })
@@ -362,7 +393,7 @@ export default function SelectorRegistryPage({
   const handleDeleteProfile = (): void => {
     const profile = selectedProfile;
     confirm({
-      title: 'Delete selector profile?',
+      title: 'Delete selector registry?',
       message: `This will remove every Mongo-backed selector entry stored for "${formatSelectorRegistryNamespaceLabel(namespace)} / ${profile}".`,
       confirmText: 'Delete',
       isDangerous: true,
@@ -384,7 +415,7 @@ export default function SelectorRegistryPage({
             namespace,
             profile,
           });
-          toast(error instanceof Error ? error.message : 'Failed to delete selector profile.', {
+          toast(error instanceof Error ? error.message : 'Failed to delete selector registry.', {
             variant: 'error',
           });
         } finally {
@@ -531,7 +562,7 @@ export default function SelectorRegistryPage({
       title={pageTitle}
       current='Selector Registry'
       parent={{ label: 'Integrations', href: '/admin/integrations' }}
-      description='One namespace-aware selector registry for marketplace automation profiles, overrides, code seeds, and Step Sequencer bindings.'
+      description='One namespace-aware selector registry for website automation targets, overrides, code seeds, and Step Sequencer bindings.'
       icon={<DatabaseIcon className='size-4' />}
       headerActions={
         <div className='flex flex-wrap items-center gap-2'>
@@ -560,7 +591,7 @@ export default function SelectorRegistryPage({
                 {profileActionKey !== `rename:${selectedProfile}` ? (
                   <PencilIcon className='mr-2 size-4' />
                 ) : null}
-                Rename Profile
+                Rename Registry
               </Button>
               <Button
                 type='button'
@@ -573,7 +604,7 @@ export default function SelectorRegistryPage({
                 {profileActionKey !== `delete:${selectedProfile}` ? (
                   <Trash2 className='mr-2 size-4' />
                 ) : null}
-                Delete Profile
+                Delete Registry
               </Button>
             </>
           ) : null}
@@ -625,12 +656,22 @@ export default function SelectorRegistryPage({
             <div className='space-y-2'>
               <div className='flex flex-wrap items-center gap-2'>
                 <Badge variant='outline'>{formatSelectorRegistryNamespaceLabel(namespace)}</Badge>
-                <Badge variant='outline'>Profile: {selectedProfile}</Badge>
+                <Badge variant='outline'>Registry: {selectedProfile}</Badge>
                 <Badge variant='outline'>Default: {defaultProfile}</Badge>
                 <Badge variant='outline'>{entries.length} effective entries</Badge>
-                <Badge variant='outline'>{availableProfiles.length} profiles</Badge>
+                <Badge variant='outline'>{availableProfiles.length} registries</Badge>
                 <Badge variant='outline'>{groupCount} groups</Badge>
                 <Badge variant='outline'>{totalItemCount} values</Badge>
+                <Badge variant='outline'>
+                  Probe backlog: {activeProbeSessions.length} sessions / {activeProbeTemplateCount}{' '}
+                  templates
+                </Badge>
+                {showArchivedProbeSessions ? (
+                  <Badge variant='outline'>
+                    Probe history: {archivedProbeSessions.length} archived /{' '}
+                    {archivedProbeTemplateCount} templates
+                  </Badge>
+                ) : null}
                 {selectedProfile !== defaultProfile ? (
                   <>
                     <Badge variant='outline'>{overrideCount} overrides</Badge>
@@ -677,7 +718,7 @@ export default function SelectorRegistryPage({
               ) : null}
               <Select value={selectedProfile} onValueChange={setSelectedProfile}>
                 <SelectTrigger className='w-full sm:w-[220px]'>
-                  <SelectValue placeholder='Profile' />
+                  <SelectValue placeholder='Registry' />
                 </SelectTrigger>
                 <SelectContent>
                   {availableProfiles.map((profile) => (
@@ -710,7 +751,7 @@ export default function SelectorRegistryPage({
               <Input
                 value={newProfile}
                 onChange={(event) => setNewProfile(event.target.value)}
-                placeholder='target profile id'
+                placeholder='target registry id'
                 className='w-full sm:w-[200px]'
                 disabled={isReadOnly}
               />
@@ -722,7 +763,7 @@ export default function SelectorRegistryPage({
                 loading={syncTargetProfile !== null && syncTargetProfile === newProfile.trim()}
                 loadingText='Seeding'
               >
-                Seed Profile
+                Create Seeded Registry
               </Button>
               <Button
                 type='button'
@@ -735,7 +776,7 @@ export default function SelectorRegistryPage({
                 {profileActionKey !== `clone:${newProfile.trim()}` ? (
                   <CopyIcon className='mr-2 size-4' />
                 ) : null}
-                Clone Selected
+                Clone Selected Registry
               </Button>
             </div>
           </div>
@@ -748,6 +789,8 @@ export default function SelectorRegistryPage({
           clusters={probeSessionClusters}
           promotableEntries={promotableEntries}
           isReadOnly={isReadOnly}
+          showArchived={showArchivedProbeSessions}
+          onShowArchivedChange={setShowArchivedProbeSessions}
         />
 
         <section className='overflow-hidden rounded-lg border border-border'>
@@ -921,9 +964,9 @@ export default function SelectorRegistryPage({
       <Dialog open={renameProfileOpen} onOpenChange={setRenameProfileOpen}>
         <DialogContent className='max-w-md'>
           <DialogHeader>
-            <DialogTitle>Rename Selector Profile</DialogTitle>
+            <DialogTitle>Rename Selector Registry</DialogTitle>
             <DialogDescription>
-              Move every Mongo-backed selector entry from "{selectedProfile}" to a new profile id.
+              Move every Mongo-backed selector entry from "{selectedProfile}" to a new registry id.
             </DialogDescription>
           </DialogHeader>
           <form
@@ -934,12 +977,12 @@ export default function SelectorRegistryPage({
             }}
           >
             <div className='space-y-1.5'>
-              <Label htmlFor='selector-profile-name'>Target Profile</Label>
+              <Label htmlFor='selector-profile-name'>Target Registry</Label>
               <Input
                 id='selector-profile-name'
                 value={renameTargetProfile}
                 onChange={(event) => setRenameTargetProfile(event.target.value)}
-                placeholder='profile id'
+                placeholder='registry id'
               />
             </div>
             <DialogFooter>
@@ -948,7 +991,7 @@ export default function SelectorRegistryPage({
                 loading={profileActionKey === `rename:${selectedProfile}`}
                 loadingText='Renaming'
               >
-                Rename Profile
+                Rename Registry
               </Button>
             </DialogFooter>
           </form>

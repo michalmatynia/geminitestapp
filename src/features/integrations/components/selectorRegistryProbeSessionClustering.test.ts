@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import type { SelectorRegistryProbeSession } from '@/shared/contracts/integrations/selector-registry';
-import { buildSelectorRegistryProbeTemplateFingerprint } from '@/shared/lib/browser-execution/selector-registry-probe-template';
+import {
+  buildSelectorRegistryProbeTemplateFingerprint,
+  formatSelectorRegistryProbeTemplateLabel,
+} from '@/shared/lib/browser-execution/selector-registry-probe-template';
 
 import {
   buildSelectorRegistryProbeSessionClusters,
@@ -82,6 +85,7 @@ const buildSession = (
       evidence: ['signal'],
     })),
   }),
+  archivedAt: null,
   createdAt: updatedAt,
   updatedAt,
 });
@@ -91,6 +95,15 @@ describe('selectorRegistryProbeSessionClustering', () => {
     expect(normalizeProbeTemplatePath('https://www.amazon.com/item-2/detail/12345')).toBe(
       '/item-:n/detail/:n'
     );
+  });
+
+  it('formats probe template labels from persisted fingerprints', () => {
+    expect(
+      formatSelectorRegistryProbeTemplateLabel({
+        host: 'www.amazon.com',
+        normalizedPath: '/item-:n',
+      })
+    ).toBe('www.amazon.com/item-:n');
   });
 
   it('clusters repeated product pages by normalized path and role signature', () => {

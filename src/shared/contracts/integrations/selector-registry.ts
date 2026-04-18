@@ -1,6 +1,12 @@
 import { z } from 'zod';
 
-export const selectorRegistryNamespaceSchema = z.enum(['tradera', 'amazon', '1688', 'vinted']);
+export const selectorRegistryNamespaceSchema = z.enum([
+  'tradera',
+  'amazon',
+  '1688',
+  'custom',
+  'vinted',
+]);
 export type SelectorRegistryNamespace = z.infer<typeof selectorRegistryNamespaceSchema>;
 
 export const selectorRegistryValueTypeSchema = z.enum([
@@ -203,6 +209,7 @@ export const selectorRegistryListRequestSchema = z.object({
   namespace: selectorRegistryNamespaceSchema.nullable().optional(),
   profile: z.string().trim().min(1).nullable().optional(),
   effective: z.boolean().optional(),
+  includeArchived: z.boolean().optional(),
 });
 
 export type SelectorRegistryListRequest = z.infer<
@@ -345,6 +352,24 @@ export const selectorRegistryProbeSessionArchiveResponseSchema = z.object({
 
 export type SelectorRegistryProbeSessionArchiveResponse = z.infer<
   typeof selectorRegistryProbeSessionArchiveResponseSchema
+>;
+
+export const selectorRegistryProbeSessionRestoreRequestSchema = z.object({
+  id: z.string().trim().min(1),
+});
+
+export type SelectorRegistryProbeSessionRestoreRequest = z.infer<
+  typeof selectorRegistryProbeSessionRestoreRequestSchema
+>;
+
+export const selectorRegistryProbeSessionRestoreResponseSchema = z.object({
+  id: z.string().trim().min(1),
+  restored: z.boolean(),
+  message: z.string().trim().min(1),
+});
+
+export type SelectorRegistryProbeSessionRestoreResponse = z.infer<
+  typeof selectorRegistryProbeSessionRestoreResponseSchema
 >;
 
 export const selectorRegistryProfileActionRequestSchema = z.discriminatedUnion('action', [

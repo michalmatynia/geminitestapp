@@ -42,6 +42,7 @@ const makeDoc = (
     profile: string;
     group: string;
     kind: (typeof TRADERA_SELECTOR_REGISTRY_SEED_ENTRIES)[number]['kind'];
+    role: (typeof TRADERA_SELECTOR_REGISTRY_SEED_ENTRIES)[number]['role'];
     description: string | null;
     valueType: (typeof TRADERA_SELECTOR_REGISTRY_SEED_ENTRIES)[number]['valueType'];
     valueJson: string;
@@ -61,6 +62,7 @@ const makeDoc = (
     key,
     group: overrides.group ?? seed.group,
     kind: overrides.kind ?? seed.kind,
+    role: overrides.role ?? seed.role,
     description: overrides.description ?? seed.description,
     valueType: overrides.valueType ?? seed.valueType,
     valueJson: overrides.valueJson ?? seed.valueJson,
@@ -209,6 +211,10 @@ describe('tradera-selector-registry service', () => {
     expect(resolution.sourceProfiles).toEqual(['default', 'experimental']);
     expect(resolution.fallbackToCode).toBe(false);
     expect(resolution.runtime).toContain('const LOGIN_SUCCESS_SELECTORS = [\'button:has-text("Override")\'];');
+    expect(resolution.runtime).toContain('const TRADERA_SELECTOR_REGISTRY_META = {');
+    expect(resolution.runtime).toContain('"LOGIN_SUCCESS_SELECTORS"');
+    expect(resolution.runtime).toContain('"role": "ready_signal"');
+    expect(resolution.runtime).toContain('const TRADERA_SELECTOR_REGISTRY_VALUE_KEYS = new Map([');
   });
 
   it('falls back to the default runtime when Mongo resolution fails', async () => {
@@ -234,6 +240,7 @@ describe('tradera-selector-registry service', () => {
       profile: 'experimental',
       key: firstSeed.key,
       valueJson: '["button:has-text(\\"Edited\\")"]',
+      role: 'ready_signal',
     });
 
     expect(response).toEqual(
@@ -251,6 +258,7 @@ describe('tradera-selector-registry service', () => {
       },
       expect.objectContaining({
         $set: expect.objectContaining({
+          role: 'ready_signal',
           source: 'mongo',
           valueJson: '[\n  "button:has-text(\\"Edited\\")"\n]',
         }),

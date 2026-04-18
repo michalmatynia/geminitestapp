@@ -429,10 +429,6 @@ vi.mock('@/features/kangur/config/routing', async (importOriginal) => {
   };
 });
 
-vi.mock('@/features/kangur/cms-builder/KangurCmsRuntimeScreen', () => ({
-  KangurCmsRuntimeScreen: ({ fallback }: { fallback: ReactNode }) => <>{fallback}</>,
-}));
-
 vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
   useSettingsStore: () => settingsStoreStateMock(),
 }));

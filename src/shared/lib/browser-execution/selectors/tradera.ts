@@ -1,6 +1,11 @@
 import type { SelectorRegistryRole } from '@/shared/contracts/integrations/selector-registry';
 
-import { inferSelectorRegistryRole } from '@/shared/lib/browser-execution/selector-registry-roles';
+import {
+  classifySelectorRegistryRole,
+  inferSelectorRegistryRole,
+  type SelectorRegistryRoleCapabilities,
+  type SelectorRegistryRoleClass,
+} from '@/shared/lib/browser-execution/selector-registry-roles';
 
 type TraderaSelectorRegistryPrimitive = string | number | boolean | null;
 
@@ -45,11 +50,11 @@ export type TraderaSelectorRegistrySeedEntry = {
 
 export type TraderaSelectorRegistryRuntimeEntry = Pick<
   TraderaSelectorRegistrySeedEntry,
-  'key' | 'valueJson'
+  'key' | 'role' | 'valueJson'
 >;
 
 const escapeJsString = (value: string): string =>
-  value.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+  value.replace(/\\/g, '\\\\').replace(/'/g, '\\\'');
 
 const toJsLiteral = (value: TraderaSelectorRegistryValue): string => {
   if (typeof value === 'string') {
@@ -72,6 +77,41 @@ const toJsLiteral = (value: TraderaSelectorRegistryValue): string => {
     .map(([key, entryValue]) => `${key}: ${toJsLiteral(entryValue)}`)
     .join(', ')} }`;
 };
+
+const buildRuntimeMetadata = (
+  entries: readonly TraderaSelectorRegistryRuntimeEntry[]
+): Record<
+  string,
+  {
+    capabilities: SelectorRegistryRoleCapabilities;
+    role: SelectorRegistryRole;
+    roleClass: SelectorRegistryRoleClass;
+  }
+> =>
+  Object.fromEntries(
+    entries.map((entry) => {
+      const classification = classifySelectorRegistryRole(entry.role);
+      if (!classification) {
+        throw new Error(`Unsupported Tradera selector registry role "${entry.role}".`);
+      }
+
+      return [
+        entry.key,
+        {
+          role: entry.role,
+          roleClass: classification.roleClass,
+          capabilities: classification.capabilities,
+        },
+      ];
+    })
+  );
+
+const buildRuntimeValueKeyMapLiteral = (
+  entries: readonly TraderaSelectorRegistryRuntimeEntry[]
+): string =>
+  `new Map([\n${entries
+    .map((entry) => `  [${entry.key}, '${entry.key}'],`)
+    .join('\n')}\n])`;
 
 const detectValueType = (
   value: TraderaSelectorRegistryValue
@@ -146,16 +186,50 @@ const getItemCount = (value: TraderaSelectorRegistryValue): number => {
   return value === null ? 0 : 1;
 };
 
+const TRADERA_SELECTOR_REGISTRY_ROLE_OVERRIDES: Partial<Record<string, SelectorRegistryRole>> = {
+  TITLE_SELECTORS: 'input',
+  DESCRIPTION_SELECTORS: 'input',
+  PRICE_SELECTORS: 'input',
+  QUANTITY_SELECTORS: 'input',
+  EAN_SELECTORS: 'input',
+  BRAND_SELECTORS: 'input',
+  WEIGHT_SELECTORS: 'input',
+  WIDTH_SELECTORS: 'input',
+  LENGTH_SELECTORS: 'input',
+  HEIGHT_SELECTORS: 'input',
+  IMAGE_UPLOAD_TRIGGER_SELECTORS: 'trigger',
+  IMAGE_REQUIRED_HINT_SELECTORS: 'feedback',
+  IMAGE_UPLOAD_PENDING_SELECTORS: 'feedback',
+  IMAGE_UPLOAD_ERROR_SELECTORS: 'feedback',
+  DRAFT_IMAGE_REMOVE_SCOPE_SELECTORS: 'content_image',
+  VALIDATION_MESSAGE_SELECTORS: 'feedback',
+  GLOBAL_HEADER_SEARCH_HINTS: 'negative_text_hint',
+  ACTIVE_TAB_LABELS: 'navigation',
+  EDIT_INTERMEDIATE_MENU_LABELS: 'trigger',
+  CATEGORY_FIELD_LABELS: 'label',
+  CATEGORY_PLACEHOLDER_LABELS: 'label',
+  LISTING_FORMAT_FIELD_LABELS: 'label',
+  CONDITION_FIELD_LABELS: 'label',
+  DEPARTMENT_FIELD_LABELS: 'label',
+  DELIVERY_FIELD_LABELS: 'label',
+  SHIPPING_DIALOG_TITLE_LABELS: 'label',
+  SHIPPING_DIALOG_SAVE_LABELS: 'submit',
+  LISTING_CONFIRMATION_LABELS: 'option',
+  DRAFT_SAVED_SELECTORS: 'ready_signal',
+};
+
 const defineRegistryEntry = (
   definition: Omit<TraderaSelectorRegistryDefinition, 'role'>
 ): TraderaSelectorRegistryDefinition => ({
   ...definition,
-  role: inferSelectorRegistryRole({
-    namespace: 'tradera',
-    key: definition.key,
-    kind: definition.kind,
-    group: definition.group,
-  }),
+  role:
+    TRADERA_SELECTOR_REGISTRY_ROLE_OVERRIDES[definition.key] ??
+    inferSelectorRegistryRole({
+      namespace: 'tradera',
+      key: definition.key,
+      kind: definition.kind,
+      group: definition.group,
+    }),
 });
 
 export const LOGIN_SUCCESS_SELECTORS = [
@@ -1514,12 +1588,15 @@ export const generateTraderaSelectorRegistryRuntimeFromEntries = (
       const parsedValue = JSON.parse(entry.valueJson) as TraderaSelectorRegistryValue;
       return `const ${entry.key} = ${toJsLiteral(parsedValue)};`;
     }),
+    `const TRADERA_SELECTOR_REGISTRY_META = ${JSON.stringify(buildRuntimeMetadata(entries), null, 2)};`,
+    `const TRADERA_SELECTOR_REGISTRY_VALUE_KEYS = ${buildRuntimeValueKeyMapLiteral(entries)};`,
   ].join('\n');
 
 export const generateTraderaSelectorRegistryRuntime = (): string =>
   generateTraderaSelectorRegistryRuntimeFromEntries(
     TRADERA_SELECTOR_REGISTRY_DEFINITIONS.map((definition) => ({
       key: definition.key,
+      role: definition.role,
       valueJson: JSON.stringify(definition.value),
     }))
   );

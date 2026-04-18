@@ -6,6 +6,7 @@ import React from 'react';
 import { act, cleanup, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { KANGUR_CMS_PROJECT_SETTING_KEY } from '@/features/kangur/cms-builder/project-contracts';
 import { clearLatchedKangurTopBarHeightCssValue } from '@/features/kangur/ui/utils/readKangurTopBarHeightCssValue';
 import {
   authStateMock,
@@ -217,6 +218,44 @@ describe('KangurFeatureApp auth and theme loading', () => {
     expect(screen.queryByTestId('kangur-app-loader')).toBeNull();
     expect(screen.getByTestId('kangur-route-content')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-page-game')).toBeInTheDocument();
+  });
+
+  it('switches to the CMS runtime screen when the project setting arrives after initial loading', () => {
+    const rawCmsProject = JSON.stringify({
+      screens: {
+        Game: { components: [] },
+        Lessons: { components: [] },
+        LearnerProfile: { components: [] },
+        ParentDashboard: { components: [] },
+      },
+    });
+    let currentRawProject: string | undefined;
+    let currentIsLoading = true;
+
+    settingsStoreStateMock.mockImplementation(() => ({
+      map: new Map(),
+      isLoading: currentIsLoading,
+      isFetching: false,
+      error: null,
+      get: vi.fn((key: string) =>
+        key === KANGUR_CMS_PROJECT_SETTING_KEY ? currentRawProject : undefined
+      ),
+      getBoolean: vi.fn(),
+      getNumber: vi.fn(),
+      refetch: vi.fn(),
+    }));
+
+    const { rerender } = render(<KangurFeatureApp />);
+
+    expect(screen.queryByTestId('kangur-cms-runtime-screen')).toBeNull();
+    expect(screen.getByTestId('kangur-page-lessons')).toBeInTheDocument();
+
+    currentRawProject = rawCmsProject;
+    currentIsLoading = false;
+    rerender(<KangurFeatureApp />);
+
+    expect(screen.getByTestId('kangur-route-content')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-page-lessons')).toBeNull();
   });
 
   it('dismisses the boot skeleton after the 50ms minimum visibility elapses', async () => {

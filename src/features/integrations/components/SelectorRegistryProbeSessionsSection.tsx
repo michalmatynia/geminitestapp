@@ -1,11 +1,12 @@
 'use client';
 
 import { Trash2 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   useArchiveSelectorRegistryProbeSessionMutation,
   useDeleteSelectorRegistryProbeSessionMutation,
+  useRestoreSelectorRegistryProbeSessionMutation,
   useSaveSelectorRegistryEntryMutation,
 } from '@/features/integrations/hooks/useSelectorRegistry';
 import type {
@@ -14,7 +15,25 @@ import type {
   SelectorRegistryProbeSessionCluster,
   SelectorRegistryProbeSession,
 } from '@/shared/contracts/integrations/selector-registry';
+import {
+  applySelectorRegistryProbeCarryForwardDefaults,
+  applySelectorRegistryProbeCarryForwardManualSelection,
+  buildSelectorRegistryProbeCarryForwardDefaultKeysByRole,
+  buildSelectorRegistryProbeEntriesByRole,
+  buildSelectorRegistryProbeCarryForwardInheritedCounts,
+  buildSelectorRegistryProbeCarryForwardItems,
+  buildSelectorRegistryProbeCarryForwardSources,
+  isSelectorRegistryProbeCarryForwardInherited,
+} from '@/shared/lib/browser-execution/selector-registry-probe-carry-forward';
 import { formatSelectorRegistryRoleLabel } from '@/shared/lib/browser-execution/selector-registry-roles';
+import { SelectorRegistryProbeSuggestionBadges } from '@/shared/lib/browser-execution/selector-registry-probe-suggestion-badges';
+import {
+  getSelectorRegistryProbeSuggestionEvidenceText,
+  getSelectorRegistryProbeSuggestionPrimaryPageLabel,
+  getSelectorRegistryProbeSuggestionSecondaryPageLabel,
+  getSelectorRegistryProbeSuggestionTextPreview,
+} from '@/shared/lib/browser-execution/selector-registry-probe-suggestion-formatting';
+import { SelectorRegistryProbeSuggestionCandidateDetails } from '@/shared/lib/browser-execution/selector-registry-probe-suggestion-candidates';
 import {
   Badge,
   Button,
@@ -35,9 +54,9 @@ type Props = {
   clusters?: SelectorRegistryProbeSessionCluster[];
   promotableEntries: SelectorRegistryEntry[];
   isReadOnly: boolean;
+  showArchived: boolean;
+  onShowArchivedChange: (next: boolean) => void;
 };
-
-const formatConfidence = (confidence: number): string => `${Math.round(confidence * 100)}%`;
 
 const formatTimestamp = (value: string): string => {
   const parsed = new Date(value);
@@ -59,30 +78,75 @@ export function SelectorRegistryProbeSessionsSection({
   clusters,
   promotableEntries,
   isReadOnly,
+  showArchived,
+  onShowArchivedChange,
 }: Props) {
   const { toast } = useToast();
   const saveMutation = useSaveSelectorRegistryEntryMutation();
   const archiveMutation = useArchiveSelectorRegistryProbeSessionMutation();
+  const restoreMutation = useRestoreSelectorRegistryProbeSessionMutation();
   const deleteMutation = useDeleteSelectorRegistryProbeSessionMutation();
   const [selectedKeys, setSelectedKeys] = useState<Record<string, string>>({});
+  const [manuallySelectedKeys, setManuallySelectedKeys] = useState<Record<string, boolean>>({});
   const [bulkPromotingSessionId, setBulkPromotingSessionId] = useState<string | null>(null);
   const [promotingAndArchivingSessionId, setPromotingAndArchivingSessionId] = useState<string | null>(null);
   const [rejectingSessionId, setRejectingSessionId] = useState<string | null>(null);
+  const [restoringSessionId, setRestoringSessionId] = useState<string | null>(null);
   const [bulkPromotingClusterKey, setBulkPromotingClusterKey] = useState<string | null>(null);
   const [promotingAndArchivingClusterKey, setPromotingAndArchivingClusterKey] = useState<string | null>(null);
   const [rejectingClusterKey, setRejectingClusterKey] = useState<string | null>(null);
+  const [restoringClusterKey, setRestoringClusterKey] = useState<string | null>(null);
+  const sectionRef = useRef<HTMLElement | null>(null);
+  const activeSessions = useMemo(
+    () => sessions.filter((session) => session.archivedAt === null),
+    [sessions]
+  );
+  const archivedSessions = useMemo(
+    () => sessions.filter((session) => session.archivedAt !== null),
+    [sessions]
+  );
   const resolvedClusters = useMemo(
-    () => clusters ?? buildSelectorRegistryProbeSessionClusters(sessions),
-    [clusters, sessions]
+    () =>
+      showArchived
+        ? buildSelectorRegistryProbeSessionClusters(activeSessions)
+        : clusters ?? buildSelectorRegistryProbeSessionClusters(activeSessions),
+    [activeSessions, clusters, showArchived]
+  );
+  const archivedClusters = useMemo(
+    () => buildSelectorRegistryProbeSessionClusters(archivedSessions),
+    [archivedSessions]
+  );
+  const promotableEntriesByRole = useMemo(
+    () => buildSelectorRegistryProbeEntriesByRole(promotableEntries),
+    [promotableEntries]
+  );
+  const defaultKeysByRole = useMemo(
+    () => buildSelectorRegistryProbeCarryForwardDefaultKeysByRole(promotableEntries),
+    [promotableEntries]
   );
 
   const suggestionIds = useMemo(
     () =>
-      sessions.flatMap((session) =>
+      activeSessions.flatMap((session) =>
         session.suggestions.map((suggestion) => `${session.id}:${suggestion.suggestionId}`)
       ),
-    [sessions]
+    [activeSessions]
   );
+  const activeSuggestionKeySet = useMemo(() => new Set(suggestionIds), [suggestionIds]);
+
+  useEffect(() => {
+    if (suggestionIds.length === 0) {
+      setManuallySelectedKeys({});
+      return;
+    }
+
+    setManuallySelectedKeys((current) => {
+      const next = Object.fromEntries(
+        Object.entries(current).filter(([suggestionKey]) => activeSuggestionKeySet.has(suggestionKey))
+      );
+      return Object.keys(next).length === Object.keys(current).length ? current : next;
+    });
+  }, [activeSuggestionKeySet, suggestionIds]);
 
   useEffect(() => {
     if (suggestionIds.length === 0) {
@@ -92,20 +156,40 @@ export function SelectorRegistryProbeSessionsSection({
 
     setSelectedKeys((current) => {
       const next: Record<string, string> = {};
-      for (const session of sessions) {
-        for (const suggestion of session.suggestions) {
-          const suggestionKey = `${session.id}:${suggestion.suggestionId}`;
-          const matchingEntries = promotableEntries.filter(
-            (entry) => entry.role === suggestion.classificationRole
-          );
-          next[suggestionKey] = current[suggestionKey] ?? matchingEntries[0]?.key ?? '';
-        }
+
+      for (const cluster of resolvedClusters) {
+        Object.assign(
+          next,
+          applySelectorRegistryProbeCarryForwardDefaults({
+            items: buildSelectorRegistryProbeCarryForwardItems({
+              items: cluster.sessions.flatMap((session) =>
+                session.suggestions.map((suggestion) => ({
+                  sessionId: session.id,
+                  suggestion,
+                }))
+              ),
+              getItemId: (item) => `${item.sessionId}:${item.suggestion.suggestionId}`,
+              getRole: (item) => item.suggestion.classificationRole,
+              defaultKeysByRole,
+            }),
+            selectedKeys: current,
+            manuallySelectedKeys,
+          })
+        );
       }
       return next;
     });
-  }, [promotableEntries, sessions, suggestionIds]);
+  }, [manuallySelectedKeys, promotableEntries, resolvedClusters, suggestionIds]);
 
-  if (sessions.length === 0 && resolvedClusters.length === 0) {
+  useEffect(() => {
+    if (typeof window === 'undefined' || window.location.hash !== '#probe-sessions') {
+      return;
+    }
+    sectionRef.current?.scrollIntoView({ block: 'start' });
+    sectionRef.current?.focus({ preventScroll: true });
+  }, [activeSessions.length, archivedSessions.length, resolvedClusters.length, showArchived]);
+
+  if (activeSessions.length === 0 && archivedSessions.length === 0 && resolvedClusters.length === 0) {
     return null;
   }
 
@@ -173,36 +257,91 @@ export function SelectorRegistryProbeSessionsSection({
     return deletedCount;
   };
 
+  const restoreSessionBatch = async (
+    sessionIds: string[]
+  ): Promise<number> => {
+    let restoredCount = 0;
+    for (const sessionId of sessionIds) {
+      const response = await restoreMutation.mutateAsync({ id: sessionId });
+      if (response.restored) {
+        restoredCount += 1;
+      }
+    }
+    return restoredCount;
+  };
+
   return (
-    <section className='space-y-4 rounded-lg border border-border bg-card/40 p-4'>
+    <section
+      id='probe-sessions'
+      ref={sectionRef}
+      tabIndex={-1}
+      className='space-y-4 rounded-lg border border-border bg-card/40 p-4'
+    >
       <div className='space-y-1'>
         <div className='flex items-center justify-between gap-3'>
           <h2 className='text-sm font-semibold'>Probe Sessions</h2>
           <div className='flex items-center gap-2'>
             <Badge variant='outline'>{resolvedClusters.length} templates</Badge>
+            <Badge variant='outline'>{activeSessions.length} active</Badge>
+            {showArchived ? (
+              <Badge variant='outline'>{archivedSessions.length} archived</Badge>
+            ) : null}
             <Badge variant='outline'>{storedSessionCount} stored</Badge>
+            <Button
+              type='button'
+              size='sm'
+              variant='outline'
+              onClick={() => {
+                onShowArchivedChange(!showArchived);
+              }}
+            >
+              {showArchived ? 'Hide Archived' : 'Show Archived'}
+            </Button>
           </div>
         </div>
         <p className='text-sm text-muted-foreground'>
           Review persisted live-scripter DOM probe sessions and promote selected suggestions into
-          the selector registry.
+          the selector registry. Archived sessions stay read-only and only appear when explicitly
+          requested.
         </p>
       </div>
 
       <div className='space-y-4'>
-        {resolvedClusters.map((cluster) => (
-          <div
-            key={cluster.clusterKey}
-            className='space-y-4 rounded-lg border border-border bg-background/40 p-4'
-          >
-            {(() => {
-              const clusterReadySuggestions = cluster.sessions.flatMap(readReadySuggestions);
-              const clusterReadyCount = clusterReadySuggestions.length;
-              const canArchiveCluster =
-                cluster.suggestionCount > 0 && clusterReadyCount === cluster.suggestionCount;
+        {resolvedClusters.map((cluster) => {
+          const clusterReadySuggestions = cluster.sessions.flatMap(readReadySuggestions);
+          const clusterReadyCount = clusterReadySuggestions.length;
+          const canArchiveCluster =
+            cluster.suggestionCount > 0 && clusterReadyCount === cluster.suggestionCount;
+          const clusterCarryForwardItems = buildSelectorRegistryProbeCarryForwardItems({
+            items: cluster.sessions.flatMap((session) =>
+              session.suggestions.map((suggestion) => ({
+                sessionId: session.id,
+                suggestion,
+              }))
+            ),
+            getItemId: (item) => `${item.sessionId}:${item.suggestion.suggestionId}`,
+            getRole: (item) => item.suggestion.classificationRole,
+            defaultKeysByRole,
+          });
+          const carryForwardSourcesByRole = buildSelectorRegistryProbeCarryForwardSources({
+            items: clusterCarryForwardItems,
+            selectedKeys,
+            manuallySelectedKeys,
+          });
+          const inheritedCountsBySuggestionKey =
+            buildSelectorRegistryProbeCarryForwardInheritedCounts({
+              items: clusterCarryForwardItems,
+              selectedKeys,
+              manuallySelectedKeys,
+              carryForwardSourcesByRole,
+            });
 
-              return (
-                <div className='space-y-1'>
+          return (
+            <div
+              key={cluster.clusterKey}
+              className='space-y-4 rounded-lg border border-border bg-background/40 p-4'
+            >
+              <div className='space-y-1'>
                   <div className='flex flex-wrap items-start justify-between gap-3'>
                     <div className='space-y-1'>
                       <div className='flex flex-wrap items-center gap-2'>
@@ -219,6 +358,20 @@ export function SelectorRegistryProbeSessionsSection({
                       <div className='text-xs text-muted-foreground'>
                         Grouped by normalized path template and suggestion-role signature.
                       </div>
+                      {carryForwardSourcesByRole.size > 0 ? (
+                        <div className='flex flex-wrap gap-2 pt-1'>
+                          {Array.from(carryForwardSourcesByRole.entries()).map(
+                            ([role, source]) => (
+                              <Badge
+                                key={`${cluster.clusterKey}:carry-forward:${role}`}
+                                variant='outline'
+                              >
+                                Carry-forward active for {role} -&gt; {source.selectedKey}
+                              </Badge>
+                            )
+                          )}
+                        </div>
+                      ) : null}
                     </div>
                     <div className='flex flex-wrap items-center gap-2'>
                       <Button
@@ -340,9 +493,7 @@ export function SelectorRegistryProbeSessionsSection({
                       </Button>
                     </div>
                   </div>
-                </div>
-              );
-            })()}
+              </div>
 
             <div className='space-y-4'>
               {cluster.sessions.map((session) => (
@@ -487,13 +638,24 @@ export function SelectorRegistryProbeSessionsSection({
                         ))}
                       </div>
 
-                      <div className='space-y-3'>
-                        {session.suggestions.map((suggestion) => {
+                    <div className='space-y-3'>
+                      {session.suggestions.map((suggestion) => {
                       const suggestionKey = `${session.id}:${suggestion.suggestionId}`;
-                      const matchingEntries = promotableEntries.filter(
-                        (entry) => entry.role === suggestion.classificationRole
-                      );
+                      const matchingEntries =
+                        promotableEntriesByRole.get(suggestion.classificationRole) ?? [];
                       const selectedKey = selectedKeys[suggestionKey] ?? '';
+                      const carryForwardSource = carryForwardSourcesByRole.get(
+                        suggestion.classificationRole
+                      );
+                      const inheritedFromTemplate = isSelectorRegistryProbeCarryForwardInherited({
+                        itemId: suggestionKey,
+                        role: suggestion.classificationRole,
+                        selectedKey,
+                        manuallySelectedKeys,
+                        carryForwardSourcesByRole,
+                      });
+                      const isCarryForwardSource =
+                        (inheritedCountsBySuggestionKey[suggestionKey] ?? 0) > 0;
                       const selectorValue = readPromotableSelectorValue(suggestion);
                       const promoteDisabled =
                         isReadOnly ||
@@ -507,32 +669,28 @@ export function SelectorRegistryProbeSessionsSection({
                               className='grid gap-3 rounded-md border border-border/60 bg-muted/10 p-3 lg:grid-cols-[minmax(0,1fr)_300px]'
                             >
                               <div className='space-y-2'>
-                                <div className='flex flex-wrap items-center gap-2'>
-                                  <Badge variant='secondary'>
-                                    {formatSelectorRegistryRoleLabel(suggestion.classificationRole) ??
-                                      suggestion.classificationRole}
-                                  </Badge>
-                                  <Badge variant='outline'>{formatConfidence(suggestion.confidence)}</Badge>
-                                  <Badge variant='outline'>{suggestion.tag}</Badge>
-                                  {suggestion.draftTargetHints.map((hint) => (
-                                    <Badge key={`${suggestionKey}:${hint}`} variant='outline'>
-                                      {hint}
-                                    </Badge>
-                                  ))}
-                                </div>
+                                <SelectorRegistryProbeSuggestionBadges
+                                  role={suggestion.classificationRole}
+                                  confidence={suggestion.confidence}
+                                  tag={suggestion.tag}
+                                  draftTargetHints={suggestion.draftTargetHints}
+                                  baseKey={suggestionKey}
+                                  isCarryForwardSource={isCarryForwardSource}
+                                />
                                 <div className='text-sm font-medium'>
-                                  {suggestion.textPreview ?? '(no visible text)'}
+                                  {getSelectorRegistryProbeSuggestionTextPreview(suggestion)}
                                 </div>
                                 <div className='text-xs text-muted-foreground'>
-                                  {suggestion.evidence.join(' ')}
+                                  {getSelectorRegistryProbeSuggestionEvidenceText(suggestion)}
                                 </div>
                                 <div className='space-y-1 text-xs text-muted-foreground'>
-                                  <div>{suggestion.pageTitle ?? suggestion.pageUrl}</div>
-                                  <div>{suggestion.pageUrl}</div>
-                                  <div>
-                                    CSS: {suggestion.candidates.css ?? 'Unavailable'} · XPath:{' '}
-                                    {suggestion.candidates.xpath ?? 'Unavailable'}
-                                  </div>
+                                  <div>{getSelectorRegistryProbeSuggestionPrimaryPageLabel(suggestion)}</div>
+                                  {getSelectorRegistryProbeSuggestionSecondaryPageLabel(suggestion) ? (
+                                    <div>{getSelectorRegistryProbeSuggestionSecondaryPageLabel(suggestion)}</div>
+                                  ) : null}
+                                  <SelectorRegistryProbeSuggestionCandidateDetails
+                                    suggestion={suggestion}
+                                  />
                                 </div>
                               </div>
 
@@ -541,10 +699,16 @@ export function SelectorRegistryProbeSessionsSection({
                                 <Select
                                   value={selectedKey}
                                   onValueChange={(value) => {
-                                    setSelectedKeys((current) => ({
-                                      ...current,
-                                      [suggestionKey]: value,
-                                    }));
+                                    const nextState =
+                                      applySelectorRegistryProbeCarryForwardManualSelection({
+                                        items: clusterCarryForwardItems,
+                                        selectedKeys,
+                                        manuallySelectedKeys,
+                                        itemId: suggestionKey,
+                                        selectedKey: value,
+                                      });
+                                    setManuallySelectedKeys(nextState.manuallySelectedKeys);
+                                    setSelectedKeys(nextState.selectedKeys);
                                   }}
                                 >
                                   <SelectTrigger id={`stored-probe-key-${suggestionKey}`}>
@@ -564,6 +728,11 @@ export function SelectorRegistryProbeSessionsSection({
                                     ))}
                                   </SelectContent>
                                 </Select>
+                                {inheritedFromTemplate ? (
+                                  <div className='text-xs text-muted-foreground'>
+                                    Inherited from template: {carryForwardSource?.selectedKey}
+                                  </div>
+                                ) : null}
 
                                 <Button
                                   type='button'
@@ -616,7 +785,189 @@ export function SelectorRegistryProbeSessionsSection({
               ))}
             </div>
           </div>
-        ))}
+          );
+        })}
+
+        {showArchived && archivedClusters.length > 0 ? (
+          <div className='space-y-4 rounded-lg border border-border/70 bg-muted/10 p-4'>
+            <div className='space-y-1'>
+              <div className='flex flex-wrap items-center gap-2'>
+                <h3 className='text-sm font-semibold'>Archived Sessions</h3>
+                <Badge variant='outline'>{archivedClusters.length} templates</Badge>
+                <Badge variant='outline'>{archivedSessions.length} archived</Badge>
+              </div>
+              <div className='text-xs text-muted-foreground'>
+                Archived probe sessions are kept for audit only and do not participate in active
+                review actions.
+              </div>
+            </div>
+
+            <div className='space-y-4'>
+              {archivedClusters.map((cluster) => (
+                <div
+                  key={`archived:${cluster.clusterKey}`}
+                  className='space-y-4 rounded-md border border-border/70 bg-background/50 p-4'
+                >
+                  <div className='flex flex-wrap items-start justify-between gap-3'>
+                    <div className='space-y-1'>
+                      <div className='flex flex-wrap items-center gap-2'>
+                        <h4 className='text-sm font-semibold'>{cluster.label}</h4>
+                        <Badge variant='outline'>{cluster.sessionCount} sessions</Badge>
+                        <Badge variant='outline'>{cluster.suggestionCount} suggestions</Badge>
+                        {cluster.roleSignature.map((role) => (
+                          <Badge key={`archived:${cluster.clusterKey}:${role}`} variant='secondary'>
+                            {formatSelectorRegistryRoleLabel(role) ?? role}
+                          </Badge>
+                        ))}
+                      </div>
+                      <div className='text-xs text-muted-foreground'>
+                        Archived template history grouped by normalized path and role signature.
+                      </div>
+                    </div>
+                    <div className='flex flex-wrap items-center gap-2'>
+                      <Button
+                        type='button'
+                        size='sm'
+                        variant='outline'
+                        loading={restoringClusterKey === cluster.clusterKey}
+                        loadingText='Restoring'
+                        disabled={restoreMutation.isPending}
+                        onClick={async () => {
+                          setRestoringClusterKey(cluster.clusterKey);
+                          try {
+                            const restoredCount = await restoreSessionBatch(
+                              cluster.sessions.map((session) => session.id)
+                            );
+                            toast(
+                              restoredCount === cluster.sessionCount
+                                ? `Restored ${restoredCount} archived probe session${restoredCount === 1 ? '' : 's'} in this template to active review.`
+                                : `Restored ${restoredCount} of ${cluster.sessionCount} archived probe sessions in this template.`,
+                              {
+                                variant:
+                                  restoredCount === cluster.sessionCount ? 'success' : 'error',
+                              }
+                            );
+                          } catch (error) {
+                            toast(
+                              error instanceof Error
+                                ? error.message
+                                : 'Archived template could not be restored.',
+                              { variant: 'error' }
+                            );
+                          } finally {
+                            setRestoringClusterKey(null);
+                          }
+                        }}
+                      >
+                        Restore Template
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className='space-y-3'>
+                    {cluster.sessions.map((session) => (
+                      <div
+                        key={`archived:${session.id}`}
+                        className='space-y-3 rounded-md border border-border/60 bg-muted/10 p-4'
+                      >
+                        <div className='space-y-1'>
+                          <div className='flex flex-wrap items-center gap-2'>
+                            <Badge variant='outline'>{session.profile}</Badge>
+                            <Badge variant='outline'>{session.scannedPages} pages</Badge>
+                            <Badge variant='outline'>{session.suggestionCount} suggestions</Badge>
+                            <Badge variant='secondary'>
+                              Archived {formatTimestamp(session.archivedAt ?? session.updatedAt)}
+                            </Badge>
+                          </div>
+                          <div className='text-sm font-medium'>
+                            {session.sourceTitle ?? session.sourceUrl}
+                          </div>
+                          <div className='text-xs text-muted-foreground'>{session.sourceUrl}</div>
+                        </div>
+                        <div className='flex flex-wrap items-center gap-2'>
+                          <Button
+                            type='button'
+                            size='sm'
+                            variant='outline'
+                            loading={restoringSessionId === session.id}
+                            loadingText='Restoring'
+                            disabled={restoreMutation.isPending}
+                            onClick={async () => {
+                              setRestoringSessionId(session.id);
+                              try {
+                                const restored = await restoreMutation.mutateAsync({
+                                  id: session.id,
+                                });
+                                toast(
+                                  restored.restored
+                                    ? 'Restored archived probe session to active review.'
+                                    : 'Probe session was already active or missing.',
+                                  { variant: restored.restored ? 'success' : 'error' }
+                                );
+                              } catch (error) {
+                                toast(
+                                  error instanceof Error
+                                    ? error.message
+                                    : 'Archived probe session could not be restored.',
+                                  { variant: 'error' }
+                                );
+                              } finally {
+                                setRestoringSessionId(null);
+                              }
+                            }}
+                          >
+                            Restore Session
+                          </Button>
+                        </div>
+
+                        <div className='flex flex-wrap gap-2 text-xs text-muted-foreground'>
+                          {session.pages.map((pageSummary) => (
+                            <Badge key={`archived:${session.id}:${pageSummary.url}`} variant='outline'>
+                              {pageSummary.title ?? pageSummary.url} ({pageSummary.suggestionCount})
+                            </Badge>
+                          ))}
+                        </div>
+
+                        <div className='space-y-3'>
+                          {session.suggestions.map((suggestion) => (
+                            <div
+                              key={`archived:${session.id}:${suggestion.suggestionId}`}
+                              className='space-y-2 rounded-md border border-border/60 bg-background/40 p-3'
+                            >
+                              <SelectorRegistryProbeSuggestionBadges
+                                role={suggestion.classificationRole}
+                                confidence={suggestion.confidence}
+                                tag={suggestion.tag}
+                                draftTargetHints={suggestion.draftTargetHints}
+                                baseKey={`archived:${session.id}:${suggestion.suggestionId}`}
+                              />
+                              <div className='text-sm font-medium'>
+                                {getSelectorRegistryProbeSuggestionTextPreview(suggestion)}
+                              </div>
+                              <div className='text-xs text-muted-foreground'>
+                                {getSelectorRegistryProbeSuggestionEvidenceText(suggestion)}
+                              </div>
+                              <div className='space-y-1 text-xs text-muted-foreground'>
+                                <div>{getSelectorRegistryProbeSuggestionPrimaryPageLabel(suggestion)}</div>
+                                {getSelectorRegistryProbeSuggestionSecondaryPageLabel(suggestion) ? (
+                                  <div>{getSelectorRegistryProbeSuggestionSecondaryPageLabel(suggestion)}</div>
+                                ) : null}
+                                <SelectorRegistryProbeSuggestionCandidateDetails
+                                  suggestion={suggestion}
+                                />
+                                <div>Archived probe suggestion. Review history only until restored.</div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
       </div>
     </section>
   );

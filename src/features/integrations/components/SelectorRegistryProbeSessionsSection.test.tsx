@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type {
@@ -11,11 +12,13 @@ import { buildSelectorRegistryProbeTemplateFingerprint } from '@/shared/lib/brow
 
 const {
   archiveMutationMock,
+  restoreMutationMock,
   saveMutationMock,
   deleteMutationMock,
   toastMock,
 } = vi.hoisted(() => ({
   archiveMutationMock: vi.fn(),
+  restoreMutationMock: vi.fn(),
   saveMutationMock: vi.fn(),
   deleteMutationMock: vi.fn(),
   toastMock: vi.fn(),
@@ -25,6 +28,10 @@ vi.mock('@/features/integrations/hooks/useSelectorRegistry', () => ({
   useArchiveSelectorRegistryProbeSessionMutation: () => ({
     isPending: false,
     mutateAsync: archiveMutationMock,
+  }),
+  useRestoreSelectorRegistryProbeSessionMutation: () => ({
+    isPending: false,
+    mutateAsync: restoreMutationMock,
   }),
   useSaveSelectorRegistryEntryMutation: () => ({
     isPending: false,
@@ -65,6 +72,14 @@ const promotableEntry: SelectorRegistryEntry = {
   resolvedFromProfile: null,
   hasOverride: false,
   readOnly: false,
+};
+
+const alternatePromotableEntry: SelectorRegistryEntry = {
+  ...promotableEntry,
+  id: 'entry-2',
+  key: 'amazon.product.sale_price',
+  description: 'Alternate price selector',
+  updatedAt: '2026-01-02T00:00:00.000Z',
 };
 
 const probeSession: SelectorRegistryProbeSession = {
@@ -146,6 +161,7 @@ const probeSession: SelectorRegistryProbeSession = {
       },
     ],
   }),
+  archivedAt: null,
   createdAt: '2026-04-18T08:00:00.000Z',
   updatedAt: '2026-04-18T08:00:00.000Z',
 };
@@ -182,18 +198,60 @@ const probeSessionVariant: SelectorRegistryProbeSession = {
       },
     ],
   }),
+  archivedAt: null,
   createdAt: '2026-04-18T09:00:00.000Z',
   updatedAt: '2026-04-18T09:00:00.000Z',
+};
+
+const archivedProbeSession: SelectorRegistryProbeSession = {
+  ...probeSession,
+  id: 'probe-session-archived',
+  sourceUrl: 'https://www.amazon.com/example-item-archived',
+  sourceTitle: 'Archived example item',
+  visitedUrls: ['https://www.amazon.com/example-item-archived'],
+  pages: [
+    {
+      url: 'https://www.amazon.com/example-item-archived',
+      title: 'Archived example item',
+      suggestionCount: 1,
+    },
+  ],
+  suggestions: [
+    {
+      ...probeSession.suggestions[0],
+      suggestionId: 'price::signal-archived',
+      pageUrl: 'https://www.amazon.com/example-item-archived',
+      pageTitle: 'Archived example item',
+    },
+  ],
+  templateFingerprint: buildSelectorRegistryProbeTemplateFingerprint({
+    sourceUrl: 'https://www.amazon.com/example-item-archived',
+    suggestions: [
+      {
+        ...probeSession.suggestions[0],
+        suggestionId: 'price::signal-archived',
+        pageUrl: 'https://www.amazon.com/example-item-archived',
+        pageTitle: 'Archived example item',
+      },
+    ],
+  }),
+  archivedAt: '2026-04-18T11:00:00.000Z',
 };
 
 describe('SelectorRegistryProbeSessionsSection', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    window.history.replaceState({}, '', '/');
     archiveMutationMock.mockResolvedValue({
       id: 'probe-session-1',
       archived: true,
       archivedAt: '2026-04-18T10:00:00.000Z',
       message: 'Archived probe session.',
+    });
+    restoreMutationMock.mockResolvedValue({
+      id: 'probe-session-archived',
+      restored: true,
+      message: 'Restored probe session to active review.',
     });
     saveMutationMock.mockResolvedValue({
       namespace: 'amazon',
@@ -218,6 +276,8 @@ describe('SelectorRegistryProbeSessionsSection', () => {
         sessions={[probeSession]}
         promotableEntries={[promotableEntry]}
         isReadOnly={false}
+        showArchived={false}
+        onShowArchivedChange={vi.fn()}
       />
     );
 
@@ -225,6 +285,38 @@ describe('SelectorRegistryProbeSessionsSection', () => {
     expect(screen.getAllByText('Example item 1').length).toBeGreaterThan(0);
     expect(screen.getByText('$19.99')).toBeInTheDocument();
     expect(screen.getByText('Example item 1 (1)')).toBeInTheDocument();
+  });
+
+  it('scrolls and focuses the review section when arriving with the probe-sessions hash', async () => {
+    const scrollIntoViewMock = vi.fn();
+    const focusMock = vi.fn();
+    const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+    const originalFocus = HTMLElement.prototype.focus;
+    HTMLElement.prototype.scrollIntoView = scrollIntoViewMock;
+    HTMLElement.prototype.focus = focusMock;
+    window.history.replaceState({}, '', '/admin/integrations/selectors#probe-sessions');
+
+    try {
+      render(
+        <SelectorRegistryProbeSessionsSection
+          namespace='amazon'
+          profile='amazon'
+          sessions={[probeSession]}
+          promotableEntries={[promotableEntry]}
+          isReadOnly={false}
+          showArchived={false}
+          onShowArchivedChange={vi.fn()}
+        />
+      );
+
+      await waitFor(() => {
+        expect(scrollIntoViewMock).toHaveBeenCalledWith({ block: 'start' });
+      });
+      expect(focusMock).toHaveBeenCalledWith({ preventScroll: true });
+    } finally {
+      HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+      HTMLElement.prototype.focus = originalFocus;
+    }
   });
 
   it('groups repeated stored probe sessions under one template cluster', () => {
@@ -235,6 +327,8 @@ describe('SelectorRegistryProbeSessionsSection', () => {
         sessions={[probeSession, probeSessionVariant]}
         promotableEntries={[promotableEntry]}
         isReadOnly={false}
+        showArchived={false}
+        onShowArchivedChange={vi.fn()}
       />
     );
 
@@ -245,6 +339,55 @@ describe('SelectorRegistryProbeSessionsSection', () => {
     expect(screen.getByText('2 ready')).toBeInTheDocument();
   });
 
+  it('carries a chosen key forward across unresolved suggestions in the same template', async () => {
+    render(
+      <SelectorRegistryProbeSessionsSection
+        namespace='amazon'
+        profile='amazon'
+        sessions={[probeSession, probeSessionVariant]}
+        promotableEntries={[promotableEntry, alternatePromotableEntry]}
+        isReadOnly={false}
+        showArchived={false}
+        onShowArchivedChange={vi.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getAllByRole('combobox')[0]);
+    fireEvent.click(screen.getByRole('option', { name: 'amazon.product.sale_price' }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          'Carry-forward active for content_price -> amazon.product.sale_price'
+        )
+      ).toBeInTheDocument();
+      expect(screen.getByText('Source for carry-forward')).toBeInTheDocument();
+      expect(
+        screen.getByText('Inherited from template: amazon.product.sale_price')
+      ).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Promote Ready In Template' }));
+
+    await waitFor(() => {
+      expect(saveMutationMock).toHaveBeenCalledTimes(2);
+    });
+    expect(saveMutationMock).toHaveBeenNthCalledWith(1, {
+      namespace: 'amazon',
+      profile: 'amazon',
+      key: 'amazon.product.sale_price',
+      valueJson: '".a-price"',
+      role: 'content_price',
+    });
+    expect(saveMutationMock).toHaveBeenNthCalledWith(2, {
+      namespace: 'amazon',
+      profile: 'amazon',
+      key: 'amazon.product.sale_price',
+      valueJson: '".a-price"',
+      role: 'content_price',
+    });
+  });
+
   it('promotes a stored probe suggestion into the selector registry', async () => {
     render(
       <SelectorRegistryProbeSessionsSection
@@ -253,6 +396,8 @@ describe('SelectorRegistryProbeSessionsSection', () => {
         sessions={[probeSession]}
         promotableEntries={[promotableEntry]}
         isReadOnly={false}
+        showArchived={false}
+        onShowArchivedChange={vi.fn()}
       />
     );
 
@@ -278,6 +423,8 @@ describe('SelectorRegistryProbeSessionsSection', () => {
         sessions={[probeSession]}
         promotableEntries={[promotableEntry]}
         isReadOnly={false}
+        showArchived={false}
+        onShowArchivedChange={vi.fn()}
       />
     );
 
@@ -333,6 +480,8 @@ describe('SelectorRegistryProbeSessionsSection', () => {
         sessions={[probeSession]}
         promotableEntries={[]}
         isReadOnly={false}
+        showArchived={false}
+        onShowArchivedChange={vi.fn()}
       />
     );
 
@@ -349,6 +498,8 @@ describe('SelectorRegistryProbeSessionsSection', () => {
         sessions={[probeSession, probeSessionVariant]}
         promotableEntries={[promotableEntry]}
         isReadOnly={false}
+        showArchived={false}
+        onShowArchivedChange={vi.fn()}
       />
     );
 
@@ -396,6 +547,8 @@ describe('SelectorRegistryProbeSessionsSection', () => {
         sessions={[probeSession, probeSessionVariant]}
         promotableEntries={[promotableEntry]}
         isReadOnly={false}
+        showArchived={false}
+        onShowArchivedChange={vi.fn()}
       />
     );
 
@@ -421,6 +574,8 @@ describe('SelectorRegistryProbeSessionsSection', () => {
         sessions={[probeSession]}
         promotableEntries={[]}
         isReadOnly={false}
+        showArchived={false}
+        onShowArchivedChange={vi.fn()}
       />
     );
 
@@ -437,6 +592,8 @@ describe('SelectorRegistryProbeSessionsSection', () => {
         sessions={[probeSession]}
         promotableEntries={[promotableEntry]}
         isReadOnly={false}
+        showArchived={false}
+        onShowArchivedChange={vi.fn()}
       />
     );
 
@@ -456,6 +613,8 @@ describe('SelectorRegistryProbeSessionsSection', () => {
         sessions={[probeSession, probeSessionVariant]}
         promotableEntries={[promotableEntry]}
         isReadOnly={false}
+        showArchived={false}
+        onShowArchivedChange={vi.fn()}
       />
     );
 
@@ -467,5 +626,93 @@ describe('SelectorRegistryProbeSessionsSection', () => {
     expect(deleteMutationMock).toHaveBeenNthCalledWith(1, { id: 'probe-session-2' });
     expect(deleteMutationMock).toHaveBeenNthCalledWith(2, { id: 'probe-session-1' });
     expect(toastMock).toHaveBeenCalled();
+  });
+
+  it('reveals archived probe sessions only when explicitly requested', () => {
+    function Harness() {
+      const [showArchived, setShowArchived] = useState(false);
+      return (
+        <SelectorRegistryProbeSessionsSection
+          namespace='amazon'
+          profile='amazon'
+          sessions={[probeSession, archivedProbeSession]}
+          promotableEntries={[promotableEntry]}
+          isReadOnly={false}
+          showArchived={showArchived}
+          onShowArchivedChange={setShowArchived}
+        />
+      );
+    }
+
+    render(<Harness />);
+
+    expect(screen.queryByText('Archived Sessions')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show Archived' }));
+
+    expect(screen.getByText('Archived Sessions')).toBeInTheDocument();
+    expect(screen.getAllByText('Archived example item').length).toBeGreaterThan(0);
+    expect(screen.getByText(/Archived Apr/)).toBeInTheDocument();
+    expect(
+      screen.getByText('Archived probe suggestion. Review history only until restored.')
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Promote All Matching' })).toBeInTheDocument();
+  });
+
+  it('restores an archived probe session back into active review', async () => {
+    function Harness() {
+      const [showArchived, setShowArchived] = useState(true);
+      return (
+        <SelectorRegistryProbeSessionsSection
+          namespace='amazon'
+          profile='amazon'
+          sessions={[probeSession, archivedProbeSession]}
+          promotableEntries={[promotableEntry]}
+          isReadOnly={false}
+          showArchived={showArchived}
+          onShowArchivedChange={setShowArchived}
+        />
+      );
+    }
+
+    render(<Harness />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Restore Session' }));
+
+    await waitFor(() => {
+      expect(restoreMutationMock).toHaveBeenCalledWith({ id: 'probe-session-archived' });
+    });
+    expect(toastMock).toHaveBeenCalledWith('Restored archived probe session to active review.', {
+      variant: 'success',
+    });
+  });
+
+  it('restores an archived template back into active review', async () => {
+    function Harness() {
+      const [showArchived, setShowArchived] = useState(true);
+      return (
+        <SelectorRegistryProbeSessionsSection
+          namespace='amazon'
+          profile='amazon'
+          sessions={[probeSession, archivedProbeSession]}
+          promotableEntries={[promotableEntry]}
+          isReadOnly={false}
+          showArchived={showArchived}
+          onShowArchivedChange={setShowArchived}
+        />
+      );
+    }
+
+    render(<Harness />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Restore Template' }));
+
+    await waitFor(() => {
+      expect(restoreMutationMock).toHaveBeenCalledWith({ id: 'probe-session-archived' });
+    });
+    expect(toastMock).toHaveBeenCalledWith(
+      'Restored 1 archived probe session in this template to active review.',
+      { variant: 'success' }
+    );
   });
 });

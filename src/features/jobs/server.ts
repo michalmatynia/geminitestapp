@@ -35,6 +35,7 @@ export {
   enqueuePlaywrightListingJob,
   startTraderaListingQueue,
   enqueueTraderaListingJob,
+  buildTraderaListingQueueJobId,
   startVintedListingQueue,
   enqueueVintedListingJob,
 } from '@/server/queues/integrations';

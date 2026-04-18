@@ -13,14 +13,16 @@ import {
 } from '@/features/integrations/server';
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { listCanonicalBaseProductListings } from '@/features/integrations/services/base-listing-canonicalization';
-import { resolvePersistedTraderaLinkedTarget } from '@/features/integrations/services/tradera-listing/utils';
+import { enqueueTraderaCreateListingResponse } from '@/features/integrations/services/tradera-listing-create-queue';
+import {
+  resolveTraderaCreateListingDecision,
+} from '@/features/integrations/services/tradera-listing-create-guard';
 import {
   resolveRequestedVintedBrowserMode,
   resolveRequestedVintedBrowserPreference,
 } from '@/features/integrations/services/vinted-listing/vinted-browser-runtime';
 import {
   enqueuePlaywrightListingJob,
-  enqueueTraderaListingJob,
   enqueueVintedListingJob,
   initializeQueues,
 } from '@/features/jobs/server';
@@ -127,41 +129,33 @@ export async function POST_handler(
       });
     }
 
-    // Check if listing already exists
     const listingRepo = await getProductListingRepository();
-    const exists = await listingExistsAcrossProviders(productId, data.connectionId);
-    if (exists) {
-      throw conflictError('Product is already listed on this account', {
-        productId,
-        connectionId: data.connectionId,
-      });
-    }
 
     if (isTraderaIntegrationSlug(integration.slug)) {
       const productListings = await listProductListingsByProductIdAcrossProviders(productId);
-      const linkedTraderaListing = productListings.find((listing) => {
-        if (listing.connectionId !== data.connectionId) {
-          return false;
-        }
-
-        const linkedTarget = resolvePersistedTraderaLinkedTarget({
-          externalListingId: listing.externalListingId,
-          marketplaceData: listing.marketplaceData,
-        });
-        return Boolean(linkedTarget.externalListingId || linkedTarget.listingUrl);
+      const traderaDecision = await resolveTraderaCreateListingDecision({
+        productId,
+        connectionId: data.connectionId,
+        productListings,
+        listingRepository: listingRepo,
       });
 
-      if (linkedTraderaListing) {
-        const linkedTarget = resolvePersistedTraderaLinkedTarget({
-          externalListingId: linkedTraderaListing.externalListingId,
-          marketplaceData: linkedTraderaListing.marketplaceData,
-        });
-        throw conflictError('Product is already linked to a Tradera listing on this account', {
+      if (traderaDecision.type === 'queued') {
+        return NextResponse.json(traderaDecision.response, { status: 200 });
+      }
+      if (traderaDecision.type === 'conflict') {
+        throw conflictError(traderaDecision.message, {
           productId,
           connectionId: data.connectionId,
-          listingId: linkedTraderaListing.id,
-          externalListingId: linkedTarget.externalListingId,
-          listingUrl: linkedTarget.listingUrl,
+          ...traderaDecision.details,
+        });
+      }
+    } else {
+      const exists = await listingExistsAcrossProviders(productId, data.connectionId);
+      if (exists) {
+        throw conflictError('Product is already listed on this account', {
+          productId,
+          connectionId: data.connectionId,
         });
       }
     }
@@ -199,22 +193,10 @@ export async function POST_handler(
     });
 
     if (isTraderaIntegrationSlug(integration.slug)) {
-      initializeQueues();
-      const enqueuedAt = new Date().toISOString();
-      const jobId = await enqueueTraderaListingJob({
-        listingId: listing.id,
-        action: 'list',
-        source: 'api',
+      const response = await enqueueTraderaCreateListingResponse({
+        listing,
+        listingRepository: listingRepo,
       });
-      const response: ProductListingCreateResponse = {
-        ...listing,
-        queued: true,
-        queue: {
-          name: 'tradera-listings',
-          jobId,
-          enqueuedAt,
-        },
-      };
       return NextResponse.json(response, { status: 201 });
     }
 

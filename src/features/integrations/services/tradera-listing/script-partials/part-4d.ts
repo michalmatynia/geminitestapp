@@ -52,7 +52,7 @@ export const PART_4D = String.raw`
           };
         }
 
-        const continueButton = await firstVisible(CONTINUE_SELECTORS);
+        const continueButton = await firstActionTarget(CONTINUE_SELECTORS, 'image-step-continue');
         const continueButtonDisabled = continueButton
           ? await isControlDisabled(continueButton)
           : null;
@@ -286,10 +286,10 @@ export const PART_4D = String.raw`
 
   const isListingEditorReady = async () => {
     const readyLocators = await Promise.all([
-      firstVisible(TITLE_SELECTORS),
-      firstVisible(DESCRIPTION_SELECTORS),
-      firstVisible(PRICE_SELECTORS),
-      firstVisible(PUBLISH_SELECTORS),
+      firstListingInput(TITLE_SELECTORS, 'title'),
+      firstListingInput(DESCRIPTION_SELECTORS, 'description'),
+      firstListingInput(PRICE_SELECTORS, 'price'),
+      firstActionTarget(PUBLISH_SELECTORS, 'publish-button'),
     ]);
 
     return readyLocators.some(Boolean);
@@ -407,7 +407,7 @@ export const PART_4D = String.raw`
     for (let attempt = 0; attempt < attempts; attempt += 1) {
       await ensureImageStepSellPageReady('image input resolution');
       await assertAllowedTraderaPage('image input resolution');
-      const imageInput = await firstExisting(IMAGE_INPUT_SELECTORS);
+      const imageInput = await firstUploadInput(IMAGE_INPUT_SELECTORS);
       if (imageInput) {
         return imageInput;
       }
@@ -424,7 +424,7 @@ export const PART_4D = String.raw`
       await wait(triggerOpened ? 1200 : editorReady ? 1500 : 1000);
     }
 
-    return firstExisting(IMAGE_INPUT_SELECTORS);
+    return firstUploadInput(IMAGE_INPUT_SELECTORS);
   };
 
   const resolveUploadFiles = async () => {

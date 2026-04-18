@@ -9,6 +9,7 @@ const {
   listProductListingsByProductIdAcrossProvidersMock,
   createListingMock,
   enqueueTraderaListingJobMock,
+  buildTraderaListingQueueJobIdMock,
   enqueueVintedListingJobMock,
   updateListingMock,
   initializeQueuesMock,
@@ -22,6 +23,7 @@ const {
   listProductListingsByProductIdAcrossProvidersMock: vi.fn(),
   createListingMock: vi.fn(),
   enqueueTraderaListingJobMock: vi.fn(),
+  buildTraderaListingQueueJobIdMock: vi.fn(),
   enqueueVintedListingJobMock: vi.fn(),
   updateListingMock: vi.fn(),
   initializeQueuesMock: vi.fn(),
@@ -54,6 +56,8 @@ vi.mock('@/features/integrations/server', () => ({
 vi.mock('@/features/jobs/server', () => ({
   enqueueTraderaListingJob: (...args: unknown[]) =>
     enqueueTraderaListingJobMock(...args),
+  buildTraderaListingQueueJobId: (...args: unknown[]) =>
+    buildTraderaListingQueueJobIdMock(...args),
   enqueueVintedListingJob: (...args: unknown[]) =>
     enqueueVintedListingJobMock(...args),
   enqueuePlaywrightListingJob: vi.fn(),
@@ -100,6 +104,7 @@ describe('integration product listings handler', () => {
       connectionId: 'connection-tradera-1',
       status: 'queued',
     });
+    buildTraderaListingQueueJobIdMock.mockReturnValue('job-tradera-1');
     enqueueTraderaListingJobMock.mockResolvedValue('job-tradera-1');
     enqueueVintedListingJobMock.mockResolvedValue('job-vinted-1');
     listCanonicalBaseProductListingsMock.mockResolvedValue([]);
@@ -140,10 +145,31 @@ describe('integration product listings handler', () => {
     const payload = await response.json();
 
     expect(initializeQueuesMock).toHaveBeenCalledTimes(1);
+    expect(buildTraderaListingQueueJobIdMock).toHaveBeenCalledWith({
+      listingId: 'listing-1',
+      action: 'list',
+      source: 'api',
+    });
+    expect(updateListingMock).toHaveBeenCalledWith(
+      'listing-1',
+      expect.objectContaining({
+        marketplaceData: expect.objectContaining({
+          tradera: expect.objectContaining({
+            pendingExecution: expect.objectContaining({
+              requestId: 'job-tradera-1',
+            }),
+          }),
+        }),
+      })
+    );
+    expect(updateListingMock.mock.invocationCallOrder[0]).toBeLessThan(
+      enqueueTraderaListingJobMock.mock.invocationCallOrder[0]
+    );
     expect(enqueueTraderaListingJobMock).toHaveBeenCalledWith({
       listingId: 'listing-1',
       action: 'list',
       source: 'api',
+      jobId: 'job-tradera-1',
     });
     expect(payload.queue).toMatchObject({
       name: 'tradera-listings',
@@ -151,8 +177,20 @@ describe('integration product listings handler', () => {
     });
   });
 
-  it('returns a real conflict response when a listing already exists for the connection', async () => {
-    listingExistsAcrossProvidersMock.mockResolvedValue(true);
+  it('returns a real conflict response when an active Tradera listing already exists for the connection', async () => {
+    listProductListingsByProductIdAcrossProvidersMock.mockResolvedValue([
+      {
+        id: 'listing-active-1',
+        productId: 'product-1',
+        connectionId: 'connection-tradera-1',
+        status: 'active',
+        externalListingId: null,
+        marketplaceData: {
+          marketplace: 'tradera',
+        },
+        updatedAt: '2026-04-18T10:00:00.000Z',
+      },
+    ]);
 
     const response = await POST_handler(
       new Request('http://localhost/api') as never,
@@ -169,10 +207,164 @@ describe('integration product listings handler', () => {
       details: {
         productId: 'product-1',
         connectionId: 'connection-tradera-1',
+        listingId: 'listing-active-1',
+        status: 'active',
       },
     });
     expect(createListingMock).not.toHaveBeenCalled();
     expect(enqueueTraderaListingJobMock).not.toHaveBeenCalled();
+  });
+
+  it('returns the existing fresh queued Tradera listing instead of creating a duplicate', async () => {
+    const queuedAt = new Date().toISOString();
+    listProductListingsByProductIdAcrossProvidersMock.mockResolvedValue([
+      {
+        id: 'listing-queued-1',
+        productId: 'product-1',
+        integrationId: 'integration-tradera-1',
+        connectionId: 'connection-tradera-1',
+        status: 'queued',
+        externalListingId: null,
+        marketplaceData: {
+          marketplace: 'tradera',
+          tradera: {
+            pendingExecution: {
+              action: 'list',
+              requestId: 'job-existing-1',
+              queuedAt,
+            },
+          },
+        },
+        updatedAt: queuedAt,
+      },
+    ]);
+
+    const response = await POST_handler(
+      new Request('http://localhost/api') as never,
+      {} as never,
+      { id: 'product-1' }
+    );
+
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload).toMatchObject({
+      id: 'listing-queued-1',
+      status: 'queued',
+      queued: true,
+      queue: {
+        name: 'tradera-listings',
+        jobId: 'job-existing-1',
+        enqueuedAt: queuedAt,
+      },
+    });
+    expect(createListingMock).not.toHaveBeenCalled();
+    expect(enqueueTraderaListingJobMock).not.toHaveBeenCalled();
+  });
+
+  it('marks a newly created Tradera listing failed when enqueueing the browser job fails', async () => {
+    enqueueTraderaListingJobMock.mockRejectedValueOnce(new Error('Queue unavailable'));
+
+    const response = await POST_handler(
+      new Request('http://localhost/api') as never,
+      {} as never,
+      { id: 'product-1' }
+    );
+
+    expect(response.status).toBe(500);
+    expect(updateListingMock).toHaveBeenCalledWith(
+      'listing-1',
+      expect.objectContaining({
+        marketplaceData: expect.objectContaining({
+          tradera: expect.objectContaining({
+            pendingExecution: expect.objectContaining({
+              requestId: 'job-tradera-1',
+            }),
+          }),
+        }),
+      })
+    );
+    expect(updateListingMock).toHaveBeenCalledWith(
+      'listing-1',
+      expect.objectContaining({
+        status: 'failed',
+        failureReason: 'Queue unavailable',
+      })
+    );
+    expect(updateListingMock.mock.invocationCallOrder[0]).toBeLessThan(
+      updateListingMock.mock.invocationCallOrder[1]
+    );
+  });
+
+  it('fails a stale queued Tradera listing and queues a fresh browser job', async () => {
+    listProductListingsByProductIdAcrossProvidersMock.mockResolvedValue([
+      {
+        id: 'listing-stale-queued-1',
+        productId: 'product-1',
+        connectionId: 'connection-tradera-1',
+        status: 'queued',
+        externalListingId: null,
+        marketplaceData: {
+          marketplace: 'tradera',
+        },
+        updatedAt: '2020-01-01T00:00:00.000Z',
+      },
+    ]);
+
+    const response = await POST_handler(
+      new Request('http://localhost/api') as never,
+      {} as never,
+      { id: 'product-1' }
+    );
+
+    const payload = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(updateListingMock).toHaveBeenCalledWith(
+      'listing-stale-queued-1',
+      expect.objectContaining({
+        status: 'failed',
+        failureReason: expect.stringContaining('expired before the browser worker started'),
+      })
+    );
+    expect(createListingMock).toHaveBeenCalled();
+    expect(enqueueTraderaListingJobMock).toHaveBeenCalledWith({
+      listingId: 'listing-1',
+      action: 'list',
+      source: 'api',
+      jobId: 'job-tradera-1',
+    });
+    expect(updateListingMock).toHaveBeenCalledWith(
+      'listing-1',
+      expect.objectContaining({
+        marketplaceData: expect.objectContaining({
+          marketplace: 'tradera',
+          tradera: expect.objectContaining({
+            pendingExecution: expect.objectContaining({
+              action: 'list',
+              requestId: 'job-tradera-1',
+            }),
+          }),
+        }),
+      })
+    );
+    expect(payload).toMatchObject({
+      id: 'listing-1',
+      queued: true,
+      queue: {
+        name: 'tradera-listings',
+        jobId: 'job-tradera-1',
+      },
+      marketplaceData: {
+        marketplace: 'tradera',
+        tradera: {
+          pendingExecution: {
+            action: 'list',
+            requestId: 'job-tradera-1',
+          },
+        },
+      },
+    });
   });
 
   it('returns a conflict when a linked Tradera listing already exists for the connection, even if the old row is terminal', async () => {

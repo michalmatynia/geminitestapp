@@ -303,6 +303,32 @@ describe('TRADERA_SELECTOR_REGISTRY_RUNTIME', () => {
     );
   });
 
+  it('emits selector role metadata and value-key lookup for role-aware listing actions', () => {
+    expect(TRADERA_SELECTOR_REGISTRY_RUNTIME).toContain('const TRADERA_SELECTOR_REGISTRY_META = {');
+    expect(TRADERA_SELECTOR_REGISTRY_RUNTIME).toContain('"TITLE_SELECTORS"');
+    expect(TRADERA_SELECTOR_REGISTRY_RUNTIME).toContain('"role": "input"');
+    expect(TRADERA_SELECTOR_REGISTRY_RUNTIME).toContain('"roleClass": "write_target"');
+    expect(TRADERA_SELECTOR_REGISTRY_RUNTIME).toContain('const TRADERA_SELECTOR_REGISTRY_VALUE_KEYS = new Map([');
+    expect(TRADERA_SELECTOR_REGISTRY_RUNTIME).toContain("[TITLE_SELECTORS, 'TITLE_SELECTORS']");
+  });
+
+  it('classifies Tradera listing-action selectors by actual runtime use', () => {
+    const rolesByKey = new Map(
+      TRADERA_SELECTOR_REGISTRY_SEED_ENTRIES.map((entry) => [entry.key, entry.role])
+    );
+
+    expect(rolesByKey.get('TITLE_SELECTORS')).toBe('input');
+    expect(rolesByKey.get('DESCRIPTION_SELECTORS')).toBe('input');
+    expect(rolesByKey.get('PRICE_SELECTORS')).toBe('input');
+    expect(rolesByKey.get('QUANTITY_SELECTORS')).toBe('input');
+    expect(rolesByKey.get('IMAGE_INPUT_SELECTORS')).toBe('upload_input');
+    expect(rolesByKey.get('IMAGE_UPLOAD_TRIGGER_SELECTORS')).toBe('trigger');
+    expect(rolesByKey.get('IMAGE_UPLOAD_PENDING_SELECTORS')).toBe('feedback');
+    expect(rolesByKey.get('VALIDATION_MESSAGE_SELECTORS')).toBe('feedback');
+    expect(rolesByKey.get('DRAFT_SAVED_SELECTORS')).toBe('ready_signal');
+    expect(rolesByKey.get('PUBLISH_SELECTORS')).toBe('submit');
+  });
+
   it('has a stable generated output and aligned seed metadata', () => {
     expect(generateTraderaSelectorRegistryRuntime()).toBe(TRADERA_SELECTOR_REGISTRY_RUNTIME);
     expect(TRADERA_SELECTOR_REGISTRY_SEED_ENTRIES.length).toBeGreaterThan(0);

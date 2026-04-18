@@ -10,6 +10,10 @@ export type SelectorRegistryProbeTemplateFingerprint = {
   roleSignature: SelectorRegistryRole[];
 };
 
+export const formatSelectorRegistryProbeTemplateLabel = (
+  templateFingerprint: Pick<SelectorRegistryProbeTemplateFingerprint, 'host' | 'normalizedPath'>
+): string => `${templateFingerprint.host}${templateFingerprint.normalizedPath}`;
+
 const normalizeProbeTemplateSegment = (segment: string): string => {
   let next = segment.trim().toLowerCase();
   if (next.length === 0) return next;

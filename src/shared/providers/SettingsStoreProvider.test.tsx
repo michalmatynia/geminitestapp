@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { act, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { useEffect } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -128,8 +128,7 @@ describe('SettingsStoreProvider', () => {
     expect(useSettingsMapMock).toHaveBeenCalledWith({ scope: 'light', enabled: false });
   });
 
-  it('bootstraps admin mode from lite settings before hydrating the broader light scope', () => {
-    vi.useFakeTimers();
+  it('loads the broader admin light scope immediately', () => {
     liteQueryResultRef.current = {
       data: new Map<string, string>([['query_status_panel_enabled', 'true']]),
       isLoading: false,
@@ -152,20 +151,11 @@ describe('SettingsStoreProvider', () => {
     );
 
     expect(useLiteSettingsMapMock).toHaveBeenCalledWith({ enabled: true });
-    expect(useSettingsMapMock).toHaveBeenLastCalledWith({ scope: 'light', enabled: false });
-    expect(screen.getByTestId('value')).toHaveTextContent('empty');
-
-    act(() => {
-      vi.runOnlyPendingTimers();
-    });
-
     expect(useSettingsMapMock).toHaveBeenLastCalledWith({ scope: 'light', enabled: true });
     expect(screen.getByTestId('value')).toHaveTextContent('["products"]');
-    vi.useRealTimers();
   });
 
   it('reuses the parent lite settings store inside admin mode instead of issuing a second lite query', () => {
-    vi.useFakeTimers();
     liteQueryResultRef.current = {
       data: new Map<string, string>([['query_status_panel_enabled', 'true']]),
       isLoading: false,
@@ -192,13 +182,57 @@ describe('SettingsStoreProvider', () => {
     expect(useLiteSettingsMapMock).toHaveBeenNthCalledWith(1, { enabled: true });
     expect(useLiteSettingsMapMock).toHaveBeenNthCalledWith(2, { enabled: false });
     expect(screen.getByTestId('value')).toHaveTextContent('true');
-
-    act(() => {
-      vi.runOnlyPendingTimers();
-    });
-
     expect(useSettingsMapMock).toHaveBeenLastCalledWith({ scope: 'light', enabled: true });
-    vi.useRealTimers();
+  });
+
+  it('keeps admin mode loading until full light-scope settings arrive', () => {
+    liteQueryResultRef.current = {
+      data: new Map<string, string>([['kangur_theme_daily', '{"accent":"lite"}']]),
+      isLoading: false,
+      isFetching: false,
+      error: null,
+      refetch: vi.fn(),
+    };
+    adminQueryResultRef.current = {
+      data: new Map<string, string>(),
+      isLoading: true,
+      isFetching: true,
+      error: null,
+      refetch: vi.fn(),
+    };
+
+    const { rerender } = render(
+      <SettingsStoreProvider mode='lite'>
+        <SettingsStoreProvider mode='admin'>
+          <SettingsProbe settingKey='kangur_cms_project_v1' />
+        </SettingsStoreProvider>
+      </SettingsStoreProvider>
+    );
+
+    expect(screen.getByTestId('value')).toHaveTextContent('empty');
+    expect(screen.getByTestId('loading')).toHaveTextContent('true');
+
+    adminQueryResultRef.current = {
+      data: new Map<string, string>([
+        ['kangur_cms_project_v1', '{"screens":{"Game":{"components":[]}}}'],
+        ['kangur_theme_daily', '{"accent":"mongo"}'],
+      ]),
+      isLoading: false,
+      isFetching: false,
+      error: null,
+      refetch: vi.fn(),
+    };
+
+    rerender(
+      <SettingsStoreProvider mode='lite'>
+        <SettingsStoreProvider mode='admin'>
+          <SettingsProbe settingKey='kangur_cms_project_v1' />
+        </SettingsStoreProvider>
+      </SettingsStoreProvider>
+    );
+
+    expect(screen.getByTestId('value')).toHaveTextContent('{"screens":{"Game":{"components":[]}}}');
+    expect(screen.getByTestId('loading')).toHaveTextContent('false');
   });
 
   it('falls back to an empty map when hydrated query data is not a Map instance', () => {
@@ -296,8 +330,8 @@ describe('SettingsStoreProvider', () => {
     );
 
     expect(onMapChange).toHaveBeenCalledTimes(2);
-    expect(onMapChange.mock.calls[0]?.[0]).toBe(initialMap);
-    expect(onMapChange.mock.calls[1]?.[0]).not.toBe(initialMap);
+    expect(onMapChange.mock.calls[0]?.[0].get('feature_flag')).toBe('true');
+    expect(onMapChange.mock.calls[1]?.[0]).not.toBe(onMapChange.mock.calls[0]?.[0]);
     expect(onMapChange.mock.calls[1]?.[0].get('feature_flag')).toBe('false');
   });
 });

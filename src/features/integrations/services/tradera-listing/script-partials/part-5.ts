@@ -1098,14 +1098,14 @@ export const PART_5 = String.raw`
 
     const resolveTitleAndDescriptionInputs = async () => {
       let [titleInput, descriptionInput] = await Promise.all([
-        firstVisible(TITLE_SELECTORS),
-        firstVisible(DESCRIPTION_SELECTORS),
+        firstListingInput(TITLE_SELECTORS, 'title'),
+        firstListingInput(DESCRIPTION_SELECTORS, 'description'),
       ]);
       if (titleInput && descriptionInput) {
         return { titleInput, descriptionInput };
       }
 
-      const continueButton = await firstVisible(CONTINUE_SELECTORS);
+      const continueButton = await firstActionTarget(CONTINUE_SELECTORS, 'image-step-continue');
       const continueButtonDisabled = continueButton
         ? await isControlDisabled(continueButton)
         : null;
@@ -1135,8 +1135,8 @@ export const PART_5 = String.raw`
         const deadline = Date.now() + 20_000;
         while (Date.now() < deadline) {
           [titleInput, descriptionInput] = await Promise.all([
-            firstVisible(TITLE_SELECTORS),
-            firstVisible(DESCRIPTION_SELECTORS),
+            firstListingInput(TITLE_SELECTORS, 'title'),
+            firstListingInput(DESCRIPTION_SELECTORS, 'description'),
           ]);
           if (titleInput && descriptionInput) {
             return { titleInput, descriptionInput };
@@ -1216,7 +1216,7 @@ export const PART_5 = String.raw`
     };
 
     const fillPriceField = async ({ required = true, context = 'unknown' } = {}) => {
-      const priceInput = await firstVisible(PRICE_SELECTORS);
+      const priceInput = await firstListingInput(PRICE_SELECTORS, 'price');
       if (!priceInput) {
         if (!required) {
           log?.('tradera.quicklist.field.skipped', {
@@ -1273,7 +1273,7 @@ export const PART_5 = String.raw`
         return false;
       }
 
-      const quantityInput = await firstVisible(QUANTITY_SELECTORS);
+      const quantityInput = await firstListingInput(QUANTITY_SELECTORS, 'quantity');
       if (!quantityInput) {
         if (!required) {
           log?.('tradera.quicklist.field.skipped', {
@@ -1330,7 +1330,7 @@ export const PART_5 = String.raw`
         return false;
       }
 
-      const eanInput = await firstVisible(EAN_SELECTORS);
+      const eanInput = await firstListingInput(EAN_SELECTORS, 'ean');
       if (!eanInput) {
         if (!required) {
           log?.('tradera.quicklist.field.skipped', {
@@ -1387,7 +1387,7 @@ export const PART_5 = String.raw`
         return false;
       }
 
-      const brandInput = await firstVisible(BRAND_SELECTORS);
+      const brandInput = await firstListingInput(BRAND_SELECTORS, 'brand');
       if (!brandInput) {
         if (!required) {
           log?.('tradera.quicklist.field.skipped', {
@@ -1446,7 +1446,7 @@ export const PART_5 = String.raw`
       for (const attr of attributes) {
         if (attr.value === null || attr.value === undefined) continue;
 
-        const inputField = await firstVisible(attr.selectors);
+        const inputField = await firstListingInput(attr.selectors, attr.key);
         if (!inputField) {
           if (required) {
             throw new Error(

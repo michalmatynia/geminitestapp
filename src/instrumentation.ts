@@ -10,13 +10,6 @@ export const shouldSkipNodeInstrumentation = (
   env: NodeJS.ProcessEnv = process.env
 ): boolean => parseEnvBoolean(env['SKIP_NEXT_NODE_INSTRUMENTATION']);
 
-type NodeInstrumentationModule = {
-  registerNodeInstrumentation: () => Promise<void>;
-};
-
-const loadNodeInstrumentationModule = async (): Promise<NodeInstrumentationModule> =>
-  import('./instrumentation' + '.node') as Promise<NodeInstrumentationModule>;
-
 export async function register(): Promise<void> {
   if (process.env['NEXT_RUNTIME'] === 'edge') {
     const { registerEdgeInstrumentation } = await import('./instrumentation.edge');
@@ -29,7 +22,7 @@ export async function register(): Promise<void> {
       return;
     }
 
-    const { registerNodeInstrumentation } = await loadNodeInstrumentationModule();
+    const { registerNodeInstrumentation } = await import('./instrumentation.node');
     await registerNodeInstrumentation();
   }
 }

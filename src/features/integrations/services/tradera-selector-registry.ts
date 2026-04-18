@@ -402,6 +402,7 @@ const buildSeedRuntimeEntryMap = (): Map<string, TraderaSelectorRegistryRuntimeE
       entry.key,
       {
         key: entry.key,
+        role: entry.role,
         valueJson: entry.valueJson,
       },
     ])
@@ -417,6 +418,7 @@ const applyDocsToRuntimeEntryMap = (
   for (const doc of buildDocMap(docs, requestedProfile).values()) {
     const entry = {
       key: doc.key,
+      role: doc.role ?? resolveSeedEntry(doc.key).role,
       valueJson: doc.valueJson,
     };
 

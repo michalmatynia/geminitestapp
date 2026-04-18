@@ -59,17 +59,18 @@ describe('lite-settings-ssr', () => {
     await expect(getLiteSettingsForHydration()).resolves.toEqual([]);
   });
 
-  it('returns immediately in development on a cold cache miss and prewarms in the background', async () => {
+  it('waits for the bounded prewarm window in development and returns cached rows when ready', async () => {
     process.env['NODE_ENV'] = 'development';
-    getLiteSettingsCacheMock.mockReturnValue(null);
-    prewarmLiteSettingsServerCacheMock.mockImplementation(
-      () => new Promise<void>(() => undefined)
-    );
+    const rows = [{ key: 'feature.enabled', value: 'true' }];
+    getLiteSettingsCacheMock
+      .mockReturnValueOnce(null)
+      .mockReturnValueOnce({ data: rows, ts: 1 });
+    prewarmLiteSettingsServerCacheMock.mockResolvedValue(undefined);
 
-    await expect(getLiteSettingsForHydration()).resolves.toEqual([]);
+    await expect(getLiteSettingsForHydration()).resolves.toEqual(rows);
 
     expect(prewarmLiteSettingsServerCacheMock).toHaveBeenCalledTimes(1);
-    expect(cloneLiteSettingsMock).not.toHaveBeenCalled();
+    expect(cloneLiteSettingsMock).toHaveBeenCalledWith(rows);
   });
 
   it('does not block hydration indefinitely when prewarm is slow', async () => {

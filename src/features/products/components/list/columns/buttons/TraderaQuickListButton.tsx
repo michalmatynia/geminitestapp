@@ -289,6 +289,9 @@ export function TraderaQuickListButton(props: {
   const resolvedLabel = isFailureState
     ? `Open Tradera recovery options (${resolvedButtonStatus}).`
     : 'One-click export to Tradera';
+  const disableQuickListAction =
+    !isFailureState &&
+    (submitting || localFeedbackStatus === 'queued' || serverStatusInFlight);
 
   return (
     <Button
@@ -304,16 +307,12 @@ export function TraderaQuickListButton(props: {
       onFocus={prefetchListings}
       variant='ghost'
       size='icon'
-      disabled={
-        submitting || localFeedbackStatus === 'queued' || serverStatusInFlight
-      }
+      disabled={disableQuickListAction}
       aria-label={resolvedLabel}
       title={`${resolvedLabel} (${resolvedButtonStatus}${traderaStatus ? ` / ${traderaStatus}` : ''})`}
       className={cn(
         'relative size-8 rounded-full border border-transparent bg-transparent p-0 hover:bg-transparent',
-        (submitting ||
-          localFeedbackStatus === 'queued' ||
-          serverStatusInFlight) &&
+        disableQuickListAction &&
           'cursor-not-allowed opacity-60',
         isProcessingOrQueued && 'animate-pulse',
         getMarketplaceButtonClass(

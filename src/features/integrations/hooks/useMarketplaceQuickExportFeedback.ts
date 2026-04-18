@@ -111,11 +111,17 @@ export function useMarketplaceQuickExportFeedback(
         isServerInFlight);
     const keepCompletedRecoveryBridge =
       !showBadge && currentStatus === 'completed' && isServerRecoveryStatus;
+    const keepExpiredInFlightRecoveryContext =
+      !showBadge &&
+      typeof currentStatus === 'string' &&
+      FAILURE_STATUSES.has(currentStatus) &&
+      isServerInFlight;
 
     if (
       keepQueuedSuccessBridge ||
       keepCompletedSuccessContext ||
       keepCompletedRecoveryBridge ||
+      keepExpiredInFlightRecoveryContext ||
       keepFailureRecoveryContext
     ) {
       setLocalFeedback(actions.readFeedback(productId));

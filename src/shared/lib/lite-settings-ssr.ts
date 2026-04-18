@@ -18,7 +18,7 @@ const LITE_SETTINGS_SSR_PREWARM_TIMEOUT_MS = parsePositiveInt(
 
 const waitForLiteSettingsPrewarm = async (): Promise<void> => {
   const prewarmPromise = prewarmLiteSettingsServerCache();
-  void prewarmPromise.catch(() => {});
+  prewarmPromise.catch(() => undefined);
 
   if (LITE_SETTINGS_SSR_PREWARM_TIMEOUT_MS <= 0) {
     await prewarmPromise;
@@ -35,7 +35,7 @@ const waitForLiteSettingsPrewarm = async (): Promise<void> => {
       }),
     ]);
   } finally {
-    if (timeoutId) {
+    if (timeoutId !== undefined) {
       clearTimeout(timeoutId);
     }
   }
@@ -54,11 +54,6 @@ export async function getLiteSettingsForHydration(): Promise<SettingRecord[]> {
     const currentCache = getLiteSettingsCache();
     if (currentCache) {
       return cloneLiteSettings(currentCache.data);
-    }
-
-    if (process.env['NODE_ENV'] === 'development') {
-      void prewarmLiteSettingsServerCache().catch(() => {});
-      return [];
     }
 
     await waitForLiteSettingsPrewarm();

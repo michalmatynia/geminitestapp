@@ -23,6 +23,15 @@ import {
   syncAmazonSelectorRegistryFromCode,
 } from '@/features/integrations/services/amazon-selector-registry';
 import {
+  cloneCustomSelectorRegistryProfile,
+  deleteCustomSelectorRegistryEntry,
+  deleteCustomSelectorRegistryProfile,
+  listCustomSelectorRegistry,
+  renameCustomSelectorRegistryProfile,
+  saveCustomSelectorRegistryEntry,
+  syncCustomSelectorRegistryFromCode,
+} from '@/features/integrations/services/custom-selector-registry';
+import {
   cloneSupplier1688SelectorRegistryProfile,
   deleteSupplier1688SelectorRegistryEntry,
   deleteSupplier1688SelectorRegistryProfile,
@@ -631,6 +640,15 @@ const listNamespaceRaw = async (
     };
   }
 
+  if (namespace === 'custom') {
+    const response = await listCustomSelectorRegistry({ profile });
+    return {
+      entries: response.entries,
+      profiles: collectProfiles(namespace, response.entries, response.profiles),
+      syncedAt: response.syncedAt,
+    };
+  }
+
   const entries = listVintedSelectorRegistry();
   return {
     entries,
@@ -760,6 +778,7 @@ export async function listSelectorRegistry(options?: {
   namespace?: SelectorRegistryNamespace | null;
   profile?: string | null;
   effective?: boolean;
+  includeArchived?: boolean;
 }): Promise<SelectorRegistryListResponse> {
   const namespace = options?.namespace ?? null;
 
@@ -787,6 +806,7 @@ export async function listSelectorRegistry(options?: {
 
   const requestedProfile = options?.profile;
   const effective = options?.effective ?? true;
+  const includeArchived = options?.includeArchived ?? false;
   const profile = normalizeProfile(namespace, requestedProfile);
   const result =
     effective === false
@@ -796,10 +816,12 @@ export async function listSelectorRegistry(options?: {
     listSelectorRegistryProbeSessions({
       namespace,
       profile,
+      includeArchived,
     }).catch(() => []),
     listSelectorRegistryProbeSessionClusters({
       namespace,
       profile,
+      includeArchived,
     }).catch(() => []),
   ]);
 
@@ -847,6 +869,10 @@ export async function syncSelectorRegistryFromCode(input: {
     const response = await syncAmazonSelectorRegistryFromCode({ profile: input.profile });
     return { namespace: input.namespace, ...response };
   }
+  if (input.namespace === 'custom') {
+    const response = await syncCustomSelectorRegistryFromCode({ profile: input.profile });
+    return { namespace: input.namespace, ...response };
+  }
   const response = await syncSupplier1688SelectorRegistryFromCode({ profile: input.profile });
   return { namespace: input.namespace, ...response };
 }
@@ -868,6 +894,10 @@ export async function saveSelectorRegistryEntry(input: {
     const response = await saveAmazonSelectorRegistryEntry(input);
     return { namespace: input.namespace, ...response };
   }
+  if (input.namespace === 'custom') {
+    const response = await saveCustomSelectorRegistryEntry(input);
+    return { namespace: input.namespace, ...response };
+  }
   const response = await saveSupplier1688SelectorRegistryEntry(input);
   return { namespace: input.namespace, ...response };
 }
@@ -887,6 +917,10 @@ export async function deleteSelectorRegistryEntry(input: {
   }
   if (input.namespace === 'amazon') {
     const response = await deleteAmazonSelectorRegistryEntry({ ...input, profile });
+    return { namespace: input.namespace, ...response };
+  }
+  if (input.namespace === 'custom') {
+    const response = await deleteCustomSelectorRegistryEntry({ ...input, profile });
     return { namespace: input.namespace, ...response };
   }
   const response = await deleteSupplier1688SelectorRegistryEntry({ ...input, profile });
@@ -940,6 +974,10 @@ export async function mutateSelectorRegistryProfile(input:
       const response = await cloneAmazonSelectorRegistryProfile({ sourceProfile, targetProfile });
       return { namespace: input.namespace, ...response };
     }
+    if (input.namespace === 'custom') {
+      const response = await cloneCustomSelectorRegistryProfile({ sourceProfile, targetProfile });
+      return { namespace: input.namespace, ...response };
+    }
     const response = await cloneSupplier1688SelectorRegistryProfile({ sourceProfile, targetProfile });
     return { namespace: input.namespace, ...response };
   }
@@ -961,6 +999,10 @@ export async function mutateSelectorRegistryProfile(input:
       const response = await renameAmazonSelectorRegistryProfile({ profile, targetProfile });
       return { namespace: input.namespace, ...response };
     }
+    if (input.namespace === 'custom') {
+      const response = await renameCustomSelectorRegistryProfile({ profile, targetProfile });
+      return { namespace: input.namespace, ...response };
+    }
     const response = await renameSupplier1688SelectorRegistryProfile({ profile, targetProfile });
     return { namespace: input.namespace, ...response };
   }
@@ -975,12 +1017,16 @@ export async function mutateSelectorRegistryProfile(input:
     const response = await deleteAmazonSelectorRegistryProfile({ profile });
     return { namespace: input.namespace, ...response };
   }
+  if (input.namespace === 'custom') {
+    const response = await deleteCustomSelectorRegistryProfile({ profile });
+    return { namespace: input.namespace, ...response };
+  }
   const response = await deleteSupplier1688SelectorRegistryProfile({ profile });
   return { namespace: input.namespace, ...response };
 }
 
 const getRuntimeEntries = async (
-  namespace: Exclude<SelectorRegistryNamespace, 'vinted'>,
+  namespace: Exclude<SelectorRegistryNamespace, 'vinted' | 'custom'>,
   profile: string
 ): Promise<{
   entries: SelectorRegistryEntry[];
@@ -1007,7 +1053,7 @@ const getRuntimeEntries = async (
 };
 
 export async function resolveSelectorRegistryRuntime(input: {
-  namespace: Exclude<SelectorRegistryNamespace, 'vinted'>;
+  namespace: Exclude<SelectorRegistryNamespace, 'vinted' | 'custom'>;
   profile?: string | null;
 }): Promise<ResolvedSelectorRegistryRuntime> {
   const requestedProfile = normalizeProfile(input.namespace, input.profile);
@@ -1017,6 +1063,7 @@ export async function resolveSelectorRegistryRuntime(input: {
     if (input.namespace === 'tradera') {
       const entries: TraderaSelectorRegistryRuntimeEntry[] = resolution.entries.map((entry) => ({
         key: entry.key,
+        role: entry.role,
         valueJson: entry.valueJson,
       }));
       return {
@@ -1153,6 +1200,7 @@ const NAMESPACE_PROBE_URLS: Record<SelectorRegistryNamespace, string> = {
   tradera: 'https://www.tradera.com',
   amazon: 'https://www.amazon.com',
   '1688': 'https://www.1688.com',
+  custom: 'https://example.com',
   vinted: 'https://www.vinted.com',
 };
 

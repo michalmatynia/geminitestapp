@@ -5,6 +5,8 @@ import { useEffect, useMemo } from 'react';
 import { useSelectorRegistry } from '@/features/integrations/hooks/useSelectorRegistry';
 import type { SelectorRegistryNamespace } from '@/shared/contracts/integrations/selector-registry';
 import { SELECTOR_REGISTRY_DEFAULT_PROFILES } from '@/shared/lib/browser-execution/selector-registry-metadata';
+import { isSelectorRegistryEntryCompatibleWithStepField } from '@/shared/lib/browser-execution/selector-registry-roles';
+import type { PlaywrightStepType } from '@/shared/contracts/playwright-steps';
 
 import { buildSelectorCandidates } from './liveScripterAssignDrawer.helpers';
 
@@ -17,6 +19,7 @@ type Options = {
   setRegistryProfile: React.Dispatch<React.SetStateAction<string>>;
   registryEntryKey: string;
   setRegistryEntryKey: React.Dispatch<React.SetStateAction<string>>;
+  stepType: PlaywrightStepType;
 };
 
 type LiveScripterAssignDrawerRegistryData = {
@@ -26,6 +29,7 @@ type LiveScripterAssignDrawerRegistryData = {
   effectiveRegistryProfile: string;
   entriesForProfile: NonNullable<ReturnType<typeof useSelectorRegistry>['data']>['entries'];
   selectedRegistryEntry: NonNullable<ReturnType<typeof useSelectorRegistry>['data']>['entries'][number] | null;
+  selectedRegistryEntryCompatible: boolean;
   isSavingRegistryEntriesLoading: boolean;
 };
 
@@ -76,11 +80,13 @@ function useResolvedRegistryData({
   registryProfile,
   registryQueryEntries,
   registryEntryKey,
+  stepType,
 }: {
   registryNamespace: Options['registryNamespace'];
   registryProfile: Options['registryProfile'];
   registryQueryEntries: NonNullable<ReturnType<typeof useSelectorRegistry>['data']>['entries'];
   registryEntryKey: Options['registryEntryKey'];
+  stepType: Options['stepType'];
 }): Omit<LiveScripterAssignDrawerRegistryData, 'selectorCandidates' | 'selectedSelector' | 'isSavingRegistryEntriesLoading'> {
   const selectorRegistryEntries = useMemo(
     () =>
@@ -102,17 +108,33 @@ function useResolvedRegistryData({
     return registryProfiles[0] ?? SELECTOR_REGISTRY_DEFAULT_PROFILES[registryNamespace];
   }, [registryProfile, registryProfiles, registryNamespace]);
   const entriesForProfile = useMemo(
-    () => selectorRegistryEntries.filter((entry) => entry.profile === effectiveRegistryProfile),
-    [effectiveRegistryProfile, selectorRegistryEntries]
+    () =>
+      selectorRegistryEntries.filter((entry) => {
+        if (entry.profile !== effectiveRegistryProfile) {
+          return false;
+        }
+        return (
+          entry.key === registryEntryKey ||
+          isSelectorRegistryEntryCompatibleWithStepField(entry, stepType)
+        );
+      }),
+    [effectiveRegistryProfile, registryEntryKey, selectorRegistryEntries, stepType]
   );
   const selectedRegistryEntry =
-    entriesForProfile.find((entry) => entry.key === registryEntryKey) ?? null;
+    selectorRegistryEntries.find(
+      (entry) =>
+        entry.profile === effectiveRegistryProfile && entry.key === registryEntryKey
+    ) ?? null;
 
   return {
     registryProfiles,
     effectiveRegistryProfile,
     entriesForProfile,
     selectedRegistryEntry,
+    selectedRegistryEntryCompatible:
+      selectedRegistryEntry === null
+        ? true
+        : isSelectorRegistryEntryCompatibleWithStepField(selectedRegistryEntry, stepType),
   };
 }
 
@@ -125,6 +147,7 @@ export function useLiveScripterAssignDrawerRegistryData({
   setRegistryProfile,
   registryEntryKey,
   setRegistryEntryKey,
+  stepType,
 }: Options): LiveScripterAssignDrawerRegistryData {
   const registryQuery = useSelectorRegistry({
     namespace: registryNamespace,
@@ -143,6 +166,7 @@ export function useLiveScripterAssignDrawerRegistryData({
     registryProfile,
     registryQueryEntries: registryQuery.data?.entries ?? [],
     registryEntryKey,
+    stepType,
   });
 
   useRegistryProfileResetEffect({ registryNamespace, setRegistryProfile });

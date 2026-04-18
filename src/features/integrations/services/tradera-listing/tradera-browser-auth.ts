@@ -411,14 +411,43 @@ export const ensureLoggedIn = async (
         }
 
         if (hasStoredSession) {
+          const hasCredentials = Boolean(
+            connection.username?.trim() && connection.password?.trim()
+          );
+          if (!hasCredentials) {
+            emitStatus({
+              status: 'stored_session_rejected',
+              message: 'Stored Tradera session needs login or manual verification.',
+              authState: initialAuthState,
+            });
+            throw buildTraderaAuthRequiredError({
+              hasStoredSession: true,
+              authState: initialAuthState,
+            });
+          }
+          // Credentials configured — fall through to credential login instead of failing
           emitStatus({
             status: 'stored_session_rejected',
-            message: 'Stored Tradera session needs login or manual verification.',
+            message: 'Stored Tradera session expired. Attempting credential login.',
             authState: initialAuthState,
           });
+          return false;
+        }
+
+        // No stored session — require credentials before attempting login
+        const hasCredentials = Boolean(
+          connection.username?.trim() && connection.password?.trim()
+        );
+        if (!hasCredentials) {
+          const noCredentialsAuthState = authFlowState.currentAuthState ?? initialAuthState;
+          emitStatus({
+            status: 'stored_session_rejected',
+            message: 'Tradera login requires credentials but none are configured.',
+            authState: noCredentialsAuthState,
+          });
           throw buildTraderaAuthRequiredError({
-            hasStoredSession: true,
-            authState: initialAuthState,
+            hasStoredSession: false,
+            authState: noCredentialsAuthState,
           });
         }
 

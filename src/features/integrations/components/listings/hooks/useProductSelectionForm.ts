@@ -18,6 +18,7 @@ import {
 import {
   isTraderaBrowserAuthRequiredMessage,
   preflightTraderaQuickListSession,
+  TRADERA_BROWSER_MANUAL_VERIFICATION_MESSAGE,
 } from '@/features/integrations/utils/tradera-browser-session';
 import {
   isVintedBrowserAuthRequiredMessage,
@@ -111,11 +112,14 @@ export function useProductSelectionForm(
           isTraderaIntegration && isTraderaBrowserIntegrationSlug(selectedIntegration?.slug);
         const isVintedBrowserIntegration = isVintedIntegrationSlug(selectedIntegration?.slug);
         if (isTraderaBrowserIntegration && selectedConnectionId) {
-          await preflightTraderaQuickListSession({
+          const preflightResponse = await preflightTraderaQuickListSession({
             integrationId: selectedIntegrationId,
             connectionId: selectedConnectionId,
             productId: selectedProductId ?? undefined,
           });
+          if (!preflightResponse.ready) {
+            throw new Error(TRADERA_BROWSER_MANUAL_VERIFICATION_MESSAGE);
+          }
         }
         if (isVintedBrowserIntegration && selectedConnectionId) {
           const preflightResponse = await preflightVintedQuickListSession({

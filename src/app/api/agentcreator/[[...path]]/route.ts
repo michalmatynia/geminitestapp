@@ -69,7 +69,7 @@ const ROUTES = [
   { pattern: ['teaching', 'collections', { param: 'collectionId' }], module: teachingCollectionById },
 ];
 
-export const __testables = {
+export const testables = {
   ROUTES,
   matchPattern: matchCatchAllPattern,
 };

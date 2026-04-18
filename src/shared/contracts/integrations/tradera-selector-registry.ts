@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { selectorRegistryRoleSchema } from './selector-registry';
+
 export const traderaSelectorRegistryValueTypeSchema = z.enum([
   'string',
   'string_array',
@@ -34,6 +36,7 @@ export const traderaSelectorRegistryEntrySchema = z.object({
   key: z.string().trim().min(1),
   group: z.string().trim().min(1),
   kind: traderaSelectorRegistryKindSchema,
+  role: selectorRegistryRoleSchema,
   description: z.string().trim().nullable(),
   valueType: traderaSelectorRegistryValueTypeSchema,
   valueJson: z.string().trim().min(1),

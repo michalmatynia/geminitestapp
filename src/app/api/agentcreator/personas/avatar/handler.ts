@@ -26,24 +26,16 @@ const THUMBNAIL_GENERATION_MIME_TYPES = new Set([
 ]);
 
 const isFileLike = (entry: FormDataEntryValue): entry is File => {
-  return typeof entry === 'object' && entry !== null && 'arrayBuffer' in entry && 'size' in entry;
+  return typeof entry === 'object' && 'arrayBuffer' in entry && 'size' in entry;
 };
 
 const sanitizeSegment = (value: string | null | undefined, fallback: string): string => {
   const normalized = typeof value === 'string' ? value.trim() : '';
-  if (!normalized) return fallback;
+  if (normalized.length === 0) return fallback;
   return normalized.replace(/[^a-zA-Z0-9-_]/g, '_');
 };
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  let formData: FormData;
-  try {
-    formData = await req.formData();
-  } catch (error) {
-    void ErrorSystem.captureException(error);
-    throw badRequestError('Invalid form data', { error });
-  }
-
+const resolveUploadedFile = (formData: FormData): File => {
   const entries = [
     ...formData.getAll('file'),
     ...formData.getAll('files'),
@@ -55,49 +47,31 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     throw badRequestError('No file provided');
   }
 
-  const personaId = sanitizeSegment(formData.get('personaId')?.toString(), 'draft');
-  const moodId = sanitizeSegment(formData.get('moodId')?.toString(), 'neutral');
-  const folder = `personas/${personaId}/${moodId}`;
-  const mimeType = typeof file.type === 'string' ? file.type.trim().toLowerCase() : '';
-
-  if (typeof file.size === 'number' && file.size > MAX_AVATAR_UPLOAD_BYTES) {
+  if (file.size > MAX_AVATAR_UPLOAD_BYTES) {
     throw badRequestError('Avatar image is too large. Keep uploads under 4 MB.');
   }
 
-  const sourceBuffer = Buffer.from(await file.arrayBuffer());
-  let thumbnail: Awaited<ReturnType<typeof buildAgentPersonaAvatarThumbnail>> | null = null;
-  if (THUMBNAIL_GENERATION_MIME_TYPES.has(mimeType) && sourceBuffer.byteLength > 0) {
-    try {
-      thumbnail = await buildAgentPersonaAvatarThumbnail({
-        personaId,
-        moodId,
-        buffer: sourceBuffer,
-      });
-    } catch (error) {
-      void ErrorSystem.captureException(error);
-      logger.warn(
-        '[agentcreator.personas.avatar] thumbnail generation failed; continuing without embedded thumbnail',
-        {
-          service: 'agentcreator.personas',
-          context: {
-            personaId,
-            moodId,
-            mimeType,
-            bytes: sourceBuffer.byteLength,
-          },
-          error,
-        }
-      );
-    }
+  return file;
+};
+
+const resolveThumbnail = async (input: {
+  personaId: string;
+  moodId: string;
+  mimeType: string;
+  buffer: Buffer;
+}): Promise<Awaited<ReturnType<typeof buildAgentPersonaAvatarThumbnail>> | null> => {
+  const { personaId, moodId, mimeType, buffer } = input;
+  if (!(THUMBNAIL_GENERATION_MIME_TYPES.has(mimeType) && buffer.byteLength > 0)) {
+    return null;
   }
 
-  const uploaded = await uploadFile(file, {
-    category: 'agentcreator',
-    folder,
-    allowOrphanRecord: true,
-  });
+  try {
+    const thumbnail = await buildAgentPersonaAvatarThumbnail({
+      personaId,
+      moodId,
+      buffer,
+    });
 
-  if (thumbnail) {
     const persisted = await upsertAgentPersonaAvatarThumbnail(thumbnail);
     if (!persisted) {
       logger.warn(
@@ -112,14 +86,62 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
           },
         }
       );
-      thumbnail = null;
+      return null;
     }
+
+    return thumbnail;
+  } catch (error) {
+    await ErrorSystem.captureException(error);
+    logger.warn(
+      '[agentcreator.personas.avatar] thumbnail generation failed; continuing without embedded thumbnail',
+      {
+        service: 'agentcreator.personas',
+        context: {
+          personaId,
+          moodId,
+          mimeType,
+          bytes: buffer.byteLength,
+        },
+        error,
+      }
+    );
+    return null;
   }
+};
+
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  let formData: FormData;
+  try {
+    formData = await req.formData();
+  } catch (error) {
+    await ErrorSystem.captureException(error);
+    throw badRequestError('Invalid form data', { error });
+  }
+
+  const file = resolveUploadedFile(formData);
+  const personaId = sanitizeSegment(formData.get('personaId')?.toString(), 'draft');
+  const moodId = sanitizeSegment(formData.get('moodId')?.toString(), 'neutral');
+  const folder = `personas/${personaId}/${moodId}`;
+  const mimeType = typeof file.type === 'string' ? file.type.trim().toLowerCase() : '';
+
+  const sourceBuffer = Buffer.from(await file.arrayBuffer());
+  const thumbnail = await resolveThumbnail({
+    personaId,
+    moodId,
+    mimeType,
+    buffer: sourceBuffer,
+  });
+
+  const uploaded = await uploadFile(file, {
+    category: 'agentcreator',
+    folder,
+    allowOrphanRecord: true,
+  });
 
   return NextResponse.json(
     {
       ...uploaded,
-      originalName: file.name || uploaded.filename,
+      originalName: (file.name.length > 0 ? file.name : uploaded.filename),
       folder,
       thumbnail: thumbnail
         ? {
@@ -136,13 +158,13 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   );
 }
 
-export async function DELETE_handler(
+export async function deleteHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {
   const query = (_ctx.query ?? {}) as z.infer<typeof deleteQuerySchema>;
   const normalizedRef = query.thumbnailRef ?? '';
-  if (!normalizedRef) {
+  if (normalizedRef.length === 0) {
     throw badRequestError('Thumbnail ref is required.');
   }
 

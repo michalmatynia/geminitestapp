@@ -10,6 +10,7 @@ import {
   type ProgrammableFieldMapperRow,
 } from '@/features/playwright/pages/playwright-programmable-integration-page.helpers';
 import type {
+  ProgrammableResultAutoExpandKey,
   ProgrammableConnection,
   RunningTestType,
 } from '@/features/playwright/pages/playwright-programmable-integration-page.types';
@@ -77,12 +78,16 @@ const usePlaywrightProgrammableConnectionActivityState = (): {
   setIsCleaningLegacyBrowserFields: Dispatch<SetStateAction<boolean>>;
   setIsPromotingConnectionSettings: Dispatch<SetStateAction<boolean>>;
   setPromotionProxyPassword: Dispatch<SetStateAction<string>>;
+  setResultAutoExpandKey: Dispatch<SetStateAction<ProgrammableResultAutoExpandKey>>;
   setRunningTestType: Dispatch<SetStateAction<RunningTestType>>;
   setTestResultJson: Dispatch<SetStateAction<string>>;
+  resultAutoExpandKey: ProgrammableResultAutoExpandKey;
   testResultJson: string;
 } => {
   const [promotionProxyPassword, setPromotionProxyPassword] = useState('');
   const [testResultJson, setTestResultJson] = useState('');
+  const [resultAutoExpandKey, setResultAutoExpandKey] =
+    useState<ProgrammableResultAutoExpandKey>(null);
   const [runningTestType, setRunningTestType] = useState<RunningTestType>(null);
   const [isPromotingConnectionSettings, setIsPromotingConnectionSettings] = useState(false);
   const [isCleaningLegacyBrowserFields, setIsCleaningLegacyBrowserFields] = useState(false);
@@ -99,14 +104,17 @@ const usePlaywrightProgrammableConnectionActivityState = (): {
     setIsCleaningLegacyBrowserFields,
     setIsPromotingConnectionSettings,
     setPromotionProxyPassword,
+    setResultAutoExpandKey,
     setRunningTestType,
     setTestResultJson,
+    resultAutoExpandKey,
     testResultJson,
   };
 };
 
 export const usePlaywrightProgrammableConnectionDraft = (
-  selectedConnection: ProgrammableConnection | null
+  selectedConnection: ProgrammableConnection | null,
+  hasUnresolvedSelectedConnectionId = false
 ): DraftFields & ReturnType<typeof usePlaywrightProgrammableConnectionActivityState> & {
     setAppearanceMode: Dispatch<SetStateAction<string>>;
     setAutomationFlowJson: Dispatch<SetStateAction<string>>;
@@ -134,6 +142,10 @@ export const usePlaywrightProgrammableConnectionDraft = (
   const [fieldMapperRows, setFieldMapperRows] = useState<ProgrammableFieldMapperRow[]>([]);
 
   useEffect(() => {
+    if (selectedConnection === null && hasUnresolvedSelectedConnectionId) {
+      return;
+    }
+
     const draft = readSelectedConnectionDraft(selectedConnection);
 
     setAppearanceMode(draft.appearanceMode);
@@ -147,8 +159,14 @@ export const usePlaywrightProgrammableConnectionDraft = (
     setImportScript(draft.importScript);
     setListingActionId(draft.listingActionId);
     setListingScript(draft.listingScript);
+    activityState.setResultAutoExpandKey(null);
     activityState.setTestResultJson('');
-  }, [activityState.setTestResultJson, selectedConnection]);
+  }, [
+    activityState.setResultAutoExpandKey,
+    activityState.setTestResultJson,
+    hasUnresolvedSelectedConnectionId,
+    selectedConnection,
+  ]);
 
   return {
     ...activityState,

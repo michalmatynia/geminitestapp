@@ -2,20 +2,19 @@ export const runtime = 'nodejs';
 
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 
-import { DELETE_handler, PATCH_handler } from './handler';
+import { deleteHandler, getHandler, patchHandler } from './handler';
 
-export const PATCH = apiHandlerWithParams<{ agentId: string }>(
-  async (request, ctx, params) => PATCH_handler(request, { ...ctx, params }),
-  {
-    source: 'agentcreator.teaching.agents.[agentId].PATCH',
-    requireAuth: true,
-  }
-);
+export const GET = apiHandlerWithParams<{ agentId: string }>(getHandler, {
+  source: 'agentcreator.teaching.agents.[agentId].GET',
+  requireAuth: true,
+});
 
-export const DELETE = apiHandlerWithParams<{ agentId: string }>(
-  async (request, ctx, params) => DELETE_handler(request, { ...ctx, params }),
-  {
-    source: 'agentcreator.teaching.agents.[agentId].DELETE',
-    requireAuth: true,
-  }
-);
+export const PATCH = apiHandlerWithParams<{ agentId: string }>(patchHandler, {
+  source: 'agentcreator.teaching.agents.[agentId].PATCH',
+  requireAuth: true,
+});
+
+export const DELETE = apiHandlerWithParams<{ agentId: string }>(deleteHandler, {
+  source: 'agentcreator.teaching.agents.[agentId].DELETE',
+  requireAuth: true,
+});

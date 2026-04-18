@@ -150,6 +150,7 @@ export function useLiveScripterAssignDrawerModel({
     setRegistryProfile: state.setRegistryProfile,
     registryEntryKey: state.registryEntryKey,
     setRegistryEntryKey: state.setRegistryEntryKey,
+    stepType: state.stepType,
   });
 
   useResetOnPickedElementChange({ pickedElement, state });
@@ -183,6 +184,7 @@ export function useLiveScripterAssignDrawerModel({
     effectiveRegistryProfile: registryData.effectiveRegistryProfile,
     entriesForProfile: registryData.entriesForProfile,
     selectedRegistryEntry: registryData.selectedRegistryEntry,
+    selectedRegistryEntryCompatible: registryData.selectedRegistryEntryCompatible,
     needsSelector,
     needsValue,
     isSavingRegistry: saveRegistryMutation.isPending,

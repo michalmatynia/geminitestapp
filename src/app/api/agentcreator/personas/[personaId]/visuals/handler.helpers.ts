@@ -5,15 +5,17 @@ import { normalizeAgentPersonas } from '@/shared/lib/agent-personas';
 type AgentPersonaMood = NonNullable<AgentPersona['moods']>[number];
 
 export const resolvePersonaVisualsPersonaId = (personaId: string | undefined): string => {
-  const normalizedPersonaId = personaId?.trim();
-  if (!normalizedPersonaId) {
+  const normalizedPersonaId = personaId?.trim() ?? '';
+  if (normalizedPersonaId.length === 0) {
     throw badRequestError('Persona id is required.');
   }
   return normalizedPersonaId;
 };
 
-export const resolveStoredAgentPersonas = (raw: string | null | undefined): AgentPersona[] =>
-  normalizeAgentPersonas(raw?.trim() ? JSON.parse(raw) : []);
+export const resolveStoredAgentPersonas = (raw: string | null | undefined): AgentPersona[] => {
+  const trimmedRaw = raw?.trim() ?? '';
+  return normalizeAgentPersonas(trimmedRaw.length > 0 ? JSON.parse(trimmedRaw) : []);
+};
 
 export const requireStoredAgentPersona = (
   personas: AgentPersona[],

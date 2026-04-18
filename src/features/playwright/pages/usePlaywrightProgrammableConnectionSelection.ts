@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import type {
   ProgrammableConnection,
@@ -21,16 +21,19 @@ const readTrimmedQueryParam = (key: string): string => {
 export const usePlaywrightProgrammableConnectionSelection = (
   connections: ProgrammableConnections
 ): {
+  hasUnresolvedSelectedConnectionId: boolean;
   importSelectionHint: ProgrammableImportSelectionHint | null;
   selectedConnection: ProgrammableConnection | null;
   selectedConnectionId: string;
   setSelectedConnectionId: React.Dispatch<React.SetStateAction<string>>;
 } => {
-  const [selectedConnectionId, setSelectedConnectionId] = useState(() =>
+  const [selectedConnectionId, setSelectedConnectionIdState] = useState(() =>
     readTrimmedQueryParam('connectionId')
   );
   const [initialImportActionId] = useState(() => readTrimmedQueryParam('importActionId'));
   const [initialRetainedRunId] = useState(() => readTrimmedQueryParam('retainedRunId'));
+  const [preserveUnresolvedSelectedConnectionId, setPreserveUnresolvedSelectedConnectionId] =
+    useState(false);
 
   const importSelectionHint =
     initialImportActionId === ''
@@ -43,14 +46,24 @@ export const usePlaywrightProgrammableConnectionSelection = (
               (connection) => connection.playwrightImportActionId?.trim() === initialImportActionId
             )?.id ?? null,
         };
+  const selectedConnection =
+    connections.find((connection) => connection.id === selectedConnectionId) ?? null;
+  const hasUnresolvedSelectedConnectionId =
+    selectedConnectionId.trim().length > 0 && selectedConnection === null;
 
   useEffect(() => {
     if (connections.length === 0) {
-      setSelectedConnectionId((current) => (current === '' ? current : ''));
+      setSelectedConnectionIdState((current) => (current === '' ? current : ''));
+      setPreserveUnresolvedSelectedConnectionId(false);
       return;
     }
 
     if (connections.some((connection) => connection.id === selectedConnectionId)) {
+      setPreserveUnresolvedSelectedConnectionId(false);
+      return;
+    }
+
+    if (preserveUnresolvedSelectedConnectionId && selectedConnectionId.trim().length > 0) {
       return;
     }
 
@@ -60,17 +73,33 @@ export const usePlaywrightProgrammableConnectionSelection = (
       );
 
       if (hintedConnection !== undefined) {
-        setSelectedConnectionId(hintedConnection.id);
+        setSelectedConnectionIdState(hintedConnection.id);
         return;
       }
     }
 
-    setSelectedConnectionId(connections[0]?.id ?? '');
-  }, [connections, initialImportActionId, selectedConnectionId]);
+    setSelectedConnectionIdState(connections[0]?.id ?? '');
+  }, [
+    connections,
+    initialImportActionId,
+    preserveUnresolvedSelectedConnectionId,
+    selectedConnectionId,
+  ]);
+
+  const setSelectedConnectionId: React.Dispatch<React.SetStateAction<string>> = useCallback(
+    (value) => {
+      setPreserveUnresolvedSelectedConnectionId(true);
+      setSelectedConnectionIdState((current) =>
+        typeof value === 'function' ? value(current) : value
+      );
+    },
+    []
+  );
 
   return {
+    hasUnresolvedSelectedConnectionId,
     importSelectionHint,
-    selectedConnection: connections.find((connection) => connection.id === selectedConnectionId) ?? null,
+    selectedConnection,
     selectedConnectionId,
     setSelectedConnectionId,
   };

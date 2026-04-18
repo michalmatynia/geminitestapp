@@ -15,8 +15,11 @@ import {
 } from '@/features/playwright/hooks/usePlaywrightActionRuns';
 import type { PlaywrightProgrammableIntegrationPageModel } from '@/features/playwright/pages/playwright-programmable-integration-page.types';
 import {
+  collectProgrammableDraftMapperSampleSourcePaths,
+  getProgrammableDraftMapperSignalMatches,
   PROGRAMMABLE_DRAFT_TARGET_OPTIONS,
   PROGRAMMABLE_DRAFT_TRANSFORM_OPTIONS,
+  sortProgrammableDraftMapperSourcePathsBySignal,
   type ProgrammableDraftMapperRow,
 } from '@/features/playwright/pages/playwright-programmable-integration-page.helpers';
 import { getProgrammableScrapedItemsFromTestResultJson } from '@/features/playwright/components/programmable-integration/playwrightProgrammableScrapeResults';
@@ -29,8 +32,10 @@ type Props = Pick<
   | 'draftMapperRows'
   | 'handleAddDraftMapping'
   | 'handleDeleteDraftMapping'
+  | 'handleSeedDraftMappingFromSourcePath'
   | 'handleUpdateDraftMapping'
   | 'importActionId'
+  | 'selectedConnectionId'
   | 'testResultJson'
 >;
 
@@ -104,19 +109,27 @@ const getRowStatusClassName = (status: 'error' | 'warning' | 'ok'): string => {
 };
 
 function DraftMapperSamplePanel({
-  scrapedItems,
+  handleSeedDraftMappingFromSourcePath,
+  orderedSamplePaths,
+  matchedSamplePaths,
+  sampleCount,
+  selectedSample,
   sourceDescription,
   sampleIndex,
   setSampleIndex,
 }: {
-  scrapedItems: Record<string, unknown>[];
+  handleSeedDraftMappingFromSourcePath: Props['handleSeedDraftMappingFromSourcePath'];
+  matchedSamplePaths: {
+    primaryMatches: string[];
+    secondaryMatches: string[];
+  };
+  orderedSamplePaths: string[];
+  sampleCount: number;
+  selectedSample: Record<string, unknown> | null;
   sourceDescription: string;
   sampleIndex: number;
   setSampleIndex: React.Dispatch<React.SetStateAction<number>>;
 }): React.JSX.Element {
-  const selectedSample = scrapedItems[sampleIndex] ?? null;
-  const topLevelKeys = selectedSample ? Object.keys(selectedSample) : [];
-
   return (
     <div className='space-y-3 rounded-xl border border-border/50 bg-background/30 p-4'>
       <div>
@@ -124,12 +137,12 @@ function DraftMapperSamplePanel({
         <p className='mt-1 text-xs text-gray-400'>{sourceDescription}</p>
       </div>
 
-      {scrapedItems.length > 0 ? (
+      {sampleCount > 0 ? (
         <FormField label='Sample'>
           <SelectSimple
             value={String(sampleIndex)}
             onValueChange={(value) => setSampleIndex(Number(value))}
-            options={scrapedItems.map((_, index) => ({
+            options={Array.from({ length: sampleCount }, (_, index) => ({
               value: String(index),
               label: `Sample ${index + 1}`,
             }))}
@@ -139,22 +152,45 @@ function DraftMapperSamplePanel({
         </FormField>
       ) : null}
 
-      {scrapedItems.length === 0 ? (
+      {sampleCount === 0 ? (
         <div className='rounded-lg border border-dashed border-border/60 px-4 py-6 text-sm text-gray-400'>
           Run Test Import to capture sample scrape data for mapping.
         </div>
       ) : (
         <>
-          {topLevelKeys.length > 0 ? (
-            <div className='flex flex-wrap gap-2'>
-              {topLevelKeys.map((key) => (
-                <span
-                  key={key}
-                  className='rounded-full border border-border/50 bg-background/50 px-2.5 py-1 text-[11px] uppercase tracking-wide text-gray-300'
-                >
-                  {key}
-                </span>
-              ))}
+          {orderedSamplePaths.length > 0 ? (
+            <div className='space-y-2'>
+              <div className='text-xs text-gray-400'>
+                Click a field to seed the first mapper row with that source path.
+              </div>
+              <div className='flex flex-wrap gap-2'>
+                {orderedSamplePaths.map((path) => {
+                  const isSignal =
+                    matchedSamplePaths.primaryMatches.includes(path) ||
+                    matchedSamplePaths.secondaryMatches.includes(path);
+
+                  return (
+                    <button
+                      type='button'
+                      key={path}
+                      aria-label={path}
+                      className={
+                        isSignal
+                          ? 'inline-flex items-center gap-1 rounded-full border border-amber-300/40 bg-amber-500/10 px-2.5 py-1 text-[11px] tracking-wide text-amber-100 transition hover:bg-amber-500/20 hover:text-white'
+                          : 'rounded-full border border-border/50 bg-background/50 px-2.5 py-1 text-[11px] tracking-wide text-gray-300 transition hover:border-white/20 hover:bg-background/70 hover:text-white'
+                      }
+                      onClick={() => handleSeedDraftMappingFromSourcePath(path)}
+                    >
+                      {path}
+                      {isSignal ? (
+                        <span className='rounded-full border border-amber-200/40 bg-amber-200/10 px-1.5 py-0 text-[9px] font-semibold uppercase tracking-wide text-amber-50'>
+                          Signal
+                        </span>
+                      ) : null}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           ) : null}
           <pre className='overflow-x-auto rounded-lg border border-border/50 bg-background/60 p-3 text-xs text-gray-200'>
@@ -416,8 +452,10 @@ export function PlaywrightProgrammableFieldMapperCard({
   draftMapperRows,
   handleAddDraftMapping,
   handleDeleteDraftMapping,
+  handleSeedDraftMappingFromSourcePath,
   handleUpdateDraftMapping,
   importActionId,
+  selectedConnectionId,
   testResultJson,
 }: Props): React.JSX.Element {
   const testScrapedItems = React.useMemo(() => parseScrapedItems(testResultJson), [testResultJson]);
@@ -477,10 +515,77 @@ export function PlaywrightProgrammableFieldMapperCard({
   }, [scrapedItems.length, sampleIndex]);
 
   const selectedSample = scrapedItems[sampleIndex] ?? null;
+  const selectedSamplePaths = React.useMemo(
+    () => collectProgrammableDraftMapperSampleSourcePaths(selectedSample),
+    [selectedSample]
+  );
+  const matchedSelectedSamplePaths = React.useMemo(
+    () => getProgrammableDraftMapperSignalMatches(selectedSamplePaths),
+    [selectedSamplePaths]
+  );
+  const orderedSelectedSamplePaths = React.useMemo(
+    () =>
+      sortProgrammableDraftMapperSourcePathsBySignal(
+        selectedSamplePaths,
+        matchedSelectedSamplePaths
+      ),
+    [matchedSelectedSamplePaths, selectedSamplePaths]
+  );
   const preview = React.useMemo(
     () => mapScrapedProductToDraftPreview(selectedSample, draftMapperRows),
     [draftMapperRows, selectedSample]
   );
+  const autoSeededSampleSourceRef = React.useRef<Set<string>>(new Set());
+  const pendingAutoSeedSampleSourceKeyRef = React.useRef<string | null>(null);
+
+  React.useEffect(() => {
+    const normalizedConnectionId = selectedConnectionId.trim();
+    const strongestSignalPath =
+      matchedSelectedSamplePaths.primaryMatches[0] ??
+      matchedSelectedSamplePaths.secondaryMatches[0] ??
+      orderedSelectedSamplePaths[0] ??
+      null;
+    const autoSeedKey =
+      normalizedConnectionId.length === 0 || strongestSignalPath === null
+        ? null
+        : testScrapedItems.length > 0
+          ? `test:${normalizedConnectionId}:${sampleIndex}:${testResultJson}`
+          : retainedRunScrapedItems.length > 0 && selectedRetainedRunId !== null
+            ? `retained:${normalizedConnectionId}:${selectedRetainedRunId}:${sampleIndex}`
+            : null;
+
+    if (autoSeedKey !== null && draftMapperRows.length > 0) {
+      if (pendingAutoSeedSampleSourceKeyRef.current === autoSeedKey) {
+        autoSeededSampleSourceRef.current.add(autoSeedKey);
+        pendingAutoSeedSampleSourceKeyRef.current = null;
+      }
+      return;
+    }
+
+    if (autoSeedKey === null) {
+      pendingAutoSeedSampleSourceKeyRef.current = null;
+      return;
+    }
+
+    if (autoSeededSampleSourceRef.current.has(autoSeedKey)) {
+      return;
+    }
+
+    pendingAutoSeedSampleSourceKeyRef.current = autoSeedKey;
+    handleSeedDraftMappingFromSourcePath(strongestSignalPath);
+  }, [
+    draftMapperRows.length,
+    handleSeedDraftMappingFromSourcePath,
+    matchedSelectedSamplePaths.primaryMatches,
+    matchedSelectedSamplePaths.secondaryMatches,
+    orderedSelectedSamplePaths,
+    retainedRunScrapedItems.length,
+    sampleIndex,
+    selectedConnectionId,
+    selectedRetainedRunId,
+    testResultJson,
+    testScrapedItems.length,
+  ]);
 
   const diagnosticsByRowId = React.useMemo(() => {
     const next = new Map<string, PlaywrightDraftMapperDiagnostic[]>();
@@ -510,7 +615,11 @@ export function PlaywrightProgrammableFieldMapperCard({
 
       <div className='grid gap-4 xl:grid-cols-3'>
         <DraftMapperSamplePanel
-          scrapedItems={scrapedItems}
+          handleSeedDraftMappingFromSourcePath={handleSeedDraftMappingFromSourcePath}
+          matchedSamplePaths={matchedSelectedSamplePaths}
+          orderedSamplePaths={orderedSelectedSamplePaths}
+          sampleCount={scrapedItems.length}
+          selectedSample={selectedSample}
           sourceDescription={sourceDescription}
           sampleIndex={sampleIndex}
           setSampleIndex={setSampleIndex}

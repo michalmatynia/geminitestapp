@@ -1,4 +1,9 @@
+import type {
+  SelectorRegistryKind,
+  SelectorRegistryNamespace,
+} from '@/shared/contracts/integrations/selector-registry';
 import type { PlaywrightStepInputBinding } from '@/shared/contracts/playwright-steps';
+import { inferSelectorRegistryRole } from '@/shared/lib/browser-execution/selector-registry-roles';
 
 import {
   getSupplier1688RuntimeStepInputBindings,
@@ -169,6 +174,38 @@ const inferRuntimeStepSelectorProfile = (stepId: string | null | undefined): str
   return null;
 };
 
+const inferRuntimeSelectorKind = (
+  field: string,
+  selectorKey: string
+): SelectorRegistryKind => {
+  const normalized = `${field}.${selectorKey}`.toLowerCase();
+  if (normalized.includes('pattern')) {
+    return 'pattern';
+  }
+  if (normalized.includes('hint')) {
+    return 'text_hint';
+  }
+  return 'selector';
+};
+
+const buildRuntimeSelectorBinding = (
+  namespace: SelectorRegistryNamespace,
+  field: string,
+  selectorKey: string,
+  selectorProfile: string
+): PlaywrightStepInputBinding => ({
+  mode: 'selectorRegistry',
+  selectorNamespace: namespace,
+  selectorKey,
+  selectorProfile,
+  selectorRole: inferSelectorRegistryRole({
+    namespace,
+    key: selectorKey,
+    kind: inferRuntimeSelectorKind(field, selectorKey),
+  }),
+  fallbackSelector: null,
+});
+
 export const getRuntimeStepSemanticSnippet = (
   stepId: string | null | undefined
 ): string | null => {
@@ -202,13 +239,7 @@ export const getRuntimeStepInputBindings = (
     return Object.fromEntries(
       Object.entries(amazonSelectorKeys).map(([field, selectorKey]) => [
         field,
-        {
-          mode: 'selectorRegistry',
-          selectorNamespace: 'amazon',
-          selectorKey,
-          selectorProfile: effectiveSelectorProfile,
-          fallbackSelector: null,
-        } satisfies PlaywrightStepInputBinding,
+        buildRuntimeSelectorBinding('amazon', field, selectorKey, effectiveSelectorProfile),
       ])
     );
   }

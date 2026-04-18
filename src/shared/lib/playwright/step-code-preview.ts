@@ -1,10 +1,12 @@
 import {
+  PLAYWRIGHT_STEP_TYPE_LABELS,
   type PlaywrightStep,
   type PlaywrightStepCodeSnapshot,
   type PlaywrightStepInputBinding,
   type PlaywrightStepSelectorResolution,
   type PlaywrightStepType,
 } from '@/shared/contracts/playwright-steps';
+import { getCompatibleSelectorRolesForStepField } from '@/shared/lib/browser-execution/selector-registry-roles';
 
 type PreviewStepLike = Omit<
   Partial<
@@ -42,6 +44,9 @@ const literalBinding = (value: unknown): PlaywrightStepInputBinding => ({
   value,
 });
 
+const isKnownStepType = (value: unknown): value is PlaywrightStepType =>
+  typeof value === 'string' && value in PLAYWRIGHT_STEP_TYPE_LABELS;
+
 export const getPlaywrightStepModuleKey = (
   type: PlaywrightStepType | string | null | undefined
 ): string => `playwright.${type || 'unknown'}`;
@@ -60,6 +65,7 @@ export const getPlaywrightStepInputBindings = (
           selectorNamespace: step.selectorNamespace ?? null,
           selectorKey: step.selectorKey,
           selectorProfile: step.selectorProfile ?? null,
+          selectorRole: null,
           fallbackSelector: step.selector ?? null,
         }
       : literalBinding(step.selector);
@@ -178,17 +184,29 @@ const selectorResolution = (
   field: string,
   binding: PlaywrightStepInputBinding | undefined,
   fallbackSelector: string | null,
-  fallbackProfile: string | null | undefined
+  fallbackProfile: string | null | undefined,
+  stepType: PlaywrightStepType | null
 ): PlaywrightStepSelectorResolution | null => {
   if (!binding && !fallbackSelector) return null;
   const mode = binding?.mode ?? 'literal';
   const resolvedSelector = bindingString(binding, fallbackSelector);
+  const expectedRoles =
+    stepType !== null ? getCompatibleSelectorRolesForStepField(stepType, field) : [];
+  const selectorRole = binding?.selectorRole ?? null;
   return {
     field,
     mode,
     selectorNamespace: asString(binding?.selectorNamespace),
     selectorKey: asString(binding?.selectorKey),
     selectorProfile: asString(binding?.selectorProfile) ?? fallbackProfile ?? null,
+    selectorRole,
+    ...(expectedRoles.length > 0 ? { expectedRoles } : {}),
+    roleMatchesExpected:
+      mode === 'selectorRegistry' && expectedRoles.length > 0
+        ? selectorRole
+          ? expectedRoles.includes(selectorRole)
+          : null
+        : null,
     fallbackSelector: asString(binding?.fallbackSelector) ?? fallbackSelector,
     resolvedSelector,
     connected: mode === 'selectorRegistry' && asString(binding?.selectorKey) !== null,
@@ -200,6 +218,7 @@ export const createPlaywrightStepCodeSnapshot = (
 ): PlaywrightStepCodeSnapshot => {
   const bindings = getPlaywrightStepInputBindings(step);
   const type = step.type ?? 'custom_script';
+  const resolvedStepType = isKnownStepType(type) ? type : null;
   const unresolvedBindings: string[] = [];
   const resolvedUnresolvedBindings: string[] = [];
   const selectorSemantic = (): string =>
@@ -309,9 +328,20 @@ export const createPlaywrightStepCodeSnapshot = (
       break;
   }
 
-  const selectorBindings = [
-    selectorResolution('selector', bindings['selector'], asString(step.selector), step.selectorProfile),
-  ].filter((entry): entry is PlaywrightStepSelectorResolution => entry !== null);
+  const selectorBindings = Object.entries(bindings).flatMap(([field, binding]) => {
+    if (field !== 'selector' && binding.mode !== 'selectorRegistry') {
+      return [];
+    }
+
+    const resolution = selectorResolution(
+      field,
+      binding,
+      field === 'selector' ? asString(step.selector) : null,
+      field === 'selector' ? step.selectorProfile : null,
+      resolvedStepType
+    );
+    return resolution ? [resolution] : [];
+  });
 
   return {
     language: 'playwright-ts',

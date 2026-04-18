@@ -1,8 +1,10 @@
 import {
   buildDraftMapperAutomationFlowTemplate,
   buildDraftMapperPreviewAutomationFlowTemplate,
+  buildProgrammableDraftMapperSeedFromSourcePath,
   buildProgrammableConnectionPayload,
   createEmptyProgrammableDraftMapperRule,
+  createSeededProgrammableDraftMapperRule,
   createEmptyProgrammableCaptureRoute,
   createEmptyProgrammableFieldMapperRow,
   type ProgrammableDraftMapperRow,
@@ -13,32 +15,92 @@ import type {
   PlaywrightProgrammableIntegrationPageActionArgs,
   PlaywrightProgrammableIntegrationPageActions,
 } from '@/features/playwright/pages/playwright-programmable-integration-page.types';
+import { isObjectRecord } from '@/shared/utils/object-utils';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 type PlaywrightProgrammableExecutionMode = 'dry_run' | 'commit';
+type ResultAutoExpandKey =
+  | 'draftWriteResultStatus'
+  | 'draftWriteStatus'
+  | 'mappedDrafts'
+  | 'productWriteStatus'
+  | null;
 
 const getErrorMessage = (error: unknown, fallback: string): string =>
   error instanceof Error ? error.message : fallback;
 
-const createHintedImportDraftMapperRows = (): ProgrammableDraftMapperRow[] => {
-  const row = createEmptyProgrammableDraftMapperRule();
-  return [
-    {
-      ...row,
-      targetPath: 'name_en',
-      mode: 'scraped',
-      sourcePath: 'title',
-      staticValue: '',
-      transform: 'trim',
-      required: true,
-    },
-  ];
+const createHintedImportDraftMapperRows = (
+  sourcePath = 'title'
+): ProgrammableDraftMapperRow[] => {
+  return [createSeededProgrammableDraftMapperRule(sourcePath)];
 };
 
 const createHintedImportAutomationFlowJson = (flowMode: 'preview' | 'draft'): string =>
   flowMode === 'draft'
     ? buildDraftMapperAutomationFlowTemplate()
     : buildDraftMapperPreviewAutomationFlowTemplate();
+
+const toUnknownArray = (value: unknown): unknown[] => (Array.isArray(value) ? value : []);
+
+const hasWriteOutcomeKind = (value: unknown, kind: 'draft' | 'product'): boolean =>
+  toUnknownArray(value).some((entry) => isObjectRecord(entry) && entry['kind'] === kind);
+
+const inferResultAutoExpandKeyFromResponse = (response: unknown): ResultAutoExpandKey => {
+  if (!isObjectRecord(response)) {
+    return null;
+  }
+
+  const result = isObjectRecord(response['result']) ? response['result'] : null;
+  const automationFlow =
+    result !== null && isObjectRecord(result['automationFlow']) ? result['automationFlow'] : null;
+  const flowResults =
+    automationFlow !== null && isObjectRecord(automationFlow['results'])
+      ? automationFlow['results']
+      : null;
+
+  if (
+    hasWriteOutcomeKind(automationFlow?.['writeOutcomes'], 'product') ||
+    toUnknownArray(automationFlow?.['productPayloads']).length > 0 ||
+    toUnknownArray(automationFlow?.['products']).length > 0
+  ) {
+    return 'productWriteStatus';
+  }
+
+  if (
+    hasWriteOutcomeKind(automationFlow?.['writeOutcomes'], 'draft') ||
+    toUnknownArray(automationFlow?.['draftPayloads']).length > 0 ||
+    toUnknownArray(automationFlow?.['drafts']).length > 0
+  ) {
+    return 'draftWriteStatus';
+  }
+
+  if (toUnknownArray(flowResults?.['draftWrites']).length > 0) {
+    return 'draftWriteResultStatus';
+  }
+
+  if (toUnknownArray(flowResults?.['mappedDrafts']).length > 0) {
+    return 'mappedDrafts';
+  }
+
+  return null;
+};
+
+const getHintedImportAutoRunSuccessMessage = (
+  importActionId: string,
+  flowMode: 'preview' | 'draft'
+): string =>
+  flowMode === 'draft'
+    ? `New programmable Playwright connection created for import action "${importActionId}" and draft-flow validation completed.`
+    : `New programmable Playwright connection created for import action "${importActionId}" and preview run completed.`;
+
+const getHintedImportAutoRunFailureMessage = (
+  importActionId: string,
+  flowMode: 'preview' | 'draft',
+  message: string
+): string =>
+  flowMode === 'draft'
+    ? `New programmable Playwright connection created for import action "${importActionId}", but draft-flow validation failed: ${message}`
+    : `New programmable Playwright connection created for import action "${importActionId}", but preview run failed: ${message}`;
 
 const buildPromotionPayload = (
   args: Pick<
@@ -227,6 +289,7 @@ const handleCreateConnection = async (
   args: PlaywrightProgrammableIntegrationPageActionArgs,
   options: {
     connectionName?: string;
+    draftMapperSourcePath?: string;
     flowMode?: 'preview' | 'draft';
     importActionId?: string;
   } = {}
@@ -239,9 +302,12 @@ const handleCreateConnection = async (
   }
 
   const normalizedHintedImportActionId = options.importActionId?.trim() ?? '';
+  const normalizedHintedDraftMapperSourcePath = options.draftMapperSourcePath?.trim() ?? 'title';
   const flowMode = options.flowMode ?? 'preview';
   const hintedDraftMapperRows =
-    normalizedHintedImportActionId.length > 0 ? createHintedImportDraftMapperRows() : [];
+    normalizedHintedImportActionId.length > 0
+      ? createHintedImportDraftMapperRows(normalizedHintedDraftMapperSourcePath)
+      : [];
   const hintedAutomationFlowJson =
     normalizedHintedImportActionId.length > 0
       ? createHintedImportAutomationFlowJson(flowMode)
@@ -282,7 +348,7 @@ const handleCreateConnection = async (
       }),
     });
     args.setSelectedConnectionId(created.id);
-    if (normalizedHintedImportActionId.length > 0 && flowMode === 'preview') {
+    if (normalizedHintedImportActionId.length > 0) {
       args.setRunningTestType('import');
       try {
         const response = await args.testProgrammableConnectionMutateAsync({
@@ -290,17 +356,27 @@ const handleCreateConnection = async (
           executionMode: 'dry_run',
           scriptType: 'import',
         });
+        args.setResultAutoExpandKey(inferResultAutoExpandKeyFromResponse(response));
         args.setTestResultJson(JSON.stringify(response, null, 2));
-        args.toast(
-          `New programmable Playwright connection created for import action "${normalizedHintedImportActionId}" and preview run completed.`,
-          { variant: 'success' }
-        );
+        args.scrollToResultSection();
+        args.toast(getHintedImportAutoRunSuccessMessage(normalizedHintedImportActionId, flowMode), {
+          variant: 'success',
+        });
       } catch (error) {
         logClientError(error);
-        const message = getErrorMessage(error, 'Preview run failed.');
+        const message = getErrorMessage(
+          error,
+          flowMode === 'draft' ? 'Draft-flow validation failed.' : 'Preview run failed.'
+        );
+        args.setResultAutoExpandKey(null);
         args.setTestResultJson(JSON.stringify({ error: message }, null, 2));
+        args.scrollToResultSection();
         args.toast(
-          `New programmable Playwright connection created for import action "${normalizedHintedImportActionId}", but preview run failed: ${message}`,
+          getHintedImportAutoRunFailureMessage(
+            normalizedHintedImportActionId,
+            flowMode,
+            message
+          ),
           { variant: 'error' }
         );
       } finally {
@@ -330,12 +406,14 @@ const runProgrammableExecution = async (
   {
     executionMode,
     failureMessage,
+    resultAutoExpandKey = null,
     runningTestType,
     scriptType,
     successMessage,
   }: {
     executionMode: PlaywrightProgrammableExecutionMode;
     failureMessage: string;
+    resultAutoExpandKey?: ResultAutoExpandKey;
     runningTestType: RunningTestType;
     scriptType: 'listing' | 'import';
     successMessage: string;
@@ -353,12 +431,18 @@ const runProgrammableExecution = async (
       executionMode,
       scriptType,
     });
+    args.setResultAutoExpandKey(
+      resultAutoExpandKey ?? inferResultAutoExpandKeyFromResponse(response)
+    );
     args.setTestResultJson(JSON.stringify(response, null, 2));
+    args.scrollToResultSection();
     args.toast(successMessage, { variant: 'success' });
   } catch (error) {
     logClientError(error);
     const message = getErrorMessage(error, failureMessage);
+    args.setResultAutoExpandKey(null);
     args.setTestResultJson(JSON.stringify({ error: message }, null, 2));
+    args.scrollToResultSection();
     args.toast(message, { variant: 'error' });
   } finally {
     args.setRunningTestType(null);
@@ -436,6 +520,30 @@ const handleAddDraftMapping = (
   ]);
 };
 
+const handleSeedDraftMappingFromSourcePath = (
+  setDraftMapperRows: PlaywrightProgrammableIntegrationPageActionArgs['setDraftMapperRows'],
+  sourcePath: string
+): void => {
+  const normalizedSourcePath = sourcePath.trim();
+  if (normalizedSourcePath.length === 0) {
+    return;
+  }
+
+  const seedPatch = buildProgrammableDraftMapperSeedFromSourcePath(normalizedSourcePath);
+  setDraftMapperRows((current: ProgrammableDraftMapperRow[]) => {
+    if (current.length === 0) {
+      return [createSeededProgrammableDraftMapperRule(normalizedSourcePath)];
+    }
+
+    const firstRow = current[0];
+    if (!firstRow) {
+      return [createSeededProgrammableDraftMapperRule(normalizedSourcePath)];
+    }
+    const remainingRows = current.slice(1);
+    return [{ ...firstRow, ...seedPatch }, ...remainingRows];
+  });
+};
+
 const handleUpdateDraftMapping = (
   setDraftMapperRows: PlaywrightProgrammableIntegrationPageActionArgs['setDraftMapperRows'],
   rowId: string,
@@ -463,8 +571,12 @@ export const createPlaywrightProgrammableIntegrationPageActions = (
   handleCleanupAllLegacyBrowserFields: () => handleCleanupAllLegacyBrowserFields(args),
   handleCleanupLegacyBrowserFields: () => handleCleanupLegacyBrowserFields(args),
   handleCreateConnection: () => handleCreateConnection(args),
-  handleCreateConnectionFromImportHint: (importActionId, flowMode = 'preview') =>
-    handleCreateConnection(args, { importActionId, flowMode }),
+  handleCreateConnectionFromImportHint: (
+    importActionId,
+    flowMode = 'preview',
+    draftMapperSourcePath
+  ) =>
+    handleCreateConnection(args, { importActionId, flowMode, draftMapperSourcePath }),
   handleDeleteDraftMapping: (rowId) =>
     handleDeleteDraftMapping(args.setDraftMapperRows, rowId),
   handleDeleteFieldMapping: (rowId) =>
@@ -472,6 +584,8 @@ export const createPlaywrightProgrammableIntegrationPageActions = (
   handlePromoteConnectionSettings: () => handlePromoteConnectionSettings(args),
   handleRunFlow: () => handleRunFlow(args),
   handleRunTest: (scriptType) => handleRunTest(args, scriptType),
+  handleSeedDraftMappingFromSourcePath: (sourcePath) =>
+    handleSeedDraftMappingFromSourcePath(args.setDraftMapperRows, sourcePath),
   handleUpdateDraftMapping: (rowId, patch) =>
     handleUpdateDraftMapping(args.setDraftMapperRows, rowId, patch),
   handleUpdateFieldMapping: (rowId, patch) =>

@@ -31,6 +31,7 @@ type Supplier1688SelectorRegistryDoc = Document & {
   key: string;
   group: string;
   kind: Supplier1688SelectorRegistrySeedEntry['kind'];
+  role?: Supplier1688SelectorRegistrySeedEntry['role'];
   description: string | null;
   valueType: Supplier1688SelectorRegistrySeedEntry['valueType'];
   valueJson: string;
@@ -47,6 +48,7 @@ type PersistedSupplier1688SelectorRegistryEntry = {
   key: string;
   group: string;
   kind: Supplier1688SelectorRegistrySeedEntry['kind'];
+  role: Supplier1688SelectorRegistrySeedEntry['role'];
   description: string | null;
   valueType: Supplier1688SelectorRegistrySeedEntry['valueType'];
   valueJson: string;
@@ -151,10 +153,12 @@ const toPersistedEntry = (
   source: 'code' | 'mongo' = 'code'
 ): PersistedSupplier1688SelectorRegistryEntry => {
   const parsedValue = parseValueJson(entry.valueJson, entry.valueType, entry.key);
+  const seedEntry = SEED_ENTRY_BY_KEY.get(entry.key);
   return {
     key: entry.key,
     group: 'group' in entry ? entry.group : resolveGroup(entry.key),
     kind: entry.kind,
+    role: entry.role ?? seedEntry?.role ?? 'generic',
     description: entry.description ?? null,
     valueType: entry.valueType,
     valueJson: normalizeValueJson(parsedValue),
@@ -170,6 +174,7 @@ const toDomain = (doc: Supplier1688SelectorRegistryDoc): Supplier1688SelectorReg
   key: doc.key,
   group: doc.group,
   kind: doc.kind,
+  role: doc.role ?? resolveSeedEntry(doc.key).role,
   description: doc.description,
   valueType: doc.valueType,
   valueJson: doc.valueJson,
@@ -326,6 +331,7 @@ export async function saveSupplier1688SelectorRegistryEntry(input: {
         key: seedEntry.key,
         group: resolveGroup(seedEntry.key),
         kind: seedEntry.kind,
+        role: seedEntry.role,
         description: seedEntry.description ?? null,
         valueType: seedEntry.valueType,
         valueJson: normalizedValueJson,
@@ -386,6 +392,7 @@ export async function cloneSupplier1688SelectorRegistryProfile(input: {
           key: entry.key,
           group: entry.group,
           kind: entry.kind,
+          role: entry.role,
           description: entry.description,
           valueType: entry.valueType,
           valueJson: entry.valueJson,

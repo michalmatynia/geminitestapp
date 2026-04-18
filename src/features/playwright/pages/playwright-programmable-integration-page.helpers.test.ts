@@ -4,6 +4,9 @@ import type { PlaywrightAction } from '@/shared/contracts/playwright-steps';
 import { defaultPlaywrightActionExecutionSettings } from '@/shared/contracts/playwright-steps';
 
 import {
+  buildProgrammableDraftMapperSeedFromSourcePath,
+  collectProgrammableDraftMapperSampleSourcePaths,
+  getProgrammableDraftMapperSignalMatches,
   buildDraftMapperAutomationFlowTemplate,
   buildDraftMapperPreviewAutomationFlowTemplate,
   buildDraftMapperResilientAutomationFlowTemplate,
@@ -16,6 +19,7 @@ import {
   createEmptyProgrammableDraftMapperRule,
   PROGRAMMABLE_DRAFT_TARGET_OPTIONS,
   PROGRAMMABLE_DRAFT_TRANSFORM_OPTIONS,
+  sortProgrammableDraftMapperSourcePathsBySignal,
 } from './playwright-programmable-integration-page.helpers';
 import {
   serializePlaywrightDraftMapperRows,
@@ -208,6 +212,92 @@ describe('playwrightProgrammableIntegrationPage helpers', () => {
       value: 'string_array',
       label: 'string_array',
     });
+  });
+
+  it('builds draft mapper seed patches from scraped source paths', () => {
+    expect(buildProgrammableDraftMapperSeedFromSourcePath('title')).toMatchObject({
+      enabled: true,
+      mode: 'scraped',
+      required: true,
+      sourcePath: 'title',
+      staticValue: '',
+      targetPath: 'name_en',
+      transform: 'trim',
+    });
+
+    expect(buildProgrammableDraftMapperSeedFromSourcePath('offer.price')).toMatchObject({
+      enabled: true,
+      mode: 'scraped',
+      required: false,
+      sourcePath: 'offer.price',
+      staticValue: '',
+      targetPath: 'price',
+      transform: 'number',
+    });
+
+    expect(buildProgrammableDraftMapperSeedFromSourcePath('offer.price.value')).toMatchObject({
+      enabled: true,
+      mode: 'scraped',
+      required: false,
+      sourcePath: 'offer.price.value',
+      staticValue: '',
+      targetPath: 'price',
+      transform: 'number',
+    });
+
+    expect(buildProgrammableDraftMapperSeedFromSourcePath('imageLinks')).toMatchObject({
+      enabled: true,
+      mode: 'scraped',
+      required: false,
+      sourcePath: 'imageLinks',
+      staticValue: '',
+      targetPath: 'imageLinks',
+      transform: 'string_array',
+    });
+
+    expect(buildProgrammableDraftMapperSeedFromSourcePath('gallery.images.0.url')).toMatchObject({
+      enabled: true,
+      mode: 'scraped',
+      required: false,
+      sourcePath: 'gallery.images.0.url',
+      staticValue: '',
+      targetPath: 'imageLinks',
+      transform: 'string_array',
+    });
+  });
+
+  it('collects nested sample source paths for draft mapper chips', () => {
+    const samplePaths = collectProgrammableDraftMapperSampleSourcePaths({
+      title: 'Mapped draft title',
+      offer: {
+        price: {
+          value: '19,50',
+        },
+      },
+      gallery: {
+        images: [{ url: 'https://example.test/image-1.jpg' }],
+      },
+    });
+
+    expect(samplePaths).toEqual([
+      'title',
+      'offer.price.value',
+      'gallery.images',
+      'gallery.images.0.url',
+    ]);
+
+    const matches = getProgrammableDraftMapperSignalMatches(samplePaths);
+    expect(matches).toEqual({
+      primaryMatches: ['title'],
+      secondaryMatches: ['offer.price.value', 'gallery.images', 'gallery.images.0.url'],
+    });
+
+    expect(sortProgrammableDraftMapperSourcePathsBySignal(samplePaths, matches)).toEqual([
+      'title',
+      'gallery.images',
+      'gallery.images.0.url',
+      'offer.price.value',
+    ]);
   });
 
   it('builds the draft-mapper automation flow template', () => {

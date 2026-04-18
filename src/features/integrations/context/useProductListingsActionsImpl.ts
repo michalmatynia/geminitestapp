@@ -22,6 +22,8 @@ import {
   isTraderaBrowserAuthRequiredMessage,
   preflightTraderaQuickListSession,
   refreshTraderaBrowserSession,
+  TRADERA_BROWSER_MANUAL_VERIFICATION_MESSAGE,
+  TRADERA_BROWSER_SESSION_SAVE_FAILURE_MESSAGE,
 } from '@/features/integrations/utils/tradera-browser-session';
 import {
   ensureVintedBrowserSession,
@@ -116,6 +118,28 @@ export const useProductListingsActionsImpl = ({
   setSyncingTraderaListing: Dispatch<SetStateAction<string | null>>;
 }): ProductListingsActions => {
   const { toast } = useToast();
+
+  const ensureTraderaPreflightSessionReady = useCallback(
+    async ({
+      integrationId,
+      connectionId,
+      productId,
+    }: {
+      integrationId: string;
+      connectionId: string;
+      productId?: string | undefined;
+    }): Promise<void> => {
+      const preflightResponse = await preflightTraderaQuickListSession({
+        integrationId,
+        connectionId,
+        ...(productId ? { productId } : {}),
+      });
+      if (!preflightResponse.ready) {
+        throw new Error(TRADERA_BROWSER_MANUAL_VERIFICATION_MESSAGE);
+      }
+    },
+    []
+  );
 
   const deleteFromBaseMutation = useDeleteFromBaseMutation(productId);
   const purgeListingMutation = usePurgeListingMutation(productId);
@@ -267,7 +291,7 @@ export const useProductListingsActionsImpl = ({
           listing.integrationId &&
           listing.connectionId
         ) {
-          await preflightTraderaQuickListSession({
+          await ensureTraderaPreflightSessionReady({
             integrationId: listing.integrationId,
             connectionId: listing.connectionId,
             productId:
@@ -359,6 +383,7 @@ export const useProductListingsActionsImpl = ({
       setRelistingBrowserMode,
       setRelistingListing,
       toast,
+      ensureTraderaPreflightSessionReady,
     ]
   );
 
@@ -383,7 +408,7 @@ export const useProductListingsActionsImpl = ({
         setError(null);
 
         if (!options?.skipSessionPreflight && integrationId && connectionId) {
-          await preflightTraderaQuickListSession({
+          await ensureTraderaPreflightSessionReady({
             integrationId,
             connectionId,
             productId:
@@ -458,6 +483,7 @@ export const useProductListingsActionsImpl = ({
       setSyncingTraderaListing,
       syncTraderaMutation,
       toast,
+      ensureTraderaPreflightSessionReady,
     ]
   );
 
@@ -483,7 +509,7 @@ export const useProductListingsActionsImpl = ({
           listing.integrationId &&
           listing.connectionId
         ) {
-          await preflightTraderaQuickListSession({
+          await ensureTraderaPreflightSessionReady({
             integrationId: listing.integrationId,
             connectionId: listing.connectionId,
             productId:
@@ -568,6 +594,7 @@ export const useProductListingsActionsImpl = ({
       setError,
       setRecoveryContext,
       toast,
+      ensureTraderaPreflightSessionReady,
     ]
   );
 
@@ -580,10 +607,21 @@ export const useProductListingsActionsImpl = ({
           integrationId,
           connectionId,
         });
+        if (!response.savedSession) {
+          setRecoveryContext(
+            createTraderaRecoveryContext({
+              status: 'auth_required',
+              runId: null,
+              failureReason: TRADERA_BROWSER_SESSION_SAVE_FAILURE_MESSAGE,
+              integrationId,
+              connectionId,
+            })
+          );
+          toast(TRADERA_BROWSER_SESSION_SAVE_FAILURE_MESSAGE, { variant: 'error' });
+          return false;
+        }
         toast(
-          response.savedSession
-            ? 'Tradera login session refreshed.'
-            : 'Tradera manual login completed.',
+          'Tradera login session refreshed.',
           { variant: 'success' }
         );
         setRecoveryContext((current) =>

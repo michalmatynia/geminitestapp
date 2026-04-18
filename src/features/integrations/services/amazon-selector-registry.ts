@@ -31,6 +31,7 @@ type AmazonSelectorRegistryDoc = Document & {
   key: string;
   group: string;
   kind: AmazonSelectorRegistrySeedEntry['kind'];
+  role?: AmazonSelectorRegistrySeedEntry['role'];
   description: string | null;
   valueType: AmazonSelectorRegistrySeedEntry['valueType'];
   valueJson: string;
@@ -47,6 +48,7 @@ type PersistedAmazonSelectorRegistryEntry = {
   key: string;
   group: string;
   kind: AmazonSelectorRegistrySeedEntry['kind'];
+  role: AmazonSelectorRegistrySeedEntry['role'];
   description: string | null;
   valueType: AmazonSelectorRegistrySeedEntry['valueType'];
   valueJson: string;
@@ -128,10 +130,12 @@ const toPersistedEntry = (
   source: 'code' | 'mongo' = 'code'
 ): PersistedAmazonSelectorRegistryEntry => {
   const parsedValue = parseValueJson(entry.valueJson, entry.valueType, entry.key);
+  const seedEntry = SEED_ENTRY_BY_KEY.get(entry.key);
   return {
     key: entry.key,
     group: 'group' in entry ? entry.group : resolveGroup(entry.key),
     kind: entry.kind,
+    role: entry.role ?? seedEntry?.role ?? 'generic',
     description: entry.description ?? null,
     valueType: entry.valueType,
     valueJson: normalizeValueJson(parsedValue),
@@ -147,6 +151,7 @@ const toDomain = (doc: AmazonSelectorRegistryDoc): AmazonSelectorRegistryEntry =
   key: doc.key,
   group: doc.group,
   kind: doc.kind,
+  role: doc.role ?? resolveSeedEntry(doc.key).role,
   description: doc.description,
   valueType: doc.valueType,
   valueJson: doc.valueJson,
@@ -311,6 +316,7 @@ export async function saveAmazonSelectorRegistryEntry(input: {
         key: seedEntry.key,
         group: resolveGroup(seedEntry.key),
         kind: seedEntry.kind,
+        role: seedEntry.role,
         description: seedEntry.description ?? null,
         valueType: seedEntry.valueType,
         valueJson: normalizedValueJson,
@@ -372,6 +378,7 @@ export async function cloneAmazonSelectorRegistryProfile(input: {
           key: entry.key,
           group: entry.group,
           kind: entry.kind,
+          role: entry.role,
           description: entry.description,
           valueType: entry.valueType,
           valueJson: entry.valueJson,

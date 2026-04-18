@@ -51,11 +51,10 @@ export const normalizeTraderaListingFormUrl = (value: string | null | undefined)
     if (!isAllowedTraderaListingFormUrl(parsed)) {
       return TRADERA_DIRECT_LISTING_FORM_URL;
     }
+    return parsed.href;
   } catch {
     return TRADERA_DIRECT_LISTING_FORM_URL;
   }
-
-  return TRADERA_DIRECT_LISTING_FORM_URL;
 };
 
 export const DEFAULT_TRADERA_SYSTEM_SETTINGS: TraderaSystemSettings = {

@@ -5,9 +5,9 @@ import type { AgentTeachingDocumentDeleteResponse } from '@/shared/contracts/age
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 
-export async function DELETE_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function deleteHandler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const documentId = ctx.params?.['documentId'];
-  if (typeof documentId !== 'string' || !documentId.trim()) {
+  if (typeof documentId !== 'string' || documentId.trim().length === 0) {
     throw badRequestError('Missing documentId.');
   }
   const deleted = await deleteEmbeddingDocument(documentId);

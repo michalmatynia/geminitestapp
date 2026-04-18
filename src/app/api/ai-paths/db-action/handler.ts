@@ -18,119 +18,13 @@ import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
-const coerceQuery = (value: unknown): Record<string, unknown> => {
-  if (!value) return {};
-  if (typeof value === 'string') {
-    try {
-      return JSON.parse(value) as Record<string, unknown>;
-    } catch (error) {
-      void ErrorSystem.captureException(error);
-      return {};
-    }
-  }
-  if (typeof value === 'object') {
-    return value as Record<string, unknown>;
-  }
-  return {};
-};
-
-const looksLikeObjectId = (value: string): boolean => /^[0-9a-fA-F]{24}$/.test(value);
-
-const normalizeObjectId = (
-  query: Record<string, unknown>,
-  idType?: string
-): Record<string, unknown> => {
-  if (idType !== 'objectId') return query;
-  const next = { ...query };
-  if (typeof next['_id'] === 'string' && looksLikeObjectId(next['_id'])) {
-    next['_id'] = new ObjectId(next['_id']);
-  }
-  return next;
-};
-
-const normalizeUpdateDoc = (update: unknown): Record<string, unknown> | unknown[] | null => {
-  if (Array.isArray(update)) return update as unknown[];
-  if (update && typeof update === 'object') {
-    const keys = Object.keys(update as Record<string, unknown>);
-    if (keys.some((key: string) => key.startsWith('$'))) {
-      return update as Record<string, unknown>;
-    }
-    return { $set: update } as Record<string, unknown>;
-  }
-  return null;
-};
-
-const AUTO_UPDATED_AT_COLLECTIONS = new Set<string>(['products', 'product_drafts']);
-
-const shouldAutoStampUpdatedAt = (collection: string): boolean =>
-  AUTO_UPDATED_AT_COLLECTIONS.has(collection.trim().toLowerCase());
-
-const applyUpdatedAtToUpdateDoc = (
-  update: Record<string, unknown> | unknown[],
-  now: Date
-): Record<string, unknown> | unknown[] => {
-  if (Array.isArray(update)) {
-    return [...update, { $set: { updatedAt: now } }];
-  }
-
-  const hasOperator = Object.keys(update).some((key: string): boolean => key.startsWith('$'));
-  if (!hasOperator) {
-    return {
-      ...update,
-      updatedAt: now,
-    };
-  }
-
-  const nextUpdate = { ...update };
-  const existingSet =
-    nextUpdate['$set'] &&
-    typeof nextUpdate['$set'] === 'object' &&
-    !Array.isArray(nextUpdate['$set'])
-      ? (nextUpdate['$set'] as Record<string, unknown>)
-      : {};
-  nextUpdate['$set'] = {
-    ...existingSet,
-    updatedAt: now,
-  };
-  return nextUpdate;
-};
-
-const applyUpdatedAtToReplacement = (
-  replacement: Record<string, unknown>,
-  now: Date
-): Record<string, unknown> => ({
-  ...replacement,
-  updatedAt: now,
-});
-
-const normalizeReplaceDoc = (update: unknown): Record<string, unknown> | null => {
-  if (update && typeof update === 'object' && !Array.isArray(update)) {
-    const keys = Object.keys(update as Record<string, unknown>);
-    if (keys.some((key: string) => key.startsWith('$'))) {
-      return null;
-    }
-    return update as Record<string, unknown>;
-  }
-  return null;
-};
-
-const extractFlatUpdates = (update: unknown): Record<string, unknown> | null => {
-  if (update && typeof update === 'object' && !Array.isArray(update)) {
-    const keys = Object.keys(update as Record<string, unknown>);
-    if (!keys.some((key: string) => key.startsWith('$'))) {
-      return update as Record<string, unknown>;
-    }
-  }
-  return null;
-};
-
-type DbProvider = 'mongodb';
-type DbActionRequestedProvider = 'auto' | DbProvider | undefined;
+export type DbProvider = 'mongodb';
+export type DbActionRequestedProvider = 'auto' | DbProvider | undefined;
 type ProviderResolutionErrorCode =
   | 'provider_not_configured'
   | 'action_not_supported';
 
-class ProviderResolutionError extends Error {
+export class ProviderResolutionError extends Error {
   public readonly code: ProviderResolutionErrorCode;
   public readonly provider: DbProvider;
 
@@ -142,10 +36,10 @@ class ProviderResolutionError extends Error {
   }
 }
 
-const isProviderResolutionError = (error: unknown): error is ProviderResolutionError =>
+export const isProviderResolutionError = (error: unknown): error is ProviderResolutionError =>
   error instanceof ProviderResolutionError;
 
-const withProviderPayload = (
+export const withProviderPayload = (
   provider: DbProvider,
   requestedProvider: DbActionRequestedProvider,
   payload: Record<string, unknown>
@@ -155,7 +49,7 @@ const withProviderPayload = (
   resolvedProvider: provider,
 });
 
-const expandFilter = (
+export const expandFilter = (
   filter: Record<string, unknown>,
   collection: string
 ): Record<string, unknown> => {
@@ -173,6 +67,105 @@ const expandFilter = (
   }
 
   return filter;
+};
+
+export const coerceQuery = (value: unknown): Record<string, unknown> => {
+  if (value === null || value === undefined) return {};
+  if (typeof value === 'string') {
+    if (value.length === 0) return {};
+    try {
+      return JSON.parse(value) as Record<string, unknown>;
+    } catch (error) {
+      ErrorSystem.captureException(error).catch(() => { /* ignore */ });
+      return {};
+    }
+  }
+  if (typeof value === 'object' && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
+  }
+  return {};
+};
+
+export const looksLikeObjectId = (value: string): boolean => /^[0-9a-fA-F]{24}$/.test(value);
+
+export const normalizeObjectId = (
+  query: Record<string, unknown>,
+  idType?: string
+): Record<string, unknown> => {
+  if (idType !== 'objectId') return query;
+  const next = { ...query };
+  if (typeof next['_id'] === 'string' && looksLikeObjectId(next['_id'])) {
+    next['_id'] = new ObjectId(next['_id']);
+  }
+  return next;
+};
+
+export const normalizeUpdateDoc = (update: unknown): Record<string, unknown> | unknown[] | null => {
+  if (Array.isArray(update)) return update as unknown[];
+  if (update && typeof update === 'object') {
+    const keys = Object.keys(update as Record<string, unknown>);
+    if (keys.some((key: string) => key.startsWith('$'))) {
+      return update as Record<string, unknown>;
+    }
+    return { $set: update } as Record<string, unknown>;
+  }
+  return null;
+};
+
+export const shouldAutoStampUpdatedAt = (collection: string): boolean =>
+  AUTO_UPDATED_AT_COLLECTIONS.has(collection.trim().toLowerCase());
+
+export const applyUpdatedAtToUpdateDoc = (
+  update: Record<string, unknown> | unknown[],
+  now: Date
+): Record<string, unknown> | unknown[] => {
+  if (Array.isArray(update)) {
+    return [...update, { $set: { updatedAt: now } }];
+  }
+
+  const hasOperator = Object.keys(update).some((key: string): boolean => key.startsWith('$'));
+  if (!hasOperator) {
+    return { ...update, updatedAt: now };
+  }
+
+  const nextUpdate = { ...update };
+  const existingSetRaw = nextUpdate['$set'];
+  const existingSet =
+    existingSetRaw && typeof existingSetRaw === 'object' && !Array.isArray(existingSetRaw)
+      ? (existingSetRaw as Record<string, unknown>)
+      : {};
+
+  nextUpdate['$set'] = { ...existingSet, updatedAt: now };
+  return nextUpdate;
+};
+
+export const applyUpdatedAtToReplacement = (
+  replacement: Record<string, unknown>,
+  now: Date
+): Record<string, unknown> => ({
+  ...replacement,
+  updatedAt: now,
+});
+
+export const normalizeReplaceDoc = (update: unknown): Record<string, unknown> | null => {
+  if (update && typeof update === 'object' && !Array.isArray(update)) {
+    const keys = Object.keys(update as Record<string, unknown>);
+    if (keys.some((key: string) => key.startsWith('$'))) {
+      return null;
+    }
+    return update as Record<string, unknown>;
+  }
+  return null;
+};
+
+export const extractFlatUpdates = (update: unknown): Record<string, unknown> | null => {
+  if (update && typeof update === 'object' && !Array.isArray(update)) {
+    const keys = Object.keys(update as Record<string, unknown>);
+    if (!keys.some((key: string) => key.startsWith('$'))) {
+      return update as Record<string, unknown>;
+    }
+  }
+  return null;
 };
 
 export async function postAiPathsDbActionHandler(
@@ -250,184 +243,100 @@ export async function postAiPathsDbActionHandler(
       'findOneAndDelete',
     ].includes(action);
 
-    if (requireFilter && !hasFilter) {
+    if (requireFilter && Object.keys(where).length === 0) {
       throw badRequestError('Filter is required for this action');
     }
 
-    if (action === 'find') {
-      const cursor = collectionRef.find(normalizedFilter, projection ? { projection } : undefined);
-      if (sort) {
-        cursor.sort(sort as Sort);
+    switch (action) {
+      case 'find': {
+        const cursor = collectionRef.find(normalizedFilter, projection ? { projection } : undefined);
+        if (sort) cursor.sort(sort as Sort);
+        const [items, count] = await Promise.all([
+          cursor.limit(limit).toArray(),
+          collectionRef.countDocuments(normalizedFilter),
+        ]);
+        return withProviderPayload(provider, requestedProvider, { items, count });
       }
-      const [items, count] = await Promise.all([
-        cursor.limit(limit).toArray(),
-        collectionRef.countDocuments(normalizedFilter),
-      ]);
-      return withProviderPayload(provider, requestedProvider, { items, count });
-    }
-
-    if (action === 'findOne') {
-      let item = await collectionRef.findOne(
-        normalizedFilter,
-        projection ? { projection } : undefined
-      );
-
-      if (
-        !item &&
-        idType !== 'objectId' &&
-        typeof normalizedFilter['_id'] === 'string' &&
-        looksLikeObjectId(normalizedFilter['_id'])
-      ) {
-        const retryFilter = { ...normalizedFilter, _id: new ObjectId(normalizedFilter['_id']) };
-        item = await collectionRef.findOne(retryFilter, projection ? { projection } : undefined);
+      case 'findOne': {
+        let item = await collectionRef.findOne(
+          normalizedFilter,
+          projection ? { projection } : undefined
+        );
+        if (
+          !item &&
+          idType !== 'objectId' &&
+          typeof normalizedFilter['_id'] === 'string' &&
+          looksLikeObjectId(normalizedFilter['_id'])
+        ) {
+          const retryFilter = { ...normalizedFilter, _id: new ObjectId(normalizedFilter['_id']) };
+          item = await collectionRef.findOne(retryFilter, projection ? { projection } : undefined);
+        }
+        return withProviderPayload(provider, requestedProvider, { item, count: item ? 1 : 0 });
       }
-
-      return withProviderPayload(provider, requestedProvider, {
-        item,
-        count: item ? 1 : 0,
-      });
-    }
-
-    if (action === 'countDocuments') {
-      const count = await collectionRef.countDocuments(normalizedFilter);
-      return withProviderPayload(provider, requestedProvider, { count });
-    }
-
-    if (action === 'distinct') {
-      const field = distinctField?.trim();
-      if (!field) {
-        throw badRequestError('distinctField is required');
+      case 'countDocuments': {
+        const count = await collectionRef.countDocuments(normalizedFilter);
+        return withProviderPayload(provider, requestedProvider, { count });
       }
-      const values = await collectionRef.distinct(field, normalizedFilter);
-      return withProviderPayload(provider, requestedProvider, {
-        values,
-        count: values.length,
-      });
-    }
-
-    if (action === 'aggregate') {
-      if (!pipeline || pipeline.length === 0) {
-        throw badRequestError('Aggregation pipeline is required');
+      case 'distinct': {
+        const field = distinctField?.trim() ?? '';
+        if (field.length === 0) throw badRequestError('distinctField is required');
+        const values = await collectionRef.distinct(field, normalizedFilter);
+        return withProviderPayload(provider, requestedProvider, { values, count: values.length });
       }
-      const items = await collectionRef.aggregate(pipeline).toArray();
-      return withProviderPayload(provider, requestedProvider, {
-        items,
-        count: items.length,
-      });
-    }
-
-    if (action === 'insertOne') {
-      const doc =
-        document && typeof document === 'object' && !Array.isArray(document) ? document : null;
-      if (!doc) {
-        throw badRequestError('Document is required');
+      case 'aggregate': {
+        if (!pipeline || pipeline.length === 0) throw badRequestError('Aggregation pipeline is required');
+        const items = await collectionRef.aggregate(pipeline).toArray();
+        return withProviderPayload(provider, requestedProvider, { items, count: items.length });
       }
-      const result = await collectionRef.insertOne(doc);
-      return withProviderPayload(provider, requestedProvider, {
-        insertedId: result.insertedId,
-        insertedCount: 1,
-      });
-    }
-
-    if (action === 'insertMany') {
-      const docs =
-        documents && Array.isArray(documents)
-          ? documents
-          : Array.isArray(document)
-            ? (document as unknown[])
-            : null;
-      if (!docs || docs.length === 0) {
-        throw badRequestError('Documents array is required');
+      case 'insertOne': {
+        const doc = document && typeof document === 'object' && !Array.isArray(document) ? document : null;
+        if (!doc) throw badRequestError('Document is required');
+        const result = await collectionRef.insertOne(doc);
+        return withProviderPayload(provider, requestedProvider, { insertedId: result.insertedId, insertedCount: 1 });
       }
-      const result = await collectionRef.insertMany(docs as Record<string, unknown>[]);
-      return withProviderPayload(provider, requestedProvider, {
-        insertedIds: result.insertedIds,
-        insertedCount: result.insertedCount,
-      });
-    }
-
-    if (action === 'replaceOne') {
-      const flatUpdates = extractFlatUpdates(update);
-      const replacement = normalizeReplaceDoc(update);
-      if (!replacement || !flatUpdates) {
-        throw badRequestError('Replacement document is required');
+      case 'insertMany': {
+        const docs = documents && Array.isArray(documents) ? documents : (Array.isArray(document) ? document : null);
+        if (!docs || docs.length === 0) throw badRequestError('Documents array is required');
+        const result = await collectionRef.insertMany(docs as Record<string, unknown>[]);
+        return withProviderPayload(provider, requestedProvider, { insertedIds: result.insertedIds, insertedCount: result.insertedCount });
       }
-      const nextReplacement = shouldAutoStampUpdatedAt(resolvedCollection)
-        ? applyUpdatedAtToReplacement(replacement, now)
-        : replacement;
-      const result = await collectionRef.replaceOne(normalizedFilter, nextReplacement, {
-        upsert: Boolean(upsert),
-      });
-      return withProviderPayload(provider, requestedProvider, {
-        matchedCount: result.matchedCount,
-        modifiedCount: result.modifiedCount,
-        upsertedId: result.upsertedId ?? null,
-      });
-    }
-
-    if (action === 'findOneAndUpdate') {
-      const updateDoc = normalizeUpdateDoc(update);
-      if (!updateDoc) {
-        throw badRequestError('Update document is required');
+      case 'replaceOne': {
+        const flatUpdates = extractFlatUpdates(update);
+        const replacement = normalizeReplaceDoc(update);
+        if (!replacement || !flatUpdates) throw badRequestError('Replacement document is required');
+        const nextReplacement = shouldAutoStampUpdatedAt(resolvedCollection) ? applyUpdatedAtToReplacement(replacement, now) : replacement;
+        const result = await collectionRef.replaceOne(normalizedFilter, nextReplacement, { upsert: Boolean(upsert) });
+        return withProviderPayload(provider, requestedProvider, { matchedCount: result.matchedCount, modifiedCount: result.modifiedCount, upsertedId: result.upsertedId ?? null });
       }
-      const nextUpdateDoc = shouldAutoStampUpdatedAt(resolvedCollection)
-        ? applyUpdatedAtToUpdateDoc(updateDoc, now)
-        : updateDoc;
-      const result = await collectionRef.findOneAndUpdate(normalizedFilter, nextUpdateDoc, {
-        returnDocument,
-        upsert: Boolean(upsert),
-        includeResultMetadata: true,
-      });
-      return withProviderPayload(provider, requestedProvider, {
-        value: result.value ?? null,
-        ok: result.ok ?? 1,
-      });
-    }
-
-    if (action === 'updateOne' || action === 'updateMany') {
-      const updateDoc = normalizeUpdateDoc(update);
-      if (!updateDoc) {
-        throw badRequestError('Update document is required');
+      case 'findOneAndUpdate': {
+        const updateDoc = normalizeUpdateDoc(update);
+        if (!updateDoc) throw badRequestError('Update document is required');
+        const nextUpdateDoc = shouldAutoStampUpdatedAt(resolvedCollection) ? applyUpdatedAtToUpdateDoc(updateDoc, now) : updateDoc;
+        const result = await collectionRef.findOneAndUpdate(normalizedFilter, nextUpdateDoc, { returnDocument, upsert: Boolean(upsert), includeResultMetadata: true });
+        return withProviderPayload(provider, requestedProvider, { value: result.value ?? null, ok: result.ok ?? 1 });
       }
-      const nextUpdateDoc = shouldAutoStampUpdatedAt(resolvedCollection)
-        ? applyUpdatedAtToUpdateDoc(updateDoc, now)
-        : updateDoc;
-      const result =
-        action === 'updateOne'
-          ? await collectionRef.updateOne(normalizedFilter, nextUpdateDoc, {
-            upsert: Boolean(upsert),
-          })
-          : await collectionRef.updateMany(normalizedFilter, nextUpdateDoc, {
-            upsert: Boolean(upsert),
-          });
-      return withProviderPayload(provider, requestedProvider, {
-        matchedCount: result.matchedCount,
-        modifiedCount: result.modifiedCount,
-        upsertedId: result.upsertedId ?? null,
-      });
+      case 'updateOne':
+      case 'updateMany': {
+        const updateDoc = normalizeUpdateDoc(update);
+        if (!updateDoc) throw badRequestError('Update document is required');
+        const nextUpdateDoc = shouldAutoStampUpdatedAt(resolvedCollection) ? applyUpdatedAtToUpdateDoc(updateDoc, now) : updateDoc;
+        const result = action === 'updateOne'
+          ? await collectionRef.updateOne(normalizedFilter, nextUpdateDoc, { upsert: Boolean(upsert) })
+          : await collectionRef.updateMany(normalizedFilter, nextUpdateDoc, { upsert: Boolean(upsert) });
+        return withProviderPayload(provider, requestedProvider, { matchedCount: result.matchedCount, modifiedCount: result.modifiedCount, upsertedId: result.upsertedId ?? null });
+      }
+      case 'deleteOne':
+      case 'deleteMany': {
+        const result = action === 'deleteOne' ? await collectionRef.deleteOne(normalizedFilter) : await collectionRef.deleteMany(normalizedFilter);
+        return withProviderPayload(provider, requestedProvider, { deletedCount: result.deletedCount ?? 0 });
+      }
+      case 'findOneAndDelete': {
+        const result = await collectionRef.findOneAndDelete(normalizedFilter, { includeResultMetadata: true });
+        return withProviderPayload(provider, requestedProvider, { value: result.value ?? null, ok: result.ok ?? 1 });
+      }
+      default:
+        throw badRequestError('Unsupported action');
     }
-
-    if (action === 'deleteOne' || action === 'deleteMany') {
-      const result =
-        action === 'deleteOne'
-          ? await collectionRef.deleteOne(normalizedFilter)
-          : await collectionRef.deleteMany(normalizedFilter);
-      return withProviderPayload(provider, requestedProvider, {
-        deletedCount: result.deletedCount ?? 0,
-      });
-    }
-
-    if (action === 'findOneAndDelete') {
-      const result = await collectionRef.findOneAndDelete(normalizedFilter, {
-        includeResultMetadata: true,
-      });
-      return withProviderPayload(provider, requestedProvider, {
-        value: result.value ?? null,
-        ok: result.ok ?? 1,
-      });
-    }
-
-    throw badRequestError('Unsupported action');
   };
 
   const primaryProvider: DbProvider = 'mongodb';
@@ -456,6 +365,6 @@ export async function postAiPathsDbActionHandler(
   }
 }
 
-export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   return postAiPathsDbActionHandler(req, ctx);
 }

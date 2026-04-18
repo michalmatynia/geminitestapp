@@ -12,6 +12,10 @@ import {
 import {
   getObservabilityLoggingControlTypeForSystemLogLevel,
 } from './logging-controls';
+import {
+  getCentralLoggingRuntimeStats as getCentralLoggingRuntimeStatsInternal,
+  type CentralLoggingRuntimeStats,
+} from './system-logger-central-forwarding';
 import { getActiveOtelContextAttributes } from './otel-context';
 import { emitOtelLogRecord } from './otel-log-bridge';
 
@@ -696,12 +700,9 @@ export async function logSystemError(input: Omit<SystemLogInput, 'level'>): Prom
   await logSystemEvent({ ...input, level: 'error' });
 }
 
-export type { CentralLoggingRuntimeStats } from './system-logger-central-forwarding';
-
-export async function getCentralLoggingRuntimeStats(): Promise<any> {
+export function getCentralLoggingRuntimeStats(): CentralLoggingRuntimeStats | null {
   if (typeof window !== 'undefined') return null;
-  const { getCentralLoggingRuntimeStats: getStats } = await import('./system-logger-central-forwarding');
-  return getStats();
+  return getCentralLoggingRuntimeStatsInternal();
 }
 
 export { ErrorSystem } from '../../utils/observability/error-system';

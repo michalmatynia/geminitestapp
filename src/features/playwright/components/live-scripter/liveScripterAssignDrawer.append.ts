@@ -81,6 +81,7 @@ export const resolveLiveScripterRegistrySelector = async ({
       selectorNamespace: null,
       selectorKey: null,
       selectorProfile: null,
+      selectorRole: null,
       errorMessage: null,
     };
   }
@@ -88,9 +89,10 @@ export const resolveLiveScripterRegistrySelector = async ({
   const selectorNamespace = selectedRegistryEntry.namespace;
   const selectorKey = selectedRegistryEntry.key;
   const selectorProfile = effectiveRegistryProfile;
+  const selectorRole = selectedRegistryEntry.role;
 
   if (!saveToRegistry) {
-    return { selectorNamespace, selectorKey, selectorProfile, errorMessage: null };
+    return { selectorNamespace, selectorKey, selectorProfile, selectorRole, errorMessage: null };
   }
 
   const valueJson = buildRegistryOverrideJson(selectedRegistryEntry, selectedSelector);
@@ -99,6 +101,7 @@ export const resolveLiveScripterRegistrySelector = async ({
       selectorNamespace: null,
       selectorKey: null,
       selectorProfile: null,
+      selectorRole: null,
       errorMessage: 'The selected registry entry cannot be overridden from a single selector.',
     };
   }
@@ -113,6 +116,7 @@ export const resolveLiveScripterRegistrySelector = async ({
     selectorNamespace: result.namespace,
     selectorKey: result.key,
     selectorProfile: result.profile,
+    selectorRole,
     errorMessage: null,
   };
 };
@@ -171,6 +175,7 @@ export const buildLiveScripterAppendInput = ({
   selectorNamespace: selectorResolution.selectorNamespace,
   selectorKey: selectorResolution.selectorKey,
   selectorProfile: selectorResolution.selectorProfile,
+  selectorRole: selectorResolution.selectorRole,
   value: needsValue ? value : null,
   url: resolveStepUrl(stepType, url),
   key: resolveStepKey(stepType, keyValue),

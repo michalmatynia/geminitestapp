@@ -23,6 +23,12 @@ import type { buildProgrammableSessionDiagnostics } from '@/features/playwright/
 import type { buildProgrammableSessionPreview } from '@/features/playwright/utils/playwright-programmable-session-preview';
 
 export type RunningTestType = 'listing' | 'import' | 'flow' | null;
+export type ProgrammableResultAutoExpandKey =
+  | 'draftWriteResultStatus'
+  | 'draftWriteStatus'
+  | 'mappedDrafts'
+  | 'productWriteStatus'
+  | null;
 
 export type UsePlaywrightProgrammableIntegrationPageModelArgs = {
   focusSection?: 'script' | 'import' | null;
@@ -48,13 +54,15 @@ export type PlaywrightProgrammableIntegrationPageActions = {
   handleCreateConnection: () => Promise<void>;
   handleCreateConnectionFromImportHint: (
     importActionId: string,
-    flowMode?: 'preview' | 'draft'
+    flowMode?: 'preview' | 'draft',
+    draftMapperSourcePath?: string
   ) => Promise<void>;
   handleDeleteDraftMapping: (rowId: string) => void;
   handleDeleteFieldMapping: (rowId: string) => void;
   handlePromoteConnectionSettings: () => Promise<void>;
   handleRunFlow: () => Promise<void>;
   handleRunTest: (scriptType: 'listing' | 'import') => Promise<void>;
+  handleSeedDraftMappingFromSourcePath: (sourcePath: string) => void;
   handleUpdateDraftMapping: (
     rowId: string,
     patch: Partial<Omit<ProgrammableDraftMapperRow, 'id'>>
@@ -100,6 +108,7 @@ export type PlaywrightProgrammableIntegrationPageActionArgs = {
   >['mutateAsync'];
   promotionProxyPassword: string;
   selectedConnection: ProgrammableConnection | null;
+  scrollToResultSection: () => void;
   setAppearanceMode: StateSetter<string>;
   setAutomationFlowJson: StateSetter<string>;
   setCaptureRoutes: StateSetter<PlaywrightConfigCaptureRoute[]>;
@@ -115,6 +124,7 @@ export type PlaywrightProgrammableIntegrationPageActionArgs = {
   setListingActionId: StateSetter<string>;
   setListingScript: StateSetter<string>;
   setPromotionProxyPassword: StateSetter<string>;
+  setResultAutoExpandKey: StateSetter<ProgrammableResultAutoExpandKey>;
   setRunningTestType: StateSetter<RunningTestType>;
   setSelectedConnectionId: StateSetter<string>;
   setTestResultJson: StateSetter<string>;
@@ -154,6 +164,7 @@ export type PlaywrightProgrammableIntegrationPageModel =
     importBaseUrl: string;
     importScript: string;
     importSectionRef: RefObject<HTMLDivElement | null>;
+    resultSectionRef: RefObject<HTMLDivElement | null>;
     importSessionPreview: ReturnType<typeof buildProgrammableSessionPreview>;
     integrationsQuery: ReturnType<typeof usePlaywrightProgrammableIntegration>['integrationQuery'];
     isBrowserBehaviorActionOwned: boolean;
@@ -170,6 +181,7 @@ export type PlaywrightProgrammableIntegrationPageModel =
     promoteBrowserOwnership: ReturnType<typeof usePromotePlaywrightBrowserOwnership>;
     programmableIntegration: Integration | null;
     promotionProxyPassword: string;
+    resultAutoExpandKey: ProgrammableResultAutoExpandKey;
     runningTestType: RunningTestType;
     scriptSectionRef: RefObject<HTMLDivElement | null>;
     importSelectionHint: ProgrammableImportSelectionHint | null;
@@ -187,6 +199,7 @@ export type PlaywrightProgrammableIntegrationPageModel =
     setListingActionId: StateSetter<string>;
     setListingScript: StateSetter<string>;
     setPromotionProxyPassword: StateSetter<string>;
+    setResultAutoExpandKey: StateSetter<ProgrammableResultAutoExpandKey>;
     setSelectedConnectionId: StateSetter<string>;
     testResultJson: string;
     testProgrammableConnection: ReturnType<typeof useTestPlaywrightProgrammableConnection>;

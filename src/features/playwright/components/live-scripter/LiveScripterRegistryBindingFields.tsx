@@ -9,6 +9,10 @@ import {
   getSelectorRegistryAdminHref,
 } from '@/shared/lib/browser-execution/selector-registry-metadata';
 import {
+  formatSelectorRegistryRoleLabel,
+  getCompatibleSelectorRolesForStepField,
+} from '@/shared/lib/browser-execution/selector-registry-roles';
+import {
   Button,
   Checkbox,
   Label,
@@ -101,7 +105,7 @@ function LiveScripterRegistryEntryField({
         <SelectContent>
           {entriesForProfile.map((entry) => (
             <SelectItem key={entry.key} value={entry.key}>
-              {entry.key}
+              {entry.key} {formatSelectorRegistryRoleLabel(entry.role) ? `(${formatSelectorRegistryRoleLabel(entry.role)})` : ''}
             </SelectItem>
           ))}
         </SelectContent>
@@ -161,6 +165,8 @@ export function LiveScripterRegistryBindingFields({
   saveToRegistry,
   setSaveToRegistry,
   selectedRegistryEntry,
+  selectedRegistryEntryCompatible,
+  stepType,
 }: Pick<
   LiveScripterAssignDrawerModel,
   | 'registryNamespace'
@@ -174,7 +180,13 @@ export function LiveScripterRegistryBindingFields({
   | 'saveToRegistry'
   | 'setSaveToRegistry'
   | 'selectedRegistryEntry'
+  | 'selectedRegistryEntryCompatible'
+  | 'stepType'
 >): React.JSX.Element {
+  const selectedRoleLabel = formatSelectorRegistryRoleLabel(selectedRegistryEntry?.role);
+  const expectedRoleLabels = getCompatibleSelectorRolesForStepField(stepType).map(
+    (role) => formatSelectorRegistryRoleLabel(role) ?? role
+  );
   return (
     <div className='space-y-3 rounded-md border border-white/10 bg-black/20 p-3'>
       <div className='grid gap-3 sm:grid-cols-2'>
@@ -198,6 +210,20 @@ export function LiveScripterRegistryBindingFields({
         setSaveToRegistry={setSaveToRegistry}
         selectedRegistryEntry={selectedRegistryEntry}
       />
+      {selectedRegistryEntry ? (
+        <div
+          className={
+            selectedRegistryEntryCompatible
+              ? 'rounded-md border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-100'
+              : 'rounded-md border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-100'
+          }
+        >
+          Selected role: {selectedRoleLabel ?? selectedRegistryEntry.role}
+          {!selectedRegistryEntryCompatible && expectedRoleLabels.length > 0
+            ? ` • Expected for ${stepType}: ${expectedRoleLabels.join(', ')}`
+            : ''}
+        </div>
+      ) : null}
       <LiveScripterRegistryAdminLink registryNamespace={registryNamespace} />
     </div>
   );

@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { selectorRegistryRoleSchema } from './selector-registry';
+
 export const amazonSelectorRegistryValueTypeSchema = z.enum(['string', 'string_array']);
 export type AmazonSelectorRegistryValueType = z.infer<typeof amazonSelectorRegistryValueTypeSchema>;
 
@@ -15,6 +17,7 @@ export const amazonSelectorRegistryEntrySchema = z.object({
   key: z.string().trim().min(1),
   group: z.string().trim().min(1),
   kind: amazonSelectorRegistryKindSchema,
+  role: selectorRegistryRoleSchema,
   description: z.string().trim().nullable(),
   valueType: amazonSelectorRegistryValueTypeSchema,
   valueJson: z.string().trim().min(1),

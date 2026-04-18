@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { selectorRegistryRoleSchema } from './integrations/selector-registry';
 import {
   playwrightIdentityProfileSchema,
   playwrightProxyProviderPresetSchema,
@@ -80,6 +81,7 @@ export const playwrightStepInputBindingSchema = z.object({
   selectorNamespace: z.string().nullable().optional(),
   selectorKey: z.string().nullable().optional(),
   selectorProfile: z.string().nullable().optional(),
+  selectorRole: selectorRegistryRoleSchema.nullable().optional(),
   fallbackSelector: z.string().nullable().optional(),
   variableKey: z.string().nullable().optional(),
   expression: z.string().nullable().optional(),
@@ -96,6 +98,9 @@ export const playwrightStepSelectorResolutionSchema = z.object({
   selectorNamespace: z.string().nullable().optional(),
   selectorKey: z.string().nullable(),
   selectorProfile: z.string().nullable(),
+  selectorRole: selectorRegistryRoleSchema.nullable().optional(),
+  expectedRoles: z.array(selectorRegistryRoleSchema).optional(),
+  roleMatchesExpected: z.boolean().nullable().optional(),
   fallbackSelector: z.string().nullable(),
   resolvedSelector: z.string().nullable(),
   connected: z.boolean(),

@@ -22,6 +22,36 @@ export const selectorRegistryKindSchema = z.enum([
 ]);
 export type SelectorRegistryKind = z.infer<typeof selectorRegistryKindSchema>;
 
+export const selectorRegistryRoleSchema = z.enum([
+  'generic',
+  'input',
+  'upload_input',
+  'trigger',
+  'option',
+  'submit',
+  'ready_signal',
+  'result_hint',
+  'result_shell',
+  'candidate_hint',
+  'overlay_accept',
+  'overlay_dismiss',
+  'navigation',
+  'content',
+  'content_title',
+  'content_price',
+  'content_description',
+  'content_image',
+  'feedback',
+  'barrier',
+  'barrier_title',
+  'text_hint',
+  'negative_text_hint',
+  'pattern',
+  'path',
+  'label',
+]);
+export type SelectorRegistryRole = z.infer<typeof selectorRegistryRoleSchema>;
+
 export const selectorRegistrySourceSchema = z.enum(['code', 'mongo']);
 export type SelectorRegistrySource = z.infer<typeof selectorRegistrySourceSchema>;
 
@@ -32,6 +62,7 @@ export const selectorRegistryEntrySchema = z.object({
   key: z.string().trim().min(1),
   group: z.string().trim().min(1),
   kind: selectorRegistryKindSchema,
+  role: selectorRegistryRoleSchema,
   description: z.string().trim().nullable(),
   valueType: selectorRegistryValueTypeSchema,
   valueJson: z.string().trim().min(1),

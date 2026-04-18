@@ -1,3 +1,7 @@
+import type { SelectorRegistryRole } from '@/shared/contracts/integrations/selector-registry';
+
+import { inferSelectorRegistryRole } from '@/shared/lib/browser-execution/selector-registry-roles';
+
 type TraderaSelectorRegistryPrimitive = string | number | boolean | null;
 
 export type TraderaSelectorRegistryValue =
@@ -21,6 +25,7 @@ export type TraderaSelectorRegistryDefinition = {
   key: string;
   group: string;
   kind: TraderaSelectorRegistryKind;
+  role: SelectorRegistryRole;
   description: string | null;
   value: TraderaSelectorRegistryValue;
 };
@@ -29,6 +34,7 @@ export type TraderaSelectorRegistrySeedEntry = {
   key: string;
   group: string;
   kind: TraderaSelectorRegistryKind;
+  role: SelectorRegistryRole;
   description: string | null;
   valueType: TraderaSelectorRegistryValueType;
   valueJson: string;
@@ -141,8 +147,16 @@ const getItemCount = (value: TraderaSelectorRegistryValue): number => {
 };
 
 const defineRegistryEntry = (
-  definition: TraderaSelectorRegistryDefinition
-): TraderaSelectorRegistryDefinition => definition;
+  definition: Omit<TraderaSelectorRegistryDefinition, 'role'>
+): TraderaSelectorRegistryDefinition => ({
+  ...definition,
+  role: inferSelectorRegistryRole({
+    namespace: 'tradera',
+    key: definition.key,
+    kind: definition.kind,
+    group: definition.group,
+  }),
+});
 
 export const LOGIN_SUCCESS_SELECTORS = [
   'a[href*="logout"]',
@@ -1482,6 +1496,7 @@ export const TRADERA_SELECTOR_REGISTRY_SEED_ENTRIES: TraderaSelectorRegistrySeed
     key: definition.key,
     group: definition.group,
     kind: definition.kind,
+    role: definition.role,
     description: definition.description,
     valueType: detectValueType(definition.value),
     valueJson: JSON.stringify(definition.value),

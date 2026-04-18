@@ -1,3 +1,7 @@
+import type { SelectorRegistryRole } from '@/shared/contracts/integrations/selector-registry';
+
+import { inferSelectorRegistryRole } from '@/shared/lib/browser-execution/selector-registry-roles';
+
 // ─── 1688 Image Search ────────────────────────────────────────────────────────
 
 export const SUPPLIER_1688_FILE_INPUT_SELECTORS = [
@@ -106,6 +110,7 @@ export type Supplier1688SelectorRegistryDefinition = {
   label: string;
   description: string;
   kind: Supplier1688SelectorRegistryKind;
+  role: SelectorRegistryRole;
   value: Supplier1688SelectorRegistryValue;
 };
 
@@ -160,8 +165,15 @@ export const SUPPLIER_1688_DEFAULT_SELECTOR_RUNTIME: Supplier1688SelectorRuntime
 };
 
 const defineSupplier1688SelectorRegistryEntry = (
-  definition: Supplier1688SelectorRegistryDefinition
-): Supplier1688SelectorRegistryDefinition => definition;
+  definition: Omit<Supplier1688SelectorRegistryDefinition, 'role'>
+): Supplier1688SelectorRegistryDefinition => ({
+  ...definition,
+  role: inferSelectorRegistryRole({
+    namespace: '1688',
+    key: definition.key,
+    kind: definition.kind,
+  }),
+});
 
 const detectSupplier1688SelectorRegistryValueType = (
   value: Supplier1688SelectorRegistryValue
@@ -276,6 +288,7 @@ export const SUPPLIER_1688_SELECTOR_REGISTRY_SEED_ENTRIES: Supplier1688SelectorR
     label: definition.label,
     description: definition.description,
     kind: definition.kind,
+    role: definition.role,
     valueType: detectSupplier1688SelectorRegistryValueType(definition.value),
     valueJson: JSON.stringify(definition.value),
   }));

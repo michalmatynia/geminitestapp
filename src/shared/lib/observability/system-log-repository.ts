@@ -13,6 +13,7 @@ import type {
   ListSystemLogsResultDto as ListSystemLogsResult,
 } from '@/shared/contracts/observability';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { readMongoSyncLock } from '@/shared/lib/db/mongo-sync-lock';
 import { executeMongoWriteWithRetry } from '@/shared/lib/db/mongo-write-retry';
 import { getObservabilityIndexManifestEntries } from '@/shared/lib/observability/observability-index-manifest';
 import type { MongoSystemLogDoc } from '@/shared/lib/observability/system-log-types';
@@ -366,6 +367,11 @@ export async function createSystemLog(input: CreateSystemLogInput): Promise<Syst
     createdAt: (input.createdAt ?? new Date()).toISOString(),
     updatedAt: null,
   };
+
+  const syncLock = await readMongoSyncLock({ pruneStale: true });
+  if (syncLock) {
+    return normalizeLogRecord(payload);
+  }
 
   await insertMongoSystemLog(payload);
   return normalizeLogRecord(payload);

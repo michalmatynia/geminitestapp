@@ -11,7 +11,7 @@ import {
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, agentTeachingChatRequestSchema, {
     logPrefix: 'agentcreator.teaching.chat.POST',
   });
@@ -19,7 +19,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
 
   const { agentId, messages, contextRegistry } = parsed.data;
   const registryRefs = contextRegistry?.refs ?? [];
-  const resolvedRegistryBundle = registryRefs.length
+  const resolvedRegistryBundle = registryRefs.length > 0
     ? await contextRegistryEngine.resolveRefs({
       refs: registryRefs,
       maxNodes: 24,

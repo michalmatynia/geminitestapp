@@ -31,6 +31,7 @@ type TraderaSelectorRegistryDoc = Document & {
   key: string;
   group: string;
   kind: TraderaSelectorRegistrySeedEntry['kind'];
+  role?: TraderaSelectorRegistrySeedEntry['role'];
   description: string | null;
   valueType: TraderaSelectorRegistrySeedEntry['valueType'];
   valueJson: string;
@@ -53,6 +54,7 @@ type PersistedTraderaSelectorRegistryEntry = {
   key: string;
   group: string;
   kind: TraderaSelectorRegistrySeedEntry['kind'];
+  role: TraderaSelectorRegistrySeedEntry['role'];
   description: string | null;
   valueType: TraderaSelectorRegistrySeedEntry['valueType'];
   valueJson: string;
@@ -88,6 +90,7 @@ const toDomain = (doc: TraderaSelectorRegistryDoc): TraderaSelectorRegistryEntry
   key: doc.key,
   group: doc.group,
   kind: doc.kind,
+  role: doc.role ?? resolveSeedEntry(doc.key).role,
   description: doc.description,
   valueType: doc.valueType,
   valueJson: doc.valueJson,
@@ -231,17 +234,21 @@ const toPersistedEntry = (
     | TraderaSelectorRegistryDoc
     | TraderaSelectorRegistrySeedEntry,
   source: 'code' | 'mongo' = 'mongo'
-): PersistedTraderaSelectorRegistryEntry => ({
-  key: entry.key,
-  group: entry.group,
-  kind: entry.kind,
-  description: entry.description,
-  valueType: entry.valueType,
-  valueJson: entry.valueJson,
-  itemCount: entry.itemCount,
-  preview: entry.preview,
-  source,
-});
+): PersistedTraderaSelectorRegistryEntry => {
+  const seedEntry = SEED_ENTRY_BY_KEY.get(entry.key);
+  return {
+    key: entry.key,
+    group: entry.group,
+    kind: entry.kind,
+    role: entry.role ?? seedEntry?.role ?? 'generic',
+    description: entry.description,
+    valueType: entry.valueType,
+    valueJson: entry.valueJson,
+    itemCount: entry.itemCount,
+    preview: entry.preview,
+    source,
+  };
+};
 
 const getProfileMatchPriority = (
   doc: TraderaSelectorRegistryDoc,
@@ -291,6 +298,7 @@ const hasSeedChanged = (
     normalizeSelectorProfile(existing.profile) !== DEFAULT_SELECTOR_PROFILE,
     existing.group !== seed.group,
     existing.kind !== seed.kind,
+    (existing.role ?? resolveSeedEntry(existing.key).role) !== seed.role,
     existing.description !== seed.description,
     existing.valueType !== seed.valueType,
     existing.valueJson !== seed.valueJson,
@@ -328,6 +336,7 @@ const syncCollectionFromCode = async (
             key: entry.key,
             group: entry.group,
             kind: entry.kind,
+            role: entry.role,
             description: entry.description,
             valueType: entry.valueType,
             valueJson: entry.valueJson,
@@ -518,6 +527,7 @@ export async function saveTraderaSelectorRegistryEntry(input: {
         key: normalizedKey,
         group: seedEntry.group,
         kind: seedEntry.kind,
+        role: seedEntry.role,
         description: seedEntry.description,
         valueType: seedEntry.valueType,
         valueJson: normalizedValueJson,

@@ -39,6 +39,7 @@ export type LiveScripterAssignDrawerModel = {
   registryEntryKey: string;
   setRegistryEntryKey: (value: string) => void;
   selectedRegistryEntry: SelectorRegistryEntry | null;
+  selectedRegistryEntryCompatible: boolean;
   saveToRegistry: boolean;
   setSaveToRegistry: (value: boolean) => void;
   value: string;
@@ -62,5 +63,6 @@ export type LiveScripterSelectorResolution = {
   selectorNamespace: SelectorRegistryNamespace | null;
   selectorKey: string | null;
   selectorProfile: string | null;
+  selectorRole: SelectorRegistryEntry['role'] | null;
   errorMessage: string | null;
 };

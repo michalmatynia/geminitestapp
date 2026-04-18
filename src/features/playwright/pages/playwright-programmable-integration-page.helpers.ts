@@ -3,6 +3,7 @@ import { playwrightConfigCaptureRouteSchema } from '@/shared/contracts/ai-paths-
 import type { ProgrammableIntegrationConnection } from '@/shared/contracts/integrations/connections';
 import type { PlaywrightAction } from '@/shared/contracts/playwright-steps';
 import { createEmptyPlaywrightCaptureRoute } from '@/shared/lib/ai-paths/core/playwright/capture-defaults';
+import { isObjectRecord } from '@/shared/utils/object-utils';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import {
   PLAYWRIGHT_FIELD_MAPPER_TARGET_FIELDS,
@@ -26,6 +27,19 @@ export type ProgrammableFieldMapperRow = {
 };
 
 export type ProgrammableDraftMapperRow = PlaywrightDraftMapperRow;
+
+const PROGRAMMABLE_DRAFT_MAPPER_PRIMARY_SIGNAL_TOKENS = ['title', 'name'] as const;
+const PROGRAMMABLE_DRAFT_MAPPER_SECONDARY_SIGNAL_TOKENS = [
+  'brand',
+  'description',
+  'ean',
+  'imagelinks',
+  'images',
+  'price',
+  'sku',
+  'sourceurl',
+  'url',
+] as const;
 
 const DEFAULT_PROGRAMMABLE_FIELD_TARGET: PlaywrightFieldMapperTargetField =
   PLAYWRIGHT_FIELD_MAPPER_TARGET_FIELDS[0];
@@ -257,6 +271,304 @@ export const connectionToProgrammableDraftMapperRows = (
 
 export const createEmptyProgrammableDraftMapperRule = (): ProgrammableDraftMapperRow =>
   createEmptyPlaywrightDraftMapperRow();
+
+export const getProgrammableDraftMapperSourcePathTokens = (sourcePath: string): string[] =>
+  sourcePath
+    .trim()
+    .toLowerCase()
+    .split(/[\.\[\]]+/)
+    .map((segment) => segment.trim())
+    .filter((segment) => segment.length > 0);
+
+const pathIncludesAnyToken = (sourcePath: string, candidates: readonly string[]): boolean => {
+  const tokens = getProgrammableDraftMapperSourcePathTokens(sourcePath);
+  return candidates.some((candidate) => tokens.includes(candidate));
+};
+
+export const getProgrammableDraftMapperSignalMatches = (
+  samplePaths: string[]
+): {
+  primaryMatches: string[];
+  secondaryMatches: string[];
+} => ({
+  primaryMatches: samplePaths.filter((path) =>
+    pathIncludesAnyToken(path, PROGRAMMABLE_DRAFT_MAPPER_PRIMARY_SIGNAL_TOKENS)
+  ),
+  secondaryMatches: samplePaths.filter((path) =>
+    pathIncludesAnyToken(path, PROGRAMMABLE_DRAFT_MAPPER_SECONDARY_SIGNAL_TOKENS)
+  ),
+});
+
+export const sortProgrammableDraftMapperSourcePathsBySignal = (
+  samplePaths: string[],
+  matches: {
+    primaryMatches: string[];
+    secondaryMatches: string[];
+  }
+): string[] => {
+  const primaryPaths = new Set(matches.primaryMatches);
+  const secondaryPaths = new Set(matches.secondaryMatches);
+
+  const getRank = (path: string): number => {
+    if (primaryPaths.has(path)) return 0;
+    if (secondaryPaths.has(path)) return 1;
+    return 2;
+  };
+
+  return [...samplePaths].sort((left, right) => {
+    const leftRank = getRank(left);
+    const rightRank = getRank(right);
+    if (leftRank !== rightRank) {
+      return leftRank - rightRank;
+    }
+
+    return left.localeCompare(right);
+  });
+};
+
+export const buildProgrammableDraftMapperSeedFromSourcePath = (
+  sourcePath: string
+): Pick<
+  ProgrammableDraftMapperRow,
+  | 'enabled'
+  | 'mode'
+  | 'required'
+  | 'sourcePath'
+  | 'staticValue'
+  | 'targetPath'
+  | 'transform'
+> => {
+  const normalizedSourcePath = sourcePath.trim();
+  const normalizedTokens = getProgrammableDraftMapperSourcePathTokens(normalizedSourcePath);
+  const includesToken = (...candidates: string[]): boolean =>
+    candidates.some((candidate) => normalizedTokens.includes(candidate));
+
+  if (includesToken('images', 'imagelinks')) {
+    return {
+      enabled: true,
+      mode: 'scraped',
+      required: false,
+      sourcePath: normalizedSourcePath,
+      staticValue: '',
+      targetPath: 'imageLinks',
+      transform: 'string_array',
+    };
+  }
+
+  if (includesToken('catalogids')) {
+    return {
+      enabled: true,
+      mode: 'scraped',
+      required: false,
+      sourcePath: normalizedSourcePath,
+      staticValue: '',
+      targetPath: 'catalogIds',
+      transform: 'string_array',
+    };
+  }
+
+  if (includesToken('tagids')) {
+    return {
+      enabled: true,
+      mode: 'scraped',
+      required: false,
+      sourcePath: normalizedSourcePath,
+      staticValue: '',
+      targetPath: 'tagIds',
+      transform: 'string_array',
+    };
+  }
+
+  if (includesToken('producerids')) {
+    return {
+      enabled: true,
+      mode: 'scraped',
+      required: false,
+      sourcePath: normalizedSourcePath,
+      staticValue: '',
+      targetPath: 'producerIds',
+      transform: 'string_array',
+    };
+  }
+
+  if (includesToken('shippinggroupid')) {
+    return {
+      enabled: true,
+      mode: 'scraped',
+      required: false,
+      sourcePath: normalizedSourcePath,
+      staticValue: '',
+      targetPath: 'shippingGroupId',
+      transform: 'trim',
+    };
+  }
+
+  if (includesToken('categoryid')) {
+    return {
+      enabled: true,
+      mode: 'scraped',
+      required: false,
+      sourcePath: normalizedSourcePath,
+      staticValue: '',
+      targetPath: 'categoryId',
+      transform: 'trim',
+    };
+  }
+
+  if (includesToken('price')) {
+    return {
+      enabled: true,
+      mode: 'scraped',
+      required: false,
+      sourcePath: normalizedSourcePath,
+      staticValue: '',
+      targetPath: 'price',
+      transform: 'number',
+    };
+  }
+
+  if (includesToken('sku')) {
+    return {
+      enabled: true,
+      mode: 'scraped',
+      required: false,
+      sourcePath: normalizedSourcePath,
+      staticValue: '',
+      targetPath: 'sku',
+      transform: 'trim',
+    };
+  }
+
+  if (includesToken('ean')) {
+    return {
+      enabled: true,
+      mode: 'scraped',
+      required: false,
+      sourcePath: normalizedSourcePath,
+      staticValue: '',
+      targetPath: 'ean',
+      transform: 'trim',
+    };
+  }
+
+  if (includesToken('description')) {
+    return {
+      enabled: true,
+      mode: 'scraped',
+      required: false,
+      sourcePath: normalizedSourcePath,
+      staticValue: '',
+      targetPath: 'description_en',
+      transform: 'trim',
+    };
+  }
+
+  if (includesToken('sourceurl', 'url')) {
+    return {
+      enabled: true,
+      mode: 'scraped',
+      required: false,
+      sourcePath: normalizedSourcePath,
+      staticValue: '',
+      targetPath: 'supplierLink',
+      transform: 'trim',
+    };
+  }
+
+  if (includesToken('title', 'name')) {
+    return {
+      enabled: true,
+      mode: 'scraped',
+      required: true,
+      sourcePath: normalizedSourcePath,
+      staticValue: '',
+      targetPath: 'name_en',
+      transform: 'trim',
+    };
+  }
+
+  return {
+    enabled: true,
+    mode: 'scraped',
+    required: false,
+    sourcePath: normalizedSourcePath,
+    staticValue: '',
+    targetPath: 'name_en',
+    transform: 'trim',
+  };
+};
+
+export const createSeededProgrammableDraftMapperRule = (
+  sourcePath: string
+): ProgrammableDraftMapperRow => ({
+  ...createEmptyProgrammableDraftMapperRule(),
+  ...buildProgrammableDraftMapperSeedFromSourcePath(sourcePath),
+});
+
+export const collectProgrammableDraftMapperSampleSourcePaths = (
+  sample: Record<string, unknown> | null,
+  options?: {
+    maxDepth?: number;
+    maxPaths?: number;
+  }
+): string[] => {
+  if (sample === null) {
+    return [];
+  }
+
+  const maxDepth = options?.maxDepth ?? 4;
+  const maxPaths = options?.maxPaths ?? 16;
+  const paths: string[] = [];
+  const seen = new Set<string>();
+
+  const pushPath = (path: string): void => {
+    const normalizedPath = path.trim();
+    if (normalizedPath.length === 0 || seen.has(normalizedPath) || paths.length >= maxPaths) {
+      return;
+    }
+
+    seen.add(normalizedPath);
+    paths.push(normalizedPath);
+  };
+
+  const visit = (value: unknown, path: string, depth: number): void => {
+    if (paths.length >= maxPaths || depth > maxDepth) {
+      return;
+    }
+
+    if (Array.isArray(value)) {
+      pushPath(path);
+      const firstMeaningfulEntry = value.find((entry) => entry !== null && entry !== undefined);
+      if (firstMeaningfulEntry !== undefined && depth < maxDepth) {
+        visit(firstMeaningfulEntry, `${path}.0`, depth + 1);
+      }
+      return;
+    }
+
+    if (isObjectRecord(value)) {
+      for (const [key, nestedValue] of Object.entries(value)) {
+        if (paths.length >= maxPaths) {
+          return;
+        }
+
+        visit(nestedValue, path.length > 0 ? `${path}.${key}` : key, depth + 1);
+      }
+      return;
+    }
+
+    pushPath(path);
+  };
+
+  for (const [key, value] of Object.entries(sample)) {
+    if (paths.length >= maxPaths) {
+      break;
+    }
+
+    visit(value, key, 0);
+  }
+
+  return paths;
+};
 
 export const buildProgrammableActionOptions = (
   actions: PlaywrightAction[] | undefined,

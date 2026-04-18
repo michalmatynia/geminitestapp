@@ -21,9 +21,21 @@ const updateCollectionSchema = z.object({
   embeddingModel: z.string().trim().min(1).optional(),
 });
 
-export async function PATCH_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+const resolveNextCollectionRecord = (
+  existing: AgentTeachingEmbeddingCollectionRecord,
+  collectionId: string,
+  data: z.infer<typeof updateCollectionSchema>
+): AgentTeachingEmbeddingCollectionRecord => {
+  const nextRecord: AgentTeachingEmbeddingCollectionRecord = { ...existing, id: collectionId };
+  if (data.name !== undefined) nextRecord.name = data.name;
+  if (data.description !== undefined) nextRecord.description = data.description ?? null;
+  if (data.embeddingModel !== undefined) nextRecord.embeddingModel = data.embeddingModel;
+  return nextRecord;
+};
+
+export async function patchHandler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const collectionId = ctx.params?.['collectionId'];
-  if (typeof collectionId !== 'string' || !collectionId.trim()) {
+  if (typeof collectionId !== 'string' || collectionId.trim().length === 0) {
     throw badRequestError('Missing collectionId.');
   }
   const existing = await getEmbeddingCollectionById(collectionId);
@@ -34,21 +46,17 @@ export async function PATCH_handler(req: NextRequest, ctx: ApiHandlerContext): P
     logPrefix: 'agentcreator.teaching.collections.PATCH',
   });
   if (!parsed.ok) return parsed.response;
-  const data = parsed.data;
-  const collection: AgentTeachingEmbeddingCollectionRecord = await upsertEmbeddingCollection({
-    ...existing,
-    id: collectionId,
-    ...(data.name !== undefined ? { name: data.name } : {}),
-    ...(data.description !== undefined ? { description: data.description ?? null } : {}),
-    ...(data.embeddingModel !== undefined ? { embeddingModel: data.embeddingModel } : {}),
-  });
+
+  const collection = await upsertEmbeddingCollection(
+    resolveNextCollectionRecord(existing, collectionId, parsed.data)
+  );
   const response: AgentTeachingCollectionResponse = { collection };
   return NextResponse.json(response);
 }
 
-export async function DELETE_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function deleteHandler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const collectionId = ctx.params?.['collectionId'];
-  if (typeof collectionId !== 'string' || !collectionId.trim()) {
+  if (typeof collectionId !== 'string' || collectionId.trim().length === 0) {
     throw badRequestError('Missing collectionId.');
   }
   const result = await deleteEmbeddingCollection(collectionId);

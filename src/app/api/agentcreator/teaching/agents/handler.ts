@@ -24,13 +24,13 @@ const createAgentSchema = z.object({
   maxDocsPerCollection: z.number().int().min(10).max(2000).optional().default(400),
 });
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const agents = await listTeachingAgents();
   const response: AgentTeachingAgentsResponse = { agents };
   return NextResponse.json(response);
 }
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, createAgentSchema, {
     logPrefix: 'agentcreator.teaching.agents.POST',
   });

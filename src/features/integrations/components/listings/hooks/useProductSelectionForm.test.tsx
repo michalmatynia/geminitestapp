@@ -44,6 +44,8 @@ vi.mock('@/features/integrations/hooks/useProductListingMutations', () => ({
 }));
 
 vi.mock('@/features/integrations/utils/tradera-browser-session', () => ({
+  TRADERA_BROWSER_MANUAL_VERIFICATION_MESSAGE:
+    'Tradera login requires manual verification. Solve the captcha in the opened browser window and retry.',
   preflightTraderaQuickListSession: (...args: unknown[]) =>
     preflightTraderaQuickListSessionMock(...args) as Promise<unknown>,
   isTraderaBrowserAuthRequiredMessage: (value: string | null | undefined) => {
@@ -165,6 +167,34 @@ describe('useProductSelectionForm', () => {
         'Tradera login requires manual verification. Solve the captcha in the opened browser window and retry.'
       )
     );
+
+    const onSuccess = vi.fn();
+    const { result } = renderHook(() => useProductSelectionForm(() => 'category-1'));
+
+    await act(async () => {
+      result.current.setSelectedProductId('product-1');
+    });
+
+    await act(async () => {
+      await result.current.handleSubmit(onSuccess);
+    });
+
+    expect(toastMock).toHaveBeenCalledWith(
+      'Tradera login requires manual verification. Solve the captcha in the opened browser window and retry.',
+      { variant: 'error' }
+    );
+    expect(result.current.error).toBe(
+      'Tradera login requires manual verification. Solve the captcha in the opened browser window and retry.'
+    );
+    expect(createListingMutateAsyncMock).not.toHaveBeenCalled();
+    expect(onSuccess).not.toHaveBeenCalled();
+  });
+
+  it('shows a toast when Tradera quick preflight returns not ready without throwing', async () => {
+    preflightTraderaQuickListSessionMock.mockResolvedValueOnce({
+      response: { ok: true, sessionReady: false, steps: [] },
+      ready: false,
+    });
 
     const onSuccess = vi.fn();
     const { result } = renderHook(() => useProductSelectionForm(() => 'category-1'));

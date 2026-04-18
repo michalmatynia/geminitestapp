@@ -65,13 +65,13 @@ let lastKnownFrontPageSettingSource: Exclude<FrontPageSelectionSource, 'disabled
 let lastKnownFrontPageSettingFallbackReason: string | null = null;
 let hasResolvedFrontPageSettingSnapshot = false;
 let frontPageSettingSnapshotIsFresh = false;
-let frontPageSettingSnapshotExpiryTimer: ReturnType<typeof setTimeout> | null = null;
+let frontPageSettingSnapshotExpiryTimer: NodeJS.Timeout | null = null;
 let frontPageSettingRetryBlocked = false;
-let frontPageSettingRetryCooldownTimer: ReturnType<typeof setTimeout> | null = null;
+let frontPageSettingRetryCooldownTimer: NodeJS.Timeout | null = null;
 const frontPageSelectionRecoveryLogCooldownKeys = new Set<string>();
 const frontPageSelectionRecoveryLogCooldownTimers = new Map<
   string,
-  ReturnType<typeof setTimeout>
+  NodeJS.Timeout
 >();
 
 const clearFrontPageSettingSnapshotExpiryTimer = (): void => {
@@ -120,7 +120,7 @@ const scheduleFrontPageSelectionRecoveryLogCooldown = (key: string): void => {
   const timer = setTimeout(() => {
     frontPageSelectionRecoveryLogCooldownKeys.delete(key);
     frontPageSelectionRecoveryLogCooldownTimers.delete(key);
-  }, FRONT_PAGE_SELECTION_LOG_TTL_MS);
+  }, FRONT_PAGE_SELECTION_LOG_TTL_MS) as NodeJS.Timeout;
 
   timer.unref();
   frontPageSelectionRecoveryLogCooldownTimers.set(key, timer);

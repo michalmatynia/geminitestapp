@@ -24,13 +24,23 @@ export const querySchema = z.object({
   limit: optionalIntegerQuerySchema(z.number().int()),
 });
 
-export async function GET_handler(
+const resolveSearchInput = (personaId: string, query: z.infer<typeof querySchema>): Parameters<typeof searchAgentPersonaMemory>[0] => ({
+  personaId,
+  q: query.q ?? null,
+  tag: query.tag ?? null,
+  topic: query.topic ?? null,
+  mood: query.mood ?? null,
+  sourceType: query.sourceType ?? null,
+  limit: query.limit ?? undefined,
+});
+
+export async function getHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { personaId: string }
 ): Promise<Response> {
-  const personaId = params.personaId?.trim();
-  if (!personaId) {
+  const personaId = params.personaId.trim();
+  if (personaId.length === 0) {
     throw badRequestError('Persona id is required.');
   }
 
@@ -40,16 +50,7 @@ export async function GET_handler(
   }
 
   const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
-
-  const payload = await searchAgentPersonaMemory({
-    personaId,
-    q: query.q ?? null,
-    tag: query.tag ?? null,
-    topic: query.topic ?? null,
-    mood: query.mood ?? null,
-    sourceType: query.sourceType ?? null,
-    limit: query.limit ?? undefined,
-  });
+  const payload = await searchAgentPersonaMemory(resolveSearchInput(personaId, query));
 
   return NextResponse.json(payload, {
     headers: {

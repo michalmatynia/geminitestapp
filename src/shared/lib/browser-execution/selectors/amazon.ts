@@ -1,3 +1,7 @@
+import type { SelectorRegistryRole } from '@/shared/contracts/integrations/selector-registry';
+
+import { inferSelectorRegistryRole } from '@/shared/lib/browser-execution/selector-registry-roles';
+
 // ─── Google Lens ─────────────────────────────────────────────────────────────
 
 export const GOOGLE_LENS_FILE_INPUT_SELECTORS = [
@@ -314,6 +318,7 @@ export type AmazonSelectorRegistryDefinition = {
   label: string;
   description: string;
   kind: AmazonSelectorRegistryKind;
+  role: SelectorRegistryRole;
   value: AmazonSelectorRegistryValue;
 };
 
@@ -383,8 +388,15 @@ export const AMAZON_DEFAULT_SELECTOR_RUNTIME: AmazonSelectorRuntime = {
 };
 
 const defineAmazonSelectorRegistryEntry = (
-  definition: AmazonSelectorRegistryDefinition
-): AmazonSelectorRegistryDefinition => definition;
+  definition: Omit<AmazonSelectorRegistryDefinition, 'role'>
+): AmazonSelectorRegistryDefinition => ({
+  ...definition,
+  role: inferSelectorRegistryRole({
+    namespace: 'amazon',
+    key: definition.key,
+    kind: definition.kind,
+  }),
+});
 
 const detectAmazonSelectorRegistryValueType = (
   value: AmazonSelectorRegistryValue
@@ -561,6 +573,7 @@ export const AMAZON_SELECTOR_REGISTRY_SEED_ENTRIES: AmazonSelectorRegistrySeedEn
     label: definition.label,
     description: definition.description,
     kind: definition.kind,
+    role: definition.role,
     valueType: detectAmazonSelectorRegistryValueType(definition.value),
     valueJson: JSON.stringify(definition.value),
   }));

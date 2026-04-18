@@ -19,13 +19,13 @@ const createCollectionSchema = z.object({
   embeddingModel: z.string().trim().min(1),
 });
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const collections = await listEmbeddingCollections();
   const response: AgentTeachingCollectionsResponse = { collections };
   return NextResponse.json(response);
 }
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, createCollectionSchema, {
     logPrefix: 'agentcreator.teaching.collections.POST',
   });

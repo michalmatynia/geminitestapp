@@ -17,12 +17,14 @@ const buildActionArgs = ({
   derived,
   draft,
   queries,
+  refs,
   selection,
   toast,
 }: {
   derived: ReturnType<typeof usePlaywrightProgrammableIntegrationPageDerivedData>;
   draft: ReturnType<typeof usePlaywrightProgrammableConnectionDraft>;
   queries: ReturnType<typeof usePlaywrightProgrammableIntegrationPageQueries>;
+  refs: ReturnType<typeof usePlaywrightProgrammableIntegrationPageRefs>;
   selection: ReturnType<typeof usePlaywrightProgrammableConnectionSelection>;
   toast: ReturnType<typeof useToast>['toast'];
 }): PlaywrightProgrammableIntegrationPageActionArgs => ({
@@ -38,9 +40,11 @@ const buildActionArgs = ({
   promoteBrowserOwnershipMutateAsync: queries.promoteBrowserOwnership.mutateAsync,
   programmableIntegration: queries.programmableIntegration,
   selectedConnection: selection.selectedConnection,
+  scrollToResultSection: refs.scrollToResultSection,
   setIsCleaningAllLegacyBrowserFields: draft.setIsCleaningAllLegacyBrowserFields,
   setIsCleaningLegacyBrowserFields: draft.setIsCleaningLegacyBrowserFields,
   setIsPromotingConnectionSettings: draft.setIsPromotingConnectionSettings,
+  setResultAutoExpandKey: draft.setResultAutoExpandKey,
   setSelectedConnectionId: selection.setSelectedConnectionId,
   testProgrammableConnectionMutateAsync: queries.testProgrammableConnection.mutateAsync,
   toast,
@@ -72,6 +76,7 @@ const buildModel = ({
   cleanupAllBrowserPersistence: queries.cleanupAllBrowserPersistence,
   cleanupBrowserPersistence: queries.cleanupBrowserPersistence,
   importActionOptions: derived.importActionOptions,
+  resultSectionRef: refs.resultSectionRef,
   importSessionPreview: derived.importSessionPreview,
   integrationsQuery: queries.integrationsQuery as PlaywrightProgrammableIntegrationPageModel['integrationsQuery'],
   isBrowserBehaviorActionOwned: derived.isBrowserBehaviorActionOwned,
@@ -82,6 +87,7 @@ const buildModel = ({
   playwrightActionsQuery: queries.playwrightActionsQuery,
   promoteBrowserOwnership: queries.promoteBrowserOwnership,
   programmableIntegration: queries.programmableIntegration,
+  resultAutoExpandKey: draft.resultAutoExpandKey,
   selectedConnection: selection.selectedConnection,
   selectedConnectionId: selection.selectedConnectionId,
   importSelectionHint: selection.importSelectionHint,
@@ -98,7 +104,10 @@ export function usePlaywrightProgrammableIntegrationPageModel({
   const queries = usePlaywrightProgrammableIntegrationPageQueries();
   const selection = usePlaywrightProgrammableConnectionSelection(queries.connections);
   const refs = usePlaywrightProgrammableIntegrationPageRefs(focusSection);
-  const draft = usePlaywrightProgrammableConnectionDraft(selection.selectedConnection);
+  const draft = usePlaywrightProgrammableConnectionDraft(
+    selection.selectedConnection,
+    selection.hasUnresolvedSelectedConnectionId
+  );
   const derived = usePlaywrightProgrammableIntegrationPageDerivedData({
     connections: queries.connections,
     importActionId: draft.importActionId,
@@ -108,7 +117,7 @@ export function usePlaywrightProgrammableIntegrationPageModel({
     selectedConnection: selection.selectedConnection,
   });
   const actions = createPlaywrightProgrammableIntegrationPageActions(
-    buildActionArgs({ derived, draft, queries, selection, toast })
+    buildActionArgs({ derived, draft, queries, refs, selection, toast })
   );
 
   return buildModel({ actions, derived, draft, queries, refs, selection });

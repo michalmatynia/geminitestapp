@@ -25,6 +25,11 @@ import {
   SELECTOR_REGISTRY_NAMESPACES,
 } from '@/shared/lib/browser-execution/selector-registry-metadata';
 import {
+  formatSelectorRegistryRoleLabel,
+  getCompatibleSelectorRolesForStepField,
+  isSelectorRegistryEntryCompatibleWithStepField,
+} from '@/shared/lib/browser-execution/selector-registry-roles';
+import {
   Button,
   Checkbox,
   Dialog,
@@ -56,7 +61,7 @@ const STEP_TYPES = Object.entries(PLAYWRIGHT_STEP_TYPE_LABELS) as [PlaywrightSte
 /** Steps that use a CSS selector */
 const SELECTOR_TYPES: PlaywrightStepType[] = [
   'click', 'fill', 'select', 'check', 'uncheck', 'hover',
-  'wait_for_selector', 'assert_text', 'assert_visible', 'scroll',
+  'wait_for_selector', 'assert_text', 'assert_visible', 'scroll', 'upload_file',
 ];
 
 /** Steps that use a value input */
@@ -211,14 +216,36 @@ export function StepFormModal(): React.JSX.Element | null {
       null,
     [registrySelectorEntries, selectedRegistryNamespace, selectedRegistryProfile, selectorBinding?.selectorKey]
   );
+  const selectorExpectedRoles = useMemo(
+    () => getCompatibleSelectorRolesForStepField(draft.type ?? 'click'),
+    [draft.type]
+  );
+  const selectorExpectedRoleLabels = useMemo(
+    () => selectorExpectedRoles.map((role) => formatSelectorRegistryRoleLabel(role) ?? role),
+    [selectorExpectedRoles]
+  );
+  const selectedRegistryEntryCompatible =
+    selectedRegistryEntry === null
+      ? true
+      : isSelectorRegistryEntryCompatibleWithStepField(selectedRegistryEntry, draft.type ?? 'click');
   const registryEntriesForProfile = useMemo(
     () =>
       registrySelectorEntries.filter(
         (entry) =>
           entry.namespace === selectedRegistryNamespace &&
-          entry.profile === selectedRegistryProfile
+          entry.profile === selectedRegistryProfile &&
+          (isSelectorRegistryEntryCompatibleWithStepField(entry, draft.type ?? 'click') ||
+            (entry.key === selectorBinding?.selectorKey &&
+              entry.namespace === selectedRegistryNamespace &&
+              entry.profile === selectedRegistryProfile))
       ),
-    [registrySelectorEntries, selectedRegistryNamespace, selectedRegistryProfile]
+    [
+      draft.type,
+      registrySelectorEntries,
+      selectedRegistryNamespace,
+      selectedRegistryProfile,
+      selectorBinding?.selectorKey,
+    ]
   );
 
   if (!isOpen) return null;
@@ -264,6 +291,7 @@ export function StepFormModal(): React.JSX.Element | null {
           selectorNamespace: entry.namespace,
           selectorKey: entry.key,
           selectorProfile: entry.profile,
+          selectorRole: entry.role,
           fallbackSelector,
         },
       },
@@ -295,6 +323,7 @@ export function StepFormModal(): React.JSX.Element | null {
         selectorNamespace: result.namespace,
         selectorKey: result.key,
         selectorProfile: result.profile,
+        selectorRole: selectedRegistryEntry.role,
         fallbackSelector: result.preview[0] ?? selector,
       });
       set('selector', result.preview[0] ?? selector);
@@ -326,6 +355,7 @@ export function StepFormModal(): React.JSX.Element | null {
           selectorNamespace,
           selectorKey: selectorBinding.selectorKey?.trim() || null,
           selectorProfile: selectorBinding.selectorProfile?.trim() || null,
+          selectorRole: selectorBinding.selectorRole ?? selectedRegistryEntry?.role ?? null,
           fallbackSelector: selectorBinding.fallbackSelector?.trim() || selector,
         };
       } else if (selectorBinding?.mode === 'disabled') {
@@ -446,6 +476,7 @@ export function StepFormModal(): React.JSX.Element | null {
                         mode,
                         selectorNamespace: selectedRegistryNamespace,
                         selectorProfile: selectedRegistryProfile,
+                        selectorRole: selectedRegistryEntry?.role ?? selectorBinding?.selectorRole ?? null,
                         fallbackSelector: draft.selector ?? null,
                       });
                       return;
@@ -490,6 +521,7 @@ export function StepFormModal(): React.JSX.Element | null {
                             selectorNamespace: nextNamespace,
                             selectorProfile: nextProfile,
                             selectorKey: null,
+                            selectorRole: null,
                             fallbackSelector: draft.selector ?? null,
                           });
                         }}
@@ -521,6 +553,7 @@ export function StepFormModal(): React.JSX.Element | null {
                             mode: 'selectorRegistry',
                             selectorNamespace: selectedRegistryNamespace,
                             selectorProfile: profile,
+                            selectorRole: entry?.role ?? null,
                             ...(entry?.preview[0]
                               ? { fallbackSelector: entry.preview[0] }
                               : {}),
@@ -564,6 +597,9 @@ export function StepFormModal(): React.JSX.Element | null {
                           {registryEntriesForProfile.map((entry) => (
                             <SelectItem key={entry.id} value={entry.id}>
                               {entry.group} / {entry.key}
+                              {formatSelectorRegistryRoleLabel(entry.role)
+                                ? ` (${formatSelectorRegistryRoleLabel(entry.role)})`
+                                : ''}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -575,11 +611,21 @@ export function StepFormModal(): React.JSX.Element | null {
                     <Input
                       id='step-selector-key'
                       value={selectorBinding?.selectorKey ?? ''}
-                      onChange={(e) => setSelectorBinding({
-                        mode: 'selectorRegistry',
-                        selectorNamespace: selectedRegistryNamespace,
-                        selectorKey: e.target.value || null,
-                      })}
+                      onChange={(e) => {
+                        const nextSelectorKey = e.target.value || null;
+                        const matchingEntry = registrySelectorEntries.find(
+                          (entry) =>
+                            entry.namespace === selectedRegistryNamespace &&
+                            entry.profile === selectedRegistryProfile &&
+                            entry.key === nextSelectorKey
+                        );
+                        setSelectorBinding({
+                          mode: 'selectorRegistry',
+                          selectorNamespace: selectedRegistryNamespace,
+                          selectorKey: nextSelectorKey,
+                          selectorRole: matchingEntry?.role ?? null,
+                        });
+                      }}
                       placeholder='e.g. tradera.search.submitButton'
                       className='font-mono text-xs'
                     />
@@ -594,6 +640,7 @@ export function StepFormModal(): React.JSX.Element | null {
                         setSelectorBinding({
                           mode: 'selectorRegistry',
                           selectorNamespace: selectedRegistryNamespace,
+                          selectorRole: selectedRegistryEntry?.role ?? selectorBinding?.selectorRole ?? null,
                           fallbackSelector: e.target.value || null,
                         });
                       }}
@@ -602,12 +649,28 @@ export function StepFormModal(): React.JSX.Element | null {
                     />
                   </div>
                   {selectedRegistryEntry ? (
-                    <div className='rounded border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-100'>
+                    <div
+                      className={
+                        selectedRegistryEntryCompatible
+                          ? 'rounded border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-100'
+                          : 'rounded border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-100'
+                      }
+                    >
                       Connected to {formatSelectorRegistryNamespaceLabel(selectedRegistryEntry.namespace)}/
                       {selectedRegistryEntry.profile}/{selectedRegistryEntry.key}
+                      {formatSelectorRegistryRoleLabel(selectedRegistryEntry.role) ? (
+                        <span className='mt-1 block'>
+                          Role: {formatSelectorRegistryRoleLabel(selectedRegistryEntry.role)}
+                        </span>
+                      ) : null}
                       {selectedRegistryEntry.preview.length > 0 ? (
-                        <span className='mt-1 block break-all text-emerald-100/75'>
+                        <span className='mt-1 block break-all opacity-75'>
                           Preview: {selectedRegistryEntry.preview.join(', ')}
+                        </span>
+                      ) : null}
+                      {!selectedRegistryEntryCompatible && selectorExpectedRoleLabels.length > 0 ? (
+                        <span className='mt-1 block'>
+                          Expected for {draft.type ?? 'click'}: {selectorExpectedRoleLabels.join(', ')}
                         </span>
                       ) : null}
                     </div>
@@ -631,6 +694,7 @@ export function StepFormModal(): React.JSX.Element | null {
                         setSelectorBinding({
                           mode: 'selectorRegistry',
                           selectorNamespace: selectedRegistryNamespace,
+                          selectorRole: selectedRegistryEntry?.role ?? selectorBinding?.selectorRole ?? null,
                           fallbackSelector: selector,
                         });
                       }}

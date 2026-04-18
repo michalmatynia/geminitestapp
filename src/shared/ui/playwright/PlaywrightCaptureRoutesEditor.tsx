@@ -5,6 +5,10 @@ import { ChevronDown, ChevronRight, Plus, Trash2 } from 'lucide-react';
 
 import type { PlaywrightConfigCaptureRoute } from '@/shared/contracts/ai-paths-core/nodes';
 import { buildCaptureRouteUrl } from '@/shared/lib/ai-paths/core/playwright/capture-defaults';
+import {
+  formatSelectorRegistryRoleLabel,
+  getCaptureCompatibleSelectorRoles,
+} from '@/shared/lib/browser-execution/selector-registry-roles';
 import { Button, Input } from '@/shared/ui/primitives.public';
 import { FormField, SelectSimple } from '@/shared/ui/forms-and-actions.public';
 import { cn } from '@/shared/utils/ui-utils';
@@ -22,6 +26,7 @@ const createEmptyRoute = (): PlaywrightConfigCaptureRoute => ({
   path: '/',
   description: '',
   selector: null,
+  selectorRole: null,
   waitForMs: null,
   waitForSelectorMs: 15_000,
 });
@@ -30,6 +35,14 @@ const APPEARANCE_MODE_OPTIONS = [
   { value: '', label: 'Default (no override)' },
   { value: 'dark', label: 'Dark' },
   { value: 'light', label: 'Light' },
+];
+
+const CAPTURE_SELECTOR_ROLE_OPTIONS = [
+  { value: '', label: 'Auto / untyped' },
+  ...getCaptureCompatibleSelectorRoles().map((role) => ({
+    value: role,
+    label: formatSelectorRegistryRoleLabel(role) ?? role,
+  })),
 ];
 
 type RoutePatch = Partial<PlaywrightConfigCaptureRoute>;
@@ -147,9 +160,28 @@ function RouteRow({ route, index }: RouteRowProps): React.JSX.Element {
               variant='subtle'
               size='sm'
               value={route.selector ?? ''}
-              onChange={(e) => onUpdate({ selector: e.target.value.trim() || null })}
+              onChange={(e) =>
+                onUpdate({
+                  selector: e.target.value.trim() || null,
+                  ...(e.target.value.trim() ? {} : { selectorRole: null }),
+                })
+              }
               placeholder='#main-content'
               aria-label='CSS selector'
+            />
+          </FormField>
+
+          <FormField
+            label='Selector Role'
+            description='Optional semantic classification for element-targeted captures.'
+          >
+            <SelectSimple
+              size='sm'
+              variant='subtle'
+              value={route.selectorRole ?? ''}
+              onValueChange={(value) => onUpdate({ selectorRole: value || null })}
+              options={CAPTURE_SELECTOR_ROLE_OPTIONS}
+              disabled={!route.selector}
             />
           </FormField>
 

@@ -21,6 +21,8 @@ type RegistryBindingProps = Pick<
   | 'saveToRegistry'
   | 'setSaveToRegistry'
   | 'selectedRegistryEntry'
+  | 'selectedRegistryEntryCompatible'
+  | 'stepType'
 >;
 
 function LiveScripterCapturedSelectorField({

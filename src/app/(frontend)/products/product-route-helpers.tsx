@@ -17,6 +17,7 @@ export async function renderProductPublicRoute({
   locale,
 }: RenderProductPublicRouteOptions): Promise<JSX.Element> {
   'use cache';
+  await Promise.resolve();
   applyCacheLife('hours');
 
   const resolvedLocale = typeof locale === 'string' ? normalizeSiteLocale(locale) : undefined;

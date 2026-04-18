@@ -3,14 +3,14 @@ export const maxDuration = 300;
 
 import { apiHandler } from '@/shared/lib/api/api-handler';
 
-import { DELETE_handler, POST_handler, deleteQuerySchema } from './handler';
+import { deleteHandler, postHandler, deleteQuerySchema } from './handler';
 
-export const POST = apiHandler(POST_handler, {
+export const POST = apiHandler(postHandler, {
   source: 'agentcreator.personas.avatar.POST',
   requireAuth: true,
 });
 
-export const DELETE = apiHandler(DELETE_handler, {
+export const DELETE = apiHandler(deleteHandler, {
   source: 'agentcreator.personas.avatar.DELETE',
   querySchema: deleteQuerySchema,
   requireAuth: true,

@@ -29,9 +29,28 @@ const updateAgentSchema = z.object({
   enabled: z.boolean().optional(),
 });
 
-export async function PATCH_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+const resolveUpdatedAgent = (
+  existing: AgentTeachingAgentRecord,
+  agentId: string,
+  data: z.infer<typeof updateAgentSchema>
+): AgentTeachingAgentRecord => {
+  const result: AgentTeachingAgentRecord = { ...existing, id: agentId };
+
+  const keys = Object.keys(updateAgentSchema.shape) as Array<keyof z.infer<typeof updateAgentSchema>>;
+  for (const key of keys) {
+    const value = data[key];
+    if (value !== undefined) {
+      // @ts-expect-error - mapping from schema to record
+      result[key] = value ?? null;
+    }
+  }
+
+  return result;
+};
+
+export async function patchHandler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const agentId = ctx.params?.['agentId'];
-  if (typeof agentId !== 'string' || !agentId.trim()) {
+  if (typeof agentId !== 'string' || agentId.trim().length === 0) {
     return NextResponse.json({ error: 'Missing agentId' }, { status: 400 });
   }
 
@@ -45,31 +64,15 @@ export async function PATCH_handler(req: NextRequest, ctx: ApiHandlerContext): P
   });
   if (!parsed.ok) return parsed.response;
 
-  const data = parsed.data;
-  const agent: AgentTeachingAgentRecord = await upsertTeachingAgent({
-    ...existing,
-    id: agentId,
-    name: data.name ?? existing.name,
-    description: data.description !== undefined ? (data.description ?? null) : existing.description,
-    llmModel: data.llmModel ?? existing.llmModel,
-    embeddingModel: data.embeddingModel ?? existing.embeddingModel,
-    systemPrompt: data.systemPrompt ?? existing.systemPrompt,
-    collectionIds: data.collectionIds ?? existing.collectionIds,
-    temperature: data.temperature ?? existing.temperature,
-    maxTokens: data.maxTokens ?? existing.maxTokens,
-    retrievalTopK: data.retrievalTopK ?? existing.retrievalTopK,
-    retrievalMinScore: data.retrievalMinScore ?? existing.retrievalMinScore,
-    maxDocsPerCollection: data.maxDocsPerCollection ?? existing.maxDocsPerCollection,
-    enabled: data.enabled ?? existing.enabled,
-  });
+  const agent = await upsertTeachingAgent(resolveUpdatedAgent(existing, agentId, parsed.data));
 
   const response: AgentTeachingAgentResponse = { agent };
   return NextResponse.json(response);
 }
 
-export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const agentId = ctx.params?.['agentId'];
-  if (typeof agentId !== 'string' || !agentId.trim()) {
+  if (typeof agentId !== 'string' || agentId.trim().length === 0) {
     return NextResponse.json({ error: 'Missing agentId' }, { status: 400 });
   }
   const agent = await getTeachingAgentById(agentId);
@@ -80,9 +83,9 @@ export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Pr
   return NextResponse.json(response);
 }
 
-export async function DELETE_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function deleteHandler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const agentId = ctx.params?.['agentId'];
-  if (typeof agentId !== 'string' || !agentId.trim()) {
+  if (typeof agentId !== 'string' || agentId.trim().length === 0) {
     return NextResponse.json({ error: 'Missing agentId' }, { status: 400 });
   }
   const success = await deleteTeachingAgent(agentId);

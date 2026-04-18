@@ -45,6 +45,10 @@ vi.mock('@/features/integrations/hooks/useProductListingMutations', () => ({
 }));
 
 vi.mock('@/features/integrations/utils/tradera-browser-session', () => ({
+  TRADERA_BROWSER_MANUAL_VERIFICATION_MESSAGE:
+    'Tradera login requires manual verification. Solve the captcha in the opened browser window and retry.',
+  TRADERA_BROWSER_SESSION_SAVE_FAILURE_MESSAGE:
+    'Tradera login session could not be saved. Complete login verification and retry.',
   preflightTraderaQuickListSession: (...args: unknown[]) =>
     preflightTraderaQuickListSessionMock(...args) as Promise<unknown>,
   refreshTraderaBrowserSession: (...args: unknown[]) =>
@@ -475,6 +479,56 @@ describe('useProductListingsActionsImpl', () => {
     expect(syncTraderaMutateAsyncMock).not.toHaveBeenCalled();
   });
 
+  it('shows a toast and opens Tradera recovery when sync preflight returns not ready', async () => {
+    const setError = vi.fn();
+    const setRecoveryContext = vi.fn();
+    preflightTraderaQuickListSessionMock.mockResolvedValueOnce({
+      response: { ok: true, sessionReady: false, steps: [] },
+      ready: false,
+    });
+
+    const { result } = renderHook(() =>
+      useProductListingsActionsImpl(
+        {
+          ...buildBaseParams({
+            listings: [
+              {
+                id: 'listing-1',
+                productId: 'product-1',
+                integrationId: 'integration-tradera-1',
+                connectionId: 'connection-tradera-1',
+                integration: { slug: 'tradera' },
+              },
+            ],
+          }),
+          setError,
+          setRecoveryContext,
+        }
+      )
+    );
+
+    await act(async () => {
+      await result.current.handleSyncTradera('listing-1');
+    });
+
+    expect(toastMock).toHaveBeenCalledWith(
+      'Tradera login requires manual verification. Solve the captcha in the opened browser window and retry.',
+      { variant: 'error' }
+    );
+    expect(setRecoveryContext).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'tradera_quick_export_auth_required',
+        integrationSlug: 'tradera',
+        status: 'auth_required',
+        integrationId: 'integration-tradera-1',
+        connectionId: 'connection-tradera-1',
+        failureReason:
+          'Tradera login requires manual verification. Solve the captcha in the opened browser window and retry.',
+      })
+    );
+    expect(syncTraderaMutateAsyncMock).not.toHaveBeenCalled();
+  });
+
   it('stores Tradera recovery context for non-auth sync preflight failures before queueing', async () => {
     const setError = vi.fn();
     const setRecoveryContext = vi.fn();
@@ -771,6 +825,50 @@ describe('useProductListingsActionsImpl', () => {
       'AUTH_REQUIRED: Stored Tradera session expired and Tradera requires manual verification.'
     );
     expect(setRecoveryContext).not.toHaveBeenCalled();
+  });
+
+  it('stores Tradera recovery context and shows a toast when manual login does not save a session', async () => {
+    const setError = vi.fn();
+    const setRecoveryContext = vi.fn();
+    refreshTraderaBrowserSessionMock.mockResolvedValueOnce({
+      response: { ok: true, steps: [] },
+      savedSession: false,
+    });
+
+    const { result } = renderHook(() =>
+      useProductListingsActionsImpl({
+        ...buildBaseParams(),
+        setError,
+        setRecoveryContext,
+      })
+    );
+
+    let success = true;
+    await act(async () => {
+      success = await result.current.handleOpenTraderaLogin(
+        'recovery',
+        'integration-tradera-1',
+        'connection-tradera-1'
+      );
+    });
+
+    expect(success).toBe(false);
+    expect(toastMock).toHaveBeenCalledWith(
+      'Tradera login session could not be saved. Complete login verification and retry.',
+      { variant: 'error' }
+    );
+    expect(setRecoveryContext).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'tradera_quick_export_auth_required',
+        integrationSlug: 'tradera',
+        status: 'auth_required',
+        integrationId: 'integration-tradera-1',
+        connectionId: 'connection-tradera-1',
+        failureReason:
+          'Tradera login session could not be saved. Complete login verification and retry.',
+      })
+    );
+    expect(setError).toHaveBeenNthCalledWith(1, null);
   });
 
   it('refreshes the Vinted session and clears Vinted recovery state after manual login succeeds', async () => {

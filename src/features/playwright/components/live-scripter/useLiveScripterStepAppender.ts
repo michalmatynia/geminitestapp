@@ -45,6 +45,7 @@ const buildSelectorBinding = (
       selectorNamespace: input.selectorNamespace ?? null,
       selectorKey: input.selectorKey.trim(),
       selectorProfile: trimmedOrNull(input.selectorProfile),
+      selectorRole: input.selectorRole ?? null,
       fallbackSelector: selector,
     };
   }
@@ -64,6 +65,7 @@ export type AppendLiveScripterStepInput = {
   selectorNamespace?: string | null;
   selectorKey?: string | null;
   selectorProfile?: string | null;
+  selectorRole?: PlaywrightStepInputBinding['selectorRole'];
   value?: string | null;
   url?: string | null;
   key?: string | null;

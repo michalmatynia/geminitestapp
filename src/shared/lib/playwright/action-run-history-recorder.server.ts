@@ -211,6 +211,9 @@ const normalizeInputBindings = (
           selectorNamespace: toStringOrNull(rawBinding['selectorNamespace']),
           selectorKey: toStringOrNull(rawBinding['selectorKey']),
           selectorProfile: toStringOrNull(rawBinding['selectorProfile']),
+          selectorRole: toStringOrNull(rawBinding['selectorRole']) as
+            | PlaywrightStepInputBinding['selectorRole']
+            | null,
           fallbackSelector: toStringOrNull(rawBinding['fallbackSelector']),
           variableKey: toStringOrNull(rawBinding['variableKey']),
           expression: toStringOrNull(rawBinding['expression']),

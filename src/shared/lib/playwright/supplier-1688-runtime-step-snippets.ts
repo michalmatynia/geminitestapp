@@ -1,4 +1,9 @@
+import type {
+  SelectorRegistryKind,
+  SelectorRegistryNamespace,
+} from '@/shared/contracts/integrations/selector-registry';
 import type { PlaywrightStepInputBinding } from '@/shared/contracts/playwright-steps';
+import { inferSelectorRegistryRole } from '@/shared/lib/browser-execution/selector-registry-roles';
 import {
   SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY,
   SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS,
@@ -317,6 +322,38 @@ export const getSupplier1688RuntimeStepSelectorKeys = (
   return Object.values(supplier1688RuntimeStepSelectorKeys[stepId] ?? {});
 };
 
+const inferRuntimeSelectorKind = (
+  field: string,
+  selectorKey: string
+): SelectorRegistryKind => {
+  const normalized = `${field}.${selectorKey}`.toLowerCase();
+  if (normalized.includes('pattern')) {
+    return 'pattern';
+  }
+  if (normalized.includes('hint')) {
+    return 'text_hint';
+  }
+  return 'selector';
+};
+
+const buildRuntimeSelectorBinding = (
+  namespace: SelectorRegistryNamespace,
+  field: string,
+  selectorKey: string,
+  selectorProfile: string
+): PlaywrightStepInputBinding => ({
+  mode: 'selectorRegistry',
+  selectorNamespace: namespace,
+  selectorKey,
+  selectorProfile,
+  selectorRole: inferSelectorRegistryRole({
+    namespace,
+    key: selectorKey,
+    kind: inferRuntimeSelectorKind(field, selectorKey),
+  }),
+  fallbackSelector: null,
+});
+
 export const getSupplier1688RuntimeStepInputBindings = (
   stepId: string | null | undefined,
   selectorProfile = '1688'
@@ -328,13 +365,7 @@ export const getSupplier1688RuntimeStepInputBindings = (
   return Object.fromEntries(
     Object.entries(selectorKeys).map(([field, selectorKey]) => [
       field,
-      {
-        mode: 'selectorRegistry',
-        selectorNamespace: '1688',
-        selectorKey,
-        selectorProfile,
-        fallbackSelector: null,
-      } satisfies PlaywrightStepInputBinding,
+      buildRuntimeSelectorBinding('1688', field, selectorKey, selectorProfile),
     ])
   );
 };

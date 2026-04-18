@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { selectorRegistryRoleSchema } from './selector-registry';
+
 export const supplier1688SelectorRegistryValueTypeSchema = z.enum([
   'string',
   'string_array',
@@ -31,6 +33,7 @@ export const supplier1688SelectorRegistryEntrySchema = z.object({
   key: z.string().trim().min(1),
   group: z.string().trim().min(1),
   kind: supplier1688SelectorRegistryKindSchema,
+  role: selectorRegistryRoleSchema,
   description: z.string().trim().nullable(),
   valueType: supplier1688SelectorRegistryValueTypeSchema,
   valueJson: z.string().trim().min(1),
@@ -153,4 +156,3 @@ export const supplier1688SelectorRegistryProfileActionResponseSchema = z.object(
 export type Supplier1688SelectorRegistryProfileActionResponse = z.infer<
   typeof supplier1688SelectorRegistryProfileActionResponseSchema
 >;
-

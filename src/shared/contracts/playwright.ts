@@ -1,3 +1,4 @@
+import type { SelectorRegistryRole } from './integrations/selector-registry';
 import { z } from 'zod';
 
 import { dtoBaseSchema, namedDtoSchema } from './base';
@@ -141,6 +142,7 @@ export type PlaywrightCaptureRoute = {
   path: string;
   description: string;
   selector: string | null;
+  selectorRole?: SelectorRegistryRole | null;
   waitForMs: number | null;
   waitForSelectorMs: number | null;
 };

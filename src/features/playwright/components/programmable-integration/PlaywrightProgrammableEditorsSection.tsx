@@ -45,6 +45,7 @@ type Props = Pick<
   | 'draftMapperRows'
   | 'handleAddDraftMapping'
   | 'handleDeleteDraftMapping'
+  | 'handleSeedDraftMappingFromSourcePath'
   | 'fieldMapperRows'
   | 'handleAddFieldMapping'
   | 'handleDeleteFieldMapping'
@@ -56,6 +57,8 @@ type Props = Pick<
   | 'importBaseUrl'
   | 'importScript'
   | 'importSectionRef'
+  | 'resultAutoExpandKey'
+  | 'resultSectionRef'
   | 'listingScript'
   | 'runningTestType'
   | 'scriptSectionRef'
@@ -554,20 +557,34 @@ function PreviewBlock({
 }
 
 function ArrayPreviewSection({
+  defaultExpanded = false,
   title,
   items,
 }: {
+  defaultExpanded?: boolean;
   title: string;
   items: unknown[];
 }): React.JSX.Element | null {
+  const [isExpanded, setIsExpanded] = React.useState(defaultExpanded);
   const [showAll, setShowAll] = React.useState(false);
+
+  React.useEffect(() => {
+    if (defaultExpanded) {
+      setIsExpanded(true);
+    }
+  }, [defaultExpanded]);
+
   if (items.length === 0) {
     return null;
   }
   const previewItems = showAll ? items : items.slice(0, PREVIEW_ITEM_LIMIT);
 
   return (
-    <details className='rounded-lg border border-border/50 bg-background/30'>
+    <details
+      className='rounded-lg border border-border/50 bg-background/30'
+      open={isExpanded}
+      onToggle={(event) => setIsExpanded((event.currentTarget as HTMLDetailsElement).open)}
+    >
       <summary className='cursor-pointer px-4 py-3 text-sm font-medium text-gray-200'>
         {title} ({items.length})
       </summary>
@@ -641,6 +658,16 @@ function WriteStatusSection({
   const [showAll, setShowAll] = React.useState(false);
   const [statusFilter, setStatusFilter] = React.useState<WriteStatusFilter>('all');
   const [sortMode, setSortMode] = React.useState<WriteStatusSortMode>(defaultSortMode);
+
+  React.useEffect(() => {
+    if (defaultExpanded) {
+      setIsExpanded(true);
+    }
+  }, [defaultExpanded]);
+
+  React.useEffect(() => {
+    setSortMode(defaultSortMode);
+  }, [defaultSortMode]);
   const rows =
     explicitRows.length > 0
       ? explicitRows
@@ -1080,33 +1107,41 @@ function RawJsonBlock({ json }: { json: string }): React.JSX.Element {
   );
 }
 
-function TestResultCard({ testResultJson }: Pick<Props, 'testResultJson'>): React.JSX.Element {
+function TestResultCard({
+  resultAutoExpandKey,
+  resultSectionRef,
+  testResultJson,
+}: Pick<Props, 'resultAutoExpandKey' | 'resultSectionRef' | 'testResultJson'>): React.JSX.Element {
   const parsedResult = parseResultJson(testResultJson);
 
   if (parsedResult === null) {
     return (
-      <Card variant='subtle' padding='md' className='border-border bg-card/40'>
-        <h2 className='text-base font-semibold text-white'>Last Run Result</h2>
-        <p className='mt-1 text-sm text-gray-400'>
-          Test Import and Run Flow use the same response panel. Flow runs surface created drafts and
-          products when commit mode is enabled.
-        </p>
-        <pre className='mt-4 overflow-x-auto rounded-lg border border-border/50 bg-background/60 p-4 text-xs text-gray-200'>
-          {testResultJson.length > 0 ? testResultJson : 'No test run yet.'}
-        </pre>
-      </Card>
+      <div ref={resultSectionRef}>
+        <Card variant='subtle' padding='md' className='border-border bg-card/40'>
+          <h2 className='text-base font-semibold text-white'>Last Run Result</h2>
+          <p className='mt-1 text-sm text-gray-400'>
+            Test Import and Run Flow use the same response panel. Flow runs surface created drafts and
+            products when commit mode is enabled.
+          </p>
+          <pre className='mt-4 overflow-x-auto rounded-lg border border-border/50 bg-background/60 p-4 text-xs text-gray-200'>
+            {testResultJson.length > 0 ? testResultJson : 'No test run yet.'}
+          </pre>
+        </Card>
+      </div>
     );
   }
 
   if (!isObjectRecord(parsedResult)) {
     return (
-      <Card variant='subtle' padding='md' className='border-border bg-card/40'>
-        <h2 className='text-base font-semibold text-white'>Last Run Result</h2>
-        <p className='mt-1 text-sm text-gray-400'>
-          The latest response is not an object payload, so only the raw JSON is available.
-        </p>
-        <RawJsonBlock json={testResultJson} />
-      </Card>
+      <div ref={resultSectionRef}>
+        <Card variant='subtle' padding='md' className='border-border bg-card/40'>
+          <h2 className='text-base font-semibold text-white'>Last Run Result</h2>
+          <p className='mt-1 text-sm text-gray-400'>
+            The latest response is not an object payload, so only the raw JSON is available.
+          </p>
+          <RawJsonBlock json={testResultJson} />
+        </Card>
+      </div>
     );
   }
 
@@ -1186,12 +1221,13 @@ function TestResultCard({ testResultJson }: Pick<Props, 'testResultJson'>): Reac
     resultBuckets.length > 0;
 
   return (
-    <Card variant='subtle' padding='md' className='border-border bg-card/40'>
-      <h2 className='text-base font-semibold text-white'>Last Run Result</h2>
-      <p className='mt-1 text-sm text-gray-400'>
-        Test Import and Run Flow use the same response panel. Flow runs surface created drafts and
-        products when commit mode is enabled.
-      </p>
+    <div ref={resultSectionRef}>
+      <Card variant='subtle' padding='md' className='border-border bg-card/40'>
+        <h2 className='text-base font-semibold text-white'>Last Run Result</h2>
+        <p className='mt-1 text-sm text-gray-400'>
+          Test Import and Run Flow use the same response panel. Flow runs surface created drafts and
+          products when commit mode is enabled.
+        </p>
       {errorMessage !== null ? (
         <Alert variant='error' className='mt-4 text-sm'>
           {errorMessage}
@@ -1297,7 +1333,10 @@ function TestResultCard({ testResultJson }: Pick<Props, 'testResultJson'>): Reac
           title='Draft Write Status'
           explicitRows={draftWriteOutcomeRows}
           contextLinks={retainedScrapeFailureContextLinks}
-          defaultExpanded={hasWriteStatusFailures(draftWriteOutcomeRows)}
+          defaultExpanded={
+            resultAutoExpandKey === 'draftWriteStatus' ||
+            hasWriteStatusFailures(draftWriteOutcomeRows)
+          }
           defaultSortMode={getDefaultWriteStatusSortMode(draftWriteOutcomeRows)}
           executionMode={executionMode}
           payloadRecords={draftPayloads}
@@ -1307,7 +1346,10 @@ function TestResultCard({ testResultJson }: Pick<Props, 'testResultJson'>): Reac
           title='Product Write Status'
           explicitRows={productWriteOutcomeRows}
           contextLinks={retainedScrapeFailureContextLinks}
-          defaultExpanded={hasWriteStatusFailures(productWriteOutcomeRows)}
+          defaultExpanded={
+            resultAutoExpandKey === 'productWriteStatus' ||
+            hasWriteStatusFailures(productWriteOutcomeRows)
+          }
           defaultSortMode={getDefaultWriteStatusSortMode(productWriteOutcomeRows)}
           executionMode={executionMode}
           payloadRecords={productPayloads}
@@ -1317,7 +1359,10 @@ function TestResultCard({ testResultJson }: Pick<Props, 'testResultJson'>): Reac
           title='Draft Write Result Status'
           explicitRows={draftWriteResultRows}
           contextLinks={retainedScrapeFailureContextLinks}
-          defaultExpanded={hasWriteStatusFailures(draftWriteResultRows)}
+          defaultExpanded={
+            resultAutoExpandKey === 'draftWriteResultStatus' ||
+            hasWriteStatusFailures(draftWriteResultRows)
+          }
           defaultSortMode={getDefaultWriteStatusSortMode(draftWriteResultRows)}
           executionMode={executionMode}
           payloadRecords={[]}
@@ -1329,7 +1374,11 @@ function TestResultCard({ testResultJson }: Pick<Props, 'testResultJson'>): Reac
         ) : null}
         <ArrayPreviewSection title='Scraped Items Preview' items={scrapedItems} />
         <ArrayPreviewSection title='Mapped Products Preview' items={mappedProducts} />
-        <ArrayPreviewSection title='Mapped Drafts Preview' items={mappedDrafts} />
+        <ArrayPreviewSection
+          title='Mapped Drafts Preview'
+          items={mappedDrafts}
+          defaultExpanded={resultAutoExpandKey === 'mappedDrafts'}
+        />
         <ArrayPreviewSection title='Draft Payloads Preview' items={draftPayloads} />
         <ArrayPreviewSection title='Drafts Preview' items={drafts} />
         <ArrayPreviewSection title='Product Payloads Preview' items={productPayloads} />
@@ -1347,7 +1396,8 @@ function TestResultCard({ testResultJson }: Pick<Props, 'testResultJson'>): Reac
       </div>
 
       <RawJsonBlock json={testResultJson} />
-    </Card>
+      </Card>
+    </div>
   );
 }
 
@@ -1357,7 +1407,11 @@ export function PlaywrightProgrammableEditorsSection(props: Props): React.JSX.El
       <ListingScriptCard {...props} />
       <ImportConfigurationCard {...props} />
       <PlaywrightProgrammableFieldMapperCard {...props} />
-      <TestResultCard testResultJson={props.testResultJson} />
+      <TestResultCard
+        resultAutoExpandKey={props.resultAutoExpandKey}
+        resultSectionRef={props.resultSectionRef}
+        testResultJson={props.testResultJson}
+      />
     </>
   );
 }

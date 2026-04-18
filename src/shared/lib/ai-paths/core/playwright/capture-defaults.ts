@@ -109,6 +109,8 @@ export default async function run({ page, input, artifacts, helpers, emit, log }
         : id;
     const url = typeof capture.url === 'string' ? capture.url : '';
     const selector = typeof capture.selector === 'string' ? capture.selector.trim() : '';
+    const selectorRole =
+      typeof capture.selectorRole === 'string' ? capture.selectorRole.trim() : '';
     const waitForMs = Number.isFinite(capture.waitForMs) ? Number(capture.waitForMs) : 2000;
     const waitForSelectorMs = Number.isFinite(capture.waitForSelectorMs)
       ? Number(capture.waitForSelectorMs)
@@ -154,7 +156,11 @@ export default async function run({ page, input, artifacts, helpers, emit, log }
     for (let attempt = 1; attempt <= maxCaptureAttempts; attempt += 1) {
       try {
         captureStage = 'navigating';
-        log(\`[\${id}] Attempt \${attempt}/\${maxCaptureAttempts}: navigating to \${url}\`);
+        log(
+          \`[\${id}] Attempt \${attempt}/\${maxCaptureAttempts}: navigating to \${url}\${
+            selectorRole ? \` (selector role: \${selectorRole})\` : ''
+          }\`
+        );
         await page.goto(url, { waitUntil: 'load', timeout: navigationTimeoutMs });
         resolvedUrl = page.url() || url;
         log(\`[\${id}] Load event fired — current URL: \${page.url()}\`);
@@ -373,6 +379,7 @@ export const createEmptyPlaywrightCaptureRoute = (index = 1): PlaywrightCaptureR
   path: '/',
   description: '',
   selector: null,
+  selectorRole: null,
   waitForMs: null,
   waitForSelectorMs: DEFAULT_WAIT_FOR_SELECTOR_MS,
 });

@@ -34,7 +34,27 @@ export const playwrightStepTypeSchema = z.enum([
   'press_key',
   'upload_file',
   'custom_script',
+  'ai_evaluate',
 ]);
+
+export const playwrightAiEvaluateInputSourceSchema = z.enum([
+  'screenshot',
+  'html',
+  'text_content',
+  'selector_text',
+]);
+
+export type PlaywrightAiEvaluateInputSource = z.infer<typeof playwrightAiEvaluateInputSourceSchema>;
+
+export const PLAYWRIGHT_AI_EVALUATE_INPUT_SOURCE_LABELS: Record<
+  PlaywrightAiEvaluateInputSource,
+  string
+> = {
+  screenshot: 'Screenshot (image)',
+  html: 'Full page HTML',
+  text_content: 'Page text content',
+  selector_text: 'Element text (selector)',
+};
 
 export type PlaywrightStepType = z.infer<typeof playwrightStepTypeSchema>;
 
@@ -57,6 +77,7 @@ export const PLAYWRIGHT_STEP_TYPE_LABELS: Record<PlaywrightStepType, string> = {
   press_key: 'Press key',
   upload_file: 'Upload file',
   custom_script: 'Custom script',
+  ai_evaluate: 'AI Evaluate',
 };
 
 // ---------------------------------------------------------------------------
@@ -139,6 +160,9 @@ export const playwrightStepCodePreviewStepSchema = z.object({
   timeout: z.number().nullable().optional(),
   script: z.string().nullable().optional(),
   inputBindings: z.record(z.string(), playwrightStepInputBindingSchema).optional(),
+  // AI Evaluate step parameters
+  aiSystemPrompt: z.string().nullable().optional(),
+  aiInputSource: playwrightAiEvaluateInputSourceSchema.nullable().optional(),
 });
 
 export type PlaywrightStepCodePreviewStep = z.infer<
@@ -187,6 +211,9 @@ export const playwrightStepSchema = z.object({
   timeout: z.number().nullable().optional(),
   script: z.string().nullable().optional(),
   inputBindings: z.record(z.string(), playwrightStepInputBindingSchema).optional(),
+  // AI Evaluate step parameters
+  aiSystemPrompt: z.string().nullable().optional(),
+  aiInputSource: playwrightAiEvaluateInputSourceSchema.nullable().optional(),
   // Scope — null means "shared" (available to all websites / flows)
   websiteId: z.string().nullable(),
   flowId: z.string().nullable(),

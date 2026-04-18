@@ -11,7 +11,9 @@ import type {
   SelectorRegistryNamespace,
 } from '@/shared/contracts/integrations/selector-registry';
 import {
+  PLAYWRIGHT_AI_EVALUATE_INPUT_SOURCE_LABELS,
   PLAYWRIGHT_STEP_TYPE_LABELS,
+  type PlaywrightAiEvaluateInputSource,
   type PlaywrightStep,
   type PlaywrightStepInputBinding,
   type PlaywrightStepInputBindingMode,
@@ -77,6 +79,13 @@ const TIMEOUT_TYPES: PlaywrightStepType[] = ['wait_for_timeout', 'wait_for_selec
 
 /** Steps that use a custom script textarea */
 const SCRIPT_TYPES: PlaywrightStepType[] = ['custom_script'];
+
+/** Steps that use the AI Evaluate configuration */
+const AI_EVALUATE_TYPES: PlaywrightStepType[] = ['ai_evaluate'];
+
+const AI_EVALUATE_INPUT_SOURCES = Object.entries(
+  PLAYWRIGHT_AI_EVALUATE_INPUT_SOURCE_LABELS
+) as [PlaywrightAiEvaluateInputSource, string][];
 const buildRegistryOverrideValueJson = (
   entry: SelectorRegistryEntry,
   selector: string
@@ -109,6 +118,8 @@ function buildEmpty(): StepDraft {
     flowId: null,
     tags: [],
     sortOrder: 0,
+    aiSystemPrompt: null,
+    aiInputSource: 'screenshot',
   };
 }
 
@@ -389,6 +400,8 @@ export function StepFormModal(): React.JSX.Element | null {
       flowId: draft.flowId ?? null,
       tags: draft.tags ?? [],
       sortOrder: draft.sortOrder ?? 0,
+      aiSystemPrompt: draft.aiSystemPrompt?.trim() || null,
+      aiInputSource: draft.aiInputSource ?? null,
     };
 
     if (isEditing && editingStep) {
@@ -399,11 +412,12 @@ export function StepFormModal(): React.JSX.Element | null {
   };
 
   const stepType = draft.type ?? 'click';
-  const showSelector = SELECTOR_TYPES.includes(stepType);
+  const showSelector = SELECTOR_TYPES.includes(stepType) || (AI_EVALUATE_TYPES.includes(stepType) && draft.aiInputSource === 'selector_text');
   const showValue = VALUE_TYPES.includes(stepType);
   const showUrl = URL_TYPES.includes(stepType);
   const showTimeout = TIMEOUT_TYPES.includes(stepType);
   const showScript = SCRIPT_TYPES.includes(stepType);
+  const showAiEvaluate = AI_EVALUATE_TYPES.includes(stepType);
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) close(); }}>
@@ -833,6 +847,49 @@ export function StepFormModal(): React.JSX.Element | null {
                 rows={5}
                 className='font-mono text-xs'
               />
+            </div>
+          ) : null}
+
+          {showAiEvaluate ? (
+            <div className='space-y-3 rounded border border-fuchsia-500/20 bg-fuchsia-500/5 p-3'>
+              <div className='space-y-1.5'>
+                <Label>Input source</Label>
+                <Select
+                  value={draft.aiInputSource ?? 'screenshot'}
+                  onValueChange={(v) => set('aiInputSource', v as PlaywrightAiEvaluateInputSource)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {AI_EVALUATE_INPUT_SOURCES.map(([source, label]) => (
+                      <SelectItem key={source} value={source}>{label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className='text-xs text-muted-foreground'>
+                  What the AI will receive: a screenshot image, raw HTML, body text, or the text of a specific element.
+                </p>
+              </div>
+
+              <p className='text-xs text-muted-foreground'>
+                The AI model is configured in{' '}
+                <a href='/admin/brain?tab=routing' className='underline' target='_blank' rel='noreferrer'>
+                  AI Brain → Playwright
+                </a>
+                .
+              </p>
+
+              <div className='space-y-1.5'>
+                <Label htmlFor='step-ai-prompt'>System prompt</Label>
+                <Textarea
+                  id='step-ai-prompt'
+                  value={draft.aiSystemPrompt ?? ''}
+                  onChange={(e) => set('aiSystemPrompt', e.target.value || null)}
+                  placeholder='Describe what you want the AI to evaluate. For example: "Determine whether the checkout button is visible and enabled. Respond with YES or NO followed by a brief explanation."'
+                  rows={5}
+                />
+              </div>
             </div>
           ) : null}
 

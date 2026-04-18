@@ -330,6 +330,49 @@ describe('frontend layout bootstrap', () => {
     expect(kangurServerShellMock).toHaveBeenCalledTimes(1);
   });
 
+  it('passes Mongo-backed Kangur theme slot settings into standalone shell initialAppearance', async () => {
+    headersMock.mockResolvedValue(
+      new Headers({
+        'x-app-request-pathname': '/en/lessons',
+      })
+    );
+    resolveFrontPageSelectionMock.mockResolvedValue({
+      enabled: true,
+      setting: 'kangur',
+      publicOwner: 'kangur',
+      redirectPath: null,
+      source: 'mongo',
+      fallbackReason: null,
+    });
+    getKangurStorefrontInitialStateMock.mockResolvedValue({
+      initialMode: 'sunset',
+      initialThemeSettings: {
+        dark: '{"backgroundColor":"#020617"}',
+        dawn: '{"backgroundColor":"#f59e0b"}',
+        default: '{"backgroundColor":"#123456"}',
+        sunset: '{"backgroundColor":"#ef4444"}',
+      },
+    });
+
+    await renderResolvedFrontendLayout(<div>kangur-themed-lessons</div>);
+
+    expect(frontendPublicOwnerShellClientMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        publicOwner: 'kangur',
+        initialAppearance: {
+          mode: 'sunset',
+          themeSettings: {
+            dark: '{"backgroundColor":"#020617"}',
+            dawn: '{"backgroundColor":"#f59e0b"}',
+            default: '{"backgroundColor":"#123456"}',
+            sunset: '{"backgroundColor":"#ef4444"}',
+          },
+        },
+      }),
+      undefined
+    );
+  });
+
   it('renders a frontend timing payload only for debug timing requests', async () => {
     headersMock.mockResolvedValue(
       new Headers({

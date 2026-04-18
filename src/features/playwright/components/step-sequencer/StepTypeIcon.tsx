@@ -2,6 +2,7 @@
 
 import {
   ArrowRight,
+  BrainCircuit,
   CheckSquare,
   Code2,
   Eye,
@@ -43,6 +44,7 @@ const STEP_TYPE_ICONS: Record<PlaywrightStepType, IconComponent> = {
   press_key: (p) => <Keyboard {...p} />,
   upload_file: (p) => <Upload {...p} />,
   custom_script: (p) => <Code2 {...p} />,
+  ai_evaluate: (p) => <BrainCircuit {...p} />,
 };
 
 const STEP_TYPE_COLORS: Record<PlaywrightStepType, string> = {
@@ -64,6 +66,7 @@ const STEP_TYPE_COLORS: Record<PlaywrightStepType, string> = {
   press_key: 'text-violet-400',
   upload_file: 'text-rose-400',
   custom_script: 'text-gray-300',
+  ai_evaluate: 'text-fuchsia-400',
 };
 
 type Props = {

@@ -1897,6 +1897,92 @@ describe('product-scans-service', () => {
     );
   });
 
+  it('bypasses AI for non-ambiguous matches on English marketplace domains even with rejectNonEnglishContent enabled', async () => {
+    const scan = createScan({
+      imageCandidates: [
+        {
+          id: 'image-1',
+          filepath: null,
+          url: 'data:image/jpeg;base64,QUJD',
+          filename: 'product-1.jpg',
+        },
+      ],
+    });
+
+    mocks.readPlaywrightEngineRunMock.mockResolvedValue({
+      runId: 'run-1',
+      status: 'completed',
+      completedAt: '2026-04-11T04:05:00.000Z',
+      artifacts: [],
+      result: { outputs: {} },
+    });
+    mocks.resolvePlaywrightEngineRunOutputsMock.mockReturnValue({
+      resultValue: {
+        status: 'matched',
+        asin: 'b00test123',
+        title: 'Amazon title',
+        price: '$19.99',
+        url: 'https://www.amazon.com/dp/B00TEST123',
+        description: 'Amazon description',
+        amazonDetails: {
+          ean: '5901234567890',
+          gtin: '5901234567890',
+          bulletPoints: [],
+          attributes: [],
+          rankings: [],
+        },
+        matchedImageId: 'image-1',
+      },
+      finalUrl: 'https://www.amazon.com/dp/B00TEST123',
+    });
+    mocks.getProductByIdMock.mockResolvedValue({
+      id: 'product-1',
+      asin: 'B00TEST123',
+      ean: '5901234567890',
+      gtin: null,
+      name_en: 'Product 1',
+      description_en: 'Product 1 description',
+      images: [],
+      imageLinks: [],
+    });
+    mocks.resolveProductScannerAmazonCandidateEvaluatorConfigMock.mockResolvedValue({
+      enabled: true,
+      mode: 'brain_default',
+      threshold: 0.85,
+      onlyForAmbiguousCandidates: true,
+      candidateSimilarityMode: 'deterministic_then_ai',
+      rejectNonEnglishContent: true,
+      modelId: 'gpt-4o',
+      systemPrompt: 'Judge the Amazon page conservatively.',
+      brainApplied: {
+        capability: 'product.scan.amazon_candidate_match',
+      },
+    });
+
+    const result = await synchronizeProductScan(scan);
+
+    expect(mocks.runBrainChatCompletionMock).not.toHaveBeenCalled();
+    expect(mocks.updateProductScanMock).toHaveBeenCalledWith(
+      'scan-1',
+      expect.objectContaining({
+        status: 'completed',
+        asinUpdateStatus: 'unchanged',
+        amazonEvaluation: expect.objectContaining({
+          status: 'skipped',
+          proceed: true,
+        }),
+      })
+    );
+    expect(result).toEqual(
+      expect.objectContaining({
+        status: 'completed',
+        amazonEvaluation: expect.objectContaining({
+          status: 'skipped',
+        }),
+      })
+    );
+  });
+
   it('does not bypass AI when similarity decision is configured as AI only', async () => {
     const scan = createScan({
       imageCandidates: [
@@ -2148,7 +2234,7 @@ describe('product-scans-service', () => {
         steps: [
           expect.objectContaining({
             key: 'product_asin_update',
-            status: 'failed',
+            status: 'completed',
             message: 'Detected ASIN B00TEST999 differs from existing ASIN B00TEST123.',
           }),
         ],

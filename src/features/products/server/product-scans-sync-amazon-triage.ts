@@ -31,7 +31,6 @@ import {
 import {
   buildProductScannerEngineRequestOptions,
   getProductScannerSettings,
-  resolveProductScannerHeadless,
 } from './product-scanner-settings';
 
 import {
@@ -126,10 +125,8 @@ export async function synchronizeAmazonTriageReady({
   }
 
   let scannerSettings = createDefaultProductScannerSettings();
-  let scannerHeadless = true;
   try {
     scannerSettings = (await getProductScannerSettings()) ?? scannerSettings;
-    scannerHeadless = await resolveProductScannerHeadless(scannerSettings);
   } catch (error) {
     void ErrorSystem.captureException(error, {
       service: 'product-scans.service',
@@ -298,7 +295,7 @@ export async function synchronizeAmazonTriageReady({
             imageSearchPageUrl,
             selectorProfile: amazonSelectorProfile,
             allowManualVerification:
-              shouldAutoShowScannerCaptchaBrowser(scannerSettings) && !scannerHeadless,
+              shouldAutoShowScannerCaptchaBrowser(scannerSettings),
             manualVerificationTimeoutMs,
             triageOnlyOnAmazonCandidates: triageEvaluatorConfig.enabled,
             probeOnlyOnAmazonMatch: probeEvaluatorConfig.enabled,
@@ -334,7 +331,7 @@ export async function synchronizeAmazonTriageReady({
             imageSearchPageUrl,
             imageSearchProviderHistory: [...providerHistory, fallbackProvider],
             allowManualVerification:
-              shouldAutoShowScannerCaptchaBrowser(scannerSettings) && !scannerHeadless,
+              shouldAutoShowScannerCaptchaBrowser(scannerSettings),
             manualVerificationTimeoutMs,
             previousRunId: engineRunId,
             previousResult: triageRawResult,
@@ -430,7 +427,7 @@ export async function synchronizeAmazonTriageReady({
             imageSearchPageUrl,
             selectorProfile: amazonSelectorProfile,
             allowManualVerification:
-              shouldAutoShowScannerCaptchaBrowser(scannerSettings) && !scannerHeadless,
+              shouldAutoShowScannerCaptchaBrowser(scannerSettings),
             manualVerificationTimeoutMs,
             probeOnlyOnAmazonMatch: probeEvaluatorConfig.enabled,
             skipAmazonProbe: false,
@@ -470,7 +467,7 @@ export async function synchronizeAmazonTriageReady({
             imageSearchPageUrl,
             imageSearchProviderHistory: providerHistory,
             allowManualVerification:
-              shouldAutoShowScannerCaptchaBrowser(scannerSettings) && !scannerHeadless,
+              shouldAutoShowScannerCaptchaBrowser(scannerSettings),
             manualVerificationTimeoutMs,
             previousRunId: engineRunId,
             previousResult: triageRawResult,

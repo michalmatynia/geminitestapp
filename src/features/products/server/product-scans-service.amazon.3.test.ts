@@ -121,7 +121,10 @@ vi.mock('@/shared/lib/ai-brain/server-runtime-client', () => ({
 }));
 
 import type { ProductScanRecord } from '@/shared/contracts/product-scans';
-import { AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY } from '@/shared/lib/browser-execution/amazon-runtime-constants';
+import {
+  AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY,
+  AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY,
+} from '@/shared/lib/browser-execution/amazon-runtime-constants';
 
 import {
   queue1688BatchProductScans,
@@ -664,6 +667,205 @@ describe('product-scans-service', () => {
       expect.objectContaining({
         status: 'completed',
         asinUpdateStatus: 'not_needed',
+      })
+    );
+  });
+
+  it('queues the fallback provider when google candidates end with no Amazon URLs', async () => {
+    const scan = createScan({
+      status: 'running',
+      rawResult: {
+        imageSearchProvider: 'google_images_upload',
+        imageSearchProviderHistory: ['google_images_upload'],
+      },
+    });
+
+    mocks.readPlaywrightEngineRunMock.mockResolvedValue({
+      runId: 'run-1',
+      status: 'completed',
+      completedAt: '2026-04-11T04:05:00.000Z',
+      artifacts: [],
+      result: { outputs: {} },
+    });
+    mocks.resolvePlaywrightEngineRunOutputsMock.mockReturnValue({
+      resultValue: {
+        status: 'failed',
+        stage: 'google_candidates',
+        matchedImageId: 'image-1',
+        message: 'No Amazon candidates found in Google Lens results.',
+        steps: [
+          {
+            key: 'google_upload',
+            label: 'Upload image to Google Lens',
+            group: 'google',
+            attempt: 1,
+            candidateId: 'image-1',
+            candidateRank: 1,
+            inputSource: null,
+            retryOf: null,
+            resultCode: 'ok',
+            status: 'completed',
+            message: 'Image was submitted to Google Lens and the search advanced.',
+            warning: null,
+            details: [],
+            url: 'https://lens.google.com/upload',
+            startedAt: '2026-04-11T04:04:00.000Z',
+            completedAt: '2026-04-11T04:04:06.000Z',
+            durationMs: 6000,
+          },
+          {
+            key: 'google_candidates',
+            label: 'Collect Amazon candidates from Google Lens',
+            group: 'google',
+            attempt: 1,
+            candidateId: 'image-1',
+            candidateRank: 1,
+            inputSource: null,
+            retryOf: null,
+            resultCode: 'no_candidates',
+            status: 'failed',
+            message: 'Google Lens results did not contain any Amazon product URLs.',
+            warning: null,
+            details: [],
+            url: 'https://lens.google.com/search?p=uploaded',
+            startedAt: '2026-04-11T04:04:06.000Z',
+            completedAt: '2026-04-11T04:04:08.000Z',
+            durationMs: 2000,
+          },
+        ],
+      },
+      finalUrl: 'https://lens.google.com/search?p=uploaded',
+    });
+    mocks.getProductByIdMock.mockResolvedValue({
+      id: 'product-1',
+      asin: null,
+      ean: null,
+      gtin: null,
+      name_en: 'Product 1',
+      description_en: 'Product 1 description',
+      images: [],
+      imageLinks: [],
+    });
+    mocks.startPlaywrightEngineTaskMock.mockResolvedValue({
+      runId: 'run-2',
+      status: 'queued',
+    });
+
+    const result = await synchronizeProductScan(scan);
+
+    expect(mocks.startPlaywrightEngineTaskMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        request: expect.objectContaining({
+          runtimeKey: AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY,
+          input: expect.objectContaining({
+            runtimeKey: AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY,
+            imageSearchProvider: 'google_lens_upload',
+            collectAmazonCandidatePreviews: false,
+            triageOnlyOnAmazonCandidates: false,
+            probeOnlyOnAmazonMatch: false,
+          }),
+        }),
+      })
+    );
+    expect(mocks.updateProductScanMock).toHaveBeenCalledWith(
+      'scan-1',
+      expect.objectContaining({
+        status: 'queued',
+        engineRunId: 'run-2',
+        error: null,
+        asinUpdateStatus: 'pending',
+        rawResult: expect.objectContaining({
+          imageSearchProvider: 'google_lens_upload',
+          imageSearchProviderHistory: ['google_images_upload', 'google_lens_upload'],
+          providerFallback: true,
+          fallbackFromImageSearchProvider: 'google_images_upload',
+          fallbackToImageSearchProvider: 'google_lens_upload',
+          fallbackTriggerStage: 'google_candidates',
+          previousRunId: 'run-1',
+        }),
+        steps: expect.arrayContaining([
+          expect.objectContaining({
+            key: 'queue_scan',
+            status: 'completed',
+            resultCode: 'run_queued',
+            message: 'Queued an Amazon scan with the fallback image-search provider.',
+          }),
+        ]),
+      })
+    );
+    expect(result).toEqual(
+      expect.objectContaining({
+        status: 'queued',
+        engineRunId: 'run-2',
+        asinUpdateStatus: 'pending',
+      })
+    );
+  });
+
+  it('keeps google candidate failures terminal when no fallback provider remains', async () => {
+    const scan = createScan({
+      status: 'running',
+      rawResult: {
+        imageSearchProvider: 'google_images_upload',
+        imageSearchProviderHistory: ['google_images_upload', 'google_lens_upload'],
+      },
+    });
+
+    mocks.readPlaywrightEngineRunMock.mockResolvedValue({
+      runId: 'run-1',
+      status: 'completed',
+      completedAt: '2026-04-11T04:05:00.000Z',
+      artifacts: [],
+      result: { outputs: {} },
+    });
+    mocks.resolvePlaywrightEngineRunOutputsMock.mockReturnValue({
+      resultValue: {
+        status: 'failed',
+        stage: 'google_candidates',
+        matchedImageId: 'image-1',
+        message: 'No Amazon candidates found in Google Lens results.',
+        steps: [
+          {
+            key: 'google_candidates',
+            label: 'Collect Amazon candidates from Google Lens',
+            group: 'google',
+            attempt: 1,
+            candidateId: 'image-1',
+            candidateRank: 1,
+            inputSource: null,
+            retryOf: null,
+            resultCode: 'no_candidates',
+            status: 'failed',
+            message: 'Google Lens results did not contain any Amazon product URLs.',
+            warning: null,
+            details: [],
+            url: 'https://lens.google.com/search?p=uploaded',
+            startedAt: '2026-04-11T04:04:06.000Z',
+            completedAt: '2026-04-11T04:04:08.000Z',
+            durationMs: 2000,
+          },
+        ],
+      },
+      finalUrl: 'https://lens.google.com/search?p=uploaded',
+    });
+
+    const result = await synchronizeProductScan(scan);
+
+    expect(mocks.getProductByIdMock).not.toHaveBeenCalled();
+    expect(mocks.startPlaywrightEngineTaskMock).not.toHaveBeenCalled();
+    expect(mocks.updateProductScanMock).toHaveBeenCalledWith(
+      'scan-1',
+      expect.objectContaining({
+        status: 'failed',
+        error: 'No Amazon candidates found in Google Lens results.',
+        asinUpdateStatus: 'failed',
+        asinUpdateMessage: 'No Amazon candidates found in Google Lens results.',
+      })
+    );
+    expect(result).toEqual(
+      expect.objectContaining({
+        status: 'failed',
+        asinUpdateStatus: 'failed',
       })
     );
   });

@@ -46,7 +46,6 @@ import {
   resolveProductScanner1688CandidateEvaluatorConfig,
   resolveProductScannerAmazonCandidateEvaluatorConfig,
   resolveProductScannerAmazonCandidateEvaluatorProbeConfig,
-  resolveProductScannerHeadless,
 } from './product-scanner-settings';
 import {
   findLatestActiveProductScan,
@@ -276,10 +275,8 @@ async function queueBatchProductScans(input: {
       : null;
 
   let scannerSettings = createDefaultProductScannerSettings();
-  let scannerHeadless = true;
   try {
     scannerSettings = (await getProductScannerSettings()) ?? scannerSettings;
-    scannerHeadless = await resolveProductScannerHeadless(scannerSettings);
   } catch (error) {
     await ErrorSystem.captureException(error, {
       service: 'product-scans.service',
@@ -423,13 +420,11 @@ async function queueBatchProductScans(input: {
 
           const shouldAutoShowCaptchaBrowser =
             shouldAutoShowScannerCaptchaBrowser(scannerSettings);
-          const scannerRunsHeadless = shouldAutoShowCaptchaBrowser ? false : scannerHeadless;
           const scannerRuntimeOptions = buildAmazonScannerRequestRuntimeOptions({
             scannerSettings,
             scannerEngineRequestOptions,
             actionExecutionSettings: amazonRuntimeAction?.executionSettings ?? null,
             actionPersonaId: amazonRuntimeAction?.personaId ?? null,
-            ...(shouldAutoShowCaptchaBrowser ? { forceHeadless: false } : {}),
           });
           const imageSearchProvider =
             resolveAmazonImageSearchProvider(requestInput, scannerSettings);
@@ -463,7 +458,7 @@ async function queueBatchProductScans(input: {
                 imageSearchPageUrl,
                 selectorProfile: amazonSelectorProfile,
                 allowManualVerification:
-                  shouldAutoShowCaptchaBrowser && !scannerRunsHeadless,
+                  shouldAutoShowCaptchaBrowser,
                 manualVerificationTimeoutMs,
                 triageOnlyOnAmazonCandidates:
                   isCandidateSearchRuntime || isCandidateExtractionRuntime

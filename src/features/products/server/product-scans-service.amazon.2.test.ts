@@ -178,6 +178,13 @@ const createScan = (overrides: Partial<ProductScanRecord> = {}): ProductScanReco
 describe('product-scans-service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.updateProductScanMock.mockImplementation(
+      async (id: string, updates: Partial<ProductScanRecord>) => ({
+        ...createScan({ id }),
+        ...updates,
+        id,
+      })
+    );
   });
 
   it('continues with the next Amazon candidate after a probe-stage AI rejection', async () => {

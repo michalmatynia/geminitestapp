@@ -148,6 +148,10 @@ export const resolveProductScanStepGroup = (
   key: string | null | undefined
 ): ProductScanStep['group'] => resolveSharedProductScanStepGroup(key);
 
+const normalizePersistedProductScanStepDetails = (
+  details: ProductScanStep['details'] | null | undefined
+): ProductScanStep['details'] => (Array.isArray(details) ? details.slice(0, 20) : []);
+
 export const areProductScanStepsEqual = (
   a: ProductScanStep[],
   b: ProductScanStep[]
@@ -223,7 +227,7 @@ export const resolvePersistedProductScanSteps = (
       results[existingIndex] = {
         ...existing,
         ...nextStep,
-        details: nextStep.details ?? existing.details ?? [],
+        details: normalizePersistedProductScanStepDetails(nextStep.details ?? existing.details),
       };
     } else {
       results.push(nextStep);
@@ -257,7 +261,7 @@ export const upsertPersistedProductScanStep = (
     status: nextStep.status ?? existingStep?.status ?? 'pending',
     resultCode: nextStep.resultCode ?? existingStep?.resultCode ?? null,
     message: nextStep.message ?? existingStep?.message ?? null,
-    details: nextStep.details ?? existingStep?.details ?? [],
+    details: normalizePersistedProductScanStepDetails(nextStep.details ?? existingStep?.details),
     candidateId: nextStep.candidateId ?? existingStep?.candidateId ?? null,
     candidateRank: nextStep.candidateRank ?? existingStep?.candidateRank ?? null,
     url: nextStep.url ?? existingStep?.url ?? null,
@@ -299,7 +303,7 @@ export const createPersistedProductScanStep = (input: {
   status: input.status ?? 'pending',
   resultCode: input.resultCode ?? null,
   message: readOptionalString(input.message),
-  details: input.details ?? [],
+  details: normalizePersistedProductScanStepDetails(input.details),
   url: readOptionalString(input.url, PRODUCT_SCAN_URL_MAX_LENGTH),
   candidateId: readOptionalString(input.candidateId, PRODUCT_SCAN_MATCHED_IMAGE_ID_MAX_LENGTH),
   candidateRank: readOptionalPositiveInt(input.candidateRank),

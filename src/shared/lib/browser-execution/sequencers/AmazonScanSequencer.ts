@@ -51,6 +51,26 @@ const GOOGLE_LENS_SAFE_ENTRY_TRIGGER_SELECTORS = [
 ] as const;
 
 const GOOGLE_IMAGES_UPLOAD_ENTRY_URL = 'https://www.google.com/imghp?hl=en';
+const GOOGLE_LENS_CAPTCHA_SELECTORS = [
+  '#captcha-form',
+  '.g-recaptcha',
+  '#recaptcha',
+  'iframe[src*="recaptcha"]',
+  'iframe[title*="reCAPTCHA"]',
+  'textarea[name="g-recaptcha-response"]',
+  'input[name="g-recaptcha-response"]',
+] as const;
+const GOOGLE_LENS_CAPTCHA_TEXT_HINTS = [
+  'our systems have detected unusual traffic',
+  'unusual traffic from your computer network',
+  'to continue, please type the characters below',
+  'verify you are human',
+  'not a robot',
+  'complete the captcha',
+  'nasze systemy wykryly nietypowy ruch',
+  'nietypowy ruch pochodzacy z twojej sieci komputerowej',
+  'nie jestem robotem',
+] as const;
 
 // ─── Input types ───────────────────────────────────────────────────────────────
 
@@ -2362,6 +2382,21 @@ export class AmazonScanSequencer extends ProductScanSequencer {
     if (url.includes('sorry') || url.includes('ipv4.google.com') || url.includes('ipv6.google.com')) {
       return { detected: true, currentUrl: url };
     }
+
+    const captchaSelectorState = await this.findFirstPresentInScopes(GOOGLE_LENS_CAPTCHA_SELECTORS);
+    if (captchaSelectorState.selector) {
+      return { detected: true, currentUrl: url };
+    }
+
+    for (const scope of this.listSearchScopes()) {
+      const bodyText = this.normalizeSurfaceText(
+        await scope.target.locator('body').first().textContent().catch(() => '')
+      );
+      if (GOOGLE_LENS_CAPTCHA_TEXT_HINTS.some((hint) => bodyText.includes(hint))) {
+        return { detected: true, currentUrl: url };
+      }
+    }
+
     return { detected: false, currentUrl: url };
   }
 
@@ -2426,6 +2461,18 @@ export class AmazonScanSequencer extends ProductScanSequencer {
         const locator = scope.target.locator(selector).first();
         if ((await locator.count().catch(() => 0)) === 0) continue;
         if (await locator.isVisible().catch(() => false)) {
+          return { selector, scopeType: scope.scopeType, frameUrl: scope.frameUrl };
+        }
+      }
+    }
+    return { selector: null, scopeType: null, frameUrl: null };
+  }
+
+  private async findFirstPresentInScopes(selectors: readonly string[]): Promise<SelectorMatchState> {
+    for (const scope of this.listSearchScopes()) {
+      for (const selector of selectors) {
+        const locator = scope.target.locator(selector).first();
+        if ((await locator.count().catch(() => 0)) > 0) {
           return { selector, scopeType: scope.scopeType, frameUrl: scope.frameUrl };
         }
       }
@@ -2711,11 +2758,52 @@ export class AmazonScanSequencer extends ProductScanSequencer {
       await this.wait(500);
     }
 
+    const finalCurrentUrl = this.page.url();
+    const finalProcessingState = await this.readGoogleLensProcessingState().catch(() => lastProcessingState);
+    const finalHasResultHints = await this.hasGoogleLensResultHints();
+
+    if (finalHasResultHints) {
+      return {
+        advanced: true,
+        currentUrl: finalCurrentUrl,
+        reason: 'result_hints',
+        processingState: finalProcessingState,
+      };
+    }
+
+    const timeoutCaptchaState = await this.detectGoogleLensCaptcha();
+    if (timeoutCaptchaState.detected) {
+      return {
+        advanced: true,
+        currentUrl: timeoutCaptchaState.currentUrl,
+        reason: 'captcha',
+        processingState: finalProcessingState,
+      };
+    }
+
+    if (finalCurrentUrl !== startingUrl && !this.isGoogleImagesUploadEntryUrl(finalCurrentUrl)) {
+      return {
+        advanced: true,
+        currentUrl: finalCurrentUrl,
+        reason: 'url_changed',
+        processingState: finalProcessingState,
+      };
+    }
+
+    if (finalProcessingState?.resultShellVisible) {
+      return {
+        advanced: true,
+        currentUrl: finalCurrentUrl,
+        reason: 'results_shell_visible',
+        processingState: finalProcessingState,
+      };
+    }
+
     return {
       advanced: false,
-      currentUrl: this.page.url(),
-      reason: lastProcessingState?.processingVisible ? 'upload_processing_timeout' : 'timeout',
-      processingState: lastProcessingState,
+      currentUrl: finalCurrentUrl,
+      reason: finalProcessingState?.processingVisible ? 'upload_processing_timeout' : 'timeout',
+      processingState: finalProcessingState,
     };
   }
 
@@ -2740,6 +2828,13 @@ export class AmazonScanSequencer extends ProductScanSequencer {
       if (host.startsWith('www.google.') && (path === '/imghp' || path === '/images')) return true;
     } catch { /* ignore */ }
     return false;
+  }
+
+  private normalizeSurfaceText(value: unknown): string {
+    return (typeof value === 'string' ? value : '')
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
   }
 
   private async isGoogleConsentPresent(): Promise<boolean> {

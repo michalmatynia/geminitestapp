@@ -609,7 +609,7 @@ describe('product-scans-service batch operations', () => {
     );
   });
 
-  it('starts Amazon scans headed immediately when captcha auto-show is enabled', async () => {
+  it('keeps Amazon scans headless initially while allowing captcha manual verification', async () => {
     mocks.findLatestActiveProductScanMock.mockResolvedValue(null);
     mocks.getProductScannerSettingsMock.mockResolvedValue({
       captchaBehavior: 'auto_show_browser',
@@ -621,7 +621,6 @@ describe('product-scans-service batch operations', () => {
         headless: true,
       },
     });
-    mocks.resolveProductScannerHeadlessMock.mockResolvedValue(true);
     mocks.getProductByIdMock.mockResolvedValue({
       id: 'product-1',
       name_en: 'Captcha Product',
@@ -655,19 +654,15 @@ describe('product-scans-service batch operations', () => {
     });
 
     expect(result.queued).toBe(1);
-    expect(mocks.startPlaywrightEngineTaskMock).toHaveBeenCalledWith(
+    const startRequest = mocks.startPlaywrightEngineTaskMock.mock.calls[0]?.[0]?.request;
+    expect(startRequest?.input).toEqual(
       expect.objectContaining({
-        request: expect.objectContaining({
-          settingsOverrides: expect.objectContaining({
-            headless: false,
-          }),
-          input: expect.objectContaining({
-            allowManualVerification: true,
-            manualVerificationTimeoutMs: 180000,
-          }),
-        }),
+        allowManualVerification: true,
+        manualVerificationTimeoutMs: 180000,
       })
     );
+    expect(startRequest?.settingsOverrides ?? {}).not.toHaveProperty('headless');
+    expect(mocks.resolveProductScannerHeadlessMock).not.toHaveBeenCalled();
   });
 
   it('forwards custom Amazon step sequence settings into the Playwright request', async () => {

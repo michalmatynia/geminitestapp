@@ -55,6 +55,7 @@ export const BRAIN_FEATURE_KEYS: AiBrainFeature[] = [
   'ai_paths',
   'chatbot',
   'prompt_engine',
+  'playwright',
 ];
 
 export type AiBrainCapabilityPolicy = 'model-only' | 'agent-or-model';
@@ -348,6 +349,20 @@ export const BRAIN_CAPABILITY_REGISTRY: Record<AiBrainCapabilityKey, BrainCapabi
     policy: 'model-only',
     modelFamily: 'chat',
   },
+  'playwright.ai_evaluator_step': {
+    key: 'playwright.ai_evaluator_step',
+    feature: 'playwright',
+    label: 'Playwright AI Evaluator Step',
+    policy: 'model-only',
+    modelFamily: 'vision_extract',
+  },
+  'playwright.probe_suggestions': {
+    key: 'playwright.probe_suggestions',
+    feature: 'playwright',
+    label: 'Playwright Probe Suggestions',
+    policy: 'model-only',
+    modelFamily: 'chat',
+  },
 };
 
 export const BRAIN_CAPABILITY_KEYS = Object.keys(
@@ -371,6 +386,7 @@ export const DEFAULT_BRAIN_CAPABILITY_BY_FEATURE: Record<AiBrainFeature, AiBrain
   agent_teaching: 'agent_teaching.chat',
   prompt_engine: 'prompt_engine.prompt_exploder',
   integrations: 'selector_registry.role_classification',
+  playwright: 'playwright.ai_evaluator_step',
 };
 
 export const defaultBrainAssignment: AiBrainAssignment = {

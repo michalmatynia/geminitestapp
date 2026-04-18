@@ -1154,6 +1154,142 @@ describe('AmazonScanSequencer', () => {
       );
     });
 
+    it('detects captcha from page text even when Google stays off the /sorry URL', async () => {
+      const currentUrl = 'https://www.google.com/?olud';
+      const makeLocator = (params?: { count?: number; textContent?: string | null }) => ({
+        count: vi.fn().mockResolvedValue(params?.count ?? 0),
+        isVisible: vi.fn().mockResolvedValue((params?.count ?? 0) > 0),
+        click: vi.fn().mockResolvedValue(undefined),
+        first: vi.fn().mockReturnThis(),
+        nth: vi.fn().mockReturnThis(),
+        evaluateAll: vi.fn().mockResolvedValue([]),
+        setInputFiles: vi.fn().mockResolvedValue(undefined),
+        waitFor: vi.fn().mockRejectedValue(new Error('timeout')),
+        textContent: vi.fn().mockResolvedValue(params?.textContent ?? null),
+      });
+      const ctx = makeContext({
+        url: vi.fn().mockReturnValue(currentUrl),
+        locator: vi.fn().mockImplementation((selector: string) => {
+          if (selector === 'body') {
+            return makeLocator({
+              count: 1,
+              textContent: 'Nasze systemy wykryły nietypowy ruch pochodzący z Twojej sieci komputerowej.',
+            });
+          }
+          return makeLocator();
+        }),
+      });
+      const seq = new AmazonScanSequencer(ctx);
+
+      await expect((seq as any).detectGoogleLensCaptcha()).resolves.toEqual({
+        detected: true,
+        currentUrl,
+      });
+    });
+
+    it('reclassifies a late Google upload timeout as captcha when the anti-bot page appears at the deadline', async () => {
+      const currentUrl = 'https://www.google.com/?olud';
+      const dateSpy = vi.spyOn(Date, 'now');
+      const realDateNow = Date.now;
+      let fakeNow = realDateNow();
+      dateSpy.mockImplementation(() => {
+        fakeNow += 30_000;
+        return fakeNow;
+      });
+
+      const makeLocator = (params?: { count?: number; textContent?: string | null }) => ({
+        count: vi.fn().mockResolvedValue(params?.count ?? 0),
+        isVisible: vi.fn().mockResolvedValue((params?.count ?? 0) > 0),
+        click: vi.fn().mockResolvedValue(undefined),
+        first: vi.fn().mockReturnThis(),
+        nth: vi.fn().mockReturnThis(),
+        evaluateAll: vi.fn().mockResolvedValue([]),
+        setInputFiles: vi.fn().mockResolvedValue(undefined),
+        waitFor: vi.fn().mockRejectedValue(new Error('timeout')),
+        textContent: vi.fn().mockResolvedValue(params?.textContent ?? null),
+      });
+
+      try {
+        const ctx = makeContext({
+          url: vi.fn().mockReturnValue(currentUrl),
+          locator: vi.fn().mockImplementation((selector: string) => {
+            if (selector === 'body') {
+              return makeLocator({
+                count: 1,
+                textContent: 'Our systems have detected unusual traffic from your computer network.',
+              });
+            }
+            return makeLocator();
+          }),
+        });
+        const seq = new AmazonScanSequencer(ctx);
+
+        const result = await (seq as any).waitForGoogleLensResultState(currentUrl, null, null);
+
+        expect(result).toEqual(
+          expect.objectContaining({
+            advanced: true,
+            currentUrl,
+            reason: 'captcha',
+          })
+        );
+      } finally {
+        dateSpy.mockRestore();
+      }
+    });
+
+    it('reclassifies a late Google upload timeout as advanced when Lens reaches a results URL at the deadline', async () => {
+      const startingUrl = 'https://www.google.com/?olud';
+      const currentUrl = 'https://www.google.com/search?vsrid=test&udm=26';
+      const dateSpy = vi.spyOn(Date, 'now');
+      const realDateNow = Date.now;
+      let fakeNow = realDateNow();
+      dateSpy.mockImplementation(() => {
+        fakeNow += 30_000;
+        return fakeNow;
+      });
+
+      const makeLocator = (params?: { count?: number; textContent?: string | null }) => ({
+        count: vi.fn().mockResolvedValue(params?.count ?? 0),
+        isVisible: vi.fn().mockResolvedValue((params?.count ?? 0) > 0),
+        click: vi.fn().mockResolvedValue(undefined),
+        first: vi.fn().mockReturnThis(),
+        nth: vi.fn().mockReturnThis(),
+        evaluateAll: vi.fn().mockResolvedValue([]),
+        setInputFiles: vi.fn().mockResolvedValue(undefined),
+        waitFor: vi.fn().mockRejectedValue(new Error('timeout')),
+        textContent: vi.fn().mockResolvedValue(params?.textContent ?? null),
+      });
+
+      try {
+        const ctx = makeContext({
+          url: vi.fn().mockReturnValue(currentUrl),
+          locator: vi.fn().mockImplementation((selector: string) => {
+            if (selector === 'body') {
+              return makeLocator({
+                count: 1,
+                textContent: 'Visual matches and related results.',
+              });
+            }
+            return makeLocator();
+          }),
+        });
+        const seq = new AmazonScanSequencer(ctx);
+
+        const result = await (seq as any).waitForGoogleLensResultState(startingUrl, null, null);
+
+        expect(result).toEqual(
+          expect.objectContaining({
+            advanced: true,
+            currentUrl,
+            reason: 'url_changed',
+          })
+        );
+      } finally {
+        dateSpy.mockRestore();
+      }
+    });
+
     it('scan completes when goto fails to advance to result page', async () => {
       // Use a sleep mock that fast-forwards time so the 25s wait loop terminates instantly
       let elapsed = 0;

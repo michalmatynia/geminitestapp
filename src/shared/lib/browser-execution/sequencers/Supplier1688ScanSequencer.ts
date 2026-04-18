@@ -261,6 +261,8 @@ export class Supplier1688ScanSequencer extends ProductScanSequencer {
     }
 
     // ── Upload image ──────────────────────────────────────────────────────────
+    let uploadSucceeded = false;
+
     const uploadResult = await this.upload1688Image({ candidate: selectedCandidate, candidateId, candidateRank });
 
     if (uploadResult.captchaRequired) {
@@ -274,9 +276,30 @@ export class Supplier1688ScanSequencer extends ProductScanSequencer {
         });
         return;
       }
+
+      // Captcha resolved. Check whether the search already produced results
+      // (1688 sometimes auto-searches when captcha is cleared), or re-upload.
+      const earlyUrls = await this.collect1688CandidateUrls().catch(() => [] as string[]);
+      if (earlyUrls.length > 0) {
+        uploadSucceeded = true;
+      } else {
+        const retryUpload = await this.upload1688Image({ candidate: selectedCandidate, candidateId, candidateRank });
+        if (!retryUpload.success) {
+          await this.emitResult({
+            status: retryUpload.captchaRequired ? 'captcha_required' : 'failed',
+            title: null, price: null, url: null, description: null,
+            message: retryUpload.message ?? '1688 image upload failed after captcha recovery.',
+            stage: '1688_upload',
+          });
+          return;
+        }
+        uploadSucceeded = true;
+      }
+    } else {
+      uploadSucceeded = uploadResult.success;
     }
 
-    if (!uploadResult.success) {
+    if (!uploadSucceeded) {
       await this.emitResult({
         status: 'failed',
         title: null, price: null, url: null, description: null,
@@ -390,8 +413,17 @@ export class Supplier1688ScanSequencer extends ProductScanSequencer {
       message: 'Uploading image to 1688 search.',
     });
 
-    // Find file input
-    const fileInput = await this.findFirstVisibleFileInput();
+    // Find file input — on 1688 it is often hidden behind the image-search entry trigger.
+    // Try clicking the entry trigger first if no file input is immediately visible.
+    let fileInput = await this.findFirstVisibleFileInput();
+
+    if (!fileInput) {
+      const entryClicked = await this.clickFirstVisible(this.selectorRuntime.imageSearchEntrySelectors);
+      if (entryClicked) {
+        await this.humanWait(800, 1_600);
+        fileInput = await this.findFirstVisibleFileInput() ?? await this.findFirstAccessibleFileInput();
+      }
+    }
 
     if (!fileInput) {
       const message = '1688 image upload control did not become available after opening image search.';
@@ -460,7 +492,7 @@ export class Supplier1688ScanSequencer extends ProductScanSequencer {
       return { success: false, captchaRequired: false, message };
     }
 
-    // Wait for upload confirmation and submit
+    // Wait for upload confirmation and submit (or auto-search detection)
     await this.humanWait(1_200, 2_400);
     const submitted = await this.submit1688UploadedImageSearch();
 
@@ -471,7 +503,7 @@ export class Supplier1688ScanSequencer extends ProductScanSequencer {
         candidateId,
         candidateRank,
         resultCode: 'submit_failed',
-        message: '1688 image search submit button was not found after upload.',
+        message: '1688 image upload did not trigger a search — no submit button found and no early results detected.',
         url: this.page.url(),
       });
       return { success: false, captchaRequired: false, message: '1688 image search submit failed.' };
@@ -541,7 +573,16 @@ export class Supplier1688ScanSequencer extends ProductScanSequencer {
     await this.page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => undefined);
     await this.humanWait(800, 1_800);
 
-    const urls = await this.collect1688CandidateUrls();
+    // 1688 SPA may render results incrementally — retry a few times before giving up.
+    let urls = await this.collect1688CandidateUrls();
+    if (urls.length === 0) {
+      for (let attempt = 0; attempt < 3; attempt++) {
+        await this.humanWait(2_000, 3_000);
+        await this.page.waitForLoadState('domcontentloaded', { timeout: 8_000 }).catch(() => undefined);
+        urls = await this.collect1688CandidateUrls();
+        if (urls.length > 0) break;
+      }
+    }
 
     if (urls.length === 0) {
       this.upsertScanStep({
@@ -828,14 +869,34 @@ export class Supplier1688ScanSequencer extends ProductScanSequencer {
     const currentUrl = this.page.url();
 
     const [title, price, description] = await Promise.all([
-      this.readFirstText(['h1', '[class*="title"]', '[data-testid*="title"]']),
       this.readFirstText([
+        'h1',
+        '[class*="product-name"]',
+        '[class*="productName"]',
+        '[class*="mod-product-name"]',
+        '[data-spm*="title"] h1',
+        '[class*="title"]',
+        '[data-testid*="title"]',
+      ]),
+      this.readFirstText([
+        '[class*="priceText"]',
+        '[class*="priceNum"]',
+        '[class*="price-original"]',
+        '[class*="price-text"]',
         '[class*="price"]',
         '[data-testid*="price"]',
+        '[data-spm*="price"]',
         'span[class*="价格"]',
         '.price',
       ]),
-      this.readFirstText(['[class*="description"]', '#description', '[data-testid*="description"]']),
+      this.readFirstText([
+        '[class*="detail-desc"]',
+        '[class*="product-desc"]',
+        '[class*="productDesc"]',
+        '[class*="description"]',
+        '#description',
+        '[data-testid*="description"]',
+      ]),
     ]);
 
     const imageUrls = await this.extractSupplierImageUrls();
@@ -853,10 +914,16 @@ export class Supplier1688ScanSequencer extends ProductScanSequencer {
 
   private async extractSupplierImageUrls(): Promise<string[]> {
     const raw = await this.page
-      .locator('img[src], img[data-src]')
+      .locator('img[src], img[data-src], img[data-original]')
       .evaluateAll((imgs) =>
         imgs
-          .map((img) => img.getAttribute('src') ?? img.getAttribute('data-src') ?? null)
+          .map(
+            (img) =>
+              img.getAttribute('data-original') ??
+              img.getAttribute('data-src') ??
+              img.getAttribute('src') ??
+              null
+          )
           .filter((src): src is string => typeof src === 'string' && src.startsWith('http'))
       )
       .catch(() => [] as string[]);
@@ -881,6 +948,10 @@ export class Supplier1688ScanSequencer extends ProductScanSequencer {
       const shopName = await this.readFirstText([
         'a[href*="shop.1688.com"]',
         'a[href*="winport"]',
+        '[class*="shopName"]',
+        '[class*="shop-name"]',
+        '[class*="storeName"]',
+        '[class*="store-name"]',
         '[class*="shop"]',
         '[class*="store"]',
       ]);
@@ -888,13 +959,18 @@ export class Supplier1688ScanSequencer extends ProductScanSequencer {
       const location = await this.readFirstText([
         '[class*="location"]',
         '[class*="address"]',
+        '[class*="areaText"]',
         '[data-testid*="location"]',
+        'td:has-text("所在地"), td:has-text("发货地")',
       ]);
 
       const minOrderQuantity = await this.readFirstText([
         '[class*="minOrder"]',
         '[class*="min-order"]',
-        'td:has-text("起订量"), td:has-text("最小起订量")',
+        '[class*="minNum"]',
+        'td:has-text("起订量")',
+        'td:has-text("最小起订量")',
+        '[class*="起订"]',
       ]);
 
       const attributes = await this.page
@@ -1179,8 +1255,9 @@ export class Supplier1688ScanSequencer extends ProductScanSequencer {
         await this.page.reload({ waitUntil: 'domcontentloaded', timeout: 30_000 }).catch(() => undefined);
       }
 
-      await this.page.waitForLoadState('networkidle', { timeout: 5_000 }).catch(() => undefined);
-      await this.wait(1_200);
+      // Give the 1688 SPA time to render after navigation/reload.
+      await this.page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => undefined);
+      await this.wait(2_000);
 
       const barrier = await this.detect1688AccessBarrier(stage);
       if (barrier.blocked) continue;
@@ -1188,6 +1265,13 @@ export class Supplier1688ScanSequencer extends ProductScanSequencer {
       const readyState = await this.detect1688ReadyState(stage);
       if (readyState.ready || readyState.reason === 'returned_to_search_entry') {
         return readyState;
+      }
+
+      // If not ready yet, give one more chance — the SPA may still be rendering.
+      await this.wait(2_500);
+      const retryReadyState = await this.detect1688ReadyState(stage);
+      if (retryReadyState.ready || retryReadyState.reason === 'returned_to_search_entry') {
+        return retryReadyState;
       }
     }
 
@@ -1239,13 +1323,20 @@ export class Supplier1688ScanSequencer extends ProductScanSequencer {
   // ─── Submit 1688 image search ────────────────────────────────────────────────
 
   protected async submit1688UploadedImageSearch(): Promise<boolean> {
+    // 1688 can either show a preview+submit button, or auto-navigate to results.
+    // Check for upload confirmation via text OR an image thumbnail appearing in the UI.
     const hasUploadedImage = await this.page
-      .evaluate(() => /File uploaded|已上传|图片预览|Search for Image|搜图|搜索图片/i.test(document.body?.innerText ?? ''))
+      .evaluate(() =>
+        /File uploaded|已上传|图片预览|Search for Image|搜图|搜索图片|正在搜索/i.test(
+          document.body?.innerText ?? ''
+        ) ||
+        document.querySelector(
+          '[class*="preview"] img, [class*="uploaded"] img, [class*="imgPreview"] img, img[src*="blob:"]'
+        ) !== null
+      )
       .catch(() => false);
 
-    if (!hasUploadedImage) return false;
-
-    // Patch window.open so new tabs navigate in-place
+    // Patch window.open so new tabs navigate in-place regardless of upload state
     await this.page.evaluate(() => {
       try {
         window.open = (url) => {
@@ -1260,13 +1351,29 @@ export class Supplier1688ScanSequencer extends ProductScanSequencer {
       } catch { /* ignore */ }
     }).catch(() => undefined);
 
-    const clicked = await this.clickFirstVisible(this.selectorRuntime.submitSearchSelectors);
-    if (!clicked) return false;
+    // If upload confirmation was detected, click the submit button.
+    if (hasUploadedImage) {
+      const clicked = await this.clickFirstVisible(this.selectorRuntime.submitSearchSelectors);
+      if (clicked) {
+        await this.humanWait(1_800, 3_600);
+        await this.page.waitForLoadState('domcontentloaded', { timeout: 8_000 }).catch(() => undefined);
+        await this.page.waitForLoadState('networkidle', { timeout: 8_000 }).catch(() => undefined);
+        return true;
+      }
+      // Submit button not found — 1688 may have auto-searched after file set.
+    }
 
-    await this.humanWait(1_800, 3_600);
-    await this.page.waitForLoadState('domcontentloaded', { timeout: 8_000 }).catch(() => undefined);
-    await this.page.waitForLoadState('networkidle', { timeout: 8_000 }).catch(() => undefined);
-    return true;
+    // Fallback: poll for results — 1688 often auto-searches and takes 3–8 s to render them.
+    for (let attempt = 0; attempt < 4; attempt++) {
+      await this.humanWait(1_500, 2_500);
+      await this.page.waitForLoadState('domcontentloaded', { timeout: 8_000 }).catch(() => undefined);
+      const earlyResults = await this.collect1688CandidateUrls().catch(() => [] as string[]);
+      if (earlyResults.length > 0) return true;
+      // Also check body signal in case links aren't rendered yet but search started
+      const bodyText = await this.page.locator('body').first().textContent().catch(() => '');
+      if (bodyText && this.SEARCH_BODY_SIGNAL.test(bodyText)) return true;
+    }
+    return false;
   }
 
   // ─── Utility helpers ─────────────────────────────────────────────────────────
@@ -1276,6 +1383,14 @@ export class Supplier1688ScanSequencer extends ProductScanSequencer {
       const locator = this.page.locator(selector).first();
       if ((await locator.count().catch(() => 0)) === 0) continue;
       if (await locator.isVisible().catch(() => false)) return locator;
+    }
+    return null;
+  }
+
+  protected async findFirstAccessibleFileInput(): Promise<Locator | null> {
+    for (const selector of this.selectorRuntime.fileInputSelectors) {
+      const locator = this.page.locator(selector).first();
+      if ((await locator.count().catch(() => 0)) > 0) return locator;
     }
     return null;
   }

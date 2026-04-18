@@ -38,6 +38,7 @@ export const aiBrainFeatureSchema = z.enum([
   'agent_teaching',
   'prompt_engine',
   'integrations',
+  'playwright',
 ]);
 export type AiBrainFeature = z.infer<typeof aiBrainFeatureSchema>;
 
@@ -81,6 +82,8 @@ export const aiBrainCapabilityKeySchema = z.enum([
   'insights.runtime_analytics',
   'insights.system_logs',
   'insights.error_logs',
+  'playwright.ai_evaluator_step',
+  'playwright.probe_suggestions',
 ]);
 export type AiBrainCapabilityKey = z.infer<typeof aiBrainCapabilityKeySchema>;
 

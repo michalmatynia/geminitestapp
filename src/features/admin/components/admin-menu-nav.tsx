@@ -638,6 +638,11 @@ export const buildAdminNav = (handlers: {
             href: '/admin/settings/playwright',
           },
           {
+            id: 'system/settings/playwright-ai',
+            label: 'Playwright AI',
+            href: '/admin/settings/playwright-ai',
+          },
+          {
             id: 'system/settings/scanner',
             label: 'Scanner',
             href: '/admin/settings/scanner',

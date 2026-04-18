@@ -782,6 +782,8 @@ export const getCompatibleSelectorRolesForStepField = (
         'result_hint',
         'candidate_hint',
       ];
+    case 'ai_evaluate':
+      return ['generic', 'content', 'content_title', 'content_description', 'ready_signal', 'result_hint'];
     default:
       return ['generic'];
   }

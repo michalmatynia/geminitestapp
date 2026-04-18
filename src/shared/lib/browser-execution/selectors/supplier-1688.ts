@@ -5,6 +5,7 @@ import { inferSelectorRegistryRole } from '@/shared/lib/browser-execution/select
 // ─── 1688 Image Search ────────────────────────────────────────────────────────
 
 export const SUPPLIER_1688_FILE_INPUT_SELECTORS = [
+  'input[type="file"][accept*="image"]',
   'input[type="file"]',
   'input[accept*="image"]',
 ];
@@ -19,23 +20,50 @@ export const SUPPLIER_1688_IMAGE_SEARCH_ENTRY_SELECTORS = [
   '[aria-label*="image"]',
   '[title*="以图搜"]',
   '[title*="搜同款"]',
+  '[class*="imageSearch"]',
+  '[class*="image-search"]',
+  '[class*="img-search"]',
+  '[class*="search-image"]',
+  '.search-image-btn',
+  '[data-spm*="img-search"]',
+  '[data-spm*="imgsearch"]',
+  'label[for*="file"]',
+  '[class*="upload"] label',
+  '[class*="upload-icon"]',
+  '[class*="camera"]',
 ];
 
 export const SUPPLIER_1688_SEARCH_RESULT_READY_SELECTORS = [
-  'a[href*="/offer/"]',
   'a[href*="detail.1688.com/offer/"]',
+  'a[href*="detail.1688.com"]',
+  'a[href*="/offer/"]',
   '[class*="offer"] a[href]',
   '[class*="image-search"] a[href]',
+  '[class*="imgSearch"] a[href]',
+  '[class*="item"] a[href*="1688.com"]',
+  '[data-offer-id] a[href]',
+  '[class*="gridList"] a[href*="1688"]',
+  '[class*="grid-list"] a[href*="1688"]',
+  '[class*="card"] a[href*="1688.com"]',
+  'a[href*="//detail.1688"]',
 ];
 
 export const SUPPLIER_1688_SUPPLIER_READY_SELECTORS = [
   'h1',
+  '[class*="product-name"]',
+  '[class*="productName"]',
+  '[class*="mod-product-name"]',
   '[class*="title"]',
   '[data-testid*="title"]',
+  '[class*="priceText"]',
+  '[class*="priceNum"]',
+  '[class*="price-original"]',
   '[class*="price"]',
   '[data-testid*="price"]',
   'a[href*="shop.1688.com"]',
   'a[href*="winport"]',
+  '[data-spm*="price"]',
+  '[data-spm*="title"]',
 ];
 
 export const SUPPLIER_1688_SUBMIT_SEARCH_SELECTORS = [
@@ -46,6 +74,14 @@ export const SUPPLIER_1688_SUBMIT_SEARCH_SELECTORS = [
   'button:has-text("搜图")',
   'div:has-text("搜索图片")',
   'button:has-text("搜索图片")',
+  'button:has-text("确认搜索")',
+  'button:has-text("确认")',
+  'button:has-text("搜索")',
+  '[class*="search-btn"]',
+  '[class*="submit-btn"]',
+  '[class*="confirm-btn"]',
+  '[class*="img-search-btn"]',
+  'button[type="submit"]',
 ];
 
 // ─── 1688 Access Barriers ─────────────────────────────────────────────────────
@@ -165,14 +201,16 @@ export const SUPPLIER_1688_DEFAULT_SELECTOR_RUNTIME: Supplier1688SelectorRuntime
 };
 
 const defineSupplier1688SelectorRegistryEntry = (
-  definition: Omit<Supplier1688SelectorRegistryDefinition, 'role'>
+  definition: Omit<Supplier1688SelectorRegistryDefinition, 'role'> & { role?: SelectorRegistryRole | undefined }
 ): Supplier1688SelectorRegistryDefinition => ({
   ...definition,
-  role: inferSelectorRegistryRole({
-    namespace: '1688',
-    key: definition.key,
-    kind: definition.kind,
-  }),
+  role:
+    definition.role ??
+    inferSelectorRegistryRole({
+      namespace: '1688',
+      key: definition.key,
+      kind: definition.kind,
+    }),
 });
 
 const detectSupplier1688SelectorRegistryValueType = (
@@ -200,6 +238,7 @@ export const SUPPLIER_1688_SELECTOR_REGISTRY_DEFINITIONS: Supplier1688SelectorRe
     label: '1688 image search result links',
     description: 'Offer-link selectors used to collect supplier candidate URLs.',
     kind: 'selector',
+    role: 'candidate_hint',
     value: SUPPLIER_1688_SEARCH_RESULT_READY_SELECTORS,
   }),
   defineSupplier1688SelectorRegistryEntry({

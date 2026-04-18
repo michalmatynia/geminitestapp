@@ -1,5 +1,6 @@
 import {
   PLAYWRIGHT_STEP_TYPE_LABELS,
+  type PlaywrightAiEvaluateInputSource,
   type PlaywrightStep,
   type PlaywrightStepCodeSnapshot,
   type PlaywrightStepInputBinding,
@@ -20,6 +21,8 @@ type PreviewStepLike = Omit<
     | 'timeout'
     | 'script'
     | 'inputBindings'
+    | 'aiSystemPrompt'
+    | 'aiInputSource'
   >
   >,
   'type'
@@ -250,6 +253,9 @@ export const createPlaywrightStepCodeSnapshot = (
     `await page.locator(${selectorResolved()}).${method}(${callArgs(timeoutArg)});`,
   ];
 
+  const aiSystemPrompt = asString(step.aiSystemPrompt) ?? null;
+  const aiInputSource: PlaywrightAiEvaluateInputSource = step.aiInputSource ?? 'screenshot';
+
   let semanticSnippet: string;
   let resolvedSnippet: string;
 
@@ -322,6 +328,30 @@ export const createPlaywrightStepCodeSnapshot = (
       semanticSnippet = script || '// Custom Playwright script is empty.';
       resolvedSnippet = semanticSnippet;
       break;
+    case 'ai_evaluate': {
+      const captureSnippet = aiInputSource === 'screenshot'
+        ? `const _aiData = await page.screenshot({ encoding: 'base64' });`
+        : aiInputSource === 'html'
+          ? `const _aiData = await page.content();`
+          : aiInputSource === 'selector_text'
+            ? `const _aiData = await page.locator(${selectorSemantic()}).textContent() ?? '';`
+            : `const _aiData = await page.locator('body').textContent() ?? '';`;
+      const captureResolved = aiInputSource === 'selector_text'
+        ? `const _aiData = await page.locator(${selectorResolved()}).textContent() ?? '';`
+        : captureSnippet;
+      const apiCall = [
+        `const _aiResp = await fetch('/api/playwright/ai-step-evaluate', {`,
+        `  method: 'POST',`,
+        `  headers: { 'Content-Type': 'application/json' },`,
+        `  body: JSON.stringify({ systemPrompt: ${json(aiSystemPrompt)}, inputSource: ${json(aiInputSource)}, data: _aiData }),`,
+        `});`,
+        `const _aiResult = await _aiResp.json();`,
+        `// _aiResult.output — AI evaluation text (model resolved via AI Brain)`,
+      ].join('\n');
+      semanticSnippet = `${captureSnippet}\n${apiCall}`;
+      resolvedSnippet = `${captureResolved}\n${apiCall}`;
+      break;
+    }
     default:
       semanticSnippet = `// Unsupported modular step type: ${String(type)}`;
       resolvedSnippet = semanticSnippet;

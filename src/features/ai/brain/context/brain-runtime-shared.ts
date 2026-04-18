@@ -63,6 +63,7 @@ export const DEFAULT_BRAIN_OVERRIDES_ENABLED: Record<AiBrainFeature, boolean> = 
   runtime_analytics: true,
   system_logs: true,
   error_logs: true,
+  playwright: false,
 };
 
 export const getAllowedProvidersForFeature = (

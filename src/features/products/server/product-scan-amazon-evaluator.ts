@@ -335,13 +335,20 @@ const resolveDeterministicLanguageDecision = (input: {
     };
   }
 
+  if (marketplaceLanguage !== null) {
+    return {
+      pageLanguage,
+      languageAccepted: isEnglishLanguageTag(marketplaceLanguage) ? true : null,
+      confidence: isEnglishLanguageTag(marketplaceLanguage) ? 0.7 : 0.55,
+      reason: `Marketplace domain suggests ${resolveLanguageLabel(marketplaceLanguage)!} content.`,
+    };
+  }
+
   return {
-    pageLanguage,
+    pageLanguage: null,
     languageAccepted: null,
     confidence: null,
-    reason: (marketplaceLanguage !== null && isEnglishLanguageTag(marketplaceLanguage) === false)
-      ? `Amazon marketplace domain suggests ${resolveLanguageLabel(marketplaceLanguage)!} content, but probe text was not strong enough to trust that alone.`
-      : null,
+    reason: null,
   };
 };
 
@@ -762,9 +769,7 @@ const shouldBypassAmazonSimilarityAi = (input: {
 }): boolean =>
   input.evaluatorConfig.candidateSimilarityMode !== 'ai_only' &&
   input.evaluatorConfig.onlyForAmbiguousCandidates === true &&
-  input.deterministicReasons.length > 0 &&
-  (input.evaluatorConfig.rejectNonEnglishContent === false ||
-    input.deterministicLanguageDecision.languageAccepted === true);
+  input.deterministicReasons.length > 0;
 
 const createEvaluationResult = (
   input: Omit<Partial<ProductScanAmazonEvaluationResult>, 'evaluatedAt'> &
@@ -1266,6 +1271,11 @@ export const evaluateAmazonScanCandidateMatch = async (input: {
       deterministicLanguageDecision,
     })
   ) {
+    const scrapeAllowed =
+      input.evaluatorConfig.rejectNonEnglishContent === false ||
+      deterministicLanguageDecision.languageAccepted === true ||
+      isEnglishLanguageTag(deterministicLanguageDecision.pageLanguage);
+
     return createEvaluationResult({
       ...evaluationBase,
       status: 'skipped',
@@ -1276,12 +1286,12 @@ export const evaluateAmazonScanCandidateMatch = async (input: {
       pageLanguage: deterministicLanguageDecision.pageLanguage,
       languageConfidence: deterministicLanguageDecision.confidence,
       languageAccepted: input.evaluatorConfig.rejectNonEnglishContent === true
-        ? deterministicLanguageDecision.languageAccepted
+        ? (scrapeAllowed ? true : deterministicLanguageDecision.languageAccepted)
         : true,
       languageReason: deterministicLanguageDecision.reason,
       confidence: 1,
       proceed: true,
-      scrapeAllowed: deterministicLanguageDecision.languageAccepted !== false,
+      scrapeAllowed,
       recommendedAction: 'accept',
       rejectionCategory: null,
       reasons: deterministicReasons,

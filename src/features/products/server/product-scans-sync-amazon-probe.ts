@@ -30,7 +30,6 @@ import {
 import {
   buildProductScannerEngineRequestOptions,
   getProductScannerSettings,
-  resolveProductScannerHeadless,
 } from './product-scanner-settings';
 
 import {
@@ -137,10 +136,8 @@ export async function synchronizeAmazonProbeReady({
   }
 
   let scannerSettings = createDefaultProductScannerSettings();
-  let scannerHeadless = true;
   try {
     scannerSettings = (await getProductScannerSettings()) ?? scannerSettings;
-    scannerHeadless = await resolveProductScannerHeadless(scannerSettings);
   } catch (error) {
     void ErrorSystem.captureException(error, {
       service: 'product-scans.service',
@@ -269,7 +266,7 @@ export async function synchronizeAmazonProbeReady({
                   imageSearchPageUrl: amazonImageSearchPageUrl,
                   selectorProfile: amazonSelectorProfile,
                   allowManualVerification:
-                    shouldAutoShowScannerCaptchaBrowser(scannerSettings) && !scannerHeadless,
+                    shouldAutoShowScannerCaptchaBrowser(scannerSettings),
                   manualVerificationTimeoutMs,
                   triageOnlyOnAmazonCandidates:
                     (await resolveAmazonTriageEvaluatorConfig(scannerSettings)).enabled,
@@ -336,7 +333,7 @@ export async function synchronizeAmazonProbeReady({
                     imageSearchPageUrl: amazonImageSearchPageUrl,
                     imageSearchProviderHistory: [...providerHistory, fallbackProvider],
                     allowManualVerification:
-                      shouldAutoShowScannerCaptchaBrowser(scannerSettings) && !scannerHeadless,
+                      shouldAutoShowScannerCaptchaBrowser(scannerSettings),
                     manualVerificationTimeoutMs,
                     previousRunId: engineRunId,
                     previousResult: probeEvaluationRawResult,
@@ -437,7 +434,7 @@ export async function synchronizeAmazonProbeReady({
                   imageSearchPageUrl: amazonImageSearchPageUrl,
                   selectorProfile: amazonSelectorProfile,
                   allowManualVerification:
-                    shouldAutoShowScannerCaptchaBrowser(scannerSettings) && !scannerHeadless,
+                    shouldAutoShowScannerCaptchaBrowser(scannerSettings),
                   manualVerificationTimeoutMs,
                   probeOnlyOnAmazonMatch: true,
                   skipAmazonProbe: false,
@@ -521,7 +518,7 @@ export async function synchronizeAmazonProbeReady({
                       amazonImageSearchProvider
                     ),
                     allowManualVerification:
-                      shouldAutoShowScannerCaptchaBrowser(scannerSettings) && !scannerHeadless,
+                      shouldAutoShowScannerCaptchaBrowser(scannerSettings),
                     manualVerificationTimeoutMs,
                     previousRunId: engineRunId,
                     previousResult: probeEvaluationRawResult,
@@ -661,7 +658,7 @@ export async function synchronizeAmazonProbeReady({
           imageSearchPageUrl: amazonImageSearchPageUrl,
           selectorProfile: amazonSelectorProfile,
           allowManualVerification:
-            shouldAutoShowScannerCaptchaBrowser(scannerSettings) && !scannerHeadless,
+            shouldAutoShowScannerCaptchaBrowser(scannerSettings),
           manualVerificationTimeoutMs,
           probeOnlyOnAmazonMatch: false,
           skipAmazonProbe: true,
@@ -737,7 +734,7 @@ export async function synchronizeAmazonProbeReady({
             amazonImageSearchProvider
           ),
           allowManualVerification:
-            shouldAutoShowScannerCaptchaBrowser(scannerSettings) && !scannerHeadless,
+            shouldAutoShowScannerCaptchaBrowser(scannerSettings),
           manualVerificationTimeoutMs,
           previousRunId: engineRunId,
           previousResult: probeEvaluationRawResult,

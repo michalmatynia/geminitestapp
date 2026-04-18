@@ -331,6 +331,33 @@ describe('ProductListingActions', () => {
     expect(handleCheckTraderaStatus).toHaveBeenCalledWith('listing-1');
   });
 
+  it('queues manual Tradera relists in headed browser mode', async () => {
+    render(
+      <ProductListingActions
+        listing={
+          {
+            id: 'listing-1',
+            status: 'active',
+            integrationId: 'integration-1',
+            connectionId: 'connection-1',
+            integration: {
+              name: 'Tradera',
+              slug: 'tradera',
+            },
+            marketplaceData: null,
+          } as never
+        }
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Relist now' }));
+    await Promise.resolve();
+
+    expect(handleRelistTradera).toHaveBeenCalledWith('listing-1', {
+      browserMode: 'headed',
+    });
+  });
+
   it('reuses the selector profile override for Tradera relist actions', async () => {
     render(
       <ProductListingActions
@@ -357,6 +384,7 @@ describe('ProductListingActions', () => {
     await Promise.resolve();
 
     expect(handleRelistTradera).toHaveBeenCalledWith('listing-1', {
+      browserMode: 'headed',
       selectorProfile: 'profile-market-a',
     });
   });

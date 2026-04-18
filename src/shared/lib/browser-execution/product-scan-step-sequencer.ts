@@ -34,6 +34,11 @@ export const PRODUCT_SCAN_STEP_REGISTRY = {
     label: 'Upload product image to Google',
     group: 'google_lens',
   },
+  google_verification_review: {
+    key: 'google_verification_review',
+    label: 'Inspect Google verification barrier',
+    group: 'google_lens',
+  },
   google_captcha: {
     key: 'google_captcha',
     label: 'Resolve Google captcha',
@@ -155,13 +160,18 @@ export const PRODUCT_SCAN_STEP_GROUP_ORDER: Record<ProductScanStepGroup, number>
   product: 4,
 };
 
+export const PRODUCT_SCAN_GOOGLE_LENS_SEQUENCE = [
+  'google_lens_open',
+  'google_upload',
+  'google_verification_review',
+  'google_captcha',
+  'google_candidates',
+] as const satisfies readonly ProductScanSequenceEntry[];
+
 export const PRODUCT_SCAN_STEP_SEQUENCES = {
   [AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY]: [
     'validate',
-    'google_lens_open',
-    'google_upload',
-    'google_captcha',
-    'google_candidates',
+    ...PRODUCT_SCAN_GOOGLE_LENS_SEQUENCE,
     'amazon_open',
     'amazon_overlays',
     'amazon_content_ready',
@@ -169,10 +179,7 @@ export const PRODUCT_SCAN_STEP_SEQUENCES = {
   ],
   [AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY]: [
     'validate',
-    'google_lens_open',
-    'google_upload',
-    'google_captcha',
-    'google_candidates',
+    ...PRODUCT_SCAN_GOOGLE_LENS_SEQUENCE,
     'amazon_open',
     'amazon_overlays',
     'amazon_content_ready',

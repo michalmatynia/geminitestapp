@@ -7,11 +7,14 @@ import { render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 
 const {
+  setRequestLocaleMock,
   loadSiteMessagesMock,
   nextIntlProviderMock,
   htmlLangSyncMock,
   kangurAppearanceLayoutMock,
+  notFoundMock,
 } = vi.hoisted(() => ({
+  setRequestLocaleMock: vi.fn(),
   loadSiteMessagesMock: vi.fn(),
   nextIntlProviderMock: vi.fn(
     ({
@@ -38,10 +41,21 @@ const {
   kangurAppearanceLayoutMock: vi.fn(({ children }: { children: ReactNode }) => (
     <div data-testid='kangur-appearance-layout'>{children}</div>
   )),
+  notFoundMock: vi.fn(() => {
+    throw new Error('NOT_FOUND');
+  }),
 }));
 
 vi.mock('next-intl', () => ({
   NextIntlClientProvider: nextIntlProviderMock,
+}));
+
+vi.mock('next-intl/server', () => ({
+  setRequestLocale: setRequestLocaleMock,
+}));
+
+vi.mock('next/navigation', () => ({
+  notFound: notFoundMock,
 }));
 
 vi.mock('@/i18n/messages', () => ({
@@ -52,11 +66,11 @@ vi.mock('@/shared/ui/HtmlLangSync', () => ({
   HtmlLangSync: htmlLangSyncMock,
 }));
 
-vi.mock('./KangurAppearanceLayout', () => ({
+vi.mock('../../kangur/KangurAppearanceLayout', () => ({
   default: kangurAppearanceLayoutMock,
 }));
 
-describe('apps/studiq-web Kangur layout', () => {
+describe('apps/studiq-web localized Kangur layout', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     loadSiteMessagesMock.mockResolvedValue({
@@ -66,20 +80,35 @@ describe('apps/studiq-web Kangur layout', () => {
     });
   });
 
-  it('wraps the shared Kangur appearance layout with the default-locale intl provider', async () => {
-    const { default: KangurLayout } = await import('./layout');
+  it('binds the requested locale for localized Kangur routes', async () => {
+    const { default: LocalizedKangurLayout } = await import('./layout');
 
-    const result = await KangurLayout({
+    const result = await LocalizedKangurLayout({
       children: <div data-testid='workspace-child'>Workspace child</div>,
+      params: Promise.resolve({ locale: 'en' }),
     });
 
     render(result);
 
-    expect(loadSiteMessagesMock).toHaveBeenCalledWith('pl');
-    expect(nextIntlProviderMock).toHaveBeenCalledTimes(1);
-    expect(htmlLangSyncMock).toHaveBeenCalledWith({ locale: 'pl' }, undefined);
-    expect(screen.getByTestId('next-intl-provider')).toHaveAttribute('data-locale', 'pl');
+    expect(setRequestLocaleMock).toHaveBeenCalledWith('en');
+    expect(loadSiteMessagesMock).toHaveBeenCalledWith('en');
+    expect(screen.getByTestId('next-intl-provider')).toHaveAttribute('data-locale', 'en');
+    expect(screen.getByTestId('html-lang-sync')).toHaveAttribute('data-locale', 'en');
     expect(screen.getByTestId('kangur-appearance-layout')).toBeInTheDocument();
     expect(screen.getByTestId('workspace-child')).toBeInTheDocument();
+  });
+
+  it('rejects unsupported locales', async () => {
+    const { default: LocalizedKangurLayout } = await import('./layout');
+
+    await expect(
+      LocalizedKangurLayout({
+        children: <div />,
+        params: Promise.resolve({ locale: 'xx' }),
+      })
+    ).rejects.toThrow('NOT_FOUND');
+
+    expect(notFoundMock).toHaveBeenCalledTimes(1);
+    expect(loadSiteMessagesMock).not.toHaveBeenCalled();
   });
 });

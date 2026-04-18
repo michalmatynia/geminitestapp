@@ -1,10 +1,40 @@
-import React, { type ReactNode } from 'react';
-import SharedKangurLayout from '../../kangur/layout';
+import { NextIntlClientProvider } from 'next-intl';
+import { setRequestLocale } from 'next-intl/server';
+import { notFound } from 'next/navigation';
 
-export default function LocalizedKangurLayout({
-  children,
-}: {
+import KangurAppearanceLayout from '../../kangur/KangurAppearanceLayout';
+import { loadSiteMessages } from '@/i18n/messages';
+import {
+  isSupportedSiteLocale,
+  normalizeSiteLocale,
+} from '@/shared/lib/i18n/site-locale';
+import { HtmlLangSync } from '@/shared/ui/HtmlLangSync';
+
+import type { ReactNode } from 'react';
+
+type LocalizedKangurLayoutProps = {
   children: ReactNode;
-}): React.JSX.Element {
-  return <SharedKangurLayout>{children}</SharedKangurLayout>;
+  params: Promise<{ locale: string }>;
+};
+
+export default async function LocalizedKangurLayout({
+  children,
+  params,
+}: LocalizedKangurLayoutProps): Promise<ReactNode> {
+  const { locale } = await params;
+
+  if (!isSupportedSiteLocale(locale)) {
+    notFound();
+  }
+
+  const normalizedLocale = normalizeSiteLocale(locale);
+  setRequestLocale(normalizedLocale);
+  const messages = await loadSiteMessages(normalizedLocale);
+
+  return (
+    <NextIntlClientProvider locale={normalizedLocale} messages={messages}>
+      <HtmlLangSync locale={normalizedLocale} />
+      <KangurAppearanceLayout>{children}</KangurAppearanceLayout>
+    </NextIntlClientProvider>
+  );
 }

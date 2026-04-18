@@ -485,13 +485,11 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
             variant='success'
             size='sm'
             onClick={(): void => {
-              if (requestedSelectorProfile) {
-                void handleRelistTradera(listing.id, {
-                  selectorProfile: requestedSelectorProfile,
-                });
-                return;
-              }
-              void handleRelistTradera(listing.id);
+              const relistOptions = {
+                browserMode: 'headed' as const,
+                ...(requestedSelectorProfile ? { selectorProfile: requestedSelectorProfile } : {}),
+              };
+              void handleRelistTradera(listing.id, relistOptions);
             }}
             disabled={
               relistingListing === listing.id ||

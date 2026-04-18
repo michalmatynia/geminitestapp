@@ -1,9 +1,7 @@
 import { Suspense } from 'react';
-import { NextIntlClientProvider } from 'next-intl';
 
-import { StudiqQueryProvider } from '@/providers/QueryProvider';
+import { StudiqQueryProvider } from '../providers/QueryProvider';
 import { DEFAULT_SITE_I18N_CONFIG } from '@/shared/contracts/site-i18n';
-import { loadSiteMessages } from '@/i18n/messages';
 
 import type { Metadata } from 'next';
 import type { JSX, ReactNode } from 'react';
@@ -15,22 +13,21 @@ export const metadata: Metadata = {
   title: 'StudiQ',
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: {
   children: ReactNode;
-}): Promise<JSX.Element> {
-  const locale = DEFAULT_SITE_I18N_CONFIG.defaultLocale;
-  const messages = await loadSiteMessages(locale);
-
+}): JSX.Element {
   return (
-    <html lang={locale} className='kangur-surface-active'>
+    <html
+      lang={DEFAULT_SITE_I18N_CONFIG.defaultLocale}
+      className='kangur-surface-active'
+      suppressHydrationWarning
+    >
       <body className='kangur-surface-active'>
         <Suspense fallback={<div className='min-h-screen' aria-busy='true' />}>
           <StudiqQueryProvider>
-            <NextIntlClientProvider locale={locale} messages={messages}>
-              <main id='kangur-main-content'>{children}</main>
-            </NextIntlClientProvider>
+            <main id='kangur-main-content'>{children}</main>
           </StudiqQueryProvider>
         </Suspense>
       </body>

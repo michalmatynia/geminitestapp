@@ -11,6 +11,11 @@ import {
 import { startCaseResolverOcrQueue } from '@/server/queues/case-resolver-ocr';
 import { startFilemakerEmailCampaignSchedulerQueue } from '@/server/queues/filemaker';
 import {
+  startPlaywrightListingQueue,
+  startTraderaListingQueue,
+  startVintedListingQueue,
+} from '@/server/queues/integrations';
+import {
   startTraderaRelistSchedulerQueue,
 } from '@/features/integrations/workers/traderaRelistSchedulerQueue';
 import {
@@ -57,6 +62,9 @@ const KANGUR_SOCIAL_STARTERS = [
   startKangurSocialPipelineQueue,
 ] as const satisfies readonly QueueStarter[];
 const FEATURE_AWARE_STARTERS = [
+  startPlaywrightListingQueue,
+  startTraderaListingQueue,
+  startVintedListingQueue,
   startProductAiJobQueue,
   startAiPathRunQueue,
   startChatbotJobQueue,

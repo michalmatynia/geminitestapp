@@ -97,6 +97,7 @@ export const STEP_REGISTRY = {
 
   google_lens_open:       { id: 'google_lens_open',       label: 'Open Google Lens search' },
   google_upload:          { id: 'google_upload',          label: 'Upload product image to Google' },
+  google_verification_review: { id: 'google_verification_review', label: 'Inspect Google verification barrier' },
   google_captcha:         { id: 'google_captcha',         label: 'Resolve Google captcha' },
   google_candidates:      { id: 'google_candidates',      label: 'Collect Amazon candidates from Google' },
 

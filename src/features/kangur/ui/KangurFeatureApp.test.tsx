@@ -386,6 +386,29 @@ describe('KangurFeatureApp', () => {
     expect(screen.getByTestId('kangur-login-modal')).toBeInTheDocument();
   });
 
+  it('renders the login modal immediately on the standalone home route even while the AI Tutor widget is still deferred', () => {
+    routingStateMock.mockReturnValue({
+      pageKey: 'Game',
+      embedded: false,
+      requestedPath: '/kangur',
+      requestedHref: '/kangur',
+      basePath: '/kangur',
+    });
+    loginModalStateMock.mockReturnValue({
+      authMode: 'sign-in',
+      callbackUrl: '/kangur',
+      homeHref: '/kangur',
+      isOpen: true,
+      isRouteDriven: false,
+      showParentAuthModeTabs: true,
+    });
+
+    render(<KangurFeatureApp />);
+
+    expect(screen.getByTestId('kangur-login-modal')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-ai-tutor-widget')).toBeNull();
+  });
+
   it('renders the navbar skeleton while the shared top-navigation host has not registered yet', () => {
     topNavigationHostVisibleMock.mockReturnValue(false);
 

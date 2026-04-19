@@ -182,6 +182,7 @@ vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurLoginModalContext', () => ({
   useKangurLoginModal: mocks.useKangurLoginModalMock,
+  useKangurLoginModalActions: mocks.useKangurLoginModalMock,
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurTextHighlight', () => ({

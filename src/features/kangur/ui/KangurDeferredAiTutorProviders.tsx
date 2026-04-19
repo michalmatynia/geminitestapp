@@ -3,6 +3,7 @@
 import { KangurTutorAnchorProvider } from '@/features/kangur/ui/context/KangurTutorAnchorContext';
 import { KangurAiTutorContentProvider } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import { KangurAiTutorDeferredProvider } from '@/features/kangur/ui/context/KangurAiTutorContext';
+import { useKangurDeferredHomeTutorContextReady } from '@/features/kangur/ui/hooks/useKangurDeferredHomeTutorContextReady';
 
 import type { JSX, ReactNode } from 'react';
 
@@ -15,10 +16,14 @@ export function KangurDeferredAiTutorProviders({
 }: {
   children: ReactNode;
 }): JSX.Element {
+  const isTutorContextReady = useKangurDeferredHomeTutorContextReady();
+
   return (
     <KangurAiTutorContentProvider>
       <KangurAiTutorDeferredProvider>
-        <KangurTutorAnchorProvider>{children}</KangurTutorAnchorProvider>
+        <KangurTutorAnchorProvider enabled={isTutorContextReady}>
+          {children}
+        </KangurTutorAnchorProvider>
       </KangurAiTutorDeferredProvider>
     </KangurAiTutorContentProvider>
   );

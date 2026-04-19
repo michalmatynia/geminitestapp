@@ -22,6 +22,15 @@ vi.mock('@/features/kangur/ui/components/assignments/KangurLearnerAssignmentsPan
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useKangurAuth: () => useKangurAuthMock(),
+  useKangurAuthSessionState: () => {
+    const auth = useKangurAuthMock();
+    return {
+      user: auth.user ?? null,
+      isAuthenticated: auth.isAuthenticated ?? Boolean(auth.user),
+      hasResolvedAuth: auth.hasResolvedAuth ?? true,
+      canAccessParentAssignments: auth.canAccessParentAssignments ?? false,
+    };
+  },
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext', () => ({

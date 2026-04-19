@@ -21,6 +21,7 @@ import {
 } from './page-context-shared';
 
 export type ContextRegistryPageProviderProps = {
+  enabled?: boolean;
   pageId: string;
   title?: string;
   rootNodeIds?: string[];
@@ -69,18 +70,72 @@ const {
   errorFactory: internalError,
 });
 
-export function ContextRegistryPageProvider({
-  pageId,
-  title,
-  rootNodeIds = [],
-  resolved = null,
-  children,
-}: ContextRegistryPageProviderProps): React.JSX.Element {
+const EMPTY_CONTEXT_REGISTRY_PAGE_SOURCES: ContextRegistryPageSource[] = [];
+
+function createDormantContextRegistryPageStateValue(input: {
+  pageId: string;
+  title?: string;
+}): ContextRegistryPageStateValue {
+  return {
+    pageId: input.pageId,
+    title: input.title,
+    sources: EMPTY_CONTEXT_REGISTRY_PAGE_SOURCES,
+    envelope: null,
+  };
+}
+
+function createActiveContextRegistryPageStateValue(input: {
+  pageId: string;
+  title?: string;
+  rootNodeIds: string[];
+  resolved: ContextRegistryResolutionBundle | null;
+  registeredSources: Record<string, ContextRegistryPageSource>;
+}): ContextRegistryPageStateValue {
+  const baseSource: ContextRegistryPageSource = {
+    sourceId: '__page__',
+    label: input.title ?? input.pageId,
+    rootNodeIds: input.rootNodeIds,
+    resolved: input.resolved,
+  };
+  const sources = [baseSource, ...Object.values(input.registeredSources)];
+  const envelope = buildContextRegistryConsumerEnvelope({
+    rootNodeIds: sources.flatMap((source) => source.rootNodeIds ?? []),
+    refs: sources.flatMap((source) => source.refs ?? []),
+    resolved: mergeContextRegistryResolutionBundles(
+      ...sources.map((source) => source.resolved ?? null)
+    ),
+  });
+
+  return {
+    pageId: input.pageId,
+    title: input.title,
+    sources,
+    envelope,
+  };
+}
+
+function useContextRegistryPageSourceRegistry(
+  enabled: boolean
+): {
+  registeredSources: Record<string, ContextRegistryPageSource>;
+  registerSource: (source: ContextRegistryPageSource) => void;
+  unregisterSource: (sourceId: string) => void;
+} {
   const [registeredSources, setRegisteredSources] = useState<
     Record<string, ContextRegistryPageSource>
   >({});
 
+  useEffect(() => {
+    if (!enabled) {
+      setRegisteredSources({});
+    }
+  }, [enabled]);
+
   const registerSource = useCallback((source: ContextRegistryPageSource) => {
+    if (!enabled) {
+      return;
+    }
+
     setRegisteredSources((current) => {
       if (current[source.sourceId] === source) {
         return current;
@@ -90,9 +145,13 @@ export function ContextRegistryPageProvider({
         [source.sourceId]: source,
       };
     });
-  }, []);
+  }, [enabled]);
 
   const unregisterSource = useCallback((sourceId: string) => {
+    if (!enabled) {
+      return;
+    }
+
     setRegisteredSources((current) => {
       if (!(sourceId in current)) {
         return current;
@@ -102,31 +161,45 @@ export function ContextRegistryPageProvider({
       delete next[sourceId];
       return next;
     });
-  }, []);
+  }, [enabled]);
+
+  return {
+    registeredSources,
+    registerSource,
+    unregisterSource,
+  };
+}
+
+export function ContextRegistryPageProvider({
+  enabled = true,
+  pageId,
+  title,
+  rootNodeIds = [],
+  resolved = null,
+  children,
+}: ContextRegistryPageProviderProps): React.JSX.Element {
+  const {
+    registeredSources,
+    registerSource,
+    unregisterSource,
+  } = useContextRegistryPageSourceRegistry(enabled);
 
   const stateValue = useMemo<ContextRegistryPageStateValue>(() => {
-    const baseSource: ContextRegistryPageSource = {
-      sourceId: '__page__',
-      label: title ?? pageId,
-      rootNodeIds,
-      resolved,
-    };
-    const sources = [baseSource, ...Object.values(registeredSources)];
-    const envelope = buildContextRegistryConsumerEnvelope({
-      rootNodeIds: sources.flatMap((source) => source.rootNodeIds ?? []),
-      refs: sources.flatMap((source) => source.refs ?? []),
-      resolved: mergeContextRegistryResolutionBundles(
-        ...sources.map((source) => source.resolved ?? null)
-      ),
-    });
+    if (!enabled) {
+      return createDormantContextRegistryPageStateValue({
+        pageId,
+        title,
+      });
+    }
 
-    return {
+    return createActiveContextRegistryPageStateValue({
       pageId,
       title,
-      sources,
-      envelope,
-    };
-  }, [pageId, registeredSources, resolved, rootNodeIds, title]);
+      rootNodeIds,
+      resolved,
+      registeredSources,
+    });
+  }, [enabled, pageId, registeredSources, resolved, rootNodeIds, title]);
 
   const actionsValue = useMemo<ContextRegistryPageActionsValue>(
     () => ({
@@ -199,7 +272,7 @@ export function useRegisterContextRegistryPageSource(
 
   useEffect(() => {
     if (!registerSource || !unregisterSource || !stableSource) {
-      return;
+      return undefined;
     }
 
     registerSource(stableSource);

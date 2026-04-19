@@ -6,7 +6,7 @@ import { LogIn } from 'lucide-react';
 import KangurHeroMilestoneSummary from '@/features/kangur/ui/components/KangurHeroMilestoneSummary';
 import { getKangurAvatarById } from '@/features/kangur/ui/avatars/catalog';
 import { KangurPageIntroCard } from '@/features/kangur/ui/components/lesson-library/KangurPageIntroCard';
-import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';
+import { useKangurLoginModalActions } from '@/features/kangur/ui/context/KangurLoginModalContext';
 import {
   getKangurLearnerProfileDisplayName,
   useKangurLearnerProfileRuntime,
@@ -95,7 +95,7 @@ function KangurLearnerProfileHeroAuthActions({
   translations,
 }: {
   actionClassName: string;
-  openLoginModal: ReturnType<typeof useKangurLoginModal>['openLoginModal'];
+  openLoginModal: ReturnType<typeof useKangurLoginModalActions>['openLoginModal'];
   translations: ReturnType<typeof useTranslations<'KangurLearnerProfileWidgets.hero'>>;
 }): React.JSX.Element {
   return (
@@ -132,7 +132,7 @@ export function KangurLearnerProfileHeroWidget(): React.JSX.Element | null {
   const runtimeTranslations = useTranslations('KangurLearnerProfileRuntime');
   const isCoarsePointer = useKangurCoarsePointer();
   const { user, progress } = useKangurLearnerProfileRuntime();
-  const { openLoginModal } = useKangurLoginModal();
+  const { openLoginModal } = useKangurLoginModalActions();
   const activeLearner = user?.activeLearner ?? null;
   const selectedAvatar = getKangurAvatarById(activeLearner?.avatarId);
   const localModeLabel = translateKangurLearnerProfileWithFallback(

@@ -9,6 +9,23 @@ import { vi } from 'vitest';
 
 import { DEFAULT_KANGUR_AGE_GROUP } from '@/features/kangur/lessons/lesson-catalog-metadata';
 
+type LessonsAuthMockValue = {
+  user?: {
+    id?: string;
+    full_name?: string | null;
+    actorType?: string;
+    canManageLearners?: boolean;
+    activeLearner?: { id?: string | null } | null;
+  } | null;
+  isAuthenticated?: boolean;
+  hasResolvedAuth?: boolean;
+  canAccessParentAssignments?: boolean;
+  logout?: (redirect?: boolean) => void;
+};
+
+const getLessonsAuthMockValue = (): LessonsAuthMockValue =>
+  useKangurAuthMock() as LessonsAuthMockValue;
+
 const {
   useKangurSubjectFocusMock,
   useKangurAuthMock,
@@ -417,6 +434,24 @@ vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useKangurAuth: () => useKangurAuthMock() as unknown,
+  useKangurAuthSessionState: () => {
+    const auth = getLessonsAuthMockValue();
+    return {
+      user: auth.user ?? null,
+      isAuthenticated: auth.isAuthenticated ?? Boolean(auth.user),
+      hasResolvedAuth: auth.hasResolvedAuth ?? true,
+      canAccessParentAssignments: auth.canAccessParentAssignments ?? false,
+    };
+  },
+  useKangurAuthActions: () => {
+    const auth = getLessonsAuthMockValue();
+    return {
+      logout: auth.logout ?? vi.fn(),
+      navigateToLogin: vi.fn(),
+      checkAppState: vi.fn(),
+      selectLearner: vi.fn(),
+    };
+  },
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurGuestPlayerContext', () => ({
@@ -434,6 +469,9 @@ vi.mock('@/features/kangur/ui/context/KangurLessonNavigationContext', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurLoginModalContext', () => ({
   useKangurLoginModal: () => ({
+    openLoginModal: openLoginModalMock,
+  }),
+  useKangurLoginModalActions: () => ({
     openLoginModal: openLoginModalMock,
   }),
 }));

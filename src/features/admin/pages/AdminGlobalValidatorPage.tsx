@@ -114,6 +114,40 @@ function getActiveDescription(activeList: ValidatorPatternListItem | null): stri
     : customDescription;
 }
 
+function getCurrentBreadcrumbLabel(
+  activeList: ValidatorPatternListItem | null,
+  activeView: GlobalValidatorView
+): string {
+  return activeView === 'tooltips' ? 'Settings' : activeList?.name ?? 'Validation Pattern Lists';
+}
+
+function getScopePanel(activeList: ValidatorPatternListItem | null): React.JSX.Element | null {
+  return activeList === null ? null : renderScopePanel(activeList.scope);
+}
+
+function getListQueryString(
+  listId: string,
+  searchParams: ReturnType<typeof useSearchParams>
+): string {
+  const nextParams = new URLSearchParams(searchParams.toString());
+  nextParams.set('list', listId);
+  return nextParams.toString();
+}
+
+function getViewQueryString(
+  searchParams: ReturnType<typeof useSearchParams>,
+  view: GlobalValidatorView
+): string {
+  const nextParams = new URLSearchParams(searchParams.toString());
+  if (view === 'patterns') {
+    nextParams.delete('view');
+  } else {
+    nextParams.set('view', view);
+  }
+
+  return nextParams.toString();
+}
+
 function AdminGlobalValidatorContent(): React.JSX.Element {
   const pathname = usePathname();
   const router = useRouter();
@@ -127,24 +161,15 @@ function AdminGlobalValidatorContent(): React.JSX.Element {
     [patternLists, searchParams]
   );
   const activeDescription = getActiveDescription(activeList);
-  const currentBreadcrumbLabel =
-    activeView === 'tooltips' ? 'Settings' : activeList?.name ?? 'Validation Pattern Lists';
-  const scopePanel = activeList ? renderScopePanel(activeList.scope) : null;
+  const currentBreadcrumbLabel = getCurrentBreadcrumbLabel(activeList, activeView);
+  const scopePanel = getScopePanel(activeList);
 
   const handleSelectList = (listId: string): void => {
-    const nextParams = new URLSearchParams(searchParams.toString());
-    nextParams.set('list', listId);
-    pushValidatorRoute(pathname, nextParams.toString(), router);
+    pushValidatorRoute(pathname, getListQueryString(listId, searchParams), router);
   };
 
   const handleSelectView = (view: GlobalValidatorView): void => {
-    const nextParams = new URLSearchParams(searchParams.toString());
-    if (view === 'patterns') {
-      nextParams.delete('view');
-    } else {
-      nextParams.set('view', view);
-    }
-    pushValidatorRoute(pathname, nextParams.toString(), router);
+    pushValidatorRoute(pathname, getViewQueryString(searchParams, view), router);
   };
 
   return (

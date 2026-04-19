@@ -18,6 +18,7 @@ const {
   publishedQuestionCountBySuiteState,
   routeNavigatorBackMock,
   settingsStoreMock,
+  useKangurAuthMock,
 } = vi.hoisted(() => ({
   disabledDocsTooltipsMock: { enabled: false },
   localeState: {
@@ -33,6 +34,7 @@ const {
   settingsStoreMock: {
     get: vi.fn(),
   },
+  useKangurAuthMock: vi.fn(),
   getDisabledDocsTooltipsMock: vi.fn(),
 }));
 
@@ -143,6 +145,28 @@ vi.mock('@/features/kangur/config/routing', () => ({
   readKangurUrlParam: () => null,
 }));
 
+vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
+  useKangurAuth: () => useKangurAuthMock(),
+  useKangurAuthSessionState: () => {
+    const auth = useKangurAuthMock();
+    return {
+      user: auth.user ?? null,
+      isAuthenticated: auth.isAuthenticated ?? Boolean(auth.user),
+      hasResolvedAuth: auth.hasResolvedAuth ?? true,
+      canAccessParentAssignments: auth.canAccessParentAssignments ?? false,
+    };
+  },
+  useKangurAuthActions: () => {
+    const auth = useKangurAuthMock();
+    return {
+      logout: auth.logout ?? vi.fn(),
+      navigateToLogin: vi.fn(),
+      checkAppState: vi.fn(),
+      selectLearner: vi.fn(),
+    };
+  },
+}));
+
 vi.mock('@/features/kangur/docs/tooltips', () => ({
   useKangurDocsTooltips: getDisabledDocsTooltipsMock,
 }));
@@ -183,13 +207,6 @@ vi.mock('@/features/kangur/ui/components/KangurTestSuitePlayer', () => ({
   KangurTestSuitePlayer: () => <div data-testid='tests-suite-player' />,
 }));
 
-vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
-  useKangurAuth: () => ({
-    user: null,
-    logout: vi.fn(),
-  }),
-}));
-
 vi.mock('@/features/kangur/ui/context/KangurGuestPlayerContext', () => ({
   useKangurGuestPlayer: () => ({
     guestPlayerName: '',
@@ -199,6 +216,9 @@ vi.mock('@/features/kangur/ui/context/KangurGuestPlayerContext', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurLoginModalContext', () => ({
   useKangurLoginModal: () => ({
+    openLoginModal: vi.fn(),
+  }),
+  useKangurLoginModalActions: () => ({
     openLoginModal: vi.fn(),
   }),
 }));
@@ -292,6 +312,13 @@ describe('Tests page', () => {
     parsedSuitesState.value = [];
     publishedQuestionCountBySuiteState.value = new Map();
     settingsStoreMock.get.mockReturnValue(undefined);
+    useKangurAuthMock.mockReturnValue({
+      user: null,
+      isAuthenticated: false,
+      hasResolvedAuth: true,
+      canAccessParentAssignments: false,
+      logout: vi.fn(),
+    });
   });
 
   it('renders the localized tests SVG heading on the intro card', () => {

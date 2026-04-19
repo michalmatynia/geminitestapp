@@ -6,9 +6,12 @@ import { useEffect, useMemo } from 'react';
 import { KangurPageIntroCard } from '@/features/kangur/ui/components/lesson-library/KangurPageIntroCard';
 import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
 import { KangurTopNavigationController } from '@/features/kangur/ui/components/primary-navigation/KangurTopNavigationController';
-import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import {
+  useKangurAuthActions,
+  useKangurAuthSessionState,
+} from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurGuestPlayer } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
-import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';
+import { useKangurLoginModalActions } from '@/features/kangur/ui/context/KangurLoginModalContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRoutePageReady';
@@ -269,10 +272,10 @@ function SocialUpdatesBody(props: {
 
 export default function SocialUpdates(): React.JSX.Element {
   const { basePath } = useKangurRouting();
-  const auth = useKangurAuth();
-  const { user, logout } = auth;
+  const { user } = useKangurAuthSessionState();
+  const { logout } = useKangurAuthActions();
   const { guestPlayerName, setGuestPlayerName } = useKangurGuestPlayer();
-  const { openLoginModal } = useKangurLoginModal();
+  const { openLoginModal } = useKangurLoginModalActions();
   const routeNavigator = useKangurRouteNavigator();
   const postsQuery = useKangurSocialPosts({ scope: 'public', limit: 8 });
   const posts = postsQuery.data ?? [];

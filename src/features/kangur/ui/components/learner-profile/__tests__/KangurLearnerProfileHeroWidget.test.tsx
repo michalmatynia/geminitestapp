@@ -12,6 +12,7 @@ const { useKangurLearnerProfileRuntimeMock, useKangurLoginModalMock } = vi.hoist
 
 vi.mock('@/features/kangur/ui/context/KangurLoginModalContext', () => ({
   useKangurLoginModal: useKangurLoginModalMock,
+  useKangurLoginModalActions: useKangurLoginModalMock,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext', () => ({

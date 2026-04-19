@@ -58,7 +58,8 @@ type InlineLoginModalState = {
   showParentAuthModeTabs: boolean;
 };
 
-const KangurLoginModalContext = createContext<KangurLoginModalContextValue | null>(null);
+const KangurLoginModalStateContext = createContext<KangurLoginModalStateValue | null>(null);
+const KangurLoginModalActionsContext = createContext<KangurLoginModalActionsValue | null>(null);
 const LOGIN_MODAL_CLOSE_ACKNOWLEDGE_MS = 0;
 const FALLBACK_HOME_HREF = getKangurHomeHref();
 const FALLBACK_STATE: KangurLoginModalStateValue = {
@@ -192,33 +193,32 @@ export const KangurLoginModalProvider = ({
     dismissLoginModal();
   }, [dismissLoginModal, homeHref, isRouteDriven, routeNavigator]);
 
-  const value = useMemo<KangurLoginModalContextValue>(
+  const stateValue = useMemo<KangurLoginModalStateValue>(
     () => ({
       authMode,
       callbackUrl,
-      closeLoginModal,
-      dismissLoginModal,
       homeHref,
       isOpen: isRouteDriven || inlineState.isOpen,
       isRouteDriven,
-      openLoginModal,
       showParentAuthModeTabs,
     }),
-    [
-      authMode,
-      callbackUrl,
+    [authMode, callbackUrl, homeHref, inlineState.isOpen, isRouteDriven, showParentAuthModeTabs]
+  );
+  const actionsValue = useMemo<KangurLoginModalActionsValue>(
+    () => ({
       closeLoginModal,
       dismissLoginModal,
-      homeHref,
-      inlineState.isOpen,
-      isRouteDriven,
       openLoginModal,
-      showParentAuthModeTabs,
-    ]
+    }),
+    [closeLoginModal, dismissLoginModal, openLoginModal]
   );
 
   return (
-    <KangurLoginModalContext.Provider value={value}>{children}</KangurLoginModalContext.Provider>
+    <KangurLoginModalActionsContext.Provider value={actionsValue}>
+      <KangurLoginModalStateContext.Provider value={stateValue}>
+        {children}
+      </KangurLoginModalStateContext.Provider>
+    </KangurLoginModalActionsContext.Provider>
   );
 };
 
@@ -229,8 +229,8 @@ export const useKangurLoginModal = (): KangurLoginModalContextValue => {
 };
 
 export const useKangurLoginModalState = (): KangurLoginModalStateValue => {
-  const context = useContext(KangurLoginModalContext);
-  if (!context) {
+  const state = useContext(KangurLoginModalStateContext);
+  if (!state) {
     if (isTestEnvironment()) {
       return FALLBACK_STATE;
     }
@@ -238,22 +238,12 @@ export const useKangurLoginModalState = (): KangurLoginModalStateValue => {
       'useKangurLoginModalState must be used within a KangurLoginModalProvider'
     );
   }
-  return useMemo(
-    () => ({
-      authMode: context.authMode,
-      callbackUrl: context.callbackUrl,
-      homeHref: context.homeHref,
-      isOpen: context.isOpen,
-      isRouteDriven: context.isRouteDriven,
-      showParentAuthModeTabs: context.showParentAuthModeTabs,
-    }),
-    [context]
-  );
+  return state;
 };
 
 export const useKangurLoginModalActions = (): KangurLoginModalActionsValue => {
-  const context = useContext(KangurLoginModalContext);
-  if (!context) {
+  const actions = useContext(KangurLoginModalActionsContext);
+  if (!actions) {
     if (isTestEnvironment()) {
       return FALLBACK_ACTIONS;
     }
@@ -261,12 +251,5 @@ export const useKangurLoginModalActions = (): KangurLoginModalActionsValue => {
       'useKangurLoginModalActions must be used within a KangurLoginModalProvider'
     );
   }
-  return useMemo(
-    () => ({
-      closeLoginModal: context.closeLoginModal,
-      dismissLoginModal: context.dismissLoginModal,
-      openLoginModal: context.openLoginModal,
-    }),
-    [context]
-  );
+  return actions;
 };

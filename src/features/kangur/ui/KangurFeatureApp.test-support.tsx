@@ -333,6 +333,11 @@ vi.mock('@/features/kangur/ui/context/KangurTutorAnchorContext', () => ({
 vi.mock('@/features/kangur/ui/context/KangurLoginModalContext', () => ({
   KangurLoginModalProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
   useKangurLoginModalState: () => loginModalStateMock(),
+  useKangurLoginModalActions: () => ({
+    closeLoginModal: vi.fn(),
+    dismissLoginModal: vi.fn(),
+    openLoginModal: vi.fn(),
+  }),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({

@@ -6,7 +6,10 @@ import {
   getKangurInternalQueryParamName,
   readKangurUrlParam,
 } from '@/features/kangur/config/routing';
-import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import {
+  useKangurAuthActions,
+  useKangurAuthSessionState,
+} from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurAgeGroupFocus } from '@/features/kangur/ui/context/KangurAgeGroupFocusContext';
 import { useKangurGuestPlayer } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 import { useOptionalKangurRouteTransitionState } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
@@ -144,14 +147,12 @@ export function useLessonsActiveLessonRenderSnapshot(input: {
 export function useLessonsLogic() {
   const routeNavigator = useKangurRouteNavigator();
   const { basePath } = useKangurRouting();
-  const auth = useKangurAuth();
-  const { user } = auth;
+  const { user, canAccessParentAssignments } = useKangurAuthSessionState();
+  const { logout } = useKangurAuthActions();
   const { subject, setSubject } = useKangurSubjectFocus();
   const { ageGroup, setAgeGroup } = useKangurAgeGroupFocus();
   const { guestPlayerName, setGuestPlayerName } = useKangurGuestPlayer();
   const routeTransitionState = useOptionalKangurRouteTransitionState();
-  const canAccessParentAssignments =
-    auth.canAccessParentAssignments ?? Boolean(user?.activeLearner?.id);
   const isMobile = useKangurMobileBreakpoint();
   // isDeferredContentReady: set to true after the first rAF tick so heavy
   // secondary data fetches (assignments, complete catalog) don't block paint.
@@ -757,10 +758,11 @@ export function useLessonsLogic() {
   }, [activeLesson?.id, isMobile]);
 
   return {
-    auth,
     basePath,
     guestPlayerName,
     setGuestPlayerName,
+    logout,
+    user,
     subject,
     setSubject,
     ageGroup,

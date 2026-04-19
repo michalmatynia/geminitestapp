@@ -41,10 +41,16 @@ type KangurLoginModalProviderType =
   typeof import('@/features/kangur/ui/context/KangurLoginModalContext')['KangurLoginModalProvider'];
 type UseKangurLoginModalType =
   typeof import('@/features/kangur/ui/context/KangurLoginModalContext')['useKangurLoginModal'];
+type UseKangurLoginModalActionsType =
+  typeof import('@/features/kangur/ui/context/KangurLoginModalContext')['useKangurLoginModalActions'];
+type UseKangurLoginModalStateType =
+  typeof import('@/features/kangur/ui/context/KangurLoginModalContext')['useKangurLoginModalState'];
 
 let KangurRoutingProvider: KangurRoutingProviderType;
 let KangurLoginModalProvider: KangurLoginModalProviderType;
 let useKangurLoginModal: UseKangurLoginModalType;
+let useKangurLoginModalActions: UseKangurLoginModalActionsType;
+let useKangurLoginModalState: UseKangurLoginModalStateType;
 
 function LoginModalProbe(): JSX.Element {
   const {
@@ -102,6 +108,27 @@ function LoginModalProbe(): JSX.Element {
   );
 }
 
+let actionOnlyRenderCount = 0;
+let stateOnlyRenderCount = 0;
+
+function LoginModalActionOnlyProbe(): JSX.Element {
+  actionOnlyRenderCount += 1;
+  const { openLoginModal } = useKangurLoginModalActions();
+
+  return (
+    <button type='button' onClick={() => openLoginModal('/lessons?focus=division')}>
+      Open via actions only
+    </button>
+  );
+}
+
+function LoginModalStateOnlyProbe(): JSX.Element {
+  stateOnlyRenderCount += 1;
+  const { isOpen } = useKangurLoginModalState();
+
+  return <div data-testid='kangur-login-modal-state-only-open'>{String(isOpen)}</div>;
+}
+
 async function renderHarness({
   basePath = '/kangur',
   pageKey = 'Lessons',
@@ -150,6 +177,11 @@ describe('KangurLoginModalProvider', () => {
     ({ KangurLoginModalProvider, useKangurLoginModal } = await import(
       '@/features/kangur/ui/context/KangurLoginModalContext'
     ));
+    ({ useKangurLoginModalActions, useKangurLoginModalState } = await import(
+      '@/features/kangur/ui/context/KangurLoginModalContext'
+    ));
+    actionOnlyRenderCount = 0;
+    stateOnlyRenderCount = 0;
   });
 
   it('treats the compatibility login route as an open route-driven modal and closes back to home', async () => {
@@ -322,5 +354,28 @@ describe('KangurLoginModalProvider', () => {
     expect(screen.getByTestId('kangur-login-modal-callback')).toHaveTextContent(
       '/en/profile?tab=stats#summary'
     );
+  });
+
+  it('does not rerender action-only consumers when modal state changes', () => {
+    usePathnameMock.mockReturnValue('/kangur/lessons');
+    useSearchParamsMock.mockReturnValue(new URLSearchParams(''));
+
+    render(
+      <KangurRoutingProvider basePath='/kangur' pageKey='Lessons' requestedPath='/kangur/lessons'>
+        <KangurLoginModalProvider>
+          <LoginModalActionOnlyProbe />
+          <LoginModalStateOnlyProbe />
+        </KangurLoginModalProvider>
+      </KangurRoutingProvider>
+    );
+
+    expect(actionOnlyRenderCount).toBe(1);
+    expect(stateOnlyRenderCount).toBe(1);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open via actions only' }));
+
+    expect(screen.getByTestId('kangur-login-modal-state-only-open')).toHaveTextContent('true');
+    expect(actionOnlyRenderCount).toBe(1);
+    expect(stateOnlyRenderCount).toBe(2);
   });
 });

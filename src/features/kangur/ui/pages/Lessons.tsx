@@ -8,7 +8,7 @@ import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRou
 import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
 import { KangurTopNavigationController } from '@/features/kangur/ui/components/primary-navigation/KangurTopNavigationController';
 import type { KangurPrimaryNavigationProps } from '@/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.types';
-import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';
+import { useKangurLoginModalActions } from '@/features/kangur/ui/context/KangurLoginModalContext';
 import {
   LessonsProvider,
   useLessons,
@@ -53,7 +53,7 @@ function useLessonsPageNavigation(input: {
   logout: (redirect?: boolean) => void;
   openLoginModal: () => void;
   setGuestPlayerName: (value: string) => void;
-  user: ReturnType<typeof useLessons>['auth']['user'];
+  user: ReturnType<typeof useLessons>['user'];
 }): KangurPrimaryNavigationProps {
   const { basePath, guestPlayerName, logout, openLoginModal, setGuestPlayerName, user } = input;
   const handleLogout = useCallback(() => {
@@ -175,7 +175,6 @@ function LessonsContent() {
   const routeTransitionState = useOptionalKangurRouteTransitionState();
   const lessons = useLessons();
   const {
-    auth,
     basePath,
     activeLesson,
     activeLessonId,
@@ -187,13 +186,14 @@ function LessonsContent() {
     progress,
     guestPlayerName,
     setGuestPlayerName,
+    logout,
+    user,
     isLessonSectionsLoading,
     shouldShowLessonsCatalogSkeleton,
     lessonDocument,
     activeLessonAssignmentContent,
   } = lessons;
-  const { openLoginModal } = useKangurLoginModal();
-  const { user, logout } = auth;
+  const { openLoginModal } = useKangurLoginModalActions();
   const isRouteTransitionIdle = resolveLessonsIsRouteTransitionIdle(routeTransitionState?.transitionPhase);
   const { activeLessonAssignment, completedActiveLessonAssignment } =
     resolveLessonsActiveLessonAssignments({

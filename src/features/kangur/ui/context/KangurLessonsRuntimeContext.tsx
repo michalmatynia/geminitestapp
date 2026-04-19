@@ -10,6 +10,7 @@ import {
   type ReactNode,
   type JSX,
 } from 'react';
+import type { KangurUser } from '@kangur/platform';
 
 import {
   useKangurLessonDocument,
@@ -60,16 +61,8 @@ const KangurLessonsRuntimeStateContext =
 const KangurLessonsRuntimeActionsContext =
   createContext<KangurLessonsRuntimeActionsContextValue | null>(null);
 
-// Resolves whether the current user can access parent-delegated assignments.
-// Falls back to checking for an active learner ID when the platform flag is
-// not yet available.
-const resolveKangurLessonsCanAccessParentAssignments = ({
-  canAccessParentAssignments,
-  user,
-}: {
-  canAccessParentAssignments: boolean;
-  user: import('@kangur/platform').KangurUser | null;
-}): boolean => canAccessParentAssignments ?? Boolean(user?.activeLearner?.id);
+const hasKangurLessonsActiveLearner = (user: KangurUser | null): boolean =>
+  typeof user?.activeLearner?.id === 'string' && user.activeLearner.id.length > 0;
 
 // KangurLessonsRuntimeProvider is the central state container for the StudiQ
 // lessons experience. It owns:
@@ -88,10 +81,8 @@ export function KangurLessonsRuntimeProvider({
 }): JSX.Element {
   const { basePath } = useKangurRouting();
   const { canAccessParentAssignments, user } = useKangurAuthSessionState();
-  const hasParentAssignmentAccess = resolveKangurLessonsCanAccessParentAssignments({
-    canAccessParentAssignments,
-    user,
-  });
+  const hasParentAssignmentAccess =
+    canAccessParentAssignments || hasKangurLessonsActiveLearner(user);
   const { subject, setSubject } = useKangurSubjectFocus();
   const { ageGroup, setAgeGroup } = useKangurAgeGroupFocus();
   const focusToken = useKangurFocusToken(basePath);

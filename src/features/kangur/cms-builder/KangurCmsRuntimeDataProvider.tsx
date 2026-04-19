@@ -19,7 +19,7 @@ import {
   resolveKangurCmsResultTitle,
   translateKangurCmsRuntimeWithFallback,
 } from '@/features/kangur/cms-builder/KangurCmsRuntimeDataProvider.i18n';
-import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import { useKangurAuthSessionState } from '@/features/kangur/ui/context/KangurAuthContext';
 import {
   useOptionalKangurGameRuntime,
 } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
@@ -172,7 +172,7 @@ export function KangurCmsRuntimeDataProvider({
   const progressRuntimeTranslations = useTranslations('KangurLearnerProfileRuntime');
   const router = useRouter();
   const routeTransition = useOptionalKangurRouteTransition();
-  const auth = useKangurAuth();
+  const auth = useKangurAuthSessionState();
   const routing = useOptionalKangurRouting();
   const progress = useKangurProgressState();
   const game = useOptionalKangurGameRuntime();
@@ -195,7 +195,7 @@ export function KangurCmsRuntimeDataProvider({
     useKangurAssignments({
       enabled:
         routing?.pageKey === 'Game' &&
-        (auth.canAccessParentAssignments ?? Boolean(auth.user?.activeLearner?.id)),
+        auth.canAccessParentAssignments,
       query: {
         includeArchived: false,
       },

@@ -20,7 +20,7 @@ import { KangurNavAction } from '@/features/kangur/ui/components/KangurNavAction
 import { KangurPageIntroCard } from '@/features/kangur/ui/components/lesson-library/KangurPageIntroCard';
 import { KangurParentDashboardWordmark } from './KangurParentDashboardWordmark';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
-import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';
+import { useKangurLoginModalActions } from '@/features/kangur/ui/context/KangurLoginModalContext';
 import {
   useKangurParentDashboardRuntimeHeroState,
   useKangurParentDashboardRuntimeShellActions,
@@ -158,7 +158,7 @@ function KangurParentDashboardHeroWordmark({
 function KangurParentDashboardGuestActions(): React.JSX.Element {
   const isCoarsePointer = useKangurCoarsePointer();
   const translations = useTranslations('KangurParentDashboard');
-  const { openLoginModal } = useKangurLoginModal();
+  const { openLoginModal } = useKangurLoginModalActions();
   const { compactWideActionClassName } = resolveHeroActionClassNames(isCoarsePointer);
 
   const handleOpenLogin = (): void => {

@@ -1,13 +1,8 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useRef } from 'react';
 
-import { KANGUR_MAIN_PAGE, kangurPages } from '@/features/kangur/config/pages';
-import { resolveKangurPageKey } from '@/features/kangur/config/routing';
-import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
-import { useKangurIdleReady } from '@/features/kangur/ui/hooks/useKangurIdleReady';
-import { GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS } from '@/features/kangur/ui/pages/GameHome.constants';
+import { useKangurDeferredHomeTutorContextReady } from '@/features/kangur/ui/hooks/useKangurDeferredHomeTutorContextReady';
 
 import type { JSX } from 'react';
 
@@ -23,17 +18,9 @@ const KangurAiTutorWidget = dynamic(
 // standalone home route. Once mounted, it stays available for the rest of the
 // session so later navigations do not pay the delay again.
 export function KangurDeferredAiTutorWidgetMount(): JSX.Element | null {
-  const { pageKey, embedded } = useKangurRouting();
-  const resolvedPageKey = resolveKangurPageKey(pageKey, kangurPages, KANGUR_MAIN_PAGE);
-  const shouldDelayInitialMountRef = useRef<boolean | null>(null);
+  const isTutorContextReady = useKangurDeferredHomeTutorContextReady();
 
-  shouldDelayInitialMountRef.current ??= !embedded && resolvedPageKey === 'Game';
-  const shouldDelayInitialMount = shouldDelayInitialMountRef.current;
-  const isIdleReady = useKangurIdleReady({
-    minimumDelayMs: shouldDelayInitialMount ? GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS : 0,
-  });
-
-  if (shouldDelayInitialMount && !isIdleReady) {
+  if (!isTutorContextReady) {
     return null;
   }
 

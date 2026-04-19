@@ -15,9 +15,12 @@ import {
 } from '@/features/kangur/ui/components/parent-dashboard/KangurParentDashboardTabsWidget';
 import { KangurTopNavigationController } from '@/features/kangur/ui/components/primary-navigation/KangurTopNavigationController';
 import { useKangurAiTutorSessionSync } from '@/features/kangur/ui/context/KangurAiTutorContext';
-import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import {
+  useKangurAuthSessionState,
+  useKangurAuthStatusState,
+} from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurGuestPlayer } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
-import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';
+import { useKangurLoginModalActions } from '@/features/kangur/ui/context/KangurLoginModalContext';
 import {
   KangurParentDashboardRuntimeBoundary,
   type KangurParentDashboardTabId,
@@ -691,7 +694,7 @@ function ParentDashboardResolvedContent({
     isAuthenticated,
   } = useKangurParentDashboardRuntimeShellState();
   const { logout } = useKangurParentDashboardRuntimeShellActions();
-  const { openLoginModal } = useKangurLoginModal();
+  const { openLoginModal } = useKangurLoginModalActions();
   const { guestPlayerName, setGuestPlayerName } = useKangurGuestPlayer();
   const tabPanelsRef = useRef<HTMLDivElement | null>(null);
   const tabPanelsContentRef = useRef<HTMLDivElement | null>(null);
@@ -868,7 +871,8 @@ function ParentDashboardAuthLoadingState({
 // skeleton while auth is in flight to prevent a flash of the unauthenticated
 // state, then renders the full dashboard once auth has resolved.
 function ParentDashboardContent(): React.JSX.Element {
-  const { hasResolvedAuth = true, isLoadingAuth } = useKangurAuth();
+  const { hasResolvedAuth = true } = useKangurAuthSessionState();
+  const { isLoadingAuth } = useKangurAuthStatusState();
   const { canAccessDashboard, isAuthenticated } = useKangurParentDashboardRuntimeShellState();
   const { enabled: docsTooltipsEnabled } = useKangurDocsTooltips('parentDashboard');
 

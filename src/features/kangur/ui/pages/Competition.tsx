@@ -16,7 +16,7 @@ import {
   useKangurGameRuntime,
 } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 import { useKangurGuestPlayer } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
-import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';
+import { useKangurLoginModalActions } from '@/features/kangur/ui/context/KangurLoginModalContext';
 import { useOptionalKangurRouteTransitionState } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
 import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
@@ -92,7 +92,7 @@ function CompetitionContent(): React.JSX.Element {
   const routeNavigator = useKangurRouteNavigator();
   const { basePath, logout, screen, setScreen, user } = useKangurGameRuntime();
   const { guestPlayerName, setGuestPlayerName } = useKangurGuestPlayer();
-  const { openLoginModal } = useKangurLoginModal();
+  const { openLoginModal } = useKangurLoginModalActions();
   const routeTransitionState = useOptionalKangurRouteTransitionState();
   const { enabled: docsTooltipsEnabled } = useKangurDocsTooltips('home');
 

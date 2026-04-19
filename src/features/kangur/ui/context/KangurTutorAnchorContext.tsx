@@ -4,6 +4,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type JSX,
@@ -33,11 +34,29 @@ const KangurTutorAnchorStateContext = createContext<KangurTutorAnchorStateContex
 const KangurTutorAnchorActionsContext = createContext<KangurTutorAnchorActionsContextValue | null>(
   null
 );
+const EMPTY_ANCHORS: KangurTutorAnchorRegistration[] = [];
+const NOOP_UNREGISTER = (): void => {};
 
-export function KangurTutorAnchorProvider({ children }: { children: ReactNode }): JSX.Element {
+export function KangurTutorAnchorProvider({
+  children,
+  enabled = true,
+}: {
+  children: ReactNode;
+  enabled?: boolean;
+}): JSX.Element {
   const [anchors, setAnchors] = useState<KangurTutorAnchorRegistration[]>([]);
 
+  useEffect(() => {
+    if (!enabled) {
+      setAnchors([]);
+    }
+  }, [enabled]);
+
   const registerAnchor = useCallback((anchor: KangurTutorAnchorRegistration) => {
+    if (!enabled) {
+      return NOOP_UNREGISTER;
+    }
+
     setAnchors((prev) => {
       const next = prev.filter((entry) => entry.id !== anchor.id);
       next.push(anchor);
@@ -47,13 +66,13 @@ export function KangurTutorAnchorProvider({ children }: { children: ReactNode })
     return () => {
       setAnchors((prev) => prev.filter((entry) => entry.id !== anchor.id));
     };
-  }, []);
+  }, [enabled]);
 
   const stateValue = useMemo<KangurTutorAnchorStateContextValue>(
     () => ({
-      anchors,
+      anchors: enabled ? anchors : EMPTY_ANCHORS,
     }),
-    [anchors]
+    [anchors, enabled]
   );
   const actionsValue = useMemo<KangurTutorAnchorActionsContextValue>(
     () => ({
@@ -125,7 +144,7 @@ const contentMatches = (
   metadata: KangurTutorAnchorMetadata | undefined,
   contentId: string | null | undefined
 ): boolean => {
-  if (!contentId) {
+  if (typeof contentId !== 'string' || contentId.length === 0) {
     return true;
   }
   return (metadata?.contentId ?? null) === contentId;
@@ -137,7 +156,7 @@ export function selectBestTutorAnchor(input: {
   contentId?: string | null;
   kinds?: KangurTutorAnchorKind[];
 }): KangurTutorAnchorRegistration | null {
-  if (!input.surface) {
+  if (typeof input.surface !== 'string' || input.surface.length === 0) {
     return null;
   }
 

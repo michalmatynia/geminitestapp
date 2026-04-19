@@ -10,9 +10,11 @@ import { KangurContextRegistryPageBoundary } from './KangurContextRegistryPageBo
 
 const {
   contextRegistryPageProviderMock,
+  deferredHomeTutorContextReadyMock,
   routingState,
 } = vi.hoisted(() => ({
   contextRegistryPageProviderMock: vi.fn(),
+  deferredHomeTutorContextReadyMock: vi.fn(() => true),
   routingState: {
     value: {
       pageKey: 'Game',
@@ -22,6 +24,10 @@ const {
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   useKangurRouting: () => routingState.value,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurDeferredHomeTutorContextReady', () => ({
+  useKangurDeferredHomeTutorContextReady: () => deferredHomeTutorContextReadyMock(),
 }));
 
 vi.mock('@/shared/lib/ai-context-registry/page-context', () => ({
@@ -77,6 +83,26 @@ describe('KangurContextRegistryPageBoundary', () => {
         pageId: 'kangur:GamesLibrary',
         title: 'Kangur Games Library',
         rootNodeIds: expect.arrayContaining(['page:kangur-games-library']),
+      })
+    );
+  });
+
+  it('keeps the page context provider dormant on the initial standalone home route until the idle gate opens', () => {
+    deferredHomeTutorContextReadyMock.mockReturnValue(false);
+    routingState.value = {
+      pageKey: 'Game',
+    };
+
+    render(
+      <KangurContextRegistryPageBoundary>
+        <div>child</div>
+      </KangurContextRegistryPageBoundary>
+    );
+
+    expect(contextRegistryPageProviderMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        enabled: false,
+        pageId: 'kangur:Game',
       })
     );
   });

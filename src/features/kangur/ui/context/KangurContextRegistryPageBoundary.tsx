@@ -6,6 +6,7 @@ import { KANGUR_MAIN_PAGE } from '@/features/kangur/config/pages';
 import { resolveKangurPageKey } from '@/features/kangur/config/routing';
 import { KANGUR_CONTEXT_ROOT_IDS } from '@/features/kangur/context-registry/refs';
 import { ContextRegistryPageProvider } from '@/shared/lib/ai-context-registry/page-context';
+import { useKangurDeferredHomeTutorContextReady } from '@/features/kangur/ui/hooks/useKangurDeferredHomeTutorContextReady';
 
 import { useKangurRouting } from './KangurRoutingContext';
 
@@ -85,6 +86,7 @@ export function KangurContextRegistryPageBoundary({
 }: {
   children: React.ReactNode;
 }): React.JSX.Element {
+  const isTutorContextReady = useKangurDeferredHomeTutorContextReady();
   const { pageKey } = useKangurRouting();
   const resolvedPageKey = resolveKangurPageKey(pageKey, KANGUR_PAGE_KEY_LOOKUP, KANGUR_FALLBACK_PAGE_KEY);
   const effectivePageKey = isKangurContextPageKey(resolvedPageKey)
@@ -98,6 +100,7 @@ export function KangurContextRegistryPageBoundary({
 
   return (
     <ContextRegistryPageProvider
+      enabled={isTutorContextReady}
       pageId={`kangur:${effectivePageKey}`}
       title={KANGUR_PAGE_TITLES[effectivePageKey] ?? 'Kangur'}
       rootNodeIds={rootNodeIds}

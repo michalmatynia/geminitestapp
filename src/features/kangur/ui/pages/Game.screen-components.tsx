@@ -25,10 +25,6 @@ import { type resolveKangurGameHomeVisibility } from '@/features/kangur/ui/pages
 import {
   KangurGameHomeSections,
 } from '@/features/kangur/ui/pages/GameHome.layout';
-import {
-  createLaunchableGameScreenComponentConfigFromRuntime,
-  getKangurLaunchableGameScreenComponentConfig,
-} from '@/features/kangur/ui/pages/Game.launchable-screens';
 import { type createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import {
   isKangurLaunchableGameScreen,
@@ -39,7 +35,6 @@ import { cn } from '@/features/kangur/shared/utils';
 
 import type {
   GameHomeScreenRefs,
-  GameLaunchableRuntime,
   GameLaunchableScreenRefs,
   GameSessionScreenRefs,
 } from './Game.screen-refs';
@@ -165,6 +160,16 @@ const KangurGameResultWidget = dynamic(
     import('@/features/kangur/ui/components/game-runtime/KangurGameResultWidget').then((m) => ({
       default: m.KangurGameResultWidget,
     })),
+  { ssr: false }
+);
+
+const GameDeferredLaunchableScreen = dynamic(
+  () => import('@/features/kangur/ui/pages/GameDeferredLaunchableScreen'),
+  { ssr: false }
+);
+
+const GameDeferredNonHomeScreen = dynamic(
+  () => import('@/features/kangur/ui/pages/GameDeferredNonHomeScreen'),
   { ssr: false }
 );
 
@@ -395,199 +400,18 @@ function GameHomeScreen(props: {
   );
 }
 
-function GameLaunchableScreen(props: {
-  activeLaunchableGameRuntime: GameLaunchableRuntime | null;
-  launchableGameInstanceId?: string | null;
-  launchableGameRuntimeLoading: boolean;
-  launchableGameScreenRefs: GameLaunchableScreenRefs;
-  screen: KangurLaunchableGameScreen;
-  screenHeadingRef: RefObject<HTMLHeadingElement | null>;
-  screenMotionProps: GameMotionProps;
-  translations: GameTranslations;
-}): React.JSX.Element {
-  const {
-    activeLaunchableGameRuntime,
-    launchableGameInstanceId,
-    launchableGameRuntimeLoading,
-    launchableGameScreenRefs,
-    screen,
-    screenHeadingRef,
-    screenMotionProps,
-    translations,
-  } = props;
-  const screenLabel = getGameScreenLabel(translations, screen);
-
-  if (launchableGameRuntimeLoading) {
-    return (
-      <GameScreenFrame
-        className='w-full flex flex-col items-center'
-        motionProps={screenMotionProps}
-        screenHeadingRef={screenHeadingRef}
-        screenKey={screen}
-        screenLabel={screenLabel}
-        screenRef={launchableGameScreenRefs[screen]}
-      >
-        <div data-testid='kangur-game-launchable-runtime-loading' />
-      </GameScreenFrame>
-    );
-  }
-
-  if (launchableGameInstanceId && !activeLaunchableGameRuntime) {
-    return (
-      <GameScreenFrame
-        className='w-full flex flex-col items-center'
-        motionProps={screenMotionProps}
-        screenHeadingRef={screenHeadingRef}
-        screenKey={screen}
-        screenLabel={screenLabel}
-        screenRef={launchableGameScreenRefs[screen]}
-      >
-        <div data-testid='kangur-game-launchable-runtime-missing' />
-      </GameScreenFrame>
-    );
-  }
-
-  const config = activeLaunchableGameRuntime
-    ? createLaunchableGameScreenComponentConfigFromRuntime(activeLaunchableGameRuntime)
-    : getKangurLaunchableGameScreenComponentConfig(screen);
-  const ScreenComponent = config.Component;
-
-  return (
-    <GameScreenFrame
-      className={config.className}
-      motionProps={screenMotionProps}
-      screenHeadingRef={screenHeadingRef}
-      screenKey={screen}
-      screenLabel={screenLabel}
-      screenRef={launchableGameScreenRefs[screen]}
-    >
-      <ScreenComponent />
-    </GameScreenFrame>
-  );
-}
-
-function GameKangurModeScreen(props: {
-  screen: 'kangur' | 'kangur_setup';
-  screenHeadingRef: RefObject<HTMLHeadingElement | null>;
-  screenMotionProps: GameMotionProps;
-  sessionRefs: Pick<GameSessionScreenRefs, 'kangurSessionRef' | 'kangurSetupRef'>;
-  translations: GameTranslations;
-}): React.JSX.Element {
-  const { screen, screenHeadingRef, screenMotionProps, sessionRefs, translations } = props;
-
-  if (screen === 'kangur_setup') {
-    return (
-      <GameScreenFrame
-        className='w-full flex flex-col items-center'
-        motionProps={screenMotionProps}
-        screenHeadingRef={screenHeadingRef}
-        screenKey='kangur_setup'
-        screenLabel={getGameScreenLabel(translations, 'kangur_setup')}
-        screenRef={sessionRefs.kangurSetupRef}
-      >
-        <KangurGameKangurSetupWidget />
-      </GameScreenFrame>
-    );
-  }
-
-  return (
-    <GameScreenFrame
-      className='w-full max-w-lg flex flex-col items-center'
-      motionProps={screenMotionProps}
-      screenHeadingRef={screenHeadingRef}
-      screenKey='kangur'
-      screenLabel={getGameScreenLabel(translations, 'kangur')}
-      screenRef={sessionRefs.kangurSessionRef}
-    >
-      <KangurGameKangurSessionWidget />
-    </GameScreenFrame>
-  );
-}
-
-function GameOperationSelectorScreen(props: {
-  screen: 'operation' | 'training';
-  screenHeadingRef: RefObject<HTMLHeadingElement | null>;
-  screenMotionProps: GameMotionProps;
-  sessionRefs: Pick<GameSessionScreenRefs, 'operationSelectorRef' | 'trainingSetupRef'>;
-  translations: GameTranslations;
-}): React.JSX.Element {
-  const { screen, screenHeadingRef, screenMotionProps, sessionRefs, translations } = props;
-  const screenRef =
-    screen === 'training' ? sessionRefs.trainingSetupRef : sessionRefs.operationSelectorRef;
-
-  return (
-    <GameScreenFrame
-      className='w-full flex flex-col items-center'
-      motionProps={screenMotionProps}
-      screenHeadingRef={screenHeadingRef}
-      screenKey={screen}
-      screenLabel={getGameScreenLabel(translations, screen)}
-      screenRef={screenRef}
-    >
-      <KangurGameOperationSelectorWidget />
-    </GameScreenFrame>
-  );
-}
-
-function GamePlayingScreen(props: {
-  screenHeadingRef: RefObject<HTMLHeadingElement | null>;
-  screenMotionProps: GameMotionProps;
-  translations: GameTranslations;
-}): React.JSX.Element {
-  const { screenHeadingRef, screenMotionProps, translations } = props;
-
-  return (
-    <GameScreenFrame
-      className='flex w-full flex-col items-center'
-      motionProps={screenMotionProps}
-      screenHeadingRef={screenHeadingRef}
-      screenKey='playing'
-      screenLabel={getGameScreenLabel(translations, 'playing')}
-    >
-      <KangurGameQuestionWidget />
-    </GameScreenFrame>
-  );
-}
-
-function GameResultScreen(props: {
-  screenHeadingRef: RefObject<HTMLHeadingElement | null>;
-  screenMotionProps: GameMotionProps;
-  sessionRefs: Pick<GameSessionScreenRefs, 'resultLeaderboardRef' | 'resultSummaryRef'>;
-  translations: GameTranslations;
-}): React.JSX.Element {
-  const { screenHeadingRef, screenMotionProps, sessionRefs, translations } = props;
-
-  return (
-    <GameScreenFrame
-      className={`flex w-full flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`}
-      motionProps={screenMotionProps}
-      screenHeadingRef={screenHeadingRef}
-      screenKey='result'
-      screenLabel={getGameScreenLabel(translations, 'result')}
-    >
-      <>
-        <div ref={sessionRefs.resultSummaryRef} className='w-full flex flex-col items-center'>
-          <KangurGameResultWidget />
-        </div>
-        <div ref={sessionRefs.resultLeaderboardRef} className='w-full'>
-          <Leaderboard />
-        </div>
-      </>
-    </GameScreenFrame>
-  );
-}
-
-function GameNonLaunchableScreen(props: {
+export function GameCurrentScreen(props: {
   basePath: string;
   canAccessParentAssignments: boolean;
   homeMotionProps: GameMotionProps;
   homeRefs: GameHomeScreenRefs;
   homeVisibility: ReturnType<typeof resolveKangurGameHomeVisibility>;
+  launchableGameInstanceId?: string | null;
   progress: KangurProgressState | null | undefined;
-  screen: Exclude<KangurGameScreen, KangurLaunchableGameScreen>;
+  screen: KangurGameScreen;
   screenHeadingRef: RefObject<HTMLHeadingElement | null>;
   screenMotionProps: GameMotionProps;
-  sessionRefs: Omit<GameSessionScreenRefs, 'launchableGameScreenRefs'>;
+  sessionRefs: GameSessionScreenRefs;
   translations: GameTranslations;
 }): React.JSX.Element | null {
   const {
@@ -596,6 +420,7 @@ function GameNonLaunchableScreen(props: {
     homeMotionProps,
     homeRefs,
     homeVisibility,
+    launchableGameInstanceId,
     progress,
     screen,
     screenHeadingRef,
@@ -603,6 +428,19 @@ function GameNonLaunchableScreen(props: {
     sessionRefs,
     translations,
   } = props;
+
+  if (isKangurLaunchableGameScreen(screen)) {
+    return (
+      <GameDeferredLaunchableScreen
+        launchableGameInstanceId={launchableGameInstanceId}
+        launchableGameScreenRefs={sessionRefs.launchableGameScreenRefs}
+        screen={screen}
+        screenHeadingRef={screenHeadingRef}
+        screenMotionProps={screenMotionProps}
+        translations={translations}
+      />
+    );
+  }
 
   if (screen === 'home') {
     return (
@@ -619,106 +457,8 @@ function GameNonLaunchableScreen(props: {
     );
   }
 
-  if (screen === 'playing') {
-    return (
-      <GamePlayingScreen
-        screenHeadingRef={screenHeadingRef}
-        screenMotionProps={screenMotionProps}
-        translations={translations}
-      />
-    );
-  }
-
-  if (screen === 'result') {
-    return (
-      <GameResultScreen
-        screenHeadingRef={screenHeadingRef}
-        screenMotionProps={screenMotionProps}
-        sessionRefs={sessionRefs}
-        translations={translations}
-      />
-    );
-  }
-
-  if (screen === 'operation' || screen === 'training') {
-    return (
-      <GameOperationSelectorScreen
-        screen={screen}
-        screenHeadingRef={screenHeadingRef}
-        screenMotionProps={screenMotionProps}
-        sessionRefs={sessionRefs}
-        translations={translations}
-      />
-    );
-  }
-
   return (
-    <GameKangurModeScreen
-      screen={screen}
-      screenHeadingRef={screenHeadingRef}
-      screenMotionProps={screenMotionProps}
-      sessionRefs={sessionRefs}
-      translations={translations}
-    />
-  );
-}
-
-export function GameCurrentScreen(props: {
-  activeLaunchableGameRuntime: GameLaunchableRuntime | null;
-  basePath: string;
-  canAccessParentAssignments: boolean;
-  homeMotionProps: GameMotionProps;
-  homeRefs: GameHomeScreenRefs;
-  homeVisibility: ReturnType<typeof resolveKangurGameHomeVisibility>;
-  launchableGameInstanceId?: string | null;
-  launchableGameRuntimeLoading: boolean;
-  progress: KangurProgressState | null | undefined;
-  screen: KangurGameScreen;
-  screenHeadingRef: RefObject<HTMLHeadingElement | null>;
-  screenMotionProps: GameMotionProps;
-  sessionRefs: GameSessionScreenRefs;
-  translations: GameTranslations;
-}): React.JSX.Element | null {
-  const {
-    activeLaunchableGameRuntime,
-    basePath,
-    canAccessParentAssignments,
-    homeMotionProps,
-    homeRefs,
-    homeVisibility,
-    launchableGameInstanceId,
-    launchableGameRuntimeLoading,
-    progress,
-    screen,
-    screenHeadingRef,
-    screenMotionProps,
-    sessionRefs,
-    translations,
-  } = props;
-
-  if (isKangurLaunchableGameScreen(screen)) {
-    return (
-      <GameLaunchableScreen
-        activeLaunchableGameRuntime={activeLaunchableGameRuntime}
-        launchableGameInstanceId={launchableGameInstanceId}
-        launchableGameRuntimeLoading={launchableGameRuntimeLoading}
-        launchableGameScreenRefs={sessionRefs.launchableGameScreenRefs}
-        screen={screen}
-        screenHeadingRef={screenHeadingRef}
-        screenMotionProps={screenMotionProps}
-        translations={translations}
-      />
-    );
-  }
-
-  return (
-    <GameNonLaunchableScreen
-      basePath={basePath}
-      canAccessParentAssignments={canAccessParentAssignments}
-      homeMotionProps={homeMotionProps}
-      homeRefs={homeRefs}
-      homeVisibility={homeVisibility}
-      progress={progress}
+    <GameDeferredNonHomeScreen
       screen={screen}
       screenHeadingRef={screenHeadingRef}
       screenMotionProps={screenMotionProps}

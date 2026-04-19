@@ -10,6 +10,7 @@ import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjec
 import { useOptionalKangurRouteTransitionState } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
 import { KangurGlassPanel } from '@/features/kangur/ui/design/primitives';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
+import { useKangurDeferredStandaloneHomeReady } from '@/features/kangur/ui/hooks/useKangurDeferredStandaloneHomeReady';
 import {
   GAME_HOME_ACTIONS_LIST_CLASSNAME,
   GAME_HOME_ACTIONS_SHELL_CLASSNAME,
@@ -198,9 +199,11 @@ const resolveKangurGameHomeActionShellClassName = (
 
 function KangurGameHomeActionsList({
   actions,
+  loadMotion,
   routeTransitionState,
 }: {
   actions: HomeAction[];
+  loadMotion: boolean;
   routeTransitionState: ReturnType<typeof useOptionalKangurRouteTransitionState>;
 }): React.JSX.Element {
   return (
@@ -209,6 +212,7 @@ function KangurGameHomeActionsList({
         <KangurHomeActionCard
           key={action.id}
           action={action}
+          loadMotion={loadMotion}
           navState={resolveHomeActionNavigationState({
             activeTransitionSourceId: routeTransitionState?.activeTransitionSourceId,
             transitionPhase: routeTransitionState?.transitionPhase,
@@ -223,10 +227,12 @@ function KangurGameHomeActionsList({
 
 function KangurHomeActionCard({
   action,
+  loadMotion,
   navState,
   index,
 }: {
   action: HomeAction;
+  loadMotion: boolean;
   navState: HomeActionNavigationState;
   index: number;
 }): React.JSX.Element {
@@ -327,6 +333,7 @@ function KangurHomeActionCard({
 
   return (
     <LazyMotionDiv
+      loadMotion={loadMotion}
       initial={{ opacity: 0, y: 16, scale: 1 }}
       animate={
         navState === 'idle'
@@ -385,6 +392,7 @@ export function KangurGameHomeActionsWidget({
   hideWhenScreenMismatch = true,
 }: KangurGameHomeActionsWidgetProps = {}): React.JSX.Element | null {
   const translations = useTranslations('KangurGameHomeActions');
+  const shouldLoadActionMotion = useKangurDeferredStandaloneHomeReady();
   const routeTransitionState = useOptionalKangurRouteTransitionState();
   const isCoarsePointer = useKangurCoarsePointer();
   const { basePath, canStartFromHome, handleStartGame, screen, setScreen } =
@@ -427,6 +435,7 @@ export function KangurGameHomeActionsWidget({
         </h3>
         <KangurGameHomeActionsList
           actions={visibleActions}
+          loadMotion={shouldLoadActionMotion}
           routeTransitionState={routeTransitionState}
         />
       </section>

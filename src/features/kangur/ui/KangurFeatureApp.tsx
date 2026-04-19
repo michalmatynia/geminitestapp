@@ -30,6 +30,13 @@ const KangurCmsRuntimeScreen = dynamic(
 import { KangurRouteAccessibilityAnnouncer } from '@/features/kangur/ui/components/KangurRouteAccessibilityAnnouncer';
 const PageNotFound = dynamic(() => import('@/features/kangur/ui/components/PageNotFound').then(m => ({ default: m.PageNotFound })), { ssr: false });
 const UserNotRegisteredError = dynamic(() => import('@/features/kangur/ui/components/UserNotRegisteredError'), { ssr: false });
+const KangurDeferredSyncEffectsClient = dynamic(
+  () =>
+    import('@/features/kangur/ui/KangurDeferredSyncEffectsClient').then((m) => ({
+      default: m.KangurDeferredSyncEffectsClient,
+    })),
+  { ssr: false }
+);
 import {
   KangurAuthProvider,
   useKangurAuthActions,
@@ -42,13 +49,11 @@ import {
   KangurLoginModalProvider,
   useKangurLoginModalState,
 } from '@/features/kangur/ui/context/KangurLoginModalContext';
-import { KangurProgressSyncProvider } from '@/features/kangur/ui/context/KangurProgressSyncProvider';
 import {
   KangurRouteTransitionProvider,
   useKangurRouteTransitionState,
 } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
-import { KangurScoreSyncProvider } from '@/features/kangur/ui/context/KangurScoreSyncProvider';
 import { KangurFocusProvider } from '@/features/kangur/ui/context/KangurFocusProvider';
 import {
   KangurTopNavigationHost,
@@ -159,12 +164,7 @@ const KangurDeferredSyncEffectsMount = memo((): JSX.Element | null => {
     return null;
   }
 
-  return (
-    <>
-      <KangurProgressSyncProvider />
-      <KangurScoreSyncProvider />
-    </>
-  );
+  return <KangurDeferredSyncEffectsClient />;
 });
 
 const KangurPlainResolvedRoutePage = memo(({

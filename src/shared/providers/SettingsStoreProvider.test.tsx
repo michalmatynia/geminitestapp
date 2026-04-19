@@ -8,6 +8,7 @@ import {
   SettingsStoreProvider,
   useSettingsStore,
   useSettingsStoreFetching,
+  useSettingsStoreLoading,
   type SettingsStoreValue,
 } from '@/shared/providers/SettingsStoreProvider';
 
@@ -91,6 +92,11 @@ function SettingsMapProbe({
 function SettingsFetchingProbe(): React.JSX.Element {
   const isFetching = useSettingsStoreFetching();
   return <div data-testid='fetching'>{String(isFetching)}</div>;
+}
+
+function SettingsLoadingProbe(): React.JSX.Element {
+  const isLoading = useSettingsStoreLoading();
+  return <div data-testid='loading-context'>{String(isLoading)}</div>;
 }
 
 describe('SettingsStoreProvider', () => {
@@ -233,6 +239,26 @@ describe('SettingsStoreProvider', () => {
 
     expect(screen.getByTestId('value')).toHaveTextContent('{"screens":{"Game":{"components":[]}}}');
     expect(screen.getByTestId('loading')).toHaveTextContent('false');
+  });
+
+  it('exposes the stable loading state through the dedicated loading hook', () => {
+    liteQueryResultRef.current = {
+      data: new Map<string, string>(),
+      isLoading: true,
+      isFetching: true,
+      error: null,
+      refetch: vi.fn(),
+    };
+
+    render(
+      <SettingsStoreProvider mode='lite'>
+        <SettingsLoadingProbe />
+        <SettingsFetchingProbe />
+      </SettingsStoreProvider>
+    );
+
+    expect(screen.getByTestId('loading-context')).toHaveTextContent('true');
+    expect(screen.getByTestId('fetching')).toHaveTextContent('true');
   });
 
   it('falls back to an empty map when hydrated query data is not a Map instance', () => {

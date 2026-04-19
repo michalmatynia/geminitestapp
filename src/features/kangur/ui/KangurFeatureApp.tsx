@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import { useLocale } from 'next-intl';
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
 import {
@@ -68,7 +68,7 @@ import { isKangurSocialBatchCaptureHref } from '@/features/kangur/shared/capture
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { readKangurTopBarHeightCssValue } from '@/features/kangur/ui/utils/readKangurTopBarHeightCssValue';
 import { cn } from '@/features/kangur/shared/utils';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { useSettingsStore, useSettingsStoreLoading } from '@/shared/providers/SettingsStoreProvider';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 import { KangurDeferredAiTutorProviders } from '@/features/kangur/ui/KangurDeferredAiTutorProviders';
 import { KangurDeferredAiTutorWidgetMount } from '@/features/kangur/ui/KangurDeferredAiTutorWidgetMount';
@@ -162,6 +162,98 @@ const KangurDeferredSyncEffectsMount = (): JSX.Element | null => {
   );
 };
 
+const KangurPlainResolvedRoutePage = memo(({
+  ResolvedPage,
+}: {
+  ResolvedPage: React.ComponentType;
+}): JSX.Element => <ResolvedPage />);
+
+const KangurCmsResolvedRoutePage = memo(({
+  pageKey,
+  ResolvedPage,
+}: {
+  pageKey: string;
+  ResolvedPage: React.ComponentType;
+}): JSX.Element => <KangurCmsRuntimeScreen pageKey={pageKey} fallback={<ResolvedPage />} />);
+
+const KangurRenderedRouteContent = memo(({
+  activeTransitionSourceId,
+  embedded,
+  isNavigationTransitionActive,
+  isPendingRouteSnapshotVisible,
+  isRouteCaptureReady,
+  isRouteContentInteractionBlocked,
+  isRouteContentVisuallyHidden,
+  isRouteInteractionReady,
+  routeContent,
+  routeContentMotionProps,
+  routeTransitionKey,
+  shouldClipRouteContentDuringTransition,
+  transitionPhase,
+}: {
+  activeTransitionSourceId: string | null;
+  embedded: boolean;
+  isNavigationTransitionActive: boolean;
+  isPendingRouteSnapshotVisible: boolean;
+  isRouteCaptureReady: boolean;
+  isRouteContentInteractionBlocked: boolean;
+  isRouteContentVisuallyHidden: boolean;
+  isRouteInteractionReady: boolean;
+  routeContent: JSX.Element;
+  routeContentMotionProps: ReturnType<typeof createKangurPageTransitionMotionProps>;
+  routeTransitionKey: string;
+  shouldClipRouteContentDuringTransition: boolean;
+  transitionPhase: string;
+}): JSX.Element => (
+  <LazyMotionDiv
+    key={routeTransitionKey}
+    {...routeContentMotionProps}
+    aria-busy={isNavigationTransitionActive || isPendingRouteSnapshotVisible}
+    aria-hidden={isRouteContentVisuallyHidden ? 'true' : undefined}
+    className={cn(
+      'w-full min-w-0 kangur-shell-viewport-height',
+      embedded ? 'min-h-full' : null,
+      shouldClipRouteContentDuringTransition ? 'overflow-hidden' : null,
+      isRouteContentInteractionBlocked ? 'pointer-events-none' : null,
+      isRouteContentVisuallyHidden ? 'pointer-events-none opacity-0' : null
+    )}
+    data-route-transition-phase={transitionPhase}
+    data-route-interactive-ready={isRouteInteractionReady ? 'true' : 'false'}
+    data-route-capture-ready={isRouteCaptureReady ? 'true' : 'false'}
+    data-route-transition-key={routeTransitionKey}
+    data-route-transition-source-id={activeTransitionSourceId ?? undefined}
+    data-testid='kangur-route-content'
+  >
+    {routeContent}
+  </LazyMotionDiv>
+));
+
+const KangurResolvedRouteContent = memo(({
+  resolvedPageKey,
+}: {
+  resolvedPageKey: string | null;
+}): JSX.Element => {
+  const settingsStore = useSettingsStore();
+
+  if (resolvedPageKey === null) {
+    return <PageNotFound />;
+  }
+
+  const ResolvedPage = kangurPages[resolvedPageKey];
+  if (!ResolvedPage) {
+    return <PageNotFound />;
+  }
+
+  const rawCmsProject = settingsStore.get(KANGUR_CMS_PROJECT_SETTING_KEY);
+  const shouldUseCmsRuntimeScreen = hasKangurCmsRuntimeScreen(rawCmsProject, resolvedPageKey);
+
+  return shouldUseCmsRuntimeScreen ? (
+    <KangurCmsResolvedRoutePage pageKey={resolvedPageKey} ResolvedPage={ResolvedPage} />
+  ) : (
+    <KangurPlainResolvedRoutePage ResolvedPage={ResolvedPage} />
+  );
+});
+
 // AuthenticatedApp is the main learner shell. It owns:
 //  - Boot and navigation skeleton orchestration
 //  - Route content rendering (page components + CMS runtime screen overlay)
@@ -173,11 +265,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
   const { isAuthenticated, hasResolvedAuth = true } = useKangurAuthSessionState();
   const { isLoadingAuth, isLoadingPublicSettings, authError } = useKangurAuthStatusState();
   const { resolvePendingSnapshot } = useKangurRouteAccess();
-  const settingsStore = useSettingsStore();
-  const isLoadingSettings = settingsStore.isLoading;
-  // Raw CMS project key from settings — used to decide whether to render the
-  // CMS runtime screen overlay instead of the plain page component.
-  const rawCmsProject = settingsStore.get(KANGUR_CMS_PROJECT_SETTING_KEY);
+  const isLoadingSettings = useSettingsStoreLoading();
   const {
     isRouteAcknowledging,
     isRoutePending,
@@ -209,7 +297,10 @@ const AuthenticatedApp = (): JSX.Element | null => {
     !authErrorType &&
     resolvedPageKey === 'ParentDashboard';
   const prefersReducedMotion = usePrefersReducedMotion();
-  const routeContentMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
+  const routeContentMotionProps = useMemo(
+    () => createKangurPageTransitionMotionProps(prefersReducedMotion),
+    [prefersReducedMotion]
+  );
   // Stable key for AnimatePresence: changes on every navigation so the
   // outgoing page can animate out before the incoming page mounts.
   const routeTransitionKey = requestedPath || (pageKey ? `page:${pageKey}` : 'page:unknown');
@@ -242,30 +333,12 @@ const AuthenticatedApp = (): JSX.Element | null => {
   // before showing the navigation skeleton so feedback is immediate.
   const shouldSkipNavigationSkeletonDelay = activeTransitionSourceId !== null;
   const shouldBlockRouteContent = shouldRedirectToHome;
-  const shouldUseCmsRuntimeScreen = hasKangurCmsRuntimeScreen(rawCmsProject, resolvedPageKey);
-  // Memoized route content: resolves the correct page component (or CMS
-  // runtime screen overlay) for the current page key. Returns null when the
-  // route should be blocked (e.g. auth_required or parent-dashboard redirect).
-  const routeContent = useMemo<JSX.Element | null>(() => {
-    if (authErrorType === 'auth_required' || shouldBlockRouteContent) {
-      return null;
-    }
-
-    if (!resolvedPageKey) {
-      return <PageNotFound />;
-    }
-
-    const ResolvedPage = kangurPages[resolvedPageKey];
-    if (!ResolvedPage) {
-      return <PageNotFound />;
-    }
-
-    return shouldUseCmsRuntimeScreen ? (
-      <KangurCmsRuntimeScreen pageKey={resolvedPageKey} fallback={<ResolvedPage />} />
-    ) : (
-      <ResolvedPage />
-    );
-  }, [authErrorType, resolvedPageKey, shouldBlockRouteContent, shouldUseCmsRuntimeScreen]);
+  const hasRouteContent = authErrorType !== 'auth_required' && !shouldBlockRouteContent;
+  const routeContent = useMemo(
+    () =>
+      hasRouteContent ? <KangurResolvedRouteContent resolvedPageKey={resolvedPageKey} /> : null,
+    [hasRouteContent, resolvedPageKey]
+  );
   // hasPresentedInteractiveShell: latched to true once the shell has been
   // shown to the user at least once. Prevents the boot loader from re-appearing
   // on subsequent navigations.
@@ -424,27 +497,21 @@ const AuthenticatedApp = (): JSX.Element | null => {
   const shouldSkipRouteContentPresence =
     isNavigationTransitionActive || isPendingRouteSnapshotVisible;
   const renderedRouteContent = routeContent ? (
-    <LazyMotionDiv
-      key={routeTransitionKey}
-      {...routeContentMotionProps}
-      aria-busy={isNavigationTransitionActive || isPendingRouteSnapshotVisible}
-      aria-hidden={isRouteContentVisuallyHidden ? 'true' : undefined}
-      className={cn(
-        'w-full min-w-0 kangur-shell-viewport-height',
-        embedded ? 'min-h-full' : null,
-        shouldClipRouteContentDuringTransition ? 'overflow-hidden' : null,
-        isRouteContentInteractionBlocked ? 'pointer-events-none' : null,
-        isRouteContentVisuallyHidden ? 'pointer-events-none opacity-0' : null
-      )}
-      data-route-transition-phase={transitionPhase}
-      data-route-interactive-ready={isRouteInteractionReady ? 'true' : 'false'}
-      data-route-capture-ready={isRouteCaptureReady ? 'true' : 'false'}
-      data-route-transition-key={routeTransitionKey}
-      data-route-transition-source-id={activeTransitionSourceId ?? undefined}
-      data-testid='kangur-route-content'
-    >
-      {routeContent}
-    </LazyMotionDiv>
+    <KangurRenderedRouteContent
+      activeTransitionSourceId={activeTransitionSourceId}
+      embedded={embedded}
+      isNavigationTransitionActive={isNavigationTransitionActive}
+      isPendingRouteSnapshotVisible={isPendingRouteSnapshotVisible}
+      isRouteCaptureReady={isRouteCaptureReady}
+      isRouteContentInteractionBlocked={isRouteContentInteractionBlocked}
+      isRouteContentVisuallyHidden={isRouteContentVisuallyHidden}
+      isRouteInteractionReady={isRouteInteractionReady}
+      routeContent={routeContent}
+      routeContentMotionProps={routeContentMotionProps}
+      routeTransitionKey={routeTransitionKey}
+      shouldClipRouteContentDuringTransition={shouldClipRouteContentDuringTransition}
+      transitionPhase={transitionPhase}
+    />
   ) : null;
 
   // Enable pointer events on the route content after the first client render.

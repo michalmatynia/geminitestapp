@@ -32,6 +32,15 @@ const {
   displayName: 'SettingsStoreFetchingContext',
 });
 
+const {
+  Context: SettingsStoreLoadingContext,
+  useOptionalContext: useOptionalSettingsStoreLoadingContext,
+} = createStrictContext<boolean>({
+  hookName: 'useSettingsStoreLoading',
+  providerName: 'SettingsStoreProvider',
+  displayName: 'SettingsStoreLoadingContext',
+});
+
 export function SettingsStoreProvider({
   children,
   mode = 'lite',
@@ -57,7 +66,9 @@ export function SettingsStoreProvider({
 
   return (
     <SettingsStoreFetchingContext.Provider value={isFetching}>
-      <SettingsStoreContext.Provider value={value}>{children}</SettingsStoreContext.Provider>
+      <SettingsStoreLoadingContext.Provider value={value.isLoading}>
+        <SettingsStoreContext.Provider value={value}>{children}</SettingsStoreContext.Provider>
+      </SettingsStoreLoadingContext.Provider>
     </SettingsStoreFetchingContext.Provider>
   );
 }
@@ -81,4 +92,8 @@ export function useSettingsStore(): SettingsStoreValue {
  */
 export function useSettingsStoreFetching(): boolean {
   return useOptionalSettingsStoreFetchingContext() ?? false;
+}
+
+export function useSettingsStoreLoading(): boolean {
+  return useOptionalSettingsStoreLoadingContext() ?? fallbackSettingsStore.isLoading;
 }

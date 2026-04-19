@@ -8,6 +8,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { clearLatchedKangurTopBarHeightCssValue } from '@/features/kangur/ui/utils/readKangurTopBarHeightCssValue';
 import {
   authStateMock,
+  kangurPageRenderSpyMock,
+  kangurRouteContentRenderSpyMock,
   loginModalStateMock,
   pendingRouteLoadingSnapshotMock,
   preloadKangurPageMock,
@@ -55,6 +57,41 @@ describe('KangurFeatureApp', () => {
     expect(screen.getByTestId('kangur-page-lessons')).toBeInTheDocument();
     expect(screen.queryByTestId('kangur-page-transition-skeleton')).toBeNull();
     expect(screen.queryByTestId('kangur-login-modal')).toBeNull();
+  });
+
+  it('does not rerender the active page subtree when the shell rerenders with the same route', () => {
+    const { rerender } = render(<KangurFeatureApp />);
+
+    expect(kangurPageRenderSpyMock).toHaveBeenCalledWith('Lessons');
+    expect(kangurPageRenderSpyMock).toHaveBeenCalledTimes(1);
+    const initialRouteContentRenderCount = kangurRouteContentRenderSpyMock.mock.calls.length;
+
+    rerender(<KangurFeatureApp />);
+
+    expect(kangurPageRenderSpyMock).toHaveBeenCalledTimes(1);
+    expect(kangurRouteContentRenderSpyMock).toHaveBeenCalledTimes(initialRouteContentRenderCount);
+  });
+
+  it('does not rerender the active page subtree when unrelated settings data changes', () => {
+    const { rerender } = render(<KangurFeatureApp />);
+
+    expect(kangurPageRenderSpyMock).toHaveBeenCalledWith('Lessons');
+    expect(kangurPageRenderSpyMock).toHaveBeenCalledTimes(1);
+
+    settingsStoreStateMock.mockReturnValue({
+      map: new Map([['unrelated_setting', 'updated']]),
+      isLoading: false,
+      isFetching: false,
+      error: null,
+      get: vi.fn(),
+      getBoolean: vi.fn(),
+      getNumber: vi.fn(),
+      refetch: vi.fn(),
+    });
+
+    rerender(<KangurFeatureApp />);
+
+    expect(kangurPageRenderSpyMock).toHaveBeenCalledTimes(1);
   });
 
   it('does not cover the initial home route with a transition skeleton while theme settings are still hydrating', () => {

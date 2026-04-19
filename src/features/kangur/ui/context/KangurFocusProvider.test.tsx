@@ -5,6 +5,9 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+const optionalRoutingMock = vi.hoisted(() => vi.fn());
+const useKangurIdleReadyMock = vi.hoisted(() => vi.fn());
+
 const authState = vi.hoisted(() => ({
   value: {
     user: {
@@ -51,6 +54,14 @@ vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
     authError: null,
     appPublicSettings: null,
   }),
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
+  useOptionalKangurRouting: () => optionalRoutingMock(),
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurIdleReady', () => ({
+  useKangurIdleReady: (options?: { minimumDelayMs?: number }) => useKangurIdleReadyMock(options),
 }));
 
 vi.mock('@/features/kangur/ui/services/progress', () => ({
@@ -119,6 +130,8 @@ describe('KangurFocusProvider', () => {
     subjectFocusServiceMocks.subscribeToSubjectFocusChangesMock.mockImplementation(
       () => () => undefined
     );
+    optionalRoutingMock.mockReturnValue(null);
+    useKangurIdleReadyMock.mockReturnValue(true);
     ageGroupFocusServiceMocks.loadPersistedAgeGroupFocusMock.mockReturnValue('ten_year_old');
     ageGroupFocusServiceMocks.persistAgeGroupFocusMock.mockImplementation(
       (_key: string | null, ageGroup: string) => ageGroup
@@ -179,6 +192,50 @@ describe('KangurFocusProvider', () => {
     expect(subjectFocusServiceMocks.persistSubjectFocusMock).toHaveBeenCalledWith(
       'learner-1',
       'alphabet'
+    );
+  });
+
+  it('defers remote subject hydration on the initial standalone home boot', async () => {
+    optionalRoutingMock.mockReturnValue({
+      embedded: false,
+      pageKey: 'Game',
+    });
+    useKangurIdleReadyMock.mockReturnValue(false);
+    subjectFocusServiceMocks.hasPersistedSubjectFocusMock.mockReturnValue(false);
+    subjectFocusServiceMocks.loadPersistedSubjectFocusMock.mockReturnValue('maths');
+    subjectFocusServiceMocks.loadRemoteSubjectFocusMock.mockResolvedValue('english');
+
+    const view = render(
+      <KangurFocusProvider>
+        <Probe />
+      </KangurFocusProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('subject-value')).toHaveTextContent('maths');
+    });
+
+    expect(setProgressScopeMock).toHaveBeenCalledWith({
+      ownerKey: 'learner-1',
+      subject: 'maths',
+    });
+    expect(subjectFocusServiceMocks.loadRemoteSubjectFocusMock).not.toHaveBeenCalled();
+
+    useKangurIdleReadyMock.mockReturnValue(true);
+    view.rerender(
+      <KangurFocusProvider>
+        <Probe />
+      </KangurFocusProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('subject-value')).toHaveTextContent('english');
+    });
+
+    expect(subjectFocusServiceMocks.loadRemoteSubjectFocusMock).toHaveBeenCalledTimes(1);
+    expect(subjectFocusServiceMocks.persistSubjectFocusMock).toHaveBeenCalledWith(
+      'learner-1',
+      'english'
     );
   });
 });

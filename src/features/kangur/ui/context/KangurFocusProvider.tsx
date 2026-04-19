@@ -14,10 +14,13 @@ import {
   DEFAULT_KANGUR_SUBJECT,
   resolveKangurSubjectForAgeGroup,
 } from '@/features/kangur/lessons/lesson-catalog-metadata';
+import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import {
   useKangurAuthSessionState,
   useKangurAuthStatusState,
 } from '@/features/kangur/ui/context/KangurAuthContext';
+import { useKangurIdleReady } from '@/features/kangur/ui/hooks/useKangurIdleReady';
+import { GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS } from '@/features/kangur/ui/pages/GameHome.constants';
 import { resolveKangurUserScopeKey } from '@/features/kangur/ui/context/kangur-user-scope';
 import {
   loadPersistedAgeGroupFocus,
@@ -66,15 +69,17 @@ const FALLBACK_FOCUS_SCOPE_KEY = 'guest';
 
 const useHydrateKangurSubjectFocus = ({
   canSyncRemote,
+  isRemoteHydrationReady,
   setSubjectState,
   storageKey,
 }: {
   canSyncRemote: boolean;
+  isRemoteHydrationReady: boolean;
   setSubjectState: (subject: KangurLessonSubject) => void;
   storageKey: string;
 }): void => {
   useEffect(() => {
-    if (!canSyncRemote || hasPersistedSubjectFocus(storageKey)) {
+    if (!canSyncRemote || !isRemoteHydrationReady || hasPersistedSubjectFocus(storageKey)) {
       return undefined;
     }
 
@@ -97,7 +102,17 @@ const useHydrateKangurSubjectFocus = ({
       cancelled = true;
       controller.abort();
     };
-  }, [canSyncRemote, setSubjectState, storageKey]);
+  }, [canSyncRemote, isRemoteHydrationReady, setSubjectState, storageKey]);
+};
+
+const useIsKangurRemoteFocusHydrationReady = (): boolean => {
+  const routing = useOptionalKangurRouting();
+  const shouldDelayRemoteHydration = routing?.embedded === false && routing.pageKey === 'Game';
+  const isIdleReady = useKangurIdleReady({
+    minimumDelayMs: shouldDelayRemoteHydration ? GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS : 0,
+  });
+
+  return !shouldDelayRemoteHydration || isIdleReady;
 };
 
 const useKangurFocusScope = (): {
@@ -126,6 +141,7 @@ const useKangurSubjectFocusStateValue = ({
   scopeKey: string | null;
   storageKey: string;
 }): KangurSubjectFocusStateContextValue & KangurSubjectFocusActionsContextValue => {
+  const isRemoteHydrationReady = useIsKangurRemoteFocusHydrationReady();
   const [subject, setSubjectState] = useState<KangurLessonSubject>(DEFAULT_KANGUR_SUBJECT);
 
   useEffect(() => {
@@ -135,6 +151,7 @@ const useKangurSubjectFocusStateValue = ({
   useEffect(() => subscribeToSubjectFocusChanges(storageKey, setSubjectState), [storageKey]);
   useHydrateKangurSubjectFocus({
     canSyncRemote,
+    isRemoteHydrationReady,
     setSubjectState,
     storageKey,
   });

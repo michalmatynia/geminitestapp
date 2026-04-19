@@ -49,6 +49,8 @@ type MockedQueryClient = Pick<QueryClient, 'prefetchQuery'>;
 
 const {
   authStateMock,
+  kangurPageRenderSpyMock,
+  kangurRouteContentRenderSpyMock,
   loginModalStateMock,
   pendingRouteLoadingSnapshotMock,
   prefetchKangurPageContentStoreMock,
@@ -67,6 +69,8 @@ const {
   useLocaleMock,
 } = vi.hoisted(() => ({
   authStateMock: vi.fn<() => MockedAuthStateInput>(),
+  kangurPageRenderSpyMock: vi.fn<(pageKey: string) => void>(),
+  kangurRouteContentRenderSpyMock: vi.fn<() => void>(),
   loginModalStateMock: vi.fn<() => MockedLoginModalState>(),
   pendingRouteLoadingSnapshotMock: vi.fn<() => MockedPendingRouteLoadingSnapshot>(),
   preloadKangurPageMock: vi.fn<(pageKey: string) => void>(),
@@ -199,15 +203,18 @@ vi.mock('@/features/kangur/ui/components/LazyAnimatePresence', () => ({
     initial?: unknown;
     transition?: unknown;
   }) => (
-    <div
-      data-motion-animate={serializeMotionProp(animate)}
-      data-motion-exit={serializeMotionProp(exit)}
-      data-motion-initial={serializeMotionProp(initial)}
-      data-motion-transition={serializeMotionProp(transition)}
-      {...props}
-    >
-      {children}
-    </div>
+    <>
+      {props['data-testid'] === 'kangur-route-content' ? kangurRouteContentRenderSpyMock() : null}
+      <div
+        data-motion-animate={serializeMotionProp(animate)}
+        data-motion-exit={serializeMotionProp(exit)}
+        data-motion-initial={serializeMotionProp(initial)}
+        data-motion-transition={serializeMotionProp(transition)}
+        {...props}
+      >
+        {children}
+      </div>
+    </>
   ),
   usePrefersReducedMotion: () => false,
 }));
@@ -407,6 +414,7 @@ vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   useKangurRouting: () => routingStateMock(),
+  useOptionalKangurRouting: () => routingStateMock(),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurRouteTransitionContext', () => ({
@@ -444,12 +452,22 @@ vi.mock('@/features/kangur/ui/routing/pending-route-loading-snapshot', async (im
 vi.mock('@/features/kangur/config/pages', () => ({
   KANGUR_MAIN_PAGE: 'Game',
   kangurPages: {
-    Game: () => <div data-testid='kangur-page-game'>Game</div>,
-    GamesLibrary: () => <div data-testid='kangur-page-games-library'>GamesLibrary</div>,
-    Lessons: () => <div data-testid='kangur-page-lessons'>Lessons</div>,
-    ParentDashboard: () => (
-      <div data-testid='kangur-page-parent-dashboard'>ParentDashboard</div>
-    ),
+    Game: () => {
+      kangurPageRenderSpyMock('Game');
+      return <div data-testid='kangur-page-game'>Game</div>;
+    },
+    GamesLibrary: () => {
+      kangurPageRenderSpyMock('GamesLibrary');
+      return <div data-testid='kangur-page-games-library'>GamesLibrary</div>;
+    },
+    Lessons: () => {
+      kangurPageRenderSpyMock('Lessons');
+      return <div data-testid='kangur-page-lessons'>Lessons</div>;
+    },
+    ParentDashboard: () => {
+      kangurPageRenderSpyMock('ParentDashboard');
+      return <div data-testid='kangur-page-parent-dashboard'>ParentDashboard</div>;
+    },
   },
   preloadKangurPage: (pageKey: string) => preloadKangurPageMock(pageKey),
 }));
@@ -479,10 +497,13 @@ vi.mock('@/features/kangur/config/routing', async (importOriginal) => {
 
 vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
   useSettingsStore: () => settingsStoreStateMock(),
+  useSettingsStoreLoading: () => settingsStoreStateMock().isLoading,
 }));
 
 export {
   authStateMock,
+  kangurPageRenderSpyMock,
+  kangurRouteContentRenderSpyMock,
   loginModalStateMock,
   pendingRouteLoadingSnapshotMock,
   preloadKangurPageMock,
@@ -565,6 +586,8 @@ export async function setupKangurFeatureAppTest() {
   useKangurDeferredStandaloneHomeReadyMock.mockReturnValue(true);
   progressSyncProviderVisibleMock.mockReturnValue(true);
   scoreSyncProviderVisibleMock.mockReturnValue(true);
+  kangurPageRenderSpyMock.mockReset();
+  kangurRouteContentRenderSpyMock.mockReset();
   preloadKangurPageMock.mockReset();
   prefetchKangurPageContentStoreMock.mockReset();
   prefetchKangurPageContentStoreMock.mockResolvedValue(true);

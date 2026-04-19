@@ -134,6 +134,34 @@ export type PlaywrightVerificationInjectionConfig<TReview> = {
    * message (even on continuation turns), giving the AI an up-to-date view of the page.
    */
   evaluateCapture?: ((capture: PlaywrightVisionIterationCapture) => Promise<PlaywrightVisionIterationEvaluation>) | null | undefined;
+  /**
+   * Artifact callbacks used to persist per-iteration screenshots.
+   * When provided together with `artifactKey`, each iteration's screenshot is saved as
+   * `${artifactKey}-inject-iter-${n}` via `artifacts.file`.
+   * Automatically forwarded from `captureAndEvaluatePlaywrightObservation` when not set.
+   */
+  artifacts?: PlaywrightObservationArtifacts | null | undefined;
+  /**
+   * Key prefix for per-iteration screenshot artifacts.
+   * Required when `artifacts` is provided; no screenshots are saved when omitted.
+   * Automatically forwarded from `captureAndEvaluatePlaywrightObservation` when not set.
+   */
+  artifactKey?: string | null | undefined;
+  /**
+   * Maximum number of consecutive execution errors before aborting the loop early.
+   * Resets to zero whenever an iteration executes without error.
+   * No limit when omitted — the loop always runs to `maxIterations`.
+   */
+  maxConsecutiveErrors?: number | null | undefined;
+};
+
+export type PlaywrightInjectionIterationEvaluationRecord = {
+  /** Whether the evaluator reported the goal as achieved (causes loop exit without code generation) */
+  done: boolean;
+  /** Serialized page-state context passed to the code generator; empty string when done=true */
+  context: string;
+  /** Human-readable reasoning provided by the evaluator (populated when done=true) */
+  reasoning?: string | null | undefined;
 };
 
 export type PlaywrightInjectionIterationRecord = {
@@ -145,6 +173,21 @@ export type PlaywrightInjectionIterationRecord = {
   executionError: string | null;
   /** Page URL captured immediately after code execution */
   urlAfter: string | null;
+  /**
+   * Artifact name of the screenshot captured at the start of this iteration.
+   * Null when artifact saving is not configured.
+   */
+  screenshotArtifactName: string | null;
+  /**
+   * Artifact name of the HTML snapshot captured at the start of this iteration.
+   * Null when artifact saving is not configured.
+   */
+  htmlArtifactName: string | null;
+  /**
+   * Result of the per-iteration evaluator (`evaluateCapture` / `evaluate`) for this iteration.
+   * Null when no per-iteration evaluator is configured.
+   */
+  evaluation: PlaywrightInjectionIterationEvaluationRecord | null;
 };
 
 export type PlaywrightInjectionAttemptResult = {
@@ -433,6 +476,13 @@ async function runPlaywrightVerificationInjectionLoop<TReview>(
       ? config.timeoutMs
       : null;
   const loopStartedAt = loopTimeoutMs !== null ? Date.now() : 0;
+  const maxConsecErrors =
+    typeof config.maxConsecutiveErrors === 'number' &&
+    Number.isFinite(config.maxConsecutiveErrors) &&
+    config.maxConsecutiveErrors > 0
+      ? config.maxConsecutiveErrors
+      : null;
+  let consecutiveErrors = 0;
 
   while (iterationsRun < maxIterations && !done) {
     if (loopTimeoutMs !== null && Date.now() - loopStartedAt >= loopTimeoutMs) {
@@ -450,8 +500,30 @@ async function runPlaywrightVerificationInjectionLoop<TReview>(
     ]);
     const screenshotBase64 = screenshotBuffer ? screenshotBuffer.toString('base64') : null;
 
+    let iterScreenshotArtifactName: string | null = null;
+    let iterHtmlArtifactName: string | null = null;
+    if (config.artifactKey) {
+      const iterKey = `${config.artifactKey}-inject-iter-${iterationsRun}`;
+      if (screenshotBuffer && typeof config.artifacts?.file === 'function') {
+        try {
+          const artifactPath = await config.artifacts.file(iterKey, screenshotBuffer, {
+            extension: 'png',
+            mimeType: 'image/png',
+            kind: 'screenshot',
+          });
+          iterScreenshotArtifactName = toArtifactName(artifactPath);
+        } catch {
+          // proceed without saving artifact
+        }
+      }
+      if (typeof config.artifacts?.html === 'function') {
+        iterHtmlArtifactName = toArtifactName(await config.artifacts.html(iterKey).catch(() => null));
+      }
+    }
+
     // Per-iteration evaluation — refreshes context and can short-circuit before code generation
     let iterationFreshContext: string | null = null;
+    let iterationEvalRecord: PlaywrightInjectionIterationEvaluationRecord | null = null;
     if (typeof config.evaluateCapture === 'function') {
       const iterEval = await config.evaluateCapture({
         screenshotBase64,
@@ -476,12 +548,16 @@ async function runPlaywrightVerificationInjectionLoop<TReview>(
           reasoning: lastReasoning,
           executionError: null,
           urlAfter: activeUrl,
+          screenshotArtifactName: iterScreenshotArtifactName,
+          htmlArtifactName: iterHtmlArtifactName,
+          evaluation: { done: true, context: '', reasoning: lastReasoning },
         };
         iterationRecords.push(record);
         if (typeof config.onIterationResult === 'function') config.onIterationResult(record);
         break;
       }
       iterationFreshContext = iterEval.context;
+      iterationEvalRecord = { done: false, context: iterEval.context };
     }
 
     const isContinuation = useHistory && conversationHistory.length > 0;
@@ -534,6 +610,9 @@ async function runPlaywrightVerificationInjectionLoop<TReview>(
         reasoning: lastReasoning,
         executionError: null,
         urlAfter: activeUrl,
+        screenshotArtifactName: iterScreenshotArtifactName,
+        htmlArtifactName: iterHtmlArtifactName,
+        evaluation: iterationEvalRecord,
       };
       iterationRecords.push(record);
       if (typeof config.onIterationResult === 'function') config.onIterationResult(record);
@@ -587,6 +666,12 @@ async function runPlaywrightVerificationInjectionLoop<TReview>(
       }
     }
 
+    if (executionError !== null) {
+      consecutiveErrors++;
+    } else {
+      consecutiveErrors = 0;
+    }
+
     const record: PlaywrightInjectionIterationRecord = {
       iteration: iterationsRun,
       code: result.code,
@@ -594,9 +679,20 @@ async function runPlaywrightVerificationInjectionLoop<TReview>(
       reasoning: lastReasoning ?? result.reasoning,
       executionError,
       urlAfter: activeUrl,
+      screenshotArtifactName: iterScreenshotArtifactName,
+      htmlArtifactName: iterHtmlArtifactName,
+      evaluation: iterationEvalRecord,
     };
     iterationRecords.push(record);
     if (typeof config.onIterationResult === 'function') config.onIterationResult(record);
+
+    if (maxConsecErrors !== null && consecutiveErrors >= maxConsecErrors) {
+      lastReasoning = `Injection loop aborted after ${consecutiveErrors} consecutive execution error${consecutiveErrors === 1 ? '' : 's'}.`;
+      if (typeof config.log === 'function') {
+        config.log(lastReasoning, { iterationsRun, consecutiveErrors });
+      }
+      break;
+    }
   }
 
   return {
@@ -698,9 +794,15 @@ export async function captureAndEvaluatePlaywrightObservation<TReview, TObservat
   let injectionReEvaluated = false;
 
   if (options.injectOnEvaluation?.shouldInject(review, capture)) {
+    const effectiveInjectConfig: typeof options.injectOnEvaluation = {
+      ...options.injectOnEvaluation,
+      log: options.injectOnEvaluation.log ?? options.log ?? undefined,
+      artifacts: options.injectOnEvaluation.artifacts ?? options.artifacts ?? undefined,
+      artifactKey: options.injectOnEvaluation.artifactKey ?? options.artifactKey ?? undefined,
+    };
     injection = await runPlaywrightVerificationInjectionLoop(
       options.page,
-      options.injectOnEvaluation,
+      effectiveInjectConfig,
       review,
       capture
     );
@@ -1178,10 +1280,14 @@ export async function runPlaywrightVerificationReviewCapture<
           loopDecision: options.params.loopDecision,
           stableForMs: options.params.stableForMs,
         }) as TObservation,
-      injectOnEvaluation:
-        options.injectOnEvaluation && options.log && !options.injectOnEvaluation.log
-          ? { ...options.injectOnEvaluation, log: options.log }
-          : (options.injectOnEvaluation ?? null),
+      injectOnEvaluation: options.injectOnEvaluation
+        ? {
+            ...options.injectOnEvaluation,
+            log: options.injectOnEvaluation.log ?? options.log ?? undefined,
+            artifacts: options.injectOnEvaluation.artifacts ?? options.artifacts ?? undefined,
+            artifactKey: options.injectOnEvaluation.artifactKey ?? options.artifactKey ?? undefined,
+          }
+        : null,
     });
 
   if (deduped) {
@@ -2108,6 +2214,11 @@ export type PlaywrightVisionGuidedAutomationOptions = {
    * as a JSON artifact after the loop completes.
    */
   artifacts?: PlaywrightObservationArtifacts | null | undefined;
+  /**
+   * Abort the loop after this many consecutive code-execution errors.
+   * Resets to 0 after any successful execution. No limit when omitted.
+   */
+  maxConsecutiveErrors?: number | null | undefined;
 };
 
 /**
@@ -2136,6 +2247,13 @@ export async function runPlaywrightVisionGuidedAutomation(
       : null;
   const loopStartedAt = loopTimeoutMs !== null ? Date.now() : 0;
 
+  const maxConsecErrors =
+    typeof options.maxConsecutiveErrors === 'number' &&
+    Number.isFinite(options.maxConsecutiveErrors) &&
+    options.maxConsecutiveErrors > 0
+      ? options.maxConsecutiveErrors
+      : null;
+  let consecutiveErrors = 0;
   let iterationsRun = 0;
   let done = false;
   let lastReasoning: string | null = null;
@@ -2168,6 +2286,27 @@ export async function runPlaywrightVisionGuidedAutomation(
       // page may be navigating
     }
 
+    let iterScreenshotArtifactName: string | null = null;
+    let iterHtmlArtifactName: string | null = null;
+    if (options.artifactKey) {
+      const iterKey = `${options.artifactKey}-iter-${iterationsRun}`;
+      if (screenshotBuffer && typeof options.artifacts?.file === 'function') {
+        try {
+          const artifactPath = await options.artifacts.file(iterKey, screenshotBuffer, {
+            extension: 'png',
+            mimeType: 'image/png',
+            kind: 'screenshot',
+          });
+          iterScreenshotArtifactName = toArtifactName(artifactPath);
+        } catch {
+          // proceed without saving artifact
+        }
+      }
+      if (typeof options.artifacts?.html === 'function') {
+        iterHtmlArtifactName = toArtifactName(await options.artifacts.html(iterKey).catch(() => null));
+      }
+    }
+
     // Step 2: Evaluate current page state
     const evaluation = await options.evaluate({
       screenshotBase64,
@@ -2193,6 +2332,9 @@ export async function runPlaywrightVisionGuidedAutomation(
         reasoning: lastReasoning,
         executionError: null,
         urlAfter: activeUrl,
+        screenshotArtifactName: iterScreenshotArtifactName,
+        htmlArtifactName: iterHtmlArtifactName,
+        evaluation: { done: true, context: evaluation.context, reasoning: evaluation.reasoning },
       };
       iterationRecords.push(record);
       if (typeof options.onIterationResult === 'function') options.onIterationResult(record);
@@ -2246,6 +2388,9 @@ export async function runPlaywrightVisionGuidedAutomation(
         reasoning: lastReasoning,
         executionError: null,
         urlAfter: activeUrl,
+        screenshotArtifactName: iterScreenshotArtifactName,
+        htmlArtifactName: iterHtmlArtifactName,
+        evaluation: { done: false, context: evaluation.context, reasoning: evaluation.reasoning },
       };
       iterationRecords.push(record);
       if (typeof options.onIterationResult === 'function') options.onIterationResult(record);
@@ -2292,6 +2437,12 @@ export async function runPlaywrightVisionGuidedAutomation(
       }
     }
 
+    if (executionError !== null) {
+      consecutiveErrors++;
+    } else {
+      consecutiveErrors = 0;
+    }
+
     const record: PlaywrightInjectionIterationRecord = {
       iteration: iterationsRun,
       code: result.code,
@@ -2299,9 +2450,20 @@ export async function runPlaywrightVisionGuidedAutomation(
       reasoning: result.reasoning,
       executionError,
       urlAfter: activeUrl,
+      screenshotArtifactName: iterScreenshotArtifactName,
+      htmlArtifactName: iterHtmlArtifactName,
+      evaluation: { done: false, context: evaluation.context, reasoning: evaluation.reasoning },
     };
     iterationRecords.push(record);
     if (typeof options.onIterationResult === 'function') options.onIterationResult(record);
+
+    if (maxConsecErrors !== null && consecutiveErrors >= maxConsecErrors) {
+      lastReasoning = `Vision automation aborted after ${consecutiveErrors} consecutive execution error${consecutiveErrors === 1 ? '' : 's'}.`;
+      if (typeof options.log === 'function') {
+        options.log(lastReasoning, { iterationsRun, consecutiveErrors });
+      }
+      break;
+    }
   }
 
   const result: PlaywrightInjectionAttemptResult = {

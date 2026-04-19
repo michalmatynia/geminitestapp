@@ -28,9 +28,11 @@ import {
   isKangurParentWithoutActiveLearner,
   resolveKangurUserScopeKey,
 } from '@/features/kangur/ui/context/kangur-user-scope';
+import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 
 const kangurPlatform = getKangurPlatform();
 const KANGUR_PROGRESS_HYDRATION_CACHE_TTL_MS = 30_000;
+const HOME_PROGRESS_HYDRATION_DELAY_MS = 1_200;
 
 type KangurProgressHydrationCacheEntry = {
   progress: KangurProgressState;
@@ -116,6 +118,34 @@ const scheduleDeferredCallback = (callback: () => void): (() => void) => {
   };
 };
 
+const scheduleInitialProgressHydration = (
+  callback: () => void,
+  delayMs: number
+): (() => void) => {
+  if (delayMs > 0) {
+    const timeoutId = globalThis.setTimeout(callback, delayMs);
+    return () => {
+      globalThis.clearTimeout(timeoutId);
+    };
+  }
+
+  let rafId: number | undefined;
+  let deferredTimeoutId: ReturnType<typeof globalThis.setTimeout> | undefined;
+
+  rafId = requestAnimationFrame(() => {
+    rafId = undefined;
+    deferredTimeoutId = globalThis.setTimeout(() => {
+      deferredTimeoutId = undefined;
+      callback();
+    }, 0);
+  });
+
+  return () => {
+    if (rafId !== undefined) cancelAnimationFrame(rafId);
+    if (deferredTimeoutId !== undefined) globalThis.clearTimeout(deferredTimeoutId);
+  };
+};
+
 export function KangurProgressSyncProvider({
   children,
 }: {
@@ -123,8 +153,14 @@ export function KangurProgressSyncProvider({
 }): React.JSX.Element | null {
   const { isAuthenticated, isLoadingAuth, user } = useKangurAuth();
   const { subject } = useKangurSubjectFocus();
+  const routing = useOptionalKangurRouting();
   const isParentWithoutLearner = isKangurParentWithoutActiveLearner(user);
   const userKey = resolveKangurUserScopeKey(user);
+  const shouldDelayInitialHydration =
+    routing?.embedded === false && routing.pageKey === 'Game';
+  const initialHydrationDelayMs = shouldDelayInitialHydration
+    ? HOME_PROGRESS_HYDRATION_DELAY_MS
+    : 0;
   const lastSyncedProgressRef = useRef<string | null>(null);
   const syncStateRef = useRef<'idle' | 'loading' | 'ready'>('idle');
 
@@ -287,29 +323,22 @@ export function KangurProgressSyncProvider({
       }
     };
 
-    // Yield to the rendering pipeline so the first paint completes before
-    // the progress hydration network call fires.  This reduces network
-    // contention during the critical boot window.
-    let rafId: number | undefined;
-    let deferredTimeoutId: ReturnType<typeof globalThis.setTimeout> | undefined;
-
-    rafId = requestAnimationFrame(() => {
-      rafId = undefined;
-      deferredTimeoutId = globalThis.setTimeout(() => {
-        deferredTimeoutId = undefined;
-        if (!cancelled) {
-          void hydrateProgress();
-        }
-      }, 0);
-    });
+    // Yield to the rendering pipeline so the first paint completes before the
+    // progress hydration network call fires. On the standalone home route,
+    // hold that remote hydration a bit longer because the visible progress
+    // widgets already render from local state and are not first-paint critical.
+    const cancelInitialHydration = scheduleInitialProgressHydration(() => {
+      if (!cancelled) {
+        void hydrateProgress();
+      }
+    }, initialHydrationDelayMs);
 
     return () => {
       cancelled = true;
-      if (rafId !== undefined) cancelAnimationFrame(rafId);
-      if (deferredTimeoutId !== undefined) globalThis.clearTimeout(deferredTimeoutId);
+      cancelInitialHydration();
       cancelDeferredRemoteUpdate?.();
     };
-  }, [isAuthenticated, isLoadingAuth, subject, userKey]);
+  }, [initialHydrationDelayMs, isAuthenticated, isLoadingAuth, subject, userKey]);
 
   useEffect(() => {
     if (isLoadingAuth || !isAuthenticated || !userKey) {

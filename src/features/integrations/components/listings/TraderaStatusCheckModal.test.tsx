@@ -2,9 +2,10 @@ import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { apiGetMock, apiPostMock, toastMock } = vi.hoisted(() => ({
+const { apiGetMock, apiPostMock, apiPutMock, toastMock } = vi.hoisted(() => ({
   apiGetMock: vi.fn(),
   apiPostMock: vi.fn(),
+  apiPutMock: vi.fn(),
   toastMock: vi.fn(),
 }));
 
@@ -24,6 +25,10 @@ const { invalidateQueriesMock } = vi.hoisted(() => ({
   invalidateQueriesMock: vi.fn(),
 }));
 
+const { useCustomFieldsMock } = vi.hoisted(() => ({
+  useCustomFieldsMock: vi.fn(),
+}));
+
 vi.mock('@tanstack/react-query', () => ({
   useQueryClient: () => ({
     invalidateQueries: invalidateQueriesMock,
@@ -37,6 +42,7 @@ vi.mock('@/shared/lib/api-client', async (importOriginal) => {
     api: {
       get: (...args: unknown[]) => apiGetMock(...args),
       post: (...args: unknown[]) => apiPostMock(...args),
+      put: (...args: unknown[]) => apiPutMock(...args),
     },
   };
 });
@@ -97,6 +103,10 @@ vi.mock('@/shared/hooks/use-settings', () => ({
   useSettingsMap: () => useSettingsMapMock(),
 }));
 
+vi.mock('@/features/products/hooks/useProductMetadataQueries', () => ({
+  useCustomFields: (...args: unknown[]) => useCustomFieldsMock(...args),
+}));
+
 import { TraderaStatusCheckModal } from './TraderaStatusCheckModal';
 import { TRADERA_SETTINGS_KEYS } from '@/features/integrations/constants/tradera';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
@@ -142,6 +152,7 @@ describe('TraderaStatusCheckModal', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     invalidateQueriesMock.mockResolvedValue(undefined);
+    apiPutMock.mockResolvedValue({ id: 'product-1' });
     useTraderaLiveExecutionMock.mockReturnValue(null);
     useTraderaSelectorRegistryMock.mockReturnValue({
       data: {
@@ -153,6 +164,22 @@ describe('TraderaStatusCheckModal', () => {
     });
     useSettingsMapMock.mockReturnValue({
       data: new Map<string, string>([[TRADERA_SETTINGS_KEYS.selectorProfile, 'profile-market-a']]),
+    });
+    useCustomFieldsMock.mockReturnValue({
+      data: [
+        {
+          id: 'market-exclusion',
+          name: 'Market Exclusion',
+          type: 'checkbox_set',
+          options: [
+            { id: 'opt-allegro', label: 'Allegro' },
+            { id: 'opt-tradera', label: 'Tradera' },
+          ],
+          createdAt: '2026-04-01T00:00:00.000Z',
+          updatedAt: '2026-04-01T00:00:00.000Z',
+        },
+      ],
+      isLoading: false,
     });
   });
 
@@ -727,7 +754,18 @@ describe('TraderaStatusCheckModal', () => {
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Checked' })).toBeInTheDocument();
     });
+    await waitFor(() => {
+      expect(apiPutMock).toHaveBeenCalledWith('/api/v2/products/product-1', {
+        customFields: [
+          {
+            fieldId: 'market-exclusion',
+            selectedOptionIds: ['opt-tradera'],
+          },
+        ],
+      });
+    });
     expect(screen.getByText('Ended')).toBeInTheDocument();
+    expect(screen.getByText('Market exclusion')).toBeInTheDocument();
     expect(screen.getByText('Latest check steps')).toBeInTheDocument();
     expect(screen.getByText('Validate Tradera session')).toBeInTheDocument();
     expect(screen.getByText('Open seller overview')).toBeInTheDocument();

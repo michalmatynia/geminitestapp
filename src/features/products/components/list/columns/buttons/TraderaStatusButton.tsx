@@ -6,7 +6,9 @@ import {
   createTraderaRecoveryContext,
   readPersistedTraderaQuickListFeedback,
 } from '@/features/integrations/product-integrations-adapter';
+import { useCustomFields } from '@/features/products/hooks/useProductMetadataQueries';
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
+import { hasProductMarketplaceExclusionSelection } from '@/shared/lib/products/utils/marketplace-exclusions';
 import { Button } from '@/shared/ui/button';
 
 import { cn } from '@/shared/utils/ui-utils';
@@ -23,13 +25,20 @@ export function TraderaStatusButton(props: {
   status: string;
   prefetchListings: () => void;
   onOpenListings: (recoveryContext?: ProductListingsRecoveryContext) => void;
+  customFieldValues?: unknown;
 }): React.JSX.Element {
-  const { productId, status, prefetchListings, onOpenListings } = props;
+  const { productId, status, prefetchListings, onOpenListings, customFieldValues } = props;
+  const customFieldsQuery = useCustomFields();
   const normalizedStatus = normalizeMarketplaceStatus(status);
   const persistedFeedback = readPersistedTraderaQuickListFeedback(productId);
   const effectiveStatus = resolveMarketplaceStatusWithLocalFeedback({
     serverStatus: normalizedStatus,
     localFeedbackStatus: persistedFeedback?.status ?? null,
+  });
+  const isTraderaMarketplaceExcluded = hasProductMarketplaceExclusionSelection({
+    customFieldDefinitions: customFieldsQuery.data,
+    customFieldValues,
+    marketplaceLabelOrAlias: 'Tradera',
   });
   const isEffectiveFailureState = FAILURE_STATUSES.has(effectiveStatus);
   const recoveryContext: ProductListingsRecoveryContext | undefined = isEffectiveFailureState
@@ -41,23 +50,37 @@ export function TraderaStatusButton(props: {
         connectionId: persistedFeedback?.connectionId ?? null,
       })
     : undefined;
-  const label = isEffectiveFailureState
-    ? `Open Tradera recovery options (${effectiveStatus}).`
-    : `Manage Tradera listing (${effectiveStatus}).`;
+  const label = isTraderaMarketplaceExcluded
+    ? `Tradera listing disabled by Market Exclusion (${effectiveStatus}).`
+    : isEffectiveFailureState
+      ? `Open Tradera recovery options (${effectiveStatus}).`
+      : `Manage Tradera listing (${effectiveStatus}).`;
+  const disableStatusAction = isTraderaMarketplaceExcluded;
+  const resolvedToneClass = isTraderaMarketplaceExcluded
+    ? 'border-slate-700/35 bg-slate-950/40 text-slate-500 hover:border-slate-700/35 hover:bg-slate-950/40 hover:text-slate-500'
+    : getMarketplaceButtonClass(effectiveStatus, true, 'tradera');
 
   return (
     <Button
       type='button'
-      onClick={() => onOpenListings(recoveryContext)}
-      onMouseEnter={prefetchListings}
-      onFocus={prefetchListings}
+      onClick={() => {
+        if (disableStatusAction) {
+          return;
+        }
+        onOpenListings(recoveryContext);
+      }}
+      onMouseEnter={disableStatusAction ? undefined : prefetchListings}
+      onFocus={disableStatusAction ? undefined : prefetchListings}
       variant='ghost'
       size='icon'
+      disabled={disableStatusAction}
       aria-label={label}
       title={label}
       className={cn(
         'size-8 rounded-full border border-transparent bg-transparent p-0 hover:bg-transparent',
-        getMarketplaceButtonClass(effectiveStatus, true, 'tradera')
+        resolvedToneClass,
+        disableStatusAction &&
+          'cursor-not-allowed disabled:border-slate-700/35 disabled:bg-slate-950/40 disabled:text-slate-500 disabled:opacity-40'
       )}
     >
       <span

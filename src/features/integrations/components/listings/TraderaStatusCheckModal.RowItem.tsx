@@ -1,6 +1,14 @@
 'use client';
 
-import { Activity, ExternalLink, Loader2, RefreshCw, RotateCcw, TriangleAlert } from 'lucide-react';
+import {
+  Activity,
+  Check,
+  ExternalLink,
+  Loader2,
+  RefreshCw,
+  RotateCcw,
+  TriangleAlert,
+} from 'lucide-react';
 
 import { useTraderaStatusCheck } from './TraderaStatusCheckModalContext';
 import {
@@ -54,7 +62,17 @@ export function ListingRowView({
 }) {
   const { onRelist, onLiveCheck, onRefreshSession, refreshingSessionProductId } = useTraderaStatusCheck();
   const isRefreshingSession = refreshingSessionProductId === row.productId;
-  const { productId, productName, listing, error, relistState, relistError, liveCheckState, liveCheckError } = row;
+  const {
+    productId,
+    productName,
+    listing,
+    traderaExcluded,
+    error,
+    relistState,
+    relistError,
+    liveCheckState,
+    liveCheckError,
+  } = row;
   const listingUrl = listing ? resolveListingUrl(listing) : null;
   const hasListingId = Boolean(listing?.id);
   const supportsLiveCheck =
@@ -191,6 +209,22 @@ export function ListingRowView({
               {formatDate(listing.lastStatusCheckAt)}
               <StalenessWarning lastStatusCheckAt={listing.lastStatusCheckAt} />
             </span>
+
+            {status.toLowerCase() === 'ended' ? (
+              <>
+                <span className='text-muted-foreground'>Market exclusion</span>
+                <span
+                  className={
+                    traderaExcluded
+                      ? 'inline-flex items-center gap-1 text-emerald-300'
+                      : 'text-muted-foreground'
+                  }
+                >
+                  {traderaExcluded ? <Check className='h-3 w-3' /> : null}
+                  Tradera
+                </span>
+              </>
+            ) : null}
 
             {displayedFailureReason && (
               <>

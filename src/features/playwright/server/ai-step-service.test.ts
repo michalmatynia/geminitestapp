@@ -1328,6 +1328,58 @@ describe('captureAndEvaluatePlaywrightObservation', () => {
     );
   });
 
+  it('forwards parent artifactKey and artifacts to the injection loop for per-iteration screenshots', async () => {
+    vi.clearAllMocks();
+    mockedIsBrainModelVisionCapable.mockReturnValue(false);
+    const page = makeMockPage({
+      content: vi.fn().mockResolvedValue('<html></html>'),
+      url: vi.fn().mockReturnValue('https://example.com'),
+      waitForTimeout: vi.fn().mockResolvedValue(undefined),
+    });
+    const evaluate = vi.fn().mockResolvedValue({ status: 'blocked' });
+
+    mockedResolveBrainExecutionConfigForCapability.mockResolvedValue({
+      modelId: 'claude-sonnet-4-6',
+      systemPrompt: null,
+      temperature: 0.2,
+      brainApplied: false,
+    });
+    mockedRunBrainChatCompletion.mockResolvedValue({
+      text: JSON.stringify({ code: '// act', done: true, reasoning: 'Injected.' }),
+      modelId: 'claude-sonnet-4-6',
+    });
+
+    const savedFiles: string[] = [];
+    const savedHtml: string[] = [];
+
+    const result = await captureAndEvaluatePlaywrightObservation({
+      page,
+      artifactKey: 'obs-key',
+      evaluate,
+      buildObservation: ({ review }) => review,
+      artifacts: {
+        file: async (key) => {
+          savedFiles.push(key);
+          return `${key}.png`;
+        },
+        html: async (key) => { savedHtml.push(key); return `${key}.html`; },
+      },
+      injectOnEvaluation: {
+        shouldInject: () => true,
+        goal: 'Solve it.',
+        maxIterations: 1,
+        // No artifactKey/artifacts set on inject config — should be forwarded from parent
+      },
+    });
+
+    // The injection loop should have saved screenshot and HTML with the forwarded artifactKey
+    expect(savedFiles.some((k) => k.startsWith('obs-key-inject-iter-'))).toBe(true);
+    expect(savedHtml.some((k) => k.startsWith('obs-key-inject-iter-'))).toBe(true);
+    // Iteration record should have both artifact names populated
+    expect(result.injection?.iterations[0]!.screenshotArtifactName).toMatch(/obs-key-inject-iter-1\.png/);
+    expect(result.injection?.iterations[0]!.htmlArtifactName).toMatch(/obs-key-inject-iter-1\.html/);
+  });
+
   it('saves a post-inject HTML artifact when reEvaluateAfterInjection is true', async () => {
     vi.clearAllMocks();
     const page = makeMockPage({
@@ -1414,6 +1466,50 @@ describe('captureAndEvaluatePlaywrightObservation', () => {
       executionError: null,
     });
     expect(mockedRunBrainChatCompletion).not.toHaveBeenCalled();
+  });
+
+  it('populates evaluation field in iteration records when evaluateCapture is provided', async () => {
+    vi.clearAllMocks();
+    mockedIsBrainModelVisionCapable.mockReturnValue(false);
+    const page = makeMockPage({
+      content: vi.fn().mockResolvedValue('<html></html>'),
+      url: vi.fn().mockReturnValue('https://example.com'),
+      waitForTimeout: vi.fn().mockResolvedValue(undefined),
+    });
+    const evaluate = vi.fn().mockResolvedValue({ status: 'blocked' });
+
+    mockedResolveBrainExecutionConfigForCapability.mockResolvedValue({
+      modelId: 'claude-sonnet-4-6',
+      systemPrompt: null,
+      temperature: 0.2,
+      brainApplied: false,
+    });
+    mockedRunBrainChatCompletion.mockResolvedValue({
+      text: JSON.stringify({ code: '// act', done: true, reasoning: 'Injected.' }),
+      modelId: 'claude-sonnet-4-6',
+    });
+
+    let captureCallCount = 0;
+    const result = await captureAndEvaluatePlaywrightObservation({
+      page,
+      artifactKey: 'v-shot',
+      evaluate,
+      buildObservation: ({ review }) => review,
+      injectOnEvaluation: {
+        shouldInject: () => true,
+        goal: 'Solve challenge.',
+        maxIterations: 1,
+        evaluateCapture: async () => {
+          captureCallCount++;
+          return { context: `Eval context #${captureCallCount}.`, done: false };
+        },
+      },
+    });
+
+    expect(result.injection?.iterations[0]!.evaluation).toMatchObject({
+      done: false,
+      context: 'Eval context #1.',
+    });
   });
 
   it('passes fresh evaluateCapture context into the code-generator user message', async () => {
@@ -2328,6 +2424,139 @@ describe('resolvePlaywrightVerificationReviewStepOutcome', () => {
   });
 });
 
+describe('captureAndEvaluatePlaywrightObservation — maxConsecutiveErrors', () => {
+  const mockBrain = () => {
+    mockedResolveBrainExecutionConfigForCapability.mockResolvedValue({
+      modelId: 'claude-sonnet-4-6',
+      systemPrompt: null,
+      temperature: 0.2,
+      brainApplied: false,
+    });
+    mockedIsBrainModelVisionCapable.mockReturnValue(false);
+  };
+
+  it('aborts the injection loop after maxConsecutiveErrors consecutive failures', async () => {
+    vi.clearAllMocks();
+    mockBrain();
+    const page = makeMockPage({
+      content: vi.fn().mockResolvedValue('<html></html>'),
+      url: vi.fn().mockReturnValue('https://example.com'),
+      waitForTimeout: vi.fn().mockResolvedValue(undefined),
+      // every evaluate() call throws to simulate execution errors
+      evaluate: vi.fn().mockRejectedValue(new Error('element not interactable')),
+    });
+    const outerEvaluate = vi.fn().mockResolvedValue({ status: 'blocked' });
+
+    let callCount = 0;
+    mockedRunBrainChatCompletion.mockImplementation(() => {
+      callCount++;
+      return Promise.resolve({
+        text: JSON.stringify({ code: `throw new Error("element not interactable ${callCount}")`, done: false, reasoning: 'Clicking.' }),
+        modelId: 'claude-sonnet-4-6',
+      });
+    });
+
+    const result = await captureAndEvaluatePlaywrightObservation({
+      page,
+      artifactKey: 'test',
+      evaluate: outerEvaluate,
+      buildObservation: ({ review }) => review,
+      injectOnEvaluation: {
+        shouldInject: () => true,
+        goal: 'Solve it.',
+        maxIterations: 10,
+        maxConsecutiveErrors: 2,
+      },
+    });
+
+    // Loop aborted after 2 consecutive errors, not after 10 iterations
+    expect(result.injection?.iterationsRun).toBe(2);
+    expect(result.injection?.done).toBe(false);
+    expect(result.injection?.lastReasoning).toContain('2 consecutive execution error');
+  });
+
+  it('resets consecutive error counter after a successful execution', async () => {
+    vi.clearAllMocks();
+    mockBrain();
+    const page = makeMockPage({
+      content: vi.fn().mockResolvedValue('<html></html>'),
+      url: vi.fn().mockReturnValue('https://example.com'),
+      waitForTimeout: vi.fn().mockResolvedValue(undefined),
+    });
+    const outerEvaluate = vi.fn().mockResolvedValue({ status: 'blocked' });
+
+    let callCount = 0;
+    mockedRunBrainChatCompletion.mockImplementation(() => {
+      callCount++;
+      if (callCount === 2) {
+        // Second call generates valid code (no execution error)
+        return Promise.resolve({
+          text: JSON.stringify({ code: '// valid', done: false, reasoning: 'Retrying.' }),
+          modelId: 'claude-sonnet-4-6',
+        });
+      }
+      return Promise.resolve({
+        text: JSON.stringify({ code: 'throw new Error("bad")', done: false, reasoning: 'Trying.' }),
+        modelId: 'claude-sonnet-4-6',
+      });
+    });
+
+    const result = await captureAndEvaluatePlaywrightObservation({
+      page,
+      artifactKey: 'test',
+      evaluate: outerEvaluate,
+      buildObservation: ({ review }) => review,
+      injectOnEvaluation: {
+        shouldInject: () => true,
+        goal: 'Solve it.',
+        maxIterations: 4,
+        maxConsecutiveErrors: 2,
+      },
+    });
+
+    // After iter 2 succeeds, consecutive errors reset to 0.
+    // Iters 3 and 4 can then each error again without triggering the 2-consecutive limit
+    // from where they left off.
+    expect(result.injection?.iterationsRun).toBeGreaterThanOrEqual(3);
+  });
+
+  it('does not abort when maxConsecutiveErrors is not set', async () => {
+    vi.clearAllMocks();
+    mockBrain();
+    const page = makeMockPage({
+      content: vi.fn().mockResolvedValue('<html></html>'),
+      url: vi.fn().mockReturnValue('https://example.com'),
+      waitForTimeout: vi.fn().mockResolvedValue(undefined),
+      evaluate: vi.fn().mockRejectedValue(new Error('always fails')),
+    });
+    const outerEvaluate = vi.fn().mockResolvedValue({ status: 'blocked' });
+
+    let noLimitCallCount = 0;
+    mockedRunBrainChatCompletion.mockImplementation(() => {
+      noLimitCallCount++;
+      return Promise.resolve({
+        text: JSON.stringify({ code: `throw new Error("always fails ${noLimitCallCount}")`, done: false, reasoning: 'Trying.' }),
+        modelId: 'claude-sonnet-4-6',
+      });
+    });
+
+    const result = await captureAndEvaluatePlaywrightObservation({
+      page,
+      artifactKey: 'test',
+      evaluate: outerEvaluate,
+      buildObservation: ({ review }) => review,
+      injectOnEvaluation: {
+        shouldInject: () => true,
+        goal: 'Solve it.',
+        maxIterations: 3,
+        // maxConsecutiveErrors not set — loop runs to maxIterations
+      },
+    });
+
+    expect(result.injection?.iterationsRun).toBe(3);
+  });
+});
+
 describe('runPlaywrightVisionGuidedAutomation', () => {
   const mockBrain = () => {
     mockedResolveBrainExecutionConfigForCapability.mockResolvedValue({
@@ -2560,6 +2789,46 @@ describe('runPlaywrightVisionGuidedAutomation', () => {
     dateSpy.mockRestore();
   });
 
+  it('populates evaluation field in every iteration record', async () => {
+    vi.clearAllMocks();
+    mockBrain();
+    const page = makeMockPage({
+      content: vi.fn().mockResolvedValue('<html></html>'),
+      url: vi.fn().mockReturnValue('https://example.com'),
+      waitForTimeout: vi.fn().mockResolvedValue(undefined),
+    });
+
+    const evaluate = vi
+      .fn()
+      .mockResolvedValueOnce({ context: 'Step 1 context.', done: false, reasoning: null })
+      .mockResolvedValue({ context: 'Goal achieved.', done: true, reasoning: 'Done now.' });
+
+    mockedRunBrainChatCompletion.mockResolvedValue({
+      text: JSON.stringify({ code: '// act', done: false, reasoning: 'Acting.' }),
+      modelId: 'claude-sonnet-4-6',
+    });
+
+    const result = await runPlaywrightVisionGuidedAutomation({
+      page,
+      goal: 'Complete.',
+      evaluate,
+      maxIterations: 5,
+    });
+
+    expect(result.iterations).toHaveLength(2);
+    // First iteration — evaluator said not done, code was generated
+    expect(result.iterations[0]!.evaluation).toMatchObject({
+      done: false,
+      context: 'Step 1 context.',
+    });
+    // Second iteration — evaluator said done, early exit without code
+    expect(result.iterations[1]!.evaluation).toMatchObject({
+      done: true,
+      context: 'Goal achieved.',
+      reasoning: 'Done now.',
+    });
+  });
+
   it('fires onIterationResult for every iteration including evaluator-done records', async () => {
     vi.clearAllMocks();
     mockBrain();
@@ -2631,6 +2900,63 @@ describe('injectCodeWithAI — freshEvaluation context', () => {
 });
 
 describe('runPlaywrightVisionGuidedAutomation — artifact saving', () => {
+  it('saves per-iteration screenshots when artifactKey and artifacts.file are provided', async () => {
+    vi.clearAllMocks();
+    mockedResolveBrainExecutionConfigForCapability.mockResolvedValue({
+      modelId: 'claude-sonnet-4-6',
+      systemPrompt: null,
+      temperature: 0.2,
+      brainApplied: false,
+    });
+    mockedIsBrainModelVisionCapable.mockReturnValue(false);
+    const page = makeMockPage({
+      content: vi.fn().mockResolvedValue('<html></html>'),
+      url: vi.fn().mockReturnValue('https://example.com'),
+      waitForTimeout: vi.fn().mockResolvedValue(undefined),
+    });
+
+    const evaluate = vi
+      .fn()
+      .mockResolvedValueOnce({ context: 'Not done.', done: false })
+      .mockResolvedValue({ context: 'Done.', done: true, reasoning: 'Solved.' });
+
+    mockedRunBrainChatCompletion.mockResolvedValue({
+      text: JSON.stringify({ code: '// act', done: false, reasoning: 'Acting.' }),
+      modelId: 'claude-sonnet-4-6',
+    });
+
+    const savedFiles: Array<{ key: string; size: number }> = [];
+    const savedHtml: string[] = [];
+
+    const result = await runPlaywrightVisionGuidedAutomation({
+      page,
+      goal: 'Complete.',
+      evaluate,
+      maxIterations: 5,
+      artifactKey: 'my-run',
+      artifacts: {
+        file: async (key, data) => {
+          savedFiles.push({ key, size: data.length });
+          return `${key}.png`;
+        },
+        html: async (key) => { savedHtml.push(key); return `${key}.html`; },
+        json: async () => undefined,
+      },
+    });
+
+    // Iteration 1 screenshot saved before code generation, iteration 2 screenshot saved before evaluator reports done
+    expect(savedFiles.some((f) => f.key === 'my-run-iter-1')).toBe(true);
+    expect(savedFiles.some((f) => f.key === 'my-run-iter-2')).toBe(true);
+    // HTML artifacts also saved per iteration
+    expect(savedHtml).toContain('my-run-iter-1');
+    expect(savedHtml).toContain('my-run-iter-2');
+    // screenshotArtifactName and htmlArtifactName populated in records
+    expect(result.iterations[0]!.screenshotArtifactName).toBe('my-run-iter-1.png');
+    expect(result.iterations[0]!.htmlArtifactName).toBe('my-run-iter-1.html');
+    expect(result.iterations[1]!.screenshotArtifactName).toBe('my-run-iter-2.png');
+    expect(result.iterations[1]!.htmlArtifactName).toBe('my-run-iter-2.html');
+  });
+
   it('saves iteration history JSON after the loop when artifactKey and artifacts are provided', async () => {
     vi.clearAllMocks();
     mockedResolveBrainExecutionConfigForCapability.mockResolvedValue({
@@ -2703,6 +3029,108 @@ describe('runPlaywrightVisionGuidedAutomation — artifact saving', () => {
   });
 });
 
+describe('runPlaywrightVisionGuidedAutomation — maxConsecutiveErrors', () => {
+  function makeBaseSetup() {
+    vi.clearAllMocks();
+    mockedResolveBrainExecutionConfigForCapability.mockResolvedValue({
+      modelId: 'claude-sonnet-4-6',
+      systemPrompt: null,
+      temperature: 0.2,
+      brainApplied: false,
+    });
+    mockedIsBrainModelVisionCapable.mockReturnValue(false);
+    return makeMockPage({
+      content: vi.fn().mockResolvedValue('<html></html>'),
+      url: vi.fn().mockReturnValue('https://example.com'),
+      waitForTimeout: vi.fn().mockResolvedValue(undefined),
+    });
+  }
+
+  it('aborts after maxConsecutiveErrors consecutive execution errors', async () => {
+    const page = makeBaseSetup();
+    let callCount = 0;
+    mockedRunBrainChatCompletion.mockImplementation(() => {
+      callCount++;
+      return Promise.resolve({
+        text: JSON.stringify({
+          code: `throw new Error("execution error ${callCount}")`,
+          done: false,
+          reasoning: 'Trying.',
+        }),
+        modelId: 'claude-sonnet-4-6',
+      });
+    });
+    const evaluate = vi.fn().mockResolvedValue({ context: 'Not done.', done: false, reasoning: null });
+
+    const result = await runPlaywrightVisionGuidedAutomation({
+      page,
+      goal: 'Complete.',
+      evaluate,
+      maxIterations: 10,
+      maxConsecutiveErrors: 2,
+    });
+
+    expect(result.iterationsRun).toBe(2);
+    expect(result.done).toBe(false);
+    expect(result.lastReasoning).toMatch(/aborted after 2 consecutive execution errors/);
+  });
+
+  it('resets consecutiveErrors counter after a successful execution', async () => {
+    const page = makeBaseSetup();
+    let callCount = 0;
+    mockedRunBrainChatCompletion.mockImplementation(() => {
+      callCount++;
+      const code =
+        callCount === 1 ? `throw new Error("fail once ${callCount}")` : `// success ${callCount}`;
+      return Promise.resolve({
+        text: JSON.stringify({ code, done: callCount >= 4, reasoning: 'Trying.' }),
+        modelId: 'claude-sonnet-4-6',
+      });
+    });
+    const evaluate = vi.fn().mockResolvedValue({ context: 'Not done.', done: false, reasoning: null });
+
+    const result = await runPlaywrightVisionGuidedAutomation({
+      page,
+      goal: 'Complete.',
+      evaluate,
+      maxIterations: 10,
+      maxConsecutiveErrors: 2,
+    });
+
+    // Iteration 1 fails, iteration 2 succeeds (resets counter), 3 succeeds, 4 done — no abort
+    expect(result.iterationsRun).toBe(4);
+    expect(result.done).toBe(true);
+  });
+
+  it('does not abort when maxConsecutiveErrors is not set', async () => {
+    const page = makeBaseSetup();
+    let callCount = 0;
+    mockedRunBrainChatCompletion.mockImplementation(() => {
+      callCount++;
+      return Promise.resolve({
+        text: JSON.stringify({
+          code: `throw new Error("always fail ${callCount}")`,
+          done: false,
+          reasoning: 'Trying.',
+        }),
+        modelId: 'claude-sonnet-4-6',
+      });
+    });
+    const evaluate = vi.fn().mockResolvedValue({ context: 'Not done.', done: false, reasoning: null });
+
+    const result = await runPlaywrightVisionGuidedAutomation({
+      page,
+      goal: 'Complete.',
+      evaluate,
+      maxIterations: 3,
+    });
+
+    // Runs all 3 iterations — no consecutive-error abort
+    expect(result.iterationsRun).toBe(3);
+    expect(result.lastReasoning).not.toMatch(/aborted after/);
+  });
+});
+
 describe('createPlaywrightVisionGuidedEvaluator', () => {
   it('returns done=true with reasoning when isDone returns true', async () => {
     vi.clearAllMocks();
@@ -2746,7 +3174,7 @@ describe('createPlaywrightVisionGuidedEvaluator', () => {
       temperature: 0.2,
       brainApplied: false,
     });
-    mockedIsBrainModelVisionCapable.mockReturnValue(false);
+    mockedIsBrainModelVisionCapable.mockReturnValue(true);
     mockedRunBrainChatCompletion.mockResolvedValue({
       text: JSON.stringify({ status: 'pending', challengeType: 'slider' }),
       modelId: 'claude-sonnet-4-6',
@@ -2761,7 +3189,7 @@ describe('createPlaywrightVisionGuidedEvaluator', () => {
     });
 
     const result = await evaluator({
-      screenshotBase64: null,
+      screenshotBase64: 'base64data',
       dom: null,
       url: 'https://example.com/challenge',
       iteration: 2,
@@ -2773,7 +3201,7 @@ describe('createPlaywrightVisionGuidedEvaluator', () => {
     expect(result.context).toContain('https://example.com/challenge');
   });
 
-  it('delegates parsed=null to isDone and buildContext when AI evaluation fails', async () => {
+  it('delegates parsed=null to isDone and buildContext when AI response is unparseable', async () => {
     vi.clearAllMocks();
     mockedResolveBrainExecutionConfigForCapability.mockResolvedValue({
       modelId: 'claude-sonnet-4-6',
@@ -2781,7 +3209,7 @@ describe('createPlaywrightVisionGuidedEvaluator', () => {
       temperature: 0.2,
       brainApplied: false,
     });
-    mockedIsBrainModelVisionCapable.mockReturnValue(false);
+    mockedIsBrainModelVisionCapable.mockReturnValue(true);
     mockedRunBrainChatCompletion.mockResolvedValue({
       text: 'not valid json {{',
       modelId: 'claude-sonnet-4-6',
@@ -2798,7 +3226,7 @@ describe('createPlaywrightVisionGuidedEvaluator', () => {
     });
 
     const result = await evaluator({
-      screenshotBase64: null,
+      screenshotBase64: 'base64data',
       dom: null,
       url: 'https://example.com',
       iteration: 1,

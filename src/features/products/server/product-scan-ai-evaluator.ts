@@ -25,6 +25,7 @@ import type {
   PlaywrightCapturedPageObservation,
   PlaywrightInjectionAttemptResult,
 } from '@/features/playwright/server/ai-step-service';
+import { createPlaywrightVisionGuidedEvaluator } from '@/features/playwright/server/ai-step-service';
 import {
   readPlaywrightEngineArtifact,
   type PlaywrightEngineRunRecord,
@@ -979,6 +980,35 @@ export const runProductScanVerificationBarrierReviewCaptureWithState = async <
  * After each injection attempt the page is re-captured and re-evaluated so the loop can
  * immediately detect a successful resolution.
  */
+const createProductScanVerificationBarrierIterationEvaluator = () =>
+  createPlaywrightVisionGuidedEvaluator({
+    schema: productScanVerificationReviewResponseSchema,
+    systemPrompt: PRODUCT_SCAN_VERIFICATION_REVIEW_SYSTEM_PROMPT,
+    isDone: (parsed) => parsed !== null && parsed.manualActionRequired === false,
+    buildContext: (parsed, capture) => {
+      if (parsed === null) {
+        return `URL: ${capture.url ?? 'unknown'}. Per-iteration evaluation failed — proceeding with prior context.`;
+      }
+      const lines: string[] = [
+        `Challenge type: ${parsed.challengeType ?? 'unknown'}`,
+        `Manual action required: ${String(parsed.manualActionRequired ?? 'unknown')}`,
+        `URL: ${capture.url ?? 'unknown'}`,
+      ];
+      if (parsed.visibleQuestion) {
+        lines.push(`Visible question: ${parsed.visibleQuestion}`);
+      }
+      if (parsed.uiElements.length > 0) {
+        lines.push(`UI elements: ${parsed.uiElements.join(', ')}`);
+      }
+      if (parsed.visibleInstructions.length > 0) {
+        lines.push(`Instructions: ${parsed.visibleInstructions.join('; ')}`);
+      }
+      return lines.join('\n');
+    },
+    getReasoning: (parsed) =>
+      parsed?.pageSummary ?? 'Verification challenge resolved.',
+  });
+
 export const createProductScanVerificationBarrierAutoInjectionConfig = (options?: {
   /** Freeform label used in the injector goal (e.g. 'Google', '1688'). */
   provider?: string;
@@ -1029,6 +1059,7 @@ export const createProductScanVerificationBarrierAutoInjectionConfig = (options?
   },
   maxIterations: options?.maxIterations ?? 3,
   reEvaluateAfterInjection: true,
+  evaluateCapture: createProductScanVerificationBarrierIterationEvaluator(),
 });
 
 export const evaluateProductScanVerificationBarrier = async (

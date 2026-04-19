@@ -19,7 +19,6 @@ import { KangurAppLoader } from '@/features/kangur/ui/components/KangurAppLoader
 import { KangurPageTransitionSkeleton } from '@/features/kangur/ui/components/KangurPageTransitionSkeleton';
 import { KangurTopNavigationSkeleton } from '@/features/kangur/ui/components/primary-navigation/KangurTopNavigationSkeleton';
 
-const KangurAiTutorWidget = dynamic(() => import('@/features/kangur/ui/components/ai-tutor-widget/KangurAiTutorWidget').then(m => ({ default: m.KangurAiTutorWidget })), { ssr: false });
 const KangurLoginModal = dynamic(() => import('@/features/kangur/ui/components/KangurLoginModal').then(m => ({ default: m.KangurLoginModal })), { ssr: false });
 const KangurCmsRuntimeScreen = dynamic(
   () =>
@@ -67,6 +66,7 @@ import { cn } from '@/features/kangur/shared/utils';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 import { KangurDeferredAiTutorProviders } from '@/features/kangur/ui/KangurDeferredAiTutorProviders';
+import { KangurDeferredAiTutorWidgetMount } from '@/features/kangur/ui/KangurDeferredAiTutorWidgetMount';
 
 import type { JSX } from 'react';
 
@@ -823,6 +823,8 @@ const AuthenticatedApp = (): JSX.Element | null => {
 //  KangurDeferredAiTutorProviders – mounts dormant AI Tutor contexts from the
 //                                   first render; the heavy runtime still
 //                                   activates lazily via the widget bridge
+//  KangurDeferredAiTutorWidgetMount – delays the heavy widget only for the
+//                                     initial standalone home-route boot
 //
 // AuthenticatedApp and KangurAiTutorWidget are rendered inside the deferred
 // AI Tutor tree so they can access tutor context without blocking first paint.
@@ -841,7 +843,7 @@ export function KangurFeatureApp(): JSX.Element {
                   <KangurContextRegistryPageBoundary>
                     <KangurDeferredAiTutorProviders>
                       <AuthenticatedApp />
-                      <KangurAiTutorWidget />
+                      <KangurDeferredAiTutorWidgetMount />
                       <KangurLoginModalMount />
                     </KangurDeferredAiTutorProviders>
                   </KangurContextRegistryPageBoundary>

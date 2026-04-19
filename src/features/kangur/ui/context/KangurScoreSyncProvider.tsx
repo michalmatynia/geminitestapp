@@ -10,9 +10,11 @@ import { syncGuestKangurScores } from '@/features/kangur/services/guest-kangur-s
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { resolveKangurUserScopeKey } from '@/features/kangur/ui/context/kangur-user-scope';
 
 const kangurPlatform = getKangurPlatform();
+const HOME_GUEST_SCORE_SYNC_DELAY_MS = 2_000;
 
 type KangurScoreSyncState = {
   cancelled: boolean;
@@ -73,7 +75,21 @@ const reportCompletedGuestScoreSync = (
   });
 };
 
-const scheduleGuestScoreSync = (syncScores: () => Promise<void>): number => {
+const scheduleGuestScoreSync = (
+  syncScores: () => Promise<void>,
+  delayMs: number
+): number => {
+  if (delayMs > 0) {
+    return window.setTimeout(() => {
+      syncScores().catch((error: unknown) => {
+        trackKangurClientEvent('kangur_guest_scores_sync_failed', {
+          learnerKey: 'unknown',
+          errorMessage: error instanceof Error ? error.message : 'Unknown error',
+        });
+      });
+    }, delayMs);
+  }
+
   const scheduleSync =
     typeof globalThis.requestIdleCallback === 'function'
       ? globalThis.requestIdleCallback
@@ -99,10 +115,12 @@ const cancelGuestScoreSync = (idleHandle: number): void => {
 };
 
 const useGuestScoreSync = ({
+  initialDelayMs,
   isAuthenticated,
   isLoadingAuth,
   learnerKey,
 }: {
+  initialDelayMs: number;
   isAuthenticated: boolean;
   isLoadingAuth: boolean;
   learnerKey: string | null;
@@ -119,13 +137,13 @@ const useGuestScoreSync = ({
       reportCompletedGuestScoreSync(learnerKey, result, state);
     };
 
-    const idleHandle = scheduleGuestScoreSync(syncScores);
+    const idleHandle = scheduleGuestScoreSync(syncScores, initialDelayMs);
 
     return () => {
       state.cancelled = true;
       cancelGuestScoreSync(idleHandle);
     };
-  }, [isAuthenticated, isLoadingAuth, learnerKey]);
+  }, [initialDelayMs, isAuthenticated, isLoadingAuth, learnerKey]);
 };
 
 export function KangurScoreSyncProvider({
@@ -134,9 +152,14 @@ export function KangurScoreSyncProvider({
   children?: ReactNode;
 }): React.JSX.Element | null {
   const { isAuthenticated, isLoadingAuth, user } = useKangurAuth();
+  const routing = useOptionalKangurRouting();
   const learnerKey = resolveKangurUserScopeKey(user);
+  const initialDelayMs =
+    routing?.embedded === false && routing.pageKey === 'Game'
+      ? HOME_GUEST_SCORE_SYNC_DELAY_MS
+      : 0;
 
-  useGuestScoreSync({ isAuthenticated, isLoadingAuth, learnerKey });
+  useGuestScoreSync({ initialDelayMs, isAuthenticated, isLoadingAuth, learnerKey });
 
   return children !== null && children !== undefined ? <>{children}</> : null;
 }

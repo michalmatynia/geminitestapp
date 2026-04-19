@@ -24,9 +24,11 @@ import {
   KangurGameRuntimeBoundary,
   useKangurGameRuntime,
 } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
+import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { useOptionalKangurRouteTransitionState } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
 import dynamic from 'next/dynamic';
 import { useKangurLearnerActivityPing } from '@/features/kangur/ui/hooks/useKangurLearnerActivity';
+import { useKangurIdleReady } from '@/features/kangur/ui/hooks/useKangurIdleReady';
 import { useKangurMobileBreakpoint } from '@/features/kangur/ui/hooks/useKangurMobileBreakpoint';
 import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRoutePageReady';
 import {
@@ -36,6 +38,7 @@ import {
 } from '@/features/kangur/ui/services/game-launch';
 import { useKangurTutorAnchors, type KangurTutorAnchorConfig } from '@/features/kangur/ui/hooks/useKangurTutorAnchors';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
+import { GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS } from '@/features/kangur/ui/pages/GameHome.constants';
 import type { KangurGameScreen } from '@/features/kangur/ui/types';
 import type { KangurAiTutorConversationContext } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 import { cn } from '@/features/kangur/shared/utils';
@@ -495,82 +498,94 @@ const buildGameLaunchableTutorAnchors = ({
 function useGameTutorAnchorsRuntime(input: {
   activeGameAssignmentId?: string | null;
   canAccessParentAssignments: boolean;
+  enabled?: boolean;
   refs: GameTutorAnchorRefs;
   screen: KangurGameScreen;
   translations: GameTranslations;
   tutorActivityContentId: string;
 }): void {
-  const { activeGameAssignmentId, canAccessParentAssignments, refs, screen, translations, tutorActivityContentId } =
-    input;
+  const {
+    activeGameAssignmentId,
+    canAccessParentAssignments,
+    enabled = true,
+    refs,
+    screen,
+    translations,
+    tutorActivityContentId,
+  } = input;
   const tutorAnchors = useMemo(
-    () => [
-      ...buildGameHomeTutorAnchors({
-        canAccessParentAssignments,
-        refs,
-        screen,
-        translations,
-      }),
-      createGameScreenTutorAnchor({
-        contentId: tutorActivityContentId,
-        enabled: screen === 'training',
-        id: 'kangur-game-training-setup',
-        label: getGameScreenLabel(translations, 'training'),
-        priority: 120,
-        ref: refs.trainingSetupRef,
-      }),
-      createGameScreenTutorAnchor({
-        contentId: tutorActivityContentId,
-        enabled: screen === 'kangur_setup',
-        id: 'kangur-game-kangur-setup',
-        label: getGameScreenLabel(translations, 'kangur_setup'),
-        priority: 120,
-        ref: refs.kangurSetupRef,
-      }),
-      createGameScreenTutorAnchor({
-        contentId: tutorActivityContentId,
-        enabled: screen === 'kangur',
-        id: 'kangur-game-kangur-session',
-        label: getGameScreenLabel(translations, 'kangur'),
-        priority: 120,
-        ref: refs.kangurSessionRef,
-      }),
-      ...buildGameLaunchableTutorAnchors({
-        launchableGameScreenRefs: refs.launchableGameScreenRefs,
-        screen,
-        translations,
-        tutorActivityContentId,
-      }),
-      createGameScreenTutorAnchor({
-        contentId: tutorActivityContentId,
-        enabled: screen === 'operation',
-        id: 'kangur-game-operation-selector',
-        label: getGameScreenLabel(translations, 'operation'),
-        priority: 120,
-        ref: refs.operationSelectorRef,
-      }),
-      createGameTutorAnchor({
-        assignmentId: activeGameAssignmentId ?? null,
-        contentId: screen === 'result' ? tutorActivityContentId : null,
-        enabled: screen === 'result',
-        id: 'kangur-game-result-summary',
-        kind: 'review',
-        label: getGameScreenLabel(translations, 'result'),
-        priority: 110,
-        ref: refs.resultSummaryRef,
-      }),
-      createGameTutorAnchor({
-        contentId: screen === 'result' ? tutorActivityContentId : null,
-        enabled: screen === 'result',
-        id: 'kangur-game-result-leaderboard',
-        kind: 'leaderboard',
-        label: translations('result.leaderboardLabel'),
-        priority: 100,
-        ref: refs.resultLeaderboardRef,
-      }),
-    ],
+    () =>
+      !enabled
+        ? []
+        : [
+            ...buildGameHomeTutorAnchors({
+              canAccessParentAssignments,
+              refs,
+              screen,
+              translations,
+            }),
+            createGameScreenTutorAnchor({
+              contentId: tutorActivityContentId,
+              enabled: screen === 'training',
+              id: 'kangur-game-training-setup',
+              label: getGameScreenLabel(translations, 'training'),
+              priority: 120,
+              ref: refs.trainingSetupRef,
+            }),
+            createGameScreenTutorAnchor({
+              contentId: tutorActivityContentId,
+              enabled: screen === 'kangur_setup',
+              id: 'kangur-game-kangur-setup',
+              label: getGameScreenLabel(translations, 'kangur_setup'),
+              priority: 120,
+              ref: refs.kangurSetupRef,
+            }),
+            createGameScreenTutorAnchor({
+              contentId: tutorActivityContentId,
+              enabled: screen === 'kangur',
+              id: 'kangur-game-kangur-session',
+              label: getGameScreenLabel(translations, 'kangur'),
+              priority: 120,
+              ref: refs.kangurSessionRef,
+            }),
+            ...buildGameLaunchableTutorAnchors({
+              launchableGameScreenRefs: refs.launchableGameScreenRefs,
+              screen,
+              translations,
+              tutorActivityContentId,
+            }),
+            createGameScreenTutorAnchor({
+              contentId: tutorActivityContentId,
+              enabled: screen === 'operation',
+              id: 'kangur-game-operation-selector',
+              label: getGameScreenLabel(translations, 'operation'),
+              priority: 120,
+              ref: refs.operationSelectorRef,
+            }),
+            createGameTutorAnchor({
+              assignmentId: activeGameAssignmentId ?? null,
+              contentId: screen === 'result' ? tutorActivityContentId : null,
+              enabled: screen === 'result',
+              id: 'kangur-game-result-summary',
+              kind: 'review',
+              label: getGameScreenLabel(translations, 'result'),
+              priority: 110,
+              ref: refs.resultSummaryRef,
+            }),
+            createGameTutorAnchor({
+              contentId: screen === 'result' ? tutorActivityContentId : null,
+              enabled: screen === 'result',
+              id: 'kangur-game-result-leaderboard',
+              kind: 'leaderboard',
+              label: translations('result.leaderboardLabel'),
+              priority: 100,
+              ref: refs.resultLeaderboardRef,
+            }),
+          ],
     [
       activeGameAssignmentId,
       canAccessParentAssignments,
+      enabled,
       refs,
       screen,
       translations,
@@ -664,7 +679,7 @@ function useGameTutorRuntime(input: {
       kind: 'game',
       title: learnerActivityTitle,
     },
-    enabled: runtime.user?.actorType === 'learner',
+    enabled: runtime.user?.actorType === 'learner' && screen !== 'home',
   });
 
   return {
@@ -690,9 +705,9 @@ function GameContent(): React.JSX.Element {
   const translations = useTranslations('KangurGamePage');
   const runtime = useKangurGameRuntime();
   const { basePath, progress, screen, user, xpToast, launchableGameInstanceId } = runtime;
+  const routing = useOptionalKangurRouting();
   const routeTransitionState = useOptionalKangurRouteTransitionState();
-  const canAccessParentAssignments =
-    runtime.canAccessParentAssignments ?? Boolean(user?.activeLearner?.id);
+  const canAccessParentAssignments = runtime.canAccessParentAssignments;
   const homeVisibility = useMemo(
     () =>
       resolveKangurGameHomeVisibility({
@@ -708,6 +723,18 @@ function GameContent(): React.JSX.Element {
   const isMobile = useKangurMobileBreakpoint();
   const shouldUseStandardMobileScroll = isMobile;
   const currentScreenLabel = getGameScreenLabel(translations, screen);
+  const shouldDelayInitialStandaloneHomeEnhancementsRef = useRef<boolean | null>(null);
+  shouldDelayInitialStandaloneHomeEnhancementsRef.current ??=
+    screen === 'home' && routing?.embedded !== true;
+  const shouldDelayInitialStandaloneHomeEnhancements =
+    shouldDelayInitialStandaloneHomeEnhancementsRef.current;
+  const homeEnhancementsIdleReady = useKangurIdleReady({
+    minimumDelayMs: shouldDelayInitialStandaloneHomeEnhancements
+      ? GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS
+      : 0,
+  });
+  const shouldMountDeferredHomeEnhancements =
+    !shouldDelayInitialStandaloneHomeEnhancements || homeEnhancementsIdleReady;
   const { activeLaunchableGameRuntime, launchableGameRuntimeLoading } = useGameLaunchableRuntime({
     launchableGameInstanceId,
     screen,
@@ -739,6 +766,7 @@ function GameContent(): React.JSX.Element {
   useGameTutorAnchorsRuntime({
     activeGameAssignmentId: activeGameAssignment?.id,
     canAccessParentAssignments,
+    enabled: screen !== 'home' || shouldMountDeferredHomeEnhancements,
     refs: {
       ...homeRefs,
       ...sessionRefs,
@@ -751,25 +779,29 @@ function GameContent(): React.JSX.Element {
 
   return (
     <>
-      <KangurAiTutorSessionSync learnerId={learnerId} sessionContext={tutorSessionContext} />
+      {shouldMountDeferredHomeEnhancements ? (
+        <KangurAiTutorSessionSync learnerId={learnerId} sessionContext={tutorSessionContext} />
+      ) : null}
       {/* Visual contract: <KangurPageShell tone='play' ...> is provided by KangurStandardPageLayout. */}
       <KangurStandardPageLayout
         tone='play'
         id='kangur-game-page'
         skipLinkTargetId={GAME_MAIN_ID}
-        docsRootId='kangur-game-page'
-        docsTooltipsEnabled={docsTooltipsEnabled}
-        beforeNavigation={(
-          <XpToast
-            xpGained={xpToast.xpGained}
-            newBadges={xpToast.newBadges}
-            breakdown={xpToast.breakdown}
-            dailyQuest={xpToast.dailyQuest}
-            nextBadge={xpToast.nextBadge}
-            recommendation={xpToast.recommendation}
-            visible={xpToast.visible}
-          />
-        )}
+        docsRootId={shouldMountDeferredHomeEnhancements ? 'kangur-game-page' : undefined}
+        docsTooltipsEnabled={shouldMountDeferredHomeEnhancements ? docsTooltipsEnabled : false}
+        beforeNavigation={
+          xpToast.visible ? (
+            <XpToast
+              xpGained={xpToast.xpGained}
+              newBadges={xpToast.newBadges}
+              breakdown={xpToast.breakdown}
+              dailyQuest={xpToast.dailyQuest}
+              nextBadge={xpToast.nextBadge}
+              recommendation={xpToast.recommendation}
+              visible={xpToast.visible}
+            />
+          ) : null
+        }
         navigation={<KangurGameNavigationWidget />}
         afterNavigation={(
           <div role='status' aria-live='polite' aria-atomic='true' className='sr-only'>

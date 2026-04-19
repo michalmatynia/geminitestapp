@@ -13,6 +13,7 @@ import { KangurGameHomeDuelsInvitesWidget } from '@/features/kangur/ui/component
 import { KangurGameHomeHeroWidget } from '@/features/kangur/ui/components/game-home/KangurGameHomeHeroWidget';
 import { KangurGameHomeQuestWidget } from '@/features/kangur/ui/components/game-home/KangurGameHomeQuestWidget';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
+import { useKangurIdleReady } from '@/features/kangur/ui/hooks/useKangurIdleReady';
 import {
   KangurButton,
   KangurEmptyState,
@@ -23,6 +24,7 @@ import {
 } from '@/features/kangur/ui/design/tokens';
 import {
   GAME_HOME_LAYOUT_CLASSNAME,
+  GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS,
 } from '@/features/kangur/ui/pages/GameHome.constants';
 import { type resolveKangurGameHomeVisibility } from '@/features/kangur/ui/pages/GameHome.visibility';
 import {
@@ -51,6 +53,17 @@ const GAME_SCREEN_TITLE_ID = 'kangur-game-screen-title';
 
 const DynamicLoadingFallback = (): React.JSX.Element => (
   <div className='h-24 w-full animate-pulse rounded-2xl bg-slate-100/60' />
+);
+
+const SecondaryHomeWidgetFallback = ({
+  testId,
+}: {
+  testId: string;
+}): React.JSX.Element => (
+  <div
+    className='h-24 w-full animate-pulse rounded-2xl bg-slate-100/60'
+    data-testid={testId}
+  />
 );
 
 const Leaderboard = dynamic(() => import('@/features/kangur/ui/components/Leaderboard'), {
@@ -216,6 +229,9 @@ function GameHomeScreen(props: {
     screenHeadingRef,
     translations,
   } = props;
+  const shouldMountSecondaryHomeWidgets = useKangurIdleReady({
+    minimumDelayMs: GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS,
+  });
 
   return (
     <GameScreenFrame
@@ -276,12 +292,26 @@ function GameHomeScreen(props: {
           id: 'kangur-home-priority-assignments',
           ref: homeRefs.homeAssignmentsRef,
         }}
-        leaderboard={<Leaderboard />}
+        leaderboard={
+          shouldMountSecondaryHomeWidgets ? (
+            <Leaderboard />
+          ) : (
+            <SecondaryHomeWidgetFallback testId='kangur-home-leaderboard-fallback' />
+          )
+        }
         leaderboardColumnProps={{
           id: 'kangur-home-leaderboard',
           ref: homeRefs.homeLeaderboardRef,
         }}
-        playerProgress={progress ? <PlayerProgressCard progress={progress} /> : null}
+        playerProgress={
+          progress ? (
+            shouldMountSecondaryHomeWidgets ? (
+              <PlayerProgressCard progress={progress} />
+            ) : (
+              <SecondaryHomeWidgetFallback testId='kangur-home-player-progress-fallback' />
+            )
+          ) : null
+        }
         playerProgressColumnProps={{
           id: 'kangur-home-player-progress',
           ref: homeRefs.homeProgressRef,

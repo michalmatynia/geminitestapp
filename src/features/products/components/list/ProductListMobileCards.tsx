@@ -496,6 +496,7 @@ const renderProductListMobileCard = ({
             onOpenListings={(recoveryContext) =>
               onIntegrationsClick(product, recoveryContext, 'tradera')
             }
+            customFieldValues={product.customFields}
           />
         )}
         <VintedQuickListButton

@@ -3,9 +3,10 @@
  */
 
 import { act, render, screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createDefaultKangurProgressState } from '@/features/kangur/shared/contracts/kangur';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
+import { KangurRoutingProvider } from '@/features/kangur/ui/context/KangurRoutingContext';
 import {
   KANGUR_PROGRESS_OWNER_STORAGE_KEY,
   saveProgress,
@@ -111,6 +112,10 @@ const ProgressProbe = (): React.JSX.Element => {
 };
 
 describe('KangurProgressSyncProvider', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   beforeEach(() => {
     localStorage.clear();
     vi.clearAllMocks();
@@ -247,6 +252,58 @@ describe('KangurProgressSyncProvider', () => {
       expect(screen.getByTestId('kangur-progress-total-xp')).toHaveTextContent('80')
     );
     expect(progressGetMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('delays remote progress hydration on the standalone home route', async () => {
+    vi.useFakeTimers();
+
+    render(
+      <KangurRoutingProvider basePath='/kangur' pageKey='Game' requestedPath='/kangur'>
+        <KangurProgressSyncProvider>
+          <ProgressProbe />
+        </KangurProgressSyncProvider>
+      </KangurRoutingProvider>
+    );
+
+    expect(progressGetMock).not.toHaveBeenCalled();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1_199);
+    });
+
+    expect(progressGetMock).not.toHaveBeenCalled();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1);
+    });
+
+    expect(progressGetMock).toHaveBeenCalledTimes(1);
+    expect(progressGetMock).toHaveBeenCalledWith({ subject: 'maths' });
+  });
+
+  it('keeps non-home progress hydration on the current immediate path', async () => {
+    vi.useFakeTimers();
+
+    render(
+      <KangurRoutingProvider
+        basePath='/kangur'
+        pageKey='Lessons'
+        requestedPath='/kangur/lessons'
+      >
+        <KangurProgressSyncProvider>
+          <ProgressProbe />
+        </KangurProgressSyncProvider>
+      </KangurRoutingProvider>
+    );
+
+    expect(progressGetMock).not.toHaveBeenCalled();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(20);
+    });
+
+    expect(progressGetMock).toHaveBeenCalledTimes(1);
+    expect(progressGetMock).toHaveBeenCalledWith({ subject: 'maths' });
   });
 
   it('pushes later local progress changes back to the server after hydration', async () => {

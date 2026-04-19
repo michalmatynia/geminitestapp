@@ -1317,6 +1317,77 @@ describe('createProductScanVerificationBarrierAutoInjectionConfig', () => {
     const config = createProductScanVerificationBarrierAutoInjectionConfig();
     expect(config.maxIterations).toBe(3);
   });
+
+  it('includes a per-iteration evaluateCapture function', () => {
+    const config = createProductScanVerificationBarrierAutoInjectionConfig();
+    expect(typeof config.evaluateCapture).toBe('function');
+  });
+
+  it('evaluateCapture reports done=true when manualActionRequired is false', async () => {
+    const { runBrainChatCompletion: mockChat, isBrainModelVisionCapable: mockVision, resolveBrainExecutionConfigForCapability: mockConfig } =
+      await import('@/shared/lib/ai-brain/server-runtime-client').then((m) => ({
+        runBrainChatCompletion: vi.mocked(m.runBrainChatCompletion),
+        isBrainModelVisionCapable: vi.mocked(m.isBrainModelVisionCapable),
+        resolveBrainExecutionConfigForCapability: undefined,
+      }));
+    const mockResolve = vi.mocked(
+      (await import('@/shared/lib/ai-brain/segments/api')).resolveBrainExecutionConfigForCapability
+    );
+
+    vi.clearAllMocks();
+    mockResolve.mockResolvedValue({ modelId: 'claude-sonnet-4-6', systemPrompt: null, temperature: 0.2, brainApplied: false });
+    mockVision.mockReturnValue(true);
+    mockChat.mockResolvedValue({
+      text: JSON.stringify({ challengeType: null, visibleQuestion: null, visibleInstructions: [], uiElements: [], pageSummary: 'Solved.', manualActionRequired: false, confidence: 0.98 }),
+      modelId: 'claude-sonnet-4-6',
+    });
+
+    const config = createProductScanVerificationBarrierAutoInjectionConfig({ provider: 'Google' });
+    const result = await config.evaluateCapture!({
+      screenshotBase64: 'base64shot',
+      dom: '<html></html>',
+      url: 'https://google.com/done',
+      iteration: 2,
+      maxIterations: 3,
+    });
+
+    expect(result.done).toBe(true);
+    expect(result.reasoning).toBe('Solved.');
+  });
+
+  it('evaluateCapture reports done=false with context when challenge still present', async () => {
+    const mockChat = vi.mocked(
+      (await import('@/shared/lib/ai-brain/server-runtime-client')).runBrainChatCompletion
+    );
+    const mockVision = vi.mocked(
+      (await import('@/shared/lib/ai-brain/server-runtime-client')).isBrainModelVisionCapable
+    );
+    const mockResolve = vi.mocked(
+      (await import('@/shared/lib/ai-brain/segments/api')).resolveBrainExecutionConfigForCapability
+    );
+
+    vi.clearAllMocks();
+    mockResolve.mockResolvedValue({ modelId: 'claude-sonnet-4-6', systemPrompt: null, temperature: 0.2, brainApplied: false });
+    mockVision.mockReturnValue(true);
+    mockChat.mockResolvedValue({
+      text: JSON.stringify({ challengeType: 'slider', visibleQuestion: 'Drag to verify', visibleInstructions: ['Drag the handle.'], uiElements: ['slider-track', 'handle'], pageSummary: null, manualActionRequired: true, confidence: 0.9 }),
+      modelId: 'claude-sonnet-4-6',
+    });
+
+    const config = createProductScanVerificationBarrierAutoInjectionConfig({ provider: 'Google' });
+    const result = await config.evaluateCapture!({
+      screenshotBase64: 'base64shot',
+      dom: null,
+      url: 'https://google.com/captcha',
+      iteration: 1,
+      maxIterations: 3,
+    });
+
+    expect(result.done).toBe(false);
+    expect(result.context).toContain('slider');
+    expect(result.context).toContain('Drag to verify');
+    expect(result.context).toContain('https://google.com/captcha');
+  });
 });
 
 describe('createProductScanVerificationBarrierRuntime — injectionConfigOverrides', () => {

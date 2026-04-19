@@ -7,6 +7,7 @@ import { act, cleanup, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { KANGUR_CMS_PROJECT_SETTING_KEY } from '@/features/kangur/cms-builder/project-contracts';
+import { GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS } from '@/features/kangur/ui/pages/GameHome.constants';
 import { clearLatchedKangurTopBarHeightCssValue } from '@/features/kangur/ui/utils/readKangurTopBarHeightCssValue';
 import {
   authStateMock,
@@ -321,19 +322,59 @@ describe('KangurFeatureApp auth and theme loading', () => {
     expect(screen.queryByTestId('kangur-app-loader')).toBeNull();
   });
 
-  it('defers AI Tutor providers until after the first render tick', async () => {
+  it('defers the AI Tutor widget on the initial standalone home route', async () => {
+    routingStateMock.mockReturnValue({
+      pageKey: 'Game',
+      embedded: false,
+      requestedPath: '/kangur',
+      requestedHref: '/kangur',
+      basePath: '/kangur',
+    });
+
     render(<KangurFeatureApp />);
 
-    // AI Tutor widget is always rendered (mocked as a simple div in test-support)
-    // but the deferred providers mount only after the first useEffect tick
-    expect(screen.getByTestId('kangur-ai-tutor-widget')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-ai-tutor-widget')).toBeNull();
 
-    // After effects run, the widget should still be present (providers now mounted)
     await act(async () => {
-      vi.runAllTimers();
+      vi.advanceTimersByTime(GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS - 1);
+    });
+
+    expect(screen.queryByTestId('kangur-ai-tutor-widget')).toBeNull();
+
+    await act(async () => {
+      vi.advanceTimersByTime(1);
     });
 
     expect(screen.getByTestId('kangur-ai-tutor-widget')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-route-content')).toBeInTheDocument();
+  });
+
+  it('renders the AI Tutor widget immediately on non-home routes', () => {
+    render(<KangurFeatureApp />);
+
+    expect(screen.getByTestId('kangur-ai-tutor-widget')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-route-content')).toBeInTheDocument();
+  });
+
+  it('keeps the AI Tutor widget mounted when navigating back to home after an initial non-home route', () => {
+    const currentRoutingState = {
+      pageKey: 'Lessons',
+      embedded: false,
+      requestedPath: '/kangur/lessons',
+      requestedHref: '/kangur/lessons',
+      basePath: '/kangur',
+    };
+    routingStateMock.mockImplementation(() => currentRoutingState);
+
+    const { rerender } = render(<KangurFeatureApp />);
+
+    expect(screen.getByTestId('kangur-ai-tutor-widget')).toBeInTheDocument();
+
+    currentRoutingState.pageKey = 'Game';
+    currentRoutingState.requestedPath = '/kangur';
+    currentRoutingState.requestedHref = '/kangur';
+    rerender(<KangurFeatureApp />);
+
+    expect(screen.getByTestId('kangur-ai-tutor-widget')).toBeInTheDocument();
   });
 });

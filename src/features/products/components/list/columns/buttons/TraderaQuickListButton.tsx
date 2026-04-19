@@ -20,6 +20,7 @@ import {
   invalidateProducts,
 } from '@/shared/lib/query-invalidation';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
+import { hasProductMarketplaceExclusionSelection } from '@/shared/lib/products/utils/marketplace-exclusions';
 import { Button } from '@/shared/ui/button';
 import { useToast } from '@/shared/ui/toast';
 
@@ -40,6 +41,7 @@ import {
   type ResolvedTraderaQuickListContext,
   type ResolvedTraderaBrowserConnection,
 } from '@/features/integrations/product-integrations-adapter';
+import { useCustomFields } from '@/features/products/hooks/useProductMetadataQueries';
 
 export function TraderaQuickListButton(props: {
   product: ProductWithImages;
@@ -58,6 +60,7 @@ export function TraderaQuickListButton(props: {
 
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const customFieldsQuery = useCustomFields();
   const createListingMutation = useCreateListingMutation(product.id);
   const [submitting, setSubmitting] = useState(false);
   const [showCheckmark, setShowCheckmark] = useState(false);
@@ -75,6 +78,11 @@ export function TraderaQuickListButton(props: {
 
   const localFeedbackRef = useRef(localFeedback);
   localFeedbackRef.current = localFeedback;
+  const isTraderaMarketplaceExcluded = hasProductMarketplaceExclusionSelection({
+    customFieldDefinitions: customFieldsQuery.data,
+    customFieldValues: product.customFields,
+    marketplaceLabelOrAlias: 'Tradera',
+  });
 
   // Flash checkmark for 3s when status transitions to completed
   useEffect(() => {
@@ -190,8 +198,8 @@ export function TraderaQuickListButton(props: {
         });
       }
       toast(
-        response.queue?.jobId
-          ? `Tradera listing queued (job ${response.queue.jobId}).`
+        queueJobId !== null
+          ? `Tradera listing queued (job ${queueJobId}).`
           : 'Tradera listing queued.',
         { variant: 'success' }
       );
@@ -205,9 +213,12 @@ export function TraderaQuickListButton(props: {
         !isTraderaBrowserAuthRequiredMessage(error.message)
       ) {
         setFeedbackStatus(null);
+        const conflictMessage =
+          error.message.length > 0
+            ? error.message
+            : 'This product already has a Tradera listing on this account.';
         toast(
-          error.message ||
-            'This product already has a Tradera listing on this account.',
+          conflictMessage,
           { variant: 'error' }
         );
         onOpenIntegrations?.();
@@ -286,40 +297,58 @@ export function TraderaQuickListButton(props: {
           connectionId: localFeedback?.connectionId ?? null,
         })
       : undefined;
-  const resolvedLabel = isFailureState
-    ? `Open Tradera recovery options (${resolvedButtonStatus}).`
-    : 'One-click export to Tradera';
+  let resolvedLabel = 'One-click export to Tradera';
+  if (isTraderaMarketplaceExcluded) {
+    resolvedLabel = 'Tradera quick export disabled by Market Exclusion';
+  } else if (isFailureState) {
+    resolvedLabel = `Open Tradera recovery options (${resolvedButtonStatus}).`;
+  }
   const disableQuickListAction =
-    !isFailureState &&
-    (submitting || localFeedbackStatus === 'queued' || serverStatusInFlight);
+    isTraderaMarketplaceExcluded ||
+    (!isFailureState &&
+      (submitting || localFeedbackStatus === 'queued' || serverStatusInFlight));
+  const shouldPrefetchListings = !disableQuickListAction;
+  const resolvedToneClass = isTraderaMarketplaceExcluded
+    ? 'border-slate-700/35 bg-slate-950/40 text-slate-500 hover:border-slate-700/35 hover:bg-slate-950/40 hover:text-slate-500'
+    : getMarketplaceButtonClass(
+        resolvedButtonStatus,
+        shouldUseFilledMarketplaceTone,
+        'tradera'
+      );
 
   return (
     <Button
       type='button'
       onClick={() => {
+        if (isTraderaMarketplaceExcluded) {
+          return;
+        }
         if (isFailureState && onOpenIntegrations) {
           onOpenIntegrations(recoveryContext);
           return;
         }
-        void handleClick();
+        handleClick().catch(() => undefined);
       }}
-      onMouseEnter={prefetchListings}
-      onFocus={prefetchListings}
+      onMouseEnter={shouldPrefetchListings ? prefetchListings : undefined}
+      onFocus={shouldPrefetchListings ? prefetchListings : undefined}
       variant='ghost'
       size='icon'
       disabled={disableQuickListAction}
       aria-label={resolvedLabel}
-      title={`${resolvedLabel} (${resolvedButtonStatus}${traderaStatus ? ` / ${traderaStatus}` : ''})`}
+      title={
+        isTraderaMarketplaceExcluded
+          ? 'Tradera quick export is disabled because Market Exclusion -> Tradera is checked.'
+          : `${resolvedLabel} (${resolvedButtonStatus}${
+              traderaStatus.length > 0 ? ` / ${traderaStatus}` : ''
+            })`
+      }
       className={cn(
         'relative size-8 rounded-full border border-transparent bg-transparent p-0 hover:bg-transparent',
-        disableQuickListAction &&
-          'cursor-not-allowed opacity-60',
         isProcessingOrQueued && 'animate-pulse',
-        getMarketplaceButtonClass(
-          resolvedButtonStatus,
-          shouldUseFilledMarketplaceTone,
-          'tradera'
-        )
+        resolvedToneClass,
+        isTraderaMarketplaceExcluded
+          ? 'cursor-not-allowed disabled:border-slate-700/35 disabled:bg-slate-950/40 disabled:text-slate-500 disabled:opacity-40'
+          : disableQuickListAction && 'cursor-not-allowed opacity-60'
       )}
     >
       {showCheckmark ? (

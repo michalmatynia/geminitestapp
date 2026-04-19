@@ -82,7 +82,7 @@ export const IntegrationsCell: React.FC<{ row: Row<ProductWithImages> }> = memo(
       </CircleIconButton>
       <BaseQuickExportButton product={product} status={runtime.integrationStatus} prefetchListings={prefetchListings} showMarketplaceBadge={runtime.showMarketplaceBadge} onOpenIntegrations={(rec): void => onIntegrationsClick(product, rec, 'baselinker')} />
       <TraderaQuickListButton product={product} prefetchListings={prefetchListings} onOpenIntegrations={(rec): void => onIntegrationsClick(product, rec, 'tradera')} showTraderaBadge={runtime.showTraderaBadge} traderaStatus={runtime.traderaStatus} />
-      {runtime.showTraderaBadge && <TraderaStatusButton productId={product.id} status={runtime.traderaStatus} prefetchListings={prefetchListings} onOpenListings={(rec): void => onIntegrationsClick(product, rec, 'tradera')} />}
+      {runtime.showTraderaBadge && <TraderaStatusButton productId={product.id} status={runtime.traderaStatus} prefetchListings={prefetchListings} onOpenListings={(rec): void => onIntegrationsClick(product, rec, 'tradera')} customFieldValues={product.customFields} />}
       <VintedQuickListButton product={product} prefetchListings={prefetchListings} onOpenIntegrations={(rec): void => onIntegrationsClick(product, rec, 'vinted')} showVintedBadge={runtime.showVintedBadge} vintedStatus={runtime.vintedStatus} />
       {runtime.showVintedBadge && <VintedStatusButton productId={product.id} status={runtime.vintedStatus} prefetchListings={prefetchListings} onOpenListings={(rec): void => onIntegrationsClick(product, rec, 'vinted')} />}
       {visuals.triggerButtonsReady === true && (

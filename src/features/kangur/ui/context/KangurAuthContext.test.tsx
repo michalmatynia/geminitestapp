@@ -276,11 +276,21 @@ describe('KangurAuthContext', () => {
     expect(meMock).toHaveBeenCalledTimes(1);
     firstRender.unmount();
 
+    vi.useFakeTimers();
     renderAuthHarness();
 
-    await waitFor(() => {
-      expect(screen.getByTestId('kangur-auth-loading')).toHaveTextContent('false');
-      expect(screen.getByTestId('kangur-parent-assignment-access')).toHaveTextContent('true');
+    expect(screen.getByTestId('kangur-auth-loading')).toHaveTextContent('false');
+    expect(screen.getByTestId('kangur-parent-assignment-access')).toHaveTextContent('true');
+    expect(meMock).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1_199);
+    });
+
+    expect(meMock).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1);
     });
 
     expect(meMock).toHaveBeenCalledTimes(2);

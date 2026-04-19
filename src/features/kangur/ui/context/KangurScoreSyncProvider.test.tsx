@@ -2,12 +2,13 @@
  * @vitest-environment jsdom
  */
 
-import { render, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, render, waitFor } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   createGuestKangurScore,
   loadGuestKangurScores,
 } from '@/features/kangur/services/guest-kangur-scores';
+import { KangurRoutingProvider } from '@/features/kangur/ui/context/KangurRoutingContext';
 
 const {
   logKangurClientErrorMock,
@@ -50,6 +51,10 @@ vi.mock('@/features/kangur/observability/client', () => ({
 import { KangurScoreSyncProvider } from './KangurScoreSyncProvider';
 
 describe('KangurScoreSyncProvider', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   beforeEach(() => {
     localStorage.clear();
     vi.clearAllMocks();
@@ -128,5 +133,65 @@ describe('KangurScoreSyncProvider', () => {
 
     expect(scoreCreateMock).not.toHaveBeenCalled();
     expect(loadGuestKangurScores()).toHaveLength(1);
+  });
+
+  it('delays guest score sync on the standalone home route', async () => {
+    vi.useFakeTimers();
+
+    const localScore = createGuestKangurScore({
+      player_name: 'Gracz',
+      score: 8,
+      operation: 'addition',
+      subject: 'maths',
+      total_questions: 10,
+      correct_answers: 8,
+      time_taken: 27,
+    });
+
+    useKangurAuthMock.mockReturnValue({
+      isAuthenticated: true,
+      isLoadingAuth: false,
+      user: {
+        id: 'parent-1',
+        activeLearner: {
+          id: 'learner-1',
+        },
+      },
+    });
+    scoreCreateMock.mockResolvedValue({
+      ...localScore,
+      id: 'db-score-1',
+      created_by: 'ada@example.com',
+      learner_id: 'learner-1',
+      owner_user_id: 'parent-1',
+    });
+
+    render(
+      <KangurRoutingProvider basePath='/kangur' pageKey='Game' requestedPath='/kangur'>
+        <KangurScoreSyncProvider>
+          <div>child</div>
+        </KangurScoreSyncProvider>
+      </KangurRoutingProvider>
+    );
+
+    expect(scoreCreateMock).not.toHaveBeenCalled();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1_999);
+    });
+
+    expect(scoreCreateMock).not.toHaveBeenCalled();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1);
+    });
+
+    expect(scoreCreateMock).toHaveBeenCalledTimes(1);
+    expect(scoreCreateMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        player_name: 'Gracz',
+        client_mutation_id: localScore.client_mutation_id,
+      })
+    );
   });
 });

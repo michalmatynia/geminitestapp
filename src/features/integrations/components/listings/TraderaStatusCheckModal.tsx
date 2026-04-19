@@ -11,6 +11,7 @@ import {
   isTraderaBrowserAuthRequiredMessage,
   refreshTraderaBrowserSession,
 } from '@/features/integrations/utils/tradera-browser-session';
+import { useCustomFields } from '@/features/products/hooks/useProductMetadataQueries';
 import { safeClearInterval, safeSetInterval } from '@/shared/lib/timers';
 import type {
   ProductListingWithDetails,
@@ -18,10 +19,15 @@ import type {
 } from '@/shared/contracts/integrations/listings';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { api } from '@/shared/lib/api-client';
-import { invalidateProductListingsAndBadges } from '@/shared/lib/query-invalidation';
+import {
+  invalidateProductListingsAndBadges,
+  invalidateProducts,
+} from '@/shared/lib/query-invalidation';
+import { ensureProductMarketplaceExclusionSelection, hasProductMarketplaceExclusionSelection } from '@/shared/lib/products/utils/marketplace-exclusions';
 import { AppModal } from '@/shared/ui/app-modal';
 import { Button } from '@/shared/ui/button';
 import { useToast } from '@/shared/ui/toast';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import {
   buildLiveCheckBaseline,
@@ -51,6 +57,7 @@ export function TraderaStatusCheckModal(props: TraderaStatusCheckModalProps): Re
   const { isOpen, onClose, productIds, products } = props;
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const customFieldsQuery = useCustomFields({ enabled: isOpen });
   const [rows, setRows] = useState<ListingRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [isBatchChecking, setIsBatchChecking] = useState(false);
@@ -59,10 +66,82 @@ export function TraderaStatusCheckModal(props: TraderaStatusCheckModalProps): Re
   const pollTimersRef = useRef<Map<string, ReturnType<typeof setInterval>>>(new Map());
   const pollDeadlinesRef = useRef<Map<string, number>>(new Map());
   const liveCheckBaselinesRef = useRef<Map<string, LiveCheckBaseline>>(new Map());
+  const rowsRef = useRef<ListingRow[]>([]);
+  const traderaExclusionSyncInFlightRef = useRef<Set<string>>(new Set());
 
   const productNamesById = useMemo(
     () => new Map(products.map((p) => [p.id, p.name_en || p.name_pl || p.name_de || p.id])),
     [products]
+  );
+  const productsById = useMemo(() => new Map(products.map((product) => [product.id, product])), [products]);
+
+  useEffect(() => {
+    rowsRef.current = rows;
+  }, [rows]);
+
+  const isProductTraderaExcluded = useCallback(
+    (productId: string): boolean => {
+      const product = productsById.get(productId);
+      if (!product) return false;
+
+      return hasProductMarketplaceExclusionSelection({
+        customFieldDefinitions: customFieldsQuery.data,
+        customFieldValues: product.customFields,
+        marketplaceLabelOrAlias: 'Tradera',
+      });
+    },
+    [customFieldsQuery.data, productsById]
+  );
+
+  const syncTraderaEndedExclusion = useCallback(
+    async (row: ListingRow): Promise<void> => {
+      if (row.traderaExcluded) return;
+      if ((row.listing?.status ?? '').toLowerCase() !== 'ended') return;
+      if (traderaExclusionSyncInFlightRef.current.has(row.productId)) return;
+
+      const product = productsById.get(row.productId);
+      if (!product) return;
+
+      const nextSelection = ensureProductMarketplaceExclusionSelection({
+        customFieldDefinitions: customFieldsQuery.data,
+        customFieldValues: product.customFields,
+        marketplaceLabelOrAlias: 'Tradera',
+      });
+      if (!nextSelection || !nextSelection.changed) return;
+
+      traderaExclusionSyncInFlightRef.current.add(row.productId);
+      setRows((prev) =>
+        prev.map((candidate) =>
+          candidate.productId === row.productId
+            ? { ...candidate, traderaExcluded: true }
+            : candidate
+        )
+      );
+
+      try {
+        await api.put(`/api/v2/products/${row.productId}`, {
+          customFields: nextSelection.customFields,
+        });
+        await invalidateProducts(queryClient);
+      } catch (error) {
+        setRows((prev) =>
+          prev.map((candidate) =>
+            candidate.productId === row.productId
+              ? { ...candidate, traderaExcluded: false }
+              : candidate
+          )
+        );
+        logClientCatch(error, {
+          source: 'TraderaStatusCheckModal',
+          action: 'syncTraderaEndedExclusion',
+          productId: row.productId,
+          level: 'warn',
+        });
+      } finally {
+        traderaExclusionSyncInFlightRef.current.delete(row.productId);
+      }
+    },
+    [customFieldsQuery.data, productsById, queryClient]
   );
 
   const buildRowFromListings = useCallback(
@@ -77,6 +156,7 @@ export function TraderaStatusCheckModal(props: TraderaStatusCheckModalProps): Re
         productId,
         productName,
         listing,
+        traderaExcluded: isProductTraderaExcluded(productId),
         error: null,
         relistState: 'idle',
         relistError: null,
@@ -84,7 +164,7 @@ export function TraderaStatusCheckModal(props: TraderaStatusCheckModalProps): Re
         liveCheckError: null,
       };
     },
-    []
+    [isProductTraderaExcluded]
   );
 
   const fetchListingsForProduct = useCallback(
@@ -107,6 +187,7 @@ export function TraderaStatusCheckModal(props: TraderaStatusCheckModalProps): Re
           productId,
           productName,
           listing: null,
+          traderaExcluded: isProductTraderaExcluded(productId),
           error: err instanceof Error ? err.message : 'Failed to fetch listing status.',
           relistState: 'idle',
           relistError: null,
@@ -115,7 +196,7 @@ export function TraderaStatusCheckModal(props: TraderaStatusCheckModalProps): Re
         };
       }
     },
-    [buildRowFromListings, fetchListingsForProduct, productNamesById]
+    [buildRowFromListings, fetchListingsForProduct, isProductTraderaExcluded, productNamesById]
   );
 
   const fetchStatuses = useCallback(async () => {
@@ -154,6 +235,7 @@ export function TraderaStatusCheckModal(props: TraderaStatusCheckModalProps): Re
 
       return {
         ...freshRow,
+        traderaExcluded: freshRow.traderaExcluded || currentRow.traderaExcluded,
         relistState: currentRow.relistState,
         relistError: currentRow.relistError,
         liveCheckState: completed
@@ -183,14 +265,22 @@ export function TraderaStatusCheckModal(props: TraderaStatusCheckModalProps): Re
         ? hasLiveCheckCompleted(freshRow.listing, options.baseline)
         : false;
       const pending = isListingLiveCheckPending(freshRow.listing);
+      const currentRow = rowsRef.current.find((row) => row.productId === productId);
+      const mergedRow = currentRow
+        ? mergeRefreshedRow(currentRow, freshRow, options)
+        : freshRow;
 
       setRows((prev) =>
         prev.map((row) =>
           row.productId === productId
-            ? mergeRefreshedRow(row, freshRow, options)
+            ? mergedRow
             : row
         )
       );
+
+      if (options.baseline && completed && (mergedRow.listing?.status ?? '').toLowerCase() === 'ended') {
+        void syncTraderaEndedExclusion(mergedRow);
+      }
 
       return {
         row: freshRow,
@@ -198,7 +288,13 @@ export function TraderaStatusCheckModal(props: TraderaStatusCheckModalProps): Re
         pending,
       };
     },
-    [buildRowFromListings, fetchListingsForProduct, mergeRefreshedRow, productNamesById]
+    [
+      buildRowFromListings,
+      fetchListingsForProduct,
+      mergeRefreshedRow,
+      productNamesById,
+      syncTraderaEndedExclusion,
+    ]
   );
 
   useEffect(() => {

@@ -47,6 +47,7 @@ export type ListingRow = {
   productId: string;
   productName: string;
   listing: ProductListingWithDetails | null;
+  traderaExcluded: boolean;
   error: string | null;
   relistState: RelistState;
   relistError: string | null;

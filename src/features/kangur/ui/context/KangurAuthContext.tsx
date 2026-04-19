@@ -49,6 +49,44 @@ import {
 // resolved within this window, the shell renders with the current (possibly
 // unauthenticated) state and a background settlement completes later.
 const AUTH_CHECK_TIMEOUT_MS = 1_500;
+const CACHED_AUTH_REVALIDATION_DELAY_MS = 1_200;
+
+type IdleCallbackHost = Window &
+  typeof globalThis & {
+    requestIdleCallback?: (
+      callback: IdleRequestCallback,
+      options?: IdleRequestOptions
+    ) => number;
+    cancelIdleCallback?: (handle: number) => void;
+  };
+
+const scheduleCachedAuthRevalidation = (callback: () => void): (() => void) => {
+  if (typeof window === 'undefined') {
+    return () => undefined;
+  }
+
+  const hostWindow = window as IdleCallbackHost;
+  if (
+    typeof hostWindow.requestIdleCallback === 'function' &&
+    typeof hostWindow.cancelIdleCallback === 'function'
+  ) {
+    const idleId = hostWindow.requestIdleCallback(
+      () => {
+        callback();
+      },
+      { timeout: CACHED_AUTH_REVALIDATION_DELAY_MS }
+    );
+
+    return () => {
+      hostWindow.cancelIdleCallback?.(idleId);
+    };
+  }
+
+  const timeoutId = window.setTimeout(callback, CACHED_AUTH_REVALIDATION_DELAY_MS);
+  return () => {
+    window.clearTimeout(timeoutId);
+  };
+};
 
 // Split into two contexts so components that only need auth state don't
 // re-render when action callbacks are recreated, and vice versa.
@@ -193,21 +231,22 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
       }
 
       // Background revalidation — update state only if the result differs.
-      void kangurPlatform.auth.me().then(
-        (freshUser) => {
-          primeKangurAuthBootstrapCache(freshUser);
-          setUser((prev) => {
-            if (prev?.id === freshUser?.id) return prev;
-            return freshUser;
-          });
-          setIsAuthenticated(freshUser !== null);
-          setHasResolvedAuth(true);
-        },
-        () => {
-          // Revalidation failed — keep the cached state; don't disrupt the UI.
-        }
-      );
-      return;
+      return scheduleCachedAuthRevalidation(() => {
+        void kangurPlatform.auth.me().then(
+          (freshUser) => {
+            primeKangurAuthBootstrapCache(freshUser);
+            setUser((prev) => {
+              if (prev?.id === freshUser?.id) return prev;
+              return freshUser;
+            });
+            setIsAuthenticated(freshUser !== null);
+            setHasResolvedAuth(true);
+          },
+          () => {
+            // Revalidation failed — keep the cached state; don't disrupt the UI.
+          }
+        );
+      });
     }
 
     void checkAppState({ timeoutMs: AUTH_CHECK_TIMEOUT_MS, useBootstrapCache: true })

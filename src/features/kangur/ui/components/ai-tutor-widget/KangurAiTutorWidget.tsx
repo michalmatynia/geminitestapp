@@ -32,6 +32,66 @@ import {
   useKangurAiTutorWidgetState,
 } from './KangurAiTutorWidget.state';
 
+type KangurAiTutorWidgetAuthState = {
+  isAuthenticated: boolean | undefined;
+  isLoadingAuth: boolean | undefined;
+  user: {
+    ownerEmailVerified?: boolean;
+  } | null;
+} | null;
+
+const resolveKangurAiTutorWidgetAuthState = ({
+  authSessionState,
+  authStatusState,
+}: {
+  authSessionState: ReturnType<typeof useOptionalKangurAuthSessionState>;
+  authStatusState: ReturnType<typeof useOptionalKangurAuthStatusState>;
+}): KangurAiTutorWidgetAuthState => {
+  if (!authSessionState && !authStatusState) {
+    return null;
+  }
+
+  return {
+    isAuthenticated: authSessionState?.isAuthenticated,
+    isLoadingAuth: authStatusState?.isLoadingAuth,
+    user: authSessionState?.user ?? null,
+  };
+};
+
+const resolveKangurAiTutorWidgetAppModes = (
+  tutorRuntime: ReturnType<typeof useKangurAiTutorRuntime>['value']
+): {
+  guestIntroMode: 'every_visit' | 'first_visit';
+  homeOnboardingMode: 'every_visit' | 'first_visit';
+} => {
+  const tutorAppSettings = tutorRuntime.appSettings as
+    | Partial<typeof tutorRuntime.appSettings>
+    | undefined;
+
+  return {
+    guestIntroMode: tutorAppSettings?.guestIntroMode ?? 'first_visit',
+    homeOnboardingMode: tutorAppSettings?.homeOnboardingMode ?? 'first_visit',
+  };
+};
+
+function KangurAiTutorWidgetPortal({
+  children,
+  tutorRuntime,
+  widgetState,
+}: {
+  children: React.ReactNode;
+  tutorRuntime: ReturnType<typeof useKangurAiTutorRuntime>['value'];
+  widgetState: ReturnType<typeof useKangurAiTutorWidgetState>;
+}): React.JSX.Element {
+  return (
+    <KangurAiTutorRuntimeScope value={tutorRuntime}>
+      <KangurAiTutorWidgetStateProvider value={widgetState}>
+        {children}
+      </KangurAiTutorWidgetStateProvider>
+    </KangurAiTutorRuntimeScope>
+  );
+}
+
 export function KangurAiTutorWidget(): React.JSX.Element | null {
   const { value: tutorRuntime, sessionRegistryValue } = useKangurAiTutorRuntime();
   useActivateKangurAiTutorContent(tutorRuntime.isOpen);
@@ -42,29 +102,24 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
   const loginModalState = useKangurLoginModalState();
   const { openLoginModal } = useKangurLoginModalActions();
   const widgetState = useKangurAiTutorWidgetState();
-  const tutorAppSettings = tutorRuntime.appSettings ?? {};
-  const authState = useMemo(() => {
-    if (!authSessionState && !authStatusState) {
-      return null;
-    }
+  const { guestIntroMode, homeOnboardingMode } =
+    resolveKangurAiTutorWidgetAppModes(tutorRuntime);
+  const authState = useMemo(
+    () =>
+      resolveKangurAiTutorWidgetAuthState({
+        authSessionState,
+        authStatusState,
+      }),
+    [authSessionState, authStatusState]
+  );
 
-    return {
-      isAuthenticated: authSessionState?.isAuthenticated,
-      isLoadingAuth: authStatusState?.isLoadingAuth,
-      user: authSessionState?.user ?? null,
-    };
-  }, [authSessionState, authStatusState]);
-
-  useKangurAiTutorDeferredActivationBridge({
-    runtimeValue: tutorRuntime,
-    sessionRegistryValue,
-  });
+  useKangurAiTutorDeferredActivationBridge({ runtimeValue: tutorRuntime, sessionRegistryValue });
 
   const environment = useKangurAiTutorWidgetEnvironment({
     authState,
-    guestIntroMode: tutorAppSettings.guestIntroMode ?? 'first_visit',
+    guestIntroMode,
     highlightedText: tutorRuntime.highlightedText,
-    homeOnboardingMode: tutorAppSettings.homeOnboardingMode ?? 'first_visit',
+    homeOnboardingMode,
     mounted: widgetState.mounted,
     sessionContext: tutorRuntime.sessionContext,
     tutorContent,
@@ -81,7 +136,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
       isOpen: loginModalState.isOpen,
       openLoginModal,
     },
-    prefersReducedMotion: prefersReducedMotion ?? undefined,
+    prefersReducedMotion,
     tutorContent,
     tutorRuntime,
     widgetState,
@@ -91,13 +146,11 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
   }
 
   return createPortal(
-    <KangurAiTutorRuntimeScope value={tutorRuntime}>
-      <KangurAiTutorWidgetStateProvider value={widgetState}>
-        <KangurAiTutorPortalProvider value={portalContentValue}>
-          <KangurAiTutorPortalContent />
-        </KangurAiTutorPortalProvider>
-      </KangurAiTutorWidgetStateProvider>
-    </KangurAiTutorRuntimeScope>,
+    <KangurAiTutorWidgetPortal tutorRuntime={tutorRuntime} widgetState={widgetState}>
+      <KangurAiTutorPortalProvider value={portalContentValue}>
+        <KangurAiTutorPortalContent />
+      </KangurAiTutorPortalProvider>
+    </KangurAiTutorWidgetPortal>,
     document.body
   );
 }

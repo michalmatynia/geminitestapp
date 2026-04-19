@@ -52,14 +52,17 @@ const {
   loginModalStateMock,
   pendingRouteLoadingSnapshotMock,
   prefetchKangurPageContentStoreMock,
+  progressSyncProviderVisibleMock,
   routingStateMock,
   routeTransitionStateMock,
   routeNavigatorMock,
   queryClientMock,
+  scoreSyncProviderVisibleMock,
   sessionMock,
   settingsStoreStateMock,
   topNavigationHostVisibleMock,
   useKangurCoarsePointerMock,
+  useKangurDeferredStandaloneHomeReadyMock,
   preloadKangurPageMock,
   useLocaleMock,
 } = vi.hoisted(() => ({
@@ -70,6 +73,7 @@ const {
   prefetchKangurPageContentStoreMock: vi.fn<
     (queryClient: QueryClient | null | undefined, locale?: string | null) => Promise<boolean>
   >(),
+  progressSyncProviderVisibleMock: vi.fn<() => boolean>(),
   queryClientMock: vi.fn<() => MockedQueryClient>(),
   routingStateMock: vi.fn<() => MockedRoutingState>(),
   routeTransitionStateMock: vi.fn<() => MockedRouteTransitionStateInput>(),
@@ -79,10 +83,12 @@ const {
     push: vi.fn(),
     replace: vi.fn(),
   },
+  scoreSyncProviderVisibleMock: vi.fn<() => boolean>(),
   sessionMock: vi.fn<() => MockedSessionState>(),
   settingsStoreStateMock: vi.fn<() => MockedSettingsStore>(),
   topNavigationHostVisibleMock: vi.fn(),
   useKangurCoarsePointerMock: vi.fn<() => boolean>(),
+  useKangurDeferredStandaloneHomeReadyMock: vi.fn<() => boolean>(),
   useLocaleMock: vi.fn<() => string>(),
 }));
 
@@ -348,11 +354,23 @@ vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurProgressSyncProvider', () => ({
-  KangurProgressSyncProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
+  KangurProgressSyncProvider: ({ children }: { children?: ReactNode }) => (
+    <div data-testid='kangur-progress-sync-provider'>
+      {progressSyncProviderVisibleMock() ? children : null}
+    </div>
+  ),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurScoreSyncProvider', () => ({
-  KangurScoreSyncProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
+  KangurScoreSyncProvider: ({ children }: { children?: ReactNode }) => (
+    <div data-testid='kangur-score-sync-provider'>
+      {scoreSyncProviderVisibleMock() ? children : null}
+    </div>
+  ),
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurDeferredStandaloneHomeReady', () => ({
+  useKangurDeferredStandaloneHomeReady: () => useKangurDeferredStandaloneHomeReadyMock(),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
@@ -469,14 +487,17 @@ export {
   pendingRouteLoadingSnapshotMock,
   preloadKangurPageMock,
   prefetchKangurPageContentStoreMock,
+  progressSyncProviderVisibleMock,
   queryClientMock,
   routingStateMock,
   routeNavigatorMock,
   routeTransitionStateMock,
+  scoreSyncProviderVisibleMock,
   sessionMock,
   settingsStoreStateMock,
   topNavigationHostVisibleMock,
   useKangurCoarsePointerMock,
+  useKangurDeferredStandaloneHomeReadyMock,
   useLocaleMock,
 };
 
@@ -541,6 +562,9 @@ export async function setupKangurFeatureAppTest() {
   });
   topNavigationHostVisibleMock.mockReturnValue(true);
   useKangurCoarsePointerMock.mockReturnValue(false);
+  useKangurDeferredStandaloneHomeReadyMock.mockReturnValue(true);
+  progressSyncProviderVisibleMock.mockReturnValue(true);
+  scoreSyncProviderVisibleMock.mockReturnValue(true);
   preloadKangurPageMock.mockReset();
   prefetchKangurPageContentStoreMock.mockReset();
   prefetchKangurPageContentStoreMock.mockResolvedValue(true);

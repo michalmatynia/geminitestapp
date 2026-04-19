@@ -57,6 +57,7 @@ import {
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import { prefetchKangurPageContentStore } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
+import { useKangurDeferredStandaloneHomeReady } from '@/features/kangur/ui/hooks/useKangurDeferredStandaloneHomeReady';
 import type { KangurRouteTransitionSkeletonVariant } from '@/features/kangur/ui/routing/route-transition-skeletons';
 import {
   useKangurPendingRouteLoadingSnapshot,
@@ -144,6 +145,21 @@ const KangurLoginModalMount = (): JSX.Element | null => {
   }
 
   return <KangurLoginModal />;
+};
+
+const KangurDeferredSyncEffectsMount = (): JSX.Element | null => {
+  const isStandaloneHomeReady = useKangurDeferredStandaloneHomeReady();
+
+  if (!isStandaloneHomeReady) {
+    return null;
+  }
+
+  return (
+    <>
+      <KangurProgressSyncProvider />
+      <KangurScoreSyncProvider />
+    </>
+  );
 };
 
 // AuthenticatedApp is the main learner shell. It owns:
@@ -816,8 +832,10 @@ const AuthenticatedApp = (): JSX.Element | null => {
 //  KangurAuthProvider             – resolves learner auth session
 //  KangurFocusProvider            – owns subject focus, age-group focus, and
 //                                   the subject/age-group sync in one scope
-//  KangurProgressSyncProvider     – background progress polling/sync
-//  KangurScoreSyncProvider        – background score polling/sync
+//  KangurDeferredSyncEffectsMount – defers progress/score sync mounts on the
+//                                   initial standalone home boot so those
+//                                   side effects do not subscribe during first
+//                                   paint
 //  KangurContextRegistryPageBoundary – scopes AI Tutor context to the page
 //  KangurDeferredAiTutorProviders – mounts dormant AI Tutor contexts from the
 //                                   first render; the heavy runtime still
@@ -839,8 +857,7 @@ export function KangurFeatureApp(): JSX.Element {
     <KangurRouteTransitionProvider>
       <KangurAuthProvider>
         <KangurFocusProvider>
-          <KangurProgressSyncProvider />
-          <KangurScoreSyncProvider />
+          <KangurDeferredSyncEffectsMount />
           <KangurLoginModalProvider>
             <KangurContextRegistryPageBoundary>
               <KangurDeferredAiTutorProviders>

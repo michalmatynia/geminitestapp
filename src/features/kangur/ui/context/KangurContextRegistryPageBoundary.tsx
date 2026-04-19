@@ -98,9 +98,12 @@ export function KangurContextRegistryPageBoundary({
     [effectivePageKey]
   );
 
+  if (!isTutorContextReady) {
+    return <>{children}</>;
+  }
+
   return (
     <ContextRegistryPageProvider
-      enabled={isTutorContextReady}
       pageId={`kangur:${effectivePageKey}`}
       title={KANGUR_PAGE_TITLES[effectivePageKey] ?? 'Kangur'}
       rootNodeIds={rootNodeIds}

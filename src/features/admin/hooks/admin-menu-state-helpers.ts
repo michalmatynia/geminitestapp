@@ -215,7 +215,9 @@ export function usePrefetchPopularAdminRoutes(
   const hasPrefetchedPopularRoutesRef = useRef(false);
 
   useEffect(() => {
-    if (hasPrefetchedPopularRoutesRef.current === true || typeof window === 'undefined') return;
+    if (hasPrefetchedPopularRoutesRef.current === true || typeof window === 'undefined') {
+      return undefined;
+    }
     hasPrefetchedPopularRoutesRef.current = true;
     return scheduleDeferredAdminMenuSettingsHydration(window, () => {
       POPULAR_ADMIN_PREFETCH_HREFS.forEach((href: string) => {

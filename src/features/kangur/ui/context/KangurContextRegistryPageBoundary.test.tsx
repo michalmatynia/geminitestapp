@@ -4,7 +4,7 @@
 
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { KangurContextRegistryPageBoundary } from './KangurContextRegistryPageBoundary';
 
@@ -46,6 +46,14 @@ vi.mock('@/shared/lib/ai-context-registry/page-context', () => ({
 }));
 
 describe('KangurContextRegistryPageBoundary', () => {
+  beforeEach(() => {
+    contextRegistryPageProviderMock.mockReset();
+    deferredHomeTutorContextReadyMock.mockReturnValue(true);
+    routingState.value = {
+      pageKey: 'Game',
+    };
+  });
+
   it('falls back to the main page context for unsupported route keys', () => {
     routingState.value = {
       pageKey: 'Duels',
@@ -99,11 +107,8 @@ describe('KangurContextRegistryPageBoundary', () => {
       </KangurContextRegistryPageBoundary>
     );
 
-    expect(contextRegistryPageProviderMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        enabled: false,
-        pageId: 'kangur:Game',
-      })
-    );
+    expect(screen.queryByTestId('context-registry-page-provider')).toBeNull();
+    expect(screen.getByText('child')).toBeInTheDocument();
+    expect(contextRegistryPageProviderMock).not.toHaveBeenCalled();
   });
 });

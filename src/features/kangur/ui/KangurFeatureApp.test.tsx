@@ -12,15 +12,18 @@ import {
   pendingRouteLoadingSnapshotMock,
   preloadKangurPageMock,
   prefetchKangurPageContentStoreMock,
+  progressSyncProviderVisibleMock,
   queryClientMock,
   routingStateMock,
   routeNavigatorMock,
   routeTransitionStateMock,
+  scoreSyncProviderVisibleMock,
   sessionMock,
   setupKangurFeatureAppTest,
   settingsStoreStateMock,
   topNavigationHostVisibleMock,
   useKangurCoarsePointerMock,
+  useKangurDeferredStandaloneHomeReadyMock,
   useLocaleMock,
 } from '@/features/kangur/ui/KangurFeatureApp.test-support';
 
@@ -78,6 +81,39 @@ describe('KangurFeatureApp', () => {
     expect(screen.getByTestId('kangur-route-content')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-page-game')).toBeInTheDocument();
     expect(screen.queryByTestId('kangur-page-transition-skeleton')).toBeNull();
+  });
+
+  it('keeps sync side effects unmounted until the standalone home idle gate opens', () => {
+    routingStateMock.mockReturnValue({
+      pageKey: 'Game',
+      embedded: false,
+      requestedPath: '/kangur',
+      requestedHref: '/kangur',
+      basePath: '/kangur',
+    });
+    useKangurDeferredStandaloneHomeReadyMock.mockReturnValue(false);
+
+    const { rerender } = render(<KangurFeatureApp />);
+
+    expect(screen.queryByTestId('kangur-progress-sync-provider')).toBeNull();
+    expect(screen.queryByTestId('kangur-score-sync-provider')).toBeNull();
+
+    useKangurDeferredStandaloneHomeReadyMock.mockReturnValue(true);
+    rerender(<KangurFeatureApp />);
+
+    expect(screen.getByTestId('kangur-progress-sync-provider')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-score-sync-provider')).toBeInTheDocument();
+  });
+
+  it('keeps sync side effects mounted on non-home routes', () => {
+    useKangurDeferredStandaloneHomeReadyMock.mockReturnValue(true);
+    progressSyncProviderVisibleMock.mockReturnValue(true);
+    scoreSyncProviderVisibleMock.mockReturnValue(true);
+
+    render(<KangurFeatureApp />);
+
+    expect(screen.getByTestId('kangur-progress-sync-provider')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-score-sync-provider')).toBeInTheDocument();
   });
 
   it('does not preload hot routes on the home Game route during cold start', async () => {
@@ -417,6 +453,7 @@ describe('KangurFeatureApp', () => {
       requestedHref: '/kangur',
       basePath: '/kangur',
     });
+    useKangurDeferredStandaloneHomeReadyMock.mockReturnValue(false);
     loginModalStateMock.mockReturnValue({
       authMode: 'sign-in',
       callbackUrl: '/kangur',

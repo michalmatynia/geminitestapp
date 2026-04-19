@@ -1,14 +1,17 @@
 'use client';
 
-import { useEffect, useRef, type Dispatch, type SetStateAction } from 'react';
+import { type Dispatch, type SetStateAction } from 'react';
 
 import type { NavItem } from '@/features/admin/components/menu/admin-menu-utils';
 import type { AdminMenuCustomNode } from '@/shared/contracts/admin';
 
 import {
-  type UseAdminMenuSettingsDerivedStateResult,
   useAdminMenuSettingsCollections,
+  type UseAdminMenuSettingsCollectionsState,
+} from './admin-menu-settings-derived-collections';
+import {
   useAdminMenuSettingsPayloads,
+  useSyncAdminMenuSettingsState,
 } from './admin-menu-settings-derived-state.helpers';
 
 type UseAdminMenuSettingsDerivedStateArgs = {
@@ -25,6 +28,13 @@ type UseAdminMenuSettingsDerivedStateArgs = {
   setCustomNav: Dispatch<SetStateAction<AdminMenuCustomNode[]>>;
   setFavorites: Dispatch<SetStateAction<string[]>>;
   setSectionColors: Dispatch<SetStateAction<Record<string, string>>>;
+};
+
+type UseAdminMenuSettingsDerivedStateResult = UseAdminMenuSettingsCollectionsState & {
+  defaultCustomNav: AdminMenuCustomNode[];
+  isDefaultState: boolean;
+  isDirty: boolean;
+  normalizedCustomNav: AdminMenuCustomNode[];
 };
 
 export function useAdminMenuSettingsDerivedState({
@@ -57,19 +67,7 @@ export function useAdminMenuSettingsDerivedState({
     sectionColors,
     settingsData,
   });
-  const previousSettingsRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (!settingsFetched || settingsSnapshot === previousSettingsRef.current) {
-      return;
-    }
-
-    previousSettingsRef.current = settingsSnapshot;
-    setFavorites(settingsValues.favorites);
-    setSectionColors(settingsValues.sectionColors);
-    setCustomEnabled(settingsValues.customEnabled);
-    setCustomNav(settingsValues.customNav.length > 0 ? settingsValues.customNav : defaultCustomNav);
-  }, [
+  useSyncAdminMenuSettingsState({
     defaultCustomNav,
     setCustomEnabled,
     setCustomNav,
@@ -78,7 +76,7 @@ export function useAdminMenuSettingsDerivedState({
     settingsFetched,
     settingsSnapshot,
     settingsValues,
-  ]);
+  });
 
   return {
     ...useAdminMenuSettingsCollections({

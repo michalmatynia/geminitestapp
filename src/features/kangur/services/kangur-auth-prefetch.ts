@@ -12,8 +12,8 @@ let prefetchStarted = false;
 export function prefetchKangurAuth(): void {
   if (prefetchStarted) return;
   prefetchStarted = true;
-  void import('@/features/kangur/services/kangur-platform').then((m) => {
-    m.getKangurPlatform().auth.me().catch(() => {
+  void import('@/features/kangur/services/kangur-shell-session-client').then((m) => {
+    m.kangurShellSessionClient.auth.me().catch(() => {
       // Swallow — KangurAuthProvider handles all auth errors.
     });
   });

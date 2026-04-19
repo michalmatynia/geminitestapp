@@ -405,7 +405,7 @@ describe('Game page', () => {
     expect(homeActionsPropsMock).toHaveBeenCalledWith(
       expect.objectContaining({ hideWhenScreenMismatch: false })
     );
-    expect(screen.getByTestId('kangur-game-navigation-widget')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-game-navigation-widget')).not.toBeInTheDocument();
   });
 
   it('does not prefetch other Kangur pages while the game shell mounts', () => {
@@ -544,7 +544,7 @@ describe('Game page', () => {
     expect(routeNavigatorPrefetchMock).not.toHaveBeenCalled();
   });
 
-  it('keeps the home screen motion static so the skeleton handoff does not jump vertically', () => {
+  it('keeps the home screen in plain-div mode until deferred home widgets are ready', () => {
     useKangurGameRuntimeMock.mockReturnValue({
       ...buildGameRuntime('home'),
       canAccessParentAssignments: true,
@@ -555,22 +555,10 @@ describe('Game page', () => {
 
     const homeLayout = screen.getByTestId('kangur-game-home-layout');
 
-    expect(homeLayout).toHaveAttribute(
-      'data-motion-initial',
-      JSON.stringify({ opacity: 1, y: 0 })
-    );
-    expect(homeLayout).toHaveAttribute(
-      'data-motion-animate',
-      JSON.stringify({ opacity: 1, y: 0 })
-    );
-    expect(homeLayout).toHaveAttribute(
-      'data-motion-exit',
-      JSON.stringify({ opacity: 1, y: 0 })
-    );
-    expect(homeLayout).toHaveAttribute(
-      'data-motion-transition',
-      JSON.stringify({ duration: 0 })
-    );
+    expect(homeLayout).not.toHaveAttribute('data-motion-initial');
+    expect(homeLayout).not.toHaveAttribute('data-motion-animate');
+    expect(homeLayout).not.toHaveAttribute('data-motion-exit');
+    expect(homeLayout).not.toHaveAttribute('data-motion-transition');
   });
 
   it('shows the parent add-learner prompt under the home actions when no learner is selected', () => {
@@ -746,7 +734,7 @@ describe('Game page', () => {
     expect(screen.queryByRole('button', { name: 'Wróć do lekcji' })).not.toBeInTheDocument();
   });
 
-  it('keeps active gameplay screens on the standard mobile layout', () => {
+  it('keeps active gameplay screens on the standard mobile layout', async () => {
     useKangurMobileBreakpointMock.mockReturnValue(true);
     useKangurGameRuntimeMock.mockReturnValue({
       ...buildGameRuntime('playing'),
@@ -758,7 +746,7 @@ describe('Game page', () => {
     const gameMain = document.getElementById('kangur-game-main');
 
     expectStandardMobileGameLayout(gameMain);
-    expect(screen.getByTestId('kangur-game-navigation-widget')).toBeInTheDocument();
+    expect(await screen.findByTestId('kangur-game-navigation-widget')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Wróć do lekcji' })).not.toBeInTheDocument();
   });
 

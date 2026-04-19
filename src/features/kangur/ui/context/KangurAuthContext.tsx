@@ -40,7 +40,7 @@ import type {
 import {
   appendAuthModeParam,
   clearKangurAuthBootstrapCache,
-  kangurPlatform,
+  kangurShellSessionClient,
   primeKangurAuthBootstrapCache,
   resolveCanAccessParentAssignments,
 } from '@/features/kangur/ui/context/kangur-auth-bootstrap-cache';
@@ -244,7 +244,7 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
 
       // Background revalidation — update state only if the result differs.
       return scheduleCachedAuthRevalidation(() => {
-        void kangurPlatform.auth.me().then(
+        void kangurShellSessionClient.auth.me().then(
           (freshUser) => {
             primeKangurAuthBootstrapCache(freshUser);
             setUser((prev) => {
@@ -295,10 +295,10 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
           },
           async () => {
             if (shouldRedirect) {
-              await kangurPlatform.auth.logout(window.location.href);
+              await kangurShellSessionClient.auth.logout(window.location.href);
               return true;
             }
-            await kangurPlatform.auth.logout();
+            await kangurShellSessionClient.auth.logout();
             router.refresh();
             await checkAppState();
             return true;
@@ -352,7 +352,7 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
   // It calls the platform learners.select endpoint, primes the bootstrap cache
   // with the returned user, and updates auth state synchronously.
   const selectLearner = useCallback(async (learnerId: string): Promise<void> => {
-    const nextUser = await kangurPlatform.learners.select(learnerId);
+    const nextUser = await kangurShellSessionClient.learners.select(learnerId);
     primeKangurAuthBootstrapCache(nextUser);
     setUser(nextUser);
     setIsAuthenticated(true);

@@ -94,8 +94,8 @@ vi.mock('nextjs-toploader/app', () => ({
   useRouter: () => useRouterMock(),
 }));
 
-vi.mock('@/features/kangur/services/kangur-platform', () => ({
-  getKangurPlatform: () => ({
+vi.mock('@/features/kangur/services/kangur-shell-session-client', () => ({
+  kangurShellSessionClient: {
     auth: {
       me: meMock,
       prepareLoginHref: prepareLoginHrefMock,
@@ -105,7 +105,7 @@ vi.mock('@/features/kangur/services/kangur-platform', () => ({
     learners: {
       select: selectLearnerMock,
     },
-  }),
+  },
 }));
 
 vi.mock('@/features/kangur/observability/client', () => ({

@@ -1,19 +1,23 @@
 'use client';
 
 import { type useTranslations } from 'next-intl';
-import { useEffect, type RefObject } from 'react';
+import { useEffect, useMemo, type RefObject } from 'react';
 
 import { LazyMotionDiv } from '@/features/kangur/ui/components/LazyAnimatePresence';
+import { type KangurTutorAnchorConfig, useKangurTutorAnchors } from '@/features/kangur/ui/hooks/useKangurTutorAnchors';
 import {
   createLaunchableGameScreenComponentConfigFromRuntime,
   getKangurLaunchableGameScreenComponentConfig,
 } from '@/features/kangur/ui/pages/Game.launchable-screens';
 import { type createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
-import { type KangurLaunchableGameScreen } from '@/features/kangur/ui/services/game-launch';
+import {
+  getKangurLaunchableGameContentId,
+  type KangurLaunchableGameScreen,
+} from '@/features/kangur/ui/services/game-launch';
 import { cn } from '@/features/kangur/shared/utils';
 
+import { useGameLaunchableScreenRefs } from './Game.launchable-screen-refs';
 import { useGameLaunchableRuntime } from './Game.launchable-runtime';
-import type { GameLaunchableScreenRefs } from './Game.screen-refs';
 
 type GameTranslations = ReturnType<typeof useTranslations>;
 type GameMotionProps = ReturnType<typeof createKangurPageTransitionMotionProps>;
@@ -24,6 +28,11 @@ const getGameScreenLabel = (
   translations: GameTranslations,
   screenKey: KangurLaunchableGameScreen
 ): string => translations(`screens.${screenKey}.label`);
+
+const createLaunchableTutorAnchor = (anchor: Omit<KangurTutorAnchorConfig, 'surface'>): KangurTutorAnchorConfig => ({
+  ...anchor,
+  surface: 'game',
+});
 
 function GameScreenFrame(props: {
   children: React.ReactNode;
@@ -54,26 +63,35 @@ function GameScreenFrame(props: {
 
 export default function GameDeferredLaunchableScreen(props: {
   launchableGameInstanceId?: string | null;
-  launchableGameScreenRefs: GameLaunchableScreenRefs;
   screen: KangurLaunchableGameScreen;
   screenHeadingRef: RefObject<HTMLHeadingElement | null>;
   screenMotionProps: GameMotionProps;
   translations: GameTranslations;
 }): React.JSX.Element {
-  const {
-    launchableGameInstanceId,
-    launchableGameScreenRefs,
-    screen,
-    screenHeadingRef,
-    screenMotionProps,
-    translations,
-  } = props;
+  const { launchableGameInstanceId, screen, screenHeadingRef, screenMotionProps, translations } = props;
+  const launchableGameScreenRefs = useGameLaunchableScreenRefs();
   const { activeLaunchableGameRuntime, launchableGameRuntimeLoading } =
     useGameLaunchableRuntime({
       launchableGameInstanceId,
       screen,
     });
   const screenLabel = getGameScreenLabel(translations, screen);
+  const tutorAnchors = useMemo<KangurTutorAnchorConfig[]>(
+    () => [
+      createLaunchableTutorAnchor({
+        contentId: getKangurLaunchableGameContentId(screen),
+        enabled: true,
+        id: `kangur-game-${screen.replaceAll('_', '-')}`,
+        kind: 'screen',
+        label: screenLabel,
+        priority: 120,
+        ref: launchableGameScreenRefs[screen],
+      }),
+    ],
+    [launchableGameScreenRefs, screen, screenLabel]
+  );
+
+  useKangurTutorAnchors(tutorAnchors);
 
   useEffect(() => {
     const heading = screenHeadingRef.current;

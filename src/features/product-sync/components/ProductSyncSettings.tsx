@@ -275,6 +275,7 @@ export function ProductSyncSettings(): React.JSX.Element {
 
   const profiles = profilesQuery.data ?? EMPTY_PROFILES;
   const [selectedProfileId, setSelectedProfileId] = useState<string>('');
+  const [isCreatingNewProfile, setIsCreatingNewProfile] = useState(false);
   const [draft, setDraft] = useState<ProductSyncProfileDraft>(defaultDraft());
   const [customBaseFieldRuleIds, setCustomBaseFieldRuleIds] = useState<Set<string>>(
     () => new Set<string>()
@@ -400,6 +401,8 @@ export function ProductSyncSettings(): React.JSX.Element {
   );
 
   useEffect(() => {
+    if (isCreatingNewProfile) return;
+
     if (profiles.length === 0) {
       setSelectedProfileId('');
       setDraft(defaultDraft(newProfileDefaults));
@@ -422,7 +425,7 @@ export function ProductSyncSettings(): React.JSX.Element {
     }
     setSelectedProfileId(first.id);
     setDraft(profileToDraft(first));
-  }, [profiles, selectedProfileId, newProfileDefaults]);
+  }, [profiles, selectedProfileId, newProfileDefaults, isCreatingNewProfile]);
 
   useEffect(() => {
     setCustomBaseFieldRuleIds((previous) => {
@@ -440,6 +443,7 @@ export function ProductSyncSettings(): React.JSX.Element {
 
   const handleNewProfile = (): void => {
     setSelectedProfileId('');
+    setIsCreatingNewProfile(true);
     setDraft(defaultDraft(newProfileDefaults));
   };
 
@@ -500,6 +504,7 @@ export function ProductSyncSettings(): React.JSX.Element {
       }
 
       const created = await createProfileMutation.mutateAsync(payload);
+      setIsCreatingNewProfile(false);
       setSelectedProfileId(created.id);
       setDraft(profileToDraft(created));
       toast('Sync profile created.', { variant: 'success' });
@@ -523,6 +528,7 @@ export function ProductSyncSettings(): React.JSX.Element {
         try {
           await deleteProfileMutation.mutateAsync(selectedProfileId);
           toast('Sync profile deleted.', { variant: 'success' });
+          setIsCreatingNewProfile(false);
           setSelectedProfileId('');
           setDraft(defaultDraft(newProfileDefaults));
         } catch (error) {
@@ -722,7 +728,10 @@ export function ProductSyncSettings(): React.JSX.Element {
                 key={profile.id}
                 type='button'
                 variant='ghost'
-                onClick={(): void => setSelectedProfileId(profile.id)}
+                onClick={(): void => {
+                  setIsCreatingNewProfile(false);
+                  setSelectedProfileId(profile.id);
+                }}
                 className={`w-full justify-start text-xs ${
                   selectedProfileId === profile.id
                     ? 'bg-gray-800 text-white hover:bg-gray-800'

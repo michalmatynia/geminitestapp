@@ -1,11 +1,9 @@
 import {
   withKangurClientErrorSync,
 } from '@/features/kangur/observability/client';
-import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
+import { kangurShellSessionClient } from '@/features/kangur/services/kangur-shell-session-client';
 import type { KangurUser } from '@kangur/platform';
 import type { KangurAuthMode } from '@/features/kangur/shared/contracts/kangur-auth';
-
-const kangurPlatform = getKangurPlatform();
 
 const AUTH_BOOTSTRAP_CACHE_TTL_MS = 30_000;
 
@@ -80,7 +78,7 @@ export const loadKangurAuthBootstrapSession = async (): Promise<KangurUser | nul
     return await kangurAuthBootstrapInflight;
   }
 
-  kangurAuthBootstrapInflight = kangurPlatform.auth
+  kangurAuthBootstrapInflight = kangurShellSessionClient.auth
     .me()
     .then((nextUser) => {
       primeKangurAuthBootstrapCache(nextUser);
@@ -134,4 +132,4 @@ export const appendAuthModeParam = (href: string, authMode?: KangurAuthMode): st
   );
 };
 
-export { kangurPlatform };
+export { kangurShellSessionClient };

@@ -10,7 +10,7 @@ import {
   createAuthenticatedKangurAuthSession,
 } from '@kangur/platform';
 
-import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
+import { kangurShellSessionClient } from '@/features/kangur/services/kangur-shell-session-client';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
 
 type BrowserKangurAuthAdapterOptions = {
@@ -23,7 +23,7 @@ const resolveDefaultCurrentUrl = (): string => window.location.href;
 export const createBrowserKangurAuthAdapter = (
   options: BrowserKangurAuthAdapterOptions = {},
 ): KangurAuthAdapter => {
-  const authPort = options.authPort ?? getKangurPlatform().auth;
+  const authPort = options.authPort ?? kangurShellSessionClient.auth;
   const resolveCurrentUrl = options.resolveCurrentUrl ?? resolveDefaultCurrentUrl;
 
   const getSession = async (): Promise<KangurAuthSession> => {

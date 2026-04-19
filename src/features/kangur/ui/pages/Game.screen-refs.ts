@@ -19,19 +19,23 @@ export type GameSessionScreenRefs = {
   trainingSetupRef: RefObject<HTMLDivElement | null>;
 };
 
-export type GameScreenRefsState = {
-  homeRefs: GameHomeScreenRefs;
-  screenHeadingRef: RefObject<HTMLHeadingElement | null>;
-  sessionRefs: GameSessionScreenRefs;
-};
-
-export function useGameScreenRefs(): GameScreenRefsState {
-  const screenHeadingRef = useRef<HTMLHeadingElement>(null);
+export function useGameHomeScreenRefs(): GameHomeScreenRefs {
   const homeActionsRef = useRef<HTMLDivElement | null>(null);
   const homeQuestRef = useRef<HTMLElement | null>(null);
   const homeAssignmentsRef = useRef<HTMLElement | null>(null);
   const homeLeaderboardRef = useRef<HTMLDivElement | null>(null);
   const homeProgressRef = useRef<HTMLDivElement | null>(null);
+
+  return {
+    homeActionsRef,
+    homeAssignmentsRef,
+    homeLeaderboardRef,
+    homeProgressRef,
+    homeQuestRef,
+  };
+}
+
+export function useGameSessionScreenRefs(): GameSessionScreenRefs {
   const trainingSetupRef = useRef<HTMLDivElement | null>(null);
   const kangurSetupRef = useRef<HTMLDivElement | null>(null);
   const kangurSessionRef = useRef<HTMLDivElement | null>(null);
@@ -40,21 +44,11 @@ export function useGameScreenRefs(): GameScreenRefsState {
   const resultLeaderboardRef = useRef<HTMLDivElement | null>(null);
 
   return {
-    homeRefs: {
-      homeActionsRef,
-      homeAssignmentsRef,
-      homeLeaderboardRef,
-      homeProgressRef,
-      homeQuestRef,
-    },
-    screenHeadingRef,
-    sessionRefs: {
-      kangurSessionRef,
-      kangurSetupRef,
-      operationSelectorRef,
-      resultLeaderboardRef,
-      resultSummaryRef,
-      trainingSetupRef,
-    },
+    kangurSessionRef,
+    kangurSetupRef,
+    operationSelectorRef,
+    resultLeaderboardRef,
+    resultSummaryRef,
+    trainingSetupRef,
   };
 }

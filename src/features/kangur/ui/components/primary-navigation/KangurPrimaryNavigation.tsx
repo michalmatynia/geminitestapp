@@ -723,7 +723,7 @@ function KangurPrimaryNavigationMobileMenuOverlay(): React.ReactNode {
 
   return (
     <div
-      aria-hidden={!isMobileMenuOpen}
+      inert={!isMobileMenuOpen}
       className={`fixed inset-0 z-50 transition-opacity duration-200 sm:hidden ${
         isMobileMenuOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
       }`}

@@ -4,21 +4,15 @@ import type { useTranslations } from 'next-intl';
 import { useMemo, type RefObject } from 'react';
 
 import { useKangurTutorAnchors, type KangurTutorAnchorConfig } from '@/features/kangur/ui/hooks/useKangurTutorAnchors';
-import {
-  KANGUR_LAUNCHABLE_GAME_SCREENS,
-  getKangurLaunchableGameContentId,
-  isKangurLaunchableGameScreen,
-} from '@/features/kangur/ui/services/game-launch';
 import type { KangurGameScreen } from '@/features/kangur/ui/types';
 
 import type {
   GameHomeScreenRefs,
-  GameLaunchableScreenRefs,
   GameSessionScreenRefs,
 } from './Game.screen-refs';
 
 type GameTranslations = ReturnType<typeof useTranslations>;
-type GameTutorAnchorRefs = GameHomeScreenRefs & GameSessionScreenRefs;
+type GameTutorAnchorRefs = Partial<GameHomeScreenRefs> & GameSessionScreenRefs;
 
 const getGameScreenLabel = (
   translations: GameTranslations,
@@ -64,7 +58,7 @@ const buildGameHomeTutorAnchors = ({
   translations,
 }: {
   canAccessParentAssignments: boolean;
-  refs: GameTutorAnchorRefs;
+  refs: GameHomeScreenRefs & GameSessionScreenRefs;
   screen: KangurGameScreen;
   translations: GameTranslations;
 }): KangurTutorAnchorConfig[] => [
@@ -115,31 +109,6 @@ const buildGameHomeTutorAnchors = ({
   }),
 ];
 
-const buildGameLaunchableTutorAnchors = ({
-  launchableGameScreenRefs,
-  screen,
-  translations,
-  tutorActivityContentId,
-}: {
-  launchableGameScreenRefs: GameLaunchableScreenRefs;
-  screen: KangurGameScreen;
-  translations: GameTranslations;
-  tutorActivityContentId: string;
-}): KangurTutorAnchorConfig[] =>
-  KANGUR_LAUNCHABLE_GAME_SCREENS.map((screenKey) =>
-    createGameScreenTutorAnchor({
-      contentId:
-        screen === screenKey && isKangurLaunchableGameScreen(screen)
-          ? getKangurLaunchableGameContentId(screen)
-          : tutorActivityContentId,
-      enabled: screen === screenKey,
-      id: `kangur-game-${screenKey.replaceAll('_', '-')}`,
-      label: getGameScreenLabel(translations, screenKey),
-      priority: 120,
-      ref: launchableGameScreenRefs[screenKey],
-    })
-  );
-
 export default function GameDeferredTutorAnchors(input: {
   activeGameAssignmentId?: string | null;
   canAccessParentAssignments: boolean;
@@ -164,12 +133,14 @@ export default function GameDeferredTutorAnchors(input: {
       !enabled
         ? []
         : [
-            ...buildGameHomeTutorAnchors({
-              canAccessParentAssignments,
-              refs,
-              screen,
-              translations,
-            }),
+            ...(screen === 'home'
+              ? buildGameHomeTutorAnchors({
+                  canAccessParentAssignments,
+                  refs: refs as GameHomeScreenRefs & GameSessionScreenRefs,
+                  screen,
+                  translations,
+                })
+              : []),
             createGameScreenTutorAnchor({
               contentId: tutorActivityContentId,
               enabled: screen === 'training',
@@ -193,12 +164,6 @@ export default function GameDeferredTutorAnchors(input: {
               label: getGameScreenLabel(translations, 'kangur'),
               priority: 120,
               ref: refs.kangurSessionRef,
-            }),
-            ...buildGameLaunchableTutorAnchors({
-              launchableGameScreenRefs: refs.launchableGameScreenRefs,
-              screen,
-              translations,
-              tutorActivityContentId,
             }),
             createGameScreenTutorAnchor({
               contentId: tutorActivityContentId,

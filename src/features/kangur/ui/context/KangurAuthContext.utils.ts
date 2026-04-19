@@ -5,7 +5,7 @@ import {
   readKangurAuthBootstrapCache,
   resolveErrorMessage,
   loadKangurAuthBootstrapSession,
-  kangurPlatform,
+  kangurShellSessionClient,
 } from '@/features/kangur/ui/context/kangur-auth-bootstrap-cache';
 import type { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { KANGUR_BASE_PATH } from '@/features/kangur/config/routing';
@@ -146,7 +146,7 @@ export const createKangurAuthSessionRequest = ({
     async () =>
       useBootstrapCache
         ? await loadKangurAuthBootstrapSession()
-        : await kangurPlatform.auth.me(),
+        : await kangurShellSessionClient.auth.me(),
     {
       fallback: null,
       shouldReport: (error) => !isKangurAuthStatusError(error),

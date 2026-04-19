@@ -3,16 +3,15 @@
 import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, type RefObject } from 'react';
 
-import { usePrefersReducedMotion } from '@/features/kangur/ui/components/LazyAnimatePresence';
-import { KangurGameNavigationWidget } from '@/features/kangur/ui/components/game-runtime/KangurGameNavigationWidget';
 import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
 import {
   GAME_PAGE_STANDARD_CONTAINER_CLASSNAME,
+  GAME_HOME_UTILITY_IDLE_DELAY_MS,
 } from '@/features/kangur/ui/pages/GameHome.constants';
 import { resolveKangurGameHomeVisibility } from '@/features/kangur/ui/pages/GameHome.visibility';
-import { GameCurrentScreen } from '@/features/kangur/ui/pages/Game.screen-components';
+import { GameHomeScreen } from '@/features/kangur/ui/pages/Game.screen-components';
 import {
-  useGameScreenRefs,
+  useGameHomeScreenRefs,
 } from '@/features/kangur/ui/pages/Game.screen-refs';
 import {
   KangurGameRuntimeBoundary,
@@ -24,15 +23,8 @@ import dynamic from 'next/dynamic';
 import { useKangurIdleReady } from '@/features/kangur/ui/hooks/useKangurIdleReady';
 import { useKangurMobileBreakpoint } from '@/features/kangur/ui/hooks/useKangurMobileBreakpoint';
 import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRoutePageReady';
-import {
-  KANGUR_LAUNCHABLE_GAME_SCREENS,
-  getKangurLaunchableGameContentId,
-  isKangurLaunchableGameScreen,
-} from '@/features/kangur/ui/services/game-launch';
-import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import { GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS } from '@/features/kangur/ui/pages/GameHome.constants';
 import type { KangurGameScreen } from '@/features/kangur/ui/types';
-import type { KangurAiTutorConversationContext } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 import { cn } from '@/features/kangur/shared/utils';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 
@@ -50,13 +42,18 @@ const GameDeferredDocsTooltipEnhancer = dynamic(
   { ssr: false }
 );
 
-const GameDeferredLearnerActivityPing = dynamic(
-  () => import('@/features/kangur/ui/pages/GameDeferredLearnerActivityPing'),
+const GameDeferredTutorAnchors = dynamic(
+  () => import('@/features/kangur/ui/pages/GameDeferredTutorAnchors'),
   { ssr: false }
 );
 
-const GameDeferredTutorAnchors = dynamic(
-  () => import('@/features/kangur/ui/pages/GameDeferredTutorAnchors'),
+const GameDeferredNavigationWidget = dynamic(
+  () => import('@/features/kangur/ui/pages/GameDeferredNavigationWidget'),
+  { ssr: false }
+);
+
+const GameDeferredRoutedContent = dynamic(
+  () => import('@/features/kangur/ui/pages/GameDeferredRoutedContent'),
   { ssr: false }
 );
 
@@ -67,12 +64,11 @@ const GAME_SCREEN_TITLE_ID = 'kangur-game-screen-title';
 // GAME_TOP_RESET_SCREENS: screens that scroll the page back to the top when
 // they become active. Setup and operation screens need a clean viewport;
 // playing/result screens preserve the learner's scroll position.
-const GAME_TOP_RESET_SCREENS = new Set<KangurGameScreen>([
-  'training',
-  'kangur_setup',
-  'operation',
-  ...KANGUR_LAUNCHABLE_GAME_SCREENS,
-]);
+const shouldResetGameScreenToTop = (screen: KangurGameScreen): boolean =>
+  screen !== 'home' &&
+  screen !== 'playing' &&
+  screen !== 'result' &&
+  screen !== 'kangur';
 
 // focusGameScreenHeading moves keyboard focus to the active screen's heading
 // after a screen transition. Uses preventScroll to avoid jarring jumps, with
@@ -102,23 +98,6 @@ const focusGameScreenHeading = (heading: HTMLHeadingElement | null): void => {
 };
 
 type GameTranslations = ReturnType<typeof useTranslations>;
-type GameAssignmentLike =
-  | {
-      id?: string | null;
-      progress: {
-        summary?: string | null;
-      };
-      title?: string | null;
-    }
-  | null
-  | undefined;
-type GameQuestionLike =
-  | {
-      question?: string | null;
-    }
-  | null
-  | undefined;
-
 const getGameScreenLabel = (
   translations: GameTranslations,
   screenKey: KangurGameScreen
@@ -128,220 +107,6 @@ const getGameScreenDescription = (
   translations: GameTranslations,
   screenKey: KangurGameScreen
 ): string => translations(`screens.${screenKey}.description`);
-
-const GAME_TUTOR_ACTIVITY_STATIC_CONTENT_IDS: Partial<Record<KangurGameScreen, string>> = {
-  home: 'game:home',
-  operation: 'game:operation-selector',
-  training: 'game:training-setup',
-};
-
-const resolveGamePracticeContentId = ({
-  difficulty,
-  operation,
-  screen,
-}: {
-  difficulty?: string | null;
-  operation?: string | null;
-  screen: KangurGameScreen;
-}): string | null =>
-  (screen === 'playing' || screen === 'result') && operation
-    ? `game:practice:${operation}:${difficulty}`
-    : null;
-
-const resolveGameKangurContentId = ({
-  kangurMode,
-  screen,
-}: {
-  kangurMode?: string | null;
-  screen: KangurGameScreen;
-}): string | null =>
-  screen === 'kangur' || screen === 'kangur_setup'
-    ? `game:kangur:${kangurMode ?? 'setup'}`
-    : null;
-
-const resolveGameTutorActivityContentId = ({
-  activeGameAssignmentId,
-  difficulty,
-  kangurMode,
-  operation,
-  screen,
-}: {
-  activeGameAssignmentId?: string | null;
-  difficulty?: string | null;
-  kangurMode?: string | null;
-  operation?: string | null;
-  screen: KangurGameScreen;
-}): string => {
-  if (activeGameAssignmentId) {
-    return `game:assignment:${activeGameAssignmentId}`;
-  }
-
-  const practiceContentId = resolveGamePracticeContentId({
-    difficulty,
-    operation,
-    screen,
-  });
-  if (practiceContentId) {
-    return practiceContentId;
-  }
-
-  if (isKangurLaunchableGameScreen(screen)) {
-    return getKangurLaunchableGameContentId(screen);
-  }
-
-  const kangurContentId = resolveGameKangurContentId({
-    kangurMode,
-    screen,
-  });
-  if (kangurContentId) {
-    return kangurContentId;
-  }
-
-  return GAME_TUTOR_ACTIVITY_STATIC_CONTENT_IDS[screen] ?? `game:${screen}`;
-};
-
-const resolveGameQuestionText = (question: GameQuestionLike): string | null =>
-  question?.question?.trim() || null;
-
-const resolveGameAssignmentSummary = (assignment: GameAssignmentLike): string | null =>
-  assignment
-    ? [assignment.title, assignment.progress.summary].filter(Boolean).join(' - ')
-    : null;
-
-const resolveGameQuestionProgressLabel = ({
-  currentQuestionIndex,
-  score,
-  screen,
-  totalQuestions,
-  translations,
-}: {
-  currentQuestionIndex: number;
-  score: number;
-  screen: KangurGameScreen;
-  totalQuestions: number;
-  translations: GameTranslations;
-}): string | null => {
-  if (screen === 'playing') {
-    return translations('questionProgress', {
-      current: currentQuestionIndex + 1,
-      total: totalQuestions,
-    });
-  }
-
-  if (screen === 'result') {
-    return translations('resultProgress', {
-      score,
-      total: totalQuestions,
-    });
-  }
-
-  return null;
-};
-
-const resolveGameTutorFocusKind = ({
-  assignment,
-  screen,
-}: {
-  assignment: GameAssignmentLike;
-  screen: KangurGameScreen;
-}): 'assignment' | 'question' | 'review' | undefined => {
-  if (screen === 'playing') {
-    return 'question';
-  }
-
-  if (screen === 'result') {
-    return 'review';
-  }
-
-  return assignment ? 'assignment' : undefined;
-};
-
-const resolveGameTutorFocusLabel = ({
-  assignment,
-  currentScreenLabel,
-  questionText,
-  screen,
-}: {
-  assignment: GameAssignmentLike;
-  currentScreenLabel: string;
-  questionText: string | null;
-  screen: KangurGameScreen;
-}): string | undefined => {
-  if (screen === 'playing') {
-    return questionText ?? undefined;
-  }
-
-  return assignment?.title?.trim() || currentScreenLabel;
-};
-
-const resolveGameTutorQuestionId = ({
-  currentQuestionIndex,
-  screen,
-}: {
-  currentQuestionIndex: number;
-  screen: KangurGameScreen;
-}): string | undefined =>
-  screen === 'playing' ? `game-question-${currentQuestionIndex + 1}` : undefined;
-
-const resolveGameTutorAnswerRevealed = (
-  screen: KangurGameScreen
-): true | undefined => (screen === 'result' ? true : undefined);
-
-const createGameTutorSessionContext = ({
-  activeGameAssignment,
-  currentQuestion,
-  currentQuestionIndex,
-  currentScreenLabel,
-  screen,
-  score,
-  totalQuestions,
-  translations,
-  tutorActivityContentId,
-}: {
-  activeGameAssignment: GameAssignmentLike;
-  currentQuestion: GameQuestionLike;
-  currentQuestionIndex: number;
-  currentScreenLabel: string;
-  screen: KangurGameScreen;
-  score: number;
-  totalQuestions: number;
-  translations: GameTranslations;
-  tutorActivityContentId: string;
-}): KangurAiTutorConversationContext => {
-  const questionText = resolveGameQuestionText(currentQuestion);
-
-  return {
-    surface: 'game',
-    contentId: tutorActivityContentId,
-    title: currentScreenLabel,
-    description: getGameScreenDescription(translations, screen),
-    assignmentSummary: resolveGameAssignmentSummary(activeGameAssignment) ?? undefined,
-    assignmentId: activeGameAssignment?.id ?? undefined,
-    currentQuestion: questionText ?? undefined,
-    questionProgressLabel: resolveGameQuestionProgressLabel({
-      currentQuestionIndex,
-      score,
-      screen,
-      totalQuestions,
-      translations,
-    }) ?? undefined,
-    questionId: resolveGameTutorQuestionId({
-      currentQuestionIndex,
-      screen,
-    }),
-    answerRevealed: resolveGameTutorAnswerRevealed(screen),
-    focusKind: resolveGameTutorFocusKind({
-      assignment: activeGameAssignment,
-      screen,
-    }),
-    focusLabel: resolveGameTutorFocusLabel({
-      assignment: activeGameAssignment,
-      currentScreenLabel,
-      questionText,
-      screen,
-    }),
-  };
-};
 
 const resolveGamePageReady = ({
   routeTransitionState,
@@ -382,7 +147,7 @@ function useGameScreenFocusReset(
     }
 
     const frameId = window.requestAnimationFrame(() => {
-      if (GAME_TOP_RESET_SCREENS.has(screen)) {
+      if (shouldResetGameScreenToTop(screen)) {
         window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
       }
 
@@ -394,100 +159,10 @@ function useGameScreenFocusReset(
   }, [screen, screenHeadingRef]);
 }
 
-const resolveGameLearnerActivityTitle = ({
-  activeGameAssignment,
-  currentScreenLabel,
-  translations,
-}: {
-  activeGameAssignment: GameAssignmentLike;
-  currentScreenLabel: string;
-  translations: GameTranslations;
-}): string => {
-  const assignmentTitle = activeGameAssignment?.title?.trim();
-  return translations('activityTitle', { title: assignmentTitle || currentScreenLabel });
-};
-
-function useGameTutorRuntime(input: {
-  currentScreenLabel: string;
-  runtime: ReturnType<typeof useKangurGameRuntime>;
-  screen: KangurGameScreen;
-  translations: GameTranslations;
-}): {
-  activeGameAssignment: typeof input.runtime.activePracticeAssignment | typeof input.runtime.resultPracticeAssignment;
-  learnerActivityEnabled: boolean;
-  learnerActivityTitle: string;
-  learnerId: string | null;
-  tutorActivityContentId: string;
-  tutorSessionContext: KangurAiTutorConversationContext;
-} {
-  const { currentScreenLabel, runtime, screen, translations } = input;
-  const activeGameAssignment = runtime.activePracticeAssignment ?? runtime.resultPracticeAssignment;
-  const tutorActivityContentId = useMemo(
-    () =>
-      resolveGameTutorActivityContentId({
-        activeGameAssignmentId: activeGameAssignment?.id,
-        difficulty: runtime.difficulty,
-        kangurMode: runtime.kangurMode,
-        operation: runtime.operation,
-        screen,
-      }),
-    [
-      activeGameAssignment?.id,
-      runtime.difficulty,
-      runtime.kangurMode,
-      runtime.operation,
-      screen,
-    ]
-  );
-  const tutorSessionContext = useMemo(
-    () =>
-      createGameTutorSessionContext({
-        activeGameAssignment,
-        currentQuestion: runtime.currentQuestion,
-        currentQuestionIndex: runtime.currentQuestionIndex,
-        currentScreenLabel,
-        screen,
-        score: runtime.score,
-        totalQuestions: runtime.totalQuestions,
-        translations,
-        tutorActivityContentId,
-      }),
-    [
-      activeGameAssignment,
-      currentScreenLabel,
-      runtime.currentQuestion,
-      runtime.currentQuestionIndex,
-      runtime.score,
-      runtime.totalQuestions,
-      screen,
-      translations,
-      tutorActivityContentId,
-    ]
-  );
-  const learnerActivityTitle = useMemo(
-    () =>
-      resolveGameLearnerActivityTitle({
-        activeGameAssignment,
-        currentScreenLabel,
-        translations,
-      }),
-    [activeGameAssignment, currentScreenLabel, translations]
-  );
-
-  return {
-    activeGameAssignment,
-    learnerActivityEnabled: runtime.user?.actorType === 'learner' && screen !== 'home',
-    learnerActivityTitle,
-    learnerId: runtime.user?.activeLearner?.id ?? null,
-    tutorActivityContentId,
-    tutorSessionContext,
-  };
-}
-
 // GameContent is the inner game page component that consumes KangurGameRuntime.
 // It owns:
-//  - Screen rendering via GameCurrentScreen (home, operation, playing, result,
-//    training, kangur_setup, launchable game instances)
+//  - Screen rendering via GameHomeScreen / GameDeferredRoutedScreen
+//    (home, operation, playing, result, training, kangur_setup, launchable game instances)
 //  - AI Tutor session sync (registers the current game screen as the tutor context)
 //  - Tutor anchor registration for game home widgets
 //  - Learner activity ping (keeps the session alive during gameplay)
@@ -511,8 +186,8 @@ function GameContent(): React.JSX.Element {
       }),
     [canAccessParentAssignments, progress, user]
   );
-  const prefersReducedMotion = usePrefersReducedMotion();
-  const { homeRefs, screenHeadingRef, sessionRefs } = useGameScreenRefs();
+  const homeRefs = useGameHomeScreenRefs();
+  const screenHeadingRef = useRef<HTMLHeadingElement>(null);
   const isMobile = useKangurMobileBreakpoint();
   const shouldUseStandardMobileScroll = isMobile;
   const currentScreenLabel = getGameScreenLabel(translations, screen);
@@ -528,28 +203,18 @@ function GameContent(): React.JSX.Element {
   });
   const shouldMountDeferredHomeEnhancements =
     !shouldDelayInitialStandaloneHomeEnhancements || homeEnhancementsIdleReady;
-  const {
-    activeGameAssignment,
-    learnerActivityEnabled,
-    learnerActivityTitle,
-    learnerId,
-    tutorActivityContentId,
-    tutorSessionContext,
-  } =
-    useGameTutorRuntime({
-      currentScreenLabel,
-      runtime,
-      screen,
-      translations,
-    });
-  const homeScreenMotionProps = useMemo(
-    () => createKangurPageTransitionMotionProps(true),
-    []
-  );
-  const screenMotionProps = useMemo(
-    () => createKangurPageTransitionMotionProps(prefersReducedMotion),
-    [prefersReducedMotion]
-  );
+  const shouldDelayInitialStandaloneHomeUtilitiesRef = useRef<boolean | null>(null);
+  shouldDelayInitialStandaloneHomeUtilitiesRef.current ??=
+    screen === 'home' && routing?.embedded !== true;
+  const shouldDelayInitialStandaloneHomeUtilities =
+    shouldDelayInitialStandaloneHomeUtilitiesRef.current;
+  const homeUtilitiesIdleReady = useKangurIdleReady({
+    minimumDelayMs: shouldDelayInitialStandaloneHomeUtilities
+      ? GAME_HOME_UTILITY_IDLE_DELAY_MS
+      : 0,
+  });
+  const shouldMountDeferredHomeUtilities =
+    !shouldDelayInitialStandaloneHomeUtilities || homeUtilitiesIdleReady;
   const isGamePageReady = resolveGamePageReady({
     routeTransitionState,
     screen,
@@ -563,31 +228,26 @@ function GameContent(): React.JSX.Element {
 
   return (
     <>
-      <GameDeferredTutorAnchors
-        activeGameAssignmentId={activeGameAssignment?.id}
-        canAccessParentAssignments={canAccessParentAssignments}
-        enabled={screen !== 'home' || shouldMountDeferredHomeEnhancements}
-        refs={{
-          ...homeRefs,
-          ...sessionRefs,
-        }}
-        screen={screen}
-        translations={translations}
-        tutorActivityContentId={tutorActivityContentId}
-      />
-      {shouldMountDeferredHomeEnhancements ? (
-        <GameDeferredAiTutorSessionSync
-          learnerId={learnerId}
-          sessionContext={tutorSessionContext}
+      {screen === 'home' && shouldMountDeferredHomeEnhancements ? (
+        <GameDeferredTutorAnchors
+          activeGameAssignmentId={null}
+          canAccessParentAssignments={canAccessParentAssignments}
+          enabled
+          refs={homeRefs}
+          screen='home'
+          translations={translations}
+          tutorActivityContentId='game:home'
         />
       ) : null}
-      {learnerActivityEnabled ? (
-        <GameDeferredLearnerActivityPing
-          activity={{
-            kind: 'game',
-            title: learnerActivityTitle,
+      {screen === 'home' && shouldMountDeferredHomeEnhancements ? (
+        <GameDeferredAiTutorSessionSync
+          learnerId={runtime.user?.activeLearner?.id ?? null}
+          sessionContext={{
+            surface: 'game',
+            contentId: 'game:home',
+            title: currentScreenLabel,
+            description: getGameScreenDescription(translations, 'home'),
           }}
-          enabled={learnerActivityEnabled}
         />
       ) : null}
       {/* Visual contract: <KangurPageShell tone='play' ...> is provided by KangurStandardPageLayout. */}
@@ -608,7 +268,7 @@ function GameContent(): React.JSX.Element {
             />
           ) : null
         }
-        navigation={<KangurGameNavigationWidget />}
+        navigation={shouldMountDeferredHomeUtilities ? <GameDeferredNavigationWidget /> : null}
         afterNavigation={(
           <div role='status' aria-live='polite' aria-atomic='true' className='sr-only'>
             {translations('statusAnnouncement', { label: currentScreenLabel })}
@@ -634,20 +294,24 @@ function GameContent(): React.JSX.Element {
           <h1 id={GAME_TITLE_ID} className='sr-only'>
             {GAME_BRAND_NAME}
           </h1>
-          <GameCurrentScreen
-            basePath={basePath}
-            canAccessParentAssignments={canAccessParentAssignments}
-            homeMotionProps={homeScreenMotionProps}
-            homeRefs={homeRefs}
-            homeVisibility={homeVisibility}
-            launchableGameInstanceId={launchableGameInstanceId}
-            progress={progress}
-            screen={screen}
-            screenHeadingRef={screenHeadingRef}
-            screenMotionProps={screenMotionProps}
-            sessionRefs={sessionRefs}
-            translations={translations}
-          />
+          {screen === 'home' ? (
+            <GameHomeScreen
+              basePath={basePath}
+              canAccessParentAssignments={canAccessParentAssignments}
+              homeRefs={homeRefs}
+              homeVisibility={homeVisibility}
+              progress={progress}
+              screenHeadingRef={screenHeadingRef}
+              translations={translations}
+            />
+          ) : (
+            <GameDeferredRoutedContent
+              launchableGameInstanceId={launchableGameInstanceId}
+              screen={screen}
+              screenHeadingRef={screenHeadingRef}
+              translations={translations}
+            />
+          )}
         </div>
       </KangurStandardPageLayout>
     </>

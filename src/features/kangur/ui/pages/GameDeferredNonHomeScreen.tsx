@@ -209,7 +209,7 @@ export default function GameDeferredNonHomeScreen(props: {
   screen: Exclude<KangurGameScreen, 'home'>;
   screenHeadingRef: RefObject<HTMLHeadingElement | null>;
   screenMotionProps: GameMotionProps;
-  sessionRefs: Omit<GameSessionScreenRefs, 'launchableGameScreenRefs'>;
+  sessionRefs: GameSessionScreenRefs;
   translations: GameTranslations;
 }): React.JSX.Element | null {
   const { screen, screenHeadingRef, screenMotionProps, sessionRefs, translations } = props;

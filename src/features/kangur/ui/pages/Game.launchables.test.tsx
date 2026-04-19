@@ -151,6 +151,10 @@ vi.mock('@/features/kangur/ui/pages/GameDeferredLearnerActivityPing', () => ({
   default: () => null,
 }));
 
+vi.mock('@/features/kangur/ui/pages/GameDeferredNavigationWidget', () => ({
+  default: () => <div data-testid='kangur-game-navigation-widget' />,
+}));
+
 vi.mock('@/features/kangur/ui/components/game-runtime/KangurGameNavigationWidget', () => ({
   KangurGameNavigationWidget: ({ visible = true }: { visible?: boolean }) =>
     visible ? <div data-testid='kangur-game-navigation-widget' /> : null,

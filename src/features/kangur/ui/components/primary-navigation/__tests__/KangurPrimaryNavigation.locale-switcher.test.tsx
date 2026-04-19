@@ -19,6 +19,7 @@ import {
   locationAssignSpy,
   openLanguageMenu,
   optionalAuthMock,
+  optionalRoutingMock,
   optionalTutorMock,
   pathnameMock,
   persistTutorVisibilityHidden,
@@ -37,12 +38,35 @@ import {
   translationMessages,
   updateSettingMutateAsyncMock,
   useKangurCoarsePointerMock,
+  useKangurIdleReadyMock,
   useKangurPageContentEntryMock,
   useKangurSubjectFocusMock,
 } from '../KangurPrimaryNavigation.test-support';
 
 describe('KangurPrimaryNavigation', () => {
   setupKangurPrimaryNavigationTest();
+
+it('does not mount the language switcher during the standalone home utility delay', () => {
+  optionalRoutingMock.mockReturnValue({
+    basePath: '/kangur',
+    embedded: false,
+    pageKey: 'Game',
+    requestedHref: '/kangur',
+    requestedPath: '/kangur',
+  });
+  useKangurIdleReadyMock.mockReturnValue(false);
+
+  render(
+    <KangurPrimaryNavigation
+      basePath='/kangur'
+      currentPage='Game'
+      isAuthenticated
+      onLogout={vi.fn()}
+    />
+  );
+
+  expect(screen.queryByTestId('kangur-language-switcher-trigger')).toBeNull();
+});
 
 it('renders the language switcher inside the utility actions and marks the current locale', async () => {
   localeMock.mockReturnValue('de');

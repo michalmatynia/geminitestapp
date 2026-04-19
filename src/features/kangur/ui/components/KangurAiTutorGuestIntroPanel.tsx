@@ -1,8 +1,11 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import { useState } from 'react';
 
+import {
+  LazyMotionButton,
+  LazyMotionDiv,
+} from '@/features/kangur/ui/components/LazyAnimatePresence';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { cn } from '@/features/kangur/shared/utils';
 
@@ -191,7 +194,7 @@ export function KangurAiTutorGuestIntroPanel({
 
   return (
     <>
-      <motion.button
+      <LazyMotionButton
         key='guest-intro-backdrop'
         data-testid='kangur-ai-tutor-guest-intro-backdrop'
         type='button'
@@ -203,7 +206,7 @@ export function KangurAiTutorGuestIntroPanel({
         onClick={onClose}
         className='fixed inset-0 z-[74] cursor-pointer border-0 bg-transparent p-0 touch-manipulation active:opacity-95'
       />
-      <motion.div
+      <LazyMotionDiv
         data-kangur-ai-tutor-root='true'
         key='guest-intro'
         data-modal-card='warm-glow-soft'
@@ -240,7 +243,7 @@ export function KangurAiTutorGuestIntroPanel({
             onDismiss={handleDismiss}
           />
         </KangurAiTutorWarmOverlayPanel>
-      </motion.div>
+      </LazyMotionDiv>
     </>
   );
 }

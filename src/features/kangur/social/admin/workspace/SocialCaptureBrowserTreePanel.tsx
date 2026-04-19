@@ -16,8 +16,8 @@ import {
 import {
   buildSlideKey,
 } from '@/features/kangur/social/shared/social-capture-content-config';
-import { PlaywrightEngineLogoButton } from '@/features/playwright/public';
-import { PlaywrightEngineSettingsModal } from '@/features/playwright/public';
+import { PlaywrightEngineLogoButton } from '@/features/playwright/components/PlaywrightEngineLogoButton';
+import { PlaywrightEngineSettingsModal } from '@/features/playwright/components/PlaywrightEngineSettingsModal';
 import { useSocialCaptureBrowser } from './SocialCaptureBrowserContext';
 
 type SlideStatusDotProps = {

@@ -1,9 +1,9 @@
 'use client';
 
-import { useReducedMotion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, type RefObject } from 'react';
 
+import { usePrefersReducedMotion } from '@/features/kangur/ui/components/LazyAnimatePresence';
 import { useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
 import { KangurGameNavigationWidget } from '@/features/kangur/ui/components/game-runtime/KangurGameNavigationWidget';
 import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
@@ -718,7 +718,7 @@ function GameContent(): React.JSX.Element {
     [canAccessParentAssignments, progress, user]
   );
   const { enabled: docsTooltipsEnabled } = useKangurDocsTooltips('home');
-  const prefersReducedMotion = useReducedMotion();
+  const prefersReducedMotion = usePrefersReducedMotion();
   const { homeRefs, screenHeadingRef, sessionRefs } = useGameScreenRefs();
   const isMobile = useKangurMobileBreakpoint();
   const shouldUseStandardMobileScroll = isMobile;

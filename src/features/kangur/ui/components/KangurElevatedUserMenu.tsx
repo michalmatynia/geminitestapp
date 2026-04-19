@@ -1,6 +1,7 @@
 import { LayoutGrid, LogOut } from 'lucide-react';
 import Link from 'next/link';
 
+import { useKangurDeferredStandaloneHomeReady } from '@/features/kangur/ui/hooks/useKangurDeferredStandaloneHomeReady';
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import type { ElevatedSessionUserSnapshot } from '@/shared/lib/auth/elevated-session-user';
 import { cn } from '@/shared/utils/ui-utils';
@@ -23,8 +24,26 @@ type KangurElevatedUserMenuProps = {
   user: ElevatedSessionUserSnapshot;
 };
 
+const resolveElevatedUserMenuDisplayNameCandidate = (
+  value: string | null | undefined
+): string => value?.trim() ?? '';
+
+const resolveFirstElevatedUserMenuText = (
+  ...values: Array<string | null | undefined>
+): string => {
+  for (const value of values) {
+    const candidate = resolveElevatedUserMenuDisplayNameCandidate(value);
+    if (candidate.length > 0) {
+      return candidate;
+    }
+  }
+
+  return '';
+};
+
 const getElevatedUserInitial = (user: ElevatedSessionUserSnapshot): string => {
-  const candidate = user.name?.trim() || user.email?.trim() || 'A';
+  const preferredCandidate = resolveFirstElevatedUserMenuText(user.name, user.email);
+  const candidate = preferredCandidate.length > 0 ? preferredCandidate : 'A';
   return candidate[0]?.toUpperCase() ?? 'A';
 };
 
@@ -35,18 +54,23 @@ type KangurElevatedUserMenuModel = {
 };
 
 const ElevatedUserAvatar = ({
+  canRenderImage,
   imageSrc,
   initial,
 }: {
+  canRenderImage: boolean;
   imageSrc: string;
   initial: string;
 }): React.JSX.Element => (
   <span className='flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-white/75 bg-white/85 text-sm font-black text-[var(--kangur-page-text)] shadow-sm'>
-    {imageSrc ? (
+    {canRenderImage ? (
       <img
         alt=''
         aria-hidden='true'
         className='h-full w-full object-cover'
+        decoding='async'
+        fetchPriority='low'
+        loading='lazy'
         src={imageSrc}
       />
     ) : (
@@ -64,6 +88,7 @@ export function KangurElevatedUserMenu({
   triggerClassName,
   user,
 }: KangurElevatedUserMenuProps): React.JSX.Element {
+  const isStandaloneHomeReady = useKangurDeferredStandaloneHomeReady();
   const model = resolveKangurElevatedUserMenuModel(user, adminLabel);
   return renderKangurElevatedUserMenu(
     {
@@ -75,7 +100,10 @@ export function KangurElevatedUserMenu({
       triggerClassName,
       user,
     },
-    model
+    {
+      ...model,
+      canRenderImage: model.imageSrc.length > 0 && isStandaloneHomeReady,
+    }
   );
 }
 
@@ -83,7 +111,8 @@ function resolveKangurElevatedUserMenuModel(
   user: ElevatedSessionUserSnapshot,
   adminLabel: string
 ): KangurElevatedUserMenuModel {
-  const displayName = user.name?.trim() || user.email?.trim() || adminLabel;
+  const preferredDisplayName = resolveFirstElevatedUserMenuText(user.name, user.email);
+  const displayName = preferredDisplayName.length > 0 ? preferredDisplayName : adminLabel;
   const imageSrc = user.image?.trim() ?? '';
   const initial = getElevatedUserInitial(user);
 
@@ -92,6 +121,46 @@ function resolveKangurElevatedUserMenuModel(
     imageSrc,
     initial,
   };
+}
+
+function ElevatedUserMenuIdentityLabel({
+  displayName,
+  email,
+}: {
+  displayName: string;
+  email: string | null | undefined;
+}): React.JSX.Element {
+  const emailText = resolveElevatedUserMenuDisplayNameCandidate(email);
+
+  return (
+    <DropdownMenuLabel className='font-normal'>
+      <div className='flex flex-col space-y-1'>
+        <p className='text-sm font-medium leading-none'>{displayName}</p>
+        {emailText.length > 0 ? (
+          <p className='text-xs leading-none text-muted-foreground'>{emailText}</p>
+        ) : null}
+      </div>
+    </DropdownMenuLabel>
+  );
+}
+
+function ElevatedUserMenuLogoutAction({
+  logoutLabel,
+  onLogout,
+}: {
+  logoutLabel: string;
+  onLogout: () => void;
+}): React.JSX.Element {
+  return (
+    <DropdownMenuItem
+      onSelect={() => {
+        onLogout();
+      }}
+    >
+      <LogOut className='mr-2 h-4 w-4' />
+      <span>{logoutLabel}</span>
+    </DropdownMenuItem>
+  );
 }
 
 function renderKangurElevatedUserMenu(
@@ -104,7 +173,12 @@ function renderKangurElevatedUserMenu(
     triggerClassName,
     user,
   }: KangurElevatedUserMenuProps & { adminHref: string },
-  { displayName, imageSrc, initial }: KangurElevatedUserMenuModel
+  {
+    canRenderImage,
+    displayName,
+    imageSrc,
+    initial,
+  }: KangurElevatedUserMenuModel & { canRenderImage: boolean }
 ): React.JSX.Element {
   return (
     <DropdownMenu>
@@ -121,18 +195,15 @@ function renderKangurElevatedUserMenu(
           variant='ghost'
           type='button'
         >
-          <ElevatedUserAvatar imageSrc={imageSrc} initial={initial} />
+          <ElevatedUserAvatar
+            canRenderImage={canRenderImage}
+            imageSrc={imageSrc}
+            initial={initial}
+          />
         </KangurButton>
       </DropdownMenuTrigger>
       <DropdownMenuContent align='end' className='z-[95] w-56' sideOffset={8}>
-        <DropdownMenuLabel className='font-normal'>
-          <div className='flex flex-col space-y-1'>
-            <p className='text-sm font-medium leading-none'>{displayName}</p>
-            {user.email ? (
-              <p className='text-xs leading-none text-muted-foreground'>{user.email}</p>
-            ) : null}
-          </div>
-        </DropdownMenuLabel>
+        <ElevatedUserMenuIdentityLabel displayName={displayName} email={user.email} />
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link href={adminHref}>
@@ -141,14 +212,7 @@ function renderKangurElevatedUserMenu(
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onSelect={() => {
-            onLogout();
-          }}
-        >
-          <LogOut className='mr-2 h-4 w-4' />
-          <span>{logoutLabel}</span>
-        </DropdownMenuItem>
+        <ElevatedUserMenuLogoutAction logoutLabel={logoutLabel} onLogout={onLogout} />
       </DropdownMenuContent>
     </DropdownMenu>
   );

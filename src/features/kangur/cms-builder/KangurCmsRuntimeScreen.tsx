@@ -3,13 +3,11 @@
 import { useLocale } from 'next-intl';
 import { useMemo } from 'react';
 
+import { CmsPageRenderer } from '@/features/cms/components/frontend/CmsPageRenderer';
 import {
-  CmsRuntimePageRenderer,
   getMediaInlineStyles,
   getMediaStyleVars,
-} from '@/features/cms/public';
-import {
-} from '@/features/kangur/appearance/theme-settings';
+} from '@/features/cms/components/frontend/theme-styles';
 import { buildKangurScopedCustomCss } from '@/features/kangur/utils/custom-css';
 import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
 import { KangurGameRuntimeBoundary } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
@@ -143,18 +141,18 @@ export function KangurCmsRuntimeScreen({
         <KangurGameRuntimeBoundary enabled={screenKey === 'Game'}>
           <KangurLessonsRuntimeBoundary enabled={screenKey === 'Lessons'}>
             <KangurLearnerProfileRuntimeBoundary enabled={screenKey === 'LearnerProfile'}>
-              <KangurParentDashboardRuntimeBoundary enabled={screenKey === 'ParentDashboard'}>
-                <KangurCmsRuntimeDataProvider>
-                  <CmsRuntimePageRenderer
-                    components={screen.components}
-                    colorSchemes={colorSchemes}
-                    layout={{ fullWidth: theme.fullWidth }}
-                    hoverEffect={theme.enableAnimations ? theme.hoverEffect : undefined}
-                    hoverScale={theme.enableAnimations ? theme.hoverScale : undefined}
-                    mediaStyles={mediaStyles}
-                  />
-                </KangurCmsRuntimeDataProvider>
-              </KangurParentDashboardRuntimeBoundary>
+                <KangurParentDashboardRuntimeBoundary enabled={screenKey === 'ParentDashboard'}>
+                  <KangurCmsRuntimeDataProvider>
+                    <CmsPageRenderer
+                      components={screen.components}
+                      colorSchemes={colorSchemes}
+                      layout={{ fullWidth: theme.fullWidth }}
+                      hoverEffect={theme.enableAnimations ? theme.hoverEffect : undefined}
+                      hoverScale={theme.enableAnimations ? theme.hoverScale : undefined}
+                      mediaStyles={mediaStyles}
+                    />
+                  </KangurCmsRuntimeDataProvider>
+                </KangurParentDashboardRuntimeBoundary>
             </KangurLearnerProfileRuntimeBoundary>
           </KangurLessonsRuntimeBoundary>
         </KangurGameRuntimeBoundary>

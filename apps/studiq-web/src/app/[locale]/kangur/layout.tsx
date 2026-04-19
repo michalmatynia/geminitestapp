@@ -3,7 +3,7 @@ import { setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 
 import KangurAppearanceLayout from '../../kangur/KangurAppearanceLayout';
-import { loadSiteMessages } from '@/i18n/messages';
+import { loadKangurSiteMessages } from '@/i18n/messages';
 import {
   isSupportedSiteLocale,
   normalizeSiteLocale,
@@ -29,7 +29,7 @@ export default async function LocalizedKangurLayout({
 
   const normalizedLocale = normalizeSiteLocale(locale);
   setRequestLocale(normalizedLocale);
-  const messages = await loadSiteMessages(normalizedLocale);
+  const messages = await loadKangurSiteMessages(normalizedLocale);
 
   return (
     <NextIntlClientProvider locale={normalizedLocale} messages={messages}>

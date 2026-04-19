@@ -19,9 +19,9 @@ import {
   KangurPanelCloseButton
 } from '@/features/kangur/ui/components/KangurPanelCloseButton';
 import KangurVisualCueContent from '@/features/kangur/ui/components/KangurVisualCueContent';
-import { useKangurIdleReady } from '@/features/kangur/ui/hooks/useKangurIdleReady';
+import { useKangurDeferredStandaloneHomeReady } from '@/features/kangur/ui/hooks/useKangurDeferredStandaloneHomeReady';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
-import { GAME_HOME_COPY_IDLE_DELAY_MS } from '@/features/kangur/ui/pages/GameHome.constants';
+import { GAME_HOME_UTILITY_IDLE_DELAY_MS } from '@/features/kangur/ui/pages/GameHome.constants';
 
 import {
   resolveMobileMenuHeaderActions,
@@ -50,20 +50,38 @@ import {
   getKangurDefaultSubjectForAgeGroup,
 } from '@/features/kangur/lessons/lesson-catalog-metadata';
 import type { KangurChoiceDialogOption } from '@/features/kangur/ui/components/KangurChoiceDialog';
+import type { KangurChoiceDialogProps } from '@/features/kangur/ui/components/KangurChoiceDialog';
 import type { KangurIntlTranslate } from '@/features/kangur/ui/types';
 import type { KangurLessonAgeGroup } from '@/features/kangur/shared/contracts/kangur';
 
 const KangurChoiceDialog = dynamic(() =>
   import('@/features/kangur/ui/components/KangurChoiceDialog').then((m) => ({
-    default: function KangurChoiceDialogEntry(
-      props: import('@/features/kangur/ui/components/KangurChoiceDialog').KangurChoiceDialogProps
-    ) {
+    default: function KangurChoiceDialogEntry(props: KangurChoiceDialogProps) {
       return m.renderKangurChoiceDialog(props);
     },
   }))
 );
 
 // --- Internal Components (previously components.tsx) ---
+
+function resolveKangurPrimaryNavigationLoginCopy({
+  fallbackLabel,
+  loginActionContent,
+}: {
+  fallbackLabel: string;
+  loginActionContent: ReturnType<typeof useKangurPageContentEntry>['entry'];
+}): {
+  loginLabel: string;
+  loginTitle: string | undefined;
+} {
+  const resolvedLoginLabel = loginActionContent ? loginActionContent.title.trim() : '';
+  const resolvedLoginTitle = loginActionContent ? loginActionContent.summary.trim() : '';
+
+  return {
+    loginLabel: resolvedLoginLabel.length > 0 ? resolvedLoginLabel : fallbackLabel,
+    loginTitle: resolvedLoginTitle.length > 0 ? resolvedLoginTitle : undefined,
+  };
+}
 
 // KangurPrimaryNavigationLoginAction renders the login button in the nav bar.
 // It reads the login action copy from the AI Tutor page content catalog so
@@ -81,8 +99,8 @@ function KangurPrimaryNavigationLoginAction({
   onActionClick?: () => void;
   onLogin: () => void;
 }): React.JSX.Element {
-  const shouldLoadLoginActionContent = useKangurIdleReady({
-    minimumDelayMs: GAME_HOME_COPY_IDLE_DELAY_MS,
+  const shouldLoadLoginActionContent = useKangurDeferredStandaloneHomeReady({
+    minimumDelayMs: GAME_HOME_UTILITY_IDLE_DELAY_MS,
   });
   const { entry: loginActionContent } = useKangurPageContentEntry(
     'shared-nav-login-action',
@@ -91,8 +109,10 @@ function KangurPrimaryNavigationLoginAction({
       enabled: shouldLoadLoginActionContent,
     }
   );
-  const loginLabel = loginActionContent?.title?.trim() || fallbackLabel;
-  const loginTitle = loginActionContent?.summary?.trim() || undefined;
+  const { loginLabel, loginTitle } = resolveKangurPrimaryNavigationLoginCopy({
+    fallbackLabel,
+    loginActionContent,
+  });
 
   return renderNavAction(
     buildActionWithClose(
@@ -371,15 +391,20 @@ function KangurPrimaryNavigationUtilityActions({
     profileLabel,
     profileTransitionSourceId,
   } = derived;
+  const isStandaloneHomeUtilityReady = useKangurDeferredStandaloneHomeReady({
+    minimumDelayMs: GAME_HOME_UTILITY_IDLE_DELAY_MS,
+  });
 
   const accessibleCurrentPage = props.currentPage;
   const forceLanguageSwitcherFallbackPath =
     props.forceLanguageSwitcherFallbackPath ?? false;
   const learnerProfileIsActive = accessibleCurrentPage === 'LearnerProfile';
 
-  const resolvedAppearanceControls = hideAppearanceControls ? null : appearanceControls;
+  const resolvedAppearanceControls = hideAppearanceControls === true ? null : appearanceControls;
   const resolvedShouldRenderLanguageSwitcher =
-    shouldRenderLanguageSwitcher && !hideLanguageSwitcher;
+    shouldRenderLanguageSwitcher &&
+    hideLanguageSwitcher !== true &&
+    isStandaloneHomeUtilityReady;
 
   if (
     !resolveKangurPrimaryNavigationUtilityVisibility({

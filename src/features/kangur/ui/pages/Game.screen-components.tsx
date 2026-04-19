@@ -1,17 +1,12 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
 import { type useTranslations } from 'next-intl';
 import type { RefObject } from 'react';
 
 import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
-import { KangurPriorityAssignments } from '@/features/kangur/ui/components/assignments/KangurPriorityAssignments';
-import { KangurAssignmentSpotlight } from '@/features/kangur/ui/components/assignments/KangurAssignmentSpotlight';
 import { KangurGameHomeActionsWidget } from '@/features/kangur/ui/components/game-home/KangurGameHomeActionsWidget';
-import { KangurGameHomeDuelsInvitesWidget } from '@/features/kangur/ui/components/game-home/KangurGameHomeDuelsInvitesWidget';
-import { KangurGameHomeHeroWidget } from '@/features/kangur/ui/components/game-home/KangurGameHomeHeroWidget';
-import { KangurGameHomeQuestWidget } from '@/features/kangur/ui/components/game-home/KangurGameHomeQuestWidget';
+import { LazyMotionDiv } from '@/features/kangur/ui/components/LazyAnimatePresence';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import { useKangurIdleReady } from '@/features/kangur/ui/hooks/useKangurIdleReady';
 import {
@@ -76,6 +71,63 @@ const PlayerProgressCard = dynamic(() => import('@/features/kangur/ui/components
   ssr: false,
 });
 
+const KangurGameHomeDuelsInvitesWidget = dynamic(
+  () =>
+    import('@/features/kangur/ui/components/game-home/KangurGameHomeDuelsInvitesWidget').then(
+      (m) => ({
+        default: m.KangurGameHomeDuelsInvitesWidget,
+      })
+    ),
+  {
+    loading: () => <SecondaryHomeWidgetFallback testId='kangur-home-duels-invites-fallback' />,
+    ssr: false,
+  }
+);
+
+const KangurGameHomeQuestWidget = dynamic(
+  () =>
+    import('@/features/kangur/ui/components/game-home/KangurGameHomeQuestWidget').then((m) => ({
+      default: m.KangurGameHomeQuestWidget,
+    })),
+  {
+    loading: () => <SecondaryHomeWidgetFallback testId='kangur-home-quest-fallback' />,
+    ssr: false,
+  }
+);
+
+const KangurGameHomeHeroWidget = dynamic(
+  () =>
+    import('@/features/kangur/ui/components/game-home/KangurGameHomeHeroWidget').then((m) => ({
+      default: m.KangurGameHomeHeroWidget,
+    })),
+  {
+    loading: () => <SecondaryHomeWidgetFallback testId='kangur-home-hero-fallback' />,
+    ssr: false,
+  }
+);
+
+const KangurPriorityAssignments = dynamic(
+  () =>
+    import('@/features/kangur/ui/components/assignments/KangurPriorityAssignments').then((m) => ({
+      default: m.KangurPriorityAssignments,
+    })),
+  {
+    loading: () => <SecondaryHomeWidgetFallback testId='kangur-home-priority-assignments-fallback' />,
+    ssr: false,
+  }
+);
+
+const KangurAssignmentSpotlight = dynamic(
+  () =>
+    import('@/features/kangur/ui/components/assignments/KangurAssignmentSpotlight').then((m) => ({
+      default: m.KangurAssignmentSpotlight,
+    })),
+  {
+    loading: () => <SecondaryHomeWidgetFallback testId='kangur-home-parent-spotlight-fallback' />,
+    ssr: false,
+  }
+);
+
 const KangurGameKangurSessionWidget = dynamic(
   () =>
     import('@/features/kangur/ui/components/game-runtime/KangurGameKangurSessionWidget').then((m) => ({
@@ -138,7 +190,7 @@ function GameScreenFrame(props: {
     props;
 
   return (
-    <motion.div
+    <LazyMotionDiv
       key={screenKey}
       {...motionProps}
       className={cn('w-full min-w-0 max-w-full', className)}
@@ -149,7 +201,7 @@ function GameScreenFrame(props: {
         {screenLabel}
       </h2>
       {children}
-    </motion.div>
+    </LazyMotionDiv>
   );
 }
 
@@ -192,16 +244,22 @@ function GameHomeActionsColumn(props: {
   basePath: string;
   homeActionsRef: RefObject<HTMLDivElement | null>;
   homeVisibility: ReturnType<typeof resolveKangurGameHomeVisibility>;
+  shouldMountSecondaryHomeWidgets: boolean;
   translations: GameTranslations;
 }): React.JSX.Element {
-  const { basePath, homeActionsRef, homeVisibility, translations } = props;
+  const { basePath, homeActionsRef, homeVisibility, shouldMountSecondaryHomeWidgets, translations } =
+    props;
 
   return (
     <>
       <div id='kangur-home-actions' ref={homeActionsRef}>
         <KangurGameHomeActionsWidget hideWhenScreenMismatch={false} />
       </div>
-      <KangurGameHomeDuelsInvitesWidget hideWhenScreenMismatch={false} />
+      {shouldMountSecondaryHomeWidgets ? (
+        <KangurGameHomeDuelsInvitesWidget hideWhenScreenMismatch={false} />
+      ) : (
+        <SecondaryHomeWidgetFallback testId='kangur-home-duels-invites-fallback' />
+      )}
       {homeVisibility.hideLearnerWidgetsForParent ? (
         <GameHomeMissingLearnerState basePath={basePath} translations={translations} />
       ) : null}
@@ -255,11 +313,18 @@ function GameHomeScreen(props: {
             basePath={basePath}
             homeActionsRef={homeRefs.homeActionsRef}
             homeVisibility={homeVisibility}
+            shouldMountSecondaryHomeWidgets={shouldMountSecondaryHomeWidgets}
             translations={translations}
           />
         }
         actionsColumnProps={{ testId: 'kangur-home-actions-column' }}
-        quest={<KangurGameHomeQuestWidget hideWhenScreenMismatch={false} />}
+        quest={
+          shouldMountSecondaryHomeWidgets ? (
+            <KangurGameHomeQuestWidget hideWhenScreenMismatch={false} />
+          ) : (
+            <SecondaryHomeWidgetFallback testId='kangur-home-quest-fallback' />
+          )
+        }
         questSectionProps={{
           headingId: 'kangur-home-quest-heading',
           headingLabel: translations('home.questHeading'),
@@ -267,11 +332,15 @@ function GameHomeScreen(props: {
           ref: homeRefs.homeQuestRef,
         }}
         summary={
-          <KangurGameHomeHeroWidget
-            hideWhenScreenMismatch={false}
-            showIntro={false}
-            showAssignmentSpotlight={false}
-          />
+          shouldMountSecondaryHomeWidgets ? (
+            <KangurGameHomeHeroWidget
+              hideWhenScreenMismatch={false}
+              showIntro={false}
+              showAssignmentSpotlight={false}
+            />
+          ) : (
+            <SecondaryHomeWidgetFallback testId='kangur-home-hero-fallback' />
+          )
         }
         summarySectionProps={{
           headingId: 'kangur-home-hero-heading',

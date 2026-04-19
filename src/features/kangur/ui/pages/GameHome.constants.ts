@@ -44,6 +44,8 @@ export const GAME_HOME_COPY_IDLE_DELAY_MS = 1200;
 
 export const GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS = 2000;
 
+export const GAME_HOME_UTILITY_IDLE_DELAY_MS = 4000;
+
 export const GAME_HOME_LEADERBOARD_COLUMN_CLASSNAME = 'order-2 flex w-full justify-center xl:order-1';
 
 export const GAME_HOME_LEADERBOARD_SHELL_CLASSNAME =

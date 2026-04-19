@@ -12,13 +12,13 @@ vi.mock('@/features/kangur/ui/useKangurStorefrontAppearance', () => ({
   })),
 }));
 
-vi.mock('next/dynamic', async () => {
+vi.mock('@/features/kangur/ui/KangurFeatureRouteShell', async () => {
   const appearanceModule = await import(
     '@/features/kangur/ui/useKangurStorefrontAppearance'
   );
 
   return {
-    default: () => function MockKangurFeatureRouteShell() {
+    KangurFeatureRouteShell: function MockKangurFeatureRouteShell() {
       const appearance = appearanceModule.useKangurStorefrontAppearance();
 
       return (

@@ -59,6 +59,8 @@ const repairedBundledPolishMessages = repairBundledPolishMessages(
   plMessages as SiteMessageDictionary
 );
 
+const KANGUR_MESSAGE_ROOT_ALLOWLIST = new Set<string>(['Common']);
+
 const defaultMessageLoader = async () => repairedBundledPolishMessages;
 
 const messageLoaders: Partial<Record<string, () => Promise<SiteMessageDictionary>>> = {
@@ -67,6 +69,15 @@ const messageLoaders: Partial<Record<string, () => Promise<SiteMessageDictionary
   de: () => import('./messages/de.json').then((module) => module.default as SiteMessageDictionary),
   uk: () => import('./messages/uk.json').then((module) => module.default as SiteMessageDictionary),
 };
+
+const isKangurMessageRoot = (key: string): boolean =>
+  key.startsWith('Kangur') || KANGUR_MESSAGE_ROOT_ALLOWLIST.has(key);
+
+const filterScopedSiteMessages = (
+  messages: SiteMessageDictionary,
+  predicate: (key: string) => boolean
+): SiteMessageDictionary =>
+  Object.fromEntries(Object.entries(messages).filter(([key]) => predicate(key)));
 
 export const loadSiteMessages = cache(
   async (locale: string | null | undefined): Promise<SiteMessages> => {
@@ -96,4 +107,9 @@ export const loadSiteMessages = cache(
 
     return mergedMessages as SiteMessages;
   }
+);
+
+export const loadKangurSiteMessages = cache(
+  async (locale: string | null | undefined): Promise<SiteMessages> =>
+    filterScopedSiteMessages(await loadSiteMessages(locale), isKangurMessageRoot) as SiteMessages
 );

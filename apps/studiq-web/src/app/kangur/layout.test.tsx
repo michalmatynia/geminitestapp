@@ -7,12 +7,12 @@ import { render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 
 const {
-  loadSiteMessagesMock,
+  loadKangurSiteMessagesMock,
   nextIntlProviderMock,
   htmlLangSyncMock,
   kangurAppearanceLayoutMock,
 } = vi.hoisted(() => ({
-  loadSiteMessagesMock: vi.fn(),
+  loadKangurSiteMessagesMock: vi.fn(),
   nextIntlProviderMock: vi.fn(
     ({
       children,
@@ -45,7 +45,7 @@ vi.mock('next-intl', () => ({
 }));
 
 vi.mock('@/i18n/messages', () => ({
-  loadSiteMessages: loadSiteMessagesMock,
+  loadKangurSiteMessages: loadKangurSiteMessagesMock,
 }));
 
 vi.mock('@/shared/ui/HtmlLangSync', () => ({
@@ -59,7 +59,7 @@ vi.mock('./KangurAppearanceLayout', () => ({
 describe('apps/studiq-web Kangur layout', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    loadSiteMessagesMock.mockResolvedValue({
+    loadKangurSiteMessagesMock.mockResolvedValue({
       Common: {
         skipToMainContent: 'Skip to main content',
       },
@@ -75,7 +75,7 @@ describe('apps/studiq-web Kangur layout', () => {
 
     render(result);
 
-    expect(loadSiteMessagesMock).toHaveBeenCalledWith('pl');
+    expect(loadKangurSiteMessagesMock).toHaveBeenCalledWith('pl');
     expect(nextIntlProviderMock).toHaveBeenCalledTimes(1);
     expect(htmlLangSyncMock).toHaveBeenCalledWith({ locale: 'pl' }, undefined);
     expect(screen.getByTestId('next-intl-provider')).toHaveAttribute('data-locale', 'pl');

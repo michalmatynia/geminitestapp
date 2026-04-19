@@ -17,7 +17,7 @@ import { headers } from 'next/headers';
 
 import { getKangurAuthBootstrapScript } from '@/features/kangur/server/auth-bootstrap';
 import { renderKangurAuthBootstrapScript } from '@/features/kangur/server/renderKangurAuthBootstrapScript';
-import { KangurFeatureRouteShellClientBoundary } from '@/features/kangur/ui/KangurFeatureRouteShellClientBoundary';
+import { KangurFeatureRouteShellClientLoader } from '@/features/kangur/ui/KangurFeatureRouteShellClientLoader';
 import { KangurServerShell } from '@/features/kangur/ui/components/KangurServerShell';
 
 import type { ReactNode } from 'react';
@@ -41,7 +41,7 @@ export function KangurAliasAppLayout({
       </Suspense>
       <KangurServerShell />
       {children}
-      <KangurFeatureRouteShellClientBoundary />
+      <KangurFeatureRouteShellClientLoader />
     </>
   );
 }

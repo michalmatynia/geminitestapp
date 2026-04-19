@@ -7,6 +7,7 @@ import { KANGUR_BASE_PATH, getKangurPageHref } from '@/features/kangur/config/ro
 import { KangurNavAction } from '@/features/kangur/ui/components/KangurNavAction';
 import { useOptionalKangurRouteTransitionState } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
+import { useKangurDeferredStandaloneHomeReady } from '@/features/kangur/ui/hooks/useKangurDeferredStandaloneHomeReady';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 type KangurProfileMenuProps = {
@@ -33,7 +34,7 @@ type KangurProfileMenuState = {
   navigationActive: boolean;
   resolvedHref: string;
   resolvedLabel: string;
-  shouldRenderAvatar: boolean;
+  shouldRenderAvatarImage: boolean;
   transitionMs: number | undefined;
   transitionSource?: string;
 };
@@ -48,9 +49,10 @@ const isTransitionSourceActive = ({
   transitionSourceId?: string;
 }): boolean =>
   Boolean(
-    transitionSourceId &&
+    transitionSourceId !== undefined &&
+      transitionSourceId.length > 0 &&
       activeTransitionSourceId === transitionSourceId &&
-      transitionPhase &&
+      transitionPhase !== undefined &&
       transitionPhase !== 'idle'
   );
 
@@ -132,12 +134,14 @@ const resolveKangurProfileMenuState = ({
   transitionAcknowledgeMs,
   transitionSourceId,
   triggerClassName,
+  isStandaloneHomeReady,
 }: KangurProfileMenuProps & {
   isCoarsePointer: boolean;
+  isStandaloneHomeReady: boolean;
   locale: ReturnType<typeof normalizeSiteLocale>;
   routeTransitionState: ReturnType<typeof useOptionalKangurRouteTransitionState>;
 }): KangurProfileMenuState => {
-  const avatarSrc = avatar?.src?.trim() ?? '';
+  const avatarSrc = (avatar?.src ?? '').trim();
   const transitionSource = transitionSourceId ?? undefined;
 
   return {
@@ -162,7 +166,7 @@ const resolveKangurProfileMenuState = ({
       label,
       locale,
     }),
-    shouldRenderAvatar: avatarSrc.length > 0,
+    shouldRenderAvatarImage: avatarSrc.length > 0 && isStandaloneHomeReady,
     transitionMs: transitionAcknowledgeMs,
     transitionSource,
   };
@@ -170,12 +174,12 @@ const resolveKangurProfileMenuState = ({
 
 function KangurProfileMenuIcon({
   avatarSrc,
-  shouldRenderAvatar,
+  shouldRenderAvatarImage,
 }: {
   avatarSrc: string;
-  shouldRenderAvatar: boolean;
+  shouldRenderAvatarImage: boolean;
 }): React.JSX.Element {
-  if (shouldRenderAvatar) {
+  if (shouldRenderAvatarImage) {
     return (
       <span className='relative h-[18px] w-[18px] overflow-hidden rounded-full border border-white/80 bg-white/80 shadow-sm sm:h-5 sm:w-5'>
         <img
@@ -183,6 +187,9 @@ function KangurProfileMenuIcon({
           alt=''
           aria-hidden='true'
           className='h-full w-full object-cover'
+          decoding='async'
+          fetchPriority='low'
+          loading='lazy'
         />
       </span>
     );
@@ -204,12 +211,14 @@ export function KangurProfileMenu(props: KangurProfileMenuProps): React.JSX.Elem
   } = props;
   const routeTransitionState = useOptionalKangurRouteTransitionState();
   const isCoarsePointer = useKangurCoarsePointer();
+  const isStandaloneHomeReady = useKangurDeferredStandaloneHomeReady();
   const locale = normalizeSiteLocale(useLocale());
   const state = resolveKangurProfileMenuState({
     avatar,
     basePath,
     isActive,
     isCoarsePointer,
+    isStandaloneHomeReady,
     label,
     locale,
     profile,
@@ -235,7 +244,7 @@ export function KangurProfileMenu(props: KangurProfileMenuProps): React.JSX.Elem
     >
       <KangurProfileMenuIcon
         avatarSrc={state.avatarSrc}
-        shouldRenderAvatar={state.shouldRenderAvatar}
+        shouldRenderAvatarImage={state.shouldRenderAvatarImage}
       />
       <span className='truncate'>{state.resolvedLabel}</span>
     </KangurNavAction>

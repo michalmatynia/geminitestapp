@@ -1,8 +1,8 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 
-import KangurAssignmentSpotlight from '@/features/kangur/ui/components/assignments/KangurAssignmentSpotlight';
 import KangurHeroMilestoneSummary from '@/features/kangur/ui/components/KangurHeroMilestoneSummary';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 import { KangurPanelIntro } from '@/features/kangur/ui/design/primitives';
@@ -34,6 +34,17 @@ type KangurGameHomeHeroViewModel = {
   intro: React.JSX.Element | null;
   milestoneSummary: React.JSX.Element | null;
 };
+
+const KangurAssignmentSpotlight = dynamic(
+  () =>
+    import('@/features/kangur/ui/components/assignments/KangurAssignmentSpotlight').then((m) => ({
+      default: m.default,
+    })),
+  {
+    loading: () => null,
+    ssr: false,
+  }
+);
 
 const hasMeaningfulProgress = (progress: KangurProgressState): boolean =>
   progress.totalXp > 0 ||

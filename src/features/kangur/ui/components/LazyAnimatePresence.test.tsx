@@ -26,6 +26,11 @@ vi.mock('framer-motion', () => {
           {children}
         </div>
       ),
+      button: ({ children, ...props }: React.ComponentProps<'button'>) => (
+        <button data-testid='mock-motion-button' {...props}>
+          {children}
+        </button>
+      ),
     },
   };
 });
@@ -41,7 +46,7 @@ describe('LazyAnimatePresence', () => {
   });
 
   it('keeps framer-motion unloaded when motion loading is disabled', async () => {
-    const { LazyAnimatePresence, LazyMotionDiv } = await import(
+    const { LazyAnimatePresence, LazyMotionButton, LazyMotionDiv } = await import(
       '@/features/kangur/ui/components/LazyAnimatePresence'
     );
 
@@ -51,6 +56,7 @@ describe('LazyAnimatePresence', () => {
           <div>animate-child</div>
         </LazyAnimatePresence>
         <LazyMotionDiv loadMotion={false}>motion-child</LazyMotionDiv>
+        <LazyMotionButton loadMotion={false}>button-child</LazyMotionButton>
       </>
     );
 
@@ -59,12 +65,14 @@ describe('LazyAnimatePresence', () => {
     expect(framerMotionLoadSpy).not.toHaveBeenCalled();
     expect(screen.getByText('animate-child')).toBeInTheDocument();
     expect(screen.getByText('motion-child')).toBeInTheDocument();
+    expect(screen.getByText('button-child')).toBeInTheDocument();
     expect(screen.queryByTestId('mock-animate-presence')).toBeNull();
     expect(screen.queryByTestId('mock-motion-div')).toBeNull();
+    expect(screen.queryByTestId('mock-motion-button')).toBeNull();
   });
 
   it('loads framer-motion when motion loading is enabled', async () => {
-    const { LazyAnimatePresence, LazyMotionDiv } = await import(
+    const { LazyAnimatePresence, LazyMotionButton, LazyMotionDiv } = await import(
       '@/features/kangur/ui/components/LazyAnimatePresence'
     );
 
@@ -74,6 +82,7 @@ describe('LazyAnimatePresence', () => {
           <div>animate-child</div>
         </LazyAnimatePresence>
         <LazyMotionDiv loadMotion>motion-child</LazyMotionDiv>
+        <LazyMotionButton loadMotion>button-child</LazyMotionButton>
       </>
     );
 
@@ -83,5 +92,6 @@ describe('LazyAnimatePresence', () => {
 
     expect(screen.getByTestId('mock-animate-presence')).toBeInTheDocument();
     expect(screen.getByTestId('mock-motion-div')).toBeInTheDocument();
+    expect(screen.getByTestId('mock-motion-button')).toBeInTheDocument();
   });
 });

@@ -1,9 +1,9 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 
 import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
+import { LazyMotionDiv } from '@/features/kangur/ui/components/LazyAnimatePresence';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
@@ -326,7 +326,7 @@ function KangurHomeActionCard({
   );
 
   return (
-    <motion.div
+    <LazyMotionDiv
       initial={{ opacity: 0, y: 16, scale: 1 }}
       animate={
         navState === 'idle'
@@ -375,7 +375,7 @@ function KangurHomeActionCard({
           {content}
         </button>
       )}
-    </motion.div>
+    </LazyMotionDiv>
   );
 }
 

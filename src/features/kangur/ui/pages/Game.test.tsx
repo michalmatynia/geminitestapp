@@ -368,7 +368,7 @@ describe('Game page', () => {
     });
   });
 
-  it('keeps the shared game navigation visible on the home screen', () => {
+  it('keeps the shared game navigation visible on the home screen', async () => {
     useKangurGameRuntimeMock.mockReturnValue({
       ...buildGameRuntime('home'),
       canAccessParentAssignments: true,
@@ -377,17 +377,12 @@ describe('Game page', () => {
 
     render(<Game />);
 
-    expect(screen.getByTestId('kangur-home-hero-widget')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-home-hero-fallback')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-home-actions-widget')).toBeInTheDocument();
-    expect(screen.getByTestId('kangur-home-quest-widget')).toBeInTheDocument();
-    expect(screen.getByTestId('kangur-assignment-spotlight-widget')).toBeInTheDocument();
-    expect(homeHeroPropsMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        hideWhenScreenMismatch: false,
-        showIntro: false,
-        showAssignmentSpotlight: false,
-      })
-    );
+    expect(screen.getByTestId('kangur-home-quest-fallback')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-home-duels-invites-fallback')).toBeInTheDocument();
+    expect(await screen.findByTestId('kangur-assignment-spotlight-widget')).toBeInTheDocument();
+    expect(homeHeroPropsMock).not.toHaveBeenCalled();
     expect(assignmentSpotlightPropsMock).toHaveBeenCalledWith(
       expect.objectContaining({ basePath: '/kangur', enabled: true })
     );

@@ -18,6 +18,7 @@ import { onBootReady } from '@/features/kangur/ui/boot/boot-ready-signal';
 type FramerMotionExports = {
   AnimatePresence: React.ComponentType<AnimatePresenceProps & { children: ReactNode }>;
   MotionDiv: React.ComponentType<HTMLMotionProps<'div'>>;
+  MotionButton: React.ComponentType<HTMLMotionProps<'button'>>;
 };
 
 let cached: FramerMotionExports | null = null;
@@ -29,6 +30,7 @@ const loadFramerMotion = (): Promise<FramerMotionExports> => {
     cached = {
       AnimatePresence: mod.AnimatePresence as FramerMotionExports['AnimatePresence'],
       MotionDiv: mod.motion.div,
+      MotionButton: mod.motion.button,
     };
     return cached;
   });
@@ -137,6 +139,42 @@ export const LazyMotionDiv = forwardRef<HTMLDivElement, LazyMotionDivProps>(
     return <div ref={ref} {...(divProps as ComponentProps<'div'>)} />;
   }
 );
+
+type LazyMotionButtonProps = HTMLMotionProps<'button'> & {
+  children?: ReactNode;
+  loadMotion?: boolean;
+};
+
+export const LazyMotionButton = forwardRef<
+  HTMLButtonElement,
+  LazyMotionButtonProps
+>((props, ref) => {
+  const { loadMotion = true, ...motionProps } = props;
+  const fm = useFramerMotion(loadMotion);
+
+  if (fm) {
+    const MotionButton = fm.MotionButton;
+    return <MotionButton ref={ref} {...motionProps} />;
+  }
+
+  const buttonProps: Record<string, unknown> = { ...motionProps };
+  delete buttonProps.initial;
+  delete buttonProps.animate;
+  delete buttonProps.exit;
+  delete buttonProps.transition;
+  delete buttonProps.whileHover;
+  delete buttonProps.whileTap;
+  delete buttonProps.whileFocus;
+  delete buttonProps.whileInView;
+  delete buttonProps.whileDrag;
+  delete buttonProps.variants;
+  delete buttonProps.layout;
+  delete buttonProps.layoutId;
+  delete buttonProps.onAnimationStart;
+  delete buttonProps.onAnimationComplete;
+
+  return <button ref={ref} {...(buttonProps as ComponentProps<'button'>)} />;
+});
 
 // ---------------------------------------------------------------------------
 // usePrefersReducedMotion — replaces framer-motion's useReducedMotion

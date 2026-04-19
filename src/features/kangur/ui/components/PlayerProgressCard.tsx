@@ -1,9 +1,9 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import * as React from 'react';
 import { useTranslations } from 'next-intl';
 
+import { LazyMotionDiv } from '@/features/kangur/ui/components/LazyAnimatePresence';
 import { KangurActivitySummaryCard } from '@/features/kangur/ui/components/summary-cards/KangurActivitySummaryCard';
 import { KangurBadgeTrackSection } from '@/features/kangur/ui/components/badge-track/KangurBadgeTrackSection';
 import {
@@ -244,7 +244,7 @@ export default function PlayerProgressCard({
 
   return (
     <PlayerProgressContext.Provider value={contextValue}>
-      <motion.div
+      <LazyMotionDiv
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className='w-full max-w-sm'
@@ -332,7 +332,7 @@ export default function PlayerProgressCard({
             progress={badgeTrackProgress}
           />
         </KangurGlassPanel>
-      </motion.div>
+      </LazyMotionDiv>
     </PlayerProgressContext.Provider>
   );
 }

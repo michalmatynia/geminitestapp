@@ -8,14 +8,14 @@ import type { ReactNode } from 'react';
 
 const {
   setRequestLocaleMock,
-  loadSiteMessagesMock,
+  loadKangurSiteMessagesMock,
   nextIntlProviderMock,
   htmlLangSyncMock,
   kangurAppearanceLayoutMock,
   notFoundMock,
 } = vi.hoisted(() => ({
   setRequestLocaleMock: vi.fn(),
-  loadSiteMessagesMock: vi.fn(),
+  loadKangurSiteMessagesMock: vi.fn(),
   nextIntlProviderMock: vi.fn(
     ({
       children,
@@ -59,7 +59,7 @@ vi.mock('next/navigation', () => ({
 }));
 
 vi.mock('@/i18n/messages', () => ({
-  loadSiteMessages: loadSiteMessagesMock,
+  loadKangurSiteMessages: loadKangurSiteMessagesMock,
 }));
 
 vi.mock('@/shared/ui/HtmlLangSync', () => ({
@@ -73,7 +73,7 @@ vi.mock('../../kangur/KangurAppearanceLayout', () => ({
 describe('apps/studiq-web localized Kangur layout', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    loadSiteMessagesMock.mockResolvedValue({
+    loadKangurSiteMessagesMock.mockResolvedValue({
       Common: {
         skipToMainContent: 'Skip to main content',
       },
@@ -91,7 +91,7 @@ describe('apps/studiq-web localized Kangur layout', () => {
     render(result);
 
     expect(setRequestLocaleMock).toHaveBeenCalledWith('en');
-    expect(loadSiteMessagesMock).toHaveBeenCalledWith('en');
+    expect(loadKangurSiteMessagesMock).toHaveBeenCalledWith('en');
     expect(screen.getByTestId('next-intl-provider')).toHaveAttribute('data-locale', 'en');
     expect(screen.getByTestId('html-lang-sync')).toHaveAttribute('data-locale', 'en');
     expect(screen.getByTestId('kangur-appearance-layout')).toBeInTheDocument();
@@ -109,7 +109,7 @@ describe('apps/studiq-web localized Kangur layout', () => {
     render(result);
 
     expect(setRequestLocaleMock).toHaveBeenCalledWith('en');
-    expect(loadSiteMessagesMock).toHaveBeenCalledWith('en');
+    expect(loadKangurSiteMessagesMock).toHaveBeenCalledWith('en');
     expect(screen.getByTestId('next-intl-provider')).toHaveAttribute('data-locale', 'en');
     expect(screen.getByTestId('html-lang-sync')).toHaveAttribute('data-locale', 'en');
   });
@@ -125,6 +125,6 @@ describe('apps/studiq-web localized Kangur layout', () => {
     ).rejects.toThrow('NOT_FOUND');
 
     expect(notFoundMock).toHaveBeenCalledTimes(1);
-    expect(loadSiteMessagesMock).not.toHaveBeenCalled();
+    expect(loadKangurSiteMessagesMock).not.toHaveBeenCalled();
   });
 });

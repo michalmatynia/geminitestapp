@@ -102,7 +102,7 @@ describe('KangurGameHomeHeroWidget', () => {
     expect(screen.queryByText('Grasz jako gosc')).toBeNull();
   });
 
-  it('shows the assignment spotlight for signed-in users on home', () => {
+  it('shows the assignment spotlight for signed-in users on home', async () => {
     useKangurGameRuntimeMock.mockReturnValue({
       basePath: '/kangur',
       canAccessParentAssignments: true,
@@ -121,7 +121,7 @@ describe('KangurGameHomeHeroWidget', () => {
     expect(screen.getByTestId('kangur-home-hero-shell')).toHaveClass(
       ...(GAME_HOME_HERO_SHELL_CLASSNAME?.split(' ') ?? [])
     );
-    expect(screen.getByText('spotlight:/kangur')).toBeInTheDocument();
+    expect(await screen.findByText('spotlight:/kangur')).toBeInTheDocument();
     expect(screen.queryByPlaceholderText('Wpisz swoje imie...')).toBeNull();
   });
 
@@ -155,7 +155,7 @@ describe('KangurGameHomeHeroWidget', () => {
     expect(screen.queryByText('spotlight:/kangur')).toBeNull();
   });
 
-  it('omits the hero intro when showIntro is false but keeps milestone content', () => {
+  it('omits the hero intro when showIntro is false but keeps milestone content', async () => {
     useKangurGameRuntimeMock.mockReturnValue({
       basePath: '/kangur',
       canAccessParentAssignments: true,
@@ -176,7 +176,7 @@ describe('KangurGameHomeHeroWidget', () => {
     expect(screen.getByTestId('kangur-home-hero-shell')).toBeInTheDocument();
     expect(screen.queryByTestId('kangur-home-hero-copy')).toBeNull();
     const milestone = screen.getByTestId('kangur-home-hero-milestone-shell');
-    const spotlight = screen.getByTestId('kangur-assignment-spotlight-shell');
+    const spotlight = await screen.findByTestId('kangur-assignment-spotlight-shell');
     expect(milestone).toBeInTheDocument();
     expect(screen.getByText('spotlight:/kangur')).toBeInTheDocument();
     const container = screen.getByTestId('kangur-home-hero-shell');
@@ -209,7 +209,7 @@ describe('KangurGameHomeHeroWidget', () => {
     expect(screen.getByTestId('kangur-home-hero-milestone-shell')).toBeInTheDocument();
   });
 
-  it('stacks the milestone summary with the assignment spotlight when both are available', () => {
+  it('stacks the milestone summary with the assignment spotlight when both are available', async () => {
     useKangurGameRuntimeMock.mockReturnValue({
       basePath: '/kangur',
       canAccessParentAssignments: true,
@@ -229,7 +229,7 @@ describe('KangurGameHomeHeroWidget', () => {
 
     expect(screen.getByTestId('kangur-home-hero-shell')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-home-hero-milestone-shell')).toBeInTheDocument();
-    expect(screen.getByText('spotlight:/kangur')).toBeInTheDocument();
+    expect(await screen.findByText('spotlight:/kangur')).toBeInTheDocument();
   });
 
   it('stays empty when assignment access is disabled', () => {
@@ -251,7 +251,7 @@ describe('KangurGameHomeHeroWidget', () => {
     expect(screen.queryByTestId('kangur-home-hero-shell')).toBeNull();
   });
 
-  it('keeps the assignment spotlight mounted outside the home screen when the transition override is disabled', () => {
+  it('keeps the assignment spotlight mounted outside the home screen when the transition override is disabled', async () => {
     useKangurGameRuntimeMock.mockReturnValue({
       basePath: '/kangur',
       canAccessParentAssignments: true,
@@ -268,7 +268,7 @@ describe('KangurGameHomeHeroWidget', () => {
 
     render(<KangurGameHomeHeroWidget hideWhenScreenMismatch={false} />);
 
-    expect(screen.getByText('spotlight:/kangur')).toBeInTheDocument();
+    expect(await screen.findByText('spotlight:/kangur')).toBeInTheDocument();
   });
 
   it('renders Mongo-backed hero copy when page-content is available', async () => {

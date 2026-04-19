@@ -10,6 +10,7 @@ import type { KangurUser } from '@kangur/platform';
 
 const KANGUR_AUTH_BOOTSTRAP_GLOBAL = '__KANGUR_AUTH_BOOTSTRAP__';
 const KANGUR_AUTH_BOOTSTRAP_URL = 'https://kangur.local/';
+const NEXT_INTERNAL_ROUTE_REQUEST_HEADERS = ['next-router-state-tree', 'next-url', 'rsc'] as const;
 
 const serializeInlineBootstrapValue = (value: KangurUser | null): string =>
   JSON.stringify(value)
@@ -22,9 +23,16 @@ const buildKangurBootstrapRequest = (requestHeaders: Headers): NextRequest =>
     headers: new Headers(requestHeaders),
   });
 
+const isInternalNextRouteRequest = (requestHeaders: Headers): boolean =>
+  NEXT_INTERNAL_ROUTE_REQUEST_HEADERS.some((headerName) => requestHeaders.has(headerName));
+
 export const getKangurAuthBootstrapScript = async (
   requestHeaders: Headers
 ): Promise<string | null> => {
+  if (isInternalNextRouteRequest(requestHeaders)) {
+    return null;
+  }
+
   try {
     const actor = await resolveKangurActor(buildKangurBootstrapRequest(requestHeaders));
     const authUser = toKangurAuthUser(actor);
@@ -35,7 +43,7 @@ export const getKangurAuthBootstrapScript = async (
       return `window.${KANGUR_AUTH_BOOTSTRAP_GLOBAL}=null;`;
     }
 
-    void ErrorSystem.captureException(error, {
+    await ErrorSystem.captureException(error, {
       service: 'kangur.auth',
       action: 'bootstrap',
     });

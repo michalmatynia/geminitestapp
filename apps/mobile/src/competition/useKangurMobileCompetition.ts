@@ -78,7 +78,7 @@ export const useKangurMobileCompetition = (
   const modes = useMemo<KangurMobileCompetitionModeItem[]>(
     () =>
       MODE_ORDER.map((mode) => {
-        const questions = getKangurCompetitionQuestions(mode) as KangurExamQuestion[];
+        const questions = getKangurCompetitionQuestions(mode);
         return {
           mode,
           pointTier: MODE_POINT_TIERS[mode],

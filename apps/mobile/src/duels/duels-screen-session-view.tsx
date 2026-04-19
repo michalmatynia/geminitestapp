@@ -32,7 +32,7 @@ import {
   formatStatusLabel,
   getPlayerStatusTone,
   getStatusTone,
-  resolveRoundProgress,
+  type resolveRoundProgress,
   resolveSeriesWins,
   resolveWinnerSummary,
 } from './duels-utils';
@@ -728,7 +728,7 @@ export function DuelsSessionView({
                         pl: `Odpowiedź: ${String(choice)}`,
                       })}
                       onPress={async () => {
-                        await duel.submitAnswer(choice as KangurDuelChoice);
+                        await duel.submitAnswer(choice);
                       }}
                       stretch
                       tone='secondary'

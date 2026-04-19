@@ -1693,7 +1693,7 @@ const executePlaywrightNodeRun = async (
         },
         aiInjectExecute: async (code: string): Promise<void> => {
           if (!code.trim()) return;
-          const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor as new (...args: string[]) => (...args: unknown[]) => Promise<unknown>;
+          const AsyncFunction = Object.getPrototypeOf(async () => {}).constructor as new (...args: string[]) => (...args: unknown[]) => Promise<unknown>;
           const fn = new AsyncFunction('page', 'runtime', code);
           await fn(page, aiRuntime);
         },

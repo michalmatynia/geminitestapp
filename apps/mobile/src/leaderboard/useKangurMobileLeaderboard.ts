@@ -1,6 +1,6 @@
 import {
-  KANGUR_LEADERBOARD_OPERATION_OPTIONS,
-  KANGUR_LEADERBOARD_USER_OPTIONS,
+  type KANGUR_LEADERBOARD_OPERATION_OPTIONS,
+  type KANGUR_LEADERBOARD_USER_OPTIONS,
   buildKangurLeaderboardItems,
   filterKangurLeaderboardScores,
   getKangurLeaderboardOperationOptions,

@@ -235,7 +235,7 @@ const resolveConnectionByIdCompat = async (input: {
     return await input.repository.getConnectionById(input.connectionId);
   }
   if (typeof input.repository.listConnections === 'function') {
-    const connections = (await input.repository.listConnections('')) as IntegrationConnectionRecord[];
+    const connections = (await input.repository.listConnections(''));
     return Array.isArray(connections)
       ? connections.find((connection) => connection?.id === input.connectionId) ?? null
       : null;

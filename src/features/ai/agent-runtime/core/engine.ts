@@ -17,7 +17,7 @@ import {
   getAgentAuditLogDelegate,
   getChatbotAgentRunDelegate,
 } from '@/features/ai/agent-runtime/store-delegates';
-import type { PlanStep, AgentRuntimeRunRecord, AgentPlanSettings, AgentRuntimeExecutionPreferences } from '@/shared/contracts/agent-runtime';
+import type { PlanStep, AgentRunRecord, AgentPlanSettings, AgentRuntimeExecutionPreferences } from '@/shared/contracts/agent-runtime';
 import type { InputJsonValue } from '@/shared/contracts/json';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
@@ -93,7 +93,7 @@ async function handleRunError(runId: string, error: unknown, chatbotAgentRun: Ch
 }
 
 interface HumanWaitOptions {
-  run: AgentRuntimeRunRecord;
+  run: AgentRunRecord;
   planSteps: PlanStep[];
   stepIndex: number;
   lastError: string | null;
@@ -141,12 +141,12 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
       if (DEBUG_CHATBOT) await ErrorSystem.logWarning('Agent tables not initialized.', { service: 'agent-engine' });
       return;
     }
-    const r = await chatbotAgentRun.findUnique<AgentRuntimeRunRecord>({ where: { id: runId } });
+    const r = await chatbotAgentRun.findUnique<AgentRunRecord>({ where: { id: runId } });
     if (r === null) {
       if (DEBUG_CHATBOT) await ErrorSystem.logWarning('Run not found', { service: 'agent-engine', runId });
       return;
     }
-    const run: AgentRuntimeRunRecord = r;
+    const run: AgentRunRecord = r;
     const { browser, context: bCtx } = await initializeBrowserAndContext(run.agentBrowser, run.runHeadless, runId);
     sharedBrowser = browser; sharedContext = bCtx;
     await logAgentAudit(run.id, 'info', 'Agent loop started.');

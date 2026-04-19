@@ -22,6 +22,9 @@ const KANGUR_PAGE_CONTENT_STALE_TIME_MS = 5 * 60_000;
 const KANGUR_PAGE_CONTENT_GC_TIME_MS = 30 * 60_000;
 const KANGUR_PAGE_CONTENT_REQUEST_TIMEOUT_MS = 45_000;
 const KANGUR_PAGE_CONTENT_RECOVERABLE_RETRY_DELAY_MS = 1_000;
+type KangurPageContentQueryOptions = {
+  enabled?: boolean;
+};
 
 const resolveKangurPageContentLocale = (locale?: string | null, routeLocale?: string | null): string =>
   normalizeSiteLocale(locale ?? routeLocale);
@@ -90,7 +93,8 @@ export const prefetchKangurPageContentStore = async (
 };
 
 export const useKangurPageContentStore = (
-  locale?: string | null
+  locale?: string | null,
+  options: KangurPageContentQueryOptions = {}
 ): UseQueryResult<KangurPageContentStore, Error> => {
   const routeLocale = useLocale();
   const resolvedLocale = resolveKangurPageContentLocale(locale, routeLocale);
@@ -106,6 +110,7 @@ export const useKangurPageContentStore = (
     refetchOnMount: false,
     refetchOnReconnect: false,
     refetchOnWindowFocus: false,
+    enabled: options.enabled ?? true,
     retry: (failureCount, error) =>
       isRecoverableKangurClientFetchError(error) && failureCount < 2,
     retryDelay: KANGUR_PAGE_CONTENT_RECOVERABLE_RETRY_DELAY_MS,
@@ -114,11 +119,12 @@ export const useKangurPageContentStore = (
 
 export const useKangurPageContentEntry = (
   entryId: string | null | undefined,
-  locale?: string | null
+  locale?: string | null,
+  options: KangurPageContentQueryOptions = {}
 ): UseQueryResult<KangurPageContentStore, Error> & {
   entry: KangurPageContentEntry | null;
 } => {
-  const query = useKangurPageContentStore(locale);
+  const query = useKangurPageContentStore(locale, options);
   const entry = useMemo(
     () =>
       entryId !== null && entryId !== undefined

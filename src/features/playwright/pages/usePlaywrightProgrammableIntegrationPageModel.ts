@@ -78,7 +78,7 @@ const buildModel = ({
   importActionOptions: derived.importActionOptions,
   resultSectionRef: refs.resultSectionRef,
   importSessionPreview: derived.importSessionPreview,
-  integrationsQuery: queries.integrationsQuery as PlaywrightProgrammableIntegrationPageModel['integrationsQuery'],
+  integrationsQuery: queries.integrationsQuery,
   isBrowserBehaviorActionOwned: derived.isBrowserBehaviorActionOwned,
   listingActionOptions: derived.listingActionOptions,
   listingSessionPreview: derived.listingSessionPreview,

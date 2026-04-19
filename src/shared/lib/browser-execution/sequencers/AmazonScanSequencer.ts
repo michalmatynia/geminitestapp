@@ -318,15 +318,6 @@ export class AmazonScanSequencer extends GoogleLensSearchSequencer<AmazonScanInp
     super(context, input);
   }
 
-  protected override async emitResult(payload: Record<string, unknown>): Promise<void> {
-    await super.emitResult({
-      imageSearchProvider: this.resolveImageSearchProvider(),
-      imageSearchPageUrl: this.resolveConfiguredImageSearchPageUrl(),
-      ...this.buildGoogleVerificationDiagnosticsPayload(),
-      ...payload,
-    });
-  }
-
   // ─── Abstract implementation ────────────────────────────────────────────────
 
   async scan(): Promise<void> {

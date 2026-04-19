@@ -210,7 +210,7 @@ function ProductFormModalBody(props: {
       if (isActive() === false) return;
 
       if (translationResult !== null && (translationResult.descriptionPl ?? '') !== '') {
-        setValue('description_pl', translationResult.descriptionPl!, {
+        setValue('description_pl', translationResult.descriptionPl, {
           shouldDirty: true,
           shouldTouch: true,
           shouldValidate: true,

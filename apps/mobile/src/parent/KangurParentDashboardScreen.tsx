@@ -27,7 +27,7 @@ import {
   getAssignmentTone,
   HOME_ROUTE,
   OutlineLink,
-  ParentDashboardTabId,
+  type ParentDashboardTabId,
   PLAN_ROUTE,
   PROFILE_ROUTE,
   RESULTS_ROUTE,

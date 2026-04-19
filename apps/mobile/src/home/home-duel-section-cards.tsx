@@ -2,7 +2,7 @@ import type { KangurDuelLeaderboardEntry, KangurDuelLobbyEntry, KangurDuelLobbyP
 import { Text, View } from 'react-native';
 
 import { createKangurDuelsHref } from '../duels/duelsHref';
-import { useKangurMobileI18n, type KangurMobileLocale } from '../i18n/kangurMobileI18n';
+import { type useKangurMobileI18n, type KangurMobileLocale } from '../i18n/kangurMobileI18n';
 import { formatKangurMobileScoreOperation } from '../scores/mobileScoreSummary';
 import { OutlineLink, PrimaryButton } from './homeScreenPrimitives';
 import {

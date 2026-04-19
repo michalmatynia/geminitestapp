@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { type z } from 'zod';
 
 import type { CreateProductDraftInput } from '@/shared/contracts/products/drafts';
 import { createProductDraftSchema } from '@/shared/contracts/products/drafts';

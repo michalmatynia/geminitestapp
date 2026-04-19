@@ -71,8 +71,8 @@ export const renderMarkdownToHtml = (value: string): string => {
   const { withTokens, tokens } = preserveSpans(value);
   const lines = withTokens.split(/\r?\n/);
   let html = '';
-  let state = { inList: false, inCodeBlock: false, inTable: false };
-  let buffers = { codeLines: [] as string[], tableHeaderCells: [] as string[], tableRows: [] as string[][] };
+  const state = { inList: false, inCodeBlock: false, inTable: false };
+  const buffers = { codeLines: [] as string[], tableHeaderCells: [] as string[], tableRows: [] as string[][] };
 
   const flushTable = (): void => {
     if (!state.inTable) return;

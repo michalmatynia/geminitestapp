@@ -178,9 +178,12 @@ vi.mock('@/shared/lib/icons', () => ({
   ),
 }));
 
-vi.mock('@/shared/lib/ai-paths', () => ({
+vi.mock('@/shared/lib/ai-paths/core/constants', () => ({
   PATH_CONFIG_PREFIX: 'ai_paths:path_config:',
   PATH_INDEX_KEY: 'ai_paths:path_index',
+}));
+
+vi.mock('@/shared/lib/ai-paths/api', () => ({
   triggerButtonsApi: {
     create: (...args: unknown[]) => mockState.triggerButtonsApi.create(...args),
     update: (...args: unknown[]) => mockState.triggerButtonsApi.update(...args),
@@ -508,7 +511,10 @@ describe('AdminAiPathsTriggerButtonsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });  it('maps path usage, persists repairs, refreshes, cleans fixtures, and opens a path', async () => {
-    mockState.triggerButtonsQuery.data = [buildRow()];
+    mockState.triggerButtonsQuery.data = [
+      buildRow({ id: 'btn-1', name: 'Generate SEO' }),
+      buildRow({ id: 'btn-2', name: 'Summarize Product' }),
+    ];
     mockState.aiPathsSettingsQuery.data = [
       {
         key: PATH_INDEX_KEY,

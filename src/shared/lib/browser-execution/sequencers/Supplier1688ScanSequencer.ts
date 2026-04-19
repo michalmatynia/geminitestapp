@@ -1,17 +1,11 @@
 import type { Locator } from 'playwright';
 import {
-  createPlaywrightVerificationReviewLoopProfile,
-  runPlaywrightVerificationObservationLoopWithProfile,
   slugifyPlaywrightVerificationReviewSegment,
   type PlaywrightObservationLoopDecision,
 } from '@/features/playwright/server/ai-step-service';
 import {
-  buildProductScanVerificationDiagnosticsPayloadFromState,
-  createProductScanVerificationState,
-  createProductScanVerificationBarrierAutoInjectionConfig,
-  runProductScanVerificationBarrierReviewCaptureWithState,
+  createProductScanVerificationBarrierRuntime,
   type ProductScanVerificationObservationBase,
-  type ProductScanVerificationReview,
 } from '@/features/products/server/product-scan-ai-evaluator';
 import {
   SUPPLIER_1688_DEFAULT_SELECTOR_RUNTIME,
@@ -140,7 +134,6 @@ type SupplierVerificationLoopBaseParams = {
   stage: ScanStage;
   candidateId: string;
   candidateRank: number;
-  resolveFallbackUrl: () => string;
 };
 
 const isSelectorRuntimeRecord = (
@@ -215,68 +208,73 @@ const normalizeSupplier1688SelectorRuntime = (
   };
 };
 
-const SUPPLIER_VERIFICATION_LOOP_PROFILE =
-  createPlaywrightVerificationReviewLoopProfile<
+const SUPPLIER_VERIFICATION_RUNTIME =
+  createProductScanVerificationBarrierRuntime<
     Supplier1688VerificationSnapshotState,
     SupplierVerificationLoopBaseParams,
     SupplierVerificationObservationCaptureParams,
     Supplier1688VerificationObservation
   >({
-    key: 'supplier_verification_review',
-    subject: 'supplier verification barrier',
-    runningMessage: 'Capturing supplier verification barrier for AI review.',
-    historyArtifactKey: '1688-verification-review-history',
-    artifactKeyPrefix: '1688-verification-review',
-    group: 'supplier',
-    label: 'Inspect supplier verification barrier',
-    analysisFailureLogKey: '1688.verification.review.analysis_failed',
-    screenshotFailureLogKey: '1688.verification.review.screenshot_failed',
-    evaluationProvider: '1688',
-    resolveEvaluationStage: (params) => params.stage ?? '1688_barrier',
-    evaluationObjective:
-      'Describe the visible 1688 login, captcha, or access barrier for manual handling. If the barrier appears cleared, say so explicitly. Do not solve it.',
-    buildObservationExtra: (params) => ({
-      blocked: params.blocked,
-      barrierKind: params.barrierKind,
-      stage: params.stage,
-      barrierMessage: params.barrierMessage,
-      recoveryReason: params.recoveryReason,
-      recoveryMessage: params.recoveryMessage,
-    }),
-    buildArtifactSegments: (params) => [
-      slugifyPlaywrightVerificationReviewSegment(params.stage, 'unknown-stage'),
-      slugifyPlaywrightVerificationReviewSegment(params.candidateId, 'unknown-candidate'),
-      `rank-${String(params.candidateRank)}`,
-      `iter-${String(params.iteration)}`,
-    ],
-    buildFingerprintPartMap: (params) => ({
-      stage: params.stage ?? 'unknown_stage',
-      candidateId: params.candidateId,
-      candidateRank: params.candidateRank,
-      loopDecision: params.loopDecision,
-      blocked: params.blocked,
-      barrierKind: params.barrierKind ?? 'none',
-      recoveryReason: params.recoveryReason ?? '',
-    }),
-    detailDescriptors: SUPPLIER_VERIFICATION_REVIEW_DETAIL_DESCRIPTORS,
-    buildLoopCaptureParams: ({ iteration, decision, snapshot, stableForMs }, baseParams) => ({
-      stage: baseParams.stage,
-      candidateId: baseParams.candidateId,
-      candidateRank: baseParams.candidateRank,
-      iteration,
-      loopDecision: decision,
-      blocked: snapshot.blocked,
-      barrierKind: snapshot.state?.barrier.barrierKind ?? null,
-      barrierMessage: snapshot.state?.barrier.message ?? null,
-      stableForMs,
-      currentUrl:
-        snapshot.currentUrl ??
-        snapshot.state?.readyState?.currentUrl ??
-        snapshot.state?.barrier.currentUrl ??
-        baseParams.resolveFallbackUrl(),
-      recoveryReason: snapshot.state?.readyState?.reason ?? null,
-      recoveryMessage: snapshot.state?.readyState?.message ?? null,
-    }),
+    reviewKey: 'supplierVerificationReview',
+    observationsKey: 'supplierVerificationObservations',
+    injectorProviderLabel: '1688',
+    profile: {
+      key: 'supplier_verification_review',
+      subject: 'supplier verification barrier',
+      runningMessage: 'Capturing supplier verification barrier for AI review.',
+      historyArtifactKey: '1688-verification-review-history',
+      artifactKeyPrefix: '1688-verification-review',
+      group: 'supplier',
+      label: 'Inspect supplier verification barrier',
+      analysisFailureLogKey: '1688.verification.review.analysis_failed',
+      screenshotFailureLogKey: '1688.verification.review.screenshot_failed',
+      evaluationProvider: '1688',
+      resolveEvaluationStage: (params) => params.stage ?? '1688_barrier',
+      evaluationObjective:
+        'Describe the visible 1688 login, captcha, or access barrier for manual handling. If the barrier appears cleared, say so explicitly. Do not solve it.',
+      buildObservationExtra: (params) => ({
+        blocked: params.blocked,
+        barrierKind: params.barrierKind,
+        stage: params.stage,
+        barrierMessage: params.barrierMessage,
+        recoveryReason: params.recoveryReason,
+        recoveryMessage: params.recoveryMessage,
+      }),
+      buildArtifactSegments: (params) => [
+        slugifyPlaywrightVerificationReviewSegment(params.stage, 'unknown-stage'),
+        slugifyPlaywrightVerificationReviewSegment(params.candidateId, 'unknown-candidate'),
+        `rank-${String(params.candidateRank)}`,
+        `iter-${String(params.iteration)}`,
+      ],
+      buildFingerprintPartMap: (params) => ({
+        stage: params.stage ?? 'unknown_stage',
+        candidateId: params.candidateId,
+        candidateRank: params.candidateRank,
+        loopDecision: params.loopDecision,
+        blocked: params.blocked,
+        barrierKind: params.barrierKind ?? 'none',
+        recoveryReason: params.recoveryReason ?? '',
+      }),
+      detailDescriptors: SUPPLIER_VERIFICATION_REVIEW_DETAIL_DESCRIPTORS,
+      buildLoopCaptureParams: ({ iteration, decision, snapshot, stableForMs }, baseParams) => ({
+        stage: baseParams.stage,
+        candidateId: baseParams.candidateId,
+        candidateRank: baseParams.candidateRank,
+        iteration,
+        loopDecision: decision,
+        blocked: snapshot.blocked,
+        barrierKind: snapshot.state?.barrier.barrierKind ?? null,
+        barrierMessage: snapshot.state?.barrier.message ?? null,
+        stableForMs,
+        currentUrl:
+          snapshot.currentUrl ??
+          snapshot.state?.readyState?.currentUrl ??
+          snapshot.state?.barrier.currentUrl ??
+          null,
+        recoveryReason: snapshot.state?.readyState?.reason ?? null,
+        recoveryMessage: snapshot.state?.readyState?.message ?? null,
+      }),
+    },
   });
 
 // ─── Main sequencer ────────────────────────────────────────────────────────────
@@ -290,10 +288,9 @@ export class Supplier1688ScanSequencer extends ProductScanSequencer {
   private readonly PRICE_TEXT_PATTERN: RegExp;
   private readonly SEARCH_BODY_SIGNAL: RegExp;
   private readonly SUPPLIER_BODY_SIGNAL: RegExp;
-  private readonly supplierVerificationState = createProductScanVerificationState<
-    ProductScanVerificationReview,
-    Supplier1688VerificationObservation
-  >();
+  private readonly supplierVerification: ReturnType<
+    typeof SUPPLIER_VERIFICATION_RUNTIME.createPageSession
+  >;
 
   private get scannerStartUrl(): string {
     return this.resolve1688ImageSearchStartUrl(this.input.scanner1688StartUrl);
@@ -313,17 +310,9 @@ export class Supplier1688ScanSequencer extends ProductScanSequencer {
     this.PRICE_TEXT_PATTERN = new RegExp(this.selectorRuntime.priceTextPatternSource);
     this.SEARCH_BODY_SIGNAL = new RegExp(this.selectorRuntime.searchBodySignalPattern);
     this.SUPPLIER_BODY_SIGNAL = new RegExp(this.selectorRuntime.supplierBodySignalPattern);
-  }
-
-  protected override async emitResult(payload: Record<string, unknown>): Promise<void> {
-    await super.emitResult({
-      ...buildProductScanVerificationDiagnosticsPayloadFromState({
-        reviewKey: 'supplierVerificationReview',
-        observationsKey: 'supplierVerificationObservations',
-        state: this.supplierVerificationState,
-      }),
-      ...payload,
-    });
+    this.supplierVerification = this.createPayloadAugmentedPageSession((sessionContext) =>
+      SUPPLIER_VERIFICATION_RUNTIME.createPageSession(sessionContext)
+    );
   }
 
   // ─── Abstract implementation ─────────────────────────────────────────────────
@@ -1322,16 +1311,14 @@ export class Supplier1688ScanSequencer extends ProductScanSequencer {
     recoveryUrl: string | null
   ): Promise<CaptchaHandleResult> {
     const barrier = await this.detect1688AccessBarrier(stage);
+    const candidateVerification = this.bindSupplierVerification(stage, stepMeta);
 
     if (!barrier.blocked) {
       return { resolved: true, captchaEncountered: false, captchaRequired: false, currentUrl: barrier.currentUrl, message: null, failureCode: null };
     }
 
     if (!this.input.allowManualVerification) {
-      await this.captureSupplierVerificationObservation({
-        stage,
-        candidateId: stepMeta.candidateId,
-        candidateRank: stepMeta.candidateRank,
+      await candidateVerification.capture({
         iteration: 1,
         loopDecision: 'blocked',
         blocked: true,
@@ -1349,73 +1336,57 @@ export class Supplier1688ScanSequencer extends ProductScanSequencer {
       ? barrier.message
       : '1688 captcha verification required. Solve it in the opened browser window and the scan will continue automatically.';
 
-    const timeoutMs = typeof this.input.manualVerificationTimeoutMs === 'number'
-      ? this.input.manualVerificationTimeoutMs
-      : 240_000;
+    const timeoutMs = this.resolveManualVerificationTimeoutMs(
+      this.input.manualVerificationTimeoutMs
+    );
 
     this.log('1688.captcha.waiting', { stage, message: waitMessage, timeoutMs });
-    const loopResult =
-      await runPlaywrightVerificationObservationLoopWithProfile<
-        Supplier1688VerificationSnapshotState,
-        Supplier1688VerificationObservation,
-        SupplierVerificationLoopBaseParams,
-        SupplierVerificationObservationCaptureParams,
-        Supplier1688VerificationObservation
-      >({
-        timeoutMs,
-        intervalMs: 3_000,
-        stableClearWindowMs: 0,
-        initialSnapshot: {
-          state: {
-            barrier,
-            readyState: null,
-            recoveryReady: false,
-            reuploadRequired: false,
-          },
-          blocked: true,
-          currentUrl: barrier.currentUrl,
+    const loopResult = await candidateVerification.observeLoop({
+      timeoutMs,
+      intervalMs: 3_000,
+      stableClearWindowMs: 0,
+      initialSnapshot: {
+        state: {
+          barrier,
+          readyState: null,
+          recoveryReady: false,
+          reuploadRequired: false,
         },
-        isPageClosed: () => this.isPageClosed(),
-        wait: (ms) => this.wait(ms),
-        readSnapshot: async () => {
-          const currentBarrier = await this.detect1688AccessBarrier(stage);
-          if (currentBarrier.blocked) {
-            return {
-              state: {
-                barrier: currentBarrier,
-                readyState: null,
-                recoveryReady: false,
-                reuploadRequired: false,
-              },
-              blocked: true,
-              currentUrl: currentBarrier.currentUrl,
-            };
-          }
-
-          const readyState = await this.attempt1688PostCaptchaRecovery(stage, recoveryUrl);
-          const recoveryReady = readyState?.ready === true;
-          const reuploadRequired = readyState?.reason === 'returned_to_search_entry';
+        blocked: true,
+        currentUrl: barrier.currentUrl,
+      },
+      isPageClosed: () => this.isPageClosed(),
+      wait: (ms) => this.wait(ms),
+      readSnapshot: async () => {
+        const currentBarrier = await this.detect1688AccessBarrier(stage);
+        if (currentBarrier.blocked) {
           return {
             state: {
               barrier: currentBarrier,
-              readyState,
-              recoveryReady,
-              reuploadRequired,
+              readyState: null,
+              recoveryReady: false,
+              reuploadRequired: false,
             },
-            blocked: !(recoveryReady || reuploadRequired),
-            currentUrl: readyState?.currentUrl ?? currentBarrier.currentUrl,
+            blocked: true,
+            currentUrl: currentBarrier.currentUrl,
           };
-        },
-        profile: SUPPLIER_VERIFICATION_LOOP_PROFILE,
-        baseParams: {
-          stage,
-          candidateId: stepMeta.candidateId,
-          candidateRank: stepMeta.candidateRank,
-          resolveFallbackUrl: () => this.page.url(),
-        },
-        captureObservation: (captureParams) =>
-          this.captureSupplierVerificationObservation(captureParams),
-      });
+        }
+
+        const readyState = await this.attempt1688PostCaptchaRecovery(stage, recoveryUrl);
+        const recoveryReady = readyState?.ready === true;
+        const reuploadRequired = readyState?.reason === 'returned_to_search_entry';
+        return {
+          state: {
+            barrier: currentBarrier,
+            readyState,
+            recoveryReady,
+            reuploadRequired,
+          },
+          blocked: !(recoveryReady || reuploadRequired),
+          currentUrl: readyState?.currentUrl ?? currentBarrier.currentUrl,
+        };
+      },
+    });
 
     if (loopResult.resolved) {
       const snapshot = loopResult.finalSnapshot?.state;
@@ -1456,22 +1427,14 @@ export class Supplier1688ScanSequencer extends ProductScanSequencer {
     return { resolved: false, captchaEncountered: true, captchaRequired: true, currentUrl: this.safePageUrl() ?? '', message: '1688 captcha or barrier was not resolved within the allowed time.', failureCode: 'captcha_timeout' };
   }
 
-  private async captureSupplierVerificationObservation(
-    params: SupplierVerificationObservationCaptureParams
-  ): Promise<Supplier1688VerificationObservation | null> {
-    const currentUrl = params.currentUrl ?? this.safePageUrl();
-    return runProductScanVerificationBarrierReviewCaptureWithState({
-      profile: SUPPLIER_VERIFICATION_LOOP_PROFILE,
-      verificationState: this.supplierVerificationState,
-      params,
-      currentUrl,
-      page: this.page,
-      artifacts: this.artifacts,
-      log: this.log,
-      upsertStep: (step) => this.upsertScanStep(step),
-      injectOnEvaluation: createProductScanVerificationBarrierAutoInjectionConfig({
-        provider: '1688',
-      }),
+  protected bindSupplierVerification(
+    stage: ScanStage,
+    stepMeta: { candidateId: string; candidateRank: number }
+  ) {
+    return this.supplierVerification.bindBaseParams({
+      stage,
+      candidateId: stepMeta.candidateId,
+      candidateRank: stepMeta.candidateRank,
     });
   }
 

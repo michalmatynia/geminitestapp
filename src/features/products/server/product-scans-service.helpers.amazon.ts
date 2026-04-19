@@ -817,7 +817,7 @@ export const formatAmazonEvaluatorModelSource = (
 export const resolveAmazonEvaluationRejectionKindLabel = (
   evaluation: ProductScanAmazonEvaluation | null | undefined
 ): string | null => {
-  if (evaluation === undefined || evaluation === null || evaluation.status !== 'rejected') {
+  if (evaluation?.status !== 'rejected') {
     return null;
   }
 

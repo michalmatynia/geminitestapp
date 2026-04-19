@@ -470,7 +470,7 @@ export const runVintedBrowserListing = async ({
       tracker.start('image_upload');
       const imageUploadPlan = await resolveVintedProductImageUploadPlan(product);
       if (imageUploadPlan.localImagePaths.length > 0) {
-        const fileInput = page.locator(VINTED_IMAGE_UPLOAD_SELECTORS[0]!).first();
+        const fileInput = page.locator(VINTED_IMAGE_UPLOAD_SELECTORS[0]).first();
         if (await safeIsVisible(fileInput)) {
           await fileInput.setInputFiles(imageUploadPlan.localImagePaths);
           await page.waitForTimeout(3000); // Wait for uploads to begin

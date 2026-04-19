@@ -29,7 +29,7 @@ export default function CollapsibleMenu({
       open={isOpen}
       onOpenChange={(nextOpen: boolean) => {
         setIsOpen(nextOpen);
-        if (nextOpen && href) {
+        if (nextOpen && href !== undefined && href !== '') {
           startTransition(() => { router.push(href); });
         }
       }}

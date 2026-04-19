@@ -11,6 +11,7 @@ import {
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_COMPACT_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import { useKangurIdleReady } from '@/features/kangur/ui/hooks/useKangurIdleReady';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import {
@@ -91,10 +92,12 @@ function useKangurPriorityAssignmentsState({
   emptyLabel,
 }: KangurPriorityAssignmentsProps): KangurPriorityAssignmentsState {
   const translations = useTranslations('KangurGameWidgets');
+  const isIdleReady = useKangurIdleReady();
+  const shouldLoadPriorityAssignments = enabled && isIdleReady;
   const { entry: assignmentsContent } = useKangurPageContentEntry(PRIORITY_ASSIGNMENTS_SECTION_ID);
   const { subject, setSubject } = useKangurSubjectFocus();
   const { assignments, isLoading, error } = useKangurAssignments({
-    enabled,
+    enabled: shouldLoadPriorityAssignments,
     query: {
       includeArchived: false,
     },
@@ -124,6 +127,10 @@ function useKangurPriorityAssignmentsState({
   );
 
   if (!enabled) {
+    return { kind: 'disabled' };
+  }
+
+  if (!shouldLoadPriorityAssignments) {
     return { kind: 'disabled' };
   }
 

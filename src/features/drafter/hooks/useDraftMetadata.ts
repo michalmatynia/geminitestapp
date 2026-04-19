@@ -33,7 +33,7 @@ export const useDraftMetadata = (selectedCatalogIds: string[]) => {
         },
       };
     }),
-  }) as readonly UseQueryResult<ProductCategory[], Error>[];
+  });
 
   const tagQueries = createMultiQueryV2({
     queries: selectedCatalogIds.map((id: string) => {
@@ -52,7 +52,7 @@ export const useDraftMetadata = (selectedCatalogIds: string[]) => {
         },
       };
     }),
-  }) as readonly UseQueryResult<ProductTag[], Error>[];
+  });
 
   const parameterQueries = createMultiQueryV2({
     queries: selectedCatalogIds.map((id: string) => {
@@ -71,7 +71,7 @@ export const useDraftMetadata = (selectedCatalogIds: string[]) => {
         },
       };
     }),
-  }) as readonly UseQueryResult<ProductParameter[], Error>[];
+  });
 
   return {
     categories: readQueryData(categoryQueries),

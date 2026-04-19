@@ -577,3 +577,12 @@ export const selfCheckReviewResultSchema = z.object({
 });
 
 export type SelfCheckReviewResult = z.infer<typeof selfCheckReviewResultSchema>;
+
+export const agentVerificationSchema = z.object({
+  verdict: z.string().optional(),
+  evidence: z.array(z.string()).optional(),
+  missing: z.array(z.string()).optional(),
+  followUp: z.string().nullable().optional(),
+});
+
+export type AgentVerification = z.infer<typeof agentVerificationSchema>;

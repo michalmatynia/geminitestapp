@@ -454,7 +454,8 @@ const AuthenticatedApp = (): JSX.Element | null => {
       isBootLoading ||
       isThemeBootLoading ||
       isNavigationTransitionActive ||
-      isSyntheticKangurCapture
+      isSyntheticKangurCapture ||
+      resolvedPageKey === 'Game'
     ) {
       return;
     }
@@ -512,6 +513,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
       isThemeBootLoading ||
       isNavigationTransitionActive ||
       isSyntheticKangurCapture ||
+      resolvedPageKey === 'Game' ||
       prefetchedPageContentLocalesRef.current.has(routeLocale)
     ) {
       return;
@@ -544,6 +546,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
     isNavigationTransitionActive,
     isThemeBootLoading,
     queryClient,
+    resolvedPageKey,
     routeLocale,
   ]);
 

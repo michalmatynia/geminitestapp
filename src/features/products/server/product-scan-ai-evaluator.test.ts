@@ -38,6 +38,8 @@ import {
   cloneProductScanVerificationObservations,
   cloneProductScanVerificationReview,
   commitProductScanVerificationObservation,
+  createProductScanVerificationBarrierRuntime,
+  createProductScanVerificationBarrierReviewLoopProfile,
   createProductScanVerificationBarrierAutoInjectionConfig,
   createProductScanVerificationState,
   createProductScanVerificationBarrierEvaluationInput,
@@ -50,7 +52,6 @@ import {
   type ProductScanVerificationReview,
 } from './product-scan-ai-evaluator';
 import {
-  createPlaywrightVerificationReviewLoopProfile,
   createPlaywrightVerificationReviewProfile,
 } from '@/features/playwright/server/ai-step-service';
 
@@ -223,6 +224,509 @@ describe('product scan verification diagnostics helpers', () => {
     });
   });
 
+  it('creates a verification runtime descriptor with shared state and diagnostics helpers', () => {
+    type TestObservation = ProductScanVerificationObservationBase<'blocked'> & {
+      captchaDetected: boolean;
+    };
+
+    const runtime = createProductScanVerificationBarrierRuntime<
+      { detected: boolean },
+      { candidateId: string },
+      {
+        candidateId: string;
+        iteration: number;
+        loopDecision: 'blocked';
+        captchaDetected: boolean;
+        stableForMs: number | null;
+        currentUrl?: string | null;
+      },
+      TestObservation
+    >({
+      reviewKey: 'googleVerificationReview',
+      observationsKey: 'googleVerificationObservations',
+      profile: {
+        key: 'google_verification_review',
+        subject: 'Google verification screen',
+        runningMessage: 'Capturing Google verification screen for AI review.',
+        historyArtifactKey: 'google-verification-review-history',
+        artifactKeyPrefix: 'google-verification-review',
+        evaluationProvider: 'google_lens',
+        resolveEvaluationStage: () => 'google_captcha',
+        buildArtifactSegments: (params) => [
+          params.candidateId,
+          `iter-${String(params.iteration)}`,
+        ],
+        buildFingerprintPartMap: (params) => ({
+          candidateId: params.candidateId,
+          loopDecision: params.loopDecision,
+        }),
+        detailDescriptors: [{ label: 'Captcha detected', value: 'captchaDetected' }],
+        buildObservationExtra: (params) => ({
+          captchaDetected: params.captchaDetected,
+        }),
+        buildLoopCaptureParams: ({ iteration, stableForMs }, baseParams) => ({
+          candidateId: baseParams.candidateId,
+          iteration,
+          loopDecision: 'blocked',
+          captchaDetected: true,
+          stableForMs,
+          currentUrl: null,
+        }),
+      },
+    });
+
+    const state = runtime.createState();
+    const review: ProductScanVerificationReview = {
+      status: 'capture_only',
+      provider: 'google_lens',
+      stage: 'google_captcha',
+      currentUrl: null,
+      pageTitle: null,
+      pageTextSnippet: null,
+      challengeType: null,
+      visibleQuestion: null,
+      visibleInstructions: ['Wait'],
+      uiElements: ['captcha'],
+      pageSummary: null,
+      manualActionRequired: true,
+      confidence: null,
+      screenshotArtifactName: null,
+      htmlArtifactName: null,
+      modelId: null,
+      brainApplied: { modelId: 'gemma' },
+      error: null,
+      evaluatedAt: null,
+    };
+    const observation: TestObservation = {
+      ...review,
+      iteration: 1,
+      observedAt: '2026-04-18T00:00:00.000Z',
+      loopDecision: 'blocked',
+      stableForMs: null,
+      fingerprint: 'candidate-1::blocked',
+      captchaDetected: true,
+    };
+
+    commitProductScanVerificationObservation(state, {
+      review,
+      observation,
+    });
+
+    expect(runtime.profile.review.runtime.step.key).toBe('google_verification_review');
+    expect(runtime.buildDiagnosticsPayload(state)).toEqual({
+      googleVerificationReview: expect.objectContaining({
+        stage: 'google_captcha',
+      }),
+      googleVerificationObservations: expect.arrayContaining([
+        expect.objectContaining({
+          loopDecision: 'blocked',
+          captchaDetected: true,
+        }),
+      ]),
+    });
+  });
+
+  it('captures verification state from a page-backed runtime and resolves currentUrl lazily', async () => {
+    type TestObservation = ProductScanVerificationObservationBase<'blocked'> & {
+      captchaDetected: boolean;
+    };
+
+    const runtime = createProductScanVerificationBarrierRuntime<
+      { detected: boolean },
+      { candidateId: string },
+      {
+        candidateId: string;
+        iteration: number;
+        loopDecision: 'blocked';
+        captchaDetected: boolean;
+        stableForMs: number | null;
+        currentUrl?: string | null;
+      },
+      TestObservation
+    >({
+      reviewKey: 'googleVerificationReview',
+      observationsKey: 'googleVerificationObservations',
+      injectorProviderLabel: 'Google',
+      profile: {
+        key: 'google_verification_review',
+        subject: 'Google verification screen',
+        runningMessage: 'Capturing Google verification screen for AI review.',
+        historyArtifactKey: 'google-verification-review-history',
+        artifactKeyPrefix: 'google-verification-review',
+        screenshotFailureLogKey: 'google.verification.review.screenshot_failed',
+        evaluationProvider: 'google_lens',
+        resolveEvaluationStage: () => 'google_captcha',
+        buildArtifactSegments: (params) => [params.candidateId, `iter-${String(params.iteration)}`],
+        buildFingerprintPartMap: (params) => ({
+          candidateId: params.candidateId,
+          loopDecision: params.loopDecision,
+        }),
+        detailDescriptors: [{ label: 'Captcha detected', value: 'captchaDetected' }],
+        buildObservationExtra: (params) => ({
+          captchaDetected: params.captchaDetected,
+        }),
+        buildLoopCaptureParams: ({ iteration, stableForMs }, baseParams) => ({
+          candidateId: baseParams.candidateId,
+          iteration,
+          loopDecision: 'blocked',
+          captchaDetected: true,
+          stableForMs,
+          currentUrl: null,
+        }),
+      },
+    });
+
+    const page = {
+      url: vi.fn().mockReturnValue('https://www.google.com/sorry/index'),
+      title: vi.fn().mockResolvedValue('Before you continue'),
+      screenshot: vi.fn().mockRejectedValue(new Error('capture failed')),
+      locator: vi.fn().mockImplementation(() => ({
+        first: vi.fn().mockReturnThis(),
+        textContent: vi.fn().mockResolvedValue('Verify you are human'),
+      })),
+    } as unknown as Page;
+    const upsertStep = vi.fn();
+    const verificationState = runtime.createState();
+
+    const observation = await runtime.captureWithStateFromPage({
+      verificationState,
+      params: {
+        candidateId: 'candidate-1',
+        iteration: 1,
+        loopDecision: 'blocked',
+        captchaDetected: true,
+        stableForMs: null,
+      },
+      resolveCurrentUrl: () => 'https://www.google.com/sorry/index',
+      page,
+      log: vi.fn(),
+      upsertStep,
+    });
+
+    expect(observation).toEqual(
+      expect.objectContaining({
+        status: 'failed',
+        provider: 'google_lens',
+        stage: 'google_captcha',
+        currentUrl: 'https://www.google.com/sorry/index',
+        captchaDetected: true,
+      })
+    );
+    expect(verificationState.review).toEqual(
+      expect.objectContaining({
+        currentUrl: 'https://www.google.com/sorry/index',
+      })
+    );
+    expect(upsertStep).toHaveBeenCalledTimes(2);
+  });
+
+  it('observes a verification loop through the runtime descriptor with page-backed capture', async () => {
+    type TestObservation = ProductScanVerificationObservationBase<'blocked' | 'resolved'> & {
+      captchaDetected: boolean;
+    };
+
+    const runtime = createProductScanVerificationBarrierRuntime<
+      { detected: boolean },
+      { candidateId: string },
+      {
+        candidateId: string;
+        iteration: number;
+        loopDecision: 'blocked' | 'resolved';
+        captchaDetected: boolean;
+        stableForMs: number | null;
+        currentUrl?: string | null;
+      },
+      TestObservation
+    >({
+      reviewKey: 'googleVerificationReview',
+      observationsKey: 'googleVerificationObservations',
+      injectorProviderLabel: 'Google',
+      profile: {
+        key: 'google_verification_review',
+        subject: 'Google verification screen',
+        runningMessage: 'Capturing Google verification screen for AI review.',
+        historyArtifactKey: 'google-verification-review-history',
+        artifactKeyPrefix: 'google-verification-review',
+        screenshotFailureLogKey: 'google.verification.review.screenshot_failed',
+        evaluationProvider: 'google_lens',
+        resolveEvaluationStage: () => 'google_captcha',
+        buildArtifactSegments: (params) => [params.candidateId, `iter-${String(params.iteration)}`],
+        buildFingerprintPartMap: (params) => ({
+          candidateId: params.candidateId,
+          loopDecision: params.loopDecision,
+        }),
+        detailDescriptors: [{ label: 'Captcha detected', value: 'captchaDetected' }],
+        buildObservationExtra: (params) => ({
+          captchaDetected: params.captchaDetected,
+        }),
+        buildLoopCaptureParams: ({ iteration, decision, snapshot, stableForMs }, baseParams) => ({
+          candidateId: baseParams.candidateId,
+          iteration,
+          loopDecision: decision === 'blocked' ? 'blocked' : 'resolved',
+          captchaDetected: snapshot.blocked,
+          stableForMs,
+          currentUrl: null,
+        }),
+      },
+    });
+
+    const page = {
+      url: vi.fn().mockReturnValue('https://www.google.com/sorry/index'),
+      title: vi.fn().mockResolvedValue('Before you continue'),
+      screenshot: vi.fn().mockRejectedValue(new Error('capture failed')),
+      locator: vi.fn().mockImplementation(() => ({
+        first: vi.fn().mockReturnThis(),
+        textContent: vi.fn().mockResolvedValue('Verify you are human'),
+      })),
+    } as unknown as Page;
+    const upsertStep = vi.fn();
+    const verificationState = runtime.createState();
+
+    const result = await runtime.observeLoopWithPage({
+      timeoutMs: 5_000,
+      stableClearWindowMs: 0,
+      intervalMs: 0,
+      initialSnapshot: {
+        state: null,
+        blocked: true,
+        currentUrl: 'https://www.google.com/sorry/index',
+      },
+      isPageClosed: () => false,
+      wait: async () => {},
+      readSnapshot: async () => ({
+        state: { detected: false },
+        blocked: false,
+        currentUrl: 'https://lens.google.com/search',
+      }),
+      baseParams: {
+        candidateId: 'candidate-1',
+      },
+      verificationState,
+      resolveCurrentUrl: () => 'https://www.google.com/sorry/index',
+      page,
+      log: vi.fn(),
+      upsertStep,
+    });
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        resolved: true,
+        finalDecision: 'resolved',
+      })
+    );
+    expect(verificationState.observations).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ loopDecision: 'blocked' }),
+        expect.objectContaining({ loopDecision: 'resolved' }),
+      ])
+    );
+    expect(upsertStep).toHaveBeenCalledTimes(4);
+  });
+
+  it('binds base params into a page session for capture and diagnostics', async () => {
+    type TestObservation = ProductScanVerificationObservationBase<'blocked'> & {
+      captchaDetected: boolean;
+    };
+
+    const runtime = createProductScanVerificationBarrierRuntime<
+      { detected: boolean },
+      { candidateId: string },
+      {
+        candidateId: string;
+        iteration: number;
+        loopDecision: 'blocked';
+        captchaDetected: boolean;
+        stableForMs: number | null;
+        currentUrl?: string | null;
+      },
+      TestObservation
+    >({
+      reviewKey: 'googleVerificationReview',
+      observationsKey: 'googleVerificationObservations',
+      injectorProviderLabel: 'Google',
+      profile: {
+        key: 'google_verification_review',
+        subject: 'Google verification screen',
+        runningMessage: 'Capturing Google verification screen for AI review.',
+        historyArtifactKey: 'google-verification-review-history',
+        artifactKeyPrefix: 'google-verification-review',
+        screenshotFailureLogKey: 'google.verification.review.screenshot_failed',
+        evaluationProvider: 'google_lens',
+        resolveEvaluationStage: () => 'google_captcha',
+        buildArtifactSegments: (params) => [params.candidateId, `iter-${String(params.iteration)}`],
+        buildFingerprintPartMap: (params) => ({
+          candidateId: params.candidateId,
+          loopDecision: params.loopDecision,
+        }),
+        detailDescriptors: [{ label: 'Captcha detected', value: 'captchaDetected' }],
+        buildObservationExtra: (params) => ({
+          captchaDetected: params.captchaDetected,
+        }),
+        buildLoopCaptureParams: ({ iteration, stableForMs }, baseParams) => ({
+          candidateId: baseParams.candidateId,
+          iteration,
+          loopDecision: 'blocked',
+          captchaDetected: true,
+          stableForMs,
+          currentUrl: null,
+        }),
+      },
+    });
+
+    const page = {
+      url: vi.fn().mockReturnValue('https://www.google.com/sorry/index'),
+      title: vi.fn().mockResolvedValue('Before you continue'),
+      screenshot: vi.fn().mockRejectedValue(new Error('capture failed')),
+      locator: vi.fn().mockImplementation(() => ({
+        first: vi.fn().mockReturnThis(),
+        textContent: vi.fn().mockResolvedValue('Verify you are human'),
+      })),
+    } as unknown as Page;
+    const upsertStep = vi.fn();
+    const session = runtime.createPageSession({
+      resolveCurrentUrl: () => 'https://www.google.com/sorry/index',
+      page,
+      log: vi.fn(),
+      upsertStep,
+    });
+    const boundSession = session.bindBaseParams({
+      candidateId: 'candidate-1',
+    });
+
+    const observation = await boundSession.capture({
+      iteration: 1,
+      loopDecision: 'blocked',
+      captchaDetected: true,
+      stableForMs: null,
+    });
+
+    expect(observation).toEqual(
+      expect.objectContaining({
+        status: 'failed',
+        provider: 'google_lens',
+        stage: 'google_captcha',
+        currentUrl: 'https://www.google.com/sorry/index',
+        captchaDetected: true,
+      })
+    );
+    expect(session.buildDiagnosticsPayload()).toEqual(
+      expect.objectContaining({
+        googleVerificationReview: expect.objectContaining({
+          currentUrl: 'https://www.google.com/sorry/index',
+        }),
+        googleVerificationObservations: [
+          expect.objectContaining({ loopDecision: 'blocked' }),
+        ],
+      })
+    );
+    expect(upsertStep).toHaveBeenCalledTimes(2);
+  });
+
+  it('observes a verification loop through base params bound into a page session', async () => {
+    type TestObservation = ProductScanVerificationObservationBase<'blocked' | 'resolved'> & {
+      captchaDetected: boolean;
+    };
+
+    const runtime = createProductScanVerificationBarrierRuntime<
+      { detected: boolean },
+      { candidateId: string },
+      {
+        candidateId: string;
+        iteration: number;
+        loopDecision: 'blocked' | 'resolved';
+        captchaDetected: boolean;
+        stableForMs: number | null;
+        currentUrl?: string | null;
+      },
+      TestObservation
+    >({
+      reviewKey: 'googleVerificationReview',
+      observationsKey: 'googleVerificationObservations',
+      injectorProviderLabel: 'Google',
+      profile: {
+        key: 'google_verification_review',
+        subject: 'Google verification screen',
+        runningMessage: 'Capturing Google verification screen for AI review.',
+        historyArtifactKey: 'google-verification-review-history',
+        artifactKeyPrefix: 'google-verification-review',
+        screenshotFailureLogKey: 'google.verification.review.screenshot_failed',
+        evaluationProvider: 'google_lens',
+        resolveEvaluationStage: () => 'google_captcha',
+        buildArtifactSegments: (params) => [params.candidateId, `iter-${String(params.iteration)}`],
+        buildFingerprintPartMap: (params) => ({
+          candidateId: params.candidateId,
+          loopDecision: params.loopDecision,
+        }),
+        detailDescriptors: [{ label: 'Captcha detected', value: 'captchaDetected' }],
+        buildObservationExtra: (params) => ({
+          captchaDetected: params.captchaDetected,
+        }),
+        buildLoopCaptureParams: ({ iteration, decision, snapshot, stableForMs }, baseParams) => ({
+          candidateId: baseParams.candidateId,
+          iteration,
+          loopDecision: decision === 'blocked' ? 'blocked' : 'resolved',
+          captchaDetected: snapshot.blocked,
+          stableForMs,
+          currentUrl: null,
+        }),
+      },
+    });
+
+    const page = {
+      url: vi.fn().mockReturnValue('https://www.google.com/sorry/index'),
+      title: vi.fn().mockResolvedValue('Before you continue'),
+      screenshot: vi.fn().mockRejectedValue(new Error('capture failed')),
+      locator: vi.fn().mockImplementation(() => ({
+        first: vi.fn().mockReturnThis(),
+        textContent: vi.fn().mockResolvedValue('Verify you are human'),
+      })),
+    } as unknown as Page;
+    const upsertStep = vi.fn();
+    const session = runtime.createPageSession({
+      resolveCurrentUrl: () => 'https://www.google.com/sorry/index',
+      page,
+      log: vi.fn(),
+      upsertStep,
+    });
+    const boundSession = session.bindBaseParams({
+      candidateId: 'candidate-1',
+    });
+
+    const result = await boundSession.observeLoop({
+      timeoutMs: 5_000,
+      stableClearWindowMs: 0,
+      intervalMs: 0,
+      initialSnapshot: {
+        state: null,
+        blocked: true,
+        currentUrl: 'https://www.google.com/sorry/index',
+      },
+      isPageClosed: () => false,
+      wait: async () => {},
+      readSnapshot: async () => ({
+        state: { detected: false },
+        blocked: false,
+        currentUrl: 'https://lens.google.com/search',
+      }),
+    });
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        resolved: true,
+        finalDecision: 'resolved',
+      })
+    );
+    expect(session.buildDiagnosticsPayload()).toEqual(
+      expect.objectContaining({
+        googleVerificationObservations: expect.arrayContaining([
+          expect.objectContaining({ loopDecision: 'blocked' }),
+          expect.objectContaining({ loopDecision: 'resolved' }),
+        ]),
+      })
+    );
+    expect(upsertStep).toHaveBeenCalledTimes(4);
+  });
+
   it('clones observation arrays item by item', () => {
     const observations = [
       {
@@ -311,7 +815,7 @@ describe('product scan verification diagnostics helpers', () => {
   it('builds a verification barrier evaluation input from a shared loop profile', () => {
     expect(
       createProductScanVerificationBarrierEvaluationInputFromProfile({
-        profile: createPlaywrightVerificationReviewLoopProfile({
+        profile: createProductScanVerificationBarrierReviewLoopProfile({
           key: 'supplier_verification_review',
           subject: 'supplier verification barrier',
           runningMessage: 'Capturing supplier verification barrier for AI review.',
@@ -399,7 +903,7 @@ describe('product scan verification diagnostics helpers', () => {
 
   it('evaluates a verification barrier directly from a shared loop profile', async () => {
     const review = await evaluateProductScanVerificationBarrierFromProfile({
-      profile: createPlaywrightVerificationReviewLoopProfile({
+      profile: createProductScanVerificationBarrierReviewLoopProfile({
         key: 'supplier_verification_review',
         subject: 'supplier verification barrier',
         runningMessage: 'Capturing supplier verification barrier for AI review.',
@@ -458,7 +962,7 @@ describe('product scan verification diagnostics helpers', () => {
     const upsertStep = vi.fn();
 
     const observation = await runProductScanVerificationBarrierReviewCapture({
-      profile: createPlaywrightVerificationReviewLoopProfile<
+      profile: createProductScanVerificationBarrierReviewLoopProfile<
         { currentUrl: string },
         { fallbackUrl: string },
         {
@@ -550,7 +1054,7 @@ describe('product scan verification diagnostics helpers', () => {
     >();
 
     const observation = await runProductScanVerificationBarrierReviewCaptureWithState({
-      profile: createPlaywrightVerificationReviewLoopProfile<
+      profile: createProductScanVerificationBarrierReviewLoopProfile<
         { currentUrl: string },
         { fallbackUrl: string },
         {
@@ -665,33 +1169,49 @@ describe('createProductScanVerificationBarrierAutoInjectionConfig', () => {
     ...overrides,
   });
 
+  const makeCapture = (
+    overrides: Partial<import('@/features/playwright/server/ai-step-service').PlaywrightCapturedPageObservation> = {}
+  ) => ({
+    currentUrl: 'https://google.com/sorry',
+    pageTitle: 'Before you continue',
+    pageTextSnippet: 'Solve this puzzle to verify you are human.',
+    screenshotBase64: null,
+    screenshotArtifactName: null,
+    htmlArtifactName: null,
+    fingerprint: 'fp::test',
+    observedAt: '2026-04-18T10:00:00.000Z',
+    ...overrides,
+  });
+
   it('triggers injection when review is analyzed and manual action is required', () => {
     const config = createProductScanVerificationBarrierAutoInjectionConfig();
-    expect(config.shouldInject(makeReview())).toBe(true);
+    expect(config.shouldInject(makeReview(), makeCapture())).toBe(true);
   });
 
   it('does not trigger injection when status is not analyzed', () => {
     const config = createProductScanVerificationBarrierAutoInjectionConfig();
-    expect(config.shouldInject(makeReview({ status: 'capture_only' }))).toBe(false);
-    expect(config.shouldInject(makeReview({ status: 'failed' }))).toBe(false);
+    expect(config.shouldInject(makeReview({ status: 'capture_only' }), makeCapture())).toBe(false);
+    expect(config.shouldInject(makeReview({ status: 'failed' }), makeCapture())).toBe(false);
   });
 
   it('does not trigger injection when manualActionRequired is false', () => {
     const config = createProductScanVerificationBarrierAutoInjectionConfig();
-    expect(config.shouldInject(makeReview({ manualActionRequired: false }))).toBe(false);
-    expect(config.shouldInject(makeReview({ manualActionRequired: null }))).toBe(false);
+    expect(config.shouldInject(makeReview({ manualActionRequired: false }), makeCapture())).toBe(false);
+    expect(config.shouldInject(makeReview({ manualActionRequired: null }), makeCapture())).toBe(false);
   });
 
-  it('builds a goal string that includes provider, challenge type and visible question', () => {
+  it('builds a goal string that includes provider, challenge type, visible question, and current URL', () => {
     const config = createProductScanVerificationBarrierAutoInjectionConfig({ provider: 'Google' });
     const review = makeReview();
-    const goal = typeof config.goal === 'function' ? config.goal(review) : config.goal;
+    const capture = makeCapture({ currentUrl: 'https://google.com/sorry/index?continue=1' });
+    const goal = typeof config.goal === 'function' ? config.goal(review, capture) : config.goal;
     expect(goal).toContain('Google');
     expect(goal).toContain('checkbox');
     expect(goal).toContain('Are you human?');
+    expect(goal).toContain('https://google.com/sorry/index?continue=1');
   });
 
-  it('builds evaluator context that serialises challenge details', () => {
+  it('builds evaluator context that serialises challenge details and capture context', () => {
     const config = createProductScanVerificationBarrierAutoInjectionConfig({ provider: '1688' });
     const review = makeReview({
       provider: '1688',
@@ -700,13 +1220,19 @@ describe('createProductScanVerificationBarrierAutoInjectionConfig', () => {
       visibleInstructions: ['Drag slider to complete.'],
       uiElements: ['slider-track'],
     });
+    const capture = makeCapture({
+      currentUrl: 'https://1688.com/challenge',
+      pageTextSnippet: 'Drag the slider to verify.',
+    });
     const ctx =
       typeof config.buildEvaluatorContext === 'function'
-        ? config.buildEvaluatorContext(review)
+        ? config.buildEvaluatorContext(review, capture)
         : '';
     expect(ctx).toContain('slider');
     expect(ctx).toContain('Drag slider to complete.');
     expect(ctx).toContain('slider-track');
+    expect(ctx).toContain('https://1688.com/challenge');
+    expect(ctx).toContain('Drag the slider to verify.');
   });
 
   it('uses the provided maxIterations and enables re-evaluation after injection', () => {

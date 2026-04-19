@@ -7,7 +7,7 @@ import { createKangurDuelsHref } from '../duels/duelsHref';
 import type { UseKangurMobileLearnerDuelsSummaryResult } from '../duels/useKangurMobileLearnerDuelsSummary';
 import {
   getKangurMobileLocaleTag,
-  useKangurMobileI18n,
+  type useKangurMobileI18n,
 } from '../i18n/kangurMobileI18n';
 import {
   KangurMobileActionButton as ActionButton,
@@ -17,12 +17,12 @@ import {
   KangurMobilePendingActionButton,
   KangurMobilePill as Pill,
 } from '../shared/KangurMobileUi';
-import { useKangurMobileLessonCheckpoints } from './useKangurMobileLessonCheckpoints';
-import { useKangurMobileLessonsAssignments } from './useKangurMobileLessonsAssignments';
-import { useKangurMobileLessonsBadges } from './useKangurMobileLessonsBadges';
-import { useKangurMobileLessonsLessonMastery } from './useKangurMobileLessonsLessonMastery';
-import { useKangurMobileLessonsRecentResults } from './useKangurMobileLessonsRecentResults';
-import { useKangurMobileLessons } from './useKangurMobileLessons';
+import { type useKangurMobileLessonCheckpoints } from './useKangurMobileLessonCheckpoints';
+import { type useKangurMobileLessonsAssignments } from './useKangurMobileLessonsAssignments';
+import { type useKangurMobileLessonsBadges } from './useKangurMobileLessonsBadges';
+import { type useKangurMobileLessonsLessonMastery } from './useKangurMobileLessonsLessonMastery';
+import { type useKangurMobileLessonsRecentResults } from './useKangurMobileLessonsRecentResults';
+import { type useKangurMobileLessons } from './useKangurMobileLessons';
 import {
   getMasteryTone,
   renderLessonPracticeLink,

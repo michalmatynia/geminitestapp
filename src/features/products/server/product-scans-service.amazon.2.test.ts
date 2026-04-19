@@ -42,6 +42,11 @@ vi.mock('@/shared/lib/files/runtime-fs', () => ({
   }),
 }));
 
+vi.mock('@/features/playwright/server/engine-artifact-reader', () => ({
+  readPlaywrightEngineArtifact: (...args: unknown[]) =>
+    mocks.readPlaywrightEngineArtifactMock(...args),
+}));
+
 vi.mock('@/features/playwright/server', () => ({
   buildPlaywrightEngineRunFailureMeta: (...args: unknown[]) =>
     mocks.buildPlaywrightEngineRunFailureMetaMock(...args),

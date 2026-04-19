@@ -5,13 +5,19 @@ import path from 'node:path';
 import { z } from 'zod';
 
 import {
+  createPlaywrightVerificationReviewLoopProfile,
   type PlaywrightVerificationCaptureParamsBase,
   type PlaywrightVerificationInjectionConfig,
   type PlaywrightVerificationObservationLike,
+  type PlaywrightObservationLoopResult,
+  type PlaywrightObservationLoopSnapshot,
   type PlaywrightVerificationReviewLoopProfile,
+  type PlaywrightVerificationReviewLoopProfileOptions,
   type PlaywrightVerificationReviewProfile,
+  type PlaywrightVerificationObservationLoopWithProfileOptions,
   evaluateStepWithAI,
   evaluateStructuredPlaywrightScreenshotWithAI,
+  runPlaywrightVerificationObservationLoopWithProfile,
   runPlaywrightVerificationReviewCapture,
   type RunPlaywrightVerificationReviewCaptureOptions,
 } from '@/features/playwright/server/ai-step-service';
@@ -19,7 +25,7 @@ import type { PlaywrightCapturedPageObservation } from '@/features/playwright/se
 import {
   readPlaywrightEngineArtifact,
   type PlaywrightEngineRunRecord,
-} from '@/features/playwright/server';
+} from '@/features/playwright/server/engine-artifact-reader';
 import type {
   ProductScanAmazonMismatchLabel,
   ProductScanAmazonRejectionCategory,
@@ -362,6 +368,376 @@ export const buildProductScanVerificationDiagnosticsPayloadFromState = <
     observations: options.state.observations,
   });
 
+export const createProductScanVerificationBarrierReviewLoopProfile = <
+  TState,
+  TBaseParams,
+  TParams extends PlaywrightVerificationCaptureParamsBase,
+  TObservation extends ProductScanVerificationObservationBase,
+  TExtra extends object = Record<never, never>,
+>(
+  options: PlaywrightVerificationReviewLoopProfileOptions<
+    TState,
+    TBaseParams,
+    TParams,
+    TObservation,
+    TExtra
+  >
+): PlaywrightVerificationReviewLoopProfile<
+  TState,
+  TBaseParams,
+  TParams,
+  TObservation,
+  TExtra
+> => createPlaywrightVerificationReviewLoopProfile(options);
+
+export type ProductScanVerificationBarrierRuntime<
+  TState,
+  TBaseParams,
+  TParams extends PlaywrightVerificationCaptureParamsBase,
+  TObservation extends ProductScanVerificationObservationBase,
+  TExtra extends object = Record<never, never>,
+> = {
+  profile: PlaywrightVerificationReviewLoopProfile<
+    TState,
+    TBaseParams,
+    TParams,
+    TObservation,
+    TExtra
+  >;
+  createState: () => ProductScanVerificationState<
+    ProductScanVerificationReview,
+    TObservation
+  >;
+  buildDiagnosticsPayload: (
+    state: ProductScanVerificationState<ProductScanVerificationReview, TObservation>
+  ) => Record<string, unknown>;
+  captureWithState: (
+    options: ProductScanVerificationBarrierCaptureWithStateOptions<
+      TState,
+      TBaseParams,
+      TParams,
+      TObservation,
+      TExtra
+    >
+  ) => Promise<TObservation | null>;
+  captureWithStateFromPage: (
+    options: ProductScanVerificationBarrierCaptureWithStateFromPageOptions<
+      TState,
+      TBaseParams,
+      TParams,
+      TObservation,
+      TExtra
+    >
+  ) => Promise<TObservation | null>;
+  observeLoopWithPage: (
+    options: ProductScanVerificationBarrierObserveLoopWithPageOptions<
+      TState,
+      TBaseParams,
+      TParams,
+      TObservation,
+      TExtra
+    >
+  ) => Promise<PlaywrightObservationLoopResult<TState, TObservation>>;
+  createPageSession: (
+    options: ProductScanVerificationBarrierPageSessionContext<
+      TState,
+      TBaseParams,
+      TParams,
+      TObservation,
+      TExtra
+    >
+  ) => ProductScanVerificationBarrierPageSession<
+    TState,
+    TBaseParams,
+    TParams,
+    TObservation,
+    TExtra
+  >;
+};
+
+export type ProductScanVerificationBarrierCaptureWithStateOptions<
+  TState,
+  TBaseParams,
+  TParams extends PlaywrightVerificationCaptureParamsBase,
+  TObservation extends ProductScanVerificationObservationBase,
+  TExtra extends object = Record<never, never>,
+> = Omit<
+  RunProductScanVerificationBarrierReviewCaptureWithStateOptions<
+    TState,
+    TBaseParams,
+    TParams,
+    TObservation,
+    TExtra
+  >,
+  'profile' | 'injectOnEvaluation'
+>;
+
+export type ProductScanVerificationBarrierCaptureWithStateFromPageOptions<
+  TState,
+  TBaseParams,
+  TParams extends PlaywrightVerificationCaptureParamsBase,
+  TObservation extends ProductScanVerificationObservationBase,
+  TExtra extends object = Record<never, never>,
+> = Omit<
+  RunProductScanVerificationBarrierReviewCaptureWithStateOptions<
+    TState,
+    TBaseParams,
+    TParams,
+    TObservation,
+    TExtra
+  >,
+  'profile' | 'injectOnEvaluation' | 'currentUrl'
+> & {
+  resolveCurrentUrl?: (() => string | null) | null;
+};
+
+export type ProductScanVerificationBarrierObserveLoopWithPageOptions<
+  TState,
+  TBaseParams,
+  TParams extends PlaywrightVerificationCaptureParamsBase,
+  TObservation extends ProductScanVerificationObservationBase,
+  TExtra extends object = Record<never, never>,
+> = Omit<
+  PlaywrightVerificationObservationLoopWithProfileOptions<
+    TState,
+    TObservation,
+    TBaseParams,
+    TParams,
+    TObservation,
+    TExtra
+  >,
+  'profile' | 'captureObservation'
+> &
+  Omit<
+    RunProductScanVerificationBarrierReviewCaptureWithStateOptions<
+      TState,
+      TBaseParams,
+      TParams,
+      TObservation,
+      TExtra
+    >,
+    'profile' | 'injectOnEvaluation' | 'params' | 'currentUrl'
+  > & {
+    verificationState: ProductScanVerificationState<
+      ProductScanVerificationReview,
+      TObservation
+    >;
+    resolveCurrentUrl?: (() => string | null) | null;
+  };
+
+export type ProductScanVerificationBarrierPageSessionContext<
+  TState,
+  TBaseParams,
+  TParams extends PlaywrightVerificationCaptureParamsBase,
+  TObservation extends ProductScanVerificationObservationBase,
+  TExtra extends object = Record<never, never>,
+> = Omit<
+  ProductScanVerificationBarrierCaptureWithStateFromPageOptions<
+    TState,
+    TBaseParams,
+    TParams,
+    TObservation,
+    TExtra
+  >,
+  'verificationState' | 'params'
+>;
+
+export type ProductScanVerificationBarrierPageSession<
+  TState,
+  TBaseParams,
+  TParams extends PlaywrightVerificationCaptureParamsBase,
+  TObservation extends ProductScanVerificationObservationBase,
+  TExtra extends object = Record<never, never>,
+> = {
+  state: ProductScanVerificationState<ProductScanVerificationReview, TObservation>;
+  buildDiagnosticsPayload: () => Record<string, unknown>;
+  augmentPayload: (payload: Record<string, unknown>) => Record<string, unknown>;
+  capture: (options: { params: TParams }) => Promise<TObservation | null>;
+  observeLoop: (
+    options: Omit<
+      ProductScanVerificationBarrierObserveLoopWithPageOptions<
+        TState,
+        TBaseParams,
+        TParams,
+        TObservation,
+        TExtra
+      >,
+      'verificationState' | 'resolveCurrentUrl' | 'page' | 'artifacts' | 'log' | 'upsertStep'
+    >
+  ) => Promise<PlaywrightObservationLoopResult<TState, TObservation>>;
+  bindBaseParams: (
+    baseParams: TBaseParams
+  ) => ProductScanVerificationBarrierBoundPageSession<
+    TState,
+    TBaseParams,
+    TParams,
+    TObservation,
+    TExtra
+  >;
+};
+
+export type ProductScanVerificationBarrierBoundPageSession<
+  TState,
+  TBaseParams,
+  TParams extends PlaywrightVerificationCaptureParamsBase,
+  TObservation extends ProductScanVerificationObservationBase,
+  TExtra extends object = Record<never, never>,
+> = {
+  capture: (
+    params: Omit<TParams, keyof TBaseParams>
+  ) => Promise<TObservation | null>;
+  observeLoop: (
+    options: Omit<
+      ProductScanVerificationBarrierObserveLoopWithPageOptions<
+        TState,
+        TBaseParams,
+        TParams,
+        TObservation,
+        TExtra
+      >,
+      | 'verificationState'
+      | 'resolveCurrentUrl'
+      | 'page'
+      | 'artifacts'
+      | 'log'
+      | 'upsertStep'
+      | 'baseParams'
+    >
+  ) => Promise<PlaywrightObservationLoopResult<TState, TObservation>>;
+};
+
+export const createProductScanVerificationBarrierRuntime = <
+  TState,
+  TBaseParams,
+  TParams extends PlaywrightVerificationCaptureParamsBase,
+  TObservation extends ProductScanVerificationObservationBase,
+  TExtra extends object = Record<never, never>,
+>(options: {
+  reviewKey: string;
+  observationsKey: string;
+  injectorProviderLabel?: string | null;
+  profile: PlaywrightVerificationReviewLoopProfileOptions<
+    TState,
+    TBaseParams,
+    TParams,
+    TObservation,
+    TExtra
+  >;
+}): ProductScanVerificationBarrierRuntime<
+  TState,
+  TBaseParams,
+  TParams,
+  TObservation,
+  TExtra
+> => {
+  const profile = createProductScanVerificationBarrierReviewLoopProfile(options.profile);
+  const runtime: ProductScanVerificationBarrierRuntime<
+    TState,
+    TBaseParams,
+    TParams,
+    TObservation,
+    TExtra
+  > = {
+    profile,
+    createState: () =>
+      createProductScanVerificationState<ProductScanVerificationReview, TObservation>(),
+    buildDiagnosticsPayload: (state) =>
+      buildProductScanVerificationDiagnosticsPayloadFromState({
+        reviewKey: options.reviewKey,
+        observationsKey: options.observationsKey,
+        state,
+      }),
+    captureWithState: (captureOptions) =>
+      runProductScanVerificationBarrierReviewCaptureWithState({
+        ...captureOptions,
+        profile,
+        injectOnEvaluation: createProductScanVerificationBarrierAutoInjectionConfig({
+          provider: options.injectorProviderLabel ?? undefined,
+        }),
+      }),
+    captureWithStateFromPage: (captureOptions) =>
+      runProductScanVerificationBarrierReviewCaptureWithState({
+        ...captureOptions,
+        currentUrl:
+          ('currentUrl' in captureOptions.params &&
+          typeof captureOptions.params.currentUrl === 'string'
+            ? captureOptions.params.currentUrl
+            : captureOptions.resolveCurrentUrl?.()) ?? null,
+        profile,
+        injectOnEvaluation: createProductScanVerificationBarrierAutoInjectionConfig({
+          provider: options.injectorProviderLabel ?? undefined,
+        }),
+      }),
+  };
+  runtime.observeLoopWithPage = (loopOptions) =>
+    runPlaywrightVerificationObservationLoopWithProfile({
+      timeoutMs: loopOptions.timeoutMs,
+      stableClearWindowMs: loopOptions.stableClearWindowMs,
+      intervalMs: loopOptions.intervalMs,
+      initialSnapshot: loopOptions.initialSnapshot,
+      isPageClosed: loopOptions.isPageClosed,
+      wait: loopOptions.wait,
+      readSnapshot: loopOptions.readSnapshot,
+      profile,
+      baseParams: loopOptions.baseParams,
+      captureObservation: (params) =>
+        runtime.captureWithStateFromPage({
+          verificationState: loopOptions.verificationState,
+          params,
+          resolveCurrentUrl: loopOptions.resolveCurrentUrl,
+          page: loopOptions.page,
+          artifacts: loopOptions.artifacts,
+          log: loopOptions.log,
+          upsertStep: loopOptions.upsertStep,
+        }),
+    });
+  runtime.createPageSession = (sessionOptions) => {
+    const state = runtime.createState();
+    const pageSession: ProductScanVerificationBarrierPageSession<
+      TState,
+      TBaseParams,
+      TParams,
+      TObservation,
+      TExtra
+    > = {
+      state,
+      buildDiagnosticsPayload: () => runtime.buildDiagnosticsPayload(state),
+      augmentPayload: (payload) => ({
+        ...runtime.buildDiagnosticsPayload(state),
+        ...payload,
+      }),
+      capture: ({ params }) =>
+        runtime.captureWithStateFromPage({
+          ...sessionOptions,
+          verificationState: state,
+          params,
+        }),
+      observeLoop: (loopOptions) =>
+        runtime.observeLoopWithPage({
+          ...loopOptions,
+          ...sessionOptions,
+          verificationState: state,
+        }),
+      bindBaseParams: (baseParams) => ({
+        capture: (params) =>
+          pageSession.capture({
+            params: {
+              ...baseParams,
+              ...params,
+            } as TParams,
+          }),
+        observeLoop: (loopOptions) =>
+          pageSession.observeLoop({
+            ...loopOptions,
+            baseParams,
+          }),
+      }),
+    };
+    return pageSession;
+  };
+  return runtime;
+};
+
 export type ProductScanVerificationBarrierEvaluationInput = {
   provider: string;
   stage: string;
@@ -571,10 +947,13 @@ export const createProductScanVerificationBarrierAutoInjectionConfig = (options?
 }): PlaywrightVerificationInjectionConfig<ProductScanVerificationReview> => ({
   shouldInject: (review) =>
     review.status === 'analyzed' && review.manualActionRequired === true,
-  goal: (review) => {
+  goal: (review, capture) => {
     const parts: string[] = [];
     const providerLabel = options?.provider ? `${options.provider} ` : '';
     parts.push(`Solve the ${providerLabel}verification challenge visible on the page.`);
+    if (capture.currentUrl) {
+      parts.push(`Current URL: ${capture.currentUrl}.`);
+    }
     if (review.challengeType) {
       parts.push(`Challenge type: ${review.challengeType}.`);
     }
@@ -583,10 +962,11 @@ export const createProductScanVerificationBarrierAutoInjectionConfig = (options?
     }
     return parts.join(' ');
   },
-  buildEvaluatorContext: (review) => {
+  buildEvaluatorContext: (review, capture) => {
     const lines: string[] = [
       `Provider: ${review.provider}`,
       `Stage: ${review.stage}`,
+      `Current URL: ${capture.currentUrl ?? 'unknown'}`,
       `Challenge type: ${review.challengeType ?? 'unknown'}`,
       `Manual action required: ${String(review.manualActionRequired ?? 'unknown')}`,
     ];
@@ -601,6 +981,9 @@ export const createProductScanVerificationBarrierAutoInjectionConfig = (options?
     }
     if (review.pageSummary) {
       lines.push(`Page summary: ${review.pageSummary}`);
+    }
+    if (capture.pageTextSnippet) {
+      lines.push(`Page text: ${capture.pageTextSnippet.slice(0, 500)}`);
     }
     return lines.join('\n');
   },
@@ -1110,7 +1493,7 @@ const resolveArtifactFileName = (
   if (artifact === undefined || artifact === null || (artifact.path ?? '') === '') {
     return null;
   }
-  const fileName = path.basename(artifact.path!);
+  const fileName = path.basename(artifact.path);
   return fileName.trim().length > 0 ? fileName : null;
 };
 

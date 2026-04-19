@@ -17,33 +17,38 @@ import {
   type Supplier1688ScanInput,
 } from '../sequencers/Supplier1688ScanSequencer';
 
-const makeDefaultVerificationReview = () => ({
-  status: 'analyzed' as const,
-  provider: 'google_lens',
-  stage: 'google_captcha',
-  currentUrl: 'https://www.google.com/sorry/index',
-  pageTitle: null,
-  pageTextSnippet: null,
-  challengeType: 'captcha',
-  visibleQuestion: 'Verify you are human',
-  visibleInstructions: [],
-  uiElements: ['captcha form'],
-  pageSummary: 'Verification barrier detected.',
-  manualActionRequired: true,
-  confidence: 0.9,
-  screenshotArtifactName: 'google-verification-review.png',
-  htmlArtifactName: 'google-verification-review.html',
-  modelId: 'gemma',
-  brainApplied: { capability: 'playwright.ai_evaluator_step' },
-  error: null,
-  evaluatedAt: '2026-04-18T00:00:00.000Z',
-});
+const { makeDefaultVerificationReview, mocks } = vi.hoisted(() => {
+  const makeDefaultVerificationReview = () => ({
+    status: 'analyzed' as const,
+    provider: 'google_lens',
+    stage: 'google_captcha',
+    currentUrl: 'https://www.google.com/sorry/index',
+    pageTitle: null,
+    pageTextSnippet: null,
+    challengeType: 'captcha',
+    visibleQuestion: 'Verify you are human',
+    visibleInstructions: [],
+    uiElements: ['captcha form'],
+    pageSummary: 'Verification barrier detected.',
+    manualActionRequired: true,
+    confidence: 0.9,
+    screenshotArtifactName: 'google-verification-review.png',
+    htmlArtifactName: 'google-verification-review.html',
+    modelId: 'gemma',
+    brainApplied: { capability: 'playwright.ai_evaluator_step' },
+    error: null,
+    evaluatedAt: '2026-04-18T00:00:00.000Z',
+  });
 
-const mocks = {
-  evaluateProductScanVerificationBarrier: vi
-    .fn()
-    .mockResolvedValue(makeDefaultVerificationReview()),
-};
+  return {
+    makeDefaultVerificationReview,
+    mocks: {
+      evaluateProductScanVerificationBarrier: vi
+        .fn()
+        .mockResolvedValue(makeDefaultVerificationReview()),
+    },
+  };
+});
 
 vi.mock('@/features/products/server/product-scan-ai-evaluator', async () => {
   const actual = await vi.importActual<typeof import('@/features/products/server/product-scan-ai-evaluator')>(
@@ -55,14 +60,184 @@ vi.mock('@/features/products/server/product-scan-ai-evaluator', async () => {
 
   return {
     ...actual,
-    evaluateProductScanVerificationBarrier: (...args: unknown[]) =>
-      mocks.evaluateProductScanVerificationBarrier(...args),
-    evaluateProductScanVerificationBarrierFromProfile: (options: Parameters<
-      typeof actual.evaluateProductScanVerificationBarrierFromProfile
-    >[0]) =>
-      mocks.evaluateProductScanVerificationBarrier(
-        actual.createProductScanVerificationBarrierEvaluationInputFromProfile(options)
-      ),
+    createProductScanVerificationBarrierAutoInjectionConfig: () => ({
+      shouldInject: () => false,
+      goal: 'No-op verification injection',
+      maxIterations: 0,
+    }),
+    createProductScanVerificationBarrierRuntime: (options: Parameters<
+      typeof actual.createProductScanVerificationBarrierRuntime
+    >[0]) => {
+      const runtime = actual.createProductScanVerificationBarrierRuntime(options);
+      const mockedRuntime = {
+        ...runtime,
+        captureWithState: (captureOptions: Parameters<typeof runtime.captureWithState>[0]) =>
+          aiStep.runPlaywrightVerificationReviewCapture({
+            ...captureOptions,
+            profile: runtime.profile.review,
+            previousObservation: actual.getLastProductScanVerificationObservation(
+              captureOptions.verificationState
+            ),
+            evaluate: (capture, params) =>
+              mocks.evaluateProductScanVerificationBarrier(
+                actual.createProductScanVerificationBarrierEvaluationInputFromProfile({
+                  profile: runtime.profile,
+                  params,
+                  capture,
+                })
+              ),
+            commitObservation: ({ review, observation }) =>
+              actual.commitProductScanVerificationObservation(
+                captureOptions.verificationState,
+                {
+                  review,
+                  observation,
+                }
+              ),
+          }),
+        captureWithStateFromPage: (
+          captureOptions: Parameters<typeof runtime.captureWithStateFromPage>[0]
+        ) =>
+          aiStep.runPlaywrightVerificationReviewCapture({
+            ...captureOptions,
+            currentUrl:
+              ('currentUrl' in captureOptions.params &&
+              typeof captureOptions.params.currentUrl === 'string'
+                ? captureOptions.params.currentUrl
+                : captureOptions.resolveCurrentUrl?.()) ?? null,
+            profile: runtime.profile.review,
+            previousObservation: actual.getLastProductScanVerificationObservation(
+              captureOptions.verificationState
+            ),
+            evaluate: (capture, params) =>
+              mocks.evaluateProductScanVerificationBarrier(
+                actual.createProductScanVerificationBarrierEvaluationInputFromProfile({
+                  profile: runtime.profile,
+                  params,
+                  capture,
+                })
+              ),
+            commitObservation: ({ review, observation }) =>
+              actual.commitProductScanVerificationObservation(
+                captureOptions.verificationState,
+                {
+                  review,
+                  observation,
+                }
+              ),
+          }),
+        observeLoopWithPage: (loopOptions: Parameters<typeof runtime.observeLoopWithPage>[0]) =>
+          aiStep.runPlaywrightVerificationObservationLoopWithProfile({
+            timeoutMs: loopOptions.timeoutMs,
+            stableClearWindowMs: loopOptions.stableClearWindowMs,
+            intervalMs: loopOptions.intervalMs,
+            initialSnapshot: loopOptions.initialSnapshot,
+            isPageClosed: loopOptions.isPageClosed,
+            wait: loopOptions.wait,
+            readSnapshot: loopOptions.readSnapshot,
+            profile: runtime.profile,
+            baseParams: loopOptions.baseParams,
+            captureObservation: (params) =>
+              aiStep.runPlaywrightVerificationReviewCapture({
+                verificationState: loopOptions.verificationState,
+                params,
+                currentUrl:
+                  ('currentUrl' in params && typeof params.currentUrl === 'string'
+                    ? params.currentUrl
+                    : loopOptions.resolveCurrentUrl?.()) ?? null,
+                page: loopOptions.page,
+                artifacts: loopOptions.artifacts,
+                log: loopOptions.log,
+                upsertStep: loopOptions.upsertStep,
+                profile: runtime.profile.review,
+                previousObservation: actual.getLastProductScanVerificationObservation(
+                  loopOptions.verificationState
+                ),
+                evaluate: (capture, nextParams) =>
+                  mocks.evaluateProductScanVerificationBarrier(
+                    actual.createProductScanVerificationBarrierEvaluationInputFromProfile({
+                      profile: runtime.profile,
+                      params: nextParams,
+                      capture,
+                    })
+                  ),
+                commitObservation: ({ review, observation }) =>
+                  actual.commitProductScanVerificationObservation(
+                    loopOptions.verificationState,
+                    {
+                      review,
+                      observation,
+                    }
+                  ),
+              }),
+          }),
+      };
+      return {
+        ...mockedRuntime,
+        createPageSession: (
+          sessionOptions: Parameters<typeof runtime.createPageSession>[0]
+        ) => {
+          const verificationState = mockedRuntime.createState();
+          return {
+            state: verificationState,
+            buildDiagnosticsPayload: () =>
+              mockedRuntime.buildDiagnosticsPayload(verificationState),
+            augmentPayload: (payload: Record<string, unknown>) => ({
+              ...mockedRuntime.buildDiagnosticsPayload(verificationState),
+              ...payload,
+            }),
+            capture: (captureOptions: {
+              params: Parameters<typeof mockedRuntime.captureWithStateFromPage>[0]['params'];
+            }) =>
+              mockedRuntime.captureWithStateFromPage({
+                ...sessionOptions,
+                verificationState,
+                params: captureOptions.params,
+              }),
+            observeLoop: (
+              loopOptions: Omit<
+                Parameters<typeof mockedRuntime.observeLoopWithPage>[0],
+                'verificationState' | 'resolveCurrentUrl' | 'page' | 'artifacts' | 'log' | 'upsertStep'
+              >
+            ) =>
+              mockedRuntime.observeLoopWithPage({
+                ...loopOptions,
+                ...sessionOptions,
+                verificationState,
+              }),
+            bindBaseParams: (baseParams: Record<string, unknown>) => ({
+              capture: (params: Record<string, unknown>) =>
+                mockedRuntime.captureWithStateFromPage({
+                  ...sessionOptions,
+                  verificationState,
+                  params: {
+                    ...baseParams,
+                    ...params,
+                  },
+                }),
+              observeLoop: (
+                loopOptions: Omit<
+                  Parameters<typeof mockedRuntime.observeLoopWithPage>[0],
+                  | 'verificationState'
+                  | 'resolveCurrentUrl'
+                  | 'page'
+                  | 'artifacts'
+                  | 'log'
+                  | 'upsertStep'
+                  | 'baseParams'
+                >
+              ) =>
+                mockedRuntime.observeLoopWithPage({
+                  ...loopOptions,
+                  ...sessionOptions,
+                  verificationState,
+                  baseParams,
+                }),
+            }),
+          };
+        },
+      };
+    },
     runProductScanVerificationBarrierReviewCapture: (options: Parameters<
       typeof actual.runProductScanVerificationBarrierReviewCapture
     >[0]) =>
@@ -72,7 +247,7 @@ vi.mock('@/features/products/server/product-scan-ai-evaluator', async () => {
         evaluate: (capture, params) =>
           mocks.evaluateProductScanVerificationBarrier(
             actual.createProductScanVerificationBarrierEvaluationInputFromProfile({
-              profile: options.profile.review,
+              profile: options.profile,
               params,
               capture,
             })
@@ -131,6 +306,7 @@ function makeMockPage(overrides: Partial<Page> = {}): Page {
     isClosed: vi.fn().mockReturnValue(false),
     goto: vi.fn().mockResolvedValue(undefined),
     reload: vi.fn().mockResolvedValue(undefined),
+    content: vi.fn().mockResolvedValue('<html><body></body></html>'),
     title: vi.fn().mockResolvedValue(''),
     waitForLoadState: vi.fn().mockResolvedValue(undefined),
     screenshot: vi.fn().mockResolvedValue(Buffer.from('mock-screenshot')),
@@ -238,6 +414,138 @@ describe('ProductScanSequencer', () => {
     await seq.scan();
 
     expect(ctx.emit).toHaveBeenCalledWith('result', expect.objectContaining({ steps: expect.any(Array) }));
+  });
+
+  it('createPageSession binds the shared page, artifacts, logger, URL resolver, and step upsert', () => {
+    const ctx = makeContext({
+      url: vi.fn().mockReturnValue('https://example.com/current'),
+    });
+
+    class SessionSeq extends ProductScanSequencer {
+      async scan(): Promise<void> {}
+
+      buildSession() {
+        return this.createPageSession((sessionContext) => sessionContext);
+      }
+    }
+
+    const seq = new SessionSeq(ctx);
+    const session = seq.buildSession();
+    const step = {
+      key: 'google_captcha',
+      status: 'running' as const,
+      candidateId: 'img-1',
+      candidateRank: 1,
+      message: 'Waiting for captcha.',
+      url: 'https://example.com/current',
+    };
+
+    session.upsertStep(step);
+
+    expect(session.page).toBe(ctx.page);
+    expect(session.artifacts).toBe(ctx.artifacts);
+    expect(session.log).toBe(ctx.log);
+    expect(session.resolveCurrentUrl()).toBe('https://example.com/current');
+    expect((seq as any).scanSteps).toEqual([
+      expect.objectContaining({
+        key: 'google_captcha',
+        status: 'running',
+        candidateId: 'img-1',
+      }),
+    ]);
+  });
+
+  it('createPayloadAugmentedPageSession registers the session payload augmenter', async () => {
+    const ctx = makeContext();
+
+    class AugmentedSessionSeq extends ProductScanSequencer {
+      async scan(): Promise<void> {
+        this.createPayloadAugmentedPageSession(() => ({
+          augmentPayload: (payload) => ({
+            ...payload,
+            augmentedBySession: true,
+            title: 'Session-augmented product',
+          }),
+        }));
+        await this.emitResult({
+          status: 'completed',
+          currentUrl: 'https://example.com/item',
+          imageUrls: ['https://example.com/image.jpg'],
+        });
+      }
+    }
+
+    const seq = new AugmentedSessionSeq(ctx);
+    await seq.scan();
+
+    expect(ctx.emit).toHaveBeenCalledWith(
+      'result',
+      expect.objectContaining({
+        augmentedBySession: true,
+        title: 'Session-augmented product',
+        scrapedItems: expect.arrayContaining([
+          expect.objectContaining({
+            title: 'Session-augmented product',
+          }),
+        ]),
+      })
+    );
+  });
+
+  it('resolveManualVerificationTimeoutMs normalizes positive values and falls back otherwise', () => {
+    const ctx = makeContext();
+
+    class TimeoutSeq extends ProductScanSequencer {
+      async scan(): Promise<void> {}
+
+      resolveTimeout(value: unknown, fallbackMs?: number) {
+        return this.resolveManualVerificationTimeoutMs(value, fallbackMs);
+      }
+    }
+
+    const seq = new TimeoutSeq(ctx);
+
+    expect(seq.resolveTimeout(180_500)).toBe(180_500);
+    expect(seq.resolveTimeout(180_500.8)).toBe(180_500);
+    expect(seq.resolveTimeout(0)).toBe(240_000);
+    expect(seq.resolveTimeout(-1)).toBe(240_000);
+    expect(seq.resolveTimeout(null)).toBe(240_000);
+    expect(seq.resolveTimeout(undefined, 90_000)).toBe(90_000);
+  });
+
+  it('emitResult applies registered result payload augmenters before adding scraped items', async () => {
+    const ctx = makeContext();
+
+    class AugmentingSeq extends ProductScanSequencer {
+      async scan(): Promise<void> {
+        this.registerResultPayloadAugmenter((payload) => ({
+          ...payload,
+          augmented: true,
+          title: 'Augmented product',
+        }));
+        await this.emitResult({
+          status: 'completed',
+          currentUrl: 'https://example.com/item',
+          imageUrls: ['https://example.com/image.jpg'],
+        });
+      }
+    }
+
+    const seq = new AugmentingSeq(ctx);
+    await seq.scan();
+
+    expect(ctx.emit).toHaveBeenCalledWith(
+      'result',
+      expect.objectContaining({
+        augmented: true,
+        title: 'Augmented product',
+        scrapedItems: expect.arrayContaining([
+          expect.objectContaining({
+            title: 'Augmented product',
+          }),
+        ]),
+      })
+    );
   });
 
   it('emitResult adds canonical scrapedItems for direct product payloads', async () => {
@@ -1064,7 +1372,7 @@ describe('AmazonScanSequencer', () => {
       );
 
       const observations = (
-        (seq as any).buildGoogleVerificationDiagnosticsPayload() as {
+        (seq as any).googleVerification.augmentPayload({}) as {
           googleVerificationObservations: Array<{
             loopDecision: string;
             iteration: number;
@@ -1873,6 +2181,121 @@ describe('Supplier1688ScanSequencer', () => {
   });
 
   describe('handle1688Captcha', () => {
+    it('captures one supplier verification observation when manual verification is disabled', async () => {
+      const blockedUrl = 'https://s.1688.com/youyuan/index.htm?tab=imageSearch';
+      const ctx = makeContext({
+        url: vi.fn().mockReturnValue(blockedUrl),
+        title: vi.fn().mockResolvedValue('1688 verification'),
+        locator: vi.fn().mockImplementation((selector: string) => {
+          if (selector === 'body') {
+            return {
+              count: vi.fn().mockResolvedValue(1),
+              isVisible: vi.fn().mockResolvedValue(true),
+              click: vi.fn().mockResolvedValue(undefined),
+              first: vi.fn().mockReturnThis(),
+              nth: vi.fn().mockReturnThis(),
+              evaluateAll: vi.fn().mockResolvedValue([]),
+              setInputFiles: vi.fn().mockResolvedValue(undefined),
+              waitFor: vi.fn().mockRejectedValue(new Error('timeout')),
+              textContent: vi.fn().mockResolvedValue('请完成验证后继续访问'),
+              innerText: vi.fn().mockResolvedValue('请完成验证后继续访问'),
+            };
+          }
+          return {
+            count: vi.fn().mockResolvedValue(0),
+            isVisible: vi.fn().mockResolvedValue(false),
+            click: vi.fn().mockResolvedValue(undefined),
+            first: vi.fn().mockReturnThis(),
+            nth: vi.fn().mockReturnThis(),
+            evaluateAll: vi.fn().mockResolvedValue([]),
+            setInputFiles: vi.fn().mockResolvedValue(undefined),
+            waitFor: vi.fn().mockRejectedValue(new Error('timeout')),
+            textContent: vi.fn().mockResolvedValue(null),
+            innerText: vi.fn().mockResolvedValue(null),
+          };
+        }),
+      });
+
+      mocks.evaluateProductScanVerificationBarrier.mockImplementation(
+        async (input: {
+          provider: string;
+          stage: string;
+          currentUrl: string | null;
+          pageTitle: string | null;
+          pageTextSnippet: string | null;
+          screenshotArtifactName?: string | null;
+          htmlArtifactName?: string | null;
+        }) => ({
+          ...makeDefaultVerificationReview(),
+          provider: input.provider,
+          stage: input.stage,
+          currentUrl: input.currentUrl,
+          pageTitle: input.pageTitle,
+          pageTextSnippet: input.pageTextSnippet,
+          challengeType: 'captcha',
+          visibleQuestion: '请完成验证后继续访问',
+          pageSummary: '1688 verification barrier is visible.',
+          screenshotArtifactName: input.screenshotArtifactName ?? null,
+          htmlArtifactName: input.htmlArtifactName ?? null,
+        })
+      );
+
+      const seq = new Supplier1688ScanSequencer(ctx, {
+        allowManualVerification: false,
+      });
+
+      (seq as any).detect1688AccessBarrier = vi.fn().mockResolvedValue({
+        blocked: true,
+        barrierKind: 'captcha',
+        currentUrl: blockedUrl,
+        message:
+          '1688 requested captcha verification. Solve it in the opened browser window and the scan will continue automatically.',
+      });
+      (seq as any).attempt1688PostCaptchaRecovery = vi.fn();
+
+      const result = await (seq as any).handle1688Captcha(
+        'supplier_open',
+        { candidateId: 'img-1', candidateRank: 1 },
+        blockedUrl
+      );
+
+      expect(result).toEqual(
+        expect.objectContaining({
+          resolved: false,
+          captchaEncountered: true,
+          captchaRequired: true,
+          currentUrl: blockedUrl,
+          failureCode: 'captcha_required',
+        })
+      );
+      expect(mocks.evaluateProductScanVerificationBarrier).toHaveBeenCalledTimes(1);
+      expect(ctx.artifacts.file).toHaveBeenCalledTimes(1);
+      expect(ctx.artifacts.html).toHaveBeenCalledTimes(1);
+      expect((seq as any).attempt1688PostCaptchaRecovery).not.toHaveBeenCalled();
+
+      await (seq as any).emitResult({
+        status: 'captcha_required',
+        stage: 'supplier_open',
+      });
+
+      const payload = (ctx.emit as ReturnType<typeof vi.fn>).mock.calls[0][1] as {
+        supplierVerificationReview: { provider: string; stage: string } | null;
+        supplierVerificationObservations: Array<{
+          loopDecision: string;
+          barrierKind: string | null;
+        }>;
+      };
+      expect(payload.supplierVerificationReview).toEqual(
+        expect.objectContaining({ provider: '1688', stage: 'supplier_open' })
+      );
+      expect(payload.supplierVerificationObservations).toEqual([
+        expect.objectContaining({
+          loopDecision: 'blocked',
+          barrierKind: 'captcha',
+        }),
+      ]);
+    });
+
     it('uses the shared observation loop and emits supplier verification observations when recovery succeeds', async () => {
       const dateSpy = vi.spyOn(Date, 'now');
       let fakeNow = 3_000_000;

@@ -19,6 +19,7 @@ import {
 import { KANGUR_WRAP_CENTER_ROW_CLASSNAME, type KangurAccent } from '@/features/kangur/ui/design/tokens';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
+import { useKangurIdleReady } from '@/features/kangur/ui/hooks/useKangurIdleReady';
 import {
   GAME_HOME_ASSIGNMENT_SPOTLIGHT_INNER_SHELL_CLASSNAME,
   GAME_HOME_ASSIGNMENT_SPOTLIGHT_SHELL_CLASSNAME,
@@ -240,8 +241,10 @@ export function KangurAssignmentSpotlight({
   basePath,
   enabled = false,
 }: KangurAssignmentSpotlightProps): React.JSX.Element | null {
+  const isIdleReady = useKangurIdleReady();
+  const shouldLoadAssignmentSpotlight = enabled && isIdleReady;
   const { assignments, isLoading, error } = useKangurAssignments({
-    enabled,
+    enabled: shouldLoadAssignmentSpotlight,
     query: {
       includeArchived: false,
     },
@@ -266,7 +269,14 @@ export function KangurAssignmentSpotlight({
     setNow(Date.now());
   }, shouldTick ? 1000 : null);
 
-  if (!canRenderKangurAssignmentSpotlight({ assignment, enabled, error, isLoading })) {
+  if (
+    !canRenderKangurAssignmentSpotlight({
+      assignment,
+      enabled: shouldLoadAssignmentSpotlight,
+      error,
+      isLoading,
+    })
+  ) {
     return null;
   }
 

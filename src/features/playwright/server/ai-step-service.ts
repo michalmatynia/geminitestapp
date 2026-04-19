@@ -25,7 +25,8 @@ Rules:
 6. Do not use require() or import statements. Do not wrap in async function declarations.
 7. Keep code minimal and targeted. One clear action per iteration.
 8. Read runtime['aiEvaluatorOutput'] to access the last AI Evaluator analysis.
-9. When a screenshot is provided, use it to understand the current visual state of the page before writing code.`;
+9. When a screenshot is provided, use it to understand the current visual state of the page before writing code.
+10. When "Prior execution error" is present, your previous code threw that error. Fix the approach — do NOT repeat the same failing code.`;
 
 export type PlaywrightStepEvaluateOptions = {
   inputSource: 'screenshot' | 'html' | 'text_content' | 'selector_text';
@@ -59,6 +60,7 @@ export type PlaywrightObservationArtifacts = {
     data: Buffer,
     options: { extension: string; mimeType: string; kind: string }
   ) => Promise<string | null | undefined>) | null | undefined;
+  json?: ((key: string, data: unknown) => Promise<unknown>) | null | undefined;
 };
 
 export type PlaywrightCapturedPageObservation = {
@@ -73,21 +75,68 @@ export type PlaywrightCapturedPageObservation = {
 };
 
 export type PlaywrightVerificationInjectionConfig<TReview> = {
-  /** Return true to trigger the injector after this evaluation result */
-  shouldInject: (review: TReview) => boolean;
-  /** Natural-language goal for the AI code injector, or a function deriving it from the review */
-  goal: string | ((review: TReview) => string);
+  /**
+   * Return true to trigger the injector after this evaluation result.
+   * The current page capture is provided as a second argument for URL/screenshot-based decisions.
+   */
+  shouldInject: (review: TReview, capture: PlaywrightCapturedPageObservation) => boolean;
+  /**
+   * Natural-language goal for the AI code injector, or a function deriving it from the review
+   * and current page capture.
+   */
+  goal: string | ((review: TReview, capture: PlaywrightCapturedPageObservation) => string);
   /** Optional system prompt override for the injector */
   systemPrompt?: string | null | undefined;
   /** Maximum injector iterations per observation (default: 3) */
   maxIterations?: number | null | undefined;
-  /** Serialize the evaluation result into a text context string for the injector (default: JSON) */
-  buildEvaluatorContext?: ((review: TReview) => string) | null | undefined;
+  /**
+   * Serialize the evaluation result into a text context string for the injector (default: JSON).
+   * The current page capture is provided as a second argument.
+   */
+  buildEvaluatorContext?: ((review: TReview, capture: PlaywrightCapturedPageObservation) => string) | null | undefined;
   /**
    * When true, re-captures the page state and re-runs the evaluate function after injection
    * completes. The returned observation, review, and capture reflect the post-injection state.
    */
   reEvaluateAfterInjection?: boolean | null | undefined;
+  /**
+   * Optional log callback — called once per injection iteration with a status message and context.
+   * Useful for surfacing real-time progress in the parent step log.
+   */
+  log?: ((message: string, context?: unknown) => void) | null | undefined;
+  /**
+   * Optional structured callback — called once per injection iteration with the full iteration
+   * record. Prefer this over `log` when you need typed access to code, reasoning, and errors.
+   */
+  onIterationResult?: ((record: PlaywrightInjectionIterationRecord) => void) | null | undefined;
+  /**
+   * When true, waits for the page to reach 'domcontentloaded' after each code execution before
+   * proceeding to the next iteration. Useful when injected code triggers navigation.
+   * Defaults to true — set to false to skip and use only the fixed inter-iteration delay.
+   */
+  waitForNavigation?: boolean | null | undefined;
+  /**
+   * Maximum wall-clock milliseconds the entire injection loop may run before it is aborted,
+   * regardless of how many iterations have completed. No timeout is enforced when omitted.
+   */
+  timeoutMs?: number | null | undefined;
+  /**
+   * When true (default), maintains a multi-turn conversation across iterations so the AI can
+   * see its exact prior code and responses rather than relying on summarized context strings.
+   * Set to false to revert to the single-turn-per-iteration approach.
+   */
+  useConversationHistory?: boolean | null | undefined;
+};
+
+export type PlaywrightInjectionIterationRecord = {
+  iteration: number;
+  code: string;
+  done: boolean;
+  reasoning: string;
+  /** Error thrown when executing the generated code; null when execution succeeded */
+  executionError: string | null;
+  /** Page URL captured immediately after code execution */
+  urlAfter: string | null;
 };
 
 export type PlaywrightInjectionAttemptResult = {
@@ -98,6 +147,10 @@ export type PlaywrightInjectionAttemptResult = {
   modelId: string | null;
   /** Page URL after the injection loop completed */
   finalUrl: string | null;
+  /** Per-iteration records for diagnostics and artifact serialization */
+  iterations: readonly PlaywrightInjectionIterationRecord[];
+  /** Full conversation history accumulated during the loop; empty when useConversationHistory is false */
+  conversationHistory: readonly PlaywrightInjectionConversationMessage[];
 };
 
 export type CaptureAndEvaluatePlaywrightObservationOptions<TReview, TObservation> = {
@@ -324,7 +377,7 @@ export const slugifyPlaywrightVerificationReviewSegment = (
 
 const executeInjectedPlaywrightCode = async (page: Page, code: string): Promise<void> => {
   if (!code.trim()) return;
-  const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor as new (
+  const AsyncFunction = Object.getPrototypeOf(async () => {}).constructor as new (
     ...args: string[]
   ) => (...a: unknown[]) => Promise<unknown>;
   await new AsyncFunction('page', code)(page);
@@ -334,18 +387,19 @@ async function runPlaywrightVerificationInjectionLoop<TReview>(
   page: Page,
   config: PlaywrightVerificationInjectionConfig<TReview>,
   review: TReview,
-  currentUrl: string
+  capture: PlaywrightCapturedPageObservation
 ): Promise<PlaywrightInjectionAttemptResult> {
+  const currentUrl = capture.currentUrl ?? '';
   const maxIterations =
     typeof config.maxIterations === 'number' &&
     Number.isFinite(config.maxIterations) &&
     config.maxIterations > 0
       ? Math.trunc(config.maxIterations)
       : 3;
-  const goal = typeof config.goal === 'function' ? config.goal(review) : config.goal;
+  const goal = typeof config.goal === 'function' ? config.goal(review, capture) : config.goal;
   const evaluatorContext =
     typeof config.buildEvaluatorContext === 'function'
-      ? config.buildEvaluatorContext(review)
+      ? config.buildEvaluatorContext(review, capture)
       : (() => {
           try {
             return JSON.stringify(review);
@@ -359,9 +413,27 @@ async function runPlaywrightVerificationInjectionLoop<TReview>(
   let lastReasoning: string | null = null;
   let modelId: string | null = null;
   let priorInjectorReasoning: string | null = null;
+  let priorExecutionError: string | null = null;
   let activeUrl = currentUrl;
+  const shouldWaitForNavigation = config.waitForNavigation !== false;
+  const iterationRecords: PlaywrightInjectionIterationRecord[] = [];
+  const seenCodes = new Set<string>();
+  const useHistory = config.useConversationHistory !== false;
+  const conversationHistory: PlaywrightInjectionConversationMessage[] = [];
+  const loopTimeoutMs =
+    typeof config.timeoutMs === 'number' && Number.isFinite(config.timeoutMs) && config.timeoutMs > 0
+      ? config.timeoutMs
+      : null;
+  const loopStartedAt = loopTimeoutMs !== null ? Date.now() : 0;
 
   while (iterationsRun < maxIterations && !done) {
+    if (loopTimeoutMs !== null && Date.now() - loopStartedAt >= loopTimeoutMs) {
+      lastReasoning = `Injection loop timed out after ${loopTimeoutMs}ms.`;
+      if (typeof config.log === 'function') {
+        config.log(`AI inject timed out after ${loopTimeoutMs}ms`, { iterationsRun });
+      }
+      break;
+    }
     iterationsRun++;
 
     const [dom, screenshotBuffer] = await Promise.all([
@@ -369,6 +441,8 @@ async function runPlaywrightVerificationInjectionLoop<TReview>(
       page.screenshot({ type: 'png' }).catch(() => null),
     ]);
     const screenshotBase64 = screenshotBuffer ? screenshotBuffer.toString('base64') : null;
+
+    const isContinuation = useHistory && conversationHistory.length > 0;
 
     const result = await injectCodeWithAI({
       goal,
@@ -379,37 +453,119 @@ async function runPlaywrightVerificationInjectionLoop<TReview>(
         url: activeUrl,
         dom,
         screenshotBase64,
-        priorEvaluation: evaluatorContext,
-        priorInjectorReasoning,
+        priorEvaluation: isContinuation ? null : evaluatorContext,
+        priorInjectorReasoning: isContinuation ? null : priorInjectorReasoning,
+        priorExecutionError,
+        isContinuation,
       },
+      conversationHistory: useHistory ? conversationHistory : null,
     });
 
     modelId = result.modelId;
     lastReasoning = result.reasoning;
     done = result.done;
     priorInjectorReasoning = result.reasoning;
+    priorExecutionError = null;
+
+    if (useHistory) {
+      conversationHistory.push({ role: 'user', content: result.userMessageText });
+      conversationHistory.push({ role: 'assistant', content: result.rawText });
+    }
+
+    if (typeof config.log === 'function') {
+      config.log(`AI inject iteration ${iterationsRun}/${maxIterations}`, {
+        done: result.done,
+        reasoning: result.reasoning,
+        url: activeUrl,
+      });
+    }
+
+    const normalizedCode = result.code.trim();
+    if (normalizedCode && seenCodes.has(normalizedCode)) {
+      lastReasoning = `Duplicate code detected on iteration ${iterationsRun} — aborting to prevent infinite loop.`;
+      done = false;
+      const record: PlaywrightInjectionIterationRecord = {
+        iteration: iterationsRun,
+        code: result.code,
+        done: false,
+        reasoning: lastReasoning,
+        executionError: null,
+        urlAfter: activeUrl,
+      };
+      iterationRecords.push(record);
+      if (typeof config.onIterationResult === 'function') config.onIterationResult(record);
+      if (typeof config.log === 'function') {
+        config.log(`AI inject duplicate code on iteration ${iterationsRun} — aborting`, {
+          url: activeUrl,
+        });
+      }
+      break;
+    }
+    if (normalizedCode) seenCodes.add(normalizedCode);
+
+    let executionError: string | null = null;
 
     if (result.code) {
+      const urlBeforeExec = activeUrl;
       try {
         await executeInjectedPlaywrightCode(page, result.code);
-      } catch {
-        lastReasoning = `Code execution failed on iteration ${iterationsRun}.`;
+      } catch (err) {
+        executionError =
+          err instanceof Error ? err.message : String(err ?? 'Unknown error');
+        priorExecutionError = executionError;
+        lastReasoning = `Code execution failed on iteration ${iterationsRun}: ${executionError}`;
         done = false;
-        break;
+        if (typeof config.log === 'function') {
+          config.log(`AI inject execution error on iteration ${iterationsRun}`, {
+            error: executionError,
+          });
+        }
+      }
+
+      try {
+        activeUrl = page.url();
+      } catch {
+        // page may still be navigating
+      }
+
+      if (!done && iterationsRun < maxIterations) {
+        if (shouldWaitForNavigation && activeUrl !== urlBeforeExec) {
+          await page
+            .waitForLoadState('domcontentloaded', { timeout: 5000 })
+            .catch(() => undefined);
+        } else {
+          await page.waitForTimeout(500).catch(() => undefined);
+        }
+        try {
+          activeUrl = page.url();
+        } catch {
+          // still navigating
+        }
       }
     }
 
-    if (!done && iterationsRun < maxIterations) {
-      await page.waitForTimeout(500).catch(() => undefined);
-    }
-    try {
-      activeUrl = page.url();
-    } catch {
-      // page may still be navigating
-    }
+    const record: PlaywrightInjectionIterationRecord = {
+      iteration: iterationsRun,
+      code: result.code,
+      done: result.done && executionError === null,
+      reasoning: lastReasoning ?? result.reasoning,
+      executionError,
+      urlAfter: activeUrl,
+    };
+    iterationRecords.push(record);
+    if (typeof config.onIterationResult === 'function') config.onIterationResult(record);
   }
 
-  return { attempted: true, iterationsRun, done, lastReasoning, modelId, finalUrl: activeUrl };
+  return {
+    attempted: true,
+    iterationsRun,
+    done,
+    lastReasoning,
+    modelId,
+    finalUrl: activeUrl,
+    iterations: iterationRecords,
+    conversationHistory,
+  };
 }
 
 export async function captureAndEvaluatePlaywrightObservation<TReview, TObservation>(
@@ -498,12 +654,12 @@ export async function captureAndEvaluatePlaywrightObservation<TReview, TObservat
   let injection: PlaywrightInjectionAttemptResult | null = null;
   let injectionReEvaluated = false;
 
-  if (options.injectOnEvaluation && options.injectOnEvaluation.shouldInject(review)) {
+  if (options.injectOnEvaluation?.shouldInject(review, capture)) {
     injection = await runPlaywrightVerificationInjectionLoop(
       options.page,
       options.injectOnEvaluation,
       review,
-      capture.currentUrl ?? ''
+      capture
     );
 
     if (options.injectOnEvaluation.reEvaluateAfterInjection) {
@@ -527,11 +683,13 @@ export async function captureAndEvaluatePlaywrightObservation<TReview, TObservat
 
       let postScreenshotBuffer: Buffer | null = null;
       let postScreenshotArtifactName: string | null = null;
+      let postHtmlArtifactName: string | null = null;
+      const postInjectKey = `${options.artifactKey}-post-inject`;
       try {
         postScreenshotBuffer = await options.page.screenshot({ type: 'png' });
         if (typeof options.artifacts?.file === 'function') {
           const artifactPath = await options.artifacts.file(
-            `${options.artifactKey}-post-inject`,
+            postInjectKey,
             postScreenshotBuffer,
             { extension: 'png', mimeType: 'image/png', kind: options.screenshotKind?.trim() || 'screenshot' }
           );
@@ -540,6 +698,10 @@ export async function captureAndEvaluatePlaywrightObservation<TReview, TObservat
       } catch {
         // proceed without screenshot
       }
+      if (typeof options.artifacts?.html === 'function') {
+        const htmlArtifact = await options.artifacts.html(postInjectKey).catch(() => null);
+        postHtmlArtifactName = toArtifactName(htmlArtifact);
+      }
 
       capture = {
         currentUrl: postUrl,
@@ -547,12 +709,18 @@ export async function captureAndEvaluatePlaywrightObservation<TReview, TObservat
         pageTextSnippet: postTextSnippet,
         screenshotBase64: postScreenshotBuffer?.toString('base64') ?? null,
         screenshotArtifactName: postScreenshotArtifactName,
-        htmlArtifactName: null,
+        htmlArtifactName: postHtmlArtifactName,
         fingerprint: postFingerprint,
         observedAt: new Date().toISOString(),
       };
       review = await options.evaluate(capture);
       injectionReEvaluated = true;
+    }
+
+    if (typeof options.artifacts?.json === 'function' && injection.iterations.length > 0) {
+      await options.artifacts
+        .json(`${options.artifactKey}-inject-history`, injection.iterations)
+        .catch(() => undefined);
     }
   }
 
@@ -881,9 +1049,7 @@ export type RunPlaywrightVerificationReviewCaptureOptions<
   currentUrl: string | null;
   previousObservation: TObservation | null;
   page: Page;
-  artifacts?: PlaywrightObservationArtifacts & {
-    json?: ((key: string, data: unknown) => Promise<unknown>) | null | undefined;
-  };
+  artifacts?: PlaywrightObservationArtifacts;
   log?: ((message: string, context?: unknown) => void) | null | undefined;
   screenshotFailureLogKey?: string | null | undefined;
   evaluate: (
@@ -968,7 +1134,10 @@ export async function runPlaywrightVerificationReviewCapture<
           loopDecision: options.params.loopDecision,
           stableForMs: options.params.stableForMs,
         }) as TObservation,
-      injectOnEvaluation: options.injectOnEvaluation ?? null,
+      injectOnEvaluation:
+        options.injectOnEvaluation && options.log && !options.injectOnEvaluation.log
+          ? { ...options.injectOnEvaluation, log: options.log }
+          : (options.injectOnEvaluation ?? null),
     });
 
   if (deduped) {
@@ -983,13 +1152,19 @@ export async function runPlaywrightVerificationReviewCapture<
 
   const baseDetails = buildPlaywrightVerificationReviewDetailsFromProfile(observation, options.profile);
   const injectionDetails: Array<{ label: string; value?: string | null }> = injection
-    ? [
-        { label: 'AI inject iterations', value: String(injection.iterationsRun) },
-        { label: 'AI inject done', value: String(injection.done) },
-        { label: 'AI inject model', value: injection.modelId },
-        { label: 'AI inject reasoning', value: injection.lastReasoning },
-        { label: 'AI inject final URL', value: injection.finalUrl },
-      ]
+    ? (() => {
+        const errorCount = injection.iterations.filter((r) => r.executionError !== null).length;
+        return [
+          { label: 'AI inject iterations', value: String(injection.iterationsRun) },
+          { label: 'AI inject done', value: String(injection.done) },
+          ...(errorCount > 0
+            ? [{ label: 'AI inject exec errors', value: String(errorCount) }]
+            : []),
+          { label: 'AI inject model', value: injection.modelId },
+          { label: 'AI inject reasoning', value: injection.lastReasoning },
+          { label: 'AI inject final URL', value: injection.finalUrl },
+        ];
+      })()
     : [];
 
   await finalizePlaywrightVerificationReview({
@@ -1130,9 +1305,7 @@ export type FinalizePlaywrightVerificationReviewOptions<
 > = {
   runtime: PlaywrightVerificationReviewRuntimeConfig;
   artifactKey: string;
-  artifacts?: PlaywrightObservationArtifacts & {
-    json?: ((key: string, data: unknown) => Promise<unknown>) | null | undefined;
-  };
+  artifacts?: PlaywrightObservationArtifacts;
   review: TReview;
   observations: readonly TObservation[];
   currentUrl: string | null;
@@ -1632,12 +1805,27 @@ export type PlaywrightStepInjectContext = {
   screenshotBase64?: string | null | undefined;
   priorEvaluation?: string | null | undefined;
   priorInjectorReasoning?: string | null | undefined;
+  /** Error thrown by the previous iteration's generated code; triggers rule 10 in the system prompt */
+  priorExecutionError?: string | null | undefined;
+  /**
+   * When true the user message is a short "continuation" format — omits goal, evaluation context,
+   * and prior reasoning since they already live in the conversation history.
+   */
+  isContinuation?: boolean | null | undefined;
+};
+
+/** A single turn in the injector's multi-turn conversation history */
+export type PlaywrightInjectionConversationMessage = {
+  role: 'user' | 'assistant';
+  content: string;
 };
 
 export type PlaywrightStepInjectOptions = {
   goal: string;
   systemPrompt?: string | null | undefined;
   context: PlaywrightStepInjectContext;
+  /** Prior turns to prepend before the current user message, enabling multi-turn code generation */
+  conversationHistory?: readonly PlaywrightInjectionConversationMessage[] | null | undefined;
 };
 
 export type PlaywrightStepInjectResult = {
@@ -1645,22 +1833,37 @@ export type PlaywrightStepInjectResult = {
   done: boolean;
   reasoning: string;
   modelId: string;
+  /** The raw text returned by the AI — store as assistant turn in conversation history */
+  rawText: string;
+  /** The text-only user message that was sent — store as user turn in conversation history */
+  userMessageText: string;
 };
 
 const buildInjectorUserMessage = (options: PlaywrightStepInjectOptions): string => {
   const { goal, context } = options;
-  const lines: string[] = [
-    `Goal: ${goal}`,
-    `Iteration: ${context.iteration} of ${context.maxIterations}`,
-    `Current URL: ${context.url}`,
-  ];
+  const isContinuation = context.isContinuation === true;
 
-  if (context.priorEvaluation) {
+  const lines: string[] = isContinuation
+    ? [
+        `Continuation — iteration ${context.iteration} of ${context.maxIterations}`,
+        `Current URL: ${context.url}`,
+      ]
+    : [
+        `Goal: ${goal}`,
+        `Iteration: ${context.iteration} of ${context.maxIterations}`,
+        `Current URL: ${context.url}`,
+      ];
+
+  if (!isContinuation && context.priorEvaluation) {
     lines.push(`\nPrior AI Evaluator output:\n${context.priorEvaluation}`);
   }
 
-  if (context.priorInjectorReasoning) {
+  if (!isContinuation && context.priorInjectorReasoning) {
     lines.push(`\nPrior injector reasoning:\n${context.priorInjectorReasoning}`);
+  }
+
+  if (context.priorExecutionError) {
+    lines.push(`\nPrior execution error:\n${context.priorExecutionError}`);
   }
 
   if (context.dom) {
@@ -1694,6 +1897,7 @@ const parseInjectorResponse = (
       done: parsed['done'] === true,
       reasoning: typeof parsed['reasoning'] === 'string' ? parsed['reasoning'] : '',
       modelId,
+      rawText: text,
     };
   } catch {
     return {
@@ -1701,6 +1905,7 @@ const parseInjectorResponse = (
       done: true,
       reasoning: 'Direct code response (JSON parse failed).',
       modelId,
+      rawText: text,
     };
   }
 };
@@ -1732,14 +1937,18 @@ export async function injectCodeWithAI(
         ]
       : userMessage;
 
+  const historyMessages: Array<{ role: 'user' | 'assistant'; content: string }> =
+    options.conversationHistory?.map((m) => ({ role: m.role, content: m.content })) ?? [];
+
   const result = await runBrainChatCompletion({
     modelId: brainConfig.modelId,
     messages: [
       { role: 'system', content: systemPrompt },
+      ...historyMessages,
       { role: 'user', content: userContent as string },
     ],
     temperature: brainConfig.temperature ?? 0.2,
   });
 
-  return parseInjectorResponse(result.text, result.modelId);
+  return { ...parseInjectorResponse(result.text, result.modelId), userMessageText: userMessage };
 }

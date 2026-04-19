@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { GAME_HOME_HERO_SHELL_CLASSNAME } from '@/features/kangur/ui/pages/GameHome.constants';
@@ -271,7 +271,7 @@ describe('KangurGameHomeHeroWidget', () => {
     expect(screen.getByText('spotlight:/kangur')).toBeInTheDocument();
   });
 
-  it('renders Mongo-backed hero copy when page-content is available', () => {
+  it('renders Mongo-backed hero copy when page-content is available', async () => {
     useKangurPageContentEntryMock.mockImplementation(() => ({
       entry: {
         id: 'game-home-hero',
@@ -300,7 +300,9 @@ describe('KangurGameHomeHeroWidget', () => {
 
     render(<KangurGameHomeHeroWidget />);
 
-    expect(screen.getByTestId('kangur-home-hero-copy')).toHaveTextContent('Mongo hero');
+    await waitFor(() => {
+      expect(screen.getByTestId('kangur-home-hero-copy')).toHaveTextContent('Mongo hero');
+    });
     expect(screen.getByTestId('kangur-home-hero-copy')).toHaveTextContent(
       'Mongo opis sekcji hero.'
     );

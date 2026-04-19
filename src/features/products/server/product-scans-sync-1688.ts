@@ -124,7 +124,7 @@ const readRetained1688ActionRunProductSteps = async (
 ): Promise<ProductScanStep[] | null> => {
   try {
     const detail = await getPlaywrightActionRunDetail(engineRunId);
-    if (!detail || detail.run.runtimeKey !== SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY) {
+    if (detail?.run.runtimeKey !== SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY) {
       return null;
     }
     if (!Array.isArray(detail.steps) || detail.steps.length === 0) {

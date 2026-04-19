@@ -79,7 +79,7 @@ describe('KangurFeatureApp', () => {
     expect(screen.queryByTestId('kangur-page-transition-skeleton')).toBeNull();
   });
 
-  it('preloads the hot Lessons page after the Game route settles', async () => {
+  it('does not preload hot routes on the home Game route during cold start', async () => {
     routingStateMock.mockReturnValue({
       pageKey: 'Game',
       embedded: false,
@@ -94,13 +94,20 @@ describe('KangurFeatureApp', () => {
       vi.runAllTimers();
     });
 
-    expect(preloadKangurPageMock).toHaveBeenCalledWith('Lessons');
+    expect(preloadKangurPageMock).not.toHaveBeenCalled();
   });
 
-  it('prefetches page content for the active locale after the shell settles', async () => {
+  it('prefetches page content for the active locale after non-home routes settle', async () => {
     const queryClient = { prefetchQuery: vi.fn() };
     queryClientMock.mockReturnValue(queryClient);
     useLocaleMock.mockReturnValue('en');
+    routingStateMock.mockReturnValue({
+      pageKey: 'Lessons',
+      embedded: false,
+      requestedPath: '/kangur/lessons',
+      requestedHref: '/kangur/lessons',
+      basePath: '/kangur',
+    });
 
     render(<KangurFeatureApp />);
 
@@ -109,6 +116,26 @@ describe('KangurFeatureApp', () => {
     });
 
     expect(prefetchKangurPageContentStoreMock).toHaveBeenCalledWith(queryClient, 'en');
+  });
+
+  it('does not prefetch page content on the home Game route during cold start', async () => {
+    const queryClient = { prefetchQuery: vi.fn() };
+    queryClientMock.mockReturnValue(queryClient);
+    routingStateMock.mockReturnValue({
+      pageKey: 'Game',
+      embedded: false,
+      requestedPath: '/kangur',
+      requestedHref: '/kangur',
+      basePath: '/kangur',
+    });
+
+    render(<KangurFeatureApp />);
+
+    await act(async () => {
+      vi.runAllTimers();
+    });
+
+    expect(prefetchKangurPageContentStoreMock).not.toHaveBeenCalled();
   });
 
   it('skips hot-route and page-content prefetch during social batch capture', async () => {
@@ -154,6 +181,13 @@ describe('KangurFeatureApp', () => {
     const queryClient = { prefetchQuery: vi.fn() };
     queryClientMock.mockReturnValue(queryClient);
     useLocaleMock.mockReturnValue('pl');
+    routingStateMock.mockReturnValue({
+      pageKey: 'Lessons',
+      embedded: false,
+      requestedPath: '/kangur/lessons',
+      requestedHref: '/kangur/lessons',
+      basePath: '/kangur',
+    });
 
     const { rerender } = render(<KangurFeatureApp />);
 
@@ -178,6 +212,13 @@ describe('KangurFeatureApp', () => {
       .mockResolvedValueOnce(false)
       .mockResolvedValueOnce(true)
       .mockResolvedValueOnce(true);
+    routingStateMock.mockReturnValue({
+      pageKey: 'Lessons',
+      embedded: false,
+      requestedPath: '/kangur/lessons',
+      requestedHref: '/kangur/lessons',
+      basePath: '/kangur',
+    });
 
     useLocaleMock.mockReturnValue('pl');
     const { rerender } = render(<KangurFeatureApp />);
@@ -211,10 +252,10 @@ describe('KangurFeatureApp', () => {
     vi.stubGlobal('requestIdleCallback', requestIdleCallbackMock);
     vi.stubGlobal('cancelIdleCallback', cancelIdleCallbackMock);
     routingStateMock.mockReturnValue({
-      pageKey: 'Game',
+      pageKey: 'Lessons',
       embedded: false,
-      requestedPath: '/kangur',
-      requestedHref: '/kangur',
+      requestedPath: '/kangur/lessons',
+      requestedHref: '/kangur/lessons',
       basePath: '/kangur',
     });
 
@@ -234,10 +275,10 @@ describe('KangurFeatureApp', () => {
 
   it('does not preload the same hot route twice after returning to the original page', async () => {
     let currentRoutingState = {
-      pageKey: 'Game',
+      pageKey: 'Lessons',
       embedded: false,
-      requestedPath: '/kangur',
-      requestedHref: '/kangur',
+      requestedPath: '/kangur/lessons',
+      requestedHref: '/kangur/lessons',
       basePath: '/kangur',
     };
     routingStateMock.mockImplementation(() => currentRoutingState);
@@ -258,10 +299,10 @@ describe('KangurFeatureApp', () => {
     rerender(<KangurFeatureApp />);
 
     currentRoutingState = {
-      pageKey: 'Game',
+      pageKey: 'Lessons',
       embedded: false,
-      requestedPath: '/kangur',
-      requestedHref: '/kangur',
+      requestedPath: '/kangur/lessons',
+      requestedHref: '/kangur/lessons',
       basePath: '/kangur',
     };
     rerender(<KangurFeatureApp />);
@@ -271,7 +312,7 @@ describe('KangurFeatureApp', () => {
     });
 
     expect(preloadKangurPageMock).toHaveBeenCalledTimes(1);
-    expect(preloadKangurPageMock).toHaveBeenCalledWith('Lessons');
+    expect(preloadKangurPageMock).toHaveBeenCalledWith('Game');
   });
 
   it('renders the sanitized fallback route content when blocked GamesLibrary routes were downgraded upstream', () => {

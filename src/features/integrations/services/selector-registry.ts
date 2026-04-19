@@ -1410,11 +1410,11 @@ export async function classifySelectorRegistryRole(input: {
     key: entry.key,
     role: classifiedRole,
     affectedEntries: 1,
-    message: [
+    message: `${[
       `Selector "${entry.key}" classified as role "${classifiedRole}" by AI (${brainConfig.modelId})`,
       isVisionCapable && probeData?.screenshotBase64 ? 'with visual context' : null,
       probeData?.matchCount !== undefined ? `— ${probeData.matchCount} DOM match(es)` : null,
-    ].filter(Boolean).join(' ') + '.',
+    ].filter(Boolean).join(' ')  }.`,
   };
 }
 

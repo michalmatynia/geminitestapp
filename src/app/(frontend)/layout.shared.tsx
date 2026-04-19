@@ -160,7 +160,7 @@ export function FrontendLayoutMain({
   routeFamily: 'pending' | FrontendPublicRouteFamily;
   ariaBusy?: boolean;
 }): JSX.Element {
-  const ariaBusyProps = ariaBusy ? { 'aria-busy': 'true' } : {};
+  const ariaBusyProps = ariaBusy ? { 'aria-busy': true } : {};
 
   return (
     <main

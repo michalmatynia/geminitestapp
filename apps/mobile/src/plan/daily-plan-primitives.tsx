@@ -374,7 +374,7 @@ const getLessonMasteryTone = (masteryPercent: number): Tone => {
     borderColor: '#fecaca',
     textColor: '#b91c1c',
   };
-}
+};
 
 export function LessonMasteryRow({
   insight,

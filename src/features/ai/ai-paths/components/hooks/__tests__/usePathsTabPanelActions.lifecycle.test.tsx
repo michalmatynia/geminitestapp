@@ -58,6 +58,10 @@ vi.mock('@/features/ai/ai-paths/components/ai-paths-settings/useAiPathsErrorRepo
   }),
 }));
 
+vi.mock('@/shared/lib/observability/system-logger-client', () => ({
+  logSystemEvent: vi.fn(),
+}));
+
 vi.mock('@/shared/lib/ai-paths/settings-store-client', () => ({
   fetchAiPathsSettingsByKeysCached: vi.fn(async (keys: string[]) =>
     keys.flatMap((key: string) => {

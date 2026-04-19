@@ -325,3 +325,31 @@ export const adminNavToCustomNav = (items: NavItem[]): AdminMenuCustomNode[] => 
 export const getAdminMenuSections = (items: NavItem[]): NavItem[] => {
   return items.filter((item) => item.children && item.children.length > 0);
 };
+
+export type DeferredAdminMenuSettingsTarget = {
+  requestIdleCallback?: (callback: () => void) => number;
+  cancelIdleCallback?: (handle: number) => void;
+  setTimeout: (handler: () => void, timeout?: number) => number;
+  clearTimeout: (handle: number) => void;
+};
+
+export const scheduleDeferredAdminMenuSettingsHydration = (
+  target: DeferredAdminMenuSettingsTarget,
+  onReady: () => void
+): (() => void) => {
+  if (typeof target.requestIdleCallback === 'function') {
+    const idleHandle = target.requestIdleCallback(() => {
+      onReady();
+    });
+    return (): void => {
+      target.cancelIdleCallback?.(idleHandle);
+    };
+  }
+
+  const timeoutHandle = target.setTimeout(() => {
+    onReady();
+  }, 1);
+  return (): void => {
+    target.clearTimeout(timeoutHandle);
+  };
+};

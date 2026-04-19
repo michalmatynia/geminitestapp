@@ -74,9 +74,22 @@ export interface ScanStepUpsertInput {
   url?: string | null;
 }
 
+export interface ProductScanPageSessionFactoryContext {
+  resolveCurrentUrl: () => string | null;
+  page: Page;
+  artifacts: ProductScanArtifacts;
+  log: (message: string, context?: unknown) => void;
+  upsertStep: (step: ScanStepUpsertInput) => void;
+}
+
+export interface ProductScanPayloadAugmentingSession {
+  augmentPayload: (payload: Record<string, unknown>) => Record<string, unknown>;
+}
+
 // ─── Abstract base ────────────────────────────────────────────────────────────
 
 export abstract class ProductScanSequencer {
+  protected readonly DEFAULT_MANUAL_VERIFICATION_TIMEOUT_MS = 240_000;
   protected readonly page: Page;
   protected readonly emit: (type: string, payload: unknown) => void;
   protected readonly log: (message: string, context?: unknown) => void;
@@ -84,6 +97,9 @@ export abstract class ProductScanSequencer {
   protected readonly helpers: ProductScanHelpers;
 
   protected scanSteps: ProductScanStep[] = [];
+  protected resultPayloadAugmenters: Array<
+    (payload: Record<string, unknown>) => Record<string, unknown>
+  > = [];
 
   constructor(context: ProductScanSequencerContext) {
     this.page = context.page;
@@ -245,12 +261,68 @@ export abstract class ProductScanSequencer {
     return nextStep;
   }
 
+  protected createPageSession<TSession>(
+    factory: (context: ProductScanPageSessionFactoryContext) => TSession
+  ): TSession {
+    return factory({
+      resolveCurrentUrl: () => this.safePageUrl(),
+      page: this.page,
+      artifacts: this.artifacts,
+      log: this.log,
+      upsertStep: (step) => {
+        this.upsertScanStep(step);
+      },
+    });
+  }
+
+  protected createPayloadAugmentedPageSession<
+    TSession extends ProductScanPayloadAugmentingSession,
+  >(
+    factory: (context: ProductScanPageSessionFactoryContext) => TSession,
+    options?: {
+      decoratePayload?: (payload: Record<string, unknown>) => Record<string, unknown>;
+    }
+  ): TSession {
+    const session = this.createPageSession(factory);
+    this.registerResultPayloadAugmenter((payload) =>
+      session.augmentPayload(
+        options?.decoratePayload ? options.decoratePayload(payload) : payload
+      )
+    );
+    return session;
+  }
+
+  protected resolveManualVerificationTimeoutMs(
+    value: unknown,
+    fallbackMs = this.DEFAULT_MANUAL_VERIFICATION_TIMEOUT_MS
+  ): number {
+    return typeof value === 'number' && Number.isFinite(value) && value > 0
+      ? Math.trunc(value)
+      : fallbackMs;
+  }
+
+  protected registerResultPayloadAugmenter(
+    augmenter: (payload: Record<string, unknown>) => Record<string, unknown>
+  ): void {
+    this.resultPayloadAugmenters.push(augmenter);
+  }
+
+  protected applyResultPayloadAugmenters(
+    payload: Record<string, unknown>
+  ): Record<string, unknown> {
+    return this.resultPayloadAugmenters.reduce(
+      (nextPayload, augmenter) => augmenter(nextPayload),
+      payload
+    );
+  }
+
   // ─── Result emission ──────────────────────────────────────────────────────
 
   protected async emitResult(payload: Record<string, unknown>): Promise<void> {
+    const augmentedPayload = this.applyResultPayloadAugmenters(payload);
     const payloadWithSteps = {
-      ...payload,
-      scrapedItems: getProductScanScrapedItems(payload),
+      ...augmentedPayload,
+      scrapedItems: getProductScanScrapedItems(augmentedPayload),
       steps: this.scanSteps.map((s) => ({ ...s })),
     };
     this.emit('result', payloadWithSteps);

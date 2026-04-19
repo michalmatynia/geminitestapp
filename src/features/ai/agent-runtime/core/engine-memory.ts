@@ -3,7 +3,7 @@ import 'server-only';
 import { reminderList } from '@/features/ai/agent-runtime/core/utils';
 import { validateAndAddAgentLongTermMemory } from '@/features/ai/agent-runtime/memory';
 import { logAgentAudit } from '@/features/ai/agent-runtime/audit';
-import type { PlanStep, PlannerMeta, AgentVerification, AgentRuntimeRunRecord } from '@/shared/contracts/agent-runtime';
+import type { PlanStep, PlannerMeta, AgentVerification, AgentRunRecord } from '@/shared/contracts/agent-runtime';
 
 export interface ImprovementReview {
   summary: string;
@@ -74,7 +74,7 @@ export async function addSelfImprovementMemory(options: MemoryAdditionOptions): 
 }
 
 interface RunSummaryMemoryOptions {
-  run: AgentRuntimeRunRecord;
+  run: AgentRunRecord;
   memoryKey: string;
   overallOk: boolean;
   taskType: PlannerMeta['taskType'] | null;

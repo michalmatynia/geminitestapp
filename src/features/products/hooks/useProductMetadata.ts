@@ -386,7 +386,7 @@ export function useProductMetadata({
         service: 'products',
         category: 'form-guard',
         productId: product!.id,
-        isHydrated: isEditingProductHydrated(product!),
+        isHydrated: isEditingProductHydrated(product),
         selectedCatalogIds,
         catalogsCount: catalogsQuery.data?.length ?? 0,
         languagesCount: languagesQuery.data?.length ?? 0,

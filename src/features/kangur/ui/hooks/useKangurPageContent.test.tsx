@@ -131,6 +131,21 @@ describe('useKangurPageContentStore', () => {
     expect(apiGetMock).toHaveBeenCalledTimes(1);
   });
 
+  it('stays idle when the query is explicitly disabled', async () => {
+    const { wrapper } = createWrapper();
+    const query = renderHook(() => useKangurPageContentStore(undefined, { enabled: false }), {
+      wrapper,
+    });
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(query.result.current.fetchStatus).toBe('idle');
+    expect(query.result.current.data).toBeUndefined();
+    expect(apiGetMock).not.toHaveBeenCalled();
+  });
+
   it('retries a recoverable timeout once so cold-start fetches can self-heal without refresh', async () => {
     vi.useFakeTimers();
     apiGetMock

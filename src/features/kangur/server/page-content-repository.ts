@@ -2,6 +2,7 @@ import 'server-only';
 
 import { LRUCache } from 'lru-cache';
 import type { AnyBulkWriteOperation } from 'mongodb';
+import type { Collection } from 'mongodb';
 
 import { buildDefaultKangurPageContentStore } from '@/features/kangur/ai-tutor/page-content-catalog';
 import {
@@ -14,6 +15,7 @@ import {
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { repairKangurPolishCopy } from '@/shared/lib/i18n/kangur-polish-diacritics';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
+import { logger } from '@/shared/utils/logger';
 
 type KangurPageContentDoc = KangurPageContentEntry & {
   locale: string;
@@ -35,6 +37,11 @@ let indexesEnsured: Promise<void> | null = null;
 const getPageContentCacheKey = (locale: string): string =>
   `kangur-page-content:${normalizeSiteLocale(locale)}`;
 
+const hasMongoUri = (): boolean => {
+  const mongoUri = process.env['MONGODB_URI'];
+  return typeof mongoUri === 'string' && mongoUri.length > 0;
+};
+
 const getCachedPageContentStore = (locale: string): KangurPageContentStore | null =>
   pageContentServerCache.get(getPageContentCacheKey(locale)) ?? null;
 
@@ -43,7 +50,7 @@ const setCachedPageContentStore = (store: KangurPageContentStore): void => {
 };
 
 const clearCachedPageContentStore = (locale?: string | null): void => {
-  if (locale) {
+  if (locale !== null && locale !== undefined) {
     const cacheKey = getPageContentCacheKey(locale);
     pageContentServerCache.delete(cacheKey);
     defaultPageContentStoreCache.delete(cacheKey);
@@ -69,15 +76,11 @@ const getDefaultPageContentStore = (locale: string): KangurPageContentStore => {
 };
 
 const ensureIndexes = async (): Promise<void> => {
-  if (!process.env['MONGODB_URI']) {
+  if (!hasMongoUri()) {
     return;
   }
 
-  if (indexesEnsured) {
-    return indexesEnsured;
-  }
-
-  indexesEnsured = (async () => {
+  indexesEnsured ??= (async (): Promise<void> => {
     const db = await getMongoDb();
     const collection = db.collection<KangurPageContentDoc>(KANGUR_PAGE_CONTENT_COLLECTION);
     await Promise.all([
@@ -90,10 +93,10 @@ const ensureIndexes = async (): Promise<void> => {
     ]);
   })();
 
-  return indexesEnsured;
+  await indexesEnsured;
 };
 
-const readCollection = async () => {
+const readCollection = async (): Promise<Collection<KangurPageContentDoc>> => {
   const db = await getMongoDb();
   return db.collection<KangurPageContentDoc>(KANGUR_PAGE_CONTENT_COLLECTION);
 };
@@ -151,6 +154,24 @@ const persistStore = async (store: KangurPageContentStore): Promise<void> => {
 const storesDiffer = (left: KangurPageContentStore, right: KangurPageContentStore): boolean =>
   JSON.stringify(left) !== JSON.stringify(right);
 
+const persistStoreInBackground = (
+  store: KangurPageContentStore,
+  reason: 'seed-defaults' | 'sync-defaults'
+): void => {
+  const backgroundWrite = (async (): Promise<void> => {
+    await ensureIndexes();
+    await persistStore(store);
+  })();
+
+  backgroundWrite.catch((error: unknown) => {
+    logger.error('[kangur.page-content] Background store write failed', error, {
+      locale: store.locale,
+      reason,
+      source: 'kangur.page-content',
+    });
+  });
+};
+
 export async function getKangurPageContentStore(locale = 'pl'): Promise<KangurPageContentStore> {
   const normalizedLocale = normalizeSiteLocale(locale);
   const cached = getCachedPageContentStore(normalizedLocale);
@@ -160,24 +181,23 @@ export async function getKangurPageContentStore(locale = 'pl'): Promise<KangurPa
 
   const cacheKey = getPageContentCacheKey(normalizedLocale);
   const inflight = pageContentInflight.get(cacheKey);
-  if (inflight) {
+  if (inflight !== undefined) {
     return inflight;
   }
 
   const defaults = getDefaultPageContentStore(normalizedLocale);
 
-  if (!process.env['MONGODB_URI']) {
+  if (!hasMongoUri()) {
     return defaults;
   }
 
   const loadPromise = (async (): Promise<KangurPageContentStore> => {
-    await ensureIndexes();
     const collection = await readCollection();
     const docs = await collection.find({ locale: normalizedLocale }).sort({ sortOrder: 1, id: 1 }).toArray();
 
     if (docs.length === 0) {
-      await persistStore(defaults);
       setCachedPageContentStore(defaults);
+      persistStoreInBackground(defaults, 'seed-defaults');
       return defaults;
     }
 
@@ -185,7 +205,7 @@ export async function getKangurPageContentStore(locale = 'pl'): Promise<KangurPa
     const merged = mergeKangurPageContentStore(defaults, repairKangurPolishCopy(existing));
 
     if (storesDiffer(existing, merged)) {
-      await persistStore(merged);
+      persistStoreInBackground(merged, 'sync-defaults');
     }
 
     setCachedPageContentStore(merged);
@@ -203,7 +223,7 @@ export async function upsertKangurPageContentStore(
 ): Promise<KangurPageContentStore> {
   const parsed = parseKangurPageContentStore(repairKangurPolishCopy(store));
 
-  if (!process.env['MONGODB_URI']) {
+  if (!hasMongoUri()) {
     return parsed;
   }
 
@@ -222,7 +242,7 @@ export async function getKangurPageContentEntry(
 }
 
 export async function getLatestKangurPageContentUpdateAt(locale = 'pl'): Promise<Date | null> {
-  if (!process.env['MONGODB_URI']) {
+  if (!hasMongoUri()) {
     return null;
   }
 

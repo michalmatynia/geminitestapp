@@ -64,7 +64,9 @@ export function useKangurAiTutorDeferredActivationBridge(input: {
       return undefined;
     }
 
-    activation.activateRuntimeValue(input.runtimeValue);
+    activation.activateRuntimeValue(
+      createKangurAiTutorDeferredShellValue(input.runtimeValue)
+    );
     return () => {
       activation.activateRuntimeValue(null);
     };
@@ -110,6 +112,33 @@ const DORMANT_VALUE: KangurAiTutorContextValue = Object.freeze({
   closeChat: NOOP,
   sendMessage: NOOP_ASYNC,
   setHighlightedText: NOOP,
+});
+
+const createKangurAiTutorDeferredShellValue = (
+  runtimeValue: KangurAiTutorContextValue
+): KangurAiTutorContextValue => ({
+  ...DORMANT_VALUE,
+  enabled: runtimeValue.enabled,
+  appSettings: runtimeValue.appSettings,
+  tutorSettings: runtimeValue.tutorSettings,
+  tutorPersona: runtimeValue.tutorPersona,
+  tutorName: runtimeValue.tutorName,
+  tutorMoodId: runtimeValue.tutorMoodId,
+  tutorBehaviorMoodId: runtimeValue.tutorBehaviorMoodId,
+  tutorBehaviorMoodLabel: runtimeValue.tutorBehaviorMoodLabel,
+  tutorBehaviorMoodDescription: runtimeValue.tutorBehaviorMoodDescription,
+  tutorAvatarSvg: runtimeValue.tutorAvatarSvg,
+  tutorAvatarImageUrl: runtimeValue.tutorAvatarImageUrl,
+  isOpen: runtimeValue.isOpen,
+  isLoading: runtimeValue.isLoading,
+  highlightedText: runtimeValue.highlightedText,
+  openChat: runtimeValue.openChat,
+  closeChat: runtimeValue.closeChat,
+  sendMessage: runtimeValue.sendMessage,
+  setHighlightedText: runtimeValue.setHighlightedText,
+  recordFollowUpCompletion: runtimeValue.recordFollowUpCompletion,
+  requestSelectionExplain: runtimeValue.requestSelectionExplain,
+  selectionExplainRequest: runtimeValue.selectionExplainRequest,
 });
 
 // ---------------------------------------------------------------------------
@@ -192,6 +221,16 @@ export function KangurAiTutorProvider({
       </KangurAiTutorSessionRegistryContext.Provider>
     </KangurAiTutorActivationContext.Provider>
   );
+}
+
+export function KangurAiTutorRuntimeScope({
+  children,
+  value,
+}: {
+  children: ReactNode;
+  value: KangurAiTutorContextValue;
+}): JSX.Element {
+  return <KangurAiTutorContext.Provider value={value}>{children}</KangurAiTutorContext.Provider>;
 }
 
 // ---------------------------------------------------------------------------

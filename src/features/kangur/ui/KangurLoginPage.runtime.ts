@@ -6,7 +6,7 @@ import type React from 'react';
 import { useEffect, useMemo, useRef } from 'react';
 
 import { useKangurAiTutorSessionSync } from '@/features/kangur/ui/context/KangurAiTutorContext';
-import { type useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import { type useOptionalKangurAuthActions } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import {
   KANGUR_PARENT_CAPTCHA_SITE_KEY,
@@ -21,9 +21,9 @@ import {
 
 type KangurLoginPageState = ReturnType<typeof useKangurLoginPageState>;
 type KangurLoginTranslations = ReturnType<typeof useTranslations>;
-type KangurOptionalAuth = ReturnType<typeof useOptionalKangurAuth>;
+type KangurOptionalAuthActions = ReturnType<typeof useOptionalKangurAuthActions>;
 type KangurLoginEffectHelpers = {
-  auth: KangurOptionalAuth;
+  authActions: KangurOptionalAuthActions;
   clearInlineFeedback: KangurLoginPageState['clearInlineFeedback'];
   clearVerificationState: KangurLoginPageState['clearVerificationState'];
   scheduleFieldFocus: KangurLoginPageState['scheduleFieldFocus'];
@@ -372,7 +372,7 @@ const reportKangurParentEmailVerificationFailure = ({
 };
 
 const applySuccessfulKangurParentEmailVerification = ({
-  auth,
+  authActions,
   clearVerificationState,
   formNoticeSetter,
   isCancelled,
@@ -383,7 +383,7 @@ const applySuccessfulKangurParentEmailVerification = ({
   setPassword,
   translations,
 }: {
-  auth: KangurOptionalAuth;
+  authActions: KangurOptionalAuthActions;
   clearVerificationState: KangurLoginPageState['clearVerificationState'];
   formNoticeSetter: KangurLoginPageState['setFormNotice'];
   isCancelled: () => boolean;
@@ -408,7 +408,7 @@ const applySuccessfulKangurParentEmailVerification = ({
       translations,
     })
   );
-  void auth?.checkAppState?.();
+  void authActions?.checkAppState?.();
   scheduleFieldFocus('password');
 };
 
@@ -423,7 +423,7 @@ const runKangurParentEmailVerification = async ({
   verificationToken,
 }: KangurParentEmailVerificationInput): Promise<void> => {
   const {
-    auth,
+    authActions,
     clearInlineFeedback,
     clearVerificationState,
     scheduleFieldFocus,
@@ -449,7 +449,7 @@ const runKangurParentEmailVerification = async ({
     }
 
     applySuccessfulKangurParentEmailVerification({
-      auth,
+      authActions,
       clearVerificationState,
       formNoticeSetter,
       isCancelled,
@@ -642,7 +642,7 @@ export function useKangurLoginPagePresentationState(input: {
 }
 
 export function useKangurLoginPageSideEffects(input: {
-  auth: KangurOptionalAuth;
+  authActions: KangurOptionalAuthActions;
   clearInlineFeedback: KangurLoginPageState['clearInlineFeedback'];
   clearVerificationState: KangurLoginPageState['clearVerificationState'];
   formNoticeSetter: KangurLoginPageState['setFormNotice'];
@@ -660,7 +660,7 @@ export function useKangurLoginPageSideEffects(input: {
   formRef: React.RefObject<HTMLFormElement | null>;
 } {
   const {
-    auth,
+    authActions,
     clearInlineFeedback,
     clearVerificationState,
     formNoticeSetter,
@@ -679,7 +679,7 @@ export function useKangurLoginPageSideEffects(input: {
   const handledMagicLinkTokenRef = useRef<string | null>(null);
   const handledVerificationTokenRef = useRef<string | null>(null);
   const effectHelpersRef = useRef<KangurLoginEffectHelpers>({
-    auth,
+    authActions,
     clearInlineFeedback,
     clearVerificationState,
     scheduleFieldFocus,
@@ -688,7 +688,7 @@ export function useKangurLoginPageSideEffects(input: {
   });
 
   effectHelpersRef.current = {
-    auth,
+    authActions,
     clearInlineFeedback,
     clearVerificationState,
     scheduleFieldFocus,

@@ -61,6 +61,8 @@ vi.mock('@radix-ui/react-dialog', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurLoginModalContext', () => ({
   useKangurLoginModal: useKangurLoginModalMock,
+  useKangurLoginModalActions: useKangurLoginModalMock,
+  useKangurLoginModalState: useKangurLoginModalMock,
 }));
 
 vi.mock('@/features/kangur/ui/KangurLoginPage', () => ({

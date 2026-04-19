@@ -478,4 +478,16 @@ export const useOptionalKangurAuth = (): KangurAuthContextValue | null => {
   }, [actions, state]);
 };
 
+export const useOptionalKangurAuthActions = (): KangurAuthActionsContextValue | null => {
+  return useContext(KangurAuthActionsContext);
+};
+
+export const useOptionalKangurAuthSessionState = (): KangurAuthSessionContextValue | null => {
+  return useContext(KangurAuthSessionContext);
+};
+
+export const useOptionalKangurAuthStatusState = (): KangurAuthStatusContextValue | null => {
+  return useContext(KangurAuthStatusContext);
+};
+
 export type { KangurAuthContextValue, KangurAuthError };

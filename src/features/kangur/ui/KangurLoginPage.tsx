@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import React, { Suspense, useMemo } from 'react';
 
 import { useOptionalFrontendPublicOwner } from '@/features/kangur/ui/FrontendPublicOwnerContext';
-import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import { useOptionalKangurAuthActions } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { useKangurRouteAccess } from '@/features/kangur/ui/routing/useKangurRouteAccess';
 import {
@@ -45,14 +45,14 @@ type KangurLoginPageContentRuntime = {
 };
 
 function buildKangurLoginPageSideEffectsOptions(args: {
-  auth: ReturnType<typeof useOptionalKangurAuth>;
+  authActions: ReturnType<typeof useOptionalKangurAuthActions>;
   searchParams: ReturnType<typeof useSearchParams>;
   state: KangurLoginPageStateValue;
 }): KangurLoginPageSideEffectsOptions {
-  const { auth, searchParams, state } = args;
+  const { authActions, searchParams, state } = args;
 
   return {
-    auth,
+    authActions,
     clearInlineFeedback: state.clearInlineFeedback,
     clearVerificationState: state.clearVerificationState,
     formNoticeSetter: state.setFormNotice,
@@ -137,9 +137,9 @@ function useKangurLoginPageContentRuntime(): KangurLoginPageContentRuntime {
   const state = useKangurLoginPageState();
   const { showParentAuthModeTabs } = useKangurLoginPageProps();
   const searchParams = useSearchParams();
-  const auth = useOptionalKangurAuth();
+  const authActions = useOptionalKangurAuthActions();
   const { formRef } = useKangurLoginPageSideEffects(
-    buildKangurLoginPageSideEffectsOptions({ auth, searchParams, state })
+    buildKangurLoginPageSideEffectsOptions({ authActions, searchParams, state })
   );
   const presentation = useKangurLoginPagePresentationState(
     buildKangurLoginPagePresentationOptions({ showParentAuthModeTabs, state })

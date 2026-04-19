@@ -15,7 +15,7 @@ import {
   trackKangurClientEvent,
 } from '@/features/kangur/observability/client';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
-import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import { useOptionalKangurAuthSessionState } from '@/features/kangur/ui/context/KangurAuthContext';
 import {
   kangurAiTutorAnswerResolutionModeSchema,
   kangurAiTutorCoachingFrameSchema,
@@ -148,8 +148,8 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
     id: number;
     selectedText: string;
   } | null>(null);
-  const authState = useOptionalKangurAuth();
-  const authUser = authState?.user ?? null;
+  const authSessionState = useOptionalKangurAuthSessionState();
+  const authUser = authSessionState?.user ?? null;
   const pageContextRegistry = useOptionalContextRegistryPageEnvelope();
 
   const activeLearnerId = activeRegistration?.learnerId ?? authUser?.activeLearner?.id ?? null;

@@ -5,7 +5,7 @@ import type { CSSProperties } from 'react';
 import { usePathname } from 'next/navigation';
 
 import { cn } from '@/features/kangur/shared/utils';
-import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import { useOptionalKangurAuthSessionState } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { KangurTopNavigationSkeleton } from '@/features/kangur/ui/components/primary-navigation/KangurTopNavigationSkeleton';
 import {
@@ -239,15 +239,17 @@ const GameHomeTransitionSkeleton = ({
 }: {
   pageLabel: string;
 }): React.JSX.Element => {
-  const auth = useOptionalKangurAuth();
+  const authSessionState = useOptionalKangurAuthSessionState();
   const progress = useKangurProgressState();
   const canAccessParentAssignments =
-    auth?.canAccessParentAssignments ??
-    Boolean(auth?.isAuthenticated && auth.user?.activeLearner?.id);
+    authSessionState?.canAccessParentAssignments ??
+    Boolean(
+      authSessionState?.isAuthenticated && authSessionState.user?.activeLearner?.id
+    );
   const homeVisibility = resolveKangurGameHomeVisibility({
     canAccessParentAssignments,
     progress,
-    user: auth?.user,
+    user: authSessionState?.user ?? null,
   });
 
   return (

@@ -26,12 +26,15 @@ import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 type QueryProviderProps = {
   children: React.ReactNode;
+  mode?: QueryProviderMode;
 };
 
+export type QueryProviderMode = 'full' | 'light';
+
 const isDevelopment = process.env['NODE_ENV'] === 'development';
-const enableAdvancedRuntime =
+const envEnableAdvancedRuntime =
   process.env['NEXT_PUBLIC_QUERY_ADVANCED_RUNTIME'] === 'true' || !isDevelopment;
-const enableWarmup = process.env['NEXT_PUBLIC_QUERY_WARMUP'] === 'true' || !isDevelopment;
+const envEnableWarmup = process.env['NEXT_PUBLIC_QUERY_WARMUP'] === 'true' || !isDevelopment;
 
 let browserQueryClient: QueryClient | null = null;
 
@@ -128,8 +131,14 @@ function DeferredQueryPersistence(): null {
   return null;
 }
 
-function QueryProviderInner({ children }: QueryProviderProps): React.JSX.Element {
+function QueryProviderInner({
+  children,
+  mode = 'full',
+}: QueryProviderProps): React.JSX.Element {
   const queryClient = useQueryClient();
+  const shouldEnableAdvancedRuntime = mode === 'full' && envEnableAdvancedRuntime;
+  const shouldEnableWarmup = shouldEnableAdvancedRuntime && envEnableWarmup;
+  const shouldEnablePersistence = mode === 'full';
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -151,22 +160,27 @@ function QueryProviderInner({ children }: QueryProviderProps): React.JSX.Element
 
   return (
     <>
-      <DeferredQueryPersistence />
-      {enableAdvancedRuntime ? <QueryProviderAdvancedRuntime shouldWarmup={enableWarmup} /> : null}
+      {shouldEnablePersistence ? <DeferredQueryPersistence /> : null}
+      {shouldEnableAdvancedRuntime ? (
+        <QueryProviderAdvancedRuntime shouldWarmup={shouldEnableWarmup} />
+      ) : null}
       {children}
     </>
   );
 }
 
-export const QueryProvider = ({ children }: QueryProviderProps): React.JSX.Element => {
+export const QueryProvider = ({
+  children,
+  mode = 'full',
+}: QueryProviderProps): React.JSX.Element => {
   const existingQueryClient = React.useContext(QueryClientContext);
   const isNestedProvider = existingQueryClient !== undefined;
   const [queryClient] = useState(getQueryClient);
 
   useEffect(() => {
-    if (isNestedProvider) return;
+    if (isNestedProvider || mode !== 'full') return;
     setupOfflineSupport(queryClient);
-  }, [isNestedProvider, queryClient]);
+  }, [isNestedProvider, mode, queryClient]);
 
   if (isNestedProvider) {
     return <>{children}</>;
@@ -174,7 +188,7 @@ export const QueryProvider = ({ children }: QueryProviderProps): React.JSX.Eleme
 
   return (
     <QueryClientProvider client={queryClient}>
-      <QueryProviderInner>{children}</QueryProviderInner>
+      <QueryProviderInner mode={mode}>{children}</QueryProviderInner>
     </QueryClientProvider>
   );
 };

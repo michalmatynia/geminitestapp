@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 
 import type { KangurAiTutorContextValue } from '@/features/kangur/ui/context/KangurAiTutorRuntime.shared';
-import type { KangurAuthContextValue } from '@/features/kangur/ui/context/KangurAuthContext';
 import type { KangurAuthMode } from '@/features/kangur/shared/contracts/kangur-auth';
 import type { KangurAiTutorContent } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
 
@@ -46,8 +45,16 @@ type LoginModalState = {
   ) => void;
 };
 
+type AuthState = {
+  isAuthenticated?: boolean;
+  isLoadingAuth?: boolean;
+  user?: {
+    ownerEmailVerified?: boolean;
+  } | null;
+} | null;
+
 type UseKangurAiTutorWidgetCoordinatorInput = {
-  authState: KangurAuthContextValue | null;
+  authState: AuthState;
   environment: ReturnType<typeof useKangurAiTutorWidgetEnvironment>;
   loginModal: LoginModalState;
   prefersReducedMotion: boolean | undefined;

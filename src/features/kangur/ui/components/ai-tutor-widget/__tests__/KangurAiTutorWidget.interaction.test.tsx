@@ -157,6 +157,7 @@ vi.mock('@/features/kangur/shared/providers/SettingsStoreProvider', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
   KangurAiTutorActivationContext: React.createContext(null),
+  KangurAiTutorRuntimeScope: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   useKangurAiTutor: mocks.useKangurAiTutorMock,
   useOptionalKangurAiTutor: mocks.useKangurAiTutorMock,
   useKangurAiTutorDeferredActivationBridge: vi.fn(),
@@ -184,10 +185,36 @@ vi.mock('@/shared/hooks/useAgentPersonaVisuals', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useOptionalKangurAuth: mocks.useOptionalKangurAuthMock,
+  useOptionalKangurAuthSessionState: () => {
+    const auth = mocks.useOptionalKangurAuthMock();
+    if (!auth) {
+      return null;
+    }
+    return {
+      canAccessParentAssignments: auth.canAccessParentAssignments,
+      hasResolvedAuth: auth.hasResolvedAuth,
+      isAuthenticated: auth.isAuthenticated,
+      user: auth.user,
+    };
+  },
+  useOptionalKangurAuthStatusState: () => {
+    const auth = mocks.useOptionalKangurAuthMock();
+    if (!auth) {
+      return null;
+    }
+    return {
+      appPublicSettings: auth.appPublicSettings,
+      authError: auth.authError,
+      isLoadingAuth: auth.isLoadingAuth,
+      isLoadingPublicSettings: auth.isLoadingPublicSettings,
+      isLoggingOut: auth.isLoggingOut,
+    };
+  },
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurLoginModalContext', () => ({
   useKangurLoginModal: mocks.useKangurLoginModalMock,
+  useKangurLoginModalState: mocks.useKangurLoginModalMock,
   useKangurLoginModalActions: mocks.useKangurLoginModalMock,
 }));
 

@@ -6,22 +6,24 @@ import KangurLoginPage from '@/features/kangur/ui/KangurLoginPage';
 import { KangurDialog } from '@/features/kangur/ui/components/KangurDialog';
 import { KangurDialogMeta } from '@/features/kangur/ui/components/KangurDialogMeta';
 import { KangurPanelCloseButton } from '@/features/kangur/ui/components/KangurPanelCloseButton';
-import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';
+import {
+  useKangurLoginModalActions,
+  useKangurLoginModalState,
+} from '@/features/kangur/ui/context/KangurLoginModalContext';
 
 import { memo, useCallback } from 'react';
 import type { JSX } from 'react';
 
 export const KangurLoginModal = memo((): JSX.Element => {
   const translations = useTranslations('KangurLoginModal');
+  const { closeLoginModal, dismissLoginModal } = useKangurLoginModalActions();
   const {
     authMode,
     callbackUrl,
-    closeLoginModal,
-    dismissLoginModal,
     isOpen,
     isRouteDriven,
     showParentAuthModeTabs,
-  } = useKangurLoginModal();
+  } = useKangurLoginModalState();
   const handleOpenChange = useCallback(
     (nextOpen: boolean) => {
       if (!nextOpen && !isRouteDriven) {

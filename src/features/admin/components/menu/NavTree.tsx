@@ -24,18 +24,14 @@ function NavTreeList({
   );
 }
 
-function NavTreeImpl({
-  items,
-  depth,
-  isMenuCollapsed,
-  pathname,
-  openIds,
-  onToggleOpen,
+function useNavTreeHandlers({
   onNavigateHref: onNavigateHrefProp,
   onPrefetchHref: onPrefetchHrefProp,
-  pendingHref,
   onSetPendingHref: onSetPendingHrefProp,
-}: NavTreeProps): React.ReactNode {
+}: Pick<
+  NavTreeProps,
+  'onNavigateHref' | 'onPrefetchHref' | 'onSetPendingHref'
+>): Pick<NavTreeContextValue, 'onNavigateHref' | 'onPrefetchHref'> {
   const router = useRouter();
   const prefetchedHrefSetRef = useRef<Set<string>>(new Set());
   const { prefetchByHref } = useAdminDataPrefetch();
@@ -65,23 +61,37 @@ function NavTreeImpl({
     [prefetchByHref, router]
   );
 
-  const contextValue = useMemo<NavTreeContextValue>(
+  return {
+    onNavigateHref: onNavigateHrefProp ?? handleNavigateHrefLocal,
+    onPrefetchHref: onPrefetchHrefProp ?? handlePrefetchHrefLocal,
+  };
+}
+
+function useNavTreeContextValue({
+  isMenuCollapsed,
+  pathname,
+  openIds,
+  onToggleOpen,
+  pendingHref,
+  onSetPendingHref: onSetPendingHrefProp,
+  ...rest
+}: NavTreeProps): NavTreeContextValue {
+  const handlers = useNavTreeHandlers(rest);
+
+  return useMemo<NavTreeContextValue>(
     () => ({
       isMenuCollapsed,
       pathname,
       openIds,
       onToggleOpen,
-      onNavigateHref: onNavigateHrefProp ?? handleNavigateHrefLocal,
-      onPrefetchHref: onPrefetchHrefProp ?? handlePrefetchHrefLocal,
+      onNavigateHref: handlers.onNavigateHref,
+      onPrefetchHref: handlers.onPrefetchHref,
       pendingHref,
       onSetPendingHref: onSetPendingHrefProp,
     }),
     [
-      handleNavigateHrefLocal,
-      handlePrefetchHrefLocal,
+      handlers,
       isMenuCollapsed,
-      onNavigateHrefProp,
-      onPrefetchHrefProp,
       onSetPendingHrefProp,
       onToggleOpen,
       openIds,
@@ -89,7 +99,11 @@ function NavTreeImpl({
       pendingHref,
     ]
   );
+}
 
+function NavTreeImpl(props: NavTreeProps): React.ReactNode {
+  const { items, depth } = props;
+  const contextValue = useNavTreeContextValue(props);
   return (
     <NavTreeContext.Provider value={contextValue}>
       <NavTreeList depth={depth} items={items} />

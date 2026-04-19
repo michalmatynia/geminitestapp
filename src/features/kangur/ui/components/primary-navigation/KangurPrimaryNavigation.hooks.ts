@@ -12,7 +12,10 @@ import { useKangurAgeGroupFocus } from '@/features/kangur/ui/context/KangurAgeGr
 import { getKangurAvatarById } from '@/features/kangur/ui/avatars/catalog';
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import { useOptionalKangurAiTutor } from '@/features/kangur/ui/context/KangurAiTutorContext';
-import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import {
+  useOptionalKangurAuthSessionState,
+  useOptionalKangurAuthStatusState,
+} from '@/features/kangur/ui/context/KangurAuthContext';
 import { useOptionalKangurRouteTransitionState } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
 import { useKangurElevatedSession } from '@/features/kangur/ui/hooks/useKangurElevatedSession';
 import { useKangurMobileBreakpoint } from '@/features/kangur/ui/hooks/useKangurMobileBreakpoint';
@@ -35,9 +38,19 @@ type KangurPrimaryNavigationStateInput = Pick<
   | 'showParentDashboard'
 >;
 
+type OptionalKangurAuthSessionState = ReturnType<
+  typeof useOptionalKangurAuthSessionState
+>;
+type OptionalKangurAuthStatusState = ReturnType<
+  typeof useOptionalKangurAuthStatusState
+>;
+type OptionalKangurAuthUser = NonNullable<
+  NonNullable<OptionalKangurAuthSessionState>['user']
+>;
+
 type KangurPrimaryNavigationSessionState = {
-  activeLearner: NonNullable<NonNullable<ReturnType<typeof useOptionalKangurAuth>>['user']>['activeLearner'] | null;
-  authUser: NonNullable<ReturnType<typeof useOptionalKangurAuth>>['user'] | null;
+  activeLearner: OptionalKangurAuthUser['activeLearner'] | null;
+  authUser: OptionalKangurAuthUser | null;
   effectiveCanManageLearners: boolean;
   effectiveIsAuthenticated: boolean;
   effectiveShowParentDashboard: boolean;
@@ -67,19 +80,19 @@ type KangurPrimaryNavigationUiState = {
 };
 
 function resolveKangurPrimaryNavigationAuthUser(
-  auth: ReturnType<typeof useOptionalKangurAuth>
-): NonNullable<ReturnType<typeof useOptionalKangurAuth>>['user'] | null {
-  return auth?.user ?? null;
+  authSessionState: OptionalKangurAuthSessionState
+): OptionalKangurAuthUser | null {
+  return authSessionState ? authSessionState.user : null;
 }
 
 function resolveKangurPrimaryNavigationActiveLearner(
-  authUser: NonNullable<ReturnType<typeof useOptionalKangurAuth>>['user'] | null
+  authUser: OptionalKangurAuthUser | null
 ): {
-  activeLearner: NonNullable<NonNullable<ReturnType<typeof useOptionalKangurAuth>>['user']>['activeLearner'] | null;
+  activeLearner: OptionalKangurAuthUser['activeLearner'] | null;
   hasActiveLearner: boolean;
 } {
   const activeLearner = authUser?.activeLearner ?? null;
-  const activeLearnerId = activeLearner?.id?.trim() ?? '';
+  const activeLearnerId = activeLearner?.id.trim() ?? '';
 
   return {
     activeLearner,
@@ -88,15 +101,19 @@ function resolveKangurPrimaryNavigationActiveLearner(
 }
 
 function resolveKangurPrimaryNavigationEffectiveAuthState({
-  auth,
+  authSessionState,
+  authStatusState,
   isAuthenticated,
 }: {
-  auth: ReturnType<typeof useOptionalKangurAuth>;
+  authSessionState: OptionalKangurAuthSessionState;
+  authStatusState: OptionalKangurAuthStatusState;
   isAuthenticated: boolean | undefined;
 }): { effectiveIsAuthenticated: boolean; isLoggingOut: boolean } {
   return {
-    effectiveIsAuthenticated: Boolean(auth?.isAuthenticated ?? isAuthenticated),
-    isLoggingOut: auth?.isLoggingOut ?? false,
+    effectiveIsAuthenticated: Boolean(
+      authSessionState?.isAuthenticated ?? isAuthenticated
+    ),
+    isLoggingOut: authStatusState?.isLoggingOut ?? false,
   };
 }
 
@@ -104,7 +121,7 @@ function resolveKangurPrimaryNavigationEffectiveCanManageLearners({
   authUser,
   canManageLearners,
 }: {
-  authUser: NonNullable<ReturnType<typeof useOptionalKangurAuth>>['user'] | null;
+  authUser: OptionalKangurAuthUser | null;
   canManageLearners: boolean | undefined;
 }): boolean {
   if (authUser) {
@@ -127,21 +144,24 @@ function resolveKangurPrimaryNavigationEffectiveShowParentDashboard({
 }
 
 function resolveKangurPrimaryNavigationSessionState({
-  auth,
+  authSessionState,
+  authStatusState,
   canManageLearners,
   isAuthenticated,
   showParentDashboard,
 }: {
-  auth: ReturnType<typeof useOptionalKangurAuth>;
+  authSessionState: OptionalKangurAuthSessionState;
+  authStatusState: OptionalKangurAuthStatusState;
   canManageLearners: boolean | undefined;
   isAuthenticated: boolean | undefined;
   showParentDashboard: boolean | undefined;
 }): KangurPrimaryNavigationSessionState {
-  const authUser = resolveKangurPrimaryNavigationAuthUser(auth);
+  const authUser = resolveKangurPrimaryNavigationAuthUser(authSessionState);
   const { activeLearner, hasActiveLearner } = resolveKangurPrimaryNavigationActiveLearner(authUser);
   const { effectiveIsAuthenticated, isLoggingOut } =
     resolveKangurPrimaryNavigationEffectiveAuthState({
-      auth,
+      authSessionState,
+      authStatusState,
       isAuthenticated,
     });
   const effectiveCanManageLearners = resolveKangurPrimaryNavigationEffectiveCanManageLearners({
@@ -169,9 +189,12 @@ function buildKangurPrimaryNavigationElevatedSessionUser({
   authUser,
   elevatedSessionSnapshot,
 }: {
-  authUser: NonNullable<ReturnType<typeof useOptionalKangurAuth>>['user'] | null;
+  authUser: OptionalKangurAuthUser | null;
   elevatedSessionSnapshot: NonNullable<ReturnType<typeof useKangurElevatedSession>['elevatedUser']>;
-}) {
+}): {
+  email: string | null;
+  name: string | null;
+} & NonNullable<ReturnType<typeof useKangurElevatedSession>['elevatedUser']> {
   return {
     ...elevatedSessionSnapshot,
     email: resolveKangurPrimaryNavigationElevatedSessionEmail(authUser, elevatedSessionSnapshot),
@@ -180,26 +203,26 @@ function buildKangurPrimaryNavigationElevatedSessionUser({
 }
 
 function resolveKangurPrimaryNavigationElevatedSessionEmail(
-  authUser: NonNullable<ReturnType<typeof useOptionalKangurAuth>>['user'] | null,
+  authUser: OptionalKangurAuthUser | null,
   elevatedSessionSnapshot: NonNullable<ReturnType<typeof useKangurElevatedSession>['elevatedUser']>
 ): string | null {
   return elevatedSessionSnapshot.email ?? authUser?.email?.trim() ?? null;
 }
 
 function resolveKangurPrimaryNavigationElevatedSessionName(
-  authUser: NonNullable<ReturnType<typeof useOptionalKangurAuth>>['user'] | null,
+  authUser: OptionalKangurAuthUser | null,
   elevatedSessionSnapshot: NonNullable<ReturnType<typeof useKangurElevatedSession>['elevatedUser']>
 ): string | null {
-  return elevatedSessionSnapshot.name ?? authUser?.full_name?.trim() ?? null;
+  return elevatedSessionSnapshot.name ?? authUser?.full_name.trim() ?? null;
 }
 
 function resolveKangurPrimaryNavigationElevatedSessionUser({
   authUser,
   elevatedSessionSnapshot,
 }: {
-  authUser: NonNullable<ReturnType<typeof useOptionalKangurAuth>>['user'] | null;
+  authUser: OptionalKangurAuthUser | null;
   elevatedSessionSnapshot: ReturnType<typeof useKangurElevatedSession>['elevatedUser'];
-}) {
+}): ReturnType<typeof buildKangurPrimaryNavigationElevatedSessionUser> | null {
   if (!elevatedSessionSnapshot) {
     return null;
   }
@@ -297,7 +320,8 @@ export function useKangurPrimaryNavigationState({
 }: KangurPrimaryNavigationStateInput) {
   const tutorContent = useKangurAiTutorContent();
   const tutor = useOptionalKangurAiTutor();
-  const auth = useOptionalKangurAuth();
+  const authSessionState = useOptionalKangurAuthSessionState();
+  const authStatusState = useOptionalKangurAuthStatusState();
   const { elevatedUser: elevatedSessionSnapshot, isSuperAdmin } = useKangurElevatedSession();
   const kangurAppearance = useKangurStorefrontAppearance();
   const routeTransitionState = useOptionalKangurRouteTransitionState();
@@ -320,7 +344,8 @@ export function useKangurPrimaryNavigationState({
     isLoggingOut,
     isParentAccount,
   } = resolveKangurPrimaryNavigationSessionState({
-    auth,
+    authSessionState,
+    authStatusState,
     canManageLearners,
     isAuthenticated,
     showParentDashboard,
@@ -359,7 +384,6 @@ export function useKangurPrimaryNavigationState({
   } = useKangurPrimaryNavigationUiState(currentPage);
 
   return {
-    auth,
     authUser,
     activeLearner,
     elevatedSessionUser,

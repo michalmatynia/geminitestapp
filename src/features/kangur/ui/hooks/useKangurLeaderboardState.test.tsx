@@ -37,6 +37,7 @@ vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useOptionalKangurAuth: () => useOptionalKangurAuthMock(),
+  useOptionalKangurAuthSessionState: () => useOptionalKangurAuthMock(),
 }));
 
 vi.mock('@/features/kangur/observability/client', () => ({

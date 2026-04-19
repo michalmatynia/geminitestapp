@@ -13,7 +13,6 @@ import {
 
 import { KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_MS } from '@/features/kangur/settings';
 import { useOptionalFrontendPublicOwner } from '@/features/kangur/ui/FrontendPublicOwnerContext';
-import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurRouteAccess } from '@/features/kangur/ui/routing/useKangurRouteAccess';
@@ -237,7 +236,6 @@ export function useKangurLoginPageState() {
     defaultCallbackUrl,
     parentAuthMode,
   } = useKangurLoginPageProps();
-  useOptionalKangurAuth();
   const { isLoading, setIsLoading, successMessage, handleLoginSuccess } = useLoginLogic();
   const loginFormEntry = useKangurPageContentEntry('login-page-form');
   const identifierEntry = useKangurPageContentEntry('login-page-identifier-field');

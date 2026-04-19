@@ -10,6 +10,7 @@ import { DEFAULT_KANGUR_AI_TUTOR_APP_SETTINGS } from '@/features/kangur/ai-tutor
 
 import {
   KangurAiTutorDeferredProvider,
+  KangurAiTutorRuntimeScope,
   useKangurAiTutor,
   useKangurAiTutorDeferredActivationBridge,
 } from './KangurAiTutorContext';
@@ -94,7 +95,28 @@ function SessionRegistrationProbe(): JSX.Element | null {
 
 function RuntimeValueProbe(): JSX.Element {
   const tutor = useKangurAiTutor();
-  return <div data-testid='runtime-enabled'>{String(tutor.enabled)}</div>;
+  return (
+    <>
+      <div data-testid='runtime-enabled'>{String(tutor.enabled)}</div>
+      <div data-testid='runtime-loading'>{String(tutor.isLoading)}</div>
+      <div data-testid='runtime-message-count'>{String(tutor.messages.length)}</div>
+      <div data-testid='runtime-session-context'>
+        {tutor.sessionContext?.contentId ?? 'none'}
+      </div>
+    </>
+  );
+}
+
+function FullRuntimeScopeProbe({
+  value = runtimeValue,
+}: {
+  value?: KangurAiTutorContextValue;
+}): JSX.Element {
+  return (
+    <KangurAiTutorRuntimeScope value={value}>
+      <RuntimeValueProbe />
+    </KangurAiTutorRuntimeScope>
+  );
 }
 
 describe('KangurAiTutorDeferredProvider', () => {
@@ -122,5 +144,91 @@ describe('KangurAiTutorDeferredProvider', () => {
         deferredRegistration
       );
     });
+  });
+
+  it('keeps only the lightweight controller state in the deferred shell context', async () => {
+    const runtimeValueWithHeavyState: KangurAiTutorContextValue = {
+      ...runtimeValue,
+      isLoading: true,
+      messages: [
+        {
+          role: 'assistant',
+          content: 'Heavy runtime message',
+        },
+      ],
+      sessionContext: {
+        surface: 'test',
+        contentId: 'suite-heavy',
+        title: 'Heavy tutor session',
+      },
+      usageSummary: {
+        dateKey: '2026-04-19',
+        remainingMessages: 7,
+        dailyMessageLimit: 10,
+        messageCount: 3,
+      },
+    };
+
+    function HeavyActivationBridgeProbe(): JSX.Element | null {
+      useKangurAiTutorDeferredActivationBridge({
+        runtimeValue: runtimeValueWithHeavyState,
+        sessionRegistryValue: runtimeSessionRegistryValue,
+      });
+      return null;
+    }
+
+    render(
+      <KangurAiTutorDeferredProvider>
+        <HeavyActivationBridgeProbe />
+        <RuntimeValueProbe />
+      </KangurAiTutorDeferredProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('runtime-enabled')).toHaveTextContent('true');
+    });
+
+    expect(screen.getByTestId('runtime-loading')).toHaveTextContent('true');
+    expect(screen.getByTestId('runtime-message-count')).toHaveTextContent('0');
+    expect(screen.getByTestId('runtime-session-context')).toHaveTextContent('none');
+  });
+
+  it('allows the widget subtree to override the shell with the full runtime value', async () => {
+    const runtimeValueWithHeavyState: KangurAiTutorContextValue = {
+      ...runtimeValue,
+      messages: [
+        {
+          role: 'assistant',
+          content: 'Heavy runtime message',
+        },
+      ],
+      sessionContext: {
+        surface: 'test',
+        contentId: 'suite-heavy',
+        title: 'Heavy tutor session',
+      },
+    };
+
+    function HeavyActivationBridgeProbe(): JSX.Element | null {
+      useKangurAiTutorDeferredActivationBridge({
+        runtimeValue: runtimeValueWithHeavyState,
+        sessionRegistryValue: runtimeSessionRegistryValue,
+      });
+      return null;
+    }
+
+    render(
+      <KangurAiTutorDeferredProvider>
+        <HeavyActivationBridgeProbe />
+        <FullRuntimeScopeProbe value={runtimeValueWithHeavyState} />
+      </KangurAiTutorDeferredProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('runtime-enabled')).toHaveTextContent('true');
+    });
+
+    expect(screen.getByTestId('runtime-message-count')).toHaveTextContent('1');
+    expect(screen.getByTestId('runtime-session-context')).toHaveTextContent('suite-heavy');
   });
 });

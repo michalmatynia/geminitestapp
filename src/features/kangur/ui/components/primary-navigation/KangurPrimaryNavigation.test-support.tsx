@@ -385,6 +385,31 @@ vi.mock('@/features/kangur/ui/FrontendPublicOwnerContext', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useOptionalKangurAuth: (): unknown => optionalAuthMock() as unknown,
+  useOptionalKangurAuthSessionState: (): unknown => {
+    const auth = optionalAuthMock() as Record<string, unknown> | null;
+    if (!auth) {
+      return null;
+    }
+    return {
+      canAccessParentAssignments: auth['canAccessParentAssignments'],
+      hasResolvedAuth: auth['hasResolvedAuth'],
+      isAuthenticated: auth['isAuthenticated'],
+      user: auth['user'],
+    };
+  },
+  useOptionalKangurAuthStatusState: (): unknown => {
+    const auth = optionalAuthMock() as Record<string, unknown> | null;
+    if (!auth) {
+      return null;
+    }
+    return {
+      appPublicSettings: auth['appPublicSettings'],
+      authError: auth['authError'],
+      isLoadingAuth: auth['isLoadingAuth'],
+      isLoadingPublicSettings: auth['isLoadingPublicSettings'],
+      isLoggingOut: auth['isLoggingOut'],
+    };
+  },
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
@@ -399,6 +424,7 @@ vi.mock('@/features/kangur/ui/context/KangurAgeGroupFocusContext', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
+  KangurAiTutorRuntimeScope: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   useOptionalKangurAiTutor: (): unknown => optionalTutorMock() as unknown,
   useKangurAiTutorDeferredActivationBridge: vi.fn(),
 }));

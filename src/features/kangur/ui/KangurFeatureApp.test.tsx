@@ -20,6 +20,7 @@ import {
   setupKangurFeatureAppTest,
   settingsStoreStateMock,
   topNavigationHostVisibleMock,
+  useKangurCoarsePointerMock,
   useLocaleMock,
 } from '@/features/kangur/ui/KangurFeatureApp.test-support';
 
@@ -135,6 +136,28 @@ describe('KangurFeatureApp', () => {
       vi.runAllTimers();
     });
 
+    expect(prefetchKangurPageContentStoreMock).not.toHaveBeenCalled();
+  });
+
+  it('skips background preloads on coarse-pointer devices after the route settles', async () => {
+    const queryClient = { prefetchQuery: vi.fn() };
+    queryClientMock.mockReturnValue(queryClient);
+    useKangurCoarsePointerMock.mockReturnValue(true);
+    routingStateMock.mockReturnValue({
+      pageKey: 'Lessons',
+      embedded: false,
+      requestedPath: '/kangur/lessons',
+      requestedHref: '/kangur/lessons',
+      basePath: '/kangur',
+    });
+
+    render(<KangurFeatureApp />);
+
+    await act(async () => {
+      vi.runAllTimers();
+    });
+
+    expect(preloadKangurPageMock).not.toHaveBeenCalled();
     expect(prefetchKangurPageContentStoreMock).not.toHaveBeenCalled();
   });
 

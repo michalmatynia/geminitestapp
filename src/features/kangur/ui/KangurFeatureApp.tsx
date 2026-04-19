@@ -64,6 +64,7 @@ import {
 import { useKangurRouteAccess } from '@/features/kangur/ui/routing/useKangurRouteAccess';
 import { resolveManagedKangurEmbeddedFromHref } from '@/features/kangur/ui/routing/managed-paths';
 import { isKangurSocialBatchCaptureHref } from '@/features/kangur/shared/capture-mode';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { readKangurTopBarHeightCssValue } from '@/features/kangur/ui/utils/readKangurTopBarHeightCssValue';
 import { cn } from '@/features/kangur/shared/utils';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
@@ -178,6 +179,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
   const { pageKey, embedded, requestedPath, requestedHref, basePath } = useKangurRouting();
   const queryClient = useQueryClient();
   const routeLocale = normalizeSiteLocale(useLocale());
+  const isCoarsePointer = useKangurCoarsePointer();
   const authErrorType = authError?.type;
   const resolvedPageKey = resolveKangurPageKey(pageKey, kangurPages, KANGUR_MAIN_PAGE);
   const homeHref = getKangurHomeHref(basePath);
@@ -451,6 +453,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
       isBootLoading ||
       isThemeBootLoading ||
       isNavigationTransitionActive ||
+      isCoarsePointer ||
       isSyntheticKangurCapture ||
       resolvedPageKey === 'Game'
     ) {
@@ -497,6 +500,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
     };
   }, [
     isBootLoading,
+    isCoarsePointer,
     isSyntheticKangurCapture,
     isNavigationTransitionActive,
     isThemeBootLoading,
@@ -509,6 +513,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
       isBootLoading ||
       isThemeBootLoading ||
       isNavigationTransitionActive ||
+      isCoarsePointer ||
       isSyntheticKangurCapture ||
       resolvedPageKey === 'Game' ||
       prefetchedPageContentLocalesRef.current.has(routeLocale)
@@ -539,6 +544,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
     };
   }, [
     isBootLoading,
+    isCoarsePointer,
     isSyntheticKangurCapture,
     isNavigationTransitionActive,
     isThemeBootLoading,

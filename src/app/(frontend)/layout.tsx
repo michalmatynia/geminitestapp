@@ -5,11 +5,9 @@ import {
   shouldEnableFrontendLoadTiming,
 } from '@/app/(frontend)/shell/frontend-load-timing';
 import { CmsStorefrontAppearanceProvider } from '@/features/cms/public';
-import {
-  FrontendPublicOwnerProvider,
-  FrontendPublicOwnerShellClient,
-  KangurServerShell,
-} from '@/features/kangur/public';
+import { FrontendPublicOwnerProvider } from '@/features/kangur/ui/FrontendPublicOwnerContext';
+import FrontendPublicOwnerShellClient from '@/features/kangur/ui/FrontendPublicOwnerShellClient';
+import { KangurServerShell } from '@/features/kangur/ui/components/KangurServerShell';
 import {
   getKangurSurfaceBootstrapStyle,
   KANGUR_SURFACE_HINT_SCRIPT,

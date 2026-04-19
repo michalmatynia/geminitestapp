@@ -59,6 +59,7 @@ const {
   sessionMock,
   settingsStoreStateMock,
   topNavigationHostVisibleMock,
+  useKangurCoarsePointerMock,
   preloadKangurPageMock,
   useLocaleMock,
 } = vi.hoisted(() => ({
@@ -81,6 +82,7 @@ const {
   sessionMock: vi.fn<() => MockedSessionState>(),
   settingsStoreStateMock: vi.fn<() => MockedSettingsStore>(),
   topNavigationHostVisibleMock: vi.fn(),
+  useKangurCoarsePointerMock: vi.fn<() => boolean>(),
   useLocaleMock: vi.fn<() => string>(),
 }));
 
@@ -400,6 +402,10 @@ vi.mock('@/features/kangur/ui/hooks/useKangurRouteNavigator', () => ({
   useKangurRouteNavigator: () => routeNavigatorMock,
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => useKangurCoarsePointerMock(),
+}));
+
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
   prefetchKangurPageContentStore: (
     ...args: Parameters<typeof prefetchKangurPageContentStoreMock>
@@ -470,6 +476,7 @@ export {
   sessionMock,
   settingsStoreStateMock,
   topNavigationHostVisibleMock,
+  useKangurCoarsePointerMock,
   useLocaleMock,
 };
 
@@ -533,6 +540,7 @@ export async function setupKangurFeatureAppTest() {
     pendingPageKey: null,
   });
   topNavigationHostVisibleMock.mockReturnValue(true);
+  useKangurCoarsePointerMock.mockReturnValue(false);
   preloadKangurPageMock.mockReset();
   prefetchKangurPageContentStoreMock.mockReset();
   prefetchKangurPageContentStoreMock.mockResolvedValue(true);

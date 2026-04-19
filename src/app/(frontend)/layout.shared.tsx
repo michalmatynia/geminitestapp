@@ -7,7 +7,8 @@ import {
   getKangurSurfaceBootstrapStyle,
   KANGUR_SURFACE_HINT_SCRIPT,
 } from '@/features/kangur/server';
-import { KangurSSRSkeleton, KangurServerShell } from '@/features/kangur/public';
+import { KangurSSRSkeleton } from '@/features/kangur/ui/KangurSSRSkeleton';
+import { KangurServerShell } from '@/features/kangur/ui/components/KangurServerShell';
 import { stripSiteLocalePrefix } from '@/shared/lib/i18n/site-locale';
 import { readOptionalRequestHeadersResult } from '@/shared/lib/request/optional-headers';
 import { safeHtml } from '@/shared/lib/security/safe-html';

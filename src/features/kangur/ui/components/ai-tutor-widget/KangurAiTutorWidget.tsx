@@ -1,13 +1,23 @@
 import { useReducedMotion } from 'framer-motion';
+import { useMemo } from 'react';
 import { createPortal } from 'react-dom';
 
 import {
   useActivateKangurAiTutorContent,
   useKangurAiTutorContent,
 } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
-import { useKangurAiTutorDeferredActivationBridge } from '@/features/kangur/ui/context/KangurAiTutorContext';
-import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
-import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';
+import {
+  KangurAiTutorRuntimeScope,
+  useKangurAiTutorDeferredActivationBridge,
+} from '@/features/kangur/ui/context/KangurAiTutorContext';
+import {
+  useOptionalKangurAuthSessionState,
+  useOptionalKangurAuthStatusState,
+} from '@/features/kangur/ui/context/KangurAuthContext';
+import {
+  useKangurLoginModalActions,
+  useKangurLoginModalState,
+} from '@/features/kangur/ui/context/KangurLoginModalContext';
 
 import { useKangurAiTutorRuntime } from '../../context/KangurAiTutorRuntime.hook';
 
@@ -27,9 +37,23 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
   useActivateKangurAiTutorContent(tutorRuntime.isOpen);
   const prefersReducedMotion = useReducedMotion();
   const tutorContent = useKangurAiTutorContent();
-  const authState = useOptionalKangurAuth();
-  const loginModal = useKangurLoginModal();
+  const authSessionState = useOptionalKangurAuthSessionState();
+  const authStatusState = useOptionalKangurAuthStatusState();
+  const loginModalState = useKangurLoginModalState();
+  const { openLoginModal } = useKangurLoginModalActions();
   const widgetState = useKangurAiTutorWidgetState();
+  const tutorAppSettings = tutorRuntime.appSettings ?? {};
+  const authState = useMemo(() => {
+    if (!authSessionState && !authStatusState) {
+      return null;
+    }
+
+    return {
+      isAuthenticated: authSessionState?.isAuthenticated,
+      isLoadingAuth: authStatusState?.isLoadingAuth,
+      user: authSessionState?.user ?? null,
+    };
+  }, [authSessionState, authStatusState]);
 
   useKangurAiTutorDeferredActivationBridge({
     runtimeValue: tutorRuntime,
@@ -38,9 +62,9 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
 
   const environment = useKangurAiTutorWidgetEnvironment({
     authState,
-    guestIntroMode: tutorRuntime.appSettings?.guestIntroMode ?? 'first_visit',
+    guestIntroMode: tutorAppSettings.guestIntroMode ?? 'first_visit',
     highlightedText: tutorRuntime.highlightedText,
-    homeOnboardingMode: tutorRuntime.appSettings?.homeOnboardingMode ?? 'first_visit',
+    homeOnboardingMode: tutorAppSettings.homeOnboardingMode ?? 'first_visit',
     mounted: widgetState.mounted,
     sessionContext: tutorRuntime.sessionContext,
     tutorContent,
@@ -53,9 +77,9 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
     authState,
     environment,
     loginModal: {
-      authMode: loginModal.authMode,
-      isOpen: loginModal.isOpen,
-      openLoginModal: loginModal.openLoginModal,
+      authMode: loginModalState.authMode,
+      isOpen: loginModalState.isOpen,
+      openLoginModal,
     },
     prefersReducedMotion: prefersReducedMotion ?? undefined,
     tutorContent,
@@ -67,11 +91,13 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
   }
 
   return createPortal(
-    <KangurAiTutorWidgetStateProvider value={widgetState}>
-      <KangurAiTutorPortalProvider value={portalContentValue}>
-        <KangurAiTutorPortalContent />
-      </KangurAiTutorPortalProvider>
-    </KangurAiTutorWidgetStateProvider>,
+    <KangurAiTutorRuntimeScope value={tutorRuntime}>
+      <KangurAiTutorWidgetStateProvider value={widgetState}>
+        <KangurAiTutorPortalProvider value={portalContentValue}>
+          <KangurAiTutorPortalContent />
+        </KangurAiTutorPortalProvider>
+      </KangurAiTutorWidgetStateProvider>
+    </KangurAiTutorRuntimeScope>,
     document.body
   );
 }

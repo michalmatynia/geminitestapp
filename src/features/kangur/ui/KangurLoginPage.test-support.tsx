@@ -84,6 +84,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurTutorAnchor', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useOptionalKangurAuth: useOptionalKangurAuthMock,
+  useOptionalKangurAuthActions: () => useOptionalKangurAuthMock(),
 }));
 
 vi.mock('@/features/kangur/ui/FrontendPublicOwnerContext', () => ({

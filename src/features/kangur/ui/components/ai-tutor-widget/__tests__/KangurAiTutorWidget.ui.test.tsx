@@ -179,6 +179,7 @@ vi.mock('@/features/kangur/shared/providers/SettingsStoreProvider', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
+  KangurAiTutorRuntimeScope: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   useKangurAiTutor: useKangurAiTutorMock,
   useOptionalKangurAiTutor: useKangurAiTutorMock,
   useKangurAiTutorDeferredActivationBridge: vi.fn(),

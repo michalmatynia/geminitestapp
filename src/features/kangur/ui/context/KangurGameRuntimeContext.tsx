@@ -10,7 +10,11 @@ import {
 import { useTranslations } from 'next-intl';
 import { DIFFICULTY_CONFIG } from '@kangur/core';
 
-import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import {
+  useKangurAuthActions,
+  useKangurAuthSessionState,
+  useKangurAuthStatusState,
+} from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurGuestPlayer } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
@@ -50,7 +54,11 @@ const resolveCanAccessParentAssignments = ({
   canAccessParentAssignments,
   isAuthenticated,
   user,
-}: ReturnType<typeof useKangurAuth>): boolean =>
+}: {
+  canAccessParentAssignments: boolean;
+  isAuthenticated: boolean;
+  user: import('@kangur/platform').KangurUser | null;
+}): boolean =>
   canAccessParentAssignments ?? (isAuthenticated && Boolean(user?.activeLearner?.id));
 
 // KangurGameRuntimeProvider is the central state container for the StudiQ
@@ -73,11 +81,16 @@ export function KangurGameRuntimeProvider({
   const progressTranslations = useTranslations('KangurProgressRuntime');
   const resultTranslations = useTranslations('KangurGameResult');
   const { basePath } = useKangurRouting();
-  const auth = useKangurAuth();
+  const { logout, navigateToLogin } = useKangurAuthActions();
+  const { canAccessParentAssignments, isAuthenticated, user } = useKangurAuthSessionState();
+  const { isLoadingAuth } = useKangurAuthStatusState();
   const { subject, subjectKey } = useKangurSubjectFocus();
-  const { isAuthenticated, isLoadingAuth, logout, navigateToLogin, user } = auth;
   const { guestPlayerName, setGuestPlayerName } = useKangurGuestPlayer();
-  const canAccessParentAssignments = resolveCanAccessParentAssignments(auth);
+  const hasParentAssignmentAccess = resolveCanAccessParentAssignments({
+    canAccessParentAssignments,
+    isAuthenticated,
+    user,
+  });
   const progress = useKangurProgressState();
 
   const {
@@ -119,7 +132,7 @@ export function KangurGameRuntimeProvider({
   // assignment access. Avoids unnecessary API calls for guest/learner-only
   // sessions.
   const { assignments: delegatedAssignments, refresh: refreshAssignments } = useKangurAssignments({
-    enabled: canAccessParentAssignments,
+    enabled: hasParentAssignmentAccess,
     query: {
       includeArchived: false,
     },
@@ -147,7 +160,7 @@ export function KangurGameRuntimeProvider({
   } = useKangurGameRuntimeActionHandlers({
     activeSessionRecommendation,
     advanceQuestion,
-    canAccessParentAssignments,
+    canAccessParentAssignments: hasParentAssignmentAccess,
     completeSession,
     currentQuestionIndex,
     difficulty,
@@ -231,7 +244,7 @@ export function KangurGameRuntimeProvider({
       basePath,
       user,
       isAuthenticated,
-      canAccessParentAssignments,
+      canAccessParentAssignments: hasParentAssignmentAccess,
       isLoadingAuth,
       progress,
       screen,
@@ -256,7 +269,7 @@ export function KangurGameRuntimeProvider({
     [
       activePracticeAssignment,
       basePath,
-      canAccessParentAssignments,
+      hasParentAssignmentAccess,
       canStartFromHome,
       currentQuestion,
       currentQuestionIndex,

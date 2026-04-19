@@ -30,6 +30,25 @@ const {
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useKangurAuth: useKangurAuthMock,
+  useKangurAuthSessionState: () => {
+    const auth = useKangurAuthMock();
+    return {
+      user: auth.user ?? null,
+      isAuthenticated: auth.isAuthenticated ?? false,
+      hasResolvedAuth: auth.hasResolvedAuth ?? true,
+      canAccessParentAssignments: auth.canAccessParentAssignments ?? false,
+    };
+  },
+  useKangurAuthStatusState: () => {
+    const auth = useKangurAuthMock();
+    return {
+      isLoadingAuth: auth.isLoadingAuth ?? false,
+      isLoadingPublicSettings: auth.isLoadingPublicSettings ?? false,
+      isLoggingOut: auth.isLoggingOut ?? false,
+      authError: auth.authError ?? null,
+      appPublicSettings: auth.appPublicSettings ?? null,
+    };
+  },
 }));
 
 vi.mock('@/features/kangur/services/kangur-platform', () => ({

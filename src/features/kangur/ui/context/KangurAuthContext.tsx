@@ -92,6 +92,18 @@ const scheduleCachedAuthRevalidation = (callback: () => void): (() => void) => {
 // re-render when action callbacks are recreated, and vice versa.
 const KangurAuthStateContext = createContext<KangurAuthStateContextValue | null>(null);
 const KangurAuthActionsContext = createContext<KangurAuthActionsContextValue | null>(null);
+type KangurAuthSessionContextValue = Pick<
+  KangurAuthContextValue,
+  'user' | 'isAuthenticated' | 'hasResolvedAuth' | 'canAccessParentAssignments'
+>;
+type KangurAuthStatusContextValue = Pick<
+  KangurAuthContextValue,
+  'isLoadingAuth' | 'isLoadingPublicSettings' | 'authError' | 'appPublicSettings'
+> & {
+  isLoggingOut: boolean;
+};
+const KangurAuthSessionContext = createContext<KangurAuthSessionContextValue | null>(null);
+const KangurAuthStatusContext = createContext<KangurAuthStatusContextValue | null>(null);
 
 export { clearKangurAuthBootstrapCache };
 
@@ -372,6 +384,25 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
       user,
     ]
   );
+  const sessionValue = useMemo<KangurAuthSessionContextValue>(
+    () => ({
+      user,
+      isAuthenticated,
+      hasResolvedAuth,
+      canAccessParentAssignments,
+    }),
+    [canAccessParentAssignments, hasResolvedAuth, isAuthenticated, user]
+  );
+  const statusValue = useMemo<KangurAuthStatusContextValue>(
+    () => ({
+      isLoadingAuth,
+      isLoadingPublicSettings,
+      isLoggingOut,
+      authError,
+      appPublicSettings,
+    }),
+    [appPublicSettings, authError, isLoadingAuth, isLoadingPublicSettings, isLoggingOut]
+  );
   const actionsValue = useMemo<KangurAuthActionsContextValue>(
     () => ({
       logout,
@@ -385,7 +416,11 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
   return (
     <KangurAuthActionsContext.Provider value={actionsValue}>
       <KangurAuthStateContext.Provider value={stateValue}>
-        {children}
+        <KangurAuthSessionContext.Provider value={sessionValue}>
+          <KangurAuthStatusContext.Provider value={statusValue}>
+            {children}
+          </KangurAuthStatusContext.Provider>
+        </KangurAuthSessionContext.Provider>
       </KangurAuthStateContext.Provider>
     </KangurAuthActionsContext.Provider>
   );
@@ -403,6 +438,22 @@ export const useKangurAuthActions = (): KangurAuthActionsContextValue => {
   const context = useContext(KangurAuthActionsContext);
   if (!context) {
     throw internalError('useKangurAuthActions must be used within a KangurAuthProvider');
+  }
+  return context;
+};
+
+export const useKangurAuthSessionState = (): KangurAuthSessionContextValue => {
+  const context = useContext(KangurAuthSessionContext);
+  if (!context) {
+    throw internalError('useKangurAuthSessionState must be used within a KangurAuthProvider');
+  }
+  return context;
+};
+
+export const useKangurAuthStatusState = (): KangurAuthStatusContextValue => {
+  const context = useContext(KangurAuthStatusContext);
+  if (!context) {
+    throw internalError('useKangurAuthStatusState must be used within a KangurAuthProvider');
   }
   return context;
 };

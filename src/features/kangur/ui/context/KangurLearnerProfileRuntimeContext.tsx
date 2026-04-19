@@ -27,7 +27,10 @@ import { useLearnerProfileScores } from './KangurLearnerProfileRuntimeContext.ho
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 const kangurPlatform = getKangurPlatform();
 import type { KangurScoreRecord, KangurUser } from '@kangur/platform';
-import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import {
+  useKangurAuthActions,
+  useKangurAuthSessionState,
+} from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
@@ -116,7 +119,8 @@ export function KangurLearnerProfileRuntimeProvider({
   const runtimeTranslations = useTranslations('KangurLearnerProfileRuntime');
   const progressRuntimeTranslations = useTranslations('KangurProgressRuntime');
   const { basePath } = useKangurRouting();
-  const { user, navigateToLogin } = useKangurAuth();
+  const { navigateToLogin } = useKangurAuthActions();
+  const { user } = useKangurAuthSessionState();
   const { subject } = useKangurSubjectFocus();
   const progress = useKangurProgressState();
   const hasUser = Boolean(user);

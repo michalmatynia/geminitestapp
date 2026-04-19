@@ -57,6 +57,16 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  async rewrites() {
+    return {
+      beforeFiles: [
+        { source: '/', destination: '/kangur' },
+        { source: '/:locale(pl|en|de|uk)', destination: '/:locale/kangur' },
+      ],
+      afterFiles: [],
+      fallback: [],
+    };
+  },
 };
 
 export default withNextIntl(nextConfig);

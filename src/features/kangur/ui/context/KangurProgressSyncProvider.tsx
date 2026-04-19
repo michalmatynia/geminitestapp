@@ -8,7 +8,10 @@ import {
 } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
-import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import {
+  useKangurAuthSessionState,
+  useKangurAuthStatusState,
+} from '@/features/kangur/ui/context/KangurAuthContext';
 import {
   areProgressStatesEqual,
   loadProgress,
@@ -151,7 +154,8 @@ export function KangurProgressSyncProvider({
 }: {
   children?: ReactNode;
 }): React.JSX.Element | null {
-  const { isAuthenticated, isLoadingAuth, user } = useKangurAuth();
+  const { isAuthenticated, user } = useKangurAuthSessionState();
+  const { isLoadingAuth } = useKangurAuthStatusState();
   const { subject } = useKangurSubjectFocus();
   const routing = useOptionalKangurRouting();
   const isParentWithoutLearner = isKangurParentWithoutActiveLearner(user);

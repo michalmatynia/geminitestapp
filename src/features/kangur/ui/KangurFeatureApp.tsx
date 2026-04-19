@@ -30,9 +30,13 @@ const KangurCmsRuntimeScreen = dynamic(
 import { KangurRouteAccessibilityAnnouncer } from '@/features/kangur/ui/components/KangurRouteAccessibilityAnnouncer';
 const PageNotFound = dynamic(() => import('@/features/kangur/ui/components/PageNotFound').then(m => ({ default: m.PageNotFound })), { ssr: false });
 const UserNotRegisteredError = dynamic(() => import('@/features/kangur/ui/components/UserNotRegisteredError'), { ssr: false });
-import { KangurAuthProvider, useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import {
+  KangurAuthProvider,
+  useKangurAuthActions,
+  useKangurAuthSessionState,
+  useKangurAuthStatusState,
+} from '@/features/kangur/ui/context/KangurAuthContext';
 import { KangurContextRegistryPageBoundary } from '@/features/kangur/ui/context/KangurContextRegistryPageBoundary';
-import { KangurAgeGroupFocusProvider } from '@/features/kangur/ui/context/KangurAgeGroupFocusContext';
 import { KangurGuestPlayerProvider } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 import {
   KangurLoginModalProvider,
@@ -45,8 +49,7 @@ import {
 } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { KangurScoreSyncProvider } from '@/features/kangur/ui/context/KangurScoreSyncProvider';
-import { KangurSubjectFocusProvider } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
-import { KangurSubjectAgeGroupSync } from '@/features/kangur/ui/context/KangurSubjectAgeGroupSync';
+import { KangurFocusProvider } from '@/features/kangur/ui/context/KangurFocusProvider';
 import {
   KangurTopNavigationHost,
   KangurTopNavigationProvider,
@@ -149,15 +152,9 @@ const KangurLoginModalMount = (): JSX.Element | null => {
 //  - Auth-error redirects (login redirect, parent-dashboard guard)
 //  - Accessibility announcer and top navigation host
 const AuthenticatedApp = (): JSX.Element | null => {
-  const {
-    isLoadingAuth,
-    isLoadingPublicSettings,
-    authError,
-    navigateToLogin,
-    isAuthenticated,
-    hasResolvedAuth = true,
-  } =
-    useKangurAuth();
+  const { navigateToLogin } = useKangurAuthActions();
+  const { isAuthenticated, hasResolvedAuth = true } = useKangurAuthSessionState();
+  const { isLoadingAuth, isLoadingPublicSettings, authError } = useKangurAuthStatusState();
   const { resolvePendingSnapshot } = useKangurRouteAccess();
   const settingsStore = useSettingsStore();
   const isLoadingSettings = settingsStore.isLoading;
@@ -811,18 +808,20 @@ const AuthenticatedApp = (): JSX.Element | null => {
 //
 //  KangurRouteTransitionProvider  – manages the 4-phase navigation lifecycle
 //  KangurTopNavigationProvider    – owns top-bar visibility and content
-//  KangurGuestPlayerProvider      – tracks unauthenticated guest state
-//  KangurLoginModalProvider       – controls the login modal open/close state
 //  KangurAuthProvider             – resolves learner auth session
-//  KangurSubjectFocusProvider     – persists the learner's active subject
-//  KangurAgeGroupFocusProvider    – persists the learner's age-group filter
-//  KangurSubjectAgeGroupSync      – keeps subject and age-group in sync
+//  KangurFocusProvider            – owns subject focus, age-group focus, and
+//                                   the subject/age-group sync in one scope
 //  KangurProgressSyncProvider     – background progress polling/sync
 //  KangurScoreSyncProvider        – background score polling/sync
 //  KangurContextRegistryPageBoundary – scopes AI Tutor context to the page
 //  KangurDeferredAiTutorProviders – mounts dormant AI Tutor contexts from the
 //                                   first render; the heavy runtime still
 //                                   activates lazily via the widget bridge
+//  KangurLoginModalProvider       – controls the login modal open/close state
+//                                   for the routed app, tutor widget, and
+//                                   modal mount only
+//  KangurGuestPlayerProvider      – tracks unauthenticated guest state for
+//                                   routed learner pages only
 //  KangurDeferredAiTutorWidgetMount – delays the heavy widget only for the
 //                                     initial standalone home-route boot
 //
@@ -832,26 +831,23 @@ export function KangurFeatureApp(): JSX.Element {
   return (
     <KangurRouteTransitionProvider>
       <KangurTopNavigationProvider>
-        <KangurGuestPlayerProvider>
-          <KangurLoginModalProvider>
-            <KangurAuthProvider>
-              <KangurSubjectFocusProvider>
-                <KangurAgeGroupFocusProvider>
-                  <KangurSubjectAgeGroupSync />
-                  <KangurProgressSyncProvider />
-                  <KangurScoreSyncProvider />
-                  <KangurContextRegistryPageBoundary>
-                    <KangurDeferredAiTutorProviders>
-                      <AuthenticatedApp />
-                      <KangurDeferredAiTutorWidgetMount />
-                      <KangurLoginModalMount />
-                    </KangurDeferredAiTutorProviders>
-                  </KangurContextRegistryPageBoundary>
-                </KangurAgeGroupFocusProvider>
-              </KangurSubjectFocusProvider>
-            </KangurAuthProvider>
-          </KangurLoginModalProvider>
-        </KangurGuestPlayerProvider>
+        <KangurAuthProvider>
+          <KangurFocusProvider>
+            <KangurProgressSyncProvider />
+            <KangurScoreSyncProvider />
+            <KangurContextRegistryPageBoundary>
+              <KangurDeferredAiTutorProviders>
+                <KangurLoginModalProvider>
+                  <KangurGuestPlayerProvider>
+                    <AuthenticatedApp />
+                  </KangurGuestPlayerProvider>
+                  <KangurDeferredAiTutorWidgetMount />
+                  <KangurLoginModalMount />
+                </KangurLoginModalProvider>
+              </KangurDeferredAiTutorProviders>
+            </KangurContextRegistryPageBoundary>
+          </KangurFocusProvider>
+        </KangurAuthProvider>
       </KangurTopNavigationProvider>
     </KangurRouteTransitionProvider>
   );

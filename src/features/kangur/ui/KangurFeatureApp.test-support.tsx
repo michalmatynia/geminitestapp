@@ -351,6 +351,25 @@ vi.mock('@/features/kangur/ui/context/KangurScoreSyncProvider', () => ({
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   KangurAuthProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
   useKangurAuth: () => createMockedAuthState(authStateMock()),
+  useKangurAuthSessionState: () => {
+    const authState = createMockedAuthState(authStateMock());
+    return {
+      user: authState.user,
+      isAuthenticated: authState.isAuthenticated,
+      hasResolvedAuth: authState.hasResolvedAuth,
+      canAccessParentAssignments: authState.canAccessParentAssignments,
+    };
+  },
+  useKangurAuthStatusState: () => {
+    const authState = createMockedAuthState(authStateMock());
+    return {
+      isLoadingAuth: authState.isLoadingAuth,
+      isLoadingPublicSettings: authState.isLoadingPublicSettings,
+      isLoggingOut: false,
+      authError: authState.authError,
+      appPublicSettings: authState.appPublicSettings,
+    };
+  },
   useKangurAuthState: () => createMockedAuthState(authStateMock()),
   useKangurAuthActions: () => ({
     logout: vi.fn(),

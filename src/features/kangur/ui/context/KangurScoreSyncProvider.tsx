@@ -9,7 +9,10 @@ import {
 import { syncGuestKangurScores } from '@/features/kangur/services/guest-kangur-scores';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
-import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import {
+  useKangurAuthSessionState,
+  useKangurAuthStatusState,
+} from '@/features/kangur/ui/context/KangurAuthContext';
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { resolveKangurUserScopeKey } from '@/features/kangur/ui/context/kangur-user-scope';
 
@@ -151,7 +154,8 @@ export function KangurScoreSyncProvider({
 }: {
   children?: ReactNode;
 }): React.JSX.Element | null {
-  const { isAuthenticated, isLoadingAuth, user } = useKangurAuth();
+  const { isAuthenticated, user } = useKangurAuthSessionState();
+  const { isLoadingAuth } = useKangurAuthStatusState();
   const routing = useOptionalKangurRouting();
   const learnerKey = resolveKangurUserScopeKey(user);
   const initialDelayMs =

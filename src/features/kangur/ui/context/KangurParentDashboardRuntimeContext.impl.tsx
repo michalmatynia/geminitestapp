@@ -12,7 +12,10 @@ import {
 } from 'react';
 
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
-import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import {
+  useKangurAuthActions,
+  useKangurAuthSessionState,
+} from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
 import { internalError } from '@/features/kangur/shared/errors/app-error';
@@ -71,14 +74,8 @@ export function KangurParentDashboardRuntimeProvider({
 }): JSX.Element {
   const translations = useTranslations('KangurParentDashboardRuntime');
   const { basePath } = useKangurRouting();
-  const {
-    isAuthenticated,
-    user,
-    navigateToLogin,
-    logout,
-    selectLearner,
-    checkAppState,
-  } = useKangurAuth();
+  const { checkAppState, logout, navigateToLogin, selectLearner } = useKangurAuthActions();
+  const { isAuthenticated, user } = useKangurAuthSessionState();
   const { ageGroup } = useKangurAgeGroupFocus();
   const { subject } = useKangurSubjectFocus();
   const progress = useKangurProgressState();

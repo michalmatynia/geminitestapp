@@ -14,7 +14,7 @@ import {
 import {
   useKangurLessonDocument,
 } from '@/features/kangur/ui/hooks/useKangurLessons';
-import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import { useKangurAuthSessionState } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurAgeGroupFocus } from '@/features/kangur/ui/context/KangurAgeGroupFocusContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
@@ -63,10 +63,13 @@ const KangurLessonsRuntimeActionsContext =
 // Resolves whether the current user can access parent-delegated assignments.
 // Falls back to checking for an active learner ID when the platform flag is
 // not yet available.
-const resolveKangurLessonsCanAccessParentAssignments = (
-  auth: ReturnType<typeof useKangurAuth>,
-  user: ReturnType<typeof useKangurAuth>['user']
-): boolean => auth.canAccessParentAssignments ?? Boolean(user?.activeLearner?.id);
+const resolveKangurLessonsCanAccessParentAssignments = ({
+  canAccessParentAssignments,
+  user,
+}: {
+  canAccessParentAssignments: boolean;
+  user: import('@kangur/platform').KangurUser | null;
+}): boolean => canAccessParentAssignments ?? Boolean(user?.activeLearner?.id);
 
 // KangurLessonsRuntimeProvider is the central state container for the StudiQ
 // lessons experience. It owns:
@@ -84,21 +87,20 @@ export function KangurLessonsRuntimeProvider({
   children: ReactNode;
 }): JSX.Element {
   const { basePath } = useKangurRouting();
-  const auth = useKangurAuth();
-  const { user } = auth;
-  const canAccessParentAssignments = resolveKangurLessonsCanAccessParentAssignments(
-    auth,
-    user
-  );
+  const { canAccessParentAssignments, user } = useKangurAuthSessionState();
+  const hasParentAssignmentAccess = resolveKangurLessonsCanAccessParentAssignments({
+    canAccessParentAssignments,
+    user,
+  });
   const { subject, setSubject } = useKangurSubjectFocus();
   const { ageGroup, setAgeGroup } = useKangurAgeGroupFocus();
   const focusToken = useKangurFocusToken(basePath);
-  const isAssignmentsReady = useKangurAssignmentsReady(canAccessParentAssignments);
+  const isAssignmentsReady = useKangurAssignmentsReady(hasParentAssignmentAccess);
   const progress = useKangurProgressState();
   // Assignments are only fetched once the assignments-ready gate has opened
   // (i.e. auth has resolved and the user has parent assignment access).
   const { assignments } = useKangurAssignments({
-    enabled: isAssignmentsReady && canAccessParentAssignments,
+    enabled: isAssignmentsReady && hasParentAssignmentAccess,
     query: {
       includeArchived: false,
     },

@@ -70,7 +70,7 @@ vi.mock('@/shared/lib/settings-lite-server-cache', () => ({
   getLiteSettingsCache: getLiteSettingsCacheMock,
 }));
 
-vi.mock('@/features/cms/public', () => ({
+vi.mock('@/shared/ui/cms-appearance/CmsStorefrontAppearance', () => ({
   CmsStorefrontAppearanceProvider: cmsStorefrontAppearanceProviderMock,
 }));
 
@@ -169,14 +169,11 @@ describe('frontend layout bootstrap', () => {
       publicOwner: 'cms',
       routeFamily: 'cms',
     });
-    expect(frontendPublicOwnerShellClientMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        publicOwner: 'cms',
-        initialAppearance: undefined,
-        renderStandaloneKangurShell: false,
-      }),
+    expect(cmsStorefrontAppearanceProviderMock).toHaveBeenCalledWith(
+      expect.objectContaining({ initialMode: 'default' }),
       undefined
     );
+    expect(frontendPublicOwnerShellClientMock).not.toHaveBeenCalled();
     },
     60_000
   );
@@ -298,14 +295,7 @@ describe('frontend layout bootstrap', () => {
     expect(getKangurStorefrontInitialStateMock).not.toHaveBeenCalled();
     expect(getKangurAuthBootstrapScriptMock).not.toHaveBeenCalled();
     expect(kangurSSRSkeletonMock).not.toHaveBeenCalled();
-    expect(frontendPublicOwnerShellClientMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        publicOwner: 'kangur',
-        initialAppearance: undefined,
-        renderStandaloneKangurShell: false,
-      }),
-      undefined
-    );
+    expect(frontendPublicOwnerShellClientMock).not.toHaveBeenCalled();
   });
 
   it('loads Kangur storefront bootstrap on standalone Kangur routes like lessons', async () => {
@@ -473,22 +463,11 @@ describe('frontend layout bootstrap', () => {
       publicOwner: 'cms',
       routeFamily: 'studiq',
     });
-    expect(frontendPublicOwnerShellClientMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        publicOwner: 'cms',
-        initialAppearance: {
-          mode: 'default',
-          themeSettings: {
-            dark: null,
-            dawn: null,
-            default: null,
-            sunset: null,
-          },
-        },
-        renderStandaloneKangurShell: false,
-      }),
+    expect(cmsStorefrontAppearanceProviderMock).toHaveBeenCalledWith(
+      expect.objectContaining({ initialMode: 'default' }),
       undefined
     );
+    expect(frontendPublicOwnerShellClientMock).not.toHaveBeenCalled();
   });
 
   it('prefers the custom server pathname header over missing next-url metadata', async () => {
@@ -573,14 +552,7 @@ describe('frontend layout bootstrap', () => {
       expect(resolveFrontPageSelectionMock).toHaveBeenCalledTimes(1);
       expect(getKangurStorefrontInitialStateMock).not.toHaveBeenCalled();
       expect(getKangurAuthBootstrapScriptMock).not.toHaveBeenCalled();
-      expect(frontendPublicOwnerShellClientMock).toHaveBeenCalledWith(
-        expect.objectContaining({
-          publicOwner: 'kangur',
-          initialAppearance: undefined,
-          renderStandaloneKangurShell: false,
-        }),
-        undefined
-      );
+      expect(frontendPublicOwnerShellClientMock).not.toHaveBeenCalled();
       const timingScript = document.querySelector('#__FRONTEND_LAYOUT_TIMING__');
       expect(timingScript?.textContent).toContain('"requestHeadersTimedOut":true');
       expect(timingScript?.textContent).toContain('"frontPageSelectionSource":"lite"');

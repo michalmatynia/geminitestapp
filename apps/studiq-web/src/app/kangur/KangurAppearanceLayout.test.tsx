@@ -7,12 +7,14 @@ import type { ReactElement, ReactNode } from 'react';
 const {
   getKangurStorefrontInitialStateMock,
   getKangurSurfaceBootstrapStyleMock,
+  getLiteSettingsForHydrationMock,
   kangurSurfaceHintScriptMock,
   settingsStoreProviderMock,
   storefrontAppearanceProviderMock,
 } = vi.hoisted(() => ({
   getKangurStorefrontInitialStateMock: vi.fn(),
   getKangurSurfaceBootstrapStyleMock: vi.fn(),
+  getLiteSettingsForHydrationMock: vi.fn(),
   kangurSurfaceHintScriptMock: 'window.__kangurSurfaceHint = "<unsafe>&";',
   settingsStoreProviderMock: vi.fn(),
   storefrontAppearanceProviderMock: vi.fn(),
@@ -24,15 +26,21 @@ vi.mock('@/features/kangur/server', () => ({
   getKangurSurfaceBootstrapStyle: getKangurSurfaceBootstrapStyleMock,
 }));
 
+vi.mock('@/shared/lib/lite-settings-ssr', () => ({
+  getLiteSettingsForHydration: getLiteSettingsForHydrationMock,
+}));
+
 vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
   SettingsStoreProvider: ({
     children,
+    initialEntries,
     mode,
   }: {
     children: ReactNode;
+    initialEntries?: ReadonlyArray<readonly [string, string]>;
     mode?: 'admin' | 'lite';
   }) => {
-    settingsStoreProviderMock({ mode });
+    settingsStoreProviderMock({ initialEntries, mode });
     return <div data-testid='settings-store-provider'>{children}</div>;
   },
 }));
@@ -68,6 +76,7 @@ describe('apps/studiq-web KangurAppearanceLayout', () => {
   beforeEach(() => {
     getKangurStorefrontInitialStateMock.mockReset();
     getKangurSurfaceBootstrapStyleMock.mockReset();
+    getLiteSettingsForHydrationMock.mockReset();
     settingsStoreProviderMock.mockReset();
     storefrontAppearanceProviderMock.mockReset();
   });
@@ -83,6 +92,10 @@ describe('apps/studiq-web KangurAppearanceLayout', () => {
       },
     });
     getKangurSurfaceBootstrapStyleMock.mockReturnValue(':root{--bootstrap-style:1;}');
+    getLiteSettingsForHydrationMock.mockResolvedValue([
+      { key: 'kangur_theme_daily', value: '{"accent":"daily"}' },
+      { key: 'kangur_theme_default', value: '{"accent":"default"}' },
+    ]);
 
     const { default: KangurAppearanceLayout } = await import('./KangurAppearanceLayout');
     const result = await KangurAppearanceLayout({
@@ -101,7 +114,13 @@ describe('apps/studiq-web KangurAppearanceLayout', () => {
         dark: '{"slot":"dark"}',
       },
     });
-    expect(settingsStoreProviderMock).toHaveBeenCalledWith({ mode: 'lite' });
+    expect(settingsStoreProviderMock).toHaveBeenCalledWith({
+      initialEntries: [
+        ['kangur_theme_daily', '{"accent":"daily"}'],
+        ['kangur_theme_default', '{"accent":"default"}'],
+      ],
+      mode: 'lite',
+    });
     expect(storefrontAppearanceProviderMock).toHaveBeenCalledWith({
       initialAppearance: {
         mode: 'sunset',
@@ -136,6 +155,7 @@ describe('apps/studiq-web KangurAppearanceLayout', () => {
       },
     });
     getKangurSurfaceBootstrapStyleMock.mockReturnValue('body::before{content:"<unsafe>&";}');
+    getLiteSettingsForHydrationMock.mockResolvedValue([]);
 
     const { default: KangurAppearanceLayout } = await import('./KangurAppearanceLayout');
     const result = await KangurAppearanceLayout({

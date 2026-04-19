@@ -14,7 +14,7 @@ import {
 } from '@/app/(frontend)/cms/slug-page-data';
 import { resolveFrontPageSelection } from '@/app/(frontend)/home/home-helpers';
 import { resolveCmsDomainFromHeaders } from '@/features/cms/server';
-import { getKangurPublicLaunchHref } from '@/features/kangur/public';
+import { getKangurPublicLaunchHref } from '@/features/kangur/config/routing';
 import { getKangurConfiguredLaunchRoute, requireAccessibleKangurSlugRoute } from '@/features/kangur/server';
 import { buildLocalizedPathname, normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 import { readOptionalRequestHeaders } from '@/shared/lib/request/optional-headers';

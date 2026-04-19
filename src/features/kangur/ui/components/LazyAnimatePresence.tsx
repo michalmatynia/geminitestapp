@@ -25,15 +25,13 @@ let loadPromise: Promise<FramerMotionExports> | null = null;
 
 const loadFramerMotion = (): Promise<FramerMotionExports> => {
   if (cached) return Promise.resolve(cached);
-  if (!loadPromise) {
-    loadPromise = import('framer-motion').then((mod) => {
-      cached = {
-        AnimatePresence: mod.AnimatePresence as FramerMotionExports['AnimatePresence'],
-        MotionDiv: mod.motion.div,
-      };
-      return cached;
-    });
-  }
+  loadPromise ??= import('framer-motion').then((mod) => {
+    cached = {
+      AnimatePresence: mod.AnimatePresence as FramerMotionExports['AnimatePresence'],
+      MotionDiv: mod.motion.div,
+    };
+    return cached;
+  });
   return loadPromise;
 };
 
@@ -41,21 +39,32 @@ const loadFramerMotion = (): Promise<FramerMotionExports> => {
 // (auth, settings) have completed. The LazyMotionDiv gracefully falls back
 // to a plain <div> until the library is available.
 if (typeof window !== 'undefined') {
-  onBootReady(() => void loadFramerMotion());
+  onBootReady(() => {
+    loadFramerMotion().catch(() => undefined);
+  });
 }
 
-const useFramerMotion = (): FramerMotionExports | null => {
-  const [resolved, setResolved] = useState<FramerMotionExports | null>(() => cached);
+const useFramerMotion = (enabled = true): FramerMotionExports | null => {
+  const [resolved, setResolved] = useState<FramerMotionExports | null>(() =>
+    enabled ? cached : null
+  );
 
   useEffect(() => {
+    if (!enabled) {
+      setResolved(null);
+      return;
+    }
+
     if (cached) {
       setResolved(cached);
       return;
     }
-    void loadFramerMotion().then((exports) => {
-      setResolved(exports);
-    });
-  }, []);
+    loadFramerMotion()
+      .then((exports) => {
+        setResolved(exports);
+      })
+      .catch(() => undefined);
+  }, [enabled]);
 
   return resolved;
 };
@@ -66,13 +75,15 @@ const useFramerMotion = (): FramerMotionExports | null => {
 
 type LazyAnimatePresenceProps = AnimatePresenceProps & {
   children: ReactNode;
+  loadMotion?: boolean;
 };
 
 export function LazyAnimatePresence({
   children,
+  loadMotion = true,
   ...props
 }: LazyAnimatePresenceProps): React.JSX.Element {
-  const fm = useFramerMotion();
+  const fm = useFramerMotion(loadMotion);
 
   if (fm) {
     return <fm.AnimatePresence {...props}>{children}</fm.AnimatePresence>;
@@ -88,6 +99,7 @@ export function LazyAnimatePresence({
 type LazyMotionDivProps = HTMLMotionProps<'div'> & {
   children?: ReactNode;
   className?: string;
+  loadMotion?: boolean;
   'data-testid'?: string;
   'data-route-transition-phase'?: string;
   'data-route-interactive-ready'?: string;
@@ -97,31 +109,30 @@ type LazyMotionDivProps = HTMLMotionProps<'div'> & {
 
 export const LazyMotionDiv = forwardRef<HTMLDivElement, LazyMotionDivProps>(
   (props, ref) => {
-    const fm = useFramerMotion();
+    const { loadMotion = true, ...motionProps } = props;
+    const fm = useFramerMotion(loadMotion);
 
     if (fm) {
       const MotionDiv = fm.MotionDiv;
-      return <MotionDiv ref={ref} {...props} />;
+      return <MotionDiv ref={ref} {...motionProps} />;
     }
 
     // Before framer-motion loads, render a plain div with only standard HTML props.
-    const {
-      initial: _initial,
-      animate: _animate,
-      exit: _exit,
-      transition: _transition,
-      whileHover: _whileHover,
-      whileTap: _whileTap,
-      whileFocus: _whileFocus,
-      whileInView: _whileInView,
-      whileDrag: _whileDrag,
-      variants: _variants,
-      layout: _layout,
-      layoutId: _layoutId,
-      onAnimationStart: _onAnimationStart,
-      onAnimationComplete: _onAnimationComplete,
-      ...divProps
-    } = props;
+    const divProps: Record<string, unknown> = { ...motionProps };
+    delete divProps.initial;
+    delete divProps.animate;
+    delete divProps.exit;
+    delete divProps.transition;
+    delete divProps.whileHover;
+    delete divProps.whileTap;
+    delete divProps.whileFocus;
+    delete divProps.whileInView;
+    delete divProps.whileDrag;
+    delete divProps.variants;
+    delete divProps.layout;
+    delete divProps.layoutId;
+    delete divProps.onAnimationStart;
+    delete divProps.onAnimationComplete;
 
     return <div ref={ref} {...(divProps as ComponentProps<'div'>)} />;
   }
@@ -136,7 +147,7 @@ export const usePrefersReducedMotion = (): boolean => {
 
   useEffect(() => {
     if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
-      return;
+      return undefined;
     }
 
     const mql = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -146,9 +157,10 @@ export const usePrefersReducedMotion = (): boolean => {
       setMatches(event.matches);
     };
     mql.addEventListener('change', handler);
-    return () => {
+    const cleanup = (): void => {
       mql.removeEventListener('change', handler);
     };
+    return cleanup;
   }, []);
 
   return matches;

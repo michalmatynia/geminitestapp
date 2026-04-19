@@ -13,7 +13,7 @@ const { frontendCmsRouteLoadingFallbackMock } = vi.hoisted(() => ({
   ),
 }));
 
-vi.mock('@/features/kangur/public', () => ({
+vi.mock('@/features/kangur/ui/components/FrontendCmsRouteLoadingFallback', () => ({
   FrontendCmsRouteLoadingFallback: frontendCmsRouteLoadingFallbackMock,
 }));
 

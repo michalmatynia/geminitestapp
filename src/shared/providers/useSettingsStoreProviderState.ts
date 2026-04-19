@@ -25,6 +25,7 @@ import {
 
 type UseSettingsStoreProviderStateOptions = {
   canReadAdminSettings?: boolean;
+  initialMap: ReadonlyMap<string, string>;
   mode: SettingsMode;
   parentFetching: boolean;
   parentStore: SettingsStoreValue | null;
@@ -45,6 +46,7 @@ type ResolvedSettingsStoreState = SettingsStoreQueryState & {
 
 const useSettingsStoreQueries = ({
   canReadAdminSettings,
+  initialMap,
   mode,
   parentStore,
   pathname,
@@ -57,6 +59,7 @@ const useSettingsStoreQueries = ({
 } => {
   const flags = resolveProviderFlags({
     canReadAdminSettings,
+    hasInitialLiteStore: initialMap.size > 0,
     mode,
     parentStore,
     pathname,
@@ -81,12 +84,14 @@ const useSettingsStoreQueries = ({
 const useResolvedSettingsStoreMapData = ({
   adminQuery,
   flags,
+  initialMap,
   liteQuery,
   parentStore,
   settingsQuery,
 }: {
   adminQuery: SettingsQueryLike;
   flags: ProviderFlags;
+  initialMap: ReadonlyMap<string, string>;
   liteQuery: SettingsQueryLike;
   parentStore: SettingsStoreValue | null;
   settingsQuery: SettingsQueryLike;
@@ -104,8 +109,10 @@ const useResolvedSettingsStoreMapData = ({
   );
 
   return resolveSettingsStoreMapData({
+    initialLiteMap: initialMap,
     mergedAdminMap,
     settingsQuery,
+    shouldUseSeededLiteStore: flags.shouldUseSeededLiteStore,
     shouldUseAdminSettings: flags.shouldUseAdminSettings,
   });
 };
@@ -113,6 +120,7 @@ const useResolvedSettingsStoreMapData = ({
 const useResolvedSettingsStoreQueryState = ({
   adminQuery,
   flags,
+  initialMap,
   liteQuery,
   parentFetching,
   parentStore,
@@ -120,6 +128,7 @@ const useResolvedSettingsStoreQueryState = ({
 }: {
   adminQuery: SettingsQueryLike;
   flags: ProviderFlags;
+  initialMap: ReadonlyMap<string, string>;
   liteQuery: SettingsQueryLike;
   parentFetching: boolean;
   parentStore: SettingsStoreValue | null;
@@ -141,27 +150,33 @@ const useResolvedSettingsStoreQueryState = ({
   return {
     error: resolveSettingsStoreErrorState({
       adminQuery,
+      initialLiteMap: initialMap,
       liteQuery,
       parentStore,
       settingsQuery,
       shouldReuseParentLiteStore: flags.shouldReuseParentLiteStore,
+      shouldUseSeededLiteStore: flags.shouldUseSeededLiteStore,
       shouldUseAdminSettings: flags.shouldUseAdminSettings,
     }),
     isFetching: resolveSettingsStoreFetchingState({
       adminQuery,
+      initialLiteMap: initialMap,
       liteQuery,
       parentFetching,
       settingsQuery,
       shouldReuseParentLiteStore: flags.shouldReuseParentLiteStore,
+      shouldUseSeededLiteStore: flags.shouldUseSeededLiteStore,
       shouldUseAdminSettings: flags.shouldUseAdminSettings,
     }),
     isLoading: resolveSettingsStoreLoadingState({
       adminQuery,
+      initialLiteMap: initialMap,
       liteQuery,
       parentStore,
       settingsQuery,
       shouldReuseParentLiteStore: flags.shouldReuseParentLiteStore,
       shouldSuppressAdminQuery: flags.shouldSuppressAdminQuery,
+      shouldUseSeededLiteStore: flags.shouldUseSeededLiteStore,
       shouldUseAdminSettings: flags.shouldUseAdminSettings,
     }),
     refetch,
@@ -171,6 +186,7 @@ const useResolvedSettingsStoreQueryState = ({
 const useResolvedSettingsStoreState = ({
   adminQuery,
   flags,
+  initialMap,
   liteQuery,
   parentFetching,
   parentStore,
@@ -178,6 +194,7 @@ const useResolvedSettingsStoreState = ({
 }: {
   adminQuery: SettingsQueryLike;
   flags: ProviderFlags;
+  initialMap: ReadonlyMap<string, string>;
   liteQuery: SettingsQueryLike;
   parentFetching: boolean;
   parentStore: SettingsStoreValue | null;
@@ -186,6 +203,7 @@ const useResolvedSettingsStoreState = ({
   const mapData = useResolvedSettingsStoreMapData({
     adminQuery,
     flags,
+    initialMap,
     liteQuery,
     parentStore,
     settingsQuery,
@@ -193,6 +211,7 @@ const useResolvedSettingsStoreState = ({
   const queryState = useResolvedSettingsStoreQueryState({
     adminQuery,
     flags,
+    initialMap,
     liteQuery,
     parentFetching,
     parentStore,
@@ -250,6 +269,7 @@ const useSettingsStoreValue = ({
 
 export const useSettingsStoreProviderState = ({
   canReadAdminSettings,
+  initialMap,
   mode,
   parentFetching,
   parentStore,
@@ -261,6 +281,7 @@ export const useSettingsStoreProviderState = ({
 } => {
   const queries = useSettingsStoreQueries({
     canReadAdminSettings,
+    initialMap,
     mode,
     parentStore,
     pathname,
@@ -269,6 +290,7 @@ export const useSettingsStoreProviderState = ({
   const resolvedState = useResolvedSettingsStoreState({
     adminQuery: queries.adminQuery,
     flags: queries.flags,
+    initialMap,
     liteQuery: queries.liteQuery,
     parentFetching,
     parentStore,

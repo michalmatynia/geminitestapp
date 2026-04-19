@@ -55,7 +55,7 @@ vi.mock('@/features/kangur/server', () => ({
   getKangurStorefrontInitialState: getKangurStorefrontInitialStateMock,
 }));
 
-vi.mock('@/features/kangur/public', () => ({
+vi.mock('@/features/kangur/ui/FrontendPublicOwnerKangurShell', () => ({
   FrontendPublicOwnerKangurShell: ({
     embeddedOverride,
     initialAppearance,

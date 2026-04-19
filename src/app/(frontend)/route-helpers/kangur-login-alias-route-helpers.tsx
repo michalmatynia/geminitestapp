@@ -5,8 +5,12 @@ import { redirect } from 'next/navigation';
 import { Suspense, type JSX } from 'react';
 
 import { resolveFrontPageSelection } from '@/app/(frontend)/home/home-helpers';
-import { getKangurCanonicalPublicHref, getKangurHomeHref, KangurFeatureRouteShell } from '@/features/kangur/public';
+import {
+  getKangurCanonicalPublicHref,
+  getKangurHomeHref,
+} from '@/features/kangur/config/routing';
 import { readSanitizedKangurAliasLoginSearchParams } from '@/features/kangur/server';
+import { KangurFeatureRouteShell } from '@/features/kangur/ui/KangurFeatureRouteShell';
 import { buildLocalizedPathname, normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 type KangurAliasLoginSearchParams = Record<string, string | string[] | undefined>;

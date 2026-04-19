@@ -64,20 +64,37 @@ vi.mock('@/app/(frontend)/home/home-helpers', () => ({
   resolveFrontPageSelection: resolveFrontPageSelectionMock,
 }));
 
-vi.mock('@/features/kangur/public', async () => {
-  const actual = await vi.importActual('@/features/kangur/public');
+vi.mock('@/features/kangur/config/routing', async () => {
+  const actual = await vi.importActual<typeof import('@/features/kangur/config/routing')>(
+    '@/features/kangur/config/routing'
+  );
+
   return {
     ...actual,
     getKangurCanonicalPublicHref: getKangurCanonicalPublicHrefMock,
     getKangurHomeHref: (pathname = '/') => pathname,
-    KangurFeatureRouteShell: () =>
-      React.createElement(
-        'div',
-        { 'data-testid': 'kangur-feature-route-shell' },
-        'Kangur route shell'
-      ),
   };
 });
+
+vi.mock('@/features/kangur/server', async () => {
+  const actual = await vi.importActual<typeof import('@/features/kangur/server/login-alias-search-params')>(
+    '@/features/kangur/server/login-alias-search-params'
+  );
+
+  return {
+    readSanitizedKangurAliasLoginSearchParams:
+      actual.readSanitizedKangurAliasLoginSearchParams,
+  };
+});
+
+vi.mock('@/features/kangur/ui/KangurFeatureRouteShell', () => ({
+  KangurFeatureRouteShell: () =>
+    React.createElement(
+      'div',
+      { 'data-testid': 'kangur-feature-route-shell' },
+      'Kangur route shell'
+    ),
+}));
 
 describe('kangur login alias route', () => {
   beforeEach(() => {
@@ -102,13 +119,15 @@ describe('kangur login alias route', () => {
   });
 
   it('redirects the unlocalized login alias to the canonical public login route when Kangur owns home', async () => {
-    const { default: Page } = await import('@/app/(frontend)/kangur/login/page');
+    const { renderKangurLoginAliasRoute } = await import(
+      '@/app/(frontend)/route-helpers/kangur-login-alias-route-helpers'
+    );
 
     await expect(
-      Page({
-        searchParams: Promise.resolve({
+      renderKangurLoginAliasRoute({
+        searchParams: {
           callbackUrl: '/kangur/tests',
-        }),
+        },
       })
     ).rejects.toThrow('redirect:/login?callbackUrl=%2Ftests');
 
@@ -116,14 +135,16 @@ describe('kangur login alias route', () => {
   });
 
   it('redirects the localized login alias to the localized canonical public login route when Kangur owns home', async () => {
-    const { default: LocalizedPage } = await import('@/app/[locale]/(frontend)/kangur/login/page');
+    const { renderKangurLoginAliasRoute } = await import(
+      '@/app/(frontend)/route-helpers/kangur-login-alias-route-helpers'
+    );
 
     await expect(
-      LocalizedPage({
-        params: Promise.resolve({ locale: 'en' }),
-        searchParams: Promise.resolve({
+      renderKangurLoginAliasRoute({
+        locale: 'en',
+        searchParams: {
           callbackUrl: '/kangur/tests',
-        }),
+        },
       })
     ).rejects.toThrow('redirect:/en/login?callbackUrl=%2Fen%2Ftests');
 
@@ -131,13 +152,15 @@ describe('kangur login alias route', () => {
   });
 
   it('sanitizes blocked games callbacks on the unlocalized login alias for non-super-admin users', async () => {
-    const { default: Page } = await import('@/app/(frontend)/kangur/login/page');
+    const { renderKangurLoginAliasRoute } = await import(
+      '@/app/(frontend)/route-helpers/kangur-login-alias-route-helpers'
+    );
 
     await expect(
-      Page({
-        searchParams: Promise.resolve({
+      renderKangurLoginAliasRoute({
+        searchParams: {
           callbackUrl: '/kangur/games',
-        }),
+        },
       })
     ).rejects.toThrow('redirect:/login?callbackUrl=%2F');
 
@@ -145,14 +168,16 @@ describe('kangur login alias route', () => {
   });
 
   it('sanitizes blocked games callbacks on the localized login alias for non-super-admin users', async () => {
-    const { default: LocalizedPage } = await import('@/app/[locale]/(frontend)/kangur/login/page');
+    const { renderKangurLoginAliasRoute } = await import(
+      '@/app/(frontend)/route-helpers/kangur-login-alias-route-helpers'
+    );
 
     await expect(
-      LocalizedPage({
-        params: Promise.resolve({ locale: 'en' }),
-        searchParams: Promise.resolve({
+      renderKangurLoginAliasRoute({
+        locale: 'en',
+        searchParams: {
           callbackUrl: '/kangur/games',
-        }),
+        },
       })
     ).rejects.toThrow('redirect:/en/login?callbackUrl=%2Fen');
 
@@ -166,13 +191,15 @@ describe('kangur login alias route', () => {
       },
     });
 
-    const { default: Page } = await import('@/app/(frontend)/kangur/login/page');
+    const { renderKangurLoginAliasRoute } = await import(
+      '@/app/(frontend)/route-helpers/kangur-login-alias-route-helpers'
+    );
 
     await expect(
-      Page({
-        searchParams: Promise.resolve({
+      renderKangurLoginAliasRoute({
+        searchParams: {
           callbackUrl: '/kangur/games',
-        }),
+        },
       })
     ).rejects.toThrow('redirect:/login?callbackUrl=%2Fgames');
 
@@ -189,8 +216,10 @@ describe('kangur login alias route', () => {
       fallbackReason: null,
     });
 
-    const { default: Page } = await import('@/app/(frontend)/kangur/login/page');
-    const result = await Page({});
+    const { renderKangurLoginAliasRoute } = await import(
+      '@/app/(frontend)/route-helpers/kangur-login-alias-route-helpers'
+    );
+    const result = await renderKangurLoginAliasRoute({});
 
     expect(result).toBeTruthy();
     expect(redirectMock).not.toHaveBeenCalled();

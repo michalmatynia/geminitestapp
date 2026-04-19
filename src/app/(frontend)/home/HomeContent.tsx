@@ -11,7 +11,7 @@ import { applyCacheLife } from '@/shared/lib/next/cache-life';
 
 import { canPreviewDrafts } from './home-helpers';
 import { normalizeHomeProducts } from './home-product-normalize';
-import { HomeContentClient } from '@/features/cms/public';
+import { HomeContentClient } from '@/features/cms/components/frontend/home/HomeContentClient';
 
 type HomeContentProps = {
   domainId: string;

@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import React from 'react';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import {
+  emptySettingsMap,
   fallbackSettingsStore,
   type SettingsStoreValue,
 } from '@/shared/providers/SettingsStoreProvider.shared';
@@ -46,17 +47,26 @@ export function SettingsStoreProvider({
   mode = 'lite',
   suppressOwnQuery = false,
   canReadAdminSettings,
+  initialEntries,
 }: {
   children: React.ReactNode;
   mode?: 'admin' | 'lite';
   suppressOwnQuery?: boolean;
   canReadAdminSettings?: boolean;
+  initialEntries?: ReadonlyArray<readonly [string, string]>;
 }): React.JSX.Element {
   const parentStore = useOptionalSettingsStoreContext();
   const parentFetching = useOptionalSettingsStoreFetchingContext();
   const pathname = usePathname();
+  const initialMap = React.useMemo<ReadonlyMap<string, string>>(() => {
+    if (!initialEntries || initialEntries.length === 0) {
+      return emptySettingsMap;
+    }
+    return new Map(initialEntries);
+  }, [initialEntries]);
   const { isFetching, value } = useSettingsStoreProviderState({
     canReadAdminSettings,
+    initialMap,
     mode,
     parentFetching: parentFetching ?? false,
     parentStore,

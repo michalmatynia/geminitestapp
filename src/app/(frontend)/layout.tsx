@@ -4,9 +4,8 @@ import {
   createFrontendLoadTimingRecorder,
   shouldEnableFrontendLoadTiming,
 } from '@/app/(frontend)/shell/frontend-load-timing';
-import { CmsStorefrontAppearanceProvider } from '@/features/cms/public';
+import { CmsStorefrontAppearanceProvider } from '@/shared/ui/cms-appearance/CmsStorefrontAppearance';
 import { FrontendPublicOwnerProvider } from '@/features/kangur/ui/FrontendPublicOwnerContext';
-import FrontendPublicOwnerShellClient from '@/features/kangur/ui/FrontendPublicOwnerShellClient';
 import { KangurServerShell } from '@/features/kangur/ui/components/KangurServerShell';
 import {
   getKangurSurfaceBootstrapStyle,
@@ -32,16 +31,54 @@ import { QueryErrorBoundary } from '@/shared/ui/QueryErrorBoundary';
 
 import type { JSX, ReactNode } from 'react';
 
-function ResolvedFrontendLayoutContent({
+type ResolvedFrontendLayoutState = Awaited<
+  ReturnType<typeof resolveResolvedFrontendLayoutState>
+>;
+
+const renderFrontendPublicOwnerContent = async ({
   children,
-  inlinePayload,
   layoutState,
 }: {
   children: ReactNode;
+  layoutState: ResolvedFrontendLayoutState;
+}): Promise<JSX.Element> => {
+  const content = (
+    <CmsStorefrontAppearanceProvider
+      initialMode={layoutState.themeSettings.darkMode === true ? 'dark' : 'default'}
+    >
+      {children as JSX.Element}
+    </CmsStorefrontAppearanceProvider>
+  );
+
+  if (!layoutState.renderStandaloneKangurShell) {
+    return content;
+  }
+
+  const { default: FrontendPublicOwnerShellClient } = await import(
+    '@/features/kangur/ui/FrontendPublicOwnerShellClient'
+  );
+
+  return (
+    <FrontendPublicOwnerShellClient
+      publicOwner={layoutState.publicOwner}
+      initialAppearance={layoutState.initialAppearance}
+      renderStandaloneKangurShell={layoutState.renderStandaloneKangurShell}
+    >
+      {content}
+    </FrontendPublicOwnerShellClient>
+  );
+};
+
+function ResolvedFrontendLayoutContent({
+  frontendPublicOwnerContent,
+  inlinePayload,
+  layoutState,
+}: {
+  frontendPublicOwnerContent: JSX.Element;
   inlinePayload:
     | ReturnType<typeof buildTimingPayload>
     | null;
-  layoutState: Awaited<ReturnType<typeof resolveResolvedFrontendLayoutState>>;
+  layoutState: ResolvedFrontendLayoutState;
 }): JSX.Element {
   return (
     <FrontendLayoutMain routeFamily={layoutState.routeFamily}>
@@ -69,19 +106,7 @@ function ResolvedFrontendLayoutContent({
         routeFamily={layoutState.routeFamily}
       >
         <QueryErrorBoundary>
-          <FrontendPublicOwnerShellClient
-            publicOwner={layoutState.publicOwner}
-            initialAppearance={layoutState.initialAppearance}
-            renderStandaloneKangurShell={layoutState.renderStandaloneKangurShell}
-          >
-            <CmsStorefrontAppearanceProvider
-              initialMode={
-                layoutState.themeSettings.darkMode === true ? 'dark' : 'default'
-              }
-            >
-              {children as JSX.Element}
-            </CmsStorefrontAppearanceProvider>
-          </FrontendPublicOwnerShellClient>
+          {frontendPublicOwnerContent}
         </QueryErrorBoundary>
       </FrontendPublicOwnerProvider>
     </FrontendLayoutMain>
@@ -125,10 +150,14 @@ async function ResolvedFrontendLayout({
     injectKangurAuthBootstrap: layoutState.injectKangurAuthBootstrap,
     loadKangurStorefrontBootstrap: layoutState.loadKangurStorefrontBootstrap,
   });
+  const frontendPublicOwnerContent = await renderFrontendPublicOwnerContent({
+    children,
+    layoutState,
+  });
 
   return (
     <ResolvedFrontendLayoutContent
-      children={children}
+      frontendPublicOwnerContent={frontendPublicOwnerContent}
       inlinePayload={inlinePayload}
       layoutState={layoutState}
     />

@@ -12,7 +12,7 @@ import {
 } from '@/app/(frontend)/cms/slug-page-data';
 import { resolveFrontPageSelection } from '@/app/(frontend)/home/home-helpers';
 import { getKangurStorefrontInitialState } from '@/features/kangur/server';
-import { FrontendPublicOwnerKangurShell } from '@/features/kangur/public';
+import { FrontendPublicOwnerKangurShell } from '@/features/kangur/ui/FrontendPublicOwnerKangurShell';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 import type { Metadata } from 'next';

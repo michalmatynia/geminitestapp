@@ -186,6 +186,7 @@ const KangurRenderedRouteContent = memo(({
   embedded,
   isNavigationTransitionActive,
   isPendingRouteSnapshotVisible,
+  loadMotion,
   isRouteCaptureReady,
   isRouteContentInteractionBlocked,
   isRouteContentVisuallyHidden,
@@ -200,6 +201,7 @@ const KangurRenderedRouteContent = memo(({
   embedded: boolean;
   isNavigationTransitionActive: boolean;
   isPendingRouteSnapshotVisible: boolean;
+  loadMotion: boolean;
   isRouteCaptureReady: boolean;
   isRouteContentInteractionBlocked: boolean;
   isRouteContentVisuallyHidden: boolean;
@@ -228,6 +230,7 @@ const KangurRenderedRouteContent = memo(({
     data-route-transition-key={routeTransitionKey}
     data-route-transition-source-id={activeTransitionSourceId ?? undefined}
     data-testid='kangur-route-content'
+    loadMotion={loadMotion}
   >
     {routeContent}
   </LazyMotionDiv>
@@ -258,6 +261,68 @@ const KangurRenderedAppLoader = memo(({
   offsetTopBar: boolean;
   visible: boolean;
 }): JSX.Element => <KangurAppLoader offsetTopBar={offsetTopBar} visible={visible} />);
+
+const KangurSuspenseRouteFallback = memo(({
+  pageKey,
+}: {
+  pageKey: string | null;
+}): JSX.Element => (
+  <KangurPageTransitionSkeleton
+    pageKey={pageKey}
+    reason='navigation'
+    renderInlineTopNavigationSkeleton={false}
+  />
+));
+
+const KangurRenderedRouteSkeletonOverlay = memo(({
+  isLanguageSwitcherTransition,
+  isRouteSkeletonVisible,
+  loadMotion,
+  routeSkeletonMotionProps,
+  shouldRenderInlineRouteSkeletonTopNavigation,
+  topBarHeightCssValue,
+  variant,
+  visibleTransitionSkeletonEmbedded,
+  visibleTransitionSkeletonPageKey,
+}: {
+  isLanguageSwitcherTransition: boolean;
+  isRouteSkeletonVisible: boolean;
+  loadMotion: boolean;
+  routeSkeletonMotionProps: {
+    animate: Record<string, unknown>;
+    exit: Record<string, unknown>;
+    initial: Record<string, unknown>;
+    transition: Record<string, unknown>;
+  };
+  shouldRenderInlineRouteSkeletonTopNavigation: boolean;
+  topBarHeightCssValue: string | null;
+  variant: KangurRouteTransitionSkeletonVariant | null;
+  visibleTransitionSkeletonEmbedded: boolean;
+  visibleTransitionSkeletonPageKey: string;
+}): JSX.Element | null => {
+  if (!isRouteSkeletonVisible) {
+    return null;
+  }
+
+  return (
+    <LazyMotionDiv
+      key='kangur-page-transition-skeleton:navigation'
+      className={cn('pointer-events-none')}
+      data-testid='kangur-page-transition-skeleton-motion'
+      loadMotion={loadMotion}
+      {...routeSkeletonMotionProps}
+    >
+      <KangurPageTransitionSkeleton
+        embeddedOverride={visibleTransitionSkeletonEmbedded}
+        pageKey={visibleTransitionSkeletonPageKey}
+        reason={isLanguageSwitcherTransition ? 'locale-switch' : 'navigation'}
+        renderInlineTopNavigationSkeleton={shouldRenderInlineRouteSkeletonTopNavigation}
+        topBarHeightCssValue={topBarHeightCssValue}
+        variant={variant ?? undefined}
+      />
+    </LazyMotionDiv>
+  );
+});
 
 const KangurResolvedRouteContent = memo(({
   resolvedPageKey,
@@ -291,7 +356,7 @@ const KangurResolvedRouteContent = memo(({
 //  - Hot-route preloading and AI Tutor page-content prefetching
 //  - Auth-error redirects (login redirect, parent-dashboard guard)
 //  - Accessibility announcer and top navigation host
-const AuthenticatedApp = memo((): JSX.Element | null => {
+const AuthenticatedApp = (): JSX.Element | null => {
   const { navigateToLogin } = useKangurAuthActions();
   const { isAuthenticated, hasResolvedAuth = true } = useKangurAuthSessionState();
   const { isLoadingAuth, isLoadingPublicSettings, authError } = useKangurAuthStatusState();
@@ -311,6 +376,7 @@ const AuthenticatedApp = memo((): JSX.Element | null => {
     activeTransitionSkeletonVariant,
   } = useKangurRouteTransitionState();
   const routeNavigator = useKangurRouteNavigator();
+  const isStandaloneHomeReady = useKangurDeferredStandaloneHomeReady();
   const { pageKey, embedded, requestedPath, requestedHref, basePath } = useKangurRouting();
   const queryClient = useQueryClient();
   const routeLocale = normalizeSiteLocale(useLocale());
@@ -505,26 +571,30 @@ const AuthenticatedApp = memo((): JSX.Element | null => {
   const shouldRenderTopNavigationHost =
     !shouldHideTopNavigationDuringBoot &&
     (!isRouteSkeletonVisible || shouldKeepShellTopNavigationDuringTransition);
-  const routeSkeletonMotionProps = prefersReducedMotion
-    ? {
-        initial: { opacity: 1 },
-        animate: { opacity: 1 },
-        exit: { opacity: 1 },
-        transition: { duration: 0 },
-      }
-    : isLanguageSwitcherTransition
-      ? {
-          initial: { opacity: 0 },
-          animate: { opacity: 1 },
-          exit: { opacity: 0 },
-          transition: { duration: 0.18, ease: [0.16, 1, 0.3, 1] as const },
-        }
-      : {
-          initial: { opacity: 1 },
-          animate: { opacity: 1 },
-          exit: { opacity: 0 },
-          transition: { duration: 0.22, ease: [0.16, 1, 0.3, 1] as const },
-        };
+  const routeSkeletonMotionProps = useMemo(
+    () =>
+      prefersReducedMotion
+        ? {
+            initial: { opacity: 1 },
+            animate: { opacity: 1 },
+            exit: { opacity: 1 },
+            transition: { duration: 0 },
+          }
+        : isLanguageSwitcherTransition
+          ? {
+              initial: { opacity: 0 },
+              animate: { opacity: 1 },
+              exit: { opacity: 0 },
+              transition: { duration: 0.18, ease: [0.16, 1, 0.3, 1] as const },
+            }
+          : {
+              initial: { opacity: 1 },
+              animate: { opacity: 1 },
+              exit: { opacity: 0 },
+              transition: { duration: 0.22, ease: [0.16, 1, 0.3, 1] as const },
+            },
+    [isLanguageSwitcherTransition, prefersReducedMotion]
+  );
   const shouldSkipRouteContentPresence =
     isNavigationTransitionActive || isPendingRouteSnapshotVisible;
   const renderedRouteContent = routeContent ? (
@@ -533,6 +603,7 @@ const AuthenticatedApp = memo((): JSX.Element | null => {
       embedded={embedded}
       isNavigationTransitionActive={isNavigationTransitionActive}
       isPendingRouteSnapshotVisible={isPendingRouteSnapshotVisible}
+      loadMotion={isStandaloneHomeReady}
       isRouteCaptureReady={isRouteCaptureReady}
       isRouteContentInteractionBlocked={isRouteContentInteractionBlocked}
       isRouteContentVisuallyHidden={isRouteContentVisuallyHidden}
@@ -886,39 +957,32 @@ const AuthenticatedApp = memo((): JSX.Element | null => {
         offsetTopBar={shouldReserveTopBarOffset}
         visible={isBootLoaderBlockingNavigation}
       />
-      <Suspense fallback={
-        <KangurPageTransitionSkeleton
-          pageKey={resolvedPageKey}
-          reason='navigation'
-          renderInlineTopNavigationSkeleton={false}
-        />
-      }>
-        <LazyAnimatePresence mode={shouldSkipRouteContentPresence ? 'sync' : 'wait'}>
+      <Suspense fallback={<KangurSuspenseRouteFallback pageKey={resolvedPageKey} />}>
+        <LazyAnimatePresence
+          loadMotion={isStandaloneHomeReady}
+          mode={shouldSkipRouteContentPresence ? 'sync' : 'wait'}
+        >
           {renderedRouteContent}
         </LazyAnimatePresence>
       </Suspense>
-      <LazyAnimatePresence>
-          {isRouteSkeletonVisible ? (
-            <LazyMotionDiv
-              key='kangur-page-transition-skeleton:navigation'
-              className={cn('pointer-events-none')}
-              data-testid='kangur-page-transition-skeleton-motion'
-              {...routeSkeletonMotionProps}
-            >
-            <KangurPageTransitionSkeleton
-              embeddedOverride={visibleTransitionSkeletonEmbedded}
-              pageKey={visibleTransitionSkeletonPageKey}
-              reason={isLanguageSwitcherTransition ? 'locale-switch' : 'navigation'}
-              renderInlineTopNavigationSkeleton={shouldRenderInlineRouteSkeletonTopNavigation}
-              topBarHeightCssValue={visibleTransitionSkeletonTopBarHeightCssValue}
-              variant={visibleTransitionSkeletonVariant ?? undefined}
-            />
-          </LazyMotionDiv>
-        ) : null}
+      <LazyAnimatePresence loadMotion={isStandaloneHomeReady}>
+        <KangurRenderedRouteSkeletonOverlay
+          isLanguageSwitcherTransition={isLanguageSwitcherTransition}
+          isRouteSkeletonVisible={isRouteSkeletonVisible}
+          loadMotion={isStandaloneHomeReady}
+          routeSkeletonMotionProps={routeSkeletonMotionProps}
+          shouldRenderInlineRouteSkeletonTopNavigation={
+            shouldRenderInlineRouteSkeletonTopNavigation
+          }
+          topBarHeightCssValue={visibleTransitionSkeletonTopBarHeightCssValue}
+          variant={visibleTransitionSkeletonVariant}
+          visibleTransitionSkeletonEmbedded={visibleTransitionSkeletonEmbedded}
+          visibleTransitionSkeletonPageKey={visibleTransitionSkeletonPageKey}
+        />
       </LazyAnimatePresence>
     </>
   );
-});
+};
 
 // KangurFeatureApp is the root of the StudiQ learner experience. It composes
 // all global context providers in the correct order:

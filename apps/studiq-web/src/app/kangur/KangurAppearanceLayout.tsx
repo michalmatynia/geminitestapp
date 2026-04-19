@@ -4,6 +4,7 @@ import {
   getKangurSurfaceBootstrapStyle,
   KANGUR_SURFACE_HINT_SCRIPT,
 } from '@/features/kangur/server';
+import { getLiteSettingsForHydration } from '@/shared/lib/lite-settings-ssr';
 import { escapeForInlineScript } from '../../lib/kangur-surface-bootstrap';
 
 import './kangur.css';
@@ -17,12 +18,17 @@ export default async function KangurAppearanceLayout({
 }: {
   children: ReactNode;
 }): Promise<ReactNode> {
+  const liteSettings = await getLiteSettingsForHydration();
   const initialState = await getKangurStorefrontInitialState();
   const initialAppearance = {
     mode: initialState.initialMode,
     themeSettings: initialState.initialThemeSettings,
   };
   const surfaceBootstrapStyle = getKangurSurfaceBootstrapStyle(initialAppearance);
+  const initialSettingsEntries =
+    liteSettings.length > 0
+      ? liteSettings.map(({ key, value }) => [key, value] as const)
+      : undefined;
 
   return (
     <>
@@ -31,7 +37,7 @@ export default async function KangurAppearanceLayout({
         id='__KANGUR_SURFACE_BOOTSTRAP__'
         dangerouslySetInnerHTML={{ __html: escapeForInlineScript(surfaceBootstrapStyle) }}
       />
-      <SettingsStoreProvider mode='lite'>
+      <SettingsStoreProvider initialEntries={initialSettingsEntries} mode='lite'>
         <KangurStorefrontAppearanceProvider initialAppearance={initialAppearance}>
           <KangurSurfaceClassSync>{children}</KangurSurfaceClassSync>
         </KangurStorefrontAppearanceProvider>

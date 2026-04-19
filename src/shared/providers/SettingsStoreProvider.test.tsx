@@ -134,6 +134,23 @@ describe('SettingsStoreProvider', () => {
     expect(useSettingsMapMock).toHaveBeenCalledWith({ scope: 'light', enabled: false });
   });
 
+  it('uses seeded lite entries without issuing the root lite settings query', () => {
+    render(
+      <SettingsStoreProvider
+        initialEntries={[['kangur_theme_daily', '{"accent":"seeded"}']]}
+        mode='lite'
+      >
+        <SettingsProbe settingKey='kangur_theme_daily' />
+        <SettingsLoadingProbe />
+      </SettingsStoreProvider>
+    );
+
+    expect(useLiteSettingsMapMock).toHaveBeenCalledWith({ enabled: false });
+    expect(screen.getByTestId('value')).toHaveTextContent('{"accent":"seeded"}');
+    expect(screen.getByTestId('loading')).toHaveTextContent('false');
+    expect(screen.getByTestId('loading-context')).toHaveTextContent('false');
+  });
+
   it('loads the broader admin light scope immediately', () => {
     liteQueryResultRef.current = {
       data: new Map<string, string>([['query_status_panel_enabled', 'true']]),

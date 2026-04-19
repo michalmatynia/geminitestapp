@@ -4,7 +4,7 @@ import { type JSX } from 'react';
 
 import type { CmsDomain, Slug } from '@/shared/contracts/cms';
 import { getCmsRepository, getSlugsForDomain, isDomainZoningEnabled, resolveCmsDomainFromHeaders } from '@/features/cms/server';
-import { getKangurPublicLaunchHref } from '@/features/kangur/public';
+import { getKangurPublicLaunchHref } from '@/features/kangur/config/routing';
 import { getKangurConfiguredLaunchRoute } from '@/features/kangur/server/launch-route';
 import { isTransientMongoConnectionError } from '@/shared/lib/db/utils/mongo';
 import { buildLocalizedPathname, normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';

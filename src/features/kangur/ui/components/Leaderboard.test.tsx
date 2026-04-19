@@ -17,6 +17,9 @@ const authMeMock = vi.fn<() => Promise<KangurUser>>();
 const scoreFilterMock = vi.fn<() => Promise<KangurScoreRecord[]>>();
 const useKangurPageContentEntryMock = vi.fn();
 const useKangurSubjectFocusMock = vi.fn();
+let intersectionObserverCallback:
+  | ((entries: Array<{ isIntersecting: boolean }>) => void)
+  | null = null;
 
 vi.mock('@/features/kangur/services/kangur-platform', () => ({
   getKangurPlatform: () => ({
@@ -62,6 +65,16 @@ vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
       display_name: 'Ada',
     },
   }),
+  useOptionalKangurAuthSessionState: () => ({
+    user: {
+      email: 'ada@example.com',
+      role: 'student',
+      display_name: 'Ada',
+    },
+    isAuthenticated: true,
+    hasResolvedAuth: true,
+    canAccessParentAssignments: false,
+  }),
 }));
 
 let Leaderboard: typeof import('@/features/kangur/ui/components/Leaderboard').default;
@@ -84,6 +97,21 @@ const createScore = (overrides: Partial<KangurScoreRecord>): KangurScoreRecord =
 describe('Leaderboard', () => {
   beforeEach(async () => {
     vi.resetModules();
+    intersectionObserverCallback = null;
+    vi.stubGlobal(
+      'IntersectionObserver',
+      class {
+        constructor(callback: (entries: Array<{ isIntersecting: boolean }>) => void) {
+          intersectionObserverCallback = callback;
+        }
+
+        disconnect(): void {}
+
+        observe(): void {}
+
+        unobserve(): void {}
+      }
+    );
     Leaderboard = (await import('@/features/kangur/ui/components/Leaderboard')).default;
     vi.clearAllMocks();
     useKangurPageContentEntryMock.mockImplementation(() => ({
@@ -131,6 +159,7 @@ describe('Leaderboard', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    vi.unstubAllGlobals();
   });
 
   it('uses shared segmented styling for filters and still narrows leaderboard results', async () => {
@@ -286,6 +315,25 @@ describe('Leaderboard', () => {
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(1);
+    });
+
+    expect(scoreFilterMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the leaderboard score fetch blocked until the shell becomes visible on home', async () => {
+    vi.useFakeTimers();
+
+    render(<Leaderboard deferUntilVisible />);
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS);
+    });
+
+    expect(scoreFilterMock).not.toHaveBeenCalled();
+
+    await act(async () => {
+      intersectionObserverCallback?.([{ isIntersecting: true }]);
+      await Promise.resolve();
     });
 
     expect(scoreFilterMock).toHaveBeenCalledTimes(1);

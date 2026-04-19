@@ -36,7 +36,7 @@ vi.mock('next/navigation', () => ({
   redirect: redirectMock,
 }));
 
-vi.mock('@/features/cms/public', () => ({
+vi.mock('@/features/cms/components/frontend/CmsPageShell', () => ({
   CmsPageShell: cmsPageShellMock,
 }));
 

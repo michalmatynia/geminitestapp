@@ -294,7 +294,7 @@ function GameHomeScreen(props: {
         }}
         leaderboard={
           shouldMountSecondaryHomeWidgets ? (
-            <Leaderboard />
+            <Leaderboard deferUntilVisible />
           ) : (
             <SecondaryHomeWidgetFallback testId='kangur-home-leaderboard-fallback' />
           )

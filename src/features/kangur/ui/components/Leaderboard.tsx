@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useRef, useState } from 'react';
 import { Trophy, User, Ghost } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
@@ -42,28 +43,69 @@ const renderUserFilterIcon = (icon: KangurLeaderboardUserFilterIcon): React.Reac
   return null;
 };
 
-export default function Leaderboard(): React.JSX.Element {
+export default function Leaderboard({
+  deferUntilVisible = false,
+}: {
+  deferUntilVisible?: boolean;
+}): React.JSX.Element {
   const translations = useTranslations('KangurGameWidgets.leaderboard');
   const isCoarsePointer = useKangurCoarsePointer();
+  const shellRef = useRef<HTMLDivElement | null>(null);
+  const [isVisible, setIsVisible] = useState(!deferUntilVisible);
   const isLeaderboardIdleReady = useKangurIdleReady({
     minimumDelayMs: GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS,
   });
+  const isLeaderboardReady = isLeaderboardIdleReady && isVisible;
   const { entry: leaderboardContent } = useKangurPageContentEntry(
     'game-home-leaderboard',
     undefined,
     {
-      enabled: isLeaderboardIdleReady,
+      enabled: isLeaderboardReady,
     }
   );
   const { emptyStateLabel, items, loading: isLeaderboardLoading, operationFilters, userFilters } =
-    useKangurLeaderboardState({ enabled: isLeaderboardIdleReady });
-  const loading = !isLeaderboardIdleReady || isLeaderboardLoading;
+    useKangurLeaderboardState({ enabled: isLeaderboardReady });
+  const loading = !isLeaderboardReady || isLeaderboardLoading;
   const segmentedItemClassName = isCoarsePointer
     ? 'min-h-12 min-w-[4.75rem] flex-1 justify-center px-4 text-xs touch-manipulation select-none active:scale-[0.985] sm:flex-none'
     : 'h-10 flex-1 justify-center px-3 text-xs sm:flex-none';
 
+  useEffect(() => {
+    if (!deferUntilVisible) {
+      setIsVisible(true);
+      return;
+    }
+
+    if (!shellRef.current) {
+      return;
+    }
+
+    if (typeof window === 'undefined' || typeof window.IntersectionObserver !== 'function') {
+      setIsVisible(true);
+      return;
+    }
+
+    const observer = new window.IntersectionObserver(
+      ([entry]) => {
+        if (!entry?.isIntersecting) {
+          return;
+        }
+
+        setIsVisible(true);
+        observer.disconnect();
+      },
+      { rootMargin: '240px 0px' }
+    );
+
+    observer.observe(shellRef.current);
+    return () => {
+      observer.disconnect();
+    };
+  }, [deferUntilVisible]);
+
   return (
     <KangurGlassPanel
+      ref={shellRef}
       className={GAME_HOME_LEADERBOARD_SHELL_CLASSNAME}
       data-testid='leaderboard-shell'
       padding='lg'

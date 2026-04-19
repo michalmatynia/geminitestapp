@@ -16,6 +16,7 @@ export type SettingsQueryLike = {
 };
 
 export type ProviderFlags = {
+  shouldUseSeededLiteStore: boolean;
   shouldReuseParentLiteStore: boolean;
   shouldSuppressAdminQuery: boolean;
   shouldSuppressLiteQuery: boolean;
@@ -59,12 +60,14 @@ const mergeSettingsMaps = (
 
 export const resolveProviderFlags = ({
   canReadAdminSettings,
+  hasInitialLiteStore,
   mode,
   parentStore,
   pathname,
   suppressOwnQuery,
 }: {
   canReadAdminSettings?: boolean;
+  hasInitialLiteStore: boolean;
   mode: SettingsMode;
   parentStore: SettingsStoreValue | null;
   pathname: string | null;
@@ -73,12 +76,15 @@ export const resolveProviderFlags = ({
   const currentPathname = resolveCurrentPathname(pathname);
   const useAdmin = mode === 'admin';
   const shouldUseAdminSettings = useAdmin && (canReadAdminSettings ?? true);
+  const shouldUseSeededLiteStore =
+    !shouldUseAdminSettings && !parentStore && hasInitialLiteStore;
 
   return {
+    shouldUseSeededLiteStore,
     shouldReuseParentLiteStore: shouldUseAdminSettings && Boolean(parentStore),
     shouldSuppressAdminQuery: suppressOwnQuery,
     shouldSuppressLiteQuery:
-      suppressOwnQuery || (!useAdmin && currentPathname.startsWith('/admin')),
+      suppressOwnQuery || shouldUseSeededLiteStore || (!useAdmin && currentPathname.startsWith('/admin')),
     shouldUseAdminSettings,
   };
 };
@@ -123,22 +129,29 @@ export const resolveMergedAdminMap = ({
 
 export const resolveSettingsStoreLoadingState = ({
   adminQuery,
+  initialLiteMap,
   liteQuery,
   parentStore,
   settingsQuery,
   shouldReuseParentLiteStore,
   shouldSuppressAdminQuery,
+  shouldUseSeededLiteStore,
   shouldUseAdminSettings,
 }: {
   adminQuery: SettingsQueryLike;
+  initialLiteMap: ReadonlyMap<string, string>;
   liteQuery: SettingsQueryLike;
   parentStore: SettingsStoreValue | null;
   settingsQuery: SettingsQueryLike;
   shouldReuseParentLiteStore: boolean;
   shouldSuppressAdminQuery: boolean;
+  shouldUseSeededLiteStore: boolean;
   shouldUseAdminSettings: boolean;
 }): boolean => {
   if (!shouldUseAdminSettings) {
+    if (shouldUseSeededLiteStore && initialLiteMap.size > 0) {
+      return false;
+    }
     return settingsQuery.isLoading;
   }
 
@@ -150,20 +163,27 @@ export const resolveSettingsStoreLoadingState = ({
 
 export const resolveSettingsStoreFetchingState = ({
   adminQuery,
+  initialLiteMap,
   liteQuery,
   parentFetching,
   settingsQuery,
   shouldReuseParentLiteStore,
+  shouldUseSeededLiteStore,
   shouldUseAdminSettings,
 }: {
   adminQuery: SettingsQueryLike;
+  initialLiteMap: ReadonlyMap<string, string>;
   liteQuery: SettingsQueryLike;
   parentFetching: boolean;
   settingsQuery: SettingsQueryLike;
   shouldReuseParentLiteStore: boolean;
+  shouldUseSeededLiteStore: boolean;
   shouldUseAdminSettings: boolean;
 }): boolean => {
   if (!shouldUseAdminSettings) {
+    if (shouldUseSeededLiteStore && initialLiteMap.size > 0) {
+      return false;
+    }
     return settingsQuery.isFetching;
   }
 
@@ -174,20 +194,27 @@ export const resolveSettingsStoreFetchingState = ({
 
 export const resolveSettingsStoreErrorState = ({
   adminQuery,
+  initialLiteMap,
   liteQuery,
   parentStore,
   settingsQuery,
   shouldReuseParentLiteStore,
+  shouldUseSeededLiteStore,
   shouldUseAdminSettings,
 }: {
   adminQuery: SettingsQueryLike;
+  initialLiteMap: ReadonlyMap<string, string>;
   liteQuery: SettingsQueryLike;
   parentStore: SettingsStoreValue | null;
   settingsQuery: SettingsQueryLike;
   shouldReuseParentLiteStore: boolean;
+  shouldUseSeededLiteStore: boolean;
   shouldUseAdminSettings: boolean;
 }): Error | null => {
   if (!shouldUseAdminSettings) {
+    if (shouldUseSeededLiteStore && initialLiteMap.size > 0) {
+      return null;
+    }
     return settingsQuery.error ?? null;
   }
 
@@ -199,16 +226,24 @@ export const resolveSettingsStoreErrorState = ({
 };
 
 export const resolveSettingsStoreMapData = ({
+  initialLiteMap,
   mergedAdminMap,
   settingsQuery,
+  shouldUseSeededLiteStore,
   shouldUseAdminSettings,
 }: {
+  initialLiteMap: ReadonlyMap<string, string>;
   mergedAdminMap: ReadonlyMap<string, string>;
   settingsQuery: SettingsQueryLike;
+  shouldUseSeededLiteStore: boolean;
   shouldUseAdminSettings: boolean;
 }): ReadonlyMap<string, string> => {
   if (shouldUseAdminSettings) {
     return mergedAdminMap;
+  }
+
+  if (shouldUseSeededLiteStore && initialLiteMap.size > 0) {
+    return initialLiteMap;
   }
 
   return settingsQuery.data instanceof Map ? settingsQuery.data : emptySettingsMap;

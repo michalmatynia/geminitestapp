@@ -10,8 +10,11 @@ import {
   kangurAiTutorWidgetRenderSpyMock,
   kangurAppLoaderRenderSpyMock,
   authStateMock,
+  kangurLazyAnimatePresenceLoadMotionSpyMock,
+  kangurLazyMotionDivLoadMotionSpyMock,
   kangurLoginModalRenderSpyMock,
   kangurPageRenderSpyMock,
+  kangurPageTransitionSkeletonRenderSpyMock,
   kangurProgressSyncProviderRenderSpyMock,
   kangurRouteAccessibilityAnnouncerRenderSpyMock,
   kangurRouteContentRenderSpyMock,
@@ -131,6 +134,41 @@ describe('KangurFeatureApp', () => {
     expect(kangurPageRenderSpyMock).toHaveBeenCalledTimes(1);
   });
 
+  it('does not rerender the visible route skeleton when transition inputs stay the same', async () => {
+    routeTransitionStateMock.mockReturnValue({
+      isRouteAcknowledging: false,
+      isRoutePending: true,
+      isRouteWaitingForReady: false,
+      isRouteRevealing: false,
+      transitionPhase: 'pending',
+      activeTransitionSourceId: null,
+      activeTransitionPageKey: 'Lessons',
+      activeTransitionRequestedHref: '/kangur/lessons',
+      activeTransitionSkeletonVariant: 'lessons-library',
+      pendingPageKey: 'Lessons',
+      startRouteTransition: vi.fn(),
+      markRouteTransitionReady: vi.fn(),
+    });
+
+    const { rerender } = render(<KangurFeatureApp />);
+
+    await act(async () => {
+      vi.advanceTimersByTime(1);
+    });
+
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent(
+      'Lessons:lessons-library'
+    );
+
+    const initialSkeletonRenderCount = kangurPageTransitionSkeletonRenderSpyMock.mock.calls.length;
+
+    rerender(<KangurFeatureApp />);
+
+    expect(kangurPageTransitionSkeletonRenderSpyMock).toHaveBeenCalledTimes(
+      initialSkeletonRenderCount
+    );
+  });
+
   it('does not cover the initial home route with a transition skeleton while theme settings are still hydrating', () => {
     routingStateMock.mockReturnValue({
       pageKey: 'Game',
@@ -177,6 +215,46 @@ describe('KangurFeatureApp', () => {
 
     expect(screen.getByTestId('kangur-progress-sync-provider')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-score-sync-provider')).toBeInTheDocument();
+  });
+
+  it('keeps route motion loading disabled until the standalone home idle gate opens', () => {
+    routingStateMock.mockReturnValue({
+      pageKey: 'Game',
+      embedded: false,
+      requestedPath: '/kangur',
+      requestedHref: '/kangur',
+      basePath: '/kangur',
+    });
+    useKangurDeferredStandaloneHomeReadyMock.mockReturnValue(false);
+
+    const { rerender } = render(<KangurFeatureApp />);
+
+    expect(kangurLazyAnimatePresenceLoadMotionSpyMock).toHaveBeenCalled();
+    expect(
+      kangurLazyAnimatePresenceLoadMotionSpyMock.mock.calls.every(([loadMotion]) => !loadMotion)
+    ).toBe(true);
+    expect(kangurLazyMotionDivLoadMotionSpyMock).toHaveBeenCalled();
+    expect(
+      kangurLazyMotionDivLoadMotionSpyMock.mock.calls.every(([loadMotion]) => !loadMotion)
+    ).toBe(true);
+
+    const initialAnimatePresenceCallCount =
+      kangurLazyAnimatePresenceLoadMotionSpyMock.mock.calls.length;
+    const initialMotionDivCallCount = kangurLazyMotionDivLoadMotionSpyMock.mock.calls.length;
+
+    useKangurDeferredStandaloneHomeReadyMock.mockReturnValue(true);
+    rerender(<KangurFeatureApp />);
+
+    expect(
+      kangurLazyAnimatePresenceLoadMotionSpyMock.mock.calls
+        .slice(initialAnimatePresenceCallCount)
+        .some(([loadMotion]) => loadMotion)
+    ).toBe(true);
+    expect(
+      kangurLazyMotionDivLoadMotionSpyMock.mock.calls
+        .slice(initialMotionDivCallCount)
+        .some(([loadMotion]) => loadMotion)
+    ).toBe(true);
   });
 
   it('keeps sync side effects mounted on non-home routes', () => {

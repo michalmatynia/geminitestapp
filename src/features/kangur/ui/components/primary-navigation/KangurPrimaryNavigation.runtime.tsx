@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React from 'react';
 import {
   BookCheck,
   BrainCircuit,
@@ -11,7 +11,6 @@ import {
 
 import { KangurHomeLogo } from '@/features/kangur/ui/components/wordmarks/KangurHomeLogo';
 import KangurVisualCueContent from '@/features/kangur/ui/components/KangurVisualCueContent';
-import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import {
   type getKangurSixYearOldAgeGroupVisual,
   type getKangurSixYearOldSubjectVisual,
@@ -19,13 +18,13 @@ import {
 
 import { KangurHomeBetaBadge } from './KangurPrimaryNavigation.components';
 import {
-  useKangurPrimaryNavigationLessonsPrefetchOnIntent,
   type useKangurPrimaryNavigationState,
 } from './KangurPrimaryNavigation.hooks';
 import type {
   KangurNavActionConfig,
   KangurPrimaryNavigationProps,
 } from './KangurPrimaryNavigation.types';
+import type { KangurIntlTranslate } from '@/features/kangur/ui/types';
 import {
   ICON_CLASSNAME,
   isTransitionSourceActive,
@@ -36,357 +35,6 @@ import {
 
 type KangurPrimaryNavigationTransitionPhase =
   'pending' | 'idle' | 'acknowledging' | 'waiting_for_ready' | 'revealing';
-
-// useKangurPrimaryNavigationMobileMenuBodyLock locks body scroll while the
-// mobile menu is open to prevent the page from scrolling behind the overlay.
-// Restores the previous overflow value on close.
-function useKangurPrimaryNavigationMobileMenuBodyLock(isMobileMenuOpen: boolean): void {
-  useEffect(() => {
-    if (!isMobileMenuOpen || typeof document === 'undefined') {
-      return;
-    }
-
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return (): void => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [isMobileMenuOpen]);
-}
-
-// useKangurPrimaryNavigationMobileMenuEscapeClose closes the mobile menu
-// when the Escape key is pressed, following ARIA dialog keyboard conventions.
-function useKangurPrimaryNavigationMobileMenuEscapeClose({
-  isMobileMenuOpen,
-  setIsMobileMenuOpen,
-}: {
-  isMobileMenuOpen: boolean;
-  setIsMobileMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
-}): void {
-  useEffect(() => {
-    if (!isMobileMenuOpen || typeof window === 'undefined') {
-      return;
-    }
-
-    const handleKeyDown = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape') {
-        setIsMobileMenuOpen(false);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return (): void => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isMobileMenuOpen, setIsMobileMenuOpen]);
-}
-
-// useKangurPrimaryNavigationMobileMenuFocusRestore saves the focused element
-// before the mobile menu opens and restores focus to it when the menu closes,
-// maintaining keyboard navigation continuity.
-function useKangurPrimaryNavigationMobileMenuFocusRestore({
-  isMobileMenuOpen,
-  mobileMenuPreviousFocusRef,
-}: {
-  isMobileMenuOpen: boolean;
-  mobileMenuPreviousFocusRef: React.MutableRefObject<HTMLElement | null>;
-}): void {
-  useEffect(() => {
-    if (typeof document === 'undefined') {
-      return;
-    }
-
-    if (isMobileMenuOpen) {
-      mobileMenuPreviousFocusRef.current = document.activeElement as HTMLElement | null;
-      return;
-    }
-
-    if (mobileMenuPreviousFocusRef.current) {
-      mobileMenuPreviousFocusRef.current.focus();
-      mobileMenuPreviousFocusRef.current = null;
-    }
-  }, [isMobileMenuOpen, mobileMenuPreviousFocusRef]);
-}
-
-function useKangurPrimaryNavigationMobileMenuInitialFocus(isMobileMenuOpen: boolean): void {
-  useEffect(() => {
-    if (!isMobileMenuOpen || typeof document === 'undefined') {
-      return;
-    }
-
-    const closeButton = document.getElementById('kangur-mobile-menu-close');
-    if (closeButton instanceof HTMLElement) {
-      closeButton.focus();
-    }
-  }, [isMobileMenuOpen]);
-}
-
-function useKangurPrimaryNavigationMobileMenuFocusTrap({
-  isMobileMenuOpen,
-  mobileMenuRef,
-}: {
-  isMobileMenuOpen: boolean;
-  mobileMenuRef: React.RefObject<HTMLDivElement | null>;
-}): void {
-  useEffect(() => {
-    if (!isMobileMenuOpen) {
-      return;
-    }
-
-    const menu = mobileMenuRef.current;
-    if (!menu || typeof document === 'undefined') {
-      return;
-    }
-
-    const selector = [
-      'a[href]',
-      'button:not([disabled])',
-      'textarea:not([disabled])',
-      'input:not([disabled])',
-      'select:not([disabled])',
-      '[tabindex]:not([tabindex="-1"])',
-    ].join(', ');
-    const getFocusable = (): HTMLElement[] =>
-      Array.from(menu.querySelectorAll<HTMLElement>(selector)).filter(
-        (element) => !element.hasAttribute('disabled') && !element.getAttribute('aria-hidden')
-      );
-    const handleKeyDown = (event: KeyboardEvent): void => {
-      if (event.key !== 'Tab') {
-        return;
-      }
-
-      const focusable = getFocusable();
-      const first = focusable.at(0);
-      const last = focusable.at(-1);
-      if (!first || !last) {
-        return;
-      }
-
-      const activeElement = document.activeElement;
-      if (event.shiftKey) {
-        if (activeElement === first || activeElement === menu) {
-          event.preventDefault();
-          last.focus();
-        }
-        return;
-      }
-
-      if (activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-
-    menu.addEventListener('keydown', handleKeyDown);
-    return (): void => {
-      menu.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isMobileMenuOpen, mobileMenuRef]);
-}
-
-function useKangurPrimaryNavigationGuestEditingState({
-  hasGuestPlayerName,
-  isEditingGuestPlayerName,
-  setIsEditingGuestPlayerName,
-  showGuestPlayerNameInput,
-}: {
-  hasGuestPlayerName: boolean;
-  isEditingGuestPlayerName: boolean;
-  setIsEditingGuestPlayerName: React.Dispatch<React.SetStateAction<boolean>>;
-  showGuestPlayerNameInput: boolean;
-}): void {
-  useEffect(() => {
-    if (!showGuestPlayerNameInput) {
-      if (isEditingGuestPlayerName) {
-        setIsEditingGuestPlayerName(false);
-      }
-      return;
-    }
-
-    if (!hasGuestPlayerName && !isEditingGuestPlayerName) {
-      setIsEditingGuestPlayerName(true);
-    }
-  }, [hasGuestPlayerName, isEditingGuestPlayerName, setIsEditingGuestPlayerName, showGuestPlayerNameInput]);
-}
-
-function useKangurPrimaryNavigationLoginAnchor({
-  effectiveIsAuthenticated,
-  fallbackCopy,
-  loginActionRef,
-  onLogin,
-}: {
-  effectiveIsAuthenticated: boolean;
-  fallbackCopy: ReturnType<typeof useKangurPrimaryNavigationState>['fallbackCopy'];
-  loginActionRef: React.RefObject<HTMLButtonElement | null>;
-  onLogin?: () => void;
-}): void {
-  useKangurTutorAnchor({
-    id: 'kangur-auth-login-action',
-    kind: 'login_action',
-    ref: loginActionRef,
-    surface: 'auth',
-    enabled: !effectiveIsAuthenticated && Boolean(onLogin),
-    priority: 130,
-    metadata: {
-      label: fallbackCopy.loginLabel,
-    },
-  });
-}
-
-function useKangurPrimaryNavigationGuestPlayerNameRuntime({
-  effectiveIsAuthenticated,
-  fallbackCopy,
-  guestPlayerName,
-  guestPlayerNamePlaceholder,
-  onGuestPlayerNameChange,
-}: {
-  effectiveIsAuthenticated: boolean;
-  fallbackCopy: ReturnType<typeof useKangurPrimaryNavigationState>['fallbackCopy'];
-  guestPlayerName?: string;
-  guestPlayerNamePlaceholder?: string;
-  onGuestPlayerNameChange?: (value: string) => void;
-}) {
-  const guestPlayerNameValue = typeof guestPlayerName === 'string' ? guestPlayerName : '';
-  const guestPlayerPlaceholderText =
-    guestPlayerNamePlaceholder ?? fallbackCopy.guestPlayerNamePlaceholder;
-  const [isEditingGuestPlayerName, setIsEditingGuestPlayerName] = useState(
-    !(guestPlayerName?.trim() ?? '')
-  );
-  const showGuestPlayerNameInput =
-    !effectiveIsAuthenticated &&
-    typeof guestPlayerName === 'string' &&
-    typeof onGuestPlayerNameChange === 'function';
-  const hasGuestPlayerName = guestPlayerNameValue.trim().length > 0;
-
-  const handleGuestPlayerNameChange = useCallback(
-    (value: string): void => {
-      onGuestPlayerNameChange?.(value);
-    },
-    [onGuestPlayerNameChange]
-  );
-
-  const commitGuestPlayerName = useCallback((): void => {
-    if (!showGuestPlayerNameInput || !hasGuestPlayerName) {
-      setIsEditingGuestPlayerName(true);
-      return;
-    }
-
-    const trimmedValue = guestPlayerNameValue.trim();
-    if (trimmedValue !== guestPlayerNameValue) {
-      handleGuestPlayerNameChange(trimmedValue);
-    }
-
-    setIsEditingGuestPlayerName(false);
-  }, [
-    guestPlayerNameValue,
-    handleGuestPlayerNameChange,
-    hasGuestPlayerName,
-    showGuestPlayerNameInput,
-  ]);
-
-  return {
-    commitGuestPlayerName,
-    guestPlayerNameValue,
-    guestPlayerPlaceholderText,
-    handleGuestPlayerNameChange,
-    hasGuestPlayerName,
-    isEditingGuestPlayerName,
-    setIsEditingGuestPlayerName,
-    showGuestPlayerNameInput,
-  };
-}
-
-// useKangurPrimaryNavigationRuntime builds the full set of nav action configs
-// for the primary navigation bar. It assembles:
-//  - Home, Lessons, Games Library, Tests, Competition, Duels, Profile,
-//    Parent Dashboard, and subject/age-group switcher actions
-//  - Login / logout actions based on auth state
-//  - Guest player name input action
-//  - Mobile menu open/close actions
-// Each action is a KangurNavActionConfig with content, href, onClick, and
-// accessibility metadata. The configs are consumed by the nav renderer.
-export function useKangurPrimaryNavigationRuntime({
-  ageGroup,
-  currentPage,
-  effectiveIsAuthenticated,
-  fallbackCopy,
-  guestPlayerName,
-  guestPlayerNamePlaceholder,
-  isMobileMenuOpen,
-  normalizedLocale,
-  onGuestPlayerNameChange,
-  onLogin,
-  queryClient,
-  setIsMobileMenuOpen,
-  subject,
-}: {
-  ageGroup: ReturnType<typeof useKangurPrimaryNavigationState>['ageGroup'];
-  currentPage: KangurPrimaryNavigationProps['currentPage'];
-  effectiveIsAuthenticated: boolean;
-  fallbackCopy: ReturnType<typeof useKangurPrimaryNavigationState>['fallbackCopy'];
-  guestPlayerName?: string;
-  guestPlayerNamePlaceholder?: string;
-  isMobileMenuOpen: boolean;
-  normalizedLocale: string;
-  onGuestPlayerNameChange?: (value: string) => void;
-  onLogin?: () => void;
-  queryClient: ReturnType<typeof useKangurPrimaryNavigationState>['queryClient'];
-  setIsMobileMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  subject: ReturnType<typeof useKangurPrimaryNavigationState>['subject'];
-}) {
-  const loginActionRef = useRef<HTMLButtonElement | null>(null);
-  const mobileMenuRef = useRef<HTMLDivElement | null>(null);
-  const mobileMenuPreviousFocusRef = useRef<HTMLElement | null>(null);
-  const guestPlayerNameRuntime = useKangurPrimaryNavigationGuestPlayerNameRuntime({
-    effectiveIsAuthenticated,
-    fallbackCopy,
-    guestPlayerName,
-    guestPlayerNamePlaceholder,
-    onGuestPlayerNameChange,
-  });
-  const prefetchLessonsCatalogOnIntent =
-    useKangurPrimaryNavigationLessonsPrefetchOnIntent({
-      ageGroup,
-      currentPage,
-      normalizedLocale,
-      queryClient,
-      subject,
-    });
-
-  useKangurPrimaryNavigationMobileMenuBodyLock(isMobileMenuOpen);
-  useKangurPrimaryNavigationMobileMenuEscapeClose({
-    isMobileMenuOpen,
-    setIsMobileMenuOpen,
-  });
-  useKangurPrimaryNavigationMobileMenuFocusRestore({
-    isMobileMenuOpen,
-    mobileMenuPreviousFocusRef,
-  });
-  useKangurPrimaryNavigationMobileMenuInitialFocus(isMobileMenuOpen);
-  useKangurPrimaryNavigationMobileMenuFocusTrap({
-    isMobileMenuOpen,
-    mobileMenuRef,
-  });
-  useKangurPrimaryNavigationGuestEditingState({
-    hasGuestPlayerName: guestPlayerNameRuntime.hasGuestPlayerName,
-    isEditingGuestPlayerName: guestPlayerNameRuntime.isEditingGuestPlayerName,
-    setIsEditingGuestPlayerName: guestPlayerNameRuntime.setIsEditingGuestPlayerName,
-    showGuestPlayerNameInput: guestPlayerNameRuntime.showGuestPlayerNameInput,
-  });
-  useKangurPrimaryNavigationLoginAnchor({
-    effectiveIsAuthenticated,
-    fallbackCopy,
-    loginActionRef,
-    onLogin,
-  });
-
-  return {
-    ...guestPlayerNameRuntime,
-    loginActionRef,
-    mobileMenuRef,
-    prefetchLessonsCatalogOnIntent,
-  };
-}
 
 const resolveSubjectActionContent = ({
   isSixYearOld,
@@ -508,7 +156,7 @@ export const buildHomeAction = ({
   effectiveHomeActive: boolean;
   homeHref: string;
   homeTransitionSourceId: string;
-  navTranslations: ReturnType<typeof useKangurPrimaryNavigationState>['navTranslations'];
+  navTranslations: KangurIntlTranslate;
   onHomeClick?: () => void;
   transitionPhase: KangurPrimaryNavigationTransitionPhase;
 }): KangurNavActionConfig => ({
@@ -553,7 +201,6 @@ export const buildLessonsAction = ({
   lessonsTransitionSourceId,
   mobileNavItemClassName,
   navTranslations,
-  prefetchLessonsCatalogOnIntent,
   transitionPhase,
 }: {
   activeTransitionSourceId: string | null;
@@ -562,8 +209,7 @@ export const buildLessonsAction = ({
   lessonsHref: string;
   lessonsTransitionSourceId: string;
   mobileNavItemClassName: string;
-  navTranslations: ReturnType<typeof useKangurPrimaryNavigationState>['navTranslations'];
-  prefetchLessonsCatalogOnIntent: () => void;
+  navTranslations: KangurIntlTranslate;
   transitionPhase: KangurPrimaryNavigationTransitionPhase;
 }): KangurNavActionConfig => ({
   active: accessibleCurrentPage === 'Lessons',
@@ -575,8 +221,6 @@ export const buildLessonsAction = ({
   }),
   docId: 'top_nav_lessons',
   href: lessonsHref,
-  onFocus: prefetchLessonsCatalogOnIntent,
-  onMouseEnter: prefetchLessonsCatalogOnIntent,
   targetPageKey: 'Lessons',
   testId: 'kangur-primary-nav-lessons',
   transition: {
@@ -605,7 +249,7 @@ export const buildGamesLibraryAction = ({
   gamesLibraryTransitionSourceId: string;
   isSixYearOld: boolean;
   mobileNavItemClassName: string;
-  navTranslations: ReturnType<typeof useKangurPrimaryNavigationState>['navTranslations'];
+  navTranslations: KangurIntlTranslate;
   transitionPhase: KangurPrimaryNavigationTransitionPhase;
 }): KangurNavActionConfig => ({
   active: accessibleCurrentPage === 'GamesLibrary',
@@ -642,7 +286,7 @@ export const buildSubjectAction = ({
   className: string;
   isSixYearOld: boolean;
   isSubjectModalOpen: boolean;
-  navTranslations: ReturnType<typeof useKangurPrimaryNavigationState>['navTranslations'];
+  navTranslations: KangurIntlTranslate;
   onOpen: () => void;
   subjectChoiceLabel: string;
   subjectDialogId: string;
@@ -680,7 +324,7 @@ export const buildAgeGroupAction = ({
   className: string;
   isAgeGroupModalOpen: boolean;
   isSixYearOld: boolean;
-  navTranslations: ReturnType<typeof useKangurPrimaryNavigationState>['navTranslations'];
+  navTranslations: KangurIntlTranslate;
   onOpen: () => void;
 }): KangurNavActionConfig => ({
   ariaControls: ageGroupDialogId,
@@ -715,7 +359,7 @@ export const buildDuelsAction = ({
   duelsTransitionSourceId: string;
   isSixYearOld: boolean;
   mobileNavItemClassName: string;
-  navTranslations: ReturnType<typeof useKangurPrimaryNavigationState>['navTranslations'];
+  navTranslations: KangurIntlTranslate;
   transitionPhase: KangurPrimaryNavigationTransitionPhase;
 }): KangurNavActionConfig => ({
   active: accessibleCurrentPage === 'Duels',
@@ -756,7 +400,7 @@ export const buildParentDashboardAction = ({
   effectiveShowParentDashboard: boolean;
   isSixYearOld: boolean;
   mobileNavItemClassName: string;
-  navTranslations: ReturnType<typeof useKangurPrimaryNavigationState>['navTranslations'];
+  navTranslations: KangurIntlTranslate;
   parentDashboardHref: string;
   parentDashboardTransitionSourceId: string;
   transitionPhase: KangurPrimaryNavigationTransitionPhase;

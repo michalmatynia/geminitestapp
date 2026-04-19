@@ -2,6 +2,7 @@ import 'server-only';
 
 import {
   getDefaultProductSyncProfile,
+  getProductSyncProfile,
   hasActiveProductSyncRun,
   updateProductSyncRun,
 } from '@/features/product-sync/services/product-sync-repository';
@@ -207,7 +208,8 @@ export const runProductBaseSync = async (
  * Run a manual sync for a batch of products, sharing profile and Base connection.
  */
 export const runProductBaseSyncBulk = async (
-  productIds: string[]
+  productIds: string[],
+  options?: { profileId?: string }
 ): Promise<ProductSyncBulkResponse> => {
   const normalizedIds = Array.from(
     new Set(
@@ -218,9 +220,16 @@ export const runProductBaseSyncBulk = async (
     throw new Error('At least one product ID is required.');
   }
 
-  const profile = await getDefaultProductSyncProfile();
+  const requestedProfileId = toTrimmedString(options?.profileId ?? '');
+  const profile = requestedProfileId
+    ? await getProductSyncProfile(requestedProfileId)
+    : await getDefaultProductSyncProfile();
   if (!profile) {
-    throw new Error('No Base.com sync profile is configured.');
+    throw new Error(
+      requestedProfileId
+        ? `Base.com sync profile ${requestedProfileId} was not found.`
+        : 'No Base.com sync profile is configured.'
+    );
   }
 
   const hasActiveRun = await hasActiveProductSyncRun(profile.id);

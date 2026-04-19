@@ -426,6 +426,7 @@ vi.mock('@/features/kangur/ui/context/KangurAgeGroupFocusContext', () => ({
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
   KangurAiTutorRuntimeScope: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   useOptionalKangurAiTutor: (): unknown => optionalTutorMock() as unknown,
+  useOptionalKangurAiTutorController: (): unknown => optionalTutorMock() as unknown,
   useKangurAiTutorDeferredActivationBridge: vi.fn(),
 }));
 

@@ -12,6 +12,7 @@ import {
   KangurAiTutorDeferredProvider,
   KangurAiTutorRuntimeScope,
   useKangurAiTutor,
+  useOptionalKangurAiTutorController,
   useKangurAiTutorDeferredActivationBridge,
 } from './KangurAiTutorContext';
 import { KangurAiTutorSessionRegistryContext } from './KangurAiTutorRuntime.session';
@@ -107,6 +108,22 @@ function RuntimeValueProbe(): JSX.Element {
   );
 }
 
+function ControllerProbe(): JSX.Element {
+  const tutorController = useOptionalKangurAiTutorController();
+
+  return (
+    <>
+      <div data-testid='controller-enabled'>{String(tutorController?.enabled ?? false)}</div>
+      <button
+        onClick={() => tutorController?.openChat()}
+        type='button'
+      >
+        open controller chat
+      </button>
+    </>
+  );
+}
+
 function FullRuntimeScopeProbe({
   value = runtimeValue,
 }: {
@@ -124,6 +141,7 @@ describe('KangurAiTutorDeferredProvider', () => {
     setRuntimeRegistrationMock.mockReset();
     requestSelectionExplainMock.mockReset();
     recordFollowUpCompletionMock.mockReset();
+    runtimeValue.openChat.mockClear();
   });
 
   it('replays deferred session registrations into the activated tutor runtime', async () => {
@@ -230,5 +248,22 @@ describe('KangurAiTutorDeferredProvider', () => {
 
     expect(screen.getByTestId('runtime-message-count')).toHaveTextContent('1');
     expect(screen.getByTestId('runtime-session-context')).toHaveTextContent('suite-heavy');
+  });
+
+  it('exposes the lightweight tutor controller in the deferred shell', async () => {
+    render(
+      <KangurAiTutorDeferredProvider>
+        <ActivationBridgeProbe />
+        <ControllerProbe />
+      </KangurAiTutorDeferredProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('controller-enabled')).toHaveTextContent('true');
+    });
+
+    screen.getByRole('button', { name: 'open controller chat' }).click();
+
+    expect(runtimeValue.openChat).toHaveBeenCalledTimes(1);
   });
 });

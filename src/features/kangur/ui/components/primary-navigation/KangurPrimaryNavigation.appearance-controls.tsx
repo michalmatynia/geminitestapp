@@ -4,12 +4,9 @@ import dynamic from 'next/dynamic';
 import React from 'react';
 
 import {
-  type useOptionalCmsStorefrontAppearance,
+  useOptionalCmsStorefrontAppearance,
 } from '@/shared/ui/cms-appearance/CmsStorefrontAppearance';
-
-import {
-  type useKangurPrimaryNavigationState,
-} from './KangurPrimaryNavigation.hooks';
+import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
 
 const CmsStorefrontAppearanceButtons = dynamic(() =>
   import('@/shared/ui/cms-appearance/CmsStorefrontAppearance').then((m) => ({
@@ -17,19 +14,28 @@ const CmsStorefrontAppearanceButtons = dynamic(() =>
   }))
 );
 
-export function resolveAppearanceControls({
+const KANGUR_PRIMARY_NAV_APPEARANCE_LABELS = {
+  default: 'Daily',
+  dawn: 'Dawn',
+  sunset: 'Sunset',
+  dark: 'Nightly',
+} satisfies Record<'dark' | 'dawn' | 'default' | 'sunset', string>;
+
+const KANGUR_PRIMARY_NAV_APPEARANCE_MODES = ['default', 'dawn', 'sunset', 'dark'] as const;
+
+export function useKangurPrimaryNavigationHasAppearanceControls(): boolean {
+  return useOptionalCmsStorefrontAppearance() != null;
+}
+
+export function KangurPrimaryNavigationAppearanceControls({
   inline,
-  kangurAppearanceLabels,
-  kangurAppearanceModes,
-  kangurAppearanceTone,
-  storefrontAppearance,
+  tone,
 }: {
   inline?: boolean;
-  kangurAppearanceLabels: Record<'dark' | 'dawn' | 'default' | 'sunset', string>;
-  kangurAppearanceModes: readonly ['default', 'dawn', 'sunset', 'dark'];
-  kangurAppearanceTone: ReturnType<typeof useKangurPrimaryNavigationState>['kangurAppearance']['tone'];
-  storefrontAppearance: ReturnType<typeof useOptionalCmsStorefrontAppearance>;
+  tone: ReturnType<typeof useKangurStorefrontAppearance>['tone'];
 }): React.ReactNode {
+  const storefrontAppearance = useOptionalCmsStorefrontAppearance();
+
   if (!storefrontAppearance) {
     return null;
   }
@@ -45,10 +51,10 @@ export function resolveAppearanceControls({
     <CmsStorefrontAppearanceButtons
       className={appearanceControlsClassName}
       label='Kangur appearance'
-      modeLabels={kangurAppearanceLabels}
-      modes={[...kangurAppearanceModes]}
+      modeLabels={KANGUR_PRIMARY_NAV_APPEARANCE_LABELS}
+      modes={[...KANGUR_PRIMARY_NAV_APPEARANCE_MODES]}
       testId={appearanceControlsTestId}
-      tone={kangurAppearanceTone}
+      tone={tone}
     />
   );
 }

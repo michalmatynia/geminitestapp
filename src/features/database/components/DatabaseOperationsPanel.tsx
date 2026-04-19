@@ -1,16 +1,14 @@
-import { AlertTriangleIcon, DatabaseIcon, Table2Icon, TerminalSquareIcon } from 'lucide-react';
+'use client';
 
+import { AlertTriangleIcon, DatabaseIcon } from 'lucide-react';
+import type { JSX } from 'react';
 import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 import type { DatabaseType } from '@/shared/contracts/database';
 import { AdminDatabaseBreadcrumbs } from '@/shared/ui/admin.public';
-import { Alert, Badge, Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/primitives.public';
-import { EmptyState, ListPanel, LoadingState } from '@/shared/ui/navigation-and-layout.public';
-import { FormSection } from '@/shared/ui/forms-and-actions.public';
+import { Alert, Badge } from '@/shared/ui/primitives.public';
+import { ListPanel } from '@/shared/ui/navigation-and-layout.public';
 import { SimpleSettingsList } from '@/shared/ui/templates.public';
-import { cn } from '@/shared/utils/ui-utils';
-
-import { CrudPanel } from './CrudPanel';
-import { SqlQueryConsole } from './SqlQueryConsole';
+import { DatabaseOperationsTabs } from './DatabaseOperationsTabs';
 import { DatabaseProvider, useDatabaseConfig, useDatabaseData } from '../context/DatabaseContext';
 
 const DATABASE_OPTIONS: Array<LabeledOptionWithDescriptionDto<DatabaseType>> = [
@@ -21,12 +19,11 @@ const DATABASE_OPTIONS: Array<LabeledOptionWithDescriptionDto<DatabaseType>> = [
   },
 ];
 
-function DatabaseOperationsPanelContent(): React.JSX.Element {
+function DatabaseOperationsPanelContent(): JSX.Element {
   const { dbType, setDbType } = useDatabaseConfig();
-  const { tableDetails, isLoading: previewLoading } = useDatabaseData();
+  const { tableDetails } = useDatabaseData();
   const isProduction = process.env['NODE_ENV'] === 'production';
-  const selectedDatabase =
-    DATABASE_OPTIONS.find((option) => option.value === dbType) ?? DATABASE_OPTIONS[0]!;
+  const selectedDatabase = DATABASE_OPTIONS[0];
 
   return (
     <ListPanel
@@ -37,15 +34,17 @@ function DatabaseOperationsPanelContent(): React.JSX.Element {
               <h2 className='text-2xl font-bold tracking-tight text-white'>Operations Console</h2>
               <AdminDatabaseBreadcrumbs current='Operations' />
             </div>
-            <div className='flex flex-wrap items-center gap-2'>
-              <Badge variant='active' className='gap-1.5'>
-                <DatabaseIcon className='size-3.5' />
-                {selectedDatabase.label}
-              </Badge>
-              <Badge variant='outline' className='border-white/10 text-gray-300'>
-                {tableDetails.length.toLocaleString()} table{tableDetails.length === 1 ? '' : 's'}
-              </Badge>
-            </div>
+            {selectedDatabase && (
+              <div className='flex flex-wrap items-center gap-2'>
+                <Badge variant='active' className='gap-1.5'>
+                  <DatabaseIcon className='size-3.5' />
+                  {selectedDatabase.label}
+                </Badge>
+                <Badge variant='outline' className='border-white/10 text-gray-300'>
+                  {tableDetails.length.toLocaleString()} table{tableDetails.length === 1 ? '' : 's'}
+                </Badge>
+              </div>
+            )}
           </div>
         </div>
       }
@@ -64,20 +63,8 @@ function DatabaseOperationsPanelContent(): React.JSX.Element {
             title: option.label,
             description: option.description,
             icon: (
-              <div
-                className={cn(
-                  'rounded-md border p-2',
-                  dbType === option.value
-                    ? 'border-emerald-400/40 bg-emerald-500/20'
-                    : 'border-white/10 bg-white/5'
-                )}
-              >
-                <DatabaseIcon
-                  className={cn(
-                    'size-4',
-                    dbType === option.value ? 'text-emerald-200' : 'text-gray-400'
-                  )}
-                />
+              <div className='rounded-md border border-emerald-400/40 bg-emerald-500/20 p-2'>
+                <DatabaseIcon className='size-4 text-emerald-200' />
               </div>
             ),
             original: option,
@@ -89,53 +76,12 @@ function DatabaseOperationsPanelContent(): React.JSX.Element {
         />
       }
     >
-      <Tabs defaultValue='sql' className='w-full'>
-        <TabsList
-          className='mb-4 border border-border/60 bg-card/30'
-          aria-label='Database operations tabs'
-        >
-          <TabsTrigger value='sql' className='gap-2 text-xs'>
-            <TerminalSquareIcon className='size-3.5' />
-            Command Console
-          </TabsTrigger>
-          <TabsTrigger value='crud' className='gap-2 text-xs'>
-            <Table2Icon className='size-3.5' />
-            Table Manager {tableDetails.length > 0 && `(${tableDetails.length})`}
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value='sql'>
-          <FormSection title='Command Console' className='p-5'>
-            <SqlQueryConsole />
-          </FormSection>
-        </TabsContent>
-
-        <TabsContent value='crud'>
-          {previewLoading ? (
-            <LoadingState
-              message='Loading table metadata...'
-              className='py-12 border border-border/60 bg-card/50 rounded-lg'
-            />
-          ) : tableDetails.length === 0 ? (
-            <EmptyState
-              title='No tables found'
-              description={
-                dbType === 'mongodb'
-                  ? 'Table metadata is not available for MongoDB. Use the command console tab for MongoDB operations.'
-                  : 'No tables found in the database.'
-              }
-              icon={<Table2Icon className='size-12 opacity-20' />}
-            />
-          ) : (
-            <CrudPanel />
-          )}
-        </TabsContent>
-      </Tabs>
+      <DatabaseOperationsTabs />
     </ListPanel>
   );
 }
 
-export function DatabaseOperationsPanel(): React.JSX.Element {
+export function DatabaseOperationsPanel(): JSX.Element {
   return (
     <DatabaseProvider>
       <DatabaseOperationsPanelContent />

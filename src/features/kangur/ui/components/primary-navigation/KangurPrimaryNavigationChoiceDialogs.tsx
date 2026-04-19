@@ -2,6 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import React from 'react';
+import { useTranslations } from 'next-intl';
 
 import { KangurDialogMeta } from '@/features/kangur/ui/components/KangurDialogMeta';
 import KangurVisualCueContent from '@/features/kangur/ui/components/KangurVisualCueContent';
@@ -29,7 +30,6 @@ import {
   buildSubjectOptions,
 } from './KangurPrimaryNavigation.sections';
 import type { KangurChoiceDialogOption, KangurChoiceDialogProps } from '@/features/kangur/ui/components/KangurChoiceDialog';
-import type { KangurIntlTranslate } from '@/features/kangur/ui/types';
 import type { KangurLessonAgeGroup } from '@/features/kangur/shared/contracts/kangur';
 
 const KangurChoiceDialog = dynamic(() =>
@@ -140,7 +140,7 @@ function buildKangurPrimaryNavigationSubjectDialog(input: {
   ageGroup: KangurLessonAgeGroup;
   defaultSubjectLabel: string;
   isSixYearOld: boolean;
-  navTranslations: KangurIntlTranslate;
+  navTranslations: ReturnType<typeof useTranslations>;
   onOpenChange: (open: boolean) => void;
   open: boolean;
   options: KangurChoiceDialogOption[];
@@ -195,7 +195,7 @@ function buildKangurPrimaryNavigationAgeGroupDialog(input: {
   ageGroupChoiceLabel: string;
   defaultAgeGroupLabel: string;
   isSixYearOld: boolean;
-  navTranslations: KangurIntlTranslate;
+  navTranslations: ReturnType<typeof useTranslations>;
   onOpenChange: (open: boolean) => void;
   open: boolean;
   options: KangurChoiceDialogOption[];
@@ -251,7 +251,6 @@ function useKangurPrimaryNavigationChoiceDialogConfigs(): {
     ageGroup,
     isAgeGroupModalOpen,
     isSubjectModalOpen,
-    navTranslations,
     normalizedLocale,
     setAgeGroup,
     setIsAgeGroupModalOpen,
@@ -260,6 +259,7 @@ function useKangurPrimaryNavigationChoiceDialogConfigs(): {
     subject,
     derived,
   } = useKangurPrimaryNavigationContext();
+  const navTranslations = useTranslations('KangurNavigation');
 
   const {
     ageGroupChoiceLabel,

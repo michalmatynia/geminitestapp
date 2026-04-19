@@ -37,6 +37,9 @@ import { useBulkProductBaseSyncMutation } from '@/features/product-sync/hooks/us
 import { useTraderaMassQuickExport } from '@/features/products/hooks/product-list/useTraderaMassQuickExport';
 import { useVintedMassQuickExport } from '@/features/products/hooks/product-list/useVintedMassQuickExport';
 import { ProductScanModal } from '@/features/products/components/list/ProductScanModal';
+import { ProductBulkSyncResultsModal } from '@/features/products/components/list/ProductBulkSyncResultsModal';
+import { ProductBulkSyncSetupModal } from '@/features/products/components/list/ProductBulkSyncSetupModal';
+import type { ProductSyncBulkResponse } from '@/shared/contracts/product-sync';
 import type { ProductAdvancedFilterPreset } from '@/shared/contracts/products/filters';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { ActionMenu } from '@/shared/ui/ActionMenu';
@@ -103,6 +106,12 @@ export const ProductSelectionActions = memo(() => {
   const [statusCheckProductIds, setStatusCheckProductIds] = useState<string[]>([]);
   const [isProductScanOpen, setIsProductScanOpen] = useState(false);
   const [productScanProductIds, setProductScanProductIds] = useState<string[]>([]);
+  const [bulkSyncResults, setBulkSyncResults] = useState<ProductSyncBulkResponse | null>(null);
+  const [bulkSyncResultProducts, setBulkSyncResultProducts] = useState<typeof data>([]);
+  const [isBulkSyncResultsOpen, setIsBulkSyncResultsOpen] = useState(false);
+  const [isBulkSyncSetupOpen, setIsBulkSyncSetupOpen] = useState(false);
+  const [bulkSyncSetupProductIds, setBulkSyncSetupProductIds] = useState<string[]>([]);
+  const [bulkSyncSetupProducts, setBulkSyncSetupProducts] = useState<typeof data>([]);
   const currentAdvancedFilterGroup = useMemo(
     () => parseAdvancedFilterPayload(advancedFilter),
     [advancedFilter]
@@ -207,28 +216,42 @@ export const ProductSelectionActions = memo(() => {
     setIsTraderaStatusCheckOpen(true);
   }, [data, rowSelection, toast]);
 
-  const handleBulkBaseSync = useCallback(async (): Promise<void> => {
+  const handleBulkBaseSync = useCallback((): void => {
     const selectedProductIds = Object.keys(rowSelection).filter((id: string) => rowSelection[id]);
     if (selectedProductIds.length === 0) {
       toast('Please select products to sync.', { variant: 'error' });
       return;
     }
 
-    try {
-      const response = await runBulkBaseSync({ productIds: selectedProductIds });
-      const { totals } = response;
-      toast(
-        `Base.com sync: ${totals.success} succeeded, ${totals.skipped} skipped, ${totals.failed} failed (of ${totals.requested}).`,
-        { variant: totals.failed > 0 ? 'error' : 'success' }
-      );
-      setRowSelection({});
-    } catch (error) {
-      logClientError(error);
-      toast(error instanceof Error ? error.message : 'Failed to sync products with Base.com.', {
-        variant: 'error',
-      });
-    }
-  }, [rowSelection, runBulkBaseSync, setRowSelection, toast]);
+    const selectedSet = new Set(selectedProductIds);
+    const snapshotProducts = data.filter((product) => selectedSet.has(product.id));
+    setBulkSyncSetupProductIds(selectedProductIds);
+    setBulkSyncSetupProducts(snapshotProducts);
+    setIsBulkSyncSetupOpen(true);
+  }, [data, rowSelection, toast]);
+
+  const handleStartBulkBaseSync = useCallback(
+    async (profileId: string): Promise<void> => {
+      if (bulkSyncSetupProductIds.length === 0) return;
+      try {
+        const response = await runBulkBaseSync({
+          productIds: bulkSyncSetupProductIds,
+          profileId,
+        });
+        setBulkSyncResults(response);
+        setBulkSyncResultProducts(bulkSyncSetupProducts);
+        setIsBulkSyncSetupOpen(false);
+        setIsBulkSyncResultsOpen(true);
+        setRowSelection({});
+      } catch (error) {
+        logClientError(error);
+        toast(error instanceof Error ? error.message : 'Failed to sync products with Base.com.', {
+          variant: 'error',
+        });
+      }
+    },
+    [bulkSyncSetupProductIds, bulkSyncSetupProducts, runBulkBaseSync, setRowSelection, toast]
+  );
 
   const handleScanAmazonAsin = useCallback((): void => {
     const selectedProductIds = Object.keys(rowSelection).filter((id: string) => rowSelection[id]);
@@ -797,6 +820,24 @@ export const ProductSelectionActions = memo(() => {
         onClose={() => setIsProductScanOpen(false)}
         productIds={productScanProductIds}
         products={productScanProducts}
+      />
+      <ProductBulkSyncSetupModal
+        isOpen={isBulkSyncSetupOpen}
+        onClose={() => {
+          if (isRunningBulkBaseSync) return;
+          setIsBulkSyncSetupOpen(false);
+        }}
+        selectedCount={bulkSyncSetupProductIds.length}
+        isRunning={isRunningBulkBaseSync}
+        onStart={(profileId) => {
+          void handleStartBulkBaseSync(profileId);
+        }}
+      />
+      <ProductBulkSyncResultsModal
+        isOpen={isBulkSyncResultsOpen}
+        onClose={() => setIsBulkSyncResultsOpen(false)}
+        response={bulkSyncResults}
+        products={bulkSyncResultProducts}
       />
     </>
   );

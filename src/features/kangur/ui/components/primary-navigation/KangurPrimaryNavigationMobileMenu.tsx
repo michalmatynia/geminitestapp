@@ -1,10 +1,12 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 
 import { KangurLanguageSwitcher } from '@/features/kangur/ui/components/KangurLanguageSwitcher';
 import { KangurTopNavGroup } from '@/features/kangur/ui/design/primitives';
 import { KangurPanelCloseButton } from '@/features/kangur/ui/components/KangurPanelCloseButton';
+import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
 
 import {
   KANGUR_PRIMARY_NAV_DIALOG_IDS,
@@ -15,26 +17,27 @@ import {
   KangurPrimaryNavigationPrimaryActions,
   KangurPrimaryNavigationUtilityActions,
 } from './KangurPrimaryNavigation.action-sections';
+import {
+  KangurPrimaryNavigationAppearanceControls,
+  useKangurPrimaryNavigationHasAppearanceControls,
+} from './KangurPrimaryNavigation.appearance-controls';
 import type { KangurPrimaryNavigationProps } from './KangurPrimaryNavigation.types';
 
 function renderMobileMenuHeaderActions({
-  appearanceControlsInline,
   basePath,
   currentPage,
   forceLanguageSwitcherFallbackPath,
+  kangurAppearanceTone,
+  shouldRenderAppearanceControlsInline,
   shouldRenderLanguageSwitcher,
 }: {
-  appearanceControlsInline: React.ReactNode;
   basePath: string;
   currentPage: KangurPrimaryNavigationProps['currentPage'];
   forceLanguageSwitcherFallbackPath: boolean;
+  kangurAppearanceTone: ReturnType<typeof useKangurStorefrontAppearance>['tone'];
+  shouldRenderAppearanceControlsInline: boolean;
   shouldRenderLanguageSwitcher: boolean;
 }): React.ReactNode {
-  const shouldRenderAppearanceControlsInline =
-    appearanceControlsInline !== null &&
-    appearanceControlsInline !== undefined &&
-    appearanceControlsInline !== false;
-
   if (!shouldRenderLanguageSwitcher && !shouldRenderAppearanceControlsInline) {
     return null;
   }
@@ -49,7 +52,12 @@ function renderMobileMenuHeaderActions({
         />
       ) : null}
       {shouldRenderAppearanceControlsInline ? (
-        <div className='flex shrink-0 items-center'>{appearanceControlsInline}</div>
+        <div className='flex shrink-0 items-center'>
+          <KangurPrimaryNavigationAppearanceControls
+            inline
+            tone={kangurAppearanceTone}
+          />
+        </div>
       ) : null}
     </>
   );
@@ -58,30 +66,31 @@ function renderMobileMenuHeaderActions({
 export function KangurPrimaryNavigationMobileMenu(): React.ReactNode {
   const {
     closeMobileMenu,
-    kangurAppearance,
-    navTranslations,
-    navigationLabel,
-    mobileMenuRef,
+    fallbackCopy,
     props,
     derived,
   } = useKangurPrimaryNavigationContext();
+  const kangurAppearance = useKangurStorefrontAppearance();
+  const mobileMenuTranslations = useTranslations('KangurNavigation.mobileMenu');
+  const mobileMenuRef = useRef<HTMLDivElement | null>(null);
+  const mobileMenuPreviousFocusRef = useRef<HTMLElement | null>(null);
 
   const { rightAccessory } = props;
-  const {
-    appearanceControlsInline,
-    basePath,
-    shouldRenderLanguageSwitcher,
-  } = derived;
+  const { basePath, shouldRenderLanguageSwitcher } = derived;
+  const navigationLabel = props.navLabel ?? fallbackCopy.navLabel;
+  const hasAppearanceControlsInline =
+    useKangurPrimaryNavigationHasAppearanceControls();
 
   const menuId = KANGUR_PRIMARY_NAV_DIALOG_IDS.mobileMenu;
   const mobileMenuTitleId = `${menuId}-title`;
   const mobileMenuDescriptionId = `${menuId}-description`;
 
   const headerActions = renderMobileMenuHeaderActions({
-    appearanceControlsInline,
     basePath,
     currentPage: props.currentPage,
     forceLanguageSwitcherFallbackPath: props.forceLanguageSwitcherFallbackPath ?? false,
+    kangurAppearanceTone: kangurAppearance.tone,
+    shouldRenderAppearanceControlsInline: hasAppearanceControlsInline,
     shouldRenderLanguageSwitcher,
   });
 
@@ -101,12 +110,99 @@ export function KangurPrimaryNavigationMobileMenu(): React.ReactNode {
       rightAccessory={rightAccessory}
       testId='kangur-primary-nav-mobile-utility-actions'
       wrapperClassName='flex w-full flex-col gap-2'
-      hideAppearanceControls={Boolean(appearanceControlsInline)}
+      hideAppearanceControls={hasAppearanceControlsInline}
       hideLanguageSwitcher={shouldRenderLanguageSwitcher}
     />
   );
   const shouldRenderHeaderActions =
     headerActions !== null && headerActions !== undefined && headerActions !== false;
+
+  useEffect(() => {
+    if (typeof document === 'undefined') {
+      return;
+    }
+
+    mobileMenuPreviousFocusRef.current = document.activeElement as HTMLElement | null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return (): void => {
+      document.body.style.overflow = previousOverflow;
+      mobileMenuPreviousFocusRef.current?.focus();
+      mobileMenuPreviousFocusRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') {
+      return;
+    }
+
+    const closeButton = document.getElementById('kangur-mobile-menu-close');
+    if (closeButton instanceof HTMLElement) {
+      closeButton.focus();
+    }
+  }, []);
+
+  useEffect(() => {
+    const menu = mobileMenuRef.current;
+    if (!menu || typeof document === 'undefined' || typeof window === 'undefined') {
+      return;
+    }
+
+    const selector = [
+      'a[href]',
+      'button:not([disabled])',
+      'textarea:not([disabled])',
+      'input:not([disabled])',
+      'select:not([disabled])',
+      '[tabindex]:not([tabindex="-1"])',
+    ].join(', ');
+    const getFocusable = (): HTMLElement[] =>
+      Array.from(menu.querySelectorAll<HTMLElement>(selector)).filter(
+        (element) => !element.hasAttribute('disabled') && !element.getAttribute('aria-hidden')
+      );
+    const handleWindowKeyDown = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') {
+        closeMobileMenu();
+      }
+    };
+    const handleMenuKeyDown = (event: KeyboardEvent): void => {
+      if (event.key !== 'Tab') {
+        return;
+      }
+
+      const focusable = getFocusable();
+      const first = focusable.at(0);
+      const last = focusable.at(-1);
+
+      if (!first || !last) {
+        return;
+      }
+
+      const activeElement = document.activeElement;
+      if (event.shiftKey) {
+        if (activeElement === first || activeElement === menu) {
+          event.preventDefault();
+          last.focus();
+        }
+        return;
+      }
+
+      if (activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    window.addEventListener('keydown', handleWindowKeyDown);
+    menu.addEventListener('keydown', handleMenuKeyDown);
+
+    return (): void => {
+      window.removeEventListener('keydown', handleWindowKeyDown);
+      menu.removeEventListener('keydown', handleMenuKeyDown);
+    };
+  }, [closeMobileMenu]);
 
   return (
     <div className='fixed inset-0 z-50 opacity-100 transition-opacity duration-200 sm:hidden'>
@@ -132,10 +228,10 @@ export function KangurPrimaryNavigationMobileMenu(): React.ReactNode {
         }}
       >
         <h2 className='sr-only' id={mobileMenuTitleId}>
-          {navTranslations('mobileMenu.title')}
+          {mobileMenuTranslations('title')}
         </h2>
         <p className='sr-only' id={mobileMenuDescriptionId}>
-          {navTranslations('mobileMenu.description')}
+          {mobileMenuTranslations('description')}
         </p>
         <KangurTopNavGroup className='w-full flex-col' label={navigationLabel}>
           <div className='flex w-full items-center gap-2' data-testid='kangur-primary-nav-mobile-header'>
@@ -149,7 +245,7 @@ export function KangurPrimaryNavigationMobileMenu(): React.ReactNode {
             ) : null}
             <div className='ml-auto flex shrink-0 items-center'>
               <KangurPanelCloseButton
-                aria-label={navTranslations('mobileMenu.close')}
+                aria-label={mobileMenuTranslations('close')}
                 id='kangur-mobile-menu-close'
                 onClick={closeMobileMenu}
                 variant='chat'

@@ -15,7 +15,7 @@ import {
 import type { ColumnDef, Row } from '@tanstack/react-table';
 
 const toTimestamp = (value: string | null | undefined): number => {
-  if (!value) return 0;
+  if (value === null || value === undefined || value.length === 0) return 0;
   const parsed = new Date(value).getTime();
   return Number.isFinite(parsed) ? parsed : 0;
 };

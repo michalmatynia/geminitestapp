@@ -1,15 +1,14 @@
 'use client';
 
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { useLocale, useTranslations } from 'next-intl';
-import { QueryClientContext, type QueryClient } from '@tanstack/react-query';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useLocale } from 'next-intl';
 import {
   loadPersistedTutorVisibilityHidden,
   subscribeToTutorVisibilityChanges,
 } from '@/features/kangur/ui/components/ai-tutor-widget/KangurAiTutorWidget.storage';
 import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import { useKangurAgeGroupFocus } from '@/features/kangur/ui/context/KangurAgeGroupFocusContext';
-import { useOptionalKangurAiTutor } from '@/features/kangur/ui/context/KangurAiTutorContext';
+import { useOptionalKangurAiTutorController } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import {
   useOptionalKangurAuthSessionState,
   useOptionalKangurAuthStatusState,
@@ -18,7 +17,6 @@ import { useOptionalKangurRouteTransitionState } from '@/features/kangur/ui/cont
 import { useKangurElevatedSession } from '@/features/kangur/ui/hooks/useKangurElevatedSession';
 import { useKangurMobileBreakpoint } from '@/features/kangur/ui/hooks/useKangurMobileBreakpoint';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
-import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 import {
   getPrimaryNavigationFallbackCopy,
@@ -32,7 +30,6 @@ type KangurPrimaryNavigationStateInput = Pick<
   | 'canManageLearners'
   | 'currentPage'
   | 'isAuthenticated'
-  | 'navLabel'
   | 'showParentDashboard'
 >;
 
@@ -47,19 +44,10 @@ type OptionalKangurAuthUser = NonNullable<
 >;
 
 type KangurPrimaryNavigationSessionState = {
-  activeLearner: OptionalKangurAuthUser['activeLearner'] | null;
   authUser: OptionalKangurAuthUser | null;
-  effectiveCanManageLearners: boolean;
   effectiveIsAuthenticated: boolean;
   effectiveShowParentDashboard: boolean;
-  hasActiveLearner: boolean;
   isLoggingOut: boolean;
-  isParentAccount: boolean;
-};
-
-type KangurPrimaryNavigationMenuState = {
-  shouldRenderElevatedUserMenu: boolean;
-  shouldRenderProfileMenu: boolean;
 };
 
 type KangurPrimaryNavigationUiState = {
@@ -168,39 +156,14 @@ function resolveKangurPrimaryNavigationSessionState({
   });
 
   return {
-    activeLearner,
     authUser,
-    effectiveCanManageLearners,
     effectiveIsAuthenticated,
     effectiveShowParentDashboard: resolveKangurPrimaryNavigationEffectiveShowParentDashboard({
       canManageLearners,
       effectiveCanManageLearners,
       showParentDashboard,
     }),
-    hasActiveLearner,
     isLoggingOut,
-    isParentAccount: authUser?.actorType === 'parent',
-  };
-}
-
-function resolveKangurPrimaryNavigationMenuState({
-  effectiveIsAuthenticated,
-  hasElevatedSessionSnapshot,
-  hasActiveLearner,
-  isParentAccount,
-}: {
-  effectiveIsAuthenticated: boolean;
-  hasElevatedSessionSnapshot: boolean;
-  hasActiveLearner: boolean;
-  isParentAccount: boolean;
-}): KangurPrimaryNavigationMenuState {
-  return {
-    shouldRenderElevatedUserMenu:
-      effectiveIsAuthenticated && hasElevatedSessionSnapshot && !hasActiveLearner,
-    shouldRenderProfileMenu:
-      effectiveIsAuthenticated &&
-      (!isParentAccount || hasActiveLearner) &&
-      (!hasElevatedSessionSnapshot || hasActiveLearner),
   };
 }
 
@@ -245,53 +208,28 @@ function useKangurPrimaryNavigationUiState(
   };
 }
 
-export function useKangurPrimaryNavigationLessonsPrefetchOnIntent({
-  ageGroup: _ageGroup,
-  currentPage: _currentPage,
-  normalizedLocale: _normalizedLocale,
-  queryClient: _queryClient,
-  subject: _subject,
-}: {
-  ageGroup: ReturnType<typeof useKangurAgeGroupFocus>['ageGroup'];
-  currentPage: KangurPrimaryNavigationStateInput['currentPage'];
-  normalizedLocale: string;
-  queryClient: QueryClient | null | undefined;
-  subject: ReturnType<typeof useKangurSubjectFocus>['subject'];
-}): () => void {
-  return useCallback((): void => {}, []);
-}
-
 export function useKangurPrimaryNavigationState({
   canManageLearners,
   currentPage,
   isAuthenticated,
-  navLabel,
   showParentDashboard,
 }: KangurPrimaryNavigationStateInput) {
-  const tutor = useOptionalKangurAiTutor();
+  const tutor = useOptionalKangurAiTutorController();
   const authSessionState = useOptionalKangurAuthSessionState();
   const authStatusState = useOptionalKangurAuthStatusState();
   const { elevatedUser: elevatedSessionSnapshot, isSuperAdmin } = useKangurElevatedSession();
-  const kangurAppearance = useKangurStorefrontAppearance();
   const routeTransitionState = useOptionalKangurRouteTransitionState();
   const locale = useLocale();
-  const queryClient = useContext(QueryClientContext);
-  const navTranslations = useTranslations('KangurNavigation');
   const normalizedLocale = normalizeSiteLocale(locale);
   const fallbackCopy = useMemo(
     () => getPrimaryNavigationFallbackCopy(normalizedLocale),
     [normalizedLocale]
   );
-  const navigationLabel = navLabel ?? fallbackCopy.navLabel;
   const {
-    activeLearner,
     authUser,
-    effectiveCanManageLearners,
     effectiveIsAuthenticated,
     effectiveShowParentDashboard,
-    hasActiveLearner,
     isLoggingOut,
-    isParentAccount,
   } = resolveKangurPrimaryNavigationSessionState({
     authSessionState,
     authStatusState,
@@ -299,13 +237,6 @@ export function useKangurPrimaryNavigationState({
     isAuthenticated,
     showParentDashboard,
   });
-  const { shouldRenderElevatedUserMenu, shouldRenderProfileMenu } =
-    resolveKangurPrimaryNavigationMenuState({
-      effectiveIsAuthenticated,
-      hasElevatedSessionSnapshot: elevatedSessionSnapshot != null,
-      hasActiveLearner,
-      isParentAccount,
-    });
   const { subject, setSubject } = useKangurSubjectFocus();
   const { ageGroup, setAgeGroup } = useKangurAgeGroupFocus();
   const {
@@ -325,15 +256,10 @@ export function useKangurPrimaryNavigationState({
 
   return {
     authUser,
-    activeLearner,
     elevatedSessionSnapshot,
     isSuperAdmin,
     isLoggingOut,
     effectiveIsAuthenticated,
-    hasActiveLearner,
-    isParentAccount,
-    shouldRenderElevatedUserMenu,
-    shouldRenderProfileMenu,
     isTutorHidden,
     setIsTutorHidden,
     isMobileMenuOpen,
@@ -351,14 +277,9 @@ export function useKangurPrimaryNavigationState({
     closeMobileMenu,
     toggleMobileMenu,
     fallbackCopy,
-    navigationLabel,
-    navTranslations,
     tutor,
     routeTransitionState,
     normalizedLocale,
-    queryClient,
-    kangurAppearance,
-    effectiveCanManageLearners,
     effectiveShowParentDashboard,
   };
 }

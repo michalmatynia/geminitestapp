@@ -32,7 +32,7 @@ function useAsset3DCardModel(asset: Asset3DRecord): {
     setEditAsset(asset);
   }, [setEditAsset, asset]);
   const onDeleteAsset = useCallback((): void => {
-    handleDelete(asset);
+    handleDelete(asset).catch(() => {});
   }, [handleDelete, asset]);
 
   const formatFileSize = (bytes: number): string => {
@@ -41,7 +41,12 @@ function useAsset3DCardModel(asset: Asset3DRecord): {
     return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
   };
 
-  const displayName = (asset.name || asset.filename || '').replace(/^\d+-/, '');
+  const getDisplayName = (name: string | undefined | null, filename: string | undefined | null): string => {
+    if (name !== undefined && name !== null && name.length > 0) return name.replace(/^\d+-/, '');
+    if (filename !== undefined && filename !== null && filename.length > 0) return filename.replace(/^\d+-/, '');
+    return '';
+  };
+  const displayName = getDisplayName(asset.name, asset.filename);
 
   return {
     displayName,

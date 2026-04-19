@@ -7,6 +7,8 @@ import { getKangurAvatarById } from '@/features/kangur/ui/avatars/catalog';
 import { KangurLanguageSwitcher } from '@/features/kangur/ui/components/KangurLanguageSwitcher';
 import { KangurElevatedUserMenu } from '@/features/kangur/ui/components/KangurElevatedUserMenu';
 import { KangurProfileMenu } from '@/features/kangur/ui/components/KangurProfileMenu';
+import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
+import { KangurPrimaryNavigationAppearanceControls } from './KangurPrimaryNavigation.appearance-controls';
 
 import type { useKangurPrimaryNavigationState } from './KangurPrimaryNavigation.hooks';
 import type { KangurPrimaryNavigationProps } from './KangurPrimaryNavigation.types';
@@ -14,9 +16,7 @@ import type { KangurPrimaryNavigationProps } from './KangurPrimaryNavigation.typ
 type PrimaryNavigationState = ReturnType<typeof useKangurPrimaryNavigationState>;
 
 type KangurPrimaryNavigationDeferredUtilityRuntimeProps = {
-  activeLearner: PrimaryNavigationState['activeLearner'];
   accessibleCurrentPage: KangurPrimaryNavigationProps['currentPage'];
-  appearanceControls: React.ReactNode;
   authUser: PrimaryNavigationState['authUser'];
   basePath: string;
   elevatedSessionSnapshot: PrimaryNavigationState['elevatedSessionSnapshot'];
@@ -28,6 +28,7 @@ type KangurPrimaryNavigationDeferredUtilityRuntimeProps = {
   onLogout: () => void;
   profileTransitionSourceId: string;
   shouldRenderElevatedUserMenu: boolean;
+  shouldRenderAppearanceControls: boolean;
   shouldRenderLanguageSwitcher: boolean;
   shouldRenderProfileMenu: boolean;
 };
@@ -51,12 +52,11 @@ function resolveDeferredUtilityElevatedSessionUser({
 }
 
 function resolveDeferredUtilityProfileDisplayName({
-  activeLearner,
   authUser,
 }: {
-  activeLearner: PrimaryNavigationState['activeLearner'];
   authUser: PrimaryNavigationState['authUser'];
 }): string | null {
+  const activeLearner = authUser?.activeLearner ?? null;
   const candidates = [
     activeLearner?.displayName,
     activeLearner?.loginName,
@@ -76,16 +76,13 @@ function resolveDeferredUtilityProfileDisplayName({
 }
 
 function resolveDeferredUtilityProfileLabel({
-  activeLearner,
   authUser,
   fallbackCopy,
 }: {
-  activeLearner: PrimaryNavigationState['activeLearner'];
   authUser: PrimaryNavigationState['authUser'];
   fallbackCopy: PrimaryNavigationState['fallbackCopy'];
 }): string {
   const profileDisplayName = resolveDeferredUtilityProfileDisplayName({
-    activeLearner,
     authUser,
   });
 
@@ -164,7 +161,6 @@ function DeferredUtilityElevatedUserMenu({
 }
 
 function DeferredUtilityProfileMenu({
-  activeLearner,
   authUser,
   basePath,
   fallbackCopy,
@@ -174,7 +170,6 @@ function DeferredUtilityProfileMenu({
   shouldRenderProfileMenu,
 }: Pick<
   KangurPrimaryNavigationDeferredUtilityRuntimeProps,
-  | 'activeLearner'
   | 'authUser'
   | 'basePath'
   | 'fallbackCopy'
@@ -187,10 +182,10 @@ function DeferredUtilityProfileMenu({
     return null;
   }
 
+  const activeLearner = authUser?.activeLearner ?? null;
   const profileAvatar = getKangurAvatarById(activeLearner?.avatarId);
   const profileHref = getKangurPageHref('LearnerProfile', basePath);
   const profileLabel = resolveDeferredUtilityProfileLabel({
-    activeLearner,
     authUser,
     fallbackCopy,
   });
@@ -207,9 +202,7 @@ function DeferredUtilityProfileMenu({
 }
 
 export function KangurPrimaryNavigationDeferredUtilityRuntime({
-  activeLearner,
   accessibleCurrentPage,
-  appearanceControls,
   authUser,
   basePath,
   elevatedSessionSnapshot,
@@ -221,9 +214,12 @@ export function KangurPrimaryNavigationDeferredUtilityRuntime({
   onLogout,
   profileTransitionSourceId,
   shouldRenderElevatedUserMenu,
+  shouldRenderAppearanceControls,
   shouldRenderLanguageSwitcher,
   shouldRenderProfileMenu,
 }: KangurPrimaryNavigationDeferredUtilityRuntimeProps): React.ReactNode {
+  const kangurAppearance = useKangurStorefrontAppearance();
+
   return (
     <>
       <DeferredUtilityLanguageSwitcher
@@ -233,7 +229,9 @@ export function KangurPrimaryNavigationDeferredUtilityRuntime({
         mobileNavItemClassName={mobileNavItemClassName}
         shouldRenderLanguageSwitcher={shouldRenderLanguageSwitcher}
       />
-      {appearanceControls}
+      {shouldRenderAppearanceControls ? (
+        <KangurPrimaryNavigationAppearanceControls tone={kangurAppearance.tone} />
+      ) : null}
       <DeferredUtilityElevatedUserMenu
         authUser={authUser}
         elevatedSessionSnapshot={elevatedSessionSnapshot}
@@ -243,7 +241,6 @@ export function KangurPrimaryNavigationDeferredUtilityRuntime({
         shouldRenderElevatedUserMenu={shouldRenderElevatedUserMenu}
       />
       <DeferredUtilityProfileMenu
-        activeLearner={activeLearner}
         authUser={authUser}
         basePath={basePath}
         fallbackCopy={fallbackCopy}

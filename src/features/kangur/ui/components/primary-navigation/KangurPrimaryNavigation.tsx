@@ -3,6 +3,7 @@
 import { Menu, X } from 'lucide-react';
 import React from 'react';
 import dynamic from 'next/dynamic';
+import { useTranslations } from 'next-intl';
 
 import {
   KangurButton,
@@ -67,13 +68,15 @@ function KangurPrimaryNavigationTopBarContent({
   utilityActions: React.ReactNode;
 }): React.JSX.Element {
   const {
+    fallbackCopy,
     isCoarsePointer,
     isMobileMenuOpen,
     isMobileViewport,
-    navTranslations,
-    navigationLabel,
+    props,
     toggleMobileMenu,
   } = useKangurPrimaryNavigationContext();
+  const navTranslations = useTranslations('KangurNavigation');
+  const navigationLabel = props.navLabel ?? fallbackCopy.navLabel;
 
   const mobileMenuLabel = isMobileMenuOpen
     ? navTranslations('mobileMenu.close')

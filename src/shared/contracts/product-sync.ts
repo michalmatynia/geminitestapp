@@ -681,6 +681,7 @@ export type ProductSyncSingleProductResponse = z.infer<typeof productSyncSingleP
 
 export const productSyncBulkRequestSchema = z.object({
   productIds: z.array(z.string().trim().min(1)).min(1).max(500),
+  profileId: z.string().trim().min(1).optional(),
 });
 export type ProductSyncBulkRequest = z.infer<typeof productSyncBulkRequestSchema>;
 

@@ -38,6 +38,7 @@ import {
   translationMessages,
   updateSettingMutateAsyncMock,
   useKangurCoarsePointerMock,
+  useKangurIdleReadyMock,
   useKangurPageContentEntryMock,
   useKangurSubjectFocusMock,
 } from '../KangurPrimaryNavigation.test-support';
@@ -940,6 +941,31 @@ it('renders storefront appearance controls inside the Kangur navbar and updates 
   fireEvent.click(screen.getByRole('button', { name: 'Switch to Nightly theme' }));
 
   expect(screen.getByRole('button', { name: 'Switch to Daily theme' })).toBeInTheDocument();
+});
+
+it('keeps storefront appearance controls off the standalone home startup path until the utility gate opens', () => {
+  useKangurIdleReadyMock.mockReturnValue(false);
+  optionalRoutingMock.mockReturnValue({
+    basePath: '/kangur',
+    embedded: false,
+    pageKey: 'Game',
+    requestedHref: '/kangur',
+    requestedPath: '/kangur',
+  });
+
+  render(
+    <CmsStorefrontAppearanceProvider initialMode='default'>
+      <KangurPrimaryNavigation
+        basePath='/kangur'
+        currentPage='Game'
+        isAuthenticated
+        onLogout={vi.fn()}
+      />
+    </CmsStorefrontAppearanceProvider>
+  );
+
+  expect(screen.queryByTestId('kangur-primary-nav-appearance-controls')).toBeNull();
+  expect(screen.queryByTestId('kangur-primary-nav-appearance-controls-inline')).toBeNull();
 });
 
 });

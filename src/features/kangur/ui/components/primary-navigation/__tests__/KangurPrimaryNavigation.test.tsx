@@ -173,7 +173,7 @@ it('shows the active learner name in the profile label for parent accounts', asy
   );
 });
 
-it('shows the login action and hides create-account when the user is not authenticated', () => {
+it('shows the login action and hides create-account when the user is not authenticated', async () => {
   const onLogin = vi.fn();
   const onGuestPlayerNameChange = vi.fn();
 
@@ -189,25 +189,25 @@ it('shows the login action and hides create-account when the user is not authent
     />
   );
 
-  expect(screen.getByRole('button', { name: 'Ala' })).toBeInTheDocument();
+  expect(await screen.findByRole('button', { name: 'Ala' })).toBeInTheDocument();
 
   fireEvent.click(screen.getByRole('button', { name: 'Ala' }));
-  fireEvent.change(screen.getByPlaceholderText('Wpisz imię gracza...'), {
+  fireEvent.change(await screen.findByPlaceholderText('Wpisz imię gracza...'), {
     target: { value: 'Ola' },
   });
   fireEvent.keyDown(screen.getByPlaceholderText('Wpisz imię gracza...'), {
     key: 'Enter',
   });
-  fireEvent.click(screen.getByRole('button', { name: /zaloguj się/i }));
+  fireEvent.click(await screen.findByRole('button', { name: /zaloguj się/i }));
 
   expect(onGuestPlayerNameChange).toHaveBeenCalledWith('Ola');
   expect(screen.queryByRole('button', { name: 'Utwórz konto' })).toBeNull();
   expect(onLogin).toHaveBeenCalledTimes(1);
-  expect(screen.getByRole('button', { name: 'Ala' })).toBeInTheDocument();
+  expect(await screen.findByRole('button', { name: 'Ala' })).toBeInTheDocument();
   expect(screen.queryByRole('link', { name: /profil/i })).toBeNull();
 });
 
-it('does not render a separate guest-name submit button while editing', () => {
+it('does not render a separate guest-name submit button while editing', async () => {
   render(
     <KangurPrimaryNavigation
       basePath='/kangur'
@@ -220,11 +220,11 @@ it('does not render a separate guest-name submit button while editing', () => {
     />
   );
 
-  expect(screen.getByPlaceholderText('Wpisz imię gracza...')).toBeInTheDocument();
+  expect(await screen.findByPlaceholderText('Wpisz imię gracza...')).toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Imię gracza' })).toBeNull();
 });
 
-it('registers tutor anchors on the anonymous login action only', () => {
+it('registers tutor anchors on the anonymous login action only', async () => {
   render(
     <KangurTutorAnchorProvider>
       <KangurPrimaryNavigation
@@ -239,7 +239,7 @@ it('registers tutor anchors on the anonymous login action only', () => {
     </KangurTutorAnchorProvider>
   );
 
-  expect(screen.getByTestId('kangur-primary-nav-login')).toHaveAttribute(
+  expect(await screen.findByTestId('kangur-primary-nav-login')).toHaveAttribute(
     'data-kangur-tutor-anchor-kind',
     'login_action'
   );
@@ -250,7 +250,7 @@ it('registers tutor anchors on the anonymous login action only', () => {
   );
 });
 
-it('uses Mongo-backed labels on the anonymous login action when available', () => {
+it('uses Mongo-backed labels on the anonymous login action when available', async () => {
   useKangurPageContentEntryMock.mockImplementation(() => ({
     data: undefined,
     entry: {
@@ -282,7 +282,7 @@ it('uses Mongo-backed labels on the anonymous login action when available', () =
   );
 
   expect(screen.queryByRole('button', { name: 'Utwórz konto' })).toBeNull();
-  expect(screen.getByRole('button', { name: 'Zaloguj się' })).toHaveAttribute(
+  expect(await screen.findByRole('button', { name: 'Zaloguj się' })).toHaveAttribute(
     'title',
     'Otwórz logowanie rodzica lub ucznia z bieżącej strony.'
   );
@@ -303,7 +303,7 @@ it('does not mount the login page-content hook on authenticated routes', () => {
   expect(useKangurPageContentEntryMock).not.toHaveBeenCalled();
 });
 
-it('keeps the anonymous login action on fallback copy until the standalone home utility gate opens', () => {
+it('keeps the anonymous login action on fallback copy until the standalone home utility gate opens', async () => {
   useKangurIdleReadyMock.mockReturnValue(false);
   optionalRoutingMock.mockReturnValue({
     basePath: '/kangur',
@@ -325,12 +325,14 @@ it('keeps the anonymous login action on fallback copy until the standalone home 
     />
   );
 
-  expect(useKangurPageContentEntryMock).toHaveBeenCalledWith(
-    'shared-nav-login-action',
-    undefined,
-    { enabled: false }
-  );
-  expect(screen.getByRole('button', { name: 'Zaloguj się' })).toBeInTheDocument();
+  await waitFor(() => {
+    expect(useKangurPageContentEntryMock).toHaveBeenCalledWith(
+      'shared-nav-login-action',
+      undefined,
+      { enabled: false }
+    );
+  });
+  expect(await screen.findByRole('button', { name: 'Zaloguj się' })).toBeInTheDocument();
 });
 
 it('keeps the learner profile menu off the standalone home utility path until the gate opens', () => {
@@ -417,7 +419,7 @@ it('keeps the elevated user menu off the standalone home utility path until the 
   expect(screen.getByRole('button', { name: /wyloguj/i })).toBeInTheDocument();
 });
 
-it('uses English fallback auth copy on the English route when CMS copy is unavailable', () => {
+it('uses English fallback auth copy on the English route when CMS copy is unavailable', async () => {
   localeMock.mockReturnValue('en');
 
   render(
@@ -432,8 +434,8 @@ it('uses English fallback auth copy on the English route when CMS copy is unavai
     />
   );
 
-  expect(screen.getByPlaceholderText('Enter the player name...')).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: 'Sign in' })).toBeInTheDocument();
+  expect(await screen.findByPlaceholderText('Enter the player name...')).toBeInTheDocument();
+  expect(await screen.findByRole('button', { name: 'Sign in' })).toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Zaloguj się' })).toBeNull();
 });
 
@@ -502,7 +504,7 @@ it('does not render the toggle action inside the main nav group when the tutor i
   expect(screen.queryByTestId('kangur-ai-tutor-toggle')).toBeNull();
 });
 
-it('collapses the guest name input on blur and reopens it on click', () => {
+it('collapses the guest name input on blur and reopens it on click', async () => {
   const onGuestPlayerNameChange = vi.fn();
 
   render(
@@ -517,14 +519,14 @@ it('collapses the guest name input on blur and reopens it on click', () => {
     />
   );
 
+  fireEvent.click(await screen.findByRole('button', { name: 'Ola' }));
+  fireEvent.blur(await screen.findByPlaceholderText('Wpisz imię gracza...'));
+
+  expect(await screen.findByRole('button', { name: 'Ola' })).toBeInTheDocument();
+
   fireEvent.click(screen.getByRole('button', { name: 'Ola' }));
-  fireEvent.blur(screen.getByPlaceholderText('Wpisz imię gracza...'));
 
-  expect(screen.getByRole('button', { name: 'Ola' })).toBeInTheDocument();
-
-  fireEvent.click(screen.getByRole('button', { name: 'Ola' }));
-
-  expect(screen.getByPlaceholderText('Wpisz imię gracza...')).toBeInTheDocument();
+  expect(await screen.findByPlaceholderText('Wpisz imię gracza...')).toBeInTheDocument();
 });
 
 it('hides the parent dashboard link when auth resolves a student session', async () => {

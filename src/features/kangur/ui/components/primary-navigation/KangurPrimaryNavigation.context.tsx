@@ -1,9 +1,9 @@
 'use client';
 
 import React, { createContext, useContext, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { useKangurPrimaryNavigationState } from './KangurPrimaryNavigation.hooks';
 import {
-  useKangurPrimaryNavigationRuntime,
   buildAgeGroupAction,
   buildDuelsAction,
   buildGamesLibraryAction,
@@ -29,25 +29,18 @@ import {
   getKangurSixYearOldSubjectVisual,
 } from '@/features/kangur/ui/constants/six-year-old-visuals';
 import { persistTutorVisibilityHidden } from '@/features/kangur/ui/components/ai-tutor-widget/KangurAiTutorWidget.storage';
-import {
-  resolveAppearanceControls,
-} from './KangurPrimaryNavigation.appearance-controls';
-import { useOptionalCmsStorefrontAppearance } from '@/shared/ui/cms-appearance/CmsStorefrontAppearance';
 import type { 
   KangurNavActionConfig,
   KangurPrimaryNavigationProps 
 } from './KangurPrimaryNavigation.types';
-import type { KangurIntlTranslate } from '@/features/kangur/ui/types';
 
 import type { KangurLessonAgeGroup, KangurLessonSubject } from '@/features/kangur/shared/contracts/kangur';
 
 type PrimaryNavigationState = ReturnType<typeof useKangurPrimaryNavigationState>;
-type PrimaryNavigationRuntime = ReturnType<typeof useKangurPrimaryNavigationRuntime>;
 
 type KangurPrimaryNavigationVisual = { detail: string; icon: React.ReactNode };
 
 export type KangurPrimaryNavigationContextValue = {
-  activeLearner: PrimaryNavigationState['activeLearner'];
   ageGroup: KangurLessonAgeGroup;
   authUser: PrimaryNavigationState['authUser'];
   closeMobileMenu: () => void;
@@ -63,32 +56,16 @@ export type KangurPrimaryNavigationContextValue = {
   isSubjectModalOpen: boolean;
   isSuperAdmin: boolean;
   isTutorHidden: boolean;
-  kangurAppearance: PrimaryNavigationState['kangurAppearance'];
-  navTranslations: KangurIntlTranslate;
-  navigationLabel: string;
   normalizedLocale: string;
-  queryClient: PrimaryNavigationState['queryClient'];
   routeTransitionState: PrimaryNavigationState['routeTransitionState'];
   setAgeGroup: (val: KangurLessonAgeGroup) => void;
   setIsAgeGroupModalOpen: (val: boolean) => void;
   setIsMobileMenuOpen: (val: boolean) => void;
   setIsSubjectModalOpen: (val: boolean) => void;
   setSubject: (val: KangurLessonSubject) => void;
-  shouldRenderElevatedUserMenu: boolean;
-  shouldRenderProfileMenu: boolean;
   subject: KangurLessonSubject;
   toggleMobileMenu: () => void;
   tutor: PrimaryNavigationState['tutor'];
-  loginActionRef: PrimaryNavigationRuntime['loginActionRef'];
-  mobileMenuRef: PrimaryNavigationRuntime['mobileMenuRef'];
-  commitGuestPlayerName: PrimaryNavigationRuntime['commitGuestPlayerName'];
-  guestPlayerNameValue: PrimaryNavigationRuntime['guestPlayerNameValue'];
-  guestPlayerPlaceholderText: PrimaryNavigationRuntime['guestPlayerPlaceholderText'];
-  handleGuestPlayerNameChange: PrimaryNavigationRuntime['handleGuestPlayerNameChange'];
-  hasGuestPlayerName: PrimaryNavigationRuntime['hasGuestPlayerName'];
-  isEditingGuestPlayerName: PrimaryNavigationRuntime['isEditingGuestPlayerName'];
-  setIsEditingGuestPlayerName: PrimaryNavigationRuntime['setIsEditingGuestPlayerName'];
-  showGuestPlayerNameInput: PrimaryNavigationRuntime['showGuestPlayerNameInput'];
   props: KangurPrimaryNavigationProps;
   derived: {
     isSixYearOld: boolean;
@@ -102,8 +79,6 @@ export type KangurPrimaryNavigationContextValue = {
     tutorToggleAction: KangurNavActionConfig;
     canAccessGamesLibrary: boolean;
     shouldRenderLanguageSwitcher: boolean;
-    appearanceControls: React.ReactNode;
-    appearanceControlsInline: React.ReactNode;
     mobileNavItemClassName: string;
     amberPillActionClassName: string;
     yellowPillActionClassName: string;
@@ -141,27 +116,9 @@ export function KangurPrimaryNavigationProvider({
     canManageLearners: props.canManageLearners,
     currentPage: props.currentPage,
     isAuthenticated: props.isAuthenticated,
-    navLabel: props.navLabel,
     showParentDashboard: props.showParentDashboard,
   });
-
-  const runtime = useKangurPrimaryNavigationRuntime({
-    ageGroup: state.ageGroup,
-    currentPage: props.currentPage,
-    effectiveIsAuthenticated: state.effectiveIsAuthenticated,
-    fallbackCopy: state.fallbackCopy,
-    guestPlayerName: props.guestPlayerName,
-    guestPlayerNamePlaceholder: props.guestPlayerNamePlaceholder,
-    isMobileMenuOpen: state.isMobileMenuOpen,
-    normalizedLocale: state.normalizedLocale,
-    onGuestPlayerNameChange: props.onGuestPlayerNameChange,
-    onLogin: props.onLogin,
-    queryClient: state.queryClient,
-    setIsMobileMenuOpen: state.setIsMobileMenuOpen,
-    subject: state.subject,
-  });
-
-  const storefrontAppearance = useOptionalCmsStorefrontAppearance();
+  const navTranslations = useTranslations('KangurNavigation');
 
   const derived = useMemo(() => {
     const isSixYearOld = state.ageGroup === 'six_year_old';
@@ -186,7 +143,7 @@ export function KangurPrimaryNavigationProvider({
       effectiveHomeActive: props.homeActive ?? props.currentPage === 'Game',
       homeHref,
       homeTransitionSourceId: KANGUR_PRIMARY_NAV_TRANSITION_SOURCE_IDS.home,
-      navTranslations: state.navTranslations,
+      navTranslations,
       onHomeClick: props.onHomeClick,
       transitionPhase,
     });
@@ -198,8 +155,7 @@ export function KangurPrimaryNavigationProvider({
       lessonsHref: createPageUrl('Lessons', props.basePath),
       lessonsTransitionSourceId: KANGUR_PRIMARY_NAV_TRANSITION_SOURCE_IDS.lessons,
       mobileNavItemClassName,
-      navTranslations: state.navTranslations,
-      prefetchLessonsCatalogOnIntent: runtime.prefetchLessonsCatalogOnIntent,
+      navTranslations,
       transitionPhase,
     });
 
@@ -210,7 +166,7 @@ export function KangurPrimaryNavigationProvider({
       gamesLibraryTransitionSourceId: KANGUR_PRIMARY_NAV_TRANSITION_SOURCE_IDS.gamesLibrary,
       isSixYearOld,
       mobileNavItemClassName,
-      navTranslations: state.navTranslations,
+      navTranslations,
       transitionPhase,
     });
 
@@ -218,7 +174,7 @@ export function KangurPrimaryNavigationProvider({
       className: yellowPillActionClassName,
       isSixYearOld,
       isSubjectModalOpen: state.isSubjectModalOpen,
-      navTranslations: state.navTranslations,
+      navTranslations,
       onOpen: () => state.setIsSubjectModalOpen(true),
       subjectChoiceLabel,
       subjectDialogId: KANGUR_PRIMARY_NAV_DIALOG_IDS.subject,
@@ -232,7 +188,7 @@ export function KangurPrimaryNavigationProvider({
       className: amberPillActionClassName,
       isAgeGroupModalOpen: state.isAgeGroupModalOpen,
       isSixYearOld,
-      navTranslations: state.navTranslations,
+      navTranslations,
       onOpen: () => state.setIsAgeGroupModalOpen(true),
     });
 
@@ -243,7 +199,7 @@ export function KangurPrimaryNavigationProvider({
       duelsTransitionSourceId: KANGUR_PRIMARY_NAV_TRANSITION_SOURCE_IDS.duels,
       isSixYearOld,
       mobileNavItemClassName,
-      navTranslations: state.navTranslations,
+      navTranslations,
       transitionPhase,
     });
 
@@ -253,7 +209,7 @@ export function KangurPrimaryNavigationProvider({
       effectiveShowParentDashboard: state.effectiveShowParentDashboard,
       isSixYearOld,
       mobileNavItemClassName,
-      navTranslations: state.navTranslations,
+      navTranslations,
       parentDashboardHref: createPageUrl('ParentDashboard', props.basePath),
       parentDashboardTransitionSourceId: KANGUR_PRIMARY_NAV_TRANSITION_SOURCE_IDS.parentDashboard,
       transitionPhase,
@@ -277,31 +233,6 @@ export function KangurPrimaryNavigationProvider({
     });
 
     const shouldRenderLanguageSwitcher = !isKangurEmbeddedBasePath(props.basePath);
-    
-    const appearanceControls = resolveAppearanceControls({
-      kangurAppearanceLabels: {
-        default: 'Daily',
-        dawn: 'Dawn',
-        sunset: 'Sunset',
-        dark: 'Nightly',
-      },
-      kangurAppearanceModes: ['default', 'dawn', 'sunset', 'dark'],
-      kangurAppearanceTone: state.kangurAppearance.tone,
-      storefrontAppearance,
-    });
-
-    const appearanceControlsInline = resolveAppearanceControls({
-      inline: true,
-      kangurAppearanceLabels: {
-        default: 'Daily',
-        dawn: 'Dawn',
-        sunset: 'Sunset',
-        dark: 'Nightly',
-      },
-      kangurAppearanceModes: ['default', 'dawn', 'sunset', 'dark'],
-      kangurAppearanceTone: state.kangurAppearance.tone,
-      storefrontAppearance,
-    });
 
     return {
       isSixYearOld,
@@ -315,8 +246,6 @@ export function KangurPrimaryNavigationProvider({
       tutorToggleAction,
       canAccessGamesLibrary,
       shouldRenderLanguageSwitcher,
-      appearanceControls,
-      appearanceControlsInline,
       mobileNavItemClassName,
       amberPillActionClassName,
       yellowPillActionClassName,
@@ -327,14 +256,13 @@ export function KangurPrimaryNavigationProvider({
       basePath: props.basePath,
       inlineAppearanceWithTutor: true,
     };
-  }, [state, runtime, props, storefrontAppearance]);
+  }, [state, props]);
 
   const value: KangurPrimaryNavigationContextValue = useMemo(() => ({
     ...state,
-    ...runtime,
     props,
     derived,
-  }), [state, runtime, props, derived]);
+  }), [state, props, derived]);
 
   return (
     <KangurPrimaryNavigationContext.Provider value={value}>

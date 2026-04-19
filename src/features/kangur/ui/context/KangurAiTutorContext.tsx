@@ -39,6 +39,9 @@ import {
 // ---------------------------------------------------------------------------
 
 const KangurAiTutorContext = createContext<KangurAiTutorContextValue | null>(null);
+type KangurAiTutorControllerValue = Pick<KangurAiTutorContextValue, 'enabled' | 'openChat'>;
+const KangurAiTutorControllerContext =
+  createContext<KangurAiTutorControllerValue | null>(null);
 
 /**
  * Activation context — allows the dynamically-loaded AI tutor widget to push
@@ -87,6 +90,10 @@ export function useKangurAiTutorDeferredActivationBridge(input: {
 
 const NOOP = (): void => {};
 const NOOP_ASYNC = async (): Promise<void> => {};
+const DORMANT_CONTROLLER_VALUE: KangurAiTutorControllerValue = Object.freeze({
+  enabled: false,
+  openChat: NOOP,
+});
 
 const DORMANT_VALUE: KangurAiTutorContextValue = Object.freeze({
   enabled: false,
@@ -141,6 +148,13 @@ const createKangurAiTutorDeferredShellValue = (
   selectionExplainRequest: runtimeValue.selectionExplainRequest,
 });
 
+const createKangurAiTutorControllerValue = (
+  runtimeValue: KangurAiTutorContextValue
+): KangurAiTutorControllerValue => ({
+  enabled: runtimeValue.enabled,
+  openChat: runtimeValue.openChat,
+});
+
 // ---------------------------------------------------------------------------
 // Deferred provider — lightweight shell, heavy runtime activates later
 // ---------------------------------------------------------------------------
@@ -172,6 +186,13 @@ export function KangurAiTutorDeferredProvider({
   );
 
   const contextValue = activeRuntimeValue ?? DORMANT_VALUE;
+  const controllerValue = useMemo<KangurAiTutorControllerValue>(
+    () =>
+      activeRuntimeValue
+        ? createKangurAiTutorControllerValue(activeRuntimeValue)
+        : DORMANT_CONTROLLER_VALUE,
+    [activeRuntimeValue]
+  );
   const activationValue = useMemo<KangurAiTutorActivationContextValue>(
     () => ({
       activateRuntimeValue: setActiveRuntimeValue,
@@ -183,9 +204,11 @@ export function KangurAiTutorDeferredProvider({
   return (
     <KangurAiTutorActivationContext.Provider value={activationValue}>
       <KangurAiTutorSessionRegistryContext.Provider value={sessionRegistryValue}>
-        <KangurAiTutorContext.Provider value={contextValue}>
-          {children}
-        </KangurAiTutorContext.Provider>
+        <KangurAiTutorControllerContext.Provider value={controllerValue}>
+          <KangurAiTutorContext.Provider value={contextValue}>
+            {children}
+          </KangurAiTutorContext.Provider>
+        </KangurAiTutorControllerContext.Provider>
       </KangurAiTutorSessionRegistryContext.Provider>
     </KangurAiTutorActivationContext.Provider>
   );
@@ -203,6 +226,10 @@ export function KangurAiTutorProvider({
   sessionContext,
 }: KangurAiTutorProviderProps): JSX.Element {
   const { value, sessionRegistryValue } = useKangurAiTutorRuntime();
+  const controllerValue = useMemo<KangurAiTutorControllerValue>(
+    () => createKangurAiTutorControllerValue(value),
+    [value.enabled, value.openChat]
+  );
   const shouldSyncSession = learnerId !== undefined || sessionContext !== undefined;
   const sessionSync = useMemo<KangurAiTutorSessionSyncInput>(
     () => ({
@@ -215,10 +242,12 @@ export function KangurAiTutorProvider({
   return (
     <KangurAiTutorActivationContext.Provider value={null}>
       <KangurAiTutorSessionRegistryContext.Provider value={sessionRegistryValue}>
-        <KangurAiTutorContext.Provider value={value}>
-          {shouldSyncSession ? <KangurAiTutorSessionSyncInner sync={sessionSync} /> : null}
-          {children}
-        </KangurAiTutorContext.Provider>
+        <KangurAiTutorControllerContext.Provider value={controllerValue}>
+          <KangurAiTutorContext.Provider value={value}>
+            {shouldSyncSession ? <KangurAiTutorSessionSyncInner sync={sessionSync} /> : null}
+            {children}
+          </KangurAiTutorContext.Provider>
+        </KangurAiTutorControllerContext.Provider>
       </KangurAiTutorSessionRegistryContext.Provider>
     </KangurAiTutorActivationContext.Provider>
   );
@@ -231,7 +260,16 @@ export function KangurAiTutorRuntimeScope({
   children: ReactNode;
   value: KangurAiTutorContextValue;
 }): JSX.Element {
-  return <KangurAiTutorContext.Provider value={value}>{children}</KangurAiTutorContext.Provider>;
+  const controllerValue = useMemo<KangurAiTutorControllerValue>(
+    () => createKangurAiTutorControllerValue(value),
+    [value.enabled, value.openChat]
+  );
+
+  return (
+    <KangurAiTutorControllerContext.Provider value={controllerValue}>
+      <KangurAiTutorContext.Provider value={value}>{children}</KangurAiTutorContext.Provider>
+    </KangurAiTutorControllerContext.Provider>
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -267,4 +305,8 @@ export function useKangurAiTutor(): KangurAiTutorContextValue {
 
 export function useOptionalKangurAiTutor(): KangurAiTutorContextValue | null {
   return useContext(KangurAiTutorContext);
+}
+
+export function useOptionalKangurAiTutorController(): KangurAiTutorControllerValue | null {
+  return useContext(KangurAiTutorControllerContext);
 }

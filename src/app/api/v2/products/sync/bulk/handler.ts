@@ -12,6 +12,8 @@ export const bulkSchema = productSyncBulkRequestSchema;
 
 export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const body = ctx.body as ProductSyncBulkRequest;
-  const response: ProductSyncBulkResponse = await runProductBaseSyncBulk(body.productIds);
+  const response: ProductSyncBulkResponse = await runProductBaseSyncBulk(body.productIds, {
+    ...(body.profileId ? { profileId: body.profileId } : {}),
+  });
   return NextResponse.json(response, { headers: { 'Cache-Control': 'no-store' } });
 }

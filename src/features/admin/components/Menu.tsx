@@ -1,7 +1,7 @@
 'use client';
 
 import { StarIcon } from 'lucide-react';
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
 
 import { Button, Tooltip } from '@/shared/ui/primitives.public';
 import { SearchInput } from '@/shared/ui/forms-and-actions.public';
@@ -27,12 +27,16 @@ export default memo((): React.ReactNode => {
     isAnyFolderOpen,
   } = useAdminMenuState();
 
-  const navWithIcons = useMemo(() => filteredNav.map((item) => {
-    if (item.id === 'favorites') {
-      return { ...item, icon: <StarIcon className='size-4' /> };
-    }
-    return item;
-  }), [filteredNav]);
+  const navWithIcons = useMemo(
+    () =>
+      filteredNav.map((item) => {
+        if (item.id === 'favorites') {
+          return { ...item, icon: <StarIcon className='size-4' /> };
+        }
+        return item;
+      }),
+    [filteredNav]
+  );
 
   return (
     <nav

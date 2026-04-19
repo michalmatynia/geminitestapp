@@ -37,6 +37,7 @@ import {
   translationMessages,
   updateSettingMutateAsyncMock,
   useKangurCoarsePointerMock,
+  useKangurIdleReadyMock,
   useKangurPageContentEntryMock,
   useKangurSubjectFocusMock,
 } from '../KangurPrimaryNavigation.test-support';
@@ -299,6 +300,29 @@ it('does not mount the login page-content hook on authenticated routes', () => {
   );
 
   expect(useKangurPageContentEntryMock).not.toHaveBeenCalled();
+});
+
+it('keeps the anonymous login action on fallback copy until idle time', () => {
+  useKangurIdleReadyMock.mockReturnValue(false);
+
+  render(
+    <KangurPrimaryNavigation
+      basePath='/kangur'
+      currentPage='Game'
+      guestPlayerName='Ala'
+      isAuthenticated={false}
+      onGuestPlayerNameChange={vi.fn()}
+      onLogin={vi.fn()}
+      onLogout={vi.fn()}
+    />
+  );
+
+  expect(useKangurPageContentEntryMock).toHaveBeenCalledWith(
+    'shared-nav-login-action',
+    undefined,
+    { enabled: false }
+  );
+  expect(screen.getByRole('button', { name: 'Zaloguj się' })).toBeInTheDocument();
 });
 
 it('uses English fallback auth copy on the English route when CMS copy is unavailable', () => {

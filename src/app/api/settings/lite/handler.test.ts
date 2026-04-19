@@ -37,6 +37,7 @@ vi.mock('@/shared/lib/auth/settings-manage-access', () => ({
 }));
 
 import {
+  __testOnly,
   GET_handler,
   clearLiteSettingsServerCache,
   prewarmLiteSettingsServerCache,
@@ -238,6 +239,25 @@ describe('settings lite handler', () => {
     expect(response.headers.get('X-Settings-Degraded')).toBe('transient-mongo-error');
     await expect(response.json()).resolves.toEqual([]);
     expect(captureExceptionMock).not.toHaveBeenCalled();
+  });
+
+  it('times out hung lite settings fetches', async () => {
+    vi.useFakeTimers();
+
+    try {
+      const handled = __testOnly
+        .withLiteSettingsTimeout(new Promise(() => undefined))
+        .catch((error: unknown) => error);
+
+      await vi.advanceTimersByTimeAsync(2_501);
+
+      await expect(handled).resolves.toMatchObject({
+        message: 'Lite settings fetch timed out after 2500ms.',
+        name: 'LiteSettingsFetchTimeoutError',
+      });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('suppresses transient mongo connectivity failures during SSR prewarm', async () => {

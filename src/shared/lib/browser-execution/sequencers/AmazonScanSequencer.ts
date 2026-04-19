@@ -36,7 +36,11 @@ import {
   type GoogleLensSearchImageCandidate,
   type GoogleLensSearchInput,
 } from './GoogleLensSearchSequencer';
-import type { ProductScanSequencerContext } from './ProductScanSequencer';
+import type {
+  ProductScanCandidateAttemptMeta,
+  ProductScanCandidateStepMeta,
+  ProductScanSequencerContext,
+} from './ProductScanSequencer';
 
 const GOOGLE_LENS_SAFE_ENTRY_TRIGGER_SELECTORS = [
   'div[aria-label="Search by image"]',
@@ -735,59 +739,11 @@ export class AmazonScanSequencer extends GoogleLensSearchSequencer<AmazonScanInp
     });
   }
 
-  // ─── Google Lens: open ──────────────────────────────────────────────────────
-
-  protected async openGoogleLens(params: {
-    candidateId: string;
-    candidateRank: number;
-  }): Promise<{ success: boolean; message: string | null }> {
-    return await super.openGoogleLens(params);
-  }
-
-  // ─── Google Lens: upload ────────────────────────────────────────────────────
-
-  protected async uploadToGoogleLens(params: {
-    candidate: AmazonScanImageCandidate;
-    candidateId: string;
-    candidateRank: number;
-  }): Promise<{
-    advanced: boolean;
-    captchaRequired: boolean;
-    error: string | null;
-    failureCode: string | null;
-  }> {
-    return await super.uploadToGoogleLens(params);
-  }
-
-  protected async continueGoogleLensUploadAfterCaptcha(params: {
-    candidate: AmazonScanImageCandidate;
-    candidateId: string;
-    candidateRank: number;
-  }): Promise<{
-    advanced: boolean;
-    captchaRequired: boolean;
-    error: string | null;
-    failureCode: string | null;
-  }> {
-    return await super.continueGoogleLensUploadAfterCaptcha(params);
-  }
-
-  // ─── Google Lens: captcha ────────────────────────────────────────────────────
-
-  protected async handleGoogleCaptcha(params: {
-    candidateId: string;
-    candidateRank: number;
-    waitForClear: boolean;
-  }): Promise<{ resolved: boolean }> {
-    return await super.handleGoogleCaptcha(params);
-  }
-
   // ─── Google Lens: collect Amazon candidates ──────────────────────────────────
 
-  protected async collectAmazonCandidates(params: {
-    candidateId: string;
-    candidateRank: number;
-  }): Promise<{ urls: string[]; results: AmazonCandidateResult[]; message: string | null }> {
+  protected async collectAmazonCandidates(
+    params: ProductScanCandidateStepMeta
+  ): Promise<{ urls: string[]; results: AmazonCandidateResult[]; message: string | null }> {
     const { candidateId, candidateRank } = params;
 
     this.upsertScanStep({
@@ -893,11 +849,8 @@ export class AmazonScanSequencer extends GoogleLensSearchSequencer<AmazonScanInp
 
   // ─── Amazon: probe a single candidate ──────────────────────────────────────
 
-  protected async processAmazonCandidate(params: {
+  protected async processAmazonCandidate(params: ProductScanCandidateAttemptMeta & {
     url: string;
-    candidateId: string;
-    candidateRank: number;
-    attempt: number;
     candidateResult?: AmazonCandidateResult | null;
     skipProbe: boolean;
     returnProbeOnly: boolean;
@@ -1272,12 +1225,9 @@ export class AmazonScanSequencer extends GoogleLensSearchSequencer<AmazonScanInp
     };
   }
 
-  protected async collectAmazonProbeData(params: {
-    url: string;
-    candidateId: string;
-    candidateRank: number;
-    attempt: number;
-  }): Promise<AmazonProbeData | null> {
+  protected async collectAmazonProbeData(
+    params: ProductScanCandidateAttemptMeta & { url: string }
+  ): Promise<AmazonProbeData | null> {
     const { url, candidateId, candidateRank, attempt } = params;
 
     this.upsertScanStep({
@@ -1659,10 +1609,8 @@ export class AmazonScanSequencer extends GoogleLensSearchSequencer<AmazonScanInp
     };
   }
 
-  private buildCandidatePreview(input: {
+  private buildCandidatePreview(input: ProductScanCandidateStepMeta & {
     amazonProbe: AmazonProbeData;
-    candidateId: string;
-    candidateRank: number;
     candidateResult?: AmazonCandidateResult | null;
     fallbackUrl: string;
   }): AmazonCandidatePreview {
@@ -1688,11 +1636,9 @@ export class AmazonScanSequencer extends GoogleLensSearchSequencer<AmazonScanInp
     };
   }
 
-  private buildProbeArtifactKey(input: {
-    candidateId: string;
-    attempt: number;
-    candidateRank: number;
-  }): string {
+  private buildProbeArtifactKey(
+    input: ProductScanCandidateAttemptMeta
+  ): string {
     const candidateFragment =
       this.normalizeText(input.candidateId)
         ?.toLowerCase()

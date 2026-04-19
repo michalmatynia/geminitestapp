@@ -21,6 +21,7 @@ import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssign
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { useKangurIdleReady } from '@/features/kangur/ui/hooks/useKangurIdleReady';
 import {
+  GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS,
   GAME_HOME_ASSIGNMENT_SPOTLIGHT_INNER_SHELL_CLASSNAME,
   GAME_HOME_ASSIGNMENT_SPOTLIGHT_SHELL_CLASSNAME,
 } from '@/features/kangur/ui/pages/GameHome.constants';
@@ -241,7 +242,9 @@ export function KangurAssignmentSpotlight({
   basePath,
   enabled = false,
 }: KangurAssignmentSpotlightProps): React.JSX.Element | null {
-  const isIdleReady = useKangurIdleReady();
+  const isIdleReady = useKangurIdleReady({
+    minimumDelayMs: GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS,
+  });
   const shouldLoadAssignmentSpotlight = enabled && isIdleReady;
   const { assignments, isLoading, error } = useKangurAssignments({
     enabled: shouldLoadAssignmentSpotlight,

@@ -20,7 +20,8 @@ import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 const KANGUR_PAGE_CONTENT_STALE_TIME_MS = 5 * 60_000;
 const KANGUR_PAGE_CONTENT_GC_TIME_MS = 30 * 60_000;
-const KANGUR_PAGE_CONTENT_REQUEST_TIMEOUT_MS = 45_000;
+const KANGUR_PAGE_CONTENT_REQUEST_TIMEOUT_MS =
+  process.env.NODE_ENV === 'production' ? 8_000 : 45_000;
 const KANGUR_PAGE_CONTENT_RECOVERABLE_RETRY_DELAY_MS = 1_000;
 type KangurPageContentQueryOptions = {
   enabled?: boolean;

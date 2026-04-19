@@ -492,6 +492,47 @@ describe('ProductScanSequencer', () => {
     );
   });
 
+  it('createPayloadAugmentedRuntimePageSession registers a runtime-backed session payload augmenter', async () => {
+    const ctx = makeContext();
+
+    class RuntimeAugmentedSessionSeq extends ProductScanSequencer {
+      async scan(): Promise<void> {
+        this.createPayloadAugmentedRuntimePageSession(
+          {
+            createPageSession: () => ({
+              augmentPayload: (payload) => ({
+                ...payload,
+                augmentedByRuntimeSession: true,
+                title: 'Runtime-session product',
+              }),
+            }),
+          }
+        );
+        await this.emitResult({
+          status: 'completed',
+          currentUrl: 'https://example.com/item',
+          imageUrls: ['https://example.com/image.jpg'],
+        });
+      }
+    }
+
+    const seq = new RuntimeAugmentedSessionSeq(ctx);
+    await seq.scan();
+
+    expect(ctx.emit).toHaveBeenCalledWith(
+      'result',
+      expect.objectContaining({
+        augmentedByRuntimeSession: true,
+        title: 'Runtime-session product',
+        scrapedItems: expect.arrayContaining([
+          expect.objectContaining({
+            title: 'Runtime-session product',
+          }),
+        ]),
+      })
+    );
+  });
+
   it('resolveManualVerificationTimeoutMs normalizes positive values and falls back otherwise', () => {
     const ctx = makeContext();
 
@@ -511,6 +552,164 @@ describe('ProductScanSequencer', () => {
     expect(seq.resolveTimeout(-1)).toBe(240_000);
     expect(seq.resolveTimeout(null)).toBe(240_000);
     expect(seq.resolveTimeout(undefined, 90_000)).toBe(90_000);
+  });
+
+  it('resolveManualVerificationPolicy derives enabled state and normalized timeout together', () => {
+    const ctx = makeContext();
+
+    class ManualVerificationSeq extends ProductScanSequencer {
+      async scan(): Promise<void> {}
+
+      resolvePolicy(input: {
+        allowManualVerification?: unknown;
+        manualVerificationTimeoutMs?: unknown;
+      }) {
+        return this.resolveManualVerificationPolicy(input);
+      }
+    }
+
+    const seq = new ManualVerificationSeq(ctx);
+
+    expect(
+      seq.resolvePolicy({
+        allowManualVerification: true,
+        manualVerificationTimeoutMs: 180_500.8,
+      })
+    ).toEqual({
+      enabled: true,
+      timeoutMs: 180_500,
+    });
+    expect(
+      seq.resolvePolicy({
+        allowManualVerification: false,
+        manualVerificationTimeoutMs: 0,
+      })
+    ).toEqual({
+      enabled: false,
+      timeoutMs: 240_000,
+    });
+  });
+
+  it('runManualVerificationFlow captures once when manual verification is disabled', async () => {
+    const ctx = makeContext();
+    const capture = vi.fn().mockResolvedValue(undefined);
+    const observeLoop = vi.fn();
+
+    class ManualVerificationFlowSeq extends ProductScanSequencer {
+      async scan(): Promise<void> {}
+
+      runFlow(input: {
+        allowManualVerification?: unknown;
+        manualVerificationTimeoutMs?: unknown;
+      }) {
+        return this.runManualVerificationFlow({
+          input,
+          session: {
+            capture,
+            observeLoop,
+          },
+          captureParams: { iteration: 1 },
+          buildObserveLoopOptions: (manualVerification) => ({
+            timeoutMs: manualVerification.timeoutMs,
+          }),
+        });
+      }
+    }
+
+    const seq = new ManualVerificationFlowSeq(ctx);
+    const result = await seq.runFlow({
+      allowManualVerification: false,
+      manualVerificationTimeoutMs: 0,
+    });
+
+    expect(capture).toHaveBeenCalledWith({ iteration: 1 });
+    expect(observeLoop).not.toHaveBeenCalled();
+    expect(result).toEqual({
+      manualVerification: {
+        enabled: false,
+        timeoutMs: 240_000,
+      },
+      loopResult: null,
+    });
+  });
+
+  it('runManualVerificationFlow observes the loop when manual verification is enabled', async () => {
+    const ctx = makeContext();
+    const capture = vi.fn();
+    const observeLoop = vi.fn().mockResolvedValue({ resolved: true });
+
+    class ManualVerificationFlowSeq extends ProductScanSequencer {
+      async scan(): Promise<void> {}
+
+      runFlow(input: {
+        allowManualVerification?: unknown;
+        manualVerificationTimeoutMs?: unknown;
+      }) {
+        return this.runManualVerificationFlow({
+          input,
+          session: {
+            capture,
+            observeLoop,
+          },
+          captureParams: { iteration: 1 },
+          buildObserveLoopOptions: (manualVerification) => ({
+            timeoutMs: manualVerification.timeoutMs,
+            tag: 'observe',
+          }),
+        });
+      }
+    }
+
+    const seq = new ManualVerificationFlowSeq(ctx);
+    const result = await seq.runFlow({
+      allowManualVerification: true,
+      manualVerificationTimeoutMs: 180_500.8,
+    });
+
+    expect(capture).not.toHaveBeenCalled();
+    expect(observeLoop).toHaveBeenCalledWith({
+      timeoutMs: 180_500,
+      tag: 'observe',
+    });
+    expect(result).toEqual({
+      manualVerification: {
+        enabled: true,
+        timeoutMs: 180_500,
+      },
+      loopResult: { resolved: true },
+    });
+  });
+
+  it('bindCandidatePageSession binds candidate meta with optional extra base params', () => {
+    const ctx = makeContext();
+    const bindBaseParams = vi.fn().mockReturnValue({ bound: true });
+
+    class CandidateBindingSeq extends ProductScanSequencer {
+      async scan(): Promise<void> {}
+
+      bindCandidate() {
+        return this.bindCandidatePageSession(
+          { bindBaseParams },
+          {
+            candidateId: 'img-1',
+            candidateRank: 2,
+          },
+          {
+            stage: '1688_open' as const,
+          }
+        );
+      }
+    }
+
+    const seq = new CandidateBindingSeq(ctx);
+    const result = seq.bindCandidate();
+
+    expect(bindBaseParams).toHaveBeenCalledWith({
+      candidateId: 'img-1',
+      candidateRank: 2,
+      stage: '1688_open',
+    });
+    expect(result).toEqual({ bound: true });
   });
 
   it('emitResult applies registered result payload augmenters before adding scraped items', async () => {

@@ -59,6 +59,7 @@ describe('useKangurPageContentStore', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    vi.unstubAllEnvs();
     focusManager.setFocused(undefined);
   });
 
@@ -194,5 +195,21 @@ describe('useKangurPageContentStore', () => {
     expect(queryClient.getQueryState(['kangur', 'page-content', { locale: 'pl' }])?.status).toBe(
       'error'
     );
+  });
+
+  it('uses a shorter production timeout for non-critical page-content fetches', async () => {
+    vi.resetModules();
+    vi.stubEnv('NODE_ENV', 'production');
+    apiGetMock.mockResolvedValue(buildDefaultKangurPageContentStore('pl'));
+
+    const { fetchKangurPageContentStore } = await import(
+      '@/features/kangur/ui/hooks/useKangurPageContent'
+    );
+
+    await fetchKangurPageContentStore('pl');
+
+    expect(apiGetMock).toHaveBeenCalledWith('/api/kangur/ai-tutor/page-content?locale=pl', {
+      timeout: 8000,
+    });
   });
 });

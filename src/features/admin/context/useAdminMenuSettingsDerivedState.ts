@@ -9,7 +9,7 @@ import {
   getAdminMenuSections,
   normalizeAdminMenuCustomNav,
   type NavItem,
-} from '@/features/admin/components/Menu';
+} from '@/features/admin/components/menu/admin-menu-utils';
 import {
   ADMIN_MENU_CUSTOM_ENABLED_KEY,
   ADMIN_MENU_CUSTOM_NAV_KEY,

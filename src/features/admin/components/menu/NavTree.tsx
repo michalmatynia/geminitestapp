@@ -11,7 +11,7 @@ import { TreeContextMenu } from '@/shared/ui/data-display.public';
 import { cn } from '@/shared/utils/ui-utils';
 
 import { type NavItem, isActiveHref } from './admin-menu-utils';
-import { ADMIN_MENU_COLOR_MAP } from '../Menu';
+import { ADMIN_MENU_COLOR_MAP } from './admin-menu-constants';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 type NavTreeProps = {

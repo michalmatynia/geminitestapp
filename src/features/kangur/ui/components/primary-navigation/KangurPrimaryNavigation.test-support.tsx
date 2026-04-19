@@ -61,6 +61,10 @@ const { useKangurCoarsePointerMock } = vi.hoisted(() => ({
   useKangurCoarsePointerMock: vi.fn(),
 }));
 
+const { useKangurIdleReadyMock } = vi.hoisted(() => ({
+  useKangurIdleReadyMock: vi.fn(),
+}));
+
 const { translationMessages } = vi.hoisted(() => ({
   translationMessages: {
     pl: {
@@ -403,6 +407,10 @@ vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
   useKangurCoarsePointer: (): boolean => useKangurCoarsePointerMock() as boolean,
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurIdleReady', () => ({
+  useKangurIdleReady: (): boolean => useKangurIdleReadyMock() as boolean,
+}));
+
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
   prefetchKangurPageContentStore: prefetchKangurPageContentStoreMock,
   useKangurPageContentEntry: useKangurPageContentEntryMock,
@@ -521,6 +529,7 @@ export const setupKangurPrimaryNavigationTest = () => {
     frontendPublicOwnerMock.mockReturnValue(null);
     localeMock.mockReturnValue('pl');
     useKangurCoarsePointerMock.mockReturnValue(true);
+    useKangurIdleReadyMock.mockReturnValue(true);
     setViewport({ width: 1024, matches: false });
     pathnameMock.mockReturnValue('/kangur');
     searchParamsMock.mockReturnValue(new URLSearchParams());
@@ -610,6 +619,7 @@ export {
   translationMessages,
   updateSettingMutateAsyncMock,
   useKangurCoarsePointerMock,
+  useKangurIdleReadyMock,
   useKangurPageContentEntryMock,
   useKangurSubjectFocusMock,
 };

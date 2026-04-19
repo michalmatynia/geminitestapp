@@ -14,6 +14,7 @@ import { KANGUR_COMPACT_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens
 import { useKangurIdleReady } from '@/features/kangur/ui/hooks/useKangurIdleReady';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
+import { GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS } from '@/features/kangur/ui/pages/GameHome.constants';
 import {
   buildKangurAssignmentListItems,
   selectKangurPriorityAssignments,
@@ -92,9 +93,17 @@ function useKangurPriorityAssignmentsState({
   emptyLabel,
 }: KangurPriorityAssignmentsProps): KangurPriorityAssignmentsState {
   const translations = useTranslations('KangurGameWidgets');
-  const isIdleReady = useKangurIdleReady();
+  const isIdleReady = useKangurIdleReady({
+    minimumDelayMs: GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS,
+  });
   const shouldLoadPriorityAssignments = enabled && isIdleReady;
-  const { entry: assignmentsContent } = useKangurPageContentEntry(PRIORITY_ASSIGNMENTS_SECTION_ID);
+  const { entry: assignmentsContent } = useKangurPageContentEntry(
+    PRIORITY_ASSIGNMENTS_SECTION_ID,
+    undefined,
+    {
+      enabled: shouldLoadPriorityAssignments,
+    }
+  );
   const { subject, setSubject } = useKangurSubjectFocus();
   const { assignments, isLoading, error } = useKangurAssignments({
     enabled: shouldLoadPriorityAssignments,

@@ -1,4 +1,4 @@
-import type { NavItem } from '@/features/admin/components/Menu';
+import type { NavItem } from '@/features/admin/components/menu/admin-menu-utils';
 import type {
   AdminMenuCustomNode,
   AdminNavNodeEntry,

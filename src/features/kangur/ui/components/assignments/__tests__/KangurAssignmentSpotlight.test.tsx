@@ -5,6 +5,7 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS } from '@/features/kangur/ui/pages/GameHome.constants';
 
 const { useKangurAssignmentsMock, useKangurIdleReadyMock, useKangurSubjectFocusMock } =
   vi.hoisted(() => ({
@@ -149,6 +150,10 @@ describe('KangurAssignmentSpotlight', () => {
         enabled
       />
     );
+
+    expect(useKangurIdleReadyMock).toHaveBeenCalledWith({
+      minimumDelayMs: GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS,
+    });
 
     expect(useKangurAssignmentsMock).toHaveBeenCalledWith({
       enabled: false,

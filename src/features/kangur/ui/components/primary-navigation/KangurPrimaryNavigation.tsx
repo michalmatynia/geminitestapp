@@ -19,7 +19,9 @@ import {
   KangurPanelCloseButton
 } from '@/features/kangur/ui/components/KangurPanelCloseButton';
 import KangurVisualCueContent from '@/features/kangur/ui/components/KangurVisualCueContent';
+import { useKangurIdleReady } from '@/features/kangur/ui/hooks/useKangurIdleReady';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
+import { GAME_HOME_COPY_IDLE_DELAY_MS } from '@/features/kangur/ui/pages/GameHome.constants';
 
 import {
   resolveMobileMenuHeaderActions,
@@ -79,7 +81,16 @@ function KangurPrimaryNavigationLoginAction({
   onActionClick?: () => void;
   onLogin: () => void;
 }): React.JSX.Element {
-  const { entry: loginActionContent } = useKangurPageContentEntry('shared-nav-login-action');
+  const shouldLoadLoginActionContent = useKangurIdleReady({
+    minimumDelayMs: GAME_HOME_COPY_IDLE_DELAY_MS,
+  });
+  const { entry: loginActionContent } = useKangurPageContentEntry(
+    'shared-nav-login-action',
+    undefined,
+    {
+      enabled: shouldLoadLoginActionContent,
+    }
+  );
   const loginLabel = loginActionContent?.title?.trim() || fallbackLabel;
   const loginTitle = loginActionContent?.summary?.trim() || undefined;
 

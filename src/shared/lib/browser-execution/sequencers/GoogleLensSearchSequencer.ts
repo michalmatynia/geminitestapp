@@ -24,7 +24,11 @@ import {
   GOOGLE_CONSENT_ACCEPT_TEXT_HINTS,
   GOOGLE_CONSENT_REJECT_TEXT_HINTS,
 } from '../selectors/amazon';
-import { ProductScanSequencer, type ProductScanSequencerContext } from './ProductScanSequencer';
+import {
+  ProductScanSequencer,
+  type ProductScanCandidateStepMeta,
+  type ProductScanSequencerContext,
+} from './ProductScanSequencer';
 
 const GOOGLE_LENS_SAFE_ENTRY_TRIGGER_SELECTORS = [
   'div[aria-label="Search by image"]',
@@ -293,8 +297,8 @@ export abstract class GoogleLensSearchSequencer<
   constructor(context: ProductScanSequencerContext, input: TInput) {
     super(context);
     this.input = input;
-    this.googleVerification = this.createPayloadAugmentedPageSession(
-      (sessionContext) => GOOGLE_VERIFICATION_RUNTIME.createPageSession(sessionContext),
+    this.googleVerification = this.createPayloadAugmentedRuntimePageSession(
+      GOOGLE_VERIFICATION_RUNTIME,
       {
         decoratePayload: (payload) => ({
           imageSearchProvider: this.resolveImageSearchProvider(),
@@ -333,10 +337,9 @@ export abstract class GoogleLensSearchSequencer<
     candidate: GoogleLensSearchImageCandidate
   ): string | null;
 
-  protected async openGoogleLens(params: {
-    candidateId: string;
-    candidateRank: number;
-  }): Promise<{ success: boolean; message: string | null }> {
+  protected async openGoogleLens(
+    params: ProductScanCandidateStepMeta
+  ): Promise<{ success: boolean; message: string | null }> {
     const { candidateId, candidateRank } = params;
 
     this.upsertScanStep({
@@ -427,11 +430,11 @@ export abstract class GoogleLensSearchSequencer<
     }
   }
 
-  protected async uploadToGoogleLens(params: {
-    candidate: GoogleLensSearchImageCandidate;
-    candidateId: string;
-    candidateRank: number;
-  }): Promise<{
+  protected async uploadToGoogleLens(
+    params: ProductScanCandidateStepMeta & {
+      candidate: GoogleLensSearchImageCandidate;
+    }
+  ): Promise<{
     advanced: boolean;
     captchaRequired: boolean;
     error: string | null;
@@ -619,11 +622,11 @@ export abstract class GoogleLensSearchSequencer<
     return this.resolveUploadOutcome(transitionState, candidateId, candidateRank);
   }
 
-  protected async continueGoogleLensUploadAfterCaptcha(params: {
-    candidate: GoogleLensSearchImageCandidate;
-    candidateId: string;
-    candidateRank: number;
-  }): Promise<{
+  protected async continueGoogleLensUploadAfterCaptcha(
+    params: ProductScanCandidateStepMeta & {
+      candidate: GoogleLensSearchImageCandidate;
+    }
+  ): Promise<{
     advanced: boolean;
     captchaRequired: boolean;
     error: string | null;
@@ -704,61 +707,66 @@ export abstract class GoogleLensSearchSequencer<
     return { advanced: true, captchaRequired: false, error: null, failureCode: null };
   }
 
-  protected async handleGoogleCaptcha(params: {
-    candidateId: string;
-    candidateRank: number;
-    waitForClear: boolean;
-  }): Promise<{ resolved: boolean }> {
+  protected async handleGoogleCaptcha(
+    params: ProductScanCandidateStepMeta & { waitForClear: boolean }
+  ): Promise<{ resolved: boolean }> {
     const { candidateId, candidateRank, waitForClear } = params;
-    const allowManual = this.input.allowManualVerification === true;
-    const candidateVerification = this.bindGoogleCandidateVerification(
-      candidateId,
-      candidateRank
-    );
-    const timeoutMs = this.resolveManualVerificationTimeoutMs(
-      this.input.manualVerificationTimeoutMs
+    const manualVerification = this.resolveManualVerificationPolicy(this.input);
+    const candidateVerification = this.bindCandidatePageSession(
+      this.googleVerification,
+      {
+        candidateId,
+        candidateRank,
+      }
     );
 
     this.upsertScanStep({
       key: 'google_captcha',
-      status: allowManual ? 'running' : 'failed',
+      status: manualVerification.enabled ? 'running' : 'failed',
       candidateId,
       candidateRank,
       resultCode: 'captcha_required',
-      message: allowManual ? this.CAPTCHA_WAIT_MESSAGE : this.CAPTCHA_REQUIRED_MESSAGE,
+      message: manualVerification.enabled
+        ? this.CAPTCHA_WAIT_MESSAGE
+        : this.CAPTCHA_REQUIRED_MESSAGE,
       url: this.safePageUrl(),
     });
 
-    if (!waitForClear || !allowManual) {
-      await candidateVerification.capture({
+    const { loopResult } = await this.runManualVerificationFlow({
+      input: this.input,
+      session: candidateVerification,
+      waitForClear,
+      captureParams: {
         iteration: 1,
         loopDecision: 'captcha_present',
         captchaDetected: true,
         stableForMs: null,
-      });
+      },
+      buildObserveLoopOptions: (manualVerification) => ({
+        timeoutMs: manualVerification.timeoutMs,
+        stableClearWindowMs: this.CAPTCHA_STABLE_CLEAR_WINDOW_MS,
+        intervalMs: 2_000,
+        initialSnapshot: {
+          state: null,
+          blocked: true,
+          currentUrl: this.safePageUrl(),
+        },
+        isPageClosed: () => this.isPageClosed(),
+        wait: (ms) => this.wait(ms),
+        readSnapshot: async () => {
+          const state = await this.detectGoogleLensCaptcha();
+          return {
+            state,
+            blocked: state.detected,
+            currentUrl: state.currentUrl,
+          };
+        },
+      }),
+    });
+
+    if (loopResult === null) {
       return { resolved: false };
     }
-
-    const loopResult = await candidateVerification.observeLoop({
-      timeoutMs,
-      stableClearWindowMs: this.CAPTCHA_STABLE_CLEAR_WINDOW_MS,
-      intervalMs: 2_000,
-      initialSnapshot: {
-        state: null,
-        blocked: true,
-        currentUrl: this.safePageUrl(),
-      },
-      isPageClosed: () => this.isPageClosed(),
-      wait: (ms) => this.wait(ms),
-      readSnapshot: async () => {
-        const state = await this.detectGoogleLensCaptcha();
-        return {
-          state,
-          blocked: state.detected,
-          currentUrl: state.currentUrl,
-        };
-      },
-    });
 
     if (loopResult.resolved) {
       this.upsertScanStep({
@@ -786,16 +794,6 @@ export abstract class GoogleLensSearchSequencer<
     }
 
     return { resolved: false };
-  }
-
-  protected bindGoogleCandidateVerification(
-    candidateId: string,
-    candidateRank: number
-  ) {
-    return this.googleVerification.bindBaseParams({
-      candidateId,
-      candidateRank,
-    });
   }
 
   private resolveGoogleLensOpenUrl(): string {

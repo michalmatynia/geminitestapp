@@ -12,7 +12,11 @@ import {
   type Supplier1688SelectorRuntime,
 } from '../selectors/supplier-1688';
 import type { ProductScanSequenceEntry } from '../product-scan-step-sequencer';
-import { ProductScanSequencer, type ProductScanSequencerContext } from './ProductScanSequencer';
+import {
+  ProductScanSequencer,
+  type ProductScanCandidateStepMeta,
+  type ProductScanSequencerContext,
+} from './ProductScanSequencer';
 
 // ─── Input types ───────────────────────────────────────────────────────────────
 
@@ -310,8 +314,8 @@ export class Supplier1688ScanSequencer extends ProductScanSequencer {
     this.PRICE_TEXT_PATTERN = new RegExp(this.selectorRuntime.priceTextPatternSource);
     this.SEARCH_BODY_SIGNAL = new RegExp(this.selectorRuntime.searchBodySignalPattern);
     this.SUPPLIER_BODY_SIGNAL = new RegExp(this.selectorRuntime.supplierBodySignalPattern);
-    this.supplierVerification = this.createPayloadAugmentedPageSession((sessionContext) =>
-      SUPPLIER_VERIFICATION_RUNTIME.createPageSession(sessionContext)
+    this.supplierVerification = this.createPayloadAugmentedRuntimePageSession(
+      SUPPLIER_VERIFICATION_RUNTIME
     );
   }
 
@@ -457,10 +461,9 @@ export class Supplier1688ScanSequencer extends ProductScanSequencer {
 
   // ─── 1688 image search: open ─────────────────────────────────────────────────
 
-  protected async open1688ImageSearch(params: {
-    candidateId: string;
-    candidateRank: number;
-  }): Promise<{ success: boolean; message: string | null }> {
+  protected async open1688ImageSearch(
+    params: ProductScanCandidateStepMeta
+  ): Promise<{ success: boolean; message: string | null }> {
     const { candidateId, candidateRank } = params;
 
     this.upsertScanStep({
@@ -527,11 +530,11 @@ export class Supplier1688ScanSequencer extends ProductScanSequencer {
 
   // ─── 1688 image search: upload ───────────────────────────────────────────────
 
-  protected async upload1688Image(params: {
-    candidate: Supplier1688ScanImageCandidate;
-    candidateId: string;
-    candidateRank: number;
-  }): Promise<{ success: boolean; captchaRequired: boolean; message: string | null }> {
+  protected async upload1688Image(
+    params: ProductScanCandidateStepMeta & {
+      candidate: Supplier1688ScanImageCandidate;
+    }
+  ): Promise<{ success: boolean; captchaRequired: boolean; message: string | null }> {
     const { candidate, candidateId, candidateRank } = params;
 
     this.upsertScanStep({
@@ -684,10 +687,9 @@ export class Supplier1688ScanSequencer extends ProductScanSequencer {
 
   // ─── 1688: collect candidates ────────────────────────────────────────────────
 
-  protected async collect1688Candidates(params: {
-    candidateId: string;
-    candidateRank: number;
-  }): Promise<{ urls: string[]; message: string | null }> {
+  protected async collect1688Candidates(
+    params: ProductScanCandidateStepMeta
+  ): Promise<{ urls: string[]; message: string | null }> {
     const { candidateId, candidateRank } = params;
 
     this.upsertScanStep({
@@ -799,11 +801,9 @@ export class Supplier1688ScanSequencer extends ProductScanSequencer {
 
   // ─── Supplier: probe a single candidate ────────────────────────────────────
 
-  protected async probeSupplierCandidate(params: {
-    url: string;
-    candidateId: string;
-    candidateRank: number;
-  }): Promise<SupplierProductData | null> {
+  protected async probeSupplierCandidate(
+    params: ProductScanCandidateStepMeta & { url: string }
+  ): Promise<SupplierProductData | null> {
     const { url, candidateId, candidateRank } = params;
 
     // ── Open ──────────────────────────────────────────────────────────────────
@@ -1307,18 +1307,36 @@ export class Supplier1688ScanSequencer extends ProductScanSequencer {
 
   protected async handle1688Captcha(
     stage: ScanStage,
-    stepMeta: { candidateId: string; candidateRank: number },
+    stepMeta: ProductScanCandidateStepMeta,
     recoveryUrl: string | null
   ): Promise<CaptchaHandleResult> {
     const barrier = await this.detect1688AccessBarrier(stage);
-    const candidateVerification = this.bindSupplierVerification(stage, stepMeta);
+    const manualVerification = this.resolveManualVerificationPolicy(this.input);
+    const candidateVerification = this.bindCandidatePageSession(
+      this.supplierVerification,
+      stepMeta,
+      { stage }
+    );
 
     if (!barrier.blocked) {
       return { resolved: true, captchaEncountered: false, captchaRequired: false, currentUrl: barrier.currentUrl, message: null, failureCode: null };
     }
 
-    if (!this.input.allowManualVerification) {
-      await candidateVerification.capture({
+    const waitMessage = barrier.barrierKind === 'login'
+      ? barrier.message
+      : '1688 captcha verification required. Solve it in the opened browser window and the scan will continue automatically.';
+
+    if (manualVerification.enabled) {
+      this.log('1688.captcha.waiting', {
+        stage,
+        message: waitMessage,
+        timeoutMs: manualVerification.timeoutMs,
+      });
+    }
+    const { loopResult } = await this.runManualVerificationFlow({
+      input: this.input,
+      session: candidateVerification,
+      captureParams: {
         iteration: 1,
         loopDecision: 'blocked',
         blocked: true,
@@ -1328,65 +1346,65 @@ export class Supplier1688ScanSequencer extends ProductScanSequencer {
         currentUrl: barrier.currentUrl,
         recoveryReason: null,
         recoveryMessage: null,
-      });
-      return { resolved: false, captchaEncountered: true, captchaRequired: true, currentUrl: barrier.currentUrl, message: barrier.message, failureCode: 'captcha_required' };
-    }
-
-    const waitMessage = barrier.barrierKind === 'login'
-      ? barrier.message
-      : '1688 captcha verification required. Solve it in the opened browser window and the scan will continue automatically.';
-
-    const timeoutMs = this.resolveManualVerificationTimeoutMs(
-      this.input.manualVerificationTimeoutMs
-    );
-
-    this.log('1688.captcha.waiting', { stage, message: waitMessage, timeoutMs });
-    const loopResult = await candidateVerification.observeLoop({
-      timeoutMs,
-      intervalMs: 3_000,
-      stableClearWindowMs: 0,
-      initialSnapshot: {
-        state: {
-          barrier,
-          readyState: null,
-          recoveryReady: false,
-          reuploadRequired: false,
-        },
-        blocked: true,
-        currentUrl: barrier.currentUrl,
       },
-      isPageClosed: () => this.isPageClosed(),
-      wait: (ms) => this.wait(ms),
-      readSnapshot: async () => {
-        const currentBarrier = await this.detect1688AccessBarrier(stage);
-        if (currentBarrier.blocked) {
+      buildObserveLoopOptions: (resolvedManualVerification) => ({
+        timeoutMs: resolvedManualVerification.timeoutMs,
+        intervalMs: 3_000,
+        stableClearWindowMs: 0,
+        initialSnapshot: {
+          state: {
+            barrier,
+            readyState: null,
+            recoveryReady: false,
+            reuploadRequired: false,
+          },
+          blocked: true,
+          currentUrl: barrier.currentUrl,
+        },
+        isPageClosed: () => this.isPageClosed(),
+        wait: (ms) => this.wait(ms),
+        readSnapshot: async () => {
+          const currentBarrier = await this.detect1688AccessBarrier(stage);
+          if (currentBarrier.blocked) {
+            return {
+              state: {
+                barrier: currentBarrier,
+                readyState: null,
+                recoveryReady: false,
+                reuploadRequired: false,
+              },
+              blocked: true,
+              currentUrl: currentBarrier.currentUrl,
+            };
+          }
+
+          const readyState = await this.attempt1688PostCaptchaRecovery(stage, recoveryUrl);
+          const recoveryReady = readyState?.ready === true;
+          const reuploadRequired = readyState?.reason === 'returned_to_search_entry';
           return {
             state: {
               barrier: currentBarrier,
-              readyState: null,
-              recoveryReady: false,
-              reuploadRequired: false,
+              readyState,
+              recoveryReady,
+              reuploadRequired,
             },
-            blocked: true,
-            currentUrl: currentBarrier.currentUrl,
+            blocked: !(recoveryReady || reuploadRequired),
+            currentUrl: readyState?.currentUrl ?? currentBarrier.currentUrl,
           };
-        }
-
-        const readyState = await this.attempt1688PostCaptchaRecovery(stage, recoveryUrl);
-        const recoveryReady = readyState?.ready === true;
-        const reuploadRequired = readyState?.reason === 'returned_to_search_entry';
-        return {
-          state: {
-            barrier: currentBarrier,
-            readyState,
-            recoveryReady,
-            reuploadRequired,
-          },
-          blocked: !(recoveryReady || reuploadRequired),
-          currentUrl: readyState?.currentUrl ?? currentBarrier.currentUrl,
-        };
-      },
+        },
+      }),
     });
+
+    if (loopResult === null) {
+      return {
+        resolved: false,
+        captchaEncountered: true,
+        captchaRequired: true,
+        currentUrl: barrier.currentUrl,
+        message: barrier.message,
+        failureCode: 'captcha_required',
+      };
+    }
 
     if (loopResult.resolved) {
       const snapshot = loopResult.finalSnapshot?.state;
@@ -1425,17 +1443,6 @@ export class Supplier1688ScanSequencer extends ProductScanSequencer {
     }
 
     return { resolved: false, captchaEncountered: true, captchaRequired: true, currentUrl: this.safePageUrl() ?? '', message: '1688 captcha or barrier was not resolved within the allowed time.', failureCode: 'captcha_timeout' };
-  }
-
-  protected bindSupplierVerification(
-    stage: ScanStage,
-    stepMeta: { candidateId: string; candidateRank: number }
-  ) {
-    return this.supplierVerification.bindBaseParams({
-      stage,
-      candidateId: stepMeta.candidateId,
-      candidateRank: stepMeta.candidateRank,
-    });
   }
 
   protected async attempt1688PostCaptchaRecovery(

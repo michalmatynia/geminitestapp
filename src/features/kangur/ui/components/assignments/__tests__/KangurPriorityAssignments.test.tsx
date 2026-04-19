@@ -4,6 +4,7 @@
 
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS } from '@/features/kangur/ui/pages/GameHome.constants';
 
 const { useKangurAssignmentsMock } = vi.hoisted(() => ({
   useKangurAssignmentsMock: vi.fn(),
@@ -12,8 +13,8 @@ const { useKangurAssignmentsMock } = vi.hoisted(() => ({
 const { useKangurIdleReadyMock, useKangurPageContentEntryMock, useKangurSubjectFocusMock } =
   vi.hoisted(() => ({
     useKangurIdleReadyMock: vi.fn(),
-  useKangurPageContentEntryMock: vi.fn(),
-  useKangurSubjectFocusMock: vi.fn(),
+    useKangurPageContentEntryMock: vi.fn(),
+    useKangurSubjectFocusMock: vi.fn(),
   }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
@@ -111,6 +112,15 @@ describe('KangurPriorityAssignments', () => {
 
     const { container } = render(<KangurPriorityAssignments basePath='/kangur' enabled />);
 
+    expect(useKangurIdleReadyMock).toHaveBeenCalledWith({
+      minimumDelayMs: GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS,
+    });
+
+    expect(useKangurPageContentEntryMock).toHaveBeenCalledWith(
+      'game-home-priority-assignments',
+      undefined,
+      { enabled: false }
+    );
     expect(useKangurAssignmentsMock).toHaveBeenCalledWith({
       enabled: false,
       query: {

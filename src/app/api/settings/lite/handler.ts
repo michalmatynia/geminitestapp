@@ -46,6 +46,39 @@ const LITE_SETTINGS_STALE_TTL_MS = parsePositiveInt(
   process.env['SETTINGS_LITE_STALE_TTL_MS'],
   10 * 60_000
 );
+const LITE_SETTINGS_FETCH_TIMEOUT_MS = parsePositiveInt(
+  process.env['SETTINGS_LITE_FETCH_TIMEOUT_MS'],
+  2_500
+);
+
+class LiteSettingsFetchTimeoutError extends Error {
+  constructor(timeoutMs: number) {
+    super(`Lite settings fetch timed out after ${timeoutMs}ms.`);
+    this.name = 'LiteSettingsFetchTimeoutError';
+  }
+}
+
+const isLiteSettingsFetchTimeoutError = (error: unknown): error is LiteSettingsFetchTimeoutError =>
+  error instanceof LiteSettingsFetchTimeoutError;
+
+const withLiteSettingsTimeout = async <T>(promise: Promise<T>): Promise<T> => {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((_resolve, reject) => {
+        timeoutId = setTimeout(() => {
+          reject(new LiteSettingsFetchTimeoutError(LITE_SETTINGS_FETCH_TIMEOUT_MS));
+        }, LITE_SETTINGS_FETCH_TIMEOUT_MS);
+      }),
+    ]);
+  } finally {
+    if (timeoutId !== null) {
+      clearTimeout(timeoutId);
+    }
+  }
+};
 
 const buildServerTiming = (entries: Record<string, number | null | undefined>): string =>
   Object.entries(entries)
@@ -60,6 +93,27 @@ const attachServerTiming = (
   const value = buildServerTiming(entries);
   if (!value) return;
   response.headers.set('Server-Timing', value);
+};
+
+const buildLiteSettingsFallbackResponse = (input: {
+  data: SettingRecord[];
+  reason: 'timeout' | 'transient-mongo-error';
+  requestStart: number;
+  fetchStart: number;
+  cacheState: 'stale' | 'degraded';
+}): Response => {
+  const response = NextResponse.json(cloneLiteSettings(input.data), {
+    headers: {
+      'Cache-Control': 'no-store',
+      'X-Cache': input.cacheState,
+      'X-Settings-Degraded': input.reason,
+    },
+  });
+  attachServerTiming(response, {
+    total: performance.now() - input.requestStart,
+    fetch: performance.now() - input.fetchStart,
+  });
+  return response;
 };
 
 const readMongoSettings = async (keys: readonly string[]): Promise<SettingRecord[]> => {
@@ -160,6 +214,10 @@ export const clearLiteSettingsServerCache = (): void => {
   setLiteSettingsInflight(null);
 };
 
+export const __testOnly = {
+  withLiteSettingsTimeout,
+};
+
 export const isLiteSettingsKey = (key: string): boolean => {
   const normalizedKey = key.trim();
   return LITE_SETTINGS_KEYS.includes(normalizedKey);
@@ -211,20 +269,42 @@ export const GET_handler = async (
   const liteInflight = getLiteSettingsInflight();
   if (liteInflight) {
     const waitStart = performance.now();
-    const data = await liteInflight;
-    const response = NextResponse.json(cloneLiteSettings(data), {
-      headers: { 'Cache-Control': 'no-store', 'X-Cache': 'wait' },
-    });
-    attachServerTiming(response, {
-      total: performance.now() - requestStart,
-      wait: performance.now() - waitStart,
-    });
-    return response;
+    try {
+      const data = await withLiteSettingsTimeout(liteInflight);
+      const response = NextResponse.json(cloneLiteSettings(data), {
+        headers: { 'Cache-Control': 'no-store', 'X-Cache': 'wait' },
+      });
+      attachServerTiming(response, {
+        total: performance.now() - requestStart,
+        wait: performance.now() - waitStart,
+      });
+      return response;
+    } catch (error: unknown) {
+      if (isLiteSettingsFetchTimeoutError(error)) {
+        return buildLiteSettingsFallbackResponse({
+          data: staleCache?.data ?? [],
+          reason: 'timeout',
+          requestStart,
+          fetchStart: waitStart,
+          cacheState: staleCache ? 'stale' : 'degraded',
+        });
+      }
+      if (isTransientMongoConnectionError(error)) {
+        return buildLiteSettingsFallbackResponse({
+          data: staleCache?.data ?? [],
+          reason: 'transient-mongo-error',
+          requestStart,
+          fetchStart: waitStart,
+          cacheState: staleCache ? 'stale' : 'degraded',
+        });
+      }
+      throw error;
+    }
   }
 
   const fetchStart = performance.now();
   try {
-    const data = await getOrCreateLiteSettingsInflight();
+    const data = await withLiteSettingsTimeout(getOrCreateLiteSettingsInflight());
     const response = NextResponse.json(cloneLiteSettings(data), {
       headers: { 'Cache-Control': 'no-store', 'X-Cache': forceFresh ? 'fresh' : 'miss' },
     });
@@ -234,30 +314,33 @@ export const GET_handler = async (
     });
     return response;
   } catch (error: unknown) {
+    if (isLiteSettingsFetchTimeoutError(error)) {
+      return buildLiteSettingsFallbackResponse({
+        data: staleCache?.data ?? [],
+        reason: 'timeout',
+        requestStart,
+        fetchStart,
+        cacheState: staleCache ? 'stale' : 'degraded',
+      });
+    }
     const isTransientMongoError = isTransientMongoConnectionError(error);
     if (staleCache) {
-      const response = NextResponse.json(cloneLiteSettings(staleCache.data), {
-        headers: { 'Cache-Control': 'no-store', 'X-Cache': 'stale' },
+      return buildLiteSettingsFallbackResponse({
+        data: staleCache.data,
+        reason: 'transient-mongo-error',
+        requestStart,
+        fetchStart,
+        cacheState: 'stale',
       });
-      attachServerTiming(response, {
-        total: performance.now() - requestStart,
-        fetch: performance.now() - fetchStart,
-      });
-      return response;
     }
     if (isTransientMongoError) {
-      const response = NextResponse.json([], {
-        headers: {
-          'Cache-Control': 'no-store',
-          'X-Cache': 'degraded',
-          'X-Settings-Degraded': 'transient-mongo-error',
-        },
+      return buildLiteSettingsFallbackResponse({
+        data: [],
+        reason: 'transient-mongo-error',
+        requestStart,
+        fetchStart,
+        cacheState: 'degraded',
       });
-      attachServerTiming(response, {
-        total: performance.now() - requestStart,
-        fetch: performance.now() - fetchStart,
-      });
-      return response;
     }
     void ErrorSystem.captureException(error, {
       service: 'api/settings/lite',

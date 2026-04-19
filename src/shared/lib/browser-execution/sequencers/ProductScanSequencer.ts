@@ -86,6 +86,55 @@ export interface ProductScanPayloadAugmentingSession {
   augmentPayload: (payload: Record<string, unknown>) => Record<string, unknown>;
 }
 
+export interface ProductScanPageSessionRuntime<
+  TSession extends ProductScanPayloadAugmentingSession,
+> {
+  createPageSession: (context: ProductScanPageSessionFactoryContext) => TSession;
+}
+
+export interface ProductScanCandidateStepMeta {
+  candidateId: string;
+  candidateRank: number;
+}
+
+export interface ProductScanCandidateAttemptMeta
+  extends ProductScanCandidateStepMeta {
+  attempt: number;
+}
+
+export interface ProductScanCandidateBindableSession<
+  TBaseParams extends ProductScanCandidateStepMeta,
+  TBoundSession,
+> {
+  bindBaseParams: (baseParams: TBaseParams) => TBoundSession;
+}
+
+export interface ProductScanManualVerificationInput {
+  allowManualVerification?: unknown;
+  manualVerificationTimeoutMs?: unknown;
+}
+
+export interface ProductScanManualVerificationPolicy {
+  enabled: boolean;
+  timeoutMs: number;
+}
+
+export interface ProductScanManualVerificationCaptureSession<
+  TCaptureParams,
+  TObserveLoopOptions,
+  TObserveLoopResult,
+> {
+  capture: (params: TCaptureParams) => Promise<unknown>;
+  observeLoop: (options: TObserveLoopOptions) => Promise<TObserveLoopResult>;
+}
+
+export interface ProductScanManualVerificationFlowResult<
+  TObserveLoopResult,
+> {
+  manualVerification: ProductScanManualVerificationPolicy;
+  loopResult: TObserveLoopResult | null;
+}
+
 // ─── Abstract base ────────────────────────────────────────────────────────────
 
 export abstract class ProductScanSequencer {
@@ -292,6 +341,35 @@ export abstract class ProductScanSequencer {
     return session;
   }
 
+  protected createPayloadAugmentedRuntimePageSession<
+    TSession extends ProductScanPayloadAugmentingSession,
+  >(
+    runtime: ProductScanPageSessionRuntime<TSession>,
+    options?: {
+      decoratePayload?: (payload: Record<string, unknown>) => Record<string, unknown>;
+    }
+  ): TSession {
+    return this.createPayloadAugmentedPageSession(
+      (context) => runtime.createPageSession(context),
+      options
+    );
+  }
+
+  protected bindCandidatePageSession<
+    TBaseParams extends ProductScanCandidateStepMeta,
+    TBoundSession,
+  >(
+    session: ProductScanCandidateBindableSession<TBaseParams, TBoundSession>,
+    stepMeta: ProductScanCandidateStepMeta,
+    extraBaseParams?: Omit<TBaseParams, keyof ProductScanCandidateStepMeta>
+  ): TBoundSession {
+    return session.bindBaseParams({
+      candidateId: stepMeta.candidateId,
+      candidateRank: stepMeta.candidateRank,
+      ...(extraBaseParams ?? {}),
+    } as TBaseParams);
+  }
+
   protected resolveManualVerificationTimeoutMs(
     value: unknown,
     fallbackMs = this.DEFAULT_MANUAL_VERIFICATION_TIMEOUT_MS
@@ -299,6 +377,58 @@ export abstract class ProductScanSequencer {
     return typeof value === 'number' && Number.isFinite(value) && value > 0
       ? Math.trunc(value)
       : fallbackMs;
+  }
+
+  protected resolveManualVerificationPolicy(
+    input: ProductScanManualVerificationInput,
+    fallbackMs = this.DEFAULT_MANUAL_VERIFICATION_TIMEOUT_MS
+  ): ProductScanManualVerificationPolicy {
+    return {
+      enabled: input.allowManualVerification === true,
+      timeoutMs: this.resolveManualVerificationTimeoutMs(
+        input.manualVerificationTimeoutMs,
+        fallbackMs
+      ),
+    };
+  }
+
+  protected async runManualVerificationFlow<
+    TCaptureParams,
+    TObserveLoopOptions,
+    TObserveLoopResult,
+  >(options: {
+    input: ProductScanManualVerificationInput;
+    session: ProductScanManualVerificationCaptureSession<
+      TCaptureParams,
+      TObserveLoopOptions,
+      TObserveLoopResult
+    >;
+    captureParams: TCaptureParams;
+    buildObserveLoopOptions: (
+      manualVerification: ProductScanManualVerificationPolicy
+    ) => TObserveLoopOptions;
+    waitForClear?: boolean;
+    fallbackTimeoutMs?: number;
+  }): Promise<ProductScanManualVerificationFlowResult<TObserveLoopResult>> {
+    const manualVerification = this.resolveManualVerificationPolicy(
+      options.input,
+      options.fallbackTimeoutMs
+    );
+
+    if (options.waitForClear === false || !manualVerification.enabled) {
+      await options.session.capture(options.captureParams);
+      return {
+        manualVerification,
+        loopResult: null,
+      };
+    }
+
+    return {
+      manualVerification,
+      loopResult: await options.session.observeLoop(
+        options.buildObserveLoopOptions(manualVerification)
+      ),
+    };
   }
 
   protected registerResultPayloadAugmenter(

@@ -25,7 +25,10 @@ import {
 } from '@/features/kangur/ui/hooks/useKangurLeaderboardState';
 import { useKangurIdleReady } from '@/features/kangur/ui/hooks/useKangurIdleReady';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
-import { GAME_HOME_LEADERBOARD_SHELL_CLASSNAME } from '@/features/kangur/ui/pages/GameHome.constants';
+import {
+  GAME_HOME_LEADERBOARD_SHELL_CLASSNAME,
+  GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS,
+} from '@/features/kangur/ui/pages/GameHome.constants';
 
 const renderUserFilterIcon = (icon: KangurLeaderboardUserFilterIcon): React.ReactNode => {
   if (icon === 'user') {
@@ -42,7 +45,9 @@ const renderUserFilterIcon = (icon: KangurLeaderboardUserFilterIcon): React.Reac
 export default function Leaderboard(): React.JSX.Element {
   const translations = useTranslations('KangurGameWidgets.leaderboard');
   const isCoarsePointer = useKangurCoarsePointer();
-  const isLeaderboardIdleReady = useKangurIdleReady();
+  const isLeaderboardIdleReady = useKangurIdleReady({
+    minimumDelayMs: GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS,
+  });
   const { entry: leaderboardContent } = useKangurPageContentEntry(
     'game-home-leaderboard',
     undefined,

@@ -175,6 +175,78 @@ describe('product scan verification diagnostics helpers', () => {
     expect(state.observations[0]!.brainApplied).toEqual({ modelId: 'gemma' });
   });
 
+  it('accumulates injection attempts in state — only when attempted is true', () => {
+    const state = createProductScanVerificationState<
+      { status: 'analyzed'; visibleInstructions: string[]; uiElements: string[]; brainApplied: Record<string, unknown> | null },
+      { status: 'analyzed'; iteration: number; visibleInstructions: string[]; uiElements: string[]; brainApplied: Record<string, unknown> | null }
+    >();
+
+    const baseReview = { status: 'analyzed' as const, visibleInstructions: [], uiElements: [], brainApplied: null };
+    const baseObs = { ...baseReview, iteration: 1 };
+
+    const attemptedInjection = {
+      attempted: true,
+      iterationsRun: 2,
+      done: true,
+      lastReasoning: 'solved',
+      modelId: 'gemini',
+      finalUrl: 'https://example.com/done',
+      iterations: [],
+      conversationHistory: [],
+    };
+    const notAttemptedInjection = {
+      attempted: false,
+      iterationsRun: 0,
+      done: false,
+      lastReasoning: null,
+      modelId: null,
+      finalUrl: null,
+      iterations: [],
+      conversationHistory: [],
+    };
+
+    commitProductScanVerificationObservation(state, { review: baseReview, observation: { ...baseObs, iteration: 1 }, injection: notAttemptedInjection });
+    expect(state.injectionAttempts).toHaveLength(0);
+
+    commitProductScanVerificationObservation(state, { review: baseReview, observation: { ...baseObs, iteration: 2 }, injection: attemptedInjection });
+    expect(state.injectionAttempts).toHaveLength(1);
+    expect(state.injectionAttempts[0]).toBe(attemptedInjection);
+
+    commitProductScanVerificationObservation(state, { review: baseReview, observation: { ...baseObs, iteration: 3 } });
+    expect(state.injectionAttempts).toHaveLength(1);
+  });
+
+  it('includes injection stats in diagnostics payload when attempts exist', () => {
+    const state = createProductScanVerificationState<
+      { status: 'analyzed'; visibleInstructions: string[]; uiElements: string[]; brainApplied: Record<string, unknown> | null },
+      { status: 'analyzed'; iteration: number; visibleInstructions: string[]; uiElements: string[]; brainApplied: Record<string, unknown> | null }
+    >();
+
+    const review = { status: 'analyzed' as const, visibleInstructions: [], uiElements: [], brainApplied: null };
+    const makeAttempt = (done: boolean) => ({
+      attempted: true,
+      iterationsRun: 1,
+      done,
+      lastReasoning: null,
+      modelId: null,
+      finalUrl: null,
+      iterations: [],
+      conversationHistory: [],
+    });
+
+    commitProductScanVerificationObservation(state, { review, observation: { ...review, iteration: 1 }, injection: makeAttempt(true) });
+    commitProductScanVerificationObservation(state, { review, observation: { ...review, iteration: 2 }, injection: makeAttempt(false) });
+
+    const payload = buildProductScanVerificationDiagnosticsPayloadFromState({
+      reviewKey: 'r',
+      observationsKey: 'o',
+      state,
+    });
+
+    expect(payload['injectionAttempts']).toBe(2);
+    expect(payload['injectionSuccesses']).toBe(1);
+  });
+
   it('builds diagnostics payload directly from shared verification state', () => {
     const state = createProductScanVerificationState<
       {
@@ -1244,5 +1316,74 @@ describe('createProductScanVerificationBarrierAutoInjectionConfig', () => {
   it('defaults to 3 iterations when maxIterations is not provided', () => {
     const config = createProductScanVerificationBarrierAutoInjectionConfig();
     expect(config.maxIterations).toBe(3);
+  });
+});
+
+describe('createProductScanVerificationBarrierRuntime — injectionConfigOverrides', () => {
+  const makeMinimalProfile = () => ({
+    key: 'test_review',
+    subject: 'Test',
+    runningMessage: 'Running.',
+    historyArtifactKey: 'test-history',
+    artifactKeyPrefix: 'test',
+    evaluationProvider: 'test_provider',
+    resolveEvaluationStage: () => 'test_stage',
+    buildArtifactSegments: () => [],
+    buildFingerprintPartMap: () => ({}),
+    detailDescriptors: [],
+    buildObservationExtra: () => ({}),
+    buildLoopCaptureParams: ({ iteration, stableForMs }: { iteration: number; stableForMs: number | null }, base: { candidateId: string; candidateRank: number }) => ({
+      candidateId: base.candidateId,
+      candidateRank: base.candidateRank,
+      iteration,
+      loopDecision: 'blocked' as const,
+      stableForMs,
+    }),
+  });
+
+  it('applies injectionConfigOverrides on top of the auto-generated config', () => {
+    type TestObservation = ProductScanVerificationObservationBase<'blocked'>;
+    const customShouldInject = vi.fn().mockReturnValue(false);
+
+    const runtime = createProductScanVerificationBarrierRuntime<
+      Record<never, never>,
+      { candidateId: string; candidateRank: number },
+      { candidateId: string; candidateRank: number; iteration: number; loopDecision: 'blocked'; stableForMs: number | null },
+      TestObservation
+    >({
+      reviewKey: 'r',
+      observationsKey: 'o',
+      injectorProviderLabel: 'Test',
+      injectionConfigOverrides: {
+        shouldInject: customShouldInject,
+        maxIterations: 10,
+        timeoutMs: 60000,
+        reEvaluateAfterInjection: false,
+        useConversationHistory: false,
+      },
+      profile: makeMinimalProfile(),
+    });
+
+    expect(runtime).toBeDefined();
+    expect(runtime.createState().injectionAttempts).toEqual([]);
+  });
+
+  it('uses the auto-generated config unchanged when injectionConfigOverrides is not provided', () => {
+    type TestObservation = ProductScanVerificationObservationBase<'blocked'>;
+
+    const runtime = createProductScanVerificationBarrierRuntime<
+      Record<never, never>,
+      { candidateId: string; candidateRank: number },
+      { candidateId: string; candidateRank: number; iteration: number; loopDecision: 'blocked'; stableForMs: number | null },
+      TestObservation
+    >({
+      reviewKey: 'r',
+      observationsKey: 'o',
+      injectorProviderLabel: 'NoOverride',
+      profile: makeMinimalProfile(),
+    });
+
+    expect(runtime).toBeDefined();
+    expect(runtime.createState().injectionAttempts).toEqual([]);
   });
 });

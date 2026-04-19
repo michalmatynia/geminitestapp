@@ -21,7 +21,10 @@ import {
   runPlaywrightVerificationReviewCapture,
   type RunPlaywrightVerificationReviewCaptureOptions,
 } from '@/features/playwright/server/ai-step-service';
-import type { PlaywrightCapturedPageObservation } from '@/features/playwright/server/ai-step-service';
+import type {
+  PlaywrightCapturedPageObservation,
+  PlaywrightInjectionAttemptResult,
+} from '@/features/playwright/server/ai-step-service';
 import {
   readPlaywrightEngineArtifact,
   type PlaywrightEngineRunRecord,
@@ -239,6 +242,8 @@ export type ProductScanVerificationState<
 > = {
   review: TReview | null;
   observations: TObservation[];
+  /** Injection attempt results accumulated across all observations in this verification session */
+  injectionAttempts: PlaywrightInjectionAttemptResult[];
 };
 
 type ProductScanVerificationReviewCloneable = {
@@ -293,6 +298,7 @@ export const createProductScanVerificationState = <
 >(): ProductScanVerificationState<TReview, TObservation> => ({
   review: null,
   observations: [],
+  injectionAttempts: [],
 });
 
 export const cloneProductScanVerificationStateReview = <
@@ -322,10 +328,17 @@ export const commitProductScanVerificationObservation = <
   TObservation extends ProductScanVerificationReviewCloneable,
 >(
   state: ProductScanVerificationState<TReview, TObservation>,
-  input: { review: TReview; observation: TObservation }
+  input: {
+    review: TReview;
+    observation: TObservation;
+    injection?: PlaywrightInjectionAttemptResult | null;
+  }
 ): readonly TObservation[] => {
   state.review = input.review;
   state.observations.push(input.observation);
+  if (input.injection?.attempted) {
+    state.injectionAttempts.push(input.injection);
+  }
   return state.observations;
 };
 
@@ -337,6 +350,7 @@ export const buildProductScanVerificationDiagnosticsPayload = <
   observationsKey: string;
   review: TReview | null;
   observations: readonly TObservation[];
+  injectionAttempts?: readonly PlaywrightInjectionAttemptResult[];
 }): Record<string, unknown> => {
   const payload: Record<string, unknown> = {};
 
@@ -348,6 +362,13 @@ export const buildProductScanVerificationDiagnosticsPayload = <
     payload[options.observationsKey] = cloneProductScanVerificationObservations(
       options.observations
     );
+  }
+
+  const attempts = options.injectionAttempts;
+  if (attempts && attempts.length > 0) {
+    const successCount = attempts.filter((a) => a.done).length;
+    payload['injectionAttempts'] = attempts.length;
+    payload['injectionSuccesses'] = successCount;
   }
 
   return payload;
@@ -366,6 +387,7 @@ export const buildProductScanVerificationDiagnosticsPayloadFromState = <
     observationsKey: options.observationsKey,
     review: options.state.review,
     observations: options.state.observations,
+    injectionAttempts: options.state.injectionAttempts,
   });
 
 export const createProductScanVerificationBarrierReviewLoopProfile = <
@@ -615,7 +637,21 @@ export const createProductScanVerificationBarrierRuntime = <
 >(options: {
   reviewKey: string;
   observationsKey: string;
+  /**
+   * Freeform label included in the auto-generated injector goal (e.g. 'Google', '1688').
+   * Ignored when `injectionConfigOverrides` supplies its own `goal`.
+   */
   injectorProviderLabel?: string | null;
+  /**
+   * Optional partial overrides merged on top of the auto-generated injection config.
+   * Use this to tune `maxIterations`, `timeoutMs`, `reEvaluateAfterInjection`,
+   * `waitForNavigation`, `useConversationHistory`, `systemPrompt`, or any other field
+   * without having to rebuild `shouldInject`, `goal`, and `buildEvaluatorContext` from scratch.
+   * Fields provided here take precedence over the auto-generated defaults.
+   */
+  injectionConfigOverrides?: Partial<
+    PlaywrightVerificationInjectionConfig<ProductScanVerificationReview>
+  > | null;
   profile: PlaywrightVerificationReviewLoopProfileOptions<
     TState,
     TBaseParams,
@@ -631,6 +667,13 @@ export const createProductScanVerificationBarrierRuntime = <
   TExtra
 > => {
   const profile = createProductScanVerificationBarrierReviewLoopProfile(options.profile);
+  const baseInjectionConfig = createProductScanVerificationBarrierAutoInjectionConfig({
+    provider: options.injectorProviderLabel ?? undefined,
+  });
+  const injectOnEvaluation: PlaywrightVerificationInjectionConfig<ProductScanVerificationReview> =
+    options.injectionConfigOverrides
+      ? { ...baseInjectionConfig, ...options.injectionConfigOverrides }
+      : baseInjectionConfig;
   const runtime: ProductScanVerificationBarrierRuntime<
     TState,
     TBaseParams,
@@ -651,9 +694,7 @@ export const createProductScanVerificationBarrierRuntime = <
       runProductScanVerificationBarrierReviewCaptureWithState({
         ...captureOptions,
         profile,
-        injectOnEvaluation: createProductScanVerificationBarrierAutoInjectionConfig({
-          provider: options.injectorProviderLabel ?? undefined,
-        }),
+        injectOnEvaluation,
       }),
     captureWithStateFromPage: (captureOptions) =>
       runProductScanVerificationBarrierReviewCaptureWithState({
@@ -664,9 +705,7 @@ export const createProductScanVerificationBarrierRuntime = <
             ? captureOptions.params.currentUrl
             : captureOptions.resolveCurrentUrl?.()) ?? null,
         profile,
-        injectOnEvaluation: createProductScanVerificationBarrierAutoInjectionConfig({
-          provider: options.injectorProviderLabel ?? undefined,
-        }),
+        injectOnEvaluation,
       }),
   };
   runtime.observeLoopWithPage = (loopOptions) =>
@@ -922,10 +961,11 @@ export const runProductScanVerificationBarrierReviewCaptureWithState = async <
   return runProductScanVerificationBarrierReviewCapture({
     ...rest,
     previousObservation: getLastProductScanVerificationObservation(verificationState),
-    commitObservation: ({ review, observation }) =>
+    commitObservation: ({ review, observation, injection }) =>
       commitProductScanVerificationObservation(verificationState, {
         review,
         observation,
+        injection,
       }),
   });
 };

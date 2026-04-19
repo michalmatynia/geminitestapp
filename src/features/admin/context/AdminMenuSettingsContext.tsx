@@ -2,10 +2,8 @@
 
 import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
 
-import {
-  adminNavToCustomNav,
-  buildAdminNav,
-} from '@/features/admin/components/Menu';
+import { buildAdminNav } from '@/features/admin/components/admin-menu-nav';
+import { adminNavToCustomNav } from '@/features/admin/components/menu/admin-menu-utils';
 import {
   ADMIN_MENU_CUSTOM_ENABLED_KEY,
   ADMIN_MENU_CUSTOM_NAV_KEY,

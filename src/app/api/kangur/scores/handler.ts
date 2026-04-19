@@ -25,6 +25,7 @@ import { normalizeKangurSort, parseKangurScoreCreatePayload } from '@/shared/val
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 const KANGUR_SCORES_CACHE_TTL_MS = 30_000;
+const KANGUR_SCORES_FETCH_TIMEOUT_MS = 2_500;
 
 type KangurScoresListResult = Awaited<
   ReturnType<Awaited<ReturnType<typeof getKangurScoreRepository>>['listScores']>
@@ -37,6 +38,35 @@ type KangurScoresCacheEntry = {
 
 const kangurScoresCache = new Map<string, KangurScoresCacheEntry>();
 const kangurScoresInflight = new Map<string, Promise<KangurScoresListResult>>();
+
+class KangurScoresFetchTimeoutError extends Error {
+  constructor(timeoutMs: number) {
+    super(`Kangur scores fetch timed out after ${timeoutMs}ms.`);
+    this.name = 'KangurScoresFetchTimeoutError';
+  }
+}
+
+const isKangurScoresFetchTimeoutError = (error: unknown): error is KangurScoresFetchTimeoutError =>
+  error instanceof KangurScoresFetchTimeoutError;
+
+const withKangurScoresTimeout = async <T>(promise: Promise<T>): Promise<T> => {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((_resolve, reject) => {
+        timeoutId = setTimeout(() => {
+          reject(new KangurScoresFetchTimeoutError(KANGUR_SCORES_FETCH_TIMEOUT_MS));
+        }, KANGUR_SCORES_FETCH_TIMEOUT_MS);
+      }),
+    ]);
+  } finally {
+    if (timeoutId !== null) {
+      clearTimeout(timeoutId);
+    }
+  }
+};
 
 export const querySchema = z.object({
   sort: z.preprocess(normalizeOptionalQueryString, kangurScoreSortSchema.optional()),
@@ -64,6 +94,19 @@ const resolveOptionalSubject = (value: unknown): KangurLessonSubject | undefined
 
 const cloneKangurScores = (rows: KangurScoresListResult): KangurScoresListResult =>
   structuredClone(rows);
+
+const buildKangurScoresFallbackResponse = (input: {
+  data: KangurScoresListResult;
+  cacheState: 'stale' | 'degraded';
+  reason: 'timeout' | 'fetch-error';
+}): Response =>
+  NextResponse.json(cloneKangurScores(input.data), {
+    headers: {
+      'Cache-Control': 'no-store',
+      'X-Cache': input.cacheState,
+      'X-Kangur-Scores-Degraded': input.reason,
+    },
+  });
 
 const buildKangurScoresCacheKey = (input: {
   sort?: string;
@@ -141,15 +184,10 @@ export async function getKangurScoresHandler(
   req: NextRequest,
   ctx: ApiHandlerContext
 ): Promise<Response> {
-  await resolveKangurActor(req).catch((error) => {
-    if (!isAppError(error) || error.code !== AppErrorCodes.unauthorized) {
-      void ErrorSystem.captureException(error);
-    }
-    return null;
-  });
   const query = resolveKangurScoresQuery(req, ctx);
   const cacheKey = buildKangurScoresCacheKey(query);
   const cached = kangurScoresCache.get(cacheKey);
+  const staleCached = cached?.data ?? null;
   const now = Date.now();
   if (cached && now - cached.fetchedAt < KANGUR_SCORES_CACHE_TTL_MS) {
     return NextResponse.json(cloneKangurScores(cached.data));
@@ -157,10 +195,20 @@ export async function getKangurScoresHandler(
 
   const inflight = kangurScoresInflight.get(cacheKey);
   if (inflight) {
-    return NextResponse.json(cloneKangurScores(await inflight));
+    try {
+      return NextResponse.json(cloneKangurScores(await withKangurScoresTimeout(inflight)));
+    } catch (error) {
+      if (!isKangurScoresFetchTimeoutError(error)) {
+        void ErrorSystem.captureException(error);
+      }
+      return buildKangurScoresFallbackResponse({
+        data: staleCached ?? [],
+        cacheState: staleCached ? 'stale' : 'degraded',
+        reason: isKangurScoresFetchTimeoutError(error) ? 'timeout' : 'fetch-error',
+      });
+    }
   }
 
-  const repository = await getKangurScoreRepository();
   const filters = {
     player_name: query.player_name,
     operation: query.operation,
@@ -170,12 +218,20 @@ export async function getKangurScoresHandler(
       ? { learner_id: query.learner_id }
       : {}),
   };
-  const inflightPromise = repository
-    .listScores({
+  const inflightPromise = (async (): Promise<KangurScoresListResult> => {
+    await resolveKangurActor(req).catch((error) => {
+      if (!isAppError(error) || error.code !== AppErrorCodes.unauthorized) {
+        void ErrorSystem.captureException(error);
+      }
+      return null;
+    });
+    const repository = await getKangurScoreRepository();
+    return repository.listScores({
       sort: normalizeKangurSort(query.sort),
       limit: query.limit,
       filters,
-    })
+    });
+  })()
     .then((rows) => {
       kangurScoresCache.set(cacheKey, {
         data: cloneKangurScores(rows),
@@ -188,9 +244,19 @@ export async function getKangurScoresHandler(
     });
 
   kangurScoresInflight.set(cacheKey, inflightPromise);
-  const rows = await inflightPromise;
-
-  return NextResponse.json(rows);
+  try {
+    const rows = await withKangurScoresTimeout(inflightPromise);
+    return NextResponse.json(rows);
+  } catch (error) {
+    if (!isKangurScoresFetchTimeoutError(error)) {
+      void ErrorSystem.captureException(error);
+    }
+    return buildKangurScoresFallbackResponse({
+      data: staleCached ?? [],
+      cacheState: staleCached ? 'stale' : 'degraded',
+      reason: isKangurScoresFetchTimeoutError(error) ? 'timeout' : 'fetch-error',
+    });
+  }
 }
 
 export async function postKangurScoresHandler(

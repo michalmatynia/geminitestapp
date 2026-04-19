@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import React from 'react';
 
-import type { NavItem } from './Menu';
+import type { NavItem } from './menu/admin-menu-utils';
 
 export const buildAdminNav = (handlers: {
   onOpenChat: React.MouseEventHandler<HTMLAnchorElement>;

@@ -4,15 +4,15 @@ import { Map as MapIcon } from 'lucide-react';
 import Link from 'next/link';
 import React, { useDeferredValue, useMemo, useState } from 'react';
 
+import { buildAdminNav } from '@/features/admin/components/admin-menu-nav';
 import {
   buildAdminMenuFromCustomNav,
-  buildAdminNav,
   flattenAdminNav,
   normalizeAdminMenuCustomNav,
   type AdminMenuCustomNode,
   type FlattenedNavItem,
   type NavItem,
-} from '@/features/admin/components/Menu';
+} from '@/features/admin/components/menu/admin-menu-utils';
 import {
   ADMIN_MENU_CUSTOM_ENABLED_KEY,
   ADMIN_MENU_CUSTOM_NAV_KEY,

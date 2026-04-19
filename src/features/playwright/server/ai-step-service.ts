@@ -126,6 +126,14 @@ export type PlaywrightVerificationInjectionConfig<TReview> = {
    * Set to false to revert to the single-turn-per-iteration approach.
    */
   useConversationHistory?: boolean | null | undefined;
+  /**
+   * Optional per-iteration evaluator — called at the start of each iteration after capturing
+   * a fresh screenshot and DOM, but before generating code. When `done` is true the loop exits
+   * without producing or executing any code. When `done` is false its `context` string is
+   * forwarded to the code generator as `freshEvaluation`, which is always included in the user
+   * message (even on continuation turns), giving the AI an up-to-date view of the page.
+   */
+  evaluateCapture?: ((capture: PlaywrightVisionIterationCapture) => Promise<PlaywrightVisionIterationEvaluation>) | null | undefined;
 };
 
 export type PlaywrightInjectionIterationRecord = {
@@ -442,6 +450,40 @@ async function runPlaywrightVerificationInjectionLoop<TReview>(
     ]);
     const screenshotBase64 = screenshotBuffer ? screenshotBuffer.toString('base64') : null;
 
+    // Per-iteration evaluation — refreshes context and can short-circuit before code generation
+    let iterationFreshContext: string | null = null;
+    if (typeof config.evaluateCapture === 'function') {
+      const iterEval = await config.evaluateCapture({
+        screenshotBase64,
+        dom,
+        url: activeUrl,
+        iteration: iterationsRun,
+        maxIterations,
+      });
+      if (iterEval.done) {
+        done = true;
+        lastReasoning = iterEval.reasoning?.trim() || 'Goal achieved according to per-iteration evaluator.';
+        if (typeof config.log === 'function') {
+          config.log(`AI inject: evaluator reports done on iteration ${iterationsRun}`, {
+            reasoning: lastReasoning,
+            url: activeUrl,
+          });
+        }
+        const record: PlaywrightInjectionIterationRecord = {
+          iteration: iterationsRun,
+          code: '',
+          done: true,
+          reasoning: lastReasoning,
+          executionError: null,
+          urlAfter: activeUrl,
+        };
+        iterationRecords.push(record);
+        if (typeof config.onIterationResult === 'function') config.onIterationResult(record);
+        break;
+      }
+      iterationFreshContext = iterEval.context;
+    }
+
     const isContinuation = useHistory && conversationHistory.length > 0;
 
     const result = await injectCodeWithAI({
@@ -455,6 +497,7 @@ async function runPlaywrightVerificationInjectionLoop<TReview>(
         screenshotBase64,
         priorEvaluation: isContinuation ? null : evaluatorContext,
         priorInjectorReasoning: isContinuation ? null : priorInjectorReasoning,
+        freshEvaluation: iterationFreshContext,
         priorExecutionError,
         isContinuation,
       },
@@ -1059,6 +1102,7 @@ export type RunPlaywrightVerificationReviewCaptureOptions<
   commitObservation: (input: {
     review: TReview;
     observation: TObservation;
+    injection: PlaywrightInjectionAttemptResult | null;
   }) => readonly TObservation[] | Promise<readonly TObservation[]>;
   upsertStep: (step: {
     key: string;
@@ -1148,6 +1192,7 @@ export async function runPlaywrightVerificationReviewCapture<
   const observations = await options.commitObservation({
     review: nextReview,
     observation,
+    injection,
   });
 
   const baseDetails = buildPlaywrightVerificationReviewDetailsFromProfile(observation, options.profile);
@@ -1812,6 +1857,12 @@ export type PlaywrightStepInjectContext = {
    * and prior reasoning since they already live in the conversation history.
    */
   isContinuation?: boolean | null | undefined;
+  /**
+   * Fresh per-iteration evaluation context produced by an inline evaluator. Unlike
+   * `priorEvaluation` this is always included in the user message — even on continuation
+   * turns — because it reflects the current page state, not a pre-loop snapshot.
+   */
+  freshEvaluation?: string | null | undefined;
 };
 
 /** A single turn in the injector's multi-turn conversation history */
@@ -1860,6 +1911,10 @@ const buildInjectorUserMessage = (options: PlaywrightStepInjectOptions): string 
 
   if (!isContinuation && context.priorInjectorReasoning) {
     lines.push(`\nPrior injector reasoning:\n${context.priorInjectorReasoning}`);
+  }
+
+  if (context.freshEvaluation) {
+    lines.push(`\nCurrent page evaluation:\n${context.freshEvaluation}`);
   }
 
   if (context.priorExecutionError) {
@@ -1951,4 +2006,361 @@ export async function injectCodeWithAI(
   });
 
   return { ...parseInjectorResponse(result.text, result.modelId), userMessageText: userMessage };
+}
+
+/**
+ * Per-iteration page snapshot provided to the vision-guided evaluator.
+ * Captured fresh at the start of every loop iteration.
+ */
+export type PlaywrightVisionIterationCapture = {
+  screenshotBase64: string | null;
+  dom: string | null;
+  url: string | null;
+  iteration: number;
+  maxIterations: number;
+};
+
+/**
+ * Result returned by the vision-guided evaluator for a single iteration.
+ * `done: true` exits the loop without generating code; `context` feeds the code generator.
+ */
+export type PlaywrightVisionIterationEvaluation = {
+  /** Serialized description of the current page state for the code generator */
+  context: string;
+  /** When true the goal is already satisfied — skip code generation and exit */
+  done: boolean;
+  /** Human-readable explanation of the evaluation outcome (logged when done=true) */
+  reasoning?: string | null | undefined;
+};
+
+/**
+ * Options for building a vision-guided evaluator from a structured AI screenshot evaluation.
+ * Pass the result of `createPlaywrightVisionGuidedEvaluator` as the `evaluate` option of
+ * `runPlaywrightVisionGuidedAutomation` or as `evaluateCapture` in
+ * `PlaywrightVerificationInjectionConfig`.
+ */
+export type PlaywrightVisionGuidedEvaluatorOptions<TParsed> = {
+  /** Zod schema for the AI's structured screenshot evaluation response */
+  schema: z.ZodType<TParsed>;
+  /** System prompt for the screenshot evaluator AI model */
+  systemPrompt: string;
+  /**
+   * Returns true when the parsed page state satisfies the goal.
+   * Receives null when the AI evaluation failed or produced an unparseable response.
+   * When true, the automation loop exits without generating or executing code.
+   */
+  isDone: (parsed: TParsed | null, capture: PlaywrightVisionIterationCapture) => boolean;
+  /**
+   * Serializes the parsed evaluation result into a context string for the code generator.
+   * Only called when `isDone` returns false.
+   * Receives null when the AI evaluation failed — build a minimal fallback context in that case.
+   */
+  buildContext: (parsed: TParsed | null, capture: PlaywrightVisionIterationCapture) => string;
+  /**
+   * Extracts a human-readable reasoning string from the parsed result.
+   * Used as `reasoning` in the iteration record when `isDone` returns true.
+   */
+  getReasoning?: ((parsed: TParsed | null) => string | null | undefined) | null | undefined;
+};
+
+export type PlaywrightVisionGuidedAutomationOptions = {
+  page: Page;
+  /** Natural-language goal describing what the automation should achieve */
+  goal: string;
+  /**
+   * Per-iteration evaluator — called after every fresh capture.
+   * Returns structured context for the code generator and a done flag.
+   * When `done` is true the loop exits without generating or executing code.
+   * Use `createPlaywrightVisionGuidedEvaluator` to build this from a Zod schema.
+   */
+  evaluate: (capture: PlaywrightVisionIterationCapture) => Promise<PlaywrightVisionIterationEvaluation>;
+  /** Maximum code-generation+execution iterations (default: 3) */
+  maxIterations?: number | null | undefined;
+  /**
+   * Maximum wall-clock milliseconds the loop may run before aborting.
+   * No timeout when omitted.
+   */
+  timeoutMs?: number | null | undefined;
+  /** Optional system prompt override for the code generator */
+  systemPrompt?: string | null | undefined;
+  /**
+   * When true (default), waits for domcontentloaded after navigation-triggering code.
+   * Set to false to use only the fixed inter-iteration delay.
+   */
+  waitForNavigation?: boolean | null | undefined;
+  /**
+   * When true (default), maintains a multi-turn conversation across iterations so the
+   * code generator can reference its exact prior outputs.
+   */
+  useConversationHistory?: boolean | null | undefined;
+  /** Optional status callback — one message per iteration */
+  log?: ((message: string, context?: unknown) => void) | null | undefined;
+  /** Optional structured callback — one record per iteration with full details */
+  onIterationResult?: ((record: PlaywrightInjectionIterationRecord) => void) | null | undefined;
+  /**
+   * Artifact key prefix used when saving the iteration history JSON.
+   * Required when `artifacts` is provided; no artifacts are saved when omitted.
+   */
+  artifactKey?: string | null | undefined;
+  /**
+   * Artifact callbacks for persisting loop outputs.
+   * When provided and `artifactKey` is set, the full iteration history is saved
+   * as a JSON artifact after the loop completes.
+   */
+  artifacts?: PlaywrightObservationArtifacts | null | undefined;
+};
+
+/**
+ * Seamless vision-guided automation loop: every iteration captures a fresh screenshot and
+ * DOM, evaluates the current page state with the caller-provided `evaluate` function, and
+ * (when the evaluator says the goal is not yet met) generates and executes targeted
+ * Playwright code. Continues until the evaluator reports done, the code generator reports
+ * done, `maxIterations` is reached, or `timeoutMs` elapses.
+ */
+export async function runPlaywrightVisionGuidedAutomation(
+  options: PlaywrightVisionGuidedAutomationOptions
+): Promise<PlaywrightInjectionAttemptResult> {
+  const maxIterations =
+    typeof options.maxIterations === 'number' &&
+    Number.isFinite(options.maxIterations) &&
+    options.maxIterations > 0
+      ? Math.trunc(options.maxIterations)
+      : 3;
+  const shouldWaitForNavigation = options.waitForNavigation !== false;
+  const useHistory = options.useConversationHistory !== false;
+  const loopTimeoutMs =
+    typeof options.timeoutMs === 'number' &&
+    Number.isFinite(options.timeoutMs) &&
+    options.timeoutMs > 0
+      ? options.timeoutMs
+      : null;
+  const loopStartedAt = loopTimeoutMs !== null ? Date.now() : 0;
+
+  let iterationsRun = 0;
+  let done = false;
+  let lastReasoning: string | null = null;
+  let modelId: string | null = null;
+  let priorExecutionError: string | null = null;
+  let activeUrl = safePageUrl(options.page) ?? '';
+  const iterationRecords: PlaywrightInjectionIterationRecord[] = [];
+  const seenCodes = new Set<string>();
+  const conversationHistory: PlaywrightInjectionConversationMessage[] = [];
+
+  while (iterationsRun < maxIterations && !done) {
+    if (loopTimeoutMs !== null && Date.now() - loopStartedAt >= loopTimeoutMs) {
+      lastReasoning = `Vision-guided automation timed out after ${loopTimeoutMs}ms.`;
+      if (typeof options.log === 'function') {
+        options.log(`Vision automation timed out after ${loopTimeoutMs}ms`, { iterationsRun });
+      }
+      break;
+    }
+    iterationsRun++;
+
+    // Step 1: Capture fresh page state
+    const [dom, screenshotBuffer] = await Promise.all([
+      options.page.content().catch(() => null),
+      options.page.screenshot({ type: 'png' }).catch(() => null),
+    ]);
+    const screenshotBase64 = screenshotBuffer?.toString('base64') ?? null;
+    try {
+      activeUrl = options.page.url();
+    } catch {
+      // page may be navigating
+    }
+
+    // Step 2: Evaluate current page state
+    const evaluation = await options.evaluate({
+      screenshotBase64,
+      dom,
+      url: activeUrl,
+      iteration: iterationsRun,
+      maxIterations,
+    });
+
+    if (evaluation.done) {
+      done = true;
+      lastReasoning = evaluation.reasoning?.trim() || 'Goal achieved according to evaluator.';
+      if (typeof options.log === 'function') {
+        options.log(`Vision automation: evaluator reports done on iteration ${iterationsRun}`, {
+          reasoning: lastReasoning,
+          url: activeUrl,
+        });
+      }
+      const record: PlaywrightInjectionIterationRecord = {
+        iteration: iterationsRun,
+        code: '',
+        done: true,
+        reasoning: lastReasoning,
+        executionError: null,
+        urlAfter: activeUrl,
+      };
+      iterationRecords.push(record);
+      if (typeof options.onIterationResult === 'function') options.onIterationResult(record);
+      break;
+    }
+
+    // Step 3: Prepare code — inject fresh evaluation context into every turn
+    const isContinuation = useHistory && conversationHistory.length > 0;
+    const result = await injectCodeWithAI({
+      goal: options.goal,
+      systemPrompt: options.systemPrompt ?? null,
+      context: {
+        iteration: iterationsRun,
+        maxIterations,
+        url: activeUrl,
+        dom,
+        screenshotBase64,
+        freshEvaluation: evaluation.context,
+        priorExecutionError,
+        isContinuation,
+      },
+      conversationHistory: useHistory ? conversationHistory : null,
+    });
+
+    modelId = result.modelId;
+    lastReasoning = result.reasoning;
+    done = result.done;
+    priorExecutionError = null;
+
+    if (useHistory) {
+      conversationHistory.push({ role: 'user', content: result.userMessageText });
+      conversationHistory.push({ role: 'assistant', content: result.rawText });
+    }
+
+    if (typeof options.log === 'function') {
+      options.log(`Vision automation iteration ${iterationsRun}/${maxIterations}`, {
+        done: result.done,
+        reasoning: result.reasoning,
+        url: activeUrl,
+      });
+    }
+
+    const normalizedCode = result.code.trim();
+    if (normalizedCode && seenCodes.has(normalizedCode)) {
+      lastReasoning = `Duplicate code detected on iteration ${iterationsRun} — aborting.`;
+      done = false;
+      const record: PlaywrightInjectionIterationRecord = {
+        iteration: iterationsRun,
+        code: result.code,
+        done: false,
+        reasoning: lastReasoning,
+        executionError: null,
+        urlAfter: activeUrl,
+      };
+      iterationRecords.push(record);
+      if (typeof options.onIterationResult === 'function') options.onIterationResult(record);
+      if (typeof options.log === 'function') {
+        options.log(`Vision automation duplicate code on iteration ${iterationsRun} — aborting`, { url: activeUrl });
+      }
+      break;
+    }
+    if (normalizedCode) seenCodes.add(normalizedCode);
+
+    // Step 4: Execute
+    let executionError: string | null = null;
+    if (result.code) {
+      const urlBeforeExec = activeUrl;
+      try {
+        await executeInjectedPlaywrightCode(options.page, result.code);
+      } catch (err) {
+        executionError = err instanceof Error ? err.message : String(err ?? 'Unknown error');
+        priorExecutionError = executionError;
+        lastReasoning = `Code execution failed on iteration ${iterationsRun}: ${executionError}`;
+        done = false;
+        if (typeof options.log === 'function') {
+          options.log(`Vision automation execution error on iteration ${iterationsRun}`, { error: executionError });
+        }
+      }
+
+      try {
+        activeUrl = options.page.url();
+      } catch {
+        // still navigating
+      }
+
+      if (!done && iterationsRun < maxIterations) {
+        if (shouldWaitForNavigation && activeUrl !== urlBeforeExec) {
+          await options.page.waitForLoadState('domcontentloaded', { timeout: 5000 }).catch(() => undefined);
+        } else {
+          await options.page.waitForTimeout(500).catch(() => undefined);
+        }
+        try {
+          activeUrl = options.page.url();
+        } catch {
+          // still navigating
+        }
+      }
+    }
+
+    const record: PlaywrightInjectionIterationRecord = {
+      iteration: iterationsRun,
+      code: result.code,
+      done: result.done,
+      reasoning: result.reasoning,
+      executionError,
+      urlAfter: activeUrl,
+    };
+    iterationRecords.push(record);
+    if (typeof options.onIterationResult === 'function') options.onIterationResult(record);
+  }
+
+  const result: PlaywrightInjectionAttemptResult = {
+    attempted: true,
+    iterationsRun,
+    done,
+    lastReasoning,
+    modelId,
+    finalUrl: activeUrl,
+    iterations: iterationRecords,
+    conversationHistory,
+  };
+
+  if (
+    typeof options.artifacts?.json === 'function' &&
+    options.artifactKey &&
+    iterationRecords.length > 0
+  ) {
+    await options.artifacts
+      .json(`${options.artifactKey}-vision-history`, iterationRecords)
+      .catch(() => undefined);
+  }
+
+  return result;
+}
+
+/**
+ * Builds a per-iteration evaluator function from a Zod schema and AI system prompt.
+ * The returned function can be passed directly to `runPlaywrightVisionGuidedAutomation`
+ * as `evaluate`, or to `PlaywrightVerificationInjectionConfig` as `evaluateCapture`.
+ *
+ * Each call runs `evaluateStructuredPlaywrightScreenshotWithAI` against the current
+ * screenshot, parses the AI response through the schema, then delegates to `isDone`
+ * and `buildContext` to produce a `PlaywrightVisionIterationEvaluation`.
+ */
+export function createPlaywrightVisionGuidedEvaluator<TParsed>(
+  options: PlaywrightVisionGuidedEvaluatorOptions<TParsed>
+): (capture: PlaywrightVisionIterationCapture) => Promise<PlaywrightVisionIterationEvaluation> {
+  return async (capture: PlaywrightVisionIterationCapture): Promise<PlaywrightVisionIterationEvaluation> => {
+    const evalResult = await evaluateStructuredPlaywrightScreenshotWithAI({
+      screenshotBase64: capture.screenshotBase64,
+      systemPrompt: options.systemPrompt,
+      responseSchema: options.schema,
+    });
+
+    const parsed = evalResult.parsed;
+    const isDone = options.isDone(parsed, capture);
+
+    if (isDone) {
+      const reasoning =
+        typeof options.getReasoning === 'function'
+          ? (options.getReasoning(parsed) ?? 'Goal achieved.')
+          : 'Goal achieved.';
+      return { context: '', done: true, reasoning };
+    }
+
+    return {
+      context: options.buildContext(parsed, capture),
+      done: false,
+    };
+  };
 }

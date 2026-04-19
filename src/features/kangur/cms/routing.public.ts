@@ -6,5 +6,6 @@ export {
   KANGUR_MAIN_PAGE_KEY,
   KANGUR_PAGE_TO_SLUG,
   readKangurUrlParam,
+  resolveKangurPageKeyFromSlug,
 } from '../config/routing';
 export { KANGUR_WIDGET_OPTIONS, getKangurWidgetLabel } from '@/shared/contracts/kangur-cms';

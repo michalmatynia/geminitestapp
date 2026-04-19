@@ -119,24 +119,27 @@ vi.mock('@/shared/lib/kangur-cms-bridge', async () => {
   return {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     ...kangurAdapterTestDouble,
-    KangurFeaturePage: ({
-      slug,
-      basePath,
-      embedded,
-    }: {
-      slug?: string[];
-      basePath?: string;
-      embedded?: boolean;
-    }) => (
-      <div
-        data-testid='kangur-feature-page'
-        data-base-path={basePath ?? ''}
-        data-embedded={String(Boolean(embedded))}
-        data-slug={JSON.stringify(slug ?? [])}
-      />
-    ),
   };
 });
+
+vi.mock('@/features/kangur/ui/KangurFeaturePage', () => ({
+  KangurFeaturePage: ({
+    slug,
+    basePath,
+    embedded,
+  }: {
+    slug?: string[];
+    basePath?: string;
+    embedded?: boolean;
+  }) => (
+    <div
+      data-testid='kangur-feature-page'
+      data-base-path={basePath ?? ''}
+      data-embedded={String(Boolean(embedded))}
+      data-slug={JSON.stringify(slug ?? [])}
+    />
+  ),
+}));
 
 import { AppEmbedBlock } from '@/features/cms/components/frontend/blocks/AppEmbedBlock';
 import {
@@ -181,7 +184,7 @@ describe('AppEmbedBlock', () => {
     expect(screen.getByTitle('Chatbot')).toHaveAttribute('src', 'https://example.com/chatbot');
   });
 
-  it('renders Kangur as an internal app mount on the current cms page', () => {
+  it('renders Kangur as an internal app mount on the current cms page', async () => {
     useSearchParamsMock.mockReturnValue(
       new URLSearchParams('preview=1&kangur-app-embed-a=parent-dashboard')
     );
@@ -194,7 +197,7 @@ describe('AppEmbedBlock', () => {
       height: 640,
     });
 
-    const mount = screen.getByTestId('kangur-feature-page');
+    const mount = await screen.findByTestId('kangur-feature-page');
     expect(mount).toHaveAttribute(
       'data-base-path',
       buildKangurEmbeddedBasePath('/home?preview=1', 'app-embed-a')
@@ -203,7 +206,7 @@ describe('AppEmbedBlock', () => {
     expect(mount).toHaveAttribute('data-slug', '["parent-dashboard"]');
   });
 
-  it('keeps a custom host-page override for internal app mounts', () => {
+  it('keeps a custom host-page override for internal app mounts', async () => {
     renderAppEmbedBlock({
       appId: 'kangur',
       title: 'Kangur Home',
@@ -212,13 +215,13 @@ describe('AppEmbedBlock', () => {
       height: 640,
     });
 
-    expect(screen.getByTestId('kangur-feature-page')).toHaveAttribute(
+    expect(await screen.findByTestId('kangur-feature-page')).toHaveAttribute(
       'data-base-path',
       buildKangurEmbeddedBasePath('/landing?preview=1', 'app-embed-a')
     );
   });
 
-  it('supports Kangur tests as the embedded entry page when no query override is active', () => {
+  it('supports Kangur tests as the embedded entry page when no query override is active', async () => {
     renderAppEmbedBlock({
       appId: 'kangur',
       title: 'Kangur Tests',
@@ -227,14 +230,15 @@ describe('AppEmbedBlock', () => {
       height: 640,
     });
 
-    expect(screen.getByTestId('kangur-feature-page')).toHaveAttribute('data-slug', '["tests"]');
-    expect(screen.getByTestId('kangur-feature-page')).toHaveAttribute(
+    const mount = await screen.findByTestId('kangur-feature-page');
+    expect(mount).toHaveAttribute('data-slug', '["tests"]');
+    expect(mount).toHaveAttribute(
       'data-base-path',
       buildKangurEmbeddedBasePath('/home?preview=1', 'app-embed-a')
     );
   });
 
-  it('downgrades blocked GamesLibrary embed entry pages for non-super-admin users', () => {
+  it('downgrades blocked GamesLibrary embed entry pages for non-super-admin users', async () => {
     renderAppEmbedBlock({
       appId: 'kangur',
       title: 'Kangur Games',
@@ -243,10 +247,10 @@ describe('AppEmbedBlock', () => {
       height: 640,
     });
 
-    expect(screen.getByTestId('kangur-feature-page')).toHaveAttribute('data-slug', '[]');
+    expect(await screen.findByTestId('kangur-feature-page')).toHaveAttribute('data-slug', '[]');
   });
 
-  it('keeps GamesLibrary embed routes for exact super-admin users', () => {
+  it('keeps GamesLibrary embed routes for exact super-admin users', async () => {
     sessionMock.mockReturnValue({
       data: {
         user: {
@@ -269,10 +273,13 @@ describe('AppEmbedBlock', () => {
       height: 640,
     });
 
-    expect(screen.getByTestId('kangur-feature-page')).toHaveAttribute('data-slug', '["games"]');
+    expect(await screen.findByTestId('kangur-feature-page')).toHaveAttribute(
+      'data-slug',
+      '["games"]'
+    );
   });
 
-  it('preserves other embedded Kangur instances when deriving the current host page', () => {
+  it('preserves other embedded Kangur instances when deriving the current host page', async () => {
     useSearchParamsMock.mockReturnValue(
       new URLSearchParams(
         'preview=1&kangur-app-embed-a=lessons&kangur-app-embed-b=parent-dashboard'
@@ -290,7 +297,7 @@ describe('AppEmbedBlock', () => {
       'app-embed-a'
     );
 
-    expect(screen.getByTestId('kangur-feature-page')).toHaveAttribute(
+    expect(await screen.findByTestId('kangur-feature-page')).toHaveAttribute(
       'data-base-path',
       buildKangurEmbeddedBasePath(
         '/home?preview=1&kangur-app-embed-b=parent-dashboard',
@@ -299,7 +306,7 @@ describe('AppEmbedBlock', () => {
     );
   });
 
-  it('supports legacy unscoped Kangur query params while stripping them from the derived host page', () => {
+  it('supports legacy unscoped Kangur query params while stripping them from the derived host page', async () => {
     useSearchParamsMock.mockReturnValue(new URLSearchParams('preview=1&kangur=parent-dashboard'));
 
     renderAppEmbedBlock(
@@ -313,7 +320,7 @@ describe('AppEmbedBlock', () => {
       'app-embed-a'
     );
 
-    const mount = screen.getByTestId('kangur-feature-page');
+    const mount = await screen.findByTestId('kangur-feature-page');
     expect(mount).toHaveAttribute('data-slug', '["parent-dashboard"]');
     expect(mount).toHaveAttribute(
       'data-base-path',
@@ -321,7 +328,7 @@ describe('AppEmbedBlock', () => {
     );
   });
 
-  it('keeps the same Kangur embed mount while query-driven page changes update the slug', () => {
+  it('keeps the same Kangur embed mount while query-driven page changes update the slug', async () => {
     useSearchParamsMock.mockReturnValue(
       new URLSearchParams(
         'preview=1&kangur-app-embed-a=lessons&kangur-app-embed-b=parent-dashboard'
@@ -339,7 +346,7 @@ describe('AppEmbedBlock', () => {
       'app-embed-a'
     );
 
-    const mount = screen.getByTestId('kangur-feature-page');
+    const mount = await screen.findByTestId('kangur-feature-page');
     mount.setAttribute('data-e2e-shell-marker', 'persist');
 
     useSearchParamsMock.mockReturnValue(
@@ -380,12 +387,13 @@ describe('AppEmbedBlock', () => {
       </BlockRenderContext.Provider>
     );
 
-    expect(screen.getByTestId('kangur-feature-page')).toHaveAttribute(
+    const updatedMount = await screen.findByTestId('kangur-feature-page');
+    expect(updatedMount).toHaveAttribute(
       'data-e2e-shell-marker',
       'persist'
     );
-    expect(screen.getByTestId('kangur-feature-page')).toHaveAttribute('data-slug', '["tests"]');
-    expect(screen.getByTestId('kangur-feature-page')).toHaveAttribute(
+    expect(updatedMount).toHaveAttribute('data-slug', '["tests"]');
+    expect(updatedMount).toHaveAttribute(
       'data-base-path',
       buildKangurEmbeddedBasePath(
         '/home?preview=1&kangur-app-embed-b=parent-dashboard',

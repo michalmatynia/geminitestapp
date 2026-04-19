@@ -121,6 +121,11 @@ const HOT_ROUTE_PRELOADS: Readonly<
   Game: ['Lessons'],
   Lessons: ['Game'],
 });
+const TOP_NAVIGATION_FALLBACK = <KangurTopNavigationSkeleton />;
+
+const KangurRenderedRouteAccessibilityAnnouncer = memo(
+  (): JSX.Element => <KangurRouteAccessibilityAnnouncer />
+);
 
 // Type guard: checks whether a string is a valid preloadable page key.
 const isKangurPreloadPageKey = (value: string | null): value is KangurPreloadPageKey =>
@@ -137,7 +142,7 @@ type LatchedNavigationSkeletonState = {
 
 // Renders the login modal only when it is explicitly open. Keeping this as a
 // separate component avoids importing the heavy modal bundle until needed.
-const KangurLoginModalMount = (): JSX.Element | null => {
+const KangurLoginModalMount = memo((): JSX.Element | null => {
   const loginModalState = useKangurLoginModalState();
 
   if (!loginModalState.isOpen) {
@@ -145,9 +150,9 @@ const KangurLoginModalMount = (): JSX.Element | null => {
   }
 
   return <KangurLoginModal />;
-};
+});
 
-const KangurDeferredSyncEffectsMount = (): JSX.Element | null => {
+const KangurDeferredSyncEffectsMount = memo((): JSX.Element | null => {
   const isStandaloneHomeReady = useKangurDeferredStandaloneHomeReady();
 
   if (!isStandaloneHomeReady) {
@@ -160,7 +165,7 @@ const KangurDeferredSyncEffectsMount = (): JSX.Element | null => {
       <KangurScoreSyncProvider />
     </>
   );
-};
+});
 
 const KangurPlainResolvedRoutePage = memo(({
   ResolvedPage,
@@ -228,6 +233,32 @@ const KangurRenderedRouteContent = memo(({
   </LazyMotionDiv>
 ));
 
+const KangurRenderedTopNavigation = memo(({
+  shouldHideTopNavigationDuringBoot,
+  shouldRenderTopNavigationHost,
+}: {
+  shouldHideTopNavigationDuringBoot: boolean;
+  shouldRenderTopNavigationHost: boolean;
+}): JSX.Element | null => {
+  if (shouldHideTopNavigationDuringBoot) {
+    return TOP_NAVIGATION_FALLBACK;
+  }
+
+  if (!shouldRenderTopNavigationHost) {
+    return null;
+  }
+
+  return <KangurTopNavigationHost fallback={TOP_NAVIGATION_FALLBACK} />;
+});
+
+const KangurRenderedAppLoader = memo(({
+  offsetTopBar,
+  visible,
+}: {
+  offsetTopBar: boolean;
+  visible: boolean;
+}): JSX.Element => <KangurAppLoader offsetTopBar={offsetTopBar} visible={visible} />);
+
 const KangurResolvedRouteContent = memo(({
   resolvedPageKey,
 }: {
@@ -260,7 +291,7 @@ const KangurResolvedRouteContent = memo(({
 //  - Hot-route preloading and AI Tutor page-content prefetching
 //  - Auth-error redirects (login redirect, parent-dashboard guard)
 //  - Accessibility announcer and top navigation host
-const AuthenticatedApp = (): JSX.Element | null => {
+const AuthenticatedApp = memo((): JSX.Element | null => {
   const { navigateToLogin } = useKangurAuthActions();
   const { isAuthenticated, hasResolvedAuth = true } = useKangurAuthSessionState();
   const { isLoadingAuth, isLoadingPublicSettings, authError } = useKangurAuthStatusState();
@@ -842,19 +873,16 @@ const AuthenticatedApp = (): JSX.Element | null => {
   if (authErrorType === 'user_not_registered') {
     return <UserNotRegisteredError />;
   }
-
-  const topNavigationFallback = <KangurTopNavigationSkeleton />;
   const shouldReserveTopBarOffset = true;
 
   return (
     <>
-      <KangurRouteAccessibilityAnnouncer />
-      {shouldHideTopNavigationDuringBoot ? (
-        topNavigationFallback
-      ) : shouldRenderTopNavigationHost ? (
-        <KangurTopNavigationHost fallback={topNavigationFallback} />
-      ) : null}
-      <KangurAppLoader
+      <KangurRenderedRouteAccessibilityAnnouncer />
+      <KangurRenderedTopNavigation
+        shouldHideTopNavigationDuringBoot={shouldHideTopNavigationDuringBoot}
+        shouldRenderTopNavigationHost={shouldRenderTopNavigationHost}
+      />
+      <KangurRenderedAppLoader
         offsetTopBar={shouldReserveTopBarOffset}
         visible={isBootLoaderBlockingNavigation}
       />
@@ -890,7 +918,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
       </LazyAnimatePresence>
     </>
   );
-};
+});
 
 // KangurFeatureApp is the root of the StudiQ learner experience. It composes
 // all global context providers in the correct order:

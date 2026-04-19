@@ -7,9 +7,16 @@ import { act, cleanup, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { clearLatchedKangurTopBarHeightCssValue } from '@/features/kangur/ui/utils/readKangurTopBarHeightCssValue';
 import {
+  kangurAiTutorWidgetRenderSpyMock,
+  kangurAppLoaderRenderSpyMock,
   authStateMock,
+  kangurLoginModalRenderSpyMock,
   kangurPageRenderSpyMock,
+  kangurProgressSyncProviderRenderSpyMock,
+  kangurRouteAccessibilityAnnouncerRenderSpyMock,
   kangurRouteContentRenderSpyMock,
+  kangurScoreSyncProviderRenderSpyMock,
+  kangurTopNavigationHostRenderSpyMock,
   loginModalStateMock,
   pendingRouteLoadingSnapshotMock,
   preloadKangurPageMock,
@@ -64,12 +71,42 @@ describe('KangurFeatureApp', () => {
 
     expect(kangurPageRenderSpyMock).toHaveBeenCalledWith('Lessons');
     expect(kangurPageRenderSpyMock).toHaveBeenCalledTimes(1);
+    const initialAiTutorWidgetRenderCount = kangurAiTutorWidgetRenderSpyMock.mock.calls.length;
+    const initialAppLoaderRenderCount = kangurAppLoaderRenderSpyMock.mock.calls.length;
+    const initialLoginModalRenderCount = kangurLoginModalRenderSpyMock.mock.calls.length;
+    const initialRouteAccessibilityAnnouncerRenderCount =
+      kangurRouteAccessibilityAnnouncerRenderSpyMock.mock.calls.length;
     const initialRouteContentRenderCount = kangurRouteContentRenderSpyMock.mock.calls.length;
+    const initialProgressSyncProviderRenderCount =
+      kangurProgressSyncProviderRenderSpyMock.mock.calls.length;
+    const initialScoreSyncProviderRenderCount =
+      kangurScoreSyncProviderRenderSpyMock.mock.calls.length;
+    const initialTopNavigationHostRenderCount =
+      kangurTopNavigationHostRenderSpyMock.mock.calls.length;
 
     rerender(<KangurFeatureApp />);
 
     expect(kangurPageRenderSpyMock).toHaveBeenCalledTimes(1);
+    expect(kangurAiTutorWidgetRenderSpyMock).toHaveBeenCalledTimes(
+      initialAiTutorWidgetRenderCount
+    );
+    expect(kangurAppLoaderRenderSpyMock).toHaveBeenCalledTimes(initialAppLoaderRenderCount);
+    expect(kangurLoginModalRenderSpyMock).toHaveBeenCalledTimes(
+      initialLoginModalRenderCount
+    );
+    expect(kangurProgressSyncProviderRenderSpyMock).toHaveBeenCalledTimes(
+      initialProgressSyncProviderRenderCount
+    );
+    expect(kangurRouteAccessibilityAnnouncerRenderSpyMock).toHaveBeenCalledTimes(
+      initialRouteAccessibilityAnnouncerRenderCount
+    );
     expect(kangurRouteContentRenderSpyMock).toHaveBeenCalledTimes(initialRouteContentRenderCount);
+    expect(kangurScoreSyncProviderRenderSpyMock).toHaveBeenCalledTimes(
+      initialScoreSyncProviderRenderCount
+    );
+    expect(kangurTopNavigationHostRenderSpyMock).toHaveBeenCalledTimes(
+      initialTopNavigationHostRenderCount
+    );
   });
 
   it('does not rerender the active page subtree when unrelated settings data changes', () => {
@@ -130,13 +167,13 @@ describe('KangurFeatureApp', () => {
     });
     useKangurDeferredStandaloneHomeReadyMock.mockReturnValue(false);
 
-    const { rerender } = render(<KangurFeatureApp />);
+    const { rerender } = render(<KangurFeatureApp key='initial' />);
 
     expect(screen.queryByTestId('kangur-progress-sync-provider')).toBeNull();
     expect(screen.queryByTestId('kangur-score-sync-provider')).toBeNull();
 
     useKangurDeferredStandaloneHomeReadyMock.mockReturnValue(true);
-    rerender(<KangurFeatureApp />);
+    rerender(<KangurFeatureApp key='ready' />);
 
     expect(screen.getByTestId('kangur-progress-sync-provider')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-score-sync-provider')).toBeInTheDocument();

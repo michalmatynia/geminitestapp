@@ -1,6 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import { memo } from 'react';
 
 import { useKangurDeferredHomeTutorContextReady } from '@/features/kangur/ui/hooks/useKangurDeferredHomeTutorContextReady';
 
@@ -17,7 +18,8 @@ const KangurAiTutorWidget = dynamic(
 // Delay the heavy AI Tutor widget only when the app initially boots on the
 // standalone home route. Once mounted, it stays available for the rest of the
 // session so later navigations do not pay the delay again.
-export function KangurDeferredAiTutorWidgetMount(): JSX.Element | null {
+export const KangurDeferredAiTutorWidgetMount = memo(
+  (): JSX.Element | null => {
   const isTutorContextReady = useKangurDeferredHomeTutorContextReady();
 
   if (!isTutorContextReady) {
@@ -25,4 +27,5 @@ export function KangurDeferredAiTutorWidgetMount(): JSX.Element | null {
   }
 
   return <KangurAiTutorWidget />;
-}
+  }
+);

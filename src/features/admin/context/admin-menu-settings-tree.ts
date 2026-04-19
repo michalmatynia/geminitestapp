@@ -4,7 +4,6 @@ import type {
   AdminNavNodeEntry,
 } from '@/shared/contracts/admin';
 
-
 const createCustomId = (): string =>
   `custom-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
@@ -33,7 +32,7 @@ export const flattenAdminNavNodes = (
       label: item.label,
       parents,
       item,
-      ...(item.href ? { href: item.href } : {}),
+      ...(item.href !== undefined && item.href !== '' ? { href: item.href } : {}),
     });
     const children = item.children;
     if (children && children.length > 0) {
@@ -109,7 +108,7 @@ export const updateNodeById = (
       return node;
     });
 
-    return { next: updated ? nextNodes : nodes, updated };
+    return { next: nextNodes, updated };
   };
 
   return walk(items);
@@ -147,7 +146,7 @@ export const insertChildNodeById = (
       return node;
     });
 
-    return { next: inserted ? nextNodes : nodes, inserted };
+    return { next: nextNodes, inserted };
   };
 
   return walk(items);
@@ -184,7 +183,7 @@ export const removeNodeById = (
       nextNodes.push(node);
     });
 
-    return { next: removed ? nextNodes : nodes, removed };
+    return { next: nextNodes, removed };
   };
 
   return walk(items);
@@ -198,7 +197,7 @@ export const findNodeById = (
     if (node.id === nodeId) return node;
     if (Array.isArray(node.children) && node.children.length > 0) {
       const nested = findNodeById(node.children, nodeId);
-      if (nested) return nested;
+      if (nested !== null) return nested;
     }
   }
   return null;

@@ -123,6 +123,7 @@ export const buildListProjectStage = (filters: ProductFilters): Document | null 
       sortIndex: '$category.sortIndex',
     },
     parameters: 1,
+    customFields: 1,
     notes: 1,
     price: 1,
     stock: 1,

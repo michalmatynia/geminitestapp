@@ -74,6 +74,377 @@ export type HomePrivateDuelSectionGroupProps = {
   areDeferredHomePanelsReady: boolean;
 };
 
+type AuthenticatedHomeInvitesContentProps = {
+  areDeferredHomePanelsReady: boolean;
+  areDeferredHomeDuelSecondaryReady: boolean;
+  invites: ReturnType<typeof useKangurMobileHomeDuelsInvites>;
+  copy: ReturnType<typeof useKangurMobileI18n>['copy'];
+  locale: string;
+};
+
+function AuthenticatedHomeInvitesContent({
+  areDeferredHomePanelsReady,
+  areDeferredHomeDuelSecondaryReady,
+  invites,
+  copy,
+  locale,
+}: AuthenticatedHomeInvitesContentProps): React.JSX.Element {
+  if (!areDeferredHomePanelsReady) {
+    return <DeferredDuelSectionPlaceholder />;
+  }
+  if (!areDeferredHomeDuelSecondaryReady) {
+    return <DeferredDuelAdvancedSectionPlaceholder />;
+  }
+  if (invites.isRestoringAuth || invites.isLoading) {
+    return (
+      <Text style={{ color: '#475569', lineHeight: 20 }}>
+        {copy({
+          de: 'Private Duelleinladungen werden geladen.',
+          en: 'Loading private duel invites.',
+          pl: 'Pobieramy prywatne zaproszenia do pojedynków.',
+        })}
+      </Text>
+    );
+  }
+  if (invites.isDeferred && invites.invites.length === 0) {
+    return (
+      <Text style={{ color: '#475569', lineHeight: 20 }}>
+        {copy({
+          de: 'Wir bereiten die aktualisierten privaten Duelleinladungen für den nächsten Startschritt vor.',
+          en: 'Preparing refreshed private duel invites for the next home step.',
+          pl: 'Przygotowujemy odświeżone prywatne zaproszenia do pojedynków na kolejny etap ekranu startowego.',
+        })}
+      </Text>
+    );
+  }
+  if (invites.error !== null && invites.error !== '') {
+    return (
+      <View style={{ gap: 10 }}>
+        <Text style={{ color: '#b91c1c', lineHeight: 20 }}>
+          {invites.error}
+        </Text>
+        <PrimaryButton
+          hint={copy({
+            de: 'Aktualisiert die privaten Duelleinladungen.',
+            en: 'Refreshes the private duel invites.',
+            pl: 'Odświeża prywatne zaproszenia do pojedynków.',
+          })}
+          label={copy({
+            de: 'Einladungen aktualisieren',
+            en: 'Refresh invites',
+            pl: 'Odśwież zaproszenia',
+          })}
+          onPress={invites.refresh}
+        />
+      </View>
+    );
+  }
+  if (invites.invites.length === 0) {
+    return (
+      <View style={{ gap: 10 }}>
+        <Text style={{ color: '#475569', lineHeight: 20 }}>
+          {copy({
+            de: 'Keine offenen Einladungen. Du kannst die Lobby öffnen und eine neue Herausforderung senden.',
+            en: 'There are no pending invites yet. You can open the lobby and send a new challenge.',
+            pl: 'Brak oczekujących zaproszeń. Możesz otworzyć lobby i wysłać nowe wyzwanie.',
+          })}
+        </Text>
+        <OutlineLink
+          href={DUELS_ROUTE}
+          hint={copy({
+            de: 'Öffnet die Duell-Lobby.',
+            en: 'Opens the duels lobby.',
+            pl: 'Otwiera lobby pojedynków.',
+          })}
+          label={copy({
+            de: 'Duell-Lobby öffnen',
+            en: 'Open duels lobby',
+            pl: 'Otwórz lobby pojedynków',
+          })}
+        />
+      </View>
+    );
+  }
+
+  return (
+    <View style={{ gap: 12 }}>
+      {invites.invites.map((invite) => (
+        <DuelInviteCard
+          key={invite.sessionId}
+          copy={copy}
+          invite={invite}
+          locale={locale}
+        />
+      ))}
+    </View>
+  );
+}
+
+type AuthenticatedHomeOutgoingChallengesContentProps = {
+  areDeferredHomePanelsReady: boolean;
+  areDeferredHomeDuelSecondaryReady: boolean;
+  invites: ReturnType<typeof useKangurMobileHomeDuelsInvites>;
+  copy: ReturnType<typeof useKangurMobileI18n>['copy'];
+  locale: string;
+  duelInviteShareError: string | null;
+  sharingDuelSessionId: string | null;
+  onShare: (sessionId: string) => Promise<void>;
+};
+
+function AuthenticatedHomeOutgoingChallengesContent({
+  areDeferredHomePanelsReady,
+  areDeferredHomeDuelSecondaryReady,
+  invites,
+  copy,
+  locale,
+  duelInviteShareError,
+  sharingDuelSessionId,
+  onShare,
+}: AuthenticatedHomeOutgoingChallengesContentProps): React.JSX.Element {
+  if (!areDeferredHomePanelsReady) {
+    return <DeferredDuelSectionPlaceholder />;
+  }
+  if (!areDeferredHomeDuelSecondaryReady) {
+    return <DeferredDuelAdvancedSectionPlaceholder />;
+  }
+  if (invites.isRestoringAuth || invites.isLoading) {
+    return (
+      <Text style={{ color: '#475569', lineHeight: 20 }}>
+        {copy({
+          de: 'Gesendete private Herausforderungen werden geladen.',
+          en: 'Loading sent private challenges.',
+          pl: 'Pobieramy wysłane prywatne wyzwania.',
+        })}
+      </Text>
+    );
+  }
+  if (invites.isDeferred && invites.outgoingChallenges.length === 0) {
+    return (
+      <Text style={{ color: '#475569', lineHeight: 20 }}>
+        {copy({
+          de: 'Wir bereiten die aktualisierten gesendeten Herausforderungen für den nächsten Startschritt vor.',
+          en: 'Preparing refreshed sent challenges for the next home step.',
+          pl: 'Przygotowujemy odświeżone wysłane wyzwania na kolejny etap ekranu startowego.',
+        })}
+      </Text>
+    );
+  }
+  if (invites.error !== null && invites.error !== '') {
+    return (
+      <View style={{ gap: 10 }}>
+        <Text style={{ color: '#b91c1c', lineHeight: 20 }}>
+          {invites.error}
+        </Text>
+        <PrimaryButton
+          hint={copy({
+            de: 'Aktualisiert die privaten Herausforderungen.',
+            en: 'Refreshes the private challenges.',
+            pl: 'Odświeża prywatne wyzwania.',
+          })}
+          label={copy({
+            de: 'Herausforderungen aktualisieren',
+            en: 'Refresh challenges',
+            pl: 'Odśwież wyzwania',
+          })}
+          onPress={invites.refresh}
+        />
+      </View>
+    );
+  }
+  if (invites.outgoingChallenges.length === 0) {
+    return (
+      <View style={{ gap: 10 }}>
+        <Text style={{ color: '#475569', lineHeight: 20 }}>
+          {copy({
+            de: 'Du hast noch keine privaten Herausforderungen gesendet. Öffne die Lobby, um direkt einen Rivalen einzuladen.',
+            en: 'You have not sent any private challenges yet. Open the lobby to invite a rival directly.',
+            pl: 'Nie wysłano jeszcze prywatnych wyzwań. Otwórz lobby, aby od razu zaprosić rywala.',
+          })}
+        </Text>
+        <OutlineLink
+          href={DUELS_ROUTE}
+          hint={copy({
+            de: 'Öffnet die Duell-Lobby.',
+            en: 'Opens the duels lobby.',
+            pl: 'Otwiera lobby pojedynków.',
+          })}
+          label={copy({
+            de: 'Duell-Lobby öffnen',
+            en: 'Open duels lobby',
+            pl: 'Otwórz lobby pojedynków',
+          })}
+        />
+      </View>
+    );
+  }
+
+  return (
+    <View style={{ gap: 12 }}>
+      {duelInviteShareError !== null && duelInviteShareError !== '' ? (
+        <Text style={{ color: '#b91c1c', lineHeight: 20 }}>
+          {duelInviteShareError}
+        </Text>
+      ) : null}
+      {invites.outgoingChallenges.map((entry) => (
+        <OutgoingChallengeCard
+          key={entry.sessionId}
+          copy={copy}
+          entry={entry}
+          isSharing={sharingDuelSessionId === entry.sessionId}
+          locale={locale}
+          onShare={async () => {
+            await onShare(entry.sessionId);
+          }}
+        />
+      ))}
+    </View>
+  );
+}
+
+type AuthenticatedHomeActiveRivalsContentProps = {
+  areDeferredHomePanelsReady: boolean;
+  areDeferredHomeDuelAdvancedReady: boolean;
+  presence: ReturnType<typeof useKangurMobileHomeDuelsPresence>;
+  copy: ReturnType<typeof useKangurMobileI18n>['copy'];
+  locale: string;
+  onChallenge: (sessionId: string) => void;
+};
+
+function AuthenticatedHomeActiveRivalsContent({
+  areDeferredHomePanelsReady,
+  areDeferredHomeDuelAdvancedReady,
+  presence,
+  copy,
+  locale,
+  onChallenge,
+}: AuthenticatedHomeActiveRivalsContentProps): React.JSX.Element {
+  const { session } = useKangurMobileAuth();
+  const activeDuelLearnerId = session.user?.activeLearner?.id ?? session.user?.id ?? null;
+
+  if (!areDeferredHomePanelsReady) {
+    return <DeferredDuelSectionPlaceholder />;
+  }
+  if (!areDeferredHomeDuelAdvancedReady) {
+    return <DeferredDuelAdvancedSectionPlaceholder />;
+  }
+  if (presence.isRestoringAuth || presence.isLoading) {
+    return (
+      <Text style={{ color: '#475569', lineHeight: 20 }}>
+        {copy({
+          de: 'Aktive Rivalen in der Lobby werden geladen.',
+          en: 'Loading active rivals in the lobby.',
+          pl: 'Pobieramy aktywnych rywali w lobby.',
+        })}
+      </Text>
+    );
+  }
+  if (presence.error !== null && presence.error !== '') {
+    return (
+      <View style={{ gap: 10 }}>
+        <Text style={{ color: '#b91c1c', lineHeight: 20 }}>
+          {presence.error}
+        </Text>
+        <PrimaryButton
+          hint={copy({
+            de: 'Aktualisiert die aktiven Rivalen in der Lobby.',
+            en: 'Refreshes the active rivals in the lobby.',
+            pl: 'Odświeża aktywnych rywali w lobby.',
+          })}
+          label={copy({
+            de: 'Rivalen aktualisieren',
+            en: 'Refresh rivals',
+            pl: 'Odśwież rywali',
+          })}
+          onPress={presence.refresh}
+        />
+      </View>
+    );
+  }
+  if (presence.entries.length === 0) {
+    return (
+      <View style={{ gap: 10 }}>
+        <Text style={{ color: '#475569', lineHeight: 20 }}>
+          {copy({
+            de: 'Gerade sind keine anderen Rivalen in der Duell-Lobby aktiv. Öffne die Lobby, um ein neues Match zu starten oder auf den nächsten Gegner zu warten.',
+            en: 'There are no other rivals active in the duels lobby right now. Open the lobby to start a new match or wait for the next opponent.',
+            pl: 'W tej chwili nie ma innych rywali aktywnych w lobby pojedynków. Otwórz lobby, aby wystartować z nowym meczem albo poczekać na kolejnego rywala.',
+          })}
+        </Text>
+        <OutlineLink
+          href={DUELS_ROUTE}
+          hint={copy({
+            de: 'Öffnet die Duell-Lobby.',
+            en: 'Opens the duels lobby.',
+            pl: 'Otwiera lobby pojedynków.',
+          })}
+          label={copy({
+            de: 'Duell-Lobby öffnen',
+            en: 'Open duels lobby',
+            pl: 'Otwórz lobby pojedynków',
+          })}
+        />
+      </View>
+    );
+  }
+
+  return (
+    <View style={{ gap: 10 }}>
+      <Text style={{ color: '#475569', lineHeight: 20 }}>
+        {copy({
+          de: 'Das sind aktive Rivalen aus der Duell-Lobby. Öffne die Duell-Lobby, damit andere auch dich in dieser Liste sehen.',
+          en: 'These are active rivals from the duels lobby. Open the duels lobby so others can also see you in this list.',
+          pl: 'To aktywni rywale z lobby pojedynków. Otwórz lobby pojedynków, aby inni zobaczyli tu również Ciebie.',
+        })}
+      </Text>
+      {presence.actionError !== null && presence.actionError !== '' ? (
+        <Text style={{ color: '#b91c1c', lineHeight: 20 }}>
+          {presence.actionError}
+        </Text>
+      ) : null}
+      {presence.entries.map((entry) => {
+        const isCurrentLearner = entry.learnerId === activeDuelLearnerId;
+
+        return (
+          <ActiveRivalCard
+            key={entry.learnerId}
+            copy={copy}
+            entry={entry}
+            isActionPending={presence.isActionPending}
+            isCurrentLearner={isCurrentLearner}
+            isPending={presence.pendingLearnerId === entry.learnerId}
+            locale={locale}
+            onChallenge={
+              isCurrentLearner
+                ? null
+                : async () => {
+                    const nextSessionId = await presence.createPrivateChallenge(
+                      entry.learnerId,
+                    );
+                    if (nextSessionId) {
+                      onChallenge(nextSessionId);
+                    }
+                  }
+            }
+          />
+        );
+      })}
+      <OutlineLink
+        href={DUELS_ROUTE}
+        hint={copy({
+          de: 'Öffnet die vollständige Duell-Lobby.',
+          en: 'Opens the full duels lobby.',
+          pl: 'Otwiera pełne lobby pojedynków.',
+        })}
+        label={copy({
+          de: 'Lobby öffnen',
+          en: 'Open lobby',
+          pl: 'Otwórz lobby',
+        })}
+      />
+    </View>
+  );
+}
+
 export function AuthenticatedHomePrivateDuelSectionGroup({
   areDeferredHomeDuelAdvancedReady,
   areDeferredHomeDuelInvitesReady,
@@ -92,14 +463,21 @@ export function AuthenticatedHomePrivateDuelSectionGroup({
     enabled: areDeferredHomeDuelAdvancedReady,
   });
   const activeDuelLearnerId = session.user?.activeLearner?.id ?? session.user?.id ?? null;
-  const duelSharerDisplayName =
-    session.user?.activeLearner?.displayName?.trim() ||
-    session.user?.full_name?.trim() ||
-    copy({
-      de: 'dem Kangur-Lernkonto',
-      en: 'the Kangur learner account',
-      pl: 'konta ucznia Kangura',
-    });
+
+  const activeLearnerDisplayName = session.user?.activeLearner?.displayName?.trim();
+  const userFullName = session.user?.full_name?.trim();
+  let duelSharerDisplayName = copy({
+    de: 'dem Kangur-Lernkonto',
+    en: 'the Kangur learner account',
+    pl: 'konta ucznia Kangura',
+  });
+
+  if (typeof activeLearnerDisplayName === 'string' && activeLearnerDisplayName !== '') {
+    duelSharerDisplayName = activeLearnerDisplayName;
+  } else if (typeof userFullName === 'string' && userFullName !== '') {
+    duelSharerDisplayName = userFullName;
+  }
+
   const openDuelSession = (sessionId: string): void => {
     router.replace(createKangurDuelsHref({ sessionId }));
   };
@@ -113,9 +491,10 @@ export function AuthenticatedHomePrivateDuelSectionGroup({
         sharerDisplayName: duelSharerDisplayName,
       });
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message.trim() : '';
       setDuelInviteShareError(
-        error instanceof Error && error.message.trim()
-          ? error.message
+        errorMessage !== ''
+          ? errorMessage
           : copy({
               de: 'Der Einladungslink konnte nicht geteilt werden.',
               en: 'Could not share the invite link.',
@@ -136,80 +515,13 @@ export function AuthenticatedHomePrivateDuelSectionGroup({
           pl: 'Zaproszenia do pojedynków',
         })}
       >
-        {!areDeferredHomePanelsReady ? (
-          <DeferredDuelSectionPlaceholder />
-        ) : !areDeferredHomeDuelSecondaryReady ? (
-          <DeferredDuelAdvancedSectionPlaceholder />
-        ) : duelInvites.isRestoringAuth || duelInvites.isLoading ? (
-          <Text style={{ color: '#475569', lineHeight: 20 }}>
-            {copy({
-              de: 'Private Duelleinladungen werden geladen.',
-              en: 'Loading private duel invites.',
-              pl: 'Pobieramy prywatne zaproszenia do pojedynków.',
-            })}
-          </Text>
-        ) : duelInvites.isDeferred && duelInvites.invites.length === 0 ? (
-          <Text style={{ color: '#475569', lineHeight: 20 }}>
-            {copy({
-              de: 'Wir bereiten die aktualisierten privaten Duelleinladungen für den nächsten Startschritt vor.',
-              en: 'Preparing refreshed private duel invites for the next home step.',
-              pl: 'Przygotowujemy odświeżone prywatne zaproszenia do pojedynków na kolejny etap ekranu startowego.',
-            })}
-          </Text>
-        ) : duelInvites.error ? (
-          <View style={{ gap: 10 }}>
-            <Text style={{ color: '#b91c1c', lineHeight: 20 }}>
-              {duelInvites.error}
-            </Text>
-            <PrimaryButton
-              hint={copy({
-                de: 'Aktualisiert die privaten Duelleinladungen.',
-                en: 'Refreshes the private duel invites.',
-                pl: 'Odświeża prywatne zaproszenia do pojedynków.',
-              })}
-              label={copy({
-                de: 'Einladungen aktualisieren',
-                en: 'Refresh invites',
-                pl: 'Odśwież zaproszenia',
-              })}
-              onPress={duelInvites.refresh}
-            />
-          </View>
-        ) : duelInvites.invites.length === 0 ? (
-          <View style={{ gap: 10 }}>
-            <Text style={{ color: '#475569', lineHeight: 20 }}>
-              {copy({
-                de: 'Keine offenen Einladungen. Du kannst die Lobby öffnen und eine neue Herausforderung senden.',
-                en: 'There are no pending invites yet. You can open the lobby and send a new challenge.',
-                pl: 'Brak oczekujących zaproszeń. Możesz otworzyć lobby i wysłać nowe wyzwanie.',
-              })}
-            </Text>
-            <OutlineLink
-              href={DUELS_ROUTE}
-              hint={copy({
-                de: 'Öffnet die Duell-Lobby.',
-                en: 'Opens the duels lobby.',
-                pl: 'Otwiera lobby pojedynków.',
-              })}
-              label={copy({
-                de: 'Duell-Lobby öffnen',
-                en: 'Open duels lobby',
-                pl: 'Otwórz lobby pojedynków',
-              })}
-            />
-          </View>
-        ) : (
-          <View style={{ gap: 12 }}>
-            {duelInvites.invites.map((invite) => (
-              <DuelInviteCard
-                key={invite.sessionId}
-                copy={copy}
-                invite={invite}
-                locale={locale}
-              />
-            ))}
-          </View>
-        )}
+        <AuthenticatedHomeInvitesContent
+          areDeferredHomePanelsReady={areDeferredHomePanelsReady}
+          areDeferredHomeDuelSecondaryReady={areDeferredHomeDuelSecondaryReady}
+          invites={duelInvites}
+          copy={copy}
+          locale={locale}
+        />
       </SectionCard>
 
       <SectionCard
@@ -219,90 +531,16 @@ export function AuthenticatedHomePrivateDuelSectionGroup({
           pl: 'Wysłane wyzwania',
         })}
       >
-        {!areDeferredHomePanelsReady ? (
-          <DeferredDuelSectionPlaceholder />
-        ) : !areDeferredHomeDuelSecondaryReady ? (
-          <DeferredDuelAdvancedSectionPlaceholder />
-        ) : duelInvites.isRestoringAuth || duelInvites.isLoading ? (
-          <Text style={{ color: '#475569', lineHeight: 20 }}>
-            {copy({
-              de: 'Gesendete private Herausforderungen werden geladen.',
-              en: 'Loading sent private challenges.',
-              pl: 'Pobieramy wysłane prywatne wyzwania.',
-            })}
-          </Text>
-        ) : duelInvites.isDeferred &&
-          duelInvites.outgoingChallenges.length === 0 ? (
-          <Text style={{ color: '#475569', lineHeight: 20 }}>
-            {copy({
-              de: 'Wir bereiten die aktualisierten gesendeten Herausforderungen für den nächsten Startschritt vor.',
-              en: 'Preparing refreshed sent challenges for the next home step.',
-              pl: 'Przygotowujemy odświeżone wysłane wyzwania na kolejny etap ekranu startowego.',
-            })}
-          </Text>
-        ) : duelInvites.error ? (
-          <View style={{ gap: 10 }}>
-            <Text style={{ color: '#b91c1c', lineHeight: 20 }}>
-              {duelInvites.error}
-            </Text>
-            <PrimaryButton
-              hint={copy({
-                de: 'Aktualisiert die privaten Herausforderungen.',
-                en: 'Refreshes the private challenges.',
-                pl: 'Odświeża prywatne wyzwania.',
-              })}
-              label={copy({
-                de: 'Herausforderungen aktualisieren',
-                en: 'Refresh challenges',
-                pl: 'Odśwież wyzwania',
-              })}
-              onPress={duelInvites.refresh}
-            />
-          </View>
-        ) : duelInvites.outgoingChallenges.length === 0 ? (
-          <View style={{ gap: 10 }}>
-            <Text style={{ color: '#475569', lineHeight: 20 }}>
-              {copy({
-                de: 'Du hast noch keine privaten Herausforderungen gesendet. Öffne die Lobby, um direkt einen Rivalen einzuladen.',
-                en: 'You have not sent any private challenges yet. Open the lobby to invite a rival directly.',
-                pl: 'Nie wysłano jeszcze prywatnych wyzwań. Otwórz lobby, aby od razu zaprosić rywala.',
-              })}
-            </Text>
-            <OutlineLink
-              href={DUELS_ROUTE}
-              hint={copy({
-                de: 'Öffnet die Duell-Lobby.',
-                en: 'Opens the duels lobby.',
-                pl: 'Otwiera lobby pojedynków.',
-              })}
-              label={copy({
-                de: 'Duell-Lobby öffnen',
-                en: 'Open duels lobby',
-                pl: 'Otwórz lobby pojedynków',
-              })}
-            />
-          </View>
-        ) : (
-          <View style={{ gap: 12 }}>
-            {duelInviteShareError ? (
-              <Text style={{ color: '#b91c1c', lineHeight: 20 }}>
-                {duelInviteShareError}
-              </Text>
-            ) : null}
-            {duelInvites.outgoingChallenges.map((entry) => (
-              <OutgoingChallengeCard
-                key={entry.sessionId}
-                copy={copy}
-                entry={entry}
-                isSharing={sharingDuelSessionId === entry.sessionId}
-                locale={locale}
-                onShare={async () => {
-                  await handleShareOutgoingChallenge(entry.sessionId);
-                }}
-              />
-            ))}
-          </View>
-        )}
+        <AuthenticatedHomeOutgoingChallengesContent
+          areDeferredHomePanelsReady={areDeferredHomePanelsReady}
+          areDeferredHomeDuelSecondaryReady={areDeferredHomeDuelSecondaryReady}
+          invites={duelInvites}
+          copy={copy}
+          locale={locale}
+          duelInviteShareError={duelInviteShareError}
+          sharingDuelSessionId={sharingDuelSessionId}
+          onShare={handleShareOutgoingChallenge}
+        />
       </SectionCard>
 
       <SectionCard
@@ -312,124 +550,15 @@ export function AuthenticatedHomePrivateDuelSectionGroup({
           pl: 'Aktywni rywale w lobby',
         })}
       >
-        {!areDeferredHomePanelsReady ? (
-          <DeferredDuelSectionPlaceholder />
-        ) : !areDeferredHomeDuelAdvancedReady ? (
-          <DeferredDuelAdvancedSectionPlaceholder />
-        ) : duelPresence.isRestoringAuth || duelPresence.isLoading ? (
-          <Text style={{ color: '#475569', lineHeight: 20 }}>
-            {copy({
-              de: 'Aktive Rivalen in der Lobby werden geladen.',
-              en: 'Loading active rivals in the lobby.',
-              pl: 'Pobieramy aktywnych rywali w lobby.',
-            })}
-          </Text>
-        ) : duelPresence.error ? (
-          <View style={{ gap: 10 }}>
-            <Text style={{ color: '#b91c1c', lineHeight: 20 }}>
-              {duelPresence.error}
-            </Text>
-            <PrimaryButton
-              hint={copy({
-                de: 'Aktualisiert die aktiven Rivalen in der Lobby.',
-                en: 'Refreshes the active rivals in the lobby.',
-                pl: 'Odświeża aktywnych rywali w lobby.',
-              })}
-              label={copy({
-                de: 'Rivalen aktualisieren',
-                en: 'Refresh rivals',
-                pl: 'Odśwież rywali',
-              })}
-              onPress={duelPresence.refresh}
-            />
-          </View>
-        ) : duelPresence.entries.length === 0 ? (
-          <View style={{ gap: 10 }}>
-            <Text style={{ color: '#475569', lineHeight: 20 }}>
-              {copy({
-                de: 'Gerade ist niemand in der Duell-Lobby aktiv. Öffne die Lobby, um auf den nächsten Rivalen zu warten.',
-                en: 'Nobody is active in the duels lobby right now. Open the lobby to wait for the next rival.',
-                pl: 'Teraz nikt nie jest aktywny w lobby pojedynków. Otwórz lobby, aby poczekać na kolejnego rywala.',
-              })}
-            </Text>
-            <OutlineLink
-              href={DUELS_ROUTE}
-              hint={copy({
-                de: 'Öffnet die Duell-Lobby.',
-                en: 'Opens the duels lobby.',
-                pl: 'Otwiera lobby pojedynków.',
-              })}
-              label={copy({
-                de: 'Duell-Lobby öffnen',
-                en: 'Open duels lobby',
-                pl: 'Otwórz lobby pojedynków',
-              })}
-            />
-          </View>
-        ) : (
-          <View style={{ gap: 12 }}>
-            <Text style={{ color: '#475569', lineHeight: 20 }}>
-              {duelPresence.entries.some((entry) => entry.learnerId === activeDuelLearnerId)
-                ? copy({
-                    de: 'Dein Konto ist derzeit in der Lobby sichtbar. Du kannst jetzt direkt einen aktiven Rivalen privat herausfordern.',
-                    en: 'Your account is currently visible in the lobby. You can directly challenge an active rival right now.',
-                    pl: 'Twoje konto jest teraz widoczne w lobby. Możesz od razu wysłać prywatne wyzwanie aktywnemu rywalowi.',
-                  })
-                : copy({
-                    de: 'Das sind aktive Rivalen aus der Duell-Lobby. Öffne die Duell-Lobby, damit andere auch dich in dieser Liste sehen.',
-                    en: 'These are active rivals from the duels lobby. Open the duels lobby so others can also see you in this list.',
-                    pl: 'To aktywni rywale z lobby pojedynków. Otwórz lobby pojedynków, aby inni zobaczyli tu również Ciebie.',
-                  })}
-            </Text>
-            {duelPresence.actionError ? (
-              <Text style={{ color: '#b91c1c', lineHeight: 20 }}>
-                {duelPresence.actionError}
-              </Text>
-            ) : null}
-            {duelPresence.entries.map((entry) => {
-              const isCurrentLearner = entry.learnerId === activeDuelLearnerId;
-
-              return (
-                <ActiveRivalCard
-                  key={entry.learnerId}
-                  copy={copy}
-                  entry={entry}
-                  isActionPending={duelPresence.isActionPending}
-                  isCurrentLearner={isCurrentLearner}
-                  isPending={duelPresence.pendingLearnerId === entry.learnerId}
-                  locale={locale}
-                  onChallenge={
-                    isCurrentLearner
-                      ? null
-                      : async () => {
-                          const nextSessionId = await duelPresence.createPrivateChallenge(
-                            entry.learnerId,
-                          );
-                          if (nextSessionId) {
-                            openDuelSession(nextSessionId);
-                          }
-                        }
-                  }
-                />
-              );
-            })}
-            <OutlineLink
-              href={DUELS_ROUTE}
-              hint={copy({
-                de: 'Öffnet die vollständige Duell-Lobby.',
-                en: 'Opens the full duels lobby.',
-                pl: 'Otwiera pełne lobby pojedynków.',
-              })}
-              label={copy({
-                de: 'Lobby öffnen',
-                en: 'Open lobby',
-                pl: 'Otwórz lobby',
-              })}
-            />
-          </View>
-        )}
+        <AuthenticatedHomeActiveRivalsContent
+          areDeferredHomePanelsReady={areDeferredHomePanelsReady}
+          areDeferredHomeDuelAdvancedReady={areDeferredHomeDuelAdvancedReady}
+          presence={duelPresence}
+          copy={copy}
+          locale={locale}
+          onChallenge={openDuelSession}
+        />
       </SectionCard>
-
     </>
   );
 }

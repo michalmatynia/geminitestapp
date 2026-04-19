@@ -115,27 +115,40 @@ const buildAssignmentMonitoring = (
 ): KangurMobileParentAssignmentMonitoring =>
   assignments.reduce<KangurMobileParentAssignmentMonitoring>(
     (summary, assignment) => {
-      summary.totalCount += 1;
-
+      let nextHighPriorityCount = summary.highPriorityCount;
       if (assignment.priority === 'high') {
-        summary.highPriorityCount += 1;
+        nextHighPriorityCount += 1;
       }
 
+      let nextLessonCount = summary.lessonCount;
+      let nextPracticeCount = summary.practiceCount;
       if (assignment.target.type === 'lesson') {
-        summary.lessonCount += 1;
+        nextLessonCount += 1;
       } else if (assignment.target.type === 'practice') {
-        summary.practiceCount += 1;
+        nextPracticeCount += 1;
       }
+
+      let nextCompletedCount = summary.completedCount;
+      let nextInProgressCount = summary.inProgressCount;
+      let nextNotStartedCount = summary.notStartedCount;
 
       if (assignment.progress.status === 'completed') {
-        summary.completedCount += 1;
+        nextCompletedCount += 1;
       } else if (assignment.progress.status === 'in_progress') {
-        summary.inProgressCount += 1;
+        nextInProgressCount += 1;
       } else {
-        summary.notStartedCount += 1;
+        nextNotStartedCount += 1;
       }
 
-      return summary;
+      return {
+        completedCount: nextCompletedCount,
+        highPriorityCount: nextHighPriorityCount,
+        inProgressCount: nextInProgressCount,
+        lessonCount: nextLessonCount,
+        notStartedCount: nextNotStartedCount,
+        practiceCount: nextPracticeCount,
+        totalCount: summary.totalCount + 1,
+      };
     },
     {
       completedCount: 0,
@@ -261,6 +274,29 @@ export const useKangurMobileParentDashboard =
       [assignmentSnapshots],
     );
 
+    const trimmedFullName = session.user?.full_name?.trim();
+    const parentDisplayName =
+      typeof trimmedFullName === 'string' && trimmedFullName !== ''
+        ? trimmedFullName
+        : copy({
+            de: 'Elternkonto',
+            en: 'Parent account',
+            pl: 'Konto rodzica',
+          });
+
+    const isAuthorized = canAccessDashboard && selectedLearnerId !== null;
+
+    let resultsError: string | null = null;
+    if (recentResults.error instanceof Error) {
+      resultsError = copy({
+        de: 'Die Ergebnisse des Lernenden konnten nicht geladen werden.',
+        en: 'Could not load learner results.',
+        pl: 'Nie udało się pobrać wyników ucznia.',
+      });
+    } else if (typeof recentResults.error === 'string' && recentResults.error !== '') {
+      resultsError = recentResults.error;
+    }
+
     return {
       activeLearner,
       assignmentItems,
@@ -276,21 +312,15 @@ export const useKangurMobileParentDashboard =
       canAccessDashboard,
       isAuthenticated,
       isLoadingAssignments: Boolean(
-        canAccessDashboard && selectedLearnerId && assignmentsQuery.isLoading,
+        isAuthorized && assignmentsQuery.isLoading,
       ),
       isLoadingAuth,
       isLoadingProgress: Boolean(
-        canAccessDashboard && selectedLearnerId && progressQuery.isLoading,
+        isAuthorized && progressQuery.isLoading,
       ),
       isLoadingResults: recentResults.isLoading,
       learners,
-      parentDisplayName:
-        session.user?.full_name?.trim() ||
-        copy({
-          de: 'Elternkonto',
-          en: 'Parent account',
-          pl: 'Konto rodzica',
-        }),
+      parentDisplayName,
       progressError:
         progressQuery.error instanceof Error
           ? copy({
@@ -302,30 +332,21 @@ export const useKangurMobileParentDashboard =
       recentResultItems,
       refreshDashboard: async () => {
         await Promise.all([
-          canAccessDashboard && selectedLearnerId
+          isAuthorized
             ? progressQuery.refetch()
             : Promise.resolve(),
-          canAccessDashboard && selectedLearnerId
+          isAuthorized
             ? assignmentsQuery.refetch()
             : Promise.resolve(),
-          canAccessDashboard && selectedLearnerId
+          isAuthorized
             ? recentResults.refresh()
             : Promise.resolve(),
         ]);
       },
-      resultsError:
-        recentResults.error instanceof Error
-          ? copy({
-              de: 'Die Ergebnisse des Lernenden konnten nicht geladen werden.',
-              en: 'Could not load learner results.',
-              pl: 'Nie udało się pobrać wyników ucznia.',
-            })
-          : typeof recentResults.error === 'string'
-            ? recentResults.error
-            : null,
+      resultsError,
       selectLearner: async (learnerId: string) => {
         const normalizedLearnerId = learnerId.trim();
-        if (!canAccessDashboard || !normalizedLearnerId || normalizedLearnerId === selectedLearnerId) {
+        if (!canAccessDashboard || normalizedLearnerId === '' || normalizedLearnerId === selectedLearnerId) {
           return;
         }
 
@@ -341,7 +362,7 @@ export const useKangurMobileParentDashboard =
           storage.setItem(KANGUR_MOBILE_ACTIVE_LEARNER_STORAGE_KEY, normalizedLearnerId);
           await refreshSession();
         } catch {
-          if (normalizedPreviousLearnerId) {
+          if (normalizedPreviousLearnerId !== null) {
             storage.setItem(
               KANGUR_MOBILE_ACTIVE_LEARNER_STORAGE_KEY,
               normalizedPreviousLearnerId,

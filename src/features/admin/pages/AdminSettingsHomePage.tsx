@@ -25,7 +25,7 @@ type SettingsOption = {
   icon: typeof BellIcon;
   title: string;
   description: string;
-  color: string;
+  color: 'emerald' | 'blue' | 'amber' | 'violet' | 'cyan' | 'orange' | 'fuchsia';
   bgColor: string;
 };
 
@@ -175,6 +175,10 @@ const colorClasses: Record<string, { border: string; text: string }> = {
     border: 'group-hover:border-orange-500/50',
     text: 'text-orange-400',
   },
+  fuchsia: {
+    border: 'group-hover:border-fuchsia-500/50',
+    text: 'text-fuchsia-400',
+  },
 };
 
 export function AdminSettingsHomePage(): React.ReactNode {
@@ -191,7 +195,7 @@ export function AdminSettingsHomePage(): React.ReactNode {
       <NavigationCardGrid className='md:grid-cols-2'>
         {settings.map((setting: SettingsOption) => {
           const Icon = setting.icon;
-          const colors = colorClasses[setting['color']] || colorClasses['emerald']!;
+          const colors = colorClasses[setting.color];
 
           return (
             <NavigationCard

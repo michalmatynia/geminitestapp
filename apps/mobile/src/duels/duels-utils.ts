@@ -412,62 +412,50 @@ export function formatReactionLabel(
   return `${DUEL_REACTION_EMOJIS[type]} ${localizeDuelText(DUEL_REACTION_LABELS[type], locale)}`;
 }
 
+function localizeSimpleDuelText(
+  de: string,
+  en: string,
+  pl: string,
+  locale: KangurMobileLocale,
+): string {
+  if (locale === 'de') return de;
+  if (locale === 'en') return en;
+  return pl;
+}
+
 export function formatRelativeAge(isoString: string, locale: KangurMobileLocale): string {
   const parsed = Date.parse(isoString);
+  const justNow = {
+    de: 'gerade eben',
+    en: 'just now',
+    pl: 'przed chwilą',
+  };
+
   if (!Number.isFinite(parsed)) {
-    return localizeDuelText(
-      {
-        de: 'gerade eben',
-        en: 'just now',
-        pl: 'przed chwilą',
-      },
-      locale,
-    );
+    return localizeDuelText(justNow, locale);
   }
 
   const seconds = Math.max(0, Math.floor((Date.now() - parsed) / 1000));
   if (seconds < 10) {
-    return localizeDuelText(
-      {
-        de: 'gerade eben',
-        en: 'just now',
-        pl: 'przed chwilą',
-      },
-      locale,
-    );
+    return localizeDuelText(justNow, locale);
   }
+
   if (seconds < 60) {
-    return locale === 'de'
-      ? `vor ${seconds}s`
-      : locale === 'en'
-        ? `${seconds}s ago`
-        : `${seconds}s temu`;
+    return localizeSimpleDuelText(`vor ${seconds}s`, `${seconds}s ago`, `${seconds}s temu`, locale);
   }
 
   const minutes = Math.floor(seconds / 60);
   if (minutes < 60) {
-    return locale === 'de'
-      ? `vor ${minutes} Min.`
-      : locale === 'en'
-        ? `${minutes} min ago`
-        : `${minutes} min temu`;
+    return localizeSimpleDuelText(`vor ${minutes} Min.`, `${minutes} min ago`, `${minutes} min temu`, locale);
   }
 
   const hours = Math.floor(minutes / 60);
   if (hours < 24) {
-    return locale === 'de'
-      ? `vor ${hours} Std.`
-      : locale === 'en'
-        ? `${hours} hr ago`
-        : `${hours} godz. temu`;
+    return localizeSimpleDuelText(`vor ${hours} Std.`, `${hours} hr ago`, `${hours} godz. temu`, locale);
   }
 
   const days = Math.floor(hours / 24);
-  return locale === 'de'
-    ? `vor ${days} Tagen`
-    : locale === 'en'
-      ? `${days} days ago`
-      : `${days} dni temu`;
+  return localizeSimpleDuelText(`vor ${days} Tagen`, `${days} days ago`, `${days} dni temu`, locale);
 }
 
 export function formatQuestionProgress(
@@ -476,26 +464,30 @@ export function formatQuestionProgress(
   locale: KangurMobileLocale,
 ): string {
   const completed = Math.min(player.currentQuestionIndex ?? 0, session.questionCount);
-  return locale === 'de'
-    ? `${completed}/${session.questionCount} Fragen`
-    : locale === 'en'
-      ? `${completed}/${session.questionCount} questions`
-      : `${completed}/${session.questionCount} pytań`;
+  return localizeSimpleDuelText(
+    `${completed}/${session.questionCount} Fragen`,
+    `${completed}/${session.questionCount} questions`,
+    `${completed}/${session.questionCount} pytań`,
+    locale,
+  );
 }
 
 export function formatSpectatorQuestionProgress(
   session: KangurDuelSession,
   locale: KangurMobileLocale,
 ): string {
-  const currentQuestion =
-    session.status === 'in_progress'
-      ? Math.min((session.currentQuestionIndex ?? 0) + 1, session.questionCount)
-      : Math.min(session.currentQuestionIndex ?? 0, session.questionCount);
-  return locale === 'de'
-    ? `Runde ${currentQuestion}/${session.questionCount}`
-    : locale === 'en'
-      ? `Round ${currentQuestion}/${session.questionCount}`
-      : `Runda ${currentQuestion}/${session.questionCount}`;
+  let currentQuestion = session.currentQuestionIndex ?? 0;
+  if (session.status === 'in_progress') {
+    currentQuestion += 1;
+  }
+  const displayQuestion = Math.min(currentQuestion, session.questionCount);
+
+  return localizeSimpleDuelText(
+    `Runde ${displayQuestion}/${session.questionCount}`,
+    `Round ${displayQuestion}/${session.questionCount}`,
+    `Runda ${displayQuestion}/${session.questionCount}`,
+    locale,
+  );
 }
 
 export type DuelRoundProgress = {
@@ -510,16 +502,17 @@ export function resolveRoundProgress(
   isSpectating: boolean,
 ): DuelRoundProgress {
   const total = Math.max(session.questionCount, 1);
-  const current =
-    session.status === 'completed' || session.status === 'aborted'
-      ? total
-      : session.status === 'in_progress'
-        ? isSpectating
-          ? Math.min((session.currentQuestionIndex ?? 0) + 1, total)
-          : Math.min((player?.currentQuestionIndex ?? 0) + 1, total)
-        : isSpectating
-          ? Math.min(session.currentQuestionIndex ?? 0, total)
-          : Math.min(player?.currentQuestionIndex ?? 0, total);
+  let current: number;
+
+  if (session.status === 'completed' || session.status === 'aborted') {
+    current = total;
+  } else if (session.status === 'in_progress') {
+    const rawIndex = isSpectating ? (session.currentQuestionIndex ?? 0) : (player?.currentQuestionIndex ?? 0);
+    current = Math.min(rawIndex + 1, total);
+  } else {
+    const rawIndex = isSpectating ? (session.currentQuestionIndex ?? 0) : (player?.currentQuestionIndex ?? 0);
+    current = Math.min(rawIndex, total);
+  }
 
   return {
     current,
@@ -532,26 +525,27 @@ export function formatRoundProgressLabel(
   progress: DuelRoundProgress,
   locale: KangurMobileLocale,
 ): string {
-  return locale === 'de'
-    ? `Rundenfortschritt ${progress.current}/${progress.total}`
-    : locale === 'en'
-      ? `Round progress ${progress.current}/${progress.total}`
-      : `Postęp rundy ${progress.current}/${progress.total}`;
+  const progressText = `${progress.current}/${progress.total}`;
+  return localizeSimpleDuelText(
+    `Rundenfortschritt ${progressText}`,
+    `Round progress ${progressText}`,
+    `Postęp rundy ${progressText}`,
+    locale,
+  );
 }
 
 export function resolveWinnerSummary(
   players: KangurDuelPlayer[],
   locale: KangurMobileLocale,
 ): string {
-  if (!players.length) {
-    return localizeDuelText(
-      {
-        de: 'Das Duell ist beendet.',
-        en: 'The duel is finished.',
-        pl: 'Pojedynek zakończony.',
-      },
-      locale,
-    );
+  const defaultSummary = {
+    de: 'Das Duell ist beendet.',
+    en: 'The duel is finished.',
+    pl: 'Pojedynek zakończony.',
+  };
+
+  if (players.length === 0) {
+    return localizeDuelText(defaultSummary, locale);
   }
 
   const sorted = [...players].sort((left, right) => {
@@ -563,18 +557,11 @@ export function resolveWinnerSummary(
   const secondPlayer = sorted[1];
 
   if (!topPlayer) {
-    return localizeDuelText(
-      {
-        de: 'Das Duell ist beendet.',
-        en: 'The duel is finished.',
-        pl: 'Pojedynek zakończony.',
-      },
-      locale,
-    );
+    return localizeDuelText(defaultSummary, locale);
   }
 
   const topScore = topPlayer.score + (topPlayer.bonusPoints ?? 0);
-  const secondScore = secondPlayer
+  const secondScore = secondPlayer !== undefined
     ? secondPlayer.score + (secondPlayer.bonusPoints ?? 0)
     : null;
 
@@ -589,11 +576,12 @@ export function resolveWinnerSummary(
     );
   }
 
-  return locale === 'de'
-    ? `${topPlayer.displayName} gewinnt mit ${topScore} Punkten.`
-    : locale === 'en'
-      ? `${topPlayer.displayName} wins with ${topScore} points.`
-      : `Wygrywa ${topPlayer.displayName} z wynikiem ${topScore}.`;
+  return localizeSimpleDuelText(
+    `${topPlayer.displayName} gewinnt mit ${topScore} Punkten.`,
+    `${topPlayer.displayName} wins with ${topScore} points.`,
+    `Wygrywa ${topPlayer.displayName} z wynikiem ${topScore}.`,
+    locale,
+  );
 }
 
 export function formatSeriesTitle(series: KangurDuelSeries, locale: KangurMobileLocale): string {
@@ -608,11 +596,12 @@ export function formatSeriesProgress(
     series.bestOf,
     Math.max(1, series.gameIndex),
   );
-  return locale === 'de'
-    ? `Spiel ${gameIndex} von ${series.bestOf}`
-    : locale === 'en'
-      ? `Game ${gameIndex} of ${series.bestOf}`
-      : `Gra ${gameIndex} z ${series.bestOf}`;
+  return localizeSimpleDuelText(
+    `Spiel ${gameIndex} von ${series.bestOf}`,
+    `Game ${gameIndex} of ${series.bestOf}`,
+    `Gra ${gameIndex} z ${series.bestOf}`,
+    locale,
+  );
 }
 
 export function formatLobbySeriesSummary(
@@ -620,18 +609,21 @@ export function formatLobbySeriesSummary(
   locale: KangurMobileLocale,
 ): string {
   if (series.isComplete) {
-    return locale === 'de'
-      ? `Serie beendet · abgeschlossene Spiele: ${series.completedGames}`
-      : locale === 'en'
-        ? `Series complete · completed games: ${series.completedGames}`
-        : `Seria zakończona · ukończone gry: ${series.completedGames}`;
+    return localizeSimpleDuelText(
+      `Serie beendet · abgeschlossene Spiele: ${series.completedGames}`,
+      `Series complete · completed games: ${series.completedGames}`,
+      `Seria zakończona · ukończone gry: ${series.completedGames}`,
+      locale,
+    );
   }
 
-  return locale === 'de'
-    ? `${formatSeriesProgress(series, locale)} · abgeschlossene Spiele: ${series.completedGames}`
-    : locale === 'en'
-      ? `${formatSeriesProgress(series, locale)} · completed games: ${series.completedGames}`
-      : `${formatSeriesProgress(series, locale)} · ukończone gry: ${series.completedGames}`;
+  const progress = formatSeriesProgress(series, locale);
+  return localizeSimpleDuelText(
+    `${progress} · abgeschlossene Spiele: ${series.completedGames}`,
+    `${progress} · completed games: ${series.completedGames}`,
+    `${progress} · ukończone gry: ${series.completedGames}`,
+    locale,
+  );
 }
 
 export function resolveSeriesWins(
@@ -647,11 +639,12 @@ export function formatSeriesSummary(
   locale: KangurMobileLocale,
 ): string {
   if (players.length === 0) {
-    return locale === 'de'
-      ? `${series.completedGames} Spiele der Serie wurden abgeschlossen.`
-      : locale === 'en'
-        ? `${series.completedGames} games in the series have been completed.`
-        : `Ukończono ${series.completedGames} gier w serii.`;
+    return localizeSimpleDuelText(
+      `${series.completedGames} Spiele der Serie wurden abgeschlossen.`,
+      `${series.completedGames} games in the series have been completed.`,
+      `Ukończono ${series.completedGames} gier w serii.`,
+      locale,
+    );
   }
 
   const rankedPlayers = [...players].sort((left, right) => {
@@ -668,58 +661,54 @@ export function formatSeriesSummary(
   );
 
   if (!leader) {
-    return locale === 'de'
-      ? `${series.completedGames} Spiele der Serie wurden abgeschlossen.`
-      : locale === 'en'
-        ? `${series.completedGames} games in the series have been completed.`
-        : `Ukończono ${series.completedGames} gier w serii.`;
+    return localizeSimpleDuelText(
+      `${series.completedGames} Spiele der Serie wurden abgeschlossen.`,
+      `${series.completedGames} games in the series have been completed.`,
+      `Ukończono ${series.completedGames} gier w serii.`,
+      locale,
+    );
   }
 
   const leaderWins = resolveSeriesWins(series, leader.learnerId);
-  const challengerWins = challenger
+  const challengerWins = challenger !== undefined
     ? resolveSeriesWins(series, challenger.learnerId)
     : 0;
 
   if (series.isComplete) {
-    if (challenger && challengerWins === leaderWins) {
-      return locale === 'de'
-        ? `Die Serie endete unentschieden ${leaderWins}:${challengerWins}.`
-        : locale === 'en'
-          ? `The series ended in a ${leaderWins}:${challengerWins} draw.`
-          : `Seria zakończona remisem ${leaderWins}:${challengerWins}.`;
+    if (challenger !== undefined && challengerWins === leaderWins) {
+      return localizeSimpleDuelText(
+        `Die Serie endete unentschieden ${leaderWins}:${challengerWins}.`,
+        `The series ended in a ${leaderWins}:${challengerWins} draw.`,
+        `Seria zakończona remisem ${leaderWins}:${challengerWins}.`,
+        locale,
+      );
     }
 
-    return locale === 'de'
-      ? `${leader.displayName} gewinnt die Serie ${leaderWins}:${challengerWins}.`
-      : locale === 'en'
-        ? `${leader.displayName} wins the series ${leaderWins}:${challengerWins}.`
-        : `Serię wygrywa ${leader.displayName} ${leaderWins}:${challengerWins}.`;
+    return localizeSimpleDuelText(
+      `${leader.displayName} gewinnt die Serie ${leaderWins}:${challengerWins}.`,
+      `${leader.displayName} wins the series ${leaderWins}:${challengerWins}.`,
+      `Serię wygrywa ${leader.displayName} ${leaderWins}:${challengerWins}.`,
+      locale,
+    );
   }
 
   if (leaderWins === 0 && challengerWins === 0) {
     return localizeDuelText(
       {
-        de: 'Das erste Spiel der Serie ist noch nicht entschieden.',
-        en: 'The first game of the series is still undecided.',
-        pl: 'Pierwsza gra serii jeszcze się nie rozstrzygnęła.',
+        de: 'Die Serie hat gerade erst begonnen.',
+        en: 'The series has just started.',
+        pl: 'Seria dopiero się zaczęła.',
       },
       locale,
     );
   }
 
-  if (challenger && challengerWins === leaderWins) {
-    return locale === 'de'
-      ? `Die Serie steht ${leaderWins}:${challengerWins} unentschieden.`
-      : locale === 'en'
-        ? `The series is tied ${leaderWins}:${challengerWins}.`
-        : `Seria jest remisowa ${leaderWins}:${challengerWins}.`;
-  }
-
-  return locale === 'de'
-    ? `${leader.displayName} führt ${leaderWins}:${challengerWins}.`
-    : locale === 'en'
-      ? `${leader.displayName} leads ${leaderWins}:${challengerWins}.`
-      : `Prowadzi ${leader.displayName} ${leaderWins}:${challengerWins}.`;
+  return localizeSimpleDuelText(
+    `${leader.displayName} führt in der Serie ${leaderWins}:${challengerWins}.`,
+    `${leader.displayName} leads the series ${leaderWins}:${challengerWins}.`,
+    `${leader.displayName} prowadzi w serii ${leaderWins}:${challengerWins}.`,
+    locale,
+  );
 }
 
 export function resolveSessionIdParam(value: string | string[] | undefined): string | null {

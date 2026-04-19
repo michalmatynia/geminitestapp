@@ -56,7 +56,7 @@ describe('TraderaStatusButton', () => {
     );
 
     const button = screen.getByRole('button', {
-      name: 'Tradera listing disabled by Market Exclusion (ended).',
+      name: 'Tradera listing disabled (ended).',
     });
 
     expect(button).toBeDisabled();
@@ -64,6 +64,37 @@ describe('TraderaStatusButton', () => {
     expect(button.className).toContain('disabled:border-slate-700/35');
     expect(button.className).toContain('bg-slate-950/40');
     expect(button.className).toContain('text-slate-500');
+
+    fireEvent.mouseEnter(button);
+    fireEvent.focus(button);
+    fireEvent.click(button);
+
+    expect(prefetchListings).not.toHaveBeenCalled();
+    expect(onOpenListings).not.toHaveBeenCalled();
+  });
+
+  it('disables ended Tradera status actions even before custom fields are refreshed into the list row', () => {
+    useCustomFieldsMock.mockReturnValue({ data: [], isLoading: false });
+
+    const onOpenListings = vi.fn();
+    const prefetchListings = vi.fn();
+
+    render(
+      <TraderaStatusButton
+        productId='product-1'
+        status='ended'
+        prefetchListings={prefetchListings}
+        onOpenListings={onOpenListings}
+      />
+    );
+
+    const button = screen.getByRole('button', {
+      name: 'Tradera listing disabled (ended).',
+    });
+
+    expect(button).toBeDisabled();
+    expect(button.className).toContain('disabled:opacity-40');
+    expect(button.className).toContain('bg-slate-950/40');
 
     fireEvent.mouseEnter(button);
     fireEvent.focus(button);

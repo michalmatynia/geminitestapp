@@ -35,6 +35,7 @@ export function TraderaStatusButton(props: {
     serverStatus: normalizedStatus,
     localFeedbackStatus: persistedFeedback?.status ?? null,
   });
+  const isEndedStatus = effectiveStatus === 'ended';
   const isTraderaMarketplaceExcluded = hasProductMarketplaceExclusionSelection({
     customFieldDefinitions: customFieldsQuery.data,
     customFieldValues,
@@ -50,13 +51,13 @@ export function TraderaStatusButton(props: {
         connectionId: persistedFeedback?.connectionId ?? null,
       })
     : undefined;
-  const label = isTraderaMarketplaceExcluded
-    ? `Tradera listing disabled by Market Exclusion (${effectiveStatus}).`
+  const disableStatusAction = isTraderaMarketplaceExcluded || isEndedStatus;
+  const label = disableStatusAction
+    ? `Tradera listing disabled (${effectiveStatus}).`
     : isEffectiveFailureState
       ? `Open Tradera recovery options (${effectiveStatus}).`
       : `Manage Tradera listing (${effectiveStatus}).`;
-  const disableStatusAction = isTraderaMarketplaceExcluded;
-  const resolvedToneClass = isTraderaMarketplaceExcluded
+  const resolvedToneClass = disableStatusAction
     ? 'border-slate-700/35 bg-slate-950/40 text-slate-500 hover:border-slate-700/35 hover:bg-slate-950/40 hover:text-slate-500'
     : getMarketplaceButtonClass(effectiveStatus, true, 'tradera');
 
@@ -75,7 +76,13 @@ export function TraderaStatusButton(props: {
       size='icon'
       disabled={disableStatusAction}
       aria-label={label}
-      title={label}
+      title={
+        isTraderaMarketplaceExcluded
+          ? 'Tradera listing is disabled because Market Exclusion -> Tradera is checked.'
+          : isEndedStatus
+            ? 'Tradera listing is disabled because the latest listing status is ended.'
+            : label
+      }
       className={cn(
         'size-8 rounded-full border border-transparent bg-transparent p-0 hover:bg-transparent',
         resolvedToneClass,

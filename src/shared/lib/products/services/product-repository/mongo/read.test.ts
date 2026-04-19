@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { buildListProjectStage, mongoProductReadImpl } from './read';
 
 describe('buildListProjectStage', () => {
-  it('includes parameters in the paged list projection when SKU filtering is not used', () => {
+  it('includes parameters and custom fields in the paged list projection when SKU filtering is not used', () => {
     const stage = buildListProjectStage({});
 
     expect(stage).not.toBeNull();
@@ -16,6 +16,7 @@ describe('buildListProjectStage', () => {
         name_en: '$category.name_en',
       },
       parameters: 1,
+      customFields: 1,
       notes: 1,
       name_en: 1,
       name_pl: 1,

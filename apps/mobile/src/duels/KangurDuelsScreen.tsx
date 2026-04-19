@@ -25,6 +25,47 @@ import { useKangurMobileDuelLobbyChat } from './useKangurMobileDuelLobbyChat';
 import { useKangurMobileDuelSession } from './useKangurMobileDuelSession';
 import { useKangurMobileDuelsLobby } from './useKangurMobileDuelsLobby';
 
+type DuelsScreenHeroProps = {
+  copy: ReturnType<typeof useKangurMobileI18n>['copy'];
+  isLoadingAuth: boolean;
+  isAuthenticated: boolean;
+  learnerName: string | null;
+};
+
+function DuelsScreenHero({
+  copy,
+  isLoadingAuth,
+  isAuthenticated,
+  learnerName,
+}: DuelsScreenHeroProps): React.JSX.Element {
+  let heroText = '';
+  if (isLoadingAuth && !isAuthenticated) {
+    heroText = copy({
+      de: 'Wir stellen gerade die Duell-Lobby und deine letzten Herausforderungen wieder her.',
+      en: 'We are restoring the duels lobby and your recent challenges.',
+      pl: 'Przywracamy teraz lobby pojedynków i Twoje ostatnie wyzwania.',
+    });
+  } else if (isAuthenticated && learnerName !== null && learnerName !== '') {
+    heroText = copy({
+      de: `Willkommen in der Lobby, ${learnerName}. Tritt einem öffentlichen Spiel bei, starte ein schnelles Match oder fordere einen Rivalen privat heraus.`,
+      en: `Welcome to the lobby, ${learnerName}. Join a public game, start a quick match, or challenge a rival privately.`,
+      pl: `Witaj w lobby, ${learnerName}. Dołącz do publicznej gry, wystartuj w szybkim meczu albo wyzwij rywala prywatnie.`,
+    });
+  } else {
+    heroText = copy({
+      de: 'Tritt einem öffentlichen Spiel bei oder starte ein schnelles Match. Nach der Anmeldung kannst du auch private Herausforderungen senden und deinen Duellstand verfolgen.',
+      en: 'Join a public game or start a quick match. After sign-in, you can also send private challenges and track your duel standing.',
+      pl: 'Dołącz do publicznej gry albo wystartuj w szybkim meczu. Po zalogowaniu możesz też wysyłać prywatne wyzwania i śledzić swój stan pojedynków.',
+    });
+  }
+
+  return (
+    <Text style={{ color: '#475569', fontSize: 16, lineHeight: 24 }}>
+      {heroText}
+    </Text>
+  );
+}
+
 export function KangurDuelsScreen(): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
   const params = useLocalSearchParams<{
@@ -79,118 +120,135 @@ export function KangurDuelsScreen(): React.JSX.Element {
       });
   const trimmedSearchQuery = lobby.searchQuery.trim();
   const trimmedSearchSubmittedQuery = lobby.searchSubmittedQuery.trim();
-  const searchStatusTone: Tone = lobby.isSearchLoading
-    ? {
-        backgroundColor: '#fffbeb',
-        borderColor: '#fde68a',
-        textColor: '#b45309',
-      }
-    : trimmedSearchSubmittedQuery.length >= 2 || trimmedSearchQuery.length >= 2
-      ? {
-          backgroundColor: '#eff6ff',
-          borderColor: '#bfdbfe',
-          textColor: '#1d4ed8',
-        }
-      : {
-          backgroundColor: '#f8fafc',
-          borderColor: '#cbd5e1',
-          textColor: '#475569',
-        };
-  const searchStatusLabel = lobby.isSearchLoading
-    ? copy({
-        de: 'Suche läuft',
-        en: 'Searching',
-        pl: 'Trwa wyszukiwanie',
-      })
-    : trimmedSearchSubmittedQuery.length >= 2
-      ? copy({
-          de: `Suche: ${trimmedSearchSubmittedQuery}`,
-          en: `Search: ${trimmedSearchSubmittedQuery}`,
-          pl: `Szukano: ${trimmedSearchSubmittedQuery}`,
-        })
-      : trimmedSearchQuery.length >= 2
-        ? copy({
-            de: `Bereit: ${trimmedSearchQuery}`,
-            en: `Ready: ${trimmedSearchQuery}`,
-            pl: `Gotowe: ${trimmedSearchQuery}`,
-          })
-        : lobby.isAuthenticated
-          ? copy({
-              de: 'Mindestens 2 Zeichen',
-              en: 'At least 2 characters',
-              pl: 'Co najmniej 2 znaki',
-            })
-          : copy({
-              de: 'Anmeldung erforderlich',
-              en: 'Sign-in required',
-              pl: 'Wymaga logowania',
-            });
-  const hasWaitingSession = duel.session
-    ? isWaitingSessionStatus(duel.session.status)
-    : false;
-  const isFinishedSession = duel.session
-    ? duel.session.status === 'completed' || duel.session.status === 'aborted'
-    : false;
-  const roundProgress = duel.session
+
+  let searchStatusTone: Tone = {
+    backgroundColor: '#f8fafc',
+    borderColor: '#cbd5e1',
+    textColor: '#475569',
+  };
+
+  if (lobby.isSearchLoading) {
+    searchStatusTone = {
+      backgroundColor: '#fffbeb',
+      borderColor: '#fde68a',
+      textColor: '#b45309',
+    };
+  } else if (trimmedSearchSubmittedQuery.length >= 2 || trimmedSearchQuery.length >= 2) {
+    searchStatusTone = {
+      backgroundColor: '#eff6ff',
+      borderColor: '#bfdbfe',
+      textColor: '#1d4ed8',
+    };
+  }
+
+  let searchStatusLabel = '';
+  if (lobby.isSearchLoading) {
+    searchStatusLabel = copy({
+      de: 'Suche läuft',
+      en: 'Searching',
+      pl: 'Trwa wyszukiwanie',
+    });
+  } else if (trimmedSearchSubmittedQuery.length >= 2) {
+    searchStatusLabel = copy({
+      de: `Suche: ${trimmedSearchSubmittedQuery}`,
+      en: `Search: ${trimmedSearchSubmittedQuery}`,
+      pl: `Szukano: ${trimmedSearchSubmittedQuery}`,
+    });
+  } else if (trimmedSearchQuery.length >= 2) {
+    searchStatusLabel = copy({
+      de: `Bereit: ${trimmedSearchQuery}`,
+      en: `Ready: ${trimmedSearchQuery}`,
+      pl: `Gotowe: ${trimmedSearchQuery}`,
+    });
+  } else if (lobby.isAuthenticated) {
+    searchStatusLabel = copy({
+      de: 'Mindestens 2 Zeichen',
+      en: 'At least 2 characters',
+      pl: 'Co najmniej 2 znaki',
+    });
+  } else {
+    searchStatusLabel = copy({
+      de: 'Anmeldung erforderlich',
+      en: 'Sign-in required',
+      pl: 'Wymaga logowania',
+    });
+  }
+
+  const hasWaitingSession = duel.session !== null && isWaitingSessionStatus(duel.session.status);
+  const isFinishedSession = duel.session !== null && (duel.session.status === 'completed' || duel.session.status === 'aborted');
+  const roundProgress = duel.session !== null
     ? resolveRoundProgress(duel.session, duel.player, duel.isSpectating)
     : null;
   const activePlayersCount =
     duel.session?.players.filter((player) => player.status !== 'left').length ?? 0;
   const hasPendingInvitedPlayer =
     duel.session?.players.some((player) => player.status === 'invited') ?? false;
-  const isInvitedLearnerMissing = duel.session?.invitedLearnerId
-    ? !duel.session.players.some(
-        (player) =>
-          player.learnerId === duel.session?.invitedLearnerId &&
-          player.status !== 'left',
-      )
-    : false;
-  const needsMorePlayersToStart = duel.session
-    ? activePlayersCount < (duel.session.minPlayersToStart ?? 2)
-    : false;
+
+  let isInvitedLearnerMissing = false;
+  if (duel.session?.invitedLearnerId !== null && duel.session?.invitedLearnerId !== undefined) {
+    const invitedId = duel.session.invitedLearnerId;
+    isInvitedLearnerMissing = !duel.session.players.some(
+      (player) =>
+        player.learnerId === invitedId &&
+        player.status !== 'left',
+    );
+  }
+
+  const needsMorePlayersToStart = duel.session !== null && activePlayersCount < (duel.session.minPlayersToStart ?? 2);
   const canShareInvite = Boolean(
-    duel.session &&
-      duel.player &&
+    duel.session !== null &&
+      duel.player !== null &&
       !duel.isSpectating &&
       duel.session.visibility === 'private' &&
       hasWaitingSession &&
       (hasPendingInvitedPlayer || isInvitedLearnerMissing || needsMorePlayersToStart),
   );
+
+  const rawInviteeName = duel.session?.invitedLearnerName?.trim();
   const inviteeName =
-    duel.session?.invitedLearnerName?.trim() ||
-    copy({
-      de: 'der zweiten Person',
-      en: 'the other player',
-      pl: 'drugiej osoby',
-    });
-  const sessionTimelineItems = duel.session
-    ? [
+    typeof rawInviteeName === 'string' && rawInviteeName !== ''
+      ? rawInviteeName
+      : copy({
+          de: 'der zweiten Person',
+          en: 'the other player',
+          pl: 'drugiej osoby',
+        });
+
+  const sessionTimelineItems: string[] = [];
+  if (duel.session !== null) {
+    sessionTimelineItems.push(
+      copy({
+        de: `Erstellt ${formatKangurMobileScoreDateTime(duel.session.createdAt, locale)}`,
+        en: `Created ${formatKangurMobileScoreDateTime(duel.session.createdAt, locale)}`,
+        pl: `Utworzono ${formatKangurMobileScoreDateTime(duel.session.createdAt, locale)}`,
+      }),
+    );
+    if (duel.session.startedAt !== null) {
+      sessionTimelineItems.push(
         copy({
-          de: `Erstellt ${formatKangurMobileScoreDateTime(duel.session.createdAt, locale)}`,
-          en: `Created ${formatKangurMobileScoreDateTime(duel.session.createdAt, locale)}`,
-          pl: `Utworzono ${formatKangurMobileScoreDateTime(duel.session.createdAt, locale)}`,
+          de: `Gestartet ${formatKangurMobileScoreDateTime(duel.session.startedAt, locale)}`,
+          en: `Started ${formatKangurMobileScoreDateTime(duel.session.startedAt, locale)}`,
+          pl: `Rozpoczęto ${formatKangurMobileScoreDateTime(duel.session.startedAt, locale)}`,
         }),
-        duel.session.startedAt
-          ? copy({
-              de: `Gestartet ${formatKangurMobileScoreDateTime(duel.session.startedAt, locale)}`,
-              en: `Started ${formatKangurMobileScoreDateTime(duel.session.startedAt, locale)}`,
-              pl: `Rozpoczęto ${formatKangurMobileScoreDateTime(duel.session.startedAt, locale)}`,
-            })
-          : null,
+      );
+    }
+    sessionTimelineItems.push(
+      copy({
+        de: `Zuletzt aktualisiert ${formatKangurMobileScoreDateTime(duel.session.updatedAt, locale)}`,
+        en: `Last updated ${formatKangurMobileScoreDateTime(duel.session.updatedAt, locale)}`,
+        pl: `Ostatnia aktualizacja ${formatKangurMobileScoreDateTime(duel.session.updatedAt, locale)}`,
+      }),
+    );
+    if (duel.session.endedAt !== null) {
+      sessionTimelineItems.push(
         copy({
-          de: `Zuletzt aktualisiert ${formatKangurMobileScoreDateTime(duel.session.updatedAt, locale)}`,
-          en: `Last updated ${formatKangurMobileScoreDateTime(duel.session.updatedAt, locale)}`,
-          pl: `Ostatnia aktualizacja ${formatKangurMobileScoreDateTime(duel.session.updatedAt, locale)}`,
+          de: `Beendet ${formatKangurMobileScoreDateTime(duel.session.endedAt, locale)}`,
+          en: `Ended ${formatKangurMobileScoreDateTime(duel.session.endedAt, locale)}`,
+          pl: `Zakończenie ${formatKangurMobileScoreDateTime(duel.session.endedAt, locale)}`,
         }),
-        duel.session.endedAt
-          ? copy({
-              de: `Beendet ${formatKangurMobileScoreDateTime(duel.session.endedAt, locale)}`,
-              en: `Ended ${formatKangurMobileScoreDateTime(duel.session.endedAt, locale)}`,
-              pl: `Zakończenie ${formatKangurMobileScoreDateTime(duel.session.endedAt, locale)}`,
-            })
-          : null,
-      ].filter((item): item is string => Boolean(item))
-    : [];
+      );
+    }
+  }
 
   const createLoginCallToAction = (label: string): React.JSX.Element =>
     supportsLearnerCredentials ? (
@@ -301,8 +359,12 @@ export function KangurDuelsScreen(): React.JSX.Element {
     }
   };
 
+  const handleJoinSessionFromRoute = (): void => {
+    void joinSessionFromRoute();
+  };
+
   useEffect(() => {
-    if (!joinSessionId || routeSessionId || isSpectatingRoute) {
+    if (joinSessionId === null || routeSessionId !== null || isSpectatingRoute) {
       return;
     }
 
@@ -315,7 +377,7 @@ export function KangurDuelsScreen(): React.JSX.Element {
     }
 
     attemptedJoinSessionIdRef.current = joinSessionId;
-    void joinSessionFromRoute();
+    handleJoinSessionFromRoute();
   }, [
     isSpectatingRoute,
     joinSessionId,
@@ -324,14 +386,18 @@ export function KangurDuelsScreen(): React.JSX.Element {
     routeSessionId,
   ]);
 
+  const handleLobbyRefresh = (): void => {
+    void lobby.refresh();
+  };
+
   useEffect(() => {
     if (!autoRefreshEnabled) {
       return undefined;
     }
 
-    void lobby.refresh();
+    handleLobbyRefresh();
     const intervalId = setInterval(() => {
-      void lobby.refresh();
+      handleLobbyRefresh();
     }, AUTO_REFRESH_INTERVAL_MS);
 
     return () => {

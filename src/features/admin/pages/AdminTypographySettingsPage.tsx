@@ -24,6 +24,108 @@ const APP_FONT_SET_OPTIONS: Array<LabeledOptionWithDescriptionDto<AppFontSetId>>
   })
 );
 
+function TypographyPageShell({
+  children,
+}: {
+  children: React.ReactNode;
+}): React.JSX.Element {
+  return (
+    <AdminSettingsPageLayout
+      title='Typography'
+      current='Typography'
+      description='Choose an app-wide font set. Fonts are served locally from public/fonts.'
+    >
+      {children}
+    </AdminSettingsPageLayout>
+  );
+}
+
+function TypographyPreview({ current }: { current: ReturnType<typeof getAppFontSet> }): React.JSX.Element {
+  return (
+    <FormSection title='Preview' className='sticky top-6 space-y-4 p-6'>
+      <FormSection variant='subtle-compact' className='p-4'>
+        <Hint uppercase className='mb-2'>
+          Headings
+        </Hint>
+        <div className='space-y-2'>
+          <h3 className='text-xl font-semibold text-white'>Edit Product</h3>
+          <h4 className='text-base font-semibold text-white'>Product Settings</h4>
+        </div>
+      </FormSection>
+
+      <FormSection variant='subtle-compact' className='p-4'>
+        <Hint uppercase className='mb-2'>
+          Body
+        </Hint>
+        <p className='text-sm text-gray-200'>
+          The quick brown fox jumps over the lazy dog. 0123456789.
+        </p>
+      </FormSection>
+
+      <FormSection variant='subtle-compact' className='space-y-2 p-4 text-xs text-gray-300'>
+        <MetadataItem label='Selected' value={current.id} mono variant='minimal' />
+        <MetadataItem label='Heading' value={current.heading} mono variant='minimal' />
+        <MetadataItem label='Body' value={current.body} mono variant='minimal' />
+      </FormSection>
+
+      <Hint
+        variant='info'
+        className='rounded-md border border-blue-500/20 bg-blue-500/5 p-3 italic'
+        size='xs'
+      >
+        Tip: If a font file is missing, the app silently falls back to system fonts.
+      </Hint>
+    </FormSection>
+  );
+}
+
+type TypographySettingsFormProps = {
+  isDirty: boolean;
+  isSaving: boolean;
+  onCancel: () => void;
+  onSave: () => void;
+  selected: AppFontSetId;
+  setSelected: (value: AppFontSetId) => void;
+};
+
+function TypographySettingsForm({
+  isDirty,
+  isSaving,
+  onCancel,
+  onSave,
+  selected,
+  setSelected,
+}: TypographySettingsFormProps): React.JSX.Element {
+  return (
+    <FormSection title='Typography Settings' className='p-6'>
+      <FormField
+        label='Font set'
+        description='Fonts are defined in src/app/fonts.css and loaded from public/fonts.'
+      >
+        <SelectSimple
+          size='sm'
+          value={selected}
+          onValueChange={(val: string) => setSelected(val as AppFontSetId)}
+          options={APP_FONT_SET_OPTIONS}
+          placeholder='Select a font set'
+          ariaLabel='Select a font set'
+          title='Select a font set'
+        />
+      </FormField>
+
+      <FormActions
+        onSave={onSave}
+        onCancel={onCancel}
+        saveText='Save Settings'
+        cancelText='Reset'
+        isDisabled={!isDirty || isSaving}
+        isSaving={isSaving}
+        className='justify-start border-t border-border pt-6'
+      />
+    </FormSection>
+  );
+}
+
 export function AdminTypographySettingsPage(): React.JSX.Element {
   const { toast } = useToast();
   const settingsQuery = useSettingsMap();
@@ -52,7 +154,9 @@ export function AdminTypographySettingsPage(): React.JSX.Element {
           logClientError(error, {
             context: { source: 'AdminTypographySettingsPage', action: 'save' },
           });
-          toast(error.message || 'Failed to save typography settings', { variant: 'error' });
+          const errorMessage =
+            error.message !== '' ? error.message : 'Failed to save typography settings';
+          toast(errorMessage, { variant: 'error' });
         },
       }
     );
@@ -60,87 +164,30 @@ export function AdminTypographySettingsPage(): React.JSX.Element {
 
   if (settingsQuery.isLoading || !settingsQuery.data) {
     return (
-      <AdminSettingsPageLayout
-        title='Typography'
-        current='Typography'
-        description='Choose an app-wide font set. Fonts are served locally from public/fonts.'
-      >
+      <TypographyPageShell>
         <LoadingState message='Loading typography settings...' />
-      </AdminSettingsPageLayout>
+      </TypographyPageShell>
     );
   }
 
   return (
-    <AdminSettingsPageLayout
-      title='Typography'
-      current='Typography'
-      description='Choose an app-wide font set. Fonts are served locally from public/fonts.'
-    >
+    <TypographyPageShell>
       <div className={`${UI_GRID_ROOMY_CLASSNAME} lg:grid-cols-3`}>
-        <div className='lg:col-span-2 space-y-6'>
-          <FormSection title='Typography Settings' className='p-6'>
-            <FormField
-              label='Font set'
-              description='Fonts are defined in src/app/fonts.css and loaded from public/fonts.'
-            >
-              <SelectSimple
-                size='sm'
-                value={selected}
-                onValueChange={(val: string) => setSelected(val as AppFontSetId)}
-                options={APP_FONT_SET_OPTIONS}
-                placeholder='Select a font set'
-               ariaLabel='Select a font set' title='Select a font set'/>
-            </FormField>
-
-            <FormActions
-              onSave={handleSave}
-              onCancel={() => setSelected(storedId)}
-              saveText='Save Settings'
-              cancelText='Reset'
-              isDisabled={!isDirty || updateSetting.isPending}
-              isSaving={updateSetting.isPending}
-              className='border-t border-border pt-6 justify-start'
-            />
-          </FormSection>
+        <div className='space-y-6 lg:col-span-2'>
+          <TypographySettingsForm
+            isDirty={isDirty}
+            isSaving={updateSetting.isPending}
+            onCancel={() => setSelected(storedId)}
+            onSave={handleSave}
+            selected={selected}
+            setSelected={setSelected}
+          />
         </div>
 
         <div>
-          <FormSection title='Preview' className='sticky top-6 p-6 space-y-4'>
-            <FormSection variant='subtle-compact' className='p-4'>
-              <Hint uppercase className='mb-2'>
-                Headings
-              </Hint>
-              <div className='space-y-2'>
-                <h3 className='text-xl font-semibold text-white'>Edit Product</h3>
-                <h4 className='text-base font-semibold text-white'>Product Settings</h4>
-              </div>
-            </FormSection>
-
-            <FormSection variant='subtle-compact' className='p-4'>
-              <Hint uppercase className='mb-2'>
-                Body
-              </Hint>
-              <p className='text-sm text-gray-200'>
-                The quick brown fox jumps over the lazy dog. 0123456789.
-              </p>
-            </FormSection>
-
-            <FormSection variant='subtle-compact' className='p-4 text-xs text-gray-300 space-y-2'>
-              <MetadataItem label='Selected' value={current.id} mono variant='minimal' />
-              <MetadataItem label='Heading' value={current.heading} mono variant='minimal' />
-              <MetadataItem label='Body' value={current.body} mono variant='minimal' />
-            </FormSection>
-
-            <Hint
-              variant='info'
-              className='rounded-md border border-blue-500/20 bg-blue-500/5 p-3 italic'
-              size='xs'
-            >
-              Tip: If a font file is missing, the app silently falls back to system fonts.
-            </Hint>
-          </FormSection>
+          <TypographyPreview current={current} />
         </div>
       </div>
-    </AdminSettingsPageLayout>
+    </TypographyPageShell>
   );
 }

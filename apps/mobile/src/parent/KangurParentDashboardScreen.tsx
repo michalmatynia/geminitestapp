@@ -71,36 +71,71 @@ export function KangurParentDashboardScreen(): React.JSX.Element {
   const activeAssignmentCount =
     dashboard.assignmentMonitoring.notStartedCount +
     dashboard.assignmentMonitoring.inProgressCount;
-  const activeTabDescription =
-    activeTab === 'progress'
-      ? copy({
-          de: 'Prüfe Level, Serie und Tagesziel des ausgewählten Lernenden.',
-          en: 'Review the selected learner level, streak, and daily goal.',
-          pl: 'Sprawdź poziom, serię i cel dnia wybranego ucznia.',
-        })
-      : activeTab === 'results'
-        ? copy({
-            de: 'Prüfe die neuesten Ergebnisse und öffne bei Bedarf den vollständigen Verlauf.',
-            en: 'Review the latest results and open the full history when needed.',
-            pl: 'Przejrzyj najnowsze wyniki i otwórz pełną historię, gdy będzie potrzebna.',
-          })
-        : activeTab === 'assignments'
-          ? copy({
-              de: 'Öffne aktuelle Prioritäten und springe direkt in Lektionen oder Training.',
-              en: 'Open current priorities and jump straight into lessons or practice.',
-              pl: 'Otwórz bieżące priorytety i przejdź od razu do lekcji albo treningu.',
-            })
-          : activeTab === 'monitoring'
-            ? copy({
-                de: 'Vergleiche den Status aktueller Aufgaben und prüfe, wo Lernende Unterstützung brauchen.',
-                en: 'Compare current assignment status and see where learners need support.',
-                pl: 'Porównaj status bieżących zadań i sprawdź, gdzie uczeń potrzebuje wsparcia.',
-              })
-            : copy({
-                de: 'Öffne den aktuellen AI-Tutor-Kontext des ausgewählten Lernenden.',
-                en: 'Open the current tutor context for the selected learner.',
-                pl: 'Otwórz bieżący kontekst AI Tutora dla wybranego ucznia.',
-              });
+
+  let activeTabDescription = copy({
+    de: 'Öffne den aktuellen AI-Tutor-Kontext des ausgewählten Lernenden.',
+    en: 'Open the current tutor context for the selected learner.',
+    pl: 'Otwórz bieżący kontekst AI Tutora dla wybranego ucznia.',
+  });
+
+  if (activeTab === 'progress') {
+    activeTabDescription = copy({
+      de: 'Prüfe Level, Serie und Tagesziel des ausgewählten Lernenden.',
+      en: 'Review the selected learner level, streak, and daily goal.',
+      pl: 'Sprawdź poziom, serię i cel dnia wybranego ucznia.',
+    });
+  } else if (activeTab === 'results') {
+    activeTabDescription = copy({
+      de: 'Prüfe die neuesten Ergebnisse und öffne bei Bedarf den vollständigen Verlauf.',
+      en: 'Review the latest results and open the full history when needed.',
+      pl: 'Przejrzyj najnowsze wyniki i otwórz pełną historię, gdy będzie potrzebna.',
+    });
+  } else if (activeTab === 'assignments') {
+    activeTabDescription = copy({
+      de: 'Öffne aktuelle Prioritäten und springe direkt in Lektionen oder Training.',
+      en: 'Open current priorities and jump straight into lessons or practice.',
+      pl: 'Otwórz bieżące priorytety i przejdź od razu do lekcji albo treningu.',
+    });
+  } else if (activeTab === 'monitoring') {
+    activeTabDescription = copy({
+      de: 'Vergleiche den Status aktueller Aufgaben und prüfe, wo Lernende Unterstützung brauchen.',
+      en: 'Compare current assignment status and see where learners need support.',
+      pl: 'Porównaj status bieżących zadań i sprawdź, gdzie uczeń potrzebuje wsparcia.',
+    });
+  }
+
+  let dashboardDescription = '';
+  if (dashboard.isLoadingAuth && !dashboard.isAuthenticated) {
+    dashboardDescription = copy({
+      de: 'Wir stellen die Eltern-Anmeldung und den zuletzt gewählten Lernenden wieder her.',
+      en: 'Restoring the parent sign-in and the last selected learner.',
+      pl: 'Przywracamy logowanie rodzica i ostatnio wybranego ucznia.',
+    });
+  } else if (!dashboard.isAuthenticated) {
+    dashboardDescription = copy({
+      de: 'Melde dich mit einem Elternkonto an, um Lernende zu wechseln, Fortschritt zu prüfen und Aufgaben zu ordnen.',
+      en: 'Sign in to a parent account to switch learners, review progress, and organise assignments.',
+      pl: 'Zaloguj się na konto rodzica, aby przełączać uczniów, sprawdzać postęp i porządkować zadania.',
+    });
+  } else if (!dashboard.canAccessDashboard) {
+    dashboardDescription = copy({
+      de: 'Dieser Bereich ist für Elternkonten gedacht, die Lernprofiles verwalten können.',
+      en: 'This space is reserved for parent accounts that can manage learner profiles.',
+      pl: 'To miejsce jest przeznaczone dla kont rodzica, które mogą zarządzać profilami uczniów.',
+    });
+  } else if (dashboard.activeLearner !== null) {
+    dashboardDescription = copy({
+      de: `Du beobachtest gerade ${dashboard.activeLearner.displayName}. Von hier aus kannst du Lernende wechseln und Fortschritt, Ergebnisse sowie aktive Aufgaben prüfen.`,
+      en: `You are currently reviewing ${dashboard.activeLearner.displayName}. From here you can switch learners and check progress, results, and active assignments.`,
+      pl: `Aktualnie obserwujesz ${dashboard.activeLearner.displayName}. Stąd możesz szybko przełączyć ucznia i sprawdzić jego postęp, wyniki oraz aktywne zadania.`,
+    });
+  } else {
+    dashboardDescription = copy({
+      de: 'Wähle einen Lernenden aus, um Fortschritt, Ergebnisse und aktive Aufgaben zu sehen.',
+      en: 'Pick a learner to see their progress, results, and active assignments.',
+      pl: 'Wybierz ucznia, aby zobaczyć jego postęp, wyniki i aktywne zadania.',
+    });
+  }
 
   return (
     <KangurMobileScrollScreen
@@ -137,35 +172,7 @@ export function KangurParentDashboardScreen(): React.JSX.Element {
               })}
             </Text>
             <Text style={{ color: '#475569', fontSize: 15, lineHeight: 22 }}>
-              {dashboard.isLoadingAuth && !dashboard.isAuthenticated
-                ? copy({
-                    de: 'Wir stellen die Eltern-Anmeldung und den zuletzt gewählten Lernenden wieder her.',
-                    en: 'Restoring the parent sign-in and the last selected learner.',
-                    pl: 'Przywracamy logowanie rodzica i ostatnio wybranego ucznia.',
-                  })
-                : !dashboard.isAuthenticated
-                  ? copy({
-                      de: 'Melde dich mit einem Elternkonto an, um Lernende zu wechseln, Fortschritt zu prüfen und Aufgaben zu ordnen.',
-                      en: 'Sign in to a parent account to switch learners, review progress, and organise assignments.',
-                      pl: 'Zaloguj się na konto rodzica, aby przełączać uczniów, sprawdzać postęp i porządkować zadania.',
-                    })
-                  : !dashboard.canAccessDashboard
-                    ? copy({
-                        de: 'Dieser Bereich ist für Elternkonten gedacht, die Lernprofile verwalten können.',
-                        en: 'This space is reserved for parent accounts that can manage learner profiles.',
-                        pl: 'To miejsce jest przeznaczone dla kont rodzica, które mogą zarządzać profilami uczniów.',
-                      })
-                    : dashboard.activeLearner
-                      ? copy({
-                          de: `Du beobachtest gerade ${dashboard.activeLearner.displayName}. Von hier aus kannst du Lernende wechseln und Fortschritt, Ergebnisse sowie aktive Aufgaben prüfen.`,
-                          en: `You are currently reviewing ${dashboard.activeLearner.displayName}. From here you can switch learners and check progress, results, and active assignments.`,
-                          pl: `Aktualnie obserwujesz ${dashboard.activeLearner.displayName}. Stąd możesz szybko przełączyć ucznia i sprawdzić jego postęp, wyniki oraz aktywne zadania.`,
-                        })
-                      : copy({
-                          de: 'Wähle einen Lernenden aus, um Fortschritt, Ergebnisse und aktive Aufgaben zu sehen.',
-                          en: 'Pick a learner to see their progress, results, and active assignments.',
-                          pl: 'Wybierz ucznia, aby zobaczyć jego postęp, wyniki i aktywne zadania.',
-                        })}
+              {dashboardDescription}
             </Text>
 
             {dashboard.canAccessDashboard ? (

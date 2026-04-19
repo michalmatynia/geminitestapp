@@ -13,6 +13,23 @@ const { loadEnvConfig } = nextEnv;
 loadEnvConfig(monorepoRoot, isDev);
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
+const cacheLifeProfiles = {
+  swr60: {
+    stale: 60,
+    revalidate: 60,
+    expire: 300,
+  },
+  swr300: {
+    stale: 300,
+    revalidate: 300,
+    expire: 3600,
+  },
+  swr86400: {
+    stale: 300,
+    revalidate: 86400,
+    expire: 604800,
+  },
+};
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -36,6 +53,7 @@ const nextConfig = {
   },
   outputFileTracingRoot: monorepoRoot,
   cacheComponents: true,
+  cacheLife: cacheLifeProfiles,
   typescript: {
     ignoreBuildErrors: true,
   },

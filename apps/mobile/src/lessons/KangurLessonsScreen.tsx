@@ -80,7 +80,7 @@ export function KangurLessonsScreen(): React.JSX.Element {
     typeof rawFocusParam === 'string' ? rawFocusParam.trim().toLowerCase() || null : null;
   const [dismissedFocusToken, setDismissedFocusToken] = useState<string | null>(null);
   const effectiveFocusToken =
-    normalizedRouteFocusToken && normalizedRouteFocusToken === dismissedFocusToken
+    normalizedRouteFocusToken !== null && normalizedRouteFocusToken === dismissedFocusToken
       ? null
       : normalizedRouteFocusToken;
   const {
@@ -95,7 +95,7 @@ export function KangurLessonsScreen(): React.JSX.Element {
   const lessonsViewKey = focusToken ?? 'catalog';
   const isPreparingLessonsView = useLessonsScreenBootState(lessonsViewKey);
   const selectedLessonBody =
-    !isPreparingLessonsView && selectedLesson
+    !isPreparingLessonsView && selectedLesson !== null
       ? getKangurPortableLessonBody(selectedLesson.lesson.componentId, locale)
       : null;
   const lessonDuels = useKangurMobileLessonsDuels();
@@ -107,7 +107,7 @@ export function KangurLessonsScreen(): React.JSX.Element {
   } | null>(null);
   const weakestLesson = lessonMastery.weakest[0] ?? null;
   const strongestLesson = lessonMastery.strongest[0] ?? null;
-  const duelSectionDescription = selectedLesson
+  const duelSectionDescription = selectedLesson !== null
     ? copy({
         de: `Von "${selectedLesson.lesson.title}" aus kannst du den Duellstand prüfen, zu den letzten Rivalen zurückkehren und direkt in einen Rückkampf springen.`,
         en: `From "${selectedLesson.lesson.title}", you can check duel standing, return to recent rivals, and jump straight into a rematch.`,
@@ -118,13 +118,13 @@ export function KangurLessonsScreen(): React.JSX.Element {
         en: 'From here, you can immediately check duels, return to recent rivals, or open the lobby.',
         pl: 'Stąd możesz od razu sprawdzić pojedynki, wrócić do ostatnich rywali albo otworzyć lobby.',
       });
-  const lessonFocusSummary = weakestLesson
+  const lessonFocusSummary = weakestLesson !== null
     ? copy({
         de: `Fokus nach dem Lesen: ${weakestLesson.title} braucht noch eine kurze Wiederholung, bevor du weitergehst.`,
         en: `Post-reading focus: ${weakestLesson.title} still needs a short review before you move on.`,
         pl: `Fokus po czytaniu: ${weakestLesson.title} potrzebuje jeszcze krótkiej powtórki, zanim przejdziesz dalej.`,
       })
-    : strongestLesson
+    : strongestLesson !== null
       ? copy({
           de: `Stabile Stärke: ${strongestLesson.title} hält das Niveau und eignet sich für eine kurze Auffrischung nach dem Lesen.`,
           en: `Stable strength: ${strongestLesson.title} is holding its level and works well for a short post-reading refresh.`,
@@ -162,12 +162,13 @@ export function KangurLessonsScreen(): React.JSX.Element {
   }, [dismissedFocusToken, normalizedRouteFocusToken]);
 
   const activeSection =
-    selectedLessonBody?.sections[Math.min(activeSectionIndex, selectedLessonBody.sections.length - 1)] ??
-    null;
+    selectedLessonBody !== null && selectedLessonBody.sections.length > 0
+      ? selectedLessonBody.sections[Math.min(activeSectionIndex, selectedLessonBody.sections.length - 1)]
+      : null;
   const selectedPracticeHref: Href | null =
-    !isPreparingLessonsView && selectedLesson ? selectedLesson.practiceHref : null;
+    !isPreparingLessonsView && selectedLesson !== null ? selectedLesson.practiceHref : null;
   const selectedLessonPracticeAction =
-    selectedPracticeHref && selectedLesson ? (
+    selectedPracticeHref !== null && selectedLesson !== null ? (
       <LinkButton
         href={selectedPracticeHref}
         label={copy({
@@ -182,7 +183,7 @@ export function KangurLessonsScreen(): React.JSX.Element {
       />
     ) : null;
   const selectedLessonCheckpoint =
-    !isPreparingLessonsView && selectedLesson && selectedLessonBody
+    !isPreparingLessonsView && selectedLesson !== null && selectedLessonBody !== null
       ? (() => {
           const totalSections = Math.max(1, selectedLessonBody.sections.length);
           const completedSections = Math.min(activeSectionIndex + 1, totalSections);
@@ -196,12 +197,12 @@ export function KangurLessonsScreen(): React.JSX.Element {
           };
         })()
       : null;
-  const lessonsTutorContext: KangurAiTutorConversationContext = selectedLesson
+  const lessonsTutorContext: KangurAiTutorConversationContext = selectedLesson !== null
     ? {
         contentId: selectedLesson.lesson.id,
         description: selectedLesson.lesson.description,
-        focusId: selectedLessonBody ? 'kangur-lesson-document' : 'kangur-lesson-header',
-        focusKind: selectedLessonBody ? 'document' : 'lesson_header',
+        focusId: selectedLessonBody !== null ? 'kangur-lesson-document' : 'kangur-lesson-header',
+        focusKind: selectedLessonBody !== null ? 'document' : 'lesson_header',
         focusLabel: activeSection?.title ?? selectedLesson.lesson.title,
         masterySummary: selectedLesson.mastery.summaryLabel,
         surface: 'lesson',

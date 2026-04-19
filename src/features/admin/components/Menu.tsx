@@ -11,7 +11,94 @@ import { cn } from '@/shared/utils/ui-utils';
 import { useAdminMenuState } from '../hooks/useAdminMenuState';
 import { NavTree } from './menu/NavTree';
 
-export default memo((): React.ReactNode => {
+type AdminNavItem = ReturnType<typeof useAdminMenuState>['filteredNav'][number];
+
+type MenuHeaderProps = {
+  isAnyFolderOpen: boolean;
+  normalizedQuery: string;
+  onQueryChange: (value: string) => void;
+  onToggleAllFolders: () => void;
+  query: string;
+};
+
+function MenuHeader({
+  isAnyFolderOpen,
+  normalizedQuery,
+  onQueryChange,
+  onToggleAllFolders,
+  query,
+}: MenuHeaderProps): React.ReactNode {
+  return (
+    <TreeHeader>
+      <div className='flex items-center gap-2'>
+        <SearchInput
+          value={query}
+          onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+            onQueryChange(event.target.value)
+          }
+          placeholder='Search admin pages…'
+          className='h-9 flex-1 bg-gray-900/40'
+          onClear={() => onQueryChange('')}
+        />
+        <Button
+          variant='outline'
+          size='sm'
+          className='h-9 shrink-0'
+          disabled={normalizedQuery !== ''}
+          onClick={onToggleAllFolders}
+          title={normalizedQuery !== '' ? 'Clear search to toggle all folders' : undefined}
+        >
+          {isAnyFolderOpen === true ? 'Collapse all' : 'Expand all'}
+        </Button>
+      </div>
+      {normalizedQuery !== '' ? (
+        <div className='text-[11px] text-gray-500'>
+          Filtering menu: <span className='text-gray-300'>{query.trim()}</span>
+        </div>
+      ) : null}
+    </TreeHeader>
+  );
+}
+
+type CollapsedMenuToggleProps = {
+  isAnyFolderOpen: boolean;
+  normalizedQuery: string;
+  onToggleAllFolders: () => void;
+};
+
+function CollapsedMenuToggle({
+  isAnyFolderOpen,
+  normalizedQuery,
+  onToggleAllFolders,
+}: CollapsedMenuToggleProps): React.ReactNode {
+  return (
+    <Tooltip
+      content={isAnyFolderOpen === true ? 'Collapse all folders' : 'Expand all folders'}
+      side='right'
+    >
+      <div>
+        <Button
+          variant='outline'
+          size='sm'
+          className='h-9 w-full'
+          disabled={normalizedQuery !== ''}
+          onClick={onToggleAllFolders}
+        >
+          {isAnyFolderOpen === true ? 'Collapse' : 'Expand'}
+        </Button>
+      </div>
+    </Tooltip>
+  );
+}
+
+function addFavoritesIcon(item: AdminNavItem): AdminNavItem {
+  if (item.id === 'favorites') {
+    return { ...item, icon: <StarIcon className='size-4' /> };
+  }
+  return item;
+}
+
+const MenuComponent = (): React.ReactNode => {
   const {
     query,
     setQuery,
@@ -28,13 +115,7 @@ export default memo((): React.ReactNode => {
   } = useAdminMenuState();
 
   const navWithIcons = useMemo(
-    () =>
-      filteredNav.map((item) => {
-        if (item.id === 'favorites') {
-          return { ...item, icon: <StarIcon className='size-4' /> };
-        }
-        return item;
-      }),
+    () => filteredNav.map(addFavoritesIcon),
     [filteredNav]
   );
 
@@ -45,51 +126,19 @@ export default memo((): React.ReactNode => {
       className={cn('flex flex-col gap-3', isMenuCollapsed ? 'items-stretch' : '')}
     >
       {!isMenuCollapsed ? (
-        <TreeHeader>
-          <div className='flex items-center gap-2'>
-            <SearchInput
-              value={query}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                setQuery(event.target.value)
-              }
-              placeholder='Search admin pages…'
-              className='h-9 flex-1 bg-gray-900/40'
-              onClear={() => setQuery('')}
-            />
-            <Button
-              variant='outline'
-              size='sm'
-              className='h-9 shrink-0'
-              disabled={normalizedQuery !== ''}
-              onClick={handleToggleAllFolders}
-              title={normalizedQuery !== '' ? 'Clear search to toggle all folders' : undefined}
-            >
-              {isAnyFolderOpen === true ? 'Collapse all' : 'Expand all'}
-            </Button>
-          </div>
-          {normalizedQuery !== '' ? (
-            <div className='text-[11px] text-gray-500'>
-              Filtering menu: <span className='text-gray-300'>{query.trim()}</span>
-            </div>
-          ) : null}
-        </TreeHeader>
+        <MenuHeader
+          isAnyFolderOpen={isAnyFolderOpen}
+          normalizedQuery={normalizedQuery}
+          onQueryChange={setQuery}
+          onToggleAllFolders={handleToggleAllFolders}
+          query={query}
+        />
       ) : (
-        <Tooltip
-          content={isAnyFolderOpen === true ? 'Collapse all folders' : 'Expand all folders'}
-          side='right'
-        >
-          <div>
-            <Button
-              variant='outline'
-              size='sm'
-              className='h-9 w-full'
-              disabled={normalizedQuery !== ''}
-              onClick={handleToggleAllFolders}
-            >
-              {isAnyFolderOpen === true ? 'Collapse' : 'Expand'}
-            </Button>
-          </div>
-        </Tooltip>
+        <CollapsedMenuToggle
+          isAnyFolderOpen={isAnyFolderOpen}
+          normalizedQuery={normalizedQuery}
+          onToggleAllFolders={handleToggleAllFolders}
+        />
       )}
 
       <NavTree
@@ -104,4 +153,6 @@ export default memo((): React.ReactNode => {
       />
     </nav>
   );
-});
+};
+
+export default memo(MenuComponent);

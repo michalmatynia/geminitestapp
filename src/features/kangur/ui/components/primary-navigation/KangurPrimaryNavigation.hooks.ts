@@ -9,8 +9,6 @@ import {
 } from '@/features/kangur/ui/components/ai-tutor-widget/KangurAiTutorWidget.storage';
 import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import { useKangurAgeGroupFocus } from '@/features/kangur/ui/context/KangurAgeGroupFocusContext';
-import { getKangurAvatarById } from '@/features/kangur/ui/avatars/catalog';
-import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import { useOptionalKangurAiTutor } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import {
   useOptionalKangurAuthSessionState,
@@ -185,72 +183,24 @@ function resolveKangurPrimaryNavigationSessionState({
   };
 }
 
-function buildKangurPrimaryNavigationElevatedSessionUser({
-  authUser,
-  elevatedSessionSnapshot,
-}: {
-  authUser: OptionalKangurAuthUser | null;
-  elevatedSessionSnapshot: NonNullable<ReturnType<typeof useKangurElevatedSession>['elevatedUser']>;
-}): {
-  email: string | null;
-  name: string | null;
-} & NonNullable<ReturnType<typeof useKangurElevatedSession>['elevatedUser']> {
-  return {
-    ...elevatedSessionSnapshot,
-    email: resolveKangurPrimaryNavigationElevatedSessionEmail(authUser, elevatedSessionSnapshot),
-    name: resolveKangurPrimaryNavigationElevatedSessionName(authUser, elevatedSessionSnapshot),
-  };
-}
-
-function resolveKangurPrimaryNavigationElevatedSessionEmail(
-  authUser: OptionalKangurAuthUser | null,
-  elevatedSessionSnapshot: NonNullable<ReturnType<typeof useKangurElevatedSession>['elevatedUser']>
-): string | null {
-  return elevatedSessionSnapshot.email ?? authUser?.email?.trim() ?? null;
-}
-
-function resolveKangurPrimaryNavigationElevatedSessionName(
-  authUser: OptionalKangurAuthUser | null,
-  elevatedSessionSnapshot: NonNullable<ReturnType<typeof useKangurElevatedSession>['elevatedUser']>
-): string | null {
-  return elevatedSessionSnapshot.name ?? authUser?.full_name.trim() ?? null;
-}
-
-function resolveKangurPrimaryNavigationElevatedSessionUser({
-  authUser,
-  elevatedSessionSnapshot,
-}: {
-  authUser: OptionalKangurAuthUser | null;
-  elevatedSessionSnapshot: ReturnType<typeof useKangurElevatedSession>['elevatedUser'];
-}): ReturnType<typeof buildKangurPrimaryNavigationElevatedSessionUser> | null {
-  if (!elevatedSessionSnapshot) {
-    return null;
-  }
-
-  return buildKangurPrimaryNavigationElevatedSessionUser({
-    authUser,
-    elevatedSessionSnapshot,
-  });
-}
-
 function resolveKangurPrimaryNavigationMenuState({
   effectiveIsAuthenticated,
-  elevatedSessionUser,
+  hasElevatedSessionSnapshot,
   hasActiveLearner,
   isParentAccount,
 }: {
   effectiveIsAuthenticated: boolean;
-  elevatedSessionUser: ReturnType<typeof resolveKangurPrimaryNavigationElevatedSessionUser>;
+  hasElevatedSessionSnapshot: boolean;
   hasActiveLearner: boolean;
   isParentAccount: boolean;
 }): KangurPrimaryNavigationMenuState {
   return {
     shouldRenderElevatedUserMenu:
-      effectiveIsAuthenticated && Boolean(elevatedSessionUser) && !hasActiveLearner,
+      effectiveIsAuthenticated && hasElevatedSessionSnapshot && !hasActiveLearner,
     shouldRenderProfileMenu:
       effectiveIsAuthenticated &&
       (!isParentAccount || hasActiveLearner) &&
-      (!elevatedSessionUser || hasActiveLearner),
+      (!hasElevatedSessionSnapshot || hasActiveLearner),
   };
 }
 
@@ -318,7 +268,6 @@ export function useKangurPrimaryNavigationState({
   navLabel,
   showParentDashboard,
 }: KangurPrimaryNavigationStateInput) {
-  const tutorContent = useKangurAiTutorContent();
   const tutor = useOptionalKangurAiTutor();
   const authSessionState = useOptionalKangurAuthSessionState();
   const authStatusState = useOptionalKangurAuthStatusState();
@@ -350,19 +299,10 @@ export function useKangurPrimaryNavigationState({
     isAuthenticated,
     showParentDashboard,
   });
-  const elevatedSessionUser = useMemo(
-    () =>
-      resolveKangurPrimaryNavigationElevatedSessionUser({
-        authUser,
-        elevatedSessionSnapshot,
-      }),
-    [authUser, elevatedSessionSnapshot]
-  );
-  const profileAvatar = getKangurAvatarById(activeLearner?.avatarId);
   const { shouldRenderElevatedUserMenu, shouldRenderProfileMenu } =
     resolveKangurPrimaryNavigationMenuState({
       effectiveIsAuthenticated,
-      elevatedSessionUser,
+      hasElevatedSessionSnapshot: elevatedSessionSnapshot != null,
       hasActiveLearner,
       isParentAccount,
     });
@@ -386,13 +326,12 @@ export function useKangurPrimaryNavigationState({
   return {
     authUser,
     activeLearner,
-    elevatedSessionUser,
+    elevatedSessionSnapshot,
     isSuperAdmin,
     isLoggingOut,
     effectiveIsAuthenticated,
     hasActiveLearner,
     isParentAccount,
-    profileAvatar,
     shouldRenderElevatedUserMenu,
     shouldRenderProfileMenu,
     isTutorHidden,
@@ -414,7 +353,6 @@ export function useKangurPrimaryNavigationState({
     fallbackCopy,
     navigationLabel,
     navTranslations,
-    tutorContent,
     tutor,
     routeTransitionState,
     normalizedLocale,

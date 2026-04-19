@@ -187,6 +187,7 @@ export const getProductFieldValue = (product: ProductWithImages, field: ProductS
   if (field === 'price') return product.price;
   if (field === 'sku') return product.sku;
   if (field === 'ean') return product.ean;
+  if (field === 'asin') return product.asin;
   if (field === 'weight') return product.weight;
   if (field === 'length') return product.length;
   if (field === 'width') return product.sizeWidth;

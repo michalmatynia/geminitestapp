@@ -5,6 +5,8 @@ import type {
   SingleQuery,
 } from '@/shared/contracts/ui/queries';
 import type {
+  ProductSyncBulkRequest,
+  ProductSyncBulkResponse,
   ProductSyncPreview,
   ProductSyncSingleProductResponse,
 } from '@/shared/contracts/product-sync';
@@ -87,6 +89,39 @@ export function useRunProductBaseSyncMutation(): MutationResult<
       mutationKey: productSettingsKeys.syncProfiles(),
       tags: ['products', 'base-sync', 'run'],
       description: 'Runs the manual Base.com sync for one product.',
+    },
+  });
+}
+
+export function useBulkProductBaseSyncMutation(): MutationResult<
+  ProductSyncBulkResponse,
+  ProductSyncBulkRequest
+> {
+  return createMutationV2({
+    mutationKey: productSettingsKeys.syncProfiles(),
+    mutationFn: async (input: ProductSyncBulkRequest): Promise<ProductSyncBulkResponse> =>
+      api.post<ProductSyncBulkResponse>('/api/v2/products/sync/bulk', input),
+    invalidate: async (queryClient, _data, variables): Promise<void> => {
+      await Promise.all([
+        ...variables.productIds.map((productId: string) =>
+          Promise.all([
+            invalidateProductsAndDetail(queryClient, productId),
+            invalidateProductListingsAndBadges(queryClient, productId),
+            queryClient.invalidateQueries({
+              queryKey: productKeys.baseSyncPreview(productId),
+            }),
+          ])
+        ),
+      ]);
+    },
+    meta: {
+      source: 'product-sync.hooks.useBulkProductBaseSyncMutation',
+      operation: 'action',
+      resource: 'products.base-sync-bulk',
+      domain: 'products',
+      mutationKey: productSettingsKeys.syncProfiles(),
+      tags: ['products', 'base-sync', 'bulk'],
+      description: 'Runs manual Base.com sync for a batch of products.',
     },
   });
 }

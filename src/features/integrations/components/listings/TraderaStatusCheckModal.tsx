@@ -107,7 +107,7 @@ export function TraderaStatusCheckModal(props: TraderaStatusCheckModalProps): Re
         customFieldValues: product.customFields,
         marketplaceLabelOrAlias: 'Tradera',
       });
-      if (!nextSelection || !nextSelection.changed) return;
+      if (!nextSelection?.changed) return;
 
       traderaExclusionSyncInFlightRef.current.add(row.productId);
       setRows((prev) =>

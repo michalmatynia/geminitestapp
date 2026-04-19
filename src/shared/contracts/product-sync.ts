@@ -16,6 +16,7 @@ export const productSyncAppFieldSchema = z.enum([
   'description_pl',
   'sku',
   'ean',
+  'asin',
   'weight',
   'length',
   'width',
@@ -34,6 +35,7 @@ export const PRODUCT_SYNC_APP_FIELDS: ProductSyncAppField[] = [
   'description_pl',
   'sku',
   'ean',
+  'asin',
   'weight',
   'length',
   'width',
@@ -187,6 +189,18 @@ export const PRODUCT_SYNC_BASE_FIELD_OPTIONS_BY_APP_FIELD: Record<
       group: 'Identifiers',
     }),
   ],
+  asin: [
+    createProductSyncBaseFieldOption({
+      value: 'text_fields.asin',
+      label: 'ASIN text field (text_fields.asin)',
+      group: 'Identifiers',
+    }),
+    createProductSyncBaseFieldOption({
+      value: 'features.asin',
+      label: 'ASIN feature (features.asin)',
+      group: 'Identifiers',
+    }),
+  ],
   weight: [
     createProductSyncBaseFieldOption({
       value: 'weight',
@@ -261,6 +275,10 @@ export const PRODUCT_SYNC_BASE_FIELD_PATTERN_HINTS_BY_APP_FIELD: Record<
   description_pl: [],
   sku: [],
   ean: [],
+  asin: [
+    createProductSyncBaseFieldPatternHint('text_fields.<custom_key>'),
+    createProductSyncBaseFieldPatternHint('features.<custom_key>'),
+  ],
   weight: [],
   length: [],
   width: [],
@@ -444,6 +462,11 @@ export const DEFAULT_PRODUCT_SYNC_FIELD_RULES: Array<Omit<ProductSyncFieldRule, 
     direction: 'disabled',
   },
   {
+    appField: 'asin',
+    baseField: 'text_fields.asin',
+    direction: 'disabled',
+  },
+  {
     appField: 'weight',
     baseField: 'weight',
     direction: 'disabled',
@@ -494,6 +517,7 @@ export const getProductSyncAppFieldLabel = (field: ProductSyncAppField): string 
   if (field === 'price') return 'Price';
   if (field === 'sku') return 'SKU';
   if (field === 'ean') return 'EAN';
+  if (field === 'asin') return 'ASIN';
   if (field === 'weight') return 'Weight';
   if (field === 'length') return 'Length';
   if (field === 'width') return 'Width';
@@ -654,6 +678,34 @@ export const productSyncSingleProductResponseSchema = z.object({
   result: productSyncSingleProductResultSchema,
 });
 export type ProductSyncSingleProductResponse = z.infer<typeof productSyncSingleProductResponseSchema>;
+
+export const productSyncBulkRequestSchema = z.object({
+  productIds: z.array(z.string().trim().min(1)).min(1).max(500),
+});
+export type ProductSyncBulkRequest = z.infer<typeof productSyncBulkRequestSchema>;
+
+export const productSyncBulkItemResultSchema = z.object({
+  productId: z.string(),
+  status: z.enum(['success', 'skipped', 'failed']),
+  localChanges: z.array(z.string()),
+  baseChanges: z.array(z.string()),
+  message: z.string().nullable(),
+  errorMessage: z.string().nullable(),
+});
+export type ProductSyncBulkItemResult = z.infer<typeof productSyncBulkItemResultSchema>;
+
+export const productSyncBulkResponseSchema = z.object({
+  profileId: z.string(),
+  profileName: z.string(),
+  totals: z.object({
+    requested: z.number(),
+    success: z.number(),
+    skipped: z.number(),
+    failed: z.number(),
+  }),
+  items: z.array(productSyncBulkItemResultSchema),
+});
+export type ProductSyncBulkResponse = z.infer<typeof productSyncBulkResponseSchema>;
 
 export const productSyncRunStatusSchema = z.enum([
   'queued',

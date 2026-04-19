@@ -45,7 +45,7 @@ export default function GameDeferredRoutedScreen(props: {
     return (
       <GameDeferredLaunchableScreen
         launchableGameInstanceId={launchableGameInstanceId}
-        screen={screen as KangurLaunchableGameScreen}
+        screen={screen}
         screenHeadingRef={screenHeadingRef}
         screenMotionProps={screenMotionProps}
         translations={translations}

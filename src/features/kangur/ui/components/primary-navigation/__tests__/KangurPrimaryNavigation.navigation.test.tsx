@@ -500,8 +500,9 @@ it('fires logout on the first tap from the mobile menu', async () => {
   );
 
   fireEvent.click(screen.getByTestId('kangur-primary-nav-mobile-toggle'));
+  const mobileMenuHeader = await screen.findByTestId('kangur-primary-nav-mobile-header');
   expect(
-    within(screen.getByTestId('kangur-primary-nav-mobile-header')).getByRole('button', {
+    within(mobileMenuHeader).getByRole('button', {
       name: 'Zamknij menu',
     })
   ).toHaveClass(
@@ -909,7 +910,7 @@ it('disables the logout action while auth logout is already pending', () => {
   expect(onLogout).not.toHaveBeenCalled();
 });
 
-it('renders storefront appearance controls inside the Kangur navbar and updates the mode', () => {
+it('renders storefront appearance controls inside the Kangur navbar and updates the mode', async () => {
   render(
     <CmsStorefrontAppearanceProvider initialMode='default'>
       <KangurPrimaryNavigation
@@ -922,10 +923,10 @@ it('renders storefront appearance controls inside the Kangur navbar and updates 
   );
 
   const utilityActions = screen.getByTestId('kangur-primary-nav-utility-actions');
-  const themeToggleButton = screen.getByRole('button', { name: 'Switch to Dawn theme' });
+  const themeToggleButton = await screen.findByRole('button', { name: 'Switch to Dawn theme' });
 
   expect(utilityActions).toContainElement(
-    screen.getByTestId('kangur-primary-nav-appearance-controls')
+    await screen.findByTestId('kangur-primary-nav-appearance-controls')
   );
 
   fireEvent.click(themeToggleButton);

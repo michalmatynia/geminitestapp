@@ -124,7 +124,7 @@ it('hides the profile link for parent accounts without an active learner', () =>
   expect(screen.queryByRole('link', { name: /profil/i })).toBeNull();
 });
 
-it('shows the active learner name in the profile label for parent accounts', () => {
+it('shows the active learner name in the profile label for parent accounts', async () => {
   optionalAuthMock.mockReturnValue({
     authError: null,
     appPublicSettings: null,
@@ -167,7 +167,7 @@ it('shows the active learner name in the profile label for parent accounts', () 
     />
   );
 
-  expect(screen.getByRole('link', { name: 'Profil Maja' })).toHaveAttribute(
+  expect(await screen.findByRole('link', { name: 'Profil Maja' })).toHaveAttribute(
     'href',
     '/kangur/profile'
   );
@@ -333,6 +333,90 @@ it('keeps the anonymous login action on fallback copy until the standalone home 
   expect(screen.getByRole('button', { name: 'Zaloguj się' })).toBeInTheDocument();
 });
 
+it('keeps the learner profile menu off the standalone home utility path until the gate opens', () => {
+  useKangurIdleReadyMock.mockReturnValue(false);
+  optionalRoutingMock.mockReturnValue({
+    basePath: '/kangur',
+    embedded: false,
+    pageKey: 'Game',
+    requestedHref: '/kangur',
+    requestedPath: '/kangur',
+  });
+
+  render(
+    <KangurPrimaryNavigation
+      basePath='/kangur'
+      currentPage='Game'
+      isAuthenticated
+      onLogout={vi.fn()}
+    />
+  );
+
+  expect(screen.queryByRole('link', { name: /profil/i })).toBeNull();
+  expect(screen.getByRole('button', { name: /wyloguj/i })).toBeInTheDocument();
+});
+
+it('keeps the elevated user menu off the standalone home utility path until the gate opens', () => {
+  useKangurIdleReadyMock.mockReturnValue(false);
+  optionalRoutingMock.mockReturnValue({
+    basePath: '/kangur',
+    embedded: false,
+    pageKey: 'Game',
+    requestedHref: '/kangur',
+    requestedPath: '/kangur',
+  });
+  optionalAuthMock.mockReturnValue({
+    authError: null,
+    appPublicSettings: null,
+    canAccessParentAssignments: false,
+    checkAppState: vi.fn(),
+    hasResolvedAuth: true,
+    isAuthenticated: true,
+    isLoadingAuth: false,
+    isLoadingPublicSettings: false,
+    isLoggingOut: false,
+    logout: vi.fn(),
+    navigateToLogin: vi.fn(),
+    selectLearner: vi.fn(),
+    user: {
+      activeLearner: null,
+      actorType: 'parent',
+      canManageLearners: true,
+      email: 'admin@example.com',
+      full_name: 'Super Admin',
+      id: 'admin-1',
+      learners: [],
+      role: 'admin',
+    },
+  });
+  sessionMock.mockReturnValue({
+    data: {
+      expires: '2026-12-31T23:59:59.000Z',
+      user: {
+        email: 'admin@example.com',
+        id: 'admin-1',
+        image: null,
+        isElevated: true,
+        name: 'Super Admin',
+        role: 'super_admin',
+      },
+    },
+    status: 'authenticated',
+  });
+
+  render(
+    <KangurPrimaryNavigation
+      basePath='/kangur'
+      currentPage='Game'
+      isAuthenticated
+      onLogout={vi.fn()}
+    />
+  );
+
+  expect(screen.queryByTestId('kangur-elevated-user-menu-trigger')).toBeNull();
+  expect(screen.getByRole('button', { name: /wyloguj/i })).toBeInTheDocument();
+});
+
 it('uses English fallback auth copy on the English route when CMS copy is unavailable', () => {
   localeMock.mockReturnValue('en');
 
@@ -443,7 +527,7 @@ it('collapses the guest name input on blur and reopens it on click', () => {
   expect(screen.getByPlaceholderText('Wpisz imię gracza...')).toBeInTheDocument();
 });
 
-it('hides the parent dashboard link when auth resolves a student session', () => {
+it('hides the parent dashboard link when auth resolves a student session', async () => {
   optionalAuthMock.mockReturnValue({
     authError: null,
     appPublicSettings: null,
@@ -487,7 +571,7 @@ it('hides the parent dashboard link when auth resolves a student session', () =>
   );
 
   expect(screen.queryByTestId('kangur-primary-nav-parent-dashboard')).toBeNull();
-  expect(screen.getByRole('link', { name: 'Profil Ola' })).toBeInTheDocument();
+  expect(await screen.findByRole('link', { name: 'Profil Ola' })).toBeInTheDocument();
 });
 
 });

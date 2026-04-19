@@ -96,7 +96,7 @@ const resolveActiveLaunchableGameRuntime = ({
     {
       ...activeLaunchableGameInstance,
       engineOverrides: activeLaunchableGameInstance.engineOverrides ?? {},
-      launchableRuntimeId: screen as KangurLaunchableGameScreen,
+      launchableRuntimeId: screen,
     },
     contentSets
   );

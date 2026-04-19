@@ -16,6 +16,7 @@ import {
   Upload,
   X,
   Activity,
+  RefreshCw,
 } from 'lucide-react';
 import { memo, useCallback, useMemo, useRef, useState, type ChangeEvent } from 'react';
 
@@ -32,6 +33,7 @@ import {
   useBulkSetProductsArchivedState,
   useBulkConvertImagesToBase64,
 } from '@/features/products/hooks/useProductsMutations';
+import { useBulkProductBaseSyncMutation } from '@/features/product-sync/hooks/useProductBaseSync';
 import { useTraderaMassQuickExport } from '@/features/products/hooks/product-list/useTraderaMassQuickExport';
 import { useVintedMassQuickExport } from '@/features/products/hooks/product-list/useVintedMassQuickExport';
 import { ProductScanModal } from '@/features/products/components/list/ProductScanModal';
@@ -91,6 +93,8 @@ export const ProductSelectionActions = memo(() => {
     useBulkConvertImagesToBase64();
   const { mutateAsync: setSelectedProductsArchivedState, isPending: isSettingSelectedArchivedState } =
     useBulkSetProductsArchivedState();
+  const { mutateAsync: runBulkBaseSync, isPending: isRunningBulkBaseSync } =
+    useBulkProductBaseSyncMutation();
   const { execute: executeTraderaMassExport, isRunning: isTraderaMassExportRunning } =
     useTraderaMassQuickExport();
   const { execute: executeVintedMassExport, isRunning: isVintedMassExportRunning } =
@@ -202,6 +206,29 @@ export const ProductSelectionActions = memo(() => {
     setStatusCheckProducts(data.filter((p) => selectedSet.has(p.id)));
     setIsTraderaStatusCheckOpen(true);
   }, [data, rowSelection, toast]);
+
+  const handleBulkBaseSync = useCallback(async (): Promise<void> => {
+    const selectedProductIds = Object.keys(rowSelection).filter((id: string) => rowSelection[id]);
+    if (selectedProductIds.length === 0) {
+      toast('Please select products to sync.', { variant: 'error' });
+      return;
+    }
+
+    try {
+      const response = await runBulkBaseSync({ productIds: selectedProductIds });
+      const { totals } = response;
+      toast(
+        `Base.com sync: ${totals.success} succeeded, ${totals.skipped} skipped, ${totals.failed} failed (of ${totals.requested}).`,
+        { variant: totals.failed > 0 ? 'error' : 'success' }
+      );
+      setRowSelection({});
+    } catch (error) {
+      logClientError(error);
+      toast(error instanceof Error ? error.message : 'Failed to sync products with Base.com.', {
+        variant: 'error',
+      });
+    }
+  }, [rowSelection, runBulkBaseSync, setRowSelection, toast]);
 
   const handleScanAmazonAsin = useCallback((): void => {
     const selectedProductIds = Object.keys(rowSelection).filter((id: string) => rowSelection[id]);
@@ -549,6 +576,16 @@ export const ProductSelectionActions = memo(() => {
             >
               <Search className='h-4 w-4' />
               Scan Amazon ASIN
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                void handleBulkBaseSync();
+              }}
+              className='cursor-pointer gap-2'
+              disabled={isRunningBulkBaseSync || selectedCount === 0}
+            >
+              <RefreshCw className='h-4 w-4' />
+              {isRunningBulkBaseSync ? 'Syncing with Base.com...' : 'Sync with Base.com'}
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => {

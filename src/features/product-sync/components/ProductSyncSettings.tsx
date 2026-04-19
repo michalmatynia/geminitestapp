@@ -147,6 +147,7 @@ const appFieldLabel = (value: ProductSyncAppField): string => {
   if (value === 'price') return 'Price';
   if (value === 'sku') return 'SKU';
   if (value === 'ean') return 'EAN';
+  if (value === 'asin') return 'ASIN';
   if (value === 'weight') return 'Weight';
   return value;
 };

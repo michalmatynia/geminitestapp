@@ -32,18 +32,8 @@ const XpToast = dynamic(() => import('@/features/kangur/ui/components/game-runti
   ssr: false,
 });
 
-const GameDeferredAiTutorSessionSync = dynamic(
-  () => import('@/features/kangur/ui/pages/GameDeferredAiTutorSessionSync'),
-  { ssr: false }
-);
-
-const GameDeferredDocsTooltipEnhancer = dynamic(
-  () => import('@/features/kangur/ui/pages/GameDeferredDocsTooltipEnhancer'),
-  { ssr: false }
-);
-
-const GameDeferredTutorAnchors = dynamic(
-  () => import('@/features/kangur/ui/pages/GameDeferredTutorAnchors'),
+const GameDeferredHomeEnhancements = dynamic(
+  () => import('@/features/kangur/ui/pages/GameDeferredHomeEnhancements'),
   { ssr: false }
 );
 
@@ -102,11 +92,6 @@ const getGameScreenLabel = (
   translations: GameTranslations,
   screenKey: KangurGameScreen
 ): string => translations(`screens.${screenKey}.label`);
-
-const getGameScreenDescription = (
-  translations: GameTranslations,
-  screenKey: KangurGameScreen
-): string => translations(`screens.${screenKey}.description`);
 
 const resolveGamePageReady = ({
   routeTransitionState,
@@ -229,25 +214,12 @@ function GameContent(): React.JSX.Element {
   return (
     <>
       {screen === 'home' && shouldMountDeferredHomeEnhancements ? (
-        <GameDeferredTutorAnchors
-          activeGameAssignmentId={null}
+        <GameDeferredHomeEnhancements
           canAccessParentAssignments={canAccessParentAssignments}
-          enabled
-          refs={homeRefs}
-          screen='home'
-          translations={translations}
-          tutorActivityContentId='game:home'
-        />
-      ) : null}
-      {screen === 'home' && shouldMountDeferredHomeEnhancements ? (
-        <GameDeferredAiTutorSessionSync
+          homeRefs={homeRefs}
           learnerId={runtime.user?.activeLearner?.id ?? null}
-          sessionContext={{
-            surface: 'game',
-            contentId: 'game:home',
-            title: currentScreenLabel,
-            description: getGameScreenDescription(translations, 'home'),
-          }}
+          title={currentScreenLabel}
+          translations={translations}
         />
       ) : null}
       {/* Visual contract: <KangurPageShell tone='play' ...> is provided by KangurStandardPageLayout. */}
@@ -287,9 +259,6 @@ function GameContent(): React.JSX.Element {
           ),
         }}
       >
-        {shouldMountDeferredHomeEnhancements ? (
-          <GameDeferredDocsTooltipEnhancer rootId='kangur-game-page' surface='home' />
-        ) : null}
         <div className='w-full'>
           <h1 id={GAME_TITLE_ID} className='sr-only'>
             {GAME_BRAND_NAME}

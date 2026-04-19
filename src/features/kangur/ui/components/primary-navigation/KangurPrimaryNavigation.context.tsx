@@ -23,10 +23,6 @@ import {
   getLocalizedKangurSubjectLabel,
 } from '@/features/kangur/lessons/lesson-catalog-i18n';
 import {
-  DEFAULT_KANGUR_AGE_GROUP,
-  KANGUR_AGE_GROUPS,
-  getKangurDefaultSubjectForAgeGroup,
-  getKangurSubjectsForAgeGroup,
 } from '@/features/kangur/lessons/lesson-catalog-metadata';
 import {
   getKangurSixYearOldAgeGroupVisual,
@@ -34,12 +30,8 @@ import {
 } from '@/features/kangur/ui/constants/six-year-old-visuals';
 import { persistTutorVisibilityHidden } from '@/features/kangur/ui/components/ai-tutor-widget/KangurAiTutorWidget.storage';
 import {
-  buildAgeGroupOptions,
-  buildSubjectOptions,
-} from './KangurPrimaryNavigation.sections';
-import {
   resolveAppearanceControls,
-} from './KangurPrimaryNavigation.utility-runtime';
+} from './KangurPrimaryNavigation.appearance-controls';
 import { useOptionalCmsStorefrontAppearance } from '@/shared/ui/cms-appearance/CmsStorefrontAppearance';
 import type { 
   KangurNavActionConfig,
@@ -47,7 +39,6 @@ import type {
 } from './KangurPrimaryNavigation.types';
 import type { KangurIntlTranslate } from '@/features/kangur/ui/types';
 
-import type { KangurChoiceDialogOption } from '@/features/kangur/ui/components/KangurChoiceDialog';
 import type { KangurLessonAgeGroup, KangurLessonSubject } from '@/features/kangur/shared/contracts/kangur';
 
 type PrimaryNavigationState = ReturnType<typeof useKangurPrimaryNavigationState>;
@@ -62,7 +53,7 @@ export type KangurPrimaryNavigationContextValue = {
   closeMobileMenu: () => void;
   effectiveIsAuthenticated: boolean;
   effectiveShowParentDashboard: boolean;
-  elevatedSessionUser: PrimaryNavigationState['elevatedSessionUser'];
+  elevatedSessionSnapshot: PrimaryNavigationState['elevatedSessionSnapshot'];
   fallbackCopy: PrimaryNavigationState['fallbackCopy'];
   isAgeGroupModalOpen: boolean;
   isCoarsePointer: boolean;
@@ -76,7 +67,6 @@ export type KangurPrimaryNavigationContextValue = {
   navTranslations: KangurIntlTranslate;
   navigationLabel: string;
   normalizedLocale: string;
-  profileAvatar: PrimaryNavigationState['profileAvatar'];
   queryClient: PrimaryNavigationState['queryClient'];
   routeTransitionState: PrimaryNavigationState['routeTransitionState'];
   setAgeGroup: (val: KangurLessonAgeGroup) => void;
@@ -89,7 +79,6 @@ export type KangurPrimaryNavigationContextValue = {
   subject: KangurLessonSubject;
   toggleMobileMenu: () => void;
   tutor: PrimaryNavigationState['tutor'];
-  tutorContent: PrimaryNavigationState['tutorContent'];
   loginActionRef: PrimaryNavigationRuntime['loginActionRef'];
   mobileMenuRef: PrimaryNavigationRuntime['mobileMenuRef'];
   commitGuestPlayerName: PrimaryNavigationRuntime['commitGuestPlayerName'];
@@ -115,18 +104,11 @@ export type KangurPrimaryNavigationContextValue = {
     shouldRenderLanguageSwitcher: boolean;
     appearanceControls: React.ReactNode;
     appearanceControlsInline: React.ReactNode;
-    profileHref: string;
-    profileLabel: string;
-    profileTransitionSourceId: string;
     mobileNavItemClassName: string;
     amberPillActionClassName: string;
     yellowPillActionClassName: string;
-    subjectOptions: KangurChoiceDialogOption[];
-    ageGroupOptions: KangurChoiceDialogOption[];
     ageGroupChoiceLabel: string;
     subjectChoiceLabel: string;
-    defaultAgeGroupLabel: string;
-    defaultSubjectLabel: string;
     subjectVisual: KangurPrimaryNavigationVisual;
     ageGroupVisual: KangurPrimaryNavigationVisual;
     inlineAppearanceWithTutor: boolean;
@@ -150,48 +132,6 @@ export const KANGUR_PRIMARY_NAV_TRANSITION_SOURCE_IDS = {
   parentDashboard: 'kangur-primary-nav:parent-dashboard',
   profile: 'kangur-primary-nav:profile',
 } as const;
-
-const resolvePrimaryNavigationProfileDisplayName = ({
-  activeLearner,
-  authUser,
-}: {
-  activeLearner: PrimaryNavigationState['activeLearner'];
-  authUser: PrimaryNavigationState['authUser'];
-}): string | null => {
-  const candidates = [
-    activeLearner?.displayName,
-    activeLearner?.loginName,
-    authUser?.full_name,
-  ];
-
-  for (const candidate of candidates) {
-    if (typeof candidate === 'string') {
-      const trimmed = candidate.trim();
-      if (trimmed.length > 0) return trimmed;
-    }
-  }
-
-  return null;
-};
-
-const resolvePrimaryNavigationLabel = ({
-  fallbackCopy,
-  profileDisplayName,
-}: {
-  fallbackCopy: PrimaryNavigationState['fallbackCopy'];
-  profileDisplayName: string | null;
-}): string =>
-  profileDisplayName
-    ? fallbackCopy.profileLabelWithName(profileDisplayName)
-    : fallbackCopy.profileLabel;
-
-const resolveTutorFallbackCopy = (
-  value: string | null | undefined,
-  fallback: string
-): string => {
-  if (typeof value !== 'string' || value.trim().length === 0) return fallback;
-  return value;
-};
 
 export function KangurPrimaryNavigationProvider({
   children,
@@ -233,47 +173,12 @@ export function KangurPrimaryNavigationProvider({
     const ageGroupChoiceLabel = getLocalizedKangurAgeGroupLabel(state.ageGroup, state.normalizedLocale);
     const subjectVisual = getKangurSixYearOldSubjectVisual(state.subject);
     const ageGroupVisual = getKangurSixYearOldAgeGroupVisual(state.ageGroup);
-    const availableSubjects = getKangurSubjectsForAgeGroup(state.ageGroup);
-
-    const subjectOptions = buildSubjectOptions({
-      availableSubjects,
-      isSixYearOld,
-      normalizedLocale: state.normalizedLocale,
-      setSubject: state.setSubject,
-      subject: state.subject,
-    });
-
-    const ageGroupOptions = buildAgeGroupOptions({
-      ageGroup: state.ageGroup,
-      isSixYearOld,
-      normalizedLocale: state.normalizedLocale,
-      setAgeGroup: state.setAgeGroup,
-    });
-
-    const profileDisplayName = resolvePrimaryNavigationProfileDisplayName({
-      activeLearner: state.activeLearner,
-      authUser: state.authUser,
-    });
-
-    const profileLabel = resolvePrimaryNavigationLabel({
-      fallbackCopy: state.fallbackCopy,
-      profileDisplayName,
-    });
 
     const mobileNavItemClassName = `max-sm:col-span-1 max-sm:min-w-0 max-sm:w-full max-sm:justify-center ${state.isCoarsePointer ? 'max-sm:min-h-12 max-sm:px-4' : 'max-sm:px-3'}`;
     const mobileWideNavItemClassName = `max-sm:col-span-2 max-sm:min-w-0 max-sm:w-full max-sm:justify-center ${state.isCoarsePointer ? 'max-sm:min-h-12 max-sm:px-4' : 'max-sm:px-3'}`;
 
     const amberPillActionClassName = `border-amber-300/90 bg-[linear-gradient(180deg,rgba(254,243,199,0.96)_0%,rgba(253,230,138,0.92)_100%)] px-4 text-amber-800 shadow-[0_14px_24px_-18px_rgba(245,158,11,0.58)] ring-1 ring-amber-200/90 hover:border-amber-300 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.96)_0%,rgba(253,230,138,0.94)_100%)] hover:text-amber-900 ${mobileWideNavItemClassName}`;
     const yellowPillActionClassName = `border-amber-200/90 bg-[linear-gradient(180deg,rgba(255,251,235,0.98)_0%,rgba(254,243,199,0.94)_100%)] px-4 text-amber-700 shadow-[0_14px_24px_-18px_rgba(245,158,11,0.55)] ring-1 ring-amber-100/90 hover:border-amber-200 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(254,243,199,0.96)_100%)] hover:text-amber-800 ${mobileWideNavItemClassName}`;
-
-    const disableTutorLabel = resolveTutorFallbackCopy(
-      state.tutorContent.common.disableTutorAria,
-      state.fallbackCopy.disableTutorLabel
-    );
-    const enableTutorLabel = resolveTutorFallbackCopy(
-      state.tutorContent.common.enableTutorLabel ?? state.tutorContent.navigation.restoreTutorLabel,
-      state.fallbackCopy.enableTutorLabel
-    );
 
     const homeHref = getKangurHomeHref(props.basePath);
     const homeAction = buildHomeAction({
@@ -363,8 +268,8 @@ export function KangurPrimaryNavigationProvider({
     };
 
     const tutorToggleAction = buildTutorToggleAction({
-      disableTutorLabel,
-      enableTutorLabel,
+      disableTutorLabel: state.fallbackCopy.disableTutorLabel,
+      enableTutorLabel: state.fallbackCopy.enableTutorLabel,
       isTutorHidden: state.isTutorHidden,
       mobileNavItemClassName,
       onToggle: handleTutorToggle,
@@ -412,24 +317,11 @@ export function KangurPrimaryNavigationProvider({
       shouldRenderLanguageSwitcher,
       appearanceControls,
       appearanceControlsInline,
-      profileHref: createPageUrl('LearnerProfile', props.basePath),
-      profileLabel,
-      profileTransitionSourceId: KANGUR_PRIMARY_NAV_TRANSITION_SOURCE_IDS.profile,
       mobileNavItemClassName,
       amberPillActionClassName,
       yellowPillActionClassName,
-      subjectOptions,
-      ageGroupOptions,
       ageGroupChoiceLabel,
       subjectChoiceLabel,
-      defaultAgeGroupLabel: getLocalizedKangurAgeGroupLabel(
-        KANGUR_AGE_GROUPS.find((group) => group.default)?.id ?? DEFAULT_KANGUR_AGE_GROUP,
-        state.normalizedLocale
-      ),
-      defaultSubjectLabel: getLocalizedKangurSubjectLabel(
-        getKangurDefaultSubjectForAgeGroup(state.ageGroup),
-        state.normalizedLocale
-      ),
       subjectVisual,
       ageGroupVisual,
       basePath: props.basePath,

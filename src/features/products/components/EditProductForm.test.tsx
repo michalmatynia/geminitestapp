@@ -9,7 +9,7 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 import EditProductPage from '@/features/products/components/EditProductForm';
 
 const { handleSubmitMock, routerPushMock, useProductFormImagesMock } = vi.hoisted(() => ({
-  handleSubmitMock: vi.fn(),
+  handleSubmitMock: vi.fn().mockResolvedValue(undefined),
   routerPushMock: vi.fn(),
   useProductFormImagesMock: vi.fn(),
 }));

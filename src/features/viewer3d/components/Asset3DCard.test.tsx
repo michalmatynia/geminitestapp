@@ -7,7 +7,7 @@ import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 
 const setPreviewAsset = vi.fn();
 const setEditAsset = vi.fn();
-const handleDelete = vi.fn();
+const handleDelete = vi.fn().mockResolvedValue(undefined);
 const isDeleting = vi.fn();
 
 vi.mock('../context/Admin3DAssetsContext', () => ({

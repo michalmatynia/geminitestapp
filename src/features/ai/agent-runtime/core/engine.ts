@@ -9,8 +9,6 @@ interface AgentRunRecord {
   runHeadless: boolean | null;
 }
 
-'use client';
-
 import { Browser, BrowserContext } from 'playwright';
 import { logAgentAudit } from '@/features/ai/agent-runtime/audit';
 import { getChatbotAgentRunDelegate } from '@/features/ai/agent-runtime/store-delegates';

@@ -1,6 +1,7 @@
 import { createRequire } from 'node:module';
+import os from 'node:os';
 
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const require = createRequire(import.meta.url);
 const {
@@ -12,6 +13,10 @@ const {
 } = require('./run-next-build.cjs');
 
 describe('run-next-build', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('uses environment-specific default heap sizing', () => {
     const originalVercel = process.env.VERCEL;
     const originalHeap = process.env.NEXT_BUILD_HEAP_MB;
@@ -22,6 +27,11 @@ describe('run-next-build', () => {
       expect(getDefaultHeapMb()).toBe('3584');
 
       process.env.VERCEL = '';
+      const totalmemSpy = vi.spyOn(os, 'totalmem');
+      totalmemSpy.mockReturnValue(32 * 1024 * 1024 * 1024);
+      expect(getDefaultHeapMb()).toBe('12288');
+
+      totalmemSpy.mockReturnValue(16 * 1024 * 1024 * 1024);
       expect(getDefaultHeapMb()).toBe('8192');
 
       process.env.NEXT_BUILD_HEAP_MB = '3072';
@@ -44,9 +54,9 @@ describe('run-next-build', () => {
     }
   });
 
-  it('defaults to Turbopack when no explicit bundler is forced', () => {
-    expect(getPreferredBundler('')).toBe('turbopack');
-    expect(getPreferredBundler('invalid')).toBe('turbopack');
+  it('defaults to webpack when no explicit bundler is forced', () => {
+    expect(getPreferredBundler('')).toBe('webpack');
+    expect(getPreferredBundler('invalid')).toBe('webpack');
   });
 
   it('keeps explicit bundler overrides', () => {

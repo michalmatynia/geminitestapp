@@ -5,7 +5,7 @@ import { validate3DFileAsync } from '@/features/viewer3d/utils/validateAsset3d';
 import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
 import { uploadAsset3DFile } from '../api';
 import { useAdmin3DAssetsContext } from '../context/Admin3DAssetsContext';
-import { Asset3DUploader } from './Asset3DUploaderView';
+import { Asset3DUploader as Asset3DUploaderView } from './Asset3DUploaderView';
 
 interface Asset3DUploaderContainerProps {
   className?: string;
@@ -80,7 +80,7 @@ export function Asset3DUploaderContainer({ className }: Asset3DUploaderContainer
   };
 
   return (
-    <Asset3DUploader
+    <Asset3DUploaderView
       className={className}
       onUpload={onUpload}
       setShowUploader={setShowUploader}
@@ -110,3 +110,5 @@ export function Asset3DUploaderContainer({ className }: Asset3DUploaderContainer
     />
   );
 }
+
+export const Asset3DUploader = Asset3DUploaderContainer;

@@ -6,7 +6,7 @@ import React from 'react';
 import {
   useOptionalCmsStorefrontAppearance,
 } from '@/shared/ui/cms-appearance/CmsStorefrontAppearance';
-import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
+import { type useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
 
 const CmsStorefrontAppearanceButtons = dynamic(() =>
   import('@/shared/ui/cms-appearance/CmsStorefrontAppearance').then((m) => ({

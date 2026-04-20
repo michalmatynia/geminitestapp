@@ -21,7 +21,6 @@ import {
 import { runPlannerTask } from './core';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-
 export async function buildAdaptivePlanReview({
   prompt,
   memory,

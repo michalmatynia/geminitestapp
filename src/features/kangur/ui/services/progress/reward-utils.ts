@@ -1,7 +1,7 @@
 import { 
-  createRewardOutcome, 
-  resolveRewardOperation 
+  createRewardOutcome
 } from '../progress.rewards';
+import { resolveRewardOperation } from '../progress.contracts';
 import type { 
   KangurProgressState, 
   KangurLessonPracticeReward 

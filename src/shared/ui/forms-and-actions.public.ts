@@ -1,4 +1,9 @@
 export { PasswordInput } from './password-input';
+export { Input } from './input';
+export type { InputProps } from './input';
+export { Textarea } from './textarea';
+export type { TextareaProps } from './textarea';
+export { Checkbox } from './checkbox';
 export { FileUploadButton, FileUploadTrigger } from './file-upload';
 export type {
   FileUploadButtonProps,
@@ -18,6 +23,7 @@ export { Tag } from './tag';
 export { SearchInput } from './search-input';
 export { RefreshButton } from './RefreshButton';
 export { CopyButton } from './copy-button';
+export { StatusBadge, resolveStatusBadgeVariant } from './status-badge';
 export { ValidatorFormatterToggle } from './validator-formatter-toggle';
 export type { ValidatorFormatterToggleProps } from './validator-formatter-toggle';
 export { FormActions } from './FormActions';

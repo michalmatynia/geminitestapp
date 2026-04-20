@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import type { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
 import type { LessonFormData, LessonTreeMode } from '../types';
-import { createInitialLessonFormData, createDefaultKangurLessonDocument } from '../utils';
-import { readPersistedTreeMode } from '../constants';
+import { createDefaultKangurLessonDocument } from '@/features/kangur/lesson-documents';
+import { createInitialLessonFormData, readPersistedTreeMode } from '../utils';
 
 export function useLessonsFormState() {
   const [showModal, setShowModal] = useState(false);

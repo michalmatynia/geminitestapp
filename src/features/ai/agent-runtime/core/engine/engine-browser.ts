@@ -1,5 +1,5 @@
 import { type Browser, type BrowserContext } from 'playwright';
-import { initializeBrowserAndContext } from '@/features/ai/agent-runtime/browsing/context';
+import { initializeBrowserAndContext } from '@/features/ai/agent-runtime/core/engine-utils';
 
 export interface BrowserSession {
   browser: Browser | null;

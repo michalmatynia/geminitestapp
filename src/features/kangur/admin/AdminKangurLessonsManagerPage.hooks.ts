@@ -2,7 +2,7 @@ import React from 'react';
 import { useLocale } from '@/shared/lib/i18n';
 import { useLessonsState } from './hooks/lessons-manager/useLessonsState';
 import { useLessonsUiState } from './hooks/lessons-manager/useLessonsUiState';
-import { resolveKangurAdminLocale } from './utils';
+import { resolveKangurAdminLocale } from './kangur-admin-locale';
 
 export function useAdminKangurLessonsManagerState(): any {
   const routeLocale = useLocale();

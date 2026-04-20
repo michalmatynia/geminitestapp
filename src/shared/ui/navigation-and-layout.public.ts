@@ -42,6 +42,8 @@ export { LoadingState } from './LoadingState';
 export { LoadingPanel } from './LoadingPanel';
 export { ResourceCard } from './ResourceCard';
 export { MetadataItem } from './metadata-item';
+export { DocumentationList } from './DocumentationList';
+export type { DocumentationListItem, DocumentationListVariant } from './DocumentationList';
 export { DocumentationSection } from './documentation-section';
 export { Drawer } from './Drawer';
 export { SidePanel } from './SidePanel';

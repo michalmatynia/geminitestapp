@@ -2,7 +2,6 @@ import 'server-only';
 
 import { reminderList } from '@/features/ai/agent-runtime/core/utils';
 import { validateAndAddAgentLongTermMemory } from '@/features/ai/agent-runtime/memory';
-import { logAgentAudit } from '@/features/ai/agent-runtime/audit';
 import type { PlanStep, PlannerMeta, AgentVerification, AgentRunRecord } from '@/shared/contracts/agent-runtime';
 
 export interface ImprovementReview {
@@ -32,21 +31,34 @@ interface MemoryAdditionOptions {
   resolvedModel: string;
 }
 
+function buildSelfImprovementContent(review: ImprovementReview): string {
+  const parts: string[] = [
+    `Self-improvement review: ${review.summary}`,
+  ];
+
+  if (review.mistakes.length > 0) {
+    parts.push(reminderList('Mistakes', review.mistakes));
+  }
+  if (review.improvements.length > 0) {
+    parts.push(reminderList('Improvements', review.improvements));
+  }
+  if (review.guardrails.length > 0) {
+    parts.push(reminderList('Guardrails', review.guardrails));
+  }
+  if (review.toolAdjustments.length > 0) {
+    parts.push(reminderList('Tool adjustments', review.toolAdjustments));
+  }
+
+  return parts.join('\n');
+}
+
 export async function addSelfImprovementMemory(options: MemoryAdditionOptions): Promise<void> {
   const {
     run, memoryKey, overallOk, taskType, verification,
     improvementReview, memoryValidationModel, memorySummarizationModel, resolvedModel,
   } = options;
 
-  const contentParts = [
-    `Self-improvement review: ${improvementReview.summary}`,
-    improvementReview.mistakes.length > 0 ? reminderList('Mistakes', improvementReview.mistakes) : null,
-    improvementReview.improvements.length > 0 ? reminderList('Improvements', improvementReview.improvements) : null,
-    improvementReview.guardrails.length > 0 ? reminderList('Guardrails', improvementReview.guardrails) : null,
-    improvementReview.toolAdjustments.length > 0 ? reminderList('Tool adjustments', improvementReview.toolAdjustments) : null,
-  ];
-
-  const content = contentParts.filter((line): line is string => line !== null).join('\n');
+  const content = buildSelfImprovementContent(improvementReview);
 
   await validateAndAddAgentLongTermMemory({
     memoryKey,
@@ -87,6 +99,26 @@ interface RunSummaryMemoryOptions {
   resolvedModel: string;
 }
 
+function getTaskPart(taskType: string | null): string | null {
+  return (taskType !== null && taskType !== '') ? `Task type: ${taskType}` : null;
+}
+
+function getUrlPart(finalUrl: string | null): string | null {
+  return (finalUrl !== null && finalUrl !== '') ? `URL: ${finalUrl}` : null;
+}
+
+function getVerdictPart(verdict: string | undefined): string | null {
+  return (verdict !== undefined && verdict !== '') ? `Verification: ${verdict}` : null;
+}
+
+function getExtractionPart(extractionSummary: ExtractionSummary | null): string | null {
+  if (extractionSummary?.extractionType !== undefined && extractionSummary.extractionType !== '') {
+    const count = extractionSummary.extractedCount ?? 0;
+    return `Extraction: ${extractionSummary.extractionType} (${count})`;
+  }
+  return null;
+}
+
 function getSummaryText(options: {
   runPrompt: string;
   overallOk: boolean;
@@ -96,15 +128,74 @@ function getSummaryText(options: {
   extractionSummary: ExtractionSummary | null;
 }): string {
   const { runPrompt, overallOk, taskType, finalUrl, verdict, extractionSummary } = options;
-  const parts = [
+
+  const parts: (string | null)[] = [
     `Task: ${runPrompt}`,
     `Status: ${overallOk ? 'completed' : 'failed'}`,
-    (taskType !== null && taskType !== '') ? `Task type: ${taskType}` : null,
-    (finalUrl !== null && finalUrl !== '') ? `URL: ${finalUrl}` : null,
-    (verdict !== undefined && verdict !== '') ? `Verification: ${verdict}` : null,
-    extractionSummary?.extractionType ? `Extraction: ${extractionSummary.extractionType} (${extractionSummary.extractedCount ?? 0})` : null,
+    getTaskPart(taskType),
+    getUrlPart(finalUrl),
+    getVerdictPart(verdict),
+    getExtractionPart(extractionSummary),
   ];
-  return parts.filter((l): l is string => l !== null).join(' · ');
+
+  return parts.filter((p): p is string => p !== null).join(' · ');
+}
+
+function getStepSummaryLines(stepSummary: { title: string; status: string; phase: string | null }[]): string[] {
+  return stepSummary.map((s, i) => {
+    const phaseInfo = s.phase !== null ? `, ${s.phase}` : '';
+    return `${i + 1}. ${s.title} (${s.status}${phaseInfo})`;
+  });
+}
+
+function getVerificationEvidenceLine(evidence: string[] | undefined): string | null {
+  if (evidence !== undefined && evidence.length > 0) {
+    return `Evidence: ${evidence.join(' | ')}`;
+  }
+  return null;
+}
+
+function getVerificationMissingLine(missing: string[] | undefined): string | null {
+  if (missing !== undefined && missing.length > 0) {
+    return `Missing: ${missing.join(' | ')}`;
+  }
+  return null;
+}
+
+function getVerificationFollowUpLine(followUp: string | null | undefined): string | null {
+  if (followUp !== undefined && followUp !== null && followUp !== '') {
+    return `Follow-up: ${followUp}`;
+  }
+  return null;
+}
+
+function getVerificationLines(verification: AgentVerification | null): string[] {
+  const lines: (string | null)[] = [
+    getVerificationEvidenceLine(verification?.evidence),
+    getVerificationMissingLine(verification?.missing),
+    getVerificationFollowUpLine(verification?.followUp),
+  ];
+  return lines.filter((l): l is string => l !== null);
+}
+
+function buildRunSummaryContent(
+  summary: string,
+  stepSummary: { title: string; status: string; phase: string | null }[],
+  verification: AgentVerification | null,
+  extractionSummary: ExtractionSummary | null
+): string {
+  const parts: string[] = [
+    summary,
+    'Steps:',
+    ...getStepSummaryLines(stepSummary),
+    ...getVerificationLines(verification),
+  ];
+
+  if (extractionSummary?.items && extractionSummary.items.length > 0) {
+    parts.push(`Sample items: ${extractionSummary.items.join(' | ')}`);
+  }
+
+  return parts.join('\n');
 }
 
 export async function addRunSummaryMemory(options: RunSummaryMemoryOptions): Promise<void> {
@@ -129,17 +220,7 @@ export async function addRunSummaryMemory(options: RunSummaryMemoryOptions): Pro
     extractionSummary,
   });
 
-  const contentParts = [
-    summary,
-    'Steps:',
-    ...stepSummary.map((s, i) => `${i + 1}. ${s.title} (${s.status}${s.phase !== null ? `, ${s.phase}` : ''})`),
-    (verification?.evidence && verification.evidence.length > 0) ? `Evidence: ${verification.evidence.join(' | ')}` : null,
-    (verification?.missing && verification.missing.length > 0) ? `Missing: ${verification.missing.join(' | ')}` : null,
-    (verification?.followUp !== undefined && verification.followUp !== null && verification.followUp !== '') ? `Follow-up: ${verification.followUp}` : null,
-    (extractionSummary?.items && extractionSummary.items.length > 0) ? `Sample items: ${extractionSummary.items.join(' | ')}` : null,
-  ];
-
-  const content = contentParts.filter((line): line is string => line !== null).join('\n');
+  const content = buildRunSummaryContent(summary, stepSummary, verification, extractionSummary);
 
   await validateAndAddAgentLongTermMemory({
     memoryKey,

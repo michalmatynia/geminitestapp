@@ -345,6 +345,7 @@ export const agentRunRecordSchema = dtoBaseSchema.extend({
   tools: z.array(z.string()),
   searchProvider: z.string().nullable().optional(),
   agentBrowser: z.string().nullable().optional(),
+  personaId: z.string().nullable().optional(),
   runHeadless: z.boolean(),
   status: agentRunStatusTypeSchema,
   logLines: z.array(z.string()),

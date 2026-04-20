@@ -30,18 +30,12 @@ const queue = createManagedQueue<AgentJobData>({
     }
     await processAgentRun(data.runId);
   },
-  onFailed: async (_jobId, error, data) => {
-    try {
-      const { ErrorSystem } = await import('@/shared/lib/observability/system-logger');
-      void ErrorSystem.captureException(error, {
-        service: 'agent-queue',
-        runId: data.runId,
-      });
-    } catch (error) {
-      void ErrorSystem.captureException(error);
-      const { logger } = await import('@/shared/utils/logger');
-      logger.error('[chatbot][agent][queue] Fatal queue error', error, { runId: data.runId });
-    }
+  onFailed: async (_jobId, err, data) => {
+    const { ErrorSystem: LoggerSystem } = await import('@/shared/lib/observability/system-logger');
+    await LoggerSystem.captureException(err, {
+      service: 'agent-queue',
+      runId: data.runId,
+    });
   },
 });
 
@@ -79,12 +73,14 @@ const isAgentRuntimeEnabled = async (): Promise<boolean> => {
 };
 
 const stopAgentQueueInternal = async (): Promise<void> => {
-  await removeRecoveryRepeatJobs().catch((error) => {
-    void ErrorSystem.captureException(error, {
+  try {
+    await removeRecoveryRepeatJobs();
+  } catch (err) {
+    await ErrorSystem.captureException(err, {
       service: 'agent-queue',
       action: 'removeRecoverySchedule',
     });
-  });
+  }
   recoveryJobRegistered = false;
   if (!workerStarted) return;
   await queue.stopWorker();
@@ -94,60 +90,45 @@ const stopAgentQueueInternal = async (): Promise<void> => {
 export function startAgentQueue(): void {
   if (reconcileInFlight) return;
   reconcileInFlight = (async (): Promise<void> => {
-    let enabled: boolean;
     try {
-      enabled = await isAgentRuntimeEnabled();
-    } catch (error) {
-      void ErrorSystem.captureException(error);
-      void ErrorSystem.captureException(error, {
-        service: 'agent-queue',
-        action: 'validateBrainGate',
-      });
-      return;
-    }
+      const enabled = await isAgentRuntimeEnabled();
+      if (!enabled) {
+        await stopAgentQueueInternal();
+        return;
+      }
 
-    if (!enabled) {
-      await stopAgentQueueInternal().catch((error) => {
-        void ErrorSystem.captureException(error, {
-          service: 'agent-queue',
-          action: 'stopWorker',
-        });
-      });
-      return;
-    }
+      if (!workerStarted) {
+        queue.startWorker();
+        workerStarted = true;
+      }
 
-    if (!workerStarted) {
-      queue.startWorker();
-      workerStarted = true;
-    }
-
-    if (recoveryJobRegistered) return;
-    recoveryJobRegistered = true;
-    // Schedule stuck-run recovery as a repeatable job every 2 minutes.
-    await queue
-      .enqueue(
+      if (recoveryJobRegistered) return;
+      recoveryJobRegistered = true;
+      await queue.enqueue(
         { runId: '__recovery__', type: 'recovery' },
         { repeat: { every: AGENT_RECOVERY_REPEAT_EVERY_MS }, jobId: 'agent-recovery' }
-      )
-      .catch((error) => {
-        recoveryJobRegistered = false;
-        void ErrorSystem.captureException(error, {
-          service: 'agent-queue',
-          action: 'registerRecoverySchedule',
-        });
+      );
+    } catch (err) {
+      recoveryJobRegistered = false;
+      await ErrorSystem.captureException(err, {
+        service: 'agent-queue',
+        action: 'reconcileQueue',
       });
+    }
   })().finally(() => {
     reconcileInFlight = null;
   });
 }
 
-export function stopAgentQueue(): void {
-  void stopAgentQueueInternal().catch((error) => {
-    void ErrorSystem.captureException(error, {
+export async function stopAgentQueue(): Promise<void> {
+  try {
+    await stopAgentQueueInternal();
+  } catch (err) {
+    await ErrorSystem.captureException(err, {
       service: 'agent-queue',
       action: 'stopWorker',
     });
-  });
+  }
 }
 
 export async function enqueueAgentRun(runId: string): Promise<void> {

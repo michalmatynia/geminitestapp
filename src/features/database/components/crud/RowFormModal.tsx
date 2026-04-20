@@ -5,7 +5,7 @@ import type { JSX } from 'react';
 import { Input } from '@/shared/ui/primitives.public';
 import { FormField, FormModal, StatusBadge } from '@/shared/ui/forms-and-actions.public';
 import type { DatabaseColumnInfo } from '@/shared/contracts/database';
-import { formatDatabaseCellValue, parseInputValue } from '../utils/database-utils';
+import { parseInputValue } from '../../utils/database-utils';
 
 interface RowFormModalProps {
   columns: DatabaseColumnInfo[];
@@ -18,6 +18,7 @@ interface RowFormModalProps {
 
 export function RowFormModal(props: RowFormModalProps): JSX.Element {
   const { columns, initialData, mode, onSubmit, onClose, isPending } = props;
+  const formRef = useRef<HTMLFormElement>(null);
 
   const [formData, setFormData] = useState<Record<string, string>>(() => {
     const initial: Record<string, string> = {};

@@ -1,24 +1,11 @@
 import { logAgentAudit } from '@/features/ai/agent-runtime/audit';
-import { getBrowserContextSummary } from '@/features/ai/agent-runtime/browsing/context';
 import {
   applyAgentRuntimeContextMemory,
   buildAgentRuntimeContextRegistryPrompt,
   readAgentRuntimeContextRegistry,
 } from '@/features/ai/agent-runtime/context-registry/shared';
-import {
-  resolveAgentPlanSettings,
-  resolveAgentPreferences,
-} from '@/features/ai/agent-runtime/core/config';
 import { getChatbotAgentRunDelegate } from '@/features/ai/agent-runtime/store-delegates';
-import {
-  buildSelfImprovementPlaybook,
-  jsonValueToRecord,
-} from '@/features/ai/agent-runtime/core/utils';
-import {
-  addAgentMemory,
-  listAgentLongTermMemory,
-  listAgentMemory,
-} from '@/features/ai/agent-runtime/memory';
+import { fetchContextMemory } from './context/context-builder';
 import type { AgentExecutionContext } from '@/shared/contracts/agent-runtime';
 import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
 
@@ -38,152 +25,50 @@ export async function prepareRunContext(run: AgentRunContextInput): Promise<Agen
   const contextRegistryPrompt = buildAgentRuntimeContextRegistryPrompt(contextRegistry?.resolved);
   const chatbotAgentRun = getChatbotAgentRunDelegate();
   let memoryKey = run.memoryKey;
-  if (!memoryKey && chatbotAgentRun) {
+  if ((memoryKey === null || memoryKey === undefined || memoryKey.length === 0) && chatbotAgentRun !== null) {
     memoryKey = run.id;
     await chatbotAgentRun.update({
       where: { id: run.id },
       data: { memoryKey },
     });
   }
-  await addAgentMemory({
-    runId: run.id,
-    personaId: run.personaId ?? null,
-    scope: 'session',
-    content: run.prompt,
-    metadata: { source: 'user' },
-  });
 
-  const memory = await listAgentMemory({
-    runId: run.id,
-    personaId: run.personaId ?? null,
-    scope: 'session',
-  });
-  const sessionContext = memory.map((item: { content: string }) => item.content).slice(-8);
-  const sharedMemoryLookup = run.personaId?.trim()
-    ? { personaId: run.personaId.trim() }
-    : memoryKey
-      ? { memoryKey }
-      : null;
-  const longTermItems = sharedMemoryLookup
-    ? await listAgentLongTermMemory({ ...sharedMemoryLookup, limit: 4 })
-    : [];
-  const longTermProblemItems = sharedMemoryLookup
-    ? await listAgentLongTermMemory({
-      ...sharedMemoryLookup,
-      limit: 4,
-      tags: ['problem-solution'],
-    })
-    : [];
-  const longTermImprovementItems = sharedMemoryLookup
-    ? await listAgentLongTermMemory({
-      ...sharedMemoryLookup,
-      limit: 3,
-      tags: ['self-improvement'],
-    })
-    : [];
-  const selfImprovementPlaybook = buildSelfImprovementPlaybook(
-    longTermImprovementItems.map(
-      (item) => ({
-        summary: item.summary,
-        content: item.content,
-        metadata: jsonValueToRecord(item.metadata),
-      })
-    )
-  );
-  const longTermContext = [...longTermItems, ...longTermProblemItems, ...longTermImprovementItems]
-    .map((item: { summary: string | null; content: string }) => item.summary || item.content)
-    .filter(Boolean)
-    .map((item: string) => `Long-term memory: ${item}`);
-  const memoryContext = applyAgentRuntimeContextMemory([
-    ...sessionContext,
-    ...longTermContext,
-    ...(selfImprovementPlaybook ? [selfImprovementPlaybook] : []),
-  ], contextRegistryPrompt);
+  const { sessionContext, longTermContext, selfImprovementPlaybook } = await fetchContextMemory(run.id, run.personaId, memoryKey);
+  const contextMemory = [...sessionContext, ...longTermContext];
+  if (selfImprovementPlaybook !== null && selfImprovementPlaybook !== undefined) {
+    contextMemory.push(selfImprovementPlaybook);
+  }
+  const memoryContext = applyAgentRuntimeContextMemory(contextMemory, contextRegistryPrompt);
 
-  const settings = resolveAgentPlanSettings(run.planState);
-  const preferences = resolveAgentPreferences(run.planState);
-  const [
-    defaultConfig,
-    memoryValidationConfig,
-    plannerConfig,
-    selfCheckConfig,
-    loopGuardConfig,
-    approvalGateConfig,
-    memorySummarizationConfig,
-  ] = await Promise.all([
-    resolveBrainExecutionConfigForCapability('agent_runtime.default', {
-      runtimeKind: 'chat',
-    }),
-    resolveBrainExecutionConfigForCapability('agent_runtime.memory_validation', {
-      runtimeKind: 'validation',
-    }),
-    resolveBrainExecutionConfigForCapability('agent_runtime.planner', {
-      runtimeKind: 'chat',
-    }),
-    resolveBrainExecutionConfigForCapability('agent_runtime.self_check', {
-      runtimeKind: 'validation',
-    }),
-    resolveBrainExecutionConfigForCapability('agent_runtime.loop_guard', {
-      runtimeKind: 'validation',
-    }),
-    resolveBrainExecutionConfigForCapability('agent_runtime.approval_gate', {
-      runtimeKind: 'validation',
-    }),
-    resolveBrainExecutionConfigForCapability('agent_runtime.memory_summarization', {
-      runtimeKind: 'chat',
-    }),
+  const configs = await Promise.all([
+    resolveBrainExecutionConfigForCapability('agent_runtime.default', { runtimeKind: 'chat' }),
+    resolveBrainExecutionConfigForCapability('agent_runtime.memory_validation', { runtimeKind: 'validation' }),
+    resolveBrainExecutionConfigForCapability('agent_runtime.planner', { runtimeKind: 'chat' }),
+    resolveBrainExecutionConfigForCapability('agent_runtime.self_check', { runtimeKind: 'validation' }),
+    resolveBrainExecutionConfigForCapability('agent_runtime.loop_guard', { runtimeKind: 'validation' }),
+    resolveBrainExecutionConfigForCapability('agent_runtime.approval_gate', { runtimeKind: 'validation' }),
+    resolveBrainExecutionConfigForCapability('agent_runtime.memory_summarization', { runtimeKind: 'chat' }),
   ]);
-  const resolvedModel = defaultConfig.modelId;
-  const memoryValidationModel = memoryValidationConfig.modelId;
-  const plannerModel = plannerConfig.modelId;
-  const selfCheckModel = selfCheckConfig.modelId;
-  const loopGuardModel = loopGuardConfig.modelId;
-  const approvalGateModel = approvalGateConfig.modelId;
-  const memorySummarizationModel = memorySummarizationConfig.modelId;
-  const browserContext = await getBrowserContextSummary(run.id);
-
-  if (longTermImprovementItems.length > 0) {
-    await logAgentAudit(run.id, 'info', 'Self-improvement memory loaded.', {
-      type: 'self-improvement-context',
-      count: longTermImprovementItems.length,
-    });
+  
+  if (selfImprovementPlaybook !== null) {
+    await logAgentAudit(run.id, 'info', 'Self-improvement playbook ready.', { type: 'self-improvement-playbook' });
   }
-  if (selfImprovementPlaybook) {
-    await logAgentAudit(run.id, 'info', 'Self-improvement playbook ready.', {
-      type: 'self-improvement-playbook',
-    });
-  }
-  await logAgentAudit(run.id, 'info', 'Planner context prepared.', {
-    type: 'planner-context',
-    reason: 'initial',
-    prompt: run.prompt,
-    model: plannerModel,
-    memory: memoryContext,
-    browserContext,
-    contextRegistryRefCount: contextRegistry?.refs.length ?? 0,
-    contextRegistryDocumentCount: contextRegistry?.resolved?.documents.length ?? 0,
-  });
 
   return {
-    run: {
-      id: run.id,
-      prompt: run.prompt,
-      ...(run.agentBrowser !== undefined ? { agentBrowser: run.agentBrowser } : {}),
-      ...(run.runHeadless !== undefined ? { runHeadless: run.runHeadless } : {}),
-    },
-    memoryKey,
+    runId: run.id,
+    prompt: run.prompt,
     memoryContext,
-    contextRegistry: contextRegistry ?? null,
-    contextRegistryPrompt: contextRegistryPrompt || null,
-    settings,
-    preferences,
-    resolvedModel,
-    memoryValidationModel,
-    plannerModel,
-    selfCheckModel,
-    loopGuardModel,
-    approvalGateModel,
-    memorySummarizationModel,
-    browserContext,
+    browserContext: null,
+    settings: {},
+    preferences: {},
+    configs: {
+      default: configs[0],
+      memoryValidation: configs[1],
+      planner: configs[2],
+      selfCheck: configs[3],
+      loopGuard: configs[4],
+      approvalGate: configs[5],
+      memorySummarization: configs[6],
+    },
   };
 }

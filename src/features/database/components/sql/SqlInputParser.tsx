@@ -1,6 +1,23 @@
-import { MONGO_OPERATIONS, type MongoCommandInput } from '@/shared/contracts/database';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { asRecord } from '@/shared/utils/type-utils';
+
+const MONGO_OPERATIONS = new Set<string>([
+  'find',
+  'insertOne',
+  'updateOne',
+  'deleteOne',
+  'deleteMany',
+  'aggregate',
+  'countDocuments',
+]);
+
+export type MongoCommandInput = {
+  collection: string;
+  operation: 'find' | 'insertOne' | 'updateOne' | 'deleteOne' | 'deleteMany' | 'aggregate' | 'countDocuments';
+  filter?: Record<string, unknown>;
+  pipeline?: unknown[];
+  data?: Record<string, unknown> | undefined;
+};
 
 interface RawMongoCommand {
   collection?: unknown;
@@ -12,9 +29,9 @@ interface RawMongoCommand {
 
 function validateOperation(op: unknown): MongoCommandInput['operation'] {
   if (typeof op === 'string') {
-    const valid = Array.from(MONGO_OPERATIONS);
-    if (valid.includes(op)) {
-      return op as MongoCommandInput['operation'];
+    const normalized = op.trim();
+    if (MONGO_OPERATIONS.has(normalized)) {
+      return normalized as MongoCommandInput['operation'];
     }
   }
   throw new Error('Command must include a supported "operation"');
@@ -33,7 +50,8 @@ export function parseMongoCommandInput(raw: string): MongoCommandInput {
   try {
     parsed = JSON.parse(raw);
   } catch (error) {
-    logClientError(error);
+    const normalizedError = error instanceof Error ? error : new Error('Invalid command JSON payload');
+    logClientError(normalizedError);
     throw new Error('Command must be valid JSON.');
   }
 

@@ -1,81 +1,56 @@
 import { logAgentAudit } from '@/features/ai/agent-runtime/audit';
 import { getBrowserContextSummary } from '@/features/ai/agent-runtime/browsing/context';
 import { addAgentMemory } from '@/features/ai/agent-runtime/memory';
-import { buildCheckpointState } from '@/features/ai/agent-runtime/memory/checkpoint';
-import { getChatbotAgentRunDelegate } from '@/features/ai/agent-runtime/store-delegates';
 import {
   buildSelfImprovementReviewWithLLM,
   verifyPlanWithLLM,
 } from '@/features/ai/agent-runtime/planning/llm';
-import type {
-  AgentExecutionContext,
-  PlanStep,
-  PlannerMeta,
-} from '@/shared/contracts/agent-runtime';
-import type { InputJsonValue } from '@/shared/contracts/json';
+import { updateChatbotRunStatus } from './finalize/finalize-utils';
+import { type ImprovementReview, type FinalizeRunInput } from './finalize/finalize-types';
+import type { AgentExecutionContext } from '@/shared/contracts/agent-runtime';
 
-type FinalizeRunInput = {
-  context: AgentExecutionContext;
-  planSteps: PlanStep[];
-  taskType: PlannerMeta['taskType'] | null;
-  overallOk: boolean;
-  requiresHuman: boolean;
-  lastError: string | null;
-  summaryCheckpoint: number;
-};
+async function processReview(runId: string, improvementReview: ImprovementReview): Promise<void> {
+  await logAgentAudit(runId, 'info', 'Self-improvement review completed.', {
+    type: 'self-improvement',
+    summary: improvementReview.summary,
+    mistakes: improvementReview.mistakes,
+    improvements: improvementReview.improvements,
+    guardrails: improvementReview.guardrails,
+    toolAdjustments: improvementReview.toolAdjustments,
+    confidence: improvementReview.confidence,
+  });
+  await addAgentMemory({
+    runId,
+    scope: 'session',
+    content: [
+      'Self-improvement review',
+      improvementReview.summary,
+      improvementReview.mistakes.length > 0 ? `Mistakes: ${  improvementReview.mistakes.join(' | ')}` : null,
+      improvementReview.improvements.length > 0 ? `Improvements: ${  improvementReview.improvements.join(' | ')}` : null,
+      improvementReview.guardrails.length > 0 ? `Guardrails: ${  improvementReview.guardrails.join(' | ')}` : null,
+      improvementReview.toolAdjustments.length > 0 ? `Tool adjustments: ${  improvementReview.toolAdjustments.join(' | ')}` : null,
+    ].filter((s): s is string => typeof s === 'string' && s.length > 0).join('\n'),
+    metadata: { type: 'self-improvement', confidence: improvementReview.confidence },
+  });
+}
 
-export async function finalizeAgentRun(input: FinalizeRunInput): Promise<{
-  verificationContext: Awaited<ReturnType<typeof getBrowserContextSummary>>;
-  verification: Awaited<ReturnType<typeof verifyPlanWithLLM>>;
-  improvementReview: Awaited<ReturnType<typeof buildSelfImprovementReviewWithLLM>>;
-}> {
-  const { context, planSteps, taskType, overallOk, requiresHuman, lastError, summaryCheckpoint } =
-    input;
-  const {
-    run,
+export async function finalizeAgentRun(input: FinalizeRunInput): Promise<any> {
+  const { context, planSteps, taskType, overallOk, requiresHuman, lastError, summaryCheckpoint } = input;
+  const typedContext = context as AgentExecutionContext;
+  const { run, settings, preferences, contextRegistry, memoryContext, plannerModel, memorySummarizationModel } = typedContext;
+
+  await updateChatbotRunStatus({
+    runId: run.id,
+    runPrompt: run.prompt,
     settings,
     preferences,
     contextRegistry,
-    memoryContext,
-    plannerModel,
-    memorySummarizationModel,
-  } = context;
-  const status = requiresHuman ? 'waiting_human' : overallOk ? 'completed' : 'failed';
-  const chatbotAgentRun = getChatbotAgentRunDelegate();
-
-  if (chatbotAgentRun) {
-    await chatbotAgentRun.update({
-      where: { id: run.id },
-      data: {
-        status,
-        requiresHumanIntervention: requiresHuman,
-        finishedAt: new Date(),
-        errorMessage: status === 'failed' ? lastError : null,
-        activeStepId: null,
-        planState: buildCheckpointState({
-          steps: planSteps,
-          activeStepId: null,
-          lastError,
-          approvalRequestedStepId: null,
-          approvalGrantedStepId: null,
-          summaryCheckpoint,
-          settings,
-          preferences,
-          contextRegistry,
-        }) as InputJsonValue,
-        checkpointedAt: new Date(),
-        logLines: {
-          push: `[${new Date().toISOString()}] Playwright tool ${
-            status === 'completed'
-              ? 'completed'
-              : status === 'waiting_human'
-                ? 'paused'
-                : 'failed'
-          }.`,
-        },
-      },
-    });
-  }
+    planSteps,
+    requiresHuman,
+    overallOk,
+    lastError,
+    summaryCheckpoint,
+  });
 
   const verificationContext = await getBrowserContextSummary(run.id);
   const verification = await verifyPlanWithLLM({
@@ -86,50 +61,21 @@ export async function finalizeAgentRun(input: FinalizeRunInput): Promise<{
     browserContext: verificationContext,
     runId: run.id,
   });
-  const improvementReview = await buildSelfImprovementReviewWithLLM({
+  
+  const improvementReview: ImprovementReview | null = await buildSelfImprovementReviewWithLLM({
     prompt: run.prompt,
     model: memorySummarizationModel,
     memory: memoryContext,
     steps: planSteps,
     verification,
-    ...(taskType && { taskType }),
+    ...(taskType !== null ? { taskType } : {}),
     lastError,
     browserContext: verificationContext,
     runId: run.id,
   });
-  if (improvementReview) {
-    await logAgentAudit(run.id, 'info', 'Self-improvement review completed.', {
-      type: 'self-improvement',
-      summary: improvementReview.summary,
-      mistakes: improvementReview.mistakes,
-      improvements: improvementReview.improvements,
-      guardrails: improvementReview.guardrails,
-      toolAdjustments: improvementReview.toolAdjustments,
-      confidence: improvementReview.confidence,
-    });
-    await addAgentMemory({
-      runId: run.id,
-      scope: 'session',
-      content: [
-        'Self-improvement review',
-        improvementReview.summary,
-        improvementReview.mistakes.length
-          ? `Mistakes: ${improvementReview.mistakes.join(' | ')}`
-          : null,
-        improvementReview.improvements.length
-          ? `Improvements: ${improvementReview.improvements.join(' | ')}`
-          : null,
-        improvementReview.guardrails.length
-          ? `Guardrails: ${improvementReview.guardrails.join(' | ')}`
-          : null,
-        improvementReview.toolAdjustments.length
-          ? `Tool adjustments: ${improvementReview.toolAdjustments.join(' | ')}`
-          : null,
-      ]
-        .filter(Boolean)
-        .join('\n'),
-      metadata: { type: 'self-improvement', confidence: improvementReview.confidence ?? null },
-    });
+  
+  if (improvementReview !== null) {
+    await processReview(run.id, improvementReview);
   }
 
   return { verificationContext, verification, improvementReview };

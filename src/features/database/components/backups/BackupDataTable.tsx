@@ -2,7 +2,7 @@
 
 import type { JSX } from 'react';
 import { StandardDataTablePanel } from '@/shared/ui/templates.public';
-import { useDatabaseBackupsStateContext, useDatabaseBackupsActionsContext } from '../context/DatabaseBackupsContext';
+import { useDatabaseBackupsStateContext, useDatabaseBackupsActionsContext } from '../../context/DatabaseBackupsContext';
 import { useDatabaseColumns } from '../DatabaseColumns';
 
 export function BackupDataTable(): JSX.Element {

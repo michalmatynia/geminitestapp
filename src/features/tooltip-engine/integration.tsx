@@ -13,6 +13,21 @@ type CreateDocsTooltipIntegrationConfig = {
   defaultEnabled?: boolean;
 };
 
+interface DocTooltipProps {
+  docId: string;
+  children: React.ReactNode;
+  enabled: boolean;
+  maxWidth?: string;
+  side?: 'top' | 'bottom' | 'left' | 'right';
+  wrapperClassName?: string;
+}
+
+interface DocsTooltipEnhancerProps {
+  enabled: boolean;
+  rootId: string;
+  fallbackDocId?: string;
+}
+
 export function createDocsTooltipIntegration({
   moduleId,
   storageKey,
@@ -22,72 +37,49 @@ export function createDocsTooltipIntegration({
   storageKey: string;
   getTooltip: (docId: string) => string | null;
   useTooltips: () => { enabled: boolean; setEnabled: (enabled: boolean) => void };
-  DocTooltip: (props: {
-    docId: string;
-    children: React.ReactNode;
-    enabled: boolean;
-    maxWidth?: string;
-    side?: 'top' | 'bottom' | 'left' | 'right';
-    wrapperClassName?: string;
-  }) => React.JSX.Element;
-  DocsTooltipEnhancer: (props: {
-    enabled: boolean;
-    rootId: string;
-    fallbackDocId?: string;
-  }) => React.JSX.Element;
+  DocTooltip: (props: DocTooltipProps) => React.JSX.Element;
+  DocsTooltipEnhancer: (props: DocsTooltipEnhancerProps) => React.JSX.Element;
 } {
-  function useTooltips() {
+  const useTooltips = (): { enabled: boolean; setEnabled: (enabled: boolean) => void } => {
     return useDocsTooltipsSetting(storageKey, defaultEnabled);
-  }
+  };
 
-  function DocTooltip({
+  const DocTooltip = ({
     docId,
     children,
     enabled,
     maxWidth,
     side,
     wrapperClassName,
-  }: {
-    docId: string;
-    children: React.ReactNode;
-    enabled: boolean;
-    maxWidth?: string;
-    side?: 'top' | 'bottom' | 'left' | 'right';
-    wrapperClassName?: string;
-  }): React.JSX.Element {
-    const optionalProps = {
-      ...(maxWidth ? { maxWidth } : {}),
-      ...(side ? { side } : {}),
-      ...(wrapperClassName ? { wrapperClassName } : {}),
-    };
-
+  }: DocTooltipProps): React.JSX.Element => {
     return (
-      <DocumentationTooltip moduleId={moduleId} docId={docId} enabled={enabled} {...optionalProps}>
+      <DocumentationTooltip
+        moduleId={moduleId}
+        docId={docId}
+        enabled={enabled}
+        maxWidth={maxWidth !== undefined && maxWidth !== '' ? maxWidth : undefined}
+        side={side}
+        wrapperClassName={wrapperClassName !== undefined && wrapperClassName !== '' ? wrapperClassName : undefined}
+      >
         {children}
       </DocumentationTooltip>
     );
-  }
+  };
 
-  function DocsTooltipEnhancer({
+  const DocsTooltipEnhancer = ({
     enabled,
     rootId,
     fallbackDocId,
-  }: {
-    enabled: boolean;
-    rootId: string;
-    fallbackDocId?: string;
-  }): React.JSX.Element {
-    const optionalProps = fallbackDocId ? { fallbackDocId } : {};
-
+  }: DocsTooltipEnhancerProps): React.JSX.Element => {
     return (
       <DocumentationTooltipEnhancer
         enabled={enabled}
         moduleId={moduleId}
         rootId={rootId}
-        {...optionalProps}
+        fallbackDocId={fallbackDocId !== undefined && fallbackDocId !== '' ? fallbackDocId : undefined}
       />
     );
-  }
+  };
 
   return {
     moduleId,

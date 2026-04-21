@@ -16,6 +16,7 @@ import {
 import { getUnsupportedProviderActionMessage } from '@/shared/lib/ai-paths/core/utils/provider-actions';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { isObject } from '@/shared/utils/object-utils';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 export type DbProvider = 'mongodb';
@@ -136,12 +137,12 @@ export const normalizeObjectId = (
 
 export const normalizeUpdateDoc = (update: unknown): Record<string, unknown> | unknown[] | null => {
   if (Array.isArray(update)) return update as unknown[];
-  if (update && typeof update === 'object') {
+  if (update !== null && typeof update === 'object') {
     const keys = Object.keys(update as Record<string, unknown>);
     if (keys.some((key: string) => key.startsWith('$'))) {
       return update as Record<string, unknown>;
     }
-    return { $set: update } as Record<string, unknown>;
+    return { $set: update };
   }
   return null;
 };
@@ -165,7 +166,7 @@ export const applyUpdatedAtToUpdateDoc = (
   const nextUpdate = { ...update };
   const existingSetRaw = nextUpdate['$set'];
   const existingSet =
-    existingSetRaw && typeof existingSetRaw === 'object' && !Array.isArray(existingSetRaw)
+    existingSetRaw !== undefined && existingSetRaw !== null && typeof existingSetRaw === 'object' && !Array.isArray(existingSetRaw)
       ? (existingSetRaw as Record<string, unknown>)
       : {};
 
@@ -182,7 +183,7 @@ export const applyUpdatedAtToReplacement = (
 });
 
 export const normalizeReplaceDoc = (update: unknown): Record<string, unknown> | null => {
-  if (update && typeof update === 'object' && !Array.isArray(update)) {
+  if (update !== null && typeof update === 'object' && !Array.isArray(update)) {
     const keys = Object.keys(update as Record<string, unknown>);
     if (keys.some((key: string) => key.startsWith('$'))) {
       return null;
@@ -193,7 +194,7 @@ export const normalizeReplaceDoc = (update: unknown): Record<string, unknown> | 
 };
 
 export const extractFlatUpdates = (update: unknown): Record<string, unknown> | null => {
-  if (update && typeof update === 'object' && !Array.isArray(update)) {
+  if (update !== null && typeof update === 'object' && !Array.isArray(update)) {
     const keys = Object.keys(update as Record<string, unknown>);
     if (!keys.some((key: string) => key.startsWith('$'))) {
       return update as Record<string, unknown>;
@@ -248,11 +249,11 @@ export async function postAiPathsDbActionHandler(
 
   const runActionWithProvider = async (provider: DbProvider): Promise<Record<string, unknown>> => {
     const providerActionError = getUnsupportedProviderActionMessage(provider, action);
-    if (providerActionError) {
+    if (providerActionError !== null) {
       throw new ProviderResolutionError('action_not_supported', provider, providerActionError);
     }
 
-    if (!process.env['MONGODB_URI']) {
+    if (process.env['MONGODB_URI'] === undefined || process.env['MONGODB_URI'] === '') {
       throw new ProviderResolutionError(
         'provider_not_configured',
         provider,
@@ -317,20 +318,26 @@ export async function postAiPathsDbActionHandler(
         return withProviderPayload(provider, requestedProvider, { values, count: values.length });
       }
       case 'aggregate': {
-        if (!pipeline || pipeline.length === 0) throw badRequestError('Aggregation pipeline is required');
+        if (pipeline === undefined || pipeline.length === 0) throw badRequestError('Aggregation pipeline is required');
         const items = await collectionRef.aggregate(pipeline).toArray();
         return withProviderPayload(provider, requestedProvider, { items, count: items.length });
       }
       case 'insertOne': {
-        const doc = document && typeof document === 'object' && !Array.isArray(document) ? document : null;
+        const doc = isObject(document) ? document : null;
         if (!doc) throw badRequestError('Document is required');
         const result = await collectionRef.insertOne(doc);
         return withProviderPayload(provider, requestedProvider, { insertedId: result.insertedId, insertedCount: 1 });
       }
       case 'insertMany': {
-        const docs = documents && Array.isArray(documents) ? documents : (Array.isArray(document) ? document : null);
-        if (!docs || docs.length === 0) throw badRequestError('Documents array is required');
-        const result = await collectionRef.insertMany(docs as Record<string, unknown>[]);
+        let docs: Record<string, unknown>[] | null = null;
+        if (Array.isArray(documents)) {
+          docs = documents;
+        } else if (Array.isArray(document)) {
+          docs = document as Record<string, unknown>[];
+        }
+
+        if (docs === null || docs.length === 0) throw badRequestError('Documents array is required');
+        const result = await collectionRef.insertMany(docs);
         return withProviderPayload(provider, requestedProvider, { insertedIds: result.insertedIds, insertedCount: result.insertedCount });
       }
       case 'replaceOne': {
@@ -346,7 +353,7 @@ export async function postAiPathsDbActionHandler(
         if (!updateDoc) throw badRequestError('Update document is required');
         const nextUpdateDoc = shouldAutoStampUpdatedAt(resolvedCollection) ? applyUpdatedAtToUpdateDoc(updateDoc, now) : updateDoc;
         const result = await collectionRef.findOneAndUpdate(normalizedFilter, nextUpdateDoc, { returnDocument, upsert: Boolean(upsert), includeResultMetadata: true });
-        return withProviderPayload(provider, requestedProvider, { value: result.value ?? null, ok: result.ok ?? 1 });
+        return withProviderPayload(provider, requestedProvider, { value: result.value ?? null, ok: result.ok });
       }
       case 'updateOne':
       case 'updateMany': {
@@ -361,11 +368,11 @@ export async function postAiPathsDbActionHandler(
       case 'deleteOne':
       case 'deleteMany': {
         const result = action === 'deleteOne' ? await collectionRef.deleteOne(normalizedFilter) : await collectionRef.deleteMany(normalizedFilter);
-        return withProviderPayload(provider, requestedProvider, { deletedCount: result.deletedCount ?? 0 });
+        return withProviderPayload(provider, requestedProvider, { deletedCount: result.deletedCount });
       }
       case 'findOneAndDelete': {
         const result = await collectionRef.findOneAndDelete(normalizedFilter, { includeResultMetadata: true });
-        return withProviderPayload(provider, requestedProvider, { value: result.value ?? null, ok: result.ok ?? 1 });
+        return withProviderPayload(provider, requestedProvider, { value: result.value ?? null, ok: result.ok });
       }
       default:
         throw badRequestError('Unsupported action');
@@ -380,13 +387,15 @@ export async function postAiPathsDbActionHandler(
       ...result,
       collection: resolvedCollection,
       requestedCollection,
-      ...(collectionResolution.mappedFrom
+      ...(collectionResolution.mappedFrom !== undefined &&
+      collectionResolution.mappedFrom !== null &&
+      collectionResolution.mappedFrom !== ''
         ? { collectionMappedFrom: collectionResolution.mappedFrom }
         : {}),
     };
     return NextResponse.json(finalResult);
   } catch (primaryError) {
-    void ErrorSystem.captureException(primaryError);
+    ErrorSystem.captureException(primaryError).catch(() => { /* ignore */ });
     const isResolutionError = isProviderResolutionError(primaryError);
     if (!isResolutionError) {
       throw primaryError;

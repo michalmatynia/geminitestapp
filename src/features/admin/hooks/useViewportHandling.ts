@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAdminLayoutActions, useAdminLayoutState } from '../context/AdminLayoutContext';
 
-export function useViewportHandling() {
+export function useViewportHandling(): { isMobileViewport: boolean } {
   const { isMenuHidden } = useAdminLayoutState();
   const { setIsMenuHidden } = useAdminLayoutActions();
   const [isMobileViewport, setIsMobileViewport] = useState(false);
@@ -11,7 +11,7 @@ export function useViewportHandling() {
 
   useEffect(() => {
     if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
-      return;
+      return undefined;
     }
 
     const media = window.matchMedia('(max-width: 1023px)');

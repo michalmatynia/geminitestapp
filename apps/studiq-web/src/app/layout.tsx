@@ -33,7 +33,7 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <body className='kangur-surface-active'>
-        {sanitizedLiteSettingsScript ? (
+        {sanitizedLiteSettingsScript !== null ? (
           <script
             dangerouslySetInnerHTML={{
               __html: sanitizedLiteSettingsScript,

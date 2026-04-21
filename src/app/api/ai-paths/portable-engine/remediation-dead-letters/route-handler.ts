@@ -4,16 +4,16 @@ import { z } from 'zod';
 
 import { apiHandler } from '@/shared/lib/api/api-handler';
 
-import { GET_handler, POST_handler, querySchema } from './handler';
+import { getDeadLettersHandler, postDeadLettersHandler, querySchema } from './handler';
 
 const bodySchema = z.unknown();
 
-export const GET = apiHandler(GET_handler, {
+export const GET = apiHandler(getDeadLettersHandler, {
   source: 'ai-paths.portable-engine.remediation-dead-letters.GET',
   querySchema,
 });
 
-export const POST = apiHandler(POST_handler, {
+export const POST = apiHandler(postDeadLettersHandler, {
   source: 'ai-paths.portable-engine.remediation-dead-letters.POST',
   parseJsonBody: true,
   bodySchema,

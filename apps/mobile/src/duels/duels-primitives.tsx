@@ -90,7 +90,7 @@ export const renderOptionalLinkButton = ({
   stretch?: boolean;
   tone?: 'primary' | 'secondary';
 }): React.JSX.Element | null => {
-  if (!href) {
+  if (href === null || href === undefined) {
     return null;
   }
 
@@ -519,35 +519,39 @@ export function LessonMasteryCard({
   const lessonMastery = useKangurMobileDuelsLessonMastery();
   const weakestLesson = lessonMastery.weakest[0] ?? null;
   const strongestLesson = lessonMastery.strongest[0] ?? null;
-  const lessonFocusSummary = weakestLesson
-    ? copy({
-        de:
-          context === 'session'
-            ? `Fokus neben dem Duell: ${weakestLesson.title} braucht noch eine kurze Wiederholung, sobald diese Sitzung endet.`
-            : `Fokus aus der Lobby: ${weakestLesson.title} braucht noch eine kurze Wiederholung, bevor du den nächsten Rivalen öffnest.`,
-        en:
-          context === 'session'
-            ? `Focus beside the duel: ${weakestLesson.title} still needs a short review once this session ends.`
-            : `Focus from the lobby: ${weakestLesson.title} still needs a short review before you open the next rival.`,
-        pl:
-          context === 'session'
-            ? `Fokus obok pojedynku: ${weakestLesson.title} potrzebuje jeszcze krótkiej powtórki, gdy ta sesja się skończy.`
-            : `Fokus z lobby: ${weakestLesson.title} potrzebuje jeszcze krótkiej powtórki, zanim otworzysz kolejnego rywala.`,
-      })
-    : strongestLesson
-      ? copy({
-          de:
-            context === 'session'
-              ? `Stabile Stärke neben dem Duell: ${strongestLesson.title} hält ihr Niveau und eignet sich nach dieser Sitzung für eine kurze Auffrischung.`
-              : `Stabile Stärke aus der Lobby: ${strongestLesson.title} hält ihr Niveau und eignet sich vor dem nächsten Match für eine kurze Auffrischung.`,
-          en:
-            context === 'session'
-              ? `Stable strength beside the duel: ${strongestLesson.title} is holding its level and works for a short refresh after this session.`
-              : `Stable strength from the lobby: ${strongestLesson.title} is holding its level and works for a short refresh before the next match.`,
-          pl:
-            context === 'session'
-              ? `Stabilna mocna strona obok pojedynku: ${strongestLesson.title} trzyma poziom i nadaje się na krótkie podtrzymanie po tej sesji.`
-              : `Stabilna mocna strona z lobby: ${strongestLesson.title} trzyma poziom i nadaje się na krótkie podtrzymanie przed następnym meczem.`,
+  let lessonFocusSummary = '';
+
+  if (weakestLesson !== null) {
+    lessonFocusSummary = copy({
+      de:
+        context === 'session'
+          ? `Fokus neben dem Duell: ${weakestLesson.title} braucht noch eine kurze Wiederholung, sobald diese Sitzung endet.`
+          : `Fokus aus der Lobby: ${weakestLesson.title} braucht noch eine kurze Wiederholung, bevor du den nächsten Rivalen öffnest.`,
+      en:
+        context === 'session'
+          ? `Focus beside the duel: ${weakestLesson.title} still needs a short review once this session ends.`
+          : `Focus from the lobby: ${weakestLesson.title} still needs a short review before you open the next rival.`,
+      pl:
+        context === 'session'
+          ? `Fokus obok pojedynku: ${weakestLesson.title} potrzebuje jeszcze krótkiej powtórki, gdy ta sesja się skończy.`
+          : `Fokus z lobby: ${weakestLesson.title} potrzebuje jeszcze krótkiej powtórki, zanim otworzysz kolejnego rywala.`,
+    });
+  } else if (strongestLesson !== null) {
+    lessonFocusSummary = copy({
+      de:
+        context === 'session'
+          ? `Stabile Stärke neben dem Duell: ${strongestLesson.title} hält ihr Niveau und eignet sich nach dieser Sitzung für eine kurze Auffrischung.`
+          : `Stabile Stärke aus der Lobby: ${strongestLesson.title} hält ihr Niveau und eignet sich vor dem nächsten Match für eine kurze Auffrischung.`,
+      en:
+        context === 'session'
+          ? `Stable strength beside the duel: ${strongestLesson.title} is holding its level and works for a short refresh after this session.`
+          : `Stable strength from the lobby: ${strongestLesson.title} is holding its level and works for a short refresh before the next match.`,
+      pl:
+        context === 'session'
+          ? `Stabilna mocna strona obok pojedynku: ${strongestLesson.title} trzyma poziom i nadaje się na krótkie podtrzymanie po tej sesji.`
+          : `Stabilna mocna strona z lobby: ${strongestLesson.title} trzyma poziom i nadaje się na krótkie podtrzymanie przed następnym meczem.`,
+    });
+  }
         })
       : null;
 

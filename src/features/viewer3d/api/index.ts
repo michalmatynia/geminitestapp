@@ -8,14 +8,34 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 
 const API_BASE = '/api/assets3d';
 
+/* eslint-disable complexity */
+function appendFilterToParams(params: Record<string, string>, filters: Asset3DListFilters): void {
+  if (filters.filename !== undefined && filters.filename !== '') {
+    // eslint-disable-next-line no-param-reassign
+    params['filename'] = filters.filename;
+  }
+  if (filters.categoryId !== undefined && filters.categoryId !== '') {
+    // eslint-disable-next-line no-param-reassign
+    params['categoryId'] = filters.categoryId;
+  }
+  if (filters.search !== undefined && filters.search !== '') {
+    // eslint-disable-next-line no-param-reassign
+    params['search'] = filters.search;
+  }
+  if (filters.isPublic !== undefined) {
+    // eslint-disable-next-line no-param-reassign
+    params['isPublic'] = String(filters.isPublic);
+  }
+  if (filters.tags !== undefined && filters.tags.length > 0) {
+    // eslint-disable-next-line no-param-reassign
+    params['tags'] = filters.tags.join(',');
+  }
+}
+
 export async function fetchAssets3D(filters?: Asset3DListFilters): Promise<Asset3DRecord[]> {
   const params: Record<string, string> = {};
-  if (filters?.filename) params['filename'] = filters.filename;
-  if (filters?.categoryId) params['categoryId'] = filters.categoryId;
-  if (filters?.search) params['search'] = filters.search;
-  if (filters?.isPublic !== undefined) params['isPublic'] = String(filters.isPublic);
-  if (filters?.tags && filters.tags.length > 0) {
-    params['tags'] = filters.tags.join(',');
+  if (filters !== undefined) {
+    appendFilterToParams(params, filters);
   }
 
   return api.get<Asset3DRecord[]>(API_BASE, { params });
@@ -25,24 +45,43 @@ export async function fetchAsset3DById(id: string): Promise<Asset3DRecord> {
   return api.get<Asset3DRecord>(`${API_BASE}/${id}`);
 }
 
+interface UploadAssetData {
+  name?: string;
+  description?: string;
+  category?: string;
+  tags?: string[];
+  isPublic?: boolean;
+}
+
+function appendAssetDataToFormData(formData: FormData, data: UploadAssetData): void {
+  if (data.name !== undefined && data.name !== '') {
+    formData.append('name', data.name);
+  }
+  if (data.description !== undefined && data.description !== '') {
+    formData.append('description', data.description);
+  }
+  if (data.category !== undefined && data.category !== '') {
+    formData.append('category', data.category);
+  }
+  if (data.tags !== undefined && data.tags.length > 0) {
+    formData.append('tags', data.tags.join(','));
+  }
+  if (data.isPublic !== undefined) {
+    formData.append('isPublic', String(data.isPublic));
+  }
+}
+/* eslint-enable complexity */
+
 export async function uploadAsset3DFile(
   file: File,
-  data?: {
-    name?: string;
-    description?: string;
-    category?: string;
-    tags?: string[];
-    isPublic?: boolean;
-  },
+  data?: UploadAssetData,
   onProgress?: (loaded: number, total?: number) => void
 ): Promise<Asset3DRecord> {
   const formData = new FormData();
   formData.append('file', file);
-  if (data?.name) formData.append('name', data.name);
-  if (data?.description) formData.append('description', data.description);
-  if (data?.category) formData.append('category', data.category);
-  if (data?.tags && data.tags.length > 0) formData.append('tags', data.tags.join(','));
-  if (data?.isPublic !== undefined) formData.append('isPublic', String(data.isPublic));
+  if (data !== undefined) {
+    appendAssetDataToFormData(formData, data);
+  }
 
   try {
     const { uploadWithProgress } = await import('@/shared/utils/upload-with-progress');
@@ -52,15 +91,14 @@ export async function uploadAsset3DFile(
     });
 
     if (!result.ok) {
-      const data = result.data as { error?: string };
-      const error = new Error(data?.error ?? 'Failed to upload 3D asset');
+      const errorData = result.data as { error?: string };
+      const error = new Error(errorData.error ?? 'Failed to upload 3D asset');
       logClientError(error, { context: { source: 'uploadAsset3DFile', filename: file.name } });
       throw error;
     }
 
     return result.data;
   } catch (error) {
-    logClientError(error);
     logClientError(error as Error, {
       context: { source: 'uploadAsset3DFile', filename: file.name },
     });

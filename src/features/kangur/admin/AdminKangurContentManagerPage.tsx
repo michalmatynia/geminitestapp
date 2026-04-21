@@ -33,7 +33,7 @@ export function AdminKangurContentManagerPage(): React.JSX.Element {
   const rawTestSuites = settingsStore.get(KANGUR_TEST_SUITES_SETTING_KEY) as unknown;
   const rawQuestions = settingsStore.get(KANGUR_TEST_QUESTIONS_SETTING_KEY) as unknown;
   
-  const lessons: KangurLesson[] = React.useMemo(() => (lessonsQuery.data ?? []) as KangurLesson[], [lessonsQuery.data]);
+  const lessons: KangurLesson[] = React.useMemo(() => (lessonsQuery.data ?? []), [lessonsQuery.data]);
   const lessonDocuments = React.useMemo(() => (lessonDocumentsQuery.data ?? {}) as Record<string, any>, [lessonDocumentsQuery.data]);
   const testSuites = React.useMemo(() => parseKangurTestSuites(rawTestSuites), [rawTestSuites]);
   const questionStore = React.useMemo(() => parseKangurTestQuestionStore(rawQuestions), [rawQuestions]);

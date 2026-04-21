@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type MutableRefObject } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useUserPreferences } from '@/shared/hooks/useUserPreferences';
 import { api } from '@/shared/lib/api-client';
@@ -43,34 +43,16 @@ const scheduleDeferredRemoteMenuPreferenceBootstrap = (onReady: () => void): (()
   };
 };
 
-export function useMenuPersistence(hasInitialMenuPreference: boolean) {
-  const { isMenuCollapsed, isProgrammaticallyCollapsed } = useAdminLayoutState();
-  const { setIsMenuCollapsed, setIsProgrammaticallyCollapsed } = useAdminLayoutActions();
-
-  const didUserToggleRef = useRef(false);
-  const preferredMenuCollapsedRef = useRef(isMenuCollapsed);
-  const programmaticCollapsedRef = useRef(false);
-
-  const [hasResolvedLocalMenuPreference, setHasResolvedLocalMenuPreference] = useState(false);
-  const [shouldLoadRemoteMenuPreference, setShouldLoadRemoteMenuPreference] = useState(
-    !hasInitialMenuPreference
-  );
-  const [remoteMenuPreferenceReady, setRemoteMenuPreferenceReady] = useState(false);
-
-  const { data: preferences } = useUserPreferences({
-    enabled:
-      hasResolvedLocalMenuPreference && shouldLoadRemoteMenuPreference && remoteMenuPreferenceReady,
-  });
+function useMenuStorage(): {
+  persistMenuCollapsed: (collapsed: boolean) => Promise<void>;
+  persistMenuCollapsedFallbacks: (collapsed: boolean) => void;
+} {
   const queryClient = useQueryClient();
 
   const persistMenuCollapsedFallbacks = useCallback((collapsed: boolean): void => {
     if (typeof window === 'undefined') return;
     try {
       window.localStorage.setItem(ADMIN_MENU_COLLAPSED_STORAGE_KEY, String(collapsed));
-    } catch (error) {
-      logClientError(error);
-    }
-    try {
       setClientCookie(ADMIN_MENU_COLLAPSED_COOKIE_KEY, collapsed ? '1' : '0', {
         maxAgeSeconds: 31536000,
       });
@@ -103,13 +85,38 @@ export function useMenuPersistence(hasInitialMenuPreference: boolean) {
     [persistMenuCollapsedFallbacks, queryClient]
   );
 
+  return { persistMenuCollapsed, persistMenuCollapsedFallbacks };
+}
+
+interface PreferenceResolutionResult {
+  hasResolvedLocalMenuPreference: boolean;
+  shouldLoadRemoteMenuPreference: boolean;
+  remoteMenuPreferenceReady: boolean;
+  setShouldLoadRemoteMenuPreference: (load: boolean) => void;
+  setRemoteMenuPreferenceReady: (ready: boolean) => void;
+}
+
+function useMenuPreferenceResolution(
+  hasInitialMenuPreference: boolean,
+  setIsMenuCollapsed: (collapsed: boolean) => void,
+  preferredMenuCollapsedRef: MutableRefObject<boolean>,
+  didUserToggleRef: MutableRefObject<boolean>
+): PreferenceResolutionResult {
+  const [hasResolvedLocalMenuPreference, setHasResolvedLocalMenuPreference] = useState(false);
+  const [shouldLoadRemoteMenuPreference, setShouldLoadRemoteMenuPreference] = useState(
+    !hasInitialMenuPreference
+  );
+  const [remoteMenuPreferenceReady, setRemoteMenuPreferenceReady] = useState(false);
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
       const stored = window.localStorage.getItem(ADMIN_MENU_COLLAPSED_STORAGE_KEY);
       if (stored === 'true' || stored === 'false') {
         const storedCollapsed = stored === 'true';
+        // eslint-disable-next-line no-param-reassign
         preferredMenuCollapsedRef.current = storedCollapsed;
+        // eslint-disable-next-line no-param-reassign
         didUserToggleRef.current = true;
         setIsMenuCollapsed(storedCollapsed);
         setShouldLoadRemoteMenuPreference(false);
@@ -119,59 +126,74 @@ export function useMenuPersistence(hasInitialMenuPreference: boolean) {
     } finally {
       setHasResolvedLocalMenuPreference(true);
     }
-  }, [setIsMenuCollapsed]);
+  }, [setIsMenuCollapsed, preferredMenuCollapsedRef, didUserToggleRef]);
 
   useEffect(() => {
     if (!hasResolvedLocalMenuPreference || !shouldLoadRemoteMenuPreference) {
-      if (remoteMenuPreferenceReady) {
-        setRemoteMenuPreferenceReady(false);
-      }
-      return;
+      if (remoteMenuPreferenceReady) setRemoteMenuPreferenceReady(false);
+      return undefined;
     }
-    if (remoteMenuPreferenceReady) return;
+    if (remoteMenuPreferenceReady) return undefined;
 
     return scheduleDeferredRemoteMenuPreferenceBootstrap(() => {
       setRemoteMenuPreferenceReady(true);
     });
   }, [hasResolvedLocalMenuPreference, remoteMenuPreferenceReady, shouldLoadRemoteMenuPreference]);
 
-  useEffect(() => {
-    programmaticCollapsedRef.current = isProgrammaticallyCollapsed;
-  }, [isProgrammaticallyCollapsed]);
+  return {
+    hasResolvedLocalMenuPreference,
+    shouldLoadRemoteMenuPreference,
+    remoteMenuPreferenceReady,
+    setShouldLoadRemoteMenuPreference,
+    setRemoteMenuPreferenceReady,
+  };
+}
 
+interface MenuPersistenceResult {
+  isMenuCollapsed: boolean;
+  preferredMenuCollapsedRef: MutableRefObject<boolean>;
+  didUserToggleRef: MutableRefObject<boolean>;
+  handleToggleCollapse: () => void;
+  hasResolvedLocalMenuPreference: boolean;
+}
+
+export function useMenuPersistence(hasInitialMenuPreference: boolean): MenuPersistenceResult {
+  const { isMenuCollapsed, isProgrammaticallyCollapsed } = useAdminLayoutState();
+  const { setIsMenuCollapsed, setIsProgrammaticallyCollapsed } = useAdminLayoutActions();
+  const didUserToggleRef = useRef(false);
+  const preferredMenuCollapsedRef = useRef(isMenuCollapsed);
+  const programmaticCollapsedRef = useRef(false);
+  const { persistMenuCollapsed, persistMenuCollapsedFallbacks } = useMenuStorage();
+  const {
+    hasResolvedLocalMenuPreference, shouldLoadRemoteMenuPreference, remoteMenuPreferenceReady,
+    setShouldLoadRemoteMenuPreference, setRemoteMenuPreferenceReady,
+  } = useMenuPreferenceResolution(
+    hasInitialMenuPreference, setIsMenuCollapsed, preferredMenuCollapsedRef, didUserToggleRef
+  );
+  const { data: preferences } = useUserPreferences({
+    enabled: hasResolvedLocalMenuPreference && shouldLoadRemoteMenuPreference && remoteMenuPreferenceReady,
+  });
+  useEffect(() => { programmaticCollapsedRef.current = isProgrammaticallyCollapsed; }, [isProgrammaticallyCollapsed]);
   useEffect(() => {
     if (!hasResolvedLocalMenuPreference || !shouldLoadRemoteMenuPreference) return;
     if (didUserToggleRef.current || programmaticCollapsedRef.current) return;
     if (!preferences || typeof preferences.adminMenuCollapsed !== 'boolean') return;
-
     preferredMenuCollapsedRef.current = preferences.adminMenuCollapsed;
     setIsMenuCollapsed(preferences.adminMenuCollapsed);
     persistMenuCollapsedFallbacks(preferences.adminMenuCollapsed);
     setShouldLoadRemoteMenuPreference(false);
     setRemoteMenuPreferenceReady(false);
   }, [
-    hasResolvedLocalMenuPreference,
-    persistMenuCollapsedFallbacks,
-    preferences,
-    remoteMenuPreferenceReady,
-    setIsMenuCollapsed,
-    shouldLoadRemoteMenuPreference,
+    hasResolvedLocalMenuPreference, persistMenuCollapsedFallbacks, preferences, remoteMenuPreferenceReady,
+    setIsMenuCollapsed, shouldLoadRemoteMenuPreference, setShouldLoadRemoteMenuPreference, setRemoteMenuPreferenceReady,
   ]);
-
   const handleToggleCollapse = useCallback((): void => {
     const nextCollapsed = !isMenuCollapsed;
     didUserToggleRef.current = true;
     preferredMenuCollapsedRef.current = nextCollapsed;
     setIsMenuCollapsed(nextCollapsed);
     setIsProgrammaticallyCollapsed(false);
-    void persistMenuCollapsed(nextCollapsed);
+    persistMenuCollapsed(nextCollapsed).catch(logClientError);
   }, [isMenuCollapsed, persistMenuCollapsed, setIsMenuCollapsed, setIsProgrammaticallyCollapsed]);
-
-  return {
-    isMenuCollapsed,
-    preferredMenuCollapsedRef,
-    didUserToggleRef,
-    handleToggleCollapse,
-    hasResolvedLocalMenuPreference,
-  };
+  return { isMenuCollapsed, preferredMenuCollapsedRef, didUserToggleRef, handleToggleCollapse, hasResolvedLocalMenuPreference };
 }

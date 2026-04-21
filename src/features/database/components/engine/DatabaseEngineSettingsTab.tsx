@@ -7,7 +7,7 @@ import { FormSection, ToggleRow } from '@/shared/ui/forms-and-actions.public';
 import { StatusBadge } from '@/shared/ui/data-display.public';
 import { useDatabaseEngineActionsContext, useDatabaseEngineStateContext } from '../../context/DatabaseEngineContext';
 import { type DatabaseCollectionRow } from '../../hooks/useDatabaseEngineState';
-import { ColumnDef } from '@tanstack/react-table';
+import { type ColumnDef } from '@tanstack/react-table';
 import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
 import { type LabeledOptionDto } from '@/shared/contracts/base';
 import type { DatabaseEngineProvider as DatabaseEngineProviderValue } from '@/shared/lib/db/database-engine-constants';

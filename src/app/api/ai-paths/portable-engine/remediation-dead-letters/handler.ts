@@ -67,7 +67,7 @@ const parseDeadLetterChannel = (
   value: unknown
 ): PortablePathAuditSinkAutoRemediationNotificationChannel | null => {
   const normalized = normalizeOptionalQueryString(value)?.toLowerCase();
-  if (!normalized) return null;
+  if (normalized === undefined || normalized === '') return null;
   if (normalized === 'webhook' || normalized === 'email') return normalized;
   throw badRequestError('Remediation dead-letter channel must be one of: webhook, email.');
 };
@@ -82,7 +82,7 @@ const resolveDeadLetterQueryInput = (
   req: NextRequest,
   ctx: ApiHandlerContext
 ): Record<string, unknown> => {
-  if (ctx.query && Object.keys(ctx.query).length > 0) {
+  if (ctx.query !== undefined && Object.keys(ctx.query).length > 0) {
     return ctx.query as Record<string, unknown>;
   }
 
@@ -124,9 +124,7 @@ const parseReplayRequestBody = (
     throw badRequestError('Remediation dead-letter replay "dryRun" must be boolean.');
   }
   const timeoutMs =
-    payload.timeoutMs === undefined || payload.timeoutMs === null
-      ? undefined
-      : Number(payload.timeoutMs);
+    payload.timeoutMs === undefined ? undefined : Number(payload.timeoutMs);
   if (timeoutMs !== undefined && !Number.isFinite(timeoutMs)) {
     throw badRequestError('Remediation dead-letter replay "timeoutMs" must be numeric.');
   }
@@ -140,7 +138,7 @@ const parseReplayRequestBody = (
   };
 };
 
-export async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function getDeadLettersHandler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   await requireAiPathsAccess();
 
   const query = portablePathRemediationDeadLettersQuerySchema.parse(
@@ -157,8 +155,8 @@ export async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Pro
   });
   const entries = Array.isArray(entriesRaw) ? entriesRaw : [];
   const filtered = entries.filter((entry) => {
-    if (channel && entry.channel !== channel) return false;
-    if (endpoint && entry.endpoint !== endpoint) return false;
+    if (channel !== null && entry.channel !== channel) return false;
+    if (endpoint !== null && entry.endpoint !== endpoint) return false;
     return true;
   });
   const sliced = filtered.slice(-limit);
@@ -168,7 +166,7 @@ export async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Pro
         sliced.length - 1
       ] as PortablePathAuditSinkAutoRemediationNotificationDeadLetterEntry)
       : null;
-  const latestQueuedAt = latestEntry ? latestEntry.queuedAt : null;
+  const latestQueuedAt = latestEntry !== null ? latestEntry.queuedAt : null;
   const byChannel = {
     webhook: sliced.filter((entry) => entry.channel === 'webhook').length,
     email: sliced.filter((entry) => entry.channel === 'email').length,
@@ -196,7 +194,7 @@ export async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Pro
   });
 }
 
-export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function postDeadLettersHandler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   await requireAiPathsAccess();
 
   const body = parseReplayRequestBody(ctx.body);

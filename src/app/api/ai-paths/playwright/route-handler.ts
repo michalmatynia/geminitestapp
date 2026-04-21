@@ -2,9 +2,9 @@ export const runtime = 'nodejs';
 
 import { apiHandler } from '@/shared/lib/api/api-handler';
 
-import { POST_handler } from './handler';
+import { postPlaywrightHandler } from './handler';
 
-export const POST = apiHandler(POST_handler, {
+export const POST = apiHandler(postPlaywrightHandler, {
   source: 'ai-paths.playwright.POST',
   requireAuth: true,
 });

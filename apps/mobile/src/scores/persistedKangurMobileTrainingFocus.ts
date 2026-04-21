@@ -11,14 +11,15 @@ const KANGUR_MOBILE_TRAINING_FOCUS_STORAGE_KEY =
 const isPersistedOperationPerformance = (
   value: unknown,
 ): value is KangurMobileOperationPerformance => {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+  if (value === null || value === undefined || typeof value !== 'object' || Array.isArray(value)) {
     return false;
   }
 
   const candidate = value as Record<string, unknown>;
+  const operation = candidate['operation'];
   return (
-    typeof candidate['operation'] === 'string' &&
-    candidate['operation'].trim().length > 0 &&
+    typeof operation === 'string' &&
+    operation.trim().length > 0 &&
     (candidate['family'] === 'arithmetic' ||
       candidate['family'] === 'logic' ||
       candidate['family'] === 'time') &&
@@ -39,23 +40,26 @@ const isPersistedOperationPerformance = (
 const parsePersistedTrainingFocus = (
   value: unknown,
 ): KangurMobileTrainingFocus | null => {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+  if (value === null || value === undefined || typeof value !== 'object' || Array.isArray(value)) {
     return null;
   }
 
   const candidate = value as Record<string, unknown>;
-  const strongestOperation =
-    candidate['strongestOperation'] === null
-      ? null
-      : isPersistedOperationPerformance(candidate['strongestOperation'])
-        ? candidate['strongestOperation']
-        : null;
-  const weakestOperation =
-    candidate['weakestOperation'] === null
-      ? null
-      : isPersistedOperationPerformance(candidate['weakestOperation'])
-        ? candidate['weakestOperation']
-        : null;
+  let strongestOperation: KangurMobileOperationPerformance | null = null;
+  const strongestCandidate = candidate['strongestOperation'];
+  if (strongestCandidate !== null && strongestCandidate !== undefined) {
+    if (isPersistedOperationPerformance(strongestCandidate)) {
+      strongestOperation = strongestCandidate;
+    }
+  }
+
+  let weakestOperation: KangurMobileOperationPerformance | null = null;
+  const weakestCandidate = candidate['weakestOperation'];
+  if (weakestCandidate !== null && weakestCandidate !== undefined) {
+    if (isPersistedOperationPerformance(weakestCandidate)) {
+      weakestOperation = weakestCandidate;
+    }
+  }
 
   if (
     !('strongestOperation' in candidate) ||
@@ -66,6 +70,7 @@ const parsePersistedTrainingFocus = (
 
   if (
     candidate['strongestOperation'] !== null &&
+    candidate['strongestOperation'] !== undefined &&
     !isPersistedOperationPerformance(candidate['strongestOperation'])
   ) {
     return null;
@@ -73,6 +78,7 @@ const parsePersistedTrainingFocus = (
 
   if (
     candidate['weakestOperation'] !== null &&
+    candidate['weakestOperation'] !== undefined &&
     !isPersistedOperationPerformance(candidate['weakestOperation'])
   ) {
     return null;
@@ -88,14 +94,15 @@ const parsePersistedTrainingFocusStore = (
   rawSnapshot: string | null,
 ): Record<string, KangurMobileTrainingFocus> => {
   const normalizedRawSnapshot = rawSnapshot?.trim() ?? '';
-  if (!normalizedRawSnapshot) {
+  if (normalizedRawSnapshot === '') {
     return {};
   }
 
   try {
     const parsedSnapshot = JSON.parse(normalizedRawSnapshot) as unknown;
     if (
-      !parsedSnapshot ||
+      parsedSnapshot === null ||
+      parsedSnapshot === undefined ||
       typeof parsedSnapshot !== 'object' ||
       Array.isArray(parsedSnapshot)
     ) {
@@ -103,12 +110,15 @@ const parsePersistedTrainingFocusStore = (
     }
 
     return Object.entries(parsedSnapshot).reduce<Record<string, KangurMobileTrainingFocus>>(
-      (snapshot, [identityKey, value]) => {
+      (acc, [identityKey, value]) => {
         const parsedFocus = parsePersistedTrainingFocus(value);
-        if (parsedFocus) {
-          snapshot[identityKey] = parsedFocus;
+        if (parsedFocus !== null) {
+          return {
+            ...acc,
+            [identityKey]: parsedFocus,
+          };
         }
-        return snapshot;
+        return acc;
       },
       {},
     );

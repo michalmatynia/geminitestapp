@@ -2,7 +2,7 @@
  * Checks if a value is a plain object.
  */
 export function isObject(item: unknown): item is Record<string, unknown> {
-  return Boolean(item && typeof item === 'object' && !Array.isArray(item));
+  return item !== null && typeof item === 'object' && !Array.isArray(item);
 }
 
 /**
@@ -35,14 +35,17 @@ export function deepMerge<T extends Record<string, unknown>>(
   target: T,
   ...sources: Partial<T>[]
 ): T {
-  if (!sources.length) return target;
+  if (sources.length === 0) return target;
   const source = sources.shift();
 
   if (isObject(target) && isObject(source)) {
     for (const key in source) {
+      if (!Object.hasOwn(source, key)) continue;
       const val = source[key];
       if (isObject(val)) {
-        if (!target[key]) Object.assign(target, { [key]: {} });
+        if (target[key] === undefined || target[key] === null) {
+          Object.assign(target, { [key]: {} });
+        }
         deepMerge(target[key] as Record<string, unknown>, val as Record<string, unknown>);
       } else {
         Object.assign(target, { [key]: val });

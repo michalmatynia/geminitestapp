@@ -23,7 +23,7 @@ const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '::1']);
 
 export const normalizeApiBaseUrl = (value: string | undefined | null): string | null => {
   const trimmed = value?.trim();
-  if (!trimmed) {
+  if (trimmed === undefined || trimmed === '') {
     return null;
   }
 
@@ -32,7 +32,7 @@ export const normalizeApiBaseUrl = (value: string | undefined | null): string | 
 
 const normalizeHostname = (value: string | null | undefined): string | null => {
   const trimmed = value?.trim().toLowerCase();
-  return trimmed ? trimmed : null;
+  return trimmed !== undefined && trimmed !== '' ? trimmed : null;
 };
 
 const readUrlHostname = (value: string): string | null => {
@@ -61,7 +61,7 @@ export const isLoopbackHost = (hostname: string | null): boolean =>
 
 const parseRuntimeHostCandidate = (value: string | null | undefined): string | null => {
   const trimmed = value?.trim();
-  if (!trimmed) {
+  if (trimmed === undefined || trimmed === '') {
     return null;
   }
 
@@ -85,7 +85,7 @@ export const extractExpoDevelopmentHost = ({
 }): string | null => {
   for (const candidate of [hostUri, linkingUri]) {
     const parsedHost = parseRuntimeHostCandidate(candidate);
-    if (parsedHost) {
+    if (parsedHost !== null) {
       return parsedHost;
     }
   }
@@ -126,7 +126,7 @@ export const resolveKangurMobileApiBaseUrl = ({
   const normalizedConfiguredApiBaseUrl = normalizeApiBaseUrl(configuredApiBaseUrl);
   const normalizedDevelopmentHost = normalizeHostname(developmentHost);
 
-  if (normalizedConfiguredApiBaseUrl) {
+  if (normalizedConfiguredApiBaseUrl !== null) {
     const configuredHostname = readUrlHostname(normalizedConfiguredApiBaseUrl);
 
     if (

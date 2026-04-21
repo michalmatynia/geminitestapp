@@ -416,7 +416,7 @@ const nextConfig = {
 
 const withBundleAnalyzer =
   process.env.ANALYZE === 'true'
-    ? (await import(['@next', 'bundle-analyzer'].join('/'))).default({ enabled: true })
+    ? (await import('@next/bundle-analyzer')).default({ enabled: true })
     : (/** @type {import('next').NextConfig} */ config) => config;
 
 export default withBundleAnalyzer(withNextIntl(nextConfig));

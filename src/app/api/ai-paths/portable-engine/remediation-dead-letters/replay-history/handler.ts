@@ -128,7 +128,7 @@ const resolveReplayHistoryQueryInput = (
 });
 
 const parseHistoryLimit = (value: string | null): number => {
-  if (!value) return DEFAULT_HISTORY_LIMIT;
+  if (value === null || value === '') return DEFAULT_HISTORY_LIMIT;
   const numeric = Number(value);
   if (!Number.isFinite(numeric)) {
     throw badRequestError('Invalid remediation replay history limit.');
@@ -143,7 +143,7 @@ const parseHistoryLimit = (value: string | null): number => {
 };
 
 const parseHistoryTimestamp = (label: 'from' | 'to', value: string | null): Date | null => {
-  if (!value) return null;
+  if (value === null || value === '') return null;
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) {
     throw badRequestError(`Remediation replay history "${label}" timestamp is invalid.`);
@@ -152,7 +152,7 @@ const parseHistoryTimestamp = (label: 'from' | 'to', value: string | null): Date
 };
 
 const parseBooleanQuery = (label: string, value: string | null, fallback: boolean): boolean => {
-  if (!value) return fallback;
+  if (value === null || value === '') return fallback;
   const normalized = value.trim().toLowerCase();
   if (normalized === '1' || normalized === 'true' || normalized === 'yes') return true;
   if (normalized === '0' || normalized === 'false' || normalized === 'no') return false;
@@ -160,7 +160,7 @@ const parseBooleanQuery = (label: string, value: string | null, fallback: boolea
 };
 
 const parseReplayHistoryExportFormat = (value: string | null): ReplayHistoryExportFormat => {
-  if (!value) return 'json';
+  if (value === null || value === '') return 'json';
   const normalized = value.trim().toLowerCase();
   if (REPLAY_HISTORY_EXPORT_FORMATS.includes(normalized as ReplayHistoryExportFormat)) {
     return normalized as ReplayHistoryExportFormat;
@@ -175,11 +175,11 @@ const parseReplayHistoryCursor = (
     to: Date | null;
   }
 ): ReplayHistoryCursorPayload | null => {
-  if (!value) return null;
+  if (value === null || value === '') return null;
   try {
     const decoded = Buffer.from(value, 'base64url').toString('utf8');
     const parsed = JSON.parse(decoded) as unknown;
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
       throw new Error('invalid_shape');
     }
     const payload = parsed as Partial<ReplayHistoryCursorPayload>;
@@ -214,7 +214,7 @@ const parseReplayHistoryCursor = (
       to: cursorTo,
     };
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    ErrorSystem.captureException(error).catch(() => { /* ignore */ });
     throw badRequestError('Remediation replay history cursor is invalid.');
   }
 };
@@ -536,7 +536,7 @@ const toReplayHistoryNdjson = (
   return `${lines.join('\n')}\n`;
 };
 
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getReplayHistoryHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await requireAiPathsAccess();
 
   const query = portablePathRemediationDeadLetterReplayHistoryQuerySchema.parse(
@@ -545,7 +545,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   const limit = parseHistoryLimit(query.limit ?? null);
   const from = parseHistoryTimestamp('from', query.from ?? null);
   const to = parseHistoryTimestamp('to', query.to ?? null);
-  if (from && to && from.getTime() > to.getTime()) {
+  if (from !== null && to !== null && from.getTime() > to.getTime()) {
     throw badRequestError(
       'Remediation replay history "from" timestamp must be earlier than or equal to "to".'
     );
@@ -571,7 +571,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     scannedLogCount += result.logs.length;
     for (const log of result.logs as unknown[]) {
       const replayLog = toReplayHistoryRecord(asRecord(log) ?? {}, includeAttempts);
-      if (!replayLog) continue;
+      if (replayLog === null) continue;
       if (!isReplayHistoryRecordBeforeCursor(replayLog, cursor)) continue;
       matchedReplayCount += 1;
       matchedEntries.push(replayLog);
@@ -638,7 +638,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   const exportKeyId =
     resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayExportKeyIdFromEnvironment();
   const signature =
-    signed && exportSecret
+    signed && exportSecret !== null && exportSecret !== ''
       ? signReplayHistoryPayload(payload, {
         timestamp: generatedAt,
         secret: exportSecret,

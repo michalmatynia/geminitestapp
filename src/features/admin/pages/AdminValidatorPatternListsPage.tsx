@@ -311,7 +311,7 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
 
   const filteredLists = useMemo((): ValidatorPatternList[] => {
     const normalizedQuery = query.trim().toLowerCase();
-    if (!normalizedQuery) return lists;
+    if (normalizedQuery.length === 0) return lists;
     return lists.filter((list: ValidatorPatternList) => {
       const scopeLabel = (VALIDATOR_SCOPE_LABELS[list.scope] ?? '').toLowerCase();
       const scopeDescription = (VALIDATOR_SCOPE_DESCRIPTIONS[list.scope] ?? '').toLowerCase();

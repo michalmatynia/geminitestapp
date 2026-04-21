@@ -11,10 +11,10 @@ type RenderProductPublicRouteOptions = {
   locale?: string | null;
 };
 
-export async function renderProductPublicRoute({
+export function renderProductPublicRoute({
   id,
   locale,
-}: RenderProductPublicRouteOptions): Promise<JSX.Element> {
+}: RenderProductPublicRouteOptions): JSX.Element {
   const resolvedLocale = typeof locale === 'string' ? normalizeSiteLocale(locale) : undefined;
   return <ProductPublicPage params={{ id }} locale={resolvedLocale} />;
 }

@@ -49,7 +49,7 @@ const parsePositiveInt = (value: string | undefined, fallback: number): number =
 };
 
 const asRecord = (value: unknown): Record<string, unknown> | null =>
-  value && typeof value === 'object' && !Array.isArray(value)
+  value !== null && typeof value === 'object' && !Array.isArray(value)
     ? (value as Record<string, unknown>)
     : null;
 
@@ -61,19 +61,19 @@ const toOptionalString = (value: unknown): string | null => {
 
 const resolveRecordId = (record: Record<string, unknown>): string | null => {
   const directId = toOptionalString(record['id']);
-  if (directId) return directId;
+  if (directId !== null) return directId;
   const fallback = record['_id'];
   return fallback === undefined || fallback === null ? null : String(fallback);
 };
 
 const toIso = (value?: Date | string | null): string | null => {
-  if (!value) return null;
+  if (value === undefined || value === null || value === '') return null;
   const date = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(date.getTime())) return null;
   return date.toISOString();
 };
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHealthHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await requireAiPathsAccess();
   startAiPathRunQueue();
   startAiInsightsQueue();
@@ -90,7 +90,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
           return [status, result.total] as const;
         })
       );
-      const byStatus = Object.fromEntries(byStatusEntries) as Record<AiPathRunStatus, number>;
+      const byStatus: Record<AiPathRunStatus, number> = Object.fromEntries(byStatusEntries);
 
       const all = await repo.listRuns({ limit: 1, offset: 0 });
       const latest = all.runs[0]
@@ -109,15 +109,16 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
         latest,
       };
     } catch (error) {
-      void ErrorSystem.captureException(error);
+      ErrorSystem.captureException(error).catch(() => { /* ignore */ });
       errors['aiPaths'] =
         error instanceof Error ? error.message : 'Failed to load AI Paths counts.';
+      const byStatus: Record<AiPathRunStatus, number> = {};
       return {
         provider: 'unknown',
         routeMode: 'fallback',
         collection: 'ai_path_runs',
         total: null,
-        byStatus: {} as Record<AiPathRunStatus, number>,
+        byStatus,
         latest: null,
       };
     }
@@ -154,14 +155,15 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
           .sort({ createdAt: -1 })
           .limit(1)
           .next();
+        const byStatus: Record<ProductAiJobStatus, number> = Object.fromEntries(totals);
         return {
           provider,
           total,
-          byStatus: Object.fromEntries(totals) as Record<ProductAiJobStatus, number>,
+          byStatus,
           latest: (() => {
             const latestRecord = asRecord(latest);
             const latestId = latestRecord ? resolveRecordId(latestRecord) : null;
-            if (!latestRecord || !latestId) return null;
+            if (latestRecord === null || latestId === null) return null;
             return {
               id: latestId,
               status: latestRecord['status'] as ProductAiJobStatus,
@@ -173,19 +175,21 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
         };
       }
 
+      const byStatus: Record<ProductAiJobStatus, number> = {};
       return {
         provider,
         total: null,
-        byStatus: {} as Record<ProductAiJobStatus, number>,
+        byStatus,
         latest: null,
       };
     } catch (error) {
-      void ErrorSystem.captureException(error);
+      ErrorSystem.captureException(error).catch(() => { /* ignore */ });
       errors['aiJobs'] = error instanceof Error ? error.message : 'Failed to load AI Jobs counts.';
+      const byStatus: Record<ProductAiJobStatus, number> = {};
       return {
         provider: getProductAiJobProvider() ?? 'unknown',
         total: null,
-        byStatus: {} as Record<ProductAiJobStatus, number>,
+        byStatus,
         latest: null,
       };
     }
@@ -195,7 +199,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
     try {
       return await getAiPathRunQueueStatus();
     } catch (error) {
-      void ErrorSystem.captureException(error);
+      ErrorSystem.captureException(error).catch(() => { /* ignore */ });
       errors['queue'] = error instanceof Error ? error.message : 'Failed to load queue health.';
       return null;
     }
@@ -206,7 +210,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
       const { from, to } = resolveRuntimeAnalyticsRangeWindow('24h');
       return await getRuntimeAnalyticsSummary({ from, to, range: '24h' });
     } catch (error) {
-      void ErrorSystem.captureException(error);
+      ErrorSystem.captureException(error).catch(() => { /* ignore */ });
       errors['runtime24h'] =
         error instanceof Error ? error.message : 'Failed to load runtime analytics summary.';
       return null;
@@ -214,7 +218,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
   })();
 
   const sloNotification = await (async () => {
-    if (!queue || queue.slo.overall === 'ok') return null;
+    if (queue === null || queue.slo.overall === 'ok') return null;
     return notifyAiPathsSloBreach({
       status: queue.slo,
       queue: {
@@ -232,7 +236,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
     process.env['AI_PATHS_HEALTH_CRITICAL_GRACE_MS'],
     DEFAULT_HEALTH_CRITICAL_GRACE_MS
   );
-  const isCriticalNow = queue?.slo?.overall === 'critical';
+  const isCriticalNow = queue !== null && queue.slo.overall === 'critical';
   if (isCriticalNow) {
     criticalSloSinceMs = criticalSloSinceMs ?? nowMs;
   } else {
@@ -241,13 +245,23 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
   const criticalForMs = criticalSloSinceMs !== null ? Math.max(0, nowMs - criticalSloSinceMs) : 0;
   const hasCriticalSlo = isCriticalNow && criticalForMs >= criticalGraceMs;
   const ok = Object.keys(errors).length === 0 && !hasCriticalSlo;
-  const responseErrors = ok
-    ? undefined
-    : Object.keys(errors).length > 0
-      ? errors
-      : {
+
+  let responseErrors: Record<string, string> | undefined = undefined;
+  if (!ok) {
+    if (Object.keys(errors).length > 0) {
+      responseErrors = errors;
+    } else {
+      responseErrors = {
         slo: `Critical AI Paths SLO breach detected for ${Math.round(criticalForMs / 1000)}s.`,
       };
+    }
+  }
+
+  let responseStatus = 200;
+  if (!ok) {
+    responseStatus = hasCriticalSlo ? 503 : 500;
+  }
+
   return NextResponse.json(
     {
       ok,
@@ -265,6 +279,6 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
       sloNotification,
       errors: responseErrors,
     },
-    { status: ok ? 200 : hasCriticalSlo ? 503 : 500 }
+    { status: responseStatus }
   );
 }

@@ -19,7 +19,7 @@ export const normalizeKangurMobilePublicApiUrl = (
   value: string | undefined,
 ): string | null => {
   const trimmed = value?.trim();
-  if (!trimmed) {
+  if (trimmed === undefined || trimmed === '') {
     return null;
   }
 

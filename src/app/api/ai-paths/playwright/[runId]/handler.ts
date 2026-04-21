@@ -17,11 +17,12 @@ import { assertPlaywrightRunAccess } from '../access';
 const toPublicRun = (
   run: PlaywrightEngineRunRecord
 ): Omit<PlaywrightEngineRunRecord, 'ownerUserId'> => {
-  const { ownerUserId: _ownerUserId, ...rest } = run;
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  const { ownerUserId: _unused, ...rest } = run;
   return rest;
 };
 
-export async function GET_handler(
+export async function getPlaywrightRunHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { runId: string }

@@ -21,7 +21,7 @@ const hydrateLiteSettingsQueryCache = (queryClient: QueryClient): void => {
   }
 
   const queryKey = QUERY_KEYS.settings.scope('lite');
-  if (!queryClient.getQueryData(queryKey)) {
+  if (queryClient.getQueryData(queryKey) === undefined) {
     queryClient.setQueryData(queryKey, initialSettings);
   }
 };

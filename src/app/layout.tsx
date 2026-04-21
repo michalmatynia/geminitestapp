@@ -55,28 +55,31 @@ export default async function RootLayout({
       : null;
 
   const fontSetId =
-    liteSettings.find((s) => s.key === APP_FONT_SET_SETTING_KEY)?.value || 'system';
+    liteSettings.find((s) => s.key === APP_FONT_SET_SETTING_KEY)?.value ?? 'system';
+  
+  const commonMessages = messages['Common'] as Record<string, unknown> | undefined;
   const skipToMainContentLabel =
-    typeof messages['Common'] === 'object' &&
-    messages['Common'] !== null &&
-    typeof messages['Common']['skipToMainContent'] === 'string'
-      ? messages['Common']['skipToMainContent']
+    commonMessages !== undefined &&
+    commonMessages !== null &&
+    typeof commonMessages['skipToMainContent'] === 'string'
+      ? (commonMessages['skipToMainContent'])
       : 'Skip to main content';
 
+  const routeMessages = messages['Routes'] as Record<string, unknown> | undefined;
   const siteTitle =
-    typeof messages['Routes'] === 'object' &&
-    messages['Routes'] !== null &&
-    typeof (messages['Routes'] as any)['siteTitle'] === 'string'
-      ? (messages['Routes'] as any)['siteTitle']
+    routeMessages !== undefined &&
+    routeMessages !== null &&
+    typeof routeMessages['siteTitle'] === 'string'
+      ? (routeMessages['siteTitle'])
       : 'Gemini App';
 
   return (
-    <html lang={locale || 'en'} data-app-font-set={fontSetId} suppressHydrationWarning>
+    <html lang={locale !== '' ? locale : 'en'} data-app-font-set={fontSetId} suppressHydrationWarning>
       <head>
         <title>{siteTitle}</title>
       </head>
       <body suppressHydrationWarning className={cn('max-w-full overflow-x-hidden font-sans')}>
-        {sanitizedLiteSettingsScript ? (
+        {sanitizedLiteSettingsScript !== null ? (
           <script
             dangerouslySetInnerHTML={{
               __html: sanitizedLiteSettingsScript,

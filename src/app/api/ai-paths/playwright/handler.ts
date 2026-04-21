@@ -31,7 +31,7 @@ const normalizeCaptureConfig = (
       }
     | undefined
 ): CapturePayload | undefined => {
-  if (!capture) return undefined;
+  if (capture === undefined) return undefined;
   const normalized: CapturePayload = {};
   if (typeof capture.screenshot === 'boolean') normalized.screenshot = capture.screenshot;
   if (typeof capture.html === 'boolean') normalized.html = capture.html;
@@ -43,11 +43,12 @@ const normalizeCaptureConfig = (
 const toPublicRun = (
   run: PlaywrightEngineRunRecord
 ): Omit<PlaywrightEngineRunRecord, 'ownerUserId'> => {
-  const { ownerUserId: _ownerUserId, ...rest } = run;
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  const { ownerUserId: _unused, ...rest } = run;
   return rest;
 };
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postPlaywrightHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const { access, isInternal } = await requireAiPathsAccessOrInternal(req);
   if (!isInternal) {
     await enforceAiPathsActionRateLimit(access, 'playwright-enqueue');
@@ -66,16 +67,16 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   const run = await enqueuePlaywrightEngineRun({
     request: {
       script: payload.script,
-      ...(payload.input ? { input: payload.input } : {}),
-      ...(startUrl ? { startUrl } : {}),
+      ...(payload.input !== undefined ? { input: payload.input } : {}),
+      ...(typeof startUrl === 'string' && startUrl.length > 0 ? { startUrl } : {}),
       ...(payload.timeoutMs !== undefined ? { timeoutMs: payload.timeoutMs } : {}),
-      ...(payload.browserEngine ? { browserEngine: payload.browserEngine } : {}),
-      ...(personaId ? { personaId } : {}),
-      ...(payload.settingsOverrides ? { settingsOverrides: payload.settingsOverrides } : {}),
-      ...(payload.launchOptions ? { launchOptions: payload.launchOptions } : {}),
-      ...(payload.contextOptions ? { contextOptions: payload.contextOptions } : {}),
-      ...(contextRegistry ? { contextRegistry } : {}),
-      ...(capture ? { capture } : {}),
+      ...(payload.browserEngine !== undefined ? { browserEngine: payload.browserEngine } : {}),
+      ...(typeof personaId === 'string' && personaId.length > 0 ? { personaId } : {}),
+      ...(payload.settingsOverrides !== undefined ? { settingsOverrides: payload.settingsOverrides } : {}),
+      ...(payload.launchOptions !== undefined ? { launchOptions: payload.launchOptions } : {}),
+      ...(payload.contextOptions !== undefined ? { contextOptions: payload.contextOptions } : {}),
+      ...(contextRegistry !== null ? { contextRegistry } : {}),
+      ...(capture !== undefined ? { capture } : {}),
     },
     waitForResult: payload.waitForResult ?? true,
     ownerUserId: isInternal ? 'system' : access.userId,

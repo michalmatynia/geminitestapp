@@ -2,7 +2,7 @@ import type { Href } from 'expo-router';
 
 export const createKangurCompetitionHref = (mode?: string | null): Href => {
   const trimmedMode = mode?.trim();
-  if (!trimmedMode) {
+  if (trimmedMode === undefined || trimmedMode === '') {
     return '/competition' as Href;
   }
 

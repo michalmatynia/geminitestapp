@@ -56,7 +56,7 @@ const prefersCompetitionGameTarget = (
 
   const modeToken =
     normalizeQueryToken(query?.['mode']) ?? normalizeQueryToken(query?.['focus']);
-  if (!modeToken) {
+  if (modeToken === null) {
     return false;
   }
 
@@ -111,7 +111,7 @@ export const resolveKangurMobileWebsiteHelpHref = (
   options: ResolveKangurMobileActionHrefOptions = {},
 ): Href | null => {
   const rawRoute = normalizeQueryToken(target.route);
-  if (!rawRoute) {
+  if (rawRoute === null) {
     return null;
   }
 

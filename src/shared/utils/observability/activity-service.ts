@@ -49,7 +49,7 @@ export async function logActivity(data: CreateActivityLog): Promise<ActivityLog>
   try {
     activity = await repository.createActivity(data);
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    ErrorSystem.captureException(error).catch(() => { /* ignore */ });
     const nowIso = new Date().toISOString();
     activity = {
       id: `activity-fallback-${randomUUID()}`,
@@ -65,11 +65,11 @@ export async function logActivity(data: CreateActivityLog): Promise<ActivityLog>
   }
 
   // Connect to centralized logging.
-  // We use void/catch to avoid blocking activity writes if logging fails.
-  void logSystemEvent({
+  // We use catch to avoid blocking activity writes if logging fails.
+  logSystemEvent({
     level: 'info',
     message: `Activity: ${data.type} - ${data.description}`,
-    source: data.entityType || 'activity-service',
+    source: data.entityType ?? 'activity-service',
     userId: data.userId ?? null,
     context: {
       activityId: activity.id,
@@ -77,7 +77,7 @@ export async function logActivity(data: CreateActivityLog): Promise<ActivityLog>
       userId: activity.userId,
       entityId: activity.entityId,
       entityType: activity.entityType,
-      metadata: activity.metadata || data.metadata || null,
+      metadata: activity.metadata ?? data.metadata ?? null,
     },
   }).catch(() => {
     // Silent fail for the secondary log.

@@ -1,5 +1,5 @@
 import { logAgentAudit } from '@/features/ai/agent-runtime/audit';
-import { getChatbotAgentRunDelegate } from '@/features/ai/agent-runtime/store-delegates';
+import { type getChatbotAgentRunDelegate } from '@/features/ai/agent-runtime/store-delegates';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 type RunDelegate = {

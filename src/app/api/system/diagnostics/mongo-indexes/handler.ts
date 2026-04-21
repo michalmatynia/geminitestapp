@@ -115,7 +115,7 @@ const buildDiagnostics = async (
   );
 };
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
+ 
 export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertSettingsManageAccess();
   const db = await getMongoDb();
@@ -126,7 +126,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
   });
 }
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
+ 
 export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertSettingsManageAccess();
   const db = await getMongoDb();

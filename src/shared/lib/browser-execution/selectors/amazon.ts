@@ -604,7 +604,7 @@ const parseRuntimeValue = (
       Array.isArray(parsed) &&
       parsed.every((entry) => typeof entry === 'string')
     ) {
-      return parsed as string[];
+      return parsed;
     }
   } catch {
     return fallback;

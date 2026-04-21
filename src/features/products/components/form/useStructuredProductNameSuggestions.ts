@@ -93,7 +93,7 @@ const resolveDropdownOpen = (
   primaryCatalogId !== '' &&
   suggestionCount > 0;
 
-// eslint-disable-next-line max-lines-per-function
+ 
 export function useStructuredProductNameSuggestions({
   categorySuggestions,
   fieldName,

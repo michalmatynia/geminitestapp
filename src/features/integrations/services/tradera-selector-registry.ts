@@ -1,4 +1,4 @@
-/* eslint-disable complexity, max-lines, max-lines-per-function */
+ 
 import type { Collection, Document, Filter, ObjectId } from 'mongodb';
 
 import { DEFAULT_TRADERA_SYSTEM_SETTINGS } from '@/features/integrations/constants/tradera';

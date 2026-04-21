@@ -1,6 +1,6 @@
-/* eslint-disable complexity */
-/* eslint-disable max-lines */
-/* eslint-disable max-lines-per-function */
+ 
+ 
+ 
 import { validationError } from '@/shared/errors/app-error';
 
 import { normalizeMasterTreeKind } from '../master-folder-tree-contract';

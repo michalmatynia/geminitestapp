@@ -38,7 +38,7 @@ const hasStructuredCategoryPrefix = (nameValue: string): boolean => {
   return Boolean(segments[0] !== '' && segments[1] !== '' && segments[2] !== '');
 };
 
-// eslint-disable-next-line max-lines-per-function
+ 
 export function useStructuredProductCategorySync({
   categories,
   fieldName,
@@ -69,7 +69,7 @@ export function useStructuredProductCategorySync({
     [getValues, setValue]
   );
 
-  // eslint-disable-next-line complexity
+   
   useEffect((): void => {
     const categorySegment = resolveCategorySegment(nameValue);
     const previousSelectedCategoryId = previousSelectedCategoryIdRef.current;

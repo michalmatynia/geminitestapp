@@ -192,7 +192,7 @@ export function ScreenshotCapture(props: {
      
     captureRef.current = (): string | null => {
       try {
-        return (gl as THREE.WebGLRenderer).domElement.toDataURL('image/png');
+        return (gl).domElement.toDataURL('image/png');
       } catch (error) {
         logClientError(error as Error);
         return null;

@@ -8,7 +8,7 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 
 const API_BASE = '/api/assets3d';
 
-/* eslint-disable complexity */
+ 
 function appendFilterToParams(params: Record<string, string>, filters: Asset3DListFilters): void {
   if (filters.filename !== undefined && filters.filename !== '') {
     // eslint-disable-next-line no-param-reassign
@@ -70,7 +70,7 @@ function appendAssetDataToFormData(formData: FormData, data: UploadAssetData): v
     formData.append('isPublic', String(data.isPublic));
   }
 }
-/* eslint-enable complexity */
+ 
 
 export async function uploadAsset3DFile(
   file: File,

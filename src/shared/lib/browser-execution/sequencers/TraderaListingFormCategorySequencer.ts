@@ -182,7 +182,7 @@ export class TraderaListingFormCategorySequencer extends PlaywrightSequencer {
     }
 
     // Partial / text match fallback
-    const byText = picker.locator(`[role="menuitem"], [role="option"]`).filter({ hasText: name }).first();
+    const byText = picker.locator('[role="menuitem"], [role="option"]').filter({ hasText: name }).first();
     if (await byText.isVisible({ timeout: 500 }).catch(() => false)) {
       await byText.scrollIntoViewIfNeeded().catch(() => undefined);
       await byText.click();

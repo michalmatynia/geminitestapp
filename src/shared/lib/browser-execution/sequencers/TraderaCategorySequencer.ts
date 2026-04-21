@@ -475,7 +475,7 @@ export class TraderaCategorySequencer extends PlaywrightSequencer {
       categories,
       categorySource: 'public-categories',
       scrapedFrom: (this.seedData?.diagnostics?.['seedUrl'] as string | undefined) ?? page.url(),
-      diagnostics: (this.seedData?.diagnostics ?? null) as Record<string, unknown> | null,
+      diagnostics: (this.seedData?.diagnostics ?? null),
       crawlStats: {
         pagesVisited: this.pagesVisited,
         rootCount: this.seedData?.rootCategories.length ?? 0,

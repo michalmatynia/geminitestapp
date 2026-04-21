@@ -1,4 +1,4 @@
-/* eslint-disable complexity */
+ 
 
 import { ScanState, type SegmentKind } from './scanner';
 

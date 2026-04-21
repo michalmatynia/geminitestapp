@@ -1,4 +1,4 @@
-/* eslint-disable max-lines, max-lines-per-function */
+ 
 import {
   PackageIcon,
   BookOpenIcon,

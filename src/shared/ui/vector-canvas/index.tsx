@@ -1,7 +1,7 @@
-/* eslint-disable max-lines-per-function */
-/* eslint-disable complexity */
-/* eslint-disable max-lines */
-/* eslint-disable @typescript-eslint/naming-convention */
+ 
+ 
+ 
+ 
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';

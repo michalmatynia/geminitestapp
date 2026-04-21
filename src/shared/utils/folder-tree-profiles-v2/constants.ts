@@ -1,4 +1,4 @@
-/* eslint-disable max-lines */
+ 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 
 import {

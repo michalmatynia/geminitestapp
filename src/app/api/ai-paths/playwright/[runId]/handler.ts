@@ -17,7 +17,7 @@ import { assertPlaywrightRunAccess } from '../access';
 const toPublicRun = (
   run: PlaywrightEngineRunRecord
 ): Omit<PlaywrightEngineRunRecord, 'ownerUserId'> => {
-  // eslint-disable-next-line @typescript-eslint/naming-convention
+   
   const { ownerUserId: _unused, ...rest } = run;
   return rest;
 };

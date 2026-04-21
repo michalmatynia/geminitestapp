@@ -1,4 +1,4 @@
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- plain .jsx exports cannot express TS return annotations
+ 
 export function Q15Illustration() {
   const cx1 = 30,
     cx2 = 65,

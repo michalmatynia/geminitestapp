@@ -1,5 +1,5 @@
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
-// eslint-disable-next-line complexity
+ 
 function unknownToErrorMessage(value: unknown): string | null {
   if (value === null || value === undefined) return null;
 

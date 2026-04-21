@@ -46,7 +46,7 @@ const updateStack = (codeTrim: string, key: string, stack: string[]): void => {
   }
 };
 
-// eslint-disable-next-line complexity
+ 
 const processLine = (
   line: string,
   stack: string[],
@@ -97,7 +97,7 @@ export function extractConstraintHintsByPath(rawObjectText: string): Record<stri
 const isIntegerHint = (pathLower: string, hint: string | undefined): boolean =>
   pathLower.includes('_px') || (hint?.toLowerCase().includes('px') ?? false);
 
-// eslint-disable-next-line complexity
+ 
 const inferNumericSpec = (path: string, value: number, hint: string | undefined, pathLower: string): ParamSpec => {
   const constraint = hint !== undefined ? parseNumericConstraintsFromHint(hint) : {};
   const integer = Number.isInteger(value) && isIntegerHint(pathLower, hint);
@@ -124,7 +124,7 @@ const inferStringSpec = (path: string, hint: string | undefined): ParamSpec => {
   };
 };
 
-// eslint-disable-next-line complexity
+ 
 const inferTypedLeafSpec = (path: string, value: unknown, hint: string | undefined, pathLower: string): ParamSpec | null => {
   if (isRgbArray(value) && (pathLower.endsWith('rgb') || pathLower.endsWith('_rgb'))) {
     return { path, kind: 'rgb', integer: true, min: 0, max: 255, step: 1, ...(hint !== undefined ? { hint } : {}) };

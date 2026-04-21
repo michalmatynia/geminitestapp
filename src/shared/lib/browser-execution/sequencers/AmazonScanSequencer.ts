@@ -1674,7 +1674,7 @@ export class AmazonScanSequencer extends GoogleLensSearchSequencer<AmazonScanInp
         const artifactPath = await screenshotFn
           .call(locator)
           .then((value) =>
-            this.artifacts.file?.(artifactKey + '-hero', value, {
+            this.artifacts.file?.(`${artifactKey  }-hero`, value, {
               extension: 'png',
               mimeType: 'image/png',
               kind: 'screenshot',

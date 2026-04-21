@@ -197,7 +197,7 @@ const executeRetryLoop = async <T>(
 
   for (let attempt = 1; attempt <= fullOpts.maxAttempts; attempt++) {
     try {
-      // eslint-disable-next-line no-await-in-loop
+       
       return await performRetryAttempt(operation, fullOpts.timeoutMs, fullOpts.source);
     } catch (error) {
       lastError = error;
@@ -217,7 +217,7 @@ const executeRetryLoop = async <T>(
       }
 
       fullOpts.onRetry(attempt, error, nextDelay);
-      // eslint-disable-next-line no-await-in-loop
+       
       await delay(nextDelay);
     }
   }

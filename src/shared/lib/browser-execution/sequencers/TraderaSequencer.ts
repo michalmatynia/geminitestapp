@@ -1,4 +1,4 @@
-/* eslint-disable complexity, max-depth, max-lines, max-lines-per-function, no-await-in-loop */
+ 
 import { type Locator, type Page } from 'playwright';
 
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';

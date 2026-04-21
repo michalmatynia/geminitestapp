@@ -1,4 +1,4 @@
-/* eslint-disable max-lines */
+ 
 import { caseResolverProfiles } from './defaults-case-resolver';
 import { imageStudioProfiles } from './defaults-image-studio';
 import { type FolderTreeProfilesV2Map, type FolderTreeProfileV2 } from './types';

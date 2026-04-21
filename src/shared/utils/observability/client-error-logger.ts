@@ -1,4 +1,4 @@
-/* eslint-disable complexity */
+ 
 import type { UnknownRecord } from '@/shared/contracts/base';
 import type {
   ClientErrorPayloadDto as ClientErrorPayload,
@@ -245,7 +245,7 @@ const sendClientErrorPayload = (payload: ClientErrorPayload): void => {
   }
 
   if (typeof fetch === 'function') {
-    // eslint-disable-next-line no-void
+     
     void fetch('/api/client-errors', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

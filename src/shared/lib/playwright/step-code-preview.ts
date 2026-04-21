@@ -336,19 +336,19 @@ export const createPlaywrightStepCodeSnapshot = (
       break;
     case 'ai_evaluate': {
       const captureSnippet = aiInputSource === 'screenshot'
-        ? `const _aiData = await page.screenshot({ encoding: 'base64' });`
+        ? 'const _aiData = await page.screenshot({ encoding: \'base64\' });'
         : aiInputSource === 'html'
-          ? `const _aiData = await page.content();`
+          ? 'const _aiData = await page.content();'
           : aiInputSource === 'selector_text'
             ? `const _aiData = await page.locator(${selectorSemantic()}).textContent() ?? '';`
-            : `const _aiData = await page.locator('body').textContent() ?? '';`;
+            : 'const _aiData = await page.locator(\'body\').textContent() ?? \'\';';
       const captureResolved = aiInputSource === 'selector_text'
         ? `const _aiData = await page.locator(${selectorResolved()}).textContent() ?? '';`
         : captureSnippet;
       const apiCall = [
         `const _aiResult = await helpers.aiEvaluate({ inputSource: ${json(aiInputSource)}, data: _aiData, systemPrompt: ${json(aiSystemPrompt)} });`,
-        `runtime['aiEvaluatorOutput'] = _aiResult.output ?? null;`,
-        `// _aiResult.output — AI evaluation text (model resolved via AI Brain)`,
+        'runtime[\'aiEvaluatorOutput\'] = _aiResult.output ?? null;',
+        '// _aiResult.output — AI evaluation text (model resolved via AI Brain)',
       ].join('\n');
       semanticSnippet = `${captureSnippet}\n${apiCall}`;
       resolvedSnippet = `${captureResolved}\n${apiCall}`;
@@ -357,53 +357,53 @@ export const createPlaywrightStepCodeSnapshot = (
     case 'ai_inject': {
       const loopEvalCapture = aiLoopEvaluatorInputSource !== null
         ? aiLoopEvaluatorInputSource === 'screenshot'
-          ? `  const _loopData = await page.screenshot({ encoding: 'base64' });`
+          ? '  const _loopData = await page.screenshot({ encoding: \'base64\' });'
           : aiLoopEvaluatorInputSource === 'html'
-            ? `  const _loopData = await page.content();`
+            ? '  const _loopData = await page.content();'
             : aiLoopEvaluatorInputSource === 'selector_text'
               ? `  const _loopData = await page.locator(${selectorSemantic()}).textContent() ?? '';`
-              : `  const _loopData = await page.locator('body').textContent() ?? '';`
+              : '  const _loopData = await page.locator(\'body\').textContent() ?? \'\';'
         : null;
       const loopEvalBlock = loopEvalCapture
         ? [
             `  ${loopEvalCapture.trim()}`,
             `  const _loopEval = await helpers.aiEvaluate({ inputSource: ${json(aiLoopEvaluatorInputSource)}, data: _loopData, systemPrompt: null });`,
-            `  runtime['aiEvaluatorOutput'] = _loopEval.output ?? null;`,
+            '  runtime[\'aiEvaluatorOutput\'] = _loopEval.output ?? null;',
           ].join('\n')
         : null;
       const snippet = [
-        `// AI Code Injector — iterates until goal achieved or max iterations reached`,
-        `let _aiDone = false;`,
-        `let _aiIter = 0;`,
-        `let _aiReasoning = null;`,
+        '// AI Code Injector — iterates until goal achieved or max iterations reached',
+        'let _aiDone = false;',
+        'let _aiIter = 0;',
+        'let _aiReasoning = null;',
         `while (!_aiDone && _aiIter < ${aiMaxIterations}) {`,
-        `  _aiIter++;`,
-        `  const _injectResult = await helpers.aiInject({`,
+        '  _aiIter++;',
+        '  const _injectResult = await helpers.aiInject({',
         `    goal: ${json(aiGoal)},`,
         `    systemPrompt: ${json(aiSystemPrompt)},`,
-        `    context: {`,
-        `      iteration: _aiIter,`,
+        '    context: {',
+        '      iteration: _aiIter,',
         `      maxIterations: ${aiMaxIterations},`,
-        `      url: page.url(),`,
-        `      dom: await page.content(),`,
-        `      priorEvaluation: runtime['aiEvaluatorOutput'] ?? null,`,
-        `      priorInjectorReasoning: _aiReasoning,`,
-        `    },`,
-        `  });`,
-        `  // _injectResult.code — generated Playwright code`,
-        `  // _injectResult.done — true when goal achieved`,
-        `  // _injectResult.reasoning — AI explanation`,
-        `  if (_injectResult.code) {`,
-        `    await helpers.aiInjectExecute(_injectResult.code);`,
-        `  }`,
-        `  _aiReasoning = _injectResult.reasoning ?? null;`,
-        `  runtime['aiInjectorOutput'] = _aiReasoning;`,
-        `  _aiDone = _injectResult.done ?? true;`,
-        ...(loopEvalBlock ? [`  if (!_aiDone) {`, loopEvalBlock, `  }`] : []),
+        '      url: page.url(),',
+        '      dom: await page.content(),',
+        '      priorEvaluation: runtime[\'aiEvaluatorOutput\'] ?? null,',
+        '      priorInjectorReasoning: _aiReasoning,',
+        '    },',
+        '  });',
+        '  // _injectResult.code — generated Playwright code',
+        '  // _injectResult.done — true when goal achieved',
+        '  // _injectResult.reasoning — AI explanation',
+        '  if (_injectResult.code) {',
+        '    await helpers.aiInjectExecute(_injectResult.code);',
+        '  }',
+        '  _aiReasoning = _injectResult.reasoning ?? null;',
+        '  runtime[\'aiInjectorOutput\'] = _aiReasoning;',
+        '  _aiDone = _injectResult.done ?? true;',
+        ...(loopEvalBlock ? ['  if (!_aiDone) {', loopEvalBlock, '  }'] : []),
         `  if (!_aiDone && _aiIter < ${aiMaxIterations}) { await page.waitForTimeout(500); }`,
-        `}`,
-        `runtime['aiInjectorIterations'] = _aiIter;`,
-        `runtime['aiInjectorDone'] = _aiDone;`,
+        '}',
+        'runtime[\'aiInjectorIterations\'] = _aiIter;',
+        'runtime[\'aiInjectorDone\'] = _aiDone;',
       ].join('\n');
       semanticSnippet = snippet;
       resolvedSnippet = snippet;

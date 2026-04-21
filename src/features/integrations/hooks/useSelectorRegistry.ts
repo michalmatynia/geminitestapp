@@ -1,4 +1,4 @@
-/* eslint-disable complexity */
+ 
 import {
   type SelectorRegistryDeleteRequest,
   type SelectorRegistryDeleteResponse,

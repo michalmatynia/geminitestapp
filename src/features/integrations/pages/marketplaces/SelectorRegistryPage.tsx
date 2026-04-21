@@ -1,4 +1,4 @@
-/* eslint-disable complexity, jsx-a11y/control-has-associated-label, max-lines, max-lines-per-function */
+/* eslint-disable jsx-a11y/control-has-associated-label */
 'use client';
 
 import Link from 'next/link';

@@ -69,7 +69,7 @@ const resolveTitleTermsHref = (primaryCatalogId: string | undefined): string => 
 
 const toTitleTerms = (data: ProductTitleTerm[] | undefined): ProductTitleTerm[] => data ?? [];
 
-// eslint-disable-next-line max-lines-per-function, complexity
+ 
 export function useStructuredProductNameFieldController({
   fieldName = 'name_en',
   config = {},

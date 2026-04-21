@@ -35,21 +35,23 @@ export function CompetitionHeaderSection({
   modesCount,
   questionCount,
   routes,
-}: CompetitionHeaderSectionProps) {
+}: CompetitionHeaderSectionProps): JSX.Element {
+  const headerTitle = copy({
+    de: 'Kangur-Wettbewerb',
+    en: 'Kangaroo competition',
+    pl: 'Konkurs Kangur',
+  });
+
+  const headerDesc = copy({
+    de: 'Wähle eine Runde des Wettbewerbs 2024 und löse die Fragen in deinem eigenen Tempo.',
+    en: 'Choose a 2024 competition round and solve the tasks at your own pace.',
+    pl: 'Wybierz rundę konkursu z 2024 roku i rozwiązuj zadania we własnym tempie.',
+  });
+
   return (
-    <SectionCard
-      title={copy({
-        de: 'Kangur-Wettbewerb',
-        en: 'Kangaroo competition',
-        pl: 'Konkurs Kangur',
-      })}
-    >
+    <SectionCard title={headerTitle}>
       <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-        {copy({
-          de: 'Wähle eine Runde des Wettbewerbs 2024 und löse die Fragen in deinem eigenen Tempo.',
-          en: 'Choose a 2024 competition round and solve the tasks at your own pace.',
-          pl: 'Wybierz rundę konkursu z 2024 roku i rozwiązuj zadania we własnym tempie.',
-        })}
+        {headerDesc}
       </Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         <StatusPill
@@ -71,43 +73,19 @@ export function CompetitionHeaderSection({
       </View>
       <View style={{ flexDirection: 'column', gap: 8 }}>
         <OutlineLink
-          href={routes.tests as any}
-          hint={copy({
-            de: 'Öffnet die Tests.',
-            en: 'Opens tests.',
-            pl: 'Otwiera testy.',
-          })}
-          label={copy({
-            de: 'Zu den Tests',
-            en: 'Go to tests',
-            pl: 'Przejdź do testów',
-          })}
+          href={routes.tests}
+          hint={copy({ de: 'Öffnet die Tests.', en: 'Opens tests.', pl: 'Otwiera testy.' })}
+          label={copy({ de: 'Zu den Tests', en: 'Go to tests', pl: 'Przejdź do testów' })}
         />
         <OutlineLink
-          href={routes.results as any}
-          hint={copy({
-            de: 'Öffnet die Ergebnisse.',
-            en: 'Opens results.',
-            pl: 'Otwiera wyniki.',
-          })}
-          label={copy({
-            de: 'Ergebnisse öffnen',
-            en: 'Open results',
-            pl: 'Otwórz wyniki',
-          })}
+          href={routes.results}
+          hint={copy({ de: 'Öffnet die Ergebnisse.', en: 'Opens results.', pl: 'Otwiera wyniki.' })}
+          label={copy({ de: 'Ergebnisse öffnen', en: 'Open results', pl: 'Otwórz wyniki' })}
         />
         <OutlineLink
-          href={routes.plan as any}
-          hint={copy({
-            de: 'Öffnet den Tagesplan.',
-            en: 'Opens the daily plan.',
-            pl: 'Otwiera plan dnia.',
-          })}
-          label={copy({
-            de: 'Zum Tagesplan',
-            en: 'Go to daily plan',
-            pl: 'Przejdź do planu dnia',
-          })}
+          href={routes.plan}
+          hint={copy({ de: 'Öffnet den Tagesplan.', en: 'Opens the daily plan.', pl: 'Otwiera plan dnia.' })}
+          label={copy({ de: 'Zum Tagesplan', en: 'Go to daily plan', pl: 'Przejdź do planu dnia' })}
         />
       </View>
     </SectionCard>
@@ -124,7 +102,7 @@ export function CompetitionMissingModeSection({
   copy,
   modeToken,
   onOpenFull,
-}: CompetitionMissingModeSectionProps) {
+}: CompetitionMissingModeSectionProps): JSX.Element {
   return (
     <SectionCard
       title={copy({
@@ -171,7 +149,7 @@ export function CompetitionModeCard({
   locale,
   onPress,
   isStart = false,
-}: CompetitionModeCardProps) {
+}: CompetitionModeCardProps): JSX.Element {
   return (
     <SectionCard title={formatCompetitionModeTitle(item.mode, locale)}>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>

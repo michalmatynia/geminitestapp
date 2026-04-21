@@ -21,7 +21,15 @@ export const useKangurMobileAuthActions = ({
   locale,
   queryClient,
   setAuthError,
-}: UseKangurMobileAuthActionsOptions) => {
+}: UseKangurMobileAuthActionsOptions): {
+  isLoadingAuth: boolean;
+  refreshSession: (options?: { blockUI?: boolean }) => Promise<void>;
+  session: KangurAuthSession;
+  setIsLoadingAuth: (isLoading: boolean) => void;
+  signIn: (input?: KangurAuthTransitionInput) => Promise<void>;
+  signInWithLearnerCredentials: (loginName: string, password: string) => Promise<void>;
+  signOut: () => Promise<void>;
+} => {
   const [session, setSession] = useState<KangurAuthSession>(initialSession);
   const sessionRef = useRef(session);
   const [isLoadingAuth, setIsLoadingAuth] = useState(false);
@@ -30,91 +38,41 @@ export const useKangurMobileAuthActions = ({
     sessionRef.current = session;
   }, [session]);
 
-  const applyResolvedSession = async (
-    nextSession: KangurAuthSession,
+  const handleAuthAction = async (
+    action: () => Promise<KangurAuthSession>,
+    shouldBlockUI: boolean,
   ): Promise<void> => {
-    const previousSession = sessionRef.current;
-    if (
-      hasKangurMobileAuthSessionPayloadChanged(previousSession, nextSession)
-    ) {
-      sessionRef.current = nextSession;
-      setSession(nextSession);
-    }
-
-    if (
-      hasKangurMobileAuthQueryIdentityChanged(previousSession, nextSession)
-    ) {
-      await invalidateKangurMobileAuthQueries(queryClient);
-    }
-  };
-
-  const refreshSession = async (
-    options: {
-      blockUI?: boolean;
-    } = {},
-  ): Promise<void> => {
-    const shouldBlockUI = options.blockUI !== false;
-    if (shouldBlockUI) {
-      setIsLoadingAuth(true);
-    }
-
+    if (shouldBlockUI) setIsLoadingAuth(true);
     try {
       setAuthError(null);
-      const nextSession = await authAdapter.getSession();
-      await applyResolvedSession(nextSession);
-    } catch (error) {
-      setAuthError(toAuthErrorMessage(error, locale));
-    } finally {
-      if (shouldBlockUI) {
-        setIsLoadingAuth(false);
+      const nextSession = await action();
+      const previousSession = sessionRef.current;
+      if (hasKangurMobileAuthSessionPayloadChanged(previousSession, nextSession)) {
+        sessionRef.current = nextSession;
+        setSession(nextSession);
       }
-    }
-  };
-
-  const signIn = async (input?: KangurAuthTransitionInput): Promise<void> => {
-    setIsLoadingAuth(true);
-    try {
-      setAuthError(null);
-      const nextSession = await authAdapter.signIn(input);
-      await applyResolvedSession(nextSession);
+      if (hasKangurMobileAuthQueryIdentityChanged(previousSession, nextSession)) {
+        await invalidateKangurMobileAuthQueries(queryClient);
+      }
     } catch (error) {
       setAuthError(toAuthErrorMessage(error, locale));
     } finally {
-      setIsLoadingAuth(false);
+      if (shouldBlockUI) setIsLoadingAuth(false);
     }
   };
-
-  const signOut = async (): Promise<void> => {
-    setIsLoadingAuth(true);
-    try {
-      setAuthError(null);
-      const nextSession = await authAdapter.signOut();
-      await applyResolvedSession(nextSession);
-    } catch (error) {
-      setAuthError(toAuthErrorMessage(error, locale));
-    } finally {
-      setIsLoadingAuth(false);
-    }
-  };
-
-  const signInWithLearnerCredentials = async (
-    loginName: string,
-    password: string,
-  ): Promise<void> =>
-    signIn({
-      learnerCredentials: {
-        loginName,
-        password,
-      },
-    });
 
   return {
     isLoadingAuth,
-    refreshSession,
     session,
     setIsLoadingAuth,
-    signIn,
-    signInWithLearnerCredentials,
-    signOut,
+    refreshSession: async (options = {}) =>
+      handleAuthAction(() => authAdapter.getSession(), options.blockUI !== false),
+    signIn: async (input) => handleAuthAction(() => authAdapter.signIn(input), true),
+    signOut: async () => handleAuthAction(() => authAdapter.signOut(), true),
+    signInWithLearnerCredentials: async (loginName, password) =>
+      handleAuthAction(
+        () => authAdapter.signIn({ learnerCredentials: { loginName, password } }),
+        true,
+      ),
   };
 };

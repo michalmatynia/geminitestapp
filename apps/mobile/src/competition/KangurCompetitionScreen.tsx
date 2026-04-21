@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Text, View } from 'react-native';
-import { useEffect, useState } from 'react';
+import { Text } from 'react-native';
+import { useEffect, useState, useMemo } from 'react';
 
 import { KangurMobileAiTutorCard } from '../ai-tutor/KangurMobileAiTutorCard';
 import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
@@ -13,26 +13,19 @@ import { createKangurTestsHref } from '../tests/testsHref';
 import { KangurMobileCompetitionPlayer } from './competition-player';
 import { createKangurCompetitionHref } from './competitionHref';
 import {
-  BASE_TONE,
-  INDIGO_TONE,
   OutlineLink,
-  PrimaryButton,
   SectionCard,
-  StatusPill,
-  SUCCESS_TONE,
-  WARNING_TONE,
 } from './competition-primitives';
-import {
-  formatCompetitionModeDescription,
-  formatCompetitionModeTitle,
-  formatCompetitionTierLabel,
-  formatModeToken,
-  formatQuestionCount,
-} from './competition-utils';
 import {
   useKangurMobileCompetition,
   type KangurMobileCompetitionMode,
 } from './useKangurMobileCompetition';
+import {
+  CompetitionHeaderSection,
+  CompetitionModeCard,
+  CompetitionMissingModeSection,
+} from './CompetitionScreenSections';
+import type { KangurMobileLocale } from '../i18n/kangurMobileI18n';
 
 const COMPETITION_ROUTE = createKangurCompetitionHref();
 const TESTS_ROUTE = createKangurTestsHref();
@@ -40,6 +33,145 @@ const LESSONS_ROUTE = createKangurLessonsCatalogHref();
 const PRACTICE_ROUTE = createKangurPracticeHref('mixed');
 const PLAN_ROUTE = createKangurPlanHref();
 const RESULTS_ROUTE = createKangurResultsHref();
+
+type ModeItem = {
+  mode: KangurMobileCompetitionMode;
+  questionCount: number;
+  pointTier: string;
+};
+
+const NextStepsSection = ({ copy }: { copy: (dict: { de: string; en: string; pl: string }) => string }): JSX.Element => (
+  <SectionCard
+    title={copy({ de: 'Nächste Schritte', en: 'Next steps', pl: 'Kolejne kroki' })}
+  >
+    <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+      {copy({
+        de: 'Nach der Wettbewerbsrunde kannst du zu Lektionen, Training oder dem Tagesplan wechseln.',
+        en: 'After the competition round, move into lessons, practice, or the daily plan.',
+        pl: 'Po rundzie konkursowej możesz przejść do lekcji, treningu albo planu dnia.',
+      })}
+    </Text>
+    <OutlineLink
+      href={LESSONS_ROUTE}
+      hint={copy({ de: 'Öffnet die Lektionen.', en: 'Opens lessons.', pl: 'Otwiera lekcje.' })}
+      label={copy({ de: 'Lektionen öffnen', en: 'Open lessons', pl: 'Otwórz lekcje' })}
+    />
+    <OutlineLink
+      href={PRACTICE_ROUTE}
+      hint={copy({ de: 'Öffnet das Training.', en: 'Opens practice.', pl: 'Otwiera trening.' })}
+      label={copy({ de: 'Training öffnen', en: 'Open practice', pl: 'Otwórz trening' })}
+    />
+  </SectionCard>
+);
+
+const ModesList = ({
+  activeItem,
+  copy,
+  locale,
+  modes,
+  onSetActiveMode,
+}: {
+  activeItem: ModeItem | null;
+  copy: (dict: { de: string; en: string; pl: string }) => string;
+  locale: KangurMobileLocale;
+  modes: ModeItem[];
+  onSetActiveMode: (mode: KangurMobileCompetitionMode | null) => void;
+}): JSX.Element => (
+  <>
+    {activeItem !== null ? (
+      <>
+        <CompetitionModeCard
+          copy={copy}
+          item={activeItem}
+          locale={locale}
+          onPress={() => onSetActiveMode(null)}
+        />
+        <KangurMobileCompetitionPlayer
+          item={activeItem}
+          onBackToCatalog={() => onSetActiveMode(null)}
+        />
+      </>
+    ) : (
+      modes.map((item) => (
+        <CompetitionModeCard
+          key={item.mode}
+          copy={copy}
+          item={item}
+          locale={locale}
+          onPress={() => onSetActiveMode(item.mode)}
+          isStart
+        />
+      ))
+    )}
+  </>
+);
+
+const useAppStartupSync = (
+  focusedMode: KangurMobileCompetitionMode | null,
+  modes: Array<{ mode: KangurMobileCompetitionMode }>,
+  activeMode: KangurMobileCompetitionMode | null,
+  setActiveMode: (m: KangurMobileCompetitionMode | null) => void,
+): void => {
+  useEffect(() => {
+    if (focusedMode !== null) setActiveMode(focusedMode);
+  }, [focusedMode, setActiveMode]);
+
+  useEffect(() => {
+    if (activeMode !== null && !modes.some((m) => m.mode === activeMode)) {
+      setActiveMode(null);
+    }
+  }, [activeMode, modes, setActiveMode]);
+};
+
+const MainSection = ({
+  activeItem,
+  copy,
+  modes,
+  totalQuestions,
+  setupTutorContext,
+  modeToken,
+  focusedMode,
+  router,
+  locale,
+  setActiveMode,
+}: {
+  activeItem: ModeItem | null;
+  copy: (dict: { de: string; en: string; pl: string }) => string;
+  modes: ModeItem[];
+  totalQuestions: number;
+  setupTutorContext: {
+    contentId: string;
+    focusId: string;
+    focusKind: 'screen';
+    surface: 'game';
+    title: string;
+  };
+  modeToken: string | null;
+  focusedMode: KangurMobileCompetitionMode | null;
+  router: ReturnType<typeof useRouter>;
+  locale: KangurMobileLocale;
+  setActiveMode: (m: KangurMobileCompetitionMode | null) => void;
+}): JSX.Element => (
+  <KangurMobileScrollScreen
+    backgroundColor='#f8fafc'
+    contentContainerStyle={{ gap: 16, padding: 16, paddingBottom: 32 }}
+    edges={['top', 'left', 'right']}
+    keyboardShouldPersistTaps='handled'
+  >
+    <CompetitionHeaderSection
+      copy={copy}
+      modesCount={modes.length}
+      questionCount={totalQuestions}
+      routes={{ tests: TESTS_ROUTE, results: RESULTS_ROUTE, plan: PLAN_ROUTE }}
+    />
+    {activeItem === null && <KangurMobileAiTutorCard context={setupTutorContext} gameTarget='competition' />}
+    {(modeToken !== null && focusedMode === null && activeItem === null) && (
+      <CompetitionMissingModeSection copy={copy} modeToken={modeToken} onOpenFull={() => router.replace(COMPETITION_ROUTE)} />
+    )}
+    <ModesList activeItem={activeItem} copy={copy} locale={locale} modes={modes} onSetActiveMode={setActiveMode} />
+    <NextStepsSection copy={copy} />
+  </KangurMobileScrollScreen>
+);
 
 export function KangurCompetitionScreen(): React.JSX.Element {
   const params = useLocalSearchParams<{ mode?: string | string[] }>();
@@ -49,267 +181,31 @@ export function KangurCompetitionScreen(): React.JSX.Element {
   const { focusedMode, modeToken, modes } = useKangurMobileCompetition(rawModeParam);
   const [activeMode, setActiveMode] = useState<KangurMobileCompetitionMode | null>(null);
 
-  useEffect(() => {
-    if (focusedMode) {
-      setActiveMode(focusedMode);
-    }
-  }, [focusedMode]);
-
-  useEffect(() => {
-    if (!activeMode) {
-      return;
-    }
-
-    const stillExists = modes.some((item) => item.mode === activeMode);
-    if (!stillExists) {
-      setActiveMode(null);
-    }
-  }, [activeMode, modes]);
+  useAppStartupSync(focusedMode, modes, activeMode, setActiveMode);
 
   const activeItem = modes.find((item) => item.mode === activeMode) ?? null;
-  const missingFocusedMode =
-    modeToken !== null && focusedMode === null && activeItem === null;
-  const setupTutorContext = {
+  const setupTutorContext = useMemo(() => ({
     contentId: 'game:kangur:setup',
     focusId: 'kangur-game-kangur-setup',
     focusKind: 'screen' as const,
     surface: 'game' as const,
-    title: copy({
-      de: 'Kangur-Wettbewerb',
-      en: 'Kangaroo competition',
-      pl: 'Konkurs Kangur',
-    }),
-  };
+    title: copy({ de: 'Kangur-Wettbewerb', en: 'Kangaroo competition', pl: 'Konkurs Kangur' }),
+  }), [copy]);
+
+  const totalQuestions = useMemo(() => modes.reduce((total, m) => total + m.questionCount, 0), [modes]);
 
   return (
-    <KangurMobileScrollScreen
-      backgroundColor='#f8fafc'
-      contentContainerStyle={{ gap: 16, padding: 16, paddingBottom: 32 }}
-      edges={['top', 'left', 'right']}
-      keyboardShouldPersistTaps='handled'
-    >
-        <SectionCard
-          title={copy({
-            de: 'Kangur-Wettbewerb',
-            en: 'Kangaroo competition',
-            pl: 'Konkurs Kangur',
-          })}
-        >
-          <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-            {copy({
-              de: 'Wähle eine Runde des Wettbewerbs 2024 und löse die Fragen in deinem eigenen Tempo.',
-              en: 'Choose a 2024 competition round and solve the tasks at your own pace.',
-              pl: 'Wybierz rundę konkursu z 2024 roku i rozwiązuj zadania we własnym tempie.',
-            })}
-          </Text>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-            <StatusPill
-              label={copy({
-                de: `Runden ${modes.length}`,
-                en: `Rounds ${modes.length}`,
-                pl: `Rundy ${modes.length}`,
-              })}
-              tone={INDIGO_TONE}
-            />
-            <StatusPill
-              label={copy({
-                de: `Fragen ${modes.reduce((total, mode) => total + mode.questionCount, 0)}`,
-                en: `Questions ${modes.reduce((total, mode) => total + mode.questionCount, 0)}`,
-                pl: `Pytania ${modes.reduce((total, mode) => total + mode.questionCount, 0)}`,
-              })}
-              tone={BASE_TONE}
-            />
-          </View>
-          <View style={{ flexDirection: 'column', gap: 8 }}>
-            <OutlineLink
-              href={TESTS_ROUTE}
-              hint={copy({
-                de: 'Öffnet die Tests.',
-                en: 'Opens tests.',
-                pl: 'Otwiera testy.',
-              })}
-              label={copy({
-                de: 'Zu den Tests',
-                en: 'Go to tests',
-                pl: 'Przejdź do testów',
-              })}
-            />
-            <OutlineLink
-              href={RESULTS_ROUTE}
-              hint={copy({
-                de: 'Öffnet die Ergebnisse.',
-                en: 'Opens results.',
-                pl: 'Otwiera wyniki.',
-              })}
-              label={copy({
-                de: 'Ergebnisse öffnen',
-                en: 'Open results',
-                pl: 'Otwórz wyniki',
-              })}
-            />
-            <OutlineLink
-              href={PLAN_ROUTE}
-              hint={copy({
-                de: 'Öffnet den Tagesplan.',
-                en: 'Opens the daily plan.',
-                pl: 'Otwiera plan dnia.',
-              })}
-              label={copy({
-                de: 'Zum Tagesplan',
-                en: 'Go to daily plan',
-                pl: 'Przejdź do planu dnia',
-              })}
-            />
-          </View>
-        </SectionCard>
-
-        {!activeItem ? (
-          <KangurMobileAiTutorCard
-            context={setupTutorContext}
-            gameTarget='competition'
-          />
-        ) : null}
-
-        {missingFocusedMode ? (
-          <SectionCard
-            title={copy({
-              de: 'Wettbewerbskürzel',
-              en: 'Competition shortcut',
-              pl: 'Skrót konkursu',
-            })}
-          >
-            <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-              {copy({
-                de: `Der Link zu "${formatModeToken(modeToken)}" passt gerade zu keiner Wettbewerbsrunde.`,
-                en: `The shortcut for "${formatModeToken(modeToken)}" does not match any competition round right now.`,
-                pl: `Skrót do „${formatModeToken(modeToken)}” nie pasuje teraz do żadnej rundy konkursu.`,
-              })}
-            </Text>
-            <PrimaryButton
-              label={copy({
-                de: 'Vollen Wettbewerb öffnen',
-                en: 'Open full competition',
-                pl: 'Otwórz pełny konkurs',
-              })}
-              onPress={() => {
-                router.replace(COMPETITION_ROUTE);
-              }}
-              tone={BASE_TONE}
-            />
-          </SectionCard>
-        ) : null}
-
-        {activeItem ? (
-          <>
-            <SectionCard title={formatCompetitionModeTitle(activeItem.mode, locale)}>
-              <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                {formatCompetitionModeDescription(activeItem.mode, locale)}
-              </Text>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                <StatusPill
-                  label={formatQuestionCount(activeItem.questionCount, locale)}
-                  tone={SUCCESS_TONE}
-                />
-                <StatusPill
-                  label={formatCompetitionTierLabel(activeItem.pointTier, locale)}
-                  tone={WARNING_TONE}
-                />
-              </View>
-              <PrimaryButton
-                label={copy({
-                  de: 'Zurück zur Auswahl',
-                  en: 'Back to setup',
-                  pl: 'Wróć do wyboru',
-                })}
-                onPress={() => {
-                  setActiveMode(null);
-                }}
-                tone={BASE_TONE}
-              />
-            </SectionCard>
-            <KangurMobileCompetitionPlayer
-              item={activeItem}
-              onBackToCatalog={() => {
-                setActiveMode(null);
-              }}
-            />
-          </>
-        ) : (
-          modes.map((item) => (
-            <SectionCard
-              key={item.mode}
-              title={formatCompetitionModeTitle(item.mode, locale)}
-            >
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                <StatusPill
-                  label={formatQuestionCount(item.questionCount, locale)}
-                  tone={SUCCESS_TONE}
-                />
-                <StatusPill
-                  label={formatCompetitionTierLabel(item.pointTier, locale)}
-                  tone={WARNING_TONE}
-                />
-              </View>
-              <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                {formatCompetitionModeDescription(item.mode, locale)}
-              </Text>
-              <PrimaryButton
-                label={copy({
-                  de: 'Runde starten',
-                  en: 'Start this round',
-                  pl: 'Uruchom rundę',
-                })}
-                onPress={() => {
-                  setActiveMode(item.mode);
-                }}
-              />
-            </SectionCard>
-          ))
-        )}
-
-        <SectionCard
-          title={copy({
-            de: 'Nächste Schritte',
-            en: 'Next steps',
-            pl: 'Kolejne kroki',
-          })}
-        >
-          <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-            {copy({
-              de: 'Nach der Wettbewerbsrunde kannst du zu Lektionen, Training oder dem Tagesplan wechseln.',
-              en: 'After the competition round, move into lessons, practice, or the daily plan.',
-              pl: 'Po rundzie konkursowej możesz przejść do lekcji, treningu albo planu dnia.',
-            })}
-          </Text>
-          <View style={{ flexDirection: 'column', gap: 8 }}>
-            <OutlineLink
-              href={LESSONS_ROUTE}
-              hint={copy({
-                de: 'Öffnet die Lektionen.',
-                en: 'Opens lessons.',
-                pl: 'Otwiera lekcje.',
-              })}
-              label={copy({
-                de: 'Lektionen öffnen',
-                en: 'Open lessons',
-                pl: 'Otwórz lekcje',
-              })}
-            />
-            <OutlineLink
-              href={PRACTICE_ROUTE}
-              hint={copy({
-                de: 'Öffnet das Training.',
-                en: 'Opens practice.',
-                pl: 'Otwiera trening.',
-              })}
-              label={copy({
-                de: 'Training öffnen',
-                en: 'Open practice',
-                pl: 'Otwórz trening',
-              })}
-            />
-          </View>
-        </SectionCard>
-    </KangurMobileScrollScreen>
+    <MainSection
+      activeItem={activeItem}
+      copy={copy}
+      modes={modes}
+      totalQuestions={totalQuestions}
+      setupTutorContext={setupTutorContext}
+      modeToken={modeToken}
+      focusedMode={focusedMode}
+      router={router}
+      locale={locale}
+      setActiveMode={setActiveMode}
+    />
   );
 }

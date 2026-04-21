@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react';
 import { InteractionManager } from 'react-native';
-import type { KangurAuthTransitionInput } from '@kangur/platform';
 import type { KangurMobileDeveloperConfig } from '../config/mobileDeveloperConfig.shared';
 import { scheduleInitialAuthRefreshFrame } from './authBootHelpers';
 
@@ -16,56 +15,56 @@ export function useAuthBootEffect({
   refreshSession: (options: { blockUI: boolean }) => Promise<void>;
 }): void {
   useEffect(() => {
+    let isDisposed = false;
+    let hasScheduledRefresh = false;
+    let fallbackTimeoutId: ReturnType<typeof setTimeout> | null = null;
+    let cancelFrame: () => void = () => {};
+    let interactionTask: { cancel: () => void } | null = null;
+
     if (shouldBlockInitialSessionRefresh) {
       setIsLoadingAuth(true);
       refreshSession({
         blockUI: true,
-      });
-      return;
-    }
-
-    let isDisposed = false;
-    let hasScheduledRefresh = false;
-    let fallbackTimeoutId: ReturnType<typeof setTimeout> | null = null;
-    let cancelFrame = () => {};
-
-    const clearFallbackTimeout = (): void => {
-      if (fallbackTimeoutId !== null) {
-        clearTimeout(fallbackTimeoutId);
-        fallbackTimeoutId = null;
-      }
-    };
-
-    const scheduleRefresh = (): void => {
-      if (isDisposed || hasScheduledRefresh) {
-        return;
-      }
-
-      hasScheduledRefresh = true;
-      clearFallbackTimeout();
-      cancelFrame = scheduleInitialAuthRefreshFrame(() => {
-        if (isDisposed) {
-          return;
+      }).catch(() => {});
+    } else {
+      const clearFallbackTimeout = (): void => {
+        if (fallbackTimeoutId !== null) {
+          clearTimeout(fallbackTimeoutId);
+          fallbackTimeoutId = null;
         }
+      };
 
-        refreshSession({
-          blockUI: false,
-        });
-      });
-    };
+      const scheduleRefresh = (): void => {
+        if (!isDisposed && !hasScheduledRefresh) {
+          hasScheduledRefresh = true;
+          clearFallbackTimeout();
+          cancelFrame = scheduleInitialAuthRefreshFrame(() => {
+            if (!isDisposed) {
+              refreshSession({
+                blockUI: false,
+              }).catch(() => {});
+            }
+          });
+        }
+      };
 
-    const interactionTask = InteractionManager.runAfterInteractions(
-      scheduleRefresh,
-    );
-    fallbackTimeoutId = setTimeout(
-      scheduleRefresh,
-      AUTH_INITIAL_BACKGROUND_REFRESH_FALLBACK_TIMEOUT_MS,
-    );
+      interactionTask = InteractionManager.runAfterInteractions(
+        scheduleRefresh,
+      );
+      fallbackTimeoutId = setTimeout(
+        scheduleRefresh,
+        AUTH_INITIAL_BACKGROUND_REFRESH_FALLBACK_TIMEOUT_MS,
+      );
+    }
 
     return () => {
       isDisposed = true;
-      clearFallbackTimeout();
-      interactionTask.cancel();
+      if (fallbackTimeoutId !== null) {
+        clearTimeout(fallbackTimeoutId);
+      }
+      if (interactionTask !== null) {
+        interactionTask.cancel();
+      }
       cancelFrame();
     };
   }, [shouldBlockInitialSessionRefresh, setIsLoadingAuth, refreshSession]);
@@ -88,21 +87,19 @@ export function useDeveloperAutoSignIn({
 
   useEffect(() => {
     if (
-      !developerAutoSignInEnabled ||
-      isLoadingAuth ||
-      isAuthenticated ||
-      hasAttemptedDeveloperAutoSignInRef.current
+      developerAutoSignInEnabled &&
+      !isLoadingAuth &&
+      !isAuthenticated &&
+      !hasAttemptedDeveloperAutoSignInRef.current
     ) {
-      return;
-    }
-
-    const { learnerLoginName, learnerPassword } = developerConfig;
-    if (learnerLoginName !== null && learnerPassword !== null) {
-      hasAttemptedDeveloperAutoSignInRef.current = true;
-      signInWithLearnerCredentials(
-        learnerLoginName,
-        learnerPassword,
-      );
+      const { learnerLoginName, learnerPassword } = developerConfig;
+      if (learnerLoginName !== null && learnerPassword !== null) {
+        hasAttemptedDeveloperAutoSignInRef.current = true;
+        signInWithLearnerCredentials(
+          learnerLoginName,
+          learnerPassword,
+        ).catch(() => {});
+      }
     }
   }, [
     developerAutoSignInEnabled,

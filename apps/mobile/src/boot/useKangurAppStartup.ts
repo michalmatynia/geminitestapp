@@ -19,46 +19,86 @@ type UseKangurAppStartupOptions = {
   includeCachedStartupData?: boolean;
 };
 
-export const useKangurAppStartup = (
+const useCachedRecentResults = (
+  includeCachedStartupData: boolean,
+  scoreScopeIdentityKey: string | null,
+  storage: ReturnType<typeof useKangurMobileRuntime>['storage'],
+): ReturnType<typeof resolvePersistedKangurMobileRecentResults> | null => useMemo(
+  () => {
+    if (!includeCachedStartupData || scoreScopeIdentityKey === null) {
+      return null;
+    }
+    return resolvePersistedKangurMobileRecentResults({
+      identityKey: scoreScopeIdentityKey,
+      limit: APP_STARTUP_RECENT_RESULTS_LIMIT,
+      storage,
+    });
+  },
+  [includeCachedStartupData, scoreScopeIdentityKey, storage],
+);
+
+const useCachedTrainingFocus = (
+  includeCachedStartupData: boolean,
+  scoreScopeIdentityKey: string | null,
+  storage: ReturnType<typeof useKangurMobileRuntime>['storage'],
+): ReturnType<typeof resolvePersistedKangurMobileTrainingFocus> | null => useMemo(
+  () => {
+    if (!includeCachedStartupData || scoreScopeIdentityKey === null) {
+      return null;
+    }
+    return resolvePersistedKangurMobileTrainingFocus({
+      identityKey: scoreScopeIdentityKey,
+      storage,
+    });
+  },
+  [includeCachedStartupData, scoreScopeIdentityKey, storage],
+);
+
+const hasTrainingFocusData = (
+  trainingFocus: ReturnType<typeof resolvePersistedKangurMobileTrainingFocus> | null,
+): boolean => {
+  const hasStrongestOp = (trainingFocus?.strongestOperation?.length ?? 0) > 0;
+  const hasWeakestOp = (trainingFocus?.weakestOperation?.length ?? 0) > 0;
+  return hasStrongestOp || hasWeakestOp;
+};
+
+const hasAnyCachedData = (
+  recentResults: ReturnType<typeof resolvePersistedKangurMobileRecentResults> | null,
+  trainingFocus: ReturnType<typeof resolvePersistedKangurMobileTrainingFocus> | null,
+): boolean => {
+  const hasRecentResults = (recentResults?.length ?? 0) > 0;
+  return hasRecentResults || hasTrainingFocusData(trainingFocus);
+};
+
+const useScoreScopeIdentityKey = (user: ReturnType<typeof useKangurMobileAuth>['session']['user']): string | null =>
+  useMemo(() => resolveKangurMobileScoreScope(user)?.identityKey ?? null, [user]);
+
+export function useKangurAppStartup(
   options: UseKangurAppStartupOptions = {},
-): KangurAppStartupState => {
+): KangurAppStartupState {
   const { authError, isLoadingAuth, session } = useKangurMobileAuth();
   const { storage } = useKangurMobileRuntime();
   const includeCachedStartupData = options.includeCachedStartupData ?? false;
-  const scoreScopeIdentityKey =
-    resolveKangurMobileScoreScope(session.user)?.identityKey ?? null;
-  const cachedRecentResults = useMemo(
-    () =>
-      includeCachedStartupData && scoreScopeIdentityKey
-        ? resolvePersistedKangurMobileRecentResults({
-            identityKey: scoreScopeIdentityKey,
-            limit: APP_STARTUP_RECENT_RESULTS_LIMIT,
-            storage,
-          })
-        : null,
-    [includeCachedStartupData, scoreScopeIdentityKey, storage],
+  const scoreScopeIdentityKey = useScoreScopeIdentityKey(session.user);
+
+  const cachedRecentResults = useCachedRecentResults(
+    includeCachedStartupData,
+    scoreScopeIdentityKey,
+    storage,
   );
-  const cachedTrainingFocus = useMemo(
-    () =>
-      includeCachedStartupData && scoreScopeIdentityKey
-        ? resolvePersistedKangurMobileTrainingFocus({
-            identityKey: scoreScopeIdentityKey,
-            storage,
-          })
-        : null,
-    [includeCachedStartupData, scoreScopeIdentityKey, storage],
+
+  const cachedTrainingFocus = useCachedTrainingFocus(
+    includeCachedStartupData,
+    scoreScopeIdentityKey,
+    storage,
   );
-  // Keep the main loader only for the blocking session-restore path.
+
   const isBootLoading = isLoadingAuth && session.status !== 'authenticated';
 
   return {
     bootError: authError,
-    hasCachedStartupData: Boolean(
-      cachedRecentResults?.length ||
-        cachedTrainingFocus?.strongestOperation ||
-        cachedTrainingFocus?.weakestOperation,
-    ),
+    hasCachedStartupData: hasAnyCachedData(cachedRecentResults, cachedTrainingFocus),
     isAuthResolved: !isBootLoading,
     isBootLoading,
   };
-};
+}

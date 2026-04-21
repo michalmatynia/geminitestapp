@@ -30,65 +30,50 @@ export const useKangurRouteBootState = ({
   fallbackTimeoutMs: number;
 }): boolean => {
   const { consumeInitialRouteBootstrapBypass } = useKangurAppBootstrap();
-  const [shouldBypassInitialRouteBootShell] = useState(() =>
+  const [shouldBypassInitialRouteBootShell] = useState<boolean>(() =>
     consumeInitialRouteBootstrapBypass(),
   );
-  const [isPreparingRouteView, setIsPreparingRouteView] = useState(
+  const [isPreparingRouteView, setIsPreparingRouteView] = useState<boolean>(
     () => !shouldBypassInitialRouteBootShell,
   );
 
   useEffect(() => {
-    if (shouldBypassInitialRouteBootShell) {
-      return;
-    }
-
-    setIsPreparingRouteView(true);
-
     let isDisposed = false;
     let hasScheduledSettle = false;
     let fallbackTimeoutId: ReturnType<typeof setTimeout> | null = null;
-    let cancelFrame = () => {};
+    let cancelFrame: () => void = () => {};
+    let interactionTask: { cancel: () => void } | null = null;
 
     const clearFallbackTimeout = (): void => {
-      if (fallbackTimeoutId === null) {
-        return;
+      if (fallbackTimeoutId !== null) {
+        clearTimeout(fallbackTimeoutId);
+        fallbackTimeoutId = null;
       }
-
-      clearTimeout(fallbackTimeoutId);
-      fallbackTimeoutId = null;
     };
-
     const settlePreparingState = (): void => {
-      if (isDisposed) {
-        return;
+      if (!isDisposed) {
+        clearFallbackTimeout();
+        startTransition(() => setIsPreparingRouteView(false));
       }
-
-      clearFallbackTimeout();
-      startTransition(() => {
-        setIsPreparingRouteView(false);
-      });
     };
-
     const scheduleSettle = (): void => {
-      if (isDisposed || hasScheduledSettle) {
-        return;
+      if (!isDisposed && !hasScheduledSettle) {
+        hasScheduledSettle = true;
+        clearFallbackTimeout();
+        cancelFrame = scheduleRouteBootFrame(settlePreparingState);
       }
-
-      hasScheduledSettle = true;
-      clearFallbackTimeout();
-      cancelFrame = scheduleRouteBootFrame(settlePreparingState);
     };
 
-    const interactionTask = InteractionManager.runAfterInteractions(
-      scheduleSettle,
-    );
-
-    fallbackTimeoutId = setTimeout(scheduleSettle, fallbackTimeoutMs);
+    if (!shouldBypassInitialRouteBootShell) {
+      setIsPreparingRouteView(true);
+      interactionTask = InteractionManager.runAfterInteractions(scheduleSettle);
+      fallbackTimeoutId = setTimeout(scheduleSettle, fallbackTimeoutMs);
+    }
 
     return () => {
       isDisposed = true;
-      clearFallbackTimeout();
-      interactionTask.cancel?.();
+      if (fallbackTimeoutId !== null) clearTimeout(fallbackTimeoutId);
+      if (interactionTask !== null) interactionTask.cancel();
       cancelFrame();
     };
   }, [bootKey, fallbackTimeoutMs, shouldBypassInitialRouteBootShell]);

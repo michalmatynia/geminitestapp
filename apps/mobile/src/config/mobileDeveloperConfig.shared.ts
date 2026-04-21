@@ -13,8 +13,8 @@ export type KangurMobileDeveloperConfig = {
 const normalizeDeveloperConfigValue = (
   value: string | undefined,
 ): string | null => {
-  const trimmed = value?.trim();
-  if (!trimmed) {
+  const trimmed = value?.trim() ?? '';
+  if (trimmed === '') {
     return null;
   }
 

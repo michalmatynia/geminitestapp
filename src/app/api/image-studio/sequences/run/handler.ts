@@ -6,7 +6,7 @@ import { imageStudioSequenceRunStartRequestSchema } from '@/shared/contracts/ima
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const body = (await req.json().catch(() => null)) as unknown;
   const parsed = imageStudioSequenceRunStartRequestSchema.safeParse(body);
   if (!parsed.success) {

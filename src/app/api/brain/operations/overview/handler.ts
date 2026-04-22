@@ -694,7 +694,7 @@ const collectImageStudioDomain = async (
   };
 };
 
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const range = parseRangeFromRequest(req);
   const nowMs = Date.now();
   const windowBounds = resolveWindowBounds(range, nowMs);

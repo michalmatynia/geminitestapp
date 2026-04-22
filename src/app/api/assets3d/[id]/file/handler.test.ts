@@ -39,7 +39,7 @@ vi.mock('@/features/viewer3d/server', () => ({
   }),
 }));
 
-import { GET_handler } from './handler';
+import { getHandler } from './handler';
 
 describe('assets3d file handler', () => {
   beforeEach(() => {
@@ -57,9 +57,9 @@ describe('assets3d file handler', () => {
     existsSyncMock.mockReturnValue(true);
     readFileMock.mockResolvedValue(Buffer.from('local-model'));
 
-    const response = await GET_handler(
-      new Request('http://localhost/api/assets3d/asset-1/file') as Parameters<typeof GET_handler>[0],
-      {} as Parameters<typeof GET_handler>[1],
+    const response = await getHandler(
+      new Request('http://localhost/api/assets3d/asset-1/file') as Parameters<typeof getHandler>[0],
+      {} as Parameters<typeof getHandler>[1],
       { id: 'asset-1' }
     );
 
@@ -86,9 +86,9 @@ describe('assets3d file handler', () => {
       );
     vi.stubGlobal('fetch', fetchMock);
 
-    const response = await GET_handler(
-      new Request('http://localhost/api/assets3d/asset-2/file') as Parameters<typeof GET_handler>[0],
-      {} as Parameters<typeof GET_handler>[1],
+    const response = await getHandler(
+      new Request('http://localhost/api/assets3d/asset-2/file') as Parameters<typeof getHandler>[0],
+      {} as Parameters<typeof getHandler>[1],
       { id: 'asset-2' }
     );
 

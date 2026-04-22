@@ -22,7 +22,7 @@ const databaseExecuteRequestSchema = z.object({
   pipeline: z.array(z.record(z.string(), z.unknown())).optional(),
 });
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertDatabaseEngineManageAccess();
   if (process.env['NODE_ENV'] === 'production') {
     throw forbiddenError('Database operations are disabled in production.');

@@ -2,8 +2,8 @@ import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
-  GET_handler,
-  POST_handler,
+  getHandler,
+  postHandler,
 } from '@/app/api/v2/integrations/exports/base/stock-fallback/handler';
 import type { BaseStockFallbackPreferenceResponse } from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
@@ -37,7 +37,7 @@ describe('api/v2/integrations/exports/base/stock-fallback handler', () => {
   });
 
   it('returns the stored stock fallback flag', async () => {
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/v2/integrations/exports/base/stock-fallback', {
         method: 'GET',
       }),
@@ -50,7 +50,7 @@ describe('api/v2/integrations/exports/base/stock-fallback handler', () => {
   });
 
   it('stores the stock fallback flag on POST and returns the centralized response', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       buildStockFallbackPostRequest(true),
       mockContext
     );

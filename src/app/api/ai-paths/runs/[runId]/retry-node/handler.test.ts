@@ -45,7 +45,7 @@ vi.mock('@/shared/lib/ai-paths/services/path-run-repository', () => ({
   })),
 }));
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 describe('ai-paths run retry-node handler', () => {
   beforeEach(() => {
@@ -62,13 +62,13 @@ describe('ai-paths run retry-node handler', () => {
   });
 
   it('parses the shared retry DTO and retries the requested node', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/ai-paths/runs/run-1/retry-node', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ nodeId: 'node-1' }),
       }),
-      {} as Parameters<typeof POST_handler>[1],
+      {} as Parameters<typeof postHandler>[1],
       { runId: 'run-1' }
     );
 

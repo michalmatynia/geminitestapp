@@ -7,7 +7,7 @@ import { notFoundError } from '@/shared/errors/app-error';
 import { applyCacheLife } from '@/shared/lib/next/cache-life';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
-export async function GET_handler(
+export async function getHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }
@@ -29,7 +29,7 @@ async function getAsset3DByIdCached(id: string) {
   return repository.getAsset3DById(id);
 }
 
-export async function PATCH_handler(
+export async function patchHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }
@@ -52,7 +52,7 @@ export async function PATCH_handler(
   return NextResponse.json(asset);
 }
 
-export async function DELETE_handler(
+export async function deleteHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }

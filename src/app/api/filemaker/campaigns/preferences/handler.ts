@@ -37,7 +37,7 @@ const resolvePreferenceStatus = (reason: string | null | undefined): FilemakerEm
   return reason === 'unsubscribed' ? 'unsubscribed' : 'blocked';
 };
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const result: JsonParseResult<FilemakerEmailCampaignPreferencesRequest> = await parseJsonBody(
     req,
     filemakerEmailCampaignPreferencesRequestSchema,

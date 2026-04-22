@@ -61,7 +61,7 @@ vi.mock('@/shared/lib/ai-paths/services/path-run-repository', () => ({
   resolvePathRunRepository: resolvePathRunRepositoryMock,
 }));
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 const makeRequest = (body: Record<string, unknown>): NextRequest =>
   new NextRequest('http://localhost/api/ai-paths/runs/enqueue', {
@@ -356,14 +356,14 @@ describe('ai-paths runs enqueue handler', () => {
     );
 
     await expect(
-      POST_handler(
+      postHandler(
         makeRequest({
           pathId: config.id,
           pathName: config.name,
           nodes,
           edges,
         }),
-        {} as Parameters<typeof POST_handler>[1]
+        {} as Parameters<typeof postHandler>[1]
       )
     ).rejects.toThrow(/unsupported node identities/i);
 
@@ -385,14 +385,14 @@ describe('ai-paths runs enqueue handler', () => {
     ];
 
     await expect(
-      POST_handler(
+      postHandler(
         makeRequest({
           pathId: config.id,
           pathName: config.name,
           nodes: config.nodes,
           edges,
         }),
-        {} as Parameters<typeof POST_handler>[1]
+        {} as Parameters<typeof postHandler>[1]
       )
     ).rejects.toThrow(/invalid or non-canonical edges/i);
 
@@ -402,7 +402,7 @@ describe('ai-paths runs enqueue handler', () => {
   it('enqueues canonical graphs without identity repair metadata', async () => {
     const config = createDefaultPathConfig('path-canonical');
 
-    const response = await POST_handler(
+    const response = await postHandler(
       makeRequest({
         pathId: config.id,
         pathName: config.name,
@@ -414,7 +414,7 @@ describe('ai-paths runs enqueue handler', () => {
           },
         },
       }),
-      {} as Parameters<typeof POST_handler>[1]
+      {} as Parameters<typeof postHandler>[1]
     );
 
     expect(response.status).toBe(200);
@@ -465,11 +465,11 @@ describe('ai-paths runs enqueue handler', () => {
     getAiPathsSettingMock.mockResolvedValue(JSON.stringify(config));
 
     await expect(
-      POST_handler(
+      postHandler(
         makeRequest({
           pathId: config.id,
         }),
-        {} as Parameters<typeof POST_handler>[1]
+        {} as Parameters<typeof postHandler>[1]
       )
     ).rejects.toThrow(/non-canonical persisted values|invalid ai path config payload/i);
     expect(enqueuePathRunMock).not.toHaveBeenCalled();
@@ -480,13 +480,13 @@ describe('ai-paths runs enqueue handler', () => {
     getAiPathsSettingMock.mockResolvedValue(JSON.stringify(config));
 
     await expect(
-      POST_handler(
+      postHandler(
         makeRequest({
           pathId: config.id,
           entityId: 'product-1',
           entityType: 'product',
         }),
-        {} as Parameters<typeof POST_handler>[1]
+        {} as Parameters<typeof postHandler>[1]
       )
     ).rejects.toThrow(/non-canonical persisted values|invalid ai path config payload/i);
     expect(enqueuePathRunMock).not.toHaveBeenCalled();
@@ -498,7 +498,7 @@ describe('ai-paths runs enqueue handler', () => {
     getAiPathsSettingMock.mockResolvedValue(JSON.stringify(config));
 
     await expect(
-      POST_handler(
+      postHandler(
         makeRequest({
           pathId: config.id,
           triggerEvent: 'manual',
@@ -508,7 +508,7 @@ describe('ai-paths runs enqueue handler', () => {
             },
           },
         }),
-        {} as Parameters<typeof POST_handler>[1]
+        {} as Parameters<typeof postHandler>[1]
       )
     ).rejects.toThrow(/invalid ai path config payload/i);
     expect(enqueuePathRunMock).not.toHaveBeenCalled();
@@ -520,13 +520,13 @@ describe('ai-paths runs enqueue handler', () => {
     getAiPathsSettingMock.mockResolvedValue(JSON.stringify(config));
 
     await expect(
-      POST_handler(
+      postHandler(
         makeRequest({
           pathId: config.id,
           entityId: 'product-1',
           entityType: 'product',
         }),
-        {} as Parameters<typeof POST_handler>[1]
+        {} as Parameters<typeof postHandler>[1]
       )
     ).rejects.toThrow(/non-canonical persisted values|invalid ai path config payload/i);
     expect(enqueuePathRunMock).not.toHaveBeenCalled();
@@ -538,13 +538,13 @@ describe('ai-paths runs enqueue handler', () => {
     getAiPathsSettingMock.mockResolvedValue(JSON.stringify(config));
 
     await expect(
-      POST_handler(
+      postHandler(
         makeRequest({
           pathId: config.id,
           entityId: 'product-1',
           entityType: 'product',
         }),
-        {} as Parameters<typeof POST_handler>[1]
+        {} as Parameters<typeof postHandler>[1]
       )
     ).rejects.toThrow(/non-canonical persisted values|invalid ai path config payload/i);
     expect(upsertAiPathsSettingsMock).not.toHaveBeenCalled();
@@ -553,7 +553,7 @@ describe('ai-paths runs enqueue handler', () => {
   it('normalizes context registry payloads into enqueue metadata', async () => {
     const config = createDefaultPathConfig('path-with-context');
 
-    const response = await POST_handler(
+    const response = await postHandler(
       makeRequest({
         pathId: config.id,
         pathName: config.name,
@@ -590,7 +590,7 @@ describe('ai-paths runs enqueue handler', () => {
           },
         },
       }),
-      {} as Parameters<typeof POST_handler>[1]
+      {} as Parameters<typeof postHandler>[1]
     );
 
     expect(response.status).toBe(200);
@@ -620,7 +620,7 @@ describe('ai-paths runs enqueue handler', () => {
     const config = createDefaultPathConfig('path-stored-config');
     getAiPathsSettingMock.mockResolvedValueOnce(serializeStoredPathConfig(config));
 
-    const response = await POST_handler(
+    const response = await postHandler(
       makeRequest({
         pathId: config.id,
         triggerEvent: 'manual',
@@ -631,7 +631,7 @@ describe('ai-paths runs enqueue handler', () => {
           },
         },
       }),
-      {} as Parameters<typeof POST_handler>[1]
+      {} as Parameters<typeof postHandler>[1]
     );
 
     expect(response.status).toBe(200);
@@ -668,7 +668,7 @@ describe('ai-paths runs enqueue handler', () => {
     const config = createDefaultPathConfig('path-canonical-legacy-id');
 
     await expect(
-      POST_handler(
+      postHandler(
         makeRequest({
           pathId: config.id,
           pathName: config.name,
@@ -680,7 +680,7 @@ describe('ai-paths runs enqueue handler', () => {
             },
           },
         }),
-        {} as Parameters<typeof POST_handler>[1]
+        {} as Parameters<typeof postHandler>[1]
       )
     ).rejects.toThrow(/non-canonical run payload/i);
   });
@@ -688,7 +688,7 @@ describe('ai-paths runs enqueue handler', () => {
   it('returns repository provider headers on successful enqueue responses', async () => {
     const config = createDefaultPathConfig('path-provider-headers');
 
-    const response = await POST_handler(
+    const response = await postHandler(
       makeRequest({
         pathId: config.id,
         pathName: config.name,
@@ -696,7 +696,7 @@ describe('ai-paths runs enqueue handler', () => {
         edges: config.edges,
         meta: { aiPathsValidation: { enabled: false } },
       }),
-      {} as Parameters<typeof POST_handler>[1]
+      {} as Parameters<typeof postHandler>[1]
     );
 
     expect(response.status).toBe(200);
@@ -709,7 +709,7 @@ describe('ai-paths runs enqueue handler', () => {
     const config = createDefaultPathConfig('path-canonical-missing-id');
 
     await expect(
-      POST_handler(
+      postHandler(
         makeRequest({
           pathId: config.id,
           pathName: config.name,
@@ -721,7 +721,7 @@ describe('ai-paths runs enqueue handler', () => {
             },
           },
         }),
-        {} as Parameters<typeof POST_handler>[1]
+        {} as Parameters<typeof postHandler>[1]
       )
     ).rejects.toThrow(/non-canonical run payload|contract violation/i);
   });
@@ -730,7 +730,7 @@ describe('ai-paths runs enqueue handler', () => {
     const config = createDefaultPathConfig('path-legacy-meta-source');
 
     await expect(
-      POST_handler(
+      postHandler(
         makeRequest({
           pathId: config.id,
           pathName: config.name,
@@ -743,7 +743,7 @@ describe('ai-paths runs enqueue handler', () => {
             triggerEventId: 'trigger_event_id',
           },
         }),
-        {} as Parameters<typeof POST_handler>[1]
+        {} as Parameters<typeof postHandler>[1]
       )
     ).rejects.toThrow(/meta\.source must be a string/i);
 
@@ -757,7 +757,7 @@ describe('ai-paths runs enqueue handler', () => {
     const config = createDefaultPathConfig('path-queue-timeout');
 
     await expect(
-      POST_handler(
+      postHandler(
         makeRequest({
           pathId: config.id,
           pathName: config.name,
@@ -765,7 +765,7 @@ describe('ai-paths runs enqueue handler', () => {
           edges: config.edges,
           meta: { aiPathsValidation: { enabled: false } },
         }),
-        {} as Parameters<typeof POST_handler>[1]
+        {} as Parameters<typeof postHandler>[1]
       )
     ).rejects.toThrow(/queue readiness check timed out/i);
 
@@ -778,7 +778,7 @@ describe('ai-paths runs enqueue handler', () => {
     const config = createDefaultPathConfig('path-queue-error');
 
     await expect(
-      POST_handler(
+      postHandler(
         makeRequest({
           pathId: config.id,
           pathName: config.name,
@@ -786,7 +786,7 @@ describe('ai-paths runs enqueue handler', () => {
           edges: config.edges,
           meta: { aiPathsValidation: { enabled: false } },
         }),
-        {} as Parameters<typeof POST_handler>[1]
+        {} as Parameters<typeof postHandler>[1]
       )
     ).rejects.toThrow('Redis connection refused');
 
@@ -798,7 +798,7 @@ describe('ai-paths runs enqueue handler', () => {
     const config = createDefaultPathConfig('path-runid-field');
 
     await expect(
-      POST_handler(
+      postHandler(
         makeRequest({
           pathId: config.id,
           pathName: config.name,
@@ -806,7 +806,7 @@ describe('ai-paths runs enqueue handler', () => {
           edges: config.edges,
           meta: { aiPathsValidation: { enabled: false } },
         }),
-        {} as Parameters<typeof POST_handler>[1]
+        {} as Parameters<typeof postHandler>[1]
       )
     ).rejects.toThrow(/non-canonical run payload/i);
   });
@@ -816,13 +816,13 @@ describe('ai-paths runs enqueue handler', () => {
     getAiPathsSettingMock.mockResolvedValue(JSON.stringify(config));
 
     await expect(
-      POST_handler(
+      postHandler(
         makeRequest({
           pathId: config.id,
           entityId: 'product-1',
           entityType: 'product',
         }),
-        {} as Parameters<typeof POST_handler>[1]
+        {} as Parameters<typeof postHandler>[1]
       )
     ).rejects.toThrow(/non-canonical persisted values|invalid ai path config payload/i);
     expect(upsertAiPathsSettingsMock).not.toHaveBeenCalled();

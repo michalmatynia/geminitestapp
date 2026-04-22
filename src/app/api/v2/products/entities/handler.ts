@@ -11,7 +11,7 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
 
-export async function GET_products_entities_handler(
+export async function getProductsEntitiesHandler(
   req: NextRequest,
   ctx: ApiHandlerContext,
   params: { type: string }
@@ -25,7 +25,7 @@ export async function GET_products_entities_handler(
   throw badRequestError(`Invalid products entity type for GET: ${type}`);
 }
 
-export async function POST_products_entities_handler(
+export async function postProductsEntitiesHandler(
   req: NextRequest,
   ctx: ApiHandlerContext,
   params: { type: string }
@@ -39,7 +39,7 @@ export async function POST_products_entities_handler(
   throw badRequestError(`Invalid products entity type for POST: ${type}`);
 }
 
-export async function GET_products_entity_handler(
+export async function getProductsEntityHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { type: string; id: string }
@@ -55,7 +55,7 @@ export async function GET_products_entity_handler(
   throw badRequestError(`Invalid products entity type for GET: ${type}`);
 }
 
-export async function PUT_products_entity_handler(
+export async function putProductsEntityHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { type: string; id: string }
@@ -87,7 +87,7 @@ export async function PUT_products_entity_handler(
   throw badRequestError(`Invalid products entity type for PUT: ${type}`);
 }
 
-export async function DELETE_products_entity_handler(
+export async function deleteProductsEntityHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { type: string; id: string }

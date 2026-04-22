@@ -14,7 +14,7 @@ import type { IdDto as Params } from '@/shared/contracts/base';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { notFoundError } from '@/shared/errors/app-error';
 
-export async function GET_handler(
+export async function getHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: Params
@@ -33,7 +33,7 @@ export async function GET_handler(
   return NextResponse.json({ domainIds });
 }
 
-export async function PUT_handler(
+export async function putHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: Params

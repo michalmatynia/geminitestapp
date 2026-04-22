@@ -246,7 +246,7 @@ export const prewarmLiteSettingsServerCache = async (): Promise<void> => {
   }
 };
 
-export const GET_handler = async (
+export const getHandler = async (
   _req: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> => {
@@ -344,7 +344,7 @@ export const GET_handler = async (
     }
     void ErrorSystem.captureException(error, {
       service: 'api/settings/lite',
-      action: 'GET_handler',
+      action: 'getHandler',
     });
     throw error;
   }

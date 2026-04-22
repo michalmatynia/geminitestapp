@@ -1,6 +1,6 @@
-import type { KangurDuelChoice } from '@kangur/contracts/kangur-duels';
 import { Text, View } from 'react-native';
 
+import { type useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import {
   KangurMobileCard as Card,
   KangurMobilePill as Pill,
@@ -36,16 +36,11 @@ import {
   resolveSeriesWins,
   resolveWinnerSummary,
 } from './duels-utils';
+import { type useKangurMobileDuelSession } from './useKangurMobileDuelSession';
 
-type DuelCopy = ReturnType<
-  typeof import('../i18n/kangurMobileI18n').useKangurMobileI18n
->['copy'];
-type DuelLocale = ReturnType<
-  typeof import('../i18n/kangurMobileI18n').useKangurMobileI18n
->['locale'];
-type DuelSessionState = ReturnType<
-  (typeof import('./useKangurMobileDuelSession'))['useKangurMobileDuelSession']
->;
+type DuelCopy = ReturnType<typeof useKangurMobileI18n>['copy'];
+type DuelLocale = ReturnType<typeof useKangurMobileI18n>['locale'];
+type DuelSessionState = ReturnType<typeof useKangurMobileDuelSession>;
 type DuelRoundProgress = ReturnType<typeof resolveRoundProgress>;
 
 type DuelsSessionViewProps = {
@@ -186,7 +181,7 @@ export function DuelsSessionView({
             }
           />
         </Card>
-      ) : duel.error || !duel.session || (!duel.isSpectating && !duel.player) ? (
+      ) : duel.error !== null || !duel.session || (!duel.isSpectating && !duel.player) ? (
         <Card>
           <MessageCard
             title={
@@ -315,7 +310,7 @@ export function DuelsSessionView({
               ) : null}
             </View>
 
-            {roundProgress && !hasWaitingSession ? (
+            {roundProgress !== null && !hasWaitingSession ? (
               <View style={{ gap: 6 }}>
                 <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
                   {formatRoundProgressLabel(roundProgress, locale)}
@@ -399,7 +394,7 @@ export function DuelsSessionView({
               />
             ) : null}
 
-            {duel.actionError ? (
+            {duel.actionError !== null ? (
               <MessageCard
                 title={copy({
                   de: 'Aktion fehlgeschlagen',
@@ -465,10 +460,10 @@ export function DuelsSessionView({
                   <View style={{ gap: 4 }}>
                     <Text style={{ color: '#475569', lineHeight: 20 }}>
                       {locale === 'de'
-                        ? `Punktzahl ${player.score}${player.bonusPoints ? ` + ${player.bonusPoints} Bonus` : ''}`
+                        ? `Punktzahl ${player.score}${(player.bonusPoints !== null && player.bonusPoints !== 0) ? ` + ${player.bonusPoints} Bonus` : ''}`
                         : locale === 'en'
-                          ? `Score ${player.score}${player.bonusPoints ? ` + ${player.bonusPoints} bonus` : ''}`
-                          : `Wynik ${player.score}${player.bonusPoints ? ` + ${player.bonusPoints} bonus` : ''}`}
+                          ? `Score ${player.score}${(player.bonusPoints !== null && player.bonusPoints !== 0) ? ` + ${player.bonusPoints} bonus` : ''}`
+                          : `Wynik ${player.score}${(player.bonusPoints !== null && player.bonusPoints !== 0) ? ` + ${player.bonusPoints} bonus` : ''}`}
                     </Text>
                     <Text style={{ color: '#64748b', fontSize: 13, lineHeight: 18 }}>
                       {formatQuestionProgress(duel.session, player, locale)}
@@ -549,7 +544,7 @@ export function DuelsSessionView({
               </>
             )}
 
-            {duel.session.recentReactions?.length ? (
+            {(duel.session.recentReactions?.length ?? 0) > 0 ? (
               <View style={{ gap: 10 }}>
                 {duel.session.recentReactions
                   .slice(-6)
@@ -656,7 +651,7 @@ export function DuelsSessionView({
                     stretch
                     tone='secondary'
                   />
-                  {inviteShareError ? (
+                  {inviteShareError !== null ? (
                     <MessageCard
                       title={copy({
                         de: 'Einladung konnte nicht geteilt werden',

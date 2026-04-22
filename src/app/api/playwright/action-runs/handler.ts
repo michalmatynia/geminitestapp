@@ -19,7 +19,7 @@ const readLimit = (params: URLSearchParams): number | undefined => {
   return Number.isFinite(parsed) ? Math.trunc(parsed) : undefined;
 };
 
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const params = req.nextUrl.searchParams;
   const rawStatus = readStringParam(params, 'status');
   const parsedStatus =

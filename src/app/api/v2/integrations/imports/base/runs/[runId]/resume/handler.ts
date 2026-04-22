@@ -13,7 +13,7 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 const requestSchema = baseImportRunResumePayloadSchema;
 
-export async function POST_handler(
+export async function postHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { runId: string }

@@ -20,7 +20,7 @@ import {
   shouldValidateShippingGroupRuleConflicts,
 } from './handler.helpers';
 
-export async function PUT_handler(
+export async function putHandler(
   _req: NextRequest,
   ctx: ApiHandlerContext,
   params: { id: string }
@@ -74,7 +74,7 @@ export async function PUT_handler(
   return NextResponse.json(shippingGroup);
 }
 
-export async function DELETE_handler(
+export async function deleteHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }

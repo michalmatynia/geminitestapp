@@ -17,7 +17,7 @@ vi.mock('@/features/products/server', () => ({
   getProductOrdersImportRepository: (...args: unknown[]) => mocks.getProductOrdersImportRepositoryMock(...args),
 }));
 
-import { POST_handler, quickImportOrdersImportSchema } from './handler';
+import { postHandler, quickImportOrdersImportSchema } from './handler';
 
 const makeRequest = (): NextRequest =>
   new NextRequest('http://localhost/api/v2/products/orders-import/quick-import', {
@@ -46,7 +46,7 @@ describe('product orders-import quick import handler', () => {
   });
 
   it('exports the supported handlers and schema', () => {
-    expect(typeof POST_handler).toBe('function');
+    expect(typeof postHandler).toBe('function');
     expect(typeof quickImportOrdersImportSchema.safeParse).toBe('function');
   });
 
@@ -80,7 +80,7 @@ describe('product orders-import quick import handler', () => {
     mocks.loadBaseOrderImportPreviewMock.mockResolvedValue(preview);
     mocks.markPreviewOrdersAsImportedMock.mockReturnValue(patchedPreview);
 
-    const response = await POST_handler(makeRequest(), {
+    const response = await postHandler(makeRequest(), {
       body: {
         connectionId: 'conn-1',
         limit: 50,
@@ -123,7 +123,7 @@ describe('product orders-import quick import handler', () => {
     };
     mocks.loadBaseOrderImportPreviewMock.mockResolvedValue(preview);
 
-    const response = await POST_handler(makeRequest(), {
+    const response = await postHandler(makeRequest(), {
       body: {
         connectionId: 'conn-1',
         limit: 50,

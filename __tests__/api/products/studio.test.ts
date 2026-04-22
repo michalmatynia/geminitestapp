@@ -5,15 +5,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { POST_handler as POST_ACCEPT } from '@/app/api/v2/products/[id]/studio/handlers/accept';
-import { POST_handler as POST_LINK } from '@/app/api/v2/products/[id]/studio/handlers/link';
-import { GET_handler as GET_PREFLIGHT } from '@/app/api/v2/products/[id]/studio/handlers/preflight';
+import { postHandler as POST_ACCEPT } from '@/app/api/v2/products/[id]/studio/handlers/accept';
+import { postHandler as POST_LINK } from '@/app/api/v2/products/[id]/studio/handlers/link';
+import { getHandler as GET_PREFLIGHT } from '@/app/api/v2/products/[id]/studio/handlers/preflight';
 import {
-  GET_handler as GET_STUDIO_CONFIG,
-  PUT_handler as PUT_STUDIO_CONFIG,
+  getHandler as GET_STUDIO_CONFIG,
+  putHandler as PUT_STUDIO_CONFIG,
 } from '@/app/api/v2/products/[id]/studio/handler';
-import { POST_handler as POST_SEND } from '@/app/api/v2/products/[id]/studio/handlers/send';
-import { GET_handler as GET_VARIANTS } from '@/app/api/v2/products/[id]/studio/handlers/variants';
+import { postHandler as POST_SEND } from '@/app/api/v2/products/[id]/studio/handlers/send';
+import { getHandler as GET_VARIANTS } from '@/app/api/v2/products/[id]/studio/handlers/variants';
 import {
   getProductStudioConfig,
   setProductStudioConfig,

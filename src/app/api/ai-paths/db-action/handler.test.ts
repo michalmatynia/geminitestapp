@@ -31,7 +31,7 @@ vi.mock('@/shared/lib/db/mongo-client', () => ({
   getMongoDb: getMongoDbMock,
 }));
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 describe('ai-paths db-action handler', () => {
   beforeEach(() => {
@@ -67,7 +67,7 @@ describe('ai-paths db-action handler', () => {
   });
 
   it('parses the shared db-action DTO and executes a find action', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/ai-paths/db-action', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -78,7 +78,7 @@ describe('ai-paths db-action handler', () => {
           limit: 5,
         }),
       }),
-      {} as Parameters<typeof POST_handler>[1]
+      {} as Parameters<typeof postHandler>[1]
     );
 
     expect(response.status).toBe(200);

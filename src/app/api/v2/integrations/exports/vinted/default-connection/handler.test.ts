@@ -22,7 +22,7 @@ vi.mock('@/features/products/server', () => ({
   parseJsonBody: (...args: unknown[]) => parseJsonBodyMock(...args),
 }));
 
-import { GET_handler, POST_handler } from './handler';
+import { getHandler, postHandler } from './handler';
 
 describe('vinted default connection handler', () => {
   beforeEach(() => {
@@ -32,7 +32,7 @@ describe('vinted default connection handler', () => {
   it('returns the stored Vinted default connection id', async () => {
     getVintedDefaultConnectionIdMock.mockResolvedValue('conn-vinted-1');
 
-    const response = await GET_handler({} as NextRequest, {} as never);
+    const response = await getHandler({} as NextRequest, {} as never);
 
     await expect(response.json()).resolves.toEqual({ connectionId: 'conn-vinted-1' });
   });
@@ -44,7 +44,7 @@ describe('vinted default connection handler', () => {
     });
     setVintedDefaultConnectionIdMock.mockResolvedValue(undefined);
 
-    const response = await POST_handler({} as NextRequest, {} as never);
+    const response = await postHandler({} as NextRequest, {} as never);
 
     expect(setVintedDefaultConnectionIdMock).toHaveBeenCalledWith('conn-vinted-2');
     await expect(response.json()).resolves.toEqual({ connectionId: 'conn-vinted-2' });

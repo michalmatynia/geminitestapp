@@ -16,7 +16,7 @@ vi.mock('@/features/filemaker/server/campaign-settings-store', () => ({
   upsertFilemakerCampaignSettingValue: upsertFilemakerCampaignSettingValueMock,
 }));
 
-import { GET_handler } from './handler';
+import { getHandler } from './handler';
 
 describe('filemaker campaign click tracking handler', () => {
   beforeEach(() => {
@@ -82,9 +82,9 @@ describe('filemaker campaign click tracking handler', () => {
       ttlMs: 1000 * 60 * 60,
     });
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest(`http://localhost/api/filemaker/campaigns/click?token=${encodeURIComponent(token)}`),
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
 
     expect(response.status).toBe(307);
@@ -170,9 +170,9 @@ describe('filemaker campaign click tracking handler', () => {
       ttlMs: 1000 * 60 * 60,
     });
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest(`http://localhost/api/filemaker/campaigns/click?token=${encodeURIComponent(token)}`),
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
 
     expect(response.status).toBe(307);
@@ -181,9 +181,9 @@ describe('filemaker campaign click tracking handler', () => {
   });
 
   it('falls back to the app root when the click token is invalid', async () => {
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/filemaker/campaigns/click?token=invalid.token'),
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
 
     expect(response.status).toBe(307);

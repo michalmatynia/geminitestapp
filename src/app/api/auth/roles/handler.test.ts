@@ -46,7 +46,7 @@ vi.mock('@/shared/lib/db/mongo-client', () => ({
   getMongoDb: getMongoDbMock,
 }));
 
-import { GET_handler, PATCH_handler } from './handler';
+import { getHandler, patchHandler } from './handler';
 
 const createRequestContext = (body?: unknown): ApiHandlerContext =>
   ({
@@ -74,7 +74,7 @@ describe('auth roles handler', () => {
     });
 
     await expect(
-      GET_handler(new NextRequest('http://localhost/api/auth/roles'), createRequestContext())
+      getHandler(new NextRequest('http://localhost/api/auth/roles'), createRequestContext())
     ).rejects.toMatchObject(authError('Unauthorized.'));
   });
 
@@ -110,7 +110,7 @@ describe('auth roles handler', () => {
     getAuthUserRolesMock.mockResolvedValue(userRoles);
     getAuthDefaultRoleIdMock.mockResolvedValue('viewer');
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/auth/roles'),
       createRequestContext()
     );
@@ -134,7 +134,7 @@ describe('auth roles handler', () => {
     });
 
     await expect(
-      PATCH_handler(new NextRequest('http://localhost/api/auth/roles'), createRequestContext({}))
+      patchHandler(new NextRequest('http://localhost/api/auth/roles'), createRequestContext({}))
     ).rejects.toMatchObject(authError('Unauthorized.'));
   });
 
@@ -185,7 +185,7 @@ describe('auth roles handler', () => {
       .mockReturnValue({ findOneAndUpdate: findOneAndUpdateMock, deleteMany: deleteManyMock });
     getMongoDbMock.mockResolvedValue({ collection: collectionMock });
 
-    const response = await PATCH_handler(
+    const response = await patchHandler(
       new NextRequest('http://localhost/api/auth/roles', { method: 'PATCH' }),
       createRequestContext({ userRoles })
     );
@@ -233,7 +233,7 @@ describe('auth roles handler', () => {
     });
 
     await expect(
-      PATCH_handler(new NextRequest('http://localhost/api/auth/roles', { method: 'PATCH' }), createRequestContext())
+      patchHandler(new NextRequest('http://localhost/api/auth/roles', { method: 'PATCH' }), createRequestContext())
     ).rejects.toMatchObject(badRequestError('Invalid payload.'));
   });
 
@@ -248,7 +248,7 @@ describe('auth roles handler', () => {
     });
 
     await expect(
-      PATCH_handler(
+      patchHandler(
         new NextRequest('http://localhost/api/auth/roles', { method: 'PATCH' }),
         createRequestContext({ userRoles: {} })
       )

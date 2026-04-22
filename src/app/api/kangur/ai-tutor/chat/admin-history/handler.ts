@@ -23,7 +23,7 @@ const buildConversationSessionId = (
   return `kangur-ai-tutor:${learnerId}:${surfaceLabel}:${contentLabel}`;
 };
 
-export async function GET_handler(
+export async function getHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {

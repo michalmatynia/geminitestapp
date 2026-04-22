@@ -5,7 +5,7 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 import { listProductStudioRunAudit } from '@/shared/lib/products/services/product-studio-audit-service';
 
-export async function GET_handler(
+export async function getHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }

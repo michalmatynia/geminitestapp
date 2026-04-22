@@ -14,7 +14,7 @@ vi.mock('@/features/filemaker/server', () => ({
   listFilemakerMailThreads: listFilemakerMailThreadsMock,
 }));
 
-import { GET_handler } from './handler';
+import { getHandler } from './handler';
 
 describe('filemaker mail threads handler', () => {
   beforeEach(() => {
@@ -30,11 +30,11 @@ describe('filemaker mail threads handler', () => {
       },
     ]);
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest(
         'http://localhost/api/filemaker/mail/threads?query=hello&accountId=account-1'
       ),
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
 
     expect(listFilemakerMailThreadsMock).toHaveBeenCalledWith({

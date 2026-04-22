@@ -37,7 +37,7 @@ vi.mock('@/shared/lib/queue', () => ({
   isRedisReachable: (...args: unknown[]) => isRedisReachableMock(...args),
 }));
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 const createContext = (body?: Record<string, unknown>): ApiHandlerContext =>
   ({
@@ -63,7 +63,7 @@ describe('social pipeline trigger handler', () => {
   });
 
   it('recovers stale jobs, starts the worker, and enqueues the scheduled tick job by default', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/kangur/social-pipeline/trigger', {
         method: 'POST',
       }),
@@ -84,7 +84,7 @@ describe('social pipeline trigger handler', () => {
   });
 
   it('enqueues a manual post pipeline job with forwarded cookies', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/kangur/social-pipeline/trigger', {
         method: 'POST',
         headers: {
@@ -140,7 +140,7 @@ describe('social pipeline trigger handler', () => {
       url: `/asset-${index + 1}.png`,
     }));
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/kangur/social-pipeline/trigger', {
         method: 'POST',
       }),
@@ -189,7 +189,7 @@ describe('social pipeline trigger handler', () => {
     isRedisReachableMock.mockResolvedValueOnce(false);
 
     await expect(
-      POST_handler(
+      postHandler(
         new NextRequest('http://localhost/api/kangur/social-pipeline/trigger', {
           method: 'POST',
         }),
@@ -205,7 +205,7 @@ describe('social pipeline trigger handler', () => {
   });
 
   it('enqueues a manual visual analysis job', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/kangur/social-pipeline/trigger', {
         method: 'POST',
       }),
@@ -237,7 +237,7 @@ describe('social pipeline trigger handler', () => {
 
   it('rejects manual pipeline jobs when Project URL is missing or localhost-only', async () => {
     await expect(
-      POST_handler(
+      postHandler(
         new NextRequest('http://localhost/api/kangur/social-pipeline/trigger', {
           method: 'POST',
         }),
@@ -267,7 +267,7 @@ describe('social pipeline trigger handler', () => {
     });
 
     await expect(
-      POST_handler(
+      postHandler(
         new NextRequest('http://localhost/api/kangur/social-pipeline/trigger', {
           method: 'POST',
         }),
@@ -304,7 +304,7 @@ describe('social pipeline trigger handler', () => {
   });
 
   it('enqueues a manual post generation job', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/kangur/social-pipeline/trigger', {
         method: 'POST',
       }),
@@ -354,7 +354,7 @@ describe('social pipeline trigger handler', () => {
 
   it('rejects manual post generation jobs when Project URL is missing or localhost-only', async () => {
     await expect(
-      POST_handler(
+      postHandler(
         new NextRequest('http://localhost/api/kangur/social-pipeline/trigger', {
           method: 'POST',
         }),
@@ -375,7 +375,7 @@ describe('social pipeline trigger handler', () => {
     });
 
     await expect(
-      POST_handler(
+      postHandler(
         new NextRequest('http://localhost/api/kangur/social-pipeline/trigger', {
           method: 'POST',
         }),

@@ -15,7 +15,7 @@ const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 export { chatbotJobActionRequestSchema as jobActionSchema };
 export { chatbotJobDeleteQuerySchema as deleteQuerySchema };
 
-export async function GET_handler(
+export async function getHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { jobId: string }
@@ -28,7 +28,7 @@ export async function GET_handler(
   return NextResponse.json({ job });
 }
 
-export async function POST_handler(
+export async function postHandler(
   req: NextRequest,
   ctx: ApiHandlerContext,
   params: { jobId: string }
@@ -65,7 +65,7 @@ export async function POST_handler(
   return NextResponse.json({ status: updated?.status });
 }
 
-export async function DELETE_handler(
+export async function deleteHandler(
   _req: NextRequest,
   ctx: ApiHandlerContext,
   params: { jobId: string }

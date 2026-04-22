@@ -172,7 +172,7 @@ const importSchema = z.object({
   folder: z.string().optional(),
 });
 
-export async function POST_handler(
+export async function postHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { projectId: string }

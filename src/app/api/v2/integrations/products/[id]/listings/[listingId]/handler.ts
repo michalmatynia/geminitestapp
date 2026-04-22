@@ -11,7 +11,7 @@ import { badRequestError, notFoundError } from '@/shared/errors/app-error';
  * DELETE /api/v2/integrations/products/[id]/listings/[listingId]
  * Marks a listing as removed from a marketplace.
  */
-export async function DELETE_handler(
+export async function deleteHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string; listingId: string }
@@ -41,7 +41,7 @@ export async function DELETE_handler(
  * PATCH /api/v2/integrations/products/[id]/listings/[listingId]
  * Updates listing metadata (e.g., inventoryId).
  */
-export async function PATCH_handler(
+export async function patchHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string; listingId: string }

@@ -57,7 +57,7 @@ const parseRequestedKeys = (req: NextRequest): string[] => {
   return unique;
 };
 
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const requestedKeys = parseRequestedKeys(req);
   const startedAt = Date.now();
   const settings =
@@ -88,7 +88,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   });
 }
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const rawBody = await req.text();
   let body: unknown = {};
 
@@ -118,7 +118,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   throw badRequestError('Invalid AI Paths settings payload.');
 }
 
-export async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function deleteHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const rawBody = await req.text();
   let body: unknown = {};
 

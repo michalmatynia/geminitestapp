@@ -20,7 +20,7 @@ vi.mock('@/features/integrations/server', () => ({
   encryptSecret: (...args: unknown[]) => mocks.encryptSecretMock(...args),
 }));
 
-import { GET_handler } from './handler';
+import { getHandler } from './handler';
 
 describe('integration linkedin callback handler', () => {
   beforeEach(() => {
@@ -33,7 +33,7 @@ describe('integration linkedin callback handler', () => {
     const req = new NextRequest(
       'http://localhost/api/v2/integrations/int-1/connections/conn-1/linkedin/callback'
     );
-    const response = await GET_handler(
+    const response = await getHandler(
       req,
       { query: { state: 'state-1' } } as never,
       { id: 'int-1', connectionId: 'conn-1' }
@@ -93,7 +93,7 @@ describe('integration linkedin callback handler', () => {
       },
     });
 
-    const response = await GET_handler(
+    const response = await getHandler(
       req,
       { query: { code: 'auth-code', state: 'state-1' } } as never,
       { id: 'int-1', connectionId: 'conn-1' }

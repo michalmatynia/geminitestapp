@@ -26,7 +26,7 @@ const resolveRange = (rangeRaw: string | undefined): AiPathRuntimeAnalyticsRange
   return value;
 };
 
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await requireAiPathsAccess();
   startAiInsightsQueue();
 
@@ -38,7 +38,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   return NextResponse.json(response);
 }
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await requireAiPathsAccess();
   startAiInsightsQueue();
 

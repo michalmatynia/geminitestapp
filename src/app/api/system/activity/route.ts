@@ -1,9 +1,9 @@
 
 import { apiHandler } from '@/shared/lib/api/api-handler';
 
-import { activityQuerySchema, GET_handler } from './handler';
+import { activityQuerySchema, getHandler } from './handler';
 
-export const GET = apiHandler(GET_handler, {
+export const GET = apiHandler(getHandler, {
   source: 'system.activity.GET',
   querySchema: activityQuerySchema,
   requireAuth: true,

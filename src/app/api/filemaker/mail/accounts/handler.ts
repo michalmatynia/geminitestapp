@@ -8,14 +8,14 @@ import {
   upsertFilemakerMailAccount,
 } from '@/features/filemaker/server';
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await requireFilemakerMailAdminSession();
   return Response.json({
     accounts: await listFilemakerMailAccounts(),
   });
 }
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await requireFilemakerMailAdminSession();
   const draft = filemakerMailAccountDraftSchema.parse(await req.json());
   const account = await upsertFilemakerMailAccount(draft);

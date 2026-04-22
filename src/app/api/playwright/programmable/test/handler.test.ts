@@ -15,7 +15,7 @@ vi.mock('@/features/playwright/server', () => ({
     mocks.runPlaywrightProgrammableConnectionTestMock(...args),
 }));
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 describe('playwright programmable test handler', () => {
   beforeEach(() => {
@@ -38,7 +38,7 @@ describe('playwright programmable test handler', () => {
       result: { ok: true },
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new Request('http://localhost/api/playwright/programmable/test', {
         method: 'POST',
       }) as never,

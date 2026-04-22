@@ -37,7 +37,7 @@ vi.mock('@/app/api/v2/integrations/_shared/tradera-browser-session-preflight', (
     assertTraderaBrowserSessionReadyMock(...args),
 }));
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 describe('integrations product-listings tradera-status-check handler', () => {
   beforeEach(() => {
@@ -94,7 +94,7 @@ describe('integrations product-listings tradera-status-check handler', () => {
   });
 
   it('queues eligible browser listings and returns skipped and already-queued results', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       new Request('http://localhost/api', {
         method: 'POST',
         body: JSON.stringify({
@@ -171,7 +171,7 @@ describe('integrations product-listings tradera-status-check handler', () => {
   });
 
   it('forwards selectorProfile overrides into queued batch live checks', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       new Request('http://localhost/api', {
         method: 'POST',
         body: JSON.stringify({
@@ -221,7 +221,7 @@ describe('integrations product-listings tradera-status-check handler', () => {
     ]);
     enqueueTraderaListingJobMock.mockRejectedValue(new Error('Queue unavailable'));
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new Request('http://localhost/api', {
         method: 'POST',
         body: JSON.stringify({
@@ -277,7 +277,7 @@ describe('integrations product-listings tradera-status-check handler', () => {
       )
     );
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new Request('http://localhost/api', {
         method: 'POST',
         body: JSON.stringify({

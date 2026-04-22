@@ -19,7 +19,7 @@ const searchSchema = z.object({
   maxDocsPerCollection: z.number().int().min(10).max(2000).optional().default(400),
 });
 
-export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const collectionId = ctx.params?.['collectionId'];
   if (typeof collectionId !== 'string' || collectionId.trim().length === 0) {
     throw badRequestError('Missing collectionId.');

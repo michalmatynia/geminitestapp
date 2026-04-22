@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { GET_handler } from './handler';
+import { getHandler } from './handler';
 import { auth, listAuthUsers, logAuthEvent } from '@/features/auth/server';
 
 vi.mock('@/features/auth/server', () => ({
@@ -9,7 +9,7 @@ vi.mock('@/features/auth/server', () => ({
   logAuthEvent: vi.fn().mockResolvedValue(undefined),
 }));
 
-describe('auth/users GET_handler', () => {
+describe('auth/users getHandler', () => {
   const mockContext = { source: 'test' } as any;
 
   beforeEach(() => {
@@ -22,7 +22,7 @@ describe('auth/users GET_handler', () => {
     } as any);
 
     const req = new NextRequest('http://localhost/api/auth/users');
-    await expect(GET_handler(req, mockContext)).rejects.toThrow('Unauthorized.');
+    await expect(getHandler(req, mockContext)).rejects.toThrow('Unauthorized.');
   });
 
   it('returns users if user is elevated', async () => {
@@ -33,7 +33,7 @@ describe('auth/users GET_handler', () => {
     vi.mocked(listAuthUsers).mockResolvedValue(mockUsers as any);
 
     const req = new NextRequest('http://localhost/api/auth/users');
-    const response = await GET_handler(req, mockContext);
+    const response = await getHandler(req, mockContext);
     const data = await response.json();
 
     expect(data.users).toEqual(mockUsers);
@@ -48,7 +48,7 @@ describe('auth/users GET_handler', () => {
     vi.mocked(listAuthUsers).mockResolvedValue(mockUsers as any);
 
     const req = new NextRequest('http://localhost/api/auth/users');
-    const response = await GET_handler(req, mockContext);
+    const response = await getHandler(req, mockContext);
     const data = await response.json();
 
     expect(data.users).toEqual(mockUsers);

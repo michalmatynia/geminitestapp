@@ -3,7 +3,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { badRequestError } from '@/shared/errors/app-error';
 import { assertDatabaseEngineManageAccess } from '@/features/database/server';
 
-export async function POST_handler(req: NextRequest): Promise<Response> {
+export async function postHandler(req: NextRequest): Promise<Response> {
   await assertDatabaseEngineManageAccess();
   void req;
   throw badRequestError(
@@ -11,7 +11,7 @@ export async function POST_handler(req: NextRequest): Promise<Response> {
   );
 }
 
-export async function GET_handler(): Promise<Response> {
+export async function getHandler(): Promise<Response> {
   await assertDatabaseEngineManageAccess();
   return NextResponse.json({
     collections: [],

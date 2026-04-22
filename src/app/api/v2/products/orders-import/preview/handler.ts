@@ -7,7 +7,7 @@ import { loadBaseOrderImportPreview } from '@/features/products/server/product-o
 
 export { baseOrderImportPreviewPayloadSchema as previewOrdersImportSchema };
 
-export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const data = ctx.body as z.infer<typeof baseOrderImportPreviewPayloadSchema>;
   const response = await loadBaseOrderImportPreview(data);
 

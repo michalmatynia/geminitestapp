@@ -10,7 +10,7 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 export const bulkSchema = productSyncBulkRequestSchema;
 
-export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const body = ctx.body as ProductSyncBulkRequest;
   const response: ProductSyncBulkResponse = await runProductBaseSyncBulk(body.productIds, {
     ...(body.profileId ? { profileId: body.profileId } : {}),

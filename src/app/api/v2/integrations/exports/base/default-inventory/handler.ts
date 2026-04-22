@@ -10,7 +10,7 @@ import { type BaseDefaultInventoryPreferenceResponse } from '@/shared/contracts/
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   let inventoryId: string | null = null;
   try {
     inventoryId = await getExportDefaultInventoryId();
@@ -29,7 +29,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
   return NextResponse.json(response);
 }
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, baseDefaultInventoryPreferencePayloadSchema, {
     logPrefix: 'exports.base.default-inventory.POST',
   });

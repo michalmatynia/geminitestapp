@@ -9,35 +9,28 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 const API_BASE = '/api/assets3d';
 
  
-function appendFilterToParams(params: Record<string, string>, filters: Asset3DListFilters): void {
-  if (filters.filename !== undefined && filters.filename !== '') {
-    // eslint-disable-next-line no-param-reassign
-    params['filename'] = filters.filename;
-  }
-  if (filters.categoryId !== undefined && filters.categoryId !== '') {
-    // eslint-disable-next-line no-param-reassign
-    params['categoryId'] = filters.categoryId;
-  }
-  if (filters.search !== undefined && filters.search !== '') {
-    // eslint-disable-next-line no-param-reassign
-    params['search'] = filters.search;
-  }
-  if (filters.isPublic !== undefined) {
-    // eslint-disable-next-line no-param-reassign
-    params['isPublic'] = String(filters.isPublic);
-  }
-  if (filters.tags !== undefined && filters.tags.length > 0) {
-    // eslint-disable-next-line no-param-reassign
-    params['tags'] = filters.tags.join(',');
-  }
+function buildFilterParams(filters: Asset3DListFilters): Record<string, string> {
+  const params: Record<string, string> = {};
+  
+  const entries: Array<[string, string | undefined]> = [
+    ['filename', filters.filename],
+    ['categoryId', filters.categoryId ?? undefined],
+    ['search', filters.search ?? undefined],
+    ['isPublic', filters.isPublic !== undefined ? String(filters.isPublic) : undefined],
+    ['tags', filters.tags !== undefined && filters.tags.length > 0 ? filters.tags.join(',') : undefined],
+  ];
+
+  entries.forEach(([key, value]) => {
+    if (value !== undefined && value !== '') {
+      params[key] = value;
+    }
+  });
+
+  return params;
 }
 
 export async function fetchAssets3D(filters?: Asset3DListFilters): Promise<Asset3DRecord[]> {
-  const params: Record<string, string> = {};
-  if (filters !== undefined) {
-    appendFilterToParams(params, filters);
-  }
-
+  const params = filters !== undefined ? buildFilterParams(filters) : {};
   return api.get<Asset3DRecord[]>(API_BASE, { params });
 }
 
@@ -54,21 +47,19 @@ interface UploadAssetData {
 }
 
 function appendAssetDataToFormData(formData: FormData, data: UploadAssetData): void {
-  if (data.name !== undefined && data.name !== '') {
-    formData.append('name', data.name);
-  }
-  if (data.description !== undefined && data.description !== '') {
-    formData.append('description', data.description);
-  }
-  if (data.category !== undefined && data.category !== '') {
-    formData.append('category', data.category);
-  }
-  if (data.tags !== undefined && data.tags.length > 0) {
-    formData.append('tags', data.tags.join(','));
-  }
-  if (data.isPublic !== undefined) {
-    formData.append('isPublic', String(data.isPublic));
-  }
+  const entries: Array<[string, string | undefined]> = [
+    ['name', data.name],
+    ['description', data.description],
+    ['category', data.category],
+    ['tags', data.tags !== undefined && data.tags.length > 0 ? data.tags.join(',') : undefined],
+    ['isPublic', data.isPublic !== undefined ? String(data.isPublic) : undefined],
+  ];
+
+  entries.forEach(([key, value]) => {
+    if (value !== undefined && value !== '') {
+      formData.append(key, value);
+    }
+  });
 }
  
 

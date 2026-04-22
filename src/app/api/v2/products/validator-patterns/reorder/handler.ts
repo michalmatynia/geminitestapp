@@ -94,7 +94,7 @@ const applyReorderUpdates = async (
   return updatedPatterns;
 };
 
-export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const body = ctx.body as z.infer<typeof reorderPayloadSchema>;
   const updates = body.updates;
   assertUniqueReorderUpdateIds(updates);

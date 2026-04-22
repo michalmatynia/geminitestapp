@@ -14,7 +14,7 @@ vi.mock('@/features/filemaker/server', () => ({
   searchFilemakerMailMessages: searchFilemakerMailMessagesMock,
 }));
 
-import { GET_handler } from './handler';
+import { getHandler } from './handler';
 
 describe('filemaker mail search handler', () => {
   beforeEach(() => {
@@ -55,11 +55,11 @@ describe('filemaker mail search handler', () => {
 
     searchFilemakerMailMessagesMock.mockResolvedValue(searchResponse);
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest(
         'http://localhost/api/filemaker/mail/search?query=invoice&accountId=account-1'
       ),
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
 
     expect(searchFilemakerMailMessagesMock).toHaveBeenCalledWith({
@@ -76,9 +76,9 @@ describe('filemaker mail search handler', () => {
       groups: [],
     });
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/filemaker/mail/search'),
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
 
     expect(searchFilemakerMailMessagesMock).toHaveBeenCalledWith({ query: '' });
@@ -96,9 +96,9 @@ describe('filemaker mail search handler', () => {
       groups: [],
     });
 
-    await GET_handler(
+    await getHandler(
       new NextRequest('http://localhost/api/filemaker/mail/search?query=hello'),
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
 
     expect(searchFilemakerMailMessagesMock).toHaveBeenCalledWith({

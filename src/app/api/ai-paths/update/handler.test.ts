@@ -83,7 +83,7 @@ vi.mock('@/shared/lib/products/services/productService', () => ({
   },
 }));
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 describe('ai-paths update handler', () => {
   beforeEach(() => {
@@ -128,7 +128,7 @@ describe('ai-paths update handler', () => {
   });
 
   it('routes product updates through productService instead of the repository', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/ai-paths/update', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -138,7 +138,7 @@ describe('ai-paths update handler', () => {
           updates: { parameters: [] },
         }),
       }),
-      {} as Parameters<typeof POST_handler>[1]
+      {} as Parameters<typeof postHandler>[1]
     );
 
     expect(response.status).toBe(200);
@@ -167,7 +167,7 @@ describe('ai-paths update handler', () => {
       },
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/ai-paths/update', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -181,7 +181,7 @@ describe('ai-paths update handler', () => {
           },
         }),
       }),
-      {} as Parameters<typeof POST_handler>[1]
+      {} as Parameters<typeof postHandler>[1]
     );
 
     expect(response.status).toBe(200);

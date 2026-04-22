@@ -50,7 +50,7 @@ const canWriteRoleSettings = (session: Session | null): boolean =>
     session?.user?.isElevated || session?.user?.permissions?.includes('auth.users.write')
   );
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const session = await auth();
   if (!canReadRoleSettings(session)) {
     throw authError('Unauthorized.');
@@ -63,7 +63,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
   });
 }
 
-export async function PATCH_handler(
+export async function patchHandler(
   _req: NextRequest,
   ctx: ApiHandlerContext
 ): Promise<Response> {

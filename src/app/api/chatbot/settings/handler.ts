@@ -66,7 +66,7 @@ const getChatbotSettingsCollection = async () => {
   return mongo.collection<ChatbotSettingsRecord>(CHATBOT_SETTINGS_COLLECTION);
 };
 
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();
   const query = chatbotSettingsQuerySchema.parse(resolveChatbotSettingsQueryInput(req, _ctx));
   const key = query.key ?? DEFAULT_SETTINGS_KEY;
@@ -88,7 +88,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   return NextResponse.json(response);
 }
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();
   const parsed = await parseJsonBody(req, chatbotSettingsSaveRequestSchema, {
     logPrefix: 'chatbot.settings.POST',

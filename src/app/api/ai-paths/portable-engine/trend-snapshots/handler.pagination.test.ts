@@ -73,7 +73,7 @@ vi.mock('@/shared/lib/ai-paths/portable-engine/server', () => ({
     builders.resolvePortablePathAuditSinkAutoRemediationWebhookUrlFromEnvironmentMock,
 }));
 
-import { GET_handler } from './handler';
+import { getHandler } from './handler';
 
 describe('ai-paths portable-engine trend snapshots handler', () => {
   beforeEach(() => {
@@ -260,11 +260,11 @@ describe('ai-paths portable-engine trend snapshots handler', () => {
       },
     ]);
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest(
         'http://localhost/api/ai-paths/portable-engine/trend-snapshots?limit=1&trigger=threshold&from=2026-03-05T00:05:00.000Z&to=2026-03-05T00:25:00.000Z'
       ),
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
 
     expect(response.status).toBe(200);
@@ -299,11 +299,11 @@ describe('ai-paths portable-engine trend snapshots handler', () => {
     ]);
 
     const nextCursor = String((payload['pagination'] as Record<string, unknown>)['nextCursor']);
-    const cursorResponse = await GET_handler(
+    const cursorResponse = await getHandler(
       new NextRequest(
         `http://localhost/api/ai-paths/portable-engine/trend-snapshots?limit=1&trigger=threshold&from=2026-03-05T00:05:00.000Z&to=2026-03-05T00:25:00.000Z&cursor=${encodeURIComponent(nextCursor)}`
       ),
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
 
     expect(cursorResponse.status).toBe(200);
@@ -429,11 +429,11 @@ describe('ai-paths portable-engine trend snapshots handler', () => {
       },
     ]);
 
-    const firstResponse = await GET_handler(
+    const firstResponse = await getHandler(
       new NextRequest(
         'http://localhost/api/ai-paths/portable-engine/trend-snapshots?limit=1&trigger=threshold'
       ),
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
     const firstPayload = (await firstResponse.json()) as Record<string, unknown>;
     const firstCursor = String(
@@ -588,11 +588,11 @@ describe('ai-paths portable-engine trend snapshots handler', () => {
       },
     ]);
 
-    const secondResponse = await GET_handler(
+    const secondResponse = await getHandler(
       new NextRequest(
         `http://localhost/api/ai-paths/portable-engine/trend-snapshots?limit=1&trigger=threshold&cursor=${encodeURIComponent(firstCursor)}`
       ),
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
     const secondPayload = (await secondResponse.json()) as Record<string, unknown>;
     expect(secondPayload['snapshotCount']).toBe(1);
@@ -604,38 +604,38 @@ describe('ai-paths portable-engine trend snapshots handler', () => {
 
   it('rejects invalid snapshot limits', async () => {
     await expect(
-      GET_handler(
+      getHandler(
         new NextRequest('http://localhost/api/ai-paths/portable-engine/trend-snapshots?limit=0'),
-        {} as Parameters<typeof GET_handler>[1]
+        {} as Parameters<typeof getHandler>[1]
       )
     ).rejects.toThrow('Trend snapshot limit must be between 1 and 500.');
   });
 
   it('rejects invalid trigger and invalid date ranges', async () => {
     await expect(
-      GET_handler(
+      getHandler(
         new NextRequest(
           'http://localhost/api/ai-paths/portable-engine/trend-snapshots?trigger=invalid'
         ),
-        {} as Parameters<typeof GET_handler>[1]
+        {} as Parameters<typeof getHandler>[1]
       )
     ).rejects.toThrow('Trend snapshot trigger must be one of: manual, threshold.');
 
     await expect(
-      GET_handler(
+      getHandler(
         new NextRequest(
           'http://localhost/api/ai-paths/portable-engine/trend-snapshots?from=2026-03-05T01:00:00.000Z&to=2026-03-05T00:00:00.000Z'
         ),
-        {} as Parameters<typeof GET_handler>[1]
+        {} as Parameters<typeof getHandler>[1]
       )
     ).rejects.toThrow('Trend snapshot "from" timestamp must be earlier than or equal to "to".');
 
     await expect(
-      GET_handler(
+      getHandler(
         new NextRequest(
           'http://localhost/api/ai-paths/portable-engine/trend-snapshots?cursor=invalid'
         ),
-        {} as Parameters<typeof GET_handler>[1]
+        {} as Parameters<typeof getHandler>[1]
       )
     ).rejects.toThrow('Trend snapshot cursor is invalid.');
 
@@ -650,11 +650,11 @@ describe('ai-paths portable-engine trend snapshots handler', () => {
       'utf8'
     ).toString('base64url');
     await expect(
-      GET_handler(
+      getHandler(
         new NextRequest(
           `http://localhost/api/ai-paths/portable-engine/trend-snapshots?trigger=threshold&cursor=${encodeURIComponent(mismatchedCursor)}`
         ),
-        {} as Parameters<typeof GET_handler>[1]
+        {} as Parameters<typeof getHandler>[1]
       )
     ).rejects.toThrow('Trend snapshot cursor is invalid.');
   });

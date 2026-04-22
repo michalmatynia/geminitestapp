@@ -21,7 +21,7 @@ const normalizeOptionalId = (value: string | null | undefined): string | null =>
  * GET /api/v2/integrations/exports/base/default-connection
  * Returns the default Base.com connection ID for exports
  */
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const storedConnectionId = normalizeOptionalId(await getExportDefaultConnectionId());
     const response: BaseDefaultConnectionPreferenceResponse = {
@@ -46,7 +46,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
  * POST /api/v2/integrations/exports/base/default-connection
  * Sets the default Base.com connection ID for exports
  */
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, baseDefaultConnectionPreferencePayloadSchema, {
     logPrefix: 'exports.base.default-connection.POST',
   });

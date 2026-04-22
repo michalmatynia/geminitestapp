@@ -48,7 +48,7 @@ const parseRuntimeAnalyticsRange = (
   throw new Error('Invalid range.');
 };
 
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const query = resolveRuntimeAnalyticsQueryInput(req, _ctx);
   const rangeRaw = parseRuntimeAnalyticsRange(query);
   const { from, to } = resolveRuntimeAnalyticsRangeWindow(rangeRaw);

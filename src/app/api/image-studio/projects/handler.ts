@@ -182,7 +182,7 @@ const upsertProjectSummary = async (
   return nextSummary;
 };
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const entries = await fs.readdir(projectsRoot, { withFileTypes: true }).catch(() => []);
   const projectRecords = await Promise.all(
     entries
@@ -214,7 +214,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
   );
 }
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const body = (await req.json().catch(() => null)) as unknown;
   const parsed = createProjectSchema.safeParse(body);
   if (!parsed.success) {

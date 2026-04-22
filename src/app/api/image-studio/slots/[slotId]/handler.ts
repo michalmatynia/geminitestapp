@@ -57,7 +57,7 @@ const resolveSlotIdCandidates = (slotIdRaw: string): string[] => {
   return candidates;
 };
 
-export async function PATCH_handler(
+export async function patchHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { slotId: string }
@@ -100,7 +100,7 @@ export async function PATCH_handler(
   return NextResponse.json(imageStudioSlotResponseSchema.parse({ slot: updated }));
 }
 
-export async function DELETE_handler(
+export async function deleteHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { slotId: string }

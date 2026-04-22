@@ -11,7 +11,7 @@ import { conflictError } from '@/shared/errors/app-error';
  * GET /api/v2/products/producers
  * Fetches all producers (flat list).
  */
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const repository = await getProducerRepository();
   const producers = await repository.listProducers({});
 
@@ -22,7 +22,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
  * POST /api/v2/products/producers
  * Creates a new producer.
  */
-export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const data = ctx.body as z.infer<typeof createProducerSchema>;
   const { name } = data;
   const trimmedName = name.trim();

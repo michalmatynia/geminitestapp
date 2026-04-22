@@ -39,6 +39,7 @@ import {
   getProductListDisplayName,
   hasImportedProductOrigin,
   getImageFilepath,
+  isUnassignedProductCategoryLabel,
   resolveProductCategoryLabel,
 } from './columns/product-column-utils';
 import { ProductListActivityPill } from './ProductListActivityPill';
@@ -260,6 +261,9 @@ const renderProductListMobileCard = ({
   currencyCode,
   formattedPrice,
 }: ProductListMobileCardResolvedProps): React.JSX.Element => {
+  const categoryToneClass = isUnassignedProductCategoryLabel(categoryLabel)
+    ? 'text-rose-300/80'
+    : '';
   const {
     onProductNameClick,
     onProductEditClick,
@@ -329,7 +333,10 @@ const renderProductListMobileCard = ({
               <span aria-hidden='true' className='text-muted-foreground/60'>
                 •
               </span>
-              <span className='truncate'>Category: {categoryLabel}</span>
+              <span className='truncate'>
+                Category:{' '}
+                <span className={categoryToneClass}>{categoryLabel}</span>
+              </span>
             </div>
             {autoShippingGroupLabel && (
               <div className='space-y-0.5'>

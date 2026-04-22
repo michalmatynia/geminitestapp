@@ -11,7 +11,7 @@ import { removeUndefined } from '@/shared/utils/object-utils';
  * PATCH /api/notes/tags/[id]
  * Updates a tag.
  */
-export async function PATCH_handler(
+export async function patchHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }
@@ -32,7 +32,7 @@ export async function PATCH_handler(
  * DELETE /api/notes/tags/[id]
  * Deletes a tag.
  */
-export async function DELETE_handler(
+export async function deleteHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }

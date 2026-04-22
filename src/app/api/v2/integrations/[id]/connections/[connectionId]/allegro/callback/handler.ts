@@ -29,7 +29,7 @@ export const querySchema = z.object({
   state: optionalTrimmedQueryString(),
 });
 
-export async function GET_handler(
+export async function getHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string; connectionId: string }

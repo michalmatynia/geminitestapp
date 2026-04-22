@@ -7,7 +7,7 @@ import { badRequestError } from '@/shared/errors/app-error';
 
 import type { NextRequest } from 'next/server';
 
-export async function POST_handler(
+export async function postHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }

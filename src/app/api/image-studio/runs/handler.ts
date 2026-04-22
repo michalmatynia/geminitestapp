@@ -26,7 +26,7 @@ export const querySchema = z.object({
   offset: optionalIntegerQuerySchema(z.number().int().min(0)).default(0),
 });
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
 
   const result: ImageStudioRunsResponse = await listImageStudioRuns({

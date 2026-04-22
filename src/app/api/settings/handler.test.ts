@@ -194,7 +194,7 @@ vi.mock('@/features/kangur/services/kangur-settings-repository', async () => {
   };
 });
 
-import { GET_handler, POST_handler } from './handler';
+import { getHandler, postHandler } from './handler';
 
 const createContext = (): ApiHandlerContext =>
   ({
@@ -256,7 +256,7 @@ describe('settings handler', () => {
   });
 
   it('clears settings caches, resets logging-control cache, and clears lite cache for lite keys', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/settings', {
         method: 'POST',
         body: JSON.stringify({
@@ -292,7 +292,7 @@ describe('settings handler', () => {
       },
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/settings', {
         method: 'POST',
         body: JSON.stringify({
@@ -347,7 +347,7 @@ describe('settings handler', () => {
       },
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/settings', {
         method: 'POST',
         body: JSON.stringify({
@@ -390,7 +390,7 @@ describe('settings handler', () => {
       },
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/settings', {
         method: 'POST',
         body: JSON.stringify({
@@ -433,7 +433,7 @@ describe('settings handler', () => {
       },
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/settings', {
         method: 'POST',
         body: JSON.stringify({
@@ -465,7 +465,7 @@ describe('settings handler', () => {
       },
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/settings', {
         method: 'POST',
         body: JSON.stringify({
@@ -532,7 +532,7 @@ describe('settings handler', () => {
       },
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/settings', {
         method: 'POST',
         body: JSON.stringify({
@@ -619,7 +619,7 @@ describe('settings handler', () => {
       },
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/settings', {
         method: 'POST',
         body: JSON.stringify({
@@ -651,7 +651,7 @@ describe('settings handler', () => {
       value: '[{"id":"kangur-daily-bloom","name":"Daily Bloom"}]',
     });
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest(
         `http://localhost/api/settings?scope=light&key=${encodeURIComponent(KANGUR_THEME_CATALOG_KEY)}`
       ),
@@ -698,7 +698,7 @@ describe('settings handler', () => {
       value: '{"daily":{"id":"factory_daily","name":"Daily Factory"}}',
     });
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/settings?scope=light'),
       {
         ...createContext(),

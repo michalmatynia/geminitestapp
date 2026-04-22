@@ -35,7 +35,7 @@ vi.mock('@/app/api/v2/integrations/_shared/tradera-browser-session-preflight', (
     assertTraderaBrowserSessionReadyMock(...args),
 }));
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 describe('integration listing check-status handler', () => {
   beforeEach(() => {
@@ -63,7 +63,7 @@ describe('integration listing check-status handler', () => {
   });
 
   it('queues a Tradera live check and persists pending execution metadata', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       new Request('http://localhost/api', {
         method: 'POST',
         body: JSON.stringify({}),
@@ -114,7 +114,7 @@ describe('integration listing check-status handler', () => {
   });
 
   it('forwards selectorProfile overrides into the queued Tradera live check', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       new Request('http://localhost/api', {
         method: 'POST',
         body: JSON.stringify({
@@ -165,7 +165,7 @@ describe('integration listing check-status handler', () => {
       },
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new Request('http://localhost/api', {
         method: 'POST',
         body: JSON.stringify({}),
@@ -208,7 +208,7 @@ describe('integration listing check-status handler', () => {
       },
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new Request('http://localhost/api', {
         method: 'POST',
         body: JSON.stringify({}),
@@ -249,7 +249,7 @@ describe('integration listing check-status handler', () => {
       },
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new Request('http://localhost/api', {
         method: 'POST',
         body: JSON.stringify({}),
@@ -299,7 +299,7 @@ describe('integration listing check-status handler', () => {
     );
 
     await expect(
-      POST_handler(
+      postHandler(
         new Request('http://localhost/api', {
           method: 'POST',
           body: JSON.stringify({}),

@@ -12,8 +12,8 @@ import {
 import { kangurKnowledgeGraphPreviewRequestSchema } from '@/shared/contracts/kangur-observability';
 import { kangurKnowledgeGraphSyncRequestSchema } from '@/shared/contracts/kangur-observability';
 import { postKangurAiTutorChatHandler } from '@/app/api/kangur/ai-tutor/chat/handler';
-import { GET_handler as getKangurAiTutorChatHistoryHandler } from '@/app/api/kangur/ai-tutor/chat/history-handler';
-import { GET_handler as getKangurAiTutorChatAdminHistoryHandler } from '@/app/api/kangur/ai-tutor/chat/admin-history/handler';
+import { getHandler as getKangurAiTutorChatHistoryHandler } from '@/app/api/kangur/ai-tutor/chat/history-handler';
+import { getHandler as getKangurAiTutorChatAdminHistoryHandler } from '@/app/api/kangur/ai-tutor/chat/admin-history/handler';
 import {
   getKangurAiTutorContentHandler,
   postKangurAiTutorContentHandler,
@@ -35,11 +35,11 @@ import {
   getKangurAiTutorUsageHandler,
   querySchema as usageQuerySchema,
 } from '@/app/api/kangur/ai-tutor/usage/handler';
-import { POST_handler as postKangurAiTutorFollowUpHandler } from '@/app/api/kangur/ai-tutor/follow-up/handler';
-import { POST_handler as postKangurNativeGuideGenerationHandler } from '@/app/api/kangur/ai-tutor/admin/native-guide-generation/handler';
-import { GET_handler as getKangurAiTutorExperimentsHandler, PUT_handler as putKangurAiTutorExperimentsHandler } from '@/app/api/kangur/ai-tutor/experiments/handler';
-import { GET_handler as getKangurKnowledgeGraphStatusHandler, querySchema as knowledgeGraphQuerySchema } from '@/app/api/kangur/knowledge-graph/status/handler';
-import { POST_handler as postKangurKnowledgeGraphSyncHandler } from '@/app/api/kangur/knowledge-graph/sync/handler';
+import { postHandler as postKangurAiTutorFollowUpHandler } from '@/app/api/kangur/ai-tutor/follow-up/handler';
+import { postHandler as postKangurNativeGuideGenerationHandler } from '@/app/api/kangur/ai-tutor/admin/native-guide-generation/handler';
+import { getHandler as getKangurAiTutorExperimentsHandler, putHandler as putKangurAiTutorExperimentsHandler } from '@/app/api/kangur/ai-tutor/experiments/handler';
+import { getHandler as getKangurKnowledgeGraphStatusHandler, querySchema as knowledgeGraphQuerySchema } from '@/app/api/kangur/knowledge-graph/status/handler';
+import { postHandler as postKangurKnowledgeGraphSyncHandler } from '@/app/api/kangur/knowledge-graph/sync/handler';
 import { handleGetPost, methodNotAllowed, type SimpleRouteHandler } from './routing.utils';
 
 export const aiTutorChatHandler: SimpleRouteHandler = apiHandler(postKangurAiTutorChatHandler, {

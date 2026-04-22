@@ -254,7 +254,7 @@ const buildPayload = async (
  * GET /api/v2/integrations/product-listings
  * Returns listing badge statuses grouped by marketplace for each product.
  */
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const timings: Record<string, number | null | undefined> = {};
   const totalStart = performance.now();
   const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
@@ -275,7 +275,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
  * POST /api/v2/integrations/product-listings
  * Returns listing badge statuses grouped by marketplace for requested products.
  */
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const timings: Record<string, number | null | undefined> = {};
   const totalStart = performance.now();
   const parsed = await parseJsonBody(req, productIdsBodySchema, {

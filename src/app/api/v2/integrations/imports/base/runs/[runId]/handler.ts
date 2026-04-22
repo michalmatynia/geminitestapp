@@ -7,7 +7,7 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 const querySchema = baseImportRunDetailQuerySchema;
 
-export async function GET_handler(
+export async function getHandler(
   req: NextRequest,
   ctx: ApiHandlerContext,
   params: { runId: string }

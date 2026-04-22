@@ -34,7 +34,7 @@ vi.mock('@/features/integrations/server', () => ({
   getIntegrationRepository: getIntegrationRepositoryMock,
 }));
 
-import { DELETE_handler, GET_handler, PUT_handler } from './handler';
+import { deleteHandler, getHandler, putHandler } from './handler';
 
 const createContext = (): ApiHandlerContext =>
   ({
@@ -80,9 +80,9 @@ describe('marketplace mapping by-id handler', () => {
   });
 
   it('exports the supported handlers', () => {
-    expect(typeof GET_handler).toBe('function');
-    expect(typeof PUT_handler).toBe('function');
-    expect(typeof DELETE_handler).toBe('function');
+    expect(typeof getHandler).toBe('function');
+    expect(typeof putHandler).toBe('function');
+    expect(typeof deleteHandler).toBe('function');
   });
 
   it('rejects reactivating a Tradera mapping that points to a parent category', async () => {
@@ -124,7 +124,7 @@ describe('marketplace mapping by-id handler', () => {
     });
 
     await expect(
-      PUT_handler(request, createContext(), { id: 'mapping-1' })
+      putHandler(request, createContext(), { id: 'mapping-1' })
     ).rejects.toMatchObject({
       message:
         'Tradera mappings must target the deepest category. "Collectibles > Pins & needles" still has child categories. Choose a leaf Tradera category and save again.',

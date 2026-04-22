@@ -23,7 +23,7 @@ vi.mock('@/features/playwright/server/live-session', () => ({
     disposeLiveScripterSessionMock(...args),
 }));
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 const createContext = (body: Record<string, unknown>): ApiHandlerContext =>
   ({
@@ -52,7 +52,7 @@ describe('playwright live scripter dispose handler', () => {
   });
 
   it('disposes a live scripter session owned by the current admin', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/playwright/live-scripter/dispose', {
         method: 'POST',
       }),
@@ -72,7 +72,7 @@ describe('playwright live scripter dispose handler', () => {
     });
 
     await expect(
-      POST_handler(
+      postHandler(
         new NextRequest('http://localhost/api/playwright/live-scripter/dispose', {
           method: 'POST',
         }),
@@ -90,7 +90,7 @@ describe('playwright live scripter dispose handler', () => {
     });
 
     await expect(
-      POST_handler(
+      postHandler(
         new NextRequest('http://localhost/api/playwright/live-scripter/dispose', {
           method: 'POST',
         }),

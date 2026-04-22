@@ -60,7 +60,7 @@ const parseSchemaDiffKindQuery = (value: string | undefined): SchemaDiffKindQuer
   throw new Error('Invalid portable schema diff kind.');
 };
 
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await requireAiPathsAccess();
 
   const query = portablePathJsonSchemaKindQuerySchema.parse(

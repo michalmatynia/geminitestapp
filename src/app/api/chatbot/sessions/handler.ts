@@ -62,7 +62,7 @@ const parseBody = async <T>(
 };
 
 // POST /api/chatbot/sessions - Create new session
-export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();
   const parsed = await parseBody(
     req,
@@ -113,7 +113,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
 }
 
 // GET /api/chatbot/sessions - List all sessions
-export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();
   const query = chatbotSessionsQuerySchema.parse((ctx.query ?? {}) as ChatbotSessionsQuery);
   const sessions = (await chatbotSessionRepository.findAll()).filter((session: ChatSession) =>
@@ -157,7 +157,7 @@ export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Pr
 }
 
 // PATCH /api/chatbot/sessions - Update session (title)
-export async function PATCH_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function patchHandler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();
   const parsed = await parseBody(
     req,
@@ -207,7 +207,7 @@ export async function PATCH_handler(req: NextRequest, ctx: ApiHandlerContext): P
 }
 
 // DELETE /api/chatbot/sessions - Delete session
-export async function DELETE_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function deleteHandler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();
   const parsed = await parseBody(
     req,

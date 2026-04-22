@@ -11,7 +11,7 @@ vi.mock('@/shared/lib/products/services/validator-decision-log-service', () => (
   appendProductValidationDecision: appendProductValidationDecisionMock,
 }));
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 const buildContext = (body?: unknown): ApiHandlerContext =>
   ({
@@ -31,7 +31,7 @@ describe('validator-decisions handler', () => {
   });
 
   it('persists a validated decision payload', async () => {
-    const response = await POST_handler({} as NextRequest, buildContext({
+    const response = await postHandler({} as NextRequest, buildContext({
       action: 'accept',
       productId: 'product-1',
       draftId: null,
@@ -59,7 +59,7 @@ describe('validator-decisions handler', () => {
   });
 
   it('rejects missing request bodies with a validation error instead of crashing', async () => {
-    await expect(POST_handler({} as NextRequest, buildContext())).rejects.toMatchObject({
+    await expect(postHandler({} as NextRequest, buildContext())).rejects.toMatchObject({
       code: 'VALIDATION_ERROR',
       httpStatus: 400,
     });

@@ -77,7 +77,7 @@ vi.mock('@/shared/lib/ai-paths/portable-engine/server', () => ({
     builders.resolvePortablePathAuditSinkAutoRemediationWebhookUrlFromEnvironmentMock,
 }));
 
-import { GET_handler } from './handler';
+import { getHandler } from './handler';
 
 describe('ai-paths portable-engine trend snapshots handler', () => {
   beforeEach(() => {
@@ -292,9 +292,9 @@ describe('ai-paths portable-engine trend snapshots handler', () => {
         signature: null,
       },
     ]);
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/ai-paths/portable-engine/trend-snapshots?limit=12'),
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
 
     expect(response.status).toBe(200);
@@ -459,9 +459,9 @@ describe('ai-paths portable-engine trend snapshots handler', () => {
       recentEvents: failureEvents,
     });
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/ai-paths/portable-engine/trend-snapshots'),
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
     expect(response.status).toBe(200);
 
@@ -482,9 +482,9 @@ describe('ai-paths portable-engine trend snapshots handler', () => {
       throw new Error('snapshot unavailable');
     });
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/ai-paths/portable-engine/trend-snapshots'),
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
 
     expect(response.status).toBe(200);
@@ -573,9 +573,9 @@ describe('ai-paths portable-engine trend snapshots handler', () => {
       null
     );
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/ai-paths/portable-engine/trend-snapshots'),
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
 
     expect(response.status).toBe(200);
@@ -649,9 +649,9 @@ describe('ai-paths portable-engine trend snapshots handler', () => {
       },
     ]);
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/ai-paths/portable-engine/trend-snapshots'),
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
 
     expect(response.status).toBe(200);

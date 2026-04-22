@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
-import { GET_handler, PUT_handler } from './handler';
+import { getHandler, putHandler } from './handler';
 import * as kangurAuth from '@/features/kangur/server';
 import * as brainServer from '@/shared/lib/ai-brain/server';
 
@@ -23,7 +23,7 @@ describe('experiments handler', () => {
     vi.clearAllMocks();
   });
 
-  describe('GET_handler', () => {
+  describe('getHandler', () => {
     it('returns 400 on missing learner', async () => {
       vi.mocked(kangurAuth.resolveKangurActor).mockResolvedValueOnce(mockActor);
       vi.mocked(kangurAuth.requireActiveLearner).mockImplementationOnce(() => {
@@ -32,7 +32,7 @@ describe('experiments handler', () => {
 
       const req = new NextRequest('http://localhost:3000/api/kangur/ai-tutor/experiments');
       try {
-        await GET_handler(req);
+        await getHandler(req);
         expect.fail('Should have thrown');
       } catch (error: any) {
         expect(error.message).toContain('active learner');
@@ -52,7 +52,7 @@ describe('experiments handler', () => {
       );
 
       const req = new NextRequest('http://localhost:3000/api/kangur/ai-tutor/experiments');
-      const res = await GET_handler(req);
+      const res = await getHandler(req);
       const json = await res.json();
 
       expect(res.status).toBe(200);
@@ -69,7 +69,7 @@ describe('experiments handler', () => {
       );
 
       const req = new NextRequest('http://localhost:3000/api/kangur/ai-tutor/experiments');
-      const res = await GET_handler(req);
+      const res = await getHandler(req);
       const json = await res.json();
 
       expect(res.status).toBe(200);
@@ -77,7 +77,7 @@ describe('experiments handler', () => {
     });
   });
 
-  describe('PUT_handler', () => {
+  describe('putHandler', () => {
     it('updates coaching mode experiment flag', async () => {
       vi.mocked(kangurAuth.resolveKangurActor).mockResolvedValueOnce(mockActor);
       vi.mocked(kangurAuth.requireActiveLearner).mockReturnValueOnce(mockLearner);
@@ -93,7 +93,7 @@ describe('experiments handler', () => {
         body: JSON.stringify({ coachingMode: 'misconception_check' }),
       });
 
-      const res = await PUT_handler(req);
+      const res = await putHandler(req);
       const json = await res.json();
 
       expect(res.status).toBe(200);
@@ -117,7 +117,7 @@ describe('experiments handler', () => {
         body: JSON.stringify({ contextStrategy: 'no_kg' }),
       });
 
-      const res = await PUT_handler(req);
+      const res = await putHandler(req);
       const json = await res.json();
 
       expect(res.status).toBe(200);
@@ -133,7 +133,7 @@ describe('experiments handler', () => {
         body: JSON.stringify({ coachingMode: 'invalid_mode' }),
       });
 
-      const res = await PUT_handler(req);
+      const res = await putHandler(req);
       expect(res.status).toBe(400);
     });
 
@@ -146,7 +146,7 @@ describe('experiments handler', () => {
         body: JSON.stringify({ contextStrategy: 'invalid_strategy' }),
       });
 
-      const res = await PUT_handler(req);
+      const res = await putHandler(req);
       expect(res.status).toBe(400);
     });
 
@@ -168,7 +168,7 @@ describe('experiments handler', () => {
         body: JSON.stringify({ coachingMode: 'misconception_check' }),
       });
 
-      const res = await PUT_handler(req);
+      const res = await putHandler(req);
       const json = await res.json();
 
       expect(json.experimentFlags.coachingMode).toBe('misconception_check');

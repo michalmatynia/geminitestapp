@@ -15,7 +15,7 @@ const MAX_SLOT_INDEX = 9;
  * GET /api/notes/[id]/files
  * Get all files for a note
  */
-export async function GET_handler(
+export async function getHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }
@@ -29,7 +29,7 @@ export async function GET_handler(
  * POST /api/notes/[id]/files
  * Upload a file to a specific slot
  */
-export async function POST_handler(
+export async function postHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }

@@ -30,36 +30,36 @@ const {
 }));
 
 vi.mock('@/app/api/v2/integrations/exports/base/active-template/handler', () => ({
-  GET_handler: (...args: unknown[]) => getActiveTemplateHandlerMock(...args),
-  POST_handler: (...args: unknown[]) => postActiveTemplateHandlerMock(...args),
+  getHandler: (...args: unknown[]) => getActiveTemplateHandlerMock(...args),
+  postHandler: (...args: unknown[]) => postActiveTemplateHandlerMock(...args),
 }));
 
 vi.mock('@/app/api/v2/integrations/exports/base/default-connection/handler', () => ({
-  GET_handler: (...args: unknown[]) => getDefaultConnectionHandlerMock(...args),
-  POST_handler: (...args: unknown[]) => postDefaultConnectionHandlerMock(...args),
+  getHandler: (...args: unknown[]) => getDefaultConnectionHandlerMock(...args),
+  postHandler: (...args: unknown[]) => postDefaultConnectionHandlerMock(...args),
 }));
 
 vi.mock('@/app/api/v2/integrations/exports/base/default-inventory/handler', () => ({
-  GET_handler: (...args: unknown[]) => getDefaultInventoryHandlerMock(...args),
-  POST_handler: (...args: unknown[]) => postDefaultInventoryHandlerMock(...args),
+  getHandler: (...args: unknown[]) => getDefaultInventoryHandlerMock(...args),
+  postHandler: (...args: unknown[]) => postDefaultInventoryHandlerMock(...args),
 }));
 
 vi.mock('@/app/api/v2/integrations/exports/base/export-warehouse/handler', () => ({
-  GET_handler: (...args: unknown[]) => getExportWarehouseHandlerMock(...args),
-  POST_handler: (...args: unknown[]) => postExportWarehouseHandlerMock(...args),
+  getHandler: (...args: unknown[]) => getExportWarehouseHandlerMock(...args),
+  postHandler: (...args: unknown[]) => postExportWarehouseHandlerMock(...args),
 }));
 
 vi.mock('@/app/api/v2/integrations/exports/base/image-retry-presets/handler', () => ({
-  GET_handler: (...args: unknown[]) => getImageRetryPresetsHandlerMock(...args),
-  POST_handler: (...args: unknown[]) => postImageRetryPresetsHandlerMock(...args),
+  getHandler: (...args: unknown[]) => getImageRetryPresetsHandlerMock(...args),
+  postHandler: (...args: unknown[]) => postImageRetryPresetsHandlerMock(...args),
 }));
 
 vi.mock('@/app/api/v2/integrations/exports/base/stock-fallback/handler', () => ({
-  GET_handler: (...args: unknown[]) => getStockFallbackHandlerMock(...args),
-  POST_handler: (...args: unknown[]) => postStockFallbackHandlerMock(...args),
+  getHandler: (...args: unknown[]) => getStockFallbackHandlerMock(...args),
+  postHandler: (...args: unknown[]) => postStockFallbackHandlerMock(...args),
 }));
 
-import { GET_handler, POST_handler, querySchema } from './handler';
+import { getHandler, postHandler, querySchema } from './handler';
 
 describe('base export setting handler', () => {
   beforeEach(() => {
@@ -72,7 +72,7 @@ describe('base export setting handler', () => {
     const delegatedResponse = NextResponse.json({ source: 'exports-default-inventory-get' });
     getDefaultInventoryHandlerMock.mockResolvedValue(delegatedResponse);
 
-    const response = await GET_handler(request, context, { setting: 'default-inventory' });
+    const response = await getHandler(request, context, { setting: 'default-inventory' });
 
     expect(getDefaultInventoryHandlerMock).toHaveBeenCalledWith(request, context);
     expect(response).toBe(delegatedResponse);
@@ -84,14 +84,14 @@ describe('base export setting handler', () => {
     const delegatedResponse = NextResponse.json({ source: 'exports-stock-fallback-post' });
     postStockFallbackHandlerMock.mockResolvedValue(delegatedResponse);
 
-    const response = await POST_handler(request, context, { setting: 'stock-fallback' });
+    const response = await postHandler(request, context, { setting: 'stock-fallback' });
 
     expect(postStockFallbackHandlerMock).toHaveBeenCalledWith(request, context);
     expect(response).toBe(delegatedResponse);
   });
 
   it('rejects unknown export setting names', async () => {
-    await expect(POST_handler({} as never, {} as never, { setting: 'unknown' })).rejects.toThrow(
+    await expect(postHandler({} as never, {} as never, { setting: 'unknown' })).rejects.toThrow(
       'Unknown exports/base setting: unknown'
     );
   });

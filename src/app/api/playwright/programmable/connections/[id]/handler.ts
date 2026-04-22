@@ -27,4 +27,4 @@ const putHandler = async (
   );
 };
 
-export { putHandler as PUT_handler };
+export { putHandler as putHandler };

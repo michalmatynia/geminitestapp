@@ -17,7 +17,7 @@ const requestSchema = z.object({
  * POST /api/v2/integrations/[id]/connections/[connectionId]/base/products
  * Fetches products from a specific inventory in Base.com/Baselinker.
  */
-export async function POST_handler(
+export async function postHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string; connectionId: string }

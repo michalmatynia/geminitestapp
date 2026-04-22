@@ -26,7 +26,7 @@ vi.mock('@/features/products/server', () => ({
   },
 }));
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 const buildContext = (): ApiHandlerContext =>
   ({
@@ -53,7 +53,7 @@ describe('products archive batch handler', () => {
   });
 
   it('archives unique products and invalidates product caches', async () => {
-    const response = await POST_handler({} as NextRequest, buildContext());
+    const response = await postHandler({} as NextRequest, buildContext());
 
     expect(response.status).toBe(200);
     expect(bulkSetArchivedMock).toHaveBeenCalledWith(['product-1', 'product-2'], true);
@@ -74,7 +74,7 @@ describe('products archive batch handler', () => {
       },
     });
 
-    const response = await POST_handler({} as NextRequest, buildContext());
+    const response = await postHandler({} as NextRequest, buildContext());
 
     expect(response.status).toBe(200);
     expect(bulkSetArchivedMock).toHaveBeenCalledWith(['product-1', 'product-2'], false);

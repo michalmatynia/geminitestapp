@@ -13,7 +13,7 @@ import { assertCategoryMappingsCanBeSaved } from '../validation';
  * GET /api/marketplace/mappings/[id]
  * Gets a specific category mapping by ID.
  */
-export async function GET_handler(
+export async function getHandler(
   _request: NextRequest,
   _ctx: ApiHandlerContext,
   params: Params
@@ -34,7 +34,7 @@ export async function GET_handler(
  * PUT /api/marketplace/mappings/[id]
  * Updates a category mapping.
  */
-export async function PUT_handler(
+export async function putHandler(
   request: NextRequest,
   _ctx: ApiHandlerContext,
   params: Params
@@ -87,7 +87,7 @@ export async function PUT_handler(
  * DELETE /api/marketplace/mappings/[id]
  * Deletes a category mapping.
  */
-export async function DELETE_handler(
+export async function deleteHandler(
   _request: NextRequest,
   _ctx: ApiHandlerContext,
   params: Params

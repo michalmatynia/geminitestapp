@@ -43,8 +43,8 @@ vi.mock('@/shared/lib/ai-paths/services/path-run-repository', async (importOrigi
   };
 });
 
-import { DELETE_handler as deleteRunHandler } from '@/app/api/ai-paths/runs/[runId]/handler';
-import { DELETE_handler as clearRunsHandler } from '@/app/api/ai-paths/runs/handler';
+import { deleteHandler as deleteRunHandler } from '@/app/api/ai-paths/runs/[runId]/handler';
+import { deleteHandler as clearRunsHandler } from '@/app/api/ai-paths/runs/handler';
 
 const mockContext: ApiHandlerContext = {
   requestId: 'test-req-id',

@@ -308,6 +308,32 @@ describe('ProductListMobileCards', () => {
     expect(screen.getByText('Duplicate SKU')).toHaveAttribute('title', 'SKU used by 2 products');
   });
 
+  it('renders unassigned categories with a slight reddish tint on mobile cards', () => {
+    useProductListSelectionContextMock.mockReturnValue({
+      data: [
+        createProduct({
+          categoryId: null,
+        }),
+      ],
+      rowSelection: {},
+      setRowSelection: vi.fn(),
+    });
+    useProductListRowVisualsContextMock.mockReturnValue({
+      productNameKey: 'name_en',
+      priceGroups: [],
+      currencyCode: 'USD',
+      categoryNameById: new Map<string, string>(),
+      thumbnailSource: 'file',
+      showTriggerRunFeedback: true,
+      triggerButtonsReady: true,
+      imageExternalBaseUrl: null,
+    });
+
+    render(<ProductListMobileCards />);
+
+    expect(screen.getByText('Unassigned')).toHaveClass('text-rose-300/80');
+  });
+
   it('passes Tradera badge runtime into the mobile quick export button', () => {
     useProductListRowRuntimeMock.mockReturnValue({
       showMarketplaceBadge: true,

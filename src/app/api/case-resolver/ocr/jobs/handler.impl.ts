@@ -25,7 +25,7 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 const CASE_RESOLVER_OCR_DEFAULT_MAX_ATTEMPTS = 3;
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const body = (await req.json().catch(() => null)) as unknown;
   const parsed = createCaseResolverOcrJobSchema.safeParse(body);
   if (!parsed.success) {

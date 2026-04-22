@@ -116,7 +116,7 @@ const buildDiagnostics = async (
 };
 
  
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertSettingsManageAccess();
   const db = await getMongoDb();
   const collections = await buildDiagnostics(db);
@@ -127,7 +127,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
 }
 
  
-export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertSettingsManageAccess();
   const db = await getMongoDb();
   const expectedByCollection = buildExpectedByCollection();

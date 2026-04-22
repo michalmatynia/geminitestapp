@@ -10,7 +10,7 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 export const relinkSchema = productSyncRelinkPayloadSchema;
 
-export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const body = ctx.body as ProductSyncRelinkPayload;
   const jobId = await enqueueProductSyncBackfillJob({
     ...(body.connectionId ? { connectionId: body.connectionId } : {}),

@@ -47,7 +47,7 @@ const isTreePathWithin = (candidatePath: string, parentPath: string): boolean =>
   return candidate.startsWith(`${parent}/`);
 };
 
-export async function POST_handler(
+export async function postHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { projectId: string }
@@ -194,7 +194,7 @@ const finalizeDeleteFolderResult = ({
   };
 };
 
-export async function DELETE_handler(
+export async function deleteHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { projectId: string }

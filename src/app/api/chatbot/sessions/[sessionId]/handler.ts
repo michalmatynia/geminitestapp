@@ -9,7 +9,7 @@ import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 
 // GET /api/chatbot/sessions/[sessionId] - Get session by ID
-export async function GET_handler(
+export async function getHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { sessionId: string }

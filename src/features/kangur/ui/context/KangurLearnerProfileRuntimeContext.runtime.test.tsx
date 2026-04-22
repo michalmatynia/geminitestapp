@@ -53,6 +53,8 @@ vi.mock('@/features/kangur/services/kangur-platform', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useKangurAuth: () => authState.value,
+  useKangurAuthActions: () => authState.value,
+  useKangurAuthSessionState: () => authState.value,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({

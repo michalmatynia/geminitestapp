@@ -14,7 +14,7 @@ import type { ApiHandlerContext, JsonParseResult } from '@/shared/contracts/ui/a
 import { assertSettingsManageAccess } from '@/features/auth/server';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertSettingsManageAccess();
   const result: JsonParseResult<FilemakerEmailCampaignLaunchRunRequest> = await parseJsonBody(
     req,

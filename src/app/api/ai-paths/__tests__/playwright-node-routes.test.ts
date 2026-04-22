@@ -46,9 +46,9 @@ vi.mock('@/features/playwright/server', () => ({
   }),
 }));
 
-import { GET_handler as GET_playwrightArtifactHandler } from '@/app/api/ai-paths/playwright/[runId]/artifacts/[file]/handler';
-import { GET_handler } from '@/app/api/ai-paths/playwright/[runId]/handler';
-import { POST_handler } from '@/app/api/ai-paths/playwright/handler';
+import { getHandler as GET_playwrightArtifactHandler } from '@/app/api/ai-paths/playwright/[runId]/artifacts/[file]/handler';
+import { getHandler } from '@/app/api/ai-paths/playwright/[runId]/handler';
+import { postHandler } from '@/app/api/ai-paths/playwright/handler';
 
 const mockContext: ApiHandlerContext = {
   requestId: 'test-req-id',
@@ -156,7 +156,7 @@ describe('AI Paths Playwright routes', () => {
       },
     }) as unknown;
 
-    const response = await POST_handler(createPostRequest(), mockContext);
+    const response = await postHandler(createPostRequest(), mockContext);
     const body = (await response.json()) as Record<string, unknown>;
 
     expect(parseJsonBodyMock).toHaveBeenCalledWith(
@@ -199,7 +199,7 @@ describe('AI Paths Playwright routes', () => {
     });
     enqueuePlaywrightNodeRunMock.mockResolvedValueOnce(buildRun());
 
-    await POST_handler(createPostRequest(), mockContext);
+    await postHandler(createPostRequest(), mockContext);
 
     expect(enforceAiPathsActionRateLimitMock).not.toHaveBeenCalled();
     expect(enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith(
@@ -217,7 +217,7 @@ describe('AI Paths Playwright routes', () => {
       buildRun({ runId: 'run-900', status: 'completed' })
     );
 
-    const response = await GET_handler(createGetRequest('run-900'), mockContext, {
+    const response = await getHandler(createGetRequest('run-900'), mockContext, {
       runId: 'run-900',
     });
     const body = (await response.json()) as Record<string, unknown>;
@@ -238,7 +238,7 @@ describe('AI Paths Playwright routes', () => {
     readPlaywrightNodeRunMock.mockResolvedValueOnce(null);
 
     await expect(
-      GET_handler(createGetRequest('missing-run'), mockContext, { runId: 'missing-run' })
+      getHandler(createGetRequest('missing-run'), mockContext, { runId: 'missing-run' })
     ).rejects.toThrow('Playwright run not found.');
   });
 
@@ -248,7 +248,7 @@ describe('AI Paths Playwright routes', () => {
     );
 
     await expect(
-      GET_handler(createGetRequest('run-unauthorized'), mockContext, { runId: 'run-unauthorized' })
+      getHandler(createGetRequest('run-unauthorized'), mockContext, { runId: 'run-unauthorized' })
     ).rejects.toThrow('Playwright run access denied.');
   });
 

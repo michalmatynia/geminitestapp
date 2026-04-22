@@ -47,7 +47,7 @@ const resolveFilename = (input: { url: string; preferred?: string; mimetype: str
   return `${source}${extensionForMimeType(input.mimetype)}`;
 };
 
-export async function POST_handler(
+export async function postHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }

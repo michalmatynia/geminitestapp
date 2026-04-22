@@ -6,7 +6,7 @@ import {
   PUT as updatePage,
   DELETE as deletePage,
 } from '@/app/api/cms/pages/[id]/route';
-import { POST_handler as createPageHandler } from '@/app/api/cms/pages/handler';
+import { postHandler as createPageHandler } from '@/app/api/cms/pages/handler';
 import { GET as listPages, POST as createPage } from '@/app/api/cms/pages/route';
 import { getCmsRepository } from '@/features/cms/server';
 

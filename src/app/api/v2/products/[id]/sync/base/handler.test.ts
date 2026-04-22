@@ -16,7 +16,7 @@ vi.mock('@/features/product-sync/services/product-sync-service', () => ({
   runProductBaseSync: (...args: unknown[]) => runProductBaseSyncMock(...args),
 }));
 
-import { GET_handler, POST_handler } from './handler';
+import { getHandler, postHandler } from './handler';
 
 const buildContext = (): ApiHandlerContext =>
   ({
@@ -51,7 +51,7 @@ describe('products/[id]/sync/base handler', () => {
       fields: [],
     });
 
-    const response = await GET_handler({} as NextRequest, buildContext(), { id: ' product-1 ' });
+    const response = await getHandler({} as NextRequest, buildContext(), { id: ' product-1 ' });
 
     expect(getProductBaseSyncPreviewMock).toHaveBeenCalledWith('product-1');
     expect(response.status).toBe(200);
@@ -74,7 +74,7 @@ describe('products/[id]/sync/base handler', () => {
     });
 
     await expect(
-      POST_handler({} as NextRequest, buildContext(), { id: 'product-1' })
+      postHandler({} as NextRequest, buildContext(), { id: 'product-1' })
     ).rejects.toThrow('This product is not linked to Base.com.');
 
     expect(runProductBaseSyncMock).not.toHaveBeenCalled();
@@ -127,7 +127,7 @@ describe('products/[id]/sync/base handler', () => {
       },
     });
 
-    const response = await POST_handler({} as NextRequest, buildContext(), { id: 'product-1' });
+    const response = await postHandler({} as NextRequest, buildContext(), { id: 'product-1' });
 
     expect(getProductBaseSyncPreviewMock).toHaveBeenCalledWith('product-1');
     expect(runProductBaseSyncMock).toHaveBeenCalledWith('product-1');

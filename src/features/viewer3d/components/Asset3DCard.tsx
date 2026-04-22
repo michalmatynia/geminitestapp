@@ -13,6 +13,18 @@ export interface Asset3DCardProps {
   className?: string;
 }
 
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+}
+
+function getDisplayName(name: string | undefined | null, filename: string | undefined | null): string {
+  if (name !== undefined && name !== null && name !== '') return name.replace(/^\d+-/, '');
+  if (filename !== undefined && filename !== null && filename !== '') return filename.replace(/^\d+-/, '');
+  return '';
+}
+
 function useAsset3DCardModel(asset: Asset3DRecord): {
   displayName: string;
   formatDate: (date: string | Date) => string;
@@ -35,17 +47,6 @@ function useAsset3DCardModel(asset: Asset3DRecord): {
     Promise.resolve(handleDelete(asset)).catch(() => {});
   }, [handleDelete, asset]);
 
-  const formatFileSize = (bytes: number): string => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
-  };
-
-  const getDisplayName = (name: string | undefined | null, filename: string | undefined | null): string => {
-    if (name !== undefined && name !== null && name.length > 0) return name.replace(/^\d+-/, '');
-    if (filename !== undefined && filename !== null && filename.length > 0) return filename.replace(/^\d+-/, '');
-    return '';
-  };
   const displayName = getDisplayName(asset.name, asset.filename);
 
   return {
@@ -60,7 +61,7 @@ function useAsset3DCardModel(asset: Asset3DRecord): {
 }
 
 export function Asset3DCard({ asset, className }: Asset3DCardProps): JSX.Element {
-  const { displayName, formatDate, formatFileSize, isDeleting, onDeleteAsset, onEditAsset, onPreviewAsset } = useAsset3DCardModel(asset);
+  const { displayName, formatDate, formatFileSize: sizeFormatter, isDeleting, onDeleteAsset, onEditAsset, onPreviewAsset } = useAsset3DCardModel(asset);
 
   const onCardKeyDown = (event: KeyboardEvent<HTMLDivElement>): void => {
     if (event.currentTarget !== event.target) return;
@@ -98,7 +99,7 @@ export function Asset3DCard({ asset, className }: Asset3DCardProps): JSX.Element
           tags={asset.tags ?? []}
           size={asset.size ?? 0}
           createdAt={asset.createdAt}
-          formatFileSize={formatFileSize}
+          formatFileSize={sizeFormatter}
           formatDate={formatDate}
         />
       </div>

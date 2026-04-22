@@ -30,7 +30,7 @@ type PdfParseFn = (buffer: Buffer) => Promise<PdfParseResult>;
 
 const isPdfParseFn = (value: unknown): value is PdfParseFn => typeof value === 'function';
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const formData = await req.formData();
   const file = formData.get('file');
   if (!(file instanceof File)) {

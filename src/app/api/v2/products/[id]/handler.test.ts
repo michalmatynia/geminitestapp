@@ -46,7 +46,7 @@ vi.mock('@/shared/lib/observability/system-logger', () => ({
   logSystemEvent: logSystemEventMock,
 }));
 
-import { DELETE_handler, PATCH_handler, PUT_handler } from './handler';
+import { deleteHandler, patchHandler, putHandler } from './handler';
 
 const buildContext = (userId: string | null = null): ApiHandlerContext =>
   ({
@@ -74,7 +74,7 @@ describe('products/[id] handler cache invalidation', () => {
       formData: vi.fn().mockResolvedValue(formData),
     } as unknown as NextRequest;
 
-    const response = await PUT_handler(request, buildContext(), { id: 'product-1' });
+    const response = await putHandler(request, buildContext(), { id: 'product-1' });
 
     expect(response.status).toBe(200);
     expect(invalidateProductMock).toHaveBeenCalledTimes(1);
@@ -94,7 +94,7 @@ describe('products/[id] handler cache invalidation', () => {
       formData: vi.fn().mockResolvedValue(formData),
     } as unknown as NextRequest;
 
-    const response = await PUT_handler(request, buildContext(), { id: 'product-1' });
+    const response = await putHandler(request, buildContext(), { id: 'product-1' });
 
     expect(response.status).toBe(200);
     expect(validateProductUpdateMiddlewareMock).toHaveBeenCalledWith(formData);
@@ -111,7 +111,7 @@ describe('products/[id] handler cache invalidation', () => {
       formData: vi.fn().mockResolvedValue(formData),
     } as unknown as NextRequest;
 
-    const response = await PUT_handler(request, buildContext(), { id: 'product-1' });
+    const response = await putHandler(request, buildContext(), { id: 'product-1' });
 
     expect(response.status).toBe(200);
     expect(validateProductUpdateMiddlewareMock).toHaveBeenCalledWith(formData);
@@ -122,7 +122,7 @@ describe('products/[id] handler cache invalidation', () => {
   it('invalidates product cache after successful PATCH', async () => {
     const request = {} as NextRequest;
 
-    const response = await PATCH_handler(request, buildContext(), { id: 'product-1' });
+    const response = await patchHandler(request, buildContext(), { id: 'product-1' });
 
     expect(response.status).toBe(200);
     expect(updateProductMock).toHaveBeenCalledTimes(1);
@@ -135,7 +135,7 @@ describe('products/[id] handler cache invalidation', () => {
     parseJsonBodyMock.mockResolvedValueOnce({ ok: true, data: { stock: 7 } });
     const request = {} as NextRequest;
 
-    const response = await PATCH_handler(request, buildContext(), { id: 'product-1' });
+    const response = await patchHandler(request, buildContext(), { id: 'product-1' });
 
     expect(response.status).toBe(200);
     expect(updateProductMock).toHaveBeenCalledTimes(1);
@@ -145,7 +145,7 @@ describe('products/[id] handler cache invalidation', () => {
   it('invalidates product cache after successful DELETE', async () => {
     const request = {} as NextRequest;
 
-    const response = await DELETE_handler(request, buildContext(), { id: 'product-1' });
+    const response = await deleteHandler(request, buildContext(), { id: 'product-1' });
 
     expect(response.status).toBe(204);
     expect(invalidateProductMock).toHaveBeenCalledTimes(1);
@@ -160,7 +160,7 @@ describe('products/[id] handler cache invalidation', () => {
     } as unknown as NextRequest;
     updateProductMock.mockResolvedValueOnce(null);
 
-    await expect(PUT_handler(request, buildContext(), { id: 'missing-product' })).rejects.toThrow(
+    await expect(putHandler(request, buildContext(), { id: 'missing-product' })).rejects.toThrow(
       'Product not found'
     );
 
@@ -175,7 +175,7 @@ describe('products/[id] handler cache invalidation', () => {
       formData: vi.fn(),
     } as unknown as NextRequest;
 
-    const response = await PUT_handler(request, buildContext(), { id: 'product-1' });
+    const response = await putHandler(request, buildContext(), { id: 'product-1' });
 
     expect(response.status).toBe(200);
     expect(parseJsonBodyMock).toHaveBeenCalledTimes(1);
@@ -203,7 +203,7 @@ describe('products/[id] handler cache invalidation', () => {
       formData: vi.fn(),
     } as unknown as NextRequest;
 
-    const response = await PUT_handler(request, buildContext(), { id: 'product-1' });
+    const response = await putHandler(request, buildContext(), { id: 'product-1' });
 
     expect(response.status).toBe(400);
     expect(updateProductMock).not.toHaveBeenCalled();

@@ -30,4 +30,4 @@ const postHandler = async (
   );
 };
 
-export { postHandler as POST_handler };
+export { postHandler as postHandler };

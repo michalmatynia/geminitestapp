@@ -7,7 +7,7 @@ import type { UpdateCmsThemeDto } from '@/shared/contracts/cms';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { notFoundError } from '@/shared/errors/app-error';
 
-export async function GET_handler(
+export async function getHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }
@@ -23,7 +23,7 @@ export async function GET_handler(
   return NextResponse.json(theme);
 }
 
-export async function PUT_handler(
+export async function putHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }
@@ -51,7 +51,7 @@ export async function PUT_handler(
   return NextResponse.json(updated);
 }
 
-export async function DELETE_handler(
+export async function deleteHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }

@@ -35,7 +35,7 @@ const parseRouteParams = (params: RouteParams): RouteParams => {
 
 const notFound = (): Response => NextResponse.json({ error: 'Not found.' }, { status: 404 });
 
-const GET_handler = async (req: NextRequest, params: RouteParams): Promise<Response> => {
+const getHandler = async (req: NextRequest, params: RouteParams): Promise<Response> => {
   const { action, runId } = parseRouteParams(params);
 
   if (runId === 'snapshots' && action) {
@@ -71,7 +71,7 @@ const GET_handler = async (req: NextRequest, params: RouteParams): Promise<Respo
   return notFound();
 };
 
-const POST_handler = async (req: NextRequest, params: RouteParams): Promise<Response> => {
+const postHandler = async (req: NextRequest, params: RouteParams): Promise<Response> => {
   const { action, runId } = parseRouteParams(params);
   if (action === 'controls') {
     return await AgentCreatorAgentRunControlsPOST(req, {
@@ -83,14 +83,14 @@ const POST_handler = async (req: NextRequest, params: RouteParams): Promise<Resp
 
 export const GET = apiHandlerWithParams<RouteParams>(
   async (req: NextRequest, _ctx: ApiHandlerContext, params: RouteParams) => {
-    return await GET_handler(req, params);
+    return await getHandler(req, params);
   },
   { source: 'chatbot.agent.[runId].[action].GET', requireAuth: true }
 );
 
 export const POST = apiHandlerWithParams<RouteParams>(
   async (req: NextRequest, _ctx: ApiHandlerContext, params: RouteParams) => {
-    return await POST_handler(req, params);
+    return await postHandler(req, params);
   },
   { source: 'chatbot.agent.[runId].[action].POST', requireAuth: true }
 );

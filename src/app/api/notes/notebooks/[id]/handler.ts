@@ -11,7 +11,7 @@ import { removeUndefined } from '@/shared/utils/object-utils';
  * PATCH /api/notes/notebooks/[id]
  * Updates a notebook.
  */
-export async function PATCH_handler(
+export async function patchHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }
@@ -35,7 +35,7 @@ export async function PATCH_handler(
  * DELETE /api/notes/notebooks/[id]
  * Deletes a notebook (and its notes/tags/categories).
  */
-export async function DELETE_handler(
+export async function deleteHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }

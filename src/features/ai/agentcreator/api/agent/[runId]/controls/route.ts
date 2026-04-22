@@ -13,7 +13,7 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 
-async function POST_handler(
+async function postHandler(
   req: NextRequest,
   { params }: { params: Promise<{ runId: string }> }
 ): Promise<Response> {
@@ -68,6 +68,6 @@ async function POST_handler(
 }
 
 export const POST = apiHandlerWithParams<{ runId: string }>(
-  async (req: NextRequest, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }),
+  async (req: NextRequest, _ctx, params) => postHandler(req, { params: Promise.resolve(params) }),
   { source: 'chatbot.agent.[runId].controls.POST', requireAuth: true }
 );

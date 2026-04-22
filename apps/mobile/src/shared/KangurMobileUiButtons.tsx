@@ -207,7 +207,7 @@ export function KangurMobileActionButton(
       accessibilityLabel={accessibilityLabel}
       disabled={disabled}
       onPress={() => {
-        // eslint-disable-next-line no-void
+         
         void onPress();
       }}
       style={[

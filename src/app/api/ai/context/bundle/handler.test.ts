@@ -25,7 +25,7 @@ vi.mock('@/shared/utils/observability/error-system', () => ({
   },
 }));
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 const createRequestContext = (): ApiHandlerContext =>
   ({
@@ -52,7 +52,7 @@ describe('ai context bundle handler', () => {
 
   it('rejects invalid JSON bodies and captures the parse error', async () => {
     await expect(
-      POST_handler(
+      postHandler(
         new NextRequest('http://localhost/api/ai/context/bundle', {
           method: 'POST',
           body: '{invalid-json',
@@ -70,7 +70,7 @@ describe('ai context bundle handler', () => {
 
   it('rejects invalid bundle request payloads', async () => {
     await expect(
-      POST_handler(
+      postHandler(
         new NextRequest('http://localhost/api/ai/context/bundle', {
           method: 'POST',
           body: JSON.stringify({ refs: [] }),
@@ -86,7 +86,7 @@ describe('ai context bundle handler', () => {
   });
 
   it('resolves refs, logs the bundle summary, and returns a cached response', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/ai/context/bundle', {
         method: 'POST',
         body: JSON.stringify({

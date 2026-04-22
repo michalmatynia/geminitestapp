@@ -41,6 +41,7 @@ describe('mongo-shipping-group-repository', () => {
     };
 
     mocks.shippingGroupDeleteOne.mockReset();
+    mocks.shippingGroupDeleteOne.mockResolvedValue({ deletedCount: 1 });
     mocks.shippingGroupFind.mockReset().mockReturnValue(cursor);
     mocks.shippingGroupFindOne.mockReset();
     mocks.shippingGroupInsertOne.mockReset();
@@ -229,6 +230,67 @@ describe('mongo-shipping-group-repository', () => {
     ).rejects.toMatchObject({
       code: 'INTERNAL_SERVER_ERROR',
       message: 'Failed to update shipping group',
+    });
+  });
+
+  it('supports legacy string ids when loading, updating, and deleting shipping groups', async () => {
+    const shippingGroupId = 'legacy-shipping-group';
+    const now = new Date('2026-04-02T18:30:00.000Z');
+
+    mocks.shippingGroupFindOne
+      .mockResolvedValueOnce({
+        _id: shippingGroupId,
+        name: 'Legacy Group',
+        description: null,
+        catalogId: 'catalog-1',
+        traderaShippingCondition: 'Buyer pays shipping',
+        traderaShippingPriceEur: 5,
+        autoAssignCategoryIds: [],
+        autoAssignCurrencyCodes: [],
+        createdAt: now,
+        updatedAt: now,
+      })
+      .mockResolvedValueOnce({
+        _id: shippingGroupId,
+        name: 'Legacy Group Updated',
+        description: null,
+        catalogId: 'catalog-1',
+        traderaShippingCondition: 'Buyer pays shipping',
+        traderaShippingPriceEur: 5,
+        autoAssignCategoryIds: [],
+        autoAssignCurrencyCodes: [],
+        createdAt: now,
+        updatedAt: now,
+      });
+
+    const found = await mongoShippingGroupRepository.getShippingGroupById(shippingGroupId);
+    const updated = await mongoShippingGroupRepository.updateShippingGroup(shippingGroupId, {
+      name: 'Legacy Group Updated',
+    });
+    await mongoShippingGroupRepository.deleteShippingGroup(shippingGroupId);
+
+    expect(found?.id).toBe(shippingGroupId);
+    expect(mocks.shippingGroupFindOne).toHaveBeenNthCalledWith(1, { _id: shippingGroupId });
+    expect(mocks.shippingGroupUpdateOne).toHaveBeenCalledWith(
+      { _id: shippingGroupId },
+      {
+        $set: expect.objectContaining({
+          name: 'Legacy Group Updated',
+        }),
+      }
+    );
+    expect(updated.id).toBe(shippingGroupId);
+    expect(mocks.shippingGroupDeleteOne).toHaveBeenCalledWith({ _id: shippingGroupId });
+  });
+
+  it('throws not found when deleting a shipping group that does not exist', async () => {
+    mocks.shippingGroupDeleteOne.mockResolvedValueOnce({ deletedCount: 0 });
+
+    await expect(
+      mongoShippingGroupRepository.deleteShippingGroup('missing-shipping-group')
+    ).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+      message: 'Shipping group not found',
     });
   });
 });

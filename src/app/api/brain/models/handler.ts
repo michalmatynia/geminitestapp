@@ -26,7 +26,7 @@ const resolveBrainModelsQueryInput = (
   ...((ctx.query ?? {}) as Record<string, unknown>),
 });
 
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const query = querySchema.parse(resolveBrainModelsQueryInput(req, _ctx));
   const payload = await listBrainModels({
     ...(query.family ? { family: query.family } : {}),

@@ -83,7 +83,7 @@ const buildRemoveParametersFromProductsUpdate = (
  * Removes all selected product parameters, and strips each removed parameterId from
  * products and product_drafts.
  */
-export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const body = ctx.body as z.infer<typeof batchDeleteParametersSchema>;
   const normalizedParameterIds = trimAndNormalizeParameterIds(body.parameterIds);
 

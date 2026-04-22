@@ -10,7 +10,7 @@ import {
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { isRedisAvailable, isRedisReachable } from '@/shared/lib/queue';
 
-export async function GET_handler(
+export async function getHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {

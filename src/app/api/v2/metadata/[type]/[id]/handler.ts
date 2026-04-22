@@ -133,7 +133,7 @@ const resolveMongoLanguage = async (id: string): Promise<MongoLanguageDoc | null
   })) as MongoLanguageDoc | null;
 };
 
-export async function GET_metadata_id_handler(
+export async function getMetadataIdHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { type: string; id: string }
@@ -175,7 +175,7 @@ export async function GET_metadata_id_handler(
   throw badRequestError(`Invalid internationalization type: ${type}`);
 }
 
-export async function PUT_metadata_id_handler(
+export async function putMetadataIdHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { type: string; id: string }
@@ -301,7 +301,7 @@ export async function PUT_metadata_id_handler(
   throw badRequestError(`Invalid internationalization type: ${type}`);
 }
 
-export async function DELETE_metadata_id_handler(
+export async function deleteMetadataIdHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { type: string; id: string }

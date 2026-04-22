@@ -30,7 +30,7 @@ const normalizeRequestedProductIds = (productIds: readonly string[]): string[] =
     new Set(productIds.map((value) => value.trim()).filter((value) => value.length > 0))
   );
 
-export async function POST_handler(
+export async function postHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {

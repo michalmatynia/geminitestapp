@@ -16,7 +16,7 @@ vi.mock('@/features/ai/image-studio/product-studio/product-studio-service', () =
   sendProductImageToStudio: sendProductImageToStudioMock,
 }));
 
-import { POST_handler } from './send';
+import { postHandler } from './send';
 
 const createConfig = () => ({
   projectId: 'studio-project-1',
@@ -129,7 +129,7 @@ describe('products studio send handler', () => {
   });
 
   it('resolves and forwards the context registry envelope', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       new Request('http://localhost/api/v2/products/product-1/studio/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -146,8 +146,8 @@ describe('products studio send handler', () => {
             engineVersion: 'page-context:v1',
           },
         }),
-      }) as Parameters<typeof POST_handler>[0],
-      { requestId: 'req-products-studio-send' } as Parameters<typeof POST_handler>[1],
+      }) as Parameters<typeof postHandler>[0],
+      { requestId: 'req-products-studio-send' } as Parameters<typeof postHandler>[1],
       { id: 'product-1' }
     );
 

@@ -23,7 +23,7 @@ export const querySchema = z.object({
  * Returns categories grouped by catalogId in a single request,
  * eliminating the N parallel requests previously made by useQueries.
  */
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
   const rawParam = query.catalogIds ?? '';
   if (!rawParam) {

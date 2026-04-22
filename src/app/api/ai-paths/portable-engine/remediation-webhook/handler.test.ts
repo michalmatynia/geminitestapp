@@ -17,7 +17,7 @@ vi.mock('@/shared/lib/ai-paths/portable-engine/server', () => ({
     resolvePortablePathAuditSinkAutoRemediationWebhookSecretFromEnvironmentMock,
 }));
 
-import { POST_handler, resetPortablePathAutoRemediationWebhookReplayGuard } from './handler';
+import { postHandler, resetPortablePathAutoRemediationWebhookReplayGuard } from './handler';
 
 const buildSignatureHeader = (timestamp: string, body: string, secret: string): string => {
   const digest = createHmac('sha256', secret).update(`${timestamp}.${body}`).digest('hex');
@@ -39,7 +39,7 @@ describe('ai-paths portable-engine remediation webhook receiver handler', () => 
     const timestamp = new Date().toISOString();
     const body = JSON.stringify({ event: 'portable_audit_sink_auto_remediation' });
     const signature = buildSignatureHeader(timestamp, body, 'receiver-webhook-secret');
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/ai-paths/portable-engine/remediation-webhook', {
         method: 'POST',
         headers: {
@@ -49,7 +49,7 @@ describe('ai-paths portable-engine remediation webhook receiver handler', () => 
         },
         body,
       }),
-      {} as Parameters<typeof POST_handler>[1]
+      {} as Parameters<typeof postHandler>[1]
     );
 
     expect(response.status).toBe(200);
@@ -64,7 +64,7 @@ describe('ai-paths portable-engine remediation webhook receiver handler', () => 
     const timestamp = new Date().toISOString();
     const body = JSON.stringify({ event: 'portable_audit_sink_auto_remediation_email' });
     const signature = buildSignatureHeader(timestamp, body, 'receiver-email-secret');
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest(
         'http://localhost/api/ai-paths/portable-engine/remediation-webhook?channel=email',
         {
@@ -77,7 +77,7 @@ describe('ai-paths portable-engine remediation webhook receiver handler', () => 
           body,
         }
       ),
-      {} as Parameters<typeof POST_handler>[1]
+      {} as Parameters<typeof postHandler>[1]
     );
 
     expect(response.status).toBe(200);
@@ -92,7 +92,7 @@ describe('ai-paths portable-engine remediation webhook receiver handler', () => 
     const signature = buildSignatureHeader(timestamp, body, 'receiver-webhook-secret');
 
     await expect(
-      POST_handler(
+      postHandler(
         new NextRequest(
           'http://localhost/api/ai-paths/portable-engine/remediation-webhook?maxSkewSeconds=1',
           {
@@ -105,7 +105,7 @@ describe('ai-paths portable-engine remediation webhook receiver handler', () => 
             body,
           }
         ),
-        {} as Parameters<typeof POST_handler>[1]
+        {} as Parameters<typeof postHandler>[1]
       )
     ).rejects.toThrow('Invalid portable remediation webhook signature.');
   });
@@ -116,7 +116,7 @@ describe('ai-paths portable-engine remediation webhook receiver handler', () => 
     const signature = buildSignatureHeader(timestamp, body, 'receiver-webhook-secret');
     const requestUrl = 'http://localhost/api/ai-paths/portable-engine/remediation-webhook';
 
-    const firstResponse = await POST_handler(
+    const firstResponse = await postHandler(
       new NextRequest(requestUrl, {
         method: 'POST',
         headers: {
@@ -126,12 +126,12 @@ describe('ai-paths portable-engine remediation webhook receiver handler', () => 
         },
         body,
       }),
-      {} as Parameters<typeof POST_handler>[1]
+      {} as Parameters<typeof postHandler>[1]
     );
     expect(firstResponse.status).toBe(200);
 
     await expect(
-      POST_handler(
+      postHandler(
         new NextRequest(requestUrl, {
           method: 'POST',
           headers: {
@@ -141,7 +141,7 @@ describe('ai-paths portable-engine remediation webhook receiver handler', () => 
           },
           body,
         }),
-        {} as Parameters<typeof POST_handler>[1]
+        {} as Parameters<typeof postHandler>[1]
       )
     ).rejects.toThrow('Invalid portable remediation webhook signature.');
   });

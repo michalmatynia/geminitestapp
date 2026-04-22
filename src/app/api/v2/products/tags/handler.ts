@@ -16,7 +16,7 @@ export const querySchema = catalogIdQuerySchema;
  * Query params:
  * - catalogId: Filter by catalog (required)
  */
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
   const catalogId = query.catalogId;
 
@@ -34,7 +34,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
  * POST /api/v2/products/tags
  * Creates a new product tag.
  */
-export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const data = ctx.body as z.infer<typeof createProductTagSchema>;
   const { name, catalogId } = data;
 

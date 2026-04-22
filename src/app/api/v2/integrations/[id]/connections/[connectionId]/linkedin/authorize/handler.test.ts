@@ -59,8 +59,8 @@ describe('linkedin authorize handler', () => {
   });
 
   const callHandler = async (params = { id: 'int-1', connectionId: 'conn-1' }) => {
-    const { GET_handler } = await import('./handler');
-    return GET_handler(makeRequest(), {} as never, params);
+    const { getHandler } = await import('./handler');
+    return getHandler(makeRequest(), {} as never, params);
   };
 
   it('redirects to LinkedIn authorization URL', async () => {
@@ -179,9 +179,9 @@ describe('linkedin authorize handler', () => {
 
   it('generates different state for each call', async () => {
     setupMocks();
-    const { GET_handler } = await import('./handler');
-    const response1 = await GET_handler(makeRequest(), {} as never, { id: 'int-1', connectionId: 'conn-1' });
-    const response2 = await GET_handler(makeRequest(), {} as never, { id: 'int-1', connectionId: 'conn-1' });
+    const { getHandler } = await import('./handler');
+    const response1 = await getHandler(makeRequest(), {} as never, { id: 'int-1', connectionId: 'conn-1' });
+    const response2 = await getHandler(makeRequest(), {} as never, { id: 'int-1', connectionId: 'conn-1' });
 
     const state1 = new URL(response1.headers.get('location') ?? '').searchParams.get('state');
     const state2 = new URL(response2.headers.get('location') ?? '').searchParams.get('state');

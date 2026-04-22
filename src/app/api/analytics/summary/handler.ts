@@ -9,7 +9,7 @@ import { getAnalyticsSummary } from '@/shared/lib/analytics/server';
 
 export { analyticsSummaryQuerySchema as querySchema };
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const session = await auth();
   if (!session?.user) throw authError('Unauthorized.');
 

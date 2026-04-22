@@ -63,7 +63,7 @@ const normalizeNullableTrimmed = (value: string | null | undefined): string | nu
 
 const normalizeLocale = (value: string | null | undefined): string | null => {
   const normalized = normalizeNullableTrimmed(value);
-  return normalized ? normalized.toLowerCase() : null;
+  return normalized !== null ? normalized.toLowerCase() : null;
 };
 
 const buildPatternSignature = (args: {
@@ -73,7 +73,7 @@ const buildPatternSignature = (args: {
 }): string => {
   const normalizedLabel = args.label.trim().toLowerCase();
   const normalizedTarget = args.target.trim().toLowerCase();
-  const normalizedLocale = args.locale?.trim().toLowerCase() ?? '*';
+  const normalizedLocale = args.locale !== null ? args.locale.trim().toLowerCase() : '*';
   return `${normalizedTarget}::${normalizedLocale}::${normalizedLabel}`;
 };
 
@@ -91,9 +91,10 @@ const buildSequenceGroupId = (
   idByCode: Map<string, string>
 ): string => {
   const existing = idByCode.get(code);
-  if (existing) return existing;
+  if (existing !== undefined) return existing;
 
-  const base = sanitizeSegment(code) || 'sequence';
+  const sanitized = sanitizeSegment(code);
+  const base = sanitized !== '' ? sanitized : 'sequence';
   let candidate = `impseq_${base}`;
   let index = 2;
   while (usedIds.has(candidate)) {
@@ -221,7 +222,7 @@ const assertValidRegex = (regexSource: string, flags: string | null | undefined)
     });
   }
   try {
-    const normalizedFlags = flags?.trim() || undefined;
+    const normalizedFlags = flags !== null && flags !== undefined ? flags.trim() : undefined;
     void new RegExp(regexSource, normalizedFlags);
   } catch (error) {
     void ErrorSystem.captureException(error);
@@ -237,15 +238,15 @@ const assertValidReplacementRecipe = (
   replacementEnabled: boolean,
   replacementValue: string | null
 ): void => {
-  if (!replacementEnabled || !replacementValue) return;
+  if (!replacementEnabled || replacementValue === null) return;
   const recipe = parseDynamicReplacementRecipe(replacementValue);
-  if (!recipe) return;
+  if (recipe === null) return;
 
-  if (recipe.sourceRegex) {
+  if (recipe.sourceRegex !== null) {
     assertValidRegex(recipe.sourceRegex, recipe.sourceFlags ?? null);
   }
   if (recipe.logicOperator === 'regex') {
-    if (!recipe.logicOperand) {
+    if (recipe.logicOperand === null) {
       throw badRequestError('Dynamic replacement regex condition requires an operand.');
     }
     assertValidRegex(recipe.logicOperand, recipe.logicFlags ?? null);
@@ -264,7 +265,7 @@ const assertValidLaunchConfig = ({
   launchFlags: string | null;
 }): void => {
   if (!launchEnabled || launchOperator !== 'regex') return;
-  if (!launchValue) {
+  if (launchValue === null) {
     throw badRequestError('launchValue is required when launchOperator is regex.');
   }
   assertValidRegex(launchValue, launchFlags);
@@ -280,7 +281,8 @@ const canResolveReplacementAtRuntime = ({
   replacementValue: string | null;
   runtimeEnabled: boolean;
   runtimeType: ProductValidationRuntimeType;
-}): boolean => replacementEnabled && !replacementValue && runtimeEnabled && runtimeType !== 'none';
+}): boolean => replacementEnabled && replacementValue === null && runtimeEnabled && runtimeType !== 'none';
+
 
 const toCreateInput = (
   pattern: ProductValidatorImportPattern,

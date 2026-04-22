@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { GET_handler, POST_handler } from './handler';
+import { getHandler, postHandler } from './handler';
 import { chatbotSessionRepository } from '@/features/ai/chatbot/server';
 
 vi.mock('@/features/ai/chatbot/server', () => ({
@@ -35,7 +35,7 @@ describe('chatbot session messages handler', () => {
       updatedAt: '2024-01-02T10:00:00.000Z',
     });
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/chatbot/sessions/session-1/messages'),
       {} as any,
       { sessionId: 'session-1' }
@@ -66,7 +66,7 @@ describe('chatbot session messages handler', () => {
       updatedAt: '2024-01-02T10:00:00.000Z',
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/chatbot/sessions/session-1/messages', {
         method: 'POST',
         body: JSON.stringify({
@@ -97,7 +97,7 @@ describe('chatbot session messages handler', () => {
     vi.mocked(chatbotSessionRepository.findById).mockResolvedValue(null);
 
     await expect(
-      GET_handler(
+      getHandler(
         new NextRequest('http://localhost/api/chatbot/sessions/missing/messages'),
         {} as any,
         { sessionId: 'missing' }

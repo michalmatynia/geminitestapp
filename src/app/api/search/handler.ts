@@ -38,7 +38,7 @@ const searchSchema = z.object({
   provider: z.string().trim().optional(),
 });
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, searchSchema, {
     logPrefix: 'search',
   });

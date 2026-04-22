@@ -20,7 +20,7 @@ vi.mock('@/features/integrations/services/imports/base-import-run-starter', () =
   startBaseImportRunResponse: startBaseImportRunResponseMock,
 }));
 
-import { GET_handler, POST_handler, listRunsQuerySchema, startRunSchema } from './handler';
+import { getHandler, postHandler, listRunsQuerySchema, startRunSchema } from './handler';
 
 describe('base import runs handler module', () => {
   beforeEach(() => {
@@ -28,8 +28,8 @@ describe('base import runs handler module', () => {
   });
 
   it('exports the supported handlers and schemas', () => {
-    expect(typeof GET_handler).toBe('function');
-    expect(typeof POST_handler).toBe('function');
+    expect(typeof getHandler).toBe('function');
+    expect(typeof postHandler).toBe('function');
     expect(typeof listRunsQuerySchema.safeParse).toBe('function');
     expect(typeof startRunSchema.safeParse).toBe('function');
   });
@@ -43,7 +43,7 @@ describe('base import runs handler module', () => {
       summaryMessage: 'Queued 1 products for import.',
     });
 
-    const response = await POST_handler({} as never, {
+    const response = await postHandler({} as never, {
       body: {
         connectionId: ' connection-1 ',
         inventoryId: 'inventory-1',
@@ -74,7 +74,7 @@ describe('base import runs handler module', () => {
       summaryMessage: 'Queued exact SKU target FOASW022 for import.',
     });
 
-    await POST_handler({} as never, {
+    await postHandler({} as never, {
       body: {
         connectionId: 'connection-1',
         inventoryId: 'inventory-1',

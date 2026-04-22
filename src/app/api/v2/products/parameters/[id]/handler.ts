@@ -74,7 +74,7 @@ const buildRemoveParameterFromProductsUpdate = (
  * PUT /api/v2/products/parameters/[id]
  * Updates a product parameter.
  */
-export async function PUT_handler(
+export async function putHandler(
   _req: NextRequest,
   ctx: ApiHandlerContext,
   params: { id: string }
@@ -145,7 +145,7 @@ export async function PUT_handler(
  * DELETE /api/v2/products/parameters/[id]
  * Deletes a product parameter.
  */
-export async function DELETE_handler(
+export async function deleteHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }

@@ -9,13 +9,13 @@ import type { BaseStockFallbackPreferenceResponse } from '@/shared/contracts/int
 import { baseStockFallbackPreferencePayloadSchema } from '@/shared/contracts/integrations/preferences';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const enabled = await getExportStockFallbackEnabled();
   const response: BaseStockFallbackPreferenceResponse = { enabled };
   return NextResponse.json(response);
 }
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, baseStockFallbackPreferencePayloadSchema, {
     logPrefix: 'exports.base.stock-fallback.POST',
   });

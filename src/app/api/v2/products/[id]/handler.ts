@@ -60,7 +60,7 @@ const isJsonRequest = (req: NextRequest): boolean => {
  * GET /api/v2/products/[id]
  * Fetches a single product by its ID.
  */
-export async function GET_handler(
+export async function getHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }
@@ -83,7 +83,7 @@ export async function GET_handler(
  * PUT /api/v2/products/[id]
  * Updates an existing product with validation.
  */
-export async function PUT_handler(
+export async function putHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }
@@ -186,7 +186,7 @@ export async function PUT_handler(
  * PATCH /api/v2/products/[id]
  * Partially updates a product (for quick field edits like price/stock).
  */
-export async function PATCH_handler(
+export async function patchHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }
@@ -224,7 +224,7 @@ export async function PATCH_handler(
  * DELETE /api/v2/products/[id]
  * Deletes a product.
  */
-export async function DELETE_handler(
+export async function deleteHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }

@@ -10,7 +10,7 @@ const tagsSchema = z.object({
   tags: z.array(z.string().trim().min(1)).default([]),
 });
 
-export async function DELETE_handler(
+export async function deleteHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }
@@ -30,7 +30,7 @@ export async function DELETE_handler(
 
   return new Response(null, { status: 204 });
 }
-export async function PATCH_handler(
+export async function patchHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }

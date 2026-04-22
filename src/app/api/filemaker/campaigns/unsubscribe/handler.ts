@@ -30,7 +30,7 @@ const buildUnsubscribeNotes = (source: string | null | undefined): string =>
     ? `Self-service unsubscribe request. Source: ${source.trim()}`
     : 'Self-service unsubscribe request.';
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const result: JsonParseResult<FilemakerEmailCampaignUnsubscribeRequest> = await parseJsonBody(
     req,
     filemakerEmailCampaignUnsubscribeRequestSchema,

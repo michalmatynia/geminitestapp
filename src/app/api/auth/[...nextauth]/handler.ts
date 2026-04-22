@@ -93,7 +93,7 @@ const logAuthEventInBackground = (input: Parameters<typeof logAuthEvent>[0]): vo
   void logAuthEvent(input).catch(() => undefined);
 };
 
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = performance.now();
   const isSessionRequest = req.nextUrl.pathname.endsWith('/session');
   if (isSessionRequest && !hasSessionTokenCookie(req)) {
@@ -165,7 +165,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   }
 }
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   logAuthEventInBackground({ req, action: 'auth.nextauth', stage: 'start' });
   const response = await handlers.POST(req);
   logAuthEventInBackground({

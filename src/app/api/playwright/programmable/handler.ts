@@ -12,4 +12,4 @@ const getHandler = async (
   return NextResponse.json(integration);
 };
 
-export { getHandler as GET_handler };
+export { getHandler as getHandler };

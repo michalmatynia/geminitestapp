@@ -28,7 +28,7 @@ const assertBaseConnectionExists = async (connectionId: string): Promise<void> =
   }
 };
 
-export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const data = ctx.body as z.infer<typeof baseOrderImportPersistPayloadSchema>;
   await assertBaseConnectionExists(data.connectionId);
 

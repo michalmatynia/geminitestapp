@@ -122,7 +122,7 @@ export const deleteQuerySchema = z.object({
  * PUT /api/v2/integrations/connections/[id]
  * Updates an integration connection.
  */
-export async function PUT_handler(
+export async function putHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }
@@ -383,7 +383,7 @@ export async function PUT_handler(
  * DELETE /api/v2/integrations/connections/[id]
  * Deletes an integration connection.
  */
-export async function DELETE_handler(
+export async function deleteHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }

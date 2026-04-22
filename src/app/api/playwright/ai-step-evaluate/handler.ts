@@ -18,7 +18,7 @@ export type PlaywrightAiStepEvaluateResponse = {
   modelId: string;
 };
 
-export async function POST_handler(
+export async function postHandler(
   _req: NextRequest,
   ctx: ApiHandlerContext
 ): Promise<Response> {

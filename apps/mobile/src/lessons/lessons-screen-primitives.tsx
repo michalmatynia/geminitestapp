@@ -1,6 +1,5 @@
 import type { Href } from 'expo-router';
 
-import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import {
   KangurMobileLinkButton as LinkButton,
   type KangurMobileTone as Tone,

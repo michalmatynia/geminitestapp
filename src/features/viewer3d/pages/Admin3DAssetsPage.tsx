@@ -1,209 +1,50 @@
 'use client';
 
-import { Box, Upload, Grid, List, Filter, X } from 'lucide-react';
+import { Box, Upload } from 'lucide-react';
 import React, { useMemo } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
-import { Button, Alert, Badge, DropdownMenuItem, DropdownMenuSeparator } from '@/shared/ui/primitives.public';
+import { Button, Alert } from '@/shared/ui/primitives.public';
 import { StandardDataTablePanel, PanelHeader } from '@/shared/ui/templates.public';
-import { SelectSimple, SearchInput, FormSection, FormField, ActionMenu } from '@/shared/ui/forms-and-actions.public';
-import { EmptyState, UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
-import { StatusBadge } from '@/shared/ui/data-display.public';
+import { SelectSimple, FormSection, FormField } from '@/shared/ui/forms-and-actions.public';
+import { EmptyState } from '@/shared/ui/navigation-and-layout.public';
 
 import { Asset3DCard } from '../components/Asset3DCard';
 import { Asset3DEditModal } from '../components/Asset3DEditModalImpl';
 import { Asset3DPreviewModal } from '../components/Asset3DPreviewModalImpl';
 import { Asset3DUploader } from '../components/Asset3DUploader';
 import { Admin3DAssetsProvider, useAdmin3DAssetsContext } from '../context/Admin3DAssetsContext';
-import { formatAssetDate } from '../utils/formatAssetDate';
-
-import type { ColumnDef } from '@tanstack/react-table';
+import { useAdmin3DAssetsColumns } from './admin-3d-assets/Admin3DAssetsColumns';
+import { Admin3DAssetsFilters, Admin3DAssetsEmptyState } from './admin-3d-assets/Admin3DAssetsSubcomponents';
 
 const ALL_CATEGORIES_OPTION: LabeledOptionDto<string> = {
   value: '__all__',
   label: 'All categories',
 };
 
-const formatFileSize = (bytes: number): string => {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
-};
-
 function Admin3DAssetsContent(): React.JSX.Element {
-  const {
-    showUploader,
-    setShowUploader,
-    previewAsset,
-    setPreviewAsset,
-    editAsset,
-    setEditAsset,
-    viewMode,
-    setViewMode,
-    searchQuery,
-    setSearchQuery,
-    selectedCategory,
-    setSelectedCategory,
-    selectedTags,
-    setSelectedTags,
-    showFilters,
-    setShowFilters,
-    assets,
-    loading,
-    error,
-    categories,
-    allTags,
-    handleDelete,
-    handleReindex,
-    clearFilters,
-    hasActiveFilters,
-    ConfirmationModal,
-    isDeleting,
-    isReindexing,
-    refetch,
-    isFetching,
-  } = useAdmin3DAssetsContext();
-
-  const columns = useMemo<ColumnDef<Asset3DRecord>[]>(
-    () => [
-      {
-        accessorKey: 'name',
-        header: 'Name',
-        cell: ({ row }) => (
-          <div className={UI_CENTER_ROW_SPACED_CLASSNAME}>
-            <button
-              type='button'
-              className='flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-border bg-muted/40 hover:bg-muted/60 transition-colors'
-              onClick={() => setPreviewAsset(row.original)}
-              aria-label={`Preview ${row.original.name || row.original.filename}`}
-              title={`Preview ${row.original.name || row.original.filename}`}>
-              <Box className='h-4 w-4 text-muted-foreground' />
-            </button>
-            <span className='text-sm font-medium text-foreground truncate'>
-              {row.original.name || row.original.filename}
-            </span>
-          </div>
-        ),
-      },
-      {
-        accessorKey: 'categoryId',
-        header: 'Category',
-        cell: ({ row }) =>
-          row.original.categoryId ? (
-            <StatusBadge
-              status={row.original.categoryId}
-              variant='info'
-              size='sm'
-              className='font-medium'
-            />
-          ) : (
-            <span className='text-muted-foreground'>-</span>
-          ),
-      },
-      {
-        accessorKey: 'tags',
-        header: 'Tags',
-        cell: ({ row }) => (
-          <div className='flex flex-wrap gap-1'>
-            {(row.original.tags || []).slice(0, 2).map((tag) => (
-              <StatusBadge
-                key={tag}
-                status={tag}
-                variant='neutral'
-                size='sm'
-                className='font-medium'
-              />
-            ))}
-            {(row.original.tags || []).length > 2 && (
-              <StatusBadge
-                status={`+${  (row.original.tags || []).length - 2}`}
-                variant='neutral'
-                size='sm'
-                className='font-bold'
-              />
-            )}
-            {(row.original.tags || []).length === 0 && (
-              <span className='text-muted-foreground'>-</span>
-            )}
-          </div>
-        ),
-      },
-      {
-        accessorKey: 'size',
-        header: 'Size',
-        cell: ({ row }) => (
-          <span className='text-xs text-muted-foreground'>
-            {formatFileSize(row.original.size || 0)}
-          </span>
-        ),
-      },
-      {
-        accessorKey: 'createdAt',
-        header: 'Date',
-        cell: ({ row }) => (
-          <span className='text-xs text-muted-foreground'>
-            {row.original.createdAt ? formatAssetDate(row.original.createdAt) : ''}
-          </span>
-        ),
-      },
-      {
-        id: 'actions',
-        header: () => <div className='text-right'>Actions</div>,
-        cell: ({ row }) => (
-          <div className='flex justify-end'>
-            <ActionMenu
-              ariaLabel={`Actions for asset ${row.original.name || row.original.filename}`}
-            >
-              <DropdownMenuItem
-                onSelect={(event: Event): void => {
-                  event.preventDefault();
-                  setPreviewAsset(row.original);
-                }}
-              >
-                Preview
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onSelect={(event: Event): void => {
-                  event.preventDefault();
-                  setEditAsset(row.original);
-                }}
-              >
-                Edit Settings
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className='text-destructive focus:text-destructive'
-                onSelect={(event: Event): void => {
-                  event.preventDefault();
-                  void handleDelete(row.original);
-                }}
-                disabled={isDeleting(row.original.id)}
-              >
-                {isDeleting(row.original.id) ? 'Deleting...' : 'Delete'}
-              </DropdownMenuItem>
-            </ActionMenu>
-          </div>
-        ),
-      },
-    ],
-    [setPreviewAsset, setEditAsset, handleDelete, isDeleting]
-  );
+  const state = useAdmin3DAssetsContext();
+  const columns = useAdmin3DAssetsColumns({
+    setPreviewAsset: state.setPreviewAsset,
+    setEditAsset: state.setEditAsset,
+    handleDelete: state.handleDelete,
+    isDeleting: state.isDeleting,
+  });
 
   const stats =
-    !loading && assets.length > 0 ? (
+    !state.loading && state.assets.length > 0 ? (
       <div className='text-xs text-muted-foreground font-medium'>
-        Showing {assets.length} asset{assets.length !== 1 ? 's' : ''}
-        {hasActiveFilters && ' (filtered)'}
+        Showing {state.assets.length} asset{state.assets.length !== 1 ? 's' : ''}
+        {state.hasActiveFilters && ' (filtered)'}
       </div>
     ) : null;
 
   const categoryOptions = useMemo(
     (): Array<LabeledOptionDto<string>> => [
       ALL_CATEGORIES_OPTION,
-      ...categories.map((cat) => ({ value: cat, label: cat })),
+      ...state.categories.map((cat) => ({ value: cat, label: cat })),
     ],
-    [categories]
+    [state.categories]
   );
 
   return (
@@ -214,92 +55,46 @@ function Admin3DAssetsContent(): React.JSX.Element {
           description='Centralized repository for 3D models and digital twins.'
           icon={<Box className='size-4' />}
           refreshable={true}
-          isRefreshing={isFetching}
-          onRefresh={refetch}
+          isRefreshing={state.isFetching}
+          onRefresh={state.refetch}
           actions={[
             {
               key: 'upload',
               label: 'Upload Asset',
               icon: <Upload className='size-3.5' />,
-              onClick: () => setShowUploader(true),
+              onClick: () => state.setShowUploader(true),
             },
           ]}
         />
       }
-      alerts={error ? <Alert variant='error'>{error}</Alert> : null}
+      alerts={state.error !== null && state.error !== '' ? <Alert variant='error'>{state.error}</Alert> : null}
       filters={
-        <div className='flex flex-wrap items-center gap-3 rounded-lg border border-border/60 bg-card/50 p-3'>
-          <SearchInput
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onClear={() => setSearchQuery('')}
-            placeholder='Search assets...'
-            size='sm'
-            containerClassName='flex-1 min-w-[200px] max-w-md'
-          />
-
-          <Button
-            variant={showFilters ? 'default' : 'outline'}
-            size='sm'
-            onClick={() => setShowFilters(!showFilters)}
-            className='gap-2 h-8 text-xs'
-          >
-            <Filter className='h-3.5 w-3.5' />
-            Filters
-            {hasActiveFilters && (
-              <Badge
-                variant='active'
-                className='ml-1 flex h-4 w-4 items-center justify-center p-0 text-[9px] font-bold'
-              >
-                {(selectedCategory ? 1 : 0) + selectedTags.length}
-              </Badge>
-            )}
-          </Button>
-
-          {hasActiveFilters && (
-            <Button variant='ghost' size='sm' onClick={clearFilters} className='gap-1 h-8 text-xs'>
-              <X className='h-3.5 w-3.5' />
-              Clear
-            </Button>
-          )}
-
-          <div className='ml-auto flex items-center overflow-hidden rounded-md border border-border bg-muted/20'>
-            <Button
-              variant={viewMode === 'grid' ? 'default' : 'ghost'}
-              size='icon'
-              className='h-8 w-8 rounded-none'
-              onClick={() => setViewMode('grid')}
-              aria-label='Grid view'
-              title='Grid view'
-            >
-              <Grid className='h-4 w-4' />
-            </Button>
-            <Button
-              variant={viewMode === 'list' ? 'default' : 'ghost'}
-              size='icon'
-              className='h-8 w-8 rounded-none'
-              onClick={() => setViewMode('list')}
-              aria-label='List view'
-              title='List view'
-            >
-              <List className='h-4 w-4' />
-            </Button>
-          </div>
-        </div>
+        <Admin3DAssetsFilters
+          searchQuery={state.searchQuery}
+          setSearchQuery={state.setSearchQuery}
+          showFilters={state.showFilters}
+          setShowFilters={state.setShowFilters}
+          hasActiveFilters={state.hasActiveFilters}
+          selectedCategory={state.selectedCategory}
+          selectedTags={state.selectedTags}
+          clearFilters={state.clearFilters}
+          viewMode={state.viewMode}
+          setViewMode={state.setViewMode}
+        />
       }
       footer={stats}
       columns={columns}
-      data={assets}
-      isLoading={loading}
+      data={state.assets}
+      isLoading={state.loading}
     >
-      {showFilters && (
+      {state.showFilters && (
         <FormSection variant='subtle' className='p-4 mb-4 border border-border/40'>
           <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
             <FormField label='Category'>
               <SelectSimple
                 size='sm'
-                value={selectedCategory ?? '__all__'}
-                onValueChange={(v) => setSelectedCategory(v === '__all__' ? null : v)}
+                value={state.selectedCategory ?? '__all__'}
+                onValueChange={(v) => state.setSelectedCategory(v === '__all__' ? null : v)}
                 options={categoryOptions}
                 placeholder='All categories'
                ariaLabel='All categories' title='All categories'/>
@@ -307,13 +102,13 @@ function Admin3DAssetsContent(): React.JSX.Element {
 
             <FormField label='Tags'>
               <div className='flex flex-wrap gap-2 pt-1'>
-                {allTags.map((tag) => (
+                {state.allTags.map((tag) => (
                   <Button
                     key={tag}
-                    variant={selectedTags.includes(tag) ? 'default' : 'outline'}
+                    variant={state.selectedTags.includes(tag) ? 'default' : 'outline'}
                     size='xs'
                     onClick={() =>
-                      setSelectedTags((prev) =>
+                      state.setSelectedTags((prev) =>
                         prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
                       )
                     }
@@ -322,7 +117,7 @@ function Admin3DAssetsContent(): React.JSX.Element {
                     {tag}
                   </Button>
                 ))}
-                {allTags.length === 0 && (
+                {state.allTags.length === 0 && (
                   <span className='text-xs text-muted-foreground italic'>No tags available</span>
                 )}
               </div>
@@ -331,14 +126,14 @@ function Admin3DAssetsContent(): React.JSX.Element {
         </FormSection>
       )}
 
-      {showUploader && (
+      {state.showUploader && (
         <FormSection
           title='Upload 3D Asset'
           actions={
             <Button
               variant='ghost'
               size='sm'
-              onClick={() => setShowUploader(false)}
+              onClick={() => state.setShowUploader(false)}
               className='h-7 text-xs'
             >
               Cancel
@@ -353,62 +148,49 @@ function Admin3DAssetsContent(): React.JSX.Element {
         </FormSection>
       )}
 
-      {!loading && assets.length === 0 && (
+      {!state.loading && state.assets.length === 0 && (
         <EmptyState
-          title={hasActiveFilters ? 'No matching assets' : 'Library is empty'}
+          title={state.hasActiveFilters ? 'No matching assets' : 'Library is empty'}
           description={
-            hasActiveFilters
+            state.hasActiveFilters
               ? 'Try adjusting your filters.'
               : 'Upload your first .glb or .gltf file to get started.'
           }
           icon={<Box className='h-12 w-12 opacity-60' />}
           action={
-            !hasActiveFilters ? (
-              <div className='mt-4 flex flex-wrap items-center justify-center gap-2'>
-                <Button onClick={() => setShowUploader(true)} size='sm'>
-                  <Upload className='mr-2 h-4 w-4' />
-                  Upload Asset
-                </Button>
-                <Button
-                  variant='outline'
-                  size='sm'
-                  onClick={() => {
-                    void handleReindex();
-                  }}
-                  disabled={isReindexing}
-                  loading={isReindexing}
-                >
-                  Reindex Local Files
-                </Button>
-              </div>
-            ) : undefined
+            <Admin3DAssetsEmptyState
+              hasActiveFilters={state.hasActiveFilters}
+              setShowUploader={state.setShowUploader}
+              handleReindex={() => { void state.handleReindex(); }}
+              isReindexing={state.isReindexing}
+            />
           }
         />
       )}
 
-      {!loading && assets.length > 0 && viewMode === 'grid' && (
+      {!state.loading && state.assets.length > 0 && state.viewMode === 'grid' && (
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
-          {assets.map((asset) => (
+          {state.assets.map((asset) => (
             <Asset3DCard key={asset.id} asset={asset} />
           ))}
         </div>
       )}
 
-      {!loading && assets.length > 0 && viewMode === 'list' && null}
+      {!state.loading && state.assets.length > 0 && state.viewMode === 'list' && null}
 
-      {previewAsset && (
+      {state.previewAsset && (
         <Asset3DPreviewModal
           isOpen={true}
-          onClose={() => setPreviewAsset(null)}
-          item={previewAsset}
+          onClose={() => state.setPreviewAsset(null)}
+          item={state.previewAsset}
         />
       )}
 
-      {editAsset && (
-        <Asset3DEditModal isOpen={true} onClose={() => setEditAsset(null)} item={editAsset} />
+      {state.editAsset && (
+        <Asset3DEditModal isOpen={true} onClose={() => state.setEditAsset(null)} item={state.editAsset} />
       )}
 
-      <ConfirmationModal />
+      <state.ConfirmationModal />
     </StandardDataTablePanel>
   );
 }

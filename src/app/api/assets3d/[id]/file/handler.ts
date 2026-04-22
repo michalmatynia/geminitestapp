@@ -8,7 +8,7 @@ import { getAsset3DRepository } from '@/features/viewer3d/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { notFoundError } from '@/shared/errors/app-error';
 
-export async function GET_handler(
+export async function getHandler(
   _request: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }

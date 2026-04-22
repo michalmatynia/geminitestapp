@@ -35,7 +35,7 @@ export const deleteQuerySchema = z.object({
   scope: z.enum(['terminal', 'all']),
 });
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const staleCount = await cleanupStaleRunningProductAiJobs(1000 * 60 * 10);
     if (staleCount > 0) {
@@ -111,7 +111,7 @@ const hasScheduledMarker = (payload: unknown): boolean => {
   return false;
 };
 
-export async function DELETE_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function deleteHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const query = (_ctx.query ?? {}) as z.infer<typeof deleteQuerySchema>;
   const scope = query.scope;
 

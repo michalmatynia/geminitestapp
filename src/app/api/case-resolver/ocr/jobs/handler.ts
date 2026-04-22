@@ -1,1 +1,1 @@
-export { POST_handler } from './handler.impl';
+export { postHandler } from './handler.impl';

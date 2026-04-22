@@ -13,6 +13,7 @@ import {
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import type { ViewMode } from './view-mode';
+import type { Asset3DGridItem } from '../components/Asset3DListSubcomponents';
 
 
 export interface UseAsset3DListStateReturn {
@@ -34,6 +35,8 @@ export interface UseAsset3DListStateReturn {
   reindexing: boolean;
   handleReindex: () => Promise<void>;
   refetch: () => void;
+  pickerItems: Asset3DGridItem[];
+  isFiltered: boolean;
 }
 
 export function useAsset3DListState(): UseAsset3DListStateReturn {
@@ -75,6 +78,31 @@ export function useAsset3DListState(): UseAsset3DListStateReturn {
       });
     }
   };
+
+  const pickerItems = useMemo<Asset3DGridItem[]>(
+    () =>
+      assets.map((asset) => {
+        const name = asset.name;
+        const filename = asset.filename ?? '';
+        
+        let label = asset.id;
+        if (name !== '') {
+          label = name;
+        } else if (filename !== '') {
+          label = filename;
+        }
+        
+        return {
+          id: asset.id,
+          label,
+          value: asset,
+        };
+      }),
+    [assets]
+  );
+
+  const isFiltered = searchQuery !== '' || (selectedCategory ?? '') !== '' || selectedTags.length > 0;
+
   return {
     previewAsset,
     setPreviewAsset,
@@ -94,5 +122,7 @@ export function useAsset3DListState(): UseAsset3DListStateReturn {
     reindexing: reindexMutation.isPending,
     handleReindex,
     refetch: () => void assetsQuery.refetch(),
+    pickerItems,
+    isFiltered,
   };
 }

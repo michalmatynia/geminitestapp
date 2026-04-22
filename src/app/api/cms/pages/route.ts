@@ -1,13 +1,13 @@
 
 import { apiHandler } from '@/shared/lib/api/api-handler';
 
-import { GET_handler, POST_handler } from './handler';
+import { getHandler, postHandler } from './handler';
 
-export const GET = apiHandler(GET_handler, {
+export const GET = apiHandler(getHandler, {
   source: 'cms.pages.GET',
   requireAuth: true,
 });
-export const POST = apiHandler(POST_handler, {
+export const POST = apiHandler(postHandler, {
   source: 'cms.pages.POST',
   requireAuth: true,
 });

@@ -90,7 +90,7 @@ const parseGeneratedGuideJson = (text: string): GeneratedGuideEntry | null => {
   }
 };
 
-export async function POST_handler(
+export async function postHandler(
   req: NextRequest,
   ctx: ApiHandlerContext
 ): Promise<Response> {

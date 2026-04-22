@@ -431,9 +431,13 @@ const AuthenticatedApp = (): JSX.Element | null => {
   const shouldSkipNavigationSkeletonDelay = activeTransitionSourceId !== null;
   const shouldBlockRouteContent = shouldRedirectToHome;
   const hasRouteContent = authErrorType !== 'auth_required' && !shouldBlockRouteContent;
-  const routeContent = hasRouteContent ? (
-    <KangurResolvedRouteContent resolvedPageKey={resolvedPageKey} />
-  ) : null;
+  const routeContent = useMemo(
+    () =>
+      hasRouteContent ? (
+        <KangurResolvedRouteContent resolvedPageKey={resolvedPageKey} />
+      ) : null,
+    [hasRouteContent, resolvedPageKey]
+  );
   // hasPresentedInteractiveShell: latched to true once the shell has been
   // shown to the user at least once. Prevents the boot loader from re-appearing
   // on subsequent navigations.

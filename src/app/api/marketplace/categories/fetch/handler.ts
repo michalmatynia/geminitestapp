@@ -44,7 +44,7 @@ const shouldRejectShallowTraderaPublicSync = ({
  * Base.com uses the API, Tradera uses the SOAP API when configured and otherwise
  * falls back to the public categories taxonomy pages.
  */
-export async function POST_handler(
+export async function postHandler(
   request: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {

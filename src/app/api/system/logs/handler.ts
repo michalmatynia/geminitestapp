@@ -83,7 +83,7 @@ const createSystemLogFromRequest = async (
   );
 };
 
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertSettingsManageAccess();
   const url = new URL(req.url);
   const parsed = systemLogsListQuerySchema.parse(Object.fromEntries(url.searchParams.entries()));
@@ -122,7 +122,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   );
 }
 
-export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   await assertSettingsManageAccess();
   const parsed = await parseCreateBody(req, ctx);
   if (!parsed.ok) {
@@ -132,7 +132,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
   return NextResponse.json({ log: created });
 }
 
-export async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function deleteHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertSettingsManageAccess();
   const url = new URL(req.url);
   const parsed = systemLogsClearQuerySchema.parse(Object.fromEntries(url.searchParams.entries()));

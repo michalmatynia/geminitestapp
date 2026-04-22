@@ -17,7 +17,7 @@ export const createDecisionSchema = z.object({
   sessionId: z.string().trim().min(1).nullable().optional(),
 });
 
-export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const parsed = createDecisionSchema.safeParse(ctx.body);
   if (!parsed.success) {
     throw validationError('Validation failed', {

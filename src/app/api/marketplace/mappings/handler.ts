@@ -22,7 +22,7 @@ const querySchema = z.object({
  *   - connectionId (required): The integration connection ID
  *   - catalogId (optional): Filter by catalog ID
  */
-export async function GET_handler(
+export async function getHandler(
   request: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {
@@ -49,7 +49,7 @@ export async function GET_handler(
  * POST /api/marketplace/mappings
  * Creates a new category mapping.
  */
-export async function POST_handler(
+export async function postHandler(
   request: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {

@@ -223,7 +223,7 @@ const encodeReplayHistoryCursor = (payload: ReplayHistoryCursorPayload): string 
   Buffer.from(JSON.stringify(payload), 'utf8').toString('base64url');
 
 const asRecord = (value: unknown): Record<string, unknown> | null => {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  if (value === null || value === undefined || typeof value !== 'object' || Array.isArray(value)) return null;
   return value as Record<string, unknown>;
 };
 
@@ -238,7 +238,7 @@ const toBoolean = (value: unknown, fallback = false): boolean =>
 
 const toReplayAttemptHistoryRecord = (value: unknown): ReplayAttemptHistoryRecord | null => {
   const record = asRecord(value);
-  if (!record) return null;
+  if (record === null) return null;
   return {
     replayedAt: toOptionalString(record['replayedAt']),
     queuedAt: toOptionalString(record['queuedAt']),
@@ -264,7 +264,7 @@ const toReplayHistoryRecord = (
 ): ReplayHistoryRecordWithCursor | null => {
   const logId = toOptionalString(log['id']);
   const context = asRecord(log['context']);
-  if (!context) return null;
+  if (context === null) return null;
   if (
     context['alertType'] !== PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_REPLAY_ALERT_TYPE
   ) {
@@ -323,13 +323,13 @@ const isReplayHistoryRecordBeforeCursor = (
   entry: ReplayHistoryRecordWithCursor,
   cursor: ReplayHistoryCursorPayload | null
 ): boolean => {
-  if (!cursor) return true;
+  if (cursor === null) return true;
   const entryTime = Date.parse(entry.loggedAt);
   const cursorTime = Date.parse(cursor.beforeLoggedAt);
   if (!Number.isFinite(entryTime) || !Number.isFinite(cursorTime)) return false;
   if (entryTime < cursorTime) return true;
   if (entryTime > cursorTime) return false;
-  if (!cursor.beforeLogId || !entry.logId) return false;
+  if (cursor.beforeLogId === null || entry.logId === null) return false;
   return entry.logId.localeCompare(cursor.beforeLogId) < 0;
 };
 
@@ -357,11 +357,11 @@ const withSignatureHeaders = (
   headers: Headers,
   signature: ReplayHistoryExportSignature | null
 ): Headers => {
-  if (!signature) return headers;
+  if (signature === null) return headers;
   headers.set('x-ai-paths-export-signature', signature.value);
   headers.set('x-ai-paths-export-signature-algorithm', signature.algorithm);
   headers.set('x-ai-paths-export-signature-timestamp', signature.timestamp);
-  if (signature.keyId) {
+  if (signature.keyId !== null) {
     headers.set('x-ai-paths-export-signature-key-id', signature.keyId);
   }
   return headers;
@@ -373,7 +373,7 @@ const withReplayHistoryPaginationHeaders = (
 ): Headers => {
   headers.set('x-ai-paths-pagination-has-more', String(pagination.hasMore));
   headers.set('x-ai-paths-pagination-scan-truncated', String(pagination.scanTruncated));
-  if (pagination.nextCursor) {
+  if (pagination.nextCursor !== null) {
     headers.set('x-ai-paths-pagination-next-cursor', pagination.nextCursor);
   }
   return headers;
@@ -423,7 +423,7 @@ const toMergedVaryHeader = (existing: string | null, value: string): string => {
 
 const acceptsGzipEncoding = (request: NextRequest): boolean => {
   const header = request.headers.get('accept-encoding');
-  if (!header) return false;
+  if (header === null) return false;
   return header
     .split(',')
     .map((entry) => entry.trim().toLowerCase())
@@ -593,12 +593,13 @@ export async function getReplayHistoryHandler(req: NextRequest, _ctx: ApiHandler
     applyReplayHistoryRecordRedaction(entry, redactionMode)
   );
   const hasMore = matchedReplayCount > selectedEntries.length || scanTruncated;
+  const lastEntry = selectedEntries[selectedEntries.length - 1];
   const nextCursor =
-    hasMore && selectedEntries.length > 0
+    hasMore && lastEntry !== undefined
       ? encodeReplayHistoryCursor({
         version: REPLAY_HISTORY_CURSOR_VERSION,
-        beforeLoggedAt: selectedEntries[selectedEntries.length - 1]!.loggedAt,
-        beforeLogId: selectedEntries[selectedEntries.length - 1]!.logId,
+        beforeLoggedAt: lastEntry.loggedAt,
+        beforeLogId: lastEntry.logId,
         from: from?.toISOString() ?? null,
         to: to?.toISOString() ?? null,
       })

@@ -94,7 +94,7 @@ export const productParameterCreateSchema = z
  * Query params:
  * - catalogId: Filter by catalog (required)
  */
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const query = querySchema.parse(resolveParametersQueryInput(req, _ctx));
   const catalogId = query?.catalogId ?? '';
 
@@ -117,7 +117,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
  * POST /api/v2/products/parameters
  * Creates a new product parameter.
  */
-export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const data = ctx.body as z.infer<typeof productParameterCreateSchema>;
   const { name_en, catalogId } = data;
 

@@ -43,7 +43,7 @@ const resolveCanonicalRemainingBaseProductId = async (
   return remainingBaseIds.length === 1 ? (remainingBaseIds[0] ?? null) : null;
 };
 
-export async function POST_handler(
+export async function postHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string; listingId: string }

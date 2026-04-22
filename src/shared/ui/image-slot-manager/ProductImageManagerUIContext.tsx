@@ -313,10 +313,9 @@ export function ProductImageManagerUIProvider({
       }
       if (imageSlots[index]) {
         await handleSlotDisconnectImage(index);
-      } else {
-        if (imageBase64s[index]) setImageBase64At(index, '');
-        if (imageLinks[index]) setImageLinkAt(index, '');
       }
+      if (imageBase64s[index]) setImageBase64At(index, '');
+      if (imageLinks[index]) setImageLinkAt(index, '');
       setSlotViewMode(index, 'upload');
     },
     [

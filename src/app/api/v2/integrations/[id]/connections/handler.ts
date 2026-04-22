@@ -85,7 +85,7 @@ const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);
  * GET /api/v2/integrations/[id]/connections
  * Fetch connections for an integration.
  */
-export async function GET_handler(
+export async function getHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }
@@ -169,7 +169,7 @@ export async function GET_handler(
  * POST /api/v2/integrations/[id]/connections
  * Create a new connection for an integration.
  */
-export async function POST_handler(
+export async function postHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }

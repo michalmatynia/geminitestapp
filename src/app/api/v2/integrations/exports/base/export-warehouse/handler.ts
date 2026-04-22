@@ -9,7 +9,7 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 export { baseExportWarehousePreferencePayloadSchema as requestSchema };
 export { baseExportWarehousePreferenceQuerySchema as querySchema };
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const query = baseExportWarehousePreferenceQuerySchema.parse(_ctx.query ?? {});
   const inventoryId = query.inventoryId ?? null;
   const warehouseId = await getExportWarehouseId(inventoryId);
@@ -17,7 +17,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
   return NextResponse.json(response);
 }
 
-export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(_req, baseExportWarehousePreferencePayloadSchema, {
     logPrefix: 'exports.base.export-warehouse.POST',
   });

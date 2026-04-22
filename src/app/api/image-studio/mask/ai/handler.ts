@@ -20,7 +20,7 @@ import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-cli
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { getDiskPathFromPublicPath } from '@/shared/lib/files/file-uploader';
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const session = await auth();
   const hasAccess =
     session?.user?.isElevated || session?.user?.permissions?.includes('ai_paths.manage');

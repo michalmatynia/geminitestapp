@@ -9,7 +9,7 @@ import type { ProductAiJobTypeDto as ProductAiJobType } from '@/shared/contracts
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { logSystemError } from '@/shared/lib/observability/system-logger';
 
-export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const job = await enqueueProductAiJob('system', 'base64_all' as ProductAiJobType, {
     source: 'base64_all',
   });

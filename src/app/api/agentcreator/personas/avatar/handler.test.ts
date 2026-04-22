@@ -25,7 +25,7 @@ vi.mock('@/features/ai/agentcreator/server/persona-avatar-thumbnails', () => ({
   deleteAgentPersonaAvatarThumbnailByRef: deleteAgentPersonaAvatarThumbnailByRefMock,
 }));
 
-import { DELETE_handler, POST_handler } from './handler';
+import { deleteHandler, postHandler } from './handler';
 
 const createRequestContext = (overrides?: Partial<ApiHandlerContext>): ApiHandlerContext =>
   ({
@@ -89,7 +89,7 @@ describe('agent persona avatar handler', () => {
     const file = new File([new Uint8Array([1, 2, 3])], 'avatar.png', {
       type: 'image/png',
     });
-    const response = await POST_handler(
+    const response = await postHandler(
       createUploadRequest({
         file,
         personaId: 'persona 1',
@@ -147,7 +147,7 @@ describe('agent persona avatar handler', () => {
       type: 'image/png',
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       createUploadRequest({
         file,
         personaId: 'persona-1',
@@ -187,7 +187,7 @@ describe('agent persona avatar handler', () => {
       type: 'image/png',
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       createUploadRequest({
         file,
         personaId: 'persona-1',
@@ -213,7 +213,7 @@ describe('agent persona avatar handler', () => {
       type: 'image/svg+xml',
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       createUploadRequest({
         file,
         personaId: 'persona-1',
@@ -233,7 +233,7 @@ describe('agent persona avatar handler', () => {
   });
 
   it('deletes a persisted thumbnail sidecar by ref', async () => {
-    const response = await DELETE_handler(
+    const response = await deleteHandler(
       new NextRequest(
         'http://localhost/api/agentcreator/personas/avatar?thumbnailRef=thumb-ref-1',
         {

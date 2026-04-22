@@ -34,7 +34,7 @@ const normalizeMaintenanceActionIds = (
   return Array.from(normalizedActionIds);
 };
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const report = await inspectAiPathsSettingsMaintenance();
   return NextResponse.json(report, {
     headers: {
@@ -43,7 +43,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
   });
 }
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const rawBody = await req.text();
   let body: unknown = {};
   if (rawBody) {

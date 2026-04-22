@@ -12,7 +12,7 @@ vi.mock('@/features/products/server/product-scans-service', () => ({
     listLatestProductScansByProductIdsWithSyncMock(...args),
 }));
 
-import { GET_handler, querySchema } from './handler';
+import { getHandler, querySchema } from './handler';
 
 describe('products/scans/latest handler', () => {
   beforeEach(() => {
@@ -20,7 +20,7 @@ describe('products/scans/latest handler', () => {
   });
 
   it('exports the latest-scan handler and query schema', () => {
-    expect(typeof GET_handler).toBe('function');
+    expect(typeof getHandler).toBe('function');
     expect(typeof querySchema.safeParse).toBe('function');
   });
 
@@ -29,7 +29,7 @@ describe('products/scans/latest handler', () => {
       { id: 'scan-1', productId: 'product-1', status: 'running' },
     ]);
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest(
         'http://localhost/api/v2/products/scans/latest?productIds=product-1,product-2'
       ),

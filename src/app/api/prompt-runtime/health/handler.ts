@@ -24,7 +24,7 @@ export const querySchema = z.object({
   reset: optionalBooleanQuerySchema(),
 });
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
 
   if (query.reset === true) {

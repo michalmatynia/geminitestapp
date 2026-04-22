@@ -27,7 +27,7 @@ const resolveBaseConnection = async (connectionId: string) => {
   return connection;
 };
 
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = baseOrderImportStatusesPayloadSchema.safeParse({
     connectionId: req.nextUrl.searchParams.get('connectionId') ?? '',
   });

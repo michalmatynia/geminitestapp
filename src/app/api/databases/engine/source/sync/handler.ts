@@ -25,7 +25,7 @@ const clearMongoSyncDependentCaches = async (): Promise<void> => {
   clearLiteSettingsServerCache();
 };
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertDatabaseEngineManageAccess();
   await assertDatabaseEngineOperationEnabled('allowManualFullSync');
 

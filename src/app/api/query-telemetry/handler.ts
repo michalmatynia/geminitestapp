@@ -346,7 +346,7 @@ export const queryTelemetryTestUtils = {
   },
 };
 
-export async function POST_handler(
+export async function postHandler(
   req: NextRequest,
   ctx: ApiHandlerContext
 ): Promise<NextResponse> {

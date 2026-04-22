@@ -21,7 +21,7 @@ vi.mock('@/features/products/server/product-scans-service', () => ({
 }));
 
 import {
-  POST_handler,
+  postHandler,
   productScanAmazonExtractCandidateRequestSchema,
 } from './handler';
 
@@ -31,7 +31,7 @@ describe('products/scans/amazon/extract-candidate handler', () => {
   });
 
   it('exports the extraction handler and request schema', () => {
-    expect(typeof POST_handler).toBe('function');
+    expect(typeof postHandler).toBe('function');
     expect(typeof productScanAmazonExtractCandidateRequestSchema.safeParse).toBe('function');
   });
 
@@ -64,7 +64,7 @@ describe('products/scans/amazon/extract-candidate handler', () => {
       ],
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/v2/products/scans/amazon/extract-candidate', {
         method: 'POST',
       }),

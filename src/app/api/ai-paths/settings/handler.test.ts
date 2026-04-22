@@ -20,7 +20,7 @@ vi.mock('@/features/ai/ai-paths/server', () => ({
   deleteAiPathsSettings: deleteAiPathsSettingsMock,
 }));
 
-import { DELETE_handler, GET_handler, POST_handler } from './handler';
+import { deleteHandler, getHandler, postHandler } from './handler';
 
 describe('ai-paths settings handler', () => {
   beforeEach(() => {
@@ -32,9 +32,9 @@ describe('ai-paths settings handler', () => {
 
   it('returns full settings list when no keys are requested', async () => {
     listAiPathsSettingsMock.mockResolvedValue([{ key: 'ai_paths_index', value: '[]' }]);
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/ai-paths/settings'),
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
 
     expect(response.status).toBe(200);
@@ -44,11 +44,11 @@ describe('ai-paths settings handler', () => {
 
   it('filters settings by requested keys', async () => {
     listAiPathsSettingsMock.mockResolvedValue([{ key: 'ai_paths_index', value: '[]' }]);
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest(
         'http://localhost/api/ai-paths/settings?keys=ai_paths_index,ai_paths_ui_state&keys=ai_paths_index'
       ),
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
 
     expect(response.status).toBe(200);
@@ -58,20 +58,20 @@ describe('ai-paths settings handler', () => {
 
   it('rejects invalid key prefixes', async () => {
     await expect(
-      GET_handler(
+      getHandler(
         new NextRequest(
           'http://localhost/api/ai-paths/settings?keys=ai_paths_index&keys=invalid_key'
         ),
-        {} as Parameters<typeof GET_handler>[1]
+        {} as Parameters<typeof getHandler>[1]
       )
     ).rejects.toThrow('Invalid AI Paths key "invalid_key".');
   });
 
   it('rejects versioned key requests', async () => {
     await expect(
-      GET_handler(
+      getHandler(
         new NextRequest('http://localhost/api/ai-paths/settings?keys=ai_paths_index_v1'),
-        {} as Parameters<typeof GET_handler>[1]
+        {} as Parameters<typeof getHandler>[1]
       )
     ).rejects.toThrow(
       'Versioned AI Paths key "ai_paths_index_v1" is disabled. Use canonical unversioned keys.'
@@ -85,11 +85,11 @@ describe('ai-paths settings handler', () => {
       { key: 'ai_paths_config_path_name_normalize_v1', value: '{"id":"path_name_normalize_v1"}' },
     ]);
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest(
         'http://localhost/api/ai-paths/settings?keys=ai_paths_config_path_name_normalize_v1'
       ),
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
 
     expect(response.status).toBe(200);
@@ -103,7 +103,7 @@ describe('ai-paths settings handler', () => {
 
   it('rejects versioned key writes', async () => {
     await expect(
-      POST_handler(
+      postHandler(
         new NextRequest('http://localhost/api/ai-paths/settings', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
@@ -112,7 +112,7 @@ describe('ai-paths settings handler', () => {
             value: '[]',
           }),
         }),
-        {} as Parameters<typeof POST_handler>[1]
+        {} as Parameters<typeof postHandler>[1]
       )
     ).rejects.toThrow(
       'Versioned AI Paths key "ai_paths_ui_state_v2" is disabled. Use canonical unversioned keys.'
@@ -125,7 +125,7 @@ describe('ai-paths settings handler', () => {
   it('allows config key writes when the path id ends with a version suffix', async () => {
     upsertAiPathsSettingMock.mockResolvedValue(undefined);
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/ai-paths/settings', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -134,7 +134,7 @@ describe('ai-paths settings handler', () => {
           value: '{"id":"path_name_normalize_v1"}',
         }),
       }),
-      {} as Parameters<typeof POST_handler>[1]
+      {} as Parameters<typeof postHandler>[1]
     );
 
     expect(response.status).toBe(200);
@@ -151,7 +151,7 @@ describe('ai-paths settings handler', () => {
   it('deletes merged single and batch keys from the delete payload', async () => {
     deleteAiPathsSettingsMock.mockResolvedValue(3);
 
-    const response = await DELETE_handler(
+    const response = await deleteHandler(
       new NextRequest('http://localhost/api/ai-paths/settings', {
         method: 'DELETE',
         headers: { 'content-type': 'application/json' },
@@ -160,7 +160,7 @@ describe('ai-paths settings handler', () => {
           keys: ['ai_paths_ui_state', 'ai_paths_recent_runs'],
         }),
       }),
-      {} as Parameters<typeof DELETE_handler>[1]
+      {} as Parameters<typeof deleteHandler>[1]
     );
 
     expect(response.status).toBe(200);

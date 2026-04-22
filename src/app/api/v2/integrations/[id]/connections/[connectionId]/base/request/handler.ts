@@ -27,7 +27,7 @@ const normalizeNumericObjectKey = (value: string): string | null => {
  * POST /api/v2/integrations/[id]/connections/[connectionId]/base/request
  * Proxy Base.com API requests using the stored token.
  */
-export async function POST_handler(
+export async function postHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string; connectionId: string }

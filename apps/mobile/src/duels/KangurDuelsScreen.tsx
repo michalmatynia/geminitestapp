@@ -25,47 +25,6 @@ import { useKangurMobileDuelLobbyChat } from './useKangurMobileDuelLobbyChat';
 import { useKangurMobileDuelSession } from './useKangurMobileDuelSession';
 import { useKangurMobileDuelsLobby } from './useKangurMobileDuelsLobby';
 
-type DuelsScreenHeroProps = {
-  copy: ReturnType<typeof useKangurMobileI18n>['copy'];
-  isLoadingAuth: boolean;
-  isAuthenticated: boolean;
-  learnerName: string | null;
-};
-
-function DuelsScreenHero({
-  copy,
-  isLoadingAuth,
-  isAuthenticated,
-  learnerName,
-}: DuelsScreenHeroProps): React.JSX.Element {
-  let heroText = '';
-  if (isLoadingAuth && !isAuthenticated) {
-    heroText = copy({
-      de: 'Wir stellen gerade die Duell-Lobby und deine letzten Herausforderungen wieder her.',
-      en: 'We are restoring the duels lobby and your recent challenges.',
-      pl: 'Przywracamy teraz lobby pojedynków i Twoje ostatnie wyzwania.',
-    });
-  } else if (isAuthenticated && learnerName !== null && learnerName !== '') {
-    heroText = copy({
-      de: `Willkommen in der Lobby, ${learnerName}. Tritt einem öffentlichen Spiel bei, starte ein schnelles Match oder fordere einen Rivalen privat heraus.`,
-      en: `Welcome to the lobby, ${learnerName}. Join a public game, start a quick match, or challenge a rival privately.`,
-      pl: `Witaj w lobby, ${learnerName}. Dołącz do publicznej gry, wystartuj w szybkim meczu albo wyzwij rywala prywatnie.`,
-    });
-  } else {
-    heroText = copy({
-      de: 'Tritt einem öffentlichen Spiel bei oder starte ein schnelles Match. Nach der Anmeldung kannst du auch private Herausforderungen senden und deinen Duellstand verfolgen.',
-      en: 'Join a public game or start a quick match. After sign-in, you can also send private challenges and track your duel standing.',
-      pl: 'Dołącz do publicznej gry albo wystartuj w szybkim meczu. Po zalogowaniu możesz też wysyłać prywatne wyzwania i śledzić swój stan pojedynków.',
-    });
-  }
-
-  return (
-    <Text style={{ color: '#475569', fontSize: 16, lineHeight: 24 }}>
-      {heroText}
-    </Text>
-  );
-}
-
 export function KangurDuelsScreen(): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
   const params = useLocalSearchParams<{
@@ -81,7 +40,7 @@ export function KangurDuelsScreen(): React.JSX.Element {
     supportsLearnerCredentials,
   } = useKangurMobileAuth();
   const routeSessionId = resolveSessionIdParam(params.sessionId);
-  const joinSessionId = routeSessionId
+  const joinSessionId = routeSessionId !== null
     ? null
     : resolveSessionIdParam(params.join);
   const sessionId = routeSessionId;
@@ -282,7 +241,7 @@ export function KangurDuelsScreen(): React.JSX.Element {
         duel.session.players.find((player) => player.learnerId !== activeLearnerId)
           ?.learnerId ?? null;
 
-      if (!opponentLearnerId) {
+      if (opponentLearnerId === null) {
         return;
       }
 
@@ -290,7 +249,7 @@ export function KangurDuelsScreen(): React.JSX.Element {
         opponentLearnerId,
         overrides,
       );
-      if (nextSessionId) {
+      if (nextSessionId !== null) {
         openSession(nextSessionId);
       }
       return;
@@ -300,7 +259,7 @@ export function KangurDuelsScreen(): React.JSX.Element {
       duel.session.mode === 'quick_match'
         ? await lobby.createQuickMatch(overrides)
         : await lobby.createPublicChallenge(overrides);
-    if (nextSessionId) {
+    if (nextSessionId !== null) {
       openSession(nextSessionId);
     }
   };
@@ -332,7 +291,7 @@ export function KangurDuelsScreen(): React.JSX.Element {
   };
 
   const joinSessionFromRoute = async (): Promise<void> => {
-    if (!joinSessionId) {
+    if (joinSessionId === null) {
       return;
     }
 
@@ -341,7 +300,7 @@ export function KangurDuelsScreen(): React.JSX.Element {
 
     try {
       const nextSessionId = await lobby.joinDuel(joinSessionId);
-      if (nextSessionId) {
+      if (nextSessionId !== null) {
         openSession(nextSessionId);
         return;
       }
@@ -433,7 +392,7 @@ export function KangurDuelsScreen(): React.JSX.Element {
         })}
         onPress={async () => {
           const nextSessionId = await lobby.joinDuel(targetSessionId);
-          if (nextSessionId) {
+          if (nextSessionId !== null) {
             openSession(nextSessionId);
           }
         }}
@@ -462,7 +421,7 @@ export function KangurDuelsScreen(): React.JSX.Element {
     />
   );
 
-  if (joinSessionId && !routeSessionId && !isSpectatingRoute) {
+  if (joinSessionId !== null && routeSessionId === null && !isSpectatingRoute) {
     return (
       <DuelsJoinRouteView
         copy={copy}
@@ -485,7 +444,7 @@ export function KangurDuelsScreen(): React.JSX.Element {
     );
   }
 
-  if (sessionId) {
+  if (sessionId !== null) {
     return (
       <DuelsSessionView
         canShareInvite={canShareInvite}
@@ -544,7 +503,7 @@ export function KangurDuelsScreen(): React.JSX.Element {
       locale={locale}
       onChatDraftChange={(nextValue) => {
         setChatDraft(nextValue);
-        if (chatActionError) {
+        if (chatActionError !== null) {
           setChatActionError(null);
         }
       }}

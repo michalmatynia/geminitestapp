@@ -14,7 +14,7 @@ vi.mock('@/shared/lib/products/validations', () => ({
   validateProductsBatch: (...args: unknown[]) => validateProductsBatchMock(...args),
 }));
 
-import { GET_handler, POST_handler } from './handler';
+import { getHandler, postHandler } from './handler';
 
 describe('product validation handler module', () => {
   beforeEach(() => {
@@ -41,12 +41,12 @@ describe('product validation handler module', () => {
   });
 
   it('exports the supported handlers', () => {
-    expect(typeof GET_handler).toBe('function');
-    expect(typeof POST_handler).toBe('function');
+    expect(typeof getHandler).toBe('function');
+    expect(typeof postHandler).toBe('function');
   });
 
   it('returns the validation health response', async () => {
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/v2/products/validation'),
       {} as never
     );
@@ -64,7 +64,7 @@ describe('product validation handler module', () => {
       response: new Response(JSON.stringify({ error: 'Invalid JSON payload' }), { status: 400 }),
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/v2/products/validation', {
         method: 'POST',
       }),
@@ -85,7 +85,7 @@ describe('product validation handler module', () => {
     });
 
     await expect(
-      POST_handler(
+      postHandler(
         new NextRequest('http://localhost/api/v2/products/validation', {
           method: 'POST',
         }),
@@ -100,7 +100,7 @@ describe('product validation handler module', () => {
   });
 
   it('returns the normalized batch validation response', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/v2/products/validation', {
         method: 'POST',
       }),

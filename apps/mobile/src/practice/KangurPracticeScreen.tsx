@@ -26,7 +26,6 @@ import {
 } from '../i18n/kangurMobileI18n';
 import { createKangurLessonHrefForPracticeOperation } from '../lessons/lessonHref';
 import { useKangurMobileLessonCheckpoints } from '../lessons/useKangurMobileLessonCheckpoints';
-import { createKangurPlanHref } from '../plan/planHref';
 import { useKangurMobileRuntime } from '../providers/KangurRuntimeContext';
 import { createKangurResultsHref } from '../scores/resultsHref';
 import { translateKangurMobileActionLabel } from '../shared/translateKangurMobileActionLabel';
@@ -334,7 +333,7 @@ export function KangurPracticeScreen(): React.JSX.Element {
   }, [isLoadingAuth, locale, session.status, syncScoreRecord]);
 
   useEffect(() => {
-    if (!debugAutoCompleteMode || completion || hasAppliedDebugAutoCompleteRef.current) {
+    if (debugAutoCompleteMode === null || completion !== null || hasAppliedDebugAutoCompleteRef.current) {
       return;
     }
 
@@ -374,8 +373,8 @@ export function KangurPracticeScreen(): React.JSX.Element {
 
   useEffect(() => {
     if (
-      !debugRedirectTarget ||
-      !completion ||
+      debugRedirectTarget === null ||
+      completion === null ||
       scoreSyncState?.status !== 'synced' ||
       hasAppliedDebugRedirectRef.current
     ) {
@@ -402,7 +401,7 @@ export function KangurPracticeScreen(): React.JSX.Element {
   let preparationLessonAction = null;
   let completionLessonAction = null;
 
-  if (lessonHref) {
+  if (lessonHref !== null) {
     preparationLessonAction = (
       <LinkButton
         borderRadius={16}

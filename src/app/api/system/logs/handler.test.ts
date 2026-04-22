@@ -58,7 +58,7 @@ vi.mock('@/shared/lib/analytics/server', () => ({
   clearAnalyticsEvents: clearAnalyticsEventsMock,
 }));
 
-import { DELETE_handler, GET_handler, POST_handler } from './handler';
+import { deleteHandler, getHandler, postHandler } from './handler';
 
 const createRequestContext = (): ApiHandlerContext =>
   ({
@@ -86,7 +86,7 @@ describe('system logs delete handler', () => {
       message: 'Created from body',
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/system/logs', { method: 'POST' }),
       {
         ...createRequestContext(),
@@ -143,7 +143,7 @@ describe('system logs delete handler', () => {
     });
     createErrorResponseMock.mockResolvedValue(invalidResponse);
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/system/logs', { method: 'POST' }),
       {
         ...createRequestContext(),
@@ -194,7 +194,7 @@ describe('system logs delete handler', () => {
       source: 'api',
     }));
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest(
         'http://localhost/api/system/logs?page=2&pageSize=25&level=error&source=%20api%20&from=2026-03-20T00:00:00.000Z'
       ),
@@ -242,7 +242,7 @@ describe('system logs delete handler', () => {
   it('clears only error-level system logs when the error_logs target is selected', async () => {
     clearSystemLogsMock.mockResolvedValue({ deleted: 4 });
 
-    const response = await DELETE_handler(
+    const response = await deleteHandler(
       new NextRequest('http://localhost/api/system/logs?target=error_logs'),
       createRequestContext()
     );
@@ -269,7 +269,7 @@ describe('system logs delete handler', () => {
   it('clears only info-level system logs when the info_logs target is selected', async () => {
     clearSystemLogsMock.mockResolvedValue({ deleted: 6 });
 
-    const response = await DELETE_handler(
+    const response = await deleteHandler(
       new NextRequest('http://localhost/api/system/logs?target=info_logs'),
       createRequestContext()
     );
@@ -298,7 +298,7 @@ describe('system logs delete handler', () => {
     clearActivityLogsMock.mockResolvedValue({ deleted: 5 });
     clearAnalyticsEventsMock.mockResolvedValue({ deleted: 7 });
 
-    const response = await DELETE_handler(
+    const response = await deleteHandler(
       new NextRequest('http://localhost/api/system/logs?target=all_logs&before=2026-03-19T10:00:00.000Z'),
       createRequestContext()
     );

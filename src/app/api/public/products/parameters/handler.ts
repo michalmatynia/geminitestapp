@@ -56,7 +56,7 @@ async function listPublicProductParametersCached(catalogId: string): Promise<Pub
   return parameters.map(toPublicProductParameter);
 }
 
-export async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const query = ctx.query as CatalogIdQuery | undefined;
   const catalogId =
     query?.catalogId ?? new URL(req.url).searchParams.get('catalogId')?.trim() ?? '';

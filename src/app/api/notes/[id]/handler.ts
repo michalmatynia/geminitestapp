@@ -12,7 +12,7 @@ import { removeUndefined } from '@/shared/utils/object-utils';
  * GET /api/notes/[id]
  * Fetches a single note by ID.
  */
-export async function GET_handler(
+export async function getHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }
@@ -31,7 +31,7 @@ export async function GET_handler(
  * PATCH /api/notes/[id]
  * Updates a note.
  */
-export async function PATCH_handler(
+export async function patchHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }
@@ -54,7 +54,7 @@ export async function PATCH_handler(
  * DELETE /api/notes/[id]
  * Deletes a note.
  */
-export async function DELETE_handler(
+export async function deleteHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }

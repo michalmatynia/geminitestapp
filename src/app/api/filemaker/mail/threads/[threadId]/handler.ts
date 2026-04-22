@@ -24,7 +24,7 @@ const resolveThreadId = (ctx: ApiHandlerContext): string => {
   return decodeURIComponent(raw);
 };
 
-export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   await requireFilemakerMailAdminSession();
   const threadId = resolveThreadId(ctx);
   const detail = await getFilemakerMailThreadDetail(threadId);
@@ -42,7 +42,7 @@ export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Pr
   });
 }
 
-export async function PATCH_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function patchHandler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   await requireFilemakerMailAdminSession();
   const threadId = resolveThreadId(ctx);
   const result: JsonParseResult<z.infer<typeof filemakerMailThreadPatchSchema>> =
@@ -60,7 +60,7 @@ export async function PATCH_handler(req: NextRequest, ctx: ApiHandlerContext): P
   return Response.json({ ok: true });
 }
 
-export async function DELETE_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function deleteHandler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   await requireFilemakerMailAdminSession();
   const threadId = resolveThreadId(ctx);
   await deleteFilemakerMailThread(threadId);

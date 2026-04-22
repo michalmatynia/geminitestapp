@@ -16,7 +16,7 @@ vi.mock('@/features/filemaker/server/campaign-settings-store', () => ({
   upsertFilemakerCampaignSettingValue: upsertFilemakerCampaignSettingValueMock,
 }));
 
-import { GET_handler } from './handler';
+import { getHandler } from './handler';
 
 describe('filemaker campaign open tracking handler', () => {
   beforeEach(() => {
@@ -81,9 +81,9 @@ describe('filemaker campaign open tracking handler', () => {
       ttlMs: 1000 * 60 * 60,
     });
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest(`http://localhost/api/filemaker/campaigns/open?token=${encodeURIComponent(token)}`),
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
 
     expect(response.headers.get('content-type')).toBe('image/gif');
@@ -166,9 +166,9 @@ describe('filemaker campaign open tracking handler', () => {
       ttlMs: 1000 * 60 * 60,
     });
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest(`http://localhost/api/filemaker/campaigns/open?token=${encodeURIComponent(token)}`),
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
 
     expect(response.headers.get('content-type')).toBe('image/gif');
@@ -176,9 +176,9 @@ describe('filemaker campaign open tracking handler', () => {
   });
 
   it('returns the tracking pixel without writing when the token is invalid', async () => {
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/filemaker/campaigns/open?token=invalid.token'),
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
 
     expect(response.headers.get('content-type')).toBe('image/gif');

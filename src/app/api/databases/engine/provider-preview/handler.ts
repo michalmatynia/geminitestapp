@@ -18,7 +18,7 @@ const resolveProviderPreviewQueryInput = (
   ...((ctx.query ?? {}) as Record<string, unknown>),
 });
 
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertDatabaseEngineManageAccess();
   const query = querySchema.parse(resolveProviderPreviewQueryInput(req, _ctx));
   const collections = query.collections;

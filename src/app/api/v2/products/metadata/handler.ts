@@ -176,7 +176,7 @@ const mapMongoPriceGroupResponse = (
   };
 };
 
-export async function GET_products_metadata_handler(
+export async function getProductsMetadataHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { type: string }
@@ -237,7 +237,7 @@ export async function GET_products_metadata_handler(
   throw badRequestError(`Invalid products metadata type: ${type}`);
 }
 
-export async function POST_products_metadata_handler(
+export async function postProductsMetadataHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { type: string }

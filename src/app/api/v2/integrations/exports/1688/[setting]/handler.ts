@@ -2,8 +2,8 @@ import { z } from 'zod';
 
 import type { SettingParams } from '@/app/api/v2/integrations/base/setting-params';
 import {
-  GET_handler as getDefaultConnectionHandler,
-  POST_handler as postDefaultConnectionHandler,
+  getHandler as getDefaultConnectionHandler,
+  postHandler as postDefaultConnectionHandler,
 } from '@/app/api/v2/integrations/exports/1688/default-connection/handler';
 import type { ApiHandlerContext, ApiRouteHandler } from '@/shared/contracts/ui/api';
 import { notFoundError } from '@/shared/errors/app-error';
@@ -36,7 +36,7 @@ const resolveHandlers = (setting: string): RouteHandlers => {
   return handlers;
 };
 
-export async function GET_handler(
+export async function getHandler(
   req: NextRequest,
   ctx: ApiHandlerContext,
   params: SettingParams
@@ -44,7 +44,7 @@ export async function GET_handler(
   return resolveHandlers(params.setting).GET(req, ctx);
 }
 
-export async function POST_handler(
+export async function postHandler(
   req: NextRequest,
   ctx: ApiHandlerContext,
   params: SettingParams

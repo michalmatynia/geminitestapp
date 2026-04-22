@@ -2,9 +2,9 @@ export const runtime = 'nodejs';
 
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
-export const POST = apiHandlerWithParams<{ slotId: string }>(POST_handler, {
+export const POST = apiHandlerWithParams<{ slotId: string }>(postHandler, {
   source: 'image-studio.slots.[slotId].masks.POST',
   requireAuth: true,
 });

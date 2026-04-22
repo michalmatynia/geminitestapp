@@ -10,7 +10,7 @@ vi.mock('@/features/ai/ai-context-registry/server', () => ({
   registryBackend: { search: searchMock, getVersion: getVersionMock },
 }));
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 const BASE_NODE = {
   id: 'page:home',
@@ -40,9 +40,9 @@ describe('POST /api/ai/context/search handler', () => {
   it('returns search results with registryVersion', async () => {
     searchMock.mockReturnValue([BASE_NODE]);
 
-    const res = await POST_handler(
+    const res = await postHandler(
       makeRequest({ query: 'home' }),
-      {} as Parameters<typeof POST_handler>[1]
+      {} as Parameters<typeof postHandler>[1]
     );
 
     expect(res.status).toBe(200);
@@ -55,7 +55,7 @@ describe('POST /api/ai/context/search handler', () => {
   it('accepts empty body and calls search with default limit', async () => {
     searchMock.mockReturnValue([]);
 
-    const res = await POST_handler(makeRequest({}), {} as Parameters<typeof POST_handler>[1]);
+    const res = await postHandler(makeRequest({}), {} as Parameters<typeof postHandler>[1]);
 
     expect(res.status).toBe(200);
     const body = (await res.json()) as { nodes: unknown[]; total: number; registryVersion: string };
@@ -68,9 +68,9 @@ describe('POST /api/ai/context/search handler', () => {
   it('passes kinds array filter through to backend', async () => {
     searchMock.mockReturnValue([]);
 
-    await POST_handler(
+    await postHandler(
       makeRequest({ kinds: ['collection', 'action'] }),
-      {} as Parameters<typeof POST_handler>[1]
+      {} as Parameters<typeof postHandler>[1]
     );
 
     expect(searchMock).toHaveBeenCalledWith(
@@ -80,9 +80,9 @@ describe('POST /api/ai/context/search handler', () => {
 
   it('throws for invalid payload (kinds element out of enum)', async () => {
     await expect(
-      POST_handler(
+      postHandler(
         makeRequest({ kinds: ['invalid-kind'] }),
-        {} as Parameters<typeof POST_handler>[1]
+        {} as Parameters<typeof postHandler>[1]
       )
     ).rejects.toThrow('Invalid search request payload.');
   });
@@ -94,7 +94,7 @@ describe('POST /api/ai/context/search handler', () => {
       body: 'not-json{',
     });
 
-    await expect(POST_handler(req, {} as Parameters<typeof POST_handler>[1])).rejects.toThrow(
+    await expect(postHandler(req, {} as Parameters<typeof postHandler>[1])).rejects.toThrow(
       'Invalid JSON body.'
     );
   });

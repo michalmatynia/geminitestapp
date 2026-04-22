@@ -25,7 +25,7 @@ vi.mock('@/shared/lib/ai-paths/services/path-run-repository', async (importOrigi
   };
 });
 
-import { GET_handler } from './handler';
+import { getHandler } from './handler';
 
 describe('ai-paths run result handler', () => {
   const repo = {
@@ -51,9 +51,9 @@ describe('ai-paths run result handler', () => {
   });
 
   it('returns the compact run payload with repository headers', async () => {
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/ai-paths/runs/run-1/result'),
-      {} as Parameters<typeof GET_handler>[1],
+      {} as Parameters<typeof getHandler>[1],
       { runId: 'run-1' }
     );
 
@@ -80,9 +80,9 @@ describe('ai-paths run result handler', () => {
     repo.findRunById.mockResolvedValueOnce(null);
 
     await expect(
-      GET_handler(
+      getHandler(
         new NextRequest('http://localhost/api/ai-paths/runs/run-missing/result'),
-        {} as Parameters<typeof GET_handler>[1],
+        {} as Parameters<typeof getHandler>[1],
         { runId: 'run-missing' }
       )
     ).rejects.toMatchObject({

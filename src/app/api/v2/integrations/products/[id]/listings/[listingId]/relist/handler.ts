@@ -45,7 +45,7 @@ const isQueuedStatusStale = (
   return !Number.isFinite(ts) || Date.now() - ts > IN_FLIGHT_RELIST_STALE_THRESHOLD_MS;
 };
 
-export async function POST_handler(
+export async function postHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string; listingId: string }

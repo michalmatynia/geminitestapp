@@ -17,7 +17,7 @@ vi.mock('@/features/filemaker/server', () => ({
   cancelFilemakerEmailCampaignRun: cancelFilemakerEmailCampaignRunMock,
 }));
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 describe('filemaker campaign run cancel handler', () => {
   beforeEach(() => {
@@ -31,11 +31,11 @@ describe('filemaker campaign run cancel handler', () => {
   });
 
   it('cancels a run through the runtime service', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/filemaker/campaigns/runs/run-1/cancel', {
         method: 'POST',
       }),
-      {} as Parameters<typeof POST_handler>[1],
+      {} as Parameters<typeof postHandler>[1],
       {
         runId: 'run-1',
       }

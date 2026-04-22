@@ -27,7 +27,7 @@ const SANDBOX_TOKEN_URL =
  * POST /api/v2/integrations/[id]/connections/[connectionId]/allegro/request
  * Proxy Allegro API requests using the stored access token.
  */
-export async function POST_handler(
+export async function postHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string; connectionId: string }

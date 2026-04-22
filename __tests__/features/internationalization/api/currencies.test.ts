@@ -13,7 +13,7 @@ vi.mock('@/features/internationalization/server', () => ({
   getInternationalizationProvider: mocks.getInternationalizationProvider,
 }));
 
-import { GET_intl_handler, POST_intl_handler } from '@/app/api/v2/metadata/handler';
+import { getIntlHandler, postIntlHandler } from '@/app/api/v2/metadata/handler';
 
 describe('Currencies API', () => {
   beforeEach(() => {
@@ -30,7 +30,7 @@ describe('Currencies API', () => {
       { id: 'USD', code: 'USD', name: 'US Dollar', symbol: '$' },
     ]);
 
-    const res = await GET_intl_handler(new NextRequest('http://localhost/api/v2/metadata/currencies'), {} as any, {
+    const res = await getIntlHandler(new NextRequest('http://localhost/api/v2/metadata/currencies'), {} as any, {
       type: 'currencies',
     });
     const currencies = await res.json();
@@ -57,7 +57,7 @@ describe('Currencies API', () => {
       }),
     });
 
-    const res = await POST_intl_handler(req, {} as any, { type: 'currencies' });
+    const res = await postIntlHandler(req, {} as any, { type: 'currencies' });
     const currency = await res.json();
 
     expect(res.status).toBe(200);
@@ -78,7 +78,7 @@ describe('Currencies API', () => {
       body: JSON.stringify({ code: 'USD' }),
     });
 
-    await expect(POST_intl_handler(req, {} as any, { type: 'currencies' })).rejects.toThrow(
+    await expect(postIntlHandler(req, {} as any, { type: 'currencies' })).rejects.toThrow(
       'Code and name are required'
     );
   });

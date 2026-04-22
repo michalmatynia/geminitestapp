@@ -18,7 +18,7 @@ export const querySchema = catalogIdQuerySchema.extend({
  * Query params:
  * - catalogId: Filter by catalog (required)
  */
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
   const catalogId = query.catalogId;
   if (!catalogId) {

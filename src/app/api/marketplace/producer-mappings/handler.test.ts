@@ -21,7 +21,7 @@ vi.mock('@/features/integrations/server', () => ({
   getProducerMappingRepository: getProducerMappingRepositoryMock,
 }));
 
-import { GET_handler, POST_handler } from './handler';
+import { getHandler, postHandler } from './handler';
 
 const createContext = (): ApiHandlerContext =>
   ({
@@ -57,7 +57,7 @@ describe('marketplace producer mappings handler', () => {
       'http://localhost/api/marketplace/producer-mappings?connectionId=conn-1'
     );
 
-    const response = await GET_handler(request, createContext());
+    const response = await getHandler(request, createContext());
 
     expect(listByConnectionMock).toHaveBeenCalledWith('conn-1');
     await expect(response.json()).resolves.toEqual([
@@ -94,7 +94,7 @@ describe('marketplace producer mappings handler', () => {
       },
     });
 
-    const response = await POST_handler(request, createContext());
+    const response = await postHandler(request, createContext());
 
     expect(response.status).toBe(200);
     expect(updateMock).toHaveBeenCalledWith('mapping-1', {
@@ -126,7 +126,7 @@ describe('marketplace producer mappings handler', () => {
       },
     });
 
-    const response = await POST_handler(request, createContext());
+    const response = await postHandler(request, createContext());
 
     expect(response.status).toBe(201);
     expect(createMock).toHaveBeenCalledWith({

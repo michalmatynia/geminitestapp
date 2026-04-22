@@ -60,10 +60,10 @@ vi.mock('@/features/ai/ai-context-registry/server', () => ({
   },
 }));
 
-import { POST_handler as enqueueHandler } from '@/app/api/ai-paths/runs/enqueue/handler';
-import { POST_handler as resumeHandler } from '@/app/api/ai-paths/runs/[runId]/resume/handler';
-import { POST_handler as retryNodeHandler } from '@/app/api/ai-paths/runs/[runId]/retry-node/handler';
-import { POST_handler as deadLetterRequeueHandler } from '@/app/api/ai-paths/runs/dead-letter/requeue/handler';
+import { postHandler as enqueueHandler } from '@/app/api/ai-paths/runs/enqueue/handler';
+import { postHandler as resumeHandler } from '@/app/api/ai-paths/runs/[runId]/resume/handler';
+import { postHandler as retryNodeHandler } from '@/app/api/ai-paths/runs/[runId]/retry-node/handler';
+import { postHandler as deadLetterRequeueHandler } from '@/app/api/ai-paths/runs/dead-letter/requeue/handler';
 
 const mockContext: ApiHandlerContext = {
   requestId: 'test-req-id',

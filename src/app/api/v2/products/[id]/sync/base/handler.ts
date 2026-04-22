@@ -23,7 +23,7 @@ const parseProductId = (params: { id: string }): string => {
   return parsed.data.id;
 };
 
-export async function GET_handler(
+export async function getHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }
@@ -41,7 +41,7 @@ export async function GET_handler(
   });
 }
 
-export async function POST_handler(
+export async function postHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }

@@ -329,4 +329,59 @@ describe('validator-pattern routes', () => {
       createManualSaveAuditExpectation(),
     );
   });
+
+  it('PUT allows enabling auto-apply on capture-group patterns', async () => {
+    repositoryMock.getPatternById.mockResolvedValueOnce({
+      id: 'pattern-1',
+      label: 'Extract numeric prefix',
+      target: 'sku',
+      locale: null,
+      regex: '^(\\d+)-(\\w+)$',
+      flags: null,
+      message: 'Normalize SKU format',
+      severity: 'warning',
+      enabled: true,
+      replacementEnabled: true,
+      replacementAutoApply: false,
+      skipNoopReplacementProposal: true,
+      replacementValue: '$1',
+      replacementFields: [],
+      replacementAppliesToScopes: ['draft_template', 'product_create', 'product_edit'],
+      runtimeEnabled: false,
+      runtimeType: 'none',
+      runtimeConfig: null,
+      postAcceptBehavior: 'revalidate',
+      denyBehaviorOverride: null,
+      validationDebounceMs: 0,
+      sequenceGroupId: null,
+      sequenceGroupLabel: null,
+      sequenceGroupDebounceMs: 0,
+      sequence: null,
+      chainMode: 'continue',
+      maxExecutions: 1,
+      passOutputToNext: true,
+      launchEnabled: false,
+      launchAppliesToScopes: ['draft_template', 'product_create', 'product_edit'],
+      launchScopeBehavior: 'gate',
+      launchSourceMode: 'current_field',
+      launchSourceField: null,
+      launchOperator: 'equals',
+      launchValue: null,
+      launchFlags: null,
+      appliesToScopes: ['draft_template', 'product_create', 'product_edit'],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+
+    const response = await PUT(buildValidatorPatternsPutRequest({ replacementAutoApply: true }), {
+      params: Promise.resolve({ id: 'pattern-1' }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(repositoryMock.updatePattern).toHaveBeenCalledWith(
+      'pattern-1',
+      createReplacementAutoApplyExpectation(),
+      createManualSaveAuditExpectation(),
+    );
+  });
 });

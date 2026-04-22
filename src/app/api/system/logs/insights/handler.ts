@@ -14,7 +14,7 @@ import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { assertSettingsManageAccess } from '@/features/auth/server';
 import { resolveObservabilityContextRegistryEnvelope } from '@/shared/lib/observability/runtime-context/server';
 
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertSettingsManageAccess();
   startAiInsightsQueue();
   const url = new URL(req.url);
@@ -26,7 +26,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   return NextResponse.json(response);
 }
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertSettingsManageAccess();
   startAiInsightsQueue();
   const parsed = await parseJsonBody(req, systemLogsInsightRequestSchema, {

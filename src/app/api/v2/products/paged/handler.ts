@@ -63,7 +63,7 @@ const resolvePagedProductsQueryInput = (
  * MongoDB uses a single $facet aggregation for filtered queries and keeps the
  * unfiltered path on the indexed list query + estimatedDocumentCount fast path.
  */
-export async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const timings: Record<string, number | null | undefined> = {};
   const query = querySchema.parse(resolvePagedProductsQueryInput(req, ctx)) as ProductFiltersParsed &
     { fresh?: boolean };

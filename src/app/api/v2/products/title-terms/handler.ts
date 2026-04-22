@@ -21,7 +21,7 @@ export const querySchema = z.object({
   search: z.preprocess(optionalTrimmedString, z.string().optional()),
 });
 
-export async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const query = querySchema.parse({
     ...Object.fromEntries(new URL(req.url).searchParams.entries()),
     ...((ctx.query ?? {}) as Record<string, unknown>),
@@ -31,7 +31,7 @@ export async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Pro
   return NextResponse.json(titleTerms);
 }
 
-export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const data = ctx.body as z.infer<typeof createProductTitleTermSchema>;
   const repository = await getTitleTermRepository();
   const existing = await repository.findByName(data.catalogId, data.type, data.name_en);

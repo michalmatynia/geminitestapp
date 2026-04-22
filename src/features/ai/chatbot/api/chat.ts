@@ -13,7 +13,7 @@ export const sendChatbotMessage = async (payload: {
     messages: payload.messages.map((message) => ({
       role: message.role,
       content: message.content,
-      ...(message.images?.length ? { images: message.images } : {}),
+      ...((message.images?.length ?? 0) > 0 ? { images: message.images } : {}),
     })),
     ...(payload.sessionId !== undefined ? { sessionId: payload.sessionId } : {}),
     ...(payload.contextRegistry ? { contextRegistry: payload.contextRegistry } : {}),

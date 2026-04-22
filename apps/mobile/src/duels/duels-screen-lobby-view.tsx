@@ -1,5 +1,6 @@
 import { Text, TextInput, View } from 'react-native';
 
+import { type useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import {
   KangurMobileCard as Card,
   KangurMobileFilterChip,
@@ -39,19 +40,13 @@ import {
   formatStatusLabel,
   localizeDuelText,
 } from './duels-utils';
+import { type useKangurMobileDuelLobbyChat } from './useKangurMobileDuelLobbyChat';
+import { type useKangurMobileDuelsLobby } from './useKangurMobileDuelsLobby';
 
-type DuelCopy = ReturnType<
-  typeof import('../i18n/kangurMobileI18n').useKangurMobileI18n
->['copy'];
-type DuelLocale = ReturnType<
-  typeof import('../i18n/kangurMobileI18n').useKangurMobileI18n
->['locale'];
-type DuelLobbyState = ReturnType<
-  (typeof import('./useKangurMobileDuelsLobby'))['useKangurMobileDuelsLobby']
->;
-type DuelChatState = ReturnType<
-  (typeof import('./useKangurMobileDuelLobbyChat'))['useKangurMobileDuelLobbyChat']
->;
+type DuelCopy = ReturnType<typeof useKangurMobileI18n>['copy'];
+type DuelLocale = ReturnType<typeof useKangurMobileI18n>['locale'];
+type DuelLobbyState = ReturnType<typeof useKangurMobileDuelsLobby>;
+type DuelChatState = ReturnType<typeof useKangurMobileDuelLobbyChat>;
 
 type DuelsLobbyViewProps = {
   activeLearnerId: string | null;

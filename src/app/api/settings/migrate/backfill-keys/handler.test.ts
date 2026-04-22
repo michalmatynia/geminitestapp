@@ -37,7 +37,7 @@ vi.mock('@/shared/lib/db/services/database-engine-operation-guards', () => ({
   assertDatabaseEngineOperationEnabled: assertDatabaseEngineOperationEnabledMock,
 }));
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 const createCursor = (rows: Array<{ _id: string }>) => ({
   limit: vi.fn().mockReturnValue({
@@ -100,7 +100,7 @@ describe('settings migrate backfill-keys handler', () => {
       }),
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/settings/migrate/backfill-keys', { method: 'POST' }),
       {} as ApiHandlerContext
     );
@@ -130,7 +130,7 @@ describe('settings migrate backfill-keys handler', () => {
     });
 
     await expect(
-      POST_handler(
+      postHandler(
         new NextRequest('http://localhost/api/settings/migrate/backfill-keys', { method: 'POST' }),
         {} as ApiHandlerContext
       )
@@ -153,7 +153,7 @@ describe('settings migrate backfill-keys handler', () => {
       }),
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/settings/migrate/backfill-keys', { method: 'POST' }),
       {} as ApiHandlerContext
     );

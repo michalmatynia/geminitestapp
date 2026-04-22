@@ -50,7 +50,7 @@ vi.mock('@/features/playwright/server', async (importOriginal) => {
 });
 
 import { DEFAULT_TRADERA_QUICKLIST_SCRIPT } from '@/features/integrations/services/tradera-listing/default-script';
-import { GET_handler, POST_handler } from './handler';
+import { getHandler, postHandler } from './handler';
 
 describe('integration connections handler', () => {
   beforeEach(() => {
@@ -205,7 +205,7 @@ describe('integration connections handler', () => {
   });
 
   it('includes scripted Tradera fields when listing connections', async () => {
-    const response = await GET_handler(
+    const response = await getHandler(
       new Request('http://localhost/api/v2/integrations/integration-tradera-1/connections') as never,
       {} as never,
       { id: 'integration-tradera-1' }
@@ -228,7 +228,7 @@ describe('integration connections handler', () => {
   });
 
   it('persists scripted Tradera fields when creating a connection', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       new Request('http://localhost/api/v2/integrations/integration-tradera-1/connections', {
         method: 'POST',
       }) as never,
@@ -284,7 +284,7 @@ describe('integration connections handler', () => {
       traderaParameterMapperCatalogJson: catalogJson,
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new Request('http://localhost/api/v2/integrations/integration-tradera-1/connections', {
         method: 'POST',
       }) as never,
@@ -330,7 +330,7 @@ describe('integration connections handler', () => {
       playwrightListingScript: null,
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new Request('http://localhost/api/v2/integrations/integration-tradera-1/connections', {
         method: 'POST',
       }) as never,
@@ -371,7 +371,7 @@ describe('integration connections handler', () => {
     });
 
     await expect(
-      POST_handler(
+      postHandler(
         new Request('http://localhost/api/v2/integrations/integration-tradera-1/connections', {
           method: 'POST',
         }) as never,
@@ -412,7 +412,7 @@ describe('integration connections handler', () => {
       traderaApiSandbox: false,
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new Request('http://localhost/api/v2/integrations/integration-vinted-1/connections', {
         method: 'POST',
       }) as never,
@@ -468,7 +468,7 @@ describe('integration connections handler', () => {
       },
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new Request('http://localhost/api/v2/integrations/integration-playwright-1/connections', {
         method: 'POST',
       }) as never,
@@ -528,7 +528,7 @@ describe('integration connections handler', () => {
     );
 
     await expect(
-      POST_handler(
+      postHandler(
         new Request('http://localhost/api/v2/integrations/integration-playwright-1/connections', {
           method: 'POST',
         }) as never,
@@ -562,7 +562,7 @@ describe('integration connections handler', () => {
       },
     ]);
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new Request('http://localhost/api/v2/integrations/integration-tradera-1/connections') as never,
       {} as never,
       { id: 'integration-tradera-1' }
@@ -601,7 +601,7 @@ describe('integration connections handler', () => {
       },
     ]);
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new Request('http://localhost/api/v2/integrations/integration-playwright-1/connections') as never,
       {} as never,
       { id: 'integration-playwright-1' }

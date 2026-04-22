@@ -26,7 +26,7 @@ vi.mock('@/features/ai/insights/workers/aiInsightsQueue', () => ({
   startAiInsightsQueue: startAiInsightsQueueMock,
 }));
 
-import { GET_handler } from '@/app/api/ai-paths/runtime-analytics/summary/handler';
+import { getHandler } from '@/app/api/ai-paths/runtime-analytics/summary/handler';
 import { authError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import type { AiPathRuntimeAnalyticsSummaryResponse } from '@/shared/contracts/ai-paths';
@@ -49,7 +49,7 @@ describe('AI Paths runtime analytics summary handler', () => {
   it('returns disabled fallback summary with trace analytics when access is unauthorized', async () => {
     requireAiPathsAccessMock.mockRejectedValue(authError());
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/ai-paths/runtime-analytics/summary?range=24h'),
       mockContext
     );
@@ -170,7 +170,7 @@ describe('AI Paths runtime analytics summary handler', () => {
       generatedAt: '2026-02-20T23:59:59.999Z',
     });
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/ai-paths/runtime-analytics/summary?range=24h'),
       mockContext
     );

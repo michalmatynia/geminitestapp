@@ -11,7 +11,7 @@ const SANDBOX_AUTH_URL =
   process.env['ALLEGRO_SANDBOX_AUTH_URL'] ??
   'https://allegro.pl.allegrosandbox.pl/auth/oauth/authorize';
 
-export async function GET_handler(
+export async function getHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string; connectionId: string }

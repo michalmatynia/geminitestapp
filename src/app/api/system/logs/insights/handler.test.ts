@@ -39,11 +39,11 @@ describe('system logs insights handler', () => {
   });
 
   it('parses the shared insights list query DTO before loading history', async () => {
-    const { GET_handler } = await import('./handler');
+    const { getHandler } = await import('./handler');
 
     listAiInsightsMock.mockResolvedValue([{ id: 'insight-1' }]);
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/system/logs/insights?limit=7'),
       {} as never
     );
@@ -58,7 +58,7 @@ describe('system logs insights handler', () => {
   });
 
   it('resolves registry context before generating a logs insight', async () => {
-    const { POST_handler } = await import('./handler');
+    const { postHandler } = await import('./handler');
 
     resolveObservabilityContextRegistryEnvelopeMock.mockResolvedValue({
       refs: [
@@ -102,7 +102,7 @@ describe('system logs insights handler', () => {
       }),
     });
 
-    const response = await POST_handler(req, {} as never);
+    const response = await postHandler(req, {} as never);
     const data = await response.json();
 
     expect(assertSettingsManageAccessMock).toHaveBeenCalledTimes(1);

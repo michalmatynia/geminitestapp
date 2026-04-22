@@ -37,7 +37,7 @@ type AgentRunRouteRecord = Pick<
 
 type AgentRunStatusRecord = Pick<AgentRuntimeRunRecord, 'id' | 'status'>;
 
-async function GET_handler(
+async function getHandler(
   _req: NextRequest,
   { params }: { params: Promise<{ runId: string }> }
 ): Promise<Response> {
@@ -64,7 +64,7 @@ async function GET_handler(
   return NextResponse.json({ run });
 }
 
-async function POST_handler(
+async function postHandler(
   req: NextRequest,
   { params }: { params: Promise<{ runId: string }> }
 ): Promise<Response> {
@@ -385,7 +385,7 @@ async function POST_handler(
   return NextResponse.json({ status: updated.status });
 }
 
-async function DELETE_handler(
+async function deleteHandler(
   req: NextRequest,
   { params }: { params: Promise<{ runId: string }> }
 ): Promise<Response> {
@@ -429,15 +429,15 @@ async function DELETE_handler(
 }
 
 export const GET = apiHandlerWithParams<{ runId: string }>(
-  async (req: NextRequest, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }),
+  async (req: NextRequest, _ctx, params) => getHandler(req, { params: Promise.resolve(params) }),
   { source: 'chatbot.agent.[runId].GET', requireAuth: true }
 );
 export const POST = apiHandlerWithParams<{ runId: string }>(
-  async (req: NextRequest, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }),
+  async (req: NextRequest, _ctx, params) => postHandler(req, { params: Promise.resolve(params) }),
   { source: 'chatbot.agent.[runId].POST', requireAuth: true }
 );
 export const DELETE = apiHandlerWithParams<{ runId: string }>(
   async (req: NextRequest, _ctx, params) =>
-    DELETE_handler(req, { params: Promise.resolve(params) }),
+    deleteHandler(req, { params: Promise.resolve(params) }),
   { source: 'chatbot.agent.[runId].DELETE', requireAuth: true }
 );

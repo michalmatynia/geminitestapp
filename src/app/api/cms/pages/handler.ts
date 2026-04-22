@@ -46,7 +46,7 @@ async function getCmsPagesCached() {
   return cmsRepository.getPages();
 }
 
-export async function GET_handler(
+export async function getHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<NextResponse | Response> {
@@ -57,7 +57,7 @@ export async function GET_handler(
  * POST /api/cms/pages
  * Creates a new page.
  */
-export async function POST_handler(
+export async function postHandler(
   req: NextRequest,
   ctx: ApiHandlerContext
 ): Promise<NextResponse | Response> {

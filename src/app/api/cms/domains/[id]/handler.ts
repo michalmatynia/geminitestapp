@@ -6,7 +6,7 @@ import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { IdDto as ApiParams } from '@/shared/contracts/base';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
-export async function PUT_handler(
+export async function putHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: ApiParams
@@ -22,7 +22,7 @@ export async function PUT_handler(
   return NextResponse.json(updated ?? {});
 }
 
-export async function DELETE_handler(
+export async function deleteHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: ApiParams

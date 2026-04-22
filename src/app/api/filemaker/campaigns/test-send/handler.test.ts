@@ -17,7 +17,7 @@ vi.mock('@/features/filemaker/server', () => ({
   sendFilemakerEmailCampaignTest: sendFilemakerEmailCampaignTestMock,
 }));
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 describe('filemaker campaign test send handler', () => {
   beforeEach(() => {
@@ -34,7 +34,7 @@ describe('filemaker campaign test send handler', () => {
       sentAt: '2026-04-02T12:00:00.000Z',
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/filemaker/campaigns/test-send', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -85,7 +85,7 @@ describe('filemaker campaign test send handler', () => {
           recipientEmail: 'qa@example.com',
         }),
       }),
-      {} as Parameters<typeof POST_handler>[1]
+      {} as Parameters<typeof postHandler>[1]
     );
 
     expect(assertSettingsManageAccessMock).toHaveBeenCalled();

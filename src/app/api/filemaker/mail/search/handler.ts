@@ -12,7 +12,7 @@ const querySchema = z.object({
   accountId: optionalTrimmedQueryString(),
 });
 
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await requireFilemakerMailAdminSession();
   const { query, accountId } = querySchema.parse(
     Object.fromEntries(req.nextUrl.searchParams.entries())

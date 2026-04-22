@@ -24,7 +24,7 @@ vi.mock('@/shared/utils/observability/error-system', () => ({
   },
 }));
 
-import { DELETE_handler, POST_handler, deleteQuerySchema } from './handler';
+import { deleteHandler, postHandler, deleteQuerySchema } from './handler';
 
 describe('image-studio project folders handler module', () => {
   beforeEach(() => {
@@ -32,8 +32,8 @@ describe('image-studio project folders handler module', () => {
   });
 
   it('exports the supported handlers and query schema', () => {
-    expect(typeof POST_handler).toBe('function');
-    expect(typeof DELETE_handler).toBe('function');
+    expect(typeof postHandler).toBe('function');
+    expect(typeof deleteHandler).toBe('function');
     expect(typeof deleteQuerySchema.safeParse).toBe('function');
   });
 
@@ -47,7 +47,7 @@ describe('image-studio project folders handler module', () => {
       deletedSlotIds: ['slot-a', 'slot-b', 'slot-a-child'],
     });
 
-    const response = await DELETE_handler(
+    const response = await deleteHandler(
       new NextRequest('http://localhost/api/image-studio/projects/project-1/folders?folder=cards/folder-a'),
       {
         query: { folder: 'cards/folder-a' },
@@ -78,7 +78,7 @@ describe('image-studio project folders handler module', () => {
       .mockRejectedValueOnce(deleteError)
       .mockResolvedValueOnce({ deletedSlotIds: [] });
 
-    const response = await DELETE_handler(
+    const response = await deleteHandler(
       new NextRequest('http://localhost/api/image-studio/projects/project-1/folders?folder=cards/folder-a'),
       {
         query: { folder: 'cards/folder-a' },

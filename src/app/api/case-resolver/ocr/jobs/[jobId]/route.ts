@@ -1,14 +1,14 @@
 
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 
-import { GET_handler, POST_handler } from './handler';
+import { getHandler, postHandler } from './handler';
 
-export const GET = apiHandlerWithParams<{ jobId: string }>(GET_handler, {
+export const GET = apiHandlerWithParams<{ jobId: string }>(getHandler, {
   source: 'case-resolver.ocr.jobs.[jobId].GET',
   requireAuth: true,
 });
 
-export const POST = apiHandlerWithParams<{ jobId: string }>(POST_handler, {
+export const POST = apiHandlerWithParams<{ jobId: string }>(postHandler, {
   source: 'case-resolver.ocr.jobs.[jobId].POST',
   requireAuth: true,
 });

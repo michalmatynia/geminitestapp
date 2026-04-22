@@ -16,7 +16,7 @@ vi.mock('@/features/filemaker/server/campaign-settings-store', () => ({
   upsertFilemakerCampaignSettingValue: upsertFilemakerCampaignSettingValueMock,
 }));
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 describe('filemaker campaign preferences handler', () => {
   beforeEach(() => {
@@ -87,7 +87,7 @@ describe('filemaker campaign preferences handler', () => {
       ttlMs: 1000 * 60 * 60,
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/filemaker/campaigns/preferences', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -97,7 +97,7 @@ describe('filemaker campaign preferences handler', () => {
           source: 'preferences-center',
         }),
       }),
-      {} as Parameters<typeof POST_handler>[1]
+      {} as Parameters<typeof postHandler>[1]
     );
 
     const suppressionWrite = upsertFilemakerCampaignSettingValueMock.mock.calls.find(
@@ -137,7 +137,7 @@ describe('filemaker campaign preferences handler', () => {
       ttlMs: 1000 * 60 * 60,
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/filemaker/campaigns/preferences', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -147,7 +147,7 @@ describe('filemaker campaign preferences handler', () => {
           source: 'preferences-center-all-campaigns',
         }),
       }),
-      {} as Parameters<typeof POST_handler>[1]
+      {} as Parameters<typeof postHandler>[1]
     );
 
     const eventWrite = upsertFilemakerCampaignSettingValueMock.mock.calls.find(
@@ -240,7 +240,7 @@ describe('filemaker campaign preferences handler', () => {
       ttlMs: 1000 * 60 * 60,
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/filemaker/campaigns/preferences', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -249,7 +249,7 @@ describe('filemaker campaign preferences handler', () => {
           action: 'resubscribe',
         }),
       }),
-      {} as Parameters<typeof POST_handler>[1]
+      {} as Parameters<typeof postHandler>[1]
     );
 
     const suppressionWrite = upsertFilemakerCampaignSettingValueMock.mock.calls.find(
@@ -347,7 +347,7 @@ describe('filemaker campaign preferences handler', () => {
       ttlMs: 1000 * 60 * 60,
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/filemaker/campaigns/preferences', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -356,7 +356,7 @@ describe('filemaker campaign preferences handler', () => {
           action: 'resubscribe',
         }),
       }),
-      {} as Parameters<typeof POST_handler>[1]
+      {} as Parameters<typeof postHandler>[1]
     );
 
     expect(upsertFilemakerCampaignSettingValueMock).not.toHaveBeenCalled();
@@ -372,7 +372,7 @@ describe('filemaker campaign preferences handler', () => {
 
   it('rejects invalid preferences tokens', async () => {
     await expect(
-      POST_handler(
+      postHandler(
         new NextRequest('http://localhost/api/filemaker/campaigns/preferences', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
@@ -381,7 +381,7 @@ describe('filemaker campaign preferences handler', () => {
             action: 'unsubscribe',
           }),
         }),
-        {} as Parameters<typeof POST_handler>[1]
+        {} as Parameters<typeof postHandler>[1]
       )
     ).rejects.toThrow('Invalid or expired preferences token.');
 

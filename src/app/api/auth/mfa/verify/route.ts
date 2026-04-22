@@ -1,9 +1,9 @@
 
 import { apiHandler } from '@/shared/lib/api/api-handler';
 
-import { payloadSchema, POST_handler } from './handler';
+import { payloadSchema, postHandler } from './handler';
 
-export const POST = apiHandler(POST_handler, {
+export const POST = apiHandler(postHandler, {
   source: 'auth.mfa.verify.POST',
   parseJsonBody: true,
   bodySchema: payloadSchema,

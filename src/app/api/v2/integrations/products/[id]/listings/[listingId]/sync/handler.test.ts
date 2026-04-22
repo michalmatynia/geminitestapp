@@ -30,7 +30,7 @@ vi.mock('@/features/jobs/server', () => ({
   initializeQueues: (...args: unknown[]) => initializeQueuesMock(...args),
 }));
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 describe('integration listing sync handler', () => {
   beforeEach(() => {
@@ -57,7 +57,7 @@ describe('integration listing sync handler', () => {
   });
 
   it('forwards selectorProfile overrides through for Tradera browser sync jobs', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       new Request('http://localhost/api', {
         method: 'POST',
         body: JSON.stringify({ selectorProfile: 'profile-market-a' }),

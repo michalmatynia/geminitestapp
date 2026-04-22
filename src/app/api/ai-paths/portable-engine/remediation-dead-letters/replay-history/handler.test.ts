@@ -46,7 +46,7 @@ vi.mock('@/shared/lib/ai-paths/portable-engine/server', () => ({
     resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayExportSecretFromEnvironmentMock,
 }));
 
-import { GET_handler } from './handler';
+import { getHandler } from './handler';
 
 const readPotentiallyGzippedResponseText = async (response: Response): Promise<string> => {
   const bytes = Buffer.from(await response.arrayBuffer());
@@ -126,11 +126,11 @@ describe('ai-paths portable-engine remediation dead-letter replay history handle
   });
 
   it('returns replay history records and signs export payload when configured', async () => {
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest(
         'http://localhost/api/ai-paths/portable-engine/remediation-dead-letters/replay-history?limit=10'
       ),
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
 
     expect(response.status).toBe(200);
@@ -199,11 +199,11 @@ describe('ai-paths portable-engine remediation dead-letter replay history handle
   });
 
   it('includes attempts when includeAttempts=true and supports unsigned export', async () => {
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest(
         'http://localhost/api/ai-paths/portable-engine/remediation-dead-letters/replay-history?includeAttempts=true&signed=false'
       ),
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
 
     expect(response.status).toBe(200);
@@ -274,11 +274,11 @@ describe('ai-paths portable-engine remediation dead-letter replay history handle
       pageSize: 200,
     });
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest(
         'http://localhost/api/ai-paths/portable-engine/remediation-dead-letters/replay-history?includeAttempts=true'
       ),
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
 
     expect(response.status).toBe(200);
@@ -298,11 +298,11 @@ describe('ai-paths portable-engine remediation dead-letter replay history handle
   });
 
   it('supports ndjson export format with signature headers', async () => {
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest(
         'http://localhost/api/ai-paths/portable-engine/remediation-dead-letters/replay-history?includeAttempts=true&format=ndjson'
       ),
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
 
     expect(response.status).toBe(200);
@@ -379,7 +379,7 @@ describe('ai-paths portable-engine remediation dead-letter replay history handle
       pageSize: 200,
     });
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest(
         'http://localhost/api/ai-paths/portable-engine/remediation-dead-letters/replay-history?includeAttempts=true&format=ndjson',
         {
@@ -388,7 +388,7 @@ describe('ai-paths portable-engine remediation dead-letter replay history handle
           },
         }
       ),
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
 
     expect(response.status).toBe(200);
@@ -413,11 +413,11 @@ describe('ai-paths portable-engine remediation dead-letter replay history handle
   });
 
   it('supports csv export format', async () => {
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest(
         'http://localhost/api/ai-paths/portable-engine/remediation-dead-letters/replay-history?format=csv'
       ),
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
 
     expect(response.status).toBe(200);
@@ -473,7 +473,7 @@ describe('ai-paths portable-engine remediation dead-letter replay history handle
       pageSize: 200,
     });
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest(
         'http://localhost/api/ai-paths/portable-engine/remediation-dead-letters/replay-history?format=csv',
         {
@@ -482,7 +482,7 @@ describe('ai-paths portable-engine remediation dead-letter replay history handle
           },
         }
       ),
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
 
     expect(response.status).toBe(200);
@@ -576,11 +576,11 @@ describe('ai-paths portable-engine remediation dead-letter replay history handle
       pageSize: 200,
     });
 
-    const firstResponse = await GET_handler(
+    const firstResponse = await getHandler(
       new NextRequest(
         'http://localhost/api/ai-paths/portable-engine/remediation-dead-letters/replay-history?limit=1'
       ),
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
     expect(firstResponse.status).toBe(200);
     const firstPayload = (await firstResponse.json()) as Record<string, unknown>;
@@ -598,11 +598,11 @@ describe('ai-paths portable-engine remediation dead-letter replay history handle
     const nextCursor = String(firstPagination['nextCursor']);
     expect(nextCursor.length).toBeGreaterThan(10);
 
-    const secondResponse = await GET_handler(
+    const secondResponse = await getHandler(
       new NextRequest(
         `http://localhost/api/ai-paths/portable-engine/remediation-dead-letters/replay-history?limit=1&cursor=${encodeURIComponent(nextCursor)}`
       ),
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
     expect(secondResponse.status).toBe(200);
     const secondPayload = (await secondResponse.json()) as Record<string, unknown>;
@@ -614,40 +614,40 @@ describe('ai-paths portable-engine remediation dead-letter replay history handle
 
   it('rejects invalid query parameters', async () => {
     await expect(
-      GET_handler(
+      getHandler(
         new NextRequest(
           'http://localhost/api/ai-paths/portable-engine/remediation-dead-letters/replay-history?limit=0'
         ),
-        {} as Parameters<typeof GET_handler>[1]
+        {} as Parameters<typeof getHandler>[1]
       )
     ).rejects.toThrow('Remediation replay history limit must be between 1 and 200.');
 
     await expect(
-      GET_handler(
+      getHandler(
         new NextRequest(
           'http://localhost/api/ai-paths/portable-engine/remediation-dead-letters/replay-history?from=2026-03-05T02:00:00.000Z&to=2026-03-05T01:00:00.000Z'
         ),
-        {} as Parameters<typeof GET_handler>[1]
+        {} as Parameters<typeof getHandler>[1]
       )
     ).rejects.toThrow(
       'Remediation replay history "from" timestamp must be earlier than or equal to "to".'
     );
 
     await expect(
-      GET_handler(
+      getHandler(
         new NextRequest(
           'http://localhost/api/ai-paths/portable-engine/remediation-dead-letters/replay-history?format=xml'
         ),
-        {} as Parameters<typeof GET_handler>[1]
+        {} as Parameters<typeof getHandler>[1]
       )
     ).rejects.toThrow('Remediation replay history "format" must be one of: json, ndjson, csv.');
 
     await expect(
-      GET_handler(
+      getHandler(
         new NextRequest(
           'http://localhost/api/ai-paths/portable-engine/remediation-dead-letters/replay-history?cursor=invalid'
         ),
-        {} as Parameters<typeof GET_handler>[1]
+        {} as Parameters<typeof getHandler>[1]
       )
     ).rejects.toThrow('Remediation replay history cursor is invalid.');
 
@@ -662,11 +662,11 @@ describe('ai-paths portable-engine remediation dead-letter replay history handle
       'utf8'
     ).toString('base64url');
     await expect(
-      GET_handler(
+      getHandler(
         new NextRequest(
           `http://localhost/api/ai-paths/portable-engine/remediation-dead-letters/replay-history?from=2026-03-05T00:00:00.000Z&cursor=${encodeURIComponent(mismatchedCursor)}`
         ),
-        {} as Parameters<typeof GET_handler>[1]
+        {} as Parameters<typeof getHandler>[1]
       )
     ).rejects.toThrow('Remediation replay history cursor is invalid.');
   });

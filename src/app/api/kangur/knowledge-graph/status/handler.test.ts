@@ -17,7 +17,7 @@ vi.mock('@/features/kangur/server/knowledge-graph/status-loader', () => ({
   getKangurKnowledgeGraphStatusSnapshot: getKangurKnowledgeGraphStatusSnapshotMock,
 }));
 
-import { GET_handler } from './handler';
+import { getHandler } from './handler';
 
 const createRequestContext = (query?: unknown): ApiHandlerContext =>
   ({
@@ -38,7 +38,7 @@ describe('kangur knowledge graph status handler', () => {
     assertSettingsManageAccessMock.mockRejectedValue(authError('Unauthorized.'));
 
     await expect(
-      GET_handler(
+      getHandler(
         new NextRequest('http://localhost/api/kangur/knowledge-graph/status'),
         createRequestContext()
       )
@@ -73,7 +73,7 @@ describe('kangur knowledge graph status handler', () => {
       semanticReadiness: 'vector_ready',
     });
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest(
         'http://localhost/api/kangur/knowledge-graph/status?graphKey=kangur-website-help-v1'
       ),
@@ -99,7 +99,7 @@ describe('kangur knowledge graph status handler', () => {
     const invalidGraphKey = 'x'.repeat(161);
 
     await expect(
-      GET_handler(
+      getHandler(
         new NextRequest(
           `http://localhost/api/kangur/knowledge-graph/status?graphKey=${invalidGraphKey}`
         ),
@@ -116,7 +116,7 @@ describe('kangur knowledge graph status handler', () => {
     });
 
     await expect(
-      GET_handler(
+      getHandler(
         new NextRequest('http://localhost/api/kangur/knowledge-graph/status'),
         createRequestContext()
       )

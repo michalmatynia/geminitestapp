@@ -41,7 +41,7 @@ vi.mock('@/shared/lib/ai-paths/services/path-run-repository', async (importOrigi
   };
 });
 
-import { GET_handler, __testOnly } from '@/app/api/ai-paths/runs/handler';
+import { getHandler, __testOnly } from '@/app/api/ai-paths/runs/handler';
 
 const mockContext: ApiHandlerContext = {
   requestId: 'test-req-id',
@@ -92,7 +92,7 @@ describe('AI Paths runs list handler', () => {
   });
 
   it('passes nodeId filter through to repository list options', async () => {
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest(
         'http://localhost/api/ai-paths/runs?pathId=path-node-filter&nodeId=node-42&status=failed&limit=25&offset=5'
       ),
@@ -112,13 +112,13 @@ describe('AI Paths runs list handler', () => {
   });
 
   it('uses distinct cache keys for different node filters', async () => {
-    await GET_handler(
+    await getHandler(
       new NextRequest(
         'http://localhost/api/ai-paths/runs?pathId=cache-key-path&nodeId=node-a&limit=1'
       ),
       mockContext
     );
-    await GET_handler(
+    await getHandler(
       new NextRequest(
         'http://localhost/api/ai-paths/runs?pathId=cache-key-path&nodeId=node-b&limit=1'
       ),
@@ -141,7 +141,7 @@ describe('AI Paths runs list handler', () => {
   });
 
   it('treats status=all as an unfiltered run list', async () => {
-    await GET_handler(
+    await getHandler(
       new NextRequest('http://localhost/api/ai-paths/runs?status=all&limit=25&offset=0'),
       mockContext
     );
@@ -150,7 +150,7 @@ describe('AI Paths runs list handler', () => {
   });
 
   it('forwards source and sourceMode when source is provided', async () => {
-    await GET_handler(
+    await getHandler(
       new NextRequest(
         'http://localhost/api/ai-paths/runs?source=ai_paths_ui&sourceMode=exclude&limit=50'
       ),
@@ -167,7 +167,7 @@ describe('AI Paths runs list handler', () => {
   it('allows explicit global visibility for users with global run access', async () => {
     canAccessGlobalAiPathRunsMock.mockReturnValue(true);
 
-    await GET_handler(
+    await getHandler(
       new NextRequest('http://localhost/api/ai-paths/runs?visibility=global&limit=10'),
       mockContext
     );
@@ -177,7 +177,7 @@ describe('AI Paths runs list handler', () => {
 
   it('rejects explicit global visibility without global run access', async () => {
     await expect(
-      GET_handler(
+      getHandler(
         new NextRequest('http://localhost/api/ai-paths/runs?visibility=global&limit=10'),
         mockContext
       )
@@ -189,11 +189,11 @@ describe('AI Paths runs list handler', () => {
       .mockResolvedValueOnce({ runs: [], total: 1 })
       .mockResolvedValueOnce({ runs: [], total: 2 });
 
-    const first = await GET_handler(
+    const first = await getHandler(
       new NextRequest('http://localhost/api/ai-paths/runs?pathId=fresh-run-cache&fresh=1'),
       mockContext
     );
-    const second = await GET_handler(
+    const second = await getHandler(
       new NextRequest('http://localhost/api/ai-paths/runs?pathId=fresh-run-cache&fresh=1'),
       mockContext
     );
@@ -206,11 +206,11 @@ describe('AI Paths runs list handler', () => {
   it('uses distinct cache keys for scoped and global visibility', async () => {
     canAccessGlobalAiPathRunsMock.mockReturnValue(true);
 
-    await GET_handler(
+    await getHandler(
       new NextRequest('http://localhost/api/ai-paths/runs?pathId=visibility-split&limit=1'),
       mockContext
     );
-    await GET_handler(
+    await getHandler(
       new NextRequest(
         'http://localhost/api/ai-paths/runs?pathId=visibility-split&limit=1&visibility=global'
       ),
@@ -229,7 +229,7 @@ describe('AI Paths runs list handler', () => {
   });
 
   it('ignores sourceMode when source is missing', async () => {
-    await GET_handler(
+    await getHandler(
       new NextRequest('http://localhost/api/ai-paths/runs?sourceMode=exclude&limit=10'),
       mockContext
     );

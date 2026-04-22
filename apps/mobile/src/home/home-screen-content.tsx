@@ -31,7 +31,6 @@ import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import { createKangurLessonHref } from '../lessons/lessonHref';
 import { createKangurPracticeHref } from '../practice/practiceHref';
 import { useKangurMobileRuntime } from '../providers/KangurRuntimeContext';
-import { formatKangurMobileScoreOperation } from '../scores/mobileScoreSummary';
 import {
   COMPETITION_ROUTE,
   DUELS_ROUTE,
@@ -949,8 +948,11 @@ export function HomeScreenContent({
         supportsLearnerCredentials,
       })
     : null;
-  const homeHeroLearnerName =
-    session.user?.activeLearner?.displayName?.trim() || session.user?.full_name?.trim() || null;
+  const activeLearnerDisplayName = session.user?.activeLearner?.displayName?.trim() ?? '';
+  const userFullName = session.user?.full_name?.trim() ?? '';
+  const homeHeroLearnerName = activeLearnerDisplayName !== ''
+    ? activeLearnerDisplayName
+    : (userFullName !== '' ? userFullName : null);
   const canOpenParentDashboard =
     session.status === 'authenticated' && Boolean(session.user?.canManageLearners);
   const activeDuelLearnerId = session.user?.activeLearner?.id ?? session.user?.id ?? null;
@@ -1053,7 +1055,7 @@ export function HomeScreenContent({
         isEnabled={areDeferredHomeHeroDetailsReady}
         isLiveProgressReady={isLiveHomeProgressReady}
       >
-        {({ homeHeroRecentCheckpoint, homeHeroRecentCheckpointCount }) => (
+        {({ homeHeroRecentCheckpoint: _homeHeroRecentCheckpoint, homeHeroRecentCheckpointCount: _homeHeroRecentCheckpointCount }) => (
           <SafeAreaView style={{ backgroundColor: '#fffaf2', flex: 1 }}>
             <ScrollView
               contentContainerStyle={{

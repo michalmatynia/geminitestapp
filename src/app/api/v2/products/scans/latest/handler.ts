@@ -21,7 +21,7 @@ export const querySchema = z.object({
   productIds: csvStringArraySchema,
 });
 
-export async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const query = querySchema.parse({
     ...Object.fromEntries(new URL(req.url).searchParams.entries()),
     ...((ctx.query ?? {}) as Record<string, unknown>),

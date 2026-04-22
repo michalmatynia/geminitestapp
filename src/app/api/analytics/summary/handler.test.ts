@@ -16,7 +16,7 @@ vi.mock('@/shared/lib/analytics/server', () => ({
   getAnalyticsSummary: getAnalyticsSummaryMock,
 }));
 
-import { GET_handler } from './handler';
+import { getHandler } from './handler';
 
 const createRequestContext = (query: Record<string, unknown>): ApiHandlerContext =>
   ({
@@ -61,7 +61,7 @@ describe('analytics summary handler', () => {
   });
 
   it('uses default summary query values when filters are omitted', async () => {
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/analytics/summary'),
       createRequestContext({})
     );
@@ -75,7 +75,7 @@ describe('analytics summary handler', () => {
   });
 
   it('passes scope and range filters through to the repository', async () => {
-    await GET_handler(
+    await getHandler(
       new NextRequest('http://localhost/api/analytics/summary'),
       createRequestContext({
         range: '7d',

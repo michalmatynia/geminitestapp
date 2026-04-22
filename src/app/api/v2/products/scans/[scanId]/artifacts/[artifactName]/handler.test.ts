@@ -16,7 +16,7 @@ vi.mock('@/features/playwright/server', () => ({
   readPlaywrightEngineArtifact: (...args: unknown[]) => readPlaywrightEngineArtifactMock(...args),
 }));
 
-import { GET_handler, paramsSchema } from './handler';
+import { getHandler, paramsSchema } from './handler';
 
 describe('products/scans/[scanId]/artifacts/[artifactName] handler', () => {
   beforeEach(() => {
@@ -24,7 +24,7 @@ describe('products/scans/[scanId]/artifacts/[artifactName] handler', () => {
   });
 
   it('exports the artifact handler and params schema', () => {
-    expect(typeof GET_handler).toBe('function');
+    expect(typeof getHandler).toBe('function');
     expect(typeof paramsSchema.safeParse).toBe('function');
   });
 
@@ -43,7 +43,7 @@ describe('products/scans/[scanId]/artifacts/[artifactName] handler', () => {
       content: Buffer.from('png-bytes'),
     });
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/v2/products/scans/scan-1/artifacts/amazon-scan-stage.png'),
       {} as ApiHandlerContext,
       {
@@ -72,7 +72,7 @@ describe('products/scans/[scanId]/artifacts/[artifactName] handler', () => {
     });
 
     await expect(
-      GET_handler(
+      getHandler(
         new NextRequest('http://localhost/api/v2/products/scans/scan-1/artifacts/amazon-scan-stage.png'),
         {} as ApiHandlerContext,
         {

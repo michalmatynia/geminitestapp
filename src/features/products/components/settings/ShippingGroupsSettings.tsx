@@ -25,6 +25,7 @@ import {
   normalizeShippingGroupRuleCategoryIds,
 } from '@/shared/lib/products/utils/shipping-group-rule-conflicts';
 import { Alert } from '@/shared/ui/alert';
+import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
 import { EmptyState } from '@/shared/ui/empty-state';
 import { FormField, FormSection } from '@/shared/ui/form-section';
@@ -44,6 +45,7 @@ import {
   DRAFT_SHIPPING_GROUP_ID,
   readConflictMetaFromApiError,
   formatShippingGroupConflictMessage,
+  isShippingGroupNotFoundError,
   summarizeRuleDescendantCoverage,
 } from '../../utils/shipping-group-settings-utils';
 
@@ -245,6 +247,11 @@ export function ShippingGroupsSettings(): React.JSX.Element {
         action: 'deleteShippingGroup',
         shippingGroupId: shippingGroupToDelete.id,
       });
+      if (isShippingGroupNotFoundError(error)) {
+        toast('Shipping group was already removed.', { variant: 'success' });
+        onRefresh();
+        return;
+      }
       const message = error instanceof Error ? error.message : 'Failed to delete shipping group.';
       toast(message, { variant: 'error' });
     } finally {
@@ -744,14 +751,29 @@ export function ShippingGroupsSettings(): React.JSX.Element {
                     <p className='text-xs font-medium text-foreground'>
                       Selected categories ({formData.autoAssignCategoryIds.length})
                     </p>
-                    <p className='text-xs text-muted-foreground'>
-                      {formData.autoAssignCategoryIds
-                        .map(
-                          (categoryId) =>
-                            modalCategoryLabelById.get(categoryId) ?? categoryId
-                        )
-                        .join(', ')}
-                    </p>
+                    <div className='flex flex-wrap gap-2'>
+                      {formData.autoAssignCategoryIds.map((categoryId) => {
+                        const categoryLabel = modalCategoryLabelById.get(categoryId) ?? categoryId;
+
+                        return (
+                          <Badge
+                            key={categoryId}
+                            variant='outline'
+                            onRemove={(): void =>
+                              setFormData((prev: ShippingGroupFormData) => ({
+                                ...prev,
+                                autoAssignCategoryIds: prev.autoAssignCategoryIds.filter(
+                                  (selectedCategoryId) => selectedCategoryId !== categoryId
+                                ),
+                              }))
+                            }
+                            removeLabel={`Remove ${categoryLabel}`}
+                          >
+                            {categoryLabel}
+                          </Badge>
+                        );
+                      })}
+                    </div>
                   </div>
                 ) : null}
               </div>

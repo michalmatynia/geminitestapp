@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { DELETE_handler, PUT_handler, productCustomFieldUpdateSchema } from './handler';
+import { deleteHandler, putHandler, productCustomFieldUpdateSchema } from './handler';
 
 describe('product custom-fields by-id handler module', () => {
   it('exports the supported handlers and schema', () => {
-    expect(typeof PUT_handler).toBe('function');
-    expect(typeof DELETE_handler).toBe('function');
+    expect(typeof putHandler).toBe('function');
+    expect(typeof deleteHandler).toBe('function');
     expect(typeof productCustomFieldUpdateSchema.safeParse).toBe('function');
   });
 });

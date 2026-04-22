@@ -225,7 +225,7 @@ async function buildServerPolygonMaskBuffer({
     .toBuffer();
 }
 
-export async function POST_handler(
+export async function postHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { slotId: string }

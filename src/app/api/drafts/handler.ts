@@ -13,7 +13,7 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
  * GET /api/drafts
  * List all product drafts
  */
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const drafts = await listDrafts();
   return NextResponse.json(drafts);
 }
@@ -22,7 +22,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
  * POST /api/drafts
  * Create a new product draft
  */
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, createDraftPayloadSchema, {
     logPrefix: 'drafts.POST',
   });

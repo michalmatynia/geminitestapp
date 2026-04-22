@@ -26,7 +26,7 @@ vi.mock('@/features/jobs/server', () => ({
   enqueueFilemakerEmailCampaignRunJob: enqueueFilemakerEmailCampaignRunJobMock,
 }));
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 describe('filemaker campaign run launch handler', () => {
   beforeEach(() => {
@@ -46,7 +46,7 @@ describe('filemaker campaign run launch handler', () => {
       queuedDeliveryCount: 0,
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/filemaker/campaigns/runs', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -55,7 +55,7 @@ describe('filemaker campaign run launch handler', () => {
           mode: 'dry_run',
         }),
       }),
-      {} as Parameters<typeof POST_handler>[1]
+      {} as Parameters<typeof postHandler>[1]
     );
 
     expect(assertSettingsManageAccessMock).toHaveBeenCalled();
@@ -82,7 +82,7 @@ describe('filemaker campaign run launch handler', () => {
       queuedDeliveryCount: 2,
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/filemaker/campaigns/runs', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -92,7 +92,7 @@ describe('filemaker campaign run launch handler', () => {
           launchReason: 'Manual launch',
         }),
       }),
-      {} as Parameters<typeof POST_handler>[1]
+      {} as Parameters<typeof postHandler>[1]
     );
 
     expect(startFilemakerEmailCampaignQueueMock).toHaveBeenCalled();

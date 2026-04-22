@@ -4,6 +4,7 @@ import Link from 'next/link';
 import React from 'react';
 
 import { KangurAdminContentShell } from '@/features/kangur/admin/components/KangurAdminContentShell';
+import { KangurDocumentationCenter } from '@/features/kangur/admin/components/KangurDocumentationCenter';
 import { KangurDocumentationTooltipSettingsPanel } from '@/features/kangur/admin/components/KangurDocumentationTooltipSettingsPanel';
 import { DocumentationStatusPanel } from './components/DocumentationStatusPanel';
 import {
@@ -51,6 +52,7 @@ export function AdminKangurDocumentationPage(): React.JSX.Element {
           aria-describedby={DOCUMENTATION_WORKSPACE_DESCRIPTION_ID}
           className='space-y-8 outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ring-offset-background'
         >
+          <KangurDocumentationCenter />
           <div
             className={`${KANGUR_GRID_ROOMY_CLASSNAME} xl:grid-cols-[minmax(0,1.4fr)_minmax(0,0.9fr)]`}
           >

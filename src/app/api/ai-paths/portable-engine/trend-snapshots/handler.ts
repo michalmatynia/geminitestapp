@@ -311,7 +311,7 @@ const buildRunExecutionSummary = (): {
   }
 };
 
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await requireAiPathsAccess();
 
   const query = querySchema.parse(resolveTrendSnapshotsQueryInput(req, _ctx));

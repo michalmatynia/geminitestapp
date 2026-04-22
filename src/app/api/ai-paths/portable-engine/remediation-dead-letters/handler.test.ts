@@ -64,7 +64,7 @@ vi.mock('@/shared/lib/ai-paths/portable-engine/server', () => ({
     resolvePortablePathAuditSinkAutoRemediationWebhookSignatureKeyIdFromEnvironmentMock,
 }));
 
-import { GET_handler, POST_handler } from './handler';
+import { getHandler, postHandler } from './handler';
 
 describe('ai-paths portable-engine remediation dead-letter handler', () => {
   beforeEach(() => {
@@ -134,11 +134,11 @@ describe('ai-paths portable-engine remediation dead-letter handler', () => {
   });
 
   it('returns filtered remediation dead-letter payload', async () => {
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest(
         'http://localhost/api/ai-paths/portable-engine/remediation-dead-letters?limit=1&channel=webhook'
       ),
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
 
     expect(response.status).toBe(200);
@@ -164,7 +164,7 @@ describe('ai-paths portable-engine remediation dead-letter handler', () => {
   });
 
   it('runs dead-letter replay with parsed request options', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/ai-paths/portable-engine/remediation-dead-letters', {
         method: 'POST',
       }),
@@ -177,7 +177,7 @@ describe('ai-paths portable-engine remediation dead-letter handler', () => {
           endpoint: 'https://example.test/remediation',
           timeoutMs: 2500,
         },
-      } as Parameters<typeof POST_handler>[1]
+      } as Parameters<typeof postHandler>[1]
     );
 
     expect(response.status).toBe(200);
@@ -217,16 +217,16 @@ describe('ai-paths portable-engine remediation dead-letter handler', () => {
 
   it('rejects invalid replay payloads and invalid channel filters', async () => {
     await expect(
-      GET_handler(
+      getHandler(
         new NextRequest(
           'http://localhost/api/ai-paths/portable-engine/remediation-dead-letters?channel=invalid'
         ),
-        {} as Parameters<typeof GET_handler>[1]
+        {} as Parameters<typeof getHandler>[1]
       )
     ).rejects.toThrow('Remediation dead-letter channel must be one of: webhook, email.');
 
     await expect(
-      POST_handler(
+      postHandler(
         new NextRequest('http://localhost/api/ai-paths/portable-engine/remediation-dead-letters', {
           method: 'POST',
         }),
@@ -234,7 +234,7 @@ describe('ai-paths portable-engine remediation dead-letter handler', () => {
           body: {
             action: 'invalid',
           },
-        } as Parameters<typeof POST_handler>[1]
+        } as Parameters<typeof postHandler>[1]
       )
     ).rejects.toThrow('Unsupported remediation dead-letter action.');
   });

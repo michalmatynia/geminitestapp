@@ -6,13 +6,13 @@ import { baseActiveTemplatePreferencePayloadSchema } from '@/shared/contracts/in
 import { type BaseActiveTemplatePreferenceResponse } from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const templateId = await getImportLastTemplateId();
   const response: BaseActiveTemplatePreferenceResponse = { templateId };
   return NextResponse.json(response);
 }
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, baseActiveTemplatePreferencePayloadSchema, {
     logPrefix: 'imports.base.last-template.POST',
   });

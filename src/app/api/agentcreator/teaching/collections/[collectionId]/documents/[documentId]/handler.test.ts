@@ -11,7 +11,7 @@ vi.mock('@/features/ai/agentcreator/server', () => ({
   deleteEmbeddingDocument: deleteEmbeddingDocumentMock,
 }));
 
-import { DELETE_handler } from './handler';
+import { deleteHandler } from './handler';
 
 describe('agentcreator teaching collection document-by-id handler module', () => {
   beforeEach(() => {
@@ -25,7 +25,7 @@ describe('agentcreator teaching collection document-by-id handler module', () =>
     } as ApiHandlerContext;
 
     await expect(
-      DELETE_handler(
+      deleteHandler(
         new NextRequest('http://localhost/api/agentcreator/teaching/collections/collection-1/documents'),
         context
       )
@@ -35,7 +35,7 @@ describe('agentcreator teaching collection document-by-id handler module', () =>
   });
 
   it('deletes the requested embedding document and returns the result', async () => {
-    const response = await DELETE_handler(
+    const response = await deleteHandler(
       new NextRequest(
         'http://localhost/api/agentcreator/teaching/collections/collection-1/documents/document-1',
         { method: 'DELETE' }

@@ -59,9 +59,9 @@ vi.mock('@/shared/utils/observability/error-system', () => ({
   },
 }));
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
-describe('products POST_handler', () => {
+describe('products postHandler', () => {
   beforeEach(() => {
     invalidateAllMock.mockReset();
     getProductBySkuMock.mockReset();
@@ -89,7 +89,7 @@ describe('products POST_handler', () => {
     formData.append('sku', 'KEYCHA9999');
     formData.append('catalogIds', 'catalog-mentios');
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/v2/products', {
         method: 'POST',
         body: formData,

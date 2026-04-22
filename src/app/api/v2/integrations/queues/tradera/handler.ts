@@ -5,7 +5,7 @@ import type { QueueHealthStatus, TraderaQueueHealthResponse } from '@/shared/con
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { getQueueHealth, isRedisAvailable } from '@/shared/lib/queue';
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   initializeQueues();
   await Promise.all([
     import('@/features/integrations/server'),

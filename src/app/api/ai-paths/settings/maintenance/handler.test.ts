@@ -22,7 +22,7 @@ vi.mock('@/features/ai/ai-paths/server', () => ({
   applyAiPathsSettingsMaintenance: applyAiPathsSettingsMaintenanceMock,
 }));
 
-import { GET_handler, POST_handler } from './handler';
+import { getHandler, postHandler } from './handler';
 
 describe('ai-paths maintenance handler', () => {
   beforeEach(() => {
@@ -38,9 +38,9 @@ describe('ai-paths maintenance handler', () => {
       actions: [],
     });
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/ai-paths/settings/maintenance'),
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
 
     expect(response.status).toBe(200);
@@ -64,12 +64,12 @@ describe('ai-paths maintenance handler', () => {
       },
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/ai-paths/settings/maintenance', {
         method: 'POST',
         body: JSON.stringify({ actionIds: ['repair_path_index'] }),
       }),
-      {} as Parameters<typeof POST_handler>[1]
+      {} as Parameters<typeof postHandler>[1]
     );
 
     expect(response.status).toBe(200);
@@ -87,12 +87,12 @@ describe('ai-paths maintenance handler', () => {
       },
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/ai-paths/settings/maintenance', {
         method: 'POST',
         body: JSON.stringify({ actionIds: ['restore_static_recovery_bundle'] }),
       }),
-      {} as Parameters<typeof POST_handler>[1]
+      {} as Parameters<typeof postHandler>[1]
     );
 
     expect(response.status).toBe(200);
@@ -112,12 +112,12 @@ describe('ai-paths maintenance handler', () => {
       },
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/ai-paths/settings/maintenance', {
         method: 'POST',
         body: JSON.stringify({ actionIds: ['normalize_runtime_kernel_mode'] }),
       }),
-      {} as Parameters<typeof POST_handler>[1]
+      {} as Parameters<typeof postHandler>[1]
     );
 
     expect(response.status).toBe(200);
@@ -128,12 +128,12 @@ describe('ai-paths maintenance handler', () => {
 
   it('rejects unknown compatibility action ids', async () => {
     await expect(
-      POST_handler(
+      postHandler(
         new NextRequest('http://localhost/api/ai-paths/settings/maintenance', {
           method: 'POST',
           body: JSON.stringify({ actionIds: ['upgrade_translation_en_pl'] }),
         }),
-        {} as Parameters<typeof POST_handler>[1]
+        {} as Parameters<typeof postHandler>[1]
       )
     ).rejects.toThrow('Invalid AI Paths maintenance payload.');
     expect(applyAiPathsSettingsMaintenanceMock).not.toHaveBeenCalled();

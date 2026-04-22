@@ -14,7 +14,7 @@ vi.mock('@/features/filemaker/server', () => ({
   sendFilemakerMailMessage: sendFilemakerMailMessageMock,
 }));
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 describe('filemaker mail send handler', () => {
   beforeEach(() => {
@@ -34,7 +34,7 @@ describe('filemaker mail send handler', () => {
       },
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/filemaker/mail/send', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -47,7 +47,7 @@ describe('filemaker mail send handler', () => {
           bodyHtml: '<p>Hello</p>',
         }),
       }),
-      {} as Parameters<typeof POST_handler>[1]
+      {} as Parameters<typeof postHandler>[1]
     );
 
     expect(sendFilemakerMailMessageMock).toHaveBeenCalledWith(

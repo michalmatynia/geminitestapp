@@ -17,6 +17,7 @@ import { Tooltip } from '@/shared/ui/tooltip';
 import {
   getProductListDisplayName,
   hasImportedProductOrigin,
+  isUnassignedProductCategoryLabel,
   resolveProductCategoryLabel,
 } from '../product-column-utils';
 import { ProductListActivityPill } from '../../ProductListActivityPill';
@@ -144,11 +145,15 @@ function NameCellDocBadge({ isImported }: { isImported: boolean }): React.JSX.El
 }
 
 function NameCellSecondaryInfo({ product, runtime, categoryLabel, ship }: { product: ProductWithImages, runtime: ProductListRowRuntimeContextType, categoryLabel: string, ship: ShippingInfo }): React.JSX.Element {
+  const categoryToneClass = isUnassignedProductCategoryLabel(categoryLabel)
+    ? 'text-rose-300/80 hover:text-rose-200/85'
+    : '';
+
   return (
     <div className='mt-1 flex min-w-0 items-center gap-1.5 text-sm text-gray-500'>
       <NameCellBasicInfo product={product} />
       <span aria-hidden='true' className='text-gray-600'>|</span>
-      <Tooltip content={categoryLabel}><button type='button' className='max-w-[14rem] truncate rounded-sm border-0 bg-transparent p-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950' aria-label={categoryLabel} title={categoryLabel}>{categoryLabel}</button></Tooltip>
+      <Tooltip content={categoryLabel}><button type='button' className={`max-w-[14rem] truncate rounded-sm border-0 bg-transparent p-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 ${categoryToneClass}`} aria-label={categoryLabel} title={categoryLabel}>{categoryLabel}</button></Tooltip>
       <NameCellShipping ship={ship} />
       <NameCellDocBadge isImported={hasImportedProductOrigin(product)} />
       {product.archived === true && <Badge variant='removed' icon={<Archive className='size-3' />}>Archived</Badge>}

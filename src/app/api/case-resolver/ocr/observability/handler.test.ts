@@ -1,13 +1,13 @@
 import { NextRequest } from 'next/server';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { GET_handler } from './handler';
+import { getHandler } from './handler';
 import { getCaseResolverOcrObservabilitySnapshot } from '@/features/case-resolver/server';
 
 vi.mock('@/features/case-resolver/server', () => ({
   getCaseResolverOcrObservabilitySnapshot: vi.fn(),
 }));
 
-describe('case-resolver/ocr/observability GET_handler', () => {
+describe('case-resolver/ocr/observability getHandler', () => {
   const mockContext = { source: 'test', query: {} } as any;
 
   beforeEach(() => {
@@ -19,7 +19,7 @@ describe('case-resolver/ocr/observability GET_handler', () => {
     vi.mocked(getCaseResolverOcrObservabilitySnapshot).mockResolvedValue(mockSnapshot as any);
 
     const req = new NextRequest('http://localhost/api/case-resolver/ocr/observability');
-    const response = await GET_handler(req, mockContext);
+    const response = await getHandler(req, mockContext);
     const data = await response.json();
 
     expect(data.snapshot).toEqual(mockSnapshot);
@@ -32,7 +32,7 @@ describe('case-resolver/ocr/observability GET_handler', () => {
 
     const contextWithQuery = { ...mockContext, query: { limit: 50 } };
     const req = new NextRequest('http://localhost/api/case-resolver/ocr/observability?limit=50');
-    const response = await GET_handler(req, contextWithQuery);
+    const response = await getHandler(req, contextWithQuery);
     const data = await response.json();
 
     expect(data.snapshot).toEqual(mockSnapshot);

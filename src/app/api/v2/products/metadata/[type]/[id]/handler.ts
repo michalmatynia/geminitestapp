@@ -128,7 +128,7 @@ const resolveCanonicalMongoPriceGroupSourceId = async (
   return String(resolvedSourceGroup?.id ?? normalizedSourceGroupId);
 };
 
-export async function GET_products_metadata_id_handler(
+export async function getProductsMetadataIdHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { type: string; id: string }
@@ -177,7 +177,7 @@ export async function GET_products_metadata_id_handler(
   throw badRequestError(`Invalid products metadata type for GET: ${type}`);
 }
 
-export async function PUT_products_metadata_id_handler(
+export async function putProductsMetadataIdHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { type: string; id: string }
@@ -295,7 +295,7 @@ export async function PUT_products_metadata_id_handler(
   throw badRequestError(`Invalid products metadata type for PUT: ${type}`);
 }
 
-export async function DELETE_products_metadata_id_handler(
+export async function deleteProductsMetadataIdHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { type: string; id: string }

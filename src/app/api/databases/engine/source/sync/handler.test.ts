@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 const mocks = vi.hoisted(() => ({
   assertDatabaseEngineManageAccess: vi.fn(async () => undefined),
@@ -88,7 +88,7 @@ describe('databases engine source sync handler', () => {
   });
 
   it('runs a manual Mongo sync and clears dependent caches', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/databases/engine/source/sync', {
         method: 'POST',
         body: JSON.stringify({ direction: 'cloud_to_local' }),

@@ -105,7 +105,7 @@ const bodySchema = z
     }
   });
 
-export async function POST_handler(
+export async function postHandler(
   req: NextRequest,
   ctx: ApiHandlerContext
 ): Promise<Response> {

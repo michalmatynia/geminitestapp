@@ -29,7 +29,7 @@ const buildEmptyProductStudioConfigResponse = (): z.infer<
     },
   });
 
-export async function GET_handler(
+export async function getHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }
@@ -48,7 +48,7 @@ export async function GET_handler(
   return NextResponse.json(productStudioConfigResponseSchema.parse({ config }));
 }
 
-export async function PUT_handler(
+export async function putHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }

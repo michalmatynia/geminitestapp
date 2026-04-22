@@ -17,7 +17,7 @@ vi.mock('@/features/filemaker/server', () => ({
   upsertFilemakerMailAccount: upsertFilemakerMailAccountMock,
 }));
 
-import { GET_handler, POST_handler } from './handler';
+import { getHandler, postHandler } from './handler';
 
 describe('filemaker mail accounts handler', () => {
   beforeEach(() => {
@@ -34,9 +34,9 @@ describe('filemaker mail accounts handler', () => {
       },
     ]);
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/filemaker/mail/accounts'),
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
 
     expect(requireFilemakerMailAdminSessionMock).toHaveBeenCalled();
@@ -59,7 +59,7 @@ describe('filemaker mail accounts handler', () => {
       emailAddress: 'support@example.com',
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/filemaker/mail/accounts', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -84,7 +84,7 @@ describe('filemaker mail accounts handler', () => {
           maxMessagesPerSync: 100,
         }),
       }),
-      {} as Parameters<typeof POST_handler>[1]
+      {} as Parameters<typeof postHandler>[1]
     );
 
     expect(upsertFilemakerMailAccountMock).toHaveBeenCalledWith(

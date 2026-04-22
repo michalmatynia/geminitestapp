@@ -30,7 +30,7 @@ vi.mock('@/features/integrations/server', () => ({
   getIntegrationRepository: getIntegrationRepositoryMock,
 }));
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 const createContext = (): ApiHandlerContext =>
   ({
@@ -88,7 +88,7 @@ describe('marketplace mappings bulk handler', () => {
       },
     });
 
-    const response = await POST_handler(request, createContext());
+    const response = await postHandler(request, createContext());
 
     expect(response.status).toBe(200);
     expect(bulkUpsertMock).toHaveBeenCalledWith('conn-1', 'catalog-1', [
@@ -145,7 +145,7 @@ describe('marketplace mappings bulk handler', () => {
       },
     });
 
-    await expect(POST_handler(request, createContext())).rejects.toMatchObject({
+    await expect(postHandler(request, createContext())).rejects.toMatchObject({
       message:
         'Tradera mappings must target the deepest category. "Collectibles > Pins & needles" still has child categories. Choose a leaf Tradera category and save again.',
       httpStatus: 400,

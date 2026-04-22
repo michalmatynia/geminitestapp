@@ -55,12 +55,12 @@ describe('ai-paths runtime analytics insights handler', () => {
   });
 
   it('lists runtime insights with ai-paths access guard', async () => {
-    const { GET_handler } = await import('./handler');
+    const { getHandler } = await import('./handler');
     listAiInsightsMock.mockResolvedValue([{ id: 'insight-1', type: 'runtime_analytics' }]);
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/ai-paths/runtime-analytics/insights?limit=5'),
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
     const payload = (await response.json()) as { insights?: Array<{ id: string }> };
 
@@ -71,14 +71,14 @@ describe('ai-paths runtime analytics insights handler', () => {
   });
 
   it('generates runtime insight with selected range', async () => {
-    const { POST_handler } = await import('./handler');
+    const { postHandler } = await import('./handler');
     generateRuntimeAnalyticsInsightMock.mockResolvedValue({ id: 'insight-runtime-1' });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/ai-paths/runtime-analytics/insights?range=7d', {
         method: 'POST',
       }),
-      {} as Parameters<typeof POST_handler>[1]
+      {} as Parameters<typeof postHandler>[1]
     );
     const payload = (await response.json()) as { insight?: { id: string } };
 
@@ -93,14 +93,14 @@ describe('ai-paths runtime analytics insights handler', () => {
   });
 
   it('falls back to 24h when range is unsupported', async () => {
-    const { POST_handler } = await import('./handler');
+    const { postHandler } = await import('./handler');
     generateRuntimeAnalyticsInsightMock.mockResolvedValue({ id: 'insight-runtime-2' });
 
-    await POST_handler(
+    await postHandler(
       new NextRequest('http://localhost/api/ai-paths/runtime-analytics/insights?range=2h', {
         method: 'POST',
       }),
-      {} as Parameters<typeof POST_handler>[1]
+      {} as Parameters<typeof postHandler>[1]
     );
 
     expect(generateRuntimeAnalyticsInsightMock).toHaveBeenCalledWith({
@@ -111,7 +111,7 @@ describe('ai-paths runtime analytics insights handler', () => {
   });
 
   it('resolves registry context from the request body before generating runtime insights', async () => {
-    const { POST_handler } = await import('./handler');
+    const { postHandler } = await import('./handler');
     resolveAiInsightsContextRegistryEnvelopeMock.mockResolvedValue({
       refs: [
         { id: 'page:ai-insights', kind: 'static_node' },
@@ -126,7 +126,7 @@ describe('ai-paths runtime analytics insights handler', () => {
     });
     generateRuntimeAnalyticsInsightMock.mockResolvedValue({ id: 'insight-runtime-3' });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/ai-paths/runtime-analytics/insights?range=7d', {
         method: 'POST',
         body: JSON.stringify({
@@ -136,7 +136,7 @@ describe('ai-paths runtime analytics insights handler', () => {
           },
         }),
       }),
-      {} as Parameters<typeof POST_handler>[1]
+      {} as Parameters<typeof postHandler>[1]
     );
     const payload = (await response.json()) as { insight?: { id: string } };
 

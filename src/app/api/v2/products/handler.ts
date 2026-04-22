@@ -1,1 +1,1 @@
-export { GET_handler, POST_handler, querySchema } from './handler.impl';
+export { getHandler, postHandler, querySchema } from './handler.impl';

@@ -19,7 +19,7 @@ vi.mock('@/features/products/server', () => ({
   getTitleTermRepository: (...args: unknown[]) => getTitleTermRepositoryMock(...args),
 }));
 
-import { GET_handler, POST_handler, querySchema } from './handler';
+import { getHandler, postHandler, querySchema } from './handler';
 
 describe('products/title-terms handler', () => {
   beforeEach(() => {
@@ -54,7 +54,7 @@ describe('products/title-terms handler', () => {
       },
     ]);
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/v2/products/title-terms?search=%20metal%20'),
       {
         query: {
@@ -93,7 +93,7 @@ describe('products/title-terms handler', () => {
       updatedAt: '2026-01-01T00:00:00.000Z',
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/v2/products/title-terms'),
       {
         body: {
@@ -128,7 +128,7 @@ describe('products/title-terms handler', () => {
     });
 
     await expect(
-      POST_handler(new NextRequest('http://localhost/api/v2/products/title-terms'), {
+      postHandler(new NextRequest('http://localhost/api/v2/products/title-terms'), {
         body: {
           catalogId: 'catalog-1',
           type: 'size',

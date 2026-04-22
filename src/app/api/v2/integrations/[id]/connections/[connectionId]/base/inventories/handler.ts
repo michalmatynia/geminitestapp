@@ -10,7 +10,7 @@ import { badRequestError, notFoundError } from '@/shared/errors/app-error';
  * GET /api/v2/integrations/[id]/connections/[connectionId]/base/inventories
  * Fetches available inventories from Base.com/Baselinker API.
  */
-export async function GET_handler(
+export async function getHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string; connectionId: string }

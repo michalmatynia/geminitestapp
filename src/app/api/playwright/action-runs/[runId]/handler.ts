@@ -4,7 +4,7 @@ import { getPlaywrightActionRunDetail } from '@/shared/lib/playwright/action-run
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { notFoundError, validationError } from '@/shared/errors/app-error';
 
-export async function GET_handler(
+export async function getHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { runId: string }

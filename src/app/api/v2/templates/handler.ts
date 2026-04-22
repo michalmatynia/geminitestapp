@@ -16,7 +16,7 @@ import { type ImportExportTemplateCreateInput } from '@/shared/contracts/integra
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
-export async function GET_templates_handler(
+export async function getTemplatesHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { type: string }
@@ -33,7 +33,7 @@ export async function GET_templates_handler(
   throw badRequestError(`Invalid template type: ${type}`);
 }
 
-export async function POST_templates_handler(
+export async function postTemplatesHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { type: string }
@@ -72,7 +72,7 @@ export async function POST_templates_handler(
   throw badRequestError(`Invalid template type: ${type}`);
 }
 
-export async function PUT_templates_item_handler(
+export async function putTemplatesItemHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { type: string; id: string }
@@ -117,7 +117,7 @@ export async function PUT_templates_item_handler(
   throw badRequestError(`Invalid template type: ${type}`);
 }
 
-export async function DELETE_templates_item_handler(
+export async function deleteTemplatesItemHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { type: string; id: string }

@@ -34,7 +34,7 @@ vi.mock('@/features/jobs/server', () => ({
   initializeQueues: (...args: unknown[]) => initializeQueuesMock(...args),
 }));
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 describe('integration listing relist handler', () => {
   beforeEach(() => {
@@ -62,7 +62,7 @@ describe('integration listing relist handler', () => {
   });
 
   it('initializes queues before enqueueing a Tradera relist job', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       new Request('http://localhost/api') as never,
       {} as never,
       { id: 'product-1', listingId: 'listing-1' }
@@ -83,7 +83,7 @@ describe('integration listing relist handler', () => {
   });
 
   it('passes headed/headless overrides through for Tradera browser relists', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       new Request('http://localhost/api', {
         method: 'POST',
         body: JSON.stringify({ browserMode: 'headed' }),
@@ -125,7 +125,7 @@ describe('integration listing relist handler', () => {
   });
 
   it('forwards selectorProfile overrides through for Tradera browser relists', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       new Request('http://localhost/api', {
         method: 'POST',
         body: JSON.stringify({ selectorProfile: 'profile-market-a' }),
@@ -186,7 +186,7 @@ describe('integration listing relist handler', () => {
       },
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new Request('http://localhost/api') as never,
       {} as never,
       { id: 'product-1', listingId: 'listing-1' }
@@ -229,7 +229,7 @@ describe('integration listing relist handler', () => {
         },
       });
 
-      const response = await POST_handler(
+      const response = await postHandler(
         new Request('http://localhost/api', {
           method: 'POST',
           body: JSON.stringify({ browserMode: 'headed' }),
@@ -272,7 +272,7 @@ describe('integration listing relist handler', () => {
       slug: 'playwright-programmable',
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new Request('http://localhost/api', {
         method: 'POST',
         body: JSON.stringify({ browserMode: 'headed' }),
@@ -320,7 +320,7 @@ describe('integration listing relist handler', () => {
     });
 
     await expect(
-      POST_handler(
+      postHandler(
         new Request('http://localhost/api', {
           method: 'POST',
           body: JSON.stringify({ browserMode: 'headed' }),
@@ -346,7 +346,7 @@ describe('integration listing relist handler', () => {
     });
 
     await expect(
-      POST_handler(
+      postHandler(
         new Request('http://localhost/api', {
           method: 'POST',
           body: JSON.stringify({ selectorProfile: 'profile-market-a' }),

@@ -1,11 +1,11 @@
 
 import { apiHandler } from '@/shared/lib/api/api-handler';
 
-import { GET_handler, querySchema } from './handler';
+import { getHandler, querySchema } from './handler';
 
 const disableSettingsRateLimit = process.env['NODE_ENV'] !== 'production';
 
-export const GET = apiHandler(GET_handler, {
+export const GET = apiHandler(getHandler, {
   source: 'settings.lite.GET',
   rateLimitKey: disableSettingsRateLimit ? false : 'api',
   querySchema,

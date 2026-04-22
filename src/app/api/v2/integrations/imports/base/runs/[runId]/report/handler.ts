@@ -144,7 +144,7 @@ const loadReportDetail = async (input: {
   };
 };
 
-export async function GET_handler(
+export async function getHandler(
   req: NextRequest,
   ctx: ApiHandlerContext,
   params: { runId: string }

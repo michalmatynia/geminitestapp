@@ -16,7 +16,7 @@ vi.mock('@/features/playwright/server', () => ({
     mocks.updateProgrammableConnectionMock(...args),
 }));
 
-import { PUT_handler } from './handler';
+import { putHandler } from './handler';
 
 describe('playwright programmable connection by-id handler', () => {
   beforeEach(() => {
@@ -30,7 +30,7 @@ describe('playwright programmable connection by-id handler', () => {
     });
     mocks.updateProgrammableConnectionMock.mockResolvedValue({ id: 'conn-playwright-1' });
 
-    const response = await PUT_handler(
+    const response = await putHandler(
       new NextRequest('http://localhost/api/playwright/programmable/connections/conn-playwright-1', {
         method: 'PUT',
       }),

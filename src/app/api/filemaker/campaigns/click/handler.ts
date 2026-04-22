@@ -38,7 +38,7 @@ const buildRedirectResponse = (location: string): Response =>
     },
   });
 
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const { token } = querySchema.parse(Object.fromEntries(req.nextUrl.searchParams.entries()));
   const tokenPayload = parseFilemakerCampaignUnsubscribeToken(token ?? null);
   const redirectTarget = resolveRedirectTarget(req, tokenPayload?.redirectTo);

@@ -16,7 +16,7 @@ const ensureFromUploadSchema = z.object({
   selectedSlotId: z.string().trim().optional().nullable(),
 });
 
-export async function POST_handler(
+export async function postHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { projectId: string }

@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-const kangurStylesheetPath = path.join(process.cwd(), 'src/app/(frontend)/kangur/kangur.css');
+const kangurStylesheetPath = path.join(process.cwd(), 'apps/studiq-web/src/app/kangur/kangur.css');
 
 describe('Kangur CTA hover styles', () => {
   it('keeps the primary cta driven by theme variables', () => {

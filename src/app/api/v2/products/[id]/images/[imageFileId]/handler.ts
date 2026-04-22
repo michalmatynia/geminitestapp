@@ -14,7 +14,7 @@ const paramsSchema = z.object({
  * DELETE /api/v2/products/[id]/images/[imageFileId]
  * Unlinks an image from a product.
  */
-export async function DELETE_handler(
+export async function deleteHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string; imageFileId: string }

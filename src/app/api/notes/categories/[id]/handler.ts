@@ -17,7 +17,7 @@ export const querySchema = z.object({
  * PATCH /api/notes/categories/[id]
  * Updates a category.
  */
-export async function PATCH_handler(
+export async function patchHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }
@@ -43,7 +43,7 @@ export async function PATCH_handler(
  * Query params:
  * - recursive=true: Delete all subfolders and notes within the category
  */
-export async function DELETE_handler(
+export async function deleteHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }

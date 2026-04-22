@@ -16,7 +16,7 @@ const deleteVariantSchema = z.object({
   sourceSlotId: z.string().trim().optional(),
 });
 
-export async function POST_handler(
+export async function postHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { projectId: string }

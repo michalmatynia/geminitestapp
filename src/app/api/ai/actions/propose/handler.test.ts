@@ -13,7 +13,7 @@ vi.mock('@/features/ai/ai-context-registry/server', () => ({
   getContextPackById: getContextPackByIdMock,
 }));
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 const MOCK_PACK = {
   id: 'data_analysis',
@@ -70,13 +70,13 @@ describe('POST /api/ai/actions/propose handler', () => {
   });
 
   it('returns proposalId, approvalsNeeded, and preview', async () => {
-    const res = await POST_handler(
+    const res = await postHandler(
       makeRequest({
         workflow: 'data_analysis',
         intent: 'Analyze order volumes',
         rootIds: ['collection:orders'],
       }),
-      {} as Parameters<typeof POST_handler>[1]
+      {} as Parameters<typeof postHandler>[1]
     );
 
     expect(res.status).toBe(200);
@@ -91,17 +91,17 @@ describe('POST /api/ai/actions/propose handler', () => {
   });
 
   it('calls getContextPackById with workflow', async () => {
-    await POST_handler(
+    await postHandler(
       makeRequest({ workflow: 'data_analysis', intent: 'Test', rootIds: ['collection:orders'] }),
-      {} as Parameters<typeof POST_handler>[1]
+      {} as Parameters<typeof postHandler>[1]
     );
     expect(getContextPackByIdMock).toHaveBeenCalledWith('data_analysis');
   });
 
   it('passes pack.maxNodes to resolveWithExpansion', async () => {
-    await POST_handler(
+    await postHandler(
       makeRequest({ workflow: 'data_analysis', intent: 'Test', rootIds: ['collection:orders'] }),
-      {} as Parameters<typeof POST_handler>[1]
+      {} as Parameters<typeof postHandler>[1]
     );
     expect(resolveWithExpansionMock).toHaveBeenCalledWith(
       expect.objectContaining({ maxNodes: MOCK_PACK.maxNodes })
@@ -122,13 +122,13 @@ describe('POST /api/ai/actions/propose handler', () => {
     });
     saveProposalMock.mockReturnValue({ ...MOCK_PROPOSAL, approvalsNeeded: true });
 
-    const res = await POST_handler(
+    const res = await postHandler(
       makeRequest({
         workflow: 'admin_automation',
         intent: 'Run AI path',
         rootIds: ['action:run-ai-path'],
       }),
-      {} as Parameters<typeof POST_handler>[1]
+      {} as Parameters<typeof postHandler>[1]
     );
     const body = (await res.json()) as { approvalsNeeded: boolean };
     expect(body.approvalsNeeded).toBe(true);
@@ -136,7 +136,7 @@ describe('POST /api/ai/actions/propose handler', () => {
 
   it('throws for invalid payload (missing required fields)', async () => {
     await expect(
-      POST_handler(makeRequest({}), {} as Parameters<typeof POST_handler>[1])
+      postHandler(makeRequest({}), {} as Parameters<typeof postHandler>[1])
     ).rejects.toThrow('Invalid propose request payload.');
   });
 
@@ -146,7 +146,7 @@ describe('POST /api/ai/actions/propose handler', () => {
       headers: { 'content-type': 'application/json' },
       body: '{bad-json',
     });
-    await expect(POST_handler(req, {} as Parameters<typeof POST_handler>[1])).rejects.toThrow(
+    await expect(postHandler(req, {} as Parameters<typeof postHandler>[1])).rejects.toThrow(
       'Invalid JSON body.'
     );
   });

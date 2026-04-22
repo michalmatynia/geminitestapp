@@ -56,7 +56,7 @@ export const productCustomFieldCreateSchema = withCheckboxOptionValidation(
  * GET /api/v2/products/custom-fields
  * Fetches all custom product field definitions.
  */
-export async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const query = querySchema.parse({
     ...Object.fromEntries(new URL(req.url).searchParams.entries()),
     ...((ctx.query ?? {}) as Record<string, unknown>),
@@ -76,7 +76,7 @@ export async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Pro
  * POST /api/v2/products/custom-fields
  * Creates a new custom product field definition.
  */
-export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const data = ctx.body as z.infer<typeof productCustomFieldCreateSchema>;
 
   const repository = await getCustomFieldRepository();

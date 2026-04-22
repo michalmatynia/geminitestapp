@@ -14,7 +14,7 @@ vi.mock('@/features/filemaker/server', () => ({
   syncFilemakerMailAccount: syncFilemakerMailAccountMock,
 }));
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 describe('filemaker mail account sync handler', () => {
   beforeEach(() => {
@@ -33,11 +33,11 @@ describe('filemaker mail account sync handler', () => {
       lastSyncError: null,
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/filemaker/mail/accounts/account%201/sync', {
         method: 'POST',
       }),
-      { params: { accountId: 'account%201' } } as Parameters<typeof POST_handler>[1]
+      { params: { accountId: 'account%201' } } as Parameters<typeof postHandler>[1]
     );
 
     expect(syncFilemakerMailAccountMock).toHaveBeenCalledWith('account 1');

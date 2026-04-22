@@ -45,7 +45,7 @@ vi.mock('@/shared/lib/ai-paths/services/path-run-repository', () => ({
   })),
 }));
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 describe('ai-paths dead-letter requeue handler', () => {
   beforeEach(() => {
@@ -68,13 +68,13 @@ describe('ai-paths dead-letter requeue handler', () => {
   });
 
   it('parses the shared requeue DTO and requeues the requested dead-letter run', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/ai-paths/runs/dead-letter/requeue', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ runIds: ['run-1'], mode: 'replay' }),
       }),
-      {} as Parameters<typeof POST_handler>[1]
+      {} as Parameters<typeof postHandler>[1]
     );
 
     expect(response.status).toBe(200);

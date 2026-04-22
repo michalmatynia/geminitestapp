@@ -529,7 +529,7 @@ const fetchAndCacheSettings = async (
   return settings;
 };
 
-export async function GET_handler(
+export async function getHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   scopeOverride?: SettingsScope
@@ -717,7 +717,7 @@ export async function GET_handler(
       }
       void ErrorSystem.captureException(error, {
         service: 'api/settings',
-        action: 'GET_handler',
+        action: 'getHandler',
         scope,
         forceFresh: true,
       });
@@ -812,7 +812,7 @@ export async function GET_handler(
     }
     void ErrorSystem.captureException(error, {
       service: 'api/settings',
-      action: 'GET_handler',
+      action: 'getHandler',
       scope,
       status: 'miss',
     });
@@ -833,7 +833,7 @@ export async function GET_handler(
   return response;
 }
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertSettingsManageAccess();
   if (shouldLog()) {
     await ErrorSystem.logInfo('[settings] POST /api/settings', { service: 'api/settings' });

@@ -8,7 +8,7 @@ vi.mock('@/shared/lib/ai-brain/server-model-catalog', () => ({
   listBrainModels: listBrainModelsMock,
 }));
 
-import { GET_handler } from './handler';
+import { getHandler } from './handler';
 
 describe('brain models handler', () => {
   beforeEach(() => {
@@ -48,9 +48,9 @@ describe('brain models handler', () => {
       },
     });
 
-    const response = await GET_handler(
-      new Request('http://localhost/api/brain/models') as Parameters<typeof GET_handler>[0],
-      {} as Parameters<typeof GET_handler>[1]
+    const response = await getHandler(
+      new Request('http://localhost/api/brain/models') as Parameters<typeof getHandler>[0],
+      {} as Parameters<typeof getHandler>[1]
     );
 
     const payload = (await response.json()) as {
@@ -71,11 +71,11 @@ describe('brain models handler', () => {
       descriptors: {},
     });
 
-    await GET_handler(
+    await getHandler(
       new Request(
         'http://localhost/api/brain/models?family=chat&modality=text&streaming=true'
-      ) as Parameters<typeof GET_handler>[0],
-      {} as Parameters<typeof GET_handler>[1]
+      ) as Parameters<typeof getHandler>[0],
+      {} as Parameters<typeof getHandler>[1]
     );
 
     expect(listBrainModelsMock).toHaveBeenCalledWith({

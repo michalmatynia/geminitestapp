@@ -10,13 +10,13 @@ import { baseImageRetryPresetsPayloadSchema } from '@/shared/contracts/integrati
 import { type BaseImageRetryPresetsResponse, type ImageRetryPreset } from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const presets = await getExportImageRetryPresets();
   const response: BaseImageRetryPresetsResponse = { presets };
   return NextResponse.json(response);
 }
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, baseImageRetryPresetsPayloadSchema, {
     logPrefix: 'exports.base.image-retry-presets.POST',
   });

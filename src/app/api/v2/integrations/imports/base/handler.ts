@@ -395,4 +395,4 @@ export async function postBaseImportsHandler(
   throw badRequestError(`Unsupported action: ${action}`);
 }
 
-export const POST_handler = postBaseImportsHandler;
+export const postHandler = postBaseImportsHandler;

@@ -5,7 +5,7 @@ import { productStudioVariantsResponseSchema } from '@/shared/contracts/products
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 
-export async function GET_handler(
+export async function getHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }

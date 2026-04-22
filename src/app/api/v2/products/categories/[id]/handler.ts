@@ -17,7 +17,7 @@ export const paramsSchema = z.object({
  * GET /api/v2/products/categories/[id]
  * Fetches a single product category by ID.
  */
-export async function GET_handler(
+export async function getHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }
@@ -36,7 +36,7 @@ export async function GET_handler(
  * PUT /api/v2/products/categories/[id]
  * Updates a product category.
  */
-export async function PUT_handler(
+export async function putHandler(
   _req: NextRequest,
   ctx: ApiHandlerContext,
   params: { id: string }
@@ -121,7 +121,7 @@ export async function PUT_handler(
  * DELETE /api/v2/products/categories/[id]
  * Deletes a product category and all its children (cascade).
  */
-export async function DELETE_handler(
+export async function deleteHandler(
   _request: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }

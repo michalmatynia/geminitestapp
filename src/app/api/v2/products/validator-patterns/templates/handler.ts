@@ -5,7 +5,7 @@ import { getValidatorTemplatePresetByType } from '@/features/products/lib/valida
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 
-export async function POST_validator_template_handler(
+export async function postValidatorTemplateHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { type: string }

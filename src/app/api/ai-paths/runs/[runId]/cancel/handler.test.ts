@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 describe('ai-paths run cancel handler module', () => {
   it('exports the supported handlers', () => {
-    expect(typeof POST_handler).toBe('function');
+    expect(typeof postHandler).toBe('function');
   });
 });

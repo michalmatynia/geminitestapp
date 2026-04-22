@@ -16,7 +16,7 @@ export const assertPlaywrightRunAccess = ({
   if (isInternal) return;
   if (access.isElevated) return;
   const ownerUserId = run.ownerUserId?.trim() ?? '';
-  if (!ownerUserId || ownerUserId !== access.userId) {
+  if (ownerUserId === '' || ownerUserId !== access.userId) {
     throw forbiddenError('Playwright run access denied.');
   }
 };

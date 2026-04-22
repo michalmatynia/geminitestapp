@@ -707,7 +707,7 @@ const buildRuntimeIssue = ({
   };
 };
 
-export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const body = ctx.body as z.infer<typeof evaluateRuntimeSchema>;
   assertRuntimePayloadBounds(body);
   const contextRegistry = await resolveProductEditorContextRegistryEnvelope(

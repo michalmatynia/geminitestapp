@@ -49,12 +49,12 @@ vi.mock('@/shared/utils/observability/error-system', () => ({
   },
 }));
 
-import { GET_handler, POST_handler } from './handler';
+import { getHandler, postHandler } from './handler';
 
 const createRequestContext = (query?: Record<string, unknown>) =>
   ({
     query,
-  }) as Parameters<typeof GET_handler>[1];
+  }) as Parameters<typeof getHandler>[1];
 
 const createSettingsSnapshot = (args?: {
   triggerButtons?: string | Array<Record<string, unknown>>;
@@ -124,7 +124,7 @@ describe('ai-paths trigger-buttons GET handler', () => {
       })
     );
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/ai-paths/trigger-buttons'),
       createRequestContext()
     );
@@ -194,7 +194,7 @@ describe('ai-paths trigger-buttons GET handler', () => {
       })
     );
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/ai-paths/trigger-buttons'),
       createRequestContext()
     );
@@ -249,7 +249,7 @@ describe('ai-paths trigger-buttons GET handler', () => {
       },
     });
 
-    const responseFromCookie = await GET_handler(
+    const responseFromCookie = await getHandler(
       cookieRequest,
       createRequestContext()
     );
@@ -260,7 +260,7 @@ describe('ai-paths trigger-buttons GET handler', () => {
       }),
     ]);
 
-    const responseFromQuery = await GET_handler(
+    const responseFromQuery = await getHandler(
       new NextRequest(
         `http://localhost/api/ai-paths/trigger-buttons?${PLAYWRIGHT_AI_PATHS_TRIGGER_BUTTONS_QUERY_PARAM}=1`
       ),
@@ -324,7 +324,7 @@ describe('ai-paths trigger-buttons GET handler', () => {
       })
     );
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/ai-paths/trigger-buttons'),
       createRequestContext()
     );
@@ -390,7 +390,7 @@ describe('ai-paths trigger-buttons GET handler', () => {
       })
     );
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/ai-paths/trigger-buttons'),
       createRequestContext()
     );
@@ -470,7 +470,7 @@ describe('ai-paths trigger-buttons GET handler', () => {
       })
     );
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/ai-paths/trigger-buttons'),
       createRequestContext()
     );
@@ -527,7 +527,7 @@ describe('ai-paths trigger-buttons GET handler', () => {
       })
     );
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/ai-paths/trigger-buttons'),
       createRequestContext()
     );
@@ -558,7 +558,7 @@ describe('ai-paths trigger-buttons GET handler', () => {
       })
     );
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/ai-paths/trigger-buttons'),
       createRequestContext()
     );
@@ -573,7 +573,7 @@ describe('ai-paths trigger-buttons GET handler', () => {
   it('returns an empty list for unauthorized access instead of throwing', async () => {
     requireAiPathsRunAccessMock.mockRejectedValue(authError('Unauthorized.'));
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/ai-paths/trigger-buttons'),
       createRequestContext()
     );
@@ -593,7 +593,7 @@ describe('ai-paths trigger-buttons GET handler', () => {
       })
     );
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/ai-paths/trigger-buttons'),
       createRequestContext()
     );
@@ -639,7 +639,7 @@ describe('ai-paths trigger-buttons GET handler', () => {
       })
     );
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/ai-paths/trigger-buttons'),
       createRequestContext()
     );
@@ -672,7 +672,7 @@ describe('ai-paths trigger-buttons GET handler', () => {
       })
     );
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/ai-paths/trigger-buttons'),
       createRequestContext()
     );
@@ -693,7 +693,7 @@ describe('ai-paths trigger-buttons GET handler', () => {
   it('does not materialize starter defaults on read when settings are empty', async () => {
     getAllAiPathsSettingsMock.mockResolvedValue([]);
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/ai-paths/trigger-buttons'),
       createRequestContext()
     );
@@ -771,7 +771,7 @@ describe('ai-paths trigger-buttons GET handler', () => {
       })
     );
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/ai-paths/trigger-buttons'),
       createRequestContext()
     );
@@ -809,7 +809,7 @@ describe('ai-paths trigger-buttons GET handler', () => {
       headers: { 'Content-Type': 'application/json' },
     });
 
-    await expect(POST_handler(request, {} as Parameters<typeof POST_handler>[1])).rejects.toThrow(
+    await expect(postHandler(request, {} as Parameters<typeof postHandler>[1])).rejects.toThrow(
       'AI Path "path-missing" does not exist.'
     );
 
@@ -844,7 +844,7 @@ describe('ai-paths trigger-buttons GET handler', () => {
       headers: { 'Content-Type': 'application/json' },
     });
 
-    await expect(POST_handler(request, {} as Parameters<typeof POST_handler>[1])).rejects.toThrow(
+    await expect(postHandler(request, {} as Parameters<typeof postHandler>[1])).rejects.toThrow(
       'AI Path "path-live" is missing its config payload.'
     );
 
@@ -887,7 +887,7 @@ describe('ai-paths trigger-buttons GET handler', () => {
       headers: { 'Content-Type': 'application/json' },
     });
 
-    const response = await POST_handler(request, {} as Parameters<typeof POST_handler>[1]);
+    const response = await postHandler(request, {} as Parameters<typeof postHandler>[1]);
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual(
@@ -935,7 +935,7 @@ describe('ai-paths trigger-buttons GET handler', () => {
       headers: { 'Content-Type': 'application/json' },
     });
 
-    const response = await POST_handler(request, {} as Parameters<typeof POST_handler>[1]);
+    const response = await postHandler(request, {} as Parameters<typeof postHandler>[1]);
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual(

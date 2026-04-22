@@ -15,7 +15,7 @@ const DEFAULT_SCOPE = process.env['LINKEDIN_OAUTH_SCOPE'] ?? 'openid profile w_m
 const ENV_CLIENT_ID = process.env['LINKEDIN_APP_KEY_SECRET']?.trim() ?? null;
 const ENV_CLIENT_SECRET = process.env['LINKEDIN_APP_CLIENT_SECRET']?.trim() ?? null;
 
-export async function GET_handler(
+export async function getHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string; connectionId: string }

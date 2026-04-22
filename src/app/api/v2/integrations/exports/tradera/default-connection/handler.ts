@@ -16,7 +16,7 @@ const normalizeOptionalId = (value: string | null | undefined): string | null =>
   return trimmed.length > 0 ? trimmed : null;
 };
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const storedConnectionId = normalizeOptionalId(await getTraderaDefaultConnectionId());
     const response: TraderaDefaultConnectionPreferenceResponse = {
@@ -37,7 +37,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
   }
 }
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, traderaDefaultConnectionPreferencePayloadSchema, {
     logPrefix: 'exports.tradera.default-connection.POST',
   });

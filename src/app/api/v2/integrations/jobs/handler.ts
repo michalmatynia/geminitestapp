@@ -143,7 +143,7 @@ const buildProductLookupMap = async (productIds: string[]): Promise<Map<string, 
  * GET /api/v2/integrations/jobs
  * Fetches all product listing jobs with product details
  */
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const listingRepo = await getProductListingRepository();
 
   const allListings = await listingRepo.listAllListings();

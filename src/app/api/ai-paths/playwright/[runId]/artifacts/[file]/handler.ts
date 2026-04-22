@@ -32,7 +32,7 @@ const toInlineDisposition = (fileName: string): string => {
   return `inline; filename="${safe}"`;
 };
 
-export async function GET_handler(
+export async function getHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { runId: string; file: string }

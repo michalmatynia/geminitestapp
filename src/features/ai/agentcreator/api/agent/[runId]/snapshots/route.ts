@@ -31,7 +31,7 @@ type AgentBrowserSnapshotRouteRecord = {
   createdAt: Date | string;
 };
 
-async function GET_handler(
+async function getHandler(
   req: NextRequest,
   { params }: { params: Promise<{ runId: string }> }
 ): Promise<Response> {
@@ -79,6 +79,6 @@ async function GET_handler(
 }
 
 export const GET = apiHandlerWithParams<{ runId: string }>(
-  async (req: NextRequest, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }),
+  async (req: NextRequest, _ctx, params) => getHandler(req, { params: Promise.resolve(params) }),
   { source: 'chatbot.agent.[runId].snapshots.GET', requireAuth: true }
 );

@@ -11,7 +11,7 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 export { baseScopedPreferenceQuerySchema as querySchema };
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const query = baseScopedPreferenceQuerySchema.parse(_ctx.query ?? {});
   const templateId = await getExportActiveTemplateId({
     connectionId: query.connectionId ?? null,
@@ -21,7 +21,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
   return NextResponse.json(response);
 }
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, baseScopedTemplatePreferencePayloadSchema, {
     logPrefix: 'exports.base.active-template.POST',
   });

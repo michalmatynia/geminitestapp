@@ -10,7 +10,7 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 export { product1688BatchScanRequestSchema };
 
-export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const body = ctx.body as Product1688BatchScanRequest;
 
   const result = await queue1688BatchProductScans({

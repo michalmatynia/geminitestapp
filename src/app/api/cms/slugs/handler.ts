@@ -74,7 +74,7 @@ const parseBody = async (
  * GET /api/cms/slugs
  * Fetches a list of all slugs.
  */
-export async function GET_handler(
+export async function getHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<NextResponse | Response> {
@@ -94,7 +94,7 @@ export async function GET_handler(
  * POST /api/cms/slugs
  * Creates a new slug.
  */
-export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const query = (ctx.query ?? {}) as z.infer<typeof querySchema>;
   const parsed = await parseBody(req, ctx);
   if (!parsed.ok) {

@@ -38,7 +38,7 @@ vi.mock('@/shared/lib/auth/settings-manage-access', () => ({
 
 import {
   __testOnly,
-  GET_handler,
+  getHandler,
   clearLiteSettingsServerCache,
   prewarmLiteSettingsServerCache,
 } from './handler';
@@ -86,7 +86,7 @@ describe('settings lite handler', () => {
     });
     getMongoDbMock.mockResolvedValue({ collection: collectionMock });
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/settings/lite'),
       createRequestContext()
     );
@@ -153,7 +153,7 @@ describe('settings lite handler', () => {
     const dbCallsAfterPrewarm = getMongoDbMock.mock.calls.length;
     expect(dbCallsAfterPrewarm).toBeGreaterThan(0);
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/settings/lite'),
       createRequestContext()
     );
@@ -201,7 +201,7 @@ describe('settings lite handler', () => {
     });
     getMongoDbMock.mockResolvedValue({ collection: collectionMock });
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/settings/lite'),
       createRequestContext()
     );
@@ -229,7 +229,7 @@ describe('settings lite handler', () => {
     error.name = 'MongoServerSelectionError';
     getMongoDbMock.mockRejectedValue(error);
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/settings/lite'),
       createRequestContext()
     );

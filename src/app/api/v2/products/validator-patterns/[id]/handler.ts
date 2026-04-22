@@ -195,12 +195,12 @@ export async function putValidatorPatternByIdHandler(
 
   const body = ctx.body as z.infer<typeof updatePatternSchema>;
   const nextRegex = (body.regex ?? current.regex).trim();
-  const nextFlags = body.flags !== undefined ? body.flags?.trim() || null : current.flags;
+  const nextFlags = body.flags !== undefined ? (body.flags?.trim() ?? null) : current.flags;
   const nextReplacementEnabled =
     body.replacementEnabled !== undefined ? body.replacementEnabled : current.replacementEnabled;
   const nextReplacementValue =
     body.replacementValue !== undefined
-      ? body.replacementValue?.trim() || null
+      ? (body.replacementValue?.trim() ?? null)
       : current.replacementValue;
   const nextReplacementFields =
     body.replacementFields !== undefined
@@ -216,7 +216,7 @@ export async function putValidatorPatternByIdHandler(
       : normalizeProductValidationLaunchScopeBehavior(current.launchScopeBehavior);
   const nextLaunchSourceField =
     body.launchSourceField !== undefined
-      ? body.launchSourceField?.trim() || null
+      ? (body.launchSourceField?.trim() ?? null)
       : current.launchSourceField;
   const nextLaunchAppliesToScopes =
     body.launchAppliesToScopes !== undefined
@@ -234,7 +234,7 @@ export async function putValidatorPatternByIdHandler(
     body.runtimeEnabled !== undefined ? body.runtimeEnabled : current.runtimeEnabled;
   const nextRuntimeType = body.runtimeType !== undefined ? body.runtimeType : current.runtimeType;
   const nextRuntimeConfigRaw =
-    body.runtimeConfig !== undefined ? body.runtimeConfig?.trim() || null : current.runtimeConfig;
+    body.runtimeConfig !== undefined ? (body.runtimeConfig?.trim() ?? null) : current.runtimeConfig;
   const nextRuntimeConfig = validateAndNormalizeRuntimeConfig({
     runtimeEnabled: nextRuntimeEnabled,
     runtimeType: nextRuntimeType,
@@ -246,7 +246,7 @@ export async function putValidatorPatternByIdHandler(
     body.runtimeType !== undefined;
   if (
     nextReplacementEnabled &&
-    !nextReplacementValue &&
+    nextReplacementValue === null &&
     !canResolveReplacementAtRuntime({
       replacementEnabled: nextReplacementEnabled,
       replacementValue: nextReplacementValue,
@@ -258,7 +258,7 @@ export async function putValidatorPatternByIdHandler(
       'replacementValue is required when replacementEnabled is true unless runtime replacement is enabled'
     );
   }
-  if (nextLaunchEnabled && nextLaunchSourceMode !== 'current_field' && !nextLaunchSourceField) {
+  if (nextLaunchEnabled && nextLaunchSourceMode !== 'current_field' && nextLaunchSourceField === null) {
     throw badRequestError(
       'launchSourceField is required when launchSourceMode is not current_field'
     );
@@ -275,8 +275,9 @@ export async function putValidatorPatternByIdHandler(
           : null
         : current.launchValue,
     launchFlags:
-      body.launchFlags !== undefined ? body.launchFlags?.trim() || null : current.launchFlags,
+      body.launchFlags !== undefined ? (body.launchFlags?.trim() ?? null) : current.launchFlags,
   });
+
   const updated = await repository.updatePattern(params.id, {
     ...(body.label !== undefined && { label: body.label.trim() }),
     ...(body.target !== undefined && { target: body.target }),

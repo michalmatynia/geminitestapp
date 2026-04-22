@@ -14,7 +14,7 @@ import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-re
 
 const TERMINAL_STATUSES = new Set(['completed', 'failed', 'canceled', 'dead_lettered']);
 
-export async function POST_handler(
+export async function postHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { runId: string }

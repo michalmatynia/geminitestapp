@@ -1,14 +1,14 @@
 
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 
-import { GET_handler, POST_handler } from './handler';
+import { getHandler, postHandler } from './handler';
 
-export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, {
+export const GET = apiHandlerWithParams<{ id: string }>(getHandler, {
   source: 'notes.[id].files.GET',
   requireAuth: true,
 });
 
-export const POST = apiHandlerWithParams<{ id: string }>(POST_handler, {
+export const POST = apiHandlerWithParams<{ id: string }>(postHandler, {
   source: 'notes.[id].files.POST',
   requireAuth: true,
 });

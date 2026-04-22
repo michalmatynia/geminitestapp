@@ -28,7 +28,7 @@ vi.mock('@/features/playwright/server', () => ({
     mocks.createProgrammableConnectionMock(...args),
 }));
 
-import { GET_handler, POST_handler } from './handler';
+import { getHandler, postHandler } from './handler';
 
 describe('playwright programmable connections handler', () => {
   beforeEach(() => {
@@ -38,7 +38,7 @@ describe('playwright programmable connections handler', () => {
   it('returns an empty list when the programmable integration is missing', async () => {
     mocks.findProgrammableIntegrationMock.mockResolvedValue(null);
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/playwright/programmable/connections'),
       {} as never
     );
@@ -55,7 +55,7 @@ describe('playwright programmable connections handler', () => {
     });
     mocks.listProgrammableConnectionsMock.mockResolvedValue([{ id: 'connection-1' }]);
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/playwright/programmable/connections'),
       {} as never
     );
@@ -76,7 +76,7 @@ describe('playwright programmable connections handler', () => {
     });
     mocks.createProgrammableConnectionMock.mockResolvedValue({ id: 'connection-2' });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/playwright/programmable/connections', {
         method: 'POST',
       }),

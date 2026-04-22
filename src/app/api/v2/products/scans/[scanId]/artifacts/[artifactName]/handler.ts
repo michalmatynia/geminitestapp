@@ -17,7 +17,7 @@ const resolveDownloadFileName = (value: string): string =>
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '') || 'artifact';
 
-export async function GET_handler(
+export async function getHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { scanId: string; artifactName: string }

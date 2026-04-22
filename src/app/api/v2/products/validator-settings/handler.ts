@@ -9,7 +9,7 @@ import { normalizeProductValidationInstanceDenyBehaviorMap } from '@/shared/lib/
 
 export { updateValidatorSettingsSchema };
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const repository = await getValidationPatternRepository();
   const [enabledByDefault, formatterEnabledByDefault, instanceDenyBehavior] = await Promise.all([
     repository.getEnabledByDefault(),
@@ -23,7 +23,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
   });
 }
 
-export async function PUT_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function putHandler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const body = ctx.body as z.infer<typeof updateValidatorSettingsSchema>;
   const repository = await getValidationPatternRepository();
   let enabledByDefault: boolean;

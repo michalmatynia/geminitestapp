@@ -13,7 +13,7 @@ import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
 import { assertDatabaseEngineManageAccess } from '@/features/database/server';
 import { assertDatabaseEngineOperationEnabled } from '@/shared/lib/db/services/database-engine-operation-guards';
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertDatabaseEngineManageAccess();
   await assertDatabaseEngineOperationEnabled('allowManualBackupMaintenance');
 

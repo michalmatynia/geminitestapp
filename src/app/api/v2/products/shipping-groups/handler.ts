@@ -16,7 +16,7 @@ import {
 
 export const querySchema = catalogIdQuerySchema;
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
   const catalogId = query.catalogId;
 
@@ -30,7 +30,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
   return NextResponse.json(shippingGroups);
 }
 
-export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const data = ctx.body as z.infer<typeof createProductShippingGroupSchema>;
   const { name, catalogId } = data;
   const normalizedAutoAssignCategoryIds = await normalizeShippingGroupRuleCategoryIdsForCatalog({

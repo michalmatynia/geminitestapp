@@ -13,7 +13,7 @@ const isDataUrl = (value: string): boolean => value.startsWith('data:');
 const toDataUrl = (buffer: Buffer, mimetype: string): string =>
   `data:${mimetype};base64,${buffer.toString('base64')}`;
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const body = (await req.json().catch(() => null)) as unknown;
   const parsed = payloadSchema.safeParse(body);
   if (!parsed.success) {

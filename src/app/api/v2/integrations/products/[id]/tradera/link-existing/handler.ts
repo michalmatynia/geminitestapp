@@ -111,7 +111,7 @@ const buildMarketplaceData = (args: {
  * POST /api/v2/integrations/products/[id]/tradera/link-existing
  * Links a product to an already existing Tradera listing by public URL.
  */
-export async function POST_handler(
+export async function postHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }

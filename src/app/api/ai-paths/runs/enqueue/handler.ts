@@ -151,7 +151,7 @@ function validateGraph(options: { pathId: string; pathName: string; nodes: AiNod
   return { normalizedNodes, normalizedEdges };
 }
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const timings: Record<string, number> = {};
   const withTiming = async <T>(label: string, fn: () => Promise<T>): Promise<T> => {
     const start = performance.now();

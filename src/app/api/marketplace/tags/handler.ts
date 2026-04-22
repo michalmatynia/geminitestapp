@@ -16,7 +16,7 @@ const querySchema = z.object({
  * Query params:
  *   - connectionId (required): The integration connection ID
  */
-export async function GET_handler(
+export async function getHandler(
   request: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {

@@ -42,7 +42,7 @@ const createSubscriber = (): Redis | null => {
   });
 };
 
-export async function GET_handler(
+export async function getHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {

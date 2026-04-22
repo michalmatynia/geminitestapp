@@ -138,7 +138,7 @@ async function listStudioFoldersFromDisk(projectId: string): Promise<string[]> {
   return folders.sort((a, b) => a.localeCompare(b));
 }
 
-export async function GET_handler(
+export async function getHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { projectId: string }
@@ -200,7 +200,7 @@ export async function GET_handler(
   return NextResponse.json({ assets: result, folders: diskFolders });
 }
 
-export async function POST_handler(
+export async function postHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { projectId: string }

@@ -12,7 +12,7 @@ import { productService } from '@/shared/lib/products/services/productService'; 
  * POST /api/v2/products/[id]/duplicate
  * Duplicates a product with a new SKU.
  */
-export async function POST_handler(
+export async function postHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }

@@ -20,7 +20,7 @@ vi.mock('@/features/playwright/server', () => ({
     mocks.promoteBrowserOwnershipMock(...args),
 }));
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 describe('playwright programmable promote browser ownership handler', () => {
   beforeEach(() => {
@@ -42,7 +42,7 @@ describe('playwright programmable promote browser ownership handler', () => {
       importDraftActionName: 'Import action',
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new Request('http://localhost/api/playwright/programmable/connections/conn-playwright-1/promote-browser-ownership', {
         method: 'POST',
       }) as never,

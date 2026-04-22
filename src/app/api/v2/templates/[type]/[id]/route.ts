@@ -1,14 +1,14 @@
 
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 
-import { PUT_templates_item_handler, DELETE_templates_item_handler } from '../../handler';
+import { putTemplatesItemHandler, deleteTemplatesItemHandler } from '../../handler';
 
-export const PUT = apiHandlerWithParams<{ type: string; id: string }>(PUT_templates_item_handler, {
+export const PUT = apiHandlerWithParams<{ type: string; id: string }>(putTemplatesItemHandler, {
   source: 'v2.templates.[type].[id].PUT',
   requireAuth: true,
 });
 
-export const DELETE = apiHandlerWithParams<{ type: string; id: string }>(DELETE_templates_item_handler, {
+export const DELETE = apiHandlerWithParams<{ type: string; id: string }>(deleteTemplatesItemHandler, {
   source: 'v2.templates.[type].[id].DELETE',
   requireAuth: true,
 });

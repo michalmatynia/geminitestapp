@@ -41,7 +41,7 @@ vi.mock('@/features/auth/server', () => ({
   logAuthEvent: logAuthEventMock,
 }));
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 const createRequestContext = (): ApiHandlerContext =>
   ({
@@ -89,7 +89,7 @@ describe('auth verify-credentials handler', () => {
       requireEmailVerification: false,
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/auth/verify-credentials', {
         method: 'POST',
         headers: {
@@ -126,7 +126,7 @@ describe('auth verify-credentials handler', () => {
       emailVerified: null,
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/auth/verify-credentials', {
         method: 'POST',
         headers: {
@@ -173,7 +173,7 @@ describe('auth verify-credentials handler', () => {
       mfaRequired: false,
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/auth/verify-credentials', {
         method: 'POST',
         headers: {

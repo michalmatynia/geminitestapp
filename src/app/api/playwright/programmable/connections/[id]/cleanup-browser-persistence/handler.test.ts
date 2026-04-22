@@ -14,7 +14,7 @@ vi.mock('@/features/playwright/server', () => ({
     mocks.cleanupBrowserPersistenceMock(...args),
 }));
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 describe('playwright programmable cleanup browser persistence handler', () => {
   beforeEach(() => {
@@ -29,7 +29,7 @@ describe('playwright programmable cleanup browser persistence handler', () => {
       playwrightImportActionId: 'import-action',
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new Request('http://localhost/api/playwright/programmable/connections/conn-playwright-1/cleanup-browser-persistence', {
         method: 'POST',
       }) as never,

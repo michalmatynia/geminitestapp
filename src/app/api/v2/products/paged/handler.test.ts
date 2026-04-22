@@ -21,7 +21,7 @@ vi.mock('@/features/products/performance', () => ({
   },
 }));
 
-import { GET_handler } from './handler';
+import { getHandler } from './handler';
 
 describe('products/paged handler', () => {
   beforeEach(() => {
@@ -35,7 +35,7 @@ describe('products/paged handler', () => {
       total: 1,
     });
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/v2/products/paged?page=1&pageSize=12'),
       {
         query: { page: 1, pageSize: 12 },
@@ -54,7 +54,7 @@ describe('products/paged handler', () => {
       total: 1,
     });
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/v2/products/paged?page=1&pageSize=12&fresh=1'),
       {
         query: { page: 1, pageSize: 12 },
@@ -72,7 +72,7 @@ describe('products/paged handler', () => {
       total: 1,
     });
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/v2/products/paged?page=1&pageSize=12'),
       {
         query: { page: 1, pageSize: 12 },

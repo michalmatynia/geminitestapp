@@ -23,7 +23,7 @@ vi.mock('@/features/products/server', () => ({
   getValidationPatternRepository: (...args: unknown[]) => getValidationPatternRepositoryMock(...args),
 }));
 
-import { GET_handler, PUT_handler, updateValidatorSettingsSchema } from './handler';
+import { getHandler, putHandler, updateValidatorSettingsSchema } from './handler';
 
 describe('product validator-settings handler module', () => {
   beforeEach(() => {
@@ -50,13 +50,13 @@ describe('product validator-settings handler module', () => {
   });
 
   it('exports the supported handlers and schema', () => {
-    expect(typeof GET_handler).toBe('function');
-    expect(typeof PUT_handler).toBe('function');
+    expect(typeof getHandler).toBe('function');
+    expect(typeof putHandler).toBe('function');
     expect(typeof updateValidatorSettingsSchema.safeParse).toBe('function');
   });
 
   it('returns the current validator settings', async () => {
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/v2/products/validator-settings'),
       {} as never
     );
@@ -74,7 +74,7 @@ describe('product validator-settings handler module', () => {
   });
 
   it('reads current values for omitted PUT fields', async () => {
-    const response = await PUT_handler(
+    const response = await putHandler(
       new NextRequest('http://localhost/api/v2/products/validator-settings', { method: 'PUT' }),
       { body: {} } as never
     );
@@ -95,7 +95,7 @@ describe('product validator-settings handler module', () => {
   });
 
   it('applies normalized PUT updates when fields are provided', async () => {
-    const response = await PUT_handler(
+    const response = await putHandler(
       new NextRequest('http://localhost/api/v2/products/validator-settings', { method: 'PUT' }),
       {
         body: {

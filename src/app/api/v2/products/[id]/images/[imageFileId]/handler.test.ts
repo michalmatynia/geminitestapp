@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { DELETE_handler } from './handler';
+import { deleteHandler } from './handler';
 
 describe('product image delete handler module', () => {
   it('exports the supported handlers', () => {
-    expect(typeof DELETE_handler).toBe('function');
+    expect(typeof deleteHandler).toBe('function');
   });
 });

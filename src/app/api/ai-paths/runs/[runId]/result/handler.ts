@@ -16,7 +16,7 @@ const parseRunId = (params: { runId: string }): string => {
   return parsed.data.runId;
 };
 
-export async function GET_handler(
+export async function getHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { runId: string }

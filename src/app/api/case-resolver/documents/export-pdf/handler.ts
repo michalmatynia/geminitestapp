@@ -71,7 +71,7 @@ const sanitizePdfFilename = (value: unknown): string => {
   return `${safeBase}.pdf`;
 };
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   let rawPayload: unknown;
   try {
     rawPayload = (await req.json()) as unknown;

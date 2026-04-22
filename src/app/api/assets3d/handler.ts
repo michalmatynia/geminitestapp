@@ -44,7 +44,7 @@ async function listAssets3DCached(query: Asset3DListQuery) {
   });
 }
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
   const assets = await listAssets3DCached({
     filename: query.filename ?? null,
@@ -61,7 +61,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
   });
 }
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   let formData: FormData;
   try {
     formData = await req.formData();

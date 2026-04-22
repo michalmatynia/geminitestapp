@@ -21,7 +21,7 @@ async function listPublicProductCategoriesCached(catalogId: string) {
   return categories.map(toProductCategorySummaryDto);
 }
 
-export async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const query = ctx.query as CatalogIdQuery | undefined;
   const catalogId =
     query?.catalogId ?? new URL(req.url).searchParams.get('catalogId')?.trim() ?? '';

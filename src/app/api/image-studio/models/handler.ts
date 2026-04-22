@@ -4,7 +4,7 @@ import type { ImageStudioModelsResponse } from '@/shared/contracts/image-studio/
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { listBrainModels } from '@/shared/lib/ai-brain/server-model-catalog';
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const payload = await listBrainModels({ family: 'image_generation' });
   const response: ImageStudioModelsResponse = {
     models: payload.models,

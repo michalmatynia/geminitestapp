@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-import { DELETE_handler } from '@/app/api/system/logs/handler';
+import { deleteHandler } from '@/app/api/system/logs/handler';
 import { GET, POST } from '@/app/api/system/logs/route';
 import {
   hydrateLogRuntimeContext,
@@ -219,7 +219,7 @@ describe('System Logs API', () => {
     const req = new NextRequest('http://localhost/api/system/logs?target=error_logs', {
       method: 'DELETE',
     });
-    const res = await DELETE_handler(req, {
+    const res = await deleteHandler(req, {
       requestId: 'test-request-id',
     });
     const data = await res.json();

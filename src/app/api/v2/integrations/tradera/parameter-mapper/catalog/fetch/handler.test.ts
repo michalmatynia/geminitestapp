@@ -17,7 +17,7 @@ vi.mock(
   })
 );
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 describe('tradera parameter mapper catalog fetch handler', () => {
   beforeEach(() => {
@@ -38,7 +38,7 @@ describe('tradera parameter mapper catalog fetch handler', () => {
   });
 
   it('parses the request and delegates to the Tradera catalog fetch service', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       new Request('http://localhost/api/v2/integrations/tradera/parameter-mapper/catalog/fetch', {
         method: 'POST',
       }) as never,

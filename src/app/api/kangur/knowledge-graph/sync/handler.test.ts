@@ -44,7 +44,7 @@ vi.mock('@/features/kangur/server/knowledge-graph/status-loader', () => ({
   getKangurKnowledgeGraphStatusSnapshot: getKangurKnowledgeGraphStatusSnapshotMock,
 }));
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 const createRequestContext = (body?: unknown): ApiHandlerContext =>
   ({
@@ -105,7 +105,7 @@ describe('kangur knowledge graph sync handler', () => {
     assertSettingsManageAccessMock.mockRejectedValue(authError('Unauthorized.'));
 
     await expect(
-      POST_handler(
+      postHandler(
         new NextRequest('http://localhost/api/kangur/knowledge-graph/sync', { method: 'POST' }),
         createRequestContext({})
       )
@@ -116,7 +116,7 @@ describe('kangur knowledge graph sync handler', () => {
     isNeo4jEnabledMock.mockReturnValue(false);
 
     await expect(
-      POST_handler(
+      postHandler(
         new NextRequest('http://localhost/api/kangur/knowledge-graph/sync', { method: 'POST' }),
         createRequestContext({})
       )
@@ -126,7 +126,7 @@ describe('kangur knowledge graph sync handler', () => {
   });
 
   it('syncs the Kangur knowledge graph and returns the refreshed status', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/kangur/knowledge-graph/sync', { method: 'POST' }),
       createRequestContext({
         locale: 'pl',

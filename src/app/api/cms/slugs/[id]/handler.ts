@@ -43,7 +43,7 @@ const resolveDomainFromRequest = async (
  * GET /api/cms/slugs/[id]
  * Fetches a single slug by its ID.
  */
-export async function GET_handler(
+export async function getHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: Params
@@ -65,7 +65,7 @@ export async function GET_handler(
  * DELETE /api/cms/slugs/[id]
  * Deletes a slug.
  */
-export async function DELETE_handler(
+export async function deleteHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: Params
@@ -88,7 +88,7 @@ export async function DELETE_handler(
  * PUT /api/cms/slugs/[id]
  * Updates a slug.
  */
-export async function PUT_handler(
+export async function putHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: Params

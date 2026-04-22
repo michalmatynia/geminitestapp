@@ -12,7 +12,7 @@ import { removeUndefined } from '@/shared/utils/object-utils';
  * GET /api/notes/themes/[id]
  * Fetches a single theme by ID.
  */
-export async function GET_handler(
+export async function getHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }
@@ -29,7 +29,7 @@ export async function GET_handler(
  * PATCH /api/notes/themes/[id]
  * Updates a theme.
  */
-export async function PATCH_handler(
+export async function patchHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }
@@ -55,7 +55,7 @@ export async function PATCH_handler(
  * DELETE /api/notes/themes/[id]
  * Deletes a theme.
  */
-export async function DELETE_handler(
+export async function deleteHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }

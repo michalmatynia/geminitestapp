@@ -33,7 +33,7 @@ vi.mock('@/shared/lib/api/parse-json', () => ({
   parseJsonBody: vi.fn(),
 }));
 
-import { GET_handler } from './handler';
+import { getHandler } from './handler';
 
 describe('integration product listings handler', () => {
   beforeEach(() => {
@@ -65,7 +65,7 @@ describe('integration product listings handler', () => {
       },
     ]);
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest(
         'http://localhost:3000/api/v2/integrations/product-listings?productIds=product-1'
       ),
@@ -101,7 +101,7 @@ describe('integration product listings handler', () => {
       },
     ]);
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest(
         'http://localhost:3000/api/v2/integrations/product-listings?productIds=product-1'
       ),
@@ -139,7 +139,7 @@ describe('integration product listings handler', () => {
       },
     ]);
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest(
         'http://localhost:3000/api/v2/integrations/product-listings?productIds=product-1'
       ),

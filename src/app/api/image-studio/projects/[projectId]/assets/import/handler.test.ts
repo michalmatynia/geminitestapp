@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { POST_handler, guessExtensionFromMime } from './handler';
+import { postHandler, guessExtensionFromMime } from './handler';
 
 describe('image-studio project assets import handler module', () => {
   it('exports the supported handlers', () => {
-    expect(typeof POST_handler).toBe('function');
+    expect(typeof postHandler).toBe('function');
   });
 
   it('maps supported mime types to import filename extensions', () => {

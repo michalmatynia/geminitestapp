@@ -1,6 +1,5 @@
-import { useLocalSearchParams } from 'expo-router';
 import { Text, View } from 'react-native';
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 
 import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import {
@@ -209,19 +208,19 @@ function KangurMobileTestPlayer({
   );
 }
 
-const TestSuiteCard = ({ suite, onOpen, copy, locale }: {
-  suite: KangurMobileTestSuiteItem['suite'];
+const TestSuiteCard = ({ item, onOpen, copy, locale }: {
+  item: KangurMobileTestSuiteItem;
   onOpen: (id: string) => void;
   copy: (v: Record<string, string>) => string;
   locale: 'de' | 'en' | 'pl';
 }): React.JSX.Element => (
-  <SectionCard title={suite.title}>
+  <SectionCard title={item.suite.title}>
     <View style={{ flexDirection: 'row', gap: 8 }}>
-      <StatusPill label={formatQuestionCount(suite.questions.length, locale)} tone={INDIGO_TONE} />
-      <StatusPill label={formatSuiteMeta(suite, locale)[0] ?? ''} tone={BASE_TONE} />
+      <StatusPill label={formatQuestionCount(item.questions.length, locale)} tone={INDIGO_TONE} />
+      <StatusPill label={formatSuiteMeta(item.suite, locale)[0] ?? ''} tone={BASE_TONE} />
     </View>
-    <Text style={{ color: '#475569', fontSize: 14 }}>{suite.description}</Text>
-    <PrimaryButton label={copy({ de: 'Start', en: 'Start', pl: 'Start' })} onPress={() => onOpen(suite.id)} />
+    <Text style={{ color: '#475569', fontSize: 14 }}>{item.suite.description}</Text>
+    <PrimaryButton label={copy({ de: 'Start', en: 'Start', pl: 'Start' })} onPress={() => onOpen(item.suite.id)} />
   </SectionCard>
 );
 
@@ -246,7 +245,7 @@ export function KangurTestsScreen(): React.JSX.Element {
       {isLoading && <Text>Loading...</Text>}
       {error !== null && <Text>{error}</Text>}
       {suites.map((item) => (
-        <TestSuiteCard copy={copy} key={item.suite.id} locale={locale} onOpen={setActiveSuiteId} suite={item.suite} />
+        <TestSuiteCard copy={copy} item={item} key={item.suite.id} locale={locale} onOpen={setActiveSuiteId} />
       ))}
     </KangurMobileScrollScreen>
   );

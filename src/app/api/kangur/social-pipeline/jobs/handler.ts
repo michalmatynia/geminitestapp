@@ -285,7 +285,7 @@ const serializeJob = async (
   };
 };
 
-export async function GET_handler(
+export async function getHandler(
   _req: NextRequest,
   ctx: ApiHandlerContext
 ): Promise<Response> {
@@ -325,7 +325,7 @@ export async function GET_handler(
 
 const TERMINAL_JOB_STATUSES = new Set(['completed', 'failed']);
 
-export async function DELETE_handler(
+export async function deleteHandler(
   req: NextRequest,
   ctx: ApiHandlerContext
 ): Promise<Response> {

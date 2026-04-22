@@ -68,7 +68,7 @@ const isIntentionalServiceOverride = (
   return configured === effective && effective !== appEffective;
 };
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertSettingsManageAccess();
   await applyActiveMongoSourceEnv();
 

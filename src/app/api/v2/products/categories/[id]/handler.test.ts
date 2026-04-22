@@ -16,7 +16,7 @@ vi.mock('@/features/products/server', () => ({
   getCategoryRepository: (...args: unknown[]) => getCategoryRepositoryMock(...args),
 }));
 
-import { DELETE_handler, GET_handler, PUT_handler, productCategoryUpdateSchema } from './handler';
+import { deleteHandler, getHandler, putHandler, productCategoryUpdateSchema } from './handler';
 
 describe('product categories by-id handler module', () => {
   beforeEach(() => {
@@ -30,16 +30,16 @@ describe('product categories by-id handler module', () => {
   });
 
   it('exports the supported handlers and schema', () => {
-    expect(typeof GET_handler).toBe('function');
-    expect(typeof PUT_handler).toBe('function');
-    expect(typeof DELETE_handler).toBe('function');
+    expect(typeof getHandler).toBe('function');
+    expect(typeof putHandler).toBe('function');
+    expect(typeof deleteHandler).toBe('function');
     expect(typeof productCategoryUpdateSchema.safeParse).toBe('function');
   });
 
   it('delegates delete to the repository and invalidates product caches', async () => {
     deleteCategoryMock.mockResolvedValue(undefined);
 
-    const response = await DELETE_handler(
+    const response = await deleteHandler(
       new NextRequest('http://localhost/api/v2/products/categories/category-1'),
       {} as ApiHandlerContext,
       { id: 'category-1' }

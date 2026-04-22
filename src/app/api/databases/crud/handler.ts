@@ -40,7 +40,7 @@ const databaseCrudRequestSchema = z.union([
   }),
 ]);
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertDatabaseEngineManageAccess();
   if (process.env['NODE_ENV'] === 'production') {
     throw forbiddenError('Database operations are disabled in production.');

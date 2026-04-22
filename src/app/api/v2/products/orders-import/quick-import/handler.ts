@@ -12,7 +12,7 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 export { baseOrderImportQuickImportPayloadSchema as quickImportOrdersImportSchema };
 
-export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const data = ctx.body as z.infer<typeof baseOrderImportQuickImportPayloadSchema>;
   const preview = await loadBaseOrderImportPreview(data);
   const importableOrders = preview.orders.filter(

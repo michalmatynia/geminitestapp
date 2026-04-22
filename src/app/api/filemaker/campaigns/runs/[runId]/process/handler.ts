@@ -26,7 +26,7 @@ import {
   type FilemakerEmailCampaignProcessRunResponse,
 } from '@/features/filemaker/server';
 
-export async function POST_handler(
+export async function postHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { runId: string }

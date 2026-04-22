@@ -1,5 +1,6 @@
 import { Text, TextInput, View } from 'react-native';
 
+import { type useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import {
   KangurMobileCard as Card,
   KangurMobilePill as Pill,
@@ -7,16 +8,11 @@ import {
 } from '../shared/KangurMobileUi';
 import { ActionButton, MessageCard } from './duels-primitives';
 import { formatRelativeAge } from './duels-utils';
+import { type useKangurMobileDuelsLobby } from './useKangurMobileDuelsLobby';
 
-type DuelCopy = ReturnType<
-  typeof import('../i18n/kangurMobileI18n').useKangurMobileI18n
->['copy'];
-type DuelLocale = ReturnType<
-  typeof import('../i18n/kangurMobileI18n').useKangurMobileI18n
->['locale'];
-type DuelLobbyState = ReturnType<
-  (typeof import('./useKangurMobileDuelsLobby'))['useKangurMobileDuelsLobby']
->;
+type DuelCopy = ReturnType<typeof useKangurMobileI18n>['copy'];
+type DuelLocale = ReturnType<typeof useKangurMobileI18n>['locale'];
+type DuelLobbyState = ReturnType<typeof useKangurMobileDuelsLobby>;
 
 type DuelLobbySecondarySectionProps = {
   copy: DuelCopy;
@@ -128,7 +124,6 @@ export function DuelLobbyPresenceSection({
 
 export function DuelLobbySearchSection({
   copy,
-  locale,
   lobby,
   onOpenSession,
   searchStatusLabel,

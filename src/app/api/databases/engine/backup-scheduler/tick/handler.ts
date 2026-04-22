@@ -14,7 +14,7 @@ import {
   startDatabaseBackupSchedulerQueue,
 } from '@/shared/lib/db/workers/databaseBackupSchedulerQueue';
 
-export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const session = await auth();
   const hasAccess =
     session?.user?.isElevated || session?.user?.permissions?.includes('settings.manage');

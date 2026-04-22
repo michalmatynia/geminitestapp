@@ -13,7 +13,7 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
  * POST /api/v2/integrations/[id]/connections/[connectionId]/base/test
  * Tests the Base.com API connection by verifying the token and fetching inventories.
  */
-export async function POST_handler(
+export async function postHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string; connectionId: string }

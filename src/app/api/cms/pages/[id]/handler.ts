@@ -47,7 +47,7 @@ async function getCmsPageByIdCached(id: string) {
   return cmsRepository.getPageById(id);
 }
 
-export async function GET_handler(
+export async function getHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: Params
@@ -66,7 +66,7 @@ export async function GET_handler(
  * PUT /api/cms/pages/[id]
  * Updates a page.
  */
-export async function PUT_handler(
+export async function putHandler(
   req: NextRequest,
   ctx: ApiHandlerContext,
   params: Params
@@ -133,7 +133,7 @@ export async function PUT_handler(
  * DELETE /api/cms/pages/[id]
  * Deletes a page.
  */
-export async function DELETE_handler(
+export async function deleteHandler(
   _req: NextRequest,
   ctx: ApiHandlerContext,
   params: Params

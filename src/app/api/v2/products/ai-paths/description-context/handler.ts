@@ -62,7 +62,7 @@ const resolveCategoryName = (
   return preferredName?.trim() ?? null;
 };
 
-export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const query = ctx.query as DescriptionContextQuery | undefined;
   const catalogId = query?.catalogId ?? '';
   const categoryId = query?.categoryId ?? '';

@@ -17,7 +17,7 @@ import {
  * PUT /api/v2/products/tags/[id]
  * Updates a product tag.
  */
-export async function PUT_handler(
+export async function putHandler(
   _req: NextRequest,
   ctx: ApiHandlerContext,
   params: { id: string }
@@ -47,7 +47,7 @@ export async function PUT_handler(
  * DELETE /api/v2/products/tags/[id]
  * Deletes a product tag.
  */
-export async function DELETE_handler(
+export async function deleteHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }

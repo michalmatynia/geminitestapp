@@ -5,7 +5,7 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { POST_handler } from '@/app/api/ai-paths/update/handler';
+import { postHandler } from '@/app/api/ai-paths/update/handler';
 import {
   enforceAiPathsActionRateLimit,
   ensureAiPathsPermission,
@@ -78,7 +78,7 @@ describe('AI Paths update handler', () => {
       }),
     });
 
-    await expect(POST_handler(request, {} as never)).rejects.toThrow(
+    await expect(postHandler(request, {} as never)).rejects.toThrow(
       /unsupported "simpleParameters" alias.*Use "parameters"/i
     );
     expect(productRepository.updateProduct).not.toHaveBeenCalled();

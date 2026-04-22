@@ -1,15 +1,15 @@
 export const runtime = 'nodejs';
 
 import {
-  GET_handler,
-  POST_handler,
+  getHandler,
+  postHandler,
   productParameterCreateSchema,
   querySchema,
 } from '@/app/api/v2/products/parameters/handler';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 
 
-export const GET = apiHandler(GET_handler, {
+export const GET = apiHandler(getHandler, {
   source: 'v2.products.parameters.GET',
   querySchema,
   rateLimitKey: 'search',
@@ -17,7 +17,7 @@ export const GET = apiHandler(GET_handler, {
   requireAuth: true,
 });
 
-export const POST = apiHandler(POST_handler, {
+export const POST = apiHandler(postHandler, {
   source: 'v2.products.parameters.POST',
   parseJsonBody: true,
   bodySchema: productParameterCreateSchema,

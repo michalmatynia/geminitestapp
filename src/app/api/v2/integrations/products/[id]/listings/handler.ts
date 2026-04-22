@@ -50,7 +50,7 @@ const toRecord = (value: unknown): Record<string, unknown> =>
  * GET /api/v2/integrations/products/[id]/listings
  * Fetches all listings for a specific product.
  */
-export async function GET_handler(
+export async function getHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }
@@ -81,7 +81,7 @@ export async function GET_handler(
  * POST /api/v2/integrations/products/[id]/listings
  * Creates a new listing for a product on a marketplace.
  */
-export async function POST_handler(
+export async function postHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }

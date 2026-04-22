@@ -6,7 +6,7 @@ import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
 import { validateProductsBatch } from '@/shared/lib/products/validations';
 
 // POST /api/v2/products/validation - Batch validation
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseObjectJsonBody(req, {
     logPrefix: 'products.validation',
   });
@@ -37,7 +37,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
 }
 
 // GET /api/v2/products/validation - Health check
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   return NextResponse.json({
     status: 'ok',
     validation: { engine: 'zod-schema' },

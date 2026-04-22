@@ -43,7 +43,7 @@ const resolveProvider = async (): Promise<AppDbProvider | 'unknown'> => {
   }
 };
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const startedAtMs = Date.now();
   const provider = await resolveProvider();
   const db = {

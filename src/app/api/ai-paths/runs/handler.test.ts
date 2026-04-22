@@ -45,7 +45,7 @@ vi.mock('@/features/integrations/services/base-export-run-recovery', () => ({
   recoverStaleBaseExportRuns: (...args: unknown[]) => recoverStaleBaseExportRunsMock(...args),
 }));
 
-import { __testOnly, GET_handler } from './handler';
+import { __testOnly, getHandler } from './handler';
 
 describe('ai-paths runs handler', () => {
   const repo = {
@@ -74,11 +74,11 @@ describe('ai-paths runs handler', () => {
   });
 
   it('forwards requestId filters to the repository list call', async () => {
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest(
         'http://localhost/api/ai-paths/runs?pathId=path-1&requestId=trigger:path-1:req-1&includeTotal=0&fresh=1'
       ),
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
 
     expect(response.status).toBe(200);
@@ -117,9 +117,9 @@ describe('ai-paths runs handler', () => {
       total: 1,
     });
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/ai-paths/runs?fresh=1'),
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
 
     expect(response.status).toBe(200);
@@ -136,9 +136,9 @@ describe('ai-paths runs handler', () => {
       total: 0,
     });
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/ai-paths/runs?requestId=req-alt&fresh=1'),
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
 
     expect(response.status).toBe(200);
@@ -158,9 +158,9 @@ describe('ai-paths runs handler', () => {
   });
 
   it('repairs stale Base export runs before listing the Base export path', async () => {
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/ai-paths/runs?pathId=integration-base-export&fresh=1'),
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
 
     expect(response.status).toBe(200);

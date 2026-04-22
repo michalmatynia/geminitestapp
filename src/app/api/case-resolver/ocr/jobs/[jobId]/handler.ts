@@ -21,7 +21,7 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 const CASE_RESOLVER_OCR_DEFAULT_MAX_ATTEMPTS = 3;
 
-export async function GET_handler(
+export async function getHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { jobId: string }
@@ -39,7 +39,7 @@ export async function GET_handler(
   return NextResponse.json({ job });
 }
 
-export async function POST_handler(
+export async function postHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { jobId: string }

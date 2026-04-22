@@ -45,7 +45,7 @@ vi.mock('@/shared/lib/ai-paths/services/path-run-repository', () => ({
   }),
 }));
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 describe('integration listing delete-from-base handler', () => {
   beforeEach(() => {
@@ -99,7 +99,7 @@ describe('integration listing delete-from-base handler', () => {
   });
 
   it('clears stale Base ids after successful deletion so re-export can create a new product', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/v2/integrations/products/product-1/listings/listing-1/delete-from-base', {
         method: 'POST',
       }),
@@ -145,7 +145,7 @@ describe('integration listing delete-from-base handler', () => {
       updateProduct: vi.fn().mockResolvedValue({ id: 'product-1', baseProductId: null }),
     });
 
-    await POST_handler(
+    await postHandler(
       new NextRequest('http://localhost/api/v2/integrations/products/product-1/listings/listing-1/delete-from-base', {
         method: 'POST',
       }),
@@ -191,7 +191,7 @@ describe('integration listing delete-from-base handler', () => {
       }),
     });
 
-    await POST_handler(
+    await postHandler(
       new NextRequest('http://localhost/api/v2/integrations/products/product-1/listings/listing-1/delete-from-base', {
         method: 'POST',
       }),

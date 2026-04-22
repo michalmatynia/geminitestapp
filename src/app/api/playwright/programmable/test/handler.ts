@@ -21,4 +21,4 @@ const postHandler = async (
   return Response.json(await runPlaywrightProgrammableConnectionTest(parsed.data));
 };
 
-export { postHandler as POST_handler };
+export { postHandler as postHandler };

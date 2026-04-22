@@ -14,13 +14,13 @@ import { productSyncProfileCreatePayloadSchema } from '@/shared/contracts/produc
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 export const createProfileSchema = productSyncProfileCreatePayloadSchema;
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const profiles = await listProductSyncProfiles();
   const response: ProductSyncProfilesResponse = { profiles };
   return NextResponse.json(response, { headers: { 'Cache-Control': 'no-store' } });
 }
 
-export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const body = ctx.body as ProductSyncProfileCreatePayload;
   const profile = await createProductSyncProfile({
     ...(body.name !== undefined ? { name: body.name } : {}),

@@ -88,7 +88,7 @@ async function browseMongoCollection(params: BrowseParams): Promise<BrowseRespon
   };
 }
 
-export async function GET_handler(
+export async function getHandler(
   request: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {

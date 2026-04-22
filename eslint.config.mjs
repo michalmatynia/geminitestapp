@@ -247,7 +247,7 @@ const commonRules = {
   'no-iterator': 'error',
   'no-proto': 'error',
   'no-sequences': 'error',
-  'no-void': ['error', { allowAsStatement: false }],
+  'no-void': ['error', { allowAsStatement: true }],
   'prefer-object-spread': 'error',
   'prefer-rest-params': 'error',
   'prefer-spread': 'error',

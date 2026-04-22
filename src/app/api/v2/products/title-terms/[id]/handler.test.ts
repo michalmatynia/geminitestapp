@@ -21,7 +21,7 @@ vi.mock('@/features/products/server', () => ({
   getTitleTermRepository: (...args: unknown[]) => getTitleTermRepositoryMock(...args),
 }));
 
-import { DELETE_handler, PUT_handler, titleTermUpdateSchema } from './handler';
+import { deleteHandler, putHandler, titleTermUpdateSchema } from './handler';
 
 describe('products/title-terms/[id] handler', () => {
   beforeEach(() => {
@@ -68,7 +68,7 @@ describe('products/title-terms/[id] handler', () => {
       updatedAt: '2026-01-02T00:00:00.000Z',
     });
 
-    const response = await PUT_handler(
+    const response = await putHandler(
       new NextRequest('http://localhost/api/v2/products/title-terms/term-1'),
       {
         body: {
@@ -91,7 +91,7 @@ describe('products/title-terms/[id] handler', () => {
     getTitleTermByIdMock.mockResolvedValue(null);
 
     await expect(
-      PUT_handler(
+      putHandler(
         new NextRequest('http://localhost/api/v2/products/title-terms/missing'),
         {
           body: {
@@ -109,7 +109,7 @@ describe('products/title-terms/[id] handler', () => {
   it('deletes a title term by id', async () => {
     deleteTitleTermMock.mockResolvedValue(undefined);
 
-    const response = await DELETE_handler(
+    const response = await deleteHandler(
       new NextRequest('http://localhost/api/v2/products/title-terms/term-1'),
       {} as ApiHandlerContext,
       { id: 'term-1' }

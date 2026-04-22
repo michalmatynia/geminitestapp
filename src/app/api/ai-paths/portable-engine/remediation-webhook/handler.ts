@@ -50,7 +50,7 @@ const toParsedJsonPayload = (rawBody: string): unknown => {
   }
 };
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const query = querySchema.parse(resolveRemediationWebhookQueryInput(req, _ctx));
   const channel = query.channel ?? 'webhook';
   const maxSkewSeconds = query.maxSkewSeconds ?? DEFAULT_MAX_SKEW_SECONDS;

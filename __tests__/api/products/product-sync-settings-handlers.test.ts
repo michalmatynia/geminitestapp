@@ -1,11 +1,11 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { GET_handler as getProfilesHandler } from '@/app/api/v2/products/sync/profiles/handler';
+import { getHandler as getProfilesHandler } from '@/app/api/v2/products/sync/profiles/handler';
 import {
-  DELETE_handler as deleteProfileHandler,
+  deleteHandler as deleteProfileHandler,
 } from '@/app/api/v2/products/sync/profiles/[id]/handler';
-import { GET_handler as getRunsHandler } from '@/app/api/v2/products/sync/runs/handler';
+import { getHandler as getRunsHandler } from '@/app/api/v2/products/sync/runs/handler';
 import type {
   ProductSyncDeleteResponse,
   ProductSyncProfile,

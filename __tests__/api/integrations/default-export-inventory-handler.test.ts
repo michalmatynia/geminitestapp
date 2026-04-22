@@ -2,8 +2,8 @@ import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
-  GET_handler,
-  POST_handler,
+  getHandler,
+  postHandler,
 } from '@/app/api/v2/integrations/exports/base/default-inventory/handler';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
@@ -41,7 +41,7 @@ describe('api/v2/integrations/exports/base/default-inventory handler', () => {
   it('returns stored default inventory id', async () => {
     getExportDefaultInventoryIdMock.mockResolvedValue('4069');
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/v2/integrations/exports/base/default-inventory', {
         method: 'GET',
       }),
@@ -56,7 +56,7 @@ describe('api/v2/integrations/exports/base/default-inventory handler', () => {
   it('returns null when reading default inventory throws unexpectedly', async () => {
     getExportDefaultInventoryIdMock.mockRejectedValue(new Error('settings read failed'));
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/v2/integrations/exports/base/default-inventory', {
         method: 'GET',
       }),
@@ -69,7 +69,7 @@ describe('api/v2/integrations/exports/base/default-inventory handler', () => {
   });
 
   it('stores inventory id on POST and returns the centralized response', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       buildDefaultInventoryPostRequest('4069'),
       mockContext
     );

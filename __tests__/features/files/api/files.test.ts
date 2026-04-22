@@ -23,8 +23,8 @@ vi.mock('@/features/products/server', () => ({
   getProductRepository: mocks.getProductRepository,
 }));
 
-import { GET_handler } from '@/app/api/files/handler';
-import { DELETE_handler } from '@/app/api/files/[id]/handler';
+import { getHandler } from '@/app/api/files/handler';
+import { deleteHandler } from '@/app/api/files/[id]/handler';
 
 describe('Files API', () => {
   beforeEach(() => {
@@ -68,7 +68,7 @@ describe('Files API', () => {
       },
     ]);
 
-    const res = await GET_handler(new NextRequest('http://localhost/api/files'), {
+    const res = await getHandler(new NextRequest('http://localhost/api/files'), {
       query: {},
     } as any);
     const files = (await res.json()) as Array<{
@@ -92,7 +92,7 @@ describe('Files API', () => {
     mocks.listImageFiles.mockResolvedValue([]);
     mocks.getProducts.mockResolvedValue([]);
 
-    await GET_handler(new NextRequest('http://localhost/api/files?filename=test-image'), {
+    await getHandler(new NextRequest('http://localhost/api/files?filename=test-image'), {
       query: { filename: 'test-image' },
     } as any);
 
@@ -132,7 +132,7 @@ describe('Files API', () => {
       },
     ]);
 
-    const res = await GET_handler(new NextRequest('http://localhost/api/files?productId=product-1'), {
+    const res = await getHandler(new NextRequest('http://localhost/api/files?productId=product-1'), {
       query: { productId: 'product-1' },
     } as any);
     const files = (await res.json()) as Array<{ id: string }>;
@@ -158,7 +158,7 @@ describe('Files API', () => {
       },
     ]);
 
-    const res = await GET_handler(
+    const res = await getHandler(
       new NextRequest('http://localhost/api/files?productName=Product%20A'),
       {
         query: { productName: 'Product A' },
@@ -183,7 +183,7 @@ describe('Files API', () => {
       id: 'file-2',
     });
 
-    const res = await DELETE_handler(new NextRequest('http://localhost/api/files/file-2'), {} as any, {
+    const res = await deleteHandler(new NextRequest('http://localhost/api/files/file-2'), {} as any, {
       id: 'file-2',
     });
 
@@ -196,7 +196,7 @@ describe('Files API', () => {
     mocks.getImageFileById.mockResolvedValue(null);
 
     await expect(
-      DELETE_handler(new NextRequest('http://localhost/api/files/missing'), {} as any, {
+      deleteHandler(new NextRequest('http://localhost/api/files/missing'), {} as any, {
         id: 'missing',
       })
     ).rejects.toThrow('File not found');

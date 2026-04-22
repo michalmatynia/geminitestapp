@@ -17,7 +17,7 @@ vi.mock('@/features/kangur/observability/summary', () => ({
   getKangurObservabilitySummary: getKangurObservabilitySummaryMock,
 }));
 
-import { GET_handler } from './handler';
+import { getHandler } from './handler';
 
 const createRequestContext = (query?: unknown): ApiHandlerContext =>
   ({
@@ -47,7 +47,7 @@ describe('kangur observability summary handler', () => {
     assertSettingsManageAccessMock.mockRejectedValue(authError('Unauthorized.'));
 
     await expect(
-      GET_handler(
+      getHandler(
         new NextRequest('http://localhost/api/kangur/observability/summary'),
         createRequestContext()
       )
@@ -193,7 +193,7 @@ describe('kangur observability summary handler', () => {
       errors: null,
     });
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/kangur/observability/summary?range=7d'),
       createRequestContext({ range: '7d' })
     );
@@ -214,7 +214,7 @@ describe('kangur observability summary handler', () => {
     assertSettingsManageAccessMock.mockResolvedValue(undefined);
 
     await expect(
-      GET_handler(
+      getHandler(
         new NextRequest('http://localhost/api/kangur/observability/summary?range=2h'),
         createRequestContext({ range: '2h' })
       )
@@ -229,7 +229,7 @@ describe('kangur observability summary handler', () => {
     });
 
     await expect(
-      GET_handler(
+      getHandler(
         new NextRequest('http://localhost/api/kangur/observability/summary?range=7d'),
         createRequestContext({ range: '7d' })
       )

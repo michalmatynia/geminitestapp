@@ -100,7 +100,7 @@ const cleanupChatbotTemp = async (): Promise<void> => {
   }
 };
 
-export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();
   const catalog = await listBrainModels();
 
@@ -127,7 +127,7 @@ export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Pr
   });
 }
 
-export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const tempFiles: string[] = [];
   const tempDirs: string[] = [];
   const requestStart = Date.now();

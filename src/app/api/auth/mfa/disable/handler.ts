@@ -14,7 +14,7 @@ export const payloadSchema = z.object({
   recoveryCode: z.string().trim().optional(),
 });
 
-export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const session = await auth();
   const userId = session?.user?.id;
   if (!userId) {

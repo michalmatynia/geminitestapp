@@ -6,7 +6,6 @@ import type { JSX, MouseEvent } from 'react';
 import { Button } from '@/shared/ui/primitives.public';
 import { Tag } from '@/shared/ui/forms-and-actions.public';
 import { cn } from '@/shared/utils/ui-utils';
-import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 
 interface Asset3DCardHeaderProps {
   displayName: string;
@@ -29,7 +28,7 @@ export function Asset3DCardHeader({
         <h3 className='truncate text-sm font-medium text-card-foreground' title={displayName}>
           {displayName}
         </h3>
-        {description ? (
+        {description !== undefined && description !== null && description !== '' ? (
           <p className='mt-0.5 truncate text-xs text-muted-foreground' title={description}>
             {description}
           </p>
@@ -105,7 +104,7 @@ export function Asset3DCardPreview({ isPublic, categoryId }: Asset3DCardPreviewP
             </>
           )}
         </div>
-        {categoryId ? (
+        {categoryId !== undefined && categoryId !== null && categoryId !== '' ? (
           <div className='absolute top-2 left-2 rounded bg-blue-500/10 px-2 py-1 text-xs text-blue-300'>
             {categoryId}
           </div>
@@ -147,9 +146,9 @@ export function Asset3DCardFooter({
 
       <div className='mt-3 border-t border-border/40 pt-3'>
         <div className='text-xs text-muted-foreground'>
-          <span>{formatFileSize(size ?? 0)}</span>
+          <span>{formatFileSize(size)}</span>
           <span className='mx-1'>•</span>
-          <span>{createdAt ? formatDate(createdAt) : ''}</span>
+          <span>{createdAt !== undefined && createdAt !== null ? formatDate(createdAt) : ''}</span>
         </div>
       </div>
     </div>

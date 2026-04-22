@@ -11,7 +11,7 @@ vi.mock('@/features/products/server/product-scans-service', () => ({
   listProductScansWithSync: (...args: unknown[]) => listProductScansWithSyncMock(...args),
 }));
 
-import { GET_handler, querySchema } from './handler';
+import { getHandler, querySchema } from './handler';
 
 describe('products/[id]/scans handler', () => {
   beforeEach(() => {
@@ -19,7 +19,7 @@ describe('products/[id]/scans handler', () => {
   });
 
   it('exports the list-by-product handler and query schema', () => {
-    expect(typeof GET_handler).toBe('function');
+    expect(typeof getHandler).toBe('function');
     expect(typeof querySchema.safeParse).toBe('function');
   });
 
@@ -28,7 +28,7 @@ describe('products/[id]/scans handler', () => {
       { id: 'scan-1', productId: 'product-123', status: 'running' },
     ]);
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/v2/products/product-123/scans?limit=15'),
       {
         query: { limit: '15' },
@@ -65,7 +65,7 @@ describe('products/[id]/scans handler', () => {
   it('uses the default limit when query is missing', async () => {
     listProductScansWithSyncMock.mockResolvedValue([]);
 
-    await GET_handler(
+    await getHandler(
       new NextRequest('http://localhost/api/v2/products/product-123/scans'),
       { query: {} } as ApiHandlerContext,
       { id: 'product-123' }

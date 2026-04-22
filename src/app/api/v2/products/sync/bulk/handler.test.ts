@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { POST_handler, bulkSchema } from './handler';
+import { postHandler, bulkSchema } from './handler';
 
 describe('product-sync bulk handler module', () => {
   it('exports the supported handlers and schema', () => {
-    expect(typeof POST_handler).toBe('function');
+    expect(typeof postHandler).toBe('function');
     expect(typeof bulkSchema.safeParse).toBe('function');
   });
 

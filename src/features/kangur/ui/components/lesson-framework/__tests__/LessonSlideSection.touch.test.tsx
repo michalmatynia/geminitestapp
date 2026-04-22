@@ -56,6 +56,10 @@ vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
     isAuthenticated: true,
     user: { actorType: 'learner', ownerUserId: 'parent-1' },
   }),
+  useKangurAuthSessionState: () => ({
+    isAuthenticated: true,
+    user: { actorType: 'learner', ownerUserId: 'parent-1' },
+  }),
 }));
 
 import LessonSlideSection from '../LessonSlideSection';

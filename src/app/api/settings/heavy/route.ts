@@ -1,9 +1,9 @@
 
 import { apiHandler } from '@/shared/lib/api/api-handler';
 
-import { disableSettingsRateLimit, GET_heavy_handler } from './handler';
+import { disableSettingsRateLimit, getHeavyHandler } from './handler';
 
-export const GET = apiHandler(GET_heavy_handler, {
+export const GET = apiHandler(getHeavyHandler, {
   source: 'settings.heavy.GET',
   rateLimitKey: disableSettingsRateLimit ? false : 'api',
   requireAuth: true,

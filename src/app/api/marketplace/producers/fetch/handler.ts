@@ -16,7 +16,7 @@ const BASE_MARKETPLACE_SLUGS = new Set(['baselinker', 'base', 'base-com']);
  * POST /api/marketplace/producers/fetch
  * Fetches producers from Base.com and stores them locally for mapping.
  */
-export async function POST_handler(
+export async function postHandler(
   request: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {

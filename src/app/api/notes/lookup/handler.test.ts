@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { GET_handler } from './handler';
+import { getHandler } from './handler';
 import { noteService } from '@/features/notesapp/server';
 
 vi.mock('@/features/notesapp/server', () => ({
@@ -9,7 +9,7 @@ vi.mock('@/features/notesapp/server', () => ({
   },
 }));
 
-describe('notes/lookup GET_handler', () => {
+describe('notes/lookup getHandler', () => {
   const mockContext = { source: 'test', query: {} } as any;
 
   beforeEach(() => {
@@ -18,7 +18,7 @@ describe('notes/lookup GET_handler', () => {
 
   it('throws badRequestError if ids are missing', async () => {
     const req = new NextRequest('http://localhost/api/notes/lookup');
-    await expect(GET_handler(req, mockContext)).rejects.toThrow('ids query parameter is required');
+    await expect(getHandler(req, mockContext)).rejects.toThrow('ids query parameter is required');
   });
 
   it('returns ordered notes from service', async () => {
@@ -33,7 +33,7 @@ describe('notes/lookup GET_handler', () => {
       query: { ids: ['n2', 'n1', 'n3'] } 
     };
     const req = new NextRequest('http://localhost/api/notes/lookup?ids=n2,n1,n3');
-    const response = await GET_handler(req, contextWithQuery);
+    const response = await getHandler(req, contextWithQuery);
     const data = await response.json();
 
     expect(data).toHaveLength(2);

@@ -22,7 +22,7 @@ const isBaseIntegrationSlug = (value: string | null | undefined): boolean => {
  * POST /api/v2/integrations/products/[id]/base/sku-check
  * Checks if the current product SKU exists in the target Base.com inventory.
  */
-export async function POST_handler(
+export async function postHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }

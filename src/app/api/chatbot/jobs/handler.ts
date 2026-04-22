@@ -29,7 +29,7 @@ const DEFAULT_CHATBOT_SYSTEM_PROMPT = 'You are a helpful assistant.';
 
 export { chatbotJobsDeleteQuerySchema as deleteQuerySchema };
 
-export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const jobs: ChatbotJob[] = await chatbotJobRepository.findAll(50);
 
   if (DEBUG_CHATBOT) {
@@ -42,7 +42,7 @@ export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Pr
   return NextResponse.json({ jobs });
 }
 
-export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const clonedRequest = req.clone();
   let rawBody: unknown = null;
   try {
@@ -142,7 +142,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
   });
 }
 
-export async function DELETE_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function deleteHandler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   void _req;
   const scope = chatbotJobsDeleteQuerySchema.parse(ctx.query ?? {}).scope ?? null;
   void scope;

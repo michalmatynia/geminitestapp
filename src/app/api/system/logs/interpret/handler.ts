@@ -29,7 +29,7 @@ const readContextRegistryEnvelope = (
   return Array.isArray(record['refs']) ? (value as ContextRegistryConsumerEnvelope) : null;
 };
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertSettingsManageAccess();
   startAiInsightsQueue();
   const parsed = await parseJsonBody(req, systemLogsInterpretRequestSchema, {

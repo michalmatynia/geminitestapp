@@ -25,7 +25,7 @@ export { createProductCategorySchema as productCategoryCreateSchema };
  * Query params:
  * - catalogId: Filter by catalog (required)
  */
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const timings: Record<string, number | null | undefined> = {};
   const requestStart = performance.now();
   const query = _ctx.query as CatalogIdWithFreshQuery | undefined;
@@ -66,7 +66,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
  * POST /api/v2/products/categories
  * Creates a new product category.
  */
-export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const data = ctx.body as z.infer<typeof createProductCategorySchema>;
   const { name, parentId, catalogId } = data;
   const normalizedName = name.trim();

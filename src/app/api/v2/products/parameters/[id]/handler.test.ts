@@ -32,7 +32,7 @@ vi.mock('@/shared/lib/db/mongo-client', () => ({
   getMongoDb: (...args: unknown[]) => getMongoDbMock(...args),
 }));
 
-import { DELETE_handler, PUT_handler } from './handler';
+import { deleteHandler, putHandler } from './handler';
 
 describe('products/parameters/[id] handler', () => {
   beforeEach(() => {
@@ -75,7 +75,7 @@ describe('products/parameters/[id] handler', () => {
       linkedTitleTermType: 'material',
     });
 
-    const response = await PUT_handler(
+    const response = await putHandler(
       new NextRequest('http://localhost/api/v2/products/parameters/param-1'),
       {
         body: {
@@ -116,7 +116,7 @@ describe('products/parameters/[id] handler', () => {
       },
     });
 
-    const response = await DELETE_handler(
+    const response = await deleteHandler(
       new NextRequest('http://localhost/api/v2/products/parameters/param-legacy-id'),
       {} as ApiHandlerContext,
       { id: 'param-legacy-id' }
@@ -150,7 +150,7 @@ describe('products/parameters/[id] handler', () => {
   it('throws not found for missing parameter on deletion', async () => {
     getParameterByIdMock.mockResolvedValue(null);
     await expect(
-      DELETE_handler(
+      deleteHandler(
         new NextRequest('http://localhost/api/v2/products/parameters/missing-id'),
         {} as ApiHandlerContext,
         { id: 'missing-id' }

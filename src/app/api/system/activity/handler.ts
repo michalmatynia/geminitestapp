@@ -17,7 +17,7 @@ type ActivityListQuery = z.infer<typeof activityQuerySchema>;
  * GET /api/system/activity
  * Fetches system-wide activity logs.
  */
-export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   await assertSettingsManageAccess();
   const query = ctx.query as ActivityListQuery;
   const repository = await getActivityRepository();

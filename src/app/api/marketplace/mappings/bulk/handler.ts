@@ -12,7 +12,7 @@ import { assertCategoryMappingsCanBeSaved } from '../validation';
  * POST /api/marketplace/mappings/bulk
  * Creates or updates multiple category mappings at once.
  */
-export async function POST_handler(
+export async function postHandler(
   request: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {

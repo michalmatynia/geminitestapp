@@ -1,9 +1,9 @@
 
 import { apiHandler } from '@/shared/lib/api/api-handler';
 
-import { POST_handler, payloadSchema } from './handler';
+import { postHandler, payloadSchema } from './handler';
 
-export const POST = apiHandler(POST_handler, {
+export const POST = apiHandler(postHandler, {
   source: 'auth.mock-signin.POST',
   parseJsonBody: true,
   bodySchema: payloadSchema,

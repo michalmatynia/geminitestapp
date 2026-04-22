@@ -1,9 +1,9 @@
 
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 
-import { DELETE_handler } from './handler';
+import { deleteHandler } from './handler';
 
-export const DELETE = apiHandlerWithParams<{ id: string; slotIndex: string }>(DELETE_handler, {
+export const DELETE = apiHandlerWithParams<{ id: string; slotIndex: string }>(deleteHandler, {
   source: 'notes.[id].files.[slotIndex].DELETE',
   requireAuth: true,
 });

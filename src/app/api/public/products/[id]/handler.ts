@@ -16,7 +16,7 @@ async function getPublicProductByIdCached(id: string) {
   return productService.getProductById(id);
 }
 
-export async function GET_handler(
+export async function getHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }

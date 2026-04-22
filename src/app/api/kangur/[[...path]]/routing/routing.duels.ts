@@ -17,12 +17,12 @@ import { postKangurDuelLeaveHandler } from '@/app/api/kangur/duels/leave/handler
 import { postKangurDuelReactionHandler } from '@/app/api/kangur/duels/reaction/handler';
 import { getKangurDuelLeaderboardHandler } from '@/app/api/kangur/duels/leaderboard/handler';
 import { getKangurDuelLobbyHandler } from '@/app/api/kangur/duels/lobby/handler';
-import { GET_handler as getKangurDuelLobbyStreamHandler } from '@/app/api/kangur/duels/lobby/stream/handler';
+import { getHandler as getKangurDuelLobbyStreamHandler } from '@/app/api/kangur/duels/lobby/stream/handler';
 import {
   getKangurDuelLobbyChatHandler,
   postKangurDuelLobbyChatHandler,
 } from '@/app/api/kangur/duels/lobby-chat/handler';
-import { GET_handler as getKangurDuelLobbyChatStreamHandler } from '@/app/api/kangur/duels/lobby-chat/stream/handler';
+import { getHandler as getKangurDuelLobbyChatStreamHandler } from '@/app/api/kangur/duels/lobby-chat/stream/handler';
 import {
   getKangurDuelLobbyPresenceHandler,
   postKangurDuelLobbyPresenceHandler,

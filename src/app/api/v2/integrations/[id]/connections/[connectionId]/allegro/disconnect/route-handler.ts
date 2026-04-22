@@ -2,9 +2,9 @@ export const runtime = 'nodejs';
 
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
-export const POST = apiHandlerWithParams<{ id: string; connectionId: string }>(POST_handler, {
+export const POST = apiHandlerWithParams<{ id: string; connectionId: string }>(postHandler, {
   source: 'v2.integrations.[id].connections.[connectionId].allegro.disconnect.POST',
   requireCsrf: false,
   requireAuth: true,

@@ -3,6 +3,7 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ApiError } from '@/shared/lib/api-client';
 
 const {
   useProductSettingsShippingGroupsContextMock,
@@ -38,6 +39,27 @@ vi.mock('@/features/products/hooks/useProductMetadataQueries', () => ({
 
 vi.mock('@/shared/ui/alert', () => ({
   Alert: ({ children }: { children: React.ReactNode }) => <div role='alert'>{children}</div>,
+}));
+
+vi.mock('@/shared/ui/badge', () => ({
+  Badge: ({
+    children,
+    onRemove,
+    removeLabel,
+  }: {
+    children: React.ReactNode;
+    onRemove?: () => void;
+    removeLabel?: string;
+  }) => (
+    <div>
+      <span>{children}</span>
+      {onRemove ? (
+        <button type='button' aria-label={removeLabel ?? 'Remove'} onClick={onRemove}>
+          Remove
+        </button>
+      ) : null}
+    </div>
+  ),
 }));
 
 vi.mock('@/shared/ui/button', () => ({
@@ -182,9 +204,11 @@ vi.mock('@/shared/ui/templates/SimpleSettingsList', () => ({
   SimpleSettingsList: ({
     items,
     onEdit,
+    onDelete,
   }: {
     items: Array<{ id: string; title: string; subtitle?: string }>;
     onEdit?: (item: { id: string; title: string; subtitle?: string }) => void;
+    onDelete?: (item: { id: string; title: string; subtitle?: string }) => void | Promise<void>;
   }) => (
     <div>
       {items.map((item) => (
@@ -194,6 +218,11 @@ vi.mock('@/shared/ui/templates/SimpleSettingsList', () => ({
           {onEdit ? (
             <button type='button' onClick={() => onEdit(item)}>
               Edit {item.title}
+            </button>
+          ) : null}
+          {onDelete ? (
+            <button type='button' onClick={() => void onDelete(item)}>
+              Delete {item.title}
             </button>
           ) : null}
         </div>
@@ -219,7 +248,28 @@ vi.mock('@/shared/ui/toast', () => ({
 }));
 
 vi.mock('@/shared/ui/templates/modals/ConfirmModal', () => ({
-  ConfirmModal: () => null,
+  ConfirmModal: ({
+    isOpen,
+    onConfirm,
+    onClose,
+    message,
+  }: {
+    isOpen: boolean;
+    onConfirm: () => void | Promise<void>;
+    onClose: () => void;
+    message?: React.ReactNode;
+  }) =>
+    isOpen ? (
+      <div>
+        {message ? <div>{message}</div> : null}
+        <button type='button' onClick={() => void onConfirm()}>
+          Confirm delete
+        </button>
+        <button type='button' onClick={onClose}>
+          Cancel delete
+        </button>
+      </div>
+    ) : null,
 }));
 
 vi.mock('@/shared/utils/observability/client-error-logger', () => ({
@@ -348,8 +398,48 @@ describe('ShippingGroupsSettings', () => {
 
     expect(screen.getByText('Selected categories (2)')).toBeInTheDocument();
     expect(
-      screen.getByText(/Jewellery \/ Rings, Jewellery \/ Keychains/i)
+      screen.getByRole('button', { name: 'Remove Jewellery / Rings' })
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Remove Jewellery / Keychains' })
+    ).toBeInTheDocument();
+  });
+
+  it('lets users remove one selected category chip before saving', async () => {
+    render(<ShippingGroupsSettings />);
+
+    fireEvent.click(screen.getByRole('button', { name: /add shipping group/i }));
+    fireEvent.change(screen.getByLabelText(/shipping group name/i), {
+      target: { value: 'Pins 7 EUR' },
+    });
+
+    const autoAssignSelect = screen.getByLabelText(/auto-assign from categories/i);
+    const ringsOption = screen.getByRole('option', { name: 'Jewellery / Rings' });
+    const keychainsOption = screen.getByRole('option', { name: 'Jewellery / Keychains' });
+    (ringsOption as HTMLOptionElement).selected = true;
+    (keychainsOption as HTMLOptionElement).selected = true;
+    fireEvent.change(autoAssignSelect);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Remove Jewellery / Rings' }));
+
+    expect(screen.getByText('Selected categories (1)')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Remove Jewellery / Rings' })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Remove Jewellery / Keychains' })
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /^save$/i }));
+
+    await waitFor(() => {
+      expect(mutateAsyncMock).toHaveBeenCalledWith({
+        id: undefined,
+        data: expect.objectContaining({
+          autoAssignCategoryIds: ['category-keychains'],
+        }),
+      });
+    });
   });
 
   it('shows explicit category counts for saved multi-category rules', () => {
@@ -377,6 +467,99 @@ describe('ShippingGroupsSettings', () => {
     expect(
       screen.getByText(/Categories \(2\): Jewellery \/ Rings, Jewellery \/ Keychains/i)
     ).toBeInTheDocument();
+  });
+
+  it('confirms and deletes a shipping group', async () => {
+    const deleteMutateAsyncMock = vi.fn().mockResolvedValue(undefined);
+    const onRefreshShippingGroupsMock = vi.fn();
+
+    useDeleteShippingGroupMutationMock.mockReturnValue({
+      mutateAsync: deleteMutateAsyncMock,
+      isPending: false,
+    });
+    useProductSettingsShippingGroupsContextMock.mockReturnValue({
+      loadingShippingGroups: false,
+      shippingGroups: [
+        {
+          id: 'shipping-group-1',
+          name: 'Pins 7 EUR',
+          description: null,
+          catalogId: 'catalog-1',
+          traderaShippingCondition: 'Buyer pays shipping',
+          traderaShippingPriceEur: 7,
+          autoAssignCategoryIds: ['category-rings', 'category-keychains'],
+        },
+      ],
+      catalogs: [{ id: 'catalog-1', name: 'Main Catalog', isDefault: true }],
+      selectedShippingGroupCatalogId: 'catalog-1',
+      onShippingGroupCatalogChange: vi.fn(),
+      onRefreshShippingGroups: onRefreshShippingGroupsMock,
+    });
+
+    render(<ShippingGroupsSettings />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete Pins 7 EUR' }));
+
+    expect(
+      screen.getByText(/are you sure you want to delete shipping group "Pins 7 EUR"/i)
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm delete' }));
+
+    await waitFor(() => {
+      expect(deleteMutateAsyncMock).toHaveBeenCalledWith({
+        id: 'shipping-group-1',
+        catalogId: 'catalog-1',
+      });
+    });
+    expect(onRefreshShippingGroupsMock).toHaveBeenCalledTimes(1);
+    expect(toastMock).toHaveBeenCalledWith('Shipping group deleted.', {
+      variant: 'success',
+    });
+  });
+
+  it('refreshes the list when the shipping group was already removed', async () => {
+    const deleteMutateAsyncMock = vi.fn().mockRejectedValue(new ApiError('Shipping group not found', 404));
+    const onRefreshShippingGroupsMock = vi.fn();
+
+    useDeleteShippingGroupMutationMock.mockReturnValue({
+      mutateAsync: deleteMutateAsyncMock,
+      isPending: false,
+    });
+    useProductSettingsShippingGroupsContextMock.mockReturnValue({
+      loadingShippingGroups: false,
+      shippingGroups: [
+        {
+          id: 'shipping-group-1',
+          name: 'Pins 7 EUR',
+          description: null,
+          catalogId: 'catalog-1',
+          traderaShippingCondition: 'Buyer pays shipping',
+          traderaShippingPriceEur: 7,
+          autoAssignCategoryIds: ['category-rings'],
+        },
+      ],
+      catalogs: [{ id: 'catalog-1', name: 'Main Catalog', isDefault: true }],
+      selectedShippingGroupCatalogId: 'catalog-1',
+      onShippingGroupCatalogChange: vi.fn(),
+      onRefreshShippingGroups: onRefreshShippingGroupsMock,
+    });
+
+    render(<ShippingGroupsSettings />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete Pins 7 EUR' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm delete' }));
+
+    await waitFor(() => {
+      expect(deleteMutateAsyncMock).toHaveBeenCalledWith({
+        id: 'shipping-group-1',
+        catalogId: 'catalog-1',
+      });
+    });
+    expect(onRefreshShippingGroupsMock).toHaveBeenCalledTimes(1);
+    expect(toastMock).toHaveBeenCalledWith('Shipping group was already removed.', {
+      variant: 'success',
+    });
   });
 
   it('warns when shipping-group category rules overlap', () => {
@@ -498,7 +681,7 @@ describe('ShippingGroupsSettings', () => {
     render(<ShippingGroupsSettings />);
 
     expect(screen.getByText(/some auto-assign rules include descendant categories already covered by parent categories/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/jewellery 7 eur/i)).toHaveLength(3);
+    expect(screen.getAllByText(/jewellery 7 eur/i)).toHaveLength(4);
     expect(screen.getByText(/auto: jewellery \(\+ descendants\)/i)).toBeInTheDocument();
     expect(screen.getByText(/redundant: jewellery \/ rings|redundant: rings/i)).toBeInTheDocument();
   });

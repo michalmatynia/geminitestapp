@@ -925,6 +925,35 @@ describe('ProductColumns queued badge', () => {
     expect(screen.queryByText('507f1f77bcf86cd799439011')).not.toBeInTheDocument();
   });
 
+  it('renders unassigned category labels with a subtle warning tint', () => {
+    const product = createProduct({
+      categoryId: null,
+    });
+    useProductListActionsContextMock.mockReturnValue({
+      productNameKey: 'name_en',
+      queuedProductIds: new Set<string>(),
+      categoryNameById: new Map<string, string>(),
+    });
+    useProductListRowActionsContextMock.mockReturnValue({
+      onProductNameClick: vi.fn(),
+    });
+    useProductListRowVisualsContextMock.mockReturnValue({
+      productNameKey: 'name_en',
+      queuedProductIds: new Set<string>(),
+      categoryNameById: new Map<string, string>(),
+    });
+
+    const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
+    if (!nameColumn || typeof nameColumn.cell !== 'function') {
+      throw new Error('Name column cell was not found.');
+    }
+
+    const cell = nameColumn.cell({ row: { original: product } } as never);
+    render(cell);
+
+    expect(screen.getByRole('button', { name: 'Unassigned' })).toHaveClass('text-rose-300/80');
+  });
+
   it('renders the embedded category label when the row exposes a nested category object', () => {
     const product = {
       ...createProduct({

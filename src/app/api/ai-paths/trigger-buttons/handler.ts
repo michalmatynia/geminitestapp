@@ -216,7 +216,7 @@ const pruneDeprecatedTriggerButtons = (
   };
 };
 
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     await requireAiPathsRunAccess();
   } catch (error) {
@@ -277,7 +277,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   });
 }
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await requireAiPathsAccess();
   const parsed = await parseJsonBody(req, aiTriggerButtonCreateSchema, {
     logPrefix: 'ai-paths.trigger-buttons.POST',

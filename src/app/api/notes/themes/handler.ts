@@ -17,7 +17,7 @@ export const querySchema = z.object({
  * GET /api/notes/themes
  * Fetches themes for a notebook.
  */
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
   const notebookId = query.notebookId
     ? query.notebookId
@@ -30,7 +30,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
  * POST /api/notes/themes
  * Creates a new theme.
  */
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, themeCreateSchema, {
     logPrefix: 'themes.POST',
   });

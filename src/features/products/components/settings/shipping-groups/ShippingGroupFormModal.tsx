@@ -157,11 +157,27 @@ export function ShippingGroupFormModal(): React.JSX.Element | null {
                   Selected categories ({normalizedModalRuleIds.length})
                 </p>
                 <div className='flex flex-wrap gap-2'>
-                  {normalizedModalRuleIds.map((categoryId) => (
-                    <Badge key={categoryId} variant='outline'>
-                      {modalCategoryLabelById.get(categoryId) ?? categoryId}
-                    </Badge>
-                  ))}
+                  {normalizedModalRuleIds.map((categoryId) => {
+                    const categoryLabel = modalCategoryLabelById.get(categoryId) ?? categoryId;
+
+                    return (
+                      <Badge
+                        key={categoryId}
+                        variant='outline'
+                        onRemove={(): void =>
+                          setFormData((prev: ShippingGroupFormData) => ({
+                            ...prev,
+                            autoAssignCategoryIds: prev.autoAssignCategoryIds.filter(
+                              (selectedCategoryId) => selectedCategoryId !== categoryId
+                            ),
+                          }))
+                        }
+                        removeLabel={`Remove ${categoryLabel}`}
+                      >
+                        {categoryLabel}
+                      </Badge>
+                    );
+                  })}
                 </div>
               </div>
             ) : null}

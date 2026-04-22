@@ -4,7 +4,7 @@ import { findProductListingByIdAcrossProviders } from '@/features/integrations/s
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
-export async function DELETE_handler(
+export async function deleteHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string; listingId: string }

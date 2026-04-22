@@ -27,7 +27,7 @@ const experimentFlagsSchema = z.object({
  * GET /api/kangur/ai-tutor/experiments
  * Returns current experiment flags for the active learner.
  */
-export async function GET_handler(req: NextRequest): Promise<Response> {
+export async function getHandler(req: NextRequest): Promise<Response> {
   const actor = await resolveKangurActor(req);
   const activeLearner = requireActiveLearner(actor);
   const learnerId = activeLearner.id;
@@ -52,7 +52,7 @@ export async function GET_handler(req: NextRequest): Promise<Response> {
  * Updates experiment flags for the active learner.
  * Request body: { coachingMode?: string | null, contextStrategy?: string | null }
  */
-export async function PUT_handler(req: NextRequest): Promise<Response> {
+export async function putHandler(req: NextRequest): Promise<Response> {
   const actor = await resolveKangurActor(req);
   const activeLearner = requireActiveLearner(actor);
   const learnerId = activeLearner.id;

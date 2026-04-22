@@ -1,6 +1,8 @@
 const ALLOWED_REGEX_FLAGS = new Set<string>(['d', 'g', 'i', 'm', 's', 'u', 'v', 'y']);
 const MAX_REGEX_PATTERN_LENGTH = 512;
 const MAX_REGEX_FLAGS_LENGTH = 8;
+const OPEN_ENDED_QUANTIFIER_PATTERN = String.raw`(?:[+*]|\{\s*\d+\s*,\s*\})`;
+const GROUP_BODY_PATTERN = String.raw`(?:[^()[\s\]]|\.)*`;
 
 type RegexSafetyFailureCode =
   | 'pattern_too_long'
@@ -19,8 +21,12 @@ export type RegexSafetyResult =
     };
 
 const POTENTIAL_BACKTRACKING_PATTERNS: RegExp[] = [
-  /\((?:[^()[\s\]]|\.)*[+*](?:[^()[\s\]]|\.)*\)\s*(?:[+*]|\{\s*\d+\s*,\s*\}|)/,
-  /\((?:[^()[\s\]]|\.)*\|\s*(?:[^()[\s\]]|\.)*\)\s*(?:[+*]|\{\s*\d+\s*,\s*\}|)/,
+  new RegExp(
+    String.raw`\(${GROUP_BODY_PATTERN}${OPEN_ENDED_QUANTIFIER_PATTERN}${GROUP_BODY_PATTERN}\)\s*${OPEN_ENDED_QUANTIFIER_PATTERN}`
+  ),
+  new RegExp(
+    String.raw`\(${GROUP_BODY_PATTERN}\|\s*${GROUP_BODY_PATTERN}\)\s*${OPEN_ENDED_QUANTIFIER_PATTERN}`
+  ),
   /\.\*.\*|\.\+\.\+|\.\*\.\+|\.\+\.\*/,
 ];
 

@@ -14,7 +14,7 @@ vi.mock('@/features/kangur/server', () => ({
   requireActiveLearner: requireActiveLearnerMock,
 }));
 
-import { GET_handler } from './handler';
+import { getHandler } from './handler';
 
 const createRequestContext = (): ApiHandlerContext =>
   ({
@@ -42,7 +42,7 @@ describe('kangur duels lobby chat stream handler', () => {
     });
 
     await expect(
-      GET_handler(
+      getHandler(
         new NextRequest('http://localhost/api/kangur/duels/lobby-chat/stream'),
         createRequestContext()
       )
@@ -53,7 +53,7 @@ describe('kangur duels lobby chat stream handler', () => {
     resolveKangurActorMock.mockRejectedValueOnce(authError('Authentication required.'));
 
     await expect(
-      GET_handler(
+      getHandler(
         new NextRequest('http://localhost/api/kangur/duels/lobby-chat/stream'),
         createRequestContext()
       )

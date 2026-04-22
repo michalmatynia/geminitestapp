@@ -70,7 +70,7 @@ vi.mock('@/features/integrations/services/base-listing-canonicalization', () => 
   resolvePersistedTraderaLinkedTarget: vi.fn(),
 }));
 
-import { GET_handler, POST_handler } from './handler';
+import { getHandler, postHandler } from './handler';
 
 describe('integration product listings handler', () => {
   beforeEach(() => {
@@ -119,7 +119,7 @@ describe('integration product listings handler', () => {
       },
     ]);
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new Request('http://localhost/api') as never,
       {} as never,
       { id: 'product-1' }
@@ -136,7 +136,7 @@ describe('integration product listings handler', () => {
   });
 
   it('initializes queues before enqueueing a Tradera listing job', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       new Request('http://localhost/api') as never,
       {} as never,
       { id: 'product-1' }
@@ -192,7 +192,7 @@ describe('integration product listings handler', () => {
       },
     ]);
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new Request('http://localhost/api') as never,
       {} as never,
       { id: 'product-1' }
@@ -239,7 +239,7 @@ describe('integration product listings handler', () => {
       },
     ]);
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new Request('http://localhost/api') as never,
       {} as never,
       { id: 'product-1' }
@@ -265,7 +265,7 @@ describe('integration product listings handler', () => {
   it('marks a newly created Tradera listing failed when enqueueing the browser job fails', async () => {
     enqueueTraderaListingJobMock.mockRejectedValueOnce(new Error('Queue unavailable'));
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new Request('http://localhost/api') as never,
       {} as never,
       { id: 'product-1' }
@@ -311,7 +311,7 @@ describe('integration product listings handler', () => {
       },
     ]);
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new Request('http://localhost/api') as never,
       {} as never,
       { id: 'product-1' }
@@ -383,7 +383,7 @@ describe('integration product listings handler', () => {
       },
     ]);
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new Request('http://localhost/api') as never,
       {} as never,
       { id: 'product-1' }
@@ -437,7 +437,7 @@ describe('integration product listings handler', () => {
       },
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new Request('http://localhost/api') as never,
       {} as never,
       { id: 'product-1' }

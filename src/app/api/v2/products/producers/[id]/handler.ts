@@ -21,7 +21,7 @@ const parseProducerId = (params: { id: string }): string => {
   return parsed.data.id;
 };
 
-export async function PUT_handler(
+export async function putHandler(
   _req: NextRequest,
   ctx: ApiHandlerContext,
   params: { id: string }
@@ -55,7 +55,7 @@ export async function PUT_handler(
   return NextResponse.json(updated);
 }
 
-export async function DELETE_handler(
+export async function deleteHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }

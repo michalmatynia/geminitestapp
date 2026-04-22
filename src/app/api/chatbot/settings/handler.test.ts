@@ -9,7 +9,7 @@ vi.mock('@/shared/lib/db/mongo-client', () => ({
   getMongoDb: getMongoDbMock,
 }));
 
-import { GET_handler, POST_handler } from './handler';
+import { getHandler, postHandler } from './handler';
 
 const findOneMock = vi.fn();
 const updateOneMock = vi.fn();
@@ -36,11 +36,11 @@ describe('chatbot settings handler', () => {
       updatedAt: '2026-03-22T09:05:00.000Z',
     });
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/chatbot/settings?key=default'),
       {
         query: {},
-      } as Parameters<typeof GET_handler>[1]
+      } as Parameters<typeof getHandler>[1]
     );
 
     expect(findOneMock).toHaveBeenCalledWith({ key: 'default' });
@@ -65,7 +65,7 @@ describe('chatbot settings handler', () => {
       updatedAt: '2026-03-22T09:10:00.000Z',
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/chatbot/settings', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -76,7 +76,7 @@ describe('chatbot settings handler', () => {
           },
         }),
       }),
-      {} as Parameters<typeof POST_handler>[1]
+      {} as Parameters<typeof postHandler>[1]
     );
 
     expect(updateOneMock).toHaveBeenCalledWith(

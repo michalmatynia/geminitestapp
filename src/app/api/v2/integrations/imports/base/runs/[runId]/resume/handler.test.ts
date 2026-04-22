@@ -25,7 +25,7 @@ vi.mock('@/features/integrations/server', () => ({
   dispatchBaseImportRunJob: dispatchBaseImportRunJobMock,
 }));
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 describe('base import run resume handler module', () => {
   beforeEach(() => {
@@ -33,7 +33,7 @@ describe('base import run resume handler module', () => {
   });
 
   it('exports the supported handlers', () => {
-    expect(typeof POST_handler).toBe('function');
+    expect(typeof postHandler).toBe('function');
   });
 
   it('initializes queues before resuming an import run', async () => {
@@ -56,7 +56,7 @@ describe('base import run resume handler module', () => {
       summaryMessage: 'Queued',
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       {
         json: async () => ({}),
       } as never,

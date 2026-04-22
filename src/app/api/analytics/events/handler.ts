@@ -126,7 +126,7 @@ const persistAnalyticsEvent = async (
   return insertAnalyticsEvent(input, serverContext);
 };
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, analyticsEventCreateRequestSchema, {
     logPrefix: 'analytics.events.POST',
   });
@@ -223,7 +223,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   return NextResponse.json({ ok: true, queued: true, requestId: _ctx.requestId }, { status: 202 });
 }
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const session = await auth();
   if (!session?.user) throw authError('Unauthorized.');
 

@@ -9,7 +9,7 @@ const paramsSchema = z.object({
   id: z.string().trim().min(1, 'Sync profile id is required'),
 });
 
-export async function POST_handler(
+export async function postHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }

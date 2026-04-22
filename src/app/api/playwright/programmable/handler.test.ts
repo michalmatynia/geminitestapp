@@ -9,7 +9,7 @@ vi.mock('@/features/playwright/server/programmable-storage', () => ({
     mocks.findProgrammableIntegrationMock(...args),
 }));
 
-import { GET_handler } from './handler';
+import { getHandler } from './handler';
 
 describe('playwright programmable integration handler', () => {
   beforeEach(() => {
@@ -23,7 +23,7 @@ describe('playwright programmable integration handler', () => {
       name: 'Playwright (Programmable)',
     });
 
-    const response = await GET_handler(new Request('http://localhost/api/playwright/programmable'), {} as never);
+    const response = await getHandler(new Request('http://localhost/api/playwright/programmable'), {} as never);
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toMatchObject({
@@ -36,7 +36,7 @@ describe('playwright programmable integration handler', () => {
   it('returns null when the programmable integration is missing', async () => {
     mocks.findProgrammableIntegrationMock.mockResolvedValue(null);
 
-    const response = await GET_handler(new Request('http://localhost/api/playwright/programmable'), {} as never);
+    const response = await getHandler(new Request('http://localhost/api/playwright/programmable'), {} as never);
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toBeNull();

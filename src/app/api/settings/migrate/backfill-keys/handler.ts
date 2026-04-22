@@ -14,7 +14,7 @@ import { assertDatabaseEngineOperationEnabled } from '@/shared/lib/db/services/d
 
 import type { Filter } from 'mongodb';
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const session = await auth();
   const hasAccess =
     session?.user?.isElevated || session?.user?.permissions?.includes('settings.manage');

@@ -17,7 +17,7 @@ vi.mock('@/shared/lib/queue', () => ({
   isRedisAvailable: isRedisAvailableMock,
 }));
 
-import { GET_handler } from './handler';
+import { getHandler } from './handler';
 
 describe('base import queue health handler', () => {
   beforeEach(() => {
@@ -39,7 +39,7 @@ describe('base import queue health handler', () => {
       },
     });
 
-    const response = await GET_handler({} as never, {} as never);
+    const response = await getHandler({} as never, {} as never);
     const body = await response.json();
 
     expect(initializeQueuesMock).toHaveBeenCalledTimes(1);

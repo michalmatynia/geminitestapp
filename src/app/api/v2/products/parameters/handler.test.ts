@@ -27,7 +27,7 @@ vi.mock('@/features/products/server', () => ({
   },
 }));
 
-import { GET_handler, POST_handler } from './handler';
+import { getHandler, postHandler } from './handler';
 
 describe('products/parameters handler', () => {
   beforeEach(() => {
@@ -48,7 +48,7 @@ describe('products/parameters handler', () => {
   it('uses cached parameter service by default', async () => {
     listParametersCachedMock.mockResolvedValue([{ id: 'param-1', catalogId: 'catalog-1' }]);
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/v2/products/parameters?catalogId=catalog-1'),
       {
         query: { catalogId: 'catalog-1' },
@@ -63,7 +63,7 @@ describe('products/parameters handler', () => {
   it('bypasses cached parameter service when fresh=1 is provided', async () => {
     listParametersMock.mockResolvedValue([{ id: 'param-1', catalogId: 'catalog-1' }]);
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/v2/products/parameters?catalogId=catalog-1&fresh=1'),
       {
         query: { catalogId: 'catalog-1' },
@@ -87,7 +87,7 @@ describe('products/parameters handler', () => {
       linkedTitleTermType: 'material',
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/v2/products/parameters'),
       {
         body: {

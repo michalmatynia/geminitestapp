@@ -51,7 +51,7 @@ vi.mock('@/features/playwright/server', async (importOriginal) => {
 });
 
 import { DEFAULT_TRADERA_QUICKLIST_SCRIPT } from '@/features/integrations/services/tradera-listing/default-script';
-import { PUT_handler, deleteQuerySchema } from './handler';
+import { putHandler, deleteQuerySchema } from './handler';
 
 describe('integration connection by-id handler', () => {
   beforeEach(() => {
@@ -142,7 +142,7 @@ describe('integration connection by-id handler', () => {
   });
 
   it('persists scripted Tradera fields and returns them in the response', async () => {
-    const response = await PUT_handler(
+    const response = await putHandler(
       new Request('http://localhost/api/v2/integrations/connections/conn-tradera-1', {
         method: 'PUT',
       }) as never,
@@ -195,7 +195,7 @@ describe('integration connection by-id handler', () => {
       traderaParameterMapperCatalogJson: catalogJson,
     });
 
-    const response = await PUT_handler(
+    const response = await putHandler(
       new Request('http://localhost/api/v2/integrations/connections/conn-tradera-1', {
         method: 'PUT',
       }) as never,
@@ -237,7 +237,7 @@ describe('integration connection by-id handler', () => {
       playwrightListingScript: null,
     });
 
-    const response = await PUT_handler(
+    const response = await putHandler(
       new Request('http://localhost/api/v2/integrations/connections/conn-tradera-1', {
         method: 'PUT',
       }) as never,
@@ -274,7 +274,7 @@ describe('integration connection by-id handler', () => {
     });
 
     await expect(
-      PUT_handler(
+      putHandler(
         new Request('http://localhost/api/v2/integrations/connections/conn-tradera-1', {
           method: 'PUT',
         }) as never,
@@ -318,7 +318,7 @@ describe('integration connection by-id handler', () => {
       traderaApiSandbox: false,
     });
 
-    const response = await PUT_handler(
+    const response = await putHandler(
       new Request('http://localhost/api/v2/integrations/connections/conn-vinted-1', {
         method: 'PUT',
       }) as never,
@@ -362,7 +362,7 @@ describe('integration connection by-id handler', () => {
     );
 
     await expect(
-      PUT_handler(
+      putHandler(
         new Request('http://localhost/api/v2/integrations/connections/conn-playwright-1', {
           method: 'PUT',
         }) as never,
@@ -414,7 +414,7 @@ describe('integration connection by-id handler', () => {
       },
     });
 
-    const response = await PUT_handler(
+    const response = await putHandler(
       new Request('http://localhost/api/v2/integrations/connections/conn-playwright-1', {
         method: 'PUT',
       }) as never,

@@ -16,7 +16,7 @@ vi.mock('@/features/playwright/server/live-session', () => ({
   createLiveScripterSession: (...args: unknown[]) => createLiveScripterSessionMock(...args),
 }));
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 const createContext = (body: Record<string, unknown>): ApiHandlerContext =>
   ({
@@ -43,7 +43,7 @@ describe('playwright live scripter start handler', () => {
   });
 
   it('creates a live scripter session for an elevated admin', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/playwright/live-scripter/start', {
         method: 'POST',
       }),
@@ -78,7 +78,7 @@ describe('playwright live scripter start handler', () => {
     });
 
     await expect(
-      POST_handler(
+      postHandler(
         new NextRequest('http://localhost/api/playwright/live-scripter/start', {
           method: 'POST',
         }),

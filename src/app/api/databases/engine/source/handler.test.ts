@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { GET_handler } from './handler';
+import { getHandler } from './handler';
 
 const mocks = vi.hoisted(() => ({
   assertDatabaseEngineManageAccess: vi.fn(async () => undefined),
@@ -54,7 +54,7 @@ describe('databases engine source handler', () => {
   });
 
   it('returns the current Mongo source state', async () => {
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/databases/engine/source'),
       mockContext
     );

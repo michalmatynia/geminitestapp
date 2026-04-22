@@ -2,7 +2,7 @@ import type { KangurDuelDifficulty, KangurDuelMode, KangurDuelOperation, KangurD
 import type { Href } from 'expo-router';
 import { Text, View } from 'react-native';
 
-import { useKangurMobileI18n, type KangurMobileLocale } from '../i18n/kangurMobileI18n';
+import { useKangurMobileI18n, type KangurMobileLocale, type KangurMobileLocalizedValue } from '../i18n/kangurMobileI18n';
 import { useKangurMobileLessonCheckpoints, type KangurMobileLessonCheckpointItem } from '../lessons/useKangurMobileLessonCheckpoints';
 import { formatKangurMobileScoreDateTime } from '../scores/mobileScoreSummary';
 import {
@@ -12,6 +12,7 @@ import {
   KangurMobileInsetPanel,
   KangurMobileLinkButton,
   KangurMobilePill as Pill,
+  type KangurMobileTone as Tone,
 } from '../shared/KangurMobileUi';
 import { translateKangurMobileActionLabel } from '../shared/translateKangurMobileActionLabel';
 import { useKangurMobileDuelsAssignments, type KangurMobileDuelsAssignmentItem } from './useKangurMobileDuelsAssignments';
@@ -452,7 +453,7 @@ function LessonMasteryRow({
       pl: 'Potem trenuj',
     }),
   });
-  const lastAttemptLabel = insight.lastCompletedAt
+  const lastAttemptLabel = insight.lastCompletedAt !== null
     ? formatKangurMobileScoreDateTime(insight.lastCompletedAt, locale)
     : copy({
         de: 'kein Datum',
@@ -552,8 +553,6 @@ export function LessonMasteryCard({
           : `Stabilna mocna strona z lobby: ${strongestLesson.title} trzyma poziom i nadaje się na krótkie podtrzymanie przed następnym meczem.`,
     });
   }
-        })
-      : null;
 
   return (
     <Card>
@@ -642,14 +641,14 @@ export function LessonMasteryCard({
         </Text>
       ) : (
         <View style={{ gap: 12 }}>
-          {lessonFocusSummary ? (
+          {lessonFocusSummary.length > 0 ? (
             <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
               {lessonFocusSummary}
             </Text>
           ) : null}
 
           <View style={{ alignSelf: 'stretch', gap: 10 }}>
-            {weakestLesson ? (
+            {weakestLesson !== null ? (
               <LinkButton
                 href={weakestLesson.lessonHref}
                 label={copy({
@@ -661,7 +660,7 @@ export function LessonMasteryCard({
                 tone='primary'
               />
             ) : null}
-            {strongestLesson ? (
+            {strongestLesson !== null ? (
               <LinkButton
                 href={strongestLesson.lessonHref}
                 label={copy({
@@ -674,7 +673,7 @@ export function LessonMasteryCard({
             ) : null}
           </View>
 
-          {weakestLesson ? (
+          {weakestLesson !== null ? (
             <LessonMasteryRow
               insight={weakestLesson}
               title={copy({
@@ -684,7 +683,7 @@ export function LessonMasteryCard({
               })}
             />
           ) : null}
-          {strongestLesson ? (
+          {strongestLesson !== null ? (
             <LessonMasteryRow
               insight={strongestLesson}
               title={copy({
@@ -706,26 +705,29 @@ function DuelAssignmentRow({
   item: KangurMobileDuelsAssignmentItem;
 }): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
-  const priorityTone =
-    item.assignment.priority === 'high'
-      ? {
-          backgroundColor: '#fef2f2',
-          borderColor: '#fecaca',
-          textColor: '#b91c1c',
-        }
-      : item.assignment.priority === 'medium'
-        ? {
-            backgroundColor: '#fffbeb',
-            borderColor: '#fde68a',
-            textColor: '#b45309',
-          }
-        : {
-            backgroundColor: '#eff6ff',
-            borderColor: '#bfdbfe',
-            textColor: '#1d4ed8',
-          };
+
+  const priorityTones: Record<string, Tone> = {
+    high: {
+      backgroundColor: '#fef2f2',
+      borderColor: '#fecaca',
+      textColor: '#b91c1c',
+    },
+    medium: {
+      backgroundColor: '#fffbeb',
+      borderColor: '#fde68a',
+      textColor: '#b45309',
+    },
+    low: {
+      backgroundColor: '#eff6ff',
+      borderColor: '#bfdbfe',
+      textColor: '#1d4ed8',
+    },
+  };
+
+  const priorityTone = priorityTones[item.assignment.priority] ?? priorityTones.low;
+
   const assignmentActionLabel = translateKangurMobileActionLabel(item.assignment.action.label, locale);
-  const assignmentAction = item.href ? (
+  const assignmentAction = item.href !== null ? (
     <LinkButton href={item.href} label={assignmentActionLabel} tone='primary' stretch />
   ) : (
     <Pill
@@ -742,31 +744,29 @@ function DuelAssignmentRow({
     />
   );
 
+  const priorityLabels: Record<string, KangurMobileLocalizedValue<string>> = {
+    high: {
+      de: 'Hohe Priorität',
+      en: 'High priority',
+      pl: 'Priorytet wysoki',
+    },
+    medium: {
+      de: 'Mittlere Priorität',
+      en: 'Medium priority',
+      pl: 'Priorytet średni',
+    },
+    low: {
+      de: 'Niedrige Priorität',
+      en: 'Low priority',
+      pl: 'Priorytet niski',
+    },
+  };
+
+  const priorityLabel = priorityLabels[item.assignment.priority] ?? priorityLabels.low;
+
   return (
     <KangurMobileInsetPanel gap={8}>
-      <Pill
-        label={copy({
-          de:
-            item.assignment.priority === 'high'
-              ? 'Hohe Priorität'
-              : item.assignment.priority === 'medium'
-                ? 'Mittlere Priorität'
-                : 'Niedrige Priorität',
-          en:
-            item.assignment.priority === 'high'
-              ? 'High priority'
-              : item.assignment.priority === 'medium'
-                ? 'Medium priority'
-                : 'Low priority',
-          pl:
-            item.assignment.priority === 'high'
-              ? 'Priorytet wysoki'
-              : item.assignment.priority === 'medium'
-                ? 'Priorytet średni'
-                : 'Priorytet niski',
-        })}
-        tone={priorityTone}
-      />
+      <Pill label={copy(priorityLabel)} tone={priorityTone} />
 
       <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
         {item.assignment.title}
@@ -886,6 +886,14 @@ export function LobbyEntryCard({
   };
   locale: KangurMobileLocale;
 }): React.JSX.Element {
+  const { copy } = useKangurMobileI18n();
+  const relativeAgeLabel = formatRelativeAge(entry.updatedAt, locale);
+  const lobbyEntrySummary = copy({
+    de: `${entry.questionCount} Fragen · ${entry.timePerQuestionSec}s pro Frage · aktualisiert ${relativeAgeLabel}`,
+    en: `${entry.questionCount} questions · ${entry.timePerQuestionSec}s per question · updated ${relativeAgeLabel}`,
+    pl: `${entry.questionCount} pytań · ${entry.timePerQuestionSec}s na pytanie · aktualizacja ${relativeAgeLabel}`,
+  });
+
   return (
     <View
       style={{
@@ -937,11 +945,7 @@ export function LobbyEntryCard({
       </View>
 
       <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
-        {locale === 'de'
-          ? `${entry.questionCount} Fragen · ${entry.timePerQuestionSec}s pro Frage · aktualisiert ${formatRelativeAge(entry.updatedAt, locale)}`
-          : locale === 'en'
-            ? `${entry.questionCount} questions · ${entry.timePerQuestionSec}s per question · updated ${formatRelativeAge(entry.updatedAt, locale)}`
-            : `${entry.questionCount} pytań · ${entry.timePerQuestionSec}s na pytanie · aktualizacja ${formatRelativeAge(entry.updatedAt, locale)}`}
+        {lobbyEntrySummary}
       </Text>
       {entry.series ? (
         <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>

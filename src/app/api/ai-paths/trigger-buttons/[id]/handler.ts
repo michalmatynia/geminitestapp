@@ -26,7 +26,7 @@ const writeTriggerButtonsRaw = async (value: string): Promise<void> => {
   await upsertAiPathsSetting(AI_PATHS_TRIGGER_BUTTONS_KEY, value);
 };
 
-export async function PATCH_handler(
+export async function patchHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }
@@ -75,7 +75,7 @@ export async function PATCH_handler(
   return NextResponse.json(nextRecord);
 }
 
-export async function DELETE_handler(
+export async function deleteHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }

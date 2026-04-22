@@ -1,5 +1,6 @@
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 
+import { type useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import {
   KangurMobileCard as Card,
   KangurMobileScrollScreen,
@@ -7,9 +8,7 @@ import {
 } from '../shared/KangurMobileUi';
 import { ActionButton, MessageCard } from './duels-primitives';
 
-type DuelCopy = ReturnType<
-  typeof import('../i18n/kangurMobileI18n').useKangurMobileI18n
->['copy'];
+type DuelCopy = ReturnType<typeof useKangurMobileI18n>['copy'];
 
 type DuelsJoinRouteViewProps = {
   copy: DuelCopy;

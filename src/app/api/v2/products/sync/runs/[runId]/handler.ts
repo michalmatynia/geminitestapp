@@ -17,7 +17,7 @@ export const querySchema = z.object({
     }),
 });
 
-export async function GET_handler(
+export async function getHandler(
   _req: NextRequest,
   ctx: ApiHandlerContext,
   params: { runId: string }

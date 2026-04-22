@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { GET_handler } from './handler';
+import { getHandler } from './handler';
 import { noteService } from '@/features/notesapp/server';
 
 vi.mock('@/features/notesapp/server', () => ({
@@ -10,7 +10,7 @@ vi.mock('@/features/notesapp/server', () => ({
   },
 }));
 
-describe('notes/categories/tree GET_handler', () => {
+describe('notes/categories/tree getHandler', () => {
   const mockContext = { source: 'test', query: {} } as any;
 
   beforeEach(() => {
@@ -23,7 +23,7 @@ describe('notes/categories/tree GET_handler', () => {
 
     const contextWithQuery = { ...mockContext, query: { notebookId: 'nb-123' } };
     const req = new NextRequest('http://localhost/api/notes/categories/tree?notebookId=nb-123');
-    const response = await GET_handler(req, contextWithQuery);
+    const response = await getHandler(req, contextWithQuery);
     const data = await response.json();
 
     expect(data).toEqual(mockTree);
@@ -37,7 +37,7 @@ describe('notes/categories/tree GET_handler', () => {
     vi.mocked(noteService.getCategoryTree).mockResolvedValue(mockTree as any);
 
     const req = new NextRequest('http://localhost/api/notes/categories/tree');
-    const response = await GET_handler(req, mockContext);
+    const response = await getHandler(req, mockContext);
     const data = await response.json();
 
     expect(data).toEqual(mockTree);

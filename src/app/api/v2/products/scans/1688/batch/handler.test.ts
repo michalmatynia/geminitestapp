@@ -11,7 +11,7 @@ vi.mock('@/features/products/server/product-scans-service', () => ({
   queue1688BatchProductScans: (...args: unknown[]) => queue1688BatchProductScansMock(...args),
 }));
 
-import { POST_handler, product1688BatchScanRequestSchema } from './handler';
+import { postHandler, product1688BatchScanRequestSchema } from './handler';
 
 describe('products/scans/1688/batch handler', () => {
   beforeEach(() => {
@@ -19,7 +19,7 @@ describe('products/scans/1688/batch handler', () => {
   });
 
   it('exports the batch handler and request schema', () => {
-    expect(typeof POST_handler).toBe('function');
+    expect(typeof postHandler).toBe('function');
     expect(typeof product1688BatchScanRequestSchema.safeParse).toBe('function');
   });
 
@@ -40,7 +40,7 @@ describe('products/scans/1688/batch handler', () => {
       ],
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/v2/products/scans/1688/batch', {
         method: 'POST',
       }),

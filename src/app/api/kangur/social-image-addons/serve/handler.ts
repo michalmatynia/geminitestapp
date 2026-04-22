@@ -14,7 +14,7 @@ export const querySchema = z.object({
   filename: optionalTrimmedQueryString(),
 });
 
-export async function GET_handler(
+export async function getHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {

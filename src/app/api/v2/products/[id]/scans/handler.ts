@@ -20,7 +20,7 @@ export const querySchema = z.object({
   provider: productScanProviderSchema.optional(),
 });
 
-export async function GET_handler(
+export async function getHandler(
   req: NextRequest,
   ctx: ApiHandlerContext,
   params: { id: string }

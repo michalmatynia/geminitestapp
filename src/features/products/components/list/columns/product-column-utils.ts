@@ -130,6 +130,7 @@ export const getProductListDisplayName = (
 
 const OPAQUE_CATEGORY_ID_PATTERN =
   /^(?:[a-f0-9]{24}|[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/i;
+export const UNASSIGNED_PRODUCT_CATEGORY_LABEL = 'Unassigned';
 
 const CATEGORY_NAME_KEYS_BY_LOCALE: Record<ProductNameKey, string[]> = {
   name_en: ['name_en', 'name', 'name_pl', 'name_de'],
@@ -184,9 +185,12 @@ export const resolveProductCategoryLabel = (
 
   if (directLabel) return directLabel;
   if (resolvedLookupLabel) return resolvedLookupLabel;
-  if (!normalizedCategoryId) return 'Unassigned';
+  if (!normalizedCategoryId) return UNASSIGNED_PRODUCT_CATEGORY_LABEL;
   return OPAQUE_CATEGORY_ID_PATTERN.test(normalizedCategoryId) ? '—' : normalizedCategoryId;
 };
+
+export const isUnassignedProductCategoryLabel = (label: string): boolean =>
+  label.trim() === UNASSIGNED_PRODUCT_CATEGORY_LABEL;
 
 export const resolveEffectiveDefaultPriceGroupId = (
   product: ProductWithImages,

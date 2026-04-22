@@ -341,7 +341,7 @@ describe('AdminFilemakerMail pages search flow', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Forward' }));
 
     expect(routerPushMock).toHaveBeenCalledWith(
-      '/admin/filemaker/mail/compose?accountId=account-1&forwardThreadId=thread+1&mailboxPath=VIP&panel=search&searchQuery=invoice'
+      '/admin/filemaker/mail/compose?forwardThreadId=thread+1&accountId=account-1&mailboxPath=VIP&panel=search&searchQuery=invoice'
     );
   });
 

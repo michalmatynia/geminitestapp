@@ -132,7 +132,7 @@ const mapMongoLanguage = (
   };
 };
 
-export async function GET_intl_handler(
+export async function getIntlHandler(
   _req: NextRequest,
   ctx: ApiHandlerContext,
   params: { type: string }
@@ -197,7 +197,7 @@ async function loadMetadataPageCached(
   throw badRequestError(`Invalid internationalization type: ${type}`);
 }
 
-export async function POST_intl_handler(
+export async function postIntlHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { type: string }

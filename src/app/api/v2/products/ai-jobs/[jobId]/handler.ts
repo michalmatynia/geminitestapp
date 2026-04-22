@@ -10,7 +10,7 @@ const actionSchema = z.object({
   action: z.string().trim().min(1),
 });
 
-export async function GET_handler(
+export async function getHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { jobId: string }
@@ -26,7 +26,7 @@ export async function GET_handler(
   return NextResponse.json({ job });
 }
 
-export async function POST_handler(
+export async function postHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { jobId: string }
@@ -49,7 +49,7 @@ export async function POST_handler(
   throw badRequestError('Invalid action');
 }
 
-export async function DELETE_handler(
+export async function deleteHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { jobId: string }

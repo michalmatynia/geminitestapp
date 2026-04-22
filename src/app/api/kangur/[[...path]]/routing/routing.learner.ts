@@ -6,7 +6,7 @@ import {
   getKangurLearnerActivityHandler,
   postKangurLearnerActivityHandler,
 } from '@/app/api/kangur/learner-activity/handler';
-import { GET_handler as getKangurLearnerActivityStreamHandler } from '@/app/api/kangur/learner-activity/stream/handler';
+import { getHandler as getKangurLearnerActivityStreamHandler } from '@/app/api/kangur/learner-activity/stream/handler';
 import {
   getKangurLearnersHandler,
   postKangurLearnersHandler,

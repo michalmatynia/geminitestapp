@@ -162,9 +162,9 @@ describe('product validator runtime handler', () => {
   });
 
   it('hydrates the AI runtime with the resolved product editor registry prompt', async () => {
-    const { POST_handler } = await import('./handler');
+    const { postHandler } = await import('./handler');
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/v2/products/validator-runtime/evaluate', {
         method: 'POST',
       }),

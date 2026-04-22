@@ -11,7 +11,7 @@ import { badRequestError } from '@/shared/errors/app-error';
 export const startRunSchema = baseImportRunStartPayloadSchema;
 export const listRunsQuerySchema = baseImportRunsListQuerySchema;
 
-export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const query = (ctx.query ?? {}) as BaseImportRunsListQuery;
   const runs = await listBaseImportRuns(query.limit ?? 25);
   const response: BaseImportRunsResponse = { runs };
@@ -25,7 +25,7 @@ export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Pr
   );
 }
 
-export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const rawConnectionId =
     typeof (ctx.body as Record<string, unknown> | undefined)?.['connectionId'] === 'string'
       ? String((ctx.body as Record<string, unknown>)['connectionId']).trim()

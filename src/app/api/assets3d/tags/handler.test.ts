@@ -1,13 +1,13 @@
 import { NextRequest } from 'next/server';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { GET_handler } from './handler';
+import { getHandler } from './handler';
 import { getAsset3DRepository } from '@/features/viewer3d/server';
 
 vi.mock('@/features/viewer3d/server', () => ({
   getAsset3DRepository: vi.fn(),
 }));
 
-describe('assets3d/tags GET_handler', () => {
+describe('assets3d/tags getHandler', () => {
   const mockContext = { source: 'test' } as any;
 
   beforeEach(() => {
@@ -22,7 +22,7 @@ describe('assets3d/tags GET_handler', () => {
     vi.mocked(getAsset3DRepository).mockReturnValue(mockRepo as any);
 
     const req = new NextRequest('http://localhost/api/assets3d/tags');
-    const response = await GET_handler(req, mockContext);
+    const response = await getHandler(req, mockContext);
     const data = await response.json();
 
     expect(data).toEqual(mockTags);

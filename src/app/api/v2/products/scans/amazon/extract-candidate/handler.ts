@@ -133,4 +133,4 @@ const postHandler = async (
   return NextResponse.json(productScanAmazonExtractCandidateResponseSchema.parse(firstResult));
 };
 
-export { postHandler as POST_handler };
+export { postHandler as postHandler };

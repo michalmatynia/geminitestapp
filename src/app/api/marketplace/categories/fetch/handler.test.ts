@@ -46,7 +46,7 @@ vi.mock('@/features/integrations/services/tradera-system-settings', () => ({
   loadTraderaSystemSettings: loadTraderaSystemSettingsMock,
 }));
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 const createContext = (): ApiHandlerContext =>
   ({
@@ -119,7 +119,7 @@ describe('marketplace categories fetch handler', () => {
       },
     });
 
-    const response = await POST_handler(request, createContext());
+    const response = await postHandler(request, createContext());
 
     expect(response.status).toBe(200);
     expect(fetchBaseCategoriesMock).toHaveBeenCalledWith('base-token', {
@@ -180,7 +180,7 @@ describe('marketplace categories fetch handler', () => {
       },
     });
 
-    const response = await POST_handler(request, createContext());
+    const response = await postHandler(request, createContext());
 
     expect(response.status).toBe(200);
     expect(fetchBaseCategoriesMock).not.toHaveBeenCalled();
@@ -218,7 +218,7 @@ describe('marketplace categories fetch handler', () => {
       },
     });
 
-    await expect(POST_handler(request, createContext())).rejects.toThrow(
+    await expect(postHandler(request, createContext())).rejects.toThrow(
       'Other is not yet supported for category fetch'
     );
 
@@ -250,7 +250,7 @@ describe('marketplace categories fetch handler', () => {
       },
     });
 
-    await expect(POST_handler(request, createContext())).rejects.toMatchObject({
+    await expect(postHandler(request, createContext())).rejects.toMatchObject({
       message: 'Marketplace categories sync failed unexpectedly.',
       httpStatus: 500,
       code: 'INTERNAL_SERVER_ERROR',
@@ -341,7 +341,7 @@ describe('marketplace categories fetch handler', () => {
       },
     });
 
-    await expect(POST_handler(request, createContext())).rejects.toMatchObject({
+    await expect(postHandler(request, createContext())).rejects.toMatchObject({
       message:
         'Tradera public taxonomy pages returned a shallower category tree than the categories already stored. Existing categories were kept. Retry the fetch or configure Tradera App ID and App Key to use the SOAP API.',
       httpStatus: 422,

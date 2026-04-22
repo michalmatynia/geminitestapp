@@ -13,6 +13,84 @@ const toTrimmedString = (value: unknown): string =>
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object';
 
+const toNonEmptyTrimmedStringArray = (value: unknown): string[] =>
+  Array.isArray(value)
+    ? value
+        .map((entry) => toTrimmedString(entry))
+        .filter((entry): entry is string => entry.length > 0)
+    : [];
+
+const hasMinimumConflictArrayLengths = ({
+  groupIds,
+  groupNames,
+  overlapCategoryIds,
+}: {
+  groupIds: readonly string[];
+  groupNames: readonly string[];
+  overlapCategoryIds: readonly string[];
+}): boolean =>
+  groupIds.length >= 2 && groupNames.length >= 2 && overlapCategoryIds.length > 0;
+
+const hasDefinedConflictGroupPairs = ({
+  firstGroupId,
+  secondGroupId,
+  firstGroupName,
+  secondGroupName,
+}: {
+  firstGroupId: string | undefined;
+  secondGroupId: string | undefined;
+  firstGroupName: string | undefined;
+  secondGroupName: string | undefined;
+}): boolean =>
+  firstGroupId !== undefined &&
+  secondGroupId !== undefined &&
+  firstGroupName !== undefined &&
+  secondGroupName !== undefined;
+
+const toShippingGroupRuleConflict = (
+  conflict: unknown
+): ShippingGroupRuleConflict | null => {
+  if (!isRecord(conflict)) {
+    return null;
+  }
+
+  const groupIds = toNonEmptyTrimmedStringArray(conflict['groupIds']);
+  const groupNames = toNonEmptyTrimmedStringArray(conflict['groupNames']);
+  const overlapCategoryIds = toNonEmptyTrimmedStringArray(conflict['overlapCategoryIds']);
+
+  if (
+    !hasMinimumConflictArrayLengths({
+      groupIds,
+      groupNames,
+      overlapCategoryIds,
+    })
+  ) {
+    return null;
+  }
+
+  const [firstGroupId, secondGroupId] = groupIds;
+  const [firstGroupName, secondGroupName] = groupNames;
+  if (
+    !hasDefinedConflictGroupPairs({
+      firstGroupId,
+      secondGroupId,
+      firstGroupName,
+      secondGroupName,
+    })
+  ) {
+    return null;
+  }
+
+  return {
+    groupIds: [firstGroupId, secondGroupId],
+    groupNames: [firstGroupName, secondGroupName],
+    overlapCategoryIds,
+    overlapCurrencyCodes: [],
+    appliesToAllCategories: false,
+    appliesToAllCurrencies: true,
+  };
+};
+
 export const readConflictMetaFromApiError = (error: unknown): ShippingGroupRuleConflict[] => {
   if (!(error instanceof ApiError) || !isRecord(error.payload)) {
     return [];
@@ -25,34 +103,17 @@ export const readConflictMetaFromApiError = (error: unknown): ShippingGroupRuleC
   }
 
   return conflicts.flatMap((conflict): ShippingGroupRuleConflict[] => {
-    if (!isRecord(conflict)) {
-      return [];
-    }
-    const groupIds = Array.isArray(conflict['groupIds'])
-      ? conflict['groupIds'].map((value) => toTrimmedString(value)).filter(Boolean)
-      : [];
-    const groupNames = Array.isArray(conflict['groupNames'])
-      ? conflict['groupNames'].map((value) => toTrimmedString(value)).filter(Boolean)
-      : [];
-    const overlapCategoryIds = Array.isArray(conflict['overlapCategoryIds'])
-      ? conflict['overlapCategoryIds'].map((value) => toTrimmedString(value)).filter(Boolean)
-      : [];
-
-    if (groupIds.length < 2 || groupNames.length < 2 || overlapCategoryIds.length === 0) {
-      return [];
-    }
-
-    return [
-      {
-        groupIds: [groupIds[0]!, groupIds[1]!],
-        groupNames: [groupNames[0]!, groupNames[1]!],
-        overlapCategoryIds,
-        overlapCurrencyCodes: [],
-        appliesToAllCategories: false,
-        appliesToAllCurrencies: true,
-      },
-    ];
+    const parsedConflict = toShippingGroupRuleConflict(conflict);
+    return parsedConflict ? [parsedConflict] : [];
   });
+};
+
+export const isShippingGroupNotFoundError = (error: unknown): boolean => {
+  if (error instanceof ApiError) {
+    return error.status === 404;
+  }
+
+  return error instanceof Error && /shipping group not found/i.test(error.message);
 };
 
 export const formatShippingGroupConflictMessage = ({
@@ -88,10 +149,37 @@ export const buildCategoryParentMap = (
   const parentMap = new Map<string, string | null>();
   for (const category of categories) {
     const categoryId = toTrimmedString(category.id);
-    if (!categoryId) continue;
-    parentMap.set(categoryId, toTrimmedString(category.parentId) || null);
+    if (categoryId.length === 0) continue;
+    const parentId = toTrimmedString(category.parentId);
+    parentMap.set(categoryId, parentId.length > 0 ? parentId : null);
   }
   return parentMap;
+};
+
+const isDescendantOfSelectedCategory = ({
+  categoryId,
+  selectedCategoryIds,
+  categoryParentMap,
+}: {
+  categoryId: string;
+  selectedCategoryIds: Set<string>;
+  categoryParentMap: Map<string, string | null>;
+}): boolean => {
+  const visited = new Set<string>();
+  let currentCategoryId = categoryParentMap.get(categoryId) ?? null;
+
+  while (typeof currentCategoryId === 'string' && currentCategoryId.length > 0) {
+    if (selectedCategoryIds.has(currentCategoryId)) {
+      return true;
+    }
+    if (visited.has(currentCategoryId)) {
+      return false;
+    }
+    visited.add(currentCategoryId);
+    currentCategoryId = categoryParentMap.get(currentCategoryId) ?? null;
+  }
+
+  return false;
 };
 
 export const summarizeRuleDescendantCoverage = ({
@@ -106,9 +194,7 @@ export const summarizeRuleDescendantCoverage = ({
   descendantIds: string[];
   descendantSummary: string | null;
 } => {
-  const selectedCategoryIds = new Set(
-    categoryIds.map((categoryId) => toTrimmedString(categoryId)).filter(Boolean)
-  );
+  const selectedCategoryIds = new Set(toNonEmptyTrimmedStringArray(categoryIds));
   if (selectedCategoryIds.size === 0 || categories.length === 0) {
     return {
       descendantIds: [],
@@ -121,19 +207,18 @@ export const summarizeRuleDescendantCoverage = ({
 
   for (const category of categories) {
     const categoryId = toTrimmedString(category.id);
-    if (!categoryId || selectedCategoryIds.has(categoryId)) {
+    if (categoryId.length === 0 || selectedCategoryIds.has(categoryId)) {
       continue;
     }
 
-    const visited = new Set<string>();
-    let currentCategoryId = categoryParentMap.get(categoryId) ?? null;
-    while (currentCategoryId && !visited.has(currentCategoryId)) {
-      if (selectedCategoryIds.has(currentCategoryId)) {
-        descendantIds.push(categoryId);
-        break;
-      }
-      visited.add(currentCategoryId);
-      currentCategoryId = categoryParentMap.get(currentCategoryId) ?? null;
+    if (
+      isDescendantOfSelectedCategory({
+        categoryId,
+        selectedCategoryIds,
+        categoryParentMap,
+      })
+    ) {
+      descendantIds.push(categoryId);
     }
   }
 

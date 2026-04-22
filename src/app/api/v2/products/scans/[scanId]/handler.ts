@@ -3,7 +3,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { deleteProductScan } from '@/features/products/server/product-scans-repository';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
-export async function DELETE_handler(
+export async function deleteHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { scanId: string }

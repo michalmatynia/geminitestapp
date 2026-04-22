@@ -107,7 +107,7 @@ const findIdempotentProductResponse = async (
   });
 };
 
-export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const query = ctx.query as ProductFiltersParsed & { fresh?: boolean };
   const { fresh, ...filters } = query;
   const timings: Record<string, number | null | undefined> = {};
@@ -158,7 +158,7 @@ export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Pr
 }
 
 /** POST /api/v2/products: create product with validation + cache invalidation. */
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const formData = await readProductCreateFormData(req);
 
   // Validate the form data

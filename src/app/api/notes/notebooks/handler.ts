@@ -10,7 +10,7 @@ import { removeUndefined } from '@/shared/utils/object-utils';
  * GET /api/notes/notebooks
  * Fetches all notebooks (creates a default if none exist).
  */
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const notebooks = await noteService.getAllNotebooks();
   return NextResponse.json(notebooks);
 }
@@ -19,7 +19,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
  * POST /api/notes/notebooks
  * Creates a notebook.
  */
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, notebookCreateSchema, {
     logPrefix: 'notebooks.POST',
   });

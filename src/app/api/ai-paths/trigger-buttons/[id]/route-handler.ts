@@ -2,12 +2,12 @@ export const runtime = 'nodejs';
 
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 
-import { DELETE_handler, PATCH_handler } from './handler';
+import { deleteHandler, patchHandler } from './handler';
 
-export const PATCH = apiHandlerWithParams<{ id: string }>(PATCH_handler, {
+export const PATCH = apiHandlerWithParams<{ id: string }>(patchHandler, {
   source: 'ai-paths.trigger-buttons.[id].PATCH',
 });
 
-export const DELETE = apiHandlerWithParams<{ id: string }>(DELETE_handler, {
+export const DELETE = apiHandlerWithParams<{ id: string }>(deleteHandler, {
   source: 'ai-paths.trigger-buttons.[id].DELETE',
 });

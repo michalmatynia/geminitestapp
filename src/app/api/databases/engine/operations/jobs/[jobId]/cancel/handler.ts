@@ -24,7 +24,7 @@ const isDatabaseEngineCancelableJob = (value: unknown): value is DatabaseEngineC
 const isDatabaseEngineOperationJob = (job: DatabaseEngineCancelableJob): boolean =>
   job.productId === 'system' && job.jobType === 'db_backup';
 
-export async function POST_handler(
+export async function postHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { jobId: string }

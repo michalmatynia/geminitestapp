@@ -2,12 +2,12 @@ import { z } from 'zod';
 
 import type { SettingParams } from '@/app/api/v2/integrations/base/setting-params';
 import {
-  GET_handler as getActiveTemplateHandler,
-  POST_handler as postActiveTemplateHandler,
+  getHandler as getActiveTemplateHandler,
+  postHandler as postActiveTemplateHandler,
 } from '@/app/api/v2/integrations/imports/base/active-template/handler';
 import {
-  GET_handler as getLastTemplateHandler,
-  POST_handler as postLastTemplateHandler,
+  getHandler as getLastTemplateHandler,
+  postHandler as postLastTemplateHandler,
 } from '@/app/api/v2/integrations/imports/base/last-template/handler';
 import type { ApiHandlerContext, ApiRouteHandler } from '@/shared/contracts/ui/api';
 import { notFoundError } from '@/shared/errors/app-error';
@@ -45,7 +45,7 @@ const resolveHandlers = (setting: string): RouteHandlers => {
   return handlers;
 };
 
-export async function GET_handler(
+export async function getHandler(
   req: NextRequest,
   ctx: ApiHandlerContext,
   params: SettingParams
@@ -53,7 +53,7 @@ export async function GET_handler(
   return resolveHandlers(params.setting).GET(req, ctx);
 }
 
-export async function POST_handler(
+export async function postHandler(
   req: NextRequest,
   ctx: ApiHandlerContext,
   params: SettingParams

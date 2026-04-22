@@ -67,7 +67,7 @@ const toIsoString = (value: Date | string | null): string | null => {
   return value instanceof Date ? value.toISOString() : value;
 };
 
-async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();
   startAgentQueue();
   const chatbotAgentRun = getChatbotAgentRunDelegate();
@@ -126,7 +126,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
   );
 }
 
-async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();
   const chatbotAgentRun = getChatbotAgentRunDelegate();
   if (!chatbotAgentRun) {
@@ -280,7 +280,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   return NextResponse.json(response);
 }
 
-async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+async function deleteHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();
   const chatbotAgentRun = getChatbotAgentRunDelegate();
   if (!chatbotAgentRun) {
@@ -332,15 +332,15 @@ async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promis
   return NextResponse.json(response);
 }
 
-export const GET = apiHandler(GET_handler, {
+export const GET = apiHandler(getHandler, {
   source: 'chatbot.agent.GET',
   requireAuth: true,
 });
-export const POST = apiHandler(POST_handler, {
+export const POST = apiHandler(postHandler, {
   source: 'chatbot.agent.POST',
   requireAuth: true,
 });
-export const DELETE = apiHandler(DELETE_handler, {
+export const DELETE = apiHandler(deleteHandler, {
   source: 'chatbot.agent.DELETE',
   requireAuth: true,
 });

@@ -14,7 +14,7 @@ const integrationSchema = z.object({
  * GET /api/integrations
  * Fetches all integrations.
  */
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const integrations = await integrationService.listIntegrations();
   return NextResponse.json(integrations);
 }
@@ -23,7 +23,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
  * POST /api/integrations
  * Creates an integration.
  */
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, integrationSchema, {
     logPrefix: 'integrations.POST',
   });

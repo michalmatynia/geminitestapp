@@ -11,7 +11,7 @@ vi.mock('@/features/ai/ai-context-registry/server', () => ({
   registryBackend: { getVersion: getVersionMock },
 }));
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 const BASE_NODE = {
   id: 'page:home',
@@ -45,9 +45,9 @@ describe('POST /api/ai/context/resolve handler', () => {
       visitedIds: ['page:home'],
     });
 
-    const res = await POST_handler(
+    const res = await postHandler(
       makeRequest({ ids: ['page:home'] }),
-      {} as Parameters<typeof POST_handler>[1]
+      {} as Parameters<typeof postHandler>[1]
     );
 
     expect(res.status).toBe(200);
@@ -70,9 +70,9 @@ describe('POST /api/ai/context/resolve handler', () => {
       visitedIds: [],
     });
 
-    await POST_handler(
+    await postHandler(
       makeRequest({ ids: ['page:home'], depth: 2, maxNodes: 50 }),
-      {} as Parameters<typeof POST_handler>[1]
+      {} as Parameters<typeof postHandler>[1]
     );
 
     expect(resolveWithExpansionMock).toHaveBeenCalledWith(
@@ -87,9 +87,9 @@ describe('POST /api/ai/context/resolve handler', () => {
       visitedIds: ['page:home'],
     });
 
-    const res = await POST_handler(
+    const res = await postHandler(
       makeRequest({ ids: ['page:home'] }),
-      {} as Parameters<typeof POST_handler>[1]
+      {} as Parameters<typeof postHandler>[1]
     );
 
     const body = (await res.json()) as { truncated: boolean };
@@ -98,13 +98,13 @@ describe('POST /api/ai/context/resolve handler', () => {
 
   it('throws for missing ids field', async () => {
     await expect(
-      POST_handler(makeRequest({}), {} as Parameters<typeof POST_handler>[1])
+      postHandler(makeRequest({}), {} as Parameters<typeof postHandler>[1])
     ).rejects.toThrow('Invalid resolve request payload.');
   });
 
   it('throws for empty ids array', async () => {
     await expect(
-      POST_handler(makeRequest({ ids: [] }), {} as Parameters<typeof POST_handler>[1])
+      postHandler(makeRequest({ ids: [] }), {} as Parameters<typeof postHandler>[1])
     ).rejects.toThrow('Invalid resolve request payload.');
   });
 
@@ -115,7 +115,7 @@ describe('POST /api/ai/context/resolve handler', () => {
       body: '{bad json',
     });
 
-    await expect(POST_handler(req, {} as Parameters<typeof POST_handler>[1])).rejects.toThrow(
+    await expect(postHandler(req, {} as Parameters<typeof postHandler>[1])).rejects.toThrow(
       'Invalid JSON body.'
     );
   });

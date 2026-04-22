@@ -36,7 +36,7 @@ vi.mock('@/features/integrations/server', () => ({
   getIntegrationRepository: getIntegrationRepositoryMock,
 }));
 
-import { GET_handler, POST_handler } from './handler';
+import { getHandler, postHandler } from './handler';
 
 const createContext = (): ApiHandlerContext =>
   ({
@@ -89,7 +89,7 @@ describe('marketplace mappings handler', () => {
       'http://localhost/api/marketplace/mappings?connectionId=conn-1&catalogId=catalog-1'
     );
 
-    const response = await GET_handler(request, createContext());
+    const response = await getHandler(request, createContext());
 
     expect(listByConnectionMock).toHaveBeenCalledWith('conn-1', 'catalog-1');
     await expect(response.json()).resolves.toEqual([
@@ -129,7 +129,7 @@ describe('marketplace mappings handler', () => {
       },
     });
 
-    const response = await POST_handler(request, createContext());
+    const response = await postHandler(request, createContext());
 
     expect(response.status).toBe(200);
     expect(updateMock).toHaveBeenCalledWith('mapping-1', {
@@ -163,7 +163,7 @@ describe('marketplace mappings handler', () => {
       },
     });
 
-    const response = await POST_handler(request, createContext());
+    const response = await postHandler(request, createContext());
 
     expect(response.status).toBe(201);
     expect(createMock).toHaveBeenCalledWith({
@@ -210,7 +210,7 @@ describe('marketplace mappings handler', () => {
       },
     });
 
-    await expect(POST_handler(request, createContext())).rejects.toMatchObject({
+    await expect(postHandler(request, createContext())).rejects.toMatchObject({
       message:
         'Tradera mappings must target the deepest category. "Collectibles > Pins & needles" still has child categories. Choose a leaf Tradera category and save again.',
       httpStatus: 400,

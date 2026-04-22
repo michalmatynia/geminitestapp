@@ -9,7 +9,7 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
  * Used for the product listing dropdown selection.
  * Uses the configured MongoDB-backed integrations repository.
  */
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const integrations = await getIntegrationsWithConnections();
   return NextResponse.json(integrations);
 }

@@ -39,4 +39,4 @@ const postHandler = async (
   return NextResponse.json({ ok: true });
 };
 
-export { postHandler as POST_handler };
+export { postHandler as postHandler };

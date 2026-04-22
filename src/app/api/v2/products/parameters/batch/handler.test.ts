@@ -22,7 +22,7 @@ vi.mock('@/shared/lib/db/mongo-client', () => ({
   getMongoDb: (...args: unknown[]) => getMongoDbMock(...args),
 }));
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 describe('products parameters batch handler', () => {
   beforeEach(() => {
@@ -64,7 +64,7 @@ describe('products parameters batch handler', () => {
   });
 
   it('deletes canonical ids and removes parameters from products and drafts', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/v2/products/parameters/batch'),
       {
         body: {
@@ -121,7 +121,7 @@ describe('products parameters batch handler', () => {
       { id: undefined, _id: new ObjectId('0000000000000000000000ff') },
     ]);
 
-    await POST_handler(
+    await postHandler(
       new NextRequest('http://localhost/api/v2/products/parameters/batch'),
       {
         body: {
@@ -178,7 +178,7 @@ describe('products parameters batch handler', () => {
     toArrayMock.mockResolvedValueOnce([{ id: 'param-1', _id: 'mongo-1' }]);
     deleteManyMock.mockResolvedValueOnce({ deletedCount: 1 });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/v2/products/parameters/batch'),
       {
         body: {
@@ -202,7 +202,7 @@ describe('products parameters batch handler', () => {
     toArrayMock.mockResolvedValueOnce([]);
 
     await expect(
-      POST_handler(
+      postHandler(
         new NextRequest('http://localhost/api/v2/products/parameters/batch'),
         {
           body: {

@@ -11,7 +11,7 @@ vi.mock('@/features/products/server/product-scans-service', () => ({
   queueAmazonBatchProductScans: (...args: unknown[]) => queueAmazonBatchProductScansMock(...args),
 }));
 
-import { POST_handler, productScanBatchRequestSchema } from './handler';
+import { postHandler, productScanBatchRequestSchema } from './handler';
 
 describe('products/scans/amazon/batch handler', () => {
   beforeEach(() => {
@@ -19,7 +19,7 @@ describe('products/scans/amazon/batch handler', () => {
   });
 
   it('exports the batch handler and request schema', () => {
-    expect(typeof POST_handler).toBe('function');
+    expect(typeof postHandler).toBe('function');
     expect(typeof productScanBatchRequestSchema.safeParse).toBe('function');
   });
 
@@ -40,7 +40,7 @@ describe('products/scans/amazon/batch handler', () => {
       ],
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/v2/products/scans/amazon/batch', {
         method: 'POST',
       }),

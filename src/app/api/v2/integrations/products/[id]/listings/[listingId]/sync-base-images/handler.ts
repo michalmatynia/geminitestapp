@@ -7,7 +7,7 @@ import { type ProductListingSyncBaseImagesResponse } from '@/shared/contracts/in
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 
-export async function POST_handler(
+export async function postHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string; listingId: string }

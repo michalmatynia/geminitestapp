@@ -1,13 +1,13 @@
 
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 
-import { GET_handler, PATCH_handler, updateSchema } from './handler';
+import { getHandler, patchHandler, updateSchema } from './handler';
 
-export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, {
+export const GET = apiHandlerWithParams<{ id: string }>(getHandler, {
   source: 'auth.users.[id].security.GET',
 });
 
-export const PATCH = apiHandlerWithParams<{ id: string }>(PATCH_handler, {
+export const PATCH = apiHandlerWithParams<{ id: string }>(patchHandler, {
   source: 'auth.users.[id].security.PATCH',
   parseJsonBody: true,
   bodySchema: updateSchema,

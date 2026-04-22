@@ -17,7 +17,7 @@ import { getSiteTranslator } from '@/shared/lib/i18n/server-translator';
 
 export const payloadSchema = verifyCredentialsPayloadSchema;
 
-export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const { t } = await getSiteTranslator({ request: req });
   const data = ctx.body as VerifyCredentialsPayload | undefined;
   if (!data) throw badRequestError(t('AuthApi.invalidPayload'));

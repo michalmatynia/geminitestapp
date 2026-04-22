@@ -13,7 +13,7 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const access = await requireAiPathsAccess();
   await enforceAiPathsActionRateLimit(access, 'run-requeue');
   const parsed = await parseJsonBody(req, aiPathRunDeadLetterRequeueRequestSchema, {

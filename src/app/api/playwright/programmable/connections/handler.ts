@@ -46,4 +46,4 @@ const postHandler = async (
   );
 };
 
-export { getHandler as GET_handler, postHandler as POST_handler };
+export { getHandler as getHandler, postHandler as postHandler };

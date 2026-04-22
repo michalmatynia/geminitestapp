@@ -37,7 +37,7 @@ vi.mock('@/shared/lib/api/parse-json', () => ({
   parseJsonBody: parseJsonBodyMock,
 }));
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 const makeRequest = (body: Record<string, unknown> = {}): NextRequest =>
   new NextRequest('http://localhost/api/ai-paths/runs/run-1/handoff', {
@@ -80,12 +80,12 @@ describe('ai-paths run handoff handler', () => {
   });
 
   it('marks the run handoff ready and returns the updated run', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       makeRequest({
         reason: 'Execution lease remains owned by another worker.',
         checkpointLineageId: 'run-1:123',
       }),
-      {} as Parameters<typeof POST_handler>[1],
+      {} as Parameters<typeof postHandler>[1],
       { runId: 'run-1' }
     );
 
@@ -117,9 +117,9 @@ describe('ai-paths run handoff handler', () => {
       response: new Response(JSON.stringify({ error: 'Invalid body' }), { status: 400 }),
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       makeRequest(),
-      {} as Parameters<typeof POST_handler>[1],
+      {} as Parameters<typeof postHandler>[1],
       { runId: 'run-1' }
     );
 
@@ -132,7 +132,7 @@ describe('ai-paths run handoff handler', () => {
     findRunByIdMock.mockResolvedValueOnce(null);
 
     await expect(
-      POST_handler(makeRequest(), {} as Parameters<typeof POST_handler>[1], { runId: 'run-1' })
+      postHandler(makeRequest(), {} as Parameters<typeof postHandler>[1], { runId: 'run-1' })
     ).rejects.toThrow(/run not found/i);
 
     expect(markPathRunHandoffReadyMock).not.toHaveBeenCalled();

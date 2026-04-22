@@ -10,7 +10,7 @@ import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
 export { traderaParameterMapperCatalogFetchRequestSchema };
 
-export async function POST_handler(
+export async function postHandler(
   request: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {

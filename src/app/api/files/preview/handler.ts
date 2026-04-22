@@ -18,7 +18,7 @@ export const querySchema = z.object({
   fileId: optionalTrimmedQueryString(),
 });
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const nodeFs = getFsPromises();
   const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
   const fileId = query.fileId;

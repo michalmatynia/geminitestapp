@@ -17,7 +17,7 @@ vi.mock('@/features/integrations/server', () => ({
   getExternalCategoryRepository: getExternalCategoryRepositoryMock,
 }));
 
-import { GET_handler } from './handler';
+import { getHandler } from './handler';
 
 const createContext = (): ApiHandlerContext =>
   ({
@@ -51,7 +51,7 @@ describe('marketplace categories handler', () => {
       'http://localhost/api/marketplace/categories?connectionId=conn-1'
     );
 
-    const response = await GET_handler(request, createContext());
+    const response = await getHandler(request, createContext());
 
     expect(listByConnectionMock).toHaveBeenCalledWith('conn-1');
     expect(getTreeByConnectionMock).not.toHaveBeenCalled();
@@ -80,7 +80,7 @@ describe('marketplace categories handler', () => {
       'http://localhost/api/marketplace/categories?connectionId=conn-1&tree=true'
     );
 
-    const response = await GET_handler(request, createContext());
+    const response = await getHandler(request, createContext());
 
     expect(getTreeByConnectionMock).toHaveBeenCalledWith('conn-1');
     expect(listByConnectionMock).not.toHaveBeenCalled();
@@ -98,7 +98,7 @@ describe('marketplace categories handler', () => {
   it('rejects requests without connectionId', async () => {
     const request = new NextRequest('http://localhost/api/marketplace/categories');
 
-    await expect(GET_handler(request, createContext())).rejects.toThrow('connectionId is required');
+    await expect(getHandler(request, createContext())).rejects.toThrow('connectionId is required');
 
     expect(listByConnectionMock).not.toHaveBeenCalled();
     expect(getTreeByConnectionMock).not.toHaveBeenCalled();

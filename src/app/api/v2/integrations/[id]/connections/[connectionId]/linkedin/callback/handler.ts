@@ -46,7 +46,7 @@ const fetchLinkedInProfile = async (
   return (await profileRes.json()) as LinkedInProfileResponseDto;
 };
 
-export async function GET_handler(
+export async function getHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string; connectionId: string }

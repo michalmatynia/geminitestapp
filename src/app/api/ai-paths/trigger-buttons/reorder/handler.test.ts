@@ -15,7 +15,7 @@ vi.mock('@/features/ai/ai-paths/server', () => ({
   upsertAiPathsSetting: upsertAiPathsSettingMock,
 }));
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 const createStoredButton = (overrides: Record<string, unknown> = {}): Record<string, unknown> => ({
   id: 'btn-1',
@@ -56,7 +56,7 @@ describe('ai-paths trigger-buttons reorder handler', () => {
       headers: { 'Content-Type': 'application/json' },
     });
 
-    const response = await POST_handler(request, {} as Parameters<typeof POST_handler>[1]);
+    const response = await postHandler(request, {} as Parameters<typeof postHandler>[1]);
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual([
@@ -92,7 +92,7 @@ describe('ai-paths trigger-buttons reorder handler', () => {
       headers: { 'Content-Type': 'application/json' },
     });
 
-    await expect(POST_handler(request, {} as Parameters<typeof POST_handler>[1])).rejects.toThrow(
+    await expect(postHandler(request, {} as Parameters<typeof postHandler>[1])).rejects.toThrow(
       'Invalid AI trigger button record payload.'
     );
 

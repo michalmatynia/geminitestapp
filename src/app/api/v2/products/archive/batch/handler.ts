@@ -5,7 +5,7 @@ import { productBulkArchiveRequestSchema } from '@/shared/contracts/products/pro
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, productBulkArchiveRequestSchema, {
     logPrefix: 'products.archive.batch.POST',
   });

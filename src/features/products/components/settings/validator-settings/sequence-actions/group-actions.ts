@@ -64,6 +64,11 @@ export const handleUngroup = async (args: {
 }): Promise<void> => {
   const { groupId, patterns, updatePattern, notifySuccess, notifyError } = args;
   const groupPatterns = patterns.filter((p) => getSequenceGroupId(p) === groupId);
+  if (groupPatterns.length === 0) {
+    notifyError('No patterns found in this sequence.');
+    return;
+  }
+
   try {
     await Promise.all(
       groupPatterns.map((pattern) =>
@@ -77,13 +82,13 @@ export const handleUngroup = async (args: {
         })
       )
     );
-    notifySuccess('Group members ungrouped.');
+    notifySuccess('Sequence deleted. Patterns were kept as standalone rules.');
   } catch (error) {
     logClientCatch(error, {
       source: 'useValidatorSettingsController',
       action: 'ungroup',
     });
-    notifyError(error instanceof Error ? error.message : 'Failed to ungroup patterns.');
+    notifyError(error instanceof Error ? error.message : 'Failed to delete sequence.');
   }
 };
 

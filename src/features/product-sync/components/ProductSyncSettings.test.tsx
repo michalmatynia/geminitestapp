@@ -5,6 +5,10 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  getProductSyncBaseFieldOptions,
+  PRODUCT_SYNC_APP_FIELDS,
+} from '@/shared/contracts/product-sync';
 
 const {
   useProductSyncProfilesMock,
@@ -327,50 +331,12 @@ describe('ProductSyncSettings', () => {
           scheduleIntervalMinutes: 30,
           batchSize: 100,
           conflictPolicy: 'skip',
-          fieldRules: [
-            {
-              id: 'rule-1',
-              appField: 'stock',
-              baseField: 'stock',
-              direction: 'base_to_app',
-            },
-            {
-              id: 'rule-2',
-              appField: 'price',
-              baseField: 'prices.PLN_STANDARD',
-              direction: 'disabled',
-            },
-            {
-              id: 'rule-3',
-              appField: 'name_en',
-              baseField: 'text_fields.name',
-              direction: 'app_to_base',
-            },
-            {
-              id: 'rule-4',
-              appField: 'description_en',
-              baseField: 'text_fields.description',
-              direction: 'app_to_base',
-            },
-            {
-              id: 'rule-5',
-              appField: 'sku',
-              baseField: 'sku',
-              direction: 'disabled',
-            },
-            {
-              id: 'rule-6',
-              appField: 'ean',
-              baseField: 'ean',
-              direction: 'disabled',
-            },
-            {
-              id: 'rule-7',
-              appField: 'weight',
-              baseField: 'weight',
-              direction: 'disabled',
-            },
-          ],
+          fieldRules: PRODUCT_SYNC_APP_FIELDS.map((appField, index) => ({
+            id: `rule-${index + 1}`,
+            appField,
+            baseField: getProductSyncBaseFieldOptions(appField)[0]?.value ?? appField,
+            direction: appField === 'stock' ? 'base_to_app' : 'disabled',
+          })),
           lastRunAt: null,
           createdAt: '2026-04-11T12:00:00.000Z',
           updatedAt: '2026-04-11T12:00:00.000Z',

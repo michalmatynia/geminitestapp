@@ -91,6 +91,47 @@ export const handleCreateNameCategoryMirrorPattern = async (args: {
   }
 };
 
+export const handleCreateStarGaterProducerPattern = async (args: {
+  queryClient: QueryClient;
+  notifySuccess: (message: string) => void;
+  notifyError: (message: string) => void;
+  notifyInfo: (message: string) => void;
+}): Promise<void> => {
+  const { queryClient, notifySuccess, notifyError, notifyInfo } = args;
+  try {
+    const templateResult = await api.post<{
+      outcomes?: Array<{
+        action?: string;
+        target?: string;
+      }>;
+    }>(
+      '/api/v2/products/validator-patterns/templates/producer-stargater',
+      {},
+      { logError: false }
+    );
+    void invalidateValidatorConfig(queryClient);
+    const createdCount = (templateResult.outcomes ?? []).filter(
+      (item) => item.action === 'created'
+    ).length;
+    notifySuccess('StarGater.net producer pattern created or updated.');
+    if (createdCount > 0) {
+      notifyInfo(
+        createdCount === 1
+          ? '1 new pattern was created from the template.'
+          : `${createdCount} new patterns were created from the template.`
+      );
+    }
+  } catch (error) {
+    logClientCatch(error, {
+      source: 'useValidatorSettingsController',
+      action: 'createStarGaterProducerPattern',
+    });
+    notifyError(
+      error instanceof Error ? error.message : 'Failed to create StarGater.net producer pattern.'
+    );
+  }
+};
+
 export const handleCreateNameMirrorPolishSequence = async (args: {
   patterns: ProductValidationPattern[];
   orderedPatterns: ProductValidationPattern[];

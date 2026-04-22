@@ -1,87 +1,93 @@
 'use client';
 
-import React, { useMemo } from 'react';
-import type { JSX } from 'react';
-import { Badge } from '@/shared/ui/primitives.public';
-import { FormSection, ToggleRow } from '@/shared/ui/forms-and-actions.public';
+import type { DatabaseEngineStatus } from '@/shared/contracts/database';
+import type { StatusVariant } from '@/shared/contracts/ui/base';
 import { StatusBadge } from '@/shared/ui/data-display.public';
+import { FormSection, ToggleRow } from '@/shared/ui/forms-and-actions.public';
+import { Button, Card } from '@/shared/ui/primitives.public';
 import { useDatabaseEngineActionsContext, useDatabaseEngineStateContext } from '../../context/DatabaseEngineContext';
-import { type DatabaseCollectionRow } from '../../hooks/useDatabaseEngineState';
-import { type ColumnDef } from '@tanstack/react-table';
-import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
-import { type LabeledOptionDto } from '@/shared/contracts/base';
-import type { DatabaseEngineProvider as DatabaseEngineProviderValue } from '@/shared/lib/db/database-engine-constants';
+import { MongoSourceSection } from './DatabaseEngineMongoSourceSection';
 
-const COLLECTION_PROVIDER_OPTIONS = [
-  { value: 'auto', label: 'Auto' },
-  { value: 'mongodb', label: 'MongoDB' },
-  { value: 'redis', label: 'Redis' },
-] as const satisfies ReadonlyArray<LabeledOptionDto<'auto' | DatabaseEngineProviderValue>>;
+import type { JSX } from 'react';
+
+const resolveEngineStatusBadge = (
+  engineStatus: DatabaseEngineStatus | undefined
+): { status: string; variant: StatusVariant } => {
+  if (engineStatus === undefined) {
+    return { status: 'Loading', variant: 'pending' };
+  }
+
+  const blockingIssuesCount = engineStatus.blockingIssues.length;
+  if (blockingIssuesCount > 0) {
+    return {
+      status: `${blockingIssuesCount} Blocking Issue${blockingIssuesCount === 1 ? '' : 's'}`,
+      variant: 'warning',
+    };
+  }
+
+  if (!engineStatus.providers.mongodbConfigured) {
+    return { status: 'MongoDB Unconfigured', variant: 'error' };
+  }
+
+  return { status: 'Healthy', variant: 'active' };
+};
 
 export function DatabaseEngineSettingsTab(): JSX.Element {
   const {
-    policy,
+    backupSchedule,
     operationControls,
-    collectionRouteMap,
     engineStatus,
+    mongoSourceState,
+    isSyncingMongoSources,
   } = useDatabaseEngineStateContext();
   const {
-    updatePolicy,
-    updateCollectionRoute,
+    updateBackupSchedule,
     updateOperationControls,
+    syncMongoSources,
+    setActiveView,
   } = useDatabaseEngineActionsContext();
-
-  const collectionColumns = useMemo<ColumnDef<DatabaseCollectionRow>[]>(
-    () => [
-      {
-        accessorKey: 'name',
-        header: 'Collection',
-        cell: ({ row }) => (
-          <div className='flex items-center gap-2'>
-            <span className='font-mono text-emerald-200 font-medium'>{row.original.name}</span>
-            <Badge variant='outline'>{row.original.provider}</Badge>
-          </div>
-        ),
-      },
-      {
-        id: 'provider',
-        header: 'Assigned Provider',
-        cell: ({ row }) => (
-          <SelectSimple
-            size='xs'
-            value={collectionRouteMap[row.original.name] ?? 'auto'}
-            onValueChange={(val) => updateCollectionRoute(row.original.name, val)}
-            options={COLLECTION_PROVIDER_OPTIONS}
-            className='h-7 w-28 text-[10px]'
-            ariaLabel='Select option'
-            title='Select option'
-          />
-        ),
-      },
-    ],
-    [collectionRouteMap, updateCollectionRoute]
-  );
+  const engineStatusBadge = resolveEngineStatusBadge(engineStatus);
 
   return (
     <div className='space-y-6'>
       <FormSection title='Engine Status'>
-        <StatusBadge status={engineStatus} />
+        <StatusBadge status={engineStatusBadge.status} variant={engineStatusBadge.variant} />
       </FormSection>
+
+      <MongoSourceSection
+        mongoSourceState={mongoSourceState}
+        isSyncingMongoSources={isSyncingMongoSources}
+        allowManualFullSync={operationControls.allowManualFullSync}
+        onSync={(direction) => {
+          syncMongoSources(direction).catch(() => {});
+        }}
+      />
 
       <FormSection title='Operation Controls'>
         <ToggleRow
-          label='Allow Manual Full Sync'
+          label='Manual Full Sync'
           checked={operationControls.allowManualFullSync}
           onCheckedChange={(checked) => updateOperationControls({ allowManualFullSync: checked })}
         />
       </FormSection>
-      
+
       <FormSection title='Backup Policy'>
         <ToggleRow
           label='Enable Automated Backups'
-          checked={policy.enabled}
-          onCheckedChange={(checked) => updatePolicy({ enabled: checked })}
+          checked={backupSchedule.schedulerEnabled}
+          onCheckedChange={(checked) => updateBackupSchedule({ schedulerEnabled: checked })}
         />
+        <Card variant='subtle' padding='md' className='space-y-3 border-white/10'>
+          <p className='text-xs leading-relaxed text-gray-300'>
+            Manual backup creation, restore, upload, and scheduler controls are available in the
+            Backup Center.
+          </p>
+          <div>
+            <Button type='button' onClick={() => setActiveView('backups')}>
+              Open Backup Center
+            </Button>
+          </div>
+        </Card>
       </FormSection>
     </div>
   );

@@ -45,7 +45,7 @@ const resolveDocumentListQuery = (
   return { limit, skip };
 };
 
-export async function getHandler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const collectionId = requireCollectionId(ctx);
   const query = (ctx.query ?? {}) as z.infer<typeof querySchema>;
   const { limit, skip } = resolveDocumentListQuery(query);
@@ -54,7 +54,7 @@ export async function getHandler(_req: NextRequest, ctx: ApiHandlerContext): Pro
   return NextResponse.json(response);
 }
 
-export async function postHandler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const collectionId = requireCollectionId(ctx);
   const collection = await getEmbeddingCollectionById(collectionId);
   if (!collection) {

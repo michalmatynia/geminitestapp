@@ -268,6 +268,8 @@ export const pathConfigSchema = z.object({
   runMode: z.string().optional(),
   strictFlowMode: z.boolean().optional(),
   blockedRunPolicy: pathBlockedRunPolicySchema.optional(),
+  historyRetentionPasses: z.number().optional(),
+  historyRetentionOptionsMax: z.number().optional(),
   nodes: z.array(z.lazy(() => aiNodeSchema)),
   edges: z.array(z.lazy(() => edgeSchema)),
   updatedAt: z.string(),

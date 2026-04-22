@@ -29,6 +29,24 @@ const mocks = vi.hoisted(() => ({
       allowBackupSchedulerTick: true,
       allowOperationJobCancellation: true,
     },
+    backupSchedule: {
+      schedulerEnabled: true,
+      repeatTickEnabled: false,
+      lastCheckedAt: null,
+      mongodb: {
+        enabled: true,
+        cadence: 'daily',
+        intervalDays: 1,
+        weekday: 1,
+        timeUtc: '02:00',
+        lastQueuedAt: null,
+        lastRunAt: null,
+        lastStatus: 'idle',
+        lastJobId: null,
+        lastError: null,
+        nextDueAt: null,
+      },
+    },
     collectionRouteMap: {},
     rows: [
       {
@@ -40,6 +58,7 @@ const mocks = vi.hoisted(() => ({
       },
     ],
     engineStatus: {
+      blockingIssues: [],
       providers: {
         mongodbConfigured: true,
         redisConfigured: false,
@@ -129,6 +148,7 @@ const mocks = vi.hoisted(() => ({
   },
   actions: {
     updatePolicy: vi.fn(),
+    updateBackupSchedule: vi.fn(),
     updateCollectionRoute: vi.fn(),
     updateOperationControls: vi.fn(),
     syncMongoSources: vi.fn(),
@@ -160,6 +180,24 @@ const createState = () => ({
     allowBackupSchedulerTick: true,
     allowOperationJobCancellation: true,
   },
+  backupSchedule: {
+    schedulerEnabled: true,
+    repeatTickEnabled: false,
+    lastCheckedAt: null,
+    mongodb: {
+      enabled: true,
+      cadence: 'daily' as const,
+      intervalDays: 1,
+      weekday: 1,
+      timeUtc: '02:00',
+      lastQueuedAt: null,
+      lastRunAt: null,
+      lastStatus: 'idle' as const,
+      lastJobId: null,
+      lastError: null,
+      nextDueAt: null,
+    },
+  },
   collectionRouteMap: {},
   rows: [
     {
@@ -171,6 +209,7 @@ const createState = () => ({
     },
   ],
   engineStatus: {
+    blockingIssues: [],
     providers: {
       mongodbConfigured: true,
       redisConfigured: false,
@@ -422,12 +461,14 @@ describe('DatabaseEnginePage', () => {
   beforeEach(() => {
     mocks.state = createState();
     mocks.actions.updatePolicy.mockReset();
+    mocks.actions.updateBackupSchedule.mockReset();
     mocks.actions.updateCollectionRoute.mockReset();
     mocks.actions.updateOperationControls.mockReset();
     mocks.actions.syncMongoSources.mockReset();
     mocks.actions.setActiveView.mockReset();
     mocks.actions.saveSettings.mockReset();
     mocks.actions.refetchAll.mockReset();
+    mocks.actions.syncMongoSources.mockResolvedValue(undefined);
   });
 
   it('renders Mongo source details and explains env-managed switching', () => {
@@ -486,6 +527,26 @@ describe('DatabaseEnginePage', () => {
       )
     ).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Switch to cloud' })).not.toBeInTheDocument();
+  });
+
+  it('renders a summarized engine status label instead of the raw status object', () => {
+    render(<DatabaseEnginePage />);
+
+    expect(screen.getByText('Healthy')).toBeInTheDocument();
+  });
+
+  it('surfaces blocking issue counts in the engine status badge', () => {
+    mocks.state = {
+      ...mocks.state,
+      engineStatus: {
+        ...mocks.state.engineStatus,
+        blockingIssues: ['MongoDB source is unavailable.'],
+      },
+    };
+
+    render(<DatabaseEnginePage />);
+
+    expect(screen.getByText('1 Blocking Issue')).toBeInTheDocument();
   });
 
   it('runs manual Mongo sync actions from the header controls', () => {

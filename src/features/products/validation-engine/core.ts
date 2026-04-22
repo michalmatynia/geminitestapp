@@ -170,6 +170,8 @@ export const resolveFieldTargetAndLocale = (
     target = 'stock';
   } else if (fieldName === 'categoryId') {
     target = 'category';
+  } else if (fieldName === 'producerIds') {
+    target = 'producer';
   } else if (fieldName === 'sizeLength') {
     target = 'size_length';
   } else if (fieldName === 'sizeWidth') {
@@ -741,6 +743,29 @@ function applyPatternPlansToField({
   return localIssues;
 }
 
+const canFieldPlansEvaluateEmptyValue = (fieldPlans: StaticPatternPlan[]): boolean => {
+  for (const plan of fieldPlans) {
+    if (plan.allowWithoutRegexMatch) {
+      return true;
+    }
+    if (plan.pattern.launchEnabled && plan.pattern.launchSourceMode !== 'current_field') {
+      return true;
+    }
+    if (!plan.pattern.replacementEnabled || !plan.pattern.replacementValue) {
+      continue;
+    }
+    try {
+      if (new RegExp(plan.pattern.regex, plan.pattern.flags ?? undefined).test('')) {
+        return true;
+      }
+    } catch (error) {
+      logClientError(error);
+    }
+  }
+
+  return false;
+};
+
 /**
  * Validator docs: see docs/validator/function-reference.md#core.buildfieldissues
  */
@@ -790,7 +815,15 @@ export const buildFieldIssues = ({
     const hasLatestPriceStockMirror = fieldPlans.some(
       (plan: StaticPatternPlan): boolean => plan.allowWithoutRegexMatch
     );
-    if (!normalizedRawValue && !hasExternalLaunchSource && !hasLatestPriceStockMirror) continue;
+    const canEvaluateEmptyValue = canFieldPlansEvaluateEmptyValue(fieldPlans);
+    if (
+      !normalizedRawValue &&
+      !hasExternalLaunchSource &&
+      !hasLatestPriceStockMirror &&
+      !canEvaluateEmptyValue
+    ) {
+      continue;
+    }
 
     const fieldIssues = applyPatternPlansToField({
       fieldName,

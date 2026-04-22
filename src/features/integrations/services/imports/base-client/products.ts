@@ -2,13 +2,20 @@ import { type BaseProductRecord, type BaseApiResponse } from '@/shared/contracts
 import { isAppError } from '@/shared/errors/app-error';
 
 import { callBaseApi } from './core';
+import { fetchPagedBaseProductIds } from './product-list-ids';
+import { resolveBaseProductIdBySku } from './product-sku-resolution';
 import { extractProductIds, extractProducts, toStringId } from '../base-client-parsers';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 const isUnknownMethodError = (error: unknown): boolean =>
   isAppError(error) && error.meta?.['errorCode'] === 'ERROR_UNKNOWN_METHOD';
+const INVENTORY_PRODUCTS_LIST_METHOD = 'getInventoryProductsList';
 
-export async function fetchBaseProductIds(token: string, inventoryId: string): Promise<string[]> {
+export async function fetchBaseProductIds(
+  token: string,
+  inventoryId: string,
+  limit?: number
+): Promise<string[]> {
   const candidates = [
     {
       method: 'getInventoryProductsList',
@@ -23,10 +30,7 @@ export async function fetchBaseProductIds(token: string, inventoryId: string): P
 
   for (const candidate of candidates) {
     try {
-      const payload = await callBaseApi(token, candidate.method, {
-        [candidate.paramKey]: inventoryId,
-      });
-      const ids = extractProductIds(payload);
+      const ids = await fetchPagedBaseProductIds(token, inventoryId, candidate, limit);
       if (ids.length > 0) return ids;
     } catch (error: unknown) {
       logClientError(error);
@@ -113,7 +117,7 @@ export async function fetchBaseProducts(
   inventoryId: string,
   limit?: number
 ): Promise<BaseProductRecord[]> {
-  const ids = await fetchBaseProductIds(token, inventoryId);
+  const ids = await fetchBaseProductIds(token, inventoryId, limit);
   const targetIds = typeof limit === 'number' && limit > 0 ? ids.slice(0, limit) : ids;
 
   if (targetIds.length === 0) return [];
@@ -143,16 +147,16 @@ export async function checkBaseSkuExists(
         const payload = await callBaseApi(token, candidate.method, {
           [candidate.paramKey]: inventoryId,
           filter_sku: sku,
+          ...(candidate.method === INVENTORY_PRODUCTS_LIST_METHOD ? { include_variants: true } : {}),
         });
         const ids = extractProductIds(payload);
         if (ids.length > 0) {
           const details = await fetchBaseProductDetails(token, inventoryId, ids);
-          const match = details.find((p: BaseProductRecord) => {
-            const pSku = p['sku'] ?? p['SKU'] ?? p['Sku'];
-            return typeof pSku === 'string' && pSku.toLowerCase() === sku.toLowerCase();
-          });
+          const match = details
+            .map((record: BaseProductRecord) => resolveBaseProductIdBySku(record, sku))
+            .find((productId: string | null): productId is string => productId !== null);
           if (match) {
-            const productId = toStringId(match['product_id'] ?? match['id']);
+            const productId = toStringId(match);
             return productId ? { exists: true, productId } : { exists: true };
           }
         }
@@ -170,12 +174,11 @@ export async function checkBaseSkuExists(
     for (let i = 0; i < allIds.length; i += batchSize) {
       const batch = allIds.slice(i, i + batchSize);
       const products = await fetchBaseProductDetails(token, inventoryId, batch);
-      const match = products.find((p: BaseProductRecord) => {
-        const pSku = p['sku'] ?? p['SKU'] ?? p['Sku'];
-        return typeof pSku === 'string' && pSku.toLowerCase() === sku.toLowerCase();
-      });
+      const match = products
+        .map((record: BaseProductRecord) => resolveBaseProductIdBySku(record, sku))
+        .find((productId: string | null): productId is string => productId !== null);
       if (match) {
-        const productId = toStringId(match['product_id'] ?? match['id']);
+        const productId = toStringId(match);
         return productId ? { exists: true, productId } : { exists: true };
       }
     }

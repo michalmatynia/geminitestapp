@@ -139,7 +139,7 @@ describe('local-kangur-platform scores shared API client integration', () => {
     ).resolves.toEqual([REMOTE_SCORE]);
 
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/kangur/scores?sort=-score&limit=5&player_name=Ada&subject=maths&learner_id=learner-1',
+      '/kangur-api/scores?sort=-score&limit=5&player_name=Ada&subject=maths&learner_id=learner-1',
       expect.objectContaining({
         method: 'GET',
         credentials: 'same-origin',
@@ -188,11 +188,11 @@ describe('local-kangur-platform scores shared API client integration', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     const cacheModule = await import('@/features/kangur/services/local-kangur-platform-score-cache');
-    cacheModule.scoreQueryCache.set('/api/kangur/scores?sort=-score', {
+    cacheModule.scoreQueryCache.set('/kangur-api/scores?sort=-score', {
       rows: [REMOTE_SCORE],
       expiresAt: Date.now() + 10_000,
     });
-    cacheModule.scoreQueryInFlight.set('/api/kangur/scores?sort=-score', Promise.resolve([REMOTE_SCORE]));
+    cacheModule.scoreQueryInFlight.set('/kangur-api/scores?sort=-score', Promise.resolve([REMOTE_SCORE]));
 
     const { createScoreViaApi } = await import(
       '@/features/kangur/services/local-kangur-platform-scores'
@@ -212,7 +212,7 @@ describe('local-kangur-platform scores shared API client integration', () => {
     ).resolves.toEqual(REMOTE_SCORE);
 
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/kangur/scores',
+      '/kangur-api/scores',
       expect.objectContaining({
         method: 'POST',
         credentials: 'same-origin',

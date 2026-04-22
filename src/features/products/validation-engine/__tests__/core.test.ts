@@ -386,6 +386,36 @@ describe('buildFieldIssues', () => {
     ).toBe(false);
   });
 
+  it('evaluates empty producer fields so static formatter patterns can auto-fill defaults', () => {
+    const pattern = makePattern({
+      regex: '^$',
+      target: 'producer',
+      replacementEnabled: true,
+      replacementAutoApply: true,
+      replacementFields: ['producerIds'],
+      replacementValue: 'StarGater.net',
+      message: 'Assign the default producer',
+    });
+
+    const issues = buildFieldIssues({
+      values: {
+        producerIds: '',
+      },
+      patterns: [pattern],
+      latestProductValues: null,
+      validationScope: SCOPE,
+    });
+
+    expect(issues['producerIds']).toHaveLength(1);
+    expect(issues['producerIds']?.[0]).toMatchObject({
+      patternId: pattern.id,
+      replacementValue: 'StarGater.net',
+      replacementApplyMode: 'replace_matched_segment',
+      replacementScope: 'field',
+      replacementActive: true,
+    });
+  });
+
   it('supports category inference driven by Name EN segment #4', () => {
     const pattern = makePattern({
       regex: '^$',

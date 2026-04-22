@@ -32,7 +32,7 @@ function useAsset3DCardModel(asset: Asset3DRecord): {
     setEditAsset(asset);
   }, [setEditAsset, asset]);
   const onDeleteAsset = useCallback((): void => {
-    handleDelete(asset).catch(() => {});
+    Promise.resolve(handleDelete(asset)).catch(() => {});
   }, [handleDelete, asset]);
 
   const formatFileSize = (bytes: number): string => {

@@ -16,6 +16,11 @@ describe('validatorTargetAdapters', () => {
       valueKind: 'category',
       replacementFields: ['categoryId'],
     });
+    expect(getProductValidationTargetAdapter('producer')).toEqual({
+      target: 'producer',
+      valueKind: 'producer',
+      replacementFields: ['producerIds'],
+    });
     expect(getProductValidationTargetAdapter('price')).toEqual({
       target: 'price',
       valueKind: 'number',
@@ -28,6 +33,7 @@ describe('validatorTargetAdapters', () => {
     expect(getReplacementFieldsForProductValidationTarget('size_width')).toEqual(['sizeWidth']);
     expect(getProductValidationFieldValueKind('stock')).toBe('number');
     expect(getProductValidationFieldValueKind('categoryId')).toBe('category');
+    expect(getProductValidationFieldValueKind('producerIds')).toBe('producer');
     expect(getProductValidationFieldValueKind('name_en')).toBe('text');
   });
 

@@ -18,6 +18,10 @@ import {
   type FieldValidatorIssue,
 } from '@/features/products/validation-engine/core';
 import { applyValidatorFieldReplacement } from '@/features/products/lib/applyValidatorFieldReplacement';
+import {
+  buildProducerNameById,
+  formatProducerDisplayValue,
+} from '@/features/products/lib/resolveValidatorProducerReplacement';
 import { resolveValidatorFieldReplacement } from '@/features/products/lib/resolveValidatorFieldReplacement';
 import { type ProductFormData } from '@/shared/contracts/products/drafts';
 import { type CatalogRecord } from '@/shared/contracts/products/catalogs';
@@ -85,6 +89,7 @@ const CategoryIssueHintRow = memo((
       },
       setFormFieldValue: () => {},
       setCategoryId,
+      setProducerIds: () => {},
     });
     if (!applied) return;
     void acceptIssue({
@@ -117,6 +122,75 @@ const CategoryIssueHintRow = memo((
   );
 });
 
+type ProducerIssueHintRowProps = {
+  issue: FieldValidatorIssue;
+  currentProducerLabel: string;
+  proposedProducerLabel: string | null;
+  selectedProducerIds: string[];
+  canApplyReplacement: boolean;
+};
+
+const ProducerIssueHintRow = memo((
+  props: ProducerIssueHintRowProps
+): React.JSX.Element => {
+  const {
+    issue,
+    currentProducerLabel,
+    proposedProducerLabel,
+    selectedProducerIds,
+    canApplyReplacement,
+  } = props;
+
+  const { producers, setProducerIds } = useProductFormMetadata();
+  const { acceptIssue, denyIssue, getDenyActionLabel } = useProductValidationActions();
+
+  const onReplace = useCallback((): void => {
+    const currentValue = currentProducerLabel === '(none)' ? '' : currentProducerLabel;
+    const nextValue = getIssueReplacementPreview(currentValue, issue).trim();
+    const applied = applyValidatorFieldReplacement({
+      fieldName: 'producerIds',
+      replacementValue: nextValue,
+      producers,
+      getCurrentFieldValue: (fieldName: keyof ProductFormData) => {
+        if (fieldName === 'producerIds') return selectedProducerIds;
+        return '';
+      },
+      setFormFieldValue: () => {},
+      setCategoryId: () => {},
+      setProducerIds,
+    });
+    if (!applied) return;
+    void acceptIssue({
+      fieldName: 'producerIds',
+      patternId: issue.patternId,
+      postAcceptBehavior: issue.postAcceptBehavior,
+      message: issue.message,
+      replacementValue: issue.replacementValue,
+    });
+  }, [acceptIssue, currentProducerLabel, issue, producers, selectedProducerIds, setProducerIds]);
+
+  const onDeny = useCallback((): void => {
+    void denyIssue({
+      fieldName: 'producerIds',
+      patternId: issue.patternId,
+      message: issue.message,
+      replacementValue: issue.replacementValue,
+    });
+  }, [denyIssue, issue.message, issue.patternId, issue.replacementValue]);
+
+  return (
+    <ValidatorIssueHint
+      issue={issue}
+      value={currentProducerLabel}
+      proposedValueOverride={proposedProducerLabel}
+      hideMatchSnippet
+      onReplace={issue.replacementValue && canApplyReplacement ? onReplace : undefined}
+      onDeny={onDeny}
+      denyLabel={getDenyActionLabel(issue.patternId)}
+    />
+  );
+});
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function ProductFormOther(): React.JSX.Element {
@@ -125,7 +199,9 @@ export default function ProductFormOther(): React.JSX.Element {
     catalogsError,
     selectedCatalogIds,
     categories,
+    producers,
     selectedCategoryId,
+    selectedProducerIds,
     setCategoryId,
     shippingGroups,
     shippingGroupsLoading,
@@ -158,6 +234,7 @@ export default function ProductFormOther(): React.JSX.Element {
     return Array.isArray(issueList) ? issueList : [];
   };
   const categoryIssueList = getIssueList('categoryId');
+  const producerIssueList = getIssueList('producerIds');
 
   const categoryNameById = useMemo((): Map<string, string> => {
     const map = new Map<string, string>();
@@ -172,6 +249,16 @@ export default function ProductFormOther(): React.JSX.Element {
   const categoryPathLabelById = useMemo(
     () => buildCategoryPathLabelMap(categories),
     [categories]
+  );
+  const producerNameById = useMemo(() => buildProducerNameById(producers), [producers]);
+  const selectedProducerLabel = useMemo(
+    () =>
+      formatProducerDisplayValue({
+        producerIds: selectedProducerIds,
+        producers,
+        producerNameById,
+      }),
+    [producerNameById, producers, selectedProducerIds]
   );
 
   // Check if price group is auto-assigned from catalog (for new products only)
@@ -608,6 +695,27 @@ export default function ProductFormOther(): React.JSX.Element {
           />
 
           <ProducerMultiSelectField />
+          {validatorEnabled &&
+            producerIssueList.map((issue: FieldValidatorIssue) => {
+              const currentProducerLabel = selectedProducerLabel || '(none)';
+              const resolvedReplacement = resolveValidatorFieldReplacement({
+                fieldName: 'producerIds',
+                replacementValue: issue.replacementValue,
+                producers,
+                producerNameById,
+              });
+              const proposedProducerLabel = resolvedReplacement?.displayValue ?? null;
+              return (
+                <ProducerIssueHintRow
+                  key={issue.patternId}
+                  issue={issue}
+                  currentProducerLabel={currentProducerLabel}
+                  proposedProducerLabel={proposedProducerLabel}
+                  selectedProducerIds={selectedProducerIds}
+                  canApplyReplacement={Boolean(resolvedReplacement)}
+                />
+              );
+            })}
         </div>
       </FormSection>
     </div>

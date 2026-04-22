@@ -3,6 +3,7 @@ import 'server-only';
 import type { ProductValidationPattern } from '@/shared/contracts/products/validation';
 
 import { getProductDataProvider, type ProductDbProvider } from './product-provider';
+import { ensureDefaultProductValidationPatterns } from './validation-pattern-defaults';
 import { getValidationPatternRepository } from './validation-pattern-repository';
 
 const DEFAULT_CACHE_TTL_MS = 15_000;
@@ -41,7 +42,9 @@ export const listValidationPatternsCached = async ({
 
   const load = (async (): Promise<ProductValidationPattern[]> => {
     const repository = await getValidationPatternRepository(provider);
-    const patterns = await repository.listPatterns();
+    const { patterns } = await ensureDefaultProductValidationPatterns({
+      repository,
+    });
     cacheByProvider.set(provider, {
       patterns,
       fetchedAt: Date.now(),
@@ -60,7 +63,7 @@ export const listValidationPatternsCached = async ({
 export const invalidateValidationPatternRuntimeCache = (
   provider?: ProductDbProvider | undefined
 ): void => {
-  if (provider) {
+  if (provider !== undefined) {
     cacheByProvider.delete(provider);
     inflightByProvider.delete(provider);
     return;

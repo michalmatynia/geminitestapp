@@ -3,6 +3,10 @@ import type { CanonicalProductImageEntryDto as TraderaCanonicalProductImageEntry
 
 type ProductImageUrlField = 'publicUrl' | 'url' | 'filepath' | 'thumbnailUrl';
 type ProductLocalImageField = 'filepath' | 'publicUrl' | 'url';
+type CanonicalTraderaProductImageEntryAccumulator = TraderaCanonicalProductImageEntry & {
+  candidateIdentityKeys: Set<string>;
+  hasPrimaryRemoteUrl: boolean;
+};
 
 const PRODUCT_IMAGE_URL_FIELDS: readonly ProductImageUrlField[] = [
   'publicUrl',
@@ -66,6 +70,24 @@ const collectNormalizedCandidates = (
   return Array.from(candidates);
 };
 
+const appendNormalizedCandidate = (candidates: string[], value: unknown): void => {
+  const normalized = normalizeNonEmptyString(value);
+  if (!normalized || candidates.includes(normalized)) {
+    return;
+  }
+
+  candidates.push(normalized);
+};
+
+const prependNormalizedCandidate = (candidates: string[], value: unknown): void => {
+  const normalized = normalizeNonEmptyString(value);
+  if (!normalized || candidates.includes(normalized)) {
+    return;
+  }
+
+  candidates.unshift(normalized);
+};
+
 const hasSeenCandidateOverlap = (
   seenCandidates: ReadonlySet<string>,
   candidates: ReadonlySet<string>
@@ -79,44 +101,88 @@ const hasSeenCandidateOverlap = (
   return false;
 };
 
+const buildImageCandidateIdentityKeys = (values: readonly unknown[]): Set<string> => {
+  const candidateIdentityKeys = new Set<string>();
+  values.forEach((value) => addCandidateIdentityKeys(candidateIdentityKeys, value));
+  return candidateIdentityKeys;
+};
+
+const buildCanonicalTraderaProductImageEntryAccumulator = (
+  image: NonNullable<ProductWithImages['images']>[number]
+): CanonicalTraderaProductImageEntryAccumulator | null => {
+  const publicUrl = image.imageFile?.publicUrl;
+  const url = image.imageFile?.url;
+  const imageUrls = collectNormalizedCandidates(
+    PRODUCT_IMAGE_URL_FIELDS.map((field) => image.imageFile?.[field])
+  );
+  const localCandidates = collectNormalizedCandidates(
+    PRODUCT_LOCAL_IMAGE_FIELDS.map((field) => image.imageFile?.[field])
+  );
+
+  if (imageUrls.length === 0 && localCandidates.length === 0) {
+    return null;
+  }
+
+  return {
+    imageUrls,
+    localCandidates,
+    candidateIdentityKeys: buildImageCandidateIdentityKeys([...imageUrls, ...localCandidates]),
+    hasPrimaryRemoteUrl: Boolean(normalizeNonEmptyString(publicUrl) || normalizeNonEmptyString(url)),
+  };
+};
+
+const buildLinkOnlyTraderaProductImageEntryAccumulator = (
+  value: string
+): CanonicalTraderaProductImageEntryAccumulator => ({
+  imageUrls: [value],
+  localCandidates: [value],
+  candidateIdentityKeys: buildImageCandidateIdentityKeys([value]),
+  hasPrimaryRemoteUrl: /^https?:\/\//i.test(value),
+});
+
+const mergeImageLinkIntoEntry = (
+  entry: CanonicalTraderaProductImageEntryAccumulator,
+  value: string
+): void => {
+  if (entry.hasPrimaryRemoteUrl) {
+    appendNormalizedCandidate(entry.imageUrls, value);
+  } else {
+    // Prefer same-slot imageLinks as the primary remote download URL when the
+    // persisted product image only has local filepath candidates.
+    prependNormalizedCandidate(entry.imageUrls, value);
+  }
+  appendNormalizedCandidate(entry.localCandidates, value);
+  addCandidateIdentityKeys(entry.candidateIdentityKeys, value);
+};
+
 export const collectCanonicalTraderaProductImageEntries = (
   product: ProductWithImages
 ): TraderaCanonicalProductImageEntry[] => {
-  const entries: TraderaCanonicalProductImageEntry[] = [];
+  const imageSlotEntries: Array<CanonicalTraderaProductImageEntryAccumulator | null> = (
+    product.images ?? []
+  ).map((image) => buildCanonicalTraderaProductImageEntryAccumulator(image));
+  const entries: CanonicalTraderaProductImageEntryAccumulator[] = [];
   const seenCandidateKeys = new Set<string>();
 
-  // product.images is the canonical source of image ordering — emit one slot per
-  // product image so Tradera uploads can match the product exactly.
-  (product.images ?? []).forEach((image) => {
-    const imageUrls = collectNormalizedCandidates(
-      PRODUCT_IMAGE_URL_FIELDS.map((field) => image.imageFile?.[field])
-    );
-    const localCandidates = collectNormalizedCandidates(
-      PRODUCT_LOCAL_IMAGE_FIELDS.map((field) => image.imageFile?.[field])
-    );
-    const candidateIdentityKeys = new Set<string>();
-    [...imageUrls, ...localCandidates].forEach((candidate) =>
-      addCandidateIdentityKeys(candidateIdentityKeys, candidate)
-    );
-
-    if (imageUrls.length === 0 && localCandidates.length === 0) {
+  imageSlotEntries.forEach((entry, index) => {
+    if (!entry) {
       return;
     }
 
-    if (hasSeenCandidateOverlap(seenCandidateKeys, candidateIdentityKeys)) {
+    if (hasSeenCandidateOverlap(seenCandidateKeys, entry.candidateIdentityKeys)) {
+      imageSlotEntries[index] = null;
       return;
     }
 
-    entries.push({
-      imageUrls,
-      localCandidates,
-    });
-    candidateIdentityKeys.forEach((candidate) => seenCandidateKeys.add(candidate));
+    entries.push(entry);
+    entry.candidateIdentityKeys.forEach((candidate) => seenCandidateKeys.add(candidate));
   });
 
-  // imageLinks may contain additional images not present in product.images;
-  // append them only after the canonical images and only when they are new.
-  (product.imageLinks ?? []).forEach((value) => {
+  // imageLinks often mirror the same logical slots as product.images with the
+  // original remote URLs. Only merge them into the same index when the
+  // canonical product image lacks a primary remote URL; otherwise treat them as
+  // additional images appended after the canonical product image order.
+  (product.imageLinks ?? []).forEach((value, index) => {
     const normalized = normalizeNonEmptyString(value);
     if (!normalized) {
       return;
@@ -128,14 +194,23 @@ export const collectCanonicalTraderaProductImageEntries = (
       return;
     }
 
-    entries.push({
-      imageUrls: [normalized],
-      localCandidates: [normalized],
-    });
+    const matchingEntry = imageSlotEntries[index];
+    if (matchingEntry && !matchingEntry.hasPrimaryRemoteUrl) {
+      mergeImageLinkIntoEntry(matchingEntry, normalized);
+      candidateIdentityKeys.forEach((candidate) => seenCandidateKeys.add(candidate));
+      return;
+    }
+
+    const nextEntry = buildLinkOnlyTraderaProductImageEntryAccumulator(normalized);
+    entries.push(nextEntry);
     candidateIdentityKeys.forEach((candidate) => seenCandidateKeys.add(candidate));
   });
 
-  return entries;
+  return entries
+    .map(({ imageUrls, localCandidates }) => ({
+      imageUrls,
+      localCandidates,
+    }));
 };
 
 export const collectProductImageUrlCandidates = (product: ProductWithImages): string[] =>

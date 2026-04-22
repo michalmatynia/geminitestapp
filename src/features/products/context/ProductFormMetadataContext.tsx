@@ -37,6 +37,7 @@ export interface ProductFormMetadataContextType {
   producers: Producer[];
   producersLoading: boolean;
   selectedProducerIds: string[];
+  setProducerIds: (producerIds: string[]) => void;
   toggleProducer: (producerId: string) => void;
   filteredLanguages: Language[];
   filteredPriceGroups: PriceGroupWithDetails[];
@@ -65,7 +66,7 @@ export type ProductFormMetadataStateContextType = Pick<
 
 export type ProductFormMetadataActionsContextType = Pick<
   ProductFormMetadataContextType,
-  'toggleCatalog' | 'setCategoryId' | 'toggleTag' | 'toggleProducer'
+  'toggleCatalog' | 'setCategoryId' | 'toggleTag' | 'setProducerIds' | 'toggleProducer'
 >;
 
 export const ProductFormMetadataContext = createContext<ProductFormMetadataContextType | null>(
@@ -117,6 +118,10 @@ export function ProductFormMetadataProvider({
       toggleProducer: (id: string) => {
         onInteraction?.();
         metadata.toggleProducer(id);
+      },
+      setProducerIds: (producerIds: string[]) => {
+        onInteraction?.();
+        metadata.setProducerIds(producerIds);
       },
     }),
     [metadata, onInteraction]
@@ -179,12 +184,13 @@ export const useProductFormMetadataState = (): ProductFormMetadataStateContextTy
 };
 
 export const useProductFormMetadataActions = (): ProductFormMetadataActionsContextType => {
-  const { toggleCatalog, setCategoryId, toggleTag, toggleProducer } =
+  const { toggleCatalog, setCategoryId, toggleTag, setProducerIds, toggleProducer } =
     useRequiredProductFormMetadataContext();
   return {
     toggleCatalog,
     setCategoryId,
     toggleTag,
+    setProducerIds,
     toggleProducer,
   };
 };

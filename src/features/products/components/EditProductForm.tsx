@@ -49,7 +49,7 @@ function EditProductForm(): React.JSX.Element {
           </Button>
           <Button
             onClick={() => {
-              handleSubmit().catch(() => { /* handled by context */ });
+              Promise.resolve(handleSubmit()).catch(() => { /* handled by context */ });
             }}
             disabled={isSaveDisabled}
             aria-disabled={isSaveDisabled}

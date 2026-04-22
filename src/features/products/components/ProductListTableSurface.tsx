@@ -93,7 +93,17 @@ export const ProductListTableSurface = memo(() => {
       if (!tableElement) return;
 
       const tableRect = tableElement.getBoundingClientRect();
-      const availableHeight = Math.floor(window.innerHeight - tableRect.top - PRODUCT_LIST_BOTTOM_GAP);
+      const appContentBottom = document
+        .getElementById('app-content')
+        ?.getBoundingClientRect().bottom;
+      const viewportBottom = window.innerHeight;
+      const layoutBottom =
+        typeof appContentBottom === 'number' && Number.isFinite(appContentBottom)
+          ? Math.min(viewportBottom, appContentBottom)
+          : viewportBottom;
+      const availableHeight = Math.floor(
+        layoutBottom - tableRect.top - PRODUCT_LIST_BOTTOM_GAP
+      );
       const nextMaxHeight = Math.max(0, availableHeight);
 
       setResolvedTableMaxHeight((currentValue) => {

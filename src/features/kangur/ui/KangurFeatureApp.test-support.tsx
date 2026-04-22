@@ -210,6 +210,19 @@ vi.mock('next/dynamic', () => ({
       return () => <div data-testid='kangur-user-not-registered-error' />;
     }
 
+    if (signature.includes('KangurDeferredSyncEffectsClient')) {
+      return () => {
+        kangurProgressSyncProviderRenderSpyMock();
+        kangurScoreSyncProviderRenderSpyMock();
+        return (
+          <>
+            <div data-testid='kangur-progress-sync-provider' />
+            <div data-testid='kangur-score-sync-provider' />
+          </>
+        );
+      };
+    }
+
     return () => null;
   },
 }));

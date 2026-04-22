@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({
   getProductDataProvider: vi.fn(),
   getValidationPatternRepository: vi.fn(),
-  listPatterns: vi.fn(),
+  ensureDefaultProductValidationPatterns: vi.fn(),
 }));
 
 vi.mock('./product-provider', () => ({
@@ -16,6 +16,10 @@ vi.mock('./product-provider', () => ({
 
 vi.mock('./validation-pattern-repository', () => ({
   getValidationPatternRepository: mocks.getValidationPatternRepository,
+}));
+
+vi.mock('./validation-pattern-defaults', () => ({
+  ensureDefaultProductValidationPatterns: mocks.ensureDefaultProductValidationPatterns,
 }));
 
 import {
@@ -27,10 +31,23 @@ describe('validation-pattern-runtime-cache', () => {
   beforeEach(() => {
     invalidateValidationPatternRuntimeCache();
     mocks.getProductDataProvider.mockReset().mockResolvedValue('mongodb');
-    mocks.listPatterns.mockReset();
+    mocks.ensureDefaultProductValidationPatterns.mockReset();
     mocks.getValidationPatternRepository.mockReset().mockResolvedValue({
-      listPatterns: mocks.listPatterns,
+      listPatterns: vi.fn(),
+      createPattern: vi.fn(),
     });
+    mocks.ensureDefaultProductValidationPatterns.mockImplementation(
+      async ({
+        repository,
+      }: {
+        repository: {
+          listPatterns: () => Promise<Array<{ id: string; label: string }>>;
+        };
+      }) => ({
+        patterns: await repository.listPatterns(),
+        createdPatternIds: [],
+      })
+    );
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-03-25T19:45:00.000Z'));
   });
@@ -41,9 +58,13 @@ describe('validation-pattern-runtime-cache', () => {
   });
 
   it('caches patterns by provider until the ttl expires', async () => {
-    mocks.listPatterns
+    const listPatterns = vi
+      .fn()
       .mockResolvedValueOnce([{ id: 'pattern-1', label: 'Alpha' }])
       .mockResolvedValueOnce([{ id: 'pattern-2', label: 'Beta' }]);
+    mocks.getValidationPatternRepository
+      .mockResolvedValueOnce({ listPatterns, createPattern: vi.fn() })
+      .mockResolvedValueOnce({ listPatterns, createPattern: vi.fn() });
 
     const first = await listValidationPatternsCached();
     const second = await listValidationPatternsCached();
@@ -58,6 +79,7 @@ describe('validation-pattern-runtime-cache', () => {
     expect(mocks.getValidationPatternRepository).toHaveBeenCalledTimes(2);
     expect(mocks.getValidationPatternRepository).toHaveBeenNthCalledWith(1, 'mongodb');
     expect(mocks.getValidationPatternRepository).toHaveBeenNthCalledWith(2, 'mongodb');
+    expect(mocks.ensureDefaultProductValidationPatterns).toHaveBeenCalledTimes(2);
   });
 
   it('reuses a single inflight fetch for concurrent requests', async () => {
@@ -65,7 +87,11 @@ describe('validation-pattern-runtime-cache', () => {
     const pending = new Promise<Array<{ id: string; label: string }>>((resolve) => {
       resolvePatterns = resolve;
     });
-    mocks.listPatterns.mockReturnValueOnce(pending);
+    const listPatterns = vi.fn().mockReturnValueOnce(pending);
+    mocks.getValidationPatternRepository.mockResolvedValueOnce({
+      listPatterns,
+      createPattern: vi.fn(),
+    });
 
     const first = listValidationPatternsCached({ providerOverride: 'mongodb' as never });
     const second = listValidationPatternsCached({ providerOverride: 'mongodb' as never });
@@ -78,15 +104,22 @@ describe('validation-pattern-runtime-cache', () => {
       [{ id: 'pattern-3', label: 'Gamma' }],
       [{ id: 'pattern-3', label: 'Gamma' }],
     ]);
-    expect(mocks.listPatterns).toHaveBeenCalledTimes(1);
+    expect(listPatterns).toHaveBeenCalledTimes(1);
+    expect(mocks.ensureDefaultProductValidationPatterns).toHaveBeenCalledTimes(1);
   });
 
   it('invalidates provider-specific and global cache entries', async () => {
-    mocks.listPatterns
+    const listPatterns = vi
+      .fn()
       .mockResolvedValueOnce([{ id: 'provider-a-1', label: 'A1' }])
       .mockResolvedValueOnce([{ id: 'provider-b-1', label: 'B1' }])
       .mockResolvedValueOnce([{ id: 'provider-a-2', label: 'A2' }])
       .mockResolvedValueOnce([{ id: 'provider-b-2', label: 'B2' }]);
+    mocks.getValidationPatternRepository
+      .mockResolvedValueOnce({ listPatterns, createPattern: vi.fn() })
+      .mockResolvedValueOnce({ listPatterns, createPattern: vi.fn() })
+      .mockResolvedValueOnce({ listPatterns, createPattern: vi.fn() })
+      .mockResolvedValueOnce({ listPatterns, createPattern: vi.fn() });
 
     await listValidationPatternsCached({ providerOverride: 'provider-a' as never });
     await listValidationPatternsCached({ providerOverride: 'provider-b' as never });
@@ -110,5 +143,6 @@ describe('validation-pattern-runtime-cache', () => {
     expect(providerBCached).toEqual([{ id: 'provider-b-1', label: 'B1' }]);
     expect(providerBAfterGlobalInvalidate).toEqual([{ id: 'provider-b-2', label: 'B2' }]);
     expect(mocks.getValidationPatternRepository).toHaveBeenCalledTimes(4);
+    expect(mocks.ensureDefaultProductValidationPatterns).toHaveBeenCalledTimes(4);
   });
 });

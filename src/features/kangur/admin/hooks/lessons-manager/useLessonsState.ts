@@ -1,15 +1,22 @@
-import { useMemo, useState } from 'react';
-import { useKangurLessons, useKangurLessonDocuments, useKangurLessonTemplates } from '@/features/kangur/hooks';
-import { resolveKangurAdminLocale } from '@/features/kangur/admin/utils';
-import { KANGUR_ADMIN_LOCALES } from '@/features/kangur/shared/contracts/kangur';
+import { useMemo } from 'react';
+import {
+  useKangurLessonDocuments,
+  useKangurLessonTemplates,
+  useKangurLessons,
+  useUpdateKangurLessonDocuments,
+  useUpdateKangurLessonTemplates,
+  useUpdateKangurLessons,
+} from '@/features/kangur/hooks';
 import type { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
-import { useLocale } from '@/shared/lib/i18n';
 
 export function useLessonsState(contentLocale: string) {
   const lessonsQuery = useKangurLessons();
   const lessonDocumentsQuery = useKangurLessonDocuments({ locale: contentLocale });
   const templatesQuery = useKangurLessonTemplates({ locale: contentLocale });
-  
+  const updateLessons = useUpdateKangurLessons();
+  const updateLessonDocuments = useUpdateKangurLessonDocuments(contentLocale);
+  const updateTemplates = useUpdateKangurLessonTemplates(contentLocale);
+
   const isLoading = lessonsQuery.isLoading || lessonDocumentsQuery.isLoading || templatesQuery.isLoading;
 
   const lessonTemplateMap = useMemo(
@@ -25,6 +32,9 @@ export function useLessonsState(contentLocale: string) {
     lessonsQuery,
     lessonDocumentsQuery,
     templatesQuery,
+    updateLessons,
+    updateLessonDocuments,
+    updateTemplates,
     isLoading,
     lessonTemplateMap,
     lessons,

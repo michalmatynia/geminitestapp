@@ -35,7 +35,7 @@ function AdminMenuSettingsInner(): React.JSX.Element {
             key: 'save',
             label: isSaving ? 'Saving...' : 'Save Settings',
             onClick: () => {
-              void handleSave();
+              handleSave().catch(() => {});
             },
             disabled: !isDirty || isSaving,
           },

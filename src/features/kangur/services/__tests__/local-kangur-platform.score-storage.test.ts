@@ -128,14 +128,14 @@ describe('createLocalKangurPlatform score storage', () => {
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
 
-      if (url.endsWith('/api/kangur/auth/me')) {
+      if (url.endsWith('/kangur-api/auth/me')) {
         return {
           ok: false,
           status: 401,
         };
       }
 
-      if (url.includes('/api/kangur/scores')) {
+      if (url.includes('/kangur-api/scores')) {
         return {
           ok: true,
           status: 200,
@@ -208,7 +208,7 @@ describe('createLocalKangurPlatform score storage', () => {
         typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
       const method = init?.method ?? 'GET';
 
-      if (url.endsWith('/api/kangur/auth/me')) {
+      if (url.endsWith('/kangur-api/auth/me')) {
         return {
           ok: true,
           status: 200,
@@ -216,7 +216,7 @@ describe('createLocalKangurPlatform score storage', () => {
         };
       }
 
-      if (url.endsWith('/api/kangur/scores') && method === 'POST') {
+      if (url.endsWith('/kangur-api/scores') && method === 'POST') {
         return {
           ok: true,
           status: 201,
@@ -224,7 +224,7 @@ describe('createLocalKangurPlatform score storage', () => {
         };
       }
 
-      if (url.includes('/api/kangur/scores') && method === 'GET') {
+      if (url.includes('/kangur-api/scores') && method === 'GET') {
         return {
           ok: true,
           status: 200,
@@ -239,7 +239,7 @@ describe('createLocalKangurPlatform score storage', () => {
 
     expect(rows).toEqual([persistedScore]);
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/kangur/scores',
+      '/kangur-api/scores',
       expect.objectContaining({
         body: expect.stringContaining('"xp_earned":37'),
         method: 'POST',
@@ -254,21 +254,21 @@ describe('createLocalKangurPlatform score storage', () => {
           typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
         const method = init?.method ?? 'GET';
 
-        if (url.endsWith('/api/kangur/auth/me')) {
+        if (url.endsWith('/kangur-api/auth/me')) {
           return {
             ok: false,
             status: 401,
           };
         }
 
-        if (url.endsWith('/api/kangur/auth/logout') && method === 'POST') {
+        if (url.endsWith('/kangur-api/auth/logout') && method === 'POST') {
           return {
             ok: true,
             status: 200,
           };
         }
 
-        if (url.includes('/api/kangur/scores') && method === 'GET') {
+        if (url.includes('/kangur-api/scores') && method === 'GET') {
           return {
             ok: true,
             status: 200,
@@ -315,7 +315,7 @@ describe('createLocalKangurPlatform score storage', () => {
     expect(rows).not.toContainEqual(previousGuestScore);
     expect(loadGuestKangurScores()).toEqual([currentGuestScore]);
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/kangur/auth/logout',
+      '/kangur-api/auth/logout',
       expect.objectContaining({
         method: 'POST',
         credentials: 'same-origin',

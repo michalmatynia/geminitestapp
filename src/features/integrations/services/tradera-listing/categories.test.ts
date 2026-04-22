@@ -2,8 +2,108 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { TRADERA_PUBLIC_CATEGORIES_URL } from '@/features/integrations/constants/tradera';
 
-const { runPlaywrightScrapeScriptMock } = vi.hoisted(() => ({
-  runPlaywrightScrapeScriptMock: vi.fn(),
+const {
+  MockTraderaCategorySequencer,
+  buildResolvedActionStepsMock,
+  createTraderaCategoryScrapePlaywrightInstanceMock,
+  runPlaywrightConnectionNativeTaskMock,
+  sequencerConstructorMock,
+  setMockSequencerError,
+  setMockSequencerResult,
+} = vi.hoisted(() => {
+  const defaultResult = {
+    categories: [
+      { id: '100', name: 'Accessories', parentId: null },
+      { id: '101', name: 'Patches & pins', parentId: '100' },
+      { id: '102', name: 'Pins', parentId: '101' },
+      { id: '200', name: 'Antiques & Design', parentId: '0' },
+      { id: '102', name: 'Pins duplicate', parentId: '101' },
+    ],
+    categorySource: 'public-categories',
+    scrapedFrom: 'https://www.tradera.com/category/all',
+    diagnostics: null,
+    crawlStats: {
+      pagesVisited: 4,
+      rootCount: 2,
+    },
+  };
+
+  const state: {
+    result: typeof defaultResult;
+    error: Error | null;
+  } = {
+    result: defaultResult,
+    error: null,
+  };
+
+  const buildResolvedActionStepsMock = vi.fn(async () => []);
+  const createTraderaCategoryScrapePlaywrightInstanceMock = vi.fn(
+    (input: Record<string, unknown> = {}) => ({
+      kind: 'tradera_category_scrape',
+      label: 'Tradera public category scrape',
+      tags: ['integration', 'tradera', 'taxonomy'],
+      ...input,
+    })
+  );
+  const runPlaywrightConnectionNativeTaskMock = vi.fn(
+    async (input: Record<string, unknown>) => {
+      const execute = input['execute'] as (session: Record<string, unknown>) => Promise<unknown>;
+      return execute({
+        page: {},
+        close: vi.fn(),
+        sessionMetadata: {
+          instance: input['instance'],
+          browserLabel: 'Chrome',
+          fallbackMessages: [],
+          resolvedBrowserPreference: 'auto',
+          personaId: 'persona-1',
+          deviceProfileName: 'Desktop Chrome',
+        },
+        effectiveBrowserMode: 'headed',
+        effectiveBrowserPreference: 'chrome',
+        requestedBrowserMode: null,
+        requestedBrowserPreference: null,
+      });
+    }
+  );
+  const sequencerConstructorMock = vi.fn();
+
+  class MockTraderaCategorySequencer {
+    public result = null;
+
+    constructor(context: Record<string, unknown>, input: Record<string, unknown>) {
+      sequencerConstructorMock({ context, input });
+    }
+
+    async run(): Promise<void> {
+      if (state.error) {
+        throw state.error;
+      }
+      this.result = state.result;
+    }
+  }
+
+  return {
+    buildResolvedActionStepsMock,
+    createTraderaCategoryScrapePlaywrightInstanceMock,
+    runPlaywrightConnectionNativeTaskMock,
+    sequencerConstructorMock,
+    setMockSequencerError: (error: Error | null) => {
+      state.error = error;
+    },
+    setMockSequencerResult: (result: typeof defaultResult) => {
+      state.result = result;
+    },
+    MockTraderaCategorySequencer,
+  };
+});
+
+vi.mock('@/shared/lib/browser-execution/runtime-action-resolver.server', () => ({
+  buildResolvedActionSteps: (...args: unknown[]) => buildResolvedActionStepsMock(...args),
+}));
+
+vi.mock('@/shared/lib/browser-execution/sequencers/TraderaCategorySequencer', () => ({
+  TraderaCategorySequencer: MockTraderaCategorySequencer,
 }));
 
 vi.mock('@/features/playwright/server', async () => {
@@ -13,152 +113,46 @@ vi.mock('@/features/playwright/server', async () => {
     );
   return {
     ...actual,
-    runPlaywrightScrapeScript: (input: Record<string, unknown>) =>
-      runPlaywrightScrapeScriptMock(input) as Promise<unknown>,
-    createTraderaCategoryScrapePlaywrightInstance: (input: Record<string, unknown> = {}) => ({
-      kind: 'tradera_category_scrape',
-      label: 'Tradera public category scrape',
-      tags: ['integration', 'tradera', 'taxonomy'],
-      ...input,
-    }),
-    buildPlaywrightEngineRunFailureMeta: (run: Record<string, unknown>) => {
-      const payloadRecord =
-        run['result'] && typeof run['result'] === 'object' && !Array.isArray(run['result'])
-          ? (run['result'] as Record<string, unknown>)
-          : {};
-      const outputs =
-        payloadRecord['outputs'] &&
-        typeof payloadRecord['outputs'] === 'object' &&
-        !Array.isArray(payloadRecord['outputs'])
-          ? (payloadRecord['outputs'] as Record<string, unknown>)
-          : payloadRecord;
-      const resultValue =
-        outputs['result'] && typeof outputs['result'] === 'object' && !Array.isArray(outputs['result'])
-          ? (outputs['result'] as Record<string, unknown>)
-          : outputs;
-      const finalUrl =
-        typeof payloadRecord['finalUrl'] === 'string' ? payloadRecord['finalUrl'].trim() : null;
-
-      return {
-        runId: run['runId'],
-        runStatus: run['status'],
-        finalUrl,
-        latestStage:
-          typeof resultValue['stage'] === 'string' ? resultValue['stage'].trim() : null,
-        latestStageUrl:
-          typeof resultValue['currentUrl'] === 'string'
-            ? resultValue['currentUrl'].trim()
-            : finalUrl,
-        failureArtifacts: Array.isArray(run['artifacts']) ? run['artifacts'] : [],
-        logTail: Array.isArray(run['logs']) ? (run['logs'] as unknown[]).slice(-12) : [],
-      };
-    },
-    collectPlaywrightEngineRunFailureMessages: (run: Record<string, unknown>) => {
-      const messages = new Set<string>();
-      const directMessage =
-        typeof run['error'] === 'string'
-          ? run['error']
-              .replace(/^\[runtime\]\[error\]\s*/i, '')
-              .replace(/^Error:\s*/i, '')
-              .trim()
-          : null;
-      if (directMessage) {
-        messages.add(directMessage);
-      }
-
-      const payloadRecord =
-        run['result'] && typeof run['result'] === 'object' && !Array.isArray(run['result'])
-          ? (run['result'] as Record<string, unknown>)
-          : {};
-      const outputs =
-        payloadRecord['outputs'] &&
-        typeof payloadRecord['outputs'] === 'object' &&
-        !Array.isArray(payloadRecord['outputs'])
-          ? (payloadRecord['outputs'] as Record<string, unknown>)
-          : payloadRecord;
-      const resultValue =
-        outputs['result'] && typeof outputs['result'] === 'object' && !Array.isArray(outputs['result'])
-          ? (outputs['result'] as Record<string, unknown>)
-          : outputs;
-      const resultMessage =
-        typeof resultValue['message'] === 'string'
-          ? resultValue['message'].replace(/^Error:\s*/i, '').trim()
-          : null;
-      if (resultMessage) {
-        messages.add(resultMessage);
-      }
-
-      for (const logLine of Array.isArray(run['logs']) ? run['logs'] : []) {
-        if (typeof logLine !== 'string' || !logLine.toLowerCase().includes('[runtime][error]')) {
-          continue;
-        }
-        messages.add(
-          logLine.replace(/^\[runtime\]\[error\]\s*/i, '').replace(/^Error:\s*/i, '').trim()
-        );
-      }
-
-      return Array.from(messages);
-    },
+    createTraderaCategoryScrapePlaywrightInstance: (input: Record<string, unknown> = {}) =>
+      createTraderaCategoryScrapePlaywrightInstanceMock(input),
+    runPlaywrightConnectionNativeTask: (input: Record<string, unknown>) =>
+      runPlaywrightConnectionNativeTaskMock(input),
   };
 });
 
 import { fetchTraderaCategoriesForConnection } from './categories';
 
-const makeScrapeResult = (
+const makeSequencerResult = (
   overrides?: Partial<{
-    run: Record<string, unknown>;
-    rawResult: Record<string, unknown>;
-    finalUrl: string | null;
+    categories: Array<{ id: string; name: string; parentId: string | null }>;
+    categorySource: string;
+    scrapedFrom: string;
+    diagnostics: Record<string, unknown> | null;
+    crawlStats: Record<string, unknown> | null;
   }>
 ) => ({
-  run: {
-    runId: 'run-123',
-    status: 'completed',
-    error: null,
-    artifacts: [],
-    logs: [],
-    result: {
-      outputs: {
-        result: {
-          categories: [
-            { id: '100', name: 'Accessories', parentId: null },
-            { id: '101', name: 'Patches & pins', parentId: '100' },
-            { id: '102', name: 'Pins', parentId: '101' },
-            { id: '200', name: 'Antiques & Design', parentId: '0' },
-            { id: '102', name: 'Pins duplicate', parentId: '101' },
-          ],
-          categorySource: 'public-categories',
-          crawlStats: {
-            pagesVisited: 4,
-            rootCount: 2,
-          },
-        },
-      },
-      finalUrl: TRADERA_PUBLIC_CATEGORIES_URL,
-    },
-    ...(overrides?.run ?? {}),
+  categories: overrides?.categories ?? [
+    { id: '100', name: 'Accessories', parentId: null },
+    { id: '101', name: 'Patches & pins', parentId: '100' },
+    { id: '102', name: 'Pins', parentId: '101' },
+    { id: '200', name: 'Antiques & Design', parentId: '0' },
+    { id: '102', name: 'Pins duplicate', parentId: '101' },
+  ],
+  categorySource: overrides?.categorySource ?? 'public-categories',
+  scrapedFrom: overrides?.scrapedFrom ?? TRADERA_PUBLIC_CATEGORIES_URL,
+  diagnostics: overrides?.diagnostics ?? null,
+  crawlStats: overrides?.crawlStats ?? {
+    pagesVisited: 4,
+    rootCount: 2,
   },
-  rawResult: overrides?.rawResult ?? {
-    categories: [
-      { id: '100', name: 'Accessories', parentId: null },
-      { id: '101', name: 'Patches & pins', parentId: '100' },
-      { id: '102', name: 'Pins', parentId: '101' },
-      { id: '200', name: 'Antiques & Design', parentId: '0' },
-      { id: '102', name: 'Pins duplicate', parentId: '101' },
-    ],
-    categorySource: 'public-categories',
-    crawlStats: {
-      pagesVisited: 4,
-      rootCount: 2,
-    },
-  },
-  finalUrl: overrides?.finalUrl ?? TRADERA_PUBLIC_CATEGORIES_URL,
 });
 
 describe('fetchTraderaCategoriesForConnection', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    runPlaywrightScrapeScriptMock.mockResolvedValue(makeScrapeResult());
+    buildResolvedActionStepsMock.mockResolvedValue([]);
+    setMockSequencerError(null);
+    setMockSequencerResult(makeSequencerResult());
   });
 
   it('runs the public Tradera categories crawl and returns normalized categories', async () => {
@@ -175,36 +169,47 @@ describe('fetchTraderaCategoriesForConnection', () => {
       { id: '102', name: 'Pins', parentId: '101' },
       { id: '200', name: 'Antiques & Design', parentId: '0' },
     ]);
-    expect(runPlaywrightScrapeScriptMock).toHaveBeenCalledWith({
-      connection: expect.objectContaining({
-        id: 'connection-1',
-        playwrightStorageState: 'encrypted-storage-state',
-      }),
-      script: expect.any(String),
-      input: {
-        connectionId: 'connection-1',
-        traderaConfig: {
+    expect(buildResolvedActionStepsMock).toHaveBeenCalledWith('tradera_fetch_categories');
+    expect(createTraderaCategoryScrapePlaywrightInstanceMock).toHaveBeenCalledWith({
+      connectionId: 'connection-1',
+      integrationId: 'integration-1',
+    });
+    expect(runPlaywrightConnectionNativeTaskMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        connection: expect.objectContaining({
+          id: 'connection-1',
+          playwrightStorageState: 'encrypted-storage-state',
+        }),
+        instance: expect.objectContaining({
+          kind: 'tradera_category_scrape',
+          connectionId: 'connection-1',
+          integrationId: 'integration-1',
+        }),
+        runtimeActionKey: 'tradera_fetch_categories',
+        execute: expect.any(Function),
+        getErrorMessage: expect.any(Function),
+      })
+    );
+    expect(sequencerConstructorMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        context: expect.objectContaining({
+          actionKey: 'tradera_fetch_categories',
+          page: {},
+        }),
+        input: {
           categoriesUrl: TRADERA_PUBLIC_CATEGORIES_URL,
         },
-      },
-      timeoutMs: 300_000,
-      startUrl: TRADERA_PUBLIC_CATEGORIES_URL,
-      capture: {
-        screenshot: true,
-        html: true,
-      },
-      instance: expect.objectContaining({
-        kind: 'tradera_category_scrape',
-      }),
-    });
+      })
+    );
   });
 
   it('does not require a stored browser session for the public crawl', async () => {
-    runPlaywrightScrapeScriptMock.mockResolvedValue(
-      makeScrapeResult({
-        rawResult: {
-          categories: [{ id: '100', name: 'Accessories', parentId: '0' }],
-          categorySource: 'public-categories',
+    setMockSequencerResult(
+      makeSequencerResult({
+        categories: [{ id: '100', name: 'Accessories', parentId: '0' }],
+        crawlStats: {
+          pagesVisited: 1,
+          rootCount: 1,
         },
       })
     );
@@ -218,26 +223,8 @@ describe('fetchTraderaCategoriesForConnection', () => {
     ).resolves.toEqual([{ id: '100', name: 'Accessories', parentId: '0' }]);
   });
 
-  it('surfaces failed public crawl runs as operation errors', async () => {
-    runPlaywrightScrapeScriptMock.mockResolvedValue(
-      makeScrapeResult({
-        run: {
-          runId: 'run-failed',
-          status: 'failed',
-          error: null,
-          logs: [
-            '[runtime] Launching chromium browser.',
-            '[runtime][error] Error: Failed to crawl Tradera category pages.',
-          ],
-          result: {
-            outputs: {
-              result: {},
-            },
-            finalUrl: TRADERA_PUBLIC_CATEGORIES_URL,
-          },
-        },
-      })
-    );
+  it('surfaces crawl failures from the public categories sequencer', async () => {
+    setMockSequencerError(new Error('Failed to crawl Tradera category pages.'));
 
     await expect(
       fetchTraderaCategoriesForConnection({
@@ -246,49 +233,19 @@ describe('fetchTraderaCategoriesForConnection', () => {
       } as never)
     ).rejects.toMatchObject({
       message: 'Failed to crawl Tradera category pages.',
-      httpStatus: 422,
-      meta: expect.objectContaining({
-        connectionId: 'connection-1',
-      }),
     });
   });
 
   it('fails when the public crawl completes without categories', async () => {
-    runPlaywrightScrapeScriptMock.mockResolvedValue(
-      makeScrapeResult({
-        run: {
-          runId: 'run-empty',
-          artifacts: [{ name: 'tradera-category-empty', path: 'run-empty/tradera-category-empty.png' }],
-          logs: ['[user] tradera.category.scrape.empty {}'],
-          result: {
-            outputs: {
-              result: {
-                categories: [],
-                categorySource: 'public-categories',
-                scrapedFrom: TRADERA_PUBLIC_CATEGORIES_URL,
-                diagnostics: {
-                  seedStatus: 200,
-                },
-                crawlStats: {
-                  pagesVisited: 1,
-                  rootCount: 0,
-                },
-              },
-            },
-            finalUrl: TRADERA_PUBLIC_CATEGORIES_URL,
-          },
+    setMockSequencerResult(
+      makeSequencerResult({
+        categories: [],
+        diagnostics: {
+          seedStatus: 200,
         },
-        rawResult: {
-          categories: [],
-          categorySource: 'public-categories',
-          scrapedFrom: TRADERA_PUBLIC_CATEGORIES_URL,
-          diagnostics: {
-            seedStatus: 200,
-          },
-          crawlStats: {
-            pagesVisited: 1,
-            rootCount: 0,
-          },
+        crawlStats: {
+          pagesVisited: 1,
+          rootCount: 0,
         },
       })
     );

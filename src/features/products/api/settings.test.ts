@@ -2,13 +2,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
   apiPut: vi.fn(),
+  apiDelete: vi.fn(),
 }));
 
 vi.mock('@/shared/lib/api-client', () => ({
   api: {
     put: (...args: unknown[]) => mocks.apiPut(...args),
     get: vi.fn(),
-    delete: vi.fn(),
+    delete: (...args: unknown[]) => mocks.apiDelete(...args),
     post: vi.fn(),
   },
 }));
@@ -17,12 +18,13 @@ vi.mock('@/shared/utils/observability/client-error-logger', () => ({
   logClientError: vi.fn(),
 }));
 
-import { updatePriceGroup } from './settings';
+import { deleteValidationPattern, updatePriceGroup } from './settings';
 
 describe('updatePriceGroup', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.apiPut.mockResolvedValue({ ok: true });
+    mocks.apiDelete.mockResolvedValue({ ok: true });
   });
 
   it('uses the canonical internal id in the price-group update route', async () => {
@@ -49,6 +51,14 @@ describe('updatePriceGroup', () => {
         id: 'group-pln',
         groupId: 'PLN_STANDARD',
       })
+    );
+  });
+
+  it('calls the validator-pattern delete endpoint under products', async () => {
+    await deleteValidationPattern('pattern-123');
+
+    expect(mocks.apiDelete).toHaveBeenCalledWith(
+      '/api/v2/products/validator-patterns/pattern-123'
     );
   });
 });

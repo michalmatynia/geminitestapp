@@ -419,20 +419,150 @@ export const slugifyPlaywrightVerificationReviewSegment = (
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
 
-  if (normalized && normalized.length > 0) {
-    return normalized;
+  if ((normalized ?? '') !== '' && normalized!.length > 0) {
+    return normalized!;
   }
 
   return normalizeOptionalText(fallback) ?? 'unknown';
 };
 
 const executeInjectedPlaywrightCode = async (page: Page, code: string): Promise<void> => {
-  if (!code.trim()) return;
+  if (code.trim() === '') return;
   const AsyncFunction = Object.getPrototypeOf(async () => {}).constructor as new (
     ...args: string[]
   ) => (...a: unknown[]) => Promise<unknown>;
   await new AsyncFunction('page', code)(page);
 };
+
+async function saveIterationArtifacts(
+  iterationsRun: number,
+  screenshotBuffer: Buffer | null,
+  config: PlaywrightVerificationInjectionConfig<any>
+): Promise<{ screenshot: string | null; html: string | null }> {
+  const artifactKey = config.artifactKey ?? '';
+  if (artifactKey === '') {
+    return { screenshot: null, html: null };
+  }
+
+  const iterKey = `${artifactKey}-inject-iter-${iterationsRun}`;
+  let iterScreenshotArtifactName: string | null = null;
+  let iterHtmlArtifactName: string | null = null;
+
+  if (screenshotBuffer !== null && typeof config.artifacts?.file === 'function') {
+    try {
+      const artifactPath = await config.artifacts.file(iterKey, screenshotBuffer, {
+        extension: 'png',
+        mimeType: 'image/png',
+        kind: 'screenshot',
+      });
+      iterScreenshotArtifactName = toArtifactName(artifactPath);
+    } catch {
+      // proceed without saving artifact
+    }
+  }
+
+  if (typeof config.artifacts?.html === 'function') {
+    const htmlPath = await config.artifacts.html(iterKey).catch(() => null);
+    iterHtmlArtifactName = toArtifactName(htmlPath);
+  }
+
+  return { screenshot: iterScreenshotArtifactName, html: iterHtmlArtifactName };
+}
+
+async function runPlaywrightIterationEvaluation(
+  options: {
+    iterationsRun: number;
+    maxIterations: number;
+    screenshotBase64: string | null;
+    dom: string | null;
+    activeUrl: string;
+    config: PlaywrightVerificationInjectionConfig<any>;
+  }
+): Promise<{ done: boolean; context: string; reasoning: string }> {
+  if (typeof options.config.evaluateCapture !== 'function') {
+    return { done: false, context: '', reasoning: '' };
+  }
+
+  const iterEval = await options.config.evaluateCapture({
+    screenshotBase64: options.screenshotBase64,
+    dom: options.dom,
+    url: options.activeUrl,
+    iteration: options.iterationsRun,
+    maxIterations: options.maxIterations,
+  });
+
+  return {
+    done: iterEval.done ?? false,
+    context: iterEval.context ?? '',
+    reasoning: (iterEval.reasoning ?? '').trim(),
+  };
+}
+
+async function performInjectionIteration<TReview>(
+  options: {
+    iterationsRun: number;
+    maxIterations: number;
+    activeUrl: string;
+    dom: string | null;
+    screenshotBase64: string | null;
+    evaluatorContext: string;
+    iterationFreshContext: string | null;
+    priorInjectorReasoning: string | null;
+    priorExecutionError: string | null;
+    useHistory: boolean;
+    conversationHistory: PlaywrightInjectionConversationMessage[];
+    config: PlaywrightVerificationInjectionConfig<TReview>;
+    review: TReview;
+    capture: PlaywrightCapturedPageObservation;
+  }
+): Promise<PlaywrightInjectionResult> {
+  const isContinuation = options.useHistory && options.conversationHistory.length > 0;
+  const goal = typeof options.config.goal === 'function' 
+    ? options.config.goal(options.review, options.capture) 
+    : options.config.goal;
+
+  return injectCodeWithAI({
+    goal,
+    systemPrompt: options.config.systemPrompt ?? null,
+    context: {
+      iteration: options.iterationsRun,
+      maxIterations: options.maxIterations,
+      url: options.activeUrl,
+      dom: options.dom,
+      screenshotBase64: options.screenshotBase64,
+      priorEvaluation: isContinuation ? null : options.evaluatorContext,
+      priorInjectorReasoning: isContinuation ? null : options.priorInjectorReasoning,
+      freshEvaluation: options.iterationFreshContext,
+      priorExecutionError: options.priorExecutionError,
+      isContinuation,
+    },
+    conversationHistory: options.useHistory ? options.conversationHistory : null,
+  });
+}
+
+async function executeInjectionIterationCode(
+  options: {
+    page: Page;
+    code: string;
+    shouldWaitForNavigation: boolean;
+    iterationDelayMs: number;
+  }
+): Promise<string | null> {
+  if (options.code === '') return null;
+  
+  try {
+    await executeInjectedPlaywrightCode(options.page, options.code);
+    if (options.shouldWaitForNavigation) {
+      await options.page.waitForLoadState('domcontentloaded', { timeout: 10000 }).catch(() => {
+        // timeout is fine, we just want to give it a chance to start loading
+      });
+    }
+    await new Promise((r) => setTimeout(r, options.iterationDelayMs));
+    return null;
+  } catch (err) {
+    return err instanceof Error ? err.message : String(err ?? 'Unknown error');
+  }
+}
 
 async function runPlaywrightVerificationInjectionLoop<TReview>(
   page: Page,
@@ -498,86 +628,69 @@ async function runPlaywrightVerificationInjectionLoop<TReview>(
       page.content().catch(() => null),
       page.screenshot({ type: 'png' }).catch(() => null),
     ]);
-    const screenshotBase64 = screenshotBuffer ? screenshotBuffer.toString('base64') : null;
+    const screenshotBase64 = screenshotBuffer !== null ? screenshotBuffer.toString('base64') : null;
 
-    let iterScreenshotArtifactName: string | null = null;
-    let iterHtmlArtifactName: string | null = null;
-    if (config.artifactKey) {
-      const iterKey = `${config.artifactKey}-inject-iter-${iterationsRun}`;
-      if (screenshotBuffer && typeof config.artifacts?.file === 'function') {
-        try {
-          const artifactPath = await config.artifacts.file(iterKey, screenshotBuffer, {
-            extension: 'png',
-            mimeType: 'image/png',
-            kind: 'screenshot',
-          });
-          iterScreenshotArtifactName = toArtifactName(artifactPath);
-        } catch {
-          // proceed without saving artifact
-        }
-      }
-      if (typeof config.artifacts?.html === 'function') {
-        iterHtmlArtifactName = toArtifactName(await config.artifacts.html(iterKey).catch(() => null));
-      }
-    }
+    const { screenshot: iterScreenshotArtifactName, html: iterHtmlArtifactName } = 
+      await saveIterationArtifacts(iterationsRun, screenshotBuffer, config);
 
     // Per-iteration evaluation — refreshes context and can short-circuit before code generation
     let iterationFreshContext: string | null = null;
     let iterationEvalRecord: PlaywrightInjectionIterationEvaluationRecord | null = null;
-    if (typeof config.evaluateCapture === 'function') {
-      const iterEval = await config.evaluateCapture({
-        screenshotBase64,
-        dom,
-        url: activeUrl,
-        iteration: iterationsRun,
-        maxIterations,
-      });
-      if (iterEval.done) {
-        done = true;
-        lastReasoning = iterEval.reasoning?.trim() || 'Goal achieved according to per-iteration evaluator.';
-        if (typeof config.log === 'function') {
-          config.log(`AI inject: evaluator reports done on iteration ${iterationsRun}`, {
-            reasoning: lastReasoning,
-            url: activeUrl,
-          });
-        }
-        const record: PlaywrightInjectionIterationRecord = {
-          iteration: iterationsRun,
-          code: '',
-          done: true,
+    
+    const evalResult = await runPlaywrightIterationEvaluation({
+      iterationsRun,
+      maxIterations,
+      screenshotBase64,
+      dom,
+      activeUrl,
+      config,
+    });
+
+    if (evalResult.done) {
+      done = true;
+      lastReasoning = evalResult.reasoning !== '' ? evalResult.reasoning : 'Goal achieved according to per-iteration evaluator.';
+      if (typeof config.log === 'function') {
+        config.log(`AI inject: evaluator reports done on iteration ${iterationsRun}`, {
           reasoning: lastReasoning,
-          executionError: null,
-          urlAfter: activeUrl,
-          screenshotArtifactName: iterScreenshotArtifactName,
-          htmlArtifactName: iterHtmlArtifactName,
-          evaluation: { done: true, context: '', reasoning: lastReasoning },
-        };
-        iterationRecords.push(record);
-        if (typeof config.onIterationResult === 'function') config.onIterationResult(record);
-        break;
+          url: activeUrl,
+        });
       }
-      iterationFreshContext = iterEval.context;
-      iterationEvalRecord = { done: false, context: iterEval.context };
+      const record: PlaywrightInjectionIterationRecord = {
+        iteration: iterationsRun,
+        code: '',
+        done: true,
+        reasoning: lastReasoning,
+        executionError: null,
+        urlAfter: activeUrl,
+        screenshotArtifactName: iterScreenshotArtifactName,
+        htmlArtifactName: iterHtmlArtifactName,
+        evaluation: { done: true, context: evalResult.context, reasoning: lastReasoning },
+      };
+      iterationRecords.push(record);
+      if (typeof config.onIterationResult === 'function') config.onIterationResult(record);
+      break;
+    }
+    
+    if (evalResult.context !== '') {
+      iterationFreshContext = evalResult.context;
+      iterationEvalRecord = { done: false, context: evalResult.context };
     }
 
-    const isContinuation = useHistory && conversationHistory.length > 0;
-
-    const result = await injectCodeWithAI({
-      goal,
-      systemPrompt: config.systemPrompt ?? null,
-      context: {
-        iteration: iterationsRun,
-        maxIterations,
-        url: activeUrl,
-        dom,
-        screenshotBase64,
-        priorEvaluation: isContinuation ? null : evaluatorContext,
-        priorInjectorReasoning: isContinuation ? null : priorInjectorReasoning,
-        freshEvaluation: iterationFreshContext,
-        priorExecutionError,
-        isContinuation,
-      },
-      conversationHistory: useHistory ? conversationHistory : null,
+    const result = await performInjectionIteration({
+      iterationsRun,
+      maxIterations,
+      activeUrl,
+      dom,
+      screenshotBase64,
+      evaluatorContext,
+      iterationFreshContext,
+      priorInjectorReasoning,
+      priorExecutionError,
+      useHistory,
+      conversationHistory,
+      config,
+      review,
+      capture,
     });
 
     modelId = result.modelId;
@@ -600,7 +713,7 @@ async function runPlaywrightVerificationInjectionLoop<TReview>(
     }
 
     const normalizedCode = result.code.trim();
-    if (normalizedCode && seenCodes.has(normalizedCode)) {
+    if (normalizedCode !== '' && seenCodes.has(normalizedCode)) {
       lastReasoning = `Duplicate code detected on iteration ${iterationsRun} — aborting to prevent infinite loop.`;
       done = false;
       const record: PlaywrightInjectionIterationRecord = {
@@ -623,54 +736,32 @@ async function runPlaywrightVerificationInjectionLoop<TReview>(
       }
       break;
     }
-    if (normalizedCode) seenCodes.add(normalizedCode);
+    if (normalizedCode !== '') seenCodes.add(normalizedCode);
 
     let executionError: string | null = null;
+    const urlBeforeExec = activeUrl;
 
-    if (result.code) {
-      const urlBeforeExec = activeUrl;
-      try {
-        await executeInjectedPlaywrightCode(page, result.code);
-      } catch (err) {
-        executionError =
-          err instanceof Error ? err.message : String(err ?? 'Unknown error');
-        priorExecutionError = executionError;
-        lastReasoning = `Code execution failed on iteration ${iterationsRun}: ${executionError}`;
-        done = false;
-        if (typeof config.log === 'function') {
-          config.log(`AI inject execution error on iteration ${iterationsRun}`, {
-            error: executionError,
-          });
-        }
-      }
-
-      try {
-        activeUrl = page.url();
-      } catch {
-        // page may still be navigating
-      }
-
-      if (!done && iterationsRun < maxIterations) {
-        if (shouldWaitForNavigation && activeUrl !== urlBeforeExec) {
-          await page
-            .waitForLoadState('domcontentloaded', { timeout: 5000 })
-            .catch(() => undefined);
-        } else {
-          await page.waitForTimeout(500).catch(() => undefined);
-        }
-        try {
-          activeUrl = page.url();
-        } catch {
-          // still navigating
-        }
-      }
-    }
+    executionError = await executeInjectionIterationCode({
+      page,
+      code: result.code,
+      shouldWaitForNavigation,
+      iterationDelayMs: config.iterationDelayMs ?? 1000,
+    });
 
     if (executionError !== null) {
+      priorExecutionError = executionError;
       consecutiveErrors++;
+      lastReasoning = `Code execution failed on iteration ${iterationsRun}: ${executionError}`;
+      if (typeof config.log === 'function') {
+        config.log(`AI inject execution error on iteration ${iterationsRun}`, {
+          error: executionError,
+        });
+      }
     } else {
       consecutiveErrors = 0;
     }
+
+    activeUrl = safePageUrl(page) ?? urlBeforeExec;
 
     const record: PlaywrightInjectionIterationRecord = {
       iteration: iterationsRun,

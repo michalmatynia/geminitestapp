@@ -12,6 +12,7 @@ import {
   useValidationPatterns,
   useValidatorSettings,
 } from '@/features/products/hooks/useProductSettingsQueries';
+import { useProducers } from '@/features/products/hooks/useProductMetadata';
 import type { ProductValidationDenyBehavior, ProductValidationInstanceDenyBehaviorMap, ProductValidationPattern, ProductValidationSemanticState, ProductValidationTarget, ProductValidationInstanceScope, SequenceGroupDraft } from '@/shared/contracts/products/validation';
 import type { PatternFormData } from '@/shared/contracts/products/drafts';
 import {
@@ -61,6 +62,7 @@ export function useValidatorSettingsController() {
   const queryClient = useQueryClient();
   const patternsQuery = useValidationPatterns();
   const settingsQuery = useValidatorSettings();
+  const producersQuery = useProducers();
   const { toast } = useToast();
 
   const patterns = patternsQuery.data ?? [];
@@ -177,11 +179,13 @@ export function useValidatorSettingsController() {
         validationScope: simulatorScope,
         simulatorValues,
         categoryFixturesText: simulatorCategoryFixtures,
+        producers: producersQuery.data ?? [],
       }),
     [
       editingPattern,
       formData,
       modalSemanticState,
+      producersQuery.data,
       orderedPatterns,
       sequenceGroups,
       simulatorCategoryFixtures,
@@ -225,6 +229,7 @@ export function useValidatorSettingsController() {
     handleCreateLatestPriceStockSequence,
     handleCreateNameLengthMirrorPattern,
     handleCreateNameCategoryMirrorPattern,
+    handleCreateStarGaterProducerPattern,
     handleCreateNameMirrorPolishSequence,
     handleSaveSequenceGroup,
     handleUngroup,
@@ -671,6 +676,7 @@ export function useValidatorSettingsController() {
     onCreateLatestPriceStockSequence: handleCreateLatestPriceStockSequence,
     handleCreateNameLengthMirrorPattern,
     handleCreateNameCategoryMirrorPattern,
+    handleCreateStarGaterProducerPattern,
     handleCreateNameMirrorPolishSequence,
     handleSaveSequenceGroup,
     handleUngroup,

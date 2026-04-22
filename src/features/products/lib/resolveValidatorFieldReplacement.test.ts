@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { ProductCategory } from '@/shared/contracts/products/categories';
+import type { Producer } from '@/shared/contracts/products/producers';
 
 import { resolveValidatorFieldReplacement } from './resolveValidatorFieldReplacement';
 
@@ -26,6 +27,23 @@ const categories: ProductCategory[] = [
     color: null,
     parentId: null,
     catalogId: 'catalog-1',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+  },
+];
+
+const producers: Producer[] = [
+  {
+    id: 'producer-1',
+    name: 'StarGater.net',
+    website: 'https://stargater.net',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+  },
+  {
+    id: 'producer-2',
+    name: 'Capsule Works',
+    website: 'https://capsule-works.test',
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
   },
@@ -118,5 +136,38 @@ describe('resolveValidatorFieldReplacement', () => {
         categories,
       })
     ).toBeNull();
+  });
+
+  it('resolves producer replacements by producer name and preserves display labels', () => {
+    expect(
+      resolveValidatorFieldReplacement({
+        fieldName: 'producerIds',
+        replacementValue: 'StarGater.net',
+        producers,
+      })
+    ).toEqual({
+      kind: 'producers',
+      fieldName: 'producerIds',
+      value: ['producer-1'],
+      comparableValue: 'producer-1',
+      displayValue: 'StarGater.net',
+    });
+  });
+
+  it('resolves producer replacements by normalized website domain', () => {
+    expect(
+      resolveValidatorFieldReplacement({
+        fieldName: 'producerIds',
+        replacementValue: 'stargater.net',
+        producers,
+        producerNameById: new Map([['producer-1', 'StarGater.net']]),
+      })
+    ).toEqual({
+      kind: 'producers',
+      fieldName: 'producerIds',
+      value: ['producer-1'],
+      comparableValue: 'producer-1',
+      displayValue: 'StarGater.net',
+    });
   });
 });

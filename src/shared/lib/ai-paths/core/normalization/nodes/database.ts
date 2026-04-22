@@ -26,6 +26,62 @@ const DEFAULT_DB_SCHEMA_CONFIG: DbSchemaConfig = {
 
 const CANONICAL_LOCALIZED_PARAMETER_TARGET_PATH = 'parameters';
 
+/**
+ * Tries to automatically migrate a "custom" update template to "mapping" mode
+ * if it follows a simple "$set": { "field": "{{token}}" } pattern.
+ */
+const tryAutoMigrateDatabaseMappings = (
+  template: string
+): { updatePayloadMode: 'mapping'; mappings: any[] } | null => {
+  const trimmed = template.trim();
+  if (!trimmed.startsWith('{') || !trimmed.endsWith('}')) return null;
+
+  // Basic check for simple $set templates
+  if (!trimmed.includes('$set')) return null;
+
+  try {
+    // Replace tokens with strings so it's valid JSON
+    // Handle both quoted and unquoted tokens in the template
+    const placeholderTemplate = trimmed
+      .replace(/"{{\s*([^}]+)\s*}}"/g, '"__TOKEN__$1__"')
+      .replace(/{{\s*([^}]+)\s*}}/g, '"__TOKEN__$1__"');
+
+    const json = JSON.parse(placeholderTemplate);
+    if (!json.$set || typeof json.$set !== 'object') return null;
+
+    // Check if it has ANY other keys besides $set
+    const keys = Object.keys(json);
+    if (keys.length > 1) return null;
+
+    const mappings: any[] = [];
+    for (const [key, value] of Object.entries(json.$set)) {
+      if (
+        typeof value !== 'string' ||
+        !value.startsWith('__TOKEN__') ||
+        !value.endsWith('__')
+      ) {
+        return null;
+      }
+      const fullPath = value.substring(9, value.length - 2).trim();
+      const [sourcePort, ...pathParts] = fullPath.split('.');
+      const sourcePath = pathParts.join('.');
+
+      mappings.push({
+        targetPath: key,
+        sourcePort,
+        ...(sourcePath ? { sourcePath } : {}),
+      });
+    }
+
+    return {
+      updatePayloadMode: 'mapping',
+      mappings,
+    };
+  } catch (e) {
+    return null;
+  }
+};
+
 export const normalizeDatabaseNode = (node: AiNode): AiNode => {
   const defaultQuery = {
     provider: 'auto' as const,
@@ -50,7 +106,18 @@ export const normalizeDatabaseNode = (node: AiNode): AiNode => {
   };
   const databaseConfig: DatabaseConfig = node.config?.database ?? { operation: 'query' };
   const updateTemplate = normalizeTemplateText(databaseConfig.updateTemplate ?? '');
-  const mappings = databaseConfig.mappings ?? [];
+
+  let mappings = databaseConfig.mappings ?? [];
+  let updatePayloadMode = databaseConfig.updatePayloadMode ?? 'custom';
+
+  if (databaseConfig.operation === 'update' && updatePayloadMode === 'custom' && updateTemplate) {
+    const migration = tryAutoMigrateDatabaseMappings(updateTemplate);
+    if (migration) {
+      updatePayloadMode = migration.updatePayloadMode;
+      mappings = migration.mappings;
+    }
+  }
+
   const inferredUseMongoActions =
     databaseConfig.useMongoActions ??
     Boolean(databaseConfig.actionCategory || databaseConfig.action);
@@ -98,7 +165,7 @@ export const normalizeDatabaseNode = (node: AiNode): AiNode => {
         idField: databaseConfig.idField ?? 'entityId',
         mode: databaseConfig.mode ?? 'replace',
         updateStrategy: databaseConfig.updateStrategy ?? 'one',
-        updatePayloadMode: databaseConfig.updatePayloadMode ?? 'custom',
+        updatePayloadMode,
         useMongoActions: inferredUseMongoActions,
         ...(databaseConfig.actionCategory ? { actionCategory: databaseConfig.actionCategory } : {}),
         ...(databaseConfig.action ? { action: databaseConfig.action } : {}),

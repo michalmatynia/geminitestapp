@@ -109,7 +109,7 @@ vi.mock('@/features/kangur/shared/ui', async (importOriginal) => {
       value,
       onChange,
       onValueChange,
-      options,
+      options = [],
       id,
       ariaLabel,
       title,
@@ -117,7 +117,7 @@ vi.mock('@/features/kangur/shared/ui', async (importOriginal) => {
       value?: string;
       onChange?: (value: string) => void;
       onValueChange?: (value: string) => void;
-      options: Array<{ value: string; label: string }>;
+      options?: Array<{ value: string; label: string }>;
       id?: string;
       ariaLabel?: string;
       title?: string;

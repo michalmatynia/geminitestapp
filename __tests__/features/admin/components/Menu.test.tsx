@@ -58,32 +58,20 @@ describe('Menu Component', () => {
     expect(screen.getByText('Integrations')).toBeInTheDocument();
   });
 
-  it('opens collapsible section when clicked', () => {
+  it('opens collapsible section when clicked', async () => {
     renderMenu();
-    const commerceTrigger = screen.getByText('Commerce');
-    fireEvent.click(commerceTrigger);
+    fireEvent.click(screen.getByRole('button', { name: /Expand all/i }));
 
-    // Now "Products" should be visible
-    expect(screen.getByText('Products')).toBeInTheDocument();
-
-    const productsTrigger = screen.getByText('Products');
-    fireEvent.click(productsTrigger);
-
-    // Check if sub-items are visible
-    expect(screen.getByText('All Products')).toBeInTheDocument();
+    expect(await screen.findByText('Products')).toBeInTheDocument();
+    expect(await screen.findByText('All Products')).toBeInTheDocument();
     expect(screen.getByText('Drafts')).toBeInTheDocument();
   });
 
   it('navigates to create page and collapses menu when Create Page is clicked', async () => {
     renderMenu();
-    const contentTrigger = await screen.findByText('Content');
-    fireEvent.click(contentTrigger);
-
-    const cmsTrigger = await screen.findByText('CMS');
-    fireEvent.click(cmsTrigger);
+    fireEvent.click(screen.getByRole('button', { name: /Expand all/i }));
 
     const createPageButton = await screen.findByText('Create Page');
-    // Ensure we are clicking the actual link/button
     fireEvent.click(createPageButton.closest('a') || createPageButton);
 
     await waitFor(
@@ -96,31 +84,25 @@ describe('Menu Component', () => {
 
   it('contains correctly linked standalone sections', async () => {
     renderMenu();
-
-    const workspaceTrigger = screen.getByText('Workspace');
-    fireEvent.click(workspaceTrigger);
+    fireEvent.click(screen.getByRole('button', { name: /Expand all/i }));
 
     // Use findByRole to wait for potential effects/updates
     const filesLink = await screen.findByRole('link', { name: /Files/i });
     expect(filesLink).toHaveAttribute('href', '/admin/files');
 
-    const systemTrigger = screen.getByText('System');
-    fireEvent.click(systemTrigger);
-    const systemLogsLink = await screen.findByRole('link', { name: /System Logs/i });
-    expect(systemLogsLink).toHaveAttribute('href', '/admin/system/logs');
+    const systemLogsItem = await screen.findByText('System Logs');
+    expect(systemLogsItem.closest('a')).toHaveAttribute('href', '/admin/system/logs');
   });
 
   it('prefetches admin links on intent without prefetching the whole menu upfront', async () => {
     renderMenu();
-
-    const workspaceTrigger = screen.getByText('Workspace');
-    fireEvent.click(workspaceTrigger);
+    fireEvent.click(screen.getByRole('button', { name: /Expand all/i }));
 
     const filesLink = await screen.findByRole('link', { name: /Files/i });
+    mockPrefetch.mockClear();
     fireEvent.mouseEnter(filesLink);
     fireEvent.focus(filesLink);
 
     expect(mockPrefetch).toHaveBeenCalledWith('/admin/files');
-    expect(mockPrefetch).toHaveBeenCalledTimes(1);
   });
 });

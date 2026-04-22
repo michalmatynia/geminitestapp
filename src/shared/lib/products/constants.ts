@@ -49,6 +49,7 @@ export const PRODUCT_VALIDATION_REPLACEMENT_FIELDS = [
   'price',
   'stock',
   'categoryId',
+  'producerIds',
   'weight',
   'sizeLength',
   'sizeWidth',

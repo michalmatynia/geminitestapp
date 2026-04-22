@@ -77,6 +77,7 @@ const setStoredActiveLearnerIdMock = vi.mocked(setStoredActiveLearnerId);
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useOptionalKangurAuth: () => null,
+  useOptionalKangurAuthActions: () => null,
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
@@ -204,7 +205,7 @@ describe('KangurLoginPage', () => {
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(
-        '/api/kangur/auth/learner-signin',
+        '/kangur-api/auth/learner-signin',
         expect.objectContaining({
           method: 'POST',
           credentials: 'same-origin',

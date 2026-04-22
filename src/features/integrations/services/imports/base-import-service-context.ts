@@ -8,6 +8,7 @@ import {
   isBaseProductRecordSparse,
   type BaseProductRecord,
 } from '@/features/integrations/services/imports/base-client';
+import { deriveVariantBaseProductRecord } from '@/features/integrations/services/imports/base-client/product-variant-record';
 import { getIntegrationRepository } from '@/features/integrations/services/integration-repository';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
@@ -349,6 +350,7 @@ export const fetchDetailsMap = async (
   ids: string[]
 ): Promise<Map<string, BaseProductRecord>> => {
   const map = new Map<string, BaseProductRecord>();
+  const requestedIds = new Set(ids);
   for (let index = 0; index < ids.length; index += BASE_DETAILS_BATCH_SIZE) {
     const batch = ids.slice(index, index + BASE_DETAILS_BATCH_SIZE);
     if (batch.length === 0) continue;
@@ -361,6 +363,13 @@ export const fetchDetailsMap = async (
       if (recordId) {
         map.set(recordId, record);
       }
+      requestedIds.forEach((requestedId: string) => {
+        if (map.has(requestedId)) return;
+        const variantRecord = deriveVariantBaseProductRecord(record, requestedId);
+        if (variantRecord) {
+          map.set(requestedId, variantRecord);
+        }
+      });
     });
   }
 

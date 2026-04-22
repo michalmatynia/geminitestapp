@@ -284,7 +284,7 @@ describe('AdminFilemakerMail pages recent flows', () => {
     expect(screen.getAllByRole('option', { name: 'VIP' }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole('option', { name: 'INBOX' }).length).toBeGreaterThan(0);
 
-    fireEvent.click(screen.getByLabelText('Sidebar recent unread only'));
+    fireEvent.click(screen.getByLabelText('Unread only'));
     await waitFor(() => {
       expect(screen.getByText('Threads: 1')).toBeInTheDocument();
       expect(screen.getAllByRole('listitem')).toHaveLength(1);
@@ -295,7 +295,7 @@ describe('AdminFilemakerMail pages recent flows', () => {
       );
     });
 
-    fireEvent.change(screen.getByLabelText('Sidebar recent mailbox filter'), {
+    fireEvent.change(screen.getByLabelText('Recent mailbox filter'), {
       target: { value: 'VIP' },
     });
     expect(within(screen.getByRole('list')).getByText('Recent welcome')).toBeInTheDocument();
@@ -319,11 +319,13 @@ describe('AdminFilemakerMail pages recent flows', () => {
     });
     expect(screen.queryByText('Mailbox: VIP')).not.toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText('Sidebar recent search'), {
+    fireEvent.change(screen.getByLabelText('Search subject, snippet, or participant...'), {
       target: { value: 'welcome' },
     });
     await waitFor(() => {
-      expect(screen.getByLabelText('Sidebar recent search')).toHaveValue('welcome');
+      expect(screen.getByLabelText('Search subject, snippet, or participant...')).toHaveValue(
+        'welcome'
+      );
       expect(screen.getByText('Threads: 1')).toBeInTheDocument();
       expect(screen.getAllByRole('listitem')).toHaveLength(1);
       expect(routerReplaceMock).toHaveBeenCalledWith(
@@ -331,9 +333,9 @@ describe('AdminFilemakerMail pages recent flows', () => {
       );
     });
     expect(screen.getByText('Search: welcome')).toBeInTheDocument();
-    expect(screen.getByText('Recent: 1')).toBeInTheDocument();
+    expect(screen.getByText('Recent: 2')).toBeInTheDocument();
     expect(screen.getByText('Recent Search: welcome')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Inbox digest/ })).not.toBeInTheDocument();
+    expect(within(screen.getByRole('list')).queryByText('Inbox digest')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Clear Filters' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Clear Recent' })).toBeInTheDocument();
 
@@ -347,7 +349,7 @@ describe('AdminFilemakerMail pages recent flows', () => {
       expect(screen.getByText('Threads: 2')).toBeInTheDocument();
       expect(screen.getAllByRole('listitem')).toHaveLength(2);
       expect(screen.queryByText('Search: welcome')).not.toBeInTheDocument();
-      expect(screen.getByLabelText('Sidebar recent search')).toHaveValue('');
+      expect(screen.getByLabelText('Search subject, snippet, or participant...')).toHaveValue('');
     });
   });
 

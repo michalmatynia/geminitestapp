@@ -63,7 +63,15 @@ export function useProductFormValidator(
   validatorSessionKey?: string
 ): UseProductFormValidatorResult {
   const { product, draft } = useProductFormCore();
-  const { categories, selectedCategoryId, setCategoryId, selectedCatalogIds } = useProductFormMetadata();
+  const {
+    categories,
+    producers,
+    selectedCategoryId,
+    selectedCatalogIds,
+    selectedProducerIds,
+    setCategoryId,
+    setProducerIds,
+  } = useProductFormMetadata();
   const { watch, getValues, setValue } = useFormContext<ProductFormData>();
 
   const settings = useProductFormValidatorSettings();
@@ -149,11 +157,21 @@ export function useProductFormValidator(
           categoryId: (watchFields[16] as string) ?? '',
         },
         categories,
+        producers,
         selectedCategoryId,
         selectedCatalogIds,
+        selectedProducerIds,
         fallbackCatalogId: product?.catalogId ?? '',
       }),
-    [watchFields, categories, selectedCategoryId, selectedCatalogIds, product?.catalogId]
+    [
+      watchFields,
+      categories,
+      producers,
+      selectedCategoryId,
+      selectedCatalogIds,
+      selectedProducerIds,
+      product?.catalogId,
+    ]
   );
 
   const needsLatestProductSource = useMemo(
@@ -269,8 +287,37 @@ export function useProductFormValidator(
     void api.post('/api/v2/products/validator-decisions', { action: 'accept', productId: product?.id ?? null, draftId: draft?.id ?? null, patternId, fieldName, denyBehavior: null, message: input.message ?? null, replacementValue: input.replacementValue ?? null, sessionId: validationSessionId || null }, { logError: false }).catch(err => logClientError(err));
   }, [buildIssueDecisionKey, draft?.id, product?.id, setAcceptedIssueKeys, validationSessionId]);
 
-  const applyAutoReplacementToField = useCallback((fieldName: string, val: string) => applyValidatorFieldReplacement({ fieldName, replacementValue: val, categories, getCurrentFieldValue: (f) => getValues(f), setFormFieldValue: (f, v) => setValue(f, v, { shouldDirty: true, shouldTouch: true }), setCategoryId }), [categories, getValues, setCategoryId, setValue]);
-  const doesAutoReplacementMatchField = useCallback((fieldName: string, val: string) => doesValidatorFieldReplacementMatchCurrentValue({ fieldName, replacementValue: val, categories, getCurrentFieldValue: (f) => getValues(f), setFormFieldValue: ()=>{}, setCategoryId: ()=>{} }), [categories, getValues]);
+  const applyAutoReplacementToField = useCallback(
+    (fieldName: string, val: string) =>
+      applyValidatorFieldReplacement({
+        fieldName,
+        replacementValue: val,
+        categories,
+        producers,
+        getCurrentFieldValue: (nextFieldName) =>
+          nextFieldName === 'producerIds' ? selectedProducerIds : getValues(nextFieldName),
+        setFormFieldValue: (nextFieldName, nextValue) =>
+          setValue(nextFieldName, nextValue, { shouldDirty: true, shouldTouch: true }),
+        setCategoryId,
+        setProducerIds,
+      }),
+    [categories, getValues, producers, selectedProducerIds, setCategoryId, setProducerIds, setValue]
+  );
+  const doesAutoReplacementMatchField = useCallback(
+    (fieldName: string, val: string) =>
+      doesValidatorFieldReplacementMatchCurrentValue({
+        fieldName,
+        replacementValue: val,
+        categories,
+        producers,
+        getCurrentFieldValue: (nextFieldName) =>
+          nextFieldName === 'producerIds' ? selectedProducerIds : getValues(nextFieldName),
+        setFormFieldValue: () => {},
+        setCategoryId: () => {},
+        setProducerIds: () => {},
+      }),
+    [categories, getValues, producers, selectedProducerIds]
+  );
 
   const autoAcceptTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const autoAcceptedIssueKeysRef = useRef<Set<string>>(getOrCreateAutoAcceptedSet(entityIdentity));

@@ -30,7 +30,7 @@ describe('KangurLoginPage', () => {
     const user = userEvent.setup();
     const fetchMock = vi.fn().mockImplementation(async (input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
-      if (url === '/api/kangur/auth/learner-signout') {
+      if (url === '/kangur-api/auth/learner-signout') {
         return {
           json: vi.fn().mockResolvedValue({ ok: true }),
           ok: true,
@@ -48,7 +48,7 @@ describe('KangurLoginPage', () => {
           status: 200,
         };
       }
-      if (url === '/api/kangur/auth/parent-account/resend') {
+      if (url === '/kangur-api/auth/parent-account/resend') {
         return {
           json: vi.fn().mockResolvedValue({
             ok: true,
@@ -95,7 +95,7 @@ describe('KangurLoginPage', () => {
     await user.click(screen.getByRole('button', { name: 'Wyślij e-mail ponownie' }));
 
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/kangur/auth/parent-account/resend',
+      '/kangur-api/auth/parent-account/resend',
       expect.objectContaining({
         body: JSON.stringify({
           email: 'parent@example.com',
@@ -116,7 +116,7 @@ describe('KangurLoginPage', () => {
     const user = userEvent.setup();
     const fetchMock = vi.fn().mockImplementation(async (input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
-      if (url === '/api/kangur/auth/learner-signout') {
+      if (url === '/kangur-api/auth/learner-signout') {
         return {
           json: vi.fn().mockResolvedValue({ ok: true }),
           ok: true,

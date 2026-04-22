@@ -25,6 +25,7 @@ const NAME_SEGMENT_DIMENSIONS_LABEL =
   buildProductValidationSemanticOperationPresetLabel(
     PRODUCT_VALIDATION_SEMANTIC_OPERATION_IDS.validateNameContainsDimensionsToken
   ) ?? 'Name Segment: Dimensions';
+const STARGATER_PRODUCER_LABEL = 'Producer -> StarGater.net';
 const SKU_AUTO_INCREMENT_GROUP_LABEL = 'SKU Auto Increment';
 const NAME_MIRROR_POLISH_GROUP_LABEL = 'Name EN -> PL Mirror';
 
@@ -89,7 +90,8 @@ export type ValidatorSemanticSequenceBundle = {
 };
 
 const buildUniquePresetLabel = (label: string, existingLabels: Set<string>): string => {
-  const trimmed = label.trim() || 'Pattern';
+  const trimmedLabel = label.trim();
+  const trimmed = trimmedLabel.length > 0 ? trimmedLabel : 'Pattern';
   let candidate = trimmed;
   let counter = 2;
   while (existingLabels.has(candidate.toLowerCase())) {
@@ -290,6 +292,37 @@ const buildNameSegmentDimensionsTemplatePayload =
     severity: 'warning',
     enabled: true,
     semanticState: buildNameSegmentDimensionsSemanticState(),
+  });
+
+const isStarGaterProducerPattern = (pattern: ProductValidationPattern): boolean =>
+  pattern.label.trim() === STARGATER_PRODUCER_LABEL ||
+  (
+    pattern.target === 'producer' &&
+    pattern.replacementEnabled &&
+    pattern.replacementValue?.trim().toLowerCase() === 'stargater.net' &&
+    pattern.replacementFields.includes('producerIds')
+  );
+
+export const buildStarGaterProducerTemplatePayload =
+  (): CreateProductValidationPatternInput => ({
+    label: STARGATER_PRODUCER_LABEL,
+    target: 'producer',
+    locale: null,
+    regex: '^.*$',
+    flags: null,
+    message: 'Set producer to StarGater.net.',
+    severity: 'warning',
+    enabled: true,
+    replacementEnabled: true,
+    replacementAutoApply: true,
+    skipNoopReplacementProposal: true,
+    replacementValue: 'StarGater.net',
+    replacementFields: ['producerIds'],
+    replacementAppliesToScopes: ['draft_template', 'product_create', 'product_edit'],
+    postAcceptBehavior: 'revalidate',
+    validationDebounceMs: 300,
+    launchEnabled: false,
+    appliesToScopes: ['draft_template', 'product_create', 'product_edit'],
   });
 
 const buildLatestFieldMirrorRecipe = (field: 'price' | 'stock'): string =>
@@ -657,6 +690,16 @@ export const VALIDATOR_TEMPLATE_PRESETS: readonly ValidatorTemplatePresetDefinit
             pattern,
             PRODUCT_VALIDATION_SEMANTIC_PRESET_IDS.validateNameContainsDimensionsToken
           ) || pattern.label.trim() === NAME_SEGMENT_DIMENSIONS_LABEL,
+      },
+    ],
+  },
+  {
+    type: 'producer-stargater',
+    patterns: [
+      {
+        key: 'producer-stargater',
+        buildPayload: buildStarGaterProducerTemplatePayload,
+        matchesExisting: isStarGaterProducerPattern,
       },
     ],
   },

@@ -58,7 +58,7 @@ const credentialsProvider = Credentials({
 
       if (!email || (!password && !challengeId)) {
         // Log non-critical info without awaiting
-        void ErrorSystem.logInfo('[AUTH] Missing email or primary auth factor', { service: 'auth' });
+        ErrorSystem.logInfo('[AUTH] Missing email or primary auth factor', { service: 'auth' }).catch(() => {});
         return null;
       }
 
@@ -91,21 +91,21 @@ const credentialsProvider = Credentials({
       const challenge = challengeResult.challenge;
 
       if (!allowed.allowed) {
-        void ErrorSystem.logWarning('[AUTH] Login blocked due to rate limits', {
+        ErrorSystem.logWarning('[AUTH] Login blocked due to rate limits', {
           service: 'auth',
           email,
           ip,
           lockedUntil: allowed.lockedUntil?.toISOString(),
-        });
+        }).catch(() => {});
         return null;
       }
 
       if (!user) {
-        void ErrorSystem.logInfo('[AUTH] User not found or challenge invalid', {
+        ErrorSystem.logInfo('[AUTH] User not found or challenge invalid', {
           service: 'auth',
           email,
-        });
-        void recordLoginFailure({ email, ip, request });
+        }).catch(() => {});
+        recordLoginFailure({ email, ip, request }).catch(() => {});
         return null;
       }
 
@@ -117,17 +117,17 @@ const credentialsProvider = Credentials({
       const requiresVerifiedEmail = settings.requireEmailVerification || authFlow === 'kangur_parent';
 
       if (security.bannedAt || security.disabledAt) {
-        void recordLoginFailure({ email, ip, request });
+        recordLoginFailure({ email, ip, request }).catch(() => {});
         return null;
       }
       if (requiresVerifiedEmail && !user.emailVerified) {
-        void recordLoginFailure({ email, ip, request });
+        recordLoginFailure({ email, ip, request }).catch(() => {});
         return null;
       }
       if (security.allowedIps.length > 0 && ip) {
         const allowedSet = new Set(security.allowedIps);
         if (!allowedSet.has(ip)) {
-          void recordLoginFailure({ email, ip, request });
+          recordLoginFailure({ email, ip, request }).catch(() => {});
           return null;
         }
       }
@@ -136,18 +136,18 @@ const credentialsProvider = Credentials({
       // But we still verify MFA if enabled
       if (!challengeId) {
         if (!user.passwordHash) {
-          void ErrorSystem.logWarning('[AUTH] User has no password hash', {
+          ErrorSystem.logWarning('[AUTH] User has no password hash', {
             service: 'auth',
             userId: user.id,
-          });
-          void recordLoginFailure({ email, ip, request });
+          }).catch(() => {});
+          recordLoginFailure({ email, ip, request }).catch(() => {});
           return null;
         }
 
         const isValid = await bcrypt.compare(password, user.passwordHash);
 
         if (!isValid) {
-          void recordLoginFailure({ email, ip, request });
+          recordLoginFailure({ email, ip, request }).catch(() => {});
           return null;
         }
       }
@@ -162,9 +162,9 @@ const credentialsProvider = Credentials({
           if (security.recoveryCodes.includes(hashed)) {
             const nextCodes = security.recoveryCodes.filter((code: string) => code !== hashed);
             // Update codes in background
-            void updateAuthSecurityProfile(user.id, {
+            updateAuthSecurityProfile(user.id, {
               recoveryCodes: nextCodes,
-            });
+            }).catch(() => {});
             mfaOk = true;
           }
         } else if (providedOtp && security.mfaSecret) {
@@ -173,12 +173,12 @@ const credentialsProvider = Credentials({
         }
 
         if (!mfaOk) {
-          void recordLoginFailure({ email, ip, request });
+          recordLoginFailure({ email, ip, request }).catch(() => {});
           return null;
         }
       }
 
-      void recordLoginSuccess({ email, ip, request, userId: user.id });
+      recordLoginSuccess({ email, ip, request, userId: user.id }).catch(() => {});
 
       const loginMethod = challenge?.purpose === 'magic_login' ? 'magic_link' : 'password';
       const activitySurface = authFlow === 'kangur_parent' ? 'kangur' : null;
@@ -197,11 +197,11 @@ const credentialsProvider = Credentials({
           : {}),
       };
     } catch (error) {
-      void ErrorSystem.captureException(error);
-      void ErrorSystem.captureException(error, {
+      ErrorSystem.captureException(error).catch(() => {});
+      ErrorSystem.captureException(error, {
         service: 'auth',
         action: 'authorize',
-      });
+      }).catch(() => {});
       return null;
     }
   },
@@ -220,13 +220,13 @@ const buildProviders = async (): Promise<Provider[]> => {
     );
   } else {
     // Non-critical warning, log to system but don't spam if not configured
-    void ErrorSystem.logWarning(
+    ErrorSystem.logWarning(
       '[AUTH] Google Client ID/Secret not found. Google login will be unavailable.',
       {
         service: 'auth',
         provider: 'google',
       }
-    );
+    ).catch(() => {});
   }
 
   if (oauthSecrets.facebook.clientId && oauthSecrets.facebook.clientSecret) {
@@ -237,13 +237,13 @@ const buildProviders = async (): Promise<Provider[]> => {
       })
     );
   } else {
-    void ErrorSystem.logWarning(
+    ErrorSystem.logWarning(
       '[AUTH] Facebook Client ID/Secret not found. Facebook login will be unavailable.',
       {
         service: 'auth',
         provider: 'facebook',
       }
-    );
+    ).catch(() => {});
   }
 
   return providers;
@@ -263,7 +263,7 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
         databaseName: process.env['MONGODB_DB'] ?? 'app',
       });
     } catch (error) {
-      void ErrorSystem.captureException(error);
+      ErrorSystem.captureException(error).catch(() => {});
       await ErrorSystem.logWarning('[AUTH] Adapter initialization failed.', {
         service: 'auth',
         provider,
@@ -315,7 +315,7 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
             token.accountBanned = Boolean(security.bannedAt);
             tokenMeta.authRefreshedAt = now;
           } catch (error) {
-            void ErrorSystem.captureException(error);
+            ErrorSystem.captureException(error).catch(() => {});
             await ErrorSystem.captureException(error, {
               service: 'auth',
               action: 'jwt_callback',
@@ -361,7 +361,7 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
               typeof authActivityUser.loginMethod === 'string'
                 ? authActivityUser.loginMethod.trim()
                 : null;
-            void logActivity({
+            logActivity({
               type: ActivityTypes.AUTH.LOGIN,
               description: `User logged in: ${user.email}`,
               userId: user.id,
@@ -376,24 +376,24 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
                     loginMethod,
                   }
                   : null,
-            }).catch(() => {});
+            }).catch(() => {}).catch(() => {});
           }
         },
         async signOut(
           message: { session: void | AdapterSession | null | undefined } | { token: JWT | null }
         ) {
           if ('token' in message && message.token?.sub) {
-            void logActivity({
+            logActivity({
               type: ActivityTypes.AUTH.LOGOUT,
               description: 'User logged out',
               userId: message.token.sub,
-            }).catch(() => {});
+            }).catch(() => {}).catch(() => {});
           }
         },
       },
     };
   } catch (error: unknown) {
-    void ErrorSystem.captureException(error);
+    ErrorSystem.captureException(error).catch(() => {});
     await ErrorSystem.captureException(error, {
       service: 'auth',
       action: 'configuration',

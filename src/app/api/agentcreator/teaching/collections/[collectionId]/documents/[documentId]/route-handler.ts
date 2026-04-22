@@ -2,9 +2,9 @@ export const runtime = 'nodejs';
 
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 
-import { deleteHandler } from './handler';
+import { DELETE_handler } from './handler';
 
-export const DELETE = apiHandlerWithParams<{ collectionId: string; documentId: string }>(deleteHandler, {
+export const DELETE = apiHandlerWithParams<{ collectionId: string; documentId: string }>(DELETE_handler, {
     source: 'agentcreator.teaching.collections.[collectionId].documents.[documentId].DELETE',
     requireAuth: true,
   }

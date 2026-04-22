@@ -18,7 +18,7 @@ describe('AdminFilemakerMail pages', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
-  it('loads the mailbox page, saves an account, and triggers sync/compose actions', async () => {
+  it('loads the mailbox page on a folder route', async () => {
     const { AdminFilemakerMailPage } = await import(
       '@/features/filemaker/pages/AdminFilemakerMailPage'
     );
@@ -122,13 +122,15 @@ describe('AdminFilemakerMail pages', () => {
     renderWithProviders(<AdminFilemakerMailPage />);
 
     expect((await screen.findAllByText('Support inbox')).length).toBeGreaterThan(0);
-    fireEvent.click(screen.getByRole('button', { name: /Settings/ }));
+    expect(await screen.findByText('Support inbox / Inbox')).toBeInTheDocument();
 
     await waitFor(() => {
-      expect(routerReplaceMock).toHaveBeenCalledWith(
-        '/admin/filemaker/mail?accountId=account-1&panel=settings'
+      const threadsCall = fetchMock.mock.calls.find(([url]) =>
+        String(url).startsWith('/api/filemaker/mail/threads?')
       );
+      expect(threadsCall).toBeDefined();
     });
+    expect(routerReplaceMock).not.toHaveBeenCalled();
   });
 
   it('routes account compose selection through the mail tree shell', async () => {
@@ -438,14 +440,14 @@ describe('AdminFilemakerMail pages', () => {
         return jsonResponse({ threads: [] });
       }
       if (url === '/api/filemaker/mail/accounts' && init?.method === 'POST') {
-        const payload = JSON.parse(String(init.body)) as {
-          status: string;
-          imapPassword: string;
-          smtpPassword: string;
-        };
-        expect(payload.status).toBe('paused');
-        expect(payload.imapPassword).toBe('');
-        expect(payload.smtpPassword).toBe('');
+        const payload = JSON.parse(String(init.body)) as Record<string, unknown>;
+        expect(payload).toMatchObject({
+          id: 'account-1',
+          emailAddress: 'support@example.com',
+          status: 'paused',
+        });
+        expect(payload).not.toHaveProperty('imapPassword');
+        expect(payload).not.toHaveProperty('smtpPassword');
         return jsonResponse(
           {
             account: {
@@ -579,7 +581,7 @@ describe('AdminFilemakerMail pages', () => {
     expect(screen.getByText('support@example.com • Status: paused')).toBeInTheDocument();
   });
 
-  it('opens mailbox settings from the attention branch in the mail tree shell', async () => {
+  it('routes mailbox settings from the attention branch in the mail tree shell', async () => {
     const { AdminFilemakerMailPage } = await import(
       '@/features/filemaker/pages/AdminFilemakerMailPage'
     );
@@ -643,13 +645,13 @@ describe('AdminFilemakerMail pages', () => {
     fireEvent.click(attentionNodeButton!);
 
     await waitFor(() => {
-      expect(screen.getByText('Mailbox Settings')).toBeInTheDocument();
-      expect(screen.getByLabelText('Email address')).toHaveValue('support@example.com');
-      expect(screen.getByText('Status: paused')).toBeInTheDocument();
+      expect(routerPushMock).toHaveBeenCalledWith(
+        '/admin/filemaker/mail?accountId=account-1&panel=settings'
+      );
     });
   });
 
-  it('opens the attention overview panel from the root attention branch', async () => {
+  it('routes to the attention overview panel from the root attention branch', async () => {
     const { AdminFilemakerMailPage } = await import(
       '@/features/filemaker/pages/AdminFilemakerMailPage'
     );
@@ -704,12 +706,7 @@ describe('AdminFilemakerMail pages', () => {
     fireEvent.click(screen.getByRole('button', { name: /Needs Attention/ }));
 
     await waitFor(() => {
-      const el = screen.queryByText(/Mailboxes Requiring Attention/i);
-      expect(el).toBeInTheDocument();
-      expect(screen.getByText('Affected: 1')).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Open Settings' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Open Mailbox' })).toBeInTheDocument();
-      expect(screen.getByText('Authentication failed')).toBeInTheDocument();
+      expect(routerPushMock).toHaveBeenCalledWith('/admin/filemaker/mail?panel=attention');
     });
   });
 

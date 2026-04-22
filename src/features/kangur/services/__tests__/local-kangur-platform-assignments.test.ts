@@ -111,7 +111,7 @@ describe('local-kangur-platform assignments shared API client integration', () =
     ]);
     expect(createActorAwareHeadersMock).toHaveBeenCalledTimes(1);
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/kangur/assignments?includeArchived=true',
+      '/kangur-api/assignments?includeArchived=true',
       expect.objectContaining({
         method: 'GET',
         credentials: 'same-origin',
@@ -167,7 +167,7 @@ describe('local-kangur-platform assignments shared API client integration', () =
 
     expect(fetchMock).toHaveBeenNthCalledWith(
       1,
-      '/api/kangur/assignments',
+      '/kangur-api/assignments',
       expect.objectContaining({
         method: 'POST',
         credentials: 'same-origin',
@@ -176,7 +176,7 @@ describe('local-kangur-platform assignments shared API client integration', () =
     );
     expect(fetchMock).toHaveBeenNthCalledWith(
       2,
-      '/api/kangur/assignments/assignment%20with%20space',
+      '/kangur-api/assignments/assignment%20with%20space',
       expect.objectContaining({
         method: 'PATCH',
         credentials: 'same-origin',
@@ -215,7 +215,7 @@ describe('local-kangur-platform assignments shared API client integration', () =
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/kangur/assignments/assignment-1/reassign',
+      '/kangur-api/assignments/assignment-1/reassign',
       expect.objectContaining({
         method: 'POST',
         credentials: 'same-origin',

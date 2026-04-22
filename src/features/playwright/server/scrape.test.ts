@@ -1,16 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { runPlaywrightConnectionScriptTaskMock } = vi.hoisted(() => ({
-  runPlaywrightConnectionScriptTaskMock: vi.fn(),
+const { runPlaywrightConnectionEngineTaskMock } = vi.hoisted(() => ({
+  runPlaywrightConnectionEngineTaskMock: vi.fn(),
 }));
 
-vi.mock('./script-task', async () => {
+vi.mock('./connection-runtime', async () => {
   const actual =
-    await vi.importActual<typeof import('./script-task')>('./script-task');
+    await vi.importActual<typeof import('./connection-runtime')>('./connection-runtime');
   return {
     ...actual,
-    runPlaywrightConnectionScriptTask: (...args: unknown[]) =>
-      runPlaywrightConnectionScriptTaskMock(...args),
+    runPlaywrightConnectionEngineTask: (...args: unknown[]) =>
+      runPlaywrightConnectionEngineTaskMock(...args),
   };
 });
 
@@ -19,7 +19,7 @@ import { runPlaywrightScrapeScript } from './scrape';
 describe('playwright scrape helper', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    runPlaywrightConnectionScriptTaskMock.mockResolvedValue({
+    runPlaywrightConnectionEngineTaskMock.mockResolvedValue({
       runtime: {
         personaId: 'persona-1',
       },
@@ -82,7 +82,7 @@ describe('playwright scrape helper', () => {
       },
     });
 
-    expect(runPlaywrightConnectionScriptTaskMock).toHaveBeenCalledWith({
+    expect(runPlaywrightConnectionEngineTaskMock).toHaveBeenCalledWith({
       connection: {
         id: 'connection-1',
       },

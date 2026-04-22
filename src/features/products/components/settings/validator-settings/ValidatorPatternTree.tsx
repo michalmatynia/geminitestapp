@@ -36,10 +36,10 @@ function GroupSettingsPanel(props: {
   draft: SequenceGroupDraft;
   setGroupDrafts: React.Dispatch<React.SetStateAction<Record<string, SequenceGroupDraft>>>;
   onSave: () => void;
-  onUngroup: () => void;
+  onDeleteSequence: () => void;
   isPending: boolean;
 }): React.JSX.Element {
-  const { groupId, draft, setGroupDrafts, onSave, onUngroup, isPending } = props;
+  const { groupId, draft, setGroupDrafts, onSave, onDeleteSequence, isPending } = props;
 
   return (
     <div className='mt-2 flex flex-wrap items-end gap-3 rounded-md border border-cyan-500/25 bg-cyan-500/5 px-3 py-2'>
@@ -90,9 +90,9 @@ function GroupSettingsPanel(props: {
           size='sm'
           className='h-8 border-amber-500/40 text-amber-200 hover:bg-amber-500/10'
           disabled={isPending}
-          onClick={onUngroup}
+          onClick={onDeleteSequence}
         >
-          Ungroup
+          Delete Sequence
         </Button>
       </div>
     </div>
@@ -242,6 +242,7 @@ export function ValidatorPatternTree(): React.JSX.Element {
   const selectedPatternId = controller.selectedNodeId
     ? fromPatternMasterNodeId(controller.selectedNodeId)
     : null;
+  const selectedGroup = selectedGroupId ? (sequenceGroups.get(selectedGroupId) ?? null) : null;
   const selectedGroupDraft = selectedGroupId ? getGroupDraft(selectedGroupId) : null;
   const selectedPattern = selectedPatternId ? patternById.get(selectedPatternId) ?? null : null;
   const semanticHistoryVisible =
@@ -263,7 +264,7 @@ export function ValidatorPatternTree(): React.JSX.Element {
           emptyLabel='No patterns — click Add Pattern to create the first one'
         />
       </FolderTreePanel>
-      {selectedGroupId && selectedGroupDraft && (
+      {selectedGroupId && selectedGroup !== null && selectedGroupDraft && (
         <GroupSettingsPanel
           groupId={selectedGroupId}
           draft={selectedGroupDraft}
@@ -271,7 +272,7 @@ export function ValidatorPatternTree(): React.JSX.Element {
           onSave={(): void => {
             void handleSaveSequenceGroup(selectedGroupId);
           }}
-          onUngroup={(): void => {
+          onDeleteSequence={(): void => {
             void handleUngroup(selectedGroupId);
           }}
           isPending={isPending}

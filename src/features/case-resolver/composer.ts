@@ -491,12 +491,12 @@ export const compileCaseResolverPrompt = (
     };
   } catch (error) {
     logClientError(error);
-    void logSystemEvent({
+    logSystemEvent({
       level: 'error',
       message: 'Failed to compile Case Resolver prompt',
       source: 'case-resolver-composer',
       context: { error: error instanceof Error ? error.message : String(error) },
-    });
+    }).catch(() => {});
     return {
       combinedContent: '',
       prompt: '',

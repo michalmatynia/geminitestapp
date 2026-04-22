@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import type { ProductCategory } from '@/shared/contracts/products/categories';
+import type { Producer } from '@/shared/contracts/products/producers';
 import type { ProductFormData } from '@/shared/contracts/products/drafts';
 
 import {
@@ -47,13 +48,25 @@ const categories: ProductCategory[] = [
   },
 ];
 
+const producers: Producer[] = [
+  {
+    id: 'producer-1',
+    name: 'StarGater.net',
+    website: 'https://stargater.net',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+  },
+];
+
 const createApplyApi = (currentValues: Partial<Record<keyof ProductFormData, unknown>>) => {
   const setFormFieldValue = vi.fn();
   const setCategoryId = vi.fn();
+  const setProducerIds = vi.fn();
 
   return {
     setFormFieldValue,
     setCategoryId,
+    setProducerIds,
     getCurrentFieldValue: (fieldName: keyof ProductFormData): unknown => currentValues[fieldName],
   };
 };
@@ -87,6 +100,23 @@ describe('applyValidatorFieldReplacement', () => {
     ).toBe(true);
 
     expect(applyApi.setFormFieldValue).toHaveBeenCalledWith('stock', 7);
+    expect(applyApi.setCategoryId).not.toHaveBeenCalled();
+  });
+
+  it('applies producer replacements through setProducerIds', () => {
+    const applyApi = createApplyApi({ producerIds: [] });
+
+    expect(
+      applyValidatorFieldReplacement({
+        fieldName: 'producerIds',
+        replacementValue: 'StarGater.net',
+        producers,
+        ...applyApi,
+      })
+    ).toBe(true);
+
+    expect(applyApi.setProducerIds).toHaveBeenCalledWith(['producer-1']);
+    expect(applyApi.setFormFieldValue).not.toHaveBeenCalled();
     expect(applyApi.setCategoryId).not.toHaveBeenCalled();
   });
 
@@ -127,6 +157,19 @@ describe('applyValidatorFieldReplacement', () => {
         ...applyApi,
       })
     ).toBe(false);
+  });
+
+  it('detects when a producer replacement is already applied', () => {
+    const applyApi = createApplyApi({ producerIds: ['producer-1'] });
+
+    expect(
+      doesValidatorFieldReplacementMatchCurrentValue({
+        fieldName: 'producerIds',
+        replacementValue: 'stargater.net',
+        producers,
+        ...applyApi,
+      })
+    ).toBe(true);
   });
 
   it('applies trimmed text replacements through setFormFieldValue', () => {

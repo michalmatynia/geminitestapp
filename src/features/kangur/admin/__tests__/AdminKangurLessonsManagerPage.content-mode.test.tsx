@@ -98,7 +98,8 @@ vi.mock('@/shared/lib/api-client', () => ({
   },
 }));
 
-vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
+vi.mock('@/features/kangur/hooks', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/features/kangur/hooks')>()),
   useKangurLessons: () => ({
     data: lessonsState.value,
     isLoading: false,
@@ -120,9 +121,6 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
     mutateAsync: updateLessonDocumentsMock,
     isPending: false,
   }),
-}));
-
-vi.mock('@/features/kangur/ui/hooks/useKangurLessonTemplates', () => ({
   useKangurLessonTemplates: (options?: { locale?: string | null }) => {
     lessonTemplateLocaleMock(options?.locale ?? null);
     return { data: lessonTemplatesState.value };
@@ -255,7 +253,7 @@ vi.mock('@/features/kangur/shared/ui', () => ({
     value,
     onValueChange,
     onChange,
-    options,
+    options = [],
     id,
     ariaLabel,
     title,
@@ -263,7 +261,7 @@ vi.mock('@/features/kangur/shared/ui', () => ({
     value?: string;
     onValueChange?: (value: string) => void;
     onChange?: (value: string) => void;
-    options: Array<LabeledOptionDto<string>>;
+    options?: Array<LabeledOptionDto<string>>;
     id?: string;
     ariaLabel?: string;
     title?: string;

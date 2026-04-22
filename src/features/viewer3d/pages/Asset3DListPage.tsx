@@ -23,11 +23,176 @@ type Asset3DGridItem = GridPickerItem<Asset3DRecord> & {
   value: Asset3DRecord;
 };
 
+function Asset3DGridItemCard({ asset }: { asset: Asset3DRecord }): React.JSX.Element {
+  const name = asset.name ?? '';
+  const filename = asset.filename ?? '';
+  const categoryId = asset.categoryId ?? '';
+  const displayName = name !== '' ? name : filename;
+
+  return (
+    <Card className='group cursor-pointer overflow-hidden bg-card/60 transition-all hover:border-blue-500/60 hover:shadow-lg hover:shadow-blue-500/10'>
+      <div className='relative flex aspect-square items-center justify-center bg-muted/30'>
+        <Box className='h-12 w-12 text-muted-foreground/70' />
+        <div className='absolute inset-0 flex items-center justify-center bg-background/70 opacity-0 transition-opacity group-hover:opacity-100'>
+          <div className='flex flex-col items-center gap-2'>
+            <div className='flex size-10 items-center justify-center rounded-full bg-blue-500 text-white shadow-lg'>
+              <Box className='size-5' />
+            </div>
+            <span className='text-[10px] font-bold uppercase tracking-wider text-blue-400'>
+              Preview
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div className='p-3'>
+        <p
+          className='text-sm font-medium text-foreground truncate'
+          title={displayName}
+        >
+          {displayName}
+        </p>
+        <div className='mt-2 flex items-center justify-between'>
+          {categoryId !== '' ? (
+            <StatusBadge
+              status={categoryId}
+              variant='info'
+              size='sm'
+              className='font-medium'
+            />
+          ) : (
+            <div />
+          )}
+          <span className='text-[10px] text-muted-foreground font-medium'>
+            {formatFileSize(asset.size ?? 0)}
+          </span>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+function Asset3DStats({ assetsCount, isFiltered }: { assetsCount: number; isFiltered: boolean }): React.JSX.Element | null {
+  if (assetsCount === 0) return null;
+  return (
+    <div className='text-xs text-muted-foreground'>
+      {assetsCount} asset{assetsCount !== 1 ? 's' : ''}
+      {isFiltered ? ' (filtered)' : ''}
+    </div>
+  );
+}
+
 const formatFileSize = (bytes: number): string => {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
 };
+
+function useAsset3DColumns(setPreviewAsset: (asset: Asset3DRecord) => void): ColumnDef<Asset3DRecord>[] {
+  return useMemo<ColumnDef<Asset3DRecord>[]>(
+    () => [
+      {
+        accessorKey: 'name',
+        header: 'Name',
+        cell: ({ row }) => {
+          const name = row.original.name ?? '';
+          const filename = row.original.filename ?? '';
+          return (
+            <div className={UI_CENTER_ROW_SPACED_CLASSNAME}>
+              <div className='flex h-9 w-9 items-center justify-center rounded-md border border-border bg-muted/40'>
+                <Box className='h-4 w-4 text-muted-foreground' />
+              </div>
+              <span className='text-sm font-medium text-foreground truncate'>
+                {name !== '' ? name : filename}
+              </span>
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: 'categoryId',
+        header: 'Category',
+        cell: ({ row }) => {
+          const catId = row.original.categoryId ?? '';
+          return catId !== '' ? (
+            <StatusBadge
+              status={catId}
+              variant='info'
+              size='sm'
+              className='font-medium'
+            />
+          ) : (
+            <span className='text-muted-foreground'>-</span>
+          );
+        },
+      },
+      {
+        accessorKey: 'tags',
+        header: 'Tags',
+        cell: ({ row }) => {
+          const tags = row.original.tags ?? [];
+          return (
+            <div className='flex flex-wrap gap-1'>
+              {tags.slice(0, 2).map((tag) => (
+                <StatusBadge
+                  key={tag}
+                  status={tag}
+                  variant='neutral'
+                  size='sm'
+                  className='font-medium'
+                />
+              ))}
+              {tags.length > 2 && (
+                <StatusBadge
+                  status={`+${  tags.length - 2}`}
+                  variant='neutral'
+                  size='sm'
+                  className='font-bold'
+                />
+              )}
+              {tags.length === 0 && (
+                <span className='text-muted-foreground'>-</span>
+              )}
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: 'size',
+        header: 'Size',
+        cell: ({ row }) => (
+          <span className='text-xs text-muted-foreground'>
+            {formatFileSize(row.original.size ?? 0)}
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'createdAt',
+        header: 'Date',
+        cell: ({ row }) => {
+          const createdAt = row.original.createdAt ?? '';
+          return (
+            <span className='text-xs text-muted-foreground'>
+              {createdAt !== '' ? formatAssetDate(createdAt) : ''}
+            </span>
+          );
+        },
+      },
+      {
+        id: 'actions',
+        header: () => <div className='text-right'>Action</div>,
+        cell: ({ row }) => (
+          <div className='text-right'>
+            <Button variant='outline' size='xs' onClick={() => setPreviewAsset(row.original)}>
+              View
+            </Button>
+          </div>
+        ),
+      },
+    ],
+    [setPreviewAsset]
+  );
+}
 
 export function Asset3DListPage(): React.JSX.Element {
   const {
@@ -51,113 +216,25 @@ export function Asset3DListPage(): React.JSX.Element {
     refetch,
   } = useAsset3DListState();
 
-  const columns = useMemo<ColumnDef<Asset3DRecord>[]>(
-    () => [
-      {
-        accessorKey: 'name',
-        header: 'Name',
-        cell: ({ row }) => (
-          <div className={UI_CENTER_ROW_SPACED_CLASSNAME}>
-            <div className='flex h-9 w-9 items-center justify-center rounded-md border border-border bg-muted/40'>
-              <Box className='h-4 w-4 text-muted-foreground' />
-            </div>
-            <span className='text-sm font-medium text-foreground truncate'>
-              {row.original.name || row.original.filename}
-            </span>
-          </div>
-        ),
-      },
-      {
-        accessorKey: 'categoryId',
-        header: 'Category',
-        cell: ({ row }) =>
-          row.original.categoryId ? (
-            <StatusBadge
-              status={row.original.categoryId}
-              variant='info'
-              size='sm'
-              className='font-medium'
-            />
-          ) : (
-            <span className='text-muted-foreground'>-</span>
-          ),
-      },
-      {
-        accessorKey: 'tags',
-        header: 'Tags',
-        cell: ({ row }) => (
-          <div className='flex flex-wrap gap-1'>
-            {(row.original.tags || []).slice(0, 2).map((tag) => (
-              <StatusBadge
-                key={tag}
-                status={tag}
-                variant='neutral'
-                size='sm'
-                className='font-medium'
-              />
-            ))}
-            {(row.original.tags || []).length > 2 && (
-              <StatusBadge
-                status={`+${  (row.original.tags || []).length - 2}`}
-                variant='neutral'
-                size='sm'
-                className='font-bold'
-              />
-            )}
-            {(row.original.tags || []).length === 0 && (
-              <span className='text-muted-foreground'>-</span>
-            )}
-          </div>
-        ),
-      },
-      {
-        accessorKey: 'size',
-        header: 'Size',
-        cell: ({ row }) => (
-          <span className='text-xs text-muted-foreground'>
-            {formatFileSize(row.original.size || 0)}
-          </span>
-        ),
-      },
-      {
-        accessorKey: 'createdAt',
-        header: 'Date',
-        cell: ({ row }) => (
-          <span className='text-xs text-muted-foreground'>
-            {row.original.createdAt ? formatAssetDate(row.original.createdAt) : ''}
-          </span>
-        ),
-      },
-      {
-        id: 'actions',
-        header: () => <div className='text-right'>Action</div>,
-        cell: ({ row }) => (
-          <div className='text-right'>
-            <Button variant='outline' size='xs' onClick={() => setPreviewAsset(row.original)}>
-              View
-            </Button>
-          </div>
-        ),
-      },
-    ],
-    [setPreviewAsset]
-  );
+  const columns = useAsset3DColumns(setPreviewAsset);
 
-  const stats =
-    !loading && assets.length > 0 ? (
-      <div className='text-xs text-muted-foreground'>
-        {assets.length} asset{assets.length !== 1 ? 's' : ''}
-        {searchQuery || selectedCategory || selectedTags.length > 0 ? ' (filtered)' : ''}
-      </div>
-    ) : null;
+  const isFiltered = (searchQuery ?? '') !== '' || (selectedCategory ?? '') !== '' || selectedTags.length > 0;
+
+  const stats = !loading ? (
+    <Asset3DStats assetsCount={assets.length} isFiltered={isFiltered} />
+  ) : null;
 
   const pickerItems = useMemo<Asset3DGridItem[]>(
     () =>
-      assets.map((asset) => ({
-        id: asset.id,
-        label: asset.name || asset.filename || asset.id,
-        value: asset,
-      })),
+      assets.map((asset) => {
+        const name = asset.name ?? '';
+        const filename = asset.filename ?? '';
+        return {
+          id: asset.id,
+          label: name !== '' ? name : (filename !== '' ? filename : asset.id),
+          value: asset,
+        };
+      }),
     [assets]
   );
 
@@ -277,18 +354,18 @@ export function Asset3DListPage(): React.JSX.Element {
         <EmptyState
           title='No assets found'
           description={
-            searchQuery || selectedCategory || selectedTags.length > 0
+            isFiltered
               ? 'Try adjusting your filters'
               : 'No 3D assets available'
           }
           icon={<Box className='h-12 w-12 opacity-60' />}
           action={
-            !searchQuery && !selectedCategory && selectedTags.length === 0 ? (
+            !isFiltered ? (
               <Button
                 variant='outline'
                 disabled={reindexing}
                 onClick={() => {
-                  void handleReindex();
+                  handleReindex().catch(() => {});
                 }}
               >
                 {reindexing ? 'Reindexing...' : 'Reindex local uploads'}
@@ -304,56 +381,13 @@ export function Asset3DListPage(): React.JSX.Element {
           onSelect={(item) => setPreviewAsset(item.value)}
           gridClassName='grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'
           gap='16px'
-          renderItem={(item) => {
-            const asset = item.value;
-            return (
-              <Card className='group cursor-pointer overflow-hidden bg-card/60 transition-all hover:border-blue-500/60 hover:shadow-lg hover:shadow-blue-500/10'>
-                <div className='relative flex aspect-square items-center justify-center bg-muted/30'>
-                  <Box className='h-12 w-12 text-muted-foreground/70' />
-                  <div className='absolute inset-0 flex items-center justify-center bg-background/70 opacity-0 transition-opacity group-hover:opacity-100'>
-                    <div className='flex flex-col items-center gap-2'>
-                      <div className='flex size-10 items-center justify-center rounded-full bg-blue-500 text-white shadow-lg'>
-                        <Box className='size-5' />
-                      </div>
-                      <span className='text-[10px] font-bold uppercase tracking-wider text-blue-400'>
-                        Preview
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className='p-3'>
-                  <p
-                    className='text-sm font-medium text-foreground truncate'
-                    title={asset.name || asset.filename}
-                  >
-                    {asset.name || asset.filename}
-                  </p>
-                  <div className='mt-2 flex items-center justify-between'>
-                    {asset.categoryId ? (
-                      <StatusBadge
-                        status={asset.categoryId}
-                        variant='info'
-                        size='sm'
-                        className='font-medium'
-                      />
-                    ) : (
-                      <div />
-                    )}
-                    <span className='text-[10px] text-muted-foreground font-medium'>
-                      {formatFileSize(asset.size || 0)}
-                    </span>
-                  </div>
-                </div>
-              </Card>
-            );
-          }}
+          renderItem={(item) => <Asset3DGridItemCard asset={item.value} />}
         />
       )}
 
       {!loading && assets.length > 0 && viewMode === 'list' && null}
 
-      {previewAsset && (
+      {(previewAsset ?? null) !== null && (
         <Asset3DPreviewModal
           isOpen={true}
           onClose={() => setPreviewAsset(null)}

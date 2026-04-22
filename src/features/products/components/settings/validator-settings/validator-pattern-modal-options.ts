@@ -7,6 +7,7 @@ export const TARGET_OPTIONS = [
   { value: 'price', label: 'Price' },
   { value: 'stock', label: 'Stock' },
   { value: 'category', label: 'Category' },
+  { value: 'producer', label: 'Producers' },
   { value: 'weight', label: 'Weight' },
   { value: 'size_length', label: 'Length (sizeLength)' },
   { value: 'size_width', label: 'Width (sizeWidth)' },

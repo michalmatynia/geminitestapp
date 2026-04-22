@@ -121,7 +121,7 @@ describe('local-kangur-platform duels read shared API client integration', () =>
 
     await expect(requestDuelStateFromApi('session 1')).resolves.toEqual(DUEL_STATE);
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/kangur/duels/state?sessionId=session%201',
+      '/kangur-api/duels/state?sessionId=session%201',
       expect.objectContaining({
         method: 'GET',
         credentials: 'same-origin',
@@ -151,7 +151,7 @@ describe('local-kangur-platform duels read shared API client integration', () =>
     ).resolves.toEqual(LOBBY_CHAT);
 
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/kangur/duels/lobby-chat?limit=20&before=2026-03-20T07%3A59%3A00.000Z',
+      '/kangur-api/duels/lobby-chat?limit=20&before=2026-03-20T07%3A59%3A00.000Z',
       expect.objectContaining({
         method: 'GET',
         credentials: 'same-origin',
@@ -185,7 +185,7 @@ describe('local-kangur-platform duels read shared API client integration', () =>
     ).resolves.toEqual(lobby);
 
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/kangur/duels/lobby?limit=6&visibility=private',
+      '/kangur-api/duels/lobby?limit=6&visibility=private',
       expect.objectContaining({
         method: 'GET',
         credentials: 'same-origin',

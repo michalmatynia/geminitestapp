@@ -78,7 +78,7 @@ export function SequenceGroupFolderNodeItem(
         },
         {
           id: 'ungroup',
-          label: 'Ungroup',
+          label: 'Delete sequence',
           onSelect: handleUngroup,
         },
       ]}
@@ -213,11 +213,11 @@ export function SequenceGroupFolderNodeItem(
                 event.stopPropagation();
                 handleUngroup();
               }}
-              title='Ungroup — move all patterns to standalone'
-              aria-label='Ungroup sequence group'
+              title='Delete sequence — keep patterns as standalone rules'
+              aria-label='Delete sequence group'
               disabled={isPending}
             >
-              Ungroup
+              Delete
             </button>
           </div>
         </TreeRow>

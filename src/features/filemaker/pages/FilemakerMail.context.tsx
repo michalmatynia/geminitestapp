@@ -9,13 +9,14 @@ import { useAdminFilemakerMailPageState, type MailPageState } from './AdminFilem
 const {
   Context: MailPageContext,
   useStrictContext: useMailPageContext,
+  useOptionalContext: useOptionalMailPageContext,
 } = createStrictContext<MailPageState>({
   hookName: 'useMailPageContext',
   providerName: 'a MailPageProvider',
   displayName: 'MailPageContext',
 });
 
-export { useMailPageContext };
+export { useMailPageContext, useOptionalMailPageContext };
 
 export function MailPageProvider({
   children,

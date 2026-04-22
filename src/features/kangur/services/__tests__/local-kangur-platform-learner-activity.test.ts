@@ -116,7 +116,7 @@ describe('local-kangur-platform learner activity shared API client integration',
       isOnline: true,
     });
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/kangur/learner-activity',
+      '/kangur-api/learner-activity',
       expect.objectContaining({
         method: 'GET',
         credentials: 'same-origin',
@@ -148,7 +148,7 @@ describe('local-kangur-platform learner activity shared API client integration',
     ).resolves.toEqual(ACTIVITY_SNAPSHOT);
 
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/kangur/learner-activity',
+      '/kangur-api/learner-activity',
       expect.objectContaining({
         method: 'POST',
         credentials: 'same-origin',

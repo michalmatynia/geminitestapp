@@ -24,6 +24,7 @@ export function ValidatorPatternTablePanel(): React.JSX.Element {
     loading,
     patterns,
     openCreate,
+    handleCreateStarGaterProducerPattern,
   } = useValidatorSettingsContext();
   const handleCopyFullDocumentation = async (): Promise<void> => {
     if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) {
@@ -73,6 +74,16 @@ export function ValidatorPatternTablePanel(): React.JSX.Element {
             title='Copy all validation docs sections including JSON snippets'
           >
             Copy Full Validation Docs
+          </Button>
+          <Button
+            type='button'
+            onClick={() => {
+              void handleCreateStarGaterProducerPattern();
+            }}
+            variant='outline'
+            className='border-amber-500/40 text-amber-200 hover:bg-amber-500/10'
+          >
+            Producer: StarGater.net
           </Button>
           <Button
             onClick={() => openCreate()}

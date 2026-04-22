@@ -69,6 +69,7 @@ export interface ProductMetadataHookResult {
   producers: Producer[];
   producersLoading: boolean;
   selectedProducerIds: string[];
+  setProducerIds: (producerIds: string[]) => void;
   toggleProducer: (producerId: string) => void;
   parameters: ProductParameter[];
   parametersLoading: boolean;
@@ -90,6 +91,16 @@ export interface UseProductMetadataProps {
 const toTrimmedString = (value: unknown): string => {
   if (typeof value !== 'string') return '';
   return value.trim();
+};
+
+const normalizeSelectionIds = (values: ReadonlyArray<unknown>): string[] => {
+  const unique = new Set<string>();
+  for (const value of values) {
+    const normalizedValue = toTrimmedString(value);
+    if (!normalizedValue) continue;
+    unique.add(normalizedValue);
+  }
+  return Array.from(unique);
 };
 
 const normalizeCatalogIdList = (values: ReadonlyArray<unknown>): string[] => {
@@ -191,10 +202,12 @@ export function useProductMetadata({
 
   const initialProducerSelection = React.useMemo((): string[] => {
     if (product?.producers !== undefined && product.producers !== null) {
-      return product.producers.map((p: { producerId: string }) => p.producerId);
+      return normalizeSelectionIds(
+        product.producers.map((p: { producerId: string }) => p.producerId)
+      );
     }
     if (initialProducerIds !== undefined && initialProducerIds !== null && initialProducerIds.length > 0) {
-      return initialProducerIds;
+      return normalizeSelectionIds(initialProducerIds);
     }
     return [];
   }, [product, initialProducerIds]);
@@ -327,6 +340,13 @@ export function useProductMetadata({
     );
   };
 
+  const setProducerIds = (producerIds: string[]): void => {
+    setSelectedProducerIds((prev: string[]) => {
+      const nextIds = normalizeSelectionIds(producerIds);
+      return arraysEqual(prev, nextIds) ? prev : nextIds;
+    });
+  };
+
   // Derive filtered languages and price groups based on selected catalogs
   const filteredResult = useMemo(() => {
     const catalogs = catalogsQuery.data ?? [];
@@ -421,6 +441,7 @@ export function useProductMetadata({
     producers: producersQuery.data ?? [],
     producersLoading: producersQuery.isLoading,
     selectedProducerIds,
+    setProducerIds,
     toggleProducer,
     parameters: parametersQuery.data ?? [],
     parametersLoading: parametersQuery.isLoading,

@@ -4,7 +4,10 @@
 // server contexts.
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { ProductCategory } from '@/shared/contracts/products/categories';
+import type { Producer } from '@/shared/contracts/products/producers';
 import { PRODUCT_VALIDATION_REPLACEMENT_FIELDS } from '@/shared/lib/products/constants';
+
+import { formatProducerDisplayValue } from './resolveValidatorProducerReplacement';
 
 export const PRODUCT_VALIDATION_REPLACEMENT_FIELD_LABELS: Record<string, string> = {
   sku: 'SKU',
@@ -14,6 +17,7 @@ export const PRODUCT_VALIDATION_REPLACEMENT_FIELD_LABELS: Record<string, string>
   price: 'Price',
   stock: 'Stock',
   categoryId: 'Category',
+  producerIds: 'Producers',
   weight: 'Weight',
   sizeLength: 'Size Length',
   sizeWidth: 'Size Width',
@@ -70,6 +74,8 @@ type BuildProductValidationSourceValuesInput = {
   categories?: ReadonlyArray<ProductCategory>;
   selectedCategoryId?: string | null;
   selectedCatalogIds?: ReadonlyArray<string>;
+  producers?: ReadonlyArray<Producer>;
+  selectedProducerIds?: ReadonlyArray<string>;
   fallbackCatalogId?: string | null;
 };
 
@@ -81,7 +87,7 @@ const toTrimmedString = (value: unknown): string => {
 
 const extractNameSegment = (value: unknown, segmentIndex: number): string => {
   const normalizedValue = toTrimmedString(value);
-  if (!normalizedValue) return '';
+  if (normalizedValue.length === 0) return '';
   const parts = normalizedValue.split('|').map((part) => part.trim());
   if (parts.length < segmentIndex + 1) return '';
   return parts[segmentIndex] ?? '';
@@ -95,7 +101,7 @@ const resolvePrimaryCatalogId = (
   fallbackCatalogId: string | null | undefined
 ): string => {
   const selected = selectedCatalogIds?.[0]?.trim() ?? '';
-  if (selected) return selected;
+  if (selected.length > 0) return selected;
   return toTrimmedString(fallbackCatalogId);
 };
 
@@ -104,7 +110,7 @@ const resolveCategoryId = (
   baseValues: Record<string, unknown>
 ): string => {
   const selected = toTrimmedString(selectedCategoryId);
-  if (selected) return selected;
+  if (selected.length > 0) return selected;
   return toTrimmedString(baseValues['categoryId']);
 };
 
@@ -112,9 +118,42 @@ const resolveCategoryName = (
   categoryId: string,
   categories: ReadonlyArray<ProductCategory> | undefined
 ): string => {
-  if (!categoryId) return '';
+  if (categoryId.length === 0) return '';
   const match = categories?.find((category) => toTrimmedString(category.id) === categoryId) ?? null;
   return toTrimmedString(match?.name);
+};
+
+const resolveProducerFieldValue = ({
+  baseValues,
+  producers,
+  selectedProducerIds,
+}: {
+  baseValues: Record<string, unknown>;
+  producers?: ReadonlyArray<Producer>;
+  selectedProducerIds?: ReadonlyArray<string>;
+}): string => {
+  if (Array.isArray(selectedProducerIds) && selectedProducerIds.length > 0) {
+    return formatProducerDisplayValue({
+      producerIds: Array.from(selectedProducerIds),
+      producers,
+    });
+  }
+
+  const rawProducerValue = baseValues['producerIds'];
+  if (typeof rawProducerValue === 'string') {
+    return toTrimmedString(rawProducerValue);
+  }
+
+  if (Array.isArray(rawProducerValue)) {
+    return formatProducerDisplayValue({
+      producerIds: rawProducerValue.filter(
+        (value): value is string => typeof value === 'string' && value.trim().length > 0
+      ),
+      producers,
+    });
+  }
+
+  return '';
 };
 
 export const buildProductValidationSourceValues = (
@@ -127,6 +166,11 @@ export const buildProductValidationSourceValues = (
   return {
     ...baseValues,
     categoryId,
+    producerIds: resolveProducerFieldValue({
+      baseValues,
+      producers: input.producers,
+      selectedProducerIds: input.selectedProducerIds,
+    }),
     [PRODUCT_VALIDATION_SOURCE_FIELD_IDS.primaryCatalogId]: resolvePrimaryCatalogId(
       input.selectedCatalogIds,
       input.fallbackCatalogId

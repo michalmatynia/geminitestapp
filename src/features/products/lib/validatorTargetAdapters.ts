@@ -3,7 +3,7 @@
 // used by the validation engine to extract and coerce values for rules.
 import type { ProductValidationTarget } from '@/shared/contracts/products/validation';
 
-export type ProductValidationValueKind = 'text' | 'number' | 'category';
+export type ProductValidationValueKind = 'text' | 'number' | 'category' | 'producer';
 export type ProductValidationNumberMode = 'integer' | 'decimal';
 
 export type ProductValidationTargetAdapter = {
@@ -46,6 +46,11 @@ const TARGET_ADAPTERS: Record<ProductValidationTarget, ProductValidationTargetAd
     valueKind: 'category',
     replacementFields: ['categoryId'],
   },
+  producer: {
+    target: 'producer',
+    valueKind: 'producer',
+    replacementFields: ['producerIds'],
+  },
   weight: {
     target: 'weight',
     valueKind: 'number',
@@ -85,6 +90,7 @@ const FIELD_VALUE_KIND_BY_FIELD_NAME: Record<string, ProductValidationValueKind>
   price: 'number',
   stock: 'number',
   categoryId: 'category',
+  producerIds: 'producer',
   weight: 'number',
   sizeLength: 'number',
   sizeWidth: 'number',
@@ -106,8 +112,13 @@ const CATEGORY_FIELD_CHANGED_AT_DEPENDENCIES = ['categoryId', 'name_en'] as cons
 
 export const getProductValidationTargetAdapter = (
   target: string
-): ProductValidationTargetAdapter =>
-  TARGET_ADAPTERS[target as ProductValidationTarget] ?? DEFAULT_TARGET_ADAPTER;
+): ProductValidationTargetAdapter => {
+  if (Object.prototype.hasOwnProperty.call(TARGET_ADAPTERS, target)) {
+    return TARGET_ADAPTERS[target as ProductValidationTarget];
+  }
+
+  return DEFAULT_TARGET_ADAPTER;
+};
 
 export const getReplacementFieldsForProductValidationTarget = (
   target: string

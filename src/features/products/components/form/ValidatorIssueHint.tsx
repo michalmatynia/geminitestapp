@@ -168,6 +168,7 @@ export const IssueHintRow = memo((
         });
       },
       setCategoryId: () => {},
+      setProducerIds: () => {},
     });
     if (!applied) return;
     void acceptIssue({

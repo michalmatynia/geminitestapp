@@ -16,6 +16,7 @@ import {
   settingsStoreStateMock,
   setupKangurFeatureAppTest,
   topNavigationHostVisibleMock,
+  useKangurDeferredStandaloneHomeReadyMock,
 } from '@/features/kangur/ui/KangurFeatureApp.test-support';
 
 const BOOT_SKELETON_MIN_VISIBLE_MS = 50;
@@ -330,19 +331,23 @@ describe('KangurFeatureApp auth and theme loading', () => {
       requestedHref: '/kangur',
       basePath: '/kangur',
     });
+    let isStandaloneHomeReady = false;
+    useKangurDeferredStandaloneHomeReadyMock.mockImplementation(() => isStandaloneHomeReady);
 
-    render(<KangurFeatureApp />);
+    const { rerender } = render(<KangurFeatureApp />);
 
     expect(screen.queryByTestId('kangur-ai-tutor-widget')).toBeNull();
 
     await act(async () => {
-      vi.advanceTimersByTime(GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS - 1);
+      await vi.advanceTimersByTimeAsync(GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS - 1);
     });
 
     expect(screen.queryByTestId('kangur-ai-tutor-widget')).toBeNull();
 
     await act(async () => {
-      vi.advanceTimersByTime(1);
+      await vi.advanceTimersByTimeAsync(1);
+      isStandaloneHomeReady = true;
+      rerender(<KangurFeatureApp />);
     });
 
     expect(screen.getByTestId('kangur-ai-tutor-widget')).toBeInTheDocument();

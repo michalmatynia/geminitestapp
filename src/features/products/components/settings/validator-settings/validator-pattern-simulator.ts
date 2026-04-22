@@ -5,6 +5,7 @@
 import type { DynamicReplacementSourceMode, ProductValidationInstanceScope, ProductValidationPattern, ProductValidationSemanticState } from '@/shared/contracts/products/validation';
 import type { PatternFormData, SequenceGroupView, ValidatorPatternSimulatorInput } from '@/shared/contracts/products/drafts';
 import type { ProductCategory } from '@/shared/contracts/products/categories';
+import type { Producer } from '@/shared/contracts/products/producers';
 import {
   isPatternEnabledForValidationScope,
   isPatternReplacementEnabledForValidationScope,
@@ -23,6 +24,10 @@ import {
   shouldLaunchPattern,
 } from '@/features/products/validation-engine/core';
 import { applyValidatorFieldReplacement } from '@/features/products/lib/applyValidatorFieldReplacement';
+import {
+  buildProducerNameById,
+  formatProducerDisplayValue,
+} from '@/features/products/lib/resolveValidatorProducerReplacement';
 import {
   PRODUCT_VALIDATION_REPLACEMENT_FIELD_LABELS,
   PRODUCT_VALIDATION_SOURCE_FIELD_OPTIONS,
@@ -494,12 +499,14 @@ export const simulateValidatorPatternPreview = ({
   validationScope = DEFAULT_SCOPE,
   simulatorValues,
   categoryFixturesText,
+  producers,
 }: {
   pattern: ProductValidationPattern;
   formData: PatternFormData;
   validationScope?: ProductValidationInstanceScope;
   simulatorValues: Record<string, string>;
   categoryFixturesText: string;
+  producers?: ReadonlyArray<Producer>;
 }): ValidatorPatternSimulationResult => {
   const currentFieldName = resolveSimulatorFieldName(formData.target, formData.locale);
   const currentFieldLabel = getFieldLabel(currentFieldName);
@@ -507,6 +514,7 @@ export const simulateValidatorPatternPreview = ({
   const currentFieldValue = simulatorValues[currentFieldKey] ?? '';
   const categories = parseValidatorPatternSimulatorCategoryFixtures(categoryFixturesText);
   const categoryNameById = buildCategoryNameById(categories);
+  const producerNameById = buildProducerNameById(producers);
   const descriptors = buildValidatorPatternSimulatorInputs(formData);
 
   const rawFormValues: Record<string, unknown> = {
@@ -527,6 +535,7 @@ export const simulateValidatorPatternPreview = ({
     ...buildProductValidationSourceValues({
       baseValues: rawFormValues,
       categories,
+      producers,
       selectedCategoryId:
         currentFieldName === 'categoryId' ? currentFieldValue : toStringValue(rawFormValues['categoryId']),
       selectedCatalogIds: [],
@@ -587,6 +596,9 @@ export const simulateValidatorPatternPreview = ({
   if (pattern.target === 'category' && categories.length === 0) {
     notes.push('Add category fixtures to preview label-to-category resolution.');
   }
+  if (pattern.target === 'producer' && (producers?.length ?? 0) === 0) {
+    notes.push('Producer replacement preview waits for producers metadata to load.');
+  }
 
   const launchMatched = shouldLaunchPattern({
     pattern,
@@ -632,6 +644,11 @@ export const simulateValidatorPatternPreview = ({
       ? (categoryNameById.get(toStringValue(simulatedCurrentValues[currentFieldName])) ??
           toStringValue(simulatedCurrentValues[currentFieldName])) ||
         null
+      : currentFieldName === 'producerIds'
+        ? formatProducerDisplayValue({
+            producerIds: [],
+            fallbackValue: toStringValue(simulatedCurrentValues[currentFieldName]) ?? '',
+          }) || null
       : toStringValue(simulatedCurrentValues[currentFieldName]) || null;
 
   const applied =
@@ -643,6 +660,8 @@ export const simulateValidatorPatternPreview = ({
       replacementValue: nextFieldValue,
       categories,
       categoryNameById,
+      producers,
+      producerNameById,
       getCurrentFieldValue: (fieldName) => simulatedCurrentValues[fieldName],
       setFormFieldValue: (fieldName, value) => {
         simulatedCurrentValues[fieldName] = value;
@@ -656,10 +675,22 @@ export const simulateValidatorPatternPreview = ({
           ? (categoryNameById.get(categoryId) ?? categoryId)
           : null;
       },
+      setProducerIds: (producerIds) => {
+        simulatedCurrentValues['producerIds'] = producerIds;
+        appliedOutputValue = formatProducerDisplayValue({
+          producerIds,
+          producers,
+          producerNameById,
+        });
+        appliedOutputDisplayValue = appliedOutputValue || null;
+      },
     });
 
   if (launchMatched && replacementEnabledForScope && !applied && pattern.target === 'category') {
     notes.push('Replacement could not be resolved to a category ID.');
+  }
+  if (launchMatched && replacementEnabledForScope && !applied && pattern.target === 'producer') {
+    notes.push('Replacement could not be resolved to producer metadata.');
   }
 
   return {
@@ -692,6 +723,7 @@ export const buildAndSimulateValidatorPatternPreview = ({
   validationScope = DEFAULT_SCOPE,
   simulatorValues,
   categoryFixturesText,
+  producers,
 }: {
   formData: PatternFormData;
   sequenceGroups: Map<string, SequenceGroupView>;
@@ -701,6 +733,7 @@ export const buildAndSimulateValidatorPatternPreview = ({
   validationScope?: ProductValidationInstanceScope;
   simulatorValues: Record<string, string>;
   categoryFixturesText: string;
+  producers?: ReadonlyArray<Producer>;
 }): ValidatorPatternSimulationResult => {
   const currentFieldName = resolveSimulatorFieldName(formData.target, formData.locale);
   const currentFieldLabel = getFieldLabel(currentFieldName);
@@ -738,6 +771,7 @@ export const buildAndSimulateValidatorPatternPreview = ({
     validationScope,
     simulatorValues,
     categoryFixturesText,
+    producers,
   });
 
   if (baseResult.status !== 'ready') {
@@ -751,6 +785,7 @@ export const buildAndSimulateValidatorPatternPreview = ({
     fieldName: baseResult.fieldName,
   });
   const categories = parseValidatorPatternSimulatorCategoryFixtures(categoryFixturesText);
+  const producerNameById = buildProducerNameById(producers);
   const descriptors = buildValidatorPatternSimulatorInputs(formData);
   const rawFormValues: Record<string, unknown> = {
     [baseResult.fieldName]: simulatorValues[makeSimulatorInputKey('current_field', baseResult.fieldName)] ?? '',
@@ -770,6 +805,7 @@ export const buildAndSimulateValidatorPatternPreview = ({
     ...buildProductValidationSourceValues({
       baseValues: rawFormValues,
       categories,
+      producers,
       selectedCategoryId:
         baseResult.fieldName === 'categoryId'
           ? (simulatorValues[makeSimulatorInputKey('current_field', baseResult.fieldName)] ?? '')
@@ -808,6 +844,12 @@ export const buildAndSimulateValidatorPatternPreview = ({
       ? (categoryNameById.get(toStringValue(simulatedCurrentValues[baseResult.fieldName])) ??
           toStringValue(simulatedCurrentValues[baseResult.fieldName])) ||
         null
+      : baseResult.fieldName === 'producerIds'
+        ? formatProducerDisplayValue({
+            producerIds: [],
+            fallbackValue:
+              toStringValue(simulatedCurrentValues[baseResult.fieldName]) ?? '',
+          }) || null
       : toStringValue(simulatedCurrentValues[baseResult.fieldName]) || null;
 
   const traceApplied = applyValidatorFieldReplacement({
@@ -815,6 +857,8 @@ export const buildAndSimulateValidatorPatternPreview = ({
     replacementValue: trace.finalValue,
     categories,
     categoryNameById,
+    producers,
+    producerNameById,
     getCurrentFieldValue: (fieldName) => simulatedCurrentValues[fieldName],
     setFormFieldValue: (fieldName, value) => {
       simulatedCurrentValues[fieldName] = value;
@@ -827,6 +871,15 @@ export const buildAndSimulateValidatorPatternPreview = ({
       traceOutputDisplayValue = categoryId
         ? (categoryNameById.get(categoryId) ?? categoryId)
         : null;
+    },
+    setProducerIds: (producerIds) => {
+      simulatedCurrentValues['producerIds'] = producerIds;
+      traceOutputValue = formatProducerDisplayValue({
+        producerIds,
+        producers,
+        producerNameById,
+      });
+      traceOutputDisplayValue = traceOutputValue || null;
     },
   });
 

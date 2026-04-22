@@ -45,7 +45,7 @@ import {
 } from './FilemakerMailSidebarContext';
 import { FilemakerMailSidebarNode } from './FilemakerMailSidebarNode';
 
-import { useMailPageContext } from '../pages/FilemakerMail.context';
+import { useOptionalMailPageContext } from '../pages/FilemakerMail.context';
 
 export type FilemakerMailSidebarSelection = {
   accountId: string | null;
@@ -89,7 +89,7 @@ export function FilemakerMailSidebar({
   actions: propsActions,
   refreshKey = 0,
 }: FilemakerMailSidebarProps): React.JSX.Element {
-  const pageContext = useMailPageContext();
+  const pageContext = useOptionalMailPageContext();
 
   const selection = useMemo((): FilemakerMailSidebarSelection => ({
     accountId: propsSelection?.accountId ?? pageContext?.selectedAccountId ?? null,

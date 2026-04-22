@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { ProductCategory } from '@/shared/contracts/products/categories';
+import type { Producer } from '@/shared/contracts/products/producers';
 
 import {
   PRODUCT_VALIDATION_REPLACEMENT_FIELD_OPTIONS,
@@ -24,6 +25,16 @@ const categories: ProductCategory[] = [
   },
 ];
 
+const producers: Producer[] = [
+  {
+    id: 'producer-1',
+    name: 'StarGater.net',
+    website: 'https://stargater.net',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+  },
+];
+
 describe('validatorSourceFields', () => {
   it('exposes replacement fields as source options before derived fields', () => {
     expect(PRODUCT_VALIDATION_REPLACEMENT_FIELD_OPTIONS[0]).toEqual({
@@ -34,6 +45,7 @@ describe('validatorSourceFields', () => {
     expect(PRODUCT_VALIDATION_SOURCE_FIELD_OPTIONS).toEqual(
       expect.arrayContaining([
         { value: 'price', label: 'Price' },
+        { value: 'producerIds', label: 'Producers' },
         { value: PRODUCT_VALIDATION_SOURCE_FIELD_IDS.primaryCatalogId, label: 'Primary Catalog ID' },
         { value: PRODUCT_VALIDATION_SOURCE_FIELD_IDS.categoryName, label: 'Category Name' },
         { value: PRODUCT_VALIDATION_SOURCE_FIELD_IDS.nameEnSegment4, label: 'Name EN Segment #4' },
@@ -50,14 +62,17 @@ describe('validatorSourceFields', () => {
           price: 12,
         },
         categories,
+        producers,
         selectedCategoryId: 'category-1',
         selectedCatalogIds: ['catalog-selected'],
+        selectedProducerIds: ['producer-1'],
         fallbackCatalogId: 'catalog-fallback',
       })
     ).toMatchObject({
       name_en: 'Wallet | Leather | Premium | Keychains',
       categoryId: 'category-1',
       categoryName: 'Keychains',
+      producerIds: 'StarGater.net',
       primaryCatalogId: 'catalog-selected',
       nameEnSegment4: 'Keychains',
       nameEnSegment4RegexEscaped: 'Keychains',

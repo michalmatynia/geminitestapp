@@ -26,7 +26,7 @@ const mocks = vi.hoisted(() => ({
   refetchMock: vi.fn(),
 }));
 
-vi.mock('@/shared/lib/ai-paths', () => ({
+vi.mock('@/shared/lib/ai-paths/api', () => ({
   listAiPathRuns: (...args: unknown[]) => mocks.listAiPathRunsMock(...args),
   getAiPathRun: (...args: unknown[]) => mocks.getAiPathRunMock(...args),
   requeueAiPathDeadLetterRuns: (...args: unknown[]) => mocks.requeueAiPathDeadLetterRunsMock(...args),
@@ -238,10 +238,6 @@ describe('useDeadLetterRuns', () => {
     });
 
     await waitFor(() => {
-      expect(result.current.requeueingSelected).toBe(true);
-    });
-
-    await waitFor(() => {
       expect(mocks.requeueAiPathDeadLetterRunsMock).toHaveBeenCalledWith({
         runIds: ['run-1', 'run-2'],
         mode: 'resume',
@@ -252,6 +248,7 @@ describe('useDeadLetterRuns', () => {
       expect(result.current.selectedIds.size).toBe(0);
     });
 
+    expect(result.current.requeueingSelected).toBe(false);
     expect(mocks.refetchMock).toHaveBeenCalledTimes(1);
     expect(mocks.toastMock).toHaveBeenCalledWith('Requeued 2 run(s) (resume).', {
       variant: 'success',

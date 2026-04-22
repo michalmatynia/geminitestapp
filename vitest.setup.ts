@@ -38,14 +38,17 @@ const createKangurClientErrorMocks = () => {
   const withKangurClientError = async <T>(
     _report: unknown,
     task: () => Promise<T>,
-    options: KangurClientErrorHandlingOptions<T>
+    options?: KangurClientErrorHandlingOptions<T>
   ): Promise<T> => {
     try {
       return await task();
     } catch (error) {
-      options.onError?.(error);
-      if (options.shouldRethrow?.(error)) {
+      options?.onError?.(error);
+      if (options?.shouldRethrow?.(error)) {
         throw error;
+      }
+      if (!options || !Object.prototype.hasOwnProperty.call(options, 'fallback')) {
+        return undefined as T;
       }
       return typeof options.fallback === 'function'
         ? (options.fallback as () => T)()
@@ -56,14 +59,17 @@ const createKangurClientErrorMocks = () => {
   const withKangurClientErrorSync = <T>(
     _report: unknown,
     task: () => T,
-    options: KangurClientErrorHandlingOptions<T>
+    options?: KangurClientErrorHandlingOptions<T>
   ): T => {
     try {
       return task();
     } catch (error) {
-      options.onError?.(error);
-      if (options.shouldRethrow?.(error)) {
+      options?.onError?.(error);
+      if (options?.shouldRethrow?.(error)) {
         throw error;
+      }
+      if (!options || !Object.prototype.hasOwnProperty.call(options, 'fallback')) {
+        return undefined as T;
       }
       return typeof options.fallback === 'function'
         ? (options.fallback as () => T)()

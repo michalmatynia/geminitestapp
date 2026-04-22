@@ -45,6 +45,7 @@ export type SequenceActionResult = {
   handleCreateLatestPriceStockSequence: () => Promise<void>;
   handleCreateNameLengthMirrorPattern: () => Promise<void>;
   handleCreateNameCategoryMirrorPattern: () => Promise<void>;
+  handleCreateStarGaterProducerPattern: () => Promise<void>;
   handleCreateNameMirrorPolishSequence: () => Promise<void>;
   handleSaveSequenceGroup: (groupId: string) => Promise<void>;
   handleUngroup: (groupId: string) => Promise<void>;

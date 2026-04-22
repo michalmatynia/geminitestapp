@@ -1183,7 +1183,7 @@ describe('buildMongoUpdatePlan', () => {
       },
     });
     expect(toast).toHaveBeenCalledWith(
-      expect.stringContaining('Falling back to mapping rows automatically'),
+      expect.stringContaining('falling back to mapping rows automatically'),
       { variant: 'warning' }
     );
     expect(toast).toHaveBeenCalledWith(

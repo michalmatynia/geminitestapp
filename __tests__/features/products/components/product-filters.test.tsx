@@ -45,8 +45,13 @@ vi.mock('@/features/products/hooks/useProductMetadataQueries', () => ({
   useCatalogs: () => ({ data: [] }),
   useFilterTags: () => ({ data: [] }),
   useMultiTags: () => [],
+  useParameters: () => ({ data: [] }),
+  usePriceGroups: () => ({ data: [] }),
   useTags: () => ({ data: [] }),
   useProducers: () => ({ data: [] }),
+  useCustomFields: () => ({ data: [] }),
+  useShippingGroups: () => ({ data: [] }),
+  useSimpleParameters: () => ({ data: [] }),
 }));
 
 vi.mock('@/features/products/hooks/useCategoryQueries', () => ({

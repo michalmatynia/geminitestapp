@@ -269,7 +269,7 @@ export async function updateValidationPattern(
 }
 
 export async function deleteValidationPattern(id: string): Promise<void> {
-  return api.delete(`/api/v2/patterns/${id}`);
+  return api.delete(`/api/v2/products/validator-patterns/${id}`);
 }
 
 export async function reorderValidationPatterns(payload: {

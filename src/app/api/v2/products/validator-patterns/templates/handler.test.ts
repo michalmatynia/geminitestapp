@@ -171,4 +171,47 @@ describe('validator-patterns templates handler module', () => {
       ],
     });
   });
+
+  it('creates the StarGater producer template with producer replacement wiring', async () => {
+    const createPattern = vi.fn(async (input) => ({
+      id: 'pattern-producer',
+      label: input.label,
+      target: input.target,
+    }));
+
+    getValidationPatternRepositoryMock.mockResolvedValue({
+      listPatterns: vi.fn(async () => []),
+      createPattern,
+      updatePattern: vi.fn(),
+    });
+
+    const response = await POST_validator_template_handler(
+      {} as never,
+      {} as never,
+      { type: 'producer-stargater' }
+    );
+
+    expect(createPattern).toHaveBeenCalledWith(
+      expect.objectContaining({
+        label: 'Producer -> StarGater.net',
+        target: 'producer',
+        regex: '^.*$',
+        replacementEnabled: true,
+        replacementAutoApply: true,
+        replacementValue: 'StarGater.net',
+        replacementFields: ['producerIds'],
+      }),
+      { semanticAuditSource: 'template' }
+    );
+    await expect(response.json()).resolves.toEqual({
+      outcomes: [
+        {
+          action: 'created',
+          target: 'producer',
+          patternId: 'pattern-producer',
+          label: 'Producer -> StarGater.net',
+        },
+      ],
+    });
+  });
 });

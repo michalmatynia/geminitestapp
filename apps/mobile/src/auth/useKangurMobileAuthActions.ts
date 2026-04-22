@@ -1,6 +1,6 @@
 import type { KangurAuthAdapter, KangurAuthSession, KangurAuthTransitionInput } from '@kangur/platform';
 import type { QueryClient } from '@tanstack/react-query';
-import { useState, useRef, useEffect } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { hasKangurMobileAuthSessionPayloadChanged } from './hasKangurMobileAuthSessionPayloadChanged';
 import { hasKangurMobileAuthQueryIdentityChanged } from './hasKangurMobileAuthQueryIdentityChanged';
 import { invalidateKangurMobileAuthQueries } from './invalidateKangurMobileAuthQueries';
@@ -38,7 +38,7 @@ export const useKangurMobileAuthActions = ({
     sessionRef.current = session;
   }, [session]);
 
-  const handleAuthAction = async (
+  const handleAuthAction = useCallback(async (
     action: () => Promise<KangurAuthSession>,
     shouldBlockUI: boolean,
   ): Promise<void> => {
@@ -59,20 +59,51 @@ export const useKangurMobileAuthActions = ({
     } finally {
       if (shouldBlockUI) setIsLoadingAuth(false);
     }
-  };
+  }, [locale, queryClient, setAuthError]);
 
-  return {
-    isLoadingAuth,
-    session,
-    setIsLoadingAuth,
-    refreshSession: async (options = {}) =>
+  const refreshSession = useCallback(
+    async (options: { blockUI?: boolean } = {}) =>
       handleAuthAction(() => authAdapter.getSession(), options.blockUI !== false),
-    signIn: async (input) => handleAuthAction(() => authAdapter.signIn(input), true),
-    signOut: async () => handleAuthAction(() => authAdapter.signOut(), true),
-    signInWithLearnerCredentials: async (loginName, password) =>
+    [authAdapter, handleAuthAction],
+  );
+
+  const signIn = useCallback(
+    async (input?: KangurAuthTransitionInput) =>
+      handleAuthAction(() => authAdapter.signIn(input), true),
+    [authAdapter, handleAuthAction],
+  );
+
+  const signOut = useCallback(
+    async () => handleAuthAction(() => authAdapter.signOut(), true),
+    [authAdapter, handleAuthAction],
+  );
+
+  const signInWithLearnerCredentials = useCallback(
+    async (loginName: string, password: string) =>
       handleAuthAction(
         () => authAdapter.signIn({ learnerCredentials: { loginName, password } }),
         true,
       ),
-  };
+    [authAdapter, handleAuthAction],
+  );
+
+  return useMemo(
+    () => ({
+      isLoadingAuth,
+      session,
+      setIsLoadingAuth,
+      refreshSession,
+      signIn,
+      signOut,
+      signInWithLearnerCredentials,
+    }),
+    [
+      isLoadingAuth,
+      refreshSession,
+      session,
+      signIn,
+      signInWithLearnerCredentials,
+      signOut,
+    ],
+  );
 };

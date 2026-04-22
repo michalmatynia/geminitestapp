@@ -324,11 +324,11 @@ const KangurRenderedRouteSkeletonOverlay = memo(({
   );
 });
 
-const KangurResolvedRouteContent = memo(({
+function KangurResolvedRouteContent({
   resolvedPageKey,
 }: {
   resolvedPageKey: string | null;
-}): JSX.Element => {
+}): JSX.Element {
   const settingsStore = useSettingsStore();
 
   if (resolvedPageKey === null) {
@@ -348,7 +348,7 @@ const KangurResolvedRouteContent = memo(({
   ) : (
     <KangurPlainResolvedRoutePage ResolvedPage={ResolvedPage} />
   );
-});
+}
 
 // AuthenticatedApp is the main learner shell. It owns:
 //  - Boot and navigation skeleton orchestration
@@ -431,11 +431,9 @@ const AuthenticatedApp = (): JSX.Element | null => {
   const shouldSkipNavigationSkeletonDelay = activeTransitionSourceId !== null;
   const shouldBlockRouteContent = shouldRedirectToHome;
   const hasRouteContent = authErrorType !== 'auth_required' && !shouldBlockRouteContent;
-  const routeContent = useMemo(
-    () =>
-      hasRouteContent ? <KangurResolvedRouteContent resolvedPageKey={resolvedPageKey} /> : null,
-    [hasRouteContent, resolvedPageKey]
-  );
+  const routeContent = hasRouteContent ? (
+    <KangurResolvedRouteContent resolvedPageKey={resolvedPageKey} />
+  ) : null;
   // hasPresentedInteractiveShell: latched to true once the shell has been
   // shown to the user at least once. Prevents the boot loader from re-appearing
   // on subsequent navigations.

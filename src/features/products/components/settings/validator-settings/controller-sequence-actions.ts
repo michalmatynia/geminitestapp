@@ -13,6 +13,7 @@ import {
   handleCreateNameLengthMirrorPattern,
   handleCreateNameCategoryMirrorPattern,
   handleCreateNameMirrorPolishSequence,
+  handleCreateStarGaterProducerPattern,
 } from './sequence-actions/mirror-actions';
 import { handleCreateLatestPriceStockSequence } from './sequence-actions/price-stock-actions';
 import { handleCreateSkuAutoIncrementSequence } from './sequence-actions/sku-actions';
@@ -27,6 +28,7 @@ export function createSequenceActions(args: SequenceActionInput): SequenceAction
     handleCreateLatestPriceStockSequence: () => handleCreateLatestPriceStockSequence(args),
     handleCreateNameLengthMirrorPattern: () => handleCreateNameLengthMirrorPattern(args),
     handleCreateNameCategoryMirrorPattern: () => handleCreateNameCategoryMirrorPattern(args),
+    handleCreateStarGaterProducerPattern: () => handleCreateStarGaterProducerPattern(args),
     handleCreateNameMirrorPolishSequence: () => handleCreateNameMirrorPolishSequence(args),
     handleSaveSequenceGroup: (groupId: string) => handleSaveSequenceGroup({ ...args, groupId }),
     handleUngroup: (groupId: string) => handleUngroup({ ...args, groupId }),

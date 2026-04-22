@@ -93,7 +93,7 @@ describe('local-kangur-platform duels write shared API client integration', () =
 
     await expect(pingDuelLobbyPresenceViaApi({ limit: 12 })).resolves.toEqual(PRESENCE_RESPONSE);
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/kangur/duels/lobby-presence?limit=12',
+      '/kangur-api/duels/lobby-presence?limit=12',
       expect.objectContaining({
         method: 'POST',
         credentials: 'same-origin',
@@ -126,7 +126,7 @@ describe('local-kangur-platform duels write shared API client integration', () =
       CHAT_RESPONSE,
     );
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/kangur/duels/lobby-chat',
+      '/kangur-api/duels/lobby-chat',
       expect.objectContaining({
         method: 'POST',
         credentials: 'same-origin',

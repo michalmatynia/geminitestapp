@@ -37,6 +37,7 @@ export {
   resolveRuntimeAnalyticsRangeWindow,
 } from './services/runtime-analytics-service';
 export {
+  recoverBlockedLeaseRuns,
   recoverStaleRunningRuns,
   resolveAiPathsStaleRunningCleanupIntervalMs,
   resolveAiPathsStaleRunningMaxAgeMs,

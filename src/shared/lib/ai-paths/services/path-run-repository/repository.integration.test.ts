@@ -1,18 +1,18 @@
-import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
-import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import type { AiNode, AiPathRunNodeRecord } from '@/shared/contracts/ai-paths';
+import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 
-import { installInMemoryMongoPathRunDb } from './path-run-mongo-test-helpers';
+import { installInMemoryMongoPathRunDb } from './test-utils/in-memory-mongo';
 
-describe('AiPathRunRepository', () => {
+describe('AiPathRunRepository integration', () => {
   let repo: Awaited<ReturnType<typeof getPathRunRepository>>;
 
   beforeAll(async () => {
     repo = await getPathRunRepository();
   });
 
-  beforeEach(async () => {
+  beforeEach(() => {
     installInMemoryMongoPathRunDb();
   });
 
@@ -39,7 +39,7 @@ describe('AiPathRunRepository', () => {
     },
   ];
 
-  it('should create and find a run', async () => {
+  it('creates and finds a run', async () => {
     const run = await repo.createRun({
       status: 'queued',
       pathId: 'test-path',
@@ -59,7 +59,7 @@ describe('AiPathRunRepository', () => {
     expect(found!.pathName).toBe('Test Path');
   });
 
-  it('should update a run', async () => {
+  it('updates a run', async () => {
     const run = await repo.createRun({ status: 'queued', pathId: 'test' });
     const updated = await repo.updateRun(run.id, {
       status: 'running',
@@ -72,7 +72,7 @@ describe('AiPathRunRepository', () => {
     expect(updated.startedAt).toBeDefined();
   });
 
-  it('should conditionally update run status', async () => {
+  it('conditionally updates run status', async () => {
     const run = await repo.createRun({ status: 'queued', pathId: 'test-conditional' });
     const miss = await repo.updateRunIfStatus(run.id, ['running'], {
       status: 'completed',
@@ -85,7 +85,7 @@ describe('AiPathRunRepository', () => {
     expect(hit?.status).toBe('running');
   });
 
-  it('should list runs with filters', async () => {
+  it('lists runs with filters', async () => {
     const r1 = await repo.createRun({ status: 'queued', pathId: 'path-1', pathName: 'Alpha' });
     await repo.updateRun(r1.id, { status: 'completed' });
 
@@ -109,7 +109,7 @@ describe('AiPathRunRepository', () => {
     expect(multipleStatuses.total).toBe(2);
   });
 
-  it('should filter runs by requestId stored in meta', async () => {
+  it('filters runs by requestId stored in meta', async () => {
     await repo.createRun({
       status: 'queued',
       pathId: 'path-request-a',
@@ -132,7 +132,7 @@ describe('AiPathRunRepository', () => {
     expect(matched.runs[0]?.pathId).toBe('path-request-a');
   });
 
-  it('should claim next queued run', async () => {
+  it('claims the next queued run', async () => {
     await repo.createRun({ status: 'queued', pathId: 'p1' });
 
     const claimed = await repo.claimNextQueuedRun();
@@ -144,14 +144,14 @@ describe('AiPathRunRepository', () => {
     expect(noneLeft).toBeNull();
   });
 
-  it('should claim run only if nextRetryAt is in the past or null', async () => {
-    const future = new Date(Date.now() + 10000);
+  it('claims a run only if nextRetryAt is in the past or null', async () => {
+    const future = new Date(Date.now() + 10_000);
     await repo.createRun({ status: 'queued', pathId: 'future', nextRetryAt: future.toISOString() });
 
     const claimed1 = await repo.claimNextQueuedRun();
     expect(claimed1).toBeNull();
 
-    const past = new Date(Date.now() - 10000);
+    const past = new Date(Date.now() - 10_000);
     await repo.createRun({ status: 'queued', pathId: 'past', nextRetryAt: past.toISOString() });
 
     const claimed2 = await repo.claimNextQueuedRun();
@@ -159,7 +159,7 @@ describe('AiPathRunRepository', () => {
     expect(claimed2!.pathId).toBe('past');
   });
 
-  it('should claim a specific queued run for processing', async () => {
+  it('claims a specific queued run for processing', async () => {
     const run = await repo.createRun({ status: 'queued', pathId: 'claim-specific' });
     const claimed = await repo.claimRunForProcessing(run.id);
     expect(claimed).not.toBeNull();
@@ -169,18 +169,18 @@ describe('AiPathRunRepository', () => {
     expect(claimedAgain).toBeNull();
   });
 
-  it('should create and list run nodes', async () => {
+  it('creates and lists run nodes', async () => {
     const run = await repo.createRun({ status: 'queued', pathId: 'test' });
     await repo.createRunNodes(run.id, mockNodes);
 
     const nodes = await repo.listRunNodes(run.id);
     expect(nodes.length).toBe(2);
-    expect(nodes.map((n: AiPathRunNodeRecord) => n.nodeId)).toContain('node-1');
-    expect(nodes.map((n: AiPathRunNodeRecord) => n.nodeId)).toContain('node-2');
+    expect(nodes.map((node: AiPathRunNodeRecord) => node.nodeId)).toContain('node-1');
+    expect(nodes.map((node: AiPathRunNodeRecord) => node.nodeId)).toContain('node-2');
     expect(nodes[0]!.status).toBe('pending');
   });
 
-  it('should list run nodes changed after a cursor', async () => {
+  it('lists run nodes changed after a cursor', async () => {
     const run = await repo.createRun({ status: 'queued', pathId: 'nodes-since' });
     await repo.createRunNodes(run.id, mockNodes);
     const initialNodes = await repo.listRunNodes(run.id);
@@ -203,10 +203,9 @@ describe('AiPathRunRepository', () => {
     expect(changed.some((node: AiPathRunNodeRecord) => node.nodeId === 'node-1')).toBe(true);
   });
 
-  it('should upsert run node', async () => {
+  it('upserts a run node', async () => {
     const run = await repo.createRun({ status: 'queued', pathId: 'test' });
 
-    // Create via upsert
     const node = await repo.upsertRunNode(run.id, 'node-x', {
       nodeType: 'custom',
       status: 'running',
@@ -215,7 +214,6 @@ describe('AiPathRunRepository', () => {
     expect(node.nodeId).toBe('node-x');
     expect(node.status).toBe('running');
 
-    // Update via upsert
     const updated = await repo.upsertRunNode(run.id, 'node-x', {
       nodeType: 'custom',
       status: 'completed',
@@ -226,7 +224,7 @@ describe('AiPathRunRepository', () => {
     expect(updated.attempt).toBe(1);
   });
 
-  it('should create and list run events', async () => {
+  it('creates and lists run events', async () => {
     const run = await repo.createRun({ status: 'queued', pathId: 'test' });
     await repo.createRunEvent({
       runId: run.id,
@@ -242,14 +240,14 @@ describe('AiPathRunRepository', () => {
     expect(events[0]!.metadata).toEqual({ foo: 'bar' });
   });
 
-  it('should mark stale running runs as failed', async () => {
+  it('marks stale running runs as failed', async () => {
     const run = await repo.createRun({ status: 'queued', pathId: 'stale' });
     await repo.updateRun(run.id, {
       status: 'running',
-      startedAt: new Date(Date.now() - 100000).toISOString(),
+      startedAt: new Date(Date.now() - 100_000).toISOString(),
     });
 
-    const result = await repo.markStaleRunningRuns(50000); // 50s max age
+    const result = await repo.markStaleRunningRuns(50_000);
     expect(result.count).toBe(1);
 
     const updated = await repo.findRunById(run.id);

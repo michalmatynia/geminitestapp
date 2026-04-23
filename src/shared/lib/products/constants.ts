@@ -18,6 +18,8 @@ export const PRODUCT_STUDIO_SEQUENCE_GENERATION_MODE_SETTING_KEY =
 export const DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL = 'http://localhost:3000';
 export const PRODUCT_PAGE_SIZE_OPTIONS = [12, 24, 48] as const;
 export const PRODUCT_PAGE_SIZE_MAX = 48;
+export const PRODUCT_CATEGORY_FILTER_ALL_VALUE = '__all__';
+export const PRODUCT_CATEGORY_FILTER_UNASSIGNED_VALUE = '__unassigned__';
 const PRODUCT_PAGE_SIZE_MIN = 1;
 
 export const normalizeProductPageSize = (

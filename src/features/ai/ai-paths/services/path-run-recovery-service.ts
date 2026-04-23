@@ -137,10 +137,9 @@ export const recoverBlockedLeaseRuns = async (input?: {
       '@/features/ai/ai-paths/services/path-run-management-service'
     );
 
-    let recoveredCount = 0;
-    for (const run of blockedRuns.runs) {
+    const recoveryPromises = blockedRuns.runs.map(async (run) => {
       const readyAtMs = resolveBlockedLeaseRecoveryReadyAtMs(run, graceMs);
-      if (readyAtMs === null || nowMs < readyAtMs) continue;
+      if (readyAtMs === null || nowMs < readyAtMs) return false;
 
       const recovered = await markPathRunHandoffReady({
         runId: run.id,
@@ -149,12 +148,11 @@ export const recoverBlockedLeaseRuns = async (input?: {
         checkpointLineageId: `${run.id}:lease-recovery:${nowMs}`,
       });
 
-      if (recovered?.status === 'handoff_ready') {
-        recoveredCount += 1;
-      }
-    }
+      return recovered?.status === 'handoff_ready';
+    });
 
-    return recoveredCount;
+    const results = await Promise.all(recoveryPromises);
+    return results.filter(Boolean).length;
   } catch (error) {
     void ErrorSystem.captureException(error);
     void ErrorSystem.logWarning(`[${source}] Failed to recover blocked lease runs.`, {

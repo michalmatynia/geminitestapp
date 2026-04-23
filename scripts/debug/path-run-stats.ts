@@ -1,6 +1,6 @@
 import 'dotenv/config';
 
-import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
+import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 
 const pathId = process.argv[2] ?? 'path_65mv2p';
 

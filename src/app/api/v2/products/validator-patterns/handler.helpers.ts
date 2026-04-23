@@ -14,14 +14,14 @@ import { parseDynamicReplacementRecipe } from '@/shared/lib/products/utils/valid
 import { validateRegexSafety } from '@/shared/utils/regex-safety';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
-type ValidatorPatternRuntimeType = 'none' | 'database_query' | 'ai_prompt';
-type ValidatorPatternScope = 'draft_template' | 'product_create' | 'product_edit';
-type ValidatorPatternLaunchSourceMode =
+export type ValidatorPatternRuntimeType = 'none' | 'database_query' | 'ai_prompt';
+export type ValidatorPatternScope = 'draft_template' | 'product_create' | 'product_edit';
+export type ValidatorPatternLaunchSourceMode =
   | 'current_field'
   | 'form_field'
   | 'latest_product_field';
-type ValidatorPatternLaunchScopeBehavior = 'gate' | 'condition_only';
-type ValidatorPatternLaunchOperator =
+export type ValidatorPatternLaunchScopeBehavior = 'gate' | 'condition_only';
+export type ValidatorPatternLaunchOperator =
   | 'equals'
   | 'not_equals'
   | 'contains'
@@ -35,7 +35,7 @@ type ValidatorPatternLaunchOperator =
   | 'is_empty'
   | 'is_not_empty';
 
-type ValidatorPatternCreateBodyLike = {
+export type ValidatorPatternCreateBodyLike = {
   label: string;
   target: CreateProductValidationPatternInput['target'];
   locale?: string | null;
@@ -75,7 +75,7 @@ type ValidatorPatternCreateBodyLike = {
   semanticState?: unknown;
 };
 
-type ResolvedValidatorPatternCreateState = {
+export type ResolvedValidatorPatternCreateState = {
   label: string;
   locale: string | null;
   regex: string;
@@ -108,12 +108,12 @@ type ResolvedValidatorPatternCreateState = {
   semanticState: CreateProductValidationPatternInput['semanticState'];
 };
 
-export const assertValidValidatorPatternCreateRegex = (
+export const assertValidValidatorPatternRegex = (
   regexSource: string,
   flags: string | null | undefined
 ): void => {
   const safety = validateRegexSafety(regexSource, flags);
-  if (!safety.ok) {
+  if (safety.ok === false) {
     throw badRequestError(safety.message, {
       code: safety.code,
       detail: safety.detail ?? null,
@@ -123,7 +123,7 @@ export const assertValidValidatorPatternCreateRegex = (
   }
 
   try {
-    const normalizedFlags = flags?.trim() || undefined;
+    const normalizedFlags = (flags !== null && flags !== undefined) ? (flags.trim() !== '' ? flags.trim() : undefined) : undefined;
     void new RegExp(regexSource, normalizedFlags);
   } catch (error) {
     void ErrorSystem.captureException(error);
@@ -135,14 +135,14 @@ export const assertValidValidatorPatternCreateRegex = (
   }
 };
 
-export const normalizeValidatorPatternCreateReplacementFields = (
+export const normalizeValidatorPatternReplacementFields = (
   fields: string[] | undefined
 ): string[] => {
   if (!Array.isArray(fields) || fields.length === 0) return [];
   return [...new Set(fields)];
 };
 
-export const canResolveValidatorPatternCreateReplacementAtRuntime = ({
+export const canResolveValidatorPatternReplacementAtRuntime = ({
   replacementEnabled,
   replacementValue,
   runtimeEnabled,
@@ -152,31 +152,31 @@ export const canResolveValidatorPatternCreateReplacementAtRuntime = ({
   replacementValue: string | null;
   runtimeEnabled: boolean;
   runtimeType: ValidatorPatternRuntimeType;
-}): boolean => replacementEnabled && !replacementValue && runtimeEnabled && runtimeType !== 'none';
+}): boolean => replacementEnabled && replacementValue === null && runtimeEnabled && runtimeType !== 'none';
 
-export const assertValidValidatorPatternCreateReplacementRecipe = (
+export const assertValidValidatorPatternReplacementRecipe = (
   replacementEnabled: boolean,
   replacementValue: string | null
 ): void => {
-  if (!replacementEnabled || !replacementValue) return;
+  if (replacementEnabled === false || replacementValue === null) return;
 
   const recipe = parseDynamicReplacementRecipe(replacementValue);
-  if (!recipe) return;
+  if (recipe === null) return;
 
-  if (recipe.sourceRegex) {
-    assertValidValidatorPatternCreateRegex(recipe.sourceRegex, recipe.sourceFlags ?? null);
+  if (recipe.sourceRegex !== null) {
+    assertValidValidatorPatternRegex(recipe.sourceRegex, recipe.sourceFlags ?? null);
   }
 
   if (recipe.logicOperator === 'regex') {
-    if (!recipe.logicOperand) {
+    if (recipe.logicOperand === null) {
       throw badRequestError('Dynamic replacement regex condition requires an operand.');
     }
 
-    assertValidValidatorPatternCreateRegex(recipe.logicOperand, recipe.logicFlags ?? null);
+    assertValidValidatorPatternRegex(recipe.logicOperand, recipe.logicFlags ?? null);
   }
 };
 
-export const assertValidValidatorPatternCreateLaunchConfig = ({
+export const assertValidValidatorPatternLaunchConfig = ({
   launchEnabled,
   launchOperator,
   launchValue,
@@ -187,29 +187,29 @@ export const assertValidValidatorPatternCreateLaunchConfig = ({
   launchValue: string | null;
   launchFlags: string | null;
 }): void => {
-  if (!launchEnabled || launchOperator !== 'regex') return;
-  if (!launchValue) {
+  if (launchEnabled === false || launchOperator !== 'regex') return;
+  if (launchValue === null) {
     throw badRequestError('launchValue is required when launchOperator is regex.');
   }
 
-  assertValidValidatorPatternCreateRegex(launchValue, launchFlags);
+  assertValidValidatorPatternRegex(launchValue, launchFlags);
 };
 
 export const resolveValidatorPatternCreateState = (
   body: ValidatorPatternCreateBodyLike
 ): ResolvedValidatorPatternCreateState => {
   const label = body.label.trim();
-  const locale = body.locale?.trim().toLowerCase() || null;
+  const locale = body.locale !== undefined && body.locale !== null ? body.locale.trim().toLowerCase() : null;
   const regex = body.regex.trim();
-  const flags = body.flags?.trim() || null;
+  const flags = body.flags !== undefined && body.flags !== null ? body.flags.trim() : null;
   const message = body.message.trim();
   const replacementEnabled = body.replacementEnabled ?? false;
   const replacementAutoApply = body.replacementAutoApply ?? false;
   const skipNoopReplacementProposal = normalizeProductValidationSkipNoopReplacementProposal(
     body.skipNoopReplacementProposal
   );
-  const replacementValue = body.replacementValue?.trim() || null;
-  const replacementFields = normalizeValidatorPatternCreateReplacementFields(
+  const replacementValue = body.replacementValue !== undefined && body.replacementValue !== null ? body.replacementValue.trim() : null;
+  const replacementFields = normalizeValidatorPatternReplacementFields(
     body.replacementFields
   );
   const replacementAppliesToScopes = normalizeProductValidationPatternReplacementScopes(
@@ -220,15 +220,15 @@ export const resolveValidatorPatternCreateState = (
   const runtimeConfig = validateAndNormalizeRuntimeConfig({
     runtimeEnabled,
     runtimeType,
-    runtimeConfig: body.runtimeConfig?.trim() || null,
+    runtimeConfig: body.runtimeConfig !== undefined && body.runtimeConfig !== null ? body.runtimeConfig.trim() : null,
   });
   const postAcceptBehavior = body.postAcceptBehavior ?? 'revalidate';
   const denyBehaviorOverride = normalizeProductValidationPatternDenyBehaviorOverride(
     body.denyBehaviorOverride
   ) as 'ask_again' | 'mute_session' | null;
   const validationDebounceMs = body.validationDebounceMs ?? 0;
-  const sequenceGroupId = body.sequenceGroupId?.trim() || null;
-  const sequenceGroupLabel = body.sequenceGroupLabel?.trim() || null;
+  const sequenceGroupId = body.sequenceGroupId !== undefined && body.sequenceGroupId !== null ? body.sequenceGroupId.trim() : null;
+  const sequenceGroupLabel = body.sequenceGroupLabel !== undefined && body.sequenceGroupLabel !== null ? body.sequenceGroupLabel.trim() : null;
   const sequenceGroupDebounceMs = body.sequenceGroupDebounceMs ?? 0;
   const launchEnabled = body.launchEnabled ?? false;
   const launchAppliesToScopes = normalizeProductValidationPatternLaunchScopes(
@@ -238,17 +238,17 @@ export const resolveValidatorPatternCreateState = (
   const launchScopeBehavior = normalizeProductValidationLaunchScopeBehavior(
     body.launchScopeBehavior
   );
-  const launchSourceField = body.launchSourceField?.trim() || null;
+  const launchSourceField = body.launchSourceField !== undefined && body.launchSourceField !== null ? body.launchSourceField.trim() : null;
   const launchOperator = body.launchOperator ?? 'equals';
   const launchValue = typeof body.launchValue === 'string' ? body.launchValue : null;
-  const launchFlags = body.launchFlags?.trim() || null;
+  const launchFlags = body.launchFlags !== undefined && body.launchFlags !== null ? body.launchFlags.trim() : null;
   const appliesToScopes = normalizeProductValidationPatternScopes(body.appliesToScopes);
   const semanticState = normalizeProductValidationSemanticState(body.semanticState);
 
   if (
     replacementEnabled &&
-    !replacementValue &&
-    !canResolveValidatorPatternCreateReplacementAtRuntime({
+    replacementValue === null &&
+    !canResolveValidatorPatternReplacementAtRuntime({
       replacementEnabled,
       replacementValue,
       runtimeEnabled,
@@ -260,14 +260,14 @@ export const resolveValidatorPatternCreateState = (
     );
   }
 
-  if (launchEnabled && launchSourceMode !== 'current_field' && !launchSourceField) {
+  if (launchEnabled && launchSourceMode !== 'current_field' && launchSourceField === null) {
     throw badRequestError(
       'launchSourceField is required when launchSourceMode is not current_field'
     );
   }
 
-  assertValidValidatorPatternCreateRegex(regex, flags);
-  assertValidValidatorPatternCreateReplacementRecipe(replacementEnabled, replacementValue);
+  assertValidValidatorPatternRegex(regex, flags);
+  assertValidValidatorPatternReplacementRecipe(replacementEnabled, replacementValue);
   assertValidValidatorPatternCreateLaunchConfig({
     launchEnabled,
     launchOperator,

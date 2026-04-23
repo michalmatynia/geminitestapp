@@ -3,7 +3,7 @@
 import React from 'react';
 
 import { ClientOnly } from '@/shared/ui/primitives.public';
-import { FormSection } from '@/shared/ui/navigation-and-layout.public';
+import { FormSection } from '@/shared/ui/forms-and-actions.public';
 import type { ValidatorPatternList, ValidatorScope } from '@/shared/contracts/admin';
 
 import { getViewContentId, getViewTriggerId } from './utils';

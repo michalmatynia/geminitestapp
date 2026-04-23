@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { PRODUCT_CATEGORY_FILTER_UNASSIGNED_VALUE } from '@/shared/lib/products/constants';
 
 const {
   categoryFindMock,
@@ -450,6 +451,18 @@ describe('mongo-product-repository.filters', () => {
       categoryId: {
         $in: ['cat-pins', 'cat-anime-pins', 'cat-game-pins', 'cat-naruto-pins'],
       },
+    });
+  });
+
+  it('filters classic category queries for unassigned products without category lookups', async () => {
+    const filter = await buildMongoWhere({
+      categoryId: PRODUCT_CATEGORY_FILTER_UNASSIGNED_VALUE,
+    });
+
+    expect(categoryFindOneMock).not.toHaveBeenCalled();
+    expect(categoryFindMock).not.toHaveBeenCalled();
+    expect(filter).toEqual({
+      $or: [{ categoryId: { $exists: false } }, { categoryId: null }, { categoryId: '' }],
     });
   });
 

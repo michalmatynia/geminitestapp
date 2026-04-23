@@ -40,7 +40,7 @@ export {
   enqueuePathRunJob,
 };
 
-export const __testOnly = {
+export const TEST_ONLY = {
   clearAiPathsEnabledCache: (): void => {
     resetAiPathsEnabledCache();
     clearAiPathRunQueueStatusCache();

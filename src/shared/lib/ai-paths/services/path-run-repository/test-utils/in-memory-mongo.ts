@@ -362,7 +362,7 @@ export const installInMemoryMongoPathRunDb = (): void => {
         let modifiedCount = 0;
         for (const operation of operations) {
           if (!operation.updateOne) continue;
-          const index = docs.findIndex((doc) => matchesFilter(doc, operation.updateOne!.filter));
+          const index = docs.findIndex((doc) => matchesFilter(doc, operation.updateOne.filter));
           if (index === -1) continue;
           docs[index] = applyUpdate(cloneValue(docs[index]!), operation.updateOne.update, false);
           modifiedCount += 1;

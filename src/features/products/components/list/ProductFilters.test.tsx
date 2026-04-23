@@ -3,6 +3,10 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  PRODUCT_CATEGORY_FILTER_ALL_VALUE,
+  PRODUCT_CATEGORY_FILTER_UNASSIGNED_VALUE,
+} from '@/shared/lib/products/constants';
 
 const {
   advancedFilterModalMock,
@@ -269,7 +273,8 @@ describe('ProductFilters layout contract', () => {
     );
     expect(categoryFilter?.options).toEqual(
       expect.arrayContaining([
-        { value: '__all__', label: 'All categories' },
+        { value: PRODUCT_CATEGORY_FILTER_ALL_VALUE, label: 'All categories' },
+        { value: PRODUCT_CATEGORY_FILTER_UNASSIGNED_VALUE, label: 'Unassigned' },
         { value: 'cat-1', label: 'Keychains (Catalog One)' },
         { value: 'cat-2', label: 'Keychains (Catalog Two)' },
         { value: 'cat-3', label: 'Stickers' },
@@ -363,7 +368,8 @@ describe('ProductFilters layout contract', () => {
     const categoryFilter = filterPanelProps.filters.find((field) => field.key === 'categoryId');
 
     expect(categoryFilter?.options).toEqual([
-      { value: '__all__', label: 'All categories' },
+      { value: PRODUCT_CATEGORY_FILTER_ALL_VALUE, label: 'All categories' },
+      { value: PRODUCT_CATEGORY_FILTER_UNASSIGNED_VALUE, label: 'Unassigned' },
       { value: 'cat-keychains', label: 'Keychains' },
       { value: 'cat-pins', label: 'Pins' },
       { value: 'cat-game-pins', label: 'Pins / Game Pins' },
@@ -382,6 +388,42 @@ describe('ProductFilters layout contract', () => {
     ]);
   });
 
+  it('keeps unassigned as a dedicated option and hides opaque unlabeled category ids', () => {
+    useProductListFiltersContextMock.mockReturnValue(
+      buildFiltersContextValue({ catalogFilter: 'catalog-1' })
+    );
+    useProductCategoriesMock.mockReturnValue({
+      data: [
+        {
+          id: '507f1f77bcf86cd799439011',
+          catalogId: 'catalog-1',
+          name: '   ',
+          name_en: '   ',
+          name_pl: null,
+          name_de: null,
+          color: null,
+          parentId: null,
+        },
+      ],
+    });
+
+    render(<ProductFilters />);
+
+    const filterPanelProps = filterPanelMock.mock.lastCall?.[0] as {
+      filters: Array<{
+        key: string;
+        options?: Array<{ value: string; label: string }>;
+      }>;
+    };
+    const categoryFilter = filterPanelProps.filters.find((field) => field.key === 'categoryId');
+
+    expect(categoryFilter?.options).toEqual([
+      { value: PRODUCT_CATEGORY_FILTER_ALL_VALUE, label: 'All categories' },
+      { value: PRODUCT_CATEGORY_FILTER_UNASSIGNED_VALUE, label: 'Unassigned' },
+      { value: '507f1f77bcf86cd799439011', label: 'Unlabeled category' },
+    ]);
+  });
+
   it('maps category option selection back to setCategoryId', () => {
     const setCategoryId = vi.fn();
     useProductListFiltersContextMock.mockReturnValue(
@@ -395,9 +437,11 @@ describe('ProductFilters layout contract', () => {
     };
 
     filterPanelProps.onFilterChange('categoryId', 'cat-123');
-    filterPanelProps.onFilterChange('categoryId', '__all__');
+    filterPanelProps.onFilterChange('categoryId', PRODUCT_CATEGORY_FILTER_UNASSIGNED_VALUE);
+    filterPanelProps.onFilterChange('categoryId', PRODUCT_CATEGORY_FILTER_ALL_VALUE);
 
     expect(setCategoryId).toHaveBeenNthCalledWith(1, 'cat-123');
-    expect(setCategoryId).toHaveBeenNthCalledWith(2, '');
+    expect(setCategoryId).toHaveBeenNthCalledWith(2, PRODUCT_CATEGORY_FILTER_UNASSIGNED_VALUE);
+    expect(setCategoryId).toHaveBeenNthCalledWith(3, '');
   });
 });

@@ -1,5 +1,9 @@
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { ProductCategory } from '@/shared/contracts/products/categories';
+import {
+  PRODUCT_CATEGORY_FILTER_ALL_VALUE,
+  PRODUCT_CATEGORY_FILTER_UNASSIGNED_VALUE,
+} from '@/shared/lib/products/constants';
 
 export type ProductCategoryNameLocale = 'name_en' | 'name_pl' | 'name_de';
 
@@ -35,7 +39,6 @@ const resolveCategoryFilterLabel = (
     normalizeString(category.name),
     normalizeString(category.name_pl),
     normalizeString(category.name_de),
-    normalizeString(category.id),
   ];
   return fallbackNames.find((label) => label.length > 0) ?? 'Unlabeled category';
 };
@@ -205,7 +208,8 @@ export const buildCategoryFilterOptions = ({
   });
 
   return [
-    { value: '__all__', label: 'All categories' },
+    { value: PRODUCT_CATEGORY_FILTER_ALL_VALUE, label: 'All categories' },
+    { value: PRODUCT_CATEGORY_FILTER_UNASSIGNED_VALUE, label: 'Unassigned' },
     ...entries.map((entry) => {
       const isDuplicatePath = (duplicateCountByPath.get(entry.pathLabel) ?? 0) > 1;
       return {

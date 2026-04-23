@@ -58,13 +58,13 @@ export type EnqueueRunInput = {
 };
 
 const toRecord = (value: unknown): Record<string, unknown> | null =>
-  value && typeof value === 'object' && !Array.isArray(value)
+  value !== null && typeof value === 'object' && !Array.isArray(value)
     ? (value as Record<string, unknown>)
     : null;
 
 const toSampleStateMap = <T = unknown>(value: unknown): Record<string, T> | undefined => {
   const record = toRecord(value);
-  if (!record) return undefined;
+  if (record === null) return undefined;
   return record as Record<string, T>;
 };
 
@@ -75,13 +75,11 @@ const REQUIRE_DURABLE_QUEUE =
   process.env['AI_PATHS_REQUIRE_DURABLE_QUEUE'] === 'true' ||
   (process.env['NODE_ENV'] === 'production' &&
     process.env['AI_PATHS_ALLOW_LOCAL_QUEUE_FALLBACK'] !== 'true');
-const LOCAL_FALLBACK_GRACE_MS = Math.max(
-  0,
-  Number.parseInt(process.env['AI_PATHS_LOCAL_FALLBACK_GRACE_MS'] ?? '1500', 10) || 1500
-);
+const rawGrace = Number.parseInt(process.env['AI_PATHS_LOCAL_FALLBACK_GRACE_MS'] ?? '1500', 10);
+const LOCAL_FALLBACK_GRACE_MS = Math.max(0, Number.isFinite(rawGrace) && rawGrace !== 0 ? rawGrace : 1500);
 
 export const resolveRunStartedAt = (run: AiPathRunRecord): string | null => {
-  if (!run.startedAt) return null;
+  if (run.startedAt === null || run.startedAt === undefined || run.startedAt === '') return null;
   return run.startedAt;
 };
 

@@ -55,7 +55,7 @@ const assertReorderUpdatesAreFresh = (
       throw notFoundError('Validation pattern not found', { patternId: update.id });
     }
     const expectedUpdatedAt = normalizeNullableTrimmed(update.expectedUpdatedAt);
-    if (expectedUpdatedAt && current.updatedAt !== expectedUpdatedAt) {
+    if (expectedUpdatedAt !== null && expectedUpdatedAt !== undefined && current.updatedAt !== expectedUpdatedAt) {
       throw conflictError('Validation pattern was modified by another request.', {
         patternId: update.id,
         expectedUpdatedAt,

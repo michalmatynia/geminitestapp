@@ -31,11 +31,12 @@ const { log: debugQueueLog, warn: debugQueueWarn } = createDebugQueueLogger(
 const AI_PATH_EXECUTION_LEASE_RESOURCE_ID = 'ai-paths.run.execution';
 const AI_PATH_EXECUTION_LEASE_MS = Math.max(60_000, JOB_EXECUTION_TIMEOUT_MS || 0, 5 * 60 * 1000);
 
-const resolveQueueWorkerAgentId = (): string =>
-  process.env['AI_AGENT_ID']?.trim() ||
-  process.env['CODEX_AGENT_ID']?.trim() ||
-  process.env['AGENT_ID']?.trim() ||
-  `ai-path-run-queue-${process.pid}`;
+const resolveQueueWorkerAgentId = (): string => {
+  const agentId = process.env['AI_AGENT_ID']?.trim() ??
+                  process.env['CODEX_AGENT_ID']?.trim() ??
+                  process.env['AGENT_ID']?.trim();
+  return agentId !== null && agentId !== undefined && agentId !== '' ? agentId : `ai-path-run-queue-${process.pid}`;
+};
 
 export const enqueuePathRunJob = async (
   runId: string,
@@ -44,53 +45,46 @@ export const enqueuePathRunJob = async (
   await queue.enqueue({ runId }, { delay: options.delayMs, jobId: runId });
 };
 
-export const queue = createManagedQueue<AiPathRunJobData>({
-  name: AI_PATH_RUN_QUEUE_NAME,
-  concurrency: Math.max(1, DEFAULT_CONCURRENCY),
-  jobTimeoutMs: JOB_EXECUTION_TIMEOUT_MS > 0 ? JOB_EXECUTION_TIMEOUT_MS : undefined,
-  defaultJobOptions: {
-    attempts: 1,
-    removeOnComplete: true,
-    removeOnFail: false,
-  },
-  workerOptions: {
-    stalledInterval: 30_000,
-    maxStalledCount: 2,
-  },
-  processor: async (data, _jobId, signal) => {
-    if (data.runId === '__recovery__' || data.type === 'recovery') {
-      await processStaleRunRecovery();
-      return;
-    }
+const jobTimeout = (typeof JOB_EXECUTION_TIMEOUT_MS === 'number' && JOB_EXECUTION_TIMEOUT_MS > 0) ? JOB_EXECUTION_TIMEOUT_MS : undefined;
 
-    const repo = await getPathRunRepository();
-    const run = await repo.claimRunForProcessing(data.runId);
-    if (!run) {
-      const latest = await repo.findRunById(data.runId);
-      if (!latest) {
-        debugQueueWarn(`[aiPathRunQueue] Run ${data.runId} not found, skipping`);
-        return;
-      }
-      if (latest.status === 'running') {
-        debugQueueLog(
-          `[aiPathRunQueue] Run ${data.runId} is already running, skipping duplicate job`
-        );
-        return;
-      }
-      debugQueueLog(`[aiPathRunQueue] Run ${data.runId} has status "${latest.status}", skipping`);
-      return;
+const handleLease = async (
+  runId: string,
+  repo: Awaited<ReturnType<typeof getPathRunRepository>>,
+  ownerAgentId: string
+): Promise<{ run: Awaited<ReturnType<typeof repo.claimRunForProcessing>>; leaseResult: ReturnType<typeof mutateAgentLease> } | null> => {
+  const run = await repo.claimRunForProcessing(runId);
+  if (run === null) {
+    const latest = await repo.findRunById(runId);
+    if (latest === null) {
+      debugQueueWarn(`[aiPathRunQueue] Run ${runId} not found, skipping`);
+      return null;
     }
-    const ownerAgentId = resolveQueueWorkerAgentId();
-    const leaseResult = mutateAgentLease({
-      action: 'claim',
-      resourceId: AI_PATH_EXECUTION_LEASE_RESOURCE_ID,
-      scopeId: run.id,
-      ownerAgentId,
-      ownerRunId: run.id,
-      leaseMs: AI_PATH_EXECUTION_LEASE_MS,
-    });
+    if (latest.status === 'running') {
+      debugQueueLog(`[aiPathRunQueue] Run ${runId} is already running, skipping duplicate job`);
+      return null;
+    }
+    debugQueueLog(`[aiPathRunQueue] Run ${runId} has status "${latest.status}", skipping`);
+    return null;
+  }
+  
+  const leaseResult = mutateAgentLease({
+    action: 'claim',
+    resourceId: AI_PATH_EXECUTION_LEASE_RESOURCE_ID,
+    scopeId: run.id,
+    ownerAgentId,
+    ownerRunId: run.id,
+    leaseMs: AI_PATH_EXECUTION_LEASE_MS,
+  });
 
-    if (!leaseResult.ok) {
+  return { run, leaseResult };
+};
+
+const handleBlockedLease = async (
+  run: Awaited<ReturnType<typeof getPathRunRepository>> extends infer R ? R extends { claimRunForProcessing: (...args: any[]) => Promise<infer U> } ? U : never : never,
+  leaseResult: ReturnType<typeof mutateAgentLease>,
+  repo: Awaited<ReturnType<typeof getPathRunRepository>>,
+  ownerAgentId: string
+): Promise<void> => {
       const blockedAt = new Date().toISOString();
       const conflictingLease = leaseResult.conflictingLease ?? null;
       const blockingOwnerAgentId = conflictingLease?.ownerAgentId ?? null;
@@ -135,45 +129,81 @@ export const queue = createManagedQueue<AiPathRunJobData>({
           timestamp: blockedAt,
         });
       }
+};
 
-      debugQueueLog(
-        `[aiPathRunQueue] Run ${data.runId} blocked on execution lease owned by ${blockingOwnerAgentId ?? 'unknown-owner'}`
-      );
+const runQueueJob = async (data: AiPathRunJobData, signal: AbortSignal): Promise<void> => {
+    if (data.runId === '__recovery__' || data.type === 'recovery') {
+      await processStaleRunRecovery();
+      return;
+    }
+
+    const repo = await getPathRunRepository();
+    const ownerAgentId = resolveQueueWorkerAgentId();
+    const result = await handleLease(data.runId, repo, ownerAgentId);
+    if (result === null) return;
+    
+    const { run, leaseResult } = result;
+
+    if (leaseResult.ok === false) {
+      if (run !== null) {
+        await handleBlockedLease(run, leaseResult, repo, ownerAgentId);
+        debugQueueLog(
+            `[aiPathRunQueue] Run ${data.runId} blocked on execution lease owned by ${leaseResult.conflictingLease?.ownerAgentId ?? 'unknown-owner'}`
+        );
+      }
       return;
     }
 
     try {
+      if (run === null) throw new Error('Run is null');
       await recordRuntimeRunStarted({ runId: run.id });
       const outcome = await processRun(run, signal);
       if (outcome?.requeueDelayMs !== undefined) {
         await enqueuePathRunJob(run.id, { delayMs: outcome.requeueDelayMs });
       }
     } finally {
-      mutateAgentLease({
-        action: 'release',
-        resourceId: AI_PATH_EXECUTION_LEASE_RESOURCE_ID,
-        scopeId: run.id,
-        ownerAgentId,
-        ownerRunId: run.id,
-        leaseId: leaseResult.lease?.leaseId ?? undefined,
-        reason: 'ai-path queue worker finished processing',
-      });
+      if (run !== null) {
+        mutateAgentLease({
+          action: 'release',
+          resourceId: AI_PATH_EXECUTION_LEASE_RESOURCE_ID,
+          scopeId: run.id,
+          ownerAgentId,
+          ownerRunId: run.id,
+          leaseId: leaseResult.lease?.leaseId ?? undefined,
+          reason: 'ai-path queue worker finished processing',
+        });
+      }
     }
+};
+
+export const queue = createManagedQueue<AiPathRunJobData>({
+  name: AI_PATH_RUN_QUEUE_NAME,
+  concurrency: Math.max(1, DEFAULT_CONCURRENCY),
+  jobTimeoutMs: jobTimeout,
+  defaultJobOptions: {
+    attempts: 1,
+    removeOnComplete: true,
+    removeOnFail: false,
   },
-  onFailed: async (_jobId, error, data) => {
+  workerOptions: {
+    stalledInterval: 30_000,
+    maxStalledCount: 2,
+  },
+  processor: runQueueJob,
+  onFailed: async (_jobId, err, data) => {
     try {
-      const { ErrorSystem } = await import('@/shared/lib/observability/system-logger');
-      void ErrorSystem.captureException(error, {
+      const { ErrorSystem: LoggerSystem } = await import('@/shared/lib/observability/system-logger');
+      void LoggerSystem.captureException(err, {
         service: LOG_SOURCE,
         runId: data.runId,
       });
-    } catch (error) {
-      void ErrorSystem.captureException(error);
+    } catch (importError) {
+      void ErrorSystem.captureException(importError);
       void logSystemEvent({
         level: 'error',
         source: LOG_SOURCE,
         message: 'Fatal queue error',
-        error,
+        error: importError,
       });
     }
   },

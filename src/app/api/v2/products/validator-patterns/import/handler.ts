@@ -315,7 +315,7 @@ const toCreateInput = (
 
   if (
     replacementEnabled &&
-    !replacementValue &&
+    replacementValue === null &&
     !canResolveReplacementAtRuntime({
       replacementEnabled,
       replacementValue,
@@ -328,7 +328,7 @@ const toCreateInput = (
     );
   }
 
-  if (launchEnabled && launchSourceMode !== 'current_field' && !launchSourceField) {
+  if (launchEnabled && launchSourceMode !== 'current_field' && launchSourceField === null) {
     throw badRequestError(
       'launchSourceField is required when launchSourceMode is not current_field'
     );
@@ -455,7 +455,7 @@ const buildSequenceAssignments = (
   for (const pattern of body.patterns) {
     if (assignments.has(pattern.code)) continue;
     const inlineSequenceCode = normalizeNullableTrimmed(pattern.sequenceCode);
-    if (!inlineSequenceCode) continue;
+    if (inlineSequenceCode === null) continue;
 
     const definedSequence = sequenceDefByCode.get(inlineSequenceCode);
     const groupId =
@@ -503,7 +503,7 @@ const buildImportPlan = (
   const retainedIds = new Set<string>();
 
   for (const importPattern of body.patterns) {
-    if (body.mode === 'append' && importPattern.id) {
+    if (body.mode === 'append' && importPattern.id !== undefined && importPattern.id !== null) {
       errors.push({
         code: importPattern.code,
         message:
@@ -520,9 +520,9 @@ const buildImportPlan = (
       );
 
       let matched: ProductValidationPattern | null = null;
-      if (importPattern.id) {
+      if (importPattern.id !== undefined && importPattern.id !== null) {
         matched = existingById.get(importPattern.id) ?? null;
-        if (!matched) {
+        if (matched === null) {
           errors.push({
             code: importPattern.code,
             message: `Pattern id "${importPattern.id}" was not found in current validator patterns.`,
@@ -548,7 +548,7 @@ const buildImportPlan = (
         matched = candidates[0] ?? null;
       }
 
-      if (matched) {
+      if (matched !== null) {
         retainedIds.add(matched.id);
 
         if (!hasPatternChanges(matched, createInput)) {
@@ -695,7 +695,7 @@ export async function postValidatorPatternsImportHandler(
   if (!dryRun) {
     for (const operation of operations) {
       if (operation.action === 'create') {
-        if (!operation.createData) {
+        if (operation.createData === undefined) {
           throw badRequestError('Import operation is missing create data.');
         }
         const created = await repository.createPattern(operation.createData, {
@@ -712,7 +712,7 @@ export async function postValidatorPatternsImportHandler(
             }
           : operation.semanticAudit;
       } else if (operation.action === 'update') {
-        if (!operation.patternId || !operation.updateData) {
+        if (operation.patternId === null || operation.updateData === undefined) {
           throw badRequestError('Import operation is missing update target or payload.');
         }
         const updated = await repository.updatePattern(operation.patternId, operation.updateData, {
@@ -729,7 +729,7 @@ export async function postValidatorPatternsImportHandler(
             }
           : operation.semanticAudit;
       } else if (operation.action === 'delete') {
-        if (!operation.patternId) {
+        if (operation.patternId === null) {
           throw badRequestError('Import operation is missing delete target.');
         }
         await repository.deletePattern(operation.patternId);

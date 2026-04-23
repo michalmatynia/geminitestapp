@@ -54,6 +54,10 @@ import { Button } from '@/shared/ui/button';
 import { FilterPanel } from '@/shared/ui/templates/FilterPanel';
 
 import type { FilterField } from '@/shared/contracts/ui/panels';
+import {
+  PRODUCT_CATEGORY_FILTER_ALL_VALUE,
+  PRODUCT_CATEGORY_FILTER_UNASSIGNED_VALUE,
+} from '@/shared/lib/products/constants';
 
 import {
   createAdvancedPreset,
@@ -208,7 +212,11 @@ export function ProductFilters({
       value: normalizeString(tag.id),
       label: normalizeString(tag.name) || normalizeString(tag.id),
     })),
-    categoryId: categoryOptions.filter((option) => option.value !== '__all__'),
+    categoryId: categoryOptions.filter(
+      (option) =>
+        option.value !== PRODUCT_CATEGORY_FILTER_ALL_VALUE &&
+        option.value !== PRODUCT_CATEGORY_FILTER_UNASSIGNED_VALUE
+    ),
     producerId: producers.map((producer) => ({
       value: normalizeString(producer.id),
       label: normalizeString(producer.name) || normalizeString(producer.id),
@@ -326,7 +334,13 @@ export function ProductFilters({
         setDescription(typeof value === 'string' ? value : '');
         break;
       case 'categoryId':
-        setCategoryId(typeof value === 'string' && value && value !== '__all__' ? value : '');
+        setCategoryId(
+          typeof value === 'string' &&
+            value &&
+            value !== PRODUCT_CATEGORY_FILTER_ALL_VALUE
+            ? value
+            : ''
+        );
         break;
       case 'baseExported':
         if (value === 'true' || value === 'false') {

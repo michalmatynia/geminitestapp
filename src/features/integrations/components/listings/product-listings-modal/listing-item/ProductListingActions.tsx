@@ -519,6 +519,7 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
               isCheckingCurrentListing ||
               isQueuedTraderaStatusCheck
             }
+            className='w-full sm:w-auto'
           >
             {isRelistingTraderaHeaded
               ? 'Queuing headed relist...'

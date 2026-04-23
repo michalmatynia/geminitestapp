@@ -36,8 +36,7 @@ import type {
   AiPathRunEventRecord,
 } from '@/shared/contracts/ai-paths';
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
-
-import { installInMemoryMongoPathRunDb } from './path-run-mongo-test-helpers';
+import { installInMemoryMongoPathRunDb } from '@/shared/lib/ai-paths/services/path-run-repository/test-utils/in-memory-mongo';
 
 vi.mock('@/features/ai/ai-paths/workers/aiPathRunQueue', () => ({
   enqueuePathRunJob: enqueuePathRunJobMock,

@@ -7,7 +7,20 @@ export const LOG_SOURCE = 'ai-path-run-queue';
 export const DEBUG_AI_PATH_QUEUE = process.env['AI_PATHS_QUEUE_DEBUG'] === 'true';
 
 export const DEFAULT_CONCURRENCY = parseEnvNumber('AI_PATHS_RUN_CONCURRENCY', 3);
+export const DEFAULT_MAX_ATTEMPTS = parseEnvNumber('AI_PATHS_RUN_MAX_ATTEMPTS', 3, 1);
 export const JOB_EXECUTION_TIMEOUT_MS = parseEnvNumber('AI_PATHS_JOB_TIMEOUT_MS', 10 * 60 * 1000);
+export const ORPHAN_QUEUED_RECOVERY_ENABLED =
+  process.env['AI_PATHS_ORPHAN_QUEUED_RECOVERY_ENABLED'] === 'true';
+export const ORPHAN_QUEUED_RECOVERY_BATCH_SIZE = parseEnvNumber(
+  'AI_PATHS_ORPHAN_QUEUED_RECOVERY_BATCH_SIZE',
+  25,
+  1
+);
+export const ORPHAN_QUEUED_RECOVERY_MIN_AGE_MS = parseEnvNumber(
+  'AI_PATHS_ORPHAN_QUEUED_RECOVERY_MIN_AGE_MS',
+  60_000,
+  1_000
+);
 
 export const RECOVERY_REPEAT_MS = resolveAiPathsStaleRunningCleanupIntervalMs();
 

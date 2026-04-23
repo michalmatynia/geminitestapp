@@ -2,6 +2,7 @@ import { type Filter } from 'mongodb';
 
 import { getProductAdvancedFilterMetrics } from '@/shared/contracts/products/filters';
 import { type ProductAdvancedFilterCondition, type ProductAdvancedFilterRule, type ProductFilters } from '@/shared/contracts/products';
+import { PRODUCT_CATEGORY_FILTER_UNASSIGNED_VALUE } from '@/shared/lib/products/constants';
 import { logger } from '@/shared/utils/logger';
 
 import { type ProductDocument } from './mongo-product-repository-mappers';
@@ -28,6 +29,11 @@ const buildEmptyStringPathCondition = (path: string): Filter<ProductDocument> =>
 const buildNonEmptyStringPathCondition = (path: string): Filter<ProductDocument> =>
   ({
     [path]: { $exists: true, $nin: [null, ''] },
+  }) as Filter<ProductDocument>;
+
+const buildMongoUnassignedCategoryFilter = (): Filter<ProductDocument> =>
+  ({
+    $or: [{ categoryId: { $exists: false } }, { categoryId: null }, { categoryId: '' }],
   }) as Filter<ProductDocument>;
 
 const buildMongoStringFieldCondition = (
@@ -157,9 +163,7 @@ const buildMongoCategoryCondition = async (
   condition: ProductAdvancedFilterCondition
 ): Promise<Filter<ProductDocument> | null> => {
   if (condition.operator === 'isEmpty') {
-    return {
-      $or: [{ categoryId: { $exists: false } }, { categoryId: null }, { categoryId: '' }],
-    } as Filter<ProductDocument>;
+    return buildMongoUnassignedCategoryFilter();
   }
 
   if (condition.operator === 'isNotEmpty') {
@@ -170,6 +174,10 @@ const buildMongoCategoryCondition = async (
 
   const value = toAdvancedStringValue(condition.value);
   if (!value) return null;
+
+  if (value === PRODUCT_CATEGORY_FILTER_UNASSIGNED_VALUE) {
+    return condition.operator === 'eq' ? buildMongoUnassignedCategoryFilter() : null;
+  }
 
   if (condition.operator === 'contains') {
     const regex = { $regex: escapeRegex(value), $options: 'i' };
@@ -569,7 +577,10 @@ export const buildMongoWhere = async (
   }
 
   if (typeof filters.categoryId === 'string' && filters.categoryId.trim().length > 0) {
-    const categoryFilter = await buildMongoExpandedCategoryFilter(filters.categoryId);
+    const categoryFilter =
+      filters.categoryId === PRODUCT_CATEGORY_FILTER_UNASSIGNED_VALUE
+        ? buildMongoUnassignedCategoryFilter()
+        : await buildMongoExpandedCategoryFilter(filters.categoryId);
     if (categoryFilter !== null) {
       filter = appendAndCondition(filter, categoryFilter);
     }

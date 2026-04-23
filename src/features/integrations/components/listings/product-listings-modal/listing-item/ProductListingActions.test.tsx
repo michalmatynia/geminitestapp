@@ -358,6 +358,28 @@ describe('ProductListingActions', () => {
     });
   });
 
+  it('keeps the Tradera relist action stretched across the mobile action row', () => {
+    render(
+      <ProductListingActions
+        listing={
+          {
+            id: 'listing-1',
+            status: 'active',
+            integrationId: 'integration-1',
+            connectionId: 'connection-1',
+            integration: {
+              name: 'Tradera',
+              slug: 'tradera',
+            },
+            marketplaceData: null,
+          } as never
+        }
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'Relist now' })).toHaveClass('w-full', 'sm:w-auto');
+  });
+
   it('reuses the selector profile override for Tradera relist actions', async () => {
     render(
       <ProductListingActions

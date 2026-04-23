@@ -1,6 +1,6 @@
 import 'dotenv/config';
 
-import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
+import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { repairRuntimeStatePorts } from '@/features/ai/ai-paths/services/runtime-state-port-repair';
 import type { AiPathRunListOptions, AiPathRunRecord } from '@/shared/contracts/ai-paths';
 

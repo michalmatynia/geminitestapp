@@ -7,7 +7,19 @@ import {
 } from '@/shared/lib/db/collection-provider-map';
 import type { DatabaseEngineProvider } from '@/shared/lib/db/database-engine-constants';
 
-import { mongoPathRunRepository } from './mongo-path-run-repository';
+import {
+  claimRunForProcessing,
+  createRun,
+  deleteRun,
+  findRunById,
+  getRunByRequestId,
+  updateRun,
+  updateRunIfStatus,
+} from './methods';
+import {
+  AI_PATHS_MONGO_INDEXES,
+  mongoPathRunRepository,
+} from './mongo-path-run-repository';
 
 export const AI_PATH_RUNS_COLLECTION = 'ai_path_runs';
 
@@ -111,4 +123,16 @@ export const resolveAlternatePathRunRepository = async (
 
 export const getPathRunRepository = async (): Promise<AiPathRunRepository> => {
   return (await resolvePathRunRepository()).repo;
+};
+
+export {
+  AI_PATHS_MONGO_INDEXES,
+  claimRunForProcessing,
+  createRun,
+  deleteRun,
+  findRunById,
+  mongoPathRunRepository,
+  getRunByRequestId,
+  updateRun,
+  updateRunIfStatus,
 };
